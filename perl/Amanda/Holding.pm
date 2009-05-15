@@ -41,7 +41,24 @@ Amanda::Holding -- interface to the holding disks
 
     use Amanda::Holding;
 
-    # TODO
+Get some statistics:
+
+    my %size_per_host;
+    for my $hfile (Amanda::Holding::files()) {
+	my $hdr = Amanda::Holding::get_header($hfile);
+	next unless $hdr;
+	$size_per_host{$hdr->{'name'}} += Amanda::Holding::file_size($hfile);
+    }
+
+Schematic for something like C<amflush>:
+
+    for my $ts (sort Amanda::Holding::get_all_timestamps()) {
+	print $ts, "\n";
+    }
+    my @to_dump = <>;
+    for my $hfile (Amanda::Holding::get_files_for_flush(@to_dump)) {
+	# flush $hfile
+    }
 
 =head1 DESCRIPTION
 

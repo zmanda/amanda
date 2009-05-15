@@ -43,11 +43,7 @@ into something similar to the old C<chg-manual>.
 Whatever you load, you get the volume in the drive.  The volume's either
 reserved or not.  All pretty straightforward.
 
-=head1 TODO
-
-Support notifying the user that a tape is required, and some kind of "OK,
-loaded" feedback mechanism -- perhaps a utility script of some sort, or an
-amtape subcommand?
+See the amanda-changers(7) manpage for usage information.
 
 =cut
 

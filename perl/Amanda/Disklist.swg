@@ -67,7 +67,7 @@ Amanda parses all DLE's as a simple tuple (host, diskname, device, dumptype,
 interface, spindle), linked to a dumptype.  DLE's which specify additional
 dumptype parameters within the C<disklist> file result in the creation of a
 "hidden" dumptype with those parameters.  Consequently, most configuration data
-about a particular disk is available in an L<Amanda::Config::dumptype_t>
+about a particular disk is available in an C<Amanda::Config::dumptype_t>
 object, and that data is not reproduced by this package.
 
 This package differs from the underlying C code in that it separates I<disk>

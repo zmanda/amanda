@@ -39,26 +39,26 @@ Amanda::Changer::compat -- run "old" changer scripts
 
 =head1 DESCRIPTION
 
-This package, calls through to old Changer API shell scripts using the new API.
-If necessary, this writes temporary configurations under C<$AMANDA_TMPDIR> and
+This package calls through to old Changer API shell scripts using the new API.
+If necessary, it writes temporary configurations under C<$AMANDA_TMPDIR> and
 invokes the changer there, allowing multiple distinct changers to run within
 the same Amanda process.
 
-=head1 TODO
+See the amanda-changers(7) manpage for usage information.
+
+=head2 NOTE
 
 In-process reservations are handled correctly - only one device may be used at
 a time.  However, the underlying scripts do not support reservations, so
 another application can easily run the script and change the current device.
 Caveat emptor.
 
-Concurrent _run_tpchanger invocations are currently forbidden with a die() --
-that should change to a simple FIFO queue of tpchanger invocations to make.
-
-Clean out old changer temporary directories on object destruction.
-
-Support 'update'
-
 =cut
+
+# TODO
+# Concurrent _run_tpchanger invocations are currently forbidden with a die() --
+#   that should change to a simple FIFO queue of tpchanger invocations to make.
+# Clean out old changer temporary directories on object destruction.
 
 sub new {
     my $class = shift;

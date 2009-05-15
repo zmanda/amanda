@@ -120,7 +120,7 @@ List all regex (POSIX Extended Regular Expression syntax) that are strange outpu
     property "GNUTAR-LISTDIR" "
     property "GNUTAR-PATH" "/bin/tar"
     property "ONE-FILE-SYSTEM" "YES"
-    property "TAR_BLOCKSIZE" "20"
+    property "TAR-BLOCKSIZE" "20"
     property "SPARSE" "YES"
     property "EXIT-HANDLING" "1=GOOD 2=BAD"
     # change a default NORMAL regex to a STRANGE regex.

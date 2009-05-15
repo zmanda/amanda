@@ -103,6 +103,27 @@ FOOTER
 	    "--css=/pod/amperl.css",
 	    "--noindex",
 	    "--outfile=$targetdir/$html");
+
+    # post-process that HTML
+    postprocess("$targetdir/$html", $module);
+}
+
+sub postprocess {
+    my ($filename, $module) = @_;
+
+    # slurp it up
+    open(my $fh, "<", $filename) or die("open $filename: $!");
+    my $html = do { local $/; <$fh> }; 
+    close($fh);
+
+    $html =~ s{<title>.*</title>}{<title>$module</title>};
+    $html =~ s{<link rev="made" [^>]*/>}{};
+    $html =~ s{html">the (\S+) manpage</a>}{html">\1</a>}g;
+
+    # write it out
+    open(my $fh, ">", $filename) or die("open $filename: $!");
+    print $fh $html;
+    close($fh);
 }
 
 # and generate an index HTML for each new directory

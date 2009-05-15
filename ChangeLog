@@ -1,4 +1,11 @@
 2009-05-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amgtar.8.xml perl/Amanda/Changer.pm
+	  perl/Amanda/Changer/compat.pm perl/Amanda/Changer/disk.pm
+	  perl/Amanda/Changer/null.pm perl/Amanda/Changer/rait.pm
+	  perl/Amanda/Changer/single.pm perl/Amanda/Disklist.swg
+	  perl/Amanda/Holding.pm perl/make_html.pl: documentation cleanup
+
+2009-05-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Installcheck.pm:always create $Installcheck::TMP;
 	  package returns 1
 	* installcheck/Installcheck/Run.pm: export run_expect

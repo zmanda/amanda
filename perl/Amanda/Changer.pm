@@ -129,8 +129,9 @@ syntax:
   if ($err->failed) { ... }
 
 The error types are:
-  fatal		    Changer is no longer useable
-  failed	    Operation failed, but the changer is OK
+
+  fatal      Changer is no longer useable
+  failed     Operation failed, but the changer is OK
 
 The API may add other error types in the future (for example, to indicate
 that a required resource is already reserved).
@@ -144,11 +145,11 @@ C<failed>.  The reason for the failure is usually clear to the user from the
 message, but for callers who may need to distinguish, C<< $err->{'reason'} >>
 has one of the following values:
 
-  notfound	    The requested volume was not found
-  invalid	    The caller's request was invalid (e.g., bad slot)
-  notimpl	    The requested operation is not supported
-  inuse		    A required resource is already in use
-  unknown	    Unknown reason
+  notfound   The requested volume was not found
+  invalid    The caller's request was invalid (e.g., bad slot)
+  notimpl    The requested operation is not supported
+  inuse      A required resource is already in use
+  unknown    Unknown reason
 
 Like types, checks for particular reasons should use the methods, to avoid
 undetected typos:

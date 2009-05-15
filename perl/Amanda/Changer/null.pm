@@ -39,9 +39,7 @@ Amanda::Changer::null
 This changer always returns reservations for null devices.  It is useful to add
 a null device to a RAIT device configuration.  It takes no arguments.
 
-=head1 USAGE
-
-Specify this changer as C<chg-null:>.
+See the amanda-changers(7) manpage for usage information.
 
 =cut
 

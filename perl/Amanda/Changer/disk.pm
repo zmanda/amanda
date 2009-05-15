@@ -50,20 +50,20 @@ string, which it arranges as follows:
         |- ...
         |- slot$n/
 
-The user should create the desired number C<slot$n> subdirectories, and
-the changer will take care of dynamically creating the drives as needed,
-and track the "current" slot using the eponymous symlink.
+The user should create the desired number of C<slot$n> subdirectories.  The
+changer will take care of dynamically creating the drives as needed, and track
+the "current" slot using the eponymous symlink.
 
 Drives are dynamically allocated as Amanda applications request access to
 particular slots.  Each drive is represented as a subdirectory containing a
 'data' symlink pointing to the "loaded" slot.
 
-=head1 TODO
-
- - better locking (at least to work on a shared filesystem, if not NFS)
- - manpage
+See the amanda-changers(7) manpage for usage information.
 
 =cut
+
+# TODO:
+# better locking (at least to work on a shared filesystem, if not NFS)
 
 sub new {
     my $class = shift;

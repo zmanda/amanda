@@ -40,20 +40,7 @@ Amanda::Changer::rait
 This changer operates several child changers, returning RAIT devices composed of
 the devices produced by the child changers.  It's modeled on the RAIT device.
 
-=head1 USAGE
-
-Specify this changer as C<chg-rait:{changer1,changer2,..}>, much like the RAIT
-device.  The child devices are specified using a shell-like syntax, where
-alternatives are enclosed in braces and separated by commas.
-
-The string C<ERROR>, if given for a changer, will be specified directly to the
-RAIT device, causing it to assume that child is missing and operate in degraded
-mode.  This changer does not automatically detect and exclude failed child
-changers.  If a tape robot breaks, you must explicitly specify ERROR for that
-changer.
-
-The slots used for this changer are comma-separated strings containing the
-slots from each child device.
+See the amanda-changers(7) manpage for usage information.
 
 =cut
 
