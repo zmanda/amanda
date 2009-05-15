@@ -718,6 +718,8 @@ printf_arglist_function(void debug_printf, const char *, format)
 	text = g_strdup_vprintf(format, argp);
 	arglist_end(argp);
 	fprintf(db_file, "%s %s", prefix, text);
+	amfree(prefix);
+	amfree(text);
 	fflush(db_file);
     }
     errno = save_errno;

@@ -1,3 +1,6 @@
+2009-05-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/debug.c: Fix memory leak.
+
 2009-05-07  Dustin J. Mitchell <dustin@zmanda.com>
 	    Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/debug.c: do not use a mutex in debug_printf
