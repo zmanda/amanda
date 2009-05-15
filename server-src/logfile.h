@@ -68,7 +68,7 @@ extern program_t curprog;
 extern char *curstr;
 extern char *program_str[];
 
-void logerror(char *);
+void amanda_log_trace_log(GLogLevelFlags log_level, const gchar *message);
 void log_add(logtype_t typ, char * format, ...) G_GNUC_PRINTF(2, 3);
 char* log_genstring(logtype_t typ, char *pname, char * format, ...)
     		    G_GNUC_PRINTF(3, 4);

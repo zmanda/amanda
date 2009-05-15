@@ -171,6 +171,16 @@ All of these functions can be imported by name.
 
 =back
 
+=head1 DEBUG LOGGING HANDLER
+
+This package provides C<$amanda_log_trace_log>, which sends C<die> messages
+(and any C<g_error> or C<g_critical> calls from C) to the trace log.  Use it
+like this:
+
+  use Amanda::Logfile qw( $amanda_log_trace_log );
+  # ...
+  Amanda::Debug::add_amanda_log_handler($amanda_log_trace_log);
+
 =cut
 %}
 
@@ -398,3 +408,10 @@ find_result_t *dumps_match(find_result_t *output_find, char *hostname,
 find_result_t *dumps_match_dumpspecs(find_result_t *output_find,
     amglue_dumpspec_list *dumpspecs,
     gboolean ok);
+
+%immutable;
+amanda_log_handler_t *amanda_log_trace_log;
+%mutable;
+amglue_export_ok(
+    $amanda_log_trace_log
+);

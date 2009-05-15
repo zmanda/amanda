@@ -1307,7 +1307,8 @@ int main(int argc, char ** argv) {
 
     safe_cd();
 
-    set_logerror(logerror);
+    add_amanda_log_handler(amanda_log_stderr);
+    add_amanda_log_handler(amanda_log_trace_log);
 
     check_running_as(RUNNING_AS_DUMPUSER);
 

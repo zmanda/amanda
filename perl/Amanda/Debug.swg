@@ -75,6 +75,15 @@ and C<warning>, respectively.
 All of the debug logging functions are available via the export tag
 C<:logging>.
 
+Applications can adjust the handling of log messages with
+C<add_amanda_log_handler($hdlr)> where C<$hdlr> is a predefined log
+destination.  The following destinations are available in this package.  See
+L<Amanda::Logfile> for C<$amanda_log_trace_log>.
+
+  $amanda_log_null
+  $amanda_log_stderr
+  $amanda_log_syslog
+
 =head1 ADVANCED USAGE
 
 Most applications should use L<Amanda::Util>'s C<setup_application>
@@ -86,14 +95,6 @@ Briefly, the functions C<dbopen> and C<dbrename> are used to
 open a debug file whose pathname includes all of the relevant
 information. C<dbclose> and C<dbreopen> are used to close that debug
 file before transferring control to another process.
-
-The variable C<$erroutput_type> can take on any combination
-of the flags C<$ERROUTPUT_INTERACTIVE>, C<$ERROUTPUT_SYSLOG>
-and C<$ERROUTPUT_AMANDALOG>.  C<$ERROUTPUT_INTERACTIVE>
-causes messages from C<error> and C<critical> to be sent
-to stderr. C<$ERROUTPUT_SYSLOG> sends it to syslog, and
-C<$ERROUTPUT_AMANDALOG> sends it to the current trace log (see
-L<Amanda::Logfile>).
 
 C<$error_exit_status> is the exit status with which C<critical>
 will exit.
@@ -118,7 +119,7 @@ applications which may produce error output.
 
 amglue_export_tag(init,
     debug_init dbopen dbreopen dbrename dbclose
-    $erroutput_type $error_exit_status
+    $error_exit_status
 );
 
 void	debug_init(void);
@@ -127,13 +128,6 @@ void	dbreopen(char *file, char *notation);
 void	dbrename(char *config, char *subdir);
 void	dbclose(void);
 
-amglue_add_flag_tag_fns(erroutput_type_t);
-amglue_add_constant_short(ERR_INTERACTIVE, INTERACTIVE, erroutput_type_t);
-amglue_add_constant_short(ERR_SYSLOG, SYSLOG, erroutput_type_t);
-amglue_add_constant_short(ERR_AMANDALOG, AMANDALOG, erroutput_type_t);
-amglue_copy_tag_to(erroutput_type_t, init);
-
-erroutput_type_t erroutput_type;
 int error_exit_status;
 
 /*
@@ -176,10 +170,6 @@ sub disable_die_override {
  * Logging
  */
 
-amglue_export_tag(logging,
-    error critical warning message info debug
-);
-
 %rename(error) error__; /* error() is a macro defined in debug.h .. just avoid that */
 %inline %{
 void error__(char *msg) { g_error("%s", msg); }
@@ -189,6 +179,23 @@ void message(char *msg) { g_message("%s", msg); }
 void info(char *msg) { g_info("%s", msg); }
 void debug(char *msg) { g_debug("%s", msg); }
 %}
+
+amglue_export_tag(logging,
+    error critical warning message info debug
+);
+
+void add_amanda_log_handler(amanda_log_handler_t *handler);
+/* these functions are written as simple global variables, since they are just
+ * function pointers used in add_amanda_log_handler.  Note that the functions
+ * then appear as e.g., $amanda_log_null. */
+%immutable;
+amanda_log_handler_t *amanda_log_stderr, *amanda_log_syslog, *amanda_log_null;
+%mutable;
+
+amglue_export_tag(logging,
+    add_amanda_log_handler
+    $amanda_log_stderr $amanda_log_syslog $amanda_log_null
+);
 
 /* used to suppress the traceback when calling from perl */
 void suppress_error_traceback(void);

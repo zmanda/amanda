@@ -116,7 +116,8 @@ main(
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
 
-    erroutput_type = (ERR_INTERACTIVE|ERR_SYSLOG);
+    add_amanda_log_handler(amanda_log_stderr);
+    add_amanda_log_handler(amanda_log_syslog);
     dbopen(DBG_SUBDIR_CLIENT);
     startclock();
     dbprintf(_("version %s\n"), version());

@@ -27,7 +27,9 @@ use Amanda::Paths;
 use Amanda::Tapelist;
 use Amanda::Cmdline;
 use Amanda::Util;
-use Amanda::Logfile qw(:logtype_t :program_t open_logfile get_logline close_logfile log_add );
+use Amanda::Debug qw( :logging );
+use Amanda::Logfile qw(:logtype_t :program_t open_logfile get_logline
+		close_logfile log_add $amanda_log_trace_log );
 use Amanda::Config qw( :init :getconf config_dir_relative );
 
 my $log_filename = "$Installcheck::TMP/Amanda_Logfile_test.log";
@@ -83,7 +85,7 @@ INFO chunker line1
 END
 
 $logfile = open_logfile(write_logfile($logdata));
-ok($logfile, "can open a logfile containing conitinuation lines");
+ok($logfile, "can open a logfile containing continuation lines");
 is_deeply([ get_logline($logfile) ],
 	  [ $L_INFO, $P_CHUNKER, "line1" ], 
 	  "can read INFO line");

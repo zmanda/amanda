@@ -1,3 +1,20 @@
+2009-05-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/debug.c common-src/debug.h: refactor set_logerr
+	  and erroutput_type into a more flexible amanda_log_handler system
+	* server-src/logfile.c server-src/logfile.h: provide
+	  amanda_log_trace_log
+	* perl/Amanda/Debug.swg perl/Amanda/Logfile.swg: SWIG it
+	* installcheck/Amanda_Debug.pl installcheck/Amanda_Logfile.pl: test it
+	* amandad-src/amandad.c application-src/amgtar.c
+	  application-src/amstar.c client-src/calcsize.c client-src/selfcheck.c
+	  client-src/sendbackup.c client-src/sendsize.c
+	  restore-src/amfetchdump.c restore-src/amrestore.c server-src/amadmin.c
+	  server-src/amcheck.c server-src/amflush.c server-src/amlabel.c
+	  server-src/amlogroll.c server-src/amservice.c server-src/amtape.c
+	  server-src/chunker.c server-src/driver.c server-src/dumper.c
+	  server-src/planner.c server-src/reporter.c server-src/taper.c: use new
+	  system
+
 2009-05-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/debug.c: Fix memory leak.
 

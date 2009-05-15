@@ -131,7 +131,7 @@ main(
 
     dbopen(DBG_SUBDIR_SERVER);
 
-    erroutput_type = ERR_INTERACTIVE;
+    add_amanda_log_handler(amanda_log_stderr);
 
     cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
     if(argc < 3) usage();

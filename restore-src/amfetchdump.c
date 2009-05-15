@@ -324,7 +324,7 @@ main(
 
     dbopen(DBG_SUBDIR_SERVER);
 
-    erroutput_type = ERR_INTERACTIVE;
+    add_amanda_log_handler(amanda_log_stderr);
     error_exit_status = 2;
 
     rst_flags = new_rst_flags();

@@ -371,7 +371,7 @@ main(
 
     /* Process options */
     
-    erroutput_type = ERR_INTERACTIVE;
+    add_amanda_log_handler(amanda_log_stderr);
     outfname = NULL;
     psfname = NULL;
     logfname = NULL;

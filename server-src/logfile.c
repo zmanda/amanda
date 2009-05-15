@@ -78,10 +78,22 @@ static void open_log(void);
 static void close_log(void);
 
 void
-logerror(
-    char *	msg)
+amanda_log_trace_log(
+    GLogLevelFlags log_level,
+    const gchar *message)
 {
-    log_add(L_FATAL, "%s", msg);
+    logtype_t logtype = L_ERROR;
+
+    switch (log_level) {
+	case G_LOG_LEVEL_ERROR:
+	case G_LOG_LEVEL_CRITICAL:
+	    logtype = L_FATAL;
+	    break;
+
+	default:
+	    return;
+    }
+    log_add(logtype, "%s", message);
 }
 
 
@@ -112,11 +124,15 @@ printf_arglist_function2(char *log_genstring, logtype_t, typ, char *, pname, cha
 printf_arglist_function1(void log_add, logtype_t, typ, char *, format)
 {
     va_list argp;
-    int saved_errout;
     char *leader = NULL;
     char *xlated_fmt = gettext(format);
     char linebuf[STR_SIZE];
     size_t n;
+    static gboolean in_log_add = 0;
+
+    /* avoid recursion */
+    if (in_log_add)
+	return;
 
     /* format error message */
 
@@ -136,8 +152,7 @@ printf_arglist_function1(void log_add, logtype_t, typ, char *, format)
 
     /* avoid recursive call from error() */
 
-    saved_errout = erroutput_type;
-    erroutput_type &= ~ERR_AMANDALOG;
+    in_log_add = 1;
 
     /* append message to the log file */
 
@@ -163,7 +178,7 @@ printf_arglist_function1(void log_add, logtype_t, typ, char *, format)
     if(multiline != -1) multiline++;
     else close_log();
 
-    erroutput_type = saved_errout;
+    in_log_add = 0;
 }
 
 void
@@ -227,11 +242,6 @@ static void
 open_log(void)
 {
     char *conf_logdir;
-
-    /* now that we have a logfile, let the debug module know how to write
-     * error messages to it.  This is due to some rather obscure linking 
-     * problems. */
-    set_logerror(logerror);
 
     conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     logfile = vstralloc(conf_logdir, "/log", NULL);

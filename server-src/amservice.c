@@ -93,7 +93,7 @@ main(
 
     dbopen(DBG_SUBDIR_SERVER);
 
-    erroutput_type = ERR_INTERACTIVE;
+    add_amanda_log_handler(amanda_log_stderr);
 
     our_features = am_init_feature_set();
     our_feature_string = am_feature_to_string(our_features);

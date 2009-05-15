@@ -52,10 +52,6 @@
  *  g_message -- normal status information
  *  g_info -- helpful extra details, but not verbose
  *  g_debug -- debug messages
- *
- * g_error and g_critical will respect erroutput_type, or if that has not
- * been set explicitly, the current process context (get_pcontext). This can
- * mean sending the error to the Amanda logfile for this run (see logfile.c).
  */
 
 /* g_debug was introduced in glib 2.6, so define it here for systems where
@@ -81,6 +77,36 @@
 void debug_init(void);
 
 /*
+ * ADDITIONAL LOGGING
+ */
+
+/* Amanda implements a rudimentary method of distributing log information to
+ * arbitrary consumers.  Some consumers are available here, and other modules
+ * (e.g., server-src/logfile.c) may implement them, too.
+ *
+ * If amanda_log_handler has never been called, then the default disposition
+ * depends on the application context: amanda_log_stderr is always used, and
+ * amanda_log_syslog is used in the 'daemon' context.  The 'scriptutil' context
+ * does not do any debug logging.
+ */
+
+/* prototype for log-handling functions; these will be called with only a single
+ * bit set in the log_level. */
+typedef void (amanda_log_handler_t)(GLogLevelFlags log_level, const gchar *message);
+
+/* add an amanda_log_handler_t to the list of handlers */
+void add_amanda_log_handler(amanda_log_handler_t *hdlr);
+
+/* log ERROR, CRITICAL, and WARNING messages to syslog */
+void amanda_log_syslog(GLogLevelFlags log_level, const gchar *message);
+
+/* log ERROR and CRITICAL to stderr */
+void amanda_log_stderr(GLogLevelFlags log_level, const gchar *message);
+
+/* log nothing */
+void amanda_log_null(GLogLevelFlags log_level, const gchar *message);
+
+/*
  * FATAL ERROR HANDLING
  */
 
@@ -90,41 +116,10 @@ void debug_init(void);
 #define errordump(...) do { g_error(__VA_ARGS__); abort(); } while (0)
 #define error(...) do { g_critical(__VA_ARGS__); exit(error_exit_status); } while (0)
 
-/* Additional handling for error and critical messages.  Leave this
- * set to its default if you're using debug_init(). */
-typedef enum {
-    /* send message to stderr (for interactive programs) */
-    ERR_INTERACTIVE	= 1 << 0, /* (default) */
-
-    /* log to syslog */
-    ERR_SYSLOG		= 1 << 1,
-
-    /* add an L_FATAL entry in the Amanda logfile for the 
-     * current run */
-    ERR_AMANDALOG	= 1 << 2,
-
-    /* the default situation -- do whatever's appropriate for
-     * the current context.  If this is set, the other flags
-     * are ignored. */
-    ERR_FROM_CONTEXT	= 1 << 3,
-} erroutput_type_t;
-extern erroutput_type_t erroutput_type;
-
 /* The process exit status that will be given when error()
  * or errordump() is called.
  */
 extern int error_exit_status;
-
-/* Supply a pointer to the logfile module's logerror(), if
- * ERR_AMANDALOG is set.
- *
- * This function is required because libamanda, which contains
- * debug.c, is not always linked with the logerror module
- * (which only appears in server applications).
- *
- * @param logerror_fn: function pointer
- */
-void set_logerror(void (*logerror_fn)(char *));
 
 /*
  * DEBUG LOGGING

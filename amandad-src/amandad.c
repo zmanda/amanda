@@ -246,7 +246,8 @@ main(
 	check_running_as(RUNNING_AS_CLIENT_LOGIN);
     }
 
-    erroutput_type = (ERR_INTERACTIVE|ERR_SYSLOG);
+    add_amanda_log_handler(amanda_log_stderr);
+    add_amanda_log_handler(amanda_log_syslog);
 
     /*
      * ad-hoc argument parsing

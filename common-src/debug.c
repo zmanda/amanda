@@ -59,12 +59,7 @@ static char *dbgdir = NULL;
 /* time debug log was opened (timestamp of the file) */
 static time_t open_time;
 
-/* pointer to logfile.c's 'logerror()', if we're linked
- * with it */
-static void (*logerror_fn)(char *) = NULL;
-
 /* storage for global variables */
-erroutput_type_t erroutput_type = ERR_FROM_CONTEXT;
 int error_exit_status = 1;
 
 /* static function prototypes */
@@ -81,6 +76,9 @@ static void debug_setup_logging(void);
 
 /* By default, do not suppress tracebacks */
 static gboolean do_suppress_error_traceback = FALSE;
+
+/* configured amanda_log_handlers */
+static GSList *amanda_log_handlers = NULL;
 
 /*
  * Generate a debug file name.  The name is based on the program name,
@@ -137,75 +135,55 @@ debug_logging_handler(const gchar *log_domain G_GNUC_UNUSED,
 	    const gchar *message,
 	    gpointer user_data G_GNUC_UNUSED)
 {
-    char *maxlevel = NULL;
+    GLogLevelFlags maxlevel;
+    char *levprefix = NULL;
     pcontext_t context = get_pcontext();
+
+    /* glib allows a message to have multiple levels, so calculate the "worst"
+     * level */
+    if (log_level & G_LOG_LEVEL_ERROR) {
+	maxlevel = G_LOG_LEVEL_ERROR;
+	levprefix = _("error (fatal): ");
+    } else if (log_level & G_LOG_LEVEL_CRITICAL) {
+	maxlevel = G_LOG_LEVEL_CRITICAL;
+	levprefix = _("critical (fatal): ");
+    } else if (log_level & G_LOG_LEVEL_WARNING) {
+	maxlevel = G_LOG_LEVEL_WARNING;
+	levprefix = _("warning: ");
+    } else if (log_level & G_LOG_LEVEL_MESSAGE) {
+	maxlevel = G_LOG_LEVEL_MESSAGE;
+	levprefix = _("message: ");
+    } else if (log_level & G_LOG_LEVEL_INFO) {
+	maxlevel = G_LOG_LEVEL_INFO;
+	levprefix = _("info: ");
+    } else {
+	maxlevel = G_LOG_LEVEL_DEBUG;
+	levprefix = ""; /* no level displayed for debugging */
+    }
 
     /* scriptutil context doesn't do any logging except for critical
      * and error levels */
     if (context != CONTEXT_SCRIPTUTIL) {
 	/* convert the highest level to a string and dbprintf it */
-	if (log_level & G_LOG_LEVEL_ERROR)
-	    maxlevel = _("error (fatal): ");
-	else if (log_level & G_LOG_LEVEL_CRITICAL)
-	    maxlevel = _("critical (fatal): ");
-	else if (log_level & G_LOG_LEVEL_WARNING)
-	    maxlevel = _("warning: ");
-	else if (log_level & G_LOG_LEVEL_MESSAGE)
-	    maxlevel = _("message: ");
-	else if (log_level & G_LOG_LEVEL_INFO)
-	    maxlevel = _("info: ");
-	else
-	    maxlevel = ""; /* no level displayed for debugging */
+	debug_printf("%s%s\n", levprefix, message);
+    }
 
-	debug_printf("%s%s\n", maxlevel, message);
+    if (amanda_log_handlers) {
+	GSList *iter = amanda_log_handlers;
+	while (iter) {
+	    amanda_log_handler_t *hdlr = (amanda_log_handler_t *)iter->data;
+	    hdlr(maxlevel, message);
+	    iter = g_slist_next(iter);
+	}
+    } else {
+	/* call the appropriate handlers, based on the context */
+	amanda_log_stderr(maxlevel, message);
+	if (context == CONTEXT_DAEMON)
+	    amanda_log_syslog(maxlevel, message);
     }
 
     /* error and critical levels have special handling */
     if (log_level & (G_LOG_LEVEL_ERROR|G_LOG_LEVEL_CRITICAL)) {
-	erroutput_type_t local_erroutput;
-
-	/* Calculate a local version of erroutput_type, based on the
-	 * context if the process has not set erroutput_type explicitly */
-	if (!(erroutput_type & ERR_FROM_CONTEXT)) {
-	    local_erroutput = erroutput_type;
-	} else {
-	    switch (context) {
-		case CONTEXT_SCRIPTUTIL:
-		    local_erroutput = ERR_INTERACTIVE;
-		    break;
-
-		case CONTEXT_DAEMON:
-		    local_erroutput = ERR_INTERACTIVE
-				    | ERR_AMANDALOG
-				    | ERR_SYSLOG;
-		    break;
-
-		case CONTEXT_CMDLINE:
-		case CONTEXT_DEFAULT:
-		default:
-		    local_erroutput = ERR_INTERACTIVE;
-		    break;
-	    }
-	}
-
-	if (local_erroutput & ERR_AMANDALOG && logerror_fn != NULL)
-	    (*logerror_fn)((char *)message); /* discard 'const' */
-
-	if (local_erroutput & ERR_SYSLOG) {
-#ifdef LOG_AUTH
-	    openlog(get_pname(), LOG_PID, LOG_AUTH);
-#else
-	    openlog(get_pname(), LOG_PID, 0);
-#endif
-	    syslog(LOG_NOTICE, "%s", message);
-	    closelog();
-	}
-
-	if (local_erroutput & ERR_INTERACTIVE) {
-	    g_fprintf(stderr, "%s: %s\n", get_pname(), message);
-	    fflush(stderr);
-	}
-
 #ifdef HAVE_GLIBC_BACKTRACE
 	/* try logging a traceback to the debug log */
 	if (!do_suppress_error_traceback && db_fd != -1) {
@@ -238,6 +216,61 @@ debug_setup_logging(void)
      * hence not useable here) */
     g_log_set_handler(NULL, G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION,
 		      debug_logging_handler, NULL);
+}
+
+void
+add_amanda_log_handler(amanda_log_handler_t *hdlr)
+{
+    amanda_log_handlers = g_slist_append(amanda_log_handlers, hdlr);
+}
+
+void
+amanda_log_syslog(GLogLevelFlags log_level, const gchar *message)
+{
+    int priority = LOG_ERR;
+    switch (log_level) {
+	case G_LOG_LEVEL_ERROR:
+	case G_LOG_LEVEL_CRITICAL:
+	    priority = LOG_ERR;
+	    break;
+
+	case G_LOG_LEVEL_WARNING:
+#ifdef LOG_WARNING
+	    priority = LOG_WARNING;
+#endif
+	    break;
+
+	default:
+	    return;
+    }
+
+#ifdef LOG_DAEMON
+    openlog(get_pname(), LOG_PID, LOG_DAEMON);
+#else
+    openlog(get_pname(), LOG_PID, 0);
+#endif
+    syslog(priority, "%s", message);
+    closelog();
+
+}
+
+void
+amanda_log_stderr(GLogLevelFlags log_level, const gchar *message)
+{
+    switch (log_level) {
+	case G_LOG_LEVEL_ERROR:
+	case G_LOG_LEVEL_CRITICAL:
+	    g_fprintf(stderr, "%s: %s\n", get_pname(), message);
+	    break;
+
+	default:
+	    return;
+    }
+}
+
+void
+amanda_log_null(GLogLevelFlags log_level G_GNUC_UNUSED, const gchar *message G_GNUC_UNUSED)
+{
 }
 
 /* Set the global dbgdir according to 'config' and 'subdir', and clean
@@ -465,12 +498,6 @@ debug_init(void)
     if (get_pcontext() != CONTEXT_SCRIPTUTIL) {
 	debug_open(get_ptype());
     }
-}
-
-void
-set_logerror(void (*f)(char *))
-{
-    logerror_fn = f;
 }
 
 void

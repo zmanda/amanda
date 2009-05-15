@@ -184,10 +184,6 @@ main(
     dbopen(DBG_SUBDIR_CLIENT);
     dbprintf(_("version %s\n"), version());
 
-#if 0
-    erroutput_type = (ERR_INTERACTIVE|ERR_SYSLOG);
-#endif
-
     argc--, argv++;	/* skip program name */
 
     /* need at least program, amname, and directory name */

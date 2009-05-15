@@ -112,7 +112,7 @@ main(
 
     dbopen(DBG_SUBDIR_SERVER);
 
-    erroutput_type = ERR_INTERACTIVE;
+    add_amanda_log_handler(amanda_log_stderr);
     foreground = 0;
     batch = 0;
     redirect = 1;
@@ -285,8 +285,8 @@ main(
 
     if(!foreground) detach();
 
-    erroutput_type = (ERR_AMANDALOG|ERR_INTERACTIVE);
-    set_logerror(logerror);
+    add_amanda_log_handler(amanda_log_stderr);
+    add_amanda_log_handler(amanda_log_trace_log);
     today = time(NULL);
     tm = localtime(&today);
     if (tm) {

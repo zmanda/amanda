@@ -227,8 +227,8 @@ main(
 
     setvbuf(stderr, (char *)NULL, (int)_IOLBF, 0);
 
-    erroutput_type = (ERR_AMANDALOG|ERR_INTERACTIVE);
-    set_logerror(logerror);
+    add_amanda_log_handler(amanda_log_stderr);
+    add_amanda_log_handler(amanda_log_trace_log);
 
     if (!planner_setuid) {
 	error(_("planner must be run setuid root"));

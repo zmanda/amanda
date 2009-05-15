@@ -86,7 +86,7 @@ main(
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
 
-    erroutput_type = ERR_INTERACTIVE;
+    add_amanda_log_handler(amanda_log_stderr);
 
     cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
 

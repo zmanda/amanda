@@ -21,7 +21,7 @@ use File::Path;
 use strict;
 
 use lib "@amperldir@";
-use Amanda::Debug;
+use Amanda::Debug qw( :logging );
 
 ## most failures of the debug module will just kill the process, so
 ## the main goal of this test script is just to make it to the end :)
@@ -76,7 +76,7 @@ Amanda::Debug::dbreopen($debug_file, "I've still got more stuff to test");
 $pid = open($kid, "-|");
 die "Can't fork: $!" unless defined($pid);
 if (!$pid) {
-    $Amanda::Debug::erroutput_type = 0; # don't spew to stderr, too, please
+    add_amanda_log_handler($amanda_log_null); # don't spew to stderr, too, please
     Amanda::Debug::critical("morituri te salutamus");
     exit 1; # just in case
 }

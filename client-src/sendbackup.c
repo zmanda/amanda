@@ -157,7 +157,8 @@ main(
 	interactive = 0;
     }
 
-    erroutput_type = (ERR_INTERACTIVE|ERR_SYSLOG);
+    add_amanda_log_handler(amanda_log_stderr);
+    add_amanda_log_handler(amanda_log_syslog);
     dbopen(DBG_SUBDIR_CLIENT);
     startclock();
     dbprintf(_("Version %s\n"), version());
