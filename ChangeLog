@@ -1,3 +1,6 @@
+2009-05-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Fix crash in amflush.
+
 2009-05-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amgtar.8.xml perl/Amanda/Changer.pm
 	  perl/Amanda/Changer/compat.pm perl/Amanda/Changer/disk.pm
