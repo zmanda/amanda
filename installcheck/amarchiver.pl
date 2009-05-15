@@ -72,7 +72,7 @@ like($Installcheck::Run::stdout,
 ok(run('amarchiver', '--create', '--verbose', $archfile),
     "archive creation with --verbose and without --file succeeds");
 like($Installcheck::Run::stderr,
-    qr{$archfile},
+    qr{\Q$archfile\E},
     "..and output goes to stderr");
 
 unlink($archfile);

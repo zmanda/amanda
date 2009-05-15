@@ -154,7 +154,7 @@ require Exporter;
     cleanup 
     $diskname $stdout $stderr $exit_code
     load_vtape vtape_dir
-    amdump_diag);
+    amdump_diag run_expect );
 @EXPORT = qw(exp_continue exp_continue_timeout);
 
 # global variables

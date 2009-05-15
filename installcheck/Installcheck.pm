@@ -18,6 +18,7 @@
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
 package Installcheck;
+use File::Path;
 use Amanda::Paths;
 
 =head1 NAME
@@ -39,3 +40,6 @@ This module defines C<$TMP>, the temporary directory for installcheck data.
 no warnings;
 
 $TMP = "$AMANDA_TMPDIR/installchecks";
+mkpath($TMP);
+
+1;

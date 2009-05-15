@@ -1,4 +1,10 @@
 2009-05-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck.pm:always create $Installcheck::TMP;
+	  package returns 1
+	* installcheck/Installcheck/Run.pm: export run_expect
+	* installcheck/amarchiver.pl: quote a path
+
+2009-05-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/compat.pm: qualify one last debug message
 
 2009-05-15  Dustin J. Mitchell <dustin@zmanda.com>
