@@ -1,4 +1,7 @@
 2009-05-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Fix crash in amflush.
+
+2009-05-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/debug.c: Fix memory leak.
 
 2009-05-07  Dustin J. Mitchell <dustin@zmanda.com>

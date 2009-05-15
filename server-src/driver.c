@@ -1526,8 +1526,8 @@ handle_taper_result(
             if(!nodump) {
                 log_add(L_WARNING,
                         _("going into degraded mode because of taper component error."));
-                start_degraded_mode(&runq);
-            }
+	    }
+	    start_degraded_mode(&runq);
             tapeq.head = tapeq.tail = NULL;
             taper_busy = 0;
             if(taper_ev_read != NULL) {
