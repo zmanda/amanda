@@ -475,7 +475,7 @@ sub _run_tpchanger {
 	my @child_output = split '\n', $child_output;
 	my $exitval = POSIX::WEXITSTATUS($child_exit_status);
 
-	debug("Got response '$child_output' with exit status $exitval");
+	debug("Amanda::Changer::compat: Got response '$child_output' with exit status $exitval");
 	if (@child_output < 1) {
 	    $failure_cb->(2, "Malformed output from changer script -- no output");
 	    return;

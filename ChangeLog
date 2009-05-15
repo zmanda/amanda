@@ -1,4 +1,7 @@
 2009-05-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/compat.pm: qualify one last debug message
+
+2009-05-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/XferServer.swg: include xfer-server.h
 
 2009-05-15  Dustin J. Mitchell <dustin@zmanda.com>
