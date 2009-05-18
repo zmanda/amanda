@@ -1,4 +1,11 @@
 2009-05-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/MainLoop.swg: new high-level call_after,
+	  call_on_child_termination, async_read, async_write; POD for new functions; and
+	  description of good async style
+	* installcheck/Amanda_MainLoop.pl: test new functions
+	* perl/amglue/filehandles.swg: use SvIOK
+
+2009-05-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am: add -Werror on gcc
 
 2009-05-15  Jean-Louis Martineau <martineau@zmanda.com>

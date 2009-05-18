@@ -23,7 +23,7 @@
     PerlIO *pio = NULL;
     int fd = -1;
 
-    if (SvTYPE($input) == SVt_IV) {
+    if (SvIOK($input)) {
         /* plain old integer */
         $1 = SvIV($input);
     } else {

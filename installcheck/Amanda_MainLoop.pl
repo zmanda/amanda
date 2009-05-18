@@ -16,13 +16,14 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 18;
+use Test::More tests => 24;
 use strict;
 use warnings;
-use POSIX qw(WIFEXITED WEXITSTATUS EINTR);
+use POSIX qw(WIFEXITED WEXITSTATUS EINTR EBADF);
+use IO::Pipe;
 
 use lib "@amperldir@";
-use Amanda::MainLoop qw( :GIOCondition );
+use Amanda::MainLoop qw( :GIOCondition make_cb );
 
 {
     my $global = 0;
@@ -348,6 +349,8 @@ $src->remove();
 $src->remove();
 pass("Calling remove twice is ok");
 
+# call_later
+
 {
     my ($cb1, $cb2);
     my $gothere = 0;
@@ -401,4 +404,393 @@ pass("Calling remove twice is ok");
     is_deeply([ @calls ],
 	      [ "call1", "call2" ],
 	      "call_later preserves the order of its invocations");
+}
+
+# call_after
+
+{
+    my ($cb1, $cb2, $cb3);
+    my $src2;
+    my @events = ();
+
+    $cb1 = sub {
+	push @events, "cb1";
+	$src2->remove();
+    };
+
+    $cb2 = sub {
+	push @events, "cb2";
+	fail("Shouldn't get here!");
+    };
+
+    $cb3 = sub {
+	my ($a, $b) = @_;
+	is($a+$b, 10,
+	    "call_after passes arguments correctly");
+	push @events, "cb3";
+	Amanda::MainLoop::quit();
+    };
+
+    Amanda::MainLoop::call_after(200, $cb3, 7, 3);
+    Amanda::MainLoop::call_after(100, $cb1);
+    $src2 = Amanda::MainLoop::call_after(150, $cb2);
+
+    Amanda::MainLoop::run();
+    is_deeply([@events], ["cb1","cb3"],
+	"call_after makes callbacks in the correct order");
+}
+
+# async_read
+
+{
+    my $global = 0;
+    my $inpipe = IO::Pipe->new();
+    my $outpipe = IO::Pipe->new();
+
+    my $pid = fork();
+    if ($pid == 0) {
+	## child
+
+	my $data;
+
+	$inpipe->writer();
+	$inpipe->autoflush(1);
+	$outpipe->reader();
+
+	$inpipe->write("HELLO");
+	$outpipe->read($data, 1);
+	$inpipe->write("WORLD");
+	exit(33);
+    }
+
+    ## parent
+
+    $inpipe->reader();
+    $inpipe->blocking(0);
+    $outpipe->writer();
+    $outpipe->blocking(0);
+    $outpipe->autoflush(1);
+
+    my @events;
+    my %subs;
+
+    $subs{'start'} = make_cb(start => sub {
+	Amanda::MainLoop::async_read(
+	    fd => $inpipe->fileno(),
+	    size => 0,
+	    async_read_cb => $subs{'read_hello'});
+    });
+
+    $subs{'read_hello'} = make_cb(read_hello => sub {
+	my ($err, $data) = @_;
+	die $err if $err;
+	push @events, "read1 '$data'";
+
+	$outpipe->write("A"); # wake up the child
+	Amanda::MainLoop::async_read(
+	    fd => $inpipe->fileno(),
+	    size => 5,
+	    async_read_cb => $subs{'read_world'});
+    });
+
+    $subs{'read_world'} = make_cb(read_world => sub {
+	my ($err, $data) = @_;
+	die $err if $err;
+	push @events, "read2 '$data'";
+
+	Amanda::MainLoop::async_read(
+	    fd => $inpipe->fileno(),
+	    size => 5,
+	    async_read_cb => $subs{'read_eof'});
+    });
+
+    $subs{'read_eof'} = make_cb(read_eof => sub {
+	my ($err, $data) = @_;
+	die $err if $err;
+	push @events, "read3 '$data'";
+
+	Amanda::MainLoop::quit();
+    });
+
+    Amanda::MainLoop::call_later($subs{'start'});
+    Amanda::MainLoop::run();
+    waitpid($pid, 0);
+
+    is_deeply([ @events ],
+	[ "read1 'HELLO'", "read2 'WORLD'", "read3 ''" ],
+	"async_read works for reading from a file descriptor");
+}
+
+{
+    my $inpipe;
+    my $outpipe;
+    my $pid;
+    my $thunk;
+
+    my $start_kid = sub {
+	if (defined $pid) {
+	    waitpid($pid, 0);
+	    $pid = undef;
+	}
+
+	$inpipe = IO::Pipe->new();
+	$outpipe = IO::Pipe->new();
+
+	$pid = fork();
+	if ($pid == 0) {
+	    my $data;
+
+	    $inpipe->writer();
+	    $inpipe->autoflush(1);
+	    $outpipe->reader();
+
+	    while (1) {
+		$outpipe->read($data, 1);
+		last if ($data eq 'X');
+		if ($data eq 'W') {
+		    $inpipe->write("a" x 4096);
+		} else {
+		    $inpipe->write("GOT=$data");
+		}
+	    }
+
+	    exit(0);
+	} else {
+	    $inpipe->reader();
+	    $inpipe->blocking(0);
+	    $outpipe->writer();
+	    $outpipe->blocking(0);
+	    $outpipe->autoflush(1);
+	}
+    };
+
+    my @events;
+    my %subs;
+
+    $subs{'start'} = make_cb(start => sub {
+	$start_kid->();
+
+	# trigger two replies
+	$outpipe->write('A');
+	$outpipe->write('B');
+
+	# give the child time to write GOT=AGOT=B
+	Amanda::MainLoop::call_after(100, $subs{'do_read_1'});
+    });
+
+    $subs{'do_read_1'} = make_cb(do_read_1 => sub {
+	Amanda::MainLoop::async_read(
+	    fd => $inpipe->fileno(), 
+	    size => 0, # 0 => all avail
+	    async_read_cb => $subs{'done_read_1'},
+	    args => [ "x", "y" ]);
+    });
+
+    $subs{'done_read_1'} = make_cb(done_read_1 => sub {
+	my ($err, $data, $x, $y) = @_;
+	die $err if $err;
+	push @events, $data;
+
+	# test the @args
+	is_deeply([$x, $y], ["x", "y"], "async_read's args key handled correctly");
+
+	$outpipe->write('C'); # should trigger a 'GOT=C' for done_read_2
+
+	$subs{'do_read_2'}->();
+    });
+
+    $subs{'do_read_2'} = make_cb(do_read_2 => sub {
+	Amanda::MainLoop::async_read(
+	    fd => $inpipe->fileno(),
+	    size => 5,
+	    async_read_cb => $subs{'done_read_2'});
+    });
+
+    $subs{'done_read_2'} = make_cb(done_read_2 => sub {
+	my ($err, $data) = @_;
+	die $err if $err;
+	push @events, $data;
+
+	# request a 4k write and then an EOF
+	$outpipe->write('W');
+	$outpipe->write('X');
+
+	$subs{'do_read_block'}->();
+    });
+
+    $subs{'do_read_block'} = make_cb(do_read_block => sub {
+	Amanda::MainLoop::async_read(
+	    fd => $inpipe->fileno(),
+	    size => 1000,
+	    async_read_cb => $subs{'got_block'});
+    });
+
+    $subs{'got_block'} = make_cb(got_block => sub {
+	my ($err, $data) = @_;
+	die $err if $err;
+	push @events, "block" . length($data);
+	if ($data ne '') {
+	    $subs{'do_read_block'}->();
+	} else {
+	    $subs{'done_reading_blocks'}->();
+	}
+    });
+
+    $subs{'done_reading_blocks'} = make_cb(done_reading_blocks => sub {
+	# one more read that should make an EOF
+	Amanda::MainLoop::async_read(
+	    fd => $inpipe->fileno(),
+	    # omit size this time -> default of 0
+	    async_read_cb => $subs{'got_eof'});
+    });
+
+    $subs{'got_eof'} = make_cb(got_eof => sub {
+	my ($err, $data) = @_;
+	die $err if $err;
+	if ($data eq '') {
+	    push @events, "EOF";
+	}
+
+	$subs{'trigger_error'}->();
+    });
+
+    $subs{'trigger_error'} = make_cb(trigger_error => sub {
+	# try reading from $outpipe
+	Amanda::MainLoop::async_read(
+	    fd => $outpipe->fileno(),
+	    size => 5,
+	    async_read_cb => $subs{'handle_error'});
+    });
+
+    $subs{'handle_error'} = make_cb(handle_error => sub {
+	my ($err, $data) = @_;
+	die "didn't get expected error" if defined($data);
+	push @events, $err+0; # coerce $! to an integer
+
+	$subs{'quit'}->();
+    });
+
+    $subs{'quit'} = make_cb(quit => sub {
+	Amanda::MainLoop::quit();
+    });
+
+    Amanda::MainLoop::call_later($subs{'start'});
+    Amanda::MainLoop::run();
+    waitpid($pid, 0) if defined($pid);
+
+    is_deeply([ @events ],
+	[ "GOT=AGOT=B", "GOT=C",
+	  "block1000", "block1000", "block1000", "block1000", "block96", "block0",
+	  "EOF", # got_eof
+	  EBADF+0, # handle_error
+	], "more complex async_read");
+}
+
+# async_write
+
+{
+    my $inpipe = IO::Pipe->new();
+    my $outpipe = IO::Pipe->new();
+
+    my $pid = fork();
+    if ($pid == 0) {
+	## child
+
+	my $data;
+
+	$inpipe->writer();
+	$inpipe->autoflush(1);
+	$outpipe->reader();
+
+	while (1) {
+	    $outpipe->sysread($data, 1024);
+	    last if ($data eq "X");
+	    $inpipe->write("$data");
+	}
+	exit(0);
+    }
+
+    ## parent
+
+    $inpipe->reader();
+    $inpipe->blocking(1);   # do blocking reads below, for simplicity
+    $outpipe->writer();
+    $outpipe->blocking(0);
+    $outpipe->autoflush(1);
+
+    my @events;
+    my %subs;
+
+    $subs{'start'} = make_cb(start => sub {
+	Amanda::MainLoop::async_write(
+	    fd => $outpipe->fileno(),
+	    data => 'FUDGE',
+	    async_write_cb => $subs{'wrote_fudge'});
+    });
+
+    $subs{'wrote_fudge'} = make_cb(wrote_fudge => sub {
+	my ($err, $bytes) = @_;
+	die $err if $err;
+	push @events, "wrote $bytes";
+
+	my $buf;
+	$inpipe->read($buf, $bytes);
+	push @events, "read $buf";
+
+	$subs{'double_write'}->();
+    });
+
+    $subs{'double_write'} = make_cb(double_write => sub {
+	Amanda::MainLoop::async_write(
+	    fd => $outpipe->fileno(),
+	    data => 'ICECREAM',
+	    async_write_cb => $subs{'wrote_icecream'});
+	Amanda::MainLoop::async_write(
+	    fd => $outpipe->fileno(),
+	    data => 'BROWNIES',
+	    async_write_cb => $subs{'wrote_brownies'});
+    });
+
+    $subs{'wrote_icecream'} = make_cb(wrote_icecream => sub {
+	my ($err, $bytes) = @_;
+	die $err if $err;
+	push @events, "wrote $bytes";
+
+	my $buf;
+	$inpipe->read($buf, $bytes);
+	push @events, "read $buf";
+    });
+
+    $subs{'wrote_brownies'} = make_cb(wrote_brownies => sub {
+	my ($err, $bytes) = @_;
+	die $err if $err;
+	push @events, "wrote $bytes";
+
+	my $buf;
+	$inpipe->read($buf, $bytes);
+	push @events, "read $buf";
+
+	$subs{'send_x'}->();
+    });
+
+    $subs{'send_x'} = make_cb(send_x => sub {
+	Amanda::MainLoop::async_write(
+	    fd => $outpipe->fileno(),
+	    data => 'X',
+	    async_write_cb => $subs{'quit'});
+    });
+
+    $subs{'quit'} = make_cb(quit => sub {
+	Amanda::MainLoop::quit();
+    });
+
+    Amanda::MainLoop::call_later($subs{'start'});
+    Amanda::MainLoop::run();
+    waitpid($pid, 0);
+
+    is_deeply([ @events ],
+	[ 'wrote 5', 'read FUDGE',
+	  'wrote 8', 'read ICECREAM',
+	  'wrote 8', 'read BROWNIES' ],
+	"async_write works");
 }
