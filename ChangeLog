@@ -1,3 +1,6 @@
+2009-05-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am: add -Werror on gcc
+
 2009-05-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Fix crash in amflush.
 
