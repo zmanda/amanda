@@ -1,4 +1,8 @@
 2009-05-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/MainLoop.swg: Solaris doesn't return async_read errors
+	* installcheck/Amanda_MainLoop.pl: ..so don't test it
+
+2009-05-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am: revert -Werror change - SWIG output is invalid C
 	  in many cases
 

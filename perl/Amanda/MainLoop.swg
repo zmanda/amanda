@@ -188,7 +188,9 @@ If C<$size> is zero, then the callback will get whatever data is available as
 soon as it is available, up to an arbitrary buffer size.  If C<$size> is
 nonzero, then a short read may still occur if C<$size> bytes do not become
 available simultaneously.  On EOF, C<$buf> will be the empty string.  It is the
-caller's responsibility to set C<$fd> to non-blocking mode.
+caller's responsibility to set C<$fd> to non-blocking mode.  Note that not all
+operating sytems generate errors that might be reported here.  For example, on
+Solaris an invalid file descriptor will be silently ignored.
 
 The return value is an event source, and calling its C<remove> method will
 cancel the read.  It is an error to have more than one C<async_read> operation

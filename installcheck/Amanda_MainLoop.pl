@@ -19,7 +19,7 @@
 use Test::More tests => 24;
 use strict;
 use warnings;
-use POSIX qw(WIFEXITED WEXITSTATUS EINTR EBADF);
+use POSIX qw(WIFEXITED WEXITSTATUS EINTR );
 use IO::Pipe;
 
 use lib "@amperldir@";
@@ -651,24 +651,11 @@ pass("Calling remove twice is ok");
 	    push @events, "EOF";
 	}
 
-	$subs{'trigger_error'}->();
-    });
-
-    $subs{'trigger_error'} = make_cb(trigger_error => sub {
-	# try reading from $outpipe
-	Amanda::MainLoop::async_read(
-	    fd => $outpipe->fileno(),
-	    size => 5,
-	    async_read_cb => $subs{'handle_error'});
-    });
-
-    $subs{'handle_error'} = make_cb(handle_error => sub {
-	my ($err, $data) = @_;
-	die "didn't get expected error" if defined($data);
-	push @events, $err+0; # coerce $! to an integer
-
 	$subs{'quit'}->();
     });
+
+    # note: not all operating systems (hi, Solaris) will generate
+    # an error other than EOF on reading from a file descriptor
 
     $subs{'quit'} = make_cb(quit => sub {
 	Amanda::MainLoop::quit();
@@ -682,7 +669,6 @@ pass("Calling remove twice is ok");
 	[ "GOT=AGOT=B", "GOT=C",
 	  "block1000", "block1000", "block1000", "block1000", "block96", "block0",
 	  "EOF", # got_eof
-	  EBADF+0, # handle_error
 	], "more complex async_read");
 }
 
