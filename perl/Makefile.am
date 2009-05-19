@@ -7,12 +7,8 @@ include $(top_srcdir)/config/automake/scripts.am
 
 # add the SWIG symbol to avoid conflicts with perl definitions.
 # $AMANDA_WARNING_CFLAGS is omitted because SWIG-generated files tend
-# to trigger warnings, although -Werror is OK (to turn gcc's default
-# warnings into errors)
+# to trigger warnings.
 AM_CFLAGS = -DSWIG
-if GCC_COMPILER
-AM_CFLAGS += -Werror
-endif
 
 # Appropriate INCLUDES depends on which components (server or client) are 
 # being built

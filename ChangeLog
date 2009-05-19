@@ -1,3 +1,7 @@
+2009-05-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am: revert -Werror change - SWIG output is invalid C
+	  in many cases
+
 2009-05-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Add reapply_config_overwrites.
 	* common-src/conffile.h: Add prototype of reapply_config_overwrites.
