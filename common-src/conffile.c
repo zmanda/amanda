@@ -5361,8 +5361,54 @@ extract_commandline_config_overwrites(
     return co;
 }
 
+static cfgerr_level_t internal_apply_config_overwrites(config_overwrites_t *co);
+
 cfgerr_level_t
 apply_config_overwrites(
+    config_overwrites_t *co)
+{
+    int i;
+
+    if(!co) return cfgerr_level;
+    assert(keytable != NULL);
+    assert(parsetable != NULL);
+
+    cfgerr_level = internal_apply_config_overwrites(co);
+
+    /* merge these overwrites with previous overwrites, if necessary */
+    if (applied_config_overwrites) {
+	for (i = 0; i < co->n_used; i++) {
+	    char *key = co->ovr[i].key;
+	    char *value = co->ovr[i].value;
+
+	    add_config_overwrite(applied_config_overwrites, key, value);
+	}
+	free_config_overwrites(co);
+    } else {
+	applied_config_overwrites = co;
+    }
+
+    update_derived_values(config_client);
+
+    return cfgerr_level;
+}
+
+cfgerr_level_t
+reapply_config_overwrites(void)
+{
+    if(!applied_config_overwrites) return cfgerr_level;
+    assert(keytable != NULL);
+    assert(parsetable != NULL);
+
+    cfgerr_level = internal_apply_config_overwrites(applied_config_overwrites);
+
+    update_derived_values(config_client);
+
+    return cfgerr_level;
+}
+
+static cfgerr_level_t
+internal_apply_config_overwrites(
     config_overwrites_t *co)
 {
     int i;
@@ -5403,21 +5449,6 @@ apply_config_overwrites(
 	amfree(current_line);
 	current_char = NULL;
     }
-
-    /* merge these overwrites with previous overwrites, if necessary */
-    if (applied_config_overwrites) {
-	for (i = 0; i < co->n_used; i++) {
-	    char *key = co->ovr[i].key;
-	    char *value = co->ovr[i].value;
-
-	    add_config_overwrite(applied_config_overwrites, key, value);
-	}
-	free_config_overwrites(co);
-    } else {
-	applied_config_overwrites = co;
-    }
-
-    update_derived_values(config_client);
 
     return cfgerr_level;
 }

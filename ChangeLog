@@ -1,3 +1,9 @@
+2009-05-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add reapply_config_overwrites.
+	* common-src/conffile.h: Add prototype of reapply_config_overwrites.
+	* perl/Amanda/Config.swg: Add reapply_config_overwrites.
+	* recover-src/amrecover.c: Call reapply_config_overwrites.
+
 2009-05-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/MainLoop.swg: new high-level call_after,
 	  call_on_child_termination, async_read, async_write; POD for new functions; and

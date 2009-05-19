@@ -411,6 +411,7 @@ main(
     apply_config_overwrites(cfg_ovr);
     config_init(CONFIG_INIT_CLIENT | CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_OVERLAY,
 		getconf_str(CNF_CONF));
+    reapply_config_overwrites();
 
     check_running_as(RUNNING_AS_ROOT);
 

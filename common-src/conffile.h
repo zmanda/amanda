@@ -1183,6 +1183,7 @@ extract_commandline_config_overwrites(int *argc,
  * @returns: current error level
  */
 cfgerr_level_t apply_config_overwrites(config_overwrites_t *co);
+cfgerr_level_t reapply_config_overwrites(void);
 
 /*
  * Initialization
