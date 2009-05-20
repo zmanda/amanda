@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 25;
+use Test::More tests => 26;
 use File::Path;
 use strict;
 use warnings;
@@ -88,7 +88,7 @@ my ($check_res_cb, $check_finished_cb);
 	    }
 	} else {
 	    if (defined($expected_dev)) {
-		is($res->{'device_name'}, $expected_dev, $msg);
+		is($res->{'device'}->device_name, $expected_dev, $msg);
 	    } else {
 		fail($msg);
 		diag("Unexpected reservation");
@@ -131,9 +131,10 @@ setup_changer <<'EOC';
 case "${1}" in
     -slot)
         case "${2}" in
-            1) echo "1 fake:1"; exit 0;;
+            1) echo "1 null:fake1"; exit 0;;
             2) echo "<ignored> slot 2 is empty"; exit 1;;
             3) echo "1"; exit 0;; # test missing 'device' portion
+	    4) echo "1 bogus:dev"; exit 0;;
         esac;;
     -reset)
 	echo "reset" > $Installcheck::TMP/chg-test.result
@@ -152,7 +153,7 @@ case "${1}" in
     -info) echo "7 10 1 1"; exit 0;;
     -search)
         case "${2}" in
-            TAPE?01) echo "5 fakedev"; exit 0;;
+            TAPE?01) echo "5 null:fakedev"; exit 0;;
 	    fatal) echo "<error> game over"; exit 2;;
             *) echo "<error> not found"; exit 1;;
         esac;;
@@ -177,7 +178,7 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 try_run_changer(
     sub { $chg->load(label => 'TAPE-01', res_cb => $check_res_cb); },
     undef,
-    "fakedev",
+    "null:fakedev",
     "search by label succeeds");
 
 try_run_changer(
@@ -189,7 +190,7 @@ try_run_changer(
 try_run_changer(
     sub { $chg->load(slot => '1', res_cb => $check_res_cb); },
     undef,
-    "fake:1",
+    "null:fake1",
     "search by slot");
 
 try_run_changer(
@@ -210,8 +211,17 @@ try_run_changer(
     undef,
     "fatal error is sticky");
 
-# reset the fatal error
-$chg->{'fatal_error'} = undef;
+$chg->{'fatal_error'} = undef; # reset the fatal error
+
+try_run_changer(
+    sub { $chg->load(slot => '4', res_cb => $check_res_cb); },
+    { message => "opening 'bogus:dev': Device type bogus is not known.",
+      type => 'failed',
+      reason => 'device' },
+    undef,
+    "search by slot; bogus device leads to 'failed' error");
+
+$chg->{'fatal_error'} = undef; # reset the fatal error
 
 try_run_changer(
     sub { $chg->load(label => 'fatal', res_cb => $check_res_cb); },
@@ -321,7 +331,7 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 
         pass("seek to current slot succeeded");
 
-        my $dev = Amanda::Device->new($res->{'device_name'});
+        my $dev = $res->{'device'};
         $dev->start($Amanda::Device::ACCESS_WRITE, "TESTCONF18", undef)
             or die $dev->error_or_status();
         $dev->finish()
@@ -365,7 +375,7 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 
         pass("load by label succeeded");
 
-        my $dev = Amanda::Device->new($res->{'device_name'});
+        my $dev = $res->{'device'};
         $dev->read_label() == 0
             or die $dev->error_or_status();
 

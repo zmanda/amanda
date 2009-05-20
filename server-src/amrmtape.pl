@@ -291,7 +291,7 @@ my $erase_volume = make_cb('erase_volume' => sub {
 		my ($err, $resv) = @_;
 		die $err if $err;
 
-                my $dev = Amanda::Device->new($resv->{device_name});
+                my $dev = $resv->{'device'};
                 die "Can not erase $label because the device doesn't support this feature"
                     unless $dev->property_get('full_deletion');
                 if (!$dry_run) {

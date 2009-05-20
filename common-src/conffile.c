@@ -1255,6 +1255,8 @@ conf_var_t changer_config_var [] = {
    { CONF_TPCHANGER       , CONFTYPE_STR      , read_str      , CHANGER_CONFIG_TPCHANGER      , NULL },
    { CONF_CHANGERDEV      , CONFTYPE_STR      , read_str      , CHANGER_CONFIG_CHANGERDEV     , NULL },
    { CONF_CHANGERFILE     , CONFTYPE_STR      , read_str      , CHANGER_CONFIG_CHANGERFILE    , NULL },
+   { CONF_PROPERTY        , CONFTYPE_PROPLIST , read_property , CHANGER_CONFIG_PROPERTY       , NULL },
+   { CONF_DEVICE_PROPERTY , CONFTYPE_PROPLIST , read_property , CHANGER_CONFIG_DEVICE_PROPERTY, NULL },
    { CONF_UNKNOWN         , CONFTYPE_INT      , NULL          , CHANGER_CONFIG_CHANGER_CONFIG , NULL }
 };
 
@@ -2792,6 +2794,8 @@ init_changer_config_defaults(
     conf_init_str(&cccur.value[CHANGER_CONFIG_TPCHANGER]  , "");
     conf_init_str(&cccur.value[CHANGER_CONFIG_CHANGERDEV]  , "");
     conf_init_str(&cccur.value[CHANGER_CONFIG_CHANGERFILE]  , "");
+    conf_init_proplist(&cccur.value[CHANGER_CONFIG_PROPERTY]);
+    conf_init_proplist(&cccur.value[CHANGER_CONFIG_DEVICE_PROPERTY]);
 }
 
 static void

@@ -83,7 +83,7 @@ sub release_and_then {
     my ($release_opts, $andthen) = @_;
     if ($res) {
 	# release the current reservation, then call andthen
-	debug("releasing reservation of " . $res->{'device_name'});
+	debug("releasing reservation of " . $res->{'device'}->device_name);
 	$res->release(@$release_opts,
 	    finished_cb => sub {
 		my ($error) = @_;
@@ -128,7 +128,13 @@ sub do_slot {
 		if ($error) {
 		    err_result($error, \&getcmd);
 		} else {
-		    normal_result($res->{'this_slot'}, $res->{'device_name'}, \&getcmd);
+		    # get the name of the device so that the Amanda process
+		    # can open it.  This is not forward-compatible, but will
+		    # work for the current fleet of changers, as long as no
+		    # configuration or properties are in effect.
+		    normal_result($res->{'this_slot'},
+			    $res->{'device'}->device_name,
+			    \&getcmd);
 		}
 	    }
 	);
@@ -213,7 +219,13 @@ sub do_search {
 		if ($error) {
 		    err_result($error, \&getcmd);
 		} else {
-		    normal_result($res->{'this_slot'}, $res->{'device_name'}, \&getcmd);
+		    # get the name of the device so that the Amanda process
+		    # can open it.  This is not forward-compatible, but will
+		    # work for the current fleet of changers, as long as no
+		    # configuration or properties are in effect.
+		    normal_result($res->{'this_slot'},
+				$res->{'device'}->device_name,
+				\&getcmd);
 		}
 	    }
 	);
@@ -231,7 +243,9 @@ sub do_label {
                 if ($error) {
 		    err_result($error, \&getcmd);
 		} else {
-		    normal_result($res->{'this_slot'}, $res->{'device_name'}, \&getcmd);
+		    normal_result($res->{'this_slot'},
+				$res->{'device'}->device_name,
+				\&getcmd);
 		}
             }
         );

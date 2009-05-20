@@ -1,3 +1,23 @@
+2009-05-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer.pm perl/Amanda/Changer/compat.pm
+	  perl/Amanda/Changer/disk.pm perl/Amanda/Changer/null.pm
+	  perl/Amanda/Changer/rait.pm perl/Amanda/Changer/single.pm:
+	  changers return full devices, not just device names, and
+	  configure those devices based on device_property parameters
+	  specified in 'changer' configuration sections
+	* changer-src/chg-glue.pl: return the device_name from the device
+	  (thereby losing the config info)
+	* perl/Amanda/Config.swg common-src/conffile.c common-src/conffile.h:
+	  add changer properties and device_properties
+	* installcheck/Amanda_Changer.pl installcheck/Amanda_Changer_compat.pl
+	  installcheck/Amanda_Changer_disk.pl
+	  installcheck/Amanda_Changer_null.pl
+	  installcheck/Amanda_Changer_rait.pl
+	  installcheck/Amanda_Changer_single.pl installcheck/Amanda_Config.pl
+	  installcheck/amrmtape.pl: test changer changes
+	* server-src/amrmtape.pl server-src/amcheckdump.pl: do not instantiate
+	  device manually
+
 2009-05-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/MainLoop.swg: Solaris doesn't return async_read errors
 	* installcheck/Amanda_MainLoop.pl: ..so don't test it

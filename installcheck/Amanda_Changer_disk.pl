@@ -57,7 +57,7 @@ sub reset_taperoot {
 sub is_pointing_to {
     my ($res, $slot, $msg) = @_;
 
-    my ($datalink) = ($res->{'device_name'} =~ /file:(.*)/);
+    my ($datalink) = ($res->{'device'}->device_name =~ /file:(.*)/);
     $datalink .= "/data";
     is(readlink($datalink), "../slot$slot", $msg);
 }

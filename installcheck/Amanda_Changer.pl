@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 43;
+use Test::More tests => 44;
 use File::Path;
 use strict;
 
@@ -48,9 +48,10 @@ $INC{'Amanda/Changer/test.pm'} = "Amanda_Changer";
 
 sub new {
     my $class = shift;
-    my ($cc, $tpchanger) = @_;
+    my ($config, $tpchanger) = @_;
 
     my $self = {
+	config => $config,
 	curslot => 0,
 	slots => [ 'TAPE-00', 'TAPE-01', 'TAPE-02', 'TAPE-03' ],
 	reserved_slots => [],
@@ -172,7 +173,7 @@ sub new {
     $self->{'slot'} = $slot;
     $self->{'label'} = $label;
 
-    $self->{'device_name'} = "test:slot-$slot";
+    $self->{'device'} = Amanda::Device->new("null:slot-$slot");
     $self->{'this_slot'} = $slot;
     $self->{'next_slot'} = ($slot + 1) % (scalar @{$chg->{'slots'}});
 
@@ -213,6 +214,7 @@ my $testconf;
 $testconf = Installcheck::Config->new();
 $testconf->add_changer("mychanger", [
     'tpchanger' => '"chg-test:/foo"',
+    'property' => '"testprop" "testval"',
 ]);
 $testconf->write();
 
@@ -222,9 +224,12 @@ if ($cfg_result != $CFGERR_OK) {
     die(join "\n", @errors);
 }
 
-# test loading by label
-
+# check out the relevant changer properties
 my $chg = Amanda::Changer->new("mychanger");
+is($chg->{'config'}->get_property("testprop"), "testval",
+    "changer properties are correctly represented");
+
+# test loading by label
 {
     my @labels = ( 'TAPE-02', 'TAPE-00', 'TAPE-03' );
     my @reservations = ();
@@ -270,7 +275,7 @@ my $chg = Amanda::Changer->new("mychanger");
     @labels = ( 'TAPE-00', 'TAPE-01' );
     is_deeply($chg->{'reserved_slots'}, [],
 	"reservations are released when the Reservation object goes out of scope");
-    Amanda::MainLoop::call_later($getres);
+    $getres->();
     Amanda::MainLoop::run();
 
     # explicitly release the reservations (without using the callback)
@@ -295,7 +300,7 @@ my $chg = Amanda::Changer->new("mychanger");
 
         is($res->{'this_slot'}, 2,
             "'current' slot loads slot 2");
-        is($res->{'device_name'}, "test:slot-2",
+        is($res->{'device'}->device_name, "null:slot-2",
             "..device is correct");
         is($res->{'next_slot'}, 3,
             "..and the next slot is slot 3");

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 147;
+use Test::More tests => 149;
 use strict;
 
 use lib "@amperldir@";
@@ -207,6 +207,8 @@ $testconf->add_changer('my_changer', [
   'tpchanger' => '"chg-foo"',
   'changerdev' => '"/dev/sg0"',
   'changerfile' => '"chg.state"',
+  'property' => '"testprop" "testval"',
+  'device_property' => '"testdprop" "testdval"',
 ]);
 
 $testconf->write();
@@ -469,7 +471,7 @@ SKIP: { # device
 }
 
 SKIP: { # changer
-    skip "error loading config", 5 unless $cfg_result == $CFGERR_OK;
+    skip "error loading config", 7 unless $cfg_result == $CFGERR_OK;
     my $dc = lookup_changer_config("my_changer");
     ok($dc, "found my_changer");
     is(changer_config_name($dc), "my_changer",
@@ -478,6 +480,21 @@ SKIP: { # changer
 	"changer comment");
     is(changer_config_getconf($dc, $CHANGER_CONFIG_CHANGERDEV), '/dev/sg0',
 	"changer tapedev");
+    is_deeply(changer_config_getconf($dc, $CHANGER_CONFIG_PROPERTY),
+	{ 'testprop' => {
+		'priority' => 0,
+		'values' => [ 'testval' ],
+		'append' => 0,
+	    }
+        }, "changer properties represented correctly");
+
+    is_deeply(changer_config_getconf($dc, $CHANGER_CONFIG_DEVICE_PROPERTY),
+	{ 'testdprop' => {
+		'priority' => 0,
+		'values' => [ 'testdval' ],
+		'append' => 0,
+	    }
+        }, "changer device properties represented correctly");
 
     is_deeply([ sort(+getconf_list("changer")) ],
 	      [ sort("my_changer") ],

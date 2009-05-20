@@ -30,6 +30,7 @@ use Amanda::Debug;
 use Amanda::Util qw( :alternates );
 use Amanda::Changer;
 use Amanda::MainLoop;
+use Amanda::Device qw( :constants );
 
 =head1 NAME
 
@@ -46,7 +47,7 @@ See the amanda-changers(7) manpage for usage information.
 
 sub new {
     my $class = shift;
-    my ($cc, $tpchanger) = @_;
+    my ($config, $tpchanger) = @_;
     my ($kidspecs) = ( $tpchanger =~ /chg-rait:(.*)/ );
 
     my @kidspecs = Amanda::Util::expand_braced_alternates($kidspecs);
@@ -71,6 +72,7 @@ sub new {
     }
 
     my $self = {
+	config => $config,
 	child_names => \@kidspecs,
 	children => \@children,
 	num_children => scalar @children,
@@ -134,14 +136,12 @@ sub load {
 	my $result;
 
 	# first, let's see if any changer gave an error
-	if (grep { defined($_->[0]) } @$kid_results) {
+	if (!grep { defined($_->[0]) } @$kid_results) {
+	    # no error .. combine the reservations and return a RAIT reservation
+	    return $self->_make_res($params{'res_cb'}, [ map { $_->[1] } @$kid_results ]);
+	} else {
 	    return $release_on_error->($kid_results);
 	}
-
-	# no error .. combine the reservations and return a RAIT reservation
-	my $combined_res = Amanda::Changer::rait::Reservation->new(
-	    [ map { $_->[1] } @$kid_results ]);
-	$params{'res_cb'}->(undef, $combined_res);
     };
 
     if (exists $params{'slot'}) {
@@ -200,6 +200,29 @@ sub load {
 		reason => "invalid",
 		message => "Invalid parameters to 'load'");
     }
+}
+
+sub _make_res {
+    my $self = shift;
+    my ($res_cb, $kid_reservations) = @_;
+    my @kid_devices = map { ($_ ne "ERROR") ? $_->{'device'} : undef } @$kid_reservations;
+
+    my $rait_device = Amanda::Device->new_rait_from_children(@kid_devices);
+    if ($rait_device->status() != $DEVICE_STATUS_SUCCESS) {
+	return $self->make_error("failed", $res_cb,
+		reason => "device",
+		message => $rait_device->error_or_status());
+    }
+
+    if (my $err = $self->{'config'}->configure_device($rait_device)) {
+	return $self->make_error("failed", $res_cb,
+		reason => "device",
+		message => $err);
+    }
+
+    my $combined_res = Amanda::Changer::rait::Reservation->new(
+	$kid_reservations, $rait_device);
+    $res_cb->(undef, $combined_res);
 }
 
 sub info_key {
@@ -395,7 +418,7 @@ sub errmap (&@) {
 
 sub new {
     my $class = shift;
-    my ($child_reservations) = @_;
+    my ($child_reservations, $rait_device) = @_;
     my $self = Amanda::Changer::Reservation::new($class);
 
     # note that $child_reservations may contain "ERROR" in place of a reservation
@@ -403,7 +426,7 @@ sub new {
     $self->{'child_reservations'} = $child_reservations;
 
     my @device_names = errmap { $_->{'device_name'} } @$child_reservations;
-    $self->{'device_name'} = "rait:" . collapse_braced_alternates(\@device_names);
+    $self->{'device'} = $rait_device;
 
     my @slot_names;
     @slot_names = errmap { $_->{'this_slot'} } @$child_reservations;

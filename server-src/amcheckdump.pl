@@ -109,7 +109,7 @@ sub find_next_device {
     # hack until all of amcheckdump is event-based.
     Amanda::MainLoop::run();
 
-    return $reservation->{device_name};
+    return $reservation->{'device'};
 }
 
 # Try to open a device containing a volume with the given label.  Returns undef
@@ -125,23 +125,8 @@ sub try_open_device {
     # nope -- get rid of that device
     close_device();
 
-    my $device_name = find_next_device($label);
-    if ( !$device_name ) {
-	print "Could not find a device for label '$label'.\n";
-        return undef;
-    }
-
-    my $device = Amanda::Device->new($device_name);
-    if ($device->status() != $DEVICE_STATUS_SUCCESS) {
-	print "Could not open device $device_name: ",
-	      $device->error_or_status(), ".\n";
-	return undef;
-    }
-    if (!$device->configure(1)) {
-	print "Could not configure device $device_name: ",
-	      $device->error_or_status(), ".\n";
-	return undef;
-    }
+    my $device = find_next_device($label);
+    my $device_name = $device->device_name;
 
     my $label_status = $device->read_label();
     if ($label_status != $DEVICE_STATUS_SUCCESS) {

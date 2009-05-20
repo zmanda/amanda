@@ -62,7 +62,7 @@ Caveat emptor.
 
 sub new {
     my $class = shift;
-    my ($cc, $tpchanger) = @_;
+    my ($config, $tpchanger) = @_;
     my ($script) = ($tpchanger =~ /chg-compat:(.*)/);
 
     unless (-e $script) {
@@ -76,6 +76,7 @@ sub new {
 
     my $self = {
         script => $script,
+	config => $config,
 	reserved => 0,
 	nslots => undef,
 	backwards => undef,
@@ -83,7 +84,7 @@ sub new {
     };
     bless ($self, $class);
 
-    $self->_make_cfg_dir($cc);
+    $self->_make_cfg_dir($config);
 
     debug("$class initialized with script $script, temporary directory $self->{cfg_dir}");
 
@@ -123,8 +124,7 @@ sub load {
 	    return $self->make_error("fatal", $params{'res_cb'},
 		message => "changer script did not provide a device name");
 	}
-        my $res = Amanda::Changer::compat::Reservation->new($self, $slot, $rest);
-        $params{'res_cb'}->(undef, $res);
+	$self->_make_res($params{'res_cb'}, $slot, $rest);
     };
     my $run_fail_cb = sub {
         my ($exitval, $message) = @_;
@@ -170,8 +170,7 @@ sub _manual_scan {
 		    and $device->read_label() == $DEVICE_STATUS_SUCCESS
 		    and $device->volume_label() eq $params{'label'}) {
             # we found the correct slot
-	    my $res = Amanda::Changer::compat::Reservation->new($self, $slot, $rest);
-            $params{'res_cb'}->(undef, $res) if $params{'res_cb'};
+	    $self->_make_res($params{'res_cb'}, $slot, $rest);
             return;
         }
 
@@ -204,6 +203,31 @@ sub _manual_scan {
 
     debug("Amanda::Changer::compat: manual scanning current slot");
     $self->_run_tpchanger($run_success_cb, $run_fail_cb, "-slot", "current");
+}
+
+# takes $res_cb, $slot and $rest; creates and configures the device, and calls
+# $res_cb with the results.
+sub _make_res {
+    my $self = shift;
+    my ($res_cb, $slot, $rest) = @_;
+    my $res;
+
+    my $device = Amanda::Device->new($rest);
+    if ($device->status != $DEVICE_STATUS_SUCCESS) {
+	return $self->make_error("failed", $res_cb,
+		reason => "device",
+		message => "opening '$rest': " . $device->error_or_status());
+    }
+
+    if (my $err = $self->{'config'}->configure_device($device)) {
+	return $self->make_error("failed", $res_cb,
+		reason => "device",
+		message => $err);
+    }
+
+    $res = Amanda::Changer::compat::Reservation->new($self, $slot, $device);
+
+    $res_cb->(undef, $res);
 }
 
 sub info_setup {
@@ -327,15 +351,18 @@ sub _get_info {
 # Internal function to create a temporary configuration directory, which persists
 # for the duration of this changer's lifetime (and beyond, TODO)
 sub _make_cfg_dir {
-    my ($self, $cc) = @_;
+    my ($self, $config) = @_;
 
-    if (defined $cc) {
+    if ($config->{'is_global'}) {
+	# for the default changer, we don't need to invent a config..
+	$self->{'cfg_dir'} = Amanda::Config::get_config_dir();
+    } else {
 	my $cfg_name = Amanda::Config::get_config_name();
-	my $changer_name = changer_config_name($cc);
-	my $tapedev = changer_config_getconf($cc, $CHANGER_CONFIG_TAPEDEV);
-	my $tpchanger = changer_config_getconf($cc, $CHANGER_CONFIG_TPCHANGER);
-	my $changerdev = changer_config_getconf($cc, $CHANGER_CONFIG_CHANGERDEV);
-	my $changerfile = changer_config_getconf($cc, $CHANGER_CONFIG_CHANGERFILE);
+	my $changer_name = $config->{'name'};
+	my $tapedev = $config->{'tapedev'};
+	my $tpchanger = $config->{'tpchanger'};
+	my $changerdev = $config->{'changerdev'};
+	my $changerfile = $config->{'changerfile'};
 
 	my $cfg_dir = "$AMANDA_TMPDIR/Amanda::Changer::compat/$cfg_name-$changer_name";
 
@@ -374,9 +401,6 @@ sub _make_cfg_dir {
 	close $amconf;
 
 	$self->{'cfg_dir'} = $cfg_dir;
-    } else {
-	# for the default changer, we don't need to invent a config..
-	$self->{'cfg_dir'} = Amanda::Config::get_config_dir();
     }
 
 }
@@ -538,17 +562,17 @@ use Amanda::Debug qw( debug );
 
 sub new {
     my $class = shift;
-    my ($chg, $slot, $device_name) = @_;
+    my ($chg, $slot, $device) = @_;
     my $self = Amanda::Changer::Reservation::new($class);
 
     $self->{'chg'} = $chg;
 
-    $self->{'device_name'} = $device_name;
+    $self->{'device'} = $device;
     $self->{'this_slot'} = $slot;
     $self->{'next_slot'} = "next"; # clever, no?
 
     # mark the changer as reserved
-    $self->{'chg'}->{'reserved'} = $device_name;
+    $self->{'chg'}->{'reserved'} = $device;
 
     return $self;
 }

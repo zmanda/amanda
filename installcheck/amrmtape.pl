@@ -28,6 +28,8 @@ use Installcheck::Config;
 use Installcheck::Run qw(run run_err $diskname);
 use Installcheck::Dumpcache;
 
+Amanda::Debug::dbopen("installcheck");
+
 sub proc_diag {
     diag(join("\n", $?,
         'stdout:', $Installcheck::Run::stdout, '',

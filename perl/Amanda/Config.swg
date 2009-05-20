@@ -508,6 +508,8 @@ amglue_add_constant(CHANGER_CONFIG_TAPEDEV, changer_config_key);
 amglue_add_constant(CHANGER_CONFIG_TPCHANGER, changer_config_key);
 amglue_add_constant(CHANGER_CONFIG_CHANGERDEV, changer_config_key);
 amglue_add_constant(CHANGER_CONFIG_CHANGERFILE, changer_config_key);
+amglue_add_constant(CHANGER_CONFIG_PROPERTY, changer_config_key);
+amglue_add_constant(CHANGER_CONFIG_DEVICE_PROPERTY, changer_config_key);
 amglue_copy_to_tag(changer_config_key, getconf);
 
 /*

@@ -72,7 +72,7 @@ my $chg = Amanda::Changer->new("chg-null:");
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading slot 'current'")
 	    or diag($err);
-	is($res->{'device_name'}, 'null:',
+	is($res->{'device'}->device_name, 'null:',
 	    "returns correct device name");
 
 	Amanda::MainLoop::quit();
