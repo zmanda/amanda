@@ -270,22 +270,26 @@ changer_find(
 		searchable);
     }
 
-    if ((searchlabel!=NULL) && searchable && !done) {
-	rc = changer_search(searchlabel, &curslotstr, &device);
-	done = user_slot(user_data, rc, curslotstr, device);
-    } else {
-	slotstr = "current";
-	checked = 0;
+    if ((searchlabel!=NULL) && searchable && !done){
+      rc=changer_search(searchlabel, &curslotstr, &device);
+      if(rc == 0)
+        done = user_slot(user_data, rc, curslotstr, device);
+    }
+ 
+    slotstr = "current";
+    checked = 0;
 
-	while(!done && checked < nslots) {
-	    rc = changer_loadslot(slotstr, &curslotstr, &device);
+    while(!done && checked < nslots) {
+	rc = changer_loadslot(slotstr, &curslotstr, &device);
+	if(rc > 0)
 	    done = user_slot(user_data, rc, curslotstr, device);
-	    amfree(curslotstr);
-	    amfree(device);
+	else if(!done)
+	    done = user_slot(user_data, 0,  curslotstr, device);
+	amfree(curslotstr);
+	amfree(device);
 
-	    checked += 1;
-	    slotstr = "next";
-	}
+	checked += 1;
+	slotstr = "next";
     }
 }
 

@@ -1,4 +1,8 @@
 2009-05-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/changer.c: revert a change (from 2009-02-20) which caused
+	  taperscan to not do a sequential scan if stage one fails
+
+2009-05-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm perl/Amanda/Changer/compat.pm
 	  perl/Amanda/Changer/disk.pm perl/Amanda/Changer/null.pm
 	  perl/Amanda/Changer/rait.pm perl/Amanda/Changer/single.pm:
