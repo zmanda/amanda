@@ -481,7 +481,7 @@ sub new {
 	# assume it's a device name or alias, and invoke the single-changer
 	return _new_from_uri("chg-single:$name", undef, $name);
     } else { # !defined($name)
-	if (getconf_seen($CNF_TPCHANGER)) {
+	if (getconf_seen($CNF_TPCHANGER) and getconf($CNF_TPCHANGER) ne '') {
 	    my $tpchanger = getconf($CNF_TPCHANGER);
 
 	    # first, is it an old changer script?
@@ -490,7 +490,7 @@ sub new {
 	    }
 
 	    # if not, then there had better be no tapdev
-	    if (getconf_seen($CNF_TAPEDEV)) {
+	    if (getconf_seen($CNF_TAPEDEV) and getconf($CNF_TAPEDEV) ne '') {
 		return Amanda::Changer::Error->new('fatal',
 		    message => "Cannot specify both 'tapedev' and 'tpchanger' " .
 			"unless using an old-style changer script");
@@ -508,7 +508,7 @@ sub new {
 
 	    # assume it's a device name or alias, and invoke the single-changer
 	    return _new_from_uri("chg-single:$tpchanger", undef, $name);
-	} elsif (getconf_seen($CNF_TAPEDEV)) {
+	} elsif (getconf_seen($CNF_TAPEDEV) and getconf($CNF_TAPEDEV) ne '') {
 	    my $tapedev = getconf($CNF_TAPEDEV);
 
 	    # first, is it a changer alias?

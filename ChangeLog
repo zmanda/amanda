@@ -1,4 +1,8 @@
 2009-05-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer.pm: check for tpchanger="" even if getconf_seen
+	  is true; same for tapedev
+
+2009-05-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/changer.c: revert a change (from 2009-02-20) which caused
 	  taperscan to not do a sequential scan if stage one fails
 
