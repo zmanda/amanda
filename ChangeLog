@@ -1,3 +1,6 @@
+2009-05-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* restore-src/restore.c: Report error.
+
 2009-05-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm: check for tpchanger="" even if getconf_seen
 	  is true; same for tapedev

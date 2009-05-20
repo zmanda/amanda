@@ -1073,11 +1073,25 @@ void restore(RestoreSource * source,
 	queue_fd_t queue_write = {pipes[0].pipe[1], NULL};
         memcpy(& file, source->header, sizeof(file));
         for (;;) {
-            do_consumer_producer_queue(fd_read_producer,
-                                       &queue_read,
-                                       fd_write_consumer,
-                                       &queue_write);
-	    /* TODO: Check error */
+            if (!do_consumer_producer_queue(fd_read_producer,
+                                            &queue_read,
+                                            fd_write_consumer,
+                                            &queue_write)) {
+		if (queue_read.errmsg && queue_write.errmsg) {
+		    error("Error copying data from holding file to fd %d: %s: %s.\n",
+	                  queue_write.fd, queue_read.errmsg,
+	                  queue_write.errmsg);
+		} else if (queue_read.errmsg) {
+		    error("Error copying data from holding file to fd %d: %s.\n",
+	                  queue_write.fd, queue_read.errmsg);
+		} else if (queue_write.errmsg) {
+		    error("Error copying data from holding file to fd %d: %s.\n",
+	                  queue_write.fd, queue_write.errmsg);
+		} else {
+		    error("Error copying data from holding file to fd %d: %s.\n",
+	                  queue_write.fd, "unknown error");
+		}
+	    }
 	    /*
 	     * See if we need to switch to the next file in a holding restore
 	     */
@@ -1118,8 +1132,15 @@ void restore(RestoreSource * source,
 	}            
     } else {
 	queue_fd_t queue_fd = {pipes[0].pipe[1], NULL};
-        device_read_to_fd(source->u.device, &queue_fd);
-	/* TODO: Check error */
+        gboolean result = device_read_to_fd(source->u.device, &queue_fd);
+	if (source->u.device->status != DEVICE_STATUS_SUCCESS) {
+	    g_fprintf(stderr, "%s\n", device_error_or_status(source->u.device));
+	    exit(2);
+	}
+	if (!result) {
+	    g_fprintf(stderr, _("Problem writing data to pipe.\n"));
+	    exit(2);
+	}
     }
 
     amfree(free_myout);
