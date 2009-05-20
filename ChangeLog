@@ -2,6 +2,19 @@
 	* perl/Amanda/Changer.pm perl/Amanda/Changer/compat.pm
 	  perl/Amanda/Changer/disk.pm perl/Amanda/Changer/null.pm
 	  perl/Amanda/Changer/rait.pm perl/Amanda/Changer/single.pm:
+	  add a fast_search info key
+	* installcheck/Amanda_Changer_compat.pl
+	  installcheck/Amanda_Changer_disk.pl
+	  installcheck/Amanda_Changer_null.pl
+	  installcheck/Amanda_Changer_rait.pl
+	  installcheck/Amanda_Changer_single.pl: test it
+	* changer-src/chg-glue.pl: and use it to reflect searchability to old
+	  changer API users
+
+2009-05-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer.pm perl/Amanda/Changer/compat.pm
+	  perl/Amanda/Changer/disk.pm perl/Amanda/Changer/null.pm
+	  perl/Amanda/Changer/rait.pm perl/Amanda/Changer/single.pm:
 	  changers return full devices, not just device names, and
 	  configure those devices based on device_property parameters
 	  specified in 'changer' configuration sections

@@ -144,7 +144,7 @@ sub do_slot {
 }
 
 sub do_info {
-    $chg->info(info => [ 'num_slots' ],
+    $chg->info(info => [ 'num_slots', 'fast_search' ],
         info_cb => sub {
             my $error = shift;
             my %results = @_;
@@ -152,9 +152,9 @@ sub do_info {
             if ($error) {
 		err_result($error, \&getcmd);
             } else {
-                my $nslots = $results{'num_slots'};
-                $nslots = 0 unless defined $nslots;
-		normal_result("current", "$nslots 0 1", \&getcmd);
+                my $nslots = $results{'num_slots'} or 0;
+		my $searchable = $results{'fast_search'}? 1:0;
+		normal_result("current", "$nslots 1 $searchable", \&getcmd);
             }
         }
     );

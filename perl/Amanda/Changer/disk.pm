@@ -114,6 +114,8 @@ sub info_key {
 	$results{$key} = scalar @slots;
     } elsif ($key eq 'vendor_string') {
 	$results{$key} = 'chg-disk'; # mostly just for testing
+    } elsif ($key eq 'fast_search') {
+	$results{$key} = 1;
     }
 
     $params{'info_cb'}->(undef, %results) if $params{'info_cb'};

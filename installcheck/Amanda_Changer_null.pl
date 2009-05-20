@@ -50,7 +50,7 @@ my $chg = Amanda::Changer->new("chg-null:");
     my ($get_info, $check_info, $do_load, $got_res);
 
     $get_info = make_cb('get_info' => sub {
-        $chg->info(info_cb => $check_info, info => [ 'num_slots' ]);
+        $chg->info(info_cb => $check_info, info => [ 'num_slots', 'fast_search' ]);
     });
 
     $check_info = make_cb('check_info' => sub {
@@ -58,7 +58,9 @@ my $chg = Amanda::Changer->new("chg-null:");
         my %results = @_;
         die($err) if defined($err);
 
-        is($results{'num_slots'}, 1, "info() returns the correct num_slots");
+        is_deeply({ %results },
+	    { num_slots => 1, fast_search => 1 },
+	    "info() returns the correct num_slots and fast_search");
 
 	$do_load->();
     });

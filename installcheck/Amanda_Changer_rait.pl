@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 40;
+use Test::More tests => 42;
 use File::Path;
 use strict;
 
@@ -107,7 +107,7 @@ label_vtape(3,4,"mytape");
     );
 
     $get_info = make_cb('get_info' => sub {
-        $chg->info(info_cb => $check_info, info => [ 'num_slots', 'vendor_string' ]);
+        $chg->info(info_cb => $check_info, info => [ 'num_slots', 'vendor_string', 'fast_search' ]);
     });
 
     $check_info = make_cb('check_info' => sub {
@@ -118,6 +118,8 @@ label_vtape(3,4,"mytape");
 	    "info() returns the correct num_slots");
         is($results{'vendor_string'}, '{chg-disk,chg-disk,chg-disk}',
 	    "info() returns the correct vendor string");
+        is($results{'fast_search'}, 1,
+	    "info() returns the correct fast_search");
 
 	$do_load_current->();
     });
@@ -275,7 +277,7 @@ label_vtape(3,4,"mytape");
     );
 
     $get_info = make_cb('get_info' => sub {
-        $chg->info(info_cb => $check_info, info => [ 'num_slots' ]);
+        $chg->info(info_cb => $check_info, info => [ 'num_slots', 'fast_search' ]);
     });
 
     $check_info = make_cb('check_info' => sub {
@@ -284,6 +286,7 @@ label_vtape(3,4,"mytape");
         die($err) if defined($err);
 
         is($results{'num_slots'}, 4, "info() returns the correct num_slots");
+        is($results{'fast_search'}, 1, "info() returns the correct fast_search");
 
 	$do_load_current->();
     });
@@ -358,8 +361,9 @@ $testconf->add_changer("myrait", [
     device_property => '"comment" "hello, world"',
 ]);
 $testconf->write();
+
 config_uninit();
-my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 if ($cfg_result != $CFGERR_OK) {
     my ($level, @errors) = Amanda::Config::config_errors();
     die(join "\n", @errors);

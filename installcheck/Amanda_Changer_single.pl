@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 5;
+use Test::More tests => 6;
 use File::Path;
 use strict;
 
@@ -52,7 +52,7 @@ my $chg = Amanda::Changer->new("chg-single:tape:/foo");
     my ($get_info, $get_res, $got_res, $got_second_res);
 
     $get_info = make_cb('get_info' => sub {
-        $chg->info(info_cb => $get_res, info => [ 'num_slots' ]);
+        $chg->info(info_cb => $get_res, info => [ 'num_slots', 'fast_search' ]);
     });
 
     $get_res = make_cb('get_res' => sub {
@@ -61,6 +61,7 @@ my $chg = Amanda::Changer->new("chg-single:tape:/foo");
         die($err) if defined($err);
 
         is($results{'num_slots'}, 1, "info() returns the correct num_slots");
+        is($results{'fast_search'}, 1, "info() returns the correct fast_slots");
 
 	$chg->load(slot => "current",
 		   res_cb => $got_res);

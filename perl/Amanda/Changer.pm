@@ -240,6 +240,14 @@ of the universe).
 
 A string describing the name and model of the changer device.
 
+=item fast_search
+
+If true, then this changer implements searching (loading by label) with
+something more efficient than a sequential scan through the volumes.  This
+information affects some taperscan algorithms and recovery programs, which may
+choose to do their own manual scan instead of invoking many potentially slow
+searches.
+
 =back
 
 =head3 $chg->reset(finished_cb => $cb)

@@ -66,6 +66,8 @@ sub info_key {
 
     if ($key eq 'num_slots') {
 	$results{$key} = 1;
+    } elsif ($key eq 'fast_search') {
+	$results{$key} = 1;
     }
 
     $params{'info_cb'}->(undef, %results) if $params{'info_cb'};

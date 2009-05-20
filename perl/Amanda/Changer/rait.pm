@@ -304,6 +304,35 @@ sub info_key {
 	    errsub => undef,
 	    parent_cb => $all_kids_done_cb,
 	);
+    } elsif ($key eq 'fast_search') {
+	my $all_kids_done_cb = sub {
+	    my ($kid_results) = @_;
+	    return if ($check_and_report_errors->($kid_results));
+
+	    my @kid_fastness =
+		grep { defined($_) }
+		map { my ($e, %r) = @$_; $r{'fast_search'} }
+		@$kid_results;
+	    if (@kid_fastness) {
+		my $fast_search = 1;
+		# conduct a logical AND of all child fastnesses
+		for my $f (@kid_fastness) {
+		    $fast_search = $fast_search && $f;
+		}
+		$params{'info_cb'}->(undef, fast_search => $fast_search) if $params{'info_cb'};
+	    } else {
+		$params{'info_cb'}->(undef, fast_search => 0) if $params{'info_cb'};
+	    }
+	};
+
+	$self->_for_each_child(
+	    oksub => sub {
+		my ($kid_chg, $kid_cb) = @_;
+		$kid_chg->info(info => [ 'fast_search' ], info_cb => $kid_cb);
+	    },
+	    errsub => undef,
+	    parent_cb => $all_kids_done_cb,
+	);
     }
 }
 

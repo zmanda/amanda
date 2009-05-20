@@ -78,6 +78,7 @@ sub new {
         script => $script,
 	config => $config,
 	reserved => 0,
+	got_info => 0,
 	nslots => undef,
 	backwards => undef,
 	searchable => undef,
@@ -234,7 +235,7 @@ sub info_setup {
     my $self = shift;
     my %params = @_;
 
-    if (!defined($self->{'nslots'}) && grep(/^num_slots$/, @{$params{'info'}})) {
+    if (!$self->{'got_info'}) {
 	$self->_get_info(
 	    sub {
 		$params{'finished_cb'}->();
@@ -262,6 +263,8 @@ sub info_key {
 
     if ($key eq 'num_slots') {
 	$results{$key} = $self->{'nslots'};
+    } elsif ($key eq 'fast_search') {
+	$results{$key} = $self->{'searchable'};
     }
 
     $params{'info_cb'}->(undef, %results) if $params{'info_cb'};
@@ -343,6 +346,7 @@ sub _get_info {
 	$self->{'backward'} = $2;
 	$self->{'searchable'} = $3? 1:0;
 
+	$self->{'got_info'} = 1;
 	$success_cb->();
     };
     $self->_run_tpchanger($run_success_cb, $error_cb, "-info");

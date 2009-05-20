@@ -110,6 +110,10 @@ sub info_key {
 
     if ($key eq 'num_slots') {
 	$results{$key} = 1;
+    } elsif ($key eq 'fast_search') {
+	# (asking the user for a specific label is faster than asking
+	# for each "slot" in a sequential scan, so search is "fast")
+	$results{$key} = 1;
     }
 
     $params{'info_cb'}->(undef, %results) if $params{'info_cb'};

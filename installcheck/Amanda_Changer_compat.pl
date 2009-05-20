@@ -312,7 +312,7 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
         $release_next, $load_by_label, $check_by_label);
 
     $get_info = make_cb('get_info' => sub {
-        $chg->info(info_cb => $load_current, info => [ 'num_slots' ]);
+        $chg->info(info_cb => $load_current, info => [ 'num_slots', 'fast_search' ]);
     });
 
     $load_current = make_cb('load_current' => sub {
@@ -320,7 +320,9 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
         my %results = @_;
         die($err) if defined($err);
 
-        is($results{'num_slots'}, 3, "info() returns the correct num_slots");
+        is_deeply({ %results },
+	    { num_slots => 3, fast_search => 0 }, # old chg-disk is not searchable
+	    "info() returns the correct num_slots and fast_search");
 
         $chg->load(slot => "1", res_cb => $label_current);
     });
