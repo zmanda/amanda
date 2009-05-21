@@ -1138,7 +1138,11 @@ void restore(RestoreSource * source,
 	    exit(2);
 	}
 	if (!result) {
-	    g_fprintf(stderr, _("Problem writing data to pipe.\n"));
+	    if (queue_fd.errmsg) {
+		g_fprintf(stderr, _("Problem writing data to pipe: %s.\n"), queue_fd.errmsg);
+	    } else {
+		g_fprintf(stderr, _("Problem writing data to pipe: Unknown reason.\n"));
+	    }
 	    exit(2);
 	}
     }

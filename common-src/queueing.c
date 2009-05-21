@@ -517,7 +517,11 @@ ssize_t fd_write_consumer(gpointer f_queue_fd, queue_buffer_t *buffer) {
                 continue;
         } else {
             /* Error occured. */
-            g_fprintf(stderr, "Error writing fd %d: %s\n", fd, strerror(errno));
+	    int save_errno = errno;
+	    amfree(queue_fd->errmsg);
+	    queue_fd->errmsg = g_strdup_printf("Error writing fd %d: %s", fd,
+					       strerror(save_errno));
+	    dbprintf("%s\n", queue_fd->errmsg);
             return -1;
         }        
     }

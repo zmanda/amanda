@@ -1,3 +1,10 @@
+2009-05-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/queueing.c: set queue_fd->errmsg.
+	* restore-src/restore.c: report queue_fd.errmsg
+	* server-src/amcheckdump.pl: report $queue_fd->{errmsg}
+          Check validation status before reporting status.
+
+
 2009-05-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/chg-zd-mtx.sh: make -search errors non-fatal
 

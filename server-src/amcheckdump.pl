@@ -188,6 +188,7 @@ sub open_validation_app {
 	and $current_validation_image->{diskname} eq $image->{diskname}
 	and $current_validation_image->{level} == $image->{level}) {
 	# TODO: also check that the part number is correct
+        print("Dump was successfully validated.\n");
         print "Continuing with previously started validation process.\n";
 	return $current_validation_pipeline;
     }
@@ -220,8 +221,10 @@ sub close_validation_app {
     # first close the applications standard input to signal it to stop
     if (!close($current_validation_pipeline)) {
 	my $exit_value = $? >> 8;
-	print "Validation process returned $exit_value (full status $?)\n";
+	print "Dump was not successfully validated: Validation process returned $exit_value (full status $?)\n";
 	$all_success = 0; # flag this as a failure
+    } else {
+        print("Dump was successfully validated.\n");
     }
 
     $current_validation_pid = undef;
@@ -508,9 +511,14 @@ for my $image (@images) {
     $check->($device->status() == $DEVICE_STATUS_SUCCESS,
       "Error reading device: " . $device->error_or_status());
     # if we make it here, the device was ok, but the read perhaps wasn't
-    $check->($read_ok, "Error writing data to validation command");
-
-    print("Dump was successfully validated.\n");
+    if (!$read_ok) {
+        my $errmsg = $queue_fd->{errmsg};
+        if (defined $errmsg && length($errmsg) > 0) {
+            $check->($read_ok, "Error writing data to validation command: $errmsg");
+	} else {
+            $check->($read_ok, "Error writing data to validation command: Unknown reason");
+	}
+    }
 }
 
 if (defined $reservation) {
