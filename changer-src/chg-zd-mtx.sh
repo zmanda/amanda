@@ -1481,7 +1481,7 @@ searchtape() {
 	if [ $labelfile_entry_found -eq 0 ]; then
 		LogAppend `_ '         -> !!! label "%s" not found in %s !!!' "$tapelabel" "$labelfile"`
 		LogAppend `_ '         -> Remove %s and run "%s %s update"' "$labelfile" "$sbindir/amtape" "$config"`
-		Exit 2 \
+		Exit 1 \
 		     `_ '<none>'` \
 		     `_ '%s: label "%s" not found in %s' "$tapelabel" "$tapelabel" "$labelfile"`
 		return $?			# in case we are internal
@@ -1504,7 +1504,7 @@ searchtape() {
 	if [ -z "$foundslot" ]; then
 		LogAppend `_ 'ERROR    -> !!! Could not find slot for barcode "%s"!!!' "$labelfile_barcode"`
 		LogAppend `_ '         -> Remove %s and run "%s %s update"' "$labelfile" "$sbindir/amtape" "$config"`
-		Exit 2 \
+		Exit 1 \
 		     `_ '<none>'` \
 		     `_ 'barcode "%s" not found in mtx status output' "$labelfile_barcode"`
 		return $?			# in case we are internal

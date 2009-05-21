@@ -1,3 +1,6 @@
+2009-05-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-zd-mtx.sh: make -search errors non-fatal
+
 2009-05-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/restore.c: Report error.
 
