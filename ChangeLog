@@ -1,4 +1,8 @@
 2009-05-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Fix for 'estimate calcsize server' with older
+				client.
+
+2009-05-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/queueing.c: set queue_fd->errmsg.
 	* restore-src/restore.c: report queue_fd.errmsg
 	* server-src/amcheckdump.pl: report $queue_fd->{errmsg}

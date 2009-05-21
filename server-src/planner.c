@@ -1621,14 +1621,21 @@ static void getsize(
 			amfree(excludefree);
 		    }
 		}
-		remove_disk(&startq, dp);
 		if (s != NULL) {
 		    estimates += i;
 		    strappend(req, s);
 		    req_len += s_len;
 		    amfree(s);
-		    est(dp)->state = DISK_ACTIVE;
-		} else {
+		    if (est(dp)->state == DISK_DONE) {
+		        remove_disk(&estq, dp);
+		        est(dp)->state = DISK_PARTIALY_DONE;
+			enqueue_disk(&pestq, dp);
+		    } else {
+		        remove_disk(&startq, dp);
+		        est(dp)->state = DISK_ACTIVE;
+		    }
+		} else if (est(dp)->state != DISK_DONE) {
+		    remove_disk(&startq, dp);
 		    est(dp)->state = DISK_DONE;
 		    if (est(dp)->errstr == NULL) {
 			est(dp)->errstr = vstrallocf(
