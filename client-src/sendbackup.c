@@ -436,6 +436,10 @@ main(
     if(am_has_feature(g_options->features, fe_rep_options_hostname)) {
 	g_printf("hostname=%s;", g_options->hostname);
     }
+    if (!am_has_feature(g_options->features, fe_rep_options_features) &&
+	!am_has_feature(g_options->features, fe_rep_options_hostname)) {
+	g_printf(";");
+    }
     g_printf("\n");
     fflush(stdout);
     if (freopen("/dev/null", "w", stdout) == NULL) {
