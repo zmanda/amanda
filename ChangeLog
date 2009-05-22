@@ -1,3 +1,6 @@
+2009-05-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup.c: Compatibity with 2.4.2 server.
+
 2009-05-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Fix crash in amflush.
 
