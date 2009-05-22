@@ -1,3 +1,6 @@
+2009-05-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/vfs-device.c: close the tapelabel file after reading it
+
 2009-05-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Fix for 'estimate calcsize server' with older
 				client.

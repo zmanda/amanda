@@ -712,6 +712,9 @@ static DeviceStatusFlags vfs_device_read_label(Device * dself) {
 	return dself->status;
     }
 
+    /* close the fd we just opened */
+    vfs_device_finish_file(dself);
+
     if (amanda_header->type != F_TAPESTART) {
         /* This is an error, and should not happen. */
 	device_set_error(dself,
