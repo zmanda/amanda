@@ -109,7 +109,10 @@ sort_needed_tapes_by_write_timestamp(
 
     /* if the tape timestamps match, sort them by usage_order, which is derived
      * from the order the tapes were written in a single run */
-    return strcmp(a_ds, b_ds) || (a_nt->usage_order > b_nt->usage_order)? 1 : -1;
+    int r = strcmp(a_ds, b_ds);
+    if (r != 0)
+	return r;
+    return (a_nt->usage_order > b_nt->usage_order)? 1 : -1;
 }
 
 /*
