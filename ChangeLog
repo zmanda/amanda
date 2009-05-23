@@ -1,4 +1,8 @@
 2009-05-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/compat.pm: run a full manual scan on update()
+	* installcheck/Amanda_Changer_compat.pl: test it
+
+2009-05-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* amandad-src/Makefile.am application-src/Makefile.am
 	  oldrecover-src/Makefile.am recover-src/Makefile.am
 	  restore-src/Makefile.am: remove LIB_EXTENSION

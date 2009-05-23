@@ -32,6 +32,7 @@ use Amanda::Config qw( :getconf );
 use Amanda::Debug qw( debug );
 use Amanda::Device qw( :constants );
 use Amanda::Changer;
+use Amanda::MainLoop;
 
 =head1 NAME
 
@@ -125,7 +126,7 @@ sub load {
 	    return $self->make_error("fatal", $params{'res_cb'},
 		message => "changer script did not provide a device name");
 	}
-	$self->_make_res($params{'res_cb'}, $slot, $rest);
+	$self->_make_res($params{'res_cb'}, $slot, $rest, undef);
     };
     my $run_fail_cb = sub {
         my ($exitval, $message) = @_;
@@ -166,14 +167,17 @@ sub _manual_scan {
     $run_success_cb = sub {
         my ($slot, $rest) = @_;
 
-	my $device = Amanda::Device->new($rest);
-	if ($device and $device->configure(1)
-		    and $device->read_label() == $DEVICE_STATUS_SUCCESS
-		    and $device->volume_label() eq $params{'label'}) {
-            # we found the correct slot
-	    $self->_make_res($params{'res_cb'}, $slot, $rest);
-            return;
-        }
+	# if we're looking for a label, check what we got
+	if (defined $params{'label'}) {
+	    my $device = Amanda::Device->new($rest);
+	    if ($device and $device->configure(1)
+			and $device->read_label() == $DEVICE_STATUS_SUCCESS
+			and $device->volume_label() eq $params{'label'}) {
+		# we found the correct slot
+		$self->_make_res($params{'res_cb'}, $slot, $rest, $device);
+		return;
+	    }
+	}
 
         $load_next->();
     };
@@ -193,9 +197,13 @@ sub _manual_scan {
     $load_next = sub {
 	# if we've scanned all nslots, we haven't found the label.
         if (++$nchecked >= $self->{'nslots'}) {
-	    return $self->make_error("failed", $params{'res_cb'},
-		reason => "notfound",
-		message => "Volume '$params{label}' not found");
+	    if (defined $params{'label'}) {
+		return $self->make_error("failed", $params{'res_cb'},
+		    reason => "notfound",
+		    message => "Volume '$params{label}' not found");
+	    } else {
+		return $params{'res_cb'}->(undef, undef);
+	    }
 	}
 
 	debug("Amanda::Changer::compat: manual scanning next slot");
@@ -210,14 +218,16 @@ sub _manual_scan {
 # $res_cb with the results.
 sub _make_res {
     my $self = shift;
-    my ($res_cb, $slot, $rest) = @_;
+    my ($res_cb, $slot, $rest, $device) = @_;
     my $res;
 
-    my $device = Amanda::Device->new($rest);
-    if ($device->status != $DEVICE_STATUS_SUCCESS) {
-	return $self->make_error("failed", $res_cb,
-		reason => "device",
-		message => "opening '$rest': " . $device->error_or_status());
+    if (!defined $device) {
+	$device = Amanda::Device->new($rest);
+	if ($device->status != $DEVICE_STATUS_SUCCESS) {
+	    return $self->make_error("failed", $res_cb,
+		    reason => "device",
+		    message => "opening '$rest': " . $device->error_or_status());
+	}
     }
 
     if (my $err = $self->{'config'}->configure_device($device)) {
@@ -322,9 +332,21 @@ sub update {
     my $self = shift;
     my %params = @_;
 
-    return $self->make_error("failed", $params{'finished_cb'},
-	reason => "notimpl",
-	message => "chg-compat does not implement 'update'");
+    my $scan_done_cb = make_cb(scan_done_cb => sub {
+	my ($err, $res) = @_;
+	if ($err) {
+	    return $params{'finished_cb'}->($err);
+	}
+
+	# we didn't search for a label, so we don't get a reservation
+	$params{'finished_cb'}->(undef);
+    });
+
+    # for compat changers, "update" just entails scanning the whole changer
+    $self->_manual_scan(
+	res_cb => $scan_done_cb,
+	label => undef, # search forever
+    );
 }
 
 # Internal function to call the script's -info, store the results in $self, and

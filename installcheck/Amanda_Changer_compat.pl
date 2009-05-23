@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 26;
+use Test::More tests => 27;
 use File::Path;
 use strict;
 use warnings;
@@ -135,6 +135,8 @@ case "${1}" in
             2) echo "<ignored> slot 2 is empty"; exit 1;;
             3) echo "1"; exit 0;; # test missing 'device' portion
 	    4) echo "1 bogus:dev"; exit 0;;
+	    current) echo "1 null:current"; exit 0;;
+	    next) echo "1 null:next"; exit 0;;
         esac;;
     -reset)
 	echo "reset" > $Installcheck::TMP/chg-test.result
@@ -247,7 +249,10 @@ try_run_changer(
     undef, undef, "chg->clean doesn't fail");
 like(slurp_result(), qr/clean/, ".. and calls chg-test -clean");
 
-# TODO test update()
+try_run_changer(
+    sub { $chg->update(finished_cb => $check_finished_cb); },
+    undef, undef, "chg->update doesn't fail");
+
 
 # make sure only one reservation can be held at once
 {
