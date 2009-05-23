@@ -170,7 +170,7 @@ AC_DEFUN([AMANDA_WITH_SINGLE_USERID],
             [force amanda to run as a single userid (for testing)]),
         [   SINGLE_USERID=$withval ])
 
-    case "$target" in
+    case "$host" in
         *-pc-cygwin)
             WANT_SETUID_CLIENT=false
 	    SINGLE_USERID=yes

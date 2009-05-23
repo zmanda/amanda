@@ -236,7 +236,7 @@ AC_DEFUN([AMANDA_PROG_DUMP_RESTORE],
     DUMP_PROGRAMS="ufsdump dump backup"
     DUMP_RETURNS_1=
     AIX_BACKUP=
-    case "$target" in
+    case "$host" in
 	*-dg-*)
 	    DUMP_PROGRAMS="dump "$DUMP_PROGRAMS
 	    DUMP_RETURNS_1=1
@@ -383,7 +383,7 @@ AC_DEFUN([AMANDA_CHECK_USE_RUNDUMP], [
     USE_RUNDUMP=no
 
     # some systems require rundump unconditionally
-    case "$target" in
+    case "$host" in
         *-ultrix*) USE_RUNDUMP=yes ;;
         *-dg-*) USE_RUNDUMP=yes ;;
     esac

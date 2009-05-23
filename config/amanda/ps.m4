@@ -11,7 +11,7 @@ AC_DEFUN([AMANDA_PS_ARGUMENT],
     # (e.g., -e) can mean different things.  So this macro tries to
     # special-case most known systems, and makes an effort to detect unknown
     # systems
-    case "$target" in
+    case "$host" in
 	*-*-solaris*)
 	    PS_ARGUMENT="-eo pid,ppid,comm"
 	    ;;

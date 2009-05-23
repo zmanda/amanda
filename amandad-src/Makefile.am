@@ -15,7 +15,6 @@ LINT=$(AMLINT)
 LINTFLAGS=$(AMLINTFLAGS)
 
 amlib_LTLIBRARIES =       libamandad.la
-LIB_EXTENSION = la
 
 amlibexec_PROGRAMS =	amandad
 
@@ -32,10 +31,10 @@ noinst_HEADERS  = amandad.h
 # routines, and second to pick up any references in the other libraries.
 ###
 
-LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
-	libamandad.$(LIB_EXTENSION) \
-	../common-src/libamanda.$(LIB_EXTENSION) \
-	../gnulib/libgnu.$(LIB_EXTENSION)
+LDADD = ../common-src/libamanda.la \
+	libamandad.la \
+	../common-src/libamanda.la \
+	../gnulib/libgnu.la
 
 INSTALLPERMS_exec = \
 	dest=$(amlibexecdir) chown=amanda \

@@ -16,7 +16,7 @@ AC_DEFUN([AMANDA_SETUP_LFS],
     # we use 'getconf', if it exists, to get the relevant
     # compiler flags.
     GETCONF_LFS="LFS"
-    case "$target" in
+    case "$host" in
         *-hp-*) GETCONF_LFS="XBS5_ILP32_OFFBIG" ;;
         *-ibm-aix*) GETCONF_LFS="XBS5_ILP32_OFFBIG" ;;
     esac

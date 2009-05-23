@@ -68,7 +68,7 @@ AC_DEFUN([AMANDA_CHECK_IPV6],
 	AC_CACHE_CHECK([for working IPv6],
 		       amanda_cv_working_ipv6,
 	[
-	    case "$target" in
+	    case "$host" in
 		*-pc-cygwin) amanda_cv_working_ipv6=no;;
 		*)
 		    AC_RUN_IFELSE([AC_LANG_SOURCE([[

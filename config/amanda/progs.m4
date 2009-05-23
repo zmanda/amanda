@@ -308,7 +308,7 @@ AC_DEFUN([AMANDA_PROG_MT],
     AC_REQUIRE([AMANDA_INIT_PROGS])
     AC_PATH_PROG(MT,mt,mt,$LOCSYSPATH)
 
-    case "$target" in
+    case "$host" in
 	*-hp-*) MT_FILE_FLAG="-t" ;;
 	*) MT_FILE_FLAG="-f" ;;
     esac

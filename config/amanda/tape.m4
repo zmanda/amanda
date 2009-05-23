@@ -57,7 +57,7 @@ AC_DEFUN([AMANDA_TAPE_DEVICE], [
 
     # decide which tape device to compile (arranged in such a way that
     # only one actually gets compiled)
-    case "$target" in
+    case "$host" in
       *-ibm-aix*) aix_tapeio=yes ;;
       *-sysv4.2uw2*) uware_tapeio=yes ;;
       *-sco3.2v5*) xenix_tapeio=yes ;;
@@ -185,7 +185,7 @@ AC_DEFUN([AMANDA_TAPE_DEVICE], [
 	    AC_MSG_RESULT(no)
 	])
 
-    case "$target" in
+    case "$host" in
 	*linux*) AC_DEFINE(DEFAULT_TAPE_NON_BLOCKING_OPEN,1,
 			[Define if open of tape device require O_NONBLOCK]);;
     esac

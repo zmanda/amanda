@@ -141,7 +141,7 @@ AC_DEFUN([AMANDA_SETUP_DEFAULTS],
         [Default location for 'amandates'])
 
     DEFAULT_FSF_AFTER_FILEMARK="FALSE"
-    case "$target" in
+    case "$host" in
 	*-solaris*) DEFAULT_FSF_AFTER_FILEMARK="TRUE"
 		    ;;
     esac

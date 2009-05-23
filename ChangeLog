@@ -1,3 +1,15 @@
+2009-05-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* amandad-src/Makefile.am application-src/Makefile.am
+	  oldrecover-src/Makefile.am recover-src/Makefile.am
+	  restore-src/Makefile.am: remove LIB_EXTENSION
+	* config/amanda/defaults.m4 config/amanda/devprefix.m4
+	  config/amanda/dumpers.m4 config/amanda/flags.m4 config/amanda/ipv6.m4
+	  config/amanda/lfs.m4 config/amanda/libs.m4 config/amanda/progs.m4
+	  config/amanda/ps.m4 config/amanda/swig.m4 config/amanda/syshacks.m4
+	  config/amanda/tape.m4 config/amanda/userid.m4 configure.in: use
+	  AC_CANONICAL_HOST, rather than AC_CANONICAL_TARGET (which is for
+	  compilers!)
+
 2009-05-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/amfetchdump.c: Fix sort_needed_tapes_by_write_timestamp.
 

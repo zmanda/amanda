@@ -13,8 +13,7 @@
 #   is presented with a warning.
 #
 AC_DEFUN([AMANDA_SYSHACKS], [
-    AC_REQUIRE([AC_CANONICAL_TARGET])
-    case "$target" in
+    case "$host" in
 	*-dec-osf*)
 		    ;;
 	*-dg-*)
@@ -99,7 +98,7 @@ AC_DEFUN([AMANDA_SYSHACKS], [
       *)
 		AMANDA_ADD_WARNING(
 [*****
-This machine, target type $target, is not known to be fully supported
+This machine, target type $host, is not known to be fully supported
 by this configure script.  If the installation of Amanda on this system
 succeeds or needed any patches, please email amanda-hackers@amanda.org
 with the patches or an indication of the sucess or failure of the

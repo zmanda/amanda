@@ -80,7 +80,7 @@ AC_DEFUN([AMANDA_INIT_FLAGS],
 
 	    for dir in $withval; do
 		if test -d "$dir"; then
-		    case "$target" in
+		    case "$host" in
 		      *-solaris2*,*-netbsd*)
 			    LDFLAGS="$LDFLAGS -R$dir"
 			    ;;

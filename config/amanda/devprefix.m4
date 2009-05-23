@@ -46,7 +46,7 @@ AC_DEFUN([AMANDA_CHECK_DEVICE_PREFIXES],
     )`
 
     # get any system-specific configuration information
-    case "$target" in
+    case "$host" in
 	*-hp-*)
 	    CLIENT_SCRIPTS_OPT=amhpfixdevs
 	    case $mount in

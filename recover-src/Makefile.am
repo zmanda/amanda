@@ -16,8 +16,6 @@ AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
 LINT=$(AMLINT)
 LINTFLAGS=$(AMLINTFLAGS)
 
-LIB_EXTENSION = la
-
 sbin_PROGRAMS =		amrecover
 
 ###
@@ -27,11 +25,11 @@ sbin_PROGRAMS =		amrecover
 # routines, and second to pick up any references in the other libraries.
 ###
 
-LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
+LDADD = ../common-src/libamanda.la \
 	@LEXLIB@ \
 	$(READLINE_LIBS) \
-	../client-src/libamclient.$(LIB_EXTENSION) \
-	../common-src/libamanda.$(LIB_EXTENSION)
+	../client-src/libamclient.la \
+	../common-src/libamanda.la
 
 amrecover_CSRC =	amrecover.c					\
 			display_commands.c		extract_list.c	\

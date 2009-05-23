@@ -14,8 +14,6 @@ INCLUDES =	-I$(top_builddir)/common-src \
 LINT=$(AMLINT)
 LINTFLAGS=$(AMLINTFLAGS)
 
-LIB_EXTENSION = la
-
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
 
@@ -45,11 +43,11 @@ applicationdir = $(APPLICATION_DIR)
 applicationexec_PROGRAMS = amgtar amstar
 applicationexec_SCRIPTS = $(SCRIPTS_PERL)
 
-LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
-	../client-src/libamclient.$(LIB_EXTENSION) \
-	../amandad-src/libamandad.$(LIB_EXTENSION) \
-	../common-src/libamanda.$(LIB_EXTENSION) \
-	../gnulib/libgnu.$(LIB_EXTENSION)
+LDADD = ../common-src/libamanda.la \
+	../client-src/libamclient.la \
+	../amandad-src/libamandad.la \
+	../common-src/libamanda.la \
+	../gnulib/libgnu.la
 
 INSTALLPERMS_exec = dest=$(amlibexecdir) chown=amanda $(amlibexec_PROGRAMS) \
 		    dest=$(applicationdir) chown=amanda $(applicationexec_PROGRAMS) \

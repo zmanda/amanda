@@ -17,7 +17,7 @@
 #   the libcurl distribution for details.
 #
 AC_DEFUN([AMANDA_CHECK_LIBCURL], [
-    case "$target" in
+    case "$host" in
         sparc-sun-solaris2.10) # Solaris 10
         # curl is not in the LD_LIBRARY_PATH on Solaris 10, so we search
         # for it in a few common paths; we then extract the -L flags and
@@ -76,7 +76,7 @@ AC_DEFUN([AMANDA_CHECK_HMAC], [
 #
 AC_DEFUN([AMANDA_CHECK_NET_LIBS], [
     # Make sure we don't use -lnsl and -lsun on Irix systems.
-    case "$target" in
+    case "$host" in
 	*sgi-irix*)
 			    AC_CHECK_LIB(socket,main)
 			    ;;
@@ -104,7 +104,7 @@ AC_DEFUN([AMANDA_CHECK_GLIB], [
     # system-specific search paths.
     AC_PATH_PROG(PKG_CONFIG, pkg-config, [], $LOCSYSPATH:/opt/csw/bin:/usr/local/bin:/opt/local/bin)
 
-    case "$target" in
+    case "$host" in
 	sparc-sun-solaris2.8) # Solaris 8
 	    # give the linker a runtime search path; pkg-config doesn't supply this.
 	    # Users could also specify this with LD_LIBRARY_PATH to both ./configure

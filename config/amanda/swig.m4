@@ -30,7 +30,7 @@ AC_DEFUN([AMANDA_SETUP_SWIG],
 	AC_MSG_ERROR([*** Amanda cannot be compiled without shared-library support (do not use --disable-shared)])
     fi
 
-    case "$target" in
+    case "$host" in
 	*freebsd@<:@123456@:>@*) # up to and including FreeBSD 6.*
 	    # Before 7.0, FreeBSD systems don't include a DT_NEEDS segment in
 	    # libgthread to automatically pull in the desired threading library.

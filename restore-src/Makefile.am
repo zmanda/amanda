@@ -18,7 +18,6 @@ LINT=$(AMLINT)
 LINTFLAGS=$(AMLINTFLAGS)
 
 amlib_LTLIBRARIES =	librestore.la
-LIB_EXTENSION = la
 
 sbin_PROGRAMS = 	amrestore amfetchdump
 
@@ -31,13 +30,13 @@ amlibexec_PROGRAMS = 	amidxtaped
 # routines, and second to pick up any references in the other libraries.
 ###
 
-LDADD = librestore.$(LIB_EXTENSION)              \
-      ../common-src/libamanda.$(LIB_EXTENSION) \
+LDADD = librestore.la              \
+      ../common-src/libamanda.la \
       $(READLINE_LIBS)
 
 amidxtaped_LDADD = $(LDADD) \
-		   ../gnulib/libgnu.$(LIB_EXTENSION) \
-		   ../amandad-src/libamandad.$(LIB_EXTENSION)
+		   ../gnulib/libgnu.la \
+		   ../amandad-src/libamandad.la
 
 amidxtaped_SOURCES = 	amidxtaped.c
 
@@ -45,9 +44,9 @@ amfetchdump_SOURCES = 	amfetchdump.c
 
 librestore_la_SOURCES	=	restore.c
 librestore_la_LDFLAGS	=	-release $(VERSION)
-librestore_la_LIBADD	=	../common-src/libamanda.$(LIB_EXTENSION) \
-				../server-src/libamserver.$(LIB_EXTENSION) \
-				../device-src/libamdevice.$(LIB_EXTENSION)
+librestore_la_LIBADD	=	../common-src/libamanda.la \
+				../server-src/libamserver.la \
+				../device-src/libamdevice.la
 
 noinst_HEADERS = restore.h
 
