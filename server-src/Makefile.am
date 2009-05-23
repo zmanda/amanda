@@ -39,7 +39,6 @@ CHECK_PERL = \
 	    amoverview \
 	    amserverconfig \
 	    amtoc \
-	    amdevcheck \
 	    amcheckdump \
 	    amcleanup \
 	    amrmtape \

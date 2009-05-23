@@ -1,4 +1,8 @@
 2009-05-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/amdevcheck.pl: move from server-src/
+	* device-src/Makefile.am server-src/Makefile.am: move script
+
+2009-05-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/compat.pm: run a full manual scan on update()
 	* installcheck/Amanda_Changer_compat.pl: test it
 

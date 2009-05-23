@@ -14,7 +14,9 @@ AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
 
 sbin_PROGRAMS =
 
-CHECK_PERL = amtapetype
+CHECK_PERL = \
+	amdevcheck \
+	amtapetype
 SCRIPTS_PERL = $(CHECK_PERL)
 sbin_SCRIPTS = $(SCRIPTS_PERL)
 
