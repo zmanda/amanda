@@ -1,4 +1,7 @@
 2009-05-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/fileheader.c: use %zd for a size_t argument
+
+2009-05-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/fileheader.c: don't automatically call dump_fileheader_t
 	  in build_header
 	* server-src/dumper.c server-src/holding.c server-src/taper.c
