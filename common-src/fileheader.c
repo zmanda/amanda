@@ -603,9 +603,9 @@ build_header(const dumpfile_t * file, size_t *size, size_t max_size)
     size_t min_size;
 
     min_size = size? *size : max_size;
-    dbprintf(_("Building type %d (%s) header of %zu-%zu bytes using:\n"),
-		file->type, filetype2str(file->type), min_size, max_size);
-    dump_dumpfile_t(file);
+    dbprintf(_("Building type %s header of %zu-%zu bytes with name='%s' disk='%s' dumplevel=%d and blocksize=%d\n"),
+	    filetype2str(file->type), min_size, max_size,
+	    file->name, file->disk, file->dumplevel, file->blocksize);
 
     rval = g_string_sized_new(min_size);
     split_data = g_string_sized_new(10);

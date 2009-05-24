@@ -1,4 +1,10 @@
 2009-05-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/fileheader.c: don't automatically call dump_fileheader_t
+	  in build_header
+	* server-src/dumper.c server-src/holding.c server-src/taper.c
+	  server-src/chunker.c: add debug messages as necessary
+
+2009-05-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/amdevcheck.pl: move from server-src/
 	* device-src/Makefile.am server-src/Makefile.am: move script
 

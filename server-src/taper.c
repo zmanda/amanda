@@ -915,6 +915,9 @@ static void run_device_output(taper_state_t * taper_state,
             return;
         }
 
+	if (this_header->partnum == 1 || debug_taper)
+	    dump_dumpfile_t(this_header);
+
 	while (!device_start_file(taper_state->device, this_header)) {
             /* Close the device. */
             device_finish(taper_state->device);

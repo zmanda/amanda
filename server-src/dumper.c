@@ -1096,6 +1096,8 @@ write_tapeheader(
     char * buffer;
     size_t written;
 
+    if (debug_dumper > 1)
+	dump_dumpfile_t(file);
     buffer = build_header(file, NULL, DISK_BLOCK_BYTES);
     if (!buffer) /* this shouldn't happen */
 	error(_("header does not fit in %zd bytes"), (size_t)DISK_BLOCK_BYTES);

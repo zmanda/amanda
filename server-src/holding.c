@@ -909,6 +909,8 @@ rename_tmp_holding(
 
 	    }
 	    file.is_partial = 1;
+	    if (debug_holding > 1)
+		dump_dumpfile_t(&file);
             header = build_header(&file, NULL, DISK_BLOCK_BYTES);
 	    if (!header) /* this shouldn't happen */
 		error(_("header does not fit in %zd bytes"), (size_t)DISK_BLOCK_BYTES);
