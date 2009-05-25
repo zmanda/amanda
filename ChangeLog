@@ -1,4 +1,7 @@
 2009-05-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/fileheader.c: use %zu for a size_t argument.
+
+2009-05-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in: Use AMANDA_WERROR_FLAGS and AMANDA_SWIG_ERROR.
 	* perl/Makefile.am: Add AMANDA_SWIG_PERL_CFLAGS to AM_CFLAGS.
 	* config/amanda/flags.m4: New AMANDA_WERROR_FLAGS and AMANDA_SWIG_ERROR.
