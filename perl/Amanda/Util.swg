@@ -186,8 +186,15 @@ my($q, $remaider) = skip_quoted_string($str)
 
 Return the first quoted string and the remainder of the string.
 
-All of C<quote_string>, C<unquote_string> and C<skip_quoted_string> are
-available under the export tag C<:quoting>.
+=item C<split_quoted_strings($str)>
+
+Split string on unquoted whitespace.  Multiple consecutive spaces are not
+collapsed into a single space: C<"x  y"> parses as C<( "x", "", "y" )>.  The
+strings are unquoted before they are returned.  An empty string is split into
+C<( "" )>.
+
+All of these quoting-related functions are available under the export tag
+C<:quoting>.
 
 =item expand_braced_alternates($str)
 =item collapse_braced_alternates(\@list)
@@ -405,13 +412,34 @@ sub skip_quoted_string {
     }
 }
 
+/* for split_quoted_strings */
+%typemap(out) gchar ** {
+    gchar **iter;
+
+    if ($1) {
+	/* Count the DeviceProperties */
+	EXTEND(SP, g_strv_length($1)); /* make room for return values */
+
+	/* Note that we set $result several times. the nature of
+	 * SWIG's wrapping is such that incrementing argvi points
+	 * $result to the next location in perl's argument stack.
+	 */
+
+	for (iter = $1; *iter; iter++) {
+	    $result = sv_2mortal(newSVpv(*iter, 0));
+	    argvi++;
+	}
+    }
+}
+
 char *sanitise_filename(char *inp);
 char *quote_string(char *);
 char *unquote_string(char *);
 GPtrArray *expand_braced_alternates(char *);
 %newobject collapse_braced_alternates;
 char *collapse_braced_alternates(GPtrArray *source);
-amglue_export_tag(quoting, quote_string unquote_string skip_quoted_string sanitise_filename);
+gchar **split_quoted_strings(const gchar *string);
+amglue_export_tag(quoting, quote_string unquote_string skip_quoted_string sanitise_filename split_quoted_strings);
 amglue_export_tag(alternates, expand_braced_alternates collapse_braced_alternates);
 
 %perlcode %{

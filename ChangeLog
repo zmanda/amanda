@@ -1,4 +1,11 @@
 2009-05-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am perl/Amanda/IPC/LineProtocol.pm: new package
+	* perl/Amanda/Util.swg: add split_quoted_strings
+	* common-src/util.c: handle NULL string correctly
+	* installcheck/Amanda_IPC_LineProtocol.pl installcheck/Amanda_Util.pl
+	  installcheck/Makefile.am: tests for all
+
+2009-05-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amservice.pl: call $testconfig->write();
 
 2009-05-24  Dustin J. Mitchell <dustin@zmanda.com>

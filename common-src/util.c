@@ -491,12 +491,18 @@ gchar **
 split_quoted_strings(
     const gchar *string)
 {
-    char *local = g_strdup(string);
-    char *start = local;
-    char *p = local;
+    char *local;
+    char *start;
+    char *p;
     char **result;
-    GPtrArray *strs = g_ptr_array_new();
+    GPtrArray *strs;
     int iq = 0;
+
+    if (!string)
+	return NULL;
+
+    p = start = local = g_strdup(string);
+    strs = g_ptr_array_new();
 
     while (*p) {
 	if (!iq && *p == ' ') {

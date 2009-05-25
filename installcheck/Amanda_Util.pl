@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 73;
+use Test::More tests => 74;
 
 use lib "@amperldir@";
 use warnings;
@@ -92,9 +92,9 @@ for my $a (keys %unquote_checks) {
 {
     my ($a, $b) = Amanda::Util::skip_quoted_string("foobar");
     is($a, "foobar",
-       "skip_quoted_string with one quoted string (first argument)\n");
+       "skip_quoted_string with one quoted string (first argument)");
     is($b, undef,
-       "skip_quoted_string with one quoted string (second argument)\n");
+       "skip_quoted_string with one quoted string (second argument)");
 }
 
 my @try_bracing = (
@@ -169,3 +169,9 @@ is($!, '', "..and no error");
 POSIX::close($fd);
 
 unlink($testfile);
+
+# just a quick check for split_quoted_strings - thorough checks are done in
+# common-src/quoting-test.c.
+is_deeply([ Amanda::Util::split_quoted_strings('one "T W O" thr\ ee'), ],
+          [ "one", "T W O", "thr ee" ],
+          "split_quoted_strings seems to work");
