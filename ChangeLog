@@ -1,3 +1,8 @@
+2009-05-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* configure.in: Use AMANDA_WERROR_FLAGS and AMANDA_SWIG_ERROR.
+	* perl/Makefile.am: Add AMANDA_SWIG_PERL_CFLAGS to AM_CFLAGS.
+	* config/amanda/flags.m4: New AMANDA_WERROR_FLAGS and AMANDA_SWIG_ERROR.
+
 2009-05-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am perl/Amanda/IPC/LineProtocol.pm: new package
 	* perl/Amanda/Util.swg: add split_quoted_strings

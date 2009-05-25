@@ -123,7 +123,7 @@ AC_DEFUN([AMANDA_STATIC_FLAGS],
 	AS_HELP_STRING([--enable-static-binary],
 		       [To build statically linked binaries]),
 	[
-	    case "$withval" in
+	    case "$enableval" in
 	    "" | y | ye | yes)
 		AMANDA_STATIC_LDFLAGS=-static
 		if test x"$enable_static" = x"no"; then
@@ -136,6 +136,60 @@ AC_DEFUN([AMANDA_STATIC_FLAGS],
 	    esac
 	])
     AC_SUBST([AMANDA_STATIC_LDFLAGS])
+])
+
+# SYNOPSIS
+#
+#   AMANDA_WERROR_FLAGS
+#
+# DESCRIPTION
+#
+#   Set AMANDA_WERROR_FLAGS
+#
+AC_DEFUN([AMANDA_WERROR_FLAGS],
+[
+    enable_werror=no
+    AC_ARG_ENABLE(werror,
+	AS_HELP_STRING([--enable-werror],
+		       [To compile with -Werror compiler flag]),
+	[
+	    case "$enableval" in
+	    "" | y | ye | yes)
+		enable_werror=yes
+		;;
+	    *n | no)
+		;;
+	    esac
+	])
+    if test x"$enable_werror" eq x"yes"; then
+	AMANDA_ENABLE_GCC_WARNING(error)
+    fi
+])
+
+# SYNOPSIS
+#
+#   AMANDA_SWIG_ERROR
+#
+# DESCRIPTION
+#
+#   Set AMANDA_SWIG_ERROR
+#
+AC_DEFUN([AMANDA_SWIG_ERROR],
+[
+    AC_ARG_ENABLE(swig-error,
+	AS_HELP_STRING([--enable-swig-error],
+		       [To compile swiged C file with -Werror compiler flag]),
+	[
+	    case "$enableval" in
+	    "" | y | ye | yes)
+		AMANDA_SWIG_PERL_CFLAGS=-Werror
+		;;
+	    *n | no)
+		AMANDA_SWIG_PERL_CFLAGS=
+		;;
+	    esac
+	])
+    AC_SUBST([AMANDA_SWIG_PERL_CFLAGS])
 ])
 
 # SYNOPSIS
