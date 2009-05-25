@@ -74,7 +74,8 @@ typedef struct Slab {
 typedef struct FileSlice {
     struct FileSlice *next;
 
-    /* fully-qualified filename to read from */
+    /* fully-qualified filename to read from, or NULL to read from a copy of
+     * the disk_cache_fd */
     char *filename;
 
     /* offset in file to start at */
@@ -104,12 +105,12 @@ typedef struct XferDestTaper {
     gsize max_memory;
 
     /* split buffering info; if we're doing memory buffering, use_mem_cache is
-     * true; if we're doing disk buffering, disk_cache_filename is non-NULL
+     * true; if we're doing disk buffering, disk_cache_dirname is non-NULL
      * and contains the (allocated) filename of the cache file.  Either way,
      * part_size gives the desired cache size.  If part_size is zero, then
      * no splitting takes place (so part_size is effectively infinite) */
     gboolean use_mem_cache;
-    char *disk_cache_filename;
+    char *disk_cache_dirname;
     guint64 part_size; /* (bytes) */
 
     /*
@@ -143,28 +144,32 @@ typedef struct XferDestTaper {
 
     /* pointers into the slab train are all protected by this mutex.  Note that
      * the slabs themselves can be manipulated without this lock; it's only
-     * when changing the pointers that the mutex must be held.  Slab_cond is
-     * notified when a new slab is made available from the reader.
+     * when changing the pointers that the mutex must be held.  Furthermore, a
+     * foo_slab variable which is not NULL will not be changed except by its
+     * controlling thread (disk_cacher_slab is controlled by disk_cache_thread,
+     * and device_slab is controlled by device_thread).  This means that a
+     * controlling thread can drop the slab_mutex once it has ensured its slab
+     * is non-NULL.
+     *
+     * Slab_cond is notified when a new slab is made available from the reader.
      * Slab_free_cond is notified when a slab becomes available for
      * reallocation.
      *
      * Any thread waiting on either condition variable should also check
      * elt->cancelled, and act appropriately if awakened in a cancelled state.
      */
-    GMutex *slab_mutex;
-    GCond *slab_cond;
-    GCond *slab_free_cond;
+    GMutex *slab_mutex; GCond *slab_cond; GCond *slab_free_cond;
 
     /* slabs in progress by each thread, or NULL if the thread is waiting on
      * slab_cond.  These can only be changed by their respective threads, except
      * when they are NULL (in which case the reader will point them to a new
      * slab and signal the slab_cond). */
-    Slab *disk_cacher_slab;
-    Slab *mem_cache_slab;
-    Slab *device_slab;
+    volatile Slab *disk_cacher_slab;
+    volatile Slab *mem_cache_slab;
+    volatile Slab *device_slab;
 
     /* tail and head of the slab train */
-    Slab *oldest_slab, *newest_slab;
+    volatile Slab *oldest_slab, *newest_slab;
 
     /* thread-specific information
      *
@@ -196,31 +201,36 @@ typedef struct XferDestTaper {
      */
     GMutex *state_mutex;
     GCond *state_cond;
-    gboolean paused;
+    volatile gboolean paused;
 
     /* The device to write to, and the header to write to it */
-    Device *device;
-    dumpfile_t *part_header;
+    volatile Device *device;
+    volatile dumpfile_t *part_header;
 
     /* If true, when unpaused, the device should begin at the beginning of the
      * cache; if false, it should proceed to the next part. */
-    gboolean retry_part;
+    volatile gboolean retry_part;
 
     /* If true, the previous part was completed successfully; only used for
      * assertions */
-    gboolean last_part_successful;
+    volatile gboolean last_part_successful;
 
     /* part number in progress */
-    guint64 partnum;
+    volatile guint64 partnum;
 
     /* if true, the main thread should *not* call start_part */
-    gboolean no_more_parts;
+    volatile gboolean no_more_parts;
 
     /* the first serial in this part, and the serial to stop at */
-    guint64 part_first_serial, part_stop_serial;
+    volatile guint64 part_first_serial, part_stop_serial;
 
     /* file slices for the current part */
-    FileSlice *part_slices;
+    volatile FileSlice *part_slices;
+
+    /* read/write file descriptor for the disk cache file, in use by the
+     * disk_cache_thread.  If this is -1, wait on state_cond until it is not;
+     * once the value is set, it will not change. */
+    volatile int disk_cache_fd;
 
     /* device parameters
      *
@@ -421,6 +431,40 @@ next_slab(
  * The disk cache thread's job is simply to follow along the slab train at
  * maximum speed, writing slabs to the disk cache file. */
 
+static gboolean
+open_disk_cache_fd(
+    XferDestTaper *self)
+{
+    char * filename;
+
+    g_assert(self->disk_cache_fd == -1);
+
+    g_mutex_lock(self->state_mutex);
+    filename = g_strdup_printf("%s/amanda-split-buffer-XXXXXX",
+                               self->disk_cache_dirname);
+    self->disk_cache_fd = g_mkstemp(filename);
+
+    /* signal anyone waiting for this value */
+    g_cond_broadcast(self->state_cond);
+    g_mutex_unlock(self->state_mutex);
+
+    if (self->disk_cache_fd < 0) {
+	send_xmsg_error_and_cancel(self,
+	    _("Error creating cache file in '%s': %s"), self->disk_cache_dirname,
+	    strerror(errno));
+	g_free(filename);
+	return FALSE;
+    }
+
+    /* errors from unlink are not fatal */
+    if (unlink(filename) < 0) {
+	g_warning("While unlinking '%s': %s (ignored)", filename, strerror(errno));
+    }
+
+    g_free(filename);
+    return TRUE;
+}
+
 static gpointer
 disk_cache_thread(
     gpointer data)
@@ -428,15 +472,18 @@ disk_cache_thread(
     XferDestTaper *self = XFER_DEST_TAPER(data);
     XferElement *elt = XFER_ELEMENT(self);
 
+    /* open up the disk cache file first */
+    if (!open_disk_cache_fd(self))
+	return NULL;
+
     while (!elt->cancelled) {
 	gboolean eof = FALSE, eop = FALSE;
 	Slab *slab;
-	int write_fd = -1;
 
-	write_fd = open(self->disk_cache_filename, O_CREAT|O_WRONLY, 0666);
-	if (write_fd < 0) {
+	/* rewind to the begining of the disk cache file */
+	if (lseek(self->disk_cache_fd, 0, SEEK_SET) == -1) {
 	    send_xmsg_error_and_cancel(self,
-		_("Error opening '%s': %s"), self->disk_cache_filename,
+		_("Error seeking disk cache file in '%s': %s"), self->disk_cache_dirname,
 		strerror(errno));
 	    return NULL;
 	}
@@ -457,9 +504,9 @@ disk_cache_thread(
 	    slab = self->disk_cacher_slab;
 	    g_mutex_unlock(self->slab_mutex);
 
-	    if (full_write(write_fd, slab->base, slab->size) < slab->size) {
+	    if (full_write(self->disk_cache_fd, slab->base, slab->size) < slab->size) {
 		send_xmsg_error_and_cancel(self,
-		    _("Error writing to '%s': %s"), self->disk_cache_filename,
+		    _("Error writing to disk cache file in '%s': %s"), self->disk_cache_dirname,
 		    strerror(errno));
 		return NULL;
 	    }
@@ -475,14 +522,9 @@ disk_cache_thread(
 	}
 	g_mutex_unlock(self->slab_mutex);
 
-	if (close(write_fd) < 0) {
-	    send_xmsg_error_and_cancel(self,
-		_("Error closing '%s': %s"), self->disk_cache_filename,
-		strerror(errno));
-	    return NULL;
-	}
-
 	if (eof) {
+	    /* this very thread should have just set this value to NULL, and since it's
+	     * EOF, there should not be any 'next' slab */
 	    g_assert(self->disk_cacher_slab == NULL);
 	    break;
 	} else if (eop) {
@@ -495,6 +537,9 @@ disk_cache_thread(
 
 	    if (elt->cancelled)
 		break;
+
+	    /* this slab is now fixed until this thread changes it */
+	    g_assert(self->disk_cacher_slab != NULL);
 
 	    /* and then making sure we're ready to write that slab. */
 	    g_mutex_lock(self->state_mutex);
@@ -514,7 +559,11 @@ disk_cache_thread(
  *
  * The device thread's job is to write slabs to self->device, applying whatever
  * streaming algorithms are required.  It does this by alternately getting the
- * next slab from a "slab source" and writing that slab to the device.
+ * next slab from a "slab source" and writing that slab to the device.  Most of
+ * the slab source functions assume that self->slab_mutex is held, but may
+ * release the mutex (either explicitly or via a g_cond_wait), so it is not
+ * valid to assume that any slab pointers remain unchanged after a slab_source
+ * function invication.
  */
 
 /* This struct tracks the current state of the slab source */
@@ -535,6 +584,8 @@ typedef struct slab_source_state {
     gsize slice_remaining;
 } slab_source_state;
 
+/* Called without the slab_mutex held, this function pre-buffers enough data into the slab
+ * train to meet the device's streaming needs. */
 static gboolean
 slab_source_prebuffer(
     XferDestTaper *self)
@@ -550,7 +601,6 @@ slab_source_prebuffer(
 
     /* pre-buffering means waiting until we have at least prebuffer_slabs in the
      * slab train ahead of the device_slab, or the newest slab is at EOF. */
-    g_mutex_lock(self->slab_mutex);
     while (!elt->cancelled) {
 	gboolean eof_or_eop = FALSE;
 
@@ -566,7 +616,6 @@ slab_source_prebuffer(
 
 	g_cond_wait(self->slab_cond, self->slab_mutex);
     }
-    g_mutex_unlock(self->slab_mutex);
 
     if (elt->cancelled) {
 	self->last_part_successful = FALSE;
@@ -577,6 +626,8 @@ slab_source_prebuffer(
     return TRUE;
 }
 
+/* Called without the slab_mutex held, this function sets up a new slab_source_state
+ * object based on the configuratino of the Xfer Element. */
 static inline gboolean
 slab_source_setup(
     XferDestTaper *self,
@@ -604,15 +655,20 @@ slab_source_setup(
 
 	    g_mutex_lock(self->slab_mutex);
 
-	    /* we're going to read from the disk cache until we get to the oldest_slab,
-	     * so it had best exist */
+	    /* we're going to read from the disk cache until we get to the oldest useful
+	     * slab in memory, so it had best exist */
 	    g_assert(self->oldest_slab != NULL);
 
-	    /* hold that position down with a reference from device_slab */
+	    /* point device_slab at the oldest slab we have */
 	    self->oldest_slab->refcount++;
 	    if (self->device_slab)
 		unref_slab(self, self->device_slab);
 	    self->device_slab = self->oldest_slab;
+
+	    /* and increment it until it is at least the slab we want to start from */
+	    while (self->device_slab->serial < self->part_first_serial) {
+		next_slab(self, &self->device_slab);
+	    }
 
 	    /* get a new, temporary slab for use while reading */
 	    state->tmp_slab = alloc_slab(self, TRUE);
@@ -641,14 +697,22 @@ slab_source_setup(
     return TRUE;
 }
 
+/* Called with the slab_mutex held, this does the work of slab_source_get when
+ * reading from the disk cache.  Note that this explicitly releases the
+ * slab_mutex during execution - do not depend on any protected values across a
+ * call to this function.  The mutex is held on return. */
 static Slab *
 slab_source_get_from_disk(
     XferDestTaper *self,
     slab_source_state *state,
     guint64 serial)
 {
+    XferElement *elt = XFER_ELEMENT(self);
     gsize bytes_needed = self->slab_size;
     gsize slab_offset = 0;
+
+    /* NOTE: slab_mutex is held, but we don't need it here, so release it for the moment */
+    g_mutex_unlock(self->slab_mutex);
 
     g_assert(state->next_serial == serial);
 
@@ -657,17 +721,33 @@ slab_source_get_from_disk(
 
 	if (state->slice_fd < 0) {
 	    g_assert(state->slice);
-	    state->slice_fd = open(state->slice->filename, O_RDONLY, 0);
+	    if (state->slice->filename) {
+		/* regular cache_inform file - just open it */
+		state->slice_fd = open(state->slice->filename, O_RDONLY, 0);
+		if (state->slice_fd < 0) {
+		    send_xmsg_error_and_cancel(self, _("Could not open '%s' for reading: %s"),
+			state->slice->filename, strerror(errno));
+		    goto fatal_error;
+		}
+	    } else {
+		/* wait for the disk_cache_thread to open the disk_cache_fd, and then copy it */
+		g_mutex_lock(self->state_mutex);
+		while (self->disk_cache_fd == -1 && !elt->cancelled)
+		    g_cond_wait(self->state_cond, self->state_mutex);
+		state->slice_fd = dup(self->disk_cache_fd);
+		g_mutex_unlock(self->state_mutex);
 
-	    if (state->slice_fd < 0) {
-		send_xmsg_error_and_cancel(self, _("Could not open '%s' for reading: %s"),
-		    state->slice->filename, strerror(errno));
-		goto fatal_error;
+		if (state->slice_fd < 0) {
+		    send_xmsg_error_and_cancel(self, _("Could not duplicate disk cache fd for reading: %s"),
+			strerror(errno));
+		    goto fatal_error;
+		}
 	    }
 
 	    if (lseek(state->slice_fd, state->slice->offset, SEEK_SET) == -1) {
 		send_xmsg_error_and_cancel(self, _("Could not seek '%s' for reading: %s"),
-		    state->slice->filename, strerror(errno));
+		    state->slice->filename? state->slice->filename : "(cache file)",
+		    strerror(errno));
 		goto fatal_error;
 	    }
 
@@ -680,7 +760,7 @@ slab_source_get_from_disk(
 			       read_size);
 	if (bytes_read < read_size) {
             send_xmsg_error_and_cancel(self, _("Error reading '%s': %s"),
-		state->slice->filename,
+		state->slice->filename? state->slice->filename : "(cache file)",
 		errno? strerror(errno) : _("Unexpected EOF"));
             goto fatal_error;
 	}
@@ -688,8 +768,8 @@ slab_source_get_from_disk(
 	state->slice_remaining -= bytes_read;
 	if (state->slice_remaining == 0) {
 	    if (close(state->slice_fd) < 0) {
-		send_xmsg_error_and_cancel(self, _("Could not close '%s' (fd %d): %s"),
-		    state->slice->filename, state->slice_fd, strerror(errno));
+		send_xmsg_error_and_cancel(self, _("Could not close fd %d: %s"),
+		    state->slice_fd, strerror(errno));
 		goto fatal_error;
 	    }
 	    state->slice_fd = -1;
@@ -702,14 +782,21 @@ slab_source_get_from_disk(
 
     state->tmp_slab->serial = state->next_serial++;
 
+    g_mutex_lock(self->slab_mutex);
     return state->tmp_slab;
 
 fatal_error:
+    g_mutex_lock(self->slab_mutex);
+
     self->last_part_successful = FALSE;
     self->no_more_parts = TRUE;
     return NULL;
 }
 
+/* Called with the slab_mutex held, this function gets the slab with the given
+ * serial number, waiting if necessary for that slab to be available.  Note
+ * that the slab_mutex may be released during execution, although it is always
+ * held on return. */
 static inline Slab *
 slab_source_get(
     XferDestTaper *self,
@@ -726,22 +813,23 @@ slab_source_get(
 	    if (!slab_source_prebuffer(self))
 		return NULL;
 	} else {
-	    g_mutex_lock(self->slab_mutex);
 	    while (self->device_slab == NULL && !elt->cancelled)
 		g_cond_wait(self->slab_cond, self->slab_mutex);
-	    g_mutex_unlock(self->slab_mutex);
 	}
 
 	if (elt->cancelled)
 	    goto fatal_error;
     }
 
+    /* device slab is now set, and only this thread can change it */
+    g_assert(self->device_slab);
+
     /* if the next item in the device slab is the one we want, then the job is
      * pretty easy */
     if (G_LIKELY(serial == self->device_slab->serial))
 	return self->device_slab;
 
-    /* we're reading from disk */
+    /* otherwise, we're reading from disk */
     g_assert(serial < self->device_slab->serial);
     return slab_source_get_from_disk(self, state, serial);
 
@@ -751,19 +839,8 @@ fatal_error:
     return NULL;
 }
 
-static inline void
-slab_source_advance(
-    XferDestTaper *self,
-    Slab *last_slab)
-{
-    /* advancing is only necessary if we're operating on the slab train */
-    if (last_slab == self->device_slab) {
-	g_mutex_lock(self->slab_mutex);
-	next_slab(self, &self->device_slab);
-	g_mutex_unlock(self->slab_mutex);
-    }
-}
-
+/* Called without the slab_mutex held, this frees any resources assigned
+ * to the slab source state */
 static inline void
 slab_source_free(
     XferDestTaper *self,
@@ -779,7 +856,7 @@ slab_source_free(
     }
 }
 
-/* Write the given slab to the device */
+/* Called without the slab_mutex, this writes the given slab to the device */
 static gboolean
 write_slab_to_device(
     XferDestTaper *self,
@@ -843,8 +920,10 @@ device_thread_write_part(
     g_timer_start(timer);
 
     stop_serial = self->part_stop_serial;
+    g_mutex_lock(self->slab_mutex);
     for (serial = self->part_first_serial; serial < stop_serial && !eof; serial++) {
 	Slab *slab = slab_source_get(self, &src_state, serial);
+	g_mutex_unlock(self->slab_mutex);
 	if (!slab)
 	    goto part_done;
 
@@ -853,8 +932,14 @@ device_thread_write_part(
 	if (!write_slab_to_device(self, slab))
 	    goto part_done;
 
-	slab_source_advance(self, slab);
+	g_mutex_lock(self->slab_mutex);
+
+	/* if we're reading from the slab train, advance self->device_slab. */
+	if (slab == self->device_slab) {
+	    next_slab(self, &self->device_slab);
+	}
     }
+    g_mutex_unlock(self->slab_mutex);
 
     /* if we write all of the blocks, but the finish_file fails, then likely
      * there was some buffering going on in the device driver, and the blocks
@@ -906,7 +991,7 @@ release_part_cache(
     }
 
     /* the disk_cache_thread takes care of freeing its cache */
-    else if (self->disk_cache_filename)
+    else if (self->disk_cache_dirname)
 	return;
 
     /* if we have part_slices, fast-forward them. Note that we should have a
@@ -944,7 +1029,7 @@ device_thread(
     XferElement *elt = XFER_ELEMENT(self);
     XMsg *msg;
 
-    if (self->disk_cache_filename) {
+    if (self->disk_cache_dirname) {
         GError *error = NULL;
 	self->disk_cache_thread = g_thread_create(disk_cache_thread, (gpointer)self, TRUE, &error);
         if (!self->disk_cache_thread) {
@@ -1020,7 +1105,7 @@ add_reader_slab_to_train(
     /* steal reader_slab's reference for newest_slab */
 
     /* if any of the other pointers are waiting for this slab, update them */
-    if (self->disk_cache_filename && !self->disk_cacher_slab) {
+    if (self->disk_cache_dirname && !self->disk_cacher_slab) {
 	self->disk_cacher_slab = slab;
 	slab->refcount++;
     }
@@ -1128,10 +1213,10 @@ start_impl(
     XferElement *elt)
 {
     XferDestTaper *self = (XferDestTaper *)elt;
+    GError *error = NULL;
 
-    self->device_thread = g_thread_create(device_thread, (gpointer)self, FALSE, NULL);
+    self->device_thread = g_thread_create(device_thread, (gpointer)self, FALSE, &error);
     if (!self->device_thread) {
-        GError *error = NULL;
         g_critical(_("Error creating new thread: %s (%s)"),
             error->message, errno? strerror(errno) : _("no error code"));
     }
@@ -1190,19 +1275,20 @@ start_part_impl(
 	GValue val;
 	self->block_size = self->device->block_size;
 
-	/* If we're caching in memory, then the slab size should be large
-	 * enough to justify the overhead of all of the mutexes ; otherwise, it
-	 * needs to be small enough to have a few slabs available for streaming
-	 * and condition variables.  */
-	if (self->use_mem_cache) {
-	    /* sixteen blocks, not more than a quarter of the part size, and not more than 10MB */
-	    self->slab_size = self->block_size * 16;
+	/* The slab size should be large enough to justify the overhead of all
+	 * of the mutexes, but it needs to be small enough to have a few slabs
+	 * available so that the threads are not constantly waiting on one
+	 * another.  The choice is sixteen blocks, not more than a quarter of
+	 * the part size, and not more than 10MB.  If we're not using the mem
+	 * cache, then avoid exceeding max_memory by keeping the slab size less
+	 * than a quarter of max_memory. */
+
+	self->slab_size = self->block_size * 16;
+	if (self->part_size)
 	    self->slab_size = MIN(self->slab_size, self->part_size / 4);
-	    self->slab_size = MIN(self->slab_size, 10*1024*1024);
-	} else {
-	    /* a quarter of the streaming memory size */
-	    self->slab_size = self->max_memory / 4;
-	}
+	self->slab_size = MIN(self->slab_size, 10*1024*1024);
+	if (!self->use_mem_cache)
+	    self->slab_size = MIN(self->slab_size, self->max_memory / 4);
 
 	/* round slab size up to the nearest multiple of the block size */
 	self->slab_size =
@@ -1217,20 +1303,22 @@ start_part_impl(
 	}
 
 	/* fill in the file slice's length, now that we know the real part size */
-	if (self->disk_cache_filename)
+	if (self->disk_cache_dirname)
 	    self->part_slices->length = self->part_size;
 
 	if (self->use_mem_cache) {
 	    self->max_slabs = self->slabs_per_part;
 	} else {
-	    /* select a max_slabs based on max_memory, but make sure it's at least four,
-	     * so that we can be reading in a slab and writing out a slab at the same
-	     * time.  Note that max_slabs == 1 will cause deadlocks, due to some
-	     * assumptions in alloc_slab. */
 	    self->max_slabs = (self->max_memory + self->slab_size - 1) / self->slab_size;
-	    if (self->max_slabs < 4)
-		self->max_slabs = 4;
 	}
+
+	/* Note that max_slabs == 1 will cause deadlocks, due to some assumptions in
+	 * alloc_slab, so we check here that it's at least 2. */
+	if (self->max_slabs < 2)
+	    self->max_slabs = 2;
+
+	g_debug("XferDestTaper using slab_size %zu and max_slabs %ju",
+	    self->slab_size, (uintmax_t)self->max_slabs);
 
         bzero(&val, sizeof(val));
         if (!device_property_get(self->device, PROPERTY_STREAMING, &val)
@@ -1286,7 +1374,7 @@ cache_inform_impl(
     FileSlice *slice, *iter;
 
     /* do we even need this info? */
-    if (self->disk_cache_filename || self->use_mem_cache || self->part_size == 0)
+    if (self->disk_cache_dirname || self->use_mem_cache || self->part_size == 0)
 	return;
 
     /* handle the (admittedly unlikely) event that length is larger than gsize.
@@ -1328,6 +1416,7 @@ instance_init(
     self->last_part_successful = TRUE;
     self->paused = TRUE;
     self->part_stop_serial = 0;
+    self->disk_cache_fd = -1;
 }
 
 static void
@@ -1338,8 +1427,8 @@ finalize_impl(
     Slab *slab, *next_slab;
     FileSlice *slice, *next_slice;
 
-    if (self->disk_cache_filename)
-	g_free(self->disk_cache_filename);
+    if (self->disk_cache_dirname)
+	g_free(self->disk_cache_dirname);
 
     g_mutex_free(self->state_mutex);
     g_cond_free(self->state_cond);
@@ -1372,6 +1461,9 @@ finalize_impl(
 
     if (self->part_header)
 	dumpfile_free(self->part_header);
+
+    if (self->disk_cache_fd != -1)
+	close(self->disk_cache_fd); /* ignore error */
 
     /* chain up */
     G_OBJECT_CLASS(parent_class)->finalize(obj_self);
@@ -1464,7 +1556,7 @@ xfer_dest_taper(
     size_t max_memory,
     guint64 part_size,
     gboolean use_mem_cache,
-    const char *disk_cache_filename)
+    const char *disk_cache_dirname)
 {
     XferDestTaper *self = (XferDestTaper *)g_object_new(XFER_DEST_TAPER_TYPE, NULL);
 
@@ -1473,21 +1565,23 @@ xfer_dest_taper(
     self->partnum = 1;
 
     /* pick only one caching mechanism, caller! */
-    g_assert(!use_mem_cache || !disk_cache_filename);
+    g_assert(!use_mem_cache || !disk_cache_dirname);
 
     /* and if part size is zero, then we don't do any caching */
     if (part_size == 0) {
-	g_assert(!use_mem_cache && !disk_cache_filename);
+	g_assert(!use_mem_cache && !disk_cache_dirname);
     }
 
     self->use_mem_cache = use_mem_cache;
-    if (disk_cache_filename) {
-	self->disk_cache_filename = g_strdup(disk_cache_filename);
+    if (disk_cache_dirname) {
+	self->disk_cache_dirname = g_strdup(disk_cache_dirname);
 
 	self->part_slices = g_new0(FileSlice, 1);
-	self->part_slices->filename = g_strdup(disk_cache_filename);
+	self->part_slices->filename = NULL; /* indicates "dup() the disk_cache_fd" */
 	self->part_slices->offset = 0;
 	self->part_slices->length = 0; /* will be filled in in start_part */
+
+	self->disk_cache_fd = -1; /* will be filled in by the disk_cache_thread */
     }
 
     return XFER_ELEMENT(self);

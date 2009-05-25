@@ -1,3 +1,13 @@
+2009-05-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-dest-taper.c: make sure max_slabs >1; improve slab
+	  size heuristic; handle the case where extra slabs are still in memory
+	  when rewinding a disk-cached part; add 'volatile' and make memory
+	  access safer; use a cache directory, not file
+	* device-src/xfer-device.h: use a cache directory, not file
+	* installcheck/Amanda_Xfer_serveronly.pl: use cache directory
+	* perl/Amanda/Xfer.swg: use cache directory
+	* perl/Amanda/XferServer.swg: use cache directory
+
 2009-05-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/fileheader.c: use %zd for a size_t argument
 

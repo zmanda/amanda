@@ -67,7 +67,8 @@ GType xfer_dest_taper_get_type(void);
  *                    for a reasonable default.
  * @param part_size: the desired size of each part
  * @param use_mem_cache: if true, use the memory cache
- * @param disk_cache_filename: if not NULL, use this file as the disk cache
+ * @param disk_cache_dirname: if not NULL, this is the directory in which the disk
+ *		      cache should be created
  * @return: new element
  */
 XferElement *
@@ -75,7 +76,7 @@ xfer_dest_taper(
     size_t max_memory,
     guint64 part_size,
     gboolean use_mem_cache,
-    const char *disk_cache_filename);
+    const char *disk_cache_dirname);
 
 /* start writing the next part to the given device.  The device should be open,
  * but the new file not started.  This will abort if called with an element

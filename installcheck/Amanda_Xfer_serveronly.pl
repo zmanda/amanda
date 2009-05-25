@@ -107,7 +107,7 @@ Amanda::Config::config_init(0, undef);
     pass("read from a device succeeded, too, and data was correct");
 }
 
-my $disk_cache = "$AMANDA_TMPDIR/disk_cache";
+my $disk_cache_dir = "$Installcheck::TMP";
 my $RANDOM_SEED = 0xFACADE;
 
 # extra params:
@@ -248,7 +248,7 @@ test_taper_dest(
     "mem cache");
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
-    Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 0, $disk_cache),
+    Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 0, $disk_cache_dir),
     [ "PART-1-OK", "PART-2-OK", "PART-3-FAILED",
       "PART-3-OK", "PART-4-OK", "PART-5-OK",
       "DONE" ],
@@ -272,7 +272,7 @@ test_taper_dest(
     do_not_retry => 1);
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
-    Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 0, $disk_cache),
+    Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 0, $disk_cache_dir),
     [ "PART-1-OK", "PART-2-OK", "PART-3-FAILED",
       "PART-3-OK", "PART-4-OK", "CANCEL",
       "CANCELLED", "DONE" ],
@@ -300,9 +300,10 @@ sub test_taper_dest_cache_inform {
     my $fh;
     my $part_size = 1024*1024;
     my $file_size = $part_size * 4 + 100 * 1024;
+    my $cache_file = "$Installcheck::TMP/cache_file";
 
     # set up our "cache", cleverly using an Amanda::Xfer::Dest::Fd
-    open($fh, ">", "$disk_cache") or die("Could not open '$disk_cache' for writing");
+    open($fh, ">", "$cache_file") or die("Could not open '$cache_file' for writing");
     $xfer = Amanda::Xfer->new([
 	Amanda::Xfer::Source::Random->new($file_size, $RANDOM_SEED),
 	Amanda::Xfer::Dest::Fd->new(fileno($fh)),
@@ -330,7 +331,7 @@ sub test_taper_dest_cache_inform {
 	my $do_chunk = sub {
 	    my ($break) = @_;
 	    die unless $break > $offset;
-	    push @holding_chunks, [ $disk_cache, $offset, $break - $offset ];
+	    push @holding_chunks, [ $cache_file, $offset, $break - $offset ];
 	    $offset = $break;
 	};
 	$do_chunk->(277);
@@ -356,7 +357,7 @@ sub test_taper_dest_cache_inform {
     $hdr->{'disk'} = "/";
     $hdr->{'datestamp'} = "20080102030405";
 
-    open($fh, "<", "$disk_cache") or die("Could not open '$disk_cache' for reading");
+    open($fh, "<", "$cache_file") or die("Could not open '$cache_file' for reading");
     my $dest = Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 0, undef);
     $xfer = Amanda::Xfer->new([
 	Amanda::Xfer::Source::Fd->new(fileno($fh)),
@@ -420,6 +421,8 @@ sub test_taper_dest_cache_inform {
     Amanda::MainLoop::call_later(sub { $start_new_part->(1, 0, -1); });
     Amanda::MainLoop::run();
 
+    unlink($cache_file);
+
     return @messages;
 }
 
@@ -435,5 +438,4 @@ is_deeply([ test_taper_dest_cache_inform(omit_chunks => 1) ],
       "DONE" ],
     "cache_inform: element produces the correct series of messages when a chunk is missing");
 
-unlink($disk_cache);
 rmtree($holding_base);

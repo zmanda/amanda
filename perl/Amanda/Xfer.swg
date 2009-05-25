@@ -202,7 +202,7 @@ performed if C<$seed> is zero.
 =head3 Amanda::Xfer::Dest::Taper (SERVER ONLY)
 
   Amanda::Xfer::Dest::Taper->new($max_memory, $part_size,
-			    $use_mem_cache, $disk_cache_filename);
+			    $use_mem_cache, $disk_cache_dirname);
 
 This is C<Amanda::Xfer::Dest::Device>'s big cousin.  C<Taper> allows a single
 transfer to write to multiple files (parts) on a device, and even spread those
@@ -213,8 +213,8 @@ caches data from each part in one of a variety of ways, and supports
 The desired part size is C<$part_size>, although this value will be rounded up
 internally as necessary.  If C<$use_mem_cache> is true, each part will be
 cached in memory (using C<$part_size> bytes of memory; plan accordingly!).  If
-C<$disk_cache_filename> is defined, then each part will be cached on-disk in
-the indicated file.  It is an error to specify both in-memory and on-disk
+C<$disk_cache_dirname> is defined, then each part will be cached on-disk in a
+file in this directory.  It is an error to specify both in-memory and on-disk
 caching.  If neither option is specified, the element will operate
 successfully, but will not be able to retry a part unless C<cache_inform> has
 been used properly (see below).
