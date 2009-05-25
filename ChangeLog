@@ -1,4 +1,7 @@
 2009-05-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amservice.pl: call $testconfig->write();
+
+2009-05-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/xfer-dest-taper.c: make sure max_slabs >1; improve slab
 	  size heuristic; handle the case where extra slabs are still in memory
 	  when rewinding a disk-cached part; add 'volatile' and make memory

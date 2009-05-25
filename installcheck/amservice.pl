@@ -26,6 +26,7 @@ use Amanda::Constants;
 
 my $input_filename = "$Installcheck::TMP/amservice_input.txt";
 my $testconf = Installcheck::Run::setup();
+$testconf->write();
 my $input;
 
 sub write_input_file {
