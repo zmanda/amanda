@@ -1190,4 +1190,6 @@ typedef enum {
     KENCRYPT_YES	/* krb5 encryption enabled on all stream */
 } kencrypt_type;
 
+#define DUMP_LEVELS    400
+
 #endif	/* !AMANDA_H */

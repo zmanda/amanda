@@ -219,7 +219,7 @@ search_holding_disk(
 	if (!holding_file_get_dumpfile(holding_file, &file))
 	    continue;
 
-	if (file.dumplevel < 0 || file.dumplevel > 9) {
+	if (file.dumplevel < 0 || file.dumplevel >= DUMP_LEVELS) {
 	    dumpfile_free_data(&file);
 	    continue;
 	}

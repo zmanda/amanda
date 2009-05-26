@@ -33,7 +33,6 @@
 
 #include "amanda.h"
 
-#define DUMP_LEVELS	10	/* XXX should be in amanda.h */
 #define EPOCH		((time_t)0)
 
 typedef struct amandates_s {

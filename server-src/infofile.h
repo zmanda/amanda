@@ -34,7 +34,6 @@
 
 #include "amanda.h"
 
-#define DUMP_LEVELS	10
 #define MAX_LABEL	80
 #define EPOCH		((time_t)0)
 

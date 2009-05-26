@@ -597,7 +597,7 @@ amgtar_support(
     fprintf(stdout, "CONFIG YES\n");
     fprintf(stdout, "HOST YES\n");
     fprintf(stdout, "DISK YES\n");
-    fprintf(stdout, "MAX-LEVEL 9\n");
+    fprintf(stdout, "MAX-LEVEL 399\n");
     fprintf(stdout, "INDEX-LINE YES\n");
     fprintf(stdout, "INDEX-XML NO\n");
     fprintf(stdout, "MESSAGE-LINE YES\n");

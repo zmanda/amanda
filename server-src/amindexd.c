@@ -1067,7 +1067,7 @@ opaque_ls(
 
     /* return the information to the caller */
     lreply(200, _(" Opaque list of %s"), dir);
-    for(level=0; level<=9; level++) {
+    for(level=0; level < DUMP_LEVELS; level++) {
 	for (dir_item = get_dir_list(); dir_item != NULL; 
 	     dir_item = dir_item->next) {
 

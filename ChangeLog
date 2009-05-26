@@ -1,3 +1,12 @@
+2009-05-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Set MAX_LEVEL to 399.
+	* common-src/amanda.h: Set DUMP_LEVELS to 400.
+	* client-src/amandates.h: Remove DUMP_LEVELS.
+	* server-src/infofile.h: Remove DUMP_LEVELS
+	* server-src/amtrmidx.c: Fix for level with more than one digit.
+	* server-src/amindexd.c, server-src/find.c
+	  server-src/reporter.c: Use DUMP_LEVELS.
+
 2009-05-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/xfer-dest-taper.c: make the pointers, not the objects,
 	  volatile

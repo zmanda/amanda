@@ -98,7 +98,7 @@ static struct cumulative_stats {
     double coutsize, corigsize;			/* compressed dump only */
 } stats[3];
 
-static int dumpdisks[10], tapedisks[10], tapechunks[10];	/* by-level breakdown of disk count */
+static int dumpdisks[DUMP_LEVELS], tapedisks[DUMP_LEVELS], tapechunks[DUMP_LEVELS];	/* by-level breakdown of disk count */
 
 typedef struct taper_s {
     char *label;
@@ -923,7 +923,7 @@ output_stats(void)
 
     if(stats[1].dumpdisks > 0) {
 	first = 1;
-	for(lv = 1; lv < 10; lv++) if(dumpdisks[lv]) {
+	for(lv = 1; lv < DUMP_LEVELS; lv++) if(dumpdisks[lv]) {
 	    fputs(first?_("   ("):_(" "), mailf);
 	    first = 0;
 	    g_fprintf(mailf, _("%d:%d"), lv, dumpdisks[lv]);
@@ -967,7 +967,7 @@ output_stats(void)
 
     if(stats[1].tapedisks > 0) {
 	first = 1;
-	for(lv = 1; lv < 10; lv++) if(tapedisks[lv]) {
+	for(lv = 1; lv < DUMP_LEVELS; lv++) if(tapedisks[lv]) {
 	    fputs(first?_("   ("):_(" "), mailf);
 	    first = 0;
 	    g_fprintf(mailf, _("%d:%d"), lv, tapedisks[lv]);
@@ -985,7 +985,7 @@ output_stats(void)
 
     if(stats[1].tapechunks > 0) {
 	first = 1;
-	for(lv = 1; lv < 10; lv++) if(tapechunks[lv]) {
+	for(lv = 1; lv < DUMP_LEVELS; lv++) if(tapechunks[lv]) {
 	    fputs(first?_("   ("):_(" "), mailf);
 	    first = 0;
 	    g_fprintf(mailf, _("%d:%d"), lv, tapechunks[lv]);
@@ -1916,7 +1916,7 @@ handle_stats(void)
 		return;
 	    }
 	    skip_integer(s, ch);
-	    if(level < 0 || level > 9) {
+	    if(level < 0 || level >= DUMP_LEVELS) {
 		amfree(hostname);
 		amfree(diskname);
 		amfree(datestamp);
@@ -2214,7 +2214,7 @@ handle_chunk(
     skip_integer(s, ch);
     
     /*@ignore@*/
-    if(level < 0 || level > 9) {
+    if(level < 0 || level >= DUMP_LEVELS) {
  	amfree(hostname);
  	amfree(diskname);
  	amfree(datestamp);
@@ -2375,7 +2375,7 @@ handle_success(
     }
 
 
-    if(level < 0 || level > 9) {
+    if(level < 0 || level >= DUMP_LEVELS) {
 	amfree(hostname);
 	amfree(diskname);
 	amfree(datestamp);
