@@ -164,12 +164,13 @@ typedef struct XferDestTaper {
      * slab_cond.  These can only be changed by their respective threads, except
      * when they are NULL (in which case the reader will point them to a new
      * slab and signal the slab_cond). */
-    volatile Slab *disk_cacher_slab;
-    volatile Slab *mem_cache_slab;
-    volatile Slab *device_slab;
+    Slab *volatile disk_cacher_slab;
+    Slab *volatile mem_cache_slab;
+    Slab *volatile device_slab;
 
     /* tail and head of the slab train */
-    volatile Slab *oldest_slab, *newest_slab;
+    Slab *volatile oldest_slab;
+    Slab *volatile newest_slab;
 
     /* thread-specific information
      *
@@ -204,8 +205,8 @@ typedef struct XferDestTaper {
     volatile gboolean paused;
 
     /* The device to write to, and the header to write to it */
-    volatile Device *device;
-    volatile dumpfile_t *part_header;
+    Device *volatile device;
+    dumpfile_t *volatile part_header;
 
     /* If true, when unpaused, the device should begin at the beginning of the
      * cache; if false, it should proceed to the next part. */
@@ -225,7 +226,7 @@ typedef struct XferDestTaper {
     volatile guint64 part_first_serial, part_stop_serial;
 
     /* file slices for the current part */
-    volatile FileSlice *part_slices;
+    FileSlice *volatile part_slices;
 
     /* read/write file descriptor for the disk cache file, in use by the
      * disk_cache_thread.  If this is -1, wait on state_cond until it is not;
@@ -408,7 +409,7 @@ unref_slab(
 static inline Slab *
 next_slab(
     XferDestTaper *self,
-    Slab **slabp)
+    Slab * volatile *slabp)
 {
     Slab *next;
 
