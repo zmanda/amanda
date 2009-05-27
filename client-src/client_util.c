@@ -1399,6 +1399,12 @@ check_file(
 	    g_printf(_("ERROR [%s is not a file]\n"), quoted);
 	    amfree(quoted);
 	}
+    } else {
+	int save_errno = errno;
+	quoted = quote_string(filename);
+	g_printf(_("ERROR [can not stat %s: %s]\n"), quoted,
+		 strerror(save_errno));
+	amfree(quoted);
     }
     if (getuid() == geteuid()) {
 	check_access(filename, mode);
@@ -1421,8 +1427,10 @@ check_dir(
 	    amfree(quoted);
 	}
     } else {
+	int save_errno = errno;
 	quoted = quote_string(dirname);
-	g_printf(_("ERROR [%s: %s]\n"), quoted, strerror(errno));
+	g_printf(_("ERROR [can not stat %s: %s]\n"), quoted,
+		 strerror(save_errno));
 	amfree(quoted);
     }
     if (getuid() == geteuid()) {
@@ -1449,7 +1457,7 @@ check_suid(
 	}
     }
     else {
-	g_printf(_("ERROR [can not stat %s]\n"), quoted);
+	g_printf(_("ERROR [can not stat %s: %s]\n"), quoted, strerror(errno));
     }
     amfree(quoted);
 #else

@@ -1,3 +1,13 @@
+2009-05-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c: Improve error reporting.
+	* client-src/sendsize.c: Typo
+	* client-src/selfcheck.c: Execute application with --calcsize even if
+	                          it not the first estimate.
+	* application-src/amgtar.c: Check calcsize binary.
+	* application-src/amstar.c: Check calcsize binary.
+	* server-src/planner.c: log sendsize error as warning if a server
+	                        estimate is available.
+
 2009-05-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Set MAX_LEVEL to 399.
 	* common-src/amanda.h: Set DUMP_LEVELS to 400.

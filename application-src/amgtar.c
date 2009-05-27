@@ -647,6 +647,13 @@ amgtar_selfcheck(
     } else if (argument->dle.device) {
 	check_dir(argument->dle.device, R_OK);
     }
+    if (argument->calcsize) {
+	char *calcsize = vstralloc(amlibexecdir, "/", "calcsize",
+				   versionsuffix(), NULL);
+	check_file(calcsize, X_OK);
+	check_suid(calcsize);
+	amfree(calcsize);
+    }
     set_root_privs(0);
 }
 

@@ -778,6 +778,7 @@ check_disk(
 		char *cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
 		GSList   *scriptlist;
 		script_t *script;
+		estimatelist_t el;
 		char *cmdline;
 
 		aclose(app_err[0]);
@@ -812,9 +813,12 @@ check_disk(
 		if (dle->record && bsu->record == 1) {
 		    g_ptr_array_add(argv_ptr, stralloc("--record"));
 		}
-		if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE &&
-		    bsu->calcsize == 1) {
-		    g_ptr_array_add(argv_ptr, stralloc("--calcsize"));
+		
+		for (el = dle->estimatelist; el != NULL; el=el->next) {
+		    estimate_t estimate = (estimate_t)GPOINTER_TO_INT(el->data);
+		    if (estimate == ES_CALCSIZE && bsu->calcsize == 1) {
+			g_ptr_array_add(argv_ptr, stralloc("--calcsize"));
+		    }
 		}
 		application_property_add_to_argv(argv_ptr, dle, bsu);
 

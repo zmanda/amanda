@@ -829,7 +829,7 @@ application_api_calc_estimate(
 		    if (est->est[level].needestimate) {
 			g_printf(_("%s %d ERROR %s\n"),
 				 est->dle->disk, level, qerrmsg);
-			dbprintf(_("%s %d ERROR A %s\n"),
+			dbprintf(_("%s %d ERROR %s\n"),
 				 est->qamname, level, qerrmsg);
 		    }
 		}

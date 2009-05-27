@@ -358,6 +358,14 @@ amstar_selfcheck(
 	check_file(star_path, X_OK);
     }
 
+    if (argument->calcsize) {
+	char *calcsize = vstralloc(amlibexecdir, "/", "calcsize",
+				   versionsuffix(), NULL);
+	check_file(calcsize, X_OK);
+	check_suid(calcsize);
+	amfree(calcsize);
+    }
+
     {
 	char *amandates_file;
 	amandates_file = getconf_str(CNF_AMANDATES);

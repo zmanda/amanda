@@ -2182,8 +2182,16 @@ static void analyze_estimate(
     /* It can be an error from a script          */
     if (est(dp)->errstr) {
 	char *qerrstr = quote_string(est(dp)->errstr);
-	log_add(L_FAIL, _("%s %s %s 0 %s"), dp->host->hostname, qname, 
-		planner_timestamp, qerrstr);
+	/* Log only a warning if a server estimate is available */
+	if (est(dp)->estimate[0].nsize > 0 ||
+	    est(dp)->estimate[1].nsize > 0 ||
+	    est(dp)->estimate[2].nsize > 0) {
+	    log_add(L_WARNING, _("%s %s %s 0 %s"), dp->host->hostname, qname, 
+		    planner_timestamp, qerrstr);
+	} else {
+	    log_add(L_FAIL, _("%s %s %s 0 %s"), dp->host->hostname, qname, 
+		    planner_timestamp, qerrstr);
+	}
 	amfree(qerrstr);
     }
 
