@@ -339,6 +339,7 @@ is case insensitive for host but is case sensitive for disk. A match
 succeeds if all words in your expression match contiguous words in 
 the host or disk.</para>
 
+<para>If the disk is a UNC ("\\windows\share") then all '\' are converted to '/' before the match.  Using '\' is complicated because of the extra quoting required by the shell and amanda. It's easier to use '/' because it require less quoting ("//windows/share")</para>
 
 <variablelist remap='TP'>
 
@@ -350,6 +351,11 @@ the host or disk.</para>
     <varlistentry>
     <term>/</term>
     <listitem><para>word separator for a disk</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>\</term>
+    <listitem><para>word separator for a UNC disk</para></listitem>
     </varlistentry>
 
     <varlistentry>
@@ -488,6 +494,27 @@ the host or disk.</para>
     <listitem><para>
     Will match the disks <filename>/usr</filename>
     but not <filename>/usr/local</filename>.
+    </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>share</term>
+    <listitem><para>
+    Will match the disks <filename>\\windows1\share</filename> and <filename>\\windows2\share</filename>.
+    </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>share*</term>
+    <listitem><para>
+    Will match the disks <filename>\\windows\share1</filename> and <filename>\\windows\share2</filename>.
+    </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>//windows/share</term>
+    <listitem><para>
+    Will match the disk <filename>\\windows\share</filename>.
     </para></listitem>
     </varlistentry>
 

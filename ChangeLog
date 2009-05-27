@@ -1,4 +1,8 @@
 2009-05-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/match.c: Match UNC name diskname.
+	* man/xml-source/amanda.8.xml: Document UNC matcher.
+
+2009-05-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c: Improve error reporting.
 	* client-src/sendsize.c: Typo
 	* client-src/selfcheck.c: Execute application with --calcsize even if

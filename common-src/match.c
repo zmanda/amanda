@@ -379,8 +379,8 @@ match_word(
     int  last_ch;
     int  next_ch;
     size_t  lenword;
-    char *nword;
-    char *nglob;
+    char  *mword, *nword;
+    char  *mglob, *nglob;
     char *g; 
     const char *w;
     int  i;
@@ -388,8 +388,41 @@ match_word(
     lenword = strlen(word);
     nword = (char *)alloc(lenword + 3);
 
+    if (separator == '/' && lenword > 2 && word[0] == '\\' && word[1] == '\\') {
+	/* Convert all '\\' to '/' */
+	mword = (char *)alloc(lenword + 1);
+	r = mword;
+	w = word;
+	while (*w != '\0') {
+	    if (*w == '\\') {
+		*r++ = '/';
+		w += 1;
+	    } else {
+		*r++ = *w++;
+	    }
+	}
+	*r++ = '\0';
+	lenword = strlen(word);
+
+	mglob = (char *)alloc(strlen(glob) + 1);
+	r = mglob;
+	w = glob;
+	while (*w != '\0') {
+	    if (*w == '\\') {
+		*r++ = '/';
+		w += 1;
+	    } else {
+		*r++ = *w++;
+	    }
+	}
+	*r++ = '\0';
+    } else {
+	mword = stralloc(word);
+	mglob = stralloc(glob);
+    }
+
     r = nword;
-    w = word;
+    w = mword;
     if(lenword == 1 && *w == separator) {
 	*r++ = separator;
 	*r++ = separator;
@@ -408,10 +441,10 @@ match_word(
      * Allocate an area to convert into.  The worst case is a six to
      * one expansion.
      */
-    len = strlen(glob);
+    len = strlen(mglob);
     regex = (char *)alloc(1 + len * 6 + 1 + 1 + 2 + 2);
     r = regex;
-    nglob = stralloc(glob);
+    nglob = stralloc(mglob);
     g = nglob;
 
     if((len == 1 && nglob[0] == separator) ||
@@ -513,6 +546,8 @@ match_word(
 
     i = match(regex,nword);
 
+    amfree(mword);
+    amfree(mglob);
     amfree(nword);
     amfree(nglob);
     amfree(regex);
