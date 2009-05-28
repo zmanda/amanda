@@ -249,7 +249,8 @@ main(
 
 		datestamp = stralloc(names[i]);
 		datestamp[len_date] = '\0';
-		sscanf(&names[i][len_date+1], "%d", &level);
+		if (sscanf(&names[i][len_date+1], "%d", &level) != 1)
+		    level = 0;
 		if(!dump_exist(output_find, diskp->host->hostname,
 				diskp->name, datestamp, level)) {
 		    char *path, *qpath;
