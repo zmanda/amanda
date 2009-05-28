@@ -2569,6 +2569,7 @@ handle_strange(void)
     char *strangestr = NULL;
     repdata_t *repdata;
     char *qdisk;
+    int nb_stranges = 0;
 
     repdata = handle_success(L_SUCCESS);
     if (!repdata)
@@ -2589,7 +2590,13 @@ handle_strange(void)
 	if(strncmp_const_skip(curstr, "sendbackup: warning ", s, ch) == 0) {
 	    strangestr = newstralloc(strangestr, s);
 	}
-	addline(&strangedet, curstr);
+	if (nb_stranges++ < 100) {
+	    addline(&strangedet, curstr);
+	}
+    }
+    if (nb_stranges > 100) {
+	addline(&strangedet, "\\--------");
+	addline(&strangedet, "%d lines follow, see the corresponding log.* file for the complete list", nb_stranges - 100);
     }
     addline(&strangedet,"\\--------");
 
@@ -2712,6 +2719,7 @@ handle_failed(void)
     }
 
     if(curprog == P_DUMPER) {
+	int nb_failed = 0;
 	addline(&errdet,"");
 	str = vstrallocf("/-- %s FAILED %s",
 			prefix(hostname, qdiskname, level), 
@@ -2720,7 +2728,13 @@ handle_failed(void)
 	amfree(str);
 	while(contline_next()) {
 	    get_logline(logfile);
-	    addline(&errdet, curstr);
+	    if (nb_failed++ < 100) {
+		addline(&errdet, curstr);
+	    }
+	}
+	if (nb_failed > 100) {
+	    addline(&errdet, "\\--------");
+	    addline(&errdet, "%d lines follow, see the corresponding log.* file for the complete list", nb_failed - 100);
 	}
 	addline(&errdet,"\\--------");
 	exit_status |= STATUS_FAILED;
