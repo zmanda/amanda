@@ -2595,8 +2595,10 @@ handle_strange(void)
 	}
     }
     if (nb_stranges > 100) {
+	char *msg = g_strdup_printf("%d lines follow, see the corresponding log.* file for the complete list", nb_stranges - 100);
 	addline(&strangedet, "\\--------");
-	addline(&strangedet, "%d lines follow, see the corresponding log.* file for the complete list", nb_stranges - 100);
+	addline(&strangedet, msg);
+	amfree(msg);
     }
     addline(&strangedet,"\\--------");
 
@@ -2733,8 +2735,10 @@ handle_failed(void)
 	    }
 	}
 	if (nb_failed > 100) {
+	    char *msg = g_strdup_printf("%d lines follow, see the corresponding log.* file for the complete list", nb_failed - 100);
 	    addline(&errdet, "\\--------");
-	    addline(&errdet, "%d lines follow, see the corresponding log.* file for the complete list", nb_failed - 100);
+	    addline(&errdet, msg);
+	    amfree(msg);
 	}
 	addline(&errdet,"\\--------");
 	exit_status |= STATUS_FAILED;
