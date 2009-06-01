@@ -80,6 +80,7 @@ sub new {
 	config => $config,
 	reserved => 0,
 	got_info => 0,
+	got_info_cbs => [],
 	nslots => undef,
 	backwards => undef,
 	searchable => undef,
@@ -105,20 +106,18 @@ sub load {
     }
 
     # make sure the info is loaded, and re-call load() if we have to wait
-    if (!defined($self->{'nslots'})) {
-	$self->_get_info(
-	    sub {
-                my ($err) = @_;
-		$self->load(%params);
-	    },
+    return unless $self->_get_info(
 	    sub {
 		my ($exitval, $message) = @_;
-		# this is always fatal - we can't load without info
-		return $self->make_error("fatal", $params{'res_cb'},
-		    message => $message);
+		if (defined $exitval) { # error
+		    # this is always fatal - we can't load without info
+		    return $self->make_error("fatal", $params{'res_cb'},
+			message => $message);
+		} else {
+		    # repeat the load, now that we have info
+		    $self->load(%params);
+		}
 	    });
-	return;
-    }
 
     my $run_success_cb = sub {
         my ($slot, $rest) = @_;
@@ -245,25 +244,25 @@ sub info_setup {
     my $self = shift;
     my %params = @_;
 
-    if (!$self->{'got_info'}) {
-	$self->_get_info(
-	    sub {
-		$params{'finished_cb'}->();
-	    },
+    return unless $self->_get_info(
 	    sub {
 		my ($exitval, $message) = @_;
-		if ($exitval >= 2) {
-		    return $self->make_error("fatal", $params{'finished_cb'},
-			message => $message);
+		if (defined $exitval) { # error
+		    if ($exitval >= 2) {
+			return $self->make_error("fatal", $params{'finished_cb'},
+			    message => $message);
+		    } else {
+			return $self->make_error("failed", $params{'finished_cb'},
+			    reason => "notfound",
+			    message => $message);
+		    }
 		} else {
-		    return $self->make_error("failed", $params{'finished_cb'},
-			reason => "notfound",
-			message => $message);
+		    # no error, so we're done with setup
+		    $params{'finished_cb'}->();
 		}
 	    });
-    } else {
-	$params{'finished_cb'}->();
-    }
+
+    $params{'finished_cb'}->();
 }
 
 sub info_key {
@@ -349,18 +348,32 @@ sub update {
     );
 }
 
-# Internal function to call the script's -info, store the results in $self, and
-# call either $success_cb (with no arguments) or $error_cb (with an exitval and
-# error message).
+# Internal function to call the script's -info and store the results in $self.
+# If this returns true, then the info is loaded; otherwise, got_info_cb will be
+# called either with no arguments (success) or ($exitval, $message) on error.
 sub _get_info {
-    my ($self, $success_cb, $error_cb) = @_;
+    my ($self, $got_info_cb) = @_;
+
+    return 1 if ($self->{'got_info'});
+
+    push @{$self->{'got_info_cbs'}}, $got_info_cb;
+
+    # if we're already getting the info, we're done
+    return if (@{$self->{'got_info_cbs'}} > 1);
+
+    my $call_cbs = sub {
+	my @cb_args = @_;
+	while (my $cb = pop @{$self->{'got_info_cbs'}}) {
+	    $cb->(@cb_args);
+	}
+    };
 
     my $run_success_cb = sub {
 	my ($slot, $rest) = @_;
 	# old, unsearchable changers don't return the third result, so it's
 	# optional in the regex
 	unless ($rest =~ /(\d+) (\d+) ?(\d+)?/) {
-	    $error_cb->(2, "Malformed response from changer -info: $rest");
+	    $call_cbs->(2, "Malformed response from changer -info: $rest");
 	    return;
 	}
 
@@ -369,9 +382,14 @@ sub _get_info {
 	$self->{'searchable'} = $3? 1:0;
 
 	$self->{'got_info'} = 1;
-	$success_cb->();
+	$call_cbs->();
     };
-    $self->_run_tpchanger($run_success_cb, $error_cb, "-info");
+
+    my $run_error_cb = sub {
+	$call_cbs->(@_);
+    };
+
+    $self->_run_tpchanger($run_success_cb, $run_error_cb, "-info");
 }
 
 # Internal function to create a temporary configuration directory, which persists

@@ -1,4 +1,7 @@
 2009-06-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/compat.pm: handle concurrent calls to _get_info
+
+2009-06-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_IPC_LineProtocol.pl: make children wait for a
 	  message before existing; fixes problems on OS X
 
