@@ -26,7 +26,7 @@ use Amanda::Config qw( :getconf config_dir_relative );
 use Amanda::Debug qw( :logging );
 use Amanda::Device qw( :constants );
 use Amanda::Xfer qw( :constants );
-use Amanda::Header qw( :filetype_t );
+use Amanda::Header qw( :constants );
 use Amanda::MainLoop;
 use Amanda::DB::Catalog;
 use Amanda::Changer;

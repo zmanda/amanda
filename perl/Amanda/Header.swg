@@ -98,7 +98,7 @@ A header object has the following keys:
  blocksize
 
 C<type> is one of the following constants, which are availble for import in the
-tag C<:filetype_t>:
+tag C<:constants>:
 
  F_UNKNOWN
  F_WEIRD
@@ -122,6 +122,7 @@ amglue_add_constant(F_DUMPFILE, filetype_t);
 amglue_add_constant(F_CONT_DUMPFILE, filetype_t);
 amglue_add_constant(F_SPLIT_DUMPFILE, filetype_t);
 amglue_add_constant(F_EMPTY, filetype_t);
+amglue_copy_to_tag(filetype_t, constants);
 
 typedef char string_t[STRMAX];
 %typemap(memberin) string_t {
