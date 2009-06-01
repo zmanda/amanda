@@ -1,4 +1,7 @@
 2009-06-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/s3-device.c: start delete at file 1
+
+2009-06-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/compat.pm: handle concurrent calls to _get_info
 
 2009-06-01  Dustin J. Mitchell <dustin@zmanda.com>

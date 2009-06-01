@@ -600,7 +600,7 @@ delete_all_files(S3Device *self)
         }
     }
 
-    for (file = 0; file <= last_file; file++) {
+    for (file = 1; file <= last_file; file++) {
         if (!delete_file(self, file))
             /* delete_file already set our error message */
             return FALSE;
