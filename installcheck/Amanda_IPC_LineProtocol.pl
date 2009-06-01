@@ -144,6 +144,7 @@ my $quit_cb = make_cb(quit_cb => sub {
     my ($rdh, $wrh) = @_;
     $wrh->autoflush(1);
 
+    $rdh->getline(); # get 'start\n'
     $wrh->write("QUIT \"just because\"");
 });
 
@@ -151,6 +152,10 @@ $proto = TestProtocol->new(
     rx_fh => $rx_fh, tx_fh => $tx_fh,
     message_cb => $message_cb,
     TestProtocol::QUIT => $quit_cb);
+Amanda::MainLoop::call_later(sub {
+    $tx_fh->autoflush(1);
+    $tx_fh->write("start\n");
+});
 Amanda::MainLoop::run();
 waitpid($pid, 0);
 
@@ -171,6 +176,7 @@ is_deeply([ @events ],
     my ($rdh, $wrh) = @_;
     $wrh->autoflush(1);
 
+    $rdh->getline(); # get 'start\n'
     $wrh->write("SNARSBLAT, yo");
 });
 
@@ -178,6 +184,10 @@ $proto = TestProtocol->new(
     rx_fh => $rx_fh, tx_fh => $tx_fh,
     message_cb => sub { push @events, [ @_ ]; },
     TestProtocol::QUIT => $quit_cb);
+Amanda::MainLoop::call_later(sub {
+    $tx_fh->autoflush(1);
+    $tx_fh->write("start\n");
+});
 Amanda::MainLoop::run();
 waitpid($pid, 0);
 

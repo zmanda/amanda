@@ -1,3 +1,7 @@
+2009-06-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_IPC_LineProtocol.pl: make children wait for a
+	  message before existing; fixes problems on OS X
+
 2009-05-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amindexd.c: fix sscanf.
 
