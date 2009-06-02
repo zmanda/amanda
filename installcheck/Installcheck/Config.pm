@@ -131,9 +131,9 @@ sub new {
 
 =item C<add_param($param, $value)>
 
-Add the given parameter to the configuration file, overriding any
-previous value.  Note that strings which should be quoted in the configuration
-file itself must be double-quoted here, e.g.,
+Add the given parameter to the configuration file.  Note that strings which
+should be quoted in the configuration file itself must be double-quoted here,
+e.g.,
 
   $testconf->add_param('org' => '"MyOrganization"');
 
@@ -148,11 +148,10 @@ sub add_param {
 
 =item C<add_client_param($param, $value)>, C<add_client_config_param($param, $value)>
 
-Add the given parameter to the client configuration file, overriding any
-previous value, as C<add_param> does for the server configuration file.
-C<add_client_param> addresses the global client configuration file, while
-C<add_client_config_param> inserts parmeters into
-C<TESTCONF/amanda-client.conf>.
+Add the given parameter to the client configuration file, as C<add_param> does
+for the server configuration file.  C<add_client_param> addresses the global
+client configuration file, while C<add_client_config_param> inserts parmeters
+into C<TESTCONF/amanda-client.conf>.
 
   $testconf->add_client_param('auth' => '"krb2"');
   $testconf->add_client_config_param('client_username' => '"freddy"');
@@ -171,6 +170,27 @@ sub add_client_config_param {
     my ($param, $value) = @_;
 
     push @{$self->{'client_config_params'}}, $param, $value;
+}
+
+=item C<remove_param($param)>
+
+Remove the given parameter from the config file.
+
+=cut
+
+sub remove_param {
+    my $self = shift;
+    my ($param) = @_;
+
+    my @new_params;
+
+    while (@{$self->{'params'}}) {
+	my ($p, $v) = (shift @{$self->{'params'}}, shift @{$self->{'params'}});
+	next if $p eq $param;
+	push @new_params, $p, $v;
+    }
+
+    $self->{'params'} = \@new_params;
 }
 
 =item C<add_tapetype($name, $values_arrayref)>

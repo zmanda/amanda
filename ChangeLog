@@ -1,4 +1,8 @@
 2009-06-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Config.pm: add remove_param
+	* installcheck/Makefile.am installcheck/amtape.pl: new installcheck
+
+2009-06-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Header.swg: add :constant tag
 	* server-src/amvault.pl: use it
 

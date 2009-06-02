@@ -40,6 +40,7 @@ server_tests = \
 	bigint \
 	taper \
 	amgetconf \
+        amtape \
 	amtapetype
 
 # (note that _setupcache should come first here)

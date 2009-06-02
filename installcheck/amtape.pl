@@ -1,0 +1,234 @@
+# Copyright (c) 2005-2008 Zmanda Inc.  All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+#
+# Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
+# Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
+
+use Test::More tests => 45;
+
+use lib "@amperldir@";
+use Installcheck::Config;
+use Installcheck::Run qw(run run_err run_get load_vtape vtape_dir);
+use Amanda::Device qw( :constants );
+use Amanda::Config qw( :init :getconf );
+use Amanda::Paths;
+use Amanda::Debug;
+use Amanda::Tapelist;
+
+my $testconf;
+
+Amanda::Debug::dbopen("installcheck");
+
+$testconf = Installcheck::Run::setup();
+$testconf->write();
+
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my ($cfgerr_level, @cfgerr_errors) = config_errors();
+if ($cfgerr_level >= $CFGERR_WARNINGS) {
+    config_print_errors();
+    BAIL_OUT("config errors");
+}
+
+# label slot 2 with "MyTape", slot 3 with "TESTCONF13", and add
+# the latter to the tapelist
+sub setup_vtapes {
+    my ($devdir, $dev);
+
+    $devdir = load_vtape(2);
+    $dev = Amanda::Device->new("file:$devdir");
+    ($dev && $dev->status == $DEVICE_STATUS_SUCCESS)
+        or BAIL_OUT("device error");
+
+    $dev->start($ACCESS_WRITE, "MyTape", undef)
+        or BAIL_OUT("device error");
+    $dev->finish()
+        or BAIL_OUT("device error");
+
+
+    $devdir = load_vtape(3);
+    $dev = Amanda::Device->new("file:$devdir");
+    ($dev && $dev->status == $DEVICE_STATUS_SUCCESS)
+        or BAIL_OUT("device error");
+
+    $dev->start($ACCESS_WRITE, "TESTCONF13", undef)
+        or BAIL_OUT("device error");
+    $dev->finish()
+        or BAIL_OUT("device error");
+
+    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+    my $tl = Amanda::Tapelist::read_tapelist($tlf);
+    $tl->add_tapelabel("0", "TESTCONF13", "test tape");
+    $tl->write($tlf);
+}
+
+like(run_err('amtape'),
+    qr/^Usage:/,
+    "bare 'amtape' gives usage message");
+
+# in general, output goes to stderr, so we can't use run_get.  These checks
+# accomplish two things: ensure that amtape can invoke the changer functions
+# correctly (and not generate an error), and ensure that it gives the
+# appropriate responses.  It does not exercise the changer itself -- most
+# of these operations are meaningless for vtapes, anyway.
+
+setup_vtapes();
+
+ok(run('amtape', 'TESTCONF', 'reset'),
+    "'amtape TESTCONF reset'");
+like($Installcheck::Run::stderr,
+    qr/changer is reset, slot .* is loaded./,
+    "..result correct");
+
+ok(run('amtape', 'TESTCONF', 'eject'),
+    "'amtape TESTCONF eject'");
+like($Installcheck::Run::stderr,
+    qr/slot .* is ejected./,
+    "..result correct");
+
+# TODO: chg-disk doesn't support "clean"
+
+ok(run('amtape', 'TESTCONF', 'slot', '2'),
+    "'amtape TESTCONF slot 2'");
+like($Installcheck::Run::stderr,
+    qr/changed to slot 2 on/,
+    "..result correct");
+
+ok(run('amtape', 'TESTCONF', 'slot', 'current'),
+    "'amtape TESTCONF slot current'");
+like($Installcheck::Run::stderr,
+    qr/changed to slot 2 on/,
+    "..result correct");
+
+ok(run('amtape', 'TESTCONF', 'slot', 'next'),
+    "'amtape TESTCONF slot next'");
+like($Installcheck::Run::stderr,
+    qr/changed to slot 3 on/,
+    "..result correct");
+
+ok(run('amtape', 'TESTCONF', 'slot', 'advance'),
+    "'amtape TESTCONF slot advance'");
+like($Installcheck::Run::stderr,
+    qr/changed to slot 1 on/, # loop around to slot 1
+    "..result correct");
+
+ok(run('amtape', 'TESTCONF', 'label', 'MyTape'),
+    "'amtape TESTCONF label MyTape'");
+like($Installcheck::Run::stderr,
+    qr/slot +2:.*label MyTape/,
+    "..result correct");
+
+is(run_get('amtape', 'TESTCONF', 'device'),
+    "file:" . vtape_dir(),
+    "'amtape TESTCONF device' gives correct device");
+
+ok(run('amtape', 'TESTCONF', 'current'),
+    "'amtape TESTCONF current'");
+like($Installcheck::Run::stderr,
+    qr/slot +2:.*label MyTape/,
+    "..result correct");
+
+ok(run('amtape', 'TESTCONF', 'update'),
+    "'amtape TESTCONF update'");
+like($Installcheck::Run::stderr,
+    qr/slot +2:.*label MyTape\nslot +3/,
+    "..result correct");
+
+ok(run('amtape', 'TESTCONF', 'show'),
+    "'amtape TESTCONF show'");
+like($Installcheck::Run::stderr,
+    qr/slot +2:.*label MyTape\nslot +3/,
+    "..result correct");
+
+ok(run('amtape', 'TESTCONF', 'taper'),
+    "'amtape TESTCONF taper'");
+like($Installcheck::Run::stderr,
+    qr/Tape with label `TESTCONF13' is now loaded/,
+    "..result correct");
+
+# shift to using the new Amanda::Changer::disk
+$testconf->remove_param("tapedev");
+$testconf->remove_param("tpchanger");
+$testconf->add_param("tpchanger", "\"chg-disk:" . vtape_dir(). "\"");
+$testconf->write();
+
+setup_vtapes();
+
+ok(run('amtape', 'TESTCONF', 'reset'),
+    "'amtape TESTCONF reset'");
+like($Installcheck::Run::stderr,
+    qr/changer is reset, slot .* is loaded./,
+    "..result correct");
+
+ok(run('amtape', 'TESTCONF', 'slot', '2'),
+    "'amtape TESTCONF slot 2'");
+like($Installcheck::Run::stderr,
+    qr/changed to slot 2 on/,
+    "..result correct");
+
+ok(run('amtape', 'TESTCONF', 'slot', 'current'),
+    "'amtape TESTCONF slot current'");
+like($Installcheck::Run::stderr,
+    qr/changed to slot 2 on/,
+    "..result correct");
+
+ok(run('amtape', 'TESTCONF', 'slot', 'next'),
+    "'amtape TESTCONF slot next'");
+like($Installcheck::Run::stderr,
+    qr/changed to slot 3 on/,
+    "..result correct");
+
+ok(run('amtape', 'TESTCONF', 'slot', 'advance'),
+    "'amtape TESTCONF slot advance'");
+like($Installcheck::Run::stderr,
+    qr/changed to slot 1 on/, # loop around to slot 1
+    "..result correct");
+
+ok(run('amtape', 'TESTCONF', 'label', 'MyTape'),
+    "'amtape TESTCONF label MyTape'");
+like($Installcheck::Run::stderr,
+    qr/slot +2:.*label MyTape/,
+    "..result correct");
+
+is(run_get('amtape', 'TESTCONF', 'device'),
+    "file:" . vtape_dir() . "/drive0",
+    "'amtape TESTCONF device' gives correct device");
+
+ok(run('amtape', 'TESTCONF', 'current'),
+    "'amtape TESTCONF current'");
+like($Installcheck::Run::stderr,
+    qr/slot +2:.*label MyTape/,
+    "..result correct");
+
+ok(run('amtape', 'TESTCONF', 'update'),
+    "'amtape TESTCONF update'");
+like($Installcheck::Run::stderr,
+    qr/slot +2:.*label MyTape\nslot +3/,
+    "..result correct");
+
+ok(run('amtape', 'TESTCONF', 'show'),
+    "'amtape TESTCONF show'");
+like($Installcheck::Run::stderr,
+    qr/slot +2:.*label MyTape\nslot +3/,
+    "..result correct");
+
+ok(run('amtape', 'TESTCONF', 'taper'),
+    "'amtape TESTCONF taper'");
+like($Installcheck::Run::stderr,
+    qr/Tape with label `TESTCONF13' is now loaded/,
+    "..result correct");
+
+
+#Installcheck::Run::cleanup();
+
