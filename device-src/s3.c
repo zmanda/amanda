@@ -108,17 +108,18 @@
 
 /* Results which should always be retried */
 #define RESULT_HANDLING_ALWAYS_RETRY \
-        { 400,  S3_ERROR_RequestTimeout,     0,                         S3_RESULT_RETRY }, \
-        { 409,  S3_ERROR_OperationAborted,   0,                         S3_RESULT_RETRY }, \
-        { 412,  S3_ERROR_PreconditionFailed, 0,                         S3_RESULT_RETRY }, \
-        { 500,  S3_ERROR_InternalError,      0,                         S3_RESULT_RETRY }, \
-        { 501,  S3_ERROR_NotImplemented,     0,                         S3_RESULT_RETRY }, \
-        { 0,    0,                           CURLE_COULDNT_CONNECT,     S3_RESULT_RETRY }, \
-        { 0,    0,                           CURLE_PARTIAL_FILE,        S3_RESULT_RETRY }, \
-        { 0,    0,                           CURLE_OPERATION_TIMEOUTED, S3_RESULT_RETRY }, \
-        { 0,    0,                           CURLE_SEND_ERROR,          S3_RESULT_RETRY }, \
-        { 0,    0,                           CURLE_RECV_ERROR,          S3_RESULT_RETRY }, \
-        { 0,    0,                           CURLE_GOT_NOTHING,         S3_RESULT_RETRY }
+        { 400,  S3_ERROR_RequestTimeout,     0,                          S3_RESULT_RETRY }, \
+        { 409,  S3_ERROR_OperationAborted,   0,                          S3_RESULT_RETRY }, \
+        { 412,  S3_ERROR_PreconditionFailed, 0,                          S3_RESULT_RETRY }, \
+        { 500,  S3_ERROR_InternalError,      0,                          S3_RESULT_RETRY }, \
+        { 501,  S3_ERROR_NotImplemented,     0,                          S3_RESULT_RETRY }, \
+        { 0,    0,                           CURLE_COULDNT_CONNECT,      S3_RESULT_RETRY }, \
+        { 0,    0,                           CURLE_COULDNT_RESOLVE_HOST, S3_RESULT_RETRY }, \
+        { 0,    0,                           CURLE_PARTIAL_FILE,         S3_RESULT_RETRY }, \
+        { 0,    0,                           CURLE_OPERATION_TIMEOUTED,  S3_RESULT_RETRY }, \
+        { 0,    0,                           CURLE_SEND_ERROR,           S3_RESULT_RETRY }, \
+        { 0,    0,                           CURLE_RECV_ERROR,           S3_RESULT_RETRY }, \
+        { 0,    0,                           CURLE_GOT_NOTHING,          S3_RESULT_RETRY }
 
 /*
  * Data structures and associated functions
