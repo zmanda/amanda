@@ -39,7 +39,7 @@ AC_DEFUN([AMANDA_PROG_GNUTAR],
 	for gnutar_name in gtar gnutar tar; do
 	    AC_PATH_PROGS(GNUTAR, $gnutar_name, , $LOCSYSPATH)
 	    if test -n "$GNUTAR"; then
-	      case "`\"$GNUTAR\" --version 2>&1`" in
+	      case `"$GNUTAR" --version 2>&1` in
 	       *GNU*tar* | *Free*paxutils* )
 			    # OK, it is GNU tar
 			    break
