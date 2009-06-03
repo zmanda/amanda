@@ -1,4 +1,8 @@
 2009-06-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/dumpers.m4: fix more quoting, thanks again to Eric
+	  Olsen <herolsen@alumni.upenn.edu>
+
+2009-06-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/dumpers.m4: fix quoting for shell portability
 
 2009-06-02  Nikolas Coukouma <atrus@zmanda.com>
