@@ -1,3 +1,6 @@
+2009-06-05  Nikolas Coukouma <atrus@zmanda.com>
+	* installcheck/Amanda_Device.pl: test device named just "s3:"
+
 2009-06-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/dumpers.m4: fix more quoting, thanks again to Eric
 	  Olsen <herolsen@alumni.upenn.edu>

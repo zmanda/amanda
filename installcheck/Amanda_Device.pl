@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 331;
+use Test::More tests => 332;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -572,11 +572,16 @@ my $base_name;
 
 SKIP: {
     skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
-            56 +
+            57 +
             1 * $verify_file_count +
             4 * $write_file_count +
             7 * $s3_make_device_count
 	unless $run_s3_tests;
+
+    $dev_name = "s3:";
+    $dev = Amanda::Device->new($dev_name);
+    isnt($dev->status(), $DEVICE_STATUS_SUCCESS,
+         "creating $dev_name fails miserably");
 
     $dev_name = "s3:foo";
     $dev = Amanda::Device->new($dev_name);
