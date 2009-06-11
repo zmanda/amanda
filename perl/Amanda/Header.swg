@@ -22,95 +22,10 @@
 %include "amglue/amglue.swg"
 %include "exception.i"
 
+%include "Amanda/Header.pod"
+
 %{
 #include "fileheader.h"
-%}
-
-%perlcode %{
-=head1 NAME
-
-Amanda::Header - Amanda-specific headers prepended to dump files
-
-=head1 SYNOPSIS
-
-  # create a header
-  my $hdr = Amanda::Header->new();
-  $hdr->{type} = $Amanda::Header::F_DUMPFILE;
-  $hdr->{name} = "localhost";
-  $hdr->{disk} = "/home";
-
-  # make a string suitable for use in a dumpfile (NUL-padded)
-  my $block = $hdr->to_string(32768, 32768);
-
-  # parse a string into a header
-  $hdr = Amanda::Header->from_string($block);
-
-=head1 Header Objects
-
-Note that, due to the vagaries of SWIG wrapping, headers actually have class
-C<Amanda::Header::Header>.
-
-The constructor creates a new, blank header, which will need at least some of its
-attributes set before being used.  These are set just like any hashref-based object:
-
- $hdr->{'dumplevel'} = 13;
-
-To construct a new object from a bytestring (as read from the beginning of a dumpfile), use
-
- Amanda::Header->from_string($data);
-
-To convert a header object into a bytestring, use the C<to_string(min, max)>
-method.  This method takes a minimum and maximum size.  If the header is
-smaller than the minimum size, it is padded with NUL bytes; if it would be
-larger than the maximum size, the method returns C<undef>.
-
-As a debugging utility, the C<debug_dump> method dumps the contents of the
-object to the debug log.
-
-A header object has the following keys:
-
- type
- datestamp
- dumplevel
- compressed
- encrypted
- comp_suffix
- encrypt_suffix
- name               hostname (F_DUMPFILE) or label (F_TAPESTART)
- disk
- program
- application
- srvcompprog
- clntcompprog
- srv_encrypt
- clnt_encrypt
- recover_cmd
- uncompress_cmd
- encrypt_cmd
- decrypt_cmd
- srv_decrypt_opt
- clnt_decrypt_opt
- cont_filename
- dle_str
- is_partial
- partnum
- totalparts         (-1 == UNKNOWN)
- blocksize
-
-C<type> is one of the following constants, which are availble for import in the
-tag C<:constants>:
-
- F_UNKNOWN
- F_WEIRD
- F_TAPESTART
- F_TAPEEND
- F_DUMPFILE
- F_CONT_DUMPFILE
- F_SPLIT_DUMPFILE
- F_EMPTY
- F_NOOP
-
-=cut
 %}
 
 amglue_add_flag_tag_fns(filetype_t);

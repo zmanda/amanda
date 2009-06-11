@@ -1,3 +1,36 @@
+2009-06-10  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Application.pod: moved from .swg file
+	* perl/Amanda/Application.swg: removed pod documentation
+	* perl/Amanda/Archive.pod: moved from .swg file
+	* perl/Amanda/Archive.swg: removed pod documentation
+	* perl/Amanda/Cmdline.pod: moved from .swg file
+	* perl/Amanda/Cmdline.swg: removed pod documentation
+	* perl/Amanda/Config.pod: moved from .swg file
+	* perl/Amanda/Config.swg: removed pod documentation
+	* perl/Amanda/Debug.pod: moved from .swg file
+	* perl/Amanda/Debug.swg: removed pod documentation
+	* perl/Amanda/Device.pod: moved from .swg file
+	* perl/Amanda/Device.swg: removed pod documentation
+	* perl/Amanda/Disklist.pod: moved from .swg file
+	* perl/Amanda/Disklist.swg: removed pod documentation
+	* perl/Amanda/Header.pod: moved from .swg file
+	* perl/Amanda/Header.swg: removed pod documentation
+	* perl/Amanda/Logfile.pod: moved from .swg file
+	* perl/Amanda/Logfile.swg: removed pod documentation
+	* perl/Amanda/MainLoop.pod: moved from .swg file
+	* perl/Amanda/MainLoop.swg: removed pod documentation
+	* perl/Amanda/Tapelist.pod: moved from .swg file
+	* perl/Amanda/Tapelist.swg: removed pod documentation
+	* perl/Amanda/Tests.pod: moved from .swg file
+	* perl/Amanda/Tests.swg: removed pod documentation
+	* perl/Amanda/Util.pod: moved from .swg file
+	* perl/Amanda/Util.swg: removed pod documentation
+	* perl/Amanda/Xfer.pod: moved from .swg file
+	* perl/Amanda/Xfer.swg: removed pod documentation
+	* perl/Amanda/XferServer.pod: moved from .swg file
+	* perl/Amanda/XferServer.swg: removed pod documentation
+	* perl/Makefile.am: added pod files to tar dist
+
 2009-06-05  Nikolas Coukouma <atrus@zmanda.com>
 	* installcheck/Amanda_Device.pl: test device named just "s3:"
 

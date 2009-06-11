@@ -22,6 +22,8 @@
 %include "amglue/amglue.swg"
 %include "exception.i"
 
+%include "Amanda/Util.pod"
+
 %{
 #include "debug.h"
 #include "full-read.h"
@@ -32,194 +34,13 @@
 %}
 
 %perlcode %{
+
 use Amanda::Debug qw(:init);
 use Amanda::Config qw(:getconf);
 use warnings;
 use Carp;
 use POSIX qw( :fcntl_h :errno_h );
 use POSIX qw( strftime );
-
-=head1 NAME
-
-Amanda::Util - Runtime support for Amanda applications
-
-=head1 Application Initialization
-
-Application initialization generally looks like this:
-
-  use Amanda::Config qw( :init );
-  use Amanda::Util qw( :constants );
-  use Amanda::Debug;
-
-  Amanda::Util::setup_application("myapp", "server", $CONTEXT_CMDLINE);
-  # .. command-line processing ..
-  Amanda::Config::config_init(...);
-  Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
-
-=over
-
-=item setup_application($name, $type, $context)
-
-Set up the operating environment for an application, without requiring any
-configuration.
-
-C<$name> is the name of the application, used in log messages, etc.  C<$type>
-is usualy one of "server" or "client".  It specifies the subdirectory in which
-debug logfiles will be created.  C<$context> indicates the usual manner in
-which this application is invoked; one of C<$CONTEXT_CMDLINE> for a
-user-invoked command-line utility (e.g., C<amadmin>) which should send
-human-readable error messages to stderr; C<$CONTEXT_DAEMON> for a program
-started by C<amandad>, e.g., C<sendbackup>; or C<$CONTEXT_SCRIPTUTIL> for a
-small program used from shell scripts, e.g., C<amgetconf>
-
-Based on C<$type> and C<$context>, this function does the following:
-
-=over
-
-=item *
-
-sets up debug logging;
-
-=item *
-
-configures internationalization
-
-=item *
-
-sets the umask;
-
-=item *
-
-sets the current working directory to the debug or temporary directory;
-
-=item *
-
-closes any unnecessary file descriptors as a security meaasure;
-
-=item *
-
-ignores C<SIGPIPE>; and
-
-=item *
-
-sets the appropriate target for error messages.
-
-=back
-
-=item finish_setup($running_as_flags)
-
-Perform final initialization tasks that require a loaded configuration.
-Specifically, move the debug log into a configuration-specific
-subdirectory, and check that the current userid is appropriate for
-this applciation.
-
-The user is specified by one of the following flags, which are
-available in export tag C<:check_running_as_flags>:
-
-  $RUNNING_AS_ANY                 # any user is OK
-  $RUNNING_AS_ROOT                # root
-  $RUNNING_AS_DUMPUSER            # dumpuser, from configuration
-  $RUNNING_AS_DUMPUSER_PREFERRED  # dumpuser, but client_login is OK too
-  $RUNNING_AS_CLIENT_LOGIN        # client_login (--with-user at build time)
-
-If the flag C<$RUNNING_AS_UID_ONLY> is bit-or'd into C<$running_as_flags>, then
-the euid is ignored; this is used for programs that expect to be setuid-root.
-
-=item get_original_cwd()
-
-Return the original current directory with C<get_original_cwd>.
-
-=back
-
-=head1 File Handling
-
-These functions read and write the entire requested size to a file descriptor,
-even if the underlying syscall returns early.  Note that they do not operate on
-Perl file handles.
-
-If fewer than C<$size> bytes are written, C<full_write> returns the number of
-bytes actually written and sets C<$!> appropriately.  When reading, if fewer
-than C<$size> bytes are read due to a normal EOF, then C<$!> is zero;
-otherwise, it contains the appropriate error message.
-
-Unlike C<POSIX::read>, C<full_read> returns a scalar containing the bytes it
-read from the file descriptor.
-
-=over
-
-=item full_read($fd, $size)
-
-=item full_write($fd, $buf, $size)
-
-=back
-
-=head1 Miscellaneous Utilities
-
-=over
-
-=item safe_env()
-
-Return a "safe" environment hash.  For non-setuid programs, this means filtering out any
-localization variables.
-
-=back
-
-=head1 String Utilities
-
-=over
-
-=item quote_string($str)
-
-Quote a string using Amanda's quoting algorithm.  Strings with no whitespace,
-control, or quote characters are returned unchanged.  An empty string is
-represented as the two-character string C<"">.  Otherwise, tab, newline,
-carriage return, form-feed, backslash, and double-quote (C<">) characters are
-escaped with a backslash and the string is surrounded by double quotes.
-
-=item unquote_string($str)
-
-Unquote a string as quoted with C<quote_string>.
-
-=item skip_quoted_string($str)
-
-my($q, $remaider) = skip_quoted_string($str)
-
-Return the first quoted string and the remainder of the string.
-
-=item C<split_quoted_strings($str)>
-
-Split string on unquoted whitespace.  Multiple consecutive spaces are not
-collapsed into a single space: C<"x  y"> parses as C<( "x", "", "y" )>.  The
-strings are unquoted before they are returned.  An empty string is split into
-C<( "" )>.
-
-All of these quoting-related functions are available under the export tag
-C<:quoting>.
-
-=item expand_braced_alternates($str)
-=item collapse_braced_alternates(\@list)
-
-These two functions handle "braced alternates", which is a syntax borrowed,
-partially, from shells.  Comma-separated strings enclosed in curly braces
-expand into multiple alternatives for the entire string.  For example:
-
-  "{foo,bar,bat}"   [ "foo", "bar", "bat" ]
-  "foo{1,2}bar"     [ "foo1bar", "foo2bar" ]
-  "foo{1\,2,3}bar"  [ "foo1,2bar", "foo3bar" ]
-  "{a,b}-{1,2}"     [ "a-1", "a-2", "b-1", "b-2" ]
-
-Note that nested braces are not processed.  Braces, commas, and backslashes may
-be escaped with backslashes.  On error, C<expand_braced_altnerates> returns
-undef.  These two functions are available in the export tag C<:alternates>.
-
-=item generate_timestamp()
-
-Generate a timestamp from the current time, obeying the 'USETIMESTAMPS'
-config parameter.  The Amanda configuration must already be loaded.
-
-=back
-
-=cut
 
 # private package variables
 my $_pname;

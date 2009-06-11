@@ -23,79 +23,11 @@
 %include "exception.i"
 %include "amglue/dumpspecs.swg"
 
+%include "Amanda/Cmdline.pod"
+
 %{
 #include <glib.h>
 #include "cmdline.h"
-%}
-
-%perlcode %{
-=head1 NAME
-
-Amanda::Cmdline - utilities for handling command lines
-
-=head1 SYNOPSIS
-
-  use Amanda::Cmdline;
-
-  my $spec = Amanda::Cmdline::dumpspec_t->new($host, $disk, $datestamp, $level);
-  print "host: $spec->{'host'}; disk: $spec->{'disk'}\n";
-
-  my @specs = Amanda::Cmdline::parse_dumpspecs(["host", "disk", "date"],
-			    $Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP);
-
-=head1 API STATUS
-
-Will change.
-
-=head1 Amanda::Cmdline::dumpspec_t Objects
-
-=head2 Instance Variables
-
-=over
-
-=item C<$host>
-
-=item C<$disk>
-
-=item C<$datestamp>
-
-=item C<$level>
-
-=back
-
-=head2 Methods
-
-=over
-
-=item C<format()>
-
-Format the dumpspec as a string.
-
-=back
-
-=head1 Functions
-
-=over
-
-=item C<format_dumpspec_components($host, $disk, $datestamp, $level)>
-
-This function returns a string representing the formatted form of the given dumpspec.  This formatting
-is the same as performed by C<format_dumpspec_components>, but does not need a C<dumpspec_t>.
-
-=item C<parse_dumpspecs(@cmdline, $flags)> 
-
-This function parses C<@cmdline> into a list of C<dumpspec_t> objects,
-according to C<$flags>, which is a logical combination of zero or
-more of C<$CMDLINE_PARSE_DATESTAMP> to recognize datestamps and
-C<$CMDLINE_PARSE_LEVEL> to recognize levels.
-
-=back
-
-=head1 SEE ALSO
-
-L<Amanda::Config> handles C<-o> options itself, through C<config_overwrites>.
-
-=cut
 %}
 
 /* Add a few methods to make this type act like a class */
@@ -168,4 +100,3 @@ amglue_dumpspec_list *cmdline_parse_dumpspecs(int argc, char **argv, int flags);
  * on output
  */
 /* amglue_dumpspec_list * cmdline_match_holding(amglue_dumpspec_list *dumpspec_list); */
-

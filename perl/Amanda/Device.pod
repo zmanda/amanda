@@ -1,0 +1,157 @@
+/*
+ * Copyright (c) Zmanda, Inc.  All Rights Reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License version 2.1
+ * as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
+ *
+ * Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
+ * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
+ */
+
+%perlcode %{
+
+=head1 NAME
+
+Amanda::Device - interact with Amanda data-storage devices
+
+=head1 SYNOPSIS
+
+  use Amanda::Device qw( :constants );
+
+  my $dev = Amanda::Device->new($device_name);
+  if ($dev->read_label() == $DEVICE_STATUS_SUCCESS) {
+      print "Label on $device_name is '$dev->volume_label'\n";
+  }
+
+See http://wiki.zmanda.com/index.php/Device_API for details on how
+Devices are used.
+
+=head1 API STATUS
+
+Stable
+
+=head1 Amanda::Device Objects
+
+To make a new Device, call C<< Amanda::Device->new($device_name) >>.
+To create a new RAIT device from a collection of device objects, call
+C<< Amanda::Device->new_rait_from_children($child1, $child2, ..) >>.
+If one of the child objects is C<undef>, the resulting RAIT device
+will operate in degraded mode.
+
+See the wiki for descriptions of the following methods.  Note that C
+instance variables are represented by accessor functions of the same
+name.
+
+=over
+
+=item C<configure($use_global_config)>
+
+=item C<erase()>
+
+=item C<read_label()>
+
+=item C<start($mode, $label, $timestamp)>
+
+=item C<finish()>
+
+=item C<start_file($jobinfo)>
+
+where C<$jobinfo> is an Amanda header (see L<Amanda::Header>)
+
+=item C<write_block($size, $data, $short_block)>
+
+Note that Perl code is not expected to handle on-device data, so there
+is currently no way to provide data to this function from Perl.  This
+may change in future revisions.
+
+=item C<write_from_fd($queue_fd)>
+
+where C<$fd> is an integer file descriptor or a filehandle
+
+=item C<finish_file()>
+
+=item C<seek_file($file)>
+
+=item C<seek_block($block)>
+
+=item C<read_block($size)>
+
+=item C<read_to_fd($queue_fd)>
+
+where C<$fd> is an integer file descriptor or a filehandle
+
+Note that Perl code is not expected to handle on-device data, so there
+is currently no way to access the data this function returns.  This
+may change in future revisions.
+
+=item C<property_list()>
+
+returns a list of properties, each represented as a hash:
+
+  { 'access' => $access_flags,
+    'name' => $property_name,
+    'description' => $property_description }
+
+=item C<property_get($property_name)>
+
+returns the property, with the appropriate Perl type, or undef.  In
+array context, returns the list C<($value, $surety, $source)>.
+
+=item C<property_set($property_name, $value)>
+
+=item C<property_set_ex($property_name, $value, $surety, $source)>
+
+where C<$value> is of an appropriate type for the given property,
+C<$surety> is a C<$PROPERTY_SURETY_*> constant, and C<$source> is a
+C<$PROPERTY_SOURCE_*> constant.
+
+=item C<recycle_file($filenum)>
+
+=item C<file()> (accessor function)
+
+=item C<block()> (accessor function)
+
+=item C<in_file()> (accessor function)
+
+=item C<device_name()> (accessor function)
+
+=item C<access_mode()> (accessor function)
+
+=item C<is_eof()> (accessor function)
+
+=item C<volume_label()> (accessor function)
+
+=item C<volume_time()> (accessor function)
+
+=item C<min_block_size()> (accessor function)
+
+=item C<max_block_size()> (accessor function)
+
+=item C<block_size()> (accessor function)
+
+=item C<volume_header()> (accessor function)
+
+=back
+
+=head1 CONSTANTS
+
+This module defines a large number of constants.  Again, consult the
+wiki or C<device.h> for the details on their meaning.  These constants
+are available from the package namespace (e.g.,
+C<Amanda::Device::ACCESS_WRITE>), or imported with the C<:constant>
+import tag.
+
+=cut
+
+
+%}

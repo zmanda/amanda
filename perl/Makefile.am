@@ -1,6 +1,6 @@
 ##
 ## Prepare for SWIGging
-## 
+##
 
 include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
@@ -10,7 +10,7 @@ include $(top_srcdir)/config/automake/scripts.am
 # to trigger warnings.
 AM_CFLAGS = -DSWIG $(AMANDA_SWIG_PERL_CFLAGS)
 
-# Appropriate INCLUDES depends on which components (server or client) are 
+# Appropriate INCLUDES depends on which components (server or client) are
 # being built
 INCLUDES =  \
             -I$(top_builddir)/common-src \
@@ -83,11 +83,11 @@ html: make_html amperl.css $(HTML_SOURCE_FILES)
 # pay attention to such things, anyway.
 PERL_EXT_LDFLAGS = -avoid-version
 
-# And add any flags the user has requested; on FreeBSD, this pulls in the 
+# And add any flags the user has requested; on FreeBSD, this pulls in the
 # threading library
 PERL_EXT_LDFLAGS += $(PERLEXTLIBS)
 
-# list our SWIG libraries. 
+# list our SWIG libraries.
 AMGLUE_SWG = amglue/amglue.swg \
 	amglue/amglue.swg \
 	amglue/constants.swg \
@@ -131,7 +131,7 @@ libArchive_la_LIBADD = libamglue.la \
 	$(top_builddir)/amar-src/libamar.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Archive.pm
-EXTRA_DIST += Amanda/Archive.swg Amanda/Archive.pm
+EXTRA_DIST += Amanda/Archive.swg Amanda/Archive.pm Amanda/Archive.pod
 MAINTAINERCLEANFILES += Amanda/Archive.c Amanda/Archive.pm
 
 if WANT_SERVER
@@ -146,7 +146,7 @@ libDevice_la_LIBADD = libamglue.la \
 Amanda_DATA += Amanda/Device.pm
 MAINTAINERCLEANFILES += Amanda/Device.c Amanda/Device.pm
 endif
-EXTRA_DIST += Amanda/Device.swg Amanda/Device.pm
+EXTRA_DIST += Amanda/Device.swg Amanda/Device.pm Amanda/Device.pod
 
 if WANT_SERVER
 # PACKAGE: Amanda::Logfile
@@ -160,7 +160,7 @@ libLogfile_la_LIBADD = libamglue.la \
 Amanda_DATA += Amanda/Logfile.pm
 MAINTAINERCLEANFILES += Amanda/Logfile.c Amanda/Logfile.pm
 endif
-EXTRA_DIST += Amanda/Logfile.swg Amanda/Logfile.pm
+EXTRA_DIST += Amanda/Logfile.swg Amanda/Logfile.pm Amanda/Logfile.pod
 
 if WANT_SERVER
 # PACKAGE: Amanda::Cmdline
@@ -174,7 +174,7 @@ libCmdline_la_LIBADD = libamglue.la \
 Amanda_DATA += Amanda/Cmdline.pm
 MAINTAINERCLEANFILES += Amanda/Cmdline.c Amanda/Cmdline.pm
 endif
-EXTRA_DIST += Amanda/Cmdline.swg Amanda/Cmdline.pm
+EXTRA_DIST += Amanda/Cmdline.swg Amanda/Cmdline.pm Amanda/Cmdline.pod
 
 if WANT_SERVER
 # PACKAGE: Amanda::Tapelist
@@ -188,7 +188,7 @@ libTapelist_la_LIBADD = libamglue.la \
 Amanda_DATA += Amanda/Tapelist.pm
 MAINTAINERCLEANFILES += Amanda/Tapelist.c Amanda/Tapelist.pm
 endif
-EXTRA_DIST += Amanda/Tapelist.swg Amanda/Tapelist.pm
+EXTRA_DIST += Amanda/Tapelist.swg Amanda/Tapelist.pm Amanda/Tapelist.pod
 
 if WANT_SERVER
 # PACKAGE: Amanda::Disklist
@@ -202,7 +202,7 @@ libDisklist_la_LIBADD = libamglue.la \
 Amanda_DATA += Amanda/Disklist.pm
 MAINTAINERCLEANFILES += Amanda/Disklist.c Amanda/Disklist.pm
 endif
-EXTRA_DIST += Amanda/Disklist.swg Amanda/Disklist.pm
+EXTRA_DIST += Amanda/Disklist.swg Amanda/Disklist.pm Amanda/Disklist.pod
 
 if WANT_SERVER
 # PACKAGE: Amanda::Changer
@@ -251,7 +251,7 @@ libXfer_la_LIBADD = libamglue.la \
 	$(top_builddir)/xfer-src/libamxfer.la
 Amanda_DATA += Amanda/Xfer.pm
 MAINTAINERCLEANFILES += Amanda/Xfer.c Amanda/Xfer.pm
-EXTRA_DIST += Amanda/Xfer.swg Amanda/Xfer.pm
+EXTRA_DIST += Amanda/Xfer.swg Amanda/Xfer.pm Amanda/Xfer.pod
 
 if WANT_SERVER
 # PACKAGE: Amanda::XferServer
@@ -263,7 +263,7 @@ libXferServer_la_LIBADD = libamglue.la \
 	$(top_builddir)/server-src/libamserver.la
 Amanda_DATA += Amanda/XferServer.pm
 MAINTAINERCLEANFILES += Amanda/XferServer.c Amanda/XferServer.pm
-EXTRA_DIST += Amanda/XferServer.swg Amanda/XferServer.pm
+EXTRA_DIST += Amanda/XferServer.swg Amanda/XferServer.pm Amanda/XferServer.pod
 endif
 
 # PACKAGE: Amanda::BigIntCompat
@@ -278,7 +278,7 @@ libDebug_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 libDebug_la_LIBADD = libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Debug.pm
-EXTRA_DIST += Amanda/Debug.swg Amanda/Debug.pm
+EXTRA_DIST += Amanda/Debug.swg Amanda/Debug.pm Amanda/Debug.pod
 MAINTAINERCLEANFILES += Amanda/Debug.c Amanda/Debug.pm
 
 # PACKAGE: Amanda::Config
@@ -289,7 +289,7 @@ libConfig_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 libConfig_la_LIBADD = libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Config.pm
-EXTRA_DIST += Amanda/Config.swg Amanda/Config.pm
+EXTRA_DIST += Amanda/Config.swg Amanda/Config.pm Amanda/Config.pod
 MAINTAINERCLEANFILES += Amanda/Config.c Amanda/Config.pm
 
 # PACKAGE: Amanda::Util
@@ -300,7 +300,7 @@ libUtil_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 libUtil_la_LIBADD = libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Util.pm
-EXTRA_DIST += Amanda/Util.swg Amanda/Util.pm
+EXTRA_DIST += Amanda/Util.swg Amanda/Util.pm Amanda/Util.pod
 MAINTAINERCLEANFILES += Amanda/Util.c Amanda/Util.pm
 
 # PACKAGE: Amanda::Header
@@ -311,7 +311,7 @@ libHeader_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 libHeader_la_LIBADD = libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Header.pm
-EXTRA_DIST += Amanda/Header.swg Amanda/Header.pm
+EXTRA_DIST += Amanda/Header.swg Amanda/Header.pm Amanda/Header.pod
 MAINTAINERCLEANFILES += Amanda/Header.c Amanda/Header.pm
 
 # PACKAGE: Amanda::Tests
@@ -322,7 +322,7 @@ libTests_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 libTests_la_LIBADD = libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Tests.pm
-EXTRA_DIST += Amanda/Tests.swg Amanda/Tests.pm
+EXTRA_DIST += Amanda/Tests.swg Amanda/Tests.pm Amanda/Tests.pod
 MAINTAINERCLEANFILES += Amanda/Tests.c Amanda/Tests.pm
 
 # PACKAGE: Amanda::MainLoop
@@ -333,7 +333,7 @@ libMainLoop_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 libMainLoop_la_LIBADD = libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/MainLoop.pm
-EXTRA_DIST += Amanda/MainLoop.swg Amanda/MainLoop.pm
+EXTRA_DIST += Amanda/MainLoop.swg Amanda/MainLoop.pm Amanda/MainLoop.pod
 MAINTAINERCLEANFILES += Amanda/MainLoop.c Amanda/MainLoop.pm
 
 # PACKAGE: Amanda::IPC::*
@@ -374,7 +374,7 @@ libApplication_la_LIBADD = libamglue.la \
 Amanda_DATA += Amanda/Application.pm
 MAINTAINERCLEANFILES += Amanda/Application.c Amanda/Application.pm
 endif
-EXTRA_DIST += Amanda/Application.swg Amanda/Application.pm
+EXTRA_DIST += Amanda/Application.swg Amanda/Application.pm Amanda/Application.pod
 
 # PACKAGE: Amanda::Script
 Amanda_DATA += Amanda/Script.pm
@@ -412,4 +412,3 @@ check-local:
 			done; \
 		fi \
         fi
-

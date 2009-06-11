@@ -22,21 +22,10 @@
 %include "amglue/amglue.swg"
 %include "exception.i"
 
+%include "Amanda/Tests.pod"
+
 %{
 #include "simpleprng.h"
-%}
-
-%perlcode %{
-=head1 NAME
-
-Amanda::Tests -- test functions for installchecks
-
-=head1 SYNOPSIS
-
-This module exists only to provide functions for installcheck scripts to call,
-mostly to test that various C-Perl interface techniques are working.
-
-=cut
 %}
 
 %inline %{

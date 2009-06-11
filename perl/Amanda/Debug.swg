@@ -22,95 +22,11 @@
 %include "amglue/amglue.swg"
 %include "exception.i"
 
+%include "Amanda/Debug.pod"
+
 %{
 #include <glib.h>
 #include "debug.h"
-%}
-
-%perlcode %{
-=head1 NAME
-
-Amanda::Debug - support for debugging Amanda applications
-
-=head1 SYNOPSIS
-
-  use Amanda::Util qw( :constants );
-
-  Amanda::Util::setup_application("amcooltool", "server", $CONTEXT_CMDLINE);
-
-  debug("this is a debug message");
-  die("Unable to frobnicate the ergonator");
-
-See C<debug.h> for a more in-depth description of the logging functionality of
-this module.
-
-=head1 API STATUS
-
-Stable
-
-=head1 DEBUG LOGGING
-
-Several debug logging functions, each taking a single string, are
-available:
-
-=over
-
-=item C<error> - also aborts the program to produce a core dump
-
-=item C<critical> - exits the program with C<$error_exit_status>
-
-=item C<warning>
-
-=item C<message>
-
-=item C<info>
-
-=item C<debug>
-
-=back
-
-Perl's built-in C<die> and C<warn> functions are patched to call C<critical>
-and C<warning>, respectively. 
-
-All of the debug logging functions are available via the export tag
-C<:logging>.
-
-Applications can adjust the handling of log messages with
-C<add_amanda_log_handler($hdlr)> where C<$hdlr> is a predefined log
-destination.  The following destinations are available in this package.  See
-L<Amanda::Logfile> for C<$amanda_log_trace_log>.
-
-  $amanda_log_null
-  $amanda_log_stderr
-  $amanda_log_syslog
-
-=head1 ADVANCED USAGE
-
-Most applications should use L<Amanda::Util>'s C<setup_application>
-to initialize the debug libraries.  The initialization functions
-available from this module are thus considered "advanced", and the
-reader is advised to consult the C header, C<debug.h>, for details.
-
-Briefly, the functions C<dbopen> and C<dbrename> are used to
-open a debug file whose pathname includes all of the relevant
-information. C<dbclose> and C<dbreopen> are used to close that debug
-file before transferring control to another process.
-
-C<$error_exit_status> is the exit status with which C<critical>
-will exit.
-
-All of the initialization functions and variables are available via
-the export tag C<:init>.
-
-The current debug file's integer file descriptor (I<not> a Perl
-filehandle) is available from C<dbfd()>.  Likewise, C<dbfn()> returns
-the filename of the current debug file.
-
-C<debug_dup_stderr_to_debug()> redirects, at the file-descriptor level,
-C<STDERR> into the debug file.  This is useful when running external
-applications which may produce error output.
-
-=cut
 %}
 
 /*

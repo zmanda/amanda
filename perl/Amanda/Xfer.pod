@@ -1,0 +1,295 @@
+/*
+ * Copyright (c) Zmanda, Inc.  All Rights Reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License version 2.1
+ * as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
+ *
+ * Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
+ * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
+ */
+
+%perlcode %{
+
+=head1 NAME
+
+Amanda::Xfer - the transfer architecture
+
+=head1 SYNOPSIS
+
+  use Amanda::MainLoop;
+  use Amanda::Xfer qw( :constants );
+  use POSIX;
+
+  my $infd = POSIX::open("input", POSIX::O_RDONLY, 0);
+  my $outfd = POSIX::open("output", POSIX::O_CREAT|POSIX::O_WRONLY, 0640);
+  my $xfer = Amanda::Xfer->new([
+    Amanda::Xfer::Source::Fd->new($infd),
+    Amanda::Xfer::Dest::Fd->new($outfd)
+  ]);
+  $xfer->get_source()->set_callback(sub {
+      my ($src, $xmsg, $xfer) = @_;
+      print "Message from $xfer: $xmsg\n"; # use stringify operations
+      if ($xfer->get_status() == $XFER_DONE) {
+	  $src->remove();
+	  Amanda::MainLoop::quit();
+      }
+  });
+  $xfer->start();
+  Amanda::MainLoop::run();
+
+See L<http://wiki.zmanda.com/index.php/XFA> for background on the
+transfer architecture.
+
+=head1 API STATUS
+
+Fluid.
+
+=head1 Amanda::Xfer Objects
+
+A new transfer is created with C<< Amanda::Xfer->new() >>, which takes
+an arrayref giving the transfer elements which should compose the
+transfer.
+
+The resulting object has the following methods:
+
+=over
+
+=item get_source()
+
+Get the L<Amanda::MainLoop> event source through which messages will
+be delivered for this transfer.  Use its C<set_callback> method to
+connect a perl sub for processing events.  You I<must> C<release> the
+source when the transfer is complete!
+
+The callback from this event source receives three arguments: the
+event source, the message, and a reference to the controlling
+transfer.  See the description of C<Amanda::Xfer::Msg>, below, for
+details.
+
+=item start()
+
+Start this transfer.  Processing takes place asynchronously, and
+messages will begin queueing up immediately.
+
+=item cancel()
+
+Stop transferring data.  The transfer will send an C<XMSG_CANCEL>,
+"drain" any buffered data as best it can, and then complete normally
+with an C<XMSG_DONE>.
+
+=item get_status()
+
+Get the transfer's status.  The result will be one of C<$XFER_INIT>,
+C<$XFER_START>, C<$XFER_RUNNING>, or C<$XFER_DONE>.  These symbols are
+available for import with the tag C<:constants>.
+
+=item repr()
+
+Return a string representation of this transfer, suitable for use in
+debugging messages.  This method is automatically invoked when a
+transfer is interpolated into a string:
+
+  print "Starting $xfer\n";
+
+=back
+
+=head1 Amanda::Xfer::Element objects
+
+The individual transfer elements that compose a transfer are instances
+of subclasses of Amanda::Xfer::Element.  All such objects have a
+C<repr()> method, similar to that for transfers, and support a similar
+kind of string interpolation.
+
+Note that the names of these classes contain the words "Source",
+"Filter", and "Dest".  This is merely suggestive of their intended
+purpose -- there are no such abstract classes.
+
+=head2 Transfer Sources
+
+=head3 Amanda::Xfer::Source::Device (SERVER ONLY)
+
+  Amanda::Xfer::Source::Device->new($device);
+
+This source reads data from a device.  The device should already be
+queued up for reading (C<< $device->seek_file(..) >>).  The element
+will read until the end of the device file.
+
+=head3 Amanda::Xfer::Source::Fd
+
+  Amanda::Xfer::Source::Fd->new(fileno($fh));
+
+This source reads data from a file descriptor.  It reads until EOF,
+but does not close the descriptor.  Be careful not to let Perl close
+the file for you!
+
+=head3 Amanda::Xfer::Source::Holding (SERVER-ONLY)
+
+  Amanda::Xfer::Source::Holding->new($filename);
+
+This source reads data from a holding file (see L<Amanda::Holding>).
+If the transfer only consists of a C<Amanda::Xfer::Source::Holding>
+and an C<Amanda::Xfer::Dest::Taper> (with no filters), then the source
+will call the destination's C<cache_inform> method so that it can use
+holding chunks for a split-part cache.
+
+=head3 Amanda::Xfer::Source::Random
+
+  Amanda::Xfer::Source::Random->new($length, $seed);
+
+This source provides I<length> bytes of random data (or an unlimited
+amount of data if I<length> is zero).  C<$seed> is the seed used to
+generate the random numbers; this seed can be used in a destination to
+check for correct output.
+
+=head3 Amanda::Xfer::Source::Pattern
+
+  Amanda::Xfer::Source::Pattern->new($length, $pattern);
+
+This source provides I<length> bytes containing copies of
+I<pattern>. If I<length> is zero, the source provides an unlimited
+number of bytes.
+
+=head2 Transfer Filters
+
+=head3 Amanda::Xfer::Filter:Xor
+
+  Amanda::Xfer::Filter::Xor->new($key);
+
+This filter applies a bytewise XOR operation to the data flowing
+through it.
+
+=head2 Transfer Destinations
+
+=head3 Amanda::Xfer::Dest::Device (SERVER ONLY)
+
+  Amanda::Xfer::Dest::Device->new($device, $max_memory);
+
+This source writes data to a device.  The device should be ready for
+writing (C<< $device->start_file(..) >>).  No more than C<$max_memory>
+will be used for buffers.  Use zero for the default buffer size.  On
+completion of the transfer, the file will be finished.
+
+=head3 Amanda::Xfer::Dest::Fd
+
+  Amanda::Xfer::Dest::Fd->new(fileno($fh));
+
+This destination writes data to a file descriptor.  The file is not
+closed after the transfer is completed.  Be careful not to let Perl
+close the file for you!
+
+=head3 Amanda::Xfer::Dest::Null
+
+  Amanda::Xfer::Dest::Null->new($seed);
+
+This destination discards the data it receives.  If C<$seed> is
+nonzero, then the element will validate that it receives the data that
+C<Amanda::Xfer::Source::Random> produced with the same seed.  No
+validation is performed if C<$seed> is zero.
+
+=head3 Amanda::Xfer::Dest::Taper (SERVER ONLY)
+
+  Amanda::Xfer::Dest::Taper->new($max_memory, $part_size,
+			    $use_mem_cache, $disk_cache_dirname);
+
+This is C<Amanda::Xfer::Dest::Device>'s big cousin.  C<Taper> allows a
+single transfer to write to multiple files (parts) on a device, and
+even spread those parts over multiple devices, without interrupting
+the transfer itself.  It caches data from each part in one of a
+variety of ways, and supports "rewinding" to retry a failed part
+(e.g., one that does not fit on a device).
+
+The desired part size is C<$part_size>, although this value will be
+rounded up internally as necessary.  If C<$use_mem_cache> is true,
+each part will be cached in memory (using C<$part_size> bytes of
+memory; plan accordingly!).  If C<$disk_cache_dirname> is defined,
+then each part will be cached on-disk in a file in this directory.  It
+is an error to specify both in-memory and on-disk caching.  If neither
+option is specified, the element will operate successfully, but will
+not be able to retry a part unless C<cache_inform> has been used
+properly (see below).
+
+When a transfer using this element is first started, nothing happens
+until the element's C<start_part> method is called:
+
+  $dest->start_part($retry_part, $device);
+
+where C<$device> is the device to which the part should be written,
+with a file open and ready to write (that is, C<<
+$device->start_file(..) >> has already been called).  If
+C<$retry_part> is true, then the previous, unsuccessful part will be
+retried.
+
+As each part is completed, the element sends an C<$XMSG_DONE>
+C<Amanda::Xfer::Msg>, with the following keys:
+
+ successful true if the whole part was written
+ eof	    recipient should not call start_part
+ size	    bytes written to tape
+ duration   time spent writing, not counting changer ops, etc.
+ partnum    the zero-based number of this part in the overall dumpfile
+ fileno     the on-media file number used for this part, or 0 if no file
+            was used
+
+If C<eof> is not true, then C<start_part> should be called again, with
+C<$retry_part = !successful>.
+
+If neither the memory nor disk caches are in use, but the dumpfile is
+available on disk, then the C<cache_inform> method allows the element
+to use that on-disk data to support retries.  This is intended to
+support transfers from Amanda's holding disk (see
+C<Amanda::Xfer::Source::Holding>), but may be useful for other
+purposes.
+
+  $dest->cache_inform($filename, $offset, $length);
+
+This function indictes that C<$filename> contains C<$length> bytes of
+data, beginning at offset C<$offset> from the beginning of the file.
+These bytes are assumed to follow immediately after any bytes
+previously specified to C<cache_inform>.  That is, no gaps or overlaps
+are allowed in the data stream described to C<cache_inform>.
+Furthermore, the location of each byte must be specified to this
+method I<before> it is sent through the transfer.
+
+=head1 Amanda::Xfer::Msg objects
+
+Messages are simple hashrefs, with a few convenience methods.  Like
+transfers, they have a C<repr()> method that formats the message
+nicely, and is available through string interpolation: print "Received
+message $msg\n";
+
+The canonical description of the message types and keys is in
+C<xfer-src/xmsg.h>, and is not duplicated here.  Every message has the
+following basic keys.
+
+=over
+
+=item type
+
+The message type -- one of the C<xmsg_type> constants available from
+the import tag C<:constants>.
+
+=item elt
+
+The transfer element that sent the message.
+
+=item version
+
+The version of the message.  This is used to support extensibility of
+the protocol.
+
+=back
+
+=cut
+
+
+%}

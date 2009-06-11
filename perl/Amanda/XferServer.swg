@@ -25,22 +25,13 @@
 %import "Amanda/Device.swg"
 %import "Amanda/Header.swg"
 
+%include "Amanda/XferServer.pod"
+
 %{
 #include "glib-util.h"
 #include "amxfer.h"
 #include "xfer-device.h"
 #include "xfer-server.h"
-%}
-
-%perlcode %{
-=head1 NAME
-
-Amanda::XferServer - server-only parts of Amanda::Xfer
-
-This package is automatically imported into L<Amanda::Xfer> if it exists; it
-is completely documented there.
-
-=cut
 %}
 
 %newobject xfer_source_device;

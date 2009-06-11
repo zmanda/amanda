@@ -22,109 +22,14 @@
 %include "amglue/amglue.swg"
 %include "exception.i"
 
+%include "Amanda/Tapelist.pod"
+
 %{
 #include "tapefile.h"
 %}
 
 %perlcode %{
 use Amanda::Debug qw(:logging);
-
-=head1 NAME
-
-Amanda::Tapelist - manipulate the Amanda tapelist
-
-=head1 SYNOPSIS
-
-    use Amanda::Tapelist;
-
-    my $tl = Amanda::Tapelist::read_tapelist("/path/to/tapefile");
-    $tl->add_tapelabel($datestamp, $label);
-    $tl->add_tapelabel($datestamp2, $label2, $comment);
-    $tl->write("/path/to/tapefile");
-
-=head1 API STATUS
-
-Stable
-
-=head1 OBJECT-ORIENTED INTERFACE
-
-The package-level functions C<read_tapelist($filename)> and C<clear_tapelist()>
-both return a new tapelist object.  C<read_tapelist> returns C<undef> if the
-tapelist does not exist.  Invalid entries are silently ignored.
-
-A tapelist object is a sequence of tapelist
-elements (referred to as TLEs in this document).  Each TLE is a hash with the
-following keys:
-
-=over
-
-=item C<position>
-
-the one-based position of the TLE in the tapelist
-
-=item C<datestamp>
-
-the datestamp on which this was written, or "0" for an
-unused tape
-
-=item C<reuse>
-
-true if this tape can be reused when it is no longer active
-
-=item C<label>
-
-tape label
-
-=item C<comment>
-
-the comment for this tape, or undef if no comment was given
-
-=back
-
-The following methods are available on a tapelist object C<$tl>:
-
-=over
-
-=item C<lookup_tapelabel($lbl)>
-
-look up and return a reference to the TLE
-with the given label
-
-=item C<lookup_tapepos($pos)>
-
-look up and return a reference to the TLE in
-the given position
-
-=item C<lookup_tapedate($date)>
-
-look up and return a reference to the TLE
-with the given datestamp
-
-=item C<remove_tapelabel($lbl)>
-
-remove the tape with the given label
-
-=item C<add_tapelabel($date, $lbl, $comment)>
-
-add a tape with the given date,
-label, and comment to the end of the tapelist, marking it reusable.
-
-=item C<write($filename)>
-
-write the tapelist out to C<$filename>.
-
-=back
-
-=head1 INTERACTION WITH C CODE
-
-The C portions of Amanda treat the tapelist as a global variable, while this
-package treats it as an object (and can thus handle more than one tapelist
-simultaneously).  Every call to C<read_tapelist> fills this global variable
-with a copy of the tapelist, and likewise C<clear_tapelist> clears the global.
-However, any changes made from Perl are not reflected in the C copy, nor are
-changes made by C modules reflected in the Perl copy.
-
-=cut
 
 ## package functions
 

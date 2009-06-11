@@ -23,6 +23,8 @@
 %include "exception.i"
 %include "cstring.i"
 
+%include "Amanda/Application.pod"
+
 %perlcode %{
 push @ISA, qw(Amanda::Script_App);
 require Amanda::Script_App;
@@ -31,39 +33,6 @@ use strict;
 use warnings;
 use Amanda::Config qw( :init :getconf  config_dir_relative );
 
-=head1 NAME
-
-Amanda::Application - perl utility functions for Applications.
-
-=head1 SYNOPSIS
-
-  package Amanda::Application::my_application;
-  use base qw(Amanda::Application);
-
-  sub new {
-    my ($class, $config, $foo) = @_;
-    my $self = $class->SUPER::new($config);
-
-    $self->{'foo'} = $foo;
-    $self->{'bar'} = $bar;
-
-    return $self;
-  }
-
-  # Define all command_* subs that you need, e.g.,
-  sub command_support {
-    my $self = shift;
-    # ...
-  }
-
-  package main;
-
-  # .. parse arguments ..
-
-  my $application = Amanda::Application::my_application->new($opt_foo, $opt_bar);
-  $application->do($cmd);
-
-=cut
 
 sub new {
     my $class = shift @_;
