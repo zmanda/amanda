@@ -1980,6 +1980,14 @@ level 1 incrementals in this configuration; this is probably a bug.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><emphasis remap='B'>ssh_keys</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>No default</emphasis>.
+The key file the ssh auth will use, it must be the private key. If this parameter is not specified, then the default ssh key will be used.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><emphasis remap='B'>starttime</emphasis> <emphasis remap='I'> int</emphasis></term>
   <listitem>
 <para>Default:

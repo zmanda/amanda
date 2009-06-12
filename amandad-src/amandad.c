@@ -430,8 +430,16 @@ main(
 
     if (getuid() == 0) {
 	if (strcasecmp(auth, "krb5") != 0) {
-	    error(_("'amandad' must be run as user '%s' when using '%s' authentication"),
-		  CLIENT_LOGIN, auth);
+	    struct passwd *pwd;
+	    /* lookup our local user name */
+	    if ((pwd = getpwnam(CLIENT_LOGIN)) == NULL) {
+		error(_("getpwnam(%s) failed."), CLIENT_LOGIN);
+	    }
+
+	    if (pwd->pw_uid != 0) {
+		error(_("'amandad' must be run as user '%s' when using '%s' authentication"),
+		      CLIENT_LOGIN, auth);
+	    }
 	}
     } else {
 	if (strcasecmp(auth, "krb5") == 0) {

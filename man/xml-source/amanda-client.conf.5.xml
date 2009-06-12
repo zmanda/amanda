@@ -128,7 +128,7 @@ authorization.</para>
   <listitem>
 <para>Default:
 <emphasis remap='I'>No default</emphasis>.
-The key file the ssh auth will use, it must be the private key. If this parameter is not specified, then the deafult ssh key will be used.</para>
+The key file the ssh auth will use, it must be the private key. If this parameter is not specified, then the default ssh key will be used.</para>
   </listitem>
   </varlistentry>
 
