@@ -1,3 +1,8 @@
+2009-06-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Fix for configured with CLIENT_LOGIN=root
+	* man/xml-source/amanda-client.conf.5.xml: Typo.
+	* man/xml-source/amanda.conf.5.xml: Add ssh_keys.
+
 2009-05-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/amfetchdump.c: Fix sort_needed_tapes_by_write_timestamp.
 
