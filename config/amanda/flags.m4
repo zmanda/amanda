@@ -148,22 +148,16 @@ AC_DEFUN([AMANDA_STATIC_FLAGS],
 #
 AC_DEFUN([AMANDA_WERROR_FLAGS],
 [
-    enable_werror=no
     AC_ARG_ENABLE(werror,
 	AS_HELP_STRING([--enable-werror],
 		       [To compile with -Werror compiler flag]),
 	[
 	    case "$enableval" in
 	    "" | y | ye | yes)
-		enable_werror=yes
-		;;
-	    *n | no)
+		AMANDA_ENABLE_GCC_WARNING(error)
 		;;
 	    esac
 	])
-    if test x"$enable_werror" eq x"yes"; then
-	AMANDA_ENABLE_GCC_WARNING(error)
-    fi
 ])
 
 # SYNOPSIS

@@ -1,3 +1,6 @@
+2009-06-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/flags.m4: fix --enable-werror macro
+
 2009-06-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Print how tape_length is computed.
 
