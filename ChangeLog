@@ -1,3 +1,7 @@
+2009-06-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Changer_compat.pl: add test case for concurrent
+	  calls to chg-compat's info() (tests the fix committed 2009-06-01)
+
 2009-06-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/flags.m4: fix --enable-werror macro
 
