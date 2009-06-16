@@ -2288,7 +2288,7 @@ static one_est_t *pick_inclevel(
 	    (long long)base_est->nsize, base_est->level, est(dp)->level_days,
 	    (long long)thresh, dp->bumpdays);
 
-    if(base_est->level == 9
+    if(base_est->level == (DUMP_LEVELS - 1)
        || est(dp)->level_days < dp->bumpdays
        || base_est->nsize <= thresh)
 	    return base_est;

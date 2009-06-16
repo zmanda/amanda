@@ -1,3 +1,6 @@
+2009-06-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Fix for bump from level 9 to 10.
+
 2009-06-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Changer_compat.pl: add test case for concurrent
 	  calls to chg-compat's info() (tests the fix committed 2009-06-01)
