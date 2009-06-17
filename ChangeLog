@@ -1,4 +1,7 @@
 2009-06-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/automake/scripts.am: support scripts with subdirs
+
+2009-06-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/mock/mtx.pl: new "mock" mtx for testing
 	* installcheck/mock_mtx.pl: test the test mtx
 	* installcheck/Installcheck/Mock.pm: support for using mtx

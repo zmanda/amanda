@@ -152,18 +152,31 @@ check-local: check-shell
 # make sure that the sources for all shell and perl scripts get included
 # in the distribution
 dist-scripts:
-	SCRIPTS_PERL="$(SCRIPTS_PERL)"; SCRIPTS_SHELL="$(SCRIPTS_SHELL)"; SCRIPTS_AWK="$(SCRIPTS_AWK)"; \
+	@SCRIPTS_PERL="$(SCRIPTS_PERL)"; SCRIPTS_SHELL="$(SCRIPTS_SHELL)"; SCRIPTS_AWK="$(SCRIPTS_AWK)"; \
+	SCRIPTS_DIST=; \
 	for script in $$SCRIPTS_PERL; do \
-		test -f $(srcdir)/$${script}.pl && { cp -p $(srcdir)/$${script}.pl $(distdir)/ || exit 1; } \
+		test -f $(srcdir)/$${script}.pl && \
+			SCRIPTS_DIST="$$SCRIPTS_DIST $${script}.pl"; \
 	done; \
 	for script in $$SCRIPTS_SHELL; do \
-		test -f $(srcdir)/$${script}.sh && { cp -p $(srcdir)/$${script}.sh $(distdir)/ || exit 1; } \
+		test -f $(srcdir)/$${script}.sh && \
+			SCRIPTS_DIST="$$SCRIPTS_DIST $${script}.sh"; \
 	done; \
 	for script in $$SCRIPTS_AWK; do \
-		test -f $(srcdir)/$${script}.awk && { cp -p $(srcdir)/$${script}.awk $(distdir)/ || exit 1; } \
+		test -f $(srcdir)/$${script}.awk && \
+			SCRIPTS_DIST="$$SCRIPTS_DIST $${script}.awk"; \
 	done; \
 	for script in $$SCRIPTS_SHELL $$SCRIPTS_PERL $$SCRIPTS_AWK; do \
-		test -f $(srcdir)/$${script}.in && { cp -p $(srcdir)/$${script}.in $(distdir)/ || exit 1; } \
+		test -f $(srcdir)/$${script}.in && \
+			SCRIPTS_DIST="$$SCRIPTS_DIST $${script}.in"; \
+	done; \
+	for script in $$SCRIPTS_DIST; do \
+		dir=`dirname $${script}`; \
+		if test -n "$$dir" && test ! -d "$(distdir)/$$dir"; then \
+			mkdir -p "$(distdir)/$$dir" || exit 1; \
+		fi; \
+		echo "distributing $${script}"; \
+		cp -p "$(srcdir)/$${script}" "$(distdir)/$${script}" || exit 1; \
 	done; \
 	true
 dist-hook: dist-scripts
