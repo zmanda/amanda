@@ -58,6 +58,13 @@ full_tests = \
 restore_tests = \
 	amfetchdump
 
+mock_tests = \
+	mock_mtx
+
+# mock scripts
+mocks = \
+	mock/mtx
+
 tests =
 
 # tests requiring a client and a server (any tests that run amdump)
@@ -70,6 +77,7 @@ endif
 
 # tests requiring neither client nor server
 tests += $(common_tests)
+tests += $(mock_tests)
 
 # tests requiring server
 if WANT_SERVER
@@ -95,6 +103,7 @@ endif
 test_utils = \
 	Installcheck.pm \
 	Installcheck/Config.pm \
+	Installcheck/Mock.pm \
 	Installcheck/Run.pm \
 	Installcheck/Dumpcache.pm \
 	Installcheck/Application.pm \
@@ -103,7 +112,7 @@ EXTRA_DIST += $(test_utils)
 
 CHECK_PERL_FLAGS=-I$(top_srcdir)/installcheck
 
-SCRIPTS_PERL = $(tests)
+SCRIPTS_PERL = $(tests) $(mocks)
 
 # we don't need to syntax check the test scripts..
 CHECK_PERL =

@@ -1,3 +1,11 @@
+2009-06-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/mock/mtx.pl: new "mock" mtx for testing
+	* installcheck/mock_mtx.pl: test the test mtx
+	* installcheck/Installcheck/Mock.pm: support for using mtx
+	* installcheck/Installcheck/Run.pm: don't apply sbindir if there
+	  are any slashes in the app name
+	* installcheck/Makefile.am: new files
+
 2009-06-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Fix for bump from level 9 to 10.
 
