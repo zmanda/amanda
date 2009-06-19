@@ -2140,6 +2140,8 @@ handle_chunk(
 	    amfree(label);
 	    return NULL;
 	}
+	/* set tapefcount, it is increased below */
+	tapefcount = fileno - 1;
 	skip_integer(s, ch);
 	skip_whitespace(s, ch);
 	if(ch == '\0') {
@@ -2259,8 +2261,9 @@ handle_chunk(
     if(current_tape == NULL) {
  	error("current_tape == NULL");
     }
+    ++tapefcount;
     if (sp->filenum == 0) {
- 	sp->filenum = ++tapefcount;
+ 	sp->filenum = tapefcount;
  	sp->tapelabel = current_tape->label;
     }
     tapechunks[level] +=1;
@@ -2497,8 +2500,10 @@ handle_success(
 	    /*NOTREACHED*/
 	}
 	stats[i].taper_time += sec;
-	sp->filenum = ++tapefcount;
-	sp->tapelabel = current_tape->label;
+	if (sp->filenum == 0) {
+	    sp->filenum = ++tapefcount;
+	    sp->tapelabel = current_tape->label;
+	}
 	sp->totpart = totpart;
 	tapedisks[level] +=1;
 	stats[i].tapedisks +=1;

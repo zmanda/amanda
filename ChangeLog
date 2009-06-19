@@ -1,3 +1,7 @@
+2009-06-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/reporter.c: Use the filenum from the PART line.
+	                         Keep the filenum of the first part.
+
 2009-06-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Fix for configured with CLIENT_LOGIN=root
 	* man/xml-source/amanda-client.conf.5.xml: Typo.
