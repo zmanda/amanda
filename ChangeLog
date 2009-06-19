@@ -1,4 +1,8 @@
 2009-06-19 Dan Locks <dwlocks@zmanda.com>
+	* packaging/deb/rules, packaging/rpm/amanda.spec: apply "quiet"
+	  changes to packages.
+
+2009-06-19 Dan Locks <dwlocks@zmanda.com>
 	* packaging/deb/server/control, packaging/deb/client/control: update
 	  depends to list libcurl3 or 4.
 

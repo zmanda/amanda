@@ -23,7 +23,7 @@
 # statements immediately above it. good luck.
 
 # This is useful for debugging
-set -x
+# set -x
 # Buildbot exports some useful env variables.
 # Check for $AMVER.  I couldn't come up with a good way to detect it.
 if [ -z $AMVER ]; then
@@ -37,10 +37,10 @@ fi
 
 # Check for AMTARBALL file, if it's not there, create it.
 if [ ! -f ${AMTARBALL} ]; then
-    mkdir ${AMVER}
+    mkdir ${AMVER} || exit 1
     cp -Rfp * ${AMVER}/
     tar -cf ${AMTARBALL} -z ${AMVER} || exit 1
-    rm -rf ${AMVER}
+    rm -rf ${AMVER} || exit 1
 fi
 
 # Check for the packaging dirs.

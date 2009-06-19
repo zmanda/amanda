@@ -118,7 +118,7 @@
     # If dist is undefined, we didn't detect.
     %{!?dist:%define dist unknown}
 %endif
-# Detect Suse variants.  
+# Detect Suse variants. 
 %if %{_vendor} == "suse"
     %define dist SuSE
     %define disttag %(awk '$1=="SUSE" {$3=="Enterprise" ? TAG="sles" : TAG="suse" ; print TAG}' /etc/SuSE-release)
@@ -178,9 +178,9 @@ BuildRequires: bison
 BuildRequires: flex
 BuildRequires: gcc
 BuildRequires: glibc >= 2.2.0
+BuildRequires: readline
 # Note: newer distros have changed most *-devel to lib*-devel, and added a
 # provides tag for backwards compat.
-BuildRequires: readline
 BuildRequires: readline-devel
 BuildRequires: curl >= 7.10.0
 BuildRequires: curl-devel >= 7.10.0
@@ -344,7 +344,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 # without_ipv6 should only be defined on rhel3.
 ./configure \
         %{?PKG_CONFIG_PATH: PKG_CONFIG_PATH=%PKG_CONFIG_PATH} \
-        CFLAGS="%{optflags} -g" CXXFLAGS="%{optflags}" \
+        CFLAGS="%{optflags} -g -pipe" CXXFLAGS="%{optflags}" \
         --quiet \
         --prefix=%{PREFIX} \
         --sysconfdir=%{SYSCONFDIR} \
@@ -374,7 +374,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
         --disable-installperms \
         %{?without_ipv6}
 
-make
+make -s LIBTOOLFLAGS=--silent
 
 # --- Install to buildroot ---
 
@@ -388,7 +388,7 @@ else
         exit -1
 fi
 
-make -j1 DESTDIR=%{buildroot} install
+make -s -j1 LIBTOOLFLAGS=--silent DESTDIR=%{buildroot} install
 
 rm -rf %{ROOT_DATADIR}/amanda
 rm -f %{ROOT_AMANDAHOMEDIR}/example/inetd.conf.amandaclient
@@ -1569,9 +1569,13 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{SBINDIR}/amcheck
 %defattr(0750,%{amanda_user},%{amanda_group})
 %{LOGDIR}
+# Files in standard dirs must be listed explicitly
 %{SBINDIR}/activate-devpay
 %{SBINDIR}/amaespipe
-%{SBINDIR}/amcrypt*
+%{SBINDIR}/amcrypt
+%{SBINDIR}/amcrypt-ossl
+%{SBINDIR}/amcrypt-ossl-asym
+%{SBINDIR}/amcryptsimple
 %{SBINDIR}/amgpgcrypt
 %{SBINDIR}/amoldrecover
 %{SBINDIR}/amrecover

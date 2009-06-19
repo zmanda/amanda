@@ -49,7 +49,7 @@ build-stamp: /sbin/dump /usr/bin/smbclient
 	dh_testdir
 	./configure \
 		MAKEFLAGS="-j1 " \
-		CFLAGS="-DIGNORE_TAR_ERRORS " \
+		CFLAGS="-pipe " \
 		MAILER=/usr/bin/mail \
 		--quiet \
 		--host=$(DEB_HOST_GNU_TYPE) \
@@ -89,14 +89,14 @@ build-stamp: /sbin/dump /usr/bin/smbclient
 	cat $(shell pwd)/debian/preinst >> $(shell pwd)/debian/amanda-backup-server.preinst
 	cat $(shell pwd)/debian/postrm >> $(shell pwd)/debian/amanda-backup-client.postrm
 	cat $(shell pwd)/debian/postrm >> $(shell pwd)/debian/amanda-backup-server.postrm
-	make 
+	make -s LIBTOOLFLAGS=--silent
 	touch build-stamp
 
 clean:
 	dh_testdir >> $(log) 2>&1
 	dh_testroot >> $(log) 2>&1
-	-make clean
-	-make distclean
+	-make -s LIBTOOLFLAGS=--silent clean
+	-make -s LIBTOOLFLAGS=--silent distclean
 	-rm -f build-stamp missing config/config.h common-src/genversion
 	-find . -type d -name .deps -exec rm -rf {} \;
 	-test -r /usr/share/misc/config.sub && \
@@ -115,7 +115,7 @@ binary-arch: build
 	dh_clean -k >> $(log) 2>&1
 	echo "---->dh_installdirs: " >> $(log)
 	dh_installdirs -v >> $(log) 2>&1
-	make install DESTDIR=$(r)
+	make -s LIBTOOLFLAGS=--silent install DESTDIR=$(r)
 	echo "---->dh_installdocs: " >> $(log)
 	dh_installdocs -v >> $(log) 2>&1
 	install -d $(r)/$(DOCDIR)/amanda-common/examples
