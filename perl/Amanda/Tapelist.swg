@@ -55,8 +55,18 @@ sub read_tapelist {
     }
     close($fh);
 
+    # sort in descending order by datestamp, sorting on position, too, to ensure
+    # that entries with the same datestamp stay in the right order
+    update_positions(\@tles); # call a method with an explicit $self
+    @tles = sort {
+	   $b->{'datestamp'} cmp $a->{'datestamp'}
+	|| $a->{'position'} <=> $b->{'position'}
+	} @tles;
+
+    # and re-calculate the positions
+    update_positions(\@tles);
+
     my $self = bless \@tles, "Amanda::Tapelist";
-    $self->update_positions();
 
     return $self;
 }
@@ -121,7 +131,8 @@ sub add_tapelabel {
     my $self = shift;
     my ($datestamp, $label, $comment) = @_;
 
-    push @$self, { 
+    # prepend this (presumably new) volume to the beginning of the list
+    unshift @$self, {
 	'datestamp' => $datestamp,
 	'label' => $label,
 	'reuse' => 1,
@@ -147,11 +158,6 @@ sub write {
     # re-read from the C side to synchronize
     C_read_tapelist($filename);
 }
-
-## TODO -- implement this when it's needed
-# =item C<lookup_last_reusable_tape($skip)> -- find the (C<$skip>+1)-th least recent
-# reusable tape.  For example, C<last_reusable_tape(1)> would return the
-# second-oldest reusable tape.
 
 ## private methods
 

@@ -55,6 +55,8 @@ The optional comment is prefixed with a '#' and continues to the end of the line
 will maintain this comment until the tape is overwritten.  Note that comments are not
 allowed on blank lines.</para>
 
+<para>The file is sorted such that the most-recently used tape appears on the first line, and the oldest tape appears on the last line.</para>
+
 <para><emphasis remap='B'>Amdump</emphasis>
 and
 <emphasis remap='B'>amflush</emphasis>

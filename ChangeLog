@@ -1,4 +1,12 @@
 2009-06-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Tapelist.swg: add tapes at the beginning and be
+	  explicit about maintaining tape order with a stable sort
+	* perl/Amanda/Tapelist.pod: document it
+	* man/xml-source/tapelist.5.xml: manpages too
+	* installcheck/Amanda_Tapelist.pl: test it
+	* installcheck/Makefile.am: sort alphabetically
+
+2009-06-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Util.swg: expose get_fs_usage in perl
 	* installcheck/Amanda_Util.pl: test it
 	* perl/Amanda/Util.pod: document it

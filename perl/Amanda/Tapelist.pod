@@ -44,8 +44,9 @@ C<clear_tapelist()> both return a new tapelist object.
 C<read_tapelist> returns C<undef> if the tapelist does not exist.
 Invalid entries are silently ignored.
 
-A tapelist object is a sequence of tapelist elements (referred to as
-TLEs in this document).  Each TLE is a hash with the following keys:
+A tapelist object is a sequence of tapelist elements (referred to as TLEs in
+this document), sorted by datestamp from newest to oldest.  Each TLE is a hash
+with the following keys:
 
 =over
 
