@@ -28,6 +28,7 @@
 #include "debug.h"
 #include "full-read.h"
 #include "full-write.h"
+#include "fsusage.h"
 /* use a relative path here to avoid conflicting with Perl's util.h. */
 #include "../common-src/util.h"
 #include "file.h"
@@ -274,6 +275,46 @@ sub generate_timestamp {
     }
 }
 %}
+
+/* interface to gnulib's fsusage */
+%typemap(in,numinputs=0) (struct fs_usage *fsp)
+    (struct fs_usage fsu) {
+    bzero(&fsu, sizeof(fsu));
+    $1 = &fsu;
+}
+
+%typemap(argout) (struct fs_usage *fsp) {
+    SV *sv;
+    HV *hv;
+
+    /* if there was an error, assume that fsu_blocksize isn't changed,
+     * and return undef. */
+    if ($1->fsu_blocksize) {
+	hv = (HV *)sv_2mortal((SV *)newHV());
+	hv_store(hv, "blocksize", 9, amglue_newSVi64($1->fsu_blocksize), 0);
+	hv_store(hv, "blocks", 6, amglue_newSVi64($1->fsu_blocks), 0);
+	hv_store(hv, "bfree", 5, amglue_newSVi64($1->fsu_bfree), 0);
+	hv_store(hv, "bavail", 6, amglue_newSVi64($1->fsu_bavail), 0);
+	hv_store(hv, "bavail_top_bit_set", 18, newSViv($1->fsu_bavail_top_bit_set), 0);
+	hv_store(hv, "files", 5, amglue_newSVi64($1->fsu_files), 0);
+	hv_store(hv, "ffree", 5, amglue_newSVi64($1->fsu_ffree), 0);
+
+	$result = newRV((SV *)hv);
+	argvi++;
+    }
+}
+
+%rename(get_fs_usage) get_fs_usage_;
+%inline %{
+void get_fs_usage_(const char *file, struct fs_usage *fsp)
+{
+    int rv = get_fs_usage(file, NULL, fsp);
+    if (rv == -1)
+	/* signal an error to the typemap */
+	fsp->fsu_blocksize = 0;
+}
+%}
+
 
 /* -------------------------------------------------------------------------
  * Functions below this line are only meant to be called within this module;

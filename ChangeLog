@@ -1,3 +1,8 @@
+2009-06-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Util.swg: expose get_fs_usage in perl
+	* installcheck/Amanda_Util.pl: test it
+	* perl/Amanda/Util.pod: document it
+
 2009-06-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/reporter.c: Use the filenum from the PART line.
 	                         Keep the filenum of the first part.

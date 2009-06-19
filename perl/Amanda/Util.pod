@@ -147,6 +147,23 @@ bytes it read from the file descriptor.
 Return a "safe" environment hash.  For non-setuid programs, this means
 filtering out any localization variables.
 
+=item get_fs_usage(file, disk)
+
+This is a wrapper around the Gnulib function of the same name.  On success, it returns
+a hash with keys:
+
+  blocksize           Size of a block
+  blocks              Total blocks on disk
+  bfree               Free blocks available to superuser
+  bavail              Free blocks available to non-superuser
+  bavail_top_bit_set  1 if fsu_bavail represents a value < 0
+  files               Total file nodes
+  ffree               Free file nodes
+
+On failure, it returns nothing, and C<$!> should be set.  If C<$!> is 0, then
+this is a system which cannot measure usage without a C<disk> argument, which
+this wrapper does not support.
+
 =back
 
 =head1 String Utilities

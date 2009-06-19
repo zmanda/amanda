@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 74;
+use Test::More tests => 75;
 
 use lib "@amperldir@";
 use warnings;
@@ -175,3 +175,11 @@ unlink($testfile);
 is_deeply([ Amanda::Util::split_quoted_strings('one "T W O" thr\ ee'), ],
           [ "one", "T W O", "thr ee" ],
           "split_quoted_strings seems to work");
+
+# check out get_fs_usage
+my $fs_usage = Amanda::Util::get_fs_usage(POSIX::getcwd);
+if ($fs_usage) {
+    ok($fs_usage->{'blocks'}, "get_fs_usage returns something");
+} else {
+    fail("get_fs_usage fails: $!");
+}
