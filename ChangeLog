@@ -1,3 +1,7 @@
+2009-06-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/reporter.c: Use the filenum from the PART line.
+	                         Keep the filenum of the first part.
+
 2009-06-19  Nikolas Coukouma <atrus@zmanda.com>
 	* amar-src/amar.c, amar-src/amar.h, amar-src/amarchiver.c,
 	  application-src/amlog-script.pl, application-src/ampgsql.pl,
