@@ -2,13 +2,16 @@ Source: amanda
 Section: utils
 Priority: optional
 Maintainer: Zmanda Inc <support@zmanda.com>
-Build-Depends: debhelper, dump, fakeroot, flex, gnuplot, libtool, mailx, mtx, perl (>=5.6.0), smbclient,
-	libcurl-dev, libncurses5-dev, libreadline5-dev | libreadline-dev, libssl-dev
+Build-Depends: debhelper, dump, fakeroot, flex, gnuplot, libtool, mailx, mtx,
+	perl (>=5.6.0), smbclient, libcurl-dev, libncurses5-dev,
+	libreadline5-dev | libreadline-dev, libssl-dev
 Standards-Version: 3.6.1
 
 Package: amanda-backup-server
 Architecture: any
-Depends: xinetd, perl (>=5.6.0), mailx, gnuplot, tar (>=1.15), libcurl3 (>=7.10.0), libglib2.0-0 (>=2.2.0), libssl | libssl0.9.8
+Depends: xinetd, perl (>=5.6.0), mailx, gnuplot, tar (>=1.15),
+	libcurl3 (>=7.10.0)| libcurl4 (>=7.10.0), libglib2.0-0 (>=2.2.0),
+	libssl | libssl0.9.8
 Suggests: amanda-backup-client (= ${Source-Version})
 Description: Amanda Network Backup and Archiving software
  .
@@ -24,7 +27,8 @@ Description: Amanda Network Backup and Archiving software
 
 Package: amanda-backup-client
 Architecture: any
-Depends: xinetd, perl (>=5.6.0), grep, libcurl3 (>=7.10.0), libglib2.0-0 (>=2.2.0), libssl | libssl0.9.8
+Depends: xinetd, perl (>=5.6.0), grep, libcurl3 (>=7.10.0)| libcurl4 (>=7.10.0),
+	libglib2.0-0 (>=2.2.0), libssl | libssl0.9.8
 Conflicts: amanda-backup-server (>=${Source-Version})
 Description: Amanda Network Backup and Archiving software
  .

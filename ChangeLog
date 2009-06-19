@@ -1,3 +1,7 @@
+2009-06-19 Dan Locks <dwlocks@zmanda.com>
+	* packaging/deb/server/control, packaging/deb/client/control: update
+	  depends to list libcurl3 or 4.
+
 2009-06-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Tapelist.swg: add tapes at the beginning and be
 	  explicit about maintaining tape order with a stable sort
