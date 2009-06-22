@@ -195,6 +195,11 @@ main(
 	    if(!force)
 		tape_ok=0;
 	}
+    } else if (device_status & DEVICE_STATUS_VOLUME_ERROR) {
+	g_printf("Reading the tape label failed: %s.\n",
+		 device_error_or_status(device));
+	if (!force)
+	    tape_ok = 0;
     } else if (device_status != DEVICE_STATUS_SUCCESS) {
         g_printf("Reading the tape label failed: %s.\n",
 		 device_error_or_status(device));
