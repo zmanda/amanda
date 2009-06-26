@@ -1,4 +1,12 @@
 2009-06-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: New ORDER keyword in script section.
+	* common-src/conffile.h: New ORDER keyword in script section.
+	* man/xml-source/amanda.conf.5.xml: Document ORDER keyword.
+	* perl/Amanda/Config.swg: Bing ORDER keyword.
+	* application-src/amlog-script.pl: Add --text parameter.
+	* installcheck/pp-scripts.pl: Check execution order.
+
+2009-06-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/amfetchdump.c, restore-src/amrestore.c,
 	  restore-src/restore.c: Add debugging.
 

@@ -201,6 +201,7 @@ amglue_add_constant(PP_SCRIPT_PLUGIN, pp_script_key);
 amglue_add_constant(PP_SCRIPT_PROPERTY, pp_script_key);
 amglue_add_constant(PP_SCRIPT_EXECUTE_ON, pp_script_key);
 amglue_add_constant(PP_SCRIPT_EXECUTE_WHERE, pp_script_key);
+amglue_add_constant(PP_SCRIPT_ORDER, pp_script_key);
 amglue_copy_to_tag(pp_script_key, getconf);
 
 amglue_add_enum_tag_fns(device_config_key);

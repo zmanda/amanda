@@ -2427,6 +2427,12 @@ A comment string describing this script.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><emphasis remap='B'>order</emphasis> int</term>
+  <listitem>
+<para>Default: <emphasis remap='I'>5000</emphasis>. Scripts are executed in that order, it is useful if you have many scripts and they must be executed in a spefific order.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><emphasis remap='B'>execute_where</emphasis> [client|server]</term>
   <listitem>
 <para>Default: <emphasis remap='I'>client</emphasis>. Where the script must be executed, on the client or server.</para>

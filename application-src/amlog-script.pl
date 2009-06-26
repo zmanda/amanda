@@ -33,7 +33,7 @@ use Amanda::Constants;
 
 sub new {
     my $class = shift;
-    my ($execute_where, $config, $host, $disk, $device, $level, $index, $message, $collection, $record, $logfile) = @_;
+    my ($execute_where, $config, $host, $disk, $device, $level, $index, $message, $collection, $record, $logfile, $text) = @_;
     my $self = $class->SUPER::new($execute_where, $config);
 
     $self->{execute_where} = $execute_where;
@@ -47,6 +47,7 @@ sub new {
     $self->{collection}    = $collection;
     $self->{record}        = $record;
     $self->{logfile}       = $logfile;
+    $self->{text}          = $text;
 
     return $self;
 }
@@ -222,7 +223,7 @@ sub log_data {
    my $log;
 
    open($log, ">>$self->{logfile}") || $self->print_to_server_and_die($self->{action}, "Can't open logfile '$self->{logfile}' for append: $!", $Amanda::Script_App::ERROR);
-   print $log "$self->{config} $function $self->{execute_where} $self->{host} $self->{disk} $self->{device} ", join (" ", @{$self->{level}}), "\n";
+   print $log "$self->{config} $function $self->{execute_where} $self->{host} $self->{disk} $self->{device} ", join (" ", @{$self->{level}}), " $self->{text}\n";
    close $log;
 }
 
@@ -246,6 +247,7 @@ my $opt_message;
 my $opt_collection;
 my $opt_record;
 my $opt_logfile;
+my $opt_text;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
@@ -259,10 +261,11 @@ GetOptions(
     'message=s'       => \$opt_message,
     'collection=s'    => \$opt_collection,
     'record=s'        => \$opt_record,
-    'logfile=s'       => \$opt_logfile
+    'logfile=s'       => \$opt_logfile,
+    'text=s'          => \$opt_text
 ) or usage();
 
-my $script = Amanda::Script::amlog_script->new($opt_execute_where, $opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_logfile);
+my $script = Amanda::Script::amlog_script->new($opt_execute_where, $opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_logfile, $opt_text);
 
 $script->do($ARGV[0]);
 

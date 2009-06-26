@@ -88,7 +88,7 @@ typedef enum {
     CONF_APPLICATION,          CONF_APPLICATION_TOOL,
     CONF_SCRIPT,               CONF_SCRIPT_TOOL,
     CONF_EXECUTE_ON,           CONF_EXECUTE_WHERE,	CONF_SEND_AMREPORT_ON,
-    CONF_DEVICE,
+    CONF_DEVICE,               CONF_ORDER,
 
     /* execute on */
     CONF_PRE_DLE_AMCHECK,      CONF_PRE_HOST_AMCHECK,
@@ -524,6 +524,7 @@ static void validate_port_range(val_t *, int, int);
 static void validate_reserved_port_range(conf_var_t *, val_t *);
 static void validate_unreserved_port_range(conf_var_t *, val_t *);
 static void validate_program(conf_var_t *, val_t *);
+gint compare_pp_script_order(gconstpointer a, gconstpointer b);
 
 /*
  * Initialization
@@ -746,6 +747,7 @@ keytab_t client_keytab[] = {
     { "DEFINE", CONF_DEFINE },
     { "COMMENT", CONF_COMMENT },
     { "MAILER", CONF_MAILER },
+    { "ORDER", CONF_ORDER },
     { "SCRIPT", CONF_SCRIPT },
     { "SCRIPT_TOOL", CONF_SCRIPT_TOOL },
     { "PLUGIN", CONF_PLUGIN },
@@ -892,6 +894,7 @@ keytab_t server_keytab[] = {
     { "NOINC", CONF_NOINC },
     { "NONE", CONF_NONE },
     { "OPTIONAL", CONF_OPTIONAL },
+    { "ORDER", CONF_ORDER },
     { "ORG", CONF_ORG },
     { "PLUGIN", CONF_PLUGIN },
     { "PRE_DLE_AMCHECK", CONF_PRE_DLE_AMCHECK },
@@ -1239,6 +1242,7 @@ conf_var_t pp_script_var [] = {
    { CONF_PROPERTY     , CONFTYPE_PROPLIST, read_property, PP_SCRIPT_PROPERTY     , NULL },
    { CONF_EXECUTE_ON   , CONFTYPE_EXECUTE_ON  , read_execute_on  , PP_SCRIPT_EXECUTE_ON   , NULL },
    { CONF_EXECUTE_WHERE, CONFTYPE_EXECUTE_WHERE  , read_execute_where  , PP_SCRIPT_EXECUTE_WHERE, NULL },
+   { CONF_ORDER        , CONFTYPE_INT     , read_int     , PP_SCRIPT_ORDER        , NULL },
    { CONF_UNKNOWN      , CONFTYPE_INT     , NULL         , PP_SCRIPT_PP_SCRIPT    , NULL }
 };
 
@@ -2167,6 +2171,10 @@ copy_dumptype(void)
     for(i=0; i < DUMPTYPE_DUMPTYPE; i++) {
 	if(dt->value[i].seen.linenum) {
 	    merge_val_t(&dpcur.value[i], &dt->value[i]);
+	    if (i == DUMPTYPE_SCRIPTLIST) {
+		/* sort in 'order' */
+		dpcur.value[i].v.identlist = g_slist_sort(dpcur.value[i].v.identlist, &compare_pp_script_order);
+	    }
 	}
     }
 }
@@ -2543,6 +2551,7 @@ init_pp_script_defaults(
     conf_init_proplist(&pscur.value[PP_SCRIPT_PROPERTY]);
     conf_init_execute_on(&pscur.value[PP_SCRIPT_EXECUTE_ON], 0);
     conf_init_execute_where(&pscur.value[PP_SCRIPT_EXECUTE_WHERE], ES_CLIENT);
+    conf_init_int(&pscur.value[PP_SCRIPT_ORDER], 5000);
 }
 
 static void
@@ -3410,7 +3419,7 @@ read_dpp_script(
 	conf_parserror(_("pp_script name expected: %d %d"), tok, CONF_STRING);
 	return;
     }
-    val->v.identlist = g_slist_append(val->v.identlist, stralloc(pp_script->name));
+    val->v.identlist = g_slist_insert_sorted(val->v.identlist, stralloc(pp_script->name), &compare_pp_script_order);
     ckseen(&val->seen);
 }
 static void
@@ -5716,6 +5725,14 @@ merge_val_t(
 				     valdst->v.proplist);
 	    }
 	}
+    } else if (valsrc->type == CONFTYPE_IDENTLIST) {
+	if (valsrc->v.identlist) {
+	    identlist_t il;
+	    for (il = valsrc->v.identlist; il != NULL; il = il->next) {
+		 valdst->v.identlist = g_slist_append(valdst->v.identlist,
+						   stralloc((char *)il->data));
+	    }
+	}
     } else {
 	free_val_t(valdst);
 	copy_val_t(valdst, valsrc);
@@ -7120,3 +7137,12 @@ anonymous_value(void)
     value++;
     return number;
 }
+
+gint compare_pp_script_order(
+    gconstpointer a,
+    gconstpointer b)
+{
+    return pp_script_get_order(lookup_pp_script((char *)a)) > pp_script_get_order(lookup_pp_script((char *)b));
+}
+
+
