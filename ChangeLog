@@ -1,3 +1,7 @@
+2009-06-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* restore-src/amfetchdump.c, restore-src/amrestore.c,
+	  restore-src/restore.c: Add debugging.
+
 2009-06-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amlabel.c: Relabel VOLUME_ERROR tape if -f.
 

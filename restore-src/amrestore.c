@@ -276,5 +276,7 @@ main(
 
     dumpspec_list_free(dumpspecs);
 
+    dbclose();
+
     return 0;
 }

@@ -92,6 +92,7 @@ usage(void)
     g_fprintf(stderr, _("  -k Skip the rewind/label read when reading a new tape.\n"));
     g_fprintf(stderr, _("  -s Do not use fast forward to skip files we won't restore.  Use only if fsf\n     causes your tapes to skip too far.\n"));
     g_fprintf(stderr, _("  -b <blocksize> Force a particular block size (default is 32kb).\n"));
+    dbclose();
     exit(1);
 }
 
@@ -148,6 +149,7 @@ list_needed_tapes(
     alldumps = find_dump(diskqp);
     if(alldumps == NULL){
         g_fprintf(stderr, _("No dump records found\n"));
+	dbclose();
         exit(1);
     }
 
@@ -439,6 +441,7 @@ main(
 	g_fprintf(stderr, _("Beginning tape-by-tape search.\n"));
 	search_tapes(stderr, stdin, rst_flags->alt_tapedev == NULL,
                      NULL, dumpspecs, rst_flags, NULL);
+	dbclose();
 	exit(0);
     }
 
@@ -468,6 +471,8 @@ main(
 
     free_disklist(&diskq);
     free_rst_flags(rst_flags);
+
+    dbclose();
 
     return(0);
 }

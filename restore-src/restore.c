@@ -130,6 +130,7 @@ handle_sigint(
 	unlink(rst_conf_logfile);
 	log_add(L_INFO, "pid-done %ld\n", (long)getpid());
     }
+    dbclose();
     exit(0);
 }
 
@@ -1127,6 +1128,7 @@ void restore(RestoreSource * source,
 		    && file.type != F_SPLIT_DUMPFILE) {
 		g_fprintf(stderr, _("unexpected header type: "));
 		print_header(stderr, source->header);
+		dbclose();
 		exit(2);
 	    }
 	}            
@@ -1135,6 +1137,7 @@ void restore(RestoreSource * source,
         gboolean result = device_read_to_fd(source->u.device, &queue_fd);
 	if (source->u.device->status != DEVICE_STATUS_SUCCESS) {
 	    g_fprintf(stderr, "%s\n", device_error_or_status(source->u.device));
+	    dbclose();
 	    exit(2);
 	}
 	if (!result) {
@@ -1143,6 +1146,7 @@ void restore(RestoreSource * source,
 	    } else {
 		g_fprintf(stderr, _("Problem writing data to pipe: Unknown reason.\n"));
 	    }
+	    dbclose();
 	    exit(2);
 	}
     }
@@ -1592,6 +1596,7 @@ try_restore_single_file(Device * device, int file_num, int* next_file,
                         dumpfile_t * first_restored_file,
                         GSList * dumpspecs,
                         seentapes_t * tape_seen) {
+    char *qdisk;
     RestoreSource source;
     source.u.device = device;
     source.restore_mode = DEVICE_MODE;
@@ -1641,6 +1646,12 @@ try_restore_single_file(Device * device, int file_num, int* next_file,
 		    get_pname(), file_num);
             print_header(prompt_out, source.header);
 	}
+	qdisk = quote_string(source.header->disk);
+	dbprintf("Skipping file %d: date %s host %s disk %s lev %d part %d/%d\n",
+		 file_num, source.header->datestamp, source.header->name,
+		 qdisk, source.header->dumplevel, source.header->partnum,
+		 source.header->totalparts);
+	amfree(qdisk);
         return RESTORE_STATUS_NEXT_FILE;
     }
 
@@ -1657,6 +1668,13 @@ try_restore_single_file(Device * device, int file_num, int* next_file,
 		get_pname(), file_num);
 	print_header(stderr, source.header);
     }
+    qdisk = quote_string(source.header->disk);
+    dbprintf("Restoring file %d: date %s host %s disk %s lev %d part %d/%d\n",
+	     file_num, source.header->datestamp, source.header->name,
+	     qdisk, source.header->dumplevel, source.header->partnum,
+	     source.header->totalparts);
+    amfree(qdisk);
+
     record_seen_dump(tape_seen, source.header);
     restore(&source, flags);
     if (first_restored_file) {
@@ -1838,6 +1856,7 @@ gboolean restore_holding_disk(FILE * prompt_out,
     RestoreSource source;
     gboolean read_result;
     dumpfile_t header;
+    char *qdisk;
 
     source.header = &header;
     source.restore_mode = HOLDING_MODE;
@@ -1882,6 +1901,13 @@ gboolean restore_holding_disk(FILE * prompt_out,
 
     print_header(stderr, source.header);
 
+    qdisk = quote_string(source.header->disk);
+    dbprintf("Restoring from holding disk %s: date %s host %s disk %s lev %d part %d/%d\n",
+	     file->label,
+	     source.header->datestamp, source.header->name,
+	     qdisk, source.header->dumplevel, source.header->partnum,
+	     source.header->totalparts);
+    amfree(qdisk);
     restore(&source, flags);
     aclose(source.u.holding_fd);
     return TRUE;
@@ -2278,6 +2304,7 @@ printf_arglist_function3(
     g_vsnprintf(linebuf, SIZEOF(linebuf)-1, format, argp);
     arglist_end(argp);
 
+    dbprintf("%s\n", linebuf);
     g_fprintf(stderr,"%s\n", linebuf);
     if (flags->amidxtaped && their_features &&
 	am_has_feature(their_features, fe_amrecover_message)) {
