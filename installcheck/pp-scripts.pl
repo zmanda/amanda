@@ -60,7 +60,7 @@ sub verify_log {
 	    diag($exp);
 	    return;
 	}
-	chomp $got;
+	$got =~ s/ *$//g;
 	if ($got ne $exp) {
 	    fail($msg);
 	    diag("    Line: $linenum");
