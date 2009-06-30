@@ -65,6 +65,11 @@ mock_tests = \
 mocks = \
 	mock/mtx
 
+# data for test scripts
+test_data = \
+	data/aws-bundle.crt
+EXTRA_DIST += $(test_data)
+
 tests =
 
 # tests requiring a client and a server (any tests that run amdump)

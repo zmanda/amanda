@@ -1,3 +1,7 @@
+2009-06-29  Nikolas Coukouma <atrus@zmanda.com>
+	* Amanda_Device.pl, Makefile.am, data/aws-bundle.crt:
+	  Test using a certificate bundle with the S3 device
+
 2009-06-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: New ORDER keyword in script section.
 	* common-src/conffile.h: New ORDER keyword in script section.
