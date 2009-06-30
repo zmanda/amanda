@@ -237,6 +237,46 @@ order, and the callbacks will be called in the correct order.
 Like async_read, this function may add a new FdSource every time it is
 invoked, so it is not well-suited to processing large amounts of data.
 
+=head3 synchronized
+
+Java has the notion of a "synchronized" method, which can only execute in one
+thread at any time.  This is a particular application of a lock, in which the
+lock is acquired when the method begins, and released when it finishes.
+
+With C<Amanda::MainLoop>, this functionality is generally not needed because
+there is no unexpected preemeption. However, if you break up a long-running
+operation (that doesn't allow concurrency) into several callbacks, you'll need
+to ensure that at most one of those operations is going on at a time. The
+C<synchronized> function manages that for you.
+
+The function takes a C<$lock> argument, which should be initialized to an empty
+arrayref (C<[]>).  It is used like this:
+
+    use Amanda::MainLoop 'synchronized';
+    # ..
+    sub dump_data {
+	my $self = shift;
+	my ($arg1, $arg2, $dump_cb) = @_;
+
+	synchronized($self->{'lock'}, $dump_cb, sub {
+	    my ($dump_cb) = @_; # IMPORTANT! See below
+	    $self->do_dump_data($arg1, $arg2, $dump_cb);
+	};
+    }
+
+Here, C<do_dump_data> may take a long time to complete (perhaps it starts
+a long-running data transfer) but only one such operation is allowed at any
+time and other C<Amanda::MainLoop> callbacks may occur (e.g. a timeout).
+When the critical operation is complete, it calls C<$dump_cb> which will
+release the lock before transferring control to the caller.
+
+Note that the C<$dump_cb> in the inner C<sub> shadows that in
+C<dump_data> -- this is intentional, the a call to the the inner
+C<$dump_cb> is how C<syncrhonized> knows that the operation has completed.
+
+Several methods may be synchronized with one another by simply sharing the same
+lock.
+
 =head1 ASYNCHRONOUS STYLE
 
 =head2 USING CALLBACKS

@@ -55,12 +55,15 @@ sub run {
     run_c();
     $mainloop_running = 0;
 }
+push @EXPORT_OK, "run";
 
 sub is_running {
     return $mainloop_running;
 }
+push @EXPORT_OK, "is_running";
 
 # quit is a direct call to C
+push @EXPORT_OK, "quit";
 
 ## utility functions
 
@@ -83,6 +86,7 @@ sub call_later {
 
     push @waiting_to_call_later, [ $sub, @args ];
 }
+push @EXPORT_OK, "call_later";
 
 sub make_cb {
     my ($name, $sub) = @_;
@@ -112,6 +116,7 @@ sub call_after {
 
     return $src;
 }
+push @EXPORT_OK, "call_after";
 
 sub call_on_child_termination {
     my ($pid, $cb, @args) = @_;
@@ -123,6 +128,7 @@ sub call_on_child_termination {
 	return $cb->($exitstatus);
     });
 }
+push @EXPORT_OK, "call_on_child_termination";
 
 sub async_read {
     my %params = @_;
@@ -148,6 +154,7 @@ sub async_read {
     $src->set_callback($fd_cb);
     return $src;
 }
+push @EXPORT_OK, "async_read";
 
 my %outstanding_writes;
 sub async_write {
@@ -211,6 +218,34 @@ sub async_write {
     
     push @{$outstanding_writes{$fd}}, [ $data, 0, length($data), $cb, \@args ];
 }
+push @EXPORT_OK, "async_write";
+
+sub synchronized {
+    my ($lock, $orig_cb, $sub) = @_;
+    my $continuation_cb;
+
+    $continuation_cb = sub {
+	my @args = @_;
+
+	# shift this invocation off the queue
+	my ($last_sub, $last_orig_cb) = @{ shift @$lock };
+
+	# start the next invocation, if the queue isn't empty
+	if (@$lock) {
+	    Amanda::MainLoop::call_later($lock->[0][0], $continuation_cb);
+	}
+
+	# call through to the original callback for the last invocation
+	return $last_orig_cb->(@args);
+    };
+
+    # push this sub onto the lock queue
+    if ((push @$lock, [ $sub, $orig_cb ]) == 1) {
+	# if this is the first addition to the queue, start it
+	$sub->($continuation_cb);
+    }
+}
+push @EXPORT_OK, "synchronized";
 
 %}
 

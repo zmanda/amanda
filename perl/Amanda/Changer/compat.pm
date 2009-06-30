@@ -57,8 +57,6 @@ Caveat emptor.
 =cut
 
 # TODO
-# Concurrent _run_tpchanger invocations are currently forbidden with a die() --
-#   that should change to a simple FIFO queue of tpchanger invocations to make.
 # Clean out old changer temporary directories on object destruction.
 
 sub new {
@@ -79,11 +77,12 @@ sub new {
         script => $script,
 	config => $config,
 	reserved => 0,
-	got_info => 0,
-	got_info_cbs => [],
 	nslots => undef,
 	backwards => undef,
 	searchable => undef,
+	lock => [],
+	got_info => 0,
+	info_lock => [],
     };
     bless ($self, $class);
 
@@ -105,57 +104,64 @@ sub load {
 	    message => "Changer is already reserved: '" . $self->{'reserved'} . "'");
     }
 
-    # make sure the info is loaded, and re-call load() if we have to wait
-    return unless $self->_get_info(
-	    sub {
-		my ($exitval, $message) = @_;
-		if (defined $exitval) { # error
-		    # this is always fatal - we can't load without info
-		    return $self->make_error("fatal", $params{'res_cb'},
-			message => $message);
-		} else {
-		    # repeat the load, now that we have info
-		    $self->load(%params);
-		}
-	    });
+    my %subs;
 
-    my $run_success_cb = sub {
-        my ($slot, $rest) = @_;
-	if (!$rest) {
-	    return $self->make_error("fatal", $params{'res_cb'},
-		message => "changer script did not provide a device name");
-	}
-	$self->_make_res($params{'res_cb'}, $slot, $rest, undef);
-    };
-    my $run_fail_cb = sub {
-        my ($exitval, $message) = @_;
-	if ($exitval >= 2) {
+    # make sure the info is loaded, and re-call load() if we have to wait
+    $subs{'get_info'} = make_cb(get_info => sub {
+	$self->_get_info($subs{'got_info'});
+    });
+
+    $subs{'got_info'} = make_cb(got_info => sub {
+	my ($exitval, $message) = @_;
+	if (defined $exitval) { # error
+	    # this is always fatal - we can't load without info
 	    return $self->make_error("fatal", $params{'res_cb'},
 		message => $message);
+	}
+
+	$subs{'start_load'}->();
+    });
+
+    $subs{'start_load'} = make_cb(start_lod => sub {
+	if (exists $params{'label'}) {
+	    if ($self->{'searchable'}) {
+		$self->_run_tpchanger($subs{'load_run_done'}, "-search", $params{'label'});
+	    } else {
+		# not searchable -- run a manual scan
+		$self->_manual_scan(%params);
+	    }
+	} elsif (exists $params{'slot'}) {
+	    $self->_run_tpchanger($subs{'load_run_done'}, "-slot", $params{'slot'});
+	}
+    });
+
+    $subs{'load_run_done'} = make_cb(load_run_done => sub {
+	my ($exitval, $slot, $rest) = @_;
+	if ($exitval == 0) {
+	    if (!$rest) {
+		return $self->make_error("fatal", $params{'res_cb'},
+		    message => "changer script did not provide a device name");
+	    }
+	} elsif ($exitval >= 2) {
+		return $self->make_error("fatal", $params{'res_cb'},
+		    message => $rest);
 	} else {
 	    return $self->make_error("failed", $params{'res_cb'},
 		reason => "notfound",
-		message => $message);
+		message => $rest);
 	}
-    };
 
-    if (exists $params{'label'}) {
-        if ($self->{'searchable'}) {
-            $self->_run_tpchanger($run_success_cb, $run_fail_cb, "-search", $params{'label'});
-        } else {
-            # not searchable -- run a manual scan
-            $self->_manual_scan(%params);
-        }
-    } elsif (exists $params{'slot'}) {
-        $self->_run_tpchanger($run_success_cb, $run_fail_cb, "-slot", $params{'slot'});
-    }
+	return $self->_make_res($params{'res_cb'}, $slot, $rest, undef);
+    });
+
+    $subs{'get_info'}->();
 }
 
 sub _manual_scan {
     my $self = shift;
     my %params = @_;
     my $nchecked = 0;
-    my ($run_success_cb, $run_fail_cb, $load_next);
+    my ($run_cb, $load_next);
 
     # search manually, starting with "current" and proceeding through nslots-1
     # loads of "next"
@@ -163,34 +169,32 @@ sub _manual_scan {
     # TODO: support the case where nslots == -1
 
     debug("Amanda::Changer::compat: beginning manual scan");
-    $run_success_cb = sub {
-        my ($slot, $rest) = @_;
+    $run_cb = sub {
+        my ($exitval, $slot, $rest) = @_;
 
-	# if we're looking for a label, check what we got
-	if (defined $params{'label'}) {
-	    my $device = Amanda::Device->new($rest);
-	    if ($device and $device->configure(1)
-			and $device->read_label() == $DEVICE_STATUS_SUCCESS
-			and $device->volume_label() eq $params{'label'}) {
-		# we found the correct slot
-		$self->_make_res($params{'res_cb'}, $slot, $rest, $device);
-		return;
+	if ($exitval == 0) {
+	    # if we're looking for a label, check what we got
+	    if (defined $params{'label'}) {
+		my $device = Amanda::Device->new($rest);
+		if ($device and $device->configure(1)
+			    and $device->read_label() == $DEVICE_STATUS_SUCCESS
+			    and $device->volume_label() eq $params{'label'}) {
+		    # we found the correct slot
+		    $self->_make_res($params{'res_cb'}, $slot, $rest, $device);
+		    return;
+		}
 	    }
+
+	    return $load_next->();
+	} else {
+	    # don't continue scanning after a fatal error
+	    if ($exitval >= 2) {
+		return $self->make_error("fatal", $params{'res_cb'},
+		    message => $rest);
+	    }
+
+	    return $load_next->();
 	}
-
-        $load_next->();
-    };
-
-    $run_fail_cb = sub {
-	my ($exitval, $message) = @_;
-
-	# don't continue scanning after a fatal error
-        if ($exitval >= 2) {
-	    return $self->make_error("fatal", $params{'res_cb'},
-		message => $message);
-	}
-
-	$load_next->();
     };
 
     $load_next = sub {
@@ -206,11 +210,11 @@ sub _manual_scan {
 	}
 
 	debug("Amanda::Changer::compat: manual scanning next slot");
-	$self->_run_tpchanger($run_success_cb, $run_fail_cb, "-slot", "next");
+	$self->_run_tpchanger($run_cb, "-slot", "next");
     };
 
     debug("Amanda::Changer::compat: manual scanning current slot");
-    $self->_run_tpchanger($run_success_cb, $run_fail_cb, "-slot", "current");
+    $self->_run_tpchanger($run_cb, "-slot", "current");
 }
 
 # takes $res_cb, $slot and $rest; creates and configures the device, and calls
@@ -244,25 +248,22 @@ sub info_setup {
     my $self = shift;
     my %params = @_;
 
-    return unless $self->_get_info(
-	    sub {
-		my ($exitval, $message) = @_;
-		if (defined $exitval) { # error
-		    if ($exitval >= 2) {
-			return $self->make_error("fatal", $params{'finished_cb'},
-			    message => $message);
-		    } else {
-			return $self->make_error("failed", $params{'finished_cb'},
-			    reason => "notfound",
-			    message => $message);
-		    }
-		} else {
-		    # no error, so we're done with setup
-		    $params{'finished_cb'}->();
-		}
-	    });
+    $self->_get_info(sub {
+	my ($exitval, $message) = @_;
+	if (defined $exitval) { # error
+	    if ($exitval >= 2) {
+		return $self->make_error("fatal", $params{'finished_cb'},
+		    message => $message);
+	    } else {
+		return $self->make_error("failed", $params{'finished_cb'},
+		    reason => "notfound",
+		    message => $message);
+	    }
+	}
 
-    $params{'finished_cb'}->();
+	# no error, so we're done with setup
+	$params{'finished_cb'}->();
+    });
 }
 
 sub info_key {
@@ -285,23 +286,24 @@ sub _simple_op {
     my $op = shift;
     my %params = @_;
 
-    my $run_success_cb = sub {
-        if (exists $params{'finished_cb'}) {
-            $params{'finished_cb'}->(undef);
-        }
-    };
-    my $run_fail_cb = sub {
-	my ($exitval, $message) = @_;
-	if ($exitval >= 2) {
-	    return $self->make_error("fatal", $params{'finished_cb'},
-		message => $message);
+    my $run_cb = sub {
+	my ($exitval, $slot, $rest) = @_;
+	if ($exitval == 0) {
+	    if (exists $params{'finished_cb'}) {
+		$params{'finished_cb'}->(undef);
+	    }
 	} else {
-	    return $self->make_error("failed", $params{'finished_cb'},
-		reason => "unknown",
-		message => $message);
+	    if ($exitval >= 2) {
+		return $self->make_error("fatal", $params{'finished_cb'},
+		    message => $rest);
+	    } else {
+		return $self->make_error("failed", $params{'finished_cb'},
+		    reason => "unknown",
+		    message => $rest);
+	    }
 	}
     };
-    $self->_run_tpchanger($run_success_cb, $run_fail_cb, "-$op");
+    $self->_run_tpchanger($run_cb, "-$op");
 }
 
 sub reset {
@@ -354,42 +356,37 @@ sub update {
 sub _get_info {
     my ($self, $got_info_cb) = @_;
 
-    return 1 if ($self->{'got_info'});
+    Amanda::MainLoop::synchronized($self->{'info_lock'}, $got_info_cb, sub {
+	my ($got_info_cb) = @_;
 
-    push @{$self->{'got_info_cbs'}}, $got_info_cb;
-
-    # if we're already getting the info, we're done
-    return if (@{$self->{'got_info_cbs'}} > 1);
-
-    my $call_cbs = sub {
-	my @cb_args = @_;
-	while (my $cb = pop @{$self->{'got_info_cbs'}}) {
-	    $cb->(@cb_args);
-	}
-    };
-
-    my $run_success_cb = sub {
-	my ($slot, $rest) = @_;
-	# old, unsearchable changers don't return the third result, so it's
-	# optional in the regex
-	unless ($rest =~ /(\d+) (\d+) ?(\d+)?/) {
-	    $call_cbs->(2, "Malformed response from changer -info: $rest");
-	    return;
+	# if we've already got info, just call back right away
+	if ($self->{'got_info'}) {
+	    return $got_info_cb->();
 	}
 
-	$self->{'nslots'} = $1;
-	$self->{'backward'} = $2;
-	$self->{'searchable'} = $3? 1:0;
+	my $run_cb = sub {
+	    my ($exitval, $slot, $rest) = @_;
+	    if ($exitval == 0) {
+		# old, unsearchable changers don't return the third result, so it's
+		# optional in the regex
+		unless ($rest =~ /(\d+) (\d+) ?(\d+)?/) {
+		    return $got_info_cb->(2,
+			    "Malformed response from changer -info: $rest");
+		}
 
-	$self->{'got_info'} = 1;
-	$call_cbs->();
-    };
+		$self->{'nslots'} = $1;
+		$self->{'backward'} = $2;
+		$self->{'searchable'} = $3? 1:0;
 
-    my $run_error_cb = sub {
-	$call_cbs->(@_);
-    };
+		$self->{'got_info'} = 1;
+		return $got_info_cb->(undef, undef);
+	    } else {
+		return $got_info_cb->($exitval, $rest);
+	    }
+	};
 
-    $self->_run_tpchanger($run_success_cb, $run_error_cb, "-info");
+	$self->_run_tpchanger($run_cb, "-info");
+    });
 }
 
 # Internal function to create a temporary configuration directory, which persists
@@ -452,151 +449,134 @@ sub _make_cfg_dir {
 # Internal-use function to actually invoke a changer script and parse
 # its output.
 #
-# @param $success_cb: called with ($slot, $rest) on success
-# @param $failure_cb: called with ($exitval, $message) on any failure
+# @param $run_cb: called with ($exitval, $slot, $rest)
 # @params @args: command-line arguments to follow the name of the changer
-# @returns: array ($error, $slot, $rest), where $error is an error message if
-#       a benign error occurred, or 0 if no error occurred
 sub _run_tpchanger {
-    my ($self, $success_cb, $failure_cb, @args) = @_;
+    my ($self, $run_cb, @args) = @_;
 
-    if ($self->{'busy'}) {
-	croak("Changer is already in use");
-    }
+    Amanda::MainLoop::synchronized($self->{'lock'}, $run_cb, sub {
+	my ($run_cb) = @_;
+	debug("Amanda::Changer::compat: invoking $self->{script} with " . join(" ", @args));
 
-    debug("Amanda::Changer::compat: invoking $self->{script} with " . join(" ", @args));
+	my ($readfd, $writefd) = POSIX::pipe();
+	if (!defined($writefd)) {
+	    croak("Error creating pipe to run changer script: $!");
+	}
 
-    my ($readfd, $writefd) = POSIX::pipe();
-    if (!defined($writefd)) {
-	croak("Error creating pipe to run changer script: $!");
-    }
+	my $pid = fork();
+	if (!defined($pid) or $pid < 0) {
+	    croak("Can't fork to run changer script: $!");
+	}
 
-    my $pid = fork();
-    if (!defined($pid) or $pid < 0) {
-        croak("Can't fork to run changer script: $!");
-    }
+	if (!$pid) {
+	    ## child
 
-    if (!$pid) {
-        ## child
+	    # get our file-handle house in order
+	    POSIX::close($readfd);
+	    POSIX::dup2($writefd, 1);
+	    POSIX::close($writefd);
 
-	# get our file-handle house in order
-	POSIX::close($readfd);
-	POSIX::dup2($writefd, 1);
+	    # cd into the config dir
+	    if (!chdir($self->{'cfg_dir'})) {
+		print "<error> Could not chdir to '" . $self->{cfg_dir} . "'\n";
+		exit(2);
+	    }
+
+	    %ENV = Amanda::Util::safe_env();
+
+	    my $script = $self->{'script'};
+	    { exec { $script } $script, @args; } # braces protect against warning
+
+	    my $err = "<error> Could not exec $script: $!\n";
+	    POSIX::write($writefd, $err, length($err));
+	    exit 2;
+	}
+
+	## parent
+
+	# clean up file descriptors from the fork
 	POSIX::close($writefd);
 
-        # cd into the config dir
-        if (!chdir($self->{'cfg_dir'})) {
-            print "<error> Could not chdir to '" . $self->{cfg_dir} . "'\n";
-            exit(2);
-        }
+	# the callbacks that follow share these lexical variables
+	my $child_eof = 0;
+	my $child_output = '';
+	my $child_dead = 0;
+	my $child_exit_status = 0;
+	my ($fdsrc, $cwsrc);
+	my ($maybe_finished, $fd_source_cb, $child_watch_source_cb);
 
-        %ENV = Amanda::Util::safe_env();
+	# Perl note: we have to use anonymous subs here, as they are instantiated
+	# at runtime, rather than at compile time.
 
-	my $script = $self->{'script'};
-        { exec { $script } $script, @args; } # braces protect against warning
+	$maybe_finished = sub {
+	    return unless $child_eof;
+	    return unless $child_dead;
 
-	my $err = "<error> Could not exec $script: $!\n";
-	POSIX::write($writefd, $err, length($err));
-        exit 2;
-    }
+	    # everything is finished -- process the results and invoke the callback
+	    chomp $child_output;
 
-    ## parent
+	    # handle unexpected exit status as a fatal error
+	    if (!POSIX::WIFEXITED($child_exit_status) || POSIX::WEXITSTATUS($child_exit_status) > 2) {
+		$run_cb->(POSIX::WEXITSTATUS($child_exit_status), undef,
+		    "Fatal error from changer script: ".$child_output);
+		return;
+	    }
 
-    # clean up file descriptors from the fork
-    POSIX::close($writefd);
+	    # parse the child's output
+	    my @child_output = split '\n', $child_output;
+	    my $exitval = POSIX::WEXITSTATUS($child_exit_status);
 
-    # mark this object as "busy", so we can't begin another operation
-    # until this one is finished.
-    $self->{'busy'} = 1;
+	    debug("Amanda::Changer::compat: Got response '$child_output' with exit status $exitval");
+	    if (@child_output < 1) {
+		$run_cb->(2, undef, "Malformed output from changer script -- no output");
+		return;
+	    }
+	    if (@child_output > 1) {
+		$run_cb->(2, undef, "Malformed output from changer script -- too many lines");
+		return;
+	    }
+	    if ($child_output[0] !~ /\s*([^\s]+)(?:\s+(.+))?/) {
+		$run_cb->(2, undef, "Malformed output from changer script: '$child_output[0]'");
+		return;
+	    }
+	    my ($slot, $rest) = ($1, $2);
 
-    # the callbacks that follow share these lexical variables
-    my $child_eof = 0;
-    my $child_output = '';
-    my $child_dead = 0;
-    my $child_exit_status = 0;
-    my ($fdsrc, $cwsrc);
-    my ($maybe_finished, $fd_source_cb, $child_watch_source_cb);
+	    # let the callback take care of any further interpretation
+	    $run_cb->($exitval, $slot, $rest);
+	};
 
-    # Perl note: we have to use anonymous subs here, as they are instantiated
-    # at runtime, rather than at compile time.
+	$fd_source_cb = sub {
+	    my ($fdsrc) = @_;
+	    my ($len, $bytes);
+	    $len = POSIX::read($readfd, $bytes, 1024);
 
-    $maybe_finished = sub {
-	return unless $child_eof;
-	return unless $child_dead;
+	    # if we got an EOF, shut things down.
+	    if ($len == 0) {
+		$child_eof = 1;
+		POSIX::close($readfd);
+		$fdsrc->remove();
+		$fdsrc = undef; # break a reference loop
+		$maybe_finished->();
+	    } else {
+		# otherwise, just keep the bytes
+		$child_output .= $bytes;
+	    }
+	};
+	$fdsrc = Amanda::MainLoop::fd_source($readfd, $G_IO_IN | $G_IO_ERR | $G_IO_HUP);
+	$fdsrc->set_callback($fd_source_cb);
 
-	# everything is finished -- process the results and invoke the callback
-	chomp $child_output;
+	$child_watch_source_cb = sub {
+	    my ($cwsrc, $got_pid, $got_status) = @_;
+	    $cwsrc->remove();
+	    $cwsrc = undef; # break a reference loop
+	    $child_dead = 1;
+	    $child_exit_status = $got_status;
 
-	# mark this object as no longer busy.  This frees the
-	# object up to begin the next operation, which may happen
-	# during the invocation of the callback
-	$self->{'busy'} = 0;
-
-	# handle unexpected exit status as a fatal error
-	if (!POSIX::WIFEXITED($child_exit_status) || POSIX::WEXITSTATUS($child_exit_status) > 2) {
-	    $failure_cb->(POSIX::WEXITSTATUS($child_exit_status),
-		"Fatal error from changer script: ".$child_output);
-	    return;
-	}
-
-	# parse the child's output
-	my @child_output = split '\n', $child_output;
-	my $exitval = POSIX::WEXITSTATUS($child_exit_status);
-
-	debug("Amanda::Changer::compat: Got response '$child_output' with exit status $exitval");
-	if (@child_output < 1) {
-	    $failure_cb->(2, "Malformed output from changer script -- no output");
-	    return;
-	}
-	if (@child_output > 1) {
-	    $failure_cb->(2, "Malformed output from changer script -- too many lines");
-	    return;
-	}
-	if ($child_output[0] !~ /\s*([^\s]+)(?:\s+(.+))?/) {
-	    $failure_cb->(2, "Malformed output from changer script: '$child_output[0]'");
-	    return;
-	}
-	my ($slot, $rest) = ($1, $2);
-
-	# let the callback take care of any further interpretation
-	if ($exitval == 0) {
-	    $success_cb->($slot, $rest);
-	} else {
-	    $failure_cb->($exitval, $rest);
-	}
-    };
-
-    $fd_source_cb = sub {
-	my ($fdsrc) = @_;
-	my ($len, $bytes);
-	$len = POSIX::read($readfd, $bytes, 1024);
-
-	# if we got an EOF, shut things down.
-	if ($len == 0) {
-	    $child_eof = 1;
-	    POSIX::close($readfd);
-	    $fdsrc->remove();
-	    $fdsrc = undef; # break a reference loop
 	    $maybe_finished->();
-	} else {
-	    # otherwise, just keep the bytes
-	    $child_output .= $bytes;
-	}
-    };
-    $fdsrc = Amanda::MainLoop::fd_source($readfd, $G_IO_IN | $G_IO_ERR | $G_IO_HUP);
-    $fdsrc->set_callback($fd_source_cb);
-
-    $child_watch_source_cb = sub {
-	my ($cwsrc, $got_pid, $got_status) = @_;
-	$cwsrc->remove();
-	$cwsrc = undef; # break a reference loop
-	$child_dead = 1;
-	$child_exit_status = $got_status;
-
-	$maybe_finished->();
-    };
-    $cwsrc = Amanda::MainLoop::child_watch_source($pid);
-    $cwsrc->set_callback($child_watch_source_cb);
+	};
+	$cwsrc = Amanda::MainLoop::child_watch_source($pid);
+	$cwsrc->set_callback($child_watch_source_cb);
+    });
 }
 
 package Amanda::Changer::compat::Reservation;
@@ -653,22 +633,23 @@ sub set_label {
         return;
     }
 
-    my $run_success_cb = sub {
-        $params{'finished_cb'}->(undef) if $params{'finished_cb'};
-    };
-    my $run_fail_cb = sub {
-	my ($exitval, $message) = @_;
-	if ($exitval >= 2) {
-	    return $self->{'chg'}->make_error("fatal", $params{'finished_cb'},
-		message => $message);
+    my $run_cb = sub {
+	my ($exitval, $slot, $rest) = @_;
+	if ($exitval == 0) {
+	    $params{'finished_cb'}->(undef) if $params{'finished_cb'};
 	} else {
-	    return $self->{'chg'}->make_error("failed", $params{'finished_cb'},
-		reason => "unknown",
-		message => $message);
+	    if ($exitval >= 2) {
+		return $self->{'chg'}->make_error("fatal", $params{'finished_cb'},
+		    message => $rest);
+	    } else {
+		return $self->{'chg'}->make_error("failed", $params{'finished_cb'},
+		    reason => "unknown",
+		    message => $rest);
+	    }
 	}
     };
     $self->{'chg'}->_run_tpchanger(
-        $run_success_cb, $run_fail_cb, "-label", $params{'label'});
+        $run_cb, "-label", $params{'label'});
 }
 
 1;

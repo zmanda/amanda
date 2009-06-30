@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 24;
+use Test::More tests => 25;
 use strict;
 use warnings;
 use POSIX qw(WIFEXITED WEXITSTATUS EINTR );
@@ -779,4 +779,57 @@ pass("Calling remove twice is ok");
 	  'wrote 8', 'read ICECREAM',
 	  'wrote 8', 'read BROWNIES' ],
 	"async_write works");
+}
+
+# test synchronized
+{
+    my $lock = [];
+    my @messages;
+
+    sub syncd1 {
+	my ($msg, $cb) = @_;
+	return Amanda::MainLoop::synchronized($lock, $cb, sub {
+	    my ($ser_cb) = @_;
+	    push @messages, "BEG-$msg";
+	    Amanda::MainLoop::call_after(10, sub {
+		push @messages, "END-$msg";
+		$ser_cb->($msg);
+	    });
+	});
+    };
+
+    # add a second syncd function to demonstrate that several functions
+    # can serialize on the same lock
+    sub syncd2 {
+	my ($msg, $fin_cb) = @_;
+	return Amanda::MainLoop::synchronized($lock, $fin_cb, sub {
+	    my ($ser_cb) = @_;
+	    push @messages, "BEG2-$msg";
+	    Amanda::MainLoop::call_after(10, sub {
+		push @messages, "END2-$msg";
+		$ser_cb->($msg);
+	    });
+	});
+    };
+
+    my $num_running = 3;
+    my $fin_cb = sub {
+	push @messages, "FIN-$_[0]";
+	if (--$num_running == 0) {
+	    Amanda::MainLoop::quit();
+	}
+    };
+
+    syncd1("A", $fin_cb);
+    syncd2("B", $fin_cb);
+    syncd1("C", $fin_cb);
+
+    Amanda::MainLoop::run();
+
+    is_deeply([ @messages ],
+	[
+	    "BEG-A", "END-A", "FIN-A",
+	    "BEG2-B", "END2-B", "FIN-B",
+	    "BEG-C", "END-C", "FIN-C",
+	], "synchronized works");
 }
