@@ -227,7 +227,7 @@ if WANT_SERVER
 # PACKAGE: Amanda::Taper::*
 AmandaTaperdir = $(amperldir)/Amanda/Taper
 AmandaTaper_DATA = \
-	Amanda/Taper/Scribe.pm
+	Amanda/Taper/Scan.pm
 HTML_SOURCE_FILES += $(AmandaTaper_DATA)
 endif
 EXTRA_DIST += $(AmandaTaper_DATA)
