@@ -52,6 +52,15 @@ Older applications access the new changer API through a "glue" layer (chg-glue)
 which limits the functionality to version-1.0 features, and in many cases still
 run the old shell scripts via chg-compat.</para>
 
+<para>The Changer API strives to treat all changers identically, so that
+Amanda's behavior is independent of the changer in use.  However, some parts of
+Amanda operate differently depending on whether a changer can efficiently
+search for a volume with a given label.  This distinction is really only
+apparent with tape libraries: those with barcode readers can quickly find a
+desired tape, while those without may fall back to an inefficient scan of each
+volume.  The capability to perform quick searches is called "fast-search", and
+each changer is annotated below to indicate its support.</para>
+
 </refsect1>
 
 <refsect1><title>SPECIFYING CHANGERS</title>
@@ -103,7 +112,7 @@ tpchanger "chg-disk:/u01/vtapes"
 supporting parallel access to vtapes stored in directories named
 <computeroutput>slotN</computeroutput> in the directory specified after
 <computeroutput>chg-disk:</computeroutput>.  It does so by creating numbered
-"drives" so that simultaneous processes can access distinct slots.</para>
+"drives" so that simultaneous processes can access distinct slots.  This changer is fast-search capable.</para>
 
 </refsect2>
 
@@ -123,6 +132,8 @@ LASTSLOT=number    # The number of slots, default to tapecycle setting.
 </programlisting>
 </para>
 
+<para>This changer is not fast-search capable.</para>
+
 </refsect2>
 
 <refsect2><title>chg-multi</title>
@@ -137,6 +148,8 @@ configuration have different device names -- for example, with S3 devices.
 The <emphasis>changerfile</emphasis> need not exist; it is used as a prefix
 for filenames of state files.
 </para>
+
+<para>This changer is not fast-search capable.</para>
 
 </refsect2>
 
@@ -160,6 +173,8 @@ request="[type]"      # How to request a new tape (default "tty_email")
   request="tty_email" # Use the tty if it exist or send an email.
 </programlisting>
 </para>
+
+<para>This changer is not fast-search capable.</para>
 
 </refsect2>
 
@@ -199,6 +214,9 @@ slotinfofile=FILENAME       #### record slot information to this file, in
 </programlisting>
 </para>
 
+<para>This changer is fast-search capable if and only if
+<command>havereader</command> is true.</para>
+
 </refsect2>
 
 <refsect2><title>chg-rait:{CHILD1,CHILD2,..}</title>
@@ -219,6 +237,8 @@ tpchanger "chg-rait:{chg-disk:/path/to/vtape,tapechanger}"
 
 <para>As a convenience to the user, the RAIT changer will also accept un-braced slot names, and supply the same name to each child changer. Thus with a 4-device RAIT changer, "<computeroutput>17</computeroutput>" is equivalent to "<computeroutput>{17,17,17,17}</computeroutput>".</para>
 
+<para>This changer is fast-search capable only if all of its child changers are fast-search capable.</para>
+
 <note>The old chg-rait script is no longer supported nor shipped with Amanda, although the old script will continue to function via <command>chg-compat</command>, giving users time to upgrade their configuration.
 </note><!-- previous newline is important -->
 
@@ -233,6 +253,8 @@ tpchanger "chg-null:"
 
 <note>The old <command>chg-null</command> shell script is no longer shipped with Amanda.
 </note>
+
+<para>This changer is trivially fast-search capable.</para>
 
 </refsect2>
 

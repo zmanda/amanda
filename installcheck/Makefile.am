@@ -36,6 +36,8 @@ server_tests = \
 	Amanda_Logfile \
 	Amanda_Process \
 	Amanda_Tapelist \
+	Amanda_Taper_Scan \
+	Amanda_Taper_Scan_traditional \
 	Amanda_Xfer_serveronly \
 	bigint \
 	taper \

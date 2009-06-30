@@ -81,6 +81,10 @@ sub new {
     my $self = {
 	dir => $dir,
 	config => $config,
+
+	# this is set to 0 by various test scripts,
+	# notably Amanda_Taper_Scan_traditional
+	support_fast_search => 1,
     };
 
     bless ($self, $class);
@@ -115,7 +119,7 @@ sub info_key {
     } elsif ($key eq 'vendor_string') {
 	$results{$key} = 'chg-disk'; # mostly just for testing
     } elsif ($key eq 'fast_search') {
-	$results{$key} = 1;
+	$results{$key} = $self->{'support_fast_search'};
     }
 
     $params{'info_cb'}->(undef, %results) if $params{'info_cb'};

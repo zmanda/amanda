@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amanda-taperscan.7'>
+
+<refmeta>
+<refentrytitle>amanda-taperscan</refentrytitle>
+<manvolnum>7</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.7;
+</refmeta>
+<refnamediv>
+<refname>amanda-taperscan</refname>
+<refpurpose>Amanda Taperscan Algorithms</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.dustin;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Amanda uses a <emphasis>taperscan algorithm</emphasis> to select volumes
+on which to store dumps.  Historically Amanda has provided only one, fairly
+complex taperscan algorithm, but this algorithm did not suit the needs of all
+users.  Now Amanda offers a wide array of algorithms to suit varied needs.
+Adding new algorithms is not difficult.</para>
+
+<para>The taperscan algorithm is specified with the <emphasis
+remap='B'>taperscan</emphasis> parameter, which has a default value of
+<emphasis remap='B'>traditional</emphasis>.</para>
+
+<para>Taperscan algorithms are implemented as perl packages with the prefix
+<filename>Amanda::Taper::Scan::</filename>.  See the perl documentation for
+<filename>Amanda::Taper::Scan</filename> for more information.</para>
+
+</refsect1>
+
+<refsect1><title>TAPERSCAN ALGORITHMS</title>
+
+<para>In general, these volumes will only select reusable volumes.  These are
+volumes which are listed in the &tapelist; with the <emphasis>reuse</emphasis>
+flag, and which are not among the <emphasis>tapecycle-1</emphasis> most recent
+volumes in the list.  Put another way, reusable volumes do not contain data
+that must be retained.  Note that if fewer than
+<emphasis>tapecycle-1</emphasis> volumes have been written then there are no
+reusable volumes.  Newly labeled volumes (volumes that have been labeled with
+&amlabel; but never used) are considered reusable.</para>
+
+<para>Many of these algorithms look for the oldest reusable volume.  In most
+cases, this is the best volume to overwrite, as the data it contains is older
+than that on any other volume.  If there are no reusable volumes, then there is
+no oldest reusable volume.
+</para>
+
+<refsect2><title>traditional</title>
+
+<para>This algorithm duplicates Amanda's historical behavior, and it operates
+in two stages.</para>
+
+<para>First, if there is an oldest reusable volume and if the changer supports
+"fast" searches, then the algorithm uses the changer to search for that volume.
+Newly labeled volumes are not considered when calculating the oldest reusable
+volume.  Consequently, this taperscan algorithm prefers volumes which have been
+used before to newly-labeled volumes when a fast-searchable changer is in
+use.</para>
+
+<para>Second, if there is no oldest reusable volume, or if that volume is not
+available in the changer, then the algorithm begins a sequential scan of the
+changer, starting at the current slot.  It selects the first suitable volume it
+finds: a reusable volume (perhaps newly-labeled) or, if
+<emphasis>label_new_tapes</emphasis> is true, a blank volume.</para>
+
+<note>This algorithm shows an undue preference for volumes already containing
+data, by omitting newly-labeled volumes from its first stage.  Historically,
+many &A; changer scripts were not fast-searchable (including
+<emphasis>chg-multi</emphasis>, <emphasis>chg-disk</emphasis> and, if
+<emphasis>havereader=0</emphasis>, <emphasis>chg-zd-mtx</emphasis>), and thus
+skipped the first stage, allowing new volumes to find their way into the tape
+cycle.  New changers are almost all fast-searchable, so both stages of the
+algorithm are used and new tapes may be unexpectedly excluded.  If this causes
+an undesirable change in behavior, consider one of the other taperscan
+algorithms.</note>
+
+</refsect2>
+
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="tapelist" vol="5"/>,
+<manref name="amanda-changers" vol="7"/>,
+</seealso>
+
+</refentry>
+

@@ -1,4 +1,16 @@
 2009-06-30  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Taper/Scan.pm perl/Amanda/Taper/Scan/traditional.pm
+	  perl/Makefile.am: add Perl implementation of the traditional taperscan
+	  algorithm
+	* installcheck/Amanda_Taper_Scan.pl
+	  installcheck/Amanda_Taper_Scan_traditional.pl
+	  installcheck/Makefile.am: test
+	* perl/Amanda/Changer/disk.pm: test support tweak
+	* man/Makefile.am man/xml-source/amanda-taperscan.7.xml: new manpage
+	  with a full description of the traditional algo
+	* man/xml-source/amanda-changers.7.xml: mention which changers are fast-search
+
+2009-06-30  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/MainLoop.swg: add synchronized()
 	* perl/Amanda/MainLoop.pod: document it
 	* installcheck/Amanda_MainLoop.pl: test it
