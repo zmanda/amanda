@@ -1,4 +1,9 @@
 2009-06-29  Nikolas Coukouma <atrus@zmanda.com>
+	* device-src/s3.c, installcheck/Amanda_Device.pl:
+	  Don't allow dots in bucket names, for compatability with
+	  libcurl built against NSS.
+
+2009-06-29  Nikolas Coukouma <atrus@zmanda.com>
 	* Amanda_Device.pl, Makefile.am, data/aws-bundle.crt:
 	  Test using a certificate bundle with the S3 device
 

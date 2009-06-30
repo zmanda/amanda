@@ -1293,7 +1293,7 @@ compile_regexes(void)
         {"<Code>[[:space:]]*([^<]*)[[:space:]]*</Code>", REG_EXTENDED | REG_ICASE, &error_name_regex},
         {"^ETag:[[:space:]]*\"([^\"]+)\"[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &etag_regex},
         {"<Message>[[:space:]]*([^<]*)[[:space:]]*</Message>", REG_EXTENDED | REG_ICASE, &message_regex},
-        {"^[a-z0-9]((-*[a-z0-9])|(\\.[a-z0-9])){2,62}$", REG_EXTENDED | REG_NOSUB, &subdomain_regex},
+        {"^[a-z0-9](-*[a-z0-9]){2,62}$", REG_EXTENDED | REG_NOSUB, &subdomain_regex},
         {"(/>)|(>([^<]*)</LocationConstraint>)", REG_EXTENDED | REG_ICASE, &location_con_regex},
         {NULL, 0, NULL}
     };
