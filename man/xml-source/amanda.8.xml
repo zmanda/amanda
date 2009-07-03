@@ -204,6 +204,9 @@ configuration files for quick reference.</para>
 <listitem>
 <manref name="amanda-scripts" vol="7"/>,
 </listitem>
+<listitem>
+<manref name="amanda-taperscan" vol="7"/>,
+</listitem>
 </itemizedlist>
 </refsect2>
 </refsect1>
