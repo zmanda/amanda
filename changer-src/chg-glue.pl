@@ -45,6 +45,7 @@ use Getopt::Long;
 
 my $chg;
 my $res;
+my $res_device_name;
 
 sub err_result {
     my ($err, $continuation, @cont_args) = @_;
@@ -83,7 +84,7 @@ sub release_and_then {
     my ($release_opts, $andthen) = @_;
     if ($res) {
 	# release the current reservation, then call andthen
-	debug("releasing reservation of " . $res->{'device'}->device_name);
+	debug("releasing reservation of $res_device_name");
 	$res->release(@$release_opts,
 	    finished_cb => sub {
 		my ($error) = @_;
@@ -132,8 +133,15 @@ sub do_slot {
 		    # can open it.  This is not forward-compatible, but will
 		    # work for the current fleet of changers, as long as no
 		    # configuration or properties are in effect.
+		    $res_device_name = $res->{'device'}->device_name;
+
+		    # close the device so that the parent process will be able
+		    # to open a tape device.  This assumes that no other references
+		    # to this device are outstanding.
+		    $res->{'device'} = undef;
+
 		    normal_result($res->{'this_slot'},
-			    $res->{'device'}->device_name,
+			    $res_device_name,
 			    \&getcmd);
 		}
 	    }
@@ -223,8 +231,15 @@ sub do_search {
 		    # can open it.  This is not forward-compatible, but will
 		    # work for the current fleet of changers, as long as no
 		    # configuration or properties are in effect.
+		    $res_device_name = $res->{'device'}->device_name;
+
+		    # close the device so that the parent process will be able
+		    # to open a tape device.  This assumes that no other references
+		    # to this device are outstanding.
+		    $res->{'device'} = undef;
+
 		    normal_result($res->{'this_slot'},
-				$res->{'device'}->device_name,
+				$res_device_name,
 				\&getcmd);
 		}
 	    }
@@ -244,7 +259,7 @@ sub do_label {
 		    err_result($error, \&getcmd);
 		} else {
 		    normal_result($res->{'this_slot'},
-				$res->{'device'}->device_name,
+				$res_device_name,
 				\&getcmd);
 		}
             }

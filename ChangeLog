@@ -1,3 +1,8 @@
+2009-07-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-glue.pl: unref the device, in hopes it will
+	  close the open file descriptor so that tape devices can be used
+	  from the process that invoked chg-glue
+
 2009-07-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda.8.xml: add link to amanda-taperscan(7)
 
