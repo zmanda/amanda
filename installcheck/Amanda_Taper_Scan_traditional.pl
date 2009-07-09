@@ -113,12 +113,12 @@ sub run_scan {
     return $error, $label, $mode;
 }
 
-# set the "current" slot on the changer
+# set the current slot on the changer
 sub set_current_slot {
     my ($slot) = @_;
 
-    -e "$taperoot/current" && unlink("$taperoot/current");
-    symlink("slot$slot", "$taperoot/current");
+    -e "$taperoot/data" && unlink("$taperoot/data");
+    symlink("slot$slot", "$taperoot/data");
 }
 
 # set up and load a config

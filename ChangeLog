@@ -1,3 +1,7 @@
+2009-07-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Taper_Scan_traditional.pl: use 'data' symlink
+	  instead of 'current', as required by previous change
+
 2009-07-09  Alan Hodgson <ahodgson@simkin.ca>
 	* application-src/amgtar.c: add ACLS, SELINUX, and XATTRS properties
 	* man/xml-source/amgtar.8.xml: document them
