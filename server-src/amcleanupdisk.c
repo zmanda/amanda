@@ -31,7 +31,6 @@
 #include "conffile.h"
 #include "diskfile.h"
 #include "clock.h"
-#include "version.h"
 #include "holding.h"
 #include "infofile.h"
 #include "server_util.h"
@@ -103,7 +102,7 @@ main(
     dbopen(DBG_SUBDIR_SERVER);
 
     if(argc < 2) {
-	error(_("Usage: amcleanupdisk%s <config>"), versionsuffix());
+	error(_("Usage: amcleanupdisk <config>"));
 	/*NOTREACHED*/
     }
 

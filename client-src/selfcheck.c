@@ -32,7 +32,6 @@
 
 #include "amanda.h"
 #include "fsusage.h"
-#include "version.h"
 #include "getfsent.h"
 #include "amandates.h"
 #include "clock.h"
@@ -120,7 +119,7 @@ main(
     add_amanda_log_handler(amanda_log_syslog);
     dbopen(DBG_SUBDIR_CLIENT);
     startclock();
-    dbprintf(_("version %s\n"), version());
+    dbprintf(_("version %s\n"), VERSION);
 
     if(argc > 2 && strcmp(argv[1], "amandad") == 0) {
 	amandad_auth = stralloc(argv[2]);
@@ -964,7 +963,7 @@ check_overall(void)
 
     if( need_runtar )
     {
-	cmd = vstralloc(amlibexecdir, "/", "runtar", versionsuffix(), NULL);
+	cmd = vstralloc(amlibexecdir, "/", "runtar", NULL);
 	check_file(cmd,X_OK);
 	check_suid(cmd);
 	amfree(cmd);
@@ -972,7 +971,7 @@ check_overall(void)
 
     if( need_rundump )
     {
-	cmd = vstralloc(amlibexecdir, "/", "rundump", versionsuffix(), NULL);
+	cmd = vstralloc(amlibexecdir, "/", "rundump", NULL);
 	check_file(cmd,X_OK);
 	check_suid(cmd);
 	amfree(cmd);
@@ -1063,7 +1062,7 @@ check_overall(void)
     if( need_calcsize ) {
 	char *cmd;
 
-	cmd = vstralloc(amlibexecdir, "/", "calcsize", versionsuffix(), NULL);
+	cmd = vstralloc(amlibexecdir, "/", "calcsize", NULL);
 
 	check_file(cmd, X_OK);
 

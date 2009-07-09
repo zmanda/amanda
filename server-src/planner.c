@@ -252,7 +252,7 @@ main(
 
     log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
     g_fprintf(stderr, _("%s: pid %ld executable %s version %s\n"),
-	    get_pname(), (long) getpid(), argv[0], version());
+	    get_pname(), (long) getpid(), argv[0], VERSION);
     for (i = 0; version_info[i] != NULL; i++)
 	g_fprintf(stderr, _("%s: %s"), get_pname(), version_info[i]);
 

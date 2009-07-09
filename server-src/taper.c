@@ -45,7 +45,6 @@
 #include "taper-source.h"
 #include "timestamp.h"
 #include "util.h"
-#include "version.h"
 #include "queueing.h"
 #include "device-queueing.h"
 
@@ -1287,9 +1286,9 @@ int main(int argc, char ** argv) {
     signal(SIGPIPE, SIG_IGN);
 
     g_fprintf(stderr, _("%s: pid %ld executable %s version %s\n"),
-	    get_pname(), (long) getpid(), argv[0], version());
+	    get_pname(), (long) getpid(), argv[0], VERSION);
     dbprintf(_("%s: pid %ld executable %s version %s\n"),
-              get_pname(), (long) getpid(), argv[0], version());
+              get_pname(), (long) getpid(), argv[0], VERSION);
 
     /* Process options */
 

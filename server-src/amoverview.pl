@@ -46,14 +46,7 @@ my $confdir="@CONFIG_DIR@";
 # The default configuration.
 my $config="@DEFAULT_CONFIG@";
 
-# Get the version suffix.
-my $USE_VERSION_SUFFIXES = '@USE_VERSION_SUFFIXES@';
-my $suf = '';
-if ( $USE_VERSION_SUFFIXES =~ /^yes$/i ) {
-	$suf='-@VERSION@';
-}
-
-my $amadmin	= "$sbindir/amadmin$suf";
+my $amadmin	= "$sbindir/amadmin";
 
 # overrideable defaults
 my $opt_config		= "$config";

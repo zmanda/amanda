@@ -83,11 +83,6 @@ sub new {
 
     Amanda::Util::finish_setup($RUNNING_AS_ANY);
 
-    $self->{'suf'} = '';
-    if ( $Amanda::Constants::USE_VERSION_SUFFIXES =~ /^yes$/i ) {
-        $self->{'suf'} = "-$Amanda::Constants::VERSION";
-    }
-
     $self->{error_status} = $Amanda::Script_App::GOOD;
     $self->{type} = $type;
     $self->{known_commands} = {};

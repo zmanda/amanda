@@ -15,13 +15,6 @@ ConfigDir=@CONFIG_DIR@
 PATH="$PATH:/usr/sbin:/sbin:/usr/ucb"
 export PATH
 
-USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
-if test "$USE_VERSION_SUFFIXES" = "yes"; then
-	SUF="-@VERSION@"
-else
-	SUF=
-fi
-
 Program=`basename $0`
 
 log () {
@@ -63,7 +56,7 @@ if [ ! -r $TapeList ]; then
 	exit 1
 fi
 
-Amadmin=$sbindir/amadmin$SUF
+Amadmin=$sbindir/amadmin
 
 [ ! -f $Amadmin ] \
 	&& echo `_ '%s was not found' $Amadmin` >&2 \

@@ -29,7 +29,6 @@
  * dump the current Amanda version info
  */
 #include "amanda.h"
-#include "version.h"
 
 /* distribution-time information */
 #include "svn-info.h"
@@ -178,7 +177,7 @@ main(
     g_printf("const char * const version_info[] = {\n");
 
     startline("build:");
-    v = version();
+    v = VERSION;
     v_len = SIZEOF("Amanda-") + strlen(v) + 1;
     verstr = malloc(v_len);
     if (!verstr) {
@@ -423,10 +422,6 @@ main(
 
 #ifdef CHECK_USERID
     prstr("CHECK_USERID");
-#endif
-
-#ifdef USE_VERSION_SUFFIXES
-    prstr("USE_VERSION_SUFFIXES");
 #endif
 
 #ifdef HAVE_GZIP

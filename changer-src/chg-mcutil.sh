@@ -37,20 +37,10 @@ export PATH
 
 
 #
-# Define Suffix for amanda binaries
-#
-USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
-if test "$USE_VERSION_SUFFIXES" = "yes"; then
-        SUF="-@VERSION@"
-else
-        SUF=
-fi
-
-#
 # Load configuration data from the config file
 #
 
-ourconf=`amgetconf$SUF changerfile`
+ourconf=`amgetconf changerfile`
 myname=$0
 
 

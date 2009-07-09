@@ -31,7 +31,6 @@
 #include "amanda.h"
 #include "util.h"
 #include "conffile.h"
-#include "version.h"
 
 #include "changer.h"
 

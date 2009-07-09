@@ -124,11 +124,9 @@ below (the difference is historical).</para>
                <term><literal>VERSION</literal></term>
                <term><literal>ASSERTIONS</literal></term>
                <term><literal>LOCKING</literal></term>
-               <term><literal>USE_VERSION_SUFFIXES</literal></term>
 
   <listitem><para>Build information.  <literal>ASSERTIONS</literal>
-  is 1 or empty, while <literal>USE_VERSION_SUFFIXES</literal> is
-  yes/no.</para></listitem>
+  is 1 or empty.</para></listitem>
  </varlistentry>
 
  <varlistentry><term><literal>DUMP</literal></term>

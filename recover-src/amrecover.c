@@ -30,7 +30,6 @@
  */
 
 #include "amanda.h"
-#include "version.h"
 #include "stream.h"
 #include "amfeatures.h"
 #include "amrecover.h"
@@ -516,7 +515,7 @@ main(
     protocol_run();
 
     g_printf(_("AMRECOVER Version %s. Contacting server on %s ...\n"),
-	   version(), server_name);
+	   VERSION, server_name);
 
     if(response_error != 0) {
 	g_fprintf(stderr,"%s\n",errstr);

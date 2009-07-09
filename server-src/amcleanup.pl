@@ -31,11 +31,6 @@ my $kill_enable=0;
 my $process_alive=0;
 my $verbose=0;
 
-my $suf = '';
-if ( $Amanda::Constants::USE_VERSION_SUFFIXES =~ /^yes$/i ) {
-        $suf="-$Amanda::Constants::VERSION";
-}
-
 sub usage() {
     print "Usage: amcleanup [-k] [-v] [-p] conf\n";
     exit 1;
@@ -74,10 +69,10 @@ Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
 my $logdir=config_dir_relative(getconf($CNF_LOGDIR));
 my $logfile = "$logdir/log";
-my $amreport="$sbindir/amreport$suf";
-my $amlogroll="$amlibexecdir/amlogroll$suf";
-my $amtrmidx="$amlibexecdir/amtrmidx$suf";
-my $amcleanupdisk="$amlibexecdir/amcleanupdisk$suf";
+my $amreport="$sbindir/amreport";
+my $amlogroll="$amlibexecdir/amlogroll";
+my $amtrmidx="$amlibexecdir/amtrmidx";
+my $amcleanupdisk="$amlibexecdir/amcleanupdisk";
 
 if ( ! -e "$CONFIG_DIR/$config_name" ) {
     die "Configuration directory '$CONFIG_DIR/$config_name' doesn't exist\n";

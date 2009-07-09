@@ -40,7 +40,6 @@
 #include "security.h"
 #include "security-util.h"
 #include "stream.h"
-#include "version.h"
 
 /*
  * Number of seconds ssh has to start up
@@ -227,8 +226,7 @@ runssh(
     safe_fd(-1, 0);
 
     if(!xamandad_path || strlen(xamandad_path) <= 1) 
-	xamandad_path = vstralloc(amlibexecdir, "/", "amandad",
-				 versionsuffix(), NULL);
+	xamandad_path = vstralloc(amlibexecdir, "/", "amandad", NULL);
     if(!xclient_username || strlen(xclient_username) <= 1)
 	xclient_username = CLIENT_LOGIN;
     if(!ssh_keys || strlen(ssh_keys) <= 1) {

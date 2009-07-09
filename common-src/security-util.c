@@ -40,7 +40,6 @@
 #include "security.h"
 #include "security-util.h"
 #include "stream.h"
-#include "version.h"
 #include "sockaddr-util.h"
 
 /*

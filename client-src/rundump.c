@@ -35,7 +35,6 @@
  */
 #include "util.h"
 #include "amanda.h"
-#include "version.h"
 
 int main(int argc, char **argv);
 
@@ -89,7 +88,7 @@ main(
 	/*NOTREACHED*/
     }
 
-    dbprintf(_("version %s\n"), version());
+    dbprintf(_("version %s\n"), VERSION);
 
 #ifdef ERRMSG							/* { */
 

@@ -20,7 +20,6 @@
 
 #include "amanda.h"
 #include "getopt.h"
-#include "version.h"
 #include "amar.h"
 
 static struct option long_options[] = {
@@ -324,7 +323,7 @@ int main(
 		break;
 	case 5: opt_file = stralloc(optarg);
 		break;
-	case 6: printf("amarchiver %s\n", version());
+	case 6: printf("amarchiver %s\n", VERSION);
 		exit(0);
 		break;
 	}

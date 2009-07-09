@@ -30,7 +30,6 @@
  */
 
 #include "amanda.h"
-#include "version.h"
 #include "amrecover.h"
 #include "fileheader.h"
 #include "dgram.h"

@@ -33,7 +33,6 @@
  */
 
 #include "amanda.h"
-#include "version.h"
 #include "clock.h"
 #include "restore.h"
 #include "cmdline.h"
@@ -306,7 +305,7 @@ main(
     (void)close(STDERR_FILENO);
     dbopen(DBG_SUBDIR_SERVER);
     startclock();
-    dbprintf(_("%s: version %s\n"), pgm, version());
+    dbprintf(_("%s: version %s\n"), pgm, VERSION);
     debug_dup_stderr_to_debug();
 
     if (! (argc >= 1 && argv != NULL && argv[0] != NULL)) {

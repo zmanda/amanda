@@ -34,7 +34,6 @@
 #include "taperscan.h"
 #include "clock.h"
 #include "changer.h"
-#include "version.h"
 #include "device.h"
 #include "timestamp.h"
 
@@ -95,7 +94,7 @@ usage(void)
 {
     int i;
 
-    g_fprintf(stderr, _("Usage: amtape%s <conf> <command> {<args>} [-o configoption]*\n"), versionsuffix());
+    g_fprintf(stderr, _("Usage: amtape <conf> <command> {<args>} [-o configoption]*\n"));
     g_fprintf(stderr, _("\tValid commands are:\n"));
     for (i = 0; i < NCMDS; i++)
 	g_fprintf(stderr, "\t\t%s\n", _(cmdtab[i].usage));

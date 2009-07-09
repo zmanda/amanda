@@ -37,7 +37,6 @@
 #include "diskfile.h"
 #include "tapefile.h"
 #include "find.h"
-#include "version.h"
 #include "util.h"
 
 static int sort_by_name_reversed(const void *a, const void *b);
@@ -89,7 +88,7 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     dbopen(DBG_SUBDIR_SERVER);
-    dbprintf(_("%s: version %s\n"), argv[0], version());
+    dbprintf(_("%s: version %s\n"), argv[0], VERSION);
 
     cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
 

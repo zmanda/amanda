@@ -36,14 +36,9 @@ $exec_prefix="@exec_prefix@";
 $exec_prefix=$exec_prefix;	# ditto
 $sbindir="@sbindir@";
 $amlibexecdir="@amlibexecdir@";
-if ("@USE_VERSION_SUFFIXES@" eq "yes") {
-    $suf = "-@VERSION@";
-} else {
-    $suf = "";
-}
 
-if (-x "$sbindir/ammt$SUF") {
-	$MT="$sbindir/ammt$SUF";
+if (-x "$sbindir/ammt") {
+	$MT="$sbindir/ammt";
 	$MTF="-f";
 } elsif (-x "@MT@") {
 	$MT="@MT@";
@@ -53,7 +48,7 @@ if (-x "$sbindir/ammt$SUF") {
 	exit(1);
 }
 
-$tapeDevice=`$sbindir/amgetconf$SUF tapedev`;
+$tapeDevice=`$sbindir/amgetconf tapedev`;
 die "tapedev not found in amanda.conf"
 	if !$tapeDevice or $tapeDevice eq "" or
 	    $tapeDevice =~ m/no such parameter/;

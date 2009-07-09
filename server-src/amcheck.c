@@ -40,7 +40,6 @@
 #include "security.h"
 #include "protocol.h"
 #include "clock.h"
-#include "version.h"
 #include "amindex.h"
 #include "taperscan.h"
 #include "server_util.h"
@@ -73,7 +72,7 @@ int test_server_pgm(FILE *outf, char *dir, char *pgm, int suid, uid_t dumpuid);
 void
 usage(void)
 {
-    error(_("Usage: amcheck%s [-am] [-w] [-sclt] [-M <address>] [-o configoption]* <conf> [host [disk]* ]*"), versionsuffix());
+    error(_("Usage: amcheck [-am] [-w] [-sclt] [-M <address>] [-o configoption]* <conf> [host [disk]* ]*"));
     /*NOTREACHED*/
 }
 
@@ -387,7 +386,7 @@ main(
 	aclose(tempfd);
     }
 
-    version_string = vstrallocf(_("\n(brought to you by Amanda %s)\n"), version());
+    version_string = vstrallocf(_("\n(brought to you by Amanda %s)\n"), VERSION);
     if (full_write(mainfd, version_string, strlen(version_string)) < strlen(version_string)) {
 	error(_("write main file: %s"), strerror(errno));
 	/*NOTREACHED*/
@@ -566,7 +565,7 @@ test_server_pgm(
     int pgmbad = 0;
     char *quoted;
 
-    pgm = vstralloc(dir, "/", pgm, versionsuffix(), NULL);
+    pgm = vstralloc(dir, "/", pgm, NULL);
     quoted = quote_string(pgm);
     if(stat(pgm, &statbuf) == -1) {
 	g_fprintf(outf, _("ERROR: program %s: does not exist\n"),

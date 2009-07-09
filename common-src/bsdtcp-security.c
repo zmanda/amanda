@@ -41,7 +41,6 @@
 #include "security-util.h"
 #include "sockaddr-util.h"
 #include "stream.h"
-#include "version.h"
 
 /*
  * Number of seconds bsdtcp has to start up

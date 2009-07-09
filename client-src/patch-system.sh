@@ -10,13 +10,6 @@ sbindir="@sbindir@"
 amlibexecdir="@amlibexecdir@"
 . "${amlibexecdir}/amanda-sh-lib.sh"
 
-USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
-if test "$USE_VERSION_SUFFIXES" = "yes"; then
-	SUF="-@VERSION@"
-else
-	SUF=
-fi
-
 SERVICE_SUFFIX="@SERVICE_SUFFIX@"
 
 USER="@CLIENT_LOGIN@"
@@ -81,7 +74,7 @@ while [ $# != 0 ]; do
 	TAPE_PORT=`echo $1 | sed -e 's/[^=]*=//'`;;
     --usage | --help | -h)
 	echo `_ 'call this script with zero or more of the following arguments:'`
-	echo `_ '--version-suffix=<suffix>: append to program names [%s]' "$SUF"`
+	echo `_ '--version-suffix=<suffix>: deprecated option' ""`
 	echo `_ '--service-suffix=<suffix>: append to service names [%s]' "$SERVICE_SUFFIX"`
 	echo `_ '--libexecdir=<dirname>: where daemons should be looked for [%s]' "$libexecdir"`
 	echo `_ '--inetd=<pathname>: full pathname of inetd.conf [%s]' "$INETDCONF"`
@@ -125,18 +118,18 @@ else
 fi
 if [ "$INETDCONF" = /dev/null ]; then :
 elif [ -f "$INETDCONF" ]; then
-	err=`_ 'warning: %s/amandad%s does not exist' "$libexecdir" "$SUF"`
-	$ENABLE_AMANDAD && test ! -f $libexecdir/amandad$SUF && echo "$err" >&2
-	err=`_ 'warning: %s/amindexd%s does not exist' "$libexecdir" "$SUF"`
-	$ENABLE_INDEX && test ! -f $libexecdir/amindexd$SUF && echo "$err" >&2
-	err=`_ 'warning: %s/amidxtaped%s does not exist' "$libexecdir" "$SUF"`
-	$ENABLE_TAPE && test ! -f $libexecdir/amidxtaped$SUF && echo "$err" >&2
+	err=`_ 'warning: %s/amandad%s does not exist' "$libexecdir" ""`
+	$ENABLE_AMANDAD && test ! -f $libexecdir/amandad && echo "$err" >&2
+	err=`_ 'warning: %s/amindexd%s does not exist' "$libexecdir" ""`
+	$ENABLE_INDEX && test ! -f $libexecdir/amindexd && echo "$err" >&2
+	err=`_ 'warning: %s/amidxtaped%s does not exist' "$libexecdir" ""`
+	$ENABLE_TAPE && test ! -f $libexecdir/amidxtaped && echo "$err" >&2
 	TEMP="$INETDCONF.new"
 	{
 	    egrep < "$INETDCONF" -v "^(amanda|amandaidx|amidxtape)${SERVICE_SUFFIX}[ 	]"
-	    $ENABLE_AMANDAD && echo "amanda${SERVICE_SUFFIX}    dgram  udp wait   $USER $libexecdir/amandad$SUF    amandad$SUF"
-	    $ENABLE_INDEX && echo "amandaidx${SERVICE_SUFFIX} stream tcp nowait $USER $libexecdir/amindexd$SUF   amindexd$SUF"
-	    $ENABLE_TAPE && echo "amidxtape${SERVICE_SUFFIX} stream tcp nowait $USER $libexecdir/amidxtaped$SUF amidxtaped$SUF"
+	    $ENABLE_AMANDAD && echo "amanda${SERVICE_SUFFIX}    dgram  udp wait   $USER $libexecdir/amandad    amandad"
+	    $ENABLE_INDEX && echo "amandaidx${SERVICE_SUFFIX} stream tcp nowait $USER $libexecdir/amindexd   amindexd"
+	    $ENABLE_TAPE && echo "amidxtape${SERVICE_SUFFIX} stream tcp nowait $USER $libexecdir/amidxtaped amidxtaped"
 	} > "$TEMP"
 	if diff "$INETDCONF" "$TEMP" >/dev/null 2>/dev/null; then
 		fmt="%s is up to date\n"

@@ -40,7 +40,6 @@
 #include "glob.h"
 #include "clock.h"
 #include "amandates.h"
-#include "version.h"
 
 #define MAXMAXDUMPS 16
 
@@ -1229,7 +1228,7 @@ run_calcsize(
     }
 
     startclock();
-    cmd = vstralloc(amlibexecdir, "/", "calcsize", versionsuffix(), NULL);
+    cmd = vstralloc(amlibexecdir, "/", "calcsize", NULL);
 
 
     g_ptr_array_add(argv_ptr, stralloc("calcsize"));

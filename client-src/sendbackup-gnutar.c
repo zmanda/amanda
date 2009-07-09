@@ -35,7 +35,6 @@
 #include "clock.h"
 #include "util.h"
 #include "getfsent.h"			/* for amname_to_dirname lookup */
-#include "version.h"
 #include "conffile.h"
 
 #ifdef SAMBA_CLIENT
@@ -521,7 +520,7 @@ start_backup(
 	if (nb_exclude > 0) file_exclude = build_exclude(dle, 0);
 	if (nb_include > 0) file_include = build_include(dle, 0);
 
-	cmd = vstralloc(amlibexecdir, "/", "runtar", versionsuffix(), NULL);
+	cmd = vstralloc(amlibexecdir, "/", "runtar", NULL);
 	info_tapeheader(dle);
 
 	start_index(dle->create_index, dumpout, mesgf, indexf, indexcmd);

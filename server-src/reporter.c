@@ -48,7 +48,6 @@
 #include "diskfile.h"
 #include "infofile.h"
 #include "logfile.h"
-#include "version.h"
 #include "util.h"
 #include "timestamp.h"
 #include "holding.h"
@@ -766,8 +765,7 @@ main(
 		g_fprintf(mailf,_("DUMP SUMMARY:\n"));
 		output_summary();
     	}
-    	g_fprintf(mailf,_("\n(brought to you by Amanda version %s)\n"),
-	    	version());
+    	g_fprintf(mailf,_("\n(brought to you by Amanda version %s)\n"), VERSION);
     }
 
     if (postscript) {
@@ -3031,7 +3029,7 @@ do_postscript_output(void)
 	/* generate a few elements */
 	g_fprintf(postscript,"(%s) DrawDate\n\n",
 		    nicedate(run_datestamp ? run_datestamp : "0"));
-	g_fprintf(postscript,_("(Amanda Version %s) DrawVers\n"),version());
+	g_fprintf(postscript,_("(Amanda Version %s) DrawVers\n"),VERSION);
 	g_fprintf(postscript,"(%s) DrawTitle\n", current_tape->label);
 
 	/* Stats */

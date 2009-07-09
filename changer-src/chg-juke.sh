@@ -42,13 +42,7 @@ set -x
 # the usual config fun
 #
 
-USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
-if test "$USE_VERSION_SUFFIXES" = "yes"; then
-        SUF="-@VERSION@";
-else
-	SUF=
-fi
-getconf=$sbindir/amgetconf$SUF
+getconf=$sbindir/amgetconf
 
 #
 # make sure we can find JUKE later

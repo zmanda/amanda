@@ -38,7 +38,6 @@
 #include "protocol.h"
 #include "security.h"
 #include "stream.h"
-#include "version.h"
 #include "fileheader.h"
 #include "amfeatures.h"
 #include "server_util.h"
@@ -364,7 +363,7 @@ main(
     g_fprintf(stderr,
 	    _("%s: pid %ld executable %s version %s\n"),
 	    get_pname(), (long) getpid(),
-	    argv[0], version());
+	    argv[0], VERSION);
     fflush(stderr);
 
     /* now, make sure we are a valid user */

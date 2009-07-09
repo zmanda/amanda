@@ -35,7 +35,6 @@
 #include "tapefile.h"
 #include "logfile.h"
 #include "clock.h"
-#include "version.h"
 #include "holding.h"
 #include "driverio.h"
 #include "server_util.h"
@@ -149,7 +148,7 @@ main(
     }
 
     if(argc < 1) {
-	error(_("Usage: amflush%s [-b] [-f] [-s] [-D date]* [-o configoption]* <confdir> [host [disk]* ]*"), versionsuffix());
+	error(_("Usage: amflush [-b] [-f] [-s] [-D date]* [-o configoption]* <confdir> [host [disk]* ]*"));
 	/*NOTREACHED*/
     }
 
@@ -208,12 +207,9 @@ main(
     amfree(conf_logfile);
 
     log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
-    driver_program = vstralloc(amlibexecdir, "/", "driver", versionsuffix(),
-			       NULL);
-    reporter_program = vstralloc(sbindir, "/", "amreport", versionsuffix(),
-				 NULL);
-    logroll_program = vstralloc(amlibexecdir, "/", "amlogroll", versionsuffix(),
-				NULL);
+    driver_program = vstralloc(amlibexecdir, "/", "driver", NULL);
+    reporter_program = vstralloc(sbindir, "/", "amreport", NULL);
+    logroll_program = vstralloc(amlibexecdir, "/", "amlogroll", NULL);
 
     tapedev = getconf_str(CNF_TAPEDEV);
     tpchanger = getconf_str(CNF_TPCHANGER);

@@ -235,8 +235,8 @@ usage(void)
 {
     int i;
 
-    g_fprintf(stderr, _("\nUsage: %s%s <conf> <command> {<args>} [-o configoption]* ...\n"),
-	    get_pname(), versionsuffix());
+    g_fprintf(stderr, _("\nUsage: %s <conf> <command> {<args>} [-o configoption]* ...\n"),
+	    get_pname());
     g_fprintf(stderr, _("    Valid <command>s are:\n"));
     for (i = 0; i < NCMDS; i++)
 	g_fprintf(stderr, "\t%s%s\n", cmdtab[i].name, _(cmdtab[i].usage));
@@ -1514,7 +1514,7 @@ export_db(
     char hostname[MAX_HOSTNAME_LENGTH+1];
     int i;
 
-    g_printf(_("CURINFO Version %s CONF %s\n"), version(), getconf_str(CNF_ORG));
+    g_printf(_("CURINFO Version %s CONF %s\n"), VERSION, getconf_str(CNF_ORG));
 
     curtime = time(0);
     if(gethostname(hostname, SIZEOF(hostname)-1) == -1) {

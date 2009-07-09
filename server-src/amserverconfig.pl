@@ -46,17 +46,11 @@ my $holding_err=0;
 my $template_only=0;
 my $parentdir;
 my $host;
-# Get the version suffix.
-my $USE_VERSION_SUFFIXES = '@USE_VERSION_SUFFIXES@';
-my $suf = '';
-if ( $USE_VERSION_SUFFIXES =~ /^yes$/i ) {
-        $suf='-@VERSION@';
-}
 
 
 #usage
 sub usage {
-        print "$0 $suf\n";
+        print "$0\n";
         print "\t\t <config> [--template <template>]\n";
 	print "\t\t[--no-vtape] (do not create virtual tapes)\n";
         print "\t\t[--tapetype <tapetype>] [--tpchanger <tpchanger>]\n";

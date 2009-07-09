@@ -370,7 +370,6 @@ AC_CONFIG_FILES([
     changer-src/Makefile
     client-src/Makefile
     common-src/Makefile
-    common-src/versuff.c
     config/Makefile
     device-src/Makefile
     application-src/Makefile

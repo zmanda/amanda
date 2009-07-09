@@ -26,30 +26,15 @@
 /*
  * $Id: version.h,v 1.6 2006/05/25 01:47:12 johnfranks Exp $
  *
- * interface to obtain the current amanda version
- */
-/*
- *	The printed version string is <major>.<minor>[.<patch>[comment]]
- *      - Changes in comments imply a non-standard version of Amanda.
- *	- Changes in patchlevel imply mostly bugfixes.
- *	- Changes in minor version number imply significant code or protocol
- *	  changes or enhancements.
- *	- Changes in major version number imply major reworking or redesign.
+ * interface to obtain the current amanda version info
  */
 
 #ifndef VERSION_H
 #define VERSION_H
 
-extern const int   VERSION_MAJOR;
-extern const int   VERSION_MINOR;
-extern const int   VERSION_PATCH;
-extern const char * const VERSION_COMMENT;
+/* version_info contains a bunch of compile-time settings for output in
+ * amadmin x version; its value is set in version.c, which is generated
+ * by genversion.c */
 extern const char * const version_info[];
-
-/* versionsuffix returns an empty string or a string like -2.3.0.4b1.  */
-extern const char *versionsuffix(void);
-
-/* version returns a string representing the version of Amanda.  */
-extern const char *version(void);
 
 #endif

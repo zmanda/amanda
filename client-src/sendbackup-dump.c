@@ -33,7 +33,6 @@
 #include "sendbackup.h"
 #include "getfsent.h"
 #include "clock.h"
-#include "version.h"
 
 #define LEAF_AND_DIRS "sed -e \'\ns/^leaf[ \t]*[0-9]*[ \t]*\\.//\nt\n/^dir[ \t]/ {\ns/^dir[ \t]*[0-9]*[ \t]*\\.//\ns%$%/%\nt\n}\nd\n\'"
 
@@ -210,7 +209,7 @@ start_backup(
     dbprintf(_("dumping device '%s' with '%s'\n"), device, fstype);
 
 #if defined(USE_RUNDUMP) || !defined(DUMP)
-    cmd = vstralloc(amlibexecdir, "/", "rundump", versionsuffix(), NULL);
+    cmd = vstralloc(amlibexecdir, "/", "rundump", NULL);
     cmdX = cmd;
     if (g_options->config)
 	config = g_options->config;
@@ -232,7 +231,7 @@ start_backup(
 #endif							/* } */
     {
         char *progname = cmd = newvstralloc(cmd, amlibexecdir, "/", "rundump",
-					    versionsuffix(), NULL);
+					    NULL);
 	cmdX = cmd;
 	if (g_options->config)
 	    config = g_options->config;
@@ -277,7 +276,7 @@ start_backup(
     {
 #ifdef USE_RUNDUMP
         char *progname = cmd = newvstralloc(cmd, amlibexecdir, "/", "rundump",
-					    versionsuffix(), NULL);
+					    NULL);
 	cmdX = cmd;
 	if (g_options->config)
 	    config = g_options->config;
@@ -328,7 +327,7 @@ start_backup(
 #endif
     {
         char *progname = cmd = newvstralloc(cmd, amlibexecdir, "/", "rundump",
-					    versionsuffix(), NULL);
+					    NULL);
 	cmdX = cmd;
 	if (g_options->config)
 	    config = g_options->config;

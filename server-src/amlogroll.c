@@ -33,7 +33,6 @@
 #include "amanda.h"
 #include "conffile.h"
 #include "logfile.h"
-#include "version.h"
 
 char *datestamp;
 

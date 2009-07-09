@@ -42,13 +42,6 @@ confdir=@CONFIG_DIR@
 PATH="$PATH:/usr/sbin:/sbin:/usr/ucb"
 export PATH
 
-USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
-if test "$USE_VERSION_SUFFIXES" = "yes"; then
-	SUF="-@VERSION@"
-else
-	SUF=
-fi
-
 if [ $# -lt 1 ]
 then
         echo `_ 'Usage: %s config [host [disk...]...]' "$0"`  1>&2
@@ -59,19 +52,19 @@ exit_status=0;
 
 conf=$1
 if [ ! -d $confdir/$conf ]; then
-    echo `_ '%s: could not find directory %s' "amdump$SUF" "$confdir/$conf"` 1>&2
+    echo `_ '%s: could not find directory %s' "amdump" "$confdir/$conf"` 1>&2
     exit 1
 fi
 shift
 
 cd $confdir/$conf || exit 1
 
-logdir=`amgetconf$SUF $conf logdir "$@"`
+logdir=`amgetconf $conf logdir "$@"`
 [ $? -ne 0 ]  && exit 1
 errfile=$logdir/amdump
-tapecycle=`amgetconf$SUF $conf tapecycle "$@"`
+tapecycle=`amgetconf $conf tapecycle "$@"`
 [ $? -ne 0 ]  && exit 1
-dumpuser=`amgetconf$SUF $conf dumpuser "$@"`
+dumpuser=`amgetconf $conf dumpuser "$@"`
 [ $? -ne 0 ]  && exit 1
 
 runuser=`{ whoami ; } 2>/dev/null`
@@ -97,7 +90,7 @@ if test -f hold; then
 fi
 
 if test -f $errfile || test -f $logdir/log; then
-	amcleanup$SUF -p $conf
+	amcleanup -p $conf
 fi
 
 gdate=`date +'%a %b %e %H:%M:%S %Z %YAAAAA%Y%m%dBBBBB%Y%m%d%H%M%SCCCCC%Y-%m-%d %H:%M:%S %Z'`
@@ -120,7 +113,7 @@ if test -f $errfile || test -f $logdir/log; then
 	echo "INFO amdump amdump pid $$" > $logdir/log.$$
 	echo "START driver date $date_starttime" >> $logdir/log.$$
 	echo "ERROR amdump " `_ '%s is already running, or you must run amcleanup' "${process_name}"` >> $logdir/log.$$
-	$sbindir/amreport$SUF $conf -l $logdir/log.$$ "$@"
+	$sbindir/amreport $conf -l $logdir/log.$$ "$@"
 	rm -f $logdir/log.$$
 	exit 1;
 fi
@@ -143,17 +136,17 @@ printf '%s: datestamp %s\n' "amdump" "$date_datestamp"
 printf '%s: starttime %s\n' "amdump" "$date_starttime"
 printf '%s: starttime-locale-independent %s\n' "amdump" "$date_locale_independent"
 
-if [ ! -x $amlibexecdir/planner$SUF ]; then
-    echo "ERROR amdump Can't execute $amlibexecdir/planner$SUF" >> $logdir/log
+if [ ! -x $amlibexecdir/planner ]; then
+    echo "ERROR amdump Can't execute $amlibexecdir/planner" >> $logdir/log
 fi
-if [ ! -x $amlibexecdir/driver$SUF ]; then
-    echo "ERROR amdump Can't execute $amlibexecdir/driver$SUF" >> $logdir/log
+if [ ! -x $amlibexecdir/driver ]; then
+    echo "ERROR amdump Can't execute $amlibexecdir/driver" >> $logdir/log
 fi
 
 # shells don't do well with handling exit values from pipelines, so we emulate
 # a pipeline in perl, in such a way that we can combine both exit statuses in a
 # kind of logical "OR".
-@PERL@ - $amlibexecdir/planner$SUF $amlibexecdir/driver$SUF $conf $date_starttime "$@" <<'EOPERL'
+@PERL@ - $amlibexecdir/planner $amlibexecdir/driver $conf $date_starttime "$@" <<'EOPERL'
 use IPC::Open3;
 use POSIX qw(WIFEXITED WEXITSTATUS);
 my ($planner, $driver, $conf, $date_starttime, @args) = @ARGV;
@@ -177,22 +170,22 @@ exit_code=$?
 printf '%s: end at %s\n' "amdump" "`date`"
 
 # Send out a report on the dumps.
-$sbindir/amreport$SUF $conf "$@"
+$sbindir/amreport $conf "$@"
 exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code
 
 # Roll the log file to its datestamped name.
-$amlibexecdir/amlogroll$SUF $conf "$@"
+$amlibexecdir/amlogroll $conf "$@"
 exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code
 
 # Trim the log file to those for dumps that still exist.
-$amlibexecdir/amtrmlog$SUF $conf "$@"
+$amlibexecdir/amtrmlog $conf "$@"
 exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code
 
 # Trim the index file to those for dumps that still exist.
-$amlibexecdir/amtrmidx$SUF $conf "$@"
+$amlibexecdir/amtrmidx $conf "$@"
 exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code
 

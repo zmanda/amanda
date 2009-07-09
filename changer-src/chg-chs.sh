@@ -50,15 +50,8 @@ fi
 
 CHS=@CHS@
 
-USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
-if test "$USE_VERSION_SUFFIXES" = "yes"; then
-	SUF="-@VERSION@"
-else
-	SUF=
-fi
-
-ourconf=`amgetconf$SUF changerfile`
-changerdev=`amgetconf$SUF changerdev`
+ourconf=`amgetconf changerfile`
+changerdev=`amgetconf changerdev`
 if test -n "$changerdev" && test x"$changerdev" != x/dev/null; then
 	CHS="$CHS -f$changerdev"
 fi

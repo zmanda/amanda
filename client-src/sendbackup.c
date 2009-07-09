@@ -37,7 +37,6 @@
 #include "amandad.h"
 #include "arglist.h"
 #include "getfsent.h"
-#include "version.h"
 #include "conffile.h"
 #include "amandates.h"
 
@@ -161,7 +160,7 @@ main(
     add_amanda_log_handler(amanda_log_syslog);
     dbopen(DBG_SUBDIR_CLIENT);
     startclock();
-    dbprintf(_("Version %s\n"), version());
+    dbprintf(_("Version %s\n"), VERSION);
 
     if(argc > 2 && strcmp(argv[1], "amandad") == 0) {
 	amandad_auth = stralloc(argv[2]);

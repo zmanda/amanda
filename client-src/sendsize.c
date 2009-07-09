@@ -36,7 +36,6 @@
 #include "clock.h"
 #include "util.h"
 #include "getfsent.h"
-#include "version.h"
 #include "client_util.h"
 #include "conffile.h"
 #include "amandad.h"
@@ -163,7 +162,7 @@ main(
     add_amanda_log_handler(amanda_log_syslog);
     dbopen(DBG_SUBDIR_CLIENT);
     startclock();
-    dbprintf(_("version %s\n"), version());
+    dbprintf(_("version %s\n"), VERSION);
 
     our_features = am_init_feature_set();
     our_feature_string = am_feature_to_string(our_features);
@@ -983,7 +982,7 @@ generic_calc_estimates(
     char tmppath[PATH_MAX];
     int len;
 
-    cmd = vstralloc(amlibexecdir, "/", "calcsize", versionsuffix(), NULL);
+    cmd = vstralloc(amlibexecdir, "/", "calcsize", NULL);
 
     g_ptr_array_add(argv_ptr, stralloc("calcsize"));
     if (g_options->config)
@@ -1344,7 +1343,7 @@ getsize_dump(
     dbprintf(_("calculating for device %s with %s\n"),
 	      qdevice, fstype);
 
-    cmd = vstralloc(amlibexecdir, "/rundump", versionsuffix(), NULL);
+    cmd = vstralloc(amlibexecdir, "/rundump", NULL);
     rundump_cmd = stralloc(cmd);
     if (g_options->config)
         config = g_options->config;
@@ -1520,8 +1519,7 @@ getsize_dump(
 	    default:
 	    {
 		char *config;
-		char *killpgrp_cmd = vstralloc(amlibexecdir, "/killpgrp",
-					       versionsuffix(), NULL);
+		char *killpgrp_cmd = vstralloc(amlibexecdir, "/killpgrp", NULL);
 		dbprintf(_("running %s\n"), killpgrp_cmd);
 		dup2(killctl[0], 0);
 		dup2(nullfd, 1);
@@ -2136,7 +2134,7 @@ getsize_gnutar(
 
     dirname = amname_to_dirname(dle->device);
 
-    cmd = vstralloc(amlibexecdir, "/", "runtar", versionsuffix(), NULL);
+    cmd = vstralloc(amlibexecdir, "/", "runtar", NULL);
     g_ptr_array_add(argv_ptr, stralloc("runtar"));
     if (g_options->config)
 	g_ptr_array_add(argv_ptr, stralloc(g_options->config));

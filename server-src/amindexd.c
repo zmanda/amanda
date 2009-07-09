@@ -45,7 +45,6 @@
 #include "diskfile.h"
 #include "arglist.h"
 #include "clock.h"
-#include "version.h"
 #include "amindex.h"
 #include "disk_history.h"
 #include "list_dir.h"
@@ -1274,7 +1273,7 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     dbopen(DBG_SUBDIR_SERVER);
-    dbprintf(_("version %s\n"), version());
+    dbprintf(_("version %s\n"), VERSION);
 
     if(argv == NULL) {
 	error("argv == NULL\n");
@@ -1416,7 +1415,7 @@ main(
     }
 
     reply(220, _("%s AMANDA index server (%s) ready."), local_hostname,
-	  version());
+	  VERSION);
 
     user_validated = from_amandad;
 

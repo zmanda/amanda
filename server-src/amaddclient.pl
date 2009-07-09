@@ -39,16 +39,8 @@ my $def_dumptype="user-tar";
 
 my $sp_diskfile=0;
 
-# Get the version suffix.
-my $USE_VERSION_SUFFIXES = '@USE_VERSION_SUFFIXES@';
-my $suf = '';
-if ( $USE_VERSION_SUFFIXES =~ /^yes$/i ) {
-        $suf='-@VERSION@';
-}
-
-
 sub usage {
-        print "$0 $suf\n";      
+        print "$0\n";      
         print "\t\t--config <config>         Required. Ex: DailySet1\n";       
 	print "\t\t--client <FQDN-name>      Required. Ex: server.zmanda.com\n";
         print "\t\t--diskdev <directory>     Required. Ex: /home\n";

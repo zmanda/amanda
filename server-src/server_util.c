@@ -36,7 +36,6 @@
 #include "conffile.h"
 #include "diskfile.h"
 #include "pipespawn.h"
-#include "version.h"
 #include "conffile.h"
 #include "sys/wait.h"
 
@@ -376,7 +375,7 @@ run_amcleanup(
 	    return;
 	    break;
 	case  0: /* child process */
-	    amcleanup_program = vstralloc(sbindir, "/", "amcleanup", versionsuffix(), NULL);
+	    amcleanup_program = vstralloc(sbindir, "/", "amcleanup", NULL);
 	    amcleanup_options[0] = amcleanup_program;
 	    amcleanup_options[1] = "-p";
 	    amcleanup_options[2] = config_name;

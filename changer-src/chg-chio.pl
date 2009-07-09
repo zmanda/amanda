@@ -63,17 +63,11 @@ $prefix=$prefix;		# avoid warnings about possible typo
 $exec_prefix="@exec_prefix@";
 $exec_prefix=$exec_prefix;	# Ditto
 $sbindir="@sbindir@";
-if ( "@USE_VERSION_SUFFIXES@" eq "yes" ) {
-    $SUF = "-@VERSION@";
-} else {
-    $SUF = "";
-}
-
-chomp ($tapeDevice = `$sbindir/amgetconf$SUF tapedev 2>&1`);
+chomp ($tapeDevice = `$sbindir/amgetconf tapedev 2>&1`);
 die "tapedev not found in amanda.conf"
 	if !$tapeDevice or $tapeDevice eq "" or
 	    $tapeDevice =~ m/no such parameter/;
-chomp ($changerDevice = `$sbindir/amgetconf$SUF changerdev 2>&1`);
+chomp ($changerDevice = `$sbindir/amgetconf changerdev 2>&1`);
 chomp $changerDevice;
 die "changerdev not found in amanda.conf"
 	if !$changerDevice or $changerDevice eq "" or
@@ -374,8 +368,8 @@ $nr_tapes = &getTapeStatus();
 # Before we do anything with the tape changer we'll have to rewind the tape
 #
 
-if (-x "$sbindir/ammt$SUF") {
-	$MT="$sbindir/ammt$SUF";
+if (-x "$sbindir/ammt") {
+	$MT="$sbindir/ammt";
 	$MTF="-f";
 } elsif (-x "@MT@") {
 	$MT="@MT@";

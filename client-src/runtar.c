@@ -34,7 +34,6 @@
  * ...
  */
 #include "amanda.h"
-#include "version.h"
 #include "util.h"
 
 int main(int argc, char **argv);
@@ -74,7 +73,7 @@ main(
 	/*NOTREACHED*/
     }
 
-    dbprintf(_("version %s\n"), version());
+    dbprintf(_("version %s\n"), VERSION);
 
     if (strcmp(argv[3], "--create") != 0) {
 	error(_("Can only be used to create tar archives\n"));

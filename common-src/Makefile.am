@@ -43,8 +43,7 @@ libamanda_la_SOURCES =		\
 	stream.c		\
 	tapelist.c		\
 	timestamp.c		\
-	util.c			\
-	versuff.c
+	util.c
 # version.c is generated; see below
 nodist_libamanda_la_SOURCES = version.c
 
@@ -135,7 +134,6 @@ EXTRA_PROGRAMS = genversion $(TEST_PROGS)
 
 genversion_SOURCES = genversion.c svn-info.h
 genversion_LDADD = $(libamanda_la_LIBADD)	\
-    	versuff.lo				\
 	../gnulib/libgnu.la
 
 genversion.h: $(top_builddir)/config.status
@@ -184,8 +182,7 @@ bsdsecurity_LDADD = $(libamanda_a_LIBADD) \
 		    file.lo \
 		    packet.lo \
 		    security.lo \
-		    ssh-security.lo \
-		    versuff.lo
+		    ssh-security.lo
 
 amfeatures_SOURCES = amfeatures.test.c
 amfeatures_LDADD = $(libamanda_la_LIBADD) $(STANDARD_COMMON_STUFF)

@@ -28,21 +28,12 @@ amlibexecdir="@amlibexecdir@"
 # Eponymous functions to access various amanda apps
 # TODO: move to amanda-sh-lib.sh
 
-if test "@USE_VERSION_SUFFIXES@" = "yes"; then
-    amgetconf() {
-        "${sbindir}/amgetconf-@VERSION@" "${@}"
-    }
-    amdevcheck() {
-        "${sbindir}/amdevcheck-@VERSION@" "${@}"
-    }
-else
-    amgetconf() {
-        "${sbindir}/amgetconf" "${@}"
-    }
-    amdevcheck() {
-        "${sbindir}/amdevcheck" "${@}"
-    }
-fi
+amgetconf() {
+    "${sbindir}/amgetconf" "${@}"
+}
+amdevcheck() {
+    "${sbindir}/amdevcheck" "${@}"
+}
 
 # This function tries to find a useable mt binary. If a fully-qualified path
 # was provided at configure time or via a config file, we check that it

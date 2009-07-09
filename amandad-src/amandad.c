@@ -453,7 +453,7 @@ main(
 
     startclock();
 
-    dbprintf(_("version %s\n"), version());
+    dbprintf(_("version %s\n"), VERSION);
     for (i = 0; version_info[i] != NULL; i++) {
 	dbprintf("    %s", version_info[i]);
     }
@@ -634,7 +634,7 @@ protocol_accept(
 	goto send_pkt_out;
     }
 
-    service_path = vstralloc(amlibexecdir, "/", service, versionsuffix(), NULL);
+    service_path = vstralloc(amlibexecdir, "/", service, NULL);
     if (access(service_path, X_OK) < 0) {
 	dbprintf(_("can't execute %s: %s\n"), service_path, strerror(errno));
 	    pkt_init(&pkt_out, P_NAK,

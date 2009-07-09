@@ -102,7 +102,7 @@ my %build_info = (
     'cc' => $Amanda::Constants::CC,
     'version' => $Amanda::Constants::VERSION,
     'assertions' => $Amanda::Constants::ASSERTIONS,
-    'use_version_suffixes' => $Amanda::Constants::USE_VERSION_SUFFIXES,
+    'use_version_suffixes' => 'no', # for backward compatibility
     'locking' => $Amanda::Constants::LOCKING,
 
     # executable paths

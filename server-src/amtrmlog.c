@@ -37,7 +37,6 @@
 #include "diskfile.h"
 #include "tapefile.h"
 #include "find.h"
-#include "version.h"
 
 int amtrmidx_debug = 0;
 
@@ -98,7 +97,7 @@ main(
     }
 
     dbopen(DBG_SUBDIR_SERVER);
-    dbprintf(_("%s: version %s\n"), argv[0], version());
+    dbprintf(_("%s: version %s\n"), argv[0], VERSION);
 
     config_init(CONFIG_INIT_EXPLICIT_NAME, argv[1]);
     apply_config_overwrites(cfg_ovr);

@@ -45,7 +45,6 @@
 #include "clock.h"
 #include "util.h"
 #include "getfsent.h"
-#include "version.h"
 #include "client_util.h"
 #include "conffile.h"
 #include "amandad.h"
@@ -201,7 +200,7 @@ main(
     add_amanda_log_handler(amanda_log_syslog);
     dbopen(DBG_SUBDIR_CLIENT);
     startclock();
-    dbprintf(_("version %s\n"), version());
+    dbprintf(_("version %s\n"), VERSION);
 
     config_init(CONFIG_INIT_CLIENT, NULL);
 
@@ -359,8 +358,7 @@ amstar_selfcheck(
     }
 
     if (argument->calcsize) {
-	char *calcsize = vstralloc(amlibexecdir, "/", "calcsize",
-				   versionsuffix(), NULL);
+	char *calcsize = vstralloc(amlibexecdir, "/", "calcsize", NULL);
 	check_file(calcsize, X_OK);
 	check_suid(calcsize);
 	amfree(calcsize);

@@ -73,16 +73,9 @@ amlibexecdir="@amlibexecdir@"
 PATH="$PATH:/usr/sbin:/sbin:/usr/ucb"
 export PATH
 
-USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
-if test "$USE_VERSION_SUFFIXES" = "yes"; then
-    SUF="-@VERSION@"
-else
-    SUF=
-fi
-
 MYNAME=$0
 
-TAPE=`amgetconf$SUF tapedev`
+TAPE=`amgetconf tapedev`
 if test X"$TAPE" = X""; then
     echo `_ '<none> tapedev not specified in amanda.conf.'`
     exit 2
@@ -110,7 +103,7 @@ fi
 
 
 # need rwx access to directory of changer file
-CHANGERFILE=`amgetconf$SUF changerfile`
+CHANGERFILE=`amgetconf changerfile`
 conf_match=`expr "$CHANGERFILE" : .\*\.conf\$`
 if [ $conf_match -ge 6 ]; then
         CONFIGFILE=$CHANGERFILE
@@ -144,7 +137,7 @@ CLEANCOUNT=`cat $CLEANFILE`
 isinteger $CLEANCOUNT || { CLEANCOUNT=0 ; echo 0 > $CLEANFILE ; }
 
 FIRSTSLOT=1
-LASTSLOT=`amgetconf$SUF tapecycle`
+LASTSLOT=`amgetconf tapecycle`
 if test -r $CONFIGFILE; then
     . $CONFIGFILE
 fi

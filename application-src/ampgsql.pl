@@ -52,7 +52,7 @@ sub new {
     my $self = $class->SUPER::new($args->{'config'});
     $self->{'args'} = $args;
     $self->{'label-prefix'} = 'amanda';
-    $self->{'runtar'}  = "$Amanda::Paths::amlibexecdir/runtar$self->{'suf'}";
+    $self->{'runtar'}  = "$Amanda::Paths::amlibexecdir/runtar";
 
     # default arguments (application properties)
     $self->{'args'}->{'statedir'} ||= $Amanda::Paths::GNUTAR_LISTED_INCREMENTAL_DIR;

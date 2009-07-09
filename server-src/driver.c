@@ -43,7 +43,6 @@
 #include "infofile.h"
 #include "logfile.h"
 #include "fsusage.h"
-#include "version.h"
 #include "driverio.h"
 #include "server_util.h"
 #include "timestamp.h"
@@ -239,7 +238,7 @@ main(
 
     log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
     g_printf(_("%s: pid %ld executable %s version %s\n"),
-	   get_pname(), (long) getpid(), argv[0], version());
+	   get_pname(), (long) getpid(), argv[0], VERSION);
 
     if(argc > 2) {
         if(strncmp(argv[2], "nodump", 6) == 0) {
@@ -293,11 +292,9 @@ main(
 	hd_driver_timestamp = stralloc(driver_timestamp);
     }
 
-    taper_program = vstralloc(amlibexecdir, "/", "taper", versionsuffix(), NULL);
-    dumper_program = vstralloc(amlibexecdir, "/", "dumper", versionsuffix(),
-			       NULL);
-    chunker_program = vstralloc(amlibexecdir, "/", "chunker", versionsuffix(),
-			       NULL);
+    taper_program = vstralloc(amlibexecdir, "/", "taper", NULL);
+    dumper_program = vstralloc(amlibexecdir, "/", "dumper", NULL);
+    chunker_program = vstralloc(amlibexecdir, "/", "chunker", NULL);
 
     conf_taperalgo = getconf_taperalgo(CNF_TAPERALGO);
     conf_tapetype = getconf_str(CNF_TAPETYPE);

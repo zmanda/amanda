@@ -33,7 +33,6 @@
  */
 #include "amanda.h"
 #include "fsusage.h"
-#include "version.h"
 #include "sl.h"
 #include "util.h"
 
@@ -182,7 +181,7 @@ main(
     set_pname("calcsize");
 
     dbopen(DBG_SUBDIR_CLIENT);
-    dbprintf(_("version %s\n"), version());
+    dbprintf(_("version %s\n"), VERSION);
 
     argc--, argv++;	/* skip program name */
 

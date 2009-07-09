@@ -34,12 +34,9 @@ use Amanda::Util qw( :constants );
 use File::Copy;
 use Getopt::Long;
 
-my $USE_VERSION_SUFFIXES='@USE_VERSION_SUFFIXES@';
-my $suf = ( $USE_VERSION_SUFFIXES =~ /^yes$/i ) ? '-@VERSION@' : '';
-
-my $amadmin = "$sbindir/amadmin$suf";
-my $amtrmidx = "$amlibexecdir/amtrmidx$suf";
-my $amtrmlog = "$amlibexecdir/amtrmlog$suf";
+my $amadmin = "$sbindir/amadmin";
+my $amtrmidx = "$amlibexecdir/amtrmidx";
+my $amtrmlog = "$amlibexecdir/amtrmlog";
 
 my $dry_run;
 my $cleanup;

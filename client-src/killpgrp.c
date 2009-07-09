@@ -34,7 +34,6 @@
  *
  */
 #include "amanda.h"
-#include "version.h"
 #include "util.h"
 
 #ifdef HAVE_GETPGRP
@@ -80,7 +79,7 @@ main(
 	error("Need at least 2 arguments\n");
 	/*NOTREACHED*/
     }
-    dbprintf(_("version %s\n"), version());
+    dbprintf(_("version %s\n"), VERSION);
     dbprintf(_("config: %s\n"), argv[1]);
     if (strcmp(argv[1], "NOCONFIG") != 0)
 	dbrename(argv[1], DBG_SUBDIR_CLIENT);

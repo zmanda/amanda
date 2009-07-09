@@ -30,7 +30,6 @@
  */
 
 #include "amanda.h"
-#include "version.h"
 #include "stream.h"
 #include "amfeatures.h"
 #include "amrecover.h"
@@ -532,7 +531,7 @@ main(
     service_name = stralloc2("amandaidx", SERVICE_SUFFIX);
 
     g_printf(_("AMRECOVER Version %s. Contacting server on %s ...\n"),
-	   version(), server_name);  
+	   VERSION, server_name);  
     if ((sp = getservbyname(service_name, "tcp")) == NULL) {
 	error(_("%s/tcp unknown protocol"), service_name);
 	/*NOTREACHED*/

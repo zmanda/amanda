@@ -1,4 +1,17 @@
 2009-07-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/version.m4: deprecate --with-suffix and AC_DEFINE
+	  VERSION_MAJOR, _MINOR, etc.
+	* common-src/version.h: remove everything but version_info
+	* client-src/versionsuffix.c client-src/Makefile.am: remove
+	  versionsuffix app
+	* configure.in: remove versuff.c
+	* perl/Amanda/Constants.pm.in man/xml-source/amgetconf.8.xml: remove
+	  USE_VERSION_SUFFIXES
+	* other source files: change version() to VERSION, remove
+	  versionsuffix() calls, remove unnecessary #include "version.h",
+	  and remove other uses of suffixes
+
+2009-07-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/disk.pm: use a symlink named 'data' instead
 	 of 'current', so the vtape root works as a device
 	* man/xml-source/amanda-changers.7.xml: document

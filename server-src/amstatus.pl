@@ -33,12 +33,6 @@ $STATUS_MISSING =  8;
 $STATUS_TAPE    = 16;
 $exit_status    =  0;
 
-$USE_VERSION_SUFFIXES='@USE_VERSION_SUFFIXES@';
-$suf = '';
-if ( $USE_VERSION_SUFFIXES =~ /^yes$/i ) {
-        $suf='-@VERSION@';
-}
-
 $result = &NGetOpt (	"summary",
 			"stats|statistics",
 			"dumping|d",
@@ -93,7 +87,7 @@ $pwd = `pwd`;
 chomp $pwd;
 chdir "$confdir/$conf";
 
-$logdir=`$sbindir/amgetconf$suf logdir`;
+$logdir=`$sbindir/amgetconf logdir`;
 exit 1 if $? != 0;
 chomp $logdir;
 $errfile="$logdir/amdump";
@@ -124,7 +118,7 @@ if($nb_options == 0 ) {
 	$opt_estimate    = 1;
 }
 
-$unit=`$sbindir/amgetconf$suf displayunit`;
+$unit=`$sbindir/amgetconf displayunit`;
 chomp($unit);
 $unit =~ tr/A-Z/a-z/;
 $unitdivisor=1;

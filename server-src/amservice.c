@@ -33,7 +33,6 @@
 #include "conffile.h"
 #include "packet.h"
 #include "protocol.h"
-#include "version.h"
 #include "server_util.h"
 #include "amfeatures.h"
 
@@ -51,8 +50,7 @@ int main(int argc, char **argv);
 void
 usage(void)
 {
-    error(_("Usage: amservice%s [-o configoption]* [-f input_file] host auth service"),
-	  versionsuffix());
+    error(_("Usage: amservice [-o configoption]* [-f input_file] host auth service"));
     /*NOTREACHED*/
 }
 

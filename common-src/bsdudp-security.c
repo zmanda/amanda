@@ -38,7 +38,6 @@
 #include "security.h"
 #include "security-util.h"
 #include "stream.h"
-#include "version.h"
 
 #ifndef SO_RCVBUF
 #undef DUMPER_SOCKET_BUFFERING
