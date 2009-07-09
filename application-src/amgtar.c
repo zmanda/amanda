@@ -40,6 +40,9 @@
  * ATIME-PRESERVE  (default YES)
  * CHECK-DEVICE    (default YES)
  * NO-UNQUOTE      (default NO)
+ * ACLS            (default NO)
+ * SELINUX         (default NO)
+ * XATTRS          (default NO)
  * INCLUDE-FILE
  * INCLUDE-LIST
  * INCLUDE-OPTIONAL
@@ -144,6 +147,9 @@ static char *gnutar_listdir;
 static char *gnutar_directory;
 static int gnutar_onefilesystem;
 static int gnutar_atimepreserve;
+static int gnutar_acls;
+static int gnutar_selinux;
+static int gnutar_xattrs;
 static int gnutar_checkdevice;
 static int gnutar_no_unquote;
 static int gnutar_sparse;
@@ -183,6 +189,9 @@ static struct option long_options[] = {
     {"calcsize"        , 0, NULL, 27},
     {"tar-blocksize"   , 1, NULL, 28},
     {"no-unquote"      , 1, NULL, 29},
+    {"acls"            , 1, NULL, 30},
+    {"selinux"         , 1, NULL, 31},
+    {"xattrs"          , 1, NULL, 32},
     {NULL, 0, NULL, 0}
 };
 
@@ -320,6 +329,9 @@ main(
     gnutar_directory = NULL;
     gnutar_onefilesystem = 1;
     gnutar_atimepreserve = 1;
+    gnutar_acls = 0;
+    gnutar_selinux = 0;
+    gnutar_xattrs = 0;
     gnutar_checkdevice = 1;
     gnutar_sparse = 1;
     gnutar_no_unquote = 0;
@@ -490,6 +502,15 @@ main(
 		 else if (strcasecmp(command, "selfcheck") == 0)
 		     printf(_("ERROR [%s: bad No_UNQUOTE property value (%s)]\n"), get_pname(), optarg);
 		 break;
+        case 30: if (optarg && strcasecmp(optarg, "YES") == 0)
+                   gnutar_acls = 1;
+                 break;
+        case 31: if (optarg && strcasecmp(optarg, "YES") == 0)
+                   gnutar_selinux = 1;
+                 break;
+        case 32: if (optarg && strcasecmp(optarg, "YES") == 0)
+                   gnutar_xattrs = 1;
+                 break;
 	case ':':
 	case '?':
 		break;
@@ -554,6 +575,9 @@ main(
     dbprintf("SPARSE %s\n", gnutar_sparse? "yes":"no");
     dbprintf("NO-UNQUOTE %s\n", gnutar_no_unquote? "yes":"no");
     dbprintf("ATIME-PRESERVE %s\n", gnutar_atimepreserve? "yes":"no");
+    dbprintf("ACLS %s\n", gnutar_acls? "yes":"no");
+    dbprintf("SELINUX %s\n", gnutar_selinux? "yes":"no");
+    dbprintf("XATTRS %s\n", gnutar_xattrs? "yes":"no");
     dbprintf("CHECK-DEVICE %s\n", gnutar_checkdevice? "yes":"no");
     {
 	amregex_t *rp;
@@ -1031,6 +1055,12 @@ amgtar_restore(
     g_ptr_array_add(argv_ptr, stralloc("--numeric-owner"));
     if (gnutar_no_unquote)
 	g_ptr_array_add(argv_ptr, stralloc("--no-unquote"));
+    if (gnutar_acls)
+	g_ptr_array_add(argv_ptr, stralloc("--acls"));
+    if (gnutar_selinux)
+	g_ptr_array_add(argv_ptr, stralloc("--selinux"));
+    if (gnutar_xattrs)
+	g_ptr_array_add(argv_ptr, stralloc("--xattrs"));
     g_ptr_array_add(argv_ptr, stralloc("-xpGvf"));
     g_ptr_array_add(argv_ptr, stralloc("-"));
 
@@ -1261,6 +1291,12 @@ GPtrArray *amgtar_build_argv(
 	g_ptr_array_add(argv_ptr, stralloc("--atime-preserve=system"));
     if (!gnutar_checkdevice)
 	g_ptr_array_add(argv_ptr, stralloc("--no-check-device"));
+    if (gnutar_acls)
+	g_ptr_array_add(argv_ptr, stralloc("--acls"));
+    if (gnutar_selinux)
+	g_ptr_array_add(argv_ptr, stralloc("--selinux"));
+    if (gnutar_xattrs)
+	g_ptr_array_add(argv_ptr, stralloc("--xattrs"));
     g_ptr_array_add(argv_ptr, stralloc("--listed-incremental"));
     g_ptr_array_add(argv_ptr, stralloc(incrname));
     if (gnutar_sparse)

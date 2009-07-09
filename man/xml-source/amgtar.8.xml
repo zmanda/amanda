@@ -78,6 +78,18 @@ If "YES" (the default), gnutar will store sparse files efficiently. If "NO", the
 If "NO" (the default), gnutar doesn't get the <emphasis>--no-unquote</emphasis> option and the diskname can't have some characters, eg. '\'. If "YES", then the <emphasis>--no-unquote</emphasis> option is given to gnutar and the diskname can have any characters.  This option is available only if you are using tar-1.16 or newer.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>ACLS</term><listitem>
+Default "NO". If "YES", gnutar will preserve ACL extended attributes. This corresponds to the <emphasis>--acls</emphasis> gnutar option. Requires a GNU Tar with nonstandard extended attribute patches from the Fedora Project.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>SELINUX</term><listitem>
+Default "NO". If "YES", gnutar will preserve SELinux extended attributes on Linux. This corresponds to the <emphasis>--selinux</emphasis> gnutar option. Requires a GNU Tar with nonstandard extended attribute patches from the Fedora Project. 
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>XATTRS</term><listitem>
+Default "NO". If "YES", gnutar will preserve all extended attributes. This corresponds to the <emphasis>--xattrs</emphasis> gnutar option. If enabled, this option also implies the ACLS and SELINUX properties, regardless of their settings, as they are implemented as extended attributes. Requires a GNU Tar with nonstandard extended attribute patches from the Fedora Project.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>EXIT-HANDLING</term><listitem>
 List which exit status of gtar are good or bad. eg. "1=GOOD 2=BAD", exit status of 1 will produce a good backup, exit status of 2 will give an error.
 </listitem></varlistentry>
@@ -122,6 +134,9 @@ List all regex (POSIX Extended Regular Expression syntax) that are strange outpu
     property "ONE-FILE-SYSTEM" "YES"
     property "TAR-BLOCKSIZE" "20"
     property "SPARSE" "YES"
+    property "ACLS" "NO"
+    property "SELINUX" "NO"
+    property "XATTRS" "NO"
     property "EXIT-HANDLING" "1=GOOD 2=BAD"
     # change a default NORMAL regex to a STRANGE regex.
     property "STRANGE" ": socket ignored$"
