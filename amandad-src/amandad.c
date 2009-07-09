@@ -428,6 +428,7 @@ main(
 	exit_on_qlength = 1;
     }
 
+#ifndef SINGLE_USERID
     if (getuid() == 0) {
 	if (strcasecmp(auth, "krb5") != 0) {
 	    struct passwd *pwd;
@@ -446,7 +447,7 @@ main(
 	    error(_("'amandad' must be run as user 'root' when using 'krb5' authentication"));
 	}
     }
-
+#endif
 
     /* initialize */
 
