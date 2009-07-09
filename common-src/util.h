@@ -55,7 +55,12 @@ ssize_t	full_writev(int, struct iovec *, int);
 char *	construct_datestamp(time_t *t);
 char *	construct_timestamp(time_t *t);
 
-/*@only@*//*@null@*/char *quote_string(const char *str);
+/* quote_string only adds "" if they're required; quote_string_always
+ * always adds "" around the string */
+#define quote_string(str) quote_string_maybe((str), 0)
+#define quote_string_always(str) quote_string_maybe((str), 1)
+
+/*@only@*//*@null@*/char *quote_string_maybe(const char *str, gboolean always);
 /*@only@*//*@null@*/char *unquote_string(const char *str);
 
 /* Split a string into space-delimited words, obeying quoting as created by

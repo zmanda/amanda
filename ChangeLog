@@ -1,4 +1,8 @@
 2009-07-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/util.c common-src/util.h: add quote_string_always
+	* common-src/conffile.c: use it to quote strings on output from config
+
+2009-07-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/version.m4: deprecate --with-suffix and AC_DEFINE
 	  VERSION_MAJOR, _MINOR, etc.
 	* common-src/version.h: remove everything but version_info

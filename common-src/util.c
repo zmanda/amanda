@@ -364,20 +364,21 @@ full_writev(
 
 
 /*
- * For backward compatibility we are trying for minimal quoting.
- * We only quote a string if it contains whitespace or is misquoted...
+ * For backward compatibility we are trying for minimal quoting.  Unless ALWAYS
+ * is true, we only quote a string if it contains whitespace or is misquoted...
  */
 
 char *
-quote_string(
-    const char *str)
+quote_string_maybe(
+    const char *str,
+    gboolean always)
 {
     char *  s;
     char *  ret;
 
     if ((str == NULL) || (*str == '\0')) {
 	ret = stralloc("\"\"");
-    } else if ((match("[:\'\\\"[:space:][:cntrl:]]", str)) == 0) {
+    } else if (!always && (match("[:\'\\\"[:space:][:cntrl:]]", str)) == 0) {
 	/*
 	 * String does not need to be quoted since it contains
 	 * neither whitespace, control or quote characters.

@@ -661,7 +661,6 @@ static void free_val_t(val_t *);
 /* memory handling */
 static void free_property_t(gpointer p);
 
-
 /* Utility functions/structs for val_t_display_strs */
 static char *exinclude_display_str(val_t *val, int file);
 static void proplist_display_str_foreach_fn(gpointer key_p, gpointer value_p, gpointer user_data_p);
@@ -5448,7 +5447,7 @@ internal_apply_config_overwrites(
 	 * parse it.  This is sneaky! */
 
 	if (key_parm->type == CONFTYPE_STR) {
-	    current_line = vstralloc("\"", value, "\"", NULL);
+	    current_line = quote_string_always(value);
 	} else {
 	    current_line = stralloc(value);
 	}
@@ -6325,7 +6324,7 @@ val_t_display_strs(
     case CONFTYPE_STR:
 	if(str_need_quote) {
             if(val->v.s) {
-		buf[0] = vstrallocf("\"%s\"", val->v.s);
+		buf[0] = quote_string_always(val->v.s);
             } else {
 		buf[0] = stralloc("\"\"");
             }
@@ -6541,7 +6540,7 @@ val_t_display_strs(
 
     case CONFTYPE_APPLICATION: {
 	if (val->v.s) {
-	    buf[0] = vstrallocf("\"%s\"", val->v.s);
+	    buf[0] = quote_string_always(val->v.s);
 	} else {
 	    buf[0] = stralloc("");
 	}
@@ -6667,19 +6666,23 @@ proplist_display_str_foreach_fn(
     gpointer value_p,
     gpointer user_data_p)
 {
-    char         *property_s = key_p;
+    char         *property_s = quote_string_always(key_p);
     property_t   *property   = value_p;
     GSList       *value;
     char       ***msg        = (char ***)user_data_p;
 
     /* What to do with property->append? it should be printed only on client */
     if (property->priority) {
-	**msg = vstralloc("priority \"", property_s, "\"", NULL);
+	**msg = vstralloc("priority ", property_s, NULL);
+	amfree(property_s);
     } else {
-	**msg = vstralloc("\"", property_s, "\"", NULL);
+	**msg = property_s;
+	property_s = NULL;
     }
     for(value=property->values; value != NULL; value = value->next) {
-	**msg = vstrextend(*msg, " \"", value->data, "\"", NULL);
+	char *qstr = quote_string_always((char *)value->data);
+	**msg = vstrextend(*msg, " ", qstr, NULL);
+	amfree(qstr);
     }
     (*msg)++;
 }
@@ -6711,7 +6714,9 @@ exinclude_display_str(
 
     if (sl != NULL) {
 	for(excl = sl->first; excl != NULL; excl = excl->next) {
-            vstrextend(&rval, " \"", excl->name, "\"", NULL);
+	    char *qstr = quote_string_always(excl->name);
+            vstrextend(&rval, " ", qstr, NULL);
+	    amfree(qstr);
 	}
     }
 
@@ -7151,5 +7156,4 @@ gint compare_pp_script_order(
 {
     return pp_script_get_order(lookup_pp_script((char *)a)) > pp_script_get_order(lookup_pp_script((char *)b));
 }
-
 
