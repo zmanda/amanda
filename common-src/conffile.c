@@ -1699,16 +1699,17 @@ read_confline(
     case CONF_DEFINE:
 	if (is_client) {
 	    get_conftoken(CONF_ANY);
-	    if(tok == CONF_APPLICATION_TOOL) get_application();
-	    else if(tok == CONF_SCRIPT_TOOL) get_pp_script();
+	    /* accept application-tool here, too, for backward compatibility */
+	    if(tok == CONF_APPLICATION_TOOL || tok == CONF_APPLICATION) get_application();
+	    else if(tok == CONF_SCRIPT_TOOL || tok == CONF_SCRIPT) get_pp_script();
 	    else conf_parserror(_("APPLICATION-TOOL or SCRIPT-TOOL expected"));
 	} else {
 	    get_conftoken(CONF_ANY);
 	    if(tok == CONF_DUMPTYPE) get_dumptype();
 	    else if(tok == CONF_TAPETYPE) get_tapetype();
 	    else if(tok == CONF_INTERFACE) get_interface();
-	    else if(tok == CONF_APPLICATION_TOOL) get_application();
-	    else if(tok == CONF_SCRIPT_TOOL) get_pp_script();
+	    else if(tok == CONF_APPLICATION_TOOL || tok == CONF_APPLICATION) get_application();
+	    else if(tok == CONF_SCRIPT_TOOL || tok == CONF_SCRIPT) get_pp_script();
 	    else if(tok == CONF_DEVICE) get_device_config();
 	    else if(tok == CONF_CHANGER) get_changer_config();
 	    else if(tok == CONF_HOLDING) get_holdingdisk(1);
@@ -2388,7 +2389,7 @@ read_application(
     apcur.seen.linenum = current_line_num;
 
     read_block(application_var, apcur.value,
-	       _("application-tool parameter expected"),
+	       _("application parameter expected"),
 	       (name == NULL), *copy_application);
     if(!name)
 	get_conftoken(CONF_NL);
@@ -2435,7 +2436,7 @@ save_application(
     ap = lookup_application(apcur.name);
 
     if(ap != (application_t *)0) {
-	conf_parserror(_("application-tool %s already defined at %s:%d"),
+	conf_parserror(_("application %s already defined at %s:%d"),
 		       ap->name, ap->seen.filename, ap->seen.linenum);
 	return;
     }
@@ -2513,7 +2514,7 @@ read_pp_script(
     pscur.seen.linenum = current_line_num;
 
     read_block(pp_script_var, pscur.value,
-	       _("script-tool parameter expected"),
+	       _("script parameter expected"),
 	       (name == NULL), *copy_pp_script);
     if(!name)
 	get_conftoken(CONF_NL);
@@ -2563,7 +2564,7 @@ save_pp_script(
     ps = lookup_pp_script(pscur.name);
 
     if(ps != (pp_script_t *)0) {
-	conf_parserror(_("script-tool %s already defined at %s:%d"),
+	conf_parserror(_("script %s already defined at %s:%d"),
 		       ps->name, ps->seen.filename, ps->seen.linenum);
 	return;
     }
@@ -4965,12 +4966,14 @@ getconf_list(
 	    rv = g_slist_append(rv, ip->name);
 	}
     } else if (strcasecmp(listname,"application_tool") == 0
-	    || strcasecmp(listname,"application-tool") == 0) {
+	    || strcasecmp(listname,"application-tool") == 0
+	    || strcasecmp(listname,"application") == 0) {
 	for(ap = application_list; ap != NULL; ap=ap->next) {
 	    rv = g_slist_append(rv, ap->name);
 	}
     } else if (strcasecmp(listname,"script_tool") == 0
-	    || strcasecmp(listname,"script-tool") == 0) {
+	    || strcasecmp(listname,"script-tool") == 0
+	    || strcasecmp(listname,"script") == 0) {
 	for(pp = pp_script_list; pp != NULL; pp=pp->next) {
 	    rv = g_slist_append(rv, pp->name);
 	}
@@ -6143,12 +6146,12 @@ dump_configuration(void)
 	    prefix = "#";
 	else
 	    prefix = "";
-	g_printf("\n%sDEFINE APPLICATION-TOOL %s {\n", prefix, ap->name);
+	g_printf("\n%sDEFINE APPLICATION %s {\n", prefix, ap->name);
 	for(i=0; i < APPLICATION_APPLICATION; i++) {
 	    for(np=application_var; np->token != CONF_UNKNOWN; np++)
 		if(np->parm == i) break;
 	    if(np->token == CONF_UNKNOWN)
-		error(_("application-tool bad value"));
+		error(_("application bad value"));
 
 	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
 		if(kt->token == np->token) break;
@@ -6165,12 +6168,12 @@ dump_configuration(void)
 	    prefix = "#";
 	else
 	    prefix = "";
-	g_printf("\n%sDEFINE SCRIPT-TOOL %s {\n", prefix, ps->name);
+	g_printf("\n%sDEFINE SCRIPT %s {\n", prefix, ps->name);
 	for(i=0; i < PP_SCRIPT_PP_SCRIPT; i++) {
 	    for(np=pp_script_var; np->token != CONF_UNKNOWN; np++)
 		if(np->parm == i) break;
 	    if(np->token == CONF_UNKNOWN)
-		error(_("script-tool bad value"));
+		error(_("script bad value"));
 
 	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
 		if(kt->token == np->token) break;
@@ -6860,7 +6863,9 @@ parm_key_info(
 	    if (val) *val = &ip->value[np->parm];
 	    if (parm) *parm = np;
 	    success = TRUE;
-	} else if (strcmp(subsec_type, "APPLICATION_TOOL") == 0) {
+	/* accept the old name here, too */
+	} else if (strcmp(subsec_type, "APPLICATION_TOOL") == 0
+		|| strcmp(subsec_type, "APPLICATION") == 0) {
 	    ap = lookup_application(subsec_name);
 	    if (!ap) goto out;
 	    for(np = application_var; np->token != CONF_UNKNOWN; np++) {
@@ -6872,7 +6877,9 @@ parm_key_info(
 	    if (val) *val = &ap->value[np->parm];
 	    if (parm) *parm = np;
 	    success = TRUE;
-	} else if (strcmp(subsec_type, "SCRIPT_TOOL") == 0) {
+	/* accept the old name here, too */
+	} else if (strcmp(subsec_type, "SCRIPT_TOOL") == 0
+		|| strcmp(subsec_type, "SCRIPT") == 0) {
 	    pp = lookup_pp_script(subsec_name);
 	    if (!pp) goto out;
 	    for(np = pp_script_var; np->token != CONF_UNKNOWN; np++) {

@@ -273,8 +273,9 @@ Parameter values are available by name from C<getconf_byname($name)> and
 C<getconf_byname_strs($name, $str_needs_quotes)>.  These functions implement
 the C<TYP:NAME:PARAM> syntax advertised by C<amgetconf> to access values in
 subsections.  The first function returns a Perl value (see DATA FORMATS,
-above), while the second returns a string suitable for use in C<amanda.conf>,
-including quotes around strings if C<$str_needs_quotes> is true.
+above), while the second returns a list of strings suitable for use in
+C<amanda.conf>, including quotes around strings if C<$str_needs_quotes> is
+true.
 
 C<getconf_list($typ)> returns a list of the names of all subsections of the
 given type.  C<%subsection_names> is a hash whose keys are allowed subsection

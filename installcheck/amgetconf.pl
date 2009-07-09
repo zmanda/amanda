@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 78;
+use Test::More tests => 80;
 
 use lib "@amperldir@";
 use Installcheck;
@@ -252,16 +252,25 @@ is(run_get('amgetconf', 'TESTCONF', 'holdingdisk:hd17:chunksize'), '128',
 like(run_get('amgetconf', 'TESTCONF', '--list', 'build'), qr(.*version.*),
 	"'--list build' lists build variables");
 
-is_deeply([sort(+split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'application-tool')))],
+is_deeply([sort(+split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'application')))],
           [sort("app_amgtar", "app_amstar")],
-        "--list returns correct set of application-tool");
+        "--list returns correct set of applications");
 
 is(run_get('amgetconf', 'TESTCONF', 'application-tool:app_amgtar:plugin'), 'amgtar',
     "returns application-tool parameter correctly");
 
+is_deeply([sort(+split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'script')))],
+          [sort("my_script")],
+        "--list returns correct set of scripts");
+
+# test the old names
 is_deeply([sort(+split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'script-tool')))],
           [sort("my_script")],
-        "--list returns correct set of script-tool");
+        "--list returns correct set of scripts, using the name script-tool");
+
+is_deeply([sort(+split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'application-tool')))],
+          [sort("app_amgtar", "app_amstar")],
+        "--list returns correct set of applications, using the name 'application-tool'");
 
 is(run_get('amgetconf', 'TESTCONF', 'script-tool:my_script:execute-on'), 'PRE-DLE-AMCHECK',
     "returns script-tool parameter correctly");

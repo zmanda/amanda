@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 149;
+use Test::More tests => 159;
 use strict;
 
 use lib "@amperldir@";
@@ -426,7 +426,11 @@ SKIP: { # application
 
     is_deeply([ sort(+getconf_list("application-tool")) ],
 	      [ sort("my_app") ],
-	"getconf_list lists all application-tool");
+	"getconf_list lists all applications");
+    # test backward compatibility
+    is_deeply([ sort(+getconf_list("application")) ],
+	      [ sort("my_app") ],
+	"getconf_list works for 'application-tool', too");
 }
 
 SKIP: { # script
@@ -445,9 +449,13 @@ SKIP: { # script
 	$EXECUTE_ON_PRE_HOST_BACKUP|$EXECUTE_ON_POST_HOST_BACKUP,
 	"script execute_on");
 
+    is_deeply([ sort(+getconf_list("script")) ],
+	      [ sort("my_script") ],
+	"getconf_list lists all script");
+
     is_deeply([ sort(+getconf_list("script-tool")) ],
 	      [ sort("my_script") ],
-	"getconf_list lists all script-tool");
+	"getconf_list works for 'script-tool', too");
 }
 
 SKIP: { # device
@@ -836,4 +844,57 @@ SKIP: {
 				    values => [ "val2a", "val2", "val2b" ] }},
     "PROPERTY parameter of app2b parsed correctly");
 }
+
+
+##
+# Check getconf_byname and getconf_byname_strs
+
+$testconf = Installcheck::Config->new();
+$testconf->add_param('tapedev', '"thats a funny name"');
+$testconf->add_application('app1', [
+    'comment' => '"one"',
+]);
+$testconf->add_script('scr1', [
+    'comment' => '"one"',
+]);
+# check old names, too
+$testconf->add_text(<<EOF);
+define application-tool "app2" {
+    comment "two"
+}
+EOF
+$testconf->add_text(<<EOF);
+define script-tool "scr2" {
+    comment "two"
+}
+EOF
+$testconf->write();
+
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+is($cfg_result, $CFGERR_OK,
+    "getconf_byname")
+    or diag_config_errors();
+SKIP: {
+    skip "error loading config", 7 unless $cfg_result == $CFGERR_OK;
+
+    is(getconf_byname("Tapedev"), "thats a funny name",
+	"getconf_byname for global param");
+    is_deeply([ getconf_byname_strs("Tapedev", 1) ],
+	[ "\"thats a funny name\"" ],
+	"getconf_byname_strs for global param with quotes");
+    is_deeply([ getconf_byname_strs("Tapedev", 0) ],
+	[ "thats a funny name" ],
+	"getconf_byname_strs for global param without quotes");
+
+    # test * and *-tool (the old name)
+    is(getconf_byname("application-tool:app1:comment"), "one",
+	"getconf_byname for appplication-tool param");
+    is(getconf_byname("application:app2:comment"), "two",
+	"getconf_byname for application param");
+    is(getconf_byname("script-tool:scr1:comment"), "one",
+	"getconf_byname for appplication-tool param");
+    is(getconf_byname("script:scr2:comment"), "two",
+	"getconf_byname for script param");
+}
+
 

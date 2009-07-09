@@ -1921,7 +1921,7 @@ The type of backup to perform. Valid values are:</para>
       <varlistentry>
       <term><emphasis remap='B'>APPLICATION</emphasis></term>
       <listitem>
-<para>To use an application-tool, see the <emphasis>application</emphasis> option.</para>
+<para>To use an application, see the <emphasis>application</emphasis> option.</para>
       </listitem>
       </varlistentry>
     </variablelist>
@@ -1930,13 +1930,13 @@ The type of backup to perform. Valid values are:</para>
   <varlistentry>
   <term><emphasis remap='B'>application</emphasis> <emphasis remap='I'> string</emphasis></term>
   <listitem>
-<para>No default. Must be the name of an application-tool if <emphasis>program</emphasis> is set to <emphasis remap='I'>APPLICATION</emphasis>. See APPLICATION SECTION below.</para>
+<para>No default. Must be the name of an application if <emphasis>program</emphasis> is set to <emphasis remap='I'>APPLICATION</emphasis>. See APPLICATION SECTION below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
   <term><emphasis remap='B'>script</emphasis> <emphasis remap='I'> string</emphasis></term>
   <listitem>
-<para>No default. Must be the name of a script-tool. You can have many script. See SCRIPT SECTION below.</para>
+<para>No default. Must be the name of a script. You can have many script. See SCRIPT SECTION below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -2347,11 +2347,11 @@ At the moment, this is of little use.</para>
 <para>The
 <emphasis remap='B'>amanda.conf</emphasis>
 file may define multiple types of application.
-The information is entered in a <emphasis remap='B'>application-tool</emphasis>
+The information is entered in a <emphasis remap='B'>application</emphasis>
 section, which looks like this:</para>
 
 <programlisting>
-define application-tool "<emphasis remap='I'>name</emphasis>" {
+define application "<emphasis remap='I'>name</emphasis>" {
     <emphasis remap='I'>application-option</emphasis> <emphasis remap='I'>application-value</emphasis>
     <literal>...</literal>
 }
@@ -2362,7 +2362,7 @@ define application-tool "<emphasis remap='I'>name</emphasis>" {
 is the name of this type of application. It is referenced from the
 <emphasis remap='I'>dumptype</emphasis></para>
 
-<para>The application-tool options and values are:</para>
+<para>The application options and values are:</para>
 <variablelist remap='TP'>
   <varlistentry>
   <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'>string</emphasis></term>
@@ -2395,11 +2395,11 @@ the property to set, and the others contains its values.
 <para>The
 <emphasis remap='B'>amanda.conf</emphasis>
 file may define multiple types of script. 
-The information is entered in a <emphasis remap='B'>script-tool</emphasis>
+The information is entered in a <emphasis remap='B'>script</emphasis>
 section, which looks like this:</para>
 
 <programlisting>
-define script-tool "<emphasis remap='I'>name</emphasis>" {
+define script "<emphasis remap='I'>name</emphasis>" {
     <emphasis remap='I'>script-option</emphasis> <emphasis remap='I'>script-value</emphasis>
     <literal>...</literal>
 }
@@ -2410,7 +2410,7 @@ define script-tool "<emphasis remap='I'>name</emphasis>" {
 is the name of this type of script. It is referenced from the
 <emphasis remap='I'>dumptype</emphasis></para>
 
-<para>The script-tool options and values are:</para>
+<para>The script options and values are:</para>
 <variablelist remap='TP'>
   <varlistentry>
   <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'>string</emphasis></term>

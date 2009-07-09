@@ -113,10 +113,11 @@ sub new {
 	'dumptypes' => [ ],
 	'interfaces' => [ ],
 	'holdingdisks' => [ ],
-	'application-tool' => [ ],
-	'script-tool' => [ ],
+	'application' => [ ],
+	'script' => [ ],
 	'devices' => [ ],
 	'changers' => [ ],
+	'text' => '',
 
 	'dles' => [ ],
     };
@@ -256,13 +257,13 @@ sub add_interface {
 sub add_application {
     my $self = shift;
     my ($name, $values) = @_;
-    $self->_add_subsec("application-tool", $name, 1, $values);
+    $self->_add_subsec("application", $name, 1, $values);
 }
 
 sub add_script {
     my $self = shift;
     my ($name, $values) = @_;
-    $self->_add_subsec("script-tool", $name, 1, $values);
+    $self->_add_subsec("script", $name, 1, $values);
 }
 
 sub add_device {
@@ -275,6 +276,18 @@ sub add_changer {
     my $self = shift;
     my ($name, $values) = @_;
     $self->_add_subsec("changers", $name, 1, $values);
+}
+
+=item C<add_text($text)>
+
+Add arbitrary text to the config file.
+
+=cut
+
+sub add_text {
+    my $self = shift;
+    my ($text) = @_;
+    $self->{'text'} .= $text;
 }
 
 =item C<add_dle($line)>
@@ -372,13 +385,14 @@ sub _write_amanda_conf {
 
     # write out subsections
     $self->_write_amanda_conf_subsection($amanda_conf, "tapetype", $self->{"tapetypes"});
-    $self->_write_amanda_conf_subsection($amanda_conf, "application-tool", $self->{"application-tool"});
-    $self->_write_amanda_conf_subsection($amanda_conf, "script-tool", $self->{"script-tool"});
+    $self->_write_amanda_conf_subsection($amanda_conf, "application", $self->{"application"});
+    $self->_write_amanda_conf_subsection($amanda_conf, "script", $self->{"script"});
     $self->_write_amanda_conf_subsection($amanda_conf, "dumptype", $self->{"dumptypes"});
     $self->_write_amanda_conf_subsection($amanda_conf, "interface", $self->{"interfaces"});
     $self->_write_amanda_conf_subsection($amanda_conf, "holdingdisk", $self->{"holdingdisks"});
     $self->_write_amanda_conf_subsection($amanda_conf, "device", $self->{"devices"});
     $self->_write_amanda_conf_subsection($amanda_conf, "changer", $self->{"changers"});
+    print $amanda_conf "\n", $self->{'text'}, "\n";
 
     close($amanda_conf);
 }

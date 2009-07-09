@@ -1,4 +1,15 @@
 2009-07-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Config.swg perl/Amanda/Config.pod common-src/conffile.c:
+	  prefer 'application' and 'script' to 'application-tool' and
+	  'script-tool', but accept both
+	* common-src/amgetconf.pl: accept both
+	* installcheck/Installcheck/Config.pm: add_text()
+	* installcheck/Amanda_Config.pl: test changes
+	* installcheck/amgetconf.pl: test changes
+	* man/xml-source/amanda-client.conf.5.xml: document
+	* man/xml-source/amanda.conf.5.xml: document
+
+2009-07-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* AUTHORS: update, add notes about contribution licensing
 
 2009-07-06  Dustin J. Mitchell <dustin@zmanda.com>

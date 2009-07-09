@@ -593,13 +593,17 @@ amglue_export_tag(getconf,
 );
 
 %perlcode %{
+# only those keys with a value of '1' should be shown; the
+# others are deprecated
 our %subsection_names = (
     "tapetype" => 1,
     "dumptype" => 1,
     "interface" => 1,
     "holdingdisk" => 1,
-    "application-tool" => 1,
-    "script-tool" => 1,
+    "application" => 1,
+    "script" => 1,
+    "application-tool" => 0,
+    "script-tool" => 0,
     "device" => 1,
     "changer" => 1,
 );
