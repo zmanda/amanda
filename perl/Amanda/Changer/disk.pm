@@ -45,7 +45,7 @@ string, which it arranges as follows:
         |           | data -> '../slot4'
         |- drive1/ -|
         |           | data -> '../slot1'
-        |- current -> slot5
+        |- data -> slot5
         |- slot1/
         |- slot2/
         |- ...
@@ -53,7 +53,8 @@ string, which it arranges as follows:
 
 The user should create the desired number of C<slot$n> subdirectories.  The
 changer will take care of dynamically creating the drives as needed, and track
-the "current" slot using the eponymous symlink.
+the current slot using a "data" symlink.  This allows use of "file:$dir" as a
+device operating on the current slot, although note that it is unlocked.
 
 Drives are dynamically allocated as Amanda applications request access to
 particular slots.  Each drive is represented as a subdirectory containing a
@@ -352,10 +353,16 @@ sub _get_next {
     return $all_slots[0];
 }
 
-# Get the 'current' slot, represented as a symlink named 'current'
+# Get the 'current' slot, represented as a symlink named 'data'
 sub _get_current {
     my ($self) = @_;
-    my $curlink = $self->{'dir'} . "/current";
+    my $curlink = $self->{'dir'} . "/data";
+
+    # for 2.6.1-compatibility, also parse a "current" symlink
+    my $oldlink = $self->{'dir'} . "/current";
+    if (-l $oldlink and ! -e $curlink) {
+	rename($oldlink, $curlink);
+    }
 
     if (-l $curlink) {
         my $target = readlink($curlink);
@@ -373,7 +380,7 @@ sub _get_current {
 # Set the 'current' slot
 sub _set_current {
     my ($self, $slot) = @_;
-    my $curlink = $self->{'dir'} . "/current";
+    my $curlink = $self->{'dir'} . "/data";
 
     if (-e $curlink) {
         unlink($curlink)

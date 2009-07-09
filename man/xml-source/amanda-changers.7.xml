@@ -114,6 +114,10 @@ supporting parallel access to vtapes stored in directories named
 <computeroutput>chg-disk:</computeroutput>.  It does so by creating numbered
 "drives" so that simultaneous processes can access distinct slots.  This changer is fast-search capable.</para>
 
+<para>The current slot can be accessed using the device name
+<computeroutput>file:VTAPEROOT</computeroutput>. This is useful for the <manref
+name="amrestore" vol="8" /> command line.</para>
+
 </refsect2>
 
 <refsect2><title>chg-disk (old)</title>
