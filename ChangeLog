@@ -1,3 +1,9 @@
+2009-07-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in: don't generate all of the example/ files here
+	* example/Makefile.am: generate them here
+	* example/chg-mcutil.conf.in: removed
+	* example/config.site: removed
+
 2009-07-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Taper_Scan_traditional.pl: use 'data' symlink
 	  instead of 'current', as required by previous change

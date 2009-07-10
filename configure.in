@@ -374,19 +374,6 @@ AC_CONFIG_FILES([
     device-src/Makefile
     application-src/Makefile
     example/Makefile
-    example/amanda-client.conf
-    example/amanda-client-postgresql.conf
-    example/amanda.conf
-    example/xinetd.amandaclient
-    example/xinetd.amandaserver
-    example/inetd.conf.amandaclient
-    example/inetd.conf.amandaserver
-    example/chg-mcutil.conf
-    example/template.d/advanced.conf
-    example/template.d/amanda-S3.conf
-    example/template.d/amanda-harddisk.conf
-    example/template.d/amanda-single-tape.conf
-    example/template.d/amanda-tape-changer.conf
     gnulib/Makefile
     installcheck/Makefile
     man/Makefile
