@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 347;
+use Test::More tests => 357;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -572,10 +572,10 @@ my $base_name;
 
 SKIP: {
     skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
-            60 +
+            64 +
             1 * $verify_file_count +
             4 * $write_file_count +
-            9 * $s3_make_device_count
+            10 * $s3_make_device_count
 	unless $run_s3_tests;
 
     $dev_name = "s3:";
@@ -728,6 +728,11 @@ SKIP: {
        "status is unlabeled after an erase")
         or diag($dev->error_or_status());
 
+    $dev = s3_make_device($dev_name, "s3");
+
+    ok($dev->erase(),
+       "erase device right after creation")
+       or diag($dev->error_or_status());
 
     # try with empty user token
     $dev_name = lc("s3:$base_name-s3");
@@ -786,27 +791,37 @@ SKIP: {
 	   "set invalid SSL/TLS CA certificate")
 	    or diag($dev->error_or_status());
 
-	$dev->read_label();
-	$status = $dev->status();
-	ok(($status != $DEVICE_STATUS_SUCCESS) && (($status & $DEVICE_STATUS_VOLUME_UNLABELED) == 0),
-	   "status is not OK or just unlabeled")
-	    or diag($dev->error_or_status());
+        ok(!$dev->start($ACCESS_WRITE, "TESTCONF13", undef),
+           "start in write mode")
+            or diag($dev->error_or_status());
+
+        isnt($dev->status(), $DEVICE_STATUS_SUCCESS,
+           "status is OK")
+            or diag($dev->error_or_status());
+
+        $dev->finish();
     }
 
-    # test again with minimal CA bundle
+    # test again with our own CA bundle
     $dev = s3_make_device($dev_name, "s3");
     SKIP: {
-	skip "SSL not supported; can't check SSL_CA_INFO", 2
+	skip "SSL not supported; can't check SSL_CA_INFO", 4
 	    unless $dev->property_get('S3_SSL');
 	ok($dev->property_set('SSL_CA_INFO', 'data/aws-bundle.crt'),
-	   "set minimal SSL/TLS CA certificate bundle")
+	   "set our own SSL/TLS CA certificate bundle")
 	    or diag($dev->error_or_status());
 
-	$dev->read_label();
-	$status = $dev->status();
-        ok(($status == $DEVICE_STATUS_SUCCESS) || (($status & $DEVICE_STATUS_VOLUME_UNLABELED) != 0),
-	   "status is OK or just unlabeled")
-	    or diag($dev->error_or_status());
+        ok($dev->erase(),
+           "erase device")
+            or diag($dev->error_or_status());
+
+        ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef),
+           "start in write mode")
+            or diag($dev->error_or_status());
+
+        is($dev->status(), $DEVICE_STATUS_SUCCESS,
+           "status is OK")
+            or diag($dev->error_or_status());
     }
 
     # bucket names incompatible with location constraint
