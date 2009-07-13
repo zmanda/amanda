@@ -66,13 +66,13 @@ my $chg = Amanda::Changer->new("chg-null:");
     });
 
     $do_load = make_cb('do_load' => sub {
-	$chg->load(slot => "current",
+	$chg->load(relative_slot => "current",
 		   res_cb => $got_res);
     });
 
     $got_res = make_cb('got_res' => sub {
 	my ($err, $res) = @_;
-	ok(!$err, "no error loading slot 'current'")
+	ok(!$err, "no error loading relative slot 'current'")
 	    or diag($err);
 	is($res->{'device'}->device_name, 'null:',
 	    "returns correct device name");

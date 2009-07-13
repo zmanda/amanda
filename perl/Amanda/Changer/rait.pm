@@ -181,7 +181,7 @@ sub load {
 	    parent_cb => $all_kids_done_cb,
 	    args => \@kid_slots,
 	);
-    } elsif (exists $params{'label'}) {
+    } elsif (exists $params{'relative_slot'} or exists $params{'label'}) {
 	$self->_for_each_child(
 	    oksub => sub {
 		my ($kid_chg, $kid_cb) = @_;

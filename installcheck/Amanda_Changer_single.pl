@@ -63,13 +63,13 @@ my $chg = Amanda::Changer->new("chg-single:tape:/foo");
         is($results{'num_slots'}, 1, "info() returns the correct num_slots");
         is($results{'fast_search'}, 1, "info() returns the correct fast_slots");
 
-	$chg->load(slot => "current",
+	$chg->load(relative_slot => "current",
 		   res_cb => $got_res);
     });
 
     $got_res = make_cb('got_res' => sub {
 	my ($err, $res) = @_;
-	ok(!$err, "no error loading slot 'current'")
+	ok(!$err, "no error loading relative slot 'current'")
 	    or diag($err);
 	is($res->{'device'}->device_name(), 'tape:/foo',
 	    "returns correct device name");

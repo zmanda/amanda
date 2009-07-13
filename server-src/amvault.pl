@@ -254,7 +254,7 @@ sub load_next_volumes {
 	    $self->{'dst_res'}->release(
 		finished_cb => $load_dst);
 	} else {
-	    $self->{'dst_next'} = "current";
+	    $self->{'dst_next'} = undef;
 	    $load_dst->(undef);
 	}
     });
@@ -264,10 +264,17 @@ sub load_next_volumes {
 	fail $err if $err;
 	vlog("Loading destination slot $self->{dst_next}");
 
-	$self->{'dst_chg'}->load(
-	    slot => $self->{'dst_next'},
-	    set_current => 1,
-	    res_cb => $open_dst);
+	if (defined $self->{'dst_next'}) {
+	    $self->{'dst_chg'}->load(
+		slot => $self->{'dst_next'},
+		set_current => 1,
+		res_cb => $open_dst);
+	} else {
+	    $self->{'dst_chg'}->load(
+		relative_slot => "current",
+		set_current => 1,
+		res_cb => $open_dst);
+	}
     });
 
     $open_dst = make_cb('open_dst' => sub {

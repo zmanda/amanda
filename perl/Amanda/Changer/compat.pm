@@ -123,6 +123,9 @@ sub load {
     });
 
     $subs{'start_load'} = make_cb(start_lod => sub {
+	# relative_slot gets fed to the changer script the same way as slot
+	$params{'slot'} = $params{'relative_slot'} if exists $params{'relative_slot'};
+
 	if (exists $params{'label'}) {
 	    if ($self->{'searchable'}) {
 		$self->_run_tpchanger($subs{'load_run_done'}, "-search", $params{'label'});

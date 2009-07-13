@@ -99,10 +99,17 @@ sub load {
         }
 
 	$cb->(undef, Amanda::Changer::test::Reservation->new($self, $slot, $label));
-    } elsif (exists $params{'slot'}) {
+    } elsif (exists $params{'slot'} or exists $params{'relative_slot'}) {
 	my $slot = $params{'slot'};
-	$slot = $self->{'curslot'}
-	    if ($slot eq "current");
+	if (exists $params{'relative_slot'}) {
+	    if ($params{'relative_slot'} eq "current") {
+		$slot = $self->{'curslot'};
+	    } elsif ($params{'relative_slot'} eq "next") {
+		$slot = ($self->{'curslot'} + 1) % (scalar @{$self->{'slots'}});
+	    } else {
+		die "invalid relative_slot";
+	    }
+	}
 
 	if (grep { $_ == $slot } @{$self->{'reserved_slots'}}) {
 	    $cb->("Slot $slot is already in use", undef);
@@ -290,7 +297,7 @@ is($chg->{'config'}->get_property("testprop"), "testval",
 
     # reserves the current slot
     $start = make_cb('start' => sub {
-        $chg->load(res_cb => $first_cb, slot => "current");
+        $chg->load(res_cb => $first_cb, relative_slot => "current");
     });
 
     # gets a reservation for the "current" slot

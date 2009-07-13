@@ -123,7 +123,12 @@ sub do_slot {
     }
 
     my $load_slot = sub {
-	$chg->load(slot => $slot, set_current => 1,
+	my @slotarg = (slot => $slot);
+	if ($slot eq 'next' or $slot eq 'current') {
+	    @slotarg = (relative_slot => $slot);
+	}
+
+	$chg->load(@slotarg, set_current => 1,
 	    res_cb => sub {
 		(my $error, $res) = @_;
 		if ($error) {

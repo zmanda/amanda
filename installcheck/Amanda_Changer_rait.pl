@@ -125,7 +125,7 @@ label_vtape(3,4,"mytape");
     });
 
     $do_load_current = make_cb('do_load_current' => sub {
-	$chg->load(slot => "current", res_cb => $got_res_current);
+	$chg->load(relative_slot => "current", res_cb => $got_res_current);
     });
 
     $got_res_current = make_cb('got_res_current' => sub {
@@ -147,7 +147,7 @@ label_vtape(3,4,"mytape");
 	my ($err) = @_;
 	die $err if $err;
 
-	$chg->load(slot => "next", res_cb => $got_res_next);
+	$chg->load(relative_slot => "next", res_cb => $got_res_next);
     });
 
     $got_res_next = make_cb('got_res_next' => sub {
@@ -292,7 +292,7 @@ label_vtape(3,4,"mytape");
     });
 
     $do_load_current = make_cb('do_load_current' => sub {
-	$chg->load(slot => "current", res_cb => $got_res_current);
+	$chg->load(relative_slot => "current", res_cb => $got_res_current);
     });
 
     $got_res_current = make_cb('got_res_current' => sub {

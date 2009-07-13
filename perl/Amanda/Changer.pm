@@ -199,12 +199,12 @@ Note that the changer I<tries> to load the requested volume, but it's a mean
 world out there, and you may not get what you want, so check the label on the
 loaded volume before getting started.
 
-=head3 $chg->load(res_cb => $cb, slot => "current", mode => $mode)
+=head3 $chg->load(res_cb => $cb, relative_slot => "current", mode => $mode)
 
-Reserve the volume in the "current" slot. This is used by the sequential
+Reserve the volume in the "current" slot. This is used by the traditional
 taperscan algorithm to begin its search.
 
-=head3 $chg->load(res_cb => $cb, slot => "next", mode => $mode, set_current => $sc)
+=head3 $chg->load(res_cb => $cb, relative_slot => "next", mode => $mode, set_current => $sc)
 
 Reserve the volume that follows the current slot.  This may not be a
 very efficient operation on all devices.

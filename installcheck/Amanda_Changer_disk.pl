@@ -136,13 +136,13 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
     @reservations = ();
 }
 
-# check "current" and "next" functionality
+# check relative slot ("current" and "next") functionality
 {
     # load the "current" slot, which should be 3
     my ($load_current, $check_current_cb, $check_next_cb, $reset_finished_cb, $check_reset_cb);
 
     $load_current = make_cb('load_current' => sub {
-	$chg->load(slot => "current", res_cb => $check_current_cb);
+	$chg->load(relative_slot => "current", res_cb => $check_current_cb);
     });
 
     $check_current_cb = make_cb('check_current_cb' => sub {
@@ -167,7 +167,7 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
         my ($err) = @_;
         die $err if $err;
 
-	$chg->load(slot => "current", res_cb => $check_reset_cb);
+	$chg->load(relative_slot => "current", res_cb => $check_reset_cb);
     });
 
     $check_reset_cb = make_cb('check_reset_cb' => sub {
@@ -183,15 +183,15 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
     Amanda::MainLoop::run();
 }
 
-# test loading slot "next"
+# test loading relative_slot "next"
 {
     my $load_next = make_cb('load_next' => sub {
-        $chg->load(slot => "next",
+        $chg->load(relative_slot => "next",
             res_cb => sub {
                 my ($err, $res) = @_;
                 die $err if $err;
 
-                is_pointing_to($res, 2, "loading slot 'next' loads the correct slot");
+                is_pointing_to($res, 2, "loading relative slot 'next' loads the correct slot");
 
                 Amanda::MainLoop::quit();
             }

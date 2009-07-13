@@ -98,7 +98,7 @@ sub load {
 
     return if $self->check_error($params{'res_cb'});
 
-    if (exists $params{'slot'}) {
+    if (exists $params{'slot'} or exists $params{'relative_slot'}) {
         $self->_load_by_slot(%params);
     } elsif (exists $params{'label'}) {
         $self->_load_by_label(%params);
@@ -143,14 +143,22 @@ sub reset {
 sub _load_by_slot {
     my $self = shift;
     my %params = @_;
-    my $slot = $params{'slot'};
     my $drive;
+    my $slot;
 
-    if ($slot eq "current") {
-        $slot = $self->_get_current();
-    } elsif ($slot eq "next") {
-        $slot = $self->_get_current();
-        $slot = $self->_get_next($slot);
+    if (exists $params{'relative_slot'}) {
+	if ($params{'relative_slot'} eq "current") {
+	    $slot = $self->_get_current();
+	} elsif ($params{'relative_slot'} eq "next") {
+	    $slot = $self->_get_current();
+	    $slot = $self->_get_next($slot);
+	} else {
+	    return $self->make_error("failed", $params{'res_cb'},
+		reason => "invalid",
+		message => "Invalid relative slot '$params{relative_slot}'");
+	}
+    } else {
+	$slot = $params{'slot'};
     }
 
     if (!$self->_slot_exists($slot)) {

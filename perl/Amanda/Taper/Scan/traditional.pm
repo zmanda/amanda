@@ -243,7 +243,7 @@ sub release_and_stage_2 {
 sub stage_2 {
     my $self = shift;
 
-    my $next_slot = "current";
+    my $next_slot;
     my $slots_remaining;
     my %subs;
 
@@ -280,13 +280,22 @@ sub stage_2 {
             return $self->scan_result("No acceptable volumes found");
         }
 
-        # load the next slot
-        $self->{'changer'}->load(
-            slot => $next_slot,
-            set_current => 1,
-            res_cb => $subs{'loaded'},
-	    mode => "write",
-        );
+        # load the current or next slot
+	if (defined $next_slot) {
+	    $self->{'changer'}->load(
+		slot => $next_slot,
+		set_current => 1,
+		res_cb => $subs{'loaded'},
+		mode => "write",
+	    );
+	} else {
+	    $self->{'changer'}->load(
+		relative_slot => "current",
+		set_current => 1,
+		res_cb => $subs{'loaded'},
+		mode => "write",
+	    );
+	}
     };
 
     $subs{'loaded'} = sub {

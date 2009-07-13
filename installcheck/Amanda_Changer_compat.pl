@@ -355,14 +355,14 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 
         pass("set_label succeeded");
 
-        $chg->load(slot => "next", res_cb => $release_next);
+        $chg->load(relative_slot => "next", res_cb => $release_next);
     });
 
     $release_next = make_cb('release_next' => sub {
         my ($err, $res) = @_;
         die $err if ($err);
 
-        pass("load 'next' succeeded");
+        pass("load relative slot 'next' succeeded");
 
         $res->release(finished_cb => $load_by_label);
     });
