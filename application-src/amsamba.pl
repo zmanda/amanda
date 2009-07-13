@@ -211,8 +211,19 @@ sub findpass {
     while ($line = <$amandapass>) {
 	chomp $line;
 	next if $line =~ /^#/;
-	my ($diskname, $userpasswd, $domain) = 
-				Amanda::Util::skip_quoted_string($line);
+	my ($diskname, $userpasswd, $domain, $extra);
+	($diskname, $userpasswd)   = Amanda::Util::skip_quoted_string($line);
+	if ($userpasswd) {
+	    ($userpasswd, $domain) =
+				Amanda::Util::skip_quoted_string($userpasswd);
+	}
+	if ($domain) {
+	    ($domain, $extra) =
+				Amanda::Util::skip_quoted_string($domain);
+	}
+	if ($extra) {
+	    debug("Trailling characters ignored in amandapass line");
+	}
 	$diskname = Amanda::Util::unquote_string($diskname);
 	$userpasswd = Amanda::Util::unquote_string($userpasswd);
 	$domain = Amanda::Util::unquote_string($domain);
