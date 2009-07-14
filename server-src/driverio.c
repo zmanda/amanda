@@ -864,8 +864,14 @@ update_info_dumper(
 	info.history[0].secs  = dumptime;
     }
 
-    if(put_info(dp->host->hostname, dp->name, &info)) {
-	error(_("infofile update failed (%s,'%s')\n"), dp->host->hostname, dp->name);
+    if (put_info(dp->host->hostname, dp->name, &info)) {
+	int save_errno = errno;
+	g_fprintf(stderr, _("infofile update failed (%s,'%s'): %s\n"),
+		  dp->host->hostname, dp->name, strerror(save_errno));
+	log_add(L_ERROR, _("infofile update failed (%s,'%s'): %s\n"),
+		dp->host->hostname, dp->name, strerror(save_errno));
+	error(_("infofile update failed (%s,'%s'): %s\n"),
+	      dp->host->hostname, dp->name, strerror(save_errno));
 	/*NOTREACHED*/
     }
 
@@ -900,8 +906,14 @@ update_info_taper(
 
     info.command = NO_COMMAND;
 
-    if(put_info(dp->host->hostname, dp->name, &info)) {
-	error(_("infofile update failed (%s,'%s')\n"), dp->host->hostname, dp->name);
+    if (put_info(dp->host->hostname, dp->name, &info)) {
+	int save_errno = errno;
+	g_fprintf(stderr, _("infofile update failed (%s,'%s'): %s\n"),
+		  dp->host->hostname, dp->name, strerror(save_errno));
+	log_add(L_ERROR, _("infofile update failed (%s,'%s'): %s\n"),
+		dp->host->hostname, dp->name, strerror(save_errno));
+	error(_("infofile update failed (%s,'%s'): %s\n"),
+	      dp->host->hostname, dp->name, strerror(save_errno));
 	/*NOTREACHED*/
     }
     close_infofile();
