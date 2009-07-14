@@ -465,14 +465,18 @@ sub sort_dumps {
     my ($keys, @dumps) = @_;
 
     return sort {
-	my $r;
+	my $res;
 	for my $key (@$keys) {
-	    if ($key =~ /^-(.*)$/) {
-		$r = $b->{$1} cmp $a->{$1}; # note: $a and $b are reversed
+	    my ($rev, $k) = ($key =~ /^(-?)(.*)$/);
+
+	    if ($k =~ /^(kb|nparts|partnum|filenum|level)$/) {
+		# compare numerically
+		$res = $a->{$k} <=> $b->{$k};
 	    } else {
-		$r = $a->{$key} cmp $b->{$key};
+		$res = $a->{$k} cmp $b->{$k};
 	    }
-	    return $r if $r;
+	    $res = -$res if ($rev eq '-' and $res);
+	    return $res if $res;
 	}
 	return 0;
     } @dumps;

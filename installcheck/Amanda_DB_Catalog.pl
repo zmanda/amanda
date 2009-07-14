@@ -16,9 +16,7 @@
 # Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-# TODO: check large values of 'kb'
-
-use Test::More tests => 35;
+use Test::More tests => 39;
 use File::Path;
 use strict;
 
@@ -78,9 +76,9 @@ while (<DATA>) {
     if (/^:dumpfile (\S+) (\S+) (\S+) (\S+) (\d+) (\S+) (\d+) (\d+) (\d+) (\S+) (\S+) (\d+)/) {
 	$dumpfiles{$1} = {
 	    'dump_timestamp' => $2,	'hostname' => $3,	    'diskname' => $4,
-	    'level' => $5+0,		'label' => $6,		    'filenum' => $7+0,
-	    'partnum' => $8+0,		'nparts' => $9+0,	    'status' => $10,
-	    'sec' => $11+0.0,		'kb' => $12+0,
+	    'level' => $5,		'label' => $6,		    'filenum' => $7,
+	    'partnum' => $8,		'nparts' => $9,		    'status' => $10,
+	    'sec' => $11+0.0,		'kb' => $12,
 	    'write_timestamp' => $write_timestamp,
 	};
 	next;
@@ -123,14 +121,14 @@ sub dumps(&) {
 # put @_ in a canonical order
 sub sortdumps {
     map {
-	# convert bigints to strings so is_deeply doesn't get confused
-	$_->{'level'} = "$_->{level}";
-	$_->{'filenum'} = "$_->{filenum}";
-	$_->{'kb'} = "$_->{kb}";
+	# convert bigints to strings and on to integers so is_deeply doesn't get confused
+	$_->{'level'} = "$_->{level}" + 0;
+	$_->{'filenum'} = "$_->{filenum}" + 0;
+	$_->{'kb'} = "$_->{kb}" + 0;
 	$_;
     } sort {
 	$a->{'label'} cmp $b->{'label'}
-	    or $a->{'filenum'} cmp $b->{'filenum'}
+	    or $a->{'filenum'} <=> $b->{'filenum'}
     }
     @_;
 }
@@ -146,7 +144,7 @@ is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(write_timestamp => '2008011
     [ sortdumps dump_names qr/somebox_lib_20080111/ ],
     "get_dumps accepts a short write_timestamp and zero-pads it");
 is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(write_timestamps => ['20080111000000','20080222222222']) ],
-    [ sortdumps dump_names qr/(20080111|20080222222222)$/ ],
+    [ sortdumps dump_names qr/(20080111|20080222222222_p\d*)$/ ],
     "get_dumps parameter write_timestamps");
 
 is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(dump_timestamp => '20080111000000') ],
@@ -156,7 +154,7 @@ is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(dump_timestamp => '20080111
     [ sortdumps dump_names qr/somebox_lib_20080111/ ],
     "get_dumps accepts a short dump_timestamp and zero-pads it");
 is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(dump_timestamps => ['20080111000000','20080222222222']) ],
-    [ sortdumps dump_names qr/(20080111|20080222222222)$/ ],
+    [ sortdumps dump_names qr/(20080111|20080222222222_p\d*)$/ ],
     "get_dumps parameter dump_timestamps");
 is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(dump_timestamp_match => '200801-2') ],
     [ sortdumps dump_names qr/20080[12]/ ],
@@ -223,21 +221,19 @@ is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(write_timestamp => '2008041
     "get_dumps parameters write_timestamp status");
 
 ## test sorting
-# (this is not exhaustive, as that would make the tests more complex than the
-#  code being tested)
 
 is_deeply([ Amanda::DB::Catalog::sort_dumps(['write_timestamp'],
-		@dumpfiles{'somebox_lib_20080222222222','somebox_lib_20080111'}) ],
-	      [ @dumpfiles{'somebox_lib_20080111','somebox_lib_20080222222222'} ],
+		@dumpfiles{'somebox_lib_20080222222222_p1','somebox_lib_20080111'}) ],
+	      [ @dumpfiles{'somebox_lib_20080111','somebox_lib_20080222222222_p1'} ],
     "sort by write_timestamps");
 is_deeply([ Amanda::DB::Catalog::sort_dumps(['-write_timestamp'],
-		@dumpfiles{'somebox_lib_20080111','somebox_lib_20080222222222'}) ],
-	      [ @dumpfiles{'somebox_lib_20080222222222','somebox_lib_20080111'} ],
+		@dumpfiles{'somebox_lib_20080111','somebox_lib_20080222222222_p1'}) ],
+	      [ @dumpfiles{'somebox_lib_20080222222222_p1','somebox_lib_20080111'} ],
     "sort by write_timestamps, reverse");
 
 is_deeply([ Amanda::DB::Catalog::sort_dumps(['hostname', '-diskname', 'write_timestamp'],
 		@dumpfiles{
-		    'somebox_lib_20080222222222',
+		    'somebox_lib_20080222222222_p1',
 		    'somebox_usr_bin_20080313133333',
 		    'somebox_lib_20080313133333_p4',
 		    'otherbox_lib_20080313133333',
@@ -247,10 +243,58 @@ is_deeply([ Amanda::DB::Catalog::sort_dumps(['hostname', '-diskname', 'write_tim
 		    'otherbox_lib_20080313133333',
 		    'somebox_usr_bin_20080313133333',
 		    'somebox_lib_20080111',
-		    'somebox_lib_20080222222222',
+		    'somebox_lib_20080222222222_p1',
 		    'somebox_lib_20080313133333_p4',
 	            } ],
     "multi-key sort");
+
+is_deeply([ Amanda::DB::Catalog::sort_dumps(['filenum'],
+		@dumpfiles{
+		    'somebox_lib_20080313133333_p9',
+		    'somebox_lib_20080313133333_p10',
+		    'somebox_lib_20080313133333_p1',
+		    }) ],
+	      [ @dumpfiles{
+		    'somebox_lib_20080313133333_p1',
+		    'somebox_lib_20080313133333_p9',
+		    'somebox_lib_20080313133333_p10',
+		    } ],
+		"filenum is sorted numerically, not lexically");
+
+is_deeply([ Amanda::DB::Catalog::sort_dumps(['-partnum'],
+		@dumpfiles{
+		    'somebox_lib_20080313133333_p9',
+		    'somebox_lib_20080313133333_p10',
+		    'somebox_lib_20080313133333_p1',
+		    }) ],
+	      [ @dumpfiles{
+		    'somebox_lib_20080313133333_p10',
+		    'somebox_lib_20080313133333_p9',
+		    'somebox_lib_20080313133333_p1',
+		    } ],
+		"partnum is sorted numerically (and in reverse!), not lexically");
+
+is_deeply([ Amanda::DB::Catalog::sort_dumps(['nparts'],
+		@dumpfiles{
+		    'somebox_lib_20080313133333_p9', # nparts=10
+		    'somebox_lib_20080222222222_p2', # nparts=2
+		    }) ],
+	      [ @dumpfiles{
+		    'somebox_lib_20080222222222_p2', # nparts=2
+		    'somebox_lib_20080313133333_p9', # nparts=10
+		    } ],
+		"nparts is sorted numerically, not lexically");
+
+is_deeply([ Amanda::DB::Catalog::sort_dumps(['kb'],
+		@dumpfiles{
+		    'somebox_lib_20080313133333_p10',
+		    'somebox_lib_20080313133333_p1',
+		    }) ],
+	      [ @dumpfiles{
+		    'somebox_lib_20080313133333_p10',
+		    'somebox_lib_20080313133333_p1',
+		    } ],
+		"kb is sorted numerically, not lexically");
 
 ## add log entries
 
@@ -394,9 +438,11 @@ SUCCESS dumper somebox /lib 20080222222222 0 [sec 0.012 kb 100 kps 8115.6 orig-k
 SUCCESS chunker somebox /lib 20080222222222 0 [sec 5.075 kb 100 kps 26.0]
 STATS driver estimate somebox /lib 20080222222222 0 [sec 0 nkb 132 ckb 160 kps 1024]
 START taper datestamp 20080222222222 label Conf-002 tape 1
-:dumpfile somebox_lib_20080222222222 20080222222222 somebox /lib 0 Conf-002 1 1 1 OK 0.000733 100
-PART taper Conf-002 1 somebox /lib 20080222222222 1/1 0 [sec 0.000733 kb 100 kps 136425.648022]
-DONE taper somebox /lib 20080222222222 1 0 [sec 0.000733 kb 100 kps 136425.648022]
+:dumpfile somebox_lib_20080222222222_p1 20080222222222 somebox /lib 0 Conf-002 1 1 2 OK 0.000733 100
+PART taper Conf-002 1 somebox /lib 20080222222222 1/2 0 [sec 0.000733 kb 100 kps 136425.648022]
+:dumpfile somebox_lib_20080222222222_p2 20080222222222 somebox /lib 0 Conf-002 2 2 2 OK 0.000428 72
+PART taper Conf-002 2 somebox /lib 20080222222222 2/2 0 [sec 0.000428 kb 72 kps 136425.648022]
+DONE taper somebox /lib 20080222222222 2 0 [sec 0.001161 kb 172 kps 136425.648022]
 FINISH driver date 20080222222222 time 6.206
 
 # a logfile with several dumps in it, one of which comes in many parts, and one of which is
@@ -425,23 +471,35 @@ DONE taper somebox /usr/bin 20080313133333 1 1 [sec 0.000370 kb 20 kps 54054.054
 SUCCESS dumper somebox /lib 20080313133333 0 [sec 0.189 kb 3156 kps 50253.1 orig-kb 3156]
 SUCCESS chunker somebox /lib 20080313133333 0 [sec 5.250 kb 3156 kps 1815.5]
 STATS driver estimate somebox /lib 20080313133333 0 [sec 1 nkb 3156 ckb 3156 kps 9500]
-:dumpfile somebox_lib_20080313133333_p1 20080313133333 somebox /lib 0 Conf-003 2 1 4 OK 0.005621 1024
-PART taper Conf-003 2 somebox /lib 20080313133333 1/4 0 [sec 0.005621 kb 1024 kps 182173.990393]
-:dumpfile somebox_lib_20080313133333_p2 20080313133333 somebox /lib 0 Conf-003 3 2 4 OK 0.006527 1024
-PART taper Conf-003 3 somebox /lib 20080313133333 2/4 0 [sec 0.006527 kb 1024 kps 156886.777999]
-:dumpfile somebox_lib_20080313133333_p3 20080313133333 somebox /lib 0 Conf-003 4 3 4 OK 0.005854 1024
-PART taper Conf-003 4 somebox /lib 20080313133333 3/4 0 [sec 0.005854 kb 1024 kps 174923.129484]
-:dumpfile somebox_lib_20080313133333_p4 20080313133333 somebox /lib 0 Conf-003 5 4 4 OK 0.001919 284
-PART taper Conf-003 5 somebox /lib 20080313133333 4/4 0 [sec 0.001919 kb 284 kps 147993.746743]
+:dumpfile somebox_lib_20080313133333_p1 20080313133333 somebox /lib 0 Conf-003 2 1 10 OK 0.005621 1024
+PART taper Conf-003 2 somebox /lib 20080313133333 1/10 0 [sec 0.005621 kb 1024 kps 182173.990393]
+:dumpfile somebox_lib_20080313133333_p2 20080313133333 somebox /lib 0 Conf-003 3 2 10 OK 0.006527 1024
+PART taper Conf-003 3 somebox /lib 20080313133333 2/10 0 [sec 0.006527 kb 1024 kps 156886.777999]
+:dumpfile somebox_lib_20080313133333_p3 20080313133333 somebox /lib 0 Conf-003 4 3 10 OK 0.005854 1024
+PART taper Conf-003 4 somebox /lib 20080313133333 3/10 0 [sec 0.005854 kb 1024 kps 174923.129484]
+:dumpfile somebox_lib_20080313133333_p4 20080313133333 somebox /lib 0 Conf-003 5 4 10 OK 0.007344 1024
+PART taper Conf-003 5 somebox /lib 20080313133333 4/10 0 [sec 0.007344 kb 1024 kps 147993.746743]
+:dumpfile somebox_lib_20080313133333_p5 20080313133333 somebox /lib 0 Conf-003 6 5 10 OK 0.007344 1024
+PART taper Conf-003 6 somebox /lib 20080313133333 5/10 0 [sec 0.007344 kb 1024 kps 147993.746743]
+:dumpfile somebox_lib_20080313133333_p6 20080313133333 somebox /lib 0 Conf-003 7 6 10 OK 0.007344 1024
+PART taper Conf-003 7 somebox /lib 20080313133333 6/10 0 [sec 0.007344 kb 1024 kps 147993.746743]
+:dumpfile somebox_lib_20080313133333_p7 20080313133333 somebox /lib 0 Conf-003 8 7 10 OK 0.007344 1024
+PART taper Conf-003 8 somebox /lib 20080313133333 7/10 0 [sec 0.007344 kb 1024 kps 147993.746743]
+:dumpfile somebox_lib_20080313133333_p8 20080313133333 somebox /lib 0 Conf-003 9 8 10 OK 0.007344 1024
+PART taper Conf-003 9 somebox /lib 20080313133333 8/10 0 [sec 0.007344 kb 1024 kps 147993.746743]
+:dumpfile somebox_lib_20080313133333_p9 20080313133333 somebox /lib 0 Conf-003 10 9 10 OK 0.007344 1024
+PART taper Conf-003 10 somebox /lib 20080313133333 9/10 0 [sec 0.007344 kb 1024 kps 147993.746743]
+:dumpfile somebox_lib_20080313133333_p10 20080313133333 somebox /lib 0 Conf-003 11 10 10 OK 0.001919 284
+PART taper Conf-003 11 somebox /lib 20080313133333 10/10 0 [sec 0.001919 kb 284 kps 147993.746743]
 DONE taper somebox /lib 20080313133333 10 0 [sec 0.051436 kb 3156 kps 184695.543977]
 SUCCESS dumper otherbox /lib 20080313133333 0 [sec 0.001 kb 190 kps 10352.0 orig-kb 20]
 SUCCESS chunker otherbox /lib 20080313133333 0 [sec 1.023 kb 190 kps 50.8]
 STATS driver estimate otherbox /lib 20080313133333 0 [sec 0 nkb 190 ckb 190 kps 1024]
 # this dump is from a previous run, with an older dump_timestamp
-:dumpfile otherbox_usr_bin_20080313133333 20080311131133 otherbox /usr/bin 0 Conf-003 6 1 1 OK 0.002733 240
-PART taper Conf-003 6 otherbox /usr/bin 20080311131133 1/1 0 [sec 0.002733 kb 240 kps 136425.648022]
-:dumpfile otherbox_lib_20080313133333 20080313133333 otherbox /lib 0 Conf-003 7 1 1 OK 0.001733 190
-PART taper Conf-003 7 otherbox /lib 20080313133333 1/1 0 [sec 0.001733 kb 190 kps 136425.648022]
+:dumpfile otherbox_usr_bin_20080313133333 20080311131133 otherbox /usr/bin 0 Conf-003 12 1 1 OK 0.002733 240
+PART taper Conf-003 12 otherbox /usr/bin 20080311131133 1/1 0 [sec 0.002733 kb 240 kps 136425.648022]
+:dumpfile otherbox_lib_20080313133333 20080313133333 otherbox /lib 0 Conf-003 13 1 1 OK 0.001733 190
+PART taper Conf-003 13 otherbox /lib 20080313133333 1/1 0 [sec 0.001733 kb 190 kps 136425.648022]
 DONE taper otherbox /lib 20080313133333 1 0 [sec 0.001733 kb 190 kps 136425.648022]
 FINISH driver date 20080313133333 time 24.777
 
