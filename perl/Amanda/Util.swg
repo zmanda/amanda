@@ -315,6 +315,44 @@ void get_fs_usage_(const char *file, struct fs_usage *fsp)
 }
 %}
 
+/*
+ * Locking (see amflock.h)
+ */
+
+/* SWIG prepends the struct name to the member function name, which
+ * conflicts with the underlying function names */
+
+typedef struct file_lock {
+    %extend {
+	file_lock(const char *filename) {
+	    return file_lock_new(filename);
+	}
+
+	~locked_data() {
+	    file_lock_free(self);
+	}
+
+	int lock();
+	int unlock();
+
+	%typemap(in) (const char *data, size_t len) {
+	    $1 = SvPV($input, $2);
+	}
+
+	int write(const char *data, size_t len);
+
+	/* get the data as an SV */
+	%typemap(out) (SV *) { $result = $1; argvi++; };
+	SV *data() {
+	    if (self->data) {
+		return newSVpvn(self->data, self->len);
+	    } else {
+		return &PL_sv_undef;
+	    }
+	}
+	%typemap(out) (SV *);
+    }
+} file_lock;
 
 /* -------------------------------------------------------------------------
  * Functions below this line are only meant to be called within this module;

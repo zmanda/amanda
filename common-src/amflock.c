@@ -29,6 +29,191 @@
  * file locking routines, put here to hide the system dependant stuff
  * from the rest of the code
  */
+
+#include "amanda.h"
+
+/*
+ * New Implementation
+ */
+
+static GStaticMutex lock_lock = G_STATIC_MUTEX_INIT;
+static GHashTable *locally_locked_files = NULL;
+
+file_lock *
+file_lock_new(
+    const char *filename)
+{
+    file_lock *lock = g_new0(file_lock, 1);
+    lock->filename = g_strdup(filename);
+    lock->fd = -1;
+
+    return lock;
+}
+
+void
+file_lock_free(
+    file_lock *lock)
+{
+    g_static_mutex_lock(&lock_lock);
+    if (locally_locked_files) {
+	g_hash_table_remove(locally_locked_files,
+			    lock->filename);
+    }
+
+    if (lock->data)
+	g_free(lock->data);
+    if (lock->filename)
+	g_free(lock->filename);
+
+    if (lock->fd != -1)
+	close(lock->fd);
+
+    g_static_mutex_unlock(&lock_lock);
+}
+
+int
+file_lock_lock(
+    file_lock *lock)
+{
+    int rv = -2;
+    int fd = -1;
+    int saved_errno;
+    struct flock lock_buf;
+    struct stat stat_buf;
+
+    g_assert(!lock->locked);
+
+    /* protect from overlapping lock operations within a process */
+    g_static_mutex_lock(&lock_lock);
+    if (!locally_locked_files) {
+	locally_locked_files = g_hash_table_new(g_str_hash, g_str_equal);
+    }
+
+    /* if this filename is in the hash table, then some other thread in this
+     * process has locked it */
+    if (g_hash_table_lookup(locally_locked_files, lock->filename)) {
+	rv = 1;
+	goto done;
+    }
+
+    /* The locks are advisory, so an error here never means the lock is already
+     * taken. */
+    lock->fd = fd = open(lock->filename, O_CREAT|O_RDWR, 0666);
+    if (fd < 0) {
+	rv = -1;
+	goto done;
+    }
+
+    /* now try locking it */
+    lock_buf.l_type = F_WRLCK;
+    lock_buf.l_start = 0;
+    lock_buf.l_whence = SEEK_SET;
+    lock_buf.l_len = 0; /* to EOF */
+    if (fcntl(fd, F_SETLK, &lock_buf) < 0) {
+	if (errno == EACCES || errno == EAGAIN)
+	    rv = 1;
+	else
+	    rv = -1;
+	goto done;
+    }
+
+    /* and read the file in its entirety */
+    if (fstat(fd, &stat_buf) < 0) {
+	rv = -1;
+	goto done;
+    }
+
+    if (!(stat_buf.st_mode & S_IFREG)) {
+	rv = -1;
+	errno = EINVAL;
+	goto done;
+    }
+
+    if (stat_buf.st_size) {
+	lock->data = g_malloc(stat_buf.st_size);
+	lock->len = stat_buf.st_size;
+	if (full_read(fd, lock->data, lock->len) < lock->len) {
+	    rv = -1;
+	    goto done;
+	}
+    }
+
+    fd = -1; /* we'll keep the file now */
+    lock->locked = TRUE;
+
+    /* the lock is acquired; record this in the hash table */
+    g_hash_table_insert(locally_locked_files, lock->filename, lock->filename);
+
+done:
+    saved_errno = errno;
+    g_static_mutex_unlock(&lock_lock);
+    if (fd >= 0) /* close and unlock if an error occurred */
+	close(fd);
+    errno = saved_errno;
+    return rv;
+}
+
+int
+file_lock_write(
+    file_lock *lock,
+    const char *data,
+    size_t len)
+{
+    int fd = lock->fd;
+
+    g_assert(lock->locked);
+
+    /* seek to position 0, rewrite, and truncate */
+    if (lseek(fd, 0, SEEK_SET) < 0)
+	return -1;
+
+    /* from here on out, any errors have corrupted the datafile.. */
+    if (full_write(fd, data, len) < len)
+	return -1;
+
+    if (lock->len > len) {
+	if (ftruncate(fd, len) < 0)
+	    return -1;
+    }
+
+    if (lock->data)
+	g_free(lock->data);
+    lock->data = g_strdup(data);
+    lock->len = len;
+
+    return 0;
+}
+
+int
+file_lock_unlock(
+    file_lock *lock)
+{
+    g_assert(lock->locked);
+
+    g_static_mutex_lock(&lock_lock);
+
+    /* relase the filesystem-level lock */
+    close(lock->fd);
+
+    /* and the hash table entry */
+    g_hash_table_remove(locally_locked_files, lock->filename);
+
+    g_static_mutex_unlock(&lock_lock);
+
+    if (lock->data)
+	g_free(lock->data);
+    lock->data = NULL;
+    lock->len = 0;
+    lock->fd = -1;
+    lock->locked = FALSE;
+
+    return 0;
+}
+
+/*
+ * Old Implementation
+ */
+
 /*
 **
 ** Notes:
@@ -43,18 +228,6 @@
 **     <none>          - No locking available.  User beware!
 */
 
-/* FIXME: This code has several limitations to be fixed:
- * - It should be possible to select a locking mode (or detect the
- *   best mode for a particular filesystem) at runtime.
- * - There should be a locking mode that works with NFS filesystems.
- * - Semantics should be clear when different parts of a single 
- *   process (possibly in the same/different threads) both try to lock 
- *   the same file (but with different file descriptors).
- * - It should be possible to promote a read-only lock to an 
- *   exclusive lock.
- * - Arbitrary strings should be useable as resource names. */
-
-#include "amanda.h"
 /* Interface to the implementations in common-src/amflock-*.c */
 
 #ifdef WANT_AMFLOCK_POSIX

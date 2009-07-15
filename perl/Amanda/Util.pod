@@ -225,6 +225,36 @@ already be loaded.
 
 =back
 
+=head1 Locking Files
+
+Amanda provides a basic mechanism to lock a file and read its contents.  This
+uses operating-system facilities to acquire an advisory lock, so non-Amanda
+applications are not prevented from modifying the file while it is locked.
+
+To create a lock object, call the C<file_lock> constructor, passing the
+filename to lock:
+
+  my $fl = Amanda::Util::file_lock->new($filename)
+
+then, lock the file:
+
+  $fl->lock();
+
+which also reads the contents of the file into memory, accessible via
+
+  my $state = $fl->data();
+
+to change the file contents, call C<write>:
+
+  $fl->write($new_contents);
+
+and unlock the lock with
+
+  $fl->unlock();
+
+Note that the file will be automatically unlocked if the C<file_lock> object is
+garbage-collected.
+
 =cut
 
 

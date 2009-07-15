@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 75;
+use Test::More tests => 80;
 
 use lib "@amperldir@";
 use warnings;
@@ -183,3 +183,20 @@ if ($fs_usage) {
 } else {
     fail("get_fs_usage fails: $!");
 }
+
+# check file_lock -- again, full checks are in common-src/amflock-test.c
+my $filename = "$Installcheck::TMP/testlock";
+unlink($filename);
+my $fl = Amanda::Util::file_lock->new($filename);
+is($fl->data, undef, "data is initially undefined");
+$fl->lock();
+is($fl->data, undef, "data is undefined even after lock");
+$fl->write("THIS IS MY DATA");
+is($fl->data, "THIS IS MY DATA", "data is set correctly after write()");
+$fl->unlock();
+
+# new lock object
+$fl = Amanda::Util::file_lock->new($filename);
+is($fl->data, undef, "data is initially undefined");
+$fl->lock();
+is($fl->data, "THIS IS MY DATA", "data is set correctly after lock");
