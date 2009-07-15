@@ -91,7 +91,6 @@ sub new {
 
     $self->{'device'} = Amanda::Device->new("null:");
     $self->{'this_slot'} = "null";
-    $self->{'next_slot'} = "null";
 
     return $self;
 }

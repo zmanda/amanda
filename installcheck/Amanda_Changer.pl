@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 45;
+use Test::More tests => 43;
 use File::Path;
 use strict;
 
@@ -182,7 +182,6 @@ sub new {
 
     $self->{'device'} = Amanda::Device->new("null:slot-$slot");
     $self->{'this_slot'} = $slot;
-    $self->{'next_slot'} = ($slot + 1) % (scalar @{$chg->{'slots'}});
 
     return $self;
 }
@@ -309,9 +308,7 @@ is($chg->{'config'}->get_property("testprop"), "testval",
             "'current' slot loads slot 2");
         is($res->{'device'}->device_name, "null:slot-2",
             "..device is correct");
-        is($res->{'next_slot'}, 3,
-            "..and the next slot is slot 3");
-        $chg->load(res_cb => $second_cb, slot => $res->{'next_slot'}, set_current => 1);
+        $chg->load(res_cb => $second_cb, relative_slot => 'next', slot => $res->{'this_slot'}, set_current => 1);
     });
 
     # gets a reservation for the "next" slot
@@ -323,8 +320,6 @@ is($chg->{'config'}->get_property("testprop"), "testval",
             "next slot loads slot 3");
         is($chg->{'curslot'}, 3,
             "..which is also now the current slot");
-        is($res->{'next_slot'}, 0,
-            "..and the next slot is slot 0");
 
         Amanda::MainLoop::quit();
     });

@@ -168,7 +168,11 @@ sub _load_by_slot {
 	if ($params{'relative_slot'} eq "current") {
 	    $slot = $self->_get_current();
 	} elsif ($params{'relative_slot'} eq "next") {
-	    $slot = $self->_get_current();
+	    if (exists $params{'slot'}) {
+		$slot = $params{'slot'};
+	    } else {
+		$slot = $self->_get_current();
+	    }
 	    $slot = $self->_get_next($slot);
 	} else {
 	    return $self->make_error("failed", $params{'res_cb'},
@@ -195,9 +199,7 @@ sub _load_by_slot {
     $self->_load_drive($drive, $slot);
     $self->_set_current($slot) if ($params{'set_current'});
 
-    my $next_slot = $self->_get_next($slot);
-
-    $self->_make_res($params{'res_cb'}, $drive, $slot, $next_slot);
+    $self->_make_res($params{'res_cb'}, $drive, $slot);
 }
 
 sub _load_by_label {
@@ -225,14 +227,12 @@ sub _load_by_label {
     $self->_load_drive($drive, $slot);
     $self->_set_current($slot) if ($params{'set_current'});
 
-    my $next_slot = $self->_get_next($slot);
-
-    $self->_make_res($params{'res_cb'}, $drive, $slot, $next_slot);
+    $self->_make_res($params{'res_cb'}, $drive, $slot);
 }
 
 sub _make_res {
     my $self = shift;
-    my ($res_cb, $drive, $slot, $next_slot) = @_;
+    my ($res_cb, $drive, $slot) = @_;
     my $res;
 
     my $device = Amanda::Device->new("file:$drive");
@@ -248,7 +248,7 @@ sub _make_res {
 		message => $err);
     }
 
-    $res = Amanda::Changer::disk::Reservation->new($self, $device, $drive, $slot, $next_slot);
+    $res = Amanda::Changer::disk::Reservation->new($self, $device, $drive, $slot);
     $res_cb->(undef, $res);
 }
 
@@ -430,7 +430,7 @@ use vars qw( @ISA );
 
 sub new {
     my $class = shift;
-    my ($chg, $device, $drive, $slot, $next_slot) = @_;
+    my ($chg, $device, $drive, $slot) = @_;
     my $self = Amanda::Changer::Reservation::new($class);
 
     $self->{'chg'} = $chg;
@@ -438,7 +438,6 @@ sub new {
 
     $self->{'device'} = $device;
     $self->{'this_slot'} = $slot;
-    $self->{'next_slot'} = $next_slot;
 
     return $self;
 }

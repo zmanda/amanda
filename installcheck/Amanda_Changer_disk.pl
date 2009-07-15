@@ -151,7 +151,7 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 
         is_pointing_to($res, 5, "'current' is slot 5");
 
-        $chg->load(slot => $res->{'next_slot'}, res_cb => $check_next_cb);
+        $chg->load(relative_slot => 'next', slot => $res->{'this_slot'}, res_cb => $check_next_cb);
     });
 
     $check_next_cb = make_cb('check_next_cb' => sub {

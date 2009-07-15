@@ -106,28 +106,29 @@ sub release_and_then {
 
 sub do_slot {
     my ($slot) = @_;
+    my @slotarg = ();
 
     # handle the special cases we support
     if ($slot eq "next" or $slot eq "advance") {
 	if (!$res) {
-            $slot = "next";
+            @slotarg = (relative_slot => "next");
 	} else {
-	    $slot = $res->{'next_slot'};
+	    @slotarg = (relative_slot => 'next', slot => $res->{'this_slot'});
 	}
     } elsif ($slot eq "first") {
-	do_reset();
+	do_reset(); # best we can do.. most old changers treat "reset" as "go to first"
 	return;
+    } elsif ($slot eq "current") {
+	@slotarg = (relative_slot => "current");
     } elsif ($slot eq "prev" or $slot eq "last") {
 	err_result("slot specifier '$slot' is not valid", \&getcmd);
 	return;
+    } else {
+	@slotarg = (slot => $slot);
     }
 
+    debug( join("|", @slotarg) );
     my $load_slot = sub {
-	my @slotarg = (slot => $slot);
-	if ($slot eq 'next' or $slot eq 'current') {
-	    @slotarg = (relative_slot => $slot);
-	}
-
 	$chg->load(@slotarg, set_current => 1,
 	    res_cb => sub {
 		(my $error, $res) = @_;

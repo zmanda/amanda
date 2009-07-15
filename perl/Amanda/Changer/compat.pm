@@ -122,10 +122,7 @@ sub load {
 	$subs{'start_load'}->();
     });
 
-    $subs{'start_load'} = make_cb(start_lod => sub {
-	# relative_slot gets fed to the changer script the same way as slot
-	$params{'slot'} = $params{'relative_slot'} if exists $params{'relative_slot'};
-
+    $subs{'start_load'} = make_cb(start_load => sub {
 	if (exists $params{'label'}) {
 	    if ($self->{'searchable'}) {
 		$self->_run_tpchanger($subs{'load_run_done'}, "-search", $params{'label'});
@@ -133,6 +130,10 @@ sub load {
 		# not searchable -- run a manual scan
 		$self->_manual_scan(%params);
 	    }
+	} elsif (exists $params{'relative_slot'}) {
+	    # if there is an explicit $slot, then just hope it's the same as the current
+	    # slot, or we're in trouble..
+	    $self->_run_tpchanger($subs{'load_run_done'}, "-slot", $params{'relative_slot'});
 	} elsif (exists $params{'slot'}) {
 	    $self->_run_tpchanger($subs{'load_run_done'}, "-slot", $params{'slot'});
 	}
@@ -596,7 +597,6 @@ sub new {
 
     $self->{'device'} = $device;
     $self->{'this_slot'} = $slot;
-    $self->{'next_slot'} = "next"; # clever, no?
 
     # mark the changer as reserved
     $self->{'chg'}->{'reserved'} = $device;

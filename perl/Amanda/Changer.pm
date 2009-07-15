@@ -167,13 +167,12 @@ reasons it expects, and treat any other failures as of unknown cause.
 
 =head2 CURRENT SLOT
 
-Changers maintain a global concept of a "current" slot, for
-compatibility with Amanda algorithms such as the taperscan.  However, it
-is not compatible with concurrent use of the same changer, and may be
-inefficient for some changers, so new algorithms should avoid using it,
-preferring instead to load the correct tape immediately (with C<load>),
-and to progress from tape to tape using the reservation objects'
-C<next_slot> attribute.
+Changers maintain a global concept of a "current" slot, for compatibility with
+Amanda algorithms such as the taperscan.  However, it is not compatible with
+concurrent use of the same changer, and may be inefficient for some changers,
+so new algorithms should avoid using it, preferring instead to load the correct
+tape immediately (with C<load>), and to progress from tape to tape using the
+C<relative_slot> parameter to C<load>.
 
 =head2 CHANGER OBJECTS
 
@@ -213,9 +212,14 @@ very efficient operation on all devices.
 
 =head3 $chg->load(res_cb => $cb, slot => $slot, mode => $mode, set_current => $sc)
 
-Reserve the volume in the given slot. $slot must be a string that appeared in a
-reservation's 'next_slot' field at some point, or a string from the user (e.g.,
-an argument to amtape).
+Reserve the volume in the given slot. $slot is a string specifying the slot to
+load, provided by the server or from some other invocation of this changer.
+Note that slots are not necessarily numeric, so performing arithmetic on this
+value is invalid.
+
+=head3 $chg->load(res_cb => $cb, relative_slot => "next", slot => $slot, mode => $mode, set_current => $sc)
+
+Reserve the volume that follows the given slot.
 
 =head3 $chg->info(info_cb => $cb, info => [ $key1, $key2, .. ])
 
@@ -302,12 +306,6 @@ in the case of empty slots in a tape library.
 This is the name of this slot.  It is an arbitrary string which will
 have some meaning to the changer's C<load()> method. It is safe to
 access this field after the reservation has been released.
-
-=head3 $res->{'next_slot'}
-
-This is the "next" slot after this one. It is safe to access this field,
-too, after the reservation has been released (and, in changers with only
-one "drive", this is the only way you will get to the next volume!)
 
 =head3 $res->release(finished_cb => $cb, eject => $eject)
 

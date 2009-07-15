@@ -170,6 +170,8 @@ sub load {
 	    oksub => sub {
 		my ($kid_chg, $kid_cb, $kid_slot) = @_;
 		my %kid_params = %params;
+		# note that relative_slot => 'next', if present, will carry
+		# through to the children here
 		$kid_params{'slot'} = $kid_slot;
 		$kid_params{'res_cb'} = $kid_cb;
 		$kid_chg->load(%kid_params);
@@ -460,8 +462,6 @@ sub new {
     my @slot_names;
     @slot_names = errmap { $_->{'this_slot'} } @$child_reservations;
     $self->{'this_slot'} = collapse_braced_alternates(\@slot_names);
-    @slot_names = errmap { $_->{'next_slot'} } @$child_reservations;
-    $self->{'next_slot'} = collapse_braced_alternates(\@slot_names);
 
     return $self;
 }

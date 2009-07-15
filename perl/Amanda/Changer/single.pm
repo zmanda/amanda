@@ -133,7 +133,6 @@ sub new {
     $self->{'device'} = $device;
 
     $self->{'this_slot'} = '1';
-    $self->{'next_slot'} = '1';
     $chg->{'reserved'} = 1;
 
     return $self;

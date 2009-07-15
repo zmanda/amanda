@@ -87,7 +87,6 @@ sub run {
 
     $self->{'dst_chg'} = Amanda::Changer->new($self->{'dst_changer'});
     $self->{'dst_res'} = undef;
-    $self->{'dst_next'} = undef;
     $self->{'dst_dev'} = undef;
     $self->{'dst_label'} = undef;
 
@@ -249,12 +248,10 @@ sub load_next_volumes {
 	    $self->{'dst_dev'}->finish()
 		or fail $self->{'dst_dev'}->error_or_status();
 	    $self->{'dst_dev'} = undef;
-	    $self->{'dst_next'} = $self->{'dst_res'}->{'next_slot'};
 
 	    $self->{'dst_res'}->release(
 		finished_cb => $load_dst);
 	} else {
-	    $self->{'dst_next'} = undef;
 	    $load_dst->(undef);
 	}
     });
@@ -262,11 +259,12 @@ sub load_next_volumes {
     $load_dst = make_cb('load_dst' => sub {
 	my ($err) = @_;
 	fail $err if $err;
-	vlog("Loading destination slot $self->{dst_next}");
+	vlog("Loading next destination slot");
 
-	if (defined $self->{'dst_next'}) {
+	if (defined $self->{'dst_res'}) {
 	    $self->{'dst_chg'}->load(
-		slot => $self->{'dst_next'},
+		relative_slot => 'next',
+		slot => $self->{'dst_res'}->{'this_slot'},
 		set_current => 1,
 		res_cb => $open_dst);
 	} else {

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 28;
+use Test::More tests => 27;
 use File::Path;
 use strict;
 use warnings;
@@ -345,7 +345,6 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
             or die $dev->error_or_status();
 
         is($res->{'this_slot'}, "1", "this slot is '1'");
-        is($res->{'next_slot'}, "next", "next slot is 'next'");
         $res->set_label(label => "TESTCONF18", finished_cb => $load_next);
     });
 

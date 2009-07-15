@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 42;
+use Test::More tests => 38;
 use File::Path;
 use strict;
 
@@ -137,8 +137,6 @@ label_vtape(3,4,"mytape");
 	    "returns correct device name");
 	is($res->{'this_slot'}, '{1,1,1}',
 	    "returns correct 'this_slot' name");
-	is($res->{'next_slot'}, '{2,2,2}',
-	    "returns correct 'next_slot' name");
 
 	$res->release(finished_cb => $do_load_next);
     });
@@ -147,7 +145,8 @@ label_vtape(3,4,"mytape");
 	my ($err) = @_;
 	die $err if $err;
 
-	$chg->load(relative_slot => "next", res_cb => $got_res_next);
+	# (use a slot-relative 'next', rather than relative to current)
+	$chg->load(relative_slot => "next", slot => '{1,1,1}', res_cb => $got_res_next);
     });
 
     $got_res_next = make_cb('got_res_next' => sub {
@@ -159,8 +158,6 @@ label_vtape(3,4,"mytape");
 	    "returns correct device name");
 	is($res->{'this_slot'}, '{2,2,2}',
 	    "returns correct 'this_slot' name");
-	is($res->{'next_slot'}, '{3,3,3}',
-	    "returns correct 'next_slot' name");
 
 	$res->release(finished_cb => $do_load_label);
     });
@@ -304,8 +301,6 @@ label_vtape(3,4,"mytape");
 	    "returns correct device name");
 	is($res->{'this_slot'}, '{1,1,ERROR}',
 	    "returns correct 'this_slot' name");
-	is($res->{'next_slot'}, '{2,2,ERROR}',
-	    "returns correct 'next_slot' name");
 
 	$res->release(finished_cb => $do_load_label);
     });
@@ -392,8 +387,6 @@ label_vtape(3,3,"mytape");
 	    "returns correct (full) device name");
 	is($res->{'this_slot'}, '{1,1,1}',
 	    "returns correct 'this_slot' name");
-	is($res->{'next_slot'}, '{2,2,2}',
-	    "returns correct 'next_slot' name");
 	is($res->{'device'}->property_get("comment"), "hello, world",
 	    "property from device_property appears on RAIT device");
 

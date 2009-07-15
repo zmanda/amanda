@@ -243,7 +243,7 @@ sub release_and_stage_2 {
 sub stage_2 {
     my $self = shift;
 
-    my $next_slot;
+    my $last_slot;
     my $slots_remaining;
     my %subs;
 
@@ -281,9 +281,10 @@ sub stage_2 {
         }
 
         # load the current or next slot
-	if (defined $next_slot) {
+	if (defined $last_slot) {
 	    $self->{'changer'}->load(
-		slot => $next_slot,
+		relative_slot => 'next',
+		slot => $last_slot,
 		set_current => 1,
 		res_cb => $subs{'loaded'},
 		mode => "write",
@@ -313,7 +314,7 @@ sub stage_2 {
         return if ($self->try_volume($res));
 
         # no luck -- release this reservation and get the next
-        $next_slot = $res->{'next_slot'};
+        $last_slot = $res->{'this_slot'};
         $res->release(finished_cb => $subs{'load'});
     };
 
