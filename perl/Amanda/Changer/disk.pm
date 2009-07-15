@@ -82,6 +82,7 @@ sub new {
     my $self = {
 	dir => $dir,
 	config => $config,
+	state_filename => "$dir/state",
 
 	# this is set to 0 by various test scripts,
 	# notably Amanda_Taper_Scan_traditional
@@ -95,16 +96,26 @@ sub new {
 sub load {
     my $self = shift;
     my %params = @_;
+    my $old_res_cb = $params{'res_cb'};
+    my $state;
 
     return if $self->check_error($params{'res_cb'});
 
-    if (exists $params{'slot'} or exists $params{'relative_slot'}) {
-        $self->_load_by_slot(%params);
-    } elsif (exists $params{'label'}) {
-        $self->_load_by_label(%params);
-    } else {
-	die "Invalid parameters to 'load'";
-    }
+    $self->with_locked_state($self->{'state_filename'},
+				     $params{'res_cb'}, sub {
+	my ($state, $res_cb) = @_;
+
+	# overwrite the callback for _load_by_xxx
+	$params{'res_cb'} = $res_cb;
+
+	if (exists $params{'slot'} or exists $params{'relative_slot'}) {
+	    $self->_load_by_slot(%params);
+	} elsif (exists $params{'label'}) {
+	    $self->_load_by_label(%params);
+	} else {
+	    die "Invalid parameters to 'load'";
+	}
+    });
 }
 
 sub info_key {
@@ -113,6 +124,8 @@ sub info_key {
     my %results;
 
     return if $self->check_error($params{'info_cb'});
+
+    # no need for synchronization -- all of these values are static
 
     if ($key eq 'num_slots') {
 	my @slots = $self->_all_slots();
@@ -134,10 +147,15 @@ sub reset {
 
     return if $self->check_error($params{'finished_cb'});
 
-    $slot = (scalar @slots)? $slots[0] : 0;
-    $self->_set_current($slot);
+    $self->with_locked_state($self->{'state_filename'},
+				     $params{'finished_cb'}, sub {
+	my ($state, $finished_cb) = @_;
 
-    $params{'finished_cb'}->() if $params{'finished_cb'};
+	$slot = (scalar @slots)? $slots[0] : 0;
+	$self->_set_current($slot);
+
+	$finished_cb->();
+    });
 }
 
 sub _load_by_slot {
@@ -430,6 +448,8 @@ sub do_release {
     my %params = @_;
     my $drive = $self->{'drive'};
 
+    # no statefile locking required here, since this is just removing
+    # resources to which we have exclusive license at the moment
     unlink("$drive/data")
 	or warn("Could not unlink '$drive/data': $!");
     rmdir("$drive")

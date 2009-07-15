@@ -1,4 +1,10 @@
 2009-07-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer.pm: new with_locked_state method to help
+	  subclasses access a locked statefile
+	* installcheck/Amanda_Changer.pl: test new method
+	* perl/Amanda/Changer/disk.pm: use new method
+
+2009-07-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amflock.h common-src/amflock.c: new fcntl-based
 	  file locking support
 	* common-src/amflock-test.c: test them

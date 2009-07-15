@@ -24,6 +24,8 @@ package Amanda::Changer;
 use strict;
 use warnings;
 use POSIX ();
+use Fcntl qw( O_RDWR O_CREAT LOCK_EX LOCK_NB );
+use Data::Dumper;
 use vars qw( @ISA );
 
 use Amanda::Paths;
@@ -438,24 +440,45 @@ property, ignoring its the priority and other attributes.  In a list context,
 it returns all values for the property; in a scalar context, it returns the
 first value specified.
 
+=head2 PERSISTENT STATE AND LOCKING
+
+Many changer subclasses need to track state across invocations and between
+different processes, and to ensure that the state is read and written
+atomically.  The C<with_locked_state> provides this functionality by
+locking a statefile, only unlocking it after any changes have been written back
+to it.  Subclasses can use this method both for mutual exclusion (ensuring that
+only one changer operation is in progress at any time) and for atomic state
+storage.
+
+The C<with_locked_state> method works like C<synchronized> (in
+L<Amanda::MainLoop>), but with some extra arguments:
+
+  $self->with_locked_state($filename, $some_cb, sub {
+    # note: $some_cb shadows outer $some_cb; see Amanda::MainLoop::synchronized
+    my ($state, $some_cb) = @_;
+    # ... and eventually:
+    $some_cb->(...);
+  });
+
+The callback C<$some_cb> is assumed to take a changer error as its first
+argument, and if there are any errors locking the statefile, they will be
+reported directly to this callback.  Otherwise, a wrapped version of
+C<$some_cb> is passed to the inner C<sub>.  When this wrapper is invoked, the
+state will be written to disk and unlocked before the original callback is
+invoked.
+
+The state itself begins as an empty hashref, but subclasses can add arbitrary
+keys to the hash.  Serialization is currently handled with L<Data::Dumper>.
+
 =head1 SEE ALSO
 
-See the other changer packages, including:
-
-=over 2
-
-=item L<Amanda::Changer::disk>
-
-=item L<Amanda::Changer::compat>
-
-=item L<Amanda::Changer::single>
-
-=back
+See amanda-changers(7) for user-level documentation of the changer implementations.
 
 =head1 TODO
 
  - support loading by barcode, showing barcodes in reservations
  - support deadlock avoidance by returning more information in load errors
+   - drive inuse vs volume inuse?
  - Amanda::Changer::Single
  - support import and export for robots with import/export slots
 
@@ -837,6 +860,75 @@ sub check_error {
 	$cb->($self->{'fatal_error'}) if $cb;
 	return 1;
     }
+}
+
+sub lock_statefile {
+    my $self = shift;
+    my %params = @_;
+
+    my $statefile = $params{'statefile_filename'};
+    my $lock_cb = $params{'lock_cb'};
+    Amanda::Changer::StateFile->new($statefile, $lock_cb);
+}
+
+sub with_locked_state {
+    my $self = shift;
+    my ($statefile, $cb, $sub) = @_;
+    my %subs;
+    my ($filelock, $STATE);
+    my $poll = 0; # first delay will be 0.1s; see below
+
+    $subs{'open'} = sub {
+	$filelock = Amanda::Util::file_lock->new($statefile);
+
+	$subs{'lock'}->();
+    };
+
+    $subs{'lock'} = sub {
+	my $rv = $filelock->lock();
+	if ($rv == 1) {
+	    # loop until we get the lock, increasing $poll to 10s
+	    $poll += 100 unless $poll >= 10000;
+	    return Amanda::MainLoop::call_after($poll, $subs{'lock'});
+	}
+
+	$subs{'read'}->();
+    };
+
+    $subs{'read'} = sub {
+	my $contents = $filelock->data();
+	if ($contents) {
+	    eval $contents;
+	    if ($@) {
+		# $fh goes out of scope here, and is thus automatically
+		# unlocked
+		return $cb->("error reading '$statefile': $@", undef);
+	    }
+	    if (!defined $STATE or ref($STATE) ne 'HASH') {
+		return $cb->("'$statefile' did not define \$STATE properly", undef);
+	    }
+	} else {
+	    # initial state (blank file)
+	    $STATE = {};
+	}
+
+	$sub->($STATE, $subs{'cb_wrap'});
+    };
+
+    $subs{'cb_wrap'} =  sub {
+	my @args = @_;
+
+	my $dumper = Data::Dumper->new([ $STATE ], ["STATE"]);
+	$dumper->Purity(1);
+	$filelock->write($dumper->Dump);
+	$filelock->unlock();
+
+	# call through to the original callback with the original
+	# arguments
+	$cb->(@args);
+    };
+
+    $subs{'open'}->();
 }
 
 package Amanda::Changer::Error;

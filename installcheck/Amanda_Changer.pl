@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 44;
+use Test::More tests => 45;
 use File::Path;
 use strict;
 
@@ -557,3 +557,50 @@ is_deeply( Amanda::Changer->new("mychanger"), [ "chg-disk:/foo", "cc" ],
     "named changer loads the proper definition");
 
 *Amanda::Changer::_new_from_uri = *saved_new_from_uri;
+
+# test with_locked_state *within* a process
+
+{
+    my %subs;
+    my $chg;
+    my $stfile = "$Installcheck::TMP/test-statefile";
+    my $num_outstanding = 0;
+
+    $subs{'start'} = sub {
+	for my $num (qw( one two three )) {
+	    ++$num_outstanding;
+	    $chg->with_locked_state($stfile, $subs{'maybe_done'}, sub {
+		my ($state, $maybe_done) = @_;
+
+		$state->{$num} = $num;
+		$state->{'count'}++;
+
+		Amanda::MainLoop::call_after(50, $maybe_done, undef, $state);
+	    });
+	}
+    };
+
+    $subs{'maybe_done'} = sub {
+	my ($err, $state) = @_;
+	die $err if $err;
+
+	return if (--$num_outstanding);
+
+	is_deeply($state, {
+	    one => "one",
+	    two => "two",
+	    three => "three",
+	    count => 3,
+	}, "state is maintained correctly (within a process)");
+
+	Amanda::MainLoop::quit();
+    };
+
+    unlink($stfile) if -f $stfile;
+
+    $chg = Amanda::Changer->new("chg-null:");
+    Amanda::MainLoop::call_later($subs{'start'});
+    Amanda::MainLoop::run();
+
+    unlink($stfile) if -f $stfile;
+}
