@@ -62,7 +62,7 @@ is(getconf($CNF_TAPEDEV), "null:TEST",
 # Check out error handling
 
 $testconf = Installcheck::Config->new();
-$testconf->add_param('rawtapedev', '"/dev/medium-rare-please"'); # a deprecated keyword -> warning
+$testconf->add_param('tapebufs', '13'); # a deprecated keyword -> warning
 $testconf->write();
 
 {

@@ -64,7 +64,7 @@ typedef enum {
     CONF_BUMPPERCENT,		CONF_BUMPSIZE,		CONF_BUMPDAYS,
     CONF_BUMPMULT,		CONF_ETIMEOUT,		CONF_DTIMEOUT,
     CONF_CTIMEOUT,		CONF_TAPEBUFS,		CONF_TAPELIST,
-    CONF_DEVICE_OUTPUT_BUFFER_SIZE,			CONF_RAWTAPEDEV,
+    CONF_DEVICE_OUTPUT_BUFFER_SIZE,
     CONF_DISKFILE,		CONF_INFOFILE,		CONF_LOGDIR,
     CONF_LOGFILE,		CONF_DISKDIR,		CONF_DISKSIZE,
     CONF_INDEXDIR,		CONF_NETUSAGE,		CONF_INPARALLEL,
@@ -949,7 +949,6 @@ keytab_t server_keytab[] = {
     { "DEVICE_OUTPUT_BUFFER_SIZE", CONF_DEVICE_OUTPUT_BUFFER_SIZE },
     { "TAPECYCLE", CONF_TAPECYCLE },
     { "TAPEDEV", CONF_TAPEDEV },
-    { "RAWTAPEDEV", CONF_RAWTAPEDEV },
     { "TAPELIST", CONF_TAPELIST },
     { "TAPERALGO", CONF_TAPERALGO },
     { "FLUSH_THRESHOLD_DUMPED", CONF_FLUSH_THRESHOLD_DUMPED },
@@ -1082,7 +1081,6 @@ conf_var_t server_var [] = {
    { CONF_PRINTER              , CONFTYPE_STR      , read_str         , CNF_PRINTER              , NULL },
    { CONF_MAILER               , CONFTYPE_STR      , read_str         , CNF_MAILER               , NULL },
    { CONF_TAPEDEV              , CONFTYPE_STR      , read_str         , CNF_TAPEDEV              , NULL },
-   { CONF_RAWTAPEDEV           , CONFTYPE_STR      , read_str         , CNF_RAWTAPEDEV           , NULL },
    { CONF_DEVICE_PROPERTY      , CONFTYPE_PROPLIST , read_property    , CNF_DEVICE_PROPERTY      , NULL },
    { CONF_PROPERTY             , CONFTYPE_PROPLIST , read_property    , CNF_PROPERTY             , NULL },
    { CONF_TPCHANGER            , CONFTYPE_STR      , read_str         , CNF_TPCHANGER            , NULL },
@@ -1759,7 +1757,6 @@ handle_deprecated_keyword(void)
      */
 
     static tok_t warning_deprecated[] = {
-        CONF_RAWTAPEDEV,  /* 2007-01-23 */
         CONF_TAPEBUFS,    /* 2007-10-15 */
 	CONF_FILE_PAD,	  /* 2008-07-01 */
         0
@@ -1778,12 +1775,13 @@ handle_invalid_keyword(
     const char * token)
 {
     static const char * error_deprecated[] = {
+	"rawtapedev",
         NULL
     };
     const char ** s;
 
     for (s = error_deprecated; *s != NULL; s ++) {
-	if (strcmp(*s, token) == 0) {
+	if (g_ascii_strcasecmp(*s, token) == 0) {
 	    conf_parserror(_("error: Keyword %s is deprecated."),
 			   token);
 	    return;
@@ -4334,7 +4332,6 @@ init_defaults(
     conf_init_str(&conf_data[CNF_MAILTO], "operators");
     conf_init_str(&conf_data[CNF_DUMPUSER], CLIENT_LOGIN);
     conf_init_str(&conf_data[CNF_TAPEDEV], DEFAULT_TAPE_DEVICE);
-    conf_init_str(&conf_data[CNF_RAWTAPEDEV], DEFAULT_TAPE_DEVICE);
     conf_init_proplist(&conf_data[CNF_DEVICE_PROPERTY]);
     conf_init_proplist(&conf_data[CNF_PROPERTY]);
     conf_init_str(&conf_data[CNF_CHANGERDEV], DEFAULT_CHANGER_DEVICE);

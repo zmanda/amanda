@@ -1,4 +1,6 @@
 Changes in release 2.6.2alpha
+   * Removed configuration keywords:
+      o rawtapedev -- this parameter is no longer needed and should be deleted
    * Device API
       o changed wildcard setting for S3_BUCKET_LOCATION from "" to "*"
    * Application API
