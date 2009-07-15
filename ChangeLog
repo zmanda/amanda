@@ -1,3 +1,7 @@
+2009-07-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* gnulib/regenerate/regenerate: add ftruncate and lseek modules
+	* config/config.rpath config/gnulib/* gnulib/*: new modules
+
 2009-07-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/DB/Catalog.pm: sort numeric values numerically
 	* installcheck/Amanda_DB_Catalog.pl: test same

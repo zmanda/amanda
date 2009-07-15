@@ -50,6 +50,8 @@ AC_DEFUN([gl_INIT],
   AC_REQUIRE([gl_HEADER_ERRNO_H])
   gl_FLOAT_H
   gl_FSUSAGE
+  gl_FUNC_FTRUNCATE
+  gl_UNISTD_MODULE_INDICATOR([ftruncate])
   gl_GETADDRINFO
   gl_NETDB_MODULE_INDICATOR([getaddrinfo])
   gl_GETOPT
@@ -60,6 +62,8 @@ AC_DEFUN([gl_INIT],
   gl_INET_NTOP
   gl_ARPA_INET_MODULE_INDICATOR([inet_ntop])
   gl_LOCK
+  gl_FUNC_LSEEK
+  gl_UNISTD_MODULE_INDICATOR([lseek])
   gl_FUNC_LSTAT
   gl_SYS_STAT_MODULE_INDICATOR([lstat])
   gt_FUNC_MKDTEMP
@@ -237,6 +241,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/float.in.h
   lib/fsusage.c
   lib/fsusage.h
+  lib/ftruncate.c
   lib/full-read.c
   lib/full-read.h
   lib/full-write.c
@@ -253,6 +258,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/glthread/lock.h
   lib/glthread/threadlib.c
   lib/inet_ntop.c
+  lib/lseek.c
   lib/lstat.c
   lib/mkdtemp.c
   lib/netdb.in.h
@@ -293,6 +299,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/extensions.m4
   m4/float_h.m4
   m4/fsusage.m4
+  m4/ftruncate.m4
   m4/getaddrinfo.m4
   m4/getopt.m4
   m4/gettimeofday.m4
@@ -307,6 +314,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/lib-prefix.m4
   m4/lock.m4
   m4/longlong.m4
+  m4/lseek.m4
   m4/lstat.m4
   m4/mkdtemp.m4
   m4/multiarch.m4

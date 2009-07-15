@@ -41,6 +41,7 @@ shopt -u nullglob
 
 GNULIB_MODULES="getaddrinfo lock visibility base64 physmem fsusage"
 GNULIB_MODULES="$GNULIB_MODULES mkdtemp getopt full-read full-write"
+GNULIB_MODULES="$GNULIB_MODULES lseek ftruncate"
 
 ######################################################################
 ## End modules                                                      ##
