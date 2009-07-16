@@ -1,3 +1,9 @@
+2009-07-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/Makefile.am man/xml-source/amanda.8.xml
+	  man/xml-source/amanda-compatibility.7.xml: add new manpage describing
+	  inter-version compatibility
+	* man/xml-source/amanda-taperscan.7.xml: fix use of &A;
+
 2009-07-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-lib.sh.in: Fix MESSAGE parsing for Solaris sed.
 

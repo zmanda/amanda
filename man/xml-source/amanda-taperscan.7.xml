@@ -80,7 +80,7 @@ finds: a reusable volume (perhaps newly-labeled) or, if
 
 <note>This algorithm shows an undue preference for volumes already containing
 data, by omitting newly-labeled volumes from its first stage.  Historically,
-many &A; changer scripts were not fast-searchable (including
+many Amanda changer scripts were not fast-searchable (including
 <emphasis>chg-multi</emphasis>, <emphasis>chg-disk</emphasis> and, if
 <emphasis>havereader=0</emphasis>, <emphasis>chg-zd-mtx</emphasis>), and thus
 skipped the first stage, allowing new volumes to find their way into the tape

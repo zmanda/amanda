@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amanda-compatibility.7'>
+
+<refmeta>
+<refentrytitle>amanda-compatibility</refentrytitle>
+<manvolnum>7</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.7;
+</refmeta>
+<refnamediv>
+<refname>amanda-compatibility</refname>
+<refpurpose>Compatibility between Amanda versions</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.dustin;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>NETWORK COMPATIBILITY</title>
+
+<para>Amanda has used several on-the-wire protocols to communicate between the
+server and backup clients, and not all of them have been compatible.</para>
+
+<para>Versions of Amanda prior to about 2.3 used a different protocol which is
+not compatible. 2.3 is very old so this is not of general interest.</para>
+
+<para>The Amanda 2.4 series all use the same protocol. This protocol has
+support for extensibility. Generally upgrading clients or servers along the 2.4
+branch does not cause difficulty.</para>
+
+<para>Amanda 2.5.0 uses the same protocol as 2.4. One can use a 2.5.0 server
+with 2.4 clients and a 2.4 server with 2.5.0 clients.</para>
+
+<para>Kerberos4 authentication in 2.5 is compatible with 2.4. In 2.5, kerberos4
+encryption is broken, at least for the server.</para>
+
+<para>Amanda 2.5.1 introduced a new recover protocol. Backup communication
+works with any combination of versions, but 2.5.1's amrecover cannot
+communicate with an older server. Use oldamrecover on 2.5.1 and higher clients
+when communicating with an older server.</para>
+
+<para>Amanda 2.6.0 and later are completely compatible with 2.5.1.</para>
+
+<para>To restore a dump created with the tapesplit_size option using amrecover,
+you need at least a 2.5 server and late-2.4 client. (Extracting that backup
+using only shell, mt and dd is also possible.)</para>
+
+</refsect1>
+
+<refsect1><title>UPGRADES</title>
+
+The recommended course for Amanda upgrades is to upgrade the server first, and
+test backups and restores before upgrading clients.  Consult the changes
+described below for the relevant span of versions to determine what
+adjustments, if any, are required.
+
+<refsect2><title>Amanda 2.6.1</title>
+
+<para>There are no incompatible changes in this release, but consider switching
+to some of the new applications instead of the old GNUTAR and DUMP
+programs.</para>
+
+<para>The following configuration configration keywords are deprecated and will
+be removed in the next release:
+<itemizedlist>
+<listitem><para><computeroutput>tapebufs</computeroutput> - use <computeroutput>device-output-buffer-size</computeroutput> instead</para></listitem>
+<listitem><para><computeroutput>rawtapedev</computeroutput> - use <computeroutput>tapedev</computeroutput> instead</para></listitem>
+<listitem><para><computeroutput>file-pad</computeroutput> - this is no longer optional, and all files are padded</para></listitem>
+</itemizedlist>
+</para>
+
+</refsect2>
+
+<refsect2><title>Amanda 2.6.0</title>
+
+<para><filename>amverify</filename> and <filename>amverifyrun</filename> are removed and replaced with <manref name="amcheckdump" vol="8" />.  Both <filename>amdd</filename> and <filename>ammt</filename> are removed.</para>
+
+<para>Some Amanda files are now installed in new <filename>amanda/</filename>
+subdirectories: libraries are now installed in
+<filename>$libdir/amanda</filename> and internal programs are now installed in
+<filename>$libexecdir/amanda</filename>.</para>
+
+<para> The amandates file, previously at <filename>/etc/amandates</filename>,
+is now at <filename>$localstatedir/amanda/amandates</filename>.  You may want
+to move your existing <filename>/etc/amandates</filename> when you upgrade
+Amanda.</para>
+
+<para>GLib is now required to build and run Amanda.</para>
+
+</refsect2>
+
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+</seealso>
+
+
+</refentry>
