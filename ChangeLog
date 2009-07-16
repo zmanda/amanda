@@ -1,4 +1,7 @@
 2009-07-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/diskfile.c: add missing _()
+
+2009-07-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/Makefile.am man/xml-source/amanda.8.xml
 	  man/xml-source/amanda-compatibility.7.xml: add new manpage describing
 	  inter-version compatibility

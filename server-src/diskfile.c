@@ -420,7 +420,7 @@ parse_diskline(
     } else {
 	hostname = stralloc(host->hostname);
 	if (strcmp(host->hostname, fp) != 0) {
-	    disk_parserror(filename, line_num, "Same host with different case: \"%s\" and \"%s\".", host->hostname, fp);
+	    disk_parserror(filename, line_num, _("Same host with different case: \"%s\" and \"%s\"."), host->hostname, fp);
 	    return -1;
 	}
     }
@@ -430,7 +430,7 @@ parse_diskline(
 	char *shostp = sanitise_filename(p->hostname);
 	if (strcmp(hostname, p->hostname) &&
 	    !strcmp(shost, shostp)) {
-	    disk_parserror(filename, line_num, "Two hosts are mapping to the same name: \"%s\" and \"%s\"", p->hostname, hostname);
+	    disk_parserror(filename, line_num, _("Two hosts are mapping to the same name: \"%s\" and \"%s\""), p->hostname, hostname);
 	    return(-1);
 	}
 	else if (strcasecmp(hostname, p->hostname) &&
