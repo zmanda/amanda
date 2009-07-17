@@ -98,6 +98,22 @@ start_new_chunk(
 	return FALSE;
     }
 
+    /* get a downstream XferDestTaper, if one exists.  This check happens
+     * for each chunk, but chunks are large, so that's OK. */
+    if (!self->dest_taper) {
+	XferElement *elt = (XferElement *)self;
+
+	/* the xfer may have inserted glue between this element and
+	* the XferDestTaper. Glue does not change the bytestream, so
+	* it does not interfere with cache_inform calls. */
+	XferElement *iter = elt->downstream;
+	while (iter && IS_XFER_ELEMENT_GLUE(iter)) {
+	    iter = iter->downstream;
+	}
+	if (IS_XFER_DEST_TAPER(iter))
+	    self->dest_taper = iter;
+    }
+
     /* tell a XferDestTaper about the new file */
     if (self->dest_taper) {
 	struct stat st;
@@ -193,25 +209,6 @@ return_eof:
     return NULL;
 }
 
-static gboolean
-start_impl(
-    XferElement *elt)
-{
-    XferSourceHolding *self = (XferSourceHolding *)elt;
-
-    /* the xfer may have inserted glue between this element and
-     * the XferDestTaper. Glue does not change the bytestream, so
-     * it does not interfere with cache_inform calls. */
-    XferElement *iter = elt->downstream;
-    while (iter && IS_XFER_ELEMENT_GLUE(iter)) {
-        iter = iter->downstream;
-    }
-    if (IS_XFER_DEST_TAPER(iter))
-	self->dest_taper = iter;
-
-    return FALSE;
-}
-
 static void
 instance_init(
     XferElement *elt)
@@ -249,7 +246,6 @@ class_init(
     };
 
     klass->pull_buffer = pull_buffer_impl;
-    klass->start = start_impl;
 
     klass->perl_class = "Amanda::Xfer::Source::Holding";
     klass->mech_pairs = mech_pairs;
