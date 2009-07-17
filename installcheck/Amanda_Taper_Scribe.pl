@@ -119,9 +119,9 @@ sub scan {
 
     main::event("scan");
 
-    my $slot = (@{$self->{'slots'}})?
-	  (shift @{$self->{'slots'}})
-	: $self->{'next_or_current'};
+    my @slotarg = (@{$self->{'slots'}})?
+	  (slot => shift @{$self->{'slots'}})
+	: (relative_slot => $self->{'next_or_current'});
     $self->{'next_or_current'} = 'next';
 
     my $res_cb = make_cb('res_cb' => sub {
@@ -140,7 +140,7 @@ sub scan {
     # delay this load call a little bit -- just enough so that the
     # request_volume_permission event reliably occurs first
     Amanda::MainLoop::call_after(50, sub {
-	$self->{'chg'}->load(slot => $slot, set_current => 1, res_cb => $res_cb);
+	$self->{'chg'}->load(@slotarg, set_current => 1, res_cb => $res_cb);
     });
 }
 
