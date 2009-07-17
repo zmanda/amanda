@@ -26,8 +26,6 @@ sbin_PROGRAMS =		amadmin		amcheck		\
 			amservice	amtape		\
 			amreport
 
-#noinst_PROGRAMS = taper_source_test
-
 amlibexec_PROGRAMS =	amindexd	amlogroll	amtrmidx	\
 			amtrmlog	driver		dumper		\
 			planner		amcleanupdisk	\

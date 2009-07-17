@@ -75,7 +75,6 @@ sub run_taper {
     close TAPER_ERR;
     $taper_in->blocking(1);
     $taper_out->autoflush();
-    close TAPER_ERR;
 
     if ($params{'keep_config'}) {
 	pass("spawned new taper for $description (same config)");
