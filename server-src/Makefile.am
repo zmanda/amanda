@@ -26,12 +26,13 @@ sbin_PROGRAMS =		amadmin		amcheck		\
 			amservice	amtape		\
 			amreport
 
-noinst_PROGRAMS = taper_source_test
+#noinst_PROGRAMS = taper_source_test
 
 amlibexec_PROGRAMS =	amindexd	amlogroll	amtrmidx	\
 			amtrmlog	driver		dumper		\
-			planner		taper		amcleanupdisk	\
+			planner		amcleanupdisk	\
 			chunker
+amlibexec_SCRIPTS = taper
 
 # Exclude scripts which depend on perl extension modules from the syntax checks
 CHECK_PERL = \
@@ -58,6 +59,7 @@ INSTALLPERMS_exec = \
 		amcheck amservice \
 	dest=$(amlibexecdir) chown=amanda chmod= \
 		$(amlibexec_PROGRAMS) \
+		$(amlibexec_SCRIPTS) \
 	chown=root chmod=04750 \
 		dumper planner
 
@@ -90,26 +92,6 @@ libamserver_la_LDFLAGS= -release $(VERSION)
 libamserver_la_LIBADD= ../device-src/libamdevice.la \
 		       ../common-src/libamanda.la
 
-taper_source_test_SOURCES = taper-source-test.c \
-			taper-source.c \
-			taper-file-source.c \
-			taper-port-source.c \
-			taper-disk-port-source.c \
-			taper-mem-port-source.c
-
-taper_SOURCES = 	taper.c \
-			taper-source.c \
-			taper-file-source.c \
-			taper-port-source.c \
-			taper-disk-port-source.c \
-			taper-mem-port-source.c
-
-taper_LDADD = $(LDADD) \
-	../amandad-src/libamandad.la
-
-taper_source_test_LDADD = $(LDADD) \
-	../amandad-src/libamandad.la
-
 amindexd_LDADD = $(LDADD) \
 	../amandad-src/libamandad.la
 
@@ -129,9 +111,7 @@ noinst_HEADERS = 	amindex.h	changer.h	cmdline.h	\
 			diskfile.h	driverio.h	\
 			holding.h	infofile.h	logfile.h	\
 			tapefile.h	find.h		server_util.h	\
-			taperscan.h taper-disk-port-source.h \
-			taper-mem-port-source.h  taper-file-source.h \
-			taper-port-source.h taper-source.h xfer-server.h
+			taperscan.h	xfer-server.h
 
 lint:
 	@ for p in $(amlibexec_PROGRAMS) $(sbin_PROGRAMS); do			\
