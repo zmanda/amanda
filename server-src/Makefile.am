@@ -30,10 +30,11 @@ amlibexec_PROGRAMS =	amindexd	amlogroll	amtrmidx	\
 			amtrmlog	driver		dumper		\
 			planner		amcleanupdisk	\
 			chunker
-amlibexec_SCRIPTS = taper
 
-# Exclude scripts which depend on perl extension modules from the syntax checks
-CHECK_PERL = \
+amlibexec_SCRIPTS_PERL = \
+	    taper
+
+sbin_SCRIPTS_PERL = \
 	    amaddclient \
 	    amoverview \
 	    amserverconfig \
@@ -43,12 +44,15 @@ CHECK_PERL = \
 	    amrmtape \
 	    amvault \
 	    amstatus
-SCRIPTS_PERL = $(CHECK_PERL)
-SCRIPTS_SHELL = \
+
+sbin_SCRIPTS_SHELL = \
 	    amcheckdb \
 	    amdump
 
-sbin_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
+SCRIPTS_PERL = $(sbin_SCRIPTS_PERL) $(amlibexec_SCRIPTS_PERL)
+SCRIPTS_SHELL = $(sbin_SCRIPTS_SHELL) $(amlibexec_SCRIPTS_SHELL)
+sbin_SCRIPTS = $(sbin_SCRIPTS_PERL) $(sbin_SCRIPTS_SHELL)
+amlibexec_SCRIPTS = $(amlibexec_SCRIPTS_PERL) $(amlibexec_SCRIPTS_SHELL)
 
 INSTALLPERMS_exec = \
 	dest=$(sbindir) chown=amanda chmod= \
