@@ -38,6 +38,7 @@ server_tests = \
 	Amanda_Tapelist \
 	Amanda_Taper_Scan \
 	Amanda_Taper_Scan_traditional \
+	Amanda_Taper_Scribe \
 	Amanda_Xfer_serveronly \
 	bigint \
 	taper \

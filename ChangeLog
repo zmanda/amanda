@@ -1,3 +1,7 @@
+2009-07-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am perl/Amanda/Taper/Scribe.pm: new package
+	* installcheck/Makefile.am installcheck/Amanda_Taper_Scribe.pl: tests
+
 2009-07-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/diskfile.c: add missing _()
 
