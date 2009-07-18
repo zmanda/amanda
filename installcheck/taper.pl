@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 127;
+use Test::More tests => 128;
 
 use lib '@amperldir@';
 use Installcheck::Run;
@@ -716,6 +716,8 @@ like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
 	"got proper NEW-TAPE") or die;
 like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 88 "\[sec [\d.]+ kb 88 kps [\d.]+\]"$/,
 	"got PARTDONE for filenum 1 on second tape") or die;
+like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 600 kps [\d.]+\]" "" ""$/,
+	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
