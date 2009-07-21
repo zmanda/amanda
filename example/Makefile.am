@@ -24,7 +24,7 @@ example_DATA = amanda.conf \
 	       inetd.conf.amandaclient \
 	       inetd.conf.amandaserver \
 	       xinetd.amandaclient \
-	       xinetd.amandaserver 
+	       xinetd.amandaserver \
 	       chg-multi.conf \
 	       chg-scsi.conf \
 	       disklist
