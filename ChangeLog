@@ -1,3 +1,6 @@
+2009-07-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Fix fd allocation.
+
 2009-07-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-lib.sh.in: Fix MESSAGE parsing for Solaris sed.
 
