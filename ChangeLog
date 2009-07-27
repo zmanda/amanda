@@ -1,4 +1,10 @@
 2009-07-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/defaults.m4: remove --with-changer-device
+	* common-src/conffile.c: make NULL the default
+	* example/amanda.conf.in: remove reference to the default
+	* NEWS: note that option is no longer available
+
+2009-07-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/automake/scripts.am: remove the CHECK_FOO vs. SCRIPTS_FOO
 	  variables, and just syntax-check everything
 	* amar-src/Makefile.am application-src/Makefile.am

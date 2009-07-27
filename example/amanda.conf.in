@@ -134,8 +134,7 @@ tapedev "@EXAMPLE_TAPEDEV@"	# the no-rewind tape device to be used
 
 #changerfile "@CONFIG_DIR@/@DEFAULT_CONFIG@/changer"
 #changerfile "@CONFIG_DIR@/@DEFAULT_CONFIG@/changer-status"
-changerfile "@CONFIG_DIR@/@DEFAULT_CONFIG@/changer.conf"
-changerdev "@DEFAULT_CHANGER_DEVICE@"
+#changerfile "@CONFIG_DIR@/@DEFAULT_CONFIG@/changer.conf"
 
 # If you want Amanda to automatically label any non-Amanda tapes it
 # encounters, uncomment the line below. Note that this will ERASE any

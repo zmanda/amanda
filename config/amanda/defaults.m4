@@ -9,8 +9,6 @@
 #	    define and substitute DEFAULT_TAPE_SERVER
 #	--with-tape-device
 #	    define and substitute DEFAULT_TAPE_DEVICE; substitue EXAMPLE_TAPEDEV
-#	--with-changer-device
-#	    define and substitute DEFAULT_CHANGER_DEVICE
 #	--with-amandates
 #	    define and substitute DEFAULT_AMANDATES_FILE
 #
@@ -101,28 +99,11 @@ AC_DEFUN([AMANDA_SETUP_DEFAULTS],
 
     AC_ARG_WITH(changer-device,
 	AS_HELP_STRING([--with-changer-device=DEV],
-	    [default tape changer device (default: /dev/ch0)]),
+	    [(deprecated)]),
 	[
-	    case "$withval" in
-	    "" | y | ye | yes | n | no)
-		AC_MSG_ERROR([*** You must supply an argument to the --with-changer-device option.])
-	      ;;
-	    *) DEFAULT_CHANGER_DEVICE="$withval"
-	      ;;
-	    esac
+            AMANDA_MSG_WARN([--with-changer-device is no longer used.])
 	]
     )
-
-    if test -z "$DEFAULT_CHANGER_DEVICE"; then
-	DEFAULT_CHANGER_DEVICE=/dev/null
-	if test -f /dev/ch0; then
-	    DEFAULT_CHANGER_DEVICE=/dev/ch0
-	fi
-    fi
-
-    AC_DEFINE_UNQUOTED(DEFAULT_CHANGER_DEVICE,"$DEFAULT_CHANGER_DEVICE",
-	[This is the default changer device. ])
-    AC_SUBST(DEFAULT_CHANGER_DEVICE)
 
     AC_ARG_WITH(amandates,
         AS_HELP_STRING([--with-amandates],

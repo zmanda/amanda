@@ -4334,7 +4334,7 @@ init_defaults(
     conf_init_str(&conf_data[CNF_TAPEDEV], DEFAULT_TAPE_DEVICE);
     conf_init_proplist(&conf_data[CNF_DEVICE_PROPERTY]);
     conf_init_proplist(&conf_data[CNF_PROPERTY]);
-    conf_init_str(&conf_data[CNF_CHANGERDEV], DEFAULT_CHANGER_DEVICE);
+    conf_init_str(&conf_data[CNF_CHANGERDEV], NULL);
     conf_init_str(&conf_data[CNF_CHANGERFILE]             , "changer");
     conf_init_str   (&conf_data[CNF_LABELSTR]             , ".*");
     conf_init_str   (&conf_data[CNF_TAPELIST]             , "tapelist");
