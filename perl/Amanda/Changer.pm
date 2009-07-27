@@ -351,6 +351,14 @@ Next, for each requested key, C<info> calls C<< $self->info_key($key, %params)
 all C<info_key> invocations to finish, then collect the results or errors that
 occur.
 
+=head2 PROPERTY PARSING
+
+Many properties are boolean, and Amanda has a habit of accepting a number of
+different ways of writing boolean values.  The method C<<
+$self->get_boolean_property($config, $prop, $default) >> will parse such a
+property, returning 0 or 1 if the property is specified, C<$default> if it is
+not specified, or C<undef> if the property cannot be parsed.
+
 =head2 ERROR HANDLING
 
 To create a new error object, use C<< $self->make_error($type, $cb, %args) >>.
@@ -768,6 +776,21 @@ sub info {
 }
 
 # subclass helpers
+
+sub get_boolean_property {
+    my ($self) = shift;
+    my ($config, $propname, $default) = @_;
+
+    return $default
+	unless (exists $config->{'properties'}->{$propname});
+
+    my $propinfo = $config->{'properties'}->{$propname};
+    return undef unless @{$propinfo->{'values'}} == 1;
+    my $propval = $propinfo->{'values'}->[0];
+    return 1 if ($propval =~ /^(1|y|yes|t|true|on)$/i);
+    return 0 if ($propval =~ /^(0|n|no|f|false|off)$/i);
+    return undef;
+}
 
 sub make_error {
     my $self = shift;
