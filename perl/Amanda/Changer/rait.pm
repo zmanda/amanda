@@ -377,10 +377,15 @@ sub _mk_simple_op {
     };
 }
 
-*reset = _mk_simple_op("reset");
-*update = _mk_simple_op("update");
-*clean = _mk_simple_op("clean");
-*eject = _mk_simple_op("eject");
+{
+    # perl doesn't like that these symbols are only mentioned once
+    no warnings;
+
+    *reset = _mk_simple_op("reset");
+    *update = _mk_simple_op("update");
+    *clean = _mk_simple_op("clean");
+    *eject = _mk_simple_op("eject");
+}
 
 # Takes keyword parameters 'oksub', 'errsub', 'parent_cb', and 'args'.  For
 # each child, runs $oksub (or, if the child is "ERROR", $errsub), passing it

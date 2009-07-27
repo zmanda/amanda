@@ -17,15 +17,13 @@ LINTFLAGS=$(AMLINTFLAGS)
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
 
-CHECK_PERL = script-email \
+SCRIPTS_PERL = script-email \
 	     amlog-script \
 	     ampgsql \
 	     amzfs-sendrecv \
 	     amzfs-snapshot \
 	     amsamba \
 	     amsuntar
-
-SCRIPTS_PERL = $(CHECK_PERL)
 
 SCRIPTS_SHELL = $(amlibexec_SCRIPTS)
 

@@ -220,19 +220,13 @@ quoting_test_LDADD = libamanda.la libtestutils.la
 
 # scripts
 
-# divide scripts up both by language, by destination directory, and by whether they
-# should get checked (stuff in *_SCRIPTS_* isn't syntax checked; this is necessary
-# for perl scripts that use Amanda::* packages)
-sbin_CHECK_PERL = \
+# divide scripts up both by language and destination directory
+sbin_SCRIPTS_PERL = \
 	    amgpgcrypt \
 	    amcryptsimple \
 	    amgetconf
-sbin_SCRIPTS_PERL = \
-	    $(sbin_CHECK_PERL)
 
-amlibexec_CHECK_PERL =
-amlibexec_SCRIPTS_PERL = \
-	    $(amlibexec_CHECK_PERL)
+amlibexec_SCRIPTS_PERL =
 
 sbin_SCRIPTS_SHELL = \
 	    amcrypt \
@@ -247,7 +241,6 @@ SCRIPTS_INCLUDE = \
 
 EXTRA_DIST += amanda-sh-lib.sh.in
 
-CHECK_PERL = $(sbin_CHECK_PERL) $(amlibexec_CHECK_PERL)
 SCRIPTS_PERL = $(sbin_SCRIPTS_PERL) $(amlibexec_SCRIPTS_PERL)
 SCRIPTS_SHELL = $(sbin_SCRIPTS_SHELL) $(amlibexec_SCRIPTS_SHELL)
 

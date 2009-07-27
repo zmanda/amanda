@@ -123,7 +123,7 @@ CHECK_PERL_FLAGS=-I$(top_srcdir)/installcheck
 SCRIPTS_PERL = $(tests) $(mocks)
 
 # we don't need to syntax check the test scripts..
-CHECK_PERL =
+SKIP_CHECKS = true
 
 .PHONY: clobber_my_config_is_ok
 clobber_my_config_is_ok:

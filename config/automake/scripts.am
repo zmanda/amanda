@@ -26,11 +26,15 @@
 # Files which support it are syntax-checked when the user invokes 'make check'.
 #
 # All *target* filenames must be listed in SCRIPTS_SHELL, SCRIPTS_PERL, and 
-# SCRIPTS_AWK to support 'make check', 'make dist', and 'make distclean'. No
+# SCRIPTS_AWK to support 'make dist', and 'make distclean'. No
 # files which are not substituted by config.status should be included in
 # SCRIPTS_PERL, SCRIPTS_SHELL, or SCRIPTS_AWK.  If non-generated files are listed
 # for installation, then Automake will figure out that they should be distributed;
 # otherwise, include them in EXTRA_DIST.
+#
+# All SCRIPTS_SHELL and SCRIPTS_PERL are syntax-checked on 'make check'.  There is
+# a fix in place to run these syntax checks against the perl modules in the build
+# tree, rather than against the (potentially old) installed perl modules.
 #
 # USAGE:
 #
@@ -49,11 +53,6 @@
 #   shell1.sh shell2.sh sh-lib.sh.in
 #   talk.awk balk.awk chalk.awk awk-lib.awk.in
 #   not-subbed util-script.pl
-#
-# by default, all shell and perl scripts are syntax checked.  If this is
-# a problem (for example, perl scripts depending on Amanda extension 
-# modules), then assign to CHECK_{PERL,SHELL} the list of files you wish
-# to be checked (which can be empty).
 #
 # To add extra flags to the perl checks (e.g., to add new -I flags), set
 # CHECK_PERL_FLAGS.
@@ -106,11 +105,11 @@ CLEANFILES += config.log
 DISTCLEANFILES += $(SCRIPTS_SHELL) $(SCRIPTS_PERL) $(SCRIPTS_AWK) $(SCRIPTS_INCLUDE)
 
 # syntax-check perl scripts on 'make check'
-check-perl: $(CHECK_PERL)
-	@CHECK_PERL="$(CHECK_PERL)"; \
+check-perl: $(SCRIPTS_PERL)
+	@SCRIPTS_PERL="$(SCRIPTS_PERL)"; \
 	if test -f $(top_builddir)/perl/.libs/libCmdline.so -o -f $(top_builddir)/perl/libCmdline.so; then \
 		if test -n "$(PERL)"; then \
-			for perlobj in $$CHECK_PERL; do \
+			for perlobj in $$SCRIPTS_PERL; do \
 				sed "s,^use lib '$(amperldir),# use lib '$(amperldir)," < $$perlobj > $$perlobj.nouselib; \
 				$(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -w -T $$perlobj.nouselib || exit 1; \
 				rm $$perlobj.nouselib; \
@@ -120,22 +119,21 @@ check-perl: $(CHECK_PERL)
 check-local: check-perl
 
 # syntax-check perl scripts on 'make installcheck'
-installcheck-perl: $(CHECK_PERL)
-	@CHECK_PERL="$(CHECK_PERL)"; \
+installcheck-perl: $(SCRIPTS_PERL)
+	@SCRIPTS_PERL="$(SCRIPTS_PERL)"; \
 	if test -n "$(PERL)"; then \
-		for perlobj in $$CHECK_PERL; do \
+		for perlobj in $$SCRIPTS_PERL; do \
 			$(PERL) $(CHECK_PERL_FLAGS) -c -w -T $$perlobj || exit 1; \
 		done; \
 	fi
 installcheck-local: installcheck-perl
 
 # syntax-check shell scripts on 'make check'
-CHECK_SHELL = $(SCRIPTS_SHELL)
-check-shell: $(CHECK_SHELL)
-	@CHECK_SHELL="$(CHECK_SHELL)"; \
-	if test -n "$$CHECK_SHELL"; then \
+check-shell: $(SCRIPTS_SHELL)
+	@SCRIPTS_SHELL="$(SCRIPTS_SHELL)"; \
+	if test -n "$$SCRIPTS_SHELL"; then \
 		if test -n "$(BASH)"; then \
-			for shobj in $$CHECK_SHELL; do \
+			for shobj in $$SCRIPTS_SHELL; do \
 				if $(BASH) -n $$shobj; then \
 					echo "$$shobj syntax OK"; \
 				else \

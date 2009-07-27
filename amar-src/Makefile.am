@@ -1,7 +1,6 @@
 # Makefile for Amanda archive library
 
 include $(top_srcdir)/config/automake/vars.am
-include $(top_srcdir)/config/automake/scripts.am
 include $(top_srcdir)/config/automake/installperms.am
 include $(top_srcdir)/config/automake/precompile.am
 
