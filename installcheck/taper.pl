@@ -43,6 +43,7 @@ use Amanda::Paths;
 
 # put the debug messages somewhere
 Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 my $test_filename = "$Installcheck::TMP/installcheck-taper-holding-file";
 my $taper_stderr_file = "$Installcheck::TMP/taper-stderr";

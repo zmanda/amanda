@@ -1,3 +1,22 @@
+2009-07-28  Nikolas Coukouma <atrus@zmanda.com>
+	* installcheck/Installcheck.pm: Add a function for including Test::More
+	  messages in debug logs (and document it). Move mkpath($TMP) into an
+	  INIT block.
+	* installcheck/Amanda_Changer.pl, installcheck/Amanda_Changer_compat.pl,
+	  installcheck/Amanda_Changer_disk.pl,
+	  installcheck/Amanda_Changer_null.pl,
+	  installcheck/Amanda_Changer_rait.pl,
+	  installcheck/Amanda_Changer_single.pl, installcheck/Amanda_Config.pl,
+	  installcheck/Amanda_Debug.pl, installcheck/Amanda_Device.pl,
+	  installcheck/Amanda_Header.pl, installcheck/Amanda_Holding.pl,
+	  installcheck/Amanda_IPC_LineProtocol.pl,
+	  installcheck/Amanda_Process.pl, installcheck/Amanda_Taper_Scan.pl,
+	  installcheck/Amanda_Taper_Scan_traditional.pl,
+	  installcheck/Amanda_Taper_Scribe.pl, installcheck/Amanda_Xfer.pl,
+	  installcheck/Amanda_Xfer_serveronly.pl, 
+	  installcheck/amrmtape.pl, installcheck/amtape.pl,
+	  installcheck/taper.pl: use Installcheck::log_test_output()
+
 2009-07-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm: add a get_boolean_property helper method
 

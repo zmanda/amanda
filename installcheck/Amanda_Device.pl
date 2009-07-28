@@ -163,6 +163,7 @@ config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF') == $CFGERR_OK
 
 # put the debug messages somewhere
 Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 ####
 ## Test errors a little bit

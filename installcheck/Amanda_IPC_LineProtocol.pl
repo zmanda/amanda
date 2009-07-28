@@ -70,6 +70,7 @@ package main;
 
 # set up debugging so debug output doesn't interfere with test results
 Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 # and disable Debug's die() and warn() overrides
 Amanda::Debug::disable_die_override();

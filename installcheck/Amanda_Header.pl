@@ -22,9 +22,11 @@ use strict;
 use lib "@amperldir@";
 use Amanda::Header;
 use Amanda::Debug;
+use Installcheck;
 
 # put the debug messages somewhere
 Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 # Not much to test, but we can at least exercise the constructor and destructor,
 # and the SWIG getters and setters:

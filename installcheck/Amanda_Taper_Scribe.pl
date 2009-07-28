@@ -37,6 +37,7 @@ Amanda::Debug::disable_die_override();
 
 # put the debug messages somewhere
 Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 # use some very small vtapes
 my $volume_length = 512*1024;

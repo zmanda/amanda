@@ -31,15 +31,93 @@ Installcheck - utilities for installchecks (not installed)
 
   my $testdir = "$Installcheck::TMP/mystuff/";
 
+  use Amanda::Debug;
+  Amanda::Debug::dbopen("installcheck");
+  Installchek::log_test_output();
+
 =head1 DESCRIPTION
 
-This module defines C<$TMP>, the temporary directory for installcheck data.
+Miscellaneous utilities for installchecks. No symbols are exported by default.
+
+=over
+
+=item C<$TMP>
+
+The temporary directory for installcheck data. This directory is created for you.
+
+=item C<log_test_output()>
+
+Calling this function causes status meesages from tests (e.g. "ok 1 - some test")
+to be recorded in the debug logs. It should be called exactly once.
+
+=back
 
 =cut
 
-no warnings;
+use strict;
+use warnings;
 
-$TMP = "$AMANDA_TMPDIR/installchecks";
-mkpath($TMP);
+our $TMP = "$AMANDA_TMPDIR/installchecks";
+
+# run this just before the script actually executes
+# (not during syntax checks)
+INIT {
+    mkpath($TMP);
+}
+
+sub log_test_output {
+    my $builder = Test::More->builder();
+    # wrap each filehandle used for output
+    foreach my $out (qw(output failure_output todo_output)) {
+        $builder->$out(Installcheck::TestFD->new($builder->$out));
+    }
+}
+
+package Installcheck::TestFD;
+
+use base qw(Tie::Handle IO::Handle);
+
+use Symbol;
+use Amanda::Debug qw(debug);
+
+use strict;
+use warnings;
+
+sub new {
+    my ($class, $fh) = @_;
+    # save the underlying filehandle
+    my $o = {'fh' => $fh};
+    # must bless before tie()
+    bless($o, $class);
+    # note that gensym is needed so we have something to tie()
+    my $new_fh = gensym;
+    tie(*$new_fh, $class, $o);
+    # note that the anonymous glob reference must be returned, so
+    # when 'print $fh "some string"' is used it works
+    return $new_fh;
+}
+
+sub TIEHANDLE {
+    my ($class, $o) = @_;
+    return $o;
+}
+
+# other methods of IO::Handle or Tie::Handle may be called in theory,
+# but in practice this seems to be all we need
+
+sub print {
+    my ($self, @args);
+    reutrn $self->PRINT(@args);
+}
+
+sub PRINT {
+    my ($self, @msgs) = @_;
+    # log each line separately
+    foreach my $m (split("\n", join($, , @msgs))) {
+        debug($m);
+    }
+    # now call print on the wrapped filehandle
+    return $self->{'fh'}->print(@msgs);
+}
 
 1;

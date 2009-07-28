@@ -33,6 +33,7 @@ use Amanda::Disklist;
 
 # put the debug messages somewhere
 Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 my $holding1 = "$Installcheck::TMP/holding1";
 my $holding2 = "$Installcheck::TMP/holding2";

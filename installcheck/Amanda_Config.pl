@@ -30,6 +30,7 @@ my $testconf;
 my $config_overwrites;
 
 Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 # utility function
 

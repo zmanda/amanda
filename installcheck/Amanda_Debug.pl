@@ -34,6 +34,8 @@ my $kid;
 # set up debugging so debug output doesn't interfere with test results
 Amanda::Debug::dbopen("installcheck");
 Amanda::Debug::dbrename("TESTCONF", "installcheck");
+# note: we don't bother using Installcheck::log_test_output here because
+# sometimes the log files aren't open
 
 # and disable Debug's die() and warn() overrides
 Amanda::Debug::disable_die_override();

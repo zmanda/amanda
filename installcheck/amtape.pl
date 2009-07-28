@@ -30,6 +30,7 @@ use Amanda::Tapelist;
 my $testconf;
 
 Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 $testconf = Installcheck::Run::setup();
 $testconf->write();
