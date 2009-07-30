@@ -19,6 +19,7 @@
 
 use strict;
 use Data::Dumper;
+use File::Path;
 
 # this script is always run as path/to/script -f <statefile> <commands>, and
 # mutates its statefile while giving expected output to the caller.
@@ -34,11 +35,16 @@ use Data::Dumper;
 #  - 'barcodes' -- does the changer have a barcode reader
 #  - 'track_orig' -- does the changer track orig_slot? (-1 = "guess" like IBM 3573-TL)
 #  - 'loaded_slots' -- hash: { slot : barcode }
+#  - 'vtape_root' -- root directory for vfs devices
 
 # the 'state' key is for internal use only, and has keys:
 #  - 'slots' -- hash: { slot => barcode }
 #  - 'drives' -- hash: { slot => [ barcode, orig_slot ] }
 #	    (if orig_slot is -1, prints "Unkown")
+
+# if 'vtape_root' is specified, it should be an empty directory in which this
+# script will create a 'driveN' subdirectory for each drive and a 'slotN'
+# subdirectory for each loaded slot.  All loaded vtapes will be "blank".
 
 my $STATE;
 my $CONFIG;
@@ -69,6 +75,7 @@ sub load_statefile {
 	$S = $STATE->{'state'} = {};
 	$S->{'slots'} = { %{$CONFIG->{'loaded_slots'}} };
 	$S->{'drives'} = {};
+	setup_vtape_root($CONFIG->{'vtape_root'}) if $CONFIG->{'vtape_root'};
     } else {
 	$S = $STATE->{'state'};
     }
@@ -83,6 +90,16 @@ sub write_statefile {
     open(my $fh, ">", $statefile);
     print $fh Data::Dumper->Dump([$STATE], ["STATE"]);
     close($fh);
+}
+
+sub setup_vtape_root {
+    my ($vtape_root) = @_;
+
+    # just mkdir slotN/data for each *loaded* slot; these become the "volumes"
+    # that we subsequently shuffle around
+    for my $slot (keys %{$CONFIG->{'loaded_slots'}}) {
+	mkpath("$vtape_root/slot$slot/data");
+    }
 }
 
 sub lowest_unoccupied_slot {
@@ -112,7 +129,9 @@ EOF
 
 sub status {
     printf "  Storage Changer $statefile:%s Drives, %s Slots ( %s Import/Export )\n",
-	$CONFIG->{'num_drives'}, $CONFIG->{'num_slots'}, $CONFIG->{'num_ie'};
+	$CONFIG->{'num_drives'},
+	$CONFIG->{'num_slots'} + $CONFIG->{'num_ie'},
+	$CONFIG->{'num_ie'};
 
     # this is more complicated than you'd think!
 
@@ -201,6 +220,10 @@ sub load {
     # ok, good to go
     $S->{'drives'}->{$dst} = [ $S->{'slots'}->{$src}, $src ];
     $S->{'slots'}->{$src} = undef;
+
+    if (my $vr = $CONFIG->{'vtape_root'}) {
+	rename("$vr/slot$src", "$vr/drive$dst") or die("renaming slot to drive: $!");
+    }
 }
 
 sub unload {
@@ -224,6 +247,10 @@ sub unload {
     # ok, good to go
     $S->{'slots'}->{$dst} = $S->{'drives'}->{$src}->[0];
     $S->{'drives'}->{$src} = undef;
+
+    if (my $vr = $CONFIG->{'vtape_root'}) {
+	rename("$vr/drive$src", "$vr/slot$dst") or die("renaming drive to slot: $!");
+    }
 }
 
 sub transfer {
@@ -244,10 +271,22 @@ sub transfer {
     # ok, good to go
     $S->{'slots'}->{$dst} = $S->{'slots'}->{$src};
     $S->{'slots'}->{$src} = undef;
+
+    if (my $vr = $CONFIG->{'vtape_root'}) {
+	rename("$vr/slot$src", "$vr/slot$dst") or die("renaming slot to slot: $!");
+    }
 }
 
 load_statefile();
 my $op = $ARGV[0];
+
+# override the config when given 'nobarcode'
+if ($op eq 'nobarcode') {
+    $CONFIG->{'barcodes'} = 0;
+    shift @ARGV;
+    $op = $ARGV[0];
+}
+
 if ($op eq 'inquiry') {
     inquiry();
 } elsif ($op eq 'status') {

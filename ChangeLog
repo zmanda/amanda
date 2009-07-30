@@ -1,3 +1,8 @@
+2009-07-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/mock/mtx.pl: mock fixes - count IE slots in 'Slots',
+	  shuffle vtapes instead of linking, and support 'nobarcode'
+	* installcheck/mock_mtx.pl: test it
+
 2009-07-28  Nikolas Coukouma <atrus@zmanda.com>
 	* installcheck/Installcheck.pm: Add a function for including Test::More
 	  messages in debug logs (and document it). Move mkpath($TMP) into an

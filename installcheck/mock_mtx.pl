@@ -16,14 +16,16 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 28;
+use Test::More tests => 31;
 use File::Path;
 use strict;
 
 use lib "@amperldir@";
+use Installcheck;
 use Installcheck::Mock qw( setup_mock_mtx );
 use Installcheck::Run qw( run run_get run_err );
 
+my $vtape_root = "$Installcheck::TMP/mock_mtx_vtapes";
 my $mtx_state_file = setup_mock_mtx (
 	 barcodes => 1,
 	 track_orig => 1,
@@ -33,6 +35,7 @@ my $mtx_state_file = setup_mock_mtx (
 	 first_slot => 1,
 	 first_drive => 0,
 	 first_ie => 6,
+	 vtape_root => $vtape_root,
 	 loaded_slots => {
 	     1 => '023984',
 	     3 => '978344',
@@ -50,7 +53,7 @@ unless(like(run_get('mock/mtx', '-f', $mtx_state_file, 'inquiry'),
 }
 
 like(run_get('mock/mtx', '-f', $mtx_state_file, 'status'),
-    qr{  Storage Changer .*:2 Drives, 5 Slots \( 1 Import/Export \)
+    qr{  Storage Changer .*:2 Drives, 6 Slots \( 1 Import/Export \)
 Data Transfer Element 0:Empty
 Data Transfer Element 1:Empty
       Storage Element 1:Full :VolumeTag=023984
@@ -76,8 +79,10 @@ like(run_err('mock/mtx', '-f', $mtx_state_file, 'unload', '3', '0'),
 ok(run('mock/mtx', '-f', $mtx_state_file, 'load', '1', '0'),
     "mtx load 1 0");
 
+ok(-d "$vtape_root/drive0/data", "fake vfs drive loaded");
+
 like(run_get('mock/mtx', '-f', $mtx_state_file, 'status'),
-    qr{  Storage Changer .*:2 Drives, 5 Slots \( 1 Import/Export \)
+    qr{  Storage Changer .*:2 Drives, 6 Slots \( 1 Import/Export \)
 Data Transfer Element 0:Full \(Storage Element 1 Loaded\):VolumeTag=023984
 Data Transfer Element 1:Empty
       Storage Element 1:Empty
@@ -95,8 +100,11 @@ like(run_err('mock/mtx', '-f', $mtx_state_file, 'load', '3', '0'),
 ok(run('mock/mtx', '-f', $mtx_state_file, 'unload', '2', '0'),
     "mtx unload 2 0");
 
+ok(! -d "$vtape_root/drive0/data", "fake vfs drive unloaded");
+ok(-d "$vtape_root/slot2/data", "fake vfs slot re-populated");
+
 like(run_get('mock/mtx', '-f', $mtx_state_file, 'status'),
-    qr{  Storage Changer .*:2 Drives, 5 Slots \( 1 Import/Export \)
+    qr{  Storage Changer .*:2 Drives, 6 Slots \( 1 Import/Export \)
 Data Transfer Element 0:Empty
 Data Transfer Element 1:Empty
       Storage Element 1:Empty
@@ -119,7 +127,7 @@ ok(run('mock/mtx', '-f', $mtx_state_file, 'transfer', '2', '4'),
     "mtx transfer 2 4");
 
 like(run_get('mock/mtx', '-f', $mtx_state_file, 'status'),
-    qr{  Storage Changer .*:2 Drives, 5 Slots \( 1 Import/Export \)
+    qr{  Storage Changer .*:2 Drives, 6 Slots \( 1 Import/Export \)
 Data Transfer Element 0:Empty
 Data Transfer Element 1:Empty
       Storage Element 1:Empty
@@ -129,6 +137,8 @@ Data Transfer Element 1:Empty
       Storage Element 5:Empty
       Storage Element 6 IMPORT/EXPORT:Empty},
     "mtx status shows results");
+
+rmtree($vtape_root);
 
 ##
 # Without barcodes, with track orig
