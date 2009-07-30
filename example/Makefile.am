@@ -5,7 +5,8 @@ include $(top_srcdir)/config/automake/installperms.am
 
 amanda_dir    = $(amdatadir)
 templatedir   = $(amanda_dir)/template.d
-exampledir    = $(amanda_dir)/example
+server_exampledir    = $(amanda_dir)/example
+client_exampledir    = $(amanda_dir)/example
 lbltempldir   = $(amanda_dir)/example/label-templates
 
 template_DATA = template.d/advanced.conf \
@@ -18,16 +19,17 @@ template_DATA = template.d/advanced.conf \
 		template.d/README   \
 		template.d/chg-manual.conf   
 
-example_DATA = amanda.conf \
-	       amanda-client.conf \
-	       amanda-client-postgresql.conf \
-	       inetd.conf.amandaclient \
+server_example_DATA = amanda.conf \
 	       inetd.conf.amandaserver \
-	       xinetd.amandaclient \
 	       xinetd.amandaserver \
 	       chg-multi.conf \
 	       chg-scsi.conf \
 	       disklist
+
+client_example_DATA = amanda-client.conf \
+	       amanda-client-postgresql.conf \
+	       inetd.conf.amandaclient \
+	       xinetd.amandaclient
 
 lbltempl_DATA = DLT.ps \
                 EXB-8500.ps \
@@ -46,8 +48,19 @@ CLEANFILES += config.log
 
 # figure out whether to put foo.in or foo itself into the dist tarball, based on whether
 # foo.in exists.
-EXAMPLE_FILES = $(template_DATA) $(example_DATA) $(lbltempl_DATA)
-DISTCLEANFILES += $(EXAMPLE_FILES)
+
+# Start with only client examples
+EXAMPLE_FILES = $(client_example_DATA)
+if WANT_SERVER
+EXAMPLE_FILES += $(template_DATA) $(server_example_DATA) $(lbltempl_DATA)
+endif
+
+# Add all example files because the .in rule will make them regardless
+DISTCLEANFILES += $(template_DATA) \
+	$(server_example_DATA) \
+	$(client_example_DATA) \
+	$(lbltempl_DATA)
+
 dist-example-files:
 	@EXAMPLE_FILES="$(EXAMPLE_FILES)"; \
 	for file in $$EXAMPLE_FILES; do \
