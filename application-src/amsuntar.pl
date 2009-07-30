@@ -219,7 +219,7 @@ sub command_backup {
 
    $self->validate_inexclude();
    my $mesgout_fd;
-   open($mesgout_fd, '>&=3') || die();
+   open($mesgout_fd, '>&=3') || die("Failed to open fd 3 (mesgout)");
    $self->{mesgout} = $mesgout_fd;
 
    my(@cmd) = $self->build_command();
@@ -468,9 +468,6 @@ sub build_command {
    my(@optparams) = ();
 
    $self->validate_inexclude();
-   my $mesgout_fd;
-   open($mesgout_fd, '>&=3') || die();
-   $self->{mesgout} = $mesgout_fd;
 
    if($self->{extended_header} =~ /^YES$/i) {
       $cmd .= "E";
