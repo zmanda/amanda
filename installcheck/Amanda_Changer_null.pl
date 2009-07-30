@@ -78,7 +78,9 @@ my $chg = Amanda::Changer->new("chg-null:");
 	is($res->{'device'}->device_name, 'null:',
 	    "returns correct device name");
 
-	Amanda::MainLoop::quit();
+	$res->release(finished_cb => sub {
+	    Amanda::MainLoop::quit();
+	});
     });
 
     # start the loop

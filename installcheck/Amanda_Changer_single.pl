@@ -89,7 +89,13 @@ my $chg = Amanda::Changer->new("chg-single:tape:/foo");
 	      reason => 'inuse' },
 	    "second simultaneous reservation rejected");
 
-	Amanda::MainLoop::quit();
+	# release the first reservation
+	$held_res->release(finished_cb => sub {
+	    my ($err) = @_;
+	    die $err if $err;
+
+	    Amanda::MainLoop::quit();
+	});
     });
 
     # start the loop

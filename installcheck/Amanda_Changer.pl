@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 43;
+use Test::More tests => 42;
 use File::Path;
 use strict;
 
@@ -187,7 +187,7 @@ sub new {
     return $self;
 }
 
-sub release {
+sub do_release {
     my $self = shift;
     my %params = @_;
     my $slot = $self->{'slot'};
@@ -238,50 +238,67 @@ is($chg->{'config'}->get_property("testprop"), "testval",
 
 # test loading by label
 {
-    my @labels = ( 'TAPE-02', 'TAPE-00', 'TAPE-03' );
-    my @reservations = ();
-    my $getres;
+    my @labels;
+    my @reservations;
+    my ($getres, $rq_reserved, $relres);
 
     $getres = make_cb('getres' => sub {
+	if (!@labels) {
+	    return $rq_reserved->();
+	}
+
 	my $label = pop @labels;
 
 	$chg->load(label => $label,
                    set_current => ($label eq "TAPE-02"),
 		   res_cb => sub {
-	    my ($err, $reservation) = @_;
+	    my ($err, $res) = @_;
 	    ok(!$err, "no error loading $label")
 		or diag($err);
 
 	    # keep this reservation
-	    if ($reservation) {
-		push @reservations, $reservation;
-	    }
+	    push @reservations, $res if $res;
 
 	    # and start on the next
-	    if (@labels) {
-		$getres->();
-		return;
-	    } else {
-		# try to load an already-reserved volume
-		$chg->load(label => 'TAPE-00',
-			   res_cb => sub {
-		    my ($err, $reservation) = @_;
-		    ok($err, "error when requesting already-reserved volume");
-		    Amanda::MainLoop::quit();
-		});
-	    }
+	    $getres->();
+	});
+    });
+
+    $rq_reserved = make_cb(rq_reserved => sub {
+	# try to load an already-reserved volume
+	$chg->load(label => 'TAPE-00',
+		   res_cb => sub {
+	    my ($err, $res) = @_;
+	    ok($err, "error when requesting already-reserved volume");
+	    push @reservations, $res if $res;
+
+	    $relres->();
+	});
+    });
+
+    $relres = make_cb('relres' => sub {
+	if (!@reservations) {
+	    return Amanda::MainLoop::quit();
+	}
+
+	my $res = pop @reservations;
+	$res->release(finished_cb => sub {
+	    my ($err) = @_;
+	    die $err if $err;
+
+	    $relres->();
 	});
     });
 
     # start the loop
+    @labels = ( 'TAPE-02', 'TAPE-00', 'TAPE-03' );
     $getres->();
     Amanda::MainLoop::run();
 
-    # ditch the reservations and do it all again
-    @reservations = ();
+    $relres->();
+    Amanda::MainLoop::run();
+
     @labels = ( 'TAPE-00', 'TAPE-01' );
-    is_deeply($chg->{'reserved_slots'}, [],
-	"reservations are released when the Reservation object goes out of scope");
     $getres->();
     Amanda::MainLoop::run();
 
@@ -293,7 +310,8 @@ is($chg->{'config'}->get_property("testprop"), "testval",
 
 # test loading by slot
 {
-    my ($start, $first_cb, $second_cb);
+    my ($start, $first_cb, $released, $second_cb, $quit);
+    my $slot;
 
     # reserves the current slot
     $start = make_cb('start' => sub {
@@ -309,7 +327,16 @@ is($chg->{'config'}->get_property("testprop"), "testval",
             "'current' slot loads slot 2");
         is($res->{'device'}->device_name, "null:slot-2",
             "..device is correct");
-        $chg->load(res_cb => $second_cb, relative_slot => 'next', slot => $res->{'this_slot'}, set_current => 1);
+
+	$slot = $res->{'this_slot'};
+	$res->release(finished_cb => $released);
+    });
+
+    $released = make_cb(released => sub {
+	my ($err) = @_;
+
+        $chg->load(res_cb => $second_cb, relative_slot => 'next',
+		   slot => $slot, set_current => 1);
     });
 
     # gets a reservation for the "next" slot
@@ -322,6 +349,13 @@ is($chg->{'config'}->get_property("testprop"), "testval",
         is($chg->{'curslot'}, 3,
             "..which is also now the current slot");
 
+	$res->release(finished_cb => $quit);
+    });
+
+    $quit = make_cb(quit => sub {
+	my ($err) = @_;
+	die $err if $err;
+
         Amanda::MainLoop::quit();
     });
 
@@ -331,7 +365,8 @@ is($chg->{'config'}->get_property("testprop"), "testval",
 
 # test set_label
 {
-    my ($start, $load1_cb, $set_cb, $load2_cb, $load3_cb);
+    my ($start, $load1_cb, $set_cb, $released, $load2_cb, $released2, $load3_cb);
+    my $res;
 
     # load TAPE-00
     $start = make_cb('start' => sub {
@@ -340,16 +375,21 @@ is($chg->{'config'}->get_property("testprop"), "testval",
 
     # rename it to TAPE-99
     $load1_cb = make_cb('load1_cb' => sub {
-        my ($err, $res) = @_;
+        (my $err, $res) = @_;
         die $err if $err;
 
         pass("loaded TAPE-00");
         $res->set_label(label => "TAPE-99", finished_cb => $set_cb);
-        $res->release();
+    });
+
+    $set_cb = make_cb('set_cb' => sub {
+	my ($err) = @_;
+
+	$res->release(finished_cb => $released);
     });
 
     # try to load TAPE-00
-    $set_cb = make_cb('set_cb' => sub {
+    $released = make_cb('released' => sub {
         my ($err) = @_;
         die $err if $err;
 
@@ -359,18 +399,25 @@ is($chg->{'config'}->get_property("testprop"), "testval",
 
     # try to load TAPE-99
     $load2_cb = make_cb('load2_cb' => sub {
-        my ($err, $res) = @_;
-
+        (my $err, $res) = @_;
         ok($err, "loading TAPE-00 is now an error");
+
         $chg->load(res_cb => $load3_cb, label => "TAPE-99");
     });
 
     # check result
     $load3_cb = make_cb('load3_cb' => sub {
-        my ($err, $res) = @_;
+        (my $err, $res) = @_;
         die $err if $err;
 
         pass("but loading TAPE-99 is ok");
+
+	$res->release(finished_cb => $released2);
+    });
+
+    $released2 = make_cb(released2 => sub {
+	my ($err) = @_;
+	die $err if $err;
 
         Amanda::MainLoop::quit();
     });

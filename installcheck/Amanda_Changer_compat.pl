@@ -75,10 +75,10 @@ my ($check_res_cb, $check_finished_cb);
     my $expected_err_info;
     my $expected_dev;
     my $msg;
+    my $quit;
 
     $check_res_cb = make_cb('check_res_cb' => sub {
 	my ($err, $res) = @_;
-	Amanda::MainLoop::quit();
 
 	if ($err) {
 	    if (defined($expected_err_info)) {
@@ -95,11 +95,16 @@ my ($check_res_cb, $check_finished_cb);
 		diag("Unexpected reservation");
 	    }
 	}
+
+	if ($res) {
+	    $res->release(finished_cb => $quit);
+	} else {
+	    $quit->();
+	}
     });
 
     $check_finished_cb = make_cb('check_finished_cb' => sub {
-	my ($err) = @_;
-	Amanda::MainLoop::quit();
+	my ($err, $res) = @_;
 
 	if ($err) {
 	    if (defined($expected_err_info)) {
@@ -116,6 +121,19 @@ my ($check_res_cb, $check_finished_cb);
 		diag("Unexpected success");
 	    }
 	}
+
+	if ($res) {
+	    $res->release(finished_cb => $quit);
+	} else {
+	    $quit->();
+	}
+    });
+
+    $quit = make_cb(quit => sub {
+	my ($err) = @_;
+	die $err if $err;
+
+	Amanda::MainLoop::quit();
     });
 
     sub try_run_changer {
@@ -314,8 +332,9 @@ $chg = Amanda::Changer->new();
 die($chg) if $chg->isa("Amanda::Changer::Error");
 
 {
+    my $res;
     my ($get_info, $load_current, $label_current, $load_next,
-        $release_next, $load_by_label, $check_by_label);
+        $released1, $release_next, $load_by_label, $check_by_label);
 
     $get_info = make_cb('get_info' => sub {
         $chg->info(info_cb => $load_current, info => [ 'num_slots', 'fast_search' ]);
@@ -334,7 +353,7 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
     });
 
     $label_current = make_cb('label_current' => sub {
-        my ($err, $res) = @_;
+        (my $err, $res) = @_;
         die $err if ($err);
 
         pass("seek to current slot succeeded");
@@ -355,11 +374,18 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 
         pass("set_label succeeded");
 
+	$res->release(finished_cb => $released1);
+    });
+
+    $released1 = make_cb(released1 => sub {
+	my ($err) = @_;
+	die $err if $err;
+
         $chg->load(relative_slot => "next", res_cb => $release_next);
     });
 
     $release_next = make_cb('release_next' => sub {
-        my ($err, $res) = @_;
+        (my $err, $res) = @_;
         die $err if ($err);
 
         pass("load relative slot 'next' succeeded");
@@ -377,7 +403,7 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
     });
 
     $check_by_label = make_cb('check_by_label' => sub {
-        my ($err, $res) = @_;
+        (my $err, $res) = @_;
         die $err if ($err);
 
         pass("load by label succeeded");
@@ -389,7 +415,12 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
         is($dev->volume_label(), "TESTCONF18",
             "..and finds the right volume");
 
-        Amanda::MainLoop::quit();
+	$res->release(finished_cb => sub {
+	    my ($err) = @_;
+	    die $err if $err;
+
+	    Amanda::MainLoop::quit();
+	});
     });
 
     $get_info->();

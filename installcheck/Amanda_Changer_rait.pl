@@ -323,7 +323,12 @@ label_vtape(3,4,"mytape");
 	is($res->{'this_slot'}, '{1,3,ERROR}',
 	    "returns correct 'this_slot' name, even with different slots");
 
-	$do_reset->();
+	$res->release(finished_cb => sub {
+	    my ($err) = @_;
+	    die $err if $err;
+
+	    $do_reset->();
+	});
     });
 
     # unfortunately, reset, clean, and update are pretty boring with vtapes, so
@@ -337,7 +342,7 @@ label_vtape(3,4,"mytape");
     });
 
     $finished_reset = make_cb('finished_reset' => sub {
-	my ($err, $res) = @_;
+	my ($err) = @_;
 	ok(!$err, "no error resetting");
 
 	Amanda::MainLoop::quit();

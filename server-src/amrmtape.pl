@@ -303,7 +303,12 @@ my $erase_volume = make_cb('erase_volume' => sub {
                     }
                 }
 
-                $scrub_db->();
+		$resv->release(finished_cb => sub {
+		    my ($err) = @_;
+		    die $err if $err;
+
+		    $scrub_db->();
+		});
             });
     } else {
         $scrub_db->();

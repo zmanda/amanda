@@ -85,12 +85,15 @@ chg_err_like($chg,
 $chg = Amanda::Changer->new("chg-disk:$taperoot");
 die($chg) if $chg->isa("Amanda::Changer::Error");
 {
-    my @slots = ( 1, 3, 5 );
+    my @slots = ();
     my @reservations = ();
-    my $getres;
+    my ($release, $getres, $tryreserved);
 
-    $getres = make_cb('getres' => sub {
+    $getres = make_cb(getres => sub {
 	my $slot = pop @slots;
+	if (!defined $slot) {
+	    return $tryreserved->();
+	}
 
 	$chg->load(slot => $slot,
                    set_current => ($slot == 5),
@@ -105,31 +108,43 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 	    }
 
 	    # and start on the next
-	    if (@slots) {
-		$getres->();
-		return;
-	    } else {
-		# try to load an already-reserved slot
-		$chg->load(slot => 3,
-			   res_cb => sub {
-		    my ($err, $reservation) = @_;
-		    chg_err_like($err,
-			{ message => qr/Slot 3 is already in use by drive/,
-			  type => 'failed',
-			  reason => 'inuse' },
-			"error when requesting already-reserved slot");
-		    Amanda::MainLoop::quit();
-		});
-	    }
+	    $getres->();
 	}));
     });
 
+    $tryreserved = make_cb(tryreserved => sub {
+	# try to load an already-reserved slot
+	$chg->load(slot => 3,
+		   res_cb => sub {
+	    my ($err, $reservation) = @_;
+	    chg_err_like($err,
+		{ message => qr/Slot 3 is already in use by drive/,
+		  type => 'failed',
+		  reason => 'inuse' },
+		"error when requesting already-reserved slot");
+	    $release->();
+	});
+    });
+
+    $release = make_cb(release => sub {
+	my $res = pop @reservations;
+	if (!defined $res) {
+	    return Amanda::MainLoop::quit();
+	}
+
+	$res->release(finished_cb => sub {
+	    my ($err) = @_;
+	    die $err if $err;
+	    $release->();
+	});
+    });
+
     # start the loop
+    @slots = ( 1, 3, 5 );
     $getres->();
     Amanda::MainLoop::run();
 
-    # ditch the reservations and do it all again
-    @reservations = ();
+    # and try it with some different slots, just to see
     @slots = ( 4, 2, 3 );
     $getres->();
     Amanda::MainLoop::run();
@@ -140,53 +155,79 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 # check relative slot ("current" and "next") functionality
 {
     # load the "current" slot, which should be 3
-    my ($load_current, $check_current_cb, $check_next_cb, $reset_finished_cb, $check_reset_cb);
+    my %subs;
+    my $slot;
 
-    $load_current = make_cb('load_current' => sub {
-	$chg->load(relative_slot => "current", res_cb => $check_current_cb);
+    $subs{'load_current'} = make_cb('load_current' => sub {
+	$chg->load(relative_slot => "current", res_cb => $subs{'check_current_cb'});
     });
 
-    $check_current_cb = make_cb('check_current_cb' => sub {
+    $subs{'check_current_cb'} = make_cb('check_current_cb' => sub {
         my ($err, $res) = @_;
         die $err if $err;
 
         is_pointing_to($res, 5, "'current' is slot 5");
+	$slot = $res->{'this_slot'};
 
-        $chg->load(relative_slot => 'next', slot => $res->{'this_slot'}, res_cb => $check_next_cb);
+	$res->release(finished_cb => $subs{'released1'});
     });
 
-    $check_next_cb = make_cb('check_next_cb' => sub {
+    $subs{'released1'} = make_cb(released1 => sub {
+	my ($err) = @_;
+	die $err if $err;
+
+        $chg->load(relative_slot => 'next', slot => $slot,
+		   res_cb => $subs{'check_next_cb'});
+    });
+
+    $subs{'check_next_cb'} = make_cb('check_next_cb' => sub {
         my ($err, $res) = @_;
         die $err if $err;
 
         is_pointing_to($res, 1, "'next' from there is slot 1");
 
-        $chg->reset(finished_cb => $reset_finished_cb);
+	$res->release(finished_cb => $subs{'released2'});
     });
 
-    $reset_finished_cb = make_cb('reset_finished_cb' => sub {
+    $subs{'released2'} = make_cb(released1 => sub {
+	my ($err) = @_;
+	die $err if $err;
+
+        $chg->reset(finished_cb => $subs{'reset_finished_cb'});
+    });
+
+    $subs{'reset_finished_cb'} = make_cb('reset_finished_cb' => sub {
         my ($err) = @_;
         die $err if $err;
 
-	$chg->load(relative_slot => "current", res_cb => $check_reset_cb);
+	$chg->load(relative_slot => "current", res_cb => $subs{'check_reset_cb'});
     });
 
-    $check_reset_cb = make_cb('check_reset_cb' => sub {
+    $subs{'check_reset_cb'} = make_cb('check_reset_cb' => sub {
         my ($err, $res) = @_;
         die $err if $err;
 
         is_pointing_to($res, 1, "after reset, 'current' is slot 1");
 
+	$res->release(finished_cb => $subs{'released3'});
+    });
+
+    $subs{'released3'} = make_cb(released1 => sub {
+	my ($err) = @_;
+	die $err if $err;
+
         Amanda::MainLoop::quit();
     });
 
-    $load_current->();
+    $subs{'load_current'}->();
     Amanda::MainLoop::run();
 }
 
 # test loading relative_slot "next"
 {
-    my $load_next = make_cb('load_next' => sub {
+    my %subs;
+
+    $subs{'load_next'} = make_cb(load_next => sub {
         $chg->load(relative_slot => "next",
             res_cb => sub {
                 my ($err, $res) = @_;
@@ -194,12 +235,23 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 
                 is_pointing_to($res, 2, "loading relative slot 'next' loads the correct slot");
 
-                Amanda::MainLoop::quit();
+		$subs{'release'}->($res);
             }
         );
     });
 
-    $load_next->();
+    $subs{'release'} = make_cb(release => sub {
+	my ($res) = @_;
+
+	$res->release(finished_cb => sub {
+	    my ($err) = @_;
+	    die $err if $err;
+
+	    Amanda::MainLoop::quit();
+	});
+    });
+
+    $subs{'load_next'}->();
     Amanda::MainLoop::run();
 }
 
@@ -247,7 +299,12 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 
         is_pointing_to($res, 4, "labeled volume found in slot 4");
 
-        Amanda::MainLoop::quit();
+	$res->release(finished_cb => sub {
+	    my ($err) = @_;
+	    die $err if $err;
+
+	    Amanda::MainLoop::quit();
+	});
     });
 
     # label slot 4, using our own symlink

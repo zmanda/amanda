@@ -955,6 +955,7 @@ sub with_locked_state {
 package Amanda::Changer::Error;
 use Amanda::Debug qw( :logging );
 use Carp qw( cluck );
+use Amanda::Debug;
 use overload
     '""' => sub { $_[0]->{'message'}; },
     'cmp' => sub { $_[0]->{'message'} cmp $_[1]; };
@@ -1024,12 +1025,8 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     if (!$self->{'released'}) {
-	$self->release(finished_cb => sub {
-	    my ($err) = @_;
-	    if (defined $err) {
-		warn "While releasing reservation: $err";
-	    }
-	});
+	Amanda::Debug::warning("Changer reservation for slot '$self->{this_slot}' has " .
+			       "gone out of scope without release");
     }
 }
 
