@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 16;
+use Test::More tests => 17;
 use File::Path;
 use strict;
 use warnings;
@@ -318,6 +318,29 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
     rmtree("$taperoot/tmp");
 
     $get_info->();
+    Amanda::MainLoop::run();
+}
+
+# inventory is pretty cool
+{
+    my $try_inventory = make_cb('try_inventory' => sub {
+        $chg->inventory(inventory_cb => make_cb(sub {
+	    my ($err, $inv) = @_;
+	    die $err if $err;
+
+	    is_deeply($inv, [
+	      { label => '', empty => 0, reserved => 0, slot => 1 },
+	      { label => '', empty => 0, reserved => 0, slot => 2 },
+	      { label => '', empty => 0, reserved => 0, slot => 3 },
+	      { label => "FOO?BAR", empty => 0, reserved => 0, slot => 4 },
+	      { label => '', empty => 0, reserved => 0, slot => 5 },
+		], "inventory finds the labeled tape");
+
+	    Amanda::MainLoop::quit();
+	}));
+    });
+
+    $try_inventory->();
     Amanda::MainLoop::run();
 }
 

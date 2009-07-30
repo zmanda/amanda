@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 38;
+use Test::More tests => 41;
 use File::Path;
 use strict;
 
@@ -105,6 +105,7 @@ label_vtape(3,4,"mytape");
 	$do_load_slot_nobraces, $got_res_slot_nobraces,
 	$do_load_slot_failure, $got_res_slot_failure,
 	$do_load_slot_multifailure, $got_res_slot_multifailure,
+	$do_inventory, $got_inventory,
     );
 
     $get_info = make_cb('get_info' => sub {
@@ -257,6 +258,28 @@ label_vtape(3,4,"mytape");
 	      reason => 'notfound' },
 	    "failure of multiple chilren to load a slot is correctly propagated");
 
+	$do_inventory->();
+    });
+
+    $do_inventory = make_cb('do_inventory' => sub {
+	$chg->inventory(inventory_cb => $got_inventory);
+    });
+
+    $got_inventory = make_cb('got_inventory' => sub {
+	my ($err, $inv) = @_;
+	die $err if $err;
+
+	is_deeply($inv,  [
+          { empty => 0, label => undef, reserved => 0, # undef because labels don't match
+	    slot => '{1,1,1}', import_export => undef },
+          { empty => 0, label => '', reserved => 0, # all blank
+	    slot => '{2,2,2}', import_export => undef },
+          { empty => 0, label => undef, reserved => 0, # mismatched labels
+	    slot => '{3,3,3}', import_export => undef },
+          { empty => 0, label => undef, reserved => 0, # mismatched labels
+	    slot => '{4,4,4}', import_export => undef } ,
+        ], "inventory is correct");
+
 	Amanda::MainLoop::quit();
     });
 
@@ -353,6 +376,46 @@ label_vtape(3,4,"mytape");
     Amanda::MainLoop::run();
 }
 
+# test inventory under "normal" circumstances
+reset_taperoot();
+label_vtape(1,1,"mytape-1");
+label_vtape(2,1,"mytape-1");
+label_vtape(3,1,"mytape-1");
+label_vtape(1,2,"mytape-2");
+label_vtape(2,2,"mytape-2");
+label_vtape(3,2,"mytape-2");
+{
+    my ($do_inventory, $got_inventory);
+
+    my $chg = Amanda::Changer->new("chg-rait:chg-disk:$tapebase/{1,2,3}");
+    pass("Create 3-way RAIT of vtapes with correctly-labeled children");
+
+    $do_inventory = make_cb('do_inventory' => sub {
+	$chg->inventory(inventory_cb => $got_inventory);
+    });
+
+    $got_inventory = make_cb('got_inventory' => sub {
+	my ($err, $inv) = @_;
+	die $err if $err;
+
+	is_deeply($inv,  [
+          { empty => 0, label => 'mytape-1', reserved => 0,
+	    slot => '{1,1,1}', import_export => undef },
+          { empty => 0, label => 'mytape-2', reserved => 0,
+	    slot => '{2,2,2}', import_export => undef },
+          { empty => 0, label => '', reserved => 0,
+	    slot => '{3,3,3}', import_export => undef },
+          { empty => 0, label => '', reserved => 0,
+	    slot => '{4,4,4}', import_export => undef } ,
+        ], "inventory is correct");
+
+	Amanda::MainLoop::quit();
+    });
+
+    # start the loop
+    Amanda::MainLoop::call_later($do_inventory);
+    Amanda::MainLoop::run();
+}
 ##
 # Test configuring the device with device_property
 

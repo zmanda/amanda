@@ -26,7 +26,7 @@ use vars qw( @ISA );
 use File::Glob qw( :glob );
 use File::Path;
 use Amanda::Config qw( :getconf );
-use Amanda::Debug;
+use Amanda::Debug qw( debug warning );
 use Amanda::Util qw( :alternates );
 use Amanda::Changer;
 use Amanda::MainLoop;
@@ -387,6 +387,47 @@ sub _mk_simple_op {
     *eject = _mk_simple_op("eject");
 }
 
+sub inventory {
+    my $self = shift;
+    my %params = @_;
+
+    return if $self->check_error($params{'inventory_cb'});
+
+    my $all_kids_done_cb = sub {
+	my ($kid_results) = @_;
+	if (grep { defined($_->[0]) } @$kid_results) {
+	    # we have errors, so collect them and make a "combined" error.
+	    my @annotated_errs;
+	    for my $i (0 .. $self->{'num_children'}-1) {
+		my $kr = $kid_results->[$i];
+		next unless defined($kr->[0]);
+		push @annotated_errs,
+		    [ $self->{'child_names'}[$i], $kr->[0] ];
+	    }
+	    return $self->make_combined_error(
+		$params{'inventory_cb'}, [ @annotated_errs ]);
+	}
+
+	my $inv = $self->_merge_inventories($kid_results);
+	if (!defined $inv) {
+	    return $self->make_error("failed", $params{'inventory_cb'},
+		    reason => "notimpl",
+		    message => "could not generate consistent inventory from rait child changers");
+	}
+
+	$params{'inventory_cb'}->(undef, $inv);
+    };
+
+    $self->_for_each_child(
+	oksub => sub {
+	    my ($kid_chg, $kid_cb) = @_;
+	    $kid_chg->inventory(inventory_cb => $kid_cb);
+	},
+	errsub => undef,
+	parent_cb => $all_kids_done_cb,
+    );
+}
+
 # Takes keyword parameters 'oksub', 'errsub', 'parent_cb', and 'args'.  For
 # each child, runs $oksub (or, if the child is "ERROR", $errsub), passing it
 # the changer, an aggregating callback, and the corresponding element from
@@ -437,6 +478,91 @@ sub _for_each_child {
 	    $oksub->($child, $child_cb, $arg) if $oksub;
 	}
     }
+}
+
+sub _merge_inventories {
+    my $self = shift;
+    my ($kid_results) = @_;
+
+    my @combined;
+    for my $kid_result (@$kid_results) {
+	my $kid_inv = $kid_result->[1];
+
+	if (!@combined) {
+	    for my $x (@$kid_inv) {
+		push @combined, {
+		    label => undef, barcode => [],
+		    empty => 0, reserved => 0, slot => [],
+		    import_export => 1, loaded_in => [],
+		};
+	    }
+	}
+
+	# if the results have different lengths, then we'll just call it
+	# not implemented; otherwise, we assume that the order of the slots
+	# in each child changer is the same.
+	if (scalar @combined != scalar @$kid_inv) {
+	    warning("child changers returned different-length inventories; cannot merge");
+	    return undef;
+	}
+
+	my $i;
+	for ($i = 0; $i < @combined; $i++) {
+	    my $c = $combined[$i];
+	    my $k = $kid_inv->[$i];
+
+	    # mismatches here are just warnings
+	    if (defined $c->{'label'}) {
+		if (defined $k->{'label'} and $c->{'label'} ne $k->{'label'}) {
+		    warning("child changers have different labels in slot at index $i");
+		    $c->{'label_mismatch'} = 1;
+		    $c->{'label'} = undef;
+		}
+	    } else {
+		if (!$c->{'label_mismatch'}) {
+		    $c->{'label'} = $k->{'label'};
+		}
+	    }
+
+	    # a slot is empty if any of the child slots are empty
+	    $c->{'empty'} = $c->{'empty'} || $k->{'empty'};
+
+	    # a slot is reserved if any of the child slots are reserved
+	    $c->{'reserved'} = $c->{'reserved'} || $k->{'reserved'};
+
+	    # a slot is import-export if all of the child slots are import_export
+	    $c->{'import_export'} = $c->{'import_export'} && $k->{'import_export'};
+
+	    # barcodes, slots, and loaded_in are lists
+	    push @{$c->{'slot'}}, $k->{'slot'};
+	    push @{$c->{'barcode'}}, $k->{'barcode'};
+	    push @{$c->{'loaded_in'}}, $k->{'loaded_in'};
+	}
+    }
+
+    # now post-process the slots, barcodes, and loaded_in into braced-alternates notation
+    my $i;
+    for ($i = 0; $i < @combined; $i++) {
+	my $c = $combined[$i];
+
+	delete $c->{'label_mismatch'} if $c->{'label_mismatch'};
+
+	$c->{'slot'} = collapse_braced_alternates([ @{$c->{'slot'}} ]);
+
+	if (grep { !defined $_ } @{$c->{'barcode'}}) {
+	    delete $c->{'barcode'};
+	} else {
+	    $c->{'barcode'} = collapse_braced_alternates([ @{$c->{'barcode'}} ]);
+	}
+
+	if (grep { !defined $_ } @{$c->{'loaded_in'}}) {
+	    delete $c->{'loaded_in'};
+	} else {
+	    $c->{'loaded_in'} = collapse_braced_alternates([ @{$c->{'loaded_in'}} ]);
+	}
+    }
+
+    return [ @combined ];
 }
 
 package Amanda::Changer::rait::Reservation;

@@ -60,10 +60,6 @@ Amanda::Changer -- interface to changer scripts
     # later..
     $reservation->release(finished_cb => $start_next_volume);
 
-=head1 API STATUS
-
-This interface will change before the next release.
-
 =head1 INTERFACE
 
 All operations in the module return immediately, and take as an argument a
@@ -288,6 +284,57 @@ reconfiguring the changer, etc. -- that may have invalidated the
 database.  C<$changed> is a changer-specific string indicating what has
 changed; if it is omitted, the changer will check everything.
 
+=head3 $chg->inventory(inventory_cb => $cb)
+
+The C<inventory_cb> is called with an error object as the first parameter, or
+C<undef> if no error occurs.  The second parameter is an arrayref containing an
+ordered list of information about the slots in the changer.  The order will
+make some sense to the user, but may change from one invocation to another.
+Note that not all changers support the C<inventory> method, and those that do
+not will return a C<'notimpl'> failure.
+
+Each slot is represented by a hash with the following keys:
+
+=over 4
+
+=item slot
+
+The slot name
+
+=item empty
+
+Set to C<1> if the slot is empty -- meaning no media is available in the slot.
+A blank or erased volume is not the same as an empty slot.
+
+=item label
+
+The label on the volume in this slot, or undef if the label is unknown.  If the
+volume is known to be blank, then this field should contain an empty string.
+
+=item barcode (optional)
+
+The barcode for the volume in this slot, if barcodes are available.
+
+=item reserved
+
+Set to C<1> if this slot is reserved, either by this process or another
+process.  This is only set for I<exclusive> reservations, meaning that loading
+the slot would result in an C<inuse> error.  Devices which can support
+concurrent access will never set this flag.
+
+=item loaded_in (optional)
+
+For changers which have distinct user-visible drives, this gives the drive
+currently accessing the volume in this slot.
+
+=item import_export (optional)
+
+Set to C<1> if this is an import-export slot -- a slot in which the user can
+easily add or remove volumes.  This information may be useful for operations to
+bulk-import newly-inserted tapes or bulk-export a set of tapes.
+
+=back
+
 =head3 $chg->move(finished_cb => $cb, from_slot => $from, to_slot => $to)
 
 Move a volume between two slots in the changer. These slots are provided by the
@@ -478,15 +525,10 @@ keys to the hash.  Serialization is currently handled with L<Data::Dumper>.
 
 =head1 SEE ALSO
 
+The Amanda Wiki (http://wiki.zmanda.com) has a higher-level description of the
+changer model implemented by this package.
+
 See amanda-changers(7) for user-level documentation of the changer implementations.
-
-=head1 TODO
-
- - support loading by barcode, showing barcodes in reservations
- - support deadlock avoidance by returning more information in load errors
-   - drive inuse vs volume inuse?
- - Amanda::Changer::Single
- - support import and export for robots with import/export slots
 
 =cut
 
@@ -692,6 +734,7 @@ sub reset { _stubop("reset", "finished_cb", @_); }
 sub clean { _stubop("clean", "finished_cb", @_); }
 sub eject { _stubop("eject", "finished_cb", @_); }
 sub update { _stubop("update", "finished_cb", @_); }
+sub inventory { _stubop("inventory", "inventory_cb", @_); }
 sub move { _stubop("move", "finished_cb", @_); }
 
 # info calls out to info_setup and info_key; see POD above

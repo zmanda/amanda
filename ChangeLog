@@ -1,4 +1,12 @@
 2009-07-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer.pm: add an inventory() method
+	* perl/Amanda/Changer/disk.pm: implement
+	* perl/Amanda/Changer/rait.pm: implement
+	* installcheck/Amanda_Changer.pl installcheck/Amanda_Changer_compat.pl
+	  installcheck/Amanda_Changer_disk.pl
+	  installcheck/Amanda_Changer_rait.pl: test
+
+2009-07-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm: do not release() reservations automatically
 	  when they go out of scope
 	* server-src/amrmtape.pl installcheck/Amanda_Changer.pl

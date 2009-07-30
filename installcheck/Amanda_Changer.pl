@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 42;
+use Test::More tests => 43;
 use File::Path;
 use strict;
 
@@ -167,6 +167,21 @@ sub clean {
     $params{'finished_cb'}->(undef) if $params{'finished_cb'};
 }
 
+sub inventory {
+    my $self = shift;
+    my %params = @_;
+
+    Amanda::MainLoop::call_later($params{'inventory_cb'},
+	undef, [ {
+	    slot => 1,
+	    empty => 0,
+	    label => 'TAPE-99',
+	    barcode => '09385A',
+	    reserved => 0,
+	    import_export => 0,
+	    loaded_in => undef,
+	}]);
+}
 
 package Amanda::Changer::test::Reservation;
 use vars qw( @ISA );
@@ -426,26 +441,45 @@ is($chg->{'config'}->get_property("testprop"), "testval",
     Amanda::MainLoop::run();
 }
 
-# test reset and clean
+# test reset and clean and inventory
 {
-    my ($do_reset, $do_clean);
+    my %subs;
 
-    $do_reset = make_cb('do_reset' => sub {
+    $subs{'do_reset'} = make_cb('do_reset' => sub {
         $chg->reset(finished_cb => sub {
             is($chg->{'curslot'}, 0,
                 "reset() resets to slot 0");
-            $do_clean->();
+            $subs{'do_clean'}->();
         });
     });
 
-    $do_clean = make_cb('do_clean' => sub {
+    $subs{'do_clean'} = make_cb('do_clean' => sub {
         $chg->clean(finished_cb => sub {
             ok($chg->{'clean'}, "clean 'cleaned' the changer");
-            Amanda::MainLoop::quit();
+	    $subs{'do_inventory'}->();
         });
     });
 
-    $do_reset->();
+    $subs{'do_inventory'} = make_cb('do_inventory' => sub {
+        $chg->inventory(inventory_cb => sub {
+	    is_deeply($_[1], [ {
+		    slot => 1,
+		    empty => 0,
+		    label => 'TAPE-99',
+		    barcode => '09385A',
+		    reserved => 0,
+		    import_export => 0,
+		    loaded_in => undef,
+		}], "inventory returns an inventory");
+	    $subs{'quit'}->();
+        });
+    });
+
+    $subs{'quit'} = sub {
+	Amanda::MainLoop::quit();
+    };
+
+    $subs{'do_reset'}->();
     Amanda::MainLoop::run();
 }
 

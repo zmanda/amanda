@@ -158,6 +158,25 @@ sub reset {
     });
 }
 
+sub inventory {
+    my $self = shift;
+    my %params = @_;
+
+    return if $self->check_error($params{'inventory_cb'});
+
+    my @slots = $self->_all_slots();
+
+    my @inventory;
+    for my $slot (@slots) {
+	my $s = { slot => $slot, empty => 0 };
+	$s->{'reserved'} = $self->_is_slot_in_use($slot);
+	$s->{'label'} = $self->_get_slot_label($slot);
+	push @inventory, $s;
+    }
+
+    $params{'inventory_cb'}->(undef, \@inventory);
+}
+
 sub _load_by_slot {
     my $self = shift;
     my %params = @_;
@@ -323,6 +342,18 @@ sub _is_slot_in_use {
     }
 
     return 0;
+}
+
+sub _get_slot_label {
+    my ($self, $slot) = @_;
+    my $dir = _quote_glob($self->{'dir'});
+
+    for my $symlink (bsd_glob("$dir/slot$slot/00000.*")) {
+	my ($label) = ($symlink =~ qr{\/00000\.([^/]*)$});
+	return $label;
+    }
+
+    return ''; # known, but blank
 }
 
 # Internal function to point a drive to a slot

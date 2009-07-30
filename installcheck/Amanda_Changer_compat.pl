@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 27;
+use Test::More tests => 28;
 use File::Path;
 use strict;
 use warnings;
@@ -271,6 +271,13 @@ like(slurp_result(), qr/clean/, ".. and calls chg-test -clean");
 try_run_changer(
     sub { $chg->update(finished_cb => $check_finished_cb); },
     undef, undef, "chg->update doesn't fail");
+
+try_run_changer(
+    sub { $chg->inventory(inventory_cb => $check_finished_cb); },
+    { message => "Amanda::Changer::compat does not support inventory",
+	    type => 'failed', reason => 'notimpl' },
+    undef,
+    "inventory not implemented");
 
 
 # make sure only one reservation can be held at once
