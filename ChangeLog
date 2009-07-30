@@ -1,3 +1,8 @@
+2009-07-30  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-dest-taper.c: open disk cache twice instead of
+	  incorrectly relying on dup(); use a local variable to stop the
+	  disk cacher for sure at the end of each part
+
 2009-07-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm: add an inventory() method
 	* perl/Amanda/Changer/disk.pm: implement
