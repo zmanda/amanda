@@ -43,16 +43,16 @@ XferElement *xfer_dest_device(
     Device *device,
     size_t max_memory);
 
+%newobject xfer_source_holding;
+XferElement * xfer_source_holding(
+    const char *filename);
+
 %newobject xfer_dest_taper;
 XferElement *xfer_dest_taper(
     size_t max_memory,
     guint64 part_size,
     gboolean use_mem_cache,
     const char *disk_cache_dirname);
-
-%newobject xfer_source_holding;
-XferElement * xfer_source_holding(
-    const char *filename);
 
 void xfer_dest_taper_start_part(
     XferElement *self,
@@ -65,6 +65,13 @@ void xfer_dest_taper_cache_inform(
     const char *filename,
     off_t offset,
     off_t length);
+
+%newobject xfer_source_taper;
+XferElement *xfer_source_taper(void);
+
+void xfer_source_taper_start_part(
+    XferElement *self,
+    Device *device);
 
 /* ---- */
 
@@ -91,3 +98,11 @@ XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_dest_taper)
 DECLARE_METHOD(start_part, Amanda::XferServer::xfer_dest_taper_start_part)
 DECLARE_METHOD(cache_inform, Amanda::XferServer::xfer_dest_taper_cache_inform)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Source::Taper)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_source_taper)
+DECLARE_METHOD(start_part, Amanda::XferServer::xfer_source_taper_start_part)
+DECLARE_METHOD(cache_inform, Amanda::XferServer::xfer_source_taper_cache_inform)

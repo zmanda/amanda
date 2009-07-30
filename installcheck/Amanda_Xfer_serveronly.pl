@@ -16,8 +16,9 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 13;
+use Test::More tests => 17;
 use File::Path;
+use Data::Dumper;
 use strict;
 use warnings;
 
@@ -30,6 +31,7 @@ use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Paths;
 use Amanda::Config;
+use Amanda::Changer;
 
 # set up debugging so debug output doesn't interfere with test results
 Amanda::Debug::dbopen("installcheck");
@@ -202,6 +204,88 @@ sub test_taper_dest {
     or diag(Dumper([@messages]));
 }
 
+sub test_taper_source {
+    my ($src, $dest, $files, $expected_messages) = @_;
+    my $device;
+    my @filenums;
+    my @messages;
+    my %subs;
+    my $xfer;
+    my $dev;
+
+    $subs{'setup'} = sub {
+	$xfer = Amanda::Xfer->new([ $src, $dest ]);
+
+	$xfer->get_source()->set_callback($subs{'got_xmsg'});
+	$xfer->start();
+
+	$subs{'load_slot'}->();
+    };
+
+    $subs{'load_slot'} = sub {
+	if (!@$files) {
+	    return $src->start_part(undef);
+	    # (will trigger an XMSG_DONE; see below)
+	}
+
+	my $slot = shift @$files;
+	@filenums = @{ shift @$files };
+
+	$dev = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($slot));
+	if ($dev->status != $DEVICE_STATUS_SUCCESS) {
+	    die $dev->error_or_status();
+	}
+	if (!$dev->start($ACCESS_READ, undef, undef)) {
+	    die $dev->error_or_status();
+	}
+
+	$subs{'seek_file'}->();
+    };
+
+    $subs{'seek_file'} = sub {
+	if (!@filenums) {
+	    return $subs{'load_slot'}->();
+	}
+
+	my $hdr = $dev->seek_file(shift @filenums);
+	if (!$hdr) {
+	    die $dev->error_or_status();
+	}
+
+	push @messages, "PART";
+
+	$src->start_part($dev);
+    };
+
+    $subs{'got_xmsg'} = sub {
+	my ($src, $msg, $xfer) = @_;
+
+	if ($msg->{'type'} == $XMSG_ERROR) {
+	    die $msg->{'elt'} . " failed: " . $msg->{'message'};
+	} elsif ($msg->{'type'} == $XMSG_PART_DONE) {
+	    push @messages, "KB-" . ($msg->{'size'}/1024);
+	    $subs{'seek_file'}->();
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
+	    push @messages, "DONE";
+	} elsif ($msg->{'type'} == $XMSG_CANCEL) {
+	    push @messages, "CANCELLED";
+	}
+
+	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    $xfer->get_source()->remove();
+	    Amanda::MainLoop::quit();
+	}
+    };
+
+    Amanda::MainLoop::call_later($subs{'setup'});
+    Amanda::MainLoop::run();
+
+    is_deeply([@messages],
+	$expected_messages,
+	"files read back and verified successfully with Amanda::Xfer::Taper::Source")
+    or diag(Dumper([@messages]));
+}
+
 my $holding_base = "$Installcheck::TMP/source-holding";
 my $holding_file;
 # create a sequence of holding chunks, each 2MB.
@@ -247,6 +331,24 @@ test_taper_dest(
       "PART-3-OK", "PART-4-OK", "PART-5-OK",
       "DONE" ],
     "mem cache");
+test_taper_source(
+    Amanda::Xfer::Source::Taper->new(),
+    Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
+    [ 1 => [ 1, 2 ], 2 => [ 1, 2, 3 ], ],
+    [
+      'PART',
+      'KB-1024',
+      'PART',
+      'KB-1024',
+      'PART',
+      'KB-1024',
+      'PART',
+      'KB-1024',
+      'PART',
+      'KB-102',
+      'DONE'
+    ]);
+
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
     Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 0, $disk_cache_dir),
@@ -254,23 +356,66 @@ test_taper_dest(
       "PART-3-OK", "PART-4-OK", "PART-5-OK",
       "DONE" ],
     "disk cache");
+test_taper_source(
+    Amanda::Xfer::Source::Taper->new(),
+    Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
+    [ 1 => [ 1, 2 ], 2 => [ 1, 2, 3 ], ],
+    [
+      'PART',
+      'KB-1024',
+      'PART',
+      'KB-1024',
+      'PART',
+      'KB-1024',
+      'PART',
+      'KB-1024',
+      'PART',
+      'KB-102',
+      'DONE'
+    ]);
+
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*2, $RANDOM_SEED),
     Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 0, undef),
     [ "PART-1-OK", "PART-2-OK", "PART-3-OK",
       "DONE" ],
-    "no cache (no failed parts)");
+    "no cache (no failed parts; exact multiple of part size)");
+test_taper_source(
+    Amanda::Xfer::Source::Taper->new(),
+    Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
+    [ 1 => [ 1, 2, 3 ], ],
+    [
+      'PART',
+      'KB-1024',
+      'PART',
+      'KB-1024',
+      'PART',
+      'KB-0',
+      'DONE'
+    ]);
+
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*2, $RANDOM_SEED),
     Amanda::Xfer::Dest::Taper->new(128*1024, 0, 0, undef),
     [ "PART-1-OK", "DONE" ],
     "no splitting (fits on volume)");
+test_taper_source(
+    Amanda::Xfer::Source::Taper->new(),
+    Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
+    [ 1 => [ 1 ], ],
+    [
+      'PART',
+      'KB-2048',
+      'DONE'
+    ]);
+
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
     Amanda::Xfer::Dest::Taper->new(128*1024, 0, 0, undef),
     [ "PART-1-FAILED", "NOT-RETRYING", "CANCELLED", "DONE" ],
     "no splitting (doesn't fit on volume -> fails)",
     do_not_retry => 1);
+
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
     Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 0, $disk_cache_dir),

@@ -155,9 +155,30 @@ check for correct output.
 
   Amanda::Xfer::Source::Pattern->new($length, $pattern);
 
+=head3 Amanda::Xfer::Source::Taper (SERVER ONLY)
+
 This source provides I<length> bytes containing copies of
 I<pattern>. If I<length> is zero, the source provides an unlimited
 number of bytes.
+
+  Amanda::Xfer::Source::Taper->new()
+
+This source reads a datastream composed of on-device files.  It contains no
+logic to decide I<which> files to assemble into the datastream; instead, it
+relies on the caller to supply pre-positioned devices:
+
+  $src->start_part($device);
+
+Once C<start_part> is called, the source will read until C<$device> produces an
+EOF.  As each part is completed, the element sends an C<$XMSG_DONE>
+C<Amanda::Xfer::Msg>, with the following keys:
+
+ size	    bytes read from the device
+ duration   time spent reading
+ fileno     the on-media file number from which the part was read
+
+Call C<start_part> with C<$device = undef> to indicate that there are no more
+parts.
 
 =head2 Transfer Filters
 
@@ -234,7 +255,7 @@ C<Amanda::Xfer::Msg>, with the following keys:
 
  successful true if the whole part was written
  eof	    recipient should not call start_part
- size	    bytes written to tape
+ size	    bytes written to volume
  duration   time spent writing, not counting changer ops, etc.
  partnum    the zero-based number of this part in the overall dumpfile
  fileno     the on-media file number used for this part, or 0 if no file

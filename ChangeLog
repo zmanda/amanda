@@ -1,3 +1,12 @@
+2009-07-30  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/Makefile.am device-src/xfer-source-taper.c
+	  device-src/xfer-device.h: new xfer element
+	* device-src/xfer-source-device.c: typos
+	* xfer-src/xmsg.h: XMSG_PART_DONE is used by XferSourceTaper, too
+	* perl/Amanda/XferServer.swg: SWIG it
+	* perl/Amanda/Xfer.pod: docs
+	* installcheck/Amanda_Xfer_serveronly.pl: test it
+
 2009-07-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsuntar.pl: Fix open of fd3.
 

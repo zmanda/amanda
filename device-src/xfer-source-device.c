@@ -72,7 +72,7 @@ pull_buffer_impl(
     size_t *size)
 {
     XferSourceDevice *self = (XferSourceDevice *)elt;
-    gpointer buf;
+    gpointer buf = NULL;
     int result;
     int devsize;
 
@@ -102,6 +102,8 @@ pull_buffer_impl(
     } while (result == 0);
 
     if (result < 0) {
+	amfree(buf);
+
 	/* if we're not at EOF, it's an error */
 	if (!self->device->is_eof) {
 	    xfer_element_handle_error(elt,

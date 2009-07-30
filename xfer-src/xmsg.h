@@ -77,16 +77,20 @@ typedef enum {
      */
     XMSG_CANCEL = 4,
 
-    /* XMSG_PART_DONE: a split part is finished; used by XferDestTaper to
-     * indicate that it is paused and awaiting instructions to start a new
-     * part.
+    /* XMSG_PART_DONE: a split part is finished; used by XferDestTaper and
+     * XferSourceTaper elements to indicate that the element is paused and
+     * awaiting instructions to start a new part.  Not all of the attributes
+     * are applicable to both elements.
      *
      * Attributes:
-     *  - successful (true if the whole part was written)
-     *  - eof (recipient should not call start_part)
-     *  - size (bytes written to tape)
+     *  - successful (true if the whole part was written; always false for
+     *		XferSourceTaper)
+     *  - eof (recipient should not call start_part; always false for
+     *		XferSourceTaper)
+     *  - size (bytes written to or read from the volume)
      *  - duration (time spent writing, not counting changer ops, etc.)
-     *  - partnum (the zero-based number of this part in the overall dumpfile)
+     *  - partnum (the zero-based number of this part in the overall
+     *		dumpfile; always 0 for XferSourceTaper)
      *  - fileno (the on-media file number used for this part, or 0 if no file
      *		  was used)
      */

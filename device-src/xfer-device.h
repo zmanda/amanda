@@ -63,7 +63,7 @@ GType xfer_dest_taper_get_type(void);
 #define XFER_DEST_TAPER_GET_CLASS(obj) G_TYPE_INSTANCE_GET_CLASS((obj), xfer_dest_taper_get_type(), XferDestTaperClass)
 
 /* Constructor for XferDestTaper.  Note that this object will not write any data until
- * you call one of the methods above.
+ * you call one of the methods below.
  *
  * @param max_memory: total amount of memory to use for buffers, or zero
  *                    for a reasonable default.
@@ -113,5 +113,24 @@ void xfer_dest_taper_cache_inform(
     const char *filename,
     off_t offset,
     off_t length);
+
+/* Create a new XferSourceTaper object.  Like XferDestTaper instances, this object
+ * will not start transferring data until xfer_source_taper_start_part is called to
+ * give the device from which the data should flow.
+ *
+ * @returns: new element
+ */
+XferElement *
+xfer_source_taper(void);
+
+/* Start an XferSourceTaper reading from a particular, pre-positioned device
+ *
+ * @param self: XferSourceTaper object
+ * @param device: device to read from
+ */
+void
+xfer_source_taper_start_part(
+    XferElement *elt,
+    Device *device);
 
 #endif
