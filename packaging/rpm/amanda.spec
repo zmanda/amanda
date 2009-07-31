@@ -228,7 +228,9 @@ Requires: readline
 Provides: amanda-backup_client = %{amanda_version}
 Provides: libamclient-%{version}.so = %{amanda_version}
 Provides: libamanda-%{version}.so = %{amanda_version}
-Conflicts: amanda-backup_server 
+Conflicts: amanda-backup_server
+# Native package names
+Obsoletes: amanda, amanda-client, amanda-server
 
 %package backup_server
 Summary: The Amanda Backup and Archiving Server
@@ -253,6 +255,8 @@ Provides: librestore-%{version}.so = %{amanda_version}
 Provides: libamtape-%{version}.so = %{amanda_version}
 Provides: libamdevice-%{version}.so = %{amanda_version}
 Conflicts: amanda-backup_client
+# Native package names
+Obsoletes: amanda, amanda-client, amanda-server
 # --- Package descriptions ---
 
 %description

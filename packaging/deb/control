@@ -12,6 +12,7 @@ Architecture: any
 Depends: xinetd, perl (>=5.6.0), mailx, gnuplot, tar (>=1.15),
 	libcurl3 (>=7.10.0)| libcurl4 (>=7.10.0), libglib2.0-0 (>=2.2.0),
 	libssl | libssl0.9.8
+Conflicts: amanda-client, amanda-common, amanda-server
 Suggests: amanda-backup-client (= ${Source-Version})
 Description: Amanda Network Backup and Archiving software
  .
@@ -29,7 +30,8 @@ Package: amanda-backup-client
 Architecture: any
 Depends: xinetd, perl (>=5.6.0), grep, libcurl3 (>=7.10.0)| libcurl4 (>=7.10.0),
 	libglib2.0-0 (>=2.2.0), libssl | libssl0.9.8
-Conflicts: amanda-backup-server (>=${Source-Version})
+Conflicts: amanda-backup-server (>=${Source-Version}), amanda-client, 
+	amanda-common, amanda-server
 Description: Amanda Network Backup and Archiving software
  .
  Amanda is the leading Open-Source Backup and Archiving software.
