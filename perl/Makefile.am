@@ -218,6 +218,7 @@ AmandaChanger_DATA = \
 	Amanda/Changer/disk.pm \
 	Amanda/Changer/null.pm \
 	Amanda/Changer/rait.pm \
+	Amanda/Changer/robot.pm \
 	Amanda/Changer/single.pm
 HTML_SOURCE_FILES += $(AmandaChanger_DATA)
 endif

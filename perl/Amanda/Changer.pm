@@ -264,9 +264,9 @@ outstanding.
 
 =head3 $chg->clean(finished_cb => $cb, drive => $drivename)
 
-Clean a drive, if the changer supports it. Drivename can be an empty string for
-devices with only one drive, or can be an arbitrary string from the user (e.g.,
-an amtape argument). Note that some changers cannot detect the completion of a
+Clean a drive, if the changer supports it. Drivename can be omitted for devices
+with only one drive, or can be an arbitrary string from the user (e.g., an
+amtape argument). Note that some changers cannot detect the completion of a
 cleaning cycle; in this case, the user will just need to delay further Amanda
 activities until the cleaning is complete.
 

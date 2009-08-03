@@ -111,30 +111,23 @@ flush-threshold-scheduled 0
 taperflush 0
 autoflush no
 
-# Specify tape device and/or tape changer.  If you don't have a tape
-# changer, and you don't want to use more than one tape per run of
-# amdump, just comment out the definition of tpchanger.
-
-# Some tape changers require tapedev to be defined; others will use
-# their own tape device selection mechanism.  Some use a separate tape
-# changer device (changerdev), others will simply ignore this
-# parameter.  Some rely on a configuration file (changerfile) to
-# obtain more information about tape devices, number of slots, etc;
-# others just need to store some data in files, whose names will start
-# with changerfile.  
-
-# At most one changerfile entry must be defined; select the most
-# appropriate one for your configuration.  If you select man-changer,
-# keep the first one; if you decide not to use a tape changer, you may
-# comment them all out.
+# Specify tape device or tape changer.
 
 runtapes 1			# number of tapes to be used in a single run of amdump
-tpchanger "chg-manual"		# the tape-changer glue script
-tapedev "@EXAMPLE_TAPEDEV@"	# the no-rewind tape device to be used
+tapedev "@EXAMPLE_TAPEDEV@"	# tape changer or device to use
 
-#changerfile "@CONFIG_DIR@/@DEFAULT_CONFIG@/changer"
-#changerfile "@CONFIG_DIR@/@DEFAULT_CONFIG@/changer-status"
-#changerfile "@CONFIG_DIR@/@DEFAULT_CONFIG@/changer.conf"
+# To use vtapes, create some slotN directories (slot0, slot1, etc.) under
+# /var/amanda/vtapes and use this tapedev:
+## tapedev "chg-disk:/var/amanda/vtapes"
+
+# To use a tape library, uncomment this definition.  See amanda-changers(7)
+# for more configuration options.
+#
+# define changer myrobot {
+#   tpchanger "chg-robot:/dev/sg0"  # your changer device file
+#   tapedev "tape:@EXAMPLE_TAPEDEV@"	# your tape drive device file
+# }
+# tapedev "myrobot"
 
 # If you want Amanda to automatically label any non-Amanda tapes it
 # encounters, uncomment the line below. Note that this will ERASE any

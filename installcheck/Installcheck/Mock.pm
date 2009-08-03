@@ -44,20 +44,18 @@ Installcheck::Mock - utilities for the installcheck mocks
 =head1 USAGE
 
 C<setup_mock_mtx> sets up a state file for C<mock/mtx> with the given config
-hash, and returns the filename of the state file.  It also points
-C<$Amanda::Constants::MTX> at C<mock/mtx>.  This function must be run with the
-current dirctory pointing to 'installcheck/'.
+hash, and returns the filename of the state file.  This function must be run
+with the current dirctory pointing to 'installcheck/'.
 
 =cut
 
 use Installcheck;
-use Amanda::Constants;
 use Cwd qw(abs_path);
 use Data::Dumper;
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT_OK = qw( setup_mock_mtx );
+@EXPORT_OK = qw( setup_mock_mtx $mock_mtx_path );
 
 sub setup_mock_mtx {
     my %config = @_;
@@ -68,10 +66,9 @@ sub setup_mock_mtx {
 	], ["STATE"]);
     close ($fh);
 
-    # point Amanda::Constants::MTX to the mock script
-    $Amanda::Constants::MTX = abs_path("mock/mtx");
-
     return $state_filename;
 }
+
+our $mock_mtx_path = abs_path("mock/mtx");
 
 1;

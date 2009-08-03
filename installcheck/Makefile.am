@@ -27,6 +27,7 @@ server_tests = \
 	Amanda_Changer_disk \
 	Amanda_Changer_null \
 	Amanda_Changer_rait \
+	Amanda_Changer_robot \
 	Amanda_Changer_single \
 	Amanda_Cmdline \
 	Amanda_Disklist \

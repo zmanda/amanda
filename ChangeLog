@@ -1,3 +1,12 @@
+2009-08-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am perl/Amanda/Changer/robot.pm:
+	  new changer
+	* example/amanda.conf.in: adjust to correspond to new changers
+	* installcheck/Amanda_Changer_robot.pl installcheck/Makefile.am: tests
+	* installcheck/Installcheck/Mock.pm: add $mock_mtx_path
+	* man/xml-source/amanda-changers.7.xml: documentation for new changer
+	* perl/Amanda/Changer.pm: POD tweak
+
 2009-07-31 Dan Locks <dwlocks@zmanda.com>
 	* packaging/deb/control, packaging/rpm/amanda.spec: add native 
 	  package names to conflict list
