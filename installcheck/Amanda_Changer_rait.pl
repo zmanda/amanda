@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 41;
+use Test::More tests => 42;
 use File::Path;
 use strict;
 
@@ -472,6 +472,64 @@ label_vtape(3,3,"mytape");
     # start the loop
     $do_load_1->();
     Amanda::MainLoop::run();
+}
+
+# scan the changer using except_slots
+{
+    my %subs;
+    my $slot;
+    my %except_slots;
+
+    my $chg = Amanda::Changer->new("myrait");
+    die "error creating" unless $chg->isa("Amanda::Changer::rait");
+
+    $subs{'start'} = make_cb(start => sub {
+	$chg->load(relative_slot => "current", except_slots => { %except_slots },
+		   res_cb => $subs{'loaded'});
+    });
+
+    $subs{'loaded'} = make_cb(loaded => sub {
+        my ($err, $res) = @_;
+	if ($err) {
+	    if ($err->notfound) {
+		# this means the scan is done
+		return $subs{'quit'}->();
+	    } elsif ($err->inuse and defined $err->{'slot'}) {
+		$slot = $err->{'slot'};
+	    } else {
+		die $err;
+	    }
+	} else {
+	    $slot = $res->{'this_slot'};
+	}
+
+	$except_slots{$slot} = 1;
+
+	if ($res) {
+	    $res->release(finished_cb => $subs{'released'});
+	} else {
+	    $subs{'released'}->();
+	}
+    });
+
+    $subs{'released'} = make_cb(released => sub {
+	my ($err) = @_;
+	die $err if $err;
+
+        $chg->load(relative_slot => 'next', slot => $slot,
+		   except_slots => { %except_slots },
+		   res_cb => $subs{'loaded'});
+    });
+
+    $subs{'quit'} = make_cb(quit => sub {
+        Amanda::MainLoop::quit();
+    });
+
+    $subs{'start'}->();
+    Amanda::MainLoop::run();
+
+    is_deeply({ %except_slots }, { "{1,1,1}"=>1, "{2,2,2}"=>1, "{3,3,3}"=>1, "{4,4,4}"=>1 },
+	    "scanning with except_slots works");
 }
 
 rmtree($tapebase);

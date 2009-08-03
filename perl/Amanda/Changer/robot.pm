@@ -330,6 +330,7 @@ sub new {
 sub load {
     my $self = shift;
     my %params = @_;
+    $self->validate_params('load', \%params);
 
     return if $self->check_error($params{'res_cb'});
 
@@ -431,6 +432,12 @@ sub load_unlocked {
 	    }
 	}
 
+	if (exists $params{'except_slots'} and exists $params{'except_slots'}->{$slot}) {
+	    return $self->make_error("failed", $params{'res_cb'},
+		reason => "notfound",
+		message => "all slots have been loaded");
+	}
+
 	my $slot_state = $state->{'slots'}->{$slot}->{'state'};
 	if ($slot_state == SLOT_EMPTY) {
 	    return $self->make_error("failed", $params{'res_cb'},
@@ -455,6 +462,7 @@ sub load_unlocked {
 	    if ($info->{'res_info'} and $self->_res_info_verify($info->{'res_info'})) {
 		return $self->make_error("failed", $params{'res_cb'},
 			reason => "inuse",
+			slot => $slot,
 			message => "the requested volume is in use (drive $drive)");
 	    }
 

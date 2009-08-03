@@ -64,9 +64,6 @@ See the amanda-changers(7) manpage for usage information.
 
 =cut
 
-# TODO:
-# better locking (at least to work on a shared filesystem, if not NFS)
-
 sub new {
     my $class = shift;
     my ($config, $tpchanger) = @_;
@@ -99,6 +96,8 @@ sub load {
     my $old_res_cb = $params{'res_cb'};
     my $state;
 
+    $self->validate_params('load', \%params);
+
     return if $self->check_error($params{'res_cb'});
 
     $self->with_locked_state($self->{'state_filename'},
@@ -112,8 +111,6 @@ sub load {
 	    $self->_load_by_slot(%params);
 	} elsif (exists $params{'label'}) {
 	    $self->_load_by_label(%params);
-	} else {
-	    die "Invalid parameters to 'load'";
 	}
     });
 }
@@ -202,6 +199,12 @@ sub _load_by_slot {
 	$slot = $params{'slot'};
     }
 
+    if (exists $params{'except_slots'} and exists $params{'except_slots'}->{$slot}) {
+	return $self->make_error("failed", $params{'res_cb'},
+	    reason => "notfound",
+	    message => "all slots have been loaded");
+    }
+
     if (!$self->_slot_exists($slot)) {
 	return $self->make_error("failed", $params{'res_cb'},
 	    reason => "notfound",
@@ -211,6 +214,7 @@ sub _load_by_slot {
     if ($drive = $self->_is_slot_in_use($slot)) {
 	return $self->make_error("failed", $params{'res_cb'},
 	    reason => "inuse",
+	    slot => $slot,
 	    message => "Slot $slot is already in use by drive '$drive'");
     }
 

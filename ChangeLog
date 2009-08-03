@@ -1,4 +1,14 @@
 2009-08-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer.pm perl/Amanda/Changer/compat.pm
+	  perl/Amanda/Changer/disk.pm perl/Amanda/Changer/rait.pm
+	  perl/Amanda/Changer/robot.pm perl/Amanda/Changer/single.pm: add
+	  except_slots, to allow slot scanning
+	* installcheck/Amanda_Changer_compat.pl
+	  installcheck/Amanda_Changer_disk.pl
+	  installcheck/Amanda_Changer_rait.pl
+	  installcheck/Amanda_Changer_robot.pl: test each implementation
+
+2009-08-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am perl/Amanda/Changer/robot.pm:
 	  new changer
 	* example/amanda.conf.in: adjust to correspond to new changers

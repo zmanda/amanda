@@ -96,6 +96,7 @@ sub new {
 sub load {
     my $self = shift;
     my %params = @_;
+    $self->validate_params('load', \%params);
     return if $self->check_error($params{'res_cb'});
 
     if ($self->{'reserved'}) {
@@ -132,7 +133,17 @@ sub load {
 	    }
 	} elsif (exists $params{'relative_slot'}) {
 	    # if there is an explicit $slot, then just hope it's the same as the current
-	    # slot, or we're in trouble..
+	    # slot, or we're in trouble.  We don't know what the current slot is, so we
+	    # can't verify, but the current slot is set on *every* load, so this works.
+
+	    # if we've already seen nslots slots, then the next slot is certainly
+	    # one of them, so the iteration should terminate
+	    if (exists $params{'except_slots'} and (keys %{$params{'except_slots'}}) == $self->{'nslots'}) {
+		return $self->make_error("failed", $params{'res_cb'},
+		    reason => 'notfound',
+		    message => "all slots have been loaded");
+	    }
+
 	    $self->_run_tpchanger($subs{'load_run_done'}, "-slot", $params{'relative_slot'});
 	} elsif (exists $params{'slot'}) {
 	    $self->_run_tpchanger($subs{'load_run_done'}, "-slot", $params{'slot'});
@@ -168,9 +179,8 @@ sub _manual_scan {
     my ($run_cb, $load_next);
 
     # search manually, starting with "current" and proceeding through nslots-1
-    # loads of "next"
-
-    # TODO: support the case where nslots == -1
+    # loads of "next".  This doesn't use the except_slots iteration mechanism as
+    # that would just add extra layers of complexity with no benefit
 
     debug("Amanda::Changer::compat: beginning manual scan");
     $run_cb = sub {

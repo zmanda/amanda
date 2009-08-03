@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 304;
+use Test::More tests => 309;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -1132,7 +1132,7 @@ for my $mtx_config (
 
 	# note that the loading behavior of update() is not required, so the loaded_in
 	# keys here may change if update() gets smarter
-	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'quit'}, [
+	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'start_scan'}, [
 	    { slot => 1, barcode => '11111', label => 'TAPE-1' },
 	    { slot => 2, empty => 1, label => undef },
 	    { slot => 3, barcode => '33333', label => 'TAPE-3', loaded_in => 1 },
@@ -1140,6 +1140,49 @@ for my $mtx_config (
 	    { slot => 5, barcode => '22222', label => 'SURPRISE!' },
 	], "$pfx: inventory reflects the move");
     };
+
+    # test a scan, using except_slots
+    my %except_slots;
+
+    $subs{'start_scan'} = make_cb(start_scan => sub {
+	$chg->load(relative_slot => "current", except_slots => { %except_slots },
+		   res_cb => $subs{'loaded_for_scan'});
+    });
+
+    $subs{'loaded_for_scan'} = make_cb(loaded_for_scan => sub {
+        (my $err, $res1) = @_;
+	my $slot;
+	if ($err) {
+	    if ($err->notfound) {
+		return $subs{'scan_done'}->();
+	    } elsif ($err->inuse and defined $err->{'slot'}) {
+		$slot = $err->{'slot'};
+	    } else {
+		die $err;
+	    }
+	} else {
+	    $slot = $res1->{'this_slot'};
+	}
+
+	$except_slots{$slot} = 1;
+
+	$res1->release(finished_cb => $subs{'released_for_scan'});
+    });
+
+    $subs{'released_for_scan'} = make_cb(released_for_scan => sub {
+	my ($err) = @_;
+	die $err if $err;
+
+        $chg->load(relative_slot => 'next', slot => $res1->{'this_slot'},
+		   except_slots => { %except_slots },
+		   res_cb => $subs{'loaded_for_scan'});
+    });
+
+    $subs{'scan_done'} = make_cb(scan_done => sub {
+	is_deeply({ %except_slots }, { 4=>1, 5=>1, 1=>1, 3=>1 },
+		"$pfx: scanning with except_slots works");
+	$subs{'quit'}->();
+    });
 
     $subs{'quit'} = sub {
 	Amanda::MainLoop::quit();

@@ -23,6 +23,7 @@ package Amanda::Changer;
 
 use strict;
 use warnings;
+use Carp;
 use POSIX ();
 use Fcntl qw( O_RDWR O_CREAT LOCK_EX LOCK_NB );
 use Data::Dumper;
@@ -161,6 +162,11 @@ undetected typos:
 Other reasons may be added in the future, so a caller should check for the
 reasons it expects, and treat any other failures as of unknown cause.
 
+When the desired slot cannot be loaded because it is already in use, the
+C<inuse> error comes with an extra parameter, C<slot>, giving the slot in
+question.  This parameter is not defined for other cases, such as no available
+drives.
+
 =head2 CURRENT SLOT
 
 Changers maintain a global concept of a "current" slot, for compatibility with
@@ -172,6 +178,8 @@ C<relative_slot> parameter to C<load>.
 
 =head2 CHANGER OBJECTS
 
+=head3 load
+
 The most common operation with a tape changer is to load a volume.  The C<load>
 method is heavily overloaded to support a number of different ways to specify a
 volume.
@@ -180,44 +188,69 @@ In general, the method takes a C<res_cb> giving a callback that will receive
 the reservation.  If set_current is specified and true, then the changer's
 current slot should be updated to correspond to C<$slot>. If not, then the changer
 should not update its current slot (but some changers will anyway -
-specifically, chg-compat).  The C<mode> describes the intended use of the
-volume by the caller, and should be one of C<"read"> (the default) or
-C<"write">.  Changers managing WORM media may use this parameter to provide a
-fresh volume for writing, but to search for already-written volumes when
-reading.
+specifically, chg-compat).
 
-=head3 $chg->load(res_cb => $cb, label => $label, mode => $mode, set_current => $sc)
+The optional C<mode> describes the intended use of the volume by the caller,
+and should be one of C<"read"> (the default) or C<"write">.  Changers managing
+WORM media may use this parameter to provide a fresh volume for writing, but to
+search for already-written volumes when reading.
 
-Load a volume with the given label. This may leverage any barcodes or other
-indices that the changer has created, or may resort to a sequential scan of
-media.
+The load method has a number of permutations:
+
+  $chg->load(res_cb => $cb,
+	     label => $label,
+	     mode => $mode,
+	     set_current => $sc)
+
+Load and reserve a volume with the given label. This may leverage any barcodes
+or other indices that the changer has available.
 
 Note that the changer I<tries> to load the requested volume, but it's a mean
 world out there, and you may not get what you want, so check the label on the
 loaded volume before getting started.
 
-=head3 $chg->load(res_cb => $cb, relative_slot => "current", mode => $mode)
+  $chg->load(res_cb => $cb,
+	     slot => $slot,
+	     mode => $mode,
+	     set_current => $sc)
+
+Load and reserve the volume in the given slot. C<$slot> is a string specifying the slot
+to load, provided by the user or from some other invocation of this changer.
+Note that slots are not necessarily numeric, so performing arithmetic on this
+value is an error.
+
+If the slot does not exist, C<res_cb> will be called with a C<notfound> error.
+Empty slots are considered empty.
+
+  $chg->load(res_cb => $cb,
+	     relative_slot => "current",
+	     mode => $mode)
 
 Reserve the volume in the "current" slot. This is used by the traditional
 taperscan algorithm to begin its search.
 
-=head3 $chg->load(res_cb => $cb, relative_slot => "next", mode => $mode, set_current => $sc)
+  $chg->load(res_cb => $cb,
+	     relative_slot => "next",
+	     slot => $slot,
+	     except_slots => { %except_slots },
+	     mode => $mode,
+	     set_current => $sc)
 
-Reserve the volume that follows the current slot.  This may not be a
-very efficient operation on all devices.
+Reserve the volume that follows the given slot or, if C<slot> is omitted, the
+volume that follows the current slot.  This will skip empty slots as if they
+were not present in the changer.
 
-=head3 $chg->load(res_cb => $cb, slot => $slot, mode => $mode, set_current => $sc)
+The optional C<except_slots> argument specifies a hash of slots that should
+I<not> be loaded.  Keys are slot names, and the hash values are ignored.  This
+is useful as a termination condition when scanning all of the slots in a
+changer: keep a hash of all slots already loaded, and pass that hash in
+C<except_slots>.  When the load operation returns a C<notfound> error, the scan
+is complete.
 
-Reserve the volume in the given slot. $slot is a string specifying the slot to
-load, provided by the server or from some other invocation of this changer.
-Note that slots are not necessarily numeric, so performing arithmetic on this
-value is invalid.
+=head3 info
 
-=head3 $chg->load(res_cb => $cb, relative_slot => "next", slot => $slot, mode => $mode, set_current => $sc)
-
-Reserve the volume that follows the given slot.
-
-=head3 $chg->info(info_cb => $cb, info => [ $key1, $key2, .. ])
+  $chg->info(info_cb => $cb,
+	     info => [ $key1, $key2, .. ])
 
 Query the changer for miscellaneous information.  Any number of keys may be
 specified.  The C<info_cb> is called with C<$error> as the first argument,
@@ -255,14 +288,19 @@ searches.
 
 =back
 
-=head3 $chg->reset(finished_cb => $cb)
+=head3 reset
+
+  $chg->reset(finished_cb => $cb)
 
 Reset the changer to a "base" state. This will generally reset the "current"
 slot to something the user would think of as the "first" tape, unload any
 loaded drives, etc. It is an error to call this while any reservations are
 outstanding.
 
-=head3 $chg->clean(finished_cb => $cb, drive => $drivename)
+=head3 clean
+
+  $chg->clean(finished_cb => $cb,
+	      drive => $drivename)
 
 Clean a drive, if the changer supports it. Drivename can be omitted for devices
 with only one drive, or can be an arbitrary string from the user (e.g., an
@@ -270,21 +308,29 @@ amtape argument). Note that some changers cannot detect the completion of a
 cleaning cycle; in this case, the user will just need to delay further Amanda
 activities until the cleaning is complete.
 
-=head3 $chg->eject(finished_cb => $cb, drive => $drivename)
+=head3 eject
+
+  $chg->eject(finished_cb => $cb,
+	      drive => $drivename)
 
 Eject the volume in a drive, if the changer supports it.  Drivename is as
 specified to C<clean>.  If possible, applications should prefer to eject a
 reserved volume when finished with it (C<< $res->release(eject => 1) >>), to
 ensure that the correct volume is ejected from a multi-drive changer.
 
-=head3 $chg->update(finished_cb => $cb, changed => $changed)
+=head3 update
 
-The user has changed something -- loading or unloading tapes,
-reconfiguring the changer, etc. -- that may have invalidated the
-database.  C<$changed> is a changer-specific string indicating what has
-changed; if it is omitted, the changer will check everything.
+  $chg->update(finished_cb => $cb,
+	       changed => $changed)
 
-=head3 $chg->inventory(inventory_cb => $cb)
+The user has changed something -- loading or unloading tapes, reconfiguring the
+changer, etc. -- that may have invalidated the database.  C<$changed> is a
+changer-specific string indicating what has changed; if it is omitted, the
+changer will check everything.
+
+=head3 inventory
+
+  $chg->inventory(inventory_cb => $cb)
 
 The C<inventory_cb> is called with an error object as the first parameter, or
 C<undef> if no error occurs.  The second parameter is an arrayref containing an
@@ -335,7 +381,11 @@ bulk-import newly-inserted tapes or bulk-export a set of tapes.
 
 =back
 
-=head3 $chg->move(finished_cb => $cb, from_slot => $from, to_slot => $to)
+=head3 move
+
+  $chg->move(finished_cb => $cb,
+	     from_slot => $from,
+	     to_slot => $to)
 
 Move a volume between two slots in the changer. These slots are provided by the
 user, and have meaning for the changer.
@@ -345,8 +395,7 @@ user, and have meaning for the changer.
 =head3 $res->{'device'}
 
 This is the fully configured device for the reserved volume.  The device is not
-started.  Note that this may, in some cases, be a null device -- for example,
-in the case of empty slots in a tape library.
+started.
 
 =head3 $res->{'this_slot'}
 
@@ -442,6 +491,9 @@ appropriate type and reason for the combined error.
 	  [ "from the right", $right_err ] ]);
   }
 
+Any additional keyword arguments to C<make_combined_error> are put into the
+combined error; this is useful to set the C<slot> attribute.
+
 The method C<< $self->check_error($cb) >> is a useful method for subclasses to
 avoid doing anything after a fatal error.  This method checks C<<
 $self->{'fatal_error'} >>.  If the error is defined, the method calls C<$cb>
@@ -522,6 +574,16 @@ invoked.
 
 The state itself begins as an empty hashref, but subclasses can add arbitrary
 keys to the hash.  Serialization is currently handled with L<Data::Dumper>.
+
+=head2 PARAMETER VALIDATION
+
+The C<validate_params> method is useful to make sure that the proper parameters
+are present for a particular method, dying if not.  Call it like this:
+
+  $self->validate_params("load", \%params);
+
+The method currently only supports the "load" method, but can be expanded to
+cover other methods.
 
 =head1 SEE ALSO
 
@@ -860,7 +922,7 @@ sub make_error {
 
 sub make_combined_error {
     my $self = shift;
-    my ($cb, $suberrors) = @_;
+    my ($cb, $suberrors, %extra_args) = @_;
     my $err;
 
     if (@$suberrors == 0) {
@@ -899,7 +961,7 @@ sub make_combined_error {
 	    map { sprintf("%s: %s", @$_) }
 	    @$suberrors);
 
-	my %errargs = ( message => $message );
+	my %errargs = ( message => $message, %extra_args );
 	$errargs{'reason'} = $reason unless ($fatal);
 	$err = Amanda::Changer::Error->new(
 	    $fatal? "fatal" : "failed",
@@ -995,6 +1057,19 @@ sub with_locked_state {
     $subs{'open'}->();
 }
 
+sub validate_params {
+    my ($self, $op, $params) = @_;
+
+    if ($op eq 'load') {
+        unless(exists $params->{'label'} || exists $params->{'slot'} ||
+               exists $params->{'relative_slot'}) {
+		confess "Invalid parameters to 'load'";
+        }
+    } else {
+        confess "don't know how to validate '$op'";
+    }
+}
+
 package Amanda::Changer::Error;
 use Amanda::Debug qw( :logging );
 use Carp qw( cluck );
@@ -1053,6 +1128,9 @@ sub invalid { $_[0]->{'reason'} eq 'invalid'; }
 sub notimpl { $_[0]->{'reason'} eq 'notimpl'; }
 sub inuse { $_[0]->{'reason'} eq 'inuse'; }
 sub unknown { $_[0]->{'reason'} eq 'unknown'; }
+
+# slot accessor
+sub slot { $_[0]->{'slot'}; }
 
 package Amanda::Changer::Reservation;
 # this is a simple base class with stub method or two.

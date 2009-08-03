@@ -73,6 +73,7 @@ sub new {
 sub load {
     my $self = shift;
     my %params = @_;
+    $self->validate_params('load', \%params);
 
     return if $self->check_error($params{'res_cb'});
 
