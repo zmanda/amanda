@@ -1,4 +1,7 @@
 2009-08-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/tape-posix.c: use g_debug instead of dbprintf
+
+2009-08-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Taper/Scan/traditional.pm: don't try a particular slot
 	  more than once in a scan object's lifetime
 	* man/xml-source/amanda-taperscan.7.xml: document this

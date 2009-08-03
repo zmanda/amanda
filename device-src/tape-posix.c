@@ -142,7 +142,7 @@ DeviceStatusFlags tape_is_tape_device(int fd) {
 	return DEVICE_STATUS_VOLUME_MISSING;
 #endif
     } else {
-	dbprintf("tape_is_tape_device: ioctl(MTIOCTOP/MTNOP) failed: %s\n",
+	g_debug("tape_is_tape_device: ioctl(MTIOCTOP/MTNOP) failed: %s",
 		 strerror(errno));
 	if (errno == EIO) {
 	    /* some devices return EIO while the drive is busy loading */
