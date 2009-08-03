@@ -37,6 +37,7 @@ use Amanda::Config qw( :getconf );
 use Amanda::Device qw( :constants );
 use Amanda::Header;
 use Amanda::Debug qw( :logging );
+use Amanda::MainLoop qw( make_cb );
 
 sub new {
     my $class = shift;
@@ -46,6 +47,7 @@ sub new {
     my $self = bless {
 	scanning => 0,
         tapelist => undef,
+	seen => {},
     }, $class;
 
     return $self;
@@ -151,6 +153,8 @@ sub stage_1 {
 	    }
 	}
 
+	$self->{'seen'}->{$res->{'this_slot'}} = 1;
+
         my $status = $res->{'device'}->read_label();
         if ($status != $DEVICE_STATUS_SUCCESS) {
             warning "Error reading label after searching for '$oldest_reusable'";
@@ -255,40 +259,16 @@ sub stage_2 {
     my $self = shift;
 
     my $last_slot;
-    my $slots_remaining;
     my %subs;
 
     $self->_user_msg("stage 2: scan for any reusable volume");
 
-    $subs{'get_info'} = sub {
-        $self->{'changer'}->info(
-            info => [ "num_slots" ],
-            info_cb => $subs{'got_info'},
-        );
-    };
-
-    $subs{'got_info'} = sub {
-        my ($error, %results) = @_;
-        if ($error) {
-            return $self->scan_result($error);
-        }
-
-        $slots_remaining = $results{'num_slots'};
-
-        $subs{'load'}->();
-    };
-
-    $subs{'load'} = sub {
-        my ($err) = @_;
+    $subs{'load'} = make_cb(load => sub {
+	my ($err) = @_;
 
         # bail on an error releasing a reservation
         if ($err) {
             return $self->scan_result($err);
-        }
-
-        # are we out of slots?
-        if ($slots_remaining-- <= 0) {
-            return $self->scan_result("No acceptable volumes found");
         }
 
         # load the current or next slot
@@ -298,6 +278,7 @@ sub stage_2 {
 		slot => $last_slot,
 		set_current => 1,
 		res_cb => $subs{'loaded'},
+		except_slots => $self->{'seen'},
 		mode => "write",
 	    );
 	} else {
@@ -305,20 +286,26 @@ sub stage_2 {
 		relative_slot => "current",
 		set_current => 1,
 		res_cb => $subs{'loaded'},
+		except_slots => $self->{'seen'},
 		mode => "write",
 	    );
 	}
-    };
+    });
 
-    $subs{'loaded'} = sub {
+    $subs{'loaded'} = make_cb(loaded => sub {
         my ($err, $res) = @_;
+
+	if ($err and $err->failed and $err->notfound) {
+            return $self->scan_result("No acceptable volumes found");
+	}
 
         # if we have a fatal error or something other than "notfound",
         # bail out.
-        if ($err and ($err->fatal or
-                      ($err->failed and !$err->notfound))) {
+        if ($err) {
             return $self->scan_result($err);
         }
+
+	$self->{'seen'}->{$res->{'this_slot'}} = 1;
 
         # we're done if try_volume calls result_cb (with success or an error)
 	$self->_user_msg("trying slot $res->{this_slot}");
@@ -326,11 +313,12 @@ sub stage_2 {
 
         # no luck -- release this reservation and get the next
         $last_slot = $res->{'this_slot'};
+
         $res->release(finished_cb => $subs{'load'});
-    };
+    });
 
     # kick the whole thing off
-    $subs{'get_info'}->();
+    $subs{'load'}->();
 }
 
 1;

@@ -1,4 +1,9 @@
 2009-08-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Taper/Scan/traditional.pm: don't try a particular slot
+	  more than once in a scan object's lifetime
+	* man/xml-source/amanda-taperscan.7.xml: document this
+
+2009-08-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/Makefile.am server-src/amtape.c server-src/amtape.pl:
 	  rewrite amtape in perl
 	* NEWS: describe changes
