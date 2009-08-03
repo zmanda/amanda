@@ -23,8 +23,7 @@ amlib_LTLIBRARIES = 	libamserver.la
 
 sbin_PROGRAMS =		amadmin		amcheck		\
 			amflush		amlabel		\
-			amservice	amtape		\
-			amreport
+			amservice	amreport
 
 amlibexec_PROGRAMS =	amindexd	amlogroll	amtrmidx	\
 			amtrmlog	driver		dumper		\
@@ -42,6 +41,7 @@ sbin_SCRIPTS_PERL = \
 	    amcheckdump \
 	    amcleanup \
 	    amrmtape \
+	    amtape \
 	    amvault \
 	    amstatus
 

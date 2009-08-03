@@ -176,16 +176,27 @@ sub _manual_scan {
     my $self = shift;
     my %params = @_;
     my $nchecked = 0;
-    my ($run_cb, $load_next);
+    my ($get_info, $got_info, $run_cb, $load_next);
+
+    my $user_msg_fn = $params{'user_msg_fn'};
+    $user_msg_fn ||= sub { Amanda::Debug::info("chg-compat: " . $_[0]); };
 
     # search manually, starting with "current" and proceeding through nslots-1
     # loads of "next".  This doesn't use the except_slots iteration mechanism as
     # that would just add extra layers of complexity with no benefit
 
-    debug("Amanda::Changer::compat: beginning manual scan");
+    $get_info = sub {
+	$self->_get_info($got_info);
+    };
+
+    $got_info = sub {
+	$user_msg_fn->("beginning manual scan of $self->{nslots} slots");
+	$self->_run_tpchanger($run_cb, "-slot", "current");
+    };
     $run_cb = sub {
         my ($exitval, $slot, $rest) = @_;
 
+	$user_msg_fn->("updated slot $slot");
 	if ($exitval == 0) {
 	    # if we're looking for a label, check what we got
 	    if (defined $params{'label'}) {
@@ -223,12 +234,10 @@ sub _manual_scan {
 	    }
 	}
 
-	debug("Amanda::Changer::compat: manual scanning next slot");
 	$self->_run_tpchanger($run_cb, "-slot", "next");
     };
 
-    debug("Amanda::Changer::compat: manual scanning current slot");
-    $self->_run_tpchanger($run_cb, "-slot", "current");
+    $get_info->();
 }
 
 # takes $res_cb, $slot and $rest; creates and configures the device, and calls
@@ -347,6 +356,12 @@ sub update {
     my $self = shift;
     my %params = @_;
 
+    if ($params{'changed'}) {
+	return $self->make_error("failed", $params{'finished_cb'},
+	    reason => 'invalid',
+	    message => 'chg-compat does not support specifying what has changed');
+    }
+
     my $scan_done_cb = make_cb(scan_done_cb => sub {
 	my ($err, $res) = @_;
 	if ($err) {
@@ -361,6 +376,7 @@ sub update {
     $self->_manual_scan(
 	res_cb => $scan_done_cb,
 	label => undef, # search forever
+	user_msg_fn => $params{'user_msg_fn'},
     );
 }
 

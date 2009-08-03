@@ -3,6 +3,13 @@ Changes in release 2.6.2alpha
       o rawtapedev -- this parameter is no longer needed and should be deleted
    * Removed compile-time default --with-changer-device: specify a device 
      explicitly in amanda.conf instead
+   * amtape behavior has changed:
+      o 'device' subcommand removed
+      o 'slot advance' subcommand removed
+      o 'update' subcommand no longer displays each slot as it is updated, and
+        is not supported by all changers
+      o taperscan output has changed
+      o new 'inventory' subcommand
    * Device API
       o changed wildcard setting for S3_BUCKET_LOCATION from "" to "*"
    * Application API

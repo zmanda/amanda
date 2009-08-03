@@ -19,9 +19,10 @@
 </refmeta>
 <refnamediv>
 <refname>amtape</refname>
-<refpurpose>user interface to Amanda tape changer controls</refpurpose>
+<refpurpose>Control Amanda changers</refpurpose>
 </refnamediv>
 <refentryinfo>
+&author.dustin;
 &author.jds;
 &author.sgw.xml;
 </refentryinfo>
@@ -30,182 +31,139 @@
 <cmdsynopsis>
   <command>amtape</command>    
     <arg choice='plain'><replaceable>config</replaceable></arg>
-    <arg choice='plain'><replaceable>command</replaceable></arg>
-    <arg choice='opt' rep='repeat'><replaceable>command_options</replaceable></arg>
+    <arg choice='plain'><replaceable>subcommand</replaceable></arg>
+    <arg choice='opt' rep='repeat'><replaceable>subcommand_options</replaceable></arg>
     <arg choice='plain' rep='repeat'><group><option>-o </option><replaceable>configoption</replaceable></group></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1><title>DESCRIPTION</title>
-<para><emphasis remap='B'>Amtape</emphasis>
-performs tape changer control operations.
-It uses the underlying tape changer script defined by the
-<emphasis remap='B'>tpchanger</emphasis>
-option for a particular Amanda
-configuration as specified by the
-<emphasis remap='I'>config</emphasis>
-argument.</para>
 
-<para>Tape changers maintain a notion of the
-<emphasis remap='I'>current</emphasis>
-and
-<emphasis remap='I'>next</emphasis>
-slot for each configuration.
-These may or may not correspond to an actual physical state of the device,
-but do tend to minimize searching through the tape storage slots.
-If the desired tape is in the current slot,
-it is likely the next tape needed is in the next slot
-rather than at some random position in the storage slots.</para>
+<para><emphasis remap='B'>Amtape</emphasis> is the command-line interface
+to Amanda's tape changers (<manref name="amanda-changers" vol="7" />) and to
+the taperscan algorithm (<manref name="amanda-taperscan" vol="7" />).
+</para>
 
-<para>See the
-<manref name="amanda" vol="8"/>
-man page for more details about Amanda.</para>
+<para>Tape changers maintain a notion of the <emphasis
+remap='I'>current</emphasis> slot for each configuration.  This may or may not
+correspond to an actual physical state of the device, but is used by some
+taperscan algorithms to minimize searching through the slots.</para>
+
 </refsect1>
 
-<refsect1><title>COMMANDS</title>
+<refsect1><title>SUBCOMMANDS</title>
 <variablelist remap='TP'>
-  <varlistentry>
-  <term><emphasis remap='B'>reset</emphasis></term>
-  <listitem>
-<para>Reset the tape changer to a known state.
-The
-<emphasis remap='I'>current</emphasis>
-slot is set to the
-<emphasis remap='I'>first</emphasis>
-slot.
-Other device-specific side effects may occur.
-Some gravity stackers need to be reset to the top position by hand.
-This command notifies Amanda the stacker is back in that position.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>eject</emphasis></term>
-  <listitem>
-<para>If a tape is loaded in the drive, it is ejected and returned to the
-slot from which it was loaded.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>clean</emphasis></term>
-  <listitem>
-<para>If a cleaning tape is defined for the changer,
-it is used to clean the drive.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>show</emphasis></term>
-  <listitem>
-<para>Show the contents of all slots.
-This can be slow.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>label</emphasis> <emphasis remap='I'>label</emphasis></term>
-  <listitem>
-<para>Search for and load the Amanda tape with label
-<emphasis remap='I'>label</emphasis>.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>taper</emphasis></term>
-  <listitem>
-<para>Perform the
-<emphasis remap='B'>taper</emphasis>
-scan algorithm.
-Load the next tape in the configuration's tape sequence,
-or a fresh tape with a suitable label.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>device</emphasis></term>
-  <listitem>
-<para>Display the name of the current tape device on
-<emphasis remap='I'>stdout</emphasis>.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>current</emphasis></term>
-  <listitem>
-<para>Display the current slot.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>update</emphasis></term>
-  <listitem>
-<para>Update the changer label database, if it has one,
-to match the tapes now available.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>slot</emphasis> <emphasis remap='I'>slot</emphasis></term>
-  <listitem>
-<para>Eject any tape in the drive and put it away,
-then load the tape from slot
-<emphasis remap='I'>slot</emphasis>
-and reset
-<emphasis remap='I'>current</emphasis>.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>slot current</emphasis></term>
-  <listitem>
-<para>Eject any tape in the drive and put it away,
-then load the tape from the current slot.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>slot next</emphasis></term>
-  <listitem>
-<para>Eject any tape in the drive and put it away,
-then load the tape from the next slot and reset
-<emphasis remap='I'>current</emphasis>.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>slot first</emphasis></term>
-  <listitem>
-<para>Eject any tape in the drive and put it away,
-then load the tape from the first slot and reset
-<emphasis remap='I'>current</emphasis>.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>slot advance</emphasis></term>
-  <listitem>
-<para>Synonym for <emphasis remap='B'>slot next</emphasis>.</para>
-  </listitem>
-  </varlistentry>
 
-  <varlistentry>
-  <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
-  <listitem>
+<varlistentry>
+<term><command>label</command> <arg choice='plain'><replaceable>label</replaceable></arg></term>
+<listitem>
+
+<para>Search for and load the Amanda tape with label <arg>label</arg>, also
+setting the current slot.</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>slot</command> <arg choice='plain'><replaceable>slot</replaceable></arg></term>
+<listitem>
+
+<para>Load the volume in the given slot, also setting the current slot.  The
+slot names <command>current</command>, <command>next</command>,
+<command>first</command>, and <command>last</command> have special meaning.
+</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>current</command></term>
+<listitem>
+
+<para>Shorthand for <command>slot</command> <arg choice='plain'>current</arg>.</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>inventory</command></term>
+<listitem>
+
+<para>Show the contents of all slots, based on the changer's cached metadata.
+This is a quick operation as it does not load or unload any volumes, but is not
+supported by all changers.</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>show</command></term>
+<listitem>
+
+<para>Show the contents of all slots by loading each slot and reading its
+label.  This can be very slow.</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>reset</command></term>
+<listitem>
+
+<para>Reset the changer to a known state.  This subcommand is intended to clear
+any unknown and potentially incorrect state the changer may have stored.</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>eject</command> <arg choice='opt'><replaceable>drive</replaceable></arg></term>
+<listitem>
+
+<para>Eject the tape currently in the drive.  This only applies to some
+changers.  Specify a drive (by drive number) if more than one drive is
+available.</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>clean</command> <arg choice='opt'><replaceable>drive</replaceable></arg></term>
+<listitem>
+
+<para>If a cleaning tape is defined for the changer, used it to clean the
+specified drive. The <arg>drive</arg> is optional if the changer only has one
+drive.</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>taper</command></term>
+<listitem>
+
+<para>Run the taperscan algorithm (see <manref name="amanda-taperscan" vol="7"
+/>), displaying information about the progress of the scan.</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>update</command> <arg choice='opt'>what</arg></term>
+<listitem>
+
+<para>Update changer state.  Consult <manref name="amanda-changers" vol="7" />
+for changer-specific details on the format of <arg
+choice='plain'>what</arg>.</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice='plain'>-o <replaceable>configoption</replaceable></arg></term>
+<listitem>
 <para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>"
- section in <manref name="amanda" vol="8"/>.</para>
-  </listitem>
-  </varlistentry>
+section in <manref name="amanda" vol="8"/>.</para>
+</listitem>
+</varlistentry>
 
 </variablelist>
-
-<para>This is useful with non-gravity stackers to unload the last tape used
-and set up Amanda for the next run.
-If you just use
-<emphasis remap='B'>eject</emphasis>,
-the current tape will be mounted again in the next run,
-where it will be rejected as being still in use,
-ejected and the next tape requested.
-Using
-<emphasis remap='B'>slot next</emphasis>
-followed by
-<emphasis remap='B'>eject</emphasis>
-does an unnecessary mount.</para>
-
-<para>Note: most changers optimize the
-<emphasis remap='B'>slot</emphasis>
-commands to not eject the loaded tape if it is the one being requested.</para>
 </refsect1>
 
 <seealso>
+<manref name="amanda-changers" vol="7"/>
+<manref name="amanda-taperscan" vol="7"/>
 <manref name="amanda-devices" vol="7"/>
 </seealso>
 

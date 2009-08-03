@@ -1012,6 +1012,9 @@ sub update_unlocked {
 
     return if $self->check_error($params{'finished_cb'});
 
+    my $user_msg_fn = $params{'user_msg_fn'};
+    $user_msg_fn ||= sub { Amanda::Debug::info("chg-robot: " . $_[0]); };
+
     $subs{'handle_assignment'} = make_cb(handle_assignment => sub {
 	# check for the SL=LABEL format, and handle it here
 	if (exists $params{'changed'} and $params{'changed'} =~ /^\d+=\S+$/) {
@@ -1034,6 +1037,7 @@ sub update_unlocked {
 			reason => "unknown", message => $whynot);
 	    }
 
+	    $user_msg_fn->("recoding volume '$label' in slot $slot");
 	    # ok, now erase all knowledge of that label
 	    while (my ($bc, $lb) = each %{$state->{'bc2lb'}}) {
 		if ($lb eq $label) {
@@ -1095,7 +1099,7 @@ sub update_unlocked {
 	return $subs{'done'}->() if (!@slots_to_check);
 
 	my $slot = shift @slots_to_check;
-	Amanda::Debug::debug("updating slot $slot");
+	$user_msg_fn->("scanning slot $slot");
 
 	$self->load_unlocked(
 		slot => $slot,

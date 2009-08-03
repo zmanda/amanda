@@ -37,7 +37,10 @@ This is an abstract base class for taperscan algorithms.
     # the device with $access_mode (one of $ACCESS_WRITE or $ACCESS_APPEND)
     # ..
   });
-  $taperscan->scan(result_cb => $result_cb);
+  my $user_msg_fn = sub {
+    print "$_[0]\n";
+  };
+  $taperscan->scan(result_cb => $result_cb, user_msg_fn => $user_msg_fn);
 
 =head1 OVERVIEW
 
@@ -61,12 +64,18 @@ instantiated.  The remaining options will be taken from the configuration file
 if not specified.  Default values for all of these options are applied before a
 subclass's constructor is called.
 
-Subclasses must implement a single method: C<scan>.  It takes only one named
-parameter:
+Subclasses must implement a single method: C<scan>.  It takes only one mandatory
+parameter, C<result_cb>:
 
-  $taperscan->scan(result_cb => $my_result_cb);
+  $taperscan->scan(
+    result_cb => $my_result_cb,
+    user_msg_fn => $fn,
+    );
 
-This callback takes the following positional parameters:
+If C<user_msg_fn> is specified, then it is called with user-oriented messages to
+indicate the progress of the scan.
+
+The C<result_cb> takes the following positional parameters:
 
   $error        an error message, or undef on success
   $reservation  Amanda::Changer::Reservation object

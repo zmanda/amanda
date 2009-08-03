@@ -1,4 +1,16 @@
 2009-08-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/Makefile.am server-src/amtape.c server-src/amtape.pl:
+	  rewrite amtape in perl
+	* NEWS: describe changes
+	* man/xml-source/amtape.8.xml: document behavior
+	* perl/Amanda/Changer.pm perl/Amanda/Changer/compat.pm
+	  perl/Amanda/Changer/robot.pm perl/Amanda/MainLoop.swg
+	  perl/Amanda/Taper/Scan.pm perl/Amanda/Taper/Scan/traditional.pm: add
+	  user_msg_fn
+	* installcheck/Amanda_Changer_compat.pl installcheck/amtape.pl: update
+	  tests to match new behavior
+
+2009-08-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm perl/Amanda/Changer/compat.pm
 	  perl/Amanda/Changer/disk.pm perl/Amanda/Changer/rait.pm
 	  perl/Amanda/Changer/robot.pm perl/Amanda/Changer/single.pm: add

@@ -274,7 +274,7 @@ try_run_changer(
 
 try_run_changer(
     sub { $chg->inventory(inventory_cb => $check_finished_cb); },
-    { message => "Amanda::Changer::compat does not support inventory",
+    { message => "'chg-compat:' does not support inventory",
 	    type => 'failed', reason => 'notimpl' },
     undef,
     "inventory not implemented");

@@ -321,12 +321,17 @@ ensure that the correct volume is ejected from a multi-drive changer.
 =head3 update
 
   $chg->update(finished_cb => $cb,
+	       user_msg_fn => $fn,
 	       changed => $changed)
 
 The user has changed something -- loading or unloading tapes, reconfiguring the
 changer, etc. -- that may have invalidated the database.  C<$changed> is a
 changer-specific string indicating what has changed; if it is omitted, the
 changer will check everything.
+
+Since updates can take a long time, and users often want to know what's going
+on, the update method will call C<user_msg_fn>, if specified, with
+user-oriented messages appropriate to the changer.
 
 =head3 inventory
 
@@ -786,9 +791,10 @@ sub _stubop {
     return if $self->check_error($params{$cbname});
 
     my $class = ref($self);
-    $self->make_error("failed", $params{$cbname},
+    my $chg_foo = "chg-" . ($class =~ /Amanda::Changer::(.*)/)[0];
+    return $self->make_error("failed", $params{$cbname},
 	reason => "notimpl",
-	message => "$class does not support $op");
+	message => "'$chg_foo:' does not support $op");
 }
 
 sub load { _stubop("loading volumes", "res_cb", @_); }

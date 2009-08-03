@@ -32,6 +32,7 @@
 %perlcode %{
 
 use POSIX;
+use Carp;
 
 ## basic functions
 
@@ -71,6 +72,8 @@ my @waiting_to_call_later;
 sub call_later {
     my ($sub, @args) = @_;
 
+    confess "undefined sub" unless ($sub);
+
     # add the callback if nothing is waiting right now
     if (!@waiting_to_call_later) {
         timeout_source(0)->set_callback(sub {
@@ -108,6 +111,8 @@ push @EXPORT, 'make_cb';
 sub call_after {
     my ($delay_ms, $sub, @args) = @_;
 
+    confess "undefined sub" unless ($sub);
+
     my $src = timeout_source($delay_ms);
     $src->set_callback(sub {
 	$src->remove();
@@ -120,6 +125,8 @@ push @EXPORT_OK, "call_after";
 
 sub call_on_child_termination {
     my ($pid, $cb, @args) = @_;
+
+    confess "undefined sub" unless ($cb);
 
     my $src = child_watch_source($pid);
     $src->set_callback(sub {
