@@ -61,9 +61,9 @@ sub setup_mock_mtx {
     my %config = @_;
     my $state_filename = "$Installcheck::TMP/mtx_state";
     open (my $fh, ">", $state_filename) or die $!;
-    print $fh Data::Dumper->Dump([
+    print $fh (Data::Dumper->Dump([
 	    { config => \%config }
-	], ["STATE"]);
+	], ["STATE"]));
     close ($fh);
 
     return $state_filename;

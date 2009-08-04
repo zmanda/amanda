@@ -1,4 +1,8 @@
 2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Mock.pm: change syntax that perl-5.8.0 finds
+	  confusing
+
+2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amlabel.pl installcheck/Makefile.am: new unit tests
 
 2009-08-03  Dustin J. Mitchell <dustin@zmanda.com>
