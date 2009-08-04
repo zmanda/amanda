@@ -1,4 +1,9 @@
 2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/device.h: remove some comments that are now redundant
+	* perl/Amanda/Device.pod: put primary Device documentation here,
+	  centralizing what used to be in the header file and on the wiki
+
+2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Installcheck/Mock.pm: change syntax that perl-5.8.0 finds
 	  confusing
 

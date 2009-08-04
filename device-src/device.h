@@ -62,35 +62,14 @@ GType	device_get_type	(void);
 
 typedef struct DevicePrivate_s DevicePrivate;
 
-/* This structure is a Flags (bitwise OR of values). Zero indicates success;
- * any other value indicates some kind of problem reading the label. If
- * multiple bits are set, it does not necessarily indicate that /all/ of
- * the specified issues occured, but rather that /at least one/ did. */
+/* See Amanda::Device POD for a description of these constants */
 typedef enum {
-    /* When changing, Also update device_status_flags_values in
-     * device-src/device.c and perl/Amanda/Device.swg */
     DEVICE_STATUS_SUCCESS          = 0,
-
-    /* The device is in an unresolvable error state, and
-     * further retries are unlikely to change the status */
     DEVICE_STATUS_DEVICE_ERROR     = (1 << 0),
-
-    /* The device is in use, and should be retried later */
     DEVICE_STATUS_DEVICE_BUSY      = (1 << 1),
-
-    /* The device itself is OK, but has no media loaded.  This
-     * may change if media is loaded by the user or a changer */
     DEVICE_STATUS_VOLUME_MISSING   = (1 << 2),
-
-    /* The device is OK and media is laoded, but there is
-     * no Amanda header or an invalid header on the media. */
     DEVICE_STATUS_VOLUME_UNLABELED = (1 << 3),
-
-    /* The device is OK, but there was an unresolvable error
-     * loading the header from the media, so subsequent reads
-     * or writes will probably fail. */
     DEVICE_STATUS_VOLUME_ERROR     = (1 << 4),
-
     DEVICE_STATUS_FLAGS_MAX        = (1 << 5)
 } DeviceStatusFlags;
 
@@ -107,7 +86,7 @@ typedef struct Device {
     /* You can peek at the stuff below, but only subclasses should
        change these values.*/
 
-    /* What file, block are we at? (and are we in the middle of a * file?) */
+    /* What file, block are we at? (and are we in the middle of a file?) */
     int file;
     guint64 block;
     gboolean in_file;
@@ -279,140 +258,31 @@ void device_set_error(Device * self, char *errmsg, DeviceStatusFlags new_flags);
 
 /*
  * Public methods
+ *
+ * See the Amanda::Device POD for more information here
  */
 
-/* This instructs the device to read the label on the current volume.
- * device->volume_label will not be initalized until read_label or start is
- * called. You are encouraged to read the label only after setting any
- * properties that may affect the label-reading process. Also, after
- * calling this function, device->volume_label and device->volume_time
- * will be non-NULL if and only if this function returns
- * DEVICE_STATUS_SUCCESS. */
 DeviceStatusFlags        device_read_label (Device * self);
-
-/* This tells the Device that it's OK to start reading and writing
- * data. Before you call this, you can only call
- * device_property_{get, set} and device_read_label. You can only call
- * this a second time if you call device_finish() first.
- *
- * You should pass a label and timestamp if and only if you are
- * opening in WRITE mode (not READ or APPEND). The label and timestamp
- * remain the caller's responsibility in terms of memory management. The
- * passed timestamp may be NULL, in which case it will be filled in with
- * the current time.
- *
- * Note that implementations need not calculate a the current time: the
- * dispatch function does it for you. */
 gboolean 	device_start	(Device * self,
                                  DeviceAccessMode mode, char * label,
                                  char * timestamp);
-
-/* This undoes device_start, returning you to the NULL state. Do this
- * if you want to (for example) change access mode.
- *
- * Note to subclass implementors: Call this function first from your
- * finalization function. */
 gboolean 	device_finish	(Device * self);
-
-/* But you can't write any data until you call this function, too.  This
- * function does not take ownership of the passed dumpfile_t; you must free it
- * yourself.  Note that this function *does* set the blocksize field of the
- * header properly, based on the size of the header block.  */
 gboolean        device_start_file       (Device * self,
                                          dumpfile_t * jobInfo);
-
-/* Does what you expect. Size must be device->block_size or less.
- * If less, then this is the final block in the file, and no more blocks
- * may be written until finish_file and start_file have been called. */
 gboolean 	device_write_block	(Device * self,
                                          guint size,
                                          gpointer data);
-
-/* This will drain the given fd (reading until EOF), and write the
- * resulting data out to the device using maximally-sized blocks.
- * This function does not call device_finish_file automatically.
- */
 gboolean 	device_write_from_fd	(Device * self,
 					queue_fd_t *queue_fd);
-
-/* Call this when you are finished writing a file.
- * This function will write a filemark or the local
- * equivalent, flush the buffers, and do whatever dirty work needs
- * to be done at such a point in time. */
 gboolean 	device_finish_file	(Device * self);
-
-/* For reading only: Seeks to the beginning of a particular
- * filemark. Only do this when reading; opening in
- * ACCESS_WRITE will start you out at the first file, and opening in
- * ACCESS_APPEND will automatically seek to the end of the medium.
- *
- * If the requested file doesn't exist, as might happen when a volume has
- * had files recycled, then this function will seek to the next file that
- * does exist. You can check which file this function selected by
- * examining the file field of the Device structure. If the requested
- * file number is *exactly* one more than the last valid file, this
- * function returns a TAPEEND header.
- *
- * If an error occurs or if the requested file is two or more beyond the
- * last valid file, this function returns NULL.
- *
- * Example results for a volume that has only files 1 and 3:
- * 1 -> Seeks to file 1
- * 2 -> Seeks to file 3
- * 3 -> Seeks to file 3
- * 4 -> Returns TAPEEND
- * 5 -> Returns NULL
- *
- * The returned dumpfile_t is yours to keep, at no extra charge. */
 dumpfile_t* 	device_seek_file	(Device * self,
 					guint file);
-
-/* After you have called device_seek_file (and /only/ after having
- * called device_seek_file), you can call this to seek to a particular
- * block inside the file. It works like SEEK_SET, only in blocks. */
 gboolean 	device_seek_block	(Device * self,
 					guint64 block);
-
-/* After you have called device_seek_file and/or device_seek_block,
- * you can start calling this function. It always reads exactly one whole
- * block at a time, however big that might be. You must pass in a buffer and
- * specify its size. If the buffer is big enough, the read is
- * performed, and both *size and the return value are equal to the
- * number of bytes actually read. If the buffer is not big enough, then
- * no read is performed, the function returns 0, and *size is set
- * to the minimum buffer size required to read the next block. If an
- * error occurs, the function returns -1  and *size is left unchanged.
- *
- * Note that this function may request a block size bigger than
- * dev->block_size, if it discovers an oversized block.  This allows Amanda to
- * read from volumes regardless of the block size used to write them. It is not
- * an error if buffer == NULL and *size == 0. This should be treated as a query
- * as to the possible size of the next block, although it is not an error for
- * the next read to request an even larger block size.  */
 int 	device_read_block	(Device * self, gpointer buffer, int * size);
-
-/* This is the reading equivalent of device_write_from_fd(). It will
- * read from the device from the current location until end of file,
- * and drains the results out into the specified fd. Returns FALSE if
- * there is a problem writing to the fd. */
 gboolean 	device_read_to_fd	(Device * self,
 					queue_fd_t *queue_fd);
-
-/* This function tells you what properties are supported by this device, and
- * when you are allowed to get and set them. The return value is an list of
- * DeviceProperty structs.  Do not free the resulting list. */
 const GSList *	device_property_get_list	(Device * self);
-
-/* These functions get or set a particular property. The val should be
- * compatible with the DevicePropertyBase associated with the given
- * DevicePropertyId, and these functions should only be called when
- * DeviceProperty.access says it is OK. Otherwise you will get an error and not
- * the tasty property action you wanted.
- *
- * All device_property_get_ex parameters but the first two are output
- * parameters, and can be left NULL if you are not interested in their value.
- * If you only need the value, use the simpler device_property_get macro. */
-
 gboolean 	device_property_get_ex	(Device * self,
                                          DevicePropertyId id,
                                          GValue * val,
@@ -420,7 +290,6 @@ gboolean 	device_property_get_ex	(Device * self,
 					 PropertySource *source);
 #define		device_property_get(self, id, val) \
     device_property_get_ex((self), (id), (val), NULL, NULL)
-
 gboolean 	device_property_set_ex	(Device * self,
                                          DevicePropertyId id,
                                          GValue * val,
@@ -429,27 +298,9 @@ gboolean 	device_property_set_ex	(Device * self,
 #define		device_property_set(self, id, val) \
     device_property_set_ex((self), (id), (val), \
 	    PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_USER)
-
-/* On devices that support it (check PROPERTY_PARTIAL_DELETION),
- * this will free only the space associated with a particular file.
- * This way, you can apply a different retention policy to every file
- * on the volume, appending new data at the end and recycling anywhere
- * in the middle -- even simultaneously (via different Device
- * handles)! Note that you generally can't recycle a file that is presently in
- * use (being read or written).
- *
- * To use this, open the device as DEVICE_MODE_APPEND. But you don't
- * have to call device_start_file(), unless you want to write some
- * data, too. */
 gboolean 	device_recycle_file	(Device * self,
 					guint filenum);
 
-/* On devices that support it (check PROPERTY_FULL_DELETION),
- * this will free all space used by the device.
- *
- * To use this, open the device as DEVICE_MODE_APPEND. But you don't
- * have to call device_start_file(), unless you want to write some
- * data, too. */
 gboolean 	device_erase	(Device * self);
 
 /* Protected methods. Don't call these except in subclass implementations. */
