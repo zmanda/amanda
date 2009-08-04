@@ -44,6 +44,7 @@ server_tests = \
 	bigint \
 	taper \
 	amcheck-device \
+	amcheck \
 	amgetconf \
         amtape \
         amlabel \

@@ -1,4 +1,8 @@
 2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am installcheck/amcheck.pl: new tests
+	* server-src/amcheck.c: fix usage message
+
+2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amlabel.pl: do not call exit() from inside a MainLoop callback
 
 2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
