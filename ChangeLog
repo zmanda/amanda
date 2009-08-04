@@ -1,4 +1,8 @@
 2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amcheck.pl: put options before args for old getopts
+	* installcheck/Makefile.am: only run amcheck check on full install
+
+2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am installcheck/amcheck.pl: new tests
 	* server-src/amcheck.c: fix usage message
 

@@ -50,31 +50,31 @@ like(run_get('amcheck', 'TESTCONF'),
     qr/Amanda Tape Server Host Check/,
     "amcheck with a new config succeeds");
 
-like(run_get('amcheck', 'TESTCONF', '-s'),
+like(run_get('amcheck', '-s', 'TESTCONF'),
     qr/Amanda Tape Server Host Check/,
     "amcheck -s works");
 
-like(run_get('amcheck', 'TESTCONF', '-l'),
+like(run_get('amcheck', '-l', 'TESTCONF'),
     qr/Amanda Tape Server Host Check/,
     "amcheck -l works");
 
-like(run_get('amcheck', 'TESTCONF', '-t'),
+like(run_get('amcheck', '-t', 'TESTCONF'),
     qr/Amanda Tape Server Host Check/,
     "amcheck -t works");
 
-like(run_get('amcheck', 'TESTCONF', '-c'),
+like(run_get('amcheck', '-c', 'TESTCONF'),
     qr/Amanda Backup Client Hosts Check/,
     "amcheck -c works");
 
-like(run_get('amcheck', 'TESTCONF', '-c', 'localhost', "$diskname"),
+like(run_get('amcheck', '-c', 'TESTCONF', 'localhost', "$diskname");
     qr/Amanda Backup Client Hosts Check/,
     "amcheck -c works with a hostname and diskname");
 
-ok(!run('amcheck', 'TESTCONF', '-o', 'label_new_tapes='),
+ok(!run('amcheck', '-o', 'label_new_tapes=', 'TESTCONF'),
     "amcheck -o configoption works");
 
 # do this after the other tests, above, since it writes to the tape
-like(run_get('amcheck', 'TESTCONF', '-sw'),
+like(run_get('amcheck', '-sw', 'TESTCONF'),
     qr/Volume 'TESTCONF01' is writeable/,
     "amcheck -w works (with -s)");
 

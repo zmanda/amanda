@@ -44,7 +44,6 @@ server_tests = \
 	bigint \
 	taper \
 	amcheck-device \
-	amcheck \
 	amgetconf \
         amtape \
         amlabel \
@@ -53,6 +52,7 @@ server_tests = \
 # (note that _setupcache should come first here)
 full_tests = \
 	_setupcache \
+	amcheck \
 	amdump \
 	amdevcheck \
 	amcheckdump \
