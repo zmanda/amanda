@@ -41,7 +41,6 @@
 #include "protocol.h"
 #include "clock.h"
 #include "amindex.h"
-#include "taperscan.h"
 #include "server_util.h"
 #include "pipespawn.h"
 #include "amfeatures.h"

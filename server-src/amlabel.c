@@ -34,7 +34,6 @@
 #include "changer.h"
 #include <device.h>
 #include <timestamp.h>
-#include <taperscan.h>
 
 /* local functions */
 

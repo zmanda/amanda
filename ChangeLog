@@ -1,4 +1,8 @@
 2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amlabel.c server-src/amcheck.c: remove include of
+	  taperscan.h
+
+2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/Makefile.am server-src/amcheck-device.pl
 	  server-src/amcheck.c: break out device-checking into a perl script
 	  invoked from amcheck
