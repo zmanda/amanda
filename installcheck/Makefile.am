@@ -45,6 +45,7 @@ server_tests = \
 	taper \
 	amgetconf \
         amtape \
+        amlabel \
 	amtapetype
 
 # (note that _setupcache should come first here)

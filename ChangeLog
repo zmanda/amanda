@@ -1,3 +1,6 @@
+2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amlabel.pl installcheck/Makefile.am: new unit tests
+
 2009-08-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/tape-posix.c: use g_debug instead of dbprintf
 
