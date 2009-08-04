@@ -1,4 +1,8 @@
 2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amcheck.c: initialize success properly
+	* installcheck/mock/mtx.pl: another workaround for bad perl parser
+
+2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amlabel.pl: update tests for new messages
 	* server-src/Makefile.am server-src/amlabel.c server-src/amlabel.pl:
 	  rewrite amlabel in perl to use new changer API

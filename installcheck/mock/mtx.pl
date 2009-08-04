@@ -88,7 +88,7 @@ sub load_statefile {
 
 sub write_statefile {
     open(my $fh, ">", $statefile);
-    print $fh Data::Dumper->Dump([$STATE], ["STATE"]);
+    print $fh (Data::Dumper->Dump([$STATE], ["STATE"]));
     close($fh);
 }
 

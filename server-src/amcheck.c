@@ -632,6 +632,7 @@ static gboolean test_tape_status(FILE * outf) {
     if (WIFSIGNALED(wait_status)) {
 	g_fprintf(outf, _("amcheck-device terminated with signal %d"),
 		  WTERMSIG(wait_status));
+	success = FALSE;
     } else if (WIFEXITED(wait_status)) {
 	success = (WEXITSTATUS(wait_status) == 0);
     } else {
