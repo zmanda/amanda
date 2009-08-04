@@ -1,4 +1,7 @@
 2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amlabel.pl: do not call exit() from inside a MainLoop callback
+
+2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amcheck.c: initialize success properly
 	* installcheck/mock/mtx.pl: another workaround for bad perl parser
 

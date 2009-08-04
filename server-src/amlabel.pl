@@ -92,10 +92,9 @@ sub failure {
     print STDERR "$msg\n";
     $exit_status = 1;
     if ($res) {
-	$res->release(finished_cb => sub { exit(1); });
-	return;
+	$res->release(finished_cb => sub { Amanda::MainLoop::quit(); });
     } else {
-	exit(1);
+	Amanda::MainLoop::quit();
     }
 }
 
@@ -223,3 +222,4 @@ $subs{'released'} = make_cb(released => sub {
 
 $subs{'start'}->();
 Amanda::MainLoop::run();
+exit($exit_status);
