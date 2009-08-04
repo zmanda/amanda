@@ -113,6 +113,15 @@ programs that expect to be setuid-root.
 
 Return the original current directory with C<get_original_cwd>.
 
+=item version_opt()
+
+Print the version and exit.  This is intended to be used in C<GetOptions> invocations, e.g.,
+
+  GetOptions(
+    # ...
+    'version' => \&Amanda::Util::version_opt,
+  );
+
 =back
 
 =head1 File Handling

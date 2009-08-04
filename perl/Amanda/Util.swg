@@ -42,6 +42,7 @@ use warnings;
 use Carp;
 use POSIX qw( :fcntl_h :errno_h );
 use POSIX qw( strftime );
+use Amanda::Constants;
 
 # private package variables
 my $_pname;
@@ -86,6 +87,11 @@ sub finish_setup {
     }
 
     check_running_as($running_as);
+}
+
+sub version_opt {
+    print "$_pname-$Amanda::Constants::VERSION\n";
+    exit 0;
 }
 
 %}

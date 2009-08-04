@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 18;
+use Test::More tests => 19;
 
 use lib "@amperldir@";
 use Installcheck::Config;
@@ -25,6 +25,7 @@ use Amanda::Device qw( :constants );
 use Amanda::Config qw( :init :getconf );
 use Amanda::Paths;
 use Amanda::Debug;
+use Amanda::Constants;
 use Amanda::Tapelist;
 
 my $testconf;
@@ -65,8 +66,12 @@ like(run_err('amlabel'),
     qr/^Usage:/,
     "bare 'amlabel' gives usage message");
 
+like(run_get('amlabel', '--version'),
+    qr/^amlabel-\Q$Amanda::Constants::VERSION\E/,
+    "'amlabel --version' gives version");
+
 like(run_get('amlabel', 'TESTCONF', 'TESTCONF92'),
-    qr/Writing label TESTCONF92/,
+    qr/Writing label 'TESTCONF92'/,
     "amlabel labels the current slot by default");
 
 $tl = Amanda::Tapelist::read_tapelist($tlf);
@@ -85,15 +90,15 @@ die "read_label failed" unless $dev->read_label() == $DEVICE_STATUS_SUCCESS;
 is($dev->volume_label, "TESTCONF92", "volume is actually labeled");
 
 ok(!run('amlabel', 'TESTCONF', 'TESTCONF93'),
-    "amlabel refuses to re-label a labeled tape");
+    "amlabel refuses to re-label a labeled volume");
 like($Installcheck::Run::stdout,
-    qr/Found Amanda tape TESTCONF92, tape is active/,
+    qr/Volume with label 'TESTCONF92' contains data from this configuration/,
     "with correct message");
 
 ok(!run('amlabel', 'TESTCONF', 'SomeTape'),
     "amlabel refuses to write a non-matching label");
 like($Installcheck::Run::stderr,
-    qr/label SomeTape doesn't match labelstr ".*"/,
+    qr/Label 'SomeTape' doesn't match labelstr '.*'/,
     "with correct message on stderr");
 
 ok(!run('amlabel', '-f', 'TESTCONF', 'SomeTape'),
@@ -102,30 +107,27 @@ ok(!run('amlabel', '-f', 'TESTCONF', 'SomeTape'),
 ok(!run('amlabel', 'TESTCONF', 'TESTCONF13', 'slot', '3'),
     "amlabel refuses to write a label already in the tapelist (and recognizes 'slot xx')");
 like($Installcheck::Run::stderr,
-    qr/label TESTCONF13 already on a tape/,
+    qr/Label 'TESTCONF13' already on a volume/,
     "with correct message on stderr");
 
 ok(run('amlabel', '-f', 'TESTCONF', 'TESTCONF13', 'slot', '3'),
     "amlabel will write a label already in the tapelist with -f");
 like($Installcheck::Run::stdout,
-    qr/Writing label TESTCONF13/,
+    qr/Writing label 'TESTCONF13'/,
     "with correct message on stdout");
 
 ok(!run('amlabel', 'TESTCONF', 'TESTCONF88', 'slot', '2'),
     "amlabel refuses to overwrite a non-matching label");
 like($Installcheck::Run::stdout,
-    qr/Found Amanda tape MyTape, but it is not from configuration TESTCONF\./,
+    qr/Found label 'MyTape', but it is not from configuration 'TESTCONF'\./,
     "with correct message on stdout");
 
 ok(run('amlabel', '-f', 'TESTCONF', 'TESTCONF88', 'slot', '2'),
     "amlabel will overwrite a non-matching label with -f");
 like($Installcheck::Run::stdout,
-    qr/Found Amanda tape MyTape, but it is not from configuration TESTCONF\.
-Writing label TESTCONF88/,
+    qr/Found label 'MyTape', but it is not from configuration 'TESTCONF'\.
+Writing label 'TESTCONF88'/,
     "with correct message on stdout");
 
-TODO: {
-    local $TODO = "C version is picky about option locations";
-    ok(run('amlabel', 'TESTCONF', 'TESTCONF88', '-f', 'slot', '2'),
-	"-f option doesn't have to follow 'amlabel'");
-}
+ok(run('amlabel', 'TESTCONF', 'TESTCONF88', '-f', 'slot', '2'),
+    "-f option doesn't have to follow 'amlabel'");

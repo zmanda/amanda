@@ -1,4 +1,11 @@
 2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amlabel.pl: update tests for new messages
+	* server-src/Makefile.am server-src/amlabel.c server-src/amlabel.pl:
+	  rewrite amlabel in perl to use new changer API
+	* man/xml-source/amlabel.8.xml: overhaul manpage
+	* perl/Amanda/Util.pod perl/Amanda/Util.swg: add version_opt
+
+2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amlabel.c server-src/amcheck.c: remove include of
 	  taperscan.h
 

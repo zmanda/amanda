@@ -22,7 +22,7 @@ LINTFLAGS=$(AMLINTFLAGS)
 amlib_LTLIBRARIES = 	libamserver.la
 
 sbin_PROGRAMS =		amadmin		amcheck		\
-			amflush		amlabel		\
+			amflush		\
 			amservice	amreport
 
 amlibexec_PROGRAMS =	amindexd	amlogroll	amtrmidx	\
@@ -42,6 +42,7 @@ sbin_SCRIPTS_PERL = \
 	    amcheckdump \
 	    amcleanup \
 	    amrmtape \
+	    amlabel \
 	    amtape \
 	    amvault \
 	    amstatus

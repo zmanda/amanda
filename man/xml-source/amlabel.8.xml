@@ -24,93 +24,85 @@
 <refentryinfo>
 &author.jds;
 &author.sgw.xml;
+&author.dustin;
 </refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amlabel</command>    
-    <arg choice='opt'>-f </arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>label</replaceable></arg>
     <arg choice='opt'>slot <replaceable>slot</replaceable></arg>
-    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
+    <arg><option>-f</option></arg>
+    <arg><option>--version</option></arg>
+    <group rep='repeat' choice='opt'><arg choice='req'><option>-o</option> <replaceable>configoption</replaceable></arg></group>
 </cmdsynopsis>
 </refsynopsisdiv>
 
-
 <refsect1><title>DESCRIPTION</title>
-<para>All Amanda tapes must be pre-labeled before they are used.
-Amanda verifies the label in
-<emphasis remap='B'>amdump</emphasis>
-and
-<emphasis remap='B'>amflush</emphasis>
-before writing to make sure the proper tape is loaded.</para>
 
-<para><emphasis remap='B'>Amlabel</emphasis>
-writes an Amanda label on the tape in the device specified by the
-<emphasis remap='I'>amanda.conf</emphasis>
-file in /usr/local/etc/amanda/<emphasis remap='I'>config</emphasis>.
-<emphasis remap='I'>Label</emphasis>
-may be any string that does not contain whitespace and that matches the
-<emphasis remap='I'>amanda.conf</emphasis>
-<emphasis remap='B'>labelstr</emphasis>
-regular expression option.
-It is up to the system administrator to define a naming convention.</para>
+<para>This command applies a label to an Amanda volume, erasing the volume in
+the process.</para>
 
-<para><emphasis remap='B'>Amlabel</emphasis>
-appends the new tape to the &tapelist;
-file so it will be used by Amanda before it reuses any other tapes.
-When you
-<command>amlabel</command>
-multiple tapes, they will be used in the order you
-<command>amlabel</command>
-them.</para>
+<para>Amanda uses labels to identify volumes: <manref name="amdump" vol="8" />
+and <manref name="amflush" vol="8" /> verify the label before writing to make
+sure the proper volume is loaded, and the recovery programs use the label to
+ensure they are reading the data they expect.</para>
 
-<para><emphasis remap='B'>Amlabel</emphasis>
-will not write the label if the tape contains an active
-Amanda tape or if the label specified is on an active tape.
-The
-<option>-f</option>
-(force) flag bypasses these verifications.</para>
+<para>If no <arg choice="opt"><replaceable>slot</replaceable></arg> is given,
+then <command>amlabel</command> labels the tape in the current slot of the
+default changer.  If a slot is given, it labels the volume in that slot.
+<emphasis remap='I'>Label</emphasis> may be any string that does not contain
+whitespace and that matches the <emphasis remap='B'>labelstr</emphasis> (see
+<manref name="amanda.conf" vol="5" />).</para>
 
-<para>An optional
-<emphasis remap='I'>slot</emphasis>
-may be specified after the tape label.
-If a tape changer is in use,
-<command>amlabel</command>
-will label the tape in the specified slot instead of the currently loaded tape.</para>
+<para>This command also appends the new volume to the &tapelist; file, so that
+they will be used in the order they are labeled (depending on the taperscan in
+use &mdash; see <manref name="amanda-taperscan" vol="7" />).</para>
 
-<para>See the
-<manref name="amanda" vol="8"/>
-man page for more details about Amanda.</para>
+<para>As a precaution, <command>amlabel</command> will not write a label if the
+volume already contains an active label or if the label specified is on an
+active tape.  The <arg choice="opt">-f</arg> (force) flag bypasses these
+verifications.</para>
 </refsect1>
 
 <refsect1><title>OPTIONS</title>
 <variablelist remap='TP'>
 
   <varlistentry>
-  <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
+  <term><option>-f</option></term>
   <listitem>
-<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in <manref name="amanda" vol="8"/>.</para>
+  <para>Force the label operation; see above</para>
   </listitem>
   </varlistentry>
 
+  <varlistentry>
+  <term><option>--version</option></term>
+  <listitem>
+<para>Output version information</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>-o <replaceable>configoption</replaceable></option></term>
+  <listitem>
+<para>See the "CONFIGURATION OVERRIDE" section in <manref name="amanda" vol="8"/>.</para>
+  </listitem>
+  </varlistentry>
 
 </variablelist>
 </refsect1>
 
 <refsect1><title>EXAMPLE</title>
 <para>Write an Amanda label with the string &quot;DMP000&quot; on
-the tape loaded in the device named in the
-<emphasis remap='B'>tapedev</emphasis>
-option in /usr/local/etc/amanda/daily/amanda.conf:</para>
+the current volume:</para>
 
 <programlisting>
 % amlabel daily DMP000 
 </programlisting>
 
-<para>Label the tape in slot 3 of the currently configured tape changer
-with the string &quot;DMP003&quot;:</para>
+<para>Label the tape in slot 3 of the changer with the label
+&quot;DMP003&quot;:</para>
 
 <programlisting>
 % amlabel daily DMP003 slot 3 
@@ -119,72 +111,57 @@ with the string &quot;DMP003&quot;:</para>
 
 <refsect1><title>MESSAGES</title>
 <variablelist remap='TP'>
+
   <varlistentry>
-  <term>label <emphasis remap='I'>label</emphasis> doesn't match labelstr <emphasis remap='I'>str</emphasis></term>
-  <listitem>
-<para>Label
-<emphasis remap='I'>label</emphasis>
-on the command line does not match the
-<emphasis remap='I'>labelstr</emphasis>
-regular expression
-<emphasis remap='I'>str</emphasis>
-from
-<emphasis remap='I'>amanda.conf</emphasis>.</para>
-  </listitem>
+
+  <term>Label '<replaceable>label</replaceable>' doesn't match labelstr
+  '<replaceable>labelstr</replaceable>'</term>
+
+  <listitem><para>The given label does not match the configured labelstr.  Even
+  with <option>-f</option>, this is an error.</para></listitem>
+
   </varlistentry>
   <varlistentry>
-  <term>label <emphasis remap='I'>label</emphasis> already on a tape</term>
-  <listitem>
-<para>Label
-<emphasis remap='I'>label</emphasis>
-is already listed as an active Amanda tape.</para>
-  </listitem>
+
+  <term>Label '<replaceable>label</replaceable>' already on a volume</term>
+
+  <listitem><para>The given label is already on another volume in the tapelist, and
+  Amanda will not write it to this volume unless forced.</para></listitem>
+
   </varlistentry>
   <varlistentry>
-  <term>no tpchanger specified in <emphasis remap='I'>path</emphasis> , so slot command invalid</term>
-  <listitem>
-<para>The command line has the
-<emphasis remap='B'>slot</emphasis>
-parameter but the
-<emphasis remap='I'>amanda.conf</emphasis>
-file in
-<emphasis remap='I'>path</emphasis>
-does not have a tape changer configured.</para>
-  </listitem>
+
+  <term>Found label '<replaceable>label</replaceable>', but it is not from
+  configuration <replaceable>config</replaceable>.</term>
+
+  <listitem><para>The label <command>amlabel</command> found on the volume does
+  not match this configuration's <emphasis remap='B'>labelstr</emphasis>, so it
+  is probably part of a different Amanda configuration.  Amanda will not
+  overwrite the label unless it is forced.</para> </listitem>
+
   </varlistentry>
   <varlistentry>
-  <term>reading label <emphasis remap='I'>label</emphasis>, tape is in another amanda configuration</term>
-  <listitem>
-<para>This tape appears to be a valid Amanda tape,
-but label does not match
-<emphasis remap='B'>labelstr</emphasis>
-for this configuration so it is probably part of a different Amanda configuration.</para>
-  </listitem>
+
+  <term>Volume with label '<emphasis remap='I'>label</emphasis>' contains
+  data from this configuration.</term>
+
+  <listitem> <para>The label <command>amlabel</command> found on the volume
+  still has valid data on it and Amanda will not overwrite it unless
+  forced.  Note that this does not distinguish between active and inactive
+  volumes.</para></listitem>
+
   </varlistentry>
   <varlistentry>
-  <term>reading label <emphasis remap='I'>label</emphasis>, tape is active</term>
-  <listitem>
-<para>Tape
-<emphasis remap='I'>label</emphasis>
-appears to already be part of this Amanda configuration
-and active, i.e. has valid data on it.</para>
-  </listitem>
+
   </varlistentry>
-  <varlistentry>
-  <term>no label found, are you sure <emphasis remap='I'>tape</emphasis> is non-rewinding?</term>
-  <listitem>
-<para>While checking that the label was written correctly,
-<command>amlabel</command>
-got an error that might be caused by mis-configuring Amanda
-with a rewinding tape device name
-instead of a non-rewinding device name for
-<emphasis remap='I'>tape.</emphasis></para>
-  </listitem>
-  </varlistentry>
+
 </variablelist>
 </refsect1>
 
 <seealso>
+<manref name="amanda.conf" vol="5"/>
+<manref name="tapelist" vol="5"/>
+<manref name="amanda-taperscan" vol="7"/>
 <manref name="amdump" vol="8"/>,
 <manref name="amflush" vol="8"/>
 </seealso>
