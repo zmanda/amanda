@@ -1,4 +1,14 @@
 2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/Makefile.am server-src/amcheck-device.pl
+	  server-src/amcheck.c: break out device-checking into a perl script
+	  invoked from amcheck
+	* installcheck/Makefile.am installcheck/amcheck-device.pl: check new
+	  script
+	* perl/Amanda/Taper/Scan/traditional.pm: be willing to overwrite
+	  volumes explicitly marked as blank (timestamp="X")
+	* server-src/taperscan.c server-src/taperscan.h: remove
+
+2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/device.h: remove some comments that are now redundant
 	* perl/Amanda/Device.pod: put primary Device documentation here,
 	  centralizing what used to be in the header file and on the wiki

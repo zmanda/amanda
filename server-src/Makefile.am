@@ -31,7 +31,8 @@ amlibexec_PROGRAMS =	amindexd	amlogroll	amtrmidx	\
 			chunker
 
 amlibexec_SCRIPTS_PERL = \
-	    taper
+	    taper \
+	    amcheck-device
 
 sbin_SCRIPTS_PERL = \
 	    amaddclient \
@@ -88,7 +89,7 @@ libamserver_la_SOURCES=	amindex.c	changer.c			\
 			diskfile.c	driverio.c	cmdline.c  \
 			holding.c	infofile.c	logfile.c	\
 			tapefile.c	find.c		server_util.c   \
-                        taperscan.c	xfer-source-holding.c
+                        xfer-source-holding.c
 
 libamserver_la_LDFLAGS= -release $(VERSION)
 libamserver_la_LIBADD= ../device-src/libamdevice.la \
@@ -113,7 +114,7 @@ noinst_HEADERS = 	amindex.h	changer.h	cmdline.h	\
 			diskfile.h	driverio.h	\
 			holding.h	infofile.h	logfile.h	\
 			tapefile.h	find.h		server_util.h	\
-			taperscan.h	xfer-server.h
+			xfer-server.h
 
 lint:
 	@ for p in $(amlibexec_PROGRAMS) $(sbin_PROGRAMS); do			\

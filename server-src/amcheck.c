@@ -600,124 +600,49 @@ test_server_pgm(
 /* check that the tape is a valid amanda tape
    Returns TRUE if all tests passed; FALSE otherwise. */
 static gboolean test_tape_status(FILE * outf) {
-    int tape_status;
-    Device * device;
-    GValue property_value;
-    char * label = NULL;
-    char * tapename = NULL;
-    DeviceStatusFlags device_status;
+    int outfd;
+    int nullfd = -1;
+    pid_t devpid;
+    char *amcheck_device = NULL;
+    gchar **args;
+    amwait_t wait_status;
+    gboolean success;
 
-    bzero(&property_value, sizeof(property_value));
-    
-    tapename = getconf_str(CNF_TAPEDEV);
-    g_return_val_if_fail(tapename != NULL, FALSE);
-
-    device_api_init();
-    
-    if (!getconf_seen(CNF_TPCHANGER) && getconf_int(CNF_RUNTAPES) != 1) {
-        g_fprintf(outf,
-                _("WARNING: if a tape changer is not available, runtapes "
-                  "must be set to 1\n"));
-        g_fprintf(outf, _("Change the value of the \"runtapes\" parameter in " 
-                        "amanda.conf or configure a tape changer\n"));
-    }
-    
-    tape_status = taper_scan(NULL, &label, &datestamp, &tapename, NULL,
-                             FILE_taperscan_output_callback, outf,
-                             NULL, NULL);
-    if (tape_status < 0) {
-        tape_t *exptape = lookup_last_reusable_tape(0);
-        g_fprintf(outf, _("       (expecting "));
-        if(exptape != NULL) g_fprintf(outf, _("tape %s or "), exptape->label);
-        g_fprintf(outf, _("a new tape)\n"));
-        amfree(label);
-        return FALSE;
+    if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
+	return FALSE;
     }
 
-    device = device_open(tapename);
-    g_assert(device != NULL);
+    fflush(outf);
+    outfd = fileno(outf);
 
-    if (device->status != DEVICE_STATUS_SUCCESS) {
-        g_fprintf(outf, "ERROR: Could not open tape device: %s.\n",
-		  device_error(device));
-        amfree(label);
-        return FALSE;
+    amcheck_device = vstralloc(amlibexecdir, "/", "amcheck-device", NULL);
+    args = get_config_options(overwrite? 3 : 2);
+    args[0] = amcheck_device; /* steal the reference */
+    args[1] = g_strdup(get_config_name());
+    if (overwrite)
+	args[2] = g_strdup("-w");
+
+    /* run libexecdir/amcheck-device.pl, capturing STDERR and STDOUT to outf */
+    devpid = pipespawnv(amcheck_device, 0, 0,
+	    &nullfd, &outfd, &outfd,
+	    (char **)args);
+
+    /* and immediately wait for it to die */
+    waitpid(devpid, &wait_status, 0);
+
+    if (WIFSIGNALED(wait_status)) {
+	g_fprintf(outf, _("amcheck-device terminated with signal %d"),
+		  WTERMSIG(wait_status));
+    } else if (WIFEXITED(wait_status)) {
+	success = (WEXITSTATUS(wait_status) == 0);
+    } else {
+	success = FALSE;
     }
 
-    if (!device_configure(device, TRUE)) {
-        g_fprintf(outf, "ERROR: Could not configure device: %s.\n",
-		  device_error_or_status(device));
-        amfree(label);
-        return FALSE;
-    }
+    g_strfreev(args);
+    close(nullfd);
 
-    device_status = device_read_label(device);
-
-    if (tape_status == 3 && 
-        !(device_status & DEVICE_STATUS_VOLUME_UNLABELED)) {
-        if (device_status == DEVICE_STATUS_SUCCESS) {
-            g_fprintf(outf, "WARNING: Volume was unlabeled, but now "
-                    "is labeled \"%s\".\n", device->volume_label);
-        }
-    } else if (device_status != DEVICE_STATUS_SUCCESS && tape_status != 3) {
-        g_fprintf(outf,
-		  _("WARNING: Reading label the second time failed: %s.\n"),
-                  device_error_or_status(device));
-    } else if (tape_status != 3 &&
-               (device->volume_label == NULL || label == NULL ||
-                strcmp(device->volume_label, label) != 0)) {
-        g_fprintf(outf, "WARNING: Label mismatch on re-read: "
-                "Got %s first, then %s.\n", label, device->volume_label);
-    }
-    
-    /* If we can't get this property, it's not an error. Maybe the device
-     * doesn't support this property, or needs an actual volume to know
-     * for sure. */
-    if (device_property_get(device, PROPERTY_MEDIUM_ACCESS_TYPE, &property_value)) {
-        g_assert(G_VALUE_TYPE(&property_value) == MEDIA_ACCESS_MODE_TYPE);
-        if (g_value_get_enum(&property_value) ==
-            MEDIA_ACCESS_MODE_WRITE_ONLY) {
-            g_fprintf(outf, "WARNING: Media access mode is WRITE_ONLY; "
-                    "dumps may not be recoverable.\n");
-        }
-    }
-    
-    if (overwrite) {
-	char *timestamp = get_undef_timestamp();
-        if (!device_start(device, ACCESS_WRITE, label, timestamp)) {
-            if (tape_status == 3) {
-                g_fprintf(outf, "ERROR: Could not label brand new tape");
-            } else {
-                g_fprintf(outf,
-                        "ERROR: tape %s label ok, but is not writable",
-                        label);
-            }
-	    g_fprintf(outf, ": %s.\n", device_error(device));
-	    amfree(timestamp);
-            amfree(label);
-            g_object_unref(device);
-            return FALSE;
-        } else { /* Write succeeded. */
-            if (tape_status != 3) {
-                g_fprintf(outf, "Tape %s is writable; rewrote label.\n", label);
-            } else {
-                g_fprintf(outf, "Wrote label %s to brand new tape.\n", label);
-            }
-        }
-	amfree(timestamp);
-    } else { /* !overwrite */
-        g_fprintf(outf, "NOTE: skipping tape-writable test\n");
-        if (tape_status == 3) {
-            g_fprintf(outf,
-                    "Found a brand new tape, will label it %s.\n", 
-                    label);
-        } else {
-            g_fprintf(outf, "Tape %s label ok\n", label);
-        }                    
-    }
-    g_object_unref(device);
-    amfree(label);
-    return TRUE;
+    return success;
 }
 
 pid_t

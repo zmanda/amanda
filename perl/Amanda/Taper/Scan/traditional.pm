@@ -193,18 +193,20 @@ sub try_volume {
             return 0;
         }
 
-        # verify that the label is in the tapelist
-        my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
-        if (!$tle) {
-            $self->_user_msg("Volume label '$label' is not in the tapelist");
-            return 0;
-        }
+        # verify that the label is in the tapelist, if it's not new
+	if ($dev->volume_time() ne "X") {
+	    my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
+	    if (!$tle) {
+		$self->_user_msg("Volume label '$label' is not in the tapelist");
+		return 0;
+	    }
 
-        # see if it's reusable
-        if (!$self->is_reusable_volume(label => $label, new_label_ok => 1)) {
-            $self->_user_msg("Volume with label '$label' is still active and cannot be overwritten");
-            return 0;
-        }
+	    # see if it's reusable
+	    if (!$self->is_reusable_volume(label => $label, new_label_ok => 1)) {
+		$self->_user_msg("Volume with label '$label' is still active and cannot be overwritten");
+		return 0;
+	    }
+	}
 
         $self->scan_result(undef, $res, $label, $ACCESS_WRITE, 0);
         return 1;

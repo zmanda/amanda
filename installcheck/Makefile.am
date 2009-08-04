@@ -43,6 +43,7 @@ server_tests = \
 	Amanda_Xfer_serveronly \
 	bigint \
 	taper \
+	amcheck-device \
 	amgetconf \
         amtape \
         amlabel \
