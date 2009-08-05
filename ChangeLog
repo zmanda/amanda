@@ -1,3 +1,6 @@
+2009-08-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amdevcheck.8.xml: manpage tweaks
+
 2009-08-05 Dan Locks <dwlocks@zmanda.com>
 	* Thanks to Jim Barber for pointing out these bugs.
 	* packaging/deb/amanda-backup-client.postinst, packaging/deb/rules,

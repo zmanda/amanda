@@ -87,7 +87,9 @@
         <term><replaceable>--label</replaceable></term>
         <listitem>
           <para>
-	    Print to stdout the label of the loaded volume. Return with error if the label is not found.
+	    Get the device's label.  If this option is given, the usual check
+	    output is omitted, and the label of the loaded volume is printed to stdout.
+	    Returns with error if the label is not found.
 	  </para>
         </listitem>
       </varlistentry>
@@ -96,11 +98,11 @@
         <term><replaceable>--properties [list]</replaceable></term>
         <listitem>
           <para>
-	    Properties to list.  If this option is given, the usual check
+	    List device properties.  If this option is given, the usual check
 	    output is omitted, and property values are printed to stdout, one
 	    per line, as a property name, followed by '=', followed by the
 	    property value.
-            Return with error if properties are not available.
+            Returns with error if properties are not available.
           </para>
           <para>
 	    If <replaceable>list</replaceable> is given, it is treated as a
