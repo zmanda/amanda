@@ -1,6 +1,7 @@
 amanda (2.6.2alpha-1) unstable; urgency=low
 
-  * Initial debian release: This package is based on Bdale Garbee's work as
-    the official debian maintainer for amanda.
+  * Initial debian release.
+  * Thanks to Jim Barber: Swap AMHOMEDIR for AMANDAHOMEDIR in postinstall,
+    install .am_passphrase 0600, and add libglib2.0-dev to build-depends
 
- -- Zmanda <support@zmanda.com>  Wed, 26 Nov 2008 23:00:09 -0600
+ -- Zmanda <support@zmanda.com>  Wed, 5 Aug 2009 13:34:09 -0600

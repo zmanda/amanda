@@ -4,7 +4,7 @@
 LOGDIR="/var/log/amanda/"
 SYSCONFDIR="/etc"
 LOCALSTATEDIR="/var"
-AMHOMEDIR="${LOCALSTATEDIR}/lib/amanda"
+AMANDAHOMEDIR="${LOCALSTATEDIR}/lib/amanda"
 AMTMP="/tmp/amanda"
 amanda_user=amandabackup
 amanda_group=disk
@@ -12,7 +12,7 @@ xinetd_reload="restart"
 
 if [ -d /etc/xinetd.d ] ; then
 	if [ ! -f /etc/xinetd.d/amandaserver ] ; then
-		cp ${AMHOMEDIR}/example/xinetd.amandaserver /etc/xinetd.d/amandaserver || exit 1
+		cp ${AMANDAHOMEDIR}/example/xinetd.amandaserver /etc/xinetd.d/amandaserver || exit 1
 		chmod 0644 /etc/xinetd.d/amandaserver || exit 1
 		if [ -f /etc/xinetd.d/amandaclient ] ; then
 			rm /etc/xinetd.d/amandaclient || exit 1
@@ -58,37 +58,37 @@ if [ ! -f ${AMANDAHOMEDIR}/.am_passphrase ] ; then
         echo ${phrase} >>${AMANDAHOMEDIR}/.am_passphrase
 
         chown ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.am_passphrase
-        chmod 0700 ${AMANDAHOMEDIR}/.am_passphrase 
+        chmod 0600 ${AMANDAHOMEDIR}/.am_passphrase 
 fi
 
 # Install .gnupg directory
-echo "`date +'%b %e %Y %T'`: Installing '${AMHOMEDIR}/.gnupg'." 
-if [ ! -d ${AMHOMEDIR}/.gnupg ] ; then
-	echo "`date +'%b %e %Y %T'`: '${AMHOMEDIR}/.gnupg' will be created." 
-	mkdir ${AMHOMEDIR}/.gnupg || exit 1
+echo "`date +'%b %e %Y %T'`: Installing '${AMANDAHOMEDIR}/.gnupg'." 
+if [ ! -d ${AMANDAHOMEDIR}/.gnupg ] ; then
+	echo "`date +'%b %e %Y %T'`: '${AMANDAHOMEDIR}/.gnupg' will be created." 
+	mkdir ${AMANDAHOMEDIR}/.gnupg || exit 1
 fi
-echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '${AMHOMEDIR}/.gnupg'." 
-chown ${amanda_user}:${amanda_group} ${AMHOMEDIR}/.gnupg || exit 1
-chmod 700 ${AMHOMEDIR}/.gnupg || exit 1
+echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '${AMANDAHOMEDIR}/.gnupg'." 
+chown ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.gnupg || exit 1
+chmod 700 ${AMANDAHOMEDIR}/.gnupg || exit 1
 
 # Install .amandahosts to server
-echo "`date +'%b %e %Y %T'`: Checking '${AMHOMEDIR}/.amandahosts' file." 
-if [ ! -f ${AMHOMEDIR}/.amandahosts ] ; then
-	touch ${AMHOMEDIR}/.amandahosts || exit 1
+echo "`date +'%b %e %Y %T'`: Checking '${AMANDAHOMEDIR}/.amandahosts' file." 
+if [ ! -f ${AMANDAHOMEDIR}/.amandahosts ] ; then
+	touch ${AMANDAHOMEDIR}/.amandahosts || exit 1
 fi
 for host in localhost localhost.localdomain ; do
-	if [ -z "`grep \"^${host}[[:blank:]]\+root[[:blank:]]\+amindexd[[:blank:]]\+amidxtaped\" ${AMHOMEDIR}/.amandahosts`" ] ; then
-	        echo "${host}   root amindexd amidxtaped" >>${AMHOMEDIR}/.amandahosts || exit 1
+	if [ -z "`grep \"^${host}[[:blank:]]\+root[[:blank:]]\+amindexd[[:blank:]]\+amidxtaped\" ${AMANDAHOMEDIR}/.amandahosts`" ] ; then
+	        echo "${host}   root amindexd amidxtaped" >>${AMANDAHOMEDIR}/.amandahosts || exit 1
 	fi
-	if [ -z "`grep \"^${host}[[:blank:]]\+${amanda_user}[[:blank:]]\+amdump\" ${AMHOMEDIR}/.amandahosts`" ] ; then
-                echo "${host} ${amanda_user} amdump" >>${AMHOMEDIR}/.amandahosts || exit 1
+	if [ -z "`grep \"^${host}[[:blank:]]\+${amanda_user}[[:blank:]]\+amdump\" ${AMANDAHOMEDIR}/.amandahosts`" ] ; then
+                echo "${host} ${amanda_user} amdump" >>${AMANDAHOMEDIR}/.amandahosts || exit 1
 	fi
 done
-chown ${amanda_user}:${amanda_group} ${AMHOMEDIR}/.amandahosts || exit 1
-chmod 0600 ${AMHOMEDIR}/.amandahosts || exit 1
+chown ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.amandahosts || exit 1
+chmod 0600 ${AMANDAHOMEDIR}/.amandahosts || exit 1
 
 # SSH RSA key generation for amdump
-KEYDIR="${AMHOMEDIR}/.ssh"
+KEYDIR="${AMANDAHOMEDIR}/.ssh"
 KEYFILE="id_rsa_amdump"
 COMMENT="${amanda_user}@server"
 if [ ! -d ${KEYDIR} ] ; then
@@ -109,7 +109,7 @@ chmod 0750 ${KEYDIR} || exit 1
 chmod 0600 ${KEYDIR}/${KEYFILE}* || exit 1
 
 # SSH RSA key generation on client for amrecover
-KEYDIR="${AMHOMEDIR}/.ssh"
+KEYDIR="${AMANDAHOMEDIR}/.ssh"
 KEYFILE="id_rsa_amrecover"
 COMMENT="root@client"
 if [ ! -d ${KEYDIR} ] ; then
@@ -130,15 +130,15 @@ chmod 0750 ${KEYDIR} || exit 1
 chmod 0600 ${KEYDIR}/${KEYFILE}* || exit 1
 
 # environment variables (~amandabackup/.profile)
-echo "`date +'%b %e %Y %T'`: Checking for '${AMHOMEDIR}/.profile' and ensuring correct environment." 
-if [ ! -f ${AMHOMEDIR}/.profile ] ; then
-	touch ${AMHOMEDIR}/.profile || exit 1
+echo "`date +'%b %e %Y %T'`: Checking for '${AMANDAHOMEDIR}/.profile' and ensuring correct environment." 
+if [ ! -f ${AMANDAHOMEDIR}/.profile ] ; then
+	touch ${AMANDAHOMEDIR}/.profile || exit 1
 fi
-if [ -z "`grep PATH ${AMHOMEDIR}/.profile | grep '/usr/sbin'`" ] ; then
-	echo "export PATH=\"\$PATH:/usr/sbin/\"" >> "${AMHOMEDIR}/.profile" || exit 1
+if [ -z "`grep PATH ${AMANDAHOMEDIR}/.profile | grep '/usr/sbin'`" ] ; then
+	echo "export PATH=\"\$PATH:/usr/sbin/\"" >> "${AMANDAHOMEDIR}/.profile" || exit 1
 fi
-echo "`date +'%b %e %Y %T'`: Setting ownership and permissions for '${AMHOMEDIR}/.profile'" 
-chown ${amanda_user}:${amanda_group} ${AMHOMEDIR}/.profile || exit 1
-chmod 0640 ${AMHOMEDIR}/.profile || exit 1
+echo "`date +'%b %e %Y %T'`: Setting ownership and permissions for '${AMANDAHOMEDIR}/.profile'" 
+chown ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.profile || exit 1
+chmod 0640 ${AMANDAHOMEDIR}/.profile || exit 1
 
 echo "`date +'%b %e %Y %T'`: === Amanda backup server installation complete. ===" 

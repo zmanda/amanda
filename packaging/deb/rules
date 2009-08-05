@@ -22,7 +22,7 @@ MANDIR=$(PREFIX)/share/man
 DOCDIR=$(PREFIX)/share/doc
 SYSCONFDIR=/etc
 LOCALSTATEDIR=/var
-AMHOMEDIR=$(LOCALSTATEDIR)/lib/amanda
+AMANDAHOMEDIR=$(LOCALSTATEDIR)/lib/amanda
 LOGDIR=$(LOCALSTATEDIR)/log/amanda
 # Extract the perl site_lib directory.  This is used to install amanda's perl 
 # libs. If configure finds a different install or you specify a different path using
@@ -61,8 +61,8 @@ build-stamp: /sbin/dump /usr/bin/smbclient
 		--enable-shared \
 		--sysconfdir=$(SYSCONFDIR) \
 		--localstatedir=$(LOCALSTATEDIR) \
-		--with-amdatadir=$(AMHOMEDIR) \
-		--with-gnutar-listdir=$(AMHOMEDIR)/gnutar-lists \
+		--with-amdatadir=$(AMANDAHOMEDIR) \
+		--with-gnutar-listdir=$(AMANDAHOMEDIR)/gnutar-lists \
 		--with-index-server=localhost \
 		--with-tape-server=localhost \
 		--with-user=$(AMANDAUSER) \
@@ -146,8 +146,8 @@ binary-arch: build
 	#chmod -R u=rwX,g=rwX,o-rwx $(server)/$(LOGDIR)
 	chown -R $(AMANDAUSER):$(AMANDAGROUP)  $(client)/$(SYSCONFDIR)/amanda $(server)/$(SYSCONFDIR)/amanda
 	#chmod -R u=rwX,g=rwX,o-rwx $(server)/$(SYSCONFDIR)/amanda
-	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(client)/$(AMHOMEDIR)/gnutar-lists $(server)/$(AMHOMEDIR)/gnutar-lists
-	chmod -R u=rwX,g=rwX,o-rwx  $(client)/$(AMHOMEDIR)/gnutar-lists $(server)/$(AMHOMEDIR)/gnutar-lists
+	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(client)/$(AMANDAHOMEDIR)/gnutar-lists $(server)/$(AMANDAHOMEDIR)/gnutar-lists
+	chmod -R u=rwX,g=rwX,o-rwx  $(client)/$(AMANDAHOMEDIR)/gnutar-lists $(server)/$(AMANDAHOMEDIR)/gnutar-lists
 	# .. setuid
 	chown root:disk \
  		$(client)/$(AMLIBEXECDIR)/application/amgtar \
@@ -181,8 +181,8 @@ binary-arch: build
 		$(server)$(AMLIBEXECDIR)/dumper \
 		$(server)$(AMLIBEXECDIR)/planner \
 		$(server)/usr/sbin/amcheck
-	echo "Amanda version $(AMVER)" >  $(server)/$(AMHOMEDIR)/amanda-release 
-	echo "Amanda version $(AMVER)" >  $(client)/$(AMHOMEDIR)/amanda-release 
+	echo "Amanda version $(AMVER)" >  $(server)/$(AMANDAHOMEDIR)/amanda-release 
+	echo "Amanda version $(AMVER)" >  $(client)/$(AMANDAHOMEDIR)/amanda-release 
 	install -o root -g root -m 0644 debian/amanda-backup-client.lintian \
 		$(client)/usr/share/lintian/overrides/amanda-backup-client
 	#install -o root -g root -m 0644 debian/amanda-common.lintian \
