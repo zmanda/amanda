@@ -3,7 +3,7 @@ Section: utils
 Priority: optional
 Maintainer: Zmanda Inc <support@zmanda.com>
 Build-Depends: debhelper, dump, fakeroot, flex, gnuplot, libtool, mailx, mtx, perl (>=5.6.0), smbclient,
-	libcurl-dev, libncurses5-dev, libreadline5-dev | libreadline-dev, libssl-dev
+	libcurl-dev, libglib2.0-dev, libncurses5-dev, libreadline5-dev | libreadline-dev, libssl-dev
 Standards-Version: 3.6.1
 
 Package: amanda-backup-server
