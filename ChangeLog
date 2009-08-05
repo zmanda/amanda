@@ -1,3 +1,10 @@
+2009-08-05 Dan Locks <dwlocks@zmanda.com>
+	* Thanks to Jim Barber for pointing out these bugs.
+	* packaging/deb/amanda-backup-client.postinst, packaging/deb/rules,
+	  packaging/deb/amanda-backup-server.postinst: replace all instances
+	  of AMHOMEDIR with AMANDAHOMEDIR, install .am_passphrase 0600.
+	* packaging/deb/control: add build-depends for libglib2.0-dev
+
 2009-08-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amcheck.pl: fix typo
 
