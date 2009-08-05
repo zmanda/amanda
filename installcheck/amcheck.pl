@@ -66,7 +66,7 @@ like(run_get('amcheck', '-c', 'TESTCONF'),
     qr/Amanda Backup Client Hosts Check/,
     "amcheck -c works");
 
-like(run_get('amcheck', '-c', 'TESTCONF', 'localhost', "$diskname");
+like(run_get('amcheck', '-c', 'TESTCONF', 'localhost', "$diskname"),
     qr/Amanda Backup Client Hosts Check/,
     "amcheck -c works with a hostname and diskname");
 
