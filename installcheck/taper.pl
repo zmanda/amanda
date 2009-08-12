@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 128;
+use Test::More tests => 130;
 
 use lib '@amperldir@';
 use Installcheck::Run;
@@ -62,7 +62,10 @@ sub run_taper {
     unless ($params{'keep_config'}) {
 	my $testconf = Installcheck::Run::setup();
 	$testconf->add_param('label_new_tapes', '"TESTCONF%%"');
-	#$testconf->add_param('tapecycle', '1');
+	if ($params{'notapedev'}) {
+	    $testconf->remove_param('tapedev');
+	    $testconf->remove_param('tpchanger');
+	}
 	$testconf->add_tapetype('TEST-TAPE', [
 	    'length' =>  "$length",
 	    ]);
@@ -774,5 +777,14 @@ wait_for_exit();
 # TODO: simulate an "erased" tape, to which taper should reply with "NEW-TAPE" and
 # immediately REQUEST-NEW-TAPE.  I can't see a way to make the VFS device erase a
 # volume without start_device succeeding.
+
+##
+# A run with a bogus tapedev/tpchanger
+$handle = "11-11111";
+$datestamp = "20070102030405";
+run_taper(4096, "single-part and multipart FILE-WRITE", notapedev => 1);
+like(taper_reply, qr/^TAPE-ERROR 99-9999 "You must specify one of 'tapedev' or 'tpchanger'"$/,
+	"got TAPER-ERROR") or die;
+wait_for_exit();
 
 cleanup_taper();

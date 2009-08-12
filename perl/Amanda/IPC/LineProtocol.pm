@@ -89,8 +89,8 @@ Define your protocol:
 	param2 => "y",
 	);
 
-    # shut down the protocol (note that this may leave un-transmitted
-    # messages in the send buffer - a TODO item)
+    # shut down the protocol, flushing any messages waiting to
+    # be sent first
     my $finished_cb = make_cb(finished_cb => sub {
 	my ($err) = @_;
 	# ...
@@ -421,8 +421,8 @@ sub send {
 	}
 
 	# call the protocol's finished_cb if necessary
-	if (--$self->{'tx_outstanding_writes'} == 0 and $self->{'finished_cb'}) {
-	    $self->{'finished_cb'}->();
+	if (--$self->{'tx_outstanding_writes'} == 0 and $self->{'tx_finished_cb'}) {
+	    $self->{'tx_finished_cb'}->();
 	}
     });
     $self->{'tx_source'} = Amanda::MainLoop::async_write(

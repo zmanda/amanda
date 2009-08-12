@@ -172,16 +172,6 @@ sub start {
 
     $self->_assert_in_state("init") or return;
 
-    my $changer = Amanda::Changer->new();
-    if ($changer->isa("Amanda::Changer::Error")) {
-	die($changer);
-    }
-
-    my $taperscan = Amanda::Taper::Scan->new(changer => $changer);
-    $self->{'scribe'} = Amanda::Taper::Scribe->new(
-	taperscan => $taperscan,
-	feedback => $self);
-
     my $message_cb = make_cb(message_cb => sub {
 	my ($msgtype, %params) = @_;
 	my $msg;
@@ -201,6 +191,27 @@ sub start {
 	message_cb => $message_cb,
 	message_obj => $self,
     );
+
+    my $changer = Amanda::Changer->new();
+    if ($changer->isa("Amanda::Changer::Error")) {
+	# send a TAPE_ERROR right away
+	$self->{'proto'}->send(main::Protocol::TAPE_ERROR,
+		handle => '99-9999', # fake handle
+		message => "$changer");
+
+	# wait for it to be transmitted, then exit
+	$self->{'proto'}->stop(finished_cb => sub {
+	    Amanda::MainLoop::quit();
+	});
+
+	# don't finish start()ing
+	return;
+    }
+
+    my $taperscan = Amanda::Taper::Scan->new(changer => $changer);
+    $self->{'scribe'} = Amanda::Taper::Scribe->new(
+	taperscan => $taperscan,
+	feedback => $self);
 
     # set up a listening socket on an arbitrary port
     my $sock = $self->{'listen_socket'} = IO::Socket::INET->new(

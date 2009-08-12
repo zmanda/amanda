@@ -1,3 +1,8 @@
+2009-08-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/taper.pl: add a check for taper startup err
+	* server-src/taper.pl: properly send a startup err instead of die()ing
+	* perl/Amanda/IPC/LineProtocol.pm: fix typos
+
 2009-08-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amdevcheck.8.xml: manpage tweaks
 
