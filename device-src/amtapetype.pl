@@ -304,23 +304,23 @@ sub check_property {
 
     $device->start($ACCESS_WRITE, "TEST-001", "20080706050403");
 
-    my $hdr = new Amanda::Header;
+    my $hdr = Amanda::Types::dumpfile_t->new();
 
-    $hdr->{type} = $Amanda::Header::F_DUMPFILE;
+    $hdr->{type} = $Amanda::Types::F_DUMPFILE;
     $hdr->{name} = "localhost";
     $hdr->{disk} = "/test1";
     $hdr->{datestamp} = "20080706050403";
     $device->start_file($hdr);
     $device->finish_file();
 
-    $hdr->{type} = $Amanda::Header::F_DUMPFILE;
+    $hdr->{type} = $Amanda::Types::F_DUMPFILE;
     $hdr->{name} = "localhost";
     $hdr->{disk} = "/test2";
     $hdr->{datestamp} = "20080706050403";
     $device->start_file($hdr);
     $device->finish_file();
 
-    $hdr->{type} = $Amanda::Header::F_DUMPFILE;
+    $hdr->{type} = $Amanda::Types::F_DUMPFILE;
     $hdr->{name} = "localhost";
     $hdr->{disk} = "/test3";
     $hdr->{datestamp} = "20080706050403";
