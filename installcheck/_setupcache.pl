@@ -16,10 +16,9 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 1;
+use Test::More qw( no_plan );
 
 use lib "@amperldir@";
 use Installcheck::Dumpcache;
 
 Installcheck::Dumpcache::create_all();
-ok("cached amdump runs created");

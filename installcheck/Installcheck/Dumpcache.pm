@@ -56,6 +56,12 @@ to which has been added:
 
 Like 'basic', but with "usetimestamps" set to "no".
 
+=head2 multi
+
+This flavor runs three dumps of two DLEs (C<$diskname> and C<$diskname/dir>).
+The first two dumps run normally, while the third is in degraded mode (the
+taper is disabled).
+
 =cut
 
 use Installcheck;
@@ -75,27 +81,69 @@ $flavors{'basic'} = sub {
     my $testconf = Installcheck::Run::setup();
     $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
     $testconf->add_dle("localhost $diskname installcheck-test");
-    return $testconf;
+    $testconf->write();
+
+    ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'basic'"),
+	or amdump_diag("Amdump run failed for 'basic'");
 };
 
 $flavors{'notimestamps'} = sub {
-    my $testconf = $flavors{'basic'}->();
+    my $testconf = Installcheck::Run::setup();
+    $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+    $testconf->add_dle("localhost $diskname installcheck-test");
     $testconf->add_param('usetimestamps', 'no');
-    return $testconf;
+    $testconf->write();
+
+    ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'notimestamps'"),
+	or amdump_diag("Amdump run failed for 'notimestamps'");
+};
+
+$flavors{'multi'} = sub {
+    my $stuff = "abcdefghijkl" x 512;
+    my $append_stuff = sub {
+	open(my $fh, ">>", "$diskname/extrastuff");
+	print $fh $stuff, $stuff;
+	close($fh);
+
+	open($fh, ">>", "$diskname/dir/extrastuff");
+	print $fh $stuff, $stuff;
+	close($fh);
+    };
+
+    my $testconf = Installcheck::Run::setup();
+    $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+    $testconf->add_dle("localhost $diskname installcheck-test");
+    $testconf->add_dle("localhost $diskname/dir installcheck-test");
+    # do the smallest dumps first -- $diskname/dir in particular should
+    # be smaller than $diskname
+    $testconf->add_param("dumporder", '"ssssssssss"');
+    $testconf->write();
+
+    ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'multi' step 1"),
+	or amdump_diag("Amdump run failed for 'multi' step 1");
+
+    $append_stuff->();
+
+    # XXX note that Amanda will not bump $diskname to level 1 here; other installchecks
+    # may depend on this behavior
+    ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'multi' step 2"),
+	or amdump_diag("Amdump run failed for 'multi' step 2");
+
+    $append_stuff->();
+
+    ok(Installcheck::Run::run('amdump', 'TESTCONF', '-otpchanger=', '-otapedev='),
+	"amdump for 'multi' step 3 (degraded mode)"),
+	or amdump_diag("Amdump run failed for 'multi' step 3 (degraded mode)");
 };
 
 sub generate_and_store {
     my ($flavor) = @_;
 
     if (exists $flavors{$flavor}) {
-	my $testconf = $flavors{$flavor}->();
-	$testconf->write();
+	$flavors{$flavor}->();
     } else {
 	die("Invalid flavor '$flavor'");
     }
-
-    Installcheck::Run::run('amdump', 'TESTCONF')
-	or amdump_diag("Amdump run failed for '$flavor'");
 
     # now package that up as a tarball
     mkpath($tarballdir);
@@ -152,8 +200,10 @@ sub load {
 
 sub create_all {
     for my $flavor (keys %flavors) {
-	generate_and_store($flavor) or return;
+	ok(generate_and_store($flavor), "cached flavor '$flavor'") or return;
     }
 }
+
+Installcheck::Run::cleanup();
 
 1;

@@ -63,7 +63,8 @@ full_tests = \
 	pp-scripts
 
 restore_tests = \
-	amfetchdump
+	amfetchdump \
+	amrestore
 
 mock_tests = \
 	mock_mtx

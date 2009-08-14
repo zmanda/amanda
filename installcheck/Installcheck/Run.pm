@@ -53,29 +53,34 @@ a fairly messy project.  This module simplifies that process by
 abstracting away the mess.  It takes care of:
 
 =over
+
 =item Setting up a holding disk;
+
 =item Setting up several vtapes; and
+
 =item Setting up a DLE pointing to a reasonably-sized subdirectory of the build directory.
+
 =back
 
-Most of this magic is in C<setup()>, which returns a configuration
-object from C<Installcheck::Config>, allowing the test to
-modify that configuration before writing it out.  The hostname
-for the DLE is "localhost", and the disk name is available in
-C<Installcheck::Run::diskname>.
+Most of this magic is in C<setup()>, which returns a configuration object from
+C<Installcheck::Config>, allowing the test to modify that configuration before
+writing it out.  The hostname for the DLE is "localhost", and the disk name is
+available in C<Installcheck::Run::diskname>.  This DLE has a subdirectory
+C<dir> which can be used as a secondary, smaller DLE if needed.
 
 This module also provides a convenient Perlish interface for running Amanda
 commands: C<run($app, $args, ...)>.  This function runs $app (from $sbindir if
 $app is not an absolute path), and returns true if the application exited with
 a status of zero.  The stdout and stderr of the application are left in
-C<Installcheck::Run::stdout> and C<stderr>, respectively.
+C<$Installcheck::Run::stdout> and C<stderr>, respectively.
 
 To check that a run is successful, and return its stdout (chomped), use
 C<run_get($app, $args, ...)>.  This function returns C<''> if the application
-returns a nonzero exit status.  Similarly, C<run_err> checks that a run returns
-a nonzero exit status, and then returns its stderr, chomped.  If you need a
-different output file, use a bare C<run> followed by C<get_stderr> or
-C<get_stdout> as needed.
+returns a nonzero exit status.  Since many Amanda applications send normal
+output to stderr, use C<run_get_err($app, $args, ...)> to check that a run is
+successful and return its stderr.  Similarly, C<run_err> checks that a run
+returns a nonzero exit status, and then returns its stderr, chomped.  If you
+need both, use a bare C<run> and then check C<$stderr> and C<$stdout> as needed.
 
 C<run> and friends can be used whether or not this module's C<setup>
 was invoked.
@@ -99,8 +104,8 @@ just like chg-disk would, and return the resulting path.
 
 =head2 HOLDING
 
-The holding disk is also stored under C<$Installcheck::TMP>.  It is a 15M
-holding disk, with a chunksize of 1M (to help exercise the chunker).
+The holding disk is C<$Installcheck::TMP/holding>.  It is a 15M holding disk,
+with a chunksize of 1M (to help exercise the chunker).
 
 =head2 DISKLIST
 
@@ -150,7 +155,7 @@ require Exporter;
 
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(setup 
-    run run_get run_err
+    run run_get run_get_err run_err
     cleanup 
     $diskname $stdout $stderr $exit_code
     load_vtape vtape_dir
@@ -366,12 +371,34 @@ sub run {
 
 sub run_get {
     if (!run @_) {
-	Test::More::diag("run unexpectedly failed; no output to compare; stderr is:\n$stderr");
+	my $detail = '';
+	# prefer to put stderr in the output
+	if ($stderr) {
+	    $detail .= "\nstderr is:\n$stderr";
+	} else {
+	    if ($stdout and length($stdout) < 1024) {
+		$detail .= "\nstdout is:\n$stdout";
+	    }
+	}
+	Test::More::diag("run unexpectedly failed; no output to compare$detail");
 	return '';
     }
 
-    chomp $stdout;
-    return $stdout;
+    my $ret = $stdout;
+    chomp($ret);
+    return $ret;
+}
+
+sub run_get_err {
+    if (!run @_) {
+	my $detail = "\nstderr is:\n$stderr";
+	Test::More::diag("run unexpectedly failed; no output to compare$detail");
+	return '';
+    }
+
+    my $ret = $stderr;
+    chomp($ret);
+    return $ret;
 }
 
 sub run_err {
@@ -380,18 +407,9 @@ sub run_err {
 	return '';
     }
 
-    chomp $stderr;
-    return $stderr;
-}
-
-sub get_stdout {
-    chomp $stdout;
-    return $stdout;
-}
-
-sub get_stderr {
-    chomp $stderr;
-    return $stderr;
+    my $ret = $stderr;
+    chomp($ret);
+    return $ret;
 }
 
 sub cleanup {

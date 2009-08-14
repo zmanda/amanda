@@ -1,3 +1,10 @@
+2009-08-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amrestore.pl installcheck/Makefile.am: new installcheck
+	* installcheck/Installcheck/Dumpcache.pm installcheck/_setupcache.pl:
+	  add a 'multi' dumpcache and refactor Dumpcache.pm
+	* installcheck/Installcheck/Run.pm: better diagnostics, better access
+	  to stderr from successful runs
+
 2009-08-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/taper.pl: add a check for taper startup err
 	* server-src/taper.pl: properly send a startup err instead of die()ing
