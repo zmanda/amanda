@@ -1,4 +1,7 @@
 2009-08-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amlabel.pl: handle error in Amanda::Changer->new
+
+2009-08-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amrestore.pl installcheck/Makefile.am: new installcheck
 	* installcheck/Installcheck/Dumpcache.pm installcheck/_setupcache.pl:
 	  add a 'multi' dumpcache and refactor Dumpcache.pm

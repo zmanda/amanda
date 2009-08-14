@@ -118,6 +118,9 @@ $subs{'start'} = make_cb(start => sub {
 $subs{'load'} = make_cb(load => sub {
     my $chg = Amanda::Changer->new();
 
+    return failure($chg)
+	if $chg->isa("Amanda::Changer::Error");
+
     if ($opt_slot) {
 	$chg->load(slot => $opt_slot, mode => "write",
 		res_cb => $subs{'loaded'});
