@@ -76,5 +76,6 @@ dist-hook: dist-example-files
 
 INSTALLPERMS_data = chown=amanda \
 	dest=$(templatedir) $(template_DATA) \
-	dest=$(exampledir) $(example_DATA) \
+	dest=$(server_exampledir) $(example_DATA) \
+	dest=$(client_exampledir) $(example_DATA) \
 	dest=$(lbltempldir) $(lbltempl_DATA)
