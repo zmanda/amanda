@@ -394,7 +394,6 @@ fi
 
 make -s -j1 LIBTOOLFLAGS=--silent DESTDIR=%{buildroot} install
 
-rm -rf %{ROOT_DATADIR}/amanda
 rm -f %{ROOT_AMANDAHOMEDIR}/example/inetd.conf.amandaclient
 mkdir %{buildroot}/{etc,var/log}
 mkdir %{ROOT_LOCALSTATEDIR}/amanda 
@@ -1552,6 +1551,8 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %doc %{AMANDAHOMEDIR}/example/amanda-client.conf
 %doc %{AMANDAHOMEDIR}/template.d/README
 %doc %{AMANDAHOMEDIR}/template.d/dumptypes
+%defattr(0644,root,root,0755)
+%doc %{DATADIR}/amanda
 
 %files backup_server
 %defattr(0755,%{amanda_user},%{amanda_group})
@@ -1598,6 +1599,8 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %doc %{AMANDAHOMEDIR}/amanda-release
 %docdir %{AMANDAHOMEDIR}/example
 %docdir %{AMANDAHOMEDIR}/template.d
+%defattr(0644,root,root,0755)
+%doc %{DATADIR}/amanda
 
 # --- ChangeLog
 
