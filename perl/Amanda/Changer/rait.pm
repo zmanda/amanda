@@ -651,6 +651,9 @@ sub do_release {
 	    $errstr = join("; ", @outer_errors);
 	}
 
+	# unref the device, for good measure
+	$self->{'device'} = undef;
+
 	$params{'finished_cb'}->($errstr) if $params{'finished_cb'};
     };
 

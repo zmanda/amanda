@@ -1,3 +1,10 @@
+2009-08-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/compat.pm perl/Amanda/Changer/disk.pm
+	  perl/Amanda/Changer/rait.pm perl/Amanda/Changer/robot.pm
+	  perl/Amanda/Changer/single.pm: set $self->{'device'} to undef in
+	  release()
+	* server-src/amcheck-device.pl: fix stupid bug
+
 2009-08-14 Dan Locks <dwlocks@zmanda.com>
 	* example/Makefile.am: split example into server and client
 	  installperms statements.

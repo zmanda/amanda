@@ -100,9 +100,6 @@ $subs{'result_cb'} = make_cb(result_cb => sub {
     } else {
 	print "Will $modestr label '$label' to new volume in slot $slot.\n";
     }
-    $res->release(finished_cb => sub {
-	Amanda::MainLoop::quit();
-    });
 
     $subs{'check_access_type'}->();
 });

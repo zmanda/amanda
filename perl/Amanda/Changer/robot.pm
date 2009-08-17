@@ -1625,6 +1625,9 @@ sub do_release {
     # then never mind
     return unless $self->{'chg'};
 
+    # unref the device, for good measure
+    $self->{'device'} = undef;
+
     # punt this method off to the changer itself, optionally calling
     # the unlocked version if we have the 'state' parameter
     if (exists $params{'unlocked'} and exists $params{'state'}) {

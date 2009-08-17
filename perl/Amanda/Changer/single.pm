@@ -145,5 +145,8 @@ sub do_release {
 
     $self->{'chg'}->{'reserved'} = 0;
 
+    # unref the device, for good measure
+    $self->{'device'} = undef;
+
     $params{'finished_cb'}->(undef) if $params{'finished_cb'};
 }

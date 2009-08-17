@@ -489,5 +489,8 @@ sub do_release {
     rmdir("$drive")
 	or warn("Could not rmdir '$drive': $!");
 
+    # unref the device, for good measure
+    $self->{'device'} = undef;
+
     $params{'finished_cb'}->(undef) if $params{'finished_cb'};
 }
