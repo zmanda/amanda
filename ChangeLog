@@ -1,4 +1,12 @@
 2009-08-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* xfer-src/filter-process.c: new xfer element
+	* xfer-src/xfer-element.h: declare it
+	* perl/Amanda/Xfer.swg: SWIG it
+	* perl/Amanda/Xfer.pod: doc it
+	* xfer-src/Makefile.am: build it
+	* installcheck/Amanda_Xfer.pl: test it
+
+2009-08-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Xfer.pod perl/Amanda/Xfer.swg: add a callback argument
 	  to start(), and make the get_source method "low-level"
 	* perl/Amanda/Taper/Scribe.pm installcheck/Amanda_Xfer.pl

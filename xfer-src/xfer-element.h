@@ -325,6 +325,20 @@ XferElement *xfer_source_pattern(guint64 length, void * pattern,
 XferElement * xfer_source_fd(
     int fd);
 
+/* A transfer filter that executes an external application, feeding it data on
+ * stdin and taking the results on stdout.
+ *
+ * The memory for ARGV becomes the property of the transfer element and will be
+ * g_free'd when the xfer is destroyed.
+ *
+ * Implemented in filter-process.c
+ *
+ * @param argv: NULL-terminated command-line arguments
+ * @param need_root: become root before exec'ing the subprocess
+ * @return: new element
+ */
+XferElement *xfer_filter_process(gchar **argv, gboolean need_root);
+
 /* A transfer filter that just applies a bytewise XOR transformation to the data
  * that passes through it.
  *

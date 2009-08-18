@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 8;
+use Test::More tests => 10;
 use File::Path;
 use strict;
 
@@ -29,6 +29,7 @@ use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Paths;
 use Amanda::Config;
+use Amanda::Constants;
 
 # set up debugging so debug output doesn't interfere with test results
 Amanda::Debug::dbopen("installcheck");
@@ -250,3 +251,71 @@ pass("Two simultaneous transfers run to completion");
 
     unlink($read_filename);
 }
+
+# test the Process filter
+{
+    my $RANDOM_SEED = 0xD00D;
+
+    my $xfer = Amanda::Xfer->new([
+	Amanda::Xfer::Source::Random->new(1024*1024, $RANDOM_SEED),
+	Amanda::Xfer::Filter::Process->new(
+	    [ $Amanda::Constants::COMPRESS_PATH, $Amanda::Constants::COMPRESS_BEST_OPT ], 0),
+	Amanda::Xfer::Filter::Process->new(
+	    [ $Amanda::Constants::UNCOMPRESS_PATH, $Amanda::Constants::UNCOMPRESS_OPT ], 0),
+	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
+    ]);
+
+    $xfer->get_source()->set_callback(sub {
+	my ($src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    die $msg->{elt} . " failed: " . $msg->{message};
+	}
+	elsif ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    $src->remove();
+	    Amanda::MainLoop::quit();
+	}
+    });
+    $xfer->start();
+    Amanda::MainLoop::run();
+    pass("compress | uncompress gets back the original stream");
+}
+
+{
+    my $RANDOM_SEED = 0x5EAF00D;
+
+    # build a transfer that will keep going forever, using a source that
+    # cannot produce an EOF, so Filter::Process is forced to kill the
+    # compress process
+
+    open(my $zerofd, "<", "/dev/zero")
+	or die("could not open /dev/zero: $!");
+    my $xfer = Amanda::Xfer->new([
+	Amanda::Xfer::Source::Fd->new($zerofd),
+	Amanda::Xfer::Filter::Process->new(
+	    [ $Amanda::Constants::COMPRESS_PATH, $Amanda::Constants::COMPRESS_BEST_OPT ], 0),
+	Amanda::Xfer::Dest::Null->new(0),
+    ]);
+
+    my $got_timeout = 0;
+    Amanda::MainLoop::timeout_source(200)->set_callback(sub {
+	my ($src) = @_;
+	$got_timeout = 1;
+	$src->remove();
+	$xfer->cancel();
+    });
+    $xfer->get_source()->set_callback(sub {
+	my ($src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    die $msg->{elt} . " failed: " . $msg->{message};
+	}
+	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    $src->remove();
+	    Amanda::MainLoop::quit();
+	}
+    });
+    $xfer->start();
+    Amanda::MainLoop::run();
+    ok($got_timeout, "Amanda::Xfer::Filter::Process can be cancelled");
+    # (note that this does not test all of the cancellation possibilities)
+}
+

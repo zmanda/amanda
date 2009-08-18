@@ -185,6 +185,17 @@ parts.
 
 =head2 Transfer Filters
 
+=head3 Amanda::Xfer::Filter:Process
+
+  Amanda::Xfer::Filter::Process->new([@args], $need_root);
+
+This filter will pipe data through the standard file descriptors of the
+subprocess specified by C<@args>.  If C<$need_root> is true, it will attempt to
+change to uid 0 before executing the process.  Standard output from the process
+is redirected to the debug log.  Note that the process is invoked directly, not
+via a shell, so shell metacharcters (e.g., C<< 2>&1 >>) will not function as
+expected.
+
 =head3 Amanda::Xfer::Filter:Xor
 
   Amanda::Xfer::Filter::Xor->new($key);

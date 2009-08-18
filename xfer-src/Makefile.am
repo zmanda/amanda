@@ -21,6 +21,7 @@ libamxfer_la_SOURCES = \
 	dest-null.c \
 	element-glue.c \
 	filter-xor.c \
+	filter-process.c \
 	source-random.c \
 	source-fd.c \
 	source-pattern.c \

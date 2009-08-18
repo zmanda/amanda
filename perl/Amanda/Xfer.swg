@@ -283,6 +283,34 @@ XferElement *xfer_source_random(
  $2 = len;
 }
 
+%typemap(in) (gchar **argv) {
+    AV *av;
+    unsigned int len;
+    unsigned int i;
+
+    /* check that it's an arrayref */
+    if (!SvROK($input) || SvTYPE(SvRV($input)) != SVt_PVAV) {
+	SWIG_exception(SWIG_TypeError, "Expected a non-empty arrayref");
+    }
+    av = (AV *)SvRV($input);
+
+    /* allocate memory for $1 */
+    len = av_len(av)+1; /* av_len(av) is like $#av */
+    if (!len) {
+	SWIG_exception(SWIG_TypeError, "Expected a non-empty arrayref");
+    }
+    $1 = g_new0(gchar *, len+1);
+
+    for (i = 0; i < len; i++) {
+	SV **sv = av_fetch(av, i, 0);
+	g_assert(sv != NULL);
+	$1[i] = g_strdup(SvPV_nolen(*sv));
+    }
+
+    /* final element is already NULL due to g_new0; xfer_filter_process takes
+     * care of freeing this array, so we don't have to */
+}
+
 %newobject xfer_source_random;
 XferElement *xfer_source_pattern(
     guint64 length,
@@ -296,6 +324,11 @@ XferElement *xfer_source_fd(
 %newobject xfer_filter_xor;
 XferElement *xfer_filter_xor(
     unsigned char xor_key);
+
+%newobject xfer_filter_process;
+XferElement *xfer_filter_process(
+    gchar **argv,
+    gboolean need_root);
 
 %newobject xfer_dest_null;
 XferElement *xfer_dest_null(
@@ -473,6 +506,12 @@ DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_source_pattern)
 PACKAGE(Amanda::Xfer::Filter::Xor)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_filter_xor)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Filter::Process)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_filter_process)
 
 /* ---- */
 
