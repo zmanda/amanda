@@ -141,20 +141,9 @@ sub write_one_file(%) {
     $xfer = Amanda::Xfer->new([$source, $dest]);
 
     # set up the relevant callbacks
-    my ($timeout_src, $xfer_src, $spinner_src);
+    my ($timeout_src, $spinner_src);
     my $got_error = 0;
     my $got_timeout = 0;
-
-    $xfer_src = $xfer->get_source();
-    $xfer_src->set_callback(sub {
-	my ($src, $xmsg, $xfer) = @_;
-	if ($xmsg->{type} == $Amanda::Xfer::XMSG_ERROR) {
-	    $got_error = $xmsg->{message};
-	}
-	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
-	    Amanda::MainLoop::quit();
-	}
-    });
 
     if ($max_time) {
 	$timeout_src = Amanda::MainLoop::timeout_source($max_time * 1000);
@@ -174,9 +163,17 @@ sub write_one_file(%) {
 
     my $start_time = time();
 
-    $xfer->start();
+    $xfer->start(sub {
+	my ($src, $xmsg, $xfer) = @_;
+	if ($xmsg->{type} == $Amanda::Xfer::XMSG_ERROR) {
+	    $got_error = $xmsg->{message};
+	}
+	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    Amanda::MainLoop::quit();
+	}
+    });
+
     Amanda::MainLoop::run();
-    $xfer_src->remove();
     $spinner_src->remove();
     $timeout_src->remove() if ($timeout_src);
     print STDERR " " x 60, "\r";
@@ -290,7 +287,7 @@ sub data_to_null {
         Amanda::Xfer::Dest::Null->new(0),
     ]); 
 
-    $xfer->get_source()->set_callback(sub {
+    $xfer->start(sub {
 	my ($src, $xmsg, $xfer) = @_;
 	if ($xmsg->{type} == $Amanda::Xfer::XMSG_ERROR) {
 	    $got_error = $xmsg->{message};
@@ -299,7 +296,6 @@ sub data_to_null {
 	    Amanda::MainLoop::quit();
 	}
     });
-    $xfer->start();
 
     Amanda::MainLoop::run();
 }

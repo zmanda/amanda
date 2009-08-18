@@ -445,10 +445,6 @@ sub start_xfer {
     my $xfer_elements = $params{'xfer_elements'};
     my $xfer = Amanda::Xfer->new([ @$xfer_elements, $xdt ]);
 
-    $xfer->get_source()->set_callback(sub {
-	$self->_xfer_callback(@_);
-    });
-
     # get the header ready for writing
     my $dump_header = $params{'dump_header'};
     $dump_header->{'partnum'} = 1;
@@ -465,7 +461,8 @@ sub start_xfer {
     $self->{'device_errors'} = [];
     $self->{'input_errors'} = [];
 
-    $xfer->start();
+    $xfer->start(sub { $self->_xfer_callback(@_); });
+
 
     $self->_start_part();
 }
@@ -595,8 +592,6 @@ sub _xmsg_done {
     my ($src, $msg, $xfer) = @_;
 
     if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
-	$src->remove();
-
 	# determine the correct final status - DONE if we're done, PARTIAL
 	# if we've started writing to the volume, otherwise FAILED
 	my $result;

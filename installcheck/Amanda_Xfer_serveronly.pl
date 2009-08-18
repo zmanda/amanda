@@ -54,7 +54,6 @@ Amanda::Config::config_init(0, undef);
 	    die $msg->{'elt'} . " failed: " . $msg->{'message'};
 	}
 	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
-	    $xfer->get_source()->remove();
 	    Amanda::MainLoop::quit();
 	}
     });
@@ -84,8 +83,7 @@ Amanda::Config::config_init(0, undef);
 	Amanda::Xfer::Dest::Device->new($device, $device->block_size() * 10),
     ]);
 
-    $xfer->get_source()->set_callback($quit_cb);
-    $xfer->start();
+    $xfer->start($quit_cb);
 
     Amanda::MainLoop::run();
     pass("write to a device (completed succesfully; data may not be correct)");
@@ -103,8 +101,7 @@ Amanda::Config::config_init(0, undef);
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
     ]);
 
-    $xfer->get_source()->set_callback($quit_cb);
-    $xfer->start();
+    $xfer->start($quit_cb);
 
     Amanda::MainLoop::run();
     pass("read from a device succeeded, too, and data was correct");
@@ -171,7 +168,7 @@ sub test_taper_dest {
 	}
     };
 
-    $xfer->get_source()->set_callback(sub {
+    $xfer->start(sub {
 	my ($src, $msg, $xfer) = @_;
 
 	if ($msg->{'type'} == $XMSG_ERROR) {
@@ -188,11 +185,9 @@ sub test_taper_dest {
 	}
 
 	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
-	    $xfer->get_source()->remove();
 	    Amanda::MainLoop::quit();
 	}
     });
-    $xfer->start();
 
     Amanda::MainLoop::call_later(sub { $start_new_part->(1, 0, -1); });
     Amanda::MainLoop::run();
@@ -216,8 +211,7 @@ sub test_taper_source {
     $subs{'setup'} = sub {
 	$xfer = Amanda::Xfer->new([ $src, $dest ]);
 
-	$xfer->get_source()->set_callback($subs{'got_xmsg'});
-	$xfer->start();
+	$xfer->start($subs{'got_xmsg'});
 
 	$subs{'load_slot'}->();
     };
@@ -272,7 +266,6 @@ sub test_taper_source {
 	}
 
 	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
-	    $xfer->get_source()->remove();
 	    Amanda::MainLoop::quit();
 	}
     };
@@ -455,17 +448,15 @@ sub test_taper_dest_cache_inform {
 	Amanda::Xfer::Dest::Fd->new(fileno($fh)),
     ]);
 
-    $xfer->get_source()->set_callback(sub {
+    $xfer->start(sub {
 	my ($src, $msg, $xfer) = @_;
 	if ($msg->{'type'} == $XMSG_ERROR) {
 	    die $msg->{'elt'} . " failed: " . $msg->{'message'};
 	}
 	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
-	    $xfer->get_source()->remove();
 	    Amanda::MainLoop::quit();
 	}
     });
-    $xfer->start();
     Amanda::MainLoop::run();
     close($fh);
 
@@ -541,7 +532,7 @@ sub test_taper_dest_cache_inform {
     };
 
     my @messages;
-    $xfer->get_source()->set_callback(sub {
+    $xfer->start(sub {
 	my ($src, $msg, $xfer) = @_;
 
 	if ($msg->{'type'} == $XMSG_ERROR) {
@@ -558,11 +549,9 @@ sub test_taper_dest_cache_inform {
 	}
 
 	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
-	    $xfer->get_source()->remove();
 	    Amanda::MainLoop::quit();
 	}
     });
-    $xfer->start();
 
     Amanda::MainLoop::call_later(sub { $start_new_part->(1, 0, -1); });
     Amanda::MainLoop::run();

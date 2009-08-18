@@ -49,7 +49,7 @@ Amanda::Debug::disable_die_override();
     pass("Creating a transfer doesn't crash"); # hey, it's a start..
 
     my $got_msg = "(not received)";
-    $xfer->get_source()->set_callback(sub {
+    $xfer->start(sub {
 	my ($src, $msg, $xfer) = @_;
 	if ($msg->{type} == $XMSG_ERROR) {
 	    die $msg->{elt} . " failed: " . $msg->{message};
@@ -58,11 +58,9 @@ Amanda::Debug::disable_die_override();
 	    $got_msg = $msg->{message};
 	}
 	elsif ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
-	    $src->remove();
 	    Amanda::MainLoop::quit();
 	}
     });
-    $xfer->start();
     Amanda::MainLoop::run();
     pass("A simple transfer runs to completion");
     is($got_msg, "Is this thing on?",
@@ -90,17 +88,12 @@ Amanda::Debug::disable_die_override();
 	}
 	if  ($xfer1->get_status() == $Amanda::Xfer::XFER_DONE
 	 and $xfer2->get_status() == $Amanda::Xfer::XFER_DONE) {
-	    $xfer1->get_source()->remove();
-	    $xfer2->get_source()->remove();
 	    Amanda::MainLoop::quit();
 	}
     };
 
-    $xfer1->get_source()->set_callback($cb);
-    $xfer2->get_source()->set_callback($cb);
-
-    $xfer1->start();
-    $xfer2->start();
+    $xfer1->start($cb);
+    $xfer2->start($cb);
 }
 # let the already-started transfers go out of scope before they 
 # complete, as a memory management test..
@@ -130,13 +123,11 @@ pass("Two simultaneous transfers run to completion");
 	    die $msg->{elt} . " failed: " . $msg->{message};
 	}
 	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
-	    $xfer->get_source()->remove();
 	    Amanda::MainLoop::quit();
 	}
     };
 
-    $xfer->get_source()->set_callback($cb);
-    $xfer->start();
+    $xfer->start($cb);
 
     Amanda::MainLoop::run();
     pass("One 10-element transfer runs to completion");
@@ -172,13 +163,11 @@ pass("Two simultaneous transfers run to completion");
 	    die $msg->{elt} . " failed: " . $msg->{message};
 	}
 	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
-	    $xfer->get_source()->remove();
 	    Amanda::MainLoop::quit();
 	}
     };
 
-    $xfer->get_source()->set_callback($cb);
-    $xfer->start();
+    $xfer->start($cb);
 
     Amanda::MainLoop::run();
 
@@ -216,17 +205,15 @@ pass("Two simultaneous transfers run to completion");
 	$src->remove();
 	$xfer->cancel();
     });
-    $xfer->get_source()->set_callback(sub {
+    $xfer->start(sub {
 	my ($src, $msg, $xfer) = @_;
 	if ($msg->{type} == $XMSG_ERROR) {
 	    die $msg->{elt} . " failed: " . $msg->{message};
 	}
 	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
-	    $src->remove();
 	    Amanda::MainLoop::quit();
 	}
     });
-    $xfer->start();
     Amanda::MainLoop::run();
     ok($got_timeout, "A neverending transfer finishes after being cancelled");
     # (note that this does not test all of the cancellation possibilities)
@@ -249,17 +236,15 @@ pass("Two simultaneous transfers run to completion");
     ]);
 
     my $got_error = 0;
-    $xfer->get_source()->set_callback(sub {
+    $xfer->start(sub {
 	my ($src, $msg, $xfer) = @_;
 	if ($msg->{type} == $XMSG_ERROR) {
 	    $got_error = 1;
 	}
 	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
-	    $src->remove();
 	    Amanda::MainLoop::quit();
 	}
     });
-    $xfer->start();
     Amanda::MainLoop::run();
     ok($got_error, "A transfer with an error cancels itself after sending an error");
 

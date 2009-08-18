@@ -1,3 +1,11 @@
+2009-08-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Xfer.pod perl/Amanda/Xfer.swg: add a callback argument
+	  to start(), and make the get_source method "low-level"
+	* perl/Amanda/Taper/Scribe.pm installcheck/Amanda_Xfer.pl
+	  installcheck/Amanda_Xfer_serveronly.pl server-src/amvault.pl
+	  device-src/amtapetype.pl: don't use get_source
+	* perl/Amanda/MainLoop.pod: documentation tweak
+
 2009-08-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/compat.pm perl/Amanda/Changer/disk.pm
 	  perl/Amanda/Changer/rait.pm perl/Amanda/Changer/robot.pm

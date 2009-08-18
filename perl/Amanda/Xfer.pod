@@ -36,7 +36,7 @@ Amanda::Xfer - the transfer architecture
     Amanda::Xfer::Source::Fd->new($infd),
     Amanda::Xfer::Dest::Fd->new($outfd)
   ]);
-  $xfer->get_source()->set_callback(sub {
+  $xfer->start(sub {
       my ($src, $xmsg, $xfer) = @_;
       print "Message from $xfer: $xmsg\n"; # use stringify operations
       if ($xfer->get_status() == $XFER_DONE) {
@@ -44,7 +44,6 @@ Amanda::Xfer - the transfer architecture
 	  Amanda::MainLoop::quit();
       }
   });
-  $xfer->start();
   Amanda::MainLoop::run();
 
 See L<http://wiki.zmanda.com/index.php/XFA> for background on the
@@ -64,22 +63,16 @@ The resulting object has the following methods:
 
 =over
 
-=item get_source()
+=item start($cb)
 
-Get the L<Amanda::MainLoop> event source through which messages will
-be delivered for this transfer.  Use its C<set_callback> method to
-connect a perl sub for processing events.  You I<must> C<release> the
-source when the transfer is complete!
+Start this transfer.  Processing takes place asynchronously, and messages will
+begin queueing up immediately.  If C<$cb> is given, then it is installed as the
+callback for messages from this transfer.  The callback receives three
+arguments: the event source, the message, and a reference to the controlling
+transfer.  See the description of C<Amanda::Xfer::Msg>, below, for details.
 
-The callback from this event source receives three arguments: the
-event source, the message, and a reference to the controlling
-transfer.  See the description of C<Amanda::Xfer::Msg>, below, for
-details.
-
-=item start()
-
-Start this transfer.  Processing takes place asynchronously, and
-messages will begin queueing up immediately.
+There is no need to remove the source on completion of the transfer - that is
+handled for you.
 
 =item cancel()
 
@@ -100,6 +93,16 @@ debugging messages.  This method is automatically invoked when a
 transfer is interpolated into a string:
 
   print "Starting $xfer\n";
+
+=item get_source()
+
+Get the L<Amanda::MainLoop> event source through which messages will
+be delivered for this transfer.  Use its C<set_callback> method to
+connect a perl sub for processing events. 
+
+Use of this method is deprecated; instead, pass a callback to the C<start>
+method.  If you set a callback via C<get_source>, then you I<must> C<remove>
+the source when the transfer is complete!
 
 =back
 

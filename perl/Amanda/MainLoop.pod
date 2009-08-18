@@ -440,7 +440,8 @@ the source itself.  Unless specified, no other arguments are provided.
 Event sources persist until they are removed with C<< $src->remove()
 >>, even if the source itself is no longer accessible from Perl.
 Although Glib supports it, there is no provision for "automatically"
-removing an event source.  As an example:
+removing an event source.  Also, calling C<< $src->remove() >> more than
+once is a potentially-fatal error. As an example:
 
   sub start_timer {
     my ($loops) = @_;
@@ -461,7 +462,7 @@ There is no means in place to specify extra arguments to be provided
 to a source callback when it is set.  If the callback needs access to
 other data, it should use a Perl closure in the form of lexically
 scoped variables and an anonymous sub.  In fact, this is exactly what
-the higher-level functions described above do.
+the higher-level functions (described above) do.
 
 =head2 Timeout
 

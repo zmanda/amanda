@@ -374,7 +374,7 @@ sub seek_and_copy {
 
     # now put together a transfer to copy that data.
     my $xfer;
-    my $xfer_cb = make_cb('xfer_cb' => sub {
+    my $xfer_cb = sub {
 	my ($src, $msg, $elt) = @_;
 	if ($msg->{type} == $XMSG_INFO) {
 	    vlog("while transferring: $msg->{message}\n");
@@ -383,7 +383,6 @@ sub seek_and_copy {
 	    fail $msg->{elt} . " failed: " . $msg->{message};
 	}
 	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
-	    $xfer->get_source()->remove();
 	    debug("transfer completed");
 
 	    # add this dump to the logfile
@@ -392,16 +391,16 @@ sub seek_and_copy {
 	    # start up the next copy
 	    $self->start_next_file();
 	}
-    });
+    };
 
     $xfer = Amanda::Xfer->new([
 	Amanda::Xfer::Source::Device->new($self->{'src_dev'}),
 	Amanda::Xfer::Dest::Device->new($self->{'dst_dev'},
 				        getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE)),
     ]);
-    $xfer->get_source()->set_callback($xfer_cb);
+
     debug("starting transfer");
-    $xfer->start();
+    $xfer->start($xfer_cb);
 }
 
 ## Application initialization

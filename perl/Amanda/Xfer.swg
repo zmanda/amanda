@@ -232,6 +232,25 @@ void xfer_cancel(Xfer *xfer);
 #define xfer_get_status(xfer) ((xfer)->status)
 %}
 
+/* upgrade the start method to optionally take a callback, which is
+ * passed to the GSource's set_callback */
+%perlcode %{
+sub xfer_start_with_callback {
+    my ($xfer, $cb) = @_;
+    if (defined $cb) {
+	my $releasing_cb = sub {
+	    my ($src, $msg, $xfer) = @_;
+	    $cb->(@_);
+	    if ($msg->{'type'} == $XMSG_DONE) {
+		$src->remove();
+	    }
+	};
+	$xfer->get_source()->set_callback($cb);
+    }
+    xfer_start($xfer);
+}
+%}
+
 /*
  * XferElement functions
  *
@@ -415,7 +434,7 @@ OVERLOAD_REPR()
 DECLARE_METHOD(repr, Amanda::Xfer::xfer_repr);
 DECLARE_METHOD(get_status, Amanda::Xfer::xfer_get_status);
 DECLARE_METHOD(get_source, Amanda::Xfer::xfer_get_amglue_source);
-DECLARE_METHOD(start, Amanda::Xfer::xfer_start);
+DECLARE_METHOD(start, Amanda::Xfer::xfer_start_with_callback);
 DECLARE_METHOD(cancel, Amanda::Xfer::xfer_cancel);
 
 /* ---- */
