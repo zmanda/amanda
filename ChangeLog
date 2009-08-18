@@ -1,4 +1,20 @@
 2009-08-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* restore-src/Makefile.am restore-src/amrestore.c: remove
+	* common-src/fileheader.c common-src/fileheader.h: add
+	  summarize_header
+	* common-src/match.c: fix match_level bugs
+	* installcheck/Amanda_Header.pl: test matches_dumpspecs
+	* server-src/Makefile.am server-src/amrestore.pl: new perl version
+	* installcheck/amrestore.pl: remove TODO's, don't expect -p to go
+	  on to the next dumpfile
+	* man/xml-source/amrestore.8.xml: update docs
+	* perl/Amanda/Cmdline.pod: typo
+	* perl/Amanda/Header.pod perl/Amanda/Header.swg: add summary and
+	  matches_dumpspec
+	* installcheck/Amanda_Util.pl: test sanitise_filename
+	* perl/Amanda/Util.pod: add sanitise_filename
+
+2009-08-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/filter-process.c: new xfer element
 	* xfer-src/xfer-element.h: declare it
 	* perl/Amanda/Xfer.swg: SWIG it

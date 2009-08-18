@@ -91,6 +91,7 @@ char *  build_header        (const dumpfile_t *file, size_t *size, size_t max_si
 void	fh_init(dumpfile_t *file);
 void	parse_file_header(const char *buffer, dumpfile_t *file, size_t buflen);
 void	print_header(FILE *outf, const dumpfile_t *file);
+char   *summarize_header(const dumpfile_t *file);
 int	known_compress_type(const dumpfile_t *file);
 void	dump_dumpfile_t(const dumpfile_t *file);
 

@@ -38,6 +38,8 @@ Amanda::Header - Amanda-specific headers prepended to dump files
   # parse a string into a header
   $hdr = Amanda::Header->from_string($block);
 
+  print "Working on: ", $hdr->summary(), "\n";
+
 =head1 Header Objects
 
 Note that, due to the vagaries of SWIG wrapping, headers actually have
@@ -60,8 +62,18 @@ header is smaller than the minimum size, it is padded with NUL bytes;
 if it would be larger than the maximum size, the method returns
 C<undef>.
 
+The C<summary> method returns a single-line summary of the header, with
+no trailing newline.
+
 As a debugging utility, the C<debug_dump> method dumps the contents of
 the object to the debug log.
+
+To compare a header to a list of dumpspecs (see L<Amanda::Cmdline>), use
+
+  if ($hdr->matches_dumpspecs([@dumpspecs])) { ... }
+
+noting that this method will return false for an empty list of dumpspecs, which
+may not be the intent.
 
 A header object has the following keys:
 

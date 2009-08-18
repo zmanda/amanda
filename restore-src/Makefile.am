@@ -19,7 +19,7 @@ LINTFLAGS=$(AMLINTFLAGS)
 
 amlib_LTLIBRARIES =	librestore.la
 
-sbin_PROGRAMS = 	amrestore amfetchdump
+sbin_PROGRAMS = 	amfetchdump
 
 amlibexec_PROGRAMS = 	amidxtaped
 

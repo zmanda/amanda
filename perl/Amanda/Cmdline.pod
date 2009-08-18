@@ -74,7 +74,7 @@ This function returns a string representing the formatted form of the
 given dumpspec.  This formatting is the same as performed by
 C<format_dumpspec_components>, but does not need a C<dumpspec_t>.
 
-=item C<parse_dumpspecs(@cmdline, $flags)>
+=item C<parse_dumpspecs([@cmdline], $flags)>
 
 This function parses C<@cmdline> into a list of C<dumpspec_t> objects,
 according to C<$flags>, which is a logical combination of zero or more

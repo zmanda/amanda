@@ -20,7 +20,9 @@
 
 %module "Amanda::Header"
 %include "amglue/amglue.swg"
+%include "amglue/dumpspecs.swg"
 %include "exception.i"
+%import "Cmdline.swg"
 
 %include "Amanda/Header.pod"
 
@@ -111,6 +113,47 @@ typedef struct {
 
 	void debug_dump(void) {
 	    dump_dumpfile_t(self);
+	}
+
+	gboolean matches_dumpspecs(amglue_dumpspec_list *dumpspecs) {
+	    char level_str[100];
+
+	    /* ignore anything that's not a (split) dumpfile */
+	    if(self->type != F_DUMPFILE && self->type != F_SPLIT_DUMPFILE)
+		return FALSE;
+
+	    g_snprintf(level_str, sizeof(level_str), "%d", self->dumplevel);
+
+	    while (dumpspecs) {
+		dumpspec_t *ds = (dumpspec_t *)dumpspecs->data;
+		dumpspecs = g_slist_next(dumpspecs);
+
+		if (ds->host && *ds->host
+		    && !match_host(ds->host, self->name))
+		    continue;
+
+		if (ds->disk && *ds->disk
+		    && !match_disk(ds->disk, self->disk))
+		    continue;
+
+		if (ds->datestamp && *ds->datestamp
+		    && !match_datestamp(ds->datestamp, self->datestamp))
+		    continue;
+
+		if (ds->level && *ds->level
+		    && !match_level(ds->level, level_str))
+		    continue;
+
+		/* passed all the checks, so it's a match */
+		return TRUE;
+	    }
+
+	    return FALSE;
+	}
+
+	%newobject summary;
+	char *summary(void) {
+	    return summarize_header(self);
 	}
     }
 } dumpfile_t;

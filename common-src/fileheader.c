@@ -748,96 +748,91 @@ build_header(const dumpfile_t * file, size_t *size, size_t max_size)
     return g_string_free(rval, FALSE);
 }
 
-/*
- * Prints the contents of the file structure.
- */
 void
 print_header(
     FILE *		outf,
     const dumpfile_t *	file)
 {
+    char *summ = summarize_header(file);
+    g_fprintf(outf, "%s\n", summ);
+    g_free(summ);
+}
+
+/*
+ * Prints the contents of the file structure.
+ */
+char *
+summarize_header(
+    const dumpfile_t *	file)
+{
     char *qdisk;
-    char number[NUM_STR_SIZE*2];
+    GString *summ;
 
     switch(file->type) {
     case F_EMPTY:
-	g_fprintf(outf, _("EMPTY file\n"));
-	break;
+	return g_strdup(_("EMPTY file"));
 
     case F_UNKNOWN:
-	g_fprintf(outf, _("UNKNOWN file\n"));
-	break;
+	return g_strdup(_("UNKNOWN file"));
 
+    default:
     case F_WEIRD:
-	g_fprintf(outf, _("WEIRD file\n"));
-	break;
+	return g_strdup(_("WEIRD file"));
 
     case F_TAPESTART:
-	g_fprintf(outf, _("start of tape: date %s label %s\n"),
+	return g_strdup_printf(_("start of tape: date %s label %s"),
 	       file->datestamp, file->name);
-	break;
 
     case F_NOOP:
-	g_fprintf(outf, _("NOOP file\n"));
-	break;
+	return g_strdup(_("NOOP file"));
 
     case F_DUMPFILE:
     case F_CONT_DUMPFILE:
 	qdisk = quote_string(file->disk);
-	g_fprintf(outf, "%s: date %s host %s disk %s lev %d comp %s",
+	summ = g_string_new("");
+        g_string_printf(summ, "%s: date %s host %s disk %s lev %d comp %s",
 	    filetype2str(file->type), file->datestamp, file->name,
 	    qdisk, file->dumplevel, file->comp_suffix);
-	if (*file->program)
-	    g_fprintf(outf, " program %s", file->program);
-	if (strcmp(file->encrypt_suffix, "enc") == 0)
-	    g_fprintf(outf, " crypt %s", file->encrypt_suffix);
-	if (*file->srvcompprog)
-	    g_fprintf(outf, " server_custom_compress %s", file->srvcompprog);
-	if (*file->clntcompprog)
-	    g_fprintf(outf, " client_custom_compress %s", file->clntcompprog);
-	if (*file->srv_encrypt)
-	    g_fprintf(outf, " server_encrypt %s", file->srv_encrypt);
-	if (*file->clnt_encrypt)
-	    g_fprintf(outf, " client_encrypt %s", file->clnt_encrypt);
-	if (*file->srv_decrypt_opt)
-	    g_fprintf(outf, " server_decrypt_option %s", file->srv_decrypt_opt);
-	if (*file->clnt_decrypt_opt)
-	    g_fprintf(outf, " client_decrypt_option %s", file->clnt_decrypt_opt);
-	g_fprintf(outf, "\n");
 	amfree(qdisk);
-	break;
+	goto add_suffixes;
 
-    case F_SPLIT_DUMPFILE:
-        if(file->totalparts > 0){
-            g_snprintf(number, SIZEOF(number), "%d", file->totalparts);
-        }   
-        else g_snprintf(number, SIZEOF(number), "UNKNOWN");
+    case F_SPLIT_DUMPFILE: {
+	char totalparts[NUM_STR_SIZE*2];
+        if(file->totalparts > 0)
+            g_snprintf(totalparts, SIZEOF(totalparts), "%d", file->totalparts);
+        else
+	    g_snprintf(totalparts, SIZEOF(totalparts), "UNKNOWN");
 	qdisk = quote_string(file->disk);
-        g_fprintf(outf, "split dumpfile: date %s host %s disk %s part %d/%s lev %d comp %s",
+        summ = g_string_new("");
+        g_string_printf(summ, "split dumpfile: date %s host %s disk %s"
+		      " part %d/%s lev %d comp %s",
                       file->datestamp, file->name, qdisk, file->partnum,
-                      number, file->dumplevel, file->comp_suffix);
-        if (*file->program)
-            g_fprintf(outf, " program %s",file->program);
-	if (strcmp(file->encrypt_suffix, "enc") == 0)
-	    g_fprintf(outf, " crypt %s", file->encrypt_suffix);
-	if (*file->srvcompprog)
-	    g_fprintf(outf, " server_custom_compress %s", file->srvcompprog);
-	if (*file->clntcompprog)
-	    g_fprintf(outf, " client_custom_compress %s", file->clntcompprog);
-	if (*file->srv_encrypt)
-	    g_fprintf(outf, " server_encrypt %s", file->srv_encrypt);
-	if (*file->clnt_encrypt)
-	    g_fprintf(outf, " client_encrypt %s", file->clnt_encrypt);
-	if (*file->srv_decrypt_opt)
-	    g_fprintf(outf, " server_decrypt_option %s", file->srv_decrypt_opt);
-	if (*file->clnt_decrypt_opt)
-	    g_fprintf(outf, " client_decrypt_option %s", file->clnt_decrypt_opt);
-        g_fprintf(outf, "\n");
+                      totalparts, file->dumplevel, file->comp_suffix);
 	amfree(qdisk);
-        break;
+        goto add_suffixes;
+    }
+
+    add_suffixes:
+	if (*file->program)
+	    g_string_append_printf(summ, " program %s", file->program);
+	if (strcmp(file->encrypt_suffix, "enc") == 0)
+	    g_string_append_printf(summ, " crypt %s", file->encrypt_suffix);
+	if (*file->srvcompprog)
+	    g_string_append_printf(summ, " server_custom_compress %s", file->srvcompprog);
+	if (*file->clntcompprog)
+	    g_string_append_printf(summ, " client_custom_compress %s", file->clntcompprog);
+	if (*file->srv_encrypt)
+	    g_string_append_printf(summ, " server_encrypt %s", file->srv_encrypt);
+	if (*file->clnt_encrypt)
+	    g_string_append_printf(summ, " client_encrypt %s", file->clnt_encrypt);
+	if (*file->srv_decrypt_opt)
+	    g_string_append_printf(summ, " server_decrypt_option %s", file->srv_decrypt_opt);
+	if (*file->clnt_decrypt_opt)
+	    g_string_append_printf(summ, " client_decrypt_option %s", file->clnt_decrypt_opt);
+	return g_string_free(summ, FALSE);
 
     case F_TAPEEND:
-	g_fprintf(outf, "end of tape: date %s\n", file->datestamp);
+	return g_strdup_printf("end of tape: date %s", file->datestamp);
 	break;
     }
 }

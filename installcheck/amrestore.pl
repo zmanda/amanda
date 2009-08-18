@@ -138,13 +138,9 @@ amrestore: 1: skipping FILE: date [0-9]* host localhost disk \Q$diskname\E/dir l
 amrestore: 2: restoring FILE: date [0-9]* host localhost disk \Q$diskname\E lev 0 comp N program .*},
     "compression works");
 
-TODO: {
-    local $TODO = "C amrestore exits without waiting or compression to finish";
-
-    @filenames = <localhost.*>;
-    $comp_size = (stat($filenames[0]))[7];
-    ok($comp_size < $orig_size, "..compressed size is smaller than original");
-}
+@filenames = <localhost.*>;
+$comp_size = (stat($filenames[0]))[7];
+ok($comp_size < $orig_size, "..compressed size is smaller than original");
 
 cleandir();
 like(run_get_err('amrestore', "-C", "file:".vtape_dir(), "localhost", "$diskname\$"),
@@ -153,13 +149,9 @@ amrestore: 1: skipping FILE: date [0-9]* host localhost disk \Q$diskname\E/dir l
 amrestore: 2: restoring FILE: date [0-9]* host localhost disk \Q$diskname\E lev 0 comp N program .*},
     "best compression works");
 
-TODO: {
-    local $TODO = "C amrestore exits without waiting or compression to finish";
-
-    @filenames = <localhost.*>;
-    $comp_best_size = (stat($filenames[0]))[7];
-    ok($comp_best_size < $comp_size, "..compressed best size is smaller than compressed fast");
-}
+@filenames = <localhost.*>;
+$comp_best_size = (stat($filenames[0]))[7];
+ok($comp_best_size < $comp_size, "..compressed best size is smaller than compressed fast");
 
 cleandir();
 like(run_get_err('amrestore', "-f", "2", "file:".vtape_dir()),
@@ -210,9 +202,8 @@ is(scalar @filenames, 2, "two holding files found") or die("holding is not what 
 my $holding_filename = $filenames[0];
 
 cleandir();
-# why does amrestore talk about fd's?? dunno..
 like(run_get_err('amrestore', $holding_filename),
-    qr{Reading \Q$holding_filename\E from fd \d+
+    qr{Reading from '\Q$holding_filename\E'
 FILE: date [0-9]* host localhost disk \Q$diskname\E lev 1 comp N program .*},
     "simple amrestore from holding disk");
 
@@ -224,9 +215,10 @@ cleandir();
 Installcheck::Run::load_vtape(2);
 like(run_get_err('amrestore', "-h", "-p", "file:".vtape_dir(), "localhost", "$diskname/dir"),
     qr{Restoring from tape TESTCONF02 starting with file 1.
-amrestore: 1: restoring FILE: date [0-9]* host localhost disk \Q$diskname\E/dir lev 1 comp N program .*
-amrestore: 2: skipping FILE: date [0-9]* host localhost disk \Q$diskname\E lev 0 comp N program .*},
+amrestore: 1: restoring FILE: date [0-9]* host localhost disk \Q$diskname\E/dir lev 1 comp N program .*},
     "piped amrestore");
+# (note that amrestore does not go on to the next part; it used to, but would either skip or
+# give an error for every subsequent file)
 
 @filenames = <localhost.*>;
 is(scalar @filenames, 0, "..leaves no files in current dir")

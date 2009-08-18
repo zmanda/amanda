@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 80;
+use Test::More tests => 86;
 
 use lib "@amperldir@";
 use warnings;
@@ -118,6 +118,20 @@ for my $strs (@try_bracing) {
 		    Amanda::Util::collapse_braced_alternates($strs)) ];
     is_deeply($rt, $strs,
 	      "round-trip of " . Dumper($strs));
+}
+
+my @try_sanitise = (
+    [ '', '' ],
+    [ 'foo', 'foo' ],
+    [ '/', '_' ],
+    [ ':', '_' ],
+    [ '\\', '_' ],
+    [ 'foo/bar:baz', 'foo_bar_baz' ],
+);
+
+for my $strs (@try_sanitise) {
+    my ($in, $exp) = @{$strs};
+    is(Amanda::Util::sanitise_filename($in), $exp, "sanitise " . $in);
 }
 
 ## test full_read and full_write

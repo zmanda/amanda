@@ -46,6 +46,10 @@ sbin_SCRIPTS_PERL = \
 	    amtape \
 	    amvault \
 	    amstatus
+if WANT_RESTORE
+sbin_SCRIPTS_PERL += \
+	    amrestore
+endif
 
 sbin_SCRIPTS_SHELL = \
 	    amcheckdb \

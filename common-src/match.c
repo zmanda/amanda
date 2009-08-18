@@ -686,9 +686,7 @@ match_level(
     const char *	level)
 {
     char *dash;
-    size_t len, len_suffix;
-    size_t len_prefix;
-    char lowend[100], highend[100];
+    long int low, hi, level_i;
     char mylevelexp[100];
     int match_exact;
 
@@ -715,23 +713,24 @@ match_level(
 
     if((dash = strchr(mylevelexp,'-'))) {
 	if(match_exact == 1) {
-	    error(_("Illegal level expression %s"),levelexp);
-	    /*NOTREACHED*/
+            goto illegal;
 	}
-	len = (size_t)(dash - mylevelexp);
-	len_suffix = strlen(dash) - 1;
-	len_prefix = len - len_suffix;
 
-	dash++;
-	strncpy(lowend, mylevelexp, len);
-	lowend[len] = '\0';
-	strncpy(highend, mylevelexp, len_prefix);
-	strncpy(&(highend[len_prefix]), dash, len_suffix);
-	highend[len] = '\0';
-	return ((strncmp(level, lowend, strlen(lowend)) >= 0) &&
-		(strncmp(level, highend , strlen(highend))  <= 0));
+        *dash = '\0';
+        if (!alldigits(mylevelexp) || !alldigits(dash+1)) goto illegal;
+
+        errno = 0;
+        low = strtol(mylevelexp, (char **) NULL, 10);
+        if (errno) goto illegal;
+        hi = strtol(dash+1, (char **) NULL, 10);
+        if (errno) goto illegal;
+        level_i = strtol(level, (char **) NULL, 10);
+        if (errno) goto illegal;
+
+	return ((level_i >= low) && (level_i <= hi));
     }
     else {
+	if (!alldigits(mylevelexp)) goto illegal;
 	if(match_exact == 1) {
 	    return (strcmp(level, mylevelexp) == 0);
 	}
@@ -739,4 +738,7 @@ match_level(
 	    return (strncmp(level, mylevelexp, strlen(mylevelexp)) == 0);
 	}
     }
+illegal:
+    error(_("Illegal level expression %s"),levelexp);
+    /*NOTREACHED*/
 }

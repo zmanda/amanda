@@ -232,6 +232,12 @@ Generate a timestamp from the current time, obeying the
 'USETIMESTAMPS' config parameter.  The Amanda configuration must
 already be loaded.
 
+=item sanitise_filename($fn)
+
+"Santitises" a filename by replacing any characters that might have special
+meaning to a filesystem with underscores.  This operation is I<not> reversible,
+and distinct input filenames I<may> produce identical output filenames.
+
 =back
 
 =head1 Locking Files
