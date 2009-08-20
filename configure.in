@@ -144,6 +144,7 @@ AMANDA_PROG_PCAT
 AMANDA_PROG_PERL
 AMANDA_PROG_SWIG
 AMANDA_PS_ARGUMENT
+AMANDA_PROG_RPCGEN
 
 dnl -------------------------------------------------------------------------
 
@@ -203,6 +204,7 @@ AC_CHECK_HEADERS(
 	stdarg.h \
 	stdlib.h \
 	strings.h \
+	rpc/rpc.h \
 	sys/file.h \
 	sys/ioctl.h \
 	sys/ipc.h \
@@ -377,6 +379,7 @@ AC_CONFIG_FILES([
     gnulib/Makefile
     installcheck/Makefile
     man/Makefile
+    ndmp-src/Makefile
     oldrecover-src/Makefile
     packaging/Makefile
     perl/Makefile

@@ -1,4 +1,12 @@
 2009-08-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/*: Import of ndmjob + ndmp-proxy.
+	* common-src/ndmp-protocol.h: Protocol between amanda and ndmp-proxy.
+	* configure.in: AMANDA_PROG_RPCGEN, build ndmp-src.
+	* config/amanda/progs.m4: AMANDA_PROG_RPCGEN.
+	* config/amanda/components.m4: AMANDA_WITHOUT_NDMP.
+	* Makefile.am: Build ndmp-src.
+
+2009-08-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/ipc-binary.c: New protocol
 	* common-src/ipc-binary.h: New protocol header
 	* common-src/Makefile.am: Compile it.

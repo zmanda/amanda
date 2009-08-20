@@ -394,3 +394,13 @@ AC_DEFUN([AMANDA_PROG_GETTEXT],
     AC_REQUIRE([AMANDA_INIT_PROGS])
     AC_PATH_PROG(GETTEXT,gettext,,$LOCSYSPATH)
 ])
+
+AC_DEFUN([AMANDA_PROG_RPCGEN],
+[
+    AC_REQUIRE([AMANDA_INIT_PROGS])
+    AC_PATH_PROG(RPCGEN,rpcgen,,$LOCSYSPATH)
+
+    # rpcgen rules (which only appear in ndmp-src) are disabled completely
+    # on systems where rpcgen is not available
+    AM_CONDITIONAL([HAVE_RPCGEN], [test "x$RPCGEN" != "x"])
+])

@@ -21,6 +21,9 @@ endif
 if WANT_AMPLOT
 PLOT_SUBDIRS = amplot
 endif
+if WANT_NDMP
+NDMP_SUBDIRS = ndmp-src
+endif
 # order is significant, don't change it arbitrarily
 SUBDIRS = . \
 	gnulib \
@@ -29,6 +32,7 @@ SUBDIRS = . \
 	amar-src \
 	amandad-src \
 	xfer-src \
+	$(NDMP_SUBDIRS) \
 	$(TAPE_SUBDIRS) \
 	$(CLIENT_SUBDIRS) \
 	$(SERVER_SUBDIRS) \
