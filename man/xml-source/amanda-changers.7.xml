@@ -119,7 +119,7 @@ places: implicit device properties (from tapetype parameters), global device
 properties (from global <emphasis>device_property</emphasis> parameters),
 properties in device definitions, and properties in changer definitions.
 Properties are applied in this order, with later properties taking
-priority.<para>
+priority.</para>
 
 <para>There are only three implicit properties:
 <emphasis>MAX_VOLUME_USAGE</emphasis> is set based on the tapetype
