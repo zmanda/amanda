@@ -1,4 +1,9 @@
 2009-08-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ipc-binary.c: New protocol
+	* common-src/ipc-binary.h: New protocol header
+	* common-src/Makefile.am: Compile it.
+
+2009-08-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda-changers.7.xml: Typo.
 
 2009-08-20  Dustin J. Mitchell <dustin@zmanda.com>
