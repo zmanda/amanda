@@ -181,7 +181,9 @@ ndmp_proxy_SOURCES = ndmjob_main.c \
 		      ndmjob_args.c \
 		      ndmjob_job.c \
 		      ndmjob_rules.c
-ndmp_proxy_LDADD = libndmjob.la
+
+ndmp_proxy_LDADD = libndmjob.la \
+		   ../common-src/libamanda.la
 
 INSTALLPERMS_exec = \
 	dest=$(amlibexecdir) chown=root chmod=04750 \

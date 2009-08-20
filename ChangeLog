@@ -1,4 +1,9 @@
 2009-08-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndma_comm_proxy.c: include "ipc-protocol.h"
+	* ndmp-src/Makefile.am: Link with libamanda
+	* ndmp-src/ndmos_glib.h: Use strtoll.
+
+2009-08-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/*: Import of ndmjob + ndmp-proxy.
 	* common-src/ndmp-protocol.h: Protocol between amanda and ndmp-proxy.
 	* configure.in: AMANDA_PROG_RPCGEN, build ndmp-src.

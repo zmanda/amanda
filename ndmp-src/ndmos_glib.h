@@ -63,7 +63,7 @@
 /* default: NDMOS_API_BZERO */
 #define NDMOS_API_MALLOC(N) g_malloc((N))
 #define NDMOS_API_FREE(P) g_free((void*)(P))
-#define NDMOS_API_STRTOLL(P,PP,BASE) g_ascii_strtoll((P),(PP),(BASE))
+#define NDMOS_API_STRTOLL(P,PP,BASE) strtoll((P),(PP),(BASE))
 #define NDMOS_API_STRDUP(S) g_strdup((S))
 /* default: NDMOS_API_STREND (default: implemented in ndml_util.c) */
 

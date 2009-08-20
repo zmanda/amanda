@@ -21,7 +21,7 @@
 
 #include "ndmagents.h"
 #include "ndmp-protocol.h"
-#include "ipc-binary.c"
+#include "ipc-binary.h"
 
 int
 ndma_proxy_session (struct ndm_session *sess)
