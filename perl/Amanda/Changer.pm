@@ -521,13 +521,13 @@ object is of type C<Amanda::Changer::Config>, and can be treated as a hashref
 with the following keys:
 
   name                  -- name of the changer section (or "default")
-  is_global             -- true if this changer is the default, global changer
+  is_global             -- true if this changer is the default changer
   tapedev               -- tapedev parameter
   tpchanger             -- tpchanger parameter
   changerdev            -- changerdev parameter
   changerfile           -- changerfile parameter
   properties            -- all properties for this changer
-  device_properties     -- all device properties for this changer
+  device_properties     -- device properties from this changer
 
 The four parameters are just as supplied by the user, either in the global
 config or in a changer section.  Changer authors are cautioned not to try to
@@ -1218,15 +1218,9 @@ sub new {
 	$self->{'changerdev'} = getconf($CNF_CHANGERDEV);
 	$self->{'changerfile'} = getconf($CNF_CHANGERFILE);
 
-	# no changer properties for a global changer
+	# no changer or device properties, since there's no changer definition to use
 	$self->{'properties'} = {};
-
-	# note that this *intentionally* overwrites the implict properties with
-	# any explicit device_property parameters (rather than appending to the
-	# 'values' key)
-	my $implicit_properties = $self->_get_implicit_properties();
-	my $global_properties = getconf($CNF_DEVICE_PROPERTY);
-	$self->{'device_properties'} = { %$implicit_properties, %$global_properties };
+	$self->{'device_properties'} = {};
     }
     return $self;
 }
@@ -1235,7 +1229,26 @@ sub configure_device {
     my $self = shift;
     my ($device) = @_;
 
-    while (my ($propname, $propinfo) = each(%{$self->{'device_properties'}})) {
+    # we'll accumulate properties in this hash *overwriting* previous properties
+    # instead of appending to them
+    my %properties;
+
+    # always use implicit properties
+    %properties = ( %properties, %{ $self->_get_implicit_properties() } );
+
+    # always use global properties
+    %properties = ( %properties, %{ getconf($CNF_DEVICE_PROPERTY) } );
+
+    # if this is a device alias, add properties from its device definition
+    if (my $dc = lookup_device_config($device->device_name)) {
+	%properties = ( %properties,
+		%{ device_config_getconf($dc, $DEVICE_CONFIG_DEVICE_PROPERTY); } );
+    }
+
+    # finally, add any props from the changer config
+    %properties = ( %properties, %{ $self->{'device_properties'} } );
+
+    while (my ($propname, $propinfo) = each(%properties)) {
 	for my $value (@{$propinfo->{'values'}}) {
 	    if (!$device->property_set($propname, $value)) {
 		my $msg = "Error setting '$propname' on device '".$device->device_name."'";
@@ -1298,6 +1311,7 @@ sub _get_implicit_properties {
 
     if (tapetype_seen($tapetype, $TAPETYPE_BLOCKSIZE)) {
 	$props->{'block_size'} = {
+	    optional => 0,
 	    priority => 0,
 	    append => 0,
 	    values => [

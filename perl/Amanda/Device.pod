@@ -90,7 +90,6 @@ not distinguishable via the usual Perl methods (C<ref> or C<< $dev->isa >>).
 
 Device users generally call device methods in the following order for reading:
 
-    configure
     read_label (optional)
     start
     seek_file (optional)
@@ -98,7 +97,6 @@ Device users generally call device methods in the following order for reading:
 
 or, when writing or appending:
 
-    configure
     read_label (optional)
     start
     start_file
@@ -344,6 +342,11 @@ the device based on the user's configuation. If C<$use_global_config> is true,
 then any global C<device_property> parameters are processed, along with
 tapetype and other relevant parameters. Otherwise, only parameters from the
 device definition (if the device was opened via an alias) are processed.
+
+This method is I<deprecated>.  All access to Devices should be via the Changer
+API (see L<Amanda::Changer>), which implements its own, more advanced method of
+configuring devices.  The C<configure> method may be removed in a future
+release.
 
 =head3 read_label
 

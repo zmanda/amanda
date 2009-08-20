@@ -37,32 +37,39 @@ does not address details that are only of concern to developers.  For that
 purpose, consult the Amanda source code and http://wiki.zmanda.com.</para>
 
 <para>The term "device driver" describes the software that can communicate with
-some kind of backend storage, e.g., a tape driver.  A "device" is the
-  storage element itself, usually a piece of hardware. When discussing
-  a device and its driver as a unit, the term  "device" is sometimes
-  also used to refer to the combination of device and driver.</para>
+some kind of backend storage, e.g., a tape driver.  A "device" is the storage
+element itself, usually a piece of hardware. When discussing a device and its
+driver as a unit, the term  "device" is sometimes also used to refer to the
+combination of device and driver.</para>
 
 
 </refsect1>
 
 <refsect1><title>SPECIFYING DEVICES</title>
 
-<para>Device names take the form <emphasis>TYPE:NODE</emphasis>, where <emphasis>TYPE</emphasis> selects a device driver, and <emphasis>NODE</emphasis> provides further information to that driver.  The syntax for each device driver is given in the corresponding section below.</para>
+<para>Device names take the form <emphasis>TYPE:NODE</emphasis>, where
+<emphasis>TYPE</emphasis> selects a device driver, and
+<emphasis>NODE</emphasis> provides further information to that driver.  The
+syntax for each device driver is given in the corresponding section
+below.</para>
 
-<para>Devices are described in &amconf; with "device" sections, e.g.,
+<para>Devices can be described in &amconf; with "device" sections, e.g.,
 <programlisting>
 define device top_drive {
     tapedev "tape:/dev/nst0"
     device_property "BLOCK_SIZE" "131072"
 }
 </programlisting>
-A device defininition creates a device "alias", in this case named <emphasis>top_drive</emphasis>, which can then be named in the global <emphasis>tapedev</emphasis> parameter:
+Such a device defininition creates a device "alias", in this case named
+<emphasis>top_drive</emphasis>, which can then be named in the global
+<emphasis>tapedev</emphasis> or <emphasis>tpchanger</emphasis> parameter:
 <programlisting>
 tapedev "top_drive"
 </programlisting>
 </para>
 
-<para>The global <emphasis>tapedev</emphasis> parameter can also specify a literal device name.  For example,
+<para>The global <emphasis>tapedev</emphasis> parameter can also specify a
+literal device name.  For example,
 <programlisting>
 tapedev "file:/amdisks"
 </programlisting>
@@ -73,14 +80,23 @@ define device default {
     tapedev "file:/amdisks"
 }
 </programlisting>
-Device properties specified outside of any device definition apply to all devices.  This syntax is provided mainly for backward compatibility, and for simple Amanda configurations.  Note that there is no way to provide properties specific to a device without defining a device alias.</para>
+Note that, in both cases, the specified devices are actually accessed through
+the <emphasis>chg-single</emphasis> changer driver; see <manref
+name="amanda-changers" vol="7" /> for more information.  </para>
+
+<para>Device properties specified outside of any device definition apply to
+all devices.  This syntax is provided mainly for backward compatibility, and
+for simple Amanda configurations.  Note that there is no way to provide
+properties specific to a device without defining a device alias.</para>
+
+<para>See <manref name="amanda-changers" vol="7" /> for details on how devices
+are configured, and in particular on how device properties are specified.  See
+<manref name="amanda.conf" vol="5"/> for more information on Amanda
+configuration in general.</para>
 
 <note><para>
 There is no way to reset a device property to its default value.
 </para></note>
-
-<para>See <manref name="amanda.conf" vol="5"/>
-for more information on Amanda configuration.</para>
 
 </refsect1>
 

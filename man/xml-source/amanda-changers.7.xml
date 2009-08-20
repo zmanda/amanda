@@ -68,13 +68,13 @@ each changer is annotated below to indicate its support.</para>
 <para>Changer specifications are strings like
 <computeroutput>chg-disk:/my/vtapes</computeroutput>.  The
 <computeroutput>chg-</computeroutput> prefix serves to differentiate changers
-from devices (see
-<manref name="amanda-devices" vol="7"/>).
-The next portion (<computeroutput>disk</computeroutput>, in this case)
-identifies the particular changer driver to use, and everything that follows
-the <computeroutput>:</computeroutput> is interpreted by the driver.  Note that
-the <computeroutput>:</computeroutput> character is required, even when nothing
-follows it.  This is an easy way to distinguish new changer specifications from old.</para>
+from devices (see <manref name="amanda-devices" vol="7"/>).  The next portion
+(<computeroutput>disk</computeroutput>, in this case) identifies the particular
+changer driver to use, and everything that follows the
+<computeroutput>:</computeroutput> is interpreted by the driver.  Note that the
+<computeroutput>:</computeroutput> character is required, even when nothing
+follows it.  This is an easy way to distinguish new changer specifications from
+old.</para>
 
 <para>A name which does not match this pattern, but which matches an old
 changer script (e.g., <computeroutput>chg-zd-mtx</computeroutput>), invokes the
@@ -85,18 +85,54 @@ the single-device changer, e.g.,
 <computeroutput>chg-single:tape:/dev/rmt/0</computeroutput>.</para>
 
 <para>Changers which require additional parameters can also be described in
-&amconf; with "changer" sections, for example,
+&amconf; with "changer" sections.  Such a changer defininition creates a
+changer "alias", in this case named <emphasis>hp-robot</emphasis>, which can
+then be named where an application expects a changer - for example, the target
+of the <command>amvault</command> command or in a global
+<command>tpchanger</command> parameter.</para>
+
+<refsect2><title>CONFIGURATION</title>
+
+<para>The preferred method of specifying configuration for a changer is as a
+"changer" section in &amconf;.  The <emphasis>tapedev</emphasis> parameter
+then indicates, by name, the changer that will be used by default by most
+Amanda programs.  For example:
 <programlisting>
 define changer hp-robot {
     tapedev "chg-robot:/dev/sg1"
     property "tape-device" "0=tape:/dev/nst0"
     property append "tape-device" "1=tape:/dev/nst0"
+    device_property "BLOCK_SIZE" "512k"
 }
+# ...
+tapedev "hp-robot"
 </programlisting>
-A changer defininition creates a changer "alias", in this case named
-<emphasis>hp-robot</emphasis>, which can then be named where an application
-expects a changer - for example, the target of the <command>amvault</command>
-command or in a global <command>tpchanger</command> parameter.</para>
+</para>
+
+<para>Several changer drivers accept <emphasis>changer properties</emphasis> which
+control the behavior of the changer.  These properties must be specified in a
+changer definition, as in the <emphasis>hp-robot</emphasis> example, above.</para>
+
+<para>Devices, too, can take properties to control their behavior (see <manref
+name="amanda-devices" vol="7" />).  Device properties can come from four
+places: implicit device properties (from tapetype parameters), global device
+properties (from global <emphasis>device_property</emphasis> parameters),
+properties in device definitions, and properties in changer definitions.
+Properties are applied in this order, with later properties taking
+priority.<para>
+
+<para>There are only three implicit properties:
+<emphasis>MAX_VOLUME_USAGE</emphasis> is set based on the tapetype
+<emphasis>length</emphasis> parameter, <emphasis>READ_BUFFER_SIZE</emphasis> is
+set if <emphasis>readblocksize</emphasis> is set, and
+<emphasis>BLOCK_SIZE</emphasis> is set based on the
+<emphasis>blocksize</emphasis> parameter.</para>
+
+<para>Global device properties always apply.  If the changer specifies a device
+by alias, then device properties from the definition apply.  If the changer is
+specified by an alias, then properties from that definition applied.</para>
+
+</refsect2>
 </refsect1>
 
 <refsect1><title>CHANGER DRIVERS</title>
