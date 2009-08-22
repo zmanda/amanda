@@ -125,11 +125,14 @@ List all regex (POSIX Extended Regular Expression syntax) that are strange outpu
 </refsect1>
 
 <refsect1><title>EXAMPLE</title>
+<para>
 <programlisting>
   define application-tool app_amgtar {
+    plugin "amgtar"
+
     property "ATIME-PRESERVE" "NO"
     property "CHECK-DEVICE" "YES"
-    property "GNUTAR-LISTDIR" "
+    property "GNUTAR-LISTDIR" "/path/to/listdir"
     property "GNUTAR-PATH" "/bin/tar"
     property "ONE-FILE-SYSTEM" "YES"
     property "TAR-BLOCKSIZE" "20"
@@ -146,6 +149,18 @@ List all regex (POSIX Extended Regular Expression syntax) that are strange outpu
     property append "IGNORE" "file changed as we read it$"
   }
 </programlisting>
+A dumptype using this application might look like:
+<programlisting>
+  define dumptype amgtar_app_dtyp {
+    global
+    program "APPLICATION"
+    application "app_amgtar"
+  }
+</programlisting>
+Note that the <emphasis>program</emphasis> parameter must be set to
+<emphasis>"APPLCIATION"</emphasis> to use the <emphasis>application</emphasis>
+parameter.
+</para>
 </refsect1>
 
 <seealso>
