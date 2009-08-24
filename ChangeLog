@@ -1,3 +1,9 @@
+2009-08-24  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Report.pm: Module for abstracting amreport data
+	* perl/Makefile.am: compile the module
+	* installcheck/Amanda_Report.pl: test for Amanda::Report
+	* installcheck/Makefile.am: add the test to installcheck
+
 2009-08-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amgtar.8.xml: changes suggested by Christopher
 	  <chrismcc@pricegrabber.com>
@@ -190,7 +196,7 @@
 	* perl/Amanda/Changer.pm: POD tweak
 
 2009-07-31 Dan Locks <dwlocks@zmanda.com>
-	* packaging/deb/control, packaging/rpm/amanda.spec: add native 
+	* packaging/deb/control, packaging/rpm/amanda.spec: add native
 	  package names to conflict list
 
 2009-07-30 Dan Locks <dwlocks@zmanda.com>
@@ -250,7 +256,7 @@
 	  installcheck/Amanda_Process.pl, installcheck/Amanda_Taper_Scan.pl,
 	  installcheck/Amanda_Taper_Scan_traditional.pl,
 	  installcheck/Amanda_Taper_Scribe.pl, installcheck/Amanda_Xfer.pl,
-	  installcheck/Amanda_Xfer_serveronly.pl, 
+	  installcheck/Amanda_Xfer_serveronly.pl,
 	  installcheck/amrmtape.pl, installcheck/amtape.pl,
 	  installcheck/taper.pl: use Installcheck::log_test_output()
 
@@ -2024,7 +2030,7 @@
 	* common-src/util.h common-src/util.c: remove unneeded needs_quotes
 
 2009-02-19  Dustin J. Mitchell <dustin@zmanda.com>
-	* installcheck/Amanda_Types.pl 
+	* installcheck/Amanda_Types.pl
 	  installcheck/Amanda_Header.pl: rename Amanda::Types to
 	  Amanda::Header, add to_string and from_string methods
 	* common-src/fileheader.c: fix bug in returned size
@@ -2334,7 +2340,7 @@
 	* installcheck/amgtar.pl: fix typo
 
 2009-01-27  Nikolas Coukouma <atrus@zmanda.com>
-	* installcheck/Installcheck/Application.pm: Add Installcheck::Application 
+	* installcheck/Installcheck/Application.pm: Add Installcheck::Application
 	  harness for running things via the Application API
 	* installcheck/amgtar.pl: Add installchecks for amgtar
 	* installcheck/Makefile.am: Add files to build and distribution
@@ -2393,7 +2399,7 @@
 	* server-src/amstatus.pl: Fix use of %free and %qlen keys.
 
 2009-01-20 Dan Locks <dwlocks@zmanda.com>
-	* packaging/rpm/amanda.spec: add missing BuildRequires, conditionalize 
+	* packaging/rpm/amanda.spec: add missing BuildRequires, conditionalize
 	  libtermcap.so.2 for fedora, change tar requirement to %{tarver}
 
 2009-01-20 Dan Locks <dwlocks@zmanda.com>
@@ -2530,9 +2536,9 @@
 	* man/xml-source/amanda-auth.7.xml: newly added man page
 	* man/Makefile.am: added amanda-auth to section 7
 	* man/xml-source/amanda.conf.5.xml: removed details on auth parameter
-	and added link to amanda-auth man page 
+	and added link to amanda-auth man page
 	* man/xml-source/amanda.conf.5.xml: moved AUTHORIZATION section to
-	amanda-auth and added link to amanda-auth man page 
+	amanda-auth and added link to amanda-auth man page
 
 2008-12-22  Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/s3.c: retry on CURLE_GOT_NOTHING (52) to handle "connection reset by peer"
@@ -2684,7 +2690,7 @@
 	  perl/Amanda/MainLoop.swg: update docs, make typemap apply
 
 2008-12-15  Nikolas Coukouma <atrus@zmanda.com>
-	* installcheck/Amanda_Device.pl: simplify S3 installcheck, removing 
+	* installcheck/Amanda_Device.pl: simplify S3 installcheck, removing
 	  ability to test well with just DevPay credentials
 
 2008-12-14  Dustin J. Mitchell <dustin@zmanda.com>
@@ -2852,7 +2858,7 @@
 2008-12-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driverio.c: Send a message with NO-NEW-TAPE.
 	* server-src/driver.c: Generate message for NO-NEW-TAPE, call
-	  start_degraded_mode when sending NO-NEW-TAPE, Fix a subscript error 
+	  start_degraded_mode when sending NO-NEW-TAPE, Fix a subscript error
 	  for INPUT-ERROR and TAPE-ERROR
 	* server-src/taper.c: Get message from NO-NEW-TAPE command and log it.
 
@@ -2860,7 +2866,7 @@
 	* server-src/amrmtape.pl:
 	  man/xml-source/amrmtape.8.xml,
 	  installcheck/amrmtape.pl:  add --empty and --changer options for erasing media
-	
+
 2008-12-04  Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/device.c, device-src/device.h, perl/Amanda/Device.swg:
 	  Add erase method to the device class
@@ -3579,8 +3585,8 @@
 	* server-src/diskfile.c: Init xml_app.result to stralloc("").
 
 2008-09-16 Dan Locks <dwlocks@zmanda.com>
-	* packaging/rpm/amanda.spec:  Added detection of CentOS 4 and 5 as 
-	  suggested by dswartz.  added graceful failure when Distro/version is 
+	* packaging/rpm/amanda.spec:  Added detection of CentOS 4 and 5 as
+	  suggested by dswartz.  added graceful failure when Distro/version is
 	  not detected correctly
 
 2008-09-15  Dustin J. Mitchell <dustin@zmanda.com>
@@ -3946,7 +3952,7 @@
 2008-07-17 Dan Locks <dwlocks@zmanda.com>
 	* packaging/debian/amanda-enterprise-backup-*.install: added entries for
 	  applications and devices man pages.
-	  
+
 2008-07-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/Makefile.am: Add amzfs-snapshot.8
 	* man/xml-source/amzfs-snapshot.8.xml: New man page.
@@ -3965,7 +3971,7 @@
 
 2008-07-16 Dan Locks <dwlocks@zmanda.com>
 	* packaging/deb/control,
-	  packaging/rpm/amanda.spec: added explicit dependency on openssl, and a 
+	  packaging/rpm/amanda.spec: added explicit dependency on openssl, and a
 	  build dependency for openssl and curl development files.
 
 2008-07-15  Dustin J. Mitchell <dustin@zmanda.com>
@@ -4088,7 +4094,7 @@
 	* device-src/vfs-device.c device-src/tape-device.c: do not autofinish
 	  when EOF occurs on writing
 
-2008-07-08  Dustin J. Mitchell <dustin@zmanda.com>, 
+2008-07-08  Dustin J. Mitchell <dustin@zmanda.com>,
 	    Nikolas Coukouma <atrus@zmanda.com>,
 	    Ian Turner <ian@zmanda.com>,
 	    Jean-Louis Martineau <martineau@zmanda.com>
@@ -4181,7 +4187,7 @@
 
 2008-07-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Device.pl: test that start(READ) without first
-	  reading the label doesn't cause errors 
+	  reading the label doesn't cause errors
 	* device-src/s3-device.c: call s3_device_read_label directly
 
 2008-07-02  Ian Turner <ian@zmanda.com>
@@ -4226,7 +4232,7 @@
 2008-06-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm perl/Amanda/Cmdline.swg
 	  perl/Amanda/Config.swg perl/Amanda/DB/Catalog.pm
-	  perl/Amanda/Device.swg perl/Amanda/Logfile.swg 
+	  perl/Amanda/Device.swg perl/Amanda/Logfile.swg
 	  perl/Amanda/Util.swg: POD cleanup
 	* perl/Makefile.am: new files, rules to make HTML
 	* perl/amperl.css: CSS file for online POD
@@ -4475,7 +4481,7 @@
 	  doesn't exist in every version of glib
 
 2008-06-10 Dan Locks <dwlocks@zmanda.com>
-	* packaging/rpm/amanda.spec:  Replaced individual SBINDIR/am... entries 
+	* packaging/rpm/amanda.spec:  Replaced individual SBINDIR/am... entries
 	  with SBINDIR/am* in %%files
 
 2008-06-10  Jean-Louis Martineau <martineau@zmanda.com>
@@ -4712,7 +4718,7 @@
 	* common-src/conffile.c: make config insensitive to
 	  differences between '-' and '_'
 	* man/xml-source/amanda-client.conf.5.xml
-	  man/xml-source/amanda.conf.5.xml 
+	  man/xml-source/amanda.conf.5.xml
 	  man/xml-source/amgetconf.8.xml: document it
 	* installcheck/Amanda_Config.pl installcheck/amgetconf.pl: update
 	  tests
@@ -4968,14 +4974,14 @@
 
 2008-05-02 Dan Locks <dwlocks@zmanda.com>
  	* packaging/rpm/amanda.spec:  Replace ${ with %{ where applicable.
- 
+
 2008-05-02 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/deb/amanda-enterprise-backup-server.postinst
 	   packaging/rpm/amanda_enterprise.spec:  Change .am_passphrase to a
-	   semi-random number in both packages. 
+	   semi-random number in both packages.
 
 2008-04-29  Dustin J. Mitchell <dustin@zmanda.com>
-	* config/amanda/dirs.m4: note that --with-dumperdir is 
+	* config/amanda/dirs.m4: note that --with-dumperdir is
 	  deprecated in ./configure --help
 
 
@@ -5023,7 +5029,7 @@
 	  for new module
 
 2008-04-22  Dustin J. Mitchell <dustin@zmanda.com>
-	* common-src/event.c: on glib <2.4.0, use a simple polling 
+	* common-src/event.c: on glib <2.4.0, use a simple polling
 	  child_watch_source; on more recent glib, use glib's own
 	  child_watch_source
 
@@ -5115,9 +5121,9 @@
 
 2008-04-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm: rewrite Amanda::Changer to use
-	  Amanda::MainLoop, allowing asynchronous operation of 
+	  Amanda::MainLoop, allowing asynchronous operation of
 	  changers
-	* server-src/amcheckdump.pl: use new Amanda::Changer 
+	* server-src/amcheckdump.pl: use new Amanda::Changer
 	  interface (synchronously, until we have Amanda::Xfer)
 	* installcheck/Amanda_Changer.pl: test new interface
 
@@ -5178,7 +5184,7 @@
 	  /bin/gnutar, but /bin/tar is actually GNU Tar.
 
 2008-04-15  Dustin J. Mitchell <dustin@zmanda.com>
-	* common-src/file.c(mk1dir): fix reversed conditional to handle 
+	* common-src/file.c(mk1dir): fix reversed conditional to handle
 	  a race condition
 
 2008-04-15  Jean-Louis Martineau <martineau@zmanda.com>
@@ -5217,7 +5223,7 @@
 	  Return the latest errno reported.
 
 2008-04-08  Dustin J. Mitchell <dustin@zmanda.com>
-	* common-src/conffile.c common-src/conffile.h 
+	* common-src/conffile.c common-src/conffile.h
 	  perl/Amanda/Config.swg installcheck/Amanda_Config.pl:
 	  new interface for config errors, re-introduce rawtapedev for
 	  deprectation purposes
@@ -5259,7 +5265,7 @@
 
 2008-04-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/MainLoop.swg perl/amglue/source.c
-	  installcheck/Amanda_MainLoop.pl: wrap GMainLoop and the 
+	  installcheck/Amanda_MainLoop.pl: wrap GMainLoop and the
 	  GSources defined in event.c, using an extensible model
 	* common-src/event.c: check whether child_watch_source's signal
 	  handler has been replaced, and issue a warning if it has.
@@ -5357,7 +5363,7 @@
 	  server-src/taper-port-source.c server-src/driverio.c
 	  server-src/holding.c server-src/driver.c
 	  server-src/taper-file-source.c restore-src/restore.c
-	  common-src/security-util.c common-src/amanda.h 
+	  common-src/security-util.c common-src/amanda.h
 	  tape-src/output-file.c: use gnulib full_read, full_write functions,
 	  which have slightly different error semantics than the corresponding
 	  Amanda functions.
@@ -5414,8 +5420,8 @@
 
 2008-03-20  Dan Locks <dwlocks@zmanda.com>
 	* packaging/deb/control: removed grep dependency
-	* packaging/deb/amanda-backup-client.postinst 
-	  packaging/deb/amanda-backup-server.postinst 
+	* packaging/deb/amanda-backup-client.postinst
+	  packaging/deb/amanda-backup-server.postinst
 	  packaging/deb/amanda-backup-server.postrm
 	  packaging/deb/amanda-backup-client.postrm:  removed call to
 	  ldconfig to satisfy lintian
@@ -5645,7 +5651,7 @@
 2008-02-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/automake/installperms.am: --without-installperms now
 	  generates a shell-parsable list of desired permissions
-	* Makefile.am: erase installperms.sh before beginning a 'make 
+	* Makefile.am: erase installperms.sh before beginning a 'make
 	  install'
 	* oldrecover-src/Makefile.am client-src/Makefile.am
 	  recover-src/Makefile.am server-src/Makefile.am: give mode
@@ -5781,7 +5787,7 @@
 	  variations, clean up forked children
 
 2008-02-13  Dustin J. Mitchell <dustin@zmanda.com>
-	* common-src/security-util.c 
+	* common-src/security-util.c
 	  common-src/security-util.h: don't cast pointers to
 	  integers for tcp_conn event id's
 
@@ -5797,7 +5803,7 @@
 2008-02-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* amandad-src/amandad.c: initialize as->service
 	* common-src/event.c common-src/event.h: new GMainLoop-based
-	  version of the event library, allowing GMainLoop-based and 
+	  version of the event library, allowing GMainLoop-based and
 	  event-based processes to co-exist peacefully
 
 2008-02-12  Dustin J. Mitchell <dustin@zmanda.com>
@@ -5916,7 +5922,7 @@
 
 2008-01-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in config/amanda/ipv6.m4 common-src/amanda.h: check
-	  for netinet/in.h and in_port_t, and define the latter if 
+	  for netinet/in.h and in_port_t, and define the latter if
 	  necessary.  Thanks to Craig Dewick <cdewick@lios.apana.org.au>
 	  for the suggestion.
 
@@ -5988,7 +5994,7 @@
 	   - add Installcheck::Run to help with setting up amdump runs, and
 	     running applications in general
 	   - Add complete runs to amdevcheck, amcheckdump
-	   - Return a nonzero exit status from amgetconf when an invalid 
+	   - Return a nonzero exit status from amgetconf when an invalid
 	     configuration parameter is specified.
 
 2008-01-18  Dustin J. Mitchell <dustin@zmanda.com>

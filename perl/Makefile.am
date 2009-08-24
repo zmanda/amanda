@@ -286,6 +286,12 @@ MAINTAINERCLEANFILES += Amanda/XferServer.c Amanda/XferServer.pm
 EXTRA_DIST += Amanda/XferServer.swg Amanda/XferServer.pm Amanda/XferServer.pod
 endif
 
+if WANT_SERVER
+# PACKAGE: Amanda::Report
+Amanda_DATA += Amanda/Report.pm
+EXTRA_DIST += Amanda/Report.pm
+endif
+
 # PACKAGE: Amanda::BigIntCompat
 Amanda_DATA += Amanda/BigIntCompat.pm
 EXTRA_DIST += Amanda/BigIntCompat.pm

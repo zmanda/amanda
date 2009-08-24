@@ -36,6 +36,7 @@ server_tests = \
 	Amanda_Holding \
 	Amanda_Logfile \
 	Amanda_Process \
+	Amanda_Report \
 	Amanda_Tapelist \
 	Amanda_Taper_Scan \
 	Amanda_Taper_Scan_traditional \
