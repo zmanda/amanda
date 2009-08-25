@@ -1,4 +1,9 @@
 2009-08-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndmp-protocol.h: Remove file.
+	* ndmp-src/Makefile.am (noinst_HEADERS): Remove ndmp-protocol.h.
+	* common-src/Makefile.am (noinst_HEADERS): Add ndmp-protocol.h.
+
+2009-08-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/ndmp-device.m4: Add AMANDA_NDMP_DEVICE.
 	* configure.in: Use AMANDA_NDMP_DEVICE.
 	* common-src/conffile.c: Add ndmp_proxy_port, ndmp_proxy_debug_file

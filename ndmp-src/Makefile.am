@@ -220,7 +220,7 @@ noinst_HEADERS = \
 	ndmp3_enum_strs.h  ndmp9.x            \
 	ndmp3.h            ndmp_ammend.h      wraplib.h \
 	ndmp3_translate.h  ndmp_msg_buf.h \
-	ndmos_glib.h	 ndmp-protocol.h
+	ndmos_glib.h
 
 EXTRA_DIST += \
 	ndmos_glib.c \

@@ -107,6 +107,7 @@ noinst_HEADERS =		\
 	file.h			\
 	fileheader.h		\
 	glib-util.h		\
+	ndmp-protocol.h		\
 	packet.h		\
 	pipespawn.h		\
 	protocol.h		\
