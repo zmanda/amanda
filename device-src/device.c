@@ -48,6 +48,9 @@ void    s3_device_register    (void);
 void    tape_device_register    (void);
 #endif
 void    vfs_device_register     (void);
+#ifdef WANT_NDMP_DEVICE
+void    ndmp_device_register    (void);
+#endif
 
 /*
  * Registration infrastructure
@@ -69,6 +72,9 @@ void device_api_init(void) {
     rait_device_register();
 #ifdef WANT_S3_DEVICE
     s3_device_register();
+#endif
+#ifdef WANT_NDMP_DEVICE
+    ndmp_device_register();
 #endif
 }
 

@@ -135,6 +135,20 @@ EXTRA_DIST += Amanda/Archive.swg Amanda/Archive.pm Amanda/Archive.pod
 MAINTAINERCLEANFILES += Amanda/Archive.c Amanda/Archive.pm
 
 if WANT_SERVER
+# PACKAGE: Amanda::Ndmp
+libNdmpdir = $(amperldir)/auto/Amanda/Ndmp
+libNdmp_LTLIBRARIES = libNdmp.la
+libNdmp_la_SOURCES = Amanda/Ndmp.c $(AMGLUE_SWG)
+libNdmp_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
+libNdmp_la_LIBADD = libamglue.la \
+	$(top_builddir)/server-src/libamserver.la \
+	$(top_builddir)/common-src/libamanda.la
+Amanda_DATA += Amanda/Ndmp.pm
+MAINTAINERCLEANFILES += Amanda/Ndmp.c Amanda/Ndmp.pm
+endif
+EXTRA_DIST += Amanda/Ndmp.swg Amanda/Ndmp.pm
+
+if WANT_SERVER
 # PACKAGE: Amanda::Device
 libDevicedir = $(amperldir)/auto/Amanda/Device
 libDevice_LTLIBRARIES = libDevice.la

@@ -64,6 +64,10 @@ if WANT_S3_DEVICE
 libamdevice_la_SOURCES += s3-device.c s3.c s3-util.c
 endif
 
+if WANT_NDMP_DEVICE
+libamdevice_la_SOURCES += ndmp-device.c
+endif
+
 ## automake-style tests
 
 TESTS = vfs-test

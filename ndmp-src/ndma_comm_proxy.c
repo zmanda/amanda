@@ -208,7 +208,7 @@ ndma_dispatch_proxy(
 		} else if (c_packet->command == CMD_TAPE_READ) {
 			char *buf;
 			int   read_count;
-			int   count = *((int *)c_packet->arguments[0].data);
+			guint32 count = ntohl(*((guint32 *)c_packet->arguments[0].data));
 
 			ndmalogf (sess, 0, 7, "got a CMD_TAPE_READ request");
 			buf = malloc(count);

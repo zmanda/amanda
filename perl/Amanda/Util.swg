@@ -89,6 +89,10 @@ sub finish_setup {
     check_running_as($running_as);
 }
 
+sub finish_application {
+    dbclose();
+}
+
 sub version_opt {
     print "$_pname-$Amanda::Constants::VERSION\n";
     exit 0;

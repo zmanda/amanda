@@ -35,6 +35,9 @@
 
 #include "ipc-binary.h"
 
+/* note that this will generate duplicate symbols if #included multiple times
+ * in the same executable */
+
 amprotocol_t listen_ndmp = { 0xC74F, -1, {
    { CMD_DEVICE      , 0 },  /*						*/
    { REPLY_DEVICE    , 1 },  /* 					*/

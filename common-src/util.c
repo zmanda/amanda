@@ -35,6 +35,8 @@
 #include "sockaddr-util.h"
 #include "conffile.h"
 #include "base64.h"
+#include "stream.h"
+#include "pipespawn.h"
 
 static int make_socket(sa_family_t family);
 static int connect_port(sockaddr_union *addrp, in_port_t port, char *proto,
@@ -1251,4 +1253,119 @@ pcontext_t
 get_pcontext(void)
 {
     return pcontext;
+}
+
+int ndmp_proxy_pid = -1;
+int ndmp_proxy_connected = FALSE;
+static int ndmp_proxy_stdin = -1;
+
+/* return  == NULL: correct
+ *         != NULL: error message
+ */
+char *
+start_ndmp_proxy(void)
+{
+    char      *ndmp_proxy;
+    GPtrArray *proxy_argv;
+    char       buffer[32769];
+    int        proxy_in, proxy_out, proxy_err;
+    int        rc;
+    int        ndmp_proxy_port;
+    int        ndmp_proxy_debug_level;
+    char      *ndmp_proxy_debug_file;
+    char      *errmsg;
+
+    if (ndmp_proxy_connected) {
+	return NULL;
+    }
+    ndmp_proxy_port = getconf_int(CNF_NDMP_PROXY_PORT);
+    ndmp_proxy_debug_level = getconf_int(CNF_NDMP_PROXY_DEBUG_LEVEL);
+    ndmp_proxy_debug_file = getconf_str(CNF_NDMP_PROXY_DEBUG_FILE);
+    proxy_argv = g_ptr_array_new();
+    g_ptr_array_add(proxy_argv, stralloc("ndmp-proxy"));
+    g_ptr_array_add(proxy_argv, stralloc("-o"));
+    g_ptr_array_add(proxy_argv, g_strdup_printf("proxy=%d", ndmp_proxy_port));
+    if (ndmp_proxy_debug_level > 0 &&
+	ndmp_proxy_debug_file && strlen(ndmp_proxy_debug_file) > 1) {
+	g_ptr_array_add(proxy_argv, g_strdup_printf("-d%d",
+						    ndmp_proxy_debug_level));
+	g_ptr_array_add(proxy_argv, g_strdup_printf("-L%s",
+						    ndmp_proxy_debug_file));
+    }
+    g_ptr_array_add(proxy_argv, NULL);
+    proxy_err = debug_fd();
+    ndmp_proxy = g_strdup_printf("%s/amanda_ndmp", amlibexecdir);
+
+    ndmp_proxy_pid = pipespawnv(ndmp_proxy, STDIN_PIPE | STDOUT_PIPE, 0,
+			        &proxy_in, &proxy_out, &proxy_err,
+			        (char **)proxy_argv->pdata);
+    ndmp_proxy_stdin = proxy_in;
+
+    g_ptr_array_free_full(proxy_argv);
+    rc = read(proxy_out, buffer, sizeof(buffer)-1);
+    if (rc == -1) {
+	errmsg = g_strdup_printf("Error reading from ndmp-proxy: %s",
+				 strerror(errno));
+	return errmsg;
+    } else if (rc == 0) {
+	errmsg = g_strdup_printf("ndmp-proxy ended unexpectedly");
+	return errmsg;
+    }
+    buffer[rc] = '\0';
+    if (strncmp(buffer, "PORT ", 5) != 0) {
+	if (strcmp(buffer, "BIND: Address already in use\n") == 0) {
+	    /* Another ndmp-proxy is running, amanda can connect to it */
+	} else {
+	    errmsg = g_strdup_printf("ndmp-proxy failed: %s", buffer);
+	    return errmsg;
+	}
+    }
+    ndmp_proxy_connected = TRUE;
+    return NULL;
+}
+
+void
+stop_ndmp_proxy(void)
+{
+    if (ndmp_proxy_stdin > 0) {
+	aclose(ndmp_proxy_stdin);
+    }
+}
+
+int
+connect_to_ndmp_proxy(char **errmsg)
+{
+    int   count = 10;
+    int   proxy_port;
+    int   fd;
+
+    proxy_port = getconf_int(CNF_NDMP_PROXY_PORT);
+
+    while (count > 0) {
+	*errmsg = start_ndmp_proxy();
+	if (*errmsg) {
+	    return -1;
+	}
+
+	dbprintf("openning a connection to ndmp-proxy\n");
+	fd = stream_client("localhost", proxy_port, 32768, 32768, NULL, 0);
+	if (fd >= 0) {
+	    dbprintf("connected to ndmp-proxy: %d\n", fd);
+	    return fd;
+	}
+
+	dbprintf("Temporary failure to connect to ndmp-proxy: %s\n", strerror(errno));
+
+	sleep(1);
+	count--;
+    }
+
+    *errmsg = stralloc(_("failed to open a connection to ndmp-proxy"));
+    return -1;
+}
+
+int
+proxy_pid(void)
+{
+    return ndmp_proxy_pid;
 }

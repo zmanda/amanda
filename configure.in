@@ -100,6 +100,7 @@ AM_GNU_GETTEXT([external])
 #
 AMANDA_S3_DEVICE
 AMANDA_TAPE_DEVICE
+AMANDA_NDMP_DEVICE
 
 #
 # Security (authentication) mechansims

@@ -420,6 +420,9 @@ typedef enum {
     CNF_RESERVED_TCP_PORT,
     CNF_UNRESERVED_TCP_PORT,
     CNF_HOLDINGDISK,
+    CNF_NDMP_PROXY_PORT,
+    CNF_NDMP_PROXY_DEBUG_FILE,
+    CNF_NDMP_PROXY_DEBUG_LEVEL,
     CNF_CNF /* sentinel */
 } confparm_key;
 
@@ -438,7 +441,7 @@ val_t *getconf(confparm_key key);
 #define getconf_seen(key)       (val_t_seen(getconf((key))))
 
 /* (convenience macros)
- * Fetch a gloabl parameter of a specific type.  Note that these
+ * Fetch a global parameter of a specific type.  Note that these
  * convenience macros have a different form from those for the
  * subsections: here you specify a type and a key, while for the
  * subsections you specify only a key.  The difference is historical.

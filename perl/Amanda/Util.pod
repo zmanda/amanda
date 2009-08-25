@@ -36,6 +36,8 @@ Application initialization generally looks like this:
   # .. command-line processing ..
   Amanda::Config::config_init(...);
   Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
+  # ..
+  Amanda::Util::finish_application();
 
 =over
 
@@ -108,6 +110,10 @@ available in export tag C<:check_running_as_flags>:
 If the flag C<$RUNNING_AS_UID_ONLY> is bit-or'd into
 C<$running_as_flags>, then the euid is ignored; this is used for
 programs that expect to be setuid-root.
+
+=item finish_application()
+
+All applications should call this before exiting.
 
 =item get_original_cwd()
 

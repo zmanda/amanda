@@ -1,4 +1,29 @@
 2009-08-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/ndmp-device.m4: Add AMANDA_NDMP_DEVICE.
+	* configure.in: Use AMANDA_NDMP_DEVICE.
+	* common-src/conffile.c: Add ndmp_proxy_port, ndmp_proxy_debug_file
+				 andndmp_proxy_debug_level.
+	* common-src/conffile.h: CNF_NDMP_PROXY_PORT, CNF_NDMP_PROXY_DEBUG_FILE
+				 and CNF_NDMP_PROXY_DEBUG_LEVEL
+	* common-src/ndmp-protocol.h: Define protocol between amanda and
+				      ndmp-proxy.
+	* common-src/util.c (start_ndmp_proxy, stop_ndmp_proxy,
+			     connect_to_ndmp_proxy): New functions.
+	* common-src/util.h: Add prototype for new functions.
+	* device-src/Makefile.am: Build ndmp-device.
+	* device-src/device.c: Use ndmp-device.
+	* device-src/ndmp-device.c: New ndmp device.
+	* device-src/tape-device.c: Small fix.
+	* ndmp-src/ndma_comm_proxy.c: Convert to network byte order.
+	* perl/Amanda/Config.swg: Export new CNF_* constants.
+	* perl/Amanda/Ndmp.swg: New module for ndmp function.
+	* perl/Amanda/Util.pod: Document Amanda::Util::finish_application.
+	* perl/Amanda/Util.swg: New finish_application function.
+	* perl/Makefile.am: Build Amanda::Ndmp
+	* server-src/amcheck-device.pl, server-src/amlabel.pl: Call
+	  stop_ndmp_proxy and finish_application.
+
+2009-08-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amfetchdump.8.xml: Document -h option.
 	* restore-src/amfetchdump.c: Document -h option, pass the server
 				     feature set to search_tapes.

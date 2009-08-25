@@ -1078,7 +1078,6 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
 	/* unset the VOLUME_UNLABELED flag, if it was set */
 	device_set_error(d_self, NULL, DEVICE_STATUS_SUCCESS);
         d_self->file = 0;
-        break;
 
     default:
         g_assert_not_reached();
