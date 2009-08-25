@@ -120,7 +120,7 @@ AC_DEFUN([AMANDA_WITHOUT_AMRECOVER], [
 	AS_HELP_STRING([--without-amrecover],
 		       [do not build amrecover]), [
 	    case "$withval" in
-	    y | ye | yes) WANT_RECOVER=false;;
+	    y | ye | yes) WANT_RECOVER=true;;
 	    n | no) WANT_RECOVER=false;;
 	    *) AC_MSG_ERROR([You must not supply an argument to --with-amrecover option.]) ;;
 	    esac
