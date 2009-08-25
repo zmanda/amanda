@@ -1,3 +1,8 @@
+2009-08-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amfetchdump.8.xml: Document -h option.
+	* restore-src/amfetchdump.c: Document -h option, pass the server
+				     feature set to search_tapes.
+
 2009-08-24  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report.pm: Module for abstracting amreport data
 	* perl/Makefile.am: compile the module

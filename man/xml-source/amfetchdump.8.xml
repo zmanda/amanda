@@ -28,7 +28,7 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amfetchdump</command>
-    <arg choice='opt'>-pcClawns</arg>
+    <arg choice='opt'>-phcClawns</arg>
     <arg choice='opt'>-d <replaceable>device</replaceable></arg>
     <arg choice='opt'>-O <replaceable>directory</replaceable></arg>
     <arg choice='opt'>-b <replaceable>blocksize</replaceable></arg>
@@ -95,6 +95,11 @@ remap='I'>stdout</emphasis>, instead of writing the file to disk. This
 will restore only the first matching dumpfile (where
 &quot;first&quot; is determined by the dump log search
 facility).</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>-h</option></term>
+<listitem><para>Send the amanda header to the output file before the
+ data.</para></listitem>
   </varlistentry>
   <varlistentry>
     <term><option>-d</option> <replaceable>device</replaceable></term>

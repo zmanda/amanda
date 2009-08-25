@@ -80,6 +80,7 @@ usage(void)
     g_fprintf(stderr, _("Goes and grabs a dump from tape, moving tapes around and assembling parts as\n"));
     g_fprintf(stderr, _("necessary.  Files are restored to the current directory, unless otherwise\nspecified.\n\n"));
     g_fprintf(stderr, _("  -p Pipe exactly *one* complete dumpfile to stdout, instead of to disk.\n"));
+    g_fprintf(stderr, _("  -h Send the amanda header to the output file before the data.\n"));
     g_fprintf(stderr, _("  -O <output dir> Restore files to this directory.\n"));
     g_fprintf(stderr, _("  -d <device> Force restoration from a particular tape device.\n"));
     g_fprintf(stderr, _("  -c Compress output, fastest method available.\n"));
@@ -302,6 +303,7 @@ main(
     config_overwrites_t *cfg_ovr = NULL;
     disklist_t diskq;
     char * conf_diskfile = NULL;
+    am_feature_t *our_features = am_init_feature_set();
 
     /*
      * Configure program for internationalization:
@@ -440,7 +442,7 @@ main(
     if(rst_flags->inventory_log){
 	g_fprintf(stderr, _("Beginning tape-by-tape search.\n"));
 	search_tapes(stderr, stdin, rst_flags->alt_tapedev == NULL,
-                     NULL, dumpspecs, rst_flags, NULL);
+                     NULL, dumpspecs, rst_flags, our_features);
 	dbclose();
 	exit(0);
     }
@@ -460,7 +462,7 @@ main(
     }
     log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
     search_tapes(NULL, stdin, rst_flags->alt_tapedev == NULL,
-                 needed_tapes, dumpspecs, rst_flags, NULL);
+                 needed_tapes, dumpspecs, rst_flags, our_features);
     cleanup();
 
     dumpspec_list_free(dumpspecs);
