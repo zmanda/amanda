@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 31;
+use Test::More tests => 35;
 use File::Path;
 use strict;
 
@@ -62,6 +62,17 @@ is(logtype_t_to_string($L_MARKER), "L_MARKER", "logtype_t_to_string works");
 is(program_t_to_string($P_DRIVER), "P_DRIVER", "program_t_to_string works");
 
 ##
+# Regression test for previously missing program types
+is( program_t_to_string($P_AMDUMP),
+    "P_AMDUMP", "program type for amdump defined" );
+is( program_t_to_string($P_AMIDXTAPED),
+    "P_AMIDXTAPED", "program type for amidxtaped defined" );
+is( program_t_to_string($P_AMFETCHDUMP),
+    "P_AMFETCHDUMP", "program type for amfetchdump defined" );
+is( program_t_to_string($P_AMCHECKDUMP),
+    "P_AMCHECKDUMP", "program type for amcheckdump defined" );
+
+##
 # Test a simple logfile
 
 $logdata = <<END;
@@ -70,7 +81,7 @@ END
 
 $logfile = open_logfile(write_logfile($logdata));
 ok($logfile, "can open a simple logfile");
-is_deeply([ get_logline($logfile) ], 
+is_deeply([ get_logline($logfile) ],
 	  [ $L_START, $P_PLANNER, "date 20071026183200" ],
 	  "reads START line correctly");
 ok(!get_logline($logfile), "no second line");
@@ -87,10 +98,10 @@ END
 $logfile = open_logfile(write_logfile($logdata));
 ok($logfile, "can open a logfile containing continuation lines");
 is_deeply([ get_logline($logfile) ],
-	  [ $L_INFO, $P_CHUNKER, "line1" ], 
+	  [ $L_INFO, $P_CHUNKER, "line1" ],
 	  "can read INFO line");
 is_deeply([ get_logline($logfile) ],
-	  [ $L_CONT, $P_CHUNKER, "line2" ], 
+	  [ $L_CONT, $P_CHUNKER, "line2" ],
 	  "can read continuation line");
 ok(!get_logline($logfile), "no third line");
 close_logfile($logfile);
@@ -107,7 +118,7 @@ END
 
 $logfile = open_logfile(write_logfile($logdata));
 ok($logfile, "can open a logfile containing blank lines");
-is_deeply([ get_logline($logfile) ], 
+is_deeply([ get_logline($logfile) ],
 	  [ $L_STATS, $P_TAPER, "foo" ],
 	  "reads non-blank line correctly");
 ok(!get_logline($logfile), "no second line");
@@ -125,14 +136,14 @@ END
 
 $logfile = open_logfile(write_logfile($logdata));
 ok($logfile, "can open a logfile containing bogus entries");
-is_deeply([ get_logline($logfile) ], 
+is_deeply([ get_logline($logfile) ],
 	  [ $L_BOGUS, $P_UNKNOWN, "bar" ],
 	  "can read line with bogus program and logtype");
-is_deeply([ get_logline($logfile) ], 
+is_deeply([ get_logline($logfile) ],
 	  [ $L_MARKER, $P_AMFLUSH, "" ],
 	  "can read line with an empty string");
 ok(get_logline($logfile), "can read third line (to fill in curstr with some text)");
-is_deeply([ get_logline($logfile) ], 
+is_deeply([ get_logline($logfile) ],
 	  [ $L_PART, $P_UNKNOWN, "" ],
 	  "can read a one-word line, with P_UNKNOWN");
 ok(!get_logline($logfile), "no next line");

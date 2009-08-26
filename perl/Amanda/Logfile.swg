@@ -71,6 +71,10 @@ amglue_add_constant(P_DUMPER, program_t);
 amglue_add_constant(P_CHUNKER, program_t);
 amglue_add_constant(P_TAPER, program_t);
 amglue_add_constant(P_AMFLUSH, program_t);
+amglue_add_constant(P_AMDUMP, program_t);
+amglue_add_constant(P_AMIDXTAPED, program_t);
+amglue_add_constant(P_AMFETCHDUMP, program_t);
+amglue_add_constant(P_AMCHECKDUMP, program_t);
 
 /* TODO: support for writing logfiles is omitted for the moment. */
 

@@ -1,3 +1,9 @@
+2009-08-26  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Logfile.swg: added four previously omitted program
+	types
+	* installcheck/Amanda_Logfile.pl: regression tests for the program
+	types
+
 2009-08-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/dumpers.m4 (AMANDA_PROG_STAR): New macro to find star.
 	* configure.in: Use AMANDA_PROG_STAR.
