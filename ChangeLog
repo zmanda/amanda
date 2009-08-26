@@ -1,3 +1,7 @@
+2009-08-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/dumpers.m4 (AMANDA_PROG_STAR): New macro to find star.
+	* configure.in: Use AMANDA_PROG_STAR.
+
 2009-08-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/components.m4: Fix --with-amrecover=yes
 

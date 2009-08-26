@@ -66,6 +66,67 @@ AC_DEFUN([AMANDA_PROG_GNUTAR],
 
 # SYNOPSIS
 #
+#   AMANDA_PROG_STAR
+#
+# OVERVIEW
+#
+#   Search for a 'star' binary, placing the result in the precious 
+#   variable STAR.  The discovered binary is tested to ensure it's really
+#   star.
+#
+#   Also handle --with-star
+#
+AC_DEFUN([AMANDA_PROG_STAR],
+[
+    AC_REQUIRE([AMANDA_INIT_PROGS])
+
+    # call with
+    AC_ARG_WITH(star,
+	AS_HELP_STRING([--with-star=PROG],
+		       [use PROG as 'star']),
+	[
+	    # check withval
+	    case "$withval" in
+		/*) STAR="$withval";;
+		y|ye|yes) :;;
+		n|no) STAR=no ;;
+		*)  AC_MSG_ERROR([*** You must supply a full pathname to --with-star]);;
+	    esac
+	    # done
+	]
+    )
+
+    if test "x$STAR" = "xno"; then
+	STAR=
+    else
+	AC_PATH_PROGS(STAR, star, , $LOCSYSPATH)
+	if test -n "$STAR"; then
+	    case `"$STAR" --version 2>&1` in
+	     *star*)
+		    # OK, it is star
+		    break
+		    ;;
+	     *)
+		    # warning..
+		    AMANDA_MSG_WARN([$STAR is not star, so it will not be used.])
+		    # reset the cache for STAR so AC_PATH_PROGS will search again
+		    STAR=''
+		    unset ac_cv_path_STAR
+		    ;;
+	    esac
+	fi
+    fi
+
+    if test "x$STAR" != "x"; then
+	# define unquoted
+	AC_DEFINE_UNQUOTED(STAR, "$STAR", [Location of the 'star' binary])
+    fi
+    AC_ARG_VAR(STAR, [Location of the 'star' binary])
+    AC_SUBST(STAR)
+])
+
+# SYNOPSIS
+#
 #   AMANDA_PROG_SAMBA_CLIENT
 #
 # OVERVIEW
