@@ -150,13 +150,13 @@ start_impl(
 
 	    if (self->need_root && !become_root()) {
 		errmsg = g_strdup_printf("could not become root: %s\n", strerror(errno));
-		write(STDERR_FILENO, errmsg, strlen(errmsg));
+		full_write(STDERR_FILENO, errmsg, strlen(errmsg));
 		exit(1);
 	    }
 
 	    execve(self->argv[0], self->argv, env);
 	    errmsg = g_strdup_printf("exec failed: %s\n", strerror(errno));
-	    write(STDERR_FILENO, errmsg, strlen(errmsg));
+	    full_write(STDERR_FILENO, errmsg, strlen(errmsg));
 	    exit(1);
 
 	default: /* parent */

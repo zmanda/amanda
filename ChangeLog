@@ -1,4 +1,8 @@
 2009-08-26  Paul C. Mantz <pcmantz@zmanda.com>
+	* xfer-src/filter-process.c: fixed write warnings which were
+  	  breaking Ubuntu builds
+
+2009-08-26  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Logfile.swg: added four previously omitted program
 	types
 	* installcheck/Amanda_Logfile.pl: regression tests for the program
