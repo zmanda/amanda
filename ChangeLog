@@ -1,3 +1,7 @@
+2009-08-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Device.pod: be explicit: finish_file is not for read
+	  mode
+
 2009-08-26  Paul C. Mantz <pcmantz@zmanda.com>
 	* xfer-src/filter-process.c: fixed write warnings which were
   	  breaking Ubuntu builds

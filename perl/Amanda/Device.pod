@@ -445,7 +445,8 @@ uses C<write_block>, so there is no need for subclasses to override it.
  $success = $dev->finish_file();
 
 Once an entire file has been written, finish_file performs any cleanup required
-on the volume, such as writing filemarks. On exit, C<in_file> is false.
+on the volume, such as writing filemarks. On exit, C<in_file> is false.  This function
+should not be used while reading -- instead, just seek to the next file.
 
 =head3 seek_file
 
