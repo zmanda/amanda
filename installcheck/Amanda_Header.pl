@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 25;
+use Test::More tests => 7;
 use strict;
 
 use lib "@amperldir@";
@@ -50,57 +50,3 @@ $hdr = Amanda::Header->from_string($block);
 is($hdr->{'name'}, "TAPE17",
    "from_string gives a reasonable-looking object");
 
-# test matching
-$hdr = Amanda::Header->new();
-$hdr->{'name'} = 'foo.bar.baz';
-$hdr->{'disk'} = '/foo/bar/baz';
-$hdr->{'datestamp'} = '20090102030405';
-$hdr->{'dumplevel'} = 31;
-$hdr->{'type'} = $Amanda::Header::F_DUMPFILE;
-
-ok(!$hdr->matches_dumpspecs([]), "header doesn't match empty list of dumpspecs");
-
-ok($hdr->matches_dumpspecs([Amanda::Cmdline::dumpspec_t->new('foo.bar.baz', undef, undef, undef)]),
-   'header matches exact host dumpspec');
-ok($hdr->matches_dumpspecs([Amanda::Cmdline::dumpspec_t->new('foo', undef, undef, undef)]),
-   'header matches partial host dumpspec');
-ok($hdr->matches_dumpspecs([Amanda::Cmdline::dumpspec_t->new('?a*', undef, undef, undef)]),
-   'header matches host pattern dumpspec');
-
-ok($hdr->matches_dumpspecs([Amanda::Cmdline::dumpspec_t->new(undef, '/foo/bar/baz', undef, undef)]),
-   'header matches exact disk dumpspec');
-ok($hdr->matches_dumpspecs([Amanda::Cmdline::dumpspec_t->new(undef, 'bar', undef, undef)]),
-   'header matches partial disk dumpspec');
-ok($hdr->matches_dumpspecs([Amanda::Cmdline::dumpspec_t->new(undef, '*a?', undef, undef)]),
-   'header matches disk pattern dumpspec');
-
-ok($hdr->matches_dumpspecs([Amanda::Cmdline::dumpspec_t->new(undef, undef, '20090102030405', undef)]),
-   'header matches exact datestamp dumpspec');
-ok($hdr->matches_dumpspecs([Amanda::Cmdline::dumpspec_t->new(undef, undef, '2009', undef)]),
-   'header matches partial datestamp dumpspec');
-ok($hdr->matches_dumpspecs([Amanda::Cmdline::dumpspec_t->new(undef, undef, '20090102030404-20090102030406', undef)]),
-   'header matches datestamp range dumpspec');
-ok($hdr->matches_dumpspecs([Amanda::Cmdline::dumpspec_t->new(undef, undef, '2009-2010', undef)]),
-   'header matches datestamp year-only range dumpspec');
-ok(!$hdr->matches_dumpspecs([Amanda::Cmdline::dumpspec_t->new(undef, undef, '20090102030406-20090102030407', undef)]),
-   "header doesn't match datestamp range dumpspec that it's outside of");
-
-ok($hdr->matches_dumpspecs([Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, '31')]),
-   'header matches exact level dumpspec');
-ok($hdr->matches_dumpspecs([Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, '30-32')]),
-   'header matches small level range dumpspec');
-ok($hdr->matches_dumpspecs([Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, '4-50')]),
-   'header matches large level range dumpspec');
-ok(!$hdr->matches_dumpspecs([Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, '32-50')]),
-   "header doesn't match level range it's outside of");
-
-ok($hdr->matches_dumpspecs([
-    Amanda::Cmdline::dumpspec_t->new('foo.bar.baz', undef, undef, undef),
-    Amanda::Cmdline::dumpspec_t->new(undef, '/foo/bar/baz', undef, undef),
-  ]),
-  'header matches when two dumpspecs are possible matches');
-ok(!$hdr->matches_dumpspecs([
-    Amanda::Cmdline::dumpspec_t->new(undef, undef, '20090102030406-20090102030407', undef),
-    Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, '32-50'),
-  ]),
-  'header matches when two dumpspecs are given and neither should match');

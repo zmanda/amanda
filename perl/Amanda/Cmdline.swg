@@ -28,6 +28,7 @@
 %{
 #include <glib.h>
 #include "cmdline.h"
+#include "fileheader.h"
 %}
 
 /* Add a few methods to make this type act like a class */
@@ -100,3 +101,43 @@ amglue_dumpspec_list *cmdline_parse_dumpspecs(int argc, char **argv, int flags);
  * on output
  */
 /* amglue_dumpspec_list * cmdline_match_holding(amglue_dumpspec_list *dumpspec_list); */
+
+%inline %{
+gboolean header_matches_dumpspecs(dumpfile_t *dumpfile, amglue_dumpspec_list *dumpspecs) {
+    char level_str[100];
+
+    /* ignore anything that's not a (split) dumpfile */
+    if(dumpfile->type != F_DUMPFILE && dumpfile->type != F_SPLIT_DUMPFILE)
+	return FALSE;
+
+    g_snprintf(level_str, sizeof(level_str), "%d", dumpfile->dumplevel);
+
+    while (dumpspecs) {
+	dumpspec_t *ds = (dumpspec_t *)dumpspecs->data;
+	dumpspecs = g_slist_next(dumpspecs);
+
+	if (ds->host && *ds->host
+	    && !match_host(ds->host, dumpfile->name))
+	    continue;
+
+	if (ds->disk && *ds->disk
+	    && !match_disk(ds->disk, dumpfile->disk))
+	    continue;
+
+	if (ds->datestamp && *ds->datestamp
+	    && !match_datestamp(ds->datestamp, dumpfile->datestamp))
+	    continue;
+
+	if (ds->level && *ds->level
+	    && !match_level(ds->level, level_str))
+	    continue;
+
+	/* passed all the checks, so it's a match */
+	return TRUE;
+    }
+
+    return FALSE;
+}
+%}
+
+amglue_export_ok(header_matches_dumpspecs);

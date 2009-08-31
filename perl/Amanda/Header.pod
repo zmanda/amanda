@@ -72,8 +72,7 @@ To compare a header to a list of dumpspecs (see L<Amanda::Cmdline>), use
 
   if ($hdr->matches_dumpspecs([@dumpspecs])) { ... }
 
-noting that this method will return false for an empty list of dumpspecs, which
-may not be the intent.
+which is really a call to C<Amanda::Cmdline::header_matches_dumpspecs>.
 
 A header object has the following keys:
 

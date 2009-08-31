@@ -81,6 +81,12 @@ according to C<$flags>, which is a logical combination of zero or more
 of C<$CMDLINE_PARSE_DATESTAMP> to recognize datestamps and
 C<$CMDLINE_PARSE_LEVEL> to recognize levels.
 
+=item C<header_matches_dumpspecs($hdr, [@dumpspecs])>
+
+This function compares a header to a list of dumpspecs, returning true if the
+header matches at least one dumpspec.  If C<@dumpspecs> is empty, the function
+returns false.
+
 =back
 
 =head1 SEE ALSO
