@@ -1,3 +1,7 @@
+2009-08-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/dumpers.m4: Give only a warning if user specified path
+				    is not correct for gtar and star.
+
 2009-08-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Device.pod: be explicit: finish_file is not for read
 	  mode

@@ -36,6 +36,7 @@ AC_DEFUN([AMANDA_PROG_GNUTAR],
     if test "x$GNUTAR" = "xno"; then
 	GNUTAR=
     else
+	OLD_GNUTAR=$GNUTAR
 	for gnutar_name in gtar gnutar tar; do
 	    AC_PATH_PROGS(GNUTAR, $gnutar_name, , $LOCSYSPATH)
 	    if test -n "$GNUTAR"; then
@@ -45,11 +46,15 @@ AC_DEFUN([AMANDA_PROG_GNUTAR],
 			    break
 			    ;;
 	       *)
-			    # warning..
-			    AMANDA_MSG_WARN([$GNUTAR is not GNU tar, so it will not be used.])
-			    # reset the cache for GNUTAR so AC_PATH_PROGS will search again
-			    GNUTAR=''
-			    unset ac_cv_path_GNUTAR
+			    if test -n "$OLD_GNUTAR"; then
+				    AMANDA_MSG_WARN([$GNUTAR is not GNU tar, it will be used.])
+			    else 
+				    # warning..
+				    AMANDA_MSG_WARN([$GNUTAR is not GNU tar, so it will not be used.])
+				    # reset the cache for GNUTAR so AC_PATH_PROGS will search again
+				    GNUTAR=''
+				    unset ac_cv_path_GNUTAR
+			    fi
 			    ;;
 	      esac
 	    fi
@@ -99,19 +104,24 @@ AC_DEFUN([AMANDA_PROG_STAR],
     if test "x$STAR" = "xno"; then
 	STAR=
     else
+	OLD_STAR=$STAR
 	AC_PATH_PROGS(STAR, star, , $LOCSYSPATH)
 	if test -n "$STAR"; then
-	    case `"$STAR" --version 2>&1` in
+	    case `"$STAR" --version 2>/dev/null` in
 	     *star*)
 		    # OK, it is star
 		    break
 		    ;;
 	     *)
-		    # warning..
-		    AMANDA_MSG_WARN([$STAR is not star, so it will not be used.])
-		    # reset the cache for STAR so AC_PATH_PROGS will search again
-		    STAR=''
-		    unset ac_cv_path_STAR
+		    if test -n "$OLD_STAR"; then
+			AMANDA_MSG_WARN([$STAR is not star, it will be used.])
+		    else
+			# warning..
+			AMANDA_MSG_WARN([$STAR is not star, so it will not be used.])
+			# reset the cache for STAR so AC_PATH_PROGS will search again
+			STAR=''
+			unset ac_cv_path_STAR
+		    fi
 		    ;;
 	    esac
 	fi
