@@ -110,6 +110,11 @@ static void handle_tape_restore(char * device_name, rst_flags_t * flags,
         error("Could not open device %s: %s.\n", device_name, device_error(device));
     }
     
+    if (!device_configure(device, TRUE)) {
+        error("Error configuring device: %s",
+                device_error_or_status(device));
+    }
+
     if (!set_restore_device_read_buffer_size(device, flags)) {
         error("Error setting read block size: %s.\n", device_error_or_status(device));
     }

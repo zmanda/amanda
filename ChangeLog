@@ -1,3 +1,6 @@
+2009-08-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* restore-src/amrestore.c: call device_configure
+
 2009-08-31 Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda.spec: add amstar and amgtar to suid section of
 	  %files for server.
