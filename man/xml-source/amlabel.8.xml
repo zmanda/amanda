@@ -34,8 +34,8 @@
     <arg choice='plain'><replaceable>label</replaceable></arg>
     <arg choice='opt'>slot <replaceable>slot</replaceable></arg>
     <arg><option>-f</option></arg>
-    <arg><option>--version</option></arg>
-    <group rep='repeat' choice='opt'><arg choice='req'><option>-o</option> <replaceable>configoption</replaceable></arg></group>
+    &version.synopsis;
+    &configoverride.synopsis;
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -76,19 +76,8 @@ verifications.</para>
   </listitem>
   </varlistentry>
 
-  <varlistentry>
-  <term><option>--version</option></term>
-  <listitem>
-<para>Output version information</para>
-  </listitem>
-  </varlistentry>
-
-  <varlistentry>
-  <term><option>-o <replaceable>configoption</replaceable></option></term>
-  <listitem>
-<para>See the "CONFIGURATION OVERRIDE" section in <manref name="amanda" vol="8"/>.</para>
-  </listitem>
-  </varlistentry>
+  &version.varlistentry;
+  &configoverride.varlistentry;
 
 </variablelist>
 </refsect1>

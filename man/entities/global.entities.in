@@ -64,6 +64,30 @@
 		    &affil.zmanda;
 		    <email>gast@zmanda.com</email></author>'>
 
+<!-- common option -->
+
+<!ENTITY version.synopsis
+    '<group choice="opt"><option>--version</option></group>'>
+
+<!ENTITY version.varlistentry
+  '<varlistentry>
+  <term><option>--version</option></term>
+  <listitem>
+<para>Output version information</para>
+  </listitem>
+  </varlistentry>'>
+
+<!ENTITY configoverride.synopsis
+    '<group rep="repeat" choice="opt"><arg choice="req"><option>-o</option> <replaceable>configoption</replaceable></arg></group>'>
+
+<!ENTITY configoverride.varlistentry
+  '<varlistentry>
+  <term><option>-o <replaceable>configoption</replaceable></option></term>
+  <listitem>
+<para>See the "CONFIGURATION OVERRIDE" section in <manref name="amanda" vol="8"/>.</para>
+  </listitem>
+  </varlistentry>'>
+
 <!-- IDs for AMANDA files-->
 <!ENTITY amconf '<manref name="amanda.conf" vol="5"/>'>
 <!ENTITY amclientconf '<manref name="amanda-client.conf" vol="5"/>'>

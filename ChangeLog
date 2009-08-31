@@ -1,4 +1,15 @@
 2009-08-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/entities/global.entities.in man/xml-source/amadmin.8.xml
+	  man/xml-source/amcheck.8.xml man/xml-source/amcheckdump.8.xml
+	  man/xml-source/amdevcheck.8.xml man/xml-source/amdump.8.xml
+	  man/xml-source/amflush.8.xml man/xml-source/amgetconf.8.xml
+	  man/xml-source/amlabel.8.xml man/xml-source/amreport.8.xml
+	  man/xml-source/amrestore.8.xml man/xml-source/amservice.8.xml
+	  man/xml-source/amtape.8.xml man/xml-source/amtapetype.8.xml
+	  man/xml-source/amvault.8.xml: use entities to represent config
+	  overwrites consistently
+
+2009-08-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Cmdline.swg perl/Amanda/Header.swg: don't depend on
 	  cmdline.h in a client-only package
 	* perl/Amanda/Cmdline.pod perl/Amanda/Header.pod: adjust docs

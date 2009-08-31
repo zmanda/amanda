@@ -34,7 +34,7 @@
        <arg choice='plain'><replaceable>host</replaceable></arg>
        <arg choice='opt' rep='repeat'><replaceable>disk</replaceable></arg>
     </arg>
-    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
+    &configoverride.synopsis;
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -78,12 +78,7 @@ man page for more details about Amanda.</para>
   </listitem>
   </varlistentry>
 
-  <varlistentry>
-  <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
-  <listitem>
-<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in <manref name="amanda" vol="8"/>.</para>
-  </listitem>
-  </varlistentry>
+  &configoverride.varlistentry;
 
 </variablelist>
 </refsect1>

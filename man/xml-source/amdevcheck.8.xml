@@ -37,8 +37,7 @@
       <group choice='opt'>
         <arg choice='plain'>-properties <replaceable>list</replaceable></arg>
       </group>
-      <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o
-      </arg><replaceable>configoption</replaceable></group></arg>
+      &configoverride.synopsis;
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -112,14 +111,8 @@
         </listitem>
       </varlistentry>
 
-      <varlistentry>
-        <term><emphasis remap='B'>-o</emphasis> <replaceable>clientconfigoption</replaceable></term>
-        <listitem>
-          <para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>"
-            section in
-            <manref name="amanda" vol="8"/>.</para>
-        </listitem>
-      </varlistentry>
+      &configoverride.varlistentry;
+
     </variablelist>
   </refsect1>
 

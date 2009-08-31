@@ -37,7 +37,7 @@
     <arg choice='opt'>-b <replaceable>blocksize</replaceable></arg>
     <arg choice='opt'>-t <replaceable>typename</replaceable></arg>
     <arg choice='opt'>-l <replaceable>label</replaceable></arg>
-    <arg choice='opt'>-o <replaceable>config_overwrite</replaceable></arg>
+    &configoverride.synopsis;
     <group choice='opt'>
       <arg choice='plain'><replaceable>config</replaceable></arg>
     </group>
@@ -98,12 +98,9 @@ is enabled.</para>
 <para>Label to write on the tape (default is randomly generated).</para>
   </listitem>
   </varlistentry>
-  <varlistentry>
-  <term><option>-o</option> <replaceable>configoption</replaceable></term>
-  <listitem>
-<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in <manref name="amanda" vol="8"/>.</para>
-  </listitem>
-  </varlistentry>
+
+  &configoverride.varlistentry;
+
 </variablelist>
 
 <para>

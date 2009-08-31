@@ -33,7 +33,7 @@
     <arg choice='plain'><replaceable>auth</replaceable></arg>
     <arg choice='plain'><replaceable>service</replaceable></arg>
     <arg choice='opt'><arg choice='plain'>-f</arg><arg choice='plain'><replaceable>input_file</replaceable></arg></arg>
-    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
+    &configoverride.synopsis;
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -77,12 +77,7 @@ The client must be configured with this auth.</para>
   </listitem>
   </varlistentry>
 
-  <varlistentry>
-  <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
-  <listitem>
-<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in <manref name="amanda" vol="8"/>.</para>
-  </listitem>
-  </varlistentry>
+  &configoverride.varlistentry;
 
 </variablelist>
 </refsect1>

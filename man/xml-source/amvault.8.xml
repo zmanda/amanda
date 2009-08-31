@@ -26,7 +26,7 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amvault</command>
-    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
+    &configoverride.synopsis;
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>src-run-timestamp</replaceable></arg>
     <arg choice='plain'><replaceable>dst-changer</replaceable></arg>

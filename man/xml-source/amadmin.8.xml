@@ -33,7 +33,7 @@
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>command</replaceable></arg>
     <arg choice='opt' rep='repeat'><replaceable>command_options</replaceable></arg>
-    <arg choice='plain' rep='repeat'><group><option>-o </option><replaceable>configoption</replaceable></group></arg>
+    &configoverride.synopsis;
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -283,13 +283,7 @@ Mostly used for debugging.</para>
   </listitem>
   </varlistentry>
 
-  <varlistentry>
-  <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
-  <listitem>
-<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>"
- section in <manref name="amanda" vol="8"/>.</para>
-  </listitem>
-  </varlistentry>
+  &configoverride.varlistentry;
 
 </variablelist>
 </refsect1>

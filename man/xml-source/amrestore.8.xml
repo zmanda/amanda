@@ -37,7 +37,7 @@
     <arg choice='opt'>-l <replaceable>label</replaceable></arg>
     <arg choice='opt'>-p</arg>
     <arg choice='opt'>-h</arg>
-    <arg choice='plain' rep='repeat'><group>-o <replaceable>configoption</replaceable></group></arg>
+    &configoverride.synopsis;
     <group>
       <arg choice='req'><replaceable>changerspec</replaceable></arg>
       <arg choice='req'><arg choice='opt'>--holding</arg>
@@ -172,12 +172,8 @@ disables any automatic decompression.  Output file names will have a
 </listitem>
 </varlistentry>
 
-<varlistentry>
-<term><arg choice='plain'>-o <replaceable>configoption</replaceable></arg></term>
-<listitem>
-<para>See the "CONFIGURATION OVERRIDE" section in <manref name="amanda" vol="8"/>.</para>
-</listitem>
-</varlistentry>
+  &configoverride.varlistentry;
+
 </variablelist>
 
 </refsect1>
