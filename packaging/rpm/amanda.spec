@@ -1565,6 +1565,8 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{LOCALSTATEDIR}/amanda
 %{SBINDIR}/am*
 %defattr(4750,root,disk)
+%{AMLIBEXECDIR}/application/amgtar
+%{AMLIBEXECDIR}/application/amstar
 %{AMLIBEXECDIR}/calcsize
 %{AMLIBEXECDIR}/killpgrp
 %{AMLIBEXECDIR}/rundump
