@@ -1,3 +1,6 @@
+2009-08-31  Dustin J. Mitchell <dustin@zmanda.com
+	* ndmp-src/ndmjob_main.c ndmp-src/ndmjob_job.c: don't use fopen64
+
 2009-08-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/entities/global.entities.in man/xml-source/amadmin.8.xml
 	  man/xml-source/amcheck.8.xml man/xml-source/amcheckdump.8.xml

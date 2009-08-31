@@ -407,13 +407,8 @@ jndex_open (void)
 		return 0;
 	}
 
-#if defined(_LARGEFILE64_SOURCE)
-	ndmjob_log (1, "Reading 64-bit input index (-I%s)", J_index_file);
-	fp = fopen64(J_index_file, "r");
-#else
 	ndmjob_log (1, "Reading input index (-I%s)", J_index_file);
 	fp = fopen(J_index_file, "r");
-#endif
 	if (!fp) {
 		perror (J_index_file);
 		error_byebye ("Can not open -J%s input index", J_index_file);

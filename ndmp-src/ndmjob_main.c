@@ -153,13 +153,8 @@ start_index_file (void)
 			ndmjob_log (1, "Writing index (-I%s)", I_index_file);
 			ifp = fdopen(atoi(I_index_file), "w");
 		} else {
-#if defined(_LARGEFILE64_SOURCE)
-			ndmjob_log (1, "Writing 64-bit index (-I%s)", I_index_file);
-			ifp = fopen64 (I_index_file, "w");
-#else
 			ndmjob_log (1, "Writing index (-I%s)", I_index_file);
 			ifp = fopen (I_index_file, "w");
-#endif
 		}
 		if (!ifp) {
 			error_byebye ("can't open -I logfile");
