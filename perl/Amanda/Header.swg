@@ -20,9 +20,7 @@
 
 %module "Amanda::Header"
 %include "amglue/amglue.swg"
-%include "amglue/dumpspecs.swg"
 %include "exception.i"
-%import "Cmdline.swg"
 
 %include "Amanda/Header.pod"
 

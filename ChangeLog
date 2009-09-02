@@ -1,4 +1,7 @@
 2009-09-02  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Header.swg: remove spurious references to cmdline.h
+
+2009-09-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/Makefile.am: fix dumb typos
 
 2009-08-31  Dustin J. Mitchell <dustin@zmanda.com
