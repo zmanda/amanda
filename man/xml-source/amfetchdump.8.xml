@@ -32,6 +32,8 @@
     <arg choice='opt'>-d <replaceable>device</replaceable></arg>
     <arg choice='opt'>-O <replaceable>directory</replaceable></arg>
     <arg choice='opt'>-b <replaceable>blocksize</replaceable></arg>
+    <arg choice='opt'>--header-fd <replaceable>fd</replaceable></arg>
+    <arg choice='opt'>--header-file <replaceable>filename</replaceable></arg>
     <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>hostname</replaceable></arg>
@@ -98,8 +100,16 @@ facility).</para></listitem>
   </varlistentry>
   <varlistentry>
     <term><option>-h</option></term>
-<listitem><para>Send the amanda header to the output file before the
- data.</para></listitem>
+<listitem><para>Output the amanda header as a 32K block to same output as the image.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--header-fd</option> <replaceable>fd</replaceable></term>
+<listitem><para>Output the amanda header to the numbered file
+ descriptor.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--header-file</option> <replaceable>filename</replaceable></term>
+<listitem><para>Output the amanda header to the filename.</para></listitem>
   </varlistentry>
   <varlistentry>
     <term><option>-d</option> <replaceable>device</replaceable></term>

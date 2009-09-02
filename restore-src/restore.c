@@ -871,8 +871,12 @@ void restore(RestoreSource * source,
 	if (!buffer) /* this shouldn't happen */
 	    error(_("header does not fit in %zd bytes"), (size_t)DISK_BLOCK_BYTES);
 
-	if((w = full_write(out, buffer,
-                          DISK_BLOCK_BYTES)) != DISK_BLOCK_BYTES) {
+	if (flags->header_to_fd != -1) {
+	    w = full_write(flags->header_to_fd, buffer, DISK_BLOCK_BYTES);
+	} else {
+	    w = full_write(out, buffer, DISK_BLOCK_BYTES);
+	}
+	if (w != DISK_BLOCK_BYTES) {
 	    if(errno != 0) {
 		error(_("write error: %s"), strerror(errno));
 		/*NOTREACHED*/
@@ -881,10 +885,16 @@ void restore(RestoreSource * source,
 		/*NOTREACHED*/
 	    }
 	}
+	if (flags->header_to_fd != -1 &&
+	    flags->header_to_fd != flags->pipe_to_fd &&
+	    flags->pipe_to_fd != -1) {
+	    close(flags->header_to_fd);
+	    flags->header_to_fd = -1;
+	}
 	amfree(buffer);
 	memcpy(source->header, &tmp_hdr, SIZEOF(dumpfile_t));
     }
- 
+
     /* find out if compression or uncompression is needed here */
     if(flags->compress && !file_is_compressed && !is_continuation
 	  && !flags->leave_comp
@@ -1659,7 +1669,7 @@ try_restore_single_file(Device * device, int file_num, int* next_file,
         first_restored_file->type != F_UNKNOWN &&
 	first_restored_file->type != F_EMPTY &&
         !headers_equal(first_restored_file, source.header, 1) &&
-        (flags->pipe_to_fd == fileno(stdout))) {
+        (flags->pipe_to_fd != -1)) {
         return RESTORE_STATUS_STOP;
     }
 
@@ -1978,7 +1988,7 @@ restore_from_tapelist(FILE * prompt_out,
                                      cur_volume, &seentapes,
                                      NULL, &first_restored_file, NULL);
             }
-	    if (flags->pipe_to_fd == fileno(stdout)) {
+	    if (flags->pipe_to_fd != -1) {
 		break;
 	    }
         } else {
@@ -2218,6 +2228,7 @@ new_rst_flags(void)
     flags->fsf = 0;
     flags->comp_type = COMPRESS_FAST_OPT;
     flags->inline_assemble = 1;
+    flags->header_to_fd = -1;
     flags->pipe_to_fd = -1;
     flags->check_labels = 1;
 

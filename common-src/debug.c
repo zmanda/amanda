@@ -789,7 +789,7 @@ debug_dup_stderr_to_debug(void)
     {
        if(dup2(db_fd, STDERR_FILENO) != STDERR_FILENO)
        {
-	   error(_("can't redirect stderr to the debug file"));
+	   error(_("can't redirect stderr to the debug file: %d, %s"), db_fd, strerror(errno));
 	   g_assert_not_reached();
        }
     }

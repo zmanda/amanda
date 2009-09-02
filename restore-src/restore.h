@@ -54,6 +54,7 @@ typedef struct rst_flags_s {
     off_t fsf;
     ssize_t blocksize;
     int pipe_to_fd;
+    int header_to_fd;
     char *restore_dir;
     char *comp_type;
     char *alt_tapedev;

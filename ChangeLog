@@ -1,3 +1,13 @@
+2009-09-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/debug.c: Improve debugging.
+	* restore-src/restore.h (rst_flags_t): Add header_to_fd.
+	* restore-src/amidxtaped.c: set header_to_fd to 1.
+	* restore-src/restore.c: Write header to header_to_fd.
+	* restore-src/amfetchdump.c: Add --header-fd and --header-file
+				     arguments.
+	* man/xml-source/amfetchdump.8.xml: Document new --header-fd and
+					    --header-file argument.
+
 2009-09-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Header.swg: remove spurious references to cmdline.h
 
