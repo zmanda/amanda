@@ -224,8 +224,8 @@ noinst_HEADERS = \
 
 EXTRA_DIST += \
 	ndmos_glib.c \
-	ndmos_common.c
-	README
-	ShakeOut.sh
-	ThingsToTry
+	ndmos_common.c \
+	README \
+	ShakeOut.sh \
+	ThingsToTry \
 	idx_dump.pl
