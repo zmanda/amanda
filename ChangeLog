@@ -1,3 +1,6 @@
+2009-09-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/ndmp-device.c: Include "ndmp-proxy.h".
+	
 2009-09-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/ipc-binary.c common-src/ipc-binary.h: new, generic
 	  binary communication protocol

@@ -35,7 +35,7 @@
 #include "amanda.h"
 #include "conffile.h"
 #include "device.h"
-#include "ndmp-protocol.h"
+#include "ndmp-proxy.h"
 
 /*
  * Type checking and casting macros
