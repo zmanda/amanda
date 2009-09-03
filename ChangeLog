@@ -1,4 +1,7 @@
 2009-09-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Header.pl: remove reference to Amanda::Cmdline
+
+2009-09-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/ndmp-device.c: remove spurious #include of stream.c
 
 2009-09-02  Jean-Louis Martineau <martineau@zmanda.com>

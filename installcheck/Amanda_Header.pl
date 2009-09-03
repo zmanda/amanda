@@ -22,7 +22,6 @@ use strict;
 use lib "@amperldir@";
 use Amanda::Header;
 use Amanda::Debug;
-use Amanda::Cmdline;
 use Installcheck;
 
 # put the debug messages somewhere
