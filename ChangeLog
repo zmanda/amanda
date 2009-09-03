@@ -1,3 +1,6 @@
+2009-09-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/ndmp-device.c: remove spurious #include of stream.c
+
 2009-09-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/debug.c: Improve debugging.
 	* restore-src/restore.h (rst_flags_t): Add header_to_fd.

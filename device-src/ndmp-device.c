@@ -35,7 +35,6 @@
 #include "amanda.h"
 #include "conffile.h"
 #include "device.h"
-#include "stream.c"
 #include "ndmp-protocol.h"
 
 /*
