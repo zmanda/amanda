@@ -58,8 +58,10 @@ typedef struct _NdmpDevice NdmpDevice;
 struct _NdmpDevice {
     Device __parent__;
 
-    amprotocol_t *protocol; /* to ndmp-proxy */
-    int           open;       /* if a device is open */
+    ipc_binary_channel_t *proxy_chan;
+    int proxy_sock;
+
+    gboolean     open;       /* if a device is open */
     char         *ndmp_filename;
 };
 
@@ -94,11 +96,15 @@ void ndmp_device_register(void);
 /*
  * utility functions */
 
+static int try_open_ndmp_device(NdmpDevice *nself, char *device_filename);
+static gboolean get_generic_reply(NdmpDevice *nself);
+static void set_proxy_comm_err(Device *dself, int saved_errno);
+
 static int ndmp_mtio_eod(NdmpDevice *nself);
 static int ndmp_mtio_eof(NdmpDevice *nself);
 static int ndmp_mtio_rewind(NdmpDevice *nself);
 static int ndmp_mtio(NdmpDevice *nself, char *cmd, int count);
-static int ndmp_device_robust_write(NdmpDevice *nself, char *buf, int count, char **ermsg);
+static int ndmp_device_robust_write(NdmpDevice *nself, char *buf, int count);
 
 /*
  * class mechanics */
@@ -210,7 +216,7 @@ ndmp_device_init(NdmpDevice *nself)
     Device *dself = DEVICE(nself);
     GValue response;
 
-    nself->protocol = NULL;
+    nself->proxy_chan = ipc_binary_new_channel(get_ndmp_proxy_proto());
     nself->open = 0;
 
     /* Register property values
@@ -303,101 +309,6 @@ ndmp_device_factory(
  * Virtual function overrides
  */
 
-static int
-try_open_ndmp_device(
-    NdmpDevice *nself,
-    char       *device_filename)
-{
-    Device              *dself = DEVICE(nself);
-    int                  rc;
-    amprotocol_packet_t *c_packet;
-    char                *error_str;
-    int                  fd;
-
-    rc = amprotocol_send_list(nself->protocol, CMD_DEVICE, 0);
-    if (rc <= 0) {
-	device_set_error(dself,
-			 stralloc(_("failed to write CMD_DEVICE to ndmp-proxy")),
-			 DEVICE_STATUS_DEVICE_ERROR);
-	return -1;
-    }
-    g_debug("Sent CMD_DEVICE to ndmp-proxy");
-
-    c_packet = amprotocol_get(nself->protocol);
-    g_debug("get packet from ndmp-proxy 1");
-    if (!c_packet) {
-	device_set_error(dself,
-			 vstrallocf(_("A failed to get a packet from ndmp-proxy: %s"), strerror(errno)),
-			 DEVICE_STATUS_DEVICE_ERROR);
-	return -1;
-    }
-    if (c_packet->command != REPLY_DEVICE) {
-	device_set_error(dself,
-			 stralloc(_("failed to get a REPLY_DEVICE from ndmp-proxy")),
-			 DEVICE_STATUS_DEVICE_ERROR);
-	free_amprotocol_packet(c_packet);
-	return -1;
-    }
-    g_debug("got REPLY_DEVICE from ndmp-proxy");
-
-    if (strcmp(c_packet->arguments[0].data, "NDMP9_NO_ERR") != 0) {
-	device_set_error(dself,
-		vstrallocf(_("%s"), c_packet->arguments[0].data),
-		  DEVICE_STATUS_DEVICE_ERROR);
-	free_amprotocol_packet(c_packet);
-	return -1;
-    }
-
-    /* switch from listen_ndmp to device_ndmp -- two different protocols
-     * on the same file descriptor.  The listening end makes the same transition
-     * at the same time -- see the protocol documentation. */
-    fd = nself->protocol->fd;
-    amfree(nself->protocol);
-    nself->protocol = malloc(sizeof(device_ndmp));
-    memmove(nself->protocol, &device_ndmp, sizeof(device_ndmp));
-    nself->protocol->fd = fd;
-
-    rc = amprotocol_send_list(nself->protocol, CMD_TAPE_OPEN, 4,
-					device_filename, "RDWR",
-					"localhost", "4,ndmp,ndmp");
-    if (rc <= 0) {
-	device_set_error(dself,
-			 stralloc(_("failed to write CMD_TAPE_OPEN to ndmp-proxy")),
-			 DEVICE_STATUS_DEVICE_ERROR);
-	return -1;
-    }
-    g_debug("Sent CMD_TAPE_OPEN to ndmp-proxy");
-
-    c_packet = amprotocol_get(nself->protocol);
-    if (!c_packet) {
-	device_set_error(dself,
-			 stralloc(_("B failed to get a packet from ndmp-proxy")),
-			 DEVICE_STATUS_DEVICE_ERROR);
-	return -1;
-    }
-    g_debug("get packet from ndmp-proxy");
-    if (c_packet->command != REPLY_TAPE_OPEN) {
-	device_set_error(dself,
-			 stralloc(_("failed to get a REPLY_TAPE_OPEN from ndmp-proxy")),
-			 DEVICE_STATUS_DEVICE_ERROR);
-	free_amprotocol_packet(c_packet);
-	return -1;
-    }
-
-    error_str = c_packet->arguments[0].data;
-    g_debug("e %s", error_str);
-    if (strcmp(error_str, "NDMP9_NO_ERR") != 0) {
-	device_set_error(dself,
-			 vstrallocf(_("REPLY_TAPE_OPEN failed: %s"), error_str),
-			 DEVICE_STATUS_DEVICE_ERROR);
-	free_amprotocol_packet(c_packet);
-	return -1;
-    }
-    free_amprotocol_packet(c_packet);
-    g_debug("get REPLY_TAPE_OPEN packet from ndmp-proxy");
-    return 0;
-}
-
 static void
 ndmp_device_open_device(
     Device *dself,
@@ -418,10 +329,7 @@ ndmp_device_open_device(
 	return;
     }
 
-    nself->protocol = malloc(sizeof(listen_ndmp));
-    memmove(nself->protocol, &listen_ndmp, sizeof(listen_ndmp));
-    nself->protocol->fd = fd;
-
+    nself->proxy_sock = fd;
     nself->ndmp_filename = stralloc(device_node);
 
     if (parent_class->open_device) {
@@ -432,38 +340,34 @@ ndmp_device_open_device(
 static void ndmp_device_finalize(GObject * obj_self)
 {
     NdmpDevice       *nself = NDMP_DEVICE (obj_self);
-    int               rc;
-    amprotocol_packet_t *c_packet;
+    ipc_binary_message_t *msg;
 
     if(G_OBJECT_CLASS(parent_class)->finalize)
         (* G_OBJECT_CLASS(parent_class)->finalize)(obj_self);
 
     if (nself->open) {
-	rc = amprotocol_send_list(nself->protocol, CMD_TAPE_CLOSE, 0);
-	if (rc <= 0) {
-	    g_debug("failed to write CMD_TAPE_CLOSE to ndmp-proxy");
-	    goto finalize;
-	}
-	g_debug("Sent CMD_TAPE_CLOSE to ndmp-proxy");
+	g_debug("closing tape device");
 
-	c_packet = amprotocol_get(nself->protocol);
-	if (!c_packet) {
-	    g_debug("Failed to get a packet from ndmp-proxy");
-	    goto finalize;
+	/* select the DEVICE service from the proxy */
+	msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_TAPE_CLOSE);
+	if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
+	    set_proxy_comm_err(DEVICE(nself), errno);
+	    goto finished;
 	}
-	g_debug("get packet from ndmp-proxy");
-	if (c_packet->command != REPLY_TAPE_CLOSE) {
-	    g_debug("failed to get a REPLY_TAPE_CLOSE from ndmp-proxy: %d", c_packet->command);
-	    goto finalize;
+    g_debug("Sent NDMP_PROXY_CMD_TAPE_CLOSE to ndmp-proxy");
+
+	if (!get_generic_reply(nself)) {
+	    /* error message is set by get_generic_reply */
+	    goto finished;
 	}
-	g_debug("get REPLY_TAPE_CLOSE packet from ndmp-proxy");
     }
 
-finalize:
-    nself->open = 0;
-    if (nself->protocol && nself->protocol->fd >= 0)
-	robust_close(nself->protocol->fd);
-    amfree(nself->protocol);
+finished:
+    nself->open = FALSE;
+    if (nself->proxy_chan)
+	ipc_binary_free_channel(nself->proxy_chan);
+    if (nself->proxy_sock)
+	robust_close(nself->proxy_sock);
 }
 
 static DeviceStatusFlags
@@ -472,9 +376,8 @@ ndmp_device_read_label(
 {
     NdmpDevice       *nself = NDMP_DEVICE(dself);
     dumpfile_t       *header;
-    int               rc;
-    guint32           count;
-    amprotocol_packet_t *c_packet;
+    ipc_binary_message_t *msg;
+    char *errcode, *errstr;
 
     amfree(dself->volume_label);
     amfree(dself->volume_time);
@@ -485,12 +388,9 @@ ndmp_device_read_label(
     header = dself->volume_header = g_new(dumpfile_t, 1);
     fh_init(header);
 
-    if (!nself->open) {
-	rc = try_open_ndmp_device(nself, nself->ndmp_filename);
-	if (rc == -1) {
-	    return dself->status;
-	}
-	nself->open = 1;
+    if (try_open_ndmp_device(nself, nself->ndmp_filename) == -1) {
+	/* error status was set by try_open_ndmp_device */
+	return dself->status;
     }
 
     /* Rewind it. */
@@ -498,31 +398,46 @@ ndmp_device_read_label(
 	return dself->status;
     }
 
-    count = htonl(32768);
-    amprotocol_send_binary(nself->protocol, CMD_TAPE_READ, 1, sizeof(count), &count);
-    g_debug("Sent CMD_TAPE_READ to ndmp-proxy");
-    c_packet = amprotocol_get(nself->protocol);
-    if (!c_packet) { exit(1); };
-    g_debug("got packet from ndmp-proxy");
-    if (c_packet->command != REPLY_TAPE_READ) { exit(1); };
-    g_debug("got CMD_TAPE_READ packet from ndmp-proxy");
-
-    if (strcmp(c_packet->arguments[0].data, "NDMP9_EOF_ERR") == 0) {
-	device_set_error(dself,
-		g_strdup(_("unlabeled volume")), DEVICE_STATUS_VOLUME_UNLABELED);
-	free_amprotocol_packet(c_packet);
-	return dself->status;
-    } else if (strcmp(c_packet->arguments[0].data, "NDMP9_NO_ERR") != 0) {
-	device_set_error(dself,
-		vstrallocf(_("Unknown error: %s"), c_packet->arguments[0].data),
-		  DEVICE_STATUS_DEVICE_ERROR
-		| DEVICE_STATUS_VOLUME_ERROR);
-	free_amprotocol_packet(c_packet);
+    msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_TAPE_READ);
+    ipc_binary_add_arg(msg, NDMP_PROXY_COUNT, 0, "32768", 0); /* TODO: use variable block size */
+    if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
+	set_proxy_comm_err(dself, errno);
 	return dself->status;
     }
 
-    parse_file_header(c_packet->arguments[1].data, header, c_packet->arguments[1].size);
-    free_amprotocol_packet(c_packet);
+    g_debug("Sent NDMP_PROXY_CMD_TAPE_READ to ndmp-proxy");
+    if (!(msg = ipc_binary_read_message(nself->proxy_chan, nself->proxy_sock))) {
+	if (errno) {
+	    set_proxy_comm_err(dself, errno);
+	} else {
+	    device_set_error(dself,
+		    vstrallocf(_("EOF from ndmp-proxy")),
+		    DEVICE_STATUS_DEVICE_ERROR);
+	}
+
+	return dself->status;
+    }
+
+    errcode = (char *)msg->args[NDMP_PROXY_ERRCODE].data;
+    errstr = (char *)msg->args[NDMP_PROXY_ERROR].data;
+    if (errcode) {
+	/* EOF gets translated to an unlabeled volume */
+	if (0 == strcmp(errcode, "NDMP9_EOF_ERR")) {
+	    device_set_error(dself,
+		    g_strdup(_("unlabeled volume")), DEVICE_STATUS_VOLUME_UNLABELED);
+	} else {
+	    device_set_error(dself,
+		    g_strdup_printf(_("Error reading label: %s"), errstr),
+		    DEVICE_STATUS_DEVICE_ERROR);
+		    /* TODO: could this also be a volume error? */
+	}
+	ipc_binary_free_message(msg);
+	return dself->status;
+    }
+
+    parse_file_header(msg->args[NDMP_PROXY_DATA].data, header, msg->args[NDMP_PROXY_DATA].len);
+    ipc_binary_free_message(msg);
+
     if (header->type != F_TAPESTART) {
 	device_set_error(dself,
 		stralloc(_("No tapestart header -- unlabeled device?")),
@@ -549,7 +464,6 @@ write_tapestart_header(
     Device     *dself = (Device*)nself;
     dumpfile_t *header;
     char       *header_buf;
-    char       *msg = NULL;
 
     if (!ndmp_mtio_rewind(nself)) {
 	return FALSE;
@@ -566,12 +480,9 @@ write_tapestart_header(
     }
     amfree(header);
 
-    result = ndmp_device_robust_write(nself, header_buf, dself->block_size, &msg);
+    result = ndmp_device_robust_write(nself, header_buf, dself->block_size);
     if (!result) {
-	device_set_error(dself,
-	    g_strdup_printf(_("Error writing tapestart header: %s"), msg),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	amfree(msg);
+	/* error was set by ndmp_device_robust_write */
 	amfree(header_buf);
 	return FALSE;
     }
@@ -790,6 +701,103 @@ ndmp_device_read_block (Device * dself, gpointer data, int *size_req) {
     return 0;
 }
 
+/*
+ * Utility functions
+ */
+
+static int
+try_open_ndmp_device(
+    NdmpDevice *nself,
+    char       *device_filename)
+{
+    Device              *dself = DEVICE(nself);
+    ipc_binary_message_t *msg;
+
+    if (nself->open)
+	return 0;
+
+    /* select the DEVICE service from the proxy */
+    msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_SELECT_SERVICE);
+    ipc_binary_add_arg(msg, NDMP_PROXY_SERVICE, 0, "DEVICE", 0);
+    if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
+	set_proxy_comm_err(dself, errno);
+	return -1;
+    }
+    g_debug("Sent NDMP_PROXY_SELECT_SERVICE to ndmp-proxy");
+
+    if (!get_generic_reply(nself)) {
+	/* error message is set by get_generic_reply */
+	return -1;
+    }
+
+    /* now send a NDMP_PROXY_TAPE_OPEN */
+    msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_TAPE_OPEN);
+    ipc_binary_add_arg(msg, NDMP_PROXY_FILENAME, 0, device_filename, 0);
+    ipc_binary_add_arg(msg, NDMP_PROXY_MODE, 0, "RDRW", 0);
+    ipc_binary_add_arg(msg, NDMP_PROXY_HOST, 0, "localhost", 0);
+    ipc_binary_add_arg(msg, NDMP_PROXY_USER_PASS, 0, "4,ndmp,ndmp", 0);
+    if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
+	set_proxy_comm_err(dself, errno);
+	return -1;
+    }
+    g_debug("Sent NDMP_PROXY_TAPE_OPEN to ndmp-proxy");
+    if (!get_generic_reply(nself)) {
+	/* error message is set by get_generic_reply */
+	return -1;
+    }
+    g_debug("get reply from ndmp-proxy");
+
+    nself->open = TRUE;
+
+    return 0;
+}
+
+static void
+set_proxy_comm_err(
+	Device *dself,
+	int saved_errno) {
+    device_set_error(dself,
+	g_strdup_printf(_("failed to communicate with ndmp-proxy: %s"), strerror(saved_errno)),
+	DEVICE_STATUS_DEVICE_ERROR);
+}
+
+static gboolean
+get_generic_reply(
+	NdmpDevice *nself) {
+    char *errcode = NULL, *errstr = NULL;
+    ipc_binary_message_t *msg;
+    Device *dself = DEVICE(nself);
+
+    if (!(msg = ipc_binary_read_message(nself->proxy_chan, nself->proxy_sock))) {
+	if (errno) {
+	    set_proxy_comm_err(dself, errno);
+	} else {
+	    device_set_error(dself,
+		    vstrallocf(_("EOF from ndmp-proxy")),
+		    DEVICE_STATUS_DEVICE_ERROR);
+	}
+
+	return FALSE;
+    }
+
+    if (msg->cmd_id != NDMP_PROXY_REPLY_GENERIC) {
+	device_set_error(dself,
+		vstrallocf(_("incorrect generic reply from ndmp-proxy")),
+		DEVICE_STATUS_DEVICE_ERROR);
+    }
+
+    errcode = (char *)msg->args[NDMP_PROXY_ERRCODE].data;
+    errstr = (char *)msg->args[NDMP_PROXY_ERROR].data;
+    if (errcode || errstr) {
+	device_set_error(dself,
+		g_strdup_printf("Error from ndmp-proxy: %s (%s)", errstr, errcode),
+		DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+    }
+
+    return TRUE;
+}
+
 static int
 ndmp_mtio_eod(
     NdmpDevice *nself)
@@ -814,51 +822,25 @@ ndmp_mtio_rewind(
 static int
 ndmp_mtio(
     NdmpDevice *nself,
-    char       *cmd,
+    char       *command,
     int         count)
 {
     Device           *dself = DEVICE(nself);
-    int               rc;
-    amprotocol_packet_t *c_packet;
-    char             *error_str;
-    char             *count_str = g_strdup_printf("%d", count);
+    ipc_binary_message_t *msg;
 
-    rc = amprotocol_send_list(nself->protocol, CMD_TAPE_MTIO, 2, cmd, count_str);
-    amfree(count_str);
-    if (rc <= 0) {
-	device_set_error(dself,
-			 vstrallocf(_("failed to write CMD_TAPE_MTIO %s to ndmp-proxy"), cmd),
-			   DEVICE_STATUS_DEVICE_ERROR
-			 | DEVICE_STATUS_VOLUME_ERROR);
-        return FALSE;
+    msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_TAPE_MTIO);
+    ipc_binary_add_arg(msg, NDMP_PROXY_COMMAND, 0, command, FALSE);
+    ipc_binary_add_arg(msg, NDMP_PROXY_COUNT, 0, g_strdup_printf("%d", count), TRUE);
+    if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
+	set_proxy_comm_err(dself, errno);
+	return FALSE;
     }
-    g_debug("Sent CMD_TAPE_MTIO %s to ndmp-proxy", cmd);
 
-    c_packet = amprotocol_get(nself->protocol);
-    if (!c_packet) {
-	device_set_error(dself,
-			 stralloc(_("failed to get a REPLY_TAPE_MTIO packet from ndmp-proxy")),
-			 DEVICE_STATUS_DEVICE_ERROR);
+    if (!get_generic_reply(nself)) {
+	/* error message is set by get_generic_reply */
 	return FALSE;
     }
-    g_debug("get packet from ndmp-proxy");
-    if (c_packet->command != REPLY_TAPE_MTIO) {
-	device_set_error(dself,
-			 stralloc(_("failed to get a REPLY_TAPE_MTIO from ndmp-proxy")),
-			 DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
-    }
-    g_debug("get REPLY_TAPE_MTIO %s packet from ndmp-proxy", cmd);
-    error_str = c_packet->arguments[0].data;
-    g_debug("e %s", error_str);
-    if (strcmp(error_str, "NDMP9_NO_ERR") != 0) {
-	g_debug("f %s", error_str);
-	device_set_error(dself,
-			 vstrallocf(_("REPLY_TAPE_MTIO %s: %s"), cmd, error_str),
-			 DEVICE_STATUS_DEVICE_ERROR);
-	g_debug("g %s", error_str);
-	return FALSE;
-    }
+
     return TRUE;
 }
 
@@ -866,30 +848,23 @@ static int
 ndmp_device_robust_write(
     NdmpDevice  *nself,
     char        *buf,
-    int          count,
-    char       **errmsg)
+    int          count)
 {
     Device *dself = (Device*)nself;
-    amprotocol_packet_t *c_packet;
+    ipc_binary_message_t *msg;
 
-    amprotocol_send_binary(nself->protocol, CMD_TAPE_WRITE, 1, count, buf);
+    msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_TAPE_WRITE);
+    ipc_binary_add_arg(msg, NDMP_PROXY_DATA, count, buf, 0);
+    if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
+	set_proxy_comm_err(dself, errno);
+	return FALSE;
+    }
     g_debug("Sent CMD_TAPE_WRITE to ndmp-proxy");
-    c_packet = amprotocol_get(nself->protocol);
-    if (!c_packet) { exit(1); };
-    g_debug("got packet from ndmp-proxy");
-    if (c_packet->command != REPLY_TAPE_WRITE) { exit(1); };
 
-    g_debug("got CMD_TAPE_WRITE packet from ndmp-proxy");
-    if (strcmp(c_packet->arguments[0].data, "NDMP9_NO_ERR") != 0) {
-	*errmsg = stralloc(c_packet->arguments[0].data);
-	device_set_error(dself,
-		vstrallocf(_("Unknown error: %s"), c_packet->arguments[0].data),
-		  DEVICE_STATUS_DEVICE_ERROR
-		| DEVICE_STATUS_VOLUME_ERROR);
-	free_amprotocol_packet(c_packet);
+    if (!get_generic_reply(nself)) {
+	/* error message is set by get_generic_reply */
 	return FALSE;
     }
 
-    free_amprotocol_packet(c_packet);
     return TRUE;
 }

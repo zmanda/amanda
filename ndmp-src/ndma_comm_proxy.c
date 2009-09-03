@@ -20,7 +20,7 @@
  */
 
 #include "ndmagents.h"
-#include "ndmp-protocol.h"
+#include "ndmp-proxy.h"
 #include "ipc-binary.h"
 
 int
@@ -30,7 +30,6 @@ ndma_proxy_session (struct ndm_session *sess)
 	struct sockaddr		sa;
 	int			proxy_sock;
 
-	ndmchan_initialize(&sess->proxy_listen, "proxy-listen");
 	proxy_sock = socket (AF_INET, SOCK_STREAM, 0);
 	if (proxy_sock < 0) {
 		perror ("socket");
@@ -38,9 +37,6 @@ ndma_proxy_session (struct ndm_session *sess)
 	}
 
 	ndmalogf (sess, 0, 2, "set sess->protocol_listen");
-	sess->protocol_listen = malloc(sizeof(listen_ndmp));
-	memmove(sess->protocol_listen, &listen_ndmp, sizeof(listen_ndmp));
-	sess->protocol_listen->fd = proxy_sock;
 
 	ndmos_condition_listen_socket (sess, proxy_sock);
 
@@ -48,7 +44,11 @@ ndma_proxy_session (struct ndm_session *sess)
 
 	if (bind (proxy_sock, &sa, sizeof sa) < 0) {
 		ndmalogf (sess, 0, 2, "Can't bind the socket(%d): %s\n", sess->proxy_port, strerror(errno));
-		fprintf(stdout, "Can't bind the socket(%d): %s\n", sess->proxy_port, strerror(errno));
+		if (errno == EADDRINUSE) {
+		    fprintf(stdout, "BIND: Address already in use\n");
+		} else {
+		    fprintf(stdout, "Can't bind the socket(%d): %s\n", sess->proxy_port, strerror(errno));
+		}
 		fflush(stdout);
 		perror ("bind");
 		return 2;
@@ -62,131 +62,196 @@ ndma_proxy_session (struct ndm_session *sess)
 		return 3;
 	}
 
-	ndmchan_start_listen(&sess->proxy_listen, proxy_sock);
+	/* set up to listen on this new socket */
+	ndmchan_initialize(&sess->listen_chan, "proxy-listen");
+	ndmchan_start_listen(&sess->listen_chan, proxy_sock);
 
-	ndmchan_initialize(&sess->proxy_input, "proxy-input");
-	ndmchan_setbuf(&sess->proxy_input, malloc(65536), 65536);
-        ndmchan_start_read(&sess->proxy_input, 0);
+	/* start reading on stdin */
+	ndmchan_initialize(&sess->stdin_chan, "proxy-stdin");
+	ndmchan_setbuf(&sess->stdin_chan, malloc(65536), 65536);
+        ndmchan_start_read(&sess->stdin_chan, 0);
 
-	fprintf(stdout, "OK\n");
+	/* tell our invoker that we are OK */
+	fprintf(stdout, "PORT %d\n", sess->proxy_port);
 	fflush(stdout);
 
+	/* and run forever */
 	for (;;) {
 		ndma_session_quantum(sess, 10000);
 	}
 
-	close (proxy_sock);
+	/* NOTREACHED */
+	/* close (proxy_sock); */
 
 	return 0;
 }
 
-int
-ndma_dispatch_proxy(
+static void
+ndma_dispatch_proxy_stdin(
     struct ndm_session *sess)
 {
-	char                *errstr = NULL;
-	char                 errbuf[1024];
-	int                  rc = 0;
-	int                  error_code = NDMP9_NO_ERR;
-	amprotocol_packet_t *c_packet;
+	/* TODO: stop more gracefully */
 
-	if (sess->proxy_input.eof) {
+	/* exit if our stdin is closed */
+	if (sess->stdin_chan.eof) {
 		exit(1);
 	}
 
-	if (sess->proxy_input.ready) {
+	/* exit if there's any data on stdin */
+	if (sess->stdin_chan.ready) {
 		exit(1);
 	}
+}
 
-	if (sess->proxy_listen.ready) {
-		int			conn_sock, len;
-		struct sockaddr_in	sa;
-		int			bad_addr = 0;
-		char			*name;
+static void
+ndma_dispatch_proxy_listen(
+    struct ndm_session *sess)
+{
+	int			conn_sock, len;
+	struct sockaddr_in	sa;
+	char			*name;
+	struct proxy_channel	*pxchan;
+	ipc_binary_message_t	*msg;
+	struct proxy_channel	**pxchanp;
+	char			*service;
+	char			*errstr = NULL;
 
-		len = sizeof(struct sockaddr);
-		conn_sock = accept(sess->proxy_listen.fd, (struct sockaddr *)&sa, &len);
-		name = inet_ntoa(sa.sin_addr);
-		ndmalogf (sess, 0, 7, "got a connection from %s", name);
-		if (strcmp(name, "127.0.0.1") != 0) {
-			snprintf(errbuf, 1023, "Address '%s' is not 127.0.0.1", name);
-			errstr = errbuf;
-			bad_addr = 1;
-			rc = -1;
-		}
+	/* if we have a new incoming connection, use it */
+	if (!sess->listen_chan.ready)
+	    return;
 
-		/* check connection from who: device, changer or application */
-		sess->protocol_listen->fd = conn_sock;
-		c_packet = amprotocol_get(sess->protocol_listen);
+	len = sizeof(struct sockaddr);
+	conn_sock = accept(sess->listen_chan.fd, (struct sockaddr *)&sa, &len);
+	name = inet_ntoa(sa.sin_addr);
+	ndmalogf (sess, 0, 7, "got a connection from %s", name);
 
-		if (!c_packet) {
-			errstr = "Got no packet";
-		} else if (c_packet->command == CMD_DEVICE) {
-			ndmalogf (sess, 0, 7, "It is a connection from a device-api");
-			if (!rc) {
-				ndmchan_initialize(&sess->proxy_device, "proxy-device");
-				ndmchan_setbuf(&sess->proxy_device, malloc(65536), 65536);
-				ndmchan_start_read(&sess->proxy_device, conn_sock);
-				sess->protocol_device = malloc(sizeof(device_ndmp));
-				memmove(sess->protocol_device, &device_ndmp, sizeof(device_ndmp));
-				sess->protocol_device->fd = conn_sock;
-			}
-			if (!errstr) {
-				errstr = ndmp9_error_to_str(NDMP9_NO_ERR);
-			}
-			rc = amprotocol_send_list(sess->protocol_listen,
-					REPLY_DEVICE, 1, errstr);
-		} else {
-			if (!errstr)
-				errstr = "Got invalid packet";
-		}
-		ndmalogf (sess, 0, 7, "%s", errstr);
-		free_amprotocol_packet(c_packet);
+	/* demand that it be from localhost */
+	if (strcmp(name, "127.0.0.1") != 0) {
+	    ndmalogf(sess, 0, 7, "Address '%s' is not 127.0.0.1; disconnecting", name);
+	    close(conn_sock);
+	    return;
 	}
 
-	if (sess->proxy_device.ready) {
-		int			conn_sock, len;
-		struct sockaddr		sa;
+	/* check connection from who: device, changer or application */
+	pxchan = g_new0(struct proxy_channel, 1);
+	pxchan->sock = conn_sock;
+	pxchan->ipc.proto = get_ndmp_proxy_proto();
 
-		c_packet = amprotocol_parse(sess->protocol_device,
-				&sess->proxy_device.data[sess->proxy_device.beg_ix],
-				ndmchan_n_ready(&sess->proxy_device));
-		if (!c_packet) {
-			/* a packet is not completely read, waiting for more data */
-			goto end_device;
-		}
+	/* TODO: this is a synchronous read and should be replaced with
+	 * something async */
+	msg = ipc_binary_read_message(&pxchan->ipc, conn_sock);
+	if (!msg) {
+		ndmalogf(sess, 0, 7, "No message received; disconnecting");
+		g_free(pxchan);
+		close(conn_sock);
+		return;
+	}
 
-		/* consume the packet */
-		sess->proxy_device.beg_ix += c_packet->block_size;
+	if (msg->cmd_id != NDMP_PROXY_CMD_SELECT_SERVICE) {
+		ndmalogf(sess, 0, 7, "Invalid message received; disconnecting");
+		g_free(pxchan);
+		close(conn_sock);
+		return;
+	}
 
-		if (c_packet->command == CMD_TAPE_OPEN) {
+	/* identify the service */
+	service = (char *)msg->args[NDMP_PROXY_SERVICE].data;
+	if (0 == strcmp(service, "DEVICE")) {
+		pxchanp = &sess->proxy_device_chan;
+	} else if (0 == strcmp(service, "APPLICATION")) {
+		pxchanp = &sess->proxy_application_chan;
+	} else if (0 == strcmp(service, "CHANGER")) {
+		pxchanp = &sess->proxy_changer_chan;
+	} else {
+		errstr = ndmp9_error_to_str(NDMP9_ILLEGAL_ARGS_ERR);
+	}
+
+	ipc_binary_free_message(msg);
+
+	/* is the service already active? */
+	if (!errstr && *pxchanp != NULL) {
+		ndmalogf(sess, 0, 7, "Service is already in use");
+		errstr = ndmp9_error_to_str(NDMP9_DEVICE_BUSY_ERR);
+	}
+
+	/* send the response; TODO: do this asynchronously */
+	msg = ipc_binary_new_message(&pxchan->ipc, NDMP_PROXY_REPLY_GENERIC);
+	if (errstr) {
+		ipc_binary_add_arg(msg, NDMP_PROXY_ERROR, 0, errstr, 0);
+		ipc_binary_add_arg(msg, NDMP_PROXY_ERRCODE, 0, errstr, 0);
+	}
+
+	if (ipc_binary_write_message(&pxchan->ipc, conn_sock, msg) < 0) {
+		ndmalogf(sess, 0, 7, "Error writing to socket: %s", strerror(errno));
+		g_free(pxchan);
+		close(conn_sock);
+		return;
+	}
+
+	if (errstr) {
+		g_free(pxchan);
+		close(conn_sock);
+		return;
+	}
+
+	/* put this proxy_channel in the appropriate place in the session */
+	*pxchanp = pxchan;
+
+	/* set up the ndmp communication channel to listen for incoming messages */
+	ndmchan_initialize(&pxchan->ndm, "proxy-service");
+	ndmchan_setbuf(&pxchan->ndm, malloc(65536), 65536);
+	ndmchan_start_read(&pxchan->ndm, conn_sock);
+}
+
+static void
+ndma_dispatch_proxy_device(
+    struct ndm_session *sess)
+{
+	int			conn_sock, len;
+	struct sockaddr		sa;
+	ipc_binary_message_t *msg;
+
+	/* TODO: handle EOF */
+	if (!sess->proxy_device_chan || !sess->proxy_device_chan->ndm.ready)
+	    return;
+
+	/* feed data into the ipc_binary channel */
+	ipc_binary_feed_data(&sess->proxy_device_chan->ipc,
+		ndmchan_n_ready(&sess->proxy_device_chan->ndm),
+		&sess->proxy_device_chan->ndm.data[sess->proxy_device_chan->ndm.beg_ix]);
+	sess->proxy_device_chan->ndm.beg_ix += ndmchan_n_ready(&sess->proxy_device_chan->ndm);
+
+	/* loop over any available incoming messages */
+	while ((msg = ipc_binary_poll_message(&sess->proxy_device_chan->ipc))) {
+		switch (msg->cmd_id) {
+
+		case NDMP_PROXY_CMD_TAPE_OPEN: {
 			struct ndm_control_agent *ca = &sess->control_acb;
+			char *errstr = NULL;
+			ndmp9_error errcode = 0;
+			ipc_binary_message_t *send_msg;
+			int rc;
 			char *tape_agent_str;
-			int int2 = strlen((char *)c_packet->arguments[2].data);
-			int int3 = strlen((char *)c_packet->arguments[3].data);
+			tape_agent_str = g_strdup_printf("%s/%s",
+			    (char *)msg->args[NDMP_PROXY_HOST].data,
+			    (char *)msg->args[NDMP_PROXY_USER_PASS].data);
 
 			ndmalogf (sess, 0, 7, "got a CMD_TAPE_OPEN request");
 
-			tape_agent_str = malloc(int2 + 1 + int3 + 1);
-			strcpy(tape_agent_str, (char *)c_packet->arguments[2].data);
-			tape_agent_str[int2] = '/';
-			strcpy(tape_agent_str+int2+1, (char *)c_packet->arguments[3].data);
 			ca->tape_mode = NDMP9_TAPE_RDWR_MODE;
-		        ca->is_label_op = 1;
-			ca->job.tape_device = strdup((char *)c_packet->arguments[0].data);
+			ca->is_label_op = 1;
+			ca->job.tape_device = g_strdup((char *)msg->args[NDMP_PROXY_FILENAME].data);
 
 			rc = ndmagent_from_str(&ca->job.tape_agent, tape_agent_str);
+			g_free(tape_agent_str);
 
 			if (!rc) {
 				rc = ndmca_connect_tape_agent(sess);
 				if (rc) {
 					/* save errstr before deleting it */
-					if (ndmconn_get_err_msg(sess->plumb.tape) == NULL) {
-						strcpy(errbuf, "Unknown error");
-					} else {
-						strcpy(errbuf, ndmconn_get_err_msg(sess->plumb.tape));
+					if (ndmconn_get_err_msg(sess->plumb.tape) != NULL) {
+						errstr = g_strdup(ndmconn_get_err_msg(sess->plumb.tape));
 					}
-					errstr = errbuf;
 					ndmconn_destruct (sess->plumb.tape);
 				}
 			}
@@ -197,64 +262,186 @@ ndma_dispatch_proxy(
 			if (!rc)
 				rc = ndmca_tape_get_state (sess);
 
-			if (!errstr)
-				errstr = ndmp9_error_to_str(sess->plumb.tape->last_reply_error);
-			rc = amprotocol_send_list(sess->protocol_device, REPLY_TAPE_OPEN, 1, errstr);
-			free(tape_agent_str);
-		} else if (c_packet->command == CMD_TAPE_CLOSE) {
-			ndmca_tape_close(sess);
+			if (rc && !errcode)
+				errcode = sess->plumb.tape->last_reply_error;
+
+			if (rc && !errstr)
+				errstr = g_strdup(ndmp9_error_to_str(errcode));
+
+			send_msg = ipc_binary_new_message(&sess->proxy_device_chan->ipc,
+						    NDMP_PROXY_REPLY_GENERIC);
+			if (rc) {
+				ipc_binary_add_arg(send_msg, NDMP_PROXY_ERRCODE, 0,
+					ndmp9_error_to_str(errcode), FALSE);
+				ipc_binary_add_arg(send_msg, NDMP_PROXY_ERROR, 0,
+					errstr, TRUE);
+			}
+			if (ipc_binary_write_message(&sess->proxy_device_chan->ipc,
+				    sess->proxy_device_chan->sock, send_msg) < 0) {
+				ndmalogf (sess, 0, 7, "error writing to device channel: %s",
+							strerror(errno));
+				/* TODO: shut down the connection */
+			}
+			break;
+		}
+
+		case NDMP_PROXY_CMD_TAPE_CLOSE: {
+			ipc_binary_message_t *send_msg;
+
 			ndmalogf (sess, 0, 7, "got a CMD_TAPE_CLOSE request");
-			rc = amprotocol_send_list(sess->protocol_device, REPLY_TAPE_CLOSE, 1, ndmp9_error_to_str(NDMP9_NO_ERR));
-		} else if (c_packet->command == CMD_TAPE_READ) {
+			ndmca_tape_close(sess);
+
+			send_msg = ipc_binary_new_message(&sess->proxy_device_chan->ipc,
+						    NDMP_PROXY_REPLY_GENERIC);
+			if (ipc_binary_write_message(&sess->proxy_device_chan->ipc,
+				    sess->proxy_device_chan->sock, send_msg) < 0) {
+				ndmalogf (sess, 0, 7, "error writing to device channel: %s",
+							strerror(errno));
+				/* TODO: shut down the connection */
+			}
+			break;
+		}
+
+		case NDMP_PROXY_CMD_TAPE_READ: {
 			char *buf;
 			int   read_count;
-			guint32 count = ntohl(*((guint32 *)c_packet->arguments[0].data));
+			ipc_binary_message_t *send_msg;
+			long count;
+			int rc;
 
 			ndmalogf (sess, 0, 7, "got a CMD_TAPE_READ request");
+			count = strtol((char *)msg->args[NDMP_PROXY_COUNT].data, NULL, 10);
+			/* TODO: sanity check count */
+
 			buf = malloc(count);
-			rc = ndmca_tape_read_partial (sess, buf, count, &read_count);
-			errstr = ndmp9_error_to_str(sess->plumb.tape->last_reply_error);
+			rc = ndmca_tape_read_partial(sess, buf, count, &read_count);
+
+			send_msg = ipc_binary_new_message(&sess->proxy_device_chan->ipc,
+						    NDMP_PROXY_REPLY_TAPE_READ);
+			ndmalogf (sess, 0, 7, "tata: %d %d", rc, read_count);
 			if (rc) {
-				amprotocol_send_list(sess->protocol_device, REPLY_TAPE_READ, 2, errstr, "");
+				char *errstr = ndmp9_error_to_str(sess->plumb.tape->last_reply_error);
+				ipc_binary_add_arg(send_msg, NDMP_PROXY_ERRCODE, 0,
+					errstr, FALSE);
+				ipc_binary_add_arg(send_msg, NDMP_PROXY_ERROR, 0,
+					errstr, FALSE);
 			} else {
-				amprotocol_send_binary(sess->protocol_device, REPLY_TAPE_READ, 2, strlen(errstr)+1, errstr, read_count, buf);
+				ipc_binary_add_arg(send_msg, NDMP_PROXY_DATA, read_count,
+					buf, 0);
 			}
-		} else if (c_packet->command == CMD_TAPE_WRITE) {
-			char *buf = c_packet->arguments[0].data;
+
+			if (ipc_binary_write_message(&sess->proxy_device_chan->ipc,
+				    sess->proxy_device_chan->sock, send_msg) < 0) {
+				ndmalogf (sess, 0, 7, "error writing to device channel: %s",
+							strerror(errno));
+				/* TODO: shut down the connection */
+			}
+			ndmalogf (sess, 0, 7, "sent NDMP_PROXY_REPLY_TAPE_READ");
+
+			break;
+		}
+
+		case NDMP_PROXY_CMD_TAPE_WRITE: {
+			char *buf = msg->args[NDMP_PROXY_DATA].data;;
+			ipc_binary_message_t *send_msg;
 			int   write_count;
-			int   count = c_packet->arguments[0].size;
 			char *error = NULL;
+			int rc;
 
 			ndmalogf (sess, 0, 7, "got a CMD_TAPE_WRITE request");
-			rc = ndmca_tape_write (sess, buf, count);
-			amprotocol_send_list(sess->protocol_device, REPLY_TAPE_WRITE, 1, ndmp9_error_to_str(sess->plumb.tape->last_reply_error));
-		} else if (c_packet->command == CMD_TAPE_MTIO) {
+
+			rc = ndmca_tape_write (sess, buf, msg->args[NDMP_PROXY_DATA].len);
+
+			send_msg = ipc_binary_new_message(&sess->proxy_device_chan->ipc,
+						    NDMP_PROXY_REPLY_GENERIC);
+			if (rc) {
+				ndmp9_error errcode = sess->plumb.tape->last_reply_error;
+				char *errstr = ndmp9_error_to_str(errcode);
+				ipc_binary_add_arg(send_msg, NDMP_PROXY_ERRCODE, 0,
+					errstr, FALSE);
+				ipc_binary_add_arg(send_msg, NDMP_PROXY_ERROR, 0,
+					errstr, TRUE);
+			}
+			if (ipc_binary_write_message(&sess->proxy_device_chan->ipc,
+				    sess->proxy_device_chan->sock, send_msg) < 0) {
+				ndmalogf (sess, 0, 7, "error writing to device channel: %s",
+							strerror(errno));
+				/* TODO: shut down the connection */
+			}
+			break;
+		}
+
+		case NDMP_PROXY_CMD_TAPE_MTIO: {
 			struct ndm_control_agent *ca = &sess->control_acb;
-			char *command = c_packet->arguments[0].data;
-			int   count   = atoi(c_packet->arguments[1].data);
+			char *command = (char *)msg->args[NDMP_PROXY_COMMAND].data;
+			ipc_binary_message_t *send_msg;
+			long count;
+			ndmp9_error errcode;
+			int rc;
 
 			ndmalogf (sess, 0, 7, "got a CMD_TAPE_MTIO %s %d request", command, count);
+
+			count = strtol((char *)msg->args[NDMP_PROXY_COUNT].data, NULL, 10);
+
 			if (strcmp(command, "REWIND") == 0) {
 				rc = ndmca_media_mtio_tape (sess, NDMP9_MTIO_REW, 1, NULL);
 			} else if (strcmp(command, "EOF") == 0) {
 				rc = ndmca_media_mtio_tape (sess, NDMP9_MTIO_EOF, 1, NULL);
 			} else {
-				error_code = NDMP9_CLASS_NOT_SUPPORTED;
+				errcode = NDMP9_CLASS_NOT_SUPPORTED;
 			}
 			if (rc)
-				error_code = sess->plumb.tape->last_reply_error;
-			amprotocol_send_list(sess->protocol_device, REPLY_TAPE_MTIO, 1, ndmp9_error_to_str(error_code));
-		} else {
+				errcode = sess->plumb.tape->last_reply_error;
+			send_msg = ipc_binary_new_message(&sess->proxy_device_chan->ipc,
+						    NDMP_PROXY_REPLY_GENERIC);
+			if (rc) {
+				ndmp9_error errcode = sess->plumb.tape->last_reply_error;
+				char *errstr = ndmp9_error_to_str(errcode);
+				ipc_binary_add_arg(send_msg, NDMP_PROXY_ERRCODE, 0,
+					errstr, FALSE);
+				ipc_binary_add_arg(send_msg, NDMP_PROXY_ERROR, 0,
+					errstr, TRUE);
+			}
+			if (ipc_binary_write_message(&sess->proxy_device_chan->ipc,
+				    sess->proxy_device_chan->sock, send_msg) < 0) {
+				ndmalogf (sess, 0, 7, "error writing to device channel: %s",
+							strerror(errno));
+				/* TODO: shut down the connection */
+			}
+			break;
 		}
-	}
-end_device:
 
-	if (sess->proxy_application.ready) {
-	}
+		default: {
+		    /* TODO */
+		}
+		}
 
-	if (sess->proxy_changer.ready) {
+		ipc_binary_free_message(msg);
 	}
+}
+
+static void
+ndma_dispatch_proxy_application(
+    struct ndm_session *sess G_GNUC_UNUSED)
+{
+}
+
+static void
+ndma_dispatch_proxy_changer(
+    struct ndm_session *sess G_GNUC_UNUSED)
+{
+}
+
+int
+ndma_dispatch_proxy(
+    struct ndm_session *sess)
+{
+	/* monitor each of our potential connections */
+	ndma_dispatch_proxy_stdin(sess);
+	ndma_dispatch_proxy_listen(sess);
+	ndma_dispatch_proxy_device(sess);
+	ndma_dispatch_proxy_application(sess);
+	ndma_dispatch_proxy_changer(sess);
 
 	return 0;
 }
-

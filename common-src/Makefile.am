@@ -31,6 +31,7 @@ libamanda_la_SOURCES =		\
 	fileheader.c		\
 	glib-util.c		\
 	match.c			\
+	ndmp-proxy.c		\
 	packet.c		\
 	pipespawn.c		\
 	protocol.c		\
@@ -107,7 +108,7 @@ noinst_HEADERS =		\
 	file.h			\
 	fileheader.h		\
 	glib-util.h		\
-	ndmp-protocol.h		\
+	ndmp-proxy.h		\
 	packet.h		\
 	pipespawn.h		\
 	protocol.h		\
@@ -203,7 +204,7 @@ libtestutils_la_SOURCES = \
 
 # automake-style tests
 
-TESTS = amflock-test event-test semaphore-test queueing-test quoting-test
+TESTS = amflock-test event-test semaphore-test queueing-test quoting-test ipc-binary-test
 noinst_PROGRAMS = $(TESTS)
 
 amflock_test_SOURCES = amflock-test.c
@@ -220,6 +221,9 @@ queueing_test_LDADD = libamanda.la libtestutils.la
 
 quoting_test_SOURCES = quoting-test.c
 quoting_test_LDADD = libamanda.la libtestutils.la
+
+ipc_binary_test_SOURCES = ipc-binary-test.c
+ipc_binary_test_LDADD = libamanda.la libtestutils.la
 
 # scripts
 

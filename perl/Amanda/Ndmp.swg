@@ -24,7 +24,7 @@
 %include "exception.i"
 
 %{
-#include "../common-src/util.h"
+#include "ndmp-proxy.h"
 %}
 
 char *start_ndmp_proxy(void);

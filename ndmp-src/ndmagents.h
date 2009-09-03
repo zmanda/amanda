@@ -1051,6 +1051,16 @@ struct ndm_session_param {
 	char *			config_file_name;
 };
 
+/* bundle up an nmdchan (ndmjob's equivalent of an FdSource) and an
+ * ipc_binary_channel_t (buffers for ipc_binary protocol messages),
+ * along with a flag to indicate whether a particular proxy_channel
+ * is in use */
+struct proxy_channel {
+    int sock;
+    struct ndmchan ndm;
+    ipc_binary_channel_t ipc;
+};
+
 struct ndm_session {
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
 	struct ndm_control_agent control_acb;
@@ -1077,18 +1087,15 @@ struct ndm_session {
 	NDM_FLAG_DECL(conn_authorized)
 	NDM_FLAG_DECL(md5_challenge_valid)
 
+	/* ndmp-proxy-specific additions  to the session state */
 	int			connect_status;
 
 	int			proxy_port;
-	struct ndmchan		proxy_input;
-	struct ndmchan		proxy_listen;
-	struct ndmchan		proxy_device;
-	struct ndmchan		proxy_application;
-	struct ndmchan		proxy_changer;
-	amprotocol_t		*protocol_listen;
-	amprotocol_t		*protocol_device;
-	amprotocol_t		*protocol_application;
-	amprotocol_t		*protocol_changer;
+	struct ndmchan		stdin_chan;
+	struct ndmchan		listen_chan; /* listening socket */
+	struct proxy_channel	*proxy_device_chan;
+	struct proxy_channel	*proxy_application_chan;
+	struct proxy_channel	*proxy_changer_chan;
 
 #ifdef NDMOS_MACRO_SESSION_ADDITIONS
 	NDMOS_MACRO_SESSION_ADDITIONS

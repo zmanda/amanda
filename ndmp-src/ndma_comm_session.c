@@ -311,19 +311,16 @@ ndma_session_quantum (struct ndm_session *sess, int max_delay_secs)
 	/*
 	 * Add proxy channel to channel table
 	 */
-	if (sess->proxy_listen.fd > 0) {
-		chtab[n_chtab++] = &sess->proxy_input;
-		chtab[n_chtab++] = &sess->proxy_listen;
-	}
-	if (sess->proxy_application.fd > 0) {
-		chtab[n_chtab++] = &sess->proxy_application;
-	}
-	if (sess->proxy_device.fd > 0) {
-		chtab[n_chtab++] = &sess->proxy_device;
-	}
-	if (sess->proxy_changer.fd > 0) {
-		chtab[n_chtab++] = &sess->proxy_changer;
-	}
+	if (sess->stdin_chan.fd > -1) /* stdin is 0 */
+		chtab[n_chtab++] = &sess->stdin_chan;
+	if (sess->listen_chan.fd > 0)
+		chtab[n_chtab++] = &sess->listen_chan;
+	if (sess->proxy_device_chan && sess->proxy_device_chan->ndm.fd > 0)
+		chtab[n_chtab++] = &sess->proxy_device_chan->ndm;
+	if (sess->proxy_application_chan && sess->proxy_application_chan->ndm.fd > 0)
+		chtab[n_chtab++] = &sess->proxy_application_chan->ndm;
+	if (sess->proxy_changer_chan && sess->proxy_changer_chan->ndm.fd > 0)
+		chtab[n_chtab++] = &sess->proxy_changer_chan->ndm;
 
 	/*
 	 * Block awaiting ready I/O. Many channel buffers

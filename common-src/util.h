@@ -347,10 +347,5 @@ void proplist_add_to_argv(gpointer key_p,
 			  gpointer value_p,
 			  gpointer user_data_p);
 
-char *start_ndmp_proxy(void);
-void  stop_ndmp_proxy(void);
-int   connect_to_ndmp_proxy(char **errmsg);
-int   proxy_pid(void);
-
 
 #endif	/* UTIL_H */

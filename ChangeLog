@@ -1,4 +1,17 @@
 2009-09-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/ipc-binary.c common-src/ipc-binary.h: new, generic
+	  binary communication protocol
+	* common-src/ipc-binary-test.c: tests for same
+	* common-src/ndmp-protocol.h: removed
+	* common-src/ndmp-proxy.c common-src/ndmp-proxy.h: code to interact
+	  with ndmp-proxy, including protocol
+	* common-src/util.c common-src/util.h: remove ndmp-proxy stuff
+	* common-src/Makefile.am: rename/add files
+	* ndmp-src/ndma_comm_proxy.c ndmp-src/ndma_comm_session.c
+	  ndmp-src/ndmagents.h perl/Amanda/Ndmp.swg device-src/ndmp-device.c:
+	  use new protocol
+
+2009-09-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Header.pl: remove reference to Amanda::Cmdline
 
 2009-09-03  Dustin J. Mitchell <dustin@zmanda.com>

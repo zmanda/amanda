@@ -24,37 +24,41 @@
  * file named AUTHORS, in the root directory of this distribution.
  */
 
-/*
- * $Id: ndmp_protocol.h,v $
- *
- * Define feature test related items.
- */
-
 #ifndef NDMP_PROTOCOL_H
 #define NDMP_PROTOCOL_H
 
 #include "ipc-binary.h"
 
-/* note that this will generate duplicate symbols if #included multiple times
- * in the same executable */
+enum {
+    NDMP_PROXY_CMD_SELECT_SERVICE = 1,
+    NDMP_PROXY_REPLY_GENERIC = 2,
+    NDMP_PROXY_CMD_TAPE_OPEN = 3,
+    NDMP_PROXY_CMD_TAPE_CLOSE = 4,
+    NDMP_PROXY_CMD_TAPE_MTIO = 5,
+    NDMP_PROXY_CMD_TAPE_WRITE = 6,
+    NDMP_PROXY_CMD_TAPE_READ = 7,
+    NDMP_PROXY_REPLY_TAPE_READ = 8,
+};
 
-amprotocol_t listen_ndmp = { 0xC74F, -1, {
-   { CMD_DEVICE      , 0 },  /*						*/
-   { REPLY_DEVICE    , 1 },  /* 					*/
-   { CMD_MAX, 0 } }};
+enum {
+    NDMP_PROXY_FILENAME = 1,
+    NDMP_PROXY_MODE = 2,
+    NDMP_PROXY_HOST = 3,
+    NDMP_PROXY_USER_PASS = 4,
+    NDMP_PROXY_ERRCODE = 5,
+    NDMP_PROXY_ERROR = 6,
+    NDMP_PROXY_COMMAND = 7,
+    NDMP_PROXY_COUNT = 8,
+    NDMP_PROXY_DATA = 9,
+    NDMP_PROXY_SERVICE = 10,
+};
 
-amprotocol_t device_ndmp = { 0xD85A, -1, {
-   { CMD_TAPE_OPEN   , 4 },  /* filename mode host user,password	*/
-   { REPLY_TAPE_OPEN , 1 },  /* filename err-code			*/
-   { CMD_TAPE_CLOSE  , 0 },  /* 					*/
-   { REPLY_TAPE_CLOSE, 1 },  /* error-code				*/
-   { CMD_TAPE_MTIO   , 2 },  /* command count				*/
-   { REPLY_TAPE_MTIO , 1 },  /* error-code				*/
-   { CMD_TAPE_WRITE  , 1 },  /* buffer					*/
-   { REPLY_TAPE_WRITE, 1 },  /* error-code				*/
-   { CMD_TAPE_READ   , 1 },  /* size					*/
-   { REPLY_TAPE_READ , 2 },  /* error-code "DATA"			*/
-   { CMD_MAX, 0 } }};
+ipc_binary_proto_t *get_ndmp_proxy_proto(void);
+
+char *start_ndmp_proxy(void);
+void  stop_ndmp_proxy(void);
+int   connect_to_ndmp_proxy(char **errmsg);
+int   proxy_pid(void);
 
 #endif /* NDMP_PROTOCOL_H */
 
