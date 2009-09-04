@@ -1119,12 +1119,31 @@ int
 set_root_privs(int need_root)
 {
 #ifndef SINGLE_USERID
+    static gboolean first_call = TRUE;
+    static uid_t unpriv = 1;
+
+    if (first_call) {
+	/* save the original real userid (that of our invoker) */
+	unpriv = getuid();
+
+	/* and set all of our userids (including, importantly, the saved
+	 * userid) to 0 */
+	setuid(0);
+
+	/* don't need to do this next time */
+	first_call = FALSE;
+    }
+
     if (need_root) {
+	if (geteuid() == 0) return 1; /* already done */
+
         if (seteuid(0) == -1) return 0;
         /* (we don't switch the group back) */
     } else {
-	if (geteuid() != 0) return 0;
-        if (seteuid(getuid()) == -1) return 0;
+	if (geteuid() != 0) return 1; /* already done */
+
+	/* set the *effective* userid only */
+        if (seteuid(unpriv) == -1) return 0;
         if (setegid(getgid()) == -1) return 0;
     }
 #else
@@ -1137,9 +1156,10 @@ int
 become_root(void)
 {
 #ifndef SINGLE_USERID
-    // if euid !=0, it set only euid
-    if (setuid(0) == -1) return 0;
-    // will set ruid because euid == 0.
+    /* first, set the effective userid to 0 */
+    if (seteuid(0) == -1) return 0;
+
+    /* then, set all of the userids to 0 */
     if (setuid(0) == -1) return 0;
 #endif
     return 1;
