@@ -127,11 +127,11 @@ sub generate_new_dst_label {
 
 sub add_dump_to_db {
     my $self = shift;
-    my ($next_file) = @_;
+    my ($next_file, $filenum) = @_;
 
     my $dump = {
 	'label' => $self->{'dst_label'},
-	'filenum' => $next_file->{'filenum'},
+	'filenum' => $filenum,
 	'dump_timestamp' => $next_file->{'dump_timestamp'},
 	'write_timestamp' => $self->{'dst_timestamp'},
 	'hostname' => $next_file->{'hostname'},
@@ -349,6 +349,7 @@ sub load_next_volumes {
 sub seek_and_copy {
     my $self = shift;
     my ($next_file) = @_;
+    my $dst_filenum;
 
     vlog("Copying file #$next_file->{filenum}");
 
@@ -372,6 +373,9 @@ sub seek_and_copy {
 	fail "Error starting new file: " . $self->{'dst_dev'}->error_or_status();
     }
 
+    # and track the destination filenum correctly
+    $dst_filenum = $self->{'dst_dev'}->file();
+
     # now put together a transfer to copy that data.
     my $xfer;
     my $xfer_cb = sub {
@@ -386,7 +390,7 @@ sub seek_and_copy {
 	    debug("transfer completed");
 
 	    # add this dump to the logfile
-	    $self->add_dump_to_db($next_file);
+	    $self->add_dump_to_db($next_file, $dst_filenum);
 
 	    # start up the next copy
 	    $self->start_next_file();

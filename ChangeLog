@@ -1,3 +1,6 @@
+2009-09-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amvault.pl: use destination volume filenums in amvault
+
 2009-09-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/util.c: setuid(0) initially, so that we can release
 	  and acquire root privs
