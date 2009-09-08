@@ -346,7 +346,7 @@ main(
     int mailout = 1;
     char *mailto = NULL;
     char *lbl_templ = NULL;
-    config_overwrites_t *cfg_ovr = NULL;
+    config_overrides_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
     char *mailer;
 
@@ -393,7 +393,7 @@ main(
 	cfg_opt = argv[1];
 	--argc; ++argv;
 
-	cfg_ovr = new_config_overwrites(argc/2);
+	cfg_ovr = new_config_overrides(argc/2);
 	while((opt = getopt(argc, argv, "o:M:f:l:p:i")) != EOF) {
 	    switch(opt) {
 	    case 'i': 
@@ -445,7 +445,7 @@ main(
 		}
                 break;
 	    case 'o':
-		add_config_overwrite_opt(cfg_ovr, optarg);
+		add_config_override_opt(cfg_ovr, optarg);
 		break;
             case '?':
 		usage();
@@ -469,7 +469,7 @@ main(
 
     /* ignore any errors reading the config file (amreport can run without a config) */
     config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
-    apply_config_overwrites(cfg_ovr);
+    apply_config_overrides(cfg_ovr);
 
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
 	config_print_errors();

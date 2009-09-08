@@ -140,7 +140,7 @@ main(
     int i;
     char *conf_diskfile;
     char *conf_infofile;
-    config_overwrites_t *cfg_ovr = NULL;
+    config_overrides_t *cfg_ovr = NULL;
 
     /*
      * Configure program for internationalization:
@@ -163,7 +163,7 @@ main(
 
     add_amanda_log_handler(amanda_log_stderr);
 
-    cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
+    cfg_ovr = extract_commandline_config_overrides(&argc, &argv);
 
     if(argc < 3) usage();
 
@@ -173,7 +173,7 @@ main(
     }
 
     config_init(CONFIG_INIT_EXPLICIT_NAME, argv[1]);
-    apply_config_overwrites(cfg_ovr);
+    apply_config_overrides(cfg_ovr);
 
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     read_diskfile(conf_diskfile, &diskq);

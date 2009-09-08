@@ -34,11 +34,11 @@ use Getopt::Long;
 
 Amanda::Util::setup_application("amcheck-device", "server", $CONTEXT_CMDLINE);
 
-my $config_overwrites = new_config_overwrites($#ARGV+1);
+my $config_overrides = new_config_overrides($#ARGV+1);
 my $overwrite = 0;
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
-    'o=s' => sub { add_config_overwrite_opt($config_overwrites, $_[1]); },
+    'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
     'w' => \$overwrite,
 ) or usage();
 
@@ -48,7 +48,7 @@ if (@ARGV != 1) {
 }
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, $ARGV[0]);
-apply_config_overwrites($config_overwrites);
+apply_config_overrides($config_overrides);
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();

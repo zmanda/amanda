@@ -30,7 +30,7 @@ Amanda::Config - access to Amanda configuration parameters
 
     my $config_name = shift @ARGV;
     config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
-    apply_config_overwrites($config_overwrites);
+    apply_config_overrides($config_overrides);
     my ($cfgerr_level, @cfgerr_errors) = config_errors();
     if ($cfgerr_level >= $CFGERR_WARNINGS) {
 	config_print_errors();
@@ -94,7 +94,7 @@ C<get_config_filename()>, respectively.
 This module collects configuration errors and warnings in a list, and also
 tracks the overall error level with an enumeration: C<$CFGERR_OK>,
 C<$CFGERR_WARNINGS>, and C<$CFGERR_ERRORS>.  C<config_init> and
-C<apply_config_overwrites> both return the current level.  The level and the
+C<apply_config_overrides> both return the current level.  The level and the
 list of error messages are available from C<config_errors>:
 
   my ($cfgerr_level, @errors) = Amanda::Config::config_errors();
@@ -107,28 +107,28 @@ stderr.  The error state can be cleared with C<config_clear_errors>.
 Most Amanda applications accept the command-line option C<-o>
 to "overwrite" configuration values in C<amanda.conf>.  In Perl
 applications, these options should be parsed with L<Getopt::Long|Getopt::Long>, with
-the action being a call to C<add_config_overwrite_opt>.  For example:
+the action being a call to C<add_config_override_opt>.  For example:
 
-  my $config_overwrites = new_config_overwrites($#ARGV+1);
+  my $config_overrides = new_config_overrides($#ARGV+1);
     GetOptions(
 	# ...
-	'o=s' => sub { add_config_overwrite_opt($config_overwrites, $_[1]); },
+	'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
     ) or usage();
   my $cfg_ok = config_init($CONFIG_INIT_EXPLICIT_NAME | $CONFIG_INIT_USE_CWD, $config_name);
-  apply_config_overwrites($config_overwrites);
+  apply_config_overrides($config_overrides);
 
-C<new_config_overwrites($size_estimate)> creates a new
+C<new_config_overrides($size_estimate)> creates a new
 overwrites object, using the given size as an estimate of
 the number of items it will contain (C<$#ARGC/2> is a good
 estimate).  Individual configuration options are then added via
-C<add_config_overwrite($co, $key, $value)> (which takes a key/value
-pair) or C<add_config_overwrite_opt($co, $optarg)>, which parses a
+C<add_config_override($co, $key, $value)> (which takes a key/value
+pair) or C<add_config_override_opt($co, $optarg)>, which parses a
 string following C<-o> on the command line.
 
 Once the overwrites are gathered, they are applied with
-C<apply_config_overwrites($co)>, which applies the overwrites to the
+C<apply_config_overrides($co)>, which applies the overwrites to the
 active configuration.  No further operations can be performed on the
-overwrites object after C<apply_config_overwrites> has been called.
+overwrites object after C<apply_config_overrides> has been called.
 
 The utility function C<get_config_options()> returns a list of
 command-line arguments to represent any overwrites that were used

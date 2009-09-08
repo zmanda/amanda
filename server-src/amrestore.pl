@@ -52,7 +52,7 @@ EOF
 
 Amanda::Util::setup_application("amrestore", "server", $CONTEXT_CMDLINE);
 
-my $config_overwrites = new_config_overwrites($#ARGV+1);
+my $config_overrides = new_config_overrides($#ARGV+1);
 
 my ($opt_config, $opt_blocksize, $opt_raw, $opt_compress, $opt_compress_best,
     $opt_pipe, $opt_header, $opt_filenum, $opt_label, $opt_holding, $opt_restore_src);
@@ -70,7 +70,7 @@ GetOptions(
     'h' => \$opt_header,
     'f=i' => \$opt_filenum,
     'l=s' => \$opt_label,
-    'o=s' => sub { add_config_overwrite_opt($config_overwrites, $_[1]); },
+    'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
 ) or usage();
 
 $opt_compress = 1 if $opt_compress_best;
@@ -99,7 +99,7 @@ if ($opt_config) {
 } else {
     config_init(0, undef);
 }
-apply_config_overwrites($config_overwrites);
+apply_config_overrides($config_overrides);
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();

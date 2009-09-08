@@ -59,7 +59,7 @@ main(
     int		argc,
     char **	argv)
 {
-    config_overwrites_t *cfg_ovr;
+    config_overrides_t *cfg_ovr;
     char *hostname;
     char *auth;
     char *service;
@@ -98,11 +98,11 @@ main(
 
     /* process arguments */
 
-    cfg_ovr = new_config_overwrites(argc/2);
+    cfg_ovr = new_config_overrides(argc/2);
     input_file = stdin;
     while((opt = getopt(argc, argv, "o:f:")) != EOF) {
 	switch(opt) {
-	case 'o':	add_config_overwrite_opt(cfg_ovr, optarg);
+	case 'o':	add_config_override_opt(cfg_ovr, optarg);
 			break;
 	case 'f':	if (*optarg == '/') {
 			    input_file = fopen(optarg, "r");
@@ -124,7 +124,7 @@ main(
 
     /* set a default config */
     config_init(CONFIG_INIT_CLIENT, NULL);
-    apply_config_overwrites(cfg_ovr);
+    apply_config_overrides(cfg_ovr);
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     if (config_errors(NULL) >= CFGERR_WARNINGS) {

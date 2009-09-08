@@ -38,7 +38,7 @@ sub usage() {
 
 Amanda::Util::setup_application("amcleanup", "server", $CONTEXT_SCRIPTUTIL);
 
-my $config_overwrites = new_config_overwrites($#ARGV+1);
+my $config_overrides = new_config_overrides($#ARGV+1);
 
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
@@ -46,7 +46,7 @@ GetOptions(
     'p' => \$process_alive,
     'v' => \$verbose,
     'help|usage' => \&usage,
-    'o=s' => sub { add_config_overwrite_opt($config_overwrites, $_[1]); },
+    'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
 ) or usage();
 
 my $config_name = shift @ARGV;
@@ -56,7 +56,7 @@ if ($kill_enable && $process_alive) {
 }
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
-apply_config_overwrites($config_overwrites);
+apply_config_overrides($config_overrides);
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();

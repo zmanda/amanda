@@ -308,7 +308,7 @@ main(
     char *q = NULL;
     int a;
     int res;
-    config_overwrites_t *cfg_ovr = NULL;
+    config_overrides_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
     int dumper_setuid;
 
@@ -336,11 +336,11 @@ main(
     add_amanda_log_handler(amanda_log_stderr);
     add_amanda_log_handler(amanda_log_trace_log);
 
-    cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
+    cfg_ovr = extract_commandline_config_overrides(&argc, &argv);
     if (argc > 1)
 	cfg_opt = argv[1];
     config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
-    apply_config_overwrites(cfg_ovr);
+    apply_config_overrides(cfg_ovr);
 
     if (!dumper_setuid) {
 	error(_("dumper must be run setuid root"));

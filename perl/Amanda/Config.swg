@@ -687,23 +687,23 @@ void config_clear_errors(void);
 cfgerr_level_t config_errors(GSList **ERRLIST);
 
 
-config_overwrites_t *new_config_overwrites(int size_estimate);
-void free_config_overwrites(config_overwrites_t *co);
-void add_config_overwrite(config_overwrites_t *co,
+config_overrides_t *new_config_overrides(int size_estimate);
+void free_config_overrides(config_overrides_t *co);
+void add_config_override(config_overrides_t *co,
 			 char *key,
 			 char *value);
-void add_config_overwrite_opt(config_overwrites_t *co,
+void add_config_override_opt(config_overrides_t *co,
 			      char *optarg);
-cfgerr_level_t apply_config_overwrites(config_overwrites_t *co);
-cfgerr_level_t reapply_config_overwrites(void);
+cfgerr_level_t apply_config_overrides(config_overrides_t *co);
+cfgerr_level_t reapply_config_overrides(void);
 
 amglue_export_tag(init,
     config_init config_uninit get_config_options
     get_config_name get_config_dir get_config_filename
     config_print_errors config_clear_errors config_errors
-    new_config_overwrites free_config_overwrites add_config_overwrite
-    add_config_overwrite_opt apply_config_overwrites
-    reapply_config_overwrites
+    new_config_overrides free_config_overrides add_config_override
+    add_config_override_opt apply_config_overrides
+    reapply_config_overrides
 );
 
 /*

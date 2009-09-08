@@ -301,13 +301,13 @@ sub find_validation_command {
 Amanda::Util::setup_application("amcheckdump", "server", $CONTEXT_CMDLINE);
 
 my $timestamp = undef;
-my $config_overwrites = new_config_overwrites($#ARGV+1);
+my $config_overrides = new_config_overrides($#ARGV+1);
 
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
     'timestamp|t=s' => \$timestamp,
     'help|usage|?' => \&usage,
-    'o=s' => sub { add_config_overwrite_opt($config_overwrites, $_[1]); },
+    'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
 ) or usage();
 
 usage() if (@ARGV < 1);
@@ -317,7 +317,7 @@ if (defined $timestamp) { $timestamp_argument = 1; }
 
 my $config_name = shift @ARGV;
 config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
-apply_config_overwrites($config_overwrites);
+apply_config_overrides($config_overrides);
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();

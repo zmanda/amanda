@@ -92,7 +92,7 @@ returns false.
 =head1 SEE ALSO
 
 L<Amanda::Config> handles C<-o> options itself, through
-C<config_overwrites>.
+C<config_overrides>.
 
 =cut
 

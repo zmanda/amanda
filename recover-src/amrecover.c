@@ -320,7 +320,7 @@ main(
     char *req = NULL;
     int response_error;
     struct tm *tm;
-    config_overwrites_t *cfg_ovr;
+    config_overrides_t *cfg_ovr;
 
     /*
      * Configure program for internationalization:
@@ -359,13 +359,13 @@ main(
 
     /* treat amrecover-specific command line options as the equivalent
      * -o command-line options to set configuration values */
-    cfg_ovr = new_config_overwrites(argc/2);
+    cfg_ovr = new_config_overrides(argc/2);
 
     /* If the first argument is not an option flag, then we assume
      * it is a configuration name to match the syntax of the other
      * Amanda utilities. */
     if (argc > 1 && argv[1][0] != '-') {
-	add_config_overwrite(cfg_ovr, "conf", argv[1]);
+	add_config_override(cfg_ovr, "conf", argv[1]);
 
 	/* remove that option from the command line */
 	argv[1] = argv[0];
@@ -376,23 +376,23 @@ main(
     while ((i = getopt(argc, argv, "o:C:s:t:d:U")) != EOF) {
 	switch (i) {
 	    case 'C':
-		add_config_overwrite(cfg_ovr, "conf", optarg);
+		add_config_override(cfg_ovr, "conf", optarg);
 		break;
 
 	    case 's':
-		add_config_overwrite(cfg_ovr, "index_server", optarg);
+		add_config_override(cfg_ovr, "index_server", optarg);
 		break;
 
 	    case 't':
-		add_config_overwrite(cfg_ovr, "tape_server", optarg);
+		add_config_override(cfg_ovr, "tape_server", optarg);
 		break;
 
 	    case 'd':
-		add_config_overwrite(cfg_ovr, "tapedev", optarg);
+		add_config_override(cfg_ovr, "tapedev", optarg);
 		break;
 
 	    case 'o':
-		add_config_overwrite_opt(cfg_ovr, optarg);
+		add_config_override_opt(cfg_ovr, optarg);
 		break;
 
 	    case 'U':
@@ -407,10 +407,10 @@ main(
     }
 
     /* and now try to load the configuration named in that file */
-    apply_config_overwrites(cfg_ovr);
+    apply_config_overrides(cfg_ovr);
     config_init(CONFIG_INIT_CLIENT | CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_OVERLAY,
 		getconf_str(CNF_CONF));
-    reapply_config_overwrites();
+    reapply_config_overrides();
 
     check_running_as(RUNNING_AS_ROOT);
 

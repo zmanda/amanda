@@ -310,7 +310,7 @@ main(
     char *e;
     rst_flags_t *rst_flags;
     int minimum_arguments;
-    config_overwrites_t *cfg_ovr = NULL;
+    config_overrides_t *cfg_ovr = NULL;
     disklist_t diskq;
     char * conf_diskfile = NULL;
     am_feature_t *our_features = am_init_feature_set();
@@ -338,7 +338,7 @@ main(
     rst_flags->wait_tape_prompt = 1;
 
     /* handle options */
-    cfg_ovr = new_config_overwrites(argc/2);
+    cfg_ovr = new_config_overrides(argc/2);
     while( (opt = getopt_long(argc, argv, "alht:scCpb:nwi:d:O:o:", long_options, NULL)) != -1) {
 	switch(opt) {
 	case 0:
@@ -396,7 +396,7 @@ main(
 	case 'w': rst_flags->delay_assemble = 1; break;
 	case 'a': rst_flags->wait_tape_prompt = 0; break;
 	case 'h': rst_flags->headers = 1; break;
-	case 'o': add_config_overwrite_opt(cfg_ovr, optarg); break;
+	case 'o': add_config_override_opt(cfg_ovr, optarg); break;
 	default:
 	    usage();
 	    /*NOTREACHED*/
@@ -452,7 +452,7 @@ main(
     }
 
     config_init(CONFIG_INIT_EXPLICIT_NAME, argv[optind++]);
-    apply_config_overwrites(cfg_ovr);
+    apply_config_overrides(cfg_ovr);
 
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     read_diskfile(conf_diskfile, &diskq);

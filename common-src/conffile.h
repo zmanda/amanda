@@ -1129,41 +1129,41 @@ void config_add_error(cfgerr_level_t level, char *errmsg);
  */
 
 /* opaque type */
-typedef struct config_overwrites_s config_overwrites_t;
+typedef struct config_overrides_s config_overrides_t;
 
-/* Create a new, empty config_overwrites object.
+/* Create a new, empty config_overrides object.
  *
  * @param size_estimate: a guess at the number of overwrites; argc/2 is a 
  *  good estimate.
  * @returns: new object
  */
-config_overwrites_t *new_config_overwrites(int size_estimate);
+config_overrides_t *new_config_overrides(int size_estimate);
 
-/* Free a config_overwrites object.  This usually won't be needed, as
- * apply_config_overwrites takes ownership of the overwrites for you.
+/* Free a config_overrides object.  This usually won't be needed, as
+ * apply_config_overrides takes ownership of the overwrites for you.
  *
- * @param co: config_overwrites object
+ * @param co: config_overrides object
  */
-void free_config_overwrites(config_overwrites_t *co);
+void free_config_overrides(config_overrides_t *co);
 
-/* Add an overwrite to a config_overwrites object.
+/* Add an overwrite to a config_overrides object.
  *
- * @param co: the config_overwrites object
+ * @param co: the config_overrides object
  * @param key: the configuration parameter's key, possibly with the format
  * SUBTYPE:NAME:KEYWORD
  * @param value: the value for the parameter, as would be seen in amanda.conf
  */
-void add_config_overwrite(config_overwrites_t *co,
+void add_config_override(config_overrides_t *co,
 			 char *key,
 			 char *value);
 
-/* Add an overwrite option from the command line to a config_overwrites
+/* Add an overwrite option from the command line to a config_overrides
  * object.  Calls error() with any errors
  *
- * @param co: the config_overwrites object
+ * @param co: the config_overrides object
  * @param optarg: the value of the command-line option
  */
-void add_config_overwrite_opt(config_overwrites_t *co,
+void add_config_override_opt(config_overrides_t *co,
 			      char *optarg);
 
 /* Given a command line, represented as argc/argv, extract any -o options
@@ -1171,25 +1171,25 @@ void add_config_overwrite_opt(config_overwrites_t *co,
  *
  * This is the deprecated way to extract config overwrites, for applications
  * which do not use getopt.  The preferred method is to use getopt and
- * call add_config_overwrite_opt for any -o options.
+ * call add_config_override_opt for any -o options.
  *
  * @param argc: (in/out) command-line length
  * @param argv: (in/out) command-line strings
- * @returns: newly allocated config_overwrites object
+ * @returns: newly allocated config_overrides object
  */
-config_overwrites_t *
-extract_commandline_config_overwrites(int *argc,
+config_overrides_t *
+extract_commandline_config_overrides(int *argc,
 				      char ***argv);
 
 /* Apply configuration overwrites to the current configuration and take
- * ownership of the config_overwrites object.  It is the caller's
+ * ownership of the config_overrides object.  It is the caller's
  * responsibility to handle any errors.
  *
- * @param co: the config_overwrites object
+ * @param co: the config_overrides object
  * @returns: current error level
  */
-cfgerr_level_t apply_config_overwrites(config_overwrites_t *co);
-cfgerr_level_t reapply_config_overwrites(void);
+cfgerr_level_t apply_config_overrides(config_overrides_t *co);
+cfgerr_level_t reapply_config_overrides(void);
 
 /*
  * Initialization
@@ -1238,7 +1238,7 @@ cfgerr_level_t config_init(
  */
 void config_uninit(void);
 
-/* Encode any applied config_overwrites into a strv format suitale for
+/* Encode any applied config_overrides into a strv format suitale for
  * executing another Amanda tool.
  *
  * The * result is dynamically allocated and NULL terminated.  There is no

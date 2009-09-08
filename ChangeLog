@@ -1,3 +1,19 @@
+2009-09-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-glue.pl common-src/amgetconf.pl
+	  common-src/conffile.c common-src/conffile.h device-src/amdevcheck.pl
+	  device-src/amtapetype.pl installcheck/Amanda_Config.pl
+	  installcheck/amcheck-device.pl perl/Amanda/Cmdline.pod
+	  perl/Amanda/Config.pod perl/Amanda/Config.swg recover-src/amrecover.c
+	  restore-src/amfetchdump.c server-src/amadmin.c
+	  server-src/amcheck-device.pl server-src/amcheck.c
+	  server-src/amcheckdump.pl server-src/amcleanup.pl server-src/amflush.c
+	  server-src/amlabel.pl server-src/amlogroll.c server-src/amrestore.pl
+	  server-src/amservice.c server-src/amtape.pl server-src/amtrmidx.c
+	  server-src/amtrmlog.c server-src/amvault.pl server-src/chunker.c
+	  server-src/driver.c server-src/dumper.c server-src/planner.c
+	  server-src/reporter.c server-src/taper.pl: change "config_overwrite"
+	  to "config_override"
+
 2009-09-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amvault.pl: use destination volume filenums in amvault
 

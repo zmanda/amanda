@@ -556,7 +556,7 @@ static gboolean config_initialized = FALSE;
 static gboolean config_client = FALSE;
 
 /* What config overwrites are applied? */
-static config_overwrites_t *applied_config_overwrites = NULL;
+static config_overrides_t *applied_config_overrides = NULL;
 
 /* All global parameters */
 static val_t conf_data[CNF_CNF];
@@ -638,15 +638,15 @@ static void conf_init_application(val_t *val);
  * Command-line Handling
  */
 
-typedef struct config_overwrite_s {
+typedef struct config_override_s {
     char *key;
     char *value;
-} config_overwrite_t;
+} config_override_t;
 
-struct config_overwrites_s {
+struct config_overrides_s {
     int n_allocated;
     int n_used;
-    config_overwrite_t *ovr;
+    config_override_t *ovr;
 };
 
 /*
@@ -4175,7 +4175,7 @@ config_init(
 	config_dir = newstralloc(config_dir, CONFIG_DIR);
     } else {
 	/* ok, then, we won't read anything (for e.g., amrestore), but
-	 * will set up for server-side config_overwrites */
+	 * will set up for server-side config_overrides */
 	amfree(config_name);
 	amfree(config_dir);
 	keytable = server_keytab;
@@ -4302,9 +4302,9 @@ config_uninit(void)
     for(i=0; i<CNF_CNF; i++)
 	free_val_t(&conf_data[i]);
 
-    if (applied_config_overwrites) {
-	free_config_overwrites(applied_config_overwrites);
-	applied_config_overwrites = NULL;
+    if (applied_config_overrides) {
+	free_config_overrides(applied_config_overrides);
+	applied_config_overrides = NULL;
     }
 
     amfree(config_name);
@@ -4517,18 +4517,18 @@ get_config_options(
 {
     char             **config_options;
     char	     **config_option;
-    int		     n_applied_config_overwrites = 0;
+    int		     n_applied_config_overrides = 0;
     int		     i;
 
-    if (applied_config_overwrites)
-	n_applied_config_overwrites = applied_config_overwrites->n_used;
+    if (applied_config_overrides)
+	n_applied_config_overrides = applied_config_overrides->n_used;
 
-    config_options = alloc((first+n_applied_config_overwrites+1)*SIZEOF(char *));
+    config_options = alloc((first+n_applied_config_overrides+1)*SIZEOF(char *));
     config_option = config_options + first;
 
-    for (i = 0; i < n_applied_config_overwrites; i++) {
-	char *key = applied_config_overwrites->ovr[i].key;
-	char *value = applied_config_overwrites->ovr[i].value;
+    for (i = 0; i < n_applied_config_overrides; i++) {
+	char *key = applied_config_overrides->ovr[i].key;
+	char *value = applied_config_overrides->ovr[i].value;
 	*config_option = vstralloc("-o", key, "=", value, NULL);
 	config_option++;
     }
@@ -5280,11 +5280,11 @@ getconf_unit_divisor(void)
  * Command-line Handling Implementation
  */
 
-config_overwrites_t *
-new_config_overwrites(
+config_overrides_t *
+new_config_overrides(
     int size_estimate)
 {
-    config_overwrites_t *co;
+    config_overrides_t *co;
 
     if (size_estimate <= 0)
 	size_estimate = 10;
@@ -5298,8 +5298,8 @@ new_config_overwrites(
 }
 
 void
-free_config_overwrites(
-    config_overwrites_t *co)
+free_config_overrides(
+    config_overrides_t *co)
 {
     int i;
 
@@ -5312,8 +5312,8 @@ free_config_overwrites(
     amfree(co);
 }
 
-void add_config_overwrite(
-    config_overwrites_t *co,
+void add_config_override(
+    config_overrides_t *co,
     char *key,
     char *value)
 {
@@ -5333,8 +5333,8 @@ void add_config_overwrite(
 }
 
 void
-add_config_overwrite_opt(
-    config_overwrites_t *co,
+add_config_override_opt(
+    config_overrides_t *co,
     char *optarg)
 {
     char *value;
@@ -5347,28 +5347,28 @@ add_config_overwrite_opt(
     }
 
     *value = '\0';
-    add_config_overwrite(co, optarg, value+1);
+    add_config_override(co, optarg, value+1);
     *value = '=';
 }
 
-config_overwrites_t *
-extract_commandline_config_overwrites(
+config_overrides_t *
+extract_commandline_config_overrides(
     int *argc,
     char ***argv)
 {
     int i, j, moveup;
-    config_overwrites_t *co = new_config_overwrites(*argc/2);
+    config_overrides_t *co = new_config_overrides(*argc/2);
 
     i = 0;
     while (i<*argc) {
 	if(strncmp((*argv)[i],"-o",2) == 0) {
 	    if(strlen((*argv)[i]) > 2) {
-		add_config_overwrite_opt(co, (*argv)[i]+2);
+		add_config_override_opt(co, (*argv)[i]+2);
 		moveup = 1;
 	    }
 	    else {
 		if (i+1 >= *argc) error(_("expect something after -o"));
-		add_config_overwrite_opt(co, (*argv)[i+1]);
+		add_config_override_opt(co, (*argv)[i+1]);
 		moveup = 2;
 	    }
 
@@ -5385,11 +5385,11 @@ extract_commandline_config_overwrites(
     return co;
 }
 
-static cfgerr_level_t internal_apply_config_overwrites(config_overwrites_t *co);
+static cfgerr_level_t internal_apply_config_overrides(config_overrides_t *co);
 
 cfgerr_level_t
-apply_config_overwrites(
-    config_overwrites_t *co)
+apply_config_overrides(
+    config_overrides_t *co)
 {
     int i;
 
@@ -5397,19 +5397,19 @@ apply_config_overwrites(
     assert(keytable != NULL);
     assert(parsetable != NULL);
 
-    cfgerr_level = internal_apply_config_overwrites(co);
+    cfgerr_level = internal_apply_config_overrides(co);
 
     /* merge these overwrites with previous overwrites, if necessary */
-    if (applied_config_overwrites) {
+    if (applied_config_overrides) {
 	for (i = 0; i < co->n_used; i++) {
 	    char *key = co->ovr[i].key;
 	    char *value = co->ovr[i].value;
 
-	    add_config_overwrite(applied_config_overwrites, key, value);
+	    add_config_override(applied_config_overrides, key, value);
 	}
-	free_config_overwrites(co);
+	free_config_overrides(co);
     } else {
-	applied_config_overwrites = co;
+	applied_config_overrides = co;
     }
 
     update_derived_values(config_client);
@@ -5418,13 +5418,13 @@ apply_config_overwrites(
 }
 
 cfgerr_level_t
-reapply_config_overwrites(void)
+reapply_config_overrides(void)
 {
-    if(!applied_config_overwrites) return cfgerr_level;
+    if(!applied_config_overrides) return cfgerr_level;
     assert(keytable != NULL);
     assert(parsetable != NULL);
 
-    cfgerr_level = internal_apply_config_overwrites(applied_config_overwrites);
+    cfgerr_level = internal_apply_config_overrides(applied_config_overrides);
 
     update_derived_values(config_client);
 
@@ -5432,8 +5432,8 @@ reapply_config_overwrites(void)
 }
 
 static cfgerr_level_t
-internal_apply_config_overwrites(
-    config_overwrites_t *co)
+internal_apply_config_overrides(
+    config_overrides_t *co)
 {
     int i;
 

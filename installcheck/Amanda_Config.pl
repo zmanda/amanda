@@ -27,7 +27,7 @@ use Amanda::Config qw( :init :getconf );
 use Amanda::Debug;
 
 my $testconf;
-my $config_overwrites;
+my $config_overrides;
 
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
@@ -52,9 +52,9 @@ is(config_init(0, undef), $CFGERR_OK,
     "Initialize with no configuration, passing a NULL config name")
     or diag_config_errors();
 
-$config_overwrites = new_config_overwrites(1);
-add_config_overwrite($config_overwrites, "tapedev", "null:TEST");
-apply_config_overwrites($config_overwrites);
+$config_overrides = new_config_overrides(1);
+add_config_override($config_overrides, "tapedev", "null:TEST");
+apply_config_overrides($config_overrides);
 
 is(getconf($CNF_TAPEDEV), "null:TEST",
     "config overwrites work with null config");
@@ -513,21 +513,21 @@ SKIP: { # changer
 ##
 # Test config overwrites (using the config from above)
 
-$config_overwrites = new_config_overwrites(1); # note estimate is too small
-add_config_overwrite($config_overwrites, "tapedev", "null:TEST");
-add_config_overwrite($config_overwrites, "tpchanger", "chg-test");
-add_config_overwrite_opt($config_overwrites, "org=KAOS");
-apply_config_overwrites($config_overwrites);
+$config_overrides = new_config_overrides(1); # note estimate is too small
+add_config_override($config_overrides, "tapedev", "null:TEST");
+add_config_override($config_overrides, "tpchanger", "chg-test");
+add_config_override_opt($config_overrides, "org=KAOS");
+apply_config_overrides($config_overrides);
 
 is(getconf($CNF_TAPEDEV), "null:TEST",
     "config overwrites work with real config");
 is(getconf($CNF_ORG), "KAOS",
-    "add_config_overwrite_opt parsed correctly");
+    "add_config_override_opt parsed correctly");
 
 # introduce an error
-$config_overwrites = new_config_overwrites(1);
-add_config_overwrite($config_overwrites, "bogusparam", "foo");
-apply_config_overwrites($config_overwrites);
+$config_overrides = new_config_overrides(1);
+add_config_override($config_overrides, "bogusparam", "foo");
+apply_config_overrides($config_overrides);
 
 my ($error_level, @errors) = Amanda::Config::config_errors();
 is($error_level, $CFGERR_ERRORS, "bogus config overwrite flagged as an error");

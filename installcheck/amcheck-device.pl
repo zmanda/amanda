@@ -38,7 +38,7 @@ like(run_get("$amlibexecdir/amcheck-device", "TESTCONF"),
     "a run of amcheck-device on a new config succeeds");
 
 ok(!run("$amlibexecdir/amcheck-device", "TESTCONF", "-o", "label_new_tapes="),
-    "accepts config_overwrites, returns exit status on failure");
+    "accepts config_overrides, returns exit status on failure");
 
 like(run_get("$amlibexecdir/amcheck-device", "TESTCONF", "-w"),
     qr/Volume 'TESTCONF01' is writeable/,

@@ -188,7 +188,7 @@ main(
     char *qname;
     int    nb_disk;
     char  *errstr = NULL;
-    config_overwrites_t *cfg_ovr = NULL;
+    config_overrides_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
     int    planner_setuid;
     int exit_status = EXIT_SUCCESS;
@@ -211,12 +211,12 @@ main(
 
     dbopen(DBG_SUBDIR_SERVER);
 
-    cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
+    cfg_ovr = extract_commandline_config_overrides(&argc, &argv);
     if (argc > 1) 
 	cfg_opt = argv[1];
 
     config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
-    apply_config_overwrites(cfg_ovr);
+    apply_config_overrides(cfg_ovr);
 
     /* conf_diskfile is freed later, as it may be used in an error message */
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));

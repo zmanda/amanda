@@ -68,7 +68,7 @@ main(
     find_result_t *output_find;
     time_t tmp_time;
     int amtrmidx_debug = 0;
-    config_overwrites_t *cfg_ovr = NULL;
+    config_overrides_t *cfg_ovr = NULL;
 
     /*
      * Configure program for internationalization:
@@ -90,7 +90,7 @@ main(
     dbopen(DBG_SUBDIR_SERVER);
     dbprintf(_("%s: version %s\n"), argv[0], VERSION);
 
-    cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
+    cfg_ovr = extract_commandline_config_overrides(&argc, &argv);
 
     if (argc > 1 && strcmp(argv[1], "-t") == 0) {
 	amtrmidx_debug = 1;
@@ -104,7 +104,7 @@ main(
     }
 
     config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, argv[1]);
-    apply_config_overwrites(cfg_ovr);
+    apply_config_overrides(cfg_ovr);
 
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     read_diskfile(conf_diskfile, &diskl);
