@@ -535,7 +535,7 @@ find_next_file(S3Device *self, int last_file) {
         }
     }
 
-    return last_file;
+    return next_file;
 }
 
 static gboolean

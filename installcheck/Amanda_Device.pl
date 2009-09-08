@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 357;
+use Test::More tests => 360;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -707,6 +707,18 @@ SKIP: {
 
     verify_file(0x2FACE, $dev->block_size()*10, 3);
 
+    # test EOT indications on reading
+    my $hdr = $dev->seek_file(4);
+    is($hdr->{'type'}, $Amanda::Header::F_DUMPFILE,
+	"file 4 has correct type F_DUMPFILE");
+
+    $hdr = $dev->seek_file(5);
+    is($hdr->{'type'}, $Amanda::Header::F_TAPEEND,
+	"file 5 has correct type F_TAPEEND");
+
+    $hdr = $dev->seek_file(6);
+    is($hdr, undef, "seek_file returns undef for file 6");
+
     ok($dev->finish(),
        "finish device after read")
         or diag($dev->error_or_status());    # (note: we don't use write_max_size here, as the maximum for S3 is very large)
@@ -846,7 +858,6 @@ SKIP: {
     ok(!$dev->property_set('S3_BUCKET_LOCATION', 'EU'),
        "should not be able to set S3 bucket location with an incompatible name")
         or diag($dev->error_or_status());
-
 }
 
 SKIP: {
