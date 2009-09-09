@@ -1,4 +1,7 @@
 2009-09-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Device.pl: fix skip count
+
+2009-09-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/util.c common-src/util.h: allow to drop root privs
 	  entirely
 	* common-src/pipespawn.c: drop root
