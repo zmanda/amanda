@@ -1,3 +1,11 @@
+2009-09-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/util.c common-src/util.h: allow to drop root privs
+	  entirely
+	* common-src/pipespawn.c: drop root
+	* amandad-src/amandad.c: check effective userid
+	* common-src/krb5-security.c: check effective userid
+	* server-src/amcheck.c: check effective userid
+
 2009-09-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/s3-device.c: handle EOT correctly
 	* installcheck/Amanda_Device.pl: check for it

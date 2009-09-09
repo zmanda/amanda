@@ -143,7 +143,7 @@ main(
     our_features = am_init_feature_set();
     our_feature_string = am_feature_to_string(our_features);
 
-    uid_me = getuid();
+    uid_me = geteuid();
 
     alwaysmail = mailout = overwrite = 0;
     do_localchk = do_tapechk = do_clientchk = 0;

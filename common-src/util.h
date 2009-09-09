@@ -217,8 +217,8 @@ void check_running_as(running_as_flags who);
  * need to be root for certain operations. Does nothing if SINGLE_USERID is 
  * defined.
  *
- * @param need_root: if true, try to assume root priviledges; otherwise, drop
- * priviledges.
+ * @param need_root: if 1, try to assume root priviledges; otherwise, drop
+ * priviledges.  If -1, drop them irreversibly.
  * @returns: true if the priviledge change succeeded
  */
 int set_root_privs(int need_root);

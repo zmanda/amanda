@@ -234,8 +234,16 @@ pipespawnv_passwd(
 	    safe_fd(-1, 0);
 	}
 
-	if (need_root)
+	if (need_root) {
 	    become_root();
+	} else {
+	    /* if our real userid is zero, the child shouldn't inherit
+	     * that, so drop privs permanently */
+	    if (getuid() == 0 && !set_root_privs(-1)) {
+		error(_("could not drop root privileges"));
+	    }
+	}
+
 	execve(prog, my_argv, env);
 	e = strerror(errno);
 	error(_("error [exec %s: %s]"), prog, e);

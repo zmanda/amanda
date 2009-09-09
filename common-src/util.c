@@ -1134,11 +1134,19 @@ set_root_privs(int need_root)
 	first_call = FALSE;
     }
 
-    if (need_root) {
+    if (need_root == 1) {
 	if (geteuid() == 0) return 1; /* already done */
 
         if (seteuid(0) == -1) return 0;
         /* (we don't switch the group back) */
+    } else if (need_root == -1) {
+	/* make sure the euid is 0 so that we can set the uid */
+	if (geteuid() != 0) {
+	    if (seteuid(0) == -1) return 0;
+	}
+
+	/* now set the uid to the unprivileged userid */
+	if (setuid(unpriv) == -1) return 0;
     } else {
 	if (geteuid() != 0) return 1; /* already done */
 
@@ -1164,7 +1172,6 @@ become_root(void)
 #endif
     return 1;
 }
-
 
 char *
 base64_decode_alloc_string(

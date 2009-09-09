@@ -549,7 +549,6 @@ gss_server(
     gss_name_t gss_name;
     gss_cred_id_t gss_creds;
     char *p, *realm, *msg;
-    uid_t euid;
     int rval = -1;
     int rvalue;
     char errbuf[256];
@@ -564,16 +563,9 @@ gss_server(
      * out of the default keytab.  We also need to be root in
      * gss_accept_context() thanks to the replay cache code.
      */
-    euid = geteuid();
-    if (getuid() != 0) {
-	g_snprintf(errbuf, SIZEOF(errbuf),
-	    _("real uid is %ld, needs to be 0 to read krb5 host key"),
-	    (long)getuid());
-	goto out;
-    }
     if (!set_root_privs(0)) {
 	g_snprintf(errbuf, SIZEOF(errbuf),
-	    _("can't seteuid to uid 0: %s"), strerror(errno));
+	    _("can't take root privileges to read krb5 host key: %s"), strerror(errno));
 	goto out;
     }
 
