@@ -1063,6 +1063,22 @@ amgtar_restore(
 	g_ptr_array_add(argv_ptr, stralloc("--xattrs"));
     g_ptr_array_add(argv_ptr, stralloc("-xpGvf"));
     g_ptr_array_add(argv_ptr, stralloc("-"));
+    if (gnutar_directory) {
+	g_ptr_array_add(argv_ptr, stralloc("--directory"));
+	g_ptr_array_add(argv_ptr, stralloc(gnutar_directory));
+    }
+    if (argument->dle.exclude_list &&
+	argument->dle.exclude_list->nb_element == 1) {
+	g_ptr_array_add(argv_ptr, stralloc("--exclude-from"));
+	g_ptr_array_add(argv_ptr,
+			stralloc(argument->dle.exclude_list->first->name));
+    }
+    if (argument->dle.include_list &&
+	argument->dle.include_list->nb_element == 1) {
+	g_ptr_array_add(argv_ptr, stralloc("--files-from"));
+	g_ptr_array_add(argv_ptr,
+			stralloc(argument->dle.include_list->first->name));
+    }
 
     for (j=1; j< argument->argc; j++) {
 	g_ptr_array_add(argv_ptr, stralloc(argument->argv[j]));
