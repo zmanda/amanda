@@ -303,7 +303,7 @@ loadlabel_slot(void *	datap,
         return 0;
     }
 
-    if (!set_restore_device_read_buffer_size(device, data->flags)) {
+    if (!set_restore_device_read_block_size(device, data->flags)) {
         g_fprintf(stderr, "%s: slot %s: Error setting read block size:\n"
                 "%s: slot %s: %s\n",
                 get_pname(), slotstr, get_pname(), slotstr, device_error_or_status(device));
@@ -1265,7 +1265,7 @@ void restore(RestoreSource * source,
 }
 
 gboolean
-set_restore_device_read_buffer_size(
+set_restore_device_read_block_size(
     Device *device,
     rst_flags_t *flags)
 {
@@ -1278,12 +1278,12 @@ set_restore_device_read_buffer_size(
 
 	g_value_init(&val, G_TYPE_UINT);
 	g_value_set_uint(&val, flags->blocksize);
-	success = device_property_set(device, PROPERTY_READ_BUFFER_SIZE, &val);
+	success = device_property_set(device, PROPERTY_READ_BLOCK_SIZE, &val);
 	g_value_unset(&val);
 	if (!success) {
 	    if (device->status == DEVICE_STATUS_SUCCESS) {
 		/* device doesn't have this property, so quietly ignore it */
-		g_warning(_("Device %s does not support PROPERTY_READ_BUFFER_SIZE; ignoring block size %zd"),
+		g_warning(_("Device %s does not support PROPERTY_READ_BLOCK_SIZE; ignoring block size %zd"),
 			device->device_name, flags->blocksize);
 	    } else {
 		/* it's a real error */
@@ -1329,7 +1329,7 @@ conditional_device_open(char         *tapedev,
         return NULL;
     }
 
-    if (!set_restore_device_read_buffer_size(rval, flags)) {
+    if (!set_restore_device_read_block_size(rval, flags)) {
 	send_message(prompt_out, flags, their_features,
 		     "Error setting read block size on '%s': %s.",
 		     tapedev, device_error(rval));

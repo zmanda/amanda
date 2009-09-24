@@ -221,8 +221,8 @@ extern DevicePropertyBase device_property_max_block_size;
 /* Value is a guint; gives the minimum buffer size for reads. Only
  * the tape device implements this, but it corresponds to the tapetype
  * readblocksize parameter, so it's a global property*/
-extern DevicePropertyBase device_property_read_buffer_size;
-#define PROPERTY_READ_BUFFER_SIZE (device_property_read_buffer_size.ID)
+extern DevicePropertyBase device_property_read_block_size;
+#define PROPERTY_READ_BLOCK_SIZE (device_property_read_block_size.ID)
 
 /* Value is a gboolean. */
 extern DevicePropertyBase device_property_appendable;

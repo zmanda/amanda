@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 360;
+use Test::More tests => 363;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -881,7 +881,7 @@ my $TAPE_DEVICE = $ENV{'INSTALLCHECK_TAPE_DEVICE'};
 my $run_tape_tests = defined $TAPE_DEVICE;
 SKIP: {
     skip "define \$INSTALLCHECK_TAPE_DEVICE to run tape tests",
-	    12 +
+	    15 +
 	    3 * $verify_file_count +
 	    4 * $write_file_count
 	unless $run_tape_tests;
@@ -951,6 +951,15 @@ SKIP: {
     is($dev->status(), $DEVICE_STATUS_SUCCESS,
 	"$dev_name: re-create successful")
 	or diag($dev->error_or_status());
+
+    # use a big read_block_size, checking that it's also settable
+    # via read_buffer_size
+    ok($dev->property_set("read_buffer_size", 256*1024),
+	"can set read_buffer_size");
+    is($dev->property_get("read_block_size"), 256*1024,
+	"and its value is reflected in read_block_size");
+    ok($dev->property_set("read_block_size", 32*1024),
+	"can set read_block_size");
 
     ok($dev->start($ACCESS_READ, undef, undef),
 	"start in read mode")

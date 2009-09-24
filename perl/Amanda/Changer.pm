@@ -1300,7 +1300,7 @@ sub _get_implicit_properties {
     }
 
     if (tapetype_seen($tapetype, $TAPETYPE_READBLOCKSIZE)) {
-	$props->{'read_buffer_size'} = {
+	$props->{'read_block_size'} = {
 	    optional => "warn", # optional, but give a warning
 	    priority => 0,
 	    append => 0,

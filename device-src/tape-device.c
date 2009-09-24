@@ -35,7 +35,7 @@ struct TapeDevicePrivate_s {
        modulus RESETOFS_THRESHOLD. */
     int write_count;
     char * device_filename;
-    gsize read_buffer_size;
+    gsize read_block_size;
 };
 
 /* Possible (abstracted) results from a system I/O operation. */
@@ -65,12 +65,13 @@ DevicePropertyBase device_property_eom;
 DevicePropertyBase device_property_bsf_after_eom;
 DevicePropertyBase device_property_nonblocking_open;
 DevicePropertyBase device_property_final_filemarks;
+DevicePropertyBase device_property_read_buffer_size; /* old name for READ_BLOCK_SIZE */
 
 void tape_device_register(void);
 
 #define tape_device_read_size(self) \
-    (((TapeDevice *)(self))->private->read_buffer_size? \
-	((TapeDevice *)(self))->private->read_buffer_size : ((Device *)(self))->block_size)
+    (((TapeDevice *)(self))->private->read_block_size? \
+	((TapeDevice *)(self))->private->read_block_size : ((Device *)(self))->block_size)
 
 /* here are local prototypes */
 static void tape_device_init (TapeDevice * o);
@@ -82,7 +83,9 @@ static gboolean tape_device_set_final_filemarks_fn(Device *p_self, DevicePropert
 				    GValue *val, PropertySurety surety, PropertySource source);
 static gboolean tape_device_set_compression_fn(Device *p_self, DevicePropertyBase *base,
 				    GValue *val, PropertySurety surety, PropertySource source);
-static gboolean tape_device_set_read_buffer_size_fn(Device *p_self, DevicePropertyBase *base,
+static gboolean tape_device_get_read_block_size_fn(Device *p_self, DevicePropertyBase *base,
+				    GValue *val, PropertySurety *surety, PropertySource *source);
+static gboolean tape_device_set_read_block_size_fn(Device *p_self, DevicePropertyBase *base,
 				    GValue *val, PropertySurety surety, PropertySource source);
 static void tape_device_open_device (Device * self, char * device_name, char * device_type, char * device_node);
 static Device * tape_device_factory (char * device_name, char * device_type, char * device_node);
@@ -197,10 +200,10 @@ tape_device_init (TapeDevice * self) {
 	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
     g_value_unset(&response);
 
-    self->private->read_buffer_size = 0;
+    self->private->read_block_size = 0;
     g_value_init(&response, G_TYPE_UINT);
-    g_value_set_uint(&response, self->private->read_buffer_size);
-    device_set_simple_property(d_self, PROPERTY_READ_BUFFER_SIZE,
+    g_value_set_uint(&response, self->private->read_block_size);
+    device_set_simple_property(d_self, PROPERTY_READ_BLOCK_SIZE,
 	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DEFAULT);
     g_value_unset(&response);
 
@@ -341,10 +344,15 @@ tape_device_base_init (TapeDeviceClass * c)
 	    NULL,
 	    tape_device_set_compression_fn);
 
-    device_class_register_property(device_class, PROPERTY_READ_BUFFER_SIZE,
+    device_class_register_property(device_class, PROPERTY_READ_BLOCK_SIZE,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
-	    device_simple_property_get_fn,
-	    tape_device_set_read_buffer_size_fn);
+	    tape_device_get_read_block_size_fn,
+	    tape_device_set_read_block_size_fn);
+
+    device_class_register_property(device_class, device_property_read_buffer_size.ID,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    tape_device_get_read_block_size_fn,
+	    tape_device_set_read_block_size_fn);
 }
 
 static gboolean
@@ -464,20 +472,31 @@ tape_device_set_compression_fn(Device *p_self, DevicePropertyBase *base,
 }
 
 static gboolean
-tape_device_set_read_buffer_size_fn(Device *p_self, DevicePropertyBase *base,
+tape_device_get_read_block_size_fn(Device *p_self, DevicePropertyBase *base G_GNUC_UNUSED,
+    GValue *val, PropertySurety *surety, PropertySource *source)
+{
+    /* use the READ_BLOCK_SIZE, even if we're invoked to get the old READ_BUFFER_SIZE */
+    return device_simple_property_get_fn(p_self, &device_property_read_block_size,
+					val, surety, source);
+}
+
+static gboolean
+tape_device_set_read_block_size_fn(Device *p_self, DevicePropertyBase *base G_GNUC_UNUSED,
     GValue *val, PropertySurety surety, PropertySource source)
 {
     TapeDevice *self = TAPE_DEVICE(p_self);
-    guint buffer_size = g_value_get_uint(val);
+    guint read_block_size = g_value_get_uint(val);
 
-    if (buffer_size != 0 &&
-	    ((gsize)buffer_size < p_self->block_size ||
-	     (gsize)buffer_size > p_self->max_block_size))
+    if (read_block_size != 0 &&
+	    ((gsize)read_block_size < p_self->block_size ||
+	     (gsize)read_block_size > p_self->max_block_size))
 	return FALSE;
 
-    self->private->read_buffer_size = buffer_size;
+    self->private->read_block_size = read_block_size;
 
-    return device_simple_property_set_fn(p_self, base, val, surety, source);
+    /* use the READ_BLOCK_SIZE, even if we're invoked to get the old READ_BUFFER_SIZE */
+    return device_simple_property_set_fn(p_self, &device_property_read_block_size,
+					val, surety, source);
 }
 
 void tape_device_register(void) {
@@ -525,6 +544,10 @@ void tape_device_register(void) {
     device_property_fill_and_register(&device_property_final_filemarks,
                                       G_TYPE_UINT, "final_filemarks",
       "How many filemarks to write after the last tape file?" );
+
+    device_property_fill_and_register(&device_property_read_buffer_size,
+                                      G_TYPE_UINT, "read_buffer_size",
+      "(deprecated name for READ_BLOCK_SIZE)");
 
     /* Then the device itself */
     register_device(tape_device_factory, device_prefix_list);
@@ -914,12 +937,12 @@ static int tape_device_read_block (Device * pself, gpointer buf,
 	g_info("Device %s indicated blocksize %zd was too small; using %zd.",
 	    pself->device_name, (gsize)*size_req, new_size);
 	*size_req = (int)new_size;
-	self->private->read_buffer_size = new_size;
+	self->private->read_block_size = new_size;
 
 	bzero(&newval, sizeof(newval));
 	g_value_init(&newval, G_TYPE_UINT);
-	g_value_set_uint(&newval, self->private->read_buffer_size);
-	device_set_simple_property(pself, PROPERTY_READ_BUFFER_SIZE,
+	g_value_set_uint(&newval, self->private->read_block_size);
+	device_set_simple_property(pself, PROPERTY_READ_BLOCK_SIZE,
 		&newval, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
 	g_value_unset(&newval);
 
@@ -1078,6 +1101,7 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
 	/* unset the VOLUME_UNLABELED flag, if it was set */
 	device_set_error(d_self, NULL, DEVICE_STATUS_SUCCESS);
         d_self->file = 0;
+        break;
 
     default:
         g_assert_not_reached();

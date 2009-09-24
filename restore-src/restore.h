@@ -104,7 +104,7 @@ int lock_logfile(void);
 void send_message(FILE *prompt_out, rst_flags_t *flags,
 		  am_feature_t *their_features,
 		  char * format, ...) G_GNUC_PRINTF(4,5);
-gboolean set_restore_device_read_buffer_size(Device *device, rst_flags_t *flags);
+gboolean set_restore_device_read_block_size(Device *device, rst_flags_t *flags);
 
 #endif /* RESTORE_H */
 

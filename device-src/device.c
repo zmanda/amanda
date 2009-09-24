@@ -758,12 +758,12 @@ set_properties_from_global_config(Device * device) {
                 g_value_init(&val, G_TYPE_UINT);
                 g_value_set_uint(&val, blocksize_kb * 1024);
                 success = device_property_set(device,
-                                              PROPERTY_READ_BUFFER_SIZE,
+                                              PROPERTY_READ_BLOCK_SIZE,
                                               &val);
                 g_value_unset(&val);
                 if (!success) {
 		    /* a non-fatal error */
-                    g_warning("Setting READ_BUFFER_SIZE to %ju not supported for device %s.",
+                    g_warning("Setting READ_BLOCK_SIZE to %ju not supported for device %s.",
                             1024*(uintmax_t)blocksize_kb, device->device_name);
                 }
             }

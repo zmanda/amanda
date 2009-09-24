@@ -229,8 +229,8 @@ void device_property_init(void) {
     device_property_fill_and_register(&device_property_max_block_size,
                                       G_TYPE_UINT, "max_block_size",
       "Maximum supported blocking factor.");
-    device_property_fill_and_register(&device_property_read_buffer_size,
-                                      G_TYPE_UINT, "read_buffer_size",
+    device_property_fill_and_register(&device_property_read_block_size,
+                                      G_TYPE_UINT, "read_block_size",
       "Minimum size of a read for this device (maximum expected block size)");
     device_property_fill_and_register(&device_property_appendable,
                                       G_TYPE_BOOLEAN, "appendable",
@@ -269,6 +269,7 @@ DevicePropertyBase device_property_compression_rate;
 DevicePropertyBase device_property_block_size;
 DevicePropertyBase device_property_min_block_size;
 DevicePropertyBase device_property_max_block_size;
+DevicePropertyBase device_property_read_block_size;
 DevicePropertyBase device_property_read_buffer_size;
 DevicePropertyBase device_property_appendable;
 DevicePropertyBase device_property_canonical_name;

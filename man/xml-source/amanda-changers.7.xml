@@ -123,7 +123,7 @@ priority.</para>
 
 <para>There are only three implicit properties:
 <emphasis>MAX_VOLUME_USAGE</emphasis> is set based on the tapetype
-<emphasis>length</emphasis> parameter, <emphasis>READ_BUFFER_SIZE</emphasis> is
+<emphasis>length</emphasis> parameter, <emphasis>READ_BLOCK_SIZE</emphasis> is
 set if <emphasis>readblocksize</emphasis> is set, and
 <emphasis>BLOCK_SIZE</emphasis> is set based on the
 <emphasis>blocksize</emphasis> parameter.</para>

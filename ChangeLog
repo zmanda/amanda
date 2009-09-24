@@ -1,3 +1,12 @@
+2009-09-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda-devices.7.xml: update property documentation
+	  and rename READ_BUFFER_SIZE to READ_BLOCK_SIZE
+	* perl/Amanda/Changer.pm restore-src/restore.c restore-src/restore.h
+	  device-src/property.c device-src/property.h device-src/device.c
+	  man/xml-source/amanda-changers.7.xml: rename property
+	* device-src/tape-device.c: accept old and new property names
+	* installcheck/Amanda_Device.pl: tests
+
 2009-09-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: accept INCLUDE-LIST, EXCLUDE-LIST, and
 	  DIRECTORY properties on restore

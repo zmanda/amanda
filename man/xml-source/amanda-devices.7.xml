@@ -389,7 +389,7 @@ size than that with which it was written.  This can be useful when handling old
 volumes written with a smaller blocksize, or volumes of unknown blocksize.
 Unfortunately, some tape devices do not detect oversized blocks correctly, and
 may lose data if the configured block size is smaller than the volume's block
-size.  The tape device driver has a READ_BUFFER_SIZE property which specifies
+size.  The tape device driver has a READ_BLOCK_SIZE property which specifies
 the minimum buffer size that will be allocated for reads from tape.  If the
 hardware supports it, setting this property allows Amanda to correctly read
 from tapes written with any blocksize less than or equal to READ_BUFFER
@@ -516,8 +516,9 @@ operations can be emulated with the MTREW and read data operations.</para>
  (read-write) Set this boolean property to "true" if O_NONBLOCK must be used on the open call. Default to "true" on Linux and "false" on all others machines. Witout it, Linux wait for a few seconds if no tape are loaded. Solaris have strange error it is set to "yes".
 </listitem></varlistentry>
  <!-- ==== -->
- <varlistentry><term>READ_BUFFER_SIZE</term><listitem>
- (read-write) This property specifies the minimum buffer size that will be used for reads; this should be large enough to contain any block that may be read from the device, and must be larger than BLOCK_SIZE.  This property exists for tape devices which cannot determine the size of on-tape blocks, or which may discard data which overflows a small buffer.  The tapetype parameter <emphasis>READBLOCKSIZE</emphasis> sets this property.  See BLOCK SIZES, above.
+ <varlistentry><term>READ_BLOCK_SIZE</term><listitem>
+ (read-write) This property (previously known as <emphasis>READ_BUFFER_SIZE</emphasis>) specifies the block size that will be used for reads; this should be large enough to contain any block that may be read from the device (for example, from a tape containing variable-sized blocks), and must be larger than BLOCK_SIZE.  This property is most often used when overwriting tapes using a new, smaller block size.
+ The tapetype parameter <emphasis>READBLOCKSIZE</emphasis> sets this property.  See BLOCK SIZES, above.
 </listitem></varlistentry>
  <!-- ==== -->
 </variablelist>
