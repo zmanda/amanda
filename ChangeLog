@@ -1,4 +1,7 @@
 2009-09-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/property.c: remove old property instance
+
+2009-09-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda-devices.7.xml: update property documentation
 	  and rename READ_BUFFER_SIZE to READ_BLOCK_SIZE
 	* perl/Amanda/Changer.pm restore-src/restore.c restore-src/restore.h
