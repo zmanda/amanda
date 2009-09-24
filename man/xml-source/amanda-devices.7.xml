@@ -392,8 +392,7 @@ may lose data if the configured block size is smaller than the volume's block
 size.  The tape device driver has a READ_BLOCK_SIZE property which specifies
 the minimum buffer size that will be allocated for reads from tape.  If the
 hardware supports it, setting this property allows Amanda to correctly read
-from tapes written with any blocksize less than or equal to READ_BUFFER
-SIZE.</para>
+from tapes written with any blocksize less than or equal to READ_BLOCK_SIZE.</para>
 
 <note><para>The RAIT device does not support flexible block sizes, as its
 parity algorithm requires that all child devices have the same, fixed block
