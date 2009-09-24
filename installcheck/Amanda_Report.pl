@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
-use Test::More tests => 7;
+use Test::More tests => 14;
 use strict;
 use warnings;
 
@@ -943,6 +943,112 @@ foreach my $test ( keys %LogfileContents ) {
     my $report = Amanda::Report->new(write_logfile($LogfileContents{$test}));
     is_deeply( $report->{data}, $LogfileData{$test}, "data check: $test" );
 }
+
+#
+# Test the report API
+#
+my $report =
+  Amanda::Report->new( write_logfile( $LogfileContents{fullExample} ) );
+
+is_deeply( [ $report->get_hosts() ],
+    ['hostname.example.org'], 'check: Amanda::Report::get_hosts()' );
+
+is_deeply(
+    [ sort { $a cmp $b } $report->get_disks('hostname.example.org') ],
+    [ '/', '/apps', '/moreapps', '/somedir', '/somedir2' ],
+    'check: Amanda::Report::get_disks($hostname)'
+);
+
+is_deeply(
+    [ sort { $a->[1] cmp $b->[1] } $report->get_dles() ],
+    [
+        [ 'hostname.example.org', '/' ],
+        [ 'hostname.example.org', '/apps' ],
+        [ 'hostname.example.org', '/moreapps' ],
+        [ 'hostname.example.org', '/somedir' ],
+        [ 'hostname.example.org', '/somedir2' ],
+    ],
+    'check: Amanda::Report::get_dles()'
+);
+
+is_deeply(
+    $report->get_dle_info( "hostname.example.org", "/apps" ),
+    {
+        estimate => {
+            nkb   => "6662",
+            kps   => "1024",
+            ckb   => "6688",
+            level => "1",
+            sec   => "6"
+        },
+        tries => [
+            {
+                chunker => {
+                    kps    => "1226.3",
+                    level  => "1",
+                    sec    => "5.432",
+                    status => "success",
+                    date   => "20081002040002",
+                    kb     => "6630"
+                },
+                taper => {
+                    kps    => "92329.545455",
+                    level  => "1",
+                    sec    => "0.071808",
+                    status => "done",
+                    parts  => "1",
+                    kb     => "6630"
+                },
+                dumper => {
+                    kps       => "16013.4",
+                    level     => "1",
+                    sec       => "0.414",
+                    status    => "success",
+                    date      => "20081002040002",
+                    kb        => "6630",
+                    "orig-kb" => "6630"
+                },
+            },
+        ],
+        chunks => [
+            {
+                kps   => "92329.545455",
+                sec   => "0.071808",
+                date  => "20081002040002",
+                part  => "1",
+                file  => "3",
+                kb    => "6630",
+                label => "FullBackup-14"
+            },
+        ],
+    },
+    'check: Amanda::Report::get_dle_info($hostname, $disk)'
+);
+
+is_deeply(
+    $report->get_dle_info( 'hostname.example.org', '/', 'estimate' ),
+    {
+        level => "1",
+        sec   => "39",
+        nkb   => "80542",
+        kps   => "1024",
+        ckb   => "40288",
+    },
+    'check: Amanda::Report::get_dle_info($hostname, $disk, $field)'
+);
+
+is_deeply(
+    $report->get_program_info('planner'),
+    {
+        time  => "32.689",
+        start => "20081002040002",
+    },
+    'check: Amanda::Report::get_program_info($program)'
+);
+
+is( $report->get_program_info( 'driver', 'start' ),
+    "20081002040002",
+    'check: Amanda::Report::get_program_info($program, $field)' );
 
 # clean up
 unlink($log_filename) if -f $log_filename;

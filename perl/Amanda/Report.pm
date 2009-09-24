@@ -53,6 +53,48 @@ This is used by C<new> to read in the log file.  This function can
 also be used to read in additional logfiles.  All existing data in
 C<$report> is deleted from the object before reading C<$logfile>.
 
+=head2 my @hosts = $report->get_hosts();
+
+This method returns a list containing the hosts that have been seen in
+a logfile.  In a scalar context, C<get_hosts> returns the number of
+hosts seen.
+
+=head2 my @disks = $report->get_disks($hostname);
+
+This method returns a list of disks that were archived under the given
+C<$hostname>.  In a scalar context, this method returns the number of
+disks seen, belonging to the hostname.
+
+=head2 my @dles = $report->get_dles();
+
+This method returns a list of list references that point to hostname
+and disk pairs.  The list returned by C<get_dles> contains all DLE
+entries encountered during lo parsing in the following format:
+
+@dles = (
+    [ 'example1', '/home' ],
+    [ 'example1', '/var/log' ],
+    [ 'example2', '/etc' ],
+    [ 'example2', '/home' ],
+    [ 'example3', '/var/www' ],
+);
+
+=head2 my $dle = $report->get_dle_info($hostname, $disk[, $field]);
+
+This method returns all the information stored in the per-DLE section
+for the given C<$hostname> and C<disk>.  The returned value is a hash
+reference to the data as it is stored in the internal data
+structure. Modifying the return value will modify the values in the
+C<Amanda::Report> object.
+
+=head2 my $info = $report->get_program_info($program[, $field]);
+
+This method returns a reference to the data for the given C<$program>.
+If the optional argument C<$field> is provided, that field in the
+indicated program is returned.  The returned value is a reference to
+the internal C<Amanda::Report> data structure and will in turn modify
+the C<$report> object.
+
 =head1 DATA DESCRIPTION
 
 The data in the logfile is stored in the module at C<< $report->{data}
@@ -269,6 +311,7 @@ sub read_file
     # clear the program and DLE data
     $data->{programs} = {};
     $data->{disklist} = {};
+    $self->{cache}    = {};
 
     my $logfh = Amanda::Logfile::open_logfile($logfname);
 
@@ -309,6 +352,58 @@ sub read_line
     }
 }
 
+sub get_hosts
+{
+    my $self  = shift @_;
+    my $cache = $self->{cache};
+
+    $cache->{hosts} = [ keys %{ $self->{data}{disklist} } ]
+      if ( !defined $cache->{hosts} );
+
+    return @{ $cache->{hosts} };
+}
+
+sub get_disks
+{
+    my $self = shift @_;
+    my ($hostname) = @_;
+    return keys %{ $self->{data}{disklist}{$hostname} };
+}
+
+sub get_dles
+{
+    my $self  = shift @_;
+    my $cache = $self->{cache};
+    my @dles;
+
+    if ( !defined $cache->{dles} ) {
+        foreach my $hostname ( $self->get_hosts() ) {
+            map { push @dles, [ $hostname, $_ ] } $self->get_disks($hostname);
+        }
+        $cache->{dles} = \@dles;
+    }
+    return @{ $cache->{dles} };
+}
+
+sub get_dle_info
+{
+    my $self = shift @_;
+    my ( $hostname, $disk, $field ) = @_;
+
+    return ( defined $field )
+      ? $self->{data}{disklist}{$hostname}{$disk}{$field}
+      : $self->{data}{disklist}{$hostname}{$disk};
+}
+
+sub get_program_info
+{
+    my $self = shift @_;
+    my ( $program, $field ) = @_;
+
+    return ( defined $field )
+      ? $self->{data}{programs}{$program}{$field}
+      : $self->{data}{programs}{$program};
+}
 
 sub _handle_planner_line
 {
