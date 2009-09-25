@@ -1,3 +1,6 @@
+2009-09-25  Nikolas Coukouma <atrus@zmanda.com>
+	* ndmp-src/ndmlib.h: apply Amanda's "force large file support" to NDMP
+
 2009-09-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda-devices.7.xml: fix typo
 
