@@ -158,13 +158,13 @@ sub new {
     # handle some config and properties
     my $properties = $config->{'properties'};
 
-    if (exists $config->{'changerdev'} and $config->{'changerdev'} ne '') {
+    if (defined $config->{'changerdev'} and $config->{'changerdev'} ne '') {
 	return Amanda::Changer->make_error("fatal", undef,
 	    message => "'changerdev' is not allowed with chg-robot");
     }
 
     if ($config->{'changerfile'}) {
-        $self->{'statefile'} = $config->{'changerfile'};
+        $self->{'statefile'} = Amanda::Config::config_dir_relative($config->{'changerfile'});
     } else {
         my $safe_filename = "chg-robot:$device_name";
         $safe_filename =~ tr/a-zA-Z0-9/-/cs;
@@ -174,10 +174,13 @@ sub new {
     $self->_debug("using statefile '$self->{statefile}'");
 
     # figure out the drive number to device name mapping
-    if (exists $config->{'tapedev'} and $config->{'tapedev'} ne '') {
-        if (exists $properties->{'tape-device'}) {
+    if (exists $config->{'tapedev'}
+	    and $config->{'tapedev'} ne ''
+	    and !exists $properties->{'tape-device'}) {
+	# if the tapedev points to us (the changer), then give an error
+	if ($config->{'tapedev'} =~ /^chg-robot:/) {
             return Amanda::Changer->make_error("fatal", undef,
-                message => "do not specify both a 'tapedev' and a 'tape-device' property");
+                message => "must specify a tape-device property");
         }
         $self->{'drive2device'} = { '0' => $config->{'tapedev'} };
 	push @{$self->{'driveorder'}}, '0';
@@ -297,20 +300,36 @@ sub new {
     }
 
     # mt and mtx
-    my ($mt, $mtx) = ($self->{'mt'}, $self->{'mtx'});
+    my ($mt, $mtx);
     if (exists $config->{'properties'}->{'mt'}) {
 	if (@{$config->{'properties'}->{'mt'}->{'values'}} > 1) {
 	    return Amanda::Changer->make_error("fatal", undef,
 		message => "only one value allowed for 'mt'");
 	}
 	$mt = $config->{'properties'}->{'mt'}->{'values'}->[0];
+    } else {
+	$mt = $Amanda::Constants::MT;
     }
+
     if (exists $config->{'properties'}->{'mtx'}) {
 	if (@{$config->{'properties'}->{'mtx'}->{'values'}} > 1) {
 	    return Amanda::Changer->make_error("fatal", undef,
 		message => "only one value allowed for 'mtx'");
 	}
 	$mtx = $config->{'properties'}->{'mtx'}->{'values'}->[0];
+    } else {
+	$mtx = $Amanda::Constants::MTX;
+    }
+
+    if (!$mtx) {
+	return Amanda::Changer->make_error("fatal", undef,
+	    message => "no default value for property MTX");
+    }
+
+    if (!$mt and $ebu) {
+	# mt is only needed for eject-before-unload
+	return Amanda::Changer->make_error("fatal", undef,
+	    message => "no default value for property MT");
     }
 
     my $ignore_barcodes = $self->get_boolean_property($self->{'config'},
@@ -484,8 +503,11 @@ sub load_unlocked {
 	# here is where we implement each of the drive-selection algorithms
 	my @check_order;
 	if ($self->{'drive_choice'} eq 'lru') {
-	    # search through the LRU list followed by the preferred dumporder
-	    @check_order = (@{$state->{'drive_lru'}}, @{$self->{'driveorder'}});
+            my %lru = map { $_, 1 } @{$state->{'drive_lru'}};
+            my @unused = grep { ! exists $lru{$_} } @{$self->{'driveorder'}};
+
+	    # search through unused drives, then the LRU list
+	    @check_order = (@unused, @{$state->{'drive_lru'}});
 	} elsif ($self->{'drive_choice'} eq 'firstavail') {
 	    # just the drive order, so we tend to prefer the first drive in
 	    # this order
@@ -1662,6 +1684,7 @@ use Amanda::MainLoop qw( synchronized make_cb );
 sub new {
     my $class = shift;
     my ($device_name, $mt, $mtx, $ignore_barcodes) = @_;
+
     return bless {
 	lock => [],
 	device_name => $device_name,

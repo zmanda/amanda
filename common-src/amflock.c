@@ -144,6 +144,8 @@ file_lock_lock(
     /* the lock is acquired; record this in the hash table */
     g_hash_table_insert(locally_locked_files, lock->filename, lock->filename);
 
+    rv = 0;
+
 done:
     saved_errno = errno;
     g_static_mutex_unlock(&lock_lock);

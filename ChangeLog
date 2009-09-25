@@ -1,3 +1,11 @@
+2009-09-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amflock.c: set the return value
+	* device-src/xfer-dest-taper.c: lock the slab mutex when prebuffering
+	* perl/Amanda/Changer.pm: check for locking errors in Changer.pm
+	* perl/Amanda/Changer/robot.pm: handle the lru driveorder better, and
+	  handle configurations where no tape device is specified better
+	* server-src/amtape.pl: handle the case where loaded_in == 0
+
 2009-09-25  Nikolas Coukouma <atrus@zmanda.com>
 	* ndmp-src/ndmlib.h: apply Amanda's "force large file support" to NDMP
 

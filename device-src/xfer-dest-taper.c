@@ -614,6 +614,8 @@ slab_source_prebuffer(
     if (self->retry_part && self->part_slices)
 	return TRUE;
 
+    g_mutex_lock(self->slab_mutex);
+
     /* pre-buffering means waiting until we have at least prebuffer_slabs in the
      * slab train ahead of the device_slab, or the newest slab is at EOF. */
     while (!elt->cancelled) {
@@ -631,6 +633,8 @@ slab_source_prebuffer(
 
 	g_cond_wait(self->slab_cond, self->slab_mutex);
     }
+
+    g_mutex_unlock(self->slab_mutex);
 
     if (elt->cancelled) {
 	self->last_part_successful = FALSE;
