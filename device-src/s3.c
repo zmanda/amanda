@@ -563,7 +563,7 @@ authenticate_request(S3Handle *hdl,
     GString *auth_string = NULL;
 
     /* From RFC 2616 */
-    static const char *wkday[] = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+    static const char *wkday[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
     static const char *month[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
