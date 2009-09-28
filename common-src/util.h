@@ -206,7 +206,7 @@ typedef enum {
     RUNNING_AS_CLIENT_LOGIN,
 
     RUNNING_AS_USER_MASK = (1 << 8) - 1,
-	/* '&' this on to only check the uid, not the euid; use this for programs
+	/* '|' this on to only check the uid, not the euid; use this for programs
 	 * that will call become_root() */
     RUNNING_AS_UID_ONLY = 1 << 8
 } running_as_flags;

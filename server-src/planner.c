@@ -240,7 +240,7 @@ main(
 
     safe_cd();
 
-    check_running_as(RUNNING_AS_DUMPUSER);
+    check_running_as(RUNNING_AS_ROOT | RUNNING_AS_UID_ONLY);
 
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 

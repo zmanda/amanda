@@ -1,3 +1,7 @@
+2009-09-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/util.h: fix comment
+	* server-src/planner.c: planner runs setuid, so tell check_running_as
+
 2009-09-28  Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/s3.c: fix day of the week in Date header
 
