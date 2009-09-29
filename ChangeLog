@@ -1,3 +1,13 @@
+2009-09-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* amandad-src/amandad.h common-src/amanda.h: move constants
+	  to amanda.h
+	* common-src/util.c common-src/util.h: add openbsd_fd_inform, to
+	  inform the OpenBSD pthread library about high-numbered fd's created
+	  by amandad
+	* client-src/noop.c client-src/selfcheck.c client-src/sendbackup.c
+	  client-src/sendsize.c restore-src/amidxtaped.c server-src/amindexd.c:
+	  use openbsd_fd_infom
+
 2009-09-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/util.h: fix comment
 	* server-src/planner.c: planner runs setuid, so tell check_running_as

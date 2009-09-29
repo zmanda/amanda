@@ -137,6 +137,7 @@ main(
     textdomain("amanda"); 
 
     safe_fd(DATA_FD_OFFSET, DATA_FD_COUNT*2);
+    openbsd_fd_inform();
 
     safe_cd();
 

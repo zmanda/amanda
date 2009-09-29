@@ -1192,4 +1192,10 @@ typedef enum {
 
 #define DUMP_LEVELS    400
 
+/* Constants to define the number of pre-opened pipes between amandad and
+ * its services */
+
+#define DATA_FD_COUNT   3               /* number of general-use pipes */
+#define DATA_FD_OFFSET  50
+
 #endif	/* !AMANDA_H */

@@ -108,6 +108,7 @@ main(
     textdomain("amanda"); 
 
     safe_fd(-1, 0);
+    openbsd_fd_inform();
     safe_cd();
 
     set_pname("selfcheck");

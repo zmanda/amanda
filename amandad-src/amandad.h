@@ -36,9 +36,6 @@
 #include "sl.h"
 #include "util.h"		/* for bstrncmp() */
 
-#define DATA_FD_COUNT   3               /* number of general-use pipes */
-#define DATA_FD_OFFSET  50  
-
 typedef struct g_option_s {
     char *str;
     am_feature_t *features;

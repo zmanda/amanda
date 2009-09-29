@@ -261,6 +261,7 @@ main(
     textdomain("amanda"); 
 
     safe_fd(DATA_FD_OFFSET, 4);
+    openbsd_fd_inform();
     safe_cd();
 
     /* Don't die when child closes pipe */

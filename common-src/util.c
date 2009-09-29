@@ -1282,3 +1282,15 @@ get_pcontext(void)
     return pcontext;
 }
 
+#ifdef __OpenBSD__
+void
+openbsd_fd_inform(void)
+{
+    int i;
+    for (i = DATA_FD_OFFSET; i < DATA_FD_OFFSET + DATA_FD_COUNT*2; i++) {
+	/* a simple fcntl() will cause the library to "look" at this file
+	 * descriptor, which is good enough */
+	(void)fcntl(i, F_GETFL);
+    }
+}
+#endif

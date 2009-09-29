@@ -348,4 +348,14 @@ void proplist_add_to_argv(gpointer key_p,
 			  gpointer user_data_p);
 
 
+/* Inform the OpenBSD pthread library about the high-numbered file descriptors
+ * that an amandad service inherits.  This won't be necessary once the new
+ * threading library is availble (OpenBSD 5.0?), but won't hurt anyway.  See the
+ * thread "Backup issues with OpenBSD 4.5 machines" from September 2009. */
+#ifdef __OpenBSD__
+void openbsd_fd_inform(void);
+#else
+#define openbsd_fd_inform()
+#endif
+
 #endif	/* UTIL_H */

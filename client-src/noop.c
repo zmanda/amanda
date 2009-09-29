@@ -65,6 +65,7 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     safe_fd(-1, 0);
+    openbsd_fd_inform();
 
     check_running_as(RUNNING_AS_CLIENT_LOGIN);
 
