@@ -228,6 +228,9 @@ runrsh(
 	return (0);
     }
 
+    /* drop root privs permanently */
+    set_root_privs(-1);
+
     safe_fd(-1, 0);
 
     if(!xamandad_path || strlen(xamandad_path) <= 1) 

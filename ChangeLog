@@ -1,3 +1,9 @@
+2009-09-30  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/dumper.c: runs setuid root
+	* common-src/local-security.c: drop root privs
+	* common-src/rsh-security.c: drop root privs
+	* common-src/ssh-security.c: drop root privs
+
 2009-09-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* amandad-src/amandad.h common-src/amanda.h: move constants
 	  to amanda.h
