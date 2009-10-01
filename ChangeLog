@@ -1,3 +1,8 @@
+2009-10-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Add --no-wildcards argument to gtar extract
+				    command.
+	* restore-src/amidxtaped.c: Set rst_flags->header_to_fd to -1.
+
 2009-09-30  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/dumper.c: runs setuid root
 	* common-src/local-security.c: drop root privs

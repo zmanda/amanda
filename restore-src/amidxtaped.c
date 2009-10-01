@@ -397,7 +397,7 @@ main(
 	}
 	else if(strncmp_const_skip(buf, "HEADER", s, ch) == 0) {
 	    rst_flags->headers = 1;
-	    rst_flags->header_to_fd = 1;
+	    rst_flags->header_to_fd = -1;
 	}
 	else if(strncmp_const_skip(buf, "FEATURES=", s, ch) == 0) {
 	    char *our_feature_string = NULL;

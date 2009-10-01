@@ -1067,6 +1067,7 @@ amgtar_restore(
 	g_ptr_array_add(argv_ptr, stralloc("--directory"));
 	g_ptr_array_add(argv_ptr, stralloc(gnutar_directory));
     }
+    g_ptr_array_add(argv_ptr, stralloc("--no-wildcards"));
     if (argument->dle.exclude_list &&
 	argument->dle.exclude_list->nb_element == 1) {
 	g_ptr_array_add(argv_ptr, stralloc("--exclude-from"));
