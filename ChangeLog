@@ -1,4 +1,8 @@
 2009-10-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c (bsd_prefix_packet): Use geteuid login
+							  name.
+
+2009-10-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Add --no-wildcards argument to gtar extract
 				    command.
 	* restore-src/amidxtaped.c: Set rst_flags->header_to_fd to -1.

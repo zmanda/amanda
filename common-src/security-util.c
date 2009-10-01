@@ -879,10 +879,10 @@ bsd_prefix_packet(
     if (pkt->type != P_REQ)
 	return "";
 
-    if ((pwd = getpwuid(getuid())) == NULL) {
+    if ((pwd = getpwuid(geteuid())) == NULL) {
 	security_seterror(&rh->sech,
 			  _("can't get login name for my uid %ld"),
-			  (long)getuid());
+			  (long)geteuid());
 	return "";
     }
     buf = alloc(16+strlen(pwd->pw_name));
