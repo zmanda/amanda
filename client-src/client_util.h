@@ -69,6 +69,24 @@ typedef struct client_script_result_s {
     GPtrArray *err;
 } client_script_result_t;
 
+typedef enum {
+    DMP_NORMAL, DMP_IGNORE, DMP_STRANGE, DMP_SIZE, DMP_ERROR
+} dmpline_t;
+
+typedef struct regex_s {
+    char *regex;
+    int srcline;
+    int scale;			/* only used for size lines */
+    int field;
+    dmpline_t typ;
+} amregex_t;
+
+#define AM_NORMAL_RE(re)	{(re), __LINE__, 0, 0, DMP_NORMAL}
+#define AM_IGNORE_RE(re)	{(re), __LINE__, 0, 0, DMP_IGNORE}
+#define AM_STRANGE_RE(re)	{(re), __LINE__, 0, 0, DMP_STRANGE}
+#define AM_SIZE_RE(re,s,f)	{(re), __LINE__, (s), (f), DMP_SIZE}
+#define AM_ERROR_RE(re)		{(re), __LINE__, 0, 0, DMP_ERROR}
+
 char *build_exclude(dle_t *dle, int verbose);
 char *build_include(dle_t *dle, int verbose);
 void parse_options(char *str,
@@ -132,4 +150,16 @@ double the_num(char * str, int pos);
  */
 char *config_errors_to_error_string(GSList *errlist);
 
+amregex_t *build_re_table(amregex_t *orig_re_table,
+                          GSList *normal_message,
+                          GSList *ignore_message,
+                          GSList *strange_message);
+void add_type_table(dmpline_t typ,
+                    amregex_t **re_table, amregex_t *orig_re_table,
+                    GSList *normal_message, GSList *ignore_message,
+                    GSList *strange_message);
+void add_list_table(dmpline_t typ, amregex_t **re_table,
+                    GSList *message);
+
 #endif
+

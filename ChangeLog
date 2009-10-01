@@ -1,4 +1,21 @@
 2009-10-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c (build_re_table, add_type_table,
+				    add_list_table): Remove function.
+	* application-src/amstar.c: Use NORNAL, IGNORE and STRANGE properties.
+	* client-src/client_util.c (build_re_table, add_type_table,
+				   add_list_table): Add function.
+	* client-src/client_util.h (build_re_table, add_type_table,
+				    add_list_table): Add prototype.
+	* client-src/client_util.h (dmpline_t, amregex_t, AM_*_RE):
+		Add declaration.
+	* client-src/sendbackup.h (dmpline_t, amregex_t, AM_*_RE):
+		Remove declaration.
+	* client-src/sendsize.c: Rename 'struct regex_s' to
+					'struct regex_scale_s'.
+	* man/xml-source/amstar.8.xml: Document new NORNAL, IGNORE and STRANGE
+				       properties.
+
+2009-10-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c (bsd_prefix_packet): Use geteuid login
 							  name.
 

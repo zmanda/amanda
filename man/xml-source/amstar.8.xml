@@ -63,6 +63,37 @@ The path to the star binary. The default is set when Amanda is built by the
 The directory where star stores the database it uses to generate incremental
 dumps.  The default is /etc/tardumps.
 </listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>NORMAL</term><listitem>
+List all regex (POSIX Extended Regular Expression syntax) that are normal output from star. These output are in the "FAILED DUMP DETAILS" section of the email report if the dump result is STRANGE or FAILED. Default values:
+<programlisting>
+  "^could not open conf file"
+  "^Type of this level "
+  "^Date of this level "
+  "^Date of last level "
+  "^Dump record  level "
+  "^Throughput"
+  "^.*is sparse$"
+  "^star: dumped [0-9][0-9]* (tar )?files"
+  "^.*The following problems occurred during .* processing.*$"
+  "^.*Processed all possible files, despite earlier errors.*$"
+  "^.*not written due to problems during backup.*$"
+</programlisting>
+<para>To treat one of these default patterns differently, specify it explicitly in a different property.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>IGNORE</term><listitem>
+List all regex (POSIX Extended Regular Expression syntax) that amanda ignore. These output are never in the email report. 
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>STRANGE</term><listitem>
+List all regex (POSIX Extended Regular Expression syntax) that are strange output from star. All star output that doesn't match a normal or ignore regex are strange by default. The result of the dump is STRANGE if star produce a strange output. These output are in the "FAILED DUMP DETAILS" section of the email report.
+<programlisting>
+  "^Perform a level 0 dump first.*$"
+</programlisting>
+<para>To treat one of these default patterns differently, specify it explicitly in a different property.</para>
+</listitem></varlistentry>
+
 </variablelist>
 
 </refsect1>

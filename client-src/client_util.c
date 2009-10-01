@@ -1511,3 +1511,120 @@ config_errors_to_error_string(
     return vstrallocf("ERROR %s%s", errmsg,
 	multiple_errors? _(" (additional errors not displayed)"):"");
 }
+
+
+void
+add_type_table(
+    dmpline_t   typ,
+    amregex_t **re_table,
+    amregex_t  *orig_re_table,
+    GSList     *normal_message,
+    GSList     *ignore_message,
+    GSList     *strange_message)
+{
+    amregex_t *rp;
+
+    for(rp = orig_re_table; rp->regex != NULL; rp++) {
+	if (rp->typ == typ) {
+	    int     found = 0;
+	    GSList *mes;
+
+	    for (mes = normal_message; mes != NULL; mes = mes->next) {
+		if (strcmp(rp->regex, (char *)mes->data) == 0)
+		    found = 1;
+	    }
+	    for (mes = ignore_message; mes != NULL; mes = mes->next) {
+		if (strcmp(rp->regex, (char *)mes->data) == 0)
+		    found = 1;
+	    }
+	    for (mes = strange_message; mes != NULL; mes = mes->next) {
+		if (strcmp(rp->regex, (char *)mes->data) == 0)
+		    found = 1;
+	    }
+	    if (found == 0) {
+		(*re_table)->regex   = rp->regex;
+		(*re_table)->srcline = rp->srcline;
+		(*re_table)->scale   = rp->scale;
+		(*re_table)->field   = rp->field;
+		(*re_table)->typ     = rp->typ;
+		(*re_table)++;
+	    }
+	}
+    }
+}
+
+void
+add_list_table(
+    dmpline_t   typ,
+    amregex_t **re_table,
+    GSList     *message)
+{
+    GSList *mes;
+
+    for (mes = message; mes != NULL; mes = mes->next) {
+	(*re_table)->regex = (char *)mes->data;
+	(*re_table)->srcline = 0;
+	(*re_table)->scale   = 0;
+	(*re_table)->field   = 0;
+	(*re_table)->typ     = typ;
+	(*re_table)++;
+    }
+}
+
+amregex_t *
+build_re_table(
+    amregex_t *orig_re_table,
+    GSList    *normal_message,
+    GSList    *ignore_message,
+    GSList    *strange_message)
+{
+    int        nb = 0;
+    amregex_t *rp;
+    amregex_t *re_table, *new_re_table;
+
+    for(rp = orig_re_table; rp->regex != NULL; rp++) {
+	nb++;
+    }
+    nb += g_slist_length(normal_message);
+    nb += g_slist_length(ignore_message);
+    nb += g_slist_length(strange_message);
+    nb ++;
+
+    re_table =  new_re_table = malloc(nb * sizeof(amregex_t));
+    
+    /* add SIZE from orig_re_table */
+    add_type_table(DMP_SIZE, &re_table, orig_re_table,
+		   normal_message, ignore_message, strange_message);
+
+    /* add ignore_message */
+    add_list_table(DMP_IGNORE, &re_table, ignore_message);
+
+    /* add IGNORE from orig_re_table */
+    add_type_table(DMP_IGNORE, &re_table, orig_re_table,
+		   normal_message, ignore_message, strange_message);
+
+    /* add normal_message */
+    add_list_table(DMP_NORMAL, &re_table, normal_message);
+
+    /* add NORMAL from orig_re_table */
+    add_type_table(DMP_NORMAL, &re_table, orig_re_table,
+		   normal_message, ignore_message, strange_message);
+
+    /* add strange_message */
+    add_list_table(DMP_STRANGE, &re_table, strange_message);
+
+    /* add STRANGE from orig_re_table */
+    add_type_table(DMP_STRANGE, &re_table, orig_re_table,
+		   normal_message, ignore_message, strange_message);
+
+    /* Add DMP_STRANGE with NULL regex,       */
+    /* it is not copied by previous statement */
+    re_table->regex = NULL;
+    re_table->srcline = 0;
+    re_table->scale = 0;
+    re_table->field = 0;
+    re_table->typ = DMP_STRANGE;
+
+    return new_re_table;
+}
+

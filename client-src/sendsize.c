@@ -1240,7 +1240,7 @@ gnutar_calc_estimates(
 }
 #endif
 
-typedef struct regex_s {
+typedef struct regex_scale_s {
     char *regex;
     int scale;
 } regex_scale_t;

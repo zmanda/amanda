@@ -36,6 +36,9 @@
  * STAR-DLE-TARDUMP
  * ONE-FILE-SYSTEM
  * SPARSE
+ * NORMAL
+ * IGNORE
+ * STRANGE
  */
 
 #include "amanda.h"
@@ -58,7 +61,7 @@ int debug_application = 1;
 	}				\
 } while (0)
 
-static amregex_t re_table[] = {
+static amregex_t init_re_table[] = {
   /* tar prints the size in bytes */
   AM_SIZE_RE("star: [0-9][0-9]* blocks", 10240, 1),
   AM_NORMAL_RE("^could not open conf file"),
@@ -89,6 +92,7 @@ static amregex_t re_table[] = {
   /* catch-all: DMP_STRANGE is returned for all other lines */
   AM_STRANGE_RE(NULL)
 };
+static amregex_t *re_table;
 
 /* local functions */
 int main(int argc, char **argv);
@@ -116,11 +120,15 @@ static void amstar_validate(application_argument_t *argument);
 static GPtrArray *amstar_build_argv(application_argument_t *argument,
 				int level,
 				int command);
+
 char *star_path;
 char *star_tardumps;
 int   star_dle_tardumps;
 int   star_onefilesystem;
 int   star_sparse;
+static GSList *normal_message = NULL;
+static GSList *ignore_message = NULL;
+static GSList *strange_message = NULL;
 
 static struct option long_options[] = {
     {"config"          , 1, NULL,  1},
@@ -138,6 +146,10 @@ static struct option long_options[] = {
     {"one-file-system" , 1, NULL, 13},
     {"sparse"          , 1, NULL, 14},
     {"calcsize"        , 0, NULL, 15},
+    {"normal"          , 1, NULL, 16},
+    {"ignore"          , 1, NULL, 17},
+    {"strange"         , 1, NULL, 18},
+
     { NULL, 0, NULL, 0}
 };
 
@@ -271,6 +283,19 @@ main(
 		 break;
 	case 15: argument.calcsize = 1;
 		 break;
+        case 16: if (optarg)
+                     normal_message =
+                         g_slist_append(normal_message, optarg);
+                 break;
+        case 17: if (optarg)
+                     ignore_message =
+                         g_slist_append(ignore_message, optarg);
+                 break;
+        case 18: if (optarg)
+                     strange_message =
+                         g_slist_append(strange_message, optarg);
+                 break;
+
 	case ':':
 	case '?':
 		break;
@@ -291,6 +316,9 @@ main(
     if (config_errors(NULL) >= CFGERR_ERRORS) {
 	g_critical(_("errors processing config file"));
     }
+
+    re_table = build_re_table(init_re_table, normal_message, ignore_message,
+			      strange_message);
 
     if (strcmp(command, "support") == 0) {
 	amstar_support(&argument);
@@ -651,6 +679,8 @@ amstar_backup(
 	    dump_size = (long)((the_num(line, rp->field)* rp->scale+1023.0)/1024.0);
 	}
 	switch (rp->typ) {
+	    case DMP_IGNORE:
+		continue;
 	    case DMP_NORMAL:
 		type = "normal";
 		startchr = '|';

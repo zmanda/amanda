@@ -56,24 +56,6 @@ void start_index(int createindex, int input, int mesg,
  * multiplied by the scale field to get the dump size.
  */
 
-typedef enum { 
-    DMP_NORMAL, DMP_IGNORE, DMP_STRANGE, DMP_SIZE, DMP_ERROR
-} dmpline_t;
-
-typedef struct regex_s {
-    char *regex;
-    int srcline;
-    int scale;                  /* only used for size lines */
-    int field;
-    dmpline_t typ;
-} amregex_t;
-
-#define AM_NORMAL_RE(re)	{(re), __LINE__, 0, 0, DMP_NORMAL}
-#define AM_IGNORE_RE(re)	{(re), __LINE__, 0, 0, DMP_IGNORE}
-#define AM_STRANGE_RE(re)	{(re), __LINE__, 0, 0, DMP_STRANGE}
-#define AM_SIZE_RE(re,s,f)	{(re), __LINE__, (s), (f), DMP_SIZE}
-#define AM_ERROR_RE(re)		{(re), __LINE__, 0, 0, DMP_ERROR}
-
 extern pid_t  comppid, dumppid, encpid, tarpid;
 extern pid_t indexpid;
 extern g_option_t *g_options;
