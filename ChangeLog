@@ -1,3 +1,7 @@
+2009-10-01  Paul C. Mantz <pcmantz@zmanda.com>
+	* server-src/reporter.c: no report made unless destination
+	argument given
+
 2009-10-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c (build_re_table, add_type_table,
 				    add_list_table): Remove function.

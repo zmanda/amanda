@@ -343,7 +343,7 @@ main(
     char *ColumnSpec = "";
     char *errstr = NULL;
     int cn;
-    int mailout = 1;
+    int mailout = 0;
     char *mailto = NULL;
     char *lbl_templ = NULL;
     config_overrides_t *cfg_ovr = NULL;
@@ -396,8 +396,8 @@ main(
 	cfg_ovr = new_config_overrides(argc/2);
 	while((opt = getopt(argc, argv, "o:M:f:l:p:i")) != EOF) {
 	    switch(opt) {
-	    case 'i': 
-		mailout = 0;
+	    case 'i':
+                mailout = 0; /* deprecated */
 		break;
             case 'M':
 		if (mailto != NULL) {
@@ -409,6 +409,7 @@ main(
 		    error(_("mail address has invalid characters"));
 		    /*NOTREACHED*/
 		}
+                mailout = 1;
                 break;
             case 'f':
 		if (outfname != NULL) {
@@ -493,14 +494,7 @@ main(
     /* Ignore error from read_diskfile */
     read_diskfile(conf_diskfile, &diskq);
     amfree(conf_diskfile);
-    if(mailout && !mailto && 
-       getconf_seen(CNF_MAILTO) && strlen(getconf_str(CNF_MAILTO)) > 0) {
-		mailto = getconf_str(CNF_MAILTO);
-                if(!validate_mailto(mailto)){
-		   mailto = NULL;
-                }
-    }
-    
+
     conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     /* Ignore error from read_tapelist */
     read_tapelist(conf_tapelist);
@@ -558,6 +552,11 @@ main(
 			   NULL);
 	handle_error();
 	amfree(curstr);
+    }
+
+    if (!mailout && !psfname && !outfname) {
+        g_printf(_("no output spectified, nothing to do\n"));
+        exit(0);
     }
 
     while(logfile && get_logline(logfile)) {
