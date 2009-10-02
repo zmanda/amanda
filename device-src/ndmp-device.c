@@ -24,16 +24,8 @@
  * blocks.
  */
 
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <regex.h>
-#include <time.h>
-#include "util.h"
 #include "amanda.h"
-#include "conffile.h"
+#include "util.h"
 #include "device.h"
 #include "ndmp-proxy.h"
 
@@ -45,7 +37,6 @@
 #define NDMP_DEVICE_CONST(obj)	G_TYPE_CHECK_INSTANCE_CAST((obj), ndmp_device_get_type(), NdmpDevice const)
 #define NDMP_DEVICE_CLASS(klass)	G_TYPE_CHECK_CLASS_CAST((klass), ndmp_device_get_type(), NdmpDeviceClass)
 #define IS_NDMP_DEVICE(obj)	G_TYPE_CHECK_INSTANCE_TYPE((obj), ndmp_device_get_type ())
-
 #define NDMP_DEVICE_GET_CLASS(obj)	G_TYPE_INSTANCE_GET_CLASS((obj), ndmp_device_get_type(), NdmpDeviceClass)
 static GType	ndmp_device_get_type	(void);
 
@@ -164,13 +155,6 @@ ndmp_device_read_block(Device * dself,
                      gpointer data,
                      int *size_req);
 
-static gboolean
-ndmp_device_recycle_file(Device *dself,
-                       guint file);
-
-static gboolean
-ndmp_device_erase(Device *dself);
-
 /*
  * Class mechanics
  */
@@ -219,9 +203,11 @@ ndmp_device_init(NdmpDevice *nself)
     nself->proxy_chan = ipc_binary_new_channel(get_ndmp_proxy_proto());
     nself->open = 0;
 
-    /* Register property values
-     * Note: Some aren't added until ndmp_device_open_device()
-     */
+    /* TODO: allow other block sizes */
+    dself->block_size = 32768;
+    dself->min_block_size = 32768;
+    dself->max_block_size = 32768;
+
     bzero(&response, sizeof(response));
 
     g_value_init(&response, CONCURRENCY_PARADIGM_TYPE);
@@ -231,7 +217,7 @@ ndmp_device_init(NdmpDevice *nself)
     g_value_unset(&response);
 
     g_value_init(&response, STREAMING_REQUIREMENT_TYPE);
-    g_value_set_enum(&response, STREAMING_REQUIREMENT_NONE);
+    g_value_set_enum(&response, STREAMING_REQUIREMENT_DESIRED);
     device_set_simple_property(dself, PROPERTY_STREAMING,
 	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
@@ -282,9 +268,6 @@ ndmp_device_class_init(NdmpDeviceClass * c G_GNUC_UNUSED)
     device_class->seek_file = ndmp_device_seek_file;
     device_class->seek_block = ndmp_device_seek_block;
     device_class->read_block = ndmp_device_read_block;
-    device_class->recycle_file = ndmp_device_recycle_file;
-
-    device_class->erase = ndmp_device_erase;
 
     g_object_class->finalize = ndmp_device_finalize;
 }
@@ -340,30 +323,10 @@ ndmp_device_open_device(
 static void ndmp_device_finalize(GObject * obj_self)
 {
     NdmpDevice       *nself = NDMP_DEVICE (obj_self);
-    ipc_binary_message_t *msg;
 
     if(G_OBJECT_CLASS(parent_class)->finalize)
         (* G_OBJECT_CLASS(parent_class)->finalize)(obj_self);
 
-    if (nself->open) {
-	g_debug("closing tape device");
-
-	/* select the DEVICE service from the proxy */
-	msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_TAPE_CLOSE);
-	if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
-	    set_proxy_comm_err(DEVICE(nself), errno);
-	    goto finished;
-	}
-    g_debug("Sent NDMP_PROXY_CMD_TAPE_CLOSE to ndmp-proxy");
-
-	if (!get_generic_reply(nself)) {
-	    /* error message is set by get_generic_reply */
-	    goto finished;
-	}
-    }
-
-finished:
-    nself->open = FALSE;
     if (nself->proxy_chan)
 	ipc_binary_free_channel(nself->proxy_chan);
     if (nself->proxy_sock)
@@ -388,13 +351,13 @@ ndmp_device_read_label(
     header = dself->volume_header = g_new(dumpfile_t, 1);
     fh_init(header);
 
-    if (try_open_ndmp_device(nself, nself->ndmp_filename) == -1) {
-	/* error status was set by try_open_ndmp_device */
-	return dself->status;
-    }
-
-    /* Rewind it. */
-    if (!ndmp_mtio_rewind(nself)) {
+    if (!nself->open) {
+	if (try_open_ndmp_device(nself, nself->ndmp_filename) == -1) {
+	    /* error status was set by try_open_ndmp_device */
+	    return dself->status;
+	}
+    } else if (!ndmp_mtio_rewind(nself)) {
+	/* error message, if any, is set by ndmp_mtio_rewind */
 	return dself->status;
     }
 
@@ -466,6 +429,7 @@ write_tapestart_header(
     char       *header_buf;
 
     if (!ndmp_mtio_rewind(nself)) {
+	/* error message, if any, is set by ndmp_mtio_rewind */
 	return FALSE;
     }
 
@@ -489,10 +453,7 @@ write_tapestart_header(
 
     amfree(header_buf);
     if (!ndmp_mtio_eof(nself)) {
-	device_set_error(dself,
-			 vstrallocf(_("Error writing filemark: %s"),
-				    strerror(errno)),
-			 DEVICE_STATUS_DEVICE_ERROR|DEVICE_STATUS_VOLUME_ERROR);
+	/* error was set by ndmp_mtio_eof */
 	return FALSE;
     }
 
@@ -515,33 +476,29 @@ ndmp_device_start(
 
     if (!nself->open) {
 	try_open_ndmp_device(nself, nself->ndmp_filename);
-	if (!nself->open)
+	if (!nself->open) {
+	    /* the error was set by try_open_ndmp_device */
 	    return FALSE;
+	}
     }
 
     if (mode != ACCESS_WRITE && dself->volume_label == NULL) {
 	if (ndmp_device_read_label(dself) != DEVICE_STATUS_SUCCESS)
+	    /* the error was set by ndmp_device_read_label */
 	    return FALSE;
     }
 
     dself->access_mode = mode;
     dself->in_file = FALSE;
 
-    if (IS_WRITABLE_ACCESS_MODE(mode)) {
-	if (!ndmp_mtio_rewind(nself)) {
-	    /* ndmp_mtio_rewind already set our error message */
-	    return FALSE;
-	}
+    if (!ndmp_mtio_rewind(nself)) {
+	/* ndmp_mtio_rewind already set our error message */
+	return FALSE;
     }
 
     /* Position the tape */
     switch (mode) {
     case ACCESS_APPEND:
-	if (dself->volume_label == NULL && device_read_label(dself) != DEVICE_STATUS_SUCCESS) {
-	    /* device_read_label already set our error message */
-	    return FALSE;
-	}
-
 	if (!ndmp_mtio_eod(nself)) {
 	    /* ndmp_mtio_eod already set our error message */
 	    return FALSE;
@@ -549,14 +506,6 @@ ndmp_device_start(
 	break;
 
     case ACCESS_READ:
-	if (dself->volume_label == NULL && device_read_label(dself) != DEVICE_STATUS_SUCCESS) {
-	    /* device_read_label already set our error message */
-	    return FALSE;
-	}
-
-	if (!ndmp_mtio_rewind(nself)) {
-	    return FALSE;
-	}
 	dself->file = 0;
 	break;
 
@@ -585,10 +534,31 @@ static gboolean
 ndmp_device_finish(
     Device *dself)
 {
+    NdmpDevice *nself = NDMP_DEVICE(dself);
     if (device_in_error(dself)) return FALSE;
 
     /* we're not in a file anymore */
     dself->access_mode = ACCESS_NULL;
+
+    if (nself->open) {
+	ipc_binary_message_t *msg;
+	g_debug("closing tape service");
+
+	/* select the DEVICE service from the proxy */
+	msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_TAPE_CLOSE);
+	if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
+	    set_proxy_comm_err(DEVICE(nself), errno);
+	    return FALSE;
+	}
+	g_debug("Sent NDMP_PROXY_CMD_TAPE_CLOSE to ndmp-proxy");
+
+	if (!get_generic_reply(nself)) {
+	    /* error message is set by get_generic_reply */
+	    return FALSE;
+	}
+
+	nself->open = FALSE;
+    }
 
     return TRUE;
 }
@@ -606,7 +576,8 @@ ndmp_device_start_file(
     self = self;
     jobInfo = jobInfo;
 
-    return TRUE;
+    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
+    return FALSE;
 }
 
 static gboolean
@@ -616,11 +587,13 @@ ndmp_device_write_block(
     gpointer  data)
 {
     NdmpDevice *nself = NDMP_DEVICE(dself);
+
     nself = nself;
     size = size;
     data = data;
 
-    return TRUE;
+    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
+    return FALSE;
 }
 
 static gboolean
@@ -632,30 +605,8 @@ ndmp_device_finish_file(
     /* we're not in a file anymore */
     dself->in_file = FALSE;
 
-    return TRUE;
-}
-
-static gboolean
-ndmp_device_recycle_file(
-    Device *dself,
-    guint   file)
-{
-    NdmpDevice *self = NDMP_DEVICE(dself);
-    file = file;
-
-    if (device_in_error(self)) return FALSE;
-
-    return TRUE;
-}
-
-static gboolean
-ndmp_device_erase(
-    Device *dself)
-{
-    NdmpDevice *nself = NDMP_DEVICE(dself);
-    nself = nself;
-
-    return TRUE;
+    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
+    return FALSE;
 }
 
 /* functions for reading */
@@ -670,6 +621,7 @@ ndmp_device_seek_file(
     nself = nself;
     file = file;
 
+    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
     return NULL;
 }
 
@@ -681,15 +633,10 @@ ndmp_device_seek_block(
     if (device_in_error(dself)) return FALSE;
 
     dself->block = block;
-    return TRUE;
+
+    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
+    return FALSE;
 }
-
-typedef struct ndmp_read_block_data {
-    gpointer data;
-    int size_req;
-    int size_written;
-
-} ndmp_read_block_data;
 
 static int
 ndmp_device_read_block (Device * dself, gpointer data, int *size_req) {
@@ -698,7 +645,8 @@ ndmp_device_read_block (Device * dself, gpointer data, int *size_req) {
     data = data;
     size_req = size_req;
 
-    return 0;
+    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
+    return -1;
 }
 
 /*

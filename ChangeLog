@@ -1,3 +1,9 @@
+2009-10-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/ndmp-device.c:  remove some includes, remove recycle and
+	  erase, streaming desired, close the tape service on finish(), rewind
+	  less, and be more careful about setting errors exactly once
+	* man/xml-source/amanda-devices.7.xml: document the device
+
 2009-10-01  Paul C. Mantz <pcmantz@zmanda.com>
 	* server-src/reporter.c: no report made unless destination
 	argument given

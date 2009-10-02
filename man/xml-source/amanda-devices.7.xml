@@ -231,6 +231,18 @@ device file.</para>
 
 </refsect2>
 
+<refsect2><title>NDMP Device</title>
+<programlisting>
+tapedev "ndmp:/dev/st0"
+</programlisting>
+
+<para>This device enables Amanda to communicate with a tape service on an NDMP
+server.  The tape device name specifies the filename of the tape drive on the
+server.  Currently the server must be "localhost".  The device only supports
+reading and writing the tape label - no data transfer is supported.</para>
+
+</refsect2>
+
 <refsect2><title>VFS Device</title>
 <programlisting>
 tapedev "file:/path/to/vtape"
