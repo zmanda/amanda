@@ -1,3 +1,7 @@
+2009-10-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/debug.c (msg_timestamp): Print time in human readable
+					      format.
+
 2009-10-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/ndmp-device.c:  remove some includes, remove recycle and
 	  erase, streaming desired, close the tape service on finish(), rewind

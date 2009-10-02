@@ -473,12 +473,15 @@ debug_setup_2(
 static char *
 msg_timestamp(void)
 {
-    static char timestamp[128];
-    struct timeval tv;
+    static char  timestamp[128];
+    char        *r;
+    time_t       curtime;
 
-    gettimeofday(&tv, NULL);
-    g_snprintf(timestamp, SIZEOF(timestamp), "%lld.%06ld",
-		(long long)tv.tv_sec, (long)tv.tv_usec);
+    time(&curtime);
+    ctime_r(&curtime, timestamp);
+    r = strchr(timestamp, '\n');
+    if (r)
+	*r = '\0';
 
     return timestamp;
 }
