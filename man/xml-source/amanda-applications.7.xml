@@ -45,6 +45,10 @@
 - use PostgreSQL's continuous WAL archiving.
 </listitem>
 <listitem>
+<manref name="amraw" vol="8"/>,
+- use open and read to read the data.
+</listitem>
+<listitem>
 <manref name="amsamba" vol="8"/>,
 - use smbclient to backup and restore data.
 </listitem>

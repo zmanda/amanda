@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amraw.8'>
+
+<refmeta>
+<refentrytitle>amraw</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amraw</refname>
+<refpurpose>Amanda Application open and read data</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jlm;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Amraw is an Amanda Application API script.  It should not be run
+by users directly.  It uses dd to backup and restore data.</para>
+
+<para>Amraw can backup only one directory entry, it can be a single file, a raw device, anything that amanda can open and read.</para>
+
+<para>Restore is done in place, an open is done and the data is written to it. A file owned by root and permission 0600 is create if the directory entry doesn't exist before the restore.</para>
+
+<para>Only full backup is allowed</para>
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This application have no property.</para>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para>
+<programlisting>
+  define application-tool app_amraw {
+    plugin "amraw"
+  }
+</programlisting>
+A dumptype using this application might look like:
+<programlisting>
+  define dumptype amraw {
+    global
+    program "APPLICATION"
+    application "app_amraw"
+  }
+</programlisting>
+Note that the <emphasis>program</emphasis> parameter must be set to
+<emphasis>"APPLICATION"</emphasis> to use the <emphasis>application</emphasis>
+parameter.
+</para>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-applications" vol="7"/>
+</seealso>
+
+</refentry>

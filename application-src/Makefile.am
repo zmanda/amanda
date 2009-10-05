@@ -22,6 +22,7 @@ SCRIPTS_PERL = script-email \
 	     ampgsql \
 	     amzfs-sendrecv \
 	     amzfs-snapshot \
+	     amraw \
 	     amsamba \
 	     amsuntar
 

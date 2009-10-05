@@ -19,7 +19,8 @@ common_tests = \
 
 client_tests = \
 	amgtar \
-	ampgsql
+	ampgsql \
+	amraw
 
 server_tests = \
 	Amanda_Changer \

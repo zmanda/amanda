@@ -1,3 +1,14 @@
+2009-10-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/Makefile.am (SCRIPTS_PERL): Add amraw.
+	* application-src/amraw.pl: New application.
+	* installcheck/Makefile.am (client_tests): Add amraw.
+	* installcheck/amraw.pl: Check amraw functionnality.
+	* man/Makefile.am (CLIENT_MAN_PAGES): Add amraw.8.
+	* man/xml-source/amanda-applications.7.xml: Add amraw.8.
+	* man/xml-source/amanda.8.xml: Add amraw.8.
+	* man/xml-source/amraw.8.xml: New man page for amraw application.
+	* perl/Amanda/Constants.pm.in: Add DD.
+
 2009-10-05  Paul C. Mantz <pcmantz@zmanda.com>
 	* server-src/reporter.c: exit code 0 with no output format
 	specified, fixed default output destination

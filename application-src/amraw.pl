@@ -1,0 +1,246 @@
+#!@PERL@ 
+# Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+#
+# Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
+# Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
+
+use lib '@amperldir@';
+use strict;
+use Getopt::Long;
+
+package Amanda::Application::Amraw;
+use base qw(Amanda::Application);
+use IPC::Open3;
+use Sys::Hostname;
+use Symbol;
+use IO::Handle;
+use Amanda::Constants;
+use Amanda::Debug qw( :logging );
+use Amanda::Util;
+
+sub new {
+    my $class = shift;
+    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $calcsize) = @_;
+    my $self = $class->SUPER::new($config);
+
+    $self->{config}           = $config;
+    $self->{host}             = $host;
+    $self->{disk}             = $disk;
+    if (defined $device) {
+	$self->{device}       = $device;
+    } else {
+	$self->{device}       = $disk;
+    }
+    $self->{level}            = [ @{$level} ];
+    $self->{index}            = $index;
+    $self->{message}          = $message;
+    $self->{collection}       = $collection;
+    $self->{record}           = $record;
+    $self->{calcsize}         = $calcsize;
+
+    return $self;
+}
+
+sub command_support {
+    my $self = shift;
+
+    print "CONFIG YES\n";
+    print "HOST YES\n";
+    print "DISK YES\n";
+    print "MAX-LEVEL 0\n";
+    print "INDEX-LINE YES\n";
+    print "INDEX-XML NO\n";
+    print "MESSAGE-LINE YES\n";
+    print "MESSAGE-XML NO\n";
+    print "RECORD YES\n";
+    print "COLLECTION NO\n";
+    print "MULTI-ESTIMATE NO\n";
+    print "CALCSIZE NO\n";
+    print "CLIENT-ESTIMATE YES\n";
+}
+
+sub command_selfcheck {
+    my $self = shift;
+
+    $self->{action} = 'check';
+
+    print "OK " . $self->{share} . "\n";
+    print "OK " . $self->{disk} . "\n";
+    print "OK " . $self->{device} . "\n";
+
+    if (! -r $self->{device}) {
+	$self->print_to_server($self->{action},"$self->{device} can't be read", $Amanda::Script_App::ERROR);
+    }
+    #check statefile
+    #check amdevice
+}
+
+sub command_estimate {
+    my $self = shift;
+
+    $self->{action} = 'estimate';
+
+    my $level = $self->{level}[0];
+
+    if ($level != 0) {
+	$self->print_to_server($self->{action},"amapp_dd can only do level 0 backup", $Amanda::Script_App::ERROR);
+    }
+
+    my $fd = POSIX::open($self->{device}, &POSIX::O_RDONLY);
+    my $size = 0;
+    my $s;
+    my $buffer;
+    while (($s = POSIX::read($fd, $buffer, 32768)) > 0) {
+	$size += $s;
+    }
+    POSIX::close($fd);
+    output_size($level, $size);
+}
+
+sub output_size {
+   my($level) = shift;
+   my($size) = shift;
+   if($size == -1) {
+      print "$level -1 -1\n";
+   }
+   else {
+      my($ksize) = int $size / (1024);
+      $ksize=32 if ($ksize<32);
+      print "$level $ksize 1\n";
+   }
+}
+
+sub command_backup {
+    my $self = shift;
+
+    $self->{action} = 'backup';
+
+    my $level = $self->{level}[0];
+    my $mesgout_fd;
+    open($mesgout_fd, '>&=3') || die();
+    $self->{mesgout} = $mesgout_fd;
+
+    if (defined($self->{index})) {
+	$self->{'index_out'} = IO::Handle->new_from_fd(4, 'w');
+	$self->{'index_out'} or confess("Could not open index fd");
+    }
+
+    if ($level != 0) {
+	$self->print_to_server($self->{action},"amapp_dd can only do level 0 backup", $Amanda::Script_App::ERROR);
+    }
+
+    my $fd = POSIX::open($self->{device}, &POSIX::O_RDONLY);
+    my $size = 0;
+    my $s;
+    my $buffer;
+    my $out = 1;
+    while (($s = POSIX::read($fd, $buffer, 32768)) > 0) {
+	Amanda::Util::full_write($out, $buffer, $s);
+	$size += $s;
+    }
+    POSIX::close($fd);
+    close($out);
+    if (defined($self->{index})) {
+	$self->{'index_out'}->print("/\n");
+	$self->{'index_out'}->close;
+    }
+    if ($size >= 0) {
+	my $ksize = $size / 1024;
+	if ($ksize < 32) {
+	    $ksize = 32;
+	}
+	print $mesgout_fd "sendbackup: size $ksize\n";
+	print $mesgout_fd "sendbackup: end\n";
+    }
+
+    exit 0;
+}
+
+sub command_restore {
+    my $self = shift;
+    my @cmd = ();
+
+    $self->{action} = 'restore';
+    chdir(Amanda::Util::get_original_cwd());
+
+    my $device = $self->{device};
+    $device = "amraw-restored" if !defined $device;
+
+    my $fd = POSIX::open($device, &POSIX::O_CREAT | &POSIX::O_RDWR, 0600 );
+    my $size = 0;
+    my $s;
+    my $buffer;
+    my $in = 0;
+    while (($s = POSIX::read($in, $buffer, 32768)) > 0) {
+	Amanda::Util::full_write($fd, $buffer, $s);
+	$size += $s;
+    }
+    POSIX::close($fd);
+    close($in);
+    exit(0);
+}
+
+sub command_validate {
+    my $self = shift;
+
+    $self->{action} = 'validate';
+    $self->default_validate();
+}
+
+package main;
+
+sub usage {
+    print <<EOF;
+Usage: amraw <command> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --calcsize.
+EOF
+    exit(1);
+}
+
+my $opt_version;
+my $opt_config;
+my $opt_host;
+my $opt_disk;
+my $opt_device;
+my @opt_level;
+my $opt_index;
+my $opt_message;
+my $opt_collection;
+my $opt_record;
+my $opt_calcsize;
+
+Getopt::Long::Configure(qw{bundling});
+GetOptions(
+    'version'            => \$opt_version,
+    'config=s'           => \$opt_config,
+    'host=s'             => \$opt_host,
+    'disk=s'             => \$opt_disk,
+    'device=s'           => \$opt_device,
+    'level=s'            => \@opt_level,
+    'index=s'            => \$opt_index,
+    'message=s'          => \$opt_message,
+    'collection=s'       => \$opt_collection,
+    'record'             => \$opt_record,
+    'calcsize'           => \$opt_calcsize,
+) or usage();
+
+if (defined $opt_version) {
+    print "amraw-" . $Amanda::Constants::VERSION , "\n";
+    exit(0);
+}
+
+my $application = Amanda::Application::Amraw->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize);
+
+$application->do($ARGV[0]);

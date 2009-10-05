@@ -19,6 +19,7 @@ CLIENT_MAN_PAGES = \
     amanda-applications.7 \
     amgtar.8 \
     ampgsql.8 \
+    amraw.8 \
     amsamba.8 \
     amstar.8 \
     amsuntar.8 \

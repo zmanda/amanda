@@ -112,6 +112,9 @@ configuration files for quick reference.</para>
 <manref name="amplot" vol="8"/>,
 </listitem>
 <listitem>
+<manref name="amraw" vol="8"/>,
+</listitem>
+<listitem>
 <manref name="amrecover" vol="8"/>,
 </listitem>
 <listitem>
