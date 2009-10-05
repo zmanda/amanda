@@ -343,7 +343,7 @@ main(
     char *ColumnSpec = "";
     char *errstr = NULL;
     int cn;
-    int mailout = 0;
+    int mailout = 1;
     char *mailto = NULL;
     char *lbl_templ = NULL;
     config_overrides_t *cfg_ovr = NULL;
@@ -397,7 +397,7 @@ main(
 	while((opt = getopt(argc, argv, "o:M:f:l:p:i")) != EOF) {
 	    switch(opt) {
 	    case 'i':
-                mailout = 0; /* deprecated */
+                mailout = 0;
 		break;
             case 'M':
 		if (mailto != NULL) {
@@ -409,7 +409,6 @@ main(
 		    error(_("mail address has invalid characters"));
 		    /*NOTREACHED*/
 		}
-                mailout = 1;
                 break;
             case 'f':
 		if (outfname != NULL) {
@@ -486,14 +485,22 @@ main(
     if (mailer && *mailer == '\0')
 	mailer = NULL;
     if (!mailer && !outfname) {
-	g_printf(_("You must run amreport with '-f <output file>' because a mailer is not defined\n"));
-	exit (1);
+	g_printf(_("Warning: a mailer is not defined, and no -f option was given, so no report produced.\n"));
+	exit(0);
     }
 
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     /* Ignore error from read_diskfile */
     read_diskfile(conf_diskfile, &diskq);
     amfree(conf_diskfile);
+
+    if( mailout && !mailto &&
+        getconf_seen(CNF_MAILTO) && strlen(getconf_str(CNF_MAILTO)) > 0) {
+               mailto = getconf_str(CNF_MAILTO);
+               if(!validate_mailto(mailto)){
+                 mailto = NULL;
+               }
+    }
 
     conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     /* Ignore error from read_tapelist */
@@ -554,8 +561,8 @@ main(
 	amfree(curstr);
     }
 
-    if (!mailout && !psfname && !outfname) {
-        g_printf(_("no output spectified, nothing to do\n"));
+    if ( ( !mailout || !mailer || !mailto ) && !psfname && !outfname ) {
+        g_printf(_("no output specified, nothing to do\n"));
         exit(0);
     }
 

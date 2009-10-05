@@ -1,3 +1,7 @@
+2009-10-05  Paul C. Mantz <pcmantz@zmanda.com>
+	* server-src/reporter.c: exit code 0 with no output format
+	specified, fixed default output destination
+
 2009-10-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/debug.c (msg_timestamp): Print time in human readable
 					      format.
