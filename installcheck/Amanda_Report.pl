@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
-use Test::More tests => 14;
+use Test::More tests => 15;
 use strict;
 use warnings;
 
@@ -675,6 +675,7 @@ EOF
 
 $LogfileData{fullExample} = {
     programs => {
+        amdump => {},
         dumper => {},
         driver => {
             time       => "663.574",
@@ -930,7 +931,116 @@ $LogfileData{fullExample} = {
             },
         },
     },
-    boguses => [ [ 8, 4, "amdump pid 9291" ], ],
+};
+
+$LogfileContents{amflushExample} = <<EOF;
+INFO amflush amflush pid 26036
+DISK amflush localhost /backups/oracle
+DISK amflush localhost /backups/mysql
+DISK amflush localhost /usr/local/bin
+DISK amflush localhost /etc
+DISK amflush localhost /home
+START amflush date 20090622075550
+INFO driver driver pid 26076
+START driver date 20090622075550
+STATS driver hostname localhost
+STATS driver startup time 0.011
+INFO taper taper pid 26077
+START taper datestamp 20090622075550 label DailyTapeDataSet-017 tape 1
+PART taper DailyTapeDataSet-017 1 localhost /etc 20090620020002 1/1 1 [sec 2.504314 kb 36980 kps 14766.518895]
+DONE taper localhost /etc 20090620020002 1 1 [sec 2.504314 kb 36980 kps 14766.518895]
+PART taper DailyTapeDataSet-017 2 localhost /usr/local/bin 20090620020002 1/1 1 [sec 1.675693 kb 309 kps 184.632684]
+DONE taper localhost /usr/local/bin 20090620020002 1 1 [sec 1.675693 kb 309 kps 184.632684]
+INFO taper pid-done 26077
+FINISH driver date 20090622075550 time 177.708
+INFO driver pid-done 26076
+INFO amflush pid-done 26075
+EOF
+
+$LogfileData{amflushExample} = {
+    'programs' => {
+        'taper' => {
+            'tapes' => {
+                'DailyTapeDataSet-017' => {
+                    'date' => '20090622075550'
+                },
+            },
+        },
+        'amflush' => { 'start' => '20090622075550' },
+        'driver'  => {
+            'time'       => '177.708',
+            'start_time' => '0.011',
+            'start'      => '20090622075550'
+        },
+    },
+    'disklist' => {
+        'localhost' => {
+            '/etc' => {
+                'tries' => [
+                    {
+                        'taper' => {
+                            'kps'    => '14766.518895',
+                            'level'  => '1',
+                            'sec'    => '2.504314',
+                            'status' => 'done',
+                            'parts'  => '1',
+                            'kb'     => '36980'
+                        },
+                    },
+                ],
+                'chunks' => [
+                    {
+                        'kps'   => '14766.518895',
+                        'sec'   => '2.504314',
+                        'date'  => '20090620020002',
+                        'part'  => '1',
+                        'file'  => '1',
+                        'kb'    => '36980',
+                        'label' => 'DailyTapeDataSet-017'
+                    },
+                ],
+                'estimate' => undef
+            },
+            '/backups/oracle' => {
+                'tries'    => [],
+                'estimate' => undef
+            },
+            '/usr/local/bin' => {
+                'tries' => [
+                    {
+                        'taper' => {
+                            'kps'    => '184.632684',
+                            'level'  => '1',
+                            'sec'    => '1.675693',
+                            'status' => 'done',
+                            'parts'  => '1',
+                            'kb'     => '309'
+                        },
+                    },
+                ],
+                'chunks' => [
+                    {
+                        'kps'   => '184.632684',
+                        'sec'   => '1.675693',
+                        'date'  => '20090620020002',
+                        'part'  => '1',
+                        'file'  => '2',
+                        'kb'    => '309',
+                        'label' => 'DailyTapeDataSet-017'
+                    },
+                ],
+                'estimate' => undef
+            },
+            '/home' => {
+                'tries'    => [],
+                'estimate' => undef
+            },
+            '/backups/mysql' => {
+                'tries'    => [],
+                'estimate' => undef
+            },
+        },
+    },
 };
 
 

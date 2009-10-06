@@ -1,3 +1,8 @@
+2009-10-06  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Reporter.pm: added log handling of amdump and
+	amflush
+	* installcheck/Amanda_Report.pl: regression tests
+
 2009-10-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/amraw.pl: Use File::Path::mkpath.
 

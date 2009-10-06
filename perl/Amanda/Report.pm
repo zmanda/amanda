@@ -144,6 +144,16 @@ entries do not:
 
 =back
 
+=head3 $programs->{amflush}
+
+When amflush is present, it records what disklist entries need to be
+processed instead of the planner.  It also has no special fields.
+
+=head3 $programs->{amdump}
+
+This program is a control program that spawns off dumper programs.  It
+has no special fields.
+
 =head3 $programs->{dumper} and $programs->{chunker}
 
 Most of the chunker's output and the dumper's output can be tied to a
@@ -344,6 +354,9 @@ sub read_line
     } elsif ( $prog == $P_AMFLUSH ) {
         return $self->_handle_amflush_line( $type, $str );
 
+    } elsif ( $prog == $P_AMDUMP ) {
+        return $self->_handle_amdump_line( $type, $str );
+
     } elsif ( $prog == $P_REPORTER ) {
         return $self->_handle_reporter_line( $type, $str );
 
@@ -420,24 +433,13 @@ sub _handle_planner_line
     } elsif ( $type == $L_START ) {
         return $self->_handle_start_line( "planner", $str );
 
-    } elsif ($type == $L_FINISH) {
+    } elsif ( $type == $L_FINISH ) {
 
         my @info = Amanda::Util::split_quoted_strings($str);
         $planner->{time} = $info[3];
 
     } elsif ( $type == $L_DISK ) {
-
-        my @info = Amanda::Util::split_quoted_strings($str);
-
-        # set up the disklist and DLE entry
-        my ( $hostname, $disk ) = @info;
-
-        $disklist->{$hostname} ||= {};
-        my $dle = $disklist->{$hostname}->{$disk} = {};
-
-        # TODO: should I put an empty try here?
-        $dle->{estimate} = undef;
-        $dle->{tries}    = [];
+        return $self->_handle_disk_line( "planner", $str );
 
     } elsif ( $type == $L_ERROR ) {
         return $self->_handle_error_line( "planner", $str );
@@ -794,22 +796,40 @@ sub _handle_amflush_line
     my $data      = $self->{data};
     my $disklist  = $data->{disklist};
     my $programs  = $data->{programs};
-    my $flusher_p = $programs->{flusher} ||= {};
+    my $amflush_p = $programs->{amflush} ||= {};
 
     if ( $type == $L_DISK ) {
+        return $self->_handle_disk_line( "amflush", $str );
 
-        # TODO: this is a stub.  Will probably fail.  Probably needs
-        # to be custom.
-        return $self->_handle_disk_line( "flusher", $str );
+    } elsif ( $type == $L_START ) {
+        return $self->_handle_start_line( "amflush", $str );
 
     } elsif ( $type == $L_INFO ) {
-        return $self->_handle_info_line( "flusher", $str );
-
-    } elsif ( $type == $L_FAIL ) {
-        return $self->_handle_fail_line( "flusher", $str );
+        return $self->_handle_info_line( "amflush", $str );
 
     } else {
         return $self->_handle_bogus_line( $P_AMFLUSH, $type, $str );
+    }
+}
+
+
+sub _handle_amdump_line
+{
+    my $self = shift;
+    my ( $type, $str ) = @_;
+    my $data     = $self->{data};
+    my $disklist = $data->{disklist};
+    my $programs = $data->{programs};
+    my $amdump = $programs->{amdump} ||= {};
+
+    if ( $type == $L_INFO ) {
+        $self->_handle_info_line("amdump", $str);
+
+    } elsif ( $type == $L_START ) {
+        $self->_handle_start_line("amdump", $str);
+
+    } elsif ( $type == $L_ERROR ) {
+        $self->_handle_error_line("amdump", $str);
     }
 }
 
@@ -876,6 +896,25 @@ sub _handle_start_line
 
     my @info = Amanda::Util::split_quoted_strings($str);
     $program_p->{start} = $info[1];
+}
+
+
+sub _handle_disk_line
+{
+    my $self = shift @_;
+    my ( $program, $str ) = @_;
+
+    my $data     = $self->{data};
+    my $disklist = $data->{disklist};
+
+    my @info = Amanda::Util::split_quoted_strings($str);
+    my ( $hostname, $disk ) = @info;
+
+    $disklist->{$hostname} ||= {};
+    my $dle = $disklist->{$hostname}->{$disk} = {};
+
+    $dle->{estimate} = undef;
+    $dle->{tries}    = [];
 }
 
 
