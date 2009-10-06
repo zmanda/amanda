@@ -46,8 +46,8 @@ my $root_dir = "$Installcheck::TMP/installcheck-amraw";
 my $back_file = "$root_dir/to_backup";
 my $rest_dir = "$root_dir/restore";
 
-File::Path::make_path $root_dir;
-File::Path::make_path $rest_dir;
+File::Path::mkpath($root_dir);
+File::Path::mkpath($rest_dir);
 Amanda::Tests::write_random_file(0xabcde, 1024*256, $back_file);
 
 my $selfcheck = $app->selfcheck('device' => $back_file, 'level' => 0, 'index' => 'line');

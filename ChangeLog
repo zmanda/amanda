@@ -1,3 +1,6 @@
+2009-10-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/amraw.pl: Use File::Path::mkpath.
+
 2009-10-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/Makefile.am (SCRIPTS_PERL): Add amraw.
 	* application-src/amraw.pl: New application.
