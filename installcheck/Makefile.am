@@ -71,6 +71,9 @@ restore_tests = \
 mock_tests = \
 	mock_mtx
 
+ndmp_tests = \
+	Amanda_NDMP
+
 # mock scripts
 mocks = \
 	mock/mtx
@@ -110,6 +113,13 @@ if WANT_CLIENT
 if WANT_RESTORE
 tests += $(restore_tests)
 endif
+endif
+endif
+
+# tests for NDMP require a server and NDMP
+if WANT_NDMP
+if WANT_SERVER
+tests += $(ndmp_tests)
 endif
 endif
 

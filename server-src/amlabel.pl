@@ -32,7 +32,6 @@ use Amanda::Changer;
 use Amanda::Header qw( :constants );
 use Amanda::MainLoop;
 use Amanda::Tapelist;
-use Amanda::Ndmp;
 
 my $exit_status = 0;
 
@@ -230,6 +229,5 @@ $subs{'released'} = make_cb(released => sub {
 
 $subs{'start'}->();
 Amanda::MainLoop::run();
-Amanda::Ndmp::stop_ndmp_proxy();
 Amanda::Util::finish_application();
 exit($exit_status);

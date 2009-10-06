@@ -50,12 +50,20 @@ The temporary directory for installcheck data. This directory is created for you
 Calling this function causes status meesages from tests (e.g. "ok 1 - some test")
 to be recorded in the debug logs. It should be called exactly once.
 
+=item C<get_unused_port()>
+
+Find a local TCP port that is currently unused and not listed in
+C</etc/services>.  This can still fail, if the port in question is bound by
+another process between the call to C<get_unused_port()> and the port's
+eventual use.
+
 =back
 
 =cut
 
 use strict;
 use warnings;
+use Socket;
 
 our $TMP = "$AMANDA_TMPDIR/installchecks";
 
@@ -63,6 +71,37 @@ our $TMP = "$AMANDA_TMPDIR/installchecks";
 # (not during syntax checks)
 INIT {
     mkpath($TMP);
+}
+
+my @used_ports;
+sub get_unused_port {
+     my ($base, $count) = (10000, 10000);
+     my $i;
+     my $tcp = getprotobyname('tcp');
+
+     # select ports randomly until we find one that is usable or have tried 1000
+     # ports
+     for ($i = 0; $i < 1000; $i++) {
+	my $port = int(rand($count)) + $base;
+
+	# have we already used it?
+	next if (grep { $_ == $port } @used_ports);
+
+	# is it listed in /etc/services?
+	next if (getservbyport($port, $tcp));
+
+	# can we bind() to it? (using REUSADDR so that the kernel doesn't reserve
+	# the port after we close it)
+	next unless socket(SOCK, PF_INET, SOCK_STREAM, $tcp);
+	next unless setsockopt(SOCK, SOL_SOCKET, SO_REUSEADDR, pack("l", 1));
+	next unless bind(SOCK, sockaddr_in($port, INADDR_ANY));
+
+	# it passed the gauntlet of tests, so the port is good
+	push @used_ports, $port;
+	return $port;
+    }
+
+    die("could not find unused port");
 }
 
 sub log_test_output {

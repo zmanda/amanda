@@ -55,10 +55,7 @@ enum {
 
 ipc_binary_proto_t *get_ndmp_proxy_proto(void);
 
-char *start_ndmp_proxy(void);
-void  stop_ndmp_proxy(void);
 int   connect_to_ndmp_proxy(char **errmsg);
-int   proxy_pid(void);
 
 #endif /* NDMP_PROTOCOL_H */
 

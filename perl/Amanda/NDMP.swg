@@ -19,14 +19,27 @@
  * Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
  */
 
-%module "Amanda::Ndmp"
+%module "Amanda::NDMP"
 %include "amglue/amglue.swg"
 %include "exception.i"
+
+%include "Amanda/NDMP.pod"
 
 %{
 #include "ndmp-proxy.h"
 %}
 
-char *start_ndmp_proxy(void);
-void  stop_ndmp_proxy(void);
-amglue_export_tag(ndmp, start_ndmp_proxy stop_ndmp_proxy);
+%typemap(in,numinputs=0) char **errmsg (char *msg) {
+    msg = NULL;
+    $1 = &msg;
+}
+
+%typemap(argout) char **errmsg {
+    /* raise an exception if there was an error */
+    if (*$1) {
+	croak("%s", *$1);
+    }
+}
+
+int  connect_to_ndmp_proxy(char **errmsg);
+amglue_export_tag(ndmp, connect_to_ndmp_proxy);

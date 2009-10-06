@@ -120,8 +120,6 @@ amglue_add_constant(CNF_RESERVED_TCP_PORT, confparm_key);
 amglue_add_constant(CNF_UNRESERVED_TCP_PORT, confparm_key);
 amglue_add_constant(CNF_HOLDINGDISK, confparm_key);
 amglue_add_constant(CNF_NDMP_PROXY_PORT, confparm_key);
-amglue_add_constant(CNF_NDMP_PROXY_DEBUG_FILE, confparm_key);
-amglue_add_constant(CNF_NDMP_PROXY_DEBUG_LEVEL, confparm_key);
 amglue_copy_to_tag(confparm_key, getconf);
 
 amglue_add_enum_tag_fns(tapetype_key);

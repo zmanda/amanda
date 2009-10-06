@@ -181,9 +181,7 @@ typedef struct ipc_binary_channel_t {
     ipc_binary_buf_t in, out;
 } ipc_binary_channel_t;
 
-/* Create a new channel, ready to send and receive messages.  Note that a
- * channel can also be allocated statically -- just set the proto field and
- * zero out the remainder.
+/* Create a new channel, ready to send and receive messages.
  *
  * @param proto: protocol to use on this channel
  * @returns: a new channel object
@@ -191,7 +189,7 @@ typedef struct ipc_binary_channel_t {
 ipc_binary_channel_t *ipc_binary_new_channel(
     ipc_binary_proto_t *proto);
 
-/* Free a channel completely
+/* Free a channel completely.
  *
  * @param channel: the channel to free
  */

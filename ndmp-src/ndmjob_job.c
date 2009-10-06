@@ -119,9 +119,6 @@ args_to_job (void)
 	case 'D':		/* -o daemon */
 		return 0;
 
-	case 'y':		/* -o proxy */
-		return 0;
-
 	default:
 		printf ("mode -%c not implemented yet\n", the_mode);
 		break;

@@ -90,8 +90,6 @@ typedef enum {
     CONF_EXECUTE_ON,           CONF_EXECUTE_WHERE,	CONF_SEND_AMREPORT_ON,
     CONF_DEVICE,               CONF_ORDER,
     CONF_NDMP_PROXY_PORT,
-    CONF_NDMP_PROXY_DEBUG_FILE,
-    CONF_NDMP_PROXY_DEBUG_LEVEL,
 
     /* execute on */
     CONF_PRE_DLE_AMCHECK,      CONF_PRE_HOST_AMCHECK,
@@ -891,8 +889,6 @@ keytab_t server_keytab[] = {
     { "MAXPROMOTEDAY", CONF_MAXPROMOTEDAY },
     { "MEDIUM", CONF_MEDIUM },
     { "NDMP_PROXY_PORT", CONF_NDMP_PROXY_PORT },
-    { "NDMP_PROXY_DEBUG_FILE", CONF_NDMP_PROXY_DEBUG_FILE },
-    { "NDMP_PROXY_DEBUG_LEVEL", CONF_NDMP_PROXY_DEBUG_LEVEL },
     { "NETUSAGE", CONF_NETUSAGE },
     { "NEVER", CONF_NEVER },
     { "NOFULL", CONF_NOFULL },
@@ -1157,8 +1153,6 @@ conf_var_t server_var [] = {
    { CONF_RESERVED_TCP_PORT    , CONFTYPE_INTRANGE , read_intrange    , CNF_RESERVED_TCP_PORT    , validate_reserved_port_range },
    { CONF_UNRESERVED_TCP_PORT  , CONFTYPE_INTRANGE , read_intrange    , CNF_UNRESERVED_TCP_PORT  , validate_unreserved_port_range },
    { CONF_NDMP_PROXY_PORT      , CONFTYPE_INT      , read_int         , CNF_NDMP_PROXY_PORT      , NULL },
-   { CONF_NDMP_PROXY_DEBUG_FILE, CONFTYPE_STR      , read_str         , CNF_NDMP_PROXY_DEBUG_FILE, NULL },
-   { CONF_NDMP_PROXY_DEBUG_LEVEL,CONFTYPE_INT      , read_int         , CNF_NDMP_PROXY_DEBUG_LEVEL,NULL },
    { CONF_UNKNOWN              , CONFTYPE_INT      , NULL             , CNF_CNF                  , NULL }
 };
 
@@ -4409,8 +4403,6 @@ init_defaults(
     conf_init_int      (&conf_data[CNF_DEBUG_SENDSIZE]       , 0);
     conf_init_int      (&conf_data[CNF_DEBUG_SENDBACKUP]     , 0);
     conf_init_int      (&conf_data[CNF_NDMP_PROXY_PORT]      , 0);
-    conf_init_int      (&conf_data[CNF_NDMP_PROXY_DEBUG_LEVEL], 0);
-    conf_init_str      (&conf_data[CNF_NDMP_PROXY_DEBUG_FILE], "");
 #ifdef UDPPORTRANGE
     conf_init_intrange (&conf_data[CNF_RESERVED_UDP_PORT]    , UDPPORTRANGE);
 #else

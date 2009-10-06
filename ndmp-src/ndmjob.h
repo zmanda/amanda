@@ -106,7 +106,6 @@ GLOBAL struct ndmagent	R_robot_agent;
 GLOBAL struct ndmscsi_target r_robot_target;
 GLOBAL struct ndmagent	T_tape_agent;
 GLOBAL char *		U_user;
-GLOBAL int 		y_fd;
 
 GLOBAL int		o_time_limit;
 GLOBAL int		o_swap_connect;
@@ -114,7 +113,6 @@ GLOBAL int		o_use_eject;
 GLOBAL int		o_tape_addr;
 GLOBAL int		o_from_addr;
 GLOBAL int		o_to_addr;
-GLOBAL int		o_proxy;
 GLOBAL struct ndmscsi_target o_tape_scsi;
 GLOBAL int		o_tape_timeout;
 GLOBAL int		o_robot_timeout;

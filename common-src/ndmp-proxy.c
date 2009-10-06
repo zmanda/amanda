@@ -30,10 +30,6 @@
 #include "stream.h"
 #include "ndmp-proxy.h"
 
-static int ndmp_proxy_pid = -1;
-static int ndmp_proxy_connected = FALSE;
-static int ndmp_proxy_stdin = -1;
-
 ipc_binary_proto_t *
 get_ndmp_proxy_proto(void)
 {
@@ -99,8 +95,16 @@ get_ndmp_proxy_proto(void)
 
 /* return  == NULL: correct
  *         != NULL: error message
+ *
+ * The ndmp-proxy is assumed to take a configuration name and a port number
+ * on its command line, and to immediately attempt to bind to that port.  If
+ * the bind operation succeeds, it should print "OK\n" to stdout and close the
+ * file descriptor.  If the operation fails because the address is already
+ * in use (and thus, most likely, there's another proxy running already), then
+ * it should print "INUSE\n", close the file descriptor, and exit.  For any other
+ * failure, it should print a suitable error message and exit.
  */
-char *
+static char *
 start_ndmp_proxy(void)
 {
     char      *ndmp_proxy;
@@ -108,102 +112,96 @@ start_ndmp_proxy(void)
     char       buffer[32769];
     int        proxy_in, proxy_out, proxy_err;
     int        rc;
-    int        ndmp_proxy_port;
-    int        ndmp_proxy_debug_level;
-    char      *ndmp_proxy_debug_file;
+    pid_t      pid;
     char      *errmsg;
+    amwait_t   wait_status;
 
-    if (ndmp_proxy_connected) {
-	return NULL;
-    }
-    ndmp_proxy_port = getconf_int(CNF_NDMP_PROXY_PORT);
-    ndmp_proxy_debug_level = getconf_int(CNF_NDMP_PROXY_DEBUG_LEVEL);
-    ndmp_proxy_debug_file = getconf_str(CNF_NDMP_PROXY_DEBUG_FILE);
     proxy_argv = g_ptr_array_new();
-    g_ptr_array_add(proxy_argv, stralloc("ndmp-proxy"));
-    g_ptr_array_add(proxy_argv, stralloc("-o"));
-    g_ptr_array_add(proxy_argv, g_strdup_printf("proxy=%d", ndmp_proxy_port));
-    if (ndmp_proxy_debug_level > 0 &&
-	ndmp_proxy_debug_file && strlen(ndmp_proxy_debug_file) > 1) {
-	g_ptr_array_add(proxy_argv, g_strdup_printf("-d%d",
-						    ndmp_proxy_debug_level));
-	g_ptr_array_add(proxy_argv, g_strdup_printf("-L%s",
-						    ndmp_proxy_debug_file));
-    }
+    g_ptr_array_add(proxy_argv, g_strdup("ndmp-proxy"));
+    g_ptr_array_add(proxy_argv, g_strdup(get_config_name()));
+    g_ptr_array_add(proxy_argv, g_strdup_printf("%d", getconf_int(CNF_NDMP_PROXY_PORT)));
     g_ptr_array_add(proxy_argv, NULL);
-    proxy_err = debug_fd();
     ndmp_proxy = g_strdup_printf("%s/ndmp-proxy", amlibexecdir);
 
-    ndmp_proxy_pid = pipespawnv(ndmp_proxy, STDIN_PIPE | STDOUT_PIPE, 0,
+    proxy_in = open("/dev/null", O_RDONLY);
+    proxy_err = debug_fd();
+    pid = pipespawnv(ndmp_proxy, STDOUT_PIPE, 0,
 			        &proxy_in, &proxy_out, &proxy_err,
 			        (char **)proxy_argv->pdata);
-    ndmp_proxy_stdin = proxy_in;
 
+    close(proxy_in);
     g_ptr_array_free_full(proxy_argv);
-    rc = read(proxy_out, buffer, sizeof(buffer)-1);
+    g_debug("started ndmp-proxy with pid %d", pid);
+
+    /* wait for the proxy to say "OK" */
+    rc = full_read(proxy_out, buffer, sizeof(buffer)-1);
     if (rc == -1) {
 	errmsg = g_strdup_printf("Error reading from ndmp-proxy: %s",
 				 strerror(errno));
+	/* clean up the PID if possible */
+	waitpid(pid, NULL, WNOHANG);
 	return errmsg;
     } else if (rc == 0) {
-	errmsg = g_strdup_printf("ndmp-proxy ended unexpectedly");
+	if (waitpid(pid, &wait_status, WNOHANG)) {
+	    errmsg = str_exit_status("ndmp-proxy", wait_status);
+	} else {
+	    errmsg = g_strdup_printf("unexpected EOF from ndmp-proxy");
+	}
 	return errmsg;
     }
-    buffer[rc] = '\0';
-    if (strncmp(buffer, "PORT ", 5) != 0) {
-	if (strcmp(buffer, "BIND: Address already in use\n") == 0) {
-	    /* Another ndmp-proxy is running, amanda can connect to it */
-	} else {
-	    errmsg = g_strdup_printf("ndmp-proxy failed: %s", buffer);
-	    return errmsg;
-	}
-    }
-    ndmp_proxy_connected = TRUE;
-    return NULL;
-}
 
-void
-stop_ndmp_proxy(void)
-{
-    if (ndmp_proxy_stdin > 0) {
-	aclose(ndmp_proxy_stdin);
+    aclose(proxy_out);
+
+    /* process the output */
+    buffer[rc] = '\0';
+    if (0 == strcmp(buffer, "OK\n")) {
+	return NULL;
+    } else if (0 == strcmp(buffer, "INUSE\n")) {
+	g_warning("overlapping attempts to start ndmp-proxy; ignoring this attempt");
+	/* clean up the pid */
+	waitpid(pid, NULL, 0);
+	return NULL;
+    } else {
+	errmsg = g_strdup_printf("ndmp-proxy failed: %s", buffer);
+	return errmsg;
     }
 }
 
 int
 connect_to_ndmp_proxy(char **errmsg)
 {
-    int   count = 10;
+    int   i;
     int   proxy_port;
     int   fd;
 
+    *errmsg = NULL;
     proxy_port = getconf_int(CNF_NDMP_PROXY_PORT);
 
-    while (count > 0) {
+    if (proxy_port == 0) {
+	*errmsg = g_strdup("no NDMP-PROXY-PORT configured; cannot start NDMP proxy");
+    }
+
+    /* we loop until getting a successful connection, either from a proxy we
+     * launched or a proxy another process launched.  We only do this a few
+     * times, though, in case there's some problem starting the proxy, or
+     * something already running on that port. */
+    for (i = 0; i < 3; i++) {
+	g_debug("openning a connection to ndmp-proxy on port %d", proxy_port);
+	fd = stream_client("localhost", proxy_port, 32768, 32768, NULL, 0);
+	if (fd >= 0) {
+	    g_debug("connected to ndmp-proxy");
+	    return fd;
+	}
+
+	g_debug("Could not connect to ndmp-proxy: %s; trying to start a new instance",
+		    strerror(errno));
 	*errmsg = start_ndmp_proxy();
 	if (*errmsg) {
 	    return -1;
 	}
 
-	g_debug("openning a connection to ndmp-proxy");
-	fd = stream_client("localhost", proxy_port, 32768, 32768, NULL, 0);
-	if (fd >= 0) {
-	    g_debug("connected to ndmp-proxy: %d", fd);
-	    return fd;
-	}
-
-	g_debug("Temporary failure to connect to ndmp-proxy: %s", strerror(errno));
-
-	sleep(1);
-	count--;
     }
 
     *errmsg = stralloc(_("failed to open a connection to ndmp-proxy"));
     return -1;
-}
-
-int
-proxy_pid(void)
-{
-    return ndmp_proxy_pid;
 }

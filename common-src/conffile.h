@@ -421,8 +421,6 @@ typedef enum {
     CNF_UNRESERVED_TCP_PORT,
     CNF_HOLDINGDISK,
     CNF_NDMP_PROXY_PORT,
-    CNF_NDMP_PROXY_DEBUG_FILE,
-    CNF_NDMP_PROXY_DEBUG_LEVEL,
     CNF_CNF /* sentinel */
 } confparm_key;
 

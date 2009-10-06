@@ -1,3 +1,24 @@
+2009-10-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Config.swg common-src/conffile.c common-src/conffile.h:
+	  remove ndmp-proxy-log-file and ndmp-proxy-debug-level
+	* man/xml-source/amanda.conf.5.xml: document ndmp-proxy-port
+	* common-src/ipc-binary.h: don't recommend static allocation
+	* common-src/ndmp-proxy.c common-src/ndmp-proxy.h: start the proxy on
+	  demand; it will shut down when all of the connections are closed
+	* installcheck/Amanda_NDMP.pl: check Amanda::NDMP
+	* installcheck/Installcheck.pm: add get_unused_port()
+	* installcheck/Makefile.am: new check
+	* ndmp-src/Makefile.am ndmp-src/ndma_comm_proxy.c
+	  ndmp-src/ndma_comm_session.c ndmp-src/ndmagents.h ndmp-src/ndmjob.h
+	  ndmp-src/ndmjob_args.c ndmp-src/ndmjob_job.c ndmp-src/ndmjob_main.c
+	  ndmp-src/ndmjob_main_util.c ndmp-src/ndmp-proxy_main.c: split the NDMP
+	  proxy into a different executable, and reference count the connections
+	  to it
+	* perl/Makefile.am perl/Amanda/NDMP.swg: rename and SWIG the new interface
+	* perl/Amanda/NDMP.pod: add POD
+	* server-src/amlabel.pl server-src/amcheck-device.pl: remove
+	  ndmp_stop_proxy()
+
 2009-10-06  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Reporter.pm: added log handling of amdump and
 	amflush

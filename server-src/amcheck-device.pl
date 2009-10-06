@@ -29,7 +29,6 @@ use Amanda::Device qw( :constants );
 use Amanda::MainLoop;
 use Amanda::Changer;
 use Amanda::Taper::Scan;
-use Amanda::Ndmp;
 use Getopt::Long;
 
 Amanda::Util::setup_application("amcheck-device", "server", $CONTEXT_CMDLINE);
@@ -151,6 +150,5 @@ $subs{'released'} = make_cb(released => sub {
 
 $subs{'start'}->();
 Amanda::MainLoop::run();
-Amanda::Ndmp::stop_ndmp_proxy();
 Amanda::Util::finish_application();
 exit($exit_status);

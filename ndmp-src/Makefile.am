@@ -174,15 +174,21 @@ libndmjob_la_SOURCES = \
 ## ndmp-proxy
 ##
 
-amlibexec_PROGRAMS = ndmp-proxy
+amlibexec_PROGRAMS = ndmp-proxy ndmjob
 
-# ndmp-proxy is a hacked-up version of ndmjob
-ndmp_proxy_SOURCES = ndmjob_main.c \
-		      ndmjob_args.c \
-		      ndmjob_job.c \
-		      ndmjob_rules.c
+ndmp_proxy_SOURCES = ndmp-proxy_main.c \
+		      ndmjob_main_util.c
 
 ndmp_proxy_LDADD = libndmjob.la \
+		   ../common-src/libamanda.la
+
+ndmjob_SOURCES = ndmjob_main.c \
+		      ndmjob_args.c \
+		      ndmjob_job.c \
+		      ndmjob_rules.c \
+		      ndmjob_main_util.c
+
+ndmjob_LDADD = libndmjob.la \
 		   ../common-src/libamanda.la
 
 INSTALLPERMS_exec = \
