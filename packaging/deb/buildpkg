@@ -52,11 +52,6 @@ then
     AMVER=amanda-2.6.2alpha
 fi
 
-if [ -z $AMTARBALL ]
-then
-    AMTARBALL=$AMVER.tar.gz
-fi
-
 #### Build functions
 
 do_build() {

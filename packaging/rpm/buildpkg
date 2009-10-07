@@ -8,10 +8,7 @@
 # AMVER: the version of amanda we're working on.  This will become part of the
 #     rpm name.  AMVER must line up with the version number mentioned in the
 #     .spec file.
-# AMTARBALL: the name of the tarball which contains the source code.  it must
-#     unpack into a directory named AMVER.  It's easiest and safest to just 
-#     let the script create a new one for you, even if it's a bit more overhead
-# AMPKGDIR: Rpmbuild expects absolute paths, so we provide this var.  It also
+# PKG_DIR: Rpmbuild expects absolute paths, so we provide this var.  It also
 #     allows you to build somewhere other than `pwd`.  You probably don't want
 #     to use the system-wide location, as the script tries to blow these
 #     directories away.
@@ -30,27 +27,22 @@ if [ -z $AMVER ]; then
     AMVER=amanda-2.6.2alpha
 fi
 
-# Check for AMTARBALL variable.
-if [ -z $AMTARBALL ]; then 
-    AMTARBALL=$AMVER.tar.gz
-fi
-
-# Check for AMTARBALL file, if it's not there, create it.
-if [ ! -f ${AMTARBALL} ]; then
+PKG_TARBALL=${AMVER}.tar.gz
+if [ ! -f "${PKG_TARBALL}" ]; then
     mkdir ${AMVER} || exit 1
     cp -Rfp * ${AMVER}/
-    tar -cf ${AMTARBALL} -z ${AMVER} || exit 1
+    tar -cf ${PKG_TARBALL} -z ${AMVER} || exit 1
     rm -rf ${AMVER} || exit 1
 fi
 
 # Check for the packaging dirs.
-if [ -z $AMPKGDIR ]; then
-    AMPKGDIR=${PWD}
+if [ -z "$PKG_DIR" ]; then
+    PKG_DIR=${PWD}
 fi
-if [ ! -d ${AMPKGDIR} ]; then
-    mkdir ${AMPKGDIR} || exit 1
+if [ ! -d ${PKG_DIR} ]; then
+    mkdir ${PKG_DIR} || exit 1
 fi
-cd ${AMPKGDIR}
+cd ${PKG_DIR}
 
 if [ -d rpm ]; then
     rm -rf rpm || exit 1
@@ -62,13 +54,13 @@ mkdir rpm/SPECS
 mkdir rpm/BUILD
 mkdir rpm/RPMS || exit 1
 
-# Make a copy of the tarball with the name that rpmbuild expects
-cp ${AMTARBALL} rpm/SOURCES/${AMVER}.tar.gz || exit 1
+# Make a copy of the tarball in the rpmbuild location
+cp ${PKG_TARBALL} rpm/SOURCES/${PKG_TARBALL} || exit 1
 cp packaging/rpm/amanda.spec rpm/SPECS || exit 1
 # Rpmbuild requires absolute paths.  annoying.  If you need to change the 
 # default value of some rpm.spec variable, just pass extra --define options.
 # this is useful for changing %amanda_release or %amanda_version
-rpmbuild -ba --define "_topdir ${AMPKGDIR}/rpm" \
-             ${AMPKGDIR}/rpm/SPECS/amanda.spec || exit 1
+rpmbuild -ba --define "_topdir ${PKG_DIR}/rpm" \
+             ${PKG_DIR}/rpm/SPECS/amanda.spec || exit 1
 cp rpm/RPMS/*/*.rpm . || exit 1
 cp rpm/SRPMS/*.rpm . || exit 1
