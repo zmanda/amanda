@@ -1837,7 +1837,6 @@ xml_scripts(
     xml_app_t   xml_app;
 
     xml_app.features = their_features;
-    xml_app.result   = stralloc("");
 
     xml_scr = stralloc("");
     for (pp_iter = pp_scriptlist; pp_iter != NULL;
@@ -1936,6 +1935,7 @@ xml_scripts(
 				  "</execute_on>\n", NULL);
 	amfree(eo_str);
 	proplist = pp_script_get_property(pp_script);
+	xml_app.result   = stralloc("");
 	g_hash_table_foreach(proplist, xml_property, &xml_app);
 	xml_scr = vstrextend(&xml_scr, xml_scr1, xml_app.result, "  </script>\n", NULL);
 	amfree(b64plugin);
