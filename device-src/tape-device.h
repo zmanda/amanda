@@ -98,6 +98,10 @@ extern DevicePropertyBase device_property_eom;
 extern DevicePropertyBase device_property_bsf_after_eom;
 #define PROPERTY_BSF_AFTER_EOM (device_property_bsf_after_eom.ID)
 
+/* Should the device be opened with O_NONBLOCK */
+extern DevicePropertyBase device_property_nonblocking_open;
+#define PROPERTY_NONBLOCKING_OPEN (device_property_nonblocking_open.ID)
+
 /* How many filemarks to write at EOD? (Default is 2).
  * This property is a G_TYPE_UINT, but can only really be set to 1 or 2. */
 extern DevicePropertyBase device_property_final_filemarks;

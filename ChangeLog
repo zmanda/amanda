@@ -1,3 +1,10 @@
+2009-10-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda-devices.7.xml: add NONBLOCKING_OPEN property
+	* config/amanda/tape.m4: use DEFAULT_TAPE_NON_BLOCKING_OPEN by default
+	  on Linux
+	* device-src/tape-device.c device-src/tape-device.h: conditionalize
+	  the use of a nonblocking open
+
 2009-10-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/diskfile.c: Fix initialization of xml_app.result.
 
