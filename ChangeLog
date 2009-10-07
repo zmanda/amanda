@@ -1,3 +1,6 @@
+2009-10-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c: Fix initialization of xml_app.result.
+
 2009-08-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* restore-src/amrestore.c: call device_configure
 
