@@ -82,7 +82,7 @@ static DeviceClass *parent_class = NULL;
  * device-specific properties
  */
 
-/* Authentication information for Amazon S3. Both of these are strings. */
+/* Authentication information for NDMP agent. Both of these are strings. */
 static DevicePropertyBase device_property_ndmp_username;
 static DevicePropertyBase device_property_ndmp_password;
 #define PROPERTY_NDMP_PASSWORD (device_property_ndmp_password.ID)
@@ -97,7 +97,7 @@ void ndmp_device_register(void);
 /*
  * utility functions */
 
-static int try_open_ndmp_device(NdmpDevice *nself);
+static gboolean try_open_ndmp_device(NdmpDevice *nself);
 static gboolean close_ndmp_device(NdmpDevice *nself);
 static gboolean get_generic_reply(NdmpDevice *nself);
 static void set_proxy_comm_err(Device *dself, int saved_errno);
@@ -385,8 +385,8 @@ ndmp_device_open_device(
     nself->ndmp_hostname = g_strndup(device_node, colon-device_node);
     if (colon) {
 	char *p = NULL;
-	guint64 port = g_ascii_strtoull(colon+1, &p, 10);
-	if (port >= 65536 || p != at) {
+	long port = strtol(colon+1, &p, 10);
+	if (port < 0 || port >= 65536 || p != at || (!port && EINVAL == errno)) {
 	    device_set_error(dself,
 			    g_strdup_printf("invalid ndmp port in device name '%s'",
 					    device_name),
@@ -448,7 +448,7 @@ ndmp_device_read_label(
     header = dself->volume_header = g_new(dumpfile_t, 1);
     fh_init(header);
 
-    if (try_open_ndmp_device(nself) == -1) {
+    if (!try_open_ndmp_device(nself)) {
 	/* error status was set by try_open_ndmp_device */
 	return dself->status;
     }
@@ -577,7 +577,7 @@ ndmp_device_start(
 
     if (device_in_error(nself)) return FALSE;
 
-    if (try_open_ndmp_device(nself) == -1) {
+    if (!try_open_ndmp_device(nself)) {
 	/* error status was set by try_open_ndmp_device */
 	return FALSE;
     }
@@ -737,7 +737,7 @@ ndmp_device_read_block (Device * dself, gpointer data, int *size_req) {
  * Utility functions
  */
 
-static int
+static gboolean
 try_open_ndmp_device(
     NdmpDevice *nself)
 {
@@ -745,8 +745,9 @@ try_open_ndmp_device(
     ipc_binary_message_t *msg;
     char *errmsg = NULL;
 
+    /* if already open, stop now */
     if (nself->proxy_sock != -1)
-	return 0;
+	return TRUE;
 
     /* now try to connect to the proxy */
     nself->proxy_sock = connect_to_ndmp_proxy(&errmsg);
@@ -793,7 +794,7 @@ try_open_ndmp_device(
     }
     g_debug("get reply from ndmp-proxy");
 
-    return 0;
+    return TRUE;
 
 error:
     if (nself->proxy_chan) {
@@ -805,7 +806,7 @@ error:
 	nself->proxy_sock = -1;
     }
 
-    return -1;
+    return FALSE;
 }
 
 static gboolean

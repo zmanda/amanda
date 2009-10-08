@@ -176,7 +176,13 @@ ndma_dispatch_proxy_device(
 
 			ndmalogf (sess, 0, 7, "got a CMD_TAPE_OPEN request");
 
-			port = atoi((char *)msg->args[NDMP_PROXY_PORT].data);
+                        {
+                            long p = strtol(((char *)msg->args[NDMP_PROXY_PORT].data), NULL, 10);
+                            /* TODO: handle these more gracefully? */
+                            g_assert(p >= 0 || p < 65536);
+                            g_assert(port || EINVAL != errno);
+                            port = (int) p;
+                        }
 			if (port == 0)
 			    port = NDMPPORT;
 

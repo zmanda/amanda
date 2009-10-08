@@ -1,6 +1,7 @@
-* run ndmjob's tape simulator for testing purposes, adding a -p PORT command-line option to facilitate this
-* ndmp-device opens and closes the connection for each service request (until bug 9227)
-* write and read a label to test ndmp device
+2009-10-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/ndmp-device.c ndmp-src/ndma_comm_proxy.c
+	  ndmp-src/ndmjob_args.c: tweaks suggested by Nikolas Coukouma
+	  <atrus@zmanda.com>
 
 2009-10-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/ndmp-proxy.c common-src/ndmp-proxy.h: separate use and

@@ -227,18 +227,24 @@ process_args (int argc, char *argv[])
 		break;
 
 	    case 'b':	/* -b N -- block size in 512-byte records (20) */
-		b_bsize = atoi(optarg);
-		if (b_bsize < 1 || b_bsize > 200) {
-			error_byebye ("bad -b option");
-		}
+            {
+                long b = strtol(optarg, NULL, 10);
+                if (b < 1 || b > 200 || (!b && EINVAL == errno)) {
+                    error_byebye ("bad -b option");
+                }
+                b_bsize = (int) b;
 		break;
+            }
 
 	    case 'p':	/* -p N -- port number for daemon mode (10000) */
-		p_ndmp_port = atoi(optarg);
-		if (p_ndmp_port < 1 || p_ndmp_port > 65535) {
-			error_byebye ("bad -p option");
-		}
+            {
+                long p = strtol(optarg, NULL, 10);
+                if (p < 1 || p > 65535 || (!p && EINVAL == errno)) {
+                    error_byebye ("bad -p option");
+                }
+                p_ndmp_port = (int) p;
 		break;
+            }
 
 	    case 'C':	/* -C DIR   -- change directory on data agent */
 #if 0
