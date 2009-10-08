@@ -64,7 +64,9 @@ get_ndmp_proxy_proto(void)
 	ipc_binary_cmd_add_arg(cmd, NDMP_PROXY_FILENAME, IPC_BINARY_STRING);
 	ipc_binary_cmd_add_arg(cmd, NDMP_PROXY_MODE, IPC_BINARY_STRING);
 	ipc_binary_cmd_add_arg(cmd, NDMP_PROXY_HOST, IPC_BINARY_STRING);
-	ipc_binary_cmd_add_arg(cmd, NDMP_PROXY_USER_PASS, IPC_BINARY_STRING);
+	ipc_binary_cmd_add_arg(cmd, NDMP_PROXY_PORT, IPC_BINARY_STRING);
+	ipc_binary_cmd_add_arg(cmd, NDMP_PROXY_USERNAME, IPC_BINARY_STRING);
+	ipc_binary_cmd_add_arg(cmd, NDMP_PROXY_PASSWORD, IPC_BINARY_STRING);
 	/* ndmp-proxy gives generic reply */
 
 	cmd = ipc_binary_proto_add_cmd(proto, NDMP_PROXY_CMD_TAPE_CLOSE);

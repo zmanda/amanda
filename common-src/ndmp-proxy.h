@@ -44,13 +44,15 @@ enum {
     NDMP_PROXY_FILENAME = 1,
     NDMP_PROXY_MODE = 2,
     NDMP_PROXY_HOST = 3,
-    NDMP_PROXY_USER_PASS = 4,
+    NDMP_PROXY_PORT = 4,
     NDMP_PROXY_ERRCODE = 5,
     NDMP_PROXY_ERROR = 6,
     NDMP_PROXY_COMMAND = 7,
     NDMP_PROXY_COUNT = 8,
     NDMP_PROXY_DATA = 9,
     NDMP_PROXY_SERVICE = 10,
+    NDMP_PROXY_USERNAME = 11,
+    NDMP_PROXY_PASSWORD = 12,
 };
 
 ipc_binary_proto_t *get_ndmp_proxy_proto(void);

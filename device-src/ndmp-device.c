@@ -50,10 +50,14 @@ struct _NdmpDevice {
     Device __parent__;
 
     ipc_binary_channel_t *proxy_chan;
-    int proxy_sock;
+    int proxy_sock; /* -1 if not connected */
 
-    gboolean     open;       /* if a device is open */
-    char         *ndmp_filename;
+    /* constructor parameters and properties */
+    gchar	 *ndmp_hostname;
+    gint	 ndmp_port;
+    gchar        *ndmp_device_name;
+    gchar	 *ndmp_username;
+    gchar	 *ndmp_password;
 };
 
 /*
@@ -78,6 +82,12 @@ static DeviceClass *parent_class = NULL;
  * device-specific properties
  */
 
+/* Authentication information for Amazon S3. Both of these are strings. */
+static DevicePropertyBase device_property_ndmp_username;
+static DevicePropertyBase device_property_ndmp_password;
+#define PROPERTY_NDMP_PASSWORD (device_property_ndmp_password.ID)
+#define PROPERTY_NDMP_USERNAME (device_property_ndmp_username.ID)
+
 /*
  * prototypes
  */
@@ -87,7 +97,8 @@ void ndmp_device_register(void);
 /*
  * utility functions */
 
-static int try_open_ndmp_device(NdmpDevice *nself, char *device_filename);
+static int try_open_ndmp_device(NdmpDevice *nself);
+static gboolean close_ndmp_device(NdmpDevice *nself);
 static gboolean get_generic_reply(NdmpDevice *nself);
 static void set_proxy_comm_err(Device *dself, int saved_errno);
 
@@ -111,6 +122,14 @@ ndmp_device_finalize(GObject *o);
 
 static Device*
 ndmp_device_factory(char *device_name, char *device_type, char *device_node);
+
+static gboolean ndmp_device_set_username_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean ndmp_device_set_password_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
 
 /*
  * virtual functions */
@@ -166,6 +185,13 @@ ndmp_device_register(void)
 
     /* register the device itself */
     register_device(ndmp_device_factory, device_prefix_list);
+
+    device_property_fill_and_register(&device_property_ndmp_username,
+                                      G_TYPE_STRING, "ndmp_username",
+       "Username for access to the NDMP agent");
+    device_property_fill_and_register(&device_property_ndmp_password,
+                                      G_TYPE_STRING, "ndmp_password",
+       "Password for access to the NDMP agent");
 }
 
 static GType
@@ -200,8 +226,8 @@ ndmp_device_init(NdmpDevice *nself)
     Device *dself = DEVICE(nself);
     GValue response;
 
-    nself->proxy_chan = ipc_binary_new_channel(get_ndmp_proxy_proto());
-    nself->open = 0;
+    nself->proxy_chan = NULL;
+    nself->proxy_sock = -1;
 
     /* TODO: allow other block sizes */
     dself->block_size = 32768;
@@ -270,6 +296,45 @@ ndmp_device_class_init(NdmpDeviceClass * c G_GNUC_UNUSED)
     device_class->read_block = ndmp_device_read_block;
 
     g_object_class->finalize = ndmp_device_finalize;
+
+    device_class_register_property(device_class, PROPERTY_NDMP_USERNAME,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    ndmp_device_set_username_fn);
+
+    device_class_register_property(device_class, PROPERTY_NDMP_PASSWORD,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    ndmp_device_set_password_fn);
+
+}
+
+static gboolean
+ndmp_device_set_username_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    NdmpDevice *nself = NDMP_DEVICE(self);
+
+    amfree(nself->ndmp_username);
+    nself->ndmp_username = g_value_dup_string(val);
+    device_clear_volume_details(self);
+
+    return device_simple_property_set_fn(self, base, val, surety, source);
+}
+
+static gboolean
+ndmp_device_set_password_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    NdmpDevice *nself = NDMP_DEVICE(self);
+
+    amfree(nself->ndmp_password);
+    nself->ndmp_password = g_value_dup_string(val);
+    device_clear_volume_details(self);
+
+    return device_simple_property_set_fn(self, base, val, surety, source);
 }
 
 static Device*
@@ -300,20 +365,43 @@ ndmp_device_open_device(
     char   *device_node)
 {
     NdmpDevice          *nself = NDMP_DEVICE(dself);
-    int                  fd;
-    char                *errmsg;
-
+    char *colon, *at;
 
     g_debug("ndmp_device_open_device: %s : %s : %s", device_name, device_type, device_node);
 
-    fd = connect_to_ndmp_proxy(&errmsg);
-    if (fd <= 0) {
-	device_set_error(dself, errmsg, DEVICE_STATUS_DEVICE_ERROR);
+    /* first, extract the various parts of the device_node:
+     * HOST[:PORT]@DEVICE */
+    colon = strchr(device_node, ':');
+    at = strchr(device_node, '@');
+    if (colon > at)
+	colon = NULL; /* :PORT only counts if it's before the device name */
+    if (!at) {
+	device_set_error(dself,
+			 g_strdup_printf("invalid ndmp device name '%s'", device_name),
+			 DEVICE_STATUS_DEVICE_ERROR);
 	return;
     }
 
-    nself->proxy_sock = fd;
-    nself->ndmp_filename = stralloc(device_node);
+    nself->ndmp_hostname = g_strndup(device_node, colon-device_node);
+    if (colon) {
+	char *p = NULL;
+	guint64 port = g_ascii_strtoull(colon+1, &p, 10);
+	if (port >= 65536 || p != at) {
+	    device_set_error(dself,
+			    g_strdup_printf("invalid ndmp port in device name '%s'",
+					    device_name),
+			    DEVICE_STATUS_DEVICE_ERROR);
+	    return;
+	}
+	nself->ndmp_port = (gint)port;
+    } else {
+	nself->ndmp_port = 0; /* (use ndmjob's default, 10000) */
+    }
+    nself->ndmp_device_name = g_strdup(at+1);
+
+    /* these should be changed by properties */
+    nself->ndmp_username = g_strdup("ndmp");
+    nself->ndmp_password = g_strdup("ndmp");
 
     if (parent_class->open_device) {
         parent_class->open_device(dself, device_name, device_type, device_node);
@@ -329,8 +417,17 @@ static void ndmp_device_finalize(GObject * obj_self)
 
     if (nself->proxy_chan)
 	ipc_binary_free_channel(nself->proxy_chan);
-    if (nself->proxy_sock)
+    if (nself->proxy_sock != -1)
 	robust_close(nself->proxy_sock);
+
+    if (nself->ndmp_hostname)
+	g_free(nself->ndmp_hostname);
+    if (nself->ndmp_device_name)
+	g_free(nself->ndmp_device_name);
+    if (nself->ndmp_username)
+	g_free(nself->ndmp_username);
+    if (nself->ndmp_password)
+	g_free(nself->ndmp_password);
 }
 
 static DeviceStatusFlags
@@ -351,12 +448,12 @@ ndmp_device_read_label(
     header = dself->volume_header = g_new(dumpfile_t, 1);
     fh_init(header);
 
-    if (!nself->open) {
-	if (try_open_ndmp_device(nself, nself->ndmp_filename) == -1) {
-	    /* error status was set by try_open_ndmp_device */
-	    return dself->status;
-	}
-    } else if (!ndmp_mtio_rewind(nself)) {
+    if (try_open_ndmp_device(nself) == -1) {
+	/* error status was set by try_open_ndmp_device */
+	return dself->status;
+    }
+
+    if (!ndmp_mtio_rewind(nself)) {
 	/* error message, if any, is set by ndmp_mtio_rewind */
 	return dself->status;
     }
@@ -410,6 +507,12 @@ ndmp_device_read_label(
     dself->volume_label = g_strdup(header->name);
     dself->volume_time = g_strdup(header->datestamp);
     /* dself->volume_header is already set */
+
+    /* close the connection now, so as not to reserve the tape device longer than
+     * necessary; TODO: be less aggressive about this */
+    if (!close_ndmp_device(nself))
+	/* error is set by close_ndmp_device */
+	return FALSE;
 
     device_set_error(dself, NULL, DEVICE_STATUS_SUCCESS);
 
@@ -474,12 +577,9 @@ ndmp_device_start(
 
     if (device_in_error(nself)) return FALSE;
 
-    if (!nself->open) {
-	try_open_ndmp_device(nself, nself->ndmp_filename);
-	if (!nself->open) {
-	    /* the error was set by try_open_ndmp_device */
-	    return FALSE;
-	}
+    if (try_open_ndmp_device(nself) == -1) {
+	/* error status was set by try_open_ndmp_device */
+	return FALSE;
     }
 
     if (mode != ACCESS_WRITE && dself->volume_label == NULL) {
@@ -540,25 +640,9 @@ ndmp_device_finish(
     /* we're not in a file anymore */
     dself->access_mode = ACCESS_NULL;
 
-    if (nself->open) {
-	ipc_binary_message_t *msg;
-	g_debug("closing tape service");
-
-	/* select the DEVICE service from the proxy */
-	msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_TAPE_CLOSE);
-	if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
-	    set_proxy_comm_err(DEVICE(nself), errno);
-	    return FALSE;
-	}
-	g_debug("Sent NDMP_PROXY_CMD_TAPE_CLOSE to ndmp-proxy");
-
-	if (!get_generic_reply(nself)) {
-	    /* error message is set by get_generic_reply */
-	    return FALSE;
-	}
-
-	nself->open = FALSE;
-    }
+    if (!close_ndmp_device(nself))
+	/* error is set by close_ndmp_device */
+	return FALSE;
 
     return TRUE;
 }
@@ -655,49 +739,105 @@ ndmp_device_read_block (Device * dself, gpointer data, int *size_req) {
 
 static int
 try_open_ndmp_device(
-    NdmpDevice *nself,
-    char       *device_filename)
+    NdmpDevice *nself)
 {
     Device              *dself = DEVICE(nself);
     ipc_binary_message_t *msg;
+    char *errmsg = NULL;
 
-    if (nself->open)
+    if (nself->proxy_sock != -1)
 	return 0;
+
+    /* now try to connect to the proxy */
+    nself->proxy_sock = connect_to_ndmp_proxy(&errmsg);
+    if (nself->proxy_sock <= 0) {
+	device_set_error(dself, errmsg, DEVICE_STATUS_DEVICE_ERROR);
+	goto error;
+    }
+
+    nself->proxy_chan = ipc_binary_new_channel(get_ndmp_proxy_proto());
 
     /* select the DEVICE service from the proxy */
     msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_SELECT_SERVICE);
     ipc_binary_add_arg(msg, NDMP_PROXY_SERVICE, 0, "DEVICE", 0);
     if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
 	set_proxy_comm_err(dself, errno);
-	return -1;
+	goto error;
     }
     g_debug("Sent NDMP_PROXY_SELECT_SERVICE to ndmp-proxy");
 
     if (!get_generic_reply(nself)) {
 	/* error message is set by get_generic_reply */
-	return -1;
+	goto error;
     }
 
     /* now send a NDMP_PROXY_TAPE_OPEN */
     msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_TAPE_OPEN);
-    ipc_binary_add_arg(msg, NDMP_PROXY_FILENAME, 0, device_filename, 0);
+    /* TODO: support read-only and write-only */
     ipc_binary_add_arg(msg, NDMP_PROXY_MODE, 0, "RDRW", 0);
-    ipc_binary_add_arg(msg, NDMP_PROXY_HOST, 0, "localhost", 0);
-    ipc_binary_add_arg(msg, NDMP_PROXY_USER_PASS, 0, "4,ndmp,ndmp", 0);
+    ipc_binary_add_arg(msg, NDMP_PROXY_HOST, 0, nself->ndmp_hostname, 0);
+    ipc_binary_add_arg(msg, NDMP_PROXY_PORT, 0,
+	    g_strdup_printf("%d", nself->ndmp_port), 1);
+    ipc_binary_add_arg(msg, NDMP_PROXY_FILENAME, 0, nself->ndmp_device_name, 0);
+    ipc_binary_add_arg(msg, NDMP_PROXY_USERNAME, 0, nself->ndmp_username, 0);
+    ipc_binary_add_arg(msg, NDMP_PROXY_PASSWORD, 0, nself->ndmp_password, 0);
     if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
 	set_proxy_comm_err(dself, errno);
-	return -1;
+	goto error;
     }
     g_debug("Sent NDMP_PROXY_TAPE_OPEN to ndmp-proxy");
+
     if (!get_generic_reply(nself)) {
 	/* error message is set by get_generic_reply */
-	return -1;
+	goto error;
     }
     g_debug("get reply from ndmp-proxy");
 
-    nself->open = TRUE;
-
     return 0;
+
+error:
+    if (nself->proxy_chan) {
+	ipc_binary_free_channel(nself->proxy_chan);
+	nself->proxy_chan = NULL;
+    }
+    if (nself->proxy_sock != -1) {
+	close(nself->proxy_sock);
+	nself->proxy_sock = -1;
+    }
+
+    return -1;
+}
+
+static gboolean
+close_ndmp_device(NdmpDevice *nself) {
+    ipc_binary_message_t *msg;
+    gboolean success = TRUE;
+
+    if (nself->proxy_sock == -1 || !nself->proxy_chan)
+	return TRUE;
+
+    g_debug("closing tape service");
+
+    /* select the DEVICE service from the proxy */
+    msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_TAPE_CLOSE);
+    if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
+	set_proxy_comm_err(DEVICE(nself), errno);
+	return FALSE;
+    }
+    g_debug("Sent NDMP_PROXY_CMD_TAPE_CLOSE to ndmp-proxy");
+
+    if (!get_generic_reply(nself)) {
+	/* error message is set by get_generic_reply */
+	success = FALSE;
+    }
+
+    close(nself->proxy_sock);
+    nself->proxy_sock = -1;
+
+    ipc_binary_free_channel(nself->proxy_chan);
+    nself->proxy_chan = NULL;
+
+    return success;
 }
 
 static void
@@ -736,6 +876,8 @@ get_generic_reply(
 
     errcode = (char *)msg->args[NDMP_PROXY_ERRCODE].data;
     errstr = (char *)msg->args[NDMP_PROXY_ERROR].data;
+    g_debug("got NDMP_PROXY_REPLY_GENERIC, errcode=%s errstr=%s",
+	errcode?errcode:"(null)", errstr?errstr:"(null)");
     if (errcode || errstr) {
 	device_set_error(dself,
 		g_strdup_printf("Error from ndmp-proxy: %s (%s)", errstr, errcode),

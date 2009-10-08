@@ -81,7 +81,7 @@ ndma_proxy_session (struct ndm_session *sess, int proxy_port)
 		}
 	}
 
-	if (listen (proxy_sock, 1) < 0) {
+	if (listen (proxy_sock, 5) < 0) {
 		fprintf(stdout, "listening on socket: %s\n", strerror(errno));
 		exit(1);
 	}

@@ -59,6 +59,7 @@ main (int ac, char *av[])
 	o_tape_addr = -1;
 	o_from_addr = -1;
 	o_to_addr = -1;
+	p_ndmp_port = NDMPPORT;
 #endif /* !NDMOS_OPTION_NO_CONTROL_AGENT */
 	log_fp = stderr;
 
@@ -78,7 +79,7 @@ main (int ac, char *av[])
 			return 0;
 		}
 		start_log_file ();
-		ndma_daemon_session (&the_session);
+		ndma_daemon_session (&the_session, p_ndmp_port);
 		return 0;
 	}
 

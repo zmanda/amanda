@@ -143,7 +143,7 @@ ndma_server_session (struct ndm_session *sess, int control_sock)
 
 
 int
-ndma_daemon_session (struct ndm_session *sess)
+ndma_daemon_session (struct ndm_session *sess, int port)
 {
 	int			listen_sock;
 	int			conn_sock, len, rc;
@@ -157,7 +157,7 @@ ndma_daemon_session (struct ndm_session *sess)
 
 	ndmos_condition_listen_socket (sess, listen_sock);
 
-	NDMOS_MACRO_SET_SOCKADDR(&sa, 0, NDMPPORT);
+	NDMOS_MACRO_SET_SOCKADDR(&sa, 0, port);
 
 	if (bind (listen_sock, &sa, sizeof sa) < 0) {
 		perror ("bind");

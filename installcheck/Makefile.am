@@ -72,6 +72,7 @@ mock_tests = \
 	mock_mtx
 
 ndmp_tests = \
+	Amanda_Device_ndmp \
 	Amanda_NDMP
 
 # mock scripts

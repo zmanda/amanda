@@ -47,11 +47,19 @@ C<setup_mock_mtx> sets up a state file for C<mock/mtx> with the given config
 hash, and returns the filename of the state file.  This function must be run
 with the current dirctory pointing to 'installcheck/'.
 
+To run an ndmjob instance, replete with a tape simulator, call C<run_ndmjob>
+with a port number on which ndmjob should listen.  The ndmjob instance will
+automatically be killed, and the temporary tape file deleted, when the test run
+is finished.  The function returns the name of the tape "device".
+
 =cut
 
 use Installcheck;
 use Cwd qw(abs_path);
 use Data::Dumper;
+use POSIX;
+use IPC::Open3;
+use Amanda::Paths;
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -70,5 +78,43 @@ sub setup_mock_mtx {
 }
 
 our $mock_mtx_path = abs_path("mock/mtx");
+
+sub run_ndmjob {
+    my ($port) = @_;
+    my $tapefile = "$Installcheck::TMP/ndmp-tapefile";
+
+    # fork once to create a "monitor" process
+    my $pid = POSIX::fork();
+    if ($pid == 0) {
+	open(my $fd, ">", $tapefile);
+	close($fd);
+
+	# first, launch ndmjob
+	local(*INFH, *OUTFH);
+	my $ndmjob_pid = IPC::Open3::open3("INFH", "OUTFH", 0,
+	    "$amlibexecdir/ndmjob", "-d5", "-o", "daemon",
+		    "-T.", "-f", $tapefile,
+		    "-p", $port);
+	# now wait for our parent process to die
+	while (1) {
+	    sleep(1);
+	    last if (getppid() == 1);
+	    if (POSIX::waitpid($ndmjob_pid, POSIX::WNOHANG)) {
+		print STDERR "***** nmdjob exited permaturely\n";
+		last;
+	    }
+	}
+
+	# then kill the ndmjob process and delete the tapefile
+	kill 9, $ndmjob_pid;
+	unlink($tapefile);
+	exit(0);
+    } else {
+	# sleep long enough for the ndmjob process to start listening
+	sleep(1);
+    }
+
+    return $tapefile;
+}
 
 1;

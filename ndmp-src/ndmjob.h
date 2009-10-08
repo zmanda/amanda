@@ -117,6 +117,7 @@ GLOBAL struct ndmscsi_target o_tape_scsi;
 GLOBAL int		o_tape_timeout;
 GLOBAL int		o_robot_timeout;
 GLOBAL char *		o_rules;
+GLOBAL int		p_ndmp_port;
 
 GLOBAL char *		file_arg[MAX_FILE_ARG];
 GLOBAL char *		file_arg_new[MAX_FILE_ARG];

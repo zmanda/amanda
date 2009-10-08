@@ -86,6 +86,7 @@ char *help_text[] = {
 	"  -n       -- no-op, just show how args were handled",
 	"  -v       -- verbose, same messages as -d1 to standard out",
 	"  -S       -- Perform DATA listen and MOVER CONNECT",
+	"  -p PORT  -- NDMP port to listen on (for -o daemon)",
 	"  -o no-time-stamps -- log w/o time stamps, makes diff(1)s easier",
 	"  -o config-file=PATH",
 	"           -- set config file ($NDMJOB_CONFIG, /usr/local/etc/ndmjob.conf)",
@@ -229,6 +230,13 @@ process_args (int argc, char *argv[])
 		b_bsize = atoi(optarg);
 		if (b_bsize < 1 || b_bsize > 200) {
 			error_byebye ("bad -b option");
+		}
+		break;
+
+	    case 'p':	/* -p N -- port number for daemon mode (10000) */
+		p_ndmp_port = atoi(optarg);
+		if (p_ndmp_port < 1 || p_ndmp_port > 65535) {
+			error_byebye ("bad -p option");
 		}
 		break;
 

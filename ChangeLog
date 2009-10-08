@@ -1,3 +1,24 @@
+* run ndmjob's tape simulator for testing purposes, adding a -p PORT command-line option to facilitate this
+* ndmp-device opens and closes the connection for each service request (until bug 9227)
+* write and read a label to test ndmp device
+
+2009-10-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/ndmp-proxy.c common-src/ndmp-proxy.h: separate use and
+	  pass parameters
+	* device-src/ndmp-device.c: bugfixes; open and close the conneciton
+	  for each service request, to avoid deadlocking the proxy
+	* installcheck/Amanda_Device_ndmp.pl: check the NDMP device against the
+	  ndmjob tape simulator
+	* installcheck/Installcheck/Mock.pm: add run_ndmjob
+	* installcheck/Makefile.am: new checks
+	* ndmp-src/ndma_comm_proxy.c: formulate the agent string better
+	* ndmp-src/ndma_comm_session.c ndmp-src/ndmagents.h: daemon should take a port
+	* ndmp-src/ndmjob.h: p_port
+	* ndmp-src/ndmjob_args.c: add -p PORT
+	* ndmp-src/ndmjob_main.c: use -p PORT
+	* ndmp-src/ndmp-proxy_main.c: listen for more than one incoming
+	  connection
+
 2009-10-07 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/deb/control: add mailx|bsd-mailx (also missing
 	   |gnuplot-nox)

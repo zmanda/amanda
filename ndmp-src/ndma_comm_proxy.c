@@ -172,11 +172,19 @@ ndma_dispatch_proxy_device(
 			ipc_binary_message_t *send_msg;
 			int rc;
 			char *tape_agent_str;
-			tape_agent_str = g_strdup_printf("%s/%s",
-			    (char *)msg->args[NDMP_PROXY_HOST].data,
-			    (char *)msg->args[NDMP_PROXY_USER_PASS].data);
+			int port;
 
 			ndmalogf (sess, 0, 7, "got a CMD_TAPE_OPEN request");
+
+			port = atoi((char *)msg->args[NDMP_PROXY_PORT].data);
+			if (port == 0)
+			    port = NDMPPORT;
+
+			tape_agent_str = g_strdup_printf("%s:%d/4,%s,%s",
+			    (char *)msg->args[NDMP_PROXY_HOST].data,
+			    port,
+			    (char *)msg->args[NDMP_PROXY_USERNAME].data,
+			    (char *)msg->args[NDMP_PROXY_PASSWORD].data);
 
 			ca->tape_mode = NDMP9_TAPE_RDWR_MODE;
 			ca->is_label_op = 1;
