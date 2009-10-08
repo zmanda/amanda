@@ -383,6 +383,17 @@ AmandaIPC_DATA = Amanda/IPC/LineProtocol.pm
 HTML_SOURCE_FILES += $(AmandaIPC_DATA)
 EXTRA_DIST += $(AmandaIPC_DATA)
 
+# PACKAGE: Amanda::IPC:Binary
+libIPCBinarydir = $(amperldir)/auto/Amanda/IPC/Binary
+libIPCBinary_LTLIBRARIES = libBinary.la
+libBinary_la_SOURCES = Amanda/IPC/Binary.c $(AMGLUE_SWG)
+libBinary_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
+libBinary_la_LIBADD = libamglue.la \
+	$(top_builddir)/common-src/libamanda.la
+AmandaIPC_DATA += Amanda/IPC/Binary.pm
+EXTRA_DIST += Amanda/IPC/Binary.swg Amanda/IPC/Binary.pm Amanda/IPC/Binary.pod
+MAINTAINERCLEANFILES += Amanda/IPC/Binary.c Amanda/IPC/Binary.pm
+
 # PACKAGE: Amanda::Paths
 Amanda_DATA += Amanda/Paths.pm
 EXTRA_DIST += Amanda/Paths.pm.in

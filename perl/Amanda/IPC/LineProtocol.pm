@@ -46,8 +46,8 @@ Define your protocol:
     );
     # ...
 
-# And use the protocol
-    packge main;
+    # And use the protocol
+    package main;
     my $input_fh = IO::Handle->new(...);
     my $output_fh = IO::Handle->new(...);
     my $proto;

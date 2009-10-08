@@ -1,4 +1,12 @@
 2009-10-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/ipc-binary.h common-src/ipc-binary.c: many fixes
+	* perl/Makefile.am perl/Amanda/IPC/Binary.swg: perl interface to
+	  ipc-binary
+	* installcheck/Makefile.am installcheck/Amanda_IPC_Binary.pl: checks
+	* perl/Amanda/IPC/Binary.pod: stub documentation
+	* perl/Amanda/IPC/LineProtocol.pm: whitespace
+
+2009-10-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/ndmp-device.c ndmp-src/ndma_comm_proxy.c
 	  ndmp-src/ndmjob_args.c: tweaks suggested by Nikolas Coukouma
 	  <atrus@zmanda.com>

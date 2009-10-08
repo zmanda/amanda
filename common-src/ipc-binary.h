@@ -52,9 +52,9 @@
  * All integers are in network byte order, and the message length includes the
  * length of the header.  This header is followed by a sequence of argument
  * records, each of which consists of a 32-bit length followed by a 16-bit
- * argument id and the corresponding data.  String arguments *include* the NUL
- * terminator byte.  Note that the argument length does not include the argument
- * header.
+ * argument id and the corresponding data.  String arguments do not include the
+ * NUL terminator byte.  Note that the argument length does not include the
+ * argument header.
  *
  *   +--------|--------|--------|--------+
  *   |              length               |
@@ -142,7 +142,9 @@ ipc_binary_cmd_t *ipc_binary_proto_add_cmd(
 /* Flags for arguments */
 
 /* This argument contains a string of non-null, printable characters and should
- * be displayed in debugging messages */
+ * be displayed in debugging messages.  Arguments of this type will have a
+ * terminating NUL byte in the ipc_binary_message_t args array, for
+ * convenience, but will not count that byte in the length. */
 #define IPC_BINARY_STRING               (1 << 0)
 
 /* This argument may be omitted */
@@ -196,13 +198,14 @@ ipc_binary_channel_t *ipc_binary_new_channel(
 void ipc_binary_free_channel(
     ipc_binary_channel_t *channel);
 
-/* (incoming) message format; use the argument id as an index into the args
- * array.  If DATA is NULL, then the argument wasn't present. */
+/* message format; use the argument id as an index into the args array.  If
+ * DATA is NULL, then the argument wasn't present. */
 
 typedef struct ipc_binary_message_t {
     ipc_binary_channel_t *chan;
     guint16 cmd_id;
     ipc_binary_cmd_t *cmd;
+    guint16 n_args;
 
     struct {
 	gsize len;
