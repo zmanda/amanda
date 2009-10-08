@@ -51,7 +51,7 @@ typedef struct _TapeDevice {
 
     /* characteristics of the device */
     gboolean fsf, bsf, fsr, bsr, eom, bsf_after_eom, broken_gmt_online;
-    gboolean fsf_after_filemark;
+    gboolean nonblocking_open, fsf_after_filemark;
     int final_filemarks;
 
     /* 0 if we opened with O_RDWR; error otherwise. */

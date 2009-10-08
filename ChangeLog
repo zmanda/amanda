@@ -1,3 +1,6 @@
+2009-10-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/tape-device.h: add missing field
+
 2009-10-07 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/deb/control: add |gnuplot-nox
 
