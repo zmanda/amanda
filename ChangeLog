@@ -1,4 +1,7 @@
 2009-10-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/IPC/Binary.pod: finish docs
+
+2009-10-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/ipc-binary.h common-src/ipc-binary.c: many fixes
 	* perl/Makefile.am perl/Amanda/IPC/Binary.swg: perl interface to
 	  ipc-binary
