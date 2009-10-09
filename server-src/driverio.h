@@ -140,6 +140,7 @@ GLOBAL off_t taper_first_fileno;
 GLOBAL TaperState taper_state;
 GLOBAL off_t taper_written;		// Number of kb already written to tape
 					//   for the DLE.
+GLOBAL char *taper_device;
 
 void init_driverio(void);
 void startup_tape_process(char *taper_program);

@@ -18,10 +18,7 @@
  * Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
  */
 
-/* An Ndmp device uses Amazon's Ndmp service (http://www.amazon.com/ndmp) to store
- * data.  It stores data in keys named with a user-specified prefix, inside a
- * user-specified bucket.  Data is stored in the form of numbered (large)
- * blocks.
+/* An Ndmp device store data to a tape on a ndmp server.
  */
 
 #include "amanda.h"
@@ -78,6 +75,11 @@ struct _NdmpDeviceClass {
 /* pointer to the class of our parent */
 static DeviceClass *parent_class = NULL;
 
+static DevicePropertyBase device_property_ndmp_host;
+static DevicePropertyBase device_property_ndmp_auth;
+#define PROPERTY_NDMP_HOST (device_property_ndmp_host.ID)
+#define PROPERTY_NDMP_AUTH (device_property_ndmp_auth.ID)
+
 /*
  * device-specific properties
  */
@@ -102,11 +104,11 @@ static gboolean close_ndmp_device(NdmpDevice *nself);
 static gboolean get_generic_reply(NdmpDevice *nself);
 static void set_proxy_comm_err(Device *dself, int saved_errno);
 
-static int ndmp_mtio_eod(NdmpDevice *nself);
-static int ndmp_mtio_eof(NdmpDevice *nself);
-static int ndmp_mtio_rewind(NdmpDevice *nself);
-static int ndmp_mtio(NdmpDevice *nself, char *cmd, int count);
-static int ndmp_device_robust_write(NdmpDevice *nself, char *buf, int count);
+static gboolean ndmp_mtio_eod(NdmpDevice *nself);
+static gboolean ndmp_mtio_eof(NdmpDevice *nself);
+static gboolean ndmp_mtio_rewind(NdmpDevice *nself);
+static gboolean ndmp_mtio(NdmpDevice *nself, char *cmd, int count);
+static gboolean ndmp_device_robust_write(NdmpDevice *nself, char *buf, int count);
 
 /*
  * class mechanics */
@@ -150,8 +152,17 @@ static gboolean
 ndmp_device_finish(Device *dself);
 
 static gboolean
+ndmp_device_start_dump(Device      *dself,
+		       data_path_t  data_path,
+		       dumpfile_t  *jobInfo,
+		       gint64       part_size);
+
+static gboolean
 ndmp_device_start_file(Device *dself,
                      dumpfile_t * jobInfo);
+
+static gboolean
+ndmp_device_write_from_data_path(Device *dself);
 
 static gboolean
 ndmp_device_write_block(Device *dself,
@@ -160,6 +171,9 @@ ndmp_device_write_block(Device *dself,
 
 static gboolean
 ndmp_device_finish_file(Device *dself);
+
+static gboolean
+ndmp_device_finish_dump(Device *dself);
 
 static dumpfile_t*
 ndmp_device_seek_file(Device *dself,
@@ -182,6 +196,14 @@ void
 ndmp_device_register(void)
 {
     static const char * device_prefix_list[] = { NDMP_DEVICE_NAME, NULL };
+
+    /* set up our properties */
+    device_property_fill_and_register(&device_property_ndmp_host,
+				      G_TYPE_STRING, "ndmp_host",
+	"ndmp host to connect to");
+    device_property_fill_and_register(&device_property_ndmp_auth,
+				      G_TYPE_STRING, "ndmp_auth",
+	"ndmp auth to use to connect to host");
 
     /* register the device itself */
     register_device(ndmp_device_factory, device_prefix_list);
@@ -287,9 +309,12 @@ ndmp_device_class_init(NdmpDeviceClass * c G_GNUC_UNUSED)
     device_class->start = ndmp_device_start;
     device_class->finish = ndmp_device_finish;
 
+    device_class->start_dump = ndmp_device_start_dump;
     device_class->start_file = ndmp_device_start_file;
     device_class->write_block = ndmp_device_write_block;
+    device_class->write_from_data_path = ndmp_device_write_from_data_path;
     device_class->finish_file = ndmp_device_finish_file;
+    device_class->finish_dump = ndmp_device_finish_dump;
 
     device_class->seek_file = ndmp_device_seek_file;
     device_class->seek_block = ndmp_device_seek_block;
@@ -434,10 +459,11 @@ static DeviceStatusFlags
 ndmp_device_read_label(
     Device *dself)
 {
-    NdmpDevice       *nself = NDMP_DEVICE(dself);
-    dumpfile_t       *header;
+    NdmpDevice           *nself = NDMP_DEVICE(dself);
+    dumpfile_t           *header;
     ipc_binary_message_t *msg;
-    char *errcode, *errstr;
+    char                 *errcode;
+    char                 *errstr;
 
     amfree(dself->volume_label);
     amfree(dself->volume_time);
@@ -651,14 +677,97 @@ ndmp_device_finish(
 
 
 static gboolean
+ndmp_device_start_dump(
+    Device      *dself,
+    data_path_t  data_path,
+    dumpfile_t  *jobInfo,
+    gint64       part_size)
+{
+    NdmpDevice           *nself = NDMP_DEVICE(dself);
+    ipc_binary_message_t *msg;
+    char                 split_size[NUM_STR_SIZE];
+
+    if (data_path == DATA_PATH_AMANDA)
+	return TRUE;
+
+    g_sprintf(split_size, "%ld", part_size);
+    msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_START_DUMP);
+    ipc_binary_add_arg(msg, NDMP_PROXY_HOST, 0, jobInfo->name, 0);
+    ipc_binary_add_arg(msg, NDMP_PROXY_DISKNAME, 0, jobInfo->disk, 0);
+    ipc_binary_add_arg(msg, NDMP_PROXY_SPLITSIZE, 0, split_size, 0);
+
+    if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
+	set_proxy_comm_err(dself, errno);
+	return dself->status;
+    }
+    g_debug("Sent NDMP_PROXY_CMD_START_DUMP to ndmp-proxy");
+
+    if (!get_generic_reply(nself)) {
+	/* error message is set by get_generic_reply */
+	return FALSE;
+    }
+
+    return TRUE;
+}
+
+static gboolean
 ndmp_device_start_file(
     Device     *dself,
     dumpfile_t *jobInfo)
 {
-    NdmpDevice *self = NDMP_DEVICE(dself);
+    NdmpDevice *nself = NDMP_DEVICE(dself);
+    int         result;
+    char       *amanda_header;
 
-    self = self;
-    jobInfo = jobInfo;
+    /* set the blocksize in the header properly */
+    jobInfo->blocksize = dself->block_size;
+
+    /* Make the Amanda header suitable for writing to the device. */
+    /* Then write the damn thing. */
+    amanda_header = device_build_amanda_header(dself, jobInfo, NULL);
+    if (amanda_header == NULL) {
+	device_set_error(dself,
+		stralloc(_("Amanda file header won't fit in a single block!")),
+		DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+    }
+
+    result = ndmp_device_robust_write(nself, amanda_header, dself->block_size);
+    if (!result) {
+	amfree(amanda_header);
+	return FALSE;
+    }
+    amfree(amanda_header);
+
+    /* arrange the file numbers correctly */
+    dself->in_file = TRUE;
+    dself->block = 0;
+    if (dself->file >= 0)
+	dself->file ++;
+
+    return TRUE;
+}
+
+static gboolean
+ndmp_device_write_from_data_path(
+    Device  *dself)
+{
+    NdmpDevice           *nself = NDMP_DEVICE(dself);
+    ipc_binary_message_t *msg;
+
+    if (device_in_error(dself)) return FALSE;
+
+    msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_DO_PART);
+    if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
+	set_proxy_comm_err(dself, errno);
+	return FALSE;
+    }
+    g_debug("Sent CMD_DO_PART to ndmp-proxy");
+
+    if (!get_generic_reply(nself)) {
+	/* error message is set by get_generic_reply */
+	return FALSE;
+    }
 
     device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
     return FALSE;
@@ -684,13 +793,45 @@ static gboolean
 ndmp_device_finish_file(
     Device *dself)
 {
+    NdmpDevice *nself = NDMP_DEVICE(dself);
     if (device_in_error(dself)) return FALSE;
 
     /* we're not in a file anymore */
     dself->in_file = FALSE;
 
-    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
-    return FALSE;
+    if (!ndmp_mtio_eof(nself)) {
+	device_set_error(dself,
+		vstrallocf(_("Error writing filemark: %s"),
+			   strerror(errno)),
+		DEVICE_STATUS_DEVICE_ERROR|DEVICE_STATUS_VOLUME_ERROR);
+	return FALSE;
+    }
+
+    return TRUE;
+}
+
+static gboolean
+ndmp_device_finish_dump(
+    Device *dself)
+{
+    NdmpDevice           *nself = NDMP_DEVICE(dself);
+    ipc_binary_message_t *msg;
+
+    if (device_in_error(dself)) return FALSE;
+
+    msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_FINISH_DUMP);
+    if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
+	set_proxy_comm_err(dself, errno);
+	return FALSE;
+    }
+    g_debug("Sent CMD_DO_PART to ndmp-proxy");
+
+    if (!get_generic_reply(nself)) {
+	/* error message is set by get_generic_reply */
+	return FALSE;
+    }
+
+    return TRUE;
 }
 
 /* functions for reading */
@@ -889,28 +1030,28 @@ get_generic_reply(
     return TRUE;
 }
 
-static int
+static gboolean
 ndmp_mtio_eod(
     NdmpDevice *nself)
 {
     return ndmp_mtio(nself, "EOD", 1);
 }
 
-static int
+static gboolean
 ndmp_mtio_eof(
     NdmpDevice *nself)
 {
     return ndmp_mtio(nself, "EOF", 1);
 }
 
-static int
+static gboolean
 ndmp_mtio_rewind(
     NdmpDevice *nself)
 {
     return ndmp_mtio(nself, "REWIND", 1);
 }
 
-static int
+static gboolean
 ndmp_mtio(
     NdmpDevice *nself,
     char       *command,
@@ -935,7 +1076,7 @@ ndmp_mtio(
     return TRUE;
 }
 
-static int
+static gboolean
 ndmp_device_robust_write(
     NdmpDevice  *nself,
     char        *buf,

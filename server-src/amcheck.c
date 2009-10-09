@@ -1523,10 +1523,12 @@ start_host(
 	    if(dp->up != DISK_READY || dp->todo != 1) {
 		continue;
 	    }
-	    if (am_has_feature(hostp->features, fe_req_xml))
+	    if (am_has_feature(hostp->features, fe_req_xml)) {
+		dp->use_data_path = dp->data_path;
 		o = xml_optionstr(dp, hostp->features, outf, 0);
-	    else
+	    } else {
 		o = optionstr(dp, hostp->features, outf);
+	    }
 	    if (o == NULL) {
 	        remote_errors++;
 		continue;
@@ -1687,7 +1689,7 @@ start_host(
 			    g_fprintf(outf,
 			      _("ERROR: application '%s' not found.\n"), dp->application);
 			} else {
-			    xml_app = xml_application(application, hostp->features);
+			    xml_app = xml_application(dp, application, hostp->features);
 			    vstrextend(&l, xml_app, NULL);
 			    amfree(xml_app);
 			}

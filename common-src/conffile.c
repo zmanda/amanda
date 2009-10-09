@@ -89,6 +89,7 @@ typedef enum {
     CONF_SCRIPT,               CONF_SCRIPT_TOOL,
     CONF_EXECUTE_ON,           CONF_EXECUTE_WHERE,	CONF_SEND_AMREPORT_ON,
     CONF_DEVICE,               CONF_ORDER,
+    CONF_DATA_PATH,            CONF_AMANDA,		CONF_NDMP,
     CONF_NDMP_PROXY_PORT,
 
     /* execute on */
@@ -475,6 +476,7 @@ static void read_estimatelist(conf_var_t *, val_t *);
 static void read_strategy(conf_var_t *, val_t *);
 static void read_taperalgo(conf_var_t *, val_t *);
 static void read_send_amreport_on(conf_var_t *, val_t *);
+static void read_data_path(conf_var_t *, val_t *);
 static void read_priority(conf_var_t *, val_t *);
 static void read_rate(conf_var_t *, val_t *);
 static void read_exinclude(conf_var_t *, val_t *);
@@ -618,6 +620,7 @@ static void conf_init_size(val_t *val, ssize_t sz);
 static void conf_init_bool(val_t *val, int i);
 static void conf_init_compress(val_t *val, comp_t i);
 static void conf_init_encrypt(val_t *val, encrypt_t i);
+static void conf_init_data_path(val_t *val, encrypt_t i);
 static void conf_init_holding(val_t *val, dump_holdingdisk_t i);
 static void conf_init_estimatelist(val_t *val, estimate_t i);
 static void conf_init_execute_on(val_t *, int);
@@ -780,6 +783,7 @@ keytab_t client_keytab[] = {
 
 keytab_t server_keytab[] = {
     { "ALL", CONF_ALL },
+    { "AMANDA", CONF_AMANDA },
     { "AMANDAD_PATH", CONF_AMANDAD_PATH },
     { "AMRECOVER_CHANGER", CONF_AMRECOVER_CHANGER },
     { "AMRECOVER_CHECK_LABEL", CONF_AMRECOVER_CHECK_LABEL },
@@ -813,6 +817,7 @@ keytab_t server_keytab[] = {
     { "CONNECT_TRIES", CONF_CONNECT_TRIES },
     { "CTIMEOUT", CONF_CTIMEOUT },
     { "CUSTOM", CONF_CUSTOM },
+    { "DATA_PATH", CONF_DATA_PATH },
     { "DEBUG_AMANDAD"    , CONF_DEBUG_AMANDAD },
     { "DEBUG_AMIDXTAPED" , CONF_DEBUG_AMIDXTAPED },
     { "DEBUG_AMINDEXD"   , CONF_DEBUG_AMINDEXD },
@@ -888,6 +893,7 @@ keytab_t server_keytab[] = {
     { "MAXDUMPSIZE", CONF_MAXDUMPSIZE },
     { "MAXPROMOTEDAY", CONF_MAXPROMOTEDAY },
     { "MEDIUM", CONF_MEDIUM },
+    { "NDMP", CONF_NDMP },
     { "NDMP_PROXY_PORT", CONF_NDMP_PROXY_PORT },
     { "NETUSAGE", CONF_NETUSAGE },
     { "NEVER", CONF_NEVER },
@@ -1211,6 +1217,7 @@ conf_var_t dumptype_var [] = {
    { CONF_CLNT_DECRYPT_OPT  , CONFTYPE_STR      , read_str      , DUMPTYPE_CLNT_DECRYPT_OPT  , NULL },
    { CONF_APPLICATION       , CONFTYPE_STR      , read_dapplication, DUMPTYPE_APPLICATION    , NULL },
    { CONF_SCRIPT            , CONFTYPE_STR      , read_dpp_script, DUMPTYPE_SCRIPTLIST    , NULL },
+   { CONF_DATA_PATH         , CONFTYPE_DATA_PATH, read_data_path, DUMPTYPE_DATA_PATH      , NULL },
    { CONF_UNKNOWN           , CONFTYPE_INT      , NULL          , DUMPTYPE_DUMPTYPE          , NULL }
 };
 
@@ -2106,6 +2113,7 @@ init_dumptype_defaults(void)
     conf_init_estimatelist(&dpcur.value[DUMPTYPE_ESTIMATELIST]   , ES_CLIENT);
     conf_init_compress (&dpcur.value[DUMPTYPE_COMPRESS]          , COMP_FAST);
     conf_init_encrypt  (&dpcur.value[DUMPTYPE_ENCRYPT]           , ENCRYPT_NONE);
+    conf_init_data_path(&dpcur.value[DUMPTYPE_DATA_PATH]         , DATA_PATH_AMANDA);
     conf_init_str   (&dpcur.value[DUMPTYPE_SRV_DECRYPT_OPT]   , "-d");
     conf_init_str   (&dpcur.value[DUMPTYPE_CLNT_DECRYPT_OPT]  , "-d");
     conf_init_rate     (&dpcur.value[DUMPTYPE_COMPRATE]          , 0.50, 0.50);
@@ -3164,6 +3172,22 @@ read_send_amreport_on(
     case CONF_NEVER:   val_t__send_amreport(val) = SEND_AMREPORT_NEVER;   break;
     default:
 	conf_parserror(_("ALL, STRANGE, ERROR or NEVER expected"));
+    }
+}
+
+static void
+read_data_path(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t *val)
+{
+    ckseen(&val->seen);
+
+    get_conftoken(CONF_ANY);
+    switch(tok) {
+    case CONF_AMANDA: val_t__send_amreport(val) = DATA_PATH_AMANDA; break;
+    case CONF_NDMP:   val_t__send_amreport(val) = DATA_PATH_NDMP  ; break;
+    default:
+	conf_parserror(_("AMANDA or NDMP expected"));
     }
 }
 
@@ -4767,6 +4791,17 @@ conf_init_encrypt(
 }
 
 static void
+conf_init_data_path(
+    val_t *val,
+    encrypt_t    i)
+{
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
+    val->type = CONFTYPE_DATA_PATH;
+    val_t__encrypt(val) = (int)i;
+}
+
+static void
 conf_init_holding(
     val_t              *val,
     dump_holdingdisk_t  i)
@@ -5651,6 +5686,17 @@ val_t_to_send_amreport(
     return val_t__send_amreport(val);
 }
 
+data_path_t
+val_t_to_data_path(
+    val_t *val)
+{
+    if (val->type != CONFTYPE_DATA_PATH) {
+	error(_("val_t_to_data_path: val.type is not CONFTYPE_DATA_PATH"));
+	/*NOTREACHED*/
+    }
+    return val_t__data_path(val);
+}
+
 int
 val_t_to_priority(
     val_t *val)
@@ -5761,6 +5807,7 @@ copy_val_t(
 	case CONFTYPE_EXECUTE_ON:
 	case CONFTYPE_EXECUTE_WHERE:
 	case CONFTYPE_SEND_AMREPORT_ON:
+	case CONFTYPE_DATA_PATH:
 	case CONFTYPE_STRATEGY:
 	case CONFTYPE_TAPERALGO:
 	case CONFTYPE_PRIORITY:
@@ -5912,6 +5959,7 @@ free_val_t(
 	case CONFTYPE_EXECUTE_WHERE:
 	case CONFTYPE_EXECUTE_ON:
 	case CONFTYPE_SEND_AMREPORT_ON:
+	case CONFTYPE_DATA_PATH:
 	case CONFTYPE_STRATEGY:
 	case CONFTYPE_SIZE:
 	case CONFTYPE_TAPERALGO:
@@ -6468,6 +6516,17 @@ val_t_display_strs(
 	    break;
 	case SEND_AMREPORT_NEVER:
 	    buf[0] = vstrallocf("NEVER");
+	    break;
+	}
+	break;
+
+    case CONFTYPE_DATA_PATH:
+	switch(val->v.i) {
+	case DATA_PATH_AMANDA:
+	    buf[0] = vstrallocf("AMANDA");
+	    break;
+	case DATA_PATH_NDMP:
+	    buf[0] = vstrallocf("NDMP");
 	    break;
 	}
 	break;
@@ -7156,5 +7215,29 @@ gint compare_pp_script_order(
     gconstpointer b)
 {
     return pp_script_get_order(lookup_pp_script((char *)a)) > pp_script_get_order(lookup_pp_script((char *)b));
+}
+
+char *
+data_path_to_string(
+    data_path_t data_path)
+{
+    switch (data_path) {
+	case DATA_PATH_AMANDA: return "AMANDA";
+	case DATA_PATH_NDMP: return "NDMP";
+    }
+    error(_("data_path is not DATA_PATH_AMANDA or DATA_PATH_NDMP"));
+    /* NOTREACHED */
+}
+
+data_path_t
+data_path_from_string(
+    char *data)
+{
+    if (strcmp(data, "AMANDA") == 0)
+	return DATA_PATH_AMANDA;
+    if (strcmp(data, "NDMP") == 0)
+	return DATA_PATH_NDMP;
+    error(_("data_path is not AMANDA or NDMP"));
+    /* NOTREACHED */
 }
 

@@ -177,6 +177,11 @@ static void simple_property_free(SimpleProperty *o);
 
 static void default_device_open_device(Device * self, char * device_name,
 				    char * device_type, char * device_node);
+static gboolean default_device_start_dump(Device *self,
+					  data_path_t data_path,
+					  dumpfile_t * jobInfo,
+					  gint64 part_size);
+static gboolean default_device_finish_dump(Device *self);
 static gboolean default_device_configure(Device *self, gboolean use_global_config);
 static gboolean default_device_write_from_fd(Device *self,
 					     queue_fd_t *queue_fd);
@@ -298,6 +303,8 @@ device_class_init (DeviceClass * device_class)
 
     device_class->open_device = default_device_open_device;
     device_class->configure = default_device_configure;
+    device_class->start_dump = default_device_start_dump;
+    device_class->finish_dump = default_device_finish_dump;
     device_class->write_from_fd = default_device_write_from_fd;
     device_class->read_to_fd = default_device_read_to_fd;
     device_class->property_get_ex = default_device_property_get_ex;
@@ -1105,6 +1112,24 @@ default_device_write_from_fd(Device *self, queue_fd_t *queue_fd) {
 	    streaming_mode);
 }
 
+static gboolean
+default_device_start_dump(
+    Device      *self G_GNUC_UNUSED,
+    data_path_t  data_path G_GNUC_UNUSED,
+    dumpfile_t  *jobInfo G_GNUC_UNUSED,
+    gint64       part_size G_GNUC_UNUSED)
+{
+    return TRUE;
+}
+
+static gboolean
+default_device_finish_dump(
+    Device * self G_GNUC_UNUSED)
+{
+    return TRUE;
+}
+
+
 /* XXX WARNING XXX
  * All the functions below this comment are stub functions that do nothing
  * but implement the virtual function table. Call these functions and they
@@ -1236,6 +1261,26 @@ device_write_from_fd (Device * self, queue_fd_t * queue_fd)
 }
 
 gboolean
+device_start_dump (
+    Device      *self,
+    data_path_t  data_path,
+    dumpfile_t  *jobInfo,
+    gint64       part_size)
+{
+    DeviceClass * klass;
+
+    g_assert(IS_DEVICE (self));
+    g_assert(!(self->in_file));
+    g_assert(jobInfo != NULL);
+
+    selfp->wrote_short_block = FALSE;
+
+    klass = DEVICE_GET_CLASS(self);
+    g_assert(klass->start_dump);
+    return (klass->start_dump)(self, data_path, jobInfo, part_size);
+}
+
+gboolean
 device_start_file (Device * self, dumpfile_t * jobInfo) {
     DeviceClass * klass;
 
@@ -1258,6 +1303,32 @@ device_finish_file (Device * self)
     g_assert(IS_DEVICE (self));
     g_assert(IS_WRITABLE_ACCESS_MODE(self->access_mode));
     g_assert(self->in_file);
+
+    klass = DEVICE_GET_CLASS(self);
+    g_assert(klass->finish_file);
+    return (klass->finish_file)(self);
+}
+
+gboolean
+device_write_from_data_path (Device * self)
+{
+    DeviceClass *klass;
+
+    g_assert(IS_DEVICE (self));
+    g_assert(IS_WRITABLE_ACCESS_MODE(self->access_mode));
+
+    klass = DEVICE_GET_CLASS(self);
+    g_assert(klass->write_from_data_path);
+    return (klass->write_from_data_path)(self);
+}
+
+gboolean
+device_finish_dump (Device * self)
+{
+    DeviceClass *klass;
+
+    g_assert(IS_DEVICE (self));
+    //g_assert(IS_WRITABLE_ACCESS_MODE(self->access_mode));
 
     klass = DEVICE_GET_CLASS(self);
     g_assert(klass->finish_file);

@@ -19,7 +19,7 @@
  * controlling proxy communication with amanda
  */
 
-#include "ndmagents.h"
+#include "ndmjob.h"
 #include "ndmp-proxy.h"
 #include "ipc-binary.h"
 
@@ -32,7 +32,7 @@ ndma_dispatch_proxy_listen(
 	char			*name;
 	struct proxy_channel	*pxchan;
 	ipc_binary_message_t	*msg;
-	struct proxy_channel	**pxchanp;
+	struct proxy_channel	**pxchanp = NULL;
 	char			*service;
 	char			*errstr = NULL;
 
@@ -77,14 +77,20 @@ ndma_dispatch_proxy_listen(
 	service = (char *)msg->args[NDMP_PROXY_SERVICE].data;
 	if (0 == strcmp(service, "DEVICE")) {
 		pxchanp = &sess->proxy_device_chan;
+		service = "proxy-device";
 	} else if (0 == strcmp(service, "APPLICATION")) {
 		pxchanp = &sess->proxy_application_chan;
+		service = "proxy-application";
 	} else if (0 == strcmp(service, "CHANGER")) {
 		pxchanp = &sess->proxy_changer_chan;
+		service = "proxy-changer";
 	} else {
 		errstr = ndmp9_error_to_str(NDMP9_ILLEGAL_ARGS_ERR);
 	}
 
+	if (pxchanp && *pxchanp && (*pxchanp)->sock != 0) {
+	    errstr = "Someone is already connected";
+	}
 	ipc_binary_free_message(msg);
 
 	/* is the service already active? */
@@ -114,7 +120,7 @@ ndma_dispatch_proxy_listen(
 	sess->proxy_connections++;
 
 	/* set up the ndmp communication channel to listen for incoming messages */
-	ndmchan_initialize(&pxchan->ndm, "proxy-service");
+	ndmchan_initialize(&pxchan->ndm, service);
 	ndmchan_setbuf(&pxchan->ndm, malloc(65536), 65536);
 	ndmchan_start_read(&pxchan->ndm, conn_sock);
 
@@ -142,10 +148,11 @@ static void
 ndma_dispatch_proxy_device(
     struct ndm_session *sess)
 {
-	int			conn_sock, len;
-	struct sockaddr		sa;
+	int			 conn_sock, len;
+	struct sockaddr		 sa;
 	struct ndmchan		*ch;
-	ipc_binary_message_t *msg;
+	ipc_binary_message_t	*msg;
+	char			*errstr = NULL;
 
 	if (!sess->proxy_device_chan || !sess->proxy_device_chan->ndm.ready)
 	    return;
@@ -167,14 +174,13 @@ ndma_dispatch_proxy_device(
 
 		case NDMP_PROXY_CMD_TAPE_OPEN: {
 			struct ndm_control_agent *ca = &sess->control_acb;
-			char *errstr = NULL;
 			ndmp9_error errcode = 0;
 			ipc_binary_message_t *send_msg;
 			int rc;
 			char *tape_agent_str;
 			int port;
 
-			ndmalogf (sess, 0, 7, "got a CMD_TAPE_OPEN request");
+			ndmalogf (sess, 0, 7, "got a NDMP_PROXY_CMD_TAPE_OPEN request");
 
                         {
                             long p = strtol(((char *)msg->args[NDMP_PROXY_PORT].data), NULL, 10);
@@ -245,7 +251,7 @@ ndma_dispatch_proxy_device(
 		case NDMP_PROXY_CMD_TAPE_CLOSE: {
 			ipc_binary_message_t *send_msg;
 
-			ndmalogf (sess, 0, 7, "got a CMD_TAPE_CLOSE request");
+			ndmalogf (sess, 0, 7, "got a NDMP_PROXY_CMD_TAPE_CLOSE request");
 			ndmca_tape_close(sess);
 			sess->device_open = FALSE;
 
@@ -257,6 +263,8 @@ ndma_dispatch_proxy_device(
 							strerror(errno));
 				goto close_chan;
 			}
+			close(sess->proxy_device_chan->sock);
+			sess->proxy_device_chan->sock = 0;
 			break;
 		}
 
@@ -267,7 +275,7 @@ ndma_dispatch_proxy_device(
 			long count;
 			int rc;
 
-			ndmalogf (sess, 0, 7, "got a CMD_TAPE_READ request");
+			ndmalogf (sess, 0, 7, "got a NDMP_PROXY_CMD_TAPE_READ request");
 			count = strtol((char *)msg->args[NDMP_PROXY_COUNT].data, NULL, 10);
 			/* TODO: sanity check count */
 
@@ -306,7 +314,7 @@ ndma_dispatch_proxy_device(
 			char *error = NULL;
 			int rc;
 
-			ndmalogf (sess, 0, 7, "got a CMD_TAPE_WRITE request");
+			ndmalogf (sess, 0, 7, "got a NDMP_PROXY_CMD_TAPE_WRITE request");
 
 			rc = ndmca_tape_write (sess, buf, msg->args[NDMP_PROXY_DATA].len);
 
@@ -337,7 +345,7 @@ ndma_dispatch_proxy_device(
 			ndmp9_error errcode;
 			int rc;
 
-			ndmalogf (sess, 0, 7, "got a CMD_TAPE_MTIO %s %d request", command, count);
+			ndmalogf (sess, 0, 7, "got a NDMP_PROXY_CMD_TAPE_MTIO %s %d request", command, count);
 
 			count = strtol((char *)msg->args[NDMP_PROXY_COUNT].data, NULL, 10);
 
@@ -367,6 +375,115 @@ ndma_dispatch_proxy_device(
 				goto close_chan;
 			}
 			break;
+		}
+
+		case NDMP_PROXY_CMD_START_DUMP: {
+			struct ndm_control_agent *ca = &sess->control_acb;
+			char* data_agent_str = strdup("ss7110.zmanda.com/4m,root,zm@nd@q@");
+			ipc_binary_message_t *send_msg;
+			ndmp9_error errcode;
+			char *errbuf;
+			int rc;
+			int i;
+
+			/* Should be property BLOCKSIZE */
+			ca->job.record_size = 32768; /* 32 kb */
+			/* Should be atoi((char *)msg->args[NDMP_PROXY_SPLITSIZE].data) */
+			ca->job.last_w_offset = 8589934592; /* 8 gb */
+			/* The following should be set by the application API */
+			/* communication from amndmp is not done yet */
+			/* this is hardcoded */
+			C_chdir = "/export/NDMP-target/data";
+			I_index_file = "n";
+			B_bu_type = "tar";
+			args_to_job_backup_env();
+			ca->job.bu_type = B_bu_type;
+			for (i = 0; i < nn_E_environment; i++)
+				ca->job.env_tab.env[i] = E_environment[i];
+			ca->job.env_tab.n_env = nn_E_environment;
+
+			/* Create the data agent */
+			rc = ndmagent_from_str(&ca->job.data_agent, data_agent_str);
+			if (!rc) {
+				rc = ndmca_connect_data_agent(sess);
+				if (rc) {
+					/* save errstr before deleting it */
+					if (ndmconn_get_err_msg(sess->plumb.data) == NULL) {
+						strcpy(errbuf, "Unknown error");
+					} else {
+						strcpy(errbuf, ndmconn_get_err_msg(sess->plumb.data));
+					}
+					errstr = errbuf;
+					ndmconn_destruct (sess->plumb.data);
+				}
+			}
+
+			if (!rc)
+				rc = ndmca_mover_set_record_size (sess);
+			if (!rc)
+				rc = ndmca_mover_set_window (sess, 0, 8589934592);
+			ca->tape_mode = NDMP9_TAPE_RDWR_MODE;
+			ca->mover_mode = NDMP9_MOVER_MODE_READ;
+			ca->is_label_op = 0;
+
+			if (!rc)
+				rc = ndmca_mover_listen (sess);
+
+			if (rc)
+				errcode = sess->plumb.tape->last_reply_error;
+
+			if (rc && !errstr)
+				errstr = g_strdup(ndmp9_error_to_str(errcode));
+			
+			send_msg = ipc_binary_new_message(sess->proxy_device_chan->ipc,
+                                                    NDMP_PROXY_REPLY_GENERIC);
+			if (rc) {
+				ipc_binary_add_arg(send_msg, NDMP_PROXY_ERRCODE, 0,
+                                        ndmp9_error_to_str(errcode), FALSE);
+				ipc_binary_add_arg(send_msg, NDMP_PROXY_ERROR, 0,
+                                        errstr, TRUE);
+			}
+			if (ipc_binary_write_message(sess->proxy_device_chan->ipc,
+				    sess->proxy_device_chan->sock, send_msg) < 0) {
+				ndmalogf (sess, 0, 7, "error writing to device channel: %s",
+					  strerror(errno));
+				/* TODO: shut down the connection */
+			}
+			break;
+		}
+
+		case NDMP_PROXY_CMD_DO_PART: {
+			ipc_binary_message_t *send_msg;
+			ndmp9_error errcode;
+			int rc;
+
+			rc = ndmca_data_start_backup (sess);
+			if (!rc)
+				rc = ndmca_monitor_startup (sess);
+			if (!rc)
+				ndmca_monitor_backup (sess);
+			if (rc)
+				errcode = sess->plumb.tape->last_reply_error;
+
+			send_msg = ipc_binary_new_message(sess->proxy_device_chan->ipc,
+                                                    NDMP_PROXY_REPLY_GENERIC);
+			if (rc) {
+				ipc_binary_add_arg(send_msg, NDMP_PROXY_ERRCODE, 0,
+                                        ndmp9_error_to_str(errcode), FALSE);
+				ipc_binary_add_arg(send_msg, NDMP_PROXY_ERROR, 0,
+                                        errstr, TRUE);
+			}
+			if (ipc_binary_write_message(sess->proxy_device_chan->ipc,
+				    sess->proxy_device_chan->sock, send_msg) < 0) {
+				ndmalogf (sess, 0, 7, "error writing to device channel: %s",
+					  strerror(errno));
+				/* TODO: shut down the connection */
+			}
+			break;
+			
+		}
+
+		case NDMP_PROXY_CMD_FINISH_DUMP: {
 		}
 
 		default: {

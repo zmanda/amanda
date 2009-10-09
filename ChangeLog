@@ -1,3 +1,37 @@
+2009-10-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/alloc.c: Increae to MAX_VSTRALLOC_ARGS to 40.
+	* common-src/conffile.c: Add data_path
+	* common-src/conffile.h: Add data-path
+	* common-src/ndmp-proxy.c: Improve.
+	* common-src/ndmp-proxy.h: Improve.
+	* device-src/device.c (device_start_dump, device_finish_dump
+			       device_write_from_data_path) New method.
+	* device-src/device.h (device_start_dump, device_finish_dump
+			       device_write_from_data_path) New method.
+	* device-src/ndmp-device.c: Improve
+	* device-src/xfer-dest-taper.c: data-path
+	* device-src/xfer-device.h: data-path
+	* ndmp-src/Makefile.am (ndmp_proxy_SOURCES): Add files.
+	* ndmp-src/ndma_comm_proxy.c: Improve.
+	* ndmp-src/ndma_comm_session.c: #include "ndmjob.h"
+	* ndmp-src/ndmjob_main.c: Open debug file.
+	* ndmp-src/ndml_log.c: Check for deliver..
+	* perl/Amanda/Config.swg: Add data-path
+	* perl/Amanda/Device.swg: Add new device api
+	* perl/Amanda/Taper/Scribe.pm: data-path
+	* perl/Amanda/XferServer.swg: data-path
+	* server-src/amadmin.c: print data-path
+	* server-src/amcheck.c: data-path and xml_application change
+	* server-src/amindexd.c: xml_application change
+	* server-src/diskfile.c: new xml_application
+	* server-src/diskfile.h: xml_application prototype change.
+	* server-src/driver.c: data-path
+	* server-src/driverio.c: data-path
+	* server-src/driverio.h (taper_device): new global variable.
+	* server-src/dumper.c: data-path
+	* server-src/planner.c: xml_application change
+	* server-src/taper.pl: data-path
+
 2009-10-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/IPC/Binary.pod: finish docs
 

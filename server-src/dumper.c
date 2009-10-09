@@ -103,6 +103,7 @@ static char *client_username=NULL;
 static char *client_port=NULL;
 static char *ssh_keys=NULL;
 static char *auth=NULL;
+static data_path_t data_path=DATA_PATH_AMANDA;
 static int level;
 static char *dumpdate = NULL;
 static char *dumper_timestamp = NULL;
@@ -410,6 +411,7 @@ main(
 	     *   client_port
 	     *   ssh_keys
 	     *   security_driver
+	     *   data_path
 	     *   options
 	     */
 	    a = 1; /* skip "PORT-DUMP" */
@@ -501,6 +503,11 @@ main(
 		error(_("error [dumper PORT-DUMP: not enough args: auth]"));
 	    }
 	    auth = newstralloc(auth, cmdargs->argv[a++]);
+
+	    if(a >= cmdargs->argc) {
+		error(_("error [dumper PORT-DUMP: not enough args: data_path]"));
+	    }
+	    data_path = data_path_from_string(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: options]"));
@@ -1207,7 +1214,7 @@ do_dump(
     }
 
     dumpsize -= headersize;		/* don't count the header */
-    if (dumpsize <= (off_t)0) {
+    if (dumpsize <= (off_t)0 && data_path == DATA_PATH_AMANDA) {
 	dumpsize = (off_t)0;
 	dump_result = max(dump_result, 2);
 	if (!errstr) errstr = stralloc(_("got no data"));
@@ -1218,7 +1225,7 @@ do_dump(
 	if (!errstr) errstr = stralloc(_("got no header information"));
     }
 
-    if (dumpsize == 0) {
+    if (dumpsize == 0 && data_path == DATA_PATH_AMANDA) {
 	dump_result = max(dump_result, 2);
 	if (!errstr) errstr = stralloc(_("got no data"));
     }

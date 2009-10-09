@@ -430,6 +430,7 @@ main(
     waitq = origq;
     taper_state = TAPER_STATE_DEFAULT;
     tapeq = read_flush();
+    taper_device = NULL;
 
     roomq.head = roomq.tail = NULL;
 
@@ -1460,9 +1461,9 @@ handle_taper_result(
 	    }
 	    break;
 
-	case NEW_TAPE: /* NEW-TAPE <handle> <label> */
-            if (result_argc != 3) {
-                error(_("error [taper NEW_TAPE result_argc != 3: %d]"),
+	case NEW_TAPE: /* NEW-TAPE <handle> <label> <device> */
+            if (result_argc != 4) {
+                error(_("error [taper NEW_TAPE result_argc != 4: %d]"),
                       result_argc);
 		/*NOTREACHED*/
             }
@@ -1471,6 +1472,8 @@ handle_taper_result(
 	    current_tape++;
 	    tape_left = tape_length;
 	    taper_state |= TAPER_STATE_TAPE_STARTED;
+	    taper_device = result_argv[3];
+	    dbprintf("taper_device: %s\n", stralloc(taper_device));
 	    break;
 
 	case NO_NEW_TAPE:  /* NO-NEW-TAPE <handle> */
@@ -3151,6 +3154,14 @@ dump_to_tape(
     }
 
     /* tell the taper to read from a port number of its choice */
+
+    if (dp->data_path == DATA_PATH_NDMP &&
+	(!taper_device ||
+	 strncmp(taper_device, "ndmp:", 5) == 0)) {
+	dp->use_data_path = dp->data_path;
+    } else {
+	dp->use_data_path = DATA_PATH_AMANDA;
+    }
 
     taper_cmd(PORT_WRITE, dp, NULL, sched(dp)->level, sched(dp)->datestamp);
     cmd = getresult(taper, 1, &result_argc, &result_argv);

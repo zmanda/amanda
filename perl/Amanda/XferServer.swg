@@ -52,7 +52,8 @@ XferElement *xfer_dest_taper(
     size_t max_memory,
     guint64 part_size,
     gboolean use_mem_cache,
-    const char *disk_cache_dirname);
+    const char *disk_cache_dirname,
+    int data_path);
 
 void xfer_dest_taper_start_part(
     XferElement *self,

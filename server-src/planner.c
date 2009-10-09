@@ -1517,7 +1517,7 @@ static void getsize(
 
 			    application = lookup_application(dp->application);
 			    g_assert(application != NULL);
-			    xml_app = xml_application(application,
+			    xml_app = xml_application(dp, application,
 						      hostp->features);
 			    vstrextend(&l, xml_app, NULL);
 			    amfree(xml_app);

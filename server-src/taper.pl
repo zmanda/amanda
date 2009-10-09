@@ -32,7 +32,7 @@ use constant START_TAPER => message("START-TAPER",
 
 use constant PORT_WRITE => message("PORT-WRITE",
     format => [ qw( handle hostname diskname level datestamp splitsize
-		    split_diskbuffer fallback_splitsize ) ],
+		    split_diskbuffer fallback_splitsize data_path ) ],
 );
 
 use constant FILE_WRITE => message("FILE-WRITE",
@@ -42,7 +42,7 @@ use constant FILE_WRITE => message("FILE-WRITE",
 use constant NEW_TAPE => message("NEW-TAPE",
     format => {
 	in => [ qw( ) ],
-	out => [ qw( handle label ) ],
+	out => [ qw( handle label device ) ],
     },
 );
 
@@ -109,6 +109,7 @@ use IO::Socket;
 use POSIX qw( :errno_h );
 use Amanda::Changer;
 use Amanda::Config qw( :getconf config_dir_relative );
+use Amanda::Debug;
 use Amanda::Header;
 use Amanda::Holding;
 use Amanda::MainLoop qw( :GIOCondition );
@@ -354,7 +355,8 @@ sub notif_new_tape {
 	# and inform the driver
 	$self->{'proto'}->send(main::Protocol::NEW_TAPE,
 	    handle => $self->{'handle'},
-	    label => $params{'volume_label'});
+	    label => $params{'volume_label'},
+	    device => $params{'device_name'});
     } else {
 	$self->{'label'} = undef;
 
@@ -577,6 +579,15 @@ sub do_start_xfer {
 	or $hdr->{'disk'} ne $params{'diskname'}) {
 	die("Header of dumpfile does not match FILE_WRITE command");
     }
+
+    if ($msgtype eq main::Protocol::FILE_WRITE) {
+	$params{'data_path'} = $Amanda::Config::DATA_PATH_AMANDA;
+    } elsif ($params{'data_path'} eq "amanda") {
+	$params{'data_path'} = $Amanda::Config::DATA_PATH_AMANDA;
+    } else {
+	$params{'data_path'} = $Amanda::Config::DATA_PATH_NDMP;
+    }
+    $start_xfer_args{'data_path'} = $params{'data_path'};
 
     my $max_memory;
     if (getconf_seen($CNF_DEVICE_OUTPUT_BUFFER_SIZE)) {
@@ -807,3 +818,4 @@ $controller->start();
 Amanda::MainLoop::run();
 
 log_add($L_INFO, "pid-done $$");
+Amanda::Util::finish_application();
