@@ -49,7 +49,6 @@ Amanda::Taper::Scribe
   $scribe->start_xfer(
     dump_header => $my_header,
     xfer_elements => [ $xfer_source ],
-    data_path => 'amanda',
     max_memory => 64 * 1024,
     split_method => 'disk',
     part_size => 150 * 1024**2,
@@ -128,7 +127,6 @@ a header for the dumpfile and information on how to split the dump.
         dump_cb => $dump_cb,
         xfer_elements => $xfer_elements,
         dump_header => $dump_header,
-        data_path => $data_path,
         max_memory => $max_memory,
         # .. split parameters
         );
@@ -250,8 +248,7 @@ name.
 
   $fb->notif_new_tape(
         error => $error,
-        volume_label => $volume_label,
-        device_name => $device_name);
+        volume_label => $volume_label);
 
 The Scribe calls C<notif_new_tape> when a new volume is started.  If the
 C<volume_label> is undefined, then the volume was not successfully
@@ -405,12 +402,10 @@ sub start_xfer {
     my $self = shift;
     my %params = @_;
 
-    for my $rq_param qw(dump_cb xfer_elements dump_header max_memory split_method data_path) {
+    for my $rq_param qw(dump_cb xfer_elements dump_header max_memory split_method) {
 	croak "required parameter '$rq_param' mising"
 	    unless exists $params{$rq_param};
     }
-
-Amanda::Debug::debug("data_path: $params{'data_path'}");
 
     if ($params{'split_method'} ne 'none') {
         croak("required parameter 'part_size' missing")
@@ -445,8 +440,7 @@ Amanda::Debug::debug("data_path: $params{'data_path'}");
 
     my $xdt = Amanda::Xfer::Dest::Taper->new(
 	$params{'max_memory'}, $part_size,
-	$use_mem_cache, $disk_cache_dirname,
-	$params{'data_path'});
+	$use_mem_cache, $disk_cache_dirname);
 
     my $xfer_elements = $params{'xfer_elements'};
     my $xfer = Amanda::Xfer->new([ @$xfer_elements, $xdt ]);
@@ -704,8 +698,7 @@ sub _volume_cb  {
 	# to notify of such
 	$self->{'feedback'}->notif_new_tape(
 	    error => $scan_error,
-	    volume_label => undef,
-	    device_name  => undef);
+	    volume_label => undef);
 
 	$self->_dump_failed($scan_error);
 	return;
@@ -726,8 +719,7 @@ sub _volume_cb  {
 	    && !($device->status & $DEVICE_STATUS_VOLUME_UNLABELED)) {
 	    $self->{'feedback'}->notif_new_tape(
 		error => "while reading label on new volume: " . $device->error_or_status(),
-		volume_label => undef,
-		device_name => undef);
+		volume_label => undef);
 
 	    return $self->_get_new_volume();
 	}
@@ -774,8 +766,7 @@ sub _volume_cb  {
 
 	$self->{'feedback'}->notif_new_tape(
 	    error => "while labeling new volume: " . $device->error_or_status(),
-	    volume_label => $erased? $new_label : undef,
-	    device_name => undef);
+	    volume_label => $erased? $new_label : undef);
 
 	return $self->_get_new_volume();
     }
@@ -783,8 +774,7 @@ sub _volume_cb  {
     # success!
     $self->{'feedback'}->notif_new_tape(
 	error => undef,
-	volume_label => $new_label,
-	device_name => $device->device_name);
+	volume_label => $new_label);
 
     # notify the changer that we've labeled the tape, and start the part.
     my $label_set_cb = make_cb(label_set_cb => sub {

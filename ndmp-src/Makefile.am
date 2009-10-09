@@ -177,8 +177,6 @@ libndmjob_la_SOURCES = \
 amlibexec_PROGRAMS = ndmp-proxy ndmjob
 
 ndmp_proxy_SOURCES = ndmp-proxy_main.c \
-		      ndmjob_job.c \
-		      ndmjob_rules.c \
 		      ndmjob_main_util.c
 
 ndmp_proxy_LDADD = libndmjob.la \

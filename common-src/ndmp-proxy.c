@@ -80,7 +80,7 @@ get_ndmp_proxy_proto(void)
 
 	cmd = ipc_binary_proto_add_cmd(proto, NDMP_PROXY_CMD_TAPE_WRITE);
 	ipc_binary_cmd_add_arg(cmd, NDMP_PROXY_DATA, 0);
-	/* ndmp-proxy gives following reply */
+	/* ndmp-proxy gives generic reply */
 
 	cmd = ipc_binary_proto_add_cmd(proto, NDMP_PROXY_CMD_TAPE_READ);
 	ipc_binary_cmd_add_arg(cmd, NDMP_PROXY_COUNT, IPC_BINARY_STRING);
@@ -89,17 +89,6 @@ get_ndmp_proxy_proto(void)
 	ipc_binary_cmd_add_arg(cmd, NDMP_PROXY_DATA, IPC_BINARY_OPTIONAL);
 	ipc_binary_cmd_add_arg(cmd, NDMP_PROXY_ERRCODE, IPC_BINARY_STRING | IPC_BINARY_OPTIONAL);
 	ipc_binary_cmd_add_arg(cmd, NDMP_PROXY_ERROR, IPC_BINARY_STRING | IPC_BINARY_OPTIONAL);
-	/* ndmp-proxy gives generic reply */
-
-	cmd = ipc_binary_proto_add_cmd(proto, NDMP_PROXY_CMD_START_DUMP);
-	ipc_binary_cmd_add_arg(cmd, NDMP_PROXY_HOST, IPC_BINARY_STRING);
-	ipc_binary_cmd_add_arg(cmd, NDMP_PROXY_DISKNAME, IPC_BINARY_STRING);
-	ipc_binary_cmd_add_arg(cmd, NDMP_PROXY_SPLITSIZE, IPC_BINARY_STRING);
-	/* ndmp-proxy gives generic reply */
-
-	cmd = ipc_binary_proto_add_cmd(proto, NDMP_PROXY_CMD_DO_PART);
-	cmd = ipc_binary_proto_add_cmd(proto, NDMP_PROXY_CMD_FINISH_DUMP);
-	/* ndmp-proxy gives generic reply */
     }
 
     g_static_mutex_unlock(&mutex);

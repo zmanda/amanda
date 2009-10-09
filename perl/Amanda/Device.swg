@@ -309,11 +309,6 @@ typedef struct Device {
 	}
 
 	gboolean
-	start_dump(int data_path, dumpfile_t *jobInfo, gint64 part_size) {
-	    return device_start_dump(self, data_path, jobInfo, part_size);
-	}
-
-	gboolean
 	start_file(dumpfile_t *jobInfo) {
 	    return device_start_file(self, jobInfo);
 	}
@@ -329,18 +324,8 @@ typedef struct Device {
 	}
 
 	gboolean
-	write_from_data_path() {
-	    return device_write_from_data_path(self);
-	}
-
-	gboolean
 	finish_file() {
 	    return device_finish_file(self);
-	}
-
-	gboolean
-	finish_dump() {
-	    return device_finish_dump(self);
 	}
 
 	dumpfile_t*

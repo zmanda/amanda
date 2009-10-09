@@ -53,9 +53,6 @@ main (int ac, char *av[])
 	the_param.log_level = 0;
 	the_param.log_tag = "SESS";
 
-	set_pname("ndmjob");
-	dbopen(NULL);
-
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
 	b_bsize = 20;
 	index_fp = stderr;

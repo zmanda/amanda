@@ -128,9 +128,6 @@ main (int ac, char *av[])
 	NDMOS_MACRO_ZEROFILL(&the_session);
 	d_debug = -1;
 
-	set_pname("ndmp-proxy");
-        dbopen(NULL);
-
 	/* ready the_param early so logging works during process_args() */
 	NDMOS_MACRO_ZEROFILL (&the_param);
 	the_param.log.deliver = ndmjob_log_deliver;

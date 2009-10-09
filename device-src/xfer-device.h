@@ -24,7 +24,6 @@
 
 #include "amxfer.h"
 #include "device.h"
-#include "conffile.h"
 
 /* A transfer source that reads from a Device. The device must be positioned
  * at the start of a file before the transfer is started.  The transfer will
@@ -79,8 +78,7 @@ xfer_dest_taper(
     size_t max_memory,
     guint64 part_size,
     gboolean use_mem_cache,
-    const char *disk_cache_dirname,
-    data_path_t data_path);
+    const char *disk_cache_dirname);
 
 /* start writing the next part to the given device.  The device should be open,
  * but the new file not started.  This will abort if called with an element

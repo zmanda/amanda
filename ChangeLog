@@ -1,4 +1,7 @@
 2009-10-09  Jean-Louis Martineau <martineau@zmanda.com>
+	Revert previous patch.
+
+2009-10-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/alloc.c: Increae to MAX_VSTRALLOC_ARGS to 40.
 	* common-src/conffile.c: Add data_path
 	* common-src/conffile.h: Add data-path

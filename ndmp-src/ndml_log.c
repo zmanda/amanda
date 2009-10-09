@@ -80,8 +80,7 @@ ndmlogf (struct ndmlog *log, char *tag, int level, char *fmt, ...)
 	vsnprintf (buf, sizeof(buf), fmt, ap);
 	va_end (ap);
 
-	if (*log->deliver)
-		(*log->deliver)(log, tag, level, buf);
+	(*log->deliver)(log, tag, level, buf);
 }
 
 void

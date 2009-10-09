@@ -168,11 +168,6 @@ typedef enum {
     SEND_AMREPORT_NEVER
 } send_amreport_t;
 
-typedef enum {
-    DATA_PATH_AMANDA,
-    DATA_PATH_NDMP,
-} data_path_t;
-
 typedef struct exinclude_s {
     sl_t *sl_list;
     sl_t *sl_file;
@@ -216,7 +211,6 @@ typedef enum {
     CONFTYPE_EXECUTE_WHERE,
     CONFTYPE_SEND_AMREPORT_ON,
     CONFTYPE_IDENTLIST,
-    CONFTYPE_DATA_PATH,
 } conftype_t;
 
 /* A "seen" struct.  Rather than allocate strings all over the place, this
@@ -276,7 +270,6 @@ char                 *val_t_to_application(val_t *);
 execute_on_t          val_t_to_execute_on(val_t *);
 execute_where_t       val_t_to_execute_where(val_t *);
 send_amreport_t       val_t_to_send_amreport(val_t *);
-data_path_t           val_t_to_data_path(val_t *);
 
 /* Has the given val_t been seen in a configuration file or config overwrite?
  *
@@ -324,7 +317,6 @@ data_path_t           val_t_to_data_path(val_t *);
 #define val_t__application(val)   ((val)->v.application)
 #define val_t__execute_on(val)    ((val)->v.i)
 #define val_t__execute_where(val) ((val)->v.i)
-#define val_t__data_path(val)     ((val)->v.i)
 /*
  * Parameters
  *
@@ -640,7 +632,6 @@ typedef enum {
     DUMPTYPE_SCRIPTLIST,
     DUMPTYPE_PROPERTY,
     DUMPTYPE_CLIENT_PORT,
-    DUMPTYPE_DATA_PATH,
     DUMPTYPE_DUMPTYPE /* sentinel */
 } dumptype_key;
 
@@ -728,7 +719,6 @@ char *dumptype_name(dumptype_t *dtyp);
 #define dumptype_get_scriptlist(dtyp)          (val_t_to_identlist(dumptype_getconf((dtyp), DUMPTYPE_SCRIPTLIST)))
 #define dumptype_get_property(dtyp)            (val_t_to_proplist(dumptype_getconf((dtyp), DUMPTYPE_PROPERTY)))
 #define dumptype_get_client_port(dtyp)             (val_t_to_str(dumptype_getconf((dtyp), DUMPTYPE_CLIENT_PORT)))
-#define dumptype_get_data_path(dtyp)             (val_t_to_data_path(dumptype_getconf((dtyp), DUMPTYPE_DATA_PATH)))
 
 /*
  * Interface parameter access
@@ -1375,11 +1365,5 @@ int string_to_boolean(const char *str);
  * @param proplist: The property list
  */
 void property_add_to_argv(GPtrArray *argv_ptr, proplist_t proplist);
-
-/* Return a pointer to a static string for the data_path */
-char *data_path_to_string(data_path_t data_path);
-
-/* Return the data_path for the string */
-data_path_t data_path_from_string(char *data);
 
 #endif /* ! CONFFILE_H */

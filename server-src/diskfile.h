@@ -112,8 +112,6 @@ typedef struct disk_s {
     int		to_holdingdisk;		/* use holding disk ? */
     int		kencrypt;
     int		index;			/* produce an index ? */
-    data_path_t	data_path;		/* defined data-path */
-    data_path_t	use_data_path;		/* data-path to use */
     int		spindle;		/* spindle # - for parallel dumps */
     int		inprogress;		/* being dumped now? */
     int		todo;
@@ -158,7 +156,7 @@ char *xml_optionstr(disk_t *dp, am_feature_t *their_features, FILE *fdout,
 		    int to_server);
 char *xml_estimate(estimatelist_t estimatelist, am_feature_t *their_features);
 char *clean_dle_str_for_client(char *dle_str);
-char *xml_application(disk_t *dp, application_t *application,
+char *xml_application(application_t *application,
 		      am_feature_t *their_features);
 char *xml_scripts(identlist_t pp_scriptlist, am_feature_t *their_features);
 

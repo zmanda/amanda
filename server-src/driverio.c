@@ -349,7 +349,6 @@ taper_cmd(
 			    " ", splitsize,
 			    " ", diskbuffer,
 			    " ", fallback_splitsize,
-			    " ", data_path_to_string(dp->use_data_path),
 			    "\n", NULL);
 	amfree(qname);
 	break;
@@ -445,7 +444,7 @@ dumper_cmd(
 		o = xml_optionstr(dp, dp->host->features, NULL, 1);
 		if (application) {
 		    char *xml_app;
-		    xml_app = xml_application(dp, application,
+		    xml_app = xml_application(application,
 					      dp->host->features);
 		    vstrextend(&o, xml_app, NULL);
 		    amfree(xml_app);
@@ -487,7 +486,6 @@ dumper_cmd(
 			    " ", qclient_port,
 			    " ", qssh_keys,
 			    " ", dp->auth,
-			    " ", data_path_to_string(dp->use_data_path),
 			    " |", o,
 			    "\n", NULL);
 	    amfree(qplugin);

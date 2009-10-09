@@ -38,9 +38,6 @@ enum {
     NDMP_PROXY_CMD_TAPE_WRITE = 6,
     NDMP_PROXY_CMD_TAPE_READ = 7,
     NDMP_PROXY_REPLY_TAPE_READ = 8,
-    NDMP_PROXY_CMD_START_DUMP = 9,
-    NDMP_PROXY_CMD_FINISH_DUMP = 10,
-    NDMP_PROXY_CMD_DO_PART = 11,
 };
 
 enum {
@@ -56,8 +53,6 @@ enum {
     NDMP_PROXY_SERVICE = 10,
     NDMP_PROXY_USERNAME = 11,
     NDMP_PROXY_PASSWORD = 12,
-    NDMP_PROXY_DISKNAME = 13,
-    NDMP_PROXY_SPLITSIZE = 14,
 };
 
 ipc_binary_proto_t *get_ndmp_proxy_proto(void);

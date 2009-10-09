@@ -690,7 +690,6 @@ parse_diskline(
     disk->ssh_keys           = dumptype_get_ssh_keys(dtype);
     disk->comprate[0]	     = dumptype_get_comprate(dtype)[0];
     disk->comprate[1]	     = dumptype_get_comprate(dtype)[1];
-    disk->data_path	     = dumptype_get_data_path(dtype);
 
     /*
      * Boolean parameters with no value (Appears here as value 2) defaults
@@ -1793,7 +1792,6 @@ static void xml_property(
 
 char *
 xml_application(
-    disk_t        *dp,
     application_t *application,
     am_feature_t  *their_features)
 {
@@ -1811,17 +1809,6 @@ xml_application(
 			NULL);
     proplist = application_get_property(application);
     g_hash_table_foreach(proplist, xml_property, &xml_app);
-
-    /* Add data-path property to application */
-    if (dp->use_data_path == DATA_PATH_NDMP) {
-	char *b64data_path = amxml_format_tag("name", stralloc("data-path"));
-	char *b64data_path_value = amxml_format_tag("value", stralloc("NDMP"));
-	vstrextend(&xml_app.result, "    <property>\n",
-				    "      ", b64data_path, "\n",
-				    "      ", b64data_path_value, "\n",
-				    "    </property>\n", NULL);
-    }
-
     vstrextend(&xml_app.result, "  </backup-program>\n", NULL);
 
     amfree(b64plugin);

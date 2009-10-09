@@ -21,7 +21,6 @@
 
 #include "amxfer.h"
 #include "amanda.h"
-#include "conffile.h"
 #include "xfer-device.h"
 #include "arglist.h"
 
@@ -114,7 +113,6 @@ typedef struct XferDestTaper {
     gboolean use_mem_cache;
     char *disk_cache_dirname;
     guint64 part_size; /* (bytes) */
-    data_path_t data_path;
 
     /*
      * threads
@@ -934,36 +932,27 @@ device_thread_write_part(
 
     g_timer_start(timer);
 
-    if (self->data_path == DATA_PATH_AMANDA) {
-	stop_serial = self->part_stop_serial;
-	g_mutex_lock(self->slab_mutex);
-	for (serial = self->part_first_serial; serial < stop_serial && !eof; serial++) {
-	    Slab *slab = slab_source_get(self, &src_state, serial);
-	    g_mutex_unlock(self->slab_mutex);
-	    if (!slab)
-		goto part_done;
-
-	    eof = slab->size < self->slab_size;
-
-	    if (!write_slab_to_device(self, slab))
-		goto part_done;
-
-	    g_mutex_lock(self->slab_mutex);
-
-	    /* if we're reading from the slab train, advance self->device_slab. */
-	    if (slab == self->device_slab) {
-		next_slab(self, &self->device_slab);
-	    }
-	}
+    stop_serial = self->part_stop_serial;
+    g_mutex_lock(self->slab_mutex);
+    for (serial = self->part_first_serial; serial < stop_serial && !eof; serial++) {
+	Slab *slab = slab_source_get(self, &src_state, serial);
 	g_mutex_unlock(self->slab_mutex);
-    } else {
-	if (device_write_from_data_path(self->device)) {
-	    // What to do on error?
+	if (!slab)
+	    goto part_done;
+
+	eof = slab->size < self->slab_size;
+
+	if (!write_slab_to_device(self, slab))
+	    goto part_done;
+
+	g_mutex_lock(self->slab_mutex);
+
+	/* if we're reading from the slab train, advance self->device_slab. */
+	if (slab == self->device_slab) {
+	    next_slab(self, &self->device_slab);
 	}
-	eof = TRUE;
-	//self->no_more_parts = TRUE;
-	//goto part_done;
     }
+    g_mutex_unlock(self->slab_mutex);
 
     /* if we write all of the blocks, but the finish_file fails, then likely
      * there was some buffering going on in the device driver, and the blocks
@@ -1052,7 +1041,6 @@ device_thread(
     XferDestTaper *self = XFER_DEST_TAPER(data);
     XferElement *elt = XFER_ELEMENT(self);
     XMsg *msg;
-    int dump_started = 0;
 
     if (self->disk_cache_dirname) {
         GError *error = NULL;
@@ -1076,15 +1064,6 @@ device_thread(
 	    break;
 
         g_mutex_unlock(self->state_mutex);
-
-	if (!dump_started) {
-	    /* -1 is for no split */
-	    if (!device_start_dump(self->device, self->data_path,
-				   self->part_header, -1)) {
-	        // What to do on error?
-	    }
-	    dump_started = 1;
-	}
 	msg = device_thread_write_part(self);
         g_mutex_lock(self->state_mutex);
 
@@ -1095,9 +1074,8 @@ device_thread(
 	xfer_queue_message(elt->xfer, msg);
 
 	/* if this is the last part, we're done with the part loop */
-	if (self->no_more_parts) {
+	if (self->no_more_parts)
 	    break;
-	}
 
 	/* pause ourselves and await instructions from the main thread */
 	self->paused = TRUE;
@@ -1108,10 +1086,6 @@ device_thread(
     /* make sure the other thread is done before we send XMSG_DONE */
     if (self->disk_cache_thread)
         g_thread_join(self->disk_cache_thread);
-
-    if (!device_finish_dump(self->device)) {
-	// What to do on error?
-    }
 
     /* tell the main thread we're done */
     xfer_queue_message(XFER_ELEMENT(self)->xfer, xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0));
@@ -1598,14 +1572,12 @@ xfer_dest_taper(
     size_t max_memory,
     guint64 part_size,
     gboolean use_mem_cache,
-    const char *disk_cache_dirname,
-    data_path_t data_path)
+    const char *disk_cache_dirname)
 {
     XferDestTaper *self = (XferDestTaper *)g_object_new(XFER_DEST_TAPER_TYPE, NULL);
 
     self->max_memory = max_memory;
     self->part_size = part_size;
-    self->data_path = data_path;
     self->partnum = 1;
 
     /* pick only one caching mechanism, caller! */
