@@ -1,3 +1,11 @@
+2009-10-13  Nikolas Coukouma <atrus@zmanda.com>
+	* perl/Amanda/Config.pod, perl/Amanda/Config.swg,
+	  installcheck/Amanda_Config.pl: SWIG string_to_boolean, document,
+	  and test it
+	* application-src/ampgsql.pl, perl/Amanda/Changer.pm:
+	  use string_to_boolean
+	* perl/Amanda/MainLoop.pod: correct spelling
+
 2009-10-09  Jean-Louis Martineau <martineau@zmanda.com>
 	Revert previous patch.
 

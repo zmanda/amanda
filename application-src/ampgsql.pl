@@ -34,7 +34,7 @@ use POSIX qw( ceil );
 use Sys::Hostname;
 use Symbol;
 use Amanda::Constants;
-use Amanda::Config qw( :init :getconf  config_dir_relative );
+use Amanda::Config qw( :init :getconf  config_dir_relative string_to_boolean );
 use Amanda::Debug qw( :logging );
 use Amanda::Paths;
 use Amanda::Util qw( :constants );
@@ -599,15 +599,18 @@ sub command_backup {
        my ($self, $end_wal) = @_;
        _write_state_file($self, $end_wal) or $self->{'die_cb'}->("Failed to write state file");
    };
-   # simulate amanda.conf boolean style
-   if ($self->{'props'}->{'pg-cleanupwal'} =~ /^(f|false|n|no|off)/i) {
-       $self->{'unlink_cb'} = sub {
-           # do nothing
-       };
-   } else {
+   my $cleanup_wal_val = $self->{'props'}->{'pg-cleanupwal'};
+   my $cleanup_wal = string_to_boolean($cleanup_wal_val);
+   if (!defined($cleanup_wal)) {
+       confess("couldn't interpret PG-CLEANUPWAL value '$cleanup_wal_val' as a boolean");
+   } elsif ($cleanup_wal) {
        $self->{'unlink_cb'} = sub {
            my $filename = shift @_;
            unlink($filename);
+       };
+   } else {
+       $self->{'unlink_cb'} = sub {
+           # do nothing
        };
    }
 

@@ -312,6 +312,10 @@ Several parts of Amanda need to convert unit modifier value like
 returns the unit multiplier for such a string.  For example, "mbytes"
 is converted to 1048576 (1024*1024).
 
+C<string_to_boolean()> takes a string and returns 0 if it matches any of
+Amanda's names for false, or 1 if matches a name for true. If it can't be
+interpreted, C<undef> is returned.
+
 =cut
 
 

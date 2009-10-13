@@ -15,9 +15,6 @@
 #
 # Contact information: Zmanda Inc., 465 N Mathlida Ave, Suite 300
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
-#
-# Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
-# Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
 package Amanda::Changer;
 
@@ -897,10 +894,7 @@ sub get_boolean_property {
 
     my $propinfo = $config->{'properties'}->{$propname};
     return undef unless @{$propinfo->{'values'}} == 1;
-    my $propval = $propinfo->{'values'}->[0];
-    return 1 if ($propval =~ /^(1|y|yes|t|true|on)$/i);
-    return 0 if ($propval =~ /^(0|n|no|f|false|off)$/i);
-    return undef;
+    return string_to_boolean($propinfo->{'values'}->[0]);
 }
 
 sub make_error {

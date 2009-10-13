@@ -16,14 +16,14 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 159;
+use Test::More tests => 173;
 use strict;
 
 use lib "@amperldir@";
 use Installcheck::Config;
 use Amanda::Paths;
 use Amanda::Tests;
-use Amanda::Config qw( :init :getconf );
+use Amanda::Config qw( :init :getconf string_to_boolean );
 use Amanda::Debug;
 
 my $testconf;
@@ -898,4 +898,24 @@ SKIP: {
 	"getconf_byname for script param");
 }
 
+my @boolean_vals = (
+    {'val' => '1', 'expected' => 1},
+    {'val' => '0', 'expected' => 0},
+    {'val' => 't', 'expected' => 1},
+    {'val' => 'true', 'expected' => 1},
+    {'val' => 'f', 'expected' => 0},
+    {'val' => 'false', 'expected' => 0},
+    {'val' => 'y', 'expected' => 1},
+    {'val' => 'yes', 'expected' => 1},
+    {'val' => 'n', 'expected' => 0},
+    {'val' => 'no', 'expected' => 0},
+    {'val' => 'on', 'expected' => 1},
+    {'val' => 'off', 'expected' => 0},
+    {'val' => 'oFf', 'expected' => 0},
+    {'val' => 'foo', 'expected' => undef},
+    );
 
+for my $bv (@boolean_vals) {
+    is(string_to_boolean($bv->{'val'}), $bv->{'expected'},
+        "string_to_boolean('$bv->{'val'}') is right");
+}

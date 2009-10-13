@@ -717,3 +717,18 @@ gint64 find_multiplier(char * casestr);
 amglue_export_ok(
     dump_configuration config_dir_relative taperalgo2str find_multiplier
 );
+
+%rename(C_string_to_boolean) string_to_boolean;
+int string_to_boolean(const char *str);
+%perlcode %{
+
+sub string_to_boolean {
+    my ($str) = @_;
+    my $ret = C_string_to_boolean($str);
+    return undef unless $ret >= 0;
+    return $ret;
+}
+
+%}
+
+amglue_export_ok(string_to_boolean);
