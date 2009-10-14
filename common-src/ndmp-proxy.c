@@ -89,6 +89,9 @@ get_ndmp_proxy_proto(void)
 	ipc_binary_cmd_add_arg(cmd, NDMP_PROXY_DATA, IPC_BINARY_OPTIONAL);
 	ipc_binary_cmd_add_arg(cmd, NDMP_PROXY_ERRCODE, IPC_BINARY_STRING | IPC_BINARY_OPTIONAL);
 	ipc_binary_cmd_add_arg(cmd, NDMP_PROXY_ERROR, IPC_BINARY_STRING | IPC_BINARY_OPTIONAL);
+
+	cmd = ipc_binary_proto_add_cmd(proto, NDMP_PROXY_CMD_NOOP);
+	/* ndmp-proxy gives generic reply */
     }
 
     g_static_mutex_unlock(&mutex);
@@ -181,6 +184,7 @@ connect_to_ndmp_proxy(char **errmsg)
 
     if (proxy_port == 0) {
 	*errmsg = g_strdup("no NDMP-PROXY-PORT configured; cannot start NDMP proxy");
+	return -1;
     }
 
     /* we loop until getting a successful connection, either from a proxy we
@@ -188,22 +192,56 @@ connect_to_ndmp_proxy(char **errmsg)
      * times, though, in case there's some problem starting the proxy, or
      * something already running on that port. */
     for (i = 0; i < 3; i++) {
+	ipc_binary_channel_t *proxy_chan = NULL;
+	ipc_binary_message_t *msg = NULL;
+
 	g_debug("openning a connection to ndmp-proxy on port %d", proxy_port);
 	fd = stream_client("localhost", proxy_port, 32768, 32768, NULL, 0);
-	if (fd >= 0) {
-	    g_debug("connected to ndmp-proxy");
-	    return fd;
+	if (fd < 0) {
+	    g_debug("Could not connect to ndmp-proxy: %s", strerror(errno));
+	    goto try_to_start;
 	}
 
-	g_debug("Could not connect to ndmp-proxy: %s; trying to start a new instance",
-		    strerror(errno));
+	g_debug("connected to ndmp-proxy; sending NOOP to test connection");
+
+	proxy_chan = ipc_binary_new_channel(get_ndmp_proxy_proto());
+	msg = ipc_binary_new_message(proxy_chan, NDMP_PROXY_CMD_NOOP);
+	if (ipc_binary_write_message(proxy_chan, fd, msg) < 0) {
+	    g_debug("Error writing to ndmp-proxy: %s", strerror(errno));
+	    goto try_to_start;
+	}
+
+	if (!(msg = ipc_binary_read_message(proxy_chan, fd))) {
+	    g_debug("Error reading from ndmp-proxy: %s", strerror(errno));
+	    goto try_to_start;
+	}
+
+	if (msg->cmd_id != NDMP_PROXY_REPLY_GENERIC) {
+	    g_debug("Got bogus response from ndmp-proxy");
+	    goto try_to_start;
+	}
+
+	ipc_binary_free_message(msg);
+	ipc_binary_free_channel(proxy_chan);
+
+	return fd;
+
+try_to_start:
+	if (msg) {
+	    ipc_binary_free_message(msg);
+	    msg = NULL;
+	}
+	if (proxy_chan) {
+	    ipc_binary_free_channel(proxy_chan);
+	    proxy_chan = NULL;
+	}
+
 	*errmsg = start_ndmp_proxy();
-	if (*errmsg) {
+	if (*errmsg)
 	    return -1;
-	}
-
     }
 
-    *errmsg = stralloc(_("failed to open a connection to ndmp-proxy"));
+    if (!*errmsg) 
+	*errmsg = stralloc(_("failed to open a connection to ndmp-proxy"));
     return -1;
 }

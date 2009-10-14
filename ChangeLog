@@ -1,3 +1,14 @@
+2009-10-14  Jean-Louis Martineau <martineau@zmanda.com>
+	    Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndma_comm_proxy.c: Use NDMP_PROXY_CMD_NOOP command.
+	* ndmp-src/ndma_tape_simulator.c: Allow rewind mtio command.
+	* device-src/ndmp-device.c: Keep track if a device is openned, don't
+	  close the connection to the proxy in ndmp_device_finish().
+	* installcheck/Amanda_Device_ndmp.pl: More check.
+	* installcheck/Installcheck/Mock.pm: tapefile based on pid number.
+	* common-src/ndmp-proxy.c: Use NDMP_PROXY_CMD_NOOP.
+	* common-src/ndmp-proxy.h: Define NDMP_PROXY_CMD_NOOP.
+
 2009-10-13  Nikolas Coukouma <atrus@zmanda.com>
 	* perl/Amanda/Config.pod, perl/Amanda/Config.swg,
 	  installcheck/Amanda_Config.pl: SWIG string_to_boolean, document,

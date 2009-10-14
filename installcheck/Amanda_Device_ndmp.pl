@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 13;
+use Test::More tests => 20;
 use strict;
 
 use lib "@amperldir@";
@@ -25,7 +25,9 @@ use Installcheck::Mock;
 use Installcheck::Config;
 use Amanda::Device qw( :constants );
 use Amanda::Config qw( :init );
+use Amanda::Util;
 
+Amanda::Util::set_pname("Amanda_Device_ndmp");
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
 
@@ -91,3 +93,36 @@ is($dev->read_label(), $DEVICE_STATUS_SUCCESS,
 
 is($dev->volume_label, "TEST1",
     "volume label read back correctly");
+
+# Write a label
+$dev = Amanda::Device->new("ndmp:localhost:$ndmp_port\@$tapefile");
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "creation of an ndmp device succeeds with correct syntax");
+$dev->property_set("ndmp_username", "ndmp");
+$dev->property_set("ndmp_password", "ndmp");
+
+# Write the label
+ok($dev->start($ACCESS_WRITE, "TEST2", "20090915000000"),
+    "start device in write mode")
+    or diag $dev->error_or_status();
+ok($dev->finish(),
+    "finish device")
+    or diag $dev->error_or_status();
+
+# Read the label with a new device.
+$dev = Amanda::Device->new("ndmp:localhost:$ndmp_port\@$tapefile");
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "creation of an ndmp device succeeds with correct syntax");
+$dev->property_set("ndmp_username", "ndmp");
+$dev->property_set("ndmp_password", "ndmp");
+
+# read the label
+is($dev->read_label(), $DEVICE_STATUS_SUCCESS,
+    "read label from device")
+    or diag $dev->error_or_status();
+is($dev->volume_label, "TEST2",
+    "volume label read back correctly");
+ok($dev->finish(),
+    "finish device")
+    or diag $dev->error_or_status();
+

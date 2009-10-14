@@ -231,15 +231,16 @@ ndmos_tape_mtio (struct ndm_session *sess,
 	int			rc;
 
 	*resid = 0;
-return NDMP9_NO_ERR;
 
 	if (ta->tape_fd < 0) {
 		return NDMP9_DEV_NOT_OPEN_ERR;
 	}
 
+	
 	/* audit for valid op and for tape mode */
 	switch (op) {
 	case NDMP9_MTIO_FSF:
+		return NDMP9_NO_ERR;
 		while (*resid > 0) {
 			simu_flush_weof(sess);
 			rc = simu_forw_one (sess, 1);
@@ -253,6 +254,7 @@ return NDMP9_NO_ERR;
 		break;
 
 	case NDMP9_MTIO_BSF:
+		return NDMP9_NO_ERR;
 		while (*resid > 0) {
 			simu_flush_weof(sess);
 			rc = simu_back_one (sess, 1);
@@ -266,6 +268,7 @@ return NDMP9_NO_ERR;
 		break;
 
 	case NDMP9_MTIO_FSR:
+		return NDMP9_NO_ERR;
 		while (*resid > 0) {
 			simu_flush_weof(sess);
 			rc = simu_forw_one (sess, 0);
@@ -278,6 +281,7 @@ return NDMP9_NO_ERR;
 		break;
 
 	case NDMP9_MTIO_BSR:
+		return NDMP9_NO_ERR;
 		while (*resid > 0) {
 			simu_flush_weof(sess);
 			rc = simu_back_one (sess, 0);
@@ -296,14 +300,18 @@ return NDMP9_NO_ERR;
 		ta->tape_state.blockno.value = 0;
 		//lseek (ta->tape_fd, (off_t)(sizeof (struct simu_gap)), 0);
 		lseek (ta->tape_fd, (off_t)0, 0);
+		ndmalogf(sess, 0, 7, "NDMP9_MTIO_REW");
+		sleep(1);
 		break;
 
 	case NDMP9_MTIO_OFF:
+		return NDMP9_NO_ERR;
 		simu_flush_weof(sess);
 		/* Hmmm. */
 		break;
 
 	case NDMP9_MTIO_EOF:		/* should be "WFM" write-file-mark */
+		return NDMP9_NO_ERR;
 		if (!NDMTA_TAPE_IS_WRITABLE(ta)) {
 			return NDMP9_PERMISSION_ERR;
 		}

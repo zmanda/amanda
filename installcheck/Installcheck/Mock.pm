@@ -81,11 +81,11 @@ our $mock_mtx_path = abs_path("mock/mtx");
 
 sub run_ndmjob {
     my ($port) = @_;
-    my $tapefile = "$Installcheck::TMP/ndmp-tapefile";
-
     # fork once to create a "monitor" process
     my $pid = POSIX::fork();
     if ($pid == 0) {
+	my $tapefile = "$Installcheck::TMP/ndmp-tapefile-$$"; # contains *my* pid
+
 	open(my $fd, ">", $tapefile);
 	close($fd);
 
@@ -100,7 +100,7 @@ sub run_ndmjob {
 	    sleep(1);
 	    last if (getppid() == 1);
 	    if (POSIX::waitpid($ndmjob_pid, POSIX::WNOHANG)) {
-		print STDERR "***** nmdjob exited permaturely\n";
+		print STDERR "***** ndmjob exited prematurely\n";
 		last;
 	    }
 	}
@@ -110,11 +110,13 @@ sub run_ndmjob {
 	unlink($tapefile);
 	exit(0);
     } else {
+	my $tapefile = "$Installcheck::TMP/ndmp-tapefile-$pid"; # contains *child's* pid
+
 	# sleep long enough for the ndmjob process to start listening
 	sleep(1);
-    }
 
-    return $tapefile;
+	return $tapefile;
+    }
 }
 
 1;

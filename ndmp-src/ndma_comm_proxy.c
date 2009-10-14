@@ -62,10 +62,22 @@ ndma_dispatch_proxy_listen(
 
 	/* TODO: this is a synchronous read and should be replaced with
 	 * something async */
+read_msg:
 	msg = ipc_binary_read_message(pxchan->ipc, conn_sock);
 	if (!msg) {
 		ndmalogf(sess, 0, 7, "No message received; disconnecting");
 		goto bail_out;
+	}
+
+	if (msg->cmd_id == NDMP_PROXY_CMD_NOOP) {
+		msg = ipc_binary_new_message(pxchan->ipc, NDMP_PROXY_REPLY_GENERIC);
+		if (ipc_binary_write_message(pxchan->ipc, conn_sock, msg) < 0) {
+			ndmalogf(sess, 0, 7, "Error sending NOOP reply: %s; disconnecting", strerror(errno));
+			goto bail_out;
+		}
+
+		/* try reading another message */
+		goto read_msg;
 	}
 
 	if (msg->cmd_id != NDMP_PROXY_CMD_SELECT_SERVICE) {
@@ -164,6 +176,19 @@ ndma_dispatch_proxy_device(
 	/* loop over any available incoming messages */
 	while ((msg = ipc_binary_poll_message(sess->proxy_device_chan->ipc))) {
 		switch (msg->cmd_id) {
+
+		case NDMP_PROXY_CMD_NOOP: {
+			ipc_binary_message_t *send_msg;
+			send_msg = ipc_binary_new_message(sess->proxy_device_chan->ipc,
+						    NDMP_PROXY_REPLY_GENERIC);
+			if (ipc_binary_write_message(sess->proxy_device_chan->ipc,
+				    sess->proxy_device_chan->sock, send_msg) < 0) {
+				ndmalogf (sess, 0, 7, "error writing to device channel: %s",
+							strerror(errno));
+				goto close_chan;
+			}
+			break;
+		}
 
 		case NDMP_PROXY_CMD_TAPE_OPEN: {
 			struct ndm_control_agent *ca = &sess->control_acb;
@@ -410,10 +435,10 @@ ndma_dispatch_proxy(
     struct ndm_session *sess)
 {
 	/* monitor each of our potential connections */
-	ndma_dispatch_proxy_listen(sess);
 	ndma_dispatch_proxy_device(sess);
 	ndma_dispatch_proxy_application(sess);
 	ndma_dispatch_proxy_changer(sess);
+	ndma_dispatch_proxy_listen(sess);
 
 	return 0;
 }

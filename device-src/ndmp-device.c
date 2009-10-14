@@ -51,6 +51,7 @@ struct _NdmpDevice {
 
     ipc_binary_channel_t *proxy_chan;
     int proxy_sock; /* -1 if not connected */
+    gboolean device_open;
 
     /* constructor parameters and properties */
     gchar	 *ndmp_hostname;
@@ -228,6 +229,7 @@ ndmp_device_init(NdmpDevice *nself)
 
     nself->proxy_chan = NULL;
     nself->proxy_sock = -1;
+    nself->device_open = FALSE;
 
     /* TODO: allow other block sizes */
     dself->block_size = 32768;
@@ -419,6 +421,7 @@ static void ndmp_device_finalize(GObject * obj_self)
 	ipc_binary_free_channel(nself->proxy_chan);
     if (nself->proxy_sock != -1)
 	robust_close(nself->proxy_sock);
+    nself->device_open = FALSE;
 
     if (nself->ndmp_hostname)
 	g_free(nself->ndmp_hostname);
@@ -640,9 +643,10 @@ ndmp_device_finish(
     /* we're not in a file anymore */
     dself->access_mode = ACCESS_NULL;
 
-    if (!close_ndmp_device(nself))
+    if (!close_ndmp_device(nself)) {
 	/* error is set by close_ndmp_device */
 	return FALSE;
+    }
 
     return TRUE;
 }
@@ -746,30 +750,34 @@ try_open_ndmp_device(
     char *errmsg = NULL;
 
     /* if already open, stop now */
-    if (nself->proxy_sock != -1)
+    if (nself->device_open) {
 	return TRUE;
-
-    /* now try to connect to the proxy */
-    nself->proxy_sock = connect_to_ndmp_proxy(&errmsg);
-    if (nself->proxy_sock <= 0) {
-	device_set_error(dself, errmsg, DEVICE_STATUS_DEVICE_ERROR);
-	goto error;
     }
 
-    nself->proxy_chan = ipc_binary_new_channel(get_ndmp_proxy_proto());
+    /* Open a connect to ndmp-proxy if not already open */
+    if (nself->proxy_sock == -1) {
+	/* now try to connect to the proxy */
+	nself->proxy_sock = connect_to_ndmp_proxy(&errmsg);
+	if (nself->proxy_sock <= 0) {
+	    device_set_error(dself, errmsg, DEVICE_STATUS_DEVICE_ERROR);
+	    goto error;
+	}
 
-    /* select the DEVICE service from the proxy */
-    msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_SELECT_SERVICE);
-    ipc_binary_add_arg(msg, NDMP_PROXY_SERVICE, 0, "DEVICE", 0);
-    if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
-	set_proxy_comm_err(dself, errno);
-	goto error;
-    }
-    g_debug("Sent NDMP_PROXY_SELECT_SERVICE to ndmp-proxy");
+	nself->proxy_chan = ipc_binary_new_channel(get_ndmp_proxy_proto());
 
-    if (!get_generic_reply(nself)) {
-	/* error message is set by get_generic_reply */
-	goto error;
+	/* select the DEVICE service from the proxy */
+	msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_SELECT_SERVICE);
+	ipc_binary_add_arg(msg, NDMP_PROXY_SERVICE, 0, "DEVICE", 0);
+	if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
+	    set_proxy_comm_err(dself, errno);
+	    goto error;
+	}
+	g_debug("Sent NDMP_PROXY_SELECT_SERVICE to ndmp-proxy");
+
+	if (!get_generic_reply(nself)) {
+	    /* error message is set by get_generic_reply */
+	    goto error;
+	}
     }
 
     /* now send a NDMP_PROXY_TAPE_OPEN */
@@ -793,6 +801,7 @@ try_open_ndmp_device(
 	goto error;
     }
     g_debug("get reply from ndmp-proxy");
+    nself->device_open = TRUE;
 
     return TRUE;
 
@@ -805,6 +814,7 @@ error:
 	close(nself->proxy_sock);
 	nself->proxy_sock = -1;
     }
+    nself->device_open = FALSE;
 
     return FALSE;
 }
@@ -831,12 +841,7 @@ close_ndmp_device(NdmpDevice *nself) {
 	/* error message is set by get_generic_reply */
 	success = FALSE;
     }
-
-    close(nself->proxy_sock);
-    nself->proxy_sock = -1;
-
-    ipc_binary_free_channel(nself->proxy_chan);
-    nself->proxy_chan = NULL;
+    nself->device_open = FALSE;
 
     return success;
 }
