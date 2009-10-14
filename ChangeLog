@@ -1,3 +1,6 @@
+2009-10-14  Nikolas Coukouma <atrus@zmanda.com>
+	* perl/Amanda/Changer.pm: forgot to import function
+
 2009-10-14  Jean-Louis Martineau <martineau@zmanda.com>
 	    Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndma_comm_proxy.c: Use NDMP_PROXY_CMD_NOOP command.
