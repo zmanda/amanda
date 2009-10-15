@@ -154,7 +154,7 @@ version.c: genversion$(EXEEXT)
 BUILT_SOURCES += genversion.h version.c
 
 # these are used for testing only:
-TEST_PROGS = file bsdsecurity amfeatures
+TEST_PROGS = file bsdsecurity amfeatures 
 
 CLEANFILES += *.test.c
 DISTCLEANFILES += version.c genversion genversion.h
@@ -204,7 +204,8 @@ libtestutils_la_SOURCES = \
 
 # automake-style tests
 
-TESTS = amflock-test event-test semaphore-test queueing-test quoting-test ipc-binary-test
+TESTS = amflock-test event-test semaphore-test queueing-test quoting-test \
+	ipc-binary-test hexencode-test
 noinst_PROGRAMS = $(TESTS)
 
 amflock_test_SOURCES = amflock-test.c
@@ -224,6 +225,9 @@ quoting_test_LDADD = libamanda.la libtestutils.la
 
 ipc_binary_test_SOURCES = ipc-binary-test.c
 ipc_binary_test_LDADD = libamanda.la libtestutils.la
+
+hexencode_test_SOURCES = hexencode-test.c
+hexencode_test_LDADD = libamanda.la libtestutils.la
 
 # scripts
 

@@ -32,6 +32,8 @@
 %{
 /* Support code (not directly available from perl) */
 
+#define AMANDA_ARCHIVE_ERROR_DOMAIN "Amanda archive"
+
 /* A C object to contain all of the relevant callbacks and other state during a
  * read operation; this becomes the user_data during the read */
 typedef struct perl_read_data_s {
@@ -196,16 +198,6 @@ read_frag_cb(
     return TRUE;
 }
 
-static void
-croak_gerror(GError **error)
-{
-    static char *errstr = NULL;
-    if (errstr) g_free(errstr);
-    errstr = g_strdup((*error)->message);
-    g_clear_error(error);
-    croak("Amanda archive: %s", errstr);
-}
-
 /* generic function to recognize when a string+len represents a number and
  * incidentally return the resulting value.  Note that this does not handle
  * negative numbers. */
@@ -283,14 +275,14 @@ amar_t *amar_new_(int fd, char *modestr) {
 	return rv;
     }
 
-    croak_gerror(&error);
+    croak_gerror(AMANDA_ARCHIVE_ERROR_DOMAIN, &error);
     return NULL;
 }
 
 void amar_close_(amar_t *arch) {
     GError *error = NULL;
     if (!amar_close(arch, &error))
-	croak_gerror(&error);
+	croak_gerror(AMANDA_ARCHIVE_ERROR_DOMAIN, &error);
 }
 
 amar_file_t *
@@ -303,14 +295,14 @@ amar_new_file_(amar_t *arch, char *filename, gsize filename_len, off_t *want_pos
     if (file)
 	return file;
 
-    croak_gerror(&error);
+    croak_gerror(AMANDA_ARCHIVE_ERROR_DOMAIN, &error);
     return NULL;
 }
 
 void amar_file_close_(amar_file_t *file) {
     GError *error = NULL;
     if (!amar_file_close(file, &error))
-	croak_gerror(&error);
+	croak_gerror(AMANDA_ARCHIVE_ERROR_DOMAIN, &error);
 }
 
 amar_attr_t *
@@ -324,20 +316,20 @@ amar_new_attr_(amar_file_t *file, guint16 attrid) {
     if (attr)
 	return attr;
 
-    croak_gerror(&error);
+    croak_gerror(AMANDA_ARCHIVE_ERROR_DOMAIN, &error);
     return NULL;
 }
 
 void amar_attr_close_(amar_attr_t *attr) {
     GError *error = NULL;
     if (!amar_attr_close(attr, &error))
-	croak_gerror(&error);
+	croak_gerror(AMANDA_ARCHIVE_ERROR_DOMAIN, &error);
 }
 
 void amar_attr_add_data_buffer_(amar_attr_t *attr, char *buffer, gsize size, gboolean eoa) {
     GError *error = NULL;
     if (!amar_attr_add_data_buffer(attr, buffer, size, eoa, &error))
-	croak_gerror(&error);
+	croak_gerror(AMANDA_ARCHIVE_ERROR_DOMAIN, &error);
 }
 
 size_t
@@ -345,7 +337,7 @@ amar_attr_add_data_fd_(amar_attr_t *attr, int fd, gboolean eoa) {
     GError *error = NULL;
     size_t rv = amar_attr_add_data_fd(attr, fd, eoa, &error);
     if (rv < 0)
-	croak_gerror(&error);
+	croak_gerror(AMANDA_ARCHIVE_ERROR_DOMAIN, &error);
     return rv;
 }
 
@@ -489,7 +481,7 @@ void amar_read_(amar_t *archive, SV *params_hashref) {
      * is still set */
     if (!success) {
 	if (error)
-	    croak_gerror(&error);
+	    croak_gerror(AMANDA_ARCHIVE_ERROR_DOMAIN, &error);
 	else
 	    croak(NULL);
     }

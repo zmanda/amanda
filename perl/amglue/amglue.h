@@ -93,6 +93,20 @@ SV *g_hash_table_to_hashref_gslist(GHashTable *hash);
 SV *g_hash_table_to_hashref_property(GHashTable *hash);
 
 /*
+ * prototypes for gerror.c
+ */
+
+/* Call perl's croak (die) for a GError (if there is one)
+ *
+ * @note This is not thread-safe
+ * @note This function does not return if error is non-NULL
+ *
+ * @param domain: String to prefix to error message (followed by ": ")
+ * @param error: The GError pointer
+ */
+void croak_gerror(const char *domain, GError **error);
+
+/*
  * prototypes for bigint.c
  */
 

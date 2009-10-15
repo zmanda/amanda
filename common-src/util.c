@@ -37,6 +37,8 @@
 #include "base64.h"
 #include "stream.h"
 #include "pipespawn.h"
+#include <glib.h>
+#include <string.h>
 
 static int make_socket(sa_family_t family);
 static int connect_port(sockaddr_union *addrp, in_port_t port, char *proto,
@@ -91,6 +93,11 @@ make_socket(
 #endif
 
     return s;
+}
+
+GQuark am_util_error_quark(void)
+{
+    return g_quark_from_static_string("am-util-error-quark");
 }
 
 /* addrp is my address */
@@ -592,6 +599,103 @@ sanitize_string(
 	}
     }
     return (ret);
+}
+
+char *hexencode_string(const char *str)
+{
+    size_t orig_len, new_len, i;
+    GString *s;
+    gchar *ret;
+    if (!str) {
+        s = g_string_sized_new(0);
+        goto cleanup;
+    }
+    new_len = orig_len = strlen(str);
+    for (i = 0; i < orig_len; i++) {
+        if (!g_ascii_isalnum(str[i])) {
+            new_len += 2;
+        }
+    }
+    s = g_string_sized_new(new_len);
+
+    for (i = 0; i < orig_len; i++) {
+        if (g_ascii_isalnum(str[i])) {
+            g_string_append_c(s, str[i]);
+        } else {
+            g_string_append_printf(s, "%%%02hhx", str[i]);
+        }
+    }
+
+cleanup:
+    ret = s->str;
+    g_string_free(s, FALSE);
+    return ret;
+}
+
+char *hexdecode_string(const char *str, GError **err)
+{
+    size_t orig_len, new_len, i;
+    GString *s;
+    gchar *ret;
+    if (!str) {
+        s = g_string_sized_new(0);
+        goto cleanup;
+    }
+    new_len = orig_len = strlen(str);
+    for (i = 0; i < orig_len; i++) {
+        if (str[i] == '%') {
+            new_len -= 2;
+        }
+    }
+    s = g_string_sized_new(new_len);
+
+    for (i = 0; (orig_len > 2) && (i < orig_len-2); i++) {
+        if (str[i] == '%') {
+            gchar tmp = 0;
+            size_t j;
+            for (j = 1; j < 3; j++) {
+                tmp <<= 4;
+                if (str[i+j] >= '0' && str[i+j] <= '9') {
+                    tmp += str[i+j] - '0';
+                } else if (str[i+j] >= 'a' && str[i+j] <= 'f') {
+                    tmp += str[i+j] - 'a' + 10;
+                } else if (str[i+j] >= 'A' && str[i+j] <= 'F') {
+                    tmp += str[i+j] - 'A' + 10;
+                } else {
+                    /* error */
+                    g_set_error(err, am_util_error_quark(), AM_UTIL_ERROR_HEXDECODEINVAL,
+                        "Illegal character (non-hex) 0x%02hhx at offset %zd", str[i+j], i+j);
+                    g_string_truncate(s, 0);
+                    goto cleanup;
+                }
+            }
+            if (!tmp) {
+                g_set_error(err, am_util_error_quark(), AM_UTIL_ERROR_HEXDECODEINVAL,
+                    "Encoded NULL at starting offset %zd", i);
+                g_string_truncate(s, 0);
+                goto cleanup;
+            }
+            g_string_append_c(s, tmp);
+            i += 2;
+        } else {
+            g_string_append_c(s, str[i]);
+        }
+    }
+    for ( /*nothing*/; i < orig_len; i++) {
+        if (str[i] == '%') {
+            g_set_error(err, am_util_error_quark(), AM_UTIL_ERROR_HEXDECODEINVAL,
+                "'%%' found at offset %zd, but fewer than two characters follow it (%zd)", i, orig_len-i-1);
+            g_string_truncate(s, 0);
+            goto cleanup;
+        } else {
+            g_string_append_c(s, str[i]);
+        }
+    }
+
+cleanup:
+    ret = s->str;
+    g_string_free(s, FALSE);
+    return ret;
 }
 
 /* Helper for expand_braced_alternates; returns a list of un-escaped strings

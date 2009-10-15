@@ -214,6 +214,18 @@ string is split into C<( "" )>.
 All of these quoting-related functions are available under the export
 tag C<:quoting>.
 
+=item hexencode($str)
+
+Encode a string using URI-style hexadecimal encoding.
+Non-alphanumeric characters will be replaced with "%xx"
+where "xx" is the two-digit hexadecimal representation of the character.
+
+=item hexdecode($str)
+
+Decode a string using URI-style hexadecimal encoding.
+
+Both C<hexencode> and C<hexdecode> are available under the export tag C<:encoding>
+
 =item expand_braced_alternates($str)
 =item collapse_braced_alternates(\@list)
 

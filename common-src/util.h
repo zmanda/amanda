@@ -44,6 +44,18 @@
 
 /* internal types and variables */
 
+/* Function to get the GQuark for errors,
+ * with error codes specified by AmUtilError
+ *
+ * @return The GQuark that's used for errors
+ */
+GQuark am_util_error_quark(void);
+
+/* Error codes that may be returned by these functions */
+typedef enum {
+    AM_UTIL_ERROR_HEXDECODEINVAL,
+} AmUtilError;
+
 
 int	connect_portrange(sockaddr_union *, in_port_t, in_port_t, char *,
 			  sockaddr_union *, int);
@@ -83,6 +95,27 @@ gchar ** split_quoted_strings(const gchar *string);
 char *		strquotedstr(char **saveptr);
 
 char *	sanitize_string(const char *str);
+
+/* Encode a string using URI-style hexadecimal encoding.
+ * Non-alphanumeric characters will be replaced with "%xx"
+ * where "xx" is the two-digit hexadecimal representation of the character.
+ *
+ * @param str The string to encode
+ *
+ * @return The encoded string. An empty string will be returned for NULL.
+ */
+char * hexencode_string(const char *str);
+
+/* Decode a string using URI-style hexadecimal encoding.
+ *
+ * @param str The string to decode
+ * @param err return location for a GError
+ *
+ * @return The decoded string. An empty string will be returned for NULL
+ * or if an error occurs.
+ */
+char * hexdecode_string(const char *str, GError **err);
+
 int     copy_file(char *dst, char *src, char **errmsg);
 
 /* These two functions handle "braced alternates", which is a syntax borrowed,

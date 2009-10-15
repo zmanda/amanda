@@ -37,7 +37,7 @@ use Amanda::Constants;
 use Amanda::Config qw( :init :getconf  config_dir_relative string_to_boolean );
 use Amanda::Debug qw( :logging );
 use Amanda::Paths;
-use Amanda::Util qw( :constants );
+use Amanda::Util qw( :constants :encoding );
 
 my $_DATA_DIR_TAR = "data_dir.tar";
 my $_ARCHIVE_DIR_TAR = "archive_dir.tar";
@@ -277,24 +277,10 @@ sub command_selfcheck {
     }
 }
 
-sub _encode {
-    my $str = shift @_;
-    return '' unless $str;
-    $str =~ s/([^A-Za-z0-9])/sprintf("%%%02x", ord($1))/eg;
-    $str;
-}
-
-sub _decode {
-    my $str = shift @_;
-    return '' unless $str;
-    $str =~ s/%(..)/chr(hex($1))/eg;
-    $str;
-}
-
 sub _state_filename {
     my ($self, $level) = @_;
 
-    my @parts = ("ampgsql", _encode($self->{'args'}->{'host'}), _encode($self->{'args'}->{'disk'}), $level);
+    my @parts = ("ampgsql", hexencode($self->{'args'}->{'host'}), hexencode($self->{'args'}->{'disk'}), $level);
     $self->{'args'}->{'statedir'} . '/'  . join("-", @parts);
 }
 

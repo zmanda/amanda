@@ -1,3 +1,12 @@
+2009-10-15  Nikolas Coukouma <atrus@zmanda.com>
+	* application-src/ampgsql.pl, common-src/Makefile.am,
+	  common-src/hexencode-test.c, common-src/util.c, common-src/util.h,
+	  installcheck/Amanda_Util.pl, perl/Amanda/Archive.swg,
+	  perl/Amanda/Util.pod, perl/Amanda/Util.swg, perl/Makefile.am,
+	  perl/amglue/amglue.h, perl/amglue/gerror.c: move URL-style hex encoding
+	  and decoding functions into C. SWIG, document, and test them. Also add
+	  exception-generating typemap for GErrors.
+
 2009-10-14  Nikolas Coukouma <atrus@zmanda.com>
 	* perl/Amanda/Changer.pm: forgot to import function
 

@@ -48,6 +48,7 @@ endif
 amlib_LTLIBRARIES = libamglue.la
 libamglue_la_SOURCES = \
 	amglue/ghashtable.c \
+	amglue/gerror.c \
 	amglue/bigint.c \
 	amglue/source.c \
 	amglue/objwrap.c \

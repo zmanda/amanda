@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 86;
+use Test::More tests => 90;
 
 use lib "@amperldir@";
 use warnings;
@@ -33,6 +33,12 @@ $Data::Dumper::Terse = 1;  # no $VAR1 = ..
 $Data::Dumper::Indent = 0; # no newlines
 
 # most of Amanda::Util is tested via running applications that use it
+
+# Test hexencode/hexdecode lightly (they have a "make check" test)
+is(Amanda::Util::hexencode("hi"), "hi", "no encoding needed");
+is(Amanda::Util::hexencode("hi!"), "hi%21", "encoding");
+is(Amanda::Util::hexdecode("hi%21"), "hi!", "decoding");
+ok(!eval {Amanda::Util::hexdecode("%"); 1}, "decoding error throws exception");
 
 # Tests for quote_string and unquote string.  First, some fuzzing of the
 # quote + unquote round-trip.
