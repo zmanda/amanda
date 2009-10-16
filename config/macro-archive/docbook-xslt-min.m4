@@ -48,7 +48,7 @@
 #   may extend this special exception to the GPL to apply to your
 #   modified version as well.
 #
-#   Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
+#   Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 #   Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
 AC_DEFUN([AC_CHECK_DOCBOOK_XSLT_MIN],
