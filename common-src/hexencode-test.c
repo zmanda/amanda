@@ -118,13 +118,13 @@ test_roundtrip(void)
     };
     static const int num = sizeof(test_strs)/sizeof(round_vec);
     int i, ret;
-    char *tmp_enc, *tmp_dec;
+    char *tmp_enc = NULL, *tmp_dec = NULL;
     GError *err = NULL;
     
     ret = TRUE;
     for (i = 0; i < num; i++) {
         tmp_enc = hexencode_string(test_strs[i]);
-        if (tmp_enc) tmp_dec = hexdecode_string(tmp_enc, &err);
+        tmp_dec = tmp_enc? hexdecode_string(tmp_enc, &err) : NULL;
         if (!tmp_enc || !tmp_dec || strcmp(test_strs[i], tmp_dec) || err) {
             ret = FALSE;
             tu_dbg("roundtrip failure:\n")
@@ -134,10 +134,8 @@ test_roundtrip(void)
             tu_dbg("error msg:  %s\n", err? err->message : "(none)");
         }
         g_clear_error(&err);
-        g_free(tmp_enc);
-        g_free(tmp_dec);
-        tmp_enc = tmp_dec = NULL;
-            
+        amfree(tmp_enc);
+        amfree(tmp_dec);
     }
     return ret;
 }
@@ -147,7 +145,7 @@ test_roundtrip_rand(void)
 {
     int i, ret;
     simpleprng_state_t state;
-    char *in, *tmp_enc, *tmp_dec;
+    char *in, *tmp_enc = NULL, *tmp_dec = NULL;
     size_t size;
     GError *err = NULL;
     
@@ -158,7 +156,7 @@ test_roundtrip_rand(void)
         in = g_malloc0(size+1);
         simpleprng_fill_buffer(&state, in, size);
         tmp_enc = hexencode_string(in);
-        if (tmp_enc) tmp_dec = hexdecode_string(tmp_enc, &err);
+        tmp_dec = tmp_enc? hexdecode_string(tmp_enc, &err) : NULL;
         if (!tmp_enc || !tmp_dec || strcmp(in, tmp_dec) || err) {
             ret = FALSE;
             tu_dbg("roundtrip failure:\n")
@@ -168,11 +166,9 @@ test_roundtrip_rand(void)
             tu_dbg("error msg:  %s\n", err? err->message : "(none)");
         }
         g_clear_error(&err);
-        g_free(tmp_enc);
-        g_free(tmp_dec);
+        amfree(tmp_enc);
+        amfree(tmp_dec);
         g_free(in);
-        tmp_enc = tmp_dec = NULL;
-            
     }
     return ret;
 }

@@ -1,3 +1,7 @@
+2009-10-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/hexencode-test.c: avoid compiler warnings and a potential
+	  crash on test failure
+
 2009-10-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsamba.pl: fix restore.
 
