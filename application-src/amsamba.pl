@@ -664,7 +664,7 @@ sub command_restore {
     my $self = shift;
     my @cmd = ();
 
-    $self->{restore} = 'backup';
+    $self->{action} = 'restore';
     $self->parsesharename();
     chdir(Amanda::Util::get_original_cwd());
 

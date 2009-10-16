@@ -1,3 +1,6 @@
+2009-10-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsamba.pl: fix restore.
+
 2009-10-15  Nikolas Coukouma <atrus@zmanda.com>
 	* application-src/ampgsql.pl, common-src/Makefile.am,
 	  common-src/hexencode-test.c, common-src/util.c, common-src/util.h,
