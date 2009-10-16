@@ -6,7 +6,7 @@
 service amanda
 {
 	disable		= no
-	flags           = IPv6
+	flags           = IPv4
 	socket_type	= stream
 	protocol	= tcp
 	wait		= no
