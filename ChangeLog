@@ -1,4 +1,8 @@
 2009-10-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Makefile.am (full_tests): Add amadmin.
+	* installcheck/amadmin.pl: Check diskname matching argument.
+
+2009-10-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/match.c: Fix match_word function.
 
 2009-10-16 Dan Locks <dwlocks@zmanda.com>

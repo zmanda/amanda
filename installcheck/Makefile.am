@@ -63,6 +63,7 @@ full_tests = \
 	amservice \
 	amstatus \
 	amreport \
+	amadmin \
 	pp-scripts
 
 restore_tests = \
