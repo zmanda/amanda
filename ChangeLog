@@ -1,3 +1,6 @@
+2009-10-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/match.c: Fix match_word function.
+
 2009-10-16 Dan Locks <dwlocks@zmanda.com>
 	*  example/xinetd.amandaclient.in, example/xinetd.amandaserver.in:
 	   replace IPv6 with IPv4

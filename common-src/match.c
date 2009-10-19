@@ -388,8 +388,8 @@ match_word(
     lenword = strlen(word);
     nword = (char *)alloc(lenword + 3);
 
-    if (separator == '/' && lenword > 2 && word[0] == '\\' && word[1] == '\\') {
-	/* Convert all '\\' to '/' */
+    if (separator == '/' && lenword > 2 && word[0] == '\\' && word[1] == '\\' && !strchr(word, '/')) {
+	/* Convert all "\" to '/' */
 	mword = (char *)alloc(lenword + 1);
 	r = mword;
 	w = word;
@@ -404,13 +404,14 @@ match_word(
 	*r++ = '\0';
 	lenword = strlen(word);
 
+	/* Convert all "\\" to '/' */
 	mglob = (char *)alloc(strlen(glob) + 1);
 	r = mglob;
 	w = glob;
 	while (*w != '\0') {
-	    if (*w == '\\') {
+	    if (*w == '\\' && *(w+1) == '\\') {
 		*r++ = '/';
-		w += 1;
+		w += 2;
 	    } else {
 		*r++ = *w++;
 	    }
