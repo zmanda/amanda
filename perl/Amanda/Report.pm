@@ -323,7 +323,8 @@ sub read_file
     $data->{disklist} = {};
     $self->{cache}    = {};
 
-    my $logfh = Amanda::Logfile::open_logfile($logfname);
+    my $logfh = Amanda::Logfile::open_logfile($logfname)
+      or die "cannot open $logfname: $!";
 
     while ( my ( $type, $prog, $str ) = Amanda::Logfile::get_logline($logfh) ) {
         $self->read_line( $type, $prog, $str );

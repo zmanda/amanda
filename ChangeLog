@@ -1,3 +1,8 @@
+2009-10-19  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Report.pm: error handling for logfile reading.
+	* perl/Amanda/Logfile.pod: documentation of open_logfile error
+	behavior
+
 2009-10-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Makefile.am (full_tests): Add amadmin.
 	* installcheck/amadmin.pl: Check diskname matching argument.

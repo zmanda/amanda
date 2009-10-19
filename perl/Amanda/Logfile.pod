@@ -76,7 +76,8 @@ Use these functions to read a logfile:
 
 =item C<open_logfile($filename)>
 
-Opens a logfile for reading, returning an opaque log file handle.
+Opens a logfile for reading, returning an opaque log file
+handle. Returns C<undef> and sets C<$!> on failure.
 
 =item C<close_logfile($handle)>
 
