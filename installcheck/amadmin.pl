@@ -27,11 +27,9 @@ use Amanda::Paths;
 use Amanda::Debug;
 use Amanda::Constants;
 use Amanda::Tapelist;
-use Amanda::Util;
 
 my $testconf;
 
-Amanda::Util::set_pname("amadmin");
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
 

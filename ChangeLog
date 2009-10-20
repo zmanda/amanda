@@ -1,3 +1,9 @@
+2009-10-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Device_ndmp.pl: Remove set_pname call.
+	* installcheck/Amanda_Logfile.pl: Fix for changed name in log.
+	* installcheck/Installcheck.pm: Call set_pname($0) in INIT section.
+	* installcheck/amadmin.pl: Remove set_pname call.
+
 2009-10-20  Paul C. Mantz <pcmantz@zmanda.com>
 	* server-src/amrmtape.pl: added config override option
 	* installcheck/amrmtape.pl: regression test

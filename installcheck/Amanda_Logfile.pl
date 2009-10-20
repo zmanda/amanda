@@ -189,7 +189,7 @@ my $logdir = $testconf->{'logdir'};
     my $logdata = do { local $/; <$fh> };
     close($fh);
 
-    like($logdata, qr/^INFO unknown This is my info/, "log_add works");
+    like($logdata, qr/^INFO Amanda_Logfile This is my info/, "log_add works");
 }
 
 # set up and read the tapelist (we don't use Amanda::Tapelist to write this,

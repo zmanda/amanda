@@ -25,9 +25,7 @@ use Installcheck::Mock;
 use Installcheck::Config;
 use Amanda::Device qw( :constants );
 use Amanda::Config qw( :init );
-use Amanda::Util;
 
-Amanda::Util::set_pname("Amanda_Device_ndmp");
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
 
