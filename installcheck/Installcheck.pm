@@ -72,7 +72,7 @@ our $TMP = "$AMANDA_TMPDIR/installchecks";
 # run this just before the script actually executes
 # (not during syntax checks)
 INIT {
-    Amanda::Util::set_pname($0);
+    Amanda::Util::set_pname("$0");
     mkpath($TMP);
 }
 
