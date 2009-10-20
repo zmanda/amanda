@@ -105,7 +105,7 @@ pull_buffer_impl(
     d = rval;
     while (l--) {
 	*(d++) = *(s + offset++);
-	if (offset > self->pattern_buffer_length) offset = 0;
+	if (offset >= self->pattern_buffer_length) offset = 0;
     }
     self->current_offset = offset;
 

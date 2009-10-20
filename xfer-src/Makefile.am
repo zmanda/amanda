@@ -19,6 +19,7 @@ LINTFLAGS=$(AMLINTFLAGS)
 libamxfer_la_SOURCES = \
 	dest-fd.c \
 	dest-null.c \
+	dest-buffer.c \
 	element-glue.c \
 	filter-xor.c \
 	filter-process.c \

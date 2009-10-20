@@ -158,11 +158,11 @@ check for correct output.
 
   Amanda::Xfer::Source::Pattern->new($length, $pattern);
 
-=head3 Amanda::Xfer::Source::Taper (SERVER ONLY)
-
 This source provides I<length> bytes containing copies of
 I<pattern>. If I<length> is zero, the source provides an unlimited
 number of bytes.
+
+=head3 Amanda::Xfer::Source::Taper (SERVER ONLY)
 
   Amanda::Xfer::Source::Taper->new()
 
@@ -213,6 +213,16 @@ This source writes data to a device.  The device should be ready for
 writing (C<< $device->start_file(..) >>).  No more than C<$max_memory>
 will be used for buffers.  Use zero for the default buffer size.  On
 completion of the transfer, the file will be finished.
+
+=head3 Amanda::Xfer::Dest::Buffer
+
+  Amanda::Xfer::Dest::Buffer->new($max_size);
+
+This destination records data into an in-memory buffer which can grow up to
+C<$max_size> bytes.  The buffer is available with the C<get> method, which
+returns a copy of the buffer as a perl scalar:
+
+    my $buf = $xdb->get();
 
 =head3 Amanda::Xfer::Dest::Fd
 

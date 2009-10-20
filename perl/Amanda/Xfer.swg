@@ -21,6 +21,7 @@
 %module "Amanda::Xfer"
 %include "amglue/amglue.swg"
 %include "exception.i"
+%include "cstring.i"
 %import "Amanda/MainLoop.swg"
 
 %include "Xfer.pod"
@@ -334,6 +335,16 @@ XferElement *xfer_filter_process(
 XferElement *xfer_dest_null(
     guint32 prng_seed);
 
+%newobject xfer_dest_buffer;
+XferElement *xfer_dest_buffer(
+    gsize max_size);
+
+%cstring_output_allocate_size(gpointer *buf, gsize *size, );
+void xfer_dest_buffer_get(
+    XferElement *elt,
+    gpointer *buf,
+    gsize *size);
+
 %newobject xfer_dest_fd;
 XferElement *xfer_dest_fd(
     int fd);
@@ -524,6 +535,13 @@ DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_dest_fd)
 PACKAGE(Amanda::Xfer::Dest::Null)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_dest_null)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Dest::Buffer)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_dest_buffer)
+DECLARE_METHOD(get, Amanda::Xfer::xfer_dest_buffer_get)
 
 /* ---- */
 

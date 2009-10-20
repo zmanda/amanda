@@ -374,4 +374,28 @@ XferElement *xfer_dest_null(
 XferElement *xfer_dest_fd(
     int fd);
 
+/* A transfer destination that writes bytes to an in-memory buffer.
+ *
+ * Implemented in dest-buffer.c
+ *
+ * @param max_size: maximum size for the buffer, or zero for no limit
+ * @return: new element
+ */
+XferElement *xfer_dest_buffer(
+    gsize max_size);
+
+/* Get the buffer and size from an XferDestBuffer.  The resulting buffer
+ * will remain allocated until the XDB itself is freed.
+ *
+ * Implemented in dest-buffer.c
+ *
+ * @param elt: the element
+ * @param buf (output): buffer pointer
+ * @param size (output): buffer size
+ */
+void xfer_dest_buffer_get(
+    XferElement *elt,
+    gpointer *buf,
+    gsize *size);
+
 #endif

@@ -1,3 +1,10 @@
+2009-10-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* xfer-src/xfer-element.h xfer-src/Makefile.am xfer-src/dest-buffer.c:
+	  new element
+	* perl/Amanda/Xfer.pod perl/Amanda/Xfer.swg: SWIG it
+	* installcheck/Amanda_Xfer.pl: tests
+	* xfer-src/source-pattern.c: fix typo
+
 2009-10-19  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report.pm: error handling for logfile reading.
 	* perl/Amanda/Logfile.pod: documentation of open_logfile error

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 10;
+use Test::More tests => 12;
 use File::Path;
 use strict;
 
@@ -319,3 +319,52 @@ pass("Two simultaneous transfers run to completion");
     # (note that this does not test all of the cancellation possibilities)
 }
 
+# Test Amanda::Xfer::Dest::Buffer
+{
+    my $dest = Amanda::Xfer::Dest::Buffer->new(1025);
+    my $xfer = Amanda::Xfer->new([
+	Amanda::Xfer::Source::Pattern->new(1024, "ABCDEFGH"),
+	$dest,
+    ]);
+
+    $xfer->get_source()->set_callback(sub {
+	my ($src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    die $msg->{elt} . " failed: " . $msg->{message};
+	}
+	elsif ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    $src->remove();
+	    Amanda::MainLoop::quit();
+	}
+    });
+    $xfer->start();
+    Amanda::MainLoop::run();
+
+    is($dest->get(), 'ABCDEFGH' x 128,
+	"buffer captures the right bytes");
+}
+
+# Test that Amanda::Xfer::Dest::Buffer terminates an xfer early
+{
+    my $dest = Amanda::Xfer::Dest::Buffer->new(100);
+    my $xfer = Amanda::Xfer->new([
+	Amanda::Xfer::Source::Pattern->new(1024, "ABCDEFGH"),
+	$dest,
+    ]);
+
+    my $got_err = 0;
+    $xfer->get_source()->set_callback(sub {
+	my ($src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    $got_err = 1;
+	}
+	elsif ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    $src->remove();
+	    Amanda::MainLoop::quit();
+	}
+    });
+    $xfer->start();
+    Amanda::MainLoop::run();
+
+    ok($got_err, "buffer stops the xfer if it doesn't have space");
+}
