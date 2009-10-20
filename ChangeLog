@@ -1,3 +1,7 @@
+2009-10-20  Paul C. Mantz <pcmantz@zmanda.com>
+	* server-src/amrmtape.pl: added config override option
+	* installcheck/amrmtape.pl: regression test
+
 2009-10-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/xfer-dest-taper.c: add detailed debugging
 	* perl/Amanda/IPC/LineProtocol.pm: add protocol debugging

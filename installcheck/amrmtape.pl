@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 39;
+use Test::More tests => 41;
 
 use lib "@amperldir@";
 use File::Find;
@@ -58,6 +58,25 @@ sub dir_file_count {
 
 my $dev;
 my ($idx_count_pre, $idx_count_post);
+
+
+## test config overrides
+Installcheck::Dumpcache::load("notimestamps");
+
+config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+
+cmp_ok(
+    run(qw(amrmtape -o tapelist="/this/is/a/fake/tapelist" TESTCONF TESTCONF01)),
+    "==", 0, "config override run"
+) or proc_diag();
+
+cmp_ok(
+    $Installcheck::Run::stderr, "=~",
+    qr/amrmtape: Could not read the tapelist/,
+    "config overrides handled correctly"
+) or proc_diag();
+
+## test
 
 Installcheck::Dumpcache::load("notimestamps");
 

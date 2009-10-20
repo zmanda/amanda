@@ -22,7 +22,8 @@ use lib '@amperldir@';
 use strict;
 use warnings;
 
-use Amanda::Config qw( :init :getconf config_print_errors config_dir_relative );
+use Amanda::Config qw( :init :getconf config_print_errors
+  config_dir_relative new_config_overrides add_config_override);
 use Amanda::Changer;
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
@@ -68,25 +69,29 @@ $SIG{INT} = \&int_handler;
 
 sub usage() {
     print <<EOF
-$0 [-n] [-v] [-q] [-d] <configuration> <label>
-\t--changer changer-name Specify the name of the changer to use (for --erase).
-\t--cleanup Remove indexes and logs immediately
-\t--dryrun
-\t-n Do nothing to original files, leave new ones in database directory.
-\t--erase Erase the media, if possible
-\t--help
-\t-h Display this message.
-\t--keep-label Do not remove label from the tapelist
-\t--quiet
-\t-q Quiet, opposite of -v.
-\t--verbose
-\t-v Verbose, list backups of hosts and disks that are being discarded.
+$0 [-n] [-v] [-q] [-d] [config-overwrites] <config> <label>
+\t--changer changer-name
+\t\tSpecify the name of the changer to use (for --erase).
+\t--cleanup
+\t\tRemove indexes and logs immediately
+\t-n, --dryrun
+\t\tDo nothing to original files, leave new ones in database directory.
+\t--erase
+\t\tErase the media, if possible
+\t-h, --help
+\t\tDisplay this message.
+\t--keep-label
+\t\tDo not remove label from the tapelist
+\t-q, --quiet
+\t\tQuiet, opposite of -v.
+\t-v, --verbose
+\t\tVerbose, list backups of hosts and disks that are being discarded.
 
 This program allows you to invalidate the contents of an existing
-backup tape within the Amanda current tape database.  This is meant
-as a recovery mecanism for when a good backup is damaged either by
-faulty hardware or user error, i.e. the tape is eaten by the tape drive,
-or the tape has been overwritten.
+backup tape within the Amanda current tape database.  This is meant as
+a recovery mecanism for when a good backup is damaged either by faulty
+hardware or user error, i.e. the tape is eaten by the tape drive, or
+the tape has been overwritten.
 EOF
 }
 
@@ -99,6 +104,8 @@ sub vlog(@) {
 
 Amanda::Util::setup_application("amrmtape", "server", $CONTEXT_CMDLINE);
 
+my $config_overrides = new_config_overrides( scalar(@ARGV) + 1 );
+
 my $opts_ok = GetOptions(
     "changer=s" => \$changer_name,
     "cleanup" => \$cleanup,
@@ -106,9 +113,10 @@ my $opts_ok = GetOptions(
     "erase" => \$erase,
     "help|h" => \$help,
     "keep-label" => \$keep_label,
-    "quiet|q" => sub {undef $verbose;},
+    'o=s' => sub { add_config_override_opt( $config_overrides, $_[1] ); },
+    "quiet|q" => sub { undef $verbose; },
     "verbose|v" => \$verbose,
-    );
+);
 
 unless ($opts_ok && scalar(@ARGV) == 2) {
     unless (scalar(@ARGV) == 2) {
@@ -125,7 +133,9 @@ if ($help) {
 
 my ($config_name, $label) = @ARGV;
 
-config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
+my $cfg_ok = config_init( $CONFIG_INIT_EXPLICIT_NAME, $config_name );
+apply_config_overrides($config_overrides);
+
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();
