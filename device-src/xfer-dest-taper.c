@@ -23,6 +23,7 @@
 #include "amanda.h"
 #include "xfer-device.h"
 #include "arglist.h"
+#include "conffile.h"
 
 /* A transfer destination that writes and entire dumpfile to one or more files on one
  * or more devices.   This is designed to work in concert with Amanda::Taper::Scribe. */
@@ -273,6 +274,23 @@ typedef struct {
 } XferDestTaperClass;
 
 /*
+ * Debug logging
+ */
+
+#define DBG(LEVEL, ...) if (debug_taper >= LEVEL) { _xdt_dbg(__VA_ARGS__); }
+static void
+_xdt_dbg(const char *fmt, ...)
+{
+    va_list argp;
+    char msg[1024];
+
+    arglist_start(argp, fmt);
+    g_vsnprintf(msg, sizeof(msg), fmt, argp);
+    arglist_end(argp);
+    g_debug("XDT thd-%p: %s", g_thread_self(), msg);
+}
+
+/*
  * Error Handling
  */
 
@@ -328,6 +346,7 @@ alloc_slab(
     XferElement *elt = XFER_ELEMENT(self);
     Slab *rv;
 
+    DBG(8, "alloc_slab(force=%d)", force);
     if (!force) {
 	/* throttle based on maximum number of extant slabs */
 	while (G_UNLIKELY(
@@ -335,8 +354,11 @@ alloc_slab(
 	    self->oldest_slab &&
 	    self->newest_slab &&
 	    self->oldest_slab->refcount > 1 &&
-	    (self->newest_slab->serial - self->oldest_slab->serial + 1) >= self->max_slabs))
+	    (self->newest_slab->serial - self->oldest_slab->serial + 1) >= self->max_slabs)) {
+	    DBG(9, "waiting for available slab");
 	    g_cond_wait(self->slab_free_cond, self->slab_mutex);
+	}
+	DBG(9, "done waiting");
 
         if (elt->cancelled)
             return NULL;
@@ -488,6 +510,8 @@ disk_cache_thread(
     XferDestTaper *self = XFER_DEST_TAPER(data);
     XferElement *elt = XFER_ELEMENT(self);
 
+    DBG(1, "(this is the disk cache thread)");
+
     /* open up the disk cache file first */
     if (!open_disk_cache_fds(self))
 	return NULL;
@@ -508,8 +532,11 @@ disk_cache_thread(
 	/* we need to sit and wait for the next part to begin, first making sure
 	 * we have a slab .. */
 	g_mutex_lock(self->slab_mutex);
-	while (!self->disk_cacher_slab && !elt->cancelled)
+	while (!self->disk_cacher_slab && !elt->cancelled) {
+	    DBG(9, "waiting for a disk slab");
 	    g_cond_wait(self->slab_cond, self->slab_mutex);
+	}
+	DBG(9, "done waiting");
 	g_mutex_unlock(self->slab_mutex);
 
 	if (elt->cancelled)
@@ -522,8 +549,11 @@ disk_cache_thread(
 	g_mutex_lock(self->state_mutex);
 	while (self->disk_cacher_slab
 		    && self->disk_cacher_slab->serial > self->part_first_serial
-		    && !elt->cancelled)
+		    && !elt->cancelled) {
+	    DBG(9, "waiting for the disk slab to become current");
 	    g_cond_wait(self->state_cond, self->state_mutex);
+	}
+	DBG(9, "done waiting");
 	stop_serial = self->part_stop_serial;
 	g_mutex_unlock(self->state_mutex);
 
@@ -532,8 +562,11 @@ disk_cache_thread(
 	eop = eof = FALSE;
 	while (!eop && !eof) {
 	    /* if we're at the head of the slab train, wait for more data */
-	    while (!self->disk_cacher_slab && !elt->cancelled)
+	    while (!self->disk_cacher_slab && !elt->cancelled) {
+		DBG(9, "waiting for the next disk slab");
 		g_cond_wait(self->slab_cond, self->slab_mutex);
+	    }
+	    DBG(9, "done waiting");
 
             if (elt->cancelled)
                 break;
@@ -631,8 +664,10 @@ slab_source_prebuffer(
 	if (i == prebuffer_slabs || eof_or_eop)
 	    break;
 
+	DBG(9, "prebuffering wait");
 	g_cond_wait(self->slab_cond, self->slab_mutex);
     }
+    DBG(9, "done waiting");
 
     g_mutex_unlock(self->slab_mutex);
 
@@ -751,8 +786,11 @@ slab_source_get_from_disk(
 	    } else {
 		/* wait for the disk_cache_thread to open the disk_cache_read_fd, and then copy it */
 		g_mutex_lock(self->state_mutex);
-		while (self->disk_cache_read_fd == -1 && !elt->cancelled)
+		while (self->disk_cache_read_fd == -1 && !elt->cancelled) {
+		    DBG(9, "waiting for disk_cache_thread to start up");
 		    g_cond_wait(self->state_cond, self->state_mutex);
+		}
+		DBG(9, "done waiting");
 		state->slice_fd = self->disk_cache_read_fd;
 		g_mutex_unlock(self->state_mutex);
 	    }
@@ -826,8 +864,11 @@ slab_source_get(
 	    if (!slab_source_prebuffer(self))
 		return NULL;
 	} else {
-	    while (self->device_slab == NULL && !elt->cancelled)
+	    while (self->device_slab == NULL && !elt->cancelled) {
+		DBG(9, "waiting for the next slab");
 		g_cond_wait(self->slab_cond, self->slab_mutex);
+	    }
+	    DBG(9, "done waiting");
 	}
 
 	if (elt->cancelled)
@@ -936,6 +977,7 @@ device_thread_write_part(
     g_mutex_lock(self->slab_mutex);
     for (serial = self->part_first_serial; serial < stop_serial && !eof; serial++) {
 	Slab *slab = slab_source_get(self, &src_state, serial);
+	DBG(8, "writing slab %p (serial %ju) to device", slab, serial);
 	g_mutex_unlock(self->slab_mutex);
 	if (!slab)
 	    goto part_done;
@@ -946,6 +988,7 @@ device_thread_write_part(
 	    goto part_done;
 
 	g_mutex_lock(self->slab_mutex);
+	DBG(8, "wrote slab %p to device", slab);
 
 	/* if we're reading from the slab train, advance self->device_slab. */
 	if (slab == self->device_slab) {
@@ -1042,6 +1085,8 @@ device_thread(
     XferElement *elt = XFER_ELEMENT(self);
     XMsg *msg;
 
+    DBG(1, "(this is the device thread)");
+
     if (self->disk_cache_dirname) {
         GError *error = NULL;
 	self->disk_cache_thread = g_thread_create(disk_cache_thread, (gpointer)self, TRUE, &error);
@@ -1057,14 +1102,19 @@ device_thread(
     while (1) {
 	/* wait until the main thread un-pauses us, and check that we have
 	 * the relevant device info available (block_size) */
-	while ((self->paused || !self->block_size) && !elt->cancelled)
+	while ((self->paused || !self->block_size) && !elt->cancelled) {
+	    DBG(9, "waiting to be unpaused");
 	    g_cond_wait(self->state_cond, self->state_mutex);
+	}
+	DBG(9, "done waiting");
 
         if (elt->cancelled)
 	    break;
 
         g_mutex_unlock(self->state_mutex);
+	DBG(2, "beginning to write part");
 	msg = device_thread_write_part(self);
+	DBG(2, "done writing part");
         g_mutex_lock(self->state_mutex);
 
 	/* release any cache of a successful part, but don't bother at EOF */
@@ -1104,6 +1154,8 @@ add_reader_slab_to_train(
     XferDestTaper *self)
 {
     Slab *slab = self->reader_slab;
+
+    DBG(3, "adding slab of new data to the slab train");
 
     if (self->newest_slab) {
 	self->newest_slab->next = slab;
@@ -1147,11 +1199,16 @@ push_buffer_impl(
     XferDestTaper *self = (XferDestTaper *)elt;
     gpointer p;
 
+    DBG(3, "push_buffer(%p, %ju)", buf, (uintmax_t)size);
+
     /* wait for device info, so we know how large slabs are, etc. */
     if (G_UNLIKELY(!self->block_size)) {
 	g_mutex_lock(self->state_mutex);
-	while (!self->block_size && !elt->cancelled)
+	while (!self->block_size && !elt->cancelled) {
+	    DBG(9, "waiting for block size");
 	    g_cond_wait(self->state_cond, self->state_mutex);
+	}
+	DBG(9, "done waiting");
 	g_mutex_unlock(self->state_mutex);
     }
 
@@ -1273,6 +1330,8 @@ start_part_impl(
     g_assert(!device->in_file);
     g_assert(header != NULL);
 
+    DBG(1, "start_part(retry_part=%d)", retry_part);
+
     g_mutex_lock(self->state_mutex);
     g_assert(self->paused);
     g_assert(!self->no_more_parts);
@@ -1287,6 +1346,8 @@ start_part_impl(
     if (!self->block_size) {
 	GValue val;
 	self->block_size = self->device->block_size;
+
+	DBG(1, "calculating block size and other device-dependent values");
 
 	/* The slab size should be large enough to justify the overhead of all
 	 * of the mutexes, but it needs to be small enough to have a few slabs
@@ -1330,8 +1391,7 @@ start_part_impl(
 	if (self->max_slabs < 2)
 	    self->max_slabs = 2;
 
-	g_debug("XferDestTaper using slab_size %zu and max_slabs %ju",
-	    self->slab_size, (uintmax_t)self->max_slabs);
+	DBG(1, "using slab_size %zu and max_slabs %ju", self->slab_size, (uintmax_t)self->max_slabs);
 
         bzero(&val, sizeof(val));
         if (!device_property_get(self->device, PROPERTY_STREAMING, &val)
@@ -1372,8 +1432,10 @@ start_part_impl(
 	}
     }
 
+    DBG(1, "unpausing");
     self->paused = FALSE;
     g_cond_broadcast(self->state_cond);
+
     g_mutex_unlock(self->state_mutex);
 }
 
@@ -1385,6 +1447,8 @@ cache_inform_impl(
     off_t length)
 {
     FileSlice *slice, *iter;
+
+    DBG(1, "cache_inform(\"%s\", %jd, %jd)", filename, (intmax_t)offset, (intmax_t)length);
 
     /* do we even need this info? */
     if (self->disk_cache_dirname || self->use_mem_cache || self->part_size == 0)

@@ -1,4 +1,10 @@
 2009-10-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-dest-taper.c: add detailed debugging
+	* perl/Amanda/IPC/LineProtocol.pm: add protocol debugging
+	* perl/Amanda/Taper/Scribe.pm: pass debugging flags around
+	* server-src/taper.pl: pass debugging flags around
+
+2009-10-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/dest-buffer.c: fix Solaris cc compile errors
 
 2009-10-20  Dustin J. Mitchell <dustin@zmanda.com>

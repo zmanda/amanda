@@ -190,6 +190,7 @@ sub start {
 	tx_fh => *STDOUT,
 	message_cb => $message_cb,
 	message_obj => $self,
+	debug => $Amanda::Config::debug_taper?'driver/taper':'',
     );
 
     my $changer = Amanda::Changer->new();
@@ -211,7 +212,8 @@ sub start {
     my $taperscan = Amanda::Taper::Scan->new(changer => $changer);
     $self->{'scribe'} = Amanda::Taper::Scribe->new(
 	taperscan => $taperscan,
-	feedback => $self);
+	feedback => $self,
+	debug => $Amanda::Config::debug_taper);
 
     # set up a listening socket on an arbitrary port
     my $sock = $self->{'listen_socket'} = IO::Socket::INET->new(

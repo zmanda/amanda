@@ -209,6 +209,10 @@ the object has been crated:
   $proto->set_message_cb(CollegeProtocol::MIDTERM,
     sub { ... });
 
+The constructor also takes a 'debug' argument; if given, then all incoming and
+outgoing messages will be written to the debug log with this argument as
+prefix.
+
 All message callbacks have the same signature:
 
   my $pizza_delivery_cb = make_cb(pizza_delivery_cb => sub {
@@ -296,6 +300,7 @@ sub new {
 
     my $self = bless {
 	stopped => 0,
+	debug => $params{'debug'},
 
 	rx_fh => $params{'rx_fh'},
 	rx_fh_tty => 0,
@@ -318,6 +323,7 @@ sub new {
 
     # strip the known values from %params and use the rest as
     # command callbacks
+    delete $params{'debug'};
     delete $params{'rx_fh'};
     delete $params{'tx_fh'};
     delete $params{'message_cb'};
@@ -406,7 +412,9 @@ sub send {
 	}
     }
 
-    my $line = join(" ", map { Amanda::Util::quote_string("$_") } @line) . "\n";
+    my $line = join(" ", map { Amanda::Util::quote_string("$_") } @line);
+    debug($self->{'debug'} . " >> $line") if ($self->{'debug'});
+    $line .= "\n";
 
     ++$self->{'tx_outstanding_writes'};
     my $write_done_cb = make_cb(write_done_cb => sub {
@@ -518,6 +526,8 @@ sub _incoming_line {
 
     $line =~ s/\n//g;
     return unless $line;
+
+    debug($self->{'debug'} . " << $line") if ($self->{'debug'});
 
     # turn the line into a list of strings..
     my @line = Amanda::Util::split_quoted_strings($line);

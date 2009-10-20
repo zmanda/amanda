@@ -305,6 +305,7 @@ sub new {
 
     my $self = {
 	feedback => $params{'feedback'},
+	debug => $params{'debug'},
 	dump_timestamp => undef,
 
 	# device handling, and our current device and reservation
@@ -342,6 +343,7 @@ sub start {
 	    unless exists $params{$rq_param};
     }
 
+    $self->dbg("starting");
     $self->{'dump_timestamp'} = $params{'dump_timestamp'};
     $self->{'devhandling'}->start();
 }
@@ -369,6 +371,8 @@ sub quit {
         # - ensure that the taperscan not be started afterward
         # and isn't required for normal Amanda operation.
     }
+
+    $self->dbg("quitting");
 
     my $cleanup_cb = make_cb(cleanup_cb => sub {
 	my ($error) = @_;
@@ -407,6 +411,8 @@ sub start_xfer {
 	    unless exists $params{$rq_param};
     }
 
+    $self->dbg("start_xfer(split_method=$params{split_method})");
+
     if ($params{'split_method'} ne 'none') {
         croak("required parameter 'part_size' missing")
             unless exists $params{'part_size'};
@@ -431,7 +437,7 @@ sub start_xfer {
         croak("invalid split_method $params{split_method}");
     }
 
-    debug("Amanda::Taper::Scribe using split method $params{split_method}");
+    debug("Amanda::Taper::Scribe beginning a part with split method $params{split_method}");
 
     die "not yet started"
 	unless ($self->{'dump_timestamp'});
@@ -463,12 +469,13 @@ sub start_xfer {
 
     $xfer->start(sub { $self->_xfer_callback(@_); });
 
-
     $self->_start_part();
 }
 
 sub _start_part {
     my $self = shift;
+
+    $self->dbg("trying to start part");
 
     # if the dump wasn't successful, and we're not splitting, then bail out.  It's
     # up to higher-level components to re-try this dump on a new volume, if desired.
@@ -481,6 +488,7 @@ sub _start_part {
 
     # invoke the devhandling object if we need a device
     if (!$self->{'device'}) {
+	$self->dbg("need device for new part");
 	return $self->_get_new_volume();
     }
 
@@ -491,6 +499,7 @@ sub _start_part {
 
     # and start writing this part
     $self->{'started_writing'} = 1;
+    $self->dbg("resuming transfer");
     $self->{'xdt'}->start_part(!$self->{'last_part_successful'},
 			       $self->{'device'},
 			       $self->{'dump_header'});
@@ -500,6 +509,7 @@ sub _xfer_callback {
     my $self = shift;
     my ($src, $msg, $xfer) = @_;
 
+    $self->dbg("got msg from xfer: $msg");
     if ($msg->{'type'} == $XMSG_PART_DONE) {
 	$self->_xmsg_part_done($src, $msg, $xfer);
     } elsif ($msg->{'type'} == $XMSG_INFO) {
@@ -592,6 +602,8 @@ sub _xmsg_done {
     my ($src, $msg, $xfer) = @_;
 
     if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	$self->dbg("transfer is complete");
+
 	# determine the correct final status - DONE if we're done, PARTIAL
 	# if we've started writing to the volume, otherwise FAILED
 	my $result;
@@ -629,6 +641,8 @@ sub _dump_failed {
     my ($error) = @_;
 
     push @{$self->{'device_errors'}}, $error;
+
+    $self->dbg("cancelling the transfer: $error");
 
     # cancelling the xdt will eventually cause an XMSG_DONE, which will notice
     # the error and set the result correctly
@@ -703,6 +717,8 @@ sub _volume_cb  {
 	$self->_dump_failed($scan_error);
 	return;
     }
+
+    $self->dbg("got new volume; writing new label");
 
     # from here on, if an error occurs, we must send notif_new_tape, and look
     # for a new volume
@@ -789,6 +805,13 @@ sub _volume_cb  {
 
     $self->{'reservation'}->set_label(label => $new_label,
 	finished_cb => $label_set_cb);
+}
+
+sub dbg {
+    my ($self, $msg) = @_;
+    if ($self->{'debug'}) {
+	debug("Amanda::Taper::Scribe: $msg");
+    }
 }
 
 ##
