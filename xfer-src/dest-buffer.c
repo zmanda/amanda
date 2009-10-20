@@ -111,7 +111,7 @@ push_buffer_impl(
 	self->allocated = new_size;
     }
 
-    g_memmove(self->buf+self->len, buf, len);
+    g_memmove(((guint8 *)self->buf)+self->len, buf, len);
     self->len += len;
 
     amfree(buf);
@@ -187,7 +187,7 @@ xfer_dest_buffer_get(
     g_assert(IS_XFER_DEST_BUFFER(elt));
 
     klass = XFER_DEST_BUFFER_GET_CLASS(elt);
-    return klass->get(XFER_DEST_BUFFER(elt), buf, size);
+    klass->get(XFER_DEST_BUFFER(elt), buf, size);
 }
 
 /* create an element of this class; prototype is in xfer-element.h */

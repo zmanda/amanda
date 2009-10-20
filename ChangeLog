@@ -1,4 +1,7 @@
 2009-10-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* xfer-src/dest-buffer.c: fix Solaris cc compile errors
+
+2009-10-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/xfer-element.h xfer-src/Makefile.am xfer-src/dest-buffer.c:
 	  new element
 	* perl/Amanda/Xfer.pod perl/Amanda/Xfer.swg: SWIG it
