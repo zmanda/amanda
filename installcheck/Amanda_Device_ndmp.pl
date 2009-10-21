@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 20;
+use Test::More tests => 21;
 use strict;
 
 use lib "@amperldir@";
@@ -30,10 +30,8 @@ Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
 
 my $ndmp_port = Installcheck::get_unused_port();
-my $ndmp_proxy_port = Installcheck::get_unused_port();
 
 my $testconf = Installcheck::Config->new();
-$testconf->add_param("ndmp-proxy-port", $ndmp_proxy_port);
 $testconf->write();
 
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
@@ -70,6 +68,9 @@ ok($dev->property_set("ndmp_password", "bar"),
 is($dev->property_get("ndmp_password"), "bar",
     "..and get the value back");
 
+ok($dev->property_set("verbose", 1),
+    "set VERBOSE");
+
 # set 'em back to the defaults
 $dev->property_set("ndmp_username", "ndmp");
 $dev->property_set("ndmp_password", "ndmp");
@@ -86,11 +87,13 @@ ok($dev->finish(),
     or diag $dev->error_or_status();
 
 is($dev->read_label(), $DEVICE_STATUS_SUCCESS,
-    "read label from device")
+    "read label from (same) device")
     or diag $dev->error_or_status();
 
 is($dev->volume_label, "TEST1",
     "volume label read back correctly");
+
+## try about the same thing, but open a new device in between
 
 # Write a label
 $dev = Amanda::Device->new("ndmp:localhost:$ndmp_port\@$tapefile");
@@ -98,6 +101,7 @@ is($dev->status(), $DEVICE_STATUS_SUCCESS,
     "creation of an ndmp device succeeds with correct syntax");
 $dev->property_set("ndmp_username", "ndmp");
 $dev->property_set("ndmp_password", "ndmp");
+$dev->property_set("verbose", 1);
 
 # Write the label
 ok($dev->start($ACCESS_WRITE, "TEST2", "20090915000000"),
@@ -113,6 +117,7 @@ is($dev->status(), $DEVICE_STATUS_SUCCESS,
     "creation of an ndmp device succeeds with correct syntax");
 $dev->property_set("ndmp_username", "ndmp");
 $dev->property_set("ndmp_password", "ndmp");
+$dev->property_set("verbose", 1);
 
 # read the label
 is($dev->read_label(), $DEVICE_STATUS_SUCCESS,

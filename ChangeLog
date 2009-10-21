@@ -1,4 +1,13 @@
 2009-10-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/Makefile.am: split ndmp-src into libndmjob.la and
+	  libndmlib.la
+	* ndmp-src/ndml_conn.c: remove calls to libndmjob function
+	* device-src/Makefile.am: compile without strict prototypes
+	* device-src/ndmp-device.c: build against libndmlib, speaking
+	  NDMP natively to the NDMP server instead of via the proxy
+	* installcheck/Amanda_Device_ndmp.pl: no need for a proxy
+
+2009-10-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/Makefile.am device-src/xfer-dest-taper-splitter.c
 	  device-src/xfer-dest-taper.c device-src/xfer-device.h: make
 	  XferDestTaper an abstract base class, with XferDestTaperSplitter its

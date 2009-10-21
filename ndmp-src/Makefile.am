@@ -81,13 +81,13 @@ INCLUDES =	-I$(top_builddir)/common-src \
 AM_CFLAGS = -DNDMOS_CONST_NDMJOBLIB_REVISION='"amanda-$(VERSION)"'
 
 ##
-## libndmjob.la
+## libndmjob.la and libndmlib.la
 ##
 
-# nmbjoblib is ordinarily built as a bunch of separate libraries, some
-# of which only have one source file in them.  To prevent such abuse
-# of the dynamic linker, we just build them all into one convenience lib
-# and then link that to ndmp-proxy
+# Divide the library up into the library side and down (libndmlib.la),
+# and the full set of rules, agents, and so on required to build ndmjob
+# (libndmjob.la).
+
 libndmjla = \
 	ndma_comm_job.c \
 	ndma_comm_session.c \
@@ -159,16 +159,21 @@ libndmjlo = \
 	ndmos.c
 	ndmos_common.c
 
-noinst_LTLIBRARIES =     libndmjob.la
+amlib_LTLIBRARIES = \
+	libndmjob.la \
+	libndmlib.la
 
-libndmjob_la_SOURCES = \
-	$(libndmjla) \
-	$(libndmjlr) \
+libndmlib_la_SOURCES = \
 	$(libndmjll) \
 	$(libndmjlp) \
 	$(libndmjls) \
 	$(libndmjl5) \
 	$(libndmjlo)
+
+libndmjob_la_SOURCES = \
+	$(libndmjla) \
+	$(libndmjlr)
+libndmjob_la_LIBADD = libndmlib.la
 
 ##
 ## ndmp-proxy

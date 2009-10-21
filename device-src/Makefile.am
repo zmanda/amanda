@@ -7,9 +7,14 @@ include $(top_srcdir)/config/automake/precompile.am
 INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src \
 		-I$(top_srcdir)/xfer-src \
+		-I$(top_srcdir)/ndmp-src \
 		-I$(top_srcdir)/gnulib
 
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
+if GCC_COMPILER
+# ndmp-device.c includes files with old-skool prototypes, so:
+AM_CFLAGS += -Wno-strict-prototypes
+endif
 AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
 
 sbin_PROGRAMS =
@@ -67,6 +72,7 @@ endif
 
 if WANT_NDMP_DEVICE
 libamdevice_la_SOURCES += ndmp-device.c
+libamdevice_la_LIBADD += ../ndmp-src/libndmlib.la
 endif
 
 ## automake-style tests

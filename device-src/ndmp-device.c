@@ -18,16 +18,10 @@
  * Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
  */
 
-/* An Ndmp device uses Amazon's Ndmp service (http://www.amazon.com/ndmp) to store
- * data.  It stores data in keys named with a user-specified prefix, inside a
- * user-specified bucket.  Data is stored in the form of numbered (large)
- * blocks.
- */
-
 #include "amanda.h"
 #include "util.h"
 #include "device.h"
-#include "ndmp-proxy.h"
+#include "ndmlib.h"
 
 /*
  * Type checking and casting macros
@@ -49,9 +43,9 @@ typedef struct _NdmpDevice NdmpDevice;
 struct _NdmpDevice {
     Device __parent__;
 
-    ipc_binary_channel_t *proxy_chan;
-    int proxy_sock; /* -1 if not connected */
-    gboolean device_open;
+    /* TODO: make this settable via a property */
+    struct ndmconn *conn;
+    gboolean tape_open;
 
     /* constructor parameters and properties */
     gchar	 *ndmp_hostname;
@@ -59,6 +53,7 @@ struct _NdmpDevice {
     gchar        *ndmp_device_name;
     gchar	 *ndmp_username;
     gchar	 *ndmp_password;
+    gboolean	 verbose;
 };
 
 /*
@@ -76,8 +71,15 @@ struct _NdmpDeviceClass {
 
 #define NDMP_DEVICE_NAME "ndmp"
 
+/* level at which to snoop when VERBOSE is set; 8 = everything but hexdumps,
+ * and 5 = packets without details */
+#define SNOOP_LEVEL 7
+
 /* pointer to the class of our parent */
 static DeviceClass *parent_class = NULL;
+
+/* logging information (for VERBOSE) */
+static struct ndmlog device_ndmlog;
 
 /*
  * device-specific properties
@@ -94,142 +96,682 @@ static DevicePropertyBase device_property_ndmp_password;
  */
 
 void ndmp_device_register(void);
+static gboolean handle_conn_failure(NdmpDevice *self, int rc);
 
 /*
- * utility functions */
+ * Utility functions
+ */
 
-static gboolean try_open_ndmp_device(NdmpDevice *nself);
-static gboolean close_ndmp_device(NdmpDevice *nself);
-static gboolean get_generic_reply(NdmpDevice *nself);
-static void set_proxy_comm_err(Device *dself, int saved_errno);
+static gboolean
+open_connection(
+	NdmpDevice *self)
+{
+    if (!self->conn) {
+	struct ndmconn *conn = ndmconn_initialize(NULL, "amanda-server");
+	if (!conn) {
+	    device_set_error(DEVICE(self),
+		g_strdup("could not initialize ndmconn"),
+		DEVICE_STATUS_DEVICE_ERROR);
+	    return FALSE;
+	}
 
-static int ndmp_mtio_eod(NdmpDevice *nself);
-static int ndmp_mtio_eof(NdmpDevice *nself);
-static int ndmp_mtio_rewind(NdmpDevice *nself);
-static int ndmp_mtio(NdmpDevice *nself, char *cmd, int count);
-static int ndmp_device_robust_write(NdmpDevice *nself, char *buf, int count);
+	if (self->verbose) {
+	    ndmconn_set_snoop(conn, &device_ndmlog, SNOOP_LEVEL);
+	}
+
+	if (ndmconn_connect_host_port(conn, self->ndmp_hostname, self->ndmp_port, 0) != 0) {
+	    device_set_error(DEVICE(self),
+		g_strdup_printf("could not connect to ndmp-server '%s:%d': %s",
+		    self->ndmp_hostname, self->ndmp_port, ndmconn_get_err_msg(conn)),
+		DEVICE_STATUS_DEVICE_ERROR);
+	    ndmconn_destruct(conn);
+	    return FALSE;
+	}
+
+	if (ndmconn_auth_md5(conn, self->ndmp_username, self->ndmp_password) != 0) {
+	    device_set_error(DEVICE(self),
+		g_strdup_printf("could not authenticate to ndmp-server '%s:%d': %s",
+		    self->ndmp_hostname, self->ndmp_port, ndmconn_get_err_msg(conn)),
+		DEVICE_STATUS_DEVICE_ERROR);
+	    ndmconn_destruct(conn);
+	    return FALSE;
+	}
+
+	self->conn = conn;
+	self->tape_open = FALSE;
+    }
+
+    return TRUE;
+}
+
+static void
+close_connection(
+	NdmpDevice *self)
+{
+    /* note that this does not send NDMP_TAPE_CLOSE, as it's used in error
+     * situations too */
+    if (self->conn) {
+	ndmconn_destruct(self->conn);
+	self->conn = NULL;
+	self->tape_open = FALSE;
+    }
+}
+
+static gboolean
+open_ndmp_device(
+    NdmpDevice *self)
+{
+    struct ndmconn *conn;
+    int rc;
+
+    /* if already open, stop now */
+    if (self->tape_open) {
+	return TRUE;
+    }
+
+    if (!open_connection(self)) {
+	/* error message set by open_connection */
+	return FALSE;
+    }
+
+    g_debug("opening tape device '%s' on NDMP server '%s:%d'",
+	self->ndmp_device_name, self->ndmp_hostname, self->ndmp_port);
+    /* send NDMP_TAPE_OPEN */
+    conn = self->conn;
+    NDMC_WITH(ndmp9_tape_open, self->conn->protocol_version)
+	request->device = self->ndmp_device_name;
+	request->mode = NDMP9_TAPE_RDWR_MODE;
+	rc = NDMC_CALL(self->conn);
+	if (!handle_conn_failure(self, rc)) {
+	    NDMC_FREE_REPLY();
+	    return FALSE;
+	}
+	NDMC_FREE_REPLY();
+    NDMC_ENDWITH
+
+    self->tape_open = TRUE;
+
+    return TRUE;
+}
+
+static gboolean
+close_ndmp_device(
+	NdmpDevice *self)
+{
+    struct ndmconn *conn = self->conn;
+    int rc;
+
+    if (self->tape_open) {
+	g_debug("closing tape device '%s' on NDMP server '%s:%d'",
+	    self->ndmp_device_name, self->ndmp_hostname, self->ndmp_port);
+	NDMC_WITH_VOID_REQUEST(ndmp9_tape_close, self->conn->protocol_version)
+	    rc = NDMC_CALL(self->conn);
+	    if (!handle_conn_failure(self, rc)) {
+		NDMC_FREE_REPLY();
+		return FALSE;
+	    }
+	    NDMC_FREE_REPLY();
+	NDMC_ENDWITH
+	self->tape_open = FALSE;
+    }
+
+    return TRUE;
+}
+
+static gboolean
+ndmp_mtio(
+    NdmpDevice *self,
+    int tape_op,
+    int count)
+{
+    struct ndmconn *conn = self->conn;
+    int rc;
+
+    NDMC_WITH(ndmp9_tape_mtio, self->conn->protocol_version)
+	request->tape_op = tape_op;
+	request->count = count;
+	rc = NDMC_CALL(self->conn);
+	if (!handle_conn_failure(self, rc)) {
+	    NDMC_FREE_REPLY();
+	    return FALSE;
+	}
+	NDMC_FREE_REPLY();
+    NDMC_ENDWITH
+
+    return TRUE;
+}
+
+static gboolean
+ndmp_mtio_eof(
+    NdmpDevice *self)
+{
+    return ndmp_mtio(self, NDMP9_MTIO_EOF, 1);
+}
+
+static gboolean
+ndmp_mtio_rewind(
+    NdmpDevice *self)
+{
+    return ndmp_mtio(self, NDMP9_MTIO_REW, 1);
+}
+
+static gboolean
+robust_write(
+    NdmpDevice *self,
+    char *buf,
+    gsize count)
+{
+    int rc;
+    struct ndmconn *conn = self->conn;
+
+    /* TODO: handle EOM better; use IoResult? */
+    NDMC_WITH(ndmp9_tape_write, self->conn->protocol_version)
+	request->data_out.data_out_val = buf;
+	request->data_out.data_out_len = count;
+	rc = NDMC_CALL(self->conn);
+
+	if (!handle_conn_failure(self, rc)) {
+	    NDMC_FREE_REPLY();
+	    return FALSE;
+	}
+	/* TODO: check this and handle it better */
+	g_assert(reply->count == count);
+	NDMC_FREE_REPLY();
+    NDMC_ENDWITH
+    return TRUE;
+}
+
+static gboolean
+handle_conn_failure(
+    NdmpDevice *self,
+    int rc)
+{
+    if (rc) {
+	if (rc == NDMCONN_CALL_STATUS_REPLY_ERROR) {
+	    device_set_error(DEVICE(self),
+		g_strdup_printf("Error from NDMP server: %s",
+			ndmp9_error_to_str(self->conn->last_reply_error)),
+		DEVICE_STATUS_DEVICE_ERROR);
+	} else {
+	    device_set_error(DEVICE(self),
+		g_strdup_printf("ndmconn error %d: %s", rc, ndmconn_get_err_msg(self->conn)),
+		DEVICE_STATUS_DEVICE_ERROR);
+	}
+	close_connection(self);
+	return FALSE;
+    }
+    return TRUE;
+}
+
+static void
+ndmp_device_ndmlog_deliver(
+    struct ndmlog *log G_GNUC_UNUSED,
+    char *tag,
+    int lev G_GNUC_UNUSED,
+    char *msg)
+{
+    g_debug("%s: %s", tag, msg);
+}
 
 /*
- * class mechanics */
+ * Virtual function overrides
+ */
 
 static void
-ndmp_device_init(NdmpDevice * o);
+ndmp_device_open_device(
+    Device *dself,
+    char   *device_name,
+    char   *device_type,
+    char   *device_node)
+{
+    NdmpDevice          *self = NDMP_DEVICE(dself);
+    char *colon, *at;
 
-static void
-ndmp_device_class_init(NdmpDeviceClass *c);
+    g_debug("ndmp_device_open_device: %s : %s : %s", device_name, device_type, device_node);
 
-static void
-ndmp_device_finalize(GObject *o);
+    /* first, extract the various parts of the device_node:
+     * HOST[:PORT]@DEVICE */
+    colon = strchr(device_node, ':');
+    at = strchr(device_node, '@');
+    if (colon > at)
+	colon = NULL; /* :PORT only counts if it's before the device name */
+    if (!at) {
+	device_set_error(dself,
+			 g_strdup_printf("invalid ndmp device name '%s'", device_name),
+			 DEVICE_STATUS_DEVICE_ERROR);
+	return;
+    }
 
-static Device*
-ndmp_device_factory(char *device_name, char *device_type, char *device_node);
+    self->ndmp_hostname = g_strndup(device_node, colon-device_node);
+    if (colon) {
+	char *p = NULL;
+	long port = strtol(colon+1, &p, 10);
+	if (port < 0 || port >= 65536 || p != at || (!port && EINVAL == errno)) {
+	    device_set_error(dself,
+			    g_strdup_printf("invalid ndmp port in device name '%s'",
+					    device_name),
+			    DEVICE_STATUS_DEVICE_ERROR);
+	    return;
+	}
+	self->ndmp_port = (gint)port;
+    } else {
+	self->ndmp_port = 0; /* (use ndmjob's default, 10000) */
+    }
+    self->ndmp_device_name = g_strdup(at+1);
 
-static gboolean ndmp_device_set_username_fn(Device *self,
-    DevicePropertyBase *base, GValue *val,
-    PropertySurety surety, PropertySource source);
+    /* these should be changed by properties */
+    self->ndmp_username = g_strdup("ndmp");
+    self->ndmp_password = g_strdup("ndmp");
 
-static gboolean ndmp_device_set_password_fn(Device *self,
-    DevicePropertyBase *base, GValue *val,
-    PropertySurety surety, PropertySource source);
+    if (parent_class->open_device) {
+        parent_class->open_device(dself, device_name, device_type, device_node);
+    }
+}
 
-/*
- * virtual functions */
+static void ndmp_device_finalize(GObject * obj_self)
+{
+    NdmpDevice       *self = NDMP_DEVICE (obj_self);
 
-static void
-ndmp_device_open_device(Device *dself, char *device_name,
-		  char * device_type, char * device_node);
+    if(G_OBJECT_CLASS(parent_class)->finalize)
+        (* G_OBJECT_CLASS(parent_class)->finalize)(obj_self);
 
-static DeviceStatusFlags ndmp_device_read_label(Device *dself);
+    close_connection(self);
+
+    if (self->ndmp_hostname)
+	g_free(self->ndmp_hostname);
+    if (self->ndmp_device_name)
+	g_free(self->ndmp_device_name);
+    if (self->ndmp_username)
+	g_free(self->ndmp_username);
+    if (self->ndmp_password)
+	g_free(self->ndmp_password);
+}
+
+static DeviceStatusFlags
+ndmp_device_read_label(
+    Device *dself)
+{
+    NdmpDevice       *self = NDMP_DEVICE(dself);
+    dumpfile_t       *header;
+    struct ndmconn *conn;
+    int rc;
+
+    amfree(dself->volume_label);
+    amfree(dself->volume_time);
+    amfree(dself->volume_header);
+
+    if (device_in_error(self)) return dself->status;
+
+    header = dself->volume_header = g_new(dumpfile_t, 1);
+    fh_init(header);
+
+    if (!open_ndmp_device(self)) {
+	/* error status was set by open_ndmp_device */
+	return dself->status;
+    }
+
+    if (!ndmp_mtio_rewind(self)) {
+	/* error message, if any, is set by ndmp_mtio_rewind */
+	return dself->status;
+    }
+
+    /* read the tape header from the NDMP server */
+    dself->status = 0;
+    conn = self->conn;
+    NDMC_WITH(ndmp9_tape_read, self->conn->protocol_version)
+	request->count = dself->block_size;
+	rc = NDMC_CALL(self->conn);
+
+	/* handle known errors */
+	if (rc == NDMCONN_CALL_STATUS_REPLY_ERROR) {
+	    switch (self->conn->last_reply_error) {
+	    case NDMP9_NO_TAPE_LOADED_ERR:
+		device_set_error(dself,
+			g_strdup(_("no tape loaded")),
+				DEVICE_STATUS_VOLUME_MISSING);
+		goto read_err;
+
+	    case NDMP9_IO_ERR:
+		device_set_error(dself,
+			g_strdup(_("IO error reading tape label")),
+				DEVICE_STATUS_VOLUME_UNLABELED |
+				DEVICE_STATUS_VOLUME_ERROR |
+				DEVICE_STATUS_DEVICE_ERROR);
+		goto read_err;
+
+	    case NDMP9_EOM_ERR:
+	    case NDMP9_EOF_ERR:
+		device_set_error(dself,
+			g_strdup(_("no tape label found")),
+				DEVICE_STATUS_VOLUME_UNLABELED);
+		goto read_err;
+
+	    default:
+		break;
+	    }
+	}
+	if (!handle_conn_failure(self, rc)) {
+	    goto read_err;
+	}
+	parse_file_header(reply->data_in.data_in_val, header, reply->data_in.data_in_len);
+read_err:
+	NDMC_FREE_REPLY();
+    NDMC_ENDWITH
+
+    if (dself->status != 0) {
+	/* error already set above */
+	return dself->status;
+    }
+
+    /* handle a "weird" label */
+    if (header->type != F_TAPESTART) {
+	device_set_error(dself,
+		stralloc(_("No tapestart header -- unlabeled device?")),
+			 DEVICE_STATUS_VOLUME_UNLABELED);
+	return dself->status;
+    }
+    dself->volume_label = g_strdup(header->name);
+    dself->volume_time = g_strdup(header->datestamp);
+    /* dself->volume_header is already set */
+
+    /* note: connection is left open, as well as the tape device */
+
+    device_set_error(dself, NULL, DEVICE_STATUS_SUCCESS);
+
+    return dself->status;
+}
+
 
 static gboolean
-ndmp_device_start(Device *dself,
-                DeviceAccessMode mode,
-                char * label,
-                char * timestamp);
+ndmp_device_start(
+    Device           *dself,
+    DeviceAccessMode  mode,
+    char             *label,
+    char             *timestamp)
+{
+    dumpfile_t *header;
+    char       *header_buf;
+    NdmpDevice *self = NDMP_DEVICE(dself);
+
+    self = NDMP_DEVICE(dself);
+
+    if (device_in_error(self)) return FALSE;
+
+    if (!open_ndmp_device(self)) {
+	/* error status was set by open_ndmp_device */
+	return FALSE;
+    }
+
+    if (mode != ACCESS_WRITE && dself->volume_label == NULL) {
+	if (ndmp_device_read_label(dself) != DEVICE_STATUS_SUCCESS)
+	    /* the error was set by ndmp_device_read_label */
+	    return FALSE;
+    }
+
+    dself->access_mode = mode;
+    dself->in_file = FALSE;
+
+    if (!ndmp_mtio_rewind(self)) {
+	/* ndmp_mtio_rewind already set our error message */
+	return FALSE;
+    }
+
+    /* Position the tape */
+    switch (mode) {
+    case ACCESS_APPEND:
+	/* TODO: append support */
+	device_set_error(dself,
+	    g_strdup("operation not supported"),
+	    DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+	break;
+
+    case ACCESS_READ:
+	dself->file = 0;
+	break;
+
+    case ACCESS_WRITE:
+	header = make_tapestart_header(dself, label, timestamp);
+	g_assert(header != NULL);
+
+	header_buf = device_build_amanda_header(dself, header, NULL);
+	if (header_buf == NULL) {
+	    device_set_error(dself,
+		stralloc(_("Tapestart header won't fit in a single block!")),
+		DEVICE_STATUS_DEVICE_ERROR);
+	    return FALSE;
+	}
+	amfree(header);
+
+	if (!robust_write(self, header_buf, dself->block_size)) {
+	    /* error was set by robust_write */
+	    amfree(header_buf);
+	    return FALSE;
+	}
+
+	amfree(header_buf);
+	if (!ndmp_mtio_eof(self)) {
+	    /* error was set by ndmp_mtio_eof */
+	    return FALSE;
+	}
+
+	dself->volume_label = newstralloc(dself->volume_label, label);
+	dself->volume_time = newstralloc(dself->volume_time, timestamp);
+
+	/* unset the VOLUME_UNLABELED flag, if it was set */
+	device_set_error(dself, NULL, DEVICE_STATUS_SUCCESS);
+	dself->file = 0;
+	break;
+
+    default:
+	g_assert_not_reached();
+    }
+
+    return TRUE;
+}
 
 static gboolean
-ndmp_device_finish(Device *dself);
+ndmp_device_finish(
+    Device *dself)
+{
+    NdmpDevice *self = NDMP_DEVICE(dself);
+    if (device_in_error(dself)) return FALSE;
+
+    /* we're not in a file anymore */
+    dself->access_mode = ACCESS_NULL;
+
+    if (!close_ndmp_device(self)) {
+	/* error is set by close_ndmp_device */
+	return FALSE;
+    }
+
+    return TRUE;
+}
+
+/* functions for writing */
 
 static gboolean
-ndmp_device_start_file(Device *dself,
-                     dumpfile_t * jobInfo);
+ndmp_device_start_file(
+    Device     *dself,
+    dumpfile_t *jobInfo)
+{
+    NdmpDevice *self = NDMP_DEVICE(dself);
+
+    self = self;
+    jobInfo = jobInfo;
+
+    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
+    return FALSE;
+}
 
 static gboolean
-ndmp_device_write_block(Device *dself,
-                      guint size,
-                      gpointer data);
+ndmp_device_write_block(
+    Device   *dself,
+    guint     size,
+    gpointer  data)
+{
+    NdmpDevice *self = NDMP_DEVICE(dself);
+
+    self = self;
+    size = size;
+    data = data;
+
+    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
+    return FALSE;
+}
 
 static gboolean
-ndmp_device_finish_file(Device *dself);
+ndmp_device_finish_file(
+    Device *dself)
+{
+    if (device_in_error(dself)) return FALSE;
+
+    /* we're not in a file anymore */
+    dself->in_file = FALSE;
+
+    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
+    return FALSE;
+}
+
+/* functions for reading */
 
 static dumpfile_t*
-ndmp_device_seek_file(Device *dself,
-                    guint file);
+ndmp_device_seek_file(
+    Device *dself,
+    guint   file)
+{
+    NdmpDevice *self = NDMP_DEVICE(dself);
+
+    self = self;
+    file = file;
+
+    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
+    return NULL;
+}
 
 static gboolean
-ndmp_device_seek_block(Device *dself,
-                     guint64 block);
+ndmp_device_seek_block(
+    Device  *dself,
+    guint64  block)
+{
+    if (device_in_error(dself)) return FALSE;
+
+    dself->block = block;
+
+    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
+    return FALSE;
+}
 
 static int
-ndmp_device_read_block(Device * dself,
-                     gpointer data,
-                     int *size_req);
+ndmp_device_read_block (Device * dself, gpointer data, int *size_req) {
+    NdmpDevice *self = NDMP_DEVICE(dself);
+    self = self;
+    data = data;
+    size_req = size_req;
+
+    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
+    return -1;
+}
 
 /*
  * Class mechanics
  */
 
-void
-ndmp_device_register(void)
+static gboolean
+ndmp_device_set_username_fn(Device *dself,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
 {
-    static const char * device_prefix_list[] = { NDMP_DEVICE_NAME, NULL };
+    NdmpDevice *self = NDMP_DEVICE(dself);
 
-    /* register the device itself */
-    register_device(ndmp_device_factory, device_prefix_list);
+    amfree(self->ndmp_username);
+    self->ndmp_username = g_value_dup_string(val);
+    device_clear_volume_details(dself);
 
-    device_property_fill_and_register(&device_property_ndmp_username,
-                                      G_TYPE_STRING, "ndmp_username",
-       "Username for access to the NDMP agent");
-    device_property_fill_and_register(&device_property_ndmp_password,
-                                      G_TYPE_STRING, "ndmp_password",
-       "Password for access to the NDMP agent");
+    return device_simple_property_set_fn(dself, base, val, surety, source);
 }
 
-static GType
-ndmp_device_get_type(void)
+static gboolean
+ndmp_device_set_password_fn(Device *dself,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
 {
-    static GType type = 0;
+    NdmpDevice *self = NDMP_DEVICE(dself);
 
-    if G_UNLIKELY(type == 0) {
-        static const GTypeInfo info = {
-            sizeof (NdmpDeviceClass),
-            (GBaseInitFunc) NULL,
-            (GBaseFinalizeFunc) NULL,
-            (GClassInitFunc) ndmp_device_class_init,
-            (GClassFinalizeFunc) NULL,
-            NULL /* class_data */,
-            sizeof (NdmpDevice),
-            0 /* n_preallocs */,
-            (GInstanceInitFunc) ndmp_device_init,
-            NULL
-        };
+    amfree(self->ndmp_password);
+    self->ndmp_password = g_value_dup_string(val);
+    device_clear_volume_details(dself);
 
-        type = g_type_register_static (TYPE_DEVICE, "NdmpDevice", &info,
-                                       (GTypeFlags)0);
+    return device_simple_property_set_fn(dself, base, val, surety, source);
+}
+
+static gboolean
+ndmp_device_set_verbose_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    NdmpDevice *self = NDMP_DEVICE(p_self);
+
+    self->verbose = g_value_get_boolean(val);
+
+    /* if the connection is active, set up verbose logging or turn it off */
+    if (self->conn) {
+	if (self->verbose)
+	    ndmconn_set_snoop(self->conn, &device_ndmlog, SNOOP_LEVEL);
+	else
+	    ndmconn_clear_snoop(self->conn);
     }
 
-    return type;
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
 
 static void
-ndmp_device_init(NdmpDevice *nself)
+ndmp_device_class_init(NdmpDeviceClass * c G_GNUC_UNUSED)
 {
-    Device *dself = DEVICE(nself);
+    GObjectClass *g_object_class = (GObjectClass*) c;
+    DeviceClass *device_class = (DeviceClass *)c;
+
+    parent_class = g_type_class_ref (TYPE_DEVICE);
+
+    device_class->open_device = ndmp_device_open_device;
+    device_class->read_label = ndmp_device_read_label;
+    device_class->start = ndmp_device_start;
+    device_class->finish = ndmp_device_finish;
+
+    device_class->start_file = ndmp_device_start_file;
+    device_class->write_block = ndmp_device_write_block;
+    device_class->finish_file = ndmp_device_finish_file;
+
+    device_class->seek_file = ndmp_device_seek_file;
+    device_class->seek_block = ndmp_device_seek_block;
+    device_class->read_block = ndmp_device_read_block;
+
+    g_object_class->finalize = ndmp_device_finalize;
+
+    device_class_register_property(device_class, PROPERTY_NDMP_USERNAME,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    ndmp_device_set_username_fn);
+
+    device_class_register_property(device_class, PROPERTY_NDMP_PASSWORD,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    ndmp_device_set_password_fn);
+
+    device_class_register_property(device_class, PROPERTY_VERBOSE,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK,
+	    device_simple_property_get_fn,
+	    ndmp_device_set_verbose_fn);
+}
+
+static void
+ndmp_device_init(NdmpDevice *self)
+{
+    Device *dself = DEVICE(self);
     GValue response;
 
-    nself->proxy_chan = NULL;
-    nself->proxy_sock = -1;
-    nself->device_open = FALSE;
+    /* begin unconnected */
+    self->conn = NULL;
 
     /* TODO: allow other block sizes */
     dself->block_size = 32768;
@@ -276,67 +818,30 @@ ndmp_device_init(NdmpDevice *nself)
 
 }
 
-static void
-ndmp_device_class_init(NdmpDeviceClass * c G_GNUC_UNUSED)
+static GType
+ndmp_device_get_type(void)
 {
-    GObjectClass *g_object_class = (GObjectClass*) c;
-    DeviceClass *device_class = (DeviceClass *)c;
+    static GType type = 0;
 
-    parent_class = g_type_class_ref (TYPE_DEVICE);
+    if G_UNLIKELY(type == 0) {
+        static const GTypeInfo info = {
+            sizeof (NdmpDeviceClass),
+            (GBaseInitFunc) NULL,
+            (GBaseFinalizeFunc) NULL,
+            (GClassInitFunc) ndmp_device_class_init,
+            (GClassFinalizeFunc) NULL,
+            NULL /* class_data */,
+            sizeof (NdmpDevice),
+            0 /* n_preallocs */,
+            (GInstanceInitFunc) ndmp_device_init,
+            NULL
+        };
 
-    device_class->open_device = ndmp_device_open_device;
-    device_class->read_label = ndmp_device_read_label;
-    device_class->start = ndmp_device_start;
-    device_class->finish = ndmp_device_finish;
+        type = g_type_register_static (TYPE_DEVICE, "NdmpDevice", &info,
+                                       (GTypeFlags)0);
+    }
 
-    device_class->start_file = ndmp_device_start_file;
-    device_class->write_block = ndmp_device_write_block;
-    device_class->finish_file = ndmp_device_finish_file;
-
-    device_class->seek_file = ndmp_device_seek_file;
-    device_class->seek_block = ndmp_device_seek_block;
-    device_class->read_block = ndmp_device_read_block;
-
-    g_object_class->finalize = ndmp_device_finalize;
-
-    device_class_register_property(device_class, PROPERTY_NDMP_USERNAME,
-	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
-	    device_simple_property_get_fn,
-	    ndmp_device_set_username_fn);
-
-    device_class_register_property(device_class, PROPERTY_NDMP_PASSWORD,
-	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
-	    device_simple_property_get_fn,
-	    ndmp_device_set_password_fn);
-
-}
-
-static gboolean
-ndmp_device_set_username_fn(Device *self,
-    DevicePropertyBase *base, GValue *val,
-    PropertySurety surety, PropertySource source)
-{
-    NdmpDevice *nself = NDMP_DEVICE(self);
-
-    amfree(nself->ndmp_username);
-    nself->ndmp_username = g_value_dup_string(val);
-    device_clear_volume_details(self);
-
-    return device_simple_property_set_fn(self, base, val, surety, source);
-}
-
-static gboolean
-ndmp_device_set_password_fn(Device *self,
-    DevicePropertyBase *base, GValue *val,
-    PropertySurety surety, PropertySource source)
-{
-    NdmpDevice *nself = NDMP_DEVICE(self);
-
-    amfree(nself->ndmp_password);
-    nself->ndmp_password = g_value_dup_string(val);
-    device_clear_volume_details(self);
-
-    return device_simple_property_set_fn(self, base, val, surety, source);
+    return type;
 }
 
 static Device*
@@ -355,612 +860,23 @@ ndmp_device_factory(
     return rval;
 }
 
-/*
- * Virtual function overrides
- */
-
-static void
-ndmp_device_open_device(
-    Device *dself,
-    char   *device_name,
-    char   *device_type,
-    char   *device_node)
+void
+ndmp_device_register(void)
 {
-    NdmpDevice          *nself = NDMP_DEVICE(dself);
-    char *colon, *at;
+    static const char * device_prefix_list[] = { NDMP_DEVICE_NAME, NULL };
 
-    g_debug("ndmp_device_open_device: %s : %s : %s", device_name, device_type, device_node);
+    /* set up logging */
+    device_ndmlog.deliver = ndmp_device_ndmlog_deliver;
+    device_ndmlog.cookie = NULL; /* unused */
 
-    /* first, extract the various parts of the device_node:
-     * HOST[:PORT]@DEVICE */
-    colon = strchr(device_node, ':');
-    at = strchr(device_node, '@');
-    if (colon > at)
-	colon = NULL; /* :PORT only counts if it's before the device name */
-    if (!at) {
-	device_set_error(dself,
-			 g_strdup_printf("invalid ndmp device name '%s'", device_name),
-			 DEVICE_STATUS_DEVICE_ERROR);
-	return;
-    }
+    /* register the device itself */
+    register_device(ndmp_device_factory, device_prefix_list);
 
-    nself->ndmp_hostname = g_strndup(device_node, colon-device_node);
-    if (colon) {
-	char *p = NULL;
-	long port = strtol(colon+1, &p, 10);
-	if (port < 0 || port >= 65536 || p != at || (!port && EINVAL == errno)) {
-	    device_set_error(dself,
-			    g_strdup_printf("invalid ndmp port in device name '%s'",
-					    device_name),
-			    DEVICE_STATUS_DEVICE_ERROR);
-	    return;
-	}
-	nself->ndmp_port = (gint)port;
-    } else {
-	nself->ndmp_port = 0; /* (use ndmjob's default, 10000) */
-    }
-    nself->ndmp_device_name = g_strdup(at+1);
-
-    /* these should be changed by properties */
-    nself->ndmp_username = g_strdup("ndmp");
-    nself->ndmp_password = g_strdup("ndmp");
-
-    if (parent_class->open_device) {
-        parent_class->open_device(dself, device_name, device_type, device_node);
-    }
+    device_property_fill_and_register(&device_property_ndmp_username,
+                                      G_TYPE_STRING, "ndmp_username",
+       "Username for access to the NDMP agent");
+    device_property_fill_and_register(&device_property_ndmp_password,
+                                      G_TYPE_STRING, "ndmp_password",
+       "Password for access to the NDMP agent");
 }
 
-static void ndmp_device_finalize(GObject * obj_self)
-{
-    NdmpDevice       *nself = NDMP_DEVICE (obj_self);
-
-    if(G_OBJECT_CLASS(parent_class)->finalize)
-        (* G_OBJECT_CLASS(parent_class)->finalize)(obj_self);
-
-    if (nself->proxy_chan)
-	ipc_binary_free_channel(nself->proxy_chan);
-    if (nself->proxy_sock != -1)
-	robust_close(nself->proxy_sock);
-    nself->device_open = FALSE;
-
-    if (nself->ndmp_hostname)
-	g_free(nself->ndmp_hostname);
-    if (nself->ndmp_device_name)
-	g_free(nself->ndmp_device_name);
-    if (nself->ndmp_username)
-	g_free(nself->ndmp_username);
-    if (nself->ndmp_password)
-	g_free(nself->ndmp_password);
-}
-
-static DeviceStatusFlags
-ndmp_device_read_label(
-    Device *dself)
-{
-    NdmpDevice       *nself = NDMP_DEVICE(dself);
-    dumpfile_t       *header;
-    ipc_binary_message_t *msg;
-    char *errcode, *errstr;
-
-    amfree(dself->volume_label);
-    amfree(dself->volume_time);
-    amfree(dself->volume_header);
-
-    if (device_in_error(nself)) return dself->status;
-
-    header = dself->volume_header = g_new(dumpfile_t, 1);
-    fh_init(header);
-
-    if (!try_open_ndmp_device(nself)) {
-	/* error status was set by try_open_ndmp_device */
-	return dself->status;
-    }
-
-    if (!ndmp_mtio_rewind(nself)) {
-	/* error message, if any, is set by ndmp_mtio_rewind */
-	return dself->status;
-    }
-
-    msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_TAPE_READ);
-    ipc_binary_add_arg(msg, NDMP_PROXY_COUNT, 0, "32768", 0); /* TODO: use variable block size */
-    if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
-	set_proxy_comm_err(dself, errno);
-	return dself->status;
-    }
-
-    g_debug("Sent NDMP_PROXY_CMD_TAPE_READ to ndmp-proxy");
-    if (!(msg = ipc_binary_read_message(nself->proxy_chan, nself->proxy_sock))) {
-	if (errno) {
-	    set_proxy_comm_err(dself, errno);
-	} else {
-	    device_set_error(dself,
-		    vstrallocf(_("EOF from ndmp-proxy")),
-		    DEVICE_STATUS_DEVICE_ERROR);
-	}
-
-	return dself->status;
-    }
-
-    errcode = (char *)msg->args[NDMP_PROXY_ERRCODE].data;
-    errstr = (char *)msg->args[NDMP_PROXY_ERROR].data;
-    if (errcode) {
-	/* EOF gets translated to an unlabeled volume */
-	if (0 == strcmp(errcode, "NDMP9_EOF_ERR")) {
-	    device_set_error(dself,
-		    g_strdup(_("unlabeled volume")), DEVICE_STATUS_VOLUME_UNLABELED);
-	} else {
-	    device_set_error(dself,
-		    g_strdup_printf(_("Error reading label: %s"), errstr),
-		    DEVICE_STATUS_DEVICE_ERROR);
-		    /* TODO: could this also be a volume error? */
-	}
-	ipc_binary_free_message(msg);
-	return dself->status;
-    }
-
-    parse_file_header(msg->args[NDMP_PROXY_DATA].data, header, msg->args[NDMP_PROXY_DATA].len);
-    ipc_binary_free_message(msg);
-
-    if (header->type != F_TAPESTART) {
-	device_set_error(dself,
-		stralloc(_("No tapestart header -- unlabeled device?")),
-			 DEVICE_STATUS_VOLUME_UNLABELED);
-	return dself->status;
-    }
-    dself->volume_label = g_strdup(header->name);
-    dself->volume_time = g_strdup(header->datestamp);
-    /* dself->volume_header is already set */
-
-    /* close the connection now, so as not to reserve the tape device longer than
-     * necessary; TODO: be less aggressive about this */
-    if (!close_ndmp_device(nself))
-	/* error is set by close_ndmp_device */
-	return FALSE;
-
-    device_set_error(dself, NULL, DEVICE_STATUS_SUCCESS);
-
-    return dself->status;
-}
-
-/* Just a helper function for ndmp_device_start(). */
-static gboolean
-write_tapestart_header(
-    NdmpDevice *nself,
-    char       *label,
-    char       *timestamp)
-{
-    int         result;
-    Device     *dself = (Device*)nself;
-    dumpfile_t *header;
-    char       *header_buf;
-
-    if (!ndmp_mtio_rewind(nself)) {
-	/* error message, if any, is set by ndmp_mtio_rewind */
-	return FALSE;
-    }
-
-    header = make_tapestart_header(dself, label, timestamp);
-    g_assert(header != NULL);
-    header_buf = device_build_amanda_header(dself, header, NULL);
-    if (header_buf == NULL) {
-	device_set_error(dself,
-	    stralloc(_("Tapestart header won't fit in a single block!")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
-    }
-    amfree(header);
-
-    result = ndmp_device_robust_write(nself, header_buf, dself->block_size);
-    if (!result) {
-	/* error was set by ndmp_device_robust_write */
-	amfree(header_buf);
-	return FALSE;
-    }
-
-    amfree(header_buf);
-    if (!ndmp_mtio_eof(nself)) {
-	/* error was set by ndmp_mtio_eof */
-	return FALSE;
-    }
-
-    return TRUE;
-}
-
-
-static gboolean
-ndmp_device_start(
-    Device           *dself,
-    DeviceAccessMode  mode,
-    char             *label,
-    char             *timestamp)
-{
-    NdmpDevice *nself = NDMP_DEVICE(dself);
-
-    nself = NDMP_DEVICE(dself);
-
-    if (device_in_error(nself)) return FALSE;
-
-    if (!try_open_ndmp_device(nself)) {
-	/* error status was set by try_open_ndmp_device */
-	return FALSE;
-    }
-
-    if (mode != ACCESS_WRITE && dself->volume_label == NULL) {
-	if (ndmp_device_read_label(dself) != DEVICE_STATUS_SUCCESS)
-	    /* the error was set by ndmp_device_read_label */
-	    return FALSE;
-    }
-
-    dself->access_mode = mode;
-    dself->in_file = FALSE;
-
-    if (!ndmp_mtio_rewind(nself)) {
-	/* ndmp_mtio_rewind already set our error message */
-	return FALSE;
-    }
-
-    /* Position the tape */
-    switch (mode) {
-    case ACCESS_APPEND:
-	if (!ndmp_mtio_eod(nself)) {
-	    /* ndmp_mtio_eod already set our error message */
-	    return FALSE;
-	}
-	break;
-
-    case ACCESS_READ:
-	dself->file = 0;
-	break;
-
-    case ACCESS_WRITE:
-	if (!write_tapestart_header(nself, label, timestamp)) {
-	    /* write_tapestart_header already set the error status */
-	    return FALSE;
-	}
-
-	dself->volume_label = newstralloc(dself->volume_label, label);
-	dself->volume_time = newstralloc(dself->volume_time, timestamp);
-
-	/* unset the VOLUME_UNLABELED flag, if it was set */
-	device_set_error(dself, NULL, DEVICE_STATUS_SUCCESS);
-	dself->file = 0;
-	break;
-
-    default:
-	g_assert_not_reached();
-    }
-
-    return TRUE;
-}
-
-static gboolean
-ndmp_device_finish(
-    Device *dself)
-{
-    NdmpDevice *nself = NDMP_DEVICE(dself);
-    if (device_in_error(dself)) return FALSE;
-
-    /* we're not in a file anymore */
-    dself->access_mode = ACCESS_NULL;
-
-    if (!close_ndmp_device(nself)) {
-	/* error is set by close_ndmp_device */
-	return FALSE;
-    }
-
-    return TRUE;
-}
-
-/* functions for writing */
-
-
-static gboolean
-ndmp_device_start_file(
-    Device     *dself,
-    dumpfile_t *jobInfo)
-{
-    NdmpDevice *self = NDMP_DEVICE(dself);
-
-    self = self;
-    jobInfo = jobInfo;
-
-    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
-    return FALSE;
-}
-
-static gboolean
-ndmp_device_write_block(
-    Device   *dself,
-    guint     size,
-    gpointer  data)
-{
-    NdmpDevice *nself = NDMP_DEVICE(dself);
-
-    nself = nself;
-    size = size;
-    data = data;
-
-    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
-    return FALSE;
-}
-
-static gboolean
-ndmp_device_finish_file(
-    Device *dself)
-{
-    if (device_in_error(dself)) return FALSE;
-
-    /* we're not in a file anymore */
-    dself->in_file = FALSE;
-
-    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
-    return FALSE;
-}
-
-/* functions for reading */
-
-static dumpfile_t*
-ndmp_device_seek_file(
-    Device *dself,
-    guint   file)
-{
-    NdmpDevice *nself = NDMP_DEVICE(dself);
-
-    nself = nself;
-    file = file;
-
-    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
-    return NULL;
-}
-
-static gboolean
-ndmp_device_seek_block(
-    Device  *dself,
-    guint64  block)
-{
-    if (device_in_error(dself)) return FALSE;
-
-    dself->block = block;
-
-    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
-    return FALSE;
-}
-
-static int
-ndmp_device_read_block (Device * dself, gpointer data, int *size_req) {
-    NdmpDevice *nself = NDMP_DEVICE(dself);
-    nself = nself;
-    data = data;
-    size_req = size_req;
-
-    device_set_error(dself, g_strdup("operation not supported"), DEVICE_STATUS_DEVICE_ERROR);
-    return -1;
-}
-
-/*
- * Utility functions
- */
-
-static gboolean
-try_open_ndmp_device(
-    NdmpDevice *nself)
-{
-    Device              *dself = DEVICE(nself);
-    ipc_binary_message_t *msg;
-    char *errmsg = NULL;
-
-    /* if already open, stop now */
-    if (nself->device_open) {
-	return TRUE;
-    }
-
-    /* Open a connect to ndmp-proxy if not already open */
-    if (nself->proxy_sock == -1) {
-	/* now try to connect to the proxy */
-	nself->proxy_sock = connect_to_ndmp_proxy(&errmsg);
-	if (nself->proxy_sock <= 0) {
-	    device_set_error(dself, errmsg, DEVICE_STATUS_DEVICE_ERROR);
-	    goto error;
-	}
-
-	nself->proxy_chan = ipc_binary_new_channel(get_ndmp_proxy_proto());
-
-	/* select the DEVICE service from the proxy */
-	msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_SELECT_SERVICE);
-	ipc_binary_add_arg(msg, NDMP_PROXY_SERVICE, 0, "DEVICE", 0);
-	if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
-	    set_proxy_comm_err(dself, errno);
-	    goto error;
-	}
-	g_debug("Sent NDMP_PROXY_SELECT_SERVICE to ndmp-proxy");
-
-	if (!get_generic_reply(nself)) {
-	    /* error message is set by get_generic_reply */
-	    goto error;
-	}
-    }
-
-    /* now send a NDMP_PROXY_TAPE_OPEN */
-    msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_TAPE_OPEN);
-    /* TODO: support read-only and write-only */
-    ipc_binary_add_arg(msg, NDMP_PROXY_MODE, 0, "RDRW", 0);
-    ipc_binary_add_arg(msg, NDMP_PROXY_HOST, 0, nself->ndmp_hostname, 0);
-    ipc_binary_add_arg(msg, NDMP_PROXY_PORT, 0,
-	    g_strdup_printf("%d", nself->ndmp_port), 1);
-    ipc_binary_add_arg(msg, NDMP_PROXY_FILENAME, 0, nself->ndmp_device_name, 0);
-    ipc_binary_add_arg(msg, NDMP_PROXY_USERNAME, 0, nself->ndmp_username, 0);
-    ipc_binary_add_arg(msg, NDMP_PROXY_PASSWORD, 0, nself->ndmp_password, 0);
-    if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
-	set_proxy_comm_err(dself, errno);
-	goto error;
-    }
-    g_debug("Sent NDMP_PROXY_TAPE_OPEN to ndmp-proxy");
-
-    if (!get_generic_reply(nself)) {
-	/* error message is set by get_generic_reply */
-	goto error;
-    }
-    g_debug("get reply from ndmp-proxy");
-    nself->device_open = TRUE;
-
-    return TRUE;
-
-error:
-    if (nself->proxy_chan) {
-	ipc_binary_free_channel(nself->proxy_chan);
-	nself->proxy_chan = NULL;
-    }
-    if (nself->proxy_sock != -1) {
-	close(nself->proxy_sock);
-	nself->proxy_sock = -1;
-    }
-    nself->device_open = FALSE;
-
-    return FALSE;
-}
-
-static gboolean
-close_ndmp_device(NdmpDevice *nself) {
-    ipc_binary_message_t *msg;
-    gboolean success = TRUE;
-
-    if (nself->proxy_sock == -1 || !nself->proxy_chan)
-	return TRUE;
-
-    g_debug("closing tape service");
-
-    /* select the DEVICE service from the proxy */
-    msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_TAPE_CLOSE);
-    if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
-	set_proxy_comm_err(DEVICE(nself), errno);
-	return FALSE;
-    }
-    g_debug("Sent NDMP_PROXY_CMD_TAPE_CLOSE to ndmp-proxy");
-
-    if (!get_generic_reply(nself)) {
-	/* error message is set by get_generic_reply */
-	success = FALSE;
-    }
-    nself->device_open = FALSE;
-
-    return success;
-}
-
-static void
-set_proxy_comm_err(
-	Device *dself,
-	int saved_errno) {
-    device_set_error(dself,
-	g_strdup_printf(_("failed to communicate with ndmp-proxy: %s"), strerror(saved_errno)),
-	DEVICE_STATUS_DEVICE_ERROR);
-}
-
-static gboolean
-get_generic_reply(
-	NdmpDevice *nself) {
-    char *errcode = NULL, *errstr = NULL;
-    ipc_binary_message_t *msg;
-    Device *dself = DEVICE(nself);
-
-    if (!(msg = ipc_binary_read_message(nself->proxy_chan, nself->proxy_sock))) {
-	if (errno) {
-	    set_proxy_comm_err(dself, errno);
-	} else {
-	    device_set_error(dself,
-		    vstrallocf(_("EOF from ndmp-proxy")),
-		    DEVICE_STATUS_DEVICE_ERROR);
-	}
-
-	return FALSE;
-    }
-
-    if (msg->cmd_id != NDMP_PROXY_REPLY_GENERIC) {
-	device_set_error(dself,
-		vstrallocf(_("incorrect generic reply from ndmp-proxy")),
-		DEVICE_STATUS_DEVICE_ERROR);
-    }
-
-    errcode = (char *)msg->args[NDMP_PROXY_ERRCODE].data;
-    errstr = (char *)msg->args[NDMP_PROXY_ERROR].data;
-    g_debug("got NDMP_PROXY_REPLY_GENERIC, errcode=%s errstr=%s",
-	errcode?errcode:"(null)", errstr?errstr:"(null)");
-    if (errcode || errstr) {
-	device_set_error(dself,
-		g_strdup_printf("Error from ndmp-proxy: %s (%s)", errstr, errcode),
-		DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
-    }
-
-    return TRUE;
-}
-
-static int
-ndmp_mtio_eod(
-    NdmpDevice *nself)
-{
-    return ndmp_mtio(nself, "EOD", 1);
-}
-
-static int
-ndmp_mtio_eof(
-    NdmpDevice *nself)
-{
-    return ndmp_mtio(nself, "EOF", 1);
-}
-
-static int
-ndmp_mtio_rewind(
-    NdmpDevice *nself)
-{
-    return ndmp_mtio(nself, "REWIND", 1);
-}
-
-static int
-ndmp_mtio(
-    NdmpDevice *nself,
-    char       *command,
-    int         count)
-{
-    Device           *dself = DEVICE(nself);
-    ipc_binary_message_t *msg;
-
-    msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_TAPE_MTIO);
-    ipc_binary_add_arg(msg, NDMP_PROXY_COMMAND, 0, command, FALSE);
-    ipc_binary_add_arg(msg, NDMP_PROXY_COUNT, 0, g_strdup_printf("%d", count), TRUE);
-    if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
-	set_proxy_comm_err(dself, errno);
-	return FALSE;
-    }
-
-    if (!get_generic_reply(nself)) {
-	/* error message is set by get_generic_reply */
-	return FALSE;
-    }
-
-    return TRUE;
-}
-
-static int
-ndmp_device_robust_write(
-    NdmpDevice  *nself,
-    char        *buf,
-    int          count)
-{
-    Device *dself = (Device*)nself;
-    ipc_binary_message_t *msg;
-
-    msg = ipc_binary_new_message(nself->proxy_chan, NDMP_PROXY_CMD_TAPE_WRITE);
-    ipc_binary_add_arg(msg, NDMP_PROXY_DATA, count, buf, 0);
-    if (ipc_binary_write_message(nself->proxy_chan, nself->proxy_sock, msg) < 0) {
-	set_proxy_comm_err(dself, errno);
-	return FALSE;
-    }
-    g_debug("Sent CMD_TAPE_WRITE to ndmp-proxy");
-
-    if (!get_generic_reply(nself)) {
-	/* error message is set by get_generic_reply */
-	return FALSE;
-    }
-
-    return TRUE;
-}

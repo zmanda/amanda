@@ -126,7 +126,7 @@ ndmconn_destruct (struct ndmconn *conn)
  *     make a connection per a hostname and port, uses ..._sockaddr_in()
  * ndmconn_connect_sockaddr_in()
  *     make a connection per sockaddr_in, performs NDMP_CONNECT_
- *     sequences, including AUTH
+ *     sequences, but no authentication
  * ndmconn_accept()
  *     make a connection (receive it really) from a file descriptor
  *     already accept()ed.
@@ -200,10 +200,8 @@ ndmconn_connect_sockaddr_in (struct ndmconn *conn,
 
 	/* reserved port? */
 	if (connect (fd, (struct sockaddr *)sin, sizeof *sin) < 0) {
-ndmalogf (&the_session, 0, 7, "connect failed a1");
 		err = malloc(1024);
 		snprintf(err, 1023, "connect failed: %s", strerror(errno));
-ndmalogf (&the_session, 0, 7, "connect failed a2");
 		goto error_out;
 	}
 
@@ -263,7 +261,6 @@ ndmalogf (&the_session, 0, 7, "connect failed a2");
 	return 0;
 
   error_out:
-ndmalogf (&the_session, 0, 7, "connect failed a3");
 	if (fd >= 0) {
 		close (fd);
 		fd = -1;
@@ -272,7 +269,6 @@ ndmalogf (&the_session, 0, 7, "connect failed a3");
 	conn->chan.mode = NDMCHAN_MODE_IDLE;
 	conn->conn_type = NDMCONN_TYPE_NONE;
 
-ndmalogf (&the_session, 0, 7, "connect failed a4 %s", err);
 	return ndmconn_set_err_msg (conn, err);
 }
 
