@@ -118,7 +118,8 @@ ndmca_op_recover_files (struct ndm_session *sess)
 	    }
 	}
 
-	ndmca_media_tattle (sess);
+	if(!ca->job.tape_tcp)
+		ndmca_media_tattle (sess);
 
 	return rc;
 }
@@ -180,6 +181,10 @@ ndmca_monitor_backup (struct ndm_session *sess)
 	ndmp9_data_state	ds;
 	ndmp9_mover_state	ms;
 	char *estb;
+
+	if (ca->job.tape_tcp) {
+		return ndmca_monitor_backup_tape_tcp(sess);
+	}
 
 	ndmalogf (sess, 0, 3, "Monitoring backup");
 
@@ -311,6 +316,56 @@ ndmca_monitor_backup (struct ndm_session *sess)
 }
 
 int
+ndmca_monitor_backup_tape_tcp (struct ndm_session *sess)
+{
+	struct ndm_control_agent *ca = &sess->control_acb;
+	int			count;
+	ndmp9_data_state	ds;
+	char *estb;
+
+	ndmalogf (sess, 0, 3, "Monitoring backup");
+
+	for (count = 0; count < 10; count++) {
+		ndmca_mon_wait_for_something (sess, count <= 1 ? 30 : 10);
+		if (ndmca_monitor_get_states(sess) < 0)
+		    break;
+
+#if 0
+		if (count > 2)
+			ndmca_mon_show_states(sess);
+#endif
+
+		ds = ca->data_state.state;
+
+		estb = ndmca_data_est(ca);
+
+		ndmalogf (sess, 0, 1,
+			  "DATA: bytes %lldKB%s",
+			  ca->data_state.bytes_processed/1024LL,
+			  estb ? estb : "");
+
+		if (ds == NDMP9_DATA_STATE_ACTIVE) {
+			count = 0;
+			continue;
+		}
+
+		/*
+		 * If DATA has halted, the show is over.
+		 */
+		if (ds == NDMP9_DATA_STATE_HALTED) {
+			ndmalogf (sess, 0, 2, "Operation done, cleaning up");
+
+			ndmca_monitor_get_post_backup_env (sess);
+
+			return 0;
+		}
+	}
+
+	ndmalogf (sess, 0, 0, "Operation monitoring mishandled, cancelling");
+	return -1;
+}
+
+int
 ndmca_monitor_get_post_backup_env (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
@@ -342,6 +397,10 @@ ndmca_monitor_recover (struct ndm_session *sess)
 	ndmp9_mover_state	ms;
 	char *estb;
 	int last_state_print = 0;
+
+	if (ca->job.tape_tcp) {
+		return (ndmca_monitor_recover_tape_tcp(sess));
+	}
 
 	ndmalogf (sess, 0, 3, "Monitoring recover");
 
@@ -498,17 +557,85 @@ ndmca_monitor_recover (struct ndm_session *sess)
 
 
 int
+ndmca_monitor_recover_tape_tcp (struct ndm_session *sess)
+{
+	struct ndm_control_agent *ca = &sess->control_acb;
+	int			count, rc;
+	ndmp9_data_state	ds;
+	char *estb;
+	int last_state_print = 0;
+
+	ndmalogf (sess, 0, 3, "Monitoring recover");
+
+	for (count = 0; count < 10; count++) {
+
+		ndmca_mon_wait_for_something (sess, count <= 1 ? 30 : 10);
+
+		if (ndmca_monitor_get_states(sess) < 0)
+		    break;
+
+#if 0
+		if (count > 2)
+			ndmca_mon_show_states(sess);
+#endif
+
+		ds = ca->data_state.state;
+
+		estb = ndmca_data_est(ca);
+
+		if ((ds != NDMP9_DATA_STATE_ACTIVE) ||
+		    ((time(0) - last_state_print) >= 5)) {
+
+		    ndmalogf (sess, 0, 1,
+			      "DATA: bytes %lldKB%s  MOVER: read %lldKB record %d",
+			      ca->data_state.bytes_processed/1024LL,
+			      estb ? estb : "",
+			      ca->mover_state.bytes_moved/1024LL,
+			      ca->mover_state.record_num);
+		    last_state_print = time(0);
+		}
+
+		if (ds == NDMP9_DATA_STATE_ACTIVE) {
+			count = 0;
+			continue;
+		}
+
+		/*
+		 * If DATA has halted, the show is over.
+		 */
+		if (ds == NDMP9_DATA_STATE_HALTED) {
+			ndmalogf (sess, 0, 2, "Operation done, cleaning up");
+
+			ndmca_monitor_get_post_backup_env (sess);
+
+			return 0;
+		}
+
+	}
+
+	ndmalogf (sess, 0, 0, "Operation monitoring mishandled, cancelling");
+	return -1;
+}
+
+
+int
 ndmca_backreco_startup (struct ndm_session *sess)
 {
-	int			rc;
+	struct ndm_control_agent *ca = &sess->control_acb;
+	int			rc = 0;
 
-	rc = ndmca_op_robot_startup (sess, 1);
+	if (!ca->job.tape_tcp)
+		rc = ndmca_op_robot_startup (sess, 1);
 	if (rc) return rc;
 
 	rc = ndmca_connect_data_agent(sess);
 	if (rc) {
 		ndmconn_destruct (sess->plumb.data);
 		return rc;
+	}
+
+	if (ca->job.tape_tcp) {
+		return 0;
 	}
 
 	rc = ndmca_connect_tape_agent(sess);
@@ -569,12 +696,18 @@ ndmca_monitor_startup (struct ndm_session *sess)
 
 	ndmalogf (sess, 0, 3, "Waiting for operation to start");
 
+	if (ca->job.tape_tcp)
+		return 0;
+
 	for (count = 0; count < 10; count++) {
 		if (ndmca_monitor_get_states (sess) < 0)
 		    break;
 
 		ds = ca->data_state.state;
-		ms = ca->mover_state.state;
+		if (!ca->job.tape_tcp)
+			ms = ca->mover_state.state;
+		else
+			ms = NDMP9_MOVER_STATE_ACTIVE;
 
 		if (ds == NDMP9_DATA_STATE_ACTIVE
 		 && ms == NDMP9_MOVER_STATE_ACTIVE) {
@@ -617,6 +750,9 @@ ndmca_monitor_shutdown (struct ndm_session *sess)
 	int			count;
 	int			finish;
 
+	if (ca->job.tape_tcp) {
+		return ndmca_monitor_shutdown_tape_tcp(sess);
+	}
 	ndmalogf (sess, 0, 3, "Waiting for operation to halt");
 
 	for (count = 0; count < 10; count++) {
@@ -712,16 +848,107 @@ ndmca_monitor_shutdown (struct ndm_session *sess)
 }
 
 int
+ndmca_monitor_shutdown_tape_tcp (struct ndm_session *sess)
+{
+	struct ndm_control_agent *ca = &sess->control_acb;
+	ndmp9_data_state	ds;
+	ndmp9_data_halt_reason	dhr;
+	ndmp9_mover_state	ms;
+	ndmp9_mover_halt_reason	mhr;
+	int			count;
+	int			finish;
+
+	ndmalogf (sess, 0, 3, "Waiting for operation to halt");
+
+	for (count = 0; count < 10; count++) {
+		ndmca_mon_wait_for_something (sess, 2);
+
+		if (ndmca_monitor_get_states (sess) < 0)
+		    break;
+
+#if 0
+		if (count > 2)
+			ndmca_mon_show_states(sess);
+#endif
+
+		ds = ca->data_state.state;
+
+		if (ds == NDMP9_DATA_STATE_HALTED) {
+		        dhr = ca->data_state.halt_reason;
+			break;
+		}
+
+		if (count > 2) {
+			if (ds != NDMP9_DATA_STATE_HALTED)
+				ndmca_data_abort(sess);
+		}
+	}
+
+	if (count >= 10) {
+		ndmalogf (sess, 0, 0,
+			"Operation did not halt, something wrong");
+	}
+
+	ndmalogf (sess, 0, 2, "Operation halted, stopping");
+
+	ds = ca->data_state.state;
+	dhr = ca->data_state.halt_reason;
+
+	if (ds == NDMP9_DATA_STATE_HALTED) {
+	    if (dhr == NDMP9_DATA_HALT_SUCCESSFUL) {
+		/* Successful operation */
+		ndmalogf (sess, 0, 0, "Operation ended OKAY");
+		finish = 0;
+	    } else {
+		/* Questionable success */
+		ndmalogf (sess, 0, 0, "Operation ended questionably");
+		finish = 1;
+	    }
+	} else {
+	    ndmalogf (sess, 0, 0, "Operation ended in failure");
+	    finish = -1;
+	}
+
+	ndmca_data_stop (sess);
+
+	for (count = 0; count < 10; count++) {
+		if (ndmca_monitor_get_states(sess) < 0)
+		    break;
+
+#if 0
+		if (count > 2)
+			ndmca_mon_show_states(sess);
+#endif
+
+		ds = ca->data_state.state;
+
+		if (ds == NDMP9_DATA_STATE_IDLE) {
+			break;
+		}
+	}
+
+	if (count >= 10) {
+		ndmalogf (sess, 0, 0,
+			"Operation did not stop, something wrong");
+		return -1;
+	}
+
+	return finish;
+}
+
+int
 ndmca_monitor_get_states (struct ndm_session *sess)
 {
+	struct ndm_control_agent *ca = &sess->control_acb;
 	int rc = 0;
-
 
 	if (ndmca_data_get_state (sess) < 0)
 	    rc = -1;
-	if (ndmca_mover_get_state (sess) < 0)
-	    rc = -1;
-	ndmca_tape_get_state_no_tattle (sess);
+	if (!ca->job.tape_tcp) {
+	    if (ndmca_mover_get_state (sess) < 0)
+		rc = -1;
+	    ndmca_tape_get_state_no_tattle (sess);
+	}
 
 	return rc;
 }

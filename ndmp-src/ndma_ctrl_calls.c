@@ -37,7 +37,6 @@
 
 #include "ndmagents.h"
 
-
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
 
 
@@ -102,9 +101,26 @@ ndmca_data_connect (struct ndm_session *sess)
 	struct ndmconn *	conn = sess->plumb.data;
 	struct ndm_control_agent *ca = &sess->control_acb;
 	int			rc;
+	ndmp9_addr		addr;
+
+	if (ca->job.tape_tcp) {
+		char *host;
+		char *port;
+		struct sockaddr_in sin;
+
+		host = ca->job.tape_tcp;
+		port = strchr(ca->job.tape_tcp, ':');
+		*port++ = '\0';
+		rc = ndmhost_lookup(host, &sin);
+		addr.addr_type = NDMP9_ADDR_TCP;
+		addr.ndmp9_addr_u.tcp_addr.ip_addr = ntohl(sin.sin_addr.s_addr);
+		addr.ndmp9_addr_u.tcp_addr.port = atoi(port);
+	} else {
+		addr = ca->mover_addr;
+	}
 
 	NDMC_WITH(ndmp9_data_connect, NDMP9VER)
-		request->addr = ca->mover_addr;
+		request->addr = addr;
 		rc = NDMC_CALL(conn);
 	NDMC_ENDWITH
 

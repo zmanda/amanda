@@ -114,6 +114,7 @@ char *help_text[] = {
 	"           -- how long to retry opening drive (await tape)",
 	"  -o use-eject=N",
 	"           -- use eject when unloading tapes (default 0)",
+        "  -o tape-tcp=hostname:port -- send the data directly to that tcp port.",
 	"CONTROL of ROBOT agent parameters",
 	"  -R AGENT -- robot agent if different than -T (see AGENT below)",
 	"  -m MEDIA -- add entry to media table (see below)",
@@ -654,6 +655,8 @@ handle_long_option (char *str)
 		o_no_time_stamps++;
 	} else if (strcmp (name, "config-file") == 0 && value) {
 		o_config_file = value;
+	} else if (strcmp (name, "tape-tcp") == 0 && value) {
+		o_tape_tcp = value;
 	} else {
 		if (value) value[-1] = '=';
 		error_byebye ("unknown/bad long option -o%s", str);

@@ -147,6 +147,7 @@ args_to_job (void)
 	job->tape_timeout = o_tape_timeout;
 	job->use_eject = o_use_eject;
 	job->tape_target = o_tape_scsi;
+	job->tape_tcp = o_tape_tcp;
 
 	/* ROBOT agent */
 	job->robot_agent = R_robot_agent;

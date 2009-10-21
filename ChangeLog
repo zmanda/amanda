@@ -1,3 +1,9 @@
+2009-10-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndma_cops_backreco.c, ndmp-src/ndma_ctrl_calls.c,
+	  ndmp-src/ndmagents.h, ndmp-src/ndmjob.h,
+	  ndmp-src/ndmjob_args.c, ndmp-src/ndmjob_job.c:
+		Add '-o tape-tcp=HOST:PORT' option.
+
 2009-10-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/Makefile.am ndmp-src/ndma_comm_proxy.c
 	  ndmp-src/ndma_comm_session.c ndmp-src/ndmagents.h

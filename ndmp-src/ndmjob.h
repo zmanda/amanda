@@ -55,6 +55,7 @@ GLOBAL int		n_noop;
 GLOBAL int		v_verbose;
 GLOBAL int		o_no_time_stamps;
 GLOBAL char *		o_config_file;
+GLOBAL char *		o_tape_tcp;
 GLOBAL char *		o_load_files_file;
 
 GLOBAL FILE *		log_fp;

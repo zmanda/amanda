@@ -218,6 +218,7 @@ struct ndm_job_param {
 	unsigned		record_size;	/* in bytes, 10k typical */
         unsigned long long	last_w_offset;	/* last window offset sent */
 	struct ndmscsi_target	tape_target;	/* unused for now */
+	char *			tape_tcp;	/* tcp direct */
 	NDM_FLAG_DECL(use_eject)		/* eject upon close (unload) */
 
 	struct ndmagent		robot_agent;	/* ROBOT AGENT host/pw */
