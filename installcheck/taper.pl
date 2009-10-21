@@ -299,7 +299,7 @@ $datestamp = "19780615010203";
 run_taper(4096, "multipart PORT-WRITE");
 like(taper_reply, qr/^TAPER-OK$/,
 	"got TAPER-OK") or die;
-taper_cmd("PORT-WRITE $handle localhost /var 0 $datestamp 524288 NULL 393216");
+taper_cmd("PORT-WRITE $handle localhost /var 0 $datestamp 524288 NULL 393216 AMANDA");
 like(taper_reply, qr/^PORT (\d+)$/,
 	"got PORT");
 ($port) = ($last_taper_reply =~ /^PORT (\d+)/);
@@ -374,7 +374,7 @@ $datestamp = "19750711095836";
 run_taper(1024, "PORT-WRITE retry on EOT (mem cache)");
 like(taper_reply, qr/^TAPER-OK$/,
 	"got TAPER-OK") or die;
-taper_cmd("PORT-WRITE $handle localhost /usr/local 0 $datestamp 786432 NULL 786432");
+taper_cmd("PORT-WRITE $handle localhost /usr/local 0 $datestamp 786432 NULL 786432 AMANDA");
 like(taper_reply, qr/^PORT (\d+)$/,
 	"got PORT");
 ($port) = ($last_taper_reply =~ /^PORT (\d+)/);
@@ -472,7 +472,7 @@ $datestamp = "20090427212500";
 run_taper(1024, "PORT-WRITE retry on EOT (disk cache)");
 like(taper_reply, qr/^TAPER-OK$/,
 	"got TAPER-OK") or die;
-taper_cmd("PORT-WRITE $handle localhost /usr/local 0 $datestamp 786432 \"$Installcheck::TMP\" 786432");
+taper_cmd("PORT-WRITE $handle localhost /usr/local 0 $datestamp 786432 \"$Installcheck::TMP\" 786432 AMANDA");
 like(taper_reply, qr/^PORT (\d+)$/,
 	"got PORT");
 ($port) = ($last_taper_reply =~ /^PORT (\d+)/);
@@ -524,7 +524,7 @@ $datestamp = "20090424173000";
 run_taper(1024, "PORT-WRITE failure on EOT (no cache)");
 like(taper_reply, qr/^TAPER-OK$/,
 	"got TAPER-OK") or die;
-taper_cmd("PORT-WRITE $handle localhost /var/log 0 $datestamp 0 NULL 0");
+taper_cmd("PORT-WRITE $handle localhost /var/log 0 $datestamp 0 NULL 0 AMANDA");
 like(taper_reply, qr/^PORT (\d+)$/,
 	"got PORT");
 ($port) = ($last_taper_reply =~ /^PORT (\d+)/);
@@ -592,7 +592,7 @@ $datestamp = "20200202222222";
 run_taper(4096, "multipart PORT-WRITE");
 like(taper_reply, qr/^TAPER-OK$/,
 	"got TAPER-OK") or die;
-taper_cmd("PORT-WRITE $handle localhost /sbin 0 $datestamp 10 NULL 655360");
+taper_cmd("PORT-WRITE $handle localhost /sbin 0 $datestamp 10 NULL 655360 AMANDA");
 like(taper_reply, qr/^PORT (\d+)$/,
 	"got PORT");
 ($port) = ($last_taper_reply =~ /^PORT (\d+)/);

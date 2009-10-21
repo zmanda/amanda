@@ -32,7 +32,7 @@ use constant START_TAPER => message("START-TAPER",
 
 use constant PORT_WRITE => message("PORT-WRITE",
     format => [ qw( handle hostname diskname level datestamp splitsize
-		    split_diskbuffer fallback_splitsize ) ],
+		    split_diskbuffer fallback_splitsize data_path ) ],
 );
 
 use constant FILE_WRITE => message("FILE-WRITE",

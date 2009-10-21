@@ -2006,6 +2006,7 @@ disklist_one(
     g_printf("        program \"%s\"\n", dp->program);
     if (dp->application)
 	g_printf("        application \"%s\"\n", dp->application);
+    g_printf("        data-path %s\n", data_path_to_string(dp->data_path));
     if (dp->exclude_file != NULL && dp->exclude_file->nb_element > 0) {
 	g_printf("        exclude file");
 	for(excl = dp->exclude_file->first; excl != NULL; excl = excl->next) {

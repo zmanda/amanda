@@ -175,6 +175,7 @@ amglue_add_constant(DUMPTYPE_INDEX, dumptype_key);
 amglue_add_constant(DUMPTYPE_APPLICATION, dumptype_key);
 amglue_add_constant(DUMPTYPE_SCRIPTLIST, dumptype_key);
 amglue_add_constant(DUMPTYPE_PROPERTY, dumptype_key);
+amglue_add_constant(DUMPTYPE_DATA_PATH, dumptype_key);
 amglue_copy_to_tag(dumptype_key, getconf);
 
 amglue_add_enum_tag_fns(interface_key);
@@ -294,6 +295,11 @@ amglue_add_constant(SEND_AMREPORT_ERROR, send_amreport_on_t);
 amglue_add_constant(SEND_AMREPORT_NEVER, send_amreport_on_t);
 amglue_copy_to_tag(send_amreport_on_t, getconf);
 
+amglue_add_enum_tag_fns(data_path_t);
+amglue_add_constant(DATA_PATH_AMANDA, data_path_t);
+amglue_add_constant(DATA_PATH_DIRECTTCP, data_path_t);
+amglue_copy_to_tag(data_path_t, getconf);
+
 /*
  * val_t typemaps
  */
@@ -308,10 +314,11 @@ amglue_copy_to_tag(send_amreport_on_t, getconf);
  *  - CONFTYPE_TIME -> IV (epoch timestamp)
  *  - CONFTYPE_COMPRESS, CONFTYPE_ENCRYPT, CONFTYPE_ESTIMATELIST, CONFTYPE_STRATEGY,
  *    CONFTYPE_TAPERALGO, CONFTYPE_PRIORITY, CONFTYPE_HOLDING, CONFTYPE_EXECUTE_ON,
- *    CONFTYPE_EXECUTE_WHERE, SEND_AMREPORT_ON -> IV (enums)
+ *    CONFTYPE_EXECUTE_WHERE, CONFTYPE_SEND_AMREPORT_ON,
+ *    CONFTYPE_DATA_PATH -> IV (enums)
  *  - CONFTYPE_RATE -> list of two NVs
  *  - CONFTYPE_INTRANGE -> list of two IVs
- *  - CONFTYPE_EXINCLUDE -> hashref with keys 'list' (listref), 'file' (listref), 
+ *  - CONFTYPE_EXINCLUDE -> hashref with keys 'list' (listref), 'file' (listref),
  *    and 'optional' (int)
  *  - CONFTYPE_PROPLIST -> hashref of hashref with keys 'append' (IV), 'priority' (IV),
  *							'values' (listref)
@@ -412,6 +419,7 @@ amglue_copy_to_tag(send_amreport_on_t, getconf);
 	    case CONFTYPE_EXECUTE_ON:
 	    case CONFTYPE_EXECUTE_WHERE:
 	    case CONFTYPE_SEND_AMREPORT_ON:
+	    case CONFTYPE_DATA_PATH:
 	    case CONFTYPE_INT:
 		$result = sv_2mortal(amglue_newSVi64(val_t__int($1)));
 		argvi++;

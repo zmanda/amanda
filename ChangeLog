@@ -1,4 +1,21 @@
 2009-10-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/alloc.c: Increase MAX_VSTRALLOC_ARGS.
+	* common-src/conffile.c: Add DATA-PATH config.
+	* common-src/conffile.h: Add DATA-PATH config.
+	* installcheck/taper.pl: Add AMANDA data-path.
+	* perl/Amanda/Config.swg: Add DATA-PATH config.
+	* server-src/amadmin.c (disklist_one): print data-path.
+	* server-src/diskfile.c: Add dp argument to xml_application.
+	* server-src/diskfile.h: New prototype for xml_application.
+	* server-src/amcheck.c: Use new xml_application.
+	* server-src/amindexd.c: Use new xml_application.
+	* server-src/driverio.c: Send data-path to the dumper and taper,
+				 Use new xml_application.
+	* server-src/dumper.c: Parse data-path, handle DIRECTTCP_DATA_PATH.
+	* server-src/planner.c: Use new xml_application.
+	* server-src/taper.pl: Parse data-path in PORT-WRITE command.
+
+2009-10-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndma_cops_backreco.c, ndmp-src/ndma_ctrl_calls.c,
 	  ndmp-src/ndmagents.h, ndmp-src/ndmjob.h,
 	  ndmp-src/ndmjob_args.c, ndmp-src/ndmjob_job.c:

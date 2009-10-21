@@ -1586,7 +1586,7 @@ main(
 
 		    application = lookup_application(dp->application);
 		    g_assert(application != NULL);
-		    xml_app = xml_application(application, their_features);
+		    xml_app = xml_application(dp, application, their_features);
 		    vstrextend(&l, xml_app, NULL);
 		    amfree(xml_app);
 		}
