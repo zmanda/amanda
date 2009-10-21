@@ -441,11 +441,15 @@ package PKG;
 }
 %enddef
 
-%define XFER_ELEMENT_SUBCLASS()
+%define XFER_ELEMENT_SUBCLASS_OF(PARENT)
 %perlcode {
 use vars qw(@ISA);
-@ISA = qw( Amanda::Xfer::Element );
+@ISA = qw( PARENT );
 }
+%enddef
+
+%define XFER_ELEMENT_SUBCLASS()
+XFER_ELEMENT_SUBCLASS_OF(Amanda::Xfer::Element)
 %enddef
 
 %define DECLARE_CONSTRUCTOR(C_CONSTRUCTOR)

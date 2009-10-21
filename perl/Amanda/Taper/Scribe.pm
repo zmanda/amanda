@@ -444,7 +444,7 @@ sub start_xfer {
     die "xfer already running"
 	if ($self->{'xfer'});
 
-    my $xdt = Amanda::Xfer::Dest::Taper->new(
+    my $xdt = Amanda::Xfer::Dest::Taper::Splitter->new(
 	$params{'max_memory'}, $part_size,
 	$use_mem_cache, $disk_cache_dirname);
 

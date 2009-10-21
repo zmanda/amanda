@@ -319,7 +319,7 @@ sub make_holding_files {
 # run this test in each of a few different cache permutations
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
-    Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 1, undef),
+    Amanda::Xfer::Dest::Taper::Splitter->new(128*1024, 1024*1024, 1, undef),
     [ "PART-1-OK", "PART-2-OK", "PART-3-FAILED",
       "PART-3-OK", "PART-4-OK", "PART-5-OK",
       "DONE" ],
@@ -344,7 +344,7 @@ test_taper_source(
 
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
-    Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 0, $disk_cache_dir),
+    Amanda::Xfer::Dest::Taper::Splitter->new(128*1024, 1024*1024, 0, $disk_cache_dir),
     [ "PART-1-OK", "PART-2-OK", "PART-3-FAILED",
       "PART-3-OK", "PART-4-OK", "PART-5-OK",
       "DONE" ],
@@ -369,7 +369,7 @@ test_taper_source(
 
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*2, $RANDOM_SEED),
-    Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 0, undef),
+    Amanda::Xfer::Dest::Taper::Splitter->new(128*1024, 1024*1024, 0, undef),
     [ "PART-1-OK", "PART-2-OK", "PART-3-OK",
       "DONE" ],
     "no cache (no failed parts; exact multiple of part size)");
@@ -389,7 +389,7 @@ test_taper_source(
 
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*2, $RANDOM_SEED),
-    Amanda::Xfer::Dest::Taper->new(128*1024, 0, 0, undef),
+    Amanda::Xfer::Dest::Taper::Splitter->new(128*1024, 0, 0, undef),
     [ "PART-1-OK", "DONE" ],
     "no splitting (fits on volume)");
 test_taper_source(
@@ -404,14 +404,14 @@ test_taper_source(
 
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
-    Amanda::Xfer::Dest::Taper->new(128*1024, 0, 0, undef),
+    Amanda::Xfer::Dest::Taper::Splitter->new(128*1024, 0, 0, undef),
     [ "PART-1-FAILED", "NOT-RETRYING", "CANCELLED", "DONE" ],
     "no splitting (doesn't fit on volume -> fails)",
     do_not_retry => 1);
 
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
-    Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 0, $disk_cache_dir),
+    Amanda::Xfer::Dest::Taper::Splitter->new(128*1024, 1024*1024, 0, $disk_cache_dir),
     [ "PART-1-OK", "PART-2-OK", "PART-3-FAILED",
       "PART-3-OK", "PART-4-OK", "CANCEL",
       "CANCELLED", "DONE" ],
@@ -422,7 +422,7 @@ test_taper_dest(
 $holding_file = make_holding_files(3);
 test_taper_dest(
     Amanda::Xfer::Source::Holding->new($holding_file),
-    Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 0, undef),
+    Amanda::Xfer::Dest::Taper::Splitter->new(128*1024, 1024*1024, 0, undef),
     [ "PART-1-OK", "PART-2-OK", "PART-3-FAILED",
       "PART-3-OK", "PART-4-OK", "PART-5-FAILED",
       "PART-5-OK", "PART-6-OK", "PART-7-OK",
@@ -495,7 +495,7 @@ sub test_taper_dest_cache_inform {
     $hdr->{'datestamp'} = "20080102030405";
 
     open($fh, "<", "$cache_file") or die("Could not open '$cache_file' for reading");
-    my $dest = Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 0, undef);
+    my $dest = Amanda::Xfer::Dest::Taper::Splitter->new(128*1024, 1024*1024, 0, undef);
     $xfer = Amanda::Xfer->new([
 	Amanda::Xfer::Source::Fd->new(fileno($fh)),
 	$dest,

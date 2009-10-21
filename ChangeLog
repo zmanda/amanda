@@ -1,3 +1,13 @@
+2009-10-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/Makefile.am device-src/xfer-dest-taper-splitter.c
+	  device-src/xfer-dest-taper.c device-src/xfer-device.h: make
+	  XferDestTaper an abstract base class, with XferDestTaperSplitter its
+	  only subclass (for now)
+	* perl/Amanda/Xfer.swg: SWIG it
+	* perl/Amanda/XferServer.swg: SWIG it
+	* installcheck/Amanda_Xfer_serveronly.pl: adjust tests
+	* perl/Amanda/Taper/Scribe.pm: use subclass
+
 2009-10-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Installcheck.pm: $0 in double quote "$0".
 

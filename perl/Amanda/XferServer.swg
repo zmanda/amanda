@@ -47,8 +47,8 @@ XferElement *xfer_dest_device(
 XferElement * xfer_source_holding(
     const char *filename);
 
-%newobject xfer_dest_taper;
-XferElement *xfer_dest_taper(
+%newobject xfer_dest_taper_splitter;
+XferElement *xfer_dest_taper_splitter(
     size_t max_memory,
     guint64 part_size,
     gboolean use_mem_cache,
@@ -95,9 +95,14 @@ DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_source_holding)
 
 PACKAGE(Amanda::Xfer::Dest::Taper)
 XFER_ELEMENT_SUBCLASS()
-DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_dest_taper)
 DECLARE_METHOD(start_part, Amanda::XferServer::xfer_dest_taper_start_part)
 DECLARE_METHOD(cache_inform, Amanda::XferServer::xfer_dest_taper_cache_inform)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Dest::Taper::Splitter)
+XFER_ELEMENT_SUBCLASS_OF(Amanda::Xfer::Dest::Taper)
+DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_dest_taper_splitter)
 
 /* ---- */
 
