@@ -1,3 +1,6 @@
+2009-10-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/Makefile.am (amlib_LTLIBRARIES): Fix order.
+
 2009-10-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/Makefile.am: split ndmp-src into libndmjob.la and
 	  libndmlib.la

@@ -160,8 +160,8 @@ libndmjlo = \
 	ndmos_common.c
 
 amlib_LTLIBRARIES = \
-	libndmjob.la \
-	libndmlib.la
+	libndmlib.la \
+	libndmjob.la
 
 libndmlib_la_SOURCES = \
 	$(libndmjll) \
