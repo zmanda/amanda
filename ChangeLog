@@ -1,3 +1,7 @@
+2009-10-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: get a device before starting
+	  the xfer
+
 2009-10-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/Makefile.am (amlib_LTLIBRARIES): Fix order.
 
