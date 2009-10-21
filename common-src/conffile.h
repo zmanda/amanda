@@ -420,7 +420,6 @@ typedef enum {
     CNF_RESERVED_TCP_PORT,
     CNF_UNRESERVED_TCP_PORT,
     CNF_HOLDINGDISK,
-    CNF_NDMP_PROXY_PORT,
     CNF_CNF /* sentinel */
 } confparm_key;
 

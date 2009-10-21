@@ -1186,19 +1186,6 @@ Debug level of the taper process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>ndmp-proxy-port</emphasis> int</term>
-  <listitem>
-<para>Default: <emphasis remap='I'>0</emphasis> (proxy disabled).
-  Amanda uses a proxy process to manage communication with NDMP servers.  This
-  is the port on which that proxy listens for local connections from other
-  Amanda processes.  It should be set to an unused TCP port on the Amanda
-  server, and should be a different port for each active Amanda configuration
-  on the server.  The port is only used locally.
-  </para>
-  </listitem>
-  </varlistentry>
-
-  <varlistentry>
   <term><emphasis remap='B'>flush-threshold-dumped</emphasis> int</term>
   <listitem>
 <para>Default: <emphasis remap='I'>0</emphasis>.

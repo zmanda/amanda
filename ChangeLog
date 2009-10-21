@@ -1,4 +1,16 @@
 2009-10-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/Makefile.am ndmp-src/ndma_comm_proxy.c
+	  ndmp-src/ndma_comm_session.c ndmp-src/ndmagents.h
+	  ndmp-src/ndmp-proxy_main.c: remove ndmp-proxy
+	* common-src/ndmp-proxy.c common-src/ndmp-proxy.h
+	  common-src/Makefile.am: remove ndmp-proxy.*
+	* man/xml-source/amanda.conf.5.xml perl/Amanda/Config.swg
+	  common-src/conffile.h common-src/conffile.c: remove ndmp-proxy-port
+	* installcheck/Amanda_NDMP.pl installcheck/Makefile.am: remove test
+	* perl/Makefile.am perl/Amanda/NDMP.swg perl/Amanda/NDMP.pod: remove
+	  module
+
+2009-10-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: get a device before starting
 	  the xfer
 

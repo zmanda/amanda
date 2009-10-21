@@ -308,17 +308,6 @@ ndma_session_quantum (struct ndm_session *sess, int max_delay_secs)
 	}
 #endif /* !NDMOS_OPTION_NO_DATA_AGENT */
 #endif
-	/*
-	 * Add proxy channel to channel table
-	 */
-	if (sess->listen_chan.fd > 0)
-		chtab[n_chtab++] = &sess->listen_chan;
-	if (sess->proxy_device_chan && sess->proxy_device_chan->ndm.fd > 0)
-		chtab[n_chtab++] = &sess->proxy_device_chan->ndm;
-	if (sess->proxy_application_chan && sess->proxy_application_chan->ndm.fd > 0)
-		chtab[n_chtab++] = &sess->proxy_application_chan->ndm;
-	if (sess->proxy_changer_chan && sess->proxy_changer_chan->ndm.fd > 0)
-		chtab[n_chtab++] = &sess->proxy_changer_chan->ndm;
 
 	/*
 	 * Block awaiting ready I/O. Many channel buffers
@@ -355,12 +344,6 @@ ndma_session_quantum (struct ndm_session *sess, int max_delay_secs)
 			ndma_dispatch_conn (sess, conn);
 		}
 	}
-
-	/*
-	 * Dispatch proxy activity (this ends up doing nothing when running
-	 * as ndmjob)
-	 */
-	ndma_dispatch_proxy(sess);
 
 	return 0;
 }

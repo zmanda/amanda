@@ -74,8 +74,7 @@ mock_tests = \
 	mock_mtx
 
 ndmp_tests = \
-	Amanda_Device_ndmp \
-	Amanda_NDMP
+	Amanda_Device_ndmp
 
 # mock scripts
 mocks = \
