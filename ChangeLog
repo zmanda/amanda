@@ -1,4 +1,13 @@
 2009-10-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Config.swg: Swig data_path_from_string.
+	* server-src/diskfile.c: Add dirrecti-tcp property to application.
+	* server-src/diskfile.h (disk_s): Add directtcp.
+	* server-src/driver.c: handle DIRECTTCP_PORT reply form taper.
+	* server-src/server_util.c (cmdstr): Add "DIRECTTCP-PORT".
+	* server-src/server_util.h: Add DIRECTTCP_PORT.
+	* server-src/taper.pl: Reply with DIRECTTCP-PORT.
+
+2009-10-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/Makefile.am: Add version info in libndmlib and libndmjob.
 
 2009-10-21  Jean-Louis Martineau <martineau@zmanda.com>

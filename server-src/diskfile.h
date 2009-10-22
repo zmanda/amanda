@@ -119,6 +119,7 @@ typedef struct disk_s {
     int		todo;
     char       *application;
     identlist_t pp_scriptlist;
+    char       *directtcp;
     void	*up;			/* generic user pointer */
 } disk_t;
 

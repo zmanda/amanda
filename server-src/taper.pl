@@ -94,6 +94,10 @@ use constant PORT => message("PORT",
     format => [ qw( port ) ],
 );
 
+use constant DIRECTTCP_PORT => message("DIRECTTCP-PORT",
+    format => [ qw( port hostport) ],
+);
+
 use constant BAD_COMMAND => message("BAD-COMMAND",
     format => [ qw( message ) ],
 );
@@ -449,6 +453,7 @@ sub msg_PORT_WRITE {
     $self->_assert_in_state("idle") or return;
     $self->{'state'} = 'writing';
     $self->{'handle'} = $params{'handle'};
+    $self->{'data_path'} = Amanda::Config::data_path_from_string($params{'data_path'});
     $self->{'doing_port_write'} = 1;
 
     # set up so that an incoming connection on the listening socket
@@ -498,8 +503,14 @@ sub msg_PORT_WRITE {
     };
 
     # tell the driver which port we're listening on
-    $self->{'proto'}->send(main::Protocol::PORT,
-	port => $self->{'listen_socket'}->sockport());
+    if ($self->{'data_path'} == $Amanda::Config::DATA_PATH_DIRECTTCP) {
+        $self->{'proto'}->send(main::Protocol::DIRECTTCP_PORT,
+	    port => $self->{'listen_socket'}->sockport(),
+	    hostport => "localhost:33333");
+    } else {
+        $self->{'proto'}->send(main::Protocol::PORT,
+	    port => $self->{'listen_socket'}->sockport());
+    }
 }
 
 sub msg_QUIT {

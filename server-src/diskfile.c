@@ -1821,6 +1821,16 @@ xml_application(
 				    "      ", b64data_path, "\n",
 				    "      ", b64data_path_value, "\n",
 				    "    </property>\n", NULL);
+	if (dp->directtcp) {
+	    char *b64direct_tcp = amxml_format_tag("name",
+						   stralloc("direct-tcp"));
+	    char *b64direct_tcp_value = amxml_format_tag("value",
+						   stralloc(dp->directtcp));
+	    vstrextend(&xml_app.result, "    <property>\n",
+					"      ", b64direct_tcp, "\n",
+					"      ", b64direct_tcp_value, "\n",
+					"    </property>\n", NULL);
+	}
     }
 
     vstrextend(&xml_app.result, "  </backup-program>\n", NULL);

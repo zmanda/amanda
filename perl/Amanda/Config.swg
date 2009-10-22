@@ -507,6 +507,8 @@ amglue_copy_to_tag(data_path_t, getconf);
     g_strfreev($1);
 }
 
+data_path_t data_path_from_string(char *data);
+
 val_t *getconf(confparm_key key);
 gboolean getconf_seen(confparm_key key);
 val_t *getconf_byname(char *key);

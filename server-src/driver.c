@@ -3154,7 +3154,7 @@ dump_to_tape(
 
     taper_cmd(PORT_WRITE, dp, NULL, sched(dp)->level, sched(dp)->datestamp);
     cmd = getresult(taper, 1, &result_argc, &result_argv);
-    if(cmd != PORT) {
+    if (dp->data_path == DATA_PATH_AMANDA && cmd != PORT) {
 	g_printf(_("driver: did not get PORT from taper for %s:%s\n"),
 		dp->host->hostname, qname);
 	fflush(stdout);
@@ -3163,10 +3163,24 @@ dump_to_tape(
         amfree(qname);
 	return;	/* fatal problem */
     }
+    if (dp->data_path == DATA_PATH_DIRECTTCP && cmd != DIRECTTCP_PORT) {
+	g_printf(_("driver: did not get DIRECTTCP_PORT from taper for %s:%s\n"),
+		dp->host->hostname, qname);
+	fflush(stdout);
+	log_add(L_WARNING, _("driver: did not get DIRECTTCP_PORT from taper for %s:%s.\n"),
+	        dp->host->hostname, qname);
+        amfree(qname);
+	return;	/* fatal problem */
+    }
     amfree(qname);
 
     /* copy port number */
     dumper->output_port = atoi(result_argv[1]);
+    if (dp->data_path == DATA_PATH_DIRECTTCP) {
+	dp->directtcp = stralloc(result_argv[2]);
+    } else {
+	dp->directtcp = NULL;
+    }
 
     dumper->dp = dp;
     dumper->chunker = NULL;
@@ -3187,6 +3201,7 @@ dump_to_tape(
     /* tell the dumper to dump to a port */
     dumper_cmd(dumper, PORT_DUMP, dp, NULL);
     dp->host->start_t = time(NULL) + 15;
+    amfree(dp->directtcp);
 
     /* update statistics & print state */
 
