@@ -1,3 +1,8 @@
+2009-10-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Device_ndmp.pl: use 127.0.0.1, not localhost
+	* installcheck/Installcheck.pm: close SOCK after using it
+	* installcheck/Installcheck/Mock.pm: handle kernel bug in getppid()
+
 2009-10-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Config.swg: Swig data_path_from_string.
 	* server-src/diskfile.c: Add dirrecti-tcp property to application.

@@ -98,6 +98,7 @@ sub get_unused_port {
 	next unless socket(SOCK, PF_INET, SOCK_STREAM, $tcp);
 	next unless setsockopt(SOCK, SOL_SOCKET, SO_REUSEADDR, pack("l", 1));
 	next unless bind(SOCK, sockaddr_in($port, INADDR_ANY));
+	close(SOCK);
 
 	# it passed the gauntlet of tests, so the port is good
 	push @used_ports, $port;

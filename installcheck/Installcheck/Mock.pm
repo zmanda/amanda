@@ -95,10 +95,18 @@ sub run_ndmjob {
 	    "$amlibexecdir/ndmjob", "-d5", "-o", "daemon",
 		    "-T.", "-f", $tapefile,
 		    "-p", $port);
+
 	# now wait for our parent process to die
 	while (1) {
 	    sleep(1);
+
+	    # parent is dead if our parent pid is 1
 	    last if (getppid() == 1);
+
+	    # but older versions of Linux don't change the result of getppid, so
+	    # test to see if the process is still alive.
+	    last if (!kill(0, getppid()));
+
 	    if (POSIX::waitpid($ndmjob_pid, POSIX::WNOHANG)) {
 		print STDERR "***** ndmjob exited prematurely\n";
 		last;

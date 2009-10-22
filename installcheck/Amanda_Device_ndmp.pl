@@ -43,19 +43,19 @@ if ($cfg_result != $CFGERR_OK) {
 my $tapefile = Installcheck::Mock::run_ndmjob($ndmp_port);
 pass("started ndmjob in daemon mode");
 
-my $dev = Amanda::Device->new("ndmp:localhost:9i1\@foo");
+my $dev = Amanda::Device->new("ndmp:127.0.0.1:9i1\@foo");
 isnt($dev->status(), $DEVICE_STATUS_SUCCESS,
     "creation of an ndmp device fails with invalid port");
 
-$dev = Amanda::Device->new("ndmp:localhost:90000\@foo");
+$dev = Amanda::Device->new("ndmp:127.0.0.1:90000\@foo");
 isnt($dev->status(), $DEVICE_STATUS_SUCCESS,
     "creation of an ndmp device fails with too-large port");
 
-$dev = Amanda::Device->new("ndmp:localhost:$ndmp_port");
+$dev = Amanda::Device->new("ndmp:127.0.0.1:$ndmp_port");
 isnt($dev->status(), $DEVICE_STATUS_SUCCESS,
     "creation of an ndmp device fails without ..\@device_name");
 
-$dev = Amanda::Device->new("ndmp:localhost:$ndmp_port\@$tapefile");
+$dev = Amanda::Device->new("ndmp:127.0.0.1:$ndmp_port\@$tapefile");
 is($dev->status(), $DEVICE_STATUS_SUCCESS,
     "creation of an ndmp device succeeds with correct syntax");
 
@@ -96,7 +96,7 @@ is($dev->volume_label, "TEST1",
 ## try about the same thing, but open a new device in between
 
 # Write a label
-$dev = Amanda::Device->new("ndmp:localhost:$ndmp_port\@$tapefile");
+$dev = Amanda::Device->new("ndmp:127.0.0.1:$ndmp_port\@$tapefile");
 is($dev->status(), $DEVICE_STATUS_SUCCESS,
     "creation of an ndmp device succeeds with correct syntax");
 $dev->property_set("ndmp_username", "ndmp");
@@ -112,7 +112,7 @@ ok($dev->finish(),
     or diag $dev->error_or_status();
 
 # Read the label with a new device.
-$dev = Amanda::Device->new("ndmp:localhost:$ndmp_port\@$tapefile");
+$dev = Amanda::Device->new("ndmp:127.0.0.1:$ndmp_port\@$tapefile");
 is($dev->status(), $DEVICE_STATUS_SUCCESS,
     "creation of an ndmp device succeeds with correct syntax");
 $dev->property_set("ndmp_username", "ndmp");
