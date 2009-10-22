@@ -1,4 +1,9 @@
 2009-10-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-dest-taper-splitter.c: slab_source_prebuffer is
+	  now always called with the slab_mutex held; both invocations of
+	  the function guarantee this.
+
+2009-10-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Device_ndmp.pl: use 127.0.0.1, not localhost
 	* installcheck/Installcheck.pm: close SOCK after using it
 	* installcheck/Installcheck/Mock.pm: handle kernel bug in getppid()

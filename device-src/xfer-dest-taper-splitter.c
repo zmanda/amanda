@@ -635,7 +635,7 @@ typedef struct slab_source_state {
     gsize slice_remaining;
 } slab_source_state;
 
-/* Called without the slab_mutex held, this function pre-buffers enough data into the slab
+/* Called with the slab_mutex held, this function pre-buffers enough data into the slab
  * train to meet the device's streaming needs. */
 static gboolean
 slab_source_prebuffer(
@@ -649,8 +649,6 @@ slab_source_prebuffer(
     /* pre-buffering is not necessary if we're reading from a disk cache */
     if (self->retry_part && self->part_slices)
 	return TRUE;
-
-    g_mutex_lock(self->slab_mutex);
 
     /* pre-buffering means waiting until we have at least prebuffer_slabs in the
      * slab train ahead of the device_slab, or the newest slab is at EOF. */
@@ -671,8 +669,6 @@ slab_source_prebuffer(
 	g_cond_wait(self->slab_cond, self->slab_mutex);
     }
     DBG(9, "done waiting");
-
-    g_mutex_unlock(self->slab_mutex);
 
     if (elt->cancelled) {
 	self->last_part_successful = FALSE;
@@ -747,7 +743,12 @@ slab_source_setup(
     /* if the streaming mode requires it, pre-buffer */
     if (self->streaming == STREAMING_REQUIREMENT_DESIRED ||
 	self->streaming == STREAMING_REQUIREMENT_REQUIRED) {
-	if (!slab_source_prebuffer(self))
+	gboolean prebuffer_ok;
+
+	g_mutex_lock(self->slab_mutex);
+	prebuffer_ok = slab_source_prebuffer(self);
+	g_mutex_unlock(self->slab_mutex);
+	if (!prebuffer_ok)
 	    return FALSE;
     }
 
