@@ -162,6 +162,7 @@ libndmjlo = \
 	ndmos.c
 	ndmos_common.c
 
+libndmlib_la_LDFLAGS = -release $(VERSION)
 libndmlib_la_SOURCES = \
 	$(libndmjll) \
 	$(libndmjlp) \
@@ -172,6 +173,7 @@ libndmlib_la_SOURCES = \
 libndmjob_la_SOURCES = \
 	$(libndmjla) \
 	$(libndmjlr)
+libndmjob_la_LDFLAGS = -release $(VERSION)
 libndmjob_la_LIBADD = libndmlib.la
 
 ##

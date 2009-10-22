@@ -1,3 +1,6 @@
+2009-10-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/Makefile.am: Add version info in libndmlib and libndmjob.
+
 2009-10-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/alloc.c: Increase MAX_VSTRALLOC_ARGS.
 	* common-src/conffile.c: Add DATA-PATH config.
