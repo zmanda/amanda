@@ -1,3 +1,6 @@
+2009-10-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/tape-device.c: handle EROFS in open.
+
 2009-10-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/tape-device.h: add missing field
 
