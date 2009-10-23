@@ -808,12 +808,21 @@ backup_support_option(
 	} else if (strncmp(line,"RECOVER-MODE ", 13) == 0) {
 	    if (strcasecmp(line+13, "SMB") == 0)
 		bsu->smb_recover_mode = 1;
+	} else if (strncmp(line,"DATA-PATH ", 10) == 0) {
+	    if (strcasecmp(line+10, "AMANDA") == 0)
+		bsu->data_path_set |= DATA_PATH_AMANDA;
+	    else if (strcasecmp(line+10, "DIRECTTCP") == 0)
+		bsu->data_path_set |= DATA_PATH_DIRECTTCP;
 	} else {
 	    dbprintf(_("Invalid support line: %s\n"), line);
 	}
 	amfree(line);
     }
     aclose(supportout);
+
+    if (bsu->data_path_set == 0)
+	bsu->data_path_set = DATA_PATH_AMANDA;
+
     streamerr = fdopen(supporterr, "r");
     if (!streamerr) {
 	error(_("Error opening pipe to child: %s"), strerror(errno));

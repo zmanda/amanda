@@ -169,8 +169,8 @@ typedef enum {
 } send_amreport_t;
 
 typedef enum {
-    DATA_PATH_AMANDA,
-    DATA_PATH_DIRECTTCP,
+    DATA_PATH_AMANDA    = 1<<0,
+    DATA_PATH_DIRECTTCP = 1<<1,
 } data_path_t;
 
 typedef struct exinclude_s {
