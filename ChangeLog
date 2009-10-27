@@ -1,4 +1,11 @@
 2009-10-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* packaging/deb/rules, packaging/deb/buildpkg,
+	  packaging/rpm/buildpkg,
+	  packaging/rpm/amanda.spec: Change version to 2.6.1p2.
+	* NEWS: Add news for 2.6.1p2.
+	* configure.in: Change version to 2.6.1p2.
+
+2009-10-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Application/Zfs.pm: Use diskname for the snapshot name.
 
 2009-10-23  Jean-Louis Martineau <martineau@zmanda.com>
