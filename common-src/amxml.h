@@ -80,6 +80,8 @@ typedef struct a_dle_s {
     int     include_optional;
     proplist_t application_property;
     scriptlist_t scriptlist;
+    data_path_t  data_path;
+    GSList      *directtcp_list;
     struct a_dle_s *next;
 } dle_t;
 

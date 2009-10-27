@@ -1574,6 +1574,18 @@ start_host(
 				    "specify a diskdevice in the disklist"	
 				    " or don't specify a diskdevice in the disklist.\n"));	
 		}
+
+		if (dp->data_path != DATA_PATH_AMANDA &&
+		    !am_has_feature(hostp->features, fe_xml_data_path)) {
+		    g_fprintf(outf,
+			      _("ERROR: Client %s does not support %s data-path\n"),
+			      hostp->hostname,  data_path_to_string(dp->data_path));
+		} else if (dp->data_path == DATA_PATH_DIRECTTCP &&
+		    !am_has_feature(hostp->features, fe_xml_directtcp_list)) {
+		    g_fprintf(outf,
+			      _("ERROR: Client %s does not support directtcp data-path\n"),
+			      hostp->hostname);
+		}
 	    }
 	    if (dp->program &&
 	        (strcmp(dp->program,"DUMP") == 0 || 

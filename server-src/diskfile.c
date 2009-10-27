@@ -1298,6 +1298,7 @@ xml_optionstr(
     char *decrypt_opt = stralloc("");
     char *record_opt = stralloc("");
     char *index_opt = stralloc("");
+    char *data_path_opt = stralloc("");
     char *exclude = stralloc("");
     char *exclude_file = NULL;
     char *exclude_list = NULL;
@@ -1505,6 +1506,31 @@ xml_optionstr(
 	}
     }
 
+    if (am_has_feature(their_features, fe_xml_data_path)) {
+	switch(dp->data_path) {
+	case DATA_PATH_AMANDA:
+	    data_path_opt = stralloc("  <datapath>AMANDA</datapath>\n");
+	    break;
+	case DATA_PATH_DIRECTTCP:
+	  { GSList *directtcp;
+	    if (am_has_feature(their_features, fe_xml_directtcp_list)) {
+	        data_path_opt = stralloc("  <datapath>DIRECTTCP");
+		for (directtcp = dp->directtcp_list; directtcp != NULL;
+						directtcp = directtcp->next) {
+		    char *b64value = amxml_format_tag("directtcp",
+							  directtcp->data);
+		    vstrextend(&data_path_opt, "\n    ", b64value, NULL);
+		    amfree(b64value);
+		}
+		if (dp->directtcp_list)
+		    strappend(data_path_opt, "\n  ");
+	        strappend(data_path_opt, "</datapath>\n");
+	    }
+	  }
+	  break;
+	}
+    }
+
     exclude_file = stralloc("");
     nb_exclude_file = 0;
     if(dp->exclude_file != NULL && dp->exclude_file->nb_element > 0) {
@@ -1665,6 +1691,7 @@ xml_optionstr(
 		       encrypt_opt,
 		       record_opt,
 		       index_opt,
+		       data_path_opt,
 		       exclude,
 		       include,
 		       script_opt,
@@ -1672,6 +1699,7 @@ xml_optionstr(
 
     amfree(qdpname);
     amfree(auth_opt);
+    amfree(data_path_opt);
     amfree(exclude);
     amfree(exclude_list);
     amfree(exclude_file);
@@ -1793,7 +1821,7 @@ static void xml_property(
 
 char *
 xml_application(
-    disk_t        *dp,
+    disk_t        *dp G_GNUC_UNUSED,
     application_t *application,
     am_feature_t  *their_features)
 {
@@ -1811,27 +1839,6 @@ xml_application(
 			NULL);
     proplist = application_get_property(application);
     g_hash_table_foreach(proplist, xml_property, &xml_app);
-
-    /* Add data-path property to application */
-    if (dp->data_path == DATA_PATH_DIRECTTCP) {
-	char *b64data_path = amxml_format_tag("name", stralloc("data-path"));
-	char *b64data_path_value = amxml_format_tag("value",
-						    stralloc("DIRECTTCP"));
-	vstrextend(&xml_app.result, "    <property>\n",
-				    "      ", b64data_path, "\n",
-				    "      ", b64data_path_value, "\n",
-				    "    </property>\n", NULL);
-	if (dp->directtcp) {
-	    char *b64direct_tcp = amxml_format_tag("name",
-						   stralloc("direct-tcp"));
-	    char *b64direct_tcp_value = amxml_format_tag("value",
-						   stralloc(dp->directtcp));
-	    vstrextend(&xml_app.result, "    <property>\n",
-					"      ", b64direct_tcp, "\n",
-					"      ", b64direct_tcp_value, "\n",
-					"    </property>\n", NULL);
-	}
-    }
 
     vstrextend(&xml_app.result, "  </backup-program>\n", NULL);
 

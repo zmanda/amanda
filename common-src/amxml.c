@@ -48,6 +48,7 @@ typedef struct amgxml_s {
     int      has_compress;
     int      has_encrypt;
     int      has_kencrypt;
+    int      has_datapath;
     int      has_exclude;
     int      has_include;
     int      has_index;
@@ -105,6 +106,8 @@ init_dle(
     dle->include_optional = 0;
     dle->application_property = NULL;
     dle->scriptlist = NULL;
+    dle->data_path = 0;
+    dle->directtcp_list = NULL;
     dle->next = NULL;
 }
 
@@ -192,6 +195,7 @@ amstart_element(
 	data_user->has_compress = 0;
 	data_user->has_encrypt = 0;
 	data_user->has_kencrypt = 0;
+	data_user->has_datapath = 0;
 	data_user->has_exclude = 0;
 	data_user->has_include = 0;
 	data_user->has_index = 0;
@@ -219,6 +223,7 @@ amstart_element(
 	      strcmp(element_name, "compress"      ) == 0 ||
 	      strcmp(element_name, "encrypt"       ) == 0 ||
 	      strcmp(element_name, "kencrypt"      ) == 0 ||
+	      strcmp(element_name, "datapath"      ) == 0 ||
 	      strcmp(element_name, "exclude"       ) == 0 ||
 	      strcmp(element_name, "include"       ) == 0) {
 	if (strcmp(last_element_name, "dle") != 0) {
@@ -239,6 +244,7 @@ amstart_element(
 	    (strcmp(element_name, "compress"      ) == 0 && data_user->has_compress) ||
 	    (strcmp(element_name, "encrypt"       ) == 0 && data_user->has_encrypt) ||
 	    (strcmp(element_name, "kencrypt"      ) == 0 && data_user->has_kencrypt) ||
+	    (strcmp(element_name, "datapath"      ) == 0 && data_user->has_datapath) ||
 	    (strcmp(element_name, "exclude"       ) == 0 && data_user->has_exclude) ||
 	    (strcmp(element_name, "include"       ) == 0 && data_user->has_include)) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
@@ -252,7 +258,8 @@ amstart_element(
 	if (strcmp(element_name, "index"         ) == 0) data_user->has_index          = 1;
 	if (strcmp(element_name, "compress"      ) == 0) data_user->has_compress       = 1;
 	if (strcmp(element_name, "encrypt"       ) == 0) data_user->has_encrypt        = 1;
-	if (strcmp(element_name, "kencrypt"       ) == 0) data_user->has_kencrypt        = 1;
+	if (strcmp(element_name, "kencrypt"      ) == 0) data_user->has_kencrypt       = 1;
+	if (strcmp(element_name, "datapath"      ) == 0) data_user->has_datapath       = 1;
 	if (strcmp(element_name, "exclude"       ) == 0) data_user->has_exclude        = 1;
 	if (strcmp(element_name, "include"       ) == 0) data_user->has_include        = 1;
 	if (strcmp(element_name, "exclude") == 0 || strcmp(element_name, "include") == 0)
@@ -382,6 +389,12 @@ amstart_element(
 	data_user->has_plugin = 0;
     } else if (strcmp(element_name, "execute_on") == 0) {
     } else if (strcmp(element_name, "execute_where") == 0) {
+    } else if (strcmp(element_name, "directtcp") == 0) {
+	if (strcmp(last_element_name, "datapath") != 0) {
+	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
+			"XML: Invalid %s element", element_name);
+	    return;
+	}
     } else {
 	g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 		    "XML: Invalid %s element", element_name);
@@ -501,6 +514,14 @@ amtext(
     if (data_user->raw) {
 	amfree(tt);
 	tt = stralloc(data_user->raw);
+    } else if (strlen(tt) > 0) {
+	/* remove trailing space */
+	char *ttt = tt + strlen(tt) - 1;
+	while(*ttt == ' ') {
+	    ttt--;
+	}
+	ttt++;
+	*ttt = '\0';
     }
 
     //check if it is only space
@@ -843,6 +864,18 @@ amtext(
 	} else {
 	    data_user->script->execute_where = ES_SERVER;
 	}
+    } else if(strcmp(last_element_name, "datapath") == 0) {
+	if (strcmp(tt, "AMANDA") == 0) {
+	    dle->data_path = DATA_PATH_AMANDA;
+	} else if (strcmp(tt, "DIRECTTCP") == 0) {
+	    dle->data_path = DATA_PATH_DIRECTTCP;
+	} else {
+	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
+			"XML: bad datapath value '%s'", tt);
+	}
+	amfree(tt);
+    } else if(strcmp(last_element_name, "directtcp") == 0) {
+	dle->directtcp_list = g_slist_append(dle->directtcp_list, tt);
     } else {
 	g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 		    "XML: amtext not defined for '%s'", last_element_name);
@@ -855,7 +888,7 @@ amxml_parse_node_CHAR(
     char *txt,
     char **errmsg)
 {
-    amgxml_t             amgxml = {NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+    amgxml_t             amgxml = {NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
     GMarkupParser        parser = {&amstart_element, &amend_element, &amtext,
 				   NULL, NULL};
     GMarkupParseFlags    flags = 0;
@@ -884,7 +917,7 @@ amxml_parse_node_FILE(
     FILE *file,
     char **errmsg)
 {
-    amgxml_t             amgxml = {NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+    amgxml_t             amgxml = {NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
     GMarkupParser        parser = {&amstart_element, &amend_element, &amtext,
 				   NULL, NULL};
     GMarkupParseFlags    flags = 0;

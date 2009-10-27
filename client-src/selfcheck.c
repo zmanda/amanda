@@ -725,6 +725,16 @@ check_disk(
 	    goto common_exit;
 	}
 
+	if (dle->data_path == DATA_PATH_AMANDA &&
+	    (bsu->data_path_set & DATA_PATH_AMANDA)==0) {
+	    g_printf("ERROR application %s doesn't support amanda data-path\n",
+		     dle->program);
+	}
+	if (dle->data_path == DATA_PATH_DIRECTTCP &&
+	    (bsu->data_path_set & DATA_PATH_DIRECTTCP)==0) {
+	    g_printf("ERROR application %s doesn't support directtcp data-path\n",
+		     dle->program);
+	}
 	if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE &&
 			    !bsu->calcsize) {
 	    g_printf("ERROR application %s doesn't support calcsize estimate\n",

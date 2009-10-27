@@ -683,6 +683,19 @@ application_property_add_to_argv(
 	    g_ptr_array_add(argv_ptr, stralloc("--exclude-optional"));
 	    g_ptr_array_add(argv_ptr, stralloc("yes"));
 	}
+
+	if (dle->data_path == DATA_PATH_DIRECTTCP &&
+	    (bsu->data_path_set & DATA_PATH_DIRECTTCP) == 0) {
+	    GSList *directtcp;
+
+	    g_ptr_array_add(argv_ptr, stralloc("--data-path"));
+	    g_ptr_array_add(argv_ptr, stralloc("directtcp"));
+	    for (directtcp = dle->directtcp_list; directtcp != NULL;
+						  directtcp = directtcp->next) {
+		g_ptr_array_add(argv_ptr, stralloc("--direct-tcp"));
+		g_ptr_array_add(argv_ptr, stralloc(directtcp->data));
+	    }
+	}
     }
 
     g_hash_table_foreach(dle->application_property,

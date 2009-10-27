@@ -861,6 +861,17 @@ application_api_calc_estimate(
 	g_ptr_array_free(errarray, TRUE);
     }
 
+    if (est->dle->data_path == DATA_PATH_AMANDA &&
+	(bsu->data_path_set & DATA_PATH_AMANDA)==0) {
+	g_printf("%s %d ERROR application %s doesn't support amanda data-path\n", est->qamname, 0, est->dle->program);
+	return;
+    }
+    if (est->dle->data_path == DATA_PATH_DIRECTTCP &&
+	(bsu->data_path_set & DATA_PATH_DIRECTTCP)==0) {
+	g_printf("%s %d ERROR application %s doesn't support directtcp data-path\n", est->qamname, 0, est->dle->program);
+	return;
+    }
+
     /* find estimate method to use */
     for (el = est->dle->estimatelist; el != NULL; el = el->next) {
 	estimate = (estimate_t)GPOINTER_TO_INT(el->data);

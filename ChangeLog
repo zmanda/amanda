@@ -1,4 +1,23 @@
 2009-10-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c: Add data-path and directtcp argument to
+				    application
+	* client-src/selfcheck.c: Check application support the requested
+				  data-path
+	* client-src/sendsize.c: Check application support the requested
+				 data-path
+	* common-src/amfeatures.h: Add fe_xml_data_path and
+				   fe_xml_directtcp_list.
+	* common-src/amfeatures.c: Add fe_xml_data_path and
+				   fe_xml_directtcp_list.
+	* common-src/amxml.c: Parse <datapath> and <directtcp> tag.
+	* common-src/amxml.h (dle_t): Add data_path and directtcp_list.
+	* server-src/amcheck.c: Check client accpet datapath and directtcp tag
+				in xml.
+	* server-src/diskfile.c: Add datapath and directtcp tag
+	* server-src/diskfile.h (disk_t): Add directtcp_list.
+	* server-src/driver.c: Set dp->directtcp_list.
+
+2009-10-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c, application-src/ampgsql.pl,
 	  application-src/amraw.pl, application-src/amsamba.pl,
 	  application-src/amstar.c, application-src/amsuntar.pl,

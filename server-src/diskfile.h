@@ -113,13 +113,12 @@ typedef struct disk_s {
     int		kencrypt;
     int		index;			/* produce an index ? */
     data_path_t	data_path;		/* defined data-path */
-    data_path_t	use_data_path;		/* data-path to use */
+    GSList     *directtcp_list;		/* list of address to use */
     int		spindle;		/* spindle # - for parallel dumps */
     int		inprogress;		/* being dumped now? */
     int		todo;
     char       *application;
     identlist_t pp_scriptlist;
-    char       *directtcp;
     void	*up;			/* generic user pointer */
 } disk_t;
 

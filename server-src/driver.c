@@ -3177,9 +3177,10 @@ dump_to_tape(
     /* copy port number */
     dumper->output_port = atoi(result_argv[1]);
     if (dp->data_path == DATA_PATH_DIRECTTCP) {
-	dp->directtcp = stralloc(result_argv[2]);
+	dp->directtcp_list = g_slist_append(dp->directtcp_list,
+					    stralloc(result_argv[2]));
     } else {
-	dp->directtcp = NULL;
+	dp->directtcp_list = NULL;
     }
 
     dumper->dp = dp;
@@ -3201,7 +3202,8 @@ dump_to_tape(
     /* tell the dumper to dump to a port */
     dumper_cmd(dumper, PORT_DUMP, dp, NULL);
     dp->host->start_t = time(NULL) + 15;
-    amfree(dp->directtcp);
+    g_slist_free_full(dp->directtcp_list);
+    dp->directtcp_list = NULL;
 
     /* update statistics & print state */
 

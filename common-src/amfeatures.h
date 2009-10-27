@@ -180,6 +180,8 @@ typedef enum {
     fe_sendsize_rep_warning,
     fe_xml_estimatelist,
     fe_xml_level_server,
+    fe_xml_data_path,
+    fe_xml_directtcp_list,
 
     /*
      * All new features must be inserted immediately *before* this entry.
