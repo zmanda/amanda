@@ -1,3 +1,6 @@
+2009-10-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Application/Zfs.pm: Use diskname for the snapshot name.
+
 2009-10-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/tape-device.c: handle EROFS in open.
 
