@@ -57,6 +57,11 @@ Optional tar read or write block size.  The default is 256.
 </listitem></varlistentry>
 
  <!-- ==== -->
+ <varlistentry><term>DIRECTORY</term><listitem>
+If set, suntar will backup from that directory instead of the <emphasis>diskdevice</emphasis> set by the DLE. On restore, the data is restore in that directory instead of the current working directory.
+</listitem></varlistentry>
+
+ <!-- ==== -->
  <varlistentry><term>EXTENDED-ATTRIBUTES</term><listitem>
 Include extended attributes in archive.  The default is YES.
 </listitem></varlistentry>

@@ -39,7 +39,17 @@ by users directly.  It uses dd to backup and restore data.</para>
 
 <refsect1><title>PROPERTIES</title>
 
-<para>This application have no property.</para>
+<para>This section lists the properties that control amgtar's functionality.
+See <manref name="amanda-applications" vol="7"/>
+for information on application properties and how they are configured.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>DIRECTORY</term><listitem>
+Used only for restore command, can be a device name or file, the data will be restored to it.
+</listitem></varlistentry>
+</variablelist>
 
 </refsect1>
 

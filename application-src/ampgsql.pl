@@ -610,7 +610,22 @@ sub command_backup {
 sub command_restore {
    my $self = shift;
 
+   $self->{action} = 'restore';
    chdir(Amanda::Util::get_original_cwd());
+   if (defined $self->{'args'}->{directory}) {
+      if (!-d $self->{'args'}->{directory}) {
+	 $self->print_to_server_and_die($self->{action},
+					"Directory $self->{directory}: $!",
+					$Amanda::Script_App::ERROR);
+      }
+      if (!-w $self->{'args'}->{directory}) {
+	 $self->print_to_server_and_die($self->{action},
+					"Directory $self->{directory}: $!",
+					$Amanda::Script_App::ERROR);
+      }
+      chdir($self->{'args'}->{directory});
+   }
+
    if (!-d $_ARCHIVE_DIR_RESTORE) {
        mkdir($_ARCHIVE_DIR_RESTORE) or confess("could not create archive WAL directory: $!");
    }
@@ -641,6 +656,7 @@ sub command_restore {
 sub command_validate {
    my $self = shift;
 
+   $self->{action} = 'validate';
    if (!defined($self->{'args'}->{'gnutar-path'}) ||
        !-x $self->{'args'}->{'gnutar-path'}) {
       return $self->default_validate();
@@ -648,10 +664,15 @@ sub command_validate {
 
    my(@cmd) = ($self->{'args'}->{'gnutar-path'}, "-tf", "-");
    debug("cmd:" . join(" ", @cmd));
-   my $pid = open3('>&STDIN', '>&STDOUT', '>&STDERR', @cmd) || $self->print_to_server_and_die( "validate", "Unable to run @cmd", $Amanda::Application::ERROR);
+   my $pid = open3('>&STDIN', '>&STDOUT', '>&STDERR', @cmd) ||
+      $self->print_to_server_and_die($self->{action},
+				     "Unable to run @cmd",
+				     $Amanda::Application::ERROR);
    waitpid $pid, 0;
    if ($? != 0){
-       $self->print_to_server_and_die("validate", "$self->{gnutar} returned error", $Amanda::Application::ERROR);
+       $self->print_to_server_and_die($self->{action},
+				      "$self->{gnutar} returned error",
+				      $Amanda::Application::ERROR);
    }
    exit($self->{error_status});
 }
@@ -679,6 +700,9 @@ GetOptions(
     'collection=s',
     'record',
     'calcsize',
+    'exclude-list=s@',
+    'include-list=s@',
+    'directory=s',
     # ampgsql-specific
     'statedir=s',
     'tmpdir=s',

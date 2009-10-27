@@ -103,6 +103,14 @@ Domain is optional. Example:
  <varlistentry><term>ALLOW-ANONYMOUS</term><listitem>
 This username without password is used to connect to the share if no matching entry is found in the amandapass file.
 </listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>DIRECTORY</term><listitem>
+For restore command only, the data is recoved in that directory. Must be a unix path for "tar" RECOVER-MODE or a smb path for "smb" recover-MODE.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>RECOVER-MODE</term><listitem>
+"tar" or "smb", default to "tar". If "tar", the data is recovered on the local machine, If "smb", the data is recovered on the smb client machine.
+</listitem></varlistentry>
 </variablelist>
 
 </refsect1>

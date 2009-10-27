@@ -38,7 +38,7 @@ use Amanda::Util qw( :constants );
 
 sub new {
     my $class = shift;
-    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $exclude_list, $exclude_optional,  $include_list, $include_optional, $bsize, $ext_attrib, $ext_header, $ignore, $normal, $strange, $error_exp) = @_;
+    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $exclude_list, $exclude_optional,  $include_list, $include_optional, $bsize, $ext_attrib, $ext_header, $ignore, $normal, $strange, $error_exp, $directory) = @_;
     my $self = $class->SUPER::new($config);
 
     $self->{suntar}            = "/usr/sbin/tar";
@@ -62,6 +62,7 @@ sub new {
     $self->{block_size}        = $bsize;
     $self->{extended_header}   = $ext_header;
     $self->{extended_attrib}   = $ext_attrib; 
+    $self->{directory}         = $directory;
 
     $self->{regex} = ();
     my $regex;
@@ -148,6 +149,7 @@ sub command_selfcheck {
    }
    print "OK " . $self->{disk} . "\n";
    print "OK " . $self->{device} . "\n";
+   print "OK " . $self->{directory} . "\n" if defined $self->{directory};
    $self->validate_inexclude();
 }
 
@@ -219,7 +221,10 @@ sub command_backup {
 
    $self->validate_inexclude();
    my $mesgout_fd;
-   open($mesgout_fd, '>&=3') || die("Failed to open fd 3 (mesgout)");
+   open($mesgout_fd, '>&=3') ||
+      $self->print_to_server_and_die($self->{action},
+				     "Can't open mesgout_fd: $!",
+				     $Amanda::Script_App::ERROR);
    $self->{mesgout} = $mesgout_fd;
 
    my(@cmd) = $self->build_command();
@@ -231,8 +236,14 @@ sub command_backup {
    my $index_fd = Symbol::gensym;
    $errtc = Symbol::gensym;
 
-   $pid = open3($wtr, \*DATA, $index_fd, @cmd) || die();
-   $pidtc = open3('<&DATA', '>&STDOUT', $errtc, @cmdtc) || die();
+   $pid = open3($wtr, \*DATA, $index_fd, @cmd) ||
+      $self->print_to_server_and_die($self->{action},
+				     "Can't run $cmd[0]: $!",
+				     $Amanda::Script_App::ERROR);
+   $pidtc = open3('<&DATA', '>&STDOUT', $errtc, @cmdtc) ||
+      $self->print_to_server_and_die($self->{action},
+				     "Can't run $cmdtc[0]: $!",
+				     $Amanda::Script_App::ERROR);
    close($wtr);
 
    unlink($self->{include_tmp}) if(-e $self->{include_tmp});
@@ -241,7 +252,10 @@ sub command_backup {
    my $result;
    if(defined($self->{index})) {
       my $indexout_fd;
-      open($indexout_fd, '>&=4') || die();
+      open($indexout_fd, '>&=4') ||
+      $self->print_to_server_and_die($self->{action},
+				     "Can't open indexout_fd: $!",
+				     $Amanda::Script_App::ERROR);
       $result = $self->parse_backup($index_fd, $mesgout_fd, $indexout_fd);
       close($indexout_fd);
    }
@@ -405,7 +419,10 @@ sub index_from_output {
 sub command_index_from_image {
    my $self = shift;
    my $index_fd;
-   open($index_fd, "$self->{suntar} -tf - |") || die();
+   open($index_fd, "$self->{suntar} -tf - |") ||
+      $self->print_to_server_and_die($self->{action},
+				     "Can't run $self->{suntar}: $!",
+				     $Amanda::Script_App::ERROR);
    index_from_output($index_fd, 1);
 }
 
@@ -414,6 +431,20 @@ sub command_restore {
    $self->{action} = 'restore'; 
 
    chdir(Amanda::Util::get_original_cwd());
+   if (defined $self->{directory}) {
+      if (!-d $self->{directory}) {
+         $self->print_to_server_and_die($self->{action},
+				        "Directory $self->{directory}: $!",
+				        $Amanda::Script_App::ERROR);
+      }
+      if (!-w $self->{directory}) {
+         $self->print_to_server_and_die($self->{action},
+				        "Directory $self->{directory}: $!",
+				        $Amanda::Script_App::ERROR);
+      }
+      chdir($self->{directory});
+   }
+
    my $cmd = "-xpv";
 
    if($self->{extended_header} eq "YES") {
@@ -425,7 +456,21 @@ sub command_restore {
 
    $cmd .= "f";      
 
-   my(@cmd) = ($self->{pfexec},$self->{suntar}, $cmd, "-");
+   if (defined($self->{exclude_list})) {
+      $cmd .= "X";
+   }
+
+   my(@cmd) = ($self->{pfexec},$self->{suntar}, $cmd);
+
+   push @cmd, "-";  # for f argument
+   if (defined($self->{exclude_list})) {
+      push @cmd, $self->{exclude_list}[0]; # for X argument
+   }
+
+   if(defined($self->{include_list}))  {
+      push @cmd, "-I", $self->{include_list}[0];
+   }
+
    for(my $i=1;defined $ARGV[$i]; $i++) {
       my $param = $ARGV[$i];
       $param =~ /^(.*)$/;
@@ -451,10 +496,15 @@ sub command_validate {
    }
    @cmd = ($program, "-tf", "-");
    debug("cmd:" . join(" ", @cmd));
-   my $pid = open3('>&STDIN', '>&STDOUT', '>&STDERR', @cmd) || $self->print_server_and_die($self->{action}, "Unable to run @cmd", $Amanda::Script_App::ERROR);
+   my $pid = open3('>&STDIN', '>&STDOUT', '>&STDERR', @cmd) ||
+      $self->print_to_server_and_die($self->{action},
+				     "Unable to run @cmd",
+				     $Amanda::Script_App::ERROR);
    waitpid $pid, 0;
    if( $? != 0 ){
-	$self->print_server_and_die($self->{action}, "$program returned error", $Amanda::Script_App::ERROR);
+	$self->print_to_server_and_die($self->{action},
+				       "$program returned error",
+				       $Amanda::Script_App::ERROR);
    }
    exit(0);
 }
@@ -491,7 +541,11 @@ sub build_command {
       $cmd .= "f";
       push @optparams,"-";
    }
-      push @optparams,"-C",$self->{device};
+   if ($self->{directory}) {
+      push @optparams, "-C", $self->{directory};
+   } else {
+      push @optparams, "-C", $self->{device};
+   }
 
    if(defined($self->{include_tmp}))  {
       push @optparams,"-I", $self->{include_tmp};
@@ -533,6 +587,7 @@ my @opt_normal;
 my @opt_strange;
 my @opt_error;
 my $opt_lang;
+my $opt_directory;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
@@ -557,12 +612,13 @@ GetOptions(
     'strange=s'              => \@opt_strange,
     'error=s'                => \@opt_error,
     'lang=s'                 => \$opt_lang,
+    'directory=s'            => \$opt_directory,
 ) or usage();
 
 if (defined $opt_lang) {
     $ENV{LANG} = $opt_lang;
 }
 
-my $application = Amanda::Application::Amsuntar->new($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_list, $opt_include_optional,$opt_bsize,$opt_ext_attrib,$opt_ext_head, \@opt_ignore, \@opt_normal, \@opt_strange, \@opt_error);
+my $application = Amanda::Application::Amsuntar->new($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_list, $opt_include_optional,$opt_bsize,$opt_ext_attrib,$opt_ext_head, \@opt_ignore, \@opt_normal, \@opt_strange, \@opt_error, $opt_directory);
 
 $application->do($ARGV[0]);

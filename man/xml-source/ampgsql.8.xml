@@ -44,6 +44,11 @@ for information on application properties and how they are configured.</para>
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 <variablelist>
  <!-- ==== -->
+ <varlistentry><term>DIRECTORY</term><listitem>
+For restore command only, the data is recoved in that directory. Must be a unix path.
+</listitem></varlistentry>
+
+ <!-- ==== -->
  <varlistentry><term>GNUTAR-PATH</term><listitem>
  Path to the GNU tar executable. This option only has an effect during restore.
  The default is set when Amanda is built by the --with-gnutar configure option.

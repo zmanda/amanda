@@ -1,3 +1,15 @@
+2009-10-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c, application-src/ampgsql.pl,
+	  application-src/amraw.pl, application-src/amsamba.pl,
+	  application-src/amstar.c, application-src/amsuntar.pl,
+	  application-src/amzfs-sendrecv.pl: Handle directory, include-list
+	 		and exclude-list inrestore command.
+	* man/xml-source/amgtar.8.xml, man/xml-source/ampgsql.8.xml,
+	  man/xml-source/amraw.8.xml, man/xml-source/amsamba.8.xml,
+	  man/xml-source/amstar.8.xml,
+	  man/xml-source/amsuntar.8.xml: Document them.
+	* perl/Amanda/Application/Zfs.pm (zfs_set_value): Handle directory.
+
 2009-10-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c (backup_support_option): Parse DATA-PATH.
 	* client-src/client_util.h (backup_support_option_t): Add data_path_set

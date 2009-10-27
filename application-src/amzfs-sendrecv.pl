@@ -36,7 +36,7 @@ use Amanda::Util qw( :constants );
 
 sub new {
     my $class = shift;
-    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $df_path, $zfs_path, $pfexec_path, $pfexec, $keep_snapshot) = @_;
+    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $df_path, $zfs_path, $pfexec_path, $pfexec, $keep_snapshot, $exclude_list, $include_list, $directory) = @_;
     my $self = $class->SUPER::new($config);
 
     $self->{config}     = $config;
@@ -54,6 +54,9 @@ sub new {
     $self->{pfexec}        = $pfexec;
     $self->{keep_snapshot} = $keep_snapshot;
     $self->{pfexec_cmd}    = undef;
+    $self->{exclude_list}  = [ @{$exclude_list} ];
+    $self->{include_list}  = [ @{$include_list} ];
+    $self->{directory}     = $directory;
 
     if ($self->{keep_snapshot} =~ /^YES$/i) {
         $self->{keep_snapshot} = "YES";
@@ -103,12 +106,34 @@ sub command_selfcheck {
 	print "OK " . $self->{disk} . "\n";
 	print "OK " . $self->{device} . "\n";
     }
+
+    if ($#{$self->{include_list}} >= 0) {
+	$self->print_to_server($self->{action},
+			       "include-list not supported for backup",
+			       $Amanda::Script_App::ERROR);
+    }
+    if ($#{$self->{exclude_list}} >= 0) {
+	$self->print_to_server($self->{action},
+			       "exclude-list not supported for backup",
+			       $Amanda::Script_App::ERROR);
+    }
 }
 
 sub command_estimate() {
     my $self = shift;
 
     my $level = 0;
+
+    if ($#{$self->{include_list}} >= 0) {
+	$self->print_to_server($self->{action},
+			       "include-list not supported for backup",
+			       $Amanda::Script_App::ERROR);
+    }
+    if ($#{$self->{exclude_list}} >= 0) {
+	$self->print_to_server($self->{action},
+			       "exclude-list not supported for backup",
+			       $Amanda::Script_App::ERROR);
+    }
 
     $self->zfs_set_value("estimate");
     $self->zfs_create_snapshot("estimate");
@@ -142,8 +167,23 @@ sub command_backup {
     my $self = shift;
 
     my $mesgout_fd;
-    open($mesgout_fd, '>&=3') || die();
+    $self->{action} = 'backup';
+    open($mesgout_fd, '>&=3') ||
+	$self->print_to_server_and_die($self->{action},
+				       "Can't open mesgout_fd: $!",
+				       $Amanda::Script_App::ERROR);
     $self->{mesgout} = $mesgout_fd;
+
+    if ($#{$self->{include_list}} >= 0) {
+	$self->print_to_server($self->{action},
+			       "include-list not supported for backup",
+			       $Amanda::Script_App::ERROR);
+    }
+    if ($#{$self->{exclude_list}} >= 0) {
+	$self->print_to_server($self->{action},
+			       "exclude-list not supported for backup",
+			       $Amanda::Script_App::ERROR);
+    }
 
     $self->zfs_set_value("backup");
     $self->zfs_create_snapshot("backup");
@@ -160,7 +200,7 @@ sub command_backup {
       if ($refsnapshotname ne "") {
         $cmd = "$self->{pfexec_cmd} $self->{zfs_path} send -i $refsnapshotname $self->{filesystem}\@$self->{snapshot} | $Amanda::Paths::amlibexecdir/teecount";
       } else {
-        $self->print_to_server_and_die("sendbackup", "cannot backup snapshot '$self->{filesystem}\@$self->{snapshot}': reference snapshot doesn't exists for level $level", $Amanda::Script_App::ERROR);
+        $self->print_to_server_and_die($self->{action}, "cannot backup snapshot '$self->{filesystem}\@$self->{snapshot}': reference snapshot doesn't exists for level $level", $Amanda::Script_App::ERROR);
       }
     }
 
@@ -175,9 +215,9 @@ sub command_backup {
     close $err;
     if ($? !=  0) {
         if (defined $errmsg) {
-            $self->print_to_server_and_die("sendbackup", $errmsg, $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die($self->{action}, $errmsg, $Amanda::Script_App::ERROR);
         } else {
-            $self->print_to_server_and_die("sendbackup", "cannot backup snapshot '$self->{filesystem}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die($self->{action}, "cannot backup snapshot '$self->{filesystem}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
         }
     }
     $size = $errmsg;
@@ -291,6 +331,7 @@ sub command_index_from_image {
 }
 
 sub command_restore {
+  #TODO
 }
 
 sub command_print_command {
@@ -319,6 +360,9 @@ my $zfs_path = 'zfs';
 my $pfexec_path = 'pfexec';
 my $pfexec = "NO";
 my $opt_keep_snapshot = "YES";
+my @opt_exclude_list;
+my @opt_include_list;
+my $opt_directory;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
@@ -335,10 +379,13 @@ GetOptions(
     'zfs-path=s'      => \$zfs_path,
     'pfexec-path=s'   => \$pfexec_path,
     'pfexec=s'        => \$pfexec,
-    'keep-snapshot=s' => \$opt_keep_snapshot
+    'keep-snapshot=s' => \$opt_keep_snapshot,
+    'exclude-list=s'  => \@opt_exclude_list,
+    'include-list=s'  => \@opt_include_list,
+    'directory=s'     => \$opt_directory,
 ) or usage();
 
-my $application = Amanda::Application::Amzfs_sendrecv->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $df_path, $zfs_path, $pfexec_path, $pfexec, $opt_keep_snapshot);
+my $application = Amanda::Application::Amzfs_sendrecv->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $df_path, $zfs_path, $pfexec_path, $pfexec, $opt_keep_snapshot, \@opt_exclude_list, \@opt_include_list, $opt_directory);
 
 $application->do($ARGV[0]);
 

@@ -51,7 +51,7 @@ If "YES" (the default), amgtar checks that the device number doesn't change for 
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>DIRECTORY</term><listitem>
-If set, gnutar will backup from that directory instead of the <emphasis>diskdevice</emphasis> set by the DLE.
+If set, gnutar will backup from that directory instead of the <emphasis>diskdevice</emphasis> set by the DLE. On restore, the data is restore in that directory instead of the current working directory.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>GNUTAR-LISTDIR</term><listitem>

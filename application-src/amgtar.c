@@ -938,6 +938,19 @@ amgtar_restore(
     g_ptr_array_add(argv_ptr, stralloc("-xpGvf"));
     g_ptr_array_add(argv_ptr, stralloc("-"));
     if (gnutar_directory) {
+	struct stat stat_buf;
+	if(!stat(gnutar_directory, &stat_buf)) {
+	    fprintf(stderr,"can not stat directory %s: %s\n", gnutar_directory, strerror(errno));
+	    exit(1);
+	}
+	if (!S_ISDIR(stat_buf.st_mode)) {
+	    fprintf(stderr,"%s is not a directory\n", gnutar_directory);
+	    exit(1);
+	}
+	if (!access(gnutar_directory, W_OK)) {
+	    fprintf(stderr, "Can't write to %s: %s\n", gnutar_directory, strerror(errno));
+	    exit(1);
+	}
 	g_ptr_array_add(argv_ptr, stralloc("--directory"));
 	g_ptr_array_add(argv_ptr, stralloc(gnutar_directory));
     }

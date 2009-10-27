@@ -72,8 +72,10 @@ sub zfs_set_value {
 	}
     }
 
-    # determine if $self->{device} is a mountpoint or ZFS dataset
-    my $cmd = "$self->{pfexec_cmd} $self->{zfs_path} get -H -o value mountpoint $self->{device}";
+    my $device = $self->{device};
+    $device = $self->{directory} if defined $self->{directory};
+    # determine if $device is a mountpoint or ZFS dataset
+    my $cmd = "$self->{pfexec_cmd} $self->{zfs_path} get -H -o value mountpoint $device";
     debug "running: $cmd";
     my($wtr, $rdr, $err, $pid);
     $err = Symbol::gensym;
@@ -88,7 +90,7 @@ sub zfs_set_value {
         chomp $zmountpoint;
 
         # zfs dataset supplied
-        $self->{filesystem} = $self->{device};
+        $self->{filesystem} = $device;
 
         # check if zfs volume
         if ($zmountpoint ne '-') {
@@ -98,8 +100,8 @@ sub zfs_set_value {
         }
     } else {
         # filesystem, directory or invalid ZFS dataset name
-        $cmd = "$self->{df_path} $self->{device}";
-        debug "running: $self->{df_path} $self->{device}";
+        $cmd = "$self->{df_path} $device";
+        debug "running: $self->{df_path} $device";
         $err = Symbol::gensym;
         $pid = open3($wtr, $rdr, $err, $cmd);
         close $wtr;
@@ -127,7 +129,7 @@ sub zfs_set_value {
                 $self->print_to_server_and_die($action, $errmsg, $Amanda::Script_App::ERROR);
             } else {
                 $self->print_to_server_and_die($action,
-                            "Failed to find mount points: $self->{device}",
+                            "Failed to find mount points: $device",
                             $Amanda::Script_App::ERROR);
             }
         }
@@ -141,7 +143,7 @@ sub zfs_set_value {
                 $self->{filesystem} = $4;
             } else {
                 $self->print_to_server_and_die($action,
-                            "Failed to find mount points: $self->{device}",
+                            "Failed to find mount points: $device",
                             $Amanda::Script_App::ERROR);
             }
         } else {
@@ -151,7 +153,7 @@ sub zfs_set_value {
                 $self->{filesystem} = $1;
             } else {
                 $self->print_to_server_and_die($action,
-                            "Failed to find mount points: $self->{device}",
+                            "Failed to find mount points: $device",
                             $Amanda::Script_App::ERROR);
             }
         }
@@ -190,22 +192,22 @@ sub zfs_set_value {
                 $Amanda::Script_App::ERROR);
         }
 
-        if (!($self->{device} =~ /^$self->{mountpoint}/)) {
+        if (!($device =~ /^$self->{mountpoint}/)) {
             $self->print_to_server_and_die($action,
-                "mountpoint '$self->{mountpoint}' is not a prefix of diskdevice '$self->{device}'",
+                "mountpoint '$self->{mountpoint}' is not a prefix of the device '$device'",
                 $Amanda::Script_App::ERROR);
         }
 
     }
 
     if ($action eq 'check') {
-      $self->{snapshot} = $self->zfs_build_snapshotname($self->{device}, -1);
+      $self->{snapshot} = $self->zfs_build_snapshotname($device, -1);
     } else {
-      $self->{snapshot} = $self->zfs_build_snapshotname($self->{device});
+      $self->{snapshot} = $self->zfs_build_snapshotname($device);
     }
     if (defined $self->{mountpoint}) {
-	if ($self->{device} =~ /^$self->{mountpoint}/) {
-            $self->{dir} = $self->{device};
+	if ($device =~ /^$self->{mountpoint}/) {
+            $self->{dir} = $device;
             $self->{dir} =~ s,^$self->{mountpoint},,;
             $self->{directory} = $self->{mountpoint} . "/.zfs/snapshot/" .
                                  $self->{snapshot} . $self->{dir};
@@ -312,7 +314,9 @@ sub zfs_rename_snapshot {
     my $level = shift;
     my $action = shift;
 
-    my $newsnapshotname = $self->zfs_build_snapshotname($self->{device}, $level);
+    my $device = $self->{device};
+    $device = $self->{directory} if defined $self->{directory};
+    my $newsnapshotname = $self->zfs_build_snapshotname($device, $level);
     my $cmd = "$self->{pfexec_cmd} $self->{zfs_path} rename $self->{filesystem}\@$self->{snapshot} $newsnapshotname";
     debug "running: $cmd|";
     my($wtr, $rdr, $err, $pid);
@@ -356,7 +360,9 @@ sub zfs_find_snapshot_level {
     my $level = shift;
     my $action = shift;
 
-    my $snapshotname = $self->zfs_build_snapshotname($self->{device}, $level);
+    my $device = $self->{device};
+    $device = $self->{directory} if defined $self->{directory};
+    my $snapshotname = $self->zfs_build_snapshotname($device, $level);
 
     my $cmd =  "$self->{pfexec_cmd} $self->{zfs_path} list -t snapshot $self->{filesystem}\@$snapshotname";
     debug "running: $cmd|";

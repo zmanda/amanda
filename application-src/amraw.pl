@@ -33,7 +33,7 @@ use Amanda::Util;
 
 sub new {
     my $class = shift;
-    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $calcsize) = @_;
+    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $calcsize, $include_list, $exclude_list, $directory) = @_;
     my $self = $class->SUPER::new($config);
 
     $self->{config}           = $config;
@@ -50,6 +50,9 @@ sub new {
     $self->{collection}       = $collection;
     $self->{record}           = $record;
     $self->{calcsize}         = $calcsize;
+    $self->{exclude_list}     = [ @{$exclude_list} ];
+    $self->{include_list}     = [ @{$include_list} ];
+    $self->{directory}        = $directory;
 
     return $self;
 }
@@ -77,13 +80,29 @@ sub command_selfcheck {
 
     $self->{action} = 'check';
 
-    print "OK " . $self->{share} . "\n";
     print "OK " . $self->{disk} . "\n";
     print "OK " . $self->{device} . "\n";
 
     if (! -r $self->{device}) {
 	$self->print_to_server($self->{action},"$self->{device} can't be read", $Amanda::Script_App::ERROR);
     }
+
+    if ($#{$self->{include_list}} >= 0) {
+	$self->print_to_server($self->{action},
+			       "include-list not supported for backup",
+			       $Amanda::Script_App::ERROR);
+    }
+    if ($#{$self->{exclude_list}} >= 0) {
+	$self->print_to_server($self->{action},
+			       "exclude-list not supported for backup",
+			       $Amanda::Script_App::ERROR);
+    }
+    if ($self->{directory}) {
+	$self->print_to_server($self->{action},
+			       "directory PROPERTY not supported for backup",
+			       $Amanda::Script_App::ERROR);
+    }
+
     #check statefile
     #check amdevice
 }
@@ -96,7 +115,25 @@ sub command_estimate {
     my $level = $self->{level}[0];
 
     if ($level != 0) {
-	$self->print_to_server($self->{action},"amapp_dd can only do level 0 backup", $Amanda::Script_App::ERROR);
+	$self->print_to_server($self->{action},
+			       "amraw can only do level 0 backup",
+			       $Amanda::Script_App::ERROR);
+    }
+
+    if ($#{$self->{include_list}} >= 0) {
+	$self->print_to_server($self->{action},
+			       "include-list not supported for backup",
+			       $Amanda::Script_App::ERROR);
+    }
+    if ($#{$self->{include_list}} >= 0) {
+	$self->print_to_server($self->{action},
+			       "exclude-list not supported for backup",
+			       $Amanda::Script_App::ERROR);
+    }
+    if ($self->{directory}) {
+	$self->print_to_server($self->{action},
+			       "directory PROPERTY not supported for backup",
+			       $Amanda::Script_App::ERROR);
     }
 
     my $fd = POSIX::open($self->{device}, &POSIX::O_RDONLY);
@@ -130,7 +167,10 @@ sub command_backup {
 
     my $level = $self->{level}[0];
     my $mesgout_fd;
-    open($mesgout_fd, '>&=3') || die();
+    open($mesgout_fd, '>&=3') ||
+	$self->print_to_server_and_die($self->{action},
+				       "Can't open mesgout_fd: $!",
+				       $Amanda::Script_App::ERROR);
     $self->{mesgout} = $mesgout_fd;
 
     if (defined($self->{index})) {
@@ -139,7 +179,25 @@ sub command_backup {
     }
 
     if ($level != 0) {
-	$self->print_to_server($self->{action},"amapp_dd can only do level 0 backup", $Amanda::Script_App::ERROR);
+	$self->print_to_server($self->{action},
+			       "amraw can only do level 0 backup",
+			       $Amanda::Script_App::ERROR);
+    }
+
+    if ($#{$self->{include_list}} >= 0) {
+	$self->print_to_server($self->{action},
+			       "include-list not supported for backup",
+			       $Amanda::Script_App::ERROR);
+    }
+    if ($#{$self->{include_list}} >= 0) {
+	$self->print_to_server($self->{action},
+			       "exclude-list not supported for backup",
+			       $Amanda::Script_App::ERROR);
+    }
+    if ($self->{directory}) {
+	$self->print_to_server($self->{action},
+			       "directory PROPERTY not supported for backup",
+			       $Amanda::Script_App::ERROR);
     }
 
     my $fd = POSIX::open($self->{device}, &POSIX::O_RDONLY);
@@ -174,12 +232,23 @@ sub command_restore {
     my @cmd = ();
 
     $self->{action} = 'restore';
-    chdir(Amanda::Util::get_original_cwd());
-
     my $device = $self->{device};
+    if (defined $self->{directory}) {
+	$device = $self->{directory};
+    } else {
+	chdir(Amanda::Util::get_original_cwd());
+    }
+
+    # include-list and exclude-list are ignored, the complete dle is restored.
+
     $device = "amraw-restored" if !defined $device;
 
     my $fd = POSIX::open($device, &POSIX::O_CREAT | &POSIX::O_RDWR, 0600 );
+    if ($fd == -1) {
+	$self->print_to_server_and_die($self->{action},
+				       "Can't open '$device': $!",
+				       $Amanda::Script_App::ERROR);
+    }
     my $size = 0;
     my $s;
     my $buffer;
@@ -220,6 +289,9 @@ my $opt_message;
 my $opt_collection;
 my $opt_record;
 my $opt_calcsize;
+my @opt_include_list;
+my @opt_exclude_list;
+my $opt_directory;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
@@ -234,6 +306,9 @@ GetOptions(
     'collection=s'       => \$opt_collection,
     'record'             => \$opt_record,
     'calcsize'           => \$opt_calcsize,
+    'include-list=s'     => \@opt_include_list,
+    'exclude-list=s'     => \@opt_exclude_list,
+    'directory'          => \$opt_directory,
 ) or usage();
 
 if (defined $opt_version) {
@@ -241,6 +316,6 @@ if (defined $opt_version) {
     exit(0);
 }
 
-my $application = Amanda::Application::Amraw->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize);
+my $application = Amanda::Application::Amraw->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize, \@opt_include_list, \@opt_exclude_list, $opt_directory);
 
 $application->do($ARGV[0]);
