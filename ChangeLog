@@ -1,3 +1,6 @@
+2009-10-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Application/Zfs.pm: Use diskname for the snapshot name.
+
 2009-10-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/Makefile.am common-src/directtcp.h: new file to
 	  handle common directtcp-related code
