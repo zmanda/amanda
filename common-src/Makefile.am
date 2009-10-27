@@ -99,6 +99,7 @@ noinst_HEADERS =		\
 	arglist.h		\
 	clock.h			\
 	columnar.h		\
+	directtcp.h		\
 	amflock.h		\
 	conffile.h		\
 	debug.h			\

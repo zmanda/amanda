@@ -26,6 +26,7 @@ libamxfer_la_SOURCES = \
 	source-random.c \
 	source-fd.c \
 	source-pattern.c \
+	source-directtcp-listen.c \
 	xfer-element.c \
 	xfer.c \
 	xmsg.c

@@ -312,7 +312,7 @@ XferElement *xfer_source_random(
      * care of freeing this array, so we don't have to */
 }
 
-%newobject xfer_source_random;
+%newobject xfer_source_pattern;
 XferElement *xfer_source_pattern(
     guint64 length,
     void * pattern,
@@ -321,6 +321,16 @@ XferElement *xfer_source_pattern(
 %newobject xfer_source_fd;
 XferElement *xfer_source_fd(
     int fd);
+
+%newobject xfer_source_directtcp_listen;
+XferElement *xfer_source_directtcp_listen(void);
+
+%inline %{
+static DirectTCPAddr *
+xfer_source_directtcp_listen_get_addrs(XferElement *elt) {
+    return elt->input_listen_addrs;
+}
+%}
 
 %newobject xfer_filter_xor;
 XferElement *xfer_filter_xor(
@@ -509,6 +519,13 @@ DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_source_fd)
 PACKAGE(Amanda::Xfer::Source::Random)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_source_random)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Source::DirectTCPListen)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_source_directtcp_listen)
+DECLARE_METHOD(get_addrs, Amanda::Xfer::xfer_source_directtcp_listen_get_addrs)
 
 /* ---- */
 

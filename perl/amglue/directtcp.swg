@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -18,13 +18,28 @@
  * Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
  */
 
-%{
-#include "amglue.h"
-%}
+/*
+ * SWIG typemaps for DirectTCP-related stuff.
+ */
 
-%include "amglue/constants.swg"
-%include "amglue/exports.swg"
-%include "amglue/glib.swg"
-%include "amglue/integers.swg"
-%include "amglue/filehandles.swg"
-%include "amglue/directtcp.swg"
+%typemap(out) DirectTCPAddr * {
+    /* (we assume this is an *array* of addresses) */
+    DirectTCPAddr *iter = $1;
+    AV *av = newAV();
+    int i = 0;
+
+    while (iter && iter->ipv4) {
+	struct in_addr in = { iter->ipv4 };
+	char *addr = inet_ntoa(in);
+	AV *tuple = newAV();
+
+	g_assert(NULL != av_store(tuple, 0,
+		newSVpv(addr, 0)));
+	g_assert(NULL != av_store(tuple, 1, newSViv(iter->port)));
+	g_assert(NULL != av_store(av, i++, newRV_noinc((SV *)tuple)));
+	iter++;
+    }
+
+    $result = newRV_noinc((SV *)av);
+    argvi++;
+}

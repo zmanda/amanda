@@ -266,6 +266,7 @@ setup_impl(
 	    break;
 
 	case XFER_MECH_NONE:
+	default:
 	    g_assert_not_reached();
 	    break;
 	}
@@ -294,6 +295,7 @@ setup_impl(
 	    break;
 
 	case XFER_MECH_NONE:
+	default:
 	    g_assert_not_reached();
 	    break;
 	}
@@ -321,6 +323,7 @@ setup_impl(
 	    break;
 
 	case XFER_MECH_NONE:
+	default:
 	    g_assert_not_reached();
 	    break;
 	}
@@ -348,12 +351,14 @@ setup_impl(
 	    break;
 
 	case XFER_MECH_NONE:
+	default:
 	    g_assert_not_reached();
 	    break;
 	}
 	break;
 
     case XFER_MECH_NONE:
+    default:
 	g_assert_not_reached();
 	break;
     }

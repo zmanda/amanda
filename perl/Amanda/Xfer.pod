@@ -183,6 +183,17 @@ C<Amanda::Xfer::Msg>, with the following keys:
 Call C<start_part> with C<$device = undef> to indicate that there are no more
 parts.
 
+=head3 Amanda::Xfer::Source::DirectTCPListen
+
+  Amanda::Xfer::Source::DirectTCPListen->new()
+
+This source is for use when the xfer data will come in via DirectTCP.  Set up
+the transfer, and after starting it, call its C<get_addrs> method to get an
+arrayref of ip/port pairs, e.g., C<[ "192.168.4.5", 9924 ]>, all of which
+are listening for an incoming data connection.
+
+  my $addrs = $src->get_addrs();
+
 =head2 Transfer Filters
 
 =head3 Amanda::Xfer::Filter:Process

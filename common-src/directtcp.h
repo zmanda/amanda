@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Amanda, The Advanced Maryland Automatic Network Disk Archiver
+ * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -18,13 +19,17 @@
  * Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
  */
 
-%{
-#include "amglue.h"
-%}
+#ifndef DIRECTTCP_H
+#define DIRECTTCP_H
 
-%include "amglue/constants.swg"
-%include "amglue/exports.swg"
-%include "amglue/glib.swg"
-%include "amglue/integers.swg"
-%include "amglue/filehandles.swg"
-%include "amglue/directtcp.swg"
+#include <glib.h>
+
+/* A combination of IP address (expressed as an integer) and port.  These are
+ * commonly seen in arrays terminated by a {0,0}.  Note that, right now, only
+ * IPv4 addresses are supported (since this is all that NDMP supports). */
+typedef struct DirectTCPAddr_ {
+    guint32 ipv4;
+    guint16 port;
+} DirectTCPAddr;
+
+#endif /* DIRECTTCP_H */
