@@ -40,6 +40,7 @@
 #include "protocol.h"
 #include "event.h"
 #include "security.h"
+#include "conffile.h"
 
 #define amrecover_debug(i, ...) do {	\
 	if ((i) <= debug_amrecover) {	\
@@ -73,6 +74,7 @@ am_feature_t *our_features = NULL;
 char *our_features_string = NULL;
 am_feature_t *indexsrv_features = NULL;
 am_feature_t *tapesrv_features = NULL;
+proplist_t proplist = NULL;
 static char *errstr = NULL;
 char *authopt;
 int amindexd_alive = 0;
@@ -491,6 +493,8 @@ main(
 	error(_("error setting signal handler: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
+
+    proplist = g_hash_table_new_full(g_str_hash, g_str_equal, &g_free, &free_property_t);
 
     protocol_init();
 

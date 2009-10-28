@@ -58,11 +58,13 @@ help_list(void)
     g_printf(_("quit\n"));
     g_printf(_("listhost          - list hosts\n"));
     g_printf(_("listdisk [diskdevice]              - list disks\n"));
+    g_printf(_("listproperty                       - list property\n"));
     g_printf(_("setdate {YYYY-MM-DD|--MM-DD|---DD} - set date of look\n"));
     g_printf(_("        {YYYY-MM-DD-HH-MM-SS}      - set date of look\n"));
     g_printf(_("setdisk diskname [mountpoint]      - select disk on dump host\n"));
     g_printf(_("sethost host                       - select dump host\n"));
     g_printf(_("setdevice [[-h host] device]       - select tape server and/or device\n"));
+    g_printf(_("setproperty [append] [priority] name [value ...] - set a property\n"));
     g_printf(_("setmode smb|tar                    - select the method used to extract SMB shares\n"));
     g_printf("\n");
 }

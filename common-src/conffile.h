@@ -1381,4 +1381,6 @@ char *data_path_to_string(data_path_t data_path);
 /* Return the data_path for the string */
 data_path_t data_path_from_string(char *data);
 
+void free_property_t(gpointer p);
+
 #endif /* ! CONFFILE_H */

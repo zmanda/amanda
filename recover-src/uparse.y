@@ -49,9 +49,11 @@ extern char *	yytext;
 
 	/* literal keyword tokens */
 
-%token LISTHOST LISTDISK SETHOST SETDISK SETDATE SETTAPE SETMODE SETDEVICE
+%token LISTHOST LISTDISK LISTPROPERTY
+%token SETHOST SETDISK SETDATE SETTAPE SETMODE SETDEVICE SETPROPERTY
 %token CD CDX QUIT DHIST LS ADD ADDX EXTRACT DASH_H
 %token LIST DELETE DELETEX PWD CLEAR HELP LCD LPWD MODE SMB TAR
+%token APPEND PRIORITY
 %token NL
 
         /* typed tokens */
@@ -82,28 +84,38 @@ set_command:
   |	LISTHOST invalid_string { yyerror("Invalid argument"); }
   |	LISTDISK STRING NL { list_disk($2); amfree($2); }
   |	LISTDISK NL { list_disk(NULL); }
-  |	LISTDISK STRING invalid_string { yyerror("Invalid argument"); }
+  |	LISTDISK STRING invalid_string { yyerror("Invalid argument"); amfree($2); }
+  |	LISTPROPERTY NL { list_property(); }
+  |	LISTPROPERTY invalid_string { yyerror("Invalid argument"); }
   |	SETHOST STRING NL { set_host($2); amfree($2); }
-  |	SETHOST STRING invalid_string { yyerror("Invalid argument"); }
+  |	SETHOST STRING invalid_string { yyerror("Invalid argument"); amfree($2); }
   |	SETHOST NL { yyerror("Argument required"); }
   |	SETDISK STRING STRING NL { set_disk($2, $3); amfree($2); amfree($3); }
   |	SETDISK STRING NL { set_disk($2, NULL); amfree($2); }
-  |	SETDISK STRING STRING invalid_string { yyerror("Invalid argument"); }
+  |	SETDISK STRING STRING invalid_string { yyerror("Invalid argument"); amfree($2); amfree($3); }
   |	SETDISK { yyerror("Argument required"); }
   |	SETTAPE STRING NL { set_tape($2); amfree($2); }
   |	SETTAPE NL { set_tape("default"); }
-  |	SETTAPE STRING invalid_string { yyerror("Invalid argument"); }
-  |	SETDEVICE STRING NL { set_device(NULL, $2); }
-  |	SETDEVICE DASH_H STRING STRING NL { set_device($3, $4); }
+  |	SETTAPE STRING invalid_string { yyerror("Invalid argument"); amfree($2); }
+  |	SETDEVICE STRING NL { set_device(NULL, $2); amfree($2); }
+  |	SETDEVICE DASH_H STRING STRING NL { set_device($3, $4); amfree($3); amfree($4);  }
   |	SETDEVICE NL { set_device(NULL, NULL); }
-  |	SETDEVICE STRING invalid_string { yyerror("Invalid argument"); }
-  |	SETDEVICE DASH_H STRING NL { yyerror("Invalid argument"); }
-  |	SETDEVICE DASH_H STRING STRING invalid_string { yyerror("Invalid argument"); }
+  |	SETDEVICE STRING invalid_string { yyerror("Invalid argument"); amfree($2); }
+  |	SETDEVICE DASH_H STRING NL { yyerror("Invalid argument"); amfree($3); }
+  |	SETDEVICE DASH_H STRING STRING invalid_string { yyerror("Invalid argument"); amfree($3); amfree($4); }
+  |	SETPROPERTY STRING property_value { set_property_name($2, 0); amfree($2); }
+  |	SETPROPERTY APPEND STRING property_value { set_property_name($3, 1); amfree($3); }
+  |	SETPROPERTY PRIORITY STRING property_value { set_property_name($3, 0); amfree($3); }
+  |	SETPROPERTY APPEND PRIORITY STRING property_value { set_property_name($4, 1); amfree($4); }
+  |	SETPROPERTY NL { yyerror("Invalid argument"); }
+  |	SETPROPERTY APPEND NL { yyerror("Invalid argument"); }
+  |	SETPROPERTY PRIORITY NL { yyerror("Invalid argument"); }
+  |	SETPROPERTY APPEND PRIORITY NL { yyerror("Invalid argument"); }
   |	CD STRING NL { cd_glob($2, 1); amfree($2); }
   |	CD STRING invalid_string { yyerror("Invalid argument"); }
   |	CD NL { yyerror("Argument required"); }
   |     CDX STRING NL { cd_regex($2, 1); amfree($2); }
-  |	CDX STRING invalid_string { yyerror("Invalid argument"); }
+  |	CDX STRING invalid_string { yyerror("Invalid argument"); amfree($2); }
   |	CDX NL { yyerror("Argument required"); }
   |	SETMODE SMB NL { set_mode(SAMBA_SMBCLIENT); }
   |	SETMODE TAR NL { set_mode(SAMBA_TAR); }
@@ -253,12 +265,17 @@ invalid_command:
 	} /* Quiets compiler warnings about unused label */
   ;
 
+property_value:
+	STRING property_value { add_property_value($1); amfree( $1); }
+  |     NL { ; }
+  ;
+
 invalid_string:
-	STRING bogus_string { ; }
+	STRING bogus_string { amfree($1); }
   ;
 
 bogus_string:
-        STRING bogus_string { ; }
+        STRING bogus_string { amfree($1); }
   |	NL { ; }
 
 /* ADDITIONAL C CODE */

@@ -58,6 +58,8 @@ int		process_line(char *line);
 %x needstring
 %x needmode
 %x astring
+%x propertyappend
+%x propertypriority
 
 LINEFEED	("\n"|"\r"|"\r\n")
 %{
@@ -72,12 +74,14 @@ static char *string_buf = NULL;
 
 listhost	{ BEGIN(needstring); return LISTHOST; }
 listdisk	{ BEGIN(needstring); return LISTDISK; }
+listproperty	{ BEGIN(needstring); return LISTPROPERTY; }
 sethost		{ BEGIN(needstring); return SETHOST; }
 setdisk		{ BEGIN(needstring); return SETDISK; }
 setdate		{ BEGIN(needstring); return SETDATE; }
 setmode		{ BEGIN(needmode); return SETMODE; }
 settape		{ BEGIN(needstring); return SETTAPE; }
 setdevice	{ BEGIN(needdevice); return SETDEVICE; }
+setproperty	{ BEGIN(propertyappend); return SETPROPERTY; }
 <needdevice>-h	{ BEGIN(needstring); return DASH_H; }
 cd		{ BEGIN(needstring); return CD; }
 cdx		{ BEGIN(needstring); return CDX; }
@@ -100,13 +104,23 @@ extract		{ BEGIN(needstring); return EXTRACT; }
 mode		{ BEGIN(needstring); return MODE; }
 <needmode>tar   { BEGIN(needstring); return TAR; }
 <needmode>smb   { BEGIN(needstring); return SMB; }
-<INITIAL,needdevice,needmode,needstring,astring>{LINEFEED}	{ BEGIN(INITIAL); return NL; }
+<INITIAL,needdevice,needmode,needstring,astring,propertyappend,propertypriority>{LINEFEED}	{ BEGIN(INITIAL); return NL; }
 
 %{
     /* quoted file names */
 %}
 
-<needdevice,needmode,needstring,astring>\"			{
+<propertyappend>append {
+    BEGIN(propertypriority);
+    return APPEND;
+}
+
+<propertyappend,propertypriority>priority {
+    BEGIN(needstring);
+    return PRIORITY;
+}
+
+<needdevice,needmode,needstring,astring,propertyappend,propertypriority>\"			{
     if(string_buf != NULL) {
 	g_printf("ERROR:string_buf != NULL: %s\n",string_buf);
     }
@@ -142,7 +156,7 @@ mode		{ BEGIN(needstring); return MODE; }
     /* file names */
 %}
 
-<INITIAL,needdevice,needmode,needstring,astring>[^[:space:][:cntrl:]"]+		{
+<INITIAL,needdevice,needmode,needstring,astring,propertyappend,propertypriority>[^[:space:][:cntrl:]"]+		{
     yylval.strval = stralloc(yytext);
     BEGIN(needstring);
     return STRING;
@@ -152,7 +166,7 @@ mode		{ BEGIN(needstring); return MODE; }
     /* whitespace */
 %}
 
-<INITIAL,needdevice,needmode,needstring,astring>[[:space:]]+ ; /* whitespace */
+<INITIAL,needdevice,needmode,needstring,astring,propertyappend,propertypriority>[[:space:]]+ ; /* whitespace */
 
 %{
     /* anything else */

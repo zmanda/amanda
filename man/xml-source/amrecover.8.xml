@@ -208,6 +208,22 @@ mount point instead of full pathnames.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><emphasis remap='B'>listproperty</emphasis></term>
+  <listitem>
+<para>List all
+<emphasis remap='B'>property</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>setproperty</emphasis> [<emphasis remap='B'>append</emphasis>] [<emphasis remap='B'>priority</emphasis>] <emphasis remap='I'>name</emphasis> [<emphasis remap='I'>value</emphasis> ...]</term>
+  <listitem>
+<para>Set the property <emphasis remap='I'>name</emphasis> to the value <emphasis remap='I'>value</emphasis>.
+The <emphasis remap='B'>append</emphasis> keyword appends the <emphasis remap='I'>value</emphasis> to the values already set for this property.
+Without <emphasis remap='I'>value</emphasis>, the property is unset.
+The <emphasis remap='B'>priority</emphasis> keyword is unused, it is present for ease of copy/paste from application definition.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><emphasis remap='B'>setdevice</emphasis> [[-h <emphasis remap='I'>tape-server</emphasis>] <emphasis remap='I'>tapedev</emphasis>]</term>
   <listitem>
 <para>Specifies the host to use as the tape server, and which of its tape devices to use.

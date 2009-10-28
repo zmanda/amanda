@@ -662,7 +662,7 @@ static void free_val_t(val_t *);
  */
 
 /* memory handling */
-static void free_property_t(gpointer p);
+void free_property_t(gpointer p);
 
 /* Utility functions/structs for val_t_display_strs */
 static char *exinclude_display_str(val_t *val, int file);
@@ -4892,7 +4892,7 @@ conf_init_intrange(
     val_t__intrange(val)[1] = i2;
 }
 
-static void
+void
 free_property_t(
     gpointer p)
 {

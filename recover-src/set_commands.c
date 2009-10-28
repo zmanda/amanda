@@ -313,6 +313,91 @@ list_disk(
     }
 }
 
+static GSList *prop_values = NULL;
+
+void
+set_property_name(
+    char *name,
+    int   append)
+{
+    property_t *prop;
+    char       *property_name;
+
+    property_name = unquote_string(name);
+
+    if (!append) {
+	g_hash_table_remove(proplist, property_name);
+	prop = NULL;
+    } else {
+	prop = g_hash_table_lookup(proplist, property_name);
+    }
+    
+    if (!prop) {
+	prop = malloc(sizeof(property_t));
+	prop->append = 0;
+	prop->priority = 1;
+	prop->values = NULL;
+	g_hash_table_insert(proplist, stralloc(property_name), prop);
+    }
+
+    /* add prop_values to prop->values */
+    if (!prop->values) {
+	prop->values = prop_values;
+	prop_values = NULL;
+    } else {
+	GSList *pv;
+
+	for(pv = prop_values; pv != NULL; pv = pv->next) {
+	    prop->values = g_slist_append(prop->values, pv->data);
+	}
+	g_slist_free(prop_values);
+	prop_values = NULL;
+    }
+    amfree(property_name);
+}
+
+void
+add_property_value(
+    char *value)
+{
+    if (value) {
+	prop_values = g_slist_prepend(prop_values, unquote_string(value));
+    }
+}
+
+/* A GHFunc (callback for g_hash_table_foreach) */
+static void list_one_property(
+    gpointer key_p,
+    gpointer value_p,
+    gpointer user_data_p G_GNUC_UNUSED)
+{
+    char       *property_s = key_p;
+    char       *qproperty;
+    property_t *property = value_p;
+    GSList     *value;
+    char       *qvalue;
+
+    qproperty = quote_string_always(property_s);
+    printf("property %s", qproperty);
+    amfree(qproperty);
+    for (value = property->values; value != NULL; value = value->next) {
+	qvalue = quote_string_always((char*)value->data);
+	printf(" %s", qvalue);
+	amfree(qvalue);
+    }
+    printf("\n");
+}
+
+void
+list_property(void)
+{
+    if (proplist) {
+	g_hash_table_foreach(proplist, list_one_property, NULL);
+    } else {
+	printf("No property set\n");
+    }
+}
+
 void
 local_cd(
     char *dir)

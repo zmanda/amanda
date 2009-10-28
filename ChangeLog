@@ -1,3 +1,13 @@
+2009-10-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (free_property_t): not static.
+	* common-src/conffile.h (free_property_t): not static.
+	* recover-src/amrecover.c, recover-src/amrecover.h,
+	  recover-src/help.c, recover-src/set_commands.c,
+	  recover-src/uparse.y,
+	  recover-src/uscan.l: New setproperty and listproperty commands.
+	* man/xml-source/amrecover.8.xml: Document setproperty and
+					  listproperty commands.
+
 2009-10-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Application/Zfs.pm: Use diskname for the snapshot name.
 
