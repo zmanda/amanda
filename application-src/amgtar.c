@@ -939,7 +939,7 @@ amgtar_restore(
     g_ptr_array_add(argv_ptr, stralloc("-"));
     if (gnutar_directory) {
 	struct stat stat_buf;
-	if(!stat(gnutar_directory, &stat_buf)) {
+	if(stat(gnutar_directory, &stat_buf) != 0) {
 	    fprintf(stderr,"can not stat directory %s: %s\n", gnutar_directory, strerror(errno));
 	    exit(1);
 	}
@@ -947,7 +947,7 @@ amgtar_restore(
 	    fprintf(stderr,"%s is not a directory\n", gnutar_directory);
 	    exit(1);
 	}
-	if (!access(gnutar_directory, W_OK)) {
+	if (access(gnutar_directory, W_OK) != 0) {
 	    fprintf(stderr, "Can't write to %s: %s\n", gnutar_directory, strerror(errno));
 	    exit(1);
 	}

@@ -802,7 +802,7 @@ amstar_restore(
     g_ptr_array_add(argv_ptr, stralloc(star_path));
     if (star_directory) {
 	struct stat stat_buf;
-	if(!stat(star_directory, &stat_buf)) {
+	if(stat(star_directory, &stat_buf) != 0) {
 	    fprintf(stderr,"can not stat directory %s: %s\n", star_directory, strerror(errno));
 	    exit(1);
 	}
@@ -810,7 +810,7 @@ amstar_restore(
 	    fprintf(stderr,"%s is not a directory\n", star_directory);
 	    exit(1);
 	}
-	if (!access(star_directory, W_OK)) {
+	if (access(star_directory, W_OK) != 0 ) {
 	    fprintf(stderr, "Can't write to %s: %s\n", star_directory, strerror(errno));
 	    exit(1);
 	}

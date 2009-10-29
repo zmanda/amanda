@@ -1,3 +1,8 @@
+
+2009-10-29  Satya Ganga <gsat@zmanda.com>
+	* application-src/amgtar.c,application-src/amstar.c: Correct validation 
+	  of directory property for existence and access.
+
 2009-10-29  Satya Ganga <gsat@zmanda.com>
 	* application-src/amsamba.pl: In command line use correct
 					application property names
