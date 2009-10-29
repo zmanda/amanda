@@ -51,6 +51,40 @@
 #error rpc/rpc.h is required to compile ndmp-src
 #endif
 
+
+/* On Solaris platforms create platform specific environment for NDMP  
+   if not we might see issues with rpc code, specifically with 64 bit 
+   mode. 
+*/
+
+#ifdef __sun__
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
+#include <sys/fcntl.h>
+#include <signal.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <assert.h>
+#include <errno.h>
+#include <strings.h>
+#include <netdb.h>
+#include <ctype.h>
+
+/* On some solaris distributions INADDR_NONE is not defined 
+   hence define here.. "in_addr_t" is defined in netinet/in.h  
+*/  
+
+#ifndef INADDR_NONE 
+#define INADDR_NONE     ((in_addr_t)-1)
+#endif
+
+#endif 
+
+
 /* this may need to be autodetected, or NDMOS_MACRO_SET_SOCKADDR may need to be
  * rewritten in terms of Amanda's sockaddr-util.h.  According to ndmpjoblib,
  * only FreeBDS has sin_len. */

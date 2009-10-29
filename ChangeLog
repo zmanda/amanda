@@ -1,3 +1,7 @@
+2009-10-29  Satya Ganga <gsat@zmanda.com>
+	* ndmp-src/ndmos_glib.h: On Solaris platforms create platform specific 
+				 environment for NDMP
+
 2009-10-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (free_property_t): not static.
 	* common-src/conffile.h (free_property_t): not static.
