@@ -1,3 +1,7 @@
+2009-10-29  Satya Ganga <gsat@zmanda.com>
+	* application-src/amsamba.pl: In command line use correct
+					application property names
+
 2009-10-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendsize.c: Fix error reporting.
 
