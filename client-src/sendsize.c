@@ -541,7 +541,7 @@ main(
     return 0;
  err:
     if (err_extra) {
-	g_printf(_("FORMAT ERROR IN REQUEST PACKET '%s'\n"), err_extra);
+	g_printf(_("ERROR FORMAT ERROR IN REQUEST PACKET '%s'\n"), err_extra);
 	dbprintf(_("REQ packet is bogus: %s\n"), err_extra);
 	amfree(err_extra);
     } else {
