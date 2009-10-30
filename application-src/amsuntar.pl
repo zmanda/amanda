@@ -456,18 +456,18 @@ sub command_restore {
 
    $cmd .= "f";      
 
-   if (defined($self->{exclude_list})) {
+   if (defined($self->{exclude_list}) && (-e $self->{exclude_list}[0])) {
       $cmd .= "X";
    }
 
    my(@cmd) = ($self->{pfexec},$self->{suntar}, $cmd);
 
    push @cmd, "-";  # for f argument
-   if (defined($self->{exclude_list})) {
+   if (defined($self->{exclude_list}) && (-e $self->{exclude_list}[0])) {
       push @cmd, $self->{exclude_list}[0]; # for X argument
    }
 
-   if(defined($self->{include_list}))  {
+   if(defined($self->{include_list}) && (-e $self->{include_list}[0]))  {
       push @cmd, "-I", $self->{include_list}[0];
    }
 

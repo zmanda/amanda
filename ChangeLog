@@ -1,3 +1,7 @@
+2009-10-30  Satya Ganga <gsat@zmanda.com>
+	* application-src/amsuntar.pl: Validate include and exclude lists
+	  before using them at restore time.
+
 2009-10-30  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/testutils.c: do not fork if -n is given (aids debugging)
 
