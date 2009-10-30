@@ -717,7 +717,8 @@ sub load_unlocked {
 	}
 
 	my $slot_state = $label? SLOT_LABELED : SLOT_UNLABELED;
-        my $res = Amanda::Changer::robot::Reservation->new($self, $slot, $drive, $device);
+        my $res = Amanda::Changer::robot::Reservation->new($self, $slot, $drive,
+                                $device, $state->{'slots'}->{$slot}->{'barcode'});
 
 	# mark this as reserved
 	$state->{'drives'}->{$drive}->{'res_info'} = $self->_res_info_new();
@@ -1627,7 +1628,7 @@ use Amanda::Debug qw( debug warning );
 
 sub new {
     my $class = shift;
-    my ($chg, $slot, $drive, $device) = @_;
+    my ($chg, $slot, $drive, $device, $barcode) = @_;
     my $self = Amanda::Changer::Reservation::new($class);
 
     $self->{'chg'} = $chg;
@@ -1635,6 +1636,7 @@ sub new {
     $self->{'drive'} = $drive;
     $self->{'device'} = $device;
     $self->{'this_slot'} = $slot;
+    $self->{'barcode'} = $barcode;
 
     return $self;
 }

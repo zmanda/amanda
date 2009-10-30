@@ -405,6 +405,11 @@ This is the name of this slot.  It is an arbitrary string which will
 have some meaning to the changer's C<load()> method. It is safe to
 access this field after the reservation has been released.
 
+=head3 $res->{'barcode'}
+
+If this changer supports barcodes, then this is the barcode of the reserved
+volume.  This can be helpful for labeling tapes using their barcode.
+
 =head3 $res->release(finished_cb => $cb, eject => $eject)
 
 This is how an Amanda application indicates that it no longer needs the

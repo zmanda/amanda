@@ -1,4 +1,9 @@
 2009-10-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: add barcodes to reservations
+	* perl/Amanda/Changer.pm: document
+	* installcheck/Amanda_Changer_robot.pl: test
+
+2009-10-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndml_log.c: use static to eliminate unnecessary global
 
 2009-10-29  Satya Ganga <gsat@zmanda.com>

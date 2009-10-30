@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 309;
+use Test::More tests => 311;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -901,6 +901,10 @@ for my $mtx_config (
 	$res2->{'device'}->read_label();
 	is($res2->{'device'}->volume_label, "TAPE-2",
 	    "$pfx: \$res->{this_slot} + 'next' returns the correct slot, too");
+        if ($mtx_config->{'barcodes'} == 1) {
+            is($res2->{'barcode'}, '22222',
+                "$pfx: result has a barcode");
+        }
 
 	$subs{'release6'}->();
     };
