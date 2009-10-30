@@ -38,7 +38,7 @@
 #include "ndmlib.h"
 
 
-struct timeval	start_time;
+static struct timeval	start_time;
 
 
 char *
