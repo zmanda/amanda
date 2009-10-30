@@ -1,3 +1,6 @@
+2009-10-30  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/testutils.c: do not fork if -n is given (aids debugging)
+
 2009-10-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: add barcodes to reservations
 	* perl/Amanda/Changer.pm: document
