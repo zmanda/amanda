@@ -115,6 +115,8 @@ void xfer_dest_taper_cache_inform(
 /* Constructor for XferDestTaperSplitter, which writes data to devices block by
  * block and handles caching and splitting parts.
  *
+ * @param first_device: the first device that will be used with this xfer, used
+ *                      to calculate some internal parameters
  * @param max_memory: total amount of memory to use for buffers, or zero
  *                    for a reasonable default.
  * @param part_size: the desired size of each part
@@ -125,6 +127,7 @@ void xfer_dest_taper_cache_inform(
  */
 XferElement *
 xfer_dest_taper_splitter(
+    Device *first_device,
     size_t max_memory,
     guint64 part_size,
     gboolean use_mem_cache,

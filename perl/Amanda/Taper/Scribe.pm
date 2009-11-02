@@ -457,7 +457,7 @@ sub start_xfer {
 
     my $finish_starting_xfer = make_cb(finish_starting_xfer => sub  {
 	my $xdt = $self->{'xdt'} = Amanda::Xfer::Dest::Taper::Splitter->new(
-	    $params{'max_memory'}, $part_size,
+            $self->{'device'}, $params{'max_memory'}, $part_size,
 	    $use_mem_cache, $disk_cache_dirname);
 
 	my $xfer_elements = $params{'xfer_elements'};

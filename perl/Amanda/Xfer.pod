@@ -141,7 +141,7 @@ the file for you!
 
 This source reads data from a holding file (see L<Amanda::Holding>).
 If the transfer only consists of a C<Amanda::Xfer::Source::Holding>
-and an C<Amanda::Xfer::Dest::Taper> (with no filters), then the source
+and an C<Amanda::Xfer::Dest::Taper::Splitter> (with no filters), then the source
 will call the destination's C<cache_inform> method so that it can use
 holding chunks for a split-part cache.
 
@@ -252,27 +252,28 @@ nonzero, then the element will validate that it receives the data that
 C<Amanda::Xfer::Source::Random> produced with the same seed.  No
 validation is performed if C<$seed> is zero.
 
-=head3 Amanda::Xfer::Dest::Taper (SERVER ONLY)
+=head3 Amanda::Xfer::Dest::Taper::Splitter (SERVER ONLY)
 
-  Amanda::Xfer::Dest::Taper->new($max_memory, $part_size,
-			    $use_mem_cache, $disk_cache_dirname);
+  Amanda::Xfer::Dest::Taper::Splitter->new($first_device, $max_memory,
+                        $part_size, $use_mem_cache, $disk_cache_dirname);
 
-This is C<Amanda::Xfer::Dest::Device>'s big cousin.  C<Taper> allows a
+This is C<Amanda::Xfer::Dest::Device>'s big cousin.  This class allows a
 single transfer to write to multiple files (parts) on a device, and
 even spread those parts over multiple devices, without interrupting
 the transfer itself.  It caches data from each part in one of a
 variety of ways, and supports "rewinding" to retry a failed part
 (e.g., one that does not fit on a device).
 
-The desired part size is C<$part_size>, although this value will be
-rounded up internally as necessary.  If C<$use_mem_cache> is true,
-each part will be cached in memory (using C<$part_size> bytes of
-memory; plan accordingly!).  If C<$disk_cache_dirname> is defined,
-then each part will be cached on-disk in a file in this directory.  It
-is an error to specify both in-memory and on-disk caching.  If neither
-option is specified, the element will operate successfully, but will
-not be able to retry a part unless C<cache_inform> has been used
-properly (see below).
+The C<$first_device> is used to calculate some internal constants, notably the
+slab size, based on the device characteristics.  The device should be
+configured, but need not be started yet.  The desired part size is
+C<$part_size>, although this value will be rounded up internally as necessary.
+If C<$use_mem_cache> is true, each part will be cached in memory (using
+C<$part_size> bytes of memory; plan accordingly!).  If C<$disk_cache_dirname>
+is defined, then each part will be cached on-disk in a file in this directory.
+It is an error to specify both in-memory and on-disk caching.  If neither
+option is specified, the element will operate successfully, but will not be
+able to retry a part unless C<cache_inform> has been used properly (see below).
 
 When a transfer using this element is first started, nothing happens
 until the element's C<start_part> method is called:

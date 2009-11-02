@@ -49,6 +49,7 @@ XferElement * xfer_source_holding(
 
 %newobject xfer_dest_taper_splitter;
 XferElement *xfer_dest_taper_splitter(
+    Device *first_device,
     size_t max_memory,
     guint64 part_size,
     gboolean use_mem_cache,

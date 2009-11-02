@@ -1,7 +1,13 @@
 2009-11-02  Dustin J. Mitchell <dustin@zmanda.com>
-	* device-src/xfer-dest-taper-splitter.c: splitter takes a
-	  'first_device' and calculates slab size immediately instead of
-	  waiting for start_part
+
+	* device-src/xfer-dest-taper-splitter.c: eliminate deadlock, take
+	  'first_device' and calculate slab size immediately instead of waiting
+	  for start_part
+	* device-src/xfer-device.h: first_device parameter
+	* perl/Amanda/XferServer.swg: swig
+	* perl/Amanda/Xfer.pod: docs
+	* installcheck/Amanda_Xfer_serveronly.pl: send first_device properly
+	* perl/Amanda/Taper/Scribe.pm: send first_device properly
 
 2009-10-30  Satya Ganga <gsat@zmanda.com>
 	* application-src/amsuntar.pl: Validate include and exclude lists

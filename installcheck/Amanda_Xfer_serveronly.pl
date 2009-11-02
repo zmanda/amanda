@@ -114,9 +114,11 @@ my $RANDOM_SEED = 0xFACADE;
 #   cancel_after_partnum - after this partnum is completed, cancel the xfer
 #   do_not_retry - do not retry a failed part - cancel the xfer instead
 sub test_taper_dest {
-    my ($src, $dest, $expected_messages, $msg_prefix, %params) = @_;
+    my ($src, $dest_sub, $expected_messages, $msg_prefix, %params) = @_;
     my $xfer;
     my $device;
+    my $vtape_num = 1;
+    my @messages;
 
     # set up vtapes
     my $testconf = Installcheck::Run::setup();
@@ -128,10 +130,17 @@ sub test_taper_dest {
     $hdr->{'disk'} = "/";
     $hdr->{'datestamp'} = "20080102030405";
 
+    # set up a device for the taper dest
+    $device = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($vtape_num++));
+    die("Could not open VFS device: " . $device->error())
+        unless ($device->status() == $DEVICE_STATUS_SUCCESS);
+    $device->start($ACCESS_WRITE, "TESTCONF01", "20080102030405");
+    $device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
+    my $dest = $dest_sub->($device);
+
+    # and create the xfer
     $xfer = Amanda::Xfer->new([ $src, $dest ]);
 
-    my $vtape_num = 1;
-    my @messages;
     my $start_new_part = sub {
 	my ($successful, $eof, $partnum) = @_;
 
@@ -319,7 +328,11 @@ sub make_holding_files {
 # run this test in each of a few different cache permutations
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
-    Amanda::Xfer::Dest::Taper::Splitter->new(128*1024, 1024*1024, 1, undef),
+    sub {
+        my ($first_dev) = @_;
+        Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
+                                                 1024*1024, 1, undef),
+    },
     [ "PART-1-OK", "PART-2-OK", "PART-3-FAILED",
       "PART-3-OK", "PART-4-OK", "PART-5-OK",
       "DONE" ],
@@ -344,7 +357,11 @@ test_taper_source(
 
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
-    Amanda::Xfer::Dest::Taper::Splitter->new(128*1024, 1024*1024, 0, $disk_cache_dir),
+    sub {
+        my ($first_dev) = @_;
+        Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
+                                          1024*1024, 0, $disk_cache_dir),
+    },
     [ "PART-1-OK", "PART-2-OK", "PART-3-FAILED",
       "PART-3-OK", "PART-4-OK", "PART-5-OK",
       "DONE" ],
@@ -369,7 +386,11 @@ test_taper_source(
 
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*2, $RANDOM_SEED),
-    Amanda::Xfer::Dest::Taper::Splitter->new(128*1024, 1024*1024, 0, undef),
+    sub {
+        my ($first_dev) = @_;
+        Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
+                                                1024*1024, 0, undef),
+    },
     [ "PART-1-OK", "PART-2-OK", "PART-3-OK",
       "DONE" ],
     "no cache (no failed parts; exact multiple of part size)");
@@ -389,7 +410,10 @@ test_taper_source(
 
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*2, $RANDOM_SEED),
-    Amanda::Xfer::Dest::Taper::Splitter->new(128*1024, 0, 0, undef),
+    sub {
+        my ($first_dev) = @_;
+        Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024, 0, 0, undef),
+    },
     [ "PART-1-OK", "DONE" ],
     "no splitting (fits on volume)");
 test_taper_source(
@@ -404,14 +428,21 @@ test_taper_source(
 
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
-    Amanda::Xfer::Dest::Taper::Splitter->new(128*1024, 0, 0, undef),
+    sub {
+        my ($first_dev) = @_;
+        Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024, 0, 0, undef),
+    },
     [ "PART-1-FAILED", "NOT-RETRYING", "CANCELLED", "DONE" ],
     "no splitting (doesn't fit on volume -> fails)",
     do_not_retry => 1);
 
 test_taper_dest(
     Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
-    Amanda::Xfer::Dest::Taper::Splitter->new(128*1024, 1024*1024, 0, $disk_cache_dir),
+    sub {
+        my ($first_dev) = @_;
+        Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
+                                        1024*1024, 0, $disk_cache_dir),
+    },
     [ "PART-1-OK", "PART-2-OK", "PART-3-FAILED",
       "PART-3-OK", "PART-4-OK", "CANCEL",
       "CANCELLED", "DONE" ],
@@ -422,7 +453,11 @@ test_taper_dest(
 $holding_file = make_holding_files(3);
 test_taper_dest(
     Amanda::Xfer::Source::Holding->new($holding_file),
-    Amanda::Xfer::Dest::Taper::Splitter->new(128*1024, 1024*1024, 0, undef),
+    sub {
+        my ($first_dev) = @_;
+        Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
+                                        1024*1024, 0, undef),
+    },
     [ "PART-1-OK", "PART-2-OK", "PART-3-FAILED",
       "PART-3-OK", "PART-4-OK", "PART-5-FAILED",
       "PART-5-OK", "PART-6-OK", "PART-7-OK",
@@ -440,6 +475,7 @@ sub test_taper_dest_cache_inform {
     my $part_size = 1024*1024;
     my $file_size = $part_size * 4 + 100 * 1024;
     my $cache_file = "$Installcheck::TMP/cache_file";
+    my $vtape_num = 1;
 
     # set up our "cache", cleverly using an Amanda::Xfer::Dest::Fd
     open($fh, ">", "$cache_file") or die("Could not open '$cache_file' for writing");
@@ -494,14 +530,23 @@ sub test_taper_dest_cache_inform {
     $hdr->{'disk'} = "/";
     $hdr->{'datestamp'} = "20080102030405";
 
+    # set up the cache file
     open($fh, "<", "$cache_file") or die("Could not open '$cache_file' for reading");
-    my $dest = Amanda::Xfer::Dest::Taper::Splitter->new(128*1024, 1024*1024, 0, undef);
+
+    # set up a device for writing
+    $device = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($vtape_num++));
+    die("Could not open VFS device: " . $device->error())
+        unless ($device->status() == $DEVICE_STATUS_SUCCESS);
+    $device->start($ACCESS_WRITE, "TESTCONF01", "20080102030405");
+    $device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
+
+    my $dest = Amanda::Xfer::Dest::Taper::Splitter->new($device, 128*1024,
+                                                1024*1024, 0, undef);
     $xfer = Amanda::Xfer->new([
 	Amanda::Xfer::Source::Fd->new(fileno($fh)),
 	$dest,
     ]);
 
-    my $vtape_num = 1;
     my $start_new_part = sub {
 	my ($successful, $eof, $last_partnum) = @_;
 

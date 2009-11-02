@@ -1107,7 +1107,7 @@ device_thread(
     while (1) {
 	/* wait until the main thread un-pauses us, and check that we have
 	 * the relevant device info available (block_size) */
-	while ((self->paused || !self->block_size) && !elt->cancelled) {
+	while (self->paused && !elt->cancelled) {
 	    DBG(9, "waiting to be unpaused");
 	    g_cond_wait(self->state_cond, self->state_mutex);
 	}
@@ -1205,17 +1205,6 @@ push_buffer_impl(
     gpointer p;
 
     DBG(3, "push_buffer(%p, %ju)", buf, (uintmax_t)size);
-
-    /* wait for device info, so we know how large slabs are, etc. */
-    if (G_UNLIKELY(!self->block_size)) {
-	g_mutex_lock(self->state_mutex);
-	while (!self->block_size && !elt->cancelled) {
-	    DBG(9, "waiting for block size");
-	    g_cond_wait(self->state_cond, self->state_mutex);
-	}
-	DBG(9, "done waiting");
-	g_mutex_unlock(self->state_mutex);
-    }
 
     /* do nothing if cancelled */
     if (G_UNLIKELY(elt->cancelled)) {
@@ -1342,6 +1331,7 @@ start_part_impl(
     dumpfile_t *header)
 {
     XferDestTaperSplitter *self = XFER_DEST_TAPER_SPLITTER(xdtself);
+    GValue val;
 
     g_assert(device != NULL);
     g_assert(!device->in_file);
@@ -1358,74 +1348,23 @@ start_part_impl(
 	dumpfile_free(self->part_header);
     self->part_header = dumpfile_copy(header);
 
-    /* calculate or verify the device-dependent parameters, now that we have
-     * a device */
-    if (!self->block_size) {
-	GValue val;
-	self->block_size = self->device->block_size;
-
-	DBG(1, "calculating block size and other device-dependent values");
-
-	/* The slab size should be large enough to justify the overhead of all
-	 * of the mutexes, but it needs to be small enough to have a few slabs
-	 * available so that the threads are not constantly waiting on one
-	 * another.  The choice is sixteen blocks, not more than a quarter of
-	 * the part size, and not more than 10MB.  If we're not using the mem
-	 * cache, then avoid exceeding max_memory by keeping the slab size less
-	 * than a quarter of max_memory. */
-
-	self->slab_size = self->block_size * 16;
-	if (self->part_size)
-	    self->slab_size = MIN(self->slab_size, self->part_size / 4);
-	self->slab_size = MIN(self->slab_size, 10*1024*1024);
-	if (!self->use_mem_cache)
-	    self->slab_size = MIN(self->slab_size, self->max_memory / 4);
-
-	/* round slab size up to the nearest multiple of the block size */
-	self->slab_size =
-	    ((self->slab_size + self->block_size - 1) / self->block_size) * self->block_size;
-
-	/* round part size up to a multiple of the slab size */
-	if (self->part_size != 0) {
-	    self->slabs_per_part = (self->part_size + self->slab_size - 1) / self->slab_size;
-	    self->part_size = self->slabs_per_part * self->slab_size;
-	} else {
-	    self->slabs_per_part = 0;
-	}
-
-	/* fill in the file slice's length, now that we know the real part size */
-	if (self->disk_cache_dirname)
-	    self->part_slices->length = self->part_size;
-
-	if (self->use_mem_cache) {
-	    self->max_slabs = self->slabs_per_part;
-	} else {
-	    self->max_slabs = (self->max_memory + self->slab_size - 1) / self->slab_size;
-	}
-
-	/* Note that max_slabs == 1 will cause deadlocks, due to some assumptions in
-	 * alloc_slab, so we check here that it's at least 2. */
-	if (self->max_slabs < 2)
-	    self->max_slabs = 2;
-
-	DBG(1, "using slab_size %zu and max_slabs %ju", self->slab_size, (uintmax_t)self->max_slabs);
-
-        bzero(&val, sizeof(val));
-        if (!device_property_get(self->device, PROPERTY_STREAMING, &val)
-            || !G_VALUE_HOLDS(&val, STREAMING_REQUIREMENT_TYPE)) {
-            g_warning("Couldn't get streaming type for %s", self->device->device_name);
-            self->streaming = STREAMING_REQUIREMENT_REQUIRED;
-        } else {
-            self->streaming = g_value_get_enum(&val);
-        }
-	g_value_unset(&val);
+    /* get this new device's streaming requirements */
+    bzero(&val, sizeof(val));
+    if (!device_property_get(self->device, PROPERTY_STREAMING, &val)
+        || !G_VALUE_HOLDS(&val, STREAMING_REQUIREMENT_TYPE)) {
+        g_warning("Couldn't get streaming type for %s", self->device->device_name);
+        self->streaming = STREAMING_REQUIREMENT_REQUIRED;
     } else {
-	if (self->block_size != device->block_size) {
-	    g_mutex_unlock(self->state_mutex);
-	    send_xmsg_error_and_cancel(self,
-		_("All devices used by the taper must have the same block size"));
-	    return;
-	}
+        self->streaming = g_value_get_enum(&val);
+    }
+    g_value_unset(&val);
+
+    /* check that the blocksize hasn't changed */
+    if (self->block_size != device->block_size) {
+        g_mutex_unlock(self->state_mutex);
+        send_xmsg_error_and_cancel(self,
+            _("All devices used by the taper must have the same block size"));
+        return;
     }
 
     if (retry_part) {
@@ -1623,6 +1562,7 @@ xfer_dest_taper_splitter_get_type (void)
 
 XferElement *
 xfer_dest_taper_splitter(
+    Device *first_device,
     size_t max_memory,
     guint64 part_size,
     gboolean use_mem_cache,
@@ -1651,6 +1591,53 @@ xfer_dest_taper_splitter(
 	self->part_slices->offset = 0;
 	self->part_slices->length = 0; /* will be filled in in start_part */
     }
+
+    /* calculate the device-dependent parameters */
+    self->block_size = first_device->block_size;
+
+    /* The slab size should be large enough to justify the overhead of all
+     * of the mutexes, but it needs to be small enough to have a few slabs
+     * available so that the threads are not constantly waiting on one
+     * another.  The choice is sixteen blocks, not more than a quarter of
+     * the part size, and not more than 10MB.  If we're not using the mem
+     * cache, then avoid exceeding max_memory by keeping the slab size less
+     * than a quarter of max_memory. */
+
+    self->slab_size = self->block_size * 16;
+    if (self->part_size)
+        self->slab_size = MIN(self->slab_size, self->part_size / 4);
+    self->slab_size = MIN(self->slab_size, 10*1024*1024);
+    if (!self->use_mem_cache)
+        self->slab_size = MIN(self->slab_size, self->max_memory / 4);
+
+    /* round slab size up to the nearest multiple of the block size */
+    self->slab_size =
+        ((self->slab_size + self->block_size - 1) / self->block_size) * self->block_size;
+
+    /* round part size up to a multiple of the slab size */
+    if (self->part_size != 0) {
+        self->slabs_per_part = (self->part_size + self->slab_size - 1) / self->slab_size;
+        self->part_size = self->slabs_per_part * self->slab_size;
+    } else {
+        self->slabs_per_part = 0;
+    }
+
+    /* fill in the file slice's length, now that we know the real part size */
+    if (self->disk_cache_dirname)
+        self->part_slices->length = self->part_size;
+
+    if (self->use_mem_cache) {
+        self->max_slabs = self->slabs_per_part;
+    } else {
+        self->max_slabs = (self->max_memory + self->slab_size - 1) / self->slab_size;
+    }
+
+    /* Note that max_slabs == 1 will cause deadlocks, due to some assumptions in
+        * alloc_slab, so we check here that it's at least 2. */
+    if (self->max_slabs < 2)
+        self->max_slabs = 2;
+
+    DBG(1, "using slab_size %zu and max_slabs %ju", self->slab_size, (uintmax_t)self->max_slabs);
 
     return XFER_ELEMENT(self);
 }
