@@ -1,3 +1,8 @@
+2009-11-02  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-dest-taper-splitter.c: splitter takes a
+	  'first_device' and calculates slab size immediately instead of
+	  waiting for start_part
+
 2009-10-30  Satya Ganga <gsat@zmanda.com>
 	* application-src/amsuntar.pl: Validate include and exclude lists
 	  before using them at restore time.

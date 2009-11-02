@@ -380,7 +380,6 @@ alloc_slab(
 	    g_free(rv);
 	    send_xmsg_error_and_cancel(self,
 		_("Could not allocate %zu bytes of memory"), self->slab_size);
-	    wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);
 	    return NULL;
 	}
     }
@@ -729,6 +728,8 @@ slab_source_setup(
 	    g_mutex_unlock(self->slab_mutex);
 
 	    if (!state->tmp_slab) {
+                /* if we couldn't allocate a slab, then we're cancelled, so we're done with
+                 * this part. */
 		self->last_part_successful = FALSE;
 		self->no_more_parts = TRUE;
 		return FALSE;
@@ -1232,6 +1233,11 @@ push_buffer_impl(
             if (!self->reader_slab) {
                 /* we've been cancelled while waiting for a slab */
                 g_mutex_unlock(self->slab_mutex);
+
+                /* wait for the xfer to cancel, so we don't get another buffer
+                 * pushed to us (and do so *without* the mutex held) */
+                wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);
+
                 goto free_and_finish;
             }
 	    self->reader_slab->serial = self->next_serial++;
@@ -1256,6 +1262,11 @@ push_buffer_impl(
             if (!self->reader_slab) {
                 /* we've been cancelled while waiting for a slab */
                 g_mutex_unlock(self->slab_mutex);
+
+                /* wait for the xfer to cancel, so we don't get another buffer
+                 * pushed to us (and do so *without* the mutex held) */
+                wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);
+
                 goto free_and_finish;
             }
 	    self->reader_slab->serial = self->next_serial++;
