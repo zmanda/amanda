@@ -26,7 +26,7 @@ int tu_debugging_enabled = FALSE;
 static void
 alarm_hdlr(int sig G_GNUC_UNUSED)
 {
-    fprintf(stderr, "-- TEST TIMED OUT --\n");
+    g_fprintf(stderr, "-- TEST TIMED OUT --\n");
     exit(1);
 }
 
@@ -41,6 +41,10 @@ callinfork(TestUtilsTest *test, int ignore_timeouts, gboolean skip_fork)
     gboolean result;
 
     if (skip_fork) {
+	/* kill the test after a bit */
+	signal(SIGALRM, alarm_hdlr);
+	if (!ignore_timeouts) alarm(test->timeout);
+
 	result = test->fn();
     } else {
 	switch (pid = fork()) {
@@ -64,9 +68,9 @@ callinfork(TestUtilsTest *test, int ignore_timeouts, gboolean skip_fork)
     }
 
     if (result) {
-	fprintf(stderr, " PASS %s\n", test->name);
+	g_fprintf(stderr, " PASS %s\n", test->name);
     } else {
-	fprintf(stderr, " FAIL %s\n", test->name);
+	g_fprintf(stderr, " FAIL %s\n", test->name);
     }
 
     return result;
@@ -110,7 +114,7 @@ testutils_run_tests(
     int run_all = 1;
     int success;
     int ignore_timeouts = 0;
-    gboolean no_fork;
+    gboolean skip_fork = FALSE;
 
     /* first_parse the command line */
     while (argc > 1) {
@@ -119,7 +123,7 @@ testutils_run_tests(
 	} else if (strcmp(argv[1], "-t") == 0) {
 	    ignore_timeouts = TRUE;
 	} else if (strcmp(argv[1], "-n") == 0) {
-	    no_fork = TRUE;
+	    skip_fork = TRUE;
 	} else if (strcmp(argv[1], "-h") == 0) {
 	    usage(tests);
 	    return 1;
@@ -135,7 +139,7 @@ testutils_run_tests(
 	    }
 
 	    if (!found) {
-		fprintf(stderr, "Test '%s' not found\n", argv[1]);
+		g_fprintf(stderr, "Test '%s' not found\n", argv[1]);
 		return 1;
 	    }
 
@@ -143,6 +147,25 @@ testutils_run_tests(
 	}
 
 	argc--; argv++;
+    }
+
+    if (run_all) {
+        for (t = tests; t->fn; t++)
+            t->selected = 1;
+    }
+
+    /* if skip_fork is given, only one test can run */
+    if (skip_fork) {
+        int num_tests = 0;
+        for (t = tests; t->fn; t++) {
+            if (t->selected)
+                num_tests++;
+        }
+
+        if (num_tests > 1) {
+            g_fprintf(stderr, "Only run one test with '-n'\n");
+            return 1;
+        }
     }
 
     /* Make sure g_critical and g_error will exit */
@@ -156,8 +179,8 @@ testutils_run_tests(
     /* Now actually run the tests */
     success = 1;
     for (t = tests; t->fn; t++) {
-        if (run_all || t->selected) {
-	    success = callinfork(t, ignore_timeouts, no_fork) && success;
+        if (t->selected) {
+	    success = callinfork(t, ignore_timeouts, skip_fork) && success;
         }
     }
 

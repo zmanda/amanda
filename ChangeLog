@@ -1,4 +1,8 @@
 2009-11-02  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/testutils.c: fix uninitialized variable, only run one
+	  test in non-fork mode
+
+2009-11-02  Dustin J. Mitchell <dustin@zmanda.com>
 
 	* device-src/xfer-dest-taper-splitter.c: eliminate deadlock, take
 	  'first_device' and calculate slab size immediately instead of waiting
