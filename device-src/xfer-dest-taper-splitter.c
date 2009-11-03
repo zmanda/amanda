@@ -549,15 +549,19 @@ disk_cache_thread(
 
 	/* and then making sure we're ready to write that slab. */
 	g_mutex_lock(self->state_mutex);
-	while (self->disk_cacher_slab
-		    && self->disk_cacher_slab->serial > self->part_first_serial
-		    && !elt->cancelled) {
-	    DBG(9, "waiting for the disk slab to become current");
-	    g_cond_wait(self->state_cond, self->state_mutex);
-	}
+        while ((self->paused ||
+		    (self->disk_cacher_slab && self->disk_cacher_slab->serial > self->part_first_serial))
+		&& !elt->cancelled) {
+            DBG(9, "waiting for the disk slab to become current and un-paused");
+            g_cond_wait(self->state_cond, self->state_mutex);
+        }
 	DBG(9, "done waiting");
+
 	stop_serial = self->part_stop_serial;
 	g_mutex_unlock(self->state_mutex);
+
+	if (elt->cancelled)
+	    break;
 
 	g_mutex_lock(self->slab_mutex);
 	slab = self->disk_cacher_slab;

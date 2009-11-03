@@ -1,4 +1,9 @@
 2009-11-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-dest-taper-splitter.c: make disk_cache_thread wait
+	  to be un-paused before starting to cache a part
+	* xfer-src/dest-null.c: add additional debugging info
+
+2009-11-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/Makefile.am device-src/directtcp-target.c
 	  device-src/directtcp-target.h: add new DirectTCPTarget interface, for
 	  use by devices supporting DirectTCP
