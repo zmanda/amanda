@@ -32,6 +32,7 @@ libamdevice_la_SOURCES = \
 	property.c \
 	device.c \
 	device-queueing.c \
+	directtcp-target.c \
 	null-device.c \
 	rait-device.c \
 	vfs-device.c \
@@ -97,6 +98,7 @@ endif
 noinst_HEADERS = \
 	device-queueing.h \
 	device.h \
+	directtcp-target.h \
 	property.h \
 	s3.h \
 	s3-util.h \
