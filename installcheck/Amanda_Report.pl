@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
-use Test::More tests => 15;
+use Test::More tests => 30;
 use strict;
 use warnings;
 
@@ -29,6 +29,7 @@ use Installcheck;
 use Amanda::Report;
 
 my %LogfileContents;
+my %LogfileFlags;
 my %LogfileData;
 my $logCount = 0;
 my $log_filename = "$Installcheck::TMP/Amanda_Report_test.log";
@@ -54,6 +55,10 @@ DISK planner localhost /root
 DISK planner localhost /etc
 DISK planner localhost /var/log
 EOF
+
+$LogfileFlags{planner} = {
+    normal_run => 1,
+};
 
 $LogfileData{planner} = {
     programs => {
@@ -95,6 +100,11 @@ STATS driver estimate localhost /etc 20090728122430 0 [sec 2 nkb 2048 ckb 64 kps
 STATS driver estimate localhost /home 20090728122430 0 [sec 4 nkb 5012 ckb 64 kps 1024]
 FINISH driver date 20090728122445 time 14.46
 EOF
+
+$LogfileFlags{driver} = {
+    got_finish => 1,
+    normal_run => 1,
+};
 
 $LogfileData{driver} = {
     programs => {
@@ -161,6 +171,11 @@ SUCCESS dumper localhost /home 20090728122430 0 [sec 1.68421 kb 4096 kps 2354 or
 STATS driver estimate localhost /home 20090728122430 0 [sec 4 nkb 4096 ckb 64 kps 1024]
 FINISH driver date 20090728122445 time 14.46
 EOF
+
+$LogfileFlags{dumper} = {
+    got_finish => 1,
+    normal_run => 1,
+};
 
 $LogfileData{dumper} = {
     programs => {
@@ -269,6 +284,11 @@ PARTIAL chunker localhost /home 20090728122430 0 [sec 0.82 kb 2532 kps 3087.8048
 STATS driver estimate localhost /home 20090728122430 0 [sec 4 nkb 4096 ckb 64 kps 1024]
 FINISH driver date 20090728122445 time 14.46
 EOF
+
+$LogfileFlags{chunker} = {
+    got_finish => 1,
+    normal_run => 1,
+};
 
 $LogfileData{chunker} = {
     programs => {
@@ -401,6 +421,11 @@ INFO taper pid-done 28023
 FINISH driver date 20080111 time 2167.581
 EOF
 
+$LogfileFlags{taper} = {
+    got_finish => 1,
+    normal_run => 1,
+};
+
 $LogfileData{taper} = {
     programs => {
         planner => {
@@ -523,6 +548,11 @@ PART taper Conf-001 1 somebox /lib 20080111 1/1 0 [sec 4.813543 kb 419 kps 87.13
 DONE taper somebox /lib 20080111 1 0 [sec 4.813543 kb 419 kps 87.133307]
 FINISH driver date 20080111 time 2167.581
 EOF
+
+$LogfileFlags{simple} = {
+    got_finish => 1,
+    normal_run => 1,
+};
 
 $LogfileData{simple} = {
     programs => {
@@ -672,6 +702,11 @@ FINISH driver date 20081002040002 time 663.574
 INFO driver pid-done 9313
 
 EOF
+
+$LogfileFlags{fullExample} = {
+    got_finish => 1,
+    normal_run => 1,
+};
 
 $LogfileData{fullExample} = {
     programs => {
@@ -957,6 +992,11 @@ INFO driver pid-done 26076
 INFO amflush pid-done 26075
 EOF
 
+$LogfileFlags{amflushExample} = {
+    got_finish  => 1,
+    amflush_run => 1,
+};
+
 $LogfileData{amflushExample} = {
     'programs' => {
         'taper' => {
@@ -1043,15 +1083,23 @@ $LogfileData{amflushExample} = {
     },
 };
 
-
 foreach my $test ( keys %LogfileContents ) {
 
     unless ( exists $LogfileData{$test} ) {
         die "error: $test present in \%LogfileContents but not \%LogfileData\n";
     }
 
-    my $report = Amanda::Report->new(write_logfile($LogfileContents{$test}));
+    my $report =
+      Amanda::Report->new( write_logfile( $LogfileContents{$test} ) );
     is_deeply( $report->{data}, $LogfileData{$test}, "data check: $test" );
+
+    map {
+        cmp_ok(
+            $report->get_flag($_), "==",
+            $LogfileFlags{$test}->{$_},
+            "flag test: $_, $test"
+        );
+    } keys %{ $LogfileFlags{$test} };
 }
 
 #
