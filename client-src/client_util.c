@@ -831,7 +831,7 @@ backup_support_option(
 	}
 	amfree(line);
     }
-    aclose(supportout);
+    fclose(streamout);
 
     if (bsu->data_path_set == 0)
 	bsu->data_path_set = DATA_PATH_AMANDA;
@@ -848,7 +848,7 @@ backup_support_option(
 	}
 	amfree(bsu);
     }
-    aclose(supporterr);
+    fclose(streamerr);
 
     if (waitpid(supportpid, &status, 0) < 0) {
 	err = vstrallocf(_("waitpid failed: %s"), strerror(errno));
