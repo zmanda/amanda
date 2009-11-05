@@ -857,7 +857,7 @@ backup_support_option(
 	}
 	amfree(line);
     }
-    aclose(supportout);
+    fclose(streamout);
     streamerr = fdopen(supporterr, "r");
     if (!streamerr) {
 	error(_("Error opening pipe to child: %s"), strerror(errno));
@@ -870,7 +870,7 @@ backup_support_option(
 	}
 	amfree(bsu);
     }
-    aclose(supporterr);
+    fclose(streamerr);
 
     if (waitpid(supportpid, &status, 0) < 0) {
 	err = vstrallocf(_("waitpid failed: %s"), strerror(errno));

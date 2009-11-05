@@ -1,3 +1,7 @@
+2009-11-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c: close FILE instead of fd.
+	* client-src/selfcheck.c: fix fd leak with app_stderr.
+
 2009-10-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendsize.c: Fix error reporting.
 
