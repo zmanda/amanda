@@ -7230,3 +7230,25 @@ data_path_from_string(
     /* NOTREACHED */
 }
 
+gchar *
+amandaify_property_name(
+    const gchar *name)
+{
+    gchar *ret, *cur_r;
+    const gchar *cur_o;
+    if (!name) return NULL;
+
+    ret = g_malloc0(strlen(name)+1);
+    cur_r = ret;
+    for (cur_o = name; *cur_o; cur_o++) {
+	if ('_' == *cur_o)
+	    *cur_r = '-';
+	else
+	    *cur_r = g_ascii_tolower(*cur_o);
+
+	cur_r++;
+    }
+
+    return ret;
+}
+

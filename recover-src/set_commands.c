@@ -321,9 +321,11 @@ set_property_name(
     int   append)
 {
     property_t *prop;
-    char       *property_name;
+    char       *property_name, *pn;
 
-    property_name = unquote_string(name);
+    pn = unquote_string(name);
+    property_name = amandaify_property_name(pn);
+    amfree(pn);
 
     if (!append) {
 	g_hash_table_remove(proplist, property_name);

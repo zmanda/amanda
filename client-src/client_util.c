@@ -1650,3 +1650,39 @@ build_re_table(
     return new_re_table;
 }
 
+typedef struct {
+    proplist_t result;
+} merge_property_t;
+
+static void
+merge_property(
+    gpointer key_p,
+    gpointer value_p,
+    gpointer user_data_p)
+{
+    char *property_s = key_p;
+    GSList *value_s = value_p;
+    merge_property_t *merge_p = user_data_p;
+    GSList *value = g_hash_table_lookup(merge_p->result, property_s);
+
+    if (value) { /* remove old value */
+	g_hash_table_remove(merge_p->result, key_p);
+    }
+    g_hash_table_insert(merge_p->result, key_p, value_s);
+}
+
+void
+merge_properties(
+    proplist_t proplist1,
+    proplist_t proplist2)
+{
+    merge_property_t merge_p = {proplist1};
+
+    if (proplist2 == NULL) {
+	return;
+    }
+    g_hash_table_foreach(proplist2,
+                         &merge_property,
+                         &merge_p);
+}
+

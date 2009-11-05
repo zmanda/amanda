@@ -1383,4 +1383,12 @@ data_path_t data_path_from_string(char *data);
 
 void free_property_t(gpointer p);
 
+/* Converts a string into Amanda property name style.
+ *
+ * @param name: The name to convert.
+ * @returns: A newly allocated string, with name in lowercase and
+ * any instances of '_' replaced with '-'.
+ */
+gchar *amandaify_property_name(const gchar *name);
+
 #endif /* ! CONFFILE_H */

@@ -1994,6 +1994,7 @@ extract_files_child(
 	    GSList   *scriptlist;
 	    script_t *script;
 
+	    merge_properties(dump_dle->application_property, proplist);
 	    application_property_add_to_argv(argv_ptr, dump_dle, NULL);
 	    for (scriptlist = dump_dle->scriptlist; scriptlist != NULL;
 		 scriptlist = scriptlist->next) {
@@ -2003,6 +2004,8 @@ extract_files_child(
 		}
 	    }
 
+	} else if (proplist) {
+	    g_hash_table_foreach(proplist, &proplist_add_to_argv, argv_ptr);
 	}
 	break;
     }
@@ -2224,7 +2227,7 @@ void
 extract_files(void)
 {
     EXTRACT_LIST *elist;
-    char * cwd;
+    char *restore_dir;
     char *l;
     int first;
     int otc;
@@ -2304,31 +2307,37 @@ extract_files(void)
     }
     g_printf("\n");
 
-    cwd = g_get_current_dir();
-    if (cwd == NULL) {
-	perror(_("extract_list: Current working directory unavailable"));
-	exit(1);
-    }
+    if (samba_extract_method == SAMBA_SMBCLIENT) {
+	g_printf(_("Restoring files into target host\n"));
+    } else {
+    	restore_dir = g_strdup(g_hash_table_lookup(proplist, "directory"));
+	if (!restore_dir) {
+	    restore_dir = g_get_current_dir();
+	    if (restore_dir == NULL) {
+		perror(_("extract_list: Current working directory unavailable"));
+		exit(1);
+	    }
+	}
 
-    g_printf(_("Restoring files into directory %s\n"), cwd);
-    check_file_overwrite(cwd);
+	g_printf(_("Restoring files into directory %s\n"), restore_dir);
+	check_file_overwrite(restore_dir);
 
-    if (samba_extract_method == SAMBA_SMBCLIENT)
-      g_printf(_("(unless it is a Samba backup, that will go through to the SMB server)\n"));
-    dbprintf(_("Checking with user before restoring into directory %s\n"), cwd);
-    if (!okay_to_continue(0,0,0)) {
-        amfree(cwd);
-	return;
-    }
-    g_printf("\n");
+	dbprintf(_("Checking with user before restoring into directory %s\n"),
+		 restore_dir);
+	if (!okay_to_continue(0,0,0)) {
+            amfree(restore_dir);
+	    return;
+	}
+	g_printf("\n");
 
-    if (!do_unlink_list()) {
-	g_fprintf(stderr, _("Can't recover because I can't cleanup the cwd (%s)\n"),
-		cwd);
-        amfree(cwd);
-	return;
+	if (!do_unlink_list()) {
+	    g_fprintf(stderr, _("Can't recover because I can't cleanup the restore directory (%s)\n"),
+		      restore_dir);
+	    amfree(restore_dir);
+	    return;
+	}
+	free_unlink_list();
     }
-    free_unlink_list();
 
     g_options.config = get_config_name();
     g_options.hostname = dump_hostname;

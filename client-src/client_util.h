@@ -162,5 +162,9 @@ void add_type_table(dmpline_t typ,
 void add_list_table(dmpline_t typ, amregex_t **re_table,
                     GSList *message);
 
+/* Merge properties from proplist2 to proplist1)
+ */
+void merge_properties(proplist_t proplist1, proplist_t proplist2);
+
 #endif
 
