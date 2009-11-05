@@ -447,7 +447,7 @@ check_options(
 #endif
 	{
 	    need_vxdump=1;
-	    if (dle->create-index)
+	    if (dle->create_index)
 		need_vxrestore=1;
 	}
 	else

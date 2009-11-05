@@ -325,7 +325,7 @@ start_backup(
     if (1)
 #endif
     {
-        char *progname = cmd = newvstralloc(cmd, amlibexecdir, "/", "rundump",
+        cmd = newvstralloc(cmd, amlibexecdir, "/", "rundump",
 					    versionsuffix(), NULL);
 	cmdX = cmd;
 	if (g_options->config)
@@ -350,7 +350,7 @@ start_backup(
 			     NULL);
 	info_tapeheader(dle);
 
-	start_index(dle->create-index, dumpout, mesgf, indexf, indexcmd);
+	start_index(dle->create_index, dumpout, mesgf, indexf, indexcmd);
 
 	dumppid = pipespawn(cmd, STDIN_PIPE, 0,
 			    &dumpin, &dumpout, &mesgf, 
