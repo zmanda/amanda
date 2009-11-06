@@ -95,3 +95,7 @@ Satya Ganga <gsat@zmanda.com>
 
 Alan Hodgson <ahodgson@simkin.ca>
     Contributions made under the UMD license
+
+Ben Slusky <sluskyb@paranoiacs.org>
+    amcrypt-ossl.sh and amcrypt-ossl-asym.sh
+    Contributions made under the UMD license
