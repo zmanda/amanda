@@ -1,3 +1,7 @@
+2009-11-06  Dan Locks <dwlocks@zmanda.com>
+	*  packaging/deb/changelog: Update package version and release
+	   timestamp
+
 2009-11-05  Jean-Louis Martineau <martineau@zmanda.com>
         * client-src/sendbackup-dump.c, client-src/sendsize.c,
           client-src/selfcheck.c:
