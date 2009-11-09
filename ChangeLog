@@ -1,4 +1,9 @@
 2009-11-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* restore-src/restore.c: Handle directtcp device.
+	* restore-src/restore.h: Handle directtcp device.
+	* device-src/directtcp-target.h (read_to_connection): Fix comment.
+
+2009-11-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/directtcp-target.c (directtcp_target_listen,
 	  directtcp_target_accept): don't assert for !self->in_file or
 				    self->access_mode == ACCESS_NULL.

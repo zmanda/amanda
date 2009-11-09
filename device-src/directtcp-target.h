@@ -158,7 +158,8 @@ struct DirectTCPTargetInterface_ {
      *
      * @param self: device object
      * @param conn: connection object from which to read data
-     * @param size: number of bytes to transfer (must be a multiple of block size)
+     * @param size: number of bytes to transfer (must be a multiple of block
+     * size), or zero for unlimited
      * @param actual_size (out): bytes actually read
      * @returns: FALSE on error
      */

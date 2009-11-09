@@ -36,6 +36,7 @@
 #include "tapelist.h"
 #include "amfeatures.h"
 #include "device.h"
+#include "directtcp-target.h"
 
 #define CREAT_MODE  0640
 
@@ -61,13 +62,19 @@ typedef struct rst_flags_s {
     char *inventory_log;
 } rst_flags_t;
 
+typedef struct DirectTCPrestore_ {
+    DirectTCPConnection *conn;
+    pid_t                pid;
+} DirectTCPrestore;
+
 typedef struct {
-    enum { HOLDING_MODE, DEVICE_MODE} restore_mode;
+    enum { HOLDING_MODE, DEVICE_MODE, DIRECTTCP_MODE } restore_mode;
     dumpfile_t * header;
     union {
         int holding_fd;
         Device * device;
     } u;
+    DirectTCPrestore *directtcp;
 } RestoreSource;
 
 typedef struct seentapes_s seentapes_t;
@@ -85,7 +92,8 @@ gboolean restore_holding_disk(FILE * prompt_out,
                               dumpfile_t * this_header,
                               dumpfile_t * last_header);
 
-gboolean search_a_tape(Device * device, FILE *prompt_out, rst_flags_t  *flags,
+gboolean search_a_tape(Device * device, DirectTCPrestore *directtcp,
+                       FILE *prompt_out, rst_flags_t  *flags,
                        am_feature_t *their_features, 
                        tapelist_t   *desired_tape, GSList *dumpspecs,
                        seentapes_t **tape_seen,
