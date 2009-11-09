@@ -196,9 +196,6 @@ directtcp_target_listen(
 {
     DirectTCPTargetInterface *iface = DIRECTTCP_TARGET_GET_INTERFACE(self);
 
-    g_assert(!self->in_file);
-    g_assert(self->access_mode == ACCESS_NULL);
-
     g_assert(iface->listen);
     return iface->listen(self, addrs);
 }
@@ -211,9 +208,6 @@ directtcp_target_accept(
     gpointer prolong_data)
 {
     DirectTCPTargetInterface *iface = DIRECTTCP_TARGET_GET_INTERFACE(self);
-
-    g_assert(!self->in_file);
-    g_assert(self->access_mode == ACCESS_NULL);
 
     g_assert(iface->accept);
     return iface->accept(self, conn, prolong, prolong_data);
