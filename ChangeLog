@@ -1,3 +1,9 @@
+2009-11-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: assume that the filetype and totalparts
+	  in the header are set by the caller
+	* server-src/taper.pl: set them
+	* installcheck/taper.pl: test that on-device headers are correct
+
 2009-11-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/restore.c: Handle directtcp device.
 	* restore-src/restore.h: Handle directtcp device.

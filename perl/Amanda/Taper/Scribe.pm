@@ -463,9 +463,8 @@ sub start_xfer {
 	my $xfer_elements = $params{'xfer_elements'};
 	my $xfer = $self->{'xfer'} = Amanda::Xfer->new([ @$xfer_elements, $xdt ]);
 
-	# get the header ready for writing
+	# get the header ready for writing (totalparts was set by the caller)
 	$self->{'dump_header'}->{'partnum'} = 1;
-	$self->{'dump_header'}->{'totalparts'} = -1;
 
 	$xfer->start(sub { $self->_xfer_callback(@_); });
 
@@ -497,11 +496,6 @@ sub _start_part {
 	$self->_dump_failed("No space left on device");
 	return;
     }
-
-    # fix the header type to indicate whether this is the first part or subsequent
-    $self->{'dump_header'}->{'type'} =
-	    (defined $self->{'dump_header'}->{'partnum'} == 1)?
-		$Amanda::Header::F_DUMPFILE : $Amanda::Header::F_SPLIT_DUMPFILE;
 
     # and start writing this part
     $self->{'started_writing'} = 1;
@@ -555,9 +549,6 @@ sub _xmsg_part_done {
 	if ($msg->{'successful'}) {
 	    # update the header for the next dumpfile
 	    $self->{'dump_header'}->{'partnum'}++;
-
-	    # change the header so that the next part has the right type
-	    $self->{'dump_header'}->{'type'} = $Amanda::Header::F_SPLIT_DUMPFILE;
 
 	    # and go on to the next part
 	    $self->_start_part();

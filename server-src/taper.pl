@@ -672,6 +672,10 @@ sub do_start_xfer {
     $self->{'header'} = $hdr;
     $self->{'header'}->{'totalparts'} = $self->{'nparts'};
 
+    # fix the header type to indicate whether this dumpfile is split
+    $self->{'header'}->{'type'} = ($self->{'nparts'} == 1)?
+		$Amanda::Header::F_DUMPFILE : $Amanda::Header::F_SPLIT_DUMPFILE;
+
     $self->{'scribe'}->start_xfer(%start_xfer_args);
 }
 
