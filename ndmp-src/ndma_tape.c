@@ -566,15 +566,11 @@ ndmta_write_quantum (struct ndm_session *sess)
 		}
 		if (done_count != count) {
 			n_read = done_count;
-			goto aaa;
-			ndmta_mover_pause_pending (sess,
-				NDMP9_MOVER_PAUSE_MEDIA_ERROR);
 			goto again;
 		}
 		ta->tb_blockno = want_blockno;
 	}
 
-aaa:
 	record_off = ta->mover_want_pos % ta->mover_state.record_size;
 
 	n_avail = ta->mover_state.record_size - record_off;

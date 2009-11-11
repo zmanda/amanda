@@ -1,3 +1,6 @@
+2009-11-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndma_tape.c: Fix crash.
+
 2009-11-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: assume that the filetype and totalparts
 	  in the header are set by the caller
