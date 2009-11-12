@@ -1,4 +1,13 @@
 2009-11-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/extract_list.c: Enable DATA-PATH.
+	* restore-src/restore.c: Enable DATA-PATH.
+	* restore-src/restore.h: Enable DATA-PATH.
+	* common-src/amfeatures.c: Add fe_amidxtaped_datapath.
+	* common-src/amfeatures.h: Add fe_amidxtaped_datapath
+	* common-src/conffile.c: Improve error message.
+	* device-src/directtcp-target.h: Improve comment.
+
+2009-11-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c, common-src/util.c,
 	  server-src/changer.c: Fix memory leak.
 

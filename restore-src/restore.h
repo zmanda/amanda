@@ -62,13 +62,21 @@ typedef struct rst_flags_s {
     char *inventory_log;
 } rst_flags_t;
 
+typedef enum {
+    HOLDING_MODE,
+    DEVICE_MODE,
+    LOCAL_DIRECTTCP_MODE,
+    DIRECTTCP_MODE
+} e_restore_mode;
+
 typedef struct DirectTCPrestore_ {
     DirectTCPConnection *conn;
     pid_t                pid;
+    e_restore_mode       restore_mode;
 } DirectTCPrestore;
 
 typedef struct {
-    enum { HOLDING_MODE, DEVICE_MODE, DIRECTTCP_MODE } restore_mode;
+    e_restore_mode restore_mode;
     dumpfile_t * header;
     union {
         int holding_fd;
@@ -82,8 +90,11 @@ typedef struct seentapes_s seentapes_t;
 char *make_filename(dumpfile_t *file);
 ssize_t read_file_header(dumpfile_t *file, int tapefd, int isafile,
 			 rst_flags_t *flags);
-void restore(RestoreSource * source, rst_flags_t * flags);
+void restore(RestoreSource * source, rst_flags_t * flags,
+	     FILE *prompt_out, FILE *prompt_in,
+	     am_feature_t *their_features);
 gboolean restore_holding_disk(FILE * prompt_out,
+			      FILE * prompt_in,
                               rst_flags_t * flags,
                               am_feature_t * features,
                               tapelist_t * file,
@@ -93,7 +104,8 @@ gboolean restore_holding_disk(FILE * prompt_out,
                               dumpfile_t * last_header);
 
 gboolean search_a_tape(Device * device, DirectTCPrestore *directtcp,
-                       FILE *prompt_out, rst_flags_t  *flags,
+                       FILE *prompt_out, FILE *prompt_in,
+                       rst_flags_t  *flags,
                        am_feature_t *their_features, 
                        tapelist_t   *desired_tape, GSList *dumpspecs,
                        seentapes_t **tape_seen,

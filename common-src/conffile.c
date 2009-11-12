@@ -7226,7 +7226,7 @@ data_path_from_string(
 	return DATA_PATH_AMANDA;
     if (strcmp(data, "DIRECTTCP") == 0)
 	return DATA_PATH_DIRECTTCP;
-    error(_("data_path is not AMANDA or DIRECTTCP"));
+    error(_("data_path is not AMANDA or DIRECTTCP :%s:"), data);
     /* NOTREACHED */
 }
 

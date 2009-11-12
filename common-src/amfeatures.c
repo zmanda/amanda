@@ -157,6 +157,7 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_xml_level_server);
 	am_add_feature(f, fe_xml_data_path);
 	am_add_feature(f, fe_xml_directtcp_list);
+	am_add_feature(f, fe_amidxtaped_datapath);
     }
     return f;
 }

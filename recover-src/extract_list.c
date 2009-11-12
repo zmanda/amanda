@@ -62,6 +62,17 @@ typedef struct EXTRACT_LIST {
 }
 EXTRACT_LIST;
 
+typedef struct ctl_data_s {
+  int                      header_done;
+  int                      child_pipe[2];
+  int                      pid;
+  EXTRACT_LIST            *elist;
+  dumpfile_t               file;
+  data_path_t              data_path;
+  char                    *addrs;
+  backup_support_option_t *bsu;
+} ctl_data_t;
+
 #define SKIP_TAPE 2
 #define RETRY_TAPE 3
 
@@ -127,12 +138,13 @@ static ssize_t read_buffer(int datafd,
 			size_t buflen,
 			long timeout_s);
 static void clear_tape_list(EXTRACT_LIST *tape_list);
-static void extract_files_child(int in_fd, EXTRACT_LIST *elist);
+static void extract_files_child(ctl_data_t *ctl_data);
 static void send_to_tape_server(security_stream_t *stream, char *cmd);
 int writer_intermediary(EXTRACT_LIST *elist);
 int get_amidxtaped_line(void);
 static void read_amidxtaped_data(void *, void *, ssize_t);
 static char *merge_path(char *path1, char *path2);
+static void start_processing_data(ctl_data_t *ctl_data);
 
 /*
  * Function:  ssize_t read_buffer(datafd, buffer, buflen, timeout_s)
@@ -1722,7 +1734,6 @@ extract_files_setup(
 	    amfree(clean_datestamp);
 	    return -1;
 	}
-	am_release_feature_set(tapesrv_features);
     }
 
 
@@ -1833,8 +1844,7 @@ enum dumptypes {
 
 static void
 extract_files_child(
-    int			in_fd,
-    EXTRACT_LIST *	elist)
+    ctl_data_t         *ctl_data)
 {
     int save_errno;
     int   i;
@@ -1843,54 +1853,46 @@ extract_files_child(
     int files_off_tape;
     EXTRACT_LIST_ITEM *fn;
     enum dumptypes dumptype = IS_UNKNOWN;
-    char buffer[DISK_BLOCK_BYTES];
-    dumpfile_t file;
     size_t len_program;
     char *cmd = NULL;
     guint passwd_field = 999999999;
 #ifdef SAMBA_CLIENT
     char *domain = NULL, *smbpass = NULL;
 #endif
-    backup_support_option_t *bsu;
-    GPtrArray		    *errarray;
 
     /* code executed by child to do extraction */
     /* never returns */
 
     /* make in_fd be our stdin */
-    if (dup2(in_fd, STDIN_FILENO) == -1)
+    if (dup2(ctl_data->child_pipe[0], STDIN_FILENO) == -1)
     {
 	error(_("dup2 failed in extract_files_child: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
 
-    /* read the file header */
-    fh_init(&file);
-    read_file_header(buffer, &file, sizeof(buffer), STDIN_FILENO);
-
-    if(file.type != F_DUMPFILE) {
-	print_header(stdout, &file);
+    if(ctl_data->file.type != F_DUMPFILE) {
+	print_header(stdout, &ctl_data->file);
 	error(_("bad header"));
 	/*NOTREACHED*/
     }
 
-    if (file.program != NULL) {
-	if (strcmp(file.program, "APPLICATION") == 0)
+    if (ctl_data->file.program != NULL) {
+	if (strcmp(ctl_data->file.program, "APPLICATION") == 0)
 	    dumptype = IS_APPLICATION_API;
 #ifdef GNUTAR
-	if (strcmp(file.program, GNUTAR) == 0)
+	if (strcmp(ctl_data->file.program, GNUTAR) == 0)
 	    dumptype = IS_GNUTAR;
 #endif
 
 	if (dumptype == IS_UNKNOWN) {
-	    len_program = strlen(file.program);
+	    len_program = strlen(ctl_data->file.program);
 	    if(len_program >= 3 &&
-	       strcmp(&file.program[len_program-3],"tar") == 0)
+	       strcmp(&ctl_data->file.program[len_program-3],"tar") == 0)
 		dumptype = IS_TAR;
 	}
 
 #ifdef SAMBA_CLIENT
-	if (dumptype == IS_UNKNOWN && strcmp(file.program, SAMBA_CLIENT) ==0) {
+	if (dumptype == IS_UNKNOWN && strcmp(ctl_data->file.program, SAMBA_CLIENT) ==0) {
 	    if (samba_extract_method == SAMBA_TAR)
 	      dumptype = IS_SAMBA_TAR;
 	    else
@@ -1900,14 +1902,14 @@ extract_files_child(
     }
 
     /* form the arguments to restore */
-    files_off_tape = length_of_tape_list(elist);
+    files_off_tape = length_of_tape_list(ctl_data->elist);
     switch(dumptype) {
     case IS_SAMBA:
 #ifdef SAMBA_CLIENT
 	g_ptr_array_add(argv_ptr, stralloc("smbclient"));
-	smbpass = findpass(file.disk, &domain);
+	smbpass = findpass(ctl_data->file.disk, &domain);
 	if (smbpass) {
-	    g_ptr_array_add(argv_ptr, stralloc(file.disk));
+	    g_ptr_array_add(argv_ptr, stralloc(ctl_data->file.disk));
 	    g_ptr_array_add(argv_ptr, stralloc("-U"));
 	    passwd_field = argv_ptr->len;
 	    g_ptr_array_add(argv_ptr, stralloc(smbpass));
@@ -1941,13 +1943,13 @@ extract_files_child(
 	g_ptr_array_add(argv_ptr, stralloc("-xB"));
 #else
 #if defined(XFSDUMP)
-	if (strcmp(file.program, XFSDUMP) == 0) {
+	if (strcmp(ctl_data->file.program, XFSDUMP) == 0) {
 	    g_ptr_array_add(argv_ptr, stralloc("-v"));
 	    g_ptr_array_add(argv_ptr, stralloc("silent"));
 	} else
 #endif
 #if defined(VDUMP)
-	if (strcmp(file.program, VDUMP) == 0) {
+	if (strcmp(ctl_data->file.program, VDUMP) == 0) {
 	    g_ptr_array_add(argv_ptr, stralloc("xf"));
 	    g_ptr_array_add(argv_ptr, stralloc("-"));	/* data on stdin */
 	} else
@@ -1960,36 +1962,29 @@ extract_files_child(
 #endif
 	break;
     case IS_APPLICATION_API:
-	{
-	    g_option_t g_options;
-	    g_options.config = get_config_name();
-	    g_options.hostname = dump_hostname;
-	    if (dump_dle) {
-		bsu = backup_support_option(file.application, &g_options,
-					    file.disk, dump_dle->device,
-					    &errarray);
-	    } else {
-		bsu = backup_support_option(file.application, &g_options,
-					    file.disk, NULL,
-					    &errarray);
-	    }
-	}
-	g_ptr_array_add(argv_ptr, stralloc(file.application));
+	g_ptr_array_add(argv_ptr, stralloc(ctl_data->file.application));
 	g_ptr_array_add(argv_ptr, stralloc("restore"));
 	g_ptr_array_add(argv_ptr, stralloc("--config"));
 	g_ptr_array_add(argv_ptr, stralloc(get_config_name()));
 	g_ptr_array_add(argv_ptr, stralloc("--disk"));
-	g_ptr_array_add(argv_ptr, stralloc(file.disk));
+	g_ptr_array_add(argv_ptr, stralloc(ctl_data->file.disk));
 	if (dump_dle && dump_dle->device) {
 	    g_ptr_array_add(argv_ptr, stralloc("--device"));
 	    g_ptr_array_add(argv_ptr, stralloc(dump_dle->device));
 	}
-	if (bsu->smb_recover_mode && samba_extract_method == SAMBA_SMBCLIENT){
+	if (ctl_data->data_path == DATA_PATH_DIRECTTCP) {
+	    g_ptr_array_add(argv_ptr, stralloc("--data-path"));
+	    g_ptr_array_add(argv_ptr, stralloc("DIRECTTCP"));
+	    g_ptr_array_add(argv_ptr, stralloc("--direct-tcp"));
+	    g_ptr_array_add(argv_ptr, stralloc(ctl_data->addrs));
+	}
+	if (ctl_data->bsu && ctl_data->bsu->smb_recover_mode &&
+	    samba_extract_method == SAMBA_SMBCLIENT){
 	    g_ptr_array_add(argv_ptr, stralloc("--recover-mode"));
 	    g_ptr_array_add(argv_ptr, stralloc("smb"));
 	}
 	g_ptr_array_add(argv_ptr, stralloc("--level"));
-	g_ptr_array_add(argv_ptr, g_strdup_printf("%d", elist->level));
+	g_ptr_array_add(argv_ptr, g_strdup_printf("%d", ctl_data->elist->level));
 	if (dump_dle) {
 	    GSList   *scriptlist;
 	    script_t *script;
@@ -2010,7 +2005,8 @@ extract_files_child(
 	break;
     }
 
-    for (i = 0, fn = elist->files; i < files_off_tape; i++, fn = fn->next)
+    for (i = 0, fn = ctl_data->elist->files; i < files_off_tape;
+					     i++, fn = fn->next)
     {
 	switch (dumptype) {
 	case IS_APPLICATION_API:
@@ -2026,7 +2022,7 @@ extract_files_child(
 	case IS_UNKNOWN:
 	case IS_DUMP:
 #if defined(XFSDUMP)
-	    if (strcmp(file.program, XFSDUMP) == 0) {
+	    if (strcmp(ctl_data->file.program, XFSDUMP) == 0) {
 		/*
 		 * xfsrestore needs a -s option before each file to be
 		 * restored, and also wants them to be relative paths.
@@ -2042,7 +2038,7 @@ extract_files_child(
   	}
     }
 #if defined(XFSDUMP)
-    if (strcmp(file.program, XFSDUMP) == 0) {
+    if (strcmp(ctl_data->file.program, XFSDUMP) == 0) {
 	g_ptr_array_add(argv_ptr, stralloc("-"));
 	g_ptr_array_add(argv_ptr, stralloc("."));
     }
@@ -2071,33 +2067,33 @@ extract_files_child(
     case IS_DUMP:
 	cmd = NULL;
 #if defined(DUMP)
-	if (strcmp(file.program, DUMP) == 0) {
+	if (strcmp(ctl_data->file.program, DUMP) == 0) {
     	    cmd = stralloc(RESTORE);
 	}
 #endif
 #if defined(VDUMP)
-	if (strcmp(file.program, VDUMP) == 0) {
+	if (strcmp(ctl_data->file.program, VDUMP) == 0) {
     	    cmd = stralloc(VRESTORE);
 	}
 #endif
 #if defined(VXDUMP)
-	if (strcmp(file.program, VXDUMP) == 0) {
+	if (strcmp(ctl_data->file.program, VXDUMP) == 0) {
     	    cmd = stralloc(VXRESTORE);
 	}
 #endif
 #if defined(XFSDUMP)
-	if (strcmp(file.program, XFSDUMP) == 0) {
+	if (strcmp(ctl_data->file.program, XFSDUMP) == 0) {
     	    cmd = stralloc(XFSRESTORE);
 	}
 #endif
 	if (cmd == NULL) {
 	    g_fprintf(stderr, _("warning: restore program for %s not available.\n"),
-		    file.program);
+		    ctl_data->file.program);
 	    cmd = stralloc("restore");
 	}
 	break;
     case IS_APPLICATION_API:
-	cmd = vstralloc(APPLICATION_DIR, "/", file.application, NULL);
+	cmd = vstralloc(APPLICATION_DIR, "/", ctl_data->file.application, NULL);
 	break;
     }
     if (cmd) {
@@ -2122,13 +2118,6 @@ extract_files_child(
     /*NOT REACHED */
 }
 
-typedef struct ctl_data_s {
-  int           header_done;
-  int           child_pipe[2];
-  int           pid;
-  EXTRACT_LIST *elist;
-} ctl_data_t;
-
 /*
  * Interpose something between the process writing out the dump (writing it to
  * some extraction program, really) and the socket from which we're reading, so
@@ -2146,6 +2135,9 @@ writer_intermediary(
     ctl_data.child_pipe[1] = -1;
     ctl_data.pid           = -1;
     ctl_data.elist         = elist;
+    ctl_data.data_path     = DATA_PATH_AMANDA;
+    ctl_data.addrs         = NULL;
+    ctl_data.bsu           = NULL;
 
     security_stream_read(amidxtaped_streams[DATAFD].fd,
 			 read_amidxtaped_data, &ctl_data);
@@ -2174,6 +2166,14 @@ writer_intermediary(
 		send_to_tape_server(amidxtaped_streams[CTLFD].fd, "ERROR");
 		break;
 	    }
+	} else if (strncmp_const(amidxtaped_line, "DATA-PATH ") == 0) {
+	    if (strncmp_const(amidxtaped_line+10, "AMANDA") == 0) {
+		ctl_data.data_path = DATA_PATH_AMANDA;
+	    } else if (strncmp_const(amidxtaped_line+10, "DIRECT-TCP") == 0) {
+		ctl_data.data_path = DATA_PATH_DIRECTTCP;
+		ctl_data.addrs = stralloc(amidxtaped_line+21);
+	    }
+	    start_processing_data(&ctl_data);
 	} else if(strncmp_const(amidxtaped_line, "MESSAGE ") == 0) {
 	    g_printf("%s\n",&amidxtaped_line[8]);
 	} else {
@@ -2185,6 +2185,9 @@ writer_intermediary(
 
     /* CTL might be close before DATA */
     event_loop(0);
+    dumpfile_free_data(&ctl_data.file);
+    amfree(ctl_data.addrs);
+    amfree(ctl_data.bsu);
     if (ctl_data.child_pipe[1] != -1)
 	aclose(ctl_data.child_pipe[1]);
 
@@ -2337,6 +2340,7 @@ extract_files(void)
 	    return;
 	}
 	free_unlink_list();
+	amfree(restore_dir);
     }
 
     g_options.config = get_config_name();
@@ -2426,6 +2430,7 @@ extract_files(void)
 	   am_has_feature(indexsrv_features, fe_amrecover_feedme_tape))
 	    delete_tape_list(elist);	/* tape done so delete from list */
 
+	am_release_feature_set(tapesrv_features);
 	stop_amidxtaped();
 
 	if (dump_dle) {
@@ -2738,33 +2743,81 @@ read_amidxtaped_data(
     assert(buf != NULL);
 
     if (ctl_data->header_done == 0) {
-	ctl_data->header_done = 1;
-	if(pipe(ctl_data->child_pipe) == -1) {
-	    error(_("extract_list - error setting up pipe to extractor: %s\n"),
-		  strerror(errno));
-	    /*NOTREACHED*/
-	}
+	GPtrArray  *errarray;
+	g_option_t  g_options;
 
-	/* okay, ready to extract. fork a child to do the actual work */
-	if ((ctl_data->pid = fork()) == 0) {
-	    /* this is the child process */
-	    /* never gets out of this clause */
-	    aclose(ctl_data->child_pipe[1]);
-	    extract_files_child(ctl_data->child_pipe[0], ctl_data->elist);
-	    /*NOTREACHED*/
+	/* parse the file header */
+	fh_init(&ctl_data->file);
+	parse_file_header(buf, &ctl_data->file, (size_t)size);
+
+	/* call backup_support_option */
+	g_options.config = get_config_name();
+	g_options.hostname = dump_hostname;
+	if (dump_dle) {
+	    ctl_data->bsu = backup_support_option(ctl_data->file.application,
+						  &g_options,
+						  ctl_data->file.disk,
+						  dump_dle->device,
+						  &errarray);
+	} else {
+	    ctl_data->bsu = backup_support_option(ctl_data->file.application,
+						  &g_options,
+						  ctl_data->file.disk, NULL,
+						  &errarray);
 	}
-	
-	if (ctl_data->pid == -1) {
-	    errstr = newstralloc(errstr, _("writer_intermediary - error forking child"));
-	    g_printf(_("writer_intermediary - error forking child"));
-	    return;
+	/* handle backup_support_option failure */
+
+	if (am_has_feature(tapesrv_features, fe_amidxtaped_datapath)) {
+ 	    char       *msg;
+	    /* send DATA-PATH request */
+	    msg = stralloc("DATA-PATH");
+	    if (ctl_data->bsu->data_path_set & DATA_PATH_AMANDA)
+		vstrextend(&msg, " AMANDA", NULL);
+	    if (ctl_data->bsu->data_path_set & DATA_PATH_DIRECTTCP)
+		vstrextend(&msg, " DIRECT-TCP", NULL);
+	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, msg);
+	    amfree(msg);
 	}
-	aclose(ctl_data->child_pipe[0]);
+	ctl_data->header_done = 1;
+	if (!am_has_feature(tapesrv_features, fe_amidxtaped_datapath)) {
+	    start_processing_data(ctl_data);
+	}
+    } else {
+	/* Only the data is sent to the child */
+	/*
+	 * We ignore errors while writing to the index file.
+	 */
+	(void)full_write(ctl_data->child_pipe[1], buf, (size_t)size);
+        security_stream_read(amidxtaped_streams[DATAFD].fd,
+			     read_amidxtaped_data, cookie);
     }
-    /*
-     * We ignore errors while writing to the index file.
-     */
-    (void)full_write(ctl_data->child_pipe[1], buf, (size_t)size);
-    security_stream_read(amidxtaped_streams[DATAFD].fd, read_amidxtaped_data, cookie);
 }
 
+static void
+start_processing_data(
+    ctl_data_t *ctl_data)
+{
+    if (pipe(ctl_data->child_pipe) == -1) {
+	error(_("extract_list - error setting up pipe to extractor: %s\n"),
+	      strerror(errno));
+	/*NOTREACHED*/
+    }
+
+    /* okay, ready to extract. fork a child to do the actual work */
+    if ((ctl_data->pid = fork()) == 0) {
+	/* this is the child process */
+	/* never gets out of this clause */
+	aclose(ctl_data->child_pipe[1]);
+	extract_files_child(ctl_data);
+	/*NOTREACHED*/
+    }
+	
+    if (ctl_data->pid == -1) {
+	errstr = newstralloc(errstr, _("writer_intermediary - error forking child"));
+	g_printf(_("writer_intermediary - error forking child"));
+	return;
+    }
+    aclose(ctl_data->child_pipe[0]);
+    security_stream_read(amidxtaped_streams[DATAFD].fd, read_amidxtaped_data,
+			 ctl_data);
+}
