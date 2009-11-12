@@ -864,6 +864,7 @@ backup_support_option(
 	amfree(bsu);
     }
     g_ptr_array_free_full(argv_ptr);
+    amfree(cmd);
     return bsu;
 }
 

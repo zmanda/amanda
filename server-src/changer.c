@@ -448,6 +448,7 @@ changer_command(
     exitcode = atoi(changer_resultstr + strlen("EXITSTATUS "));
 
     /* and the second */
+    amfree(changer_resultstr);
     changer_resultstr = areads(tpchanger_stdout);
     if (!changer_resultstr) {
         changer_resultstr = g_strdup("<error> unexpected EOF");

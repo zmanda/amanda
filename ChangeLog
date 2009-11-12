@@ -1,3 +1,7 @@
+2009-11-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c, common-src/util.c,
+	  server-src/changer.c: Fix memory leak.
+
 2009-11-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndma_tape.c: Fix crash.
 

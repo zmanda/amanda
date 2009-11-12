@@ -1160,6 +1160,7 @@ check_running_as(running_as_flags who)
 	case RUNNING_AS_ANY:
 	    uid_target = uid_me;
 	    uname_target = uname_me;
+	    amfree(uname_me);
 	    return;
 
 	case RUNNING_AS_ROOT:
