@@ -47,6 +47,7 @@ then
     exit 1
 fi
 
+# TODO:  Can we delete this block?
 if [ -z $AMVER ]
 then
     AMVER=amanda-2.6.2alpha
@@ -54,41 +55,30 @@ fi
 
 #### Build functions
 
-do_build() {
-
-    echo "Running configure"
-    ./configure --quiet \
-        --prefix=${PREFIX} \
-        --bindir=${BINDIR} \
-        --sbindir=${SBINDIR} \
-        --mandir=${MANDIR} \
-        --libexecdir=${LIBEXECDIR} \
-        --sysconfdir=${SYSCONFDIR} \
-        --localstatedir=${LOCALSTATEDIR} \
-        --with-star=/bin/star \
-        --with-gnutar=/bin/tar \
-        --with-gnutar-listdir=${AMANDAHOMEDIR}/gnutar-lists \
-        --with-index-server=localhost \
-        --with-tape-server=localhost \
-        --with-user=${amanda_user} \
-        --with-group=${amanda_group} \
-        --with-owner=${amanda_user} \
-        --with-fqdn \
-        --with-bsd-security \
-        --with-bsdtcp-security \
-        --with-bsdudp-security \
-        --with-amandahosts \
-        --with-smbclient=/usr/bin/smbclient \
-        --with-ssh-security \
-        --with-udpportrange=${udpportrange} \
-        --with-tcpportrange=${tcpportrange} \
-        --with-low-tcpportrange=${low_tcpportrange} \
-        --with-debugging=${LOGDIR} \
-        --disable-installperms \
-        --enable-s3-device \
-        --with-assertions \
-	|| exit 1
-
+do_distro() {
+    # We need to edit packaging/deb/changelog to reflect our current distro
+    # and release.  This can't be done withing the debian packaging system;
+    # dpkg assumes that packages will have the same name on all releases and
+    # that apt will prevent users from downloading the wrong build.  We want
+    # this information helpfully obvious since we can't rely on apt.
+    if [ -x /usr/bin/lsb_release ] ; then
+	# Just to be safe...
+        DISTRO=`/usr/lsb_release -i| cut -f2`
+    else
+	DISTRO=Debian
+    fi
+    if [ ${DISTRO} = "Debian" ] ; then
+	DEB_REL=`cat /etc/debian_version | cut -d"." -f"1,2"`
+    elif [ ${DISTRO} = "Ubuntu" ] ; then
+	DEB_REL=`/usr/lsb_release -i| cut -f2`
+    else
+	# Blank is better than some random version
+	DEB_REL=""
+    fi
+    CHANGELOG_VER=`sed -r  "s/(.*\()(.*)(\).*)/\2/;q" packaging/deb/changelog`
+    # Now Sub those values into the Debian changelog.
+    sed -i".orig" -e "1s/\(${CHANGELOG_VER}.{2}\)/\1${DISTRO}${DEB_REL}/" packaging/deb/changelog
+    BUILDDIR=amanda-${CHANGELOG_VER}${DISTRO}${DEB_REL}
 }
 
 do_resources() {
@@ -97,27 +87,21 @@ do_resources() {
         rm -rf debian
     fi
     cp -Rf packaging/deb debian
-    if [ -d $AMVER ]; then
-        rm -rf $AMVER
+    if [ -d $BUILDDIR ]; then
+        rm -rf $BUILDDIR
     fi
-    mkdir $AMVER
-    cp -Rfp * $AMVER
+    mkdir $BUILDDIR
+    cp -Rfp * $BUILDDIR
 }
 
 do_package() {
 
     echo "Building package"
-    cd $AMVER
+    cd $BUILDDIR
     # Create unsigned packages
     dpkg-buildpackage -rfakeroot -uc -us
 }
 
-
-do_all() {
-    do_build $1
-    do_resources $1
-    do_package $1
-}
-
+do_distro
 do_resources
 do_package

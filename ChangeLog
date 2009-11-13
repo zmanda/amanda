@@ -1,3 +1,7 @@
+2009-11-13 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/deb/buildpkg: delete unused functions, detect and add 
+	   distro/release tag to version number changelog prior to build
+
 2009-11-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/extract_list.c: Enable DATA-PATH.
 	* restore-src/restore.c: Enable DATA-PATH.
