@@ -1,1 +1,0 @@
-shlibs:Depends=amanda-backup-server, libc6 (>= 2.3.2.ds1-21), libncurses5 (>= 5.4-1), libreadline5

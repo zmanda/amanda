@@ -1,4 +1,13 @@
 2009-11-13 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/deb/control: update to use shlibs:Depends and
+	   perl:Depends
+	*  packaging/deb/rules: tweak build dirs for clarity, update shlibs
+	   invocation, remove unneeded debhelper commands.
+	*  packaging/deb/amanda-backup-server.substvars, 
+	   packaging/deb/amanda-backup-client.substvars: delete. These files
+	   are generated at build time
+
+2009-11-13 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/deb/buildpkg: delete unused functions, detect and add 
 	   distro/release tag to version number changelog prior to build
 

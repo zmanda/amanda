@@ -33,7 +33,7 @@ AMANDAGROUP=disk
 WITHOUT_SERVER="False"
 WITHOUT_CLIENT="False"
 
-r=$(shell pwd)/debian/amanda-common
+r=$(shell pwd)/debian/tmp
 server=$(shell pwd)/debian/amanda-backup-server
 client=$(shell pwd)/debian/amanda-backup-client
 
@@ -43,6 +43,8 @@ log=$(shell pwd)/debian/dpkg.log
 # from having to guess our platform (since we know it already)
 DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+
+WD=$(shell pwd)
 
 build: build-stamp 
 build-stamp: /sbin/dump /usr/bin/smbclient 
@@ -85,10 +87,10 @@ build-stamp: /sbin/dump /usr/bin/smbclient
 	# There's probably a better way to do this.  Preinst and postrm are the
 	# same for client and server, but we leave room for differences by just
 	# appending here.
-	cat $(shell pwd)/debian/preinst >> $(shell pwd)/debian/amanda-backup-client.preinst
-	cat $(shell pwd)/debian/preinst >> $(shell pwd)/debian/amanda-backup-server.preinst
-	cat $(shell pwd)/debian/postrm >> $(shell pwd)/debian/amanda-backup-client.postrm
-	cat $(shell pwd)/debian/postrm >> $(shell pwd)/debian/amanda-backup-server.postrm
+	cat $(WD)/debian/preinst >> $(WD)/debian/amanda-backup-client.preinst
+	cat $(WD)/debian/preinst >> $(WD)/debian/amanda-backup-server.preinst
+	cat $(WD)/debian/postrm >> $(WD)/debian/amanda-backup-client.postrm
+	cat $(WD)/debian/postrm >> $(WD)/debian/amanda-backup-server.postrm
 	make -s LIBTOOLFLAGS=--silent
 	touch build-stamp
 
@@ -121,18 +123,12 @@ binary-arch: build
 	install -d $(r)/$(DOCDIR)/amanda-common/examples
 	cp -a example/* $(r)/$(DOCDIR)/amanda-common/examples
 	cp ChangeLog $(r)/$(DOCDIR)/amanda-common/changelog
-	echo "---->dh_installmenu: " >> $(log)
-	dh_installmenu -v >> $(log) 2>&1
-	echo "---->dh_installcron: " >> $(log)
-	dh_installcron >> $(log) 2>&1
 	echo "---->dh_installchangelogs: " >> $(log)
 	dh_installchangelogs -v >> $(log) 2>&1
-	echo "---->dh_installdebconf: " >> $(log)
-	dh_installdebconf -v >> $(log) 2>&1
 	# Here's how we get the perl modules installed into sitelib
 	echo $(PERLSITELIB)/* >> debian/amanda-backup-server.install
 	echo "---->dh_install -v --fail-missing: " >> $(log)
-	dh_install -v --sourcedir=debian/amanda-common >> $(log) 2>&1
+	dh_install -v --sourcedir=$(r) >> $(log) 2>&1
 	echo "---->dh_strip: " >> $(log)
 	dh_strip >> $(log) 2>&1
 	echo "---->dh_compress: " >> $(log)
@@ -185,20 +181,12 @@ binary-arch: build
 	echo "Amanda version $(AMVER)" >  $(client)/$(AMANDAHOMEDIR)/amanda-release 
 	install -o root -g root -m 0644 debian/amanda-backup-client.lintian \
 		$(client)/usr/share/lintian/overrides/amanda-backup-client
-	#install -o root -g root -m 0644 debian/amanda-common.lintian \
-	#	$(r)/usr/share/lintian/overrides/amanda-common
 	install -o root -g root -m 0644 debian/amanda-backup-server.lintian \
 		$(server)/usr/share/lintian/overrides/amanda-backup-server
 	dh_makeshlibs  >> $(log) 2>&1
-	dh_installdeb >> $(log) 2>&1
 	dh_perl >> $(log) 2>&1
-	dh_shlibdeps -l"debian/$(r)/usr/lib:debian/$(client)/usr/lib:debian/$(server)/usr/lib" >> $(log) 2>&1
-	# strip out the non-versioned amanda-common references, we need
-	# the versioned ones in the control file and dupes are ugly...
-	sed -e 's/amanda-common, //' < debian/amanda-backup-server.substvars > debian/blah
-	mv debian/blah debian/amanda-backup-server.substvars
-	sed -e 's/amanda-common, //' < debian/amanda-backup-client.substvars > debian/blah
-	mv debian/blah debian/amanda-backup-client.substvars
+	dh_shlibdeps -l"$(r)/usr/lib:$(client)/usr/lib:$(server)/usr/lib" >> $(log) 2>&1
+	dh_installdeb >> $(log) 2>&1
 	dh_gencontrol >> $(log) 2>&1
 	dh_md5sums  >> $(log) 2>&1
 	dh_builddeb  >> $(log) 2>&1
