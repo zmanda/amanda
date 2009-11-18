@@ -75,6 +75,8 @@ typedef struct open_output_s {
     int lastpartnum;
     pid_t comp_enc_pid;
     int outfd;
+    e_restore_mode   restore_mode;
+    DirectTCPrestore directtcp;
 } open_output_t;
 
 typedef struct dumplist_s {
@@ -439,6 +441,11 @@ flush_open_outputs(
 	    if(only_file && !headers_equal(cur_file, only_file, 1)){
 		continue;
 	    }
+
+	    /* directtcp can't be reassembled */
+	    if (cur_out->directtcp.conn) {
+		continue;
+	    }
 	    cur_find_res = alloc(SIZEOF(find_result_t));
 	    memset(cur_find_res, '\0', SIZEOF(find_result_t));
 	    cur_find_res->timestamp = stralloc(cur_file->datestamp);
@@ -504,7 +511,7 @@ flush_open_outputs(
 		    outfd = cur_out->outfd;
 		    if(outfd < 0) {
 			char *cur_filename = make_filename(cur_file);
-			open(cur_filename, O_RDWR|O_APPEND);
+			outfd = open(cur_filename, O_RDWR|O_APPEND);
 			if (outfd < 0) {
 			  error(_("Couldn't open %s for appending: %s"),
 			        cur_filename, strerror(errno));
@@ -543,8 +550,16 @@ flush_open_outputs(
 	    aclose(cur_out->outfd);
 	}
 
+	if (cur_out->directtcp.conn) {
+	    directtcp_connection_close(cur_out->directtcp.conn);
+	    g_object_unref(cur_out->directtcp.conn);
+	}
+
 	if(cur_out->comp_enc_pid > 0){
 	    waitpid(cur_out->comp_enc_pid, &compress_status, 0);
+	}
+	if (cur_out->directtcp.pid > 0) {
+	    waitpid(cur_out->directtcp.pid, &compress_status, 0);
 	}
 	amfree(cur_out->file);
 	prev = cur_out;
@@ -706,7 +721,7 @@ void restore(RestoreSource  *source,
     int check_for_aborted = 0;
     char *tmp_filename = NULL, *final_filename = NULL;
     struct stat statinfo;
-    open_output_t *free_myout = NULL, *myout = NULL, *oldout = NULL;
+    open_output_t *free_myout = NULL, *myout = NULL;
     dumplist_t *tempdump = NULL, *fileentry = NULL;
     char *buffer;
     int need_compress=0, need_uncompress=0, need_decrypt=0;
@@ -715,6 +730,7 @@ void restore(RestoreSource  *source,
         int	pipe[2];
     } pipes[3];
     char * filename;
+    DirectTCPAddr *addrs;
 
     filename = make_filename(source->header);
 
@@ -758,15 +774,14 @@ void restore(RestoreSource  *source,
 	    flags->compress = 0;
 	    flags->leave_comp = 1;
 	}
-	if (myout == NULL) {
-	    free_myout = myout = alloc(SIZEOF(open_output_t));
-	    memset(myout, 0, SIZEOF(open_output_t));
-	}
-    } else {
-	free_myout = myout = alloc(SIZEOF(open_output_t));
-	memset(myout, 0, SIZEOF(open_output_t));
     }
 
+    if (myout == NULL) {
+	free_myout = myout = alloc(SIZEOF(open_output_t));
+	memset(myout, 0, SIZEOF(open_output_t));
+	myout->restore_mode = source->restore_mode;
+	myout->directtcp.conn = NULL;
+    }
 
     if (is_continuation && flags->pipe_to_fd == -1) {
 	char *filename;
@@ -787,13 +802,42 @@ void restore(RestoreSource  *source,
     }
 
     /* set up final destination file */
-    if (is_continuation && myout != NULL) {
-      out = myout->outfd;
+    if (is_continuation) {
+	out = myout->outfd;
     } else {
-      if(flags->pipe_to_fd != -1) {
-  	  dest = flags->pipe_to_fd;
-      }
-      out = dest;
+	if (flags->pipe_to_fd != -1) {
+	    dest = flags->pipe_to_fd;
+	} else {
+  	    char *filename_ext = NULL;
+  
+  	    if (flags->compress) {
+		filename_ext = file_is_compressed ? source->header->comp_suffix
+						  : COMPRESS_SUFFIX;
+  	    } else if (flags->raw) {
+		filename_ext = ".RAW";
+  	    } else {
+		filename_ext = "";
+  	    }
+  	    filename_ext = stralloc2(filename, filename_ext);
+	    tmp_filename = stralloc(filename_ext); 
+	    if (flags->restore_dir != NULL) {
+		char *tmpstr = vstralloc(flags->restore_dir, "/",
+					 tmp_filename, NULL);
+		amfree(tmp_filename);
+		tmp_filename = tmpstr;
+	    } 
+	    final_filename = tmp_filename; 
+	    tmp_filename = vstralloc(final_filename, ".tmp", NULL);
+  	    if ((dest = open(tmp_filename, (O_CREAT | O_RDWR | O_TRUNC),
+			     CREAT_MODE)) < 0) {
+		error(_("could not create output file %s: %s"),
+	      	      tmp_filename, strerror(errno));
+		/*NOTREACHED*/
+	    }
+  	    amfree(filename_ext);
+	}
+
+        out = dest;
     }
 
     /*
@@ -869,40 +913,10 @@ void restore(RestoreSource  *source,
         dumpfile_free_data(&tmp_hdr);
     }
 
-    if (!is_continuation || myout == NULL) {
-	if (flags->pipe_to_fd == -1) {
-  	    char *filename_ext = NULL;
-  
-  	    if (flags->compress) {
-		filename_ext = file_is_compressed ? source->header->comp_suffix
-						  : COMPRESS_SUFFIX;
-  	    } else if (flags->raw) {
-		filename_ext = ".RAW";
-  	    } else {
-		filename_ext = "";
-  	    }
-  	    filename_ext = stralloc2(filename, filename_ext);
-	    tmp_filename = stralloc(filename_ext); 
-	    if (flags->restore_dir != NULL) {
-		char *tmpstr = vstralloc(flags->restore_dir, "/",
-					 tmp_filename, NULL);
-		amfree(tmp_filename);
-		tmp_filename = tmpstr;
-	    } 
-	    final_filename = tmp_filename; 
-	    tmp_filename = vstralloc(final_filename, ".tmp", NULL);
-  	    if ((dest = open(tmp_filename, (O_CREAT | O_RDWR | O_TRUNC),
-			     CREAT_MODE)) < 0) {
-		error(_("could not create output file %s: %s"),
-	      	      tmp_filename, strerror(errno));
-		/*NOTREACHED*/
-	    }
-  	    amfree(filename_ext);
-	}
-  
+    if (!is_continuation) {
 	/* first part of a dump */
-	if (device_directtcp_supported(source->u.device)) {
-	    DirectTCPAddr *addrs;
+	if (myout->restore_mode == DEVICE_MODE &&
+	    device_directtcp_supported(source->u.device)) {
 	    data_path_t    data_path = DATA_PATH_AMANDA;
             char          *input, *s;
 
@@ -933,72 +947,42 @@ void restore(RestoreSource  *source,
 		amfree(input);
 	    }
 
+	    if (file_is_compressed || source->header->encrypted)
+		data_path = DATA_PATH_AMANDA;
+
 	    if (data_path & DATA_PATH_DIRECTTCP &&
 		device_directtcp_supported(source->u.device)) {
-		source->restore_mode = DIRECTTCP_MODE;
+		myout->restore_mode = DIRECTTCP_MODE;
 	    } else if (data_path & DATA_PATH_AMANDA &&
 		       device_directtcp_supported(source->u.device)) {
-		source->restore_mode = LOCAL_DIRECTTCP_MODE;
+		myout->restore_mode = LOCAL_DIRECTTCP_MODE;
 	    } else {
-		source->restore_mode = DEVICE_MODE;
+		myout->restore_mode = DEVICE_MODE;
 	    }
 
-	    if (source->restore_mode == LOCAL_DIRECTTCP_MODE ||
-		source->restore_mode == DIRECTTCP_MODE) {
+	    source->restore_mode = myout->restore_mode;
+
+	    if (myout->restore_mode == LOCAL_DIRECTTCP_MODE ||
+		myout->restore_mode == DIRECTTCP_MODE) {
 		device_listen(source->u.device, &addrs);
-	    }
-
-	    if (source->restore_mode == LOCAL_DIRECTTCP_MODE) {
-		/* start a process to read from addr and write to dest */
-
-		switch(source->directtcp->pid = fork()) {
-		case -1:
-		    error(_("could not fork directtcp: %s"), strerror(errno));
-		    /*NOTREACHED*/
-		case 0:
-	        {   char buffer[DISK_BLOCK_BYTES];
-		    gsize size, wsize;
-		    int fd;
-		    in_port_t port = addrs->port;
-		    in_port_t localport;
-		    struct in_addr in;
-		    char *ipname;
-
-		    in.s_addr = addrs->ipv4;
-		    ipname = stralloc(inet_ntoa(in));
-		    g_debug(_("openning connection from host (%s) port (%d)"),
-			    ipname, port);
-		    fd = stream_client(ipname, port, STREAM_BUFSIZE,
-				       STREAM_BUFSIZE, &localport, 0);
-		    amfree(ipname);
-		    while ((size = full_read(fd, buffer, sizeof(buffer))) > 0){
-		        if ((wsize = full_write(dest, buffer, size)) != size) {
-			    error(_("write error: %s"), strerror(errno));
-		        }
-		    }
-		    close(dest);
-		    exit(0);
-		}
-		default:
-		    break;
-		}
 	    }
 
 	    /* send DATA-PATH reply */
 	    if (flags->amidxtaped &&
 		am_has_feature(their_features, fe_amidxtaped_datapath)) {
-		if (source->restore_mode == DEVICE_MODE) {
+		if (myout->restore_mode == DEVICE_MODE) {
 	            g_fprintf(prompt_out, "DATA-PATH AMANDA\r\n");
-		} else if (source->restore_mode == LOCAL_DIRECTTCP_MODE) {
+		} else if (myout->restore_mode == LOCAL_DIRECTTCP_MODE) {
 	            g_fprintf(prompt_out, "DATA-PATH AMANDA\r\n");
-		} else if (source->restore_mode == DIRECTTCP_MODE) {
+		    g_debug("DATA-PATH AMANDA");
+		} else if (myout->restore_mode == DIRECTTCP_MODE) {
 		    char *addr_list = stralloc("");
 		    DirectTCPAddr *addr;
 
 		    for (addr=addrs; addr->ipv4 != 0; addr++) {
 			struct in_addr in;
 			char *an_addr;
-			in.s_addr = addrs->ipv4;
+			in.s_addr = addr->ipv4;
 			an_addr = g_strdup_printf(" %s:%d", inet_ntoa(in),
 					     addr->port);
 			vstrextend(&addr_list, an_addr, NULL);
@@ -1006,18 +990,13 @@ void restore(RestoreSource  *source,
 		    }
 		    g_fprintf(prompt_out, "DATA-PATH DIRECT-TCP%s\r\n",
 			      addr_list);
+		    g_debug("DATA-PATH DIRECT-TCP%s", addr_list);
 		    amfree(addr_list);
 		}
 	    }
 	    fflush(prompt_out);
-	    if (source->restore_mode == LOCAL_DIRECTTCP_MODE ||
-		source->restore_mode == DIRECTTCP_MODE) {
-		device_accept(source->u.device,
-			      &source->directtcp->conn, NULL, NULL);
-	    }
 	}
     }
-    source->directtcp->restore_mode = source->restore_mode;
 
     /* find out if compression or uncompression is needed here */
     if(flags->compress && !file_is_compressed && !is_continuation
@@ -1202,7 +1181,7 @@ void restore(RestoreSource  *source,
     }
 
     /* copy the rest of the file from tape to the output */
-    if (source->restore_mode == HOLDING_MODE) {
+    if (myout->restore_mode == HOLDING_MODE) {
         dumpfile_t file;
 	queue_fd_t queue_read = {source->u.holding_fd, NULL};
 	queue_fd_t queue_write = {pipes[0].pipe[1], NULL};
@@ -1266,7 +1245,7 @@ void restore(RestoreSource  *source,
 		exit(2);
 	    }
 	}            
-    } else if (source->restore_mode == DEVICE_MODE) {
+    } else if (myout->restore_mode == DEVICE_MODE) {
 	queue_fd_t queue_fd = {pipes[0].pipe[1], NULL};
         gboolean result = device_read_to_fd(source->u.device, &queue_fd);
 	if (source->u.device->status != DEVICE_STATUS_SUCCESS) {
@@ -1283,11 +1262,56 @@ void restore(RestoreSource  *source,
 	    dbclose();
 	    exit(2);
 	}
-    } else { /* source->restore_mode == LOCAL_DIRECTTCP_MODE */
+    } else if (myout->restore_mode == LOCAL_DIRECTTCP_MODE) {
+	if (!is_continuation) {
+	    /* start a process to read from addr and write to dest */
+	    switch(myout->directtcp.pid = fork()) {
+	    case -1:
+		error(_("could not fork directtcp: %s"), strerror(errno));
+		/*NOTREACHED*/
+	    case 0:
+            {   char buffer[DISK_BLOCK_BYTES];
+		gsize size, wsize;
+		int fd;
+		in_port_t port = addrs->port;
+		in_port_t localport;
+		struct in_addr in;
+		char *ipname;
+
+		in.s_addr = addrs->ipv4;
+		ipname = stralloc(inet_ntoa(in));
+		g_debug(_("openning connection from host (%s) port (%d)"),
+			ipname, port);
+		fd = stream_client(ipname, port, STREAM_BUFSIZE,
+				   STREAM_BUFSIZE, &localport, 0);
+		amfree(ipname);
+		while ((size = full_read(fd, buffer, sizeof(buffer))) > 0){
+		    if ((wsize = full_write(pipes[0].pipe[1], buffer, size)) != size) {
+			error(_("write error: %s"), strerror(errno));
+	    	    }
+		}
+		close(fd);
+		close(pipes[0].pipe[1]);
+		exit(0);
+	    }
+	    default:
+		break;
+	    }
+	    aclose(pipes[0].pipe[1]);
+	}
+    }
+
+    if (myout->restore_mode == LOCAL_DIRECTTCP_MODE ||
+	myout->restore_mode == DIRECTTCP_MODE) {
 	gsize size = 0;
+
+	if (!is_continuation) {
+	    device_accept(source->u.device,
+			            &myout->directtcp.conn, NULL, NULL);
+	}
 	if (!device_read_to_connection(source->u.device,
-				       source->directtcp->conn,
-				       size, &size)) {
+						 myout->directtcp.conn,
+						 size, &size)) {
 	    g_fprintf(stderr, _("Problem transfering data: %s\n"),
 		      device_error_or_status(source->u.device));
 	    dbclose();
@@ -1295,7 +1319,6 @@ void restore(RestoreSource  *source,
 	}
     }
 
-    amfree(free_myout);
     if(!flags->inline_assemble) {
         if(out != dest)
 	    aclose(out);
@@ -1378,15 +1401,18 @@ void restore(RestoreSource  *source,
      * structures (we waited in case we needed to give up)
      */
     if(!is_continuation){
-        oldout = alloc(SIZEOF(open_output_t));
-        oldout->file = alloc(SIZEOF(dumpfile_t));
-        memcpy(oldout->file, source->header, SIZEOF(dumpfile_t));
-        if(flags->inline_assemble) oldout->outfd = pipes[0].pipe[1];
-	else oldout->outfd = -1;
-        oldout->comp_enc_pid = -1;
-        oldout->lastpartnum = source->header->partnum;
-        oldout->next = open_outputs;
-        open_outputs = oldout;
+        myout->file = alloc(SIZEOF(dumpfile_t));
+        memcpy(myout->file, source->header, SIZEOF(dumpfile_t));
+        if (flags->inline_assemble)
+	    myout->outfd = pipes[0].pipe[1];
+	else
+	    myout->outfd = -1;
+        myout->comp_enc_pid = -1;
+        myout->lastpartnum = source->header->partnum;
+        myout->next = open_outputs;
+        open_outputs = myout;
+    } else {
+	amfree(free_myout);
     }
     if(alldumps_list){
 	fileentry = alldumps_list;
@@ -1734,7 +1760,7 @@ static gboolean run_dumpspecs(GSList * dumpspecs,
    be attempted. *next_file will be filled in with the number of the
    file following the one that was attempted. */
 static RestoreFileStatus
-try_restore_single_file(Device * device, DirectTCPrestore *directtcp,
+try_restore_single_file(Device * device,
                         int file_num, int* next_file,
                         FILE * prompt_out,
                         FILE * prompt_in,
@@ -1747,10 +1773,6 @@ try_restore_single_file(Device * device, DirectTCPrestore *directtcp,
     RestoreSource source;
     source.u.device = device;
     source.restore_mode = DEVICE_MODE;
-    source.directtcp = directtcp;
-    if (directtcp)
-	source.restore_mode = directtcp->restore_mode;
-
     source.header = device_seek_file(device, file_num);
 
     if (source.header == NULL) {
@@ -1835,6 +1857,16 @@ try_restore_single_file(Device * device, DirectTCPrestore *directtcp,
     if (first_restored_file) {
 	memcpy(first_restored_file, source.header, sizeof(dumpfile_t));
     }
+
+    if (source.header->totalparts > 0 &&
+	have_all_parts(source.header, source.header->totalparts)) {
+	if (flags->delay_assemble || flags->inline_assemble) {
+	    flush_open_outputs(1, source.header);
+	} else {
+	    flush_open_outputs(0, source.header);
+	}
+    }
+
     dumpfile_free_data(source.header);
     amfree(source.header);
     return RESTORE_STATUS_NEXT_FILE;
@@ -1845,7 +1877,6 @@ try_restore_single_file(Device * device, DirectTCPrestore *directtcp,
 
 gboolean
 search_a_tape(Device      * device,
-              DirectTCPrestore *directtcp,
               FILE         *prompt_out, /* Where to send any prompts */
 	      FILE         *prompt_in,
               rst_flags_t  *flags,      /* Restore options. */
@@ -1905,7 +1936,7 @@ search_a_tape(Device      * device,
         for (file_index = 0; file_index < desired_tape->numfiles;
              file_index ++) {
             int file_num = desired_tape->files[file_index];
-            restore_status = try_restore_single_file(device, directtcp,
+            restore_status = try_restore_single_file(device,
 						     file_num, NULL,
                                                      prompt_out, prompt_in,
 						     flags,
@@ -1918,7 +1949,7 @@ search_a_tape(Device      * device,
     } else if(flags->fsf && flags->amidxtaped) {
         /* Restore a single file, then quit. */
         restore_status =
-            try_restore_single_file(device, directtcp,
+            try_restore_single_file(device,
 				    flags->fsf, NULL, prompt_out, prompt_in,
 				    flags,
                                     their_features, first_restored_file,
@@ -1941,7 +1972,7 @@ search_a_tape(Device      * device,
 
         for (;;) {
             restore_status =
-                try_restore_single_file(device, directtcp, file_num, &file_num,
+                try_restore_single_file(device, file_num, &file_num,
                                         prompt_out, prompt_in, flags,
                                         their_features, first_restored_file,
                                         dumpspecs, tape_seen_head);
@@ -2020,7 +2051,6 @@ gboolean restore_holding_disk(FILE * prompt_out,
 
     source.header = &header;
     source.restore_mode = HOLDING_MODE;
-    source.directtcp = NULL;
     source.u.holding_fd = robust_open(file->label, 0, 0);
     if (source.u.holding_fd < 0) {
         send_message(prompt_out, flags, features, 
@@ -2070,6 +2100,13 @@ gboolean restore_holding_disk(FILE * prompt_out,
 	     source.header->totalparts);
     amfree(qdisk);
     restore(&source, flags, prompt_out, prompt_in, features);
+
+    if (flags->delay_assemble || flags->inline_assemble) {
+	flush_open_outputs(1, source.header);
+    } else {
+	flush_open_outputs(0, source.header);
+    }
+
     dumpfile_free_data(source.header);
     aclose(source.u.holding_fd);
     return TRUE;
@@ -2122,7 +2159,6 @@ restore_from_tapelist(FILE * prompt_out,
     tapelist_t * cur_volume;
     dumpfile_t first_restored_file;
     seentapes_t * seentapes = NULL;
-    DirectTCPrestore directtcp = {NULL, -1, DEVICE_MODE};
 
     fh_init(&first_restored_file);
 
@@ -2176,7 +2212,7 @@ restore_from_tapelist(FILE * prompt_out,
                           device->volume_label);
             }
 
-            if (!search_a_tape(device, &directtcp, prompt_out, prompt_in,
+            if (!search_a_tape(device, prompt_out, prompt_in,
 			       flags, features,
                                cur_volume, dumpspecs, &seentapes,
                                &first_restored_file, 0, logstream)) {
@@ -2184,7 +2220,7 @@ restore_from_tapelist(FILE * prompt_out,
                 break;
             }
             g_object_unref(device);
-        }            
+        }
     }
 
     free_seen_tapes(seentapes);
@@ -2209,7 +2245,6 @@ restore_without_tapelist(FILE * prompt_out,
     seentapes_t * seentapes;
     int tape_count = 0;
     dumpfile_t first_restored_file;
-    DirectTCPrestore directtcp = {NULL, -1, DEVICE_MODE};
 
     fh_init(&first_restored_file);
 
@@ -2240,7 +2275,7 @@ restore_without_tapelist(FILE * prompt_out,
 	g_fprintf(stderr, "Scanning %s (slot %s)\n", device->volume_label,
 		curslot);
         
-        if (!search_a_tape(device, &directtcp, prompt_out, prompt_in,
+        if (!search_a_tape(device, prompt_out, prompt_in,
 			   flags, features,
                            NULL, dumpspecs, &seentapes, &first_restored_file,
                            tape_count, logstream)) {
@@ -2366,6 +2401,7 @@ search_tapes(
     if(logstream && logstream != stderr && logstream != stdout){
 	fclose(logstream);
     }
+
     if(flags->delay_assemble || flags->inline_assemble){
 	flush_open_outputs(1, NULL);
     }

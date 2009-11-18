@@ -512,6 +512,7 @@ main(
 
     free_disklist(&diskq);
     free_rst_flags(rst_flags);
+    am_release_feature_set(our_features);
 
     dbclose();
 

@@ -72,7 +72,6 @@ typedef enum {
 typedef struct DirectTCPrestore_ {
     DirectTCPConnection *conn;
     pid_t                pid;
-    e_restore_mode       restore_mode;
 } DirectTCPrestore;
 
 typedef struct {
@@ -82,7 +81,6 @@ typedef struct {
         int holding_fd;
         Device * device;
     } u;
-    DirectTCPrestore *directtcp;
 } RestoreSource;
 
 typedef struct seentapes_s seentapes_t;
@@ -103,7 +101,7 @@ gboolean restore_holding_disk(FILE * prompt_out,
                               dumpfile_t * this_header,
                               dumpfile_t * last_header);
 
-gboolean search_a_tape(Device * device, DirectTCPrestore *directtcp,
+gboolean search_a_tape(Device * device,
                        FILE *prompt_out, FILE *prompt_in,
                        rst_flags_t  *flags,
                        am_feature_t *their_features, 

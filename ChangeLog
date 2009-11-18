@@ -1,4 +1,9 @@
 2009-11-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* restore-src/amfetchdump.c: Small memory leak.
+	* restore-src/restore.c, restore-src/restore.h: Many change to fix
+	  what was broken in previous patch.
+
+2009-11-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c,
 	  application-src/amstar.c: Fix if none of --disk or --device is set.
 
