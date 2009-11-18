@@ -1,4 +1,8 @@
 2009-11-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c,
+	  application-src/amstar.c: Fix if none of --disk or --device is set.
+
+2009-11-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/tapefile.c: Fix if list_new_tapes return NULL.
 
 2009-11-18  Jean-Louis Martineau <martineau@zmanda.com>
