@@ -829,7 +829,7 @@ databuf_flush(
     /*
      * Write out the buffer
      */
-    size_to_write = (size_t)(db->datain - db->dataout)
+    size_to_write = (size_t)(db->datain - db->dataout);
     written = full_write(db->fd, db->dataout, size_to_write);
     if (written > 0) {
 	db->dataout += written;
