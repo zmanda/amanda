@@ -321,6 +321,11 @@ main(
 	}
     }
 
+    if (!argument.dle.disk)
+	argument.dle.disk = stralloc(argument.dle.device);
+    if (!argument.dle.device)
+	argument.dle.device = stralloc(argument.dle.disk);
+
     argument.argc = argc - optind;
     argument.argv = argv + optind;
 

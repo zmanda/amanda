@@ -61,6 +61,12 @@ sub new {
     # So, this only works for restore at the moment
     $self->{'args'}->{'gnutar-path'} ||= $Amanda::Constants::GNUTAR;
 
+    if (!defined $self->{'args'}->{'disk'}) {
+	$self->{'args'}->{'disk'} = $self->{'args'}->{'device'};
+    }
+    if (!defined $self->{'args'}->{'device'}) {
+	$self->{'args'}->{'device'} = $self->{'args'}->{'disk'};
+    }
     # default properties
     $self->{'props'} = {
         'pg-db' => 'template1',

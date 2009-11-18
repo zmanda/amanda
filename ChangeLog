@@ -1,4 +1,11 @@
 2009-11-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c, application-src/ampgsql.pl,
+	* application-src/amraw.pl, application-src/amsamba.pl,
+	* application-src/amstar.c, application-src/amsuntar.pl,
+	* application-src/amzfs-sendrecv.pl, application-src/amzfs-snapshot.pl:
+	  They can get either --disk or --device or both.
+
+2009-11-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/tapefile.c: New list_new_tapes function.
 	* server-src/tapefile.h: Prototype for list_new_tapes function.
 	* perl/Amanda/Tapelist.swg: swig of list_new_tapes.

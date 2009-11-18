@@ -38,7 +38,11 @@ sub new {
 
     $self->{config}           = $config;
     $self->{host}             = $host;
-    $self->{disk}             = $disk;
+    if (defined $disk) {
+	$self->{disk}         = $disk;
+    } else {
+	$self->{disk}         = $device;
+    }
     if (defined $device) {
 	$self->{device}       = $device;
     } else {
