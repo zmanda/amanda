@@ -523,6 +523,8 @@ print_new_tapes(
 {
     char *result = list_new_tapes(nb);
 
-    g_fprintf(output,"%s\n", result);
-    amfree(result);
+    if (result) {
+	g_fprintf(output,"%s\n", result);
+	amfree(result);
+    }
 }

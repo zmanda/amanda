@@ -1,4 +1,7 @@
 2009-11-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/tapefile.c: Fix if list_new_tapes return NULL.
+
+2009-11-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c, server-src/driver.c,
 	  server-src/planner.c: Do sanity check for DIRECT-TCP data-path.
 
