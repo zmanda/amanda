@@ -36,22 +36,6 @@
 
 #include "ndmjob.h"
 
-int
-start_log_file (void)
-{
-	if (L_log_file) {
-		FILE *		lfp;
-
-		lfp = fopen (L_log_file, "w");
-		if (!lfp) {
-			error_byebye ("can't open -L logfile");
-		}
-		log_fp = lfp;
-	}
-
-	return 0;
-}
-
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
 int
 start_index_file (void)
@@ -72,7 +56,7 @@ start_index_file (void)
 		index_fp = ifp;
 		fprintf (ifp, "##ndmjob -I\n");
 	} else {
-		index_fp = log_fp;
+		index_fp = stderr;
 	}
 
 	return 0;
@@ -87,7 +71,7 @@ sort_index_file (void)
 
 		fprintf (index_fp, "##ndmjob -J\n"); /* sorts to 2nd line */
 		fclose (index_fp);
-		index_fp = log_fp;	/* in case anything else happens */
+		index_fp = stderr;	/* in case anything else happens */
 
 		sprintf (cmd, "LC_ALL=C sort %s -o %s\n", I_index_file, I_index_file);
 		ndmjob_log (3, "sort command: %s", cmd);
@@ -129,17 +113,10 @@ ndmjob_log_deliver (struct ndmlog *log, char *tag, int lev, char *msg)
 	}
 
 	if (d_debug >= lev) {
-		if (!o_no_time_stamps) {
-			fprintf (log_fp, "%s %s %s\n",
-				tagbuf, ndmlog_time_stamp(), msg);
-		} else {
-			fprintf (log_fp, "%s t[x] %s\n",
-				tagbuf, msg);
-		}
-		fflush (log_fp);
+		g_debug ("%s %s", tagbuf, msg);
 	}
 
-	if ((v_verbose >= lev) && (log_fp != stderr)) {
+	if (v_verbose >= lev) {
 		printf ("'%s'\n", msg);
 		fflush (stdout);
 	}

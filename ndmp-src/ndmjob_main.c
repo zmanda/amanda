@@ -37,12 +37,16 @@
 
 #define GLOBAL
 #include "ndmjob.h"
+#include "debug.h"
 
 
 int
 main (int ac, char *av[])
 {
 	int rc;
+
+	set_pname("ndmjob");
+	dbopen(DBG_SUBDIR_CLIENT);
 
 	NDMOS_MACRO_ZEROFILL(&the_session);
 	d_debug = -1;
@@ -61,7 +65,6 @@ main (int ac, char *av[])
 	o_to_addr = -1;
 	p_ndmp_port = NDMPPORT;
 #endif /* !NDMOS_OPTION_NO_CONTROL_AGENT */
-	log_fp = stderr;
 
 	process_args (ac, av);
 
@@ -78,7 +81,6 @@ main (int ac, char *av[])
 			dump_settings();
 			return 0;
 		}
-		start_log_file ();
 		ndma_daemon_session (&the_session, p_ndmp_port);
 		return 0;
 	}
@@ -96,8 +98,6 @@ main (int ac, char *av[])
 		return 0;
 	}
 
-	start_log_file ();
-
 	start_index_file ();
 
 	rc = ndma_client_session (&the_session);
@@ -110,6 +110,7 @@ main (int ac, char *av[])
 	    ndmjob_log (1, "Operation complete but had problems.");
 #endif /* !NDMOS_OPTION_NO_CONTROL_AGENT */
 
+	dbclose();
 	return 0;
 }
 
