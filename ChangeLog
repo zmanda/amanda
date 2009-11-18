@@ -1,4 +1,9 @@
 2009-11-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/tapefile.c: New list_new_tapes function.
+	* server-src/tapefile.h: Prototype for list_new_tapes function.
+	* perl/Amanda/Tapelist.swg: swig of list_new_tapes.
+
+2009-11-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndmjob.h, ndmp-src/ndmjob_main.c,
 	  ndmp-src/ndmjob_main_util.c: Use g_debug for logging.
 

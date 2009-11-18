@@ -171,6 +171,8 @@ sub update_positions {
 
 %}
 
+char *list_new_tapes(int nb);
+
 /* C functions -- should be called *only* from within this module */
 
 %rename(C_read_tapelist) read_tapelist;
