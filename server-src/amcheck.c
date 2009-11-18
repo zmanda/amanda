@@ -1368,6 +1368,33 @@ start_server_check(
 			      hostp->hostname, dp->name);
 		    pgmbad = 1;
 		}
+
+		if (dp->data_path == DATA_PATH_DIRECTTCP) {
+		    if (dp->compress != COMP_NONE) {
+			g_fprintf(outf,
+				  _("ERROR: %s %s: Can't compress directtcp data-path\n"),
+				  hostp->hostname, dp->name);
+			pgmbad = 1;
+		    }
+		    if (dp->encrypt != ENCRYPT_NONE) {
+			g_fprintf(outf,
+				  _("ERROR: %s %s: Can't encrypt directtcp data-path\n"),
+				  hostp->hostname, dp->name);
+			pgmbad = 1;
+		    }
+		    if (dp->to_holdingdisk == HOLD_REQUIRED) {
+			g_fprintf(outf,
+				  _("ERROR: %s %s: Holding disk can't be use for directtcp data-path\n"),
+				  hostp->hostname, dp->name);
+			pgmbad = 1;
+		    } else if (dp->to_holdingdisk == HOLD_AUTO) {
+			g_fprintf(outf,
+				  _("WARNING: %s %s: Holding disk can't be use for directtcp data-path\n"),
+				  hostp->hostname, dp->name);
+			pgmbad = 1;
+		    }
+		}
+
 		amfree(disk);
 		remove_disk(&origq, dp);
 	    }

@@ -1,4 +1,8 @@
 2009-11-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c, server-src/driver.c,
+	  server-src/planner.c: Do sanity check for DIRECT-TCP data-path.
+
+2009-11-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c, application-src/ampgsql.pl,
 	* application-src/amraw.pl, application-src/amsamba.pl,
 	* application-src/amstar.c, application-src/amsuntar.pl,

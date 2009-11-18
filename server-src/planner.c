@@ -736,6 +736,39 @@ setup_estimate(
 	log_add(L_INFO, _("Adding new disk %s:%s."), dp->host->hostname, qname);
     }
 
+    if (dp->data_path == DATA_PATH_DIRECTTCP) {
+	if (dp->compress != COMP_NONE) {
+	    log_add(L_FAIL, _("%s %s %s 0 [Can't compress directtcp data-path]"),
+		    dp->host->hostname, qname, planner_timestamp);
+	    g_fprintf(stderr,_("%s:%s lev 0 skipped can't compress directtcp data-path\n"),
+		      dp->host->hostname, qname);
+	    amfree(qname);
+	    return;
+	}
+	if (dp->encrypt != ENCRYPT_NONE) {
+	    log_add(L_FAIL, _("%s %s %s 0 [Can't encrypt directtcp data-path]"),
+		    dp->host->hostname, qname, planner_timestamp);
+	    g_fprintf(stderr,_("%s:%s lev 0 skipped can't encrypt directtcp data-path\n"),
+		      dp->host->hostname, qname);
+	    amfree(qname);
+	    return;
+	}
+	if (dp->to_holdingdisk == HOLD_REQUIRED) {
+	    log_add(L_FAIL, _("%s %s %s 0 [Holding disk can't be use for directtcp data-path]"),
+		    dp->host->hostname, qname, planner_timestamp);
+	    g_fprintf(stderr,_("%s:%s lev 0 skipped Holding disk can't be use for directtcp data-path\n"),
+		      dp->host->hostname, qname);
+	    amfree(qname);
+	    return;
+	} else if (dp->to_holdingdisk == HOLD_AUTO) {
+	    log_add(L_INFO, _("Disabling holding disk for %s:%s."),
+		    dp->host->hostname, qname);
+	    g_fprintf(stderr,_("%s:%s Disabling holding disk\n"),
+		      dp->host->hostname, qname);
+	    dp->to_holdingdisk = HOLD_NEVER;
+	}
+    }
+
     /* setup working data struct for disk */
 
     ep = alloc(SIZEOF(est_t));

@@ -2640,6 +2640,13 @@ read_schedule(
 	    }
 	}
 	remove_disk(&waitq, dp);
+
+	if (dp->data_path == DATA_PATH_DIRECTTCP &&
+	    dp->to_holdingdisk == HOLD_AUTO) {
+	    /* planner already logged a warning. */
+	    dp->to_holdingdisk = HOLD_NEVER;
+	}
+
 	if (dp->to_holdingdisk == HOLD_NEVER) {
 	    enqueue_disk(&directq, dp);
 	} else {
