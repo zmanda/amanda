@@ -1,4 +1,7 @@
 2009-11-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/chunker.c: Fix checking result of full_write.
+
+2009-11-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c,
 	  common-src/security-util.c: Correctly report write error.
 

@@ -580,6 +580,7 @@ databuf_flush(
 {
     struct cmdargs *cmdargs = NULL;
     int rc = 1;
+    size_t size_to_write;
     size_t written;
     off_t left_in_chunk;
     char *arg_filename = NULL;
@@ -828,8 +829,8 @@ databuf_flush(
     /*
      * Write out the buffer
      */
-    written = full_write(db->fd, db->dataout,
-			(size_t)(db->datain - db->dataout));
+    size_to_write = (size_t)(db->datain - db->dataout)
+    written = full_write(db->fd, db->dataout, size_to_write);
     if (written > 0) {
 	db->dataout += written;
 	dumpbytes += (off_t)written;
@@ -837,7 +838,7 @@ databuf_flush(
     dumpsize += (dumpbytes / (off_t)1024);
     filesize += (dumpbytes / (off_t)1024);
     dumpbytes %= 1024;
-    if (written == 0) {
+    if (written < size_to_write) {
 	if (errno != ENOSPC) {
 	    char *m = vstrallocf(_("data write: %s"), strerror(errno));
 	    errstr = quote_string(m);
