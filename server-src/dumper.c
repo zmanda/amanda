@@ -695,9 +695,11 @@ databuf_flush(
 	dumpbytes %= (off_t)1024;
     }
     if (written == 0) {
-	m = vstrallocf(_("data write: %s"), strerror(errno));
+	int save_errno = errno;
+	m = vstrallocf(_("data write: %s"), strerror(save_errno));
 	errstr = quote_string(m);
 	amfree(m);
+	errno = save_errno;
 	return -1;
     }
     db->datain = db->dataout = db->buf;
@@ -1510,7 +1512,8 @@ read_datafd(
      */
     assert(buf != NULL);
     if (databuf_write(db, buf, (size_t)size) < 0) {
-	errstr = newvstrallocf(errstr, _("data write: %s"), strerror(errno));
+	int save_errno = errno;
+	errstr = newvstrallocf(errstr, _("data write: %s"), strerror(save_errno));
 	dump_result = 2;
 	stop_dump();
 	return;

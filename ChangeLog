@@ -1,3 +1,7 @@
+2009-11-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c,
+	  common-src/security-util.c: Correctly report write error.
+
 2009-11-13 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/deb/control: update to use shlibs:Depends and
 	   perl:Depends

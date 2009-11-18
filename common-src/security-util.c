@@ -424,6 +424,7 @@ tcpm_send_token(
     int			rval;
     char		*encbuf;
     ssize_t		encsize;
+    int			save_errno;
 
     assert(SIZEOF(netlength) == 4);
 
@@ -464,6 +465,7 @@ tcpm_send_token(
     }
 
     rval = full_writev(fd, iov, nb_iov);
+    save_errno = errno;
     if (len != 0 && rc->driver->data_encrypt != NULL && buf != encbuf) {
 	amfree(encbuf);
     }
@@ -471,7 +473,7 @@ tcpm_send_token(
     if (rval < 0) {
 	if (errmsg)
             *errmsg = newvstrallocf(*errmsg, _("write error to: %s"),
-				   strerror(errno));
+				   strerror(save_errno));
         return (-1);
     }
     return (0);
