@@ -1,3 +1,16 @@
+2009-11-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/directtcp-target.c
+	  device-src/directtcp-target.h: Removed files.
+	* device-src/device.c,
+	  device-src/device.h: New device directtcp api.
+	* device-src/directtcp-connection.c,
+	  device-src/directtcp-connection.h: directtcp_connection and
+	  directtcp_connection_socket object.
+	* device-src/Makefile.am: Remove directtcp-target.*
+				  Add directtcp-connection.*
+	* restore-src/restore.c,
+	  restore-src/restore.h: Fix for new device directtcp api.
+
 2009-11-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/chunker.c: Fix checking result of full_write.
 

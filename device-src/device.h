@@ -30,6 +30,8 @@
 
 #include "property.h"
 #include "fileheader.h"
+#include "directtcp.h"
+#include "directtcp-connection.h"
 
 /* Device API version. */
 #define DEVICE_API_VERSION 0
@@ -76,6 +78,9 @@ typedef enum {
 #define DEVICE_STATUS_FLAGS_MASK (DEVICE_STATUS_MAX-1)
 #define DEVICE_STATUS_FLAGS_TYPE (device_status_flags_get_type())
 GType device_status_flags_get_type(void);
+
+/* a callback to prolong an operation */
+typedef gboolean (* ProlongProc)(gpointer data);
 
 /*
  * Main object structure
@@ -184,6 +189,78 @@ struct _DeviceClass {
     gboolean (* recycle_file) (Device * self, guint filenum);
     gboolean (* erase) (Device * self);
     gboolean (* finish) (Device * self);
+
+    /* DirectTCP methods */
+
+    // TODO: move to wiki
+
+    /* Check whether this device supports DirectTCP.  If this returns false,
+     * then don't call any of the other DirectTCP methods
+     *
+     * @param self: device object
+     * @returns: TRUE if support is present
+     */
+    gboolean (* directtcp_supported)(Device *self);
+
+    /* Begin listening for incoming connections, and return a list of listening
+     * addresses.  This method should be called when the device is not yet
+     * started, and must be followed by an accept() call.  The list of
+     * addresses is the property of the device, and will remain unchanged at
+     * least until accept() returns.
+     *
+     * @param self: device object
+     * @param addrs (output): 0-terminated list of destination addresses
+     * @returns: FALSE on error
+     */
+    gboolean (* listen)(Device *self, DirectTCPAddr **addrs);
+
+    /* accept an incoming connection and return an opaque identifier for the
+     * connection, but do not begin reading data.  If the operation is aborted
+     * before the incoming connection is made, this method returns FALSE but
+     * does not set an error status.
+     *
+     * @param self: device object
+     * @param conn (output): new connection object
+     * @param prolong: a ProlongProc called periodically; accept is aborted if
+     *   this returns FALSE (can be NULL)
+     * @param prolong_data: data passed to prolong
+     * @returns: FALSE on error
+     */
+    gboolean (* accept)(Device *self, DirectTCPConnection **conn,
+			ProlongProc prolong, gpointer prolong_data);
+
+    /* Write to the device using data from the connection, writing at most
+     * SIZE bytes of data.
+     *
+     * @param self: device object
+     * @param conn: connection object from which to read data
+     * @param size: number of bytes to transfer (must be a multiple of block size), or
+     * zero for unlimited
+     * @param actual_size (out): bytes actually written
+     * @returns: FALSE on error
+     */
+    gboolean (* write_from_connection)(Device *self, DirectTCPConnection *conn,
+		    gsize size, gsize *actual_size);
+
+    /* send a fixed amount of data to the given connection from the device
+     *
+     * @param self: device object
+     * @param conn: connection object from which to read data
+     * @param size: number of bytes to transfer (must be a multiple of block
+     * size), or zero for the complete part.
+     * @param actual_size (out): bytes actually read
+     * @returns: FALSE on error
+     */
+    gboolean (* read_to_connection)(Device *self, DirectTCPConnection *conn,
+		    gsize size, gsize *actual_size);
+
+    /* verify that the device can use a given connection
+     *
+     * @param self: device object
+     * @param conn: conn to verify
+     * @returns: TRUE if this device can interact with the given connection
+     */
+    gboolean (* can_use_connection)(Device *self, DirectTCPConnection *conn);
 
     /* array of DeviceProperty objects for this class, keyed by ID */
     GArray *class_properties;
@@ -302,6 +379,15 @@ gboolean 	device_recycle_file	(Device * self,
 					guint filenum);
 
 gboolean 	device_erase	(Device * self);
+gboolean device_directtcp_supported(Device *self);
+gboolean device_listen(Device *self, DirectTCPAddr **addrs);
+gboolean device_accept(Device *self, DirectTCPConnection **conn,
+                ProlongProc prolong, gpointer prolong_data);
+gboolean device_write_from_connection(Device *self, DirectTCPConnection *conn,
+		gsize size, gsize *actual_size);
+gboolean device_read_to_connection(Device *self, DirectTCPConnection *conn,
+		gsize size, gsize *actual_size);
+gboolean device_can_use_connection(Device *self, DirectTCPConnection *conn);
 
 /* Protected methods. Don't call these except in subclass implementations. */
 

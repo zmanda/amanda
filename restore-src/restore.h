@@ -36,7 +36,7 @@
 #include "tapelist.h"
 #include "amfeatures.h"
 #include "device.h"
-#include "directtcp-target.h"
+#include "directtcp-connection.h"
 
 #define CREAT_MODE  0640
 

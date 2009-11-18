@@ -901,7 +901,7 @@ void restore(RestoreSource  *source,
 	}
   
 	/* first part of a dump */
-	if (IS_DIRECTTCP_TARGET(source->u.device)) {
+	if (device_directtcp_supported(source->u.device)) {
 	    DirectTCPAddr *addrs;
 	    data_path_t    data_path = DATA_PATH_AMANDA;
             char          *input, *s;
@@ -934,10 +934,10 @@ void restore(RestoreSource  *source,
 	    }
 
 	    if (data_path & DATA_PATH_DIRECTTCP &&
-		IS_DIRECTTCP_TARGET(source->u.device)) {
+		device_directtcp_supported(source->u.device)) {
 		source->restore_mode = DIRECTTCP_MODE;
 	    } else if (data_path & DATA_PATH_AMANDA &&
-		       IS_DIRECTTCP_TARGET(source->u.device)) {
+		       device_directtcp_supported(source->u.device)) {
 		source->restore_mode = LOCAL_DIRECTTCP_MODE;
 	    } else {
 		source->restore_mode = DEVICE_MODE;
@@ -945,7 +945,7 @@ void restore(RestoreSource  *source,
 
 	    if (source->restore_mode == LOCAL_DIRECTTCP_MODE ||
 		source->restore_mode == DIRECTTCP_MODE) {
-		directtcp_target_listen(source->u.device, &addrs);
+		device_listen(source->u.device, &addrs);
 	    }
 
 	    if (source->restore_mode == LOCAL_DIRECTTCP_MODE) {
@@ -1012,8 +1012,8 @@ void restore(RestoreSource  *source,
 	    fflush(prompt_out);
 	    if (source->restore_mode == LOCAL_DIRECTTCP_MODE ||
 		source->restore_mode == DIRECTTCP_MODE) {
-		directtcp_target_accept(source->u.device,
-				        &source->directtcp->conn, NULL, NULL);
+		device_accept(source->u.device,
+			      &source->directtcp->conn, NULL, NULL);
 	    }
 	}
     }
@@ -1285,9 +1285,9 @@ void restore(RestoreSource  *source,
 	}
     } else { /* source->restore_mode == LOCAL_DIRECTTCP_MODE */
 	gsize size = 0;
-	if (!directtcp_target_read_to_connection(source->u.device,
-						 source->directtcp->conn,
-						 size, &size)) {
+	if (!device_read_to_connection(source->u.device,
+				       source->directtcp->conn,
+				       size, &size)) {
 	    g_fprintf(stderr, _("Problem transfering data: %s\n"),
 		      device_error_or_status(source->u.device));
 	    dbclose();

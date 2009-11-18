@@ -190,6 +190,7 @@ static gboolean default_device_property_set_ex(Device *self,
 					       GValue * val,
 					       PropertySurety surety,
 					       PropertySource source);
+static gboolean default_device_directtcp_supported(Device *self);
 static void set_properties_from_global_config(Device * device);
 static void set_properties_from_device_config(Device * device, device_config_t *dc);
 
@@ -302,6 +303,7 @@ device_class_init (DeviceClass * device_class)
     device_class->read_to_fd = default_device_read_to_fd;
     device_class->property_get_ex = default_device_property_get_ex;
     device_class->property_set_ex = default_device_property_set_ex;
+    device_class->directtcp_supported = default_device_directtcp_supported;
     g_object_class->finalize = device_finalize;
 }
 
@@ -1043,6 +1045,13 @@ default_device_property_set_ex(
     return TRUE;
 }
 
+static gboolean
+default_device_directtcp_supported(
+    Device *self G_GNUC_UNUSED)
+{
+    return FALSE;
+}
+
 const GSList *
 device_property_get_list (Device * self)
 {
@@ -1395,6 +1404,83 @@ device_erase (Device * self)
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
+}
+
+gboolean
+device_directtcp_supported(
+    Device *self)
+{
+    DeviceClass *klass = DEVICE_GET_CLASS(self);
+
+    g_assert(klass->directtcp_supported);
+    return klass->directtcp_supported(self);
+}
+
+gboolean
+device_listen(
+    Device *self,
+    DirectTCPAddr **addrs)
+{
+    DeviceClass *klass = DEVICE_GET_CLASS(self);
+
+    g_assert(klass->listen);
+    return klass->listen(self, addrs);
+}
+
+gboolean
+device_accept(
+    Device *self,
+    DirectTCPConnection **conn,
+    ProlongProc prolong,
+    gpointer prolong_data)
+{
+    DeviceClass *klass = DEVICE_GET_CLASS(self);
+
+    g_assert(klass->accept);
+    return klass->accept(self, conn, prolong, prolong_data);
+}
+
+gboolean
+device_write_from_connection(
+    Device *self,
+    DirectTCPConnection *conn,
+    gsize size,
+    gsize *actual_size)
+{
+    DeviceClass *klass = DEVICE_GET_CLASS(self);
+
+    g_assert(self->in_file);
+    g_assert(IS_WRITABLE_ACCESS_MODE(self->access_mode));
+
+    g_assert(klass->write_from_connection);
+    return klass->write_from_connection(self, conn, size, actual_size);
+}
+
+gboolean
+device_read_to_connection(
+    Device *self,
+    DirectTCPConnection *conn,
+    gsize size,
+    gsize *actual_size)
+{
+    DeviceClass *klass = DEVICE_GET_CLASS(self);
+
+    g_assert(self->in_file);
+    g_assert(self->access_mode == ACCESS_READ);
+
+    g_assert(klass->read_to_connection);
+    return klass->read_to_connection(self, conn, size, actual_size);
+}
+
+gboolean
+device_can_use_connection(
+    Device *self,
+    DirectTCPConnection *conn)
+{
+    DeviceClass *klass = DEVICE_GET_CLASS(self);
+
+    g_assert(klass->can_use_connection);
+    return klass->can_use_connection(self, conn);
 }
 
 /* Property handling */

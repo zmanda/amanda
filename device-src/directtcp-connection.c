@@ -19,7 +19,7 @@
  */
 
 #include "amanda.h"
-#include "directtcp-target.h"
+#include "directtcp-connection.h"
 #include <glib-object.h>
 
 /*
@@ -30,14 +30,9 @@ static void
 directtcp_connection_finalize(GObject *goself)
 {
     DirectTCPConnection *self = DIRECTTCP_CONNECTION(goself);
-    GObjectClass *goclass = G_OBJECT_GET_CLASS(goself);
-
-    /* chain up first */
-    if (goclass->finalize)
-        goclass->finalize(goself);
 
     /* close this socket if necessary, failing fatally if that doesn't work */
-    if (self->closed) {
+    if (!self->closed) {
         char *errmsg;
 
         g_warning("connection freed without being closed first; any error will be fatal");
@@ -115,7 +110,7 @@ static char *
 directtcp_connection_socket_close(DirectTCPConnection *dself)
 {
     DirectTCPConnectionSocket *self = DIRECTTCP_CONNECTION_SOCKET(dself);
-    if (!close(self->socket)) {
+    if (self->socket >= 0 && !close(self->socket)) {
         return g_strdup_printf("while closing socket: %s", strerror(errno));
     }
     self->socket = -1;
@@ -161,97 +156,4 @@ directtcp_connection_socket_get_type (void)
     }
 
     return type;
-}
-
-/*
- * DirectTCPTarget class implementation
- */
-
-GType
-directtcp_target_get_type(void)
-{
-    static GType type = 0;
-    if G_UNLIKELY(type == 0) {
-        static const GTypeInfo info = {
-            sizeof (DirectTCPTargetInterface),
-            NULL,   /* base_init */
-            NULL,   /* base_finalize */
-            NULL,   /* class_init */
-            NULL,   /* class_finalize */
-            NULL,   /* class_data */
-            0,
-            0,      /* n_preallocs */
-            NULL,   /* instance_init */
-	    NULL
-        };
-        type = g_type_register_static (G_TYPE_INTERFACE, "DirectTCPTarget", &info, 0);
-    }
-    return type;
-}
-
-gboolean
-directtcp_target_listen(
-    Device *self,
-    DirectTCPAddr **addrs)
-{
-    DirectTCPTargetInterface *iface = DIRECTTCP_TARGET_GET_INTERFACE(self);
-
-    g_assert(iface->listen);
-    return iface->listen(self, addrs);
-}
-
-gboolean
-directtcp_target_accept(
-    Device *self,
-    DirectTCPConnection **conn,
-    ProlongProc prolong,
-    gpointer prolong_data)
-{
-    DirectTCPTargetInterface *iface = DIRECTTCP_TARGET_GET_INTERFACE(self);
-
-    g_assert(iface->accept);
-    return iface->accept(self, conn, prolong, prolong_data);
-}
-
-gboolean
-directtcp_target_write_from_connection(
-    Device *self,
-    DirectTCPConnection *conn,
-    gsize size,
-    gsize *actual_size)
-{
-    DirectTCPTargetInterface *iface = DIRECTTCP_TARGET_GET_INTERFACE(self);
-
-    g_assert(self->in_file);
-    g_assert(IS_WRITABLE_ACCESS_MODE(self->access_mode));
-
-    g_assert(iface->write_from_connection);
-    return iface->write_from_connection(self, conn, size, actual_size);
-}
-
-gboolean
-directtcp_target_read_to_connection(
-    Device *self,
-    DirectTCPConnection *conn,
-    gsize size,
-    gsize *actual_size)
-{
-    DirectTCPTargetInterface *iface = DIRECTTCP_TARGET_GET_INTERFACE(self);
-
-    g_assert(self->in_file);
-    g_assert(self->access_mode == ACCESS_READ);
-
-    g_assert(iface->read_to_connection);
-    return iface->read_to_connection(self, conn, size, actual_size);
-}
-
-gboolean
-directtcp_target_can_use_connection(
-    Device *self,
-    DirectTCPConnection *conn)
-{
-    DirectTCPTargetInterface *iface = DIRECTTCP_TARGET_GET_INTERFACE(self);
-
-    g_assert(iface->can_use_connection);
-    return iface->can_use_connection(self, conn);
 }
