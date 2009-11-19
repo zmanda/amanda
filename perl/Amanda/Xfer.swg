@@ -380,6 +380,8 @@ xmsgsource_perl_callback(
     SV *msg_sv = NULL;
     SV *xfer_sv = NULL;
 
+    /* keep the source around long enough for the call to finish */
+    amglue_source_ref(src);
     g_assert(src->callback_sv != NULL);
 
     ENTER;
@@ -406,9 +408,12 @@ xmsgsource_perl_callback(
     FREETMPS;
     LEAVE;
 
+    /* we no longer need the src */
+    amglue_source_unref(src);
+    src = NULL;
+
     /* these may be gone, so NULL them out */
     src_sv = NULL;
-    src = NULL;
     msg_sv = NULL;
     xfer_sv = NULL;
 

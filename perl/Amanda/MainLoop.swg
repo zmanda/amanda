@@ -319,12 +319,13 @@ typedef struct amglue_Source {
 	     * that we make a copy of this SV, in case the user later
 	     * modifies it. */
 	    if (self->callback_sv) {
-		SvSetSV(self->callback_sv, callback_sub);
-	    } else {
-		self->callback_sv = newSVsv(callback_sub);
-		g_source_set_callback(self->src, self->callback,
-		    (gpointer)self, NULL);
+		SvREFCNT_dec(self->callback_sv);
+		self->callback_sv = NULL;
 	    }
+	    self->callback_sv = newSVsv(callback_sub);
+	    SvREFCNT_inc(self->callback_sv);
+	    g_source_set_callback(self->src, self->callback,
+		(gpointer)self, NULL);
 	}
 	/* delete the cheater's typemap */
 	%typemap(in) SV *sv;
@@ -378,6 +379,8 @@ amglue_source_callback_simple(
     amglue_Source *src = (amglue_Source *)data;
     SV *src_sv = NULL;
 
+    /* keep the source around long enough for the call to finish */
+    amglue_source_ref(src);
     g_assert(src->callback_sv != NULL);
 
     ENTER;
@@ -399,9 +402,12 @@ amglue_source_callback_simple(
     FREETMPS;
     LEAVE;
 
-    /* these may have been freed, so don't use them after this point */
-    src_sv = NULL;
+    /* we no longer need the src */
+    amglue_source_unref(src);
     src = NULL;
+
+    /* this may have been freed, so don't use them after this point */
+    src_sv = NULL;
 
     /* check for an uncaught 'die'.  If we don't do this, then Perl will longjmp()
      * over the GMainLoop mechanics, leaving GMainLoop in an inconsistent (locked)
@@ -458,6 +464,8 @@ child_watch_source_callback(
     amglue_Source *src = (amglue_Source *)data;
     SV *src_sv;
 
+    /* keep the source around long enough for the call to finish */
+    amglue_source_ref(src);
     g_assert(src->callback_sv != NULL);
 
     ENTER;
@@ -485,9 +493,12 @@ child_watch_source_callback(
     FREETMPS;
     LEAVE;
 
-    /* these may have been freed, so don't use them after this point */
-    src_sv = NULL;
+    /* we no longer need the src */
+    amglue_source_unref(src);
     src = NULL;
+
+    /* this may have been freed, so don't use them after this point */
+    src_sv = NULL;
 
     /* check for an uncaught 'die'.  If we don't do this, then Perl will longjmp()
      * over the GMainLoop mechanics, leaving GMainLoop in an inconsistent (locked)

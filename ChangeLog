@@ -1,3 +1,7 @@
+2009-11-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/MainLoop.swg perl/Amanda/Xfer.swg: fix refcounting for
+	  callback_sv, and hang onto the src through the callback invocation
+
 2009-11-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* gnulib/Makefile.am (EXTRA_DIST): Remove regenerate/.regenerate.swp
 
