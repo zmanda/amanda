@@ -1,3 +1,15 @@
+2009-11-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Device.pod perl/Amanda/Device.swg
+	  device-src/device.c device-src/device.h: add is_eom
+	* device-src/rait-device.c
+	  device-src/s3-device.c device-src/tape-device.c
+	  device-src/vfs-device.c device-src/null-device.c: set is_eom
+	  and is_eof correctl
+	* perl/Amanda/Xfer.pod perl/Amanda/Xfer.swg xfer-src/xmsg.h:
+	  add an eom attribute to XMsgs
+	* device-src/xfer-dest-taper-splitter.c: set the attribute
+	* perl/Amanda/Taper/Scribe.pm: handle EOM separately from !success
+
 2009-11-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c, application-src/amstar.c: Print restore
 	  and validate command with debug_executing.

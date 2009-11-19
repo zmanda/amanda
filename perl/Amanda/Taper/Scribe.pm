@@ -549,10 +549,9 @@ sub _xmsg_part_done {
 	if ($msg->{'successful'}) {
 	    # update the header for the next dumpfile
 	    $self->{'dump_header'}->{'partnum'}++;
+	}
 
-	    # and go on to the next part
-	    $self->_start_part();
-	} else {
+	if ($msg->{'eom'}) {
 	    # if there's an error finishing the device, it's probably just carryover
 	    # from the error the Xfer::Dest::Taper encountered while writing to the
 	    # device, so we ignore it.
@@ -562,9 +561,30 @@ sub _xmsg_part_done {
 		debug("ignoring error while finishing device '$devname': $errmsg");
 	    }
 
-	    # if we're not splitting, then this dump is done and has failed
-	    if ($self->{'split_method'} eq 'none') {
-		my $msg = "No space left on device";
+	    # if the part failed..
+	    if (!$msg->{'successful'}) {
+		# if no caching was going on, then the dump has failed
+		if ($self->{'split_method'} eq 'none') {
+		    my $msg = "No space left on device";
+		    if ($self->{'device'}->status() != $DEVICE_STATUS_SUCCESS) {
+			$msg = $self->{'device'}->error_or_status();
+		    }
+		    $self->_dump_failed($msg);
+		    return;
+		}
+
+		# log a message for amreport
+		$self->{'feedback'}->notif_log_info(
+		    message => "Will request retry of failed split part.");
+	    }
+
+	    # get a new volume, then go on to the next part
+	    $self->_get_new_volume(sub { $self->_start_part(); });
+	} else {
+	    # if the part was unsuccessful, but the xfer dest has reason to believe
+	    # this is not due to EOT, then the dump is done
+	    if (!$msg->{'successful'}) {
+		my $msg = "unknown error while dumping";
 		if ($self->{'device'}->status() != $DEVICE_STATUS_SUCCESS) {
 		    $msg = $self->{'device'}->error_or_status();
 		}
@@ -572,12 +592,8 @@ sub _xmsg_part_done {
 		return;
 	    }
 
-	    # log a message for amreport
-	    $self->{'feedback'}->notif_log_info(
-		message => "Will request retry of failed split part.");
-
-	    # get a new volume, then go on to the next part
-	    $self->_get_new_volume(sub { $self->_start_part(); });
+	    # no EOT -- go on to the next part
+	    $self->_start_part();
 	}
     }
 }

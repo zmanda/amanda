@@ -137,6 +137,9 @@ new_sv_for_xmsg(
     /* successful */
     hv_store(hash, "successful", 10, newSViv(msg->successful), 0);
 
+    /* eom */
+    hv_store(hash, "eom", 3, newSViv(msg->eom), 0);
+
     /* eof */
     hv_store(hash, "eof", 3, newSViv(msg->eof), 0);
 

@@ -1215,6 +1215,8 @@ s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
 
     if (device_in_error(self)) return FALSE;
 
+    pself->is_eom = FALSE;
+
     /* Set the blocksize to zero, since there's no header to skip (it's stored
      * in a distinct file, rather than block zero) */
     jobInfo->blocksize = 0;

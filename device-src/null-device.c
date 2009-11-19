@@ -259,6 +259,7 @@ null_device_start_file(Device * d_self,
 		    dumpfile_t * jobInfo G_GNUC_UNUSED)
 {
     d_self->in_file = TRUE;
+    d_self->is_eom = FALSE;
     d_self->block = 0;
     if (d_self->file <= 0)
         d_self->file = 1;

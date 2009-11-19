@@ -283,7 +283,11 @@ the current access mode (C<$ACCESS_NULL>, or that supplied to start)
 
 =item C<is_eof>
 
-true if an EOF occurred on reading, or if the volume is out of space
+true if an EOF occurred while reading; also used by C<write_from_connection>
+
+=item C<is_eom>
+
+true if a write operation reached the end of the volume (end-of-medium)
 
 =item C<volume_label>
 
@@ -404,7 +408,8 @@ until after C<start_file> has been called.
 This method prepares the device to write data into a file, beginning by writing
 the supplied header to the volume. On successful completion, the device's
 C<file> is set to the current file number, C<block> is zero, and C<in_file> is
-true.
+true.  If the volume is out of space, the C<is_eom> member is set to true and
+the method returns false with status C<DEVICE_STATUS_VOLUME_ERROR>.
 
 =head3 write_block
 
@@ -415,13 +420,17 @@ This method writes a single block of data to the volume.  It is only available
 from C -- Perl code should not be handling raw data, as it is far too slow.
 Use the transfer architecture (L<Amanda::Xfer>) for that purpose.
 
-The C<blocksize> must be the device's block size, unless this is a short write.
-A short write must be the last block of a file. Some devices will zero-pad a
-short write to a full blocksize. This method returns false on error, including
-running out of space.  If the device can distinguish this condition from other
-errors, then C<is_eof> is set. This function ensures that block is correct on
-exit. Even in an error condition, it does not finish the current file for the
-caller.
+The C<blocksize> must be the device's block size, unless
+this is a short write.  A short write must be the last block
+of a file. Some devices will zero-pad a short write to a full
+blocksize. This method returns false on error.  If the volume is
+out of space, C<is_eom> is set and the method returns false with
+status C<DEVICE_STATUS_VOLUME_ERROR>.  Note that not all devices can
+differentiate an EOM condition from other errors; these devices will
+set C<is_eom> whenever the situation is ambiguous.
+
+This function ensures that C<block> is correct on exit. Even in an
+error condition, it does not finish the current file for the caller.
 
 =head3 write_from_fd (DEPRECATED)
 
@@ -444,9 +453,14 @@ uses C<write_block>, so there is no need for subclasses to override it.
 
  $success = $dev->finish_file();
 
-Once an entire file has been written, finish_file performs any cleanup required
-on the volume, such as writing filemarks. On exit, C<in_file> is false.  This function
-should not be used while reading -- instead, just seek to the next file.
+Once an entire file has been written, finish_file performs any
+cleanup required on the volume, such as writing filemarks. On exit,
+C<in_file> is false.  If the device runs out of space while finishing
+(e.g., the filemark does not fit), then this method returns false
+with status C<DEVICE_STATUS_VOLUME_ERROR> and C<is_eom> is set.
+
+This function should not be used while reading -- instead, just seek
+to the next file.
 
 =head3 seek_file
 

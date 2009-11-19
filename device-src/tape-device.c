@@ -872,7 +872,7 @@ tape_device_write_block(Device * pself, guint size, gpointer data) {
 	    device_set_error(pself,
 		stralloc(_("No space left on device")),
 		DEVICE_STATUS_VOLUME_ERROR);
-	    pself->is_eof = TRUE;
+	    pself->is_eom = TRUE;
 	    return FALSE;
 
 	default:
@@ -993,10 +993,14 @@ static gboolean write_tapestart_header(TapeDevice * self, char * label,
 
      result = tape_device_robust_write(self, header_buf, d_self->block_size, &msg);
      if (result != RESULT_SUCCESS) {
-	 device_set_error(d_self,
+	device_set_error(d_self,
 	    g_strdup_printf(_("Error writing tapestart header: %s"),
 			(result == RESULT_ERROR)? msg : _("out of space")),
 	    DEVICE_STATUS_DEVICE_ERROR);
+
+        if (result == RESULT_NO_SPACE)
+            d_self->is_eom = TRUE;
+
 	amfree(msg);
 	amfree(header_buf);
 	return FALSE;
@@ -1009,11 +1013,12 @@ static gboolean write_tapestart_header(TapeDevice * self, char * label,
 			 vstrallocf(_("Error writing filemark: %s"),
 				    strerror(errno)),
 			 DEVICE_STATUS_DEVICE_ERROR|DEVICE_STATUS_VOLUME_ERROR);
+        /* can't tell if this was EOM or not, so assume it is */
+        d_self->is_eom = TRUE;
 	return FALSE;
      }
 
      return TRUE;
-
 }
 
 static gboolean
@@ -1117,6 +1122,8 @@ static gboolean tape_device_start_file(Device * d_self,
     char * amanda_header;
     char *msg = NULL;
 
+    d_self->is_eom = FALSE;
+
     self = TAPE_DEVICE(d_self);
 
     g_assert(self->fd >= 0);
@@ -1141,6 +1148,10 @@ static gboolean tape_device_start_file(Device * d_self,
 	    vstrallocf(_("Error writing file header: %s"),
 			(result == RESULT_ERROR)? msg : _("out of space")),
 	    DEVICE_STATUS_DEVICE_ERROR);
+
+        if (result == RESULT_NO_SPACE)
+            d_self->is_eom = TRUE;
+
 	amfree(amanda_header);
 	amfree(msg);
         return FALSE;
@@ -1166,6 +1177,8 @@ tape_device_finish_file (Device * d_self) {
 	device_set_error(d_self,
 		vstrallocf(_("Error writing filemark: %s"), strerror(errno)),
 		DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
+        /* can't tell if this was EOM or not, so assume it is */
+        d_self->is_eom = TRUE;
         return FALSE;
     }
 

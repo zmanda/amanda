@@ -286,19 +286,24 @@ $device->start_file(..) >> has already been called).  If
 C<$retry_part> is true, then the previous, unsuccessful part will be
 retried.
 
-As each part is completed, the element sends an C<$XMSG_DONE>
+As each part is completed, the element sends an C<$XMSG_PART_DONE>
 C<Amanda::Xfer::Msg>, with the following keys:
 
- successful true if the whole part was written
- eof	    recipient should not call start_part
+ successful true if the part was written successfully
+ eof	    recipient should not call start_part again
+ eom        this volume is at EOM; a new volume is required
  size	    bytes written to volume
  duration   time spent writing, not counting changer ops, etc.
  partnum    the zero-based number of this part in the overall dumpfile
  fileno     the on-media file number used for this part, or 0 if no file
             was used
 
-If C<eof> is not true, then C<start_part> should be called again, with
-C<$retry_part = !successful>.
+If C<eom> is true, then the caller should find a new volume before
+continuing.  If C<eof> is not true, then C<start_part> should be called
+again, with C<$retry_part = !successful>.  Note that it is possible
+for some destinations to write a portion of a part successfully,
+but still stop at EOM.  That is, C<eom> does not necessarily imply
+C<!successful>.
 
 If neither the memory nor disk caches are in use, but the dumpfile is
 available on disk, then the C<cache_inform> method allows the element
@@ -345,6 +350,9 @@ The version of the message.  This is used to support extensibility of
 the protocol.
 
 =back
+
+Additional keys are described in the documentation for the elements
+that use them.  All keys are listed in C<xfer-src/xmsg.h>.
 
 =cut
 

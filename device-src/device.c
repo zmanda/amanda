@@ -271,6 +271,7 @@ device_init (Device * self)
     self->device_name = NULL;
     self->access_mode = ACCESS_NULL;
     self->is_eof = FALSE;
+    self->is_eom = FALSE;
     self->file = -1;
     self->block = 0;
     self->in_file = FALSE;

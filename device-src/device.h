@@ -104,9 +104,13 @@ typedef struct Device {
     DeviceAccessMode access_mode;
 
     /* In reading mode, FALSE unless all the data from the current file
-     * was successfully read.  In writing mode, TRUE if the end of tape
-     * has been reached. */
+     * was successfully read.  In writing mode, TRUE if the last byte
+     * of a file has been written by write_from_connection. */
     gboolean is_eof;
+
+    /* In writing mode, indicates that the volume is at (or near, if possible)
+     * EOM. */
+    gboolean is_eom;
 
     /* Holds the label and time of the currently-inserted volume,
      * or NULL if it has not been read/written yet. */

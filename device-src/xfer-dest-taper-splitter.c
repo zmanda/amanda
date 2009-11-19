@@ -936,6 +936,8 @@ write_slab_to_device(
 	if (!ok) {
             self->bytes_written += slab->size - remaining;
 
+            /* TODO: handle an error without is_eom
+             * differently/fatally? or at least with a warning? */
 	    self->last_part_successful = FALSE;
 	    self->no_more_parts = FALSE;
 	    return FALSE;
@@ -1026,6 +1028,7 @@ part_done:
     msg->partnum = self->partnum;
     msg->fileno = fileno;
     msg->successful = self->last_part_successful;
+    msg->eom = !self->last_part_successful;
     msg->eof = self->no_more_parts;
 
     if (self->last_part_successful)

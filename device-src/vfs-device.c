@@ -746,7 +746,7 @@ static gboolean vfs_device_write_block(Device * pself, guint size, gpointer data
     if (self->volume_limit > 0 &&
         self->volume_bytes + size > self->volume_limit) {
         /* Simulate EOF. */
-        pself->is_eof = TRUE;
+        pself->is_eom = TRUE;
 	device_set_error(pself,
 	    stralloc(_("No space left on device")),
 	    DEVICE_STATUS_VOLUME_ERROR);
@@ -992,6 +992,8 @@ vfs_device_start_file (Device * pself, dumpfile_t * ji) {
     VfsDevice * self;
     self = VFS_DEVICE(pself);
 
+    pself->is_eom = FALSE;
+
     if (device_in_error(self)) return FALSE;
 
     /* set the blocksize in the header to 32k, since the VFS header is always
@@ -1000,6 +1002,7 @@ vfs_device_start_file (Device * pself, dumpfile_t * ji) {
 
     if (self->volume_limit > 0 &&
         self->volume_bytes + VFS_DEVICE_LABEL_SIZE > self->volume_limit) {
+        pself->is_eom = TRUE;
 	device_set_error(pself,
 		stralloc(_("No space left on device")),
 		DEVICE_STATUS_DEVICE_ERROR);
@@ -1058,6 +1061,10 @@ vfs_device_finish_file (Device * pself) {
     release_file(self);
 
     pself->in_file = FALSE;
+
+    if (pself->is_eom)
+        return FALSE;
+
     return TRUE;
 }
 

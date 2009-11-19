@@ -499,6 +499,7 @@ typedef struct Device {
 	char * device_name(void) { return self->device_name; }
 	DeviceAccessMode access_mode(void) { return self->access_mode; }
 	gboolean is_eof(void) { return self->is_eof; }
+	gboolean is_eom(void) { return self->is_eom; }
 	char * volume_label(void) { return self->volume_label; }
 	char * volume_time(void) { return self->volume_time; }
 	DeviceStatusFlags status(void) { return self->status; }
