@@ -1399,3 +1399,20 @@ openbsd_fd_inform(void)
     }
 }
 #endif
+
+void
+debug_executing(
+    GPtrArray *argv_ptr)
+{
+    guint i;
+    char *cmdline = stralloc((char *)g_ptr_array_index(argv_ptr, 0));
+
+    for (i = 1; i < argv_ptr->len-1; i++) {
+	char *arg = g_shell_quote((char *)g_ptr_array_index(argv_ptr, i));
+	cmdline = vstrextend(&cmdline, " ", arg, NULL);
+	amfree(arg);
+    }
+    g_debug("Executing: %s\n", cmdline);
+    amfree(cmdline);
+}
+

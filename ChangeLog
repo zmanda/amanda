@@ -1,3 +1,9 @@
+2009-11-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c, application-src/amstar.c: Print restore
+	  and validate command with debug_executing.
+	* common-src/util.c: New debug_executing function.
+	* common-src/util.h: New debug_executing prototype.
+
 2009-11-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/amfetchdump.c: Small memory leak.
 	* restore-src/restore.c, restore-src/restore.h: Many change to fix

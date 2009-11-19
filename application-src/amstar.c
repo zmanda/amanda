@@ -849,6 +849,7 @@ amstar_restore(
 	g_ptr_array_add(argv_ptr, stralloc(argument->argv[j]+2));/*remove ./ */
     g_ptr_array_add(argv_ptr, NULL);
 
+    debug_executing(argv_ptr);
     env = safe_env();
     become_root();
     execve(cmd, (char **)argv_ptr->pdata, env);
@@ -881,6 +882,7 @@ amstar_validate(
     g_ptr_array_add(argv_ptr, stralloc("-"));
     g_ptr_array_add(argv_ptr, NULL);
 
+    debug_executing(argv_ptr);
     env = safe_env();
     execve(cmd, (char **)argv_ptr->pdata, env);
     e = strerror(errno);

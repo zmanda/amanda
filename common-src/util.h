@@ -391,4 +391,10 @@ void openbsd_fd_inform(void);
 #define openbsd_fd_inform()
 #endif
 
+/* Print the argv_ptr with g_debug()
+ *
+ * @param argv_ptr: GPtrArray of an array to print.
+ */
+void debug_executing(GPtrArray *argv_ptr);
+
 #endif	/* UTIL_H */
