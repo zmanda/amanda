@@ -1,3 +1,9 @@
+2009-11-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* gnulib/*, config/gnulib/*: Update gnulib
+				     Use getopt-gnu instead of getopt
+				     Add fseeko and ftello
+				     Remove visibility
+
 2009-11-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/progs.m4: require swig-1.3.32, as previous versions
 	  don't handle empty C strings correctly
