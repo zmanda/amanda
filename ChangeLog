@@ -1,3 +1,7 @@
+2009-11-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/progs.m4: require swig-1.3.32, as previous versions
+	  don't handle empty C strings correctly
+
 2009-11-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Device.pod perl/Amanda/Device.swg
 	  device-src/device.c device-src/device.h: add is_eom
