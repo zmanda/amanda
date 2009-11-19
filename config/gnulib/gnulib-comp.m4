@@ -27,6 +27,8 @@ AC_DEFUN([gl_EARLY],
   AC_REQUIRE([AC_PROG_RANLIB])
   AC_REQUIRE([AM_PROG_CC_C_O])
   AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+  AC_REQUIRE([AC_FUNC_FSEEKO])
+  AC_REQUIRE([AC_FUNC_FSEEKO])
   gl_THREADLIB_EARLY
 ])
 
@@ -47,14 +49,20 @@ AC_DEFUN([gl_INIT],
   gl_HEADER_ARPA_INET
   AC_PROG_MKDIR_P
   gl_FUNC_BASE64
-  AC_REQUIRE([gl_HEADER_ERRNO_H])
+  gl_HEADER_ERRNO_H
   gl_FLOAT_H
+  gl_FUNC_FSEEKO
+  gl_STDIO_MODULE_INDICATOR([fseeko])
   gl_FSUSAGE
+  gl_FUNC_FTELLO
+  gl_STDIO_MODULE_INDICATOR([ftello])
   gl_FUNC_FTRUNCATE
   gl_UNISTD_MODULE_INDICATOR([ftruncate])
   gl_GETADDRINFO
   gl_NETDB_MODULE_INDICATOR([getaddrinfo])
-  gl_GETOPT
+  gl_FUNC_GETOPT_GNU
+  gl_MODULE_INDICATOR([getopt-gnu])
+  gl_FUNC_GETOPT_POSIX
   AC_SUBST([LIBINTL])
   AC_SUBST([LTLIBINTL])
   gl_FUNC_GETTIMEOFDAY
@@ -66,9 +74,11 @@ AC_DEFUN([gl_INIT],
   gl_UNISTD_MODULE_INDICATOR([lseek])
   gl_FUNC_LSTAT
   gl_SYS_STAT_MODULE_INDICATOR([lstat])
+  gl_FUNC_MEMCHR
+  gl_STRING_MODULE_INDICATOR([memchr])
   gt_FUNC_MKDTEMP
   gl_STDLIB_MODULE_INDICATOR([mkdtemp])
-  AC_REQUIRE([gl_MULTIARCH])
+  gl_MULTIARCH
   gl_HEADER_NETDB
   gl_HEADER_NETINET_IN
   AC_PROG_MKDIR_P
@@ -81,12 +91,15 @@ AC_DEFUN([gl_INIT],
   gl_STDIO_MODULE_INDICATOR([snprintf])
   gl_TYPE_SOCKLEN_T
   gt_TYPE_SSIZE_T
+  gl_FUNC_STAT
+  gl_SYS_STAT_MODULE_INDICATOR([stat])
   AM_STDBOOL_H
+  gl_STDDEF_H
   gl_STDINT_H
   gl_STDIO_H
   gl_STDLIB_H
+  gl_HEADER_STRING_H
   gl_HEADER_SYS_SOCKET
-  gl_MODULE_INDICATOR([sys_socket])
   AC_PROG_MKDIR_P
   gl_HEADER_SYS_STAT_H
   AC_PROG_MKDIR_P
@@ -94,9 +107,9 @@ AC_DEFUN([gl_INIT],
   AC_PROG_MKDIR_P
   gl_FUNC_GEN_TEMPNAME
   gl_THREADLIB
+  gl_HEADER_TIME_H
   gl_UNISTD_H
   gl_FUNC_VASNPRINTF
-  gl_VISIBILITY
   gl_WCHAR_H
   gl_FUNC_WRITE
   gl_UNISTD_MODULE_INDICATOR([write])
@@ -231,6 +244,7 @@ AC_DEFUN([gltests_LIBSOURCES], [
 AC_DEFUN([gl_FILE_LIST], [
   build-aux/config.rpath
   build-aux/link-warning.h
+  lib/alignof.h
   lib/alloca.in.h
   lib/arpa_inet.in.h
   lib/asnprintf.c
@@ -239,8 +253,10 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/errno.in.h
   lib/float+.h
   lib/float.in.h
+  lib/fseeko.c
   lib/fsusage.c
   lib/fsusage.h
+  lib/ftello.c
   lib/ftruncate.c
   lib/full-read.c
   lib/full-read.h
@@ -260,6 +276,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/inet_ntop.c
   lib/lseek.c
   lib/lstat.c
+  lib/memchr.c
+  lib/memchr.valgrind
   lib/mkdtemp.c
   lib/netdb.in.h
   lib/netinet_in.in.h
@@ -275,16 +293,21 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/safe-write.h
   lib/size_max.h
   lib/snprintf.c
+  lib/stat.c
   lib/stdbool.in.h
+  lib/stddef.in.h
   lib/stdint.in.h
+  lib/stdio-impl.h
   lib/stdio-write.c
   lib/stdio.in.h
   lib/stdlib.in.h
+  lib/string.in.h
   lib/sys_socket.in.h
   lib/sys_stat.in.h
   lib/sys_time.in.h
   lib/tempname.c
   lib/tempname.h
+  lib/time.in.h
   lib/unistd.in.h
   lib/vasnprintf.c
   lib/vasnprintf.h
@@ -295,10 +318,13 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/alloca.m4
   m4/arpa_inet_h.m4
   m4/base64.m4
+  m4/dos.m4
   m4/errno_h.m4
   m4/extensions.m4
   m4/float_h.m4
+  m4/fseeko.m4
   m4/fsusage.m4
+  m4/ftello.m4
   m4/ftruncate.m4
   m4/getaddrinfo.m4
   m4/getopt.m4
@@ -316,7 +342,9 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/longlong.m4
   m4/lseek.m4
   m4/lstat.m4
+  m4/memchr.m4
   m4/mkdtemp.m4
+  m4/mmap-anon.m4
   m4/multiarch.m4
   m4/netdb_h.m4
   m4/netinet_in_h.m4
@@ -331,19 +359,22 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/socklen.m4
   m4/sockpfaf.m4
   m4/ssize_t.m4
+  m4/stat.m4
   m4/stdbool.m4
+  m4/stddef_h.m4
   m4/stdint.m4
   m4/stdint_h.m4
   m4/stdio_h.m4
   m4/stdlib_h.m4
+  m4/string_h.m4
   m4/sys_socket_h.m4
   m4/sys_stat_h.m4
   m4/sys_time_h.m4
   m4/tempname.m4
   m4/threadlib.m4
+  m4/time_h.m4
   m4/unistd_h.m4
   m4/vasnprintf.m4
-  m4/visibility.m4
   m4/wchar.m4
   m4/wchar_t.m4
   m4/wint_t.m4

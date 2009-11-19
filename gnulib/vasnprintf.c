@@ -257,7 +257,7 @@ local_wcsnlen (const wchar_t *s, size_t maxlen)
 # ifndef decimal_point_char_defined
 #  define decimal_point_char_defined 1
 static char
-decimal_point_char ()
+decimal_point_char (void)
 {
   const char *point;
   /* Determine it in a multithread-safe way.  We know nl_langinfo is
@@ -413,7 +413,7 @@ divide (mpn_t a, mpn_t b, mpn_t *q)
        Normalise [q[m-1],...,q[0]], yields q.
      If m>=n>1, perform a multiple-precision division:
        We have a/b < beta^(m-n+1).
-       s:=intDsize-1-(hightest bit in b[n-1]), 0<=s<intDsize.
+       s:=intDsize-1-(highest bit in b[n-1]), 0<=s<intDsize.
        Shift a and b left by s bits, copying them. r:=a.
        r=[r[m],...,r[0]], b=[b[n-1],...,b[0]] with b[n-1]>=beta/2.
        For j=m-n,...,0: {Here 0 <= r < b*beta^(j+1).}
@@ -1799,18 +1799,18 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 			size_t converted_len = allocated - length;
 #  if DCHAR_IS_TCHAR
 			/* Convert from UTF-8 to locale encoding.  */
-			if (u8_conv_to_encoding (locale_charset (),
-						 iconveh_question_mark,
-						 arg, arg_end - arg, NULL,
-						 &converted, &converted_len)
-			    < 0)
+			converted =
+			  u8_conv_to_encoding (locale_charset (),
+					       iconveh_question_mark,
+					       arg, arg_end - arg, NULL,
+					       converted, &converted_len);
 #  else
 			/* Convert from UTF-8 to UTF-16/UTF-32.  */
 			converted =
 			  U8_TO_DCHAR (arg, arg_end - arg,
 				       converted, &converted_len);
-			if (converted == NULL)
 #  endif
+			if (converted == NULL)
 			  {
 			    int saved_errno = errno;
 			    if (!(result == resultbuf || result == NULL))
@@ -1927,18 +1927,18 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 			size_t converted_len = allocated - length;
 #  if DCHAR_IS_TCHAR
 			/* Convert from UTF-16 to locale encoding.  */
-			if (u16_conv_to_encoding (locale_charset (),
-						  iconveh_question_mark,
-						  arg, arg_end - arg, NULL,
-						  &converted, &converted_len)
-			    < 0)
+			converted =
+			  u16_conv_to_encoding (locale_charset (),
+						iconveh_question_mark,
+						arg, arg_end - arg, NULL,
+						converted, &converted_len);
 #  else
 			/* Convert from UTF-16 to UTF-8/UTF-32.  */
 			converted =
 			  U16_TO_DCHAR (arg, arg_end - arg,
 					converted, &converted_len);
-			if (converted == NULL)
 #  endif
+			if (converted == NULL)
 			  {
 			    int saved_errno = errno;
 			    if (!(result == resultbuf || result == NULL))
@@ -2055,18 +2055,18 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 			size_t converted_len = allocated - length;
 #  if DCHAR_IS_TCHAR
 			/* Convert from UTF-32 to locale encoding.  */
-			if (u32_conv_to_encoding (locale_charset (),
-						  iconveh_question_mark,
-						  arg, arg_end - arg, NULL,
-						  &converted, &converted_len)
-			    < 0)
+			converted =
+			  u32_conv_to_encoding (locale_charset (),
+						iconveh_question_mark,
+						arg, arg_end - arg, NULL,
+						converted, &converted_len);
 #  else
 			/* Convert from UTF-32 to UTF-8/UTF-16.  */
 			converted =
 			  U32_TO_DCHAR (arg, arg_end - arg,
 					converted, &converted_len);
-			if (converted == NULL)
 #  endif
+			if (converted == NULL)
 			  {
 			    int saved_errno = errno;
 			    if (!(result == resultbuf || result == NULL))
@@ -2375,16 +2375,16 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 		      characters = 0;
 		      while (precision > 0)
 			{
-			  char buf[64]; /* Assume MB_CUR_MAX <= 64.  */
+			  char cbuf[64]; /* Assume MB_CUR_MAX <= 64.  */
 			  int count;
 
 			  if (*arg_end == 0)
 			    /* Found the terminating null wide character.  */
 			    break;
 #  if HAVE_WCRTOMB
-			  count = wcrtomb (buf, *arg_end, &state);
+			  count = wcrtomb (cbuf, *arg_end, &state);
 #  else
-			  count = wctomb (buf, *arg_end);
+			  count = wctomb (cbuf, *arg_end);
 #  endif
 			  if (count < 0)
 			    {
@@ -2420,16 +2420,16 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 		      characters = 0;
 		      for (;;)
 			{
-			  char buf[64]; /* Assume MB_CUR_MAX <= 64.  */
+			  char cbuf[64]; /* Assume MB_CUR_MAX <= 64.  */
 			  int count;
 
 			  if (*arg_end == 0)
 			    /* Found the terminating null wide character.  */
 			    break;
 #  if HAVE_WCRTOMB
-			  count = wcrtomb (buf, *arg_end, &state);
+			  count = wcrtomb (cbuf, *arg_end, &state);
 #  else
-			  count = wctomb (buf, *arg_end);
+			  count = wctomb (cbuf, *arg_end);
 #  endif
 			  if (count < 0)
 			    {
@@ -2470,20 +2470,20 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 #   endif
 		    for (remaining = characters; remaining > 0; )
 		      {
-			char buf[64]; /* Assume MB_CUR_MAX <= 64.  */
+			char cbuf[64]; /* Assume MB_CUR_MAX <= 64.  */
 			int count;
 
 			if (*arg == 0)
 			  abort ();
 #   if HAVE_WCRTOMB
-			count = wcrtomb (buf, *arg, &state);
+			count = wcrtomb (cbuf, *arg, &state);
 #   else
-			count = wctomb (buf, *arg);
+			count = wctomb (cbuf, *arg);
 #   endif
 			if (count <= 0)
 			  /* Inconsistency.  */
 			  abort ();
-			memcpy (tmpptr, buf, count);
+			memcpy (tmpptr, cbuf, count);
 			tmpptr += count;
 			arg++;
 			remaining -= count;
@@ -2493,14 +2493,13 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 		  }
 
 		  /* Convert from TCHAR_T[] to DCHAR_T[].  */
-		  tmpdst = NULL;
-		  tmpdst_len = 0;
-		  if (DCHAR_CONV_FROM_ENCODING (locale_charset (),
-						iconveh_question_mark,
-						tmpsrc, characters,
-						NULL,
-						&tmpdst, &tmpdst_len)
-		      < 0)
+		  tmpdst =
+		    DCHAR_CONV_FROM_ENCODING (locale_charset (),
+					      iconveh_question_mark,
+					      tmpsrc, characters,
+					      NULL,
+					      NULL, &tmpdst_len);
+		  if (tmpdst == NULL)
 		    {
 		      int saved_errno = errno;
 		      free (tmpsrc);
@@ -2553,20 +2552,20 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 		      ENSURE_ALLOCATION (xsum (length, characters));
 		      for (remaining = characters; remaining > 0; )
 			{
-			  char buf[64]; /* Assume MB_CUR_MAX <= 64.  */
+			  char cbuf[64]; /* Assume MB_CUR_MAX <= 64.  */
 			  int count;
 
 			  if (*arg == 0)
 			    abort ();
 #   if HAVE_WCRTOMB
-			  count = wcrtomb (buf, *arg, &state);
+			  count = wcrtomb (cbuf, *arg, &state);
 #   else
-			  count = wctomb (buf, *arg);
+			  count = wctomb (cbuf, *arg);
 #   endif
 			  if (count <= 0)
 			    /* Inconsistency.  */
 			    abort ();
-			  memcpy (result + length, buf, count);
+			  memcpy (result + length, cbuf, count);
 			  length += count;
 			  arg++;
 			  remaining -= count;
@@ -2582,21 +2581,21 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 #   endif
 		      while (arg < arg_end)
 			{
-			  char buf[64]; /* Assume MB_CUR_MAX <= 64.  */
+			  char cbuf[64]; /* Assume MB_CUR_MAX <= 64.  */
 			  int count;
 
 			  if (*arg == 0)
 			    abort ();
 #   if HAVE_WCRTOMB
-			  count = wcrtomb (buf, *arg, &state);
+			  count = wcrtomb (cbuf, *arg, &state);
 #   else
-			  count = wctomb (buf, *arg);
+			  count = wctomb (cbuf, *arg);
 #   endif
 			  if (count <= 0)
 			    /* Inconsistency.  */
 			    abort ();
 			  ENSURE_ALLOCATION (xsum (length, count));
-			  memcpy (result + length, buf, count);
+			  memcpy (result + length, cbuf, count);
 			  length += count;
 			  arg++;
 			}
@@ -5216,14 +5215,13 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 # else
 			tmpsrc = tmp;
 # endif
-			tmpdst = NULL;
-			tmpdst_len = 0;
-			if (DCHAR_CONV_FROM_ENCODING (locale_charset (),
-						      iconveh_question_mark,
-						      tmpsrc, count,
-						      NULL,
-						      &tmpdst, &tmpdst_len)
-			    < 0)
+			tmpdst =
+			  DCHAR_CONV_FROM_ENCODING (locale_charset (),
+						    iconveh_question_mark,
+						    tmpsrc, count,
+						    NULL,
+						    NULL, &tmpdst_len);
+			if (tmpdst == NULL)
 			  {
 			    int saved_errno = errno;
 			    if (!(result == resultbuf || result == NULL))
@@ -5478,6 +5476,7 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 #undef TCHARS_PER_DCHAR
 #undef SNPRINTF
 #undef USE_SNPRINTF
+#undef DCHAR_SET
 #undef DCHAR_CPY
 #undef PRINTF_PARSE
 #undef DIRECTIVES

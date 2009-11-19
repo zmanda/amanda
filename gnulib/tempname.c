@@ -1,7 +1,7 @@
 /* tempname.c - generate the name of a temporary file.
 
    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2005, 2006, 2007 Free Software Foundation,
+   2000, 2001, 2002, 2003, 2005, 2006, 2007, 2009 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -41,9 +41,12 @@
 #endif
 #ifndef __GT_FILE
 # define __GT_FILE	0
-# define __GT_BIGFILE	1
-# define __GT_DIR	2
-# define __GT_NOCREATE	3
+# define __GT_DIR	1
+# define __GT_NOCREATE	2
+#endif
+#if !_LIBC && (GT_FILE != __GT_FILE || GT_DIR != __GT_DIR       \
+               || GT_NOCREATE != __GT_NOCREATE)
+# error report this to bug-gnulib@gnu.org
 #endif
 
 #include <stddef.h>
@@ -59,16 +62,14 @@
 
 #if _LIBC
 # define struct_stat64 struct stat64
-# define small_open __open
-# define large_open __open64
 #else
 # define struct_stat64 struct stat
-# define small_open open
-# define large_open open
 # define __gen_tempname gen_tempname
 # define __getpid getpid
 # define __gettimeofday gettimeofday
 # define __mkdir mkdir
+# define __open open
+# define __open64 open
 # define __lxstat64(version, file, buf) lstat (file, buf)
 # define __xstat64(version, file, buf) stat (file, buf)
 #endif
@@ -183,21 +184,20 @@ static const char letters[] =
 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 /* Generate a temporary file name based on TMPL.  TMPL must match the
-   rules for mk[s]temp (i.e. end in "XXXXXX").  The name constructed
-   does not exist at the time of the call to __gen_tempname.  TMPL is
-   overwritten with the result.
+   rules for mk[s]temp (i.e. end in "XXXXXX", possibly with a suffix).
+   The name constructed does not exist at the time of the call to
+   __gen_tempname.  TMPL is overwritten with the result.
 
    KIND may be one of:
    __GT_NOCREATE:	simply verify that the name does not exist
 			at the time of the call.
    __GT_FILE:		create the file using open(O_CREAT|O_EXCL)
 			and return a read-write fd.  The file is mode 0600.
-   __GT_BIGFILE:	same as __GT_FILE but use open64().
    __GT_DIR:		create a directory, which will be mode 0700.
 
    We use a clever algorithm to get hard-to-predict names. */
 int
-__gen_tempname (char *tmpl, int kind)
+__gen_tempname (char *tmpl, int suffixlen, int flags, int kind)
 {
   int len;
   char *XXXXXX;
@@ -225,14 +225,14 @@ __gen_tempname (char *tmpl, int kind)
 #endif
 
   len = strlen (tmpl);
-  if (len < 6 || strcmp (&tmpl[len - 6], "XXXXXX"))
+  if (len < 6 + suffixlen || memcmp (&tmpl[len - 6 - suffixlen], "XXXXXX", 6))
     {
       __set_errno (EINVAL);
       return -1;
     }
 
   /* This is where the Xs start.  */
-  XXXXXX = &tmpl[len - 6];
+  XXXXXX = &tmpl[len - 6 - suffixlen];
 
   /* Get some more or less random data.  */
 #ifdef RANDOM_BITS
@@ -266,11 +266,9 @@ __gen_tempname (char *tmpl, int kind)
       switch (kind)
 	{
 	case __GT_FILE:
-	  fd = small_open (tmpl, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
-	  break;
-
-	case __GT_BIGFILE:
-	  fd = large_open (tmpl, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+	  fd = __open (tmpl,
+		       (flags & ~O_ACCMODE)
+		       | O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
 	  break;
 
 	case __GT_DIR:
@@ -297,6 +295,7 @@ __gen_tempname (char *tmpl, int kind)
 
 	default:
 	  assert (! "invalid KIND in __gen_tempname");
+	  abort ();
 	}
 
       if (fd >= 0)

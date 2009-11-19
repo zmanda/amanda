@@ -1,4 +1,4 @@
-# inet_ntop.m4 serial 8
+# inet_ntop.m4 serial 11
 dnl Copyright (C) 2005, 2006, 2008, 2009 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -11,7 +11,19 @@ AC_DEFUN([gl_INET_NTOP],
 
   gl_REPLACE_ARPA_INET_H
 
-  AC_REPLACE_FUNCS([inet_ntop])
+  dnl Most platforms that provide inet_ntop define it in libc.
+  dnl Solaris 8..10 provide inet_ntop in libnsl instead.
+  gl_save_LIBS=$LIBS
+  AC_SEARCH_LIBS([inet_ntop], [nsl], [],
+    [AC_REPLACE_FUNCS([inet_ntop])])
+  LIBS=$gl_save_LIBS
+  INET_NTOP_LIB=
+  if test "$ac_cv_search_inet_ntop" != "no" &&
+     test "$ac_cv_search_inet_ntop" != "none required"; then
+    INET_NTOP_LIB="$ac_cv_search_inet_ntop"
+  fi
+  AC_SUBST([INET_NTOP_LIB])
+
   gl_PREREQ_INET_NTOP
 ])
 

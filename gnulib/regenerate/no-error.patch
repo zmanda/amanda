@@ -3,9 +3,9 @@ Index: gnulib/Makefile.am
 --- gnulib/Makefile.am	(revision 5691)
 +++ gnulib/Makefile.am	(working copy)
 @@ -26,6 +26,9 @@
- MAINTAINERCLEANFILES =
  
  AM_CPPFLAGS =
+ AM_CFLAGS =
 +if GCC_COMPILER
 +  AM_CFLAGS = -Wno-error -Wno-sign-compare
 +endif
