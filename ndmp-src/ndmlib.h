@@ -38,21 +38,6 @@
 #ifndef _NDMLIB_H_
 #define _NDMLIB_H_
 
-/*
- * Force large file source even if configure guesses wrong.
- */
-#ifndef _LARGE_FILE_SOURCE
-#define _LARGE_FILES 1
-#endif
-
-#ifndef _LARGEFILE64_SOURCE
-#define _LARGEFILE64_SOURCE 1
-#endif
-
-#ifndef  _FILE_OFFSET_BITS
-#define	_FILE_OFFSET_BITS 64
-#endif
-
 #include "ndmos.h"
 
 #include "ndmprotocol.h"

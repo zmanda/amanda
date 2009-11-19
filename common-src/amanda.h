@@ -44,10 +44,6 @@
 /*
  * Force large file source even if configure guesses wrong.
  */
-#ifndef _LARGE_FILE_SOURCE
-#define _LARGE_FILES 1
-#endif
-
 #ifndef _LARGEFILE64_SOURCE
 #define _LARGEFILE64_SOURCE 1
 #endif
