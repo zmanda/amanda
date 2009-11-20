@@ -82,23 +82,23 @@ ndmbstf_first_with_bounds (
   char *key,			/* what we're looking for */
   char *buf,			/* returned line */
   unsigned max_buf,		/* maximum lenght of buf (sizeof (buf)) */
-  long lower_bound,		/* offset, to skip headers, usually 0 */
-  long upper_bound)		/* 0->don't know, >0 limit */
+  off_t lower_bound,		/* offset, to skip headers, usually 0 */
+  off_t upper_bound)		/* 0->don't know, >0 limit */
 {
-	long		off;
-	long		lower, upper;		/* bounds */
-	long		delta;
+	off_t		off;
+	off_t		lower, upper;		/* bounds */
+	off_t		delta;
 	int		rc, buf_len;
 
 	if (upper_bound == 0) {
-		long	end_off;
+		off_t	end_off;
 
 		/*
 		 * Determine the file size using fseek()/ftell()
 		 */
 
-		fseek (fp, 0, SEEK_END);
-		end_off = ftell (fp);
+		fseeko (fp, 0, SEEK_END);
+		end_off = ftello (fp);
 		if (end_off == -1)
 			return -3;
 		upper_bound = end_off;
@@ -302,11 +302,11 @@ ndmbstf_getline (FILE *fp, char *buf, unsigned max_buf)
 }
 
 int
-ndmbstf_seek_and_align (FILE *fp, long *off)
+ndmbstf_seek_and_align (FILE *fp, off_t *off)
 {
 	int		c;
 
-	if (fseek (fp, *off, SEEK_SET) == -1) {
+	if (fseeko (fp, *off, SEEK_SET) == -1) {
 		return -2;
 	}
 #ifdef SELF_TEST
@@ -317,7 +317,7 @@ ndmbstf_seek_and_align (FILE *fp, long *off)
 	 * There is a slim chance that we're at the
 	 * true begining of a line. Too slim.
 	 * Scan forward discarding the trailing
-	 * poriton of the line we just fseek()ed
+	 * portion of the line we just fseek()ed
 	 * to, and leave the stdio stream positioned
 	 * for the subsequent line. Notice
 	 * we keep off upated so that it reflects

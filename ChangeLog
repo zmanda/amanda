@@ -1,3 +1,6 @@
+2009-11-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndml_bstf.c, ndmp-src/ndmlib.h: Use fseeko and ftello.
+
 2009-11-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/stream.c common-src/util.c: use g_debug instead
 	  of dbprintf
