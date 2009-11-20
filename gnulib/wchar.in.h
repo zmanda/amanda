@@ -264,11 +264,7 @@ extern size_t wcsrtombs (char *dest, const wchar_t **srcp, size_t len, mbstate_t
 
 /* Convert a wide string to a string.  */
 #if @GNULIB_WCSNRTOMBS@
-# if @REPLACE_WCSNRTOMBS@
-#  undef wcsnrtombs
-#  define wcsnrtombs rpl_wcsnrtombs
-# endif
-# if !@HAVE_WCSNRTOMBS@ || @REPLACE_WCSNRTOMBS@
+# if !@HAVE_WCSNRTOMBS@
 extern size_t wcsnrtombs (char *dest, const wchar_t **srcp, size_t srclen, size_t len, mbstate_t *ps);
 # endif
 #elif defined GNULIB_POSIXCHECK

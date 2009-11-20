@@ -1,3 +1,6 @@
+2009-11-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* Revert to previous gnulib, keep fseeko, ftello.
+
 2009-11-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndmjob_args.c: add "-o test-daemon"
 	* ndmp-src/ndma_comm_session.c: add a thread to kill the daemon

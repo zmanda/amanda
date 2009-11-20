@@ -94,6 +94,7 @@
 int
 get_fs_usage (char const *file, char const *disk, struct fs_usage *fsp)
 {
+  (void) disk;  /* avoid argument-unused warning */
 #if defined STAT_STATVFS		/* POSIX */
 
   struct statvfs fsd;
@@ -232,7 +233,6 @@ get_fs_usage (char const *file, char const *disk, struct fs_usage *fsp)
 
 #endif
 
-  (void) disk;  /* avoid argument-unused warning */
   return 0;
 }
 

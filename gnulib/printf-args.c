@@ -1,6 +1,5 @@
 /* Decomposed printf argument list.
-   Copyright (C) 1999, 2002-2003, 2005-2007, 2009 Free Software
-   Foundation, Inc.
+   Copyright (C) 1999, 2002-2003, 2005-2007 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -90,7 +89,7 @@ PRINTF_FETCHARGS (va_list args, arguments *a)
 	   where wint_t is 'unsigned short'.  */
 	ap->a.a_wide_char =
 	  (sizeof (wint_t) < sizeof (int)
-	   ? (wint_t) va_arg (args, int)
+	   ? va_arg (args, int)
 	   : va_arg (args, wint_t));
 	break;
 #endif

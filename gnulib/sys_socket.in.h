@@ -43,30 +43,6 @@
 #ifndef _GL_SYS_SOCKET_H
 #define _GL_SYS_SOCKET_H
 
-#if !@HAVE_SA_FAMILY_T@
-typedef unsigned short  sa_family_t;
-#endif
-
-#if !@HAVE_STRUCT_SOCKADDR_STORAGE@
-# include <alignof.h>
-/* Code taken from glibc sysdeps/unix/sysv/linux/bits/socket.h on
-   2009-05-08, licensed under LGPLv2.1+, plus portability fixes. */
-# define __ss_aligntype unsigned long int
-# define _SS_SIZE 256
-# define _SS_PADSIZE \
-    (_SS_SIZE - ((sizeof (sa_family_t) >= alignof (__ss_aligntype)	\
-		  ? sizeof (sa_family_t)				\
-		  : alignof (__ss_aligntype))				\
-		 + sizeof (__ss_aligntype)))
-
-struct sockaddr_storage
-{
-  sa_family_t ss_family;      /* Address family, etc.  */
-  __ss_aligntype __ss_align;  /* Force desired alignment.  */
-  char __ss_padding[_SS_PADSIZE];
-};
-#endif
-
 #if @HAVE_SYS_SOCKET_H@
 
 /* A platform that has <sys/socket.h>.  */
@@ -422,33 +398,6 @@ extern int rpl_shutdown (int, int);
 # endif
 
 #endif /* HAVE_SYS_SOCKET_H */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#if @GNULIB_ACCEPT4@
-/* Accept a connection on a socket, with specific opening flags.
-   The flags are a bitmask, possibly including O_CLOEXEC (defined in <fcntl.h>)
-   and O_TEXT, O_BINARY (defined in "binary-io.h").
-   See also the Linux man page at
-   <http://www.kernel.org/doc/man-pages/online/pages/man2/accept4.2.html>.  */
-# if @HAVE_ACCEPT4@
-#  define accept4 rpl_accept4
-# endif
-extern int accept4 (int sockfd, struct sockaddr *addr, socklen_t *addrlen,
-		    int flags);
-#elif defined GNULIB_POSIXCHECK
-# undef accept4
-# define accept4(s,a,l,f) \
-    (GL_LINK_WARNING ("accept4 is unportable - " \
-                      "use gnulib module accept4 for portability"), \
-     accept4 (s, a, l, f))
-#endif
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* _GL_SYS_SOCKET_H */
 #endif /* _GL_SYS_SOCKET_H */
