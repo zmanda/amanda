@@ -74,14 +74,14 @@ main (int ac, char *av[])
 		the_param.log_level = v_verbose;
 	the_param.config_file_name = o_config_file;
 
-	if (the_mode == 'D') {
+	if (the_mode == NDM_JOB_OP_DAEMON || the_mode == NDM_JOB_OP_TEST_DAEMON) {
 		the_session.param = the_param;
 
 		if (n_noop) {
 			dump_settings();
 			return 0;
 		}
-		ndma_daemon_session (&the_session, p_ndmp_port);
+		ndma_daemon_session (&the_session, p_ndmp_port, the_mode == NDM_JOB_OP_TEST_DAEMON);
 		return 0;
 	}
 

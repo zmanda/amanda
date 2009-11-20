@@ -81,50 +81,25 @@ our $mock_mtx_path = abs_path("mock/mtx");
 
 sub run_ndmjob {
     my ($port) = @_;
-    # fork once to create a "monitor" process
-    my $pid = POSIX::fork();
-    if ($pid == 0) {
-	my $tapefile = "$Installcheck::TMP/ndmp-tapefile-$$"; # contains *my* pid
+    my $tapefile = "$Installcheck::TMP/ndmp-tapefile-$$";
+    no warnings; # don't complain that OUTFH is used only once
 
-	open(my $fd, ">", $tapefile);
-	close($fd);
+    open(my $fd, ">", $tapefile);
+    close($fd);
 
-	# first, launch ndmjob
-	local(*INFH, *OUTFH);
-	my $ndmjob_pid = IPC::Open3::open3("INFH", "OUTFH", 0,
-	    "$amlibexecdir/ndmjob", "-d5", "-o", "daemon",
-		    "-T.", "-f", $tapefile,
-		    "-p", $port);
+    # first, launch ndmjob
+    my $ndmjob_pid = IPC::Open3::open3("INFH", "OUTFH", 0,
+	"$amlibexecdir/ndmjob", "-d5", "-o", "test-daemon",
+		"-T.", "-f", $tapefile,
+		"-p", $port);
 
-	# now wait for our parent process to die
-	while (1) {
-	    sleep(1);
+    # wait for it to start up
+    die "ndmjob did not start up" unless (<OUTFH> =~ /READY/);
 
-	    # parent is dead if our parent pid is 1
-	    last if (getppid() == 1);
-
-	    # but older versions of Linux don't change the result of getppid, so
-	    # test to see if the process is still alive.
-	    last if (!kill(0, getppid()));
-
-	    if (POSIX::waitpid($ndmjob_pid, POSIX::WNOHANG)) {
-		print STDERR "***** ndmjob exited prematurely\n";
-		last;
-	    }
-	}
-
-	# then kill the ndmjob process and delete the tapefile
-	kill 9, $ndmjob_pid;
-	unlink($tapefile);
-	exit(0);
-    } else {
-	my $tapefile = "$Installcheck::TMP/ndmp-tapefile-$pid"; # contains *child's* pid
-
-	# sleep long enough for the ndmjob process to start listening
-	sleep(1);
-
-	return $tapefile;
-    }
+    # ndmjob will exit when INFH is closed, which will occur when this
+    # (parent) process exits. Note that INFH and OUTFH are global, so the
+    # handle will not be closed on return from run_ndmjob
+    return $tapefile;
 }
 
 1;

@@ -141,9 +141,22 @@ ndma_server_session (struct ndm_session *sess, int control_sock)
 	return 0;
 }
 
+static gpointer
+exit_on_stdin_eof_thread(gpointer data G_GNUC_UNUSED)
+{
+    char buf[32];
+
+    for (;;) {
+	if (read(0, buf, sizeof(buf)) <= 0) {
+	    printf("DONE\n");
+	    fflush(stdout);
+	    exit(0);
+	}
+    }
+}
 
 int
-ndma_daemon_session (struct ndm_session *sess, int port)
+ndma_daemon_session (struct ndm_session *sess, int port, int is_test_daemon)
 {
 	int			listen_sock;
 	int			conn_sock, len, rc;
@@ -167,6 +180,16 @@ ndma_daemon_session (struct ndm_session *sess, int port)
 	if (listen (listen_sock, 1) < 0) {
 		perror ("listen");
 		return 3;
+	}
+
+	if (is_test_daemon) {
+	    /* the listen socket is running, so tell our invoker */
+	    printf("READY\n");
+	    fflush(stdout);
+
+	    /* and exit when our stdin goes away */
+	    g_thread_init(NULL);
+	    g_thread_create(exit_on_stdin_eof_thread, NULL, FALSE, NULL);
 	}
 
 	for (;;) {

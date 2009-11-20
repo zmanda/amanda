@@ -200,6 +200,9 @@ struct ndm_media_table {
 #define NDM_JOB_OP_EXPORT_TAPE	(0x300 | 'e')
 #define NDM_JOB_OP_INIT_ELEM_STATUS (0x300 | 'I')
 
+/* daemon operations */
+#define NDM_JOB_OP_DAEMON 'd'
+#define NDM_JOB_OP_TEST_DAEMON 'D'
 
 struct ndm_job_param {
 	int			operation;	/* NDM_JOB_OP_... */
@@ -1090,7 +1093,7 @@ struct ndm_session {
 extern int	ndma_client_session (struct ndm_session *sess);
 extern int	ndma_server_session (struct ndm_session *sess,
 			int control_sock);
-extern int	ndma_daemon_session (struct ndm_session *sess, int port);
+extern int	ndma_daemon_session (struct ndm_session *sess, int port, int is_test_daemon);
 extern int	ndma_session_quantum (struct ndm_session *sess,
 			int max_delay_secs);
 extern int	ndma_session_initialize (struct ndm_session *sess);

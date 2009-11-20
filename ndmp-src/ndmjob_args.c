@@ -55,6 +55,7 @@ char *help_text[] = {
 #endif /* !NDMOS_OPTION_NO_CONTROL_AGENT */
 #ifndef NDMOS_EFFECT_NO_SERVER_AGENTS
 	"  -o daemon      -- launch session for incomming connections",
+	"  -o test-daemon -- launch session for incomming connections, exit when stdin is closed",
 #endif /* !NDMOS_EFFECT_NO_SERVER_AGENTS */
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
 	"  -o rewind      -- rewind tape in drive, need -T and -f",
@@ -574,7 +575,8 @@ struct ndmp_enum_str_table	mode_long_name_table[] = {
 	{ "-Z",			NDM_JOB_OP_REMEDY_ROBOT },
 #endif /* !NDMOS_OPTION_NO_CONTROL_AGENT */
 #ifndef NDMOS_EFFECT_NO_SERVER_AGENTS
-	{ "daemon",		'D' },
+	{ "daemon",		NDM_JOB_OP_DAEMON },
+	{ "test-daemon",	NDM_JOB_OP_TEST_DAEMON },
 #endif /* !NDMOS_EFFECT_NO_SERVER_AGENTS */
 	{ 0 }
 };

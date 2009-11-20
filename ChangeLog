@@ -1,3 +1,11 @@
+2009-11-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndmjob_args.c: add "-o test-daemon"
+	* ndmp-src/ndma_comm_session.c: add a thread to kill the daemon
+	  when stdin closes
+	* ndmp-src/ndmjob_main.c ndmp-src/ndmagents.h: change prototype
+	* installcheck/Installcheck/Mock.pm: use "-o test-daemon" to
+	  automatically kill the daemon when the test finishes
+
 2009-11-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amanda.h: Remove define of _LARGE_FILES.
 	* ndmp-src/ndmlib.h: Remove define of _LARGE_FILES.
