@@ -82,7 +82,7 @@ stream_server(
 #endif
     if (server_socket == -1) {
 	save_errno = errno;
-	dbprintf(_("stream_server: socket() failed: %s\n"),
+	g_debug(_("stream_server: socket() failed: %s"),
 		  strerror(save_errno));
 	errno = save_errno;
 	return -1;
@@ -91,7 +91,7 @@ stream_server(
 	aclose(server_socket);
 	errno = EMFILE;				/* out of range */
 	save_errno = errno;
-	dbprintf(_("stream_server: socket out of range: %d\n"),
+	g_debug(_("stream_server: socket out of range: %d"),
 		  server_socket);
 	errno = save_errno;
 	return -1;
@@ -104,7 +104,7 @@ stream_server(
     r = setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR,
 	(void *)&on, (socklen_t_equiv)sizeof(on));
     if (r < 0) {
-	dbprintf(_("stream_server: setsockopt(SO_REUSEADDR) failed: %s\n"),
+	g_debug(_("stream_server: setsockopt(SO_REUSEADDR) failed: %s"),
 		  strerror(errno));
     }
 #endif
@@ -134,26 +134,26 @@ stream_server(
 	    if (bind_portrange(server_socket, &server, (in_port_t)portrange[0],
 			       (in_port_t)portrange[1], "tcp") == 0)
 		goto out;
-	    dbprintf(_("stream_server: Could not bind to port in range: %d - %d.\n"),
+	    g_debug(_("stream_server: Could not bind to port in range: %d - %d."),
 		      portrange[0], portrange[1]);
 	} else {
 	    socklen = SS_LEN(&server);
 	    if (bind(server_socket, (struct sockaddr *)&server, socklen) == 0)
 		goto out;
-	    dbprintf(_("stream_server: Could not bind to any port: %s\n"),
+	    g_debug(_("stream_server: Could not bind to any port: %s"),
 		      strerror(errno));
 	}
 
 	if (retries >= BIND_CYCLE_RETRIES)
 	    break;
 
-	dbprintf(_("stream_server: Retrying entire range after 10 second delay.\n"));
+	g_debug(_("stream_server: Retrying entire range after 10 second delay."));
 
 	sleep(15);
     }
 
     save_errno = errno;
-    dbprintf(_("stream_server: bind(in6addr_any) failed: %s\n"),
+    g_debug(_("stream_server: bind(in6addr_any) failed: %s"),
 		  strerror(save_errno));
     aclose(server_socket);
     errno = save_errno;
@@ -167,7 +167,7 @@ out:
     len = SIZEOF(server);
     if(getsockname(server_socket, (struct sockaddr *)&server, &len) == -1) {
 	save_errno = errno;
-	dbprintf(_("stream_server: getsockname() failed: %s\n"),
+	g_debug(_("stream_server: getsockname() failed: %s"),
 		  strerror(save_errno));
 	aclose(server_socket);
 	errno = save_errno;
@@ -179,7 +179,7 @@ out:
 	(void *)&on, (socklen_t_equiv)sizeof(on));
     if(r == -1) {
 	save_errno = errno;
-	dbprintf(_("stream_server: setsockopt(SO_KEEPALIVE) failed: %s\n"),
+	g_debug(_("stream_server: setsockopt(SO_KEEPALIVE) failed: %s"),
 		  strerror(save_errno));
         aclose(server_socket);
 	errno = save_errno;
@@ -188,7 +188,7 @@ out:
 #endif
 
     *portp = SU_GET_PORT(&server);
-    dbprintf(_("stream_server: waiting for connection: %s\n"),
+    g_debug(_("stream_server: waiting for connection: %s"),
 	      str_sockaddr(&server));
     return server_socket;
 }
@@ -215,12 +215,12 @@ stream_client_internal(
 
     result = resolve_hostname(hostname, SOCK_STREAM, &res, NULL);
     if(result != 0) {
-	dbprintf(_("resolve_hostname(%s): %s\n"), hostname, gai_strerror(result));
+	g_debug(_("resolve_hostname(%s): %s"), hostname, gai_strerror(result));
 	errno = EHOSTUNREACH;
 	return -1;
     }
     if(!res) {
-	dbprintf(_("resolve_hostname(%s): no results\n"), hostname);
+	g_debug(_("resolve_hostname(%s): no results"), hostname);
 	errno = EHOSTUNREACH;
 	return -1;
     }
@@ -261,7 +261,7 @@ stream_client_internal(
     if (client_socket > 0)
 	goto out;
 
-    dbprintf(_("stream_client: Could not bind to port in range %d-%d.\n"),
+    g_debug(_("stream_client: Could not bind to port in range %d-%d."),
 	      portrange[0], portrange[1]);
 
     errno = save_errno;
@@ -342,11 +342,11 @@ stream_accept(
 	if(nfound <= 0 || !FD_ISSET(server_socket, &readset)) {
 	    save_errno = errno;
 	    if(nfound < 0) {
-		dbprintf(_("stream_accept: select() failed: %s\n"),
+		g_debug(_("stream_accept: select() failed: %s"),
 		      strerror(save_errno));
 	    } else if(nfound == 0) {
-		dbprintf(plural(_("stream_accept: timeout after %d second\n"),
-			        _("stream_accept: timeout after %d seconds\n"),
+		g_debug(plural(_("stream_accept: timeout after %d second"),
+			        _("stream_accept: timeout after %d seconds"),
 			       timeout),
 			 timeout);
 		errno = ETIMEDOUT;
@@ -356,7 +356,7 @@ stream_accept(
 
 		for(i = 0; i < server_socket + 1; i++) {
 		    if(FD_ISSET(i, &readset)) {
-			dbprintf(_("stream_accept: got fd %d instead of %d\n"),
+			g_debug(_("stream_accept: got fd %d instead of %d"),
 			      i,
 			      server_socket);
 		    }
@@ -378,7 +378,7 @@ stream_accept(
 	if(connected_socket < 0) {
 	    break;
 	}
-	dbprintf(_("stream_accept: connection from %s\n"),
+	g_debug(_("stream_accept: connection from %s"),
 	          str_sockaddr(&addr));
 	/*
 	 * Make certain we got an inet connection and that it is not
@@ -395,18 +395,18 @@ stream_accept(
 		try_socksize(connected_socket, SO_RCVBUF, recvsize);
 		return connected_socket;
 	    } else {
-		dbprintf(_("remote port is %u: ignored\n"),
+		g_debug(_("remote port is %u: ignored"),
 			  (unsigned int)port);
 	    }
 	} else {
 #ifdef WORKING_IPV6
-	    dbprintf(_("family is %d instead of %d(AF_INET)"
-		      " or %d(AF_INET6): ignored\n"),
+	    g_debug(_("family is %d instead of %d(AF_INET)"
+		      " or %d(AF_INET6): ignored"),
 		      SU_GET_FAMILY(&addr),
 		      AF_INET, AF_INET6);
 #else
-	    dbprintf(_("family is %d instead of %d(AF_INET)"
-		      ": ignored\n"),
+	    g_debug(_("family is %d instead of %d(AF_INET)"
+		      ": ignored"),
 		      SU_GET_FAMILY(&addr),
 		      AF_INET);
 #endif
@@ -415,7 +415,7 @@ stream_accept(
     }
 
     save_errno = errno;
-    dbprintf(_("stream_accept: accept() failed: %s\n"),
+    g_debug(_("stream_accept: accept() failed: %s"),
 	      strerror(save_errno));
     errno = save_errno;
     return -1;
@@ -442,11 +442,11 @@ try_socksize(
 	isize -= 1024;
     }
     if(isize > 1024) {
-	dbprintf(_("try_socksize: %s buffer size is %d\n"),
+	g_debug(_("try_socksize: %s buffer size is %d"),
 		  (which == SO_SNDBUF) ? _("send") : _("receive"),
 		  isize);
     } else {
-	dbprintf(_("try_socksize: could not allocate %s buffer of %zu\n"),
+	g_debug(_("try_socksize: could not allocate %s buffer of %zu"),
 		  (which == SO_SNDBUF) ? _("send") : _("receive"),
 		  origsize);
     }

@@ -292,29 +292,29 @@ bind_portrange(
 	    socklen = SS_LEN(addrp);
 	    if (bind(s, (struct sockaddr *)addrp, socklen) >= 0) {
 		if (servPort == NULL) {
-		    dbprintf(_("bind_portrange2: Try  port %d: Available - Success\n"), port);
+		    g_debug(_("bind_portrange2: Try  port %d: Available - Success"), port);
 		} else {
-		    dbprintf(_("bind_portrange2: Try  port %d: Owned by %s - Success.\n"), port, servPort->s_name);
+		    g_debug(_("bind_portrange2: Try  port %d: Owned by %s - Success."), port, servPort->s_name);
 		}
 		return 0;
 	    }
 	    if (errno != EAGAIN && errno != EBUSY)
 		save_errno = errno;
 	    if (servPort == NULL) {
-		dbprintf(_("bind_portrange2: Try  port %d: Available - %s\n"),
+		g_debug(_("bind_portrange2: Try  port %d: Available - %s"),
 			port, strerror(errno));
 	    } else {
-		dbprintf(_("bind_portrange2: Try  port %d: Owned by %s - %s\n"),
+		g_debug(_("bind_portrange2: Try  port %d: Owned by %s - %s"),
 			port, servPort->s_name, strerror(errno));
 	    }
 	} else {
-	        dbprintf(_("bind_portrange2: Skip port %d: Owned by %s.\n"),
+	        g_debug(_("bind_portrange2: Skip port %d: Owned by %s."),
 		      port, servPort->s_name);
 	}
 	if (++port > last_port)
 	    port = first_port;
     }
-    dbprintf(_("bind_portrange: all ports between %d and %d busy\n"),
+    g_debug(_("bind_portrange: all ports between %d and %d busy"),
 		  first_port,
 		  last_port);
     errno = save_errno;
