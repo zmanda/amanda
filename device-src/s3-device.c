@@ -24,6 +24,7 @@
  * blocks.
  */
 
+#include "amanda.h"
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -32,7 +33,6 @@
 #include <regex.h>
 #include <time.h>
 #include "util.h"
-#include "amanda.h"
 #include "conffile.h"
 #include "device.h"
 #include "s3.h"

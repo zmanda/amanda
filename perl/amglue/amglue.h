@@ -21,6 +21,7 @@
 #ifndef AMANDA_AMGLUE_H
 #define AMANDA_AMGLUE_H
 
+#include "../config/config.h"
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"

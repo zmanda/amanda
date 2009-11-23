@@ -27,6 +27,7 @@
 
 %{
 #include <glib.h>
+#include "amanda.h"
 #include "cmdline.h"
 #include "fileheader.h"
 %}

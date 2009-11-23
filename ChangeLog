@@ -1,3 +1,9 @@
+2009-11-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: First include "amanda.h".
+	* perl/Amanda/Cmdline.swg: include "amanda.h".
+	* perl/amglue/amglue.h: include "../config/config.h"
+	* perl/amglue/amglue.swg: %begin include ../config/config.h"
+
 2009-11-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndml_bstf.c, ndmp-src/ndmlib.h: Use fseeko and ftello.
 
