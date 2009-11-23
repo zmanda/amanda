@@ -18,10 +18,6 @@
  * Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
  */
 
-%begin %{
-#include "../config/config.h"
-%}
-
 %{
 #include "amglue.h"
 %}
