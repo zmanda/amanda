@@ -59,9 +59,9 @@
 
 #include <grp.h>
 
-#define amindexd_debug(i,x) do {	\
+#define DBG(i, ...) do {		\
 	if ((i) <= debug_amindexd) {	\
-	    dbprintf(x);		\
+	    g_debug(__VA_ARGS__);	\
 	}				\
 } while (0)
 
@@ -592,7 +592,7 @@ printf_arglist_function1(static void fast_lreply, int, n, char *, fmt)
 	exit(1);
     }
 
-    dbprintf("< %03d-%s\n", n, reply_buffer);
+    DBG(2, "< %03d-%s", n, reply_buffer);
 }
 
 /* see if hostname is valid */

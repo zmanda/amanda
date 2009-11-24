@@ -1,3 +1,6 @@
+2009-11-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amindexd.c: Reduce logging.
+
 2009-11-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/amglue/amglue.swg: Remove %begin section, we don't want to
 				  require swig 1.3.39.
