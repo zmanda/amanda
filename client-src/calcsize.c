@@ -200,7 +200,7 @@ main(
     argc--;
     argv++;
 
-    check_running_as(RUNNING_AS_CLIENT_LOGIN);
+    check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_AS_UID_ONLY);
 
     /* parse backup program name */
 
