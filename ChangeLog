@@ -1,3 +1,6 @@
+2009-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* restore-src/restore.c: Always do data_path exchange.
+
 2009-11-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* client-src/calcsize.c: fix check_running_as
 

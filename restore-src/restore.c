@@ -915,8 +915,7 @@ void restore(RestoreSource  *source,
 
     if (!is_continuation) {
 	/* first part of a dump */
-	if (myout->restore_mode == DEVICE_MODE &&
-	    device_directtcp_supported(source->u.device)) {
+	if (myout->restore_mode == DEVICE_MODE) {
 	    data_path_t    data_path = DATA_PATH_AMANDA;
             char          *input, *s;
 
