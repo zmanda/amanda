@@ -1,3 +1,7 @@
+2009-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amcheckdump.pl: Fix hang in MainLoop.
+
 2009-11-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amindexd.c: Reduce logging.
 
