@@ -82,28 +82,24 @@ sub command_support {
 sub command_selfcheck {
     my $self = shift;
 
-    $self->{action} = 'check';
-
     print "OK " . $self->{disk} . "\n";
     print "OK " . $self->{device} . "\n";
 
     if (! -r $self->{device}) {
-	$self->print_to_server($self->{action},"$self->{device} can't be read", $Amanda::Script_App::ERROR);
+	$self->print_to_server("$self->{device} can't be read",
+			       $Amanda::Script_App::ERROR);
     }
 
     if ($#{$self->{include_list}} >= 0) {
-	$self->print_to_server($self->{action},
-			       "include-list not supported for backup",
+	$self->print_to_server("include-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
     if ($#{$self->{exclude_list}} >= 0) {
-	$self->print_to_server($self->{action},
-			       "exclude-list not supported for backup",
+	$self->print_to_server("exclude-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
     if ($self->{directory}) {
-	$self->print_to_server($self->{action},
-			       "directory PROPERTY not supported for backup",
+	$self->print_to_server("directory PROPERTY not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
 
@@ -114,29 +110,23 @@ sub command_selfcheck {
 sub command_estimate {
     my $self = shift;
 
-    $self->{action} = 'estimate';
-
     my $level = $self->{level}[0];
 
     if ($level != 0) {
-	$self->print_to_server($self->{action},
-			       "amraw can only do level 0 backup",
+	$self->print_to_server("amraw can only do level 0 backup",
 			       $Amanda::Script_App::ERROR);
     }
 
     if ($#{$self->{include_list}} >= 0) {
-	$self->print_to_server($self->{action},
-			       "include-list not supported for backup",
+	$self->print_to_server("include-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
     if ($#{$self->{include_list}} >= 0) {
-	$self->print_to_server($self->{action},
-			       "exclude-list not supported for backup",
+	$self->print_to_server("exclude-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
     if ($self->{directory}) {
-	$self->print_to_server($self->{action},
-			       "directory PROPERTY not supported for backup",
+	$self->print_to_server("directory PROPERTY not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
 
@@ -167,13 +157,10 @@ sub output_size {
 sub command_backup {
     my $self = shift;
 
-    $self->{action} = 'backup';
-
     my $level = $self->{level}[0];
     my $mesgout_fd;
     open($mesgout_fd, '>&=3') ||
-	$self->print_to_server_and_die($self->{action},
-				       "Can't open mesgout_fd: $!",
+	$self->print_to_server_and_die("Can't open mesgout_fd: $!",
 				       $Amanda::Script_App::ERROR);
     $self->{mesgout} = $mesgout_fd;
 
@@ -183,24 +170,20 @@ sub command_backup {
     }
 
     if ($level != 0) {
-	$self->print_to_server($self->{action},
-			       "amraw can only do level 0 backup",
+	$self->print_to_server("amraw can only do level 0 backup",
 			       $Amanda::Script_App::ERROR);
     }
 
     if ($#{$self->{include_list}} >= 0) {
-	$self->print_to_server($self->{action},
-			       "include-list not supported for backup",
+	$self->print_to_server("include-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
     if ($#{$self->{include_list}} >= 0) {
-	$self->print_to_server($self->{action},
-			       "exclude-list not supported for backup",
+	$self->print_to_server("exclude-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
     if ($self->{directory}) {
-	$self->print_to_server($self->{action},
-			       "directory PROPERTY not supported for backup",
+	$self->print_to_server("directory PROPERTY not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
 
@@ -235,7 +218,6 @@ sub command_restore {
     my $self = shift;
     my @cmd = ();
 
-    $self->{action} = 'restore';
     my $device = $self->{device};
     if (defined $self->{directory}) {
 	$device = $self->{directory};
@@ -249,8 +231,7 @@ sub command_restore {
 
     my $fd = POSIX::open($device, &POSIX::O_CREAT | &POSIX::O_RDWR, 0600 );
     if ($fd == -1) {
-	$self->print_to_server_and_die($self->{action},
-				       "Can't open '$device': $!",
+	$self->print_to_server_and_die("Can't open '$device': $!",
 				       $Amanda::Script_App::ERROR);
     }
     my $size = 0;
@@ -269,7 +250,6 @@ sub command_restore {
 sub command_validate {
     my $self = shift;
 
-    $self->{action} = 'validate';
     $self->default_validate();
 }
 

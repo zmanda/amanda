@@ -37,17 +37,15 @@ Amanda::Application::Zfs -- collection of function to use with zfs
 sub zfs_set_value {
     my $self = shift;
 
-    my $action = $_[0];
-
     if (defined $self->{execute_where} && $self->{execute_where} ne "client") {
-	$self->print_to_server_and_die($action, " Script must be run on the client 'execute_where client'", $Amanda::Script_App::ERROR);
+	$self->print_to_server_and_die(" Script must be run on the client 'execute_where client'", $Amanda::Script_App::ERROR);
     }
     if ($self->{df_path} ne "df" && !-e $self->{df_path}) {
-	$self->print_to_server_and_die($action, "Can't execute DF-PATH '$self->{df_path}' command",
+	$self->print_to_server_and_die("Can't execute DF-PATH '$self->{df_path}' command",
                         $Amanda::Script_App::ERROR);
     }
     if ($self->{zfs_path} ne "zfs" && !-e $self->{zfs_path}) {
-        $self->print_to_server_and_die($action, "Can't execute ZFS-PATH '$self->{zfs_path}' command",
+        $self->print_to_server_and_die("Can't execute ZFS-PATH '$self->{zfs_path}' command",
                         $Amanda::Script_App::ERROR);
     }
 
@@ -55,7 +53,7 @@ sub zfs_set_value {
         $self->{pfexec_cmd} = $self->{pfexec_path};
     }
     if (defined $self->{pfexec_cmd} && $self->{pfexec_cmd} ne "pfexec" && !-e $self->{pfexec_cmd}) {
-        $self->print_to_server_and_die($action, "Can't execute PFEXEC-PATH '$self->{pfexec_cmd}' command",
+        $self->print_to_server_and_die("Can't execute PFEXEC-PATH '$self->{pfexec_cmd}' command",
                         $Amanda::Script_App::ERROR);
     }
     if (!defined $self->{pfexec_cmd}) {
@@ -63,11 +61,10 @@ sub zfs_set_value {
     }
 
     if (!defined $self->{device}) {
-	if ($action eq "check") {
+	if ($self->{action} eq "check") {
 	    return;
 	} else {
-	    $self->print_to_server_and_die($action,
-					   "'--device' is not provided",
+	    $self->print_to_server_and_die("'--device' is not provided",
 					   $Amanda::Script_App::ERROR);
 	}
     }
@@ -122,13 +119,13 @@ sub zfs_set_value {
                 chomp $errmsg;
             }
             if (defined $ret && defined $errmsg) {
-                $self->print_to_server_and_die($action, "$ret, $errmsg", $Amanda::Script_App::ERROR);
+                $self->print_to_server_and_die("$ret, $errmsg", $Amanda::Script_App::ERROR);
             } elsif (defined $ret) {
-                $self->print_to_server_and_die($action, $ret, $Amanda::Script_App::ERROR);
+                $self->print_to_server_and_die($ret, $Amanda::Script_App::ERROR);
             } elsif (defined $errmsg) {
-                $self->print_to_server_and_die($action, $errmsg, $Amanda::Script_App::ERROR);
+                $self->print_to_server_and_die($errmsg, $Amanda::Script_App::ERROR);
             } else {
-                $self->print_to_server_and_die($action,
+                $self->print_to_server_and_die(
                             "Failed to find mount points: $device",
                             $Amanda::Script_App::ERROR);
             }
@@ -142,7 +139,7 @@ sub zfs_set_value {
                 $self->{mountpoint} = $1;
                 $self->{filesystem} = $4;
             } else {
-                $self->print_to_server_and_die($action,
+                $self->print_to_server_and_die(
                             "Failed to find mount points: $device",
                             $Amanda::Script_App::ERROR);
             }
@@ -152,7 +149,7 @@ sub zfs_set_value {
                 $self->{mountpoint} = $6;
                 $self->{filesystem} = $1;
             } else {
-                $self->print_to_server_and_die($action,
+                $self->print_to_server_and_die(
                             "Failed to find mount points: $device",
                             $Amanda::Script_App::ERROR);
             }
@@ -175,32 +172,32 @@ sub zfs_set_value {
                 chomp $errmsg;
             }
             if (defined $zmountpoint && defined $errmsg) {
-                $self->print_to_server_and_die($action, $zmountpoint, $errmsg, $Amanda::Script_App::ERROR);
+                $self->print_to_server_and_die($zmountpoint, $errmsg, $Amanda::Script_App::ERROR);
             } elsif (defined $zmountpoint) {
-                $self->print_to_server_and_die($action, $zmountpoint, $Amanda::Script_App::ERROR);
+                $self->print_to_server_and_die($zmountpoint, $Amanda::Script_App::ERROR);
             } elsif (defined $errmsg) {
-                $self->print_to_server_and_die($action, $errmsg, $Amanda::Script_App::ERROR);
+                $self->print_to_server_and_die($errmsg, $Amanda::Script_App::ERROR);
             } else {
-                $self->print_to_server_and_die($action,
+                $self->print_to_server_and_die(
                         "Failed to find mount points: $self->{filesystem}",
                         $Amanda::Script_App::ERROR);
             }
         }
         if ($zmountpoint ne 'legacy' && $zmountpoint ne $self->{mountpoint}) {
-            $self->print_to_server_and_die($action,
+            $self->print_to_server_and_die(
                 "mountpoint from 'df' ($self->{mountpoint}) and 'zfs list' ($zmountpoint) differ",
                 $Amanda::Script_App::ERROR);
         }
 
         if (!($device =~ /^$self->{mountpoint}/)) {
-            $self->print_to_server_and_die($action,
+            $self->print_to_server_and_die(
                 "mountpoint '$self->{mountpoint}' is not a prefix of the device '$device'",
                 $Amanda::Script_App::ERROR);
         }
 
     }
 
-    if ($action eq 'check') {
+    if ($self->{action} eq 'check') {
       $self->{snapshot} = $self->zfs_build_snapshotname($device, -1);
     } else {
       $self->{snapshot} = $self->zfs_build_snapshotname($device);
@@ -220,7 +217,6 @@ sub zfs_set_value {
 
 sub zfs_create_snapshot {
     my $self = shift;
-    my $action = shift;
 
     my $cmd = "$self->{pfexec_cmd} $self->{zfs_path} snapshot $self->{filesystem}\@$self->{snapshot}";
     debug "running: $cmd";
@@ -235,20 +231,19 @@ sub zfs_create_snapshot {
     close $err;
     if( $? != 0 ) {
         if(defined $msg && defined $errmsg) {
-            $self->print_to_server_and_die($action, "$msg, $errmsg", $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die("$msg, $errmsg", $Amanda::Script_App::ERROR);
         } elsif (defined $msg) {
-            $self->print_to_server_and_die($action, $msg, $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die($msg, $Amanda::Script_App::ERROR);
         } elsif (defined $errmsg) {
-            $self->print_to_server_and_die($action, $errmsg, $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die($errmsg, $Amanda::Script_App::ERROR);
         } else {
-            $self->print_to_server_and_die($action, "cannot create snapshot '$self->{filesystem}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die("cannot create snapshot '$self->{filesystem}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
         }
     }
 }
 
 sub zfs_destroy_snapshot {
     my $self = shift;
-    my $action = shift;
 
     my $cmd = "$self->{pfexec_cmd} $self->{zfs_path} destroy $self->{filesystem}\@$self->{snapshot}";
     debug "running: $cmd|";
@@ -264,13 +259,13 @@ sub zfs_destroy_snapshot {
     close $err;
     if( $? != 0 ) {
         if(defined $msg && defined $errmsg) {
-            $self->print_to_server_and_die($action, "$msg, $errmsg", $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die("$msg, $errmsg", $Amanda::Script_App::ERROR);
         } elsif (defined $msg) {
-            $self->print_to_server_and_die($action, $msg, $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die($msg, $Amanda::Script_App::ERROR);
         } elsif (defined $errmsg) {
-            $self->print_to_server_and_die($action, $errmsg, $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die($errmsg, $Amanda::Script_App::ERROR);
         } else {
-            $self->print_to_server_and_die($action, "cannot destroy snapshot '$self->{filesystem}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die("cannot destroy snapshot '$self->{filesystem}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
         }
     }
 }
@@ -278,7 +273,6 @@ sub zfs_destroy_snapshot {
 sub zfs_destroy_snapshot_level {
     my $self = shift;
     my $level = shift;
-    my $action = shift;
 
     my $snapshotname = $self->zfs_find_snapshot_level($level);
     debug "zfs_destroy_snapshot_level: Current $snapshotname";
@@ -297,13 +291,13 @@ sub zfs_destroy_snapshot_level {
       close $err;
       if( $? != 0 ) {
           if(defined $msg && defined $errmsg) {
-              $self->print_to_server_and_die($action, "$msg, $errmsg", $Amanda::Script_App::ERROR);
+              $self->print_to_server_and_die("$msg, $errmsg", $Amanda::Script_App::ERROR);
           } elsif (defined $msg) {
-              $self->print_to_server_and_die($action, $msg, $Amanda::Script_App::ERROR);
+              $self->print_to_server_and_die($msg, $Amanda::Script_App::ERROR);
           } elsif (defined $errmsg) {
-              $self->print_to_server_and_die($action, $errmsg, $Amanda::Script_App::ERROR);
+              $self->print_to_server_and_die($errmsg, $Amanda::Script_App::ERROR);
           } else {
-              $self->print_to_server_and_die($action, "cannot destroy snapshot '$self->{filesystem}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
+              $self->print_to_server_and_die("cannot destroy snapshot '$self->{filesystem}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
           }
       }
     }
@@ -312,7 +306,6 @@ sub zfs_destroy_snapshot_level {
 sub zfs_rename_snapshot {
     my $self = shift;
     my $level = shift;
-    my $action = shift;
 
     my $device = $self->{device};
     $device = $self->{directory} if defined $self->{directory};
@@ -331,13 +324,13 @@ sub zfs_rename_snapshot {
     close $err;
     if( $? != 0 ) {
         if(defined $msg && defined $errmsg) {
-            $self->print_to_server_and_die($action, "$msg, $errmsg", $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die("$msg, $errmsg", $Amanda::Script_App::ERROR);
         } elsif (defined $msg) {
-            $self->print_to_server_and_die($action, $msg, $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die($msg, $Amanda::Script_App::ERROR);
         } elsif (defined $errmsg) {
-            $self->print_to_server_and_die($action, $errmsg, $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die($errmsg, $Amanda::Script_App::ERROR);
         } else {
-            $self->print_to_server_and_die($action, "cannot rename snapshot '$self->{filesystem}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die("cannot rename snapshot '$self->{filesystem}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
         }
     }
 }
@@ -346,19 +339,17 @@ sub zfs_purge_snapshot {
     my $self = shift;
     my $minlevel = shift;
     my $maxlevel = shift;
-    my $action = shift;
 
     my $level;
     for ($level = $maxlevel; $level >= $minlevel; $level--) {
 	debug "zfs_purge_snapshot: Check for existing snapshot at level $level";
-        $self->zfs_destroy_snapshot_level($level, $action);
+        $self->zfs_destroy_snapshot_level($level);
     }
 }
 
 sub zfs_find_snapshot_level {
     my $self = shift;
     my $level = shift;
-    my $action = shift;
 
     my $device = $self->{device};
     $device = $self->{directory} if defined $self->{directory};
@@ -386,7 +377,6 @@ sub zfs_build_snapshotname {
     my $self = shift;
     my $device = shift;
     my $level = shift;
-    my $action = shift;
 
     my $snapshotname = "";
 

@@ -65,86 +65,103 @@ sub command_support {
 #something
 sub command_pre_dle_amcheck {
    my $self = shift;
+
    $self->sendmail("pre-dle-amcheck");
 }
 
 sub command_pre_host_amcheck {
    my $self = shift;
+
    $self->sendmail("pre-host-amcheck");
 }
 
 sub command_post_dle_amcheck {
    my $self = shift;
+
    $self->sendmail("post-dle-amcheck");
 }
 
 sub command_post_host_amcheck {
    my $self = shift;
+
    $self->sendmail("post-host-amcheck");
 }
 
 sub command_pre_dle_estimate {
    my $self = shift;
+
    $self->sendmail("pre-dle-estimate");
 }
 
 sub command_pre_host_estimate {
    my $self = shift;
+
    $self->sendmail("pre-host-estimate");
 }
 
 sub command_post_dle_estimate {
    my $self = shift;
+
    $self->sendmail("post-dle-estimate");
 }
 
 sub command_post_host_estimate {
    my $self = shift;
+
    $self->sendmail("post-host-estimate");
 }
 
 sub command_pre_dle_backup {
    my $self = shift;
+
    $self->sendmail("pre-dle-backup");
 }
 
 sub command_pre_host_backup {
    my $self = shift;
+
    $self->sendmail("pre-host-backup");
 }
 
 sub command_post_dle_backup {
    my $self = shift;
+
    $self->sendmail("post-dle-backup");
 }
 
 sub command_post_host_backup {
    my $self = shift;
+
    $self->sendmail("post-host-backup");
 }
 
 sub command_pre_recover {
    my $self = shift;
+
    $self->sendmail("pre-recover");
 }
 
 sub command_post_recover {
    my $self = shift;
+
    $self->sendmail("post-recover");
 }
 
 sub command_pre_level_recover {
    my $self = shift;
+
    $self->sendmail("pre-level-recover");
 }
 
 sub command_post_level_recover {
    my $self = shift;
+
    $self->sendmail("post-level-recover");
 }
 
 sub command_inter_level_recover {
    my $self = shift;
+
    $self->sendmail("inter-level-recover");
 }
 
@@ -164,7 +181,7 @@ sub sendmail {
    debug("cmd: $Amanda::Constants::MAILER $args\n");
    my $mail;
    open $mail, '|-', $Amanda::Constants::MAILER, @args;
-   print $mail "$self->{config} $function $self->{host} $self->{disk} $self->{device} ", join (" ", @{$self->{level}}), "\n";
+   print $mail "$self->{action} $self->{config} $function $self->{host} $self->{disk} $self->{device} ", join (" ", @{$self->{level}}), "\n";
    close $mail;
 }
 

@@ -93,53 +93,50 @@ sub new {
 }
 
 
-#$_[0] action
-#$_[1] message
-#$_[2] status: GOOD or ERROR
+#$_[0] message
+#$_[1] status: GOOD or ERROR
 sub print_to_server {
     my $self = shift;
-    my($action,$msg, $status) = @_;
+    my($msg, $status) = @_;
     if ($status != 0) {
         $self->{error_status} = $status;
     }
-    if ($action eq "check") {
+    if ($self->{action} eq "check") {
 	if ($status == $Amanda::Script_App::GOOD) {
             print STDOUT "OK $msg\n";
 	} else {
             print STDOUT "ERROR $msg\n";
 	}
-    } elsif ($action eq "estimate") {
+    } elsif ($self->{action} eq "estimate") {
 	if ($status == $Amanda::Script_App::GOOD) {
             #do nothing
 	} else {
             print STDERR "ERROR $msg\n";
 	}
-    } elsif ($action eq "backup") {
+    } elsif ($self->{action} eq "backup") {
 	if ($status == $Amanda::Script_App::GOOD) {
             print {$self->{mesgout}} "| $msg\n";
 	} else {
             print {$self->{mesgout}} "? $msg\n";
 	}
-    } elsif ($action eq "restore") {
+    } elsif ($self->{action} eq "restore") {
         print STDOUT "$msg\n";
-    } elsif ($action eq "validate") {
+    } elsif ($self->{action} eq "validate") {
         print STDERR "$msg\n";
     } else {
         print STDERR "$msg\n";
     }
 }
 
-#$_[0] action
-#$_[1] message
-#$_[2] status: GOOD or ERROR
+#$_[0] message
+#$_[1] status: GOOD or ERROR
 sub print_to_server_and_die {
     my $self = shift;
 
-    my $action = $_[0];
     $self->print_to_server( @_ );
     if (!defined $self->{die} && $self->can("check_for_backup_failure")) {
 	$self->{die} = 1;
-	$self->check_for_backup_failure($action);
+	$self->check_for_backup_failure();
     }
     exit 1;
 }
@@ -163,6 +160,26 @@ sub do {
 	exit 1;
     }
 
+    my $action = $command;
+    $action =~ s/^pre_//;
+    $action =~ s/^post_//;
+    $action =~ s/^inter_//;
+    $action =~ s/^dle_//;
+    $action =~ s/^host_//;
+    $action =~ s/^level_//;
+
+    if ($action eq 'amcheck' || $action eq 'selfcheck') {
+	$self->{action} = 'check';
+    } elsif ($action eq 'estimate') {
+	$self->{action} = 'estimate';
+    } elsif ($action eq 'backup') {
+	$self->{action} = 'backup';
+    } elsif ($action eq 'recover' || $action eq 'restore') {
+	$self->{action} = 'restore';
+    } elsif ($action eq 'validate') {
+	$self->{action} = 'validate';
+    }
+
     # now convert it to a function name and see if it's
     # defined
     my $function_name = "command_$command";
@@ -170,7 +187,7 @@ sub do {
 
     if (!$self->can($function_name)) {
         if (!$self->can($default_name)) {
-            print STDERR "Ycommand `$command' is not supported by the '" .
+            print STDERR "command `$command' is not supported by the '" .
                          $self->{name} . "' " . $self->{type} . ".\n";
             exit 1;
 	}

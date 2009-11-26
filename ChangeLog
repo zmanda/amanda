@@ -1,3 +1,10 @@
+2009-11-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/*.pl: Remove $action from all function arguments.
+	* installcheck/pp-scripts.pl: Fix for new output of amlog-script.
+	* perl/Amanda/Application/Zfs.pm: Remove $action from all function
+					  arguments.
+	* perl/Amanda/Script_App.pm: Set $self->{action}.
+
 2009-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/restore.c: Always do data_path exchange.
 

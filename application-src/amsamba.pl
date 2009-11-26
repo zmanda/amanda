@@ -106,8 +106,7 @@ sub validate_inexclude {
 
     if ($#{$self->{exclude_file}} + $#{$self->{exclude_list}} >= -1 &&
 	$#{$self->{include_file}} + $#{$self->{include_list}} >= -1) {
-	$self->print_to_server_and_die($self->{action},
-				       "Can't have both include and exclude",
+	$self->print_to_server_and_die("Can't have both include and exclude",
 				       $Amanda::Script_App::ERROR);
     }
 
@@ -117,8 +116,7 @@ sub validate_inexclude {
     foreach my $file (@{$self->{exclude_list}}) {
 	if (!open(FF, $file)) {
 	    if ($self->{action} eq 'check' && !$self->{exclude_optional}) {
-		$self->print_to_server($self->{action},
-				       "Open of '$file' failed: $!",
+		$self->print_to_server("Open of '$file' failed: $!",
 				       $Amanda::Script_App::ERROR);
 	    }
 	    next;
@@ -135,8 +133,7 @@ sub validate_inexclude {
     foreach my $file (@{$self->{include_list}}) {
 	if (open(FF, $file)) {
 	    if ($self->{action} eq 'check') {
-		$self->print_to_server($self->{action},
-				       "Open of '$file' failed: $!",
+		$self->print_to_server("Open of '$file' failed: $!",
 				       $Amanda::Script_App::ERROR);
 	    }
 	    next;
@@ -214,7 +211,9 @@ sub findpass {
 	    debug("cannot open password file '$self->{amandapass}': $!\n");
 	    return;
 	} else {
-	    $self->print_to_server_and_die($self->{action},"cannot open password file '$self->{amandapass}': $!", $Amanda::Script_App::ERROR);
+	    $self->print_to_server_and_die(
+			"cannot open password file '$self->{amandapass}': $!",
+			$Amanda::Script_App::ERROR);
 	}
     }
 
@@ -262,7 +261,9 @@ sub findpass {
 	debug("Cannot find password for share $self->{share} in $self->{amandapass}");
 	return;
     }
-    $self->print_to_server_and_die($self->{action},"Cannot find password for share $self->{share} in $self->{amandapass}", $Amanda::Script_App::ERROR);
+    $self->print_to_server_and_die(
+	"Cannot find password for share $self->{share} in $self->{amandapass}",
+	$Amanda::Script_App::ERROR);
 }
 
 sub command_support {
@@ -293,19 +294,22 @@ sub command_support {
 sub command_selfcheck {
     my $self = shift;
 
-    $self->{action} = 'check';
-
     #check binary
     if (!defined($self->{smbclient}) || $self->{smbclient} eq "") {
-	$self->print_to_server($self->{action},"smbclient not set; you must define the SMBCLIENT-PATH property", $Amanda::Script_App::ERROR);
+	$self->print_to_server(
+	    "smbclient not set; you must define the SMBCLIENT-PATH property",
+	    $Amanda::Script_App::ERROR);
     }
     elsif (! -e $self->{smbclient}) {
-	$self->print_to_server($self->{action},"$self->{smbclient} doesn't exist", $Amanda::Script_App::ERROR);
+	$self->print_to_server("$self->{smbclient} doesn't exist",
+			       $Amanda::Script_App::ERROR);
     }
     elsif (! -x $self->{smbclient}) {
-	$self->print_to_server($self->{action},"$self->{smbclient} is not executable", $Amanda::Script_App::ERROR);
+	$self->print_to_server("$self->{smbclient} is not executable",
+			       $Amanda::Script_App::ERROR);
     }
-    $self->print_to_server($self->{action},"$self->{smbclient}", $Amanda::Script_App::GOOD);
+    $self->print_to_server("$self->{smbclient}",
+			   $Amanda::Script_App::GOOD);
     if (!defined $self->{disk} || !defined $self->{device}) {
 	return;
     }
@@ -371,7 +375,7 @@ sub command_selfcheck {
 	chomp;
 	debug("stderr: " . $_);
 	next if /^Domain=/;
-	$self->print_to_server($self->{action}, "smbclient: $_",
+	$self->print_to_server("smbclient: $_",
 			       $Amanda::Script_App::ERROR);
     }
     close($err);
@@ -383,7 +387,6 @@ sub command_selfcheck {
 sub command_estimate {
     my $self = shift;
 
-    $self->{action} = 'estimate';
     $self->parsesharename();
     $self->findpass();
     $self->validate_inexclude();
@@ -465,7 +468,7 @@ sub parse_estimate {
 	    $size = $1;
 	    last;
 	} else {
-	    $self->print_to_server($self->{action}, "smbclient: $_",
+	    $self->print_to_server("smbclient: $_",
 				   $Amanda::Script_App::ERROR);
 	}
     }
@@ -489,13 +492,10 @@ sub output_size {
 sub command_backup {
     my $self = shift;
 
-    $self->{action} = 'backup';
-
     my $level = $self->{level}[0];
     my $mesgout_fd;
     open($mesgout_fd, '>&=3') ||
-	$self->print_to_server_and_die($self->{action},
-				       "Can't open mesgout_fd: $!",
+	$self->print_to_server_and_die("Can't open mesgout_fd: $!",
 				       $Amanda::Script_App::ERROR);
     $self->{mesgout} = $mesgout_fd;
 
@@ -594,8 +594,7 @@ sub command_backup {
     if (defined($self->{index})) {
 	my $indexout_fd;
 	open($indexout_fd, '>&=4') ||
-	    $self->print_to_server_and_die($self->{action},
-					   "Can't open indexout_fd: $!",
+	    $self->print_to_server_and_die("Can't open indexout_fd: $!",
 					   $Amanda::Script_App::ERROR);
 	$self->parse_backup($index, $mesgout_fd, $indexout_fd);
 	close($indexout_fd);
@@ -613,7 +612,7 @@ sub command_backup {
 	if (/^Total bytes written: (\d*)/) {
 	    $size = $1;
 	} else {
-	    $self->print_to_server($self->{action}, "smbclient: $_",
+	    $self->print_to_server("smbclient: $_",
 			           $Amanda::Script_App::ERROR);
 	}
     }
@@ -628,8 +627,7 @@ sub command_backup {
 
     waitpid $pid, 0;
     if ($? != 0) {
-	$self->print_to_server_and_die($self->{action},
-				       "smbclient returned error",
+	$self->print_to_server_and_die("smbclient returned error",
 				       $Amanda::Script_App::ERROR);
     }
     exit 0;
@@ -674,8 +672,7 @@ sub command_index_from_image {
    my $self = shift;
    my $index_fd;
    open($index_fd, "$self->{gnutar} --list --file - |") ||
-      $self->print_to_server_and_die($self->{action},
-				     "Can't run $self->{gnutar}: $!",
+      $self->print_to_server_and_die("Can't run $self->{gnutar}: $!",
 				     $Amanda::Script_App::ERROR);
    index_from_output($index_fd, 1);
 }
@@ -684,7 +681,6 @@ sub command_restore {
     my $self = shift;
     my @cmd = ();
 
-    $self->{action} = 'restore';
     $self->parsesharename();
     chdir(Amanda::Util::get_original_cwd());
 
@@ -735,12 +731,12 @@ sub command_restore {
 	push @cmd, $self->{gnutar}, "-xpvf", "-";
 	if (defined $self->{directory}) {
 	    if (!-d $self->{directory}) {
-		$self->print_to_server_and_die($self->{action},
+		$self->print_to_server_and_die(
 				       "Directory $self->{directory}: $!",
 				       $Amanda::Script_App::ERROR);
 	    }
 	    if (!-w $self->{directory}) {
-		$self->print_to_server_and_die($self->{action},
+		$self->print_to_server_and_die(
 				       "Directory $self->{directory}: $!",
 				       $Amanda::Script_App::ERROR);
 	    }
@@ -770,17 +766,14 @@ sub command_validate {
       return $self->default_validate();
    }
 
-   $self->{action} = 'validate';
    my(@cmd) = ($self->{gnutar}, "-tf", "-");
    debug("cmd:" . join(" ", @cmd));
    my $pid = open3('>&STDIN', '>&STDOUT', '>&STDERR', @cmd) ||
-	$self->print_to_server_and_die($self->{action},
-				       "Unable to run @cmd: $!",
+	$self->print_to_server_and_die("Unable to run @cmd: $!",
 				       $Amanda::Script_App::ERROR);
    waitpid $pid, 0;
    if( $? != 0 ){
-	$self->print_to_server_and_die($self->{action},
-				       "$self->{gnutar} returned error",
+	$self->print_to_server_and_die("$self->{gnutar} returned error",
 				       $Amanda::Script_App::ERROR);
    }
    exit(0);

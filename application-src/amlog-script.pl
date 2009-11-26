@@ -56,15 +56,19 @@ sub setup() {
     my $self = shift;
 
     if (!defined $self->{logfile}) {
-	$self->print_to_server_and_die($self->{action}, "property LOGFILE not set", $Amanda::Script_App::ERROR);
+	$self->print_to_server_and_die("property LOGFILE not set",
+				       $Amanda::Script_App::ERROR);
     }
 
     my $dirname = File::Basename::dirname($self->{logfile});
     if (! -e $dirname) {
-	$self->print_to_server_and_die($self->{action}, "Directory '$dirname' doesn't exist", $Amanda::Script_App::ERROR);
+	$self->print_to_server_and_die("Directory '$dirname' doesn't exist",
+				       $Amanda::Script_App::ERROR);
     }
     if (! -d $dirname) {
-	$self->print_to_server_and_die($self->{action}, "Directory '$dirname' is not a directory", $Amanda::Script_App::ERROR);
+	$self->print_to_server_and_die(
+				"Directory '$dirname' is not a directory",i
+				$Amanda::Script_App::ERROR);
     }
 }
 
@@ -84,7 +88,6 @@ sub command_support {
 sub command_pre_dle_amcheck {
    my $self = shift;
 
-   $self->{action} = "check";
    $self->setup();
    $self->log_data("pre-dle-amcheck");
 }
@@ -92,7 +95,6 @@ sub command_pre_dle_amcheck {
 sub command_pre_host_amcheck {
    my $self = shift;
 
-   $self->{action} = "check";
    $self->setup();
    $self->log_data("pre-host-amcheck");
 }
@@ -100,7 +102,6 @@ sub command_pre_host_amcheck {
 sub command_post_dle_amcheck {
    my $self = shift;
 
-   $self->{action} = "check";
    $self->setup();
    $self->log_data("post-dle-amcheck");
 }
@@ -108,7 +109,6 @@ sub command_post_dle_amcheck {
 sub command_post_host_amcheck {
    my $self = shift;
 
-   $self->{action} = "check";
    $self->setup();
    $self->log_data("post-host-amcheck");
 }
@@ -116,7 +116,6 @@ sub command_post_host_amcheck {
 sub command_pre_dle_estimate {
    my $self = shift;
 
-   $self->{action} = "estimate";
    $self->setup();
    $self->log_data("pre-dle-estimate");
 }
@@ -124,7 +123,6 @@ sub command_pre_dle_estimate {
 sub command_pre_host_estimate {
    my $self = shift;
 
-   $self->{action} = "estimate";
    $self->setup();
    $self->log_data("pre-host-estimate");
 }
@@ -132,7 +130,6 @@ sub command_pre_host_estimate {
 sub command_post_dle_estimate {
    my $self = shift;
 
-   $self->{action} = "estimate";
    $self->setup();
    $self->log_data("post-dle-estimate");
 }
@@ -140,7 +137,6 @@ sub command_post_dle_estimate {
 sub command_post_host_estimate {
    my $self = shift;
 
-   $self->{action} = "estimate";
    $self->setup();
    $self->log_data("post-host-estimate");
 }
@@ -148,7 +144,6 @@ sub command_post_host_estimate {
 sub command_pre_dle_backup {
    my $self = shift;
 
-   $self->{action} = "backup";
    $self->setup();
    $self->log_data("pre-dle-backup");
 }
@@ -156,7 +151,6 @@ sub command_pre_dle_backup {
 sub command_pre_host_backup {
    my $self = shift;
 
-   $self->{action} = "backup";
    $self->setup();
    $self->log_data("pre-host-backup");
 }
@@ -164,7 +158,6 @@ sub command_pre_host_backup {
 sub command_post_dle_backup {
    my $self = shift;
 
-   $self->{action} = "backup";
    $self->setup();
    $self->log_data("post-dle-backup");
 }
@@ -172,7 +165,6 @@ sub command_post_dle_backup {
 sub command_post_host_backup {
    my $self = shift;
 
-   $self->{action} = "backup";
    $self->setup();
    $self->log_data("post-host-backup");
 }
@@ -180,7 +172,6 @@ sub command_post_host_backup {
 sub command_pre_recover {
    my $self = shift;
 
-   $self->{action} = "restore";
    $self->setup();
    $self->log_data("pre-recover");
 }
@@ -188,7 +179,6 @@ sub command_pre_recover {
 sub command_post_recover {
    my $self = shift;
 
-   $self->{action} = "restore";
    $self->setup();
    $self->log_data("post-recover");
 }
@@ -196,7 +186,6 @@ sub command_post_recover {
 sub command_pre_level_recover {
    my $self = shift;
 
-   $self->{action} = "restore";
    $self->setup();
    $self->log_data("pre-level-recover");
 }
@@ -204,7 +193,6 @@ sub command_pre_level_recover {
 sub command_post_level_recover {
    my $self = shift;
 
-   $self->{action} = "restore";
    $self->setup();
    $self->log_data("post-level-recover");
 }
@@ -212,7 +200,6 @@ sub command_post_level_recover {
 sub command_inter_level_recover {
    my $self = shift;
 
-   $self->{action} = "restore";
    $self->setup();
    $self->log_data("inter-level-recover");
 }
@@ -222,8 +209,11 @@ sub log_data {
    my($function) = shift;
    my $log;
 
-   open($log, ">>$self->{logfile}") || $self->print_to_server_and_die($self->{action}, "Can't open logfile '$self->{logfile}' for append: $!", $Amanda::Script_App::ERROR);
-   print $log "$self->{config} $function $self->{execute_where} $self->{host} $self->{disk} $self->{device} ", join (" ", @{$self->{level}}), " $self->{text}\n";
+   open($log, ">>$self->{logfile}") ||
+	$self->print_to_server_and_die(
+			"Can't open logfile '$self->{logfile}' for append: $!",
+			$Amanda::Script_App::ERROR);
+   print $log "$self->{action} $self->{config} $function $self->{execute_where} $self->{host} $self->{disk} $self->{device} ", join (" ", @{$self->{level}}), " $self->{text}\n";
    close $log;
 }
 

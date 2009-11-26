@@ -139,16 +139,14 @@ sub command_support {
 
 sub command_selfcheck {
    my $self = shift;
-   my $action = shift;
-   $self->{action} = 'check';
 
    if (!-e $self->{suntar}) {
-      $self->print_to_server_and_die($self->{action},
-                       "application binary $self->{suntar} doesn't exist",
+      $self->print_to_server_and_die(
+		       "application binary $self->{suntar} doesn't exist",
                        $Amanda::Script_App::ERROR);
    }
    if (!-x $self->{suntar}) {
-      $self->print_to_server_and_die($self->{action},
+      $self->print_to_server_and_die(
                        "application binary $self->{suntar} is not a executable",
                        $Amanda::Script_App::ERROR);
    }
@@ -163,7 +161,6 @@ sub command_selfcheck {
 
 sub command_estimate() {
     my $self = shift;
-    my $action = "estimate";
     my $size = "-1";
     my $level = $self->{level};
 
@@ -199,9 +196,11 @@ sub command_estimate() {
     close $err;
     if ($result ==  1) {
         if (defined $errmsg) {
-            $self->print_to_server_and_die($action, $errmsg, $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die($errmsg, $Amanda::Script_App::ERROR);
         } else {
-                $self->print_to_server_and_die($action, "cannot estimate archive size': unknown reason", $Amanda::Script_App::ERROR);
+                $self->print_to_server_and_die(
+			"cannot estimate archive size': unknown reason",
+			$Amanda::Script_App::ERROR);
         }
     }
     output_size($level, $msgsize);
@@ -225,13 +224,11 @@ sub output_size {
 
 sub command_backup {
    my $self = shift;
-   $self->{action} = 'backup';
 
    $self->validate_inexclude();
    my $mesgout_fd;
    open($mesgout_fd, '>&=3') ||
-      $self->print_to_server_and_die($self->{action},
-				     "Can't open mesgout_fd: $!",
+      $self->print_to_server_and_die("Can't open mesgout_fd: $!",
 				     $Amanda::Script_App::ERROR);
    $self->{mesgout} = $mesgout_fd;
 
@@ -245,12 +242,10 @@ sub command_backup {
    $errtc = Symbol::gensym;
 
    $pid = open3($wtr, \*DATA, $index_fd, @cmd) ||
-      $self->print_to_server_and_die($self->{action},
-				     "Can't run $cmd[0]: $!",
+      $self->print_to_server_and_die("Can't run $cmd[0]: $!",
 				     $Amanda::Script_App::ERROR);
    $pidtc = open3('<&DATA', '>&STDOUT', $errtc, @cmdtc) ||
-      $self->print_to_server_and_die($self->{action},
-				     "Can't run $cmdtc[0]: $!",
+      $self->print_to_server_and_die("Can't run $cmdtc[0]: $!",
 				     $Amanda::Script_App::ERROR);
    close($wtr);
 
@@ -261,8 +256,7 @@ sub command_backup {
    if(defined($self->{index})) {
       my $indexout_fd;
       open($indexout_fd, '>&=4') ||
-      $self->print_to_server_and_die($self->{action},
-				     "Can't open indexout_fd: $!",
+      $self->print_to_server_and_die("Can't open indexout_fd: $!",
 				     $Amanda::Script_App::ERROR);
       $result = $self->parse_backup($index_fd, $mesgout_fd, $indexout_fd);
       close($indexout_fd);
@@ -347,16 +341,14 @@ sub validate_inexclude {
    my @tmp;
 
    if ($#{$self->{exclude_list}} >= 0 && $#{$self->{include_list}} >= 0 )  {
-      $self->print_to_server_and_die($self->{action},
-                                       "Can't have both include and exclude",
-                                       $Amanda::Script_App::ERROR);
+      $self->print_to_server_and_die("Can't have both include and exclude",
+                                     $Amanda::Script_App::ERROR);
    }
     
    foreach my $file (@{$self->{exclude_list}}){
       if (!open($fh, $file)) {
           if ($self->{action} eq "check" && !$self->{exclude_optional}) {
-                $self->print_to_server($self->{action},
-                                       "Open of '$file' failed: $!",
+                $self->print_to_server("Open of '$file' failed: $!",
                                        $Amanda::Script_App::ERROR);
           }
           next;
@@ -371,9 +363,9 @@ sub validate_inexclude {
    if($self->{action} eq 'backup' && $#{$self->{exculde_list}} >= 0) {
       ($fh, $self->{exclude_tmp}) = tempfile(DIR => $Amanda::paths::AMANDA_TMPDIR);
       unless($fh) {
-                $self->print_to_server_and_die($self->{action},
-                                       "Open of tmp file '$self->{exclude_tmp}' failed: $!",
-                                       $Amanda::Script_App::ERROR);
+                $self->print_to_server_and_die(
+                          "Open of tmp file '$self->{exclude_tmp}' failed: $!",
+                          $Amanda::Script_App::ERROR);
       }
       print $fh @tmp;	
       close $fh;
@@ -383,8 +375,7 @@ sub validate_inexclude {
    foreach my $file (@{$self->{include_list}}) {
       if (!open($fh, $file)) {
          if ($self->{action} eq "check" && !$self->{include_optional}) {
-                $self->print_to_server($self->{action},
-                                       "Open of '$file' failed: $!",
+                $self->print_to_server("Open of '$file' failed: $!",
                                        $Amanda::Script_App::ERROR);
          }
          next;
@@ -398,9 +389,9 @@ sub validate_inexclude {
    if($self->{action} eq 'backup' && $#{$self->{include_list}} >= 0) {
       ($fh, $self->{include_tmp}) = tempfile(DIR => $Amanda::paths::AMANDA_TMPDIR);
       unless($fh) {
-                $self->print_to_server_and_die($self->{action},
-                                       "Open of tmp file '$self->{include_tmp}' failed: $!",
-                                       $Amanda::Script_App::ERROR);
+                $self->print_to_server_and_die(
+                          "Open of tmp file '$self->{include_tmp}' failed: $!",
+                          $Amanda::Script_App::ERROR);
       }
       print $fh @tmp;
       close $fh;
@@ -428,26 +419,22 @@ sub command_index_from_image {
    my $self = shift;
    my $index_fd;
    open($index_fd, "$self->{suntar} -tf - |") ||
-      $self->print_to_server_and_die($self->{action},
-				     "Can't run $self->{suntar}: $!",
+      $self->print_to_server_and_die("Can't run $self->{suntar}: $!",
 				     $Amanda::Script_App::ERROR);
    index_from_output($index_fd, 1);
 }
 
 sub command_restore {
    my $self = shift;
-   $self->{action} = 'restore'; 
 
    chdir(Amanda::Util::get_original_cwd());
    if (defined $self->{directory}) {
       if (!-d $self->{directory}) {
-         $self->print_to_server_and_die($self->{action},
-				        "Directory $self->{directory}: $!",
+         $self->print_to_server_and_die("Directory $self->{directory}: $!",
 				        $Amanda::Script_App::ERROR);
       }
       if (!-w $self->{directory}) {
-         $self->print_to_server_and_die($self->{action},
-				        "Directory $self->{directory}: $!",
+         $self->print_to_server_and_die("Directory $self->{directory}: $!",
 				        $Amanda::Script_App::ERROR);
       }
       chdir($self->{directory});
@@ -491,7 +478,6 @@ sub command_restore {
 
 sub command_validate {
    my $self = shift;
-   $self->{action} = 'validate';
    my @cmd;
    my $program;
 
@@ -505,13 +491,11 @@ sub command_validate {
    @cmd = ($program, "-tf", "-");
    debug("cmd:" . join(" ", @cmd));
    my $pid = open3('>&STDIN', '>&STDOUT', '>&STDERR', @cmd) ||
-      $self->print_to_server_and_die($self->{action},
-				     "Unable to run @cmd",
+      $self->print_to_server_and_die("Unable to run @cmd",
 				     $Amanda::Script_App::ERROR);
    waitpid $pid, 0;
    if( $? != 0 ){
-	$self->print_to_server_and_die($self->{action},
-				       "$program returned error",
+	$self->print_to_server_and_die("$program returned error",
 				       $Amanda::Script_App::ERROR);
    }
    exit(0);

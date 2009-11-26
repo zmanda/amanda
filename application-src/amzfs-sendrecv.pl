@@ -78,9 +78,8 @@ sub new {
 
 sub check_for_backup_failure {
    my $self = shift;
-   my $action = shift;
 
-   $self->zfs_destroy_snapshot($action);
+   $self->zfs_destroy_snapshot();
 }
 
 sub command_support {
@@ -102,49 +101,44 @@ sub command_support {
 sub command_selfcheck {
     my $self = shift;
 
-    $self->zfs_set_value("check");
+    $self->zfs_set_value();
 
     if (!defined $self->{device}) {
 	return;
     }
 
     if ($self->{error_status} == $Amanda::Script_App::GOOD) {
-	$self->zfs_create_snapshot("check");
-	$self->zfs_destroy_snapshot("check");
+	$self->zfs_create_snapshot();
+	$self->zfs_destroy_snapshot();
 	print "OK " . $self->{disk} . "\n";
 	print "OK " . $self->{device} . "\n";
     }
 
     if ($#{$self->{include_list}} >= 0) {
-	$self->print_to_server($self->{action},
-			       "include-list not supported for backup",
+	$self->print_to_server("include-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
     if ($#{$self->{exclude_list}} >= 0) {
-	$self->print_to_server($self->{action},
-			       "exclude-list not supported for backup",
+	$self->print_to_server("exclude-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
 }
 
 sub command_estimate() {
     my $self = shift;
-
     my $level = 0;
 
     if ($#{$self->{include_list}} >= 0) {
-	$self->print_to_server($self->{action},
-			       "include-list not supported for backup",
+	$self->print_to_server("include-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
     if ($#{$self->{exclude_list}} >= 0) {
-	$self->print_to_server($self->{action},
-			       "exclude-list not supported for backup",
+	$self->print_to_server("exclude-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
 
-    $self->zfs_set_value("estimate");
-    $self->zfs_create_snapshot("estimate");
+    $self->zfs_set_value();
+    $self->zfs_create_snapshot();
 
     while (defined ($level = shift @{$self->{level}})) {
       debug "Estimate of level $level";
@@ -152,7 +146,7 @@ sub command_estimate() {
       output_size($level, $size);
     }
 
-    $self->zfs_destroy_snapshot("estimate");
+    $self->zfs_destroy_snapshot();
 
     exit 0;
 }
@@ -175,26 +169,22 @@ sub command_backup {
     my $self = shift;
 
     my $mesgout_fd;
-    $self->{action} = 'backup';
     open($mesgout_fd, '>&=3') ||
-	$self->print_to_server_and_die($self->{action},
-				       "Can't open mesgout_fd: $!",
+	$self->print_to_server_and_die("Can't open mesgout_fd: $!",
 				       $Amanda::Script_App::ERROR);
     $self->{mesgout} = $mesgout_fd;
 
     if ($#{$self->{include_list}} >= 0) {
-	$self->print_to_server($self->{action},
-			       "include-list not supported for backup",
+	$self->print_to_server("include-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
     if ($#{$self->{exclude_list}} >= 0) {
-	$self->print_to_server($self->{action},
-			       "exclude-list not supported for backup",
+	$self->print_to_server("exclude-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
 
-    $self->zfs_set_value("backup");
-    $self->zfs_create_snapshot("backup");
+    $self->zfs_set_value();
+    $self->zfs_create_snapshot();
 
     my $size = -1;
     my $level = $self->{level}[0];
@@ -208,7 +198,7 @@ sub command_backup {
       if ($refsnapshotname ne "") {
         $cmd = "$self->{pfexec_cmd} $self->{zfs_path} send -i $refsnapshotname $self->{filesystem}\@$self->{snapshot} | $Amanda::Paths::amlibexecdir/teecount";
       } else {
-        $self->print_to_server_and_die($self->{action}, "cannot backup snapshot '$self->{filesystem}\@$self->{snapshot}': reference snapshot doesn't exists for level $level", $Amanda::Script_App::ERROR);
+        $self->print_to_server_and_die("cannot backup snapshot '$self->{filesystem}\@$self->{snapshot}': reference snapshot doesn't exists for level $level", $Amanda::Script_App::ERROR);
       }
     }
 
@@ -223,9 +213,9 @@ sub command_backup {
     close $err;
     if ($? !=  0) {
         if (defined $errmsg) {
-            $self->print_to_server_and_die($self->{action}, $errmsg, $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die($errmsg, $Amanda::Script_App::ERROR);
         } else {
-            $self->print_to_server_and_die($self->{action}, "cannot backup snapshot '$self->{filesystem}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die("cannot backup snapshot '$self->{filesystem}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
         }
     }
     $size = $errmsg;
@@ -238,12 +228,12 @@ sub command_backup {
     print $mesgout_fd "sendbackup: end\n";
 
     # destroy all snapshot of this level and higher
-    $self->zfs_purge_snapshot($level, 9, "backup");
+    $self->zfs_purge_snapshot($level, 9);
 
     if ($self->{keep_snapshot} eq 'YES') {
-	$self->zfs_rename_snapshot($level, "backup");
+	$self->zfs_rename_snapshot($level);
     } else {
-	$self->zfs_destroy_snapshot("backup");
+	$self->zfs_destroy_snapshot();
     }
 
     exit 0;
@@ -253,7 +243,6 @@ sub estimate_snapshot
 {
     my $self = shift;
     my $level = shift;
-    my $action = shift;
 
     debug "\$filesystem = $self->{filesystem}";
     debug "\$snapshot = $self->{snapshot}";
@@ -283,13 +272,13 @@ sub estimate_snapshot
     close $err;
     if ($? !=  0) {
         if (defined $msg && defined $errmsg) {
-            $self->print_to_server_and_die($action, "$msg, $errmsg", $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die("$msg, $errmsg", $Amanda::Script_App::ERROR);
         } elsif (defined $msg) {
-            $self->print_to_server_and_die($action, $msg, $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die($msg, $Amanda::Script_App::ERROR);
         } elsif (defined $errmsg) {
-            $self->print_to_server_and_die($action, $errmsg, $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die($errmsg, $Amanda::Script_App::ERROR);
         } else {
-	    $self->print_to_server_and_die($action, "cannot estimate snapshot '$self->{snapshot}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
+	    $self->print_to_server_and_die("cannot estimate snapshot '$self->{snapshot}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
 	}
     }
     if ($level == 0) {
@@ -304,7 +293,6 @@ sub estimate_snapshot
 sub get_compratio
 {
     my $self = shift;
-    my $action = shift;
 
     my $cmd;
     $cmd =  "$self->{pfexec_cmd} $self->{zfs_path} get -Hp -o value compressratio $self->{filesystem}\@$self->{snapshot}";
@@ -320,13 +308,13 @@ sub get_compratio
     close $err;
     if ($? !=  0) {
         if (defined $msg && defined $errmsg) {
-            $self->print_to_server_and_die($action, "$msg, $errmsg", $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die("$msg, $errmsg", $Amanda::Script_App::ERROR);
         } elsif (defined $msg) {
-            $self->print_to_server_and_die($action, $msg, $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die($msg, $Amanda::Script_App::ERROR);
         } elsif (defined $errmsg) {
-            $self->print_to_server_and_die($action, $errmsg, $Amanda::Script_App::ERROR);
+            $self->print_to_server_and_die($errmsg, $Amanda::Script_App::ERROR);
         } else {
-	    $self->print_to_server_and_die($action, "cannot read compression ratio '$self->{snapshot}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
+	    $self->print_to_server_and_die("cannot read compression ratio '$self->{snapshot}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
 	}
     }
     return $msg
@@ -338,9 +326,11 @@ sub command_index_from_output {
 sub command_index_from_image {
 }
 
-sub command_restore {
-  #TODO
-}
+#sub command_restore {
+#    my $self = shift;
+#
+#TODO
+#}
 
 sub command_print_command {
 }

@@ -72,16 +72,15 @@ sub new {
 
 sub zfs_snapshot_set_value() {
    my $self   = shift;
-   my $action = shift;
 
-   $self->zfs_set_value($action);
+   $self->zfs_set_value();
 
    if (!defined $self->{device}) {
        return;
    }
 
    if (!defined $self->{mountpoint}) {
-       $self->print_to_server($action, "$self->{disk} is not a directory", $Amanda::Script_App::ERROR);
+       $self->print_to_server("$self->{disk} is not a directory", $Amanda::Script_App::ERROR);
 	
    }
 }
@@ -102,7 +101,7 @@ sub command_support {
 sub command_pre_dle_amcheck {
     my $self = shift;
 
-    $self->zfs_snapshot_set_value("check");
+    $self->zfs_snapshot_set_value();
 
     if (!defined $self->{device}) {
 	return;
@@ -110,11 +109,11 @@ sub command_pre_dle_amcheck {
 
     if ($self->{error_status} == $Amanda::Script_App::GOOD) {
 	if (defined $self->{mountpoint}) {
-	    $self->print_to_server("check", "mountpoint $self->{mountpoint}", $Amanda::Script_App::GOOD);
-	    $self->print_to_server("check", "directory $self->{directory}", $Amanda::Script_App::GOOD);
-	    $self->print_to_server("check", "dir $self->{dir}", $Amanda::Script_App::GOOD);
+	    $self->print_to_server("mountpoint $self->{mountpoint}", $Amanda::Script_App::GOOD);
+	    $self->print_to_server("directory $self->{directory}", $Amanda::Script_App::GOOD);
+	    $self->print_to_server("dir $self->{dir}", $Amanda::Script_App::GOOD);
 	}
-	$self->print_to_server("check", "snapshot $self->{snapshot}", $Amanda::Script_App::GOOD);
+	$self->print_to_server("snapshot $self->{snapshot}", $Amanda::Script_App::GOOD);
 	$self->zfs_create_snapshot("check");
 	print "PROPERTY directory $self->{directory}\n";
     }
@@ -123,7 +122,7 @@ sub command_pre_dle_amcheck {
 sub command_post_dle_amcheck {
     my $self = shift;
 
-    $self->zfs_snapshot_set_value("check");
+    $self->zfs_snapshot_set_value();
 
     if (!defined $self->{device}) {
 	return;
@@ -135,7 +134,7 @@ sub command_post_dle_amcheck {
 sub command_pre_dle_estimate {
     my $self = shift;
 
-    $self->zfs_snapshot_set_value("estimate");
+    $self->zfs_snapshot_set_value();
     if ($self->{error_status} == $Amanda::Script_App::GOOD) {
 	$self->zfs_create_snapshot("estimate");
 	print "PROPERTY directory $self->{directory}\n";
@@ -145,14 +144,14 @@ sub command_pre_dle_estimate {
 sub command_post_dle_estimate {
     my $self = shift;
 
-    $self->zfs_snapshot_set_value("estimate");
+    $self->zfs_snapshot_set_value();
     $self->zfs_destroy_snapshot("estimate");
 }
 
 sub command_pre_dle_backup {
     my $self = shift;
 
-    $self->zfs_snapshot_set_value("backup");
+    $self->zfs_snapshot_set_value();
     if ($self->{error_status} == $Amanda::Script_App::GOOD) {
 	$self->zfs_create_snapshot("backup");
 	print "PROPERTY directory $self->{directory}\n";

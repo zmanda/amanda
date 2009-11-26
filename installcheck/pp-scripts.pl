@@ -109,8 +109,8 @@ unlink $templog;
 ok(run('amcheck', '-c', 'TESTCONF'), "amcheck runs successfully for client scripts.");
 
 verify_log("amcheck invokes correct script commands",
-    "TESTCONF pre-dle-amcheck client localhost diskname1 $diskname",
-    "TESTCONF post-dle-amcheck client localhost diskname1 $diskname",
+    "check TESTCONF pre-dle-amcheck client localhost diskname1 $diskname",
+    "check TESTCONF post-dle-amcheck client localhost diskname1 $diskname",
 );
 
 unlink $templog;
@@ -118,10 +118,10 @@ ok(run('amdump', 'TESTCONF'), "amdump runs successfully for client scripts.")
     or amdump_diag();
 
 verify_log("amdump invokes correct script commands",
-    "TESTCONF pre-dle-estimate client localhost diskname1 $diskname 0",
-    "TESTCONF post-dle-estimate client localhost diskname1 $diskname 0",
-    "TESTCONF pre-dle-backup client localhost diskname1 $diskname 0",
-    "TESTCONF post-dle-backup client localhost diskname1 $diskname 0",
+    "estimate TESTCONF pre-dle-estimate client localhost diskname1 $diskname 0",
+    "estimate TESTCONF post-dle-estimate client localhost diskname1 $diskname 0",
+    "backup TESTCONF pre-dle-backup client localhost diskname1 $diskname 0",
+    "backup TESTCONF post-dle-backup client localhost diskname1 $diskname 0",
 );
 
 Installcheck::Run::cleanup();
@@ -152,8 +152,8 @@ unlink $templog;
 ok(run('amcheck', '-c', 'TESTCONF'), "amcheck runs successfully for server scripts.");
 
 verify_log("amcheck invokes correct script commands",
-    "TESTCONF pre-host-amcheck server localhost diskname2 $diskname",
-    "TESTCONF post-host-amcheck server localhost diskname2 $diskname",
+    "check TESTCONF pre-host-amcheck server localhost diskname2 $diskname",
+    "check TESTCONF post-host-amcheck server localhost diskname2 $diskname",
 );
 
 unlink $templog;
@@ -161,10 +161,10 @@ ok(run('amdump', 'TESTCONF'), "amdump runs successfully for server scripts.")
     or amdump_diag();
 
 verify_log("amdump invokes correct script commands",
-    "TESTCONF pre-host-estimate server localhost diskname2 $diskname 0",
-    "TESTCONF post-host-estimate server localhost diskname2 $diskname 0",
-    "TESTCONF pre-host-backup server localhost diskname2 $diskname",
-    "TESTCONF post-host-backup server localhost diskname2 $diskname",
+    "estimate TESTCONF pre-host-estimate server localhost diskname2 $diskname 0",
+    "estimate TESTCONF post-host-estimate server localhost diskname2 $diskname 0",
+    "backup TESTCONF pre-host-backup server localhost diskname2 $diskname",
+    "backup TESTCONF post-host-backup server localhost diskname2 $diskname",
 );
 
 unlink $templog;
@@ -214,9 +214,9 @@ unlink $templog;
 ok(run('amcheck', '-c', 'TESTCONF'), "amcheck runs successfully for ordered scripts.");
 
 verify_log("amcheck invokes script in correct order",
-    "TESTCONF pre-host-amcheck client localhost diskname2 $diskname  40",
-    "TESTCONF pre-host-amcheck client localhost diskname2 $diskname  50",
-    "TESTCONF pre-host-amcheck client localhost diskname2 $diskname  60",
+    "check TESTCONF pre-host-amcheck client localhost diskname2 $diskname  40",
+    "check TESTCONF pre-host-amcheck client localhost diskname2 $diskname  50",
+    "check TESTCONF pre-host-amcheck client localhost diskname2 $diskname  60",
 );
 
 
