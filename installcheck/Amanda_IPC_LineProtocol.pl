@@ -151,8 +151,8 @@ my $quit_cb = make_cb(quit_cb => sub {
 
 $proto = TestProtocol->new(
     rx_fh => $rx_fh, tx_fh => $tx_fh,
-    message_cb => $message_cb,
-    TestProtocol::QUIT => $quit_cb);
+    message_cb => $message_cb);
+$proto->set_message_cb(TestProtocol::QUIT, $quit_cb);
 Amanda::MainLoop::call_later(sub {
     $tx_fh->autoflush(1);
     $tx_fh->write("start\n");
@@ -183,8 +183,8 @@ is_deeply([ @events ],
 
 $proto = TestProtocol->new(
     rx_fh => $rx_fh, tx_fh => $tx_fh,
-    message_cb => sub { push @events, [ @_ ]; },
-    TestProtocol::QUIT => $quit_cb);
+    message_cb => sub { push @events, [ @_ ]; });
+$proto->set_message_cb(TestProtocol::QUIT, $quit_cb);
 Amanda::MainLoop::call_later(sub {
     $tx_fh->autoflush(1);
     $tx_fh->write("start\n");
@@ -224,12 +224,12 @@ is_deeply([ @events ],
 
 $proto = TestProtocol->new(
     rx_fh => $rx_fh, tx_fh => $tx_fh,
-    message_cb => $message_cb,
-    TestProtocol::QUIT => $quit_cb,
-    TestProtocol::FOO => sub {
-	push @events, [ shift @_, { @_ } ];
-        $proto->send(TestProtocol::SIMPLE);
-    });
+    message_cb => $message_cb);
+$proto->set_message_cb(TestProtocol::QUIT, $quit_cb);
+$proto->set_message_cb(TestProtocol::FOO, sub {
+    push @events, [ shift @_, { @_ } ];
+    $proto->send(TestProtocol::SIMPLE);
+});
 Amanda::MainLoop::run();
 waitpid($pid, 0);
 
@@ -258,9 +258,9 @@ is_deeply([ @events ],
 
 $proto = TestProtocol->new(
     rx_fh => $rx_fh, tx_fh => $tx_fh,
-    message_cb => $message_cb,
-    TestProtocol::QUIT => $quit_cb,
-    TestProtocol::ASSYM => sub {
+    message_cb => $message_cb);
+$proto->set_message_cb(TestProtocol::QUIT, $quit_cb);
+$proto->set_message_cb(TestProtocol::ASSYM, sub {
 	push @events, [ shift @_, { @_ } ];
         $proto->send(TestProtocol::ASSYM, x => "a");
     });
@@ -311,8 +311,8 @@ my $NMSGS = 10000;
 
 $proto = TestProtocol->new(
     rx_fh => $rx_fh, tx_fh => $tx_fh,
-    message_cb => $message_cb,
-    TestProtocol::QUIT => $quit_cb);
+    message_cb => $message_cb);
+$proto->set_message_cb(TestProtocol::QUIT, $quit_cb);
 $proto->set_message_cb(TestProtocol::BAR => sub {
 	push @events, [ shift @_, { @_ } ];
     });
@@ -378,8 +378,8 @@ package main;
 
 $proto = TestProtocol->new(
     rx_fh => $rx_fh, tx_fh => $tx_fh,
-    message_obj => bless(\@events, "main::MessageObj"),
-    TestProtocol::QUIT => $quit_cb);
+    message_obj => bless(\@events, "main::MessageObj"));
+$proto->set_message_cb(TestProtocol::QUIT, $quit_cb);
 Amanda::MainLoop::run();
 waitpid($pid, 0);
 

@@ -64,10 +64,10 @@ Define your protocol:
     $proto = MyProtocol->new(
 	    rx_fh => $input_fh,
 	    tx_fh => $output_fh,
-	    message_cb => $message_cb,
-	    MyProtocol::PING => $ping_cb);
+	    message_cb => $message_cb);
 
-    # or, to add callbacks afterward
+    # and add callbacks
+    $proto->set_message_cb(MyProtocol::PING, $ping_cb);
     $proto->set_message_cb(MyProtocol::PONG, $pong_cb);
 
     # or send messages to an object, with method names based on
@@ -191,8 +191,8 @@ C<CollegeProtocol> running on that socket:
   my $proto = CollegeProtocol->new(
     rx_fh => $sockh,
     tx_fh => $sockh,
-    CollegeProtocol::PIZZA_DELIVERY => $pizza_delivery_cb,
   );
+  $proto->set_message_cb(CollegeProtocol::PIZZA_DELIVERY, $pizza_delivery_cb);
 
 For protocols with a lot of message types, it may be useful to have the
 protocol call methods on an object.  This is done with the C<message_obj>
@@ -320,15 +320,6 @@ sub new {
 	# a ref to the existing structure
 	msgspecs => $msgspecs_by_protocol{$class},
     }, $class;
-
-    # strip the known values from %params and use the rest as
-    # command callbacks
-    delete $params{'debug'};
-    delete $params{'rx_fh'};
-    delete $params{'tx_fh'};
-    delete $params{'message_cb'};
-    delete $params{'message_obj'};
-    $self->{'cmd_cbs'} = \%params;
 
     # set nonblocking mode on both file descriptor, but only for non-tty
     # handles -- non-blocking tty's don't work well at all.
