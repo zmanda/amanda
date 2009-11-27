@@ -1,4 +1,8 @@
 2009-11-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Mock.pm: perl-5.6's abs_path
+	  expects the path to point to a directory, not a file
+
+2009-11-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_IPC_Binary.pl perl/Amanda/Changer/robot.pm
 	  perl/Amanda/IPC/Binary.pod: perl-5.6 does not support use
 	  constant with a hash of constants.

@@ -77,7 +77,7 @@ sub setup_mock_mtx {
     return $state_filename;
 }
 
-our $mock_mtx_path = abs_path("mock/mtx");
+our $mock_mtx_path = abs_path("mock") . "/mtx"; # abs_path only does dirs in perl-5.6
 
 sub run_ndmjob {
     my ($port) = @_;
