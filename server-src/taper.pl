@@ -585,7 +585,7 @@ sub do_start_xfer {
     $start_xfer_args{'dump_cb'} = sub { $self->dump_cb(@_); };
     $start_xfer_args{'xfer_elements'} = [ $xfer_source ];
     $start_xfer_args{'dump_header'} = $hdr;
-    if ($hdr->{'dumplevel'} ne $params{'level'}
+    if ($hdr->{'dumplevel'} != $params{'level'}
 	or $hdr->{'name'} ne $params{'hostname'}
 	or $hdr->{'disk'} ne $params{'diskname'}) {
 	die("Header of dumpfile does not match FILE_WRITE command");

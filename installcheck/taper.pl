@@ -305,7 +305,7 @@ check_logs([
     sub is_hdr {
 	my ($hdr, $expected, $msg) = @_;
 	my $got = {};
-	for (keys %$expected) { $got->{$_} = $hdr->{$_}; }
+	for (keys %$expected) { $got->{$_} = "".$hdr->{$_}; }
 	if (!is_deeply($got, $expected, $msg)) {
 	    diag("got: " . Dumper($got));
 	}

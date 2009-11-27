@@ -129,6 +129,7 @@ sub main {
     my $hdr;
     my $filenum = $opt_filenum;
     $filenum = 1 if (!$filenum);
+    $filenum = 0 + "$filenum"; # convert to integer
 
     $subs{'start'} = make_cb(start => sub {
 	# first, return to the original working directory we were started in

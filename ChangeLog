@@ -1,4 +1,10 @@
 2009-11-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Config.pl installcheck/taper.pl
+	  perl/Amanda/Config.swg server-src/amrestore.pl
+	  server-src/taper.pl: handle older perls' bad conversions
+	  from BigInt to integers or strings
+
+2009-11-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Holding.pl installcheck/amrestore.pl:
 	  use unary + before the arguments to sort, since perl-5.6's
 	  parser gets confused otherwise

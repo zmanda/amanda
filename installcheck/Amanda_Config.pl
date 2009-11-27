@@ -329,7 +329,8 @@ SKIP: { # dumptypes
 	  'optional' => 0 },
 	"dumptype exclude list");
     is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_ESTIMATELIST),
-	      [ $ES_SERVER, $ES_CALCSIZE, $ES_CLIENT ]);
+	      [ $ES_SERVER, $ES_CALCSIZE, $ES_CLIENT ],
+	"dumptype estimate list");
     is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_PROPERTY),
 	      { "prop" => { priority => 0, append => 0, values => ["erty"]},
 		"drop" => { priority => 0, append => 0,

@@ -430,7 +430,7 @@ amglue_copy_to_tag(data_path_t, getconf);
 		AV *elist = newAV();
 		estimatelist_t el;
 		for (el=val_t__estimatelist($1); el != NULL; el = el->next) {
-		    av_push(elist, amglue_newSVi64(GPOINTER_TO_INT(el->data)));
+		    av_push(elist, newSVuv(GPOINTER_TO_INT(el->data)));
 		}
 		$result = sv_2mortal(newRV_noinc((SV *)elist));
 		argvi++;
