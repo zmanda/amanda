@@ -1,4 +1,9 @@
 2009-11-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Taper_Scribe.pl: flatten changer errors
+	  to strings, since older perls' Test::More::is_deeply do not
+	  handle this well
+
+2009-11-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/IPC/LineProtocol.pm: remove per-message callbacks
 	  from the constructor, since => quotes its left-hand side
 	* installcheck/Amanda_IPC_LineProtocol.pl: don't use per-message

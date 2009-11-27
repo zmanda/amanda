@@ -129,7 +129,7 @@ sub scan {
 	my ($err, $res) = @_;
 
 	my $slot = $res? $res->{'this_slot'} : "none";
-	main::event("scan-finished", $err, "slot: $slot");
+	main::event("scan-finished", main::undef_or_str($err), "slot: $slot");
 
 	if ($err) {
 	    $result_cb->($err);
@@ -171,7 +171,7 @@ sub notif_scan_finished {
     my $slot = $params{'reservation'}? $params{'reservation'}->{'this_slot'} : "none";
 
     main::event("notif_scan_finished",
-	$params{'error'}, "slot: $slot", $params{'volume_label'});
+	main::undef_or_str($params{'error'}), "slot: $slot", $params{'volume_label'});
 }
 
 sub notif_new_tape {
@@ -179,7 +179,7 @@ sub notif_new_tape {
     my %params = @_;
 
     main::event("notif_new_tape",
-	$params{'error'}, $params{'volume_label'});
+	main::undef_or_str($params{'error'}), $params{'volume_label'});
 }
 
 sub notif_part_done {
@@ -198,6 +198,10 @@ sub notif_part_done {
 ##
 
 package main;
+
+# utility fn to stringify changer errors (earlier perls' Test::More's
+# fail to do this automatically)
+sub undef_or_str { (defined $_[0])? "".$_[0] : undef; }
 
 sub run_devh {
     my ($nruns, $taperscan, $feedback) = @_;
@@ -238,7 +242,7 @@ sub run_devh {
 	my ($scan_error, $request_denied_reason, $reservation, $volume_label, $access_mode) = @_;
 
 	event("got_volume",
-	    $scan_error,
+	    undef_or_str($scan_error),
 	    $request_denied_reason,
 	    $reservation? ("slot: ".$reservation->{'this_slot'}) : undef);
 
@@ -379,8 +383,10 @@ sub run_scribe_xfer {
 	my %params = @_;
 
 	main::event("dump_cb",
-	    $params{'result'}, $params{'input_errors'},
-	    $params{'device_errors'}, $params{'size'});
+	    $params{'result'},
+	    [ map { undef_or_str($_) } @{ $params{'input_errors'} } ],
+	    [ map { undef_or_str($_) } @{ $params{'device_errors'} } ],
+	    $params{'size'});
 
 	Amanda::MainLoop::quit();
     });
@@ -500,7 +506,7 @@ reset_events();
 $scribe->start(dump_timestamp => "20010203040507");
 run_scribe_xfer($volume_length + $volume_length / 4, $scribe);
 
-$experr = chgerr('failed', 'reason' => 'notfound', 'message' => 'Slot bogus not found');
+$experr = 'Slot bogus not found';
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'request_volume_permission', 'answer:', undef ],
@@ -536,7 +542,6 @@ reset_events();
 $scribe->start(dump_timestamp => "20010203040507");
 run_scribe_xfer($volume_length + $volume_length / 4, $scribe);
 
-$experr = chgerr('failed', 'reason' => 'notfound', 'message' => 'Slot bogus not found');
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'request_volume_permission', 'answer:', undef ],
