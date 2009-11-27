@@ -121,7 +121,7 @@ make_holding(
     [ $holding3, '20070306123456', 'olfactory', '/stinky', 1 ],
 );
 
-is_deeply([ sort(Amanda::Holding::disks()) ],
+is_deeply([ sort(+Amanda::Holding::disks()) ],
     [ sort($holding1, $holding2) ],
     "all active holding disks, but not inactive (defined but not used) disks");
 

@@ -1,4 +1,7 @@
 2009-11-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Holding.pl: add one more unary +
+
+2009-11-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_IPC_LineProtocol.pl: use , instead
 	  of => when the left-hand-side shouldn't be quoted
 
