@@ -1,4 +1,8 @@
 2009-11-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_IPC_LineProtocol.pl: use , instead
+	  of => when the left-hand-side shouldn't be quoted
+
+2009-11-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Config.pl installcheck/taper.pl
 	  perl/Amanda/Config.swg server-src/amrestore.pl
 	  server-src/taper.pl: handle older perls' bad conversions

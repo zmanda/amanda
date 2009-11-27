@@ -313,7 +313,7 @@ $proto = TestProtocol->new(
     rx_fh => $rx_fh, tx_fh => $tx_fh,
     message_cb => $message_cb);
 $proto->set_message_cb(TestProtocol::QUIT, $quit_cb);
-$proto->set_message_cb(TestProtocol::BAR => sub {
+$proto->set_message_cb(TestProtocol::BAR, sub {
 	push @events, [ shift @_, { @_ } ];
     });
 
