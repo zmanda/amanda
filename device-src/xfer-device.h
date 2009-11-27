@@ -76,6 +76,7 @@ typedef struct {
 		       dumpfile_t *header);
     void (*cache_inform)(XferDestTaper *self, const char *filename, off_t offset,
 			 off_t length);
+    guint64 (*get_part_bytes_written)(XferDestTaper *self);
 } XferDestTaperClass;
 
 /* start writing the next part to the given device.  The device should be open,
@@ -111,6 +112,13 @@ void xfer_dest_taper_cache_inform(
     const char *filename,
     off_t offset,
     off_t length);
+
+/* Return the number of bytes written for the current part.
+ *
+ * @param self: the XferDestTaper object
+ */
+guint64 xfer_dest_taper_get_part_bytes_written(
+    XferElement *self);
 
 /* Constructor for XferDestTaperSplitter, which writes data to devices block by
  * block and handles caching and splitting parts.

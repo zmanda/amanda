@@ -123,6 +123,7 @@ use Amanda::Logfile qw( :logtype_t log_add );
 use Amanda::Xfer;
 use Amanda::Util qw( quote_string );
 use Amanda::Tapelist;
+use File::Temp;
 
 use base qw( Amanda::Taper::Scribe::Feedback );
 
@@ -496,6 +497,27 @@ sub msg_PORT_WRITE {
 	# parse the header
 	my $hdr = Amanda::Header->from_string($hdr_buf);
 
+	if ($self->{'data_path'} == $Amanda::Config::DATA_PATH_AMANDA) {
+	    # create temporary file
+		($self->{status_fh}, $self->{status_filename}) =
+		File::Temp::tempfile("taper_status_file_XXXXXX",
+				     DIR => $Amanda::Paths::AMANDA_TMPDIR,
+				     UNLINK => 1);
+	    print STDERR "taper: status file $hdr->{name} " .
+			 quote_string($hdr->{disk}) .
+			 ": $self->{status_filename}\n";
+	    print {$self->{status_fh}} "0";
+
+	    # create timer callback
+	    $self->{timer} = Amanda::MainLoop::timeout_source(5);
+	    $self->{timer}->set_callback(sub {
+		my $size = $self->{scribe}->get_bytes_written();
+		seek $self->{status_fh}, 0, 0;
+		print {$self->{status_fh}} $size;
+		$self->{status_fh}->flush();
+	    });
+	}
+
 	# and start up the transfer
 	$self->{'incoming_socket'}->blocking(1);
 	my $xfer_src = Amanda::Xfer::Source::Fd->new($self->{'incoming_socket'}->fileno());
@@ -715,6 +737,15 @@ sub dump_cb {
     } elsif ($params{'result'} eq 'FAILED') {
 	$msgtype = main::Protocol::FAILED;
 	$logtype = $L_FAIL;
+    }
+
+    if ($self->{timer}) {
+	$self->{timer}->remove();
+	undef $self->{timer};
+	$self->{status_fh}->close();
+	undef $self->{status_fh};
+	unlink($self->{status_filename});
+	undef $self->{status_filename};
     }
 
     my $stats = $self->make_stats($params{'size'}, $params{'duration'});

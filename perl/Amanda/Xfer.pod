@@ -314,13 +314,18 @@ purposes.
 
   $dest->cache_inform($filename, $offset, $length);
 
-This function indictes that C<$filename> contains C<$length> bytes of
+This function indicates that C<$filename> contains C<$length> bytes of
 data, beginning at offset C<$offset> from the beginning of the file.
 These bytes are assumed to follow immediately after any bytes
 previously specified to C<cache_inform>.  That is, no gaps or overlaps
 are allowed in the data stream described to C<cache_inform>.
 Furthermore, the location of each byte must be specified to this
 method I<before> it is sent through the transfer.
+
+  $dest->get_part_bytes_written()
+
+This function returns the number of bytes written for the current part
+to the device.
 
 =head1 Amanda::Xfer::Msg objects
 

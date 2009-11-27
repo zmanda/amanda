@@ -1,3 +1,17 @@
+2009-11-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Display % done on port-write.
+	* device-src/xfer-device.h: New get_part_bytes_written method in
+				    XferDestTaperClass.
+	* device-src/xfer-dest-taper.c: new
+			xfer_dest_taper_get_part_bytes_written function.
+	* device-src/xfer-dest-taper-splitter.c: New 
+			get_part_bytes_written_impl function.
+	* perl/Amanda/Taper/Scribe.pm: New get_bytes_written method.
+	* perl/Amanda/XferServer.swg: swig
+				      xfer_dest_taper_get_part_bytes_written.
+	* server-src/taper.pl: Update status file every 5 seconds.
+	* perl/Amanda/Xfer.pod: Document get_part_bytes_written.
+
 2009-11-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Holding.pl: add one more unary +
 

@@ -189,6 +189,9 @@ typedef struct XferDestTaperSplitter {
     /* bytes written to the device in this part */
     guint64 bytes_written;
 
+    /* bytes written to the device in the current slab */
+    guint64 slab_bytes_written;
+
     /* element state
      *
      * "state" includes all of the variables below (including device
@@ -944,6 +947,7 @@ write_slab_to_device(
 	}
 
 	buf += write_size;
+	self->slab_bytes_written += write_size;
 	remaining -= write_size;
     }
 
@@ -954,6 +958,7 @@ write_slab_to_device(
     }
 
     self->bytes_written += slab->size;
+    self->slab_bytes_written = 0;
     return TRUE;
 }
 
@@ -1124,6 +1129,7 @@ device_thread(
 	    break;
 
         g_mutex_unlock(self->state_mutex);
+	self->slab_bytes_written = 0;
 	DBG(2, "beginning to write part");
 	msg = device_thread_write_part(self);
 	DBG(2, "done writing part");
@@ -1441,6 +1447,14 @@ cache_inform_impl(
     g_mutex_unlock(self->state_mutex);
 }
 
+static guint64
+get_part_bytes_written_impl(
+    XferDestTaper *xdtself)
+{
+    XferDestTaperSplitter *self = XFER_DEST_TAPER_SPLITTER(xdtself);
+    return self->bytes_written + self->slab_bytes_written;
+}
+
 static void
 instance_init(
     XferElement *elt)
@@ -1530,6 +1544,7 @@ class_init(
     klass->push_buffer = push_buffer_impl;
     xdt_klass->start_part = start_part_impl;
     xdt_klass->cache_inform = cache_inform_impl;
+    xdt_klass->get_part_bytes_written = get_part_bytes_written_impl;
     goc->finalize = finalize_impl;
 
     klass->perl_class = "Amanda::Xfer::Dest::Taper::Splitter";

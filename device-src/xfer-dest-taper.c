@@ -87,3 +87,17 @@ xfer_dest_taper_cache_inform(
     klass = XFER_DEST_TAPER_GET_CLASS(elt);
     klass->cache_inform(XFER_DEST_TAPER(elt), filename, offset, length);
 }
+
+guint64
+xfer_dest_taper_get_part_bytes_written(
+    XferElement *elt G_GNUC_UNUSED)
+{
+    XferDestTaperClass *klass;
+    g_assert(IS_XFER_DEST_TAPER(elt));
+
+    klass = XFER_DEST_TAPER_GET_CLASS(elt);
+    if (klass->get_part_bytes_written)
+	return klass->get_part_bytes_written(XFER_DEST_TAPER(elt));
+    else
+	return 0;
+}

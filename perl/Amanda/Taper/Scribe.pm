@@ -214,6 +214,10 @@ C<finished_cb>.
     print "ALL DONE!\n";
   });
 
+=head2 GET_BYTES_WRITTEN
+
+The C<get_bytes_written> return the number of bytes written to the device.
+
 =head1 FEEDBACK
 
 The C<Amanda::Taper::Scribe::Feedback> class is intended to be
@@ -479,6 +483,16 @@ sub start_xfer {
 	return $self->_get_new_volume($finish_starting_xfer);
     } else {
 	$finish_starting_xfer->();
+    }
+}
+
+sub get_bytes_written {
+    my ($self) = @_;
+
+    if (defined $self->{'xdt'}) {
+	return $self->{'size'} + $self->{'xdt'}->get_part_bytes_written();
+    } else {
+	return $self->{'size'};
     }
 }
 

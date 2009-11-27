@@ -165,6 +165,8 @@ else {
 open(AMDUMP,"<$errfile") || die("$errfile: $!");
 print "Using $errfile\n";
 
+my $taper_status_file;
+
 $start_degraded_mode = 0;
 
 $label = "";					# -w fodder
@@ -596,6 +598,7 @@ while($lineX = <AMDUMP>) {
 					if ($ntchunk_size > 0) {
 						$ntchunk{$nb_tape}++;
 					}
+					undef $taper_status_file;
 				}
 				elsif($line[6] eq "PARTDONE") {
 					#7:handle 8:label 9:filenum 10:ksize 11:errstr
@@ -647,6 +650,7 @@ while($lineX = <AMDUMP>) {
 					} else {
 						$exit_status |= $STATUS_TAPE;
 					}
+					undef $taper_status_file;
 				}
 				elsif($line[6] eq "FAILED") {
 					#7:handle 8:INPUT- 9:TAPE- 10:input_message 11:tape_message
@@ -667,6 +671,7 @@ while($lineX = <AMDUMP>) {
 						$taper_time{$hostpart}=$current_time;
 						$error{$hostpart}="$error";
 					}
+					undef $taper_status_file;
 				}
 			}
 		}
@@ -763,8 +768,12 @@ while($lineX = <AMDUMP>) {
 			$ntsize{$nb_tape} = 0;
 			$ntesize{$nb_tape} = 0;
 		}
+		elsif($line[1] eq "status" && $line[2] eq "file") {
+			#1:"status" #2:"file:" #3:hostname #4:diskname #5:filename
+			$taper_status_file = $line[5];
+		}
 	}
-   elsif($line[0] eq "splitting" &&
+	elsif($line[0] eq "splitting" &&
 			 $line[1] eq "chunk" &&
 			 $line[2] eq "that" &&
 			 $line[3] eq "started" &&
@@ -773,7 +782,7 @@ while($lineX = <AMDUMP>) {
 		$line[7] =~ /(\d*)kb/;
 		$size = $1;
 		$ntchunk{$nb_tape}++;
-	   $ntsize{$nb_tape} += $size / $unitdivisor;
+		$ntsize{$nb_tape} += $size / $unitdivisor;
 		$ntesize{$nb_tape} += $size / $unitdivisor;
 		$ntchunk_size += $size / $unitdivisor;
 	}
@@ -946,9 +955,22 @@ foreach $host (sort @hosts) {
 								$exit_status |= $STATUS_FAILED;
 							}
 							print " dumping to tape";
-							if(defined($tapedsize{$hostpart})) {
-								printf " (%d$unit done (%0.2f%%))", $tapedsize{$hostpart}, 100.0 * $tapedsize{$hostpart}/$esize{$hostpart};
-								$dtsize += $tapedsize{$hostpart};
+							$size = $tapedsize{$hostpart};
+							if ($taper_status_file && -f $taper_status_file &&
+								open FF, "<$taper_status_file") {
+								$line = <FF>;
+								if (defined $line) {
+									chomp $line;
+									$value = $line / ($unitdivisor * 1024);
+									if ($value) {
+										$size = $value if (!defined($size) || $value > $size);
+									}
+								}
+								close FF;
+							}
+							if(defined($size)) {
+								printf " (%d$unit done (%0.2f%%))", $size, 100.0 * $size/$esize{$hostpart};
+								$dtsize += $size;
 							}
 							if( defined $starttime ) {
 								print " (", &showtime($taper_time{$hostpart}), ")";
@@ -974,8 +996,21 @@ foreach $host (sort @hosts) {
 							else {
 								print " flushing to tape";
 							}
-							if(defined($tapedsize{$hostpart})) {
-								printf " (%d$unit done (%0.2f%%))", $tapedsize{$hostpart}, 100.0 * $tapedsize{$hostpart}/$size{$hostpart};
+							$size = $tapedsize{$hostpart};
+							if ($taper_status_file &&  -f $taper_status_file &&
+								open FF, "<$taper_status_file") {
+								$line = <FF>;
+								if (defined $line) {
+									chomp $line;
+									$value = $line / ($unitdivisor * 1024);
+									if ($value) {
+										$size = $value if (!defined($size) || $value > $size);
+									}
+								}
+								close FF;
+							}
+							if(defined($size)) {
+								printf " (%d$unit done (%0.2f%%))", $size, 100.0 * $size/$esize{$hostpart};
 							}
 							if( defined $starttime ) {
 								print " (", &showtime($taper_time{$hostpart}), ")";
