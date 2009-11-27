@@ -499,13 +499,14 @@ sub msg_PORT_WRITE {
 
 	if ($self->{'data_path'} == $Amanda::Config::DATA_PATH_AMANDA) {
 	    # create temporary file
-		($self->{status_fh}, $self->{status_filename}) =
+	    ($self->{status_fh}, $self->{status_filename}) =
 		File::Temp::tempfile("taper_status_file_XXXXXX",
 				     DIR => $Amanda::Paths::AMANDA_TMPDIR,
 				     UNLINK => 1);
-	    print STDERR "taper: status file $hdr->{name} " .
-			 quote_string($hdr->{disk}) .
-			 ": $self->{status_filename}\n";
+	    my $disk = $hdr->{disk};
+	    my $qdisk = Amanda::Util::quote_string($disk);
+	    print STDERR "taper: status file $hdr->{name} $qdisk:" . 
+			 "$self->{status_filename}\n";
 	    print {$self->{status_fh}} "0";
 
 	    # create timer callback

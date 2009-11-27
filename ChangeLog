@@ -1,4 +1,7 @@
 2009-11-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper.pl: Fix quote_string use.
+
+2009-11-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Display % done on port-write.
 	* device-src/xfer-device.h: New get_part_bytes_written method in
 				    XferDestTaperClass.
