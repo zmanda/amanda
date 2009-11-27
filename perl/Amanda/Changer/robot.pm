@@ -111,19 +111,18 @@ See the amanda-changers(7) manpage for usage information.
 
 # constants for the states that slots may be in; note that these states still
 # apply even if the tape is actually loaded in a drive
-use constant {
-    # slot is known to contain no volume
-    SLOT_EMPTY => 0,
 
-    # slot contains a volume, but who knows what
-    SLOT_UNKNOWN => 1,
+# slot is known to contain no volume
+use constant SLOT_EMPTY => 0;
 
-    # slot contains an unlabled volume
-    SLOT_UNLABELED => 2,
+# slot contains a volume, but who knows what
+use constant SLOT_UNKNOWN => 1;
 
-    # slot contains a volume with a known label
-    SLOT_LABELED => 3,
-};
+# slot contains an unlabled volume
+use constant SLOT_UNLABELED => 2;
+
+# slot contains a volume with a known label
+use constant SLOT_LABELED => 3;
 
 sub new {
     my $class = shift;

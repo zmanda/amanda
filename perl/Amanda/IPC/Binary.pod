@@ -50,21 +50,19 @@ Begin with the subclass:
     use base "Amanda::IPC::Binary";
     use Amanda::IPC::Binary;
 
-Then define the constants for each command:
+Then define the constants for each command.  Note that the C<constant> pragma did
+not support the hash syntax in Perl-5.6, so this must be written as individual
+invocations of the constant:
 
-    use constant {
-	CMD1 => 1,
-	CMD2 => 2,
-    };
+    use constant CMD1 => 1;
+    use constant CMD2 => 2;
 
 Then the constants for each argument:
 
-    use constant {
-	USERNAME => 1,
-	PASSWORD => 2,
-	RESOURCE => 3,
-	USE_OVERDRIVE => 4,
-    };
+    use constant USERNAME => 1;
+    use constant PASSWORD => 2;
+    use constant RESOURCE => 3;
+    use constant USE_OVERDRIVE => 4;
 
 Next, give the magic value for the protocol:
 

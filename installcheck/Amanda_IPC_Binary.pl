@@ -37,19 +37,15 @@ use base "Amanda::IPC::Binary";
 use Amanda::IPC::Binary;
 
 # cmd_id's
-use constant {
-    SIMPLE => 1,
-    FOO => 2,
-    BAR => 3,
-};
+use constant SIMPLE => 1;
+use constant FOO => 2;
+use constant BAR => 3;
 
 # arg_id's
-use constant {
-    NAME => 1,
-    NICKNAME => 2,
-    MANDATORY => 3,
-    OPTIONAL => 4,
-};
+use constant NAME => 1;
+use constant NICKNAME => 2;
+use constant MANDATORY => 3;
+use constant OPTIONAL => 4;
 
 magic(0x1234);
 
