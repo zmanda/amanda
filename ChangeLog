@@ -1,4 +1,7 @@
 2009-11-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Small fix.
+
+2009-11-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.pl: Fix quote_string use.
 
 2009-11-27  Jean-Louis Martineau <martineau@zmanda.com>

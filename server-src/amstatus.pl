@@ -1010,7 +1010,7 @@ foreach $host (sort @hosts) {
 								close FF;
 							}
 							if(defined($size)) {
-								printf " (%d$unit done (%0.2f%%))", $size, 100.0 * $size/$esize{$hostpart};
+								printf " (%d$unit done (%0.2f%%))", $size, 100.0 * $size/$size{$hostpart};
 							}
 							if( defined $starttime ) {
 								print " (", &showtime($taper_time{$hostpart}), ")";
