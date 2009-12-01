@@ -1,4 +1,8 @@
 2009-12-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/single.pm: Use except_slot,
+					 It is not fast searchable.
+
+2009-12-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.h: Keep partnum and totalparts as int.
 	* server-src/find.c: Compute totalparts if -1.
 	* perl/Amanda/Logfile.swg: Change api.

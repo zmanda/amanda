@@ -79,6 +79,12 @@ sub load {
 
     die "no res_cb supplied" unless (exists $params{'res_cb'});
 
+    if (keys %{$params{'except_slots'}} > 0) {
+	return $self->make_error("failed", $params{'res_cb'},
+		reason => "notfound",
+		message => "all slots have been loaded");
+    }
+
     if ($self->{'reserved'}) {
 	return $self->make_error("failed", $params{'res_cb'},
 	    reason => "inuse",
@@ -114,7 +120,7 @@ sub info_key {
     } elsif ($key eq 'fast_search') {
 	# (asking the user for a specific label is faster than asking
 	# for each "slot" in a sequential scan, so search is "fast")
-	$results{$key} = 1;
+	$results{$key} = 0;
     }
 
     $params{'info_cb'}->(undef, %results) if $params{'info_cb'};
