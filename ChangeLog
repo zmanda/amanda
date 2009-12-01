@@ -1,4 +1,11 @@
 2009-12-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/find.h: Keep partnum and totalparts as int.
+	* server-src/find.c: Compute totalparts if -1.
+	* perl/Amanda/Logfile.swg: Change api.
+	* restore-src/amfetchdump.c, restore-src/restore.c,
+	  server-src/amcheckdump.pl, server-src/amindexd.c: Use new api.
+
+2009-12-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/Makefile.am: Build ndmjob with original tape simulator.
 				Build amndmjob with modifier tape simulator.
 	* ndmp-src/amndma_tape_simulator.c: The modified tape simulator.

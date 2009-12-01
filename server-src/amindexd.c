@@ -768,32 +768,6 @@ build_disk_table(void)
 	if(strcasecmp(dump_hostname, find_output->hostname) == 0 &&
 	   strcmp(disk_name    , find_output->diskname) == 0 &&
 	   strcmp("OK"         , find_output->status)   == 0) {
-	    int partnum = -1;
-	    int maxpart = -1;
-	    if (strcmp("1/1", find_output->partnum) == 0) {
-		partnum = -1;
-	    } else if (strcmp("1/-1", find_output->partnum) == 0) {
-		if (find_output->next &&
-		    strcmp(dump_hostname, find_output->next->hostname) == 0 &&
-		    strcmp(disk_name, find_output->next->diskname) == 0 &&
-		    strcmp(find_output->timestamp,
-			   find_output->next->timestamp) == 0 &&
-		    strcmp("OK", find_output->next->status) == 0 &&
-		    strcmp("2/-1", find_output->next->partnum) == 0) {
-		    partnum = 1;
-		}
-		else {
-		    partnum = -1;
-		}
-	    } else if (strcmp("--", find_output->partnum)) {
-		char *c;
-		partnum = atoi(find_output->partnum);
-		c = strchr(find_output->partnum,'/');
-		if (c)
-		    maxpart = atoi(c+1);
-		else
-		    maxpart = -1;
-	    }
 	    /*
 	     * The sort order puts holding disk entries first.  We want to
 	     * use them if at all possible, so ignore any other entries
@@ -803,29 +777,29 @@ build_disk_table(void)
 	    if(last_timestamp &&
 	       strcmp(find_output->timestamp, last_timestamp) == 0 &&
 	       find_output->level == last_level && 
-	       partnum == last_partnum && last_filenum == 0) {
+	       last_filenum == 0) {
 		continue;
 	    }
 	    /* ignore duplicate partnum */
 	    if(last_timestamp &&
 	       strcmp(find_output->timestamp, last_timestamp) == 0 &&
 	       find_output->level == last_level && 
-	       partnum == last_partnum) {
+	       find_output->partnum == last_partnum) {
 		continue;
 	    }
 	    last_timestamp = find_output->timestamp;
 	    last_filenum = find_output->filenum;
 	    last_level = find_output->level;
-	    last_partnum = partnum;
+	    last_partnum = find_output->partnum;
 	    date = amindexd_nicedate(find_output->timestamp);
 	    add_dump(find_output->hostname, date, find_output->level,
-		     find_output->label, find_output->filenum, partnum,
-		     maxpart);
+		     find_output->label, find_output->filenum,
+		     find_output->partnum, find_output->totalparts);
 	    dbprintf("- %s %d %s %lld %d %d\n",
 		     date, find_output->level, 
 		     find_output->label,
 		     (long long)find_output->filenum,
-		     partnum, maxpart);
+		     find_output->partnum, find_output->totalparts);
 	}
     }
 

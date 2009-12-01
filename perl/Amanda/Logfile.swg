@@ -137,7 +137,8 @@ typedef struct {
     char *label;
     off_t filenum;
     char *status;
-    char *partnum;
+    int partnum;
+    int totalparts;
     double sec;
     size_t kb;
     %mutable;

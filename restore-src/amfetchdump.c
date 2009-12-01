@@ -251,7 +251,8 @@ list_needed_tapes(
 	    for (iter = seen_dumps; iter; iter = iter->next) {
 		prev = iter->data;
 
-		if (!strcmp(prev->partnum, curfind->partnum) &&
+		if (prev->partnum == curfind->partnum &&
+		    prev->totalparts == curfind->totalparts &&
 		    !strcmp(prev->hostname, curfind->hostname) &&
 		    !strcmp(prev->diskname, curfind->diskname) &&
 		    !strcmp(prev->timestamp, curfind->timestamp) &&

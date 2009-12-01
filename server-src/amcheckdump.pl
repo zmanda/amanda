@@ -460,17 +460,10 @@ for my $image (@images) {
 	}
     };
 
-    # Currently, L_PART results will be n/x, n >= 1, x >= -1
-    # In the past (before split dumps), L_PART could be --
-    # Headers can give partnum >= 0, where 0 means not split.
-    my $logfile_part = 1; # assume this is not a split dump
-    if ($image->{partnum} =~ m$(\d+)/(-?\d+)$) {
-        $logfile_part = $1;
-    }
-
-    printf("Validating image %s:%s datestamp %s level %s part %s on tape %s file #%d\n",
+    printf("Validating image %s:%s datestamp %s level %s part %d/%d on tape %s file #%d\n",
            $image->{hostname}, $image->{diskname}, $image->{timestamp},
-           $image->{level}, $logfile_part, $image->{label}, $image->{filenum});
+           $image->{level}, $image->{partnum}, $image->{totalparts},
+	   $image->{label}, $image->{filenum});
 
     # note that if there is a device failure, we may try the same device
     # again for the next image.  That's OK -- it may give a user with an
@@ -493,12 +486,11 @@ for my $image (@images) {
         $volume_part = 1;
     }
 
-    
     if ($image->{timestamp} ne $header->{datestamp} ||
         $image->{hostname} ne $header->{name} ||
         $image->{diskname} ne $header->{disk} ||
         $image->{level} != $header->{dumplevel} ||
-        $logfile_part != $volume_part) {
+        $image->{partnum} != $volume_part) {
         printf("Volume image is %s:%s datestamp %s level %s part %s\n",
                $header->{name}, $header->{disk}, $header->{datestamp},
                $header->{dumplevel}, $volume_part);

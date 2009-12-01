@@ -246,7 +246,8 @@ search_holding_disk(
 	    new_output_find->diskname = stralloc(file.disk);
 	    new_output_find->level=file.dumplevel;
 	    new_output_find->label=stralloc(holding_file);
-	    new_output_find->partnum=stralloc("--");
+	    new_output_find->partnum = -1;
+	    new_output_find->totalparts = -1;
 	    new_output_find->filenum=0;
 	    if (file.is_partial)
 		new_output_find->status=stralloc("PARTIAL");
@@ -313,11 +314,7 @@ find_compare(
 				 get_write_timestamp(j->label));
 		   break;
 	case 'p' :
-		   if(strcmp(i->partnum, "--") != 0 &&
-		      strcmp(j->partnum, "--") != 0){
-		      compare = atoi(i->partnum) - atoi(j->partnum);
-		   }
-	           else compare=strcmp(i->partnum,j->partnum);
+		   compare=i->partnum - j->partnum;
 		   break;
 	}
 	if(compare != 0)
@@ -389,6 +386,7 @@ print_find_result(
 	output_find_result;
 	output_find_result=output_find_result->next) {
 	char *qdiskname;
+	char *s;
 
 	len=strlen(find_nicedate(output_find_result->timestamp));
 	if((int)len > max_len_datestamp)
@@ -414,7 +412,9 @@ print_find_result(
 	if((int)len > max_len_status)
 	    max_len_status = (int)len;
 
-	len=strlen(output_find_result->partnum);
+	s = g_strdup_printf("%d/%d", output_find_result->partnum,
+				     output_find_result->totalparts);
+	len=strlen(s);
 	if((int)len > max_len_part)
 	    max_len_part = (int)len;
     }
@@ -443,6 +443,7 @@ print_find_result(
 	        output_find_result=output_find_result->next) {
 	    char *qdiskname;
             char * formatted_label;
+	    char *s;
 
 	    qdiskname = quote_string(output_find_result->diskname);
             formatted_label = output_find_result->label;
@@ -452,6 +453,8 @@ print_find_result(
 	    /*@ignore@*/
 	    /* sec and kb are omitted here, for compatibility with the existing
 	     * output from 'amadmin' */
+	    s = g_strdup_printf("%d/%d", output_find_result->partnum,
+					 output_find_result->totalparts);
 	    g_printf("%-*s %-*s %-*s %*d %-*s %*lld %*s %-*s\n",
                      max_len_datestamp, 
                      find_nicedate(output_find_result->timestamp),
@@ -460,9 +463,10 @@ print_find_result(
                      max_len_level,     output_find_result->level,
                      max_len_label,     formatted_label,
                      max_len_filenum,   (long long)output_find_result->filenum,
-                     max_len_part,      output_find_result->partnum,
+                     max_len_part,      s,
                      max_len_status,    output_find_result->status
 		    );
+	    amfree(s);
 	    /*@end@*/
 	    amfree(qdiskname);
 	}
@@ -484,7 +488,6 @@ free_find_result(
 	amfree(output_find_result->hostname);
 	amfree(output_find_result->diskname);
 	amfree(output_find_result->label);
-	amfree(output_find_result->partnum);
 	amfree(output_find_result->status);
 	prev = output_find_result;
     }
@@ -631,7 +634,9 @@ search_logfile(
     char *host, *host_undo;
     char *disk, *qdisk, *disk_undo;
     char *date, *date_undo;
-    char *partnum=NULL, *partnum_undo;
+    int  partnum;
+    int  totalparts;
+    int  maxparts = -1;
     char *number;
     int fileno;
     char *current_label = NULL;
@@ -698,7 +703,8 @@ search_logfile(
 	    curprog == P_TAPER) {
 	    filenum++;
 	}
-	partnum = "--";
+	partnum = -1;
+	totalparts = -1;
 	if (curlog == L_SUCCESS || curlog == L_CHUNKSUCCESS ||
 	    curlog == L_DONE    || curlog == L_FAIL ||
 	    curlog == L_CHUNK   || curlog == L_PART || curlog == L_PARTIAL ||
@@ -779,10 +785,14 @@ search_logfile(
 		if (curlog == L_CHUNK || curlog == L_PART ||
 		    curlog == L_PARTPARTIAL || curlog == L_DONE){
 		    skip_whitespace(s, ch);
-		    partnum = s - 1;
+		    number = s - 1;
 		    skip_non_whitespace(s, ch);
-		    partnum_undo = s - 1;
-		    *partnum_undo = '\0';
+		    s[-1] = '\0';
+		    sscanf(number, "%d/%d", &partnum, &totalparts);
+		    if (partnum > maxparts)
+			maxparts = partnum;
+		    if (totalparts > maxparts)
+			maxparts = totalparts;
 		}
 		skip_whitespace(s, ch);
 		if(ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
@@ -847,7 +857,8 @@ search_logfile(
 		    new_output_find->hostname=stralloc(host);
 		    new_output_find->diskname=stralloc(disk);
 		    new_output_find->level=level;
-		    new_output_find->partnum = stralloc(partnum);
+		    new_output_find->partnum = partnum;
+		    new_output_find->totalparts = totalparts;
                     new_output_find->label=stralloc(current_label);
 		    new_output_find->status=NULL;
 		    new_output_find->filenum=filenum;
@@ -872,6 +883,14 @@ search_logfile(
 				    a_part_find->status = stralloc(rest);
 			    }
 			}
+			if (curlog == L_DONE) {
+			    for (a_part_find = part_find; a_part_find;
+			         a_part_find = a_part_find->next) {
+				if (a_part_find->totalparts == -1) {
+				    a_part_find->totalparts = maxparts;
+				}
+			    }
+			}
 			if (part_find) { /* find last element */
 			    for (a_part_find = part_find;
 				 a_part_find->next != NULL;
@@ -881,6 +900,7 @@ search_logfile(
 			    a_part_find->next = *output_find;
 			    *output_find = part_find;
 			    part_find = NULL;
+			    maxparts = -1;
                             found_something = TRUE;
 			}
 			free_find_result(&new_output_find);
@@ -907,7 +927,8 @@ search_logfile(
 		    new_output_find->diskname=stralloc(disk);
 		    new_output_find->level=level;
 		    new_output_find->label=NULL;
-		    new_output_find->partnum=stralloc(partnum);
+		    new_output_find->partnum=partnum;
+		    new_output_find->totalparts=totalparts;
 		    new_output_find->filenum=0;
 		    new_output_find->sec=sec;
 		    new_output_find->kb=kb;
@@ -919,6 +940,7 @@ search_logfile(
 			 NULL);
 		    *output_find=new_output_find;
                     found_something = TRUE;
+		    maxparts = -1;
 		}
 	    }
 	    amfree(disk);
@@ -942,6 +964,11 @@ search_logfile(
 		a_part_find->status = stralloc("PARTIAL");
 	    else if (curlog == L_FAIL)
 		a_part_find->status = stralloc("FAIL");
+	    else if (curlog == L_DONE || curlog == L_SUCCESS) {
+		if (a_part_find->totalparts == -1) {
+		    a_part_find->totalparts = maxparts;
+		}
+	    }
 	}
 	for (a_part_find = part_find;
 	     a_part_find->next != NULL;
@@ -951,6 +978,7 @@ search_logfile(
 	a_part_find->next = *output_find;
 	*output_find = part_find;
 	part_find = NULL;
+	maxparts = -1;
     }
 
     afclose(logf);
@@ -1004,8 +1032,8 @@ dumps_match(
 	    curmatch->sec = cur_result->sec;
 	    curmatch->kb = cur_result->kb;
 	    curmatch->status = stralloc(cur_result->status);
-	    curmatch->partnum = stralloc(cur_result->partnum);
-
+	    curmatch->partnum = cur_result->partnum;
+	    curmatch->totalparts = cur_result->totalparts;
 	    curmatch->next = matches;
 	    matches = curmatch;
 	}
@@ -1055,7 +1083,8 @@ dumps_match_dumpspecs(
 		curmatch->label = cur_result->label? stralloc(cur_result->label) : NULL;
 		curmatch->filenum = cur_result->filenum;
 		curmatch->status = stralloc(cur_result->status);
-		curmatch->partnum = stralloc(cur_result->partnum);
+		curmatch->partnum = cur_result->partnum;
+		curmatch->totalparts = cur_result->totalparts;
 
 		curmatch->next = matches;
 		matches = curmatch;

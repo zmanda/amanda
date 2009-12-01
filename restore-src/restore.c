@@ -452,12 +452,8 @@ flush_open_outputs(
 	    cur_find_res->hostname = stralloc(cur_file->name);
 	    cur_find_res->diskname = stralloc(cur_file->disk);
 	    cur_find_res->level = cur_file->dumplevel;
-	    if(cur_file->partnum < 1) cur_find_res->partnum = stralloc("--");
-	    else{
-		char part_str[NUM_STR_SIZE];
-		g_snprintf(part_str, SIZEOF(part_str), "%d", cur_file->partnum);
-		cur_find_res->partnum = stralloc(part_str);
-	    }
+	    cur_find_res->partnum = cur_file->partnum;
+	    cur_find_res->totalparts = cur_file->totalparts;
 	    cur_find_res->user_ptr = (void*)cur_out;
 
 	    cur_find_res->next = sorted_files;
