@@ -29,6 +29,7 @@
 #include "device.h"
 #include "property.h"
 #include "fileheader.h"
+#include "glib-util.h"
 %}
 
 %init %{

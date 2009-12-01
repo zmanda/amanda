@@ -1,4 +1,7 @@
 2009-12-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Device.swg: #include "glib-util.h".
+
+2009-12-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Fix conf_init_data_path argument type.
 	* common-src/debug.c: Use gpointer.
 	* ndmp-src/ndmjob_main.c, ndmp-src/amndmjob_main.c:
