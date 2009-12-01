@@ -190,7 +190,7 @@ ndmjob_SOURCES = ndmjob_main.c \
 		      ndma_tape_simulator.c
 
 
-amndmjob_SOURCES = ndmjob_main.c \
+amndmjob_SOURCES = amndmjob_main.c \
 		      ndmjob_args.c \
 		      ndmjob_job.c \
 		      ndmjob_rules.c \

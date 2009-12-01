@@ -1,4 +1,7 @@
 2009-12-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/Makefile.am: amndmjob_SOURCES = amndmjob_main.c
+
+2009-12-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c: Fix for older log entry.
 	* perl/Amanda/DB/Catalog.pm: Fix for new totalparts in find_result_t.
 	* perl/Amanda/Logfile.pod: Add totalparts.
