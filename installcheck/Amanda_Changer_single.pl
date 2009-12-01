@@ -62,7 +62,7 @@ my $chg = Amanda::Changer->new("chg-single:tape:/foo");
         die($err) if defined($err);
 
         is($results{'num_slots'}, 1, "info() returns the correct num_slots");
-        is($results{'fast_search'}, 1, "info() returns the correct fast_slots");
+        is($results{'fast_search'}, 0, "info() returns the correct fast_slots");
 
 	$chg->load(relative_slot => "current",
 		   res_cb => $got_res);

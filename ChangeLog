@@ -1,4 +1,7 @@
 2009-12-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Changer_single.pl: Fix for not fast searchable.
+
+2009-12-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/single.pm: Use except_slot,
 					 It is not fast searchable.
 
