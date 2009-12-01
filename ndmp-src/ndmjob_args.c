@@ -159,7 +159,7 @@ process_args (int argc, char *argv[])
 	}
 
 	if (argc == 2 && strcmp (argv[1], "-v") == 0) {
-		version_info ();
+		ndmjob_version_info ();
 		exit(0);
 	}
 
@@ -669,7 +669,7 @@ handle_long_option (char *str)
 }
 
 void
-set_job_mode (mode)
+set_job_mode (int mode)
 {
 	if (the_mode) {
 		printf ("more than one -[ctxlqZ] or other mode");
@@ -700,7 +700,7 @@ help (void)
 }
 
 void
-version_info (void)
+ndmjob_version_info (void)
 {
 	char		vbuf[100];
 	char		abuf[100];

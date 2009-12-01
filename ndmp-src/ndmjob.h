@@ -67,7 +67,7 @@ extern int		handle_long_option (char *str);
 extern void		set_job_mode (int mode);
 extern void		usage (void);
 extern void		help (void);
-extern void		version_info (void);
+extern void		ndmjob_version_info (void);
 extern void		dump_settings (void);
 
 extern int		copy_args_expanding_macros (int argc, char *argv[],

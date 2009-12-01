@@ -221,7 +221,7 @@ debug_setup_logging(void)
 void
 add_amanda_log_handler(amanda_log_handler_t *hdlr)
 {
-    amanda_log_handlers = g_slist_append(amanda_log_handlers, hdlr);
+    amanda_log_handlers = g_slist_append(amanda_log_handlers, (gpointer)hdlr);
 }
 
 void

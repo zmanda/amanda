@@ -1,4 +1,13 @@
 2009-12-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Fix conf_init_data_path argument type.
+	* common-src/debug.c: Use gpointer.
+	* ndmp-src/ndmjob_main.c, ndmp-src/amndmjob_main.c:
+	  #include "util.h" for set_pname prototype.
+	* ndmp-src/ndma_cops_backreco.c: Add prototype.
+	* ndmp-src/ndmjob.h, ndmp-src/ndmjob_args.c:
+	  Rename version_info to ndmjob_version_info to avoid conflict.
+
+2009-12-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/DB/Catalog.pm: Fix for new find_result_t api.
 	* installcheck/Amanda_Logfile.pl: Fix for perl-5.6.
 	* installcheck/Amanda_DB_Catalog.pl: Fix for perl-5.6.

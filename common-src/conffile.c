@@ -619,7 +619,7 @@ static void conf_init_size(val_t *val, ssize_t sz);
 static void conf_init_bool(val_t *val, int i);
 static void conf_init_compress(val_t *val, comp_t i);
 static void conf_init_encrypt(val_t *val, encrypt_t i);
-static void conf_init_data_path(val_t *val, encrypt_t i);
+static void conf_init_data_path(val_t *val, data_path_t i);
 static void conf_init_holding(val_t *val, dump_holdingdisk_t i);
 static void conf_init_estimatelist(val_t *val, estimate_t i);
 static void conf_init_execute_on(val_t *, int);
@@ -4789,7 +4789,7 @@ conf_init_encrypt(
 static void
 conf_init_data_path(
     val_t *val,
-    encrypt_t    i)
+    data_path_t    i)
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;

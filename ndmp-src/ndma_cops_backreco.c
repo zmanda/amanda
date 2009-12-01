@@ -40,6 +40,9 @@
 
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
 
+int ndmca_monitor_backup_tape_tcp (struct ndm_session *sess);
+int ndmca_monitor_recover_tape_tcp (struct ndm_session *sess);
+int ndmca_monitor_shutdown_tape_tcp (struct ndm_session *sess);
 
 int
 ndmca_op_create_backup (struct ndm_session *sess)
