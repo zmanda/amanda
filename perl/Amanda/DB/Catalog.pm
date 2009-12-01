@@ -442,13 +442,8 @@ sub get_dumps {
 	    );
 
 	    # partnum and nparts takes some special interpretation
-	    if (my ($partnum, $nparts) = $find_result->{'partnum'} =~ m$(\d+)/(-?\d+)$) {
-		$dumpfile{'partnum'} = $partnum+0;
-		$dumpfile{'nparts'} = $nparts+0;
-	    } else {
-		$dumpfile{'partnum'} = 1;
-		$dumpfile{'nparts'} = 1;
-	    }
+	    $dumpfile{'partnum'} = $find_result->{'partnum'};
+	    $dumpfile{'nparts'} = $find_result->{'totalparts'};
 
 	    # check partnum and nparts
 	    next if (defined($params{'partnum'}) and $dumpfile{'partnum'} != $params{'partnum'});

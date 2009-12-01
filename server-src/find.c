@@ -781,6 +781,8 @@ search_logfile(
 	    if(strlen(date) < 3) { /* old log didn't have datestamp */
 		level = atoi(date);
 		date = stralloc(datestamp);
+		partnum = 1;
+		totalparts =1;
 	    } else {
 		if (curlog == L_CHUNK || curlog == L_PART ||
 		    curlog == L_PARTPARTIAL || curlog == L_DONE){

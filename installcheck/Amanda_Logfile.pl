@@ -163,7 +163,8 @@ sub res2arr {
 	$res->{'label'},
 	"$res->{'filenum'}",
 	$res->{'status'},
-	$res->{'partnum'}
+	$res->{'partnum'},
+	$res->{'totalparts'}
     ];
 }
 
@@ -291,26 +292,25 @@ is($#results+1, 17, "search_logfile returned 15 results");
 
 # and convert the hashes to arrays for easy comparison
 @results_arr = map { res2arr($_) } @results;
-
 is_deeply(\@results_arr,
 	[
-	  [ '20071109010002', 'clihost', '/usr',	    0, 'TESTCONF002', 1,  'OK', '1'   ],
-	  [ '20071109010002', 'clihost', '/my documents',   0, 'TESTCONF002', 2,  'OK', '1'   ],
-	  [ '20071109010002', 'thatbox', '/var',	    1, 'TESTCONF002', 3,  'OK', '--'  ],
-	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 4,  'OK', '1/5' ],
-	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 5,  'OK', '2/5' ],
-	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 6,  'OK', '3/5' ],
-	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 7,  'OK', '4/5' ],
-	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 8,  'OK', '5/5' ],
-	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 9,  'OK', '1/4' ],
-	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 10, 'OK', '2/4' ],
-	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 11, 'PARTIAL', '3/4' ],
-	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF003', 1,  '"Oh no!"', '3/4' ],
-	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 2, 'OK', '1/4' ],
-	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 3, 'OK', '2/4' ],
-	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 4, 'PARTIAL', '3/4' ],
-	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 1, 'OK', '3/4' ],
-	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 2, 'OK', '4/4' ],
+	  [ '20071109010002', 'clihost', '/usr',	    0, 'TESTCONF002', 1,  'OK', 1, 1   ],
+	  [ '20071109010002', 'clihost', '/my documents',   0, 'TESTCONF002', 2,  'OK', 1, 1   ],
+	  [ '20071109010002', 'thatbox', '/var',	    1, 'TESTCONF002', 3,  'OK', 1, 1  ],
+	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 4,  'OK', 1, 5 ],
+	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 5,  'OK', 2, 5 ],
+	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 6,  'OK', 3, 5 ],
+	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 7,  'OK', 4, 5 ],
+	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 8,  'OK', 5, 5 ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 9,  'OK', 1, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 10, 'OK', 2, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 11, 'PARTIAL', 3, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF003', 1,  '"Oh no!"', 3, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 2, 'OK', 1, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 3, 'OK', 2, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 4, 'PARTIAL', 3, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 1, 'OK', 3, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 2, 'OK', 4, 4 ],
 	], "results are correct");
 
 my @filtered;
@@ -325,16 +325,16 @@ is($#filtered+1, 10, "ten results match 'thatbox'");
 
 is_deeply(\@filtered_arr,
 	[
-	  [ '20071109010002', 'thatbox', '/var',      1, 'TESTCONF002', 3,  'OK',       '--' ],
-	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 9,  'OK',       '1/4' ],
-	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 10, 'OK',       '2/4' ],
-	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 11, 'PARTIAL',  '3/4' ],
-	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF003', 1,  '"Oh no!"', '3/4' ],
-	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 2,  'OK',       '1/4' ],
-	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 3,  'OK',       '2/4' ],
-	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 4,  'PARTIAL',  '3/4' ],
-	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 1,  'OK',       '3/4' ],
-	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 2,  'OK',       '4/4' ],
+	  [ '20071109010002', 'thatbox', '/var',      1, 'TESTCONF002', 3,  'OK',       1, 1 ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 9,  'OK',       1, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 10, 'OK',       2, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 11, 'PARTIAL',  3, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF003', 1,  '"Oh no!"', 3, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 2,  'OK',       1, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 3,  'OK',       2, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 4,  'PARTIAL',  3, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 1,  'OK',       3, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 2,  'OK',       4, 4 ],
 	], "results are correct");
 
 @filtered = Amanda::Logfile::dumps_match([@results], "thatbox", "/var", undef, undef, 0);
@@ -357,7 +357,7 @@ my @dumpspecs;
 @filtered = Amanda::Logfile::dumps_match_dumpspecs([@results], [@dumpspecs], 0);
 is_deeply([ map { res2arr($_) } @filtered ],
 	[
-	  [ '20071109010002', 'thatbox', '/var',	    1, 'TESTCONF002', 3,  'OK', '--'  ],
+	  [ '20071109010002', 'thatbox', '/var',	    1, 'TESTCONF002', 3,  'OK', 1, 1 ],
 	], "filter with dumpspecs 'thatbox /var'");
 
 @dumpspecs = Amanda::Cmdline::parse_dumpspecs(["thatbox", "/var", "clihost"], 0);
@@ -366,14 +366,14 @@ is_deeply([ map { res2arr($_) } @filtered ],
 		   $a->{'filenum'} <=> $b->{'filenum'} } @filtered;
 is_deeply([ map { res2arr($_) } @filtered ],
 	[
-	  [ '20071109010002', 'clihost', '/usr',	    0, 'TESTCONF002', 1,  'OK', '1'   ],
-	  [ '20071109010002', 'clihost', '/my documents',   0, 'TESTCONF002', 2,  'OK', '1'   ],
-	  [ '20071109010002', 'thatbox', '/var',	    1, 'TESTCONF002', 3,  'OK', '--'  ],
-	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 4,  'OK', '1/5' ],
-	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 5,  'OK', '2/5' ],
-	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 6,  'OK', '3/5' ],
-	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 7,  'OK', '4/5' ],
-	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 8,  'OK', '5/5' ],
+	  [ '20071109010002', 'clihost', '/usr',	    0, 'TESTCONF002', 1,  'OK', 1, 1 ],
+	  [ '20071109010002', 'clihost', '/my documents',   0, 'TESTCONF002', 2,  'OK', 1, 1 ],
+	  [ '20071109010002', 'thatbox', '/var',	    1, 'TESTCONF002', 3,  'OK', 1, 1 ],
+	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 4,  'OK', 1, 5 ],
+	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 5,  'OK', 2, 5 ],
+	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 6,  'OK', 3, 5 ],
+	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 7,  'OK', 4, 5 ],
+	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 8,  'OK', 5, 5 ],
 	], "filter with dumpspecs 'thatbox /var clihost' (union of two disjoint sets)");
 
 # if multiple dumpspecs specify the same dump, it will be included in the output multiple times
@@ -383,16 +383,16 @@ is_deeply([ map { res2arr($_) } @filtered ],
 		   $a->{'filenum'} <=> $b->{'filenum'} } @filtered;
 is_deeply([ map { res2arr($_) } @filtered ],
 	[
-	  [ '20071109010002', 'thatbox', '/var',      1, 'TESTCONF002', 3,  'OK',       '--'  ],
-	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 9,  'OK',       '1/4' ],
-	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 10, 'OK',       '2/4' ],
-	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 11, 'PARTIAL',  '3/4' ],
-	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF003', 1,  '"Oh no!"', '3/4' ],
-	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 2,  'OK',       '1/4' ],
-	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 3,  'OK',       '2/4' ],
-	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 4,  'PARTIAL',  '3/4' ],
-	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 1,  'OK',       '3/4' ],
-	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 2,  'OK',       '4/4' ],
+	  [ '20071109010002', 'thatbox', '/var',      1, 'TESTCONF002', 3,  'OK',       1, 1  ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 9,  'OK',       1, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 10, 'OK',       2, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 11, 'PARTIAL',  3, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF003', 1,  '"Oh no!"', 3, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 2,  'OK',       1, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 3,  'OK',       2, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 4,  'PARTIAL',  3, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 1,  'OK',       3, 4 ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 2,  'OK',       4, 4 ],
 	], "filter with dumpspecs '.* /var thatbox' (union of two overlapping sets includes dupes)");
 
 unlink($log_filename);

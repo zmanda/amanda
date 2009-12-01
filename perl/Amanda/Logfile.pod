@@ -122,6 +122,8 @@ Instance variables are:
 
 =item C<partnum>
 
+=item C<totalparts>
+
 =item C<sec>
 
 =item C<kb>
@@ -129,8 +131,7 @@ Instance variables are:
 =back
 
 Note that the format for these variables are based on that found in
-the logfiles.  In particular, C<partnum> is a string, usually with a
-slash (C</>) in it.  Also, C<timestamp> is the timestamp for the run
+the logfiles.  In particular, C<timestamp> is the timestamp for the run
 in which the client dump took place, and not for the timestamp of the
 logfile.
 
