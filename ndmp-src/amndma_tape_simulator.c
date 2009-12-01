@@ -48,13 +48,6 @@ int	simu_flush_weof (struct ndm_session *sess);
 
 #ifdef NDMOS_OPTION_TAPE_SIMULATOR
 
-struct simu_gap {
-	u_long		magic;
-	u_long		rectype;
-	u_long		prev_size;
-	u_long		size;
-};
-
 #define SIMU_GAP_MAGIC		0x0BEEFEE0
 #define SIMU_GAP_RT_(a,b,c,d) ((a<<0)+(b<<8)+(c<<16)+(d<<24))
 #define SIMU_GAP_RT_BOT		SIMU_GAP_RT_('B','O','T','_')
@@ -81,16 +74,17 @@ ndmp9_error
 ndmos_tape_open (struct ndm_session *sess, char *drive_name, int will_write)
 {
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
-	struct simu_gap		gap;
 	struct stat		st;
 	int			read_only, omode;
-	int			rc, fd;
-	char			pos_symlink_name[128];
-	char			pos_buf[32];
-	off_t			pos = -1;
+	int			fd;
 
 	if (ta->tape_fd >= 0) {
 		return NDMP9_DEVICE_OPENED_ERR;
+	}
+
+	if (*drive_name >= '0' && *drive_name <= '9') {
+		fd = atoi(drive_name);
+		goto skip_header_check;
 	}
 
 	if (stat (drive_name, &st) < 0) {
@@ -112,61 +106,15 @@ ndmos_tape_open (struct ndm_session *sess, char *drive_name, int will_write)
 		return NDMP9_PERMISSION_ERR;
 	}
 
-	strcpy (pos_symlink_name, drive_name);
-	strcat (pos_symlink_name, ".pos");
-
 	if (st.st_size == 0) {
-		remove (pos_symlink_name);
 		if (will_write) {
-			gap.magic = SIMU_GAP_MAGIC;
-			gap.rectype = SIMU_GAP_RT_BOT;
-			gap.size = 0;
-			gap.prev_size = 0;
-			write (fd, &gap, sizeof gap);
-
-			gap.rectype = SIMU_GAP_RT_EOT;
-			write (fd, &gap, sizeof gap);
 			lseek (fd, (off_t)0, 0);
 		} else {
 			goto skip_header_check;
 		}
 	}
 
-	rc = read (fd, &gap, sizeof gap);
-	if (rc != sizeof gap) {
-		close (fd);
-		return NDMP9_NO_TAPE_LOADED_ERR;
-	}
-
-#if 1
-	if (gap.magic != SIMU_GAP_MAGIC) {
-		close (fd);
-		return NDMP9_IO_ERR;
-	}
-#else
-	if (gap.magic != SIMU_GAP_MAGIC
-	 || gap.rectype != SIMU_GAP_RT_BOT
-	 || gap.size != 0) {
-		close (fd);
-		return NDMP9_IO_ERR;
-	}
-#endif
-
-	rc = readlink (pos_symlink_name, pos_buf, sizeof pos_buf);
-	if (rc > 0) {
-		pos_buf[rc] = 0;
-		pos = strtol (pos_buf, 0, 0);
-		lseek (fd, pos, 0);
-		rc = read (fd, &gap, sizeof gap);
-		if (rc == sizeof gap && gap.magic == SIMU_GAP_MAGIC) {
-		} else {
-			pos = sizeof gap;
-		}
-		lseek (fd, pos, 0);
-	}
-
   skip_header_check:
-	remove (pos_symlink_name);
 	ta->tape_fd = fd;
 	NDMOS_API_BZERO (ta->drive_name, sizeof ta->drive_name);
 	strcpy (ta->drive_name, drive_name);
@@ -189,7 +137,6 @@ ndmp9_error
 ndmos_tape_close (struct ndm_session *sess)
 {
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
-	off_t			cur_pos;
 
 	if (ta->tape_fd < 0) {
 		return NDMP9_DEV_NOT_OPEN_ERR;
@@ -201,17 +148,6 @@ ndmos_tape_close (struct ndm_session *sess)
 	u_long			resid;
 	ndmos_tape_mtio (sess, NDMP9_MTIO_REW, 1, &resid);
 #endif
-
-	cur_pos = lseek (ta->tape_fd, (off_t)0, 1);
-	if (cur_pos != -1) {
-		char		pos_symlink_name[128];
-		char		pos_buf[32];
-
-		strcpy (pos_symlink_name, ta->drive_name);
-		strcat (pos_symlink_name, ".pos");
-		sprintf (pos_buf, "%ld", (long) cur_pos);
-		symlink (pos_buf, pos_symlink_name);
-	}
 
 	close (ta->tape_fd);
 	ta->tape_fd = -1;
@@ -256,123 +192,22 @@ int
 simu_back_one (struct ndm_session *sess, int over_file_mark)
 {
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
-	struct simu_gap		gap;
 	off_t			cur_pos;
-	off_t			new_pos;
-	int			rc;
 
 	cur_pos = lseek (ta->tape_fd, (off_t)0, 1);
-
-	rc = read (ta->tape_fd, &gap, sizeof gap);
-	if (rc != sizeof gap || gap.magic != SIMU_GAP_MAGIC)
-		goto bail_out;
-
-	new_pos = cur_pos;
-	new_pos -= sizeof gap + gap.prev_size;
-
-
-	/*
-	 * This is the new position. We need to update simu_prev_gap.
-	 */
-
-	lseek (ta->tape_fd, new_pos, 0);
-
-	rc = read (ta->tape_fd, &gap, sizeof gap);
-	if (rc != sizeof gap || gap.magic != SIMU_GAP_MAGIC)
-		goto bail_out;
-
-	switch (gap.rectype) {
-	case SIMU_GAP_RT_BOT:
-		/* can't actually back up to this, but update stuff */
-		ta->tape_state.file_num.value = 0;
-		ta->tape_state.blockno.value = 0;
-		/* cur_pos is now just right */
-		return 0;		/* can't back up */
-
-	case SIMU_GAP_RT_EOT:
-		/* this just isn't suppose to happen */
-		goto bail_out;
-
-	case SIMU_GAP_RT_DATA:
-		/* this is always OK */
-		if (ta->tape_state.blockno.value > 0)
-			ta->tape_state.blockno.value--;
-		lseek (ta->tape_fd, new_pos, 0);
-		return SIMU_GAP_RT_DATA;
-
-	case SIMU_GAP_RT_FILE:
-		ta->tape_state.blockno.value = 0;
-		if (!over_file_mark) {
-			lseek (ta->tape_fd, cur_pos, 0);
-			return 0;
-		}
-		if (ta->tape_state.file_num.value > 0)
-			ta->tape_state.file_num.value--;
-		lseek (ta->tape_fd, new_pos, 0);
-		return SIMU_GAP_RT_FILE;
-
-	default:
-		/* this just isn't suppose to happen */
-		goto bail_out;
-	}
-
-  bail_out:
-	lseek (ta->tape_fd, cur_pos, 0);
-	return -1;
+	lseek (ta->tape_fd, 0, 0);
+return 0;
 }
 
 int
 simu_forw_one (struct ndm_session *sess, int over_file_mark)
 {
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
-	struct simu_gap		gap;
 	off_t			cur_pos;
-	off_t			new_pos;
-	int			rc;
 
 	cur_pos = lseek (ta->tape_fd, (off_t)0, 1);
+return 0;
 
-	rc = read (ta->tape_fd, &gap, sizeof gap);
-	if (rc != sizeof gap || gap.magic != SIMU_GAP_MAGIC)
-		goto bail_out;
-
-
-	new_pos = cur_pos;
-	new_pos += gap.size + sizeof gap;
-
-	switch (gap.rectype) {
-	case SIMU_GAP_RT_BOT:
-		/* this just isn't suppose to happen */
-		goto bail_out;
-
-	case SIMU_GAP_RT_EOT:
-		lseek (ta->tape_fd, cur_pos, 0);
-		return 0;	/* can't go forward */
-
-	case SIMU_GAP_RT_DATA:
-		/* this is always OK */
-		ta->tape_state.blockno.value++;
-		lseek (ta->tape_fd, new_pos, 0);
-		return SIMU_GAP_RT_DATA;
-
-	case SIMU_GAP_RT_FILE:
-		if (!over_file_mark) {
-			lseek (ta->tape_fd, cur_pos, 0);
-			return 0;
-		}
-		ta->tape_state.blockno.value = 0;
-		ta->tape_state.file_num.value++;
-		/* cur_pos is just right */
-		return SIMU_GAP_RT_FILE;
-
-	default:
-		/* this just isn't suppose to happen */
-		goto bail_out;
-	}
-
-  bail_out:
-	lseek (ta->tape_fd, cur_pos, 0);
-	return -1;
 }
 
 int
@@ -386,7 +221,7 @@ simu_flush_weof (struct ndm_session *sess)
 	}
 	return 0;
 }
-		
+
 
 ndmp9_error
 ndmos_tape_mtio (struct ndm_session *sess,
@@ -395,15 +230,17 @@ ndmos_tape_mtio (struct ndm_session *sess,
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
 	int			rc;
 
-	*resid = count;
+	*resid = 0;
 
 	if (ta->tape_fd < 0) {
 		return NDMP9_DEV_NOT_OPEN_ERR;
 	}
 
+	
 	/* audit for valid op and for tape mode */
 	switch (op) {
 	case NDMP9_MTIO_FSF:
+		return NDMP9_NO_ERR;
 		while (*resid > 0) {
 			simu_flush_weof(sess);
 			rc = simu_forw_one (sess, 1);
@@ -417,6 +254,7 @@ ndmos_tape_mtio (struct ndm_session *sess,
 		break;
 
 	case NDMP9_MTIO_BSF:
+		return NDMP9_NO_ERR;
 		while (*resid > 0) {
 			simu_flush_weof(sess);
 			rc = simu_back_one (sess, 1);
@@ -430,6 +268,7 @@ ndmos_tape_mtio (struct ndm_session *sess,
 		break;
 
 	case NDMP9_MTIO_FSR:
+		return NDMP9_NO_ERR;
 		while (*resid > 0) {
 			simu_flush_weof(sess);
 			rc = simu_forw_one (sess, 0);
@@ -442,6 +281,7 @@ ndmos_tape_mtio (struct ndm_session *sess,
 		break;
 
 	case NDMP9_MTIO_BSR:
+		return NDMP9_NO_ERR;
 		while (*resid > 0) {
 			simu_flush_weof(sess);
 			rc = simu_back_one (sess, 0);
@@ -458,15 +298,20 @@ ndmos_tape_mtio (struct ndm_session *sess,
 		*resid = 0;
 		ta->tape_state.file_num.value = 0;
 		ta->tape_state.blockno.value = 0;
-		lseek (ta->tape_fd, (off_t)(sizeof (struct simu_gap)), 0);
+		//lseek (ta->tape_fd, (off_t)(sizeof (struct simu_gap)), 0);
+		lseek (ta->tape_fd, (off_t)0, 0);
+		ndmalogf(sess, 0, 7, "NDMP9_MTIO_REW");
+		sleep(1);
 		break;
 
 	case NDMP9_MTIO_OFF:
+		return NDMP9_NO_ERR;
 		simu_flush_weof(sess);
 		/* Hmmm. */
 		break;
 
 	case NDMP9_MTIO_EOF:		/* should be "WFM" write-file-mark */
+		return NDMP9_NO_ERR;
 		if (!NDMTA_TAPE_IS_WRITABLE(ta)) {
 			return NDMP9_PERMISSION_ERR;
 		}
@@ -493,8 +338,6 @@ ndmos_tape_write (struct ndm_session *sess,
   char *buf, u_long count, u_long *done_count)
 {
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
-	int			rc;
-	struct simu_gap		gap;
 	off_t			cur_pos;
 	ndmp9_error		err;
 	u_long			prev_size;
@@ -519,26 +362,10 @@ ndmos_tape_write (struct ndm_session *sess,
 	}
 
 	cur_pos = lseek (ta->tape_fd, (off_t)0, 1);
-
-	rc = read (ta->tape_fd, &gap, sizeof gap);
-	if (rc != sizeof gap
-	 || gap.magic != SIMU_GAP_MAGIC) {
-		lseek (ta->tape_fd, cur_pos, 0);
-		return NDMP9_IO_ERR;
-	}
-
-	prev_size = gap.prev_size;
-
-	gap.magic = SIMU_GAP_MAGIC;
-	gap.rectype = SIMU_GAP_RT_DATA;
-	gap.prev_size = prev_size;
-	gap.size = count;
-
 	lseek (ta->tape_fd, cur_pos, 0);
 
-	if (write (ta->tape_fd, &gap, sizeof gap) == sizeof gap
-	 && write (ta->tape_fd, buf, count) == count) {
-		cur_pos += count + sizeof gap;
+	if (write (ta->tape_fd, buf, count) == count) {
+		cur_pos += count;
 
 		prev_size = count;
 
@@ -556,13 +383,6 @@ ndmos_tape_write (struct ndm_session *sess,
 
 	lseek (ta->tape_fd, cur_pos, 0);
 
-	gap.rectype = SIMU_GAP_RT_EOT;
-	gap.size = 0;
-	gap.prev_size = prev_size;
-
-	write (ta->tape_fd, &gap, sizeof gap);
-	lseek (ta->tape_fd, cur_pos, 0);
-
 	ta->weof_on_close = 1;
 
 	return err;
@@ -572,11 +392,8 @@ ndmp9_error
 ndmos_tape_wfm (struct ndm_session *sess)
 {
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
-	int			rc;
-	struct simu_gap		gap;
 	off_t			cur_pos;
 	ndmp9_error		err;
-	u_long			prev_size;
 
 	ta->weof_on_close = 0;
 
@@ -590,44 +407,10 @@ ndmos_tape_wfm (struct ndm_session *sess)
 
 	cur_pos = lseek (ta->tape_fd, (off_t)0, 1);
 
-	rc = read (ta->tape_fd, &gap, sizeof gap);
-	if (rc != sizeof gap
-	 || gap.magic != SIMU_GAP_MAGIC) {
-		lseek (ta->tape_fd, cur_pos, 0);
-		return NDMP9_IO_ERR;
-	}
-
-	prev_size = gap.prev_size;
-
-	gap.magic = SIMU_GAP_MAGIC;
-	gap.rectype = SIMU_GAP_RT_FILE;
-	gap.prev_size = prev_size;
-	gap.size = 0;
-
 	lseek (ta->tape_fd, cur_pos, 0);
-
-	if (write (ta->tape_fd, &gap, sizeof gap) == sizeof gap) {
-
-		cur_pos += sizeof gap;
-
-		prev_size = 0;
-
-		ta->tape_state.file_num.value++;
-		ta->tape_state.blockno.value = 0;
-
-		err = NDMP9_NO_ERR;
-	} else {
-		err = NDMP9_IO_ERR;
-	}
+	err = NDMP9_NO_ERR;
 
 	ftruncate (ta->tape_fd, cur_pos);
-	lseek (ta->tape_fd, cur_pos, 0);
-
-	gap.rectype = SIMU_GAP_RT_EOT;
-	gap.size = 0;
-	gap.prev_size = prev_size;
-
-	write (ta->tape_fd, &gap, sizeof gap);
 	lseek (ta->tape_fd, cur_pos, 0);
 
 	return err;
@@ -639,8 +422,6 @@ ndmos_tape_read (struct ndm_session *sess,
 {
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
 	int			rc;
-	struct simu_gap		gap;
-	off_t			cur_pos;
 
 	if (ta->tape_fd < 0) {
 		return NDMP9_DEV_NOT_OPEN_ERR;
@@ -658,40 +439,19 @@ ndmos_tape_read (struct ndm_session *sess,
 		return NDMP9_NO_ERR;
 	}
 
-	cur_pos = lseek (ta->tape_fd, (off_t)0, 1);
+	unsigned	nb;
 
-	rc = read (ta->tape_fd, &gap, sizeof gap);
-	if (rc != sizeof gap
-	 || gap.magic != SIMU_GAP_MAGIC) {
-		lseek (ta->tape_fd, cur_pos, 0);
+	nb = count;
+
+	rc = read (ta->tape_fd, buf, nb);
+	if (rc < 0) {
 		return NDMP9_IO_ERR;
 	}
+	ta->tape_state.blockno.value++;
 
-	if (gap.rectype == SIMU_GAP_RT_DATA) {
-		unsigned	nb;
+	*done_count = rc;
 
-		nb = count;
-		if (nb > gap.size)
-			nb = gap.size;
-
-		rc = read (ta->tape_fd, buf, nb);
-		if (rc != nb) {
-			lseek (ta->tape_fd, cur_pos, 0);
-			return NDMP9_IO_ERR;
-		}
-
-		if (gap.size != nb) {
-			cur_pos += sizeof gap + gap.size;
-			lseek (ta->tape_fd, cur_pos, 0);
-		}
-
-		ta->tape_state.blockno.value++;
-
-		*done_count = nb;
-	} else {
-		/* all other record types are interpretted as EOF */
-		lseek (ta->tape_fd, cur_pos, 0);
-		*done_count = 0;
+	if (rc == 0) {
 		return NDMP9_EOF_ERR;
 	}
 	return NDMP9_NO_ERR;

@@ -1,3 +1,10 @@
+2009-12-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/Makefile.am: Build ndmjob with original tape simulator.
+				Build amndmjob with modifier tape simulator.
+	* ndmp-src/amndma_tape_simulator.c: The modified tape simulator.
+	* ndmp-src/amndmjob_main.c: Main amndmjob program.
+	* ndmp-src/ndma_tape_simulator.c: The original tape simulator.
+
 2009-11-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Small fix.
 

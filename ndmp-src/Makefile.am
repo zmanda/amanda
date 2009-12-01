@@ -116,7 +116,6 @@ libndmjla = \
 	ndma_image_stream.c \
 	ndma_noti_calls.c \
 	ndma_tape.c \
-	ndma_tape_simulator.c \
 	ndma_robot.c \
 	wraplib.c
 
@@ -173,6 +172,7 @@ libndmlib_la_SOURCES = \
 libndmjob_la_SOURCES = \
 	$(libndmjla) \
 	$(libndmjlr)
+
 libndmjob_la_LDFLAGS = -release $(VERSION)
 libndmjob_la_LIBADD = libndmlib.la
 
@@ -180,15 +180,27 @@ libndmjob_la_LIBADD = libndmlib.la
 ## ndmjob -- used for testing and by applications
 ##
 
-amlibexec_PROGRAMS = ndmjob
+amlibexec_PROGRAMS = amndmjob ndmjob
 
 ndmjob_SOURCES = ndmjob_main.c \
 		      ndmjob_args.c \
 		      ndmjob_job.c \
 		      ndmjob_rules.c \
-		      ndmjob_main_util.c
+		      ndmjob_main_util.c \
+		      ndma_tape_simulator.c
+
+
+amndmjob_SOURCES = ndmjob_main.c \
+		      ndmjob_args.c \
+		      ndmjob_job.c \
+		      ndmjob_rules.c \
+		      ndmjob_main_util.c \
+		      amndma_tape_simulator.c
 
 ndmjob_LDADD = libndmjob.la \
+		   ../common-src/libamanda.la
+
+amndmjob_LDADD = libndmjob.la \
 		   ../common-src/libamanda.la
 
 # for systems without rpcgen, don't even include rules that *might*
