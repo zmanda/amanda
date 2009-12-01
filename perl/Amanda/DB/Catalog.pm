@@ -552,7 +552,7 @@ sub add_dump {
 
 	    # if this is part number 1, reset our secs and kbs counters on the
 	    # assumption that this is the beginning of a new dump
-	    if ($find_result->{'partnum'} =~ qr{1/\d}) {
+	    if ($find_result->{'partnum'} == 1) {
 		$last_secs = $last_kbs = 0;
 	    }
 	    $last_secs += $find_result->{'sec'};

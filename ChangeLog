@@ -1,4 +1,9 @@
 2009-12-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/DB/Catalog.pm: Fix for new find_result_t api.
+	* installcheck/Amanda_Logfile.pl: Fix for perl-5.6.
+	* installcheck/Amanda_DB_Catalog.pl: Fix for perl-5.6.
+
+2009-12-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/Makefile.am: amndmjob_SOURCES = amndmjob_main.c
 
 2009-12-01  Jean-Louis Martineau <martineau@zmanda.com>

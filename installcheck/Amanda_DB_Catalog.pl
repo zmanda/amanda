@@ -125,6 +125,8 @@ sub sortdumps {
 	$_->{'level'} = "$_->{level}" + 0;
 	$_->{'filenum'} = "$_->{filenum}" + 0;
 	$_->{'kb'} = "$_->{kb}" + 0;
+	$_->{'partnum'} = "$_->{partnum}" + 0;
+	$_->{'nparts'} = "$_->{nparts}" + 0;
 	$_;
     } sort {
 	$a->{'label'} cmp $b->{'label'}
