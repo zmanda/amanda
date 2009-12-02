@@ -1,4 +1,8 @@
 2009-12-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scan/traditional.pm: continue the scan on inuse
+						 error.
+
+2009-12-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scan/traditional.pm: Release reservation on error.
 
 2009-12-01  Jean-Louis Martineau <martineau@zmanda.com>
