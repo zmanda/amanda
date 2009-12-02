@@ -85,6 +85,20 @@ sub scan_result {
 
     if ($err) {
 	debug("Amanda::Taper::Scan::traditional result: error=$err");
+
+	# if we already had a reservation when the error occurred, then we'll need
+	# to release that reservation before signalling the error
+	if ($res) {
+	    my $finished_cb = make_cb(finished_cb => sub {
+		my ($err) = @_;
+		# if there was an error releasing, log it and ignore it
+		Amanda::Debug::warn("while releasing reservation: $err") if $err;
+
+		$self->{'scanning'} = 0;
+		$self->{'result_cb'}->(@result);
+	    });
+	    return $res->release(finished_cb => $finished_cb);
+	}
     } else {
 	my $devname = $res->{'device'}->device_name;
 	debug("Amanda::Taper::Scan::traditional result: '$label' on $devname, mode $mode");
@@ -149,7 +163,7 @@ sub stage_1 {
 		$self->_user_msg("oldest reusable volume not found");
 		return $self->stage_2();
 	    } else {
-		return $self->scan_result($err);
+		return $self->scan_result($err, $res);
 	    }
 	}
 
@@ -228,7 +242,7 @@ sub try_volume {
         $label = $self->make_new_tape_label();
         if (!defined $label) {
             # make this fatal, rather than silently skipping new tapes
-            $self->scan_result("Could not invent new label for new volume");
+            $self->scan_result("Could not invent new label for new volume", $res);
             return 1;
         }
 
@@ -298,13 +312,13 @@ sub stage_2 {
         my ($err, $res) = @_;
 
 	if ($err and $err->failed and $err->notfound) {
-            return $self->scan_result("No acceptable volumes found");
+            return $self->scan_result("No acceptable volumes found", $res);
 	}
 
         # if we have a fatal error or something other than "notfound",
         # bail out.
         if ($err) {
-            return $self->scan_result($err);
+            return $self->scan_result($err, $res);
         }
 
 	$self->{'seen'}->{$res->{'this_slot'}} = 1;
