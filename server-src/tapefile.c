@@ -182,6 +182,15 @@ lookup_nb_tape(void)
     return pos;
 }
 
+
+char *
+get_last_reusable_tape_label(
+     int skip)
+{
+    tape_t *tp = lookup_last_reusable_tape(skip);
+    return (tp != NULL) ? tp->label : NULL;
+}
+
 tape_t *
 lookup_last_reusable_tape(
      int skip)

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 18;
+use Test::More tests => 20;
 use strict;
 
 use lib "@amperldir@";
@@ -141,6 +141,16 @@ SKIP: {
     is_deeply($tl->lookup_tapedate("20071109010002"), undef,
 	".. lookup_tapedate no longer finds it");
 
+    ## set tapecycle to 0 to perform the next couple tests
+    my $cor = new_config_overrides(1);
+    add_config_override_opt($cor, "TAPECYCLE=0");
+    apply_config_overrides($cor);
+
+    is( Amanda::Tapelist::get_last_reusable_tape_label(0),
+        'TESTCONF002', ".. get_last_reusable_tape_labe for skip=0" );
+
+    is( Amanda::Tapelist::get_last_reusable_tape_label(2),
+        'TESTCONF004', ".. get_last_reusable_tape_labe for skip=2" );
 }
 
 # try parsing various invalid lines

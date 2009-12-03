@@ -50,6 +50,7 @@ tape_t *lookup_tapelabel(char *label);
 tape_t *lookup_tapepos(int pos);
 tape_t *lookup_tapedate(char *datestamp);
 int lookup_nb_tape(void);
+char *get_last_reusable_tape_label(int skip);
 tape_t *lookup_last_reusable_tape(int skip);
 void remove_tapelabel(char *label);
 tape_t *add_tapelabel(char *datestamp, char *label, char *comment);
