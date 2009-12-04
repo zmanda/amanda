@@ -2501,7 +2501,7 @@ A comment string describing this script.</para>
       <varlistentry>
       <term><emphasis remap='B'>pre-host-backup</emphasis></term>
       <listitem>
-<para>Execute before the backup command for all dle for the client.</para>
+<para>Execute before the backup command for all dle for the client. It can't be run on client, it must be run on server</para>
       </listitem>
       </varlistentry>
       <varlistentry>
@@ -2513,7 +2513,7 @@ A comment string describing this script.</para>
       <varlistentry>
       <term><emphasis remap='B'>post-host-backup</emphasis></term>
       <listitem>
-<para>Execute after the backup command for all dle for the client.</para>
+<para>Execute after the backup command for all dle for the client. It can't be run on client, it must be run on server</para>
       </listitem>
       </varlistentry>
       <varlistentry>

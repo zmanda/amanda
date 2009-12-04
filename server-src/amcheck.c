@@ -1091,6 +1091,7 @@ start_server_check(
 	char *host;
 	char *disk;
 	int conf_tapecycle, conf_runspercycle;
+	identlist_t pp_scriptlist;
 
 	conf_tapecycle = getconf_int(CNF_TAPECYCLE);
 	conf_runspercycle = getconf_int(CNF_RUNSPERCYCLE);
@@ -1392,6 +1393,23 @@ start_server_check(
 				  _("WARNING: %s %s: Holding disk can't be use for directtcp data-path\n"),
 				  hostp->hostname, dp->name);
 			pgmbad = 1;
+		    }
+		}
+
+		for (pp_scriptlist = dp->pp_scriptlist; pp_scriptlist != NULL;
+		     pp_scriptlist = pp_scriptlist->next) {
+		    pp_script_t *pp_script = lookup_pp_script((char *)pp_scriptlist->data);
+		    g_assert(pp_script != NULL);
+		    if (pp_script_get_execute_where(pp_script) == ES_CLIENT &&
+			pp_script_get_execute_on(pp_script) & EXECUTE_ON_PRE_HOST_BACKUP) {
+			g_fprintf(outf,
+				  _("ERROR: %s %s: Can't run pre-host-backup script on client\n"),
+				  hostp->hostname, dp->name);
+		    } else if (pp_script_get_execute_where(pp_script) == ES_CLIENT &&
+			pp_script_get_execute_on(pp_script) & EXECUTE_ON_POST_HOST_BACKUP) {
+			g_fprintf(outf,
+				  _("ERROR: %s %s: Can't run post-host-backup script on client\n"),
+				  hostp->hostname, dp->name);
 		    }
 		}
 

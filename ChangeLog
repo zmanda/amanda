@@ -1,9 +1,13 @@
+2009-12-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Give error if pre-host-backup or
+				post-host-backup are executed on client.
+	* man/xml-source/amanda.conf.5.xml: Document it.
+
 2009-12-03  Paul C. Mantz <pcmantz@zmanda.com>
 	* server-src/tapefile.c server-src/tapefile.h
           perl/Amanda/Tapelist.swg installcheck/Amanda_Tapelist.pl:
           added and swigged get_last_reusable_tape_label(). 
 	
-
 2009-12-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scan/traditional.pm: continue the scan on inuse
 						 error.
