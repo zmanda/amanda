@@ -42,7 +42,7 @@ Stable
 =head1 INTERFACE
 
 This module will modify C<Math::BigInt> to hide inconsistent behaviors across
-Perl versions. Spefically, it handles the following.
+Perl versions. Specifically, it handles the following.
 
 =over
 
@@ -56,7 +56,6 @@ stringify positive numbers with a leading C<+> (e.g. C<+1> instead of C<1>).
 =cut
 
 my $test_num = Math::BigInt->new(1);
-our $stringify = overload::Method($test_num, '""');
 
 if ($test_num =~ /^\+/) {
     eval <<'EVAL';

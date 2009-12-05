@@ -1,3 +1,7 @@
+2009-12-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/automake/scripts.am: remove unnecessary -T
+	* perl/Amanda/BigIntCompat.pm: remove unused $stringify
+
 2009-12-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Give error if pre-host-backup or
 				post-host-backup are executed on client.
