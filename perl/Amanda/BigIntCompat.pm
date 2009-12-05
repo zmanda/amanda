@@ -57,6 +57,10 @@ stringify positive numbers with a leading C<+> (e.g. C<+1> instead of C<1>).
 
 my $test_num = Math::BigInt->new(1);
 
+our $stringify = overload::Method($test_num, '""');
+# convince older perls that $stringify really is used
+$stringify = $stringify;
+
 if ($test_num =~ /^\+/) {
     eval <<'EVAL';
         package Math::BigInt;
