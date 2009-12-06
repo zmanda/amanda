@@ -1,3 +1,6 @@
+2009-12-05  Sam Couter <sam@couter.id.au>
+	* client-src/client_util.c: Free correct memory
+
 2009-12-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/automake/scripts.am: remove unnecessary -T
 	* perl/Amanda/BigIntCompat.pm: remove unused $stringify
