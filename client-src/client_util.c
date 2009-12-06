@@ -846,7 +846,7 @@ backup_support_option(
 	    g_ptr_array_add(*errarray, line);
 	    dbprintf("Application '%s': %s\n", program, line);
 	}
-	amfree(line);
+	amfree(bsu);
     }
     fclose(streamerr);
 
