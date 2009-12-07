@@ -56,6 +56,7 @@ char *help_text[] = {
 #ifndef NDMOS_EFFECT_NO_SERVER_AGENTS
 	"  -o daemon      -- launch session for incomming connections",
 	"  -o test-daemon -- launch session for incomming connections, exit when stdin is closed",
+	"  -o tape-size=SIZE -- specify the length, in bytes of the simulated tape",
 #endif /* !NDMOS_EFFECT_NO_SERVER_AGENTS */
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
 	"  -o rewind      -- rewind tape in drive, need -T and -f",
@@ -659,6 +660,12 @@ handle_long_option (char *str)
 		o_config_file = value;
 	} else if (strcmp (name, "tape-tcp") == 0 && value) {
 		o_tape_tcp = value;
+	} else if (strcmp (name, "tape-limit") == 0) {
+		if (!value) {
+			error_byebye ("tape-limit argument is required");
+		} else {
+			o_tape_limit = atoi(value);
+		}
 	} else {
 		if (value) value[-1] = '=';
 		error_byebye ("unknown/bad long option -o%s", str);

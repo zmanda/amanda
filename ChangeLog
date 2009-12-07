@@ -1,3 +1,10 @@
+2009-12-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/mock/chg-ndmjob.pl installcheck/Installcheck/Mock.pm
+	  installcheck/Makefile.am: new mock changer for ndmjob
+	* ndmp-src/ndma_tape_simulator.c ndmp-src/ndmagents.h
+	  ndmp-src/ndmjob.h ndmp-src/ndmjob_args.c: add EOM (both LEOM and
+	  PEOM) support to the tape simulator
+
 2009-12-07  Sam Couter <sam@couter.id.au>
 	* AUTHORS: add Sam to AUTHORS
 	* device-src/device.c device-src/Makefile.am

@@ -78,7 +78,8 @@ ndmp_tests = \
 
 # mock scripts
 mocks = \
-	mock/mtx
+	mock/mtx \
+	mock/chg-ndmjob
 
 # data for test scripts
 test_data = \

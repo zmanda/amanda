@@ -62,7 +62,12 @@ struct simu_gap {
 #define SIMU_GAP_RT_FILE	SIMU_GAP_RT_('F','I','L','E')
 #define SIMU_GAP_RT_EOT		SIMU_GAP_RT_('E','O','T','_')
 
+/* send logical EOM with a bit less than 2 32k blocks left (due to SIMU_GAPs) */
+#define TAPE_SIM_LOGICAL_EOM	32768*2
 
+/* we sneak a peek at this global variable - probably not the best way, but
+ * it works */
+extern off_t o_tape_limit;
 
 int
 ndmos_tape_initialize (struct ndm_session *sess)
@@ -182,6 +187,16 @@ ndmos_tape_open (struct ndm_session *sess, char *drive_name, int will_write)
 	ta->tape_state.total_space.valid = NDMP9_VALIDITY_INVALID;
 	ta->tape_state.space_remain.valid = NDMP9_VALIDITY_INVALID;
 
+	ta->sent_leom = 0;
+	if (o_tape_limit) {
+	    g_assert(o_tape_limit > st.st_size);
+
+	    ta->tape_state.total_space.valid = NDMP9_VALIDITY_VALID;
+	    ta->tape_state.total_space.value = o_tape_limit;
+	    ta->tape_state.space_remain.valid = NDMP9_VALIDITY_VALID;
+	    ta->tape_state.space_remain.value = o_tape_limit - st.st_size;
+	}
+
 	return NDMP9_NO_ERR;
 }
 
@@ -233,8 +248,6 @@ ndmos_tape_sync_state (struct ndm_session *sess)
 		ta->tape_state.soft_errors.valid = NDMP9_VALIDITY_INVALID;
 		ta->tape_state.block_size.valid = NDMP9_VALIDITY_INVALID;
 		ta->tape_state.blockno.valid = NDMP9_VALIDITY_INVALID;
-		ta->tape_state.total_space.valid = NDMP9_VALIDITY_INVALID;
-		ta->tape_state.space_remain.valid = NDMP9_VALIDITY_INVALID;
 	} else {
 		ta->tape_state.error = NDMP9_NO_ERR;
 		if (ta->mover_state.state == NDMP9_MOVER_STATE_ACTIVE)
@@ -245,8 +258,6 @@ ndmos_tape_sync_state (struct ndm_session *sess)
 		ta->tape_state.soft_errors.valid = NDMP9_VALIDITY_VALID;
 		ta->tape_state.block_size.valid = NDMP9_VALIDITY_VALID;
 		ta->tape_state.blockno.valid = NDMP9_VALIDITY_VALID;
-		ta->tape_state.total_space.valid = NDMP9_VALIDITY_INVALID;
-		ta->tape_state.space_remain.valid = NDMP9_VALIDITY_INVALID;
 	}
 
 	return;
@@ -270,6 +281,7 @@ simu_back_one (struct ndm_session *sess, int over_file_mark)
 	new_pos = cur_pos;
 	new_pos -= sizeof gap + gap.prev_size;
 
+	ta->sent_leom = 0;
 
 	/*
 	 * This is the new position. We need to update simu_prev_gap.
@@ -336,6 +348,7 @@ simu_forw_one (struct ndm_session *sess, int over_file_mark)
 	if (rc != sizeof gap || gap.magic != SIMU_GAP_MAGIC)
 		goto bail_out;
 
+	ta->sent_leom = 0;
 
 	new_pos = cur_pos;
 	new_pos += gap.size + sizeof gap;
@@ -520,6 +533,20 @@ ndmos_tape_write (struct ndm_session *sess,
 
 	cur_pos = lseek (ta->tape_fd, (off_t)0, 1);
 
+	if (o_tape_limit) {
+	    /* if cur_pos is past LEOM, but we haven't sent NDMP9_EOM_ERR yet,
+	     * then do so now */
+	    if (!ta->sent_leom && cur_pos > o_tape_limit - TAPE_SIM_LOGICAL_EOM) {
+		ta->sent_leom = 1;
+		return NDMP9_EOM_ERR;
+	    }
+
+	    /* if this write will put us over PEOM, then send NDMP9_IO_ERR */
+	    if (cur_pos + sizeof gap + count > o_tape_limit) {
+		return NDMP9_IO_ERR;
+	    }
+	}
+
 	rc = read (ta->tape_fd, &gap, sizeof gap);
 	if (rc != sizeof gap
 	 || gap.magic != SIMU_GAP_MAGIC) {
@@ -563,6 +590,10 @@ ndmos_tape_write (struct ndm_session *sess,
 	write (ta->tape_fd, &gap, sizeof gap);
 	lseek (ta->tape_fd, cur_pos, 0);
 
+	if (o_tape_limit) {
+	    ta->tape_state.space_remain.value = o_tape_limit - cur_pos;
+	}
+
 	ta->weof_on_close = 1;
 
 	return err;
@@ -589,6 +620,15 @@ ndmos_tape_wfm (struct ndm_session *sess)
 	}
 
 	cur_pos = lseek (ta->tape_fd, (off_t)0, 1);
+
+	if (o_tape_limit) {
+	    /* note: filemarks *never* trigger NDMP9_EOM_ERR */
+
+	    /* if this write will put us over PEOM, then send NDMP9_IO_ERR */
+	    if (cur_pos + sizeof gap > o_tape_limit) {
+		return NDMP9_IO_ERR;
+	    }
+	}
 
 	rc = read (ta->tape_fd, &gap, sizeof gap);
 	if (rc != sizeof gap
@@ -629,6 +669,10 @@ ndmos_tape_wfm (struct ndm_session *sess)
 
 	write (ta->tape_fd, &gap, sizeof gap);
 	lseek (ta->tape_fd, cur_pos, 0);
+
+	if (o_tape_limit) {
+	    ta->tape_state.space_remain.value = o_tape_limit - cur_pos;
+	}
 
 	return err;
 }

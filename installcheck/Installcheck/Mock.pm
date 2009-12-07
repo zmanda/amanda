@@ -43,9 +43,13 @@ Installcheck::Mock - utilities for the installcheck mocks
 
 =head1 USAGE
 
+=head2 mtx
+
 C<setup_mock_mtx> sets up a state file for C<mock/mtx> with the given config
 hash, and returns the filename of the state file.  This function must be run
 with the current dirctory pointing to 'installcheck/'.
+
+=head2 ndmjob
 
 To run an ndmjob instance, replete with a tape simulator, call C<run_ndmjob>
 with a port number on which ndmjob should listen.  The ndmjob instance will
@@ -56,6 +60,7 @@ is finished.  The function returns the name of the tape "device".
 
 use Installcheck;
 use Cwd qw(abs_path);
+use File::Path qw( mkpath rmtree );
 use Data::Dumper;
 use POSIX;
 use IPC::Open3;
@@ -79,11 +84,17 @@ sub setup_mock_mtx {
 
 our $mock_mtx_path = abs_path("mock") . "/mtx"; # abs_path only does dirs in perl-5.6
 
+my $ndmjob_sim_dir = "$Installcheck::TMP/ndmjob-tape-simulator-$$";
+
 sub run_ndmjob {
-    my ($port) = @_;
-    my $tapefile = "$Installcheck::TMP/ndmp-tapefile-$$";
+    my ($port, @extra_args) = @_;
     no warnings; # don't complain that OUTFH is used only once
 
+    my $tapefile = "$ndmjob_sim_dir/ndmp-tapefile";
+    rmtree($ndmjob_sim_dir) if -d $ndmjob_sim_dir;
+
+    # the tapefile must already exist
+    mkpath($ndmjob_sim_dir);
     open(my $fd, ">", $tapefile);
     close($fd);
 
@@ -91,7 +102,7 @@ sub run_ndmjob {
     my $ndmjob_pid = IPC::Open3::open3("INFH", "OUTFH", 0,
 	"$amlibexecdir/ndmjob", "-d5", "-o", "test-daemon",
 		"-T.", "-f", $tapefile,
-		"-p", $port);
+		"-p", $port, @extra_args);
 
     # wait for it to start up
     die "ndmjob did not start up" unless (<OUTFH> =~ /READY/);
@@ -100,6 +111,10 @@ sub run_ndmjob {
     # (parent) process exits. Note that INFH and OUTFH are global, so the
     # handle will not be closed on return from run_ndmjob
     return $tapefile;
+}
+
+sub cleanup_ndmjob {
+    rmtree($ndmjob_sim_dir) if -d $ndmjob_sim_dir;
 }
 
 1;
