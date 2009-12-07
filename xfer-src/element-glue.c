@@ -129,6 +129,7 @@ do_directtcp_connect(
     sockaddr_union addr;
     int sock;
 
+    addrs = elt->downstream->input_listen_addrs;
     if (!addrs) {
 	xfer_cancel_with_error(elt,
 	    "%s got no directtcp addresses to connect to",
@@ -138,7 +139,6 @@ do_directtcp_connect(
 
     /* set up the sockaddr -- IPv4 only */
     SU_INIT(&addr, AF_INET);
-    addrs = elt->downstream->input_listen_addrs;
     SU_SET_PORT(&addr, addrs->port);
     ((struct sockaddr_in *)&addr)->sin_addr.s_addr = htonl(addrs->ipv4);
 

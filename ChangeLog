@@ -1,4 +1,7 @@
 2009-12-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* xfer-src/element-glue.c: fix uninitialized use of variable
+
+2009-12-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/element-glue.c xfer-src/element-glue.h: full glue for
 	  XFER_MECH_DIRECTTCP_LISTEN (source reorganized)
 	* xfer-src/xfer-test.c: tests for same
