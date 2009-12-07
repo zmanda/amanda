@@ -1,4 +1,8 @@
 2009-12-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndma_tape_simulator.c: fix buffer overflow in NDMJOB code
+	  triggered by long filenames in buildbots
+
+2009-12-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/element-glue.c: one more uninitialized variable
 
 2009-12-07  Jean-Louis Martineau <martineau@zmanda.com>
