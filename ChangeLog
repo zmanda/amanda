@@ -1,3 +1,7 @@
+2009-12-07  Sam Couter <sam@couter.id.au>
+	* man/Makefile.am man/xml-source/*: fix documentation so out-of-tree
+					  builds work
+
 2009-12-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/calcsize.c: fix check_running_as.
 

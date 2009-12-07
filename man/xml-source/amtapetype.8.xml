@@ -3,7 +3,7 @@
                    "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 
   <!-- entities files to use -->
-  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
   %global_entities;
 
 ]>

@@ -120,14 +120,14 @@ entities/global.entities: entities/global.entities.in $(top_builddir)/config.sta
 if   ENABLE_MANPAGE_BUILD
 # phase one of the documentation build expands some macros.
 xml-source/%.proc.xml: $(SRCMANPAGEDIR)/%.xml $(srcdir)/xslt/expand-sambadoc.xsl entities/global.entities
-	$(XSLTPROC) $(XSLTPROC_FLAGS) --path $(srcdir)/xslt/ --xinclude --stringparam latex.imagebasedir "$*/" --stringparam noreference 1 --output $@ $(srcdir)/xslt/expand-sambadoc.xsl $<
+	$(XSLTPROC) $(XSLTPROC_FLAGS) --path "$(srcdir)/xslt/:$(builddir)/entities/" --xinclude --stringparam latex.imagebasedir "$*/" --stringparam noreference 1 --output $@ $(srcdir)/xslt/expand-sambadoc.xsl $<
 
 # phase two generates a manpage from the resulting "expanded" docbook XML
 %: xml-source/%.proc.xml $(srcdir)/xslt/man.xsl entities/global.entities
-	$(XSLTPROC) $(XSLTPROC_FLAGS) --path $(srcdir)/xslt/ --output $@ xslt/man.xsl $<
+	$(XSLTPROC) $(XSLTPROC_FLAGS) --path "$(srcdir)/xslt/:$(builddir)/entities/" --output $@ xslt/man.xsl $<
 
 %.html: xml-source/%.proc.xml $(srcdir)/xslt/html.xsl entities/global.entities
-	$(XSLTPROC) $(XSLTPROC_FLAGS) --path $(srcdir)/xslt/ --output $@ xslt/html.xsl $<
+	$(XSLTPROC) $(XSLTPROC_FLAGS) --path "$(srcdir)/xslt/:$(builddir)/entities/" --output $@ xslt/html.xsl $<
 
 else	!ENABLE_MANPAGE_BUILD
 
