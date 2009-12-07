@@ -1,4 +1,8 @@
 2009-12-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndmagents.h: use PATH_MAX for drive_name; remove
+	  unnecessary include
+
+2009-12-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/directtcp.h: mention IP byte order
 	* perl/amglue/directtcp.swg device-src/device.c device-src/device.h
 	  perl/Amanda/Device.swg: use guint64 instead of gsize for read/write
