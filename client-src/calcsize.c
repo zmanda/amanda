@@ -168,13 +168,6 @@ main(
     char *amname=NULL, *qamname=NULL;
     char *filename=NULL, *qfilename = NULL;
 
-    /* drop root privileges; we'll regain them for the required operations */
-#ifdef WANT_SETUID_CLIENT
-    if (!set_root_privs(0)) {
-	error(_("calcsize must be run setuid root"));
-    }
-#endif
-
     safe_fd(-1, 0);
     safe_cd();
 
@@ -182,6 +175,16 @@ main(
 
     dbopen(DBG_SUBDIR_CLIENT);
     dbprintf(_("version %s\n"), VERSION);
+
+    /* drop root privileges; we'll regain them for the required operations */
+#ifdef WANT_SETUID_CLIENT
+    check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_AS_UID_ONLY);
+    if (!set_root_privs(0)) {
+	error(_("calcsize must be run setuid root"));
+    }
+#else
+    check_running_as(RUNNING_AS_CLIENT_LOGIN);
+#endif
 
     argc--, argv++;	/* skip program name */
 
@@ -199,8 +202,6 @@ main(
     }
     argc--;
     argv++;
-
-    check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_AS_UID_ONLY);
 
     /* parse backup program name */
 
