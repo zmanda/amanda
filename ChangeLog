@@ -1,4 +1,8 @@
 2009-12-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/dvdrw-device.c: fix uninitialized variable, don't use
+	  G_DEFINE_DEVICE
+
+2009-12-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/element-glue.c: fix uninitialized use of variable
 
 2009-12-07  Dustin J. Mitchell <dustin@zmanda.com>

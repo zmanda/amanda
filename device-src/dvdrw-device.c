@@ -67,8 +67,6 @@ struct _DvdRwDeviceClass {
     VfsDeviceClass __parent__;
 };
 
-G_DEFINE_TYPE(DvdRwDevice, dvdrw_device, TYPE_VFS_DEVICE)
-
 /* Where the DVD-RW can be mounted */
 static DevicePropertyBase device_property_dvdrw_mount_point;
 #define PROPERTY_DVDRW_MOUNT_POINT (device_property_dvdrw_mount_point.ID)
@@ -171,6 +169,32 @@ burn_disc(DvdRwDevice *self);
 
 static DeviceStatusFlags
 execute_command(DvdRwDevice *self, gchar **argv, gint *status);
+
+static GType
+dvdrw_device_get_type (void)
+{
+    static GType type = 0;
+
+    if G_UNLIKELY(type == 0) {
+        static const GTypeInfo info = {
+            sizeof (VfsDeviceClass),
+            (GBaseInitFunc) NULL,
+            (GBaseFinalizeFunc) NULL,
+            (GClassInitFunc) dvdrw_device_class_init,
+            (GClassFinalizeFunc) NULL,
+            NULL /* class_data */,
+            sizeof (VfsDevice),
+            0 /* n_preallocs */,
+            (GInstanceInitFunc) dvdrw_device_init,
+            NULL
+        };
+
+        type = g_type_register_static (TYPE_VFS_DEVICE, "DvdRwDevice",
+                                       &info, (GTypeFlags)0);
+    }
+
+    return type;
+}
 
 void
 dvdrw_device_register(void)
@@ -403,7 +427,7 @@ dvdrw_device_read_label(Device *dself)
 {
     DvdRwDevice *self = DVDRW_DEVICE(dself);
     VfsDevice *vself = VFS_DEVICE(dself);
-    gboolean mounted;
+    gboolean mounted = FALSE;
     DeviceStatusFlags status;
     struct stat dir_status;
     DeviceClass *parent_class = DEVICE_CLASS(g_type_class_peek_parent(DVDRW_DEVICE_GET_CLASS(dself)));
