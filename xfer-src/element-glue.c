@@ -427,8 +427,8 @@ setup_impl(
     XferElement *elt)
 {
     XferElementGlue *self = (XferElementGlue *)elt;
-    gboolean need_ring;
-    gboolean need_listen;
+    gboolean need_ring = FALSE;
+    gboolean need_listen = FALSE;
 
     g_assert(elt->input_mech != XFER_MECH_NONE);
     g_assert(elt->output_mech != XFER_MECH_NONE);

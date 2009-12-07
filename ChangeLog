@@ -1,3 +1,6 @@
+2009-12-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* xfer-src/element-glue.c: one more uninitialized variable
+
 2009-12-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.h, device-src/device.c,
 	  man/xml-source/amanda-changers.7.xml, perl/Amanda/Device.pod
