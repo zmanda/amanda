@@ -167,7 +167,8 @@ libndmlib_la_SOURCES = \
 	$(libndmjlp) \
 	$(libndmjls) \
 	$(libndmjl5) \
-	$(libndmjlo)
+	$(libndmjlo) \
+	ndmpconnobj.c
 
 libndmjob_la_SOURCES = \
 	$(libndmjla) \
@@ -234,7 +235,8 @@ noinst_HEADERS = \
 	ndmp3_enum_strs.h  ndmp9.x            \
 	ndmp3.h            ndmp_ammend.h      wraplib.h \
 	ndmp3_translate.h  ndmp_msg_buf.h \
-	ndmos_glib.h
+	ndmos_glib.h \
+	ndmpconnobj.h
 
 EXTRA_DIST += \
 	ndmos_glib.c \
