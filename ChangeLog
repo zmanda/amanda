@@ -1,4 +1,8 @@
 2009-12-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndma_tape_simulator.c: use g_strlcpy to be safe
+	* ndmp-src/ndmagents.h: expand drive_name to 256 bytes
+
+2009-12-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/Makefile.am ndmp-src/ndmpconnobj.c ndmp-src/ndmpconnobj.h:
 	  new class to encapsulate all of the NDMP transactions without
 	  requiring weird precompiler macros

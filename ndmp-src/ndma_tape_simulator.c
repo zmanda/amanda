@@ -174,7 +174,7 @@ ndmos_tape_open (struct ndm_session *sess, char *drive_name, int will_write)
 	g_free(pos_symlink_name);
 	ta->tape_fd = fd;
 	NDMOS_API_BZERO (ta->drive_name, sizeof ta->drive_name);
-	strcpy (ta->drive_name, drive_name);
+	g_strlcpy (ta->drive_name, drive_name, sizeof ta->drive_name);
 	bzero (&ta->tape_state, sizeof ta->tape_state);
 	ta->tape_state.error = NDMP9_NO_ERR;
 	ta->tape_state.state = NDMP9_TAPE_STATE_OPEN;
