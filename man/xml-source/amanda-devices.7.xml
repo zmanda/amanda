@@ -261,6 +261,49 @@ size, regardless of the blocksize used to write the data.</para>
 
 </refsect2>
 
+<refsect2><title>DVD-RW Device</title>
+<programlisting>
+tapedev "dvdrw:/var/cache/amanda/dvd-cache:/dev/scd0"
+device_property "DVDRW_MOUNT_POINT" "/media/dvd"
+device_property "DVDRW_KEEP_CACHE" "false"
+device_property "DVDRW_UNLABELLED_WHEN_UNMOUNTABLE" "true"
+</programlisting>
+
+<para>The DVD-RW device driver reads and writes optical media such as DVDs and
+CDs. The device name must specify a cache directory for data to be temporarily
+stored, followed by the operating system name for the optical drive. The cache
+directory must contain a "data/" subdirectory.</para>
+
+<para>The DVDRW_MOUNT_POINT property is required, and specifies a directory
+where the optical media can be mounted. This directory must be configured to
+enable non-root users to mount the optical media. On Linux, that means a line
+similar to the following in /etc/fstab:</para>
+<programlisting>
+/dev/scd0 /media/dvd auto ro,user,noauto 0 0
+</programlisting>
+
+<para>Note the "user" option.</para>
+
+<para>When writing data, the device acts as a VFS device using the given cache
+directory. On completion of writing the tape, the cache directory is written
+to optical media. The DVDRW_KEEP_CACHE property controls whether the cache
+contents are immediately deleted. When reading, the optical media is first
+mounted and read as a VFS device.</para>
+
+<para>Attempting to mount unformatted media or media that is formatted but
+contains no filesystem will usually result in an error. The boolean
+DVDRW_UNLABELLED_WHEN_UNMOUNTABLE property specifies whether media that cannot
+be mounted should be treated as an empty, unlabelled volume when attempting to
+read the volume label. It is necessary to set this property to "true" when
+labelling such media.</para>
+
+<para>The properties DVDRW_GROWISOFS_COMMAND, DVDRW_MOUNT_COMMAND and
+DVDRW_UMOUNT_COMMAND specify alternative commands for writing, mounting and
+unmounting optical media. The default is to find the programs using the PATH
+environment variable.</para>
+
+</refsect2>
+
 </refsect1>
 
 <refsect1><title>PROPERTIES</title>
@@ -533,6 +576,33 @@ operations can be emulated with the MTREW and read data operations.</para>
 </listitem></varlistentry>
  <!-- ==== -->
 </variablelist>
+
+</refsect3>
+
+<refsect3><title>DVD-RW Device</title>
+
+<variablelist>
+ <varlistentry><term>DVDRW_KEEP_CACHE</term><listitem>
+ (read-write) Set this boolean property to "true" if the disk cache directory should be kept after successfully writing tape data to optical media. The default is false, which causes the cache contents to be deleted immediately after a successful write operation.
+</listitem></varlistentry>
+ <varlistentry><term>DVDRW_MOUNT_POINT</term><listitem>
+ (read-write) This property specifies the filesystem mount point for the optical media. Non-root users must be able to mount optical media by invoking "mount" and specifying this mount point.
+</listitem></varlistentry>
+ <varlistentry><term>DVDRW_UNLABELLED_WHEN_UNMOUNTABLE</term><listitem>
+ (read-write) Treat unmountable media as empty, unlabelled media. This is necessary when attempting to label freshly formatted media.
+</listitem></varlistentry>
+ <varlistentry><term>DVDRW_GROWISOFS_COMMAND</term><listitem>
+ (read-write) The command to invoke to burn the DVD.
+</listitem></varlistentry>
+ <varlistentry><term>DVDRW_MOUNT_COMMAND</term><listitem>
+ (read-write) The command to invoke to mount the DVD.
+</listitem></varlistentry>
+ <varlistentry><term>DVDRW_UMOUNT_COMMAND</term><listitem>
+ (read-write) The command to invoke to unmount the DVD.
+</listitem></varlistentry>
+</variablelist>
+
+<para>The DVDRW_MOUNT_POINT property is required. Other properties are optional.</para>
 
 </refsect3>
 

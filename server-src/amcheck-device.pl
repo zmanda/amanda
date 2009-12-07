@@ -41,9 +41,13 @@ GetOptions(
     'w' => \$overwrite,
 ) or usage();
 
-if (@ARGV != 1) {
+sub usage {
     print STDERR "USAGE: amcheck-device <config> [-w] <config-overwrites>";
     exit 1;
+}
+
+if (@ARGV != 1) {
+    usage();
 }
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, $ARGV[0]);

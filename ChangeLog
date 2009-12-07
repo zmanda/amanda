@@ -1,4 +1,15 @@
 2009-12-07  Sam Couter <sam@couter.id.au>
+	* AUTHORS: add Sam to AUTHORS
+	* device-src/device.c device-src/Makefile.am
+	  device-src/dvdrw-device.c: new dvd-rw device
+	* configure.in config/amanda/dvdrw-device.m4: config
+	  for it
+	* device-src/vfs-device.c device-src/vfs-device.h: enable
+	  subclassing of VFS device
+	* man/xml-source/amanda-devices.7.xml: documentation
+	* server-src/amcheck-device.pl: add usage() sub
+
+2009-12-07  Sam Couter <sam@couter.id.au>
 	* man/Makefile.am man/xml-source/*: fix documentation so out-of-tree
 					  builds work
 
