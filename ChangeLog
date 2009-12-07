@@ -1,4 +1,14 @@
 2009-12-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/directtcp.h: mention IP byte order
+	* perl/amglue/directtcp.swg device-src/device.c device-src/device.h
+	  perl/Amanda/Device.swg: use guint64 instead of gsize for read/write
+	  lengths; directtcp_supported is a boolean class attribute instead of a
+	  method; listen takes a for_writing argument; SWIG directtcp methods
+	* perl/Amanda/Device.pod: document LEOM handling, new methods
+	* device-src/directtcp-connection.c: call parent's finalize
+	* restore-src/restore.c: pass correct for_writing to listen
+
+2009-12-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndma_tape_simulator.c: use g_strlcpy to be safe
 	* ndmp-src/ndmagents.h: expand drive_name to 256 bytes
 

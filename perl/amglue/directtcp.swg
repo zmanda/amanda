@@ -29,7 +29,7 @@
     int i = 0;
 
     while (iter && iter->ipv4) {
-	struct in_addr in = { iter->ipv4 };
+	struct in_addr in = { htonl(iter->ipv4) };
 	char *addr = inet_ntoa(in);
 	AV *tuple = newAV();
 
@@ -42,4 +42,73 @@
 
     $result = newRV_noinc((SV *)av);
     argvi++;
+}
+
+%typemap(in,numinputs=0) DirectTCPAddr **addrs
+    (DirectTCPAddr *addrs) {
+    addrs = NULL;
+    $1 = &addrs;
+}
+%typemap(argout) DirectTCPAddr **addrs {
+    if ($1 && *$1) {
+	DirectTCPAddr *iter = *$1;
+	AV *av = newAV();
+	int i = 0;
+
+	while (iter && iter->ipv4) {
+	    struct in_addr in = { htonl(iter->ipv4) };
+	    char *addr = inet_ntoa(in);
+	    AV *tuple = newAV();
+
+	    g_assert(NULL != av_store(tuple, 0,
+		    newSVpv(addr, 0)));
+	    g_assert(NULL != av_store(tuple, 1, newSViv(iter->port)));
+	    g_assert(NULL != av_store(av, i++, newRV_noinc((SV *)tuple)));
+	    iter++;
+	}
+
+	$result = newRV_noinc((SV *)av);
+	argvi++;
+    }
+}
+
+%typemap(in) DirectTCPAddr *addrs {
+    AV *addrs_av;
+    int num_addrs, i;
+
+    if (!SvROK($input) || SvTYPE(SvRV($input)) != SVt_PVAV) {
+        SWIG_exception_fail(SWIG_TypeError, "must provide an arrayref of DirectTCPAddrs");
+    }
+    addrs_av = (AV *)SvRV($input);
+    num_addrs = av_len(addrs_av)+1;
+
+    $1 = g_new0(DirectTCPAddr, num_addrs);
+
+    for (i = 0; i < num_addrs; i++) {
+        SV **svp = av_fetch(addrs_av, i, 0);
+        AV *addr_av;
+        struct in_addr addr;
+        IV port;
+
+        if (!svp || !SvROK(*svp) || SvTYPE(SvRV(*svp)) != SVt_PVAV
+                 || av_len((AV *)SvRV(*svp))+1 != 2) {
+            SWIG_exception_fail(SWIG_TypeError, "each DirectTCPAddr must be a 2-element arrayref");
+        }
+
+        addr_av = (AV *)SvRV(*svp);
+
+        /* get address */
+        svp = av_fetch(addr_av, 0, 0);
+        if (!svp || !SvPOK(*svp) || !inet_aton(SvPV_nolen(*svp), &addr)) {
+            SWIG_exception_fail(SWIG_TypeError, "invalid IPv4 addr in address");
+        }
+        $1[i].ipv4 = ntohl(addr.s_addr);
+
+        /* get port */
+        svp = av_fetch(addr_av, 1, 0);
+        if (!svp || !SvIOK(*svp) || (port = SvIV(*svp)) <= 0 || port >= 65536) {
+            SWIG_exception_fail(SWIG_TypeError, "invalid port in address");
+        }
+        $1[i].port = (guint16)port;
+    }
 }

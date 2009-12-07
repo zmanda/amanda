@@ -24,9 +24,10 @@
 
 #include <glib.h>
 
-/* A combination of IP address (expressed as an integer) and port.  These are
- * commonly seen in arrays terminated by a {0,0}.  Note that, right now, only
- * IPv4 addresses are supported (since this is all that NDMP supports). */
+/* A combination of IP address (expressed as an integer in host byte
+ * order) and port.  These are commonly seen in arrays terminated by
+ * a {0,0}.  Note that, right now, only IPv4 addresses are supported
+ * (since this is all that NDMP supports). */
 typedef struct DirectTCPAddr_ {
     guint32 ipv4;
     guint16 port;

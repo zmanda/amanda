@@ -959,7 +959,7 @@ void restore(RestoreSource  *source,
 
 	    if (myout->restore_mode == LOCAL_DIRECTTCP_MODE ||
 		myout->restore_mode == DIRECTTCP_MODE) {
-		device_listen(source->u.device, &addrs);
+		device_listen(source->u.device, FALSE, &addrs);
 	    }
 
 	    /* send DATA-PATH reply */

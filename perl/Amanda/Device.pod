@@ -247,9 +247,29 @@ As of this writing, device locking is not correctly implemented in many
 devices; consult the source code and check with the Amanda developers before
 depending on concurrent operation of devices.
 
+=head2 EOM and EOF
+
+When writing to a volume, an EOM (end-of-media) condition occurs when no more
+space is available on the volume.  Some devices (currently only those
+supporting DirectTCP) distinguish a logical EOM (LEOM) from a physical EOM
+(PEOM).  The logical EOM comes some distance before the physical EOM, with
+enough space left to finish a data block and write any additional bookkeeping
+data before PEOM.
+
+In such devices, the C<is_eom> attribute is set once LEOM is detected.  Such
+detection can happen in any method that writes to the volume, including
+C<start>, C<start_file>, C<finish_file>, and C<finish>.  API users that
+understand LEOM should take this as a signal to complete writing to the device
+and move on before hitting PEOM.
+
+Devices which do not support EOM simply return a VOLUME_ERROR when the volume
+is full.  If this occurs during a C<write_block> operation, then the volume may
+or may not contain the block - the situation is indeterminate.
+
 =head2 Member Variables
 
-All member variables are implemented using accessor methods, rather than the more common hashref technique.  Use
+All member variables are implemented using accessor methods, rather than the
+more common hashref technique.  Use
 
   print $dev->device_name, "\n";
 
@@ -571,6 +591,81 @@ property.
 On devices that support it, this eject the volume.  This method can be called
 before start and after finish.
 
+=head3 directtcp_supported
+
+  $supp = $dev->directtcp_supported();
+
+This method returns TRUE if the DirectTCP-related methods (C<listen>,
+C<accept>, C<write_from_connection>, and C<read_to_connection>) are implemented
+by this device.
+
+=head3 listen
+
+  $addrs = $dev->listen($for_writing);
+
+The C<listen> method starts the device listening for an incoming DirectTCP
+connection.  The method returns a set of IP:PORT pairs to which a TCP
+connection can be made.  The boolean C<for_writing> is TRUE if
+this connection will be used to write to the device.
+
+This method must be called in C<ACCESS_NULL> (that is, before C<start> or after
+C<finish>).  Between the time C<listen> is called and when C<accept> returns, no
+other methods of the device should be called.
+
+The return value might look like:
+
+  $addrs = [ [ "127.0.0.1", 9382 ] ]
+
+In C, the memory for these addresses remains the responsibility of the device,
+and will remain unchanged until C<accept> returns.
+
+=head3 accept
+
+  $conn = $dev->accept();
+
+This method accepts a connection to one of the addresses returned by C<listen>,
+returning an established DirectTCPConnection object (see below).  It returns
+C<undef> on failure.  Note that this method may block indefinitely if no
+connection ever occurs.
+
+=head3 can_use_connection
+
+  die "no-can-do!"
+    unless $dev->can_use_connection($conn);
+
+Not all DirectTCPConnections are created alike.  This method returns TRUE if
+the given connection is compatible with this device.
+
+=head3 write_from_connection
+
+  ($ok, $actual_size) = $dev->write_from_connection($conn, $size);
+
+This method reads data from an existing DirectTCPConnection (perhaps created
+by another device) and writes it to the volume.   It writes at most C<$size>
+bytes, and returns the number of bytes written in C<$actual_size>.  On error,
+C<$ok> is false.
+
+When an EOF is received over the connection, signalling the end of the data
+stream, then this method returns without error (C<$ok> is true), with
+C<$actual_size> indicating the number of bytes written to the device (which may
+be zero).  In this case, the C<is_eof> attribute is true on return.
+
+Similarly, when the device encounters logical EOM in this method, it returns
+the total bytes transferred in C<$actual_size>, with C<$ok> true, and the
+C<is_eom> attribute true.  No data is lost.  If writes continue until physical
+EOM, data may be lost.
+
+=head3 read_to_connection
+
+  ($ok, $actual_size) = $dev->read_to_connection($conn, $size);
+
+This method is similar to C<write_from_connection> but the data flows in the
+opposite direction.  It reads at most C<$size> bytes, and returns the total
+number of bytes read in C<$actual_size>.
+
+When the method encounters an EOF, it stops early and returns successfully with
+the number of bytes actually read (which may be zero).
+
 =head3 property_get
 
 Get a property value, where the property is specified by name.  See "Properties", above.
@@ -588,6 +683,22 @@ Set a property value with surety and source.  See "Properties", above.
 This module defines a large number of constant scalars.  These constants are
 available from the package namespace (e.g., C<$Amanda::Device::ACCESS_WRITE>),
 or imported with the C<:constant> import tag.
+
+=head2 DirectTCPConnection objects
+
+The C<accept> method returns an object to represent the ongoing DirectTCP
+connection.  This object is mostly useful as a "token" to be passed to
+C<write_from_connection> and C<read_to_connection>.  In particular, a
+connection created by one device can be used with another device; this is how
+DirectTCP dumps are spanned over multiple volumes.
+
+The class does have one critical method, though:
+
+  $conn->close();
+
+This method closes the connection, releasing all resources allocated to it.  It
+can be called at any time, whether the remote side has closed the connection
+already or not.
 
 =cut
 

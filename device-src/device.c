@@ -196,7 +196,6 @@ static gboolean default_device_property_set_ex(Device *self,
 					       GValue * val,
 					       PropertySurety surety,
 					       PropertySource source);
-static gboolean default_device_directtcp_supported(Device *self);
 static void set_properties_from_global_config(Device * device);
 static void set_properties_from_device_config(Device * device, device_config_t *dc);
 
@@ -304,13 +303,14 @@ device_class_init (DeviceClass * device_class)
 
     parent_class = g_type_class_ref (G_TYPE_OBJECT);
 
+    device_class->directtcp_supported = FALSE;
+
     device_class->open_device = default_device_open_device;
     device_class->configure = default_device_configure;
     device_class->write_from_fd = default_device_write_from_fd;
     device_class->read_to_fd = default_device_read_to_fd;
     device_class->property_get_ex = default_device_property_get_ex;
     device_class->property_set_ex = default_device_property_set_ex;
-    device_class->directtcp_supported = default_device_directtcp_supported;
     g_object_class->finalize = device_finalize;
 }
 
@@ -1052,13 +1052,6 @@ default_device_property_set_ex(
     return TRUE;
 }
 
-static gboolean
-default_device_directtcp_supported(
-    Device *self G_GNUC_UNUSED)
-{
-    return FALSE;
-}
-
 const GSList *
 device_property_get_list (Device * self)
 {
@@ -1431,24 +1424,22 @@ device_eject (Device * self)
 }
 
 gboolean
-device_directtcp_supported(
-    Device *self)
-{
-    DeviceClass *klass = DEVICE_GET_CLASS(self);
-
-    g_assert(klass->directtcp_supported);
-    return klass->directtcp_supported(self);
-}
-
-gboolean
 device_listen(
     Device *self,
+    gboolean for_writing,
     DirectTCPAddr **addrs)
 {
-    DeviceClass *klass = DEVICE_GET_CLASS(self);
+    DeviceClass *klass;
 
-    g_assert(klass->listen);
-    return klass->listen(self, addrs);
+    klass = DEVICE_GET_CLASS(self);
+    if(klass->listen) {
+	return (klass->listen)(self, for_writing, addrs);
+    } else {
+	device_set_error(self,
+	    stralloc(_("Unimplemented method")),
+	    DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+    }
 }
 
 gboolean
@@ -1458,42 +1449,64 @@ device_accept(
     ProlongProc prolong,
     gpointer prolong_data)
 {
-    DeviceClass *klass = DEVICE_GET_CLASS(self);
+    DeviceClass *klass;
 
-    g_assert(klass->accept);
-    return klass->accept(self, conn, prolong, prolong_data);
+    klass = DEVICE_GET_CLASS(self);
+    if(klass->accept) {
+	return (klass->accept)(self, conn, prolong, prolong_data);
+    } else {
+	device_set_error(self,
+	    stralloc(_("Unimplemented method")),
+	    DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+    }
 }
 
 gboolean
 device_write_from_connection(
     Device *self,
     DirectTCPConnection *conn,
-    gsize size,
-    gsize *actual_size)
+    guint64 size,
+    guint64 *actual_size)
 {
-    DeviceClass *klass = DEVICE_GET_CLASS(self);
+    DeviceClass *klass;
+
+    klass = DEVICE_GET_CLASS(self);
 
     g_assert(self->in_file);
     g_assert(IS_WRITABLE_ACCESS_MODE(self->access_mode));
 
-    g_assert(klass->write_from_connection);
-    return klass->write_from_connection(self, conn, size, actual_size);
+    if(klass->write_from_connection) {
+	return (klass->write_from_connection)(self, conn, size, actual_size);
+    } else {
+	device_set_error(self,
+	    stralloc(_("Unimplemented method")),
+	    DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+    }
 }
 
 gboolean
 device_read_to_connection(
     Device *self,
     DirectTCPConnection *conn,
-    gsize size,
-    gsize *actual_size)
+    guint64 size,
+    guint64 *actual_size)
 {
-    DeviceClass *klass = DEVICE_GET_CLASS(self);
+    DeviceClass *klass;
 
     g_assert(self->in_file);
     g_assert(self->access_mode == ACCESS_READ);
 
-    g_assert(klass->read_to_connection);
-    return klass->read_to_connection(self, conn, size, actual_size);
+    klass = DEVICE_GET_CLASS(self);
+    if(klass->read_to_connection) {
+	return (klass->read_to_connection)(self, conn, size, actual_size);
+    } else {
+	device_set_error(self,
+	    stralloc(_("Unimplemented method")),
+	    DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+    }
 }
 
 gboolean
@@ -1501,10 +1514,17 @@ device_can_use_connection(
     Device *self,
     DirectTCPConnection *conn)
 {
-    DeviceClass *klass = DEVICE_GET_CLASS(self);
+    DeviceClass *klass;
 
-    g_assert(klass->can_use_connection);
-    return klass->can_use_connection(self, conn);
+    klass = DEVICE_GET_CLASS(self);
+    if(klass->can_use_connection) {
+	return (klass->can_use_connection)(self, conn);
+    } else {
+	device_set_error(self,
+	    stralloc(_("Unimplemented method")),
+	    DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+    }
 }
 
 /* Property handling */

@@ -26,6 +26,8 @@
  * DirectTCPConnection class implementation
  */
 
+static GObjectClass *parent_class = NULL;
+
 static void
 directtcp_connection_finalize(GObject *goself)
 {
@@ -40,6 +42,8 @@ directtcp_connection_finalize(GObject *goself)
         if (errmsg)
             error("while closing directtcp connection: %s", errmsg);
     }
+
+    G_OBJECT_CLASS(parent_class)->finalize(goself);
 }
 
 static void
@@ -49,6 +53,8 @@ directtcp_connection_class_init(
     GObjectClass *goc = (GObjectClass *)c;
 
     goc->finalize =  directtcp_connection_finalize;
+
+    parent_class = g_type_class_peek_parent(c);
 }
 
 GType

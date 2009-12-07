@@ -41,7 +41,7 @@
 
 /* Utility functions for typemaps, below */
 
-/* return a new, motal SV corresponding to the given GValue
+/* return a new, mortal SV corresponding to the given GValue
  *
  * @param value: the value to convert
  * @returns: a new, mortal SV
@@ -235,6 +235,23 @@ set_gvalue_from_sv(SV *sv, GValue *value)
 %}
 
 /*
+ * DirectTCPConnection object
+ */
+
+typedef struct DirectTCPConnection {
+    %extend {
+	~DirectTCPConnection() {
+	    g_object_unref(self);
+	};
+
+	%newobject close;
+	char *close() {
+	    return directtcp_connection_close(self);
+	}
+    };
+} DirectTCPConnection;
+
+/*
  * Device struct, %extend-ed into a Perl class
  */
 
@@ -356,6 +373,55 @@ typedef struct Device {
 	gboolean
 	eject() {
 	    return device_eject(self);
+	}
+
+	gboolean
+	directtcp_supported() {
+	    return device_directtcp_supported(self);
+	}
+
+	void
+	listen(gboolean for_writing, DirectTCPAddr **addrs) {
+	    /* ensure that the addresses are empty if there was an error */
+	    if (!device_listen(self, for_writing, addrs))
+		*addrs = NULL;
+	}
+
+	%newobject accept;
+	DirectTCPConnection *
+	accept() {
+	    DirectTCPConnection *conn = NULL;
+	    gboolean rv;
+
+	    rv = device_accept(self, &conn, NULL, NULL);
+	    if (!rv && conn) {
+		g_object_unref(conn);
+		conn = NULL;
+	    }
+	    return conn;
+	}
+
+	gboolean
+	can_use_connection(DirectTCPConnection *conn) {
+	    return device_can_use_connection(self, conn);
+	}
+
+	%typemap(in,numinputs=0) guint64 *actual_size (guint64 sz) {
+	    sz = 0;
+	    $1 = &sz;
+	}
+	%typemap(argout) guint64 *actual_size {
+	    $result = sv_2mortal(amglue_newSVu64(*$1));
+	    argvi++;
+	}
+	gboolean
+	write_from_connection(DirectTCPConnection *conn, guint64 size, guint64 *actual_size) {
+	    return device_write_from_connection(self, conn, size, actual_size);
+	}
+
+	gboolean
+	read_to_connection(DirectTCPConnection *conn, guint64 size, guint64 *actual_size) {
+	    return device_read_to_connection(self, conn, size, actual_size);
 	}
 
 	%typemap(out) const GSList * {
@@ -545,7 +611,7 @@ typedef struct Device {
 %typemap(freearg) GSList *child_devices {
     g_slist_free($1);
 }
-%newobject new_rait_from_children;
+%newobject rait_device_open_from_children;
 Device *rait_device_open_from_children(GSList *child_devices);
 %perlcode %{
 sub new_rait_from_children {
