@@ -66,7 +66,7 @@ start_impl(
     /* this is really all we do -- copy the input addresses from our downstream
      * neighbor.  This seems trivial, but downstream may be a glue element, which
      * means we get the listening socket for free. */
-    elt->input_listen_addrs = elt->upstream->input_listen_addrs;
+    elt->input_listen_addrs = elt->downstream->input_listen_addrs;
 
     return FALSE;
 }

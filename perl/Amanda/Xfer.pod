@@ -235,6 +235,13 @@ returns a copy of the buffer as a perl scalar:
 
     my $buf = $xdb->get();
 
+=head3 Amanda::Xfer::Dest::DirectTCPConnect
+
+  Amanda::Xfer::Dest::DirectTCPConnect->new($addrs);
+
+This destination connects to an IP:PORT endpoint and sends the transfer
+data over the connection.
+
 =head3 Amanda::Xfer::Dest::Fd
 
   Amanda::Xfer::Dest::Fd->new(fileno($fh));

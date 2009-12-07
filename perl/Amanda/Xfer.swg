@@ -362,6 +362,9 @@ void xfer_dest_buffer_get(
 XferElement *xfer_dest_fd(
     int fd);
 
+%newobject xfer_dest_directtcp_connect;
+XferElement *xfer_dest_directtcp_connect(DirectTCPAddr *addrs);
+
 /*
  * Callback handling
  */
@@ -571,6 +574,12 @@ PACKAGE(Amanda::Xfer::Dest::Buffer)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_dest_buffer)
 DECLARE_METHOD(get, Amanda::Xfer::xfer_dest_buffer_get)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Dest::DirectTCPConnect)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_dest_directtcp_connect)
 
 /* ---- */
 

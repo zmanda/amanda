@@ -26,6 +26,7 @@
 #include "amanda.h"
 #include "event.h"
 #include "simpleprng.h"
+#include "sockaddr-util.h"
 
 /* Having tests repeat exactly is an advantage, so we use a hard-coded
  * random seed. */
@@ -41,7 +42,7 @@
 
 /* constants to determine the total amount of data to be transfered; EXTRA is
  * to test out partial-block handling; it should be prime. */
-#define TEST_BLOCK_SIZE 1024
+#define TEST_BLOCK_SIZE 32768
 #define TEST_BLOCK_COUNT 10
 #define TEST_BLOCK_EXTRA 97
 #define TEST_XFER_SIZE ((TEST_BLOCK_SIZE*TEST_BLOCK_COUNT)+TEST_BLOCK_EXTRA)
@@ -446,6 +447,133 @@ xfer_source_pull_get_type (void)
     return type;
 }
 
+/* LISTEN */
+
+static GType xfer_source_listen_get_type(void);
+#define XFER_SOURCE_LISTEN_TYPE (xfer_source_listen_get_type())
+#define XFER_SOURCE_LISTEN(obj) G_TYPE_CHECK_INSTANCE_CAST((obj), xfer_source_listen_get_type(), XferSourceListen)
+#define XFER_SOURCE_LISTEN_CONST(obj) G_TYPE_CHECK_INSTANCE_CAST((obj), xfer_source_listen_get_type(), XferSourceListen const)
+#define XFER_SOURCE_LISTEN_CLASS(klass) G_TYPE_CHECK_CLASS_CAST((klass), xfer_source_listen_get_type(), XferSourceListenClass)
+#define IS_XFER_SOURCE_LISTEN(obj) G_TYPE_CHECK_INSTANCE_TYPE((obj), xfer_source_listen_get_type ())
+#define XFER_SOURCE_LISTEN_GET_CLASS(obj) G_TYPE_INSTANCE_GET_CLASS((obj), xfer_source_listen_get_type(), XferSourceListenClass)
+
+typedef struct XferSourceListen {
+    XferElement __parent__;
+
+    gint nbuffers;
+    GThread *thread;
+    simpleprng_state_t prng;
+} XferSourceListen;
+
+typedef struct {
+    XferElementClass __parent__;
+} XferSourceListenClass;
+
+static gpointer
+source_listen_thread(
+    gpointer data)
+{
+    XferSourcePush *self = (XferSourcePush *)data;
+    XferElement *elt = XFER_ELEMENT(self);
+    DirectTCPAddr *addrs;
+    sockaddr_union addr;
+    int sock;
+    char *buf;
+    int i;
+
+    /* set up the sockaddr -- IPv4 only */
+    SU_INIT(&addr, AF_INET);
+    addrs = elt->downstream->input_listen_addrs;
+    g_assert(addrs != NULL);
+    SU_SET_PORT(&addr, addrs->port);
+    ((struct sockaddr_in *)&addr)->sin_addr.s_addr = htonl(addrs->ipv4);
+
+    tu_dbg("making data connection to %s\n", str_sockaddr(&addr));
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+	error("socket(): %s", strerror(errno));
+    }
+    if (connect(sock, (struct sockaddr *)&addr, SS_LEN(&addr)) < 0) {
+	error("connect(): %s", strerror(errno));
+    }
+
+    tu_dbg("connected to %s\n", str_sockaddr(&addr));
+
+    buf = g_malloc(TEST_BLOCK_SIZE);
+    for (i = 0; i < TEST_BLOCK_COUNT; i++) {
+	simpleprng_fill_buffer(&self->prng, buf, TEST_BLOCK_SIZE);
+	if (full_write(sock, buf, TEST_BLOCK_SIZE) < TEST_BLOCK_SIZE) {
+	    error("error in full_write(): %s", strerror(errno));
+	}
+    }
+
+    /* send a smaller block */
+    simpleprng_fill_buffer(&self->prng, buf, TEST_BLOCK_EXTRA);
+    if (full_write(sock, buf, TEST_BLOCK_EXTRA) < TEST_BLOCK_EXTRA) {
+	error("error in full_write(): %s", strerror(errno));
+    }
+    g_free(buf);
+
+    /* send EOF by closing the socket */
+    close(sock);
+
+    xfer_queue_message(XFER_ELEMENT(self)->xfer, xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0));
+
+    return NULL;
+}
+
+static gboolean
+source_listen_start_impl(
+    XferElement *elt)
+{
+    XferSourcePush *self = (XferSourcePush *)elt;
+
+    simpleprng_seed(&self->prng, RANDOM_SEED);
+
+    self->thread = g_thread_create(source_listen_thread, (gpointer)self, FALSE, NULL);
+
+    return TRUE;
+}
+
+static void
+source_listen_class_init(
+    XferSourceListenClass * klass)
+{
+    XferElementClass *xec = XFER_ELEMENT_CLASS(klass);
+    static xfer_element_mech_pair_t mech_pairs[] = {
+	{ XFER_MECH_NONE, XFER_MECH_DIRECTTCP_LISTEN, 1, 0},
+	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
+    };
+
+    xec->start = source_listen_start_impl;
+    xec->mech_pairs = mech_pairs;
+}
+
+GType
+xfer_source_listen_get_type (void)
+{
+    static GType type = 0;
+
+    if G_UNLIKELY(type == 0) {
+        static const GTypeInfo info = {
+            sizeof (XferSourceListenClass),
+            (GBaseInitFunc) NULL,
+            (GBaseFinalizeFunc) NULL,
+            (GClassInitFunc) source_listen_class_init,
+            (GClassFinalizeFunc) NULL,
+            NULL /* class_data */,
+            sizeof (XferSourceListen),
+            0 /* n_preallocs */,
+            (GInstanceInitFunc) NULL,
+            NULL
+        };
+
+        type = g_type_register_static (XFER_ELEMENT_TYPE, "XferSourceListen", &info, 0);
+    }
+
+    return type;
+}
+
 /* READFD */
 
 static GType xfer_dest_readfd_get_type(void);
@@ -686,7 +814,7 @@ static GType xfer_dest_push_get_type(void);
 typedef struct XferDestPush {
     XferElement __parent__;
 
-    char buf[TEST_XFER_SIZE];
+    char *buf;
     size_t bufpos;
 
     GThread *thread;
@@ -710,6 +838,7 @@ dest_push_push_buffer_impl(
 	g_assert(self->bufpos == TEST_XFER_SIZE);
 	if (!simpleprng_verify_buffer(&self->prng, self->buf, TEST_XFER_SIZE))
 	    g_critical("data entering XferDestPush does not match");
+	g_free(self->buf);
 	return;
     }
 
@@ -724,6 +853,7 @@ dest_push_setup_impl(
 {
     XferDestPush *self = (XferDestPush *)elt;
 
+    self->buf = g_malloc(TEST_XFER_SIZE);
     simpleprng_seed(&self->prng, RANDOM_SEED);
 }
 
@@ -861,6 +991,150 @@ xfer_dest_pull_get_type (void)
         };
 
         type = g_type_register_static (XFER_ELEMENT_TYPE, "XferDestPull", &info, 0);
+    }
+
+    return type;
+}
+
+/* LISTEN */
+
+static GType xfer_dest_listen_get_type(void);
+#define XFER_DEST_LISTEN_TYPE (xfer_dest_listen_get_type())
+#define XFER_DEST_LISTEN(obj) G_TYPE_CHECK_INSTANCE_CAST((obj), xfer_dest_listen_get_type(), XferDestListen)
+#define XFER_DEST_LISTEN_CONST(obj) G_TYPE_CHECK_INSTANCE_CAST((obj), xfer_dest_listen_get_type(), XferDestListen const)
+#define XFER_DEST_LISTEN_CLASS(klass) G_TYPE_CHECK_CLASS_CAST((klass), xfer_dest_listen_get_type(), XferDestListenClass)
+#define IS_XFER_DEST_LISTEN(obj) G_TYPE_CHECK_INSTANCE_TYPE((obj), xfer_dest_listen_get_type ())
+#define XFER_DEST_LISTEN_GET_CLASS(obj) G_TYPE_INSTANCE_GET_CLASS((obj), xfer_dest_listen_get_type(), XferDestListenClass)
+
+typedef struct XferDestListen {
+    XferElement __parent__;
+
+    int listen_socket;
+
+    GThread *thread;
+    simpleprng_state_t prng;
+} XferDestListen;
+
+typedef struct {
+    XferElementClass __parent__;
+} XferDestListenClass;
+
+static gpointer
+dest_listen_thread(
+    gpointer data)
+{
+    XferDestListen *self = (XferDestListen *)data;
+    char *buf;
+    size_t bytes = 0;
+    int sock;
+
+    g_assert(self->listen_socket != -1);
+
+    if ((sock = accept(self->listen_socket, NULL, NULL)) == -1) {
+	xfer_cancel_with_error(XFER_ELEMENT(self),
+	    _("Error accepting incoming connection: %s"), strerror(errno));
+	wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);
+	return NULL;
+    }
+
+    /* close the listening socket now, for good measure */
+    close(self->listen_socket);
+    self->listen_socket = -1;
+
+    /* read from the socket until EOF or all of the data is read.  We try to
+     * read one extra byte - if we get it, then upstream sent too much data */
+    buf = g_malloc(TEST_XFER_SIZE+1);
+    bytes = full_read(sock, buf, TEST_XFER_SIZE+1);
+    g_assert(bytes == TEST_XFER_SIZE);
+    close(sock);
+
+    /* we're at EOF, so verify we got the right bytes */
+    g_assert(bytes == TEST_XFER_SIZE);
+    if (!simpleprng_verify_buffer(&self->prng, buf, TEST_XFER_SIZE))
+	g_critical("data entering XferDestListen does not match");
+
+    xfer_queue_message(XFER_ELEMENT(self)->xfer, xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0));
+
+    return NULL;
+}
+
+static void
+dest_listen_setup_impl(
+    XferElement *elt)
+{
+    XferDestListen *self = (XferDestListen *)elt;
+    sockaddr_union addr;
+    DirectTCPAddr *addrs;
+    socklen_t len;
+    int sock;
+
+    /* set up self->listen_socket and set elt->input_listen_addrs */
+    sock = self->listen_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0)
+	error("socket(): %s", strerror(errno));
+
+    if (listen(sock, 1) < 0)
+	error("listen(): %s", strerror(errno));
+
+    len = sizeof(addr);
+    if (getsockname(sock, (struct sockaddr *)&addr, &len) < 0)
+	error("getsockname(): %s", strerror(errno));
+    g_assert(SU_GET_FAMILY(&addr) == AF_INET);
+
+    addrs = g_new0(DirectTCPAddr, 2);
+    addrs[0].ipv4 = ntohl(inet_addr("127.0.0.1"));
+    addrs[0].port = SU_GET_PORT(&addr);
+    elt->input_listen_addrs = addrs;
+}
+
+static gboolean
+dest_listen_start_impl(
+    XferElement *elt)
+{
+    XferDestListen *self = (XferDestListen *)elt;
+
+    simpleprng_seed(&self->prng, RANDOM_SEED);
+
+    self->thread = g_thread_create(dest_listen_thread, (gpointer)self, FALSE, NULL);
+
+    return TRUE;
+}
+
+static void
+dest_listen_class_init(
+    XferDestListenClass * klass)
+{
+    XferElementClass *xec = XFER_ELEMENT_CLASS(klass);
+    static xfer_element_mech_pair_t mech_pairs[] = {
+	{ XFER_MECH_DIRECTTCP_LISTEN, XFER_MECH_NONE, 1, 1},
+	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
+    };
+
+    xec->setup = dest_listen_setup_impl;
+    xec->start = dest_listen_start_impl;
+    xec->mech_pairs = mech_pairs;
+}
+
+GType
+xfer_dest_listen_get_type (void)
+{
+    static GType type = 0;
+
+    if G_UNLIKELY(type == 0) {
+        static const GTypeInfo info = {
+            sizeof (XferDestListenClass),
+            (GBaseInitFunc) NULL,
+            (GBaseFinalizeFunc) NULL,
+            (GClassInitFunc) dest_listen_class_init,
+            (GClassFinalizeFunc) NULL,
+            NULL /* class_data */,
+            sizeof (XferDestListen),
+            0 /* n_preallocs */,
+            (GInstanceInitFunc) NULL,
+            NULL
+        };
+
+        type = g_type_register_static (XFER_ELEMENT_TYPE, "XferDestListen", &info, 0);
     }
 
     return type;
@@ -1042,21 +1316,30 @@ test_glue_combo(
 			   (XferElement *)g_object_new(d, NULL)); \
 }
 make_test_glue(test_glue_READFD_READFD, XFER_SOURCE_READFD_TYPE, XFER_DEST_READFD_TYPE)
-make_test_glue(test_glue_READFD_WRITE, XFER_SOURCE_READFD_TYPE, XFER_DEST_WRITEFD_TYPE)
+make_test_glue(test_glue_READFD_WRITEFD, XFER_SOURCE_READFD_TYPE, XFER_DEST_WRITEFD_TYPE)
 make_test_glue(test_glue_READFD_PUSH, XFER_SOURCE_READFD_TYPE, XFER_DEST_PUSH_TYPE)
 make_test_glue(test_glue_READFD_PULL, XFER_SOURCE_READFD_TYPE, XFER_DEST_PULL_TYPE)
+make_test_glue(test_glue_READFD_LISTEN, XFER_SOURCE_READFD_TYPE, XFER_DEST_LISTEN_TYPE)
 make_test_glue(test_glue_WRITEFD_READFD, XFER_SOURCE_WRITEFD_TYPE, XFER_DEST_READFD_TYPE)
-make_test_glue(test_glue_WRITEFD_WRITE, XFER_SOURCE_WRITEFD_TYPE, XFER_DEST_WRITEFD_TYPE)
+make_test_glue(test_glue_WRITEFD_WRITEFD, XFER_SOURCE_WRITEFD_TYPE, XFER_DEST_WRITEFD_TYPE)
 make_test_glue(test_glue_WRITEFD_PUSH, XFER_SOURCE_WRITEFD_TYPE, XFER_DEST_PUSH_TYPE)
 make_test_glue(test_glue_WRITEFD_PULL, XFER_SOURCE_WRITEFD_TYPE, XFER_DEST_PULL_TYPE)
+make_test_glue(test_glue_WRITEFD_LISTEN, XFER_SOURCE_WRITEFD_TYPE, XFER_DEST_LISTEN_TYPE)
 make_test_glue(test_glue_PUSH_READFD, XFER_SOURCE_PUSH_TYPE, XFER_DEST_READFD_TYPE)
-make_test_glue(test_glue_PUSH_WRITE, XFER_SOURCE_PUSH_TYPE, XFER_DEST_WRITEFD_TYPE)
+make_test_glue(test_glue_PUSH_WRITEFD, XFER_SOURCE_PUSH_TYPE, XFER_DEST_WRITEFD_TYPE)
 make_test_glue(test_glue_PUSH_PUSH, XFER_SOURCE_PUSH_TYPE, XFER_DEST_PUSH_TYPE)
 make_test_glue(test_glue_PUSH_PULL, XFER_SOURCE_PUSH_TYPE, XFER_DEST_PULL_TYPE)
+make_test_glue(test_glue_PUSH_LISTEN, XFER_SOURCE_PUSH_TYPE, XFER_DEST_LISTEN_TYPE)
 make_test_glue(test_glue_PULL_READFD, XFER_SOURCE_PULL_TYPE, XFER_DEST_READFD_TYPE)
-make_test_glue(test_glue_PULL_WRITE, XFER_SOURCE_PULL_TYPE, XFER_DEST_WRITEFD_TYPE)
+make_test_glue(test_glue_PULL_WRITEFD, XFER_SOURCE_PULL_TYPE, XFER_DEST_WRITEFD_TYPE)
 make_test_glue(test_glue_PULL_PUSH, XFER_SOURCE_PULL_TYPE, XFER_DEST_PUSH_TYPE)
 make_test_glue(test_glue_PULL_PULL, XFER_SOURCE_PULL_TYPE, XFER_DEST_PULL_TYPE)
+make_test_glue(test_glue_PULL_LISTEN, XFER_SOURCE_PULL_TYPE, XFER_DEST_LISTEN_TYPE)
+make_test_glue(test_glue_LISTEN_READFD, XFER_SOURCE_LISTEN_TYPE, XFER_DEST_READFD_TYPE)
+make_test_glue(test_glue_LISTEN_WRITEFD, XFER_SOURCE_LISTEN_TYPE, XFER_DEST_WRITEFD_TYPE)
+make_test_glue(test_glue_LISTEN_PUSH, XFER_SOURCE_LISTEN_TYPE, XFER_DEST_PUSH_TYPE)
+make_test_glue(test_glue_LISTEN_PULL, XFER_SOURCE_LISTEN_TYPE, XFER_DEST_PULL_TYPE)
+make_test_glue(test_glue_LISTEN_LISTEN, XFER_SOURCE_LISTEN_TYPE, XFER_DEST_LISTEN_TYPE)
 
 /*
  * Main driver
@@ -1070,21 +1353,30 @@ main(int argc, char **argv)
 	TU_TEST(test_xfer_files_simple, 90),
 	TU_TEST(test_xfer_files_filter, 90),
         TU_TEST(test_glue_READFD_READFD, 90),
-        TU_TEST(test_glue_READFD_WRITE, 90),
+        TU_TEST(test_glue_READFD_WRITEFD, 90),
         TU_TEST(test_glue_READFD_PUSH, 90),
         TU_TEST(test_glue_READFD_PULL, 90),
+        TU_TEST(test_glue_READFD_LISTEN, 90),
         TU_TEST(test_glue_WRITEFD_READFD, 90),
-        TU_TEST(test_glue_WRITEFD_WRITE, 90),
+        TU_TEST(test_glue_WRITEFD_WRITEFD, 90),
         TU_TEST(test_glue_WRITEFD_PUSH, 90),
         TU_TEST(test_glue_WRITEFD_PULL, 90),
+        TU_TEST(test_glue_WRITEFD_LISTEN, 90),
         TU_TEST(test_glue_PUSH_READFD, 90),
-        TU_TEST(test_glue_PUSH_WRITE, 90),
+        TU_TEST(test_glue_PUSH_WRITEFD, 90),
         TU_TEST(test_glue_PUSH_PUSH, 90),
         TU_TEST(test_glue_PUSH_PULL, 90),
+        TU_TEST(test_glue_PUSH_LISTEN, 90),
         TU_TEST(test_glue_PULL_READFD, 90),
-        TU_TEST(test_glue_PULL_WRITE, 90),
+        TU_TEST(test_glue_PULL_WRITEFD, 90),
         TU_TEST(test_glue_PULL_PUSH, 90),
         TU_TEST(test_glue_PULL_PULL, 90),
+        TU_TEST(test_glue_PULL_LISTEN, 90),
+        TU_TEST(test_glue_LISTEN_READFD, 90),
+        TU_TEST(test_glue_LISTEN_WRITEFD, 90),
+        TU_TEST(test_glue_LISTEN_PUSH, 90),
+        TU_TEST(test_glue_LISTEN_PULL, 90),
+        TU_TEST(test_glue_LISTEN_LISTEN, 90),
 	TU_END()
     };
 

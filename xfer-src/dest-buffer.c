@@ -93,8 +93,9 @@ push_buffer_impl(
 
     /* make sure this isn't too much data */
     if (self->max_size && self->len + len > self->max_size) {
-	xfer_element_handle_error(elt,
+	xfer_cancel_with_error(elt,
 	    _("illegal attempt to transfer more than %zd bytes"), self->max_size);
+	wait_until_xfer_cancelled(elt->xfer);
 	amfree(buf);
 	return;
     }

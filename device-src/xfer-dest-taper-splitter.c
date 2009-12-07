@@ -297,36 +297,6 @@ _xdt_dbg(const char *fmt, ...)
 }
 
 /*
- * Error Handling
- */
-
-/* This is similar to xfer_element_handle_error, except that in this element
- * we don't want to wait around for cancellation to complete. */
-static void
-send_xmsg_error_and_cancel(
-    XferDestTaperSplitter *self,
-    const char *fmt,
-    ...)
-{
-    XferElement *elt = XFER_ELEMENT(self);
-    va_list argp;
-    XMsg *msg;
-
-    g_assert(elt != NULL);
-    g_assert(elt->xfer != NULL);
-
-    msg = xmsg_new(elt, XMSG_ERROR, 0);
-
-    arglist_start(argp, fmt);
-    msg->message = g_strdup_vprintf(fmt, argp);
-    arglist_end(argp);
-
-    xfer_queue_message(elt->xfer, msg);
-
-    xfer_cancel(elt->xfer);
-}
-
-/*
  * Slab handling
  */
 
@@ -381,7 +351,7 @@ alloc_slab(
 	rv->base = g_try_malloc(self->slab_size);
 	if (!rv->base) {
 	    g_free(rv);
-	    send_xmsg_error_and_cancel(self,
+	    xfer_cancel_with_error(XFER_ELEMENT(self),
 		_("Could not allocate %zu bytes of memory"), self->slab_size);
 	    return NULL;
 	}
@@ -477,7 +447,7 @@ open_disk_cache_fds(
     self->disk_cache_write_fd = g_mkstemp(filename);
     if (self->disk_cache_write_fd < 0) {
 	g_mutex_unlock(self->state_mutex);
-	send_xmsg_error_and_cancel(self,
+	xfer_cancel_with_error(XFER_ELEMENT(self),
 	    _("Error creating cache file in '%s': %s"), self->disk_cache_dirname,
 	    strerror(errno));
 	g_free(filename);
@@ -488,7 +458,7 @@ open_disk_cache_fds(
     self->disk_cache_read_fd = open(filename, O_RDONLY);
     if (self->disk_cache_read_fd < 0) {
 	g_mutex_unlock(self->state_mutex);
-	send_xmsg_error_and_cancel(self,
+	xfer_cancel_with_error(XFER_ELEMENT(self),
 	    _("Error opening cache file in '%s': %s"), self->disk_cache_dirname,
 	    strerror(errno));
 	g_free(filename);
@@ -528,7 +498,7 @@ disk_cache_thread(
 
 	/* rewind to the begining of the disk cache file */
 	if (lseek(self->disk_cache_write_fd, 0, SEEK_SET) == -1) {
-	    send_xmsg_error_and_cancel(self,
+	    xfer_cancel_with_error(XFER_ELEMENT(self),
 		_("Error seeking disk cache file in '%s': %s"), self->disk_cache_dirname,
 		strerror(errno));
 	    return NULL;
@@ -586,7 +556,7 @@ disk_cache_thread(
 	    g_mutex_unlock(self->slab_mutex);
 
 	    if (full_write(self->disk_cache_write_fd, slab->base, slab->size) < slab->size) {
-		send_xmsg_error_and_cancel(self,
+		xfer_cancel_with_error(XFER_ELEMENT(self),
 		    _("Error writing to disk cache file in '%s': %s"), self->disk_cache_dirname,
 		    strerror(errno));
 		return NULL;
@@ -791,7 +761,8 @@ slab_source_get_from_disk(
 		/* regular cache_inform file - just open it */
 		state->slice_fd = open(state->slice->filename, O_RDONLY, 0);
 		if (state->slice_fd < 0) {
-		    send_xmsg_error_and_cancel(self, _("Could not open '%s' for reading: %s"),
+		    xfer_cancel_with_error(XFER_ELEMENT(self),
+                        _("Could not open '%s' for reading: %s"),
 			state->slice->filename, strerror(errno));
 		    goto fatal_error;
 		}
@@ -808,7 +779,8 @@ slab_source_get_from_disk(
 	    }
 
 	    if (lseek(state->slice_fd, state->slice->offset, SEEK_SET) == -1) {
-		send_xmsg_error_and_cancel(self, _("Could not seek '%s' for reading: %s"),
+		xfer_cancel_with_error(XFER_ELEMENT(self),
+                    _("Could not seek '%s' for reading: %s"),
 		    state->slice->filename? state->slice->filename : "(cache file)",
 		    strerror(errno));
 		goto fatal_error;
@@ -822,7 +794,8 @@ slab_source_get_from_disk(
 			       state->tmp_slab->base + slab_offset,
 			       read_size);
 	if (bytes_read < read_size) {
-            send_xmsg_error_and_cancel(self, _("Error reading '%s': %s"),
+            xfer_cancel_with_error(XFER_ELEMENT(self),
+                _("Error reading '%s': %s"),
 		state->slice->filename? state->slice->filename : "(cache file)",
 		errno? strerror(errno) : _("Unexpected EOF"));
             goto fatal_error;
@@ -831,7 +804,8 @@ slab_source_get_from_disk(
 	state->slice_remaining -= bytes_read;
 	if (state->slice_remaining == 0) {
 	    if (close(state->slice_fd) < 0) {
-		send_xmsg_error_and_cancel(self, _("Could not close fd %d: %s"),
+		xfer_cancel_with_error(XFER_ELEMENT(self),
+                    _("Could not close fd %d: %s"),
 		    state->slice_fd, strerror(errno));
 		goto fatal_error;
 	    }
@@ -1375,7 +1349,7 @@ start_part_impl(
     /* check that the blocksize hasn't changed */
     if (self->block_size != device->block_size) {
         g_mutex_unlock(self->state_mutex);
-        send_xmsg_error_and_cancel(self,
+        xfer_cancel_with_error(XFER_ELEMENT(self),
             _("All devices used by the taper must have the same block size"));
         return;
     }
@@ -1383,7 +1357,7 @@ start_part_impl(
     if (retry_part) {
 	if (!self->use_mem_cache && !self->part_slices) {
 	    g_mutex_unlock(self->state_mutex);
-	    send_xmsg_error_and_cancel(self,
+	    xfer_cancel_with_error(XFER_ELEMENT(self),
 		_("Failed part was not cached; cannot retry"));
 	    return;
 	}

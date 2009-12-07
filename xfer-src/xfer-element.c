@@ -21,7 +21,6 @@
 
 #include "amxfer.h"
 #include "amanda.h"
-#include "arglist.h"
 
 /* parent class for XferElement */
 static GObjectClass *parent_class = NULL;
@@ -201,6 +200,13 @@ xfer_element_pull_buffer(
     XferElement *elt,
     size_t *size)
 {
+    /* Make sure that the xfer is running before calling upstream's
+     * pull_buffer method; this avoids a race condition where upstream
+     * hasn't finished its xfer_element_start yet, and isn't ready for
+     * a pull */
+    if (elt->xfer->status == XFER_START)
+	wait_until_xfer_running(elt->xfer);
+
     return XFER_ELEMENT_GET_CLASS(elt)->pull_buffer(elt, size);
 }
 
@@ -210,6 +216,8 @@ xfer_element_push_buffer(
     gpointer buf,
     size_t size)
 {
+    /* There is no race condition with push_buffer, because downstream
+     * elements are started first. */
     XFER_ELEMENT_GET_CLASS(elt)->push_buffer(elt, buf, size);
 }
 
@@ -243,46 +251,3 @@ xfer_element_drain_by_reading(
     }
 }
 
-xfer_status
-wait_until_xfer_cancelled(
-    Xfer *xfer)
-{
-    xfer_status seen_status;
-    g_assert(xfer != NULL);
-
-    g_mutex_lock(xfer->status_mutex);
-    while (xfer->status != XFER_CANCELLED && xfer->status != XFER_DONE)
-	g_cond_wait(xfer->status_cond, xfer->status_mutex);
-    seen_status = xfer->status;
-    g_mutex_unlock(xfer->status_mutex);
-
-    return seen_status;
-}
-
-void
-xfer_element_handle_error(
-    XferElement *elt,
-    const char *fmt,
-    ...)
-{
-    va_list argp;
-    XMsg *msg;
-
-    g_assert(elt != NULL);
-    g_assert(elt->xfer != NULL);
-
-    msg = xmsg_new(elt, XMSG_ERROR, 0);
-
-    arglist_start(argp, fmt);
-    msg->message = g_strdup_vprintf(fmt, argp);
-    arglist_end(argp);
-
-    /* send the XMSG_ERROR */
-    xfer_queue_message(elt->xfer, msg);
-
-    /* cancel the transfer */
-    xfer_cancel(elt->xfer);
-
-    /* and wait for the cancellation to take effect */
-    wait_until_xfer_cancelled(elt->xfer);
-}

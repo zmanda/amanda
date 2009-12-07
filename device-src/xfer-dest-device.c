@@ -146,11 +146,13 @@ queueing_thread(
 
 	if ((result & QUEUE_CONSUMER_ERROR)
 		&& (self->device->status != DEVICE_STATUS_SUCCESS)) {
-	    xfer_element_handle_error(elt, "%s: %s",
+	    xfer_cancel_with_error(elt, "%s: %s",
 		    self->device->device_name, device_error_or_status(self->device));
+	    wait_until_xfer_cancelled(elt->xfer);
 	} else {
-	    xfer_element_handle_error(elt, _("%s: internal error"),
+	    xfer_cancel_with_error(elt, _("%s: internal error"),
 		    xfer_element_repr(elt));
+	    wait_until_xfer_cancelled(elt->xfer);
 	}
 
 	/* and drain our upstream, since the queueing loop is done */

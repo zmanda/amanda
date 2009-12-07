@@ -178,4 +178,41 @@ void xfer_start(Xfer *xfer);
  */
 void xfer_cancel(Xfer *xfer);
 
+/*
+ * Utilities
+ */
+
+/* Wait for the xfer's state to become CANCELLED or DONE; this is useful to
+ * wait until a cancelletion is in progress before returning an EOF or
+ * otherwise handling a failure.  If you call this in the main thread, you'll
+ * be waiting for a while.
+ *
+ * @param xfer: the transfer object
+ * @returns: the new status (XFER_CANCELLED or XFER_DONE)
+ */
+xfer_status wait_until_xfer_cancelled(Xfer *xfer);
+
+/* Wait for the xfer's state to become anything but START; this is
+ * called *automatically* for every xfer_element_pull_buffer call, as the
+ * upstream element may not be running and ready for a pull just yet.  But
+ * the function may be useful in other places, too.
+ *
+ * @param xfer: the transfer object
+ * @returns: the new status (XFER_CANCELLED or XFER_DONE)
+ */
+xfer_status wait_until_xfer_running(Xfer *xfer);
+
+/* Send an XMSG_ERROR constructed with the given format and arguments, then
+ * cancel the transfer, then wait until the transfer is completely cancelled.
+ * This is the most common error-handling process for transfer elements.  All
+ * that remains to be done on return is to branch to the appropriate point in
+ * the cancellation-handling portion of the transfer.
+ *
+ * @param elt: the transfer element producing the error
+ * @param fmt: the format for the error message
+ * @param ...: arguments corresponding to the format
+ */
+void xfer_cancel_with_error(struct XferElement *elt, const char *fmt, ...)
+	G_GNUC_PRINTF(2,3);
+
 #endif /* XFER_H */

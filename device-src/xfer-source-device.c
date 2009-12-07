@@ -106,10 +106,11 @@ pull_buffer_impl(
 
 	/* if we're not at EOF, it's an error */
 	if (!self->device->is_eof) {
-	    xfer_element_handle_error(elt,
+	    xfer_cancel_with_error(elt,
 		_("error reading from %s: %s"),
 		self->device->device_name,
 		device_error_or_status(self->device));
+	    wait_until_xfer_cancelled(elt->xfer);
 	}
 
 	*size = 0;

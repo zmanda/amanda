@@ -21,6 +21,7 @@
 #include "amxfer.h"
 #include "element-glue.h"
 #include "amanda.h"
+#include "arglist.h"
 
 /* XMsgSource objects are GSource "subclasses" which manage
  * a queue of messages, delivering those messages via callback
@@ -61,7 +62,6 @@ xfer_new(
 
     /* Create our message source and corresponding queue */
     xfer->msg_source = xmsgsource_new(xfer);
-    g_source_ref((GSource *)xfer->msg_source);
     xfer->queue = g_async_queue_new();
 
     /* copy the elements in, verifying that they're all XferElement objects */
@@ -126,6 +126,10 @@ xfer_unref(
 	elt->xfer = NULL;
 	g_object_unref(elt);
     }
+    g_ptr_array_free(xfer->elements, TRUE);
+
+    if (xfer->repr)
+	g_free(xfer->repr);
 
     g_free(xfer);
 }
@@ -326,6 +330,7 @@ xfer_mech_name(
 	case XFER_MECH_WRITEFD: return "WRITEFD";
 	case XFER_MECH_PULL_BUFFER: return "PULL_BUFFER";
 	case XFER_MECH_PUSH_BUFFER: return "PUSH_BUFFER";
+	case XFER_MECH_DIRECTTCP_LISTEN: return "DIRECTTCP_LISTEN";
 	default: return "UNKNOWN";
     }
 }
@@ -626,3 +631,61 @@ xmsgsource_new(
 
     return xms;
 }
+
+xfer_status
+wait_until_xfer_cancelled(
+    Xfer *xfer)
+{
+    xfer_status seen_status;
+    g_assert(xfer != NULL);
+
+    g_mutex_lock(xfer->status_mutex);
+    while (xfer->status != XFER_CANCELLED && xfer->status != XFER_DONE)
+	g_cond_wait(xfer->status_cond, xfer->status_mutex);
+    seen_status = xfer->status;
+    g_mutex_unlock(xfer->status_mutex);
+
+    return seen_status;
+}
+
+xfer_status
+wait_until_xfer_running(
+    Xfer *xfer)
+{
+    xfer_status seen_status;
+    g_assert(xfer != NULL);
+
+    g_mutex_lock(xfer->status_mutex);
+    while (xfer->status == XFER_START)
+	g_cond_wait(xfer->status_cond, xfer->status_mutex);
+    seen_status = xfer->status;
+    g_mutex_unlock(xfer->status_mutex);
+
+    return seen_status;
+}
+
+void
+xfer_cancel_with_error(
+    XferElement *elt,
+    const char *fmt,
+    ...)
+{
+    va_list argp;
+    XMsg *msg;
+
+    g_assert(elt != NULL);
+    g_assert(elt->xfer != NULL);
+
+    msg = xmsg_new(elt, XMSG_ERROR, 0);
+
+    arglist_start(argp, fmt);
+    msg->message = g_strdup_vprintf(fmt, argp);
+    arglist_end(argp);
+
+    /* send the XMSG_ERROR */
+    xfer_queue_message(elt->xfer, msg);
+
+    /* cancel the transfer */
+    xfer_cancel(elt->xfer);
+}
+

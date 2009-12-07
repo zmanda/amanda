@@ -128,6 +128,7 @@ amglue_source_new(
     GSourceFunc callback)
 {
     amglue_Source *src = g_new0(amglue_Source, 1);
+    g_source_ref(gsrc);
     src->src = gsrc;
     src->callback = callback;
     src->state = AMGLUE_SOURCE_NEW;

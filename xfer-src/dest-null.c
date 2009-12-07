@@ -79,9 +79,10 @@ push_buffer_impl(
 
     if (self->do_verify && !elt->cancelled) {
 	if (!simpleprng_verify_buffer(&self->prng, buf, len)) {
-	    xfer_element_handle_error(elt,
+	    xfer_cancel_with_error(elt,
 		_("verification of incoming bytestream failed; failed buffer starts at byte position %ju"),
 		(uintmax_t)self->byte_position);
+	    wait_until_xfer_cancelled(elt->xfer);
 	    amfree(buf);
 	    return;
 	}

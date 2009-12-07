@@ -76,8 +76,9 @@ start_new_chunk(
     /* try to close an already-open file */
     if (self->fd != -1) {
 	if (close(self->fd) < 0) {
-	    xfer_element_handle_error(XFER_ELEMENT(self),
+	    xfer_cancel_with_error(XFER_ELEMENT(self),
 		"while closing holding file: %s", strerror(errno));
+	    wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);
 	    return FALSE;
 	}
 
@@ -92,9 +93,10 @@ start_new_chunk(
     /* otherwise, open up the next file */
     self->fd = open(self->next_filename, O_RDONLY);
     if (self->fd < 0) {
-	xfer_element_handle_error(XFER_ELEMENT(self),
+	xfer_cancel_with_error(XFER_ELEMENT(self),
 	    "while opening holding file '%s': %s",
 	    self->next_filename, strerror(errno));
+	wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);
 	return FALSE;
     }
 
@@ -118,9 +120,10 @@ start_new_chunk(
     if (self->dest_taper) {
 	struct stat st;
 	if (fstat(self->fd, &st) < 0) {
-	    xfer_element_handle_error(XFER_ELEMENT(self),
+	    xfer_cancel_with_error(XFER_ELEMENT(self),
 		"while finding size of holding file '%s': %s",
 		self->next_filename, strerror(errno));
+	    wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);
 	    return FALSE;
 	}
 
@@ -135,9 +138,10 @@ start_new_chunk(
     bytes_read = full_read(self->fd, hdrbuf, DISK_BLOCK_BYTES);
     if (bytes_read < DISK_BLOCK_BYTES) {
 	g_free(hdrbuf);
-	xfer_element_handle_error(XFER_ELEMENT(self),
+	xfer_cancel_with_error(XFER_ELEMENT(self),
 	    "while reading header from holding file '%s': %s",
 	    self->next_filename, strerror(errno));
+	wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);
 	return FALSE;
     }
 
@@ -147,9 +151,10 @@ start_new_chunk(
 
     if (hdr.type != F_DUMPFILE && hdr.type != F_CONT_DUMPFILE) {
 	dumpfile_free_data(&hdr);
-	xfer_element_handle_error(XFER_ELEMENT(self),
+	xfer_cancel_with_error(XFER_ELEMENT(self),
 	    "unexpected header type %d in holding file '%s'",
 	    hdr.type, self->next_filename);
+	wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);
 	return FALSE;
     }
 
@@ -195,8 +200,9 @@ pull_buffer_impl(
 
 	/* did an error occur? */
 	if (errno != 0) {
-	    xfer_element_handle_error(XFER_ELEMENT(self),
+	    xfer_cancel_with_error(XFER_ELEMENT(self),
 		"while reading holding file: %s", strerror(errno));
+	    wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);
 	    goto return_eof;
 	}
 

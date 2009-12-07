@@ -86,6 +86,7 @@ usage(
 	"\t-d: print debugging messages\n"
 	"\t-t: ignore timeouts\n"
         "\t-n: do not fork\n"
+        "\t-l: loop the same test repeatedly (use with -n for leak checks)\n"
 	"\n"
 	"If no test names are specified, all tests are run.  Available tests:\n"
 	"\n");
@@ -115,6 +116,8 @@ testutils_run_tests(
     int success;
     int ignore_timeouts = 0;
     gboolean skip_fork = FALSE;
+    gboolean only_one = FALSE;
+    gboolean loop_forever = FALSE;
 
     /* first_parse the command line */
     while (argc > 1) {
@@ -124,6 +127,10 @@ testutils_run_tests(
 	    ignore_timeouts = TRUE;
 	} else if (strcmp(argv[1], "-n") == 0) {
 	    skip_fork = TRUE;
+	    only_one = TRUE;
+	} else if (strcmp(argv[1], "-l") == 0) {
+	    loop_forever = TRUE;
+	    only_one = TRUE;
 	} else if (strcmp(argv[1], "-h") == 0) {
 	    usage(tests);
 	    return 1;
@@ -154,8 +161,8 @@ testutils_run_tests(
             t->selected = 1;
     }
 
-    /* if skip_fork is given, only one test can run */
-    if (skip_fork) {
+    /* check only_one */
+    if (only_one) {
         int num_tests = 0;
         for (t = tests; t->fn; t++) {
             if (t->selected)
@@ -180,7 +187,9 @@ testutils_run_tests(
     success = 1;
     for (t = tests; t->fn; t++) {
         if (t->selected) {
-	    success = callinfork(t, ignore_timeouts, skip_fork) && success;
+	    do {
+		success = callinfork(t, ignore_timeouts, skip_fork) && success;
+	    } while (loop_forever);
         }
     }
 

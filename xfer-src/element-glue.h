@@ -39,34 +39,6 @@ GType xfer_element_glue_get_type(void);
 #define IS_XFER_ELEMENT_GLUE(obj) G_TYPE_CHECK_INSTANCE_TYPE((obj), xfer_element_glue_get_type ())
 #define XFER_ELEMENT_GLUE_GET_CLASS(obj) G_TYPE_INSTANCE_GET_CLASS((obj), xfer_element_glue_get_type(), XferElementGlueClass)
 
-/*
- * Main object structure
- */
-
-typedef struct XferElementGlue {
-    XferElement __parent__;
-
-    /* the stuff we might use, depending on what flavor of glue we're
-     * providing.. */
-    int pipe[2];
-
-    /* for push/pull, a ring buffer of ptr/size pairs */
-    struct { gpointer buf; size_t size; } *ring;
-    semaphore_t *ring_used_sem, *ring_free_sem;
-    gint ring_head, ring_tail;
-
-    GThread *thread;
-    GThreadFunc threadfunc;
-} XferElementGlue;
-
-/*
- * Class definition
- */
-
-typedef struct {
-    XferElementClass __parent__;
-} XferElementGlueClass;
-
 /* Constructor */
 
 XferElement * xfer_element_glue(void);

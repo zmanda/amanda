@@ -54,9 +54,9 @@ typedef enum {
      * a buffer.  EOF is indicated by passing a NULL buffer. */
     XFER_MECH_PUSH_BUFFER,
 
-    /* DirectTCP: upstream sends an array of IP:PORT addresses to which a
-     * TCP connection should be made, then downstream connects to one of the
-     * addreses and sends the data over that connection */
+    /* DirectTCP: downstream sends an array of IP:PORT addresses to which a TCP
+     * connection should be made, then upstream connects to one of the addreses
+     * and sends the data over that connection */
     XFER_MECH_DIRECTTCP_LISTEN,
 
     /* (XFER_MECH_DIRECTTCP_CONNECT is not impossible, but not implemented now) */
@@ -203,8 +203,9 @@ typedef struct {
      * This method is always called from the main thread.  It must not block.
      *
      * @param elt: the XferElement
+     * @param expect_eof: element should expect an EOF
      */
-    gboolean (*cancel)(XferElement *elt, gboolean generate_eof);
+    gboolean (*cancel)(XferElement *elt, gboolean expect_eof);
 
     /* Get a buffer full of data from this element.  This function is called by
      * the downstream element under XFER_MECH_PULL_CALL.  It can block indefinitely,
@@ -272,29 +273,6 @@ void xfer_element_drain_by_pulling(XferElement *upstream);
  * @param fd: the file descriptor to drain
  */
 void xfer_element_drain_by_reading(int fd);
-
-/* Wait for the xfer's state to become CANCELLED or DONE; this is useful to
- * wait until a cancelletion is in progress before returning an EOF or
- * otherwise handling a failure.  If you call this in the main thread, you'll
- * be waiting for a while.
- *
- * @param xfer: the transfer object
- * @returns: the new status (XFER_CANCELLED or XFER_DONE)
- */
-xfer_status wait_until_xfer_cancelled(Xfer *xfer);
-
-/* Send an XMSG_ERROR constructed with the given format and arguments, then
- * cancel the transfer, then wait until the transfer is completely cancelled.
- * This is the most common error-handling process for transfer elements.  All
- * that remains to be done on return is to branch to the appropriate point in
- * the cancellation-handling portion of the transfer.
- *
- * @param elt: the transfer element producing the error
- * @param fmt: the format for the error message
- * @param ...: arguments corresponding to the format
- */
-void xfer_element_handle_error(XferElement *elt, const char *fmt, ...)
-	G_GNUC_PRINTF(2,3);
 
 /***********************
  * XferElement subclasses
@@ -421,5 +399,15 @@ void xfer_dest_buffer_get(
     XferElement *elt,
     gpointer *buf,
     gsize *size);
+
+/* A transfer dest that connects to a DirectTCPAddr and sends data to
+ * it - mostly just useful for testing.
+ *
+ * Implemented in dest-directtcp-connect.c
+ *
+ * @param addrs: DirectTCP addresses to connect to
+ * @return: new element
+ */
+XferElement * xfer_dest_directtcp_connect(DirectTCPAddr *addrs);
 
 #endif
