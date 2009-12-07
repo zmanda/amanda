@@ -39,6 +39,7 @@
 #define STFSR MTFSR
 #define STRSR MTBSR
 #define STWEOF MTWEOF
+#define STOFFL MTOFFL
 --- */
 
 gboolean tape_rewind(int fd) {
@@ -90,6 +91,13 @@ gboolean tape_weof(int fd, guint8 count) {
 
 gboolean tape_setcompression(int fd G_GNUC_UNUSED, gboolean on G_GNUC_UNUSED) {
     return FALSE;
+}
+
+gboolean tape_offl(int fd) {
+    struct stop st;
+    st.st_op = STOFFL;
+    st.st_count = 1;
+    return 0 == ioctl(fd, STIOCTOP, &st);
 }
 
 DeviceStatusFlags tape_is_tape_device(int fd G_GNUC_UNUSED) {

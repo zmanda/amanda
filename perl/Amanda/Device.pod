@@ -556,13 +556,20 @@ mode.
 
 =head3 erase
 
- $success = $dev->recycle_file(fileno);
+ $success = $dev->erase(fileno);
 
 On devices that support it, this erases all data from the volume, presumably
 freeing the space.  This method must be called before start and after finish --
 that is, while the device is in a neutral state (C<$ACCESS_NULL>). You can
 detect whether or not this operation is supported using the C<full_deletion>
 property.
+
+=head3 eject
+
+ $success = $dev->eject();
+
+On devices that support it, this eject the volume.  This method can be called
+before start and after finish.
 
 =head3 property_get
 

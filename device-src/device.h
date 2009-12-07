@@ -192,6 +192,7 @@ struct _DeviceClass {
 				  PropertySource source);
     gboolean (* recycle_file) (Device * self, guint filenum);
     gboolean (* erase) (Device * self);
+    gboolean (* eject) (Device * self);
     gboolean (* finish) (Device * self);
 
     /* DirectTCP methods */
@@ -383,6 +384,7 @@ gboolean 	device_recycle_file	(Device * self,
 					guint filenum);
 
 gboolean 	device_erase	(Device * self);
+gboolean 	device_eject	(Device * self);
 gboolean device_directtcp_supported(Device *self);
 gboolean device_listen(Device *self, DirectTCPAddr **addrs);
 gboolean device_accept(Device *self, DirectTCPConnection **conn,

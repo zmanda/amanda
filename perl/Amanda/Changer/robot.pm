@@ -298,18 +298,8 @@ sub new {
 	$self->{$key} = $time;
     }
 
-    # mt and mtx
-    my ($mt, $mtx);
-    if (exists $config->{'properties'}->{'mt'}) {
-	if (@{$config->{'properties'}->{'mt'}->{'values'}} > 1) {
-	    return Amanda::Changer->make_error("fatal", undef,
-		message => "only one value allowed for 'mt'");
-	}
-	$mt = $config->{'properties'}->{'mt'}->{'values'}->[0];
-    } else {
-	$mt = $Amanda::Constants::MT;
-    }
-
+    # mtx
+    my $mtx;
     if (exists $config->{'properties'}->{'mtx'}) {
 	if (@{$config->{'properties'}->{'mtx'}->{'values'}} > 1) {
 	    return Amanda::Changer->make_error("fatal", undef,
@@ -325,12 +315,6 @@ sub new {
 	    message => "no default value for property MTX");
     }
 
-    if (!$mt and $ebu) {
-	# mt is only needed for eject-before-unload
-	return Amanda::Changer->make_error("fatal", undef,
-	    message => "no default value for property MT");
-    }
-
     my $ignore_barcodes = $self->get_boolean_property($self->{'config'},
 					    "ignore-barcodes", 0);
     if (!defined $ignore_barcodes) {
@@ -340,7 +324,7 @@ sub new {
 
     # construct the interface object
     $self->{'interface'} = Amanda::Changer::robot::Interface->new(
-	    $device_name, $mt, $mtx, $ignore_barcodes),
+	    $device_name, $mtx, $ignore_barcodes),
 
     return $self;
 }
@@ -1674,6 +1658,7 @@ use Amanda::MainLoop qw( :GIOCondition );
 use Amanda::Config qw( :getconf );
 use Amanda::Debug qw( debug warning );
 use Amanda::MainLoop qw( synchronized make_cb );
+use Amanda::Device qw( :constants );
 
 # the physical interface to the changer is abstracted out in hopes of eventually
 # supporting SCSI access (via some C glue, presumably).
@@ -1684,12 +1669,11 @@ use Amanda::MainLoop qw( synchronized make_cb );
 
 sub new {
     my $class = shift;
-    my ($device_name, $mt, $mtx, $ignore_barcodes) = @_;
+    my ($device_name, $mtx, $ignore_barcodes) = @_;
 
     return bless {
 	lock => [],
 	device_name => $device_name,
-	mt => $mt,
 	mtx => $mtx,
 	ignore_barcodes => $ignore_barcodes,
     }, $class;
@@ -1841,7 +1825,6 @@ sub unload {
 }
 
 # eject $drive (named /dev/whatever, not the drive number), and call finished_cb.
-# This will strip any "tape:" prefix beforehand.
 sub eject {
     my $self = shift;
     my ($drive_name, $finished_cb) = @_;
@@ -1850,17 +1833,23 @@ sub eject {
     synchronized($self->{'lock'}, $finished_cb, sub {
 	my ($finished_cb) = @_;
 
-	my $sys_cb = make_cb(sys_cb => sub {
-	    my ($exitstatus, $output) = @_;
-	    if ($exitstatus != 0) {
-		return $finished_cb->("error from mt: " . $output);
-	    } else {
-		return $finished_cb->(undef);
-	    }
-	});
+	Amanda::Debug::debug("ejecting drive $drive_name");
+	my $device = Amanda::Device->new($drive_name);
+	if ($device->status() != $DEVICE_STATUS_SUCCESS) {
+	    return $finished_cb->($device->error_or_status);
+	}
+	if (my $err = $self->{'config'}->configure_device($device)) {
+	    return $finished_cb->($err);
+	}
+	if ($device->status() != $DEVICE_STATUS_SUCCESS) {
+	    return $finished_cb->($device->error_or_status);
+	}
+	if (!$device->eject()) {
+	    return $finished_cb->($device->error_or_status);
+	}
+	undef $device;
 
-	$self->_run_system_command($sys_cb,
-	    $self->{'mt'}, "-f", $drive_name, 'eject');
+	$finished_cb->(undef);
     });
 }
 
@@ -1890,7 +1879,7 @@ sub transfer {
     });
 }
 
-# Run 'mtx' or 'mt' and capture the output.  Standard output and error
+# Run 'mtx' and capture the output.  Standard output and error
 # are lumped together.
 #
 # @param $sys_cb: called with ($exitstatus, $output)

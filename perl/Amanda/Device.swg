@@ -353,6 +353,11 @@ typedef struct Device {
 	    return device_erase(self);
 	}
 
+	gboolean
+	eject() {
+	    return device_eject(self);
+	}
+
 	%typemap(out) const GSList * {
 	    GSList *iter;
 

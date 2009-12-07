@@ -53,6 +53,8 @@ gint tape_eod(int fd);
 gboolean tape_weof(int fd, guint8 count);
 gboolean tape_setcompression(int fd, gboolean on);
 
+gboolean tape_offl(int fd);
+
 DeviceStatusFlags tape_is_tape_device(int fd);
 DeviceStatusFlags tape_is_ready(int fd, TapeDevice *t_self);
 

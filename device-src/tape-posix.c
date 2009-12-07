@@ -131,6 +131,22 @@ gboolean tape_setcompression(int fd G_GNUC_UNUSED,
 #endif
 }
 
+gboolean tape_offl(int fd) {
+    struct mtop mt;
+    int safe_errno;
+
+    mt.mt_op = MTOFFL;
+    mt.mt_count = 1;
+    if (0 == ioctl(fd, MTIOCTOP, &mt))
+	return TRUE;
+
+    safe_errno = errno;
+    g_debug("tape_off: ioctl(MTIOCTOP/MTOFFL) failed: %s", strerror(errno));
+    errno = safe_errno;
+
+    return FALSE;
+}
+
 DeviceStatusFlags tape_is_tape_device(int fd) {
     struct mtop mt;
     mt.mt_op = MTNOP;

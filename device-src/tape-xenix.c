@@ -82,6 +82,12 @@ gboolean tape_setcompression(int fd G_GNUC_UNUSED, gboolean on G_GNUC_UNUSED) {
     return FALSE;
 }
 
+gboolean tape_offl(int fd) {
+    /* return 0 == ioctl(fd, MT_OFFL); */
+    /* return 0 == ioctl(fd, T_UNLOAD); */
+    return TRUE;
+}
+
 DeviceStatusFlags tape_is_tape_device(int fd) {
     struct tape_info result;
     if (0 == ioctl(fd, MT_STATUS, &result)) {

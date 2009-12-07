@@ -1,3 +1,13 @@
+2009-12-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/device.h, device-src/device.c,
+	  man/xml-source/amanda-changers.7.xml, perl/Amanda/Device.pod
+	  perl/Amanda/Device.swg: Add an eject method to the device-api.
+	* device-src/tape-device.c, device-src/tape-ops.h,
+	  device-src/tape-posix.c, device-src/tape-uware.c,
+	  device-src/tape-aix.c,
+	  device-src/tape-xenix.c: Implement eject method.
+	* perl/Amanda/Changer/robot.pm: Use new eject method.
+
 2009-12-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/dvdrw-device.c: fix uninitialized variable, don't use
 	  G_DEFINE_DEVICE

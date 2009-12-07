@@ -441,11 +441,6 @@ The default value is <command>"0s poll 3s until 2m"</command>.
 </para>
 </listitem></varlistentry>
 <!-- ==== -->
-<varlistentry><term>MT</term><listitem>
-The path to the 'mt' binary.  Note that this is only used for ejecting volumes.
-The default value is defined at compile time.
-</listitem></varlistentry>
-<!-- ==== -->
 <varlistentry><term>MTX</term><listitem>
 The path to the 'mtx' binary.  The default value is defined at compile time.
 </listitem></varlistentry>

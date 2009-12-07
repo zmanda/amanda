@@ -18,6 +18,8 @@
  * Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
  */
 
+#include "amanda.h"
+#include "pipespawn.h"
 #include <string.h> /* memset() */
 #include "util.h"
 #include "tape-device.h"
@@ -99,6 +101,7 @@ static gboolean tape_device_start_file (Device * self, dumpfile_t * ji);
 static gboolean tape_device_finish_file (Device * self);
 static dumpfile_t * tape_device_seek_file (Device * self, guint file);
 static gboolean tape_device_seek_block (Device * self, guint64 block);
+static gboolean tape_device_eject (Device * self);
 static gboolean tape_device_finish (Device * self);
 static IoResult tape_device_robust_read (TapeDevice * self, void * buf,
                                                int * count, char **errmsg);
@@ -277,6 +280,7 @@ tape_device_class_init (TapeDeviceClass * c)
     device_class->finish_file = tape_device_finish_file;
     device_class->seek_file = tape_device_seek_file;
     device_class->seek_block = tape_device_seek_block;
+    device_class->eject = tape_device_eject;
     device_class->finish = tape_device_finish;
 
     g_object_class->finalize = tape_device_finalize;
@@ -1329,6 +1333,44 @@ tape_device_seek_block (Device * d_self, guint64 block) {
 
     d_self->block = block;
     return TRUE;
+}
+
+static gboolean
+tape_device_eject (Device * d_self) {
+    TapeDevice * self;
+
+    self = TAPE_DEVICE(d_self);
+
+    if (device_in_error(self)) return FALSE;
+
+    /* Open the device if not already opened */
+    if (self->fd == -1) {
+	self->fd = try_open_tape_device(self, self->private->device_filename);
+	/* if the open failed, then try_open_tape_device already set the
+         * approppriate error status */
+        if (self->fd == -1)
+            return FALSE;
+    }
+
+    /* Rewind it. */
+    if (!tape_rewind(self->fd)) {
+	device_set_error(d_self,
+	    vstrallocf(_("Error rewinding device %s: %s"),
+		       self->private->device_filename, strerror(errno)),
+	      DEVICE_STATUS_DEVICE_ERROR
+	    | DEVICE_STATUS_VOLUME_ERROR);
+	return FALSE;
+    }
+
+    if (tape_offl(self->fd))
+	return TRUE;
+
+    device_set_error(d_self,
+	vstrallocf(_("Error ejecting device %s: %s\n"),
+		   self->private->device_filename, strerror(errno)),
+	  DEVICE_STATUS_DEVICE_ERROR);
+
+    return FALSE;
 }
 
 static gboolean

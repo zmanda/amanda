@@ -37,6 +37,7 @@
 #define T_RDBLKLEN 0
 #define T_WRBLKLEN 0
 #define T_SETCOMP 0
+#define T_UNLOAD 0
 
 struct blklen {
     int min_blen, max_blen;
@@ -71,6 +72,10 @@ gint tape_eod(int fd G_GNUC_UNUSED) {
 
 gboolean tape_weof(int fd, guint8 count) {
     return 0 == ioctl(fd, T_WRFILEM, count);
+}
+
+gboolean tape_offl(int fd) {
+    return 0 == ioctl(fd, T_UNLOAD);
 }
 
 gboolean tape_setcompression(int fd, gboolean on) {
