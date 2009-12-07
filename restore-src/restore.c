@@ -1298,7 +1298,7 @@ void restore(RestoreSource  *source,
 
     if (myout->restore_mode == LOCAL_DIRECTTCP_MODE ||
 	myout->restore_mode == DIRECTTCP_MODE) {
-	gsize size = 0;
+	guint64 size = 0;
 
 	if (!is_continuation) {
 	    device_accept(source->u.device,
