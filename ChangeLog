@@ -1,3 +1,8 @@
+2009-12-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/device.c, device-src/device.h:
+	  Add device_unaliassed_name function.
+	* perl/Amanda/Device.swg: Add unaliassed_name function.
+
 2009-12-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/restore.c: Fix read_to_connection argument.
 

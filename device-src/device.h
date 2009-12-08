@@ -218,6 +218,11 @@ struct _DeviceClass {
  * Device Instantiation
  */
 
+/* Return the unaliased device name of a device.
+ * The returned must not be freed by the caller.
+ */
+char*		device_unaliased_name(char * device_name);
+
 /* This is how you get a new Device. Pass in a device name or alias.
  *
  * A Device is *always* returned, even for an invalid device name. You

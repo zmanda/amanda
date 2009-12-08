@@ -278,6 +278,8 @@ typedef struct queue_fd_t {
     }
 } queue_fd_t;
 
+%name(unaliased_name) extern char *device_unaliased_name(char *);
+
 typedef struct Device {
 
     /* methods */

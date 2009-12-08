@@ -461,6 +461,26 @@ make_null_error(char *errmsg, DeviceStatusFlags status)
     return device;
 }
 
+char *
+device_unaliased_name(
+    char *device_name)
+{
+    device_config_t *dc;
+    char *unaliased_name;
+
+    /* look up the unaliased device name in the configuration */
+    if ((dc = lookup_device_config(device_name))) {
+	if (!(unaliased_name = device_config_get_tapedev(dc))
+	    || unaliased_name[0] == '\0') {
+	    return NULL;
+	}
+    } else {
+	unaliased_name = device_name;
+    }
+
+    return unaliased_name;
+}
+
 Device*
 device_open (char * device_name)
 {
@@ -470,7 +490,6 @@ device_open (char * device_name)
     char *unaliased_name = NULL;
     DeviceFactory factory;
     Device *device;
-    device_config_t *dc;
 
     g_assert(device_name != NULL);
 
@@ -482,16 +501,11 @@ device_open (char * device_name)
     if (device_name == NULL)
 	return make_null_error(stralloc(_("No device name specified")), DEVICE_STATUS_DEVICE_ERROR);
 
-    /* look up the unaliased device name in the configuration */
-    if ((dc = lookup_device_config(device_name))) {
-	if (!(unaliased_name = device_config_get_tapedev(dc))
-	    || unaliased_name[0] == '\0') {
-	    return make_null_error(
+    unaliased_name = device_unaliased_name(device_name);
+    if (!unaliased_name) {
+	return make_null_error(
 		vstrallocf(_("Device '%s' has no tapedev"), device_name),
 		DEVICE_STATUS_DEVICE_ERROR);
-	}
-    } else {
-	unaliased_name = device_name;
     }
 
     if (!handle_device_regex(unaliased_name, &device_type, &device_node,
