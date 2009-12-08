@@ -540,7 +540,6 @@ parse_diskline(
 	disk->inprogress = 0;
 	disk->application = NULL;
 	disk->pp_scriptlist = NULL;
-	disk->dataport_list = NULL;
     }
 
     if (host) {
@@ -1513,29 +1512,19 @@ xml_optionstr(
 	    data_path_opt = stralloc("  <datapath>AMANDA</datapath>\n");
 	    break;
 	case DATA_PATH_DIRECTTCP:
-	  { /* dp->dataport_list is not set for selfcheck/sendsize */
+	  { GSList *directtcp;
 	    if (am_has_feature(their_features, fe_xml_directtcp_list)) {
-		char *s, *sc;
-		char *value, *b64value;
-
-		data_path_opt = stralloc("  <datapath>DIRECTTCP");
-		if (dp->dataport_list) {
-		    s = sc = stralloc(dp->dataport_list);
-		    do {
-			value = s;
-			s = strchr(s, ';');
-			if (s) {
-			    *s++ = '\0';
-			}
-
-			b64value = amxml_format_tag("directtcp", value);
-			vstrextend(&data_path_opt, "\n    ", b64value, NULL);
-			amfree(b64value);
-		    } while (s);
-		    amfree(sc);
-		    strappend(data_path_opt, "\n  ");
+	        data_path_opt = stralloc("  <datapath>DIRECTTCP");
+		for (directtcp = dp->directtcp_list; directtcp != NULL;
+						directtcp = directtcp->next) {
+		    char *b64value = amxml_format_tag("directtcp",
+							  directtcp->data);
+		    vstrextend(&data_path_opt, "\n    ", b64value, NULL);
+		    amfree(b64value);
 		}
-		strappend(data_path_opt, "</datapath>\n");
+		if (dp->directtcp_list)
+		    strappend(data_path_opt, "\n  ");
+	        strappend(data_path_opt, "</datapath>\n");
 	    }
 	  }
 	  break;

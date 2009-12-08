@@ -91,7 +91,11 @@ use constant REQUEST_NEW_TAPE => message("REQUEST-NEW-TAPE",
 );
 
 use constant PORT => message("PORT",
-    format => [ qw( port hostport ) ],
+    format => [ qw( port ) ],
+);
+
+use constant DIRECTTCP_PORT => message("DIRECTTCP-PORT",
+    format => [ qw( port hostport) ],
 );
 
 use constant BAD_COMMAND => message("BAD-COMMAND",
@@ -523,13 +527,12 @@ sub msg_PORT_WRITE {
 
     # tell the driver which port we're listening on
     if ($self->{'data_path'} == $Amanda::Config::DATA_PATH_DIRECTTCP) {
-        $self->{'proto'}->send(main::Protocol::PORT,
+        $self->{'proto'}->send(main::Protocol::DIRECTTCP_PORT,
 	    port => $self->{'listen_socket'}->sockport(),
 	    hostport => "localhost:33333");
     } else {
         $self->{'proto'}->send(main::Protocol::PORT,
 	    port => $self->{'listen_socket'}->sockport());
-	    hostport => "localhost:22222";
     }
 }
 

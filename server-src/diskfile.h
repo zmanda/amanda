@@ -113,7 +113,7 @@ typedef struct disk_s {
     int		kencrypt;
     int		index;			/* produce an index ? */
     data_path_t	data_path;		/* defined data-path */
-    char       *dataport_list;		/* list of address to send data */
+    GSList     *directtcp_list;		/* list of address to use */
     int		spindle;		/* spindle # - for parallel dumps */
     int		inprogress;		/* being dumped now? */
     int		todo;

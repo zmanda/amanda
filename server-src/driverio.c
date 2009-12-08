@@ -488,7 +488,6 @@ dumper_cmd(
 			    " ", qssh_keys,
 			    " ", dp->auth,
 			    " ", data_path_to_string(dp->data_path),
-			    " ", dp->dataport_list,
 			    " |", o,
 			    "\n", NULL);
 	    amfree(qplugin);

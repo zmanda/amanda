@@ -104,7 +104,6 @@ static char *client_port=NULL;
 static char *ssh_keys=NULL;
 static char *auth=NULL;
 static data_path_t data_path=DATA_PATH_AMANDA;
-static char *dataport_list = NULL;
 static int level;
 static char *dumpdate = NULL;
 static char *dumper_timestamp = NULL;
@@ -306,7 +305,7 @@ main(
     struct cmdargs *cmdargs = NULL;
     int outfd = -1;
     int rc;
-    in_port_t header_port;
+    in_port_t taper_port;
     char *q = NULL;
     int a;
     int res;
@@ -413,7 +412,6 @@ main(
 	     *   ssh_keys
 	     *   security_driver
 	     *   data_path
-	     *   dataport_list
 	     *   options
 	     */
 	    a = 1; /* skip "PORT-DUMP" */
@@ -428,7 +426,7 @@ main(
 		error(_("error [dumper PORT-DUMP: not enough args: port]"));
 		/*NOTREACHED*/
 	    }
-	    header_port = (in_port_t)atoi(cmdargs->argv[a++]);
+	    taper_port = (in_port_t)atoi(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: hostname]"));
@@ -512,11 +510,6 @@ main(
 	    data_path = data_path_from_string(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: dataport_list]"));
-	    }
-	    dataport_list = newstralloc(dataport_list, cmdargs->argv[a++]);
-
-	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: options]"));
 	    }
 	    options = newstralloc(options, cmdargs->argv[a++]);
@@ -542,8 +535,7 @@ main(
 
 	    /* connect outf to chunker/taper port */
 
-	    g_debug(_("Sending header to localhost:%d\n"), header_port);
-	    outfd = stream_client("localhost", header_port,
+	    outfd = stream_client("localhost", taper_port,
 				  STREAM_BUFSIZE, 0, NULL, 0);
 	    if (outfd == -1) {
 		
@@ -1279,9 +1271,7 @@ do_dump(
 
     if (errf) afclose(errf);
 
-    if (data_path == DATA_PATH_AMANDA)
-	aclose(db->fd);
-
+    aclose(db->fd);
     if (indexfile_tmp) {
 	amwait_t index_status;
 
@@ -1430,14 +1420,6 @@ read_mesgfd(
     }
 
     if (ISSET(status, GOT_INFO_ENDLINE) && !ISSET(status, HEADER_DONE)) {
-	/* Use the first in the dataport_list */
-	in_port_t data_port;
-	char *data_host = dataport_list;
-	char *s= strchr(dataport_list, ':');
-	*s = '\0';
-	s++;
-	data_port = atoi(s);
-
 	SET(status, HEADER_DONE);
 	/* time to do the header */
 	finish_tapeheader(&file);
@@ -1448,21 +1430,6 @@ read_mesgfd(
 	    stop_dump();
 	    return;
 	}
-	close(db->fd);
-	if (data_path == DATA_PATH_AMANDA) {
-	    g_debug(_("Sending data to %s:%d\n"), data_host, data_port);
-	    db->fd = stream_client(data_host, data_port,
-				   STREAM_BUFSIZE, 0, NULL, 0);
-	    if (db->fd == -1) {
-		errstr = newvstrallocf(errstr,
-				       _("Can't opendata output stream: %s"),
-				       strerror(errno));
-		dump_result = 2;
-		stop_dump();
-		return;
-	    }
-	}
-
 	dumpsize += (off_t)DISK_BLOCK_KB;
 	headersize += (off_t)DISK_BLOCK_KB;
 
