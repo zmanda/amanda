@@ -911,40 +911,40 @@ void restore(RestoreSource  *source,
 
     if (!is_continuation) {
 	/* first part of a dump */
-	if (myout->restore_mode == DEVICE_MODE) {
-	    data_path_t    data_path = DATA_PATH_AMANDA;
-            char          *input, *s;
+	data_path_t    data_path = DATA_PATH_AMANDA;
+        char          *input, *s;
 
-	    /* Wait for amrecover DATA-PATH */
-	    if (flags->amidxtaped &&
-		am_has_feature(their_features, fe_amidxtaped_datapath)) {
-		data_path = 0;
-		input = agets(prompt_in);/* Strips \n but not \r */
-		if (!input) {
-		    error(_("Connection lost with amrecover"));
-		    /*NOTREACHED*/
-		} else if (strncmp_const(input, "DATA-PATH ") != 0) {
-		    error(_("Did not get DATA-PATH from amrecover"));
-		    /*NOTREACHED*/
-		}
-		s = input;
-		while ((s = strchr(s, ' '))) {
-		    s++;
-		    if (strncmp_const(s, "AMANDA") == 0) {
-			data_path |= DATA_PATH_AMANDA;
-			g_debug("DATA_PATH_AMANDA");
-		    }
-		    if (strncmp_const(s, "DIRECT-TCP") == 0) {
-			data_path |= DATA_PATH_DIRECTTCP;
-			g_debug("DATA_PATH_DIRECTTCP");
-		    }
-		}
-		amfree(input);
+	/* Wait for amrecover DATA-PATH */
+	if (flags->amidxtaped &&
+	    am_has_feature(their_features, fe_amidxtaped_datapath)) {
+	    data_path = 0;
+	    input = agets(prompt_in);/* Strips \n but not \r */
+	    if (!input) {
+		error(_("Connection lost with amrecover"));
+		/*NOTREACHED*/
+	    } else if (strncmp_const(input, "DATA-PATH ") != 0) {
+		error(_("Did not get DATA-PATH from amrecover"));
+		/*NOTREACHED*/
 	    }
+	    s = input;
+	    while ((s = strchr(s, ' '))) {
+		s++;
+		if (strncmp_const(s, "AMANDA") == 0) {
+		    data_path |= DATA_PATH_AMANDA;
+		    g_debug("DATA_PATH_AMANDA");
+		}
+		if (strncmp_const(s, "DIRECT-TCP") == 0) {
+		    data_path |= DATA_PATH_DIRECTTCP;
+		    g_debug("DATA_PATH_DIRECTTCP");
+		}
+	    }
+	    amfree(input);
+	}
 
-	    if (file_is_compressed || source->header->encrypted)
-		data_path = DATA_PATH_AMANDA;
+	if (file_is_compressed || source->header->encrypted)
+	    data_path = DATA_PATH_AMANDA;
 
+	if (myout->restore_mode == DEVICE_MODE) {
 	    if (data_path & DATA_PATH_DIRECTTCP &&
 		device_directtcp_supported(source->u.device)) {
 		myout->restore_mode = DIRECTTCP_MODE;
@@ -954,43 +954,43 @@ void restore(RestoreSource  *source,
 	    } else {
 		myout->restore_mode = DEVICE_MODE;
 	    }
-
-	    source->restore_mode = myout->restore_mode;
-
-	    if (myout->restore_mode == LOCAL_DIRECTTCP_MODE ||
-		myout->restore_mode == DIRECTTCP_MODE) {
-		device_listen(source->u.device, FALSE, &addrs);
-	    }
-
-	    /* send DATA-PATH reply */
-	    if (flags->amidxtaped &&
-		am_has_feature(their_features, fe_amidxtaped_datapath)) {
-		if (myout->restore_mode == DEVICE_MODE) {
-	            g_fprintf(prompt_out, "DATA-PATH AMANDA\r\n");
-		} else if (myout->restore_mode == LOCAL_DIRECTTCP_MODE) {
-	            g_fprintf(prompt_out, "DATA-PATH AMANDA\r\n");
-		    g_debug("DATA-PATH AMANDA");
-		} else if (myout->restore_mode == DIRECTTCP_MODE) {
-		    char *addr_list = stralloc("");
-		    DirectTCPAddr *addr;
-
-		    for (addr=addrs; addr->ipv4 != 0; addr++) {
-			struct in_addr in;
-			char *an_addr;
-			in.s_addr = addr->ipv4;
-			an_addr = g_strdup_printf(" %s:%d", inet_ntoa(in),
-					     addr->port);
-			vstrextend(&addr_list, an_addr, NULL);
-			amfree(an_addr);
-		    }
-		    g_fprintf(prompt_out, "DATA-PATH DIRECT-TCP%s\r\n",
-			      addr_list);
-		    g_debug("DATA-PATH DIRECT-TCP%s", addr_list);
-		    amfree(addr_list);
-		}
-	    }
-	    fflush(prompt_out);
 	}
+
+	source->restore_mode = myout->restore_mode;
+
+	if (myout->restore_mode == LOCAL_DIRECTTCP_MODE ||
+	    myout->restore_mode == DIRECTTCP_MODE) {
+	    device_listen(source->u.device, FALSE, &addrs);
+	}
+
+	/* send DATA-PATH reply */
+	if (flags->amidxtaped &&
+	    am_has_feature(their_features, fe_amidxtaped_datapath)) {
+	    if (myout->restore_mode == DEVICE_MODE ||
+		myout->restore_mode == HOLDING_MODE ||
+		myout->restore_mode == LOCAL_DIRECTTCP_MODE) {
+	        g_fprintf(prompt_out, "DATA-PATH AMANDA\r\n");
+		g_debug("DATA-PATH AMANDA");
+	    } else if (myout->restore_mode == DIRECTTCP_MODE) {
+		char *addr_list = stralloc("");
+		DirectTCPAddr *addr;
+
+		for (addr=addrs; addr->ipv4 != 0; addr++) {
+		    struct in_addr in;
+		    char *an_addr;
+		    in.s_addr = addr->ipv4;
+		    an_addr = g_strdup_printf(" %s:%d", inet_ntoa(in),
+					      addr->port);
+		    vstrextend(&addr_list, an_addr, NULL);
+		    amfree(an_addr);
+		}
+		g_fprintf(prompt_out, "DATA-PATH DIRECT-TCP%s\r\n",
+			  addr_list);
+		g_debug("DATA-PATH DIRECT-TCP%s", addr_list);
+		amfree(addr_list);
+	    }
+	}
+	fflush(prompt_out);
     }
 
     /* find out if compression or uncompression is needed here */

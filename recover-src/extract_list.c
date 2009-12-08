@@ -1614,6 +1614,7 @@ send_to_tape_server(
 {
     char *msg = stralloc2(cmd, "\r\n");
 
+    g_debug("send_to_tape_server: %s\n", cmd);
     if (security_stream_write(stream, msg, strlen(msg)) < 0)
     {
 	error(_("Error writing to tape server"));
@@ -2135,6 +2136,7 @@ writer_intermediary(
     ctl_data.child_pipe[1] = -1;
     ctl_data.pid           = -1;
     ctl_data.elist         = elist;
+    fh_init(&ctl_data.file);
     ctl_data.data_path     = DATA_PATH_AMANDA;
     ctl_data.addrs         = NULL;
     ctl_data.bsu           = NULL;
@@ -2745,6 +2747,7 @@ read_amidxtaped_data(
     if (ctl_data->header_done == 0) {
 	GPtrArray  *errarray;
 	g_option_t  g_options;
+	data_path_t data_path_set = DATA_PATH_AMANDA;
 
 	/* parse the file header */
 	fh_init(&ctl_data->file);
@@ -2753,17 +2756,30 @@ read_amidxtaped_data(
 	/* call backup_support_option */
 	g_options.config = get_config_name();
 	g_options.hostname = dump_hostname;
-	if (dump_dle) {
-	    ctl_data->bsu = backup_support_option(ctl_data->file.application,
-						  &g_options,
-						  ctl_data->file.disk,
-						  dump_dle->device,
-						  &errarray);
-	} else {
-	    ctl_data->bsu = backup_support_option(ctl_data->file.application,
-						  &g_options,
-						  ctl_data->file.disk, NULL,
-						  &errarray);
+	if (strcmp(ctl_data->file.program, "APPLICATION") == 0) {
+	    if (dump_dle) {
+	        ctl_data->bsu = backup_support_option(ctl_data->file.application,
+						      &g_options,
+						      ctl_data->file.disk,
+						      dump_dle->device,
+						      &errarray);
+	    } else {
+	        ctl_data->bsu = backup_support_option(ctl_data->file.application,
+						      &g_options,
+						      ctl_data->file.disk, NULL,
+						      &errarray);
+	    }
+	    if (!ctl_data->bsu) {
+		guint  i;
+		for (i=0; i < errarray->len; i++) {
+		    char *line;
+		    line = g_ptr_array_index(errarray, i);
+		    g_fprintf(stderr, "%s\n", line);
+		}
+		g_ptr_array_free_full(errarray);
+		exit(1);
+	    }
+	    data_path_set = ctl_data->bsu->data_path_set;
 	}
 	/* handle backup_support_option failure */
 
@@ -2771,9 +2787,9 @@ read_amidxtaped_data(
  	    char       *msg;
 	    /* send DATA-PATH request */
 	    msg = stralloc("DATA-PATH");
-	    if (ctl_data->bsu->data_path_set & DATA_PATH_AMANDA)
+	    if (data_path_set & DATA_PATH_AMANDA)
 		vstrextend(&msg, " AMANDA", NULL);
-	    if (ctl_data->bsu->data_path_set & DATA_PATH_DIRECTTCP)
+	    if (data_path_set & DATA_PATH_DIRECTTCP)
 		vstrextend(&msg, " DIRECT-TCP", NULL);
 	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, msg);
 	    amfree(msg);

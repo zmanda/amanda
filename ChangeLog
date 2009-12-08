@@ -1,4 +1,9 @@
 2009-12-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/extract_list.c: Fix for GNUTAR/DUMP.
+	* restore-src/restore.c: Fix DATA-PATH excahnge with amrecover for
+	  reading from a holding disk.
+
+2009-12-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.c, device-src/device.h:
 	  Add device_unaliassed_name function.
 	* perl/Amanda/Device.swg: Add unaliassed_name function.
