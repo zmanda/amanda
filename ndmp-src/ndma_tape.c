@@ -591,6 +591,7 @@ ndmta_write_quantum (struct ndm_session *sess)
 
 	bcopy (data, ch->data + ch->end_ix, n_read);
 	ch->end_ix += n_read;
+	ta->mover_state.bytes_moved += n_read;
 	ta->mover_want_pos += n_read;
 	ta->mover_state.bytes_left_to_read -= n_read;
 
