@@ -2459,6 +2459,9 @@ ndmp_sxa_mover_set_window (struct ndm_session *sess,
 		end_win = NDMP_LENGTH_INFINITY;
 	}
 	ms->window_offset = request->offset;
+	/* record_num should probably be one less than this value, but the spec
+	 * says to divide, so we divide */
+	ms->record_num = request->offset / ms->record_size;
 	ms->window_length = request->length;
 	ta->mover_window_end = end_win;
 	ta->mover_window_first_blockno = ta->tape_state.blockno.value;
