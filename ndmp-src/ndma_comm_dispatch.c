@@ -2431,7 +2431,14 @@ ndmp_sxa_mover_set_window (struct ndm_session *sess,
 	}
 
 	/* TODO: NDMPv4 subtle semantic changes here */
-	if (request->length != NDMP_LENGTH_INFINITY) {
+
+	/* If a maximum length window is required following a mover transition
+	 * to the PAUSED state, a window length of all ones (binary) minus the
+	 * current window offset MUST be specified." (NDMPv4 RFC, Section
+	 * 3.6.2.2) -- we allow length = NDMP_LENGTH_INFINITY too */
+
+	if (request->length != NDMP_LENGTH_INFINITY
+		&& request->length + request->offset != NDMP_LENGTH_INFINITY) {
 		if (request->length % ms->record_size != 0) {
 			NDMADR_RAISE_ILLEGAL_ARGS("len !record_size");
 		}

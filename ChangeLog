@@ -1,4 +1,8 @@
 2009-12-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndma_comm_dispatch.c: follow the spec regarding window
+	  offset+length = G_MAXUINT64
+
+2009-12-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndma_tape.c: properly update bytes_moved when reading to
 	  connection
 
