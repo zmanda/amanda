@@ -32,13 +32,15 @@ simpleprng_seed(
     guint32 seed)
 {
     g_assert(seed != 0);
-    *state = seed;
+    state->val = seed;
+    state->count = 0;
 }
 
 guint32 simpleprng_rand(
     simpleprng_state_t *state)
 {
-    return (*state = (A * (*state)) + C);
+    state->count++;
+    return (state->val = (A * state->val) + C);
 }
 
 void simpleprng_fill_buffer(
@@ -52,6 +54,23 @@ void simpleprng_fill_buffer(
     }
 }
 
+static char *
+hexstr(guint8 *p, int len)
+{
+    char *result = NULL;
+    int i;
+
+    for (i = 0; i < len; i++) {
+	if (result)
+	    result = newvstrallocf(result, "%s %02x", result, (guint)(*(p++)));
+	else
+	    result = vstrallocf("[%02x", (guint)(*(p++)));
+    }
+    result = newvstrallocf(result, "%s]", result);
+
+    return result;
+}
+
 gboolean simpleprng_verify_buffer(
     simpleprng_state_t *state,
     gpointer buf,
@@ -59,12 +78,24 @@ gboolean simpleprng_verify_buffer(
 {
     guint8 *p = buf;
     while (len--) {
+	guint64 count = state->count;
 	guint8 expected = simpleprng_rand_byte(state);
 	guint8 got = *p;
 	if (expected != got) {
+	    int remaining = MIN(len, 16);
+	    guint8 expbytes[16] = { expected };
+	    char *gotstr = hexstr(p, remaining);
+	    char *expstr;
+	    int i;
+
+	    for (i = 1; i < remaining; i++)
+		expbytes[i] = simpleprng_rand_byte(state);
+	    expstr = hexstr(expbytes, remaining);
+
 	    g_fprintf(stderr,
-		    "random value mismatch in buffer %p, offset %zd: got 0x%02x, expected 0x%02x\n", 
-		    buf, (size_t)(p-(guint8*)buf), (int)got, (int)expected);
+		    "random value mismatch at offset %ju: got %s, expected %s\n",
+		    (uintmax_t)count, gotstr, expstr);
+	    g_free(gotstr);
 	    return FALSE;
 	}
 	p++;

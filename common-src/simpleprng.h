@@ -27,7 +27,10 @@
  * generating bytestreams for testing purposes.  It is *not* cryptographically
  * secure! */
 
-typedef guint32 simpleprng_state_t;
+typedef struct {
+    guint32 val;
+    guint64 count;
+} simpleprng_state_t;
 
 /* Initialize and seed the PRNG
  *

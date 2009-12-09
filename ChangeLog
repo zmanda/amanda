@@ -1,3 +1,9 @@
+2009-12-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/simpleprng.c: better error message from simpleprng on
+	  random number mismatch
+	* common-src/simpleprng.h: simpleprng_state_t is now a real struct
+	* xfer-src/dest-null.c: no need to give buffer offset anymore
+
 2009-12-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/extract_list.c: Fix for GNUTAR/DUMP.
 	* restore-src/restore.c: Fix DATA-PATH excahnge with amrecover for
