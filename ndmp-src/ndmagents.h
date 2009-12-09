@@ -814,6 +814,7 @@ struct ndm_tape_agent {
 
 	/* MOVER */
 	ndmp9_mover_get_state_reply mover_state;
+	u_long			mover_window_first_blockno;
 	unsigned long long	mover_window_end;
 	unsigned long long	mover_want_pos;
 	int			mover_notify_pending;

@@ -1,4 +1,8 @@
 2009-12-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndma_comm_dispatch.c ndmp-src/ndma_tape.c
+	  ndmp-src/ndmagents.h: make mover seek to correct block number
+
+2009-12-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/simpleprng.c: better error message from simpleprng on
 	  random number mismatch
 	* common-src/simpleprng.h: simpleprng_state_t is now a real struct

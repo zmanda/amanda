@@ -463,6 +463,7 @@ ndmta_write_quantum (struct ndm_session *sess)
 	int			did_something = 0;
 	unsigned long long	max_read;
 	unsigned long long	want_window_off;
+	unsigned long		block_size;
 	unsigned long		want_blockno;
 	unsigned long		cur_blockno;
 	unsigned		n_avail, n_read, record_off;
@@ -507,7 +508,16 @@ ndmta_write_quantum (struct ndm_session *sess)
 
 	want_window_off = ta->mover_want_pos - ta->mover_state.window_offset;
 
-	want_blockno = want_window_off / ta->mover_state.record_size;
+	/* make an estimate of the block size - the tape agent's block size, or
+	 * if it's in variabel block size mode, the mover's record size: "When
+	 * in variable block mode, as indicated by a tape block_size value of
+	 * zero, the mover record size defines the actual block size used by
+	 * the tape subsystem." (NDMPv4 RFC, Section 3.6.2.1) */
+	block_size = ta->tape_state.block_size.value;
+	if (!block_size)
+		block_size = ta->mover_state.record_size;
+
+	want_blockno = ta->mover_window_first_blockno + want_window_off / block_size;
 
 	if (ta->tb_blockno != want_blockno) {
 		unsigned long	xsr_count, xsr_resid;

@@ -2454,6 +2454,7 @@ ndmp_sxa_mover_set_window (struct ndm_session *sess,
 	ms->window_offset = request->offset;
 	ms->window_length = request->length;
 	ta->mover_window_end = end_win;
+	ta->mover_window_first_blockno = ta->tape_state.blockno.value;
 
 	return 0;
       NDMS_ENDWITH
