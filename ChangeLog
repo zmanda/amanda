@@ -1,3 +1,7 @@
+2009-12-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* xfer-src/element-glue.c: element-glue shouldn't complain when the
+	  xfer's already been cancelled
+
 2009-12-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndma_comm_dispatch.c ndmp-src/ndma_tape.c: set record_num
 	  according to the spec (even though it's inconsistent)

@@ -131,9 +131,11 @@ do_directtcp_connect(
 
     addrs = elt->downstream->input_listen_addrs;
     if (!addrs) {
-	xfer_cancel_with_error(elt,
-	    "%s got no directtcp addresses to connect to",
-	    xfer_element_repr(elt));
+	if (!elt->cancelled) {
+	    xfer_cancel_with_error(elt,
+		"%s got no directtcp addresses to connect to",
+		xfer_element_repr(elt));
+	}
 	goto cancel_wait;
     }
 
@@ -195,9 +197,11 @@ pull_and_write(XferElementGlue *self)
 
 	/* write it */
 	if (full_write(fd, buf, len) < len) {
-	    xfer_cancel_with_error(elt,
-		_("Error writing to fd %d: %s"), fd, strerror(errno));
-	    wait_until_xfer_cancelled(elt->xfer);
+	    if (!elt->cancelled) {
+		xfer_cancel_with_error(elt,
+		    _("Error writing to fd %d: %s"), fd, strerror(errno));
+		wait_until_xfer_cancelled(elt->xfer);
+	    }
 	    amfree(buf);
 	    break;
 	}
@@ -234,9 +238,11 @@ read_and_write(XferElementGlue *self)
 	len = full_read(rfd, buf, GLUE_BUFFER_SIZE);
 	if (len < GLUE_BUFFER_SIZE) {
 	    if (errno) {
-		xfer_cancel_with_error(elt,
-		    _("Error reading from fd %d: %s"), rfd, strerror(errno));
-		wait_until_xfer_cancelled(elt->xfer);
+		if (!elt->cancelled) {
+		    xfer_cancel_with_error(elt,
+			_("Error reading from fd %d: %s"), rfd, strerror(errno));
+		    wait_until_xfer_cancelled(elt->xfer);
+		}
 		break;
 	    } else if (len == 0) { /* we only count a zero-length read as EOF */
 		break;
@@ -245,9 +251,11 @@ read_and_write(XferElementGlue *self)
 
 	/* write the buffer fully */
 	if (full_write(wfd, buf, len) < len) {
-	    xfer_cancel_with_error(elt,
-		_("Could not write to fd %d: %s"), wfd, strerror(errno));
-	    wait_until_xfer_cancelled(elt->xfer);
+	    if (!elt->cancelled) {
+		xfer_cancel_with_error(elt,
+		    _("Could not write to fd %d: %s"), wfd, strerror(errno));
+		wait_until_xfer_cancelled(elt->xfer);
+	    }
 	    break;
 	}
     }
@@ -287,10 +295,12 @@ read_and_push(
 	len = full_read(fd, buf, GLUE_BUFFER_SIZE);
 	if (len < GLUE_BUFFER_SIZE) {
 	    if (errno) {
-		xfer_cancel_with_error(elt,
-		    _("Error reading from fd %d: %s"), fd, strerror(errno));
+		if (!elt->cancelled) {
+		    xfer_cancel_with_error(elt,
+			_("Error reading from fd %d: %s"), fd, strerror(errno));
+		    wait_until_xfer_cancelled(elt->xfer);
+		}
 		break;
-		wait_until_xfer_cancelled(elt->xfer);
 	    } else if (len == 0) { /* we only count a zero-length read as EOF */
 		amfree(buf);
 		break;
@@ -707,9 +717,11 @@ pull_buffer_impl(
 	    len = full_read(fd, buf, GLUE_BUFFER_SIZE);
 	    if (len < GLUE_BUFFER_SIZE) {
 		if (errno) {
-		    xfer_cancel_with_error(elt,
-			_("Error reading from fd %d: %s"), fd, strerror(errno));
-		    wait_until_xfer_cancelled(elt->xfer);
+		    if (!elt->cancelled) {
+			xfer_cancel_with_error(elt,
+			    _("Error reading from fd %d: %s"), fd, strerror(errno));
+			wait_until_xfer_cancelled(elt->xfer);
+		    }
 
 		    /* return an EOF */
 		    amfree(buf);
@@ -813,10 +825,12 @@ push_buffer_impl(
 	    /* write the full buffer to the fd, or close on EOF */
 	    if (buf) {
 		if (full_write(fd, buf, len) < len) {
-		    xfer_cancel_with_error(elt,
-			_("Error writing to fd %d: %s"), fd, strerror(errno));
-		    wait_until_xfer_cancelled(elt->xfer);
-		    /* nothing special to do to handle the cancellation */
+		    if (!elt->cancelled) {
+			xfer_cancel_with_error(elt,
+			    _("Error writing to fd %d: %s"), fd, strerror(errno));
+			wait_until_xfer_cancelled(elt->xfer);
+		    }
+		    /* nothing special to do to handle a cancellation */
 		}
 		amfree(buf);
 	    } else {
