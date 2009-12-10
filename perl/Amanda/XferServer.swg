@@ -55,6 +55,11 @@ XferElement *xfer_dest_taper_splitter(
     gboolean use_mem_cache,
     const char *disk_cache_dirname);
 
+%newobject xfer_dest_taper_directtcp;
+XferElement *xfer_dest_taper_directtcp(
+    Device *first_device,
+    guint64 part_size);
+
 void xfer_dest_taper_start_part(
     XferElement *self,
     gboolean retry_part,
@@ -108,6 +113,12 @@ DECLARE_METHOD(get_part_bytes_written, Amanda::XferServer::xfer_dest_taper_get_p
 PACKAGE(Amanda::Xfer::Dest::Taper::Splitter)
 XFER_ELEMENT_SUBCLASS_OF(Amanda::Xfer::Dest::Taper)
 DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_dest_taper_splitter)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Dest::Taper::DirectTCP)
+XFER_ELEMENT_SUBCLASS_OF(Amanda::Xfer::Dest::Taper)
+DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_dest_taper_directtcp)
 
 /* ---- */
 

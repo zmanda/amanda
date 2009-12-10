@@ -259,39 +259,26 @@ nonzero, then the element will validate that it receives the data that
 C<Amanda::Xfer::Source::Random> produced with the same seed.  No
 validation is performed if C<$seed> is zero.
 
-=head3 Amanda::Xfer::Dest::Taper::Splitter (SERVER ONLY)
+=head3 Amanda::Xfer::Dest::Taper (SERVER ONLY)
 
-  Amanda::Xfer::Dest::Taper::Splitter->new($first_device, $max_memory,
-                        $part_size, $use_mem_cache, $disk_cache_dirname);
+This is the parent class to C<Amanda::Xfer::Dest::Taper::Splitter> and
+C<Amanda::Xfer::Dest::Taper::DirectTCP>. These subclasses allow a single
+transfer to write to multiple files (parts) on a device, and even spread those
+parts over multiple devices, without interrupting the transfer itself.
 
-This is C<Amanda::Xfer::Dest::Device>'s big cousin.  This class allows a
-single transfer to write to multiple files (parts) on a device, and
-even spread those parts over multiple devices, without interrupting
-the transfer itself.  It caches data from each part in one of a
-variety of ways, and supports "rewinding" to retry a failed part
-(e.g., one that does not fit on a device).
+The subclass constructors all take a C<$first_device>, which should be
+configured but not yet started; and a C<$part_size> giving the maximum size of
+each part.  Note that this value may be rounded up internally as necessary.
 
-The C<$first_device> is used to calculate some internal constants, notably the
-slab size, based on the device characteristics.  The device should be
-configured, but need not be started yet.  The desired part size is
-C<$part_size>, although this value will be rounded up internally as necessary.
-If C<$use_mem_cache> is true, each part will be cached in memory (using
-C<$part_size> bytes of memory; plan accordingly!).  If C<$disk_cache_dirname>
-is defined, then each part will be cached on-disk in a file in this directory.
-It is an error to specify both in-memory and on-disk caching.  If neither
-option is specified, the element will operate successfully, but will not be
-able to retry a part unless C<cache_inform> has been used properly (see below).
-
-When a transfer using this element is first started, nothing happens
-until the element's C<start_part> method is called:
+When a transfer using a taper destination element is first started, no data is
+transfered until the element's C<start_part> method is called:
 
   $dest->start_part($retry_part, $device);
 
-where C<$device> is the device to which the part should be written,
-with a file open and ready to write (that is, C<<
-$device->start_file(..) >> has already been called).  If
-C<$retry_part> is true, then the previous, unsuccessful part will be
-retried.
+where C<$device> is the device to which the part should be written.  The device
+should have a file open and ready to write (that is, 
+C<< $device->start_file(..) >> has already been called).  If C<$retry_part> is
+true, then the previous, unsuccessful part will be retried.
 
 As each part is completed, the element sends an C<$XMSG_PART_DONE>
 C<Amanda::Xfer::Msg>, with the following keys:
@@ -333,6 +320,42 @@ method I<before> it is sent through the transfer.
 
 This function returns the number of bytes written for the current part
 to the device.
+
+=head3 Amanda::Xfer::Dest::Taper::Splitter
+
+  Amanda::Xfer::Dest::Taper::Splitter->new($first_device, $max_memory,
+                        $part_size, $use_mem_cache, $disk_cache_dirname);
+
+This class caches data from each part in one of a variety of ways, and supports
+"rewinding" to retry a failed part (e.g., one that does not fit on a device).
+It assumes that when a device reaches EOM while writing, the entire file is
+corrupt.  It does not (yet) support logical EOM, which can render this
+assumption incorrect.
+
+The C<$first_device> is used to calculate some internal constants, notably the
+slab size, based on the device characteristics.   Subsequent devices must have
+the same block size.  The C<$part_size> and C<$first_device> parameters are
+described above.
+
+If C<$use_mem_cache> is true, each part will be cached in memory (using
+C<$part_size> bytes of memory; plan accordingly!).  If C<$disk_cache_dirname>
+is defined, then each part will be cached on-disk in a file in this directory.
+It is an error to specify both in-memory and on-disk caching.  If neither
+option is specified, the element will operate successfully, but will not be
+able to retry a part unless C<cache_inform> has been used properly (see above).
+
+=head3 Amanda::Xfer::Dest::Taper::DirectTCP
+
+  Amanda::Xfer::Dest::Taper::DirectTCP->new($first_device, $part_size);
+
+This class uses the Device API DirectTCP methods to write data to a device via
+DirectTCP.  Since all DirectTCP devices support logical EOM, this class does
+not cache any data, and will never re-start an unsuccessful part.
+
+As state above, C<$first_device> must not be started when C<new> is called.
+Furthermore, no use of that device is allowed until the element sens an
+C<$XMSG_READY> to indicate that it is finished with the device.  The
+C<start_part> method must not be called until this method is received either.
 
 =head1 Amanda::Xfer::Msg objects
 

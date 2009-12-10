@@ -84,6 +84,7 @@ amglue_add_constant(XMSG_ERROR, xmsg_type);
 amglue_add_constant(XMSG_DONE, xmsg_type);
 amglue_add_constant(XMSG_CANCEL, xmsg_type);
 amglue_add_constant(XMSG_PART_DONE, xmsg_type);
+amglue_add_constant(XMSG_READY, xmsg_type);
 amglue_copy_to_tag(xmsg_type, constants);
 
 /*

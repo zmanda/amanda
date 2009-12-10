@@ -40,6 +40,7 @@ libamdevice_la_SOURCES = \
 	xfer-dest-device.c \
 	xfer-dest-taper.c \
 	xfer-dest-taper-splitter.c \
+	xfer-dest-taper-directtcp.c \
 	xfer-source-taper.c
 libamdevice_la_LIBADD = \
 	../common-src/libamanda.la \

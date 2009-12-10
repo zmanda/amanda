@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 17;
+use Test::More tests => 19;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -24,6 +24,7 @@ use warnings;
 
 use lib "@amperldir@";
 use Installcheck::Run;
+use Installcheck::Mock;
 use Amanda::Xfer qw( :constants );
 use Amanda::Device qw( :constants );
 use Amanda::Header;
@@ -201,7 +202,6 @@ sub test_taper_dest {
     Amanda::MainLoop::call_later(sub { $start_new_part->(1, 0, -1); });
     Amanda::MainLoop::run();
 
-    use Data::Dumper;
     is_deeply([@messages],
 	$expected_messages,
 	"$msg_prefix: element produces the correct series of messages")
@@ -619,3 +619,98 @@ is_deeply([ test_taper_dest_cache_inform(omit_chunks => 1) ],
     "cache_inform: element produces the correct series of messages when a chunk is missing");
 
 rmtree($holding_base);
+
+# test Amanda::Xfer::Dest::Taper::DirectTCP; do it twice, once with a cancellation
+
+for my $do_cancel (0, 1) {
+    my $ndmp_port = Installcheck::get_unused_port();
+    my $tapefile = Installcheck::Mock::run_ndmjob($ndmp_port);
+    my $dev;
+    my $xfer;
+    my @messages;
+
+    sub mkdevice {
+	my $dev = Amanda::Device->new("ndmp:127.0.0.1:$ndmp_port\@$tapefile");
+	die "can't create device" unless $dev->status() == $DEVICE_STATUS_SUCCESS;
+	$dev->property_set("verbose", 1) or die "can't set VERBOSE";
+	$dev->property_set("ndmp_username", "ndmp") or die "can't set username";
+	$dev->property_set("ndmp_password", "ndmp") or die "can't set password";
+
+	return $dev;
+    }
+
+    my $hdr = Amanda::Header->new();
+    $hdr->{'type'} = $Amanda::Header::F_DUMPFILE;
+    $hdr->{'name'} = "installcheck";
+    $hdr->{'disk'} = "/";
+    $hdr->{'datestamp'} = "20080102030405";
+
+    # make a starting device
+    $dev = mkdevice();
+    $dev->start($ACCESS_WRITE, "TESTCONF01", "20080102030405");
+
+    # and create the xfer
+    my $src = Amanda::Xfer::Source::Random->new(32768*34-7, $RANDOM_SEED);
+    my $dest = Amanda::Xfer::Dest::Taper::DirectTCP->new($dev, 32768*16);
+    $xfer = Amanda::Xfer->new([ $src, $dest ]);
+
+    my $start_new_part; # forward declaration
+    my $xmsg_cb = sub {
+	my ($src, $msg, $xfer) = @_;
+
+	if ($msg->{'type'} == $XMSG_ERROR) {
+	    die $msg->{'elt'} . " failed: " . $msg->{'message'};
+	} elsif ($msg->{'type'} == $XMSG_READY) {
+	    push @messages, "READY";
+
+	    # get ourselves a new (albeit identical) device, just to prove that the connections
+	    # are a little bit portable
+	    $dev->finish();
+	    $dev = mkdevice();
+	    $dev->start($ACCESS_WRITE, "TESTCONF02", "20080102030406");
+
+	    $start_new_part->(1, 0); # start first part
+	} elsif ($msg->{'type'} == $XMSG_PART_DONE) {
+	    push @messages, "PART-" . $msg->{'partnum'} . '-' . ($msg->{'successful'}? "OK" : "FAILED");
+	    if ($do_cancel and $msg->{'partnum'} == 2) {
+		$xfer->cancel();
+	    } else {
+		$start_new_part->($msg->{'successful'}, $msg->{'eof'});
+	    }
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
+	    push @messages, "DONE";
+	    Amanda::MainLoop::quit();
+	} elsif ($msg->{'type'} == $XMSG_CANCEL) {
+	    push @messages, "CANCELLED";
+	} else {
+	    push @messages, "$msg";
+	}
+    };
+    $xfer->start($xmsg_cb);
+
+    $start_new_part = sub {
+	my ($successful, $eof) = @_;
+
+	die "this dest shouldn't have unsuccessful parts" unless $successful;
+
+	if (!$eof) {
+	    $dest->start_part(0, $dev, $hdr);
+	}
+    };
+
+    Amanda::MainLoop::run();
+
+    $dev->finish();
+
+    if ($do_cancel) {
+	is_deeply([@messages],
+	    [ 'READY', 'PART-1-OK', 'PART-2-OK', 'CANCELLED', 'DONE' ],
+	    "Amanda::Xfer::Dest::Taper::DirectTCP element produces the correct series of messages when cancelled")
+	or diag(Dumper([@messages]));
+    } else {
+	is_deeply([@messages],
+	    [ 'READY', 'PART-1-OK', 'PART-2-OK', 'PART-3-OK', 'DONE' ],
+	    "Amanda::Xfer::Dest::Taper::DirectTCP element produces the correct series of messages")
+	or diag(Dumper([@messages]));
+    }
+}

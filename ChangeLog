@@ -1,4 +1,12 @@
 2009-12-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-device.h device-src/xfer-dest-taper-directtcp.c
+	  device-src/Makefile.am: new class
+	* perl/Amanda/Xfer.pod perl/Amanda/XferServer.swg: SWIG and document
+	* installcheck/Amanda_Xfer_serveronly.pl: tests
+	* perl/amglue/directtcp.swg: return undef for null addrs array
+	* xfer-src/xmsg.h xfer-src/xmsg.c perl/Amanda/Xfer.swg : add XMSG_READY
+
+2009-12-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/ndmp-device.c: finish reading, writing, and directtcp implementation
 	* ndmp-src/ndmpconnobj.h ndmp-src/ndmpconnobj.c: add methods and args
 	* installcheck/Amanda_Device_ndmp.pl: new tests

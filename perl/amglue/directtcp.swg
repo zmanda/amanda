@@ -23,25 +23,30 @@
  */
 
 %typemap(out) DirectTCPAddr * {
-    /* (we assume this is an *array* of addresses) */
+    /* we assume this is an *array* of addresses, and return an arrayref or, if
+     * the result is NULL, undef. */
     DirectTCPAddr *iter = $1;
-    AV *av = newAV();
-    int i = 0;
+    AV *av;
+    int i;
 
-    while (iter && iter->ipv4) {
-	struct in_addr in = { htonl(iter->ipv4) };
-	char *addr = inet_ntoa(in);
-	AV *tuple = newAV();
+    if (iter) {
+	i = 0;
+	av = newAV();
+	while (iter->ipv4) {
+	    struct in_addr in = { htonl(iter->ipv4) };
+	    char *addr = inet_ntoa(in);
+	    AV *tuple = newAV();
 
-	g_assert(NULL != av_store(tuple, 0,
-		newSVpv(addr, 0)));
-	g_assert(NULL != av_store(tuple, 1, newSViv(iter->port)));
-	g_assert(NULL != av_store(av, i++, newRV_noinc((SV *)tuple)));
-	iter++;
+	    g_assert(NULL != av_store(tuple, 0,
+		    newSVpv(addr, 0)));
+	    g_assert(NULL != av_store(tuple, 1, newSViv(iter->port)));
+	    g_assert(NULL != av_store(av, i++, newRV_noinc((SV *)tuple)));
+	    iter++;
+	}
+
+	$result = newRV_noinc((SV *)av);
+	argvi++;
     }
-
-    $result = newRV_noinc((SV *)av);
-    argvi++;
 }
 
 %typemap(in,numinputs=0) DirectTCPAddr **addrs

@@ -75,6 +75,7 @@ xmsg_repr(
 	    case XMSG_DONE: typ = "DONE"; break;
 	    case XMSG_CANCEL: typ = "CANCEL"; break;
 	    case XMSG_PART_DONE: typ = "PART_DONE"; break;
+	    case XMSG_READY: typ = "READY"; break;
 	    default: typ = "**UNKNOWN**"; break;
 	}
 

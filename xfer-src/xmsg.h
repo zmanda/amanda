@@ -97,6 +97,14 @@ typedef enum {
      */
     XMSG_PART_DONE = 5,
 
+    /* XMSG_READY: some elements do some additional, potentially long-term
+     * startup operations after the xfer itself starts.  This message is used
+     * to indicate that the startup was successful.
+     *
+     * Attributes:
+     *  (none)
+     */
+    XMSG_READY = 6,
 } xmsg_type;
 
 /*

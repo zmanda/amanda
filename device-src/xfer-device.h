@@ -141,6 +141,19 @@ xfer_dest_taper_splitter(
     gboolean use_mem_cache,
     const char *disk_cache_dirname);
 
+/* Constructor for XferDestTaperDirectTCP, which uses DirectTCP to transfer data
+ * to devices (which must support the feature).
+ *
+ * @param first_device: the first device that will be used with this xfer, used
+ *                      to calculate some internal parameters
+ * @param part_size: the desired size of each part
+ * @return: new element
+ */
+XferElement *
+xfer_dest_taper_directtcp(
+    Device *first_device,
+    guint64 part_size);
+
 /*
  * XferSourceTaper
  */
