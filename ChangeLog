@@ -1,4 +1,9 @@
 2009-12-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/ndmp-device.c: finish reading, writing, and directtcp implementation
+	* ndmp-src/ndmpconnobj.h ndmp-src/ndmpconnobj.c: add methods and args
+	* installcheck/Amanda_Device_ndmp.pl: new tests
+
+2009-12-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/element-glue.c: element-glue shouldn't complain when the
 	  xfer's already been cancelled
 

@@ -277,13 +277,28 @@ ndmp_connection_tape_read(
 gboolean
 ndmp_connection_tape_get_state(
 	NDMPConnection *self,
+	guint64 *blocksize,
 	guint64 *file_num,
 	guint64 *blockno)
 {
     NDMP_TRANS_NO_REQUEST(self, ndmp4_tape_get_state)
 	NDMP_CALL(self);
-	*file_num = reply->file_num;
-	*blockno = reply->blockno;
+
+	if (reply->unsupported & NDMP4_TAPE_STATE_BLOCK_SIZE_UNS)
+	    *blocksize = 0;
+	else
+	    *blocksize = reply->block_size;
+
+	if (reply->unsupported & NDMP4_TAPE_STATE_FILE_NUM_UNS)
+	    *file_num = G_MAXUINT64;
+	else
+	    *file_num = reply->file_num;
+
+	if (reply->unsupported & NDMP4_TAPE_STATE_BLOCKNO_UNS)
+	    *blockno = G_MAXUINT64;
+	else
+	    *blockno = reply->blockno;
+
 	NDMP_FREE();
     NDMP_END
     return TRUE;
@@ -310,6 +325,21 @@ ndmp_connection_mover_set_window(
 	guint64 length)
 {
     NDMP_TRANS(self, ndmp4_mover_set_window)
+	request->offset = offset;
+	request->length = length;
+	NDMP_CALL(self);
+	NDMP_FREE();
+    NDMP_END
+    return TRUE;
+}
+
+gboolean
+ndmp_connection_mover_read(
+	NDMPConnection *self,
+	guint64 offset,
+	guint64 length)
+{
+    NDMP_TRANS(self, ndmp4_mover_read)
 	request->offset = offset;
 	request->length = length;
 	NDMP_CALL(self);

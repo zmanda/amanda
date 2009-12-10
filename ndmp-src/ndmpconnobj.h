@@ -128,8 +128,9 @@ gboolean ndmp_connection_tape_read(
 
 gboolean ndmp_connection_tape_get_state(
 	NDMPConnection *self,
-	guint64 *file_num,
-	guint64 *blockno);
+	guint64 *blocksize, /* 0 if not supported */
+	guint64 *file_num, /* all 1's if not supported */
+	guint64 *blockno); /* all 1's if not supported */
 	/* (other state variables should be added as needed) */
 
 gboolean ndmp_connection_mover_set_record_size(
@@ -137,6 +138,11 @@ gboolean ndmp_connection_mover_set_record_size(
 	guint32 record_size);
 
 gboolean ndmp_connection_mover_set_window(
+	NDMPConnection *self,
+	guint64 offset,
+	guint64 length);
+
+gboolean ndmp_connection_mover_read(
 	NDMPConnection *self,
 	guint64 offset,
 	guint64 length);
