@@ -517,7 +517,7 @@ ndmp_connection_wait_for_notify(
 	*mover_pause_seek_position = 0;
 
     while (1) {
-	gboolean found;
+	gboolean found = FALSE;
 
 	/* if any desired notifications have been received, then we're
 	 * done */

@@ -1,4 +1,7 @@
 2009-12-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndmpconnobj.c: fix uninitialized variable
+
+2009-12-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/xfer-device.h device-src/xfer-dest-taper-directtcp.c
 	  device-src/Makefile.am: new class
 	* perl/Amanda/Xfer.pod perl/Amanda/XferServer.swg: SWIG and document
