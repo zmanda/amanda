@@ -1,3 +1,10 @@
+2009-12-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/chunker.c server-src/diskfile.c server-src/diskfile.h
+	  server-src/driver.c server-src/driverio.c server-src/dumper.c
+	  server-src/taper.pl: Change protocol between chunker/taper and dumper:
+	  "PORT header_port  data_host:data_port", and dumper sends the header
+	  completely before sending the data
+
 2009-12-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndmpconnobj.c: fix uninitialized variable
 

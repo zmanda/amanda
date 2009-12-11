@@ -1051,6 +1051,7 @@ start_some_dumps(
 	    diskp->inprogress = 1;
 	    sched(diskp)->dumper = dumper;
 	    sched(diskp)->timestamp = now;
+	    amfree(diskp->dataport_list);
 
 	    dumper->busy = 1;		/* dumper is now busy */
 	    dumper->dp = diskp;		/* link disk to dumper */
@@ -1101,6 +1102,8 @@ start_some_dumps(
 		chunker->ev_read = event_register((event_id_t)chunker->fd, EV_READFD,
 						   handle_chunker_result, chunker);
 		dumper->output_port = atoi(result_argv[1]);
+		amfree(diskp->dataport_list);
+		diskp->dataport_list = stralloc(result_argv[2]);
 
 		if (diskp->host->pre_script == 0) {
 		    for (dp=diskp->host->disks; dp != NULL; dp = dp->hostnext) {
@@ -3161,7 +3164,7 @@ dump_to_tape(
 
     taper_cmd(PORT_WRITE, dp, NULL, sched(dp)->level, sched(dp)->datestamp);
     cmd = getresult(taper, 1, &result_argc, &result_argv);
-    if (dp->data_path == DATA_PATH_AMANDA && cmd != PORT) {
+    if (cmd != PORT) {
 	g_printf(_("driver: did not get PORT from taper for %s:%s\n"),
 		dp->host->hostname, qname);
 	fflush(stdout);
@@ -3170,25 +3173,12 @@ dump_to_tape(
         amfree(qname);
 	return;	/* fatal problem */
     }
-    if (dp->data_path == DATA_PATH_DIRECTTCP && cmd != DIRECTTCP_PORT) {
-	g_printf(_("driver: did not get DIRECTTCP_PORT from taper for %s:%s\n"),
-		dp->host->hostname, qname);
-	fflush(stdout);
-	log_add(L_WARNING, _("driver: did not get DIRECTTCP_PORT from taper for %s:%s.\n"),
-	        dp->host->hostname, qname);
-        amfree(qname);
-	return;	/* fatal problem */
-    }
     amfree(qname);
 
     /* copy port number */
     dumper->output_port = atoi(result_argv[1]);
-    if (dp->data_path == DATA_PATH_DIRECTTCP) {
-	dp->directtcp_list = g_slist_append(dp->directtcp_list,
-					    stralloc(result_argv[2]));
-    } else {
-	dp->directtcp_list = NULL;
-    }
+    amfree(dp->dataport_list);
+    dp->dataport_list = stralloc(result_argv[2]);
 
     dumper->dp = dp;
     dumper->chunker = NULL;
@@ -3209,8 +3199,7 @@ dump_to_tape(
     /* tell the dumper to dump to a port */
     dumper_cmd(dumper, PORT_DUMP, dp, NULL);
     dp->host->start_t = time(NULL) + 15;
-    g_slist_free_full(dp->directtcp_list);
-    dp->directtcp_list = NULL;
+    amfree(dp->dataport_list);
 
     /* update statistics & print state */
 
