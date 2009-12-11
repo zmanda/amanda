@@ -190,6 +190,7 @@ sub _load_by_slot {
 		$slot = $self->_get_current();
 	    }
 	    $slot = $self->_get_next($slot);
+	    $self->_set_current($slot) if ($params{'set_current'});
 	} else {
 	    return $self->make_error("failed", $params{'res_cb'},
 		reason => "invalid",

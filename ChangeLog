@@ -1,4 +1,7 @@
 2009-12-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/disk.pm: 'next' always set current_slot.
+
+2009-12-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/multi.pm: New changer.
 	* perl/Makefile.am: Build Amanda::Changer::multi
 	* man/xml-source/amanda-changers.7.xml: Document Amanda::Changer::multi
