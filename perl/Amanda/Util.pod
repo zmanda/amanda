@@ -179,6 +179,10 @@ On failure, it returns nothing, and C<$!> should be set.  If C<$!> is 0, then
 this is a system which cannot measure usage without a C<disk> argument, which
 this wrapper does not support.
 
+=item is_pid_alive(pid)
+
+Return 1 is the process with that pid is still alive.
+
 =back
 
 =head1 String Utilities

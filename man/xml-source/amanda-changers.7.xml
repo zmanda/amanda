@@ -176,7 +176,36 @@ LASTSLOT=number    # The number of slots, default to tapecycle setting.
 
 </refsect2>
 
-<refsect2><title>chg-multi</title>
+<refsect2><title>chg-multi:DEVICE-LIST</title>
+<programlisting>
+tpchanger "chg-multi:{/dev/nst0,/dev/nst1,/dev/nst2}"
+changerfile "chg-multi-state"
+</programlisting>
+
+<para>This script simply round-robins a number of distinct device names, as
+specified in the <emphasis>tpchanger</emphasis> setting.  It is useful when
+all volumes for a configuration have different device names -- for example,
+if you have many standalone drive.  The <emphasis>changerfile</emphasis> must exist; it is used to save the state file.
+</para>
+
+<para>This changer is not fast-search capable.</para>
+
+<refsect3><title>Properties</title>
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+
+<variablelist>
+<!-- ==== -->
+<varlistentry><term>FIRST-SLOT</term><listitem>
+This property gives the number of the first slot. The default value is "1".
+</listitem></varlistentry>
+<!-- ==== -->
+</variablelist>
+
+</refsect3>
+
+</refsect2>
+
+<refsect2><title>chg-multi (old)</title>
 <programlisting>
 tpchanger "chg-multi"
 changerfile "chg-multi-state"

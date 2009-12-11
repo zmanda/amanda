@@ -1,4 +1,13 @@
 2009-12-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/multi.pm: New changer.
+	* perl/Makefile.am: Build Amanda::Changer::multi
+	* man/xml-source/amanda-changers.7.xml: Document Amanda::Changer::multi
+	* installcheck/Amanda_Changer_multi.pl: installcheck for multi.
+	* installcheck/Makefile.am: build and test Amanda_Changer_multi.
+	* perl/Amanda/Util.swg: Add is_pid_alive.
+	* perl/Amanda/Util.pod: Document is_pid_alive.
+
+2009-12-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Use wrong indice.
 	* server-src/driver.c: run POST_HOST_BACKUP scripts for all hosts.
 

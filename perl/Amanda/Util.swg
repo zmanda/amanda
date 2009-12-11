@@ -44,6 +44,7 @@ use Carp;
 use POSIX qw( :fcntl_h :errno_h );
 use POSIX qw( strftime );
 use Amanda::Constants;
+use Amanda::Process;
 
 # private package variables
 my $_pname;
@@ -382,6 +383,22 @@ typedef struct file_lock {
 	%typemap(out) (SV *);
     }
 } file_lock;
+
+%perlcode %{
+
+sub is_pid_alive {
+    my ($pid) = shift;
+
+    return 1 if $pid == $$;
+
+    my $Amanda_process = Amanda::Process->new(0);
+
+    $Amanda_process->load_ps_table();
+    my $alive = $Amanda_process->process_alive($pid);
+    return $alive;
+
+}
+%}
 
 /* -------------------------------------------------------------------------
  * Functions below this line are only meant to be called within this module;
