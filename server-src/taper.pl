@@ -32,7 +32,7 @@ use constant START_TAPER => message("START-TAPER",
 
 use constant PORT_WRITE => message("PORT-WRITE",
     format => [ qw( handle hostname diskname level datestamp splitsize
-		    split_diskbuffer fallback_splitsize data_path ) ],
+		    split_diskbuffer fallback_splitsize ) ],
 );
 
 use constant FILE_WRITE => message("FILE-WRITE",
@@ -91,7 +91,7 @@ use constant REQUEST_NEW_TAPE => message("REQUEST-NEW-TAPE",
 );
 
 use constant PORT => message("PORT",
-    format => [ qw( port hostport ) ],
+    format => [ qw( port ipports ) ],
 );
 
 use constant BAD_COMMAND => message("BAD-COMMAND",
@@ -116,7 +116,7 @@ use Amanda::MainLoop;
 use Amanda::Taper::Scan;
 use Amanda::Taper::Scribe;
 use Amanda::Logfile qw( :logtype_t log_add );
-use Amanda::Xfer;
+use Amanda::Xfer qw( :constants );
 use Amanda::Util qw( quote_string );
 use Amanda::Tapelist;
 use File::Temp;
@@ -132,18 +132,30 @@ sub new {
 	# filled in at start
 	proto => undef,
 	scribe => undef,
-	listen_socket => undef,
-	listen_socket_src => undef,
+	header_socket => undef,
+	header_socket_src => undef,
+	header_socket_connect_cb => undef,
 	tape_num => 0,
 
 	# filled in when a write starts:
+        xfer => undef,
+	xfer_source => undef,
 	handle => undef,
+        hostname => undef,
+        diskname => undef,
+        datestamp => undef,
+        level => undef,
 	header => undef,
-	nparts => -1,
 	last_partnum => -1,
 	doing_port_write => undef,
-	incoming_socket_cb => undef,
-	incoming_socket => undef,
+
+	# periodic status updates
+	timer => undef,
+	status_filename => undef,
+	status_fh => undef,
+
+        # filled in after the header is available
+	header => undef,
 
 	# filled in when a new tape is started:
 	label => undef,
@@ -163,6 +175,10 @@ sub new {
 #   warming up devices; TAPER-OK not sent yet
 # idle:
 #   not currently dumping anything
+# making_xfer:
+#   setting up a transfer for a new dump
+# getting_header:
+#   getting the header before beginning a new dump
 # writing:
 #   in the middle of writing a file (self->{'handle'} set)
 # error:
@@ -217,7 +233,7 @@ sub start {
 	debug => $Amanda::Config::debug_taper);
 
     # set up a listening socket on an arbitrary port
-    my $sock = $self->{'listen_socket'} = IO::Socket::INET->new(
+    my $sock = $self->{'header_socket'} = IO::Socket::INET->new(
 	LocalHost => "127.0.0.1",
 	Proto => "tcp",
 	Listen => 1,
@@ -226,12 +242,43 @@ sub start {
     );
     $sock->listen(5);
 
-    # and call listen_socket_cb when a new connection comes in
-    $self->{'listen_socket_src'} =
+    # arrange to call header_socket_connect_cb when a new connection comes in
+    $self->{'header_socket_src'} =
 	Amanda::MainLoop::fd_source($sock->fileno(), $G_IO_IN);
-    $self->{'listen_socket_src'}->set_callback(sub {
-	$self->listen_socket_cb(@_);
+    $self->{'header_socket_src'}->set_callback(sub {
+	my ($src) = @_;
+	# this is called when a new connection comes in on the header_socket, and calls
+	# through to $self->{'header_socket_connect_cb'}, or rejects the connection if
+	# there is no such callback running
+
+	my $child_sock = $self->{'header_socket'}->accept();
+
+	if ($self->{'header_socket_connect_cb'}) {
+	    my $cb = $self->{'header_socket_connect_cb'};
+	    # reset the callback first to avoid double-calling it
+	    $self->{'header_socket_connect_cb'} = undef;
+	    return $cb->($child_sock);
+	} else {
+	    # reject connections when we haven't sent a PORT request
+	    $child_sock->close();
+	}
     });
+}
+
+# called when the scribe is fully started up and ready to go
+sub _scribe_started_cb {
+    my $self = shift;
+    my ($err) = @_;
+
+    if ($err) {
+	$self->{'proto'}->send(main::Protocol::TAPE_ERROR,
+		handle => '99-9999', # fake handle
+		message => "$err");
+	$self->{'state'} = "error";
+    } else {
+	$self->{'proto'}->send(main::Protocol::TAPER_OK);
+	$self->{'state'} = "idle";
+    }
 }
 
 sub quit {
@@ -241,8 +288,8 @@ sub quit {
     my @errors = @_;
 
     $subs{'stop_socket'} = make_cb(stop_socket => sub {
-	$self->{'listen_socket_src'}->remove();
-	$self->{'listen_socket'}->close();
+	$self->{'header_socket_src'}->remove();
+	$self->{'header_socket'}->close();
 
 	$subs{'quit_scribe'}->();
     });
@@ -278,26 +325,6 @@ sub quit {
 
 ##
 # Scribe feedback
-
-sub notif_scan_finished {
-    my $self = shift;
-    my %params = @_;
-
-    # the driver doesn't care about our having finished a scan except
-    # when starting up
-    if ($self->{'state'} eq "starting") {
-	if ($params{'error'}) {
-	    $self->{'proto'}->send(main::Protocol::TAPE_ERROR,
-		    handle => '99-9999', # fake handle
-		    message => "$params{error}");
-	    $self->{'state'} = "error";
-	    # TODO: wait for message to be sent and then quit?
-	} else {
-	    $self->{'proto'}->send(main::Protocol::TAPER_OK);
-	    $self->{'state'} = "idle";
-	}
-    }
-}
 
 sub request_volume_permission {
     my $self = shift;
@@ -382,9 +409,9 @@ sub notif_part_done {
 	$params{'fileno'},
 	quote_string($self->{'header'}->{'name'}.""), # " is required for SWIG..
 	quote_string($self->{'header'}->{'disk'}.""),
-	$self->{'header'}->{'datestamp'},
-	$params{'partnum'}, $self->{'nparts'},
-	$self->{'header'}->{'dumplevel'},
+	$self->{'datestamp'},
+	$params{'partnum'}, -1, # totalparts is always -1
+	$self->{'level'},
 	$stats);
     if ($params{'successful'}) {
 	log_add($L_PART, $logbase);
@@ -420,7 +447,8 @@ sub msg_START_TAPER {
     $self->_assert_in_state("init") or return;
 
     $self->{'state'} = "starting";
-    $self->{'scribe'}->start(dump_timestamp => $params{'timestamp'});
+    $self->{'scribe'}->start(dump_timestamp => $params{'timestamp'},
+	finished_cb => sub { $self->_scribe_started_cb(@_); });
     $self->{'timestamp'} = $params{'timestamp'};
 }
 
@@ -430,16 +458,10 @@ sub msg_FILE_WRITE {
     my ($msgtype, %params) = @_;
 
     $self->_assert_in_state("idle") or return;
-    $self->{'state'} = 'writing';
-    $self->{'handle'} = $params{'handle'};
+
     $self->{'doing_port_write'} = 0;
 
-    my $xfer_src = Amanda::Xfer::Source::Holding->new($params{'filename'});
-    my $hdr = Amanda::Holding::get_header($params{'filename'});
-    if (!defined $hdr || $hdr->{'type'} != $Amanda::Header::F_DUMPFILE) {
-	die("Could not read header from '$params{filename}'");
-    }
-    $self->do_start_xfer($msgtype, $xfer_src, $hdr, %params);
+    $self->setup_dump($msgtype, %params);
 }
 
 sub msg_PORT_WRITE {
@@ -448,89 +470,10 @@ sub msg_PORT_WRITE {
     my $read_cb;
 
     $self->_assert_in_state("idle") or return;
-    $self->{'state'} = 'writing';
-    $self->{'handle'} = $params{'handle'};
-    $self->{'data_path'} = Amanda::Config::data_path_from_string($params{'data_path'});
+
     $self->{'doing_port_write'} = 1;
 
-    # set up so that an incoming connection on the listening socket
-    # gets sent here
-    $self->{'incoming_socket_cb'} = make_cb(incoming_socket_cb => sub {
-	my ($socket) = @_;
-	$self->{'incoming_socket_cb'} = undef;
-
-	$socket->blocking(0);
-	$self->{'incoming_socket'} = $socket;
-
-	# now read from that socket until we have a full block to parse into a header
-	my $src = Amanda::MainLoop::fd_source($socket->fileno(), $G_IO_IN|$G_IO_HUP);
-	$src->set_callback($read_cb);
-    });
-
-    # read the header from that new socket
-    my $hdr_buf = '';
-    $read_cb = sub {
-	my ($src) = @_;
-	my $data;
-
-	my $nbytes = Amanda::Holding::DISK_BLOCK_BYTES - length($hdr_buf);
-	my $bytes_read = $self->{'incoming_socket'}->sysread($data, $nbytes);
-	if (!defined $bytes_read) {
-	    if ($! != EAGAIN) {
-		# TODO: handle this better
-		die "Lost TCP connection from driver: $!";
-	    }
-	    return;
-	}
-
-	# keep going until we have a whole header
-	$hdr_buf .= $data;
-	return unless length($hdr_buf) == Amanda::Holding::DISK_BLOCK_BYTES;
-
-	# remove the fd source, as we're done reading from this socket
-	$src->remove();
-
-	# parse the header
-	my $hdr = Amanda::Header->from_string($hdr_buf);
-
-	if ($self->{'data_path'} == $Amanda::Config::DATA_PATH_AMANDA) {
-	    # create temporary file
-	    ($self->{status_fh}, $self->{status_filename}) =
-		File::Temp::tempfile("taper_status_file_XXXXXX",
-				     DIR => $Amanda::Paths::AMANDA_TMPDIR,
-				     UNLINK => 1);
-	    my $disk = $hdr->{disk};
-	    my $qdisk = Amanda::Util::quote_string($disk);
-	    print STDERR "taper: status file $hdr->{name} $qdisk:" . 
-			 "$self->{status_filename}\n";
-	    print {$self->{status_fh}} "0";
-
-	    # create timer callback
-	    $self->{timer} = Amanda::MainLoop::timeout_source(5);
-	    $self->{timer}->set_callback(sub {
-		my $size = $self->{scribe}->get_bytes_written();
-		seek $self->{status_fh}, 0, 0;
-		print {$self->{status_fh}} $size;
-		$self->{status_fh}->flush();
-	    });
-	}
-
-	# and start up the transfer
-	$self->{'incoming_socket'}->blocking(1);
-	my $xfer_src = Amanda::Xfer::Source::Fd->new($self->{'incoming_socket'}->fileno());
-	$self->do_start_xfer($msgtype, $xfer_src, $hdr, %params);
-    };
-
-    # tell the driver which port we're listening on
-    if ($self->{'data_path'} == $Amanda::Config::DATA_PATH_DIRECTTCP) {
-        $self->{'proto'}->send(main::Protocol::PORT,
-	    port => $self->{'listen_socket'}->sockport(),
-	    hostport => "localhost:33333");
-    } else {
-        $self->{'proto'}->send(main::Protocol::PORT,
-	    port => $self->{'listen_socket'}->sockport());
-	    hostport => "localhost:22222";
-    }
+    $self->setup_dump($msgtype, %params);
 }
 
 sub msg_QUIT {
@@ -565,23 +508,6 @@ sub _assert_in_state {
     }
 }
 
-# this is called when a new connection comes in on the listen_socket; it combines
-# that new connection with a pending PORT_WRITE request and gets things rolling.
-sub listen_socket_cb {
-    my $self = shift;
-    my ($src) = @_;
-
-    my $child_sock = $self->{'listen_socket'}->accept();
-    if ($self->{'incoming_socket_cb'}) {
-	my $cb = $self->{'incoming_socket_cb'};
-	$self->{'incoming_socket_cb'} = undef;
-	$cb->($child_sock);
-    } else {
-	# reject connections when we haven't sent a PORT request
-	$child_sock->close();
-    }
-}
-
 # Make up the [sec .. kb .. kps ..] section of the result messages
 sub make_stats {
     my $self = shift;
@@ -594,116 +520,290 @@ sub make_stats {
     return sprintf("[sec %f kb %d kps %f]", $duration, $kb, $kps);
 }
 
-# do the work of starting a new xfer; this contains the code common to
-# msg_PORT_WRITE and msg_FILE_WRITE.
-sub do_start_xfer {
+sub create_status_file {
     my $self = shift;
-    my ($msgtype, $xfer_source, $hdr, %params) = @_;
 
-    my %start_xfer_args;
+    # create temporary file
+    ($self->{status_fh}, $self->{status_filename}) =
+	File::Temp::tempfile("taper_status_file_XXXXXX",
+				DIR => $Amanda::Paths::AMANDA_TMPDIR,
+				UNLINK => 1);
 
-    $start_xfer_args{'dump_cb'} = sub { $self->dump_cb(@_); };
-    $start_xfer_args{'xfer_elements'} = [ $xfer_source ];
-    $start_xfer_args{'dump_header'} = $hdr;
-    if ($hdr->{'dumplevel'} != $params{'level'}
-	or $hdr->{'name'} ne $params{'hostname'}
-	or $hdr->{'disk'} ne $params{'diskname'}) {
-	die("Header of dumpfile does not match FILE_WRITE command");
-    }
+    # tell amstatus about it by writing it to the dump log
+    my $qdisk = Amanda::Util::quote_string($self->{'diskname'});
+    my $qhost = Amanda::Util::quote_string($self->{'hostname'});
+    print STDERR "taper: status file $qhost $qdisk:" .
+		    "$self->{status_filename}\n";
+    print {$self->{status_fh}} "0";
+
+    # create timer callback
+    $self->{timer} = Amanda::MainLoop::timeout_source(5);
+    $self->{timer}->set_callback(sub {
+	my $size = $self->{scribe}->get_bytes_written();
+	seek $self->{status_fh}, 0, 0;
+	print {$self->{status_fh}} $size;
+	$self->{status_fh}->flush();
+    });
+}
+
+# utility function for setup_dump, returning keyword args
+# for $scribe->get_xfer_dest
+sub get_splitting_config {
+    my $self = shift;
+    my ($msgtype, %params) = @_;
+    my %get_xfer_dest_args;
 
     my $max_memory;
     if (getconf_seen($CNF_DEVICE_OUTPUT_BUFFER_SIZE)) {
-	$max_memory = getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE);
+        $max_memory = getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE);
     } elsif (getconf_seen($CNF_TAPEBUFS)) {
-	$max_memory = getconf($CNF_TAPEBUFS) * 32768;
+        $max_memory = getconf($CNF_TAPEBUFS) * 32768;
     } else {
-	# use the default value
-	$max_memory = getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE);
+        # use the default value
+        $max_memory = getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE);
     }
-    $start_xfer_args{'max_memory'} = $max_memory;
+    $get_xfer_dest_args{'max_memory'} = $max_memory;
 
     # here, things look a little bit different depending on whether we're
     # reading from holding (FILE_WRITE) or from a network socket (PORT_WRITE)
     if ($msgtype eq main::Protocol::FILE_WRITE) {
-	if ($params{'splitsize'} ne 0) {
-	    $start_xfer_args{'split_method'} = 'cache_inform';
-	    $start_xfer_args{'part_size'} = $params{'splitsize'}+0;
-	} else {
-	    $start_xfer_args{'split_method'} = 'none';
-	}
+        if ($params{'splitsize'} ne 0) {
+            $get_xfer_dest_args{'split_method'} = 'cache_inform';
+            $get_xfer_dest_args{'part_size'} = $params{'splitsize'}+0;
+        } else {
+            $get_xfer_dest_args{'split_method'} = 'none';
+        }
     } else {
-	# if we have a disk buffer, use it
-	if ($params{'split_diskbuffer'} ne "NULL") {
-	    if ($params{'splitsize'} ne 0) {
-		$start_xfer_args{'split_method'} = 'disk';
-		$start_xfer_args{'disk_cache_dirname'} = $params{'split_diskbuffer'};
-		$start_xfer_args{'part_size'} = $params{'splitsize'}+0;
-	    } else {
-		$start_xfer_args{'split_method'} = 'none';
-	    }
-	} else {
-	    # otherwise, if splitsize is nonzero, use memory
-	    if ($params{'splitsize'} ne 0) {
-		my $size = $params{'fallback_splitsize'}+0;
-		$size = $params{'splitsize'}+0 unless ($size);
-		$start_xfer_args{'split_method'} = 'memory';
-		$start_xfer_args{'part_size'} = $size;
-	    } else {
-		$start_xfer_args{'split_method'} = 'none';
-	    }
-	}
+        # if we have a disk buffer, use it
+        if ($params{'split_diskbuffer'} ne "NULL") {
+            if ($params{'splitsize'} ne 0) {
+                $get_xfer_dest_args{'split_method'} = 'disk';
+                $get_xfer_dest_args{'disk_cache_dirname'} = $params{'split_diskbuffer'};
+                $get_xfer_dest_args{'part_size'} = $params{'splitsize'}+0;
+            } else {
+                $get_xfer_dest_args{'split_method'} = 'none';
+            }
+        } else {
+            # otherwise, if splitsize is nonzero, use memory
+            if ($params{'splitsize'} ne 0) {
+                my $size = $params{'fallback_splitsize'}+0;
+                $size = $params{'splitsize'}+0 unless ($size);
+                $get_xfer_dest_args{'split_method'} = 'memory';
+                $get_xfer_dest_args{'part_size'} = $size;
+            } else {
+                $get_xfer_dest_args{'split_method'} = 'none';
+            }
+        }
     }
 
     # implement the fallback to memory buffering if the disk buffer does
     # not exist or doesnt have enough space
     my $need_fallback = 0;
-    if ($start_xfer_args{'split_method'} eq 'disk') {
-	if (! -d $start_xfer_args{'disk_cache_dirname'}) {
-	    $need_fallback = "'$start_xfer_args{disk_cache_dirname}' not found or not a directory";
-	} else {
-	    my $fsusage = Amanda::Util::get_fs_usage($start_xfer_args{'disk_cache_dirname'});
-	    my $avail = $fsusage->{'blocks'} * $fsusage->{'bavail'};
-	    my $dir = $start_xfer_args{'disk_cache_dirname'};
-	    Amanda::Debug::debug("disk cache has $avail bytes available on $dir, but need $start_xfer_args{part_size}");
-	    if ($fsusage->{'blocks'} * $fsusage->{'bavail'} < $start_xfer_args{'part_size'}) {
-		$need_fallback = "insufficient space in disk cache directory";
-	    }
-	}
+    if ($get_xfer_dest_args{'split_method'} eq 'disk') {
+        if (! -d $get_xfer_dest_args{'disk_cache_dirname'}) {
+            $need_fallback = "'$get_xfer_dest_args{disk_cache_dirname}' not found or not a directory";
+        } else {
+            my $fsusage = Amanda::Util::get_fs_usage($get_xfer_dest_args{'disk_cache_dirname'});
+            my $avail = $fsusage->{'blocks'} * $fsusage->{'bavail'};
+            my $dir = $get_xfer_dest_args{'disk_cache_dirname'};
+            Amanda::Debug::debug("disk cache has $avail bytes available on $dir, but need $get_xfer_dest_args{part_size}");
+            if ($fsusage->{'blocks'} * $fsusage->{'bavail'} < $get_xfer_dest_args{'part_size'}) {
+                $need_fallback = "insufficient space in disk cache directory";
+            }
+        }
     }
 
     if ($need_fallback) {
-	Amanda::Debug::warning("falling back to memory buffer for splitting: $need_fallback");
-	my $size = $params{'fallback_splitsize'}+0;
-	$start_xfer_args{'split_method'} = 'memory';
-	$start_xfer_args{'part_size'} = $size if $size != 0;
-	delete $start_xfer_args{'disk_cache_dirname'};
+        Amanda::Debug::warning("falling back to memory buffer for splitting: $need_fallback");
+        my $size = $params{'fallback_splitsize'}+0;
+        $get_xfer_dest_args{'split_method'} = 'memory';
+        $get_xfer_dest_args{'part_size'} = $size if $size != 0;
+        delete $get_xfer_dest_args{'disk_cache_dirname'};
     }
 
-    # track some values for later reporting
-    if ($start_xfer_args{'split_method'} eq 'none') {
-	$self->{'nparts'} = 1;
-    } elsif ($msgtype eq main::Protocol::FILE_WRITE) {
-	my $total_size = Amanda::Holding::file_size($params{'filename'}, 1) * 1024;
-	$self->{'nparts'} = $total_size / $start_xfer_args{'part_size'} + 1;
-    } else {
-	$self->{'nparts'} = -1;
-    }
+    return %get_xfer_dest_args;
+}
+
+sub send_port_and_get_header {
+    my $self = shift;
+    my ($finished_cb) = @_;
+
+    my %subs;
+    my $connected_socket;
+    my $header_xfer;
+    my ($xsrc, $xdst);
+    my $errmsg;
+
+    $subs{'send_port'} = make_cb(send_port => sub {
+	# set up so that an incoming connection on the header socket gets sent here
+	die "header_socket_connect_cb should be undef"
+	    if defined $self->{'header_socket_connect_cb'};
+	$self->{'header_socket_connect_cb'} = $subs{'header_socket_connect_cb'};
+
+	# get the ip:port pairs for the data connection from the data xfer source,
+	# which should be an Amanda::Xfer::Source::DirectTCPListen
+	my $addrs = $self->{'xfer_source'}->get_addrs();
+	$addrs = join ";", map { $_->[0] . ':' . $_->[1] } @$addrs;
+
+	# and tell the driver which port we're listening on
+	$self->{'proto'}->send(main::Protocol::PORT,
+	    port => $self->{'header_socket'}->sockport(),
+	    ipports => $addrs);
+    });
+
+    $subs{'header_socket_connect_cb'} = make_cb(header_socket_connect_cb => sub {
+	($connected_socket) = @_; # keep the socket so Perl doesn't close it!
+
+	# now read a header block from that socket - note that this does not specify
+	# a maximum size, so this portion of Amanda at least can handle any size header
+	($xsrc, $xdst) = (
+	    Amanda::Xfer::Source::Fd->new($connected_socket->fileno()),
+	    Amanda::Xfer::Dest::Buffer->new(0));
+	$header_xfer = Amanda::Xfer->new([$xsrc, $xdst]);
+	$header_xfer->start($subs{'header_xfer_xmsg_cb'});
+    });
+
+    $subs{'header_xfer_xmsg_cb'} = make_cb(header_xfer_xmsg_cb => sub {
+	my ($src, $xmsg, $xfer) = @_;
+	if ($xmsg->{'type'} == $XMSG_INFO) {
+	    info($xmsg->{'message'});
+	} elsif ($xmsg->{'type'} == $XMSG_ERROR) {
+	    $errmsg = $xmsg->{'messsage'};
+	} elsif ($xmsg->{'type'} == $XMSG_DONE) {
+	    if ($errmsg) {
+		$finished_cb->($errmsg);
+	    } else {
+		$subs{'got_header'}->();
+	    }
+	}
+    });
+
+    $subs{'got_header'} = make_cb(got_header => sub {
+	my $hdr_buf = $xdst->get();
+
+	# close stuff up
+	$header_xfer = $xsrc = $xdst = undef;
+	$connected_socket->close();
+
+	# parse the header, finally!
+	$self->{'header'} = Amanda::Header->from_string($hdr_buf);
+
+	$finished_cb->(undef);
+    });
+
+    $subs{'send_port'}->();
+}
+
+# do the work of starting a new xfer; this contains the code common to
+# msg_PORT_WRITE and msg_FILE_WRITE.
+sub setup_dump {
+    my $self = shift;
+    my ($msgtype, %params) = @_;
+    my %subs;
+
+    $self->{'handle'} = $params{'handle'};
+    $self->{'hostname'} = $params{'hostname'};
+    $self->{'diskname'} = $params{'diskname'};
+    $self->{'datestamp'} = $params{'datestamp'};
+    $self->{'level'} = $params{'level'};
+    $self->{'header'} = undef; # no header yet
     $self->{'last_partnum'} = -1;
-    $self->{'header'} = $hdr;
-    $self->{'header'}->{'totalparts'} = $self->{'nparts'};
 
-    # fix the header type to indicate whether this dumpfile is split
-    $self->{'header'}->{'type'} = ($self->{'nparts'} == 1)?
-		$Amanda::Header::F_DUMPFILE : $Amanda::Header::F_SPLIT_DUMPFILE;
+    # setting up the dump is a bit complex, due to the requirements of
+    # a directtcp port_write.  This function:
+    # 1. creates and starts a transfer (make_xfer)
+    # 2. gets the header
+    # 3. calls the scribe's start_dump method with the new header
 
-    $self->{'scribe'}->start_xfer(%start_xfer_args);
+    $subs{'make_xfer'} = make_cb(make_xfer => sub {
+        $self->_assert_in_state("idle") or return;
+        $self->{'state'} = 'making_xfer';
+
+        my %get_xfer_dest_args = $self->get_splitting_config($msgtype, %params);
+        my $xfer_dest = $self->{'scribe'}->get_xfer_dest(%get_xfer_dest_args);
+
+	my $xfer_source;
+	if ($msgtype eq main::Protocol::PORT_WRITE) {
+	    $xfer_source = Amanda::Xfer::Source::DirectTCPListen->new();
+	} else {
+	    $xfer_source = Amanda::Xfer::Source::Holding->new($params{'filename'});
+	}
+	$self->{'xfer_source'} = $xfer_source;
+
+        $self->{'xfer'} = Amanda::Xfer->new([$xfer_source, $xfer_dest]);
+        $self->{'xfer'}->start(sub {
+            $self->{'scribe'}->handle_xmsg(@_);
+        });
+
+	# we've started the xfer now, but the destination won't actually write
+	# any data until we call start_dump.  And we'll need a header for that.
+
+	$subs{'get_header'}->();
+    });
+
+    $subs{'get_header'} = make_cb(get_header => sub {
+        $self->_assert_in_state("making_xfer") or return;
+        $self->{'state'} = 'getting_header';
+
+	if ($msgtype eq main::Protocol::FILE_WRITE) {
+	    # getting the header is easy for FILE-WRITE..
+	    my $hdr = $self->{'header'} = Amanda::Holding::get_header($params{'filename'});
+	    if (!defined $hdr || $hdr->{'type'} != $Amanda::Header::F_DUMPFILE) {
+		die("Could not read header from '$params{filename}'");
+	    }
+	    $subs{'start_dump'}->(undef);
+	} else {
+	    # ..but quite a bit harder for PORT-WRITE; this method will send the
+	    # proper PORT command, then read the header from the dumper and parse
+	    # it, placing the result in $self->{'header'}
+	    $self->send_port_and_get_header($subs{'start_dump'});
+	}
+    });
+
+    $subs{'start_dump'} = make_cb(start_dump => sub {
+	my ($err) = @_;
+
+        $self->_assert_in_state("getting_header") or return;
+        $self->{'state'} = 'writing';
+
+        # if $err is set, call through to dump_cb to handle the situation, treating
+        # it as a device error
+        if ($err) {
+            return $self->dump_cb(
+                result => "FAILED",
+                input_errors => [],
+                device_errors => [ $err ],
+                size => 0,
+                duration => 0.0);
+        }
+
+        # sanity check the header..
+        my $hdr = $self->{'header'};
+        if ($hdr->{'dumplevel'} != $params{'level'}
+            or $hdr->{'name'} ne $params{'hostname'}
+            or $hdr->{'disk'} ne $params{'diskname'}
+	    or $hdr->{'datestamp'} ne $params{'datestamp'}) {
+            die("Header of dumpfile does not match command from driver");
+        }
+
+	# start producing status
+	$self->create_status_file();
+
+	# and fix it up before writing it
+        $hdr->{'totalparts'} = -1;
+        $hdr->{'type'} = $Amanda::Header::F_SPLIT_DUMPFILE;
+
+        $self->{'scribe'}->start_dump(
+            dump_header => $hdr,
+            dump_cb => sub { $self->dump_cb(@_); });
+    });
+
+    $subs{'make_xfer'}->();
 }
 
 sub dump_cb {
     my $self = shift;
     my %params = @_;
-
-    $self->_assert_in_state("writing") or return;
 
     # if we need to the dumper status (to differentiate a dropped network
     # connection from a normal EOF) and have not done so yet, then send a
@@ -755,18 +855,18 @@ sub dump_cb {
 
     if ($logtype == $L_FAIL) {
 	log_add($L_FAIL, sprintf("%s %s %s %s %s",
-	    quote_string($self->{'header'}->{'name'}.""), # " is required for SWIG..
-	    quote_string($self->{'header'}->{'disk'}.""),
-	    $self->{'header'}->{'datestamp'},
-	    $self->{'header'}->{'dumplevel'},
+	    quote_string($self->{'hostname'}.""), # " is required for SWIG..
+	    quote_string($self->{'diskname'}.""),
+	    $self->{'datestamp'},
+	    $self->{'level'},
 	    $msg));
     } else {
 	log_add($logtype, sprintf("%s %s %s %s %s %s%s",
-	    quote_string($self->{'header'}->{'name'}.""), # " is required for SWIG..
-	    quote_string($self->{'header'}->{'disk'}.""),
-	    $self->{'header'}->{'datestamp'},
+	    quote_string($self->{'hostname'}.""), # " is required for SWIG..
+	    quote_string($self->{'diskname'}.""),
+	    $self->{'datestamp'},
 	    $self->{'last_partnum'},
-	    $self->{'header'}->{'dumplevel'},
+	    $self->{'level'},
 	    $stats,
 	    ($logtype == $L_PARTIAL and $have_msg)? " $msg" : ""));
     }
@@ -796,9 +896,15 @@ sub dump_cb {
 	$msg_params{'stats'} = $stats;
     }
 
-    # reset things to 'idle' (or 'error') before sending the message
-    $self->{'incoming_socket'} = undef;
+    # reset things to 'idle' before sending the message
+    $self->{'xfer'} = undef;
+    $self->{'xfer_source'} = undef;
     $self->{'handle'} = undef;
+    $self->{'header'} = undef;
+    $self->{'hostname'} = undef;
+    $self->{'diskname'} = undef;
+    $self->{'datestamp'} = undef;
+    $self->{'level'} = undef;
     $self->{'header'} = undef;
     $self->{'state'} = 'idle';
 

@@ -59,8 +59,8 @@ my ($orig_size, $comp_size, $comp_best_size, $raw_size, $hdr_size);
 cleandir();
 like(run_get_err('amrestore', "file:".vtape_dir()),
     qr{Restoring from tape TESTCONF01 starting with file 1.
-amrestore: 1: restoring FILE: date [0-9]* host localhost disk \Q$diskname\E/dir lev 0 comp N program .*
-amrestore: 2: restoring FILE: date [0-9]* host localhost disk \Q$diskname\E lev 0 comp N program .*},
+amrestore: 1: restoring split dumpfile: date [0-9]* host localhost disk \Q$diskname\E/dir part 1/UNKNOWN lev 0 comp N program .*
+amrestore: 2: restoring split dumpfile: date [0-9]* host localhost disk \Q$diskname\E part 1/UNKNOWN lev 0 comp N program .*},
     "simple amrestore from VFS device");
 
 @filenames = sort <localhost.*>;
@@ -78,8 +78,8 @@ cleandir();
 Installcheck::Run::load_vtape(2);
 like(run_get_err('amrestore', "file:".vtape_dir()),
     qr{Restoring from tape TESTCONF02 starting with file 1.
-amrestore: 1: restoring FILE: date [0-9]* host localhost disk \Q$diskname\E/dir lev 1 comp N program .*
-amrestore: 2: restoring FILE: date [0-9]* host localhost disk \Q$diskname\E lev 0 comp N program .*},
+amrestore: 1: restoring split dumpfile: date [0-9]* host localhost disk \Q$diskname\E/dir part 1/UNKNOWN lev 1 comp N program .*
+amrestore: 2: restoring split dumpfile: date [0-9]* host localhost disk \Q$diskname\E part 1/UNKNOWN lev 0 comp N program .*},
     "simple amrestore from VFS device (tape 2)");
 
 @filenames = sort <localhost.*>;
@@ -94,15 +94,15 @@ cleandir();
 Installcheck::Run::load_vtape(1);
 like(run_get_err('amrestore', "file:".vtape_dir(), "otherhost"),
     qr{Restoring from tape TESTCONF01 starting with file 1.
-amrestore: 1: skipping FILE: date [0-9]* host localhost disk \Q$diskname\E/dir lev 0 comp N program .*
-amrestore: 2: skipping FILE: date [0-9]* host localhost disk \Q$diskname\E lev 0 comp N program .*},
+amrestore: 1: skipping split dumpfile: date [0-9]* host localhost disk \Q$diskname\E/dir part 1/UNKNOWN lev 0 comp N program .*
+amrestore: 2: skipping split dumpfile: date [0-9]* host localhost disk \Q$diskname\E part 1/UNKNOWN lev 0 comp N program .*},
     "amrestore with a nonexistent hostname restores nothing");
 
 cleandir();
 like(run_get_err('amrestore', "file:".vtape_dir(), "localhost", "/NOSuCH/DIR"),
     qr{Restoring from tape TESTCONF01 starting with file 1.
-amrestore: 1: skipping FILE: date [0-9]* host localhost disk \Q$diskname\E/dir lev 0 comp N program .*
-amrestore: 2: skipping FILE: date [0-9]* host localhost disk \Q$diskname\E lev 0 comp N program .*},
+amrestore: 1: skipping split dumpfile: date [0-9]* host localhost disk \Q$diskname\E/dir part 1/UNKNOWN lev 0 comp N program .*
+amrestore: 2: skipping split dumpfile: date [0-9]* host localhost disk \Q$diskname\E part 1/UNKNOWN lev 0 comp N program .*},
     "amrestore with a good hostname but non-matching dir restores nothing");
 
 @filenames = <localhost.*>;
@@ -112,8 +112,8 @@ is(scalar @filenames, 0, "..and no restored files are present in testdir")
 cleandir();
 like(run_get_err('amrestore', "file:".vtape_dir(), "localhost", "$diskname\$"),
     qr{Restoring from tape TESTCONF01 starting with file 1.
-amrestore: 1: skipping FILE: date [0-9]* host localhost disk \Q$diskname\E/dir lev 0 comp N program .*
-amrestore: 2: restoring FILE: date [0-9]* host localhost disk \Q$diskname\E lev 0 comp N program .*},
+amrestore: 1: skipping split dumpfile: date [0-9]* host localhost disk \Q$diskname\E/dir part 1/UNKNOWN lev 0 comp N program .*
+amrestore: 2: restoring split dumpfile: date [0-9]* host localhost disk \Q$diskname\E part 1/UNKNOWN lev 0 comp N program .*},
     "amrestore with a good hostname and matching dir restores one file");
 
 @filenames = <localhost.*>;
@@ -123,8 +123,8 @@ is(scalar @filenames, 1, "..and the file is present in testdir")
 cleandir();
 like(run_get_err('amrestore', "-l", "TESTCONF01", "file:".vtape_dir(), "localhost", "$diskname/dir"),
     qr{Restoring from tape TESTCONF01 starting with file 1.
-amrestore: 1: restoring FILE: date [0-9]* host localhost disk \Q$diskname\E/dir lev 0 comp N program .*
-amrestore: 2: skipping FILE: date [0-9]* host localhost disk \Q$diskname\E lev 0 comp N program .*},
+amrestore: 1: restoring split dumpfile: date [0-9]* host localhost disk \Q$diskname\E/dir part 1/UNKNOWN lev 0 comp N program .*
+amrestore: 2: skipping split dumpfile: date [0-9]* host localhost disk \Q$diskname\E part 1/UNKNOWN lev 0 comp N program .*},
     "label checking OK");
 
 cleandir();
@@ -134,8 +134,8 @@ ok(run('amrestore', "-b", "16384", "file:".vtape_dir()),
 cleandir();
 like(run_get_err('amrestore', "-c", "file:".vtape_dir(), "localhost", "$diskname\$"),
     qr{Restoring from tape TESTCONF01 starting with file 1.
-amrestore: 1: skipping FILE: date [0-9]* host localhost disk \Q$diskname\E/dir lev 0 comp N program .*
-amrestore: 2: restoring FILE: date [0-9]* host localhost disk \Q$diskname\E lev 0 comp N program .*},
+amrestore: 1: skipping split dumpfile: date [0-9]* host localhost disk \Q$diskname\E/dir part 1/UNKNOWN lev 0 comp N program .*
+amrestore: 2: restoring split dumpfile: date [0-9]* host localhost disk \Q$diskname\E part 1/UNKNOWN lev 0 comp N program .*},
     "compression works");
 
 @filenames = <localhost.*>;
@@ -145,8 +145,8 @@ ok($comp_size < $orig_size, "..compressed size is smaller than original");
 cleandir();
 like(run_get_err('amrestore', "-C", "file:".vtape_dir(), "localhost", "$diskname\$"),
     qr{Restoring from tape TESTCONF01 starting with file 1.
-amrestore: 1: skipping FILE: date [0-9]* host localhost disk \Q$diskname\E/dir lev 0 comp N program .*
-amrestore: 2: restoring FILE: date [0-9]* host localhost disk \Q$diskname\E lev 0 comp N program .*},
+amrestore: 1: skipping split dumpfile: date [0-9]* host localhost disk \Q$diskname\E/dir part 1/UNKNOWN lev 0 comp N program .*
+amrestore: 2: restoring split dumpfile: date [0-9]* host localhost disk \Q$diskname\E part 1/UNKNOWN lev 0 comp N program .*},
     "best compression works");
 
 @filenames = <localhost.*>;
@@ -164,8 +164,8 @@ ok(run_err('amrestore', "-c", "-r", "file:".vtape_dir()),
 cleandir();
 like(run_get_err('amrestore', "-r", "file:".vtape_dir(), "localhost", "$diskname\$"),
     qr{Restoring from tape TESTCONF01 starting with file 1.
-amrestore: 1: skipping FILE: date [0-9]* host localhost disk \Q$diskname\E/dir lev 0 comp N program .*
-amrestore: 2: restoring FILE: date [0-9]* host localhost disk \Q$diskname\E lev 0 comp N program .*},
+amrestore: 1: skipping split dumpfile: date [0-9]* host localhost disk \Q$diskname\E/dir part 1/UNKNOWN lev 0 comp N program .*
+amrestore: 2: restoring split dumpfile: date [0-9]* host localhost disk \Q$diskname\E part 1/UNKNOWN lev 0 comp N program .*},
     "raw restore");
 
 @filenames = <localhost.*>;
@@ -181,8 +181,8 @@ is($raw_size, $orig_size + Amanda::Holding::DISK_BLOCK_BYTES,
 cleandir();
 like(run_get_err('amrestore', "-h", "file:".vtape_dir(), "localhost", "$diskname\$"),
     qr{Restoring from tape TESTCONF01 starting with file 1.
-amrestore: 1: skipping FILE: date [0-9]* host localhost disk \Q$diskname\E/dir lev 0 comp N program .*
-amrestore: 2: restoring FILE: date [0-9]* host localhost disk \Q$diskname\E lev 0 comp N program .*},
+amrestore: 1: skipping split dumpfile: date [0-9]* host localhost disk \Q$diskname\E/dir part 1/UNKNOWN lev 0 comp N program .*
+amrestore: 2: restoring split dumpfile: date [0-9]* host localhost disk \Q$diskname\E part 1/UNKNOWN lev 0 comp N program .*},
     "header (-h) restore");
 
 @filenames = <localhost.*>;
@@ -215,7 +215,7 @@ cleandir();
 Installcheck::Run::load_vtape(2);
 like(run_get_err('amrestore', "-h", "-p", "file:".vtape_dir(), "localhost", "$diskname/dir"),
     qr{Restoring from tape TESTCONF02 starting with file 1.
-amrestore: 1: restoring FILE: date [0-9]* host localhost disk \Q$diskname\E/dir lev 1 comp N program .*},
+amrestore: 1: restoring split dumpfile: date [0-9]* host localhost disk \Q$diskname\E/dir part 1/UNKNOWN lev 1 comp N program .*},
     "piped amrestore");
 # (note that amrestore does not go on to the next part; it used to, but would either skip or
 # give an error for every subsequent file)

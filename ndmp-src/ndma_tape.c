@@ -512,7 +512,7 @@ ndmta_write_quantum (struct ndm_session *sess)
 	want_window_off = ta->mover_want_pos - ta->mover_state.window_offset;
 
 	/* make an estimate of the block size - the tape agent's block size, or
-	 * if it's in variabel block size mode, the mover's record size: "When
+	 * if it's in variable block size mode, the mover's record size: "When
 	 * in variable block mode, as indicated by a tape block_size value of
 	 * zero, the mover record size defines the actual block size used by
 	 * the tape subsystem." (NDMPv4 RFC, Section 3.6.2.1) */
@@ -569,6 +569,8 @@ ndmta_write_quantum (struct ndm_session *sess)
 						NDMP9_MOVER_PAUSE_EOF);
 			goto again;
 		}
+		/* N.B. - handling of done_count = 0 here is hacked to support
+		 * non-blocking writes to a socket in amndmjob */
 		if (error != NDMP9_NO_ERR) {
 			ndmta_mover_pause_pending (sess,
 				NDMP9_MOVER_PAUSE_MEDIA_ERROR);

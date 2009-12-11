@@ -1,3 +1,13 @@
+2009-12-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm server-src/taper.pl: support DirectTCP
+	* server-src/driverio.c: do not send datapath to taper
+	* installcheck/Amanda_Taper_Scribe.pl installcheck/taper.pl: test DirectTCP
+	* installcheck/amfetchdump.pl installcheck/amrestore.pl: handle
+	  changed on-tape format
+	* installcheck/Amanda_Xfer_serveronly.pl: fix cleanup
+	* ndmp-src/ndma_tape.c: fix typos
+	* NEWS: document behavior changes
+
 2009-12-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/chunker.c server-src/diskfile.c server-src/diskfile.h
 	  server-src/driver.c server-src/driverio.c server-src/dumper.c

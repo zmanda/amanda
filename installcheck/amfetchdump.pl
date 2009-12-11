@@ -64,7 +64,7 @@ SKIP: {
 	    push @results, "tapes-needed";
 	    exp_continue;
 	} ],
-	[ qr{amfetchdump: 1: restoring FILE: date [[:digit:]]+ host localhost disk .*},
+	[ qr{amfetchdump: 1: restoring split dumpfile: date [[:digit:]]+ host localhost disk .*},
 	sub {
 	    push @results, "restoring";
 	    exp_continue;
@@ -113,7 +113,7 @@ SKIP: {
 	    push @results, "tapes-needed";
 	    exp_continue;
 	} ],
-	[ qr{amfetchdump: 1: restoring FILE: date [[:digit:]]+ host localhost disk .*},
+	[ qr{amfetchdump: 1: restoring split dumpfile: date [[:digit:]]+ host localhost disk .*},
 	sub {
 	    push @results, "restoring";
 	    exp_continue;

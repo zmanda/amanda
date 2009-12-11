@@ -349,7 +349,6 @@ taper_cmd(
 			    " ", splitsize,
 			    " ", diskbuffer,
 			    " ", fallback_splitsize,
-			    " ", data_path_to_string(dp->data_path),
 			    "\n", NULL);
 	amfree(qname);
 	break;

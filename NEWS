@@ -14,6 +14,12 @@ Changes in release 2.6.2alpha
       o changed wildcard setting for S3_BUCKET_LOCATION from "" to "*"
    * Application API
       o ampgsql: Backup PostgreSQL using continuous WAL archiving
+   * New taper, with DirectTCP support, changed tape and catalog format:
+    - all dumpfiles are now F_SPLIT_DUMPFILE
+    - all on-tape dumpfiles have numparts=-1, since it's no longer possible to
+      calculate this value in advance
+    - there is no logging or reporting of zero-byte, successful parts (this may
+      cause gaps in filenums in the catalog)
 
 Changes in release 2.6.1
 

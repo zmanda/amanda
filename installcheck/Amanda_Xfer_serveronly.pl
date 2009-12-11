@@ -622,9 +622,9 @@ rmtree($holding_base);
 
 # test Amanda::Xfer::Dest::Taper::DirectTCP; do it twice, once with a cancellation
 
+my $ndmp_port = Installcheck::get_unused_port();
+my $tapefile = Installcheck::Mock::run_ndmjob($ndmp_port);
 for my $do_cancel (0, 1) {
-    my $ndmp_port = Installcheck::get_unused_port();
-    my $tapefile = Installcheck::Mock::run_ndmjob($ndmp_port);
     my $dev;
     my $xfer;
     my @messages;
@@ -714,3 +714,4 @@ for my $do_cancel (0, 1) {
 	or diag(Dumper([@messages]));
     }
 }
+Installcheck::Mock::cleanup_ndmjob();

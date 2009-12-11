@@ -164,16 +164,6 @@ sub request_volume_permission {
     $params{'perm_cb'}->($answer);
 }
 
-sub notif_scan_finished {
-    my $self = shift;
-    my %params = @_;
-
-    my $slot = $params{'reservation'}? $params{'reservation'}->{'this_slot'} : "none";
-
-    main::event("notif_scan_finished",
-	main::undef_or_str($params{'error'}), "slot: $slot", $params{'volume_label'});
-}
-
 sub notif_new_tape {
     my $self = shift;
     my %params = @_;
@@ -223,7 +213,6 @@ sub run_devh {
 	# calling get_volume -- this wouldn't ordinarily be
 	# necessary, but we want to make sure that start() is
 	# really kicking off the scan.
-	# TODO: call this 0.1s later or something, to be sure
 	$get_volume->();
     });
 
@@ -280,7 +269,6 @@ is_deeply([ @events ], [
       [ 'get_volume' ],
       [ 'request_volume_permission', 'answer:', undef ],
       [ 'scan-finished', undef, "slot: 1" ],
-      [ 'notif_scan_finished', undef, 'slot: 1', 'FAKELABEL' ],
       [ 'got_volume', undef, undef, "slot: 1" ],
       [ 'release', undef ],
 
@@ -288,7 +276,6 @@ is_deeply([ @events ], [
       [ 'scan' ], # scan starts *after* get_volume this time
       [ 'request_volume_permission', 'answer:', undef ],
       [ 'scan-finished', undef, "slot: 2" ],
-      [ 'notif_scan_finished', undef, 'slot: 2', 'FAKELABEL' ],
       [ 'got_volume', undef, undef, "slot: 2" ],
       [ 'release', undef ],
 
@@ -296,7 +283,6 @@ is_deeply([ @events ], [
       [ 'scan' ],
       [ 'request_volume_permission', 'answer:', undef ],
       [ 'scan-finished', undef, "slot: 3" ],
-      [ 'notif_scan_finished', undef, 'slot: 3', 'FAKELABEL' ],
       [ 'got_volume', undef, undef, "slot: 3" ],
       [ 'release', undef ],
 
@@ -312,7 +298,6 @@ is_deeply([ @events ], [
       [ 'get_volume' ],
       [ 'request_volume_permission', 'answer:', 'no-can-do' ],
       [ 'scan-finished', undef, "slot: 1" ],
-      [ 'notif_scan_finished', undef, 'slot: 1', 'FAKELABEL' ],
       [ 'got_volume', undef, 'no-can-do', undef ],
 
       [ 'quit' ],
@@ -327,7 +312,6 @@ is_deeply([ @events ], [
       [ 'get_volume' ],
       [ 'request_volume_permission', 'answer:', undef ],
       [ 'scan-finished', "Slot bogus not found", "slot: none" ],
-      [ 'notif_scan_finished', "Slot bogus not found", 'slot: none', undef ],
       [ 'got_volume', 'Slot bogus not found', undef, undef ],
 
       [ 'quit' ],
@@ -342,7 +326,6 @@ is_deeply([ @events ], [
       [ 'get_volume' ],
       [ 'request_volume_permission', 'answer:', 'not this time' ],
       [ 'scan-finished', "Slot bogus not found", "slot: none" ],
-      [ 'notif_scan_finished', "Slot bogus not found", 'slot: none', undef ],
       [ 'got_volume', 'Slot bogus not found', 'not this time', undef ],
 
       [ 'quit' ],
@@ -355,9 +338,32 @@ is_deeply([ @events ], [
 
 sub run_scribe_xfer {
     my ($data_length, $scribe, %params) = @_;
-    my ($start, $dump_cb);
+    my $xfer;
+    my %subs;
 
-    $start = make_cb(start => sub {
+    $subs{'start_scribe'} = make_cb(start_scribe => sub {
+	if ($params{'start_scribe'}) {
+	    $scribe->start(%{ $params{'start_scribe'} },
+			finished_cb => $subs{'get_xdt'});
+	} else {
+	    $subs{'get_xdt'}->();
+	}
+    });
+
+    $subs{'get_xdt'} = make_cb(get_xdt => sub {
+	my ($err) = @_;
+	die $err if $err;
+
+	# set up a transfer
+	my $xdt = $scribe->get_xfer_dest(
+	    max_memory => 1024 * 64,
+            split_method => ($params{'split_method'} or 'memory'),
+	    part_size => 1024 * 128,
+	    use_mem_cache => 1,
+	    disk_cache_dirname => undef);
+
+        die "$err" if $err;
+
 	my $hdr = Amanda::Header->new();
 	$hdr->{type} = $Amanda::Header::F_DUMPFILE;
 	$hdr->{datestamp} = "20010203040506";
@@ -367,19 +373,21 @@ sub run_scribe_xfer {
 	$hdr->{disk} = "/home";
 	$hdr->{program} = "INSTALLCHECK";
 
-	# set up a transfer
-	$scribe->start_xfer(
-	    dump_header => $hdr,
-	    xfer_elements => [ Amanda::Xfer::Source::Random->new($data_length, 0x5EED5) ],
-	    max_memory => 1024 * 64,
-            split_method => ($params{'split_method'} or 'memory'),
-	    part_size => 1024 * 128,
-	    use_mem_cache => 1,
-	    disk_cache_dirname => undef,
-	    dump_cb => $dump_cb);
+        $xfer = Amanda::Xfer->new([
+            Amanda::Xfer::Source::Random->new($data_length, 0x5EED5),
+            $xdt,
+        ]);
+
+        $xfer->start(sub {
+            $scribe->handle_xmsg(@_);
+        });
+
+        $scribe->start_dump(
+            dump_header => $hdr,
+            dump_cb => $subs{'dump_cb'});
     });
 
-    $dump_cb = make_cb(dump_cb => sub {
+    $subs{'dump_cb'} = make_cb(dump_cb => sub {
 	my %params = @_;
 
 	main::event("dump_cb",
@@ -391,7 +399,7 @@ sub run_scribe_xfer {
 	Amanda::MainLoop::quit();
     });
 
-    $start->();
+    $subs{'start_scribe'}->();
     Amanda::MainLoop::run();
 }
 
@@ -421,14 +429,13 @@ $scribe = Amanda::Taper::Scribe->new(
     feedback => Mock::Feedback->new());
 
 reset_events();
-$scribe->start(dump_timestamp => "20010203040506");
-run_scribe_xfer(1024*300, $scribe);
+run_scribe_xfer(1024*300, $scribe,
+	    start_scribe => { dump_timestamp => "20010203040506" });
 
 is_deeply([ @events ], [
       [ 'scan' ],
-      [ 'request_volume_permission', 'answer:', undef ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'notif_scan_finished', undef, 'slot: 1', 'FAKELABEL' ],
+      [ 'request_volume_permission', 'answer:', undef ],
       [ 'notif_new_tape', undef, 'FAKELABEL' ],
       [ 'notif_part_done', bi(1), bi(1), 1, bi(131072) ],
       [ 'notif_part_done', bi(2), bi(2), 1, bi(131072) ],
@@ -461,14 +468,13 @@ $scribe = Amanda::Taper::Scribe->new(
     feedback => Mock::Feedback->new());
 
 reset_events();
-$scribe->start(dump_timestamp => "20010203040506");
-run_scribe_xfer($volume_length + $volume_length / 4, $scribe);
+run_scribe_xfer($volume_length + $volume_length / 4, $scribe,
+	    start_scribe => { dump_timestamp => "20010203040506" });
 
 is_deeply([ @events ], [
       [ 'scan' ],
-      [ 'request_volume_permission', 'answer:', undef ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'notif_scan_finished', undef, 'slot: 1', 'FAKELABEL' ],
+      [ 'request_volume_permission', 'answer:', undef ],
       [ 'notif_new_tape', undef, 'FAKELABEL' ],
 
       [ 'notif_part_done', bi(1), bi(1), 1, bi(131072) ],
@@ -479,15 +485,11 @@ is_deeply([ @events ], [
       [ 'scan' ],
       [ 'request_volume_permission', 'answer:', undef ],
       [ 'scan-finished', undef, 'slot: 2' ],
-      [ 'notif_scan_finished', undef, 'slot: 2', 'FAKELABEL' ],
       [ 'notif_new_tape', undef, 'FAKELABEL' ],
 
       [ 'notif_part_done', bi(4), bi(1), 1, bi(131072) ],
       [ 'notif_part_done', bi(5), bi(2), 1, bi(131072) ],
-      # it would be nice to be able to get rid of this empty part when the
-      # file length is an exact multiple of the part length, but for now this
-      # is expected behavior.
-      [ 'notif_part_done', bi(6), bi(3), 1, bi(0) ],
+      # empty part is written but not notified
 
       [ 'dump_cb', 'DONE', [], [], bi(655360) ],
     ], "correct event sequence for a multipart scribe of more than a whole volume")
@@ -503,15 +505,14 @@ $scribe = Amanda::Taper::Scribe->new(
     feedback => Mock::Feedback->new());
 
 reset_events();
-$scribe->start(dump_timestamp => "20010203040507");
-run_scribe_xfer($volume_length + $volume_length / 4, $scribe);
+run_scribe_xfer($volume_length + $volume_length / 4, $scribe,
+	    start_scribe => { dump_timestamp => "20010203040507" });
 
 $experr = 'Slot bogus not found';
 is_deeply([ @events ], [
       [ 'scan' ],
-      [ 'request_volume_permission', 'answer:', undef ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'notif_scan_finished', undef, 'slot: 1', 'FAKELABEL' ],
+      [ 'request_volume_permission', 'answer:', undef ],
       [ 'notif_new_tape', undef, 'FAKELABEL' ],
 
       [ 'notif_part_done', bi(1), bi(1), 1, bi(131072) ],
@@ -522,7 +523,6 @@ is_deeply([ @events ], [
       [ 'scan' ],
       [ 'request_volume_permission', 'answer:', undef ],
       [ 'scan-finished', $experr, 'slot: none' ],
-      [ 'notif_scan_finished', $experr, 'slot: none', undef ],
       [ 'notif_new_tape', $experr, undef ],
 
       [ 'dump_cb', 'PARTIAL', [], [$experr], bi(393216) ],
@@ -539,14 +539,13 @@ $scribe = Amanda::Taper::Scribe->new(
     feedback => Mock::Feedback->new(undef, "sorry!"));
 
 reset_events();
-$scribe->start(dump_timestamp => "20010203040507");
-run_scribe_xfer($volume_length + $volume_length / 4, $scribe);
+run_scribe_xfer($volume_length + $volume_length / 4, $scribe,
+	    start_scribe => { dump_timestamp => "20010203040507" });
 
 is_deeply([ @events ], [
       [ 'scan' ],
-      [ 'request_volume_permission', 'answer:', undef ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'notif_scan_finished', undef, 'slot: 1', 'FAKELABEL' ],
+      [ 'request_volume_permission', 'answer:', undef ],
       [ 'notif_new_tape', undef, 'FAKELABEL' ],
 
       [ 'notif_part_done', bi(1), bi(1), 1, bi(131072) ],
@@ -557,7 +556,6 @@ is_deeply([ @events ], [
       [ 'scan' ],
       [ 'request_volume_permission', 'answer:', "sorry!" ],
       [ 'scan-finished', undef, 'slot: 2' ],
-      [ 'notif_scan_finished', undef, 'slot: 2', 'FAKELABEL' ],
 
       [ 'dump_cb', 'PARTIAL',
 	    [], ["sorry!"], bi(393216) ],
@@ -574,14 +572,13 @@ $scribe = Amanda::Taper::Scribe->new(
     feedback => Mock::Feedback->new());
 
 reset_events();
-$scribe->start(dump_timestamp => "20010203040506");
-run_scribe_xfer(1024*300, $scribe, split_method => 'none');
+run_scribe_xfer(1024*300, $scribe, split_method => 'none',
+	    start_scribe => { dump_timestamp => "20010203040506" });
 
 is_deeply([ @events ], [
       [ 'scan' ],
-      [ 'request_volume_permission', 'answer:', undef ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'notif_scan_finished', undef, 'slot: 1', 'FAKELABEL' ],
+      [ 'request_volume_permission', 'answer:', undef ],
       [ 'notif_new_tape', undef, 'FAKELABEL' ],
       [ 'notif_part_done', bi(1), bi(1), 1, bi(307200) ],
       [ 'dump_cb', 'DONE', [], [], bi(307200) ],
@@ -589,4 +586,7 @@ is_deeply([ @events ], [
     or diag(Dumper([@events]));
 
 quit_scribe($scribe);
+
+# DirectTCP support is tested through the taper installcheck
+
 rmtree($taperoot);
