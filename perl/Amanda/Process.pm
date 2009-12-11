@@ -28,12 +28,6 @@ use File::Basename;
 use Amanda::Constants;
 @ISA = qw( Exporter );
 
-use Amanda::Paths;
-use Amanda::Util;
-use Amanda::MainLoop qw( :GIOCondition );
-use Amanda::Config;
-use Amanda::Device qw( :constants );
-
 =head1 NAME
 
 Amanda::Process -- interface to process

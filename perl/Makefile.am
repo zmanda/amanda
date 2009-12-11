@@ -136,6 +136,10 @@ Amanda_DATA += Amanda/Archive.pm
 EXTRA_DIST += Amanda/Archive.swg Amanda/Archive.pm Amanda/Archive.pod
 MAINTAINERCLEANFILES += Amanda/Archive.c Amanda/Archive.pm
 
+# PACKAGE: Amanda::Process
+Amanda_DATA += Amanda/Process.pm
+EXTRA_DIST += Amanda/Process.pm
+
 if WANT_SERVER
 # PACKAGE: Amanda::Device
 libDevicedir = $(amperldir)/auto/Amanda/Device
@@ -245,12 +249,6 @@ AmandaTaperScan_DATA = \
 HTML_SOURCE_FILES += $(AmandaTaperScan_DATA)
 endif
 EXTRA_DIST += $(AmandaTaperScan_DATA)
-
-# PACKAGE: Amanda::Process
-if WANT_SERVER
-Amanda_DATA += Amanda/Process.pm
-endif
-EXTRA_DIST += Amanda/Process.pm
 
 if WANT_SERVER
 # PACKAGE: Amanda::DB::*
