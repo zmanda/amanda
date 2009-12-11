@@ -716,7 +716,7 @@ while($lineX = <AMDUMP>) {
 				}
 				$state_time_prev=$current_time;
 				$dumpers_active_prev=$dumpers_active;
-				$status_driver=$line[16];
+				$status_driver=$line[23];
 				if(! defined($dumpers_held[$dumpers_active]{$status_driver})) {
 					$dumpers_held[$dumpers_active]{$status_driver}=0;
 				}

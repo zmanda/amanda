@@ -1952,10 +1952,25 @@ handle_dumper_result(
 
 	if (cmd != BOGUS) {
 	    int last_dump = 1;
+	    dumper_t *dumper;
+
 	    run_server_scripts(EXECUTE_ON_POST_DLE_BACKUP,
 			       get_config_name(), dp, sched(dp)->level);
+	    /* check dump not yet started */
 	    for (dp1=runq.head; dp1 != NULL; dp1 = dp1->next) {
-		if (dp1 != dp) last_dump = 0;
+		if (dp1->host == dp->host)
+		    last_dump = 0;
+	    }
+	    /* check direct to tape dump */
+	    for (dp1=directq.head; dp1 != NULL; dp1 = dp1->next) {
+		if (dp1->host == dp->host)
+		    last_dump = 0;
+	    }
+	    /* check dumping dle */
+	    for (dumper = dmptable; dumper < dmptable + inparallel; dumper++) {
+		if (dumper->busy && dumper->dp != dp &&
+		    dumper->dp->host == dp->host)
+		 last_dump = 0;
 	    }
 	    if (last_dump && dp->host->post_script == 0) {
 		if (dp->host->post_script == 0) {
