@@ -253,6 +253,9 @@ sub start {
 
 	my $child_sock = $self->{'header_socket'}->accept();
 
+	# and make sure it's set to blocking mode
+	$child_sock->blocking(1);
+
 	if ($self->{'header_socket_connect_cb'}) {
 	    my $cb = $self->{'header_socket_connect_cb'};
 	    # reset the callback first to avoid double-calling it

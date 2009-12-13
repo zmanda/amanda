@@ -1,3 +1,6 @@
+2009-12-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/taper.pl: put header socket in blocking mode
+
 2009-12-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Process.pm: Remove unneded 'use'.
 	* perl/Makefile.am: Build Amanda::Process on client.
