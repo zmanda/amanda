@@ -249,13 +249,13 @@ sub new {
 	}
 	my $propval = $config->{'properties'}->{'load-poll'}->{'values'}->[0];
 	my ($delay, $delayu, $poll, $pollu, $until, $untilu) = ($propval =~ /^
-		(\d+)([ms]?)
+		(\d+)\s*([ms]?)
 		(?:
 		  \s+poll\s+
-		  (\d+)([ms]?)
+		  (\d+)\s*([ms]?)
 		  (?:
 		    \s+until\s+
-		    (\d+)([ms]?)
+		    (\d+)\s*([ms]?)
 		  )?
 		)?
 		$/ix);

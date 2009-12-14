@@ -3,6 +3,9 @@ Changes in release 2.6.2alpha
       o rawtapedev -- this parameter is no longer needed and should be deleted
    * Removed compile-time default --with-changer-device: specify a device 
      explicitly in amanda.conf instead
+   * Although chg-zd-mtx is still supported, we recommend that all users upgrade
+     to the more efficient chg-robot.  See contrib/convert-zd-mtx-to-robot.sh
+     for a useful conversion script.
    * amtape behavior has changed:
       o 'device' subcommand removed
       o 'slot advance' subcommand removed

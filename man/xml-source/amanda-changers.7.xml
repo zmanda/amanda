@@ -367,6 +367,16 @@ such libraries, it is the responsibility of the operator to
 <command>update</command> the changer when tapes are added to or removed from
 the library.</para>
 
+<para>There is a shell script in the <filename>contrib/</filename> directory of
+Amanda's source distribution which can help you convert a
+<command>chg-zd-mtx</command> configuration into a <command>chg-robot</command>
+configuration.  Just give it your Amanda configuration name:
+<programlisting>
+  sh contrib/convert-zd-mtx-to-robot.sh $config
+</programlisting>
+The script can be downloaded at <uri
+type="webpage">http://github.com/zmanda/amanda/raw/master/contrib/convert-zd-mtx-to-robot.sh</uri></para>
+
 <refsect3><title>Special Operations</title>
 
 <para>A number of special operations are available for <command>chg-robot</command> via

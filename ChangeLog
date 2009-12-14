@@ -1,3 +1,8 @@
+2009-12-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* contrib/convert-zd-mtx-to-robot.sh: useful conversion script
+	* NEWS man/xml-source/amanda-changers.7.xml: mention conversion script
+	* perl/Amanda/Changer/robot.pm: allow spaces between times and units
+
 2009-12-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amtape.pl: Call $res->set_label after reading a label.
 
