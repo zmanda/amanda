@@ -219,7 +219,7 @@ struct _DeviceClass {
  */
 
 /* Return the unaliased device name of a device.
- * The returned must not be freed by the caller.
+ * The returned string must not be freed by the caller.
  */
 char*		device_unaliased_name(char * device_name);
 
