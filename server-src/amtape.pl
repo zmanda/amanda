@@ -144,6 +144,7 @@ sub {
     my %subs;
     my $last_slot;
     my %seen_slots;
+    my $gres;
 
     if (@args != 0) {
 	return usage();
@@ -194,6 +195,9 @@ sub {
 		    print STDERR sprintf("slot %3s: date %-14s label %s\n",
 			$last_slot, $dev->volume_time(),
 			$dev->volume_label());
+		    $gres = $res;
+		    return $res->set_label(label => $dev->volume_label(),
+				     finished_cb => $subs{'set_labeled'});
 		} elsif ($st == $DEVICE_STATUS_VOLUME_UNLABELED) {
 		    print STDERR sprintf("slot %3s: unlabeled volume\n", $last_slot);
 		} else {
@@ -209,6 +213,10 @@ sub {
 	} else {
 	    $subs{'released'}->();
 	}
+    };
+
+    $subs{'set_labeled'} = sub {
+	$gres->release(finished_cb => $subs{'released'});
     };
 
     $subs{'released'} = sub {
@@ -292,6 +300,7 @@ sub {
     my @args = @_;
     my @slotarg;
     my %subs;
+    my $gres;
 
     # NOTE: the syntax of this subcommand precludes actual slots named
     # 'current' or 'next' ..  when we have a changer using such slot names,
@@ -346,8 +355,18 @@ sub {
 	my $gotslot = $res->{'this_slot'};
 	print STDERR "changed to slot $gotslot\n";
 
-	$res->release(finished_cb => $subs{'released'});
+	if ($res->{device}->volume_label) {
+	    $gres = $res;
+	    $res->set_label(label => $res->{device}->volume_label(),
+			    finished_cb => $subs{'set_labeled'});
+	} else {
+	    $res->release(finished_cb => $subs{'released'});
+	}
     });
+
+    $subs{'set_labeled'} = sub {
+	$gres->release(finished_cb => $subs{'released'});
+    };
 
     $subs{'released'} = make_cb(released => sub {
 	my ($err) = @_;
@@ -363,6 +382,7 @@ subcommand("label", "label <label>", "load the volume with label <label>",
 sub {
     my @args = @_;
     my %subs;
+    my $gres;
 
     usage unless (@args == 1);
     my $label = shift @args;
@@ -383,8 +403,18 @@ sub {
 	show_slot($res);
 	print STDERR "label $label is now loaded from slot $gotslot\n";
 
-	$res->release(finished_cb => $subs{'released'});
+	if ($res->{device}->volume_label) {
+	    $gres = $res;
+	    $res->set_label(label => $res->{device}->volume_label(),
+			    finished_cb => $subs{'set_labeled'});
+	} else {
+	    $res->release(finished_cb => $subs{'released'});
+	}
     });
+
+    $subs{'set_labeled'} = sub {
+	$gres->release(finished_cb => $subs{'released'});
+    };
 
     $subs{'released'} = make_cb(released => sub {
 	my ($err) = @_;
@@ -519,6 +549,7 @@ sub main {
     usage unless defined($subcmd) and exists ($subcommands{$subcmd});
     invoke_subcommand($subcmd, @ARGV);
     Amanda::MainLoop::run();
+    Amanda::Util::finish_application();
     exit($exit_status);
 }
 

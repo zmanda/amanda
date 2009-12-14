@@ -1,3 +1,6 @@
+2009-12-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amtape.pl: Call $res->set_label after reading a label.
+
 2009-12-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/taper.pl: put header socket in blocking mode
 
