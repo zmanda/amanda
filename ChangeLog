@@ -1,4 +1,8 @@
 2009-12-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/disk.pm: Keep track of pid, automatically remove
+	  drive if the pid is dead.
+
+2009-12-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/diskfile.c: Add validate_optionstr,  optionstr and
 	  xml_optionstr no longer do validation..
 	* server-src/diskfile.h: Add validate_optionstr, change prototype for

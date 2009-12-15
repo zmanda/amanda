@@ -64,6 +64,18 @@ See the amanda-changers(7) manpage for usage information.
 
 =cut
 
+# STATE
+#
+# The device state is shared between all changers accessing the same changer.
+# It is a hash with keys:
+#   drives - see below
+#
+# The 'drives' key is a hash, with drive as keys and hashes
+# as values.  Each drive's hash has keys:
+#   pid - the pid that reserved that drive.
+#
+
+
 sub new {
     my $class = shift;
     my ($config, $tpchanger) = @_;
@@ -103,6 +115,7 @@ sub load {
     $self->with_locked_state($self->{'state_filename'},
 				     $params{'res_cb'}, sub {
 	my ($state, $res_cb) = @_;
+	$params{'state'} = $state;
 
 	# overwrite the callback for _load_by_xxx
 	$params{'res_cb'} = $res_cb;
@@ -163,15 +176,19 @@ sub inventory {
 
     my @slots = $self->_all_slots();
 
-    my @inventory;
-    for my $slot (@slots) {
-	my $s = { slot => $slot, empty => 0 };
-	$s->{'reserved'} = $self->_is_slot_in_use($slot);
-	$s->{'label'} = $self->_get_slot_label($slot);
-	push @inventory, $s;
-    }
+    $self->with_locked_state($self->{'state_filename'},
+			     $params{'inventory_cb'}, sub {
+	my ($state, $finished_cb) = @_;
+	my @inventory;
 
-    $params{'inventory_cb'}->(undef, \@inventory);
+	for my $slot (@slots) {
+	    my $s = { slot => $slot, empty => 0 };
+	    $s->{'reserved'} = $self->_is_slot_in_use($state, $slot);
+	    $s->{'label'} = $self->_get_slot_label($slot);
+	    push @inventory, $s;
+	}
+	$finished_cb->(undef, \@inventory);
+    });
 }
 
 sub _load_by_slot {
@@ -212,18 +229,18 @@ sub _load_by_slot {
 	    message => "Slot $slot not found");
     }
 
-    if ($drive = $self->_is_slot_in_use($slot)) {
+    if ($drive = $self->_is_slot_in_use($params{'state'}, $slot)) {
 	return $self->make_error("failed", $params{'res_cb'},
 	    reason => "inuse",
 	    slot => $slot,
-	    message => "Slot $slot is already in use by drive '$drive'");
+	    message => "Slot $slot is already in use by drive '$drive' and process '$params{state}->{drives}->{$drive}->{pid}'");
     }
 
     $drive = $self->_alloc_drive();
     $self->_load_drive($drive, $slot);
     $self->_set_current($slot) if ($params{'set_current'});
 
-    $self->_make_res($params{'res_cb'}, $drive, $slot);
+    $self->_make_res($params{'state'}, $params{'res_cb'}, $drive, $slot);
 }
 
 sub _load_by_label {
@@ -240,7 +257,7 @@ sub _load_by_label {
 	    message => "Label '$label' not found");
     }
 
-    if ($drive = $self->_is_slot_in_use($slot)) {
+    if ($drive = $self->_is_slot_in_use($params{'state'}, $slot)) {
 	return $self->make_error("failed", $params{'res_cb'},
 	    reason => "notfound",
 	    message => "Slot $slot, containing '$label', is already " .
@@ -251,12 +268,12 @@ sub _load_by_label {
     $self->_load_drive($drive, $slot);
     $self->_set_current($slot) if ($params{'set_current'});
 
-    $self->_make_res($params{'res_cb'}, $drive, $slot);
+    $self->_make_res($params{'state'}, $params{'res_cb'}, $drive, $slot);
 }
 
 sub _make_res {
     my $self = shift;
-    my ($res_cb, $drive, $slot) = @_;
+    my ($state, $res_cb, $drive, $slot) = @_;
     my $res;
 
     my $device = Amanda::Device->new("file:$drive");
@@ -273,6 +290,7 @@ sub _make_res {
     }
 
     $res = Amanda::Changer::disk::Reservation->new($self, $device, $drive, $slot);
+    $state->{drives}->{$drive}->{pid} = $$;
     $res_cb->(undef, $res);
 }
 
@@ -319,7 +337,7 @@ sub _slot_exists {
 # Internal function to determine if a slot (specified by number) is in use by a
 # drive, and return the path for that drive if so.
 sub _is_slot_in_use {
-    my ($self, $slot) = @_;
+    my ($self, $state, $slot) = @_;
     my $dir = _quote_glob($self->{'dir'});
 
     for my $symlink (bsd_glob("$dir/drive*/data")) {
@@ -341,8 +359,20 @@ sub _is_slot_in_use {
 	}
 
 	if ($tslot+0 == $slot) {
-	    $symlink =~ s{/data$}{}; # strip the trailing '/data'
-	    return $symlink;
+	    my $drive = $symlink;
+	    $drive =~ s{/data$}{}; # strip the trailing '/data'
+
+	    #check if process is alive
+	    my $pid = $state->{drives}->{$drive}->{pid};
+	    if (defined $pid && !Amanda::Util::is_pid_alive($pid)) {
+		unlink("$drive/data")
+		    or warn("Could not unlink '$drive/data': $!");
+		rmdir("$drive")
+		    or warn("Could not rmdir '$drive': $!");
+		delete $state->{drives}->{$drive}->{pid};
+		next;
+	    }
+	    return $drive;
 	}
     }
 
@@ -483,8 +513,6 @@ sub do_release {
     my %params = @_;
     my $drive = $self->{'drive'};
 
-    # no statefile locking required here, since this is just removing
-    # resources to which we have exclusive license at the moment
     unlink("$drive/data")
 	or warn("Could not unlink '$drive/data': $!");
     rmdir("$drive")
@@ -493,5 +521,18 @@ sub do_release {
     # unref the device, for good measure
     $self->{'device'} = undef;
 
-    $params{'finished_cb'}->(undef) if $params{'finished_cb'};
+    if (exists $params{'unlocked'}) {
+        my $state = $params{state};
+	delete $state->{drives}->{$drive}->{pid};
+        return $params{'finished_cb'}->();
+    }
+
+    $self->{chg}->with_locked_state($self->{chg}->{'state_filename'},
+				    $params{'finished_cb'}, sub {
+	my ($state, $finished_cb) = @_;
+
+	delete $state->{drives}->{$drive}->{pid};
+
+	$finished_cb->();
+    });
 }
