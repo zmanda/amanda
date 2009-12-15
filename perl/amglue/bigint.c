@@ -56,12 +56,13 @@ str2bigint(char *num)
     ENTER;
     SAVETMPS;
 
+    EXTEND(SP, 2);
     PUSHMARK(SP);
     XPUSHs(sv_2mortal(newSVpv("Math::BigInt", 0)));
     XPUSHs(sv_2mortal(newSVpv(num, 0)));
     PUTBACK;
 
-    count = call_method("Math::BigInt::new", G_SCALAR);
+    count = call_method("new", G_SCALAR);
 
     SPAGAIN;
 

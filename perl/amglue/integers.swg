@@ -135,8 +135,9 @@ typemap_in_signed(intmax_t)
 
 %define typemap_out_unsigned(type)
 %typemap(out) type {
+    SP += argvi; PUTBACK;
     $result = sv_2mortal(amglue_newSVu64($1));
-    argvi++;
+    SPAGAIN; SP -= argvi; argvi++;
 }
 %enddef
 
@@ -159,8 +160,9 @@ typemap_out_unsigned(uintmax_t)
 
 %define typemap_out_signed(type)
 %typemap(out) type {
+    SP += argvi; PUTBACK;
     $result = sv_2mortal(amglue_newSVi64($1));
-    argvi++;
+    SPAGAIN; SP -= argvi; argvi++;
 }
 %enddef
 

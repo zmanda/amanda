@@ -320,6 +320,7 @@ sub generate_timestamp {
     /* if there was an error, assume that fsu_blocksize isn't changed,
      * and return undef. */
     if ($1->fsu_blocksize) {
+	SP += argvi; PUTBACK; /* save the perl stack so amglue_newSVi64 doesn't kill it */
 	hv = (HV *)sv_2mortal((SV *)newHV());
 	hv_store(hv, "blocksize", 9, amglue_newSVi64($1->fsu_blocksize), 0);
 	hv_store(hv, "blocks", 6, amglue_newSVi64($1->fsu_blocks), 0);
@@ -330,6 +331,7 @@ sub generate_timestamp {
 	hv_store(hv, "ffree", 5, amglue_newSVi64($1->fsu_ffree), 0);
 
 	$result = newRV((SV *)hv);
+	SPAGAIN; SP -= argvi;
 	argvi++;
     }
 }

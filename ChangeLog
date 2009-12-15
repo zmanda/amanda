@@ -1,3 +1,10 @@
+2009-12-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/amglue/amglue.h: amglue_newSv[iu]64 requires special care
+	  when used in an outgoing typemap, due to stack stomping
+	* perl/Amanda/Archive.swg perl/Amanda/Config.swg
+	  perl/Amanda/Device.swg perl/Amanda/Util.swg perl/amglue/bigint.c
+	  perl/amglue/integers.swg: exercise care as directed
+
 2009-12-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/extract_list.c: Wait to parse the header before
 	  confirming destination directory. Unlink files only for GNUTAR

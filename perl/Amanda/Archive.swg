@@ -250,8 +250,9 @@ is_number(char *str, int len, int *result)
 }
 %typemap(argout) off_t *want_position {
     if ($1) {
-	$result = amglue_newSVi64(*$1);
-	argvi++;
+	SP += argvi; PUTBACK;
+	$result = sv_2mortal(amglue_newSVi64(*$1));
+	SPAGAIN; SP -= argvi; argvi++;
     }
 }
 

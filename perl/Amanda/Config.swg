@@ -400,13 +400,15 @@ amglue_copy_to_tag(data_path_t, getconf);
 		break;
 
 	    case CONFTYPE_SIZE:
+		SP += argvi; PUTBACK;
 		$result = sv_2mortal(amglue_newSVi64(val_t__size($1)));
-		argvi++;
+		SPAGAIN; SP -= argvi; argvi++;
 		break;
 
 	    case CONFTYPE_INT64:
+		SP += argvi; PUTBACK;
 		$result = sv_2mortal(amglue_newSVi64(val_t__int64($1)));
-		argvi++;
+		SPAGAIN; SP -= argvi; argvi++;
 		break;
 
 	    case CONFTYPE_BOOLEAN:	    /* all same as INT.. */
@@ -421,12 +423,12 @@ amglue_copy_to_tag(data_path_t, getconf);
 	    case CONFTYPE_SEND_AMREPORT_ON:
 	    case CONFTYPE_DATA_PATH:
 	    case CONFTYPE_INT:
+		SP += argvi; PUTBACK;
 		$result = sv_2mortal(amglue_newSVi64(val_t__int($1)));
-		argvi++;
+		SPAGAIN; SP -= argvi; argvi++;
 		break;
 
            case CONFTYPE_ESTIMATELIST: {
-		#AV *elist = (AV *)sv_2mortal((SV *)newAV());
 		AV *elist = newAV();
 		estimatelist_t el;
 		for (el=val_t__estimatelist($1); el != NULL; el = el->next) {
@@ -438,8 +440,9 @@ amglue_copy_to_tag(data_path_t, getconf);
 	    }
 
 	    case CONFTYPE_TIME:
+		SP += argvi; PUTBACK;
 		$result = sv_2mortal(amglue_newSVi64(val_t__time($1)));
-		argvi++;
+		SPAGAIN; SP -= argvi; argvi++;
 		break;
 
 	    case CONFTYPE_REAL:

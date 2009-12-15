@@ -413,8 +413,9 @@ typedef struct Device {
 	    $1 = &sz;
 	}
 	%typemap(argout) guint64 *actual_size {
+	    SP += argvi; PUTBACK;
 	    $result = sv_2mortal(amglue_newSVu64(*$1));
-	    argvi++;
+	    SPAGAIN; SP -= argvi; argvi++;
 	}
 	gboolean
 	write_from_connection(DirectTCPConnection *conn, guint64 size, guint64 *actual_size) {
@@ -492,9 +493,11 @@ typedef struct Device {
 			  PropertySource *source, gboolean *val_found) {
 	    /* if the result is valid */
 	    if (*$4) {
-		/* move data from $1 to $result, somehow */
+		/* move data from $1 to $result, somehow, being careful to
+		 * save the perl stack while doing so */
+		SP += argvi; PUTBACK;
 		$result = set_sv_from_gvalue($1);
-		argvi++;
+		SPAGAIN; SP -= argvi; argvi++;
 
 		/* free any memory for the GValue */
 		g_value_unset($1);

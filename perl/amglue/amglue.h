@@ -123,6 +123,16 @@ void croak_gerror(const char *domain, GError **error);
  * Math::BigInt object.  Any failure is fatal.  *All* C-to-Perl integer conversions
  * must use these functions.
  *
+ * NOTE - NOTE - NOTE
+ *
+ * Due to the way SWIG constructs return values, *any* outgoing typemap (out or
+ * argout) must use the following syntax:
+ *   SP += argvi; PUTBACK;
+ *   $result = sv_2mortal(amglue_newSVi64(...));
+ *   SPAGAIN; SP -= argvi; argvi++;
+ * This has the effect of saving the arguments added to the perl stack so far, by
+ * setting the global perl stack to a point above them.
+ *
  * @param v: value to convert
  * @returns: pointer to a new SV (refcount=1)
  */
