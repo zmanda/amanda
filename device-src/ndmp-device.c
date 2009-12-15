@@ -151,7 +151,6 @@ open_connection(
 	NdmpDevice *self)
 {
     if (!self->ndmp) {
-	char *errmsg = NULL;
 	char *ident = g_strdup_printf("tape=%s", self->ndmp_device_name);
 
 	self->ndmp = ndmp_connection_get(
@@ -162,7 +161,8 @@ open_connection(
 	    self->ndmp_password);
 	g_free(ident);
 
-	if ((errmsg = ndmp_connection_err_msg(self->ndmp))) {
+	if (ndmp_connection_err_code(self->ndmp)) {
+	    char *errmsg = ndmp_connection_err_msg(self->ndmp);
 	    device_set_error(DEVICE(self),
 		g_strdup_printf("could not connect to ndmp-server '%s:%d': %s",
 		    self->ndmp_hostname, self->ndmp_port, errmsg),

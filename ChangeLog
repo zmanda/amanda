@@ -1,4 +1,8 @@
 2009-12-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/ndmp-device.c: use err_code, instead of err_msg, to
+	  detect an NDMPConnection error
+
+2009-12-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/ndmp-device.c: fix use of ndmp4_* enumerated types
 
 2009-12-15  Jean-Louis Martineau <martineau@zmanda.com>
