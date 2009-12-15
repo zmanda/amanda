@@ -266,7 +266,7 @@ close_ndmp_device(
 static gboolean
 ndmp_mtio(
     NdmpDevice *self,
-    ndmp4_tape_mtio_op tape_op,
+    ndmp9_tape_mtio_op tape_op,
     gint count)
 {
     if (!ndmp_connection_tape_mtio(self->ndmp, tape_op, count)) {
@@ -936,10 +936,10 @@ accept_impl(
     gpointer prolong_data)
 {
     NdmpDevice *self = NDMP_DEVICE(dself);
-    ndmp4_mover_state state;
+    ndmp9_mover_state state;
     guint64 bytes_moved;
-    ndmp4_mover_mode mode;
-    ndmp4_mover_pause_reason reason;
+    ndmp9_mover_mode mode;
+    ndmp9_mover_pause_reason reason;
     guint64 seek_position;
 
     g_assert(self->listen_addrs);
@@ -1040,9 +1040,9 @@ write_from_connection_impl(
     NdmpDevice *self = NDMP_DEVICE(dself);
     DirectTCPConnectionNDMP *nconn = DIRECTTCP_CONNECTION_NDMP(dtcpconn);
     gboolean eom = FALSE, eof = FALSE, eow = FALSE;
-    ndmp4_mover_state mover_state;
-    ndmp4_mover_halt_reason halt_reason;
-    ndmp4_mover_pause_reason pause_reason;
+    ndmp9_mover_state mover_state;
+    ndmp9_mover_halt_reason halt_reason;
+    ndmp9_mover_pause_reason pause_reason;
     guint64 bytes_moved_before, bytes_moved_after;
     gchar *err;
 
@@ -1165,9 +1165,9 @@ read_to_connection_impl(
     NdmpDevice *self = NDMP_DEVICE(dself);
     DirectTCPConnectionNDMP *nconn = DIRECTTCP_CONNECTION_NDMP(dtcpconn);
     gboolean eom = FALSE, eof = FALSE, eow = FALSE;
-    ndmp4_mover_state mover_state;
-    ndmp4_mover_halt_reason halt_reason;
-    ndmp4_mover_pause_reason pause_reason;
+    ndmp9_mover_state mover_state;
+    ndmp9_mover_halt_reason halt_reason;
+    ndmp9_mover_pause_reason pause_reason;
     guint64 bytes_moved_before, bytes_moved_after;
     gchar *err;
 
@@ -1517,9 +1517,9 @@ directtcp_connection_ndmp_close(DirectTCPConnection *dself)
 {
     DirectTCPConnectionNDMP *self = DIRECTTCP_CONNECTION_NDMP(dself);
     char *rv = NULL;
-    ndmp4_mover_state state;
+    ndmp9_mover_state state;
     guint64 bytes_moved;
-    ndmp4_mover_halt_reason reason;
+    ndmp9_mover_halt_reason reason;
     gboolean expect_notif = FALSE;
 
     /* based on the current state, we may need to abort or stop the
