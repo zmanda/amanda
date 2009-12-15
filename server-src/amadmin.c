@@ -2106,11 +2106,17 @@ disklist_one(
     case COMP_BEST:
 	g_printf("CLIENT BEST\n");
 	break;
+    case COMP_CUST:
+	g_printf("CLIENT CUSTOM\n");
+	break;
     case COMP_SERVER_FAST:
 	g_printf("SERVER FAST\n");
 	break;
     case COMP_SERVER_BEST:
 	g_printf("SERVER BEST\n");
+	break;
+    case COMP_SERVER_CUST:
+	g_printf("SERVER CUSTOM\n");
 	break;
     }
     if(dp->compress != COMP_NONE) {

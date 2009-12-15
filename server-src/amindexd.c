@@ -1550,33 +1550,50 @@ main(
 	    if (dp->line == 0) {
 		reply(200, "NODLE");
 	    } else {
-		b64disk = amxml_format_tag("disk", dp->name);
-		optionstr = xml_optionstr(dp, their_features, NULL, 0);
-		l = vstralloc("<dle>\n",
-			      "  <program>", dp->program, "</program>\n", NULL);
-		if (dp->application) {
-		    application_t *application;
-		    char *xml_app;
+		GPtrArray *errarray;
+		guint      i;
 
-		    application = lookup_application(dp->application);
-		    g_assert(application != NULL);
-		    xml_app = xml_application(dp, application, their_features);
-		    vstrextend(&l, xml_app, NULL);
-		    amfree(xml_app);
+		b64disk = amxml_format_tag("disk", dp->name);
+		dp->host->features = their_features;
+		errarray = validate_optionstr(dp);
+		if (errarray->len > 0) {
+		    for (i=0; i < errarray->len; i++) {
+			g_debug(_("ERROR: %s:%s %s"),
+				dump_hostname, disk_name,
+				(char *)g_ptr_array_index(errarray, i));
+		    }
+		    g_ptr_array_free(errarray, TRUE);
+		    reply(200, "NODLE");
+		} else {
+		    optionstr = xml_optionstr(dp, 0);
+		    l = vstralloc("<dle>\n",
+			      "  <program>", dp->program, "</program>\n", NULL);
+		    if (dp->application) {
+			application_t *application;
+			char *xml_app;
+
+			application = lookup_application(dp->application);
+			g_assert(application != NULL);
+			xml_app = xml_application(dp, application,
+						  their_features);
+			vstrextend(&l, xml_app, NULL);
+			amfree(xml_app);
+		    }
+		    vstrextend(&l, "  ", b64disk, "\n", NULL);
+		    if (dp->device) {
+			char *b64device = amxml_format_tag("diskdevice",
+							   dp->device);
+			vstrextend(&l, "  ", b64device, "\n", NULL);
+			amfree(b64device);
+		    }
+		    vstrextend(&l, optionstr, "</dle>\n", NULL);
+		    ql = quote_string(l);
+		    reply(200, "%s", ql);
+		    amfree(optionstr);
+		    amfree(l);
+		    amfree(ql);
+		    amfree(b64disk);
 		}
-		vstrextend(&l, "  ", b64disk, "\n", NULL);
-		if (dp->device) {
-		    char *b64device = amxml_format_tag("diskdevice", dp->device);
-		    vstrextend(&l, "  ", b64device, "\n", NULL);
-		    amfree(b64device);
-		}
-		vstrextend(&l, optionstr, "</dle>\n", NULL);
-		ql = quote_string(l);
-		reply(200, "%s", ql);
-		amfree(optionstr);
-		amfree(l);
-		amfree(ql);
-		amfree(b64disk);
 	    }
 	} else if (strcmp(cmd, "LISTDISK") == 0) {
 	    char *qname;

@@ -1,3 +1,15 @@
+2009-12-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c: Add validate_optionstr,  optionstr and
+	  xml_optionstr no longer do validation..
+	* server-src/diskfile.h: Add validate_optionstr, change prototype for
+	  optionstr and xml_optionstr.
+	* server-src/amadmin.c: Add missing case.
+	* server-src/amcheck.c, server-src/amindexd.c, server-src/planner.c:
+	  Use validate_optionstr, Change for new *_optionstr prototype.
+	* server-src/driver.c: Use validate_optionstr.
+	* server-src/driverio.c: Change for new *_optionstr prototype.
+	* installcheck/amdump.pl: Check planner error from validate_optionstr.
+
 2009-12-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_NDMP.pl device-src/ndmp-device.c
 	  ndmp-src/ndmpconnobj.c ndmp-src/ndmpconnobj.h: return an object with

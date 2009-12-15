@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 2;
+use Test::More tests => 4;
 
 use lib "@amperldir@";
 use Installcheck::Dumpcache;
@@ -62,5 +62,26 @@ $testconf->add_dle('does-not-exist.example.com / installcheck-test');
 $testconf->write();
 
 ok(!run('amdump', 'TESTCONF'), "amdump fails with nonexistent client");
+
+#check failure in validate_optstr.
+$testconf = Installcheck::Run::setup();
+$testconf->add_dle(<<EODLE);
+localhost diskname2 $diskname {
+    installcheck-test
+    program "APPLICATION"
+    application {
+        plugin "amgtar"
+        property "ATIME-PRESERVE" "NO"
+    }
+    compress client custom
+}
+EODLE
+$testconf->write();
+
+ok(!run("$amlibexecdir/planner", 'TESTCONF'), "amdump fails in validate_optstr");
+open(my $logfile, "<", "$CONFIG_DIR/TESTCONF/log/log")
+	or die("opening log: $!");
+my $logline = grep(/^\S+ planner localhost diskname2 \d* 0 \[client custom compression with no compression program specified\]/, <$logfile>);
+ok($logline, "planner fail without 'client custom compression with no compression program specified'");
 
 Installcheck::Run::cleanup();

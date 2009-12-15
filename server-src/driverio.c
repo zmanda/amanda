@@ -441,7 +441,7 @@ dumper_cmd(
 	    g_snprintf(numberport, SIZEOF(numberport), "%d", dumper->output_port);
 	    features = am_feature_to_string(dp->host->features);
 	    if (am_has_feature(dp->host->features, fe_req_xml)) {
-		o = xml_optionstr(dp, dp->host->features, NULL, 1);
+		o = xml_optionstr(dp, 1);
 		if (application) {
 		    char *xml_app;
 		    xml_app = xml_application(dp, application,
@@ -451,10 +451,7 @@ dumper_cmd(
 		}
 		o = quote_string(o);
 	    } else {
-		o = optionstr(dp, dp->host->features, NULL);
-	    }
-	    if ( o == NULL ) {
-	      error(_("problem with option string, check the dumptype definition.\n"));
+		o = optionstr(dp);
 	    }
 
 	    g_assert(dp->program);
@@ -575,10 +572,7 @@ chunker_cmd(
 	    g_snprintf(use, SIZEOF(use), "%lld",
 		    (long long)h[0]->reserved);
 	    features = am_feature_to_string(dp->host->features);
-	    o = optionstr(dp, dp->host->features, NULL);
-	    if ( o == NULL ) {
-	      error(_("problem with option string, check the dumptype definition.\n"));
-	    }
+	    o = optionstr(dp);
 	    cmdline = vstralloc(cmdstr[cmd],
 			    " ", disk2serial(dp),
 			    " ", qdest,

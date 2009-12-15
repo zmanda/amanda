@@ -1560,24 +1560,35 @@ start_host(
 	    char *l;
 	    char *es;
 	    size_t l_len;
-	    char *o;
+	    char *o = NULL;
 	    char *calcsize;
 	    char *qname, *b64disk;
 	    char *qdevice, *b64device = NULL;
+	    GPtrArray *errarray;
+	    guint      i;
 
 	    if(dp->up != DISK_READY || dp->todo != 1) {
 		continue;
 	    }
-	    if (am_has_feature(hostp->features, fe_req_xml)) {
-		o = xml_optionstr(dp, hostp->features, outf, 0);
-	    } else {
-		o = optionstr(dp, hostp->features, outf);
-	    }
-	    if (o == NULL) {
-	        remote_errors++;
-		continue;
-	    }
 	    qname = quote_string(dp->name);
+
+	    errarray = validate_optionstr(dp);
+	    if (errarray->len > 0) {
+		for (i=0; i < errarray->len; i++) {
+		    g_fprintf(outf, _("ERROR: %s:%s %s\n"),
+			      hostp->hostname, qname,
+			      (char *)g_ptr_array_index(errarray, i));
+		}
+		g_ptr_array_free(errarray, TRUE);
+		amfree(qname);
+		remote_errors++;
+		continue;
+	    } else  if (am_has_feature(hostp->features, fe_req_xml)) {
+		o = xml_optionstr(dp, 0);
+	    } else {
+		o = optionstr(dp);
+	    }
+
 	    b64disk = amxml_format_tag("disk", dp->name);
 	    qdevice = quote_string(dp->device); 
 	    if (dp->device)

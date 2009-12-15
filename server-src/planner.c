@@ -1436,6 +1436,7 @@ static void getsize(
 	    char *s = NULL;
 	    char *es;
 	    size_t s_len = 0;
+	    GPtrArray *errarray;
 
 	    if(dp->todo == 0) continue;
 
@@ -1448,6 +1449,21 @@ static void getsize(
 	    }
 
 	    qname = quote_string(dp->name);
+
+	    errarray = validate_optionstr(dp);
+	    if (errarray->len > 0) {
+		guint i;
+		for (i=0; i < errarray->len; i++) {
+		    log_add(L_FAIL, _("%s %s %s 0 [%s]"),
+			    dp->host->hostname, qname,
+			    planner_timestamp,
+			    (char *)g_ptr_array_index(errarray, i));
+		}
+		amfree(qname);
+		est(dp)->state = DISK_DONE;
+		continue;
+	    }
+		    
 	    b64disk = amxml_format_tag("disk", dp->name);
 	    qdevice = quote_string(dp->device);
 	    estimate = (estimate_t)GPOINTER_TO_INT(dp->estimatelist->data);
@@ -1529,10 +1545,7 @@ static void getsize(
 		    spindlestr = vstralloc("  <spindle>",
 					   spindle,
 					   "</spindle>\n", NULL);
-		    o = xml_optionstr(dp, hostp->features, NULL, 0);
-		    if (o == NULL) {
-			error(_("problem with option string, check the dumptype definition.\n"));
-		    }
+		    o = xml_optionstr(dp, 0);
 		    
 		    if (strcmp(dp->program,"DUMP") == 0 ||
 			strcmp(dp->program,"GNUTAR") == 0) {
@@ -1591,7 +1604,7 @@ static void getsize(
 			if (am_has_feature(hostp->features,
 					   fe_sendsize_req_options)){
 			    exclude1 = " OPTIONS |";
-			    exclude2 = optionstr(dp, hostp->features, NULL);
+			    exclude2 = optionstr(dp);
 			    if ( exclude2 == NULL ) {
 				error(_("problem with option string, check the dumptype definition.\n"));
 			    }

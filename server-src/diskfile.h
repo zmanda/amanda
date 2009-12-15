@@ -147,15 +147,15 @@ void remove_disk(disklist_t *list, disk_t *disk);
 
 void dump_queue(char *str, disklist_t q, int npr, FILE *f);
 
-char *optionstr(disk_t *dp, am_feature_t *their_features, FILE *fdout);
+char *optionstr(disk_t *dp);
 
 /* xml_optionstr()
  * to_server must be set to 1 if the result is sent to another server
  *           application, eg. driver to dumper.
  *           It must be set to 0 if the result is sent to the client.
  */
-char *xml_optionstr(disk_t *dp, am_feature_t *their_features, FILE *fdout,
-		    int to_server);
+GPtrArray *validate_optionstr(disk_t *dp);
+char *xml_optionstr(disk_t *dp, int to_server);
 char *xml_estimate(estimatelist_t estimatelist, am_feature_t *their_features);
 char *clean_dle_str_for_client(char *dle_str);
 char *xml_application(disk_t *dp, application_t *application,
