@@ -142,7 +142,9 @@ ndmp4_error
 ndmp_connection_err_code(
     NDMPConnection *self)
 {
-    if (self->last_rc == NDMCONN_CALL_STATUS_REPLY_ERROR) {
+    if (self->startup_err) {
+	return NDMP4_IO_ERR;
+    } else if (self->last_rc == NDMCONN_CALL_STATUS_REPLY_ERROR) {
 	return self->conn->last_reply_error;
     } else {
 	return NDMP4_NO_ERR;
@@ -153,7 +155,9 @@ gchar *
 ndmp_connection_err_msg(
     NDMPConnection *self)
 {
-    if (self->last_rc == NDMCONN_CALL_STATUS_REPLY_ERROR) {
+    if (self->startup_err) {
+	return g_strdup(self->startup_err);
+    } else if (self->last_rc == NDMCONN_CALL_STATUS_REPLY_ERROR) {
 	return g_strdup_printf("Error from NDMP server: %s",
 		    ndmp9_error_to_str(self->conn->last_reply_error));
     } else if (self->last_rc) {
@@ -182,6 +186,8 @@ ndmp_connection_set_verbose(
     device_ndmlog.deliver = ndmp_connection_ndmlog_deliver;
     device_ndmlog.cookie = NULL; /* unused */
 
+    g_assert(!self->startup_err);
+
     if (verbose) {
 	ndmconn_set_snoop(self->conn,
 	    &device_ndmlog,
@@ -200,6 +206,8 @@ ndmp_connection_scsi_open(
 	NDMPConnection *self,
 	gchar *device)
 {
+    g_assert(!self->startup_err);
+
     NDMP_TRANS(self, ndmp4_scsi_open)
 	request->device = device;
 	NDMP_CALL(self);
@@ -212,6 +220,8 @@ gboolean
 ndmp_connection_scsi_close(
 	NDMPConnection *self)
 {
+    g_assert(!self->startup_err);
+
     NDMP_TRANS_NO_REQUEST(self, ndmp4_scsi_close)
 	NDMP_CALL(self);
 	NDMP_FREE();
@@ -224,20 +234,22 @@ ndmp_connection_scsi_execute_cdb(
 	NDMPConnection *self,
 	guint32 flags, /* NDMP4_SCSI_DATA_{IN,OUT}; OUT = to device */
 	guint32 timeout, /* in ms */
-	gsize cdb_len,
 	gpointer cdb,
-	gsize dataout_len,
+	gsize cdb_len,
 	gpointer dataout,
+	gsize dataout_len,
 	gsize *actual_dataout_len, /* output */
-	gsize datain_max_len, /* output buffer size */
 	gpointer datain, /* output */
+	gsize datain_max_len, /* output buffer size */
 	gsize *actual_datain_len, /* output */
 	guint8 *status, /* output */
-	gsize ext_sense_max_len, /* output buffer size */
 	gpointer ext_sense, /* output */
+	gsize ext_sense_max_len, /* output buffer size */
 	gsize *actual_ext_sense_len /* output */
 	)
 {
+    g_assert(!self->startup_err);
+
     if (status)
 	*status = 0;
     if (actual_dataout_len)
@@ -286,6 +298,8 @@ ndmp_connection_tape_open(
 	gchar *device,
 	ndmp9_tape_open_mode mode)
 {
+    g_assert(!self->startup_err);
+
     NDMP_TRANS(self, ndmp4_tape_open)
 	request->device = device;
 	request->mode = mode;
@@ -299,6 +313,8 @@ gboolean
 ndmp_connection_tape_close(
 	NDMPConnection *self)
 {
+    g_assert(!self->startup_err);
+
     NDMP_TRANS_NO_REQUEST(self, ndmp4_tape_close)
 	NDMP_CALL(self);
 	NDMP_FREE();
@@ -309,9 +325,11 @@ ndmp_connection_tape_close(
 gboolean
 ndmp_connection_tape_mtio(
 	NDMPConnection *self,
-	ndmp4_tape_mtio_op tape_op,
+	ndmp9_tape_mtio_op tape_op,
 	gint count)
 {
+    g_assert(!self->startup_err);
+
     NDMP_TRANS(self, ndmp4_tape_mtio)
 	request->tape_op = tape_op;
 	request->count = count;
@@ -328,6 +346,8 @@ ndmp_connection_tape_write(
 	guint64 len,
 	guint64 *count)
 {
+    g_assert(!self->startup_err);
+
     *count = 0;
 
     NDMP_TRANS(self, ndmp4_tape_write)
@@ -347,6 +367,8 @@ ndmp_connection_tape_read(
 	guint64 count,
 	guint64 *out_count)
 {
+    g_assert(!self->startup_err);
+
     *out_count = 0;
 
     NDMP_TRANS(self, ndmp4_tape_read)
@@ -366,6 +388,8 @@ ndmp_connection_tape_get_state(
 	guint64 *file_num,
 	guint64 *blockno)
 {
+    g_assert(!self->startup_err);
+
     NDMP_TRANS_NO_REQUEST(self, ndmp4_tape_get_state)
 	NDMP_CALL(self);
 
@@ -394,6 +418,8 @@ ndmp_connection_mover_set_record_size(
 	NDMPConnection *self,
 	guint32 record_size)
 {
+    g_assert(!self->startup_err);
+
     NDMP_TRANS(self, ndmp4_mover_set_record_size)
 	/* this field is "len" in ndmp4, but "record_size" in ndmp9 */
 	request->len = record_size;
@@ -409,6 +435,8 @@ ndmp_connection_mover_set_window(
 	guint64 offset,
 	guint64 length)
 {
+    g_assert(!self->startup_err);
+
     NDMP_TRANS(self, ndmp4_mover_set_window)
 	request->offset = offset;
 	request->length = length;
@@ -424,6 +452,8 @@ ndmp_connection_mover_read(
 	guint64 offset,
 	guint64 length)
 {
+    g_assert(!self->startup_err);
+
     NDMP_TRANS(self, ndmp4_mover_read)
 	request->offset = offset;
 	request->length = length;
@@ -437,6 +467,8 @@ gboolean
 ndmp_connection_mover_continue(
 	NDMPConnection *self)
 {
+    g_assert(!self->startup_err);
+
     NDMP_TRANS_NO_REQUEST(self, ndmp4_mover_continue)
 	NDMP_CALL(self);
 	NDMP_FREE();
@@ -447,10 +479,12 @@ ndmp_connection_mover_continue(
 gboolean
 ndmp_connection_mover_listen(
 	NDMPConnection *self,
-	ndmp4_mover_mode mode,
-	ndmp4_addr_type addr_type,
+	ndmp9_mover_mode mode,
+	ndmp9_addr_type addr_type,
 	DirectTCPAddr **addrs)
 {
+    g_assert(!self->startup_err);
+
     unsigned int naddrs, i;
     *addrs = NULL;
 
@@ -481,6 +515,8 @@ gboolean
 ndmp_connection_mover_abort(
 	NDMPConnection *self)
 {
+    g_assert(!self->startup_err);
+
     NDMP_TRANS_NO_REQUEST(self, ndmp4_mover_abort)
 	NDMP_CALL(self);
 	NDMP_FREE();
@@ -492,6 +528,8 @@ gboolean
 ndmp_connection_mover_stop(
 	NDMPConnection *self)
 {
+    g_assert(!self->startup_err);
+
     NDMP_TRANS_NO_REQUEST(self, ndmp4_mover_stop)
 	NDMP_CALL(self);
 	NDMP_FREE();
@@ -503,6 +541,8 @@ gboolean
 ndmp_connection_mover_close(
 	NDMPConnection *self)
 {
+    g_assert(!self->startup_err);
+
     NDMP_TRANS_NO_REQUEST(self, ndmp4_mover_close)
 	NDMP_CALL(self);
 	NDMP_FREE();
@@ -512,9 +552,11 @@ ndmp_connection_mover_close(
 
 gboolean ndmp_connection_mover_get_state(
 	NDMPConnection *self,
-	ndmp4_mover_state *state,
+	ndmp9_mover_state *state,
 	guint64 *bytes_moved)
 {
+    g_assert(!self->startup_err);
+
     NDMP_TRANS_NO_REQUEST(self, ndmp4_mover_get_state)
 	NDMP_CALL(self);
 	if (state) *state = reply->state;
@@ -529,6 +571,8 @@ ndmconn_handle_notify(
     NDMPConnection *self,
     struct ndmp_msg_buf *nmb)
 {
+    g_assert(!self->startup_err);
+
     if (nmb->header.message_type == NDMP0_MESSAGE_REQUEST) {
 	switch (nmb->header.message) {
 	    case NDMP4_NOTIFY_DATA_HALTED: {
@@ -584,12 +628,14 @@ ndmconn_unexpected_impl (struct ndmconn *conn, struct ndmp_msg_buf *nmb)
 gboolean
 ndmp_connection_wait_for_notify(
 	NDMPConnection *self,
-	ndmp4_data_halt_reason *data_halt_reason,
-	ndmp4_mover_halt_reason *mover_halt_reason,
-	ndmp4_mover_pause_reason *mover_pause_reason,
+	ndmp9_data_halt_reason *data_halt_reason,
+	ndmp9_mover_halt_reason *mover_halt_reason,
+	ndmp9_mover_pause_reason *mover_pause_reason,
 	guint64 *mover_pause_seek_position)
 {
     struct ndmp_msg_buf nmb;
+
+    g_assert(!self->startup_err);
 
     /* initialize output parameters */
     if (data_halt_reason)
@@ -698,13 +744,11 @@ ndmp_connection_get(
     gint port,
     gchar *identifier,
     gchar *username,
-    gchar *password,
-    gchar **errmsg)
+    gchar *password)
 {
     NDMPConnection *self = NULL;
     gchar *key = NULL;
-
-    *errmsg = NULL;
+    gchar *errmsg = NULL;
 
     g_static_mutex_lock(&instances_mutex);
     key = ndmp_connection_key(hostname, port, identifier);
@@ -723,7 +767,7 @@ ndmp_connection_get(
 
 	conn = ndmconn_initialize(NULL, "amanda-server");
 	if (!conn) {
-	    *errmsg = "could not initialize ndmconn";
+	    errmsg = "could not initialize ndmconn";
 	    goto out;
 	}
 
@@ -732,19 +776,19 @@ ndmp_connection_get(
 	conn->unexpected = ndmconn_unexpected_impl;
 
 	if (ndmconn_connect_host_port(conn, hostname, port, 0) != 0) {
-	    *errmsg = ndmconn_get_err_msg(conn);
+	    errmsg = ndmconn_get_err_msg(conn);
 	    ndmconn_destruct(conn);
 	    goto out;
 	}
 
 	if (ndmconn_auth_md5(conn, username, password) != 0) {
-	    *errmsg = ndmconn_get_err_msg(conn);
+	    errmsg = ndmconn_get_err_msg(conn);
 	    ndmconn_destruct(conn);
 	    goto out;
 	}
 
 	if (conn->protocol_version != NDMP4VER) {
-	    *errmsg = g_strdup_printf("Only NDMPv4 is supported; got NDMPv%d",
+	    errmsg = g_strdup_printf("Only NDMPv4 is supported; got NDMPv%d",
 		conn->protocol_version);
 	    ndmconn_destruct(conn);
 	    goto out;
@@ -764,6 +808,14 @@ ndmp_connection_get(
 out:
     if (key)
 	g_free(key);
+
+    /* make a "fake" error connection if we have an error message.  Note that
+     * this object is not added to the instances hash */
+    if (errmsg) {
+	self = NDMP_CONNECTION(g_object_new(TYPE_NDMP_CONNECTION, NULL));
+	self->startup_err = errmsg;
+	errmsg = NULL;
+    }
 
     g_static_mutex_unlock(&instances_mutex);
     return self;

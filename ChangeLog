@@ -1,4 +1,11 @@
 2009-12-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_NDMP.pl device-src/ndmp-device.c
+	  ndmp-src/ndmpconnobj.c ndmp-src/ndmpconnobj.h: return an object with
+	  an error set instead of just returning an error from the constructor
+	* perl/Makefile.am perl/Amanda/NDMP.swg: SWIGging of ndmpconnobj
+	* perl/Amanda/NDMP.pod: docs for same
+
+2009-12-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndmpconnobj.c ndmp-src/ndmpconnobj.h: add ndmp_scsi_*
 
 2009-12-15  Dustin J. Mitchell <dustin@zmanda.com>

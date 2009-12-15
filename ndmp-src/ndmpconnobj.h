@@ -48,13 +48,14 @@ typedef struct NDMPConnection_ {
      * notifications, and that only one "queued" version of each notification
      * is possible.  Each reason is 0 if no such notification has been
      * received.  */
-    ndmp4_data_halt_reason data_halt_reason;
-    ndmp4_mover_halt_reason mover_halt_reason;
-    ndmp4_mover_pause_reason mover_pause_reason;
+    ndmp9_data_halt_reason data_halt_reason;
+    ndmp9_mover_halt_reason mover_halt_reason;
+    ndmp9_mover_pause_reason mover_pause_reason;
     guint64 mover_pause_seek_position;
 
     /* error info */
     int last_rc;
+    gchar *startup_err;
 } NDMPConnection;
 
 typedef struct NDMPConnectionClass_ {
@@ -68,7 +69,8 @@ typedef struct NDMPConnectionClass_ {
 /* Error handling */
 
 /* Get the last NDMP error on this connection; returns NDMP4_NO_ERR (0)
- * if no error occurred, or if there was a communications error
+ * if no error occurred, or if there was a communications error.  This
+ * will also detect errors from the constructor.
  *
  * @param self: object
  * @returns: error code
@@ -110,19 +112,19 @@ gboolean ndmp_connection_scsi_close(
 
 gboolean ndmp_connection_scsi_execute_cdb(
 	NDMPConnection *self,
-	guint32 flags, /* NDMP4_SCSI_DATA_{IN,OUT}; OUT = to device */
+	guint32 flags, /* bitmask: NDMP9_SCSI_DATA_DIR_{IN,OUT}; OUT = to device */
 	guint32 timeout, /* in ms */
-	gsize cdb_len,
 	gpointer cdb,
-	gsize dataout_len,
+	gsize cdb_len,
 	gpointer dataout,
+	gsize dataout_len,
 	gsize *actual_dataout_len, /* output */
-	gsize datain_max_len, /* output buffer size */
 	gpointer datain, /* output */
+	gsize datain_max_len, /* output buffer size */
 	gsize *actual_datain_len, /* output */
 	guint8 *status, /* output */
-	gsize ext_sense_max_len, /* output buffer size */
 	gpointer ext_sense, /* output */
+	gsize ext_sense_max_len, /* output buffer size */
 	gsize *actual_ext_sense_len /* output */
 	);
 
@@ -136,7 +138,7 @@ gboolean ndmp_connection_tape_close(
 
 gboolean ndmp_connection_tape_mtio(
 	NDMPConnection *self,
-	ndmp4_tape_mtio_op tape_op,
+	ndmp9_tape_mtio_op tape_op,
 	gint count);
 
 gboolean ndmp_connection_tape_write(
@@ -177,8 +179,8 @@ gboolean ndmp_connection_mover_continue(
 
 gboolean ndmp_connection_mover_listen(
 	NDMPConnection *self,
-	ndmp4_mover_mode mode,
-	ndmp4_addr_type addr_type,
+	ndmp9_mover_mode mode,
+	ndmp9_addr_type addr_type,
 	DirectTCPAddr **addrs);
 
 gboolean ndmp_connection_mover_abort(
@@ -192,7 +194,7 @@ gboolean ndmp_connection_mover_close(
 
 gboolean ndmp_connection_mover_get_state(
 	NDMPConnection *self,
-	ndmp4_mover_state *state,
+	ndmp9_mover_state *state,
 	guint64 *bytes_moved);
 	/* (other state variables should be added as needed) */
 
@@ -201,11 +203,11 @@ gboolean ndmp_connection_mover_get_state(
 gboolean ndmp_connection_wait_for_notify(
 	NDMPConnection *self,
 	/* NDMP_NOTIFY_DATA_HALTED */
-	ndmp4_data_halt_reason *data_halt_reason,
+	ndmp9_data_halt_reason *data_halt_reason,
 	/* NDMP_NOTIFY_MOVER_HALTED */
-	ndmp4_mover_halt_reason *mover_halt_reason,
+	ndmp9_mover_halt_reason *mover_halt_reason,
 	/* NDMP_NOTIFY_MOVER_PAUSED */
-	ndmp4_mover_pause_reason *mover_pause_reason,
+	ndmp9_mover_pause_reason *mover_pause_reason,
 	guint64 *mover_pause_seek_position);
 
 /*
@@ -217,6 +219,9 @@ gboolean ndmp_connection_wait_for_notify(
  * NDMP features are tied to the connection, so several Amanda components must
  * use the same conncection.
  *
+ * If an error occurs, this returns an empty object with its err_msg and err_code
+ * set appropriately.
+ *
  * @param hostname: hostname to connect to
  * @param port: port to connect on
  * @param identifier: arbitrary identifier to disambiguate multiple connections
@@ -224,7 +229,7 @@ gboolean ndmp_connection_wait_for_notify(
  * @param username: username to login with
  * @param password: password to login with
  * @param errmsg (output): error message on NULL return (caller must free)
- * @returns: NDMPConnection object, or NULL on error
+ * @returns: NDMPConnection object
  */
 NDMPConnection *
 ndmp_connection_get(
@@ -232,7 +237,6 @@ ndmp_connection_get(
     gint port,
     gchar *identifier,
     gchar *username,
-    gchar *password,
-    gchar **errmsg);
+    gchar *password);
 
 #endif

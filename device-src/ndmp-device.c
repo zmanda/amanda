@@ -159,15 +159,15 @@ open_connection(
 	    self->ndmp_port,
 	    ident,
 	    self->ndmp_username,
-	    self->ndmp_password,
-	    &errmsg);
+	    self->ndmp_password);
 	g_free(ident);
 
-	if (!self->ndmp) {
+	if ((errmsg = ndmp_connection_err_msg(self->ndmp))) {
 	    device_set_error(DEVICE(self),
 		g_strdup_printf("could not connect to ndmp-server '%s:%d': %s",
 		    self->ndmp_hostname, self->ndmp_port, errmsg),
 		DEVICE_STATUS_DEVICE_ERROR);
+	    g_object_unref(self->ndmp);
 	    return FALSE;
 	}
 

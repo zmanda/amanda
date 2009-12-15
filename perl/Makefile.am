@@ -20,6 +20,7 @@ INCLUDES =  \
             -I$(top_srcdir)/xfer-src \
             -I$(top_srcdir)/perl/amglue \
             -I$(top_srcdir)/gnulib \
+            -I$(top_srcdir)/ndmp-src \
             $(PERL_INC)
 
 if WANT_SERVER
@@ -273,6 +274,19 @@ libXfer_la_LIBADD = libamglue.la \
 Amanda_DATA += Amanda/Xfer.pm
 MAINTAINERCLEANFILES += Amanda/Xfer.c Amanda/Xfer.pm
 EXTRA_DIST += Amanda/Xfer.swg Amanda/Xfer.pm Amanda/Xfer.pod
+
+if WANT_NDMP
+# PACKAGE: Amanda::NDMP
+libNDMPdir = $(amperldir)/auto/Amanda/NDMP
+libNDMP_LTLIBRARIES = libNDMP.la
+libNDMP_la_SOURCES = Amanda/NDMP.c $(AMGLUE_SWG)
+libNDMP_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
+libNDMP_la_LIBADD = libamglue.la \
+	$(top_builddir)/server-src/libamserver.la
+Amanda_DATA += Amanda/NDMP.pm
+MAINTAINERCLEANFILES += Amanda/NDMP.c Amanda/NDMP.pm
+EXTRA_DIST += Amanda/NDMP.swg Amanda/NDMP.pm Amanda/NDMP.pod
+endif
 
 if WANT_SERVER
 # PACKAGE: Amanda::XferServer
