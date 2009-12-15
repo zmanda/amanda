@@ -826,6 +826,11 @@ backup_support_option(
 		bsu->data_path_set |= DATA_PATH_AMANDA;
 	    else if (strcasecmp(line+10, "DIRECTTCP") == 0)
 		bsu->data_path_set |= DATA_PATH_DIRECTTCP;
+	} else if (strncmp(line,"RECOVER-PATH ", 13) == 0) {
+	    if (strcasecmp(line+13, "CWD") == 0)
+		bsu->recover_path = RECOVER_PATH_CWD;
+	    else if (strcasecmp(line+13, "REMOTE") == 0)
+		bsu->recover_path = RECOVER_PATH_REMOTE;
 	} else {
 	    dbprintf(_("Invalid support line: %s\n"), line);
 	}

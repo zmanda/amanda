@@ -1,3 +1,11 @@
+2009-12-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/extract_list.c: Wait to parse the header before
+	  confirming destination directory. Unlink files only for GNUTAR
+	  and amgtar.
+	* client-src/client_util.c: Parse RECOVER-PATH application support
+				    result.
+	* client-src/client_util.h: Add recover_path_t.
+
 2009-12-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* contrib/convert-zd-mtx-to-robot.sh: useful conversion script
 	* NEWS man/xml-source/amanda-changers.7.xml: mention conversion script

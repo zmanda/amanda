@@ -2232,7 +2232,6 @@ void
 extract_files(void)
 {
     EXTRACT_LIST *elist;
-    char *restore_dir;
     char *l;
     int first;
     int otc;
@@ -2311,39 +2310,6 @@ extract_files(void)
 	}
     }
     g_printf("\n");
-
-    if (samba_extract_method == SAMBA_SMBCLIENT) {
-	g_printf(_("Restoring files into target host\n"));
-    } else {
-    	restore_dir = g_strdup(g_hash_table_lookup(proplist, "directory"));
-	if (!restore_dir) {
-	    restore_dir = g_get_current_dir();
-	    if (restore_dir == NULL) {
-		perror(_("extract_list: Current working directory unavailable"));
-		exit(1);
-	    }
-	}
-
-	g_printf(_("Restoring files into directory %s\n"), restore_dir);
-	check_file_overwrite(restore_dir);
-
-	dbprintf(_("Checking with user before restoring into directory %s\n"),
-		 restore_dir);
-	if (!okay_to_continue(0,0,0)) {
-            amfree(restore_dir);
-	    return;
-	}
-	g_printf("\n");
-
-	if (!do_unlink_list()) {
-	    g_fprintf(stderr, _("Can't recover because I can't cleanup the restore directory (%s)\n"),
-		      restore_dir);
-	    amfree(restore_dir);
-	    return;
-	}
-	free_unlink_list();
-	amfree(restore_dir);
-    }
 
     g_options.config = get_config_name();
     g_options.hostname = dump_hostname;
@@ -2813,6 +2779,53 @@ static void
 start_processing_data(
     ctl_data_t *ctl_data)
 {
+    char *restore_dir;
+
+    if (ctl_data->file.dumplevel == 0) {
+	restore_dir = g_strdup(g_hash_table_lookup(proplist, "directory"));
+	if (samba_extract_method == SAMBA_SMBCLIENT ||
+	    ctl_data->bsu->recover_path == RECOVER_PATH_REMOTE) {
+	    if (!restore_dir) {
+		restore_dir = g_strdup(ctl_data->file.disk);
+	    }
+	    g_printf(_("Restoring files into target host %s\n"), restore_dir);
+	} else {
+	    if (!restore_dir) {
+		restore_dir = g_get_current_dir();
+	    }
+	    g_printf(_("Restoring files into directory %s\n"), restore_dir);
+	}
+
+	# Collect files to delete befause of a bug in gnutar
+	if (strcmp(ctl_data->file.program, "GNUTAR") == 0 ||
+	    (strcmp(ctl_data->file.program, "APPLICATION") == 0 &&
+	     strcmp(ctl_data->file.application, "amgtar") == 0)) {
+	    check_file_overwrite(restore_dir);
+	} else {
+	    g_printf(_("All existing files in %s can be deleted\n"),
+		     restore_dir);
+	}
+
+	if (!okay_to_continue(0,0,0)) {
+	    free_unlink_list();
+	    amfree(restore_dir);
+	    return;
+	}
+	g_printf("\n");
+
+	# delete the files for gnutar
+	if (unlink_list) {
+	    if (!do_unlink_list()) {
+		g_fprintf(stderr, _("Can't recover because I can't cleanup the restore directory (%s)\n"),
+			  restore_dir);
+		free_unlink_list();
+		amfree(restore_dir);
+		return;
+	    }
+	    free_unlink_list();
+	}
+	amfree(restore_dir);
+    }
     if (pipe(ctl_data->child_pipe) == -1) {
 	error(_("extract_list - error setting up pipe to extractor: %s\n"),
 	      strerror(errno));

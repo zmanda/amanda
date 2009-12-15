@@ -39,6 +39,11 @@
 #include "amandad.h"		/* for g_option_t */
 #include "amxml.h"		/* for dle_t	  */
 
+typedef enum {
+    RECOVER_PATH_CWD    = 0,
+    RECOVER_PATH_REMOTE = 1,
+} recover_path_t;
+
 typedef struct backup_support_option_s {
     int config;
     int host;
@@ -61,6 +66,7 @@ typedef struct backup_support_option_s {
     int multi_estimate;
     int smb_recover_mode;
     data_path_t data_path_set;  /* bitfield of all allowed data-path */
+    recover_path_t recover_path;
 } backup_support_option_t;
 
 typedef struct client_script_result_s {
