@@ -101,6 +101,31 @@ void ndmp_connection_set_verbose(
  * All of these functions return TRUE on success.
  */
 
+gboolean ndmp_connection_scsi_open(
+	NDMPConnection *self,
+	gchar *device);
+
+gboolean ndmp_connection_scsi_close(
+	NDMPConnection *self);
+
+gboolean ndmp_connection_scsi_execute_cdb(
+	NDMPConnection *self,
+	guint32 flags, /* NDMP4_SCSI_DATA_{IN,OUT}; OUT = to device */
+	guint32 timeout, /* in ms */
+	gsize cdb_len,
+	gpointer cdb,
+	gsize dataout_len,
+	gpointer dataout,
+	gsize *actual_dataout_len, /* output */
+	gsize datain_max_len, /* output buffer size */
+	gpointer datain, /* output */
+	gsize *actual_datain_len, /* output */
+	guint8 *status, /* output */
+	gsize ext_sense_max_len, /* output buffer size */
+	gpointer ext_sense, /* output */
+	gsize *actual_ext_sense_len /* output */
+	);
+
 gboolean ndmp_connection_tape_open(
 	NDMPConnection *self,
 	gchar *device,

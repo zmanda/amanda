@@ -196,6 +196,91 @@ ndmp_connection_set_verbose(
  */
 
 gboolean
+ndmp_connection_scsi_open(
+	NDMPConnection *self,
+	gchar *device)
+{
+    NDMP_TRANS(self, ndmp4_scsi_open)
+	request->device = device;
+	NDMP_CALL(self);
+	NDMP_FREE();
+    NDMP_END
+    return TRUE;
+}
+
+gboolean
+ndmp_connection_scsi_close(
+	NDMPConnection *self)
+{
+    NDMP_TRANS_NO_REQUEST(self, ndmp4_scsi_close)
+	NDMP_CALL(self);
+	NDMP_FREE();
+    NDMP_END
+    return TRUE;
+}
+
+gboolean
+ndmp_connection_scsi_execute_cdb(
+	NDMPConnection *self,
+	guint32 flags, /* NDMP4_SCSI_DATA_{IN,OUT}; OUT = to device */
+	guint32 timeout, /* in ms */
+	gsize cdb_len,
+	gpointer cdb,
+	gsize dataout_len,
+	gpointer dataout,
+	gsize *actual_dataout_len, /* output */
+	gsize datain_max_len, /* output buffer size */
+	gpointer datain, /* output */
+	gsize *actual_datain_len, /* output */
+	guint8 *status, /* output */
+	gsize ext_sense_max_len, /* output buffer size */
+	gpointer ext_sense, /* output */
+	gsize *actual_ext_sense_len /* output */
+	)
+{
+    if (status)
+	*status = 0;
+    if (actual_dataout_len)
+	*actual_dataout_len = 0;
+    if (actual_datain_len)
+	*actual_datain_len = 0;
+    if (actual_ext_sense_len)
+	*actual_ext_sense_len = 0;
+
+    NDMP_TRANS(self, ndmp4_scsi_execute_cdb)
+	request->flags = flags;
+	request->timeout = timeout;
+	request->datain_len = datain_max_len;
+	request->cdb.cdb_len = cdb_len;
+	request->cdb.cdb_val = cdb;
+	request->dataout.dataout_len = dataout_len;
+	request->dataout.dataout_val = dataout;
+
+	NDMP_CALL(self);
+
+	if (status)
+	    *status = reply->status;
+	if (actual_dataout_len)
+	    *actual_dataout_len = reply->dataout_len;
+
+	reply->datain.datain_len = MIN(datain_max_len, reply->datain.datain_len);
+	if (actual_datain_len)
+	    *actual_datain_len = reply->datain.datain_len;
+	if (datain_max_len && datain)
+	    g_memmove(datain, reply->datain.datain_val, reply->datain.datain_len);
+
+	reply->ext_sense.ext_sense_len = MIN(ext_sense_max_len, reply->ext_sense.ext_sense_len);
+	if (actual_ext_sense_len)
+	    *actual_ext_sense_len = reply->ext_sense.ext_sense_len;
+	if (ext_sense_max_len && ext_sense)
+	    g_memmove(ext_sense, reply->ext_sense.ext_sense_val, reply->ext_sense.ext_sense_len);
+
+	NDMP_FREE();
+    NDMP_END
+    return TRUE;
+}
+
+gboolean
 ndmp_connection_tape_open(
 	NDMPConnection *self,
 	gchar *device,
