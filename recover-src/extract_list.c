@@ -2796,7 +2796,7 @@ start_processing_data(
 	    g_printf(_("Restoring files into directory %s\n"), restore_dir);
 	}
 
-	# Collect files to delete befause of a bug in gnutar
+	/* Collect files to delete befause of a bug in gnutar */
 	if (strcmp(ctl_data->file.program, "GNUTAR") == 0 ||
 	    (strcmp(ctl_data->file.program, "APPLICATION") == 0 &&
 	     strcmp(ctl_data->file.application, "amgtar") == 0)) {
@@ -2813,7 +2813,7 @@ start_processing_data(
 	}
 	g_printf("\n");
 
-	# delete the files for gnutar
+	/* delete the files for gnutar */
 	if (unlink_list) {
 	    if (!do_unlink_list()) {
 		g_fprintf(stderr, _("Can't recover because I can't cleanup the restore directory (%s)\n"),
