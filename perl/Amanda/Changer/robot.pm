@@ -1,4 +1,4 @@
-# Copyright (c) Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
 #
 # This library is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License version 2.1 as
@@ -127,12 +127,14 @@ use constant SLOT_LABELED => 3;
 sub new {
     my $class = shift;
     my ($config, $tpchanger) = @_;
-    my ($device_name) = ($tpchanger =~ /chg-robot:(.*)/);
 
-    unless (-e $device_name) {
-	return Amanda::Changer->make_error("fatal", undef,
-	    message => "'$device_name' not found");
-    }
+    # strip the "chg-foo:" prefix from $tpchanger
+    my $device_name = $tpchanger;
+    $device_name =~ s/^[^:]*://;
+
+    # get the 'chg-foo' form of this changer script
+    my $chg_name = $class;
+    $chg_name =~ s/Amanda::Changer::/chg-/;
 
     my $self = {
         interface => undef,
@@ -151,6 +153,7 @@ sub new {
 	load_poll => [0, 2, 120], # delay, poll, until
 	eject_delay => 0, # in seconds
 	unload_delay => 0, # in seconds
+	chg_name => $chg_name,
     };
     bless ($self, $class);
 
@@ -159,13 +162,13 @@ sub new {
 
     if (defined $config->{'changerdev'} and $config->{'changerdev'} ne '') {
 	return Amanda::Changer->make_error("fatal", undef,
-	    message => "'changerdev' is not allowed with chg-robot");
+	    message => "'changerdev' is not allowed with $self->{chg_name}");
     }
 
     if ($config->{'changerfile'}) {
         $self->{'statefile'} = Amanda::Config::config_dir_relative($config->{'changerfile'});
     } else {
-        my $safe_filename = "chg-robot:$device_name";
+        my $safe_filename = "$self->{chg_name}:$device_name";
         $safe_filename =~ tr/a-zA-Z0-9/-/cs;
         $safe_filename =~ s/^-*//;
         $self->{'statefile'} = "$libexecdir/lib/amanda/$safe_filename";
@@ -177,7 +180,7 @@ sub new {
 	    and $config->{'tapedev'} ne ''
 	    and !exists $properties->{'tape-device'}) {
 	# if the tapedev points to us (the changer), then give an error
-	if ($config->{'tapedev'} =~ /^chg-robot:/) {
+	if ($config->{'tapedev'} eq $tpchanger) {
             return Amanda::Changer->make_error("fatal", undef,
                 message => "must specify a tape-device property");
         }
@@ -298,23 +301,6 @@ sub new {
 	$self->{$key} = $time;
     }
 
-    # mtx
-    my $mtx;
-    if (exists $config->{'properties'}->{'mtx'}) {
-	if (@{$config->{'properties'}->{'mtx'}->{'values'}} > 1) {
-	    return Amanda::Changer->make_error("fatal", undef,
-		message => "only one value allowed for 'mtx'");
-	}
-	$mtx = $config->{'properties'}->{'mtx'}->{'values'}->[0];
-    } else {
-	$mtx = $Amanda::Constants::MTX;
-    }
-
-    if (!$mtx) {
-	return Amanda::Changer->make_error("fatal", undef,
-	    message => "no default value for property MTX");
-    }
-
     my $ignore_barcodes = $self->get_boolean_property($self->{'config'},
 					    "ignore-barcodes", 0);
     if (!defined $ignore_barcodes) {
@@ -322,9 +308,10 @@ sub new {
 	    message => "invalid 'ignore-barcodes' value");
     }
 
-    # construct the interface object
-    $self->{'interface'} = Amanda::Changer::robot::Interface->new(
-	    $device_name, $mtx, $ignore_barcodes),
+    # get the interface, returning an error if we get one
+    $self->{'interface'} = $self->get_interface($device_name, $ignore_barcodes);
+    return $self->{'interface'}
+	if ($self->{'interface'}->isa("Amanda::Changer::Error"));
 
     return $self;
 }
@@ -788,6 +775,29 @@ sub info_key_num_slots_unlocked {
     $params{'info_cb'}->(undef, num_slots => scalar @allowed_slots);
 }
 
+sub get_interface { # (overridden by subclasses)
+    my $self = shift;
+    my ($device_name, $ignore_barcodes) = @_;
+
+    my $mtx;
+    if (exists $self->{'config'}->{'properties'}->{'mtx'}) {
+	if (@{$self->{'config'}->{'properties'}->{'mtx'}->{'values'}} > 1) {
+	    return Amanda::Changer->make_error("fatal", undef,
+		message => "only one value allowed for 'mtx'");
+	}
+	$mtx = $self->{'config'}->{'properties'}->{'mtx'}->{'values'}->[0];
+    } else {
+	$mtx = $Amanda::Constants::MTX;
+    }
+
+    if (!$mtx) {
+	return Amanda::Changer->make_error("fatal", undef,
+	    message => "no default value for property MTX");
+    }
+
+    return Amanda::Changer::robot::Interface::MTX->new($device_name, $mtx, $ignore_barcodes),
+}
+
 sub _set_label {
     my $self = shift;
     my %params = @_;
@@ -1019,7 +1029,7 @@ sub update_unlocked {
     return if $self->check_error($params{'finished_cb'});
 
     my $user_msg_fn = $params{'user_msg_fn'};
-    $user_msg_fn ||= sub { Amanda::Debug::info("chg-robot: " . $_[0]); };
+    $user_msg_fn ||= sub { $self->_debug($_[0]); };
 
     $subs{'handle_assignment'} = make_cb(handle_assignment => sub {
 	# check for the SL=LABEL format, and handle it here
@@ -1094,7 +1104,7 @@ sub update_unlocked {
 	# the user with a "random" order
 	@slots_to_check = grep { $self->_is_slot_allowed($_) } @slots_to_check;
 	@slots_to_check = grep { $state->{'slots'}->{$_}->{'state'} != SLOT_EMPTY } @slots_to_check;
-	@slots_to_check = sort @slots_to_check;
+	@slots_to_check = sort { $a <=> $b } @slots_to_check;
 
 	$subs{'update_slot'}->();
     });
@@ -1263,7 +1273,7 @@ sub _get_next_slot {
     my $self = shift;
     my ($state, $slot) = @_;
 
-    my @nonempty = sort grep {
+    my @nonempty = sort { $a <=> $b } grep {
 	$state->{'slots'}->{$_}->{'state'} != SLOT_EMPTY
 	and $self->_is_slot_allowed($_)
     } keys(%{$state->{'slots'}});
@@ -1296,7 +1306,7 @@ sub _is_slot_allowed {
 sub _debug {
     my $self = shift;
     my ($msg) = @_;
-    my $pfx = "chg-robot:$self->{device_name}";
+    my $pfx = "$self->{chg_name}:$self->{device_name}";
     debug("$pfx: $msg");
 }
 
@@ -1653,6 +1663,56 @@ sub set_label {
 }
 
 package Amanda::Changer::robot::Interface;
+
+# The physical interface to the changer is abstracted out to allow several
+# implementations (see chg-ndmp for one of them).  This API is "reasonably
+# stable", but is really only known to this changer and its subclasses, so it's
+# not documented in POD.  The methods are:
+#
+#   $iface->inquiry($inquiry_cb);
+#
+# Inquire as to the relevant information about the changer.  The result is a
+# hash table of lowercased key names and values, $info.  The inquiry_cb is
+# called as $inquiry_cb->($errmsg, $info).  The resulting strings have quotes
+# and whitespace stripped.  Keys include 'vendor id' and 'product id'.
+#
+#   $iface->status($status_cb)
+#
+# Get the READ ELEMENT STATUS output for the changer.  The status_cb is called
+# as $status_cb->($errmsg, $status).  $status is a hash with keys 'drives' and
+# 'slots', each of which is a hash indexed by the element address (note that drive
+# element addresses can and usually do overlap with slots.  The values of the slots
+# hash are hashes with keys
+#  - 'empty' (1 if the slot is empty)
+#  - 'barcode' (which may be undef if the changer does not support barcodes)
+#  - 'ie' (a boolean indicating whether this is an import/export slot).
+# The values of the drives are undef for empty drive, or hashes with keys
+#  - 'barcode' (which may be undef if the changer does not support barcodes)
+#  - 'orig_slot' (slot from which this volume was taken, if known)
+#
+#   $iface->load($slot, $drive, $finished_cb)
+#
+# Load $slot into $drive.  The finished_cb gets a single argument, $error,
+# which is only defined if an error occurred.  Note that this does not
+# necessarily wait until the load operation is complete (most drives give
+# no such indication) (this method also implements unload, if $un=1)
+#
+#   $iface->unload($drive, $slot, $finished_cb);
+#
+# Unload $drive into $slot.  Finished_cb is just as for load().
+#
+#   $iface->eject($drive_name, $finished_cb);
+#
+# Eject $drive_name (named /dev/whatever, not the drive number), and call finished_cb.
+#
+#   $iface->transfer($src_slot, $dst_slot, $finished_cb);
+#
+# Move the tape in $src_slot into $dst_slot.  The finished_cb gets a single
+# argument, $error, which is only defined if an error occurred.  Note that this
+# does not necessarily wait until the load operation is complete.
+
+package Amanda::Changer::robot::Interface::MTX;
+
 use Amanda::Paths;
 use Amanda::MainLoop qw( :GIOCondition );
 use Amanda::Config qw( :getconf );
@@ -1660,18 +1720,19 @@ use Amanda::Debug qw( debug warning );
 use Amanda::MainLoop qw( synchronized make_cb );
 use Amanda::Device qw( :constants );
 
-# the physical interface to the changer is abstracted out in hopes of eventually
-# supporting SCSI access (via some C glue, presumably).
-
-# This object uses a big lock to block *all* operations, not just mtx
-# invocations.  This allows us to add delays to certain operations, while still
-# holding the lock.
-
 sub new {
     my $class = shift;
     my ($device_name, $mtx, $ignore_barcodes) = @_;
 
+    unless (-e $device_name) {
+	return Amanda::Changer->make_error("fatal", undef,
+	    message => "'$device_name' not found");
+    }
+
     return bless {
+	# This object uses a big lock to block *all* operations, not just mtx
+	# invocations.  This allows us to add delays to certain operations, while still
+	# holding the lock.
 	lock => [],
 	device_name => $device_name,
 	mtx => $mtx,
@@ -1679,10 +1740,6 @@ sub new {
     }, $class;
 }
 
-# Inquire as to the relevant information about the changer.  The result is a
-# hash table of lowercased key names and values, $info.  The inquiry_cb is
-# called as $inquiry_cb->($errmsg, $info).  The resulting strings have quotes
-# and whitespace stripped
 sub inquiry {
     my $self = shift;
     my ($inquiry_cb) = @_;
@@ -1711,17 +1768,6 @@ sub inquiry {
     });
 }
 
-# Get the READ ELEMENT STATUS output for the changer.  The status_cb is called
-# as $status_cb->($errmsg, $status).  $status is a hash with keys 'drives' and
-# 'slots', each of which is a hash indexed by the element address (note that drive
-# element addresses can and usually do overlap with slots.  The values of the slots
-# hash are hashes with keys
-#  - 'empty' (1 if the slot is empty)
-#  - 'barcode' (which may be undef if the changer does not support barcodes)
-#  - 'ie' (a boolean indicating whether this is an import/export slot).
-# The values of the drives are undef for empty drive, or hashes with keys
-#  - 'barcode' (which may be undef if the changer does not support barcodes)
-#  - 'orig_slot' (slot from which this volume was taken, if known)
 sub status {
     my $self = shift;
     my ($status_cb) = @_;
@@ -1790,10 +1836,6 @@ sub status {
     });
 }
 
-# Load $slot into $drive.  The finished_cb gets a single argument, $error,
-# which is only defined if an error occurred.  Note that this does not
-# necessarily wait until the load operation is complete (most drives give
-# no such indication) (this method also implements unload, if $un=1)
 sub load {
     my $self = shift;
     my ($slot, $drive, $finished_cb, $un) = @_;
@@ -1817,14 +1859,12 @@ sub load {
     });
 }
 
-# Unload $drive into $slot.  Finished_cb is just as for load().
 sub unload {
     my $self = shift;
     my ($drive, $slot, $finished_cb) = @_;
     return $self->load($slot, $drive, $finished_cb, 1);
 }
 
-# eject $drive (named /dev/whatever, not the drive number), and call finished_cb.
 sub eject {
     my $self = shift;
     my ($drive_name, $finished_cb) = @_;
@@ -1853,9 +1893,6 @@ sub eject {
     });
 }
 
-# Move the tape in $src_slot into $dst_slot.  The finished_cb gets a single
-# argument, $error, which is only defined if an error occurred.  Note that this
-# does not necessarily wait until the load operation is complete.
 sub transfer {
     my $self = shift;
     my ($src_slot, $dst_slot, $finished_cb) = @_;

@@ -1,4 +1,8 @@
 2009-12-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: make chg-robot's Interface easier to
+	  subclass
+
+2009-12-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda-changers.7.xml: add docs for old chg-multi,
 	  based on example/chg-multi.conf
 
