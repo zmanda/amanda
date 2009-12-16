@@ -1,3 +1,7 @@
+2009-12-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda-changers.7.xml: add docs for old chg-multi,
+	  based on example/chg-multi.conf
+
 2009-12-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/ndmp-device.c: use err_code, instead of err_msg, to
 	  detect an NDMPConnection error

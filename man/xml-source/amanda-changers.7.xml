@@ -218,6 +218,32 @@ The <emphasis>changerfile</emphasis> need not exist; it is used as a prefix
 for filenames of state files.
 </para>
 
+<para>The configuration file has simple lines with a parameter and its value separated by a space.  The # character introduces a comment.  The configuration parameters are: </para>
+
+<variablelist>
+<varlistentry><term>multieject</term><listitem>If this is 1, use an 'mt
+offline' command to change to the next tape, or multiple such commands for
+skipping several tapes at a time.
+</listitem></varlistentry>
+
+<varlistentry><term>needeject</term><listitem>This option is incompatible with
+'multieject'. This should be 1 for changers accessed through several virtual
+tape devices, when the changer needs the current tape to be ejected before
+changing to another device.
+</listitem></varlistentry>
+
+<varlistentry><term>gravity</term><listitem>Set this to 1 if the
+changer/stacker is unable to loop back to the first tape after unloading the
+last one, or if you don't want amanda to go through the tape stack looking for
+the exact tape it wants instead of using the first acceptable one.
+</listitem></varlistentry>
+
+<varlistentry><term>slot X</term><listitem>The configuration file should list
+as many 'slot X' statements as the number of slots supported by the changer or
+the number of separate tape drives used.
+</listitem></varlistentry>
+</variablelist>
+
 <para>This changer is not fast-search capable.</para>
 
 </refsect2>
