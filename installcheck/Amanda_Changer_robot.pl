@@ -1,4 +1,4 @@
-# Copyright (c) Zmanda Inc.  All Rights Reserved.
+# Copyright (c) 2009 Zmanda Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -270,6 +270,11 @@ sub check_inventory {
 
 {
     my $testconf = Installcheck::Config->new();
+    $testconf->add_changer('bum-scsi-dev', [
+	tpchanger => "\"chg-robot:does/not/exist\"",
+	property => "\"tape-device\" \"0=null:foo\"",
+	changerfile => "\"$chg_state_file\"",
+    ]);
     $testconf->add_changer('no-tape-device', [
 	tpchanger => "\"chg-robot:$mtx_state_file\"",
 	changerfile => "\"$chg_state_file\"",
@@ -307,7 +312,7 @@ sub check_inventory {
     }
 
     # test the changer constructor and properties
-    my $err = Amanda::Changer->new("chg-robot:does/not/exist");
+    my $err = Amanda::Changer->new("bum-scsi-dev");
     chg_err_like($err,
 	{ message => "'does/not/exist' not found",
 	  type => 'fatal' },
