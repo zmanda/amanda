@@ -528,7 +528,13 @@ for my $image (@images) {
 }
 
 if (defined $reservation) {
-    $reservation->release();
+    my $release = make_cb(start => sub {
+	$reservation->release(finished_cb => sub {
+				Amanda::MainLoop::quit()});
+    });
+
+    Amanda::MainLoop::call_later($release);
+    Amanda::MainLoop::run();
 }
 
 # clean up

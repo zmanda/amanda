@@ -1,4 +1,7 @@
 2009-12-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheckdump.pl: Call $res->release() with a callback.
+
+2009-12-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck-device.pl, server-src/amcheckdump.pl,
 	  server-src/amrestore.pl,
 	  server-src/amvault.pl: Call $res->set_label after $dev->read_label.
