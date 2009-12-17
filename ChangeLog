@@ -1,4 +1,8 @@
 2009-12-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcleanup.pl: Use CONTEXT_CMDLINE to get a debug file.
+	  Add a few debugging output.
+
+2009-12-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheckdump.pl: Call $res->release() with a callback.
 
 2009-12-17  Jean-Louis Martineau <martineau@zmanda.com>

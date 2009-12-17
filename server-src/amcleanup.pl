@@ -36,7 +36,7 @@ sub usage() {
     exit 1;
 }
 
-Amanda::Util::setup_application("amcleanup", "server", $CONTEXT_SCRIPTUTIL);
+Amanda::Util::setup_application("amcleanup", "server", $CONTEXT_CMDLINE);
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 
@@ -110,6 +110,7 @@ if ($nb_amanda_process > 0) {
 	print "Usage: amcleanup [-k] conf\n";
 	exit 0;
     } else { #kill the processes
+	Amanda::Debug::debug("Killing amanda process");
 	$Amanda_process->kill_process("SIGTERM");
 	my $count = 5;
 	my $pp;
@@ -129,11 +130,14 @@ if ($nb_amanda_process > 0) {
 	}
 	print "amcleanup: ", $nb_amanda_process, " Amanda processes were found running.\n";
 	print "amcleanup: $pp processes failed to terminate.\n";
+	Amanda::Debug::debug("$nb_amanda_process Amanda processes were found running");
+	Amanda::Debug::debug("$pp processes failed to terminate");
     }
 }
 
 # rotate log
 if (-f $logfile) {
+    Amanda::Debug::debug("Processing log file");
     system $amreport, $config_name;
     system $amlogroll, $config_name;
     system $amtrmidx, $config_name;
@@ -149,6 +153,7 @@ foreach my $pname ("amdump", "amflush") {
     my $errfile = "$logdir/$pname";
     if (-f $errfile) {
 	print "amcleanup: $errfile exists, renaming it.\n";
+	Amanda::Debug::debug("$errfile exists, renaming it");
 
 	# Keep debug log through the tapecycle plus a couple days
 	my $maxdays=$tapecycle + 2;
