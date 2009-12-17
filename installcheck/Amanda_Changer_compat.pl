@@ -483,7 +483,7 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 	    if ($err->notfound) {
 		# this means the scan is done
 		return $subs{'quit'}->();
-	    } elsif ($err->inuse and defined $err->{'slot'}) {
+	    } elsif ($err->volinuse and defined $err->{'slot'}) {
 		$slot = $err->{'slot'};
 	    } else {
 		die $err;

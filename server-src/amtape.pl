@@ -176,7 +176,7 @@ sub {
 		# no more interesting slots
 		Amanda::MainLoop::quit();
 		return;
-	    } elsif ($err->inuse and defined $err->{'slot'}) {
+	    } elsif ($err->volinuse and defined $err->{'slot'}) {
 		$last_slot = $err->{'slot'};
 	    } else {
 		return failure($err) if $err;

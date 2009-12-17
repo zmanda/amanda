@@ -87,7 +87,7 @@ sub load {
 
     if ($self->{'reserved'}) {
 	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "inuse",
+	    reason => "volinuse",
 	    message => "'$self->{device_name}' is already reserved");
     }
 

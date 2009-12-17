@@ -450,7 +450,7 @@ sub load_unlocked {
 	    # if it's reserved, it can't be used
 	    if ($info->{'res_info'} and $self->_res_info_verify($info->{'res_info'})) {
 		return $self->make_error("failed", $params{'res_cb'},
-			reason => "inuse",
+			reason => "volinuse",
 			slot => $slot,
 			message => "the requested volume is in use (drive $drive)");
 	    }
@@ -459,7 +459,7 @@ sub load_unlocked {
 	    # can't be used
 	    if (!exists $self->{'drive2device'}->{$drive}) {
 		return $self->make_error("failed", $params{'res_cb'},
-			# not 'inuse' because we can't expect the tape to be magically
+			# not 'volinuse' because we can't expect the tape to be magically
 			# unloaded any time soon -- it's not actually in use, just inaccessible
 			reason => "invalid",
 			message => "the requested volume is in drive $drive, which this " .
@@ -520,7 +520,7 @@ sub load_unlocked {
 
         if (!defined $drive) {
             return $self->make_error("failed", $params{'res_cb'},
-                    reason => "inuse",
+                    reason => "driveinuse",
                     message => "no drives available");
         }
 
@@ -937,7 +937,7 @@ sub eject_unlocked {
 	if ($drive_info->{'res_info'}
 		    and $self->_res_info_verify($drive_info->{'res_info'})) {
 	    return $self->make_error("failed", $params{'finished_cb'},
-		    reason => "inuse",
+		    reason => "volinuse",
 		    message => "tape in drive '$drive' is in use");
 	}
 

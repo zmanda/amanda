@@ -559,7 +559,7 @@ for my $mtx_config (
 
 	chg_err_like($err,
 	    { message => "no drives available",
-	      reason => 'inuse',
+	      reason => 'driveinuse',
 	      type => 'failed' },
 	    "$pfx: trying to load a third slot fails with 'no drives available'");
 
@@ -661,7 +661,7 @@ for my $mtx_config (
 
 	chg_err_like($err,
 	    { message => "the requested volume is in use (drive 0)",
-	      reason => 'inuse',
+	      reason => 'volinuse',
 	      type => 'failed' },
 	    "$pfx: loading 'current' when set_current hasn't been used yet gets slot 1 (which is in use)");
 
@@ -1164,7 +1164,7 @@ for my $mtx_config (
 	if ($err) {
 	    if ($err->notfound) {
 		return $subs{'scan_done'}->();
-	    } elsif ($err->inuse and defined $err->{'slot'}) {
+	    } elsif ($err->volinuse and defined $err->{'slot'}) {
 		$slot = $err->{'slot'};
 	    } else {
 		die $err;

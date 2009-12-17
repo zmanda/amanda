@@ -120,7 +120,7 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 	    chg_err_like($err,
 		{ message => qr/Slot 3 is already in use by drive/,
 		  type => 'failed',
-		  reason => 'inuse' },
+		  reason => 'volinuse' },
 		"error when requesting already-reserved slot");
 	    $release->();
 	});
@@ -272,7 +272,7 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 	    if ($err->notfound) {
 		# this means the scan is done
 		return $subs{'quit'}->();
-	    } elsif ($err->inuse and defined $err->{'slot'}) {
+	    } elsif ($err->volinuse and defined $err->{'slot'}) {
 		$slot = $err->{'slot'};
 	    } else {
 		die $err;

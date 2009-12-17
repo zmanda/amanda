@@ -433,7 +433,7 @@ sub _load_by_slot {
     if ($self->_is_slot_in_use($params{state}, $slot)) {
 	my $unaliased = $self->{unaliased}->{$slot};
 	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "inuse",
+	    reason => "volinuse",
 	    slot => $slot,
 	    message => "Slot $slot is already in use by process '$params{state}->{slots}->{$unaliased}->{pid}'");
     }

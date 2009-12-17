@@ -231,7 +231,7 @@ sub _load_by_slot {
 
     if ($drive = $self->_is_slot_in_use($params{'state'}, $slot)) {
 	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "inuse",
+	    reason => "volinuse",
 	    slot => $slot,
 	    message => "Slot $slot is already in use by drive '$drive' and process '$params{state}->{drives}->{$drive}->{pid}'");
     }

@@ -148,7 +148,8 @@ has one of the following values:
   notfound          The requested volume was not found
   invalid           The caller's request was invalid (e.g., bad slot)
   notimpl           The requested operation is not supported
-  inuse             A required resource is already in use
+  volinuse          The requested volume or slot is already in use
+  driveinuse        All drives are in use
   unknown           Unknown reason
 
 Like types, checks for particular reasons should use the methods, to avoid
@@ -160,9 +161,8 @@ Other reasons may be added in the future, so a caller should check for the
 reasons it expects, and treat any other failures as of unknown cause.
 
 When the desired slot cannot be loaded because it is already in use, the
-C<inuse> error comes with an extra parameter, C<slot>, giving the slot in
-question.  This parameter is not defined for other cases, such as no available
-drives.
+C<volinuse> error comes with an extra parameter, C<slot>, giving the slot in
+question.  This parameter is not defined for other cases.
 
 =head2 CURRENT SLOT
 
@@ -367,7 +367,7 @@ The barcode for the volume in this slot, if barcodes are available.
 
 Set to C<1> if this slot is reserved, either by this process or another
 process.  This is only set for I<exclusive> reservations, meaning that loading
-the slot would result in an C<inuse> error.  Devices which can support
+the slot would result in an C<volinuse> error.  Devices which can support
 concurrent access will never set this flag.
 
 =item loaded_in (optional)
@@ -1087,7 +1087,7 @@ use overload
     'cmp' => sub { $_[0]->{'message'} cmp $_[1]; };
 
 my %known_err_types = map { ($_, 1) } qw( fatal failed );
-my %known_err_reasons = map { ($_, 1) } qw( notfound invalid notimpl inuse unknown device );
+my %known_err_reasons = map { ($_, 1) } qw( notfound invalid notimpl driveinuse volinuse unknown device );
 
 sub new {
     my $class = shift; # ignore class
@@ -1134,7 +1134,8 @@ sub failed { $_[0]->{'type'} eq 'failed'; }
 sub notfound { $_[0]->{'reason'} eq 'notfound'; }
 sub invalid { $_[0]->{'reason'} eq 'invalid'; }
 sub notimpl { $_[0]->{'reason'} eq 'notimpl'; }
-sub inuse { $_[0]->{'reason'} eq 'inuse'; }
+sub driveinuse { $_[0]->{'reason'} eq 'driveinuse'; }
+sub volinuse { $_[0]->{'reason'} eq 'volinuse'; }
 sub unknown { $_[0]->{'reason'} eq 'unknown'; }
 
 # slot accessor

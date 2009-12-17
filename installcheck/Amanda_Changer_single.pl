@@ -86,7 +86,7 @@ my $chg = Amanda::Changer->new("chg-single:tape:/foo");
 	chg_err_like($err,
 	    { message => qr{'tape:/foo' is already reserved},
 	      type => 'failed',
-	      reason => 'inuse' },
+	      reason => 'volinuse' },
 	    "second simultaneous reservation rejected");
 
 	# release the first reservation

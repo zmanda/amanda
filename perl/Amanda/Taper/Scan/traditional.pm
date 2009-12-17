@@ -315,7 +315,7 @@ sub stage_2 {
             return $self->scan_result("No acceptable volumes found", $res);
 	}
 
-	if ($err && $err->{inuse} && $err->{slot}) {
+	if ($err && $err->{volinuse} && $err->{slot}) {
 	    $self->_user_msg("$err");
 	    $last_slot = $err->{slot};
 	    $self->{'seen'}->{$last_slot} = 1;
@@ -325,7 +325,7 @@ sub stage_2 {
 	    return;
 	} elsif ($err) {
             # if we have a fatal error or something other than "notfound"
-            # or "inuse", bail out.
+            # or "volinuse", bail out.
             return $self->scan_result($err, $res);
         }
 

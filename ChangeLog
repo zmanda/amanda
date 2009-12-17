@@ -1,4 +1,18 @@
 2009-12-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm, perl/Amanda/Changer/compat.pm,
+	  perl/Amanda/Changer/disk.pm, perl/Amanda/Changer/multi.pm,
+	  perl/Amanda/Changer/robot.pm, perl/Amanda/Changer/single.pm,
+	  perl/Amanda/Taper/Scan/traditional.pm, server-src/amtape.pl,
+	  Split the 'inuse' code into 'driveinuse' and 'volinuse'.
+	* installcheck/Amanda_Changer_compat.pl,
+	  installcheck/Amanda_Changer_disk.pl,
+	  installcheck/Amanda_Changer_multi.pl,
+	  installcheck/Amanda_Changer_rait.pl,
+	  installcheck/Amanda_Changer_robot.pl,
+	  installcheck/Amanda_Changer_single.pl:
+	  Use 'driveinuse' and 'volinuse'.
+
+2009-12-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: etimeout must be positive.
 	* common-src/protocol.c: Fix possible timeout of 0.
 
