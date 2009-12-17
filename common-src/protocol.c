@@ -602,6 +602,8 @@ s_repwait(
     }
     else if(pkt->type == P_PREP) {
 	p->timeout = p->repwait - CURTIME + p->curtime + 1;
+	if (p->timeout <= 0)
+	    p->timeout = 1;
 	return (PA_CONTPEND);
     }
 
