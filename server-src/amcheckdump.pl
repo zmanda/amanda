@@ -145,6 +145,16 @@ sub try_open_device {
 	return undef;
     }
 
+    my $start = make_cb(start => sub {
+	$reservation->set_label(label => $device->volume_label(),
+				finished_cb => sub {
+					Amanda::MainLoop::quit();
+				});
+    });
+
+    Amanda::MainLoop::call_later($start);
+    Amanda::MainLoop::run();
+
     if ($device->volume_label() ne $label) {
 	printf("Labels do not match: Expected '%s', but the device contains '%s'.\n",
 		     $label, $device->volume_label());

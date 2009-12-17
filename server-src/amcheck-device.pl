@@ -97,6 +97,15 @@ $subs{'result_cb'} = make_cb(result_cb => sub {
 	$res->{'device'}->read_label();
     }
 
+    if (defined $res->{'device'}->volume_label()) {
+	$res->set_label(label => $res->{'device'}->volume_label(),
+			finished_cb => $subs{'set_labeled'});
+    } else {
+	$subs{'set_labeled'}->(undef);
+    };
+});
+
+$subs{'set_labeled'} = make_cb(set_labeled => sub {
     my $modestr = ($mode == $ACCESS_APPEND)? "append" : "write";
     my $slot = $res->{'this_slot'};
     if (defined $res->{'device'}->volume_label()) {

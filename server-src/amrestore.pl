@@ -171,6 +171,11 @@ sub main {
 	    return failure($dev->error_or_status);
 	}
 
+	$res->set_label(label => $dev->volume_label,
+		        finished_cb => $subs{'set_labeled'});
+    });
+
+    $subs{'set_labeled'} = make_cb(set_labeled => sub {
 	if ($opt_label) {
 	    if ($dev->volume_label ne $opt_label) {
 		my $got = $dev->volume_label;

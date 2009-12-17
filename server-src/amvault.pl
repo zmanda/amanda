@@ -174,7 +174,7 @@ sub load_next_volumes {
     my $self = shift;
     my ($next_file) = @_;
     my ($src_loaded, $dst_loaded) = (0,0);
-    my ($release_src, $load_src, $open_src,
+    my ($release_src, $load_src, $open_src, $set_labeled_src,
         $release_dst, $load_dst, $open_dst,
 	$maybe_done);
 
@@ -223,6 +223,13 @@ sub load_next_volumes {
 		 $dev->error_or_status());
 	}
 
+	$res->set_label($dev->volume_label(),
+			finished_cb => $set_labeled_src);
+    });
+
+    $set_labeled_src = make_cb('set_labelel' => sub {
+	my $dev = $self->{'src_dev'};
+	my $res = $self->{'src_res'};
 	if ($dev->volume_label ne $next_file->{'label'}) {
 	    fail ("Volume in $res->{device_name} has unexpected label " .
 		 $dev->volume_label);
@@ -329,7 +336,8 @@ sub load_next_volumes {
 	$self->{'dst_label'} = $new_label;
 	$dst_loaded = 1;
 
-	$maybe_done->();
+	$res->set_label($dev->volume_label(),
+			finished_cb => $maybe_done);
     });
 
     # and finally, when both src and dst are finished, we move on to
