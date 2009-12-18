@@ -282,7 +282,7 @@ libNDMP_LTLIBRARIES = libNDMP.la
 libNDMP_la_SOURCES = Amanda/NDMP.c $(AMGLUE_SWG)
 libNDMP_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 libNDMP_la_LIBADD = libamglue.la \
-	$(top_builddir)/common-src/libamanda.la
+	$(top_builddir)/common-src/libamanda.la \
 	$(top_builddir)/ndmp-src/libndmlib.la
 Amanda_DATA += Amanda/NDMP.pm
 MAINTAINERCLEANFILES += Amanda/NDMP.c Amanda/NDMP.pm

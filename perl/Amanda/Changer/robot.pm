@@ -604,18 +604,8 @@ sub load_unlocked {
 
 	$self->_debug("polling '$device_name' to see if it's ready");
 
-	my $device = Amanda::Device->new($device_name);
-	if ($device->status != $DEVICE_STATUS_SUCCESS) {
-	    return $self->make_error("failed", $params{'res_cb'},
-		    reason => "device",
-		    message => "opening '$device_name': " . $device->error_or_status());
-	}
-
-	if (my $err = $self->{'config'}->configure_device($device)) {
-	    return $self->make_error("failed", $params{'res_cb'},
-		    reason => "device",
-		    message => $err);
-	}
+	my $device = $self->get_device($device_name);
+	return $params{'res_cb'}->($device) if $device->isa("Amanda::Changer::Error");
 
 	my $label;
 	$device->read_label();
@@ -798,6 +788,27 @@ sub get_interface { # (overridden by subclasses)
     return Amanda::Changer::robot::Interface::MTX->new($device_name, $mtx, $ignore_barcodes),
 }
 
+# get, configure, and return a new device, or return a changer error
+sub get_device { # (overridden by subclasses)
+    my $self = shift;
+    my ($device_name) = @_;
+
+    my $device = Amanda::Device->new($device_name);
+    if ($device->status != $DEVICE_STATUS_SUCCESS) {
+	return Amanda::Changer->make_error("failed", undef,
+		reason => "device",
+		message => "opening '$device_name': " . $device->error_or_status());
+    }
+
+    if (my $err = $self->{'config'}->configure_device($device)) {
+	return Amanda::Changer->make_error("failed", undef,
+		reason => "device",
+		message => $err);
+    }
+
+    return $device;
+}
+
 sub _set_label {
     my $self = shift;
     my %params = @_;
@@ -953,18 +964,18 @@ sub eject_unlocked {
     });
 
     $subs{'eject'} = make_cb(eject => sub {
-	my $drive_name = $self->{'drive2device'}->{$drive};
-	$self->_debug("ejecting $drive_name before unload");
-	$self->{'interface'}->eject($drive_name, $subs{'eject_finished'});
-    });
+	my $device_name = $self->{'drive2device'}->{$drive};
+	$self->_debug("ejecting $device_name before unload");
 
-    $subs{'eject_finished'} = make_cb(eject_finished => sub {
-	my ($err) = @_;
+	my $device = $self->get_device($device_name);
+	return $device if $device->isa("Amanda::Changer::Error");
 
-	# errors while ejecting are noted in the debug file but ignored
-        if ($err) {
-	    warning("while ejecting: $err (ignored)");
-        }
+	if (!$device->eject()) {
+	    return $self->make_error("failed", $params{'finished_cb'},
+		    reason => "unknown",
+		    message => "while ejecting volume: " . $device->error_or_status);
+	}
+	undef $device;
 
 	$self->_set_delay($state, $self->{'eject_delay'});
 
@@ -1863,34 +1874,6 @@ sub unload {
     my $self = shift;
     my ($drive, $slot, $finished_cb) = @_;
     return $self->load($slot, $drive, $finished_cb, 1);
-}
-
-sub eject {
-    my $self = shift;
-    my ($drive_name, $finished_cb) = @_;
-    $drive_name =~ s/^tape://;
-
-    synchronized($self->{'lock'}, $finished_cb, sub {
-	my ($finished_cb) = @_;
-
-	Amanda::Debug::debug("ejecting drive $drive_name");
-	my $device = Amanda::Device->new($drive_name);
-	if ($device->status() != $DEVICE_STATUS_SUCCESS) {
-	    return $finished_cb->($device->error_or_status);
-	}
-	if (my $err = $self->{'config'}->configure_device($device)) {
-	    return $finished_cb->($err);
-	}
-	if ($device->status() != $DEVICE_STATUS_SUCCESS) {
-	    return $finished_cb->($device->error_or_status);
-	}
-	if (!$device->eject()) {
-	    return $finished_cb->($device->error_or_status);
-	}
-	undef $device;
-
-	$finished_cb->(undef);
-    });
 }
 
 sub transfer {

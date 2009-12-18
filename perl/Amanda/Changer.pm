@@ -734,7 +734,7 @@ sub _uri_to_pkgname {
 
         # determine whether the module doesn't exist at all, or if there was an
         # error loading it; die if we found a syntax error
-        if (exists $INC{$filename}) {
+        if (exists $INC{$filename} or $err =~ /did not return a true value/) {
             die($err);
         }
 

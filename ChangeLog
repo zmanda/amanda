@@ -1,3 +1,9 @@
+2009-12-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am perl/Amanda/Changer/ndmp.pm: new changer
+	* man/xml-source/amanda-changers.7.xml: docs
+	* perl/Amanda/Changer.pm: better error handling
+	* perl/Amanda/Changer/robot.pm: changes for subclassing
+
 2009-12-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Don't call validate_optionstr for flush dles.
 
