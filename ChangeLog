@@ -1,4 +1,7 @@
 2009-12-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck.pm: disable log_test_output on perl-5.6
+
+2009-12-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am perl/Amanda/Changer/ndmp.pm: new changer
 	* man/xml-source/amanda-changers.7.xml: docs
 	* perl/Amanda/Changer.pm: better error handling

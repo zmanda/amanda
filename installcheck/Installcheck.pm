@@ -110,6 +110,10 @@ sub get_unused_port {
 
 sub log_test_output {
     my $builder = Test::More->builder();
+
+    # not supported on perl-5.6
+    return if !$^V or $^V lt v5.8.0;
+
     # wrap each filehandle used for output
     foreach my $out (qw(output failure_output todo_output)) {
         $builder->$out(Installcheck::TestFD->new($builder->$out));
