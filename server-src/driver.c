@@ -2215,7 +2215,6 @@ read_flush(void)
     disklist_t tq;
     char *qname = NULL;
     char *qdestname = NULL;
-    GPtrArray *errarray;
 
     tq.head = tq.tail = NULL;
 
@@ -2378,19 +2377,7 @@ read_flush(void)
 
 	dp1->up = (char *)sp;
 
-	errarray = validate_optionstr(dp);
-	if (errarray->len > 0) {
-	    guint i;
-	    for (i=0; i < errarray->len; i++) {
-		log_add(L_FAIL, _("%s %s %s 0 [%s]"),
-			dp->host->hostname, qname,
-			sp->datestamp,
-			(char *)g_ptr_array_index(errarray, i));
-	    }
-	    amfree(qname);
-	} else {
-	    enqueue_disk(&tq, dp1);
-	}
+	enqueue_disk(&tq, dp1);
 	dumpfile_free_data(&file);
     }
     amfree(inpline);

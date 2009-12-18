@@ -1,3 +1,6 @@
+2009-12-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Don't call validate_optionstr for flush dles.
+
 2009-12-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/components.m4: AC_SUBST AMANDA_COMPONENTS
 	* perl/Amanda/Constants.pm.in: include AMANDA_COMPONENTS
