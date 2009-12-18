@@ -1,3 +1,7 @@
+2009-12-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amtrmidx.c: Check index entry will all dles using the
+				 same index directory.
+
 2009-12-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm, perl/Amanda/Changer/compat.pm,
 	  perl/Amanda/Changer/disk.pm, perl/Amanda/Changer/multi.pm,

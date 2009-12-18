@@ -148,7 +148,8 @@ main(
 	    char *host;
 	    char *disk, *qdisk;
 	    size_t len_date;
-
+	    disk_t *dp;
+	    GSList *matching_dp = NULL;
 
 	    /* get listing of indices, newest first */
 	    host = sanitise_filename(diskp->host->hostname);
@@ -159,6 +160,18 @@ main(
 				 disk, "/",
 				 NULL);
 	    qindexdir = quote_string(indexdir);
+
+	    /* find all dles that use the same indexdir */
+	    for (dp = diskl.head; dp != NULL; dp = dp->next) {
+		char *dp_host, *dp_disk;
+
+		dp_host = sanitise_filename(dp->host->hostname);
+		dp_disk = sanitise_filename(dp->name);
+		if (strcmp(host, dp_host) == 0 &&
+		    strcmp(disk, dp_disk) == 0) {
+		    matching_dp = g_slist_append(matching_dp, dp);
+		}
+	    }
 
 	    dbprintf("%s %s -> %s\n", diskp->host->hostname,
 			qdisk, qindexdir);
@@ -239,6 +252,8 @@ main(
 		char *datestamp;
 		int level;
 		size_t len_date;
+		int matching = 0;
+		GSList *mdp;
 
 		for(len_date = 0; len_date < SIZEOF("YYYYMMDDHHMMSS")-1; len_date++) {
                     if(! isdigit((int)(names[i][len_date]))) {
@@ -250,8 +265,14 @@ main(
 		datestamp[len_date] = '\0';
 		if (sscanf(&names[i][len_date+1], "%d", &level) != 1)
 		    level = 0;
-		if(!dump_exist(output_find, diskp->host->hostname,
-				diskp->name, datestamp, level)) {
+		for (mdp = matching_dp; mdp != NULL; mdp = mdp->next) {
+		    dp = mdp->data;
+		    if (dump_exist(output_find, dp->host->hostname,
+				   dp->name, datestamp, level)) {
+			matching = 1;
+		    }
+		}
+		if (!matching) {
 		    char *path, *qpath;
 		    path = stralloc2(indexdir, names[i]);
 		    qpath = quote_string(path);
