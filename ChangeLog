@@ -1,3 +1,15 @@
+2009-12-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/components.m4: AC_SUBST AMANDA_COMPONENTS
+	* perl/Amanda/Constants.pm.in: include AMANDA_COMPONENTS
+	* perl/Amanda/Util.pod perl/Amanda/Util.swg: add built_with_component
+	* installcheck/Amanda_Device.pl: add ndmp-only tests
+	* installcheck/Amanda_Xfer.pl: add server-only tests
+	* installcheck/Amanda_Device_ndmp.pl: remove
+	* installcheck/Amanda_Xfer_serveronly.pl: remove
+	* installcheck/Makefile.am: remove files
+	* installcheck/taper.pl: conditionalize ndmp tests
+	* perl/Makefile.am: link Amanda::NDMP to libndmlib and libamanda
+
 2009-12-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amtrmidx.c: Check index entry will all dles using the
 				 same index directory.

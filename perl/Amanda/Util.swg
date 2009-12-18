@@ -304,6 +304,13 @@ sub generate_timestamp {
 	return strftime "%Y%m%d", localtime;
     }
 }
+
+sub built_with_component {
+    my ($component) = @_;
+    my @components = split / +/, $Amanda::Constants::AMANDA_COMPONENTS;
+    return grep { $_ eq $component } @components;
+}
+
 %}
 
 /* interface to gnulib's fsusage */

@@ -260,6 +260,11 @@ already be loaded.
 meaning to a filesystem with underscores.  This operation is I<not> reversible,
 and distinct input filenames I<may> produce identical output filenames.
 
+=item built_with_component($comp)
+
+Returns true if Amanda was built with the given component.  Component names are
+in C<config/amanda/components.m4>.
+
 =back
 
 =head1 Locking Files

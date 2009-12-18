@@ -44,7 +44,6 @@ server_tests = \
 	Amanda_Taper_Scan \
 	Amanda_Taper_Scan_traditional \
 	Amanda_Taper_Scribe \
-	Amanda_Xfer_serveronly \
 	bigint \
 	taper \
 	amcheck-device \
@@ -73,9 +72,6 @@ restore_tests = \
 
 mock_tests = \
 	mock_mtx
-
-ndmp_tests = \
-	Amanda_Device_ndmp
 
 # mock scripts
 mocks = \
@@ -117,13 +113,6 @@ if WANT_CLIENT
 if WANT_RESTORE
 tests += $(restore_tests)
 endif
-endif
-endif
-
-# tests for NDMP require a server and NDMP
-if WANT_NDMP
-if WANT_SERVER
-tests += $(ndmp_tests)
 endif
 endif
 

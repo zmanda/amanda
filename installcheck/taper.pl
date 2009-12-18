@@ -884,124 +884,129 @@ wait_for_exit();
 ##
 # Test with NDMP device (DirectTCP)
 
-my $ndmjob_port = Installcheck::get_unused_port();
-my $ndmjob_tapefile = Installcheck::Mock::run_ndmjob($ndmjob_port, "-o", "tape-limit=" . (1024*1024));
+SKIP : {
+    skip "not built with NDMP", 30 unless Amanda::Util::built_with_component("ndmp");
 
-$handle = "55-11111";
-$datestamp = "19780615010305";
-run_taper(4096, "multipart dircttcp PORT-WRITE",
-    use_ndmjob => 1,
-    ndmjob_port => $ndmjob_port,
-    ndmjob_tapefile => $ndmjob_tapefile);
-like(taper_reply, qr/^TAPER-OK$/,
-	"got TAPER-OK") or die;
-# note that Amanda uses the fallback splitsize here, even though it doesn't
-# need a disk_splitbuffer
-taper_cmd("PORT-WRITE $handle localhost /var 0 $datestamp 524288 NULL 393216");
-like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
-	"got PORT with data address");
-write_to_port($last_taper_reply, 1614*1024, "localhost", "/var", 0);
-like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
-	"got REQUEST-NEW-TAPE") or die;
-taper_cmd("NEW-TAPE");
-like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
-	"got proper NEW-TAPE") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 384 "\[sec [\d.]+ kb 384 kps [\d.]+\]"$/,
-	"got PARTDONE for part 1") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF01 2 384 "\[sec [\d.]+ kb 384 kps [\d.]+\]"$/,
-	"got PARTDONE for part 2") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF01 3 64 "\[sec [\d.]+ kb 64 kps [\d.]+\]"$/,
-	"got PARTDONE for part 3 (short part)") or die;
-like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
-	"got REQUEST-NEW-TAPE") or die;
-taper_cmd("NEW-TAPE");
-like(taper_reply, qr/^NEW-TAPE $handle TESTCONF02$/,
-	"got proper NEW-TAPE") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF02 1 384 "\[sec [\d.]+ kb 384 kps [\d.]+\]"$/,
-	"got PARTDONE for part 3") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF02 2 384 "\[sec [\d.]+ kb 384 kps [\d.]+\]"$/,
-	"got PARTDONE for part 4") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF02 3 32 "\[sec [\d.]+ kb 32 kps [\d.]+\]"$/,
-	"got PARTDONE for part 5") or die;
-like(taper_reply, qr/^DUMPER-STATUS $handle$/,
-	"got DUMPER-STATUS request") or die;
-taper_cmd("DONE $handle");
-like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1632 kps [\d.]+\]" "" ""$/,
-	"got DONE") or die;
-taper_cmd("QUIT");
-wait_for_exit();
+    my $ndmjob_port = Installcheck::get_unused_port();
+    my $ndmjob_tapefile = Installcheck::Mock::run_ndmjob($ndmjob_port, "-o", "tape-limit=" . (1024*1024));
 
-check_logs([
-    qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
-    qr(^PART taper TESTCONF01 1 localhost /var $datestamp 1/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
-    qr(^PART taper TESTCONF01 2 localhost /var $datestamp 2/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
-    qr(^PART taper TESTCONF01 3 localhost /var $datestamp 3/-1 0 \[sec [\d.]+ kb 64 kps [\d.]+\]$),
-    # note no "Will retry.."
-    qr(^INFO taper tape TESTCONF01 kb 832 fm 3 \[OK\]$),
-    qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
-    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
-    qr(^PART taper TESTCONF02 1 localhost /var $datestamp 4/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
-    qr(^PART taper TESTCONF02 2 localhost /var $datestamp 5/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
-    qr(^PART taper TESTCONF02 3 localhost /var $datestamp 6/-1 0 \[sec [\d.]+ kb 32 kps [\d.]+\]$),
-    qr(^DONE taper localhost /var $datestamp 6 0 \[sec [\d.]+ kb 1632 kps [\d.]+\]$),
-    qr(^INFO taper tape TESTCONF02 kb 800 fm 3 \[OK\]$),
-], "multipart directtcp PORT-WRITE logged correctly");
+    $handle = "55-11111";
+    $datestamp = "19780615010305";
+    run_taper(4096, "multipart dircttcp PORT-WRITE",
+	use_ndmjob => 1,
+	ndmjob_port => $ndmjob_port,
+	ndmjob_tapefile => $ndmjob_tapefile);
+    like(taper_reply, qr/^TAPER-OK$/,
+	    "got TAPER-OK") or die;
+    # note that Amanda uses the fallback splitsize here, even though it doesn't
+    # need a disk_splitbuffer
+    taper_cmd("PORT-WRITE $handle localhost /var 0 $datestamp 524288 NULL 393216");
+    like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+	    "got PORT with data address");
+    write_to_port($last_taper_reply, 1614*1024, "localhost", "/var", 0);
+    like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
+	    "got REQUEST-NEW-TAPE") or die;
+    taper_cmd("NEW-TAPE");
+    like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
+	    "got proper NEW-TAPE") or die;
+    like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 384 "\[sec [\d.]+ kb 384 kps [\d.]+\]"$/,
+	    "got PARTDONE for part 1") or die;
+    like(taper_reply, qr/^PARTDONE $handle TESTCONF01 2 384 "\[sec [\d.]+ kb 384 kps [\d.]+\]"$/,
+	    "got PARTDONE for part 2") or die;
+    like(taper_reply, qr/^PARTDONE $handle TESTCONF01 3 64 "\[sec [\d.]+ kb 64 kps [\d.]+\]"$/,
+	    "got PARTDONE for part 3 (short part)") or die;
+    like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
+	    "got REQUEST-NEW-TAPE") or die;
+    taper_cmd("NEW-TAPE");
+    like(taper_reply, qr/^NEW-TAPE $handle TESTCONF02$/,
+	    "got proper NEW-TAPE") or die;
+    like(taper_reply, qr/^PARTDONE $handle TESTCONF02 1 384 "\[sec [\d.]+ kb 384 kps [\d.]+\]"$/,
+	    "got PARTDONE for part 3") or die;
+    like(taper_reply, qr/^PARTDONE $handle TESTCONF02 2 384 "\[sec [\d.]+ kb 384 kps [\d.]+\]"$/,
+	    "got PARTDONE for part 4") or die;
+    like(taper_reply, qr/^PARTDONE $handle TESTCONF02 3 32 "\[sec [\d.]+ kb 32 kps [\d.]+\]"$/,
+	    "got PARTDONE for part 5") or die;
+    like(taper_reply, qr/^DUMPER-STATUS $handle$/,
+	    "got DUMPER-STATUS request") or die;
+    taper_cmd("DONE $handle");
+    like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1632 kps [\d.]+\]" "" ""$/,
+	    "got DONE") or die;
+    taper_cmd("QUIT");
+    wait_for_exit();
 
-$handle = "55-22222";
-$datestamp = "19780615010305";
-run_taper(4096, "multipart dircttcp PORT-WRITE, with a zero-byte part",
-    use_ndmjob => 1,
-    ndmjob_port => $ndmjob_port,
-    ndmjob_tapefile => $ndmjob_tapefile);
-like(taper_reply, qr/^TAPER-OK$/,
-	"got TAPER-OK") or die;
-# use a different part size this time, to hit EOM "on the head"
-taper_cmd("PORT-WRITE $handle localhost /var 0 $datestamp 524288 NULL 425984");
-like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
-	"got PORT with data address");
-write_to_port($last_taper_reply, 1632*1024, "localhost", "/var", 0);
-like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
-	"got REQUEST-NEW-TAPE") or die;
-taper_cmd("NEW-TAPE");
-like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
-	"got proper NEW-TAPE") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 416 "\[sec [\d.]+ kb 416 kps [\d.]+\]"$/,
-	"got PARTDONE for part 1") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF01 2 416 "\[sec [\d.]+ kb 416 kps [\d.]+\]"$/,
-	"got PARTDONE for part 2") or die;
-# note: zero-byte part is not reported as PARTDONE
-like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
-	"got REQUEST-NEW-TAPE") or die;
-taper_cmd("NEW-TAPE");
-like(taper_reply, qr/^NEW-TAPE $handle TESTCONF02$/,
-	"got proper NEW-TAPE") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF02 1 416 "\[sec [\d.]+ kb 416 kps [\d.]+\]"$/,
-	"got PARTDONE for part 3") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF02 2 384 "\[sec [\d.]+ kb 384 kps [\d.]+\]"$/,
-	"got PARTDONE for part 4") or die;
-like(taper_reply, qr/^DUMPER-STATUS $handle$/,
-	"got DUMPER-STATUS request") or die;
-taper_cmd("DONE $handle");
-like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1632 kps [\d.]+\]" "" ""$/,
-	"got DONE") or die;
-taper_cmd("QUIT");
-wait_for_exit();
+    check_logs([
+	qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
+	qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+	qr(^PART taper TESTCONF01 1 localhost /var $datestamp 1/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
+	qr(^PART taper TESTCONF01 2 localhost /var $datestamp 2/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
+	qr(^PART taper TESTCONF01 3 localhost /var $datestamp 3/-1 0 \[sec [\d.]+ kb 64 kps [\d.]+\]$),
+	# note no "Will retry.."
+	qr(^INFO taper tape TESTCONF01 kb 832 fm 3 \[OK\]$),
+	qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
+	qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
+	qr(^PART taper TESTCONF02 1 localhost /var $datestamp 4/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
+	qr(^PART taper TESTCONF02 2 localhost /var $datestamp 5/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
+	qr(^PART taper TESTCONF02 3 localhost /var $datestamp 6/-1 0 \[sec [\d.]+ kb 32 kps [\d.]+\]$),
+	qr(^DONE taper localhost /var $datestamp 6 0 \[sec [\d.]+ kb 1632 kps [\d.]+\]$),
+	qr(^INFO taper tape TESTCONF02 kb 800 fm 3 \[OK\]$),
+    ], "multipart directtcp PORT-WRITE logged correctly");
 
-check_logs([
-    qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
-    qr(^PART taper TESTCONF01 1 localhost /var $datestamp 1/-1 0 \[sec [\d.]+ kb 416 kps [\d.]+\]$),
-    qr(^PART taper TESTCONF01 2 localhost /var $datestamp 2/-1 0 \[sec [\d.]+ kb 416 kps [\d.]+\]$),
-    # Note: zero-byte part is not logged, but is counted in this INFO line's 'fm' field
-    qr(^INFO taper tape TESTCONF01 kb 832 fm 3 \[OK\]$),
-    qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
-    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
-    qr(^PART taper TESTCONF02 1 localhost /var $datestamp 3/-1 0 \[sec [\d.]+ kb 416 kps [\d.]+\]$),
-    qr(^PART taper TESTCONF02 2 localhost /var $datestamp 4/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
-    qr(^DONE taper localhost /var $datestamp 4 0 \[sec [\d.]+ kb 1632 kps [\d.]+\]$),
-    qr(^INFO taper tape TESTCONF02 kb 800 fm 2 \[OK\]$),
-], "multipart directtcp PORT-WRITE with a zero-byte part logged correctly");
+    $handle = "55-22222";
+    $datestamp = "19780615010305";
+    run_taper(4096, "multipart dircttcp PORT-WRITE, with a zero-byte part",
+	use_ndmjob => 1,
+	ndmjob_port => $ndmjob_port,
+	ndmjob_tapefile => $ndmjob_tapefile);
+    like(taper_reply, qr/^TAPER-OK$/,
+	    "got TAPER-OK") or die;
+    # use a different part size this time, to hit EOM "on the head"
+    taper_cmd("PORT-WRITE $handle localhost /var 0 $datestamp 524288 NULL 425984");
+    like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+	    "got PORT with data address");
+    write_to_port($last_taper_reply, 1632*1024, "localhost", "/var", 0);
+    like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
+	    "got REQUEST-NEW-TAPE") or die;
+    taper_cmd("NEW-TAPE");
+    like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
+	    "got proper NEW-TAPE") or die;
+    like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 416 "\[sec [\d.]+ kb 416 kps [\d.]+\]"$/,
+	    "got PARTDONE for part 1") or die;
+    like(taper_reply, qr/^PARTDONE $handle TESTCONF01 2 416 "\[sec [\d.]+ kb 416 kps [\d.]+\]"$/,
+	    "got PARTDONE for part 2") or die;
+    # note: zero-byte part is not reported as PARTDONE
+    like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
+	    "got REQUEST-NEW-TAPE") or die;
+    taper_cmd("NEW-TAPE");
+    like(taper_reply, qr/^NEW-TAPE $handle TESTCONF02$/,
+	    "got proper NEW-TAPE") or die;
+    like(taper_reply, qr/^PARTDONE $handle TESTCONF02 1 416 "\[sec [\d.]+ kb 416 kps [\d.]+\]"$/,
+	    "got PARTDONE for part 3") or die;
+    like(taper_reply, qr/^PARTDONE $handle TESTCONF02 2 384 "\[sec [\d.]+ kb 384 kps [\d.]+\]"$/,
+	    "got PARTDONE for part 4") or die;
+    like(taper_reply, qr/^DUMPER-STATUS $handle$/,
+	    "got DUMPER-STATUS request") or die;
+    taper_cmd("DONE $handle");
+    like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1632 kps [\d.]+\]" "" ""$/,
+	    "got DONE") or die;
+    taper_cmd("QUIT");
+    wait_for_exit();
 
-Installcheck::Mock::cleanup_ndmjob();
+    check_logs([
+	qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
+	qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+	qr(^PART taper TESTCONF01 1 localhost /var $datestamp 1/-1 0 \[sec [\d.]+ kb 416 kps [\d.]+\]$),
+	qr(^PART taper TESTCONF01 2 localhost /var $datestamp 2/-1 0 \[sec [\d.]+ kb 416 kps [\d.]+\]$),
+	# Note: zero-byte part is not logged, but is counted in this INFO line's 'fm' field
+	qr(^INFO taper tape TESTCONF01 kb 832 fm 3 \[OK\]$),
+	qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
+	qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
+	qr(^PART taper TESTCONF02 1 localhost /var $datestamp 3/-1 0 \[sec [\d.]+ kb 416 kps [\d.]+\]$),
+	qr(^PART taper TESTCONF02 2 localhost /var $datestamp 4/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
+	qr(^DONE taper localhost /var $datestamp 4 0 \[sec [\d.]+ kb 1632 kps [\d.]+\]$),
+	qr(^INFO taper tape TESTCONF02 kb 800 fm 2 \[OK\]$),
+    ], "multipart directtcp PORT-WRITE with a zero-byte part logged correctly");
+
+    Installcheck::Mock::cleanup_ndmjob();
+} # end of ndmp SKIP
+
 cleanup_taper();

@@ -37,6 +37,39 @@ AC_DEFUN([AMANDA_CHECK_COMPONENTS], [
     AM_CONDITIONAL(WANT_NDMP, $WANT_NDMP)
 
     AM_CONDITIONAL(WANT_TAPE, $WANT_SERVER || $WANT_RESTORE)
+
+    # AMANDA_COMPONENTS goes to Amanda::Constants; missing_components is just for the
+    # summary, below
+    AMANDA_COMPONENTS=''
+    missing_components=''
+
+    if $WANT_SERVER; then
+	AMANDA_COMPONENTS="$AMANDA_COMPONENTS server";
+    else
+	missing_components="$missing_components (no server)";
+    fi
+    if $WANT_RESTORE; then
+	AMANDA_COMPONENTS="$AMANDA_COMPONENTS restore";
+    else
+	missing_components="$missing_components (no restore)";
+    fi
+    if $WANT_CLIENT; then
+	AMANDA_COMPONENTS="$AMANDA_COMPONENTS client";
+    else
+	missing_components="$missing_components (no client)";
+    fi
+    if $WANT_RECOVER; then
+	AMANDA_COMPONENTS="$AMANDA_COMPONENTS amrecover";
+    else
+	missing_components="$missing_components (no amrecover)";
+    fi
+    if $WANT_NDMP; then
+	AMANDA_COMPONENTS="$AMANDA_COMPONENTS ndmp";
+    else
+	missing_components="$missing_components (no ndmp)";
+    fi
+
+    AC_SUBST(AMANDA_COMPONENTS)
 ])
 
 
@@ -175,32 +208,5 @@ AC_DEFUN([AMANDA_WITH_SERVER_ONLY], [
 #
 AC_DEFUN([AMANDA_SHOW_COMPONENTS_SUMMARY],
 [
-    components=''
-    if $WANT_SERVER; then
-	components="$components server";
-    else 
-	components="$components (no server)";
-    fi
-    if $WANT_RESTORE; then
-	components="$components restore";
-    else 
-	components="$components (no restore)";
-    fi
-    if $WANT_CLIENT; then
-	components="$components client";
-    else 
-	components="$components (no client)";
-    fi
-    if $WANT_RECOVER; then
-	components="$components amrecover";
-    else 
-	components="$components (no amrecover)";
-    fi
-    if $WANT_NDMP; then
-	components="$components ndmp";
-    else
-	components="$components (no ndmp)";
-    fi
-
-    echo "Amanda Components: $components"
+    echo "Amanda Components:$AMANDA_COMPONENTS$missing_components"
 ])

@@ -51,6 +51,7 @@ no warnings;
 # (keep this list sorted in alphabetical order, for ease of updates)
 
 $AIX_BACKUP = "@AIX_BACKUP@";
+$AMANDA_COMPONENTS = "@AMANDA_COMPONENTS@";
 $AMANDA_DEBUG_DAYS = "@AMANDA_DEBUG_DAYS@";
 $ASSERTIONS = "@ASSERTIONS@";
 $BSDTCP_SECURITY = "@BSDTCP_SECURITY@";
