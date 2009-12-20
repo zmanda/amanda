@@ -217,7 +217,8 @@ below (the difference is historical).</para>
 <refsect2><title>DEBUG LOG MANAGEMENT</title>
 
 <note>That this application is responsible for debug logs is a
-historical quirk, but the functionality is widely used.</note>
+historical quirk, but the functionality is widely used.
+</note>
 
 <para>If <emphasis remap='I'>parameter</emphasis> begins with <emphasis
 remap='I'>dbopen.</emphasis>, the string following the period is a

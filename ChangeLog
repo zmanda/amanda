@@ -1,3 +1,7 @@
+2009-12-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amgetconf.8.xml: fix formatting error by putting
+	  <note> on its own line
+
 2009-12-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Installcheck.pm: disable log_test_output on perl-5.6
 
