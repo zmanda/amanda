@@ -233,13 +233,19 @@ device file.</para>
 
 <refsect2><title>NDMP Device</title>
 <programlisting>
-tapedev "ndmp:/dev/st0"
+tapedev "ndmp:my.filer.com:10000@st1"
+device_property "NDMP_USERNAME" "jimmy"
+device_property "NDMP_PASSWORD" "thelock"
 </programlisting>
 
 <para>This device enables Amanda to communicate with a tape service on an NDMP
-server.  The tape device name specifies the filename of the tape drive on the
-server.  Currently the server must be "localhost".  The device only supports
-reading and writing the tape label - no data transfer is supported.</para>
+server.  The device name specifies the hostname and optionally the TCP port of
+the NDMP server, followed by the name of the tape device on the server
+(<command>st1</command> in the example above).</para>
+
+<para>The properties <command>NDMP_USERNAME</command> and
+<command>NDMP_PASSWORD</command> set the username and password with which to
+access the NDMP server.  The default for both is "ndmp".</para>
 
 </refsect2>
 

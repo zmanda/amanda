@@ -1,4 +1,7 @@
 2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda-devices.7.xml: update NDMP Device docs
+
+2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* autogen: do not use sed --in-place
 
 2009-12-20  Dustin J. Mitchell <dustin@zmanda.com>
