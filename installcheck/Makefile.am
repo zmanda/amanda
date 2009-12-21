@@ -70,6 +70,9 @@ restore_tests = \
 	amfetchdump \
 	amrestore
 
+ndmp_tests = \
+	Amanda_NDMP
+
 mock_tests = \
 	mock_mtx
 
@@ -113,6 +116,12 @@ if WANT_CLIENT
 if WANT_RESTORE
 tests += $(restore_tests)
 endif
+endif
+endif
+
+if WANT_NDMP
+if WANT_SERVER
+tests += $(ndmp_tests)
 endif
 endif
 

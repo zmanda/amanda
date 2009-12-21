@@ -80,6 +80,18 @@ typedef guint ndmp_enum;
     SP -= argvi; argvi++;
 }
 
+/* guint, output argument */
+%typemap(in,numinputs=0) guint * (guint temp) "$1 = &temp; temp = 0;"
+%typemap(argout) guint * {
+    if (argvi >= items) {
+	EXTEND(sp,1);
+    }
+
+    SP += argvi; PUTBACK;
+    $result = sv_2mortal(amglue_newSVu64(*$1));
+    SP -= argvi; argvi++;
+}
+
 typedef struct NDMPConnection {
     /* methods */
     %extend {
@@ -277,11 +289,13 @@ typedef struct NDMPConnection {
 	gboolean
 	tape_mtio(
 		ndmp_enum tape_op,
-		gint count) {
+		gint count,
+		guint *resid) {
 	    return ndmp_connection_tape_mtio(
 		    self,
 		    tape_op,
-		    count);
+		    count,
+		    resid);
 	}
 
 	%typemap(in) (gpointer buf, guint64 len) {

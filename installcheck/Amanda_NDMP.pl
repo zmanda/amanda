@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 55;
+use Test::More tests => 11;
 use IO::Socket;
 use strict;
 
@@ -28,6 +28,8 @@ use Amanda::NDMP qw( :constants );
 my $ndmp_port = Installcheck::get_unused_port();
 my $tapefile = Installcheck::Mock::run_ndmjob($ndmp_port);
 my $nc;
+
+Amanda::Debug::dbopen("installcheck");
 
 $nc = Amanda::NDMP::NDMPConnection->new("127.0.0.1", $ndmp_port, "test", "ndmp", "ndmp");
 ok($nc, "constructor creates an object");
@@ -47,10 +49,10 @@ is_deeply([ $nc->tape_write("ab"x8) ], [1, 16],
 is_deeply([ $nc->tape_write("cd"x8) ], [1, 16],
     "tape_write");
 
-ok($nc->tape_mtio($NDMP9_MTIO_EOF, 1),
+is_deeply([ $nc->tape_mtio($NDMP9_MTIO_EOF, 1) ], [1, 0],
     "tape_mtio (eof)");
 
-ok($nc->tape_mtio($NDMP9_MTIO_REW, 1),
+is_deeply([ $nc->tape_mtio($NDMP9_MTIO_REW, 1) ], [1, 0],
     "tape_mtio (rewind)");
 
 is_deeply([ $nc->tape_read(32) ], [1, "ab"x8], "tape_read");

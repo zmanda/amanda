@@ -139,7 +139,8 @@ gboolean ndmp_connection_tape_close(
 gboolean ndmp_connection_tape_mtio(
 	NDMPConnection *self,
 	ndmp9_tape_mtio_op tape_op,
-	gint count);
+	gint count,
+	guint *resid_count);
 
 gboolean ndmp_connection_tape_write(
 	NDMPConnection *self,

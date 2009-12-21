@@ -269,7 +269,8 @@ ndmp_mtio(
     ndmp9_tape_mtio_op tape_op,
     gint count)
 {
-    if (!ndmp_connection_tape_mtio(self->ndmp, tape_op, count)) {
+    guint tmp;
+    if (!ndmp_connection_tape_mtio(self->ndmp, tape_op, count, &tmp)) {
 	set_error_from_ndmp(self);
 	return FALSE;
     }

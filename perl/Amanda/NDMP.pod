@@ -117,10 +117,11 @@ The first method opens a tape device, using the give mode -
 C<$NDMP9_TAPE_READ_MODE> or C<$NDMP9_TAPE_RDRW_MODE>.  The second method closes
 the tape device associated with this connection.
 
-  my $ok = $conn->tape_mtio($op, $count);
+  my ($ok, $resid) = $conn->tape_mtio($op, $count);
 
 This method sends C<NDMP_TAPE_MTIO> with the given operation and count.
-Operations have the prefix C<$NDMP9_MTIO_>.
+Operations have the prefix C<$NDMP9_MTIO_>.  The number of incomplete
+operations is returned in C<$resid>.
 
 To read and write blocks, use these methods:
 

@@ -1,4 +1,12 @@
 2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndmpconnobj.c ndmp-src/ndmpconnobj.h: add resid_count
+	  return value to ndmp_connection_tape_mtio
+	* perl/Amanda/NDMP.pod perl/Amanda/NDMP.swg: SWIG it
+	* installcheck/Amanda_NDMP.pl: test it
+	* installcheck/Makefile.am: actually run Amanda_NDMP tests
+	* device-src/ndmp-device.c: compatible change
+
+2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda.8.xml: remove amdd
 
 2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>

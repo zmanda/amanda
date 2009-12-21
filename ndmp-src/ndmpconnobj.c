@@ -326,7 +326,8 @@ gboolean
 ndmp_connection_tape_mtio(
 	NDMPConnection *self,
 	ndmp9_tape_mtio_op tape_op,
-	gint count)
+	gint count,
+	guint *resid_count)
 {
     g_assert(!self->startup_err);
 
@@ -334,6 +335,7 @@ ndmp_connection_tape_mtio(
 	request->tape_op = tape_op;
 	request->count = count;
 	NDMP_CALL(self);
+	*resid_count = reply->resid_count;
 	NDMP_FREE();
     NDMP_END
     return TRUE;
