@@ -1,3 +1,6 @@
+2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* autogen: do not use sed --in-place
+
 2009-12-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amgetconf.8.xml: fix formatting error by putting
 	  <note> on its own line
