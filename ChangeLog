@@ -1,4 +1,9 @@
 2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>
+
+	* changer-src/Makefile.am changer-src/chg-rait.sh
+	  changer-src/chg-null.sh: restore deleted files
+
+2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda-devices.7.xml: update NDMP Device docs
 
 2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>

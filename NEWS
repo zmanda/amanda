@@ -1,4 +1,12 @@
 Changes in release 2.6.2alpha
+   * Deprecated old changers; see amanda-changers(7) for replacements.  These
+     changers are still available in the distribution, but will be removed in a
+     future release.
+      o chg-null
+      o chg-zd-mtx
+      o chg-rait
+      o chg-disk
+      o chg-multi
    * Removed configuration keywords:
       o rawtapedev -- this parameter is no longer needed and should be deleted
    * Removed compile-time default --with-changer-device: specify a device 

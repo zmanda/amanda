@@ -273,7 +273,7 @@ request="[type]"      # How to request a new tape (default "tty_email")
 
 </refsect2>
 
-<refsect2><title>chg-zd-mtx</title>
+<refsect2><title>chg-zd-mtx (old)</title>
 <programlisting>
 tpchanger "chg-zd-mtx"
 changerdev "/dev/sg0"         # used with 'mtx -f'
