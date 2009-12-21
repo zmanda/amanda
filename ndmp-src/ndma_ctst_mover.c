@@ -561,7 +561,7 @@ ndmca_test_check_mover_state  (struct ndm_session *sess,
 	what = "reason";
 	switch (ms->state) {
 	case NDMP9_MOVER_STATE_PAUSED:
-		if (ms->pause_reason != reason) {
+		if (ms->pause_reason != (ndmp9_mover_pause_reason)reason) {
 			sprintf (errbuf, "expected %s got %s",
 			    ndmp9_mover_pause_reason_to_str (reason),
 			    ndmp9_mover_pause_reason_to_str (ms->pause_reason));
@@ -570,7 +570,7 @@ ndmca_test_check_mover_state  (struct ndm_session *sess,
 		break;
 
 	case NDMP9_MOVER_STATE_HALTED:
-		if (ms->halt_reason != reason) {
+		if (ms->halt_reason != (ndmp9_mover_halt_reason)reason) {
 			sprintf (errbuf, "expected %s got %s",
 			    ndmp9_mover_halt_reason_to_str (reason),
 			    ndmp9_mover_halt_reason_to_str (ms->halt_reason));

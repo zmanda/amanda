@@ -122,7 +122,6 @@ static void
 finalize_impl(GObject *goself)
 {
     NDMPConnection *self = NDMP_CONNECTION(goself);
-    GObjectClass *goclass = G_OBJECT_GET_CLASS(goself);
 
     /* chain up first */
     G_OBJECT_CLASS(parent_class)->finalize(goself);
@@ -485,10 +484,10 @@ ndmp_connection_mover_listen(
 	ndmp9_addr_type addr_type,
 	DirectTCPAddr **addrs)
 {
-    g_assert(!self->startup_err);
-
     unsigned int naddrs, i;
     *addrs = NULL;
+
+    g_assert(!self->startup_err);
 
     NDMP_TRANS(self, ndmp4_mover_listen)
 	request->mode = mode;

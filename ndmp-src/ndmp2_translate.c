@@ -134,7 +134,7 @@ ndmp_2to9_pval_vec (
   ndmp9_pval *pval9,
   unsigned n_pval)
 {
-	int		i;
+	unsigned int	i;
 
 	for (i = 0; i < n_pval; i++)
 		ndmp_2to9_pval (&pval2[i], &pval9[i]);
@@ -148,7 +148,7 @@ ndmp_9to2_pval_vec (
   ndmp2_pval *pval2,
   unsigned n_pval)
 {
-	int		i;
+	unsigned int	i;
 
 	for (i = 0; i < n_pval; i++)
 		ndmp_9to2_pval (&pval9[i], &pval2[i]);
@@ -538,7 +538,7 @@ ndmp_2to9_config_get_host_info_reply (
   ndmp2_config_get_host_info_reply *reply2,
   ndmp9_config_get_host_info_reply *reply9)
 {
-	int		i, n_error = 0;
+	unsigned int	i, n_error = 0;
 
 	CNVT_E_TO_9 (reply2, reply9, error, ndmp_29_error);
 	CNVT_STRDUP_TO_9x (reply2, reply9, hostname, config_info.hostname);
@@ -627,7 +627,7 @@ ndmp_2to9_config_get_mover_type_reply (
   ndmp9_config_get_connection_type_reply *reply9)
 {
 	int			n_error = 0;
-	int			i;
+	unsigned int		i;
 
 	CNVT_E_TO_9 (reply2, reply9, error, ndmp_29_error);
 	for (i = 0; i < reply2->methods.methods_len; i++) {
@@ -1782,7 +1782,7 @@ ndmp_2to9_name_vec (
   ndmp9_name *name9,
   unsigned n_name)
 {
-	int		i;
+	unsigned int	i;
 
 	for (i = 0; i < n_name; i++)
 		ndmp_2to9_name (&name2[i], &name9[i]);
@@ -1796,7 +1796,7 @@ ndmp_9to2_name_vec (
   ndmp2_name *name2,
   unsigned n_name)
 {
-	int		i;
+	unsigned int	i;
 
 	for (i = 0; i < n_name; i++)
 		ndmp_9to2_name (&name9[i], &name2[i]);

@@ -227,7 +227,7 @@ int
 ndmchan_pre_poll (struct ndmchan *chtab[], unsigned n_chtab)
 {
 	struct ndmchan *	ch;
-	int			i, n_check;
+	unsigned int		i, n_check;
 
 	n_check = 0;
 	for (i = 0; i < n_chtab; i++) {
@@ -274,7 +274,8 @@ int
 ndmchan_post_poll (struct ndmchan *chtab[], unsigned n_chtab)
 {
 	struct ndmchan *	ch;
-	int			i, rc, len, n_ready;
+	unsigned int		i;
+	int			rc, len, n_ready;
 
 	n_ready = 0;
 
@@ -520,7 +521,8 @@ ndmos_chan_poll (struct ndmchan *chtab[], unsigned n_chtab, int milli_timo)
 {
 	struct ndmchan *	ch;
 	fd_set			rfds, wfds;
-	int			nfd = 0, rc, i;
+	int			nfd = 0, rc;
+	unsigned		i;
 	struct timeval		timo;
 
 	FD_ZERO(&rfds);

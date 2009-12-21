@@ -458,7 +458,7 @@ ndmca_tt_basic_write_and_read (struct ndm_session *sess)
 {
     int rc, i, f, pass;
     char buf[64*1024];
-    unsigned char	*p;
+    char *p;
 
     ndmca_test_phase (sess, "T-BWR", "Tape Write and Read Basics");
 
@@ -719,8 +719,9 @@ ndmca_tt_read (struct ndm_session *sess)
 				goto fail;
 #else
 			if (bcmp (buf, pbuf, recsize) != 0) {
-				unsigned char *expect_p = pbuf, *got_p = buf;
-				int i, f;
+				unsigned char *expect_p = (unsigned char *)pbuf;
+				unsigned char *got_p = (unsigned char *)buf;
+				unsigned int i, f;
 				for(f = i = 0;
 				    f < 64 && i < recsize;
 				    i++, expect_p++, got_p++) {
@@ -982,7 +983,7 @@ ndmca_tt_check_fileno_recno (struct ndm_session *sess,
 		goto fail;
 
 	oper = "check blockno";
-	if ((ts->blockno.value != blockno) && (ts->blockno.value != -1))
+	if ((ts->blockno.value != blockno) && (ts->blockno.value != NDMP9_INVALID_U_LONG))
 		goto fail;
 
 	return 0;

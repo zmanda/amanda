@@ -1,4 +1,8 @@
 2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/Makefile.am: skip some warnings that are endemic to ndmjob
+	* ndmp-src/*.c: fix warnings, mostly sign differences
+
+2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndmpconnobj.c ndmp-src/ndmpconnobj.h: add resid_count
 	  return value to ndmp_connection_tape_mtio
 	* perl/Amanda/NDMP.pod perl/Amanda/NDMP.swg: SWIG it

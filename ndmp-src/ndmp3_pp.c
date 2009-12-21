@@ -84,7 +84,8 @@ ndmp3_pp_addr (char *buf, ndmp3_addr *ma)
 int
 ndmp3_pp_request (ndmp3_message msg, void *data, int lineno, char *buf)
 {
-    int		i;
+    int			i;
+    unsigned int	j;
 
     switch (msg) {
     default:
@@ -182,9 +183,9 @@ ndmp3_pp_request (ndmp3_message msg, void *data, int lineno, char *buf)
 			p->flags, p->timeout, p->datain_len);
 		break;
 	case 1: sprintf (buf, "cmd[%d]={", p->cdb.cdb_len);
-		for (i = 0; i < p->cdb.cdb_len; i++) {
+		for (j = 0; j < p->cdb.cdb_len; j++) {
 			sprintf (NDMOS_API_STREND(buf), " %02x",
-						p->cdb.cdb_val[i]&0xFF);
+						p->cdb.cdb_val[j]&0xFF);
 		}
 		strcat (buf, " }");
 		break;
@@ -228,7 +229,7 @@ ndmp3_pp_request (ndmp3_message msg, void *data, int lineno, char *buf)
 			p->bu_type, p->env.env_len);
 	} else {
 		i = lineno - 1;
-		if (0 <= i && i < p->env.env_len) {
+		if (0 <= i && (unsigned)i < p->env.env_len) {
 			sprintf (buf, "env[%d] name='%s' value='%s'",
 				i, p->env.env_val[i].name,
 				p->env.env_val[i].value);
@@ -249,13 +250,13 @@ ndmp3_pp_request (ndmp3_message msg, void *data, int lineno, char *buf)
 			p->nlist.nlist_len);
 	} else {
 		i = lineno - 1;
-		if (0 <= i && i < p->env.env_len) {
+		if (0 <= i && (unsigned)i < p->env.env_len) {
 			sprintf (buf, "env[%d] name='%s' value='%s'",
 				i, p->env.env_val[i].name,
 				p->env.env_val[i].value);
 		} else {
 			i -= p->env.env_len;
-			if (0 <= i && i < p->nlist.nlist_len*4) {
+			if (0 <= i && (unsigned)i < p->nlist.nlist_len*4) {
 			    ndmp3_name *nm = &p->nlist.nlist_val[i/4];
 
 			    switch (i%4) {
@@ -355,14 +356,15 @@ ndmp3_pp_request (ndmp3_message msg, void *data, int lineno, char *buf)
 
     case NDMP3_FH_ADD_FILE:
       NDMP_PP_WITH(ndmp3_fh_add_file_request)
-	int	n_line = 0, n_normal = 0, n_names = 0, n_stats = 0;
+	int	n_line = 0, n_names = 0, n_stats = 0;
+	unsigned int n_normal = 0;
 
 	n_line++;
-	for (i = 0; i < p->files.files_len; i++) {
+	for (j = 0; j < p->files.files_len; j++) {
 		int	nn, ns;
 
-		nn = p->files.files_val[i].names.names_len;
-		ns = p->files.files_val[i].stats.stats_len;
+		nn = p->files.files_val[j].names.names_len;
+		ns = p->files.files_val[j].stats.stats_len;
 
 		n_line += 1 + nn + ns;
 		if (nn == 1 && ns == 1)
@@ -381,13 +383,13 @@ ndmp3_pp_request (ndmp3_message msg, void *data, int lineno, char *buf)
 		return n_line;
 	}
 	lineno--;
-	for (i = 0; i < p->files.files_len; i++) {
-	    ndmp3_file *	file = &p->files.files_val[i];
-	    int			j;
+	for (j = 0; j < p->files.files_len; j++) {
+	    ndmp3_file *	file = &p->files.files_val[j];
+	    unsigned int	k;
 
 	    if (lineno == 0) {
 		sprintf (buf, "[%d] n_names=%d n_stats=%d node=%lld fhinfo=%lld",
-			i,
+			j,
 			file->names.names_len,
 			file->stats.stats_len,
 			file->node,
@@ -397,16 +399,16 @@ ndmp3_pp_request (ndmp3_message msg, void *data, int lineno, char *buf)
 
 	    lineno--;
 
-	    for (j = 0; j < file->names.names_len; j++, lineno--) {
+	    for (k = 0; k < file->names.names_len; k++, lineno--) {
 		ndmp3_file_name *filename;
 
 		if (lineno != 0)
 			continue;
 
-		filename = &file->names.names_val[j];
+		filename = &file->names.names_val[k];
 
 		sprintf (buf, "  name[%d] fs_type=%s",
-			j, ndmp3_fs_type_to_str (filename->fs_type));
+			k, ndmp3_fs_type_to_str (filename->fs_type));
 
 		switch (filename->fs_type) {
 		default:
@@ -428,16 +430,16 @@ ndmp3_pp_request (ndmp3_message msg, void *data, int lineno, char *buf)
 		return n_line;
 	    }
 
-	    for (j = 0; j < file->stats.stats_len; j++, lineno--) {
+	    for (k = 0; k < file->stats.stats_len; k++, lineno--) {
 		ndmp3_file_stat *filestat;
 
 		if (lineno != 0)
 			continue;
 
-		filestat = &file->stats.stats_val[j];
+		filestat = &file->stats.stats_val[k];
 
-		sprintf (buf, "  stat[%d] fs_type=%s ftype=%s size=%lld",
-			j,
+		sprintf (buf, "  stat[%ud] fs_type=%s ftype=%s size=%lld",
+			k,
 			ndmp3_fs_type_to_str (filestat->fs_type),
 			ndmp3_file_type_to_str (filestat->ftype),
 			filestat->size);
@@ -452,13 +454,14 @@ ndmp3_pp_request (ndmp3_message msg, void *data, int lineno, char *buf)
 
     case NDMP3_FH_ADD_DIR:
       NDMP_PP_WITH(ndmp3_fh_add_dir_request)
-	int	n_line = 0, n_normal = 0, n_names = 0;
+	int	n_line = 0, n_names = 0;
+        unsigned int n_normal = 0;
 
 	n_line++;
-	for (i = 0; i < p->dirs.dirs_len; i++) {
+	for (j = 0; j < p->dirs.dirs_len; j++) {
 		int	nn;
 
-		nn = p->dirs.dirs_val[i].names.names_len;
+		nn = p->dirs.dirs_val[j].names.names_len;
 
 		n_line += 1 + nn;
 		if (nn == 1)
@@ -476,13 +479,13 @@ ndmp3_pp_request (ndmp3_message msg, void *data, int lineno, char *buf)
 		return n_line;
 	}
 	lineno--;
-	for (i = 0; i < p->dirs.dirs_len; i++) {
-	    ndmp3_dir *		dir = &p->dirs.dirs_val[i];
-	    int			j;
+	for (j = 0; j < p->dirs.dirs_len; j++) {
+	    ndmp3_dir *		dir = &p->dirs.dirs_val[j];
+	    unsigned int	k;
 
 	    if (lineno == 0) {
-		sprintf (buf, "[%d] n_names=%d node=%lld parent=%lld",
-			i,
+		sprintf (buf, "[%ud] n_names=%d node=%lld parent=%lld",
+			j,
 			dir->names.names_len,
 			dir->node,
 			dir->parent);
@@ -491,16 +494,16 @@ ndmp3_pp_request (ndmp3_message msg, void *data, int lineno, char *buf)
 
 	    lineno--;
 
-	    for (j = 0; j < dir->names.names_len; j++, lineno--) {
+	    for (k = 0; k < dir->names.names_len; k++, lineno--) {
 		ndmp3_file_name *filename;
 
 		if (lineno != 0)
 			continue;
 
-		filename = &dir->names.names_val[j];
+		filename = &dir->names.names_val[k];
 
-		sprintf (buf, "  name[%d] fs_type=%s",
-			j, ndmp3_fs_type_to_str (filename->fs_type));
+		sprintf (buf, "  name[%ud] fs_type=%s",
+			k, ndmp3_fs_type_to_str (filename->fs_type));
 
 		switch (filename->fs_type) {
 		default:
@@ -529,13 +532,14 @@ ndmp3_pp_request (ndmp3_message msg, void *data, int lineno, char *buf)
 
     case NDMP3_FH_ADD_NODE:
       NDMP_PP_WITH(ndmp3_fh_add_node_request)
-	int	n_line = 0, n_normal = 0, n_stats = 0;
+	int	n_line = 0, n_stats = 0;
+        unsigned int n_normal = 0;
 
 	n_line++;
-	for (i = 0; i < p->nodes.nodes_len; i++) {
+	for (j = 0; j < p->nodes.nodes_len; j++) {
 		int	ns;
 
-		ns = p->nodes.nodes_val[i].stats.stats_len;
+		ns = p->nodes.nodes_val[j].stats.stats_len;
 
 		n_line += 1 + ns;
 		if (ns == 1)
@@ -553,13 +557,13 @@ ndmp3_pp_request (ndmp3_message msg, void *data, int lineno, char *buf)
 		return n_line;
 	}
 	lineno--;
-	for (i = 0; i < p->nodes.nodes_len; i++) {
-	    ndmp3_node *	node = &p->nodes.nodes_val[i];
-	    int			j;
+	for (j = 0; j < p->nodes.nodes_len; j++) {
+	    ndmp3_node *	node = &p->nodes.nodes_val[j];
+	    unsigned int	k;
 
 	    if (lineno == 0) {
-		sprintf (buf, "[%d] n_stats=%d node=%lld fhinfo=%lld",
-			i,
+		sprintf (buf, "[%ud] n_stats=%d node=%lld fhinfo=%lld",
+			j,
 			node->stats.stats_len,
 			node->node,
 			node->fh_info);
@@ -568,16 +572,16 @@ ndmp3_pp_request (ndmp3_message msg, void *data, int lineno, char *buf)
 
 	    lineno--;
 
-	    for (j = 0; j < node->stats.stats_len; j++, lineno--) {
+	    for (k = 0; k < node->stats.stats_len; k++, lineno--) {
 		ndmp3_file_stat *filestat;
 
 		if (lineno != 0)
 			continue;
 
-		filestat = &node->stats.stats_val[j];
+		filestat = &node->stats.stats_val[k];
 
-		sprintf (buf, "  stat[%d] fs_type=%s ftype=%s size=%lld",
-			j,
+		sprintf (buf, "  stat[%ud] fs_type=%s ftype=%s size=%lld",
+			k,
 			ndmp3_fs_type_to_str (filestat->fs_type),
 			ndmp3_file_type_to_str (filestat->ftype),
 			filestat->size);
@@ -632,7 +636,8 @@ ndmp3_pp_request (ndmp3_message msg, void *data, int lineno, char *buf)
 int
 ndmp3_pp_reply (ndmp3_message msg, void *data, int lineno, char *buf)
 {
-    int		i;
+    int		    i;
+    unsigned int    j;
 
     switch (msg) {
     default:
@@ -672,9 +677,9 @@ ndmp3_pp_reply (ndmp3_message msg, void *data, int lineno, char *buf)
 	sprintf (buf, "error=%s addr_types[%d]={",
 			ndmp3_error_to_str(p->error),
 			p->addr_types.addr_types_len);
-	for (i = 0; i < p->addr_types.addr_types_len; i++) {
+	for (j = 0; j < p->addr_types.addr_types_len; j++) {
 		sprintf (NDMOS_API_STREND(buf), " %s",
-			 ndmp3_addr_type_to_str(p->addr_types.addr_types_val[i]));
+			 ndmp3_addr_type_to_str(p->addr_types.addr_types_val[j]));
 	}
 	strcat (buf, " }");
       NDMP_PP_ENDWITH
@@ -737,9 +742,9 @@ ndmp3_pp_reply (ndmp3_message msg, void *data, int lineno, char *buf)
 			p->status, p->dataout_len, p->datain.datain_len);
 		break;
 	case 1: sprintf (buf, "sense[%d]={", p->ext_sense.ext_sense_len);
-		for (i = 0; i < p->ext_sense.ext_sense_len; i++) {
+		for (j = 0; j < p->ext_sense.ext_sense_len; j++) {
 			sprintf (NDMOS_API_STREND(buf), " %02x",
-					p->ext_sense.ext_sense_val[i]&0xFF);
+					p->ext_sense.ext_sense_val[j]&0xFF);
 		}
 		strcat (buf, " }");
 		break;
@@ -832,7 +837,7 @@ ndmp3_pp_reply (ndmp3_message msg, void *data, int lineno, char *buf)
 			p->env.env_len);
 	} else {
 		i = lineno - 1;
-		if (0 <= i && i < p->env.env_len) {
+		if (0 <= i && (unsigned)i < p->env.env_len) {
 			sprintf (buf, "[%d] name='%s' value='%s'",
 				i, p->env.env_val[i].name,
 				p->env.env_val[i].value);

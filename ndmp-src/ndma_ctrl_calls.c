@@ -265,7 +265,7 @@ ndmca_data_get_env (struct ndm_session *sess)
 	struct ndmconn *	conn = sess->plumb.data;
 	struct ndm_control_agent *ca = &sess->control_acb;
 	int			rc;
-	int			i;
+	unsigned int		i;
 	ndmp9_pval *		d_pv;
 	ndmp9_pval *		s_pv;
 

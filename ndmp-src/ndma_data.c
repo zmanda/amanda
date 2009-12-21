@@ -820,11 +820,12 @@ ndmda_copy_environment (struct ndm_session *sess,
 {
 	struct ndm_data_agent *	da = &sess->data_acb;
 	int			i;
+	unsigned int		j;
 	ndmp9_pval *		src_pv;
 	ndmp9_pval *		dst_pv;
 
-	for (i = 0; i < n_env; i++) {
-		src_pv = &env[i];
+	for (j = 0; j < n_env; j++) {
+		src_pv = &env[j];
 		dst_pv = &da->env_tab.env[da->env_tab.n_env];
 
 		dst_pv->name  = NDMOS_API_STRDUP (src_pv->name);
@@ -916,7 +917,8 @@ ndmda_copy_nlist (struct ndm_session *sess,
   ndmp9_name *nlist, unsigned n_nlist)
 {
 	struct ndm_data_agent *	da = &sess->data_acb;
-	int			i, j;
+	unsigned int		i;
+	int			j;
 	ndmp9_name *		src_nl;
 	ndmp9_name *		dst_nl;
 

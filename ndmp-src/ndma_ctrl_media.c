@@ -289,7 +289,8 @@ int
 ndmca_media_open_tape (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	int			rc, t;
+	int			rc;
+	unsigned int		t;
 
 	ndmalogf (sess, 0, 1, "Opening tape drive %s %s",
 			ca->job.tape_device,

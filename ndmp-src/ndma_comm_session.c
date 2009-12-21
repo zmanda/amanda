@@ -82,7 +82,7 @@ ndma_server_session (struct ndm_session *sess, int control_sock)
 	struct ndmconn *	conn;
 	int			rc;
 	struct sockaddr		sa;
-	int			len;
+	socklen_t		len;
 
 	rc = ndma_session_initialize (sess);
 	if (rc) return rc;
@@ -159,7 +159,8 @@ int
 ndma_daemon_session (struct ndm_session *sess, int port, int is_test_daemon)
 {
 	int			listen_sock;
-	int			conn_sock, len, rc;
+	int			conn_sock, rc;
+	socklen_t		len;
 	struct sockaddr		sa;
 
 	listen_sock = socket (AF_INET, SOCK_STREAM, 0);

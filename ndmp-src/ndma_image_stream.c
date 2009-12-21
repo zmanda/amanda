@@ -785,7 +785,7 @@ ndmis_tcp_listen (struct ndm_session *sess, struct ndmp9_addr *listen_addr)
 	struct sockaddr		c_sa;
 	struct sockaddr		l_sa;
 	struct sockaddr_in *	sin;
-	int			len;
+	socklen_t		len;
 	int			listen_sock = -1;
 	char *			what = "???";
 
@@ -902,7 +902,7 @@ ndmis_tcp_accept (struct ndm_session *sess)
 	ndmp9_tcp_addr *	tcp_addr;
 	struct sockaddr		sa;
 	struct sockaddr_in *	sin = (struct sockaddr_in *) &sa;
-	int			len;
+	socklen_t		len;
 	int			accept_sock = -1;
 
 	what = "remote-conn-stat";
@@ -1025,7 +1025,7 @@ ndmis_tcp_get_local_and_peer_addrs (struct ndm_session *sess)
 	struct sockaddr		sa;
 	struct sockaddr_in *	sin = (struct sockaddr_in *) &sa;
 	ndmp9_tcp_addr *	tcp_addr;
-	int			len;
+	socklen_t		len;
 	int			rc = 0;
 
 	len = sizeof sa;

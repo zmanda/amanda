@@ -138,7 +138,7 @@ ndmp_3to9_pval_vec (
   ndmp9_pval *pval9,
   unsigned n_pval)
 {
-	int		i;
+	unsigned int	i;
 
 	for (i = 0; i < n_pval; i++)
 		ndmp_3to9_pval (&pval3[i], &pval9[i]);
@@ -152,7 +152,7 @@ ndmp_9to3_pval_vec (
   ndmp3_pval *pval3,
   unsigned n_pval)
 {
-	int		i;
+	unsigned int	i;
 
 	for (i = 0; i < n_pval; i++)
 		ndmp_9to3_pval (&pval9[i], &pval3[i]);
@@ -538,7 +538,8 @@ ndmp_3to9_device_info_vec_dup (
   int n_devinf)
 {
 	ndmp9_device_info *	devinf9;
-	int			i, j;
+	int			i;
+	unsigned int		j;
 
 	devinf9 = *devinf9_p = NDMOS_MACRO_NEWN(ndmp9_device_info, n_devinf);
 	if (!devinf9) {
@@ -596,7 +597,8 @@ ndmp_9to3_device_info_vec_dup (
   int n_devinf)
 {
 	ndmp3_device_info *	devinf3;
-	int			i, j;
+	int			i;
+	unsigned int		j;
 
 	devinf3 = *devinf3_p = NDMOS_MACRO_NEWN(ndmp3_device_info, n_devinf);
 	if (!devinf3) {
@@ -693,7 +695,7 @@ ndmp_3to9_config_get_connection_type_reply (
   ndmp9_config_get_connection_type_reply *reply9)
 {
 	int			n_error = 0;
-	int			i;
+	unsigned int		i;
 
 	CNVT_E_TO_9 (reply3, reply9, error, ndmp_39_error);
 	for (i = 0; i < reply3->addr_types.addr_types_len; i++) {
@@ -1103,7 +1105,7 @@ ndmp_3to9_config_get_server_info_reply (
   ndmp3_config_get_server_info_reply *reply3,
   ndmp9_config_get_server_info_reply *reply9)
 {
-	int		i, n_error = 0;
+	unsigned int	i, n_error = 0;
 
 	CNVT_E_TO_9 (reply3, reply9, error, ndmp_39_error);
 	CNVT_STRDUP_TO_9x (reply3, reply9,
@@ -2376,7 +2378,7 @@ ndmp_3to9_name_vec (
   ndmp9_name *name9,
   unsigned n_name)
 {
-	int		i;
+	unsigned int	i;
 
 	for (i = 0; i < n_name; i++)
 		ndmp_3to9_name (&name3[i], &name9[i]);
@@ -2390,7 +2392,7 @@ ndmp_9to3_name_vec (
   ndmp3_name *name3,
   unsigned n_name)
 {
-	int		i;
+	unsigned int	i;
 
 	for (i = 0; i < n_name; i++)
 		ndmp_9to3_name (&name9[i], &name3[i]);
@@ -3174,7 +3176,8 @@ ndmp_3to9_fh_add_file_request (
   ndmp9_fh_add_file_request *request9)
 {
 	int			n_ent = request3->files.files_len;
-	int			i, j;
+	unsigned int		j;
+	int			i;
 	ndmp9_file *		table;
 
 	table = NDMOS_MACRO_NEWN(ndmp9_file, n_ent);
@@ -3273,7 +3276,8 @@ ndmp_3to9_fh_add_dir_request (
   ndmp9_fh_add_dir_request *request9)
 {
 	int			n_ent = request3->dirs.dirs_len;
-	int			i, j;
+	int			i;
+	unsigned int		j;
 	ndmp9_dir *		table;
 
 	table = NDMOS_MACRO_NEWN(ndmp9_dir, n_ent);
@@ -3408,7 +3412,8 @@ ndmp_3to9_fh_add_node_request (
   ndmp9_fh_add_node_request *request9)
 {
 	int			n_ent = request3->nodes.nodes_len;
-	int			i, j;
+	int			i;
+	unsigned int		j;
 	ndmp9_node *		table;
 
 	table = NDMOS_MACRO_NEWN(ndmp9_node, n_ent);

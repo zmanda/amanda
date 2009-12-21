@@ -84,7 +84,8 @@ ndmp2_pp_mover_addr (char *buf, ndmp2_mover_addr *ma)
 int
 ndmp2_pp_request (ndmp2_message msg, void *data, int lineno, char *buf)
 {
-    int		i;
+    int		    i;
+    unsigned int    j;
 
     switch (msg) {
     default:
@@ -181,9 +182,9 @@ ndmp2_pp_request (ndmp2_message msg, void *data, int lineno, char *buf)
 			p->flags, p->timeout, p->datain_len);
 		break;
 	case 1: sprintf (buf, "cmd[%d]={", p->cdb.cdb_len);
-		for (i = 0; i < p->cdb.cdb_len; i++) {
+		for (j = 0; j < p->cdb.cdb_len; j++) {
 			sprintf (NDMOS_API_STREND(buf), " %02x",
-						p->cdb.cdb_val[i]&0xFF);
+						p->cdb.cdb_val[j]&0xFF);
 		}
 		strcat (buf, " }");
 		break;
@@ -228,7 +229,7 @@ ndmp2_pp_request (ndmp2_message msg, void *data, int lineno, char *buf)
 		ndmp2_pp_mover_addr (NDMOS_API_STREND(buf), &p->mover);
 	} else {
 		i = lineno - 1;
-		if (0 <= i && i < p->env.env_len) {
+		if (0 <= i && (unsigned)i < p->env.env_len) {
 			sprintf (buf, "env[%d] name='%s' value='%s'",
 				i, p->env.env_val[i].name,
 				p->env.env_val[i].value);
@@ -250,13 +251,13 @@ ndmp2_pp_request (ndmp2_message msg, void *data, int lineno, char *buf)
 		ndmp2_pp_mover_addr (NDMOS_API_STREND(buf), &p->mover);
 	} else {
 		i = lineno - 1;
-		if (0 <= i && i < p->env.env_len) {
+		if (0 <= i && (unsigned)i < p->env.env_len) {
 			sprintf (buf, "env[%d] name='%s' value='%s'",
 				i, p->env.env_val[i].name,
 				p->env.env_val[i].value);
 		} else {
 			i -= p->env.env_len;
-			if (0 <= i && i < p->nlist.nlist_len) {
+			if (0 <= i && (unsigned)i < p->nlist.nlist_len) {
 				sprintf (buf,
 					"nl[%d] name='%s' fhi=%lld dest='%s'",
 					i,
@@ -339,7 +340,7 @@ ndmp2_pp_request (ndmp2_message msg, void *data, int lineno, char *buf)
 		sprintf (buf, "n_paths=%d", p->paths.paths_len);
 	} else {
 		i = lineno - 1;
-		if (0 <= i && i < p->paths.paths_len) {
+		if (0 <= i && (unsigned)i < p->paths.paths_len) {
 			struct ndmp2_fh_unix_path *pa;
 
 			pa = &p->paths.paths_val[i];
@@ -362,7 +363,7 @@ ndmp2_pp_request (ndmp2_message msg, void *data, int lineno, char *buf)
 		sprintf (buf, "n_dirs=%d", p->dirs.dirs_len);
 	} else {
 		i = lineno - 1;
-		if (0 <= i && i < p->dirs.dirs_len) {
+		if (0 <= i && (unsigned)i < p->dirs.dirs_len) {
 			struct ndmp2_fh_unix_dir *de;
 
 			de = &p->dirs.dirs_val[i];
@@ -382,7 +383,7 @@ ndmp2_pp_request (ndmp2_message msg, void *data, int lineno, char *buf)
 		sprintf (buf, "n_nodes=%d", p->nodes.nodes_len);
 	} else {
 		i = lineno - 1;
-		if (0 <= i && i < p->nodes.nodes_len) {
+		if (0 <= i && (unsigned)i < p->nodes.nodes_len) {
 			struct ndmp2_fh_unix_node *nd;
 
 			nd = &p->nodes.nodes_val[i];
@@ -433,7 +434,8 @@ ndmp2_pp_request (ndmp2_message msg, void *data, int lineno, char *buf)
 int
 ndmp2_pp_reply (ndmp2_message msg, void *data, int lineno, char *buf)
 {
-    int		i;
+    int			i;
+    unsigned int	j;
 
     switch (msg) {
     default:
@@ -485,10 +487,10 @@ ndmp2_pp_reply (ndmp2_message msg, void *data, int lineno, char *buf)
 			p->os_type, p->os_vers, p->hostid);
 		break;
 	case 2: sprintf (buf, "auth_type[%d]={", p->auth_type.auth_type_len);
-		for (i = 0; i < p->auth_type.auth_type_len; i++) {
+		for (j = 0; j < p->auth_type.auth_type_len; j++) {
 			sprintf (NDMOS_API_STREND(buf), " %s",
 				ndmp2_auth_type_to_str(
-					p->auth_type.auth_type_val[i]));
+					p->auth_type.auth_type_val[j]));
 		}
 		strcat (buf, " }");
 		break;
@@ -513,9 +515,9 @@ ndmp2_pp_reply (ndmp2_message msg, void *data, int lineno, char *buf)
 	sprintf (buf, "error=%s methods[%d]={",
 			ndmp2_error_to_str(p->error),
 			p->methods.methods_len);
-	for (i = 0; i < p->methods.methods_len; i++) {
+	for (j = 0; j < p->methods.methods_len; j++) {
 		sprintf (NDMOS_API_STREND(buf), " %s",
-		    ndmp2_mover_addr_type_to_str(p->methods.methods_val[i]));
+		    ndmp2_mover_addr_type_to_str(p->methods.methods_val[j]));
 	}
 	strcat (buf, " }");
       NDMP_PP_ENDWITH
@@ -544,9 +546,9 @@ ndmp2_pp_reply (ndmp2_message msg, void *data, int lineno, char *buf)
 			p->status, p->dataout_len, p->datain.datain_len);
 		break;
 	case 1: sprintf (buf, "sense[%d]={", p->ext_sense.ext_sense_len);
-		for (i = 0; i < p->ext_sense.ext_sense_len; i++) {
+		for (j = 0; j < p->ext_sense.ext_sense_len; j++) {
 			sprintf (NDMOS_API_STREND(buf), " %02x",
-				p->ext_sense.ext_sense_val[i]&0xFF);
+				p->ext_sense.ext_sense_val[j]&0xFF);
 		}
 		strcat (buf, " }");
 		break;
@@ -636,7 +638,7 @@ ndmp2_pp_reply (ndmp2_message msg, void *data, int lineno, char *buf)
 			p->env.env_len);
 	} else {
 		i = lineno - 1;
-		if (0 <= i && i < p->env.env_len) {
+		if (0 <= i && (unsigned)i < p->env.env_len) {
 			sprintf (buf, "[%d] name='%s' value='%s'",
 				i, p->env.env_val[i].name,
 				p->env.env_val[i].value);

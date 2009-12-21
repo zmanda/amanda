@@ -119,8 +119,6 @@ ndmta_init_mover_state (struct ndm_session *sess)
 void
 ndmta_mover_sync_state (struct ndm_session *sess)
 {
-	struct ndm_tape_agent *	ta = &sess->tape_acb;
-
 	ndmos_tape_sync_state (sess);
 }
 
@@ -394,7 +392,7 @@ ndmta_read_quantum (struct ndm_session *sess)
 
 		if (n_ready < count) {
 			int		n_pad = count - n_ready;
-			unsigned	n_avail;
+			int		n_avail;
 
 
 			while (n_pad > 0) {

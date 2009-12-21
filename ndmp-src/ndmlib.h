@@ -746,7 +746,6 @@ extern int ndmstz_parse (char *buf, char *argv[], int max_argv);
  */
 extern int	ndmcfg_load (char *filename, ndmp9_config_info *config_info);
 extern int	ndmcfg_loadfp (FILE *fp, ndmp9_config_info *config_info);
-extern int	ndmcfg_free (ndmp9_config_info *config_info);
 
 
 

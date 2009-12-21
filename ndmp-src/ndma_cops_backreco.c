@@ -104,7 +104,7 @@ ndmca_op_recover_files (struct ndm_session *sess)
 	if (rc == 0) {
 	    if (ca->recover_log_file_count > 0) {
 		struct ndm_control_agent *ca = &sess->control_acb;
-		unsigned int		n_nlist = ca->job.nlist_tab.n_nlist;
+		int		    n_nlist = ca->job.nlist_tab.n_nlist;
 
 		ndmalogf (sess, 0, 0,
 			  "LOG_FILE messages: %d OK, %d ERROR, total %d of %d",
@@ -563,7 +563,7 @@ int
 ndmca_monitor_recover_tape_tcp (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	int			count, rc;
+	int			count;
 	ndmp9_data_state	ds;
 	char *estb;
 	int last_state_print = 0;
@@ -856,8 +856,6 @@ ndmca_monitor_shutdown_tape_tcp (struct ndm_session *sess)
 	struct ndm_control_agent *ca = &sess->control_acb;
 	ndmp9_data_state	ds;
 	ndmp9_data_halt_reason	dhr;
-	ndmp9_mover_state	ms;
-	ndmp9_mover_halt_reason	mhr;
 	int			count;
 	int			finish;
 

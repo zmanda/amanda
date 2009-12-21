@@ -47,7 +47,7 @@ ndmca_test_query_conn_types (struct ndm_session *sess,
     struct ndmconn *conn = ref_conn;
     struct ndm_control_agent *ca = &sess->control_acb;
     int	rc;
-    int i;
+    unsigned int i;
 
     switch (conn->protocol_version) {
 	default:	return -1234;

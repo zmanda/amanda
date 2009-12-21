@@ -183,7 +183,7 @@ reqrep_xlate_lookup_version (
   unsigned protocol_version)
 {
 	for (; rrvt->protocol_version > 0; rrvt++) {
-		if (rrvt->protocol_version == protocol_version) {
+		if (rrvt->protocol_version == (int)protocol_version) {
 			return rrvt->reqrep_xlate_table;
 		}
 	}

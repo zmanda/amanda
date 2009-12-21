@@ -861,7 +861,7 @@ dump_settings (void)
 	printf ("%d files\n", n_file_arg);
 	for (i = 0; i < n_file_arg; i++) {
 		printf ("  %2d: @%-8lld %s\n", i,
-			nlist[i].fh_info.valid ? nlist[i].fh_info.value : -1ll,
+			nlist[i].fh_info.valid ? nlist[i].fh_info.value : NDMP9_INVALID_U_QUAD,
 			file_arg[i]);
 	}
 #endif /* !NDMOS_OPTION_NO_CONTROL_AGENT */

@@ -79,6 +79,19 @@ INCLUDES =	-I$(top_builddir)/common-src \
 
 # add the Amanda version to the ndmjoblib version info
 AM_CFLAGS = -DNDMOS_CONST_NDMJOBLIB_REVISION='"amanda-$(VERSION)"'
+AM_CFLAGS += $(AMANDA_WARNING_CFLAGS)
+# there are some old-skool prototypes in the XDR-generated code
+AM_CFLAGS += -Wno-strict-prototypes
+# and the XDR-generated source also leaves calculated values unused
+AM_CFLAGS += -Wno-unused-value
+# and lots of callbacks take unused parameters
+AM_CFLAGS += -Wno-unused-parameter
+# and most arrays are terminated with a simple { 0 }
+AM_CFLAGS += -Wno-missing-field-initializers
+# the translate functions don't have prototypes
+AM_CFLAGS += -Wno-missing-prototypes -Wno-missing-declarations
+# and some of them have old-school declarations
+AM_CFLAGS += -Wno-old-style-definition
 
 ##
 ## libndmjob.la and libndmlib.la

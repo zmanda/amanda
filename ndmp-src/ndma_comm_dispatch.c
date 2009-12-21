@@ -813,7 +813,7 @@ ndmp2_sxa_config_get_butype_attr (struct ndm_session *sess,
 {
 	ndmp9_config_info *	ci = &sess->config_info;
 	ndmp9_butype_info *	bu = 0;
-	int			i;
+	unsigned int		i;
 
 	assert (xa->request.protocol_version == NDMP2VER);
 
@@ -1949,7 +1949,7 @@ data_ok_bu_type (struct ndm_session *sess,
 {
 	ndmp9_config_info *	ci = &sess->config_info;
 	ndmp9_butype_info *	bu;
-	int			i;
+	unsigned int		i;
 
 	ndmos_sync_config_info (sess);
 
@@ -3052,7 +3052,7 @@ ndmp_sxa_fh_add_file (struct ndm_session *sess,
 	struct ndm_control_agent *ca = &sess->control_acb;
 	struct ndmlog *		ixlog = &ca->job.index_log;
 	int			tagc = ref_conn->chan.name[1];
-	int			i;
+	unsigned int		i;
 	ndmp9_file *		file;
 
 	xa->reply.flags |= NDMNMB_FLAG_NO_SEND;
@@ -3084,7 +3084,7 @@ ndmp_sxa_fh_add_dir (struct ndm_session *sess,
 	struct ndmlog *		ixlog = &ca->job.index_log;
 	int			tagc = ref_conn->chan.name[1];
 	char *			raw_name;
-	int			i;
+	unsigned int		i;
 	ndmp9_dir *		dir;
 
 	xa->reply.flags |= NDMNMB_FLAG_NO_SEND;
@@ -3151,7 +3151,7 @@ ndmp_sxa_fh_add_node (struct ndm_session *sess,
 	struct ndm_control_agent *ca = &sess->control_acb;
 	struct ndmlog *		ixlog = &ca->job.index_log;
 	int			tagc = ref_conn->chan.name[1];
-	int			i;
+	unsigned int		i;
 	ndmp9_node *		node;
 
 	xa->reply.flags |= NDMNMB_FLAG_NO_SEND;
@@ -3253,7 +3253,7 @@ ndma_drt_lookup (struct ndm_dispatch_version_table *dvt,
 	struct ndm_dispatch_request_table *	drt;
 
 	for (; dvt->protocol_version >= 0; dvt++) {
-		if (dvt->protocol_version == protocol_version)
+		if (dvt->protocol_version == (int)protocol_version)
 			break;
 	}
 

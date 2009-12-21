@@ -364,7 +364,7 @@ ndmos_tape_write (struct ndm_session *sess,
 	cur_pos = lseek (ta->tape_fd, (off_t)0, 1);
 	lseek (ta->tape_fd, cur_pos, 0);
 
-	if (write (ta->tape_fd, buf, count) == count) {
+	if ((u_long)write (ta->tape_fd, buf, count) == count) {
 		cur_pos += count;
 
 		prev_size = count;
@@ -422,6 +422,7 @@ ndmos_tape_read (struct ndm_session *sess,
 {
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
 	int			rc;
+	unsigned	nb;
 
 	if (ta->tape_fd < 0) {
 		return NDMP9_DEV_NOT_OPEN_ERR;
@@ -438,8 +439,6 @@ ndmos_tape_read (struct ndm_session *sess,
 		*done_count = 0;
 		return NDMP9_NO_ERR;
 	}
-
-	unsigned	nb;
 
 	nb = count;
 

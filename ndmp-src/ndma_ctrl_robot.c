@@ -129,7 +129,8 @@ ndmca_robot_move (struct ndm_session *sess, int src_addr, int dst_addr)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
 	struct smc_ctrl_block *	smc = &ca->smc_cb;
-	int			rc, t;
+	int			rc;
+	unsigned int		t;
 
 	ndmalogf (sess, 0, 2, "robot moving @%d to @%d",
 			src_addr, dst_addr);
@@ -203,7 +204,7 @@ struct smc_element_descriptor *
 ndmca_robot_find_element (struct ndm_session *sess, int element_address)
 {
 	struct smc_ctrl_block *		smc = &sess->control_acb.smc_cb;
-	int				i;
+	unsigned int			i;
 	struct smc_element_descriptor *	edp;
 
 	for (i = 0; i < smc->n_elem_desc; i++) {
@@ -222,7 +223,7 @@ ndmca_robot_check_ready (struct ndm_session *sess)
 	unsigned			first_dte_addr;
 	unsigned			n_dte_addr;
 	int				rc;
-	int				i;
+	unsigned int			i;
 	int				errcnt = 0;
 	struct smc_element_descriptor *	edp;
 
@@ -260,7 +261,7 @@ ndmca_robot_remedy_ready (struct ndm_session *sess)
 {
 	struct smc_ctrl_block *		smc = &sess->control_acb.smc_cb;
 	int				rc;
-	int				i;
+	unsigned int			i;
 	int				errcnt;
 	struct smc_element_descriptor *	edp;
 	struct smc_element_descriptor *	edp2;
@@ -340,7 +341,7 @@ ndmca_robot_query (struct ndm_session *sess)
 {
 	struct smc_ctrl_block *	smc = &sess->control_acb.smc_cb;
 	int			rc;
-	int			i;
+	unsigned int		i;
 	char			buf[100];
 	char			lnbuf[30];
 	int			lineno, nline = 1;
@@ -414,7 +415,8 @@ ndmca_robot_verify_media (struct ndm_session *sess)
 	int			rc;
 	struct ndmmedia *	me;
 	struct smc_element_descriptor *edp;
-	int			i, j;
+	int			i;
+	unsigned int		j;
 	int			errcnt = 0;
 
 	rc = ndmca_robot_obtain_info (sess);
@@ -468,7 +470,7 @@ ndmca_robot_synthesize_media (struct ndm_session *sess)
 	int			rc;
 	struct ndmmedia *	me;
 	struct smc_element_descriptor *edp;
-	int			i;
+	unsigned int		i;
 
 	rc = ndmca_robot_obtain_info (sess);
 	if (rc) return rc;

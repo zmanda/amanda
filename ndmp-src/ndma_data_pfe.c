@@ -121,7 +121,7 @@ ndmda_pipe_fork_exec (struct ndm_session *sess, char *cmd, int is_backup)
 			close(rc);
 		}
 
-		execl ("/bin/sh", "sh", "-c", cmd, 0);
+		execl ("/bin/sh", "sh", "-c", cmd, NULL);
 
 		fprintf (stderr, "EXEC FAILED %s\n", cmd);
 		exit(127);

@@ -70,9 +70,9 @@ smc_parse_element_status_data (
   struct smc_element_descriptor elem_desc[],
   unsigned	max_elem_desc)
 {
-	unsigned char *			p = raw;
+	unsigned char *			p = (unsigned char *)raw;
 	unsigned char *			raw_end = p + raw_len;
-	int				n_elem = 0;
+	unsigned int			n_elem = 0;
 
 	bzero (elem_desc, sizeof elem_desc[0] * max_elem_desc);
 

@@ -377,7 +377,7 @@ ndmca_test_check_data_state  (struct ndm_session *sess,
 	what = "reason";
 	switch (ds->state) {
 	case NDMP9_DATA_STATE_HALTED:
-		if (ds->halt_reason != reason) {
+		if (ds->halt_reason != (ndmp9_data_halt_reason)reason) {
 			sprintf (errbuf, "expected %s got %s",
 			    ndmp9_data_halt_reason_to_str (reason),
 			    ndmp9_data_halt_reason_to_str (ds->halt_reason));

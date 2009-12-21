@@ -542,7 +542,7 @@ ndmos_tape_write (struct ndm_session *sess,
 	    }
 
 	    /* if this write will put us over PEOM, then send NDMP9_IO_ERR */
-	    if (cur_pos + sizeof gap + count > o_tape_limit) {
+	    if ((off_t)(cur_pos + sizeof gap + count) > o_tape_limit) {
 		return NDMP9_IO_ERR;
 	    }
 	}
@@ -564,7 +564,7 @@ ndmos_tape_write (struct ndm_session *sess,
 	lseek (ta->tape_fd, cur_pos, 0);
 
 	if (write (ta->tape_fd, &gap, sizeof gap) == sizeof gap
-	 && write (ta->tape_fd, buf, count) == count) {
+	 && (u_long)write (ta->tape_fd, buf, count) == count) {
 		cur_pos += count + sizeof gap;
 
 		prev_size = count;
@@ -625,7 +625,7 @@ ndmos_tape_wfm (struct ndm_session *sess)
 	    /* note: filemarks *never* trigger NDMP9_EOM_ERR */
 
 	    /* if this write will put us over PEOM, then send NDMP9_IO_ERR */
-	    if (cur_pos + sizeof gap > o_tape_limit) {
+	    if ((off_t)(cur_pos + sizeof gap) > o_tape_limit) {
 		return NDMP9_IO_ERR;
 	    }
 	}
@@ -719,7 +719,7 @@ ndmos_tape_read (struct ndm_session *sess,
 			nb = gap.size;
 
 		rc = read (ta->tape_fd, buf, nb);
-		if (rc != nb) {
+		if (rc != (int)nb) {
 			lseek (ta->tape_fd, cur_pos, 0);
 			return NDMP9_IO_ERR;
 		}

@@ -55,9 +55,9 @@ static int	cfg_butype (struct cfg_cb *cb);
 static int	cfg_fs (struct cfg_cb *cb);
 static int	cfg_tape (struct cfg_cb *cb);
 static int	cfg_scsi (struct cfg_cb *cb);
-static int	cfg_device (struct cfg_cb *cb, int *n_device,
+static int	cfg_device (struct cfg_cb *cb, u_int *n_device,
 			ndmp9_device_info **pp);
-static int	cfg_add_env (struct cfg_cb *cb, int *n_env,
+static int	cfg_add_env (struct cfg_cb *cb, u_int *n_env,
 			ndmp9_pval **pp, char *name, char *value);
 
 
@@ -129,12 +129,6 @@ ndmcfg_loadfp (FILE *fp, ndmp9_config_info *config_info)
 	}
 
 	return cb->n_error;
-}
-
-int
-ndmcfg_free (ndmp9_config_info *config_info)
-{
-	return -1;
 }
 
 /*
@@ -330,12 +324,12 @@ cfg_scsi (struct cfg_cb *cb)
  */
 
 static int
-cfg_device (struct cfg_cb *cb, int *n_device, ndmp9_device_info **pp)
+cfg_device (struct cfg_cb *cb, u_int *n_device, ndmp9_device_info **pp)
 {
 	ndmp9_device_info *	ent = *pp;
 	ndmp9_device_capability *dcap;
-	int			n_ent = *n_device;
-	int			i, rc;
+	int			rc;
+	unsigned int		i, n_ent = *n_device;
 
 	if (!ent)
 		n_ent = 0;
@@ -430,7 +424,7 @@ cfg_device (struct cfg_cb *cb, int *n_device, ndmp9_device_info **pp)
 }
 
 static int
-cfg_add_env (struct cfg_cb *cb, int *n_env,
+cfg_add_env (struct cfg_cb *cb, u_int *n_env,
   ndmp9_pval **pp, char *name, char *value)
 {
 	ndmp9_pval *		ent = *pp;

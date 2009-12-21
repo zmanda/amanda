@@ -516,7 +516,7 @@ wrap_pipe_fork_exec (char *cmd, int fdmap[3])
 
 		for (rc = 3; rc < 100; rc++) close(rc);
 
-		execle ("/bin/sh", "sh", "-c", cmd, 0);
+		execl ("/bin/sh", "sh", "-c", cmd, NULL);
 
 		fprintf (stderr, "EXEC FAILED %s\n", cmd);
 		exit(127);
