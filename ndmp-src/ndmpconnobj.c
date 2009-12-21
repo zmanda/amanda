@@ -745,7 +745,8 @@ ndmp_connection_get(
     gint port,
     gchar *identifier,
     gchar *username,
-    gchar *password)
+    gchar *password,
+    gchar *auth)
 {
     NDMPConnection *self = NULL;
     gchar *key = NULL;
@@ -763,8 +764,9 @@ ndmp_connection_get(
     /* if it was in the cache, ref it; otherwise, create a new object */
     if (self) {
 	g_object_ref(self);
-    } else {
-	struct ndmconn *conn;
+     } else {
+	struct ndmconn *conn = NULL;
+	int rc;
 
 	conn = ndmconn_initialize(NULL, "amanda-server");
 	if (!conn) {
@@ -782,7 +784,20 @@ ndmp_connection_get(
 	    goto out;
 	}
 
-	if (ndmconn_auth_md5(conn, username, password) != 0) {
+	if (0 == g_ascii_strcasecmp(auth, "void")) {
+	    rc = 0; /* don't authenticate */
+	} else if (0 == g_ascii_strcasecmp(auth, "none")) {
+	    rc = ndmconn_auth_none(conn);
+	} else if (0 == g_ascii_strcasecmp(auth, "md5")) {
+	    rc = ndmconn_auth_md5(conn, username, password);
+	} else if (0 == g_ascii_strcasecmp(auth, "text")) {
+	    rc = ndmconn_auth_text(conn, username, password);
+	} else {
+	    errmsg = "invalid auth type";
+	    goto out;
+	}
+
+	if (rc != 0) {
 	    errmsg = ndmconn_get_err_msg(conn);
 	    ndmconn_destruct(conn);
 	    goto out;

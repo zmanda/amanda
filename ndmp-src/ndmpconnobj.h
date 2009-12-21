@@ -229,7 +229,7 @@ gboolean ndmp_connection_wait_for_notify(
  *   to the same host:port
  * @param username: username to login with
  * @param password: password to login with
- * @param errmsg (output): error message on NULL return (caller must free)
+ * @param auth: authentication method to use ("MD5", "TEXT", "NONE", or "VOID")
  * @returns: NDMPConnection object
  */
 NDMPConnection *
@@ -238,6 +238,7 @@ ndmp_connection_get(
     gint port,
     gchar *identifier,
     gchar *username,
-    gchar *password);
+    gchar *password,
+    gchar *auth);
 
 #endif

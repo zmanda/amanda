@@ -67,21 +67,23 @@ sub get_interface {
     }
     $port = $port? ($port+0) : 0; # 0 => default port
 
-    for my $propname (qw(ndmp-username ndmp-password)) {
+    $self->{'ndmp-username'} = 'ndmp';
+    $self->{'ndmp-password'} = 'ndmp';
+    $self->{'ndmp-auth'} = 'md5';
+    for my $propname (qw(ndmp-username ndmp-password ndmp-auth)) {
 	if (exists $self->{'config'}->{'properties'}->{$propname}) {
 	    if (@{$self->{'config'}->{'properties'}->{$propname}->{'values'}} > 1) {
 		return Amanda::Changer->make_error("fatal", undef,
 		    message => "only one value allowed for '$propname'");
 	    }
 	    $self->{$propname} = $self->{'config'}->{'properties'}->{$propname}->{'values'}->[0];
-	} else {
-	    $self->{$propname} = 'ndmp'; # default value
 	}
     }
 
     my $conn = Amanda::NDMP::NDMPConnection->new(
 	$host, $port, "changer-$scsi_dev",
-	$self->{'ndmp-username'}, $self->{'ndmp-password'});
+	$self->{'ndmp-username'}, $self->{'ndmp-password'},
+	$self->{'ndmp-auth'});
 
     if ($conn->err_code()) {
 	return Amanda::Changer->make_error("fatal", undef,

@@ -28,7 +28,8 @@ Amanda::NDMP - communicate via NDMP
 
   use Amanda::NDMP qw( :constants );
 
-  my $conn = Amanda::NDMP::NDMPConnection->new($host, $port, $ident, $username, $password);
+  my $conn = Amanda::NDMP::NDMPConnection->new($host, $port, $ident, $username,
+					       $password, $auth);
   my ($ok, $blocksize, $file_num, $blockno) = $conn->tape_get_status();
 
 =head1 DESCRIPTION
@@ -40,7 +41,8 @@ by NDMJOB, which sends and receives NDMP messages on a TCP socket.
 
 =head2 Constructor
 
-  my $conn = Amanda::NDMP::NDMPConnection->new($host, $port, $ident, $username, $password);
+  my $conn = Amanda::NDMP::NDMPConnection->new($host, $port, $ident, $username,
+					       $password, $auth);
   if ($conn->err_code()) {
     # handle error..
   }
@@ -49,14 +51,20 @@ This gets a new conncetion object.  This will always return an object, but the
 result should be checked for errors as described in the "Error Handling"
 section, below.
 
-Most of the parameters are clear, but the C<$ident> deserves some explanation.
-NDMP scopes many server-side variables to the NDMP connection - for example,
-the "current" tape and taper state are associated with the NDMP connection.  To
-facilitate this, the constructor returns the I<same connection> for any
-constructor invocation with the same host, port, and identifier.  In cases
-where multiple connections are required (e.g., when two tapes are in use
-simultaneously), callers should provide different identifiers for each
-connection.
+The C<$host> and C<$port> give the NDMP server's host and port, respectively.
+The C<$auth> parameter defines the authentication mechanism to use: "md5" or
+"text"; "none" for no authentication; or "void" to not send any authentication
+packets at all.  For md5 or text modes, C<$username> and C<$password> specify
+the username and password for the NDMP server; these parameters must always be
+included, but can be blank for none or void.
+
+The C<$ident> parameter deserves some explanation.  NDMP scopes many
+server-side variables to the NDMP connection - for example, the "current" tape
+and taper state are associated with the NDMP connection.  To facilitate this,
+the constructor returns the I<same connection> for any constructor invocation
+with the same host, port, and identifier.  In cases where multiple connections
+are required (e.g., when two tapes are in use simultaneously), callers should
+provide different identifiers for each connection.
 
 =head2 Methods
 

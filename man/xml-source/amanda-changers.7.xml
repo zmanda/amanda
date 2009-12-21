@@ -600,20 +600,26 @@ which controls the changer.  The format of this parameter is
 implementation-specific.</para>
 
 <refsect3><title>Properties</title>
-<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 
 <para>This changer supports all of the properties supported by
 <command>chg-robot</command>, although the value of <command>MTX</command> is
 ignored.  The following properties are also recognized:</para>
 
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 <variablelist>
 <!-- ==== -->
-<varlistentry><term>NDMP-USERNAME</term><listitem>
-The username for the NDMP server.
+<varlistentry><term>NDMP_AUTH</term><listitem>
+Authentication method to use to connect to the NDMP server.  One of
+"md5" (default), "text", "none" (for an empty authentication attempt) or "void" (for
+no authentication attempt at all).
 </listitem></varlistentry>
 <!-- ==== -->
 <varlistentry><term>NDMP-PASSWORD</term><listitem>
 The password for the NDMP server.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>NDMP-USERNAME</term><listitem>
+The username for the NDMP server.
 </listitem></varlistentry>
 <!-- ==== -->
 </variablelist>

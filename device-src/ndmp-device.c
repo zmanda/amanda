@@ -62,6 +62,7 @@ struct _NdmpDevice {
     gchar        *ndmp_device_name;
     gchar	 *ndmp_username;
     gchar	 *ndmp_password;
+    gchar	 *ndmp_auth;
     gboolean	 verbose;
 };
 
@@ -132,8 +133,10 @@ typedef enum {
 /* Authentication information for NDMP agent. Both of these are strings. */
 static DevicePropertyBase device_property_ndmp_username;
 static DevicePropertyBase device_property_ndmp_password;
-#define PROPERTY_NDMP_PASSWORD (device_property_ndmp_password.ID)
+static DevicePropertyBase device_property_ndmp_auth;
 #define PROPERTY_NDMP_USERNAME (device_property_ndmp_username.ID)
+#define PROPERTY_NDMP_PASSWORD (device_property_ndmp_password.ID)
+#define PROPERTY_NDMP_AUTH (device_property_ndmp_auth.ID)
 
 /*
  * prototypes
@@ -158,7 +161,8 @@ open_connection(
 	    self->ndmp_port,
 	    ident,
 	    self->ndmp_username,
-	    self->ndmp_password);
+	    self->ndmp_password,
+	    self->ndmp_auth);
 	g_free(ident);
 
 	if (ndmp_connection_err_code(self->ndmp)) {
@@ -390,10 +394,6 @@ ndmp_device_open_device(
     }
     self->ndmp_device_name = g_strdup(at+1);
 
-    /* these should be changed by properties */
-    self->ndmp_username = g_strdup("ndmp");
-    self->ndmp_password = g_strdup("ndmp");
-
     if (parent_class->open_device) {
         parent_class->open_device(dself, device_name, device_type, device_node);
     }
@@ -416,6 +416,8 @@ static void ndmp_device_finalize(GObject * obj_self)
 	g_free(self->ndmp_username);
     if (self->ndmp_password)
 	g_free(self->ndmp_password);
+    if (self->ndmp_auth)
+	g_free(self->ndmp_auth);
 }
 
 static DeviceStatusFlags
@@ -1335,6 +1337,20 @@ ndmp_device_set_password_fn(Device *dself,
 }
 
 static gboolean
+ndmp_device_set_auth_fn(Device *dself,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    NdmpDevice *self = NDMP_DEVICE(dself);
+
+    amfree(self->ndmp_auth);
+    self->ndmp_auth = g_value_dup_string(val);
+    device_clear_volume_details(dself);
+
+    return device_simple_property_set_fn(dself, base, val, surety, source);
+}
+
+static gboolean
 ndmp_device_set_verbose_fn(Device *p_self, DevicePropertyBase *base,
     GValue *val, PropertySurety surety, PropertySource source)
 {
@@ -1390,6 +1406,11 @@ ndmp_device_class_init(NdmpDeviceClass * c G_GNUC_UNUSED)
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
 	    ndmp_device_set_password_fn);
+
+    device_class_register_property(device_class, PROPERTY_NDMP_AUTH,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    ndmp_device_set_auth_fn);
 
     device_class_register_property(device_class, PROPERTY_VERBOSE,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK,
@@ -1449,6 +1470,27 @@ ndmp_device_init(NdmpDevice *self)
 	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
+    g_value_init(&response, G_TYPE_STRING);
+    g_value_set_string(&response, "ndmp");
+    device_set_simple_property(dself, PROPERTY_NDMP_USERNAME,
+	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
+    g_value_unset(&response);
+    self->ndmp_username = g_strdup("ndmp");
+
+    g_value_init(&response, G_TYPE_STRING);
+    g_value_set_string(&response, "ndmp");
+    device_set_simple_property(dself, PROPERTY_NDMP_PASSWORD,
+	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
+    g_value_unset(&response);
+    self->ndmp_password = g_strdup("ndmp");
+
+    g_value_init(&response, G_TYPE_STRING);
+    g_value_set_string(&response, "md5");
+    device_set_simple_property(dself, PROPERTY_NDMP_AUTH,
+	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
+    g_value_unset(&response);
+    self->ndmp_auth = g_strdup("md5");
+
 }
 
 static GType
@@ -1507,6 +1549,9 @@ ndmp_device_register(void)
     device_property_fill_and_register(&device_property_ndmp_password,
                                       G_TYPE_STRING, "ndmp_password",
        "Password for access to the NDMP agent");
+    device_property_fill_and_register(&device_property_ndmp_auth,
+                                      G_TYPE_STRING, "ndmp_auth",
+       "Authentication method for the NDMP agent - md5 (default), text, none, or void");
 }
 
 /*

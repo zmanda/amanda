@@ -1,4 +1,13 @@
 2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndmpconnobj.c ndmp-src/ndmpconnobj.h: add an auth
+	  parameter with four options
+	* perl/Amanda/NDMP.pod perl/Amanda/NDMP.swg: SWIG it
+	* device-src/ndmp-device.c: add NDMP_AUTH property
+	* man/xml-source/amanda-devices.7.xml: doc it
+	* perl/Amanda/Changer/ndmp.pm: add NDMP-AUTH property
+	* man/xml-source/amanda-changers.7.xml: doc it
+
+2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/Makefile.am: skip some warnings that are endemic to ndmjob
 	* ndmp-src/*.c: fix warnings, mostly sign differences
 

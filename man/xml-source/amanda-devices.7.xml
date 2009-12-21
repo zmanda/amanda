@@ -585,6 +585,29 @@ operations can be emulated with the MTREW and read data operations.</para>
 
 </refsect3>
 
+<refsect3><title>NDMP Device</title>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+<varlistentry><term>NDMP_AUTH</term><listitem>
+(read-write) Authentication method to use to connect to the NDMP server.  One of
+"md5" (default), "text", "none" (for an empty authentication attempt) or "void" (for
+no authentication attempt at all).
+</listitem></varlistentry>
+ <!-- ==== -->
+<varlistentry><term>NDMP_PASSWORD</term><listitem>
+(read-write) Password for md5 or text authentications.
+</listitem></varlistentry>
+ <!-- ==== -->
+<varlistentry><term>NDMP_USERNAME</term><listitem>
+(read-write) Username for md5 or text authentications.
+</listitem></varlistentry>
+ <!-- ==== -->
+</variablelist>
+
+</refsect3>
+
 <refsect3><title>DVD-RW Device</title>
 
 <variablelist>
