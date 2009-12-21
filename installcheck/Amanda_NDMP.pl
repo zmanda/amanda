@@ -31,7 +31,7 @@ my $nc;
 
 Amanda::Debug::dbopen("installcheck");
 
-$nc = Amanda::NDMP::NDMPConnection->new("127.0.0.1", $ndmp_port, "test", "ndmp", "ndmp");
+$nc = Amanda::NDMP::NDMPConnection->new("127.0.0.1", $ndmp_port, "test", "ndmp", "ndmp", "md5");
 ok($nc, "constructor creates an object");
 is($nc->err_code(), 0, "and no error is set");
 
