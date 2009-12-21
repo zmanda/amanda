@@ -1,4 +1,7 @@
 2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda.8.xml: remove amdd
+
+2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>
 
 	* changer-src/Makefile.am changer-src/chg-rait.sh
 	  changer-src/chg-null.sh: restore deleted files
