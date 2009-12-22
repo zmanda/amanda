@@ -1,4 +1,12 @@
 2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/Makefile.am configure.in: conditionalize warnings which
+	  are not present on all gcc version
+	* ndmp-src/amndma_tape_simulator.c ndmp-src/ndma_tape_simulator.c
+	  ndmp-src/ndmjob_main_util.c: fix warnings
+	* ndmp-src/ndmp9.h ndmp-src/ndmp9.x ndmp-src/ndmp9_xdr.c: unsigned
+	  long long constant should end in 'ull'
+
+2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_NDMP.pl: add auth parameter here too
 
 2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>

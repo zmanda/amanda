@@ -51,7 +51,7 @@ xdr_ndmp9_valid_u_long (XDR *xdrs, ndmp9_valid_u_long *objp)
 		return FALSE;
 	return TRUE;
 }
-#define NDMP9_INVALID_U_QUAD 0xFFFFFFFFFFFFFFFFul
+#define NDMP9_INVALID_U_QUAD 0xFFFFFFFFFFFFFFFFull
 
 bool_t
 xdr_ndmp9_valid_u_quad (XDR *xdrs, ndmp9_valid_u_quad *objp)

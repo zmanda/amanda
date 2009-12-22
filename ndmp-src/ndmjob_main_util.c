@@ -76,7 +76,8 @@ sort_index_file (void)
 		sprintf (cmd, "LC_ALL=C sort %s -o %s\n", I_index_file, I_index_file);
 		ndmjob_log (3, "sort command: %s", cmd);
 		ndmjob_log (1, "sorting index");
-		system (cmd);
+		if (system (cmd) < 0)
+		    error_byebye ("sort index failed");
 		ndmjob_log (1, "sort index done");
 	}
 

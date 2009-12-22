@@ -132,7 +132,7 @@ struct ndmp9_valid_u_long {
 	u_long value;
 };
 typedef struct ndmp9_valid_u_long ndmp9_valid_u_long;
-#define NDMP9_INVALID_U_QUAD 0xFFFFFFFFFFFFFFFFul
+#define NDMP9_INVALID_U_QUAD 0xFFFFFFFFFFFFFFFFull
 
 struct ndmp9_valid_u_quad {
 	ndmp9_validity valid;

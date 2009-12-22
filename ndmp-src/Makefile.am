@@ -87,11 +87,11 @@ AM_CFLAGS += -Wno-unused-value
 # and lots of callbacks take unused parameters
 AM_CFLAGS += -Wno-unused-parameter
 # and most arrays are terminated with a simple { 0 }
-AM_CFLAGS += -Wno-missing-field-initializers
+# AM_CFLAGS += -Wno-missing-field-initializers - this is added gloablly in configure.in
 # the translate functions don't have prototypes
 AM_CFLAGS += -Wno-missing-prototypes -Wno-missing-declarations
 # and some of them have old-school declarations
-AM_CFLAGS += -Wno-old-style-definition
+# AM_CFLAGS += -Wno-old-style-definition - this is added gloablly in configure.in
 
 ##
 ## libndmjob.la and libndmlib.la

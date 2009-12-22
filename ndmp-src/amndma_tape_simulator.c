@@ -379,7 +379,8 @@ ndmos_tape_write (struct ndm_session *sess,
 	}
 
 
-	ftruncate (ta->tape_fd, cur_pos);
+	if (ftruncate (ta->tape_fd, cur_pos) < 0)
+	    return NDMP9_IO_ERR;
 
 	lseek (ta->tape_fd, cur_pos, 0);
 
@@ -410,7 +411,9 @@ ndmos_tape_wfm (struct ndm_session *sess)
 	lseek (ta->tape_fd, cur_pos, 0);
 	err = NDMP9_NO_ERR;
 
-	ftruncate (ta->tape_fd, cur_pos);
+	if (ftruncate (ta->tape_fd, cur_pos) < 0)
+	    return NDMP9_IO_ERR;
+
 	lseek (ta->tape_fd, cur_pos, 0);
 
 	return err;
