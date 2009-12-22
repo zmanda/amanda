@@ -295,6 +295,24 @@ s3_verbose(S3Handle *hdl,
 gboolean
 s3_use_ssl(S3Handle *hdl, gboolean use_ssl);
 
+/* Control the throttling of S3 uploads.  Only supported with curl >= 7.15.5.
+ *
+ * @param hdl: the S3Handle object
+ * @param max_send_speed: max speed (bytes/sec) at which to send
+ * @returns: true if the setting is valid
+ */
+gboolean
+s3_set_max_send_speed(S3Handle *hdl, guint64 max_send_speed);
+
+/* Control the throttling of S3 downloads.  Only supported with curl >= 7.15.5.
+ *
+ * @param hdl: the S3Handle object
+ * @param max_recv_speed: max speed (bytes/sec) at which to receive
+ * @returns: true if the setting is valid
+ */
+gboolean
+s3_set_max_recv_speed(S3Handle *hdl, guint64 max_recv_speed);
+
 /* Get the error information from the last operation on this handle,
  * formatted as a string.
  *

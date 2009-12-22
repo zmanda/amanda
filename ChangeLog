@@ -1,3 +1,9 @@
+2009-12-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/s3.c device-src/s3.h: add max send and receive speeds
+	* device-src/s3-device.c: add PROPERTY_MAX_SEND_SPEED and
+	  PROPERTY_MAX_RECV_SPEED
+	* man/xml-source/amanda-devices.7.xml: document
+
 2009-12-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/Makefile.am configure.in: conditionalize warnings which
 	  are not present on all gcc version

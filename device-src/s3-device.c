@@ -99,6 +99,10 @@ struct _S3Device {
 
     /* Use SSL? */
     gboolean use_ssl;
+
+    /* Throttling */
+    guint64 max_send_speed;
+    guint64 max_recv_speed;
 };
 
 /*
@@ -156,6 +160,12 @@ static DevicePropertyBase device_property_ssl_ca_info;
 /* Whether to use SSL with Amazon S3. */
 static DevicePropertyBase device_property_s3_ssl;
 #define PROPERTY_S3_SSL (device_property_s3_ssl.ID)
+
+/* Speed limits for sending and receiving */
+static DevicePropertyBase device_property_max_send_speed;
+static DevicePropertyBase device_property_max_recv_speed;
+#define PROPERTY_MAX_SEND_SPEED (device_property_max_send_speed.ID)
+#define PROPERTY_MAX_RECV_SPEED (device_property_max_recv_speed.ID)
 
 
 /*
@@ -288,6 +298,14 @@ static gboolean s3_device_set_verbose_fn(Device *self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_ssl_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_max_send_speed_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_max_recv_speed_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -638,7 +656,12 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_s3_ssl,
                                       G_TYPE_BOOLEAN, "s3_ssl",
        "Whether to use SSL with Amazon S3");
-
+    device_property_fill_and_register(&device_property_max_send_speed,
+                                      G_TYPE_UINT64, "max_send_speed",
+       "Maximum average upload speed (bytes/sec)");
+    device_property_fill_and_register(&device_property_max_recv_speed,
+                                      G_TYPE_UINT64, "max_recv_speed",
+       "Maximum average download speed (bytes/sec)");
 
     /* register the device itself */
     register_device(s3_device_factory, device_prefix_list);
@@ -786,6 +809,16 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    device_simple_property_get_fn,
 	    s3_device_set_ssl_fn);
 
+    device_class_register_property(device_class, PROPERTY_MAX_SEND_SPEED,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_max_send_speed_fn);
+
+    device_class_register_property(device_class, PROPERTY_MAX_RECV_SPEED,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_max_recv_speed_fn);
+
     device_class_register_property(device_class, PROPERTY_COMPRESSION,
 	    PROPERTY_ACCESS_GET_MASK,
 	    device_simple_property_get_fn,
@@ -923,6 +956,46 @@ s3_device_set_ssl_fn(Device *p_self, DevicePropertyBase *base,
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
 
+static gboolean
+s3_device_set_max_send_speed_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+    guint64 new_val;
+
+    new_val = g_value_get_uint64(val);
+    if (self->s3 && !s3_set_max_send_speed(self->s3, new_val)) {
+	device_set_error(p_self,
+		g_strdup("Could not set S3 maximum send speed"),
+		DEVICE_STATUS_DEVICE_ERROR);
+        return FALSE;
+    }
+    self->max_send_speed = new_val;
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_max_recv_speed_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+    guint64 new_val;
+
+    new_val = g_value_get_uint64(val);
+    if (self->s3 && !s3_set_max_recv_speed(self->s3, new_val)) {
+	device_set_error(p_self,
+		g_strdup("Could not set S3 maximum recv speed"),
+		DEVICE_STATUS_DEVICE_ERROR);
+        return FALSE;
+    }
+    self->max_recv_speed = new_val;
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
 static Device*
 s3_device_factory(char * device_name, char * device_type, char * device_node)
 {
@@ -1041,6 +1114,20 @@ static gboolean setup_handle(S3Device * self) {
                 "Error setting S3 SSL/TLS use "
                 "(tried to enable SSL/TLS for S3, but curl doesn't support it?)")),
 	    DEVICE_STATUS_DEVICE_ERROR);
+        return FALSE;
+    }
+
+    if (!s3_set_max_send_speed(self->s3, self->max_send_speed)) {
+	device_set_error(d_self,
+		g_strdup("Could not set S3 maximum send speed"),
+		DEVICE_STATUS_DEVICE_ERROR);
+        return FALSE;
+    }
+
+    if (!s3_set_max_recv_speed(self->s3, self->max_recv_speed)) {
+	device_set_error(d_self,
+		g_strdup("Could not set S3 maximum recv speed"),
+		DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }
 

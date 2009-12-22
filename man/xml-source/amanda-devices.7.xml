@@ -470,6 +470,18 @@ size.</para></note>
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 <variablelist>
  <!-- ==== -->
+ <varlistentry><term>MAX_RECV_SPEED</term><listitem>
+(read-write) Maximum speed, in bytes per second, that this device will receive
+data from S3.  If the average speed exceeds this value, the device will stop
+reading long enough to bring the average below this value.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>MAX_SEND_SPEED</term><listitem>
+(read-write) Maximum speed, in bytes per second, that this device will send
+data to S3.  If the average speed exceeds this value, the device will stop
+writing long enough to bring the average below this value.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>S3_ACCESS_KEY</term><listitem>
  (read-write) This property gives the Amazon S3 access key used to access the service.
 </listitem></varlistentry>
@@ -481,23 +493,21 @@ or "EU" (i.e. store data in the EU).
 See Amazon's documentation for details and latest information
 </listitem></varlistentry>
  <!-- ==== -->
- <varlistentry><term>S3_SECRET_KEY</term><listitem>
- (read-write) This property gives the Amazon S3 secret key used to access the service.
-</listitem></varlistentry>
- <!-- ==== -->
- <varlistentry><term>S3_SSL</term><listitem>
- (read-write) Whether or not to use SSL/TLS to secure communications with Amazon S3.
-</listitem></varlistentry>
- <!-- ==== -->
  <varlistentry><term>SSL_CA_INFO</term><listitem>
  (read-write) Path to CA certificate to use to verify the identity of the S3 server.
 Only applicable when SSL/TLS is in use. The certificate should be in PEM format
 if OpenSSL or GnuTLS is being used with libcurl. Multiple certificates can be
 bundled together simply by concatenating them.
 If NSS is being used, then it is the directory that the database resides in.
-The value is passed to
-<manref name="curl_easy_setopt" vol="3"/>
-as CURLOPT_CAINFO.
+The value is passed to curl_easy_setopt(3) as CURLOPT_CAINFO.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>S3_SECRET_KEY</term><listitem>
+ (read-write) This property gives the Amazon S3 secret key used to access the service.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>S3_SSL</term><listitem>
+ (read-write) Whether or not to use SSL/TLS to secure communications with Amazon S3.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>S3_USER_TOKEN</term><listitem>

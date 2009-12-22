@@ -141,6 +141,9 @@ struct S3Handle {
     gboolean verbose;
     gboolean use_ssl;
 
+    guint64 max_send_speed;
+    guint64 max_recv_speed;
+
     /* information from the last request */
     char *last_message;
     guint last_response_code;
@@ -452,6 +455,16 @@ s3_curl_supports_ssl(void)
     }
 
     return supported;
+}
+
+static gboolean
+s3_curl_throttling_compat(void)
+{
+    curl_version_info_data *info;
+
+    /* CURLOPT_MAX_{SEND,RECV}_SPEED_LARGE were added in 7.15.5 */
+    info = curl_version_info(CURLVERSION_NOW);
+    return info->version_num >= 0x070f05;
 }
 
 static s3_result_t
@@ -976,7 +989,9 @@ curl_debug_message(CURL *curl G_GNUC_UNUSED,
     default:
         /* ignore data in/out -- nobody wants to see that in the
          * debug logs! */
-        return 0;
+        //return 0;
+	lineprefix="data";
+	break;
     }
 
     /* split the input into lines */
@@ -1142,6 +1157,15 @@ perform_request(S3Handle *hdl,
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_INFILESIZE, (long)request_body_size)))
             goto curl_error;
 #endif
+	if (s3_curl_throttling_compat()) {
+	    if (hdl->max_send_speed)
+		if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_MAX_SEND_SPEED_LARGE, (curl_off_t)hdl->max_send_speed)))
+		    goto curl_error;
+
+	    if (hdl->max_recv_speed)
+		if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_MAX_SEND_SPEED_LARGE, (curl_off_t)hdl->max_recv_speed)))
+		    goto curl_error;
+	}
 
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_HTTPGET, curlopt_httpget)))
             goto curl_error;
@@ -1490,6 +1514,28 @@ void
 s3_verbose(S3Handle *hdl, gboolean verbose)
 {
     hdl->verbose = verbose;
+}
+
+gboolean
+s3_set_max_send_speed(S3Handle *hdl, guint64 max_send_speed)
+{
+    if (!s3_curl_throttling_compat())
+	return FALSE;
+
+    hdl->max_send_speed = max_send_speed;
+
+    return TRUE;
+}
+
+gboolean
+s3_set_max_recv_speed(S3Handle *hdl, guint64 max_recv_speed)
+{
+    if (!s3_curl_throttling_compat())
+	return FALSE;
+
+    hdl->max_recv_speed = max_recv_speed;
+
+    return TRUE;
 }
 
 gboolean
