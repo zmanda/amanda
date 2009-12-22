@@ -301,8 +301,10 @@ typedef struct NDMPConnection {
 
 	%typemap(in) (gpointer buf, guint64 len) {
 	    int alloc = SWIG_OLDOBJ;
-	    SWIG_AsCharPtrAndSize($input, (char **)&$1, &$2, &alloc);
-	    if ($2) $2--; /* strip trailing NUL byte */
+	    size_t len_tmp; /* use a temporary with the right type */
+	    SWIG_AsCharPtrAndSize($input, (char **)&$1, &len_tmp, &alloc);
+	    if (len_tmp) len_tmp--; /* strip trailing NUL byte */
+	    $2 = len_tmp;
 	}
 	gboolean
 	tape_write(

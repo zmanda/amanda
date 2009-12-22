@@ -1,4 +1,7 @@
 2009-12-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/NDMP.swg: correct argument size to SWIG_AsCharPtrAndSize
+
+2009-12-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/s3.c device-src/s3.h: add max send and receive speeds
 	* device-src/s3-device.c: add PROPERTY_MAX_SEND_SPEED and
 	  PROPERTY_MAX_RECV_SPEED
