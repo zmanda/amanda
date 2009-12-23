@@ -1,4 +1,10 @@
 2009-12-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/Makefile.am: compile ndmp-src without warnings again - the
+	  source generated with rpcgen contains constructs that cause
+	  warnings for which earlier gcc's have no -Wno-xxx option
+	* configure.in: revert disabled warnings
+
+2009-12-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/NDMP.swg: correct argument size to SWIG_AsCharPtrAndSize
 
 2009-12-22  Dustin J. Mitchell <dustin@zmanda.com>

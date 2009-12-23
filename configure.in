@@ -180,9 +180,6 @@ AMANDA_ENABLE_GCC_WARNING([float-equal])
 AMANDA_ENABLE_GCC_WARNING([old-style-definition])
 AMANDA_DISABLE_GCC_WARNING([strict-aliasing])
 AMANDA_DISABLE_GCC_WARNING([unknown-pragmas])
-AMANDA_DISABLE_GCC_WARNING([missing-field-initializers]) # NDMJOB leaves out initializers
-AMANDA_DISABLE_GCC_WARNING([old-style-definition]) # and uses old-style definitions
-AMANDA_DISABLE_GCC_WARNING([unprototyped-calls]) # a very broken SuSE "improvement" to gcc
 AMANDA_WERROR_FLAGS
 AMANDA_SWIG_ERROR
 
