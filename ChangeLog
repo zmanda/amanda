@@ -1,4 +1,8 @@
 2009-12-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/s3.c: only including throttling code if the precompiler
+	  symbols are present
+
+2009-12-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/ndmp-device.c: fix TAPEEND handling in seek_file
 	* installcheck/Amanda_Device.pl: test it
 

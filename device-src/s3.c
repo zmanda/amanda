@@ -460,11 +460,15 @@ s3_curl_supports_ssl(void)
 static gboolean
 s3_curl_throttling_compat(void)
 {
+#ifdef CURLOPT_MAX_SEND_SPEED_LARGE
     curl_version_info_data *info;
 
     /* CURLOPT_MAX_{SEND,RECV}_SPEED_LARGE were added in 7.15.5 */
     info = curl_version_info(CURLVERSION_NOW);
     return info->version_num >= 0x070f05;
+#else
+    return FALSE;
+#endif
 }
 
 static s3_result_t
@@ -1157,6 +1161,7 @@ perform_request(S3Handle *hdl,
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_INFILESIZE, (long)request_body_size)))
             goto curl_error;
 #endif
+#ifdef CURLOPT_MAX_SEND_SPEED_LARGE
 	if (s3_curl_throttling_compat()) {
 	    if (hdl->max_send_speed)
 		if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_MAX_SEND_SPEED_LARGE, (curl_off_t)hdl->max_send_speed)))
@@ -1166,6 +1171,7 @@ perform_request(S3Handle *hdl,
 		if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_MAX_SEND_SPEED_LARGE, (curl_off_t)hdl->max_recv_speed)))
 		    goto curl_error;
 	}
+#endif
 
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_HTTPGET, curlopt_httpget)))
             goto curl_error;
