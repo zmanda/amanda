@@ -48,14 +48,6 @@ See the amanda-changers(7) manpage for usage information.
 # but overrides it to insert its own Interface class (that speaks NDMP) and to
 # create NDMP devices instead of tape devices.
 
-# XXX devel notes
-#
-# chg-ndmp:host:port@scsi-dev
-#   props: chg-robot + [ ndmp_username, ndmp_password ] - [ mtx ]
-#   tape-drives should name tape device
-#
-# This does not load or unload asynchronously.. add async interface to NDMPConnection?
-
 sub get_interface {
     my $self = shift;
     my ($device_name, $ignore_barcodes) = @_;
@@ -99,6 +91,30 @@ sub get_interface {
     return Amanda::Changer::ndmp::Interface->new($conn, $ignore_barcodes),
 }
 
+sub get_device {
+    my $self = shift;
+    my ($device_name) = @_;
+
+    my $device = Amanda::Changer::robot::get_device($self, $device_name);
+
+    # set the authentication properties for the new device based on our
+    # own settings, but only if they haven't been set by the user
+    my ($val, $surety, $source);
+
+    ($val, $surety, $source)= $device->property_get("ndmp-auth");
+    $device->property_set("ndmp-auth", $self->{'ndmp-auth'})
+	if ($source == $PROPERTY_SOURCE_DEFAULT);
+
+    ($val, $surety, $source)= $device->property_get("ndmp-password");
+    $device->property_set("ndmp-password", $self->{'ndmp-password'})
+	if ($source == $PROPERTY_SOURCE_DEFAULT);
+
+    ($val, $surety, $source)= $device->property_get("ndmp-username");
+    $device->property_set("ndmp-username", $self->{'ndmp-username'})
+	if ($source == $PROPERTY_SOURCE_DEFAULT);
+
+    return $device;
+}
 
 package Amanda::Changer::ndmp::Interface;
 

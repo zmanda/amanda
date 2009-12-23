@@ -224,6 +224,7 @@ AmandaChanger_DATA = \
 	Amanda/Changer/compat.pm \
 	Amanda/Changer/disk.pm \
 	Amanda/Changer/multi.pm \
+	Amanda/Changer/ndmp.pm \
 	Amanda/Changer/null.pm \
 	Amanda/Changer/rait.pm \
 	Amanda/Changer/robot.pm \

@@ -198,7 +198,9 @@ necessary type conversions:
     $success = $device->property_set("BLOCK_SIZE", $blocksize);
     $blocksize = $device->property_get("BLOCK_SIZE");
 
-if there is an error fetching the property, C<property_get> returns C<undef>.
+If C<property_get> is called in an array context, it returns the property
+value, its surety, and its source, in that order.  If there is an error
+fetching the property, C<property_get> returns C<undef>.
 
 The C<property_list()> method returns a list of all properties:
 

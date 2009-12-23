@@ -589,6 +589,9 @@ with the optional suffix <command>s</command> for seconds (the default) or
     property        "tape-device" "0=ndmp:filer.company.com@/dev/rtape0"
     property append "tape-device" "1=ndmp:filer.company.com@/dev/rtape1"
     property "use-slots" "1-12"
+    property "ndmp-auth" "text"
+    property "ndmp-username" "luke"
+    property "ndmp-password" "leia"
 </programlisting>
 
 <para>This changer is very similar to <command>chg-robot</command>, but
@@ -598,6 +601,9 @@ hostname of the NDMP server.  The <command>PORT</command> is optional.  The
 <command>SCSIDEV</command> should specify the SCSI device on the NDMP server
 which controls the changer.  The format of this parameter is
 implementation-specific.</para>
+
+<para>The appropriate authentication properties will be automatically set on
+any devices created by this changer.</para>
 
 <refsect3><title>Properties</title>
 
