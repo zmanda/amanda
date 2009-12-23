@@ -81,6 +81,9 @@ typedef struct {
 	dumpfile_t(void) {
 	    dumpfile_t *df = g_new(dumpfile_t, 1);
 	    fh_init(df);
+	    /* some default values */
+	    df->totalparts = -1;
+	    df->partnum = 1;
 	    return df;
 	}
 

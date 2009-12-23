@@ -204,7 +204,7 @@ sub main {
 	} else {
 	    $hdr = $dev->seek_file($filenum);
 	    if (!$hdr) {
-		return failure($dev->error_or_status());
+		return failure("while reading next header: " . $dev->error_or_status());
 	    } elsif ($hdr->{'type'} == $Amanda::Header::F_TAPEEND) {
 		return $subs{'finished'}->();
 	    }
@@ -286,7 +286,7 @@ sub main {
 		    Amanda::Xfer::Filter::Process->new(
 			[ $hdr->{'srvcompprog'}, "-d" ], 0)
 		);
-	    } elsif ($hdr->{'clntcomp'}) {
+	    } elsif ($hdr->{'clntcompprog'}) {
 		# TODO: this assumes that clntcompprog takes "-d" to decompress
 		@filters = (
 		    Amanda::Xfer::Filter::Process->new(

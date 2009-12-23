@@ -16,13 +16,14 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 34;
+use Test::More tests => 39;
 use strict;
 use warnings;
 
 use lib "@amperldir@";
 use Installcheck;
 use Installcheck::Config;
+use Installcheck::Mock;
 use Installcheck::Run qw(run run_get run_get_err run_err
 		$stderr $stdout $diskname vtape_dir);
 use Installcheck::Dumpcache;
@@ -31,6 +32,9 @@ use Amanda::Paths;
 use Amanda::Constants;
 use Amanda::Holding;
 use Amanda::Config qw( :init :getconf );
+use Amanda::Device qw( :constants );
+use Amanda::Xfer qw( :constants );
+use Amanda::MainLoop;
 use Cwd;
 use Data::Dumper;
 
@@ -49,6 +53,10 @@ sub cleandir {
 like(run_err('amrestore'),
     qr{Usage:},
     "'amrestore' gives usage message on stderr");
+
+# put the debug messages somewhere
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 Installcheck::Dumpcache::load("multi");
 Installcheck::Run::load_vtape(1);
@@ -225,6 +233,81 @@ is(scalar @filenames, 0, "..leaves no files in current dir")
     or diag(join("\n", @filenames));
 
 like($stdout, qr/AMANDA: /, "..and stdout contains something with a header");
+
+####
+# For DirectTCP, we write a dumpfile to disk manually with the NDMP device, and
+# then use amrestore to get it.
+
+SKIP: {
+    skip "not built with ndmp and server", 5 unless
+	Amanda::Util::built_with_component("ndmp") and Amanda::Util::built_with_component("server");
+
+    my $ndmp_port = Installcheck::get_unused_port();
+    my $tapefile = Installcheck::Mock::run_ndmjob($ndmp_port);
+
+    # set up a header for use below
+    my $hdr = Amanda::Header->new();
+    $hdr->{type} = $Amanda::Header::F_SPLIT_DUMPFILE;
+    $hdr->{datestamp} = "20091220000000";
+    $hdr->{dumplevel} = 0;
+    $hdr->{compressed} = 0;
+    $hdr->{comp_suffix} = 'N';
+    $hdr->{name} = "localhost";
+    $hdr->{disk} = "/home";
+    $hdr->{program} = "INSTALLCHECK";
+
+    my $device_name = "ndmp:127.0.0.1:$ndmp_port\@$tapefile";
+    my $dev = Amanda::Device->new($device_name);
+    ($dev->status() == $DEVICE_STATUS_SUCCESS)
+	or die "creation of an ndmp device failed: " . $dev->error_or_status();
+
+    $dev->start($ACCESS_WRITE, "TEST-17", "20091220000000")
+	or die "could not start NDMP device in write mode: " . $dev->error_or_status();
+
+    $dev->start_file($hdr),
+	or die "could not start_file: " . $dev->error_or_status();
+
+    {   # write to the file
+	my $xfer = Amanda::Xfer->new([
+		Amanda::Xfer::Source::Random->new(32768*40+280, 0xEEEEE),
+		Amanda::Xfer::Dest::Device->new($dev, 32768*5) ]);
+	$xfer->start(make_cb(xmsg_cb => sub {
+	    my ($src, $msg, $xfer) = @_;
+	    if ($msg->{'type'} == $XMSG_ERROR) {
+		die $msg->{'elt'} . " failed: " . $msg->{'message'};
+	    }
+	    if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+		Amanda::MainLoop::quit();
+	    }
+	}));
+
+	Amanda::MainLoop::run();
+    }
+
+    $dev->finish()
+	or die "could not finish device: " . $dev->error_or_status();
+    undef $dev;
+
+    pass("wrote a file to an NDMP device");
+
+    cleandir();
+    like(run_get_err('amrestore', $device_name),
+	qr{Restoring from tape TEST-17 starting with file 1.
+amrestore: 1: restoring split dumpfile: date [0-9]* host localhost disk /home part 1/UNKNOWN lev 0 comp N program .*},
+	"simple amrestore from NDMP device");
+
+    @filenames = sort <localhost.*>;
+    is(scalar @filenames, 1, "..and the restored file is present in testdir")
+	or diag(join("\n", @filenames));
+    like($filenames[0], qr/localhost\..*\.[0-9]{14}\.0/,
+	".. filename looks correct");
+
+    # get the size of the first file for later
+    is((stat($filenames[0]))[7], 32768*41, # note: last block is padded
+	".. file length is correct");
+
+    # let's just assume the contents of the file are correct, ok?
+}
 
 chdir("$testdir/..");
 rmtree($testdir);

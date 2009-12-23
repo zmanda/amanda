@@ -792,7 +792,8 @@ summarize_header(
 	summ = g_string_new("");
         g_string_printf(summ, "%s: date %s host %s disk %s lev %d comp %s",
 	    filetype2str(file->type), file->datestamp, file->name,
-	    qdisk, file->dumplevel, file->comp_suffix);
+	    qdisk, file->dumplevel,
+	    file->compressed? file->comp_suffix : "N");
 	amfree(qdisk);
 	goto add_suffixes;
 
@@ -807,7 +808,8 @@ summarize_header(
         g_string_printf(summ, "split dumpfile: date %s host %s disk %s"
 		      " part %d/%s lev %d comp %s",
                       file->datestamp, file->name, qdisk, file->partnum,
-                      totalparts, file->dumplevel, file->comp_suffix);
+                      totalparts, file->dumplevel,
+		      file->compressed? file->comp_suffix : "N");
 	amfree(qdisk);
         goto add_suffixes;
     }

@@ -1,4 +1,11 @@
 2009-12-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/fileheader.c: try to generate parsable headers
+	* perl/Amanda/Header.swg: add default values
+	* server-src/amrestore.pl: fix typo
+	* installcheck/amrestore.pl: ndmp-device test (not using directtcp
+	  yet)
+
+2009-12-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/s3.c: recent versions of curl switched from #define
 	  to enum, so #ifdef no longer works; test specific versions
 	  instead
