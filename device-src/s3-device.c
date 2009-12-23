@@ -1117,14 +1117,16 @@ static gboolean setup_handle(S3Device * self) {
         return FALSE;
     }
 
-    if (!s3_set_max_send_speed(self->s3, self->max_send_speed)) {
+    if (self->max_send_speed &&
+	    !s3_set_max_send_speed(self->s3, self->max_send_speed)) {
 	device_set_error(d_self,
 		g_strdup("Could not set S3 maximum send speed"),
 		DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }
 
-    if (!s3_set_max_recv_speed(self->s3, self->max_recv_speed)) {
+    if (self->max_recv_speed &&
+	    !s3_set_max_recv_speed(self->s3, self->max_recv_speed)) {
 	device_set_error(d_self,
 		g_strdup("Could not set S3 maximum recv speed"),
 		DEVICE_STATUS_DEVICE_ERROR);

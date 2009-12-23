@@ -1,4 +1,8 @@
 2009-12-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/s3-device.c: don't set the throttling properties unless
+	  they are nonzero
+
+2009-12-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am: only build chg-ndmp when WANT_NDMP
 
 2009-12-23  Dustin J. Mitchell <dustin@zmanda.com>
