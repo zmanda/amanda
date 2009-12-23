@@ -224,11 +224,13 @@ AmandaChanger_DATA = \
 	Amanda/Changer/compat.pm \
 	Amanda/Changer/disk.pm \
 	Amanda/Changer/multi.pm \
-	Amanda/Changer/ndmp.pm \
 	Amanda/Changer/null.pm \
 	Amanda/Changer/rait.pm \
 	Amanda/Changer/robot.pm \
 	Amanda/Changer/single.pm
+if WANT_NDMP
+AmandaChanger_DATA += Amanda/Changer/ndmp.pm
+endif
 HTML_SOURCE_FILES += $(AmandaChanger_DATA)
 endif
 EXTRA_DIST += $(AmandaChanger_DATA)

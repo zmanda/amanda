@@ -1,4 +1,7 @@
 2009-12-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am: only build chg-ndmp when WANT_NDMP
+
+2009-12-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/ndmp.pm: set device authentication properties
 	* perl/Makefile.am: actually include ndmp.pm
 	* perl/Amanda/Device.pod: doc extended property_get
