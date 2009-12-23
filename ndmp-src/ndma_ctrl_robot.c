@@ -350,7 +350,7 @@ ndmca_robot_query (struct ndm_session *sess)
 
 	rc = smc_inquire (smc);
 	if (rc) {
-		ndmalogqr (sess, "    ERROR smc_inquire()");
+		ndmalogqr (sess, "    ERROR smc_inquire(): %s", smc->errmsg);
 	} else {
 		ndmalogqr (sess, "    '%s'", smc->ident);
 	}
@@ -359,7 +359,7 @@ ndmca_robot_query (struct ndm_session *sess)
 	ndmalogqr (sess, "  Elements");
 	rc = smc_get_elem_aa (smc);
 	if (rc) {
-		ndmalogqr (sess, "    ERROR smc_get_elem_aa()");
+		ndmalogqr (sess, "    ERROR smc_get_elem_aa(): %s", smc->errmsg);
 	} else {
 		strcpy (lnbuf, "    ");
 		for (lineno = 0, nline = 1; lineno < nline; lineno++) {
@@ -376,7 +376,7 @@ ndmca_robot_query (struct ndm_session *sess)
 	ndmalogqr (sess, "  Status");
 	rc = smc_read_elem_status (smc);
 	if (rc) {
-		ndmalogqr (sess, "    ERROR smc_read_elem_status()");
+		ndmalogqr (sess, "    ERROR smc_read_elem_status(): %s", smc->errmsg);
 	} else {
 		ndmalogqr (sess, "    E#  Addr Type Status");
 		ndmalogqr (sess, "    --  ---- ---- ---------------------");

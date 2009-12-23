@@ -1,4 +1,7 @@
 2009-12-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndma_ctrl_robot.c: show error messages
+
+2009-12-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_NDMP.pl: work around perl-5.6's bad BigInt
 
 2009-12-22  Dustin J. Mitchell <dustin@zmanda.com>
