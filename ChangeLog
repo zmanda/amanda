@@ -1,4 +1,7 @@
 2009-12-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/s3.c: remove debugging info
+
+2009-12-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/s3.c: only including throttling code if the precompiler
 	  symbols are present
 

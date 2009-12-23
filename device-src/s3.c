@@ -993,9 +993,7 @@ curl_debug_message(CURL *curl G_GNUC_UNUSED,
     default:
         /* ignore data in/out -- nobody wants to see that in the
          * debug logs! */
-        //return 0;
-	lineprefix="data";
-	break;
+        return 0;
     }
 
     /* split the input into lines */
