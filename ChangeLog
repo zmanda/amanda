@@ -1,4 +1,9 @@
 2009-12-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/s3.c: recent versions of curl switched from #define
+	  to enum, so #ifdef no longer works; test specific versions
+	  instead
+
+2009-12-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndma_ctrl_robot.c: show error messages
 
 2009-12-23  Dustin J. Mitchell <dustin@zmanda.com>

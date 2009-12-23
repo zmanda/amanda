@@ -460,10 +460,11 @@ s3_curl_supports_ssl(void)
 static gboolean
 s3_curl_throttling_compat(void)
 {
-#ifdef CURLOPT_MAX_SEND_SPEED_LARGE
+/* CURLOPT_MAX_SEND_SPEED_LARGE added in 7.15.5 */
+#if LIBCURL_VERSION_NUM >= 0x070f05
     curl_version_info_data *info;
 
-    /* CURLOPT_MAX_{SEND,RECV}_SPEED_LARGE were added in 7.15.5 */
+    /* check the runtime version too */
     info = curl_version_info(CURLVERSION_NOW);
     return info->version_num >= 0x070f05;
 #else
@@ -1152,14 +1153,16 @@ perform_request(S3Handle *hdl,
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_PROGRESSDATA, progress_data)))
             goto curl_error;
 
-#ifdef CURLOPT_INFILESIZE_LARGE
+/* CURLOPT_INFILESIZE_LARGE added in 7.11.0 */
+#if LIBCURL_VERSION_NUM >= 0x070b00
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)request_body_size)))
             goto curl_error;
 #else
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_INFILESIZE, (long)request_body_size)))
             goto curl_error;
 #endif
-#ifdef CURLOPT_MAX_SEND_SPEED_LARGE
+/* CURLOPT_MAX_{RECV,SEND}_SPEED_LARGE added in 7.15.5 */
+#if LIBCURL_VERSION_NUM >= 0x070f05
 	if (s3_curl_throttling_compat()) {
 	    if (hdl->max_send_speed)
 		if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_MAX_SEND_SPEED_LARGE, (curl_off_t)hdl->max_send_speed)))
