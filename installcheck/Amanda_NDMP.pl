@@ -43,22 +43,25 @@ $nc->set_verbose(1);
 ok($nc->tape_open($tapefile, $NDMP9_TAPE_RDWR_MODE),
     "tape_open");
 
-is_deeply([ $nc->tape_write("ab"x8) ], [1, 16],
+# the stringification maps here are for old perls, which don't do well
+# with Math::BigInt and is_deeply.
+
+is_deeply([ map { "$_" } $nc->tape_write("ab"x8) ], ['1', '16'],
     "tape_write");
 
-is_deeply([ $nc->tape_write("cd"x8) ], [1, 16],
+is_deeply([ map { "$_" } $nc->tape_write("cd"x8) ], ['1', '16'],
     "tape_write");
 
-is_deeply([ $nc->tape_mtio($NDMP9_MTIO_EOF, 1) ], [1, 0],
+is_deeply([ map { "$_" } $nc->tape_mtio($NDMP9_MTIO_EOF, 1) ], ['1', '0'],
     "tape_mtio (eof)");
 
-is_deeply([ $nc->tape_mtio($NDMP9_MTIO_REW, 1) ], [1, 0],
+is_deeply([ map { "$_" } $nc->tape_mtio($NDMP9_MTIO_REW, 1) ], ['1', '0'],
     "tape_mtio (rewind)");
 
-is_deeply([ $nc->tape_read(32) ], [1, "ab"x8], "tape_read");
-is_deeply([ $nc->tape_read(32) ], [1, "cd"x8], "tape_read");
+is_deeply([ map { "$_" } $nc->tape_read(32) ], ['1', "ab"x8], "tape_read");
+is_deeply([ map { "$_" } $nc->tape_read(32) ], ['1', "cd"x8], "tape_read");
 
-is_deeply([ $nc->tape_get_state() ], [1, 0, 0, 2], "tape_get_state");
+is_deeply([ map { "$_" } $nc->tape_get_state() ], ['1', '0', '0', '2'], "tape_get_state");
 
 ok($nc->tape_close(),
     "tape_close");
