@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 418;
+use Test::More tests => 422;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -986,7 +986,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "not built with ndmp and server", 55 unless
+    skip "not built with ndmp and server", 59 unless
 	Amanda::Util::built_with_component("ndmp") and
 	Amanda::Util::built_with_component("server");
 
@@ -1339,6 +1339,17 @@ SKIP: {
 	    [ "READ-491520", "READ-491520", "READ-131072", "CLOSE", "DONE" ],
 	    "sequential read_to_connection operations read the right amounts and bytestream matches");
     }
+
+    ## test seek_file's handling of EOM
+
+    $hdr = $dev->seek_file(3);
+    is($hdr->{type}, $Amanda::Header::F_DUMPFILE, "file 3 is a dumpfile");
+    $hdr = $dev->seek_file(4);
+    is($hdr->{type}, $Amanda::Header::F_TAPEEND, "file 4 is tapeend");
+    $hdr = $dev->seek_file(5);
+    is($hdr, undef, "file 5 is an error");
+    $hdr = $dev->seek_file(6);
+    is($hdr, undef, "file 6 is an error");
 
     unlink $tapefile;
 }

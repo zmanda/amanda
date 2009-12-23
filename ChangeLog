@@ -1,4 +1,8 @@
 2009-12-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/ndmp-device.c: fix TAPEEND handling in seek_file
+	* installcheck/Amanda_Device.pl: test it
+
+2009-12-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/Makefile.am: compile ndmp-src without warnings again - the
 	  source generated with rpcgen contains constructs that cause
 	  warnings for which earlier gcc's have no -Wno-xxx option

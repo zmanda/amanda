@@ -268,15 +268,21 @@ close_ndmp_device(
 }
 
 static gboolean
-ndmp_mtio(
+single_ndmp_mtio(
     NdmpDevice *self,
-    ndmp9_tape_mtio_op tape_op,
-    gint count)
+    ndmp9_tape_mtio_op tape_op)
 {
-    guint tmp;
-    if (!ndmp_connection_tape_mtio(self->ndmp, tape_op, count, &tmp)) {
+    guint resid;
+
+    if (!ndmp_connection_tape_mtio(self->ndmp, tape_op, 1, &resid)) {
 	set_error_from_ndmp(self);
 	return FALSE;
+    }
+
+    if (resid != 0) {
+	device_set_error(DEVICE(self),
+		g_strdup_printf("NDMP MTIO operation %d did not complete", tape_op),
+		DEVICE_STATUS_DEVICE_ERROR);
     }
 
     return TRUE;
@@ -443,8 +449,8 @@ ndmp_device_read_label(
 	return dself->status;
     }
 
-    if (!ndmp_mtio(self, NDMP9_MTIO_REW, 1)) {
-	/* error message, if any, is set by ndmp_mtio */
+    if (!single_ndmp_mtio(self, NDMP9_MTIO_REW)) {
+	/* error message, if any, is set by single_ndmp_mtio */
 	return dself->status;
     }
 
@@ -543,8 +549,8 @@ ndmp_device_start(
     dself->access_mode = mode;
     dself->in_file = FALSE;
 
-    if (!ndmp_mtio(self, NDMP9_MTIO_REW, 1)) {
-	/* ndmp_mtio already set our error message */
+    if (!single_ndmp_mtio(self, NDMP9_MTIO_REW)) {
+	/* single_ndmp_mtio already set our error message */
 	return FALSE;
     }
 
@@ -598,8 +604,8 @@ ndmp_device_start(
 	}
 
 	amfree(header_buf);
-	if (!ndmp_mtio(self, NDMP9_MTIO_EOF, 1)) {
-	    /* error was set by ndmp_mtio */
+	if (!single_ndmp_mtio(self, NDMP9_MTIO_EOF)) {
+	    /* error was set by single_ndmp_mtio */
 	    return FALSE;
 	}
 
@@ -758,8 +764,8 @@ ndmp_device_finish_file(
     /* we're not in a file anymore */
     dself->in_file = FALSE;
 
-    if (!ndmp_mtio(self, NDMP9_MTIO_EOF, 1)) {
-	/* error was set by ndmp_mtio */
+    if (!single_ndmp_mtio(self, NDMP9_MTIO_EOF)) {
+	/* error was set by single_ndmp_mtio */
         dself->is_eom = TRUE;
 	return FALSE;
     }
@@ -775,7 +781,7 @@ ndmp_device_seek_file(
     guint   file)
 {
     NdmpDevice *self = NDMP_DEVICE(dself);
-    guint delta;
+    guint delta, resid;
     gpointer buf;
     guint64 buf_size;
     dumpfile_t *header;
@@ -803,20 +809,38 @@ ndmp_device_seek_file(
 	 * the current part, too */
 
 	/* BSF *past* the filemark we want to seek to */
-	if (!ndmp_mtio(self, NDMP9_MTIO_BSF, -delta + 1)) {
-	    /* ndmp_mtio already set our error message */
+	if (!ndmp_connection_tape_mtio(self->ndmp, NDMP9_MTIO_BSF, -delta + 1, &resid)) {
+	    set_error_from_ndmp(self);
 	    return NULL;
 	}
+	if (resid != 0)
+	    goto incomplete_bsf;
 
 	/* now we are on the BOT side of the filemark, but we want to be
 	 * on the EOT side of it.  An FSF will get us there.. */
-	if (!ndmp_mtio(self, NDMP9_MTIO_FSF, 1)) {
-	    /* ndmp_mtio already set our error message */
+	if (!ndmp_connection_tape_mtio(self->ndmp, NDMP9_MTIO_FSF, 1, &resid)) {
+	    set_error_from_ndmp(self);
+	    return NULL;
+	}
+
+	if (resid != 0) {
+incomplete_bsf:
+	    device_set_error(dself,
+		g_strdup_printf("BSF operation failed to seek by %d files", resid),
+		DEVICE_STATUS_DEVICE_ERROR);
 	    return NULL;
 	}
     } else /* (delta > 0) */ {
-	if (!ndmp_mtio(self, NDMP9_MTIO_FSF, delta)) {
-	    /* ndmp_mtio already set our error message */
+	if (!ndmp_connection_tape_mtio(self->ndmp, NDMP9_MTIO_FSF, delta, &resid)) {
+	    set_error_from_ndmp(self);
+	    return FALSE;
+	}
+
+	/* if we didn't seek all the way there, then we're past the tapeend */
+	if (resid > 0) {
+	    device_set_error(dself,
+		vstrallocf(_("Could not seek forward to file %d"), file),
+		DEVICE_STATUS_VOLUME_ERROR);
 	    return NULL;
 	}
     }
@@ -830,9 +854,16 @@ ndmp_device_seek_file(
     buf = g_malloc(dself->block_size);
     if (!ndmp_connection_tape_read(self->ndmp,
 		buf, dself->block_size, &buf_size)) {
-	set_error_from_ndmp(self);
-	g_free(buf);
-	return NULL;
+	switch (ndmp_connection_err_code(self->ndmp)) {
+	    case NDMP9_EOF_ERR:
+	    case NDMP9_EOM_ERR:
+		return make_tapeend_header();
+
+	    default:
+		set_error_from_ndmp(self);
+		g_free(buf);
+		return NULL;
+	}
     }
 
     header = g_new(dumpfile_t, 1);
