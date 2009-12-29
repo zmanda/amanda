@@ -365,4 +365,16 @@ extern char *ndml_strend(char *s);	/* ndml_util.c */
 #endif /* !NDMOS_OPTION_NO_NDMP3 */
 #endif /* !NDMOS_OPTION_NO_NDMP4 */
 
+/*
+ * simulator fields
+ */
+
+#ifdef NDMOS_OPTION_TAPE_SIMULATOR
+#define NDMOS_MACRO_TAPE_AGENT_ADDITIONS \
+	int			tape_fd; \
+	char			drive_name[PATH_MAX]; \
+	int			weof_on_close; \
+	int			sent_leom;
+#endif /* NDMOS_OPTION_TAPE_SIMULATOR */
+
 #endif /* _NDMOS_H */

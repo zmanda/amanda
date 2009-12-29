@@ -1,4 +1,9 @@
 2009-12-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndma_tape.c: remove ndmta_belay
+	* ndmp-src/ndmagents.h ndmp-src/ndmos.h: use
+	  NDMOS_MACRO_TAPE_AGENT_ADDITIONS for tape simulator
+
+2009-12-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Taper/Scan/traditional.pm: only open 'current' on the
 	  scan
 

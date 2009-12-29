@@ -81,13 +81,6 @@ ndmta_decommission (struct ndm_session *sess)
 	return 0;
 }
 
-/* Belay -- Cancel partially issued activation/start */
-int
-ndmta_belay (struct ndm_session *sess)
-{
-	return ndmta_decommission (sess);
-}
-
 /* helper for mover state */
 int
 ndmta_init_mover_state (struct ndm_session *sess)

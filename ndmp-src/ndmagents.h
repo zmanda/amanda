@@ -807,10 +807,6 @@ struct ndm_tape_agent {
 
 	/* TAPE */
 	ndmp9_tape_get_state_reply tape_state;
-	int			tape_fd;
-	char			drive_name[PATH_MAX];
-	int			weof_on_close;
-	int			sent_leom;
 
 	/* MOVER */
 	ndmp9_mover_get_state_reply mover_state;
@@ -839,7 +835,6 @@ struct ndm_tape_agent {
 extern int		ndmta_initialize (struct ndm_session *sess);
 extern int		ndmta_commission (struct ndm_session *sess);
 extern int		ndmta_decommission (struct ndm_session *sess);
-extern int		ndmta_belay (struct ndm_session *sess);
 extern int		ndmta_init_mover_state (struct ndm_session *sess);
 
 extern void		ndmta_mover_sync_state (struct ndm_session *sess);
