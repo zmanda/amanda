@@ -1,4 +1,8 @@
 2009-12-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Taper/Scan/traditional.pm: only open 'current' on the
+	  scan
+
+2009-12-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/amglue/directtcp.swg: initialize struct in_addr by member name
 
 2009-12-29  Dustin J. Mitchell <dustin@zmanda.com>

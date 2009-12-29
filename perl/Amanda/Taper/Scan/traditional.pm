@@ -1,4 +1,4 @@
-# Copyright (c) Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
 #
 # This library is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License version 2.1 as
@@ -48,6 +48,7 @@ sub new {
 	scanning => 0,
         tapelist => undef,
 	seen => {},
+	scan_num => 0,
     }, $class;
 
     return $self;
@@ -64,6 +65,10 @@ sub scan {
 
     # refresh the tapelist at every scan
     $self->{'tapelist'} = $self->read_tapelist();
+
+    # count the number of scans we do, so we can only load 'current' on the
+    # first scan
+    $self->{'scan_num'}++;
 
     $self->stage_1();
 }
@@ -288,24 +293,30 @@ sub stage_2 {
         }
 
         # load the current or next slot
+	my @load_args;
 	if (defined $last_slot) {
-	    $self->{'changer'}->load(
+	    @load_args = (
 		relative_slot => 'next',
 		slot => $last_slot,
-		set_current => 1,
-		res_cb => $subs{'loaded'},
-		except_slots => $self->{'seen'},
-		mode => "write",
+	    );
+	} elsif ($self->{'scan_num'} > 1) {
+	    # don't bother to load 'current' if this is our second scan
+	    @load_args = (
+		relative_slot => 'next',
 	    );
 	} else {
-	    $self->{'changer'}->load(
-		relative_slot => "current",
-		set_current => 1,
-		res_cb => $subs{'loaded'},
-		except_slots => $self->{'seen'},
-		mode => "write",
+	    # load 'current' the first time through
+	    @load_args = (
+		relative_slot => 'current',
 	    );
 	}
+	$self->{'changer'}->load(
+	    @load_args,
+	    set_current => 1,
+	    res_cb => $subs{'loaded'},
+	    except_slots => $self->{'seen'},
+	    mode => "write",
+	);
     });
 
     $subs{'loaded'} = make_cb(loaded => sub {
