@@ -1,3 +1,7 @@
+2009-12-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Config.swg: fix return type for config_init
+	* perl/amglue/glib.swg: use PL_sv_yes and PL_sv_no for booleans
+
 2009-12-24  Charles Curley <charlescurley@charlescurley.com>
 	* README: rewrite
 

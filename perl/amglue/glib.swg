@@ -27,6 +27,14 @@
 %}
 
 typedef int gboolean;
+%typemap(out) gboolean {
+    if ($1)
+	$result = &PL_sv_yes;
+    else
+	$result = &PL_sv_no;
+    argvi++;
+}
+
 typedef void *gpointer;
 typedef void *gconstpointer;
 

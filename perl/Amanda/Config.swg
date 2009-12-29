@@ -667,7 +667,7 @@ amglue_add_constant(CONFIG_INIT_CLIENT, config_init_flags);
 amglue_add_constant(CONFIG_INIT_OVERLAY, config_init_flags);
 amglue_copy_to_tag(config_init_flags, init);
 
-gboolean config_init(config_init_flags flags,
+cfgerr_level_t config_init(config_init_flags flags,
 		     char *arg_config_name);
 void config_uninit(void);
 char **get_config_options(int first);
