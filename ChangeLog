@@ -1,4 +1,8 @@
 2009-12-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am: sort tests
+	* installcheck/=setupcache.pl: rename _setupcache so it sorts first
+
+2009-12-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Config.swg: fix return type for config_init
 	* perl/amglue/glib.swg: use PL_sv_yes and PL_sv_no for booleans
 
