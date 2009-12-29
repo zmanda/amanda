@@ -1,4 +1,7 @@
 2009-12-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/amglue/directtcp.swg: initialize struct in_addr by member name
+
+2009-12-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am: sort tests
 	* installcheck/=setupcache.pl: rename _setupcache so it sorts first
 
