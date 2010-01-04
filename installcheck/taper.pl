@@ -68,25 +68,27 @@ sub run_taper {
 	if ($params{'notapedev'}) {
 	    $testconf->remove_param('tapedev');
 	    $testconf->remove_param('tpchanger');
-	} elsif ($params{'use_ndmjob'}) {
-	    # set things up to work with installcheck/mock/chg-ndmjob
-	    my $tapefile = $params{'ndmjob_tapefile'};
-	    my $ndmp_port = $params{'ndmjob_port'};
-	    my $chg_ndmjob_path = abs_path("mock") . "/chg-ndmjob";
+	} elsif ($params{'ndmp_server'}) {
+	    my $ndmp = $params{'ndmp_server'};
+	    $ndmp->reset();
 
-	    # write to the port file and unlink the "cur" file and both slots
-	    open(my $fh, ">", "$tapefile-port");
-	    print $fh $ndmp_port;
-	    close($fh);
-	    unlink "$tapefile-cur";
-	    unlink "$tapefile-slot0";
-	    unlink "$tapefile-slot1";
+	    my $port = $ndmp->{'port'};
+	    my $chg = $ndmp->{'changer'};
+	    my $drive0 = $ndmp->{'drive0'};
 
+	    # set things up to work with chg-ndmp; note that we only use
+	    # one drive right now
 	    $testconf->remove_param('tapedev');
 	    $testconf->remove_param('tpchanger');
 	    $testconf->remove_param('changerfile');
-	    $testconf->add_param('tpchanger', "\"$chg_ndmjob_path\"");
-	    $testconf->add_param('changerfile', "\"$tapefile\"");
+	    $testconf->add_param('tpchanger', '"ndmp_server"');
+	    $testconf->add_changer('ndmp_server', [
+		tpchanger => "\"chg-ndmp:127.0.0.1:$port\@$chg\"",
+		property => "\"tape-device\" \"0=ndmp:127.0.0.1:$port\@$drive0\"",
+		# no drive1 for now - it doesn't work yet
+		#property => "append \"tape-device\" \"1=ndmp:127.0.0.1:$port\@$drive1\"",
+		changerfile => "\"$chg-state\"",
+	    ]);
 	}
 	$testconf->add_tapetype('TEST-TAPE', [
 	    'length' =>  "$length",
@@ -887,15 +889,14 @@ wait_for_exit();
 SKIP : {
     skip "not built with NDMP", 30 unless Amanda::Util::built_with_component("ndmp");
 
-    my $ndmjob_port = Installcheck::get_unused_port();
-    my $ndmjob_tapefile = Installcheck::Mock::run_ndmjob($ndmjob_port, "-o", "tape-limit=" . (1024*1024));
+    my $ndmp = Installcheck::Mock::NdmpServer->new(tape_limit => 1024*1024);
+    my $ndmp_port = $ndmp->{'port'};
+    my $drive = $ndmp->{'drive'};
 
     $handle = "55-11111";
     $datestamp = "19780615010305";
-    run_taper(4096, "multipart dircttcp PORT-WRITE",
-	use_ndmjob => 1,
-	ndmjob_port => $ndmjob_port,
-	ndmjob_tapefile => $ndmjob_tapefile);
+    run_taper(4096, "multipart directtcp PORT-WRITE",
+	ndmp_server => $ndmp);
     like(taper_reply, qr/^TAPER-OK$/,
 	    "got TAPER-OK") or die;
     # note that Amanda uses the fallback splitsize here, even though it doesn't
@@ -953,10 +954,8 @@ SKIP : {
 
     $handle = "55-22222";
     $datestamp = "19780615010305";
-    run_taper(4096, "multipart dircttcp PORT-WRITE, with a zero-byte part",
-	use_ndmjob => 1,
-	ndmjob_port => $ndmjob_port,
-	ndmjob_tapefile => $ndmjob_tapefile);
+    run_taper(4096, "multipart directtcp PORT-WRITE, with a zero-byte part",
+	ndmp_server => $ndmp);
     like(taper_reply, qr/^TAPER-OK$/,
 	    "got TAPER-OK") or die;
     # use a different part size this time, to hit EOM "on the head"
@@ -1006,7 +1005,7 @@ SKIP : {
 	qr(^INFO taper tape TESTCONF02 kb 800 fm 2 \[OK\]$),
     ], "multipart directtcp PORT-WRITE with a zero-byte part logged correctly");
 
-    Installcheck::Mock::cleanup_ndmjob();
+    $ndmp->cleanup();
 } # end of ndmp SKIP
 
 cleanup_taper();

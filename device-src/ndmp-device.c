@@ -368,8 +368,6 @@ ndmp_device_open_device(
     NdmpDevice          *self = NDMP_DEVICE(dself);
     char *colon, *at;
 
-    g_debug("ndmp_device_open_device: %s : %s : %s", device_name, device_type, device_node);
-
     /* first, extract the various parts of the device_node:
      * HOST[:PORT]@DEVICE */
     colon = strchr(device_node, ':');

@@ -242,8 +242,9 @@ SKIP: {
     skip "not built with ndmp and server", 5 unless
 	Amanda::Util::built_with_component("ndmp") and Amanda::Util::built_with_component("server");
 
-    my $ndmp_port = Installcheck::get_unused_port();
-    my $tapefile = Installcheck::Mock::run_ndmjob($ndmp_port);
+    my $ndmp = Installcheck::Mock::NdmpServer->new();
+    my $port = $ndmp->{'port'};
+    my $drive = $ndmp->{'drive'};
 
     # set up a header for use below
     my $hdr = Amanda::Header->new();
@@ -256,7 +257,7 @@ SKIP: {
     $hdr->{disk} = "/home";
     $hdr->{program} = "INSTALLCHECK";
 
-    my $device_name = "ndmp:127.0.0.1:$ndmp_port\@$tapefile";
+    my $device_name = "ndmp:127.0.0.1:$port\@$drive";
     my $dev = Amanda::Device->new($device_name);
     ($dev->status() == $DEVICE_STATUS_SUCCESS)
 	or die "creation of an ndmp device failed: " . $dev->error_or_status();

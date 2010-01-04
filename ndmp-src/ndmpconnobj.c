@@ -768,6 +768,7 @@ ndmp_connection_get(
 	struct ndmconn *conn = NULL;
 	int rc;
 
+	g_debug("opening new NDMPConnection: to %s:%d ident '%s'", hostname, port, identifier);
 	conn = ndmconn_initialize(NULL, "amanda-server");
 	if (!conn) {
 	    errmsg = "could not initialize ndmconn";

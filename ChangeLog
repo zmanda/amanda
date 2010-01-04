@@ -1,3 +1,16 @@
+2010-01-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndmpconnobj.c device-src/ndmp-device.c: debugging tweaks
+	* installcheck/Installcheck/Mock.pm: use chg-ndmp directly
+	* installcheck/mock/chg-ndmjob.pl: remove
+	* installcheck/Amanda_Changer_ndmp.pl: new test
+	* installcheck/Amanda_Device.pl installcheck/Amanda_NDMP.pl
+	  installcheck/Amanda_Xfer.pl installcheck/Makefile.am
+	  installcheck/amrestore.pl installcheck/taper.pl: use chg-ndmp for
+	  tests via I::Mock
+	* perl/Amanda/Changer/ndmp.pm: open and close the scsi device every
+	  time, process sense data correctly, use correct element addresses
+	  for MOVE MEDIUM
+
 2010-01-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/bsd-security.c, common-src/bsdtcp-security.c,
 	  common-src/bsdudp-security.c: Check service != NULL.

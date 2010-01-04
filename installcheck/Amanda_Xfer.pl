@@ -976,15 +976,16 @@ SKIP: {
     my $RANDOM_SEED = 0xFACADE;
 
     # test Amanda::Xfer::Dest::Taper::DirectTCP; do it twice, once with a cancellation
-    my $ndmp_port = Installcheck::get_unused_port();
-    my $tapefile = Installcheck::Mock::run_ndmjob($ndmp_port);
+    my $ndmp = Installcheck::Mock::NdmpServer->new();
+    my $ndmp_port = $ndmp->{'port'};
+    my $drive = $ndmp->{'drive'};
     for my $do_cancel (0, 1) {
 	my $dev;
 	my $xfer;
 	my @messages;
 
 	sub mkdevice {
-	    my $dev = Amanda::Device->new("ndmp:127.0.0.1:$ndmp_port\@$tapefile");
+	    my $dev = Amanda::Device->new("ndmp:127.0.0.1:$ndmp_port\@$drive");
 	    die "can't create device" unless $dev->status() == $Amanda::Device::DEVICE_STATUS_SUCCESS;
 	    $dev->property_set("verbose", 1) or die "can't set VERBOSE";
 	    $dev->property_set("ndmp_username", "ndmp") or die "can't set username";
@@ -1068,5 +1069,5 @@ SKIP: {
 	    or diag(Dumper([@messages]));
 	}
     }
-    Installcheck::Mock::cleanup_ndmjob();
+    $ndmp->cleanup();
 }

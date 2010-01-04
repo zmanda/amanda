@@ -51,10 +51,27 @@ with the current dirctory pointing to 'installcheck/'.
 
 =head2 ndmjob
 
-To run an ndmjob instance, replete with a tape simulator, call C<run_ndmjob>
-with a port number on which ndmjob should listen.  The ndmjob instance will
-automatically be killed, and the temporary tape file deleted, when the test run
-is finished.  The function returns the name of the tape "device".
+Ndmjob can be used to provide an NDMP server, complete with two tape drives and
+a 10-tape changer.  Start it with:
+
+  my $ndmpserver = Installcheck::Mock::NdmpServer->new();
+
+All keyword arguments are optional, and include:
+
+  tape_limit	    size limit for simulated tapes
+
+The resulting object has a number of useful attributes:
+
+  $n->{'port'}	    port the NDMP server is listening on
+  $n->{'changer'}   device name for the NDMP changer
+  $n->{'drive0'}    device name for changer's drive 0
+  $n->{'drive1'}    device name for changer's drive 1
+  $n->{'drive'}	    device name for a drive not attached to the changer,
+		    and already loaded with a volume
+
+The C<cleanup> method will clean up any data files, and should be called when a
+test suite finishes.  The C<reset> method resets the changer to its initial
+state, without restarting ndmjob.
 
 =cut
 
@@ -84,37 +101,70 @@ sub setup_mock_mtx {
 
 our $mock_mtx_path = abs_path("mock") . "/mtx"; # abs_path only does dirs in perl-5.6
 
-my $ndmjob_sim_dir = "$Installcheck::TMP/ndmjob-tape-simulator-$$";
+package Installcheck::Mock::NdmpServer;
 
-sub run_ndmjob {
-    my ($port, @extra_args) = @_;
+use File::Path qw( mkpath rmtree );
+use Amanda::Paths;
+
+sub new {
+    my $class = shift;
+    my %params = @_;
+
+    my $self = bless {}, $class;
+
     no warnings; # don't complain that OUTFH is used only once
 
-    my $tapefile = "$ndmjob_sim_dir/ndmp-tapefile";
-    rmtree($ndmjob_sim_dir) if -d $ndmjob_sim_dir;
+    # note that we put this under /vtapes/ so that Dumpcache will pick it up
+    $self->{'simdir'} = "$Installcheck::TMP/vtapes/ndmjob";
+    $self->reset();
 
-    # the tapefile must already exist
-    mkpath($ndmjob_sim_dir);
-    open(my $fd, ">", $tapefile);
-    close($fd);
-
-    # first, launch ndmjob
-    my $ndmjob_pid = IPC::Open3::open3("INFH", "OUTFH", 0,
-	"$amlibexecdir/ndmjob", "-d5", "-o", "test-daemon",
-		"-T.", "-f", $tapefile,
+    # launch ndmjob
+    my $port = Installcheck::get_unused_port();
+    my @extra_args;
+    if ($params{'tape_limit'}) {
+	push @extra_args, "-o", "tape-limit=".$params{'tape_limit'};
+    }
+    my $ndmjob_pid = IPC::Open3::open3("INFH", "OUTFH", "ERRFH",
+	"$amlibexecdir/ndmjob", "-d8", "-o", "test-daemon",
 		"-p", $port, @extra_args);
 
     # wait for it to start up
-    die "ndmjob did not start up" unless (<OUTFH> =~ /READY/);
+    unless (<OUTFH> =~ /READY/) {
+	for (<ERRFH>) {
+	    main::diag($_);
+	}
+	die "ndmjob did not start up";
+    }
 
-    # ndmjob will exit when INFH is closed, which will occur when this
-    # (parent) process exits. Note that INFH and OUTFH are global, so the
-    # handle will not be closed on return from run_ndmjob
-    return $tapefile;
+    # and fill in the various attributes
+    $self->{'port'} = $port;
+    $self->{'changer'} = $self->{'simdir'};
+    $self->{'drive0'} = $self->{'simdir'} . '/drive0';
+    $self->{'drive1'} = $self->{'simdir'} . '/drive1';
+    $self->{'drive'} = $self->{'simdir'} . '/solo-drive';
+    $self->{'pid'} = $ndmjob_pid;
+
+    return $self;
 }
 
-sub cleanup_ndmjob {
-    rmtree($ndmjob_sim_dir) if -d $ndmjob_sim_dir;
+sub reset {
+    my $self = shift;
+
+    $self->cleanup();
+    mkpath($self->{'simdir'})
+	or die("cannot create " . $self->{'simdir'});
+
+    # non-changer drive must exist
+    my $drive = $self->{'simdir'} . '/solo-drive';
+    open(my $fd, ">", $drive)
+	or die("Could not open '$drive': $!");
+    close($fd);
+}
+
+sub cleanup {
+    my $self = shift;
+
+    rmtree($self->{'simdir'}) if -d $self->{'simdir'};
 }
 
 1;

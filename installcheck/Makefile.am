@@ -31,6 +31,7 @@ server_tests = \
 	Amanda_Changer_null \
 	Amanda_Changer_rait \
 	Amanda_Changer_robot \
+	Amanda_Changer_ndmp \
 	Amanda_Changer_single \
 	Amanda_Cmdline \
 	Amanda_Disklist \
@@ -77,8 +78,7 @@ mock_tests = \
 
 # mock scripts
 mocks = \
-	mock/mtx \
-	mock/chg-ndmjob
+	mock/mtx
 
 # data for test scripts
 test_data = \

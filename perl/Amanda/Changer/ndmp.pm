@@ -73,7 +73,7 @@ sub get_interface {
     }
 
     my $conn = Amanda::NDMP::NDMPConnection->new(
-	$host, $port, "changer-$scsi_dev",
+	$host, $port, "changer=$scsi_dev",
 	$self->{'ndmp-username'}, $self->{'ndmp-password'},
 	$self->{'ndmp-auth'});
 
@@ -82,13 +82,7 @@ sub get_interface {
 	    message => "error opening NDMP connection: " . $conn->err_msg());
     }
 
-    # open the scsi device
-    if (!$conn->scsi_open($scsi_dev)) {
-	return Amanda::Changer->make_error("fatal", undef,
-	    message => "error opening NDMP SCSI device '$scsi_dev': " . $conn->err_msg());
-    }
-
-    return Amanda::Changer::ndmp::Interface->new($conn, $ignore_barcodes),
+    return Amanda::Changer::ndmp::Interface->new($conn, $scsi_dev, $ignore_barcodes),
 }
 
 sub get_device {
@@ -124,10 +118,11 @@ use Amanda::MainLoop;
 
 sub new {
     my $class = shift;
-    my ($conn, $ignore_barcodes) = @_;
+    my ($conn, $scsi_dev, $ignore_barcodes) = @_;
 
     return bless {
 	conn => $conn,
+	scsi_dev => $scsi_dev,
 	ignore_barcodes => $ignore_barcodes,
 	# have we called READ ELEMENT STATUS yet?
 	have_status => 0,
@@ -150,6 +145,21 @@ sub inquiry {
     my $self = shift;
     my ($inquiry_cb) = @_;
 
+    if (!$self->{'conn'}->scsi_open($self->{'scsi_dev'})) {
+	return $inquiry_cb->($self->{'conn'}->err_msg());
+    }
+
+    # patch scsi_close into the callback, so it will be executed in error and
+    # success conditions
+    my $orig_inquiry_cb = $inquiry_cb;
+    $inquiry_cb = sub {
+	my ($err, $res) = @_;
+	if (!$self->{'conn'}->scsi_close()) {
+	    return $orig_inquiry_cb->($self->{'conn'}->err_msg()) unless ($err);
+	}
+	return $orig_inquiry_cb->($err, $res);
+    };
+
     # send a TEST UNIT READY first
     my $res = $self->{'conn'}->scsi_execute_cdb(
 	flags => 0,
@@ -168,8 +178,8 @@ sub inquiry {
     $res = $self->{'conn'}->scsi_execute_cdb(
 	flags => $NDMP9_SCSI_DATA_DIR_IN,
 	timeout => 5*1000,
-	cdb => pack('CCCnC', 0x12, 0, 0, 56, 0),
-	datain_len => 56
+	cdb => pack('CCCnC', 0x12, 0, 0, 96, 0),
+	datain_len => 96
     );
     if (!$res) {
 	return $inquiry_cb->($self->{'conn'}->err_msg());
@@ -189,6 +199,7 @@ sub inquiry {
 	'vendor id' => $self->_trim_scsi(substr($res->{'datain'}, 8, 8)),
 	'product id' => $self->_trim_scsi(substr($res->{'datain'}, 16, 16)),
 	'revision' => $self->_trim_scsi(substr($res->{'datain'}, 32, 4)),
+	'product type' => "Medium Changer",
     };
 
     return $inquiry_cb->(undef, $result);
@@ -197,60 +208,66 @@ sub inquiry {
 sub status {
     my $self = shift;
     my ($status_cb) = @_;
-    my %subs;
 
     # the SMC spec says we can "query" the length of the READ ELEMENT STATUS
-    # result by passing an initial datain_len of 8, so that's what we do
+    # result by passing an initial datain_len of 8, so that's what we do.  This
+    # variable will be changed, later
     my $bufsize = 8;
 
-    $subs{'send_cdb'} = make_cb(send_cdb => sub {
-	my $res = $self->{'conn'}->scsi_execute_cdb(
-	    flags => $NDMP9_SCSI_DATA_DIR_IN,
-	    timeout => 2*1000,
-	    cdb => pack('CCnnCCnxC',
-		0xB8, # opcode
-		0x10, # VOLTAG, all element types
-		0, # start at addr 0
-		0xffff, # and give me 65535 elements
-		0, # CURDATA=0, so don't do an inventory
-		$bufsize >> 16, # allocation length high byte
-		$bufsize & 0xffff, # allocation length low short
-		0), # control
-	    datain_len => $bufsize
-	);
-	$subs{'scsi_done'}->($res);
-    });
+    if (!$self->{'conn'}->scsi_open($self->{'scsi_dev'})) {
+	return $status_cb->($self->{'conn'}->err_msg());
+    }
 
-    $subs{'scsi_done'} = make_cb(scsi_done => sub {
-	my ($res) = @_;
-
-	if (!$res) {
-	    return $status_cb->($self->{'conn'}->err_msg());
+    # patch scsi_close into the callback, so it will be executed in error and
+    # success conditions
+    my $orig_status_cb = $status_cb;
+    $status_cb = sub {
+	my ($err, $res) = @_;
+	if (!$self->{'conn'}->scsi_close()) {
+	    return $orig_status_cb->($self->{'conn'}->err_msg()) unless ($err);
 	}
-	if ($res->{'status'} != 0) {
-	    my $sense_info = $self->_get_scsi_err($res);
-	    return $status_cb->("READ ELEMENT STATUS failed: $sense_info");
+	return $orig_status_cb->($err, $res);
+    };
+
+send_cdb:
+    my $res = $self->{'conn'}->scsi_execute_cdb(
+	flags => $NDMP9_SCSI_DATA_DIR_IN,
+	timeout => 2*1000,
+	cdb => pack('CCnnCCnxC',
+	    0xB8, # opcode
+	    0x10, # VOLTAG, all element types
+	    0, # start at addr 0
+	    0xffff, # and give me 65535 elements
+	    0, # CURDATA=0, so don't do an inventory
+	    $bufsize >> 16, # allocation length high byte
+	    $bufsize & 0xffff, # allocation length low short
+	    0), # control
+	datain_len => $bufsize
+    );
+    if (!$res) {
+	return $status_cb->($self->{'conn'}->err_msg());
+    }
+    if ($res->{'status'} != 0) {
+	my $sense_info = $self->_get_scsi_err($res);
+	return $status_cb->("READ ELEMENT STATUS failed: $sense_info");
+    }
+
+    # if we only got the size, then send another request
+    if ($bufsize == 8) {
+	my ($msb, $lsw) = unpack("Cn", substr($res->{'datain'}, 5, 3));
+	$bufsize = ($msb << 16) + $lsw;
+	$bufsize += 8; # add the header length
+	if ($bufsize > 8) {
+	    goto send_cdb;
+	} else {
+	    return $status_cb->("got short result from READ ELEMENT STATUS");
 	}
+    }
 
-	# if we only got the size, then send another request
-	if ($bufsize == 8) {
-	    my ($msb, $lsw) = unpack("Cn", substr($res->{'datain'}, 5, 3));
-	    $bufsize = ($msb << 16) + $lsw;
-	    $bufsize += 8; # add the header length
-	    if ($bufsize > 8) {
-		return $subs{'send_cdb'}->();
-	    } else {
-		return $status_cb->("got short result from READ ELEMENT STATUS");
-	    }
-	}
+    $self->{'have_status'} = 1;
 
-	$self->{'have_status'} = 1;
-
-	# parse it and invoke the callback
-	$status_cb->(undef, $self->_parse_read_element_status($res->{'datain'}));
-    });
-
-    $subs{'send_cdb'}->();
+    # parse it and invoke the callback
+    $status_cb->(undef, $self->_parse_read_element_status($res->{'datain'}));
 }
 
 sub load {
@@ -278,6 +295,25 @@ sub _do_move_medium {
     my $self = shift;
     my ($op, $src, $dst, $finished_cb) = @_;
     my %subs;
+
+    $subs{'scsi_open'} = make_cb(scsi_open => sub {
+	if (!$self->{'conn'}->scsi_open($self->{'scsi_dev'})) {
+	    return $finished_cb->($self->{'conn'}->err_msg());
+	}
+
+	# patch scsi_close into the callback, so it will be executed in error and
+	# success conditions
+	my $orig_finished_cb = $finished_cb;
+	$finished_cb = sub {
+	    my ($err) = @_;
+	    if (!$self->{'conn'}->scsi_close()) {
+		return $orig_finished_cb->($self->{'conn'}->err_msg()) unless ($err);
+	    }
+	    return $orig_finished_cb->($err);
+	};
+
+	$subs{'get_status'}->();
+    });
 
     $subs{'get_status'} = make_cb(get_status => sub {
 	if ($self->{'have_status'}) {
@@ -322,8 +358,8 @@ sub _do_move_medium {
 	    cdb => pack('CxnnnxxxC',
 		0xA5, # MOVE MEDIUM
 		$self->{'medium_transport_elem'},
-		$src,
-		$dst,
+		$src_elem,
+		$dst_elem,
 		0) # control
 	);
 
@@ -344,11 +380,12 @@ sub _do_move_medium {
 	return $finished_cb->(undef);
     });
 
-    $subs{'get_status'}->();
+    $subs{'scsi_open'}->();
 }
 
 # a selected set of errors we might see; keyed by ASC . ASCQ
 my %scsi_errors = (
+    '2101' => "Invalid element address",
     '3b0d' => "Medium Destination Element Full",
     '3b0e' => "Medium Source Element Empty",
     '3b11' => "Medium Magazine Not Accessible",
@@ -365,9 +402,9 @@ sub _get_scsi_err {
 
     if (($res->{'status'} & 0x3E) == 2) { # CHECK CONDITION
 	my @sense_data = map { ord($_) } split //, $res->{'ext_sense'};
-	my $sense_key = $sense_data[2] & 0xF;
-	my $sense_code = $sense_data[12];
-	my $sense_code_qualifier = $sense_data[13];
+	my $sense_key = $sense_data[1] & 0xF;
+	my $sense_code = $sense_data[2];
+	my $sense_code_qualifier = $sense_data[3];
 	my $ascascq = sprintf("%02x%02x", $sense_code, $sense_code_qualifier);
 	my $msg = "CHECK CONDITION: ";
 	if (exists $scsi_errors{$ascascq}) {
@@ -405,6 +442,7 @@ sub _parse_read_element_status {
     my $result = { drives => {}, slots => {} };
     my $next_drive_num = 0;
     my $next_slot_num = 1;
+    my %slots_by_elem; # inverse of $self->{slot_scsi_elem_map}
 
     # element status header
     my ($first_elem, $num_elems) = unpack("nn", substr($data, 0, 4));
@@ -435,11 +473,11 @@ sub _parse_read_element_status {
 
 	    my ($pvoltag, $avoltag);
 	    if ($have_pvoltag) {
-		$pvoltag = $self->_trim_scsi(substr($descripdata, 0, 36));
+		$pvoltag = $self->_trim_scsi(substr($descripdata, 0, 32));
 		$descripdata = substr($descripdata, 36);
 	    }
 	    if ($have_avoltag) {
-		$avoltag = _trim_scsi(substr($descripdata, 0, 36));
+		$avoltag = $self->_trim_scsi(substr($descripdata, 0, 32));
 		$descripdata = substr($descripdata, 36);
 	    }
 
@@ -460,11 +498,12 @@ sub _parse_read_element_status {
 	    } elsif ($elem_type == 2 or $elem_type == 3) { # storage or import/export
 		my $slot = $next_slot_num++;
 		$self->{'slot_scsi_elem_map'}->{$slot} = $elem_addr;
+		$slots_by_elem{$elem_addr} = $slot;
 
 		my $h = $result->{'slots'}->{$slot} = {};
-		$h->{'empty'} = !$full_flag;
-		$h->{'barcode'} = $pvoltag;
-		$h->{'ie'} = ($elem_type == 3); # import/export elem type
+		$h->{'empty'} = 1 if !$full_flag;
+		$h->{'barcode'} = $pvoltag if $pvoltag ne '';
+		$h->{'ie'} = 1 if ($elem_type == 3); # import/export elem type
 	    } elsif ($elem_type == 1) { # medium transport
 		$self->{'medium_transport_elem'} = $elem_addr;
 	    }
@@ -480,7 +519,7 @@ sub _parse_read_element_status {
     for my $dr (values %{$result->{'drives'}}) {
 	next unless defined $dr;
 	if (defined $dr->{'orig_slot_elem'}) {
-	    $dr->{'orig_slot'} = $self->{'slot_scsi_elem_map'}->{$dr->{'orig_slot_elem'}};
+	    $dr->{'orig_slot'} = $slots_by_elem{$dr->{'orig_slot_elem'}};
 	} else {
 	    $dr->{'orig_slot'} = undef;
 	}
@@ -488,28 +527,6 @@ sub _parse_read_element_status {
     }
 
     return $result;
-}
-
-# XXX temporary
-sub hdump {
-    my $offset = 0;
-    my(@array,$format);
-    foreach my $data (unpack("a16"x(length($_[0])/16)."a*",$_[0])) {
-        my($len)=length($data);
-        if ($len == 16) {
-            @array = unpack('N4', $data);
-            $format="0x%08x (%05d)   %08x %08x %08x %08x   %s\n";
-        } else {
-            @array = unpack('C*', $data);
-            $_ = sprintf "%2.2x", $_ for @array;
-            push(@array, '  ') while $len++ < 16;
-            $format="0x%08x (%05d)" .
-               "   %s%s%s%s %s%s%s%s %s%s%s%s %s%s%s%s   %s\n";
-        }
-        $data =~ tr/\0-\37\177-\377/./;
-        printf $format,$offset,$offset,@array,$data;
-        $offset += 16;
-    }
 }
 
 1;

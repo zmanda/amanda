@@ -25,13 +25,13 @@ use Installcheck;
 use Installcheck::Mock;
 use Amanda::NDMP qw( :constants );
 
-my $ndmp_port = Installcheck::get_unused_port();
-my $tapefile = Installcheck::Mock::run_ndmjob($ndmp_port);
+my $ndmp = Installcheck::Mock::NdmpServer->new();
 my $nc;
 
 Amanda::Debug::dbopen("installcheck");
 
-$nc = Amanda::NDMP::NDMPConnection->new("127.0.0.1", $ndmp_port, "test", "ndmp", "ndmp", "md5");
+$nc = Amanda::NDMP::NDMPConnection->new("127.0.0.1", $ndmp->{'port'},
+				    "test", "ndmp", "ndmp", "md5");
 ok($nc, "constructor creates an object");
 is($nc->err_code(), 0, "and no error is set");
 
@@ -40,7 +40,7 @@ $nc->set_verbose(1);
 # can't test the scsi_* methods in the general case, because we have nothing to talk
 # to -- but they were tested once, never fear!
 
-ok($nc->tape_open($tapefile, $NDMP9_TAPE_RDWR_MODE),
+ok($nc->tape_open($ndmp->{'drive'}, $NDMP9_TAPE_RDWR_MODE),
     "tape_open");
 
 # the stringification maps here are for old perls, which don't do well
@@ -66,4 +66,4 @@ is_deeply([ map { "$_" } $nc->tape_get_state() ], ['1', '0', '0', '2'], "tape_ge
 ok($nc->tape_close(),
     "tape_close");
 
-Installcheck::Mock::cleanup_ndmjob();
+$ndmp->cleanup();

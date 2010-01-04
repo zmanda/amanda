@@ -991,8 +991,6 @@ SKIP: {
 	Amanda::Util::built_with_component("server");
 
     my $dev;
-    my $ndmp_port = Installcheck::get_unused_port();
-
     my $testconf = Installcheck::Config->new();
     $testconf->write();
 
@@ -1002,8 +1000,10 @@ SKIP: {
 	die(join "\n", @errors);
     }
 
-    my $tapefile = Installcheck::Mock::run_ndmjob($ndmp_port);
-    pass("started ndmjob in daemon mode; tapefile=$tapefile");
+    my $ndmp = Installcheck::Mock::NdmpServer->new();
+    my $ndmp_port = $ndmp->{'port'};
+    my $drive = $ndmp->{'drive'};
+    pass("started ndmjob in daemon mode");
 
     # set up a header for use below
     my $hdr = Amanda::Header->new();
@@ -1027,7 +1027,7 @@ SKIP: {
     isnt($dev->status(), $DEVICE_STATUS_SUCCESS,
 	"creation of an ndmp device fails without ..\@device_name");
 
-    $dev = Amanda::Device->new("ndmp:127.0.0.1:$ndmp_port\@$tapefile");
+    $dev = Amanda::Device->new("ndmp:127.0.0.1:$ndmp_port\@$drive");
     is($dev->status(), $DEVICE_STATUS_SUCCESS,
 	"creation of an ndmp device succeeds with correct syntax");
 
@@ -1087,7 +1087,7 @@ SKIP: {
     ## label a device and check the label, but open a new device in between
 
     # Write a label
-    $dev = Amanda::Device->new("ndmp:127.0.0.1:$ndmp_port\@$tapefile");
+    $dev = Amanda::Device->new("ndmp:127.0.0.1:$ndmp_port\@$drive");
     is($dev->status(), $DEVICE_STATUS_SUCCESS,
 	"creation of an ndmp device succeeds with correct syntax");
     $dev->property_set("ndmp_username", "ndmp");
@@ -1103,7 +1103,7 @@ SKIP: {
 	or diag $dev->error_or_status();
 
     # Read the label with a new device.
-    $dev = Amanda::Device->new("ndmp:127.0.0.1:$ndmp_port\@$tapefile");
+    $dev = Amanda::Device->new("ndmp:127.0.0.1:$ndmp_port\@$drive");
     is($dev->status(), $DEVICE_STATUS_SUCCESS,
 	"creation of an ndmp device succeeds with correct syntax");
     $dev->property_set("ndmp_username", "ndmp");
@@ -1351,7 +1351,7 @@ SKIP: {
     $hdr = $dev->seek_file(6);
     is($hdr, undef, "file 6 is an error");
 
-    unlink $tapefile;
+    $ndmp->cleanup();
 }
 unlink($input_filename);
 unlink($output_filename);
