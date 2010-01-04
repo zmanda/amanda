@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -65,10 +65,11 @@
 	int i = 0;
 
 	while (iter && iter->ipv4) {
-	    struct in_addr in = { htonl(iter->ipv4) };
+	    struct in_addr in;
 	    char *addr = inet_ntoa(in);
 	    AV *tuple = newAV();
 
+	    in.s_addr = htonl(iter->ipv4);
 	    g_assert(NULL != av_store(tuple, 0,
 		    newSVpv(addr, 0)));
 	    g_assert(NULL != av_store(tuple, 1, newSViv(iter->port)));

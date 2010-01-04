@@ -1,4 +1,8 @@
 2010-01-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/amglue/directtcp.swg: initialize the other struct in_addr by
+	  member name, too (see 2009-12-29)
+
+2010-01-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndmpconnobj.c device-src/ndmp-device.c: debugging tweaks
 	* installcheck/Installcheck/Mock.pm: use chg-ndmp directly
 	* installcheck/mock/chg-ndmjob.pl: remove
