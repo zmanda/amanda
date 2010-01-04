@@ -1,4 +1,16 @@
 2010-01-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/device.c device-src/device.h: change can_use_connection
+	  to the imperative use_connection
+	* device-src/ndmp-device.c: implement use_connection
+	* device-src/xfer-device.h device-src/xfer-dest-taper-directtcp.c
+	  device-src/xfer-dest-taper-splitter.c device-src/xfer-dest-taper.c:
+	  add a use_device method, start_part no longer needs a device
+	* perl/Amanda/Device.pod perl/Amanda/Device.swg perl/Amanda/Xfer.pod
+	  perl/Amanda/XferServer.swg: SWIG it 
+	* perl/Amanda/Taper/Scribe.pm: call new use_device and start_part
+	* installcheck/Amanda_Xfer.pl installcheck/taper.pl: test it
+
+2010-01-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am: conditionalize Amanda_Changer_ndmp tests
 	  on WANT_NDMP
 

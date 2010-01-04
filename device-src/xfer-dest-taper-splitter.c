@@ -1314,14 +1314,12 @@ static void
 start_part_impl(
     XferDestTaper *xdtself,
     gboolean retry_part,
-    Device *device,
     dumpfile_t *header)
 {
     XferDestTaperSplitter *self = XFER_DEST_TAPER_SPLITTER(xdtself);
-    GValue val;
 
-    g_assert(device != NULL);
-    g_assert(!device->in_file);
+    g_assert(self->device != NULL);
+    g_assert(!self->device->in_file);
     g_assert(header != NULL);
 
     DBG(1, "start_part(retry_part=%d)", retry_part);
@@ -1330,29 +1328,9 @@ start_part_impl(
     g_assert(self->paused);
     g_assert(!self->no_more_parts);
 
-    self->device = device;
     if (self->part_header)
 	dumpfile_free(self->part_header);
     self->part_header = dumpfile_copy(header);
-
-    /* get this new device's streaming requirements */
-    bzero(&val, sizeof(val));
-    if (!device_property_get(self->device, PROPERTY_STREAMING, &val)
-        || !G_VALUE_HOLDS(&val, STREAMING_REQUIREMENT_TYPE)) {
-        g_warning("Couldn't get streaming type for %s", self->device->device_name);
-        self->streaming = STREAMING_REQUIREMENT_REQUIRED;
-    } else {
-        self->streaming = g_value_get_enum(&val);
-    }
-    g_value_unset(&val);
-
-    /* check that the blocksize hasn't changed */
-    if (self->block_size != device->block_size) {
-        g_mutex_unlock(self->state_mutex);
-        xfer_cancel_with_error(XFER_ELEMENT(self),
-            _("All devices used by the taper must have the same block size"));
-        return;
-    }
 
     if (retry_part) {
 	if (!self->use_mem_cache && !self->part_slices) {
@@ -1379,6 +1357,45 @@ start_part_impl(
     self->paused = FALSE;
     g_cond_broadcast(self->state_cond);
 
+    g_mutex_unlock(self->state_mutex);
+}
+
+static void
+use_device_impl(
+    XferDestTaper *xdtself,
+    Device *device)
+{
+    XferDestTaperSplitter *self = XFER_DEST_TAPER_SPLITTER(xdtself);
+    GValue val;
+
+    /* short-circuit if nothing is changing */
+    if (self->device == device)
+	return;
+
+    g_mutex_lock(self->state_mutex);
+    if (self->device)
+	g_object_unref(self->device);
+    self->device = device;
+    g_object_ref(device);
+
+    /* get this new device's streaming requirements */
+    bzero(&val, sizeof(val));
+    if (!device_property_get(self->device, PROPERTY_STREAMING, &val)
+        || !G_VALUE_HOLDS(&val, STREAMING_REQUIREMENT_TYPE)) {
+        g_warning("Couldn't get streaming type for %s", self->device->device_name);
+        self->streaming = STREAMING_REQUIREMENT_REQUIRED;
+    } else {
+        self->streaming = g_value_get_enum(&val);
+    }
+    g_value_unset(&val);
+
+    /* check that the blocksize hasn't changed */
+    if (self->block_size != device->block_size) {
+        g_mutex_unlock(self->state_mutex);
+        xfer_cancel_with_error(XFER_ELEMENT(self),
+            _("All devices used by the taper must have the same block size"));
+        return;
+    }
     g_mutex_unlock(self->state_mutex);
 }
 
@@ -1497,6 +1514,9 @@ finalize_impl(
     if (self->disk_cache_write_fd != -1)
 	close(self->disk_cache_write_fd); /* ignore error */
 
+    if (self->device)
+	g_object_unref(self->device);
+
     /* chain up */
     G_OBJECT_CLASS(parent_class)->finalize(obj_self);
 }
@@ -1517,6 +1537,7 @@ class_init(
     klass->cancel = cancel_impl;
     klass->push_buffer = push_buffer_impl;
     xdt_klass->start_part = start_part_impl;
+    xdt_klass->use_device = use_device_impl;
     xdt_klass->cache_inform = cache_inform_impl;
     xdt_klass->get_part_bytes_written = get_part_bytes_written_impl;
     goc->finalize = finalize_impl;
@@ -1569,6 +1590,8 @@ xfer_dest_taper_splitter(
     self->max_memory = max_memory;
     self->part_size = part_size;
     self->partnum = 1;
+    self->device = first_device;
+    g_object_ref(self->device);
 
     /* pick only one caching mechanism, caller! */
     g_assert(!use_mem_cache || !disk_cache_dirname);

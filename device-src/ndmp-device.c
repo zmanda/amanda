@@ -198,7 +198,7 @@ close_connection(
 }
 
 static gboolean
-open_ndmp_device(
+open_tape_agent(
     NdmpDevice *self)
 {
     guint64 file_num, blockno, blocksize;
@@ -251,7 +251,7 @@ open_ndmp_device(
 }
 
 static gboolean
-close_ndmp_device(
+close_tape_agent(
 	NdmpDevice *self)
 {
     if (self->tape_open) {
@@ -442,8 +442,8 @@ ndmp_device_read_label(
     header = dself->volume_header = g_new(dumpfile_t, 1);
     fh_init(header);
 
-    if (!open_ndmp_device(self)) {
-	/* error status was set by open_ndmp_device */
+    if (!open_tape_agent(self)) {
+	/* error status was set by open_tape_agent */
 	return dself->status;
     }
 
@@ -533,8 +533,8 @@ ndmp_device_start(
 
     if (device_in_error(self)) return FALSE;
 
-    if (!open_ndmp_device(self)) {
-	/* error status was set by open_ndmp_device */
+    if (!open_tape_agent(self)) {
+	/* error status was set by open_tape_agent */
 	return FALSE;
     }
 
@@ -632,8 +632,8 @@ ndmp_device_finish(
     /* we're not in a file anymore */
     dself->access_mode = ACCESS_NULL;
 
-    if (!close_ndmp_device(self)) {
-	/* error is set by close_ndmp_device */
+    if (!close_tape_agent(self)) {
+	/* error is set by close_tape_agent */
 	return FALSE;
     }
 
@@ -934,8 +934,8 @@ listen_impl(
     /* check status */
     g_assert(!self->listen_addrs);
 
-    if (!open_ndmp_device(self)) {
-	/* error message was set by open_ndmp_device */
+    if (!open_tape_agent(self)) {
+	/* error message was set by open_tape_agent */
 	return FALSE;
     }
 
@@ -1081,8 +1081,8 @@ write_from_connection_impl(
     if (actual_size)
 	*actual_size = 0;
 
-    /* caller should have checked this already */
-    g_assert(device_can_use_connection(dself, dtcpconn));
+    /* if this is false, then the caller did not use use_connection correctly */
+    g_assert(self->ndmp == nconn->ndmp);
 
     if (!ndmp_connection_mover_get_state(self->ndmp,
 		&mover_state, &bytes_moved_before)) {
@@ -1206,8 +1206,8 @@ read_to_connection_impl(
     if (actual_size)
 	*actual_size = 0;
 
-    /* caller should have checked this already */
-    g_assert(device_can_use_connection(dself, dtcpconn));
+    /* if this is false, then the caller did not use use_connection correctly */
+    g_assert(self->ndmp == nconn->ndmp);
 
     if (!ndmp_connection_mover_get_state(self->ndmp,
 		&mover_state, &bytes_moved_before)) {
@@ -1313,21 +1313,30 @@ read_to_connection_impl(
 }
 
 static gboolean
-can_use_connection_impl(
+use_connection_impl(
     Device *dself,
     DirectTCPConnection *conn)
 {
     NdmpDevice *self = NDMP_DEVICE(dself);
     DirectTCPConnectionNDMP *nconn;
 
+    /* we had best not be listening when this is called */
+    g_assert(!self->listen_addrs);
+
     if (!IS_DIRECTTCP_CONNECTION_NDMP(conn)) {
+	device_set_error(DEVICE(self),
+	    g_strdup("existing DirectTCPConnection is not compatible with this device"),
+	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
-
     nconn = DIRECTTCP_CONNECTION_NDMP(conn);
+
+    /* if this is a different connection, use it */
     if (nconn->ndmp != self->ndmp) {
-	/* this data connection is not to the same mover as we're using */
-	return FALSE;
+	if (self->ndmp)
+	    close_connection(self);
+	self->ndmp = nconn->ndmp;
+	g_object_ref(self->ndmp);
     }
 
     return TRUE;
@@ -1422,7 +1431,7 @@ ndmp_device_class_init(NdmpDeviceClass * c G_GNUC_UNUSED)
     device_class->accept = accept_impl;
     device_class->write_from_connection = write_from_connection_impl;
     device_class->read_to_connection = read_to_connection_impl;
-    device_class->can_use_connection = can_use_connection_impl;
+    device_class->use_connection = use_connection_impl;
 
     g_object_class->finalize = ndmp_device_finalize;
 

@@ -63,8 +63,11 @@ XferElement *xfer_dest_taper_directtcp(
 void xfer_dest_taper_start_part(
     XferElement *self,
     gboolean retry_part,
-    Device *device,
     dumpfile_t *header);
+
+void xfer_dest_taper_use_device(
+    XferElement *self,
+    Device *device);
 
 void xfer_dest_taper_cache_inform(
     XferElement *self,
@@ -104,6 +107,7 @@ DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_source_holding)
 
 PACKAGE(Amanda::Xfer::Dest::Taper)
 XFER_ELEMENT_SUBCLASS()
+DECLARE_METHOD(use_device, Amanda::XferServer::xfer_dest_taper_use_device)
 DECLARE_METHOD(start_part, Amanda::XferServer::xfer_dest_taper_start_part)
 DECLARE_METHOD(cache_inform, Amanda::XferServer::xfer_dest_taper_cache_inform)
 DECLARE_METHOD(get_part_bytes_written, Amanda::XferServer::xfer_dest_taper_get_part_bytes_written)

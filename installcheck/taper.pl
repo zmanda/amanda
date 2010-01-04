@@ -75,6 +75,7 @@ sub run_taper {
 	    my $port = $ndmp->{'port'};
 	    my $chg = $ndmp->{'changer'};
 	    my $drive0 = $ndmp->{'drive0'};
+	    my $drive1 = $ndmp->{'drive1'};
 
 	    # set things up to work with chg-ndmp; note that we only use
 	    # one drive right now
@@ -85,8 +86,7 @@ sub run_taper {
 	    $testconf->add_changer('ndmp_server', [
 		tpchanger => "\"chg-ndmp:127.0.0.1:$port\@$chg\"",
 		property => "\"tape-device\" \"0=ndmp:127.0.0.1:$port\@$drive0\"",
-		# no drive1 for now - it doesn't work yet
-		#property => "append \"tape-device\" \"1=ndmp:127.0.0.1:$port\@$drive1\"",
+		property => "append \"tape-device\" \"1=ndmp:127.0.0.1:$port\@$drive1\"",
 		changerfile => "\"$chg-state\"",
 	    ]);
 	}

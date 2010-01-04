@@ -273,7 +273,7 @@ each part.  Note that this value may be rounded up internally as necessary.
 When a transfer using a taper destination element is first started, no data is
 transfered until the element's C<start_part> method is called:
 
-  $dest->start_part($retry_part, $device);
+  $dest->start_part($retry_part);
 
 where C<$device> is the device to which the part should be written.  The device
 should have a file open and ready to write (that is, 
@@ -298,6 +298,12 @@ again, with C<$retry_part = !successful>.  Note that it is possible
 for some destinations to write a portion of a part successfully,
 but still stop at EOM.  That is, C<eom> does not necessarily imply
 C<!successful>.
+
+To switch to a new device in mid-transfer, use C<use_device>:
+
+  $dest->use_device($device);
+
+This method must be called with a device that is not yet started.
 
 If neither the memory nor disk caches are in use, but the dumpfile is
 available on disk, then the C<cache_inform> method allows the element

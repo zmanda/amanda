@@ -619,7 +619,6 @@ sub _start_part {
     $self->{'started_writing'} = 1;
     $self->dbg("resuming transfer");
     $self->{'xdt'}->start_part(!$self->{'last_part_successful'},
-			       $self->{'device'},
 			       $self->{'dump_header'});
 }
 
@@ -923,6 +922,9 @@ sub _volume_cb  {
 	$old_label = $device->volume_label;
 	$old_timestamp = $device->volume_time;
     }
+
+    # inform the xdt about this new device before starting it
+    $self->{'xdt'}->use_device($device);
 
     if (!$device->start($access_mode, $new_label, $self->{'dump_timestamp'})) {
 	# try reading the label to see whether we erased the tape

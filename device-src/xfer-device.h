@@ -72,27 +72,36 @@ typedef struct {
     XferElementClass __parent__;
 
     /* see xfer-device.h for details of these methods */
-    void (*start_part)(XferDestTaper *self, gboolean retry_part, Device *device,
-		       dumpfile_t *header);
+    void (*start_part)(XferDestTaper *self, gboolean retry_part, dumpfile_t *header);
+    void (*use_device)(XferDestTaper *self, Device *device);
     void (*cache_inform)(XferDestTaper *self, const char *filename, off_t offset,
 			 off_t length);
     guint64 (*get_part_bytes_written)(XferDestTaper *self);
 } XferDestTaperClass;
 
-/* start writing the next part to the given device.  The device should be open,
- * but the new file not started.  This will abort if called with an element
- * that is not an XferDestTaper.
+/* Start writing the next part to the given device.  The part will be written
+ * to the device given to use_device, which should be open and properly positioned.
+ * It should not have a file open yet.
  *
  * @param self: the XferDestTaper object
  * @param retry_part: retry the previous (incomplete) part if true
- * @param device: the device
  * @param header: part header
  */
 void xfer_dest_taper_start_part(
     XferElement *self,
     gboolean retry_part,
-    Device *device,
     dumpfile_t *header);
+
+/* Prepare to write subsequent parts to the given device.  The device must
+ * not be started yet.  It is not necessary to call this method for the first
+ * device used in a transfer.
+ *
+ * @param self: the XferDestTaper object
+ * @param device: the device
+ */
+void xfer_dest_taper_use_device(
+    XferElement *self,
+    Device *device);
 
 /* Add a slice of data to the cache for the element.  This is used by the taper
  * when reading from holding disk, to tell the element which holding disk files

@@ -202,7 +202,7 @@ struct _DeviceClass {
 		    guint64 size, guint64 *actual_size);
     gboolean (* read_to_connection)(Device *self, DirectTCPConnection *conn,
 		    guint64 size, guint64 *actual_size);
-    gboolean (* can_use_connection)(Device *self, DirectTCPConnection *conn);
+    gboolean (* use_connection)(Device *self, DirectTCPConnection *conn);
 
     /* array of DeviceProperty objects for this class, keyed by ID */
     GArray *class_properties;
@@ -339,7 +339,7 @@ gboolean device_write_from_connection(Device *self, DirectTCPConnection *conn,
 		guint64 size, guint64 *actual_size);
 gboolean device_read_to_connection(Device *self, DirectTCPConnection *conn,
 		guint64 size, guint64 *actual_size);
-gboolean device_can_use_connection(Device *self, DirectTCPConnection *conn);
+gboolean device_use_connection(Device *self, DirectTCPConnection *conn);
 
 /* Protected methods. Don't call these except in subclass implementations. */
 

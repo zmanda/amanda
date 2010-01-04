@@ -63,7 +63,6 @@ typedef struct XferDestTaperDirectTCP {
     /* part number in progress */
     volatile guint64 partnum;
 
-    Device *listen_device; /* device on which we started listening (refcounted) */
     DirectTCPConnection *conn; /* connection we're writing to (refcounted) */
 
     /* is the element paused, waiting to start a new part? this is set to FALSE
@@ -112,18 +111,14 @@ worker_thread(
     g_mutex_lock(self->state_mutex);
 
     /* first, accept a new connection from the device */
-    DBG(2, "accepting DirectTCP connection on device %s", self->listen_device->device_name);
-    if (!device_accept(self->listen_device, &self->conn, NULL, NULL)) {
+    DBG(2, "accepting DirectTCP connection on device %s", self->device->device_name);
+    if (!device_accept(self->device, &self->conn, NULL, NULL)) {
 	xfer_cancel_with_error(XFER_ELEMENT(self),
 	    "accepting DirectTCP connection: %s",
-	    device_error_or_status(self->listen_device));
+	    device_error_or_status(self->device));
 	g_mutex_unlock(self->state_mutex);
 	return NULL;
     }
-
-    /* we don't need the listen_device anymore, so unref it */
-    g_object_unref(self->listen_device);
-    self->listen_device = NULL;
 
     DBG(2, "connection accepted; sending XMSG_READY");
     xfer_queue_message(elt->xfer, xmsg_new(elt, XMSG_READY, 0));
@@ -260,12 +255,12 @@ setup_impl(
 {
     XferDestTaperDirectTCP *self = (XferDestTaperDirectTCP *)elt;
 
-    /* start the listen_device listening, and get the addresses */
-    if (!device_listen(self->listen_device, TRUE, &elt->input_listen_addrs)) {
+    /* start the device listening, and get the addresses */
+    if (!device_listen(self->device, TRUE, &elt->input_listen_addrs)) {
 	elt->input_listen_addrs = NULL;
 	xfer_cancel_with_error(XFER_ELEMENT(self),
 	    "Error starting DirectTCP listen: %s",
-	    device_error_or_status(self->listen_device));
+	    device_error_or_status(self->device));
 	return;
     }
 }
@@ -313,24 +308,22 @@ static void
 start_part_impl(
     XferDestTaper *xdtself,
     gboolean retry_part,
-    Device *device,
     dumpfile_t *header)
 {
     XferDestTaperDirectTCP *self = XFER_DEST_TAPER_DIRECTTCP(xdtself);
 
-    g_assert(device != NULL);
-    g_assert(!device->in_file);
+    /* the only way self->device can become NULL is if use_device fails, in
+     * which case an error is already queued up, so just return silently */
+    if (self->device == NULL)
+	return;
+
+    g_assert(!self->device->in_file);
     g_assert(header != NULL);
 
     DBG(1, "start_part(retry_part=%d)", retry_part);
 
     g_mutex_lock(self->state_mutex);
     g_assert(self->paused);
-
-    if (self->device)
-	g_object_unref(self->device);
-    self->device = device;
-    g_object_ref(device);
 
     if (self->part_header)
 	dumpfile_free(self->part_header);
@@ -339,6 +332,40 @@ start_part_impl(
     DBG(1, "unpausing");
     self->paused = FALSE;
     g_cond_broadcast(self->paused_cond);
+
+    g_mutex_unlock(self->state_mutex);
+}
+
+static void
+use_device_impl(
+    XferDestTaper *xdtself,
+    Device *device)
+{
+    XferDestTaperDirectTCP *self = XFER_DEST_TAPER_DIRECTTCP(xdtself);
+
+    /* short-circuit if nothing is changing */
+    if (self->device == device)
+	return;
+
+    g_mutex_lock(self->state_mutex);
+
+    if (self->device)
+	g_object_unref(self->device);
+    self->device = NULL;
+
+    /* if we already have a connection, then make this device use it */
+    if (self->conn) {
+	if (!device_use_connection(device, self->conn)) {
+	    /* queue up an error for later, and leave the device NULL.
+	     * start_part will see this and fail silently */
+	    xfer_cancel_with_error(XFER_ELEMENT(self),
+		_("Failed part was not cached; cannot retry"));
+	    return;
+	}
+    }
+
+    self->device = device;
+    g_object_ref(device);
 
     g_mutex_unlock(self->state_mutex);
 }
@@ -385,9 +412,9 @@ finalize_impl(
 	g_object_unref(self->conn);
     self->conn = NULL;
 
-    if (self->listen_device)
-	g_object_unref(self->listen_device);
-    self->listen_device = NULL;
+    if (self->device)
+	g_object_unref(self->device);
+    self->device = NULL;
 
     if (self->device)
 	g_object_unref(self->device);
@@ -420,6 +447,7 @@ class_init(
     klass->setup = setup_impl;
     klass->cancel = cancel_impl;
     xdt_klass->start_part = start_part_impl;
+    xdt_klass->use_device = use_device_impl;
     xdt_klass->cache_inform = cache_inform_impl;
     xdt_klass->get_part_bytes_written = get_part_bytes_written_impl;
     goc->finalize = finalize_impl;
@@ -467,9 +495,9 @@ xfer_dest_taper_directtcp(Device *first_device, guint64 part_size)
     g_assert(device_directtcp_supported(first_device));
 
     self->part_size = part_size;
-    self->listen_device = first_device;
+    self->device = first_device;
     self->partnum = 1;
-    g_object_ref(self->listen_device);
+    g_object_ref(self->device);
 
     return XFER_ELEMENT(self);
 }

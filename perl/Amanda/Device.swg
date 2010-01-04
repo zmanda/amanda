@@ -404,8 +404,8 @@ typedef struct Device {
 	}
 
 	gboolean
-	can_use_connection(DirectTCPConnection *conn) {
-	    return device_can_use_connection(self, conn);
+	use_connection(DirectTCPConnection *conn) {
+	    return device_use_connection(self, conn);
 	}
 
 	%typemap(in,numinputs=0) guint64 *actual_size (guint64 sz) {

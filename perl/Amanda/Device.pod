@@ -630,13 +630,14 @@ returning an established DirectTCPConnection object (see below).  It returns
 C<undef> on failure.  Note that this method may block indefinitely if no
 connection ever occurs.
 
-=head3 can_use_connection
+=head3 use_connection
 
-  die "no-can-do!"
-    unless $dev->can_use_connection($conn);
+  my $ok = $dev->use_connection($conn);
 
-Not all DirectTCPConnections are created alike.  This method returns TRUE if
-the given connection is compatible with this device.
+Call this method to use a DirectTCPConnection object created with another
+device.  The method must be called before the device is started (so
+C<access_mode> is C<$ACCESS_NULL>).  Any subsequent C<read_from_connection> or
+C<write_to_connection> calls must use the same connection.
 
 =head3 write_from_connection
 

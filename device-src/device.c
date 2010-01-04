@@ -1524,15 +1524,17 @@ device_read_to_connection(
 }
 
 gboolean
-device_can_use_connection(
+device_use_connection(
     Device *self,
     DirectTCPConnection *conn)
 {
     DeviceClass *klass;
 
+    g_assert(self->access_mode == ACCESS_NULL);
+
     klass = DEVICE_GET_CLASS(self);
-    if(klass->can_use_connection) {
-	return (klass->can_use_connection)(self, conn);
+    if(klass->use_connection) {
+	return (klass->use_connection)(self, conn);
     } else {
 	device_set_error(self,
 	    stralloc(_("Unimplemented method")),

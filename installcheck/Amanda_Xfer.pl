@@ -506,6 +506,7 @@ SKIP: {
 		$device = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($vtape_num++));
 		die("Could not open VFS device: " . $device->error())
 		    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_SUCCESS);
+		$dest->use_device($device);
 		$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
 		$device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
 	    }
@@ -519,9 +520,9 @@ SKIP: {
 
 	    if (!$eof) {
 		if ($successful) {
-		    $dest->start_part(0, $device, $hdr);
+		    $dest->start_part(0, $hdr);
 		} else {
-		    $dest->start_part(1, $device, $hdr);
+		    $dest->start_part(1, $hdr);
 		}
 	    }
 	};
@@ -904,6 +905,7 @@ SKIP: {
 		$device = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($vtape_num++));
 		die("Could not open VFS device: " . $device->error())
 		    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_SUCCESS);
+		$dest->use_device($device);
 		$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
 		$device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
 	    }
@@ -917,9 +919,9 @@ SKIP: {
 
 	    if (!$eof) {
 		if ($successful) {
-		    $dest->start_part(0, $device, $hdr);
+		    $dest->start_part(0, $hdr);
 		} else {
-		    $dest->start_part(1, $device, $hdr);
+		    $dest->start_part(1, $hdr);
 		}
 	    }
 	};
@@ -1022,6 +1024,7 @@ SKIP: {
 		# are a little bit portable
 		$dev->finish();
 		$dev = mkdevice();
+		$dest->use_device($dev);
 		$dev->start($Amanda::Device::ACCESS_WRITE, "TESTCONF02", "20080102030406");
 
 		$start_new_part->(1, 0); # start first part
@@ -1049,7 +1052,7 @@ SKIP: {
 	    die "this dest shouldn't have unsuccessful parts" unless $successful;
 
 	    if (!$eof) {
-		$dest->start_part(0, $dev, $hdr);
+		$dest->start_part(0, $hdr);
 	    }
 	};
 

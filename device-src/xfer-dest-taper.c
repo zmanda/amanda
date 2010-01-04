@@ -64,14 +64,25 @@ void
 xfer_dest_taper_start_part(
     XferElement *elt,
     gboolean retry_part,
-    Device *device,
     dumpfile_t *header)
 {
     XferDestTaperClass *klass;
     g_assert(IS_XFER_DEST_TAPER(elt));
 
     klass = XFER_DEST_TAPER_GET_CLASS(elt);
-    klass->start_part(XFER_DEST_TAPER(elt), retry_part, device, header);
+    klass->start_part(XFER_DEST_TAPER(elt), retry_part, header);
+}
+
+void
+xfer_dest_taper_use_device(
+    XferElement *elt,
+    Device *device)
+{
+    XferDestTaperClass *klass;
+    g_assert(IS_XFER_DEST_TAPER(elt));
+
+    klass = XFER_DEST_TAPER_GET_CLASS(elt);
+    klass->use_device(XFER_DEST_TAPER(elt), device);
 }
 
 void
