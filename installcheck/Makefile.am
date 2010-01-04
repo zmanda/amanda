@@ -31,7 +31,6 @@ server_tests = \
 	Amanda_Changer_null \
 	Amanda_Changer_rait \
 	Amanda_Changer_robot \
-	Amanda_Changer_ndmp \
 	Amanda_Changer_single \
 	Amanda_Cmdline \
 	Amanda_Disklist \
@@ -71,6 +70,7 @@ restore_tests = \
 	amrestore
 
 ndmp_tests = \
+	Amanda_Changer_ndmp \
 	Amanda_NDMP
 
 mock_tests = \
