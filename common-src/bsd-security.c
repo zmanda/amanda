@@ -272,7 +272,7 @@ bsd_connect(
 
     if (conf_fn) {
         service = conf_fn("client_port", datap);
-        if (strlen(service) <= 1)
+        if (!service || strlen(service) <= 1)
             service = "amanda";
     } else {
         service = "amanda";

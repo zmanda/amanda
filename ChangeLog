@@ -1,3 +1,7 @@
+2010-01-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/bsd-security.c, common-src/bsdtcp-security.c,
+	  common-src/bsdudp-security.c: Check service != NULL.
+
 2010-01-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndma_comm_session.c ndmp-src/ndma_robot.c
 	  ndmp-src/ndmagents.h ndmp-src/ndmlib.h ndmp-src/ndmos.h
