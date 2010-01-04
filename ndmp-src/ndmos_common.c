@@ -56,8 +56,8 @@
 
 #ifdef NDMOS_COMMON_SYNC_CONFIG_INFO
 /*
- * Get local info. Supports NDMPx_CONFIG_GET_HOST_INFO and
- * NDMP3_CONFIG_GET_SERVER_INFO.
+ * Get local info. Supports NDMPx_CONFIG_GET_HOST_INFO,
+ * NDMP3_CONFIG_GET_SERVER_INFO, and NDMPx_CONFIG_GET_SCSI_INFO.
  */
 void
 ndmos_sync_config_info (struct ndm_session *sess)
@@ -107,7 +107,7 @@ ndmos_sync_config_info (struct ndm_session *sess)
 
 	sess->config_info.revision_number = revbuf;
 
-	/* best effort */
+	/* best effort; note that this loads scsi and tape config */
 	ndmcfg_load (sess->param.config_file_name, &sess->config_info);
 }
 #endif /* NDMOS_COMMON_SYNC_CONFIG_INFO */
@@ -305,10 +305,22 @@ ndmos_tape_execute_cdb (struct ndm_session *sess,
 #endif /* NDMOS_COMMON_TAPE_INTERFACE */
 
 
+#ifdef NDMOS_COMMON_ROBOT_INTERFACE
+#ifndef NDMOS_OPTION_NO_ROBOT_AGENT
+#ifndef NDMOS_OPTION_ROBOT_SIMULATOR
+
+/* ndmos_robot_* functions here */
+
+#endif /* !NDMOS_OPTION_ROBOT_SIMULATOR */
+#else /* !NDMOS_OPTION_NO_ROBOT_AGENT */
+/* robot interfaces implemented in ndma_robot_simulator.c */
+#endif /* !NDMOS_OPTION_NO_ROBOT_AGENT */
+#endif /* NDMOS_COMMON_ROBOT_INTERFACE */
 
 
 #ifdef NDMOS_COMMON_SCSI_INTERFACE
 #ifndef NDMOS_OPTION_NO_ROBOT_AGENT	/* Surrounds all SCSI intfs */
+#ifndef NDMOS_OPTION_ROBOT_SIMULATOR
 /*
  * SCSI INTERFACE
  ****************************************************************
@@ -367,6 +379,7 @@ ndmos_scsi_execute_cdb (struct ndm_session *sess,
 	return NDMP9_NOT_SUPPORTED_ERR;
 }
 
+#endif /* NDMOS_OPTION_ROBOT_SIMULATOR */
 #endif /* NDMOS_OPTION_NO_ROBOT_AGENT	Surrounds all SCSI intfs */
 #endif /* NDMOS_COMMON_SCSI_INTERFACE */
 

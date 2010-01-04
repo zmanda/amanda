@@ -1,3 +1,11 @@
+2010-01-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndma_comm_session.c ndmp-src/ndma_robot.c
+	  ndmp-src/ndmagents.h ndmp-src/ndmlib.h ndmp-src/ndmos.h
+	  ndmp-src/ndmos_common.c ndmp-src/Makefile.am
+	  ndmp-src/ndma_robot_simulator.c: add robot simulator
+	* ndmp-src/ndmos_glib.h: use robot simulator
+	* ndmp-src/scsiconst.h: fix typo
+
 2009-12-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndma_tape.c: remove ndmta_belay
 	* ndmp-src/ndmagents.h ndmp-src/ndmos.h: use

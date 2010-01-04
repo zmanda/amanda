@@ -203,6 +203,14 @@
  *	subsystem interface is implemented (ndmos_tape_...()), the
  *	tape simulator serves as a reference for correct implementation.
  *
+ * NDMOS_OPTION_ROBOT_SIMULATOR
+ *	Similarly, for testing multi-tape operations, it's easier to
+ *	get started by using the robot simulator. It represents a simple
+ *	robot with ten slots and two drives.  It operates on a directory,
+ *	and uses rename() to load and unload tapes.  It operates in concert
+ *	with the tape simulator.  The robot name is a directory, and it
+ *	creates drives named 'drive0', 'drive1', etc. in that directory
+ *
  * NDMOS_OPTION_USE_SELECT_FOR_CHAN_POLL -- use common poll() code
  * NDMOS_OPTION_USE_POLL_FOR_CHAN_POLL   -- use common select() code
  *	These two _OPTION_'s choose common code to implement
@@ -365,6 +373,16 @@ extern char *ndml_strend(char *s);	/* ndml_util.c */
 #endif /* !NDMOS_OPTION_NO_NDMP3 */
 #endif /* !NDMOS_OPTION_NO_NDMP4 */
 
+/* check for a conflict: robot sim requires tape sim */
+#ifdef NDMOS_OPTION_ROBOT_SIMULATOR
+#ifndef NDMOS_OPTION_TAPE_SIMULATOR
+#error robot simulator requires the tape simulator
+#endif /* NDMOS_OPTION_TAPE_SIMULATOR */
+#ifdef NDMOS_COMMON_SCSI_INTERFACE
+#error robot simulator and ndmos scsi interface are incompatible
+#endif
+#endif /* NDMOS_OPTION_ROBOT_SIMULATOR */
+
 /*
  * simulator fields
  */
@@ -376,5 +394,10 @@ extern char *ndml_strend(char *s);	/* ndml_util.c */
 	int			weof_on_close; \
 	int			sent_leom;
 #endif /* NDMOS_OPTION_TAPE_SIMULATOR */
+
+#ifdef NDMOS_OPTION_ROBOT_SIMULATOR
+#define NDMOS_MACRO_ROBOT_AGENT_ADDITIONS \
+	    char sim_dir[PATH_MAX];
+#endif /* NDMOS_OPTION_ROBOT_SIMULATOR */
 
 #endif /* _NDMOS_H */

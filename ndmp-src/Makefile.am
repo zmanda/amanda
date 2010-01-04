@@ -121,6 +121,7 @@ libndmjla = \
 	ndma_noti_calls.c \
 	ndma_tape.c \
 	ndma_robot.c \
+	ndma_robot_simulator.c \
 	wraplib.c
 
 libndmjlr = \

@@ -882,6 +882,11 @@ struct ndm_robot_agent {
 #endif /* NDMOS_MACRO_ROBOT_AGENT_ADDITIONS */
 };
 
+extern int		ndmra_initialize (struct ndm_session *sess);
+extern int		ndmra_commission (struct ndm_session *sess);
+extern int		ndmra_decommission (struct ndm_session *sess);
+
+/* all semantic operations are done directly to the ndmos_scsi layer */
 #endif /* !NDMOS_OPTION_NO_ROBOT_AGENT */
 
 
@@ -1229,6 +1234,7 @@ extern ndmp9_error	ndmos_tape_execute_cdb (struct ndm_session *sess,
 #ifndef NDMOS_OPTION_NO_ROBOT_AGENT
 extern int		ndmos_scsi_initialize (struct ndm_session *sess);
 extern void		ndmos_scsi_sync_state (struct ndm_session *sess);
+extern void		ndmos_scsi_sync_config_info (struct ndm_session *sess);
 ndmp9_error		ndmos_scsi_open (struct ndm_session *sess, char *name);
 ndmp9_error		ndmos_scsi_close (struct ndm_session *sess);
 ndmp9_error		ndmos_scsi_set_target (struct ndm_session *sess);

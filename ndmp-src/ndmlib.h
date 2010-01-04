@@ -496,7 +496,7 @@ extern int	ndmagent_to_sockaddr_in (struct ndmagent *agent,
  */
 
 struct ndmscsi_target {
-	char		dev_name[32];
+	char		dev_name[PATH_MAX];
 	int		controller;
 	int		sid;
 	int		lun;

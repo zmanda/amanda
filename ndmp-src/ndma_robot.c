@@ -53,6 +53,7 @@ ndmra_initialize (struct ndm_session *sess)
 	struct ndm_robot_agent *ra = &sess->robot_acb;
 
 	NDMOS_MACRO_ZEROFILL(ra);
+	ra->scsi_state.error = NDMP9_DEV_NOT_OPEN_ERR;
 
 	return 0;
 }
@@ -71,33 +72,10 @@ ndmra_decommission (struct ndm_session *sess)
 	return 0;
 }
 
-/* Belay -- Cancel partially issued activation/start */
-int
-ndmra_belay (struct ndm_session *sess)
-{
-	return 0;
-}
-
-
 
 
 /*
- * Semantic actions -- called from ndma_dispatch()
- ****************************************************************
+ * Semantic actions are all handled directly by ndmos_scsi_*
  */
-
-
-
-
-/*
- * Quantum -- get a bit of work done
- ****************************************************************
- */
-
-int
-ndmra_quantum (struct ndm_session *sess)
-{
-	return 0;
-}
 
 #endif /* !NDMOS_OPTION_NO_ROBOT_AGENT */
