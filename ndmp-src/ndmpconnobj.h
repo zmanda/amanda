@@ -215,28 +215,20 @@ gboolean ndmp_connection_wait_for_notify(
  * Constructor
  */
 
-/* Get an NDMP connection, possibly returning an already-existing connection
- * with the same hostname, port, and identifier - this is important because some
- * NDMP features are tied to the connection, so several Amanda components must
- * use the same conncection.
- *
- * If an error occurs, this returns an empty object with its err_msg and err_code
- * set appropriately.
+/* Get a new NDMP connection. If an error occurs, this returns an empty object
+ * with its err_msg and err_code set appropriately.
  *
  * @param hostname: hostname to connect to
  * @param port: port to connect on
- * @param identifier: arbitrary identifier to disambiguate multiple connections
- *   to the same host:port
  * @param username: username to login with
  * @param password: password to login with
  * @param auth: authentication method to use ("MD5", "TEXT", "NONE", or "VOID")
  * @returns: NDMPConnection object
  */
 NDMPConnection *
-ndmp_connection_get(
+ndmp_connection_new(
     gchar *hostname,
     gint port,
-    gchar *identifier,
     gchar *username,
     gchar *password,
     gchar *auth);

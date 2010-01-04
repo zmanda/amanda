@@ -30,7 +30,7 @@ Amanda::NDMP - communicate via NDMP
 
   my $conn = Amanda::NDMP::NDMPConnection->new($host, $port, $ident, $username,
 					       $password, $auth);
-  my ($ok, $blocksize, $file_num, $blockno) = $conn->tape_get_status();
+  my ($ok, $blocksize, $file_num, $blockno) = $conn->tape_get_state();
 
 =head1 DESCRIPTION
 

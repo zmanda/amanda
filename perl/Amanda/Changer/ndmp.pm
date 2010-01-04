@@ -73,7 +73,7 @@ sub get_interface {
     }
 
     my $conn = Amanda::NDMP::NDMPConnection->new(
-	$host, $port, "changer=$scsi_dev",
+	$host, $port,
 	$self->{'ndmp-username'}, $self->{'ndmp-password'},
 	$self->{'ndmp-auth'});
 

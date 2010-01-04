@@ -99,12 +99,11 @@ typedef struct NDMPConnection {
 	NDMPConnection(
 		gchar *hostname,
 		gint port,
-		gchar *identifier,
 		gchar *username,
 		gchar *password,
 		gchar *auth) {
-	    return ndmp_connection_get(
-		    hostname, port, identifier, username, password, auth);
+	    return ndmp_connection_new(
+		    hostname, port, username, password, auth);
 	}
 
 	~NDMPConnection() {

@@ -1,4 +1,12 @@
 2010-01-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndmpconnobj.c ndmp-src/ndmpconnobj.h: remove singleton
+	  pattern and the identifiers that supported it
+	* device-src/ndmp-device.c: don't worry about idents
+	* perl/Amanda/Changer/ndmp.pm: don't worry about idents
+	* perl/Amanda/NDMP.pod perl/Amanda/NDMP.swg: SWIG and document
+	* installcheck/Amanda_NDMP.pl: change tests
+
+2010-01-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/device.c device-src/device.h: change can_use_connection
 	  to the imperative use_connection
 	* device-src/ndmp-device.c: implement use_connection

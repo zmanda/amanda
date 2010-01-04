@@ -154,16 +154,12 @@ open_connection(
 	NdmpDevice *self)
 {
     if (!self->ndmp) {
-	char *ident = g_strdup_printf("tape=%s", self->ndmp_device_name);
-
-	self->ndmp = ndmp_connection_get(
+	self->ndmp = ndmp_connection_new(
 	    self->ndmp_hostname,
 	    self->ndmp_port,
-	    ident,
 	    self->ndmp_username,
 	    self->ndmp_password,
 	    self->ndmp_auth);
-	g_free(ident);
 
 	if (ndmp_connection_err_code(self->ndmp)) {
 	    char *errmsg = ndmp_connection_err_msg(self->ndmp);

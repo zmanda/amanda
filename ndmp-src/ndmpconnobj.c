@@ -34,42 +34,10 @@ static struct ndmlog device_ndmlog;
 
 static GObjectClass *parent_class = NULL;
 
-/* equipment for tracking the single-instance stuff */
-static GStaticMutex instances_mutex = G_STATIC_MUTEX_INIT;
-static GHashTable *instances = NULL;
-
 /* and equipment to ensure we only talk to ndmlib in one thread at a time, even
  * using multiple connections.  The ndmlib code is not necessarily reentrant,
  * so this is better safe than sorry. */
 static GStaticMutex ndmlib_mutex = G_STATIC_MUTEX_INIT;
-
-/*
- * Utils
- */
-
-/* get the hash key for a given set of parameters */
-static gchar *
-ndmp_connection_key(
-    gchar *hostname,
-    gint port,
-    gchar *identifier)
-{
-    return g_strdup_printf("%s:%d!%s", hostname, port, identifier);
-}
-
-/* GWeakNotify callback for when a connection object is being destroyed */
-static void notify_connection_gone(
-    gpointer data,
-    GObject *where_the_object_was G_GNUC_UNUSED)
-{
-    gchar *key = data;
-
-    g_static_mutex_lock(&instances_mutex);
-    g_hash_table_remove(instances, key);
-    g_static_mutex_unlock(&instances_mutex);
-
-    g_free(key);
-}
 
 /* macros like those in ndmlib.h, but designed for use in this class */
 /* (copied from ndmp-src/ndmlib.h; see that file for copyright and license) */
@@ -740,10 +708,9 @@ ndmp_connection_get_type(void)
  */
 
 NDMPConnection *
-ndmp_connection_get(
+ndmp_connection_new(
     gchar *hostname,
     gint port,
-    gchar *identifier,
     gchar *username,
     gchar *password,
     gchar *auth)
@@ -751,81 +718,57 @@ ndmp_connection_get(
     NDMPConnection *self = NULL;
     gchar *key = NULL;
     gchar *errmsg = NULL;
+    struct ndmconn *conn = NULL;
+    int rc;
 
-    g_static_mutex_lock(&instances_mutex);
-    key = ndmp_connection_key(hostname, port, identifier);
+    g_debug("opening new NDMPConnection: to %s:%d", hostname, port);
+    conn = ndmconn_initialize(NULL, "amanda-server");
+    if (!conn) {
+	errmsg = "could not initialize ndmconn";
+	goto out;
+    }
 
-    if (!instances) {
-	instances = g_hash_table_new(g_str_hash, g_str_equal);
+    /* set up a handler for unexpected messages, which should generally
+     * be notifications */
+    conn->unexpected = ndmconn_unexpected_impl;
+
+    if (ndmconn_connect_host_port(conn, hostname, port, 0) != 0) {
+	errmsg = ndmconn_get_err_msg(conn);
+	ndmconn_destruct(conn);
+	goto out;
+    }
+
+    if (0 == g_ascii_strcasecmp(auth, "void")) {
+	rc = 0; /* don't authenticate */
+    } else if (0 == g_ascii_strcasecmp(auth, "none")) {
+	rc = ndmconn_auth_none(conn);
+    } else if (0 == g_ascii_strcasecmp(auth, "md5")) {
+	rc = ndmconn_auth_md5(conn, username, password);
+    } else if (0 == g_ascii_strcasecmp(auth, "text")) {
+	rc = ndmconn_auth_text(conn, username, password);
     } else {
-	self = g_hash_table_lookup(instances, key);
+	errmsg = "invalid auth type";
+	goto out;
     }
 
-    /* if it was in the cache, ref it; otherwise, create a new object */
-    if (self) {
-	g_object_ref(self);
-     } else {
-	struct ndmconn *conn = NULL;
-	int rc;
-
-	g_debug("opening new NDMPConnection: to %s:%d ident '%s'", hostname, port, identifier);
-	conn = ndmconn_initialize(NULL, "amanda-server");
-	if (!conn) {
-	    errmsg = "could not initialize ndmconn";
-	    goto out;
-	}
-
-	/* set up a handler for unexpected messages, which should generally
-	 * be notifications */
-	conn->unexpected = ndmconn_unexpected_impl;
-
-	if (ndmconn_connect_host_port(conn, hostname, port, 0) != 0) {
-	    errmsg = ndmconn_get_err_msg(conn);
-	    ndmconn_destruct(conn);
-	    goto out;
-	}
-
-	if (0 == g_ascii_strcasecmp(auth, "void")) {
-	    rc = 0; /* don't authenticate */
-	} else if (0 == g_ascii_strcasecmp(auth, "none")) {
-	    rc = ndmconn_auth_none(conn);
-	} else if (0 == g_ascii_strcasecmp(auth, "md5")) {
-	    rc = ndmconn_auth_md5(conn, username, password);
-	} else if (0 == g_ascii_strcasecmp(auth, "text")) {
-	    rc = ndmconn_auth_text(conn, username, password);
-	} else {
-	    errmsg = "invalid auth type";
-	    goto out;
-	}
-
-	if (rc != 0) {
-	    errmsg = ndmconn_get_err_msg(conn);
-	    ndmconn_destruct(conn);
-	    goto out;
-	}
-
-	if (conn->protocol_version != NDMP4VER) {
-	    errmsg = g_strdup_printf("Only NDMPv4 is supported; got NDMPv%d",
-		conn->protocol_version);
-	    ndmconn_destruct(conn);
-	    goto out;
-	}
-
-	self = NDMP_CONNECTION(g_object_new(TYPE_NDMP_CONNECTION, NULL));
-	self->conn = conn;
-	conn->context = (void *)self;
-
-	/* insert into the hash table, with a weak ref to remove it when
-	 * necessary */
-	g_hash_table_insert(instances, key, self);
-	g_object_weak_ref((GObject *)self, notify_connection_gone, key);
-	key = NULL; /* key will be freed by notify_connection_gone */
+    if (rc != 0) {
+	errmsg = ndmconn_get_err_msg(conn);
+	ndmconn_destruct(conn);
+	goto out;
     }
+
+    if (conn->protocol_version != NDMP4VER) {
+	errmsg = g_strdup_printf("Only NDMPv4 is supported; got NDMPv%d",
+	    conn->protocol_version);
+	ndmconn_destruct(conn);
+	goto out;
+    }
+
+    self = NDMP_CONNECTION(g_object_new(TYPE_NDMP_CONNECTION, NULL));
+    self->conn = conn;
+    conn->context = (void *)self;
 
 out:
-    if (key)
-	g_free(key);
-
     /* make a "fake" error connection if we have an error message.  Note that
      * this object is not added to the instances hash */
     if (errmsg) {
@@ -834,6 +777,5 @@ out:
 	errmsg = NULL;
     }
 
-    g_static_mutex_unlock(&instances_mutex);
     return self;
 }
