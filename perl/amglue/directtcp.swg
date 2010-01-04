@@ -66,10 +66,11 @@
 
 	while (iter && iter->ipv4) {
 	    struct in_addr in;
-	    char *addr = inet_ntoa(in);
+	    char *addr;
 	    AV *tuple = newAV();
 
 	    in.s_addr = htonl(iter->ipv4);
+	    addr = inet_ntoa(in);
 	    g_assert(NULL != av_store(tuple, 0,
 		    newSVpv(addr, 0)));
 	    g_assert(NULL != av_store(tuple, 1, newSViv(iter->port)));

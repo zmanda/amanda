@@ -1,4 +1,8 @@
 2010-01-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/amglue/directtcp.swg: don't use inet_ntoa until in is
+	  initialized
+
+2010-01-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndmpconnobj.c ndmp-src/ndmpconnobj.h: remove singleton
 	  pattern and the identifiers that supported it
 	* device-src/ndmp-device.c: don't worry about idents
