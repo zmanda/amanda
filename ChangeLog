@@ -1,3 +1,6 @@
+2010-01-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/ndmp-device.c: add an eject() implementation
+
 2010-01-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndma_robot_simulator.c: increase logging levels, so that
 	  ndmjob does not output logging info to stdout during installchecks

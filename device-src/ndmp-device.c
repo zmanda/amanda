@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -635,6 +635,22 @@ ndmp_device_finish(
 
     return TRUE;
 }
+
+static gboolean
+ndmp_device_eject(
+    Device *dself)
+{
+    NdmpDevice *self = NDMP_DEVICE(dself);
+    if (device_in_error(dself)) return FALSE;
+
+    if (!single_ndmp_mtio(self, NDMP9_MTIO_OFF)) {
+	/* error was set by single_ndmp_mtio */
+	return FALSE;
+    }
+
+    return TRUE;
+}
+
 
 /* functions for writing */
 
@@ -1413,6 +1429,7 @@ ndmp_device_class_init(NdmpDeviceClass * c G_GNUC_UNUSED)
     device_class->read_label = ndmp_device_read_label;
     device_class->start = ndmp_device_start;
     device_class->finish = ndmp_device_finish;
+    device_class->eject = ndmp_device_eject;
 
     device_class->start_file = ndmp_device_start_file;
     device_class->write_block = ndmp_device_write_block;
