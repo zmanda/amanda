@@ -244,7 +244,7 @@ robot_state_move(struct ndm_session *sess, struct robot_state *rs, int src, int 
 
 	/* TODO: audit that the tape device is not using this volume right now */
 
-	ndmalogf(sess, 0, 0, "moving medium from %d to %d", src, dest);
+	ndmalogf(sess, 0, 3, "moving medium from %d to %d", src, dest);
 
 	if (IS_IE_ADDR(src)) {
 		src_elt = &rs->ie[src - IE_FIRST];
@@ -259,7 +259,7 @@ robot_state_move(struct ndm_session *sess, struct robot_state *rs, int src, int 
 		snprintf(src_filename, sizeof(src_filename), "%s/slot%d",
 		    sess->robot_acb.sim_dir, src - STORAGE_FIRST);
 	} else {
-		ndmalogf(sess, 0, 0, "invalid src address %d", src);
+		ndmalogf(sess, 0, 3, "invalid src address %d", src);
 		return -1;
 	}
 
@@ -276,24 +276,24 @@ robot_state_move(struct ndm_session *sess, struct robot_state *rs, int src, int 
 		snprintf(dest_filename, sizeof(dest_filename), "%s/slot%d",
 		    sess->robot_acb.sim_dir, dest - STORAGE_FIRST);
 	} else {
-		ndmalogf(sess, 0, 0, "invalid dst address %d", src);
+		ndmalogf(sess, 0, 3, "invalid dst address %d", src);
 		return -1;
 	}
 
 	if (!src_elt->full) {
-		ndmalogf(sess, 0, 0, "src not full");
+		ndmalogf(sess, 0, 3, "src not full");
 		return -1;
 	}
 
 	if (dest_elt->full) {
-		ndmalogf(sess, 0, 0, "dest full");
+		ndmalogf(sess, 0, 3, "dest full");
 		return -1;
 	}
 
 	/* OK, enough checking, let's do it */
 	/* delete the destination, if it exists */
 	if (stat (dest_filename, &st) >= 0) {
-		ndmalogf(sess, 0, 0, "unlink %s", dest_filename);
+		ndmalogf(sess, 0, 3, "unlink %s", dest_filename);
 		if (unlink(dest_filename) < 0) {
 			ndmalogf(sess, 0, 0, "error unlinking: %s", strerror(errno));
 			return -1;
@@ -302,14 +302,14 @@ robot_state_move(struct ndm_session *sess, struct robot_state *rs, int src, int 
 
 	/* and move the source if it exists */
 	if (stat (src_filename, &st) >= 0) {
-		ndmalogf(sess, 0, 0, "move %s to %s", src_filename, dest_filename);
+		ndmalogf(sess, 0, 3, "move %s to %s", src_filename, dest_filename);
 		if (rename(src_filename, dest_filename) < 0) {
 			ndmalogf(sess, 0, 0, "error renaming: %s", strerror(errno));
 			return -1;
 		}
 	} else {
 		/* otherwise touch the destination file */
-		ndmalogf(sess, 0, 0, "touch %s", dest_filename);
+		ndmalogf(sess, 0, 3, "touch %s", dest_filename);
 		int fd = open(dest_filename, O_CREAT | O_WRONLY, 0666);
 		if (fd < 0) {
 			ndmalogf(sess, 0, 0, "error touching: %s", strerror(errno));
@@ -326,12 +326,12 @@ robot_state_move(struct ndm_session *sess, struct robot_state *rs, int src, int 
 
 	/* update state */
 	*dest_elt = *src_elt;
-	ndmalogf(sess, 0, 0, "setting dest's source_element to %d", src);
+	ndmalogf(sess, 0, 3, "setting dest's source_element to %d", src);
 	dest_elt->source_element = src;
 	src_elt->full = 0;
 
 
-	ndmalogf(sess, 0, 0, "move successful");
+	ndmalogf(sess, 0, 3, "move successful");
 	return 0;
 }
 
@@ -359,7 +359,7 @@ scsi_fail_with_sense_code(struct ndm_session *sess,
 		0,
 		0 };
 
-	ndmalogf(sess, 0, 0, "sending failure; status=0x%02x sense_key=0x%02x asq=0x%04x",
+	ndmalogf(sess, 0, 3, "sending failure; status=0x%02x sense_key=0x%02x asq=0x%04x",
 		    status, sense_key, asq);
 
 	reply->status = status;
