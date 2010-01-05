@@ -1,4 +1,4 @@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -1004,7 +1004,6 @@ SKIP: {
 
 	# make a starting device
 	$dev = mkdevice();
-	$dev->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
 
 	# and create the xfer
 	my $src = Amanda::Xfer::Source::Random->new(32768*34-7, $RANDOM_SEED);

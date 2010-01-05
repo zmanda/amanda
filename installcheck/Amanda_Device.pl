@@ -1,4 +1,4 @@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -1127,10 +1127,6 @@ SKIP: {
     {
 	ok($dev->directtcp_supported(), "is a directtcp target");
 
-	ok($dev->start($ACCESS_WRITE, "TEST2", "20090915000000"),
-	    "start device in write mode")
-	    or diag $dev->error_or_status();
-
 	my $addrs = $dev->listen(1);
 	ok($addrs, "listen returns successfully") or die($dev->error_or_status());
 
@@ -1153,10 +1149,18 @@ SKIP: {
 	# write files from the connection until EOF
 	my $num_files;
 	my $conn;
-	my ($call_accept, $write_file_cb);
+	my ($call_accept, $start_device, $write_file_cb);
 
 	$call_accept = make_cb(call_accept => sub {
 	    $conn = $dev->accept();
+	    Amanda::MainLoop::call_later($start_device);
+	});
+
+	$start_device = make_cb(start_device => sub {
+	    ok($dev->start($ACCESS_WRITE, "TEST2", "20090915000000"),
+		"start device in write mode")
+		or diag $dev->error_or_status();
+
 	    Amanda::MainLoop::call_later($write_file_cb);
 	});
 
@@ -1166,7 +1170,7 @@ SKIP: {
 	    ok($dev->start_file($hdr), "start file $num_files for writing");
 	    is($dev->file, $num_files, "..file number is correct");
 
-	    my ($ok, $size) = $dev->write_from_connection($conn, 32768*15);
+	    my ($ok, $size) = $dev->write_from_connection(32768*15);
 	    push @messages, sprintf("WRITE-%s-%d-%s-%s",
 		$ok?"OK":"ERR", $size,
 		$dev->is_eof()? "EOF":"!eof",
@@ -1272,10 +1276,6 @@ SKIP: {
 
     {
 	my @events;
-	ok($dev->start($ACCESS_READ, undef, undef),
-	    "start device in read mode")
-	    or diag $dev->error_or_status();
-
 	my $addrs = $dev->listen(0);
 
 	# now connect to that
@@ -1311,13 +1311,21 @@ SKIP: {
 	    $conn = $dev->accept();
 	    die $dev->error_or_status() unless ($conn);
 
+	    Amanda::MainLoop::call_later($subs{'start_dev'});
+	});
+
+	$subs{'start_dev'} = make_cb(start_dev => sub {
+	    ok($dev->start($ACCESS_READ, undef, undef),
+		"start device in read mode")
+		or diag $dev->error_or_status();
+
 	    Amanda::MainLoop::call_later($subs{'read_part_cb'});
 	});
 
 	$subs{'read_part_cb'} = make_cb(read_part_cb => sub {
 	    my $hdr = $dev->seek_file($file);
 	    die $dev->error_or_status() unless ($hdr);
-	    my $size = $dev->read_to_connection($conn, 0);
+	    my $size = $dev->read_to_connection(0);
 	    push @events, "READ-$size";
 
 	    if (++$file <= 3) {

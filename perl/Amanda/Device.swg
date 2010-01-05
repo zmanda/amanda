@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -418,13 +418,13 @@ typedef struct Device {
 	    SPAGAIN; SP -= argvi; argvi++;
 	}
 	gboolean
-	write_from_connection(DirectTCPConnection *conn, guint64 size, guint64 *actual_size) {
-	    return device_write_from_connection(self, conn, size, actual_size);
+	write_from_connection(guint64 size, guint64 *actual_size) {
+	    return device_write_from_connection(self, size, actual_size);
 	}
 
 	gboolean
-	read_to_connection(DirectTCPConnection *conn, guint64 size, guint64 *actual_size) {
-	    return device_read_to_connection(self, conn, size, actual_size);
+	read_to_connection(guint64 size, guint64 *actual_size) {
+	    return device_read_to_connection(self, size, actual_size);
 	}
 
 	%typemap(out) const GSList * {

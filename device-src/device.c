@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -1445,6 +1445,8 @@ device_listen(
 {
     DeviceClass *klass;
 
+    g_assert(self->access_mode == ACCESS_NULL);
+
     klass = DEVICE_GET_CLASS(self);
     if(klass->listen) {
 	return (klass->listen)(self, for_writing, addrs);
@@ -1465,6 +1467,8 @@ device_accept(
 {
     DeviceClass *klass;
 
+    g_assert(self->access_mode == ACCESS_NULL);
+
     klass = DEVICE_GET_CLASS(self);
     if(klass->accept) {
 	return (klass->accept)(self, conn, prolong, prolong_data);
@@ -1479,7 +1483,6 @@ device_accept(
 gboolean
 device_write_from_connection(
     Device *self,
-    DirectTCPConnection *conn,
     guint64 size,
     guint64 *actual_size)
 {
@@ -1491,7 +1494,7 @@ device_write_from_connection(
     g_assert(IS_WRITABLE_ACCESS_MODE(self->access_mode));
 
     if(klass->write_from_connection) {
-	return (klass->write_from_connection)(self, conn, size, actual_size);
+	return (klass->write_from_connection)(self, size, actual_size);
     } else {
 	device_set_error(self,
 	    stralloc(_("Unimplemented method")),
@@ -1503,7 +1506,6 @@ device_write_from_connection(
 gboolean
 device_read_to_connection(
     Device *self,
-    DirectTCPConnection *conn,
     guint64 size,
     guint64 *actual_size)
 {
@@ -1514,7 +1516,7 @@ device_read_to_connection(
 
     klass = DEVICE_GET_CLASS(self);
     if(klass->read_to_connection) {
-	return (klass->read_to_connection)(self, conn, size, actual_size);
+	return (klass->read_to_connection)(self, size, actual_size);
     } else {
 	device_set_error(self,
 	    stralloc(_("Unimplemented method")),

@@ -1305,7 +1305,6 @@ void restore(RestoreSource  *source,
 			            &myout->directtcp.conn, NULL, NULL);
 	}
 	if (!device_read_to_connection(source->u.device,
-						 myout->directtcp.conn,
 						 size, &size)) {
 	    g_fprintf(stderr, _("Problem transfering data: %s\n"),
 		      device_error_or_status(source->u.device));

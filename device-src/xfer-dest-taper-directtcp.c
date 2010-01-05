@@ -1,6 +1,6 @@
 /*
  * Amanda, The Advanced Maryland Automatic Network Disk Archiver
- * Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -161,7 +161,7 @@ worker_thread(
 	/* write the part */
 	g_timer_start(timer);
 	if (!device_write_from_connection(self->device,
-		self->conn, self->part_size, &size)) {
+		self->part_size, &size)) {
 	    /* even if this is just a physical EOM, we may have lost data, so
 	     * the whole transfer is dead. */
 	    xfer_cancel_with_error(XFER_ELEMENT(self),

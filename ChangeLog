@@ -1,4 +1,14 @@
 2010-01-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/device.c device-src/device.h: remove conn argument from
+	  read_to_connection and write_from_connection; check for ACCESS_NULL
+	* device-src/ndmp-device.c: remove conn argument, call use_connection
+	  from accept_impl
+	* installcheck/Amanda_Device.pl installcheck/Amanda_Xfer.pl
+	  perl/Amanda/Device.pod perl/Amanda/Device.swg restore-src/restore.c
+	  device-src/xfer-dest-taper-directtcp.c: don't supply conn argument,
+	  call use_connection at the appropriate time
+
+2010-01-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/ndmp-device.c: add an eject() implementation
 
 2010-01-04  Dustin J. Mitchell <dustin@zmanda.com>

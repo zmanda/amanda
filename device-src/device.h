@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -198,10 +198,8 @@ struct _DeviceClass {
     gboolean (* listen)(Device *self, gboolean for_writing, DirectTCPAddr **addrs);
     gboolean (* accept)(Device *self, DirectTCPConnection **conn,
 			ProlongProc prolong, gpointer prolong_data);
-    gboolean (* write_from_connection)(Device *self, DirectTCPConnection *conn,
-		    guint64 size, guint64 *actual_size);
-    gboolean (* read_to_connection)(Device *self, DirectTCPConnection *conn,
-		    guint64 size, guint64 *actual_size);
+    gboolean (* write_from_connection)(Device *self, guint64 size, guint64 *actual_size);
+    gboolean (* read_to_connection)(Device *self, guint64 size, guint64 *actual_size);
     gboolean (* use_connection)(Device *self, DirectTCPConnection *conn);
 
     /* array of DeviceProperty objects for this class, keyed by ID */
@@ -335,10 +333,8 @@ gboolean 	device_eject	(Device * self);
 gboolean device_listen(Device *self, gboolean for_writing, DirectTCPAddr **addrs);
 gboolean device_accept(Device *self, DirectTCPConnection **conn,
                 ProlongProc prolong, gpointer prolong_data);
-gboolean device_write_from_connection(Device *self, DirectTCPConnection *conn,
-		guint64 size, guint64 *actual_size);
-gboolean device_read_to_connection(Device *self, DirectTCPConnection *conn,
-		guint64 size, guint64 *actual_size);
+gboolean device_write_from_connection(Device *self, guint64 size, guint64 *actual_size);
+gboolean device_read_to_connection(Device *self, guint64 size, guint64 *actual_size);
 gboolean device_use_connection(Device *self, DirectTCPConnection *conn);
 
 /* Protected methods. Don't call these except in subclass implementations. */

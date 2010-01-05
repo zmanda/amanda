@@ -40,10 +40,8 @@ static GType	ndmp_device_get_type	(void);
  * Main object structure
  */
 
-typedef struct _NdmpMetadataFile NdmpMetadataFile;
-
-typedef struct _NdmpDevice NdmpDevice;
-struct _NdmpDevice {
+typedef struct NdmpDevice_ NdmpDevice;
+struct NdmpDevice_ {
     Device __parent__;
 
     NDMPConnection *ndmp;
@@ -55,6 +53,9 @@ struct _NdmpDevice {
      * was opened */
     DirectTCPAddr *listen_addrs;
     gboolean for_writing;
+
+    /* Current DirectTCPConnectionNDMP */
+    struct DirectTCPConnectionNDMP_ *directtcp_conn;
 
     /* constructor parameters and properties */
     gchar	 *ndmp_hostname;
@@ -70,8 +71,8 @@ struct _NdmpDevice {
  * Class definition
  */
 
-typedef struct _NdmpDeviceClass NdmpDeviceClass;
-struct _NdmpDeviceClass {
+typedef struct NdmpDeviceClass_ NdmpDeviceClass;
+struct NdmpDeviceClass_ {
     DeviceClass __parent__;
 };
 
@@ -405,6 +406,9 @@ static void ndmp_device_finalize(GObject * obj_self)
 
     if(G_OBJECT_CLASS(parent_class)->finalize)
         (* G_OBJECT_CLASS(parent_class)->finalize)(obj_self);
+
+    if (self->directtcp_conn)
+	g_object_unref(self->directtcp_conn);
 
     close_connection(self);
 
@@ -1070,19 +1074,25 @@ accept_impl(
 	mode = NDMP4_MOVER_MODE_WRITE;
     else
 	mode = NDMP4_MOVER_MODE_READ;
-    *dtcpconn = DIRECTTCP_CONNECTION(directtcp_connection_ndmp_new(self->ndmp, mode));
+
+    if (!device_use_connection(dself,
+	    DIRECTTCP_CONNECTION(directtcp_connection_ndmp_new(self->ndmp, mode)))) {
+	/* error already set by ndmp_device_use_connection */
+	return FALSE;
+    }
+
+    *dtcpconn = DIRECTTCP_CONNECTION(self->directtcp_conn);
     return TRUE;
 }
 
 static gboolean
 write_from_connection_impl(
     Device *dself,
-    DirectTCPConnection *dtcpconn,
     guint64 size,
     guint64 *actual_size)
 {
     NdmpDevice *self = NDMP_DEVICE(dself);
-    DirectTCPConnectionNDMP *nconn = DIRECTTCP_CONNECTION_NDMP(dtcpconn);
+    DirectTCPConnectionNDMP *nconn = self->directtcp_conn;
     gboolean eom = FALSE, eof = FALSE, eow = FALSE;
     ndmp9_mover_state mover_state;
     ndmp9_mover_halt_reason halt_reason;
@@ -1094,6 +1104,7 @@ write_from_connection_impl(
 	*actual_size = 0;
 
     /* if this is false, then the caller did not use use_connection correctly */
+    g_assert(self->directtcp_conn != NULL);
     g_assert(self->ndmp == nconn->ndmp);
 
     if (!ndmp_connection_mover_get_state(self->ndmp,
@@ -1202,12 +1213,11 @@ write_from_connection_impl(
 static gboolean
 read_to_connection_impl(
     Device *dself,
-    DirectTCPConnection *dtcpconn,
     guint64 size,
     guint64 *actual_size)
 {
     NdmpDevice *self = NDMP_DEVICE(dself);
-    DirectTCPConnectionNDMP *nconn = DIRECTTCP_CONNECTION_NDMP(dtcpconn);
+    DirectTCPConnectionNDMP *nconn = self->directtcp_conn;
     gboolean eom = FALSE, eof = FALSE, eow = FALSE;
     ndmp9_mover_state mover_state;
     ndmp9_mover_halt_reason halt_reason;
@@ -1341,7 +1351,11 @@ use_connection_impl(
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
-    nconn = DIRECTTCP_CONNECTION_NDMP(conn);
+
+    if (self->directtcp_conn)
+	g_object_unref(self->directtcp_conn);
+    self->directtcp_conn = nconn = DIRECTTCP_CONNECTION_NDMP(conn);
+    g_object_ref(self->directtcp_conn);
 
     /* if this is a different connection, use it */
     if (nconn->ndmp != self->ndmp) {
