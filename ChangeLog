@@ -1,3 +1,7 @@
+2010-01-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/NDMP.pod: typo
+	* perl/Amanda/NDMP.swg: actually include POD
+
 2010-01-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/device.c device-src/device.h: remove conn argument from
 	  read_to_connection and write_from_connection; check for ACCESS_NULL

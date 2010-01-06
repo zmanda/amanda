@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -47,7 +47,7 @@ by NDMJOB, which sends and receives NDMP messages on a TCP socket.
     # handle error..
   }
 
-This gets a new conncetion object.  This will always return an object, but the
+This gets a new connection object.  This will always return an object, but the
 result should be checked for errors as described in the "Error Handling"
 section, below.
 
