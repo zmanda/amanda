@@ -341,6 +341,7 @@ ndmos_tape_write (struct ndm_session *sess,
 	off_t			cur_pos;
 	ndmp9_error		err;
 	u_long			prev_size;
+	int			rc;
 
 	if (ta->tape_fd < 0) {
 		return NDMP9_DEV_NOT_OPEN_ERR;
@@ -364,7 +365,7 @@ ndmos_tape_write (struct ndm_session *sess,
 	cur_pos = lseek (ta->tape_fd, (off_t)0, 1);
 	lseek (ta->tape_fd, cur_pos, 0);
 
-	if ((u_long)write (ta->tape_fd, buf, count) == count) {
+	if ((u_long)full_write (ta->tape_fd, buf, count) == count) {
 		cur_pos += count;
 
 		prev_size = count;
@@ -375,12 +376,12 @@ ndmos_tape_write (struct ndm_session *sess,
 
 		err = NDMP9_NO_ERR;
 	} else {
+		ndmalogf(sess, 0, 7, "full_write not %d", count);
 		err = NDMP9_IO_ERR;
 	}
 
-
-	if (ftruncate (ta->tape_fd, cur_pos) < 0)
-	    return NDMP9_IO_ERR;
+	/* error ignored for pipe file descriptor */
+	rc = ftruncate (ta->tape_fd, cur_pos);
 
 	lseek (ta->tape_fd, cur_pos, 0);
 
@@ -395,6 +396,7 @@ ndmos_tape_wfm (struct ndm_session *sess)
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
 	off_t			cur_pos;
 	ndmp9_error		err;
+	int			rc;
 
 	ta->weof_on_close = 0;
 
@@ -411,8 +413,8 @@ ndmos_tape_wfm (struct ndm_session *sess)
 	lseek (ta->tape_fd, cur_pos, 0);
 	err = NDMP9_NO_ERR;
 
-	if (ftruncate (ta->tape_fd, cur_pos) < 0)
-	    return NDMP9_IO_ERR;
+	/* error ignored for pipe file descriptor */
+	rc = ftruncate (ta->tape_fd, cur_pos);
 
 	lseek (ta->tape_fd, cur_pos, 0);
 
