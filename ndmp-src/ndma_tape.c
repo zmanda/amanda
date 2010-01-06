@@ -439,7 +439,7 @@ ndmta_read_quantum (struct ndm_session *sess)
 		break;
 
 	default:
-		ndmta_mover_pause (sess, NDMP9_MOVER_PAUSE_MEDIA_ERROR);
+		ndmta_mover_halt (sess, NDMP9_MOVER_HALT_MEDIA_ERROR);
 		did_something++;
 		break;
 	}
@@ -528,8 +528,8 @@ ndmta_write_quantum (struct ndm_session *sess)
 				goto again;
 			}
 			if (error != NDMP9_NO_ERR) {
-				ndmta_mover_pause_pending (sess,
-						NDMP9_MOVER_PAUSE_MEDIA_ERROR);
+				ndmta_mover_halt_pending (sess,
+						NDMP9_MOVER_HALT_MEDIA_ERROR);
 				goto again;
 			}
 			if (xsr_resid > 0) {
@@ -542,8 +542,8 @@ ndmta_write_quantum (struct ndm_session *sess)
 			error = ndmos_tape_mtio (sess, NDMP9_MTIO_BSR,
 						xsr_count, &xsr_resid);
 			if (error != NDMP9_NO_ERR || xsr_resid > 0) {
-				ndmta_mover_pause_pending (sess,
-						NDMP9_MOVER_PAUSE_MEDIA_ERROR);
+				ndmta_mover_halt_pending (sess,
+						NDMP9_MOVER_HALT_MEDIA_ERROR);
 				goto again;
 			}
 		} else {
@@ -563,8 +563,8 @@ ndmta_write_quantum (struct ndm_session *sess)
 		/* N.B. - handling of done_count = 0 here is hacked to support
 		 * non-blocking writes to a socket in amndmjob */
 		if (error != NDMP9_NO_ERR) {
-			ndmta_mover_pause_pending (sess,
-				NDMP9_MOVER_PAUSE_MEDIA_ERROR);
+			ndmta_mover_halt_pending (sess,
+				NDMP9_MOVER_HALT_MEDIA_ERROR);
 			goto again;
 		}
 		if (done_count == 0) {

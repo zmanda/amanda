@@ -577,6 +577,7 @@ enum ndmp9_mover_halt_reason {
 	NDMP9_MOVER_HALT_ABORTED = 2,
 	NDMP9_MOVER_HALT_INTERNAL_ERROR = 3,
 	NDMP9_MOVER_HALT_CONNECT_ERROR = 4,
+	NDMP9_MOVER_HALT_MEDIA_ERROR = 5,
 };
 typedef enum ndmp9_mover_halt_reason ndmp9_mover_halt_reason;
 

@@ -762,7 +762,6 @@ enum ndmp4_mover_pause_reason {
 	NDMP4_MOVER_PAUSE_EOM = 1,
 	NDMP4_MOVER_PAUSE_EOF = 2,
 	NDMP4_MOVER_PAUSE_SEEK = 3,
-	NDMP4_MOVER_PAUSE_MEDIA_ERROR = 4,
 	NDMP4_MOVER_PAUSE_EOW = 5,
 };
 typedef enum ndmp4_mover_pause_reason ndmp4_mover_pause_reason;
@@ -773,6 +772,7 @@ enum ndmp4_mover_halt_reason {
 	NDMP4_MOVER_HALT_ABORTED = 2,
 	NDMP4_MOVER_HALT_INTERNAL_ERROR = 3,
 	NDMP4_MOVER_HALT_CONNECT_ERROR = 4,
+	NDMP4_MOVER_HALT_MEDIA_ERROR = 5,
 };
 typedef enum ndmp4_mover_halt_reason ndmp4_mover_halt_reason;
 

@@ -1,3 +1,11 @@
+2010-01-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndma_tape.c: halt on media error
+	* ndmp-src/ndmp4_translate.c ndmp-src/ndmp4_enum_strs.c
+	  ndmp-src/ndmp4.h ndmp-src/ndmp4.x: remove
+	  NDMP4_MOVER_PAUSE_MEDIA_ERROR and add NDMP4_MOVER_HALT_MEDIA_ERROR
+	* ndmp-src/ndmp9.h ndmp-src/ndmp9.x: add
+	  NDMP9_MOVER_HALT_MEDIA_ERROR
+
 2010-01-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Makefile.am: add a dependency to run swig if the .pod is modified.
 
