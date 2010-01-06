@@ -150,3 +150,7 @@ C<constants>:
 
   use Amanda::NDMP qw( :constants );
 
+=cut
+
+
+%}
