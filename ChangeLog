@@ -1,4 +1,7 @@
 2010-01-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am: add a dependency to run swig if the .pod is modified.
+
+2010-01-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/NDMP.pod: fix %}.
 
 2010-01-06  Jean-Louis Martineau <martineau@zmanda.com>
