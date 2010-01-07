@@ -1,4 +1,8 @@
 2010-01-07  Paul C. Mantz <pcmantz@zmanda.com>
+	* installcheck/Amanda_Curinfo.pl: fixed optional dependency on
+          Text::Diff
+
+2010-01-07  Paul C. Mantz <pcmantz@zmanda.com>
         * perl/Amanda/Curinfo.pm: perl implementation of server-src/infofile.h
         * perl/Amanda/Curinfo/Info.pm: container classes for Amanda::Curinfo
 	* installcheck/Amanda_Curinfo.pl: installcheck

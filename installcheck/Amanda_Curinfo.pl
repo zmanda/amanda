@@ -32,7 +32,7 @@ use Amanda::Curinfo::Info;
 my $use_diff;
 
 BEGIN {
-    eval { use Text::Diff; };
+    eval "use Text::Diff;";
     $use_diff = !$@;
 }
 
