@@ -1,3 +1,9 @@
+2010-01-07  Paul C. Mantz <pcmantz@zmanda.com>
+        * perl/Amanda/Curinfo.pm: perl implementation of server-src/infofile.h
+        * perl/Amanda/Curinfo/Info.pm: container classes for Amanda::Curinfo
+	* installcheck/Amanda_Curinfo.pl: installcheck
+	* perl/Makefile.am installcheck/Makefile.am: makefile additions
+
 2010-01-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndma_tape.c: halt on media error
 	* ndmp-src/ndmp4_translate.c ndmp-src/ndmp4_enum_strs.c

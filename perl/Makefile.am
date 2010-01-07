@@ -228,12 +228,27 @@ AmandaChanger_DATA = \
 	Amanda/Changer/rait.pm \
 	Amanda/Changer/robot.pm \
 	Amanda/Changer/single.pm
+
 if WANT_NDMP
 AmandaChanger_DATA += Amanda/Changer/ndmp.pm
 endif
 HTML_SOURCE_FILES += $(AmandaChanger_DATA)
 endif
 EXTRA_DIST += $(AmandaChanger_DATA)
+
+if WANT_SERVER
+# PACKAGE: Amanda::Curinfo
+Amanda_DATA += Amanda/Curinfo.pm
+endif
+EXTRA_DIST += Amanda/Curinfo.pm
+
+if WANT_SERVER
+# PACKAGE: Amanda::Curinfo::*
+AmandaCurinfodir = $(amperldir)/Amanda/Curinfo
+AmandaCurinfo_DATA = \
+	Amanda/Curinfo/Info.pm
+endif
+EXTRA_DIST += $(AmandaCurinfo_DATA)
 
 if WANT_SERVER
 # PACKAGE: Amanda::Taper::*

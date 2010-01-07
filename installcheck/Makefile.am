@@ -33,6 +33,7 @@ server_tests = \
 	Amanda_Changer_robot \
 	Amanda_Changer_single \
 	Amanda_Cmdline \
+	Amanda_Curinfo \
 	Amanda_Disklist \
 	Amanda_DB_Catalog \
 	Amanda_Device \
