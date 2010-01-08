@@ -1,4 +1,8 @@
 2010-01-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Xfer.swg: allow xfer elements to be compared for
+	  identity
+
+2010-01-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/simpleprng.c common-src/simpleprng.h: add a method to
 	  extract the current seed from the PRNG state
 	* xfer-src/source-random.c xfer-src/xfer-element.h: add get_seed()

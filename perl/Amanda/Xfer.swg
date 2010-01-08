@@ -269,6 +269,15 @@ char *xfer_element_repr(XferElement *elt);
 /* xfer_element_start -- private */
 /* xfer_element_cancel -- private */
 
+%inline %{
+static gboolean same_elements(
+	XferElement *a,
+	XferElement *b)
+{
+    return a == b;
+}
+%}
+
 /* subclass constructors */
 
 /* N.B. When adding new classes, ensure that the class_init function
@@ -489,7 +498,10 @@ sub new {
 %enddef
 
 %define OVERLOAD_REPR()
-%perlcode {use overload '""' => sub { $_[0]->repr(); };
+%perlcode {
+use overload '""' => sub { $_[0]->repr(); };
+# overload comparison, so users can ask if one obj == another
+use overload '==' => sub { Amanda::Xfer::same_elements($_[0], $_[1]); };
 }
 %enddef
 
