@@ -83,7 +83,7 @@ html: make_html amperl.css $(HTML_SOURCE_FILES)
 
 # Tell libtool to not bother versioning the libs we build, since perl won't
 # pay attention to such things, anyway.
-PERL_EXT_LDFLAGS = -avoid-version
+PERL_EXT_LDFLAGS = -avoid-version -shared
 
 # And add any flags the user has requested; on FreeBSD, this pulls in the
 # threading library

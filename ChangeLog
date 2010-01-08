@@ -1,4 +1,7 @@
 2010-01-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am: don't build useless static versions of perl libs
+
+2010-01-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/xfer-source-taper.c: make element cancellation work
 
 2010-01-08  Dustin J. Mitchell <dustin@zmanda.com>
