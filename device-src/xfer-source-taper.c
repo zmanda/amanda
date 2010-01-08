@@ -1,6 +1,6 @@
 /*
  * Amanda, The Advanced Maryland Automatic Network Disk Archiver
- * Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -182,6 +182,22 @@ error:
     return NULL;
 }
 
+static gboolean
+cancel_impl(
+    XferElement *elt,
+    gboolean expect_eof G_GNUC_UNUSED)
+{
+    XferSourceTaper *self = XFER_SOURCE_TAPER(elt);
+    elt->cancelled = TRUE;
+
+    /* trigger the condition variable, in case the thread is waiting on it */
+    g_mutex_lock(self->start_part_mutex);
+    g_cond_broadcast(self->start_part_cond);
+    g_mutex_unlock(self->start_part_mutex);
+
+    return TRUE;
+}
+
 static void
 start_part_impl(
     XferSourceTaper *self,
@@ -215,7 +231,6 @@ instance_init(
 {
     XferSourceTaper *self = XFER_SOURCE_TAPER(elt);
 
-    elt->can_generate_eof = TRUE;
     self->paused = 1;
     self->start_part_cond = g_cond_new();
     self->start_part_mutex = g_mutex_new();
@@ -233,6 +248,7 @@ class_init(
     };
 
     klass->pull_buffer = pull_buffer_impl;
+    klass->cancel = cancel_impl;
 
     klass->perl_class = "Amanda::Xfer::Source::Taper";
     klass->mech_pairs = mech_pairs;
