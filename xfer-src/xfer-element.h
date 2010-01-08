@@ -1,6 +1,6 @@
 /*
  * Amanda, The Advanced Maryland Automatic Network Disk Archiver
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -293,6 +293,16 @@ void xfer_element_drain_by_reading(int fd);
  * @return: new element
  */
 XferElement *xfer_source_random(guint64 length, guint32 prng_seed);
+
+/* Get the ending random seed for the xfer_source_random.  Call this after a
+ * transfer has finished, and construct a new xfer_source_random with the seed.
+ * The new source will continue the same random sequence at the next byte.  This
+ * is useful for constructing spanned dumps in testing.
+ *
+ * @param src: XferSourceRandom object
+ * @returns: seed
+ */
+guint32 xfer_source_random_get_seed(XferElement *src);
 
 /* A transfer source that produces LENGTH bytes containing repeated
  * copies of the provided pattern, for testing purposes.

@@ -1,3 +1,9 @@
+2010-01-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/simpleprng.c common-src/simpleprng.h: add a method to
+	  extract the current seed from the PRNG state
+	* xfer-src/source-random.c xfer-src/xfer-element.h: add get_seed()
+	* perl/Amanda/Xfer.pod perl/Amanda/Xfer.swg: SWIG it
+
 2010-01-07  Paul C. Mantz <pcmantz@zmanda.com>
 	* installcheck/Amanda_Curinfo.pl: fixed optional dependency on
           Text::Diff

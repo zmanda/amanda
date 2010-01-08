@@ -1,6 +1,6 @@
 /*
  * Amanda, The Advanced Maryland Automatic Network Disk Archiver
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -58,11 +58,20 @@ typedef struct XferSourceRandom {
 
 typedef struct {
     XferElementClass __parent__;
+
+    guint32 (*get_seed)(XferSourceRandom *elt);
 } XferSourceRandomClass;
 
 /*
  * Implementation
  */
+
+static guint32
+get_seed_impl(
+    XferSourceRandom *self)
+{
+    return simpleprng_get_seed(&self->prng);
+}
 
 static gpointer
 pull_buffer_impl(
@@ -107,6 +116,7 @@ class_init(
 	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
     };
 
+    selfc->get_seed = get_seed_impl;
     klass->pull_buffer = pull_buffer_impl;
 
     klass->perl_class = "Amanda::Xfer::Source::Random";
@@ -138,6 +148,17 @@ xfer_source_random_get_type (void)
     }
 
     return type;
+}
+
+guint32
+xfer_source_random_get_seed(
+    XferElement *elt)
+{
+    XferSourceRandomClass *klass;
+    g_assert(IS_XFER_SOURCE_RANDOM(elt));
+
+    klass = XFER_SOURCE_RANDOM_GET_CLASS(elt);
+    return klass->get_seed(XFER_SOURCE_RANDOM(elt));
 }
 
 /* create an element of this class; prototype is in xfer-element.h */

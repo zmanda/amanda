@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -34,6 +34,13 @@ simpleprng_seed(
     g_assert(seed != 0);
     state->val = seed;
     state->count = 0;
+}
+
+guint32
+simpleprng_get_seed(
+    simpleprng_state_t *state)
+{
+    return state->val;
 }
 
 guint32 simpleprng_rand(

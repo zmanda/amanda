@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -279,6 +279,9 @@ XferElement *xfer_source_random(
     guint64 length,
     guint32 seed);
 
+guint32 xfer_source_random_get_seed(
+    XferElement *self);
+
 %typemap(in) (void * pattern, size_t pattern_length) {
  size_t len;
  char * pat;
@@ -531,6 +534,7 @@ DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_source_fd)
 PACKAGE(Amanda::Xfer::Source::Random)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_source_random)
+DECLARE_METHOD(get_seed, Amanda::Xfer::xfer_source_random_get_seed)
 
 /* ---- */
 

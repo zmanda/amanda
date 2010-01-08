@@ -154,6 +154,15 @@ amount of data if I<length> is zero).  C<$seed> is the seed used to
 generate the random numbers; this seed can be used in a destination to
 check for correct output.
 
+If you need to string multiple transfers together into a coherent sequence of
+random numbers, for example when testing the re-assembly of spanned dumps, call
+
+  my $seed = $src->get_seed();
+
+to get the finishing seed for the source, then pass this to the source
+constructor for the next transfer.  When concatenated, the bytestreams from the
+transfers will verify correctly using the original random seed.
+
 =head3 Amanda::Xfer::Source::Pattern
 
   Amanda::Xfer::Source::Pattern->new($length, $pattern);
