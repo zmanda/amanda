@@ -260,11 +260,15 @@ parse_file_header(
 	}
 	strncpy(file->comp_suffix, tok, SIZEOF(file->comp_suffix) - 1);
 
-	file->compressed = strcmp(file->comp_suffix, "N");
-	/* compatibility with pre-2.2 amanda */
-	if (strcmp(file->comp_suffix, "C") == 0)
-	    strncpy(file->comp_suffix, ".Z", SIZEOF(file->comp_suffix) - 1);
-	       
+	file->compressed = (0 != strcmp(file->comp_suffix, "N"));
+	if (file->compressed) {
+	    /* compatibility with pre-2.2 amanda */
+	    if (strcmp(file->comp_suffix, "C") == 0)
+		strncpy(file->comp_suffix, ".Z", SIZEOF(file->comp_suffix) - 1);
+	} else {
+	    strcpy(file->comp_suffix, "");
+	}
+
 	tok = strtok_r(NULL, " ", &saveptr);
         /* "program" is optional */
         if (tok == NULL || strcmp(tok, "program") != 0) {
@@ -277,13 +281,11 @@ parse_file_header(
 	    goto out;
 	}
         strncpy(file->program, tok, SIZEOF(file->program) - 1);
-        if (file->program[0] == '\0')
-            strncpy(file->program, "RESTORE", SIZEOF(file->program) - 1);
 
 	if ((tok = strtok_r(NULL, " ", &saveptr)) == NULL)
              break;          /* reached the end of the buffer */
 
-	/* "encryption" is optional */
+	/* encryption is optional */
 	if (BSTRNCMP(tok, "crypt") == 0) {
 	    tok = strtok_r(NULL, " ", &saveptr);
 	    if (tok == NULL) {
@@ -292,7 +294,15 @@ parse_file_header(
 	    }
 	    strncpy(file->encrypt_suffix, tok,
 		    SIZEOF(file->encrypt_suffix) - 1);
-	    file->encrypted = BSTRNCMP(file->encrypt_suffix, "N");
+	    file->encrypted = 1;
+
+	    /* for compatibility with who-knows-what, allow "comp N" to be
+	     * equivalent to no compression */
+	    if (0 == BSTRNCMP(file->encrypt_suffix, "N")) {
+		file->encrypted = 0;
+		strcpy(file->encrypt_suffix, "");
+	    }
+
 	    if ((tok = strtok_r(NULL, " ", &saveptr)) == NULL)
 		break;
 	}
@@ -514,49 +524,96 @@ void
 dump_dumpfile_t(
     const dumpfile_t *file)
 {
-	dbprintf(_("Contents of *(dumpfile_t *)%p:\n"), file);
-	dbprintf(_("    type             = %d (%s)\n"),
+	g_debug(_("Contents of *(dumpfile_t *)%p:"), file);
+	g_debug(_("    type             = %d (%s)"),
 			file->type, filetype2str(file->type));
-	dbprintf(_("    datestamp        = '%s'\n"), file->datestamp);
-	dbprintf(_("    dumplevel        = %d\n"), file->dumplevel);
-	dbprintf(_("    compressed       = %d\n"), file->compressed);
-	dbprintf(_("    encrypted        = %d\n"), file->encrypted);
-	dbprintf(_("    comp_suffix      = '%s'\n"), file->comp_suffix);
-	dbprintf(_("    encrypt_suffix   = '%s'\n"), file->encrypt_suffix);
-	dbprintf(_("    name             = '%s'\n"), file->name);
-	dbprintf(_("    disk             = '%s'\n"), file->disk);
-	dbprintf(_("    program          = '%s'\n"), file->program);
-	dbprintf(_("    application      = '%s'\n"), file->application);
-	dbprintf(_("    srvcompprog      = '%s'\n"), file->srvcompprog);
-	dbprintf(_("    clntcompprog     = '%s'\n"), file->clntcompprog);
-	dbprintf(_("    srv_encrypt      = '%s'\n"), file->srv_encrypt);
-	dbprintf(_("    clnt_encrypt     = '%s'\n"), file->clnt_encrypt);
-	dbprintf(_("    recover_cmd      = '%s'\n"), file->recover_cmd);
-	dbprintf(_("    uncompress_cmd   = '%s'\n"), file->uncompress_cmd);
-	dbprintf(_("    encrypt_cmd      = '%s'\n"), file->encrypt_cmd);
-	dbprintf(_("    decrypt_cmd      = '%s'\n"), file->decrypt_cmd);
-	dbprintf(_("    srv_decrypt_opt  = '%s'\n"), file->srv_decrypt_opt);
-	dbprintf(_("    clnt_decrypt_opt = '%s'\n"), file->clnt_decrypt_opt);
-	dbprintf(_("    cont_filename    = '%s'\n"), file->cont_filename);
+	g_debug(_("    datestamp        = '%s'"), file->datestamp);
+	g_debug(_("    dumplevel        = %d"), file->dumplevel);
+	g_debug(_("    compressed       = %d"), file->compressed);
+	g_debug(_("    encrypted        = %d"), file->encrypted);
+	g_debug(_("    comp_suffix      = '%s'"), file->comp_suffix);
+	g_debug(_("    encrypt_suffix   = '%s'"), file->encrypt_suffix);
+	g_debug(_("    name             = '%s'"), file->name);
+	g_debug(_("    disk             = '%s'"), file->disk);
+	g_debug(_("    program          = '%s'"), file->program);
+	g_debug(_("    application      = '%s'"), file->application);
+	g_debug(_("    srvcompprog      = '%s'"), file->srvcompprog);
+	g_debug(_("    clntcompprog     = '%s'"), file->clntcompprog);
+	g_debug(_("    srv_encrypt      = '%s'"), file->srv_encrypt);
+	g_debug(_("    clnt_encrypt     = '%s'"), file->clnt_encrypt);
+	g_debug(_("    recover_cmd      = '%s'"), file->recover_cmd);
+	g_debug(_("    uncompress_cmd   = '%s'"), file->uncompress_cmd);
+	g_debug(_("    decrypt_cmd      = '%s'"), file->decrypt_cmd);
+	g_debug(_("    srv_decrypt_opt  = '%s'"), file->srv_decrypt_opt);
+	g_debug(_("    clnt_decrypt_opt = '%s'"), file->clnt_decrypt_opt);
+	g_debug(_("    cont_filename    = '%s'"), file->cont_filename);
 	if (file->dle_str)
-	    dbprintf(_("    dle_str          = %s\n"), file->dle_str);
+	    g_debug(_("    dle_str          = %s"), file->dle_str);
 	else
-	    dbprintf(_("    dle_str          = (null)\n"));
-	dbprintf(_("    is_partial       = %d\n"), file->is_partial);
-	dbprintf(_("    partnum          = %d\n"), file->partnum);
-	dbprintf(_("    totalparts       = %d\n"), file->totalparts);
+	    g_debug(_("    dle_str          = (null)"));
+	g_debug(_("    is_partial       = %d"), file->is_partial);
+	g_debug(_("    partnum          = %d"), file->partnum);
+	g_debug(_("    totalparts       = %d"), file->totalparts);
 	if (file->blocksize)
-	    dbprintf(_("    blocksize        = %zu\n"), file->blocksize);
+	    g_debug(_("    blocksize        = %zu"), file->blocksize);
 }
 
 static void
-validate_name(
+validate_nonempty_str(
+    const char *val,
     const char *name)
 {
-	if (strlen(name) == 0) {
-	    error(_("Invalid name '%s'\n"), name);
-	    /*NOTREACHED*/
+    if (strlen(val) == 0) {
+	error(_("Invalid %s '%s'\n"), name, val);
+	/*NOTREACHED*/
+    }
+}
+
+static void
+validate_not_both(
+    const char *val1, const char *val2,
+    const char *name1, const char *name2)
+{
+    if (*val1 && *val2) {
+	error("cannot set both %s and %s\n", name1, name2);
+    }
+}
+
+static void
+validate_no_space(
+    const char *val,
+    const char *name)
+{
+    if (strchr(val, ' ') != NULL) {
+	error(_("%s cannot contain spaces\n"), name);
+	/*NOTREACHED*/
+    }
+}
+
+static void
+validate_pipe_cmd(
+	const char *cmd,
+	const char *name)
+{
+    if (strlen(cmd) && cmd[strlen(cmd)-1] != '|') {
+	error("invalid %s (must end with '|'): '%s'\n", name, cmd);
+    }
+}
+
+static void
+validate_encrypt_suffix(
+	int encrypted,
+	const char *suff)
+{
+    if (encrypted) {
+	if (!suff[0] || (0 == strcmp(suff, "N"))) {
+	    error(_("Invalid encr_suffix '%s'\n"), suff);
 	}
+    } else {
+	if (suff[0] && (0 != strcmp(suff, "N"))) {
+	    error(_("Invalid header: encr_suffix '%s' specified but not encrypted\n"), suff);
+	}
+    }
 }
 
 static void
@@ -603,33 +660,34 @@ build_header(const dumpfile_t * file, size_t *size, size_t max_size)
     size_t min_size;
 
     min_size = size? *size : max_size;
-    dbprintf(_("Building type %s header of %zu-%zu bytes with name='%s' disk='%s' dumplevel=%d and blocksize=%zu\n"),
+    g_debug(_("Building type %s header of %zu-%zu bytes with name='%s' disk='%s' dumplevel=%d and blocksize=%zu"),
 	    filetype2str(file->type), min_size, max_size,
 	    file->name, file->disk, file->dumplevel, file->blocksize);
 
     rval = g_string_sized_new(min_size);
     split_data = g_string_sized_new(10);
-    
+
     switch (file->type) {
     case F_TAPESTART:
-	validate_name(file->name);
+	validate_nonempty_str(file->name, "name");
 	validate_datestamp(file->datestamp);
-        g_string_printf(rval, 
+        g_string_printf(rval,
                         "AMANDA: TAPESTART DATE %s TAPE %s\n\014\n",
                         file->datestamp, file->name);
 	break;
-        
+
     case F_SPLIT_DUMPFILE:
 	validate_parts(file->partnum, file->totalparts);
         g_string_printf(split_data,
                         " part %d/%d ", file->partnum, file->totalparts);
         /* FALLTHROUGH */
-	
 
     case F_CONT_DUMPFILE:
     case F_DUMPFILE :
-	validate_name(file->name);
+	validate_nonempty_str(file->name, "name");
+	validate_nonempty_str(file->program, "program");
 	validate_datestamp(file->datestamp);
+	validate_encrypt_suffix(file->encrypted, file->encrypt_suffix);
 	qname = quote_string(file->disk);
 	program = stralloc(file->program);
 	if (match("^.*[.][Ee][Xx][Ee]$", program)) {
@@ -641,32 +699,45 @@ build_header(const dumpfile_t * file, size_t *size, size_t max_size)
                         filetype2str(file->type),
                         file->datestamp, file->name, qname,
                         split_data->str,
-                        file->dumplevel, file->comp_suffix, program); 
+                        file->dumplevel,
+			file->compressed? file->comp_suffix : "N",
+			program); 
 	amfree(program);
 	amfree(qname);
 
         /* only output crypt if it's enabled */
-	if (strcmp(file->encrypt_suffix, "enc") == 0) {
-            g_string_append_printf(rval, " crypt %s", file->encrypt_suffix);
+	if (file->encrypted) {
+	    g_string_append_printf(rval, " crypt %s", file->encrypt_suffix);
 	}
 
+	validate_not_both(file->srvcompprog, file->clntcompprog,
+			    "srvcompprog", "clntcompprog");
 	if (*file->srvcompprog) {
-            g_string_append_printf(rval, " server_custom_compress %s", 
+	    validate_no_space(file->srvcompprog, "srvcompprog");
+            g_string_append_printf(rval, " server_custom_compress %s",
                                    file->srvcompprog);
 	} else if (*file->clntcompprog) {
+	    validate_no_space(file->clntcompprog, "clntcompprog");
             g_string_append_printf(rval, " client_custom_compress %s",
                                    file->clntcompprog);
-	} 
-        
+	}
+
+	validate_not_both(file->srv_encrypt, file->clnt_encrypt,
+			    "srv_encrypt", "clnt_encrypt");
 	if (*file->srv_encrypt) {
+	    validate_no_space(file->srv_encrypt, "srv_encrypt");
             g_string_append_printf(rval, " server_encrypt %s",
                                    file->srv_encrypt);
 	} else if (*file->clnt_encrypt) {
+	    validate_no_space(file->clnt_encrypt, "clnt_encrypt");
             g_string_append_printf(rval, " client_encrypt %s",
                                    file->clnt_encrypt);
-	} 
-        
+	}
+
+	validate_not_both(file->srv_decrypt_opt, file->clnt_decrypt_opt,
+			    "srv_decrypt_opt", "clnt_decrypt_opt");
 	if (*file->srv_decrypt_opt) {
+	    validate_no_space(file->srv_decrypt_opt, "srv_decrypt_opt");
             g_string_append_printf(rval, " server_decrypt_option %s",
                                    file->srv_decrypt_opt);
         } else if (*file->clnt_decrypt_opt) {
@@ -677,10 +748,12 @@ build_header(const dumpfile_t * file, size_t *size, size_t max_size)
         g_string_append_printf(rval, "\n");
         
 	if (file->cont_filename[0] != '\0') {
+	    validate_no_space(file->cont_filename, "cont_filename");
             g_string_append_printf(rval, "CONT_FILENAME=%s\n",
                                    file->cont_filename);
 	}
 	if (file->application[0] != '\0') {
+	    validate_no_space(file->application, "application");
             g_string_append_printf(rval, "APPLICATION=%s\n", file->application);
 	}
 	if (file->is_partial != 0) {
@@ -700,12 +773,20 @@ build_header(const dumpfile_t * file, size_t *size, size_t max_size)
 	    g_string_append_printf(rval, "bs=%zuk ",
 				   file->blocksize / 1024);
 	g_string_append_printf(rval, "skip=1 | ");
-	if (*file->decrypt_cmd)
-	    g_string_append_printf(rval, "%s ", file->decrypt_cmd);
-	if (*file->uncompress_cmd)
-	    g_string_append_printf(rval, "%s ", file->uncompress_cmd);
-	if (*file->recover_cmd)
+	if (*file->recover_cmd) {
+	    if (*file->decrypt_cmd) {
+		validate_pipe_cmd(file->decrypt_cmd, "decrypt_cmd");
+		g_string_append_printf(rval, "%s ", file->decrypt_cmd);
+	    }
+	    if (*file->uncompress_cmd) {
+		validate_pipe_cmd(file->uncompress_cmd, "uncompress_cmd");
+		g_string_append_printf(rval, "%s ", file->uncompress_cmd);
+	    }
 	    g_string_append_printf(rval, "%s ", file->recover_cmd);
+	} else {
+	    if (*file->uncompress_cmd || *file->decrypt_cmd)
+		error("cannot specify uncompress_cmd or decrypt_cmd without recover_cmd\n");
+	}
 	/* \014 == ^L == form feed */
 	g_string_append_printf(rval, "\n\014\n");
 	break;
@@ -917,7 +998,6 @@ gboolean headers_are_equal(dumpfile_t * a, dumpfile_t * b) {
     if (strcmp(a->clnt_encrypt, b->clnt_encrypt)) return FALSE;
     if (strcmp(a->recover_cmd, b->recover_cmd)) return FALSE;
     if (strcmp(a->uncompress_cmd, b->uncompress_cmd)) return FALSE;
-    if (strcmp(a->encrypt_cmd, b->encrypt_cmd)) return FALSE;
     if (strcmp(a->decrypt_cmd, b->decrypt_cmd)) return FALSE;
     if (strcmp(a->srv_decrypt_opt, b->srv_decrypt_opt)) return FALSE;
     if (strcmp(a->clnt_decrypt_opt, b->clnt_decrypt_opt)) return FALSE;
@@ -1033,8 +1113,11 @@ static char *parse_heredoc(
 	      strcmp(new_line, keyword) != 0) {
 	    result = vstrextend(&result, new_line, "\n", NULL);
 	}
+	/* make sure we have something */
+	if (!result)
+	    result = g_strdup("");
 	/* remove latest '\n' */
-	if (strlen(result) > 0)
+	else if (strlen(result) > 0)
 	    result[strlen(result)-1] = '\0';
     } else {
 	result = stralloc(line);

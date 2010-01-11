@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -65,7 +65,6 @@ typedef struct {
     string_t clnt_encrypt;
     string_t recover_cmd;
     string_t uncompress_cmd;
-    string_t encrypt_cmd;
     string_t decrypt_cmd;
     string_t srv_decrypt_opt;
     string_t clnt_decrypt_opt;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -93,7 +93,6 @@ A header object has the following keys:
  clnt_encrypt
  recover_cmd
  uncompress_cmd
- encrypt_cmd
  decrypt_cmd
  srv_decrypt_opt
  clnt_decrypt_opt
@@ -116,6 +115,44 @@ import in the tag C<:constants>:
  F_SPLIT_DUMPFILE
  F_EMPTY
  F_NOOP
+
+Some of the header fields are interrelated.  The following restrictions apply.
+
+=over 4
+
+=item *
+
+C<comp_suffix> is set if and only if C<compressed> is true; the suffix "N" is
+reserved and cannot be used.
+
+=item *
+
+C<encrypt_suffix> is set if and only if C<encrypted> is true; the suffix "N" is
+reserved and cannot be used.
+
+=item *
+
+If C<totalparts> is not -1, then C<partnum> must be less than or equal to
+C<totalparts>.  Neither parameter can be zero.  These parameters are only
+recorded in a C<F_SPLIT_DUMPFILE> header.
+
+=item *
+
+The C<blocksize> is intended for the user's convenience only.  It is written to
+the header string, but not parsed on return.  C<from_string> will always return
+a header with blocksize=0.
+
+=item *
+
+Like C<blocksize>, C<recover_cmd>, C<uncompress_cmd> and C<decrypt_cmd> are
+intended for the user's convenience noly.  The C<uncompress_cmd> and
+C<decrypt_cmd>, if specified, must end with C<|> (the shell pipe character).
+Neither can be nonempty unless C<recover_cmd> is also nonempty.  When parsing a
+header with only two commands from a string, it is ambiguous whether the first
+string is for decryption or uncompression, and this package assumes
+uncompression.
+
+=back
 
 =cut
 

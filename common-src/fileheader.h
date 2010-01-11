@@ -61,7 +61,6 @@ typedef struct file_s {
     string_t clnt_encrypt;
     string_t recover_cmd;
     string_t uncompress_cmd;
-    string_t encrypt_cmd;
     string_t decrypt_cmd;
     string_t srv_decrypt_opt;
     string_t clnt_decrypt_opt;

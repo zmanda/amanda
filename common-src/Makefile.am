@@ -204,7 +204,7 @@ libtestutils_la_SOURCES = \
 # automake-style tests
 
 TESTS = amflock-test event-test semaphore-test queueing-test quoting-test \
-	ipc-binary-test hexencode-test
+	ipc-binary-test hexencode-test fileheader-test
 noinst_PROGRAMS = $(TESTS)
 
 amflock_test_SOURCES = amflock-test.c
@@ -227,6 +227,9 @@ ipc_binary_test_LDADD = libamanda.la libtestutils.la
 
 hexencode_test_SOURCES = hexencode-test.c
 hexencode_test_LDADD = libamanda.la libtestutils.la
+
+fileheader_test_SOURCES = fileheader-test.c
+fileheader_test_LDADD = libamanda.la libtestutils.la
 
 # scripts
 

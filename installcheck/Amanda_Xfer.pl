@@ -425,6 +425,7 @@ SKIP: {
 	$hdr->{'name'} = "installcheck";
 	$hdr->{'disk'} = "/";
 	$hdr->{'datestamp'} = "20080102030405";
+	$hdr->{'program'} = "INSTALLCHECK";
 
 	$device->finish();
 	$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
@@ -478,6 +479,7 @@ SKIP: {
 	$hdr->{'name'} = "installcheck";
 	$hdr->{'disk'} = "/";
 	$hdr->{'datestamp'} = "20080102030405";
+	$hdr->{'program'} = "INSTALLCHECK";
 
 	# set up a device for the taper dest
 	$device = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($vtape_num++));
@@ -878,6 +880,7 @@ SKIP: {
 	$hdr->{'name'} = "installcheck";
 	$hdr->{'disk'} = "/";
 	$hdr->{'datestamp'} = "20080102030405";
+	$hdr->{'program'} = "INSTALLCHECK";
 
 	# set up the cache file
 	open($fh, "<", "$cache_file") or die("Could not open '$cache_file' for reading");
@@ -1001,6 +1004,7 @@ SKIP: {
 	$hdr->{'name'} = "installcheck";
 	$hdr->{'disk'} = "/";
 	$hdr->{'datestamp'} = "20080102030405";
+	$hdr->{'program'} = "INSTALLCHECK";
 
 	# make a starting device
 	$dev = mkdevice();

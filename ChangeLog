@@ -1,3 +1,14 @@
+2010-01-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/Makefile.am common-src/fileheader-test.c: new test
+	* common-src/fileheader.c common-src/fileheader.h: validate a lot
+	  of inputs; use g_debug; handle compressed/comp_suffix and
+	  encrypted/encr_suffix in a sane way; remove unused encrypt_cmd; fix
+	  bug in parsing empty heredoc
+	* device-src/amtapetype.pl: add 'program' to header
+	* installcheck/Amanda_Xfer.pl: add 'program' to header
+	* perl/Amanda/Header.pod perl/Amanda/Header.swg: remove encrypt_cmd
+	  and document interrelationships of fields
+
 2010-01-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am: don't build useless static versions of perl libs
 

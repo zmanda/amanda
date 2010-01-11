@@ -1,5 +1,5 @@
 #! @PERL@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -123,6 +123,7 @@ sub write_one_file(%) {
     $hdr->{name} = "amtapetype";
     $hdr->{disk} = "/test";
     $hdr->{datestamp} = "X";
+    $hdr->{program} = "AMTAPETYPE";
     $device->start_file($hdr)
 	or return $device->error_or_status();
 
@@ -316,6 +317,7 @@ sub check_property {
     $hdr->{name} = "localhost";
     $hdr->{disk} = "/test1";
     $hdr->{datestamp} = "20080706050403";
+    $hdr->{program} = "AMTAPETYPE";
     $device->start_file($hdr);
     $device->finish_file();
 
@@ -323,6 +325,7 @@ sub check_property {
     $hdr->{name} = "localhost";
     $hdr->{disk} = "/test2";
     $hdr->{datestamp} = "20080706050403";
+    $hdr->{program} = "AMTAPETYPE";
     $device->start_file($hdr);
     $device->finish_file();
 
@@ -330,6 +333,7 @@ sub check_property {
     $hdr->{name} = "localhost";
     $hdr->{disk} = "/test3";
     $hdr->{datestamp} = "20080706050403";
+    $hdr->{program} = "AMTAPETYPE";
     $device->start_file($hdr);
     $device->finish_file();
 
