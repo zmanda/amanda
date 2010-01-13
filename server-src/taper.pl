@@ -1,5 +1,5 @@
 #! @PERL@
-# Copyright (c) 2009 Zmanda Inc.  All Rights Reserved.
+# Copyright (c) 2009, 2010 Zmanda Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -539,8 +539,8 @@ sub create_status_file {
 		    "$self->{status_filename}\n";
     print {$self->{status_fh}} "0";
 
-    # create timer callback
-    $self->{timer} = Amanda::MainLoop::timeout_source(5);
+    # create timer callback, firing every 5s (=5000msec)
+    $self->{timer} = Amanda::MainLoop::timeout_source(5000);
     $self->{timer}->set_callback(sub {
 	my $size = $self->{scribe}->get_bytes_written();
 	seek $self->{status_fh}, 0, 0;

@@ -1,4 +1,7 @@
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/taper.pl: fix taper writing status too quickly
+
+2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* client-src/client_util.c: fix to send the --direct-tcp and
 	  --data-path arguments to applications
 	* client-src/sendbackup.c: add a bit of debugging to sendbackup
