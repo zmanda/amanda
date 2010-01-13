@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -28,9 +28,6 @@
 /* level at which to snoop when VERBOSE is set; 8 = everything but hexdumps,
  * and 5 = packets without details */
 #define SNOOP_LEVEL 7
-
-/* logging information (for VERBOSE) */
-static struct ndmlog device_ndmlog;
 
 static GObjectClass *parent_class = NULL;
 
@@ -99,6 +96,11 @@ finalize_impl(GObject *goself)
 	ndmconn_destruct(self->conn);
 	self->conn = NULL;
     }
+
+    if (self->log_state) {
+	g_free(self->log_state);
+	self->log_state = NULL;
+    }
 }
 
 /*
@@ -137,12 +139,13 @@ ndmp_connection_err_msg(
 
 static void
 ndmp_connection_ndmlog_deliver(
-    struct ndmlog *log G_GNUC_UNUSED,
+    struct ndmlog *log,
     char *tag,
     int lev G_GNUC_UNUSED,
     char *msg)
 {
-    g_debug("%s: %s", tag, msg);
+    NDMPConnection *self = NDMP_CONNECTION(log->cookie);
+    g_debug("conn#%d: %s: %s", self->connid, tag, msg);
 }
 
 void
@@ -150,14 +153,18 @@ ndmp_connection_set_verbose(
     NDMPConnection *self,
     gboolean verbose)
 {
-    device_ndmlog.deliver = ndmp_connection_ndmlog_deliver;
-    device_ndmlog.cookie = NULL; /* unused */
-
+    struct ndmlog *device_ndmlog;
     g_assert(!self->startup_err);
+
+    device_ndmlog = g_new0(struct ndmlog, 1);
+
+    self->log_state = (gpointer)device_ndmlog;
+    device_ndmlog->deliver = ndmp_connection_ndmlog_deliver;
+    device_ndmlog->cookie = self;
 
     if (verbose) {
 	ndmconn_set_snoop(self->conn,
-	    &device_ndmlog,
+	    device_ndmlog,
 	    SNOOP_LEVEL);
     } else {
 	ndmconn_clear_snoop(self->conn);
@@ -720,6 +727,8 @@ ndmp_connection_new(
     gchar *errmsg = NULL;
     struct ndmconn *conn = NULL;
     int rc;
+    static int next_connid = 1;
+    static GStaticMutex next_connid_mutex = G_STATIC_MUTEX_INIT;
 
     g_debug("opening new NDMPConnection: to %s:%d", hostname, port);
     conn = ndmconn_initialize(NULL, "amanda-server");
@@ -766,6 +775,9 @@ ndmp_connection_new(
 
     self = NDMP_CONNECTION(g_object_new(TYPE_NDMP_CONNECTION, NULL));
     self->conn = conn;
+    g_static_mutex_lock(&next_connid_mutex);
+    self->connid = next_connid++;
+    g_static_mutex_unlock(&next_connid_mutex);
     conn->context = (void *)self;
 
 out:

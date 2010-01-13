@@ -1,4 +1,9 @@
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndmpconnobj.c ndmp-src/ndmpconnobj.h: better debugging
+	  messages, including a fancy connection ID to help debug problems
+	  using the wrong NDMP connection at the wrong time
+
+2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/ndmp-device.c: work around record_size bug in ndmjob
 
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -44,6 +44,9 @@ typedef struct NDMPConnection_ {
     /* the ndmconn - interface to ndmlib */
     struct ndmconn *conn;
 
+    /* integer to identify this connection */
+    int connid;
+
     /* received notifications; note that this does not include all possible
      * notifications, and that only one "queued" version of each notification
      * is possible.  Each reason is 0 if no such notification has been
@@ -52,6 +55,9 @@ typedef struct NDMPConnection_ {
     ndmp9_mover_halt_reason mover_halt_reason;
     ndmp9_mover_pause_reason mover_pause_reason;
     guint64 mover_pause_seek_position;
+
+    /* log state, if using verbose logging (private) */
+    gpointer log_state;
 
     /* error info */
     int last_rc;
