@@ -1,4 +1,7 @@
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/scsiconst.h: fix typo in constant name
+
+2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: don't mark unknown but loaded tapes as
 	  'blank', mark them as unknown
 
