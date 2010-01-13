@@ -1,4 +1,8 @@
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/ndmp-device.c: correctly handle devices while they are
+	  coming online after a load
+
+2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/scsiconst.h: fix typo in constant name
 
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>

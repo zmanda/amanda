@@ -214,9 +214,9 @@ open_tape_agent(
     g_debug("opening tape device '%s' on NDMP server '%s:%d'",
 	self->ndmp_device_name, self->ndmp_hostname, self->ndmp_port);
 
-    /* send NDMP_TAPE_OPEN */
+    /* send NDMP_TAPE_OPEN, using RAW mode so that it will open even with no tape */
     if (!ndmp_connection_tape_open(self->ndmp,
-		self->ndmp_device_name, NDMP9_TAPE_RDWR_MODE)) {
+		self->ndmp_device_name, NDMP9_TAPE_RAW_MODE)) {
 	set_error_from_ndmp(self);
 	return FALSE;
     }
@@ -346,9 +346,28 @@ static void
 set_error_from_ndmp(
     NdmpDevice *self)
 {
-    device_set_error(DEVICE(self),
-	    ndmp_connection_err_msg(self->ndmp),
-	    DEVICE_STATUS_DEVICE_ERROR);
+    /* translate some error codes to the corresponding Device API status */
+    switch (ndmp_connection_err_code(self->ndmp)) {
+	case NDMP9_NO_TAPE_LOADED_ERR:
+	    device_set_error(DEVICE(self),
+		    g_strdup(_("no tape loaded")),
+			    DEVICE_STATUS_VOLUME_MISSING);
+	    break;
+
+	case NDMP9_IO_ERR:
+	    device_set_error(DEVICE(self),
+		    g_strdup(_("IO error")),
+			    DEVICE_STATUS_VOLUME_UNLABELED |
+			    DEVICE_STATUS_VOLUME_ERROR |
+			    DEVICE_STATUS_DEVICE_ERROR);
+	    break;
+
+	default:
+	    device_set_error(DEVICE(self),
+		    ndmp_connection_err_msg(self->ndmp),
+		    DEVICE_STATUS_DEVICE_ERROR);
+	    break;
+	}
     close_connection(self);
 }
 
