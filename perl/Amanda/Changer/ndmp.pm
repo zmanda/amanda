@@ -351,7 +351,9 @@ sub _do_move_medium {
 
 	# send a MOVE MEDIUM command
 	my $res = $self->{'conn'}->scsi_execute_cdb(
-	    flags => $NDMP9_SCSI_DATA_DIR_OUT, # this is what mtx does..
+	    # mtx uses data dir "out", but ndmjob uses 0.  A NetApp filer
+	    # segfaults with data dir "out", so we use 0.
+	    flags => $NDMP9_SCSI_DATA_DIR_NONE,
 	    dataout => '',
 	    # NOTE: 0 does not mean "no timeout"; it means "fail immediately"
 	    timeout => 300000,
