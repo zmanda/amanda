@@ -1,4 +1,7 @@
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/ndmp-device.c: work around record_size bug in ndmjob
+
+2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amfetchdump.pl: check restored files more closely
 
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>

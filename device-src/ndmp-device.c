@@ -978,7 +978,15 @@ listen_impl(
     }
 
     /* first, set the window to an empty span so that the mover doesn't start
-     * reading or writing data immediately */
+     * reading or writing data immediately.  NDMJOB tends to reset the record
+     * size periodically (in direct contradiction to the spec), so we reset it
+     * here as well. */
+    if (!ndmp_connection_mover_set_record_size(self->ndmp,
+		DEVICE(self)->block_size)) {
+	set_error_from_ndmp(self);
+	return FALSE;
+    }
+
     if (!ndmp_connection_mover_set_window(self->ndmp, 0, 0)) {
 	set_error_from_ndmp(self);
 	return FALSE;
@@ -1138,7 +1146,6 @@ write_from_connection_impl(
     /* the mover had best be PAUSED right now */
     g_assert(mover_state == NDMP4_MOVER_STATE_PAUSED);
 
-    /* We need to reset the mover's window and restart it */
     if (!ndmp_connection_mover_set_window(self->ndmp,
 		nconn->offset,
 		size? size : G_MAXUINT64 - nconn->offset)) {
@@ -1262,7 +1269,6 @@ read_to_connection_impl(
     /* the mover had best be PAUSED right now */
     g_assert(mover_state == NDMP4_MOVER_STATE_PAUSED);
 
-    /* We need to reset the mover's window and restart it */
     if (!ndmp_connection_mover_set_window(self->ndmp,
 		nconn->offset,
 		size? size : G_MAXUINT64 - nconn->offset)) {
