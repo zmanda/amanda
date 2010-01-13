@@ -1,4 +1,7 @@
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amfetchdump.pl: check restored files more closely
+
+2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/taper.pl: taper installcheck to run multiple dumps
 	  on a spanned NDMP device
 

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 7;
+use Test::More tests => 9;
 
 use lib "@amperldir@";
 use Installcheck;
@@ -26,6 +26,9 @@ use Installcheck::Dumpcache;
 use File::Path qw(rmtree mkpath);
 use Amanda::Paths;
 use Cwd;
+use warnings;
+use strict;
+no strict 'subs';
 
 my $testconf;
 my $dumpok;
@@ -41,6 +44,27 @@ sub cleandir {
     for my $filename (<$testdir/*>) {
 	unlink($filename);
     }
+}
+
+sub got_files {
+    my ($count, $msg) = @_;
+    my $ok = 1;
+
+    my @filenames = <localhost.*>;
+
+    # check for .tmp files and empty files
+    for my $fn (@filenames) {
+	if ($fn =~ /\.tmp$/ || -z "$testdir/$fn") {
+	    $ok = 0;
+	}
+    }
+
+    if (scalar @filenames != $count) {
+	diag("expected $count files");
+	$ok = 0;
+    }
+
+    ok($ok, $msg) or diag(`ls -l $testdir`);
 }
 
 Installcheck::Dumpcache::load("basic");
@@ -81,9 +105,7 @@ SKIP: {
     is_deeply([ @results ], [ "tapes-needed", "press-enter", "restoring", "eof" ],
 	      "simple restore follows the correct steps");
 
-    my @filenames = <localhost.*>;
-    is(scalar @filenames, 1, "..and restored file is present in testdir")
-	or diag(join("\n", @filenames));
+    got_files(1, "..and restored file is present in testdir");
 }
 
 {
@@ -92,9 +114,7 @@ SKIP: {
     ok(run('amfetchdump', '-a', 'TESTCONF', 'localhost'),
 	"run with -a successful");
 
-    my @filenames = <localhost.*>;
-    is(scalar @filenames, 1, "..and restored file is present in testdir")
-	or diag(join("\n", @filenames));
+    got_files(1, "..and restored file is present in testdir");
 }
 
 SKIP: {
@@ -131,9 +151,7 @@ SKIP: {
 	      "restore with -O follows the correct steps");
 
     chdir($testdir);
-    my @filenames = <localhost.*>;
-    is(scalar @filenames, 1, "..and restored file is present in testdir")
-	or diag(join("\n", @filenames));
+    got_files(1, "..and restored file is present in testdir");
 }
 
 SKIP: {
@@ -144,7 +162,8 @@ SKIP: {
 
 
     Installcheck::Dumpcache::load("ndmp");
-    my $ndmp = Installcheck::Mock::NdmpServer->new();
+    my $ndmp = Installcheck::Mock::NdmpServer->new(no_reset => 1);
+    $ndmp->edit_config();
 
     cleandir();
 
@@ -174,9 +193,7 @@ SKIP: {
     is_deeply([ @results ], [ "tapes-needed", "press-enter", "restoring", "eof" ],
 	      "simple restore follows the correct steps");
 
-    my @filenames = <localhost.*>;
-    is(scalar @filenames, 1, "..and restored file is present in testdir")
-	or diag(join("\n", @filenames));
+    got_files(1, "..and restored file is present in testdir");
 }
 
 # TODO:
