@@ -387,6 +387,8 @@ main(
     dbprintf(_("                     level %d\n"), level);
     dbprintf(_("                     since %s\n"), dumpdate);
     dbprintf(_("                     options `%s'\n"), stroptions);
+    dbprintf(_("                     datapath `%s'\n"),
+			    data_path_to_string(dle->data_path));
 
     if (dle->program_is_application_api==1) {
 	/* check that the application_api exist */

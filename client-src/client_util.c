@@ -685,7 +685,7 @@ application_property_add_to_argv(
 	}
 
 	if (dle->data_path == DATA_PATH_DIRECTTCP &&
-	    (bsu->data_path_set & DATA_PATH_DIRECTTCP) == 0) {
+	    bsu->data_path_set & DATA_PATH_DIRECTTCP) {
 	    GSList *directtcp;
 
 	    g_ptr_array_add(argv_ptr, stralloc("--data-path"));
@@ -694,6 +694,7 @@ application_property_add_to_argv(
 						  directtcp = directtcp->next) {
 		g_ptr_array_add(argv_ptr, stralloc("--direct-tcp"));
 		g_ptr_array_add(argv_ptr, stralloc(directtcp->data));
+		break; /* XXX temporary; apps only support one ip:port pair */
 	    }
 	}
     }
