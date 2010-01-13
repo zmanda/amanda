@@ -387,7 +387,10 @@ sub _do_move_medium {
 
 # a selected set of errors we might see; keyed by ASC . ASCQ
 my %scsi_errors = (
+    '0500' => "Logical Unit Does Not Respond To Selection",
+    '0600' => "No Reference Position Found",
     '2101' => "Invalid element address",
+    '3003' => "Cleaning Cartridge Installed",
     '3b0d' => "Medium Destination Element Full",
     '3b0e' => "Medium Source Element Empty",
     '3b11' => "Medium Magazine Not Accessible",
@@ -410,11 +413,10 @@ sub _get_scsi_err {
 	my $ascascq = sprintf("%02x%02x", $sense_code, $sense_code_qualifier);
 	my $msg = "CHECK CONDITION: ";
 	if (exists $scsi_errors{$ascascq}) {
-	    $msg .= $scsi_errors{$ascascq};
-	} else {
-	    $msg .= sprintf("sense key 0x%2.2x, sense code 0x%2.2x, qualifier 0x%2.2x",
-		$sense_key, $sense_code, $sense_code_qualifier);
+	    $msg .= $scsi_errors{$ascascq} . ' - ';
 	}
+	$msg .= sprintf("sense key 0x%2.2x, sense code 0x%2.2x, qualifier 0x%2.2x",
+	    $sense_key, $sense_code, $sense_code_qualifier);
 	return $msg;
     } else {
 	return "unexepected SCSI status $res->{status}";

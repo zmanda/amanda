@@ -1,4 +1,7 @@
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/ndmp.pm: add more SCSI error handling
+
+2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/ndmp.pm: use scsi data dir 'none' for MOVE
 	  MEDIUM
 
