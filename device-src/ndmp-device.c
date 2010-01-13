@@ -169,6 +169,7 @@ open_connection(
 		    self->ndmp_hostname, self->ndmp_port, errmsg),
 		DEVICE_STATUS_DEVICE_ERROR);
 	    g_object_unref(self->ndmp);
+	    self->ndmp = NULL;
 	    return FALSE;
 	}
 
