@@ -610,9 +610,8 @@ connection.  The method returns a set of IP:PORT pairs to which a TCP
 connection can be made.  The boolean C<for_writing> is TRUE if
 this connection will be used to write to the device.
 
-This method must be called in C<ACCESS_NULL> (that is, before C<start> or after
-C<finish>).  Between the time C<listen> is called and when C<accept> returns, no
-other methods of the device should be called.
+This method can be called at any time, but between the time C<listen> is called
+and when C<accept> returns, no other methods of the device should be called.
 
 The return value might look like:
 
@@ -628,7 +627,9 @@ and will remain unchanged until C<accept> returns.
 This method accepts a connection to one of the addresses returned by C<listen>,
 returning an established DirectTCPConnection object (see below).  It returns
 C<undef> on failure.  Note that this method may block indefinitely if no
-connection ever occurs.
+connection ever occurs.  The C implementation returns an already-referenced
+connection object, so the caller should call C<g_object_unref> when the
+connection is no longer needed.
 
 =head3 use_connection
 
@@ -636,8 +637,9 @@ connection ever occurs.
 
 Call this method to use a DirectTCPConnection object created with another
 device.  The method must be called before the device is started (so
-C<access_mode> is C<$ACCESS_NULL>).  Any subsequent C<read_from_connection> or
-C<write_to_connection> calls must use the same connection.
+C<access_mode> is C<$ACCESS_NULL>), as some devices cannot support switching
+connections without rewinding.  Any subsequent C<read_from_connection> or
+C<write_to_connection> calls will use this connection.
 
 =head3 write_from_connection
 

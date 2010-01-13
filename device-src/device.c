@@ -1445,8 +1445,6 @@ device_listen(
 {
     DeviceClass *klass;
 
-    g_assert(self->access_mode == ACCESS_NULL);
-
     klass = DEVICE_GET_CLASS(self);
     if(klass->listen) {
 	return (klass->listen)(self, for_writing, addrs);
@@ -1466,8 +1464,6 @@ device_accept(
     gpointer prolong_data)
 {
     DeviceClass *klass;
-
-    g_assert(self->access_mode == ACCESS_NULL);
 
     klass = DEVICE_GET_CLASS(self);
     if(klass->accept) {

@@ -1275,7 +1275,7 @@ void restore(RestoreSource  *source,
 
 		in.s_addr = htonl(addrs->ipv4);
 		ipname = stralloc(inet_ntoa(in));
-		g_debug(_("opening connection from host (%s) port (%d)"),
+		g_debug(_("opening connection to host (%s) port (%d)"),
 			ipname, port);
 		fd = stream_client(ipname, port, STREAM_BUFSIZE,
 				   STREAM_BUFSIZE, &localport, 0);

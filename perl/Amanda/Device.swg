@@ -389,7 +389,7 @@ typedef struct Device {
 		*addrs = NULL;
 	}
 
-	%newobject accept;
+	%newobject accept; /* connection is already ref'd, so we own it */
 	DirectTCPConnection *
 	accept() {
 	    DirectTCPConnection *conn = NULL;
@@ -397,6 +397,7 @@ typedef struct Device {
 
 	    rv = device_accept(self, &conn, NULL, NULL);
 	    if (!rv && conn) {
+		/* conn is ref'd for our convenience, but we don't want it */
 		g_object_unref(conn);
 		conn = NULL;
 	    }

@@ -1,4 +1,12 @@
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/device.c perl/Amanda/Device.pod perl/Amanda/Device.swg:
+	  make device_listen and device_accept callable anywhere; be explicit
+	  about conn refcount from accept
+	* device-src/ndmp-device.c: don't call device_use_connection, as
+	  that method requires ACCESS_NULL
+	* restore-src/restore.c: fix typo
+
+2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/taper.pl: fix taper writing status too quickly
 
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>

@@ -1105,13 +1105,16 @@ accept_impl(
     else
 	mode = NDMP4_MOVER_MODE_READ;
 
-    if (!device_use_connection(dself,
-	    DIRECTTCP_CONNECTION(directtcp_connection_ndmp_new(self->ndmp, mode)))) {
-	/* error already set by ndmp_device_use_connection */
-	return FALSE;
-    }
-
+    /* set up the new directtcp connection */
+    if (self->directtcp_conn)
+	g_object_unref(self->directtcp_conn);
+    self->directtcp_conn =
+	directtcp_connection_ndmp_new(self->ndmp, mode);
     *dtcpconn = DIRECTTCP_CONNECTION(self->directtcp_conn);
+
+    /* reference it for the caller */
+    g_object_ref(*dtcpconn);
+
     return TRUE;
 }
 
