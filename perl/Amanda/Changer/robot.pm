@@ -1564,7 +1564,7 @@ sub _with_updated_state {
 	    # also update the slots with the relevant 'loaded_in' info
 	    if (defined $info->{'orig_slot'}) {
 		$state->{'slots'}->{$info->{'orig_slot'}} = {
-                    state => defined $info->{'label'}? SLOT_LABELED : SLOT_UNLABELED,
+                    state => defined $info->{'label'}? SLOT_LABELED : $info->{'state'},
 		    label => $info->{'label'},
                     barcode => $info->{'barcode'},
 		    loaded_in => $drv,
