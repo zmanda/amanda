@@ -1,4 +1,4 @@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -66,6 +66,7 @@ taper is disabled).
 
 use Installcheck;
 use Installcheck::Run qw(run $diskname amdump_diag);
+use Installcheck::Mock;
 use Test::More;
 use Amanda::Paths;
 use Amanda::Constants;
@@ -135,6 +136,22 @@ $flavors{'multi'} = sub {
 	"amdump for 'multi' step 3 (degraded mode)"),
 	or amdump_diag("Amdump run failed for 'multi' step 3 (degraded mode)");
 };
+
+if (Amanda::Util::built_with_component("server")
+    and Amanda::Util::built_with_component("ndmp")) {
+
+    $flavors{'ndmp'} = sub {
+	my $testconf = Installcheck::Run::setup();
+	$testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+	$testconf->add_dle("localhost $diskname installcheck-test");
+	my $ndmp = Installcheck::Mock::NdmpServer->new();
+	$ndmp->config($testconf);
+	$testconf->write();
+
+	ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'basic'"),
+	    or amdump_diag("Amdump run failed for 'basic'");
+    };
+}
 
 sub generate_and_store {
     my ($flavor) = @_;

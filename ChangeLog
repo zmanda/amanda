@@ -1,4 +1,10 @@
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Dumpcache.pm: Add an 'ndmp' dumpcache 
+	* installcheck/Installcheck/Mock.pm: add a way to revive it for
+	  recovery tests
+	* installcheck/amfetchdump.pl: use it
+
+2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/ndmp-device.c: correctly handle devices while they are
 	  coming online after a load
 

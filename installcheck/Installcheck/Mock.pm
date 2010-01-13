@@ -1,5 +1,5 @@
 # vim:ft=perl
-# Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -69,6 +69,24 @@ The resulting object has a number of useful attributes:
   $n->{'drive'}	    device name for a drive not attached to the changer,
 		    and already loaded with a volume
 
+The constructor takes the following keyword arguments:
+
+  no_reset => 1	    do not empty out the changer of any existing state or data
+
+The C<config> method, given an L<Installcheck::Config> object, will add the
+necessary config to use C<chg-ndmp>:
+
+  $ndmp->config($testconf);
+  $testconf->write();
+
+The C<edit_config> method is intended for use with NDMP dumps in
+L<Installcheck::Dumpcache>.  It edits an existing, on-disk configuration that
+was created by the C<config> method to reflect the NDMP port in use by this
+instance:
+
+  Installcheck:Dumpcache::load("ndmp")
+  $ndmp->edit_config();
+
 The C<cleanup> method will clean up any data files, and should be called when a
 test suite finishes.  The C<reset> method resets the changer to its initial
 state, without restarting ndmjob.
@@ -116,7 +134,7 @@ sub new {
 
     # note that we put this under /vtapes/ so that Dumpcache will pick it up
     $self->{'simdir'} = "$Installcheck::TMP/vtapes/ndmjob";
-    $self->reset();
+    $self->reset() unless ($params{'no_reset'});
 
     # launch ndmjob
     my $port = Installcheck::get_unused_port();
@@ -145,6 +163,48 @@ sub new {
     $self->{'pid'} = $ndmjob_pid;
 
     return $self;
+}
+
+sub config {
+    my $self = shift;
+    my ($testconf) = @_;
+
+    my $port = $self->{'port'};
+    my $chg = $self->{'changer'};
+    my $drive0 = $self->{'drive0'};
+    my $drive1 = $self->{'drive1'};
+
+    $testconf->remove_param('tapedev');
+    $testconf->remove_param('tpchanger');
+    $testconf->remove_param('changerfile');
+    $testconf->add_param('tpchanger', '"ndmp_server"');
+    $testconf->add_changer('ndmp_server', [
+	tpchanger => "\"chg-ndmp:127.0.0.1:$port\@$chg\"",
+	property => "\"tape-device\" \"0=ndmp:127.0.0.1:$port\@$drive0\"",
+	property => "append \"tape-device\" \"1=ndmp:127.0.0.1:$port\@$drive1\"",
+	changerfile => "\"$chg-state\"",
+    ]);
+}
+
+sub edit_config {
+    my $self = shift;
+
+    # this is a bit sneaky, but is useful for dumpcache'd ndmp runs
+    my $amanda_conf_filename = "$CONFIG_DIR/TESTCONF/amanda.conf";
+    
+    # slurp the whole file
+    open(my $fh, "<", $amanda_conf_filename) or die("open $amanda_conf_filename: $!");
+    my $amanda_conf = do { local $/; <$fh> };
+    close($fh);
+
+    # replace all existing ndmp changers and devices with the new port
+    # note that we assume that the remaining paths are correct
+    my $port = $self->{'port'};
+    $amanda_conf =~ s/ndmp:127.0.0.1:\d+/ndmp:127.0.0.1:$port/g;
+
+    open($fh, ">", $amanda_conf_filename) or die("open $amanda_conf_filename for writing: $!");
+    print $fh $amanda_conf;
+    close($fh);
 }
 
 sub reset {

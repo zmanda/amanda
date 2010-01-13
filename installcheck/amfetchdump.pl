@@ -1,4 +1,4 @@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -131,6 +131,49 @@ SKIP: {
 	      "restore with -O follows the correct steps");
 
     chdir($testdir);
+    my @filenames = <localhost.*>;
+    is(scalar @filenames, 1, "..and restored file is present in testdir")
+	or diag(join("\n", @filenames));
+}
+
+SKIP: {
+    skip "Expect not installed or not built with ndmp and server", 2 unless
+	Amanda::Util::built_with_component("ndmp") and
+	Amanda::Util::built_with_component("server") and
+	$Installcheck::Run::have_expect;
+
+
+    Installcheck::Dumpcache::load("ndmp");
+    my $ndmp = Installcheck::Mock::NdmpServer->new();
+
+    cleandir();
+
+    my $exp = Installcheck::Run::run_expect('amfetchdump', 'TESTCONF', 'localhost');
+    $exp->log_stdout(0);
+
+    my @results;
+    $exp->expect(60,
+	[ qr{1 tape\(s\) needed for restoration}, sub {
+	    push @results, "tapes-needed";
+	    exp_continue;
+	} ],
+	[ qr{amfetchdump: 1: restoring split dumpfile: date [[:digit:]]+ host localhost disk .*},
+	sub {
+	    push @results, "restoring";
+	    exp_continue;
+	} ],
+	[ 'Press enter when ready', sub {
+	    push @results, "press-enter";
+	    $exp->send("\n");
+	    exp_continue;
+	}, ],
+	[ 'eof', sub {
+	    push @results, "eof";
+	}, ],
+    );
+    is_deeply([ @results ], [ "tapes-needed", "press-enter", "restoring", "eof" ],
+	      "simple restore follows the correct steps");
+
     my @filenames = <localhost.*>;
     is(scalar @filenames, 1, "..and restored file is present in testdir")
 	or diag(join("\n", @filenames));
