@@ -1,4 +1,8 @@
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* restore-src/restore.c: add missing htonl to restore.c for ipv4
+	  address; fix typo
+
+2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndmpconnobj.c ndmp-src/ndmpconnobj.h: better debugging
 	  messages, including a fancy connection ID to help debug problems
 	  using the wrong NDMP connection at the wrong time
