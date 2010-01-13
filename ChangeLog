@@ -1,4 +1,7 @@
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/ndmp-device.c: fix parsing of device node in ndmp-device
+
+2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/ndmp-device.c: fix dangling reference
 
 2010-01-11  Dustin J. Mitchell <dustin@zmanda.com>

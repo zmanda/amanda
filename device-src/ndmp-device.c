@@ -379,10 +379,10 @@ ndmp_device_open_device(
 	return;
     }
 
-    self->ndmp_hostname = g_strndup(device_node, colon-device_node);
     if (colon) {
 	char *p = NULL;
 	long port = strtol(colon+1, &p, 10);
+
 	if (port < 0 || port >= 65536 || p != at || (!port && EINVAL == errno)) {
 	    device_set_error(dself,
 			    g_strdup_printf("invalid ndmp port in device name '%s'",
@@ -391,8 +391,10 @@ ndmp_device_open_device(
 	    return;
 	}
 	self->ndmp_port = (gint)port;
+	self->ndmp_hostname = g_strndup(device_node, colon-device_node);
     } else {
 	self->ndmp_port = 0; /* (use ndmjob's default, 10000) */
+	self->ndmp_hostname = g_strndup(device_node, at-device_node);
     }
     self->ndmp_device_name = g_strdup(at+1);
 
