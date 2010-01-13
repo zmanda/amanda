@@ -1,4 +1,8 @@
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/taper.pl: taper installcheck to run multiple dumps
+	  on a spanned NDMP device
+
+2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Installcheck/Dumpcache.pm: Add an 'ndmp' dumpcache 
 	* installcheck/Installcheck/Mock.pm: add a way to revive it for
 	  recovery tests

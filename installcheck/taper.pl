@@ -1,4 +1,4 @@
-# Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 163;
+use Test::More tests => 166;
 
 use lib '@amperldir@';
 use Installcheck::Run;
@@ -71,24 +71,7 @@ sub run_taper {
 	} elsif ($params{'ndmp_server'}) {
 	    my $ndmp = $params{'ndmp_server'};
 	    $ndmp->reset();
-
-	    my $port = $ndmp->{'port'};
-	    my $chg = $ndmp->{'changer'};
-	    my $drive0 = $ndmp->{'drive0'};
-	    my $drive1 = $ndmp->{'drive1'};
-
-	    # set things up to work with chg-ndmp; note that we only use
-	    # one drive right now
-	    $testconf->remove_param('tapedev');
-	    $testconf->remove_param('tpchanger');
-	    $testconf->remove_param('changerfile');
-	    $testconf->add_param('tpchanger', '"ndmp_server"');
-	    $testconf->add_changer('ndmp_server', [
-		tpchanger => "\"chg-ndmp:127.0.0.1:$port\@$chg\"",
-		property => "\"tape-device\" \"0=ndmp:127.0.0.1:$port\@$drive0\"",
-		property => "append \"tape-device\" \"1=ndmp:127.0.0.1:$port\@$drive1\"",
-		changerfile => "\"$chg-state\"",
-	    ]);
+	    $ndmp->config($testconf);
 	}
 	$testconf->add_tapetype('TEST-TAPE', [
 	    'length' =>  "$length",
@@ -887,7 +870,7 @@ wait_for_exit();
 # Test with NDMP device (DirectTCP)
 
 SKIP : {
-    skip "not built with NDMP", 30 unless Amanda::Util::built_with_component("ndmp");
+    skip "not built with NDMP", 33 unless Amanda::Util::built_with_component("ndmp");
 
     my $ndmp = Installcheck::Mock::NdmpServer->new(tape_limit => 1024*1024);
     my $ndmp_port = $ndmp->{'port'};
@@ -904,7 +887,7 @@ SKIP : {
     taper_cmd("PORT-WRITE $handle localhost /var 0 $datestamp 524288 NULL 393216");
     like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	    "got PORT with data address");
-    write_to_port($last_taper_reply, 1614*1024, "localhost", "/var", 0);
+    write_to_port($last_taper_reply, 1230*1024, "localhost", "/var", 0);
     like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	    "got REQUEST-NEW-TAPE") or die;
     taper_cmd("NEW-TAPE");
@@ -922,15 +905,25 @@ SKIP : {
     like(taper_reply, qr/^NEW-TAPE $handle TESTCONF02$/,
 	    "got proper NEW-TAPE") or die;
     like(taper_reply, qr/^PARTDONE $handle TESTCONF02 1 384 "\[sec [\d.]+ kb 384 kps [\d.]+\]"$/,
-	    "got PARTDONE for part 3") or die;
-    like(taper_reply, qr/^PARTDONE $handle TESTCONF02 2 384 "\[sec [\d.]+ kb 384 kps [\d.]+\]"$/,
 	    "got PARTDONE for part 4") or die;
-    like(taper_reply, qr/^PARTDONE $handle TESTCONF02 3 32 "\[sec [\d.]+ kb 32 kps [\d.]+\]"$/,
+    like(taper_reply, qr/^PARTDONE $handle TESTCONF02 2 32 "\[sec [\d.]+ kb 32 kps [\d.]+\]"$/,
 	    "got PARTDONE for part 5") or die;
     like(taper_reply, qr/^DUMPER-STATUS $handle$/,
 	    "got DUMPER-STATUS request") or die;
     taper_cmd("DONE $handle");
-    like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1632 kps [\d.]+\]" "" ""$/,
+    like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1248 kps [\d.]+\]" "" ""$/,
+	    "got DONE") or die;
+    $handle = "55-22222";
+    taper_cmd("PORT-WRITE $handle localhost /etc 0 $datestamp 524288 NULL 393216");
+    like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+	    "got PORT with data address");
+    write_to_port($last_taper_reply, 300*1024, "localhost", "/etc", 0);
+    like(taper_reply, qr/^PARTDONE $handle TESTCONF02 3 320 "\[sec [\d.]+ kb 320 kps [\d.]+\]"$/,
+	    "got PARTDONE for part 1") or die;
+    like(taper_reply, qr/^DUMPER-STATUS $handle$/,
+	    "got DUMPER-STATUS request") or die;
+    taper_cmd("DONE $handle");
+    like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 320 kps [\d.]+\]" "" ""$/,
 	    "got DONE") or die;
     taper_cmd("QUIT");
     wait_for_exit();
@@ -946,13 +939,14 @@ SKIP : {
 	qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
 	qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
 	qr(^PART taper TESTCONF02 1 localhost /var $datestamp 4/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
-	qr(^PART taper TESTCONF02 2 localhost /var $datestamp 5/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
-	qr(^PART taper TESTCONF02 3 localhost /var $datestamp 6/-1 0 \[sec [\d.]+ kb 32 kps [\d.]+\]$),
-	qr(^DONE taper localhost /var $datestamp 6 0 \[sec [\d.]+ kb 1632 kps [\d.]+\]$),
-	qr(^INFO taper tape TESTCONF02 kb 800 fm 3 \[OK\]$),
+	qr(^PART taper TESTCONF02 2 localhost /var $datestamp 5/-1 0 \[sec [\d.]+ kb 32 kps [\d.]+\]$),
+	qr(^DONE taper localhost /var $datestamp 5 0 \[sec [\d.]+ kb 1248 kps [\d.]+\]$),
+	qr(^PART taper TESTCONF02 3 localhost /etc $datestamp 1/-1 0 \[sec [\d.]+ kb 320 kps [\d.]+\]$),
+	qr(^DONE taper localhost /etc $datestamp 1 0 \[sec [\d.]+ kb 320 kps [\d.]+\]$),
+	qr(^INFO taper tape TESTCONF02 kb 736 fm 3 \[OK\]$),
     ], "multipart directtcp PORT-WRITE logged correctly");
 
-    $handle = "55-22222";
+    $handle = "55-33333";
     $datestamp = "19780615010305";
     run_taper(4096, "multipart directtcp PORT-WRITE, with a zero-byte part",
 	ndmp_server => $ndmp);
