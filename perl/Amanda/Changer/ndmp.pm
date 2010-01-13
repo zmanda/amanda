@@ -509,7 +509,9 @@ sub _parse_read_element_status {
 		$h->{'barcode'} = $pvoltag if $pvoltag ne '';
 		$h->{'ie'} = 1 if ($elem_type == 3); # import/export elem type
 	    } elsif ($elem_type == 1) { # medium transport
-		$self->{'medium_transport_elem'} = $elem_addr;
+		if (!defined $self->{'medium_transport_elem'}) {
+		    $self->{'medium_transport_elem'} = $elem_addr;
+		}
 	    }
 
 	    $data = substr($data, $descrip_len);

@@ -1,4 +1,8 @@
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/ndmp.pm: use the first MTE found, in systems
+	  with several
+
+2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/ndmp.pm: add more SCSI error handling
 
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
