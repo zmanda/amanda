@@ -326,6 +326,15 @@ Amanda_DATA += Amanda/Report.pm
 EXTRA_DIST += Amanda/Report.pm
 endif
 
+if WANT_SERVER
+# PACKAGE: Amanda::Report::*
+AmandaReportdir = $(amperldir)/Amanda/Report
+AmandaReport_DATA = Amanda/Report/xml.pm \
+	            Amanda/Report/human.pm
+HTML_SOURCE_FILES += $(libReport_DATA)
+EXTRA_DIST += $(libReport_DATA)
+endif
+
 # PACKAGE: Amanda::BigIntCompat
 Amanda_DATA += Amanda/BigIntCompat.pm
 EXTRA_DIST += Amanda/BigIntCompat.pm

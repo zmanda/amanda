@@ -1,4 +1,4 @@
-# Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -439,6 +439,13 @@ sub get_dles
         $cache->{dles} = \@dles;
     }
     return @{ $cache->{dles} };
+}
+
+sub xml_output
+{
+    my ( $self, $org, $config ) = @_;
+    use Amanda::Report::xml;
+    return Amanda::Report::xml::make_amreport_xml( $self, $org, $config );
 }
 
 sub get_dle_info

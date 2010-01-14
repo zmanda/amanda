@@ -1,3 +1,11 @@
+2010-01-14  Paul C. Mantz <pcmantz@zmanda.com>
+	* server-src/amreport_new.pl: amreport rewrite in perl
+	* perl/Amanda/Report.pm perl/Amanda/Report/human.pm
+          perl/Amanda/Report/xml.pm: factored out output formats and
+	  added legacy format
+	* perl/Makefile.am server-src/Makefile.am: makefile changes
+	* contrib/amreport.rnc: amreport xml spec in RelaxNG
+
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/device.c perl/Amanda/Device.pod perl/Amanda/Device.swg:
 	  make device_listen and device_accept callable anywhere; be explicit

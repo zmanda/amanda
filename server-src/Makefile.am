@@ -43,6 +43,7 @@ sbin_SCRIPTS_PERL = \
 	    amcleanup \
 	    amrmtape \
 	    amlabel \
+	    amreport_new \
 	    amtape \
 	    amvault \
 	    amstatus
