@@ -208,6 +208,7 @@ main(
 
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     read_diskfile(conf_diskfile, &origq);
+    disable_skip_disk(&origq);
     amfree(conf_diskfile);
 
     if (config_errors(NULL) >= CFGERR_WARNINGS) {

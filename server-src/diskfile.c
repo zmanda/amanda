@@ -770,10 +770,6 @@ parse_diskline(
 		       _("program set to APPLICATION but no application set"));
     }
 
-    if(dumptype_get_ignore(dtype) || dumptype_get_strategy(dtype) == DS_SKIP) {
-	disk->todo = 0;
-    }
-
     /* success, add disk to lists */
 
     if(host == NULL) {			/* new host */
@@ -1889,7 +1885,20 @@ xml_scripts(
     return xml_scr;
 }
 
- 
+
+void
+disable_skip_disk(
+    disklist_t *origqp)
+{
+    disk_t *dp;
+
+    for (dp = origqp->head; dp != NULL; dp = dp->next) {
+	if (dp->ignore || dp->strategy == DS_SKIP)
+	    dp->todo = 0;
+    }
+}
+
+
 char *
 match_disklist(
     disklist_t *origqp,

@@ -214,6 +214,7 @@ main(
     /* conf_diskfile is freed later, as it may be used in an error message */
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     read_diskfile(conf_diskfile, &origq);
+    disable_skip_disk(&origq);
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
