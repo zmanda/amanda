@@ -31,15 +31,15 @@ use Amanda::Tapelist;
 
 use Amanda::Report;
 
-use constant {
-    COLSPEC_NAME      => 0,    # column name, used internally
-    COLSPEC_PRE_SPACE => 1,    # prefix spaces
-    COLSPEC_WIDTH     => 2,    # column width
-    COLSPEC_PREC      => 3,    # post-decimal precision
-    COLSPEC_MAXWIDTH  => 4,    # resize if set
-    COLSPEC_FORMAT    => 5,    # sprintf format
-    COLSPEC_TITLE     => 6     # column title
-};
+## constants that define the column specification output format.
+
+use constant COLSPEC_NAME      => 0;    # column name; used internally
+use constant COLSPEC_PRE_SPACE => 1;    # prefix spaces
+use constant COLSPEC_WIDTH     => 2;    # column width
+use constant COLSPEC_PREC      => 3;    # post-decimal precision
+use constant COLSPEC_MAXWIDTH  => 4;    # resize if set
+use constant COLSPEC_FORMAT    => 5;    # sprintf format
+use constant COLSPEC_TITLE     => 6;    # column title
 
 ## helper functions
 

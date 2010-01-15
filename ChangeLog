@@ -1,3 +1,7 @@
+2010-01-15  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Report/human.pm: changed usage of 'constant' for perl
+	  5.6 compatibility
+
 2010-01-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Changer_robot.pl: Typo.
 
