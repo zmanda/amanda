@@ -331,8 +331,8 @@ if WANT_SERVER
 AmandaReportdir = $(amperldir)/Amanda/Report
 AmandaReport_DATA = Amanda/Report/xml.pm \
 	            Amanda/Report/human.pm
-HTML_SOURCE_FILES += $(libReport_DATA)
-EXTRA_DIST += $(libReport_DATA)
+HTML_SOURCE_FILES += $(AmandaReport_DATA)
+EXTRA_DIST += $(AmandaReport_DATA)
 endif
 
 # PACKAGE: Amanda::BigIntCompat

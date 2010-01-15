@@ -1,3 +1,6 @@
+2010-01-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am: typo.
+
 2010-01-14  Paul C. Mantz <pcmantz@zmanda.com>
 	* server-src/amreport_new.pl: amreport rewrite in perl
 	* perl/Amanda/Report.pm perl/Amanda/Report/human.pm
