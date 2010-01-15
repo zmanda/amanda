@@ -168,6 +168,7 @@ static action_t s_sendrep(struct active_service *, action_t, pkt_t *);
 static action_t s_ackwait(struct active_service *, action_t, pkt_t *);
 
 static void repfd_recv(void *);
+static void process_errfd(void *cookie);
 static void errfd_recv(void *);
 static void timeout_repfd(void *);
 static void protocol_recv(void *, pkt_t *, security_status_t);
@@ -896,20 +897,7 @@ s_repwait(
 	    }
 	}
 
-	/* Process errfd before sending the REP packet */
-	if (as->ev_errfd) {
-	    SELECT_ARG_TYPE readset;
-	    struct timeval  tv;
-	    int             nfound;
-
-	    memset(&tv, 0, SIZEOF(tv));
-	    FD_ZERO(&readset);
-	    FD_SET(as->errfd, &readset);
-	    nfound = select(as->errfd+1, &readset, NULL, NULL, &tv);
-	    if (nfound && FD_ISSET(as->errfd, &readset)) {
-		errfd_recv(as);
-	    }
-	}
+	process_errfd(as);
 
 	if (pid == 0)
 	    pid = waitpid(as->pid, &retstat, WNOHANG);
@@ -1211,6 +1199,28 @@ repfd_recv(
     assert(as->ev_repfd != NULL);
 
     state_machine(as, A_RECVREP, NULL);
+}
+
+static void
+process_errfd(
+    void *cookie)
+{
+    struct active_service *as = cookie;
+
+    /* Process errfd before sending the REP packet */
+    if (as->ev_errfd) {
+	SELECT_ARG_TYPE readset;
+	struct timeval  tv;
+	int             nfound;
+
+	memset(&tv, 0, SIZEOF(tv));
+	FD_ZERO(&readset);
+	FD_SET(as->errfd, &readset);
+	nfound = select(as->errfd+1, &readset, NULL, NULL, &tv);
+	if (nfound && FD_ISSET(as->errfd, &readset)) {
+	    errfd_recv(as);
+	}
+    }
 }
 
 /*
@@ -1739,11 +1749,17 @@ service_delete(
 	aclose(as->reqfd);
     if (as->repfd != -1)
 	aclose(as->repfd);
+    if (as->errfd != -1) {
+	process_errfd(as);
+	aclose(as->errfd);
+    }
 
     if (as->ev_repfd != NULL)
 	event_release(as->ev_repfd);
     if (as->ev_reptimeout != NULL)
 	event_release(as->ev_reptimeout);
+    if (as->ev_errfd != NULL)
+	event_release(as->ev_errfd);
 
     for (i = 0; i < DATA_FD_COUNT; i++) {
 	dh = &as->data[i];
