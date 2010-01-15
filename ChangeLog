@@ -1,4 +1,7 @@
 2010-01-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Changer_robot.pl: Typo.
+
+2010-01-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: iread errfd and close it on termination.
 
 2010-01-15  Jean-Louis Martineau <martineau@zmanda.com>

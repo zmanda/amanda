@@ -1197,7 +1197,7 @@ for my $mtx_config (
 	my ($err) = @_;
 	die "$err" if $err;
 
-	if ($mtx_config->{'barcodes'} > 1) {
+	if ($mtx_config->{'barcodes'} > 0) {
 	    check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'quit'}, [
 		{ slot => 1, barcode => '11111', label => 'TAPE-1', loaded_in => 0 },
 		{ slot => 2, empty => 1, label => undef },
