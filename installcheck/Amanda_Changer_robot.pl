@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 311;
+use Test::More tests => 316;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -1190,8 +1190,31 @@ for my $mtx_config (
     $subs{'scan_done'} = make_cb(scan_done => sub {
 	is_deeply({ %except_slots }, { 4=>1, 5=>1, 1=>1, 3=>1 },
 		"$pfx: scanning with except_slots works");
-	$subs{'quit'}->();
+	$chg->update(changed => "3-4=", finished_cb => $subs{'update_unknown_finished'});
     });
+
+    $subs{'update_unknown_finished'} = sub {
+	my ($err) = @_;
+	die "$err" if $err;
+
+	if ($mtx_config->{'barcodes'} > 1) {
+	    check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'quit'}, [
+		{ slot => 1, barcode => '11111', label => 'TAPE-1', loaded_in => 0 },
+		{ slot => 2, empty => 1, label => undef },
+		{ slot => 3, barcode => '33333', label => 'TAPE-3', loaded_in => 1 },
+		{ slot => 4, barcode => '44444', label => 'TAPE-4' },
+		{ slot => 5, barcode => '22222', label => 'TAPE-2' },
+	    ], "$pfx: inventory reflects updates with unknown state with barcodes");
+	} else {
+	    check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'quit'}, [
+		{ slot => 1, barcode => '11111', label => 'TAPE-1', loaded_in => 0 },
+		{ slot => 2, empty => 1, label => undef },
+		{ slot => 3, barcode => '33333', label => undef   , loaded_in => 1 },
+		{ slot => 4, barcode => '44444', label => undef},
+		{ slot => 5, barcode => '22222', label => 'TAPE-2' },
+	    ], "$pfx: inventory reflects updates with unknown state without barcodes");
+	}
+    };
 
     $subs{'quit'} = sub {
 	Amanda::MainLoop::quit();

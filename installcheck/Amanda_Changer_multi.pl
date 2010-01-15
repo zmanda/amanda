@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 17;
+use Test::More tests => 18;
 use File::Path;
 use strict;
 use warnings;
@@ -382,6 +382,32 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
     });
 
     $try_inventory->();
+    Amanda::MainLoop::run();
+}
+
+# check loading by label if the state is unknown
+{
+    my ($update, $load_label, $check_load_cb) = @_;
+
+    $update = make_cb('update' => sub {
+	$chg->update(changed => "4=", finished_cb => $load_label);
+    });
+
+    $load_label = make_cb('load_label' => sub {
+        # note use of a glob metacharacter in the label name
+        $chg->load(label => "FOO?BAR", res_cb => $check_load_cb);
+    });
+
+    $check_load_cb = make_cb('check_load_cb' => sub {
+        my ($err, $res) = @_;
+	die("labeled volume found in slot 4") if $res;
+	die("bad error: $err") if $err && !$err->notfound;
+	
+	ok(1, "Don't found label for unknown state slot");
+	Amanda::MainLoop::quit();
+    });
+
+    $update->();
     Amanda::MainLoop::run();
 }
 

@@ -1036,6 +1036,7 @@ sub update_unlocked {
     my %subs;
     my @slots_to_check;
     my $state = $params{'state'};
+    my $set_to_unknown = 0;
 
     return if $self->check_error($params{'finished_cb'});
 
@@ -1089,11 +1090,17 @@ sub update_unlocked {
 
 	    # that's it -- no changer motion required
 	    return $params{'finished_cb'}->(undef);
+	} elsif (exists $params{'changed'} and
+		 $params{'changed'} =~ /^(.+)=$/) {
+	    $params{'changed'} = $1;
+	    $set_to_unknown = 1;
+	    $subs{'calculate_slots'}->($subs{'set_to_unknown'});
 	} else {
-	    $subs{'calculate_slots'}->();
+	    $subs{'calculate_slots'}->($subs{'update_slot'});
 	}
     });
     $subs{'calculate_slots'} = make_cb(calculate_slots => sub {
+	my ($update_slot_cb) = shift @_;
 	if (exists $params{'changed'}) {
 	    # parse the string just like use-slots, using a hash for uniqueness
 	    my %changed;
@@ -1117,7 +1124,19 @@ sub update_unlocked {
 	@slots_to_check = grep { $state->{'slots'}->{$_}->{'state'} != SLOT_EMPTY } @slots_to_check;
 	@slots_to_check = sort { $a <=> $b } @slots_to_check;
 
-	$subs{'update_slot'}->();
+	$update_slot_cb->();
+    });
+
+    $subs{'set_to_unknown'} = make_cb(set_to_unknown => sub {
+	return $subs{'done'}->() if (!@slots_to_check);
+
+	my $slot = shift @slots_to_check;
+	$user_msg_fn->("Removing entry for slot $slot");
+	if (!defined $state->{'slots'}->{$slot}->{'barcode'}) {
+	    $state->{'slots'}->{$slot}->{'label'} = undef;
+	    $state->{'slots'}->{$slot}->{'state'} = SLOT_UNKNOWN;
+	}
+	$subs{'set_to_unknown'}->();
     });
 
     # TODO: parallelize this if multiple drives are available

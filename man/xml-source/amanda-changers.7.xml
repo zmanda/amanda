@@ -203,6 +203,44 @@ This property gives the number of the first slot. The default value is "1".
 
 </refsect3>
 
+<refsect3><title>Special Operations</title>
+
+<para>A number of special operations are available for <command>chg-multi</command> via
+<manref name="amtape" vol="8" /> subcommands.</para>
+
+<para>The <command>reset</command> subcommand will change the current slot to
+the first available slot, but does not erase any stored state maintained by the
+changer.</para>
+
+<para>The <command>eject</command> subcommand will eject the volume in the
+given drive</para>
+
+<para>The <command>clean</command> subcommand is not yet implemented.</para>
+
+<para>The <command>update</command> subcommand instructs the changer to update
+its state database.  Given no arguments, the changer will scan all available
+slots, loading each tape and reading its label.  Especially for large libraries,
+this can take a long time.  If only a few slots have changed, they can be listed
+on the command line:
+<programlisting>
+amtape CONFIG update 1-3,9
+</programlisting>
+In this case, the changer will only scan the stated slots.  Finally, the changer
+will not scan at all if it is given the tape label for the slot:
+<programlisting>
+amtape CONFIG update 2=DailySet-028
+</programlisting>
+In this case, the changer updates its state to indicate that
+<computeroutput>DailySet-028</computeroutput> is in slot 2, without trying to
+load the tape.
+<programlisting>
+amtape CONFIG update 1-3,9=
+</programlisting>
+In this case, the changer marks the stated slots as an unknown state.
+</para>
+
+</refsect3>
+
 </refsect2>
 
 <refsect2><title>chg-multi (old)</title>
@@ -436,6 +474,10 @@ amtape CONFIG update 2=DailySet-028
 In this case, the changer updates its state to indicate that
 <computeroutput>DailySet-028</computeroutput> is in slot 2, without trying to
 load the tape.
+<programlisting>
+amtape CONFIG update 1-3,9=
+</programlisting>
+In this case, the changer marks the stated slots as an unknown state.
 </para>
 
 </refsect3>

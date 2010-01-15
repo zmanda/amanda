@@ -243,6 +243,7 @@ sub update {
     my %subs;
     my @slots_to_check;
     my $state;
+    my $set_to_unknown = 0;
 
     my $user_msg_fn = $params{'user_msg_fn'};
     $user_msg_fn ||= sub { Amanda::Debug::info("chg-robot: " . $_[0]); };
@@ -279,6 +280,11 @@ sub update {
 
 	    # that's it -- no changer motion required
 	    return $params{'finished_cb'}->(undef);
+	} elsif (exists $params{'changed'} and
+	       $params{'changed'} =~ /^(.+)=$/) {
+	    $params{'changed'} = $1;
+	    $set_to_unknown = 1;
+	    $subs{'calculate_slots'}->();
 	} else {
 	    $subs{'calculate_slots'}->();
 	}
@@ -314,14 +320,21 @@ sub update {
 	return $subs{'done'}->() if (!@slots_to_check);
 	my $slot = shift @slots_to_check;
 	if ($self->_is_slot_in_use($state, $slot)) {
-	    $user_msg_fn->("Slot 4 is already in use");
+	    $user_msg_fn->("Slot $slot is already in use");
 	    return $subs{'update_slot'}->();
 	}
-	$user_msg_fn->("scanning slot $slot");
 
-	$params{'slot'} = $slot;
-	$params{'res_cb'} = $subs{'slot_loaded'};
-	$self->_load_by_slot(%params);
+	if ($set_to_unknown == 1) {
+	    $user_msg_fn->("removing entry for slot $slot");
+	    my $unaliased = $self->{unaliased}->{$slot};
+	    delete $state->{slots}->{$unaliased};
+	    return $subs{'update_slot'}->();
+	} else {
+	    $user_msg_fn->("scanning slot $slot");
+	    $params{'slot'} = $slot;
+	    $params{'res_cb'} = $subs{'slot_loaded'};
+	    $self->_load_by_slot(%params);
+	}
     });
 
     $subs{'slot_loaded'} = make_cb(slot_loaded => sub {

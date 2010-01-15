@@ -1,4 +1,11 @@
 2010-01-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/multi.pm, perl/Amanda/Changer/robot.pm: Add
+	  update '1-4=' syntax to mark slot as being in unknown state.
+	* man/xml-source/amanda-changers.7.xml: Document new syntax.
+	* installcheck/Amanda_Changer_multi.pl: Test new syntax.
+	* installcheck/Amanda_Changer_robot.pl: Test new syntax.
+
+2010-01-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/diskfile.c (parse_diskline): Don't set todo to 0 for
 	                                          skip disk.
 	* server-src/diskfile.c (disable_skip_disk): New function to set todo
