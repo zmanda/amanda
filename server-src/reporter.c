@@ -492,6 +492,7 @@ main(
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     /* Ignore error from read_diskfile */
     read_diskfile(conf_diskfile, &diskq);
+    disable_skip_disk(&diskq);
     amfree(conf_diskfile);
 
     if( mailout && !mailto &&

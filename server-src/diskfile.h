@@ -162,6 +162,13 @@ char *xml_application(disk_t *dp, application_t *application,
 		      am_feature_t *their_features);
 char *xml_scripts(identlist_t pp_scriptlist, am_feature_t *their_features);
 
+/* disable_skip_disk() set the db->todo flag to 0 for each dle with 'ignore'
+ * 'strategy skip'. It is useful for all programs that want to skip them,i
+ * eg. all amdump process.
+ * Program use for listing dump or index should not use it.
+ */
+void disable_skip_disk(disklist_t *origqp);
+
 char *match_disklist(disklist_t *origqp, int sargc, char **sargv);
 void free_disklist(disklist_t *dl);
 
