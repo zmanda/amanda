@@ -1,4 +1,4 @@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -562,15 +562,17 @@ sub _run_tpchanger {
 		$run_cb->(2, undef, "Malformed output from changer script -- no output");
 		return;
 	    }
-	    if (@child_output > 1) {
-		$run_cb->(2, undef, "Malformed output from changer script -- too many lines");
-		return;
-	    }
-	    if ($child_output[0] !~ /\s*([^\s]+)(?:\s+(.+))?/) {
-		$run_cb->(2, undef, "Malformed output from changer script: '$child_output[0]'");
+	    my $slotline = shift @child_output;
+	    if ($slotline !~ /\s*([^\s]+)(?:\s+(.+))?/) {
+		$run_cb->(2, undef, "Malformed output from changer script: '$slotline'");
 		return;
 	    }
 	    my ($slot, $rest) = ($1, $2);
+
+	    # append any additional lines to $rest
+	    if (@child_output) {
+		$rest .= "\n" . join("\n", @child_output);
+	    }
 
 	    # let the callback take care of any further interpretation
 	    $run_cb->($exitval, $slot, $rest);

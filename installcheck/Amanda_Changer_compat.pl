@@ -1,4 +1,4 @@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 29;
+use Test::More tests => 30;
 use File::Path;
 use strict;
 use warnings;
@@ -154,6 +154,7 @@ case "${1}" in
             2) echo "<ignored> slot 2 is empty"; exit 1;;
             3) echo "1"; exit 0;; # test missing 'device' portion
 	    4) echo "1 bogus:dev"; exit 0;;
+	    5) echo "<error> multiline error"; echo "line 2"; exit 1;;
 	    current) echo "1 null:current"; exit 0;;
 	    next) echo "1 null:next"; exit 0;;
         esac;;
@@ -241,6 +242,16 @@ try_run_changer(
       reason => 'device' },
     undef,
     "search by slot; bogus device leads to 'failed' error");
+
+$chg->{'fatal_error'} = undef; # reset the fatal error
+
+try_run_changer(
+    sub { $chg->load(slot => '5', res_cb => $check_res_cb); },
+    { message => "multiline error\nline 2",
+      type => 'failed',
+      reason => 'notfound' },
+    undef,
+    "multiline error response captured in its entirety");
 
 $chg->{'fatal_error'} = undef; # reset the fatal error
 
