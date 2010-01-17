@@ -218,11 +218,6 @@ sub load_next_volumes {
 		 $dev->error_or_status());
 	}
 
-	if ($dev->read_label() != $DEVICE_STATUS_SUCCESS) {
-	    fail ("Could not read label from $res->{device_name}: " .
-		 $dev->error_or_status());
-	}
-
 	$res->set_label($dev->volume_label(),
 			finished_cb => $set_labeled_src);
     });
@@ -307,7 +302,7 @@ sub load_next_volumes {
 	# for now, we only overwrite absolutely empty volumes.  This will need
 	# to change when we introduce use of a taperscan algorithm.
 
-	my $status = $dev->read_label();
+	my $status = $dev->status;
 	if (!($status & $DEVICE_STATUS_VOLUME_UNLABELED)) {
 	    # if UNLABELED is only one possibility, give a device error msg
 	    if ($status & ~$DEVICE_STATUS_VOLUME_UNLABELED) {

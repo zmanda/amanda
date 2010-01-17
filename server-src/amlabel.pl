@@ -140,9 +140,6 @@ $subs{'loaded'} = make_cb(loaded => sub {
 
     my $dev = $res->{'device'};
     my $dev_ok = 1;
-    if (!defined $dev->volume_label) {
-	$dev->read_label();
-    }
     if ($dev->status & $DEVICE_STATUS_VOLUME_UNLABELED) {
 	if (!$dev->volume_header or $dev->volume_header->{'type'} == $F_EMPTY) {
 	    print "Found an empty tape.\n";

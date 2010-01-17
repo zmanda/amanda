@@ -910,7 +910,6 @@ sub _volume_cb  {
     my $old_label;
     my $old_timestamp;
     if (!$is_new) {
-	$device->read_label();
 	if (($device->status & ~$DEVICE_STATUS_VOLUME_UNLABELED)
 	    && !($device->status & $DEVICE_STATUS_VOLUME_UNLABELED)) {
 	    $self->{'feedback'}->notif_new_tape(

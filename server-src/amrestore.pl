@@ -163,10 +163,6 @@ sub main {
     });
 
     $subs{'check_label'} = make_cb(check_label => sub {
-	if (!$dev->volume_label) {
-	    $dev->read_label();
-	}
-
 	if ($dev->status != $DEVICE_STATUS_SUCCESS) {
 	    return failure($dev->error_or_status);
 	}

@@ -291,6 +291,8 @@ sub _make_res {
 
     $res = Amanda::Changer::disk::Reservation->new($self, $device, $drive, $slot);
     $state->{drives}->{$drive}->{pid} = $$;
+    $device->read_label();
+
     $res_cb->(undef, $res);
 }
 

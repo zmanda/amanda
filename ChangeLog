@@ -1,3 +1,13 @@
+2010-01-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: $chg->load always read ther label.
+	* perl/Amanda/Changer/compat.pm, perl/Amanda/Changer/disk.pm,
+	* perl/Amanda/Changer/multi.pm, perl/Amanda/Changer/rait.pm,
+	* perl/Amanda/Changer/single.pm: $chg->load always read ther label.
+	* perl/Amanda/Taper/Scan/traditional.pm, perl/Amanda/Taper/Scribe.pm,
+	* server-src/amcheck-device.pl, server-src/amcheckdump.pl,
+	* server-src/amlabel.pl, server-src/amrestore.pl,
+	* server-src/amtape.pl, server-src/amvault.pl: Don't read the label.
+
 2010-01-15  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report/human.pm: changed usage of 'constant' for perl
 	  5.6 compatibility

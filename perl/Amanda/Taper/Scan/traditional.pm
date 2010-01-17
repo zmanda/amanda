@@ -174,7 +174,7 @@ sub stage_1 {
 
 	$self->{'seen'}->{$res->{'this_slot'}} = 1;
 
-        my $status = $res->{'device'}->read_label();
+        my $status = $res->{'device'}->status;
         if ($status != $DEVICE_STATUS_SUCCESS) {
             warning "Error reading label after searching for '$oldest_reusable'";
             return $self->release_and_stage_2($res);
@@ -200,7 +200,7 @@ sub try_volume {
     my ($res) = @_;
 
     my $dev = $res->{'device'};
-    my $status = $dev->read_label();
+    my $status = $dev->status;
     my $labelstr = $self->{'labelstr'};
     my $label;
 

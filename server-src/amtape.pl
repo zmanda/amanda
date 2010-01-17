@@ -189,20 +189,18 @@ sub {
 
 	if ($res) {
 	    my $dev = $res->{'device'};
-	    if (!defined $dev->volume_label) {
-		my $st = $dev->read_label();
-		if ($st == $DEVICE_STATUS_SUCCESS) {
-		    print STDERR sprintf("slot %3s: date %-14s label %s\n",
+	    my $st = $dev->read_label();
+	    if ($st == $DEVICE_STATUS_SUCCESS) {
+		print STDERR sprintf("slot %3s: date %-14s label %s\n",
 			$last_slot, $dev->volume_time(),
 			$dev->volume_label());
-		    $gres = $res;
-		    return $res->set_label(label => $dev->volume_label(),
-				     finished_cb => $subs{'set_labeled'});
-		} elsif ($st == $DEVICE_STATUS_VOLUME_UNLABELED) {
-		    print STDERR sprintf("slot %3s: unlabeled volume\n", $last_slot);
-		} else {
-		    print STDERR sprintf("slot %3s: %s\n", $last_slot, $dev->error_or_status());
-		}
+		$gres = $res;
+		return $res->set_label(label => $dev->volume_label(),
+				       finished_cb => $subs{'set_labeled'});
+	    } elsif ($st == $DEVICE_STATUS_VOLUME_UNLABELED) {
+		print STDERR sprintf("slot %3s: unlabeled volume\n", $last_slot);
+	    } else {
+		print STDERR sprintf("slot %3s: %s\n", $last_slot, $dev->error_or_status());
 	    }
 	} else {
 	    print STDERR sprintf("slot %3s: in use\n", $last_slot);
@@ -505,11 +503,6 @@ sub show_slot {
     if ($dev->status != $DEVICE_STATUS_SUCCESS) {
 	print STDERR "Could not open device: "
 		. $dev->error_or_status() . "\n";
-	return;
-    }
-
-    if (!$dev->volume_label and $dev->read_label() != $DEVICE_STATUS_SUCCESS) {
-	print STDERR $dev->error_or_status() . "\n";
 	return;
     }
 

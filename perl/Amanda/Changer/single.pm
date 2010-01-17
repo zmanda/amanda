@@ -79,16 +79,16 @@ sub load {
 
     die "no res_cb supplied" unless (exists $params{'res_cb'});
 
-    if (keys %{$params{'except_slots'}} > 0) {
-	return $self->make_error("failed", $params{'res_cb'},
-		reason => "notfound",
-		message => "all slots have been loaded");
-    }
-
     if ($self->{'reserved'}) {
 	return $self->make_error("failed", $params{'res_cb'},
 	    reason => "volinuse",
 	    message => "'$self->{device_name}' is already reserved");
+    }
+
+    if (keys %{$params{'except_slots'}} > 0) {
+	return $self->make_error("failed", $params{'res_cb'},
+		reason => "notfound",
+		message => "all slots have been loaded");
     }
 
     my $device = Amanda::Device->new($self->{'device_name'});
@@ -105,7 +105,10 @@ sub load {
 	    message => $msg);
     }
 
-    $params{'res_cb'}->(undef, Amanda::Changer::single::Reservation->new($self, $device));
+    my $res = Amanda::Changer::single::Reservation->new($self, $device);
+
+    $device->read_label();
+    $params{'res_cb'}->(undef, $res);
 }
 
 sub info_key {

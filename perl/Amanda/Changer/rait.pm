@@ -252,6 +252,8 @@ sub _make_res {
 
     my $combined_res = Amanda::Changer::rait::Reservation->new(
 	$kid_reservations, $rait_device);
+    $rait_device->read_label();
+
     $res_cb->(undef, $combined_res);
 }
 
@@ -625,11 +627,10 @@ sub new {
 
     $self->{'child_reservations'} = $child_reservations;
 
-    my @device_names = errmap { $_->{'device_name'} } @$child_reservations;
     $self->{'device'} = $rait_device;
 
     my @slot_names;
-    @slot_names = errmap { $_->{'this_slot'} } @$child_reservations;
+    @slot_names = errmap { "" . $_->{'this_slot'} } @$child_reservations;
     $self->{'this_slot'} = collapse_braced_alternates(\@slot_names);
 
     return $self;

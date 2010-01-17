@@ -132,7 +132,7 @@ sub try_open_device {
     my $device = find_next_device($label);
     my $device_name = $device->device_name;
 
-    my $label_status = $device->read_label();
+    my $label_status = $device->status;
     if ($label_status != $DEVICE_STATUS_SUCCESS) {
 	if ($device->error_or_status() ) {
 	    print "Could not read device $device_name: ",

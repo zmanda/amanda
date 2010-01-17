@@ -511,6 +511,8 @@ sub _make_res {
 
     $res = Amanda::Changer::multi::Reservation->new($self, $device, $slot);
     $state->{slots}->{$unaliased}->{pid} = $$;
+    $device->read_label();
+
     $res_cb->(undef, $res);
 }
 

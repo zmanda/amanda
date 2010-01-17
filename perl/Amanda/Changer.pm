@@ -187,6 +187,8 @@ current slot should be updated to correspond to C<$slot>. If not, then the chang
 should not update its current slot (but some changers will anyway -
 specifically, chg-compat).
 
+The load method always read the label if it succeed to load a volume.
+
 The optional C<mode> describes the intended use of the volume by the caller,
 and should be one of C<"read"> (the default) or C<"write">.  Changers managing
 WORM media may use this parameter to provide a fresh volume for writing, but to
@@ -1155,8 +1157,13 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     if (!$self->{'released'}) {
-	Amanda::Debug::warning("Changer reservation for slot '$self->{this_slot}' has " .
-			       "gone out of scope without release");
+	if (defined $self->{this_slot}) {
+	    Amanda::Debug::warning("Changer reservation for slot '$self->{this_slot}' has " .
+				   "gone out of scope without release");
+        } else {
+	    Amanda::Debug::warning("Changer reservation for unknown slot has " .
+				   "gone out of scope without release");
+	}
     }
 }
 

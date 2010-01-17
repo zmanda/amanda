@@ -263,6 +263,7 @@ sub _make_res {
     }
 
     $res = Amanda::Changer::compat::Reservation->new($self, $slot, $device);
+    $device->read_label();
 
     $res_cb->(undef, $res);
 }
