@@ -45,10 +45,16 @@ AC_DEFUN([gl_INIT],
   m4_pushdef([gl_LIBSOURCES_DIR], [])
   gl_COMMON
   gl_source_base='gnulib'
+changequote(,)dnl
+LTALLOCA=`echo "$ALLOCA" | sed 's/\.[^.]* /.lo /g;s/\.[^.]*$/.lo/'`
+changequote([, ])dnl
+AC_SUBST([LTALLOCA])
   gl_FUNC_ALLOCA
   gl_HEADER_ARPA_INET
   AC_PROG_MKDIR_P
   gl_FUNC_BASE64
+  gl_FUNC_BTOWC
+  gl_WCHAR_MODULE_INDICATOR([btowc])
   AC_REQUIRE([gl_HEADER_ERRNO_H])
   gl_FLOAT_H
   gl_FUNC_FSEEKO
@@ -67,11 +73,22 @@ AC_DEFUN([gl_INIT],
   gl_HOSTENT
   gl_INET_NTOP
   gl_ARPA_INET_MODULE_INDICATOR([inet_ntop])
+  gl_LOCALCHARSET
+  LOCALCHARSET_TESTS_ENVIRONMENT="CHARSETALIASDIR=\"\$(top_builddir)/$gl_source_base\""
+  AC_SUBST([LOCALCHARSET_TESTS_ENVIRONMENT])
   gl_LOCK
   gl_FUNC_LSEEK
   gl_UNISTD_MODULE_INDICATOR([lseek])
   gl_FUNC_LSTAT
   gl_SYS_STAT_MODULE_INDICATOR([lstat])
+  AC_FUNC_MALLOC
+  AC_DEFINE([GNULIB_MALLOC_GNU], 1, [Define to indicate the 'malloc' module.])
+  gl_FUNC_MALLOC_POSIX
+  gl_STDLIB_MODULE_INDICATOR([malloc-posix])
+  gl_FUNC_MBRTOWC
+  gl_WCHAR_MODULE_INDICATOR([mbrtowc])
+  gl_FUNC_MBSINIT
+  gl_WCHAR_MODULE_INDICATOR([mbsinit])
   gt_FUNC_MKDTEMP
   gl_STDLIB_MODULE_INDICATOR([mkdtemp])
   AC_REQUIRE([gl_MULTIARCH])
@@ -79,6 +96,7 @@ AC_DEFUN([gl_INIT],
   gl_HEADER_NETINET_IN
   AC_PROG_MKDIR_P
   gl_PHYSMEM
+  gl_REGEX
   gl_SAFE_READ
   gl_SAFE_WRITE
   gl_SERVENT
@@ -104,6 +122,9 @@ AC_DEFUN([gl_INIT],
   gl_FUNC_VASNPRINTF
   gl_VISIBILITY
   gl_WCHAR_H
+  gl_FUNC_WCRTOMB
+  gl_WCHAR_MODULE_INDICATOR([wcrtomb])
+  gl_WCTYPE_H
   gl_FUNC_WRITE
   gl_UNISTD_MODULE_INDICATOR([write])
   gl_XSIZE
@@ -237,11 +258,14 @@ AC_DEFUN([gltests_LIBSOURCES], [
 AC_DEFUN([gl_FILE_LIST], [
   build-aux/config.rpath
   build-aux/link-warning.h
+  lib/alloca.c
   lib/alloca.in.h
   lib/arpa_inet.in.h
   lib/asnprintf.c
   lib/base64.c
   lib/base64.h
+  lib/btowc.c
+  lib/config.charset
   lib/errno.in.h
   lib/float+.h
   lib/float.in.h
@@ -266,8 +290,13 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/glthread/lock.h
   lib/glthread/threadlib.c
   lib/inet_ntop.c
+  lib/localcharset.c
+  lib/localcharset.h
   lib/lseek.c
   lib/lstat.c
+  lib/malloc.c
+  lib/mbrtowc.c
+  lib/mbsinit.c
   lib/mkdtemp.c
   lib/netdb.in.h
   lib/netinet_in.in.h
@@ -277,6 +306,14 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/printf-args.h
   lib/printf-parse.c
   lib/printf-parse.h
+  lib/ref-add.sin
+  lib/ref-del.sin
+  lib/regcomp.c
+  lib/regex.c
+  lib/regex.h
+  lib/regex_internal.c
+  lib/regex_internal.h
+  lib/regexec.c
   lib/safe-read.c
   lib/safe-read.h
   lib/safe-write.c
@@ -289,6 +326,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/stdio-write.c
   lib/stdio.in.h
   lib/stdlib.in.h
+  lib/streq.h
   lib/sys_socket.in.h
   lib/sys_stat.in.h
   lib/sys_time.in.h
@@ -297,13 +335,18 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/unistd.in.h
   lib/vasnprintf.c
   lib/vasnprintf.h
+  lib/verify.h
   lib/wchar.in.h
+  lib/wcrtomb.c
+  lib/wctype.in.h
   lib/write.c
   lib/xsize.h
   m4/00gnulib.m4
   m4/alloca.m4
   m4/arpa_inet_h.m4
   m4/base64.m4
+  m4/btowc.m4
+  m4/codeset.m4
   m4/errno_h.m4
   m4/extensions.m4
   m4/float_h.m4
@@ -314,6 +357,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/getaddrinfo.m4
   m4/getopt.m4
   m4/gettimeofday.m4
+  m4/glibc21.m4
   m4/gnulib-common.m4
   m4/hostent.m4
   m4/include_next.m4
@@ -323,10 +367,18 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/lib-ld.m4
   m4/lib-link.m4
   m4/lib-prefix.m4
+  m4/localcharset.m4
+  m4/locale-fr.m4
+  m4/locale-ja.m4
+  m4/locale-zh.m4
   m4/lock.m4
   m4/longlong.m4
   m4/lseek.m4
   m4/lstat.m4
+  m4/malloc.m4
+  m4/mbrtowc.m4
+  m4/mbsinit.m4
+  m4/mbstate_t.m4
   m4/mkdtemp.m4
   m4/multiarch.m4
   m4/netdb_h.m4
@@ -334,6 +386,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/onceonly.m4
   m4/physmem.m4
   m4/printf.m4
+  m4/regex.m4
   m4/safe-read.m4
   m4/safe-write.m4
   m4/servent.m4
@@ -357,6 +410,8 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/visibility.m4
   m4/wchar.m4
   m4/wchar_t.m4
+  m4/wcrtomb.m4
+  m4/wctype.m4
   m4/wint_t.m4
   m4/write.m4
   m4/xsize.m4
