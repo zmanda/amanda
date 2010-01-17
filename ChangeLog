@@ -1,4 +1,7 @@
 2010-01-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Curinfo.pl: remove spurious diag()
+
+2010-01-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* gnulib/regenerate/regenerate: add regex module, for Mac OS X
 	  compatibility; no change in gnulib version
 	* config/gnulib/* gnulib/*: resulting gnulib updates
