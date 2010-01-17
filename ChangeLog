@@ -1,3 +1,6 @@
+2010-01-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Xfer.pod: fix POD typo
+
 2010-01-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Set drive state to unknown.
 
