@@ -1135,6 +1135,11 @@ sub update_unlocked {
 	if (!defined $state->{'slots'}->{$slot}->{'barcode'}) {
 	    $state->{'slots'}->{$slot}->{'label'} = undef;
 	    $state->{'slots'}->{$slot}->{'state'} = SLOT_UNKNOWN;
+	    if (defined $state->{'slots'}->{$slot}->{'loaded_in'}) {
+		my $drive = $state->{'slots'}->{$slot}->{'loaded_in'};
+		$state->{'drives'}->{$drive}->{'label'} = undef;
+		$state->{'drives'}->{$drive}->{'state'} = SLOT_UNKNOWN;
+	    }
 	}
 	$subs{'set_to_unknown'}->();
     });
