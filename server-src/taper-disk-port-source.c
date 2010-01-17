@@ -94,8 +94,8 @@ taper_disk_port_source_finalize(GObject *obj_self)
     if(G_OBJECT_CLASS(parent_class)->finalize)
         (* G_OBJECT_CLASS(parent_class)->finalize)(obj_self);
 
-    if (self->buffer_fd >= 0)
-	aclose(self->buffer_fd);
+    if (self->_priv->buffer_fd >= 0)
+	aclose(self->_priv->buffer_fd);
 
     amfree(self->buffer_dir_name);
     amfree(self->_priv->excess_buffer);

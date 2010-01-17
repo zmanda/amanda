@@ -1,3 +1,6 @@
+2010-01-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper-disk-port-source.c: fix.
+
 2009-01-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/taper-disk-port-source.c: close disk buffer when finished
 
