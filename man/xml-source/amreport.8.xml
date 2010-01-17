@@ -156,7 +156,7 @@ tapetype definition,
 will not print tape labels.</para>
 
 <para>You may use the
-<emphasis>remap='I'>printer</emphasis>
+<emphasis remap='I'>printer</emphasis>
 keyword in amanda.conf to print to other than the system default printer.</para>
 
 </refsect1>
