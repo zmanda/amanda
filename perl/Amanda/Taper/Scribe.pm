@@ -1,4 +1,4 @@
-# Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This library is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License version 2.1 as
@@ -61,6 +61,7 @@ Amanda::Taper::Scribe
 
     # tell the scribe to start dumping via this transfer
     $scribe->start_dump(
+	xfer => $xfer,
         dump_header => $hdr,
         dump_cb => $subs{'dump_cb'});
   });
@@ -219,6 +220,7 @@ the volume.  This is the first moment at which the Scribe needs a header, too.
 All of this is supplied to the C<start_dump> method:
 
   $scribe->start_dump(
+      xfer => $xfer,
       dump_header => $hdr,
       dump_cb => $dump_cb);
 
@@ -569,8 +571,9 @@ sub start_dump {
     $self->{'dump_header'} = $params{'dump_header'};
     $self->{'dump_header'}->{'partnum'} = 1;
 
-    # set up the dump_cb for when this dump is done
+    # set up the dump_cb for when this dump is done, and keep the xfer
     $self->{'dump_cb'} = $params{'dump_cb'};
+    $self->{'xfer'} = $params{'xfer'};
 
     # and start the part
     $self->_start_part();
@@ -807,6 +810,8 @@ sub _operation_failed {
     # cancelling the xdt will eventually cause an XMSG_DONE, which will notice
     # the error and set the result correctly; but if there's no xfer, then we
     # can just call _dump_done directly.
+    use Data::Dumper;
+    $self->dbg(Dumper($self));
     if (defined $self->{'xfer'}) {
         $self->dbg("cancelling the transfer: $error");
 

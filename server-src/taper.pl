@@ -797,6 +797,7 @@ sub setup_dump {
         $hdr->{'type'} = $Amanda::Header::F_SPLIT_DUMPFILE;
 
         $self->{'scribe'}->start_dump(
+	    xfer => $self->{'xfer'},
             dump_header => $hdr,
             dump_cb => sub { $self->dump_cb(@_); });
     });
