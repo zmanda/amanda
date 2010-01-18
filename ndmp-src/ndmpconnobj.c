@@ -91,6 +91,8 @@ finalize_impl(GObject *goself)
     /* chain up first */
     G_OBJECT_CLASS(parent_class)->finalize(goself);
 
+    g_debug("closing conn#%d", self->connid);
+
     /* close this connection if necessary */
     if (self->conn) {
 	ndmconn_destruct(self->conn);
@@ -730,7 +732,6 @@ ndmp_connection_new(
     static int next_connid = 1;
     static GStaticMutex next_connid_mutex = G_STATIC_MUTEX_INIT;
 
-    g_debug("opening new NDMPConnection: to %s:%d", hostname, port);
     conn = ndmconn_initialize(NULL, "amanda-server");
     if (!conn) {
 	errmsg = "could not initialize ndmconn";
@@ -779,6 +780,7 @@ ndmp_connection_new(
     self->connid = next_connid++;
     g_static_mutex_unlock(&next_connid_mutex);
     conn->context = (void *)self;
+    g_debug("opening new NDMPConnection #%d: to %s:%d", self->connid, hostname, port);
 
 out:
     /* make a "fake" error connection if we have an error message.  Note that
