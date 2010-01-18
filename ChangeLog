@@ -1,3 +1,6 @@
+2010-01-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* restore-src/restore.c: add another htonl invocation for ipv4 address
+
 2010-01-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Xfer.pod: fix POD typo
 

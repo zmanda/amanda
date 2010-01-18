@@ -978,7 +978,7 @@ void restore(RestoreSource  *source,
 		for (addr=addrs; addr->ipv4 != 0; addr++) {
 		    struct in_addr in;
 		    char *an_addr;
-		    in.s_addr = addr->ipv4;
+		    in.s_addr = htonl(addr->ipv4);
 		    an_addr = g_strdup_printf(" %s:%d", inet_ntoa(in),
 					      addr->port);
 		    vstrextend(&addr_list, an_addr, NULL);
