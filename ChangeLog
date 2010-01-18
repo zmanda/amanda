@@ -1,4 +1,12 @@
 2010-01-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndma_tape_simulator.c: maintain a 'lock file' per device,
+	  and return NDMP_DEVICE_BUSY_ERR on a collision
+	* device-src/ndmp-device.c: close the tape agent before switching
+	  connections, and before closing a device, to avoid
+	  NDMP_DEVICE_BUSY_ERR; do not set the record size when opening the
+	  tape agent, as the mover may already be active
+
+2010-01-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* restore-src/restore.c: add another htonl invocation for ipv4 address
 
 2010-01-17  Dustin J. Mitchell <dustin@zmanda.com>

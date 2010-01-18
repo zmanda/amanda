@@ -235,14 +235,6 @@ open_tape_agent(
 	    DEVICE_STATUS_DEVICE_ERROR);
     }
 
-    /* set the mover record size - NDMP expects this to happen very
-     * early in the connection */
-    if (!ndmp_connection_mover_set_record_size(self->ndmp,
-		DEVICE(self)->block_size)) {
-	set_error_from_ndmp(self);
-	return FALSE;
-    }
-
     self->tape_open = TRUE;
 
     return TRUE;
@@ -428,6 +420,8 @@ static void ndmp_device_finalize(GObject * obj_self)
 
     if(G_OBJECT_CLASS(parent_class)->finalize)
         (* G_OBJECT_CLASS(parent_class)->finalize)(obj_self);
+
+    (void)close_tape_agent(self); /* ignore any error */
 
     if (self->directtcp_conn)
 	g_object_unref(self->directtcp_conn);
@@ -1372,6 +1366,14 @@ use_connection_impl(
 {
     NdmpDevice *self = NDMP_DEVICE(dself);
     DirectTCPConnectionNDMP *nconn;
+
+    /* the device_use_connection_impl wrapper already made sure we're in
+     * ACCESS_NULL, but we may have opened the tape service already to read
+     * a label - so close it to be sure */
+    if (!close_tape_agent(self)) {
+	/* error was already set by close_tape_agent */
+	return FALSE;
+    }
 
     /* we had best not be listening when this is called */
     g_assert(!self->listen_addrs);

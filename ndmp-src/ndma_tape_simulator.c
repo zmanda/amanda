@@ -82,6 +82,33 @@ ndmos_tape_initialize (struct ndm_session *sess)
 	return 0;
 }
 
+static int
+touch_tape_lockfile(char *drive_name)
+{
+    char *lockfile_name;
+    int fd;
+
+    lockfile_name = g_strdup_printf("%s.lck", drive_name);
+    if ((fd = open(lockfile_name, O_CREAT|O_EXCL, 0666)) < 0) {
+	g_free(lockfile_name);
+	return -1;
+    }
+
+    close(fd);
+    g_free(lockfile_name);
+    return 0;
+}
+
+static void
+unlink_tape_lockfile(char *drive_name)
+{
+    char *lockfile_name;
+
+    lockfile_name = g_strdup_printf("%s.lck", drive_name);
+    unlink(lockfile_name);
+    g_free(lockfile_name);
+}
+
 ndmp9_error
 ndmos_tape_open (struct ndm_session *sess, char *drive_name, int will_write)
 {
@@ -111,6 +138,9 @@ ndmos_tape_open (struct ndm_session *sess, char *drive_name, int will_write)
 			return NDMP9_WRITE_PROTECT_ERR;
 		omode = 2;		/* ndmp_write means read/write */
 	}
+
+	if (touch_tape_lockfile(drive_name) < 0)
+	    return NDMP9_DEVICE_BUSY_ERR;
 
 	fd = open (drive_name, omode);
 	if (fd < 0) {
@@ -178,6 +208,7 @@ ndmos_tape_open (struct ndm_session *sess, char *drive_name, int will_write)
   skip_header_check:
 	remove (pos_symlink_name);
 	g_free(pos_symlink_name);
+
 	ta->tape_fd = fd;
 	NDMOS_API_BZERO (ta->drive_name, sizeof ta->drive_name);
 	g_strlcpy (ta->drive_name, drive_name, sizeof ta->drive_name);
@@ -212,6 +243,10 @@ ndmos_tape_close (struct ndm_session *sess)
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
 	off_t			cur_pos;
 
+	/* TODO this is not called on an EOF from the DMA, so the lockfile
+	 * will remain, although the spec says the tape service should be
+	 * automatically closed */
+
 	if (ta->tape_fd < 0) {
 		return NDMP9_DEV_NOT_OPEN_ERR;
 	}
@@ -238,6 +273,8 @@ ndmos_tape_close (struct ndm_session *sess)
 
 	close (ta->tape_fd);
 	ta->tape_fd = -1;
+
+	unlink_tape_lockfile(ta->drive_name);
 
 	ndmos_tape_initialize (sess);
 
