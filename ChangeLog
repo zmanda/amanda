@@ -1,4 +1,7 @@
 2010-01-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/Makefile.am: fix (apparently innocuous) Makefile typo
+
+2010-01-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: add an xfer argument to start_dump, so
 	  that the scribe can cancel a transfer in an error situation
 	* installcheck/Amanda_Taper_Scribe.pl: git it an xfer

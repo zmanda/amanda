@@ -163,7 +163,7 @@ libndmjl5 = \
 	md5c.c
 
 libndmjlo = \
-	ndmos.c
+	ndmos.c \
 	ndmos_common.c
 
 libndmlib_la_LDFLAGS = -release $(VERSION)
