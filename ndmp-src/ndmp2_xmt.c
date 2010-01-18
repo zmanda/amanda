@@ -294,7 +294,7 @@ xdr_ndmp2_u_quad(xdrs, objp)
 	case XDR_DECODE:
 		if (XDR_GETLONG(xdrs, (long*)&hi)
 		 && XDR_GETLONG(xdrs, (long*)&lo)) {
-			*objp = ((unsigned long long)hi << 32) | (lo);
+			*objp = ((unsigned long long)hi << 32) | (lo & 0xffffffff);
 			return TRUE;
 		}
 		break;

@@ -1,4 +1,8 @@
 2010-01-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndmp2_xmt.c ndmp-src/ndmp3_xmt.c ndmp-src/ndmp4_xmt.c
+	  ndmp-src/ndmp9_xmt.c: fix sign-bit extension error in *_xdr_u_quad
+
+2010-01-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/Makefile.am: fix (apparently innocuous) Makefile typo
 
 2010-01-18  Dustin J. Mitchell <dustin@zmanda.com>
