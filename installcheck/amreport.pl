@@ -73,32 +73,42 @@ sub slurp {
 
 ## compare two multiline strings, giving a diff if they do not match
 
-sub results_match {
-    my ($a, $b, $msg) = @_;
+sub results_match
+{
+    my ( $a, $b, $msg ) = @_;
 
-    sub cleanup {
-	my $str = shift;
-	chomp $str;
-	# chomp whitespace before newlines
-	$str =~ s/\s+$//mg;
-	# chomp the "brought to you by.." line
-	$str =~ s/brought to you by Amanda version .*\)/<versioninfo>/g;
-	$str;
+    sub cleanup
+    {
+        my $str = shift;
+        chomp $str;
+
+        # strip out special characters
+        $str =~ tr{\f}{};
+
+        # make lines insensitive to whitespace differences
+        $str =~ s{[\t ]+}{ }mgx;
+        $str =~ s{\s*\n[\n ]*\s*}{\n}mgx;
+
+        # chomp the "brought to you by.." line
+        $str =~ s{\n\(brought to you by Amanda version .*$}{\n<versioninfo>}g;
+
+        return $str;
     }
+
     $a = cleanup($a);
     $b = cleanup($b);
 
-    if ($a eq $b) {
-	pass($msg);
+    if ( $a eq $b ) {
+        pass($msg);
     } else {
-	my $diff;
-	if ($have_text_diff) {
-	    $diff = diff(\$a, \$b, { 'STYLE' => "Unified" });
-	} else {
-	    $diff = "---- GOT: ----\n$a\n---- EXPECTED: ----\n$b\n---- ----";
-	}
-	fail($msg);
-	diag($diff);
+        my $diff;
+        if ($have_text_diff) {
+            $diff = diff( \$a, \$b, { 'STYLE' => "Unified" } );
+        } else {
+            $diff = "---- GOT: ----\n$a\n---- EXPECTED: ----\n$b\n---- ----";
+        }
+        fail($msg);
+        diag($diff);
     }
 }
 
@@ -258,9 +268,9 @@ Run Time (hrs:min)         0:00
 Dump Time (hrs:min)        0:00       0:00       0:00
 Output Size (meg)      1339591.9   1339591.9        0.0
 Original Size (meg)    1821724.4   1821724.4        0.0
-Avg Compressed Size (%)    73.5       73.5        -- 
+Avg Compressed Size (%)    73.5       73.5        --
 Filesystems Dumped            9          9          0
-Avg Dump Rate (k/s)     #######    #######        -- 
+Avg Dump Rate (k/s)     #######    #######        --
 
 Tape Time (hrs:min)        0:00       0:00       0:00
 Tape Size (meg)        1339591.9   1339591.9        0.0
@@ -268,7 +278,7 @@ Tape Used (%)             #####      #####        0.0
 Filesystems Taped             9          9          0
 
 Chunks Taped                  9          9          0
-Avg Tp Write Rate (k/s) #######    #######        -- 
+Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
   Label               Time      Size      %    Nb    Nc
@@ -280,7 +290,7 @@ NOTES:
 
 
 DUMP SUMMARY:
-                                          DUMPER STATS                    TAPER STATS  
+                                          DUMPER STATS                    TAPER STATS
 HOSTNAME     DISK        L    ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
 -------------------------- -------------------------------------------- ---------------
 localhost.lo /boot1      0         12         12    --     0:02 24748.4   0:00 156611.1
@@ -312,9 +322,9 @@ Run Time (hrs:min)         0:00
 Dump Time (hrs:min)        0:00       0:00       0:00
 Output Size (meg)      1339591.9   1339591.9        0.0
 Original Size (meg)    1821724.4   1821724.4        0.0
-Avg Compressed Size (%)    73.5       73.5        -- 
+Avg Compressed Size (%)    73.5       73.5        --
 Filesystems Dumped            9          9          0
-Avg Dump Rate (k/s)     #######    #######        -- 
+Avg Dump Rate (k/s)     #######    #######        --
 
 Tape Time (hrs:min)        0:00       0:00       0:00
 Tape Size (meg)        1339591.9   1339591.9        0.0
@@ -322,7 +332,7 @@ Tape Used (%)             #####      #####        0.0
 Filesystems Taped             9          9          0
 
 Chunks Taped                  9          9          0
-Avg Tp Write Rate (k/s) #######    #######        -- 
+Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
   Label               Time      Size      %    Nb    Nc
@@ -334,7 +344,7 @@ NOTES:
 
 
 DUMP SUMMARY:
-                                            DUMPER STATS                     TAPER STATS  
+                                            DUMPER STATS                     TAPER STATS
 HOSTNAME     DISK        L       ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
 -------------------------- ----------------------------------------------- ---------------
 localhost.lo /boot1      0         12.00         12    --     0:02 24748.4   0:00 156611.1
@@ -366,9 +376,9 @@ Run Time (hrs:min)         0:00
 Dump Time (hrs:min)        0:00       0:00       0:00
 Output Size (meg)      1339591.9   1339591.9        0.0
 Original Size (meg)    1821724.4   1821724.4        0.0
-Avg Compressed Size (%)    73.5       73.5        -- 
+Avg Compressed Size (%)    73.5       73.5        --
 Filesystems Dumped            9          9          0
-Avg Dump Rate (k/s)     #######    #######        -- 
+Avg Dump Rate (k/s)     #######    #######        --
 
 Tape Time (hrs:min)        0:00       0:00       0:00
 Tape Size (meg)        1339591.9   1339591.9        0.0
@@ -376,7 +386,7 @@ Tape Used (%)             #####      #####        0.0
 Filesystems Taped             9          9          0
 
 Chunks Taped                  9          9          0
-Avg Tp Write Rate (k/s) #######    #######        -- 
+Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
   Label               Time      Size      %    Nb    Nc
@@ -388,7 +398,7 @@ NOTES:
 
 
 DUMP SUMMARY:
-                                        DUMPER STATS                 TAPER STATS  
+                                        DUMPER STATS                 TAPER STATS
 HOSTNAME     DISK        L ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
 -------------------------- --------------------------------------- ---------------
 localhost.lo /boot1      0    12         12    --     0:02 24748.4   0:00 156611.1
@@ -420,9 +430,9 @@ Run Time (hrs:min)         0:00
 Dump Time (hrs:min)        0:00       0:00       0:00
 Output Size (meg)      1339591.9   1339591.9        0.0
 Original Size (meg)    1821724.4   1821724.4        0.0
-Avg Compressed Size (%)    73.5       73.5        -- 
+Avg Compressed Size (%)    73.5       73.5        --
 Filesystems Dumped            9          9          0
-Avg Dump Rate (k/s)     #######    #######        -- 
+Avg Dump Rate (k/s)     #######    #######        --
 
 Tape Time (hrs:min)        0:00       0:00       0:00
 Tape Size (meg)        1339591.9   1339591.9        0.0
@@ -430,7 +440,7 @@ Tape Used (%)             #####      #####        0.0
 Filesystems Taped             9          9          0
 
 Chunks Taped                  9          9          0
-Avg Tp Write Rate (k/s) #######    #######        -- 
+Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
   Label               Time      Size      %    Nb    Nc
@@ -442,7 +452,7 @@ NOTES:
 
 
 DUMP SUMMARY:
-                                        DUMPER STATS                 TAPER STATS  
+                                        DUMPER STATS                 TAPER STATS
 HOSTNAME     DISK        L ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
 -------------------------- --------------------------------------- ---------------
 localhost.lo /boot1      0    12         12    --     0:02 24748.4   0:00 156611.1
@@ -474,9 +484,9 @@ Run Time (hrs:min)         0:00
 Dump Time (hrs:min)        0:00       0:00       0:00
 Output Size (meg)      1339591.9   1339591.9        0.0
 Original Size (meg)    1821724.4   1821724.4        0.0
-Avg Compressed Size (%)    73.5       73.5        -- 
+Avg Compressed Size (%)    73.5       73.5        --
 Filesystems Dumped            9          9          0
-Avg Dump Rate (k/s)     #######    #######        -- 
+Avg Dump Rate (k/s)     #######    #######        --
 
 Tape Time (hrs:min)        0:00       0:00       0:00
 Tape Size (meg)        1339591.9   1339591.9        0.0
@@ -484,7 +494,7 @@ Tape Used (%)             #####      #####        0.0
 Filesystems Taped             9          9          0
 
 Chunks Taped                  9          9          0
-Avg Tp Write Rate (k/s) #######    #######        -- 
+Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
   Label               Time      Size      %    Nb    Nc
@@ -496,7 +506,7 @@ NOTES:
 
 
 DUMP SUMMARY:
-                                       DUMPER STATS                 TAPER STATS  
+                                       DUMPER STATS                 TAPER STATS
 HOSTNAME     DISK        L ORIG-MB  OUT-MB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
 -------------------------- -------------------------------------- ---------------
 localhost.lo /boot1      0       0       0    --     0:02 24748.4   0:00 156611.1
