@@ -325,6 +325,8 @@ ndmca_monitor_backup_tape_tcp (struct ndm_session *sess)
 	int			count;
 	ndmp9_data_state	ds;
 	char *estb;
+	struct ndmlog *		ixlog = &ca->job.index_log;
+	char *			pname = get_pname();
 
 	ndmalogf (sess, 0, 3, "Monitoring backup");
 
@@ -346,6 +348,11 @@ ndmca_monitor_backup_tape_tcp (struct ndm_session *sess)
 			  "DATA: bytes %lldKB%s",
 			  ca->data_state.bytes_processed/1024LL,
 			  estb ? estb : "");
+
+		if (strcmp(pname, "amndmjob") == 0) {
+			ndmlogf (ixlog, "DATA SIZE", 0, "%lldKB",
+				 ca->data_state.bytes_processed/1024LL);
+		}
 
 		if (ds == NDMP9_DATA_STATE_ACTIVE) {
 			count = 0;

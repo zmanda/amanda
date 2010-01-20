@@ -1230,6 +1230,10 @@ do_dump(
 	if (!errstr) errstr = stralloc(_("got no data"));
     }
 
+    if (data_path == DATA_PATH_DIRECTTCP) {
+	dumpsize = origsize;
+    }
+
     if (!ISSET(status, HEADER_DONE)) {
 	dump_result = max(dump_result, 2);
 	if (!errstr) errstr = stralloc(_("got no header information"));
