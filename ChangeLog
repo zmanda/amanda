@@ -1,3 +1,7 @@
+2010-01-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report/human.pm: Many fix.
+	* server-src/amreport_new.pl: Many fix.
+
 2010-01-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndma_cops_backreco.c: Output "DATA SIZE" lines.
 	* server-src/dumper.c: Set dumpsize from origsize for DIRECTTCP

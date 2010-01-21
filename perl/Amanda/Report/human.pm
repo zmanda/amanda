@@ -116,7 +116,7 @@ sub new
         logfname    => $logfname,
 
         ## config info
-        disp_unit => getconf($CNF_DISPLAYUNIT),
+        disp_unit => uc(getconf($CNF_DISPLAYUNIT)),
         unit_div  => getconf_unit_divisor(),
 
         ## statistics
@@ -264,7 +264,7 @@ sub print_human_amreport
 
     ## footer
     print $fh
-      "\n(brought to you by Amanda version $Amanda::Constants::VERSION)\n";
+      "(brought to you by Amanda version $Amanda::Constants::VERSION)\n";
 
     return;
 }
@@ -286,8 +286,8 @@ sub print_header
         $report->get_flag("amflush_run") ? "amflush" : "planner", "start" );
     $datestamp /= 1000000 if $datestamp > 99999999;
     $datestamp = int($datestamp);
-    my $year  = int( $datestamp / 10000 );
-    my $month = int( ( $datestamp / 100 ) % 100 );
+    my $year  = int( $datestamp / 10000 ) - 1900;
+    my $month = int( ( $datestamp / 100 ) % 100 ) - 1;
     my $day   = int( $datestamp % 100 );
     my $date  = POSIX::strftime( '%B %d, %Y', 0, 0, 0, $day, $month, $year );
 
@@ -490,18 +490,18 @@ EOF
     print $fh swrite(
         $st_format,
         "Output Size (meg)",
-        sprintf( "%8.1lf", $total_stats->{outsize} ),
-        sprintf( "%8.1lf", $full_stats->{outsize} ),
-        sprintf( "%8.1lf", $incr_stats->{outsize} ),
+        sprintf( "%8.1lf", $total_stats->{outsize}/1024 ),
+        sprintf( "%8.1lf", $full_stats->{outsize}/1024 ),
+        sprintf( "%8.1lf", $incr_stats->{outsize}/1024 ),
         "",
     );
 
     print $fh swrite(
         $st_format,
         "Original Size (meg)",
-        sprintf( "%8.1lf", $total_stats->{origsize} ),
-        sprintf( "%8.1lf", $full_stats->{origsize} ),
-        sprintf( "%8.1lf", $incr_stats->{origsize} ),
+        sprintf( "%8.1lf", $total_stats->{origsize}/1024 ),
+        sprintf( "%8.1lf", $full_stats->{origsize}/1024 ),
+        sprintf( "%8.1lf", $incr_stats->{origsize}/1024 ),
         "",
     );
 
@@ -512,7 +512,7 @@ EOF
 
     print $fh swrite(
         $st_format,
-        "Avg Compressed Size (%%)",
+        "Avg Compressed Size (%)",
         $comp_size->($total_stats),
         $comp_size->($full_stats),
         $comp_size->($incr_stats),
@@ -548,9 +548,9 @@ EOF
     print $fh swrite(
         $st_format,
         "Tape Size (meg)",
-        sprintf( "%8.1lf", $total_stats->{tapesize} ),
-        sprintf( "%8.1lf", $full_stats->{tapesize} ),
-        sprintf( "%8.1lf", $incr_stats->{tapesize} ),
+        sprintf( "%8.1lf", $total_stats->{tapesize}/1024 ),
+        sprintf( "%8.1lf", $full_stats->{tapesize}/1024 ),
+        sprintf( "%8.1lf", $incr_stats->{tapesize}/1024 ),
         ""
     );
 
@@ -567,7 +567,7 @@ EOF
 
     print $fh swrite(
         $st_format,
-        "Tape Used (%%)",
+        "Tape Used (%)",
         $tape_usage->($total_stats),
         $tape_usage->($full_stats),
         $tape_usage->($incr_stats),
@@ -614,7 +614,7 @@ sub output_tape_stats
 
     my $header = <<EOF;
 USAGE BY TAPE:
-  Label         Time      Size      %%    Nb    Nc
+  Label         Time      Size      %    Nb    Nc
 EOF
 
     my $ts_format = <<EOF;
@@ -692,14 +692,53 @@ sub output_summary
 
     ## collect all the output lines
     my @summary_lines =
-      map { [ get_summary_info( $_, $report, $col_spec ) ] } @dles;
+      map { [ $self->get_summary_info($_, $report, $col_spec) ] } @dles;
 
     ## get the summary format. this is based on col_spec, but may
     ## expand maxwidth columns if they have large fields.
-    my $summary_format = get_summary_format($col_spec, @summary_lines);
+    my $summary_format = get_summary_format( $col_spec, @summary_lines );
 
     ## print the header names
-    print $fh swrite( $summary_format, map { $_->[COLSPEC_TITLE] } @$col_spec );
+    my $hdl =
+      $col_spec->[0]->[COLSPEC_WIDTH] +
+      $col_spec->[1]->[COLSPEC_PRE_SPACE] +
+      $col_spec->[1]->[COLSPEC_WIDTH] +
+      $col_spec->[2]->[COLSPEC_PRE_SPACE] +
+      $col_spec->[2]->[COLSPEC_WIDTH];
+    my $ds =
+      $col_spec->[3]->[COLSPEC_WIDTH] +
+      $col_spec->[4]->[COLSPEC_PRE_SPACE] +
+      $col_spec->[4]->[COLSPEC_WIDTH] +
+      $col_spec->[5]->[COLSPEC_PRE_SPACE] +
+      $col_spec->[5]->[COLSPEC_WIDTH] +
+      $col_spec->[6]->[COLSPEC_PRE_SPACE] +
+      $col_spec->[6]->[COLSPEC_WIDTH] +
+      $col_spec->[7]->[COLSPEC_PRE_SPACE] +
+      $col_spec->[7]->[COLSPEC_WIDTH];
+    my $ts =
+      $col_spec->[8]->[COLSPEC_WIDTH] +
+      $col_spec->[9]->[COLSPEC_PRE_SPACE] +
+      $col_spec->[9]->[COLSPEC_WIDTH];
+
+    my $summary_header_format =
+      ' ' x ($col_spec->[0]->[COLSPEC_PRE_SPACE] +
+          $hdl + $col_spec->[4]->[COLSPEC_PRE_SPACE])
+      . '@' . '|' x ($ds - 1)
+      . ' ' x $col_spec->[9]->[COLSPEC_PRE_SPACE]
+      . '@'. '|' x ($ts - 1) . "\n";
+
+    my $summary_dash_format =
+        ' ' x $col_spec->[0]->[COLSPEC_PRE_SPACE]
+      . '@' . '<' x ($hdl - 1)
+      . ' ' x $col_spec->[4]->[COLSPEC_PRE_SPACE]
+      . '@' . '<' x ($ds - 1)
+      . ' ' x $col_spec->[9]->[COLSPEC_PRE_SPACE]
+      . '@' . '<' x ($ts - 1) . "\n";
+
+    print $fh "DUMP SUMMARY:\n";
+    print $fh swrite($summary_header_format, "DUMPER STATS", "TAPER STATS");
+    print $fh swrite($summary_format, map { $_->[COLSPEC_TITLE] } @$col_spec);
+    print $fh swrite($summary_dash_format, '-' x $hdl, '-' x $ds, '-' x $ts);
 
     ## write out each output line
     map { print $fh swrite( $summary_format, @$_ ) } @summary_lines;
@@ -713,6 +752,7 @@ sub output_summary
 
 sub get_summary_info
 {
+    my $self = shift;
     my ( $dle, $report, $col_spec ) = @_;
     my ( $hostname, $disk ) = @$dle;
 
@@ -825,8 +865,14 @@ sub get_summary_info
         }
     }
 
-    my $compression =
-      divzero_col( ( 100 * $out_size ), $orig_size, $col_spec->[5] );
+    my $compression;
+    if (abs($out_size - $orig_size) > 32) {
+        $compression =
+          divzero_col((100 * $out_size), $orig_size, $col_spec->[5]);
+    } else {
+        #compression is too negligible to count
+        $compression = 100;
+    }
 
     ## simple formatting macros
 
@@ -841,20 +887,20 @@ sub get_summary_info
     };
 
     return (
-        $col_format_field->( 0, $hostname ),
-        $col_format_field->( 1, $disk ),
-        $col_format_field->( 2, $level ),
-        $col_format_field->( 3, $orig_size ),
-        $col_format_field->( 4, $out_size ),
-        $col_format_field->( 5, $compression ),
-        $col_format_field->( 6, mnsc($dump_time) ),
-        $col_format_field->( 7, $dump_rate ),
+        $col_format_field->(0, $hostname),
+        $col_format_field->(1, $disk),
+        $col_format_field->(2, $level),
+        ($orig_size) ? $col_format_field->(3, $orig_size / $self->{'unit_div'})
+        : "",
+        ($out_size) ? $col_format_field->(4, $out_size / $self->{'unit_div'})
+        : "",
+        ($compression == 100) ? '--' : $col_format_field->(5, $compression),
+        $col_format_field->(6, mnsc($dump_time)),
+        $col_format_field->(7, $dump_rate),
         $col_format_field->(
-            8, ( defined $tape_time ) ? mnsc($tape_time) : "FAILED"
+            8, (defined $tape_time) ? mnsc($tape_time) : "FAILED"
         ),
-        $col_format_field->(
-            9, ( defined $tape_rate ) ? $tape_rate : "FAILED"
-        ),
+        $col_format_field->(9, (defined $tape_rate) ? $tape_rate : "FAILED"),
     );
 }
 
@@ -865,7 +911,7 @@ sub get_summary_format
 
     foreach my $i ( 0 .. ( @$col_spec - 1 ) ) {
         $col_format[$i] =
-          get_summary_col_format( $col_spec->[$i],
+          get_summary_col_format( $i, $col_spec->[$i],
             map { $_->[$i] } @summary_lines );
     }
 
@@ -874,27 +920,24 @@ sub get_summary_format
 
 sub get_summary_col_format
 {
-    my ( $col, @entries ) = @_;
+    my ( $i, $col, @entries ) = @_;
     my ( $col_width, $col_char );
     ## get the longest string in the column
 
-    if ( $col->[COLSPEC_FORMAT] =~ m/s$/ ) {
-        $col_width = $col->[COLSPEC_WIDTH];    #string
+    $col_width = $col->[COLSPEC_WIDTH];
+    if ($i == 0 || $i == 1) {
         $col_char  = '<';
-
-    } elsif ( $col->[COLSPEC_FORMAT] =~ m/d$/ ) {
-        $col_width = $col->[COLSPEC_WIDTH];    # decimal
-        $col_char  = '>';
-
-    } else {
-        $col_width = $col->[COLSPEC_WIDTH] + $col->[COLSPEC_PREC] + 1;   # float
+    } else { # numeric
         $col_char  = '>';
     }
 
     my $strmax = max( map { length $_ } @entries );
-    $col_width = max( $strmax, $col_width ) if ( $col->[COLSPEC_MAXWIDTH] );
+    if ($col->[COLSPEC_MAXWIDTH]) {
+	$col_width = max($strmax, $col_width);
+	$col->[COLSPEC_WIDTH] = $col_width;
+    }
 
-    return ' ' x $col->[COLSPEC_PRE_SPACE] . '@' . $col_char x $col_width;
+    return ' ' x $col->[COLSPEC_PRE_SPACE] . '@' . $col_char x ($col_width-1);
 }
 
 ## col_spec functions.  I want to deprecate this stuff so bad it hurts.

@@ -42,9 +42,6 @@ my $no_mail = 0;
 my ( $mailto, $outfname, $logfname, $psfname, $xmlout );
 my ( $config_name, $report, $outfh );
 
-# these variables are set after the config
-my ($disp_unit, $unit_div);
-
 
 ## Program subroutines
 
@@ -102,15 +99,6 @@ sub mnsc
     return sprintf( '%d:%02d', $mn, $sc );
 }
 
-# NOTE: du stands for display unit.  it converts a number in the
-# default kilobyte denomination to the display unit as determined by
-# the configuration.
-sub du
-{
-    my ($val) = @_;
-    return ( $val / $unit_div );
-}
-
 sub get_filefh
 {
 
@@ -148,8 +136,8 @@ sub get_mailfh
 
     $datestamp /= 1000000 if $datestamp > 99999999;
     $datestamp = int($datestamp);
-    my $year  = int( $datestamp / 10000 );
-    my $month = int( ( $datestamp / 100 ) % 100 );
+    my $year  = int( $datestamp / 10000 ) - 1900;
+    my $month = int( ( $datestamp / 100 ) % 100 ) - 1;
     my $day   = int( $datestamp % 100 );
     my $date  = POSIX::strftime( '%B %d, %Y', 0, 0, 0, $day, $month, $year );
 
@@ -237,14 +225,6 @@ if ( defined $psfname && ( defined $mailto || $xmlout ) ) {
 
 ## apply summary-specific output configuration and set global
 ## variables based on configuration.
-
-$disp_unit = getconf($CNF_DISPLAYUNIT);
-$unit_div  = getconf_unit_divisor();
-
-# TODO: add support for other display units
-lc($disp_unit) eq "k"
-  or
-  error( "display units other than 'k' not supported (given '$disp_unit')", 1 );
 
 ## Parse the report & set output
 
