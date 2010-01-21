@@ -397,7 +397,6 @@ write_amanda_header(S3Device *self,
     Device *d_self = DEVICE(self);
     size_t header_size;
 
-
     /* build the header */
     header_size = 0; /* no minimum size */
     dumpinfo = make_tapestart_header(DEVICE(self), label, timestamp);
@@ -407,6 +406,7 @@ write_amanda_header(S3Device *self,
 	device_set_error(d_self,
 	    stralloc(_("Amanda tapestart header won't fit in a single block!")),
 	    DEVICE_STATUS_DEVICE_ERROR);
+	dumpfile_free(dumpinfo);
 	g_free(amanda_header.buffer);
 	return FALSE;
     }
@@ -424,7 +424,12 @@ write_amanda_header(S3Device *self,
 	device_set_error(d_self,
 	    vstrallocf(_("While writing amanda header: %s"), s3_strerror(self->s3)),
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
+	dumpfile_free(dumpinfo);
+    } else {
+	dumpfile_free(d_self->volume_header);
+	d_self->volume_header = dumpinfo;
     }
+
     return result;
 }
 
@@ -1148,7 +1153,8 @@ s3_device_read_label(Device *pself) {
 
     amfree(pself->volume_label);
     amfree(pself->volume_time);
-    amfree(pself->volume_header);
+    dumpfile_free(pself->volume_header);
+    pself->volume_header = NULL;
 
     if (device_in_error(self)) return pself->status;
 

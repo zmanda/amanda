@@ -1082,7 +1082,8 @@ static DeviceStatusFlags rait_device_read_label(Device * dself) {
 
     amfree(dself->volume_time);
     amfree(dself->volume_label);
-    amfree(dself->volume_header);
+    dumpfile_free(dself->volume_header);
+    dself->volume_header = NULL;
 
     if (rait_device_in_error(self))
         return dself->status | DEVICE_STATUS_DEVICE_ERROR;
@@ -1227,6 +1228,8 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
     dself->in_file = FALSE;
     amfree(dself->volume_label);
     amfree(dself->volume_time);
+    dumpfile_free(dself->volume_header);
+    dself->volume_header = NULL;
 
     ops = g_ptr_array_sized_new(self->private->children->len);
     for (i = 0; i < self->private->children->len; i ++) {
@@ -1286,6 +1289,7 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
                     /* First device with a volume. */
                     dself->volume_label = g_strdup(child->volume_label);
                     dself->volume_time = g_strdup(child->volume_time);
+                    dself->volume_header = dumpfile_copy(child->volume_header);
                     label_from_device = g_strdup(child->device_name);
                 }
             } else {

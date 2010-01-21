@@ -761,7 +761,8 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
 
     amfree(dself->volume_label);
     amfree(dself->volume_time);
-    amfree(dself->volume_header);
+    dumpfile_free(dself->volume_header);
+    dself->volume_header = NULL;
 
     if (device_in_error(self)) return dself->status;
 
@@ -991,9 +992,11 @@ static gboolean write_tapestart_header(TapeDevice * self, char * label,
 	 device_set_error(d_self,
 	    stralloc(_("Tapestart header won't fit in a single block!")),
 	    DEVICE_STATUS_DEVICE_ERROR);
+	 dumpfile_free(header);
          return FALSE;
      }
-     amfree(header);
+     dumpfile_free(d_self->volume_header);
+     d_self->volume_header = NULL;
 
      result = tape_device_robust_write(self, header_buf, d_self->block_size, &msg);
      if (result != RESULT_SUCCESS) {
@@ -1006,6 +1009,7 @@ static gboolean write_tapestart_header(TapeDevice * self, char * label,
             d_self->is_eom = TRUE;
 
 	amfree(msg);
+	dumpfile_free(header);
 	amfree(header_buf);
 	return FALSE;
      }
@@ -1019,9 +1023,11 @@ static gboolean write_tapestart_header(TapeDevice * self, char * label,
 			 DEVICE_STATUS_DEVICE_ERROR|DEVICE_STATUS_VOLUME_ERROR);
         /* can't tell if this was EOM or not, so assume it is */
         d_self->is_eom = TRUE;
+	dumpfile_free(header);
 	return FALSE;
      }
 
+     d_self->volume_header = header;
      return TRUE;
 }
 

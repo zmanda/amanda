@@ -606,10 +606,11 @@ static gboolean clear_and_prepare_label(VfsDevice * self, char * label,
     label_header = make_tapestart_header(DEVICE(self), label, timestamp);
     if (!write_amanda_header(self, label_header)) {
 	/* write_amanda_header sets error status if necessary */
-        amfree(label_header);
+        dumpfile_free(label_header);
         return FALSE;
     }
-    amfree(label_header);
+    dumpfile_free(d_self->volume_header);
+    d_self->volume_header = label_header;
     self->volume_bytes = VFS_DEVICE_LABEL_SIZE;
     return TRUE;
 }
@@ -658,7 +659,8 @@ static DeviceStatusFlags vfs_device_read_label(Device * dself) {
 
     amfree(dself->volume_label);
     amfree(dself->volume_time);
-    amfree(dself->volume_header);
+    dumpfile_free(dself->volume_header);
+    dself->volume_header = NULL;
 
     if (device_in_error(dself)) return dself->status;
 

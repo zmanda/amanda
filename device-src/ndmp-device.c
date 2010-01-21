@@ -451,7 +451,8 @@ ndmp_device_read_label(
 
     amfree(dself->volume_label);
     amfree(dself->volume_time);
-    amfree(dself->volume_header);
+    dumpfile_free(dself->volume_header);
+    dself->volume_header = NULL;
 
     if (device_in_error(self)) return dself->status;
 
@@ -590,9 +591,9 @@ ndmp_device_start(
 	    device_set_error(dself,
 		stralloc(_("Tapestart header won't fit in a single block!")),
 		DEVICE_STATUS_DEVICE_ERROR);
+	    dumpfile_free(header);
 	    return FALSE;
 	}
-	amfree(header);
 
 	switch (robust_write(self, header_buf, dself->block_size)) {
 	    case ROBUST_WRITE_OK_LEOM:
@@ -612,19 +613,23 @@ ndmp_device_start(
 
 	    case ROBUST_WRITE_ERROR:
 		/* error was set by robust_write or above */
+		dumpfile_free(header);
 		amfree(header_buf);
 		return FALSE;
 
 	}
-
 	amfree(header_buf);
+
 	if (!single_ndmp_mtio(self, NDMP9_MTIO_EOF)) {
 	    /* error was set by single_ndmp_mtio */
+	    dumpfile_free(header);
 	    return FALSE;
 	}
 
 	dself->volume_label = newstralloc(dself->volume_label, label);
 	dself->volume_time = newstralloc(dself->volume_time, timestamp);
+	dumpfile_free(dself->volume_header);
+	dself->volume_header = header;
 
 	/* unset the VOLUME_UNLABELED flag, if it was set */
 	device_set_error(dself, NULL, DEVICE_STATUS_SUCCESS);
