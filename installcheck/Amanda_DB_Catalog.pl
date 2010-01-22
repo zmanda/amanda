@@ -127,6 +127,23 @@ sub partstr {
 	   "$part->{dump}->{hostname} $part->{dump}->{diskname}";
 }
 
+# filter out recursive links from part->dump->parts, without changing
+# the original objects.  Note that this removes the object-identity of
+# dumps.
+sub filter_parts {
+    my ($parts) = @_;
+
+    my @rv;
+    for my $p (@$parts) {
+	$p = do { my %t = %$p; \%t; }; # copy hash
+	$p->{'dump'} = do { my %t = %{$p->{'dump'}}; \%t; };
+	$p->{'dump'}->{'parts'} = undef;
+	push @rv, $p;
+    }
+
+    return \@rv;
+}
+
 sub got_parts {
     my ($got, $exp, $msg, %params) = @_;
 
@@ -135,7 +152,9 @@ sub got_parts {
 	diag("warning: zero parts expected: $msg")
 	    unless $params{'zero_parts_expected'};
     }
-    if (!is_deeply($got, $exp, $msg)) {
+
+    # filter recursive references to avoid confusing old is_deeply instances
+    if (!is_deeply(filter_parts($got), filter_parts($exp), $msg)) {
 	diag("got parts:");
 	for (@$got) {
 	    diag("  " . partstr($_));
@@ -185,6 +204,27 @@ sub dumpstr {
 	   "$dump->{dump_timestamp} $dump->{level}";
 }
 
+# filter out recursive links from dump->parts->dump, without changing
+# the original objects.
+sub filter_dumps {
+    my ($dumps) = @_;
+
+    my @rv;
+    for my $d (@$dumps) {
+	$d = do { my %t = %$d; \%t; }; # copy hash
+	my @dparts = map {
+		return undef unless defined $_;
+		my $p = do { my %t = %$_; \%t }; # copy part
+		$p->{'dump'} = undef;
+		$p;
+	    } @{$d->{'parts'}};
+	$d->{'parts'} = [ @dparts ];
+	push @rv, $d;
+    }
+
+    return \@rv;
+}
+
 sub got_dumps {
     my ($got, $exp, $msg, %params) = @_;
 
@@ -193,7 +233,9 @@ sub got_dumps {
 	diag("warning: zero dumps expected: $msg")
 	    unless $params{'zero_dumps_expected'};
     }
-    if (!is_deeply($got, $exp, $msg)) {
+
+    # filter recursive references to avoid confusing old is_deeply instances
+    if (!is_deeply(filter_dumps($got), filter_dumps($exp), $msg)) {
 	diag("got dumps:");
 	for (@$got) {
 	    diag("  " . dumpstr($_));

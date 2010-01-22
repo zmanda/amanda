@@ -1,4 +1,8 @@
 2010-01-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_DB_Catalog.pl: remove recursive links that
+	  confuse old is_deeply implementations
+
+2010-01-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/DB/Catalog.pm: Use the terms 'dump' and 'part' a bit
 	  more carefully; add ability to query and sort dumps; use weak refs to
 	  break reference loops
