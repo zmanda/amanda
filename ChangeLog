@@ -1,3 +1,13 @@
+2010-01-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/DB/Catalog.pm: Use the terms 'dump' and 'part' a bit
+	  more carefully; add ability to query and sort dumps; use weak refs to
+	  break reference loops
+	* installcheck/Amanda_DB_Catalog.pl: tests
+	* perl/Amanda/Util.pod perl/Amanda/Util.swg: add weaken_ref
+	* server-src/amvault.pl: update to match
+	* perl/Amanda/Logfile.pod perl/Amanda/Logfile.swg: add match_host,
+	  match_disk, and match_datestamp, and document dumps_match_dumpspecs
+
 2010-01-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/ndmp-device.c, device-src/rait-device.c,
 	  device-src/s3-device.c, device-src/tape-device.c,

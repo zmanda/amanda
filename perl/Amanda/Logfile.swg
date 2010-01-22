@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -61,6 +61,7 @@ amglue_add_constant(L_CHUNKSUCCESS, logtype_t);
 amglue_add_constant(L_STATS, logtype_t);
 amglue_add_constant(L_MARKER, logtype_t);
 amglue_add_constant(L_CONT, logtype_t);
+amglue_copy_to_tag(logtype_t, constants);
 
 amglue_add_enum_tag_fns(program_t);
 amglue_add_constant(P_UNKNOWN, program_t);
@@ -75,6 +76,7 @@ amglue_add_constant(P_AMDUMP, program_t);
 amglue_add_constant(P_AMIDXTAPED, program_t);
 amglue_add_constant(P_AMFETCHDUMP, program_t);
 amglue_add_constant(P_AMCHECKDUMP, program_t);
+amglue_copy_to_tag(program_t, constants);
 
 /* TODO: support for writing logfiles is omitted for the moment. */
 
@@ -235,7 +237,7 @@ typedef struct {
 }
 
 amglue_export_ok(
-    find_log search_logfile dumps_match
+    find_log search_logfile dumps_match match_host match_disk match_datestamp
 );
 
 char **find_log(void);
@@ -262,6 +264,13 @@ find_result_t *dumps_match(find_result_t *output_find, char *hostname,
 find_result_t *dumps_match_dumpspecs(find_result_t *output_find,
     amglue_dumpspec_list *dumpspecs,
     gboolean ok);
+
+/* these are actually available for clients as well, but they do not deserve
+ * their own perl module, so they're stuck here */
+gboolean match_host(char *pat, char *value);
+gboolean match_disk(char *pat, char *value);
+gboolean match_datestamp(char *pat, char *value);
+gboolean match_level(char *pat, char *value);
 
 %immutable;
 amanda_log_handler_t *amanda_log_trace_log;

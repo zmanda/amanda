@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -26,7 +26,7 @@ Amanda::Logfile - manage Amanda trace logs
 
 =head1 SYNOPSIS
 
-  use Amanda::Logfile qw(:logtype_t);
+  use Amanda::Logfile qw( :constants );
   use Amanda::Config qw( :getconf config_dir_relative );
 
   for my $logfile (Amanda::Logfile::find_log()) {
@@ -39,7 +39,7 @@ Amanda::Logfile - manage Amanda trace logs
         print "Found info line from $pname: $str\n";
       }
     }
-    Amanda::Logfile::close_logfile($log);
+    Amanda::Logfile::close_logfile($hdl);
 
     my @dumps = Amanda::Logfile::search_logfile("TapeLabel-001", "19780615", $logfile, 1);
 
@@ -60,13 +60,13 @@ This section corresponds to the C C<logfile> module.
 Raw access to logfiles is accomplished by opening a logfile and
 fetching log lines one by one via the C<get_logline> function.
 
-A log line is represented by a list C<($type, $prog, $string)> where
-C<$type> is one of the C<L_*> constants (available in export tag
-C<logtype_t>), C<$prog> is one of the C<P_*> constants (available in
-export tag C<program_t>), and C<$str> is the remainder of the line.
-
-Both families of constants can be converted to symbolic names with
-C<logtype_t_to_string> and C<program_t_to_string>, respectively.
+A log line is represented by a list C<($type, $prog, $string)> where C<$type>
+is one of the C<L_*> constants (available in export tag C<logtype_t>), C<$prog>
+is one of the C<P_*> constants (available in export tag C<program_t>), and
+C<$str> is the remainder of the line. Both sets of constants are also available
+in the usual C<constants> export tag.  Both families of constants can be
+converted to symbolic names with C<logtype_t_to_string> and
+C<program_t_to_string>, respectively.
 
 =head2 FUNCTIONS
 
@@ -160,9 +160,25 @@ match the given expressions.  If C<$ok> is true, don't match partial
 results.  Note that C<$level> is given as a string, since it is a
 match expression.
 
-All of these functions can be imported by name.
+=item C<dumps_match_dumpspecs([@results], [@dumpspecs], $ok)>
+
+Return a filtered version of C<@results>, containing only results that match
+one or more of the dumpspecs.  C<$ok> is as for C<dumps_match>.  Supplying no
+dumpspecs will result in an empty return value.  If multiple dumpspecs match
+the same result, that result will be returned multiple times.
 
 =back
+
+All of these functions can be imported by name.
+
+=head1 MATCHING
+
+The following functions are available to match strings against patterns using
+the rules described in amanda(8):
+
+  match_host($pat, $str);
+  match_disk($pat, $str);
+  match_datestamp($pat, $str);
 
 =head1 DEBUG LOGGING HANDLER
 

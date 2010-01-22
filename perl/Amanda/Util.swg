@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -406,6 +406,17 @@ sub is_pid_alive {
     my $alive = $Amanda_process->process_alive($pid);
     return $alive;
 
+}
+%}
+
+/* Interesting story: Perl added a sv_rvweaken function in 5.6.0 (or earlier?), but
+ * did not include this functionality in Scalar::Util until later.  It doesn't make
+ * much sense, does it? */
+amglue_export_ok(weaken_ref)
+%typemap(in) SV *rv "$1 = $input;"
+%inline %{
+void weaken_ref(SV *rv) {
+    sv_rvweaken(rv);
 }
 %}
 

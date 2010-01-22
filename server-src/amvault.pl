@@ -1,5 +1,5 @@
 #! @PERL@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -75,7 +75,7 @@ sub run {
 
     $self->{'remaining_files'} = [
 	Amanda::DB::Catalog::sort_dumps([ "label", "filenum" ],
-	    Amanda::DB::Catalog::get_dumps(
+	    Amanda::DB::Catalog::get_parts(
 		write_timestamp => $self->{'src_write_timestamp'},
 		ok => 1,
 	)) ];
@@ -125,7 +125,7 @@ sub generate_new_dst_label {
 # add $next_file to the catalog db.  This assumes that the corresponding label
 # is already in the DB.
 
-sub add_dump_to_db {
+sub add_part_to_db {
     my $self = shift;
     my ($next_file, $filenum) = @_;
 
@@ -144,7 +144,7 @@ sub add_dump_to_db {
 	'sec' => 0, # unknown
     };
 
-    Amanda::DB::Catalog::add_dump($dump);
+    Amanda::DB::Catalog::add_part($dump);
 }
 
 # This function is called to copy the next file in $self->{remaining_files}
@@ -393,7 +393,7 @@ sub seek_and_copy {
 	    debug("transfer completed");
 
 	    # add this dump to the logfile
-	    $self->add_dump_to_db($next_file, $dst_filenum);
+	    $self->add_part_to_db($next_file, $dst_filenum);
 
 	    # start up the next copy
 	    $self->start_next_file();

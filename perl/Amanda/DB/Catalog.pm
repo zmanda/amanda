@@ -1,4 +1,4 @@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -31,7 +31,7 @@ Amanda::DB::Catalog - access to the Amanda catalog: where is that dump?
 
   # loop over those timestamps, printing dump info for each one
   for my $timestamp (@timestamps) {
-      my @dumpfiles = Amanda::DB::Catalog::get_dumps(
+      my @dumpfiles = Amanda::DB::Catalog::get_parts(
 	  timestamp => $timestamp,
 	  ok => 1
       );
@@ -42,28 +42,25 @@ Amanda::DB::Catalog - access to the Amanda catalog: where is that dump?
       }
   }
 
-=head1 DESCRIPTION
+=head1 MODEL
 
-=head2 MODEL
+The Amanda catalog is modeled as a set of dumps comprised of parts.  A dump is
+a complete bytestream received from an application, and is uniquely identified
+by the combination of C<hostname>, C<diskname>, C<dump_timestamp>, C<level>,
+and C<write_timestamp>.  A dump may be partial, or even a complete failure.
 
-The Amanda catalog is a set of dumpfiles, where each dumpfile corresponds to a
-single file in a storage volume.  On tapes, files are separated by filemarks
-and numbered sequentially.  This model is preserved on non-tape media such as
-the VFS and S3 devices.  A dumpfile, then, is completely specified by a volume
-label and a file number (I<filenum>).
+A part corresponds to a single file on a volume, containing a portion of the
+data for a dump.  A part, then, is completely specified by a volume label and a
+file number (C<filenum>).  Each part has, among other things, a part number
+(C<partnum>) which gives its relative position within the dump.  The bytestream
+for a dump is recovered by concatenating all of the successful (C<status> = OK)
+parts matching the dump.
 
-The catalog is presented as a single table containing one row per dumpfile.
-Each row has the following values:
+=head2 DUMPS
+
+The dump table contains one row per dump.  It has the following columns:
 
 =over
-
-=item label
-
-(string) -- volume label
-
-=item filenum
-
-(integer) -- file on that volume
 
 =item dump_timestamp
 
@@ -71,7 +68,7 @@ Each row has the following values:
 
 =item write_timestamp
 
-(string) -- timestamp of the run in which the dump was written to this volume
+(string) -- timestamp of the run in which the part was written to this volume
 
 =item hostname
 
@@ -87,56 +84,105 @@ Each row has the following values:
 
 =item status
 
+(string) -- "OK", "PARTIAL", or "FAIL"
+
+=item message
+
+(string) -- reason for PARTIAL or FAIL status
+
+=item nparts
+
+(integer) -- number of successful parts in this dump
+
+=item kb
+
+(integer) -- size (in kb) of this part
+
+=item sec
+
+(integer) -- time (in seconds) spent writing this part
+
+=item parts
+
+(arrayref) -- array of parts, indexed by partnum (so C<< $parts->[0] >> is
+always C<undef>).  When multiple partial parts are available, the choice of the
+partial that is included in this array is undefined.
+
+=back
+
+A dump is represented as a hashref with these keys.
+
+The C<write_timestamp> gives the time of the amanda run in which the part was
+written to this volume.  The C<write_timestamp> may differ from the
+C<dump_timestamp> if, for example, I<amflush> wrote the part to tape after the
+initial dump.
+
+=head2 PARTS
+
+The parts table contains one row per part, and has the following columns:
+
+=over
+
+=item label
+
+(string) -- volume label
+
+=item filenum
+
+(integer) -- file on that volume
+
+=item dump
+
+(object ref) -- a reference to the dump containing this part
+
+=item status
+
 (string) -- "OK", "PARTIAL" or some other descriptor
 
 =item partnum
 
-(integer) -- part number of a split dump (1-based)
-
-=item nparts
-
-(integer) -- number of parts in this dump (estimated)
+(integer) -- part number of a split part (1-based)
 
 =item kb
 
-(integer) -- size (in kb) of this dumpfile
+(integer) -- size (in kb) of this part
 
 =item sec
 
-(integer) -- time (in seconds) spent writing this dumpfile
+(integer) -- time (in seconds) spent writing this part
 
 =back
 
-A dumpfile is represented as a hashref with these keys.
+A part is represented as a hashref with these keys.  The C<label> and
+C<filenum> serve as a primary key. 
 
-The label and filenum serve as a primary key.  The dump_timestamp, hostname,
-diskname, and level uniquely identify the dump.  The write_timestamp gives the
-time that the dump was written to this volume.  The write_timestamp may differ
-from the dump_timestamp if, for example, I<amflush> wrote the dump to tape
-after the initial dump.  The remaining fields are informational.
+Note that parts' C<dump> and dumps' C<parts> create a reference loop.  This is
+broken by making the C<parts> array's contents weak references in C<get_dumps>,
+and the C<dump> reference weak in C<get_parts>.
 
 =head2 NOTES
 
-A dumpfile may be a part of a larger (split) dump, or may be partial (due to
-end of tape or some other error), so the contents of the catalog require some
-interpretation in order to find a particular dump.
-
 All timestamps used in this module are full-length, in the format
 C<YYYYMMDDHHMMSS>.  If the underlying data contains only datestamps, they are
-zero-extended into timestamps: C<YYYYMMDD000000>.  A dump_timestamp always
+zero-extended into timestamps: C<YYYYMMDD000000>.  A C<dump_timestamp> always
 corresponds to the initiation of the I<original> dump run, while
-write_timestamp gives the time the file was written to the volume.  When
-dumpfiles are migrated from volume to volume (e.g., by I<amflush>), the
-dump_timestamp does not change.  
+C<write_timestamp> gives the time the file was written to the volume.  When
+parts are migrated from volume to volume (e.g., by I<amvault>), the
+C<dump_timestamp> does not change.  
 
-In Amanda, the tuple (hostname, diskname, level, dump_timestamp) serves as a unique
-identifier for a dump.  Since all of this information is preserved during
-migrations, a catalog query with these four terms will return all dumpfiles
-relevant to that dump.
+In Amanda, the tuple (C<hostname>, C<diskname>, C<level>, C<dump_timestamp>)
+serves as a unique identifier for a dump bytestream, but because the bytestream
+may appear several times in the catalog (due to vaulting) the additional
+C<write_timestamp> is required to identify a particular on-storage instance of
+a dump.  Note that the part sizes may differ between instances, so it is not
+valid to concatenate parts from different dump instances.
 
-=head2 QUERIES
+=head1 INTERFACES
 
-This API is read-only at the moment.  The following functions are available:
+=head2 SUMMARY DATA
+
+The following functions provide summary data based on the contents of the
+catalog.
 
 =over
 
@@ -152,85 +198,95 @@ Return the most recent write timestamp.
 
 Return a list of labels for volumes written at the given timestamp.
 
-=item get_dumps(%parameters)
+=back
 
-This function is the workhorse query interface, and returns a sequence of
-dumpfiles.  Values in C<%parameters> restrict the set of dumpfiles that are
-returned.  The hash can have any of the following keys:
+=head2 PARTS
+
+=over
+
+=item get_parts(%parameters)
+
+This function returns a sequence of parts.  Values in C<%parameters> restrict
+the set of parts that are returned.  The hash can have any of the following
+keys:
 
 =over
 
 =item write_timestamp
 
-restrict to dumpfiles written at this timestamp
+restrict to parts written at this timestamp
 
 =item write_timestamps
 
-(arrayref) restrict to dumpfiles written at any of these timestamps
+(arrayref) restrict to parts written at any of these timestamps
 
 =item dump_timestamp
 
-restrict to dumpfiles with exactly this timestamp
+restrict to parts with exactly this timestamp
 
 =item dump_timestamps
 
-(arrayref) restrict to dumpfiles with any of these timestamps
+(arrayref) restrict to parts with any of these timestamps
 
 =item dump_timestamp_match
 
-restrict to dumpfiles with timestamps matching this expression
+restrict to parts with timestamps matching this expression
 
 =item hostname
 
-restrict to dumpfiles with exactly this hostname
+restrict to parts with exactly this hostname
 
 =item hostnames
 
-(arrayref) restrict to dumpfiles with any of these hostnames
+(arrayref) restrict to parts with any of these hostnames
 
 =item hostname_match
 
-restrict to dumpfiles with hostnames matching this expression
+restrict to parts with hostnames matching this expression
 
 =item diskname
 
-restrict to dumpfiles with exactly this diskname
+restrict to parts with exactly this diskname
 
 =item disknames
 
-(arrayref) restrict to dumpfiles with any of these disknames
+(arrayref) restrict to parts with any of these disknames
 
 =item diskname_match
 
-restrict to dumpfiles with disknames matching this expression
+restrict to parts with disknames matching this expression
 
 =item label
 
-restrict to dumpfiles with exactly this label
+restrict to parts with exactly this label
 
 =item labels
 
-(arrayref) restrict to dumpfiles with any of these labels
+(arrayref) restrict to parts with any of these labels
 
 =item level
 
-restrict to dumpfiles with exactly this level
+restrict to parts with exactly this level
 
 =item levels
 
-(arrayref) restrict to dumpfiles with any of these levels
+(arrayref) restrict to parts with any of these levels
 
 =item status
 
-restrict to dumpfiles with this status
+restrict to parts with this status
+
+=item dumpspecs
+
+(arrayref of dumpspecs) restruct to parts matching one or more of these dumpspecs
 
 =back
 
 Match expressions are described in the amanda(8) manual page.
 
-=item sort_dumps([ $key1, $key2, .. ], @dumps)
+=item sort_parts([ $key1, $key2, .. ], @parts)
 
-Given a list of dumps, this function sorts that list by the requested keys.
+Given a list of parts, this function sorts that list by the requested keys.
 The following keys are available:
 
 =over
@@ -249,27 +305,58 @@ The following keys are available:
 
 =item label
 
+Note that this sorts labels I<lexically>, not necessarily in the order they were used!
+
 =item partnum
 
-=item kb
-
-=item sec
+=item nparts
 
 =back
 
 Keys are processed from left to right: if two dumps have the same value for
-C<$key1>, then C<$key2> is examined, and so on.  Key names may be prefixed by
-a dash (C<->) to reverse the order.
+C<$key1>, then C<$key2> is examined, and so on.  Key names may be prefixed by a
+dash (C<->) to reverse the order.
 
-=item add_dump($dumpfile)
+Note that some of these keys are dump keys; the function will automatically
+access those values via the C<dump> attribute.
 
-Add the given dumpfile to the database.  In terms of logfiles, this will either
-create a new logfile (if the dump's C<write_timestamp> has not been seen
+=back
+
+=head2 DUMPS
+
+=over
+
+=item get_dumps(%parameters)
+
+This function returns a sequence of dumps.  Values in C<%parameters> restrict
+the set of dumps that are returned.  The same keys as are used for C<get_parts>
+are available here, with the exception of C<label> and C<labels>.  The
+C<status> key applies to the dump status, not the status of its constituent
+parts.
+
+=item sort_dumps([ $key1, $key2 ], @dumps)
+
+Like C<sort_parts>, this sorts a sequence of dumps generated by C<get_dumps>.
+The same keys are available, with the exception of C<label>, C<filenum>, and
+C<partnum>.
+
+=back
+
+=head2 ADDING DATA
+
+=over
+
+=item add_part($part)
+
+Add the given part to the database.  In terms of logfiles, this will either
+create a new logfile (if the part's C<write_timestamp> has not been seen
 before) or append to an existing logfile.  Note that a new logfile will require
 a corresponding new entry in the tapelist.
 
 Note that no locking is performed: multiple simultaneous calls to this function
 can result in a corrupted or incorrect logfile.
+
+TODO: add_dump
 
 =back
 
@@ -283,10 +370,10 @@ this module.
 
 =cut
 
-use Amanda::Logfile;
+use Amanda::Logfile qw( :constants match_disk match_host match_datestamp );
 use Amanda::Tapelist;
 use Amanda::Config qw( :init :getconf config_dir_relative );
-use Amanda::Util qw( quote_string );
+use Amanda::Util qw( quote_string weaken_ref );
 use warnings;
 use strict;
 
@@ -328,7 +415,11 @@ sub get_latest_write_timestamp {
     return undef;
 }
 
-sub get_dumps {
+# this generic function implements the loop of scanning logfiles to find
+# the requested data; get_parts and get_dumps then adjust the results to
+# match what the user expects.
+sub get_parts_and_dumps {
+    my $get_what = shift; # "parts" or "dumps"
     my %params = @_;
     my $logfile_dir = config_dir_relative(getconf($CNF_LOGDIR));
 
@@ -346,8 +437,12 @@ sub get_dumps {
 	if exists($params{'diskname'});
     push @{$params{'levels'}}, $params{'level'} 
 	if exists($params{'level'});
-    push @{$params{'labels'}}, $params{'label'} 
-	if exists($params{'label'});
+    if ($get_what eq 'parts') {
+	push @{$params{'labels'}}, $params{'label'} 
+	    if exists($params{'label'});
+    } else {
+	delete $params{'labels'};
+    }
 
     # Since we're working from logfiles, we have to pick the logfiles we'll use first.
     # Then we can use search_logfile.
@@ -387,9 +482,11 @@ sub get_dumps {
     %labels_hash = map { ($_, undef) } @{$params{'labels'}}
 	if (exists($params{'labels'}));
 
+    my %dumps;
+    my @parts;
+
     # now loop over those logfiles and use search_logfile to load the dumpfiles
     # from them, then process each entry from the logfile
-    my @results;
     for my $logfile (@logfiles) {
 	# get the raw contents from search_logfile
 	my @find_results = Amanda::Logfile::search_logfile(undef, undef,
@@ -424,50 +521,201 @@ sub get_dumps {
 		and !exists($levels_hash{$find_result->{'level'}}));
 	    next if (%labels_hash 
 		and !exists($labels_hash{$find_result->{'label'}}));
-	    next if (exists($params{'status'}) 
-		and $find_result->{'status'} ne $params{'status'});
+	    if ($get_what eq 'parts') {
+		next if (exists($params{'status'}) 
+		    and $find_result->{'status'} ne $params{'status'});
+	    }
 
-	    # start setting up a dumpfile hash for this result
-	    my %dumpfile = (
-		'write_timestamp' => $write_timestamp,
-		'dump_timestamp' => zeropad($find_result->{'timestamp'}),
-		'hostname' => $find_result->{'hostname'},
-		'diskname' => $find_result->{'diskname'},
-		'level' => $find_result->{'level'},
-		'label' => $find_result->{'label'},
-		'filenum' => $find_result->{'filenum'},
-		'status' => $find_result->{'status'},
-		'sec' => $find_result->{'sec'},
-		'kb' => $find_result->{'kb'},
+	    # filter each result against dumpspecs, to avoid dumps_match_dumpspecs'
+	    # tendency to produce duplicate results
+	    next if ($params{'dumpspecs'}
+		and !Amanda::Logfile::dumps_match_dumpspecs([$find_result],
+						    $params{'dumpspecs'}, 0));
+
+	    my $dump_timestamp = zeropad($find_result->{'timestamp'});
+
+	    my $dumpkey = join("\0", $find_result->{'hostname'}, $find_result->{'diskname'},
+			             $write_timestamp, $find_result->{'level'});
+	    my $dump = $dumps{$dumpkey};
+	    if (!defined $dump) {
+		$dump = $dumps{$dumpkey} = {
+		    dump_timestamp => $dump_timestamp,
+		    write_timestamp => $write_timestamp,
+		    hostname => $find_result->{'hostname'},
+		    diskname => $find_result->{'diskname'},
+		    level => $find_result->{'level'}+0,
+		    # the rest of these params are unknown until we see a taper
+		    # DONE, PARTIAL, or FAIL line, although we count nparts
+		    # manually instead of relying on the logfile
+		    status => "UNKNOWN",
+		    message => "",
+		    nparts => 0,
+		    kb => -1,
+		    sec => -1,
+		};
+	    }
+
+	    # start setting up a part hash for this result
+	    my %part = (
+		label => $find_result->{'label'},
+		filenum => $find_result->{'filenum'},
+		dump => $dump,
+		status => $find_result->{'status'},
+		sec => $find_result->{'sec'},
+		kb => $find_result->{'kb'},
+		partnum => $find_result->{'partnum'},
 	    );
 
-	    # partnum and nparts takes some special interpretation
-	    $dumpfile{'partnum'} = $find_result->{'partnum'};
-	    $dumpfile{'nparts'} = $find_result->{'totalparts'};
+	    # weaken the dump ref if we're returning dumps
+	    weaken_ref($part{'dump'})
+		if ($get_what eq 'dumps');
 
-	    # check partnum and nparts
-	    next if (defined($params{'partnum'}) and $dumpfile{'partnum'} != $params{'partnum'});
-	    next if (defined($params{'nparts'}) and $dumpfile{'nparts'} != $params{'nparts'});
+	    # count the number of successful parts in the dump
+	    $dump->{'nparts'}++ if $part{'status'} eq 'OK';
+	    
+	    # and add a ref to the array of parts; if we're getting
+	    # parts, then this is a weak ref
+	    $dump->{'parts'}[$part{'partnum'}] = \%part;
+	    weaken_ref($dump->{'parts'}[$part{'partnum'}])
+		if ($get_what eq 'parts');
 
-	    push @results, \%dumpfile;
+	    push @parts, \%part;
 	}
+
+	# re-read the logfile to extract dump-level info that's not captured by
+	# search_logfile
+	my $logh = Amanda::Logfile::open_logfile("$logfile_dir/$logfile");
+	die "logfile '$logfile' not found" unless $logh;
+	while (my ($type, $prog, $str) = Amanda::Logfile::get_logline($logh)) {
+	    next unless $prog == $P_TAPER;
+	    my $status;
+	    if ($type == $L_DONE) {
+		$status = 'OK';
+	    } elsif ($type == $L_PARTIAL) {
+		$status = 'PARTIAL';
+	    } elsif ($type == $L_FAIL) {
+		$status = 'FAIL';
+	    } else {
+		next;
+	    }
+
+	    # now extract the appropriate info; luckily these log lines have the same
+	    # format, more or less
+	    my ($hostname, $diskname, $dump_timestamp, $nparts, $level, $secs, $kb, $message);
+	    ($hostname, $str) = Amanda::Util::skip_quoted_string($str);
+	    ($diskname, $str) = Amanda::Util::skip_quoted_string($str);
+	    ($dump_timestamp, $str) = Amanda::Util::skip_quoted_string($str);
+	    if ($status ne 'FAIL') {
+		($nparts, $str) = Amanda::Util::skip_quoted_string($str);
+	    } else {
+		$nparts = 0;
+	    }
+	    ($level, $str) = Amanda::Util::skip_quoted_string($str);
+	    if ($status ne 'FAIL') {
+		my $s = $str;
+		($secs, $kb, $str) = ($str =~ /^\[sec ([0-9.]+) kb (\d+) .*\] ?(.*)$/)
+		    or die("'$s'");
+	    }
+	    if ($status ne 'OK') {
+		$message = $str;
+	    } else {
+		$message = '';
+	    }
+
+	    $hostname = Amanda::Util::unquote_string($hostname);
+	    $diskname = Amanda::Util::unquote_string($diskname);
+	    $message = Amanda::Util::unquote_string($message) if $message;
+
+	    # filter against dump criteria
+	    next if ($params{'dump_timestamp_match'}
+		and !match_datestamp($params{'dump_timestamp_match'}, zeropad($dump_timestamp)));
+	    next if (%dump_timestamps_hash 
+		and !exists($dump_timestamps_hash{zeropad($dump_timestamp)}));
+
+	    next if ($params{'hostname_match'}
+		and !match_host($params{'hostname_match'}, $hostname));
+	    next if (%hostnames_hash 
+		and !exists($hostnames_hash{$hostname}));
+
+	    next if ($params{'diskname_match'}
+		and !match_disk($params{'diskname_match'}, $diskname));
+	    next if (%disknames_hash 
+		and !exists($disknames_hash{$diskname}));
+
+	    next if (%levels_hash 
+		and !exists($levels_hash{$level}));
+	    # get_dumps filters on status
+
+	    my $dumpkey = join("\0", $hostname, $diskname, $write_timestamp, $level);
+	    my $dump = $dumps{$dumpkey};
+	    if (!defined $dump) {
+		# this probably shouldn't happen, but may happen if a dump gets logged
+		# with no parts; be liberal in what you accept!
+		$dump = $dumps{$dumpkey} = {
+		    dump_timestamp => $dump_timestamp,
+		    write_timestamp => $write_timestamp,
+		    hostname => $hostname,
+		    diskname => $diskname,
+		    level => $level+0,
+		    nparts => $nparts, # hopefully 0?
+		};
+	    }
+
+	    $dump->{'status'} = $status;
+	    $dump->{'message'} = $message;
+	    if ($status eq 'FAIL') {
+		$dump->{'kb'} = 0;
+		$dump->{'sec'} = 0.0;
+	    } else {
+		$dump->{'kb'} = $kb+0;
+		$dump->{'sec'} = $secs+0.0;
+	    }
+	    $dump->{'status'} = $status;
+	}
+	Amanda::Logfile::close_logfile($logh);
     }
 
-    return @results;
+    return [ values %dumps], \@parts;
 }
 
-sub sort_dumps {
+sub get_parts {
+    my ($dumps, $parts) = get_parts_and_dumps("parts", @_);
+    return @$parts;
+}
+
+sub get_dumps {
+    my %params = @_;
+    my ($dumps, $parts) = get_parts_and_dumps("dumps", @_);
+    my @dumps = @$dumps;
+
+    if (exists $params{'status'}) {
+	@dumps = grep { $_->{'status'} eq $params{'status'} } @dumps;
+    }
+
+    return @dumps;
+}
+
+sub sort_parts {
     my ($keys, @dumps) = @_;
 
+    # TODO: make this more efficient by selecting the comparison
+    # functions once, in advance, and just applying them
     return sort {
 	my $res;
 	for my $key (@$keys) {
 	    my ($rev, $k) = ($key =~ /^(-?)(.*)$/);
 
-	    if ($k =~ /^(kb|nparts|partnum|filenum|level)$/) {
-		# compare numerically
+	    if ($k =~ /^(partnum|filenum)$/) {
+		# compare part components numerically
 		$res = $a->{$k} <=> $b->{$k};
-	    } else {
+	    } elsif ($k =~ /^(nparts|level)$/) {
+		# compare dump components numerically
+		$res = $a->{'dump'}->{$k} <=> $b->{'dump'}->{$k};
+	    } elsif ($k =~ /^(hostname|diskname|write_timestamp|dump_timestamp)$/) {
+		# compare dump components alphabetically
+		$res = $a->{'dump'}->{$k} cmp $b->{'dump'}->{$k};
+	    } else { # (label)
+		# compare part components alphabetically
 		$res = $a->{$k} cmp $b->{$k};
 	    }
 	    $res = -$res if ($rev eq '-' and $res);
@@ -477,13 +725,37 @@ sub sort_dumps {
     } @dumps;
 }
 
-# caches for add_dump() to avoid repeatedly looking up the log
-# filename for a particular write_timestamp.
-my $add_dump_last_label = undef;
-my $add_dump_last_write_timestamp = undef;
-my $add_dump_last_logfile = undef;
+sub sort_dumps {
+    my ($keys, @dumps) = @_;
 
-sub add_dump {
+    # TODO: make this more efficient by selecting the comparison
+    # functions once, in advance, and just applying them
+    return sort {
+	my $res;
+	for my $key (@$keys) {
+	    my ($rev, $k) = ($key =~ /^(-?)(.*)$/);
+
+	    if ($k =~ /^(nparts|level)$/) {
+		# compare dump components numerically
+		$res = $a->{$k} <=> $b->{$k};
+	    } else { # ($k =~ /^(hostname|diskname|write_timestamp|dump_timestamp)$/)
+		# compare dump components alphabetically
+		$res = $a->{$k} cmp $b->{$k};
+	    } 
+	    $res = -$res if ($rev eq '-' and $res);
+	    return $res if $res;
+	}
+	return 0;
+    } @dumps;
+}
+
+# caches for add_part() to avoid repeatedly looking up the log
+# filename for a particular write_timestamp.
+my $add_part_last_label = undef;
+my $add_part_last_write_timestamp = undef;
+my $add_part_last_logfile = undef;
+
+sub add_part {
     my ($dump) = @_;
     my $found;
     my $logfh;
@@ -498,12 +770,12 @@ sub add_dump {
     die "dump has no 'write_timestamp'" unless defined $write_timestamp;
 
     # consult our one-element cache for this label and write_timestamp
-    if (!defined $add_dump_last_label
-	or $add_dump_last_label ne $dump->{'label'}
-	or $add_dump_last_write_timestamp ne $dump->{'write_timestamp'}) {
+    if (!defined $add_part_last_label
+	or $add_part_last_label ne $dump->{'label'}
+	or $add_part_last_write_timestamp ne $dump->{'write_timestamp'}) {
 
 	# update the cache
-	$add_dump_last_logfile = undef;
+	$add_part_last_logfile = undef;
 	LOGFILE:
 	for my $lf (Amanda::Logfile::find_log()) {
 	    next unless (my ($log_timestamp) = $lf =~ /^log\.([0-9]+)(?:\.[0-9]+|\.amflush)?$/);
@@ -516,15 +788,15 @@ sub add_dump {
 		next unless (defined $find_result->{'label'});
 
 		if ($find_result->{'label'} eq $dump->{'label'}) {
-		    $add_dump_last_label = $dump->{'label'};
-		    $add_dump_last_write_timestamp = $dump->{'write_timestamp'};
-		    $add_dump_last_logfile = $lf;
+		    $add_part_last_label = $dump->{'label'};
+		    $add_part_last_write_timestamp = $dump->{'write_timestamp'};
+		    $add_part_last_logfile = $lf;
 		    last LOGFILE;
 		}
 	    }
 	}
     }
-    $logfile = $add_dump_last_logfile;
+    $logfile = $add_part_last_logfile;
 
     # truncate the write_timestamp if we're not using timestamps
     if (!getconf($CNF_USETIMESTAMPS)) {

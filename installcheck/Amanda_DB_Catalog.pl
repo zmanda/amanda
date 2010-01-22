@@ -1,4 +1,4 @@
-# Copyright (c) 2008 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -16,14 +16,17 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 39;
+use Test::More tests => 62;
 use File::Path;
+use Data::Dumper;
 use strict;
+use warnings;
 
 use lib "@amperldir@";
 use Installcheck::Config;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::DB::Catalog;
+use Amanda::Cmdline;
 
 # set up and load a simple config
 my $testconf = Installcheck::Config->new();
@@ -39,16 +42,17 @@ is_deeply([ Amanda::DB::Catalog::get_write_timestamps() ], [],
 is_deeply(Amanda::DB::Catalog::get_latest_write_timestamp(), undef,
     "No latest write_timestamp in an empty catalog");
 
-is_deeply([ Amanda::DB::Catalog::get_dumps() ], [],
-    "No dumpfiles in an empty catalog");
+is_deeply([ Amanda::DB::Catalog::get_parts() ], [],
+    "No parts in an empty catalog");
 
 # and add some logfiles to query, and a corresponding tapelist, while also gathering
-# a list of dumpfiles for comparison with the results from Amanda::DB::Catalog
+# a list of parts and dumps for comparison with the results from Amanda::DB::Catalog
 my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
 my $tapelist_fn = config_dir_relative(getconf($CNF_TAPELIST));
 my $output;
 my $write_timestamp;
-my %dumpfiles;
+my (%parts, %dumps, $last_dump);
+my @dumpspecs;
 open (my $tapelist, ">", $tapelist_fn);
 while (<DATA>) {
     # skip comments
@@ -72,15 +76,27 @@ while (<DATA>) {
 	next;
     }
 
-    # new dumpfile
-    if (/^:dumpfile (\S+) (\S+) (\S+) (\S+) (\d+) (\S+) (\d+) (\d+) (\d+) (\S+) (\S+) (\d+)/) {
-	$dumpfiles{$1} = {
+    # new dump
+    if (/^:dump (\S+) (\S+) (\S+) (\S+) (\d+) (\S+) (\S+) (\d+) (\S+) (\d+)/) {
+	$last_dump = $dumps{$1} = {
 	    'dump_timestamp' => $2,	'hostname' => $3,	    'diskname' => $4,
-	    'level' => $5,		'label' => $6,		    'filenum' => $7,
-	    'partnum' => $8,		'nparts' => $9,		    'status' => $10,
-	    'sec' => $11+0.0,		'kb' => $12,
+	    'level' => $5+0,		'status' => $6,		    'message' => $7,
+	    'nparts' => $8,		'sec' => $9+0.0,	    'kb' => $10,
 	    'write_timestamp' => $write_timestamp,
 	};
+	$last_dump->{'message'} = ''
+	    if $last_dump->{'message'} eq '""';
+	next;
+    }
+
+    # new part
+    if (/^:part (\S+) (\S+) (\S+) (\d+) (\d+) (\S+) (\S+) (\d+)/) {
+	$parts{$1} = {
+	    'dump' => $dumps{$2},	'label' => $3,		    'filenum' => $4,
+	    'partnum' => $5,		'status' => $6,		    'sec' => $7+0.0,
+	    'kb' => $8,
+	};
+	$last_dump->{'parts'}->[$parts{$1}->{'partnum'}] = $parts{$1};
 	next;
     }
 
@@ -103,30 +119,58 @@ is(Amanda::DB::Catalog::get_latest_write_timestamp(), '20080414144444',
     "get_latest_write_timestamp correctly returns the latest write timestamp");
 
 ##
-# test get_dumps and sort_dumps
+# test get_parts and sort_parts
 
-# get dumps filtered by a regexp on the key
-sub dump_names($) {
-    my ($expr) = @_; 
-    my @selected_keys = grep { $_ =~ $expr } keys %dumpfiles;
-    return map { $dumpfiles{$_} } @selected_keys;
+sub partstr {
+    my ($part) = @_;
+    return "$part->{label}:$part->{filenum}: " .
+	   "$part->{dump}->{hostname} $part->{dump}->{diskname}";
 }
 
-# get dumps filtered by an expression on the dumpfile itself
-sub dumps(&) {
+sub got_parts {
+    my ($got, $exp, $msg, %params) = @_;
+
+    # give a warning if we accidentally select zero parts
+    if (@$exp == 0) {
+	diag("warning: zero parts expected: $msg")
+	    unless $params{'zero_parts_expected'};
+    }
+    if (!is_deeply($got, $exp, $msg)) {
+	diag("got parts:");
+	for (@$got) {
+	    diag("  " . partstr($_));
+	}
+	diag("expected parts:");
+	for (@$exp) {
+	    diag("  " . partstr($_));
+	}
+	return '';
+    }
+    return 1;
+}
+
+# get parts filtered by a regexp on the key
+sub parts_named($) {
+    my ($expr) = @_; 
+    my @selected_keys = grep { $_ =~ $expr } keys %parts;
+    return map { $parts{$_} } @selected_keys;
+}
+
+# get parts filtered by an expression on the dumpfile itself
+sub parts_matching(&) {
     my ($block) = @_; 
-    return grep { &$block } values %dumpfiles;
+    return grep { &$block } values %parts;
 }
 
 # put @_ in a canonical order
-sub sortdumps {
+sub sortparts {
     map {
 	# convert bigints to strings and on to integers so is_deeply doesn't get confused
-	$_->{'level'} = "$_->{level}" + 0;
+	$_->{'dump'}->{'level'} = "$_->{dump}->{level}" + 0;
+	$_->{'dump'}->{'kb'} = "$_->{dump}->{kb}" + 0;
 	$_->{'filenum'} = "$_->{filenum}" + 0;
 	$_->{'kb'} = "$_->{kb}" + 0;
 	$_->{'partnum'} = "$_->{partnum}" + 0;
-	$_->{'nparts'} = "$_->{nparts}" + 0;
 	$_;
     } sort {
 	$a->{'label'} cmp $b->{'label'}
@@ -135,113 +179,190 @@ sub sortdumps {
     @_;
 }
 
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps() ],
-    [ sortdumps dump_names qr/.*/ ],
-    "get_dumps returns all dumps when given no parameters");
+sub dumpstr {
+    my ($dump) = @_;
+    return "$dump->{hostname} $dump->{diskname} " .
+	   "$dump->{dump_timestamp} $dump->{level}";
+}
 
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(write_timestamp => '20080111000000') ],
-    [ sortdumps dump_names qr/somebox_lib_20080111/ ],
-    "get_dumps parameter write_timestamp");
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(write_timestamp => '20080111') ],
-    [ sortdumps dump_names qr/somebox_lib_20080111/ ],
-    "get_dumps accepts a short write_timestamp and zero-pads it");
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(write_timestamps => ['20080111000000','20080222222222']) ],
-    [ sortdumps dump_names qr/(20080111|20080222222222_p\d*)$/ ],
-    "get_dumps parameter write_timestamps");
+sub got_dumps {
+    my ($got, $exp, $msg, %params) = @_;
 
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(dump_timestamp => '20080111000000') ],
-    [ sortdumps dump_names qr/somebox_lib_20080111/ ],
-    "get_dumps parameter dump_timestamp");
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(dump_timestamp => '20080111') ],
-    [ sortdumps dump_names qr/somebox_lib_20080111/ ],
-    "get_dumps accepts a short dump_timestamp and zero-pads it");
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(dump_timestamps => ['20080111000000','20080222222222']) ],
-    [ sortdumps dump_names qr/(20080111|20080222222222_p\d*)$/ ],
-    "get_dumps parameter dump_timestamps");
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(dump_timestamp_match => '200801-2') ],
-    [ sortdumps dump_names qr/20080[12]/ ],
-    "get_dumps parameter dump_timestamp_match");
+    # give a warning if we accidentally select zero dumps
+    if (@$exp == 0) {
+	diag("warning: zero dumps expected: $msg")
+	    unless $params{'zero_dumps_expected'};
+    }
+    if (!is_deeply($got, $exp, $msg)) {
+	diag("got dumps:");
+	for (@$got) {
+	    diag("  " . dumpstr($_));
+	}
+	diag("expected dumps:");
+	for (@$exp) {
+	    diag("  " . dumpstr($_));
+	}
+	return '';
+    }
+    return 1;
+}
 
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(hostname => 'otherbox') ],
-    [ sortdumps dump_names qr/^otherbox_/ ],
-    "get_dumps parameter hostname");
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(hostnames => ['otherbox','somebox']) ],
-    [ sortdumps dump_names qr/^(otherbox_|somebox_)/ ],
-    "get_dumps parameter hostnames");
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(hostname_match => '*box') ],
-    [ sortdumps dump_names qr/box/ ],
-    "get_dumps parameter hostname_match");
+# get dumps filtered by a regexp on the key
+sub dumps_named($) {
+    my ($expr) = @_; 
+    my @selected_keys = grep { $_ =~ $expr } keys %dumps;
+    return map { $dumps{$_} } @selected_keys;
+}
 
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(diskname => '/lib') ],
-    [ sortdumps dump_names qr/_lib_/ ],
-    "get_dumps parameter diskname");
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(disknames => ['/lib','/usr/bin']) ],
-    [ sortdumps dump_names qr/(_lib_|_usr_bin_)/ ],
-    "get_dumps parameter disknames");
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(diskname_match => '/usr') ],
-    [ sortdumps dump_names qr/_usr_/ ],
-    "get_dumps parameter diskname_match");
+# get dumps filtered by an expression on the dumpfile itself
+sub dumps_matching(&) {
+    my ($block) = @_; 
+    return grep { &$block } values %dumps;
+}
 
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(label => 'Conf-001') ],
-    [ sortdumps dumps { $_->{'label'} eq 'Conf-001' } ],
-    "get_dumps parameter label");
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(labels => ['Conf-002','Conf-003']) ],
-    [ sortdumps dumps { $_->{'label'} eq 'Conf-002' or $_->{'label'} eq 'Conf-003' } ],
-    "get_dumps parameter labels");
+# put @_ in a canonical order
+sub sortdumps {
+    map {
+	# convert bigints to strings and on to integers so is_deeply doesn't get confused
+	$_->{'level'} = "$_->{level}" + 0;
+	$_->{'kb'} = "$_->{kb}" + 0;
+	$_->{'nparts'} = "$_->{nparts}" + 0;
+	$_;
+    } sort {
+	$a->{'write_timestamp'} cmp $b->{'write_timestamp'}
+	    or $a->{'hostname'} cmp $b->{'hostname'}
+	    or $a->{'diskname'} cmp $b->{'diskname'}
+	    or $a->{'level'} <=> $b->{'level'}
+    }
+    @_;
+}
 
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(level => 0) ],
-    [ sortdumps dumps { $_->{'level'} == 0 } ],
-    "get_dumps parameter level");
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(levels => [ 1 ]) ],
-    [ sortdumps dumps { $_->{'level'} == 1 } ],
-    "get_dumps parameter levels");
+### test part selecting
 
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(status => "OK") ],
-    [ sortdumps dumps { $_->{'status'} eq "OK" } ],
-    "get_dumps parameter status = OK");
+got_parts([ sortparts Amanda::DB::Catalog::get_parts() ],
+    [ sortparts parts_named qr/.*/ ],
+    "get_parts returns all dumps when given no parameters");
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(write_timestamp => '20080111000000') ],
+    [ sortparts parts_named qr/somebox_lib_20080111/ ],
+    "get_parts parameter write_timestamp");
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(write_timestamp => '20080111') ],
+    [ sortparts parts_named qr/somebox_lib_20080111/ ],
+    "get_parts accepts a short write_timestamp and zero-pads it");
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(write_timestamps => ['20080111000000','20080222222222']) ],
+    [ sortparts parts_named qr/(20080111|20080222222222_p\d*)$/ ],
+    "get_parts parameter write_timestamps");
 
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(status => "PARTIAL") ],
-    [ sortdumps dumps { $_->{'status'} eq "PARTIAL" } ],
-    "get_dumps parameter status = PARTIAL");
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(dump_timestamp => '20080111000000') ],
+    [ sortparts parts_named qr/somebox_lib_20080111/ ],
+    "get_parts parameter dump_timestamp");
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(dump_timestamp => '20080111') ],
+    [ sortparts parts_named qr/somebox_lib_20080111/ ],
+    "get_parts accepts a short dump_timestamp and zero-pads it");
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(dump_timestamps => ['20080111000000','20080222222222']) ],
+    [ sortparts parts_named qr/(20080111|20080222222222_p\d*)$/ ],
+    "get_parts parameter dump_timestamps");
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(dump_timestamp_match => '200801-2') ],
+    [ sortparts parts_named qr/20080[12]/ ],
+    "get_parts parameter dump_timestamp_match");
+
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(hostname => 'otherbox') ],
+    [ sortparts parts_named qr/^otherbox_/ ],
+    "get_parts parameter hostname");
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(hostnames => ['otherbox','somebox']) ],
+    [ sortparts parts_named qr/^(otherbox_|somebox_)/ ],
+    "get_parts parameter hostnames");
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(hostname_match => '*box') ],
+    [ sortparts parts_named qr/box/ ],
+    "get_parts parameter hostname_match");
+
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(diskname => '/lib') ],
+    [ sortparts parts_named qr/_lib_/ ],
+    "get_parts parameter diskname");
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(disknames => ['/lib','/usr/bin']) ],
+    [ sortparts parts_named qr/(_lib_|_usr_bin_)/ ],
+    "get_parts parameter disknames");
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(diskname_match => '/usr') ],
+    [ sortparts parts_named qr/_usr_/ ],
+    "get_parts parameter diskname_match");
+
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(label => 'Conf-001') ],
+    [ sortparts parts_matching { $_->{'label'} eq 'Conf-001' } ],
+    "get_parts parameter label");
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(labels => ['Conf-002','Conf-003']) ],
+    [ sortparts parts_matching { $_->{'label'} eq 'Conf-002' or $_->{'label'} eq 'Conf-003' } ],
+    "get_parts parameter labels");
+
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(level => 0) ],
+    [ sortparts parts_matching { $_->{'dump'}->{'level'} == 0 } ],
+    "get_parts parameter level");
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(levels => [ 1 ]) ],
+    [ sortparts parts_matching { $_->{'dump'}->{'level'} == 1 } ],
+    "get_parts parameter levels");
+
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(status => "OK") ],
+    [ sortparts parts_matching { $_->{'status'} eq "OK" } ],
+    "get_parts parameter status = OK");
+
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(status => "PARTIAL") ],
+    [ sortparts parts_matching { $_->{'status'} eq "PARTIAL" } ],
+    "get_parts parameter status = PARTIAL");
+
+@dumpspecs = Amanda::Cmdline::parse_dumpspecs([".*", "/lib"], 0);
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(dumpspecs => [ @dumpspecs ]) ],
+    [ sortparts parts_named qr/_lib_/ ],
+    "get_parts parameter dumpspecs with one dumpspec");
+
+@dumpspecs = Amanda::Cmdline::parse_dumpspecs([".*", "/lib", "somebox"], 0);
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(dumpspecs => [ @dumpspecs ]) ],
+    [ sortparts parts_matching { $_->{'dump'}->{'diskname'} eq '/lib'
+			      or $_->{'dump'}->{'hostname'} eq 'somebox' } ],
+    "get_parts parameter dumpspecs with two dumpspecs");
+
+@dumpspecs = Amanda::Cmdline::parse_dumpspecs(["otherbox", "*", "somebox"], 0);
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(dumpspecs => [ @dumpspecs ]) ],
+    [ sortparts parts_matching { $_->{'dump'}->{'hostname'} eq 'otherbox'
+			      or $_->{'dump'}->{'hostname'} eq 'somebox' } ],
+    "get_parts parameter dumpspecs with two non-overlapping dumpspecs");
 
 ## more complex, multi-parameter queries
 
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(hostname => 'somebox',
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(hostname => 'somebox',
 						     diskname_match => '/lib') ],
-    [ sortdumps dump_names qr/^somebox_lib_/ ],
-    "get_dumps parameters hostname and diskname_match");
+    [ sortparts parts_named qr/^somebox_lib_/ ],
+    "get_parts parameters hostname and diskname_match");
 
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(write_timestamp => '20080313133333',
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(write_timestamp => '20080313133333',
 						     dump_timestamp => '20080311131133') ],
-    [ sortdumps dumps { $_->{'dump_timestamp'} eq '20080311131133' 
-                    and $_->{'write_timestamp'} eq '20080313133333' } ],
-    "get_dumps parameters write_timestamp and dump_timestamp");
+    [ sortparts parts_matching { $_->{'dump'}->{'dump_timestamp'} eq '20080311131133' 
+                    and $_->{'dump'}->{'write_timestamp'} eq '20080313133333' } ],
+    "get_parts parameters write_timestamp and dump_timestamp");
 
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(write_timestamp => '20080414144444',
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(write_timestamp => '20080414144444',
 						     status => 'OK') ],
     [ ], # there were no OK dumps on that date
-    "get_dumps parameters write_timestamp status");
+    "get_parts parameters write_timestamp status",
+    zero_parts_expected => 1);
 
-## test sorting
+## test part sorting
 
-is_deeply([ Amanda::DB::Catalog::sort_dumps(['write_timestamp'],
-		@dumpfiles{'somebox_lib_20080222222222_p1','somebox_lib_20080111'}) ],
-	      [ @dumpfiles{'somebox_lib_20080111','somebox_lib_20080222222222_p1'} ],
+got_parts([ Amanda::DB::Catalog::sort_parts(['write_timestamp'],
+		@parts{'somebox_lib_20080222222222_p1','somebox_lib_20080111'}) ],
+	      [ @parts{'somebox_lib_20080111','somebox_lib_20080222222222_p1'} ],
     "sort by write_timestamps");
-is_deeply([ Amanda::DB::Catalog::sort_dumps(['-write_timestamp'],
-		@dumpfiles{'somebox_lib_20080111','somebox_lib_20080222222222_p1'}) ],
-	      [ @dumpfiles{'somebox_lib_20080222222222_p1','somebox_lib_20080111'} ],
+got_parts([ Amanda::DB::Catalog::sort_parts(['-write_timestamp'],
+		@parts{'somebox_lib_20080111','somebox_lib_20080222222222_p1'}) ],
+	      [ @parts{'somebox_lib_20080222222222_p1','somebox_lib_20080111'} ],
     "sort by write_timestamps, reverse");
 
-is_deeply([ Amanda::DB::Catalog::sort_dumps(['hostname', '-diskname', 'write_timestamp'],
-		@dumpfiles{
+got_parts([ Amanda::DB::Catalog::sort_parts(['hostname', '-diskname', 'write_timestamp'],
+		@parts{
 		    'somebox_lib_20080222222222_p1',
 		    'somebox_usr_bin_20080313133333',
 		    'somebox_lib_20080313133333_p4',
 		    'otherbox_lib_20080313133333',
 		    'somebox_lib_20080111',
 		    }) ],
-	      [ @dumpfiles{
+	      [ @parts{
 		    'otherbox_lib_20080313133333',
 		    'somebox_usr_bin_20080313133333',
 		    'somebox_lib_20080111',
@@ -250,161 +371,190 @@ is_deeply([ Amanda::DB::Catalog::sort_dumps(['hostname', '-diskname', 'write_tim
 	            } ],
     "multi-key sort");
 
-is_deeply([ Amanda::DB::Catalog::sort_dumps(['filenum'],
-		@dumpfiles{
+got_parts([ Amanda::DB::Catalog::sort_parts(['filenum'],
+		@parts{
 		    'somebox_lib_20080313133333_p9',
 		    'somebox_lib_20080313133333_p10',
 		    'somebox_lib_20080313133333_p1',
 		    }) ],
-	      [ @dumpfiles{
+	      [ @parts{
 		    'somebox_lib_20080313133333_p1',
 		    'somebox_lib_20080313133333_p9',
 		    'somebox_lib_20080313133333_p10',
 		    } ],
 		"filenum is sorted numerically, not lexically");
 
-is_deeply([ Amanda::DB::Catalog::sort_dumps(['-partnum'],
-		@dumpfiles{
+got_parts([ Amanda::DB::Catalog::sort_parts(['-partnum'],
+		@parts{
 		    'somebox_lib_20080313133333_p9',
 		    'somebox_lib_20080313133333_p10',
 		    'somebox_lib_20080313133333_p1',
 		    }) ],
-	      [ @dumpfiles{
+	      [ @parts{
 		    'somebox_lib_20080313133333_p10',
 		    'somebox_lib_20080313133333_p9',
 		    'somebox_lib_20080313133333_p1',
 		    } ],
 		"partnum is sorted numerically (and in reverse!), not lexically");
 
-is_deeply([ Amanda::DB::Catalog::sort_dumps(['nparts'],
-		@dumpfiles{
+got_parts([ Amanda::DB::Catalog::sort_parts(['nparts'],
+		@parts{
 		    'somebox_lib_20080313133333_p9', # nparts=10
 		    'somebox_lib_20080222222222_p2', # nparts=2
 		    }) ],
-	      [ @dumpfiles{
+	      [ @parts{
 		    'somebox_lib_20080222222222_p2', # nparts=2
 		    'somebox_lib_20080313133333_p9', # nparts=10
 		    } ],
 		"nparts is sorted numerically, not lexically");
 
-is_deeply([ Amanda::DB::Catalog::sort_dumps(['kb'],
-		@dumpfiles{
-		    'somebox_lib_20080313133333_p10',
-		    'somebox_lib_20080313133333_p1',
+got_parts([ Amanda::DB::Catalog::sort_parts(['label'],
+		@parts{
+		    'somebox_lib_20080313133333_p9', # Conf-003
+		    'somebox_lib_20080222222222_p2', # Conf-002
 		    }) ],
-	      [ @dumpfiles{
-		    'somebox_lib_20080313133333_p10',
-		    'somebox_lib_20080313133333_p1',
+	      [ @parts{
+		    'somebox_lib_20080222222222_p2', # Conf-002
+		    'somebox_lib_20080313133333_p9', # Conf-003
 		    } ],
-		"kb is sorted numerically, not lexically");
+		"labels sort correctly");
 
-## add log entries
+### test dump selecting
 
-# one to an existing logfile, same tape
-Amanda::DB::Catalog::add_dump({
-    'write_timestamp' => '20080111',
-    'dump_timestamp' => '20080707070707',
-    'hostname' => 'newbox',
-    'diskname' => '/newdisk',
-    'level' => 3,
-    'label' => 'Conf-001',
-    'filenum' => 2,
-    'partnum' => 1,
-    'nparts' => 1,
-    'status' => 'OK',
-    'sec' => 13.0,
-    'kb' => 12380,
-});
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps() ],
+    [ sortdumps dumps_named qr/.*/ ],
+    "get_dumps returns all dumps when given no parameters");
 
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(hostname => 'newbox') ],
-    [ sortdumps {
-	'write_timestamp' => '20080111000000',
-	'dump_timestamp' => '20080707070707',
-	'hostname' => 'newbox',
-	'diskname' => '/newdisk',
-	'level' => 3,
-	'label' => 'Conf-001',
-	'filenum' => 2,
-	'partnum' => 1,
-	'nparts' => 1,
-	'status' => 'OK',
-	'sec' => 13.0,
-	'kb' => 12380,
-    } ],
-    "successfully re-read an added dump in an existing logfile");
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(write_timestamp => '20080111000000') ],
+    [ sortdumps dumps_named qr/somebox_lib_20080111/ ],
+    "get_dumps parameter write_timestamp");
 
-# and again, to test the last-logfile cache in Amanda::DB::Catalog
-Amanda::DB::Catalog::add_dump({
-    'write_timestamp' => '20080111',
-    'dump_timestamp' => '20080707070707',
-    'hostname' => 'newbox',
-    'diskname' => '/newdisk2',
-    'level' => 0,
-    'label' => 'Conf-001',
-    'filenum' => 3,
-    'partnum' => 1,
-    'nparts' => 1,
-    'status' => 'OK',
-    'sec' => 27.0,
-    'kb' => 32380,
-});
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(write_timestamp => '20080111') ],
+    [ sortdumps dumps_named qr/somebox_lib_20080111/ ],
+    "get_dumps accepts a short write_timestamp and zero-pads it");
 
-is(scalar Amanda::DB::Catalog::get_dumps(hostname => 'newbox'), 2,
-    "adding another dump to that logfile and re-reading gives 2 dumps");
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(write_timestamps => ['20080111000000','20080222222222']) ],
+    [ sortdumps dumps_named qr/(20080111|20080222222222)$/ ],
+    "get_dumps parameter write_timestamps");
 
-# and another in a new file, as well as a tapelist entry
-Amanda::DB::Catalog::add_dump({
-    'write_timestamp' => '20080707070707',
-    'dump_timestamp' => '20080707070707',
-    'hostname' => 'newlog',
-    'diskname' => '/newdisk',
-    'level' => 3,
-    'label' => 'Conf-009',
-    'filenum' => 1,
-    'partnum' => 1,
-    'nparts' => 1,
-    'status' => 'OK',
-    'sec' => 13.0,
-    'kb' => 12380,
-});
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(hostname => 'otherbox') ],
+    [ sortdumps dumps_named qr/^otherbox/ ],
+    "get_dumps parameter hostname");
 
-is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(hostname => 'newlog') ],
-    [ sortdumps {
-	'write_timestamp' => '20080707070707',
-	'dump_timestamp' => '20080707070707',
-	'hostname' => 'newlog',
-	'diskname' => '/newdisk',
-	'level' => 3,
-	'label' => 'Conf-009',
-	'filenum' => 1,
-	'partnum' => 1,
-	'nparts' => 1,
-	'status' => 'OK',
-	'sec' => 13.0,
-	'kb' => 12380,
-    } ],
-    "successfully re-read an added dump in a new logfile");
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(hostnames => ['notthere', 'otherbox']) ],
+    [ sortdumps dumps_named qr/^otherbox/ ],
+    "get_dumps parameter hostnames");
 
-# and add a multipart dump to that same logfile
-for (my $i = 1; $i <= 5; $i++) {
-    Amanda::DB::Catalog::add_dump({
-	'write_timestamp' => '20080707070707',
-	'dump_timestamp' => '20080707070707',
-	'hostname' => 'newlog',
-	'diskname' => '/bigdisk',
-	'level' => 1,
-	'label' => 'Conf-009',
-	'filenum' => $i+1,
-	'partnum' => $i,
-	'nparts' => 5,
-	'status' => 'OK',
-	'sec' => 13.0,
-	'kb' => 12380,
-    });
-}
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(hostname_match => 'other*') ],
+    [ sortdumps dumps_named qr/^otherbox/ ],
+    "get_dumps parameter hostname_match");
 
-is(scalar Amanda::DB::Catalog::get_dumps(diskname => '/bigdisk'), 5,
-    "multi-part dump added and re-read successfully");
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(diskname => '/lib') ],
+    [ sortdumps dumps_named qr/^[^_]*_lib_/ ],
+    "get_dumps parameter diskname");
+
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(disknames => ['/lib', '/usr/bin']) ],
+    [ sortdumps dumps_named qr/^[^_]*_(usr_bin|lib)_/ ],
+    "get_dumps parameter disknames");
+
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(diskname_match => 'bin') ],
+    [ sortdumps dumps_named qr/.*_bin_/ ],
+    "get_dumps parameter diskname_match");
+
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(dump_timestamp => '20080414144444') ],
+    [ sortdumps dumps_matching { $_->{'dump_timestamp'} eq '20080414144444' } ],
+    "get_dumps parameter dump_timestamp");
+
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(
+			dump_timestamps => ['20080414144444', '20080311131133']) ],
+    [ sortdumps dumps_matching { $_->{'dump_timestamp'} eq '20080414144444' 
+			      or $_->{'dump_timestamp'} eq '20080311131133' } ],
+    "get_dumps parameter dump_timestamps");
+
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(dump_timestamp_match => '200804-7') ],
+    [ sortdumps dumps_matching { $_->{'dump_timestamp'} =~ /^20080[4567]/ } ],
+    "get_dumps parameter dump_timestamp_match");
+
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(level => 0) ],
+    [ sortdumps dumps_matching { $_->{'level'} == 0 } ],
+    "get_dumps parameter level");
+
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(levels => [ 1 ]) ],
+    [ sortdumps dumps_matching { $_->{'level'} == 1 } ],
+    "get_dumps parameter levels");
+
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(status => "OK") ],
+    [ sortdumps dumps_matching { $_->{'status'} eq "OK" } ],
+    "get_dumps parameter status = OK");
+
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(status => "PARTIAL") ],
+    [ sortdumps dumps_matching { $_->{'status'} eq "PARTIAL" } ],
+    "get_dumps parameter status = PARTIAL");
+
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(status => "FAIL") ],
+    [ sortdumps dumps_matching { $_->{'status'} eq "FAIL" } ],
+    "get_dumps parameter status = FAIL");
+
+## test dump sorting
+
+got_dumps([ Amanda::DB::Catalog::sort_dumps(['write_timestamp'],
+		@dumps{'somebox_lib_20080222222222','somebox_lib_20080111'}) ],
+	      [ @dumps{'somebox_lib_20080111','somebox_lib_20080222222222'} ],
+    "sort dumps by write_timestamps");
+got_dumps([ Amanda::DB::Catalog::sort_dumps(['-write_timestamp'],
+		@dumps{'somebox_lib_20080111','somebox_lib_20080222222222'}) ],
+	      [ @dumps{'somebox_lib_20080222222222','somebox_lib_20080111'} ],
+    "sort dumps by write_timestamps, reverse");
+
+got_dumps([ Amanda::DB::Catalog::sort_dumps(['hostname', '-diskname', 'write_timestamp'],
+		@dumps{
+		    'somebox_lib_20080222222222',
+		    'somebox_usr_bin_20080313133333',
+		    'somebox_lib_20080313133333',
+		    'otherbox_lib_20080313133333',
+		    'somebox_lib_20080111',
+		    }) ],
+	      [ @dumps{
+		    'otherbox_lib_20080313133333',
+		    'somebox_usr_bin_20080313133333',
+		    'somebox_lib_20080111',
+		    'somebox_lib_20080222222222',
+		    'somebox_lib_20080313133333',
+	            } ],
+		"multi-key dump sort");
+
+got_dumps([ Amanda::DB::Catalog::sort_dumps(['nparts'],
+		@dumps{
+		    'somebox_lib_20080313133333', # nparts=10
+		    'somebox_lib_20080222222222', # nparts=2
+		    }) ],
+	      [ @dumps{
+		    'somebox_lib_20080222222222', # nparts=2
+		    'somebox_lib_20080313133333', # nparts=10
+		    } ],
+		"dumps' nparts is sorted numerically, not lexically");
+
+got_dumps([ Amanda::DB::Catalog::sort_dumps(['-level'],
+		@dumps{
+		    'somebox_lib_20080313133333', # level=0
+		    'somebox_usr_bin_20080313133333', # level=1
+		    }) ],
+	      [ @dumps{
+		    'somebox_usr_bin_20080313133333', # level=1
+		    'somebox_lib_20080313133333', # level=0
+		    } ],
+		"sort dumps by level, reversed");
+
+got_dumps([ Amanda::DB::Catalog::sort_dumps(['dump_timestamp'],
+		@dumps{
+		    'somebox_lib_20080313133333', # dts=20080313133333
+		    'otherbox_usr_bin_20080313133333', # dts=20080311131133
+		    }) ],
+	      [ @dumps{
+		    'otherbox_usr_bin_20080313133333', # dts=20080311131133
+		    'somebox_lib_20080313133333', # dts=20080313133333
+		    } ],
+		"sort dumps by write_timestamp");
 
 __DATA__
 # a short-datestamp logfile with only a single, single-part file in it
@@ -421,7 +571,8 @@ START taper datestamp 20080111 label Conf-001 tape 1
 SUCCESS dumper somebox /lib 20080111 0 [sec 0.209 kb 1970 kps 9382.2 orig-kb 1970]
 SUCCESS chunker somebox /lib 20080111 0 [sec 0.305 kb 420 kps 1478.7]
 STATS driver estimate somebox /lib 20080111 0 [sec 1 nkb 2002 ckb 480 kps 385]
-:dumpfile somebox_lib_20080111 20080111000000 somebox /lib 0 Conf-001 1 1 1 OK 4.813543 419
+:dump somebox_lib_20080111 20080111000000 somebox /lib 0 OK "" 1 4.813543 419
+:part somebox_lib_20080111 somebox_lib_20080111 Conf-001 1 1 OK 4.813543 419
 PART taper Conf-001 1 somebox /lib 20080111 1/1 0 [sec 4.813543 kb 419 kps 87.133307]
 DONE taper somebox /lib 20080111 1 0 [sec 4.813543 kb 419 kps 87.133307]
 FINISH driver date 20080111 time 2167.581
@@ -440,9 +591,10 @@ SUCCESS dumper somebox /lib 20080222222222 0 [sec 0.012 kb 100 kps 8115.6 orig-k
 SUCCESS chunker somebox /lib 20080222222222 0 [sec 5.075 kb 100 kps 26.0]
 STATS driver estimate somebox /lib 20080222222222 0 [sec 0 nkb 132 ckb 160 kps 1024]
 START taper datestamp 20080222222222 label Conf-002 tape 1
-:dumpfile somebox_lib_20080222222222_p1 20080222222222 somebox /lib 0 Conf-002 1 1 2 OK 0.000733 100
+:dump somebox_lib_20080222222222 20080222222222 somebox /lib 0 OK "" 2 0.001161 172
+:part somebox_lib_20080222222222_p1 somebox_lib_20080222222222 Conf-002 1 1 OK 0.000733 100
 PART taper Conf-002 1 somebox /lib 20080222222222 1/2 0 [sec 0.000733 kb 100 kps 136425.648022]
-:dumpfile somebox_lib_20080222222222_p2 20080222222222 somebox /lib 0 Conf-002 2 2 2 OK 0.000428 72
+:part somebox_lib_20080222222222_p2 somebox_lib_20080222222222 Conf-002 2 2 OK 0.000428 72
 PART taper Conf-002 2 somebox /lib 20080222222222 2/2 0 [sec 0.000428 kb 72 kps 136425.648022]
 DONE taper somebox /lib 20080222222222 2 0 [sec 0.001161 kb 172 kps 136425.648022]
 FINISH driver date 20080222222222 time 6.206
@@ -466,41 +618,46 @@ SUCCESS dumper somebox /usr/bin 20080313133333 1 [sec 0.001 kb 20 kps 10352.0 or
 SUCCESS chunker somebox /usr/bin 20080313133333 1 [sec 1.023 kb 20 kps 50.8]
 STATS driver estimate somebox /usr/bin 20080313133333 1 [sec 0 nkb 52 ckb 64 kps 1024]
 START taper datestamp 20080313133333 label Conf-003 tape 1
-:dumpfile somebox_usr_bin_20080313133333 20080313133333 somebox /usr/bin 1 Conf-003 1 1 1 OK 0.000370 20
+:dump somebox_usr_bin_20080313133333 20080313133333 somebox /usr/bin 1 OK "" 1 0.000370 20
+:part somebox_usr_bin_20080313133333 somebox_usr_bin_20080313133333 Conf-003 1 1 OK 0.000370 20
 PART taper Conf-003 1 somebox /usr/bin 20080313133333 1/1 1 [sec 0.000370 kb 20 kps 54054.054054]
 DONE taper somebox /usr/bin 20080313133333 1 1 [sec 0.000370 kb 20 kps 54054.054054]
 # a multi-part dump
 SUCCESS dumper somebox /lib 20080313133333 0 [sec 0.189 kb 3156 kps 50253.1 orig-kb 3156]
 SUCCESS chunker somebox /lib 20080313133333 0 [sec 5.250 kb 3156 kps 1815.5]
 STATS driver estimate somebox /lib 20080313133333 0 [sec 1 nkb 3156 ckb 3156 kps 9500]
-:dumpfile somebox_lib_20080313133333_p1 20080313133333 somebox /lib 0 Conf-003 2 1 10 OK 0.005621 1024
+:dump somebox_lib_20080313133333 20080313133333 somebox /lib 0 OK "" 10 0.051436 3156
+:part somebox_lib_20080313133333_p1 somebox_lib_20080313133333 Conf-003 2 1 OK 0.005621 1024
 PART taper Conf-003 2 somebox /lib 20080313133333 1/10 0 [sec 0.005621 kb 1024 kps 182173.990393]
-:dumpfile somebox_lib_20080313133333_p2 20080313133333 somebox /lib 0 Conf-003 3 2 10 OK 0.006527 1024
+:part somebox_lib_20080313133333_p2 somebox_lib_20080313133333 Conf-003 3 2 OK 0.006527 1024
 PART taper Conf-003 3 somebox /lib 20080313133333 2/10 0 [sec 0.006527 kb 1024 kps 156886.777999]
-:dumpfile somebox_lib_20080313133333_p3 20080313133333 somebox /lib 0 Conf-003 4 3 10 OK 0.005854 1024
+:part somebox_lib_20080313133333_p3 somebox_lib_20080313133333 Conf-003 4 3 OK 0.005854 1024
 PART taper Conf-003 4 somebox /lib 20080313133333 3/10 0 [sec 0.005854 kb 1024 kps 174923.129484]
-:dumpfile somebox_lib_20080313133333_p4 20080313133333 somebox /lib 0 Conf-003 5 4 10 OK 0.007344 1024
+:part somebox_lib_20080313133333_p4 somebox_lib_20080313133333 Conf-003 5 4 OK 0.007344 1024
 PART taper Conf-003 5 somebox /lib 20080313133333 4/10 0 [sec 0.007344 kb 1024 kps 147993.746743]
-:dumpfile somebox_lib_20080313133333_p5 20080313133333 somebox /lib 0 Conf-003 6 5 10 OK 0.007344 1024
+:part somebox_lib_20080313133333_p5 somebox_lib_20080313133333 Conf-003 6 5 OK 0.007344 1024
 PART taper Conf-003 6 somebox /lib 20080313133333 5/10 0 [sec 0.007344 kb 1024 kps 147993.746743]
-:dumpfile somebox_lib_20080313133333_p6 20080313133333 somebox /lib 0 Conf-003 7 6 10 OK 0.007344 1024
+:part somebox_lib_20080313133333_p6 somebox_lib_20080313133333 Conf-003 7 6 OK 0.007344 1024
 PART taper Conf-003 7 somebox /lib 20080313133333 6/10 0 [sec 0.007344 kb 1024 kps 147993.746743]
-:dumpfile somebox_lib_20080313133333_p7 20080313133333 somebox /lib 0 Conf-003 8 7 10 OK 0.007344 1024
+:part somebox_lib_20080313133333_p7 somebox_lib_20080313133333 Conf-003 8 7 OK 0.007344 1024
 PART taper Conf-003 8 somebox /lib 20080313133333 7/10 0 [sec 0.007344 kb 1024 kps 147993.746743]
-:dumpfile somebox_lib_20080313133333_p8 20080313133333 somebox /lib 0 Conf-003 9 8 10 OK 0.007344 1024
+:part somebox_lib_20080313133333_p8 somebox_lib_20080313133333 Conf-003 9 8 OK 0.007344 1024
 PART taper Conf-003 9 somebox /lib 20080313133333 8/10 0 [sec 0.007344 kb 1024 kps 147993.746743]
-:dumpfile somebox_lib_20080313133333_p9 20080313133333 somebox /lib 0 Conf-003 10 9 10 OK 0.007344 1024
+:part somebox_lib_20080313133333_p9 somebox_lib_20080313133333 Conf-003 10 9 OK 0.007344 1024
 PART taper Conf-003 10 somebox /lib 20080313133333 9/10 0 [sec 0.007344 kb 1024 kps 147993.746743]
-:dumpfile somebox_lib_20080313133333_p10 20080313133333 somebox /lib 0 Conf-003 11 10 10 OK 0.001919 284
+:part somebox_lib_20080313133333_p10 somebox_lib_20080313133333 Conf-003 11 10 OK 0.001919 284
 PART taper Conf-003 11 somebox /lib 20080313133333 10/10 0 [sec 0.001919 kb 284 kps 147993.746743]
 DONE taper somebox /lib 20080313133333 10 0 [sec 0.051436 kb 3156 kps 184695.543977]
 SUCCESS dumper otherbox /lib 20080313133333 0 [sec 0.001 kb 190 kps 10352.0 orig-kb 20]
 SUCCESS chunker otherbox /lib 20080313133333 0 [sec 1.023 kb 190 kps 50.8]
 STATS driver estimate otherbox /lib 20080313133333 0 [sec 0 nkb 190 ckb 190 kps 1024]
 # this dump is from a previous run, with an older dump_timestamp
-:dumpfile otherbox_usr_bin_20080313133333 20080311131133 otherbox /usr/bin 0 Conf-003 12 1 1 OK 0.002733 240
+:dump otherbox_usr_bin_20080313133333 20080311131133 otherbox /usr/bin 0 OK "" 1 0.002733 240
+:part otherbox_usr_bin_20080313133333 otherbox_usr_bin_20080313133333 Conf-003 12 1 OK 0.002733 240
 PART taper Conf-003 12 otherbox /usr/bin 20080311131133 1/1 0 [sec 0.002733 kb 240 kps 136425.648022]
-:dumpfile otherbox_lib_20080313133333 20080313133333 otherbox /lib 0 Conf-003 13 1 1 OK 0.001733 190
+DONE taper otherbox /usr/bin 20080311131133 1 0 [sec 0.002733 kb 240 kps 136425.648022]
+:dump otherbox_lib_20080313133333 20080313133333 otherbox /lib 0 OK "" 1 0.001733 190
+:part otherbox_lib_20080313133333 otherbox_lib_20080313133333 Conf-003 13 1 OK 0.001733 190
 PART taper Conf-003 13 otherbox /lib 20080313133333 1/1 0 [sec 0.001733 kb 190 kps 136425.648022]
 DONE taper otherbox /lib 20080313133333 1 0 [sec 0.001733 kb 190 kps 136425.648022]
 FINISH driver date 20080313133333 time 24.777
@@ -521,14 +678,18 @@ SUCCESS dumper otherbox /lib 20080414144444 1 [sec 0.003 kb 60 kps 16304.3 orig-
 SUCCESS chunker otherbox /lib 20080414144444 1 [sec 1.038 kb 60 kps 88.5]
 STATS driver estimate otherbox /lib 20080414144444 1 [sec 0 nkb 92 ckb 96 kps 1024]
 START taper datestamp 20080414144444 label Conf-004 tape 1
-:dumpfile otherbox_lib_20080414144444_try1 20080414144444 otherbox /lib 1 Conf-004 1 1 1 PARTIAL 0.000707 32
+:dump otherbox_lib_20080414144444 20080414144444 otherbox /lib 1 PARTIAL full-up 0 0.000540 32
+:part otherbox_lib_20080414144444_try1 otherbox_lib_20080414144444 Conf-004 1 1 PARTIAL 0.000707 32
 PARTPARTIAL taper Conf-004 1 otherbox /lib 20080414144444 1/1 1 [sec 0.000707 kb 32 kps 45261.669024] ""
 INFO taper Will request retry of failed split part.
 INFO taper Will write new label `Conf-005' to new (previously non-amanda) tape
 START taper datestamp 20080414144444 label Conf-005 tape 2
-:dumpfile otherbox_lib_20080414144444_try2 20080414144444 otherbox /lib 1 Conf-005 1 1 1 PARTIAL 0.000540 32
+:part otherbox_lib_20080414144444_try2 otherbox_lib_20080414144444 Conf-005 1 1 PARTIAL 0.000540 32
 PARTPARTIAL taper Conf-005 1 otherbox /lib 20080414144444 1/1 1 [sec 0.000540 kb 32 kps 59259.259259] ""
 INFO taper Will request retry of failed split part.
 WARNING driver Out of tapes; going into degraded mode.
-PARTIAL taper otherbox /lib 20080414144444 1 1 [sec 0.000540 kb 32 kps 59259.259259] ""
+PARTIAL taper otherbox /lib 20080414144444 1 1 [sec 0.000540 kb 32 kps 59259.259259] "full-up"
+# a completely failed dump
+:dump otherbox_boot_20080414144444 20080414144444 otherbox /boot 0 FAIL no-space 0 0.0 0
+FAIL taper otherbox /boot 20080414144444 0 "no-space"
 FINISH driver date 20080414144444 time 6.959
