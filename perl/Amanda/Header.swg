@@ -124,7 +124,7 @@ typedef struct {
 
 %newobject C_from_string;
 %inline %{
-dumpfile_t *C_from_string(const char *string) {
+static dumpfile_t *C_from_string(const char *string) {
     dumpfile_t *result = g_new(dumpfile_t, 1);
     parse_file_header(string, result, strlen(string));
     return result;

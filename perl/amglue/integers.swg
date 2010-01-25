@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -129,15 +129,27 @@ typemap_in_signed(intmax_t)
 /* All conversions from C to Perl create Math::BigInt objects, even when the
  * C datatype is 32 bits or smaller.  This is to ensure that Perl's automatic
  * promotion to double does not silently corrupt arithmetic on large numbers.
+ *
+ * The complex typemaps here are to ensure that the argument stack is protected
+ * against stomping by amglue_newSV*64, which may invoke a significant amount
+ * of perl code.  "SP += argvi; PUTBACK;" increments the global stack pointer
+ * to cover the arguments processed so far, while "SPAGAIN; SP -= argvi;"
+ * restores the local stack pointer.  The latter must be done before the newest
+ * argument is added to the stack.  This whole process is a hack around SWIG's
+ * habit of invoking (out) typemaps while building the stack, instead of doing
+ * so in advance.
  */
 
 /* (these all use newSV*64, relying on C to upcast to a 64-bit integer) */
 
 %define typemap_out_unsigned(type)
 %typemap(out) type {
+    SV *for_stack;
     SP += argvi; PUTBACK;
-    $result = sv_2mortal(amglue_newSVu64($1));
-    SPAGAIN; SP -= argvi; argvi++;
+    for_stack = sv_2mortal(amglue_newSVu64($1));
+    SPAGAIN; SP -= argvi;
+    $result = for_stack;
+    argvi++;
 }
 %enddef
 
@@ -160,9 +172,12 @@ typemap_out_unsigned(uintmax_t)
 
 %define typemap_out_signed(type)
 %typemap(out) type {
+    SV *for_stack;
     SP += argvi; PUTBACK;
-    $result = sv_2mortal(amglue_newSVi64($1));
-    SPAGAIN; SP -= argvi; argvi++;
+    for_stack = sv_2mortal(amglue_newSVi64($1));
+    SPAGAIN; SP -= argvi;
+    $result = for_stack;
+    argvi++;
 }
 %enddef
 
