@@ -146,7 +146,7 @@ C<$CNF_>, e.g., C<$CNF_LABELSTR>.  The function C<getconf($cnf)> returns the
 value of parameter C<$cnf>, in whatever format is appropriate for the parameter
 (see DATA FORMATS, below).  C<getconf_seen($cnf)> returns a true value if
 C<$cnf> was seen in the configuration file.  If it was not seen, then it will
-have its default value.
+have its default value.  C<getconf_linenum($cnf)> return the line number in the configuration file where it is set, 0 if it is not in a configuration file, -2 if it is set in a command line argument.
 
 Some parameters have enumerated types.  The values for those
 enumerations are available from this module with the same name as

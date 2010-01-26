@@ -444,6 +444,7 @@ val_t *getconf(confparm_key key);
  * @returns: boolean
  */
 #define getconf_seen(key)       (val_t_seen(getconf((key))))
+#define getconf_linenum(key)       (val_t_seen(getconf((key))))
 
 /* (convenience macros)
  * Fetch a global parameter of a specific type.  Note that these

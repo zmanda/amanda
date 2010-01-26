@@ -626,7 +626,10 @@ sub new {
 	# assume it's a device name or alias, and invoke the single-changer
 	return _new_from_uri("chg-single:$name", undef, $name);
     } else { # !defined($name)
-	if (getconf_seen($CNF_TPCHANGER) and getconf($CNF_TPCHANGER) ne '') {
+	if ((getconf_linenum($CNF_TPCHANGER) == -2 ||
+	     (getconf_seen($CNF_TPCHANGER) &&
+	      getconf_linenum($CNF_TAPEDEV) != -2)) &&
+	    getconf($CNF_TPCHANGER) ne '') {
 	    my $tpchanger = getconf($CNF_TPCHANGER);
 
 	    # first, is it an old changer script?
@@ -635,7 +638,10 @@ sub new {
 	    }
 
 	    # if not, then there had better be no tapdev
-	    if (getconf_seen($CNF_TAPEDEV) and getconf($CNF_TAPEDEV) ne '') {
+	    if (getconf_seen($CNF_TAPEDEV) and getconf($CNF_TAPEDEV) ne '' and
+		((getconf_linenum($CNF_TAPEDEV) > 0 and
+		  getconf_linenum($CNF_TPCHANGER) > 0) ||
+		 (getconf_linenum($CNF_TAPEDEV) == -2))) {
 		return Amanda::Changer::Error->new('fatal',
 		    message => "Cannot specify both 'tapedev' and 'tpchanger' " .
 			"unless using an old-style changer script");

@@ -514,6 +514,7 @@ data_path_t data_path_from_string(char *data);
 
 val_t *getconf(confparm_key key);
 gboolean getconf_seen(confparm_key key);
+int getconf_linenum(confparm_key key);
 val_t *getconf_byname(char *key);
 GSList *getconf_list(char *listname);
 %inline %{
@@ -526,7 +527,7 @@ val_t_strs getconf_byname_strs(char *key, int str_needs_quotes) {
 %}
 
 amglue_export_tag(getconf,
-    getconf getconf_seen 
+    getconf getconf_seen getconf_linenum
     getconf_byname getconf_byname_strs
     getconf_list
 );

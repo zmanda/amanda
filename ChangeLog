@@ -1,3 +1,10 @@
+2010-01-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.h: Add getconf_linenum.
+	* perl/Amanda/Config.swg: Add getconf_linenum.
+	* perl/Amanda/Config.pod: Document getconf_linenum.
+	* perl/Amanda/Changer.pm: Accept tapedev or tpchanger from command
+	  line without setting the other to ''.
+
 2010-01-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/amglue/bigint.c: call SPAGAIN after loading
 	  Math::BigInt, in case the stack base has moved
