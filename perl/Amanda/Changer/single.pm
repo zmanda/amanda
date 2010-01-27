@@ -106,6 +106,7 @@ sub load {
     }
 
     my $res = Amanda::Changer::single::Reservation->new($self, $device);
+    $device->read_label();
     $params{'res_cb'}->(undef, $res);
 }
 
