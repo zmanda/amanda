@@ -106,13 +106,6 @@ sub load {
     }
 
     my $res = Amanda::Changer::single::Reservation->new($self, $device);
-
-    $device->read_label();
-    if ($device->status() != $DEVICE_STATUS_SUCCESS) {
-	return $self->make_error("fatal", $params{'res_cb'},
-	    message => "error reading device '$self->{device_name}': " . $device->error_or_status());
-    }
-
     $params{'res_cb'}->(undef, $res);
 }
 

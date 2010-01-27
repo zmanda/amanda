@@ -1,4 +1,7 @@
 2010-01-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/single.pm: Undo bogus chunk from previous patch.
+
+2010-01-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Document new inventory result.
 	* perl/Amanda/Changer/disk.pm, perl/Amanda/Changer/multi.pm,
 	  perl/Amanda/Changer/ndmp.pm, perl/Amanda/Changer/rait.pm,
