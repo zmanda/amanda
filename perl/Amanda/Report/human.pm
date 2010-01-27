@@ -46,18 +46,30 @@ use constant COLSPEC_TITLE     => 6;    # column title
 sub divzero
 {
     my ( $a, $b ) = @_;
+    my $q;
     return
-        ( $b == 0 )              ? "--"
-      : ( $a / $b > 9999999.95 ) ? "#######"
-      : ( $b > 99999.95 ) ? sprintf( "%7.0lf", $a / $b )
-      :                     sprintf( "%7.1lf", $a / $b );
+        ( $b == 0 )              ? "-- "
+      : ( ($q = $a / $b) > 99999.95 ) ? "#####"
+      : ( $q > 999.95 ) ? sprintf( "%5.0lf", $q )
+      :                   sprintf( "%5.1lf", $q );
+}
+
+sub divzero_wide
+{
+    my ( $a, $b ) = @_;
+    my $q;
+    return
+        ( $b == 0 )              ? "-- "
+      : ( ($q = $a / $b) > 9999999.95 ) ? "#######"
+      : ( $q > 99999.95 ) ? sprintf( "%7.0lf", $q )
+      :                     sprintf( "%7.1lf", $q );
 }
 
 sub divzero_col
 {
     my ( $a, $b, $col ) = @_;
     return ( $b == 0 )
-      ? "--"
+      ? "-- "
       : sprintf( $col->[5], $col->[2], $col->[3], ( $a / $b ) );
 }
 
@@ -123,20 +135,27 @@ sub new
         incr_stats  => {},
         full_stats  => {},
         total_stats => {},
+        dumpdisks   => [],
+        tapedisks   => [],
+        tapechunks  => []
     };
 
-    if ( defined $report ) {
+    if (defined $report) {
 
         my (@errors, @stranges, @notes);
 
         @errors =
-          map { @{ $report->get_program_info( $_, "errors" ) || [] }; }
+          map { @{ $report->get_program_info($_, "errors") || [] }; }
           keys %{ $report->{data}{programs} };
         @stranges =
-          map { @{ $report->get_program_info( $_, "stranges" ) || [] }; }
+          map { @{ $report->get_program_info($_, "stranges") || [] }; }
           keys %{ $report->{data}{programs} };
-        @notes = map { @{ $report->get_program_info( $_, "notes" ) || [] }; }
-          keys %{ $report->{data}{programs} };
+	##prepend program name to notes lines.
+	foreach my $program (keys %{ $report->{data}{programs} }) {
+	    push @notes,
+	      map { "$program: $_" }
+	      @{ $report->get_program_info($program, "notes") || [] };
+	}
 
         $self->{errors}   = \@errors;
         $self->{stranges} = \@stranges;
@@ -159,6 +178,9 @@ sub calculate_stats
     my $full_stats  = $self->{full_stats};
     my $incr_stats  = $self->{incr_stats};
     my $total_stats = $self->{total_stats};
+    my $dumpdisks   = $self->{dumpdisks};
+    my $tapedisks   = $self->{tapedisks};
+    my $tapechunks  = $self->{tapechunks};
 
     ## initialize all relevant fields to 0
     map { $incr_stats->{$_} = $full_stats->{$_} = 0; }
@@ -193,9 +215,10 @@ sub calculate_stats
             if ( exists $try->{dumper}
                 && $try->{dumper}{status} eq 'success' ) {
 
-                $stats->{origsize}    += $try->{dumper}{kbytes};
+                $stats->{origsize}    += $try->{dumper}{'orig-kb'};
                 $stats->{dumper_time} += $try->{dumper}{sec};
                 $stats->{dumpdisks}++;
+                $dumpdisks->[$try->{dumper}{'level'}]++; #by level count
             }
 
             if ( exists $try->{taper}
@@ -204,7 +227,10 @@ sub calculate_stats
                 $stats->{tapesize}   += $try->{taper}{kb};
                 $stats->{taper_time} += $try->{taper}{sec};
                 $stats->{tapedisks}++;
-            }
+                $tapedisks->[$try->{taper}{'level'}]++; #by level count
+                $tapechunks->[$try->{taper}{'level'}] += @{ $dle->{chunks} }
+                     if (exists $dle->{chunks});
+	    }
         }
     }
 
@@ -428,6 +454,18 @@ sub output_error_summaries
     return;
 }
 
+sub by_level_count
+{
+    my ($count) = @_;
+    my @lc;
+
+    return '' if @$count == 0;
+    foreach my $i (0 .. (@$count - 1)) {
+        push @lc, "$i:$count->[$i]" if $count->[$i] > 0;
+    }
+    return '(' . join(' ', @lc) . ')';
+}
+
 sub output_stats
 {
     my ($self) = @_;
@@ -436,12 +474,12 @@ sub output_stats
 
     my $header = <<EOF;
 STATISTICS:
-                          Total      Full     Incr.
-                        --------  --------  --------
+                          Total       Full      Incr.
+                        --------   --------   --------
 EOF
 
     my $st_format = <<EOF;
-@<<<<<<<<<<<<<<<<<<<<...@>>>>>>>  @>>>>>>>  @>>>>>>>   @<<<<<<<<<<<<<<<<
+@<<<<<<<<<<<<<<<<<<<<<<@>>>>>>>   @>>>>>>>   @>>>>>>>   @<<<<<<<<<<<<<<<<<<
 EOF
 
     # TODO: the hashes are a cheap fix.  fix these.
@@ -455,8 +493,8 @@ EOF
 
     if ( $ttyp && $tt ) {
 
-        $tapesize = tapetype_getconf( $tt, $TAPETYPE_LENGTH );
-        $marksize = tapetype_getconf( $tt, $TAPETYPE_FILEMARK );
+        $tapesize = "".tapetype_getconf( $tt, $TAPETYPE_LENGTH );
+        $marksize = "".tapetype_getconf( $tt, $TAPETYPE_FILEMARK );
     }
 
     # these values should never be zero; assign defaults
@@ -507,7 +545,7 @@ EOF
 
     my $comp_size = sub {
         my ($stats) = @_;
-        return divzero( $stats->{coutsize}, $stats->{origsize} );
+        return divzero_wide( 100 * $stats->{coutsize}, $stats->{origsize} );
     };
 
     print $fh swrite(
@@ -516,7 +554,7 @@ EOF
         $comp_size->($total_stats),
         $comp_size->($full_stats),
         $comp_size->($incr_stats),
-        ( $full_stats->{dumpdisks} > 0 ? "(level:#disks ...)" : "" )
+        ( $self->{dumpdisks} > 1 ? "(level:#disks ...)" : "" )
     );
 
     print $fh swrite(
@@ -525,17 +563,18 @@ EOF
         sprintf( "%4d", $total_stats->{dumpdisks} ),
         sprintf( "%4d", $full_stats->{dumpdisks} ),
         sprintf( "%4d", $incr_stats->{dumpdisks} ),
-        ( $full_stats->{dumpdisks} > 0 ? "FIXME!" : "" )
+	by_level_count($self->{dumpdisks})
     );
 
     print $fh swrite(
         $st_format,
         "Avg Dump Rate (k/s)",
-        divzero( $total_stats->{outsize}, $total_stats->{dumper_time} ),
-        divzero( $full_stats->{outsize},  $full_stats->{dumper_time} ),
-        divzero( $incr_stats->{outsize},  $incr_stats->{dumper_time} ),
+        divzero_wide( $total_stats->{outsize}, $total_stats->{dumper_time} ),
+        divzero_wide( $full_stats->{outsize},  $full_stats->{dumper_time} ),
+        divzero_wide( $incr_stats->{outsize},  $incr_stats->{dumper_time} ),
         ""
     );
+    print $fh "\n";
 
     print $fh swrite(
         $st_format,
@@ -556,6 +595,11 @@ EOF
 
     my $tape_usage = sub {
         my ($stat_ref) = @_;
+	return divzero((100 * ($stat_ref->{tapesize} +
+			($marksize *
+			 ($stat_ref->{tapedisks} + $stat_ref->{tapechunks})))),
+		       $tapesize);
+
         return sprintf(
             "%3.1lf",
             (
@@ -580,24 +624,26 @@ EOF
         $total_stats->{tapedisks},
         $full_stats->{tapedisks},
         $incr_stats->{tapedisks},
-        ( $incr_stats->{tapedisks} ? "FIXME!" : "" )
+	by_level_count($self->{tapedisks})
     );
 
+    print $fh swrite($st_format, "", "", "", "", "(level:#chunks ...)")
+       if scalar(@{$self->{tapechunks}}) > 1;
     print $fh swrite(
         $st_format,
         "Chunks Taped",
         sprintf( "%4d", $total_stats->{tapechunks} ),
         sprintf( "%4d", $full_stats->{tapechunks} ),
         sprintf( "%4d", $incr_stats->{tapechunks} ),
-        ( $incr_stats->{tapechunks} > 0 ? "FIXME!" : "" )
+	by_level_count($self->{tapechunks})
     );
 
     print $fh swrite(
         $st_format,
         "Avg Tp Write Rate (k/s)",
-        divzero( $total_stats->{tapesize}, $total_stats->{taper_time} ),
-        divzero( $full_stats->{tapesize},  $full_stats->{taper_time} ),
-        divzero( $incr_stats->{tapesize},  $incr_stats->{taper_time} ),
+        divzero_wide( $total_stats->{tapesize}, $total_stats->{taper_time} ),
+        divzero_wide( $full_stats->{tapesize},  $full_stats->{taper_time} ),
+        divzero_wide( $incr_stats->{tapesize},  $incr_stats->{taper_time} ),
         ""
     );
 
@@ -610,32 +656,37 @@ sub output_tape_stats
     my ($self) = @_;
     my $fh     = $self->{fh};
     my $report = $self->{report};
-    my $tapes = $report->get_program_info( "taper", "tapes" );
+    my $tapes = $report->get_program_info("taper", "tapes");
 
-    my $header = <<EOF;
-USAGE BY TAPE:
-  Label         Time      Size      %    Nb    Nc
-EOF
+    my $label_length = 19;
+    foreach my $label (keys %$tapes) {
+        $label_length = length($label) if length($label) > $label_length;
+    }
+    my $ts_format = "  @"
+      . '<' x ($label_length - 1)
+      . "@>>>> @>>>>>>>> @>>>>> @>>>> @>>>>\n";
 
-    my $ts_format = <<EOF;
-@<<<<<<<<<<< @>>>>> @>>>>>>>> @>>>>>> @>>>> @>>>
-EOF
+    print $fh "USAGE BY TAPE:\n";
+    print $fh swrite($ts_format, "Label", "Time", "Size", "%", "Nb", "Nc");
 
-    print $fh $header;
+    my $tapetype_name = getconf($CNF_TAPETYPE);
+    my $tapetype      = lookup_tapetype($tapetype_name);
+    my $tapesize      = "" . tapetype_getconf($tapetype, $TAPETYPE_LENGTH);
 
-    while ( my ( $label, $tape ) = each %$tapes ) {
+    while (my ($label, $tape) = each %$tapes) {
 
-        # TODO: finish this
         print $fh swrite(
             $ts_format,
             $label,
-            "",                # time
-            $tape->{kb},       # size
-            "",                # % usage
-            $tape->{files},    # # of chunks
+            hrmn($tape->{time}),    # time
+            sprintf("%8.0lf%s",
+                $tape->{kb} / $self->{unit_div},
+                $self->{disp_unit}),    # size
+            divzero(100 * $tape->{kb}, $tapesize),    # % usage
+            $tape->{dle},                             # Nb of dles
+            $tape->{files}                            # Nb of chunks
         );
     }
-
     print $fh "\n";
     return;
 }
@@ -665,8 +716,8 @@ sub output_details
 
     if (@$notes) {
 
-        print $fh "NOTES:\n";
-        map { print $fh "$_\n" } @$notes;
+        print $fh "\nNOTES:\n";
+        map { print $fh "  $_\n" } @$notes;
         print $fh "\n";
     }
 
@@ -735,7 +786,7 @@ sub output_summary
       . ' ' x $col_spec->[9]->[COLSPEC_PRE_SPACE]
       . '@' . '<' x ($ts - 1) . "\n";
 
-    print $fh "DUMP SUMMARY:\n";
+    print $fh "\nDUMP SUMMARY:\n";
     print $fh swrite($summary_header_format, "DUMPER STATS", "TAPER STATS");
     print $fh swrite($summary_format, map { $_->[COLSPEC_TITLE] } @$col_spec);
     print $fh swrite($summary_dash_format, '-' x $hdl, '-' x $ds, '-' x $ts);
@@ -894,7 +945,7 @@ sub get_summary_info
         : "",
         ($out_size) ? $col_format_field->(4, $out_size / $self->{'unit_div'})
         : "",
-        ($compression == 100) ? '--' : $col_format_field->(5, $compression),
+        ($compression == 100) ? '-- ' : $col_format_field->(5, $compression),
         $col_format_field->(6, mnsc($dump_time)),
         $col_format_field->(7, $dump_rate),
         $col_format_field->(

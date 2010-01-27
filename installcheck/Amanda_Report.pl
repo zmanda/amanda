@@ -440,12 +440,15 @@ $LogfileData{taper} = {
         dumper  => {},
         chunker => {},
         taper   => {
-            notes => [ "Will write new label `TESTCONF01' to new tape", ],
+            notes => [ "Will write new label `TESTCONF01' to new tape",
+		       "tape TESTCONF01 kb 2016 fm 4 [OK]" ],
             tapes => {
                 TESTCONF01 => {
+		    time  => "0.011669",
                     date  => "20080111",
                     kb    => "2016",
                     files => "4",
+		    dle   => "1",
                 },
             },
         },
@@ -568,7 +571,9 @@ $LogfileData{simple} = {
         taper   => {
             tapes => {
                 "Conf-001" => {
+		    time => "4.813543",
                     date => "20080111",
+		    dle  => "1"
                 },
             },
         },
@@ -723,7 +728,9 @@ $LogfileData{fullExample} = {
         },
         chunker => {},
         taper =>
-          { tapes => { "FullBackup-14" => { date => "20081002040002", }, }, },
+          { tapes => { "FullBackup-14" => { time => "370.548573",
+					    date => "20081002040002",
+					    dle  => "5" }, }, },
     },
     disklist => {
         "hostname.example.org" => {
@@ -1002,7 +1009,9 @@ $LogfileData{amflushExample} = {
         'taper' => {
             'tapes' => {
                 'DailyTapeDataSet-017' => {
-                    'date' => '20090622075550'
+		    'time' => '4.180007',
+                    'date' => '20090622075550',
+		    'dle'  => '2'
                 },
             },
         },

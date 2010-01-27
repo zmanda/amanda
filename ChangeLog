@@ -1,4 +1,10 @@
 2010-01-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report.pm: Add notes, time, dle. Many improvements.
+	* perl/Amanda/Report/human.pm: Many improvements.
+	* installcheck/Amanda_Report.pl: Fix for new data.
+	* perl/Makefile.am: Check AmandaReport_DATA.
+
+2010-01-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.h: Add getconf_linenum.
 	* perl/Amanda/Config.swg: Add getconf_linenum.
 	* perl/Amanda/Config.pod: Document getconf_linenum.

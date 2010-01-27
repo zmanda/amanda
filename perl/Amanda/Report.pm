@@ -79,7 +79,7 @@ entries encountered during lo parsing in the following format:
     [ 'example3', '/var/www' ],
 );
 
-=head2 my $dle = $report->get_dle_info($hostname, $disk[, $field]);
+=head2 my $dle = $report->get_dle_info($hostname, $disk [,$field] );
 
 This method returns all the information stored in the per-DLE section
 for the given C<$hostname> and C<disk>.  The returned value is a hash
@@ -87,7 +87,7 @@ reference to the data as it is stored in the internal data
 structure. Modifying the return value will modify the values in the
 C<Amanda::Report> object.
 
-=head2 my $info = $report->get_program_info($program[, $field]);
+=head2 my $info = $report->get_program_info($program [,$field] );
 
 This method returns a reference to the data for the given C<$program>.
 If the optional argument C<$field> is provided, that field in the
@@ -186,11 +186,15 @@ number of files seen by this backup on the tape.  Here is an example:
 	    date  => "",
 	    kb    => "",
 	    files => "",
+	    dle   => "",
+	    time  => "",
 	},
 	FakeTape02 => {
 	    date  => "",
 	    kb    => "",
 	    files => "",
+	    dle   => "",
+	    time  => "",
 	},
     };
 
@@ -370,6 +374,12 @@ sub read_file
         $self->{flags}{amflush_run} = 1;
     }
 
+    #remove last_label field
+    foreach my $dle ($self->get_dles()) {
+        my $dle_info = $self->get_dle_info(@$dle);
+        delete $dle_info->{last_label};
+    }
+
     return;
 }
 
@@ -461,9 +471,9 @@ sub get_dle_info
 sub get_program_info
 {
     my $self = shift @_;
-    my ( $program, $field ) = @_;
+    my ($program, $field) = @_;
 
-    return ( defined $field )
+    return (defined $field)
       ? $self->{data}{programs}{$program}{$field}
       : $self->{data}{programs}{$program};
 }
@@ -485,6 +495,9 @@ sub _handle_planner_line
 
     if ( $type == $L_INFO ) {
         return $self->_handle_info_line( "planner", $str );
+
+    } elsif ( $type == $L_WARNING ) {
+        return $self->_handle_warning_line( "planner", $str );
 
     } elsif ( $type == $L_START ) {
 
@@ -645,9 +658,7 @@ sub _handle_dumper_line
 
     } elsif ( $type == $L_WARNING ) {
 
-        # TODO: assign note to the appropriate DLE
-        my $notes = $dumper_p->{notes};
-        push @$notes, $str;
+	return $self->_handle_warning_line("dumper", $str);
 
     } elsif ( $type == $L_SUCCESS ) {
 
@@ -776,6 +787,14 @@ sub _handle_taper_line
 
         push @$chunks, $chunk;
 
+	if ($type = $L_PART) {
+	    $taper_p->{tapes}->{$tapevol}->{time} += $sec;
+	    if (!defined $dle->{last_label} || $dle->{last_label} ne $tapevol) {
+		$taper_p->{tapes}->{$tapevol}->{dle} += 1;
+	    }
+	}
+	$dle->{last_label} = $tapevol;
+
         if ( $type == $L_PARTPARTIAL ) {
 
             my @info   = Amanda::Util::split_quoted_strings($str);
@@ -814,6 +833,7 @@ sub _handle_taper_line
         my @info = Amanda::Util::split_quoted_strings($str);
         if ( $info[0] eq "tape" ) {
 
+	    $self->_handle_info_line("taper", $str);
             my ( $label, $kb, $files ) = @info[ 1, 3, 5 ];
             my $tapes = $taper_p->{tapes} ||= {};
             my $tape  = $tapes->{$label}  ||= {};
@@ -828,10 +848,7 @@ sub _handle_taper_line
 
     } elsif ( $type == $L_WARNING ) {
 
-        # TODO: change this to a handler call
-        # TODO: add to DLE if possible
-        my $notes = $taper_p->{notes} ||= [];
-        push @$notes, $str;
+	return $self->_handle_warning_line("taper", $str);
 
     } elsif ( $type == $L_ERROR ) {
 
@@ -990,7 +1007,7 @@ sub _handle_info_line
 
     my $program_p = $programs->{$program} ||= {};
 
-    if ( $str =~ m/^\w+ pid / || $str =~ m/pid-done / ) {
+    if ( $str =~ m/^\w+ pid \d+/ || $str =~ m/^pid-done \d+/ ) {
 
         #do not report pid lines
         return;
@@ -1001,6 +1018,13 @@ sub _handle_info_line
     }
 }
 
+sub _handle_warning_line
+{
+    my $self = shift @_;
+    my ( $program, $str ) = @_;
+
+    $self->_handle_info_line($program, $str);
+}
 
 sub _handle_bogus_line
 {
