@@ -18,6 +18,7 @@
 
 use Test::More tests => 42;
 use File::Path;
+use Data::Dumper;
 use strict;
 
 use lib "@amperldir@";
@@ -25,7 +26,7 @@ use Installcheck;
 use Installcheck::Config;
 use Installcheck::Changer;
 use Amanda::Paths;
-use Amanda::Device;
+use Amanda::Device qw( :constants );
 use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Config qw( :init :getconf config_dir_relative );
@@ -270,16 +271,15 @@ label_vtape(3,4,"mytape");
 	die $err if $err;
 
 	is_deeply($inv,  [
-          { empty => 0, label => undef, reserved => 0, # undef because labels don't match
+          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS, f_type => $Amanda::Header::F_EMPTY, label => undef, reserved => 0, # undef because labels don't match
 	    slot => '{1,1,1}', import_export => undef },
-          { empty => 0, label => '', reserved => 0, # all blank
+          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS, f_type => $Amanda::Header::F_EMPTY, label => undef, reserved => 0, # all blank
 	    slot => '{2,2,2}', import_export => undef },
-          { empty => 0, label => undef, reserved => 0, # mismatched labels
+          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS, f_type => $Amanda::Header::F_EMPTY, label => undef, reserved => 0, # mismatched labels
 	    slot => '{3,3,3}', import_export => undef },
-          { empty => 0, label => undef, reserved => 0, # mismatched labels
+          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS, f_type => $Amanda::Header::F_EMPTY, label => undef, reserved => 0, # mismatched labels
 	    slot => '{4,4,4}', import_export => undef } ,
         ], "inventory is correct");
-
 	Amanda::MainLoop::quit();
     });
 
@@ -399,16 +399,15 @@ label_vtape(3,2,"mytape-2");
 	die $err if $err;
 
 	is_deeply($inv,  [
-          { empty => 0, label => 'mytape-1', reserved => 0,
+          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS, f_type => $Amanda::Header::F_TAPESTART, label => 'mytape-1', reserved => 0,
 	    slot => '{1,1,1}', import_export => undef },
-          { empty => 0, label => 'mytape-2', reserved => 0,
+          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS, f_type => $Amanda::Header::F_TAPESTART, label => 'mytape-2', reserved => 0,
 	    slot => '{2,2,2}', import_export => undef },
-          { empty => 0, label => '', reserved => 0,
+          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS, f_type => $Amanda::Header::F_EMPTY, label => undef, reserved => 0,
 	    slot => '{3,3,3}', import_export => undef },
-          { empty => 0, label => '', reserved => 0,
+          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS, f_type => $Amanda::Header::F_EMPTY, label => undef, reserved => 0,
 	    slot => '{4,4,4}', import_export => undef } ,
-        ], "inventory is correct");
-
+        ], "second inventory is correct");
 	Amanda::MainLoop::quit();
     });
 

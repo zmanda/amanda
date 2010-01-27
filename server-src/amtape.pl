@@ -253,12 +253,16 @@ sub {
 
 	for my $sl (@$inv) {
 	    my $line = "slot $sl->{slot}:";
-	    if ($sl->{'empty'}) {
+	    if (!defined($sl->{device_status}) && !defined($sl->{label})) {
+		$line .= " unknown state";
+	    } elsif ($sl->{'status'} == Amanda::Changer::SLOT_EMPTY) {
 		$line .= " empty";
 	    } else {
-		if ($sl->{'label'}) {
+		if (defined $sl->{label}) {
 		    $line .= " label $sl->{label}";
-		} elsif (defined $sl->{'label'}) {
+		} elsif ($sl->{'device_status'} != $DEVICE_STATUS_SUCCESS) {
+		    $line .= "device error";
+		} elsif ($sl->{'f_type'} != $Amanda::Header::F_TAPESTART) {
 		    $line .= " blank";
 		} else {
 		    $line .= " unknown";

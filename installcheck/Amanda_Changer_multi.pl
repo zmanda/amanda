@@ -26,7 +26,7 @@ use Installcheck;
 use Installcheck::Config;
 use Installcheck::Changer;
 use Amanda::Paths;
-use Amanda::Device;
+use Amanda::Device qw( :constants );
 use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Config qw( :init :getconf config_dir_relative );
@@ -370,11 +370,32 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 	    die $err if $err;
 
 	    is_deeply($inv, [
-	      { label => undef, empty => 0, reserved => 0, slot => 1 },
-	      { label => undef, empty => 0, reserved => 0, slot => 2 },
-	      { label => undef, empty => 0, reserved => 0, slot => 3 },
-	      { label => "FOO?BAR", empty => 0, reserved => 0, slot => 4 },
-	      { label => undef, empty => 0, reserved => 0, slot => 5 },
+	      { slot => 1, state => Amanda::Changer::SLOT_FULL,
+		device_status => $DEVICE_STATUS_DEVICE_ERROR,
+		f_type => undef, label => undef,
+		reserved => 0, current => 1 },
+	      { slot => 2, state => Amanda::Changer::SLOT_FULL,
+		device_status => ($DEVICE_STATUS_DEVICE_ERROR |
+				  $DEVICE_STATUS_VOLUME_UNLABELED |
+				  $DEVICE_STATUS_VOLUME_ERROR),
+		f_type => undef, label => undef,
+		reserved => 0 },
+	      { slot => 3, state => Amanda::Changer::SLOT_FULL,
+		device_status => ($DEVICE_STATUS_DEVICE_ERROR |
+				  $DEVICE_STATUS_VOLUME_UNLABELED |
+				  $DEVICE_STATUS_VOLUME_ERROR),
+		f_type => undef, label => undef,
+		reserved => 0 },
+	      { slot => 4, state => Amanda::Changer::SLOT_FULL,
+		device_status => $DEVICE_STATUS_SUCCESS,
+		f_type => $Amanda::Header::F_TAPESTART, label => "FOO?BAR",
+		reserved => 0 },
+	      { slot => 5, state => Amanda::Changer::SLOT_FULL,
+		device_status => ($DEVICE_STATUS_DEVICE_ERROR |
+				  $DEVICE_STATUS_VOLUME_UNLABELED |
+				  $DEVICE_STATUS_VOLUME_ERROR),
+		f_type => undef, label => undef,
+		reserved => 0 },
 		], "inventory finds the labeled tape");
 
 	    Amanda::MainLoop::quit();

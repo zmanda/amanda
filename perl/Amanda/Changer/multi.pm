@@ -1,4 +1,4 @@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008,2009,2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -53,8 +53,11 @@ See the amanda-changers(7) manpage for usage information.
 #
 # The 'slots' key is a hash, with unaliased device name as keys and hashes
 # as values.  Each slot's hash has keys:
-#   pid   - the pid that reserved that slot.
-#   label - the label, if known, of the volume in this slot
+#   pid           - the pid that reserved that slot.
+#   state         - SLOT_FULL/SLOT_EMPTY/SLOT_UNKNOWN
+#   device_status - the status of the device after the open or read_label
+#   f_type        - the F_TYPE of the fileheader.
+#   label         - the label, if known, of the volume in this slot
 
 # $self is a hash with keys:
 #   slot           : slot number of the current slot
@@ -344,11 +347,10 @@ sub update {
 	}
 
 	my $slot = $res->{'this_slot'};
-	my $unaliased = $self->{unaliased}->{$slot};
 	my $dev = $res->{device};
 	$dev->read_label();
 	my $label = $dev->volume_label;
-	$state->{slots}->{$unaliased}->{label} = $label;
+	$self->_update_slot_state(state => $state, dev => $dev, slot =>$slot);
 	$user_msg_fn->("recording volume '$label' in slot $slot");
 	$res->release(
 	    finished_cb => $subs{'released'},
@@ -388,6 +390,7 @@ sub inventory {
 
     return if $self->check_error($params{'inventory_cb'});
 
+    my $current = $self->_get_current($params{state});
     $self->with_locked_state($self->{'state_filename'},
 			     $params{'inventory_cb'}, sub {
 	my ($state, $inventory_cb) = @_;
@@ -395,10 +398,23 @@ sub inventory {
 	my @inventory;
 	foreach ($self->{first_slot} .. ($self->{last_slot} - 1)) {
 	    my $slot = "$_";
-	    my $s = { slot => $slot, empty => 0 };
 	    my $unaliased = $self->{unaliased}->{$slot};
-	    $s->{'reserved'} = $self->_is_slot_in_use($state, $slot);
-	    $s->{'label'} = $state->{slots}->{$unaliased}->{label};
+	    my $s = { slot => $slot,
+		      state => $state->{slots}->{$unaliased}->{state},
+		      reserved => $self->_is_slot_in_use($state, $slot) };
+	    if (defined $state->{slots}->{$unaliased}) {
+		$s->{'device_status'} =
+			      $state->{slots}->{$unaliased}->{device_status};
+		$s->{'f_type'} = $state->{slots}->{$unaliased}->{f_type};
+		$s->{'label'} = $state->{slots}->{$unaliased}->{label};
+	    } else {
+		$s->{'device_status'} = undef;
+		$s->{'f_type'} = undef;
+		$s->{'label'} = undef;
+	    }
+	    if ($slot eq $current) {
+		$s->{'current'} = 1;
+	    }
 	    push @inventory, $s;
 	}
 	$inventory_cb->(undef, \@inventory);
@@ -513,6 +529,7 @@ sub _make_res {
     $state->{slots}->{$unaliased}->{pid} = $$;
     $device->read_label();
 
+    $self->_update_slot_state(state => $state, dev => $res->{device}, slot => $slot);
     $res_cb->(undef, $res);
 }
 
@@ -525,6 +542,24 @@ sub _slot_exists {
     return 0;
 }
 
+sub _update_slot_state {
+    my $self = shift;
+    my %params = @_;
+    my $state = $params{state};
+    my $dev = $params{dev};
+    my $slot = $params{slot};
+    my $unaliased = $self->{unaliased}->{$slot};
+    $state->{slots}->{$unaliased}->{device_status} = "".scalar($dev->status);
+    my $label = $dev->volume_label;
+    $state->{slots}->{$unaliased}->{state} = Amanda::Changer::SLOT_FULL;
+    $state->{slots}->{$unaliased}->{label} = $label;
+    my $volume_header = $dev->volume_header;
+    if (defined $volume_header) {
+	$state->{slots}->{$unaliased}->{f_type} = "".scalar($volume_header->{type});
+    } else {
+	delete $state->{slots}->{$unaliased}->{f_type};
+    }
+}
 # Internal function to determine if a slot (specified by number) is in use by a
 # drive, and return the path for that drive if so.
 sub _is_slot_in_use {
@@ -585,6 +620,7 @@ sub _set_current {
 package Amanda::Changer::multi::Reservation;
 use vars qw( @ISA );
 @ISA = qw( Amanda::Changer::Reservation );
+use Amanda::Device qw( :constants );
 
 sub new {
     my $class = shift;
@@ -611,7 +647,10 @@ sub set_label {
 	my $unaliased = $chg->{unaliased}->{$slot};
 
 	$state->{slots}->{$unaliased}->{label} =  $label;
-
+	$state->{slots}->{$unaliased}->{device_status} =
+				"".$DEVICE_STATUS_SUCCESS;
+	$state->{slots}->{$unaliased}->{f_type} =
+				"".scalar($Amanda::Header::F_TAPESTART);
 	$finished_cb->();
     });
 }

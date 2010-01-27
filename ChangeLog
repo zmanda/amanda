@@ -1,3 +1,16 @@
+2010-01-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: Document new inventory result.
+	* perl/Amanda/Changer/disk.pm, perl/Amanda/Changer/multi.pm,
+	  perl/Amanda/Changer/ndmp.pm, perl/Amanda/Changer/rait.pm,
+	  perl/Amanda/Changer/robot.pm,
+	  perl/Amanda/Changer/single.pm: Generate new inventory result.
+	* installcheck/Amanda_Changer_disk.pl,
+	  installcheck/Amanda_Changer_multi.pl,
+	  installcheck/Amanda_Changer_ndmp.pl,
+	  installcheck/Amanda_Changer_rait.pl,
+	  installcheck/Amanda_Changer_robot.pl: Fix for new inventory result.
+	* server-src/amtape.pl: Use new inventory result.
+
 2010-01-26  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Util.swg: added slurp and burp subs
 	* installcheck/Amanda_Util.pl: installcheck for slurp and burp

@@ -1,4 +1,4 @@
-# Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2009,2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -531,8 +531,10 @@ sub _merge_inventories {
 	if (!@combined) {
 	    for my $x (@$kid_inv) {
 		push @combined, {
+		    state => Amanda::Changer::SLOT_FULL,
+		    device_status => undef, f_type => undef,
 		    label => undef, barcode => [],
-		    empty => 0, reserved => 0, slot => [],
+		    reserved => 0, slot => [],
 		    import_export => 1, loaded_in => [],
 		};
 	    }
@@ -550,22 +552,31 @@ sub _merge_inventories {
 	for ($i = 0; $i < @combined; $i++) {
 	    my $c = $combined[$i];
 	    my $k = $kid_inv->[$i];
-
 	    # mismatches here are just warnings
 	    if (defined $c->{'label'}) {
 		if (defined $k->{'label'} and $c->{'label'} ne $k->{'label'}) {
 		    warning("child changers have different labels in slot at index $i");
 		    $c->{'label_mismatch'} = 1;
 		    $c->{'label'} = undef;
+		} elsif (!defined $k->{'label'}) {
+		    $c->{'label_mismatch'} = 1;
+		    $c->{'label'} = undef;
 		}
 	    } else {
-		if (!$c->{'label_mismatch'}) {
+		if (!$c->{'label_mismatch'} && !$c->{'label_set'}) {
 		    $c->{'label'} = $k->{'label'};
 		}
 	    }
+	    $c->{'label_set'} = 1;
 
+	    $c->{'device_status'} |= $k->{'device_status'};
+	    if (!defined $c->{'f_type'} ||
+		$k->{'f_type'} != $Amanda::Header::F_TAPESTART) {
+		$c->{'f_type'} = $k->{'f_type'};
+	    }
 	    # a slot is empty if any of the child slots are empty
-	    $c->{'empty'} = $c->{'empty'} || $k->{'empty'};
+	    $c->{'state'} = Amanda::Changer::SLOT_EMPTY
+			if $k->{'state'} == Amanda::Changer::SLOT_EMPTY;
 
 	    # a slot is reserved if any of the child slots are reserved
 	    $c->{'reserved'} = $c->{'reserved'} || $k->{'reserved'};
@@ -586,6 +597,7 @@ sub _merge_inventories {
 	my $c = $combined[$i];
 
 	delete $c->{'label_mismatch'} if $c->{'label_mismatch'};
+	delete $c->{'label_set'} if $c->{'label_set'};
 
 	$c->{'slot'} = collapse_braced_alternates([ @{$c->{'slot'}} ]);
 

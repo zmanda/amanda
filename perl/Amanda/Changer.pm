@@ -1,4 +1,4 @@
-# Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2007,2008,2009,2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -338,10 +338,8 @@ user-oriented messages appropriate to the changer.
 
 The C<inventory_cb> is called with an error object as the first parameter, or
 C<undef> if no error occurs.  The second parameter is an arrayref containing an
-ordered list of information about the slots in the changer.  The order will
-make some sense to the user, but may change from one invocation to another.
-Note that not all changers support the C<inventory> method, and those that do
-not will return a C<'notimpl'> failure.
+ordered list of information about the slots in the changer. The order never
+change, but some entries can be added or removed.
 
 Each slot is represented by a hash with the following keys:
 
@@ -351,15 +349,29 @@ Each slot is represented by a hash with the following keys:
 
 The slot name
 
-=item empty
+=item current
 
-Set to C<1> if the slot is empty -- meaning no media is available in the slot.
+Set to C<1> if it is the current slot.
+
+=item state
+
+ Set to C<SLOT_FULL> if the slot is full.
+ Set to C<SLOT_EMPTY> if the slot is empty (no volume in slot)
+ Set to C<SLOT_UNKNOWN> if the changer doesn't if the slot is full or not.
+
 A blank or erased volume is not the same as an empty slot.
+
+=item device_status
+
+The device status after the open or read_label, undef if device status is unknown.
+
+=item f_type
+
+The file header type as returned by read_label, only if device_status is DEVICE_STATUS_SUCCESS.
 
 =item label
 
-The label on the volume in this slot, or undef if the label is unknown.  If the
-volume is known to be blank, then this field should contain an empty string.
+The label on the volume in this slot, can be set by barcode or by read_label if f_type is Amanda::Header::F_TAPESTART.
 
 =item barcode (optional)
 
@@ -602,6 +614,18 @@ changer model implemented by this package.
 See amanda-changers(7) for user-level documentation of the changer implementations.
 
 =cut
+
+# constants for the states that slots may be in; note that these states still
+# apply even if the tape is actually loaded in a drive
+
+# slot is known to contain a volume
+use constant SLOT_FULL => 1;
+
+# slot is known to contain no volume
+use constant SLOT_EMPTY => 2;
+
+# don't known if slot contains a volume
+use constant SLOT_UNKNOWN => 3;
 
 # this is a "virtual" constructor which instantiates objects of different
 # classes based on its argument.  Subclasses should not try to chain up!
@@ -1101,7 +1125,9 @@ sub new {
     my $class = shift; # ignore class
     my ($type, %info) = @_;
 
-    debug("new Amanda::Changer::Error: type='$type', message='$info{message}'");
+    my $reason = "";
+    $reason = ", reason='$info{reason}'" if $type eq "failed";
+    debug("new Amanda::Changer::Error: type='$type'$reason, message='$info{message}'");
 
     $info{'type'} = $type;
 

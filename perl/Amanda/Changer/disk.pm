@@ -1,4 +1,4 @@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008,2009,2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -181,10 +181,20 @@ sub inventory {
 	my ($state, $finished_cb) = @_;
 	my @inventory;
 
+	my $current = $self->_get_current();
 	for my $slot (@slots) {
-	    my $s = { slot => $slot, empty => 0 };
+	    my $s = { slot => $slot, state => Amanda::Changer::SLOT_FULL };
 	    $s->{'reserved'} = $self->_is_slot_in_use($state, $slot);
-	    $s->{'label'} = $self->_get_slot_label($slot);
+	    my $label = $self->_get_slot_label($slot);
+	    if ($label) {
+		$s->{'label'} = $self->_get_slot_label($slot);
+		$s->{'f_type'} = "".$Amanda::Header::F_TAPESTART;
+	    } else {
+		$s->{'label'} = undef;
+		$s->{'f_type'} = "".$Amanda::Header::F_EMPTY;
+	    }
+	    $s->{'device_status'} = "".$DEVICE_STATUS_SUCCESS;
+	    $s->{'current'} = 1 if $slot eq $current;
 	    push @inventory, $s;
 	}
 	$finished_cb->(undef, \@inventory);
@@ -259,7 +269,7 @@ sub _load_by_label {
 
     if ($drive = $self->_is_slot_in_use($params{'state'}, $slot)) {
 	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "notfound",
+	    reason => "volinuse",
 	    message => "Slot $slot, containing '$label', is already " .
 			"in use by drive '$drive'");
     }

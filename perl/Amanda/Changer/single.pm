@@ -1,4 +1,4 @@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008,2009,2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -108,7 +108,27 @@ sub load {
     my $res = Amanda::Changer::single::Reservation->new($self, $device);
 
     $device->read_label();
+    if ($device->status() != $DEVICE_STATUS_SUCCESS) {
+	return $self->make_error("fatal", $params{'res_cb'},
+	    message => "error reading device '$self->{device_name}': " . $device->error_or_status());
+    }
+
     $params{'res_cb'}->(undef, $res);
+}
+
+sub inventory {
+    my $self = shift;
+    my %params = @_;
+
+    my @inventory;
+    my $s = { slot => 0,
+	      state => Amanda::Changer::SLOT_UNKNOWN,
+	      device_status => undef,
+	      f_type => undef,
+	      label => undef };
+    push @inventory, $s;
+
+    $params{'inventory_cb'}->(undef, \@inventory);
 }
 
 sub info_key {

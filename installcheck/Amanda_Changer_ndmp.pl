@@ -26,7 +26,7 @@ use Installcheck;
 use Installcheck::Config;
 use Installcheck::Changer;
 use Installcheck::Mock qw( setup_mock_mtx $mock_mtx_path );
-use Amanda::Device;
+use Amanda::Device qw( :constants );
 use Amanda::Debug;
 use Amanda::Paths;
 use Amanda::MainLoop;
@@ -351,11 +351,21 @@ for my $mtx_config (
 
     $subs{'inventory1'} = sub {
 	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'load_slot_1'}, [
-	    { slot => 1, empty => 1, ie => 1, label => undef },
-	    { slot => 2, empty => 1, ie => 1, label => undef },
-	    { slot => 3, barcode => 'PTAG00XX', label => undef },
-	    { slot => 4, barcode => 'PTAG01XX', label => undef },
-	    { slot => 5, barcode => 'PTAG02XX', label => undef },
+	    { slot => 1, state => Amanda::Changer::SLOT_EMPTY,
+	      import_export => 1,
+	      device_status => undef, f_type => undef, label => undef },
+	    { slot => 2, state => Amanda::Changer::SLOT_EMPTY,
+	      import_export => 1,
+	      device_status => undef, f_type => undef, label => undef },
+	    { slot => 3, state => Amanda::Changer::SLOT_FULL,
+	      barcode => 'PTAG00XX', current => 1,
+	      device_status => undef, f_type => undef, label => undef },
+	    { slot => 4, state => Amanda::Changer::SLOT_FULL,
+	      barcode => 'PTAG01XX',
+	      device_status => undef, f_type => undef, label => undef },
+	    { slot => 5, state => Amanda::Changer::SLOT_FULL,
+	      barcode => 'PTAG02XX',
+	      device_status => undef, f_type => undef, label => undef },
 	], "$pfx: inventory is correct on start-up");
     };
 
@@ -432,13 +442,22 @@ for my $mtx_config (
 
     $subs{'inventory2'} = sub {
 	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'load_slot_3'}, [
-	    { slot => 1, empty => 1, ie => 1, label => undef },
-	    { slot => 2, empty => 1, ie => 1, label => undef },
-	    { slot => 3, barcode => 'PTAG00XX', label => '',
-		loaded_in => 0, reserved => 1 },
-	    { slot => 4, barcode => 'PTAG01XX', label => '',
-		loaded_in => 1, reserved => 1 },
-	    { slot => 5, barcode => 'PTAG02XX', label => undef },
+	    { slot => 1, state => Amanda::Changer::SLOT_EMPTY,
+	      import_export => 1,
+	      device_status => undef, f_type => undef, label => undef },
+	    { slot => 2, state => Amanda::Changer::SLOT_EMPTY,
+	      import_export => 1,
+	      device_status => undef, f_type => undef, label => undef },
+	    { slot => 3, state => Amanda::Changer::SLOT_FULL,
+	      barcode => 'PTAG00XX', reserved => 1, loaded_in => 0,
+	      current => 1,
+	      device_status => undef, f_type => undef, label => undef },
+	    { slot => 4, state => Amanda::Changer::SLOT_FULL,
+	      barcode => 'PTAG01XX', reserved => 1, loaded_in => 1,
+	      device_status => undef, f_type => undef, label => undef },
+	    { slot => 5, state => Amanda::Changer::SLOT_FULL,
+	      barcode => 'PTAG02XX',
+	      device_status => undef, f_type => undef, label => undef },
 	], "$pfx: inventory is updated when slots are loaded");
     };
 
@@ -525,13 +544,24 @@ for my $mtx_config (
 	pass("$pfx: slot 4/drive 1 released");
 
 	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'check_state_after_release1'}, [
-	    { slot => 1, empty => 1, ie => 1, label => undef },
-	    { slot => 2, empty => 1, ie => 1, label => undef },
-	    { slot => 3, barcode => 'PTAG00XX', label => 'TAPE-1',
-		loaded_in => 0, reserved => 1 },
-	    { slot => 4, barcode => 'PTAG01XX', label => 'TAPE-2',
-		loaded_in => 1 },
-	    { slot => 5, barcode => 'PTAG02XX', label => undef },
+	    { slot => 1, state => Amanda::Changer::SLOT_EMPTY,
+	      import_export => 1,
+	      device_status => undef, f_type => undef, label => undef },
+	    { slot => 2, state => Amanda::Changer::SLOT_EMPTY,
+	      import_export => 1,
+	      device_status => undef, f_type => undef, label => undef },
+	    { slot => 3, state => Amanda::Changer::SLOT_FULL,
+	      barcode => 'PTAG00XX', reserved => 1, loaded_in => 0,
+	      current => 1,
+	      device_status => $DEVICE_STATUS_SUCCESS,
+	      f_type => $Amanda::Header::F_TAPESTART, label => 'TAPE-1' },
+	    { slot => 4, state => Amanda::Changer::SLOT_FULL,
+	      barcode => 'PTAG01XX', loaded_in => 1,
+	      device_status => $DEVICE_STATUS_SUCCESS,
+	      f_type => $Amanda::Header::F_TAPESTART, label => 'TAPE-2' },
+	    { slot => 5, state => Amanda::Changer::SLOT_FULL,
+	      barcode => 'PTAG02XX',
+	      device_status => undef, f_type => undef, label => undef },
 	], "$pfx: inventory is still up to date");
     };
 
@@ -612,13 +642,25 @@ for my $mtx_config (
 	pass("$pfx: labeled TAPE-4 in drive 1");
 
 	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'release2'}, [
-	    { slot => 1, empty => 1, ie => 1, label => undef },
-	    { slot => 2, empty => 1, ie => 1, label => undef },
-	    { slot => 3, barcode => 'PTAG00XX', label => 'TAPE-1',
-		loaded_in => 0, reserved => 1 },
-	    { slot => 4, barcode => 'PTAG01XX', label => 'TAPE-2' },
-	    { slot => 5, barcode => 'PTAG02XX', label => 'TAPE-4',
-		loaded_in => 1, reserved => 1 },
+	    { slot => 1, state => Amanda::Changer::SLOT_EMPTY,
+	      import_export => 1,
+	      device_status => undef, f_type => undef, label => undef },
+	    { slot => 2, state => Amanda::Changer::SLOT_EMPTY,
+	      import_export => 1,
+	      device_status => undef, f_type => undef, label => undef },
+	    { slot => 3, state => Amanda::Changer::SLOT_FULL,
+	      barcode => 'PTAG00XX', reserved => 1, loaded_in => 0,
+	      device_status => $DEVICE_STATUS_SUCCESS,
+	      f_type => $Amanda::Header::F_TAPESTART, label => 'TAPE-1' },
+	    { slot => 4, state => Amanda::Changer::SLOT_FULL,
+	      barcode => 'PTAG01XX',
+	      device_status => $DEVICE_STATUS_SUCCESS,
+	      f_type => $Amanda::Header::F_TAPESTART, label => 'TAPE-2' },
+	    { slot => 5, state => Amanda::Changer::SLOT_FULL,
+	      barcode => 'PTAG02XX', reserved => 1, loaded_in => 1,
+	      current => 1,
+	      device_status => $DEVICE_STATUS_SUCCESS,
+	      f_type => $Amanda::Header::F_TAPESTART, label => 'TAPE-4' },
 	], "$pfx: inventory is up to date after more labelings");
     };
 
@@ -681,5 +723,4 @@ for my $mtx_config (
 
     unlink($chg_state_file) if -f $chg_state_file;
 }
-
 $ndmp->cleanup();

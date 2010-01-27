@@ -1,4 +1,4 @@
-# Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2009,2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This library is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License version 2.1 as
@@ -67,7 +67,9 @@ See the amanda-changers(7) manpage for usage information.
 #
 # The 'slots' key is a hash, with slot numbers as keys and hashes
 # as values.  Each slot's hash has keys
-#   state - one of the SLOT_ constants, below
+#   state - SLOT_FULL/SLOT_EMPTY/SLOT_UNKNOWN
+#   device_status - the status of the device
+#   f_type - The f_type of the header
 #   label - volume label, if known
 #   barcode - volume barcode, if available
 #   loaded_in - drive this volume is loaded in
@@ -77,7 +79,7 @@ See the amanda-changers(7) manpage for usage information.
 #
 # The 'drives' key is also a hash by drive numbere, the values of
 # which are hashes with keys
-#   state - one of the SLOT_ constants, below
+#   state - SLOT_FULL/SLOT_EMPTY/SLOT_UNKNOWN
 #   label - volume label
 #   barcode - volume barcode
 #   orig_slot - slot from which this tape was loaded
@@ -111,18 +113,6 @@ See the amanda-changers(7) manpage for usage information.
 
 # constants for the states that slots may be in; note that these states still
 # apply even if the tape is actually loaded in a drive
-
-# slot is known to contain no volume
-use constant SLOT_EMPTY => 0;
-
-# slot contains a volume, but who knows what
-use constant SLOT_UNKNOWN => 1;
-
-# slot contains an unlabled volume
-use constant SLOT_UNLABELED => 2;
-
-# slot contains a volume with a known label
-use constant SLOT_LABELED => 3;
 
 sub new {
     my $class = shift;
@@ -427,8 +417,7 @@ sub load_unlocked {
 		message => "all slots have been loaded");
 	}
 
-	my $slot_state = $state->{'slots'}->{$slot}->{'state'};
-	if ($slot_state == SLOT_EMPTY) {
+	if ($state->{'slots'}->{$slot}->{'state'} eq Amanda::Changer::SLOT_EMPTY) {
 	    return $self->make_error("failed", $params{'res_cb'},
 		    reason => "notfound",
 		    message => "slot $slot is empty");
@@ -512,7 +501,7 @@ sub load_unlocked {
 	    # otherwise, the drive is available, so use it (whether it contains
 	    # a volume or not)
 	    $drive = $dr;
-	    if ($info->{'state'} != SLOT_EMPTY) {
+	    if ($info->{'state'} != Amanda::Changer::SLOT_EMPTY) {
 		$need_unload = 1;
 	    }
 	    last;
@@ -650,6 +639,13 @@ sub load_unlocked {
 	    $self->_debug("Expected label '$params{label}', but got '$label'");
 
 	    # update metadata with this new information
+	    $state->{'slots'}->{$slot}->{'state'} = Amanda::Changer::SLOT_FULL;
+	    $state->{'slots'}->{$slot}->{'device_status'} = $device->status;
+	    if (defined $device->{'header'}) {
+		$state->{'slots'}->{$slot}->{'f_type'} = $device->{'header'}->{type};
+	    } else {
+		$state->{'slots'}->{$slot}->{'f_type'} = undef;
+	    }
 	    $state->{'slots'}->{$slot}->{'label'} = $label;
 	    if ($state->{'slots'}->{$slot}->{'barcode'}) {
 		$state->{'bc2lb'}->{$state->{'slots'}->{$slot}->{'barcode'}} = $label;
@@ -665,8 +661,14 @@ sub load_unlocked {
 	    $self->_debug("Expected label '$params{label}', but got an unlabeled tape");
 
 	    # update metadata with this new information
+	    $state->{'slots'}->{$slot}->{'state'} = Amanda::Changer::SLOT_FULL;
+	    $state->{'slots'}->{$slot}->{'device_status'} = $device->status;
+	    if (defined $device->{'header'}) {
+		$state->{'slots'}->{$slot}->{'f_type'} = $device->{'header'}->{type};
+	    } else {
+		$state->{'slots'}->{$slot}->{'f_type'} = undef;
+	    }
 	    $state->{'slots'}->{$slot}->{'label'} = undef;
-	    $state->{'slots'}->{$slot}->{'state'} = SLOT_UNLABELED;
 	    if ($state->{'slots'}->{$slot}->{'barcode'}) {
 		delete $state->{'bc2lb'}->{$state->{'slots'}->{$slot}->{'barcode'}};
 	    }
@@ -676,7 +678,6 @@ sub load_unlocked {
 		    message => "Found unlabeled tape while looking for '$params{label}'");
 	}
 
-	my $slot_state = $label? SLOT_LABELED : SLOT_UNLABELED;
         my $res = Amanda::Changer::robot::Reservation->new($self, $slot, $drive,
                                 $device, $state->{'slots'}->{$slot}->{'barcode'});
 
@@ -688,9 +689,9 @@ sub load_unlocked {
 	$state->{'drives'}->{$drive}->{'orig_slot'} = $slot;
 	$state->{'slots'}->{$slot}->{'label'} = $label;
 	$state->{'drives'}->{$drive}->{'label'} = $label;
-	$state->{'slots'}->{$slot}->{'state'} = $slot_state;
-	$state->{'drives'}->{$drive}->{'state'} = $slot_state;
+	$state->{'drives'}->{$drive}->{'state'} = Amanda::Changer::SLOT_FULL;
 	$state->{'drives'}->{$drive}->{'barcode'} = $state->{'slots'}->{$slot}->{'barcode'};
+	#$state->{'slots'}->{$slot}->{'device_status'} = 9;
 	if ($label and $state->{'slots'}->{$slot}->{'barcode'}) {
 	    $state->{'bc2lb'}->{$state->{'slots'}->{$slot}->{'barcode'}} = $label;
 	}
@@ -829,12 +830,20 @@ sub _set_label_unlocked {
     my $slot = $state->{'drives'}->{$drive}->{'orig_slot'};
     my $label = $params{'label'};
     my $barcode = $state->{'drives'}->{$drive}->{'barcode'};
+    my $dev = $params{dev};
 
     $state->{'drives'}->{$drive}->{'label'} = $label;
-    $state->{'drives'}->{$drive}->{'state'} = SLOT_LABELED;
     if (defined $slot) {
+	delete $state->{'slots'}->{$slot}->{'unkknown_state'};
+	$state->{'slots'}->{$slot}->{'state'} = Amanda::Changer::SLOT_FULL;
+	$state->{'slots'}->{$slot}->{'device_status'} = "".$dev->status;
+	my $volume_header = $dev->volume_header;
+	if (defined $volume_header) {
+	    $state->{'slots'}->{$slot}->{'f_type'} = "".$volume_header->{type};
+	} else {
+	    $state->{'slots'}->{$slot}->{'f_type'} = undef;
+	}
 	$state->{'slots'}->{$slot}->{'label'} = $label;
-	$state->{'slots'}->{$slot}->{'state'} = SLOT_LABELED;
     }
     if (defined $barcode) {
 	$state->{'bc2lb'}->{$barcode} = $label;
@@ -1008,7 +1017,7 @@ sub eject_unlocked {
 	$state->{'slots'}->{$orig_slot}->{'label'} = $state->{'drives'}->{$drive}->{'label'};
 	$state->{'slots'}->{$orig_slot}->{'barcode'} = $state->{'drives'}->{$drive}->{'barcode'};
 	$state->{'slots'}->{$orig_slot}->{'loaded_in'} = undef;
-	$state->{'drives'}->{$drive}->{'state'} = SLOT_EMPTY;
+	$state->{'drives'}->{$drive}->{'state'} = Amanda::Changer::SLOT_EMPTY;
 	$state->{'drives'}->{$drive}->{'label'} = undef;
 	$state->{'drives'}->{$drive}->{'barcode'} = undef;
 	$state->{'drives'}->{$drive}->{'orig_slot'} = undef;
@@ -1054,7 +1063,8 @@ sub update_unlocked {
 		$whynot = "slot $slot does not exist";
 	    } elsif (!$self->_is_slot_allowed($slot)) {
 		$whynot = "slot $slot is not used by this changer";
-	    } elsif ($state->{'slots'}->{$slot}->{'state'} == SLOT_EMPTY) {
+	    } elsif ($state->{'slots'}->{$slot}->{'state'} ==
+		     Amanda::Changer::SLOT_EMPTY) {
 		$whynot = "slot $slot is empty";
 	    } elsif (defined $state->{'slots'}->{$slot}->{'loaded_in'}) {
 		$whynot = "slot $slot is currently loaded";
@@ -1075,14 +1085,16 @@ sub update_unlocked {
 	    }
 	    while (my ($sl, $inf) = each %{$state->{'slots'}}) {
 		if ($inf->{'label'} and $inf->{'label'} eq $label) {
-		    $inf->{'label'} = undef;
-		    $inf->{'state'} = SLOT_UNKNOWN;
+		    delete $inf->{'device_status'};
+		    delete $inf->{'f_type'};
+		    delete $inf->{'label'};
 		}
 	    }
 
 	    # and add knowledge of the label to the given slot
+	    #$state->{'slots'}->{$slot}->{'device_status'} = $DEVICE_STATUS_SUCCESS;
+	    #$state->{'slots'}->{$slot}->{'f_type'} = $Amanda::Header::F_TAPESTART;
 	    $state->{'slots'}->{$slot}->{'label'} = $label;
-	    $state->{'slots'}->{$slot}->{'state'} = SLOT_LABELED;
 	    if ($state->{'slots'}->{$slot}->{'barcode'}) {
 		my $bc = $state->{'slots'}->{$slot}->{'barcode'};
 		$state->{'bc2lb'}->{$bc} = $label;
@@ -1121,7 +1133,7 @@ sub update_unlocked {
 	# limit the update to allowed slots, and sort them so we don't confuse
 	# the user with a "random" order
 	@slots_to_check = grep { $self->_is_slot_allowed($_) } @slots_to_check;
-	@slots_to_check = grep { $state->{'slots'}->{$_}->{'state'} != SLOT_EMPTY } @slots_to_check;
+	@slots_to_check = grep { $state->{'slots'}->{$_}->{'state'} == Amanda::Changer::SLOT_FULL} @slots_to_check;
 	@slots_to_check = sort { $a <=> $b } @slots_to_check;
 
 	$update_slot_cb->();
@@ -1134,11 +1146,13 @@ sub update_unlocked {
 	$user_msg_fn->("Removing entry for slot $slot");
 	if (!defined $state->{'slots'}->{$slot}->{'barcode'}) {
 	    $state->{'slots'}->{$slot}->{'label'} = undef;
-	    $state->{'slots'}->{$slot}->{'state'} = SLOT_UNKNOWN;
+	    $state->{'slots'}->{$slot}->{'device_status'} = undef;
+	    $state->{'slots'}->{$slot}->{'f_type'} = undef;
 	    if (defined $state->{'slots'}->{$slot}->{'loaded_in'}) {
 		my $drive = $state->{'slots'}->{$slot}->{'loaded_in'};
 		$state->{'drives'}->{$drive}->{'label'} = undef;
-		$state->{'drives'}->{$drive}->{'state'} = SLOT_UNKNOWN;
+		$state->{'drives'}->{$drive}->{'state'} =
+					Amanda::Changer::SLOT_FULL;
 	    }
 	}
 	$subs{'set_to_unknown'}->();
@@ -1211,12 +1225,12 @@ sub inventory_unlocked {
 	my $slot = $state->{'slots'}->{$slot_name};
 
 	$i->{'slot'} = $slot_name;
-	$i->{'empty'} = 1
-	    if ($slot->{'state'} == SLOT_EMPTY);
-	$i->{'label'} = ($slot->{'state'} == SLOT_UNLABELED)?
-	    '' : $slot->{'label'};
+	$i->{'state'} = $slot->{'state'};
+	$i->{'device_status'} = $slot->{'device_status'};
+	$i->{'f_type'} = $slot->{'f_type'};
+	$i->{'label'} = $slot->{'label'};
 	$i->{'barcode'} = $slot->{'barcode'}
-	    if ($slot->{'barcode'});
+		if ($slot->{'barcode'});
 	if (defined $slot->{'loaded_in'}) {
 	    $i->{'loaded_in'} = $slot->{'loaded_in'};
 	    my $drive = $state->{'drives'}->{$slot->{'loaded_in'}};
@@ -1224,8 +1238,11 @@ sub inventory_unlocked {
 		$i->{'reserved'} = 1;
 	    }
 	}
-	$i->{'ie'} = 1
+	$i->{'import_export'} = 1
 	    if $slot->{'ie'};
+
+	$i->{'current'} = 1
+	    if $slot_name eq $state->{'current_slot'};
 
 	push @inv, $i;
     }
@@ -1260,10 +1277,7 @@ sub move_unlocked {
 	}
     }
 
-    my $from_state = $state->{'slots'}->{$from_slot}->{'state'};
-    my $to_state = $state->{'slots'}->{$to_slot}->{'state'};
-
-    if ($from_state == SLOT_EMPTY) {
+    if ($state->{'slots'}->{$from_slot}->{'state'} == Amanda::Changer::SLOT_EMPTY) {
 	return $self->make_error("failed", $params{'finished_cb'},
 		reason => "invalid",
 		message => "slot $from_slot is empty");
@@ -1275,7 +1289,7 @@ sub move_unlocked {
 		message => "slot $from_slot is currently loaded");
     }
 
-    if ($to_state != SLOT_EMPTY) {
+    if ($state->{'slots'}->{$to_slot}->{'state'} == Amanda::Changer::SLOT_FULL) {
 	return $self->make_error("failed", $params{'finished_cb'},
 		reason => "invalid",
 		message => "slot $to_slot is not empty");
@@ -1290,7 +1304,10 @@ sub move_unlocked {
 
 	# update metadata
 	$state->{'slots'}->{$to_slot} = { %{ $state->{'slots'}->{$from_slot} } };
-	$state->{'slots'}->{$from_slot}->{'state'} = SLOT_EMPTY;
+	$state->{'slots'}->{$from_slot}->{'state'} =
+						Amanda::Changer::SLOT_EMPTY;
+	$state->{'slots'}->{$from_slot}->{'device_status'} = undef;
+	$state->{'slots'}->{$from_slot}->{'f_type'} = undef;
 	$state->{'slots'}->{$from_slot}->{'label'} = undef;
 	$state->{'slots'}->{$from_slot}->{'barcode'} = undef;
 
@@ -1309,7 +1326,7 @@ sub _get_next_slot {
     my ($state, $slot) = @_;
 
     my @nonempty = sort { $a <=> $b } grep {
-	$state->{'slots'}->{$_}->{'state'} != SLOT_EMPTY
+	$state->{'slots'}->{$_}->{'state'} == Amanda::Changer::SLOT_FULL
 	and $self->_is_slot_allowed($_)
     } keys(%{$state->{'slots'}});
 
@@ -1465,7 +1482,9 @@ sub _with_updated_state {
             if ($info->{'empty'}) {
                 # empty slot
                 $new_slots->{$slot} = {
-                    state => SLOT_EMPTY,
+                    state => Amanda::Changer::SLOT_EMPTY,
+		    device_status => undef,
+		    f_type => undef,
                     label => undef,
                     barcode => undef,
                     loaded_in => undef,
@@ -1475,15 +1494,13 @@ sub _with_updated_state {
             }
 
 	    if (defined $info->{'barcode'}) {
-                my $slot_state = SLOT_UNKNOWN;
 
                 my $label = $state->{'bc2lb'}->{$info->{'barcode'}};
-                if (defined $label and $label ne '') {
-                    $slot_state = SLOT_LABELED;
-                }
 
 		$new_slots->{$slot} = {
-                    state => $slot_state,
+                    state => Amanda::Changer::SLOT_FULL,
+		    device_status => $state->{'slots'}->{$slot}->{device_status},
+		    f_type => $state->{'slots'}->{$slot}->{f_type},
 		    label => $label,
 		    barcode => $info->{'barcode'},
                     loaded_in => undef,
@@ -1497,7 +1514,9 @@ sub _with_updated_state {
 		    $new_slots->{$slot}->{'loaded_in'} = undef;
 		} else {
 		    $new_slots->{$slot} = {
-			state => SLOT_UNKNOWN,
+			state => Amanda::Changer::SLOT_FULL,
+			device_status => undef,
+			f_type => undef,
 			label => undef,
 			barcode => undef,
 			loaded_in => undef,
@@ -1506,6 +1525,7 @@ sub _with_updated_state {
 		}
 	    }
 	}
+	my $old_slots_state = $state->{'slots'};
 	$state->{'slots'} = $new_slots;
 
 	# now handle the drives
@@ -1523,7 +1543,7 @@ sub _with_updated_state {
 	    # if the drive is empty, this is pretty easy
 	    if (!defined $info) {
 		$new_drives->{$drv} = {
-                    state => SLOT_EMPTY,
+                    state => Amanda::Changer::SLOT_EMPTY,
                     label => undef,
                     barcode => undef,
                     orig_slot => undef,
@@ -1554,12 +1574,12 @@ sub _with_updated_state {
 
 	    # but if there's a tape in that slot, then we've got a problem
 	    if (defined $orig_slot
-		    and $state->{'slots'}->{$orig_slot}->{'state'} != SLOT_EMPTY) {
+		    and $state->{'slots'}->{$orig_slot}->{'state'} != Amanda::Changer::SLOT_EMPTY) {
 		warning("mtx indicates tape in drive $drv should go to slot $orig_slot, " .
 		        "but that slot is not empty.");
 		$orig_slot = undef;
 		for my $slot (keys %{ $state->{'slots'} }) {
-		    if ($state->{'slots'}->{$slot}->{'state'} == SLOT_EMPTY) {
+		    if ($state->{'slots'}->{$slot}->{'state'} == Amanda::Changer::SLOT_EMPTY) {
 			$orig_slot = $slot;
 			last;
 		    }
@@ -1575,7 +1595,7 @@ sub _with_updated_state {
 	    }
 
 	    $new_drives->{$drv} = {
-                state => $label? SLOT_LABELED : SLOT_UNKNOWN,
+                state => $label? Amanda::Changer::SLOT_FULL : Amanda::Changer::SLOT_UNKNOWN,
                 label => $label,
                 barcode => $info->{'barcode'},
                 orig_slot => $orig_slot,
@@ -1587,8 +1607,11 @@ sub _with_updated_state {
 	while (($drv, $info) = each %$new_drives) {
 	    # also update the slots with the relevant 'loaded_in' info
 	    if (defined $info->{'orig_slot'}) {
+		my $old_state = $old_slots_state->{$info->{'orig_slot'}};
 		$state->{'slots'}->{$info->{'orig_slot'}} = {
-                    state => defined $info->{'label'}? SLOT_LABELED : $info->{'state'},
+                    state => $info->{'state'},
+                    device_status => $old_state->{'device_status'},
+                    f_type => $old_state->{'f_type'},
 		    label => $info->{'label'},
                     barcode => $info->{'barcode'},
 		    loaded_in => $drv,
@@ -1602,6 +1625,10 @@ sub _with_updated_state {
 		warning("tape-device property specified for drive $dr, but no such " .
 			"drive exists in the library");
 	    }
+	}
+
+	if ($state->{'current_slot'} == -1) {
+	    $state->{'current_slot'} = $self->_get_next_slot($state, -1);
 	}
 
 	$subs{'done'}->();
@@ -1694,7 +1721,8 @@ sub set_label {
     my %params = @_;
 
     return unless $self->{'chg'};
-    $self->{'chg'}->_set_label(drive => $self->{'drive'}, %params);
+    $self->{'chg'}->_set_label(drive => $self->{'drive'},
+			       dev => $self->{device}, %params);
 }
 
 package Amanda::Changer::robot::Interface;
@@ -1916,7 +1944,6 @@ sub transfer {
 	    }
 
 	});
-
 	$self->_run_system_command($sys_cb,
 	    $self->{'mtx'}, "-f", $self->{'device_name'},
 			    'transfer', $src_slot, $dst_slot);
