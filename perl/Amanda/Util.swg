@@ -25,6 +25,7 @@
 %include "Amanda/Util.pod"
 
 %{
+#include <unistd.h>
 #include "amglue.h"
 #include "debug.h"
 #include "full-read.h"
@@ -210,6 +211,7 @@ sub skip_quoted_string {
 
 amglue_export_ok(slurp);
 amglue_export_ok(burp);
+amglue_export_ok(safe_overwrite_file);
 
 %perlcode %{
 
@@ -228,6 +230,17 @@ sub burp {
     my $file = shift @_;
     open my $fh, ">", $file or croak "can't open $file: $!";
     print $fh @_;
+}
+
+sub safe_overwrite_file {
+    my ( $filename, $contents ) = @_;
+
+    my $tmpfname = "$filename." . time;
+    open my $tmpfh, ">", $tmpfname or die "open: $!";
+
+    print $tmpfh $contents;
+    (fsync($tmpfh) == 0) or die "fsync: $!";
+    return rename $tmpfname, $filename;
 }
 
 %}
@@ -377,6 +390,12 @@ void get_fs_usage_(const char *file, struct fs_usage *fsp)
 	fsp->fsu_blocksize = 0;
 }
 %}
+
+/*
+ * File Syncing
+ */
+
+int fsync(int fd);
 
 /*
  * Locking (see amflock.h)

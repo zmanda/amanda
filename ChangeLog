@@ -1,3 +1,7 @@
+2010-01-27  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Util.pm: added safe_overwrite_file
+	* installcheck/Amanda_Util.pl: installcheck
+
 2010-01-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/single.pm: Undo bogus chunk from previous patch.
 

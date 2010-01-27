@@ -16,13 +16,13 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 92;
+use Test::More tests => 94;
 
 use lib "@amperldir@";
 use warnings;
 use strict;
 use Data::Dumper;
-use Amanda::Util qw(slurp burp);
+use Amanda::Util qw(slurp burp safe_overwrite_file);
 use Installcheck;
 use POSIX;
 
@@ -227,6 +227,28 @@ my $burp_corpus_fname = "$Installcheck::TMP/burp_corpus";
 
 ok( burp( $burp_corpus_fname, $corpus ), "burp round-trip test" );
 is( slurp($burp_corpus_fname), $corpus, "slurp round-trip test" );
+
+# test safe_overwrite_file
+
+my $sof_data = <<EOF;
+DISK planner somebox /lib
+START planner date 20080111
+START driver date 20080111
+STATS driver hostname somebox
+STATS driver startup time 0.051
+FINISH planner date 20080111 time 82.721
+START taper datestamp 20080111 label Conf-001 tape 1
+SUCCESS dumper somebox /lib 20080111 0 [sec 0.209 kb 1970 kps 9382.2 orig-kb 1970]
+SUCCESS chunker somebox /lib 20080111 0 [sec 0.305 kb 420 kps 1478.7]
+STATS driver estimate somebox /lib 20080111 0 [sec 1 nkb 2002 ckb 480 kps 385]
+PART taper Conf-001 1 somebox /lib 20080111 1/1 0 [sec 4.813543 kb 419 kps 87.133307]
+DONE taper somebox /lib 20080111 1 0 [sec 4.813543 kb 419 kps 87.133307]
+FINISH driver date 20080111 time 2167.581
+EOF
+
+ok(safe_overwrite_file($burp_corpus_fname, $sof_data));
+is(slurp($burp_corpus_fname), $sof_data,
+    "safe_overwrite_file round-trip check");
 
 # check out get_fs_usage
 my $fs_usage = Amanda::Util::get_fs_usage(POSIX::getcwd);
