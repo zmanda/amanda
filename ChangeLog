@@ -1,3 +1,8 @@
+2010-01-26  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Util.swg: added slurp and burp subs
+	* installcheck/Amanda_Util.pl: installcheck for slurp and burp
+	* installcheck/Installcheck/Run.pm: use of slurp in production
+
 2010-01-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report.pm: Add notes, time, dle. Many improvements.
 	* perl/Amanda/Report/human.pm: Many improvements.

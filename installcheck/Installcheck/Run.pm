@@ -150,13 +150,14 @@ use Cwd qw(abs_path getcwd);
 use Carp;
 use Test::More;
 use Amanda::Config qw( :init );
+use Amanda::Util qw(slurp);
 
 require Exporter;
 
 @ISA = qw(Exporter);
-@EXPORT_OK = qw(setup 
+@EXPORT_OK = qw(setup
     run run_get run_get_err run_err
-    cleanup 
+    cleanup
     $diskname $stdout $stderr $exit_code
     load_vtape vtape_dir
     amdump_diag run_expect );
@@ -304,7 +305,7 @@ sub setup_holding {
 
 sub setup_disklist {
     my ($testconf) = @_;
-    
+
     $testconf->add_dumptype("installcheck-test", [
 	'auth' => '"local"',
 	'compress' => 'none',
@@ -345,7 +346,7 @@ sub run {
     $app = "$sbindir/$app" unless ($app =~ qr{/});
     my $pid = IPC::Open3::open3("INFH", "OUTFH", ">&ERRFH",
 	"$app", @args);
-    
+
     # immediately close the child's stdin
     close(INFH);
 
@@ -359,9 +360,7 @@ sub run {
     close(ERRFH);
 
     # fetch stderr from the temporary file
-    open(ERRFH, "<", "$errtempfile") or croak("Could not open '$errtempfile'");
-    $stderr = do { local $/; <ERRFH> };
-    close(ERRFH);
+    $stderr = slurp($errtempfile);
     unlink($errtempfile);
 
     # and return true if the exit status was zero

@@ -208,6 +208,30 @@ sub skip_quoted_string {
 
 %}
 
+amglue_export_ok(slurp);
+amglue_export_ok(burp);
+
+%perlcode %{
+
+sub slurp {
+    my $file = shift @_;
+    local $/;
+
+    open my $fh, "<", $file or croak "can't open $file: $!";
+    my $data = <$fh>;
+    close $fh;
+
+    return $data;
+}
+
+sub burp {
+    my $file = shift @_;
+    open my $fh, ">", $file or croak "can't open $file: $!";
+    print $fh @_;
+}
+
+%}
+
 %typemap (in) GPtrArray * {
     AV *av;
     guint len;

@@ -16,13 +16,13 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 90;
+use Test::More tests => 92;
 
 use lib "@amperldir@";
 use warnings;
 use strict;
 use Data::Dumper;
-use Amanda::Util;
+use Amanda::Util qw(slurp burp);
 use Installcheck;
 use POSIX;
 
@@ -195,6 +195,38 @@ unlink($testfile);
 is_deeply([ Amanda::Util::split_quoted_strings('one "T W O" thr\ ee'), ],
           [ "one", "T W O", "thr ee" ],
           "split_quoted_strings seems to work");
+
+## tests for slurp and burp
+
+my $corpus = <<EOF;
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean id
+neque interdum ligula euismod cursus at vel tortor. Praesent interdum
+molestie felis, nec vehicula lorem luctus quis. Suspendisse in laoreet
+diam. Maecenas fringilla lectus vel libero vehicula
+condimentum. Aenean ac luctus nulla. Nullam sagittis lacinia orci, et
+consectetur nunc malesuada sed. Nulla eu felis ipsum. Duis feugiat
+risus a lectus blandit lobortis. Fusce quis neque neque. Class aptent
+taciti sociosqu ad litora torquent per conubia nostra, per inceptos
+himenaeos.
+
+Nulla at auctor mi. Mauris vestibulum ante vel metus auctor at iaculis
+neque semper. Nullam ipsum lorem, convallis ullamcorper ornare in,
+lacinia eu magna. Vivamus vulputate fermentum quam, quis pulvinar eros
+varius at. Phasellus ac diam nec erat elementum facilisis et ac
+est. Nunc nec nulla nec quam tristique dignissim at ut arcu. Integer
+accumsan tincidunt nisi non consectetur. Donec nec massa sed dui
+auctor sodales eget ac elit. Aliquam luctus sollicitudin nibh, eu
+volutpat augue tempor sed. Mauris ac est et neque mollis iaculis vel
+in libero. Duis molestie felis ultrices elit fringilla varius. In eget
+turpis dignissim sem varius sagittis eget vel neque.
+
+EOF
+
+my $burp_corpus_fname = "$Installcheck::TMP/burp_corpus";
+
+ok( burp( $burp_corpus_fname, $corpus ), "burp round-trip test" );
+is( slurp($burp_corpus_fname), $corpus, "slurp round-trip test" );
 
 # check out get_fs_usage
 my $fs_usage = Amanda::Util::get_fs_usage(POSIX::getcwd);
