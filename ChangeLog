@@ -1,3 +1,8 @@
+2010-01-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Config.pod perl/Amanda/DB/Catalog.pm
+	  perl/Amanda/Taper/Scribe.pm perl/Amanda/Xfer.pod:
+	  fix typos
+
 2010-01-27  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Util.pm: added safe_overwrite_file
 	* installcheck/Amanda_Util.pl: installcheck

@@ -231,7 +231,7 @@ dump is completely finished - either successfully or with a fatal error.
 Unlike most callbacks, this one takes keyword arguments, since it has so many
 parameters.
 
-  $dump_cb->(result => $result,
+  $dump_cb->(
         result => $result,
         input_errors => $input_errors,
         device_errors => $device_errors,
@@ -466,7 +466,7 @@ sub get_xfer_dest {
     my %params = @_;
 
     for my $rq_param qw(max_memory split_method) {
-	croak "required parameter '$rq_param' mising"
+	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }
 

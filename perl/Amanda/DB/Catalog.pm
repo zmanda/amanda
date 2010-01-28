@@ -696,7 +696,7 @@ sub get_dumps {
 }
 
 sub sort_parts {
-    my ($keys, @dumps) = @_;
+    my ($keys, @parts) = @_;
 
     # TODO: make this more efficient by selecting the comparison
     # functions once, in advance, and just applying them
@@ -722,7 +722,7 @@ sub sort_parts {
 	    return $res if $res;
 	}
 	return 0;
-    } @dumps;
+    } @parts;
 }
 
 sub sort_dumps {
