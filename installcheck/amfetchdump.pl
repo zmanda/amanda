@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 9;
+use Test::More; # plan given below
 
 use lib "@amperldir@";
 use Installcheck;
@@ -25,20 +25,43 @@ use Installcheck::Run qw(run run_get run_err $diskname);
 use Installcheck::Dumpcache;
 use File::Path qw(rmtree mkpath);
 use Amanda::Paths;
+use Amanda::Header;
+use Amanda::Debug;
 use Cwd;
 use warnings;
 use strict;
 no strict 'subs';
 
+if ($Installcheck::Run::have_expect) {
+    plan tests => 30;
+} else {
+    plan skip_all => "Expect.pm not available";
+    exit(0);
+}
+
+## NOTE:
+#
+# Not all features of amfetchdump can be tested without a lot of extra work:
+# --header-fd: Expect doesn't pass through nonstandard fd's
+# -p: Expect would have to deal with the dumpfile data, which it won't like
+
 my $testconf;
 my $dumpok;
+my @filenames;
+my $exp;
+my @results;
+my $fok;
+my $last_file_size;
 
-my $testdir = "$Installcheck::TMP/amfetchdump-installcheck";
+my $testdir = "$Installcheck::TMP/amfetchdump-installcheck/files";
 rmtree($testdir);
 mkpath($testdir);
 
 my $origdir = getcwd;
 chdir($testdir);
+
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 sub cleandir {
     for my $filename (<$testdir/*>) {
@@ -64,6 +87,11 @@ sub got_files {
 	$ok = 0;
     }
 
+    # capture file size if there's only one file
+    if (@filenames == 1) {
+	$last_file_size = -s $filenames[0];
+    }
+
     ok($ok, $msg) or diag(`ls -l $testdir`);
 }
 
@@ -73,86 +101,298 @@ like(run_err('amfetchdump', 'TESTCONF'),
     qr{^Usage:},
     "'amfetchdump TESTCONF' gives usage message on stderr");
 
-SKIP: {
-    skip "Expect.pm not installed", 2
-	unless $Installcheck::Run::have_expect;
+##
+# plain vanilla
 
-    cleandir();
+cleandir();
 
-    my $exp = Installcheck::Run::run_expect('amfetchdump', 'TESTCONF', 'localhost');
-    $exp->log_stdout(0);
+$exp = Installcheck::Run::run_expect('amfetchdump', '-b', '65536', 'TESTCONF', 'localhost');
+$exp->log_stdout(0);
 
-    my @results;
-    $exp->expect(60,
-	[ qr{1 tape\(s\) needed for restoration}, sub {
-	    push @results, "tapes-needed";
-	    exp_continue;
-	} ],
-	[ qr{amfetchdump: 1: restoring split dumpfile: date [[:digit:]]+ host localhost disk .*},
-	sub {
-	    push @results, "restoring";
-	    exp_continue;
-	} ],
-	[ 'Press enter when ready', sub {
-	    push @results, "press-enter";
-	    $exp->send("\n");
-	    exp_continue;
-	}, ],
-	[ 'eof', sub {
-	    push @results, "eof";
-	}, ],
-    );
-    is_deeply([ @results ], [ "tapes-needed", "press-enter", "restoring", "eof" ],
-	      "simple restore follows the correct steps");
+@results = ();
+$exp->expect(60,
+    [ qr{1 (tape|volume)\(s\) needed for restoration}, sub {
+	push @results, "tapes-needed";
+	exp_continue;
+    } ],
+    [ qr{amfetchdump: 1: restoring split dumpfile: date [[:digit:]]+ host localhost disk .*},
+    sub {
+	push @results, "restoring";
+	exp_continue;
+    } ],
+    [ 'Press enter when ready', sub {
+	push @results, "press-enter";
+	$exp->send("\n");
+	exp_continue;
+    }, ],
+    [ 'eof', sub {
+	push @results, "eof";
+    }, ],
+);
+is_deeply([ @results ], [ "tapes-needed", "press-enter", "restoring", "eof" ],
+	  "simple restore with explicit blocksize follows the correct steps");
 
-    got_files(1, "..and restored file is present in testdir");
+got_files(1, "..and restored file is present in testdir");
+
+##
+# -a (assume)
+
+cleandir();
+
+ok(run('amfetchdump', '-a', '-l', 'TESTCONF', 'localhost'),
+    "run with -a and -l successful");
+
+got_files(1, "..and restored file is present in testdir ($last_file_size bytes)");
+my $uncomp_size = $last_file_size;
+
+##
+# -C (should make output file smaller)
+
+cleandir();
+
+ok(run('amfetchdump', '-a', '-C', 'TESTCONF', 'localhost'),
+    "run with -a and -C successful");
+
+got_files(1, "..and restored file is present in testdir");
+
+ok($last_file_size < $uncomp_size,
+    "..and is smaller than previous run ($last_file_size bytes)");
+
+##
+# -O
+
+cleandir();
+chdir($Installcheck::TMP);
+
+$exp = Installcheck::Run::run_expect('amfetchdump', '-O', $testdir, 'TESTCONF', 'localhost');
+$exp->log_stdout(0);
+
+@results = ();
+$exp->expect(60,
+    [ qr{1 (tape|volume)\(s\) needed for restoration}, sub {
+	push @results, "tapes-needed";
+	exp_continue;
+    } ],
+    [ qr{amfetchdump: 1: restoring split dumpfile: date [[:digit:]]+ host localhost disk .*},
+    sub {
+	push @results, "restoring";
+	exp_continue;
+    } ],
+    [ 'Press enter when ready', sub {
+	push @results, "press-enter";
+	$exp->send("\n");
+	exp_continue;
+    }, ],
+    [ 'eof', sub {
+	push @results, "eof";
+    }, ],
+);
+is_deeply([ @results ], [ "tapes-needed", "press-enter", "restoring", "eof" ],
+	  "restore with -O follows the correct steps");
+
+chdir($testdir);
+got_files(1, "..and restored file is present in testdir");
+
+##
+# -h
+
+cleandir();
+
+$exp = Installcheck::Run::run_expect('amfetchdump', '-h', 'TESTCONF', 'localhost');
+$exp->log_stdout(0);
+
+@results = ();
+$exp->expect(60,
+    [ qr{1 (tape|volume)\(s\) needed for restoration}, sub {
+	push @results, "tapes-needed";
+	exp_continue;
+    } ],
+    [ qr{amfetchdump: 1: restoring split dumpfile: date [[:digit:]]+ host localhost disk .*},
+    sub {
+	push @results, "restoring";
+	exp_continue;
+    } ],
+    [ 'Press enter when ready', sub {
+	push @results, "press-enter";
+	$exp->send("\n");
+	exp_continue;
+    }, ],
+    [ 'eof', sub {
+	push @results, "eof";
+    }, ],
+);
+is_deeply([ @results ], [ "tapes-needed", "press-enter", "restoring", "eof" ],
+	  "restore with -h follows the correct steps");
+
+$fok = got_files(1, "..and restored file is present in testdir");
+
+# check that it starts with a header
+if ($fok) {
+    my @filenames = <localhost.*>;
+    open(my $fh, "<", $filenames[0]) or die "error opening: $!";
+    sysread($fh, my $hdr_dat, 32768) or die "error reading: $!";
+    close($fh);
+    my $hdr = Amanda::Header->from_string($hdr_dat);
+    is($hdr->{type}+0, $Amanda::Header::F_SPLIT_DUMPFILE,
+	"..dumpfile begins with a split dumpfile header");
+} else {
+    fail();
 }
 
-{
-    cleandir();
+##
+# --header-file
 
-    ok(run('amfetchdump', '-a', 'TESTCONF', 'localhost'),
-	"run with -a successful");
+cleandir();
 
-    got_files(1, "..and restored file is present in testdir");
+$exp = Installcheck::Run::run_expect('amfetchdump', '--header-file', 'hdr',
+					'TESTCONF', 'localhost');
+$exp->log_stdout(0);
+
+@results = ();
+$exp->expect(60,
+    [ qr{1 (tape|volume)\(s\) needed for restoration}, sub {
+	push @results, "tapes-needed";
+	exp_continue;
+    } ],
+    [ qr{amfetchdump: 1: restoring split dumpfile: date [[:digit:]]+ host localhost disk .*},
+    sub {
+	push @results, "restoring";
+	exp_continue;
+    } ],
+    [ 'Press enter when ready', sub {
+	push @results, "press-enter";
+	$exp->send("\n");
+	exp_continue;
+    }, ],
+    [ 'eof', sub {
+	push @results, "eof";
+    }, ],
+);
+is_deeply([ @results ], [ "tapes-needed", "press-enter", "restoring", "eof" ],
+	  "restore with --header-file follows the correct steps");
+
+$fok = got_files(1, "..and restored file is present in testdir");
+
+# check that it starts with a header
+if ($fok) {
+    my @filenames = <localhost.*>;
+    open(my $fh, "<", "$testdir/hdr") or die "error opening: $!";
+    sysread($fh, my $hdr_dat, 32768) or die "error reading: $!";
+    close($fh);
+    my $hdr = Amanda::Header->from_string($hdr_dat);
+    is($hdr->{type}+0, $Amanda::Header::F_SPLIT_DUMPFILE,
+	"..and the header file contains the right header");
+} else {
+    fail();
 }
 
-SKIP: {
-    skip "Expect.pm not installed", 2
-	unless $Installcheck::Run::have_expect;
+##
+# -d and prompting for volumes one at a time
 
-    cleandir();
-    chdir($Installcheck::TMP);
+cleandir();
 
-    my $exp = Installcheck::Run::run_expect('amfetchdump', '-O', $testdir, 'TESTCONF', 'localhost');
-    $exp->log_stdout(0);
+my $vfsdev = 'file:' . Installcheck::Run::vtape_dir();
+Installcheck::Run::load_vtape(3); # wrong vtape
+$exp = Installcheck::Run::run_expect('amfetchdump', '-d', $vfsdev,
+					'TESTCONF', 'localhost');
+$exp->log_stdout(0);
 
-    my @results;
-    $exp->expect(60,
-	[ qr{1 tape\(s\) needed for restoration}, sub {
-	    push @results, "tapes-needed";
-	    exp_continue;
-	} ],
-	[ qr{amfetchdump: 1: restoring split dumpfile: date [[:digit:]]+ host localhost disk .*},
-	sub {
-	    push @results, "restoring";
-	    exp_continue;
-	} ],
-	[ 'Press enter when ready', sub {
-	    push @results, "press-enter";
-	    $exp->send("\n");
-	    exp_continue;
-	}, ],
-	[ 'eof', sub {
-	    push @results, "eof";
-	}, ],
-    );
-    is_deeply([ @results ], [ "tapes-needed", "press-enter", "restoring", "eof" ],
-	      "restore with -O follows the correct steps");
+@results = ();
+$exp->expect(60,
+    [ qr{1 (tape|volume)\(s\) needed for restoration}, sub {
+	push @results, "tapes-needed";
+	exp_continue;
+    } ],
+    [ 'Press enter when ready', sub {
+	push @results, "press-enter";
+	$exp->send("\n");
+	exp_continue;
+    }, ],
+    [ qr{Insert tape labeled TESTCONF01 in device.*\n.*to finish reading tapes}, sub {
+	push @results, "insert-tape";
+	Installcheck::Run::load_vtape(1); # right vtape
+	$exp->send("\n");
+	exp_continue;
+    }, ],
+    [ qr{amfetchdump: 1: restoring split dumpfile: date [[:digit:]]+ host localhost disk .*},
+    sub {
+	push @results, "restoring";
+	exp_continue;
+    } ],
+    [ 'eof', sub {
+	push @results, "eof";
+    }, ],
+);
+is_deeply([ @results ], [ "tapes-needed", "press-enter", "insert-tape", "restoring", "eof" ],
+	  "restore with an explicit device follows the correct steps, prompting for each");
 
-    chdir($testdir);
-    got_files(1, "..and restored file is present in testdir");
-}
+got_files(1, "..and restored file is present in testdir");
+
+##
+# -n (using a multipart dump)
+
+Installcheck::Dumpcache::load("parts");
+cleandir();
+
+$exp = Installcheck::Run::run_expect('amfetchdump', '-n', 'TESTCONF', 'localhost');
+$exp->log_stdout(0);
+
+@results = ();
+$exp->expect(60,
+    [ qr{1 (tape|volume)\(s\) needed for restoration}, sub {
+	push @results, "tapes-needed";
+	exp_continue;
+    } ],
+    [ qr{amfetchdump: (\d+): restoring split dumpfile: date [[:digit:]]+ host localhost disk .*},
+    sub {
+	push @results, "restoring";
+	exp_continue;
+    } ],
+    [ 'Press enter when ready', sub {
+	push @results, "press-enter";
+	$exp->send("\n");
+	exp_continue;
+    }, ],
+    [ 'eof', sub {
+	push @results, "eof";
+    }, ],
+);
+is_deeply([ @results ], [ "tapes-needed", "press-enter", ("restoring",)x9, "eof" ],
+	  "restore with -n follows the correct steps");
+
+got_files(9, "..and restored file is present in testdir");
+
+##
+# -l, no options, and -c for compressed dumps
+
+Installcheck::Dumpcache::load("compress");
+cleandir();
+
+ok(run('amfetchdump', '-a', 'TESTCONF', 'localhost'),
+    "run with -a successful (should uncompress)");
+
+got_files(1, "..and restored file is present in testdir ($last_file_size bytes)");
+$uncomp_size = $last_file_size;
+
+cleandir();
+
+ok(run('amfetchdump', '-a', '-l', 'TESTCONF', 'localhost'),
+    "run with -a and -l successful (should not uncompress)");
+
+got_files(1, "..and restored file is present in testdir");
+
+ok($last_file_size < $uncomp_size,
+    "..and is smaller than previous run ($last_file_size bytes)");
+
+cleandir();
+
+ok(run('amfetchdump', '-a', '-c', 'TESTCONF', 'localhost'),
+    "run with -a and -c successful (should not uncompress)");
+
+got_files(1, "..and restored file is present in testdir");
+
+ok($last_file_size < $uncomp_size,
+    "..and is smaller than previous run ($last_file_size bytes)");
 
 SKIP: {
     skip "Expect not installed or not built with ndmp and server", 2 unless
@@ -167,12 +407,12 @@ SKIP: {
 
     cleandir();
 
-    my $exp = Installcheck::Run::run_expect('amfetchdump', 'TESTCONF', 'localhost');
+    $exp = Installcheck::Run::run_expect('amfetchdump', 'TESTCONF', 'localhost');
     $exp->log_stdout(0);
 
-    my @results;
+    @results = ();
     $exp->expect(60,
-	[ qr{1 tape\(s\) needed for restoration}, sub {
+	[ qr{1 (tape|volume)\(s\) needed for restoration}, sub {
 	    push @results, "tapes-needed";
 	    exp_continue;
 	} ],
@@ -191,16 +431,10 @@ SKIP: {
 	}, ],
     );
     is_deeply([ @results ], [ "tapes-needed", "press-enter", "restoring", "eof" ],
-	      "simple restore follows the correct steps");
+	      "ndmp restore follows the correct steps");
 
     got_files(1, "..and restored file is present in testdir");
 }
-
-# TODO:
-# - test piping (-p),
-# - test compression (-c and -C)
-# - test a specified device (-d)
-# - test splits (regular, -w, -n)
 
 END {
     chdir("$testdir/..");

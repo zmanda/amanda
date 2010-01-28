@@ -183,7 +183,7 @@ operation.</para></listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
+  <term><option>-o</option> <replaceable>configoption</replaceable></term>
   <listitem>
 <para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>"
  section in <manref name="amanda" vol="8"/>.</para>

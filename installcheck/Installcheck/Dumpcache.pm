@@ -56,6 +56,19 @@ to which has been added:
 
 Like 'basic', but with "usetimestamps" set to "no".
 
+=head2 ndmp
+
+Like 'basic', but with an NDMP device.  You will need to use
+L<Installcheck::Mock>'s C<edit_config> to use this.
+
+=head2 parts
+
+A single multi-part dump with nine parts (using a fallback_splitsize of 128k).
+
+=head2 compress
+
+A single dump of C<$diskname/dir> with server-side compression enabled.
+
 =head2 multi
 
 This flavor runs three dumps of two DLEs (C<$diskname> and C<$diskname/dir>).
@@ -137,6 +150,35 @@ $flavors{'multi'} = sub {
 	or amdump_diag("Amdump run failed for 'multi' step 3 (degraded mode)");
 };
 
+$flavors{'parts'} = sub {
+    my $testconf = Installcheck::Run::setup();
+    $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+    $testconf->add_dumptype("installcheck-test-parts", [
+	"installcheck-test", "",
+	"tape_splitsize", "128k",
+	"fallback_splitsize", "128k",
+    ]);
+    $testconf->add_dle("localhost $diskname installcheck-test-parts");
+    $testconf->write();
+
+    ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'parts'"),
+	or amdump_diag("Amdump run failed for 'part'");
+};
+
+$flavors{'compress'} = sub {
+    my $testconf = Installcheck::Run::setup();
+    $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+    $testconf->add_dumptype("installcheck-test-comp", [
+	"installcheck-test", "",
+	"compress", "server fast",
+    ]);
+    $testconf->add_dle("localhost $diskname installcheck-test-comp");
+    $testconf->write();
+
+    ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'parts'"),
+	or amdump_diag("Amdump run failed for 'part'");
+};
+
 if (Amanda::Util::built_with_component("server")
     and Amanda::Util::built_with_component("ndmp")) {
 
@@ -148,8 +190,8 @@ if (Amanda::Util::built_with_component("server")
 	$ndmp->config($testconf);
 	$testconf->write();
 
-	ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'basic'"),
-	    or amdump_diag("Amdump run failed for 'basic'");
+	ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'ndmp'"),
+	    or amdump_diag("Amdump run failed for 'ndmp'");
     };
 }
 
