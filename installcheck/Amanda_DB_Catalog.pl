@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 62;
+use Test::More tests => 66;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -597,6 +597,29 @@ got_dumps([ Amanda::DB::Catalog::sort_dumps(['dump_timestamp'],
 		    'somebox_lib_20080313133333', # dts=20080313133333
 		    } ],
 		"sort dumps by write_timestamp");
+
+@dumpspecs = Amanda::Cmdline::parse_dumpspecs([".*", "/lib"], 0);
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(dumpspecs => [ @dumpspecs ]) ],
+    [ sortdumps dumps_named qr/_lib_/ ],
+    "get_dumps parameter dumpspecs with one dumpspec");
+
+@dumpspecs = Amanda::Cmdline::parse_dumpspecs([".*", "/lib", "somebox"], 0);
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(dumpspecs => [ @dumpspecs ]) ],
+    [ sortdumps dumps_matching { $_->{'diskname'} eq '/lib'
+			      or $_->{'hostname'} eq 'somebox' } ],
+    "get_dumps parameter dumpspecs with two dumpspecs");
+
+@dumpspecs = Amanda::Cmdline::parse_dumpspecs(["otherbox", "*", "somebox"], 0);
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(dumpspecs => [ @dumpspecs ]) ],
+    [ sortdumps dumps_matching { $_->{'hostname'} eq 'otherbox'
+			      or $_->{'hostname'} eq 'somebox' } ],
+    "get_dumps parameter dumpspecs with two non-overlapping dumpspecs");
+
+@dumpspecs = Amanda::Cmdline::parse_dumpspecs(["does-not-exist"], 0);
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(dumpspecs => [ @dumpspecs ]) ],
+    [ ],
+    "get_dumps parameter dumpspecs with a dumpspec that matches nothing",
+    zero_dumps_expected => 1);
 
 __DATA__
 # a short-datestamp logfile with only a single, single-part file in it

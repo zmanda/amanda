@@ -237,7 +237,8 @@ typedef struct {
 }
 
 amglue_export_ok(
-    find_log search_logfile dumps_match match_host match_disk match_datestamp
+    find_log search_logfile dumps_match
+    match_host match_disk match_datestamp match_level
 );
 
 char **find_log(void);

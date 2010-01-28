@@ -179,6 +179,7 @@ the rules described in amanda(8):
   match_host($pat, $str);
   match_disk($pat, $str);
   match_datestamp($pat, $str);
+  match_level($pat, $str);
 
 =head1 DEBUG LOGGING HANDLER
 
