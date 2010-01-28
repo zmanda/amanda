@@ -1,4 +1,7 @@
 2010-01-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amfetchdump.pl: don't use an END block for cleanup
+
+2010-01-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/DB/Catalog.pm: also check dumpspecs for get_dumps
 	* installcheck/Amanda_DB_Catalog.pl: test it
 	* perl/Amanda/Logfile.pod perl/Amanda/Logfile.swg: add match_level

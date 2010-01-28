@@ -436,7 +436,5 @@ SKIP: {
     got_files(1, "..and restored file is present in testdir");
 }
 
-END {
-    chdir("$testdir/..");
-    rmtree($testdir);
-}
+chdir("$testdir/..");
+rmtree($testdir);
