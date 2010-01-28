@@ -390,12 +390,12 @@ sub inventory {
 
     return if $self->check_error($params{'inventory_cb'});
 
-    my $current = $self->_get_current($params{state});
     $self->with_locked_state($self->{'state_filename'},
 			     $params{'inventory_cb'}, sub {
 	my ($state, $inventory_cb) = @_;
 
 	my @inventory;
+	my $current = $self->_get_current($state);
 	foreach ($self->{first_slot} .. ($self->{last_slot} - 1)) {
 	    my $slot = "$_";
 	    my $unaliased = $self->{unaliased}->{$slot};

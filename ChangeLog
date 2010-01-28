@@ -1,3 +1,7 @@
+2010-01-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/multi.pm: Fix current in inventory result.
+	* installcheck/Amanda_Changer_multi.pl: Test it.
+
 2010-01-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amfetchdump.pl: don't use an END block for cleanup
 

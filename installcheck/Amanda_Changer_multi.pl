@@ -334,7 +334,7 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 	    "info() returns the correct num_slots and fast_search");
 
         # note use of a glob metacharacter in the label name
-        $chg->load(label => "FOO?BAR", res_cb => $check_load_cb);
+        $chg->load(label => "FOO?BAR", res_cb => $check_load_cb, set_current => 1);
     });
 
     $check_load_cb = make_cb('check_load_cb' => sub {
@@ -373,7 +373,7 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 	      { slot => 1, state => Amanda::Changer::SLOT_FULL,
 		device_status => $DEVICE_STATUS_DEVICE_ERROR,
 		f_type => undef, label => undef,
-		reserved => 0, current => 1 },
+		reserved => 0 },
 	      { slot => 2, state => Amanda::Changer::SLOT_FULL,
 		device_status => ($DEVICE_STATUS_DEVICE_ERROR |
 				  $DEVICE_STATUS_VOLUME_UNLABELED |
@@ -389,7 +389,7 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 	      { slot => 4, state => Amanda::Changer::SLOT_FULL,
 		device_status => $DEVICE_STATUS_SUCCESS,
 		f_type => $Amanda::Header::F_TAPESTART, label => "FOO?BAR",
-		reserved => 0 },
+		reserved => 0, current => 1 },
 	      { slot => 5, state => Amanda::Changer::SLOT_FULL,
 		device_status => ($DEVICE_STATUS_DEVICE_ERROR |
 				  $DEVICE_STATUS_VOLUME_UNLABELED |
