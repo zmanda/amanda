@@ -1,4 +1,8 @@
 2010-01-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-glue.pl: fix chg-glue to be more careful about
+	  releasing the device first
+
+2010-01-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Installcheck/Dumpcache.pm: add 'parts' and 'compress'
 	  cached dumps
 	* installcheck/amfetchdump.pl: more/better tests

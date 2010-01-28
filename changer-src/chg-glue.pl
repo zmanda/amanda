@@ -1,5 +1,5 @@
 #! @PERL@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -71,13 +71,24 @@ sub err_result {
 sub normal_result {
     my ($slot, $rest, $continuation, @cont_args) = @_;
 
-    debug("returning success: $slot $rest");
+    # delay the return until a later iteration of the mainloop.  This helps
+    # when some function in the Perl stack is still holding a reference to
+    # the device we're trying to return, violating the "assumes that no other references
+    # to this device are outstanding" assumption below.
+    #
+    # Yes, it's a hack.  Chg-glue needs to die, and soon.
+    #
+    my $return_result = sub {
+	debug("returning success: $slot $rest");
 
-    print "EXITSTATUS 0\n";
-    print "$slot $rest\n";
-    if (defined($continuation)) {
-	Amanda::MainLoop::call_later($continuation, @cont_args);
-    }
+	print "EXITSTATUS 0\n";
+	print "$slot $rest\n";
+	if (defined($continuation)) {
+	    Amanda::MainLoop::call_later($continuation, @cont_args);
+	}
+    };
+
+    Amanda::MainLoop::call_later($return_result);
 }
 
 sub release_and_then {
