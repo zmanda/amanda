@@ -1,4 +1,9 @@
 2010-01-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am perl/Amanda/Recovery/Planner.pm: new package
+	* installcheck/Amanda_Recovery_Planner.pl
+	  installcheck/Makefile.am: tests
+
+2010-01-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am perl/Amanda/Recovery/Clerk.pm: new perl module
 	* installcheck/Makefile.am installcheck/Amanda_Recovery_Clerk.pl:
 	  tests

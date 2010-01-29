@@ -41,6 +41,7 @@ server_tests = \
 	Amanda_Logfile \
 	Amanda_Process \
 	Amanda_Recovery_Clerk \
+	Amanda_Recovery_Planner \
 	Amanda_Report \
 	Amanda_Tapelist \
 	Amanda_Taper_Scan \

@@ -254,7 +254,8 @@ if WANT_SERVER
 # PACKAGE: Amanda::Recovery::*
 AmandaRecoverydir = $(amperldir)/Amanda/Recovery
 AmandaRecovery_DATA = \
-	Amanda/Recovery/Clerk.pm
+	Amanda/Recovery/Clerk.pm \
+	Amanda/Recovery/Planner.pm
 HTML_SOURCE_FILES += $(AmandaRecovery_DATA)
 endif
 EXTRA_DIST += $(AmandaRecovery_DATA)
