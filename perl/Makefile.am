@@ -251,6 +251,15 @@ endif
 EXTRA_DIST += $(AmandaCurinfo_DATA)
 
 if WANT_SERVER
+# PACKAGE: Amanda::Recovery::*
+AmandaRecoverydir = $(amperldir)/Amanda/Recovery
+AmandaRecovery_DATA = \
+	Amanda/Recovery/Clerk.pm
+HTML_SOURCE_FILES += $(AmandaRecovery_DATA)
+endif
+EXTRA_DIST += $(AmandaRecovery_DATA)
+
+if WANT_SERVER
 # PACKAGE: Amanda::Taper::*
 AmandaTaperdir = $(amperldir)/Amanda/Taper
 AmandaTaper_DATA = \

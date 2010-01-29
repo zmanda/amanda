@@ -1,4 +1,9 @@
 2010-01-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am perl/Amanda/Recovery/Clerk.pm: new perl module
+	* installcheck/Makefile.am installcheck/Amanda_Recovery_Clerk.pl:
+	  tests
+
+2010-01-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_MainLoop.pl: a call_after test that is more
 	  stable when the system clock is stepping
 	* perl/Amanda/Util.pod perl/Amanda/Util.swg: add gettimeofday()
