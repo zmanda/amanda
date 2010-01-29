@@ -1,4 +1,9 @@
 2010-01-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_MainLoop.pl: a call_after test that is more
+	  stable when the system clock is stepping
+	* perl/Amanda/Util.pod perl/Amanda/Util.swg: add gettimeofday()
+
+2010-01-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Logfile.pl: note about checks
 	* perl/Amanda/Logfile.pod perl/Amanda/Logfile.swg: SWIG it
 	* server-src/find.c server-src/find.h: add dynamic_disklit param

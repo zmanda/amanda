@@ -463,6 +463,16 @@ void weaken_ref(SV *rv) {
 }
 %}
 
+%rename(gettimeofday) gettimeofday_for_perl;
+%inline %{
+static guint64 gettimeofday_for_perl(void)
+{
+    GTimeVal t;
+    g_get_current_time(&t);
+    return (guint64)t.tv_sec * G_USEC_PER_SEC + (guint64)t.tv_usec;
+}
+%}
+
 /* -------------------------------------------------------------------------
  * Functions below this line are only meant to be called within this module;
  * do not call them externally. */

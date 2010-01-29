@@ -188,6 +188,10 @@ Return 1 is the process with that pid is still alive.
 This is exactly the same as C<Scalar::Util::weaken>, but available in all
 supported versions of perl.
 
+=item gettimeofday()
+
+Return the number of microseconds since the UNIX epoch.
+
 =back
 
 =head1 String Utilities

@@ -1,4 +1,4 @@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -24,6 +24,7 @@ use IO::Pipe;
 
 use lib "@amperldir@";
 use Amanda::MainLoop qw( :GIOCondition make_cb );
+use Amanda::Util;
 
 {
     my $global = 0;
@@ -409,35 +410,20 @@ pass("Calling remove twice is ok");
 # call_after
 
 {
-    my ($cb1, $cb2, $cb3);
-    my $src2;
-    my @events = ();
+    # note: gettimeofday is in usec, but call_after is in msec
 
-    $cb1 = sub {
-	push @events, "cb1";
-	$src2->remove();
-    };
-
-    $cb2 = sub {
-	push @events, "cb2";
-	fail("Shouldn't get here!");
-    };
-
-    $cb3 = sub {
+    my ($start, $end) = (Amanda::Util::gettimeofday(), undef );
+    Amanda::MainLoop::call_after(100, sub {
 	my ($a, $b) = @_;
-	is($a+$b, 10,
-	    "call_after passes arguments correctly");
-	push @events, "cb3";
+	is($a+$b, 10, "call_after passes arguments correctly");
+	$end = Amanda::Util::gettimeofday();
 	Amanda::MainLoop::quit();
-    };
-
-    Amanda::MainLoop::call_after(200, $cb3, 7, 3);
-    Amanda::MainLoop::call_after(100, $cb1);
-    $src2 = Amanda::MainLoop::call_after(150, $cb2);
-
+    }, 2, 8);
     Amanda::MainLoop::run();
-    is_deeply([@events], ["cb1","cb3"],
-	"call_after makes callbacks in the correct order");
+
+    ok(($end - $start)/1000 > 75,
+	"call_after makes callbacks in the correct order")
+	or diag("only " . (($end - $start)/1000) . "msec elapsed");
 }
 
 # async_read
