@@ -19,8 +19,6 @@ LINTFLAGS=$(AMLINTFLAGS)
 
 amlib_LTLIBRARIES =	librestore.la
 
-sbin_PROGRAMS = 	amfetchdump
-
 amlibexec_PROGRAMS = 	amidxtaped
 
 ###
@@ -40,8 +38,6 @@ amidxtaped_LDADD = $(LDADD) \
 
 amidxtaped_SOURCES = 	amidxtaped.c
 
-amfetchdump_SOURCES = 	amfetchdump.c
-
 librestore_la_SOURCES	=	restore.c
 librestore_la_LDFLAGS	=	-release $(VERSION)
 librestore_la_LIBADD	=	../common-src/libamanda.la \
@@ -51,11 +47,10 @@ librestore_la_LIBADD	=	../common-src/libamanda.la \
 noinst_HEADERS = restore.h
 
 INSTALLPERMS_exec = \
-	dest=$(sbindir) chown=amanda $(sbin_PROGRAMS) \
 	dest=$(amlibexecdir) chown=amanda $(amlibexec_PROGRAMS)
 
 lint:
-	@ for p in $(amlibexec_PROGRAMS) $(sbin_PROGRAMS); do			\
+	@ for p in $(amlibexec_PROGRAMS); do			\
 		p=`basename $$p $(EXEEXT)`;					\
 		f="$$p.c $(librestore_la_SOURCES)";				\
 		(cd ../common-src; make listlibsrc);				\

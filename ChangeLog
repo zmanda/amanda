@@ -1,4 +1,13 @@
 2010-01-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amfetchdump.8.xml: remove amfetchdump -s, -b,
+	  and -w options
+	* restore-src/Makefile.am restore-src/amfetchdump.c: remove
+	* server-src/Makefile.am server-src/amfetchdump.pl: new version
+	  of amfetchdump that uses Clerk and Planner
+	* installcheck/amfetchdump.pl: updates to tests (change 'tape'
+	  to 'volume', no more -b, add quotes around labels
+
+2010-01-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am perl/Amanda/Recovery/Planner.pm: new package
 	* installcheck/Amanda_Recovery_Planner.pl
 	  installcheck/Makefile.am: tests

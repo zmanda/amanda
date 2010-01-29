@@ -33,7 +33,7 @@ use strict;
 no strict 'subs';
 
 if ($Installcheck::Run::have_expect) {
-    plan tests => 30;
+    plan tests => 31;
 } else {
     plan skip_all => "Expect.pm not available";
     exit(0);
@@ -101,12 +101,16 @@ like(run_err('amfetchdump', 'TESTCONF'),
     qr{^Usage:},
     "'amfetchdump TESTCONF' gives usage message on stderr");
 
+like(run_err('amfetchdump', '-b', '65536', 'TESTCONF', 'localhost'),
+    qr{ERROR: The -b option is no longer},
+    "-b option gives a warning stderr");
+
 ##
 # plain vanilla
 
 cleandir();
 
-$exp = Installcheck::Run::run_expect('amfetchdump', '-b', '65536', 'TESTCONF', 'localhost');
+$exp = Installcheck::Run::run_expect('amfetchdump', 'TESTCONF', 'localhost');
 $exp->log_stdout(0);
 
 @results = ();
@@ -130,7 +134,7 @@ $exp->expect(60,
     }, ],
 );
 is_deeply([ @results ], [ "tapes-needed", "press-enter", "restoring", "eof" ],
-	  "simple restore with explicit blocksize follows the correct steps");
+	  "simple restore follows the correct steps");
 
 got_files(1, "..and restored file is present in testdir");
 
@@ -308,7 +312,7 @@ $exp->expect(60,
 	$exp->send("\n");
 	exp_continue;
     }, ],
-    [ qr{Insert tape labeled TESTCONF01 in device.*\n.*to finish reading tapes}, sub {
+    [ qr{Insert (tape|volume) labeled '?TESTCONF01'? in .*\n.*to abort}, sub {
 	push @results, "insert-tape";
 	Installcheck::Run::load_vtape(1); # right vtape
 	$exp->send("\n");

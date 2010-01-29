@@ -49,6 +49,7 @@ sbin_SCRIPTS_PERL = \
 	    amstatus
 if WANT_RESTORE
 sbin_SCRIPTS_PERL += \
+	    amfetchdump \
 	    amrestore
 endif
 

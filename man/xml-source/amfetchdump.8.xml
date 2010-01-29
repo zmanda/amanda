@@ -83,6 +83,9 @@ remap='I'>hostname</emphasis> must be specified when not in inventory mode.</par
 <option>-p</option>
 is used, backup images are extracted to files in the current directory named:</para>
 
+<para>If a changer error occurs, or the <option>-d</option> option is given,
+then amfetchdump prompts for each required volume.</para>
+
 <!-- .RS -->
 <para><emphasis remap='I'>hostname.diskname.datestamp.dumplevel</emphasis></para>
 <!-- .RE -->
@@ -112,8 +115,9 @@ facility).</para></listitem>
 <listitem><para>Output the amanda header to the filename.</para></listitem>
   </varlistentry>
   <varlistentry>
-    <term><option>-d</option> <replaceable>device</replaceable></term>
-<listitem><para> Restore from this tape device instead of the default.</para></listitem>
+    <term><option>-d</option> <replaceable>device_or_changer</replaceable></term>
+    <listitem><para> Restore from this device or changer instead of the default,
+prompting for each volume.</para></listitem>
   </varlistentry>
   <varlistentry>
     <term><option>-O</option>
@@ -144,42 +148,11 @@ restoring.</para></listitem>
 otherwise, instead of prompting the operator to ensure that all tapes
 are loaded.</para></listitem>
   </varlistentry>
-  <varlistentry>
-    <term><option>-w</option></term>
-<listitem><para>Wait to put split dumps together until all chunks have been
-restored. Normally, <emphasis remap='B'>amfetchdump</emphasis> will
-attempt to read pieces of a split file from tape in order, so that it
-can assemble them simply by appending each file to the first. This
-option disables the appending behavior, and instead restores each
-piece as an individual file and reassembles them only after all have
-been restored.</para>
 
-<note><para>This requires at least double the size of your dump in free
-disk space, in order to build the final assembled dumpfile.</para>
-</note>
-
-<para>This behavior is implicitly invoked in circumstances where knowing the
-location of all dumps on tape in advance is not possible, such as when
-you are restoring without log files.</para></listitem>
-  </varlistentry>
   <varlistentry>
     <term><option>-n</option></term>
 <listitem><para>Do not reassemble split dump files at all, just restore each
 piece as an individual file.</para></listitem>
-  </varlistentry>
-  <varlistentry>
-    <term><option>-s</option></term>
-<listitem><para>Do not fast-forward straight to needed files on tape. This will
-slow down most restores substantially. Only use this option if your
-tape drive does not properly support the fast-forward
-operation.</para></listitem>
-  </varlistentry>
-  <varlistentry>
-    <term><option>-b</option>
-    <replaceable>blocksize</replaceable></term>
-<listitem><para>Force a particular block size when reading from tapes. This
-    value will usually be autodetected, and should not normally need
-    to be set.</para></listitem>
   </varlistentry>
 
   <varlistentry>
