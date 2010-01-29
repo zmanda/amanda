@@ -153,6 +153,11 @@ C<$datestamp>.  If C<$add_missing_disks> is true, then any disks in
 the logfile not present in the disklist are added to the disklist;
 otherwise, such dumps are skipped.
 
+=item C<search_holding_disk()>
+
+Return results for all holding-disk files.  Results are similar to those from
+search_logfile.
+
 =item C<dumps_match([@results], $hostname, $diskname, $datestamp, $level, $ok)>
 
 Return a filtered version of C<@results> containing only results that

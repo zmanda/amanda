@@ -39,7 +39,6 @@
 #include "cmdline.h"
 
 int find_match(char *host, char *disk);
-void search_holding_disk(find_result_t **output_find);
 char *find_nicedate(char *datestamp);
 static int find_compare(const void *, const void *);
 static int parse_taper_datestamp_log(char *logline, char **datestamp, char **level);
@@ -111,7 +110,7 @@ find_result_t * find_dump(disklist_t* diskqp) {
     amfree(logfile);
     amfree(conf_logdir);
 
-    search_holding_disk(&output_find);
+    search_holding_disk(&output_find, diskqp);
 
     return(output_find);
 }
@@ -202,12 +201,14 @@ find_log(void)
 
 void
 search_holding_disk(
-    find_result_t **output_find)
+    find_result_t **output_find,
+    disklist_t * dynamic_disklist)
 {
     GSList *holding_file_list;
     GSList *e;
     char *holding_file;
     disk_t *dp;
+    char *orig_name;
 
     holding_file_list = holding_get_files(NULL, 1);
 
@@ -225,6 +226,7 @@ search_holding_disk(
 	}
 
 	dp = NULL;
+	orig_name = g_strdup(file.name);
 	for(;;) {
 	    char *s;
 	    if((dp = lookup_disk(file.name, file.disk)))
@@ -233,9 +235,16 @@ search_holding_disk(
 		break;
 	    *s = '\0';
 	}
+	strcpy(file.name, orig_name); /* restore munged string */
+	g_free(orig_name);
+
 	if ( dp == NULL ) {
-	    dumpfile_free_data(&file);
-	    continue;
+	    if (dynamic_disklist == NULL) {
+		dumpfile_free_data(&file);
+		continue;
+	    }
+	    dp = add_disk(dynamic_disklist, file.name, file.disk);
+	    enqueue_disk(dynamic_disklist, dp);
 	}
 
 	if(find_match(file.name,file.disk)) {
@@ -253,6 +262,7 @@ search_holding_disk(
 		new_output_find->status=stralloc("PARTIAL");
 	    else
 		new_output_find->status=stralloc("OK");
+	    new_output_find->kb = (size_t)holding_file_size(holding_file, 1);
 	    *output_find=new_output_find;
 	}
 	dumpfile_free_data(&file);

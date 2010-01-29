@@ -1,3 +1,9 @@
+2010-01-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Logfile.pl: note about checks
+	* perl/Amanda/Logfile.pod perl/Amanda/Logfile.swg: SWIG it
+	* server-src/find.c server-src/find.h: add dynamic_disklit param
+	  to search_holding_disk
+
 2010-01-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/multi.pm: Fix current in inventory result.
 	* installcheck/Amanda_Changer_multi.pl: Test it.

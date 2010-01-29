@@ -84,13 +84,13 @@ amglue_copy_to_tag(program_t, constants);
 /* open_ and close_logfile are both simple wrappers around fopen/fclose. */
 typedef FILE loghandle;
 
-loghandle *open_logfile(char *filename) {
+static loghandle *open_logfile(char *filename) {
     return fopen(filename, "r");
 }
 %}
 
 %inline %{
-void close_logfile(loghandle *logfile) {
+static void close_logfile(loghandle *logfile) {
     if (logfile) fclose(logfile);
 }
 %}
@@ -245,7 +245,7 @@ char **find_log(void);
 
 %rename(search_logfile) search_logfile_wrap;
 %inline %{
-find_result_t *search_logfile_wrap(char *label, char *datestamp, 
+static find_result_t *search_logfile_wrap(char *label, char *datestamp,
 				   char *logfile, int add_missing_disks) {
     find_result_t *rv = NULL;
 
@@ -255,6 +255,16 @@ find_result_t *search_logfile_wrap(char *label, char *datestamp,
     search_logfile(&rv, label, datestamp, logfile, 
 	add_missing_disks? &unrecognized_disks : NULL);
 
+    return rv;
+}
+%}
+
+%rename(search_holding_disk) search_holding_disk_wrap;
+%inline %{
+static find_result_t *search_holding_disk_wrap(void) {
+    find_result_t *rv = NULL;
+    static disklist_t unrecognized_disks = { NULL, NULL };
+    search_holding_disk(&rv, &unrecognized_disks);
     return rv;
 }
 %}

@@ -1,4 +1,4 @@
-# Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -396,3 +396,5 @@ is_deeply([ map { res2arr($_) } @filtered ],
 	], "filter with dumpspecs '.* /var thatbox' (union of two overlapping sets includes dupes)");
 
 unlink($log_filename);
+
+# search_holding_disk and match_* are tested via Amanda::DB::Catalog's installcheck
