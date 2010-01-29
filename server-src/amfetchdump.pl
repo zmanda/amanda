@@ -37,9 +37,6 @@ use Amanda::Xfer qw( :constants );
 use Amanda::Recovery::Planner;
 use Amanda::Recovery::Clerk;
 
-# TODO: --header-file, --header-fd
-# TODO: find dumps on holding disk, too
-
 sub usage {
     my ($msg) = @_;
     print STDERR <<EOF;
@@ -147,6 +144,14 @@ sub notif_part {
     print STDERR "amfetchdump: $filenum: restoring ", $header->summary(), "\n";
 }
 
+sub notif_holding {
+    my $self = shift;
+    my ($filename, $header) = @_;
+
+    # this used to give the fd from which the holding file was being read.. why??
+    print STDERR "Reading '$filename'\n", $header->summary(), "\n";
+}
+
 sub volume_not_found {
     my $self = shift;
     my ($err, $label, $res_cb) = @_;
@@ -235,9 +240,18 @@ sub main {
 	}
 
 	my @needed_labels = $plan->get_volume_list();
-	print STDERR (scalar @needed_labels), " volume(s) needed for restoration\n";
-	print STDERR "The following volumes are needed: ",
-	    join(" ", map { $_->{'label'} } @needed_labels ), "\n";
+	my @needed_holding = $plan->get_holding_file_list();
+	if (@needed_labels) {
+	    print STDERR (scalar @needed_labels), " volume(s) needed for restoration\n";
+	    print STDERR "The following volumes are needed: ",
+		join(" ", map { $_->{'label'} } @needed_labels ), "\n";
+	}
+	if (@needed_holding) {
+	    print STDERR (scalar @needed_holding), " holding file(s) needed for restoration\n";
+	    for my $hf (@needed_holding) {
+		print "  $hf\n";
+	    }
+	}
 
 	unless ($opt_assume) {
 	    print STDERR "Press enter when ready\n";
@@ -272,7 +286,7 @@ sub main {
 		    Amanda::Util::sanitise_filename("".$hdr->{'disk'}), # workaround SWIG bug
 		    $hdr->{'datestamp'},
 		    $hdr->{'dumplevel'});
-	    if ($hdr->{'partnum'} > 0) {
+	    if ($current_dump->{'nparts'} > 1) {
 		$filename .= sprintf(".%07d", $hdr->{'partnum'});
 	    }
 

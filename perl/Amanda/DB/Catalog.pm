@@ -56,6 +56,10 @@ file number (C<filenum>).  Each part has, among other things, a part number
 for a dump is recovered by concatenating all of the successful (C<status> = OK)
 parts matching the dump.
 
+Files in the holding disk are considered part of the catalog, and are
+represented as single-part dumps (holding-disk chunking is ignored, as it is
+distinct from split parts).
+
 =head2 DUMPS
 
 The dump table contains one row per dump.  It has the following columns:
@@ -68,7 +72,8 @@ The dump table contains one row per dump.  It has the following columns:
 
 =item write_timestamp
 
-(string) -- timestamp of the run in which the part was written to this volume
+(string) -- timestamp of the run in which the part was written to this volume,
+or C<"00000000000000"> for dumps in the holding disk.
 
 =item hostname
 
@@ -125,11 +130,16 @@ The parts table contains one row per part, and has the following columns:
 
 =item label
 
-(string) -- volume label
+(string) -- volume label (not present for holding files)
 
 =item filenum
 
-(integer) -- file on that volume
+(integer) -- file on that volume (not present for holding files)
+
+=item holding_file
+
+(string) -- fully-qualified pathname of the holding file (not present for
+on-media dumps)
 
 =item dump
 
@@ -218,7 +228,9 @@ restrict to parts written at this timestamp
 
 =item write_timestamps
 
-(arrayref) restrict to parts written at any of these timestamps
+(arrayref) restrict to parts written at any of these timestamps (note that
+holding-disk files have no C<write_timestamp>, so this option and the previous
+will omit them)
 
 =item dump_timestamp
 
@@ -231,6 +243,11 @@ restrict to parts with exactly this timestamp
 =item dump_timestamp_match
 
 restrict to parts with timestamps matching this expression
+
+=item holding
+
+if true, only return dumps on holding disk.  If false, omit dumps on holding
+disk.
 
 =item hostname
 
@@ -445,10 +462,20 @@ sub get_parts_and_dumps {
 	delete $params{'labels'};
     }
 
+    # specifying write_timestamps implies we won't check holding files
+    if ($params{'write_timestamps'}) {
+	if (defined $params{'holding'} and $params{'holding'}) {
+	    return [], []; # well, that's easy..
+	}
+	$params{'holding'} = 0;
+    }
+
     # Since we're working from logfiles, we have to pick the logfiles we'll use first.
     # Then we can use search_logfile.
     my @logfiles;
-    if (exists($params{'write_timestamps'})) {
+    if ($params{'holding'}) {
+	@logfiles = ( 'holding', );
+    } elsif (exists($params{'write_timestamps'})) {
 	# if we have specific write_timestamps, the job is pretty easy.
 	my %timestamps_hash = map { ($_, undef) } @{$params{'write_timestamps'}};
 	for my $logfile (Amanda::Logfile::find_log()) {
@@ -486,12 +513,29 @@ sub get_parts_and_dumps {
     my %dumps;
     my @parts;
 
+    # *also* scan holding if the holding param wasn't specified
+    if (!exists $params{'holding'}) {
+	push @logfiles, 'holding';
+    }
+
     # now loop over those logfiles and use search_logfile to load the dumpfiles
     # from them, then process each entry from the logfile
     for my $logfile (@logfiles) {
-	# get the raw contents from search_logfile
-	my @find_results = Amanda::Logfile::search_logfile(undef, undef,
-						    "$logfile_dir/$logfile", 1);
+	my (@find_results, $write_timestamp);
+
+	# get the raw contents from search_logfile, or use holding if
+	# $logfile is undef
+	if ($logfile ne 'holding') {
+	    @find_results = Amanda::Logfile::search_logfile(undef, undef,
+							"$logfile_dir/$logfile", 1);
+	    # convert to dumpfile hashes, including the write_timestamp from the logfile name
+	    my ($timestamp) = $logfile =~ /^log\.([0-9]+)(?:\.[0-9]+|\.amflush)?$/;
+	    $write_timestamp = zeropad($timestamp);
+
+	} else {
+	    @find_results = Amanda::Logfile::search_holding_disk();
+	    $write_timestamp = '00000000000000';
+	}
 
 	# filter against *_match with dumps_match
 	@find_results = Amanda::Logfile::dumps_match([@find_results],
@@ -500,10 +544,6 @@ sub get_parts_and_dumps {
 	    exists($params{'dump_timestamp_match'})? $params{'dump_timestamp_match'} : undef,
 	    undef,
 	    0);
-
-	# convert to dumpfile hashes, including the write_timestamp from the logfile name
-	my ($timestamp) = $logfile =~ /^log\.([0-9]+)(?:\.[0-9]+|\.amflush)?$/;
-	my $write_timestamp = zeropad($timestamp);
 
 	# loop over each entry in the logfile.
 	for my $find_result (@find_results) {
@@ -557,15 +597,33 @@ sub get_parts_and_dumps {
 	    }
 
 	    # start setting up a part hash for this result
-	    my %part = (
-		label => $find_result->{'label'},
-		filenum => $find_result->{'filenum'},
-		dump => $dump,
-		status => $find_result->{'status'},
-		sec => $find_result->{'sec'},
-		kb => $find_result->{'kb'},
-		partnum => $find_result->{'partnum'},
-	    );
+	    my %part;
+	    if ($logfile ne 'holding') {
+		# on-media dump
+		%part = (
+		    label => $find_result->{'label'},
+		    filenum => $find_result->{'filenum'},
+		    dump => $dump,
+		    status => $find_result->{'status'},
+		    sec => $find_result->{'sec'},
+		    kb => $find_result->{'kb'},
+		    partnum => $find_result->{'partnum'},
+		);
+	    } else {
+		# holding disk
+		%part = (
+		    holding_file => $find_result->{'label'},
+		    dump => $dump,
+		    status => $find_result->{'status'},
+		    sec => 0.0,
+		    kb => $find_result->{'kb'},
+		    partnum => 1,
+		);
+		# and fix up the dump, too
+		$dump->{'status'} = $find_result->{'status'};
+		$dump->{'kb'} = $find_result->{'kb'};
+		$dump->{'sec'} = $find_result->{'sec'};
+	    }
 
 	    # weaken the dump ref if we're returning dumps
 	    weaken_ref($part{'dump'})
@@ -582,6 +640,9 @@ sub get_parts_and_dumps {
 
 	    push @parts, \%part;
 	}
+
+	# if these dumps were on the holding disk, then we're done
+	next if $logfile eq 'holding';
 
 	# re-read the logfile to extract dump-level info that's not captured by
 	# search_logfile

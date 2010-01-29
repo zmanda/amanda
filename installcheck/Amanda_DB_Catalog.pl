@@ -16,20 +16,26 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 66;
+use Test::More tests => 76;
 use File::Path;
 use Data::Dumper;
 use strict;
 use warnings;
 
 use lib "@amperldir@";
-use Installcheck::Config;
+use Installcheck;
+use Installcheck::Run;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::DB::Catalog;
 use Amanda::Cmdline;
+use Amanda::Xfer qw( :constants );
+
+# send xfer logging somewhere
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 # set up and load a simple config
-my $testconf = Installcheck::Config->new();
+my $testconf = Installcheck::Run->setup();
 $testconf->write();
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF') == $CFGERR_OK
     or die("Could not load test config");
@@ -46,13 +52,60 @@ is_deeply([ Amanda::DB::Catalog::get_parts() ], [],
     "No parts in an empty catalog");
 
 # and add some logfiles to query, and a corresponding tapelist, while also gathering
-# a list of parts and dumps for comparison with the results from Amanda::DB::Catalog
+# a list of parts and dumps for comparison with the results from Amanda::DB::Catalog.
+# also add some files to holding disk
 my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
 my $tapelist_fn = config_dir_relative(getconf($CNF_TAPELIST));
+my $holdingdir = "$Installcheck::TMP/holding";
 my $output;
 my $write_timestamp;
 my (%parts, %dumps, $last_dump);
 my @dumpspecs;
+
+sub make_holding_file {
+    my ($dump) = @_;
+
+    my $dir = "$holdingdir/$dump->{dump_timestamp}";
+    my $safe_disk = $dump->{'diskname'};
+    $safe_disk =~ tr{/}{_};
+    my $filename = "$dir/$dump->{hostname}.$safe_disk";
+    mkpath($dir);
+
+    # (note that multi-chunk holding files are not used at this point)
+    my $hdr = Amanda::Header->new();
+    $hdr->{'type'} = $Amanda::Header::F_DUMPFILE;
+    $hdr->{'datestamp'} = $dump->{'dump_timestamp'};
+    $hdr->{'dumplevel'} = $dump->{'level'};
+    $hdr->{'name'} = $dump->{'hostname'};
+    $hdr->{'disk'} = $dump->{'diskname'};
+    $hdr->{'program'} = "INSTALLCHECK";
+    $hdr->{'is_partial'} = ($dump->{'status'} ne 'OK');
+
+    open(my $fh, ">", $filename) or die("opening '$filename': $!");
+    print $fh $hdr->to_string(32768,32768);
+
+    # transfer some data to that file
+    my $xfer = Amanda::Xfer->new([
+	Amanda::Xfer::Source::Pattern->new(1024*$dump->{'kb'}, "+-+-+-+-"),
+	Amanda::Xfer::Dest::Fd->new($fh),
+    ]);
+
+    $xfer->start(sub {
+	my ($src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    die $msg->{elt} . " failed: " . $msg->{message};
+	}
+	elsif ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    $src->remove();
+	    Amanda::MainLoop::quit();
+	}
+    });
+    Amanda::MainLoop::run();
+    close($fh);
+
+    return $filename;
+}
+
 open (my $tapelist, ">", $tapelist_fn);
 while (<DATA>) {
     # skip comments
@@ -86,6 +139,28 @@ while (<DATA>) {
 	};
 	$last_dump->{'message'} = ''
 	    if $last_dump->{'message'} eq '""';
+	next;
+    }
+
+    # new holding-disk file
+    if (/^:holding (\S+) (\S+) (\S+) (\S+) (\d+) (\S+) (\d+)/) {
+	$last_dump = $dumps{$1} = {
+	    'dump_timestamp' => $2,	'hostname' => $3,	    'diskname' => $4,
+	    'level' => $5+0,		'status' => $6,		    'kb' => $7,
+	    'write_timestamp' => '00000000000000',
+	    'message' => '',
+	    'nparts' => 1,
+	    'sec' => 0.0,
+	};
+	$parts{$1} = {
+	    holding_file => make_holding_file($last_dump),
+	    dump => $last_dump,
+	    status => $last_dump->{'status'},
+	    sec => 0.0,
+	    kb => $last_dump->{'kb'},
+	    partnum => 1,
+	};
+	$last_dump->{'parts'} = [ undef, $parts{$1}, ];
 	next;
     }
 
@@ -123,8 +198,13 @@ is(Amanda::DB::Catalog::get_latest_write_timestamp(), '20080414144444',
 
 sub partstr {
     my ($part) = @_;
-    return "$part->{label}:$part->{filenum}: " .
-	   "$part->{dump}->{hostname} $part->{dump}->{diskname}";
+    if (exists $part->{'holding_file'}) {
+	return "$part->{holding_file}: " .
+	       "$part->{dump}->{hostname} $part->{dump}->{diskname}";
+   } else {
+	return "$part->{label}:$part->{filenum}: " .
+	       "$part->{dump}->{hostname} $part->{dump}->{diskname}";
+   }
 }
 
 # filter out recursive links from part->dump->parts, without changing
@@ -192,8 +272,14 @@ sub sortparts {
 	$_->{'partnum'} = "$_->{partnum}" + 0;
 	$_;
     } sort {
-	$a->{'label'} cmp $b->{'label'}
-	    or $a->{'filenum'} <=> $b->{'filenum'}
+	if (exists $a->{'holding_file'} and exists $b->{'holding_file'}) {
+	    return $a->{'holding_file'} cmp $b->{'holding_file'};
+	} elsif (not exists $a->{'holding_file'} and not exists $b->{'holding_file'}) {
+	    return ($a->{'label'} cmp $b->{'label'})
+		|| ($a->{'filenum'} <=> $b->{'filenum'});
+	} else {
+	    return (exists $a->{'holding_file'})? 1 : -1;
+	}
     }
     @_;
 }
@@ -283,7 +369,7 @@ sub sortdumps {
 
 got_parts([ sortparts Amanda::DB::Catalog::get_parts() ],
     [ sortparts parts_named qr/.*/ ],
-    "get_parts returns all dumps when given no parameters");
+    "get_parts returns all parts when given no parameters");
 got_parts([ sortparts Amanda::DB::Catalog::get_parts(write_timestamp => '20080111000000') ],
     [ sortparts parts_named qr/somebox_lib_20080111/ ],
     "get_parts parameter write_timestamp");
@@ -293,6 +379,10 @@ got_parts([ sortparts Amanda::DB::Catalog::get_parts(write_timestamp => '2008011
 got_parts([ sortparts Amanda::DB::Catalog::get_parts(write_timestamps => ['20080111000000','20080222222222']) ],
     [ sortparts parts_named qr/(20080111|20080222222222_p\d*)$/ ],
     "get_parts parameter write_timestamps");
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(write_timestamp => '20080111', holding => 1) ],
+    [ ],
+    "get_parts parameter write_timestamp + holding => 1 returns nothing",
+    zero_parts_expected => 1);
 
 got_parts([ sortparts Amanda::DB::Catalog::get_parts(dump_timestamp => '20080111000000') ],
     [ sortparts parts_named qr/somebox_lib_20080111/ ],
@@ -349,6 +439,30 @@ got_parts([ sortparts Amanda::DB::Catalog::get_parts(status => "PARTIAL") ],
     [ sortparts parts_matching { $_->{'status'} eq "PARTIAL" } ],
     "get_parts parameter status = PARTIAL");
 
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(hostname => "oldbox") ],
+    [ sortparts parts_named qr/^oldbox_/ ],
+    "get_parts finds a holding-disk dump");
+
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(hostname => "oldbox", holding => 0) ],
+    [ ],
+    "get_parts ignores a holding-disk dump if holding is false",
+    zero_parts_expected => 1);
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(hostname => "oldbox", holding => 1) ],
+    [ sortparts parts_named qr/^oldbox_/ ],
+    "get_parts supplies a holding-disk dump if holding is true");
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(hostnames => [ "oldbox", "somebox" ]) ],
+    [ sortparts (parts_named qr/^oldbox_.*_holding/, parts_named qr/^somebox_/) ],
+    "get_parts returns both holding and on-media dumps");
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(hostnames => [ "oldbox", "somebox" ],
+						     holding => 1) ],
+    [ sortparts parts_named qr/^oldbox_.*_holding/ ],
+    "get_parts ignores an on-media dump if holding is true");
+
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(hostnames => [ "oldbox", "somebox" ],
+						     holding => 0) ],
+    [ sortparts parts_named qr/^somebox_/ ],
+    "get_parts ignores an holding dump if holding is false");
+
 @dumpspecs = Amanda::Cmdline::parse_dumpspecs([".*", "/lib"], 0);
 got_parts([ sortparts Amanda::DB::Catalog::get_parts(dumpspecs => [ @dumpspecs ]) ],
     [ sortparts parts_named qr/_lib_/ ],
@@ -365,6 +479,12 @@ got_parts([ sortparts Amanda::DB::Catalog::get_parts(dumpspecs => [ @dumpspecs ]
     [ sortparts parts_matching { $_->{'dump'}->{'hostname'} eq 'otherbox'
 			      or $_->{'dump'}->{'hostname'} eq 'somebox' } ],
     "get_parts parameter dumpspecs with two non-overlapping dumpspecs");
+
+@dumpspecs = Amanda::Cmdline::parse_dumpspecs(["otherbox", "*", "somebox"], 0);
+got_parts([ sortparts Amanda::DB::Catalog::get_parts(dumpspecs => [ @dumpspecs ], holding => 1), ],
+    [ sortparts parts_matching { $_->{'dump'}->{'hostname'} eq 'otherbox'
+			     and exists $_->{'holding_file'} } ],
+    "get_parts parameter dumpspecs with two non-overlapping dumpspecs, but holding files only");
 
 ## more complex, multi-parameter queries
 
@@ -483,6 +603,10 @@ got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(hostname => 'otherbox') ],
     [ sortdumps dumps_named qr/^otherbox/ ],
     "get_dumps parameter hostname");
 
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(hostname => 'oldbox') ],
+    [ sortdumps dumps_named qr/^oldbox_.*_holding/ ],
+    "get_dumps parameter hostname, holding");
+
 got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(hostnames => ['notthere', 'otherbox']) ],
     [ sortdumps dumps_named qr/^otherbox/ ],
     "get_dumps parameter hostnames");
@@ -536,6 +660,34 @@ got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(status => "PARTIAL") ],
 got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(status => "FAIL") ],
     [ sortdumps dumps_matching { $_->{'status'} eq "FAIL" } ],
     "get_dumps parameter status = FAIL");
+
+@dumpspecs = Amanda::Cmdline::parse_dumpspecs([".*", "/lib"], 0);
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(dumpspecs => [ @dumpspecs ]) ],
+    [ sortdumps dumps_named qr/_lib_/ ],
+    "get_dumps parameter dumpspecs with one dumpspec");
+
+@dumpspecs = Amanda::Cmdline::parse_dumpspecs([".*", "/lib"], 0);
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(dumpspecs => [ @dumpspecs ], holding => 1) ],
+    [ sortdumps dumps_named qr/_lib_.*_holding/ ],
+    "get_dumps parameter dumpspecs with one dumpspec");
+
+@dumpspecs = Amanda::Cmdline::parse_dumpspecs([".*", "/lib", "somebox"], 0);
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(dumpspecs => [ @dumpspecs ]) ],
+    [ sortdumps dumps_matching { $_->{'diskname'} eq '/lib'
+			      or $_->{'hostname'} eq 'somebox' } ],
+    "get_dumps parameter dumpspecs with two dumpspecs");
+
+@dumpspecs = Amanda::Cmdline::parse_dumpspecs(["otherbox", "*", "somebox"], 0);
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(dumpspecs => [ @dumpspecs ]) ],
+    [ sortdumps dumps_matching { $_->{'hostname'} eq 'otherbox'
+			      or $_->{'hostname'} eq 'somebox' } ],
+    "get_dumps parameter dumpspecs with two non-overlapping dumpspecs");
+
+@dumpspecs = Amanda::Cmdline::parse_dumpspecs(["does-not-exist"], 0);
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(dumpspecs => [ @dumpspecs ]) ],
+    [ ],
+    "get_dumps parameter dumpspecs with a dumpspec that matches nothing",
+    zero_dumps_expected => 1);
 
 ## test dump sorting
 
@@ -597,29 +749,6 @@ got_dumps([ Amanda::DB::Catalog::sort_dumps(['dump_timestamp'],
 		    'somebox_lib_20080313133333', # dts=20080313133333
 		    } ],
 		"sort dumps by write_timestamp");
-
-@dumpspecs = Amanda::Cmdline::parse_dumpspecs([".*", "/lib"], 0);
-got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(dumpspecs => [ @dumpspecs ]) ],
-    [ sortdumps dumps_named qr/_lib_/ ],
-    "get_dumps parameter dumpspecs with one dumpspec");
-
-@dumpspecs = Amanda::Cmdline::parse_dumpspecs([".*", "/lib", "somebox"], 0);
-got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(dumpspecs => [ @dumpspecs ]) ],
-    [ sortdumps dumps_matching { $_->{'diskname'} eq '/lib'
-			      or $_->{'hostname'} eq 'somebox' } ],
-    "get_dumps parameter dumpspecs with two dumpspecs");
-
-@dumpspecs = Amanda::Cmdline::parse_dumpspecs(["otherbox", "*", "somebox"], 0);
-got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(dumpspecs => [ @dumpspecs ]) ],
-    [ sortdumps dumps_matching { $_->{'hostname'} eq 'otherbox'
-			      or $_->{'hostname'} eq 'somebox' } ],
-    "get_dumps parameter dumpspecs with two non-overlapping dumpspecs");
-
-@dumpspecs = Amanda::Cmdline::parse_dumpspecs(["does-not-exist"], 0);
-got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(dumpspecs => [ @dumpspecs ]) ],
-    [ ],
-    "get_dumps parameter dumpspecs with a dumpspec that matches nothing",
-    zero_dumps_expected => 1);
 
 __DATA__
 # a short-datestamp logfile with only a single, single-part file in it
@@ -758,3 +887,7 @@ PARTIAL taper otherbox /lib 20080414144444 1 1 [sec 0.000540 kb 32 kps 59259.259
 :dump otherbox_boot_20080414144444 20080414144444 otherbox /boot 0 FAIL no-space 0 0.0 0
 FAIL taper otherbox /boot 20080414144444 0 "no-space"
 FINISH driver date 20080414144444 time 6.959
+
+# holding-disk
+:holding otherbox_lib_20080414144444_holding 20080414144444 otherbox /lib 1 OK 256
+:holding oldbox_opt_20080414144444_holding 20080414144444 oldbox /opt 0 OK 1298

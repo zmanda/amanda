@@ -25,6 +25,7 @@ use Carp;
 use Amanda::Xfer qw( :constants );
 use Amanda::Device qw( :constants );
 use Amanda::Header;
+use Amanda::Holding;
 use Amanda::Debug qw( :logging );
 use Amanda::MainLoop;
 
@@ -85,7 +86,8 @@ from which to read the data.  The dump object is from L<Amanda::DB::Catalog>,
 usually by awy of L<Amanda::Recovery::Planner>.  The Clerk responds with a
 transfer source element, which the caller then uses to construct an start a
 transfer.  The clerk then uses a changer to find the required volumes, seeks to
-the appropriate files, and reads the data into the transfer.
+the appropriate files, and reads the data into the transfer.  Note that the
+clerk can also recover holding-disk files.
 
 Because the clerk operates transfers (see L<Amanda::Xfer) and the Changer API
 (L<Amanda::Changer>), its operations assume that L<Amanda::MainLoop> is in use.
@@ -178,6 +180,10 @@ the methods.
 
 The C<notif_part> method is called just before each part is restored, and is
 given the label, filenum, and header.  Its return value, if any, is ignored.
+Similarly, C<notif_holding> is called for a holding-disk recovery and is given
+the holding filename and its header.  Note that C<notif_holding> is called
+before the C<xfer_src_cb>, since data will begin flowing from a holding disk
+immediately when the transfer is started.
 
 The C<volume_not_found> method is called when the Clerk's changer cannot load a
 volume.  It is passed three arguments: the error message (either a string or a
@@ -238,15 +244,14 @@ sub get_xfer_src {
 
     die "Clerk is already busy" if $self->{'xfer_state'};
 
-    # TODO handle holding-disk files, too
-
     # set up a new xfer_state
     my $xfer_state = $self->{'xfer_state'} = {
 	dump => $params{'dump'},
+	is_holding => exists $params{'dump'}->{'parts'}[1]{'holding_file'},
 	next_part_idx => 1,
 	next_part => undef,
 
-	xfer_src => Amanda::Xfer::Source::Taper->new(),
+	xfer_src => undef,
 	xfer => undef,
 
 	recovery_cb => undef,
@@ -256,6 +261,14 @@ sub get_xfer_src {
 
 	errors => [],
     };
+
+    # choose the xfer source
+    if ($xfer_state->{'is_holding'}) {
+	$xfer_state->{'xfer_src'} = Amanda::Xfer::Source::Holding->new(
+		    $params{'dump'}->{'parts'}[1]{'holding_file'}),
+    } else {
+	$xfer_state->{'xfer_src'} = Amanda::Xfer::Source::Taper->new(),
+    }
 
     $self->_maybe_start_part();
 }
@@ -382,8 +395,13 @@ sub _maybe_start_part {
 
 	$xfer_state->{'next_part'} =
 	    $xfer_state->{'dump'}{'parts'}[$xfer_state->{'next_part_idx'}];
-	my $next_label = $xfer_state->{'next_part'}->{'label'};
 
+	# short-circuit for a holding disk
+	if ($xfer_state->{'is_holding'}) {
+	    return $subs{'holding_recovery'}->();
+	}
+
+	my $next_label = $xfer_state->{'next_part'}->{'label'};
 	# load the next label, if necessary
 	if ($self->{'current_label'} and
 	     $self->{'current_label'} eq $next_label) {
@@ -526,6 +544,38 @@ sub _maybe_start_part {
 	}
     });
 
+    # ---
+
+    # handle a holding restore
+    $subs{'holding_recovery'} = make_cb(holding_recovery => sub {
+	my $next_filename = $xfer_state->{'next_part'}->{'holding_file'};
+	my $on_disk_hdr = Amanda::Holding::get_header($next_filename);
+
+	if (!$on_disk_hdr) {
+	    push @{$xfer_state->{'errors'}}, "error loading header from '$next_filename'";
+	    return $subs{'handle_error'}->();
+	}
+
+	if (!$self->_header_expected($on_disk_hdr)) {
+	    # _header_expected already pushed an error message or two
+	    return $subs{'handle_error'}->();
+	}
+
+	# now, either start the part, or invoke the xfer_src_cb.
+	if ($xfer_state->{'xfer_src_cb'}) {
+	    my $cb = $xfer_state->{'xfer_src_cb'};
+	    $xfer_state->{'xfer_src_cb'} = undef;
+
+	    # notify caller of the part, *before* xfer_src_cb is called!
+	    $self->{'feedback'}->notif_holding($next_filename, $on_disk_hdr);
+
+	    $self->dbg("successfully located holding file for recovery");
+	    return $cb->(undef, $on_disk_hdr, $xfer_state->{'xfer_src'});
+	}
+	# (nothing to do until the xfer is done)
+    });
+
+
     # ----
 
     # this utility sub handles errors differently depending on which phase is active.
@@ -570,15 +620,22 @@ sub _header_expected {
 	push @errs, "got dumplevel '$on_vol_hdr->{dumplevel}'; " .
 		    "expected '$next_part->{dump}->{level}'";
     }
-    if ($on_vol_hdr->{'partnum'} != $next_part->{'partnum'}) {
-	push @errs, "got partnum '$on_vol_hdr->{partnum}'; " .
-		    "expected '$next_part->{partnum}'";
+    unless ($xfer_state->{'is_holding'}) {
+	if ($on_vol_hdr->{'partnum'} != $next_part->{'partnum'}) {
+	    push @errs, "got partnum '$on_vol_hdr->{partnum}'; " .
+			"expected '$next_part->{partnum}'";
+	}
     }
 
     if (@errs) {
-	my $label = $next_part->{'label'};
-	my $filenum = $next_part->{'filenum'};
-	my $errmsg = "header on '$label' file $filenum does not match expectations: ";
+	my $errmsg;
+	if ($xfer_state->{'is_holding'}) {
+	    $errmsg = "header on '$next_part->{holding_file}' does not match expectations: ";
+	} else {
+	    my $label = $next_part->{'label'};
+	    my $filenum = $next_part->{'filenum'};
+	    $errmsg = "header on '$label' file $filenum does not match expectations: ";
+	}
 	$errmsg .= join("; ", @errs);
 	push @{$xfer_state->{'errors'}}, $errmsg;
 	return 0;
@@ -600,6 +657,8 @@ sub new {
 }
 
 sub notif_part { }
+
+sub notif_holding { }
 
 sub volume_not_found {
     my ($err, $label, $res_cb) = @_;

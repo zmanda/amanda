@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 14;
+use Test::More tests => 16;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -212,6 +212,44 @@ my $datestamp = "20100101010203";
     pass("successfully set up test data");
 }
 
+# make a holding file
+my $holding_file = "$Installcheck::TMP/holding_file";
+my $holding_key = 0x797;
+my $holding_kb = 64;
+{
+    open(my $fh, ">", "$holding_file") or die("opening '$holding_file': $!");
+
+    my $hdr = Amanda::Header->new();
+    $hdr->{'type'} = $Amanda::Header::F_DUMPFILE;
+    $hdr->{'datestamp'} = '21001010101010';
+    $hdr->{'dumplevel'} = 1;
+    $hdr->{'name'} = 'heldhost';
+    $hdr->{'disk'} = '/to/holding';
+    $hdr->{'program'} = "INSTALLCHECK";
+    $hdr->{'is_partial'} = 0;
+
+    print $fh $hdr->to_string(32768,32768);
+
+    # transfer some data to that file
+    my $xfer = Amanda::Xfer->new([
+	Amanda::Xfer::Source::Random->new(1024*$holding_kb, $holding_key),
+	Amanda::Xfer::Dest::Fd->new($fh),
+    ]);
+
+    $xfer->start(sub {
+	my ($src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    die $msg->{elt} . " failed: " . $msg->{message};
+	}
+	elsif ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    $src->remove();
+	    Amanda::MainLoop::quit();
+	}
+    });
+    Amanda::MainLoop::run();
+    close($fh);
+}
+
 # fill out a dump object like that returned from Amanda::DB::Catalog, with all
 # of the keys that we don't really need based on a much simpler description
 sub fake_dump {
@@ -232,10 +270,8 @@ sub fake_dump {
     };
 
     for my $part (@parts) {
-	my ($label, $filenum) = ($part->{'label'}, $part->{'filenum'});
 	push @{$pldump->{'parts'}}, {
-	    label => $label,
-	    filenum => $filenum,
+	    %$part,
 	    dump => $pldump,
 	    status => "OK",
 	    partnum => scalar @{$pldump->{'parts'}},
@@ -443,7 +479,25 @@ try_recovery(
     ),
     msg => "multi-part recovery spanning tapes 1 and 2 successful");
 
+try_recovery(
+    clerk => $clerk,
+    seed => $holding_key,
+    dump => fake_dump("heldhost", "/to/holding", '21001010101010', 1,
+	{ holding_file => $holding_file },
+    ),
+    msg => "holding-disk recovery");
+
 # try some expected failures
+
+try_recovery(
+    clerk => $clerk,
+    seed => $holding_key,
+    dump => fake_dump("weldtoast", "/to/holding", '21001010101010', 1,
+	{ holding_file => $holding_file },
+    ),
+    xfail => [ "header on '$holding_file' does not match expectations: " .
+	        "got hostname 'heldhost'; expected 'weldtoast'" ],
+    msg => "holding-disk recovery expected failure on header disagreement");
 
 try_recovery(
     clerk => $clerk,
@@ -522,3 +576,4 @@ quit_clerk($clerk);
 
 # cleanup
 rmtree($taperoot);
+unlink($holding_file);

@@ -124,6 +124,10 @@ where C<available> is false if the planner did not find this volume in the
 changer.  Planners which do not consult the changer will have a false value for
 C<available>.
 
+Similarly, to get a list of holding files that the plan requires, in order, use
+C<get_holding_file_list>.  Each file is represented as a string giving the
+fully qualified pathname.
+
 =cut
 
 package Amanda::Recovery::Planner;
@@ -212,7 +216,8 @@ sub make_plan {
 
 	# now, take the one written longest ago - this gets us the dump on secondary
 	# media if it hasn't been overwritten, otherwise the dump on tertiary media,
-	# etc.
+	# etc.  Note that this also prefers dumps on holding disk, since they are
+	# tagged with a write_timestamp of 0
 	@options = Amanda::DB::Catalog::sort_dumps(['write_timestamp'], @options);
 	push @dumps, $options[0];
     }
@@ -229,7 +234,7 @@ sub make_plan {
     # on write_timestamp, then on the label of the first part of the dump,
     # using the tapelist to order the labels.  Where labels match, it sorts on
     # the part's filenum.  This should sort the dumps into the order in which
-    # they were written.
+    # they were written, with holding dumps coming in at the head of the list.
     my $tapelist_filename = config_dir_relative(getconf($CNF_TAPELIST));
     my $tapelist = Amanda::Tapelist::read_tapelist($tapelist_filename);
 
@@ -239,6 +244,13 @@ sub make_plan {
 
 	return $rv
 	    if ($rv = $a->{'write_timestamp'} cmp $b->{'write_timestamp'});
+
+	# above will take care of comparing a holding dump to an on-media dump, but
+	# if both are on holding then we need to compare them lexically
+	if (exists $a->{'parts'}[1]{'holding_file'}
+	and exists $b->{'parts'}[1]{'holding_file'}) {
+	    return $a->{'parts'}[1]{'holding_file'} cmp $b->{'parts'}[1]{'holding_file'};
+	}
 
 	my ($alabel, $blabel) = (
 	    $a->{'parts'}[1]{'label'},
@@ -308,6 +320,7 @@ sub get_volume_list {
     for my $dump (@{$self->{'dumps'}}) {
 	for my $part (@{$dump->{'parts'}}) {
 	    next unless defined $part; # skip parts[0]
+	    next unless defined $part->{'label'}; # skip holding parts
 	    if (!defined $last_label || $part->{'label'} ne $last_label) {
 		$last_label = $part->{'label'};
 		push @volumes, { label => $last_label, available => 0 };
@@ -316,6 +329,21 @@ sub get_volume_list {
     }
 
     return @volumes;
+}
+
+sub get_holding_file_list {
+    my $self = shift;
+    my @hfiles;
+
+    for my $dump (@{$self->{'dumps'}}) {
+	for my $part (@{$dump->{'parts'}}) {
+	    next unless defined $part; # skip parts[0]
+	    next unless defined $part->{'holding_file'}; # skip on-media dumps
+	    push @hfiles, $part->{'holding_file'};
+	}
+    }
+
+    return @hfiles;
 }
 
 sub dbg {

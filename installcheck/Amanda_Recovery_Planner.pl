@@ -16,20 +16,22 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 5;
+use Test::More tests => 7;
 use File::Path;
 use Data::Dumper;
 use strict;
 use warnings;
 
 use lib "@amperldir@";
-use Installcheck::Config;
+use Installcheck::Run;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Changer;
 use Amanda::Debug;
 use Amanda::DB::Catalog;
 use Amanda::Recovery::Planner;
 use Amanda::MainLoop;
+use Amanda::Header;
+use Amanda::Xfer qw( :constants );
 
 # and disable Debug's die() and warn() overrides
 Amanda::Debug::disable_die_override();
@@ -39,7 +41,7 @@ Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
 
 my $testconf;
-$testconf = Installcheck::Config->new();
+$testconf = Installcheck::Run->setup();
 $testconf->write();
 
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
@@ -53,8 +55,54 @@ if ($cfg_result != $CFGERR_OK) {
 
 my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
 my $tapelist_fn = config_dir_relative(getconf($CNF_TAPELIST));
+my $holdingdir = "$Installcheck::TMP/holding";
 my $write_timestamp;
 my $output;
+
+sub make_holding_file {
+    my ($dump) = @_;
+
+    my $dir = "$holdingdir/$dump->{dump_timestamp}";
+    my $safe_disk = $dump->{'diskname'};
+    $safe_disk =~ tr{/}{_};
+    my $filename = "$dir/$dump->{hostname}.$safe_disk";
+    mkpath($dir);
+
+    # (note that multi-chunk holding files are not used at this point)
+    my $hdr = Amanda::Header->new();
+    $hdr->{'type'} = $Amanda::Header::F_DUMPFILE;
+    $hdr->{'datestamp'} = $dump->{'dump_timestamp'};
+    $hdr->{'dumplevel'} = $dump->{'level'};
+    $hdr->{'name'} = $dump->{'hostname'};
+    $hdr->{'disk'} = $dump->{'diskname'};
+    $hdr->{'program'} = "INSTALLCHECK";
+    $hdr->{'is_partial'} = ($dump->{'status'} ne 'OK');
+
+    open(my $fh, ">", $filename) or die("opening '$filename': $!");
+    print $fh $hdr->to_string(32768,32768);
+
+    # transfer some data to that file
+    my $xfer = Amanda::Xfer->new([
+	Amanda::Xfer::Source::Pattern->new(1024*$dump->{'kb'}, "+-+-+-+-"),
+	Amanda::Xfer::Dest::Fd->new($fh),
+    ]);
+
+    $xfer->start(sub {
+	my ($src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    die $msg->{elt} . " failed: " . $msg->{message};
+	}
+	elsif ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    $src->remove();
+	    Amanda::MainLoop::quit();
+	}
+    });
+    Amanda::MainLoop::run();
+    close($fh);
+
+    return $filename;
+}
+
 open (my $tapelist, ">", $tapelist_fn);
 while (<DATA>) {
     # skip comments
@@ -71,6 +119,17 @@ while (<DATA>) {
 	open $output, ">", "$logdir/$1" or die("Could not open $1 for writing: $!");
 	next;
     }
+
+    # new holding-disk file
+    if (/^:holding (\S+) (\S+) (\S+) (\S+) (\d+) (\S+) (\d+)/) {
+	my $dump = {
+	    'dump_timestamp' => $2,	'hostname' => $3,	    'diskname' => $4,
+	    'level' => $5+0,		'status' => $6,		    'kb' => $7,
+	};
+	make_holding_file($dump);
+	next;
+    }
+
 
     die("syntax error") if (/^:/);
 
@@ -120,9 +179,16 @@ sub is_plan {
 
 	for my $p (@{$d->{'parts'}}) {
 	    next unless defined $p;
-	    push @parts,
-		$p->{'label'},
-		"$p->{filenum}"+0; # strip bigints
+	    if (exists $p->{'holding_file'}) {
+		# extract the last two filename components, since the rest is variable
+		my $hf = $p->{'holding_file'};
+		$hf =~ s/^.*\/([^\/]*\/[^\/]*)$/$1/;
+		push @parts, $hf;
+	    } else {
+		push @parts,
+		    $p->{'label'},
+		    "$p->{filenum}"+0; # strip bigints
+	    }
 	}
     }
 
@@ -137,6 +203,17 @@ is_plan(make_plan_sync(
 	    changer => $changer),
     [ ],
     "empty plan for nonexistent host");
+
+is_plan(make_plan_sync(
+	    dumpspec => ds("oldbox", "^/opt"),
+	    changer => $changer),
+    [
+	[   "oldbox", "/opt", "20080414144444", 0, [
+		'20080414144444/oldbox._opt',
+	    ],
+	],
+    ],
+    "simple plan for a dump on holding disk");
 
 is_plan(make_plan_sync(
 	    dumpspec => ds("somebox", "^/lib", "200801"),
@@ -172,6 +249,21 @@ is_plan(make_plan_sync(
 	],
     ],
     "plan for two dumps, in order by tape write time");
+
+is_plan(make_plan_sync(
+	    dumpspec => ds("otherbox", "^/lib"),
+	    changer => $changer),
+    [
+	[   "otherbox", "/lib", "20080414144444", 1, [
+		'20080414144444/otherbox._lib',
+	    ],
+	],
+	[   "otherbox", "/lib", "20080313133333", 0, [
+		'Conf-003', 13,
+	    ],
+	],
+    ],
+    "plan for a two dumps, one on holding disk; holding dumps prioritized first");
 
 is_plan(make_plan_sync(
 	    dumpspecs => [
@@ -384,3 +476,7 @@ INFO dumper pid-done 30221
 INFO taper pid-done 30210
 FINISH driver date 20100127172011 time 4.197
 INFO driver pid-done 30208
+
+# holding-disk
+:holding otherbox_lib_20080414144444_holding 20080414144444 otherbox /lib 1 OK 256
+:holding oldbox_opt_20080414144444_holding 20080414144444 oldbox /opt 0 OK 1298

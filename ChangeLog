@@ -1,4 +1,16 @@
 2010-01-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/DB/Catalog.pm: inculde dumps on holding
+	* installcheck/Amanda_DB_Catalog.pl: tests
+	* perl/Amanda/Recovery/Planner.pm: plan for dumps on holding
+	* installcheck/Amanda_Recovery_Planner.pl: tests
+	* perl/Amanda/Recovery/Clerk.pm: recover from holding with
+	  Amanda::Xfer::Source::Holding when appropriate
+	* installcheck/Amanda_Recovery_Clerk.pl: tests
+	* server-src/amfetchdump.pl: give better messaging when recovering
+	  from holding, don't append partnum unless it's a multipart dump
+	* installcheck/amfetchdump.pl: tests
+
+2010-01-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amfetchdump.8.xml: remove amfetchdump -s, -b,
 	  and -w options
 	* restore-src/Makefile.am restore-src/amfetchdump.c: remove

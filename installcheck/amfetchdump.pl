@@ -33,7 +33,7 @@ use strict;
 no strict 'subs';
 
 if ($Installcheck::Run::have_expect) {
-    plan tests => 31;
+    plan tests => 33;
 } else {
     plan skip_all => "Expect.pm not available";
     exit(0);
@@ -116,6 +116,10 @@ $exp->log_stdout(0);
 @results = ();
 $exp->expect(60,
     [ qr{1 (tape|volume)\(s\) needed for restoration}, sub {
+	push @results, "tape-count";
+	exp_continue;
+    } ],
+    [ qr{The following (tapes|volumes) are needed: TESTCONF01}, sub {
 	push @results, "tapes-needed";
 	exp_continue;
     } ],
@@ -133,7 +137,7 @@ $exp->expect(60,
 	push @results, "eof";
     }, ],
 );
-is_deeply([ @results ], [ "tapes-needed", "press-enter", "restoring", "eof" ],
+is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "restoring", "eof" ],
 	  "simple restore follows the correct steps");
 
 got_files(1, "..and restored file is present in testdir");
@@ -174,6 +178,10 @@ $exp->log_stdout(0);
 @results = ();
 $exp->expect(60,
     [ qr{1 (tape|volume)\(s\) needed for restoration}, sub {
+	push @results, "tape-count";
+	exp_continue;
+    } ],
+    [ qr{The following (tapes|volumes) are needed: TESTCONF01}, sub {
 	push @results, "tapes-needed";
 	exp_continue;
     } ],
@@ -191,7 +199,7 @@ $exp->expect(60,
 	push @results, "eof";
     }, ],
 );
-is_deeply([ @results ], [ "tapes-needed", "press-enter", "restoring", "eof" ],
+is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "restoring", "eof" ],
 	  "restore with -O follows the correct steps");
 
 chdir($testdir);
@@ -208,6 +216,10 @@ $exp->log_stdout(0);
 @results = ();
 $exp->expect(60,
     [ qr{1 (tape|volume)\(s\) needed for restoration}, sub {
+	push @results, "tape-count";
+	exp_continue;
+    } ],
+    [ qr{The following (tapes|volumes) are needed: TESTCONF01}, sub {
 	push @results, "tapes-needed";
 	exp_continue;
     } ],
@@ -225,7 +237,7 @@ $exp->expect(60,
 	push @results, "eof";
     }, ],
 );
-is_deeply([ @results ], [ "tapes-needed", "press-enter", "restoring", "eof" ],
+is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "restoring", "eof" ],
 	  "restore with -h follows the correct steps");
 
 $fok = got_files(1, "..and restored file is present in testdir");
@@ -255,6 +267,10 @@ $exp->log_stdout(0);
 @results = ();
 $exp->expect(60,
     [ qr{1 (tape|volume)\(s\) needed for restoration}, sub {
+	push @results, "tape-count";
+	exp_continue;
+    } ],
+    [ qr{The following (tapes|volumes) are needed: TESTCONF01}, sub {
 	push @results, "tapes-needed";
 	exp_continue;
     } ],
@@ -272,7 +288,7 @@ $exp->expect(60,
 	push @results, "eof";
     }, ],
 );
-is_deeply([ @results ], [ "tapes-needed", "press-enter", "restoring", "eof" ],
+is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "restoring", "eof" ],
 	  "restore with --header-file follows the correct steps");
 
 $fok = got_files(1, "..and restored file is present in testdir");
@@ -304,6 +320,10 @@ $exp->log_stdout(0);
 @results = ();
 $exp->expect(60,
     [ qr{1 (tape|volume)\(s\) needed for restoration}, sub {
+	push @results, "tape-count";
+	exp_continue;
+    } ],
+    [ qr{The following (tapes|volumes) are needed: TESTCONF01}, sub {
 	push @results, "tapes-needed";
 	exp_continue;
     } ],
@@ -327,7 +347,8 @@ $exp->expect(60,
 	push @results, "eof";
     }, ],
 );
-is_deeply([ @results ], [ "tapes-needed", "press-enter", "insert-tape", "restoring", "eof" ],
+is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter",
+			  "insert-tape", "restoring", "eof" ],
 	  "restore with an explicit device follows the correct steps, prompting for each");
 
 got_files(1, "..and restored file is present in testdir");
@@ -344,6 +365,10 @@ $exp->log_stdout(0);
 @results = ();
 $exp->expect(60,
     [ qr{1 (tape|volume)\(s\) needed for restoration}, sub {
+	push @results, "tape-count";
+	exp_continue;
+    } ],
+    [ qr{The following (tapes|volumes) are needed: TESTCONF01}, sub {
 	push @results, "tapes-needed";
 	exp_continue;
     } ],
@@ -361,7 +386,8 @@ $exp->expect(60,
 	push @results, "eof";
     }, ],
 );
-is_deeply([ @results ], [ "tapes-needed", "press-enter", ("restoring",)x9, "eof" ],
+is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter",
+			  ("restoring",)x9, "eof" ],
 	  "restore with -n follows the correct steps");
 
 got_files(9, "..and restored file is present in testdir");
@@ -398,6 +424,47 @@ got_files(1, "..and restored file is present in testdir");
 ok($last_file_size < $uncomp_size,
     "..and is smaller than previous run ($last_file_size bytes)");
 
+Installcheck::Dumpcache::load("multi");
+cleandir();
+
+$exp = Installcheck::Run::run_expect('amfetchdump', 'TESTCONF', 'localhost');
+$exp->log_stdout(0);
+
+@results = ();
+$exp->expect(60,
+    [ qr{2 (tape|volume)\(s\) needed for restoration}, sub {
+	push @results, "tape-count";
+	exp_continue;
+    } ],
+    [ qr{The following (tapes|volumes) are needed: TESTCONF01 TESTCONF02.*}, sub {
+	push @results, "tapes-needed";
+	exp_continue;
+    } ],
+    [ qr{2 holding file\(s\) needed for restoration}, sub {
+	push @results, "holding-count";
+	exp_continue;
+    } ],
+    [ qr{Reading .*\nFILE: date [[:digit:]]+ host localhost disk .*},
+    sub {
+	push @results, "reading";
+	exp_continue;
+    } ],
+    [ 'Press enter when ready', sub {
+	push @results, "press-enter";
+	$exp->send("\n");
+	exp_continue;
+    }, ],
+    [ 'eof', sub {
+	push @results, "eof";
+    }, ],
+);
+is_deeply([ @results ], [ "tape-count", "tapes-needed", "holding-count",
+			  "press-enter", "reading", "reading", "eof" ],
+	  "restore from holding follows the correct steps");
+
+got_files(6, "..and all restored files are present in testdir");
+
+
 SKIP: {
     skip "Expect not installed or not built with ndmp and server", 2 unless
 	Amanda::Util::built_with_component("ndmp") and
@@ -417,6 +484,10 @@ SKIP: {
     @results = ();
     $exp->expect(60,
 	[ qr{1 (tape|volume)\(s\) needed for restoration}, sub {
+	    push @results, "tape-count";
+	    exp_continue;
+	} ],
+	[ qr{The following (tapes|volumes) are needed: TESTCONF01}, sub {
 	    push @results, "tapes-needed";
 	    exp_continue;
 	} ],
@@ -434,7 +505,7 @@ SKIP: {
 	    push @results, "eof";
 	}, ],
     );
-    is_deeply([ @results ], [ "tapes-needed", "press-enter", "restoring", "eof" ],
+    is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "restoring", "eof" ],
 	      "ndmp restore follows the correct steps");
 
     got_files(1, "..and restored file is present in testdir");
