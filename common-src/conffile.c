@@ -3431,17 +3431,24 @@ read_dpp_script(
 					     ")", ".", anonymous_value(),NULL),
 				   NULL, NULL, NULL);
 	current_line_num -= 1;
-    } else if (tok == CONF_STRING) {
-	pp_script = lookup_pp_script(tokenval.v.s);
-	if (pp_script == NULL) {
-	    conf_parserror(_("Unknown pp_script named: %s"), tokenval.v.s);
-	    return;
+	val->v.identlist = g_slist_insert_sorted(val->v.identlist,
+			stralloc(pp_script->name), &compare_pp_script_order);
+    } else if (tok == CONF_STRING || tok == CONF_IDENT) {
+	while (tok == CONF_STRING || tok == CONF_IDENT) {
+	    pp_script = lookup_pp_script(tokenval.v.s);
+	    if (pp_script == NULL) {
+		conf_parserror(_("Unknown pp_script named: %s"), tokenval.v.s);
+		return;
+	    }
+    	    val->v.identlist = g_slist_insert_sorted(val->v.identlist,
+			 stralloc(pp_script->name), &compare_pp_script_order);
+	    get_conftoken(CONF_ANY);
 	}
+	unget_conftoken();
     } else {
 	conf_parserror(_("pp_script name expected: %d %d"), tok, CONF_STRING);
 	return;
     }
-    val->v.identlist = g_slist_insert_sorted(val->v.identlist, stralloc(pp_script->name), &compare_pp_script_order);
     ckseen(&val->seen);
 }
 static void
