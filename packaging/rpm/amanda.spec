@@ -1531,6 +1531,15 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{LOCALSTATEDIR}/amanda
 %{PERLSITELIB}/Amanda
 %{SYSCONFDIR}/amanda
+%{AMLIBEXECDIR}/amcat.awk
+%{AMANDAHOMEDIR}/gnutar-lists
+%doc %{AMANDAHOMEDIR}/amanda-release
+%doc %{AMANDAHOMEDIR}/example/xinetd.amandaclient
+%doc %{AMANDAHOMEDIR}/example/xinetd.amandaserver
+%doc %{AMANDAHOMEDIR}/example/amanda-client.conf
+%doc %{AMANDAHOMEDIR}/template.d/README
+%doc %{AMANDAHOMEDIR}/template.d/dumptypes
+%defattr(0644,root,root,0755)
 %docdir %{MANDIR}
 %{MANDIR}/man5/amanda.conf.5.gz
 %{MANDIR}/man5/amanda-client.conf.5.gz
@@ -1543,15 +1552,6 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{MANDIR}/man8/amcrypt*
 %{MANDIR}/man8/amgpgcrypt.8.gz
 %{MANDIR}/man8/amrecover.8.gz
-%{AMLIBEXECDIR}/amcat.awk
-%{AMANDAHOMEDIR}/gnutar-lists
-%doc %{AMANDAHOMEDIR}/amanda-release
-%doc %{AMANDAHOMEDIR}/example/xinetd.amandaclient
-%doc %{AMANDAHOMEDIR}/example/xinetd.amandaserver
-%doc %{AMANDAHOMEDIR}/example/amanda-client.conf
-%doc %{AMANDAHOMEDIR}/template.d/README
-%doc %{AMANDAHOMEDIR}/template.d/dumptypes
-%defattr(0644,root,root,0755)
 %doc %{DATADIR}/amanda
 
 %files backup_server
@@ -1591,6 +1591,10 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{AMLIBEXECDIR}/amplot.awk
 %{AMLIBEXECDIR}/amplot.g
 %{AMLIBEXECDIR}/amplot.gp
+%doc %{AMANDAHOMEDIR}/amanda-release
+%docdir %{AMANDAHOMEDIR}/example
+%docdir %{AMANDAHOMEDIR}/template.d
+%defattr(0644,root,root,0755)
 %docdir %{MANDIR}
 %{MANDIR}/man5/am*
 %{MANDIR}/man5/disklist.5.gz
@@ -1598,10 +1602,6 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{MANDIR}/man7/am*
 %{MANDIR}/man8/am*
 %{MANDIR}/man8/script-email.8.gz
-%doc %{AMANDAHOMEDIR}/amanda-release
-%docdir %{AMANDAHOMEDIR}/example
-%docdir %{AMANDAHOMEDIR}/template.d
-%defattr(0644,root,root,0755)
 %doc %{DATADIR}/amanda
 
 # --- ChangeLog

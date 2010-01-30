@@ -1,3 +1,7 @@
+2010-01-29 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/rpm/amanda.spec: move manpages to
+	   defattr(644,root,root,..) section
+
 2010-01-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/DB/Catalog.pm: inculde dumps on holding
 	* installcheck/Amanda_DB_Catalog.pl: tests
