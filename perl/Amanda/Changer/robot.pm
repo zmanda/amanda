@@ -1595,7 +1595,7 @@ sub _with_updated_state {
 	    }
 
 	    $new_drives->{$drv} = {
-                state => Amanda::Changer::SLOT_FULL;
+                state => Amanda::Changer::SLOT_FULL,
                 label => $label,
                 barcode => $info->{'barcode'},
                 orig_slot => $orig_slot,
