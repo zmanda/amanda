@@ -51,7 +51,7 @@ Amanda::Changer -- interface to changer scripts
 	    if ($err) {
 		die $err->{message};
 	    }
-	    $dev = Amanda::Device->new($reservation->{device_name});
+	    $dev = $reservation->{'device'};
 	    # use device..
 	});
 
@@ -355,9 +355,9 @@ Set to C<1> if it is the current slot.
 
 =item state
 
- Set to C<SLOT_FULL> if the slot is full.
- Set to C<SLOT_EMPTY> if the slot is empty (no volume in slot)
- Set to C<SLOT_UNKNOWN> if the changer doesn't if the slot is full or not.
+Set to C<SLOT_FULL> if the slot is full, C<SLOT_EMPTY> if the slot is empty (no
+volume in slot), or C<SLOT_UNKNOWN> if the changer doesn't if the slot is full
+or not.  These constants are available in the C<:constants> export tag.
 
 A blank or erased volume is not the same as an empty slot.
 
@@ -626,6 +626,11 @@ use constant SLOT_EMPTY => 2;
 
 # don't known if slot contains a volume
 use constant SLOT_UNKNOWN => 3;
+
+our @EXPORT_OK = qw( SLOT_FULL SLOT_EMPTY SLOT_UNKNOWN );
+our %EXPORT_TAGS = (
+    constants => [ qw( SLOT_FULL SLOT_EMPTY SLOT_UNKNOWN ) ],
+);
 
 # this is a "virtual" constructor which instantiates objects of different
 # classes based on its argument.  Subclasses should not try to chain up!
