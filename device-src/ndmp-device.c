@@ -816,10 +816,13 @@ ndmp_device_seek_file(
     guint   file)
 {
     NdmpDevice *self = NDMP_DEVICE(dself);
-    guint delta, resid;
+    gint delta;
+    guint resid;
     gpointer buf;
     guint64 buf_size;
     dumpfile_t *header;
+
+    if (device_in_error(dself)) return FALSE;
 
     /* file 0 is the tape header, and isn't seekable as a distinct
      * Device-API-level file */

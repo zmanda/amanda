@@ -1,4 +1,11 @@
 2010-02-02  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/ndmp-device.c: fix failure to check for fatal errors, use
+	  signed 'delta'
+	* device-src/tape-device.c: rewind correctly, even to the current file
+	* device-src/vfs-device.c: set in_file=FALSE on finish()
+	* installcheck/Amanda_Device.pl: check reading file header twice
+
+2010-02-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/amtapetype.pl installcheck/Amanda_DB_Catalog.pl
 	  installcheck/Amanda_Device.pl installcheck/Amanda_Recovery_Clerk.pl
 	  installcheck/Amanda_Recovery_Planner.pl installcheck/Amanda_Xfer.pl

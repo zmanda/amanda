@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -1233,12 +1233,24 @@ reseek:
 		DEVICE_STATUS_VOLUME_ERROR | DEVICE_STATUS_DEVICE_ERROR);
             return NULL;
         }
-    } else if (difference < 0) {
-        /* Seeking backwards */
-        if (!tape_device_bsf(self, -difference, d_self->file)) {
+    } else { /* (difference <= 0) */
+        /* Seeking backwards, or to this file itself */
+
+	/* bsf one more than the difference */
+        if (!tape_device_bsf(self, -difference + 1, d_self->file)) {
             tape_rewind(self->fd);
 	    device_set_error(d_self,
 		vstrallocf(_("Could not seek backward to file %d"), file),
+		DEVICE_STATUS_VOLUME_ERROR | DEVICE_STATUS_DEVICE_ERROR);
+            return NULL;
+        }
+
+	/* now we are on the BOT side of the desired filemark, so FSF to get to the
+	 * EOT side of it */
+        if (!tape_device_fsf(self, 1)) {
+            tape_rewind(self->fd);
+	    device_set_error(d_self,
+		vstrallocf(_("Could not seek forward to file %d"), file),
 		DEVICE_STATUS_VOLUME_ERROR | DEVICE_STATUS_DEVICE_ERROR);
             return NULL;
         }

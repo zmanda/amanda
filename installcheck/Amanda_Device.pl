@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 422;
+use Test::More tests => 428;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -316,6 +316,14 @@ ok($dev->start($ACCESS_READ, undef, undef),
     or diag($dev->error_or_status());
 
 verify_file(0x2FACE, $dev->block_size()*10+17, 3);
+
+{
+    # try two seek_file's in a row
+    my $hdr = $dev->seek_file(3);
+    is($hdr? $hdr->{'type'} : -1, $Amanda::Header::F_DUMPFILE, "seek_file the first time");
+    $hdr = $dev->seek_file(3);
+    is($hdr? $hdr->{'type'} : -1, $Amanda::Header::F_DUMPFILE, "seek_file the second time");
+}
 
 ok($dev->finish(),
     "finish device after read")
@@ -886,7 +894,7 @@ my $TAPE_DEVICE = $ENV{'INSTALLCHECK_TAPE_DEVICE'};
 my $run_tape_tests = defined $TAPE_DEVICE;
 SKIP: {
     skip "define \$INSTALLCHECK_TAPE_DEVICE to run tape tests",
-	    15 +
+	    17 +
 	    3 * $verify_file_count +
 	    4 * $write_file_count
 	unless $run_tape_tests;
@@ -973,6 +981,13 @@ SKIP: {
     verify_file(0x2FACE+2, $dev->block_size()*10+17, 2);
     verify_file(0x2FACE+3, $dev->block_size()*10+17, 3);
 
+    # try two seek_file's in a row
+    my $hdr;
+    $hdr = $dev->seek_file(2);
+    is($hdr? $hdr->{'type'} : -1, $Amanda::Header::F_DUMPFILE, "seek_file the first time");
+    $hdr = $dev->seek_file(2);
+    is($hdr? $hdr->{'type'} : -1, $Amanda::Header::F_DUMPFILE, "seek_file the second time");
+
     SKIP: {
         skip "APPEND not supported", $verify_file_count
             unless $dev->property_get("APPENDABLE");
@@ -986,7 +1001,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "not built with ndmp and server", 59 unless
+    skip "not built with ndmp and server", 61 unless
 	Amanda::Util::built_with_component("ndmp") and
 	Amanda::Util::built_with_component("server");
 
@@ -1343,6 +1358,12 @@ SKIP: {
 	    [ "READ-491520", "READ-491520", "READ-131072", "CLOSE", "DONE" ],
 	    "sequential read_to_connection operations read the right amounts and bytestream matches");
     }
+
+    # try two seek_file's in a row
+    $hdr = $dev->seek_file(2);
+    is($hdr? $hdr->{'type'} : -1, $Amanda::Header::F_DUMPFILE, "seek_file the first time");
+    $hdr = $dev->seek_file(2);
+    is($hdr? $hdr->{'type'} : -1, $Amanda::Header::F_DUMPFILE, "seek_file the second time");
 
     ## test seek_file's handling of EOM
 
