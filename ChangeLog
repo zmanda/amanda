@@ -1,3 +1,6 @@
+2010-02-02  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda-auth.7.xml: reduce circular references
+
 2010-02-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm: add a :constants tag, clean up POD
 

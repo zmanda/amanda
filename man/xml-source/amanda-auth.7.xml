@@ -29,7 +29,7 @@
 <!-- body begins here -->
 
 <refsect1><title>DESCRIPTION</title>
-  <para>Amanda offers 7 methods of communication between Amanda server (sometimes also called the tape server) and clients, each with its own authentication method.  The desired communication method is specified by the <emphasis remap='I'>auth</emphasis> parameter in the amanda.conf file (&amconf;) commonly as a dumptype.  Valid values to the <emphasis remap='I'>auth</emphasis> parameter are <emphasis remap='B'>bsd</emphasis>, <emphasis remap='B'>bsdudp</emphasis>, <emphasis remap='B'>bsdtcp</emphasis>, <emphasis remap='B'>krb4</emphasis>, <emphasis remap='B'>krb5</emphasis>, <emphasis remap='B'>local</emphasis>, <emphasis remap='B'>rsh</emphasis>, and <emphasis remap='B'>ssh</emphasis>. Please note that <emphasis remap='B'>krb4</emphasis> will be removed in the next release.  The authentication and communication method is used during the backup process &amdump; (amdump(8)) as well as the recovery process &amrecover; (amrecover(8)).  For detailed information, please see http://wiki.zmanda.com/index.php/Server/Client_authentication.</para>
+<para>Amanda offers 7 methods of communication between Amanda server (sometimes also called the tape server) and clients, each with its own authentication method.  The desired communication method is specified by the <emphasis remap='I'>auth</emphasis> parameter in the amanda.conf file (&amconf;) commonly as a dumptype.  Valid values to the <emphasis remap='I'>auth</emphasis> parameter are <emphasis remap='B'>bsd</emphasis>, <emphasis remap='B'>bsdudp</emphasis>, <emphasis remap='B'>bsdtcp</emphasis>, <emphasis remap='B'>krb4</emphasis>, <emphasis remap='B'>krb5</emphasis>, <emphasis remap='B'>local</emphasis>, <emphasis remap='B'>rsh</emphasis>, and <emphasis remap='B'>ssh</emphasis>. Please note that <emphasis remap='B'>krb4</emphasis> will be removed in the next release.  The authentication and communication method is used during the backup process &amdump; (amdump(8)) as well as the recovery process &amrecover; (amrecover(8)).</para>
 </refsect1>
 
 <refsect1><title>COMPILATION AND GENERAL INFORMATION</title>
@@ -82,7 +82,7 @@ Authentication	  Configure option(s)
 </refsect1>
 
 <refsect1><title>BSD, BSDUDP, AND BSDTCP COMMUNICATION AND AUTHENTICATION</title>
-<para>For more detail, see http://wiki.zmanda.com/index.php/Configuring_bsd/bsdudp/bsdtcp_authentication.</para>
+<para>For additional information including example configurations, see http://wiki.zmanda.com/index.php/Configuring_bsd/bsdudp/bsdtcp_authentication.</para>
 
   <para>The <emphasis remap='B'>bsd</emphasis>, <emphasis remap='B'>bsdudp</emphasis>, and <emphasis remap='B'>bsdtcp</emphasis> communication methods use either UDP, TCP, or both protocols operating as a network service to authenticate and exchange data between server and clients.</para>
 
