@@ -1,4 +1,4 @@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -276,8 +276,7 @@ SKIP: {
 	    my ($src, $msg, $xfer) = @_;
 	    if ($msg->{'type'} == $XMSG_ERROR) {
 		die $msg->{'elt'} . " failed: " . $msg->{'message'};
-	    }
-	    if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    } elsif ($msg->{'type'} == $XMSG_DONE) {
 		Amanda::MainLoop::quit();
 	    }
 	}));

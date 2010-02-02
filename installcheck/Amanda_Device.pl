@@ -1063,8 +1063,7 @@ SKIP: {
 	    my ($src, $msg, $xfer) = @_;
 	    if ($msg->{'type'} == $XMSG_ERROR) {
 		die $msg->{'elt'} . " failed: " . $msg->{'message'};
-	    }
-	    if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    } elsif ($msg->{'type'} == $XMSG_DONE) {
 		Amanda::MainLoop::quit();
 	    }
 	}));
@@ -1140,8 +1139,7 @@ SKIP: {
 	    my ($src, $msg, $xfer) = @_;
 	    if ($msg->{'type'} == $XMSG_ERROR) {
 		die $msg->{'elt'} . " failed: " . $msg->{'message'};
-	    }
-	    if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    } elsif ($msg->{'type'} == $XMSG_DONE) {
 		Amanda::MainLoop::quit();
 	    }
 	}));
@@ -1228,8 +1226,7 @@ SKIP: {
 		my ($src, $msg, $xfer) = @_;
 		if ($msg->{'type'} == $XMSG_ERROR) {
 		    die $msg->{'elt'} . " failed: " . $msg->{'message'};
-		}
-		if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+		} elsif ($msg->{'type'} == $XMSG_DONE) {
 		    Amanda::MainLoop::quit();
 		}
 	    }));
@@ -1251,8 +1248,7 @@ SKIP: {
 	    my ($src, $msg, $xfer) = @_;
 	    if ($msg->{'type'} == $XMSG_ERROR) {
 		die $msg->{'elt'} . " failed: " . $msg->{'message'};
-	    }
-	    if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    } elsif ($msg->{'type'} == $XMSG_DONE) {
 		Amanda::MainLoop::quit();
 	    }
 	}));

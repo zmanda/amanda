@@ -758,7 +758,7 @@ sub _xmsg_done {
     my $self = shift;
     my ($src, $msg, $xfer) = @_;
 
-    if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+    if ($msg->{'type'} == $XMSG_DONE) {
 	$self->dbg("transfer is complete");
 	$self->_dump_done();
     }

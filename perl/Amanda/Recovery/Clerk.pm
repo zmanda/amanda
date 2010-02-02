@@ -306,7 +306,7 @@ sub handle_xmsg {
 	}
     }
 
-    if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+    if ($msg->{'type'} == $XMSG_DONE) {
 	$self->_xmsg_done($src, $msg, $xfer);
     }
 }

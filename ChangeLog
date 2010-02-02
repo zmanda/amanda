@@ -1,4 +1,13 @@
 2010-02-02  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/amtapetype.pl installcheck/Amanda_DB_Catalog.pl
+	  installcheck/Amanda_Device.pl installcheck/Amanda_Recovery_Clerk.pl
+	  installcheck/Amanda_Recovery_Planner.pl installcheck/Amanda_Xfer.pl
+	  installcheck/amrestore.pl perl/Amanda/Recovery/Clerk.pm
+	  perl/Amanda/Taper/Scribe.pm perl/Amanda/Xfer.pod server-src/amvault.pl
+	  xfer-src/xfer-test.c: detect a finished xfer by XMSG_DONE, instead
+	  of xfer_state == XFER_DONE
+
+2010-02-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda-auth.7.xml: reduce circular references
 
 2010-02-01  Dustin J. Mitchell <dustin@zmanda.com>

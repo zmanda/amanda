@@ -168,8 +168,7 @@ sub write_one_file(%) {
 	my ($src, $xmsg, $xfer) = @_;
 	if ($xmsg->{type} == $Amanda::Xfer::XMSG_ERROR) {
 	    $got_error = $xmsg->{message};
-	}
-	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	} elsif ($xmsg->{'type'} == $Amanda::Xfer::XMSG_DONE) {
 	    Amanda::MainLoop::quit();
 	}
     });
@@ -292,8 +291,7 @@ sub data_to_null {
 	my ($src, $xmsg, $xfer) = @_;
 	if ($xmsg->{type} == $Amanda::Xfer::XMSG_ERROR) {
 	    $got_error = $xmsg->{message};
-	}
-	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	} elsif ($xmsg->{'type'} == $Amanda::Xfer::XMSG_DONE) {
 	    Amanda::MainLoop::quit();
 	}
     });

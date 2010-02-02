@@ -388,8 +388,7 @@ sub seek_and_copy {
 	}
 	if ($msg->{type} == $XMSG_ERROR) {
 	    fail $msg->{elt} . " failed: " . $msg->{message};
-	}
-	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
 	    debug("transfer completed");
 
 	    # add this dump to the logfile

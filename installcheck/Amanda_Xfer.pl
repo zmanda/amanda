@@ -67,8 +67,7 @@ Amanda::Debug::disable_die_override();
 	}
 	if ($msg->{type} == $XMSG_INFO) {
 	    $got_msg = $msg->{message};
-	}
-	elsif ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
 	    Amanda::MainLoop::quit();
 	}
     });
@@ -96,10 +95,11 @@ Amanda::Debug::disable_die_override();
 	my ($src, $msg, $xfer) = @_;
 	if ($msg->{type} == $XMSG_ERROR) {
 	    die $msg->{elt} . " failed: " . $msg->{message};
-	}
-	if  ($xfer1->get_status() == $Amanda::Xfer::XFER_DONE
-	 and $xfer2->get_status() == $Amanda::Xfer::XFER_DONE) {
-	    Amanda::MainLoop::quit();
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
+	    if  ($xfer1->get_status() == $Amanda::Xfer::XFER_DONE
+	     and $xfer2->get_status() == $Amanda::Xfer::XFER_DONE) {
+		Amanda::MainLoop::quit();
+	    }
 	}
     };
 
@@ -132,8 +132,7 @@ pass("Two simultaneous transfers run to completion");
 	my ($src, $msg, $xfer) = @_;
 	if ($msg->{type} == $XMSG_ERROR) {
 	    die $msg->{elt} . " failed: " . $msg->{message};
-	}
-	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
 	    Amanda::MainLoop::quit();
 	}
     };
@@ -172,8 +171,7 @@ pass("Two simultaneous transfers run to completion");
 	my ($src, $msg, $xfer) = @_;
 	if ($msg->{type} == $XMSG_ERROR) {
 	    die $msg->{elt} . " failed: " . $msg->{message};
-	}
-	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
 	    Amanda::MainLoop::quit();
 	}
     };
@@ -220,8 +218,7 @@ pass("Two simultaneous transfers run to completion");
 	my ($src, $msg, $xfer) = @_;
 	if ($msg->{type} == $XMSG_ERROR) {
 	    die $msg->{elt} . " failed: " . $msg->{message};
-	}
-	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
 	    Amanda::MainLoop::quit();
 	}
     });
@@ -251,8 +248,7 @@ pass("Two simultaneous transfers run to completion");
 	my ($src, $msg, $xfer) = @_;
 	if ($msg->{type} == $XMSG_ERROR) {
 	    $got_error = 1;
-	}
-	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
 	    Amanda::MainLoop::quit();
 	}
     });
@@ -279,8 +275,7 @@ pass("Two simultaneous transfers run to completion");
 	my ($src, $msg, $xfer) = @_;
 	if ($msg->{type} == $XMSG_ERROR) {
 	    die $msg->{elt} . " failed: " . $msg->{message};
-	}
-	elsif ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
 	    $src->remove();
 	    Amanda::MainLoop::quit();
 	}
@@ -317,8 +312,7 @@ pass("Two simultaneous transfers run to completion");
 	my ($src, $msg, $xfer) = @_;
 	if ($msg->{type} == $XMSG_ERROR) {
 	    die $msg->{elt} . " failed: " . $msg->{message};
-	}
-	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
 	    $src->remove();
 	    Amanda::MainLoop::quit();
 	}
@@ -341,8 +335,7 @@ pass("Two simultaneous transfers run to completion");
 	my ($src, $msg, $xfer) = @_;
 	if ($msg->{type} == $XMSG_ERROR) {
 	    die $msg->{elt} . " failed: " . $msg->{message};
-	}
-	elsif ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
 	    $src->remove();
 	    Amanda::MainLoop::quit();
 	}
@@ -367,8 +360,7 @@ pass("Two simultaneous transfers run to completion");
 	my ($src, $msg, $xfer) = @_;
 	if ($msg->{type} == $XMSG_ERROR) {
 	    $got_err = 1;
-	}
-	elsif ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
 	    $src->remove();
 	    Amanda::MainLoop::quit();
 	}
@@ -404,8 +396,7 @@ SKIP: {
 	    my ($src, $msg, $xfer) = @_;
 	    if ($msg->{'type'} == $XMSG_ERROR) {
 		die $msg->{'elt'} . " failed: " . $msg->{'message'};
-	    }
-	    if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    } elsif ($msg->{'type'} == $XMSG_DONE) {
 		Amanda::MainLoop::quit();
 	    }
 	});
@@ -539,14 +530,11 @@ SKIP: {
 		$start_new_part->($msg->{'successful'}, $msg->{'eof'}, $msg->{'partnum'});
 	    } elsif ($msg->{'type'} == $XMSG_DONE) {
 		push @messages, "DONE";
+		Amanda::MainLoop::quit();
 	    } elsif ($msg->{'type'} == $XMSG_CANCEL) {
 		push @messages, "CANCELLED";
 	    } else {
 		push @messages, "$msg";
-	    }
-
-	    if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
-		Amanda::MainLoop::quit();
 	    }
 	});
 
@@ -621,12 +609,9 @@ SKIP: {
 		$subs{'seek_file'}->();
 	    } elsif ($msg->{'type'} == $XMSG_DONE) {
 		push @messages, "DONE";
+		Amanda::MainLoop::quit();
 	    } elsif ($msg->{'type'} == $XMSG_CANCEL) {
 		push @messages, "CANCELLED";
-	    }
-
-	    if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
-		Amanda::MainLoop::quit();
 	    }
 	};
 
@@ -839,8 +824,7 @@ SKIP: {
 	    my ($src, $msg, $xfer) = @_;
 	    if ($msg->{'type'} == $XMSG_ERROR) {
 		die $msg->{'elt'} . " failed: " . $msg->{'message'};
-	    }
-	    if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    } elsif ($msg->{'type'} == $XMSG_DONE) {
 		Amanda::MainLoop::quit();
 	    }
 	});
@@ -940,14 +924,11 @@ SKIP: {
 		$start_new_part->($msg->{'successful'}, $msg->{'eof'}, $msg->{'partnum'});
 	    } elsif ($msg->{'type'} == $XMSG_DONE) {
 		push @messages, "DONE";
+		Amanda::MainLoop::quit();
 	    } elsif ($msg->{'type'} == $XMSG_CANCEL) {
 		push @messages, "CANCELLED";
 	    } else {
 		push @messages, $msg->{'type'};
-	    }
-
-	    if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
-		Amanda::MainLoop::quit();
 	    }
 	});
 

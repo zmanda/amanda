@@ -94,8 +94,7 @@ sub make_holding_file {
 	my ($src, $msg, $xfer) = @_;
 	if ($msg->{type} == $XMSG_ERROR) {
 	    die $msg->{elt} . " failed: " . $msg->{message};
-	}
-	elsif ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
 	    $src->remove();
 	    Amanda::MainLoop::quit();
 	}

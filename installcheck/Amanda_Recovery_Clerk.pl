@@ -167,8 +167,7 @@ my $datestamp = "20100101010203";
 
 	    if ($msg->{'type'} == $XMSG_ERROR) {
 		die $msg->{'elt'} . " failed: " . $msg->{'message'};
-	    }
-	    if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    } elsif ($msg->{'type'} == $XMSG_DONE) {
 		# fix up $xfer_info
 		$xfer_info->[0] -= $len;
 		$xfer_info->[1] = $xsrc->get_seed();
@@ -240,8 +239,7 @@ my $holding_kb = 64;
 	my ($src, $msg, $xfer) = @_;
 	if ($msg->{type} == $XMSG_ERROR) {
 	    die $msg->{elt} . " failed: " . $msg->{message};
-	}
-	elsif ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
 	    $src->remove();
 	    Amanda::MainLoop::quit();
 	}
