@@ -87,6 +87,14 @@ creating a new changer is
     die("Error creating changer $changer_name: $chg");
   }
 
+=head2 MEMBER VARIABLES
+
+=over 4
+
+=item $chg->{'chg_name'}>
+
+The name of the changer
+
 =head2 CALLBACKS
 
 All changer callbacks take an error object as the first parameter.  If no error
@@ -663,7 +671,7 @@ sub new {
 
 	    # first, is it an old changer script?
 	    if ($uri = _old_script_to_uri($tpchanger)) {
-		return _new_from_uri($uri, undef, $name);
+		return _new_from_uri($uri, undef, $tpchanger);
 	    }
 
 	    # if not, then there had better be no tapdev
@@ -678,33 +686,33 @@ sub new {
 
 	    # maybe a changer alias?
 	    if (($uri,$cc) = _changer_alias_to_uri($tpchanger)) {
-		return _new_from_uri($uri, $cc, $name);
+		return _new_from_uri($uri, $cc, $tpchanger);
 	    }
 
 	    # maybe a straight-up changer URI?
 	    if (_uri_to_pkgname($tpchanger)) {
-		return _new_from_uri($tpchanger, undef, $name);
+		return _new_from_uri($tpchanger, undef, $tpchanger);
 	    }
 
 	    # assume it's a device name or alias, and invoke the single-changer
-	    return _new_from_uri("chg-single:$tpchanger", undef, $name);
+	    return _new_from_uri("chg-single:$tpchanger", undef, $tpchanger);
 	} elsif (getconf_seen($CNF_TAPEDEV) and getconf($CNF_TAPEDEV) ne '') {
 	    my $tapedev = getconf($CNF_TAPEDEV);
 
 	    # first, is it a changer alias?
 	    if (($uri,$cc) = _changer_alias_to_uri($tapedev)) {
-		return _new_from_uri($uri, $cc, $name);
+		return _new_from_uri($uri, $cc, $tapedev);
 	    }
 
 	    # maybe a straight-up changer URI?
 	    if (_uri_to_pkgname($tapedev)) {
-		return _new_from_uri($tapedev, undef, $name);
+		return _new_from_uri($tapedev, undef, $tapedev);
 	    }
 
 	    # assume it's a device name or alias, and invoke chg-single.
 	    # chg-single will check the device immediately and error out
 	    # if the device name is invalid.
-	    return _new_from_uri("chg-single:$tapedev", undef, $name);
+	    return _new_from_uri("chg-single:$tapedev", undef, $tapedev);
 	} else {
 	    return Amanda::Changer::Error->new('fatal',
 		message => "You must specify one of 'tapedev' or 'tpchanger'");
@@ -781,7 +789,7 @@ sub _uri_to_pkgname {
     return $pkgname;
 }
 
-# already-instsantiated changer objects (using 'our' so that the installcheck
+# already-instantiated changer objects (using 'our' so that the installcheck
 # and reset this list as necessary)
 our %changers_by_uri_cc = ();
 
@@ -820,6 +828,7 @@ sub _new_from_uri { # (note: this sub is patched by the installcheck)
 	$changers_by_uri_cc{$uri_cc} = $rv;
     }
 
+    $rv->{'chg_name'} = $name;
     return $rv;
 }
 
