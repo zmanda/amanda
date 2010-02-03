@@ -36,6 +36,79 @@ use Amanda::Cmdline;
 use Amanda::Xfer qw( :constants );
 use Amanda::Recovery::Planner;
 use Amanda::Recovery::Clerk;
+use Amanda::Recovery::Scan;
+
+# Interactive package
+package Amanda::Interactive::amfetchdump;
+use POSIX qw( :errno_h );
+use Amanda::MainLoop qw( :GIOCondition );
+use vars qw( @ISA );
+@ISA = qw( Amanda::Interactive );
+
+sub new {
+    my $class = shift;
+
+    my $self = {
+	input_src => undef};
+    return bless ($self, $class);
+}
+
+sub abort() {
+    my $self = shift;
+
+    if ($self->{'input_src'}) {
+	$self->{'input_src'}->remove();
+	$self->{'input_src'} = undef;
+    }
+}
+
+sub user_request {
+    my $self = shift;
+    my %params = @_;
+    my %subs;
+    my $buffer = "";
+
+    my $message  = $params{'message'};
+    my $label    = $params{'label'};
+    my $err      = $params{'err'};
+    my $chg_name = $params{'chg_name'};
+
+    $subs{'data_in'} = sub {
+	my $b;
+	my $n_read = POSIX::read(0, $b, 1);
+	if (!defined $n_read) {
+	    return if ($! == EINTR);
+	    $self->abort();
+	    return $params{'finished_cb'}->(
+		Amanda::Changer::Error->new('fatal',
+			message => "Fail to read from stdin"));
+	} elsif ($n_read == 0) {
+	    $self->abort();
+	    return $params{'finished_cb'}->(
+		Amanda::Changer::Error->new('fatal',
+			message => "Aborted by user"));
+	} else {
+	    $buffer .= $b;
+	    if ($b eq "\n") {
+		my $line = $buffer;
+		chomp $line;
+		$buffer = "";
+		$self->abort();
+		return $params{'finished_cb'}->(undef, $line);
+	    }
+	}
+    };
+
+    print STDERR "$err\n";
+    print STDERR "Insert volume labeled '$label' in $chg_name\n";
+    print STDERR "and press enter, or ^D to abort.\n";
+
+    $self->{'input_src'} = Amanda::MainLoop::fd_source(0, $G_IO_IN|$G_IO_HUP|$G_IO_ERR);
+    $self->{'input_src'}->set_callback($subs{'data_in'});
+    return;
+};
+
+package main;
 
 sub usage {
     my ($msg) = @_;
@@ -152,42 +225,6 @@ sub notif_holding {
     print STDERR "Reading '$filename'\n", $header->summary(), "\n";
 }
 
-sub volume_not_found {
-    my $self = shift;
-    my ($err, $label, $res_cb) = @_;
-
-    # $self->{chg} is either the same changer that the Clerk just used to find
-    # the device *or* the device give by the user in the -d command-line
-    # option.  Either way, we want to prompt the user to insert the volume,
-    # wait for a response, and then try to load it.  Note that the blocking
-    # wait-for-enter here is not problematic in this case, but bad form all the
-    # same.
-    my $dev_name = $self->{'dev_name'} || "changer";
-    print STDERR "$err\n";
-    print STDERR "Insert volume labeled '$label' in $dev_name\n";
-    print STDERR "and press enter, or ^D to abort.\n";
-    my $resp = <STDIN>;
-
-    if (!defined $resp) { # meaning ^D or EOF
-	return $res_cb->("Aborted by user");
-    }
-
-    # this is a little bit tricky, because we want to trap any errors and
-    # re-prompt the user, instead of failing completely.
-    return $self->{'chg'}->load(
-	label => $label,
-	res_cb => make_cb(res_cb => sub {
-	    my ($err, $res) = @_;
-	    if ($err) {
-		# prompt again, possibly with a new error
-		return $self->volume_not_found($err, $label, $res_cb);
-	    }
-
-	    # call through to the clerk's callback
-	    return $res_cb->($err, $res);
-	}));
-}
-
 package main;
 
 sub main {
@@ -206,21 +243,28 @@ sub main {
 	    return failure("Cannot chdir to $destdir: $!");
 	}
 
+	my $interactive = Amanda::Interactive::amfetchdump->new();
 	# if we have an explicit device, then the clerk doesn't get a changer --
-	# we operate the changer via volume_not_found
+	# we operate the changer via Amanda::Recovery::Scan
 	if (defined $opt_device) {
 	    $chg = Amanda::Changer->new($opt_device);
 	    return failure($chg) if $chg->isa("Amanda::Changer::Error");
-
+	    my $scan = Amanda::Recovery::Scan->new(
+				chg => $chg,
+				interactive => $interactive);
+	    return failure($scan) if $scan->isa("Amanda::Changer::Error");
 	    $clerk = Amanda::Recovery::Clerk->new(
-		feedback => main::Feedback->new($chg, $opt_device));
+		feedback => main::Feedback->new($chg, $opt_device),
+		scan     => $scan);
 	} else {
-	    $chg = Amanda::Changer->new();
-	    return failure($chg) if $chg->isa("Amanda::Changer::Error");
+	    my $scan = Amanda::Recovery::Scan->new(
+				interactive => $interactive);
+	    return failure($scan) if $scan->isa("Amanda::Changer::Error");
 
 	    $clerk = Amanda::Recovery::Clerk->new(
 		changer => $chg,
-		feedback => main::Feedback->new($chg, undef));
+		feedback => main::Feedback->new($chg, undef),
+		scan     => $scan);
 	}
 
 	# planner gets to plan against the same changer the user specified

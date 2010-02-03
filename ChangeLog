@@ -1,4 +1,7 @@
 2010-02-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amfetchdump.pl: Use Amanda::Recovery::Scan.
+
+2010-02-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Recovery_Scan.pl: Test Amanda::Recovery::Scan
 	* installcheck/Makefile.am (server_tests): Add Amanda_Recovery_Scan.
 	* perl/Amanda/Changer/compat.pm: Print device_name.
