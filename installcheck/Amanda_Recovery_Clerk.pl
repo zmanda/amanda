@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 16;
+use Test::More tests => 14;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -32,6 +32,7 @@ use Amanda::Header;
 use Amanda::DB::Catalog;
 use Amanda::Xfer qw( :constants );
 use Amanda::Recovery::Clerk;
+use Amanda::Recovery::Scan;
 use Amanda::MainLoop;
 
 # and disable Debug's die() and warn() overrides
@@ -89,6 +90,7 @@ my $datestamp = "20100101010203";
 
     my $res;
     my $chg = Amanda::Changer->new("chg-disk:$taperoot");
+    my $scan = Amanda::Recovery::Scan->new(chg => $chg);
     my $label;
     my %subs;
     my ($slot, $xfer_info, $partnum);
@@ -303,16 +305,6 @@ sub notif_part {
     }
 }
 
-sub volume_not_found {
-    my $self = shift;
-
-    if (exists $self->{'volume_not_found'}) {
-	$self->{'volume_not_found'}->(@_);
-    } else {
-	$self->SUPER::volume_not_found(@_);
-    }
-}
-
 package main;
 
 # run a recovery with the given plan on the given clerk, expecting a bytestream with
@@ -418,8 +410,9 @@ my $clerk;
 my $feedback;
 my @notif_parts;
 my $chg = Amanda::Changer->new("chg-disk:$taperoot");
+my $scan = Amanda::Recovery::Scan->new(chg => $chg);
 
-$clerk = Amanda::Recovery::Clerk->new(changer => $chg, debug => 1);
+$clerk = Amanda::Recovery::Clerk->new(scan => $scan, debug => 1);
 
 try_recovery(
     clerk => $clerk,
@@ -450,8 +443,8 @@ $feedback = main::Feedback->new(
     },
 );
 
-$clerk = Amanda::Recovery::Clerk->new(changer => $chg, debug => 1,
-				    feedback => $feedback);
+$clerk = Amanda::Recovery::Clerk->new(scan => $scan, debug => 1,
+				      feedback => $feedback);
 
 try_recovery(
     clerk => $clerk,
@@ -538,37 +531,6 @@ try_recovery(
     msg => "mismatched level detected");
 
 # use volume_not_found with no changer
-
-my $gave_bogus_device = 0;
-$feedback = main::Feedback->new(
-    volume_not_found => sub {
-	my ($err, $label, $res_cb) = @_;
-
-	if (!$gave_bogus_device) {
-	    $gave_bogus_device = 1;
-	    # wrong slot (it wants TESETCONF01) should trigger another call to
-	    # volume_not_found
-	    return $chg->load(label => 'TESTCONF02', res_cb => $res_cb);
-	} else {
-	    return $chg->load(label => $label, res_cb => $res_cb);
-	}
-    },
-);
-
-quit_clerk($clerk);
-
-$clerk = Amanda::Recovery::Clerk->new(debug => 1,
-				    feedback => $feedback);
-
-try_recovery(
-    clerk => $clerk,
-    seed => 0xF001,
-    dump => fake_dump("usr", "/usr", $datestamp, 0,
-	{ label => 'TESTCONF01', filenum => 2 },
-	{ label => 'TESTCONF01', filenum => 3 },
-	{ label => 'TESTCONF02', filenum => 1 },
-    ),
-    msg => "multi-part recovery using volume_not_found (manual mode)");
 
 quit_clerk($clerk);
 

@@ -36,7 +36,7 @@ Amanda::Recovery::Clerk - handle assembling dumpfiles from multiple parts
 =head1 SYNOPSIS
 
     my $clerk = Amanda::Recovery::Clerk->new(
-	changer => $chg)
+	scan => $scan)
 
     $subs{'setup'} = make_cb(setup => sub {
       $clerk->get_xfer_src(
@@ -98,7 +98,7 @@ To use a Clerk, first create a new object, giving the changer object that the
 Clerk should use to load devices:
 
   my $clerk = Amanda::Recovery::Clerk->new(
-	changer => $chg)
+	scan => $scan);
 
 If the optional parameter C<debug> is given with a true value, then the Clerk
 will log additional debug information to the Amanda debug logs.  This value is
@@ -107,8 +107,8 @@ also set to true if the C<DEBUG_RECOVERY> configuration parameter is set.
 The optional C<feedback> parameter gives an object which will handle feedback
 form the clerk.  See FEEDBACK, below.
 
-The changer parameter can be omitted, in which case the feedback object's
-C<volume_not_found> method will be invoked for every volume.
+The C<scan> parameter must be an L<Amanda::Recover::Scan> instance, which
+will be used to find the volumes required for the recovery.
 
 =head2 TRANSFERRING A DUMPFILE
 
@@ -186,14 +186,6 @@ the holding filename and its header.  Note that C<notif_holding> is called
 before the C<xfer_src_cb>, since data will begin flowing from a holding disk
 immediately when the transfer is started.
 
-The C<volume_not_found> method is called when the Clerk's changer cannot load a
-volume.  It is passed three arguments: the error message (either a string or a
-changer error), the label to load, and a C<res_cb>.  This callback must be
-invoked before the Clerk will continue, and acts just like a changer's
-C<res_cb>.  The default implementation of this method passes the supplied error
-directly to C<res_cb>, which will cause the clerk to cancel the transfer and
-report the error to C<recovery_cb>.
-
 A typical Clerk feedback class might look like:
 
     use base 'Amanda::Recovery::Clerk::Feedback';
@@ -203,12 +195,6 @@ A typical Clerk feedback class might look like:
 	my ($label, $filenum, $hdr) = @_;
 	print "restoring part ", $hdr->{'partnum'},
 	      " from '$label' file $filenum\n";
-    }
-
-    sub volume_not_found {
-	my ($err, $label, $res_cb) = @_;
-	# ..get a reservation somehow..
-	$res_cb->(undef, $res);
     }
 
 
@@ -223,7 +209,7 @@ sub new {
 	if defined $params{'debug'} and $params{'debug'} > $debug;
 
     my $self = {
-	chg => $params{'changer'},
+	scan => $params{'scan'},
 	debug => $debug,
 	feedback => $params{'feedback'}
 	    || Amanda::Recovery::Clerk::Feedback->new(),
@@ -444,35 +430,9 @@ sub _maybe_start_part {
 
 	my $next_label = $xfer_state->{'next_part'}->{'label'};
 
-	if (defined $self->{'chg'}) {
-	    $self->dbg("loading volume '$next_label'");
-	    $self->{'chg'}->load(label => $next_label,
-		    res_cb => $subs{'loaded_label'});
-	} else {
-	    $subs{'call_volume_not_found'}->("no changer set");
-	}
-    });
-
-    $subs{'call_volume_not_found'} = make_cb(call_volume_not_found => sub {
-	my ($err) = @_;
-
-	my $next_label = $xfer_state->{'next_part'}->{'label'};
-	$self->dbg("calling Feedback::volume_not_found for '$next_label': $err");
-	return $self->{'feedback'}->volume_not_found($err, $next_label,
-			$subs{'volume_not_found_result'});
-    });
-
-    $subs{'volume_not_found_result'} = make_cb(volume_not_found_result => sub {
-	my ($err, $res) = @_;
-
-	if ($err) {
-	    push @{$xfer_state->{'errors'}}, "$err";
-	    return $subs{'handle_error'}->();
-	}
-
-	# volume_not_found was successful in finding a reservation, so pretend
-	# the clerk just loaded it
-	return $subs{'loaded_label'}->(undef, $res);
+	$self->dbg("loading volume '$next_label'");
+	$self->{'scan'}->find_volume(label => $next_label,
+			res_cb => $subs{'loaded_label'});
     });
 
     $subs{'loaded_label'} = make_cb(loaded_label => sub {
@@ -481,8 +441,8 @@ sub _maybe_start_part {
 	my $next_label = $xfer_state->{'next_part'}->{'label'};
 
 	if ($err) {
-	    # changer error? let volume_not_found give it a try
-	    return $subs{'call_volume_not_found'}->($err);
+	    push @{$xfer_state->{'errors'}}, "$err";
+	    return $subs{'handle_error'}->();
 	}
 
 	$self->{'current_res'} = $res;
@@ -503,8 +463,7 @@ sub _maybe_start_part {
 	    }
 	}
 
-	# the volume didn't work out, so release the reservation and try
-	# calling volume_not_found (maybe again, that's ok).
+	# the volume didn't work out, so release the reservation and fail
 	$res->release(finished_cb => sub {
 	    my ($release_err) = @_;
 
@@ -513,7 +472,8 @@ sub _maybe_start_part {
 		return $subs{'handle_error'}->();
 	    }
 
-	    return $subs{'call_volume_not_found'}->($err);
+	    push @{$xfer_state->{'errors'}}, "$err";
+	    return $subs{'handle_error'}->();
 	});
     });
 
@@ -664,10 +624,5 @@ sub new {
 sub notif_part { }
 
 sub notif_holding { }
-
-sub volume_not_found {
-    my ($err, $label, $res_cb) = @_;
-    $res_cb->($err);
-}
 
 1;
