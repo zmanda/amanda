@@ -286,7 +286,7 @@ sub main {
 		    Amanda::Util::sanitise_filename("".$hdr->{'disk'}), # workaround SWIG bug
 		    $hdr->{'datestamp'},
 		    $hdr->{'dumplevel'});
-	    if ($current_dump->{'nparts'} > 1) {
+	    if ($opt_no_reassembly) {
 		$filename .= sprintf(".%07d", $hdr->{'partnum'});
 	    }
 

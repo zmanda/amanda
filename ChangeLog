@@ -1,4 +1,8 @@
 2010-02-02  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amfetchdump.pl: only output a filename with a partnum
+	  when -n was given
+
+2010-02-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/ndmp-device.c: fix failure to check for fatal errors, use
 	  signed 'delta'
 	* device-src/tape-device.c: rewind correctly, even to the current file
