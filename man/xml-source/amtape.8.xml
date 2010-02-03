@@ -37,7 +37,6 @@
 </cmdsynopsis>
 </refsynopsisdiv>
 
-
 <refsect1><title>DESCRIPTION</title>
 
 <para><emphasis remap='B'>Amtape</emphasis> is the command-line interface
@@ -49,6 +48,10 @@ the taperscan algorithm (<manref name="amanda-taperscan" vol="7" />).
 remap='I'>current</emphasis> slot for each configuration.  This may or may not
 correspond to an actual physical state of the device, but is used by some
 taperscan algorithms to minimize searching through the slots.</para>
+
+<para>Amtape uses the default changer.  To use a different changer, use the
+config override option, e.g.,
+<command>-otpchanger=otherchanger</command>.</para>
 
 </refsect1>
 

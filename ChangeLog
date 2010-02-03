@@ -1,4 +1,7 @@
 2010-02-02  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amtape.8.xml: add a suggestion to use -otpchanger=
+
+2010-02-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amfetchdump.pl: only output a filename with a partnum
 	  when -n was given
 
