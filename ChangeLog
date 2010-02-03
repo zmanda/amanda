@@ -1,4 +1,7 @@
 2010-02-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am: check all .pm files (some had been missed)
+
+2010-02-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm: fix bogus POD
 
 2010-02-03  Jean-Louis Martineau <martineau@zmanda.com>

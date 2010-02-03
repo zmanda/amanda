@@ -67,14 +67,10 @@ EXTRA_DIST += $(libamglue_la_SOURCES)
 # that all perl modules were built (not just server or client), and that the
 # build directory does not contain any "junk".
 
-# HTML_SOURCE_FILES should contain the .pm files from which the HTML should
-# be geneated.  This is just the concatenation of foo_DATA for all $(foodir)
-# into which perl modules are installed.
-HTML_SOURCE_FILES=
-html: make_html amperl.css $(HTML_SOURCE_FILES)
+html: make_html amperl.css $(PM_FILES)
 	rm -rf html-tmp/ && mkdir html-tmp/
 	cp amperl.css html-tmp/
-	$(PERL) make_html html-tmp/ $(HTML_SOURCE_FILES)
+	$(PERL) make_html html-tmp/ $(PM_FILES)
 	cd html-tmp/ && tar -zcf $(abs_builddir)/html.tar.gz .
 	rm -rf html-tmp/
 ##
@@ -121,9 +117,18 @@ SWIG_OPTIONS=-perl5 -proxy -DSWIG_TYPE_TABLE=SWIG_TYPES_Amanda -I$(srcdir)
 %.i : %.swg $(AMGLUE_SWG)
 	$(SWIG) $(SWIG_OPTIONS) -E $(top_srcdir)/perl/$< >$@
 
+###
+### Packages
+###
+
+# PM_FILES should contain the .pm files from which the HTML should
+# be geneated.  This is just the concatenation of foo_DATA for all $(foodir)
+# into which perl modules are installed.
+PM_FILES=
+
 Amandadir=$(amperldir)/Amanda
 Amanda_DATA =
-HTML_SOURCE_FILES += $(Amanda_DATA)
+PM_FILES += $(Amanda_DATA)
 
 # PACKAGE: Amanda::Archive
 libArchivedir = $(amperldir)/auto/Amanda/Archive
@@ -232,7 +237,7 @@ AmandaChanger_DATA = \
 if WANT_NDMP
 AmandaChanger_DATA += Amanda/Changer/ndmp.pm
 endif
-HTML_SOURCE_FILES += $(AmandaChanger_DATA)
+PM_FILES += $(AmandaChanger_DATA)
 endif
 EXTRA_DIST += $(AmandaChanger_DATA)
 
@@ -247,6 +252,7 @@ if WANT_SERVER
 AmandaCurinfodir = $(amperldir)/Amanda/Curinfo
 AmandaCurinfo_DATA = \
 	Amanda/Curinfo/Info.pm
+PM_FILES += $(AmandaCurinfo_DATA)
 endif
 EXTRA_DIST += $(AmandaCurinfo_DATA)
 
@@ -256,7 +262,7 @@ AmandaRecoverydir = $(amperldir)/Amanda/Recovery
 AmandaRecovery_DATA = \
 	Amanda/Recovery/Clerk.pm \
 	Amanda/Recovery/Planner.pm
-HTML_SOURCE_FILES += $(AmandaRecovery_DATA)
+PM_FILES += $(AmandaRecovery_DATA)
 endif
 EXTRA_DIST += $(AmandaRecovery_DATA)
 
@@ -266,7 +272,7 @@ AmandaTaperdir = $(amperldir)/Amanda/Taper
 AmandaTaper_DATA = \
 	Amanda/Taper/Scan.pm \
 	Amanda/Taper/Scribe.pm
-HTML_SOURCE_FILES += $(AmandaTaper_DATA)
+PM_FILES += $(AmandaTaper_DATA)
 endif
 EXTRA_DIST += $(AmandaTaper_DATA)
 
@@ -275,7 +281,7 @@ if WANT_SERVER
 AmandaTaperScandir = $(amperldir)/Amanda/Taper/Scan
 AmandaTaperScan_DATA = \
 	Amanda/Taper/Scan/traditional.pm
-HTML_SOURCE_FILES += $(AmandaTaperScan_DATA)
+PM_FILES += $(AmandaTaperScan_DATA)
 endif
 EXTRA_DIST += $(AmandaTaperScan_DATA)
 
@@ -283,7 +289,7 @@ if WANT_SERVER
 # PACKAGE: Amanda::DB::*
 Amanda_DBdir = $(Amandadir)/DB
 Amanda_DB_DATA =
-HTML_SOURCE_FILES += $(Amanda_DB_DATA)
+PM_FILES += $(Amanda_DB_DATA)
 endif
 
 if WANT_SERVER
@@ -341,7 +347,7 @@ if WANT_SERVER
 AmandaReportdir = $(amperldir)/Amanda/Report
 AmandaReport_DATA = Amanda/Report/xml.pm \
 	            Amanda/Report/human.pm
-HTML_SOURCE_FILES += $(AmandaReport_DATA)
+PM_FILES += $(AmandaReport_DATA)
 EXTRA_DIST += $(AmandaReport_DATA)
 endif
 
@@ -418,7 +424,7 @@ MAINTAINERCLEANFILES += Amanda/MainLoop.c Amanda/MainLoop.pm
 # PACKAGE: Amanda::IPC::*
 AmandaIPCdir = $(amperldir)/Amanda/IPC
 AmandaIPC_DATA = Amanda/IPC/LineProtocol.pm
-HTML_SOURCE_FILES += $(AmandaIPC_DATA)
+PM_FILES += $(AmandaIPC_DATA)
 EXTRA_DIST += $(AmandaIPC_DATA)
 
 # PACKAGE: Amanda::IPC:Binary
@@ -474,7 +480,7 @@ if WANT_CLIENT
 # PACKAGE: Amanda::Application::*
 AmandaApplicationdir = $(amperldir)/Amanda/Application
 AmandaApplication_DATA = Amanda/Application/Zfs.pm
-HTML_SOURCE_FILES += $(AmandaApplication_DATA)
+PM_FILES += $(AmandaApplication_DATA)
 endif
 EXTRA_DIST += Amanda/Application/Zfs.pm
 
@@ -490,7 +496,7 @@ install-data-hook:
 endif
 
 check-local:
-	@MODULES_TO_CHECK="$(Amanda_DATA) $(Amanda_DB_DATA) $(AmandaChanger_DATA) $(AmandaApplication_DATA) $(AmandaReport_DATA)"; \
+	@MODULES_TO_CHECK="$(PM_FILES)"; \
 	if test -f $(top_builddir)/perl/.libs/libConfig.so -o -f $(top_builddir)/perl/libConfig.so; then \
 		if test -n "$(PERL)"; then \
 			for perlobj in $$MODULES_TO_CHECK; do \
