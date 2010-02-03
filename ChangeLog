@@ -1,3 +1,15 @@
+2010-02-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Recovery_Scan.pl: Test Amanda::Recovery::Scan
+	* installcheck/Makefile.am (server_tests): Add Amanda_Recovery_Scan.
+	* perl/Amanda/Changer/compat.pm: Print device_name.
+	* perl/Amanda/Interactive.pm: Base class for interactivity.
+	* perl/Amanda/Interactive/stdin.pm: Interactivity on stdin/stdout.
+	* perl/Amanda/Recovery/Scan.pm: Scan changers
+	* perl/Makefile.am: Add Amanda/Interactive.pm,
+	  Amanda/Interactive/stdin.pm, Amanda/Recovery/Scan.pm.
+	* server-src/amcheckdump.pl: Use Amanda::Recovery::Scan.
+	* server-src/amtape.pl: Use Amanda::Recovery::Scan.
+
 2010-02-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Installcheck/Run.pm: export $taperoot and $holdingdir
 	* installcheck/Installcheck/Dumpcache.pm: use new (much faster!) chg-disk

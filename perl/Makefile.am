@@ -217,6 +217,20 @@ endif
 EXTRA_DIST += Amanda/Disklist.swg Amanda/Disklist.pm Amanda/Disklist.pod
 
 if WANT_SERVER
+# PACKAGE: Amanda::Interactive
+Amanda_DATA += Amanda/Interactive.pm
+endif
+EXTRA_DIST += Amanda/Interactive.pm
+
+if WANT_SERVER
+# PACKAGE: Amanda::Interactive::*
+AmandaInteractivedir = $(amperldir)/Amanda/Interactive
+AmandaInteractive_DATA = \
+	Amanda/Interactive/stdin.pm
+endif
+EXTRA_DIST += $(AmandaInteractive_DATA)
+
+if WANT_SERVER
 # PACKAGE: Amanda::Changer
 Amanda_DATA += Amanda/Changer.pm
 endif
@@ -261,7 +275,8 @@ if WANT_SERVER
 AmandaRecoverydir = $(amperldir)/Amanda/Recovery
 AmandaRecovery_DATA = \
 	Amanda/Recovery/Clerk.pm \
-	Amanda/Recovery/Planner.pm
+	Amanda/Recovery/Planner.pm \
+	Amanda/Recovery/Scan.pm
 PM_FILES += $(AmandaRecovery_DATA)
 endif
 EXTRA_DIST += $(AmandaRecovery_DATA)
@@ -496,7 +511,11 @@ install-data-hook:
 endif
 
 check-local:
+<<<<<<< HEAD:perl/Makefile.am
 	@MODULES_TO_CHECK="$(PM_FILES)"; \
+=======
+	@MODULES_TO_CHECK="$(Amanda_DATA) $(Amanda_DB_DATA) $(AmandaRecovery_DATA) $(AmandaChanger_DATA) $(AmandaApplication_DATA) $(AmandaReport_DATA) $(AmandaInteractive_DATA)"; \
+>>>>>>> dustin-9934-bf25d152.patch:perl/Makefile.am
 	if test -f $(top_builddir)/perl/.libs/libConfig.so -o -f $(top_builddir)/perl/libConfig.so; then \
 		if test -n "$(PERL)"; then \
 			for perlobj in $$MODULES_TO_CHECK; do \

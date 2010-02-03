@@ -32,6 +32,8 @@ use Amanda::Changer;
 use Amanda::Constants;
 use Amanda::MainLoop;
 use Amanda::Taper::Scan;
+use Amanda::Recovery::Scan;
+use Amanda::Interactive;
 
 my $exit_status = 0;
 
@@ -386,15 +388,20 @@ sub {
     my %subs;
     my $gres;
 
+    sub _user_msg_fn {
+	my $msg = shift;
+	print "$msg";
+    };
+
     usage unless (@args == 1);
     my $label = shift @args;
 
-    my $chg = load_changer() or return;
-
-    $subs{'do_load'} = make_cb(do_load => sub {
-	$chg->load(label => $label, set_current => 1,
-	    res_cb => $subs{'done_load'});
-    });
+    my $inter = Amanda::Interactive->new(name => 'stdin');
+    my $scan = Amanda::Recovery::Scan->new(interactive => $inter);
+    if ($scan->isa("Amanda::Changer::Error")) {
+	print "$scan\n";;
+	exit 1;
+    }
 
     $subs{'done_load'} = make_cb(done_load => sub {
 	my ($err, $res) = @_;
@@ -425,7 +432,10 @@ sub {
 	Amanda::MainLoop::quit();
     });
 
-    $subs{'do_load'}->();
+    $scan->find_volume(label  => $label,
+                       res_cb => $subs{'done_load'},
+			user_msg_fn => \&_user_msg_fn,
+		       set_current => 1);
 });
 
 subcommand("taper", "taper", "perform the taperscan algorithm and display the result",

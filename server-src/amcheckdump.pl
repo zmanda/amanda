@@ -30,6 +30,7 @@ use Amanda::Tapelist;
 use Amanda::Logfile;
 use Amanda::Util qw( :constants );
 use Amanda::Changer;
+use Amanda::Recovery::Scan;
 use Amanda::Constants;
 use Amanda::MainLoop;
 
@@ -56,7 +57,7 @@ EOF
 
 ## Device management
 
-my $changer;
+my $scan;
 my $reservation;
 my $current_device;
 my $current_device_label;
@@ -67,17 +68,14 @@ sub find_next_device {
     my $find_done_cb;
     my ($slot, $tapedev);
 
-    # if the changer hasn't been created yet, set it up
-    if (!$changer) {
-	$changer = Amanda::Changer->new();
-    }
-
-    # as a temporary hack until "chg-single:" is improved to communicate
-    # with the user, prompt for a tape if we're using that particular changer
-    if ($changer->isa("Amanda::Changer::single")) {
-        my $devname = $changer->{'device_name'};
-        print "Insert volume with label $label in device $devname and press ENTER:\n";
-        <STDIN>;
+    # if the scan hasn't been created yet, set it up
+    if (!$scan) {
+	my $inter = Amanda::Interactive->new(name => 'stdin');
+	$scan = Amanda::Recovery::Scan->new(interactive => $inter);
+	if ($scan->isa("Amanda::Changer::Error")) {
+	    print "$scan\n";
+	    exit 1;
+	}
     }
 
     my $load_sub = make_cb(load_sub => sub {
@@ -87,7 +85,7 @@ sub find_next_device {
 	    exit 1;
 	}
 
-	$changer->load(
+	$scan->find_volume(
 	    label => $label,
 	    res_cb => sub {
 		(my $err, $reservation) = @_;

@@ -102,7 +102,7 @@ sub load {
     if ($self->{'reserved'}) {
 	return $self->make_error("failed", $params{'res_cb'},
 	    reason => "driveinuse",
-	    message => "Changer is already reserved: '" . $self->{'reserved'} . "'");
+	    message => "Changer is already reserved: '" . $self->{'reserved'}->device_name . "'");
     }
 
     my %subs;
