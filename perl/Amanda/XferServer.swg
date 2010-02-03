@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -78,10 +78,10 @@ void xfer_dest_taper_cache_inform(
 guint64 xfer_dest_taper_get_part_bytes_written(
     XferElement *self);
 
-%newobject xfer_source_taper;
-XferElement *xfer_source_taper(void);
+%newobject xfer_source_recovery;
+XferElement *xfer_source_recovery(void);
 
-void xfer_source_taper_start_part(
+void xfer_source_recovery_start_part(
     XferElement *self,
     Device *device);
 
@@ -126,8 +126,7 @@ DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_dest_taper_directtcp)
 
 /* ---- */
 
-PACKAGE(Amanda::Xfer::Source::Taper)
+PACKAGE(Amanda::Xfer::Source::Recovery)
 XFER_ELEMENT_SUBCLASS()
-DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_source_taper)
-DECLARE_METHOD(start_part, Amanda::XferServer::xfer_source_taper_start_part)
-DECLARE_METHOD(cache_inform, Amanda::XferServer::xfer_source_taper_cache_inform)
+DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_source_recovery)
+DECLARE_METHOD(start_part, Amanda::XferServer::xfer_source_recovery_start_part)

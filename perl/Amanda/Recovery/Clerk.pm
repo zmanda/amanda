@@ -267,7 +267,7 @@ sub get_xfer_src {
 	$xfer_state->{'xfer_src'} = Amanda::Xfer::Source::Holding->new(
 		    $params{'dump'}->{'parts'}[1]{'holding_file'}),
     } else {
-	$xfer_state->{'xfer_src'} = Amanda::Xfer::Source::Taper->new(),
+	$xfer_state->{'xfer_src'} = Amanda::Xfer::Source::Recovery->new(),
     }
 
     $self->_maybe_start_part();

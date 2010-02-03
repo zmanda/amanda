@@ -28,17 +28,17 @@
 /*
  * Class declaration
  *
- * This declaration is entirely private; nothing but xfer_source_taper() references
+ * This declaration is entirely private; nothing but xfer_source_recovery() references
  * it directly.
  */
 
-GType xfer_source_taper_get_type(void);
-#define XFER_SOURCE_TAPER_TYPE (xfer_source_taper_get_type())
-#define XFER_SOURCE_TAPER(obj) G_TYPE_CHECK_INSTANCE_CAST((obj), xfer_source_taper_get_type(), XferSourceTaper)
-#define XFER_SOURCE_TAPER_CONST(obj) G_TYPE_CHECK_INSTANCE_CAST((obj), xfer_source_taper_get_type(), XferSourceTaper const)
-#define XFER_SOURCE_TAPER_CLASS(klass) G_TYPE_CHECK_CLASS_CAST((klass), xfer_source_taper_get_type(), XferSourceTaperClass)
-#define IS_XFER_SOURCE_TAPER(obj) G_TYPE_CHECK_INSTANCE_TYPE((obj), xfer_source_taper_get_type ())
-#define XFER_SOURCE_TAPER_GET_CLASS(obj) G_TYPE_INSTANCE_GET_CLASS((obj), xfer_source_taper_get_type(), XferSourceTaperClass)
+GType xfer_source_recovery_get_type(void);
+#define XFER_SOURCE_RECOVERY_TYPE (xfer_source_recovery_get_type())
+#define XFER_SOURCE_RECOVERY(obj) G_TYPE_CHECK_INSTANCE_CAST((obj), xfer_source_recovery_get_type(), XferSourceRecovery)
+#define XFER_SOURCE_RECOVERY_CONST(obj) G_TYPE_CHECK_INSTANCE_CAST((obj), xfer_source_recovery_get_type(), XferSourceRecovery const)
+#define XFER_SOURCE_RECOVERY_CLASS(klass) G_TYPE_CHECK_CLASS_CAST((klass), xfer_source_recovery_get_type(), XferSourceRecoveryClass)
+#define IS_XFER_SOURCE_RECOVERY(obj) G_TYPE_CHECK_INSTANCE_TYPE((obj), xfer_source_recovery_get_type ())
+#define XFER_SOURCE_RECOVERY_GET_CLASS(obj) G_TYPE_INSTANCE_GET_CLASS((obj), xfer_source_recovery_get_type(), XferSourceRecoveryClass)
 
 static GObjectClass *parent_class = NULL;
 
@@ -46,7 +46,7 @@ static GObjectClass *parent_class = NULL;
  * Main object structure
  */
 
-typedef struct XferSourceTaper {
+typedef struct XferSourceRecovery {
     XferElement __parent__;
 
     /* this mutex in this condition variable governs all variables below */
@@ -69,7 +69,7 @@ typedef struct XferSourceTaper {
 
     /* timer for the duration; NULL while paused or cancelled */
     GTimer *part_timer;
-} XferSourceTaper;
+} XferSourceRecovery;
 
 /*
  * Class definition
@@ -80,8 +80,8 @@ typedef struct {
 
     /* start reading the part at which DEVICE is positioned, sending an
      * XMSG_PART_DONE when the part has been read */
-    void (*start_part)(XferSourceTaper *self, Device *device);
-} XferSourceTaperClass;
+    void (*start_part)(XferSourceRecovery *self, Device *device);
+} XferSourceRecoveryClass;
 
 /*
  * Implementation
@@ -92,7 +92,7 @@ pull_buffer_impl(
     XferElement *elt,
     size_t *size)
 {
-    XferSourceTaper *self = (XferSourceTaper *)elt;
+    XferSourceRecovery *self = (XferSourceRecovery *)elt;
     gpointer buf = NULL;
     int result;
     int devsize;
@@ -187,7 +187,7 @@ cancel_impl(
     XferElement *elt,
     gboolean expect_eof G_GNUC_UNUSED)
 {
-    XferSourceTaper *self = XFER_SOURCE_TAPER(elt);
+    XferSourceRecovery *self = XFER_SOURCE_RECOVERY(elt);
     elt->cancelled = TRUE;
 
     /* trigger the condition variable, in case the thread is waiting on it */
@@ -200,7 +200,7 @@ cancel_impl(
 
 static void
 start_part_impl(
-    XferSourceTaper *self,
+    XferSourceRecovery *self,
     Device *device)
 {
     g_assert(!device || device->in_file);
@@ -219,7 +219,7 @@ static void
 finalize_impl(
     GObject * obj_self)
 {
-    XferSourceTaper *self = XFER_SOURCE_TAPER(obj_self);
+    XferSourceRecovery *self = XFER_SOURCE_RECOVERY(obj_self);
 
     g_cond_free(self->start_part_cond);
     g_mutex_free(self->start_part_mutex);
@@ -229,7 +229,7 @@ static void
 instance_init(
     XferElement *elt)
 {
-    XferSourceTaper *self = XFER_SOURCE_TAPER(elt);
+    XferSourceRecovery *self = XFER_SOURCE_RECOVERY(elt);
 
     self->paused = 1;
     self->start_part_cond = g_cond_new();
@@ -238,7 +238,7 @@ instance_init(
 
 static void
 class_init(
-    XferSourceTaperClass * xst_klass)
+    XferSourceRecoveryClass * xst_klass)
 {
     XferElementClass *klass = XFER_ELEMENT_CLASS(xst_klass);
     GObjectClass *gobject_klass = G_OBJECT_CLASS(xst_klass);
@@ -250,7 +250,7 @@ class_init(
     klass->pull_buffer = pull_buffer_impl;
     klass->cancel = cancel_impl;
 
-    klass->perl_class = "Amanda::Xfer::Source::Taper";
+    klass->perl_class = "Amanda::Xfer::Source::Recovery";
     klass->mech_pairs = mech_pairs;
 
     xst_klass->start_part = start_part_impl;
@@ -261,25 +261,25 @@ class_init(
 }
 
 GType
-xfer_source_taper_get_type (void)
+xfer_source_recovery_get_type (void)
 {
     static GType type = 0;
 
     if G_UNLIKELY(type == 0) {
         static const GTypeInfo info = {
-            sizeof (XferSourceTaperClass),
+            sizeof (XferSourceRecoveryClass),
             (GBaseInitFunc) NULL,
             (GBaseFinalizeFunc) NULL,
             (GClassInitFunc) class_init,
             (GClassFinalizeFunc) NULL,
             NULL /* class_data */,
-            sizeof (XferSourceTaper),
+            sizeof (XferSourceRecovery),
             0 /* n_preallocs */,
             (GInstanceInitFunc) instance_init,
             NULL
         };
 
-        type = g_type_register_static (XFER_ELEMENT_TYPE, "XferSourceTaper", &info, 0);
+        type = g_type_register_static (XFER_ELEMENT_TYPE, "XferSourceRecovery", &info, 0);
     }
 
     return type;
@@ -290,22 +290,22 @@ xfer_source_taper_get_type (void)
  */
 
 void
-xfer_source_taper_start_part(
+xfer_source_recovery_start_part(
     XferElement *elt,
     Device *device)
 {
-    XferSourceTaperClass *klass;
-    g_assert(IS_XFER_SOURCE_TAPER(elt));
+    XferSourceRecoveryClass *klass;
+    g_assert(IS_XFER_SOURCE_RECOVERY(elt));
 
-    klass = XFER_SOURCE_TAPER_GET_CLASS(elt);
-    klass->start_part(XFER_SOURCE_TAPER(elt), device);
+    klass = XFER_SOURCE_RECOVERY_GET_CLASS(elt);
+    klass->start_part(XFER_SOURCE_RECOVERY(elt), device);
 }
 
 /* create an element of this class; prototype is in xfer-device.h */
 XferElement *
-xfer_source_taper(void)
+xfer_source_recovery(void)
 {
-    XferSourceTaper *self = (XferSourceTaper *)g_object_new(XFER_SOURCE_TAPER_TYPE, NULL);
+    XferSourceRecovery *self = (XferSourceRecovery *)g_object_new(XFER_SOURCE_RECOVERY_TYPE, NULL);
     XferElement *elt = XFER_ELEMENT(self);
 
     return elt;

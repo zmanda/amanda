@@ -674,7 +674,7 @@ SKIP: {
 	  "DONE" ],
 	"mem cache");
     test_taper_source(
-	Amanda::Xfer::Source::Taper->new(),
+	Amanda::Xfer::Source::Recovery->new(),
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
 	[ 1 => [ 1, 2 ], 2 => [ 1, 2, 3 ], ],
 	[
@@ -703,7 +703,7 @@ SKIP: {
 	  "DONE" ],
 	"disk cache");
     test_taper_source(
-	Amanda::Xfer::Source::Taper->new(),
+	Amanda::Xfer::Source::Recovery->new(),
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
 	[ 1 => [ 1, 2 ], 2 => [ 1, 2, 3 ], ],
 	[
@@ -731,7 +731,7 @@ SKIP: {
 	  "DONE" ],
 	"no cache (no failed parts; exact multiple of part size)");
     test_taper_source(
-	Amanda::Xfer::Source::Taper->new(),
+	Amanda::Xfer::Source::Recovery->new(),
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
 	[ 1 => [ 1, 2, 3 ], ],
 	[
@@ -753,7 +753,7 @@ SKIP: {
 	[ "PART-1-OK", "DONE" ],
 	"no splitting (fits on volume)");
     test_taper_source(
-	Amanda::Xfer::Source::Taper->new(),
+	Amanda::Xfer::Source::Recovery->new(),
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
 	[ 1 => [ 1 ], ],
 	[

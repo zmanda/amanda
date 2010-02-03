@@ -1,4 +1,11 @@
 2010-02-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/Makefile.am device-src/xfer-device.h
+	  device-src/xfer-source-recovery.c device-src/xfer-source-taper.c
+	  installcheck/Amanda_Xfer.pl perl/Amanda/Recovery/Clerk.pm
+	  perl/Amanda/Xfer.pod perl/Amanda/XferServer.swg: rename
+	  Amanda::Taper::Source to Amanda::Recovery::Source
+
+2010-02-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am: check all .pm files (some had been missed)
 
 2010-02-03  Dustin J. Mitchell <dustin@zmanda.com>

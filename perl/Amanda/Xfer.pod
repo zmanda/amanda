@@ -171,9 +171,9 @@ This source provides I<length> bytes containing copies of
 I<pattern>. If I<length> is zero, the source provides an unlimited
 number of bytes.
 
-=head3 Amanda::Xfer::Source::Taper (SERVER ONLY)
+=head3 Amanda::Xfer::Source::Recovery (SERVER ONLY)
 
-  Amanda::Xfer::Source::Taper->new()
+  Amanda::Xfer::Source::Recovery->new()
 
 This source reads a datastream composed of on-device files.  It contains no
 logic to decide I<which> files to assemble into the datastream; instead, it

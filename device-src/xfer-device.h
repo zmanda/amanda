@@ -1,6 +1,6 @@
 /*
  * Amanda, The Advanced Maryland Automatic Network Disk Archiver
- * Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -164,25 +164,25 @@ xfer_dest_taper_directtcp(
     guint64 part_size);
 
 /*
- * XferSourceTaper
+ * XferSourceRecovery
  */
 
-/* Create a new XferSourceTaper object.  Like XferDestTaper instances, this object
- * will not start transferring data until xfer_source_taper_start_part is called to
+/* Create a new XferSourceRecovery object.  Like XferDestTaper instances, this object
+ * will not start transferring data until xfer_source_recovery_start_part is called to
  * give the device from which the data should flow.
  *
  * @returns: new element
  */
 XferElement *
-xfer_source_taper(void);
+xfer_source_recovery(void);
 
-/* Start an XferSourceTaper reading from a particular, pre-positioned device
+/* Start an XferSourceRecovery reading from a particular, pre-positioned device
  *
- * @param self: XferSourceTaper object
+ * @param self: XferSourceRecovery object
  * @param device: device to read from
  */
 void
-xfer_source_taper_start_part(
+xfer_source_recovery_start_part(
     XferElement *elt,
     Device *device);
 
