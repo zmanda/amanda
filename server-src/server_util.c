@@ -37,6 +37,7 @@
 #include "diskfile.h"
 #include "pipespawn.h"
 #include "conffile.h"
+#include "infofile.h"
 #include "sys/wait.h"
 
 const char *cmdstr[] = {
@@ -423,3 +424,144 @@ get_master_process(
     fclose(log);
     return stralloc("UNKNOWN");
 }
+
+
+gint64
+internal_server_estimate(
+    disk_t *dp,
+    info_t *info,
+    int     level,
+    int    *stats)
+{
+    int    j;
+    gint64 size = 0;
+
+    *stats = 0;
+
+    if (level == 0) { /* use latest level 0, should do extrapolation */
+	gint64 est_size = (gint64)0;
+	int nb_est = 0;
+
+	for (j=NB_HISTORY-2; j>=0; j--) {
+	    if (info->history[j].level == 0) {
+		if (info->history[j].size < (gint64)0) continue;
+		est_size = info->history[j].size;
+		nb_est++;
+	    }
+	}
+	if (nb_est > 0) {
+	    size = est_size;
+	    *stats = 1;
+	} else if (info->inf[level].size > (gint64)1000) { /* stats */
+	    size = info->inf[level].size;
+	    *stats = 1;
+	} else {
+	    char *conf_tapetype = getconf_str(CNF_TAPETYPE);
+	    tapetype_t *tape = lookup_tapetype(conf_tapetype);
+	    size = (gint64)1000000;
+	    if (size > tapetype_get_length(tape)/2)
+		size = tapetype_get_length(tape)/2;
+	    *stats = 0;
+	}
+    } else if (level == info->last_level) {
+	/* means of all X day at the same level */
+	#define NB_DAY 30
+	int nb_day = 0;
+	gint64 est_size_day[NB_DAY];
+	int nb_est_day[NB_DAY];
+
+	for (j=0; j<NB_DAY; j++) {
+	    est_size_day[j] = (gint64)0;
+	    nb_est_day[j] = 0;
+	}
+
+	for (j=NB_HISTORY-2; j>=0; j--) {
+	    if (info->history[j].level <= 0) continue;
+	    if (info->history[j].size < (gint64)0) continue;
+	    if (info->history[j].level == info->history[j+1].level) {
+		if (nb_day <NB_DAY-1) nb_day++;
+		est_size_day[nb_day] += info->history[j].size;
+		nb_est_day[nb_day]++;
+	    } else {
+		nb_day=0;
+	    }
+	}
+	nb_day = info->consecutive_runs + 1;
+	if (nb_day > NB_DAY-1) nb_day = NB_DAY-1;
+
+	while (nb_day > 0 && nb_est_day[nb_day] == 0) nb_day--;
+
+	if (nb_est_day[nb_day] > 0) {
+	    size = est_size_day[nb_day] / (gint64)nb_est_day[nb_day];
+	    *stats = 1;
+	}
+	else if (info->inf[level].size > (gint64)1000) { /* stats */
+	    size = info->inf[level].size;
+	    *stats = 1;
+	}
+	else {
+	    int level0_stat;
+	    gint64 level0_size;
+	    char *conf_tapetype = getconf_str(CNF_TAPETYPE);
+	    tapetype_t *tape = lookup_tapetype(conf_tapetype);
+
+            level0_size = internal_server_estimate(dp, info, 0, &level0_stat);
+	    size = (gint64)10000;
+	    if (size > tapetype_get_length(tape)/2)
+		size = tapetype_get_length(tape)/2;
+	    if (size > level0_size/2)
+		size = level0_size/2;
+	    *stats = 0;
+	}
+    }
+    else if (level == info->last_level + 1) {
+	/* means of all first day at a new level */
+	gint64 est_size = (gint64)0;
+	int nb_est = 0;
+
+	for (j=NB_HISTORY-2; j>=0; j--) {
+	    if (info->history[j].level <= 0) continue;
+	    if (info->history[j].size < (gint64)0) continue;
+	    if (info->history[j].level == info->history[j+1].level + 1 ) {
+		est_size += info->history[j].size;
+		nb_est++;
+	    }
+	}
+	if (nb_est > 0) {
+	    size = est_size / (gint64)nb_est;
+	    *stats = 1;
+	} else if (info->inf[level].size > (gint64)1000) { /* stats */
+	    size = info->inf[level].size;
+	    *stats = 1;
+	} else {
+	    int level0_stat;
+	    gint64 level0_size;
+	    char *conf_tapetype = getconf_str(CNF_TAPETYPE);
+	    tapetype_t *tape = lookup_tapetype(conf_tapetype);
+
+            level0_size = internal_server_estimate(dp, info, 0, &level0_stat);
+	    size = (gint64)100000;
+	    if (size > tapetype_get_length(tape)/2)
+		size = tapetype_get_length(tape)/2;
+	    if (size > level0_size/2)
+		size = level0_size/2;
+	    *stats = 0;
+	}
+    }
+
+    return size;
+}
+
+int
+server_can_do_estimate(
+    disk_t *dp,
+    info_t *info,
+    int     level)
+{
+    gint64  size;
+    int     stats;
+
+    size = internal_server_estimate(dp, info, level, &stats);
+    return stats;
+}
+

@@ -1,4 +1,11 @@
 2010-02-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amadmin.c: Add 'estimate' command'.
+	* man/xml-source/amadmin.8.xml: Document estimate command.
+	* server-src/planner.c, server-src/server_util.c,
+	  server-src/server_util.h: Move internal_server_estimate and
+	   server_can_do_estimate from planner.c to server_util.c
+
+2010-02-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Recovery/Clerk.pm: Use Amanda::Recovery::Scan
 	* installcheck/Amanda_Recovery_Clerk.pl: Test it.
 

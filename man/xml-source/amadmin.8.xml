@@ -77,6 +77,37 @@ parameter must be present but is ignored.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><emphasis remap='B'>estimate</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]*</term>
+  <listitem>
+<para>Print the server estimate for the dles, each output lines have the following format:</para>
+<programlisting>
+  hostname diskname level size
+</programlisting>
+<variablelist remap='TP'>
+<varlistentry>
+<term>hostname</term>
+<listitem>The quoted hostname
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>diskname</term>
+<listitem>The quoted diskname
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>level</term>
+<listitem>The level of the estimate
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>size</term>
+<listitem>The estimate size in kbytes
+</listitem>
+</varlistentry>
+</variablelist>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><emphasis remap='B'>force-bump</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]+</term>
   <listitem>
 <para>Force the

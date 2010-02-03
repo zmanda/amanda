@@ -41,11 +41,14 @@
 #include "find.h"
 #include "util.h"
 #include "timestamp.h"
+#include "server_util.h"
 
 disklist_t diskq;
 
 int main(int argc, char **argv);
 void usage(void);
+static void estimate(int argc, char **argv);
+static void estimate_one(disk_t *dp);
 void force(int argc, char **argv);
 void force_one(disk_t *dp);
 void unforce(int argc, char **argv);
@@ -93,6 +96,8 @@ static const struct {
 	T_("\t\t\t\t\t# Show version info.") },
     { "config", show_config,
 	T_("\t\t\t\t\t# Show configuration.") },
+    { "estimate", estimate,
+	T_(" [<hostname> [<disks>]* ]*\t# Print server estimate.") },
     { "force", force,
 	T_(" [<hostname> [<disks>]* ]+\t\t# Force level 0 at next run.") },
     { "unforce", unforce,
@@ -329,6 +334,62 @@ diskloop(
 	g_fprintf(stderr,_("%s: no disk matched\n"),get_pname());
     }
 }
+
+/* ----------------------------------------------- */
+
+
+static void
+estimate_one(
+    disk_t *	dp)
+{
+    char   *hostname = dp->host->hostname;
+    char   *diskname = dp->name;
+    char   *qhost = quote_string(hostname);
+    char   *qdisk = quote_string(diskname);
+    info_t  info;
+    int     stats;
+    gint64  size;
+
+    get_info(hostname, diskname, &info);
+
+    size = internal_server_estimate(dp, &info, 0, &stats);
+    if (stats) {
+	printf("%s %s %d %ld\n", qhost, qdisk, 0, size);
+    }
+
+    if (info.last_level > 0) {
+	size = internal_server_estimate(dp, &info, info.last_level, &stats);
+	if (stats) {
+	    printf("%s %s %d %ld\n", qhost, qdisk, info.last_level, size);
+	}
+    }
+
+    if (info.last_level > -1) {
+	size = internal_server_estimate(dp, &info, info.last_level+1, &stats);
+	if (stats) {
+	    printf("%s %s %d %ld\n", qhost, qdisk, info.last_level+1, size);
+	}
+    }
+
+    amfree(qhost);
+    amfree(qdisk);
+}
+
+
+static void
+estimate(
+    int		argc,
+    char **	argv)
+{
+    disk_t *dp;
+
+    if(argc >= 4)
+	diskloop(argc, argv, "estimate", estimate_one);
+    else
+	for(dp = diskq.head; dp != NULL; dp = dp->next)
+	    estimate_one(dp);
+}
+
 
 /* ----------------------------------------------- */
 
