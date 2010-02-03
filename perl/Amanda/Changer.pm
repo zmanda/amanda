@@ -91,9 +91,13 @@ creating a new changer is
 
 =over 4
 
-=item $chg->{'chg_name'}>
+=item C<< $chg->{'chg_name'} >>
 
-The name of the changer
+Gives the name of the changer.  This name will make sense to the user, but will
+not necessarily form a valid changer specification.  It should be used to
+describe the changer in messages to the user.
+
+=back
 
 =head2 CALLBACKS
 
