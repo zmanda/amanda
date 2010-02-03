@@ -173,7 +173,7 @@ sub is_plan {
 	    $d->{'hostname'},
 	    $d->{'diskname'},
 	    $d->{'dump_timestamp'},
-	    $d->{'level'},
+	    "$d->{'level'}"+0, # strip bigints
 	    \@parts ];
 
 	for my $p (@{$d->{'parts'}}) {

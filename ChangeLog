@@ -1,4 +1,7 @@
 2010-02-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Recovery_Planner.pl: fix perl-5.6 bigint compat
+
+2010-02-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/Makefile.am device-src/xfer-device.h
 	  device-src/xfer-source-recovery.c device-src/xfer-source-taper.c
 	  installcheck/Amanda_Xfer.pl perl/Amanda/Recovery/Clerk.pm
