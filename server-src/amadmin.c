@@ -354,20 +354,22 @@ estimate_one(
 
     size = internal_server_estimate(dp, &info, 0, &stats);
     if (stats) {
-	printf("%s %s %d %ld\n", qhost, qdisk, 0, size);
+	printf("%s %s %d %jd\n", qhost, qdisk, 0, (intmax_t)size);
     }
 
     if (info.last_level > 0) {
 	size = internal_server_estimate(dp, &info, info.last_level, &stats);
 	if (stats) {
-	    printf("%s %s %d %ld\n", qhost, qdisk, info.last_level, size);
+	    printf("%s %s %d %jd\n", qhost, qdisk, info.last_level,
+		   (intmax_t)size);
 	}
     }
 
     if (info.last_level > -1) {
 	size = internal_server_estimate(dp, &info, info.last_level+1, &stats);
 	if (stats) {
-	    printf("%s %s %d %ld\n", qhost, qdisk, info.last_level+1, size);
+	    printf("%s %s %d %jd\n", qhost, qdisk, info.last_level+1,
+		   (intmax_t)size);
 	}
     }
 
