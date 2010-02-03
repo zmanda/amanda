@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -100,6 +100,7 @@ amglue_add_constant(CNF_REP_TRIES, confparm_key);
 amglue_add_constant(CNF_CONNECT_TRIES, confparm_key);
 amglue_add_constant(CNF_REQ_TRIES, confparm_key);
 amglue_add_constant(CNF_DEBUG_AMANDAD, confparm_key);
+amglue_add_constant(CNF_DEBUG_RECOVERY, confparm_key);
 amglue_add_constant(CNF_DEBUG_AMIDXTAPED, confparm_key);
 amglue_add_constant(CNF_DEBUG_AMINDEXD, confparm_key);
 amglue_add_constant(CNF_DEBUG_AMRECOVER, confparm_key);
@@ -627,6 +628,7 @@ amglue_export_tag(getconf, %subsection_names);
 long int getconf_unit_divisor(void);
 
 extern int debug_amandad;
+extern int debug_recovery;
 extern int debug_amidxtaped;
 extern int debug_amindexd;
 extern int debug_amrecover;
@@ -645,7 +647,7 @@ extern int debug_sendbackup;
 amglue_export_tag(getconf,
     getconf_unit_divisor
 
-    $debug_amandad $debug_amidxtaped $debug_amindexd $debug_amrecover
+    $debug_amandad $debug_recovery $debug_amidxtaped $debug_amindexd $debug_amrecover
     $debug_auth $debug_event $debug_holding $debug_protocol
     $debug_planner $debug_driver $debug_dumper $debug_chunker
     $debug_taper $debug_selfcheck $debug_sendsize $debug_sendbackup

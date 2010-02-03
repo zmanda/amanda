@@ -142,7 +142,7 @@ typedef enum {
     CONF_DEBUG_HOLDING,		CONF_DEBUG_PROTOCOL,	CONF_DEBUG_PLANNER,
     CONF_DEBUG_DRIVER,		CONF_DEBUG_DUMPER,	CONF_DEBUG_CHUNKER,
     CONF_DEBUG_TAPER,		CONF_DEBUG_SELFCHECK,	CONF_DEBUG_SENDSIZE,
-    CONF_DEBUG_SENDBACKUP,
+    CONF_DEBUG_SENDBACKUP,	CONF_DEBUG_RECOVERY,
 
     /* network interface */
     /* COMMENT, */		/* USE, */
@@ -574,6 +574,7 @@ static changer_config_t *changer_config_list = NULL;
 static long int unit_divisor = 1;
 
 int debug_amandad    = 0;
+int debug_recovery   = 0;
 int debug_amidxtaped = 0;
 int debug_amindexd   = 0;
 int debug_amrecover  = 0;
@@ -726,6 +727,7 @@ keytab_t client_keytab[] = {
     { "REQ_TRIES", CONF_REQ_TRIES },
     { "CLIENT", CONF_CLIENT },
     { "DEBUG_AMANDAD", CONF_DEBUG_AMANDAD },
+    { "DEBUG_RECOVERY", CONF_DEBUG_RECOVERY },
     { "DEBUG_AMIDXTAPED", CONF_DEBUG_AMIDXTAPED },
     { "DEBUG_AMINDEXD", CONF_DEBUG_AMINDEXD },
     { "DEBUG_AMRECOVER", CONF_DEBUG_AMRECOVER },
@@ -818,6 +820,7 @@ keytab_t server_keytab[] = {
     { "CUSTOM", CONF_CUSTOM },
     { "DATA_PATH", CONF_DATA_PATH },
     { "DEBUG_AMANDAD"    , CONF_DEBUG_AMANDAD },
+    { "DEBUG_RECOVERY"   , CONF_DEBUG_RECOVERY },
     { "DEBUG_AMIDXTAPED" , CONF_DEBUG_AMIDXTAPED },
     { "DEBUG_AMINDEXD"   , CONF_DEBUG_AMINDEXD },
     { "DEBUG_AMRECOVER"  , CONF_DEBUG_AMRECOVER },
@@ -1056,6 +1059,7 @@ conf_var_t client_var [] = {
    { CONF_REP_TRIES          , CONFTYPE_INT     , read_int     , CNF_REP_TRIES          , validate_positive },
    { CONF_REQ_TRIES          , CONFTYPE_INT     , read_int     , CNF_REQ_TRIES          , validate_positive },
    { CONF_DEBUG_AMANDAD      , CONFTYPE_INT     , read_int     , CNF_DEBUG_AMANDAD      , validate_debug },
+   { CONF_DEBUG_RECOVERY     , CONFTYPE_INT     , read_int     , CNF_DEBUG_RECOVERY     , validate_debug },
    { CONF_DEBUG_AMIDXTAPED   , CONFTYPE_INT     , read_int     , CNF_DEBUG_AMIDXTAPED   , validate_debug },
    { CONF_DEBUG_AMINDEXD     , CONFTYPE_INT     , read_int     , CNF_DEBUG_AMINDEXD     , validate_debug },
    { CONF_DEBUG_AMRECOVER    , CONFTYPE_INT     , read_int     , CNF_DEBUG_AMRECOVER    , validate_debug },
@@ -1138,6 +1142,7 @@ conf_var_t server_var [] = {
    { CONF_REP_TRIES            , CONFTYPE_INT      , read_int         , CNF_REP_TRIES            , validate_positive },
    { CONF_REQ_TRIES            , CONFTYPE_INT      , read_int         , CNF_REQ_TRIES            , validate_positive },
    { CONF_DEBUG_AMANDAD        , CONFTYPE_INT      , read_int         , CNF_DEBUG_AMANDAD        , validate_debug },
+   { CONF_DEBUG_RECOVERY       , CONFTYPE_INT      , read_int         , CNF_DEBUG_RECOVERY       , validate_debug },
    { CONF_DEBUG_AMIDXTAPED     , CONFTYPE_INT      , read_int         , CNF_DEBUG_AMIDXTAPED     , validate_debug },
    { CONF_DEBUG_AMINDEXD       , CONFTYPE_INT      , read_int         , CNF_DEBUG_AMINDEXD       , validate_debug },
    { CONF_DEBUG_AMRECOVER      , CONFTYPE_INT      , read_int         , CNF_DEBUG_AMRECOVER      , validate_debug },
@@ -4415,6 +4420,7 @@ init_defaults(
     conf_init_int      (&conf_data[CNF_REP_TRIES]            , 5);
     conf_init_int      (&conf_data[CNF_REQ_TRIES]            , 3);
     conf_init_int      (&conf_data[CNF_DEBUG_AMANDAD]        , 0);
+    conf_init_int      (&conf_data[CNF_DEBUG_RECOVERY]       , 0);
     conf_init_int      (&conf_data[CNF_DEBUG_AMIDXTAPED]     , 0);
     conf_init_int      (&conf_data[CNF_DEBUG_AMINDEXD]       , 0);
     conf_init_int      (&conf_data[CNF_DEBUG_AMRECOVER]      , 0);
@@ -4620,6 +4626,7 @@ update_derived_values(
 
     /* fill in the debug_* values */
     debug_amandad    = getconf_int(CNF_DEBUG_AMANDAD);
+    debug_recovery   = getconf_int(CNF_DEBUG_RECOVERY);
     debug_amidxtaped = getconf_int(CNF_DEBUG_AMIDXTAPED);
     debug_amindexd   = getconf_int(CNF_DEBUG_AMINDEXD);
     debug_amrecover  = getconf_int(CNF_DEBUG_AMRECOVER);

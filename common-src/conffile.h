@@ -409,6 +409,7 @@ typedef enum {
     CNF_CONNECT_TRIES,
     CNF_REQ_TRIES,
     CNF_DEBUG_AMANDAD,
+    CNF_DEBUG_RECOVERY,
     CNF_DEBUG_AMIDXTAPED,
     CNF_DEBUG_AMINDEXD,
     CNF_DEBUG_AMRECOVER,
@@ -510,6 +511,7 @@ long int getconf_unit_divisor(void);
  * desired.  */
 
 extern int debug_amandad;
+extern int debug_recovery;
 extern int debug_amidxtaped;
 extern int debug_amindexd;
 extern int debug_amrecover;

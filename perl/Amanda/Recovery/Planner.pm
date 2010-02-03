@@ -88,7 +88,9 @@ the dumpspec was not unambiguous.
 To select the planner algorithm, pass an C<algorithm> argument.  This argument
 is currently ignored and should be omitted.  If the optional argument C<debug>
 is given with a true value, then the Planner will log additional debug
-information to the Amanda debug logs.
+information to the Amanda debug logs.  Debugging is automatically enabled if
+the C<DEBUG_RECOVERY> configuration parameter is set to anything greater than
+1.
 
 The optional argument C<one_dump_per_part> will create a "no-reassembly" plan,
 where each part appears as the only part in a unique dump.  The dump objects
@@ -147,10 +149,14 @@ sub make_plan {
 	    unless exists $params{$rq_param};
     }
 
+    my $debug = $Amanda::Config::debug_recovery;
+    $debug = $params{'debug'}
+	if defined $params{'debug'} and $params{'debug'} > $debug;
+
     my $plan = Amanda::Recovery::Planner::Plan->new({
 	algo => $params{'algorithm'},
 	chg => $params{'changer'},
-	debug => $params{'debug'},
+	debug => $debug,
 	one_dump_per_part => $params{'one_dump_per_part'},
     });
 

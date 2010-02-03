@@ -1,4 +1,10 @@
 2010-02-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Config.swg common-src/conffile.c common-src/conffile.h:
+	  add debug_recovery
+	* perl/Amanda/Recovery/Clerk.pm: use it
+	* perl/Amanda/Recovery/Planner.pm: use it
+
+2010-02-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Recovery_Planner.pl: fix perl-5.6 bigint compat
 
 2010-02-03  Dustin J. Mitchell <dustin@zmanda.com>

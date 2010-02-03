@@ -101,7 +101,8 @@ Clerk should use to load devices:
 	changer => $chg)
 
 If the optional parameter C<debug> is given with a true value, then the Clerk
-will log additional debug information to the Amanda debug logs.
+will log additional debug information to the Amanda debug logs.  This value is
+also set to true if the C<DEBUG_RECOVERY> configuration parameter is set.
 
 The optional C<feedback> parameter gives an object which will handle feedback
 form the clerk.  See FEEDBACK, below.
@@ -217,9 +218,13 @@ sub new {
     my $class = shift;
     my %params = @_;
 
+    my $debug = $Amanda::Config::debug_recovery;
+    $debug = $params{'debug'}
+	if defined $params{'debug'} and $params{'debug'} > $debug;
+
     my $self = {
 	chg => $params{'changer'},
-	debug => $params{'debug'},
+	debug => $debug,
 	feedback => $params{'feedback'}
 	    || Amanda::Recovery::Clerk::Feedback->new(),
 
