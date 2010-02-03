@@ -59,11 +59,6 @@ sub new {
 
     $self->{config}           = $config;
     $self->{host}             = $host;
-    if ($disk =~ /^\\\\/) {
-	$self->{unc}          = 1;
-    } else {
-	$self->{unc}          = 0;
-    }
     if (defined $disk) {
 	$self->{disk}         = $disk;
     } else {
@@ -73,6 +68,11 @@ sub new {
 	$self->{device}       = $device;
     } else {
 	$self->{device}       = $disk;
+    }
+    if ($self->{disk} =~ /^\\\\/) {
+	$self->{unc}          = 1;
+    } else {
+	$self->{unc}          = 0;
     }
     $self->{level}            = [ @{$level} ];
     $self->{index}            = $index;

@@ -1,4 +1,8 @@
 2010-02-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsamba.pl: Fix parsing of unc if disk is noti
+				      defined.
+
+2010-02-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Set $chg->{'chg_name'}
 
 2010-02-02  Dustin J. Mitchell <dustin@zmanda.com>
