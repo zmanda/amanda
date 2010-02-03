@@ -1,5 +1,5 @@
 # vim:ft=perl
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -65,7 +65,7 @@ abstracting away the mess.  It takes care of:
 Most of this magic is in C<setup()>, which returns a configuration object from
 C<Installcheck::Config>, allowing the test to modify that configuration before
 writing it out.  The hostname for the DLE is "localhost", and the disk name is
-available in C<Installcheck::Run::diskname>.  This DLE has a subdirectory
+available in C<$Installcheck::Run::diskname>.  This DLE has a subdirectory
 C<dir> which can be used as a secondary, smaller DLE if needed.
 
 This module also provides a convenient Perlish interface for running Amanda
@@ -96,15 +96,15 @@ the proper vtape directories.  These are controlled by C<chg-disk>.
 The tapes are not labeled, and C<label_new_tapes> is not set by
 default, although C<labelstr> is set to C<TESTCONF[0-9][0-9]>.
 
-The vtapes are created in a subdirectory of C<$Installcheck::TMP> for ease of
-later deletion.  The subdirectory for each slot is available from
-C<vtape_dir($slot)>, while the parent directory is available from
-C<vtape_dir()>.  C<load_vtape($slot)> will "load" the indicated slot
-just like chg-disk would, and return the resulting path.
+The vtapes are created in <$Installcheck::Run::taperoot>, a subdirectory of
+C<$Installcheck::TMP> for ease of later deletion.  The subdirectory for each
+slot is available from C<vtape_dir($slot)>, while the parent directory is
+available from C<vtape_dir()>.  C<load_vtape($slot)> will "load" the indicated
+slot just like chg-disk would, and return the resulting path.
 
 =head2 HOLDING
 
-The holding disk is C<$Installcheck::TMP/holding>.  It is a 15M holding disk,
+The holding disk is C<$Installcheck::Run::holdingdir>.  It is a 15M holding disk,
 with a chunksize of 1M (to help exercise the chunker).
 
 =head2 DISKLIST
@@ -158,7 +158,8 @@ require Exporter;
 @EXPORT_OK = qw(setup
     run run_get run_get_err run_err
     cleanup
-    $diskname $stdout $stderr $exit_code
+    $diskname $taperoot $holdingdir
+    $stdout $stderr $exit_code
     load_vtape vtape_dir
     amdump_diag run_expect );
 @EXPORT = qw(exp_continue exp_continue_timeout);
@@ -181,11 +182,10 @@ BEGIN {
     }
 };
 
-our $diskname = "$Installcheck::TMP/backmeup";
-
 # common paths (note that Installcheck::Dumpcache assumes these do not change)
-my $taperoot = "$Installcheck::TMP/vtapes";
-my $holdingdir ="$Installcheck::TMP/holding";
+our $diskname = "$Installcheck::TMP/backmeup";
+our $taperoot = "$Installcheck::TMP/vtapes";
+our $holdingdir ="$Installcheck::TMP/holding";
 
 sub setup {
     my $testconf = Installcheck::Config->new();

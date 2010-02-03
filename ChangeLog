@@ -1,4 +1,10 @@
 2010-02-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Run.pm: export $taperoot and $holdingdir
+	* installcheck/Installcheck/Dumpcache.pm: use new (much faster!) chg-disk
+	* installcheck/amdevcheck.pl: give an explicit device name, now that
+	  tapedev is not set
+
+2010-02-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Config.swg common-src/conffile.c common-src/conffile.h:
 	  add debug_recovery
 	* perl/Amanda/Recovery/Clerk.pm: use it

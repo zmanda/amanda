@@ -1,4 +1,4 @@
-# Copyright (c) 2007,2008 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2007, 2008, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -95,7 +95,10 @@ is_deeply([ sort split "\n", $Installcheck::Run::stdout],
 
 Installcheck::Dumpcache::load("basic");
 
-is_deeply([ sort split "\n", run_get('amdevcheck', 'TESTCONF') ],
+# the 'basic' dumpcache uses a changer, not a tapedev, and amdevcheck doesn't
+# understand that, so we have to give an explicit device here
+is_deeply([ sort split "\n",
+	    run_get('amdevcheck', 'TESTCONF', 'file:'.$Installcheck::Run::taperoot) ],
 	  [ sort "SUCCESS" ],
     "used vtape described as SUCCESS");
 

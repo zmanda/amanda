@@ -78,7 +78,7 @@ taper is disabled).
 =cut
 
 use Installcheck;
-use Installcheck::Run qw(run $diskname amdump_diag);
+use Installcheck::Run qw(run $diskname $taperoot amdump_diag);
 use Installcheck::Mock;
 use Test::More;
 use Amanda::Paths;
@@ -91,8 +91,16 @@ use Carp;
 my $tarballdir = "$Installcheck::TMP/dumpcache";
 my %flavors;
 
+sub use_new_chg_disk {
+    my ($testconf) = @_;
+    $testconf->remove_param('tapedev');
+    $testconf->remove_param('tpchanger');
+    $testconf->add_param('tpchanger', "\"chg-disk:$taperoot\"");
+};
+
 $flavors{'basic'} = sub {
     my $testconf = Installcheck::Run::setup();
+    use_new_chg_disk($testconf);
     $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
     $testconf->add_dle("localhost $diskname installcheck-test");
     $testconf->write();
@@ -103,6 +111,7 @@ $flavors{'basic'} = sub {
 
 $flavors{'notimestamps'} = sub {
     my $testconf = Installcheck::Run::setup();
+    use_new_chg_disk($testconf);
     $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
     $testconf->add_dle("localhost $diskname installcheck-test");
     $testconf->add_param('usetimestamps', 'no');
@@ -125,6 +134,7 @@ $flavors{'multi'} = sub {
     };
 
     my $testconf = Installcheck::Run::setup();
+    use_new_chg_disk($testconf);
     $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
     $testconf->add_dle("localhost $diskname installcheck-test");
     $testconf->add_dle("localhost $diskname/dir installcheck-test");
@@ -152,6 +162,7 @@ $flavors{'multi'} = sub {
 
 $flavors{'parts'} = sub {
     my $testconf = Installcheck::Run::setup();
+    use_new_chg_disk($testconf);
     $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
     $testconf->add_dumptype("installcheck-test-parts", [
 	"installcheck-test", "",
@@ -167,6 +178,7 @@ $flavors{'parts'} = sub {
 
 $flavors{'compress'} = sub {
     my $testconf = Installcheck::Run::setup();
+    use_new_chg_disk($testconf);
     $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
     $testconf->add_dumptype("installcheck-test-comp", [
 	"installcheck-test", "",
@@ -184,6 +196,7 @@ if (Amanda::Util::built_with_component("server")
 
     $flavors{'ndmp'} = sub {
 	my $testconf = Installcheck::Run::setup();
+	use_new_chg_disk($testconf);
 	$testconf->add_param('label_new_tapes', '"TESTCONF%%"');
 	$testconf->add_dle("localhost $diskname installcheck-test");
 	my $ndmp = Installcheck::Mock::NdmpServer->new();
