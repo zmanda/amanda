@@ -128,7 +128,8 @@ static void amgtar_validate(application_argument_t *argument);
 static void amgtar_build_exinclude(dle_t *dle, int verbose,
 				   int *nb_exclude, char **file_exclude,
 				   int *nb_include, char **file_include);
-static char *amgtar_get_incrname(application_argument_t *argument, int level);
+static char *amgtar_get_incrname(application_argument_t *argument, int level,
+				 FILE *mesgstream, int command);
 static GPtrArray *amgtar_build_argv(application_argument_t *argument,
 				char *incrname, int command);
 static char *gnutar_path;
@@ -628,7 +629,7 @@ amgtar_estimate(
 
     for (levels = argument->level; levels != NULL; levels = levels->next) {
 	level = GPOINTER_TO_INT(levels->data);
-	incrname = amgtar_get_incrname(argument, level);
+	incrname = amgtar_get_incrname(argument, level, stdout, CMD_ESTIMATE);
 	cmd = stralloc(gnutar_path);
 	argv_ptr = amgtar_build_argv(argument, incrname, CMD_ESTIMATE);
 
@@ -798,7 +799,8 @@ amgtar_backup(
     qdisk = quote_string(argument->dle.disk);
 
     incrname = amgtar_get_incrname(argument,
-				   GPOINTER_TO_INT(argument->level->data));
+				   GPOINTER_TO_INT(argument->level->data),
+				   mesgstream, CMD_BACKUP);
     cmd = stralloc(gnutar_path);
     argv_ptr = amgtar_build_argv(argument, incrname, CMD_BACKUP);
 
@@ -1059,7 +1061,9 @@ amgtar_build_exinclude(
 static char *
 amgtar_get_incrname(
     application_argument_t *argument,
-    int                     level)
+    int                     level,
+    FILE                   *mesgstream,
+    int                     command)
 {
     char *basename = NULL;
     char *incrname = NULL;
@@ -1106,7 +1110,12 @@ amgtar_get_incrname(
 				     inputname, strerror(errno));
 		dbprintf("%s\n", errmsg);
 		if (baselevel < 0) {
-		    return NULL;
+		    if (command == CMD_ESTIMATE) {
+			fprintf(mesgstream, "ERROR %s\n", errmsg);
+		    } else {
+			fprintf(mesgstream, "? %s\n", errmsg);
+		    }
+		    exit(1);
 		}
 		amfree(errmsg);
 	    }
@@ -1116,10 +1125,15 @@ amgtar_get_incrname(
 	 * Copy the previous listed incremental file to the new one.
 	 */
 	if ((outfd = open(incrname, O_WRONLY|O_CREAT, 0600)) == -1) {
-	    errmsg = vstrallocf(_("opening %s: %s"),
+	    errmsg = vstrallocf(_("error opening %s: %s"),
 			         incrname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
-	    return NULL;
+	    if (command == CMD_ESTIMATE) {
+		fprintf(mesgstream, "ERROR %s\n", errmsg);
+	    } else {
+		fprintf(mesgstream, "? %s\n", errmsg);
+	    }
+	    exit(1);
 	}
 
 	while ((nb = read(infd, &buf, SIZEOF(buf))) > 0) {

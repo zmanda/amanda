@@ -1,4 +1,7 @@
 2010-02-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Fix crash in gnutar_listdir doesn't exist.
+
+2010-02-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Makefile.am: Fix bad merge.
 
 2010-02-03  Paul C. Mantz <pcmantz@zmanda.com>
