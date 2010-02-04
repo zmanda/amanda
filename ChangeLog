@@ -1,3 +1,7 @@
+2010-02-03  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Report/human.c: increased width of output_stats
+  	  fields
+
 2010-02-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin.c: Use %jd for gint.
 
