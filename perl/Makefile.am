@@ -511,11 +511,7 @@ install-data-hook:
 endif
 
 check-local:
-<<<<<<< HEAD:perl/Makefile.am
 	@MODULES_TO_CHECK="$(PM_FILES)"; \
-=======
-	@MODULES_TO_CHECK="$(Amanda_DATA) $(Amanda_DB_DATA) $(AmandaRecovery_DATA) $(AmandaChanger_DATA) $(AmandaApplication_DATA) $(AmandaReport_DATA) $(AmandaInteractive_DATA)"; \
->>>>>>> dustin-9934-bf25d152.patch:perl/Makefile.am
 	if test -f $(top_builddir)/perl/.libs/libConfig.so -o -f $(top_builddir)/perl/libConfig.so; then \
 		if test -n "$(PERL)"; then \
 			for perlobj in $$MODULES_TO_CHECK; do \

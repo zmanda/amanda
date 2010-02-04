@@ -1,3 +1,6 @@
+2010-02-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am: Fix bad merge.
+
 2010-02-03  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report/human.c: increased width of output_stats
   	  fields
