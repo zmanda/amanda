@@ -1206,8 +1206,12 @@ void restore(RestoreSource * source,
         oldout = alloc(SIZEOF(open_output_t));
         oldout->file = alloc(SIZEOF(dumpfile_t));
         memcpy(oldout->file, source->header, SIZEOF(dumpfile_t));
-        if(flags->inline_assemble) oldout->outfd = pipes[0].pipe[1];
-	else oldout->outfd = -1;
+        if(flags->inline_assemble) {
+	    oldout->outfd = pipes[0].pipe[1];
+	} else {
+	    oldout->outfd = -1;
+	    aclose(pipes[0].pipe[1]);
+	}
         oldout->comp_enc_pid = -1;
         oldout->lastpartnum = source->header->partnum;
         oldout->next = open_outputs;
