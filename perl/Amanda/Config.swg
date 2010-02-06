@@ -482,22 +482,13 @@ amglue_copy_to_tag(data_path_t, getconf);
 	    }
 
 	    case CONFTYPE_AUTOLABEL: {
-	        /* exincludes are represented in perl as {
-		 *   'template'     : template,
-		 *   'any_volume'   : 0,
-		 *   'other_config' : 0,
-		 *   'non_amanda'   : 0,
-		 *   'volume_error' : 0,
-		 *   'empty'        : 1,
-		 * }
-		 */
 		autolabel_t *autolabel = &val_t__autolabel($1);
 		HV *hv;
 
 		/* now build the hash */
 		hv = (HV *)sv_2mortal((SV *)newHV());
 		hv_store(hv, "template", 8,
-			(autolabel->template)? newSVpv(autolabel->template, 0) : &PL_sv_undef,
+			(autolabel->template)? newSVpv(autolabel->template, 0) : newSV(0),
 			0);
 		hv_store(hv, "other_config", 12,
 			(autolabel->autolabel & AL_OTHER_CONFIG)? &PL_sv_yes : &PL_sv_no,

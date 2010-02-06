@@ -269,6 +269,14 @@ and C<append> that are true if the corresponding keyword was supplied.
 Note that integer types of all sizes become C<Math::BigInt> objects rather than
 Perl integers, as is the habit throughout Amanda.
 
+The C<CNF_AUTOLABEL> value is a hash with the following keys
+
+  template	label template, or undef
+  other_config	boolean
+  non_amanda	boolean
+  volume_error	boolean
+  empty		boolean
+
 =head2 OTHER ACCESS
 
 Parameter values are available by name from C<getconf_byname($name)> and

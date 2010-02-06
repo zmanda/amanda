@@ -1,3 +1,7 @@
+2010-02-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Config.pod: document autolabel format
+	* perl/Amanda/Config.swg: don't use PL_sv_undef as a hash val
+
 2010-02-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Add autolabel config option.
 	* common-src/conffile.h: Add autolabel config option.
