@@ -49,10 +49,6 @@ Amanda::Xfer - the transfer architecture
 See L<http://wiki.zmanda.com/index.php/XFA> for background on the
 transfer architecture.
 
-=head1 API STATUS
-
-Fluid.
-
 =head1 Amanda::Xfer Objects
 
 A new transfer is created with C<< Amanda::Xfer->new() >>, which takes

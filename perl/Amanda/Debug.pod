@@ -36,10 +36,6 @@ Amanda::Debug - support for debugging Amanda applications
 See C<debug.h> for a more in-depth description of the logging
 functionality of this module.
 
-=head1 API STATUS
-
-Stable
-
 =head1 DEBUG LOGGING
 
 Several debug logging functions, each taking a single string, are

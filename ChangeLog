@@ -1,4 +1,12 @@
 2010-02-05  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Device.pod, perl/Amanda/DB/Catalog.pm,
+	* perl/Amanda/Xfer.pod, perl/Amanda/Process.pm,
+	* perl/Amanda/BigIntCompat.pm, perl/Amanda/Cmdline.pod,
+	* perl/Amanda/Constants.pm.in, perl/Amanda/Logfile.pod,
+	* perl/Amanda/Tapelist.pod, perl/Amanda/Debug.pod: removed "API
+	STATUS" pod header
+
+2010-02-05  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report/human.pm: made fixed appearance of per-level
   	  column in output_stats
 

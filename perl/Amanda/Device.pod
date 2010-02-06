@@ -33,10 +33,6 @@ Amanda::Device - interact with Amanda data-storage devices
       print "Label on $device_name is '$dev->volume_label'\n";
   }
 
-=head1 API STATUS
-
-Stable
-
 =head1 DATA MODEL
 
 A volume is a container for data which can be "loaded" into a particular

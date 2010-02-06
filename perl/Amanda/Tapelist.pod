@@ -33,10 +33,6 @@ Amanda::Tapelist - manipulate the Amanda tapelist
     $tl->add_tapelabel($datestamp2, $label2, $comment);
     $tl->write("/path/to/tapefile");
 
-=head1 API STATUS
-
-Stable
-
 =head1 OBJECT-ORIENTED INTERFACE
 
 The package-level functions C<read_tapelist($filename)> and

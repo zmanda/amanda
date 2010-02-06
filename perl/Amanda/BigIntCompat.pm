@@ -35,10 +35,6 @@ Amanda::BigIntCompat -- make C<Math::BigInt> behave consistently
   my $bn = Math::BigInt->new(1);
   print "okay\n" if $bn eq "1";
 
-=head1 API STATUS
-
-Stable
-
 =head1 INTERFACE
 
 This module will modify C<Math::BigInt> to hide inconsistent behaviors across

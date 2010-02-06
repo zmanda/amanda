@@ -52,10 +52,6 @@ Amanda::Process -- interface to process
 
   my $alive = Amanda::Process::process_alive($pid, $pname);
 
-=head1 API STATUS
-
-Stable
-
 =head1 INTERFACE
 
 This module provides an object-oriented interface to track process used by

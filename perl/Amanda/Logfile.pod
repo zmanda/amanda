@@ -49,10 +49,6 @@ Amanda::Logfile - manage Amanda trace logs
     }
   }
 
-=head1 API STATUS
-
-Stabilizing
-
 =head1 RAW LOGFILE ACCESS
 
 This section corresponds to the C C<logfile> module.

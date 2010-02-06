@@ -38,10 +38,6 @@ This module does not automatically export any of its values.
 
 See the source for the list of constants available.
 
-=head1 API STATUS
-
-Constants will not be removed from this file unless they are no longer available in the codebase.
-
 =cut
 
 # the 'warnings' pragma doesn't recognized exported variables as "used", and generates warnings

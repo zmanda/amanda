@@ -377,14 +377,6 @@ TODO: add_dump
 
 =back
 
-=head1 API STATUS
-
-New summary functions may be added to reduce code duplication in other parts of
-Amanda.
-
-Support for loading and modifying the tapelist may eventually be folded into
-this module.
-
 =cut
 
 use Amanda::Logfile qw( :constants match_disk match_host
