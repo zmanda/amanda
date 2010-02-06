@@ -56,7 +56,7 @@ is_deeply([ sort split "\n", $Installcheck::Run::stdout],
 
 # this is re-created for each test
 $testconf = Installcheck::Run::setup();
-$testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+$testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
 $testconf->add_dle("localhost $diskname installcheck-test");
 $testconf->write();
 

@@ -55,7 +55,9 @@ my $taperscan = Amanda::Taper::Scan->new(
     tapelist_filename => $tapelist,
     tapecycle => 1, # will be changed periodically below
     labelstr => "TEST-[0-9]",
-    label_new_tapes => "TEST-%",
+    autolabel => { 'template'    => "TEST-%",
+		   'empty'        => 1,
+		   'volume_error' => 1},
     );
 
 set_tapelist(<<EOF);

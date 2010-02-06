@@ -55,6 +55,7 @@ amglue_add_constant(CNF_PROPERTY, confparm_key);
 amglue_add_constant(CNF_CHANGERDEV, confparm_key);
 amglue_add_constant(CNF_CHANGERFILE, confparm_key);
 amglue_add_constant(CNF_LABELSTR, confparm_key);
+amglue_add_constant(CNF_AUTOLABEL, confparm_key);
 amglue_add_constant(CNF_TAPELIST, confparm_key);
 amglue_add_constant(CNF_DISKFILE, confparm_key);
 amglue_add_constant(CNF_INFOFILE, confparm_key);
@@ -265,6 +266,13 @@ amglue_add_constant(ES_SERVER, estimate_t);
 amglue_add_constant(ES_CALCSIZE, estimate_t);
 amglue_copy_to_tag(estimate_t, getconf);
 
+amglue_add_enum_tag_fns(autolabel_enum_t);
+amglue_add_constant(AL_OTHER_CONFIG, autolabel_enum_t);
+amglue_add_constant(AL_NON_AMANDA, autolabel_enum_t);
+amglue_add_constant(AL_VOLUME_ERROR, autolabel_enum_t);
+amglue_add_constant(AL_EMPTY, autolabel_enum_t);
+amglue_copy_to_tag(autolabel_enum_t, getconf);
+
 amglue_add_enum_tag_fns(taperalgo_t);
 amglue_add_constant(ALGO_FIRST, taperalgo_t);
 amglue_add_constant(ALGO_FIRSTFIT, taperalgo_t);
@@ -469,6 +477,42 @@ amglue_copy_to_tag(data_path_t, getconf);
 		}
 
 		$result = sv_2mortal(newRV_noinc((SV *)ilist));
+		argvi++;
+		break;
+	    }
+
+	    case CONFTYPE_AUTOLABEL: {
+	        /* exincludes are represented in perl as {
+		 *   'template'     : template,
+		 *   'any_volume'   : 0,
+		 *   'other_config' : 0,
+		 *   'non_amanda'   : 0,
+		 *   'volume_error' : 0,
+		 *   'empty'        : 1,
+		 * }
+		 */
+		autolabel_t *autolabel = &val_t__autolabel($1);
+		HV *hv;
+
+		/* now build the hash */
+		hv = (HV *)sv_2mortal((SV *)newHV());
+		hv_store(hv, "template", 8,
+			(autolabel->template)? newSVpv(autolabel->template, 0) : &PL_sv_undef,
+			0);
+		hv_store(hv, "other_config", 12,
+			(autolabel->autolabel & AL_OTHER_CONFIG)? &PL_sv_yes : &PL_sv_no,
+			0);
+		hv_store(hv, "non_amanda", 10,
+			(autolabel->autolabel & AL_NON_AMANDA)? &PL_sv_yes : &PL_sv_no,
+			0);
+		hv_store(hv, "volume_error", 12,
+			(autolabel->autolabel & AL_VOLUME_ERROR)? &PL_sv_yes : &PL_sv_no,
+			0);
+		hv_store(hv, "empty", 5,
+			(autolabel->autolabel & AL_EMPTY)? &PL_sv_yes : &PL_sv_no,
+			0);
+
+		$result = sv_2mortal(newRV((SV *)hv));
 		argvi++;
 		break;
 	    }

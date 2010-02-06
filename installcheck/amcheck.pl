@@ -42,7 +42,7 @@ like(run_err('amcheck', 'this-probably-doesnt-exist'),
 # Now use a fresh new config
 
 $testconf = Installcheck::Run::setup();
-$testconf->add_param("label_new_tapes", "\"TESTCONF%%\"");
+$testconf->add_param("autolabel", "\"TESTCONF%%\" empty volume_error");
 $testconf->add_dle("localhost $diskname installcheck-test");
 $testconf->write();
 
@@ -70,7 +70,7 @@ like(run_get('amcheck', '-c', 'TESTCONF', 'localhost', "$diskname"),
     qr/Amanda Backup Client Hosts Check/,
     "amcheck -c works with a hostname and diskname");
 
-ok(!run('amcheck', '-o', 'label_new_tapes=', 'TESTCONF'),
+ok(!run('amcheck', '-o', 'autolabel=', 'TESTCONF'),
     "amcheck -o configoption works");
 
 # do this after the other tests, above, since it writes to the tape

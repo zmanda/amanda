@@ -155,6 +155,10 @@ typedef enum {
     CONF_SERVER,		CONF_CLIENT,		CONF_CALCSIZE,
     CONF_CUSTOM,
 
+    /* autolabel */
+    CONF_AUTOLABEL,		CONF_ANY_VOLUME,	CONF_OTHER_CONFIG,
+    CONF_NON_AMANDA,		CONF_VOLUME_ERROR,	CONF_EMPTY,
+
     /* holdingdisk */
     CONF_NEVER,			CONF_AUTO,		CONF_REQUIRED,
 
@@ -487,6 +491,7 @@ static void read_execute_on(conf_var_t *, val_t *);
 static void read_execute_where(conf_var_t *, val_t *);
 static void read_holdingdisk(conf_var_t *, val_t *);
 static void read_int_or_str(conf_var_t *, val_t *);
+static void read_autolabel(conf_var_t *, val_t *);
 
 /* Functions to get various types of values.  These are called by
  * read_functions to take care of any variations in the way that these
@@ -634,6 +639,7 @@ static void conf_init_exinclude(val_t *val); /* to empty list */
 static void conf_init_intrange(val_t *val, int i1, int i2);
 static void conf_init_proplist(val_t *val); /* to empty list */
 static void conf_init_application(val_t *val);
+static void conf_init_autolabel(val_t *val);
 
 /*
  * Command-line Handling
@@ -789,10 +795,12 @@ keytab_t server_keytab[] = {
     { "AMRECOVER_CHANGER", CONF_AMRECOVER_CHANGER },
     { "AMRECOVER_CHECK_LABEL", CONF_AMRECOVER_CHECK_LABEL },
     { "AMRECOVER_DO_FSF", CONF_AMRECOVER_DO_FSF },
+    { "ANY", CONF_ANY_VOLUME },
     { "APPEND", CONF_APPEND },
     { "AUTH", CONF_AUTH },
     { "AUTO", CONF_AUTO },
     { "AUTOFLUSH", CONF_AUTOFLUSH },
+    { "AUTOLABEL", CONF_AUTOLABEL },
     { "APPLICATION", CONF_APPLICATION },
     { "APPLICATION_TOOL", CONF_APPLICATION_TOOL },
     { "BEST", CONF_BEST },
@@ -848,6 +856,7 @@ keytab_t server_keytab[] = {
     { "DUMPORDER", CONF_DUMPORDER },
     { "DUMPTYPE", CONF_DUMPTYPE },
     { "DUMPUSER", CONF_DUMPUSER },
+    { "EMPTY", CONF_EMPTY },
     { "ENCRYPT", CONF_ENCRYPT },
     { "ERROR", CONF_ERROR },
     { "ESTIMATE", CONF_ESTIMATE },
@@ -901,9 +910,11 @@ keytab_t server_keytab[] = {
     { "NOFULL", CONF_NOFULL },
     { "NOINC", CONF_NOINC },
     { "NONE", CONF_NONE },
+    { "NON_AMANDA", CONF_NON_AMANDA },
     { "OPTIONAL", CONF_OPTIONAL },
     { "ORDER", CONF_ORDER },
     { "ORG", CONF_ORG },
+    { "OTHER_CONFIG", CONF_OTHER_CONFIG },
     { "PLUGIN", CONF_PLUGIN },
     { "PRE_DLE_AMCHECK", CONF_PRE_DLE_AMCHECK },
     { "PRE_HOST_AMCHECK", CONF_PRE_HOST_AMCHECK },
@@ -969,6 +980,7 @@ keytab_t server_keytab[] = {
     { "UNRESERVED_TCP_PORT", CONF_UNRESERVED_TCP_PORT },
     { "USE", CONF_USE },
     { "USETIMESTAMPS", CONF_USETIMESTAMPS },
+    { "VOLUME_ERROR", CONF_VOLUME_ERROR },
     { NULL, CONF_IDENT },
     { NULL, CONF_UNKNOWN }
 };
@@ -1134,6 +1146,7 @@ conf_var_t server_var [] = {
    { CONF_KRB5KEYTAB           , CONFTYPE_STR      , read_str         , CNF_KRB5KEYTAB           , NULL },
    { CONF_KRB5PRINCIPAL        , CONFTYPE_STR      , read_str         , CNF_KRB5PRINCIPAL        , NULL },
    { CONF_LABEL_NEW_TAPES      , CONFTYPE_STR      , read_str         , CNF_LABEL_NEW_TAPES      , NULL },
+   { CONF_AUTOLABEL            , CONFTYPE_AUTOLABEL, read_autolabel   , CNF_AUTOLABEL            , NULL },
    { CONF_USETIMESTAMPS        , CONFTYPE_BOOLEAN  , read_bool        , CNF_USETIMESTAMPS        , NULL },
    { CONF_AMRECOVER_DO_FSF     , CONFTYPE_BOOLEAN  , read_bool        , CNF_AMRECOVER_DO_FSF     , NULL },
    { CONF_AMRECOVER_CHANGER    , CONFTYPE_STR      , read_str         , CNF_AMRECOVER_CHANGER    , NULL },
@@ -1771,6 +1784,7 @@ handle_deprecated_keyword(void)
     static tok_t warning_deprecated[] = {
         CONF_TAPEBUFS,    /* 2007-10-15 */
 	CONF_FILE_PAD,	  /* 2008-07-01 */
+	CONF_LABEL_NEW_TAPES,	/* 2010-02-05 */
         0
     };
 
@@ -3544,6 +3558,48 @@ read_int_or_str(
     }
 }
 
+static void
+read_autolabel(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t *val)
+{
+    int data = 0;
+    ckseen(&val->seen);
+
+    get_conftoken(CONF_ANY);
+    if (tok == CONF_STRING) {
+	data++;
+	val->v.autolabel.template = newstralloc(val->v.autolabel.template,
+						tokenval.v.s);
+	get_conftoken(CONF_ANY);
+    }
+    val->v.autolabel.autolabel = 0;
+    while (tok != CONF_NL && tok != CONF_END) {
+	data++;
+	if (tok == CONF_ANY_VOLUME)
+	    val->v.autolabel.autolabel |= AL_OTHER_CONFIG | AL_NON_AMANDA |
+					  AL_VOLUME_ERROR | AL_EMPTY;
+	else if (tok == CONF_OTHER_CONFIG)
+	    val->v.autolabel.autolabel |= AL_OTHER_CONFIG;
+	else if (tok == CONF_NON_AMANDA)
+	    val->v.autolabel.autolabel |= AL_NON_AMANDA;
+	else if (tok == CONF_VOLUME_ERROR)
+	    val->v.autolabel.autolabel |= AL_VOLUME_ERROR;
+	else if (tok == CONF_EMPTY)
+	    val->v.autolabel.autolabel |= AL_EMPTY;
+	else {
+	    conf_parserror(_("ANY-VOLUME, NEW-VOLUME, OTHER-CONFIG, NON-AMANDA, VOLUME-ERROR or EMPTY is expected"));
+	}
+	get_conftoken(CONF_ANY);
+    }
+    if (data == 0) {
+	amfree(val->v.autolabel.template);
+	val->v.autolabel.autolabel = 0;
+    } else if (val->v.autolabel.autolabel == 0) {
+	val->v.autolabel.autolabel = AL_VOLUME_ERROR | AL_EMPTY;
+    }
+}
+
 /* get_* functions */
 
 /* these functions use precompiler conditionals to skip useless size checks
@@ -4452,6 +4508,7 @@ init_defaults(
     conf_init_intrange (&conf_data[CNF_UNRESERVED_TCP_PORT]  , IPPORT_RESERVED, 65535);
 #endif
     conf_init_send_amreport (&conf_data[CNF_SEND_AMREPORT_ON], SEND_AMREPORT_ALL);
+    conf_init_autolabel(&conf_data[CNF_AUTOLABEL]);
 
     /* reset internal variables */
     config_clear_errors();
@@ -4621,6 +4678,19 @@ update_derived_values(
 		conf_parserror(_("holdingdisk %s is not defined"),
 			       (char *)il->data);
 	    }
+	}
+
+	if ((getconf_seen(CNF_LABEL_NEW_TAPES) > 0 &&
+	     getconf_seen(CNF_AUTOLABEL) > 0)  ||
+	    (getconf_seen(CNF_LABEL_NEW_TAPES) < 0 &&
+	     getconf_seen(CNF_AUTOLABEL) < 0)) {
+		conf_parserror(_("Can't defined both label_new_tapes and autolabel"));
+	}
+	if (getconf_seen(CNF_LABEL_NEW_TAPES) < 0 &&
+	    getconf_seen(CNF_AUTOLABEL) >= 0) {
+	    autolabel_t *autolabel = &(conf_data[CNF_AUTOLABEL].v.autolabel);
+	    autolabel->template = getconf_str(CNF_LABEL_NEW_TAPES);
+	    autolabel->autolabel = AL_VOLUME_ERROR | AL_EMPTY;
 	}
     }
 
@@ -4904,6 +4974,16 @@ conf_init_intrange(
     val->type = CONFTYPE_INTRANGE;
     val_t__intrange(val)[0] = i1;
     val_t__intrange(val)[1] = i2;
+}
+
+static void
+conf_init_autolabel(
+    val_t *val) {
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
+    val->type = CONFTYPE_AUTOLABEL;
+    val->v.autolabel.template = NULL;
+    val->v.autolabel.autolabel = 0;
 }
 
 void
@@ -5763,6 +5843,17 @@ val_t_to_proplist(
     return val_t__proplist(val);
 }
 
+autolabel_t
+val_t_to_autolabel(
+    val_t *val)
+{
+    if (val->type != CONFTYPE_AUTOLABEL) {
+	error(_("val_t_to_autolabel: val.type is not CONFTYPE_AUTOLABEL"));
+	/*NOTREACHED*/
+    }
+    return val_t__autolabel(val);
+}
+
 static void
 merge_val_t(
     val_t *valdst,
@@ -5898,6 +5989,11 @@ copy_val_t(
 	case CONFTYPE_APPLICATION:
 	    valdst->v.s = stralloc(valsrc->v.s);
 	    break;
+
+	case CONFTYPE_AUTOLABEL:
+	    valdst->v.autolabel.template = stralloc(valsrc->v.autolabel.template);
+	    valdst->v.autolabel.autolabel = valsrc->v.autolabel.autolabel;
+	    break;
 	}
     }
 }
@@ -6005,6 +6101,10 @@ free_val_t(
         case CONFTYPE_PROPLIST:
             g_hash_table_destroy(val_t__proplist(val));
             break;
+
+	case CONFTYPE_AUTOLABEL:
+	    amfree(val->v.autolabel.template);
+	    break;
     }
     val->seen.linenum = 0;
     val->seen.filename = NULL;
@@ -6393,6 +6493,24 @@ val_t_display_strs(
             } else {
 		buf[0] = stralloc("");
             }
+	}
+	break;
+
+    case CONFTYPE_AUTOLABEL:
+	{
+	    buf[0] = quote_string_always(val->v.autolabel.template);
+	    if (val->v.autolabel.autolabel & AL_OTHER_CONFIG) {
+		buf[0] = vstrextend(&buf[0], " OTHER-CONFIG", NULL);
+	    }
+	    if (val->v.autolabel.autolabel & AL_NON_AMANDA) {
+		buf[0] = vstrextend(&buf[0], " NON-AMANDA", NULL);
+	    }
+	    if (val->v.autolabel.autolabel & AL_VOLUME_ERROR) {
+		buf[0] = vstrextend(&buf[0], " VOLUME-ERROR", NULL);
+	    }
+	    if (val->v.autolabel.autolabel & AL_EMPTY) {
+		buf[0] = vstrextend(&buf[0], " EMPTY", NULL);
+	    }
 	}
 	break;
 

@@ -49,7 +49,7 @@ and fills the cache.
 Basic runs a single amdump with the default L<Installcheck::Run> configuration,
 to which has been added:
 
-  $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+  $testconf->add_param('autolabel', '"TESTCONF%%" EMPTY VOLUME_ERROR');
   $testconf->add_dle("localhost $diskname installcheck-test");
 
 =head2 notimestamps
@@ -101,7 +101,7 @@ sub use_new_chg_disk {
 $flavors{'basic'} = sub {
     my $testconf = Installcheck::Run::setup();
     use_new_chg_disk($testconf);
-    $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+    $testconf->add_param('autolabel', '"TESTCONF%%" EMPTY VOLUME_ERROR');
     $testconf->add_dle("localhost $diskname installcheck-test");
     $testconf->write();
 
@@ -112,7 +112,7 @@ $flavors{'basic'} = sub {
 $flavors{'notimestamps'} = sub {
     my $testconf = Installcheck::Run::setup();
     use_new_chg_disk($testconf);
-    $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+    $testconf->add_param('autolabel', '"TESTCONF%%" EMPTY VOLUME_ERROR');
     $testconf->add_dle("localhost $diskname installcheck-test");
     $testconf->add_param('usetimestamps', 'no');
     $testconf->write();
@@ -135,7 +135,7 @@ $flavors{'multi'} = sub {
 
     my $testconf = Installcheck::Run::setup();
     use_new_chg_disk($testconf);
-    $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+    $testconf->add_param('autolabel', '"TESTCONF%%" EMPTY VOLUME_ERROR');
     $testconf->add_dle("localhost $diskname installcheck-test");
     $testconf->add_dle("localhost $diskname/dir installcheck-test");
     # do the smallest dumps first -- $diskname/dir in particular should
@@ -163,7 +163,7 @@ $flavors{'multi'} = sub {
 $flavors{'parts'} = sub {
     my $testconf = Installcheck::Run::setup();
     use_new_chg_disk($testconf);
-    $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+    $testconf->add_param('autolabel', '"TESTCONF%%" EMPTY VOLUME_ERROR');
     $testconf->add_dumptype("installcheck-test-parts", [
 	"installcheck-test", "",
 	"tape_splitsize", "128k",
@@ -179,7 +179,7 @@ $flavors{'parts'} = sub {
 $flavors{'compress'} = sub {
     my $testconf = Installcheck::Run::setup();
     use_new_chg_disk($testconf);
-    $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+    $testconf->add_param('autolabel', '"TESTCONF%%" EMPTY VOLUME_ERROR');
     $testconf->add_dumptype("installcheck-test-comp", [
 	"installcheck-test", "",
 	"compress", "server fast",
@@ -197,7 +197,7 @@ if (Amanda::Util::built_with_component("server")
     $flavors{'ndmp'} = sub {
 	my $testconf = Installcheck::Run::setup();
 	use_new_chg_disk($testconf);
-	$testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+	$testconf->add_param('autolabel', '"TESTCONF%%" EMPTY VOLUME_ERROR');
 	$testconf->add_dle("localhost $diskname installcheck-test");
 	my $ndmp = Installcheck::Mock::NdmpServer->new();
 	$ndmp->config($testconf);

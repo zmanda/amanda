@@ -30,7 +30,7 @@ Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
 
 $testconf = Installcheck::Run::setup();
-$testconf->add_param("label_new_tapes", "\"TESTCONF%%\"");
+$testconf->add_param("autolabel", "\"TESTCONF%%\" empty volume_error");
 $testconf->write();
 
 like(run_get("$amlibexecdir/amcheck-device", "TESTCONF"),

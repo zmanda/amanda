@@ -442,6 +442,7 @@ can't read logfiles written when this option was enabled.
   <term><emphasis remap='B'>label_new_tapes</emphasis>
         <emphasis remap='I'> string</emphasis></term>
 <listitem>
+    <para>Deprecated, use <emphasis remap='B'>autolabel</emphasis> option.</para>
     <para>Default: not set.
 When set, this directive will cause Amanda to automatically write an Amanda
 tape label to any blank tape she encounters. This option is DANGEROUS 
@@ -454,6 +455,62 @@ specify enough '%' characters that you do not run out of tape labels.
 Example: 
 <markup>label_new_tapes "DailySet1-%%%"</markup>
 </para>
+</listitem>
+</varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>autolabel</emphasis>
+        <emphasis remap='I'> string</emphasis>
+        <emphasis remap='B'> any</emphasis>
+        <emphasis remap='B'> other_config</emphasis>
+        <emphasis remap='B'> non_amanda</emphasis>
+        <emphasis remap='B'> volume_error</emphasis>
+        <emphasis remap='B'> empty</emphasis></term>
+<listitem>
+    <para>Default: not set.
+When set, this directive will cause Amanda to automatically write an Amanda
+tape label to most volume she encounters. This option is DANGEROUS
+because when set, Amanda may erase near-failing tapes or tapes accidentally
+loaded in the wrong slot.</para>
+<para>When using this directive, specify the template for new tape
+labels. The template should contain some number of contiguous '%'
+characters, which will be replaced with a generated number. Be sure to
+specify enough '%' characters that you do not run out of tape labels.
+Example:
+<markup>autolabel "DailySet1-%%%" empty</markup>
+</para>
+<variablelist remap='TP'>
+<varlistentry>
+<term>any</term>
+<listitem>equivalent to 'other_config non_amanda volume_error empty'
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>other_config</term>
+<listitem>Label volumes with a valid Amanda label that do not match our
+<emphasis remap='B'>labelstr</emphasis>. Danger: this may erase volumes
+from other Amanda configurations without warning!
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>non_amanda</term>
+<listitem>Label volumes which do not start with data that resembles an
+Amanda header. Danger: this may erase volumes from other backup applications
+without warning!
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>volume_error</term>
+<listitem>Label volumes where an error occurs while trying to read the label.
+Danger: this may erase arbitrary volumes due to transient errors.
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>empty</term>
+<listitem>Label volumes where a read returns 0 bytes.
+</listitem>
+</varlistentry>
+</variablelist>
 </listitem>
 </varlistentry>
 

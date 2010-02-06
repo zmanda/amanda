@@ -204,7 +204,9 @@ set_current_slot(5);
 $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",
     tapecycle => 2,
-    label_new_tapes => "TEST-%",
+    autolabel => { 'template'     => "TEST-%",
+                   'empty'        => 1,
+                   'volume_error' => 1},
     changer => Amanda::Changer->new("chg-disk:$taperoot"));
 @results = run_scan($taperscan);
 is_deeply([ @results ],

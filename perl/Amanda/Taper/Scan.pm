@@ -56,7 +56,7 @@ algorithm.  The constructor takes the following keyword arguments:
     tapelist_filename
     tapecycle
     labelstr
-    label_new_tapes
+    autolabel
 
 The changer object must always be provided, but C<algorithm> may be omitted, in
 which case the class specified by the user in the Amanda configuration file is
@@ -121,7 +121,7 @@ if no label could be created.
     );
 
 If no C<template> is provided, the function uses the value of
-C<label_new_tapes> specified when the object was constructed; similarly,
+C<autolabel> specified when the object was constructed; similarly,
 C<labelstr> defaults to the value specified at object construction.
 
 =cut
@@ -147,8 +147,8 @@ sub new {
 	    unless exists $params{'tapelist_filename'};
     $params{'labelstr'} = getconf($CNF_LABELSTR)
 	unless exists $params{'labelstr'};
-    $params{'label_new_tapes'} = getconf($CNF_LABEL_NEW_TAPES)
-	unless exists $params{'label_new_tapes'};
+    $params{'autolabel'} = getconf($CNF_AUTOLABEL)
+	unless exists $params{'autolabel'};
 
     # load the package
     my $pkgname = "Amanda::Taper::Scan::" . $params{'algorithm'};
@@ -173,7 +173,7 @@ sub new {
     $self->{'tapecycle'} = $params{'tapecycle'};
     $self->{'tapelist_filename'} = $params{'tapelist_filename'};
     $self->{'labelstr'} = $params{'labelstr'};
-    $self->{'label_new_tapes'} = $params{'label_new_tapes'};
+    $self->{'autolabel'} = $params{'autolabel'};
 
     return $self;
 }
@@ -237,7 +237,7 @@ sub is_reusable_volume {
 sub make_new_tape_label {
     my $self = shift;
     my %params = @_;
-    my $template = exists $params{'template'}? $params{'template'} : $self->{'label_new_tapes'};
+    my $template = exists $params{'template'}? $params{'template'} : $self->{'autolabel'}->{'template'};
     my $labelstr = exists $params{'labelstr'}? $params{'labelstr'} : $self->{'labelstr'};
 
     (my $npercents =

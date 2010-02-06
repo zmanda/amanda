@@ -116,6 +116,19 @@ typedef enum {
 /* A GSlist where each element is a element_t */
 typedef GSList *estimatelist_t;
 
+typedef enum {
+    AL_OTHER_CONFIG = 1<<0,
+    AL_NON_AMANDA   = 1<<1,
+    AL_VOLUME_ERROR = 1<<2,
+    AL_EMPTY        = 1<<3,
+} autolabel_enum_t;
+typedef int autolabel_set_t;
+
+typedef struct autolabel_s {
+    char            *template;
+    autolabel_set_t  autolabel;
+} autolabel_t;
+
 /* Dump strategies */
 typedef enum {
     DS_SKIP,        /* Don't do any dumps at all */
@@ -217,6 +230,7 @@ typedef enum {
     CONFTYPE_SEND_AMREPORT_ON,
     CONFTYPE_IDENTLIST,
     CONFTYPE_DATA_PATH,
+    CONFTYPE_AUTOLABEL,
 } conftype_t;
 
 /* A "seen" struct.  Rather than allocate strings all over the place, this
@@ -244,6 +258,7 @@ typedef struct val_s {
         proplist_t      proplist;
 	estimatelist_t  estimatelist;
 	identlist_t     identlist;
+        autolabel_t     autolabel;
     } v;
     seen_t seen;
     conftype_t type;
@@ -277,6 +292,7 @@ execute_on_t          val_t_to_execute_on(val_t *);
 execute_where_t       val_t_to_execute_where(val_t *);
 send_amreport_t       val_t_to_send_amreport(val_t *);
 data_path_t           val_t_to_data_path(val_t *);
+autolabel_t           val_t_to_autolabel(val_t *);
 
 /* Has the given val_t been seen in a configuration file or config overwrite?
  *
@@ -325,6 +341,7 @@ data_path_t           val_t_to_data_path(val_t *);
 #define val_t__execute_on(val)    ((val)->v.i)
 #define val_t__execute_where(val) ((val)->v.i)
 #define val_t__data_path(val)     ((val)->v.i)
+#define val_t__autolabel(val)     ((val)->v.autolabel)
 /*
  * Parameters
  *
@@ -429,6 +446,7 @@ typedef enum {
     CNF_RESERVED_TCP_PORT,
     CNF_UNRESERVED_TCP_PORT,
     CNF_HOLDINGDISK,
+    CNF_AUTOLABEL,
     CNF_CNF /* sentinel */
 } confparm_key;
 
@@ -477,6 +495,7 @@ val_t *getconf(confparm_key key);
 #define getconf_intrange(key)     (val_t_to_intrange(getconf((key))))
 #define getconf_proplist(key)     (val_t_to_proplist(getconf((key))))
 #define getconf_send_amreport(key) (val_t_to_send_amreport(getconf((key))))
+#define getconf_autolabel(key)    (val_t_to_autolabel(getconf((key))))
 
 /* Get a list of names for subsections of the given type
  *

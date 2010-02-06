@@ -85,7 +85,7 @@ sub verify_log {
 # check script on client
 
 $testconf = Installcheck::Run::setup();
-$testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+$testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
 
 $testconf->add_dle(<<EODLE);
 localhost diskname1 $diskname {
@@ -128,7 +128,7 @@ Installcheck::Run::cleanup();
 
 #check script on server
 $testconf = Installcheck::Run::setup();
-$testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+$testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
 
 $testconf->add_dle(<<EODLE);
 localhost diskname2 $diskname {
@@ -172,7 +172,7 @@ Installcheck::Run::cleanup();
 
 #check order script
 $testconf = Installcheck::Run::setup();
-$testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+$testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
 
 $testconf->add_dle(<<EODLE);
 localhost diskname2 $diskname {

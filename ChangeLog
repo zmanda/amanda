@@ -1,3 +1,18 @@
+2010-02-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add autolabel config option.
+	* common-src/conffile.h: Add autolabel config option.
+	* man/xml-source/amanda.conf.5.xml: Document autolabel.
+	* perl/Amanda/Config.swg: Swig autolabel.
+	* perl/Amanda/Taper/Scan/traditional.pm,
+	  perl/Amanda/Taper/Scan.pm: Use autolabel.
+	* installcheck/Amanda_Config.pl, installcheck/Amanda_Taper_Scan.pl,
+	  installcheck/Amanda_Taper_Scan_traditional.pl,
+	  installcheck/Installcheck/Dumpcache.pm,
+	  installcheck/Installcheck/Run.pm, installcheck/amcheck-device.pl,
+	  installcheck/amcheck.pl, installcheck/amdevcheck.pl,
+	  installcheck/amdump.pl, installcheck/pp-scripts.pl,
+	  installcheck/taper.pl: Fix to use autolabel.
+
 2010-02-05  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Device.pod, perl/Amanda/DB/Catalog.pm,
 	* perl/Amanda/Xfer.pod, perl/Amanda/Process.pm,

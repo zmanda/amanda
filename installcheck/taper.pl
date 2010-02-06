@@ -64,7 +64,7 @@ sub run_taper {
 
     unless ($params{'keep_config'}) {
 	my $testconf = Installcheck::Run::setup();
-	$testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+	$testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
 	if ($params{'notapedev'}) {
 	    $testconf->remove_param('tapedev');
 	    $testconf->remove_param('tpchanger');

@@ -93,7 +93,7 @@ to call this before your test script exits.
 
 This module sets up a configuration with three 30M vtapes, replete with
 the proper vtape directories.  These are controlled by C<chg-disk>.
-The tapes are not labeled, and C<label_new_tapes> is not set by
+The tapes are not labeled, and C<autolabel> is not set by
 default, although C<labelstr> is set to C<TESTCONF[0-9][0-9]>.
 
 The vtapes are created in <$Installcheck::Run::taperoot>, a subdirectory of

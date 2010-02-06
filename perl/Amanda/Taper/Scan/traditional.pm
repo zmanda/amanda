@@ -199,21 +199,23 @@ sub try_volume {
     my $self = shift;
     my ($res) = @_;
 
+    my $slot = $res->{'this_slot'};
     my $dev = $res->{'device'};
     my $status = $dev->status;
     my $labelstr = $self->{'labelstr'};
     my $label;
+    my $autolabel = $self->{'autolabel'};
 
     if ($status == $DEVICE_STATUS_SUCCESS) {
         $label = $dev->volume_label;
 
         if ($label !~ /$labelstr/) {
-            $self->_user_msg("Volume label '$label' does not match labelstr '$labelstr'");
-            return 0;
-        }
-
-        # verify that the label is in the tapelist, if it's not new
-	if ($dev->volume_time() ne "X") {
+	    if (!$autolabel->{'other_config'}) {
+		$self->_user_msg("Volume label '$label' does not match labelstr '$labelstr'");
+		return 0;
+	    }
+        } else {
+	    # verify that the label is in the tapelist
 	    my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
 	    if (!$tle) {
 		$self->_user_msg("Volume label '$label' is not in the tapelist");
@@ -225,38 +227,48 @@ sub try_volume {
 		$self->_user_msg("Volume with label '$label' is still active and cannot be overwritten");
 		return 0;
 	    }
+	    $self->scan_result(undef, $res, $label, $ACCESS_WRITE, 0);
+	    return 1;
 	}
+    }
 
-        $self->scan_result(undef, $res, $label, $ACCESS_WRITE, 0);
-        return 1;
+    if (!defined $autolabel->{'template'} ||
+	$autolabel->{'template'} eq "") {
+	return 0;
+    }
 
-    } elsif ($status & $DEVICE_STATUS_VOLUME_UNLABELED) {
-        # unlabeled volume -- we can only use this if label_new_tapes is set
-        if (!$self->{'label_new_tapes'}) {
-            return 0;
-        }
+    if ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
+	$dev->volume_header and
+	$dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY and
+	!$autolabel->{'empty'}) {
+	$self->_user_msg("Slot '$slot' contains an empty tape");
+	return 0;
+    }
 
-        if ($dev->volume_header and
-            $dev->volume_header->{'type'} != $Amanda::Header::F_EMPTY) {
-	    my $slot = $res->{'this_slot'};
-            $self->_user_msg("Slot '$slot' contains a non-Amanda volume; check and " .
-                 "relabel it with 'amlabel -f'");
-            return 0;
-        }
+    if ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
+	$dev->volume_header and
+	$dev->volume_header->{'type'} == $Amanda::Header::F_WEIRD and
+	!$autolabel->{'non_amanda'}) {
+	$self->_user_msg("Slot '$slot' contains a non-Amanda volume; check and " .
+			 "relabel it with 'amlabel -f'");
+	return 0;
+    }
 
-        $label = $self->make_new_tape_label();
-        if (!defined $label) {
-            # make this fatal, rather than silently skipping new tapes
-            $self->scan_result("Could not invent new label for new volume", $res);
-            return 1;
-        }
+    if ($status & $DEVICE_STATUS_VOLUME_ERROR and
+	!$autolabel->{'volume_error'}) {
+	$self->_user_msg("Can't read label in slot '$slot'");
+	return 0;
+    }
 
-        $self->scan_result(undef, $res, $label, $ACCESS_WRITE, 1);
+    $label = $self->make_new_tape_label();
+    if (!defined $label) {
+        # make this fatal, rather than silently skipping new tapes
+        $self->scan_result("Could not invent new label for new volume", $res);
         return 1;
     }
 
-    # nope - the device is useless to us
-    return 0;
+    $self->scan_result(undef, $res, $label, $ACCESS_WRITE, 1);
+    return 1;
 }
 
 ##

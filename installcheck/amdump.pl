@@ -30,7 +30,7 @@ my $testconf;
 # Just run amdump.
 
 $testconf = Installcheck::Run::setup();
-$testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+$testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
 
 # one program "GNUTAR"
 $testconf->add_dle(<<EODLE);

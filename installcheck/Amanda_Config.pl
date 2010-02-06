@@ -1,4 +1,4 @@
-# Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 173;
+use Test::More tests => 176;
 use strict;
 
 use lib "@amperldir@";
@@ -136,6 +136,7 @@ $testconf->add_param('device_output_buffer_size', $size_t_num);
 $testconf->add_param('taperalgo', 'last');
 $testconf->add_param('device_property', '"foo" "bar"');
 $testconf->add_param('device_property', '"blUE" "car" "tar"');
+$testconf->add_param('autolabel', 'non-amanda empty');
 $testconf->add_param('displayunit', '"m"');
 $testconf->add_param('debug_auth', '1');
 $testconf->add_tapetype('mytapetype', [
@@ -232,7 +233,7 @@ SKIP: {
 }
 
 SKIP: { # global parameters
-    skip "error loading config", 12 unless $cfg_result == $CFGERR_OK;
+    skip "error loading config", 13 unless $cfg_result == $CFGERR_OK;
 
     is(getconf($CNF_RESERVE), 75,
 	"integer global confparm");
@@ -257,6 +258,10 @@ SKIP: { # global parameters
 		"blue" => { priority => 0, append => 0,
 			    values => ["car", "tar"]} },
 	    "proplist global confparm");
+    is_deeply(getconf($CNF_AUTOLABEL),
+	    { template => undef, other_config => '',
+	      non_amanda => 1, volume_error => '', empty => 1 },
+	    "'autolabel non-amanda empty' represented correctly");
     ok(getconf_seen($CNF_TAPEDEV),
 	"'tapedev' parm was seen");
     ok(!getconf_seen($CNF_CHANGERFILE),
@@ -649,6 +654,25 @@ SKIP: {
     ok($dtyp, "found mydump-type");
     is(dumptype_getconf($dtyp, $DUMPTYPE_EXCLUDE)->{'optional'}, 0,
 	"'optional' has no effect when not on the last occurrence");
+}
+
+##
+# Try an autolabel with a template and 'any'
+
+$testconf = Installcheck::Config->new();
+$testconf->add_param('autolabel', '"FOO%%%BAR" any');
+$testconf->write();
+
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+is($cfg_result, $CFGERR_OK, 
+    "first exinclude parsing config loaded")
+    or diag_config_errors();
+SKIP: {
+    skip "error loading config", 1 unless $cfg_result == $CFGERR_OK;
+    is_deeply(getconf($CNF_AUTOLABEL),
+	    { template => "FOO%%%BAR", other_config => 1,
+	      non_amanda => 1, volume_error => 1, empty => 1 },
+	    "'autolabel \"FOO%%%BAR\" any' represented correctly");
 }
 
 ##
