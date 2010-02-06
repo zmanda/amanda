@@ -459,7 +459,6 @@ sub by_level_count
     my ($count) = @_;
     my @lc;
 
-    return '' if @$count == 0;
     foreach my $i (0 .. (@$count - 1)) {
         push @lc, "$i:$count->[$i]" if $count->[$i] > 0;
     }
@@ -545,7 +544,7 @@ EOF
 
     my $comp_size = sub {
         my ($stats) = @_;
-        return divzero_wide( 100 * $stats->{coutsize}, $stats->{origsize} );
+        return divzero( 100 * $stats->{outsize}, $stats->{origsize} );
     };
 
     print $fh swrite(
@@ -554,16 +553,16 @@ EOF
         $comp_size->($total_stats),
         $comp_size->($full_stats),
         $comp_size->($incr_stats),
-        ( $self->{dumpdisks} > 1 ? "(level:#disks ...)" : "" )
+        (@{ $self->{dumpdisks} } > 1 ? "(level:#disks ...)" : "")
     );
 
     print $fh swrite(
         $st_format,
         "Filesystems Dumped",
-        sprintf( "%4d", $total_stats->{dumpdisks} ),
-        sprintf( "%4d", $full_stats->{dumpdisks} ),
-        sprintf( "%4d", $incr_stats->{dumpdisks} ),
-	by_level_count($self->{dumpdisks})
+        sprintf("%4d", $total_stats->{dumpdisks}),
+        sprintf("%4d", $full_stats->{dumpdisks}),
+        sprintf("%4d", $incr_stats->{dumpdisks}),
+        (@{ $self->{dumpdisks} } > 1 ? by_level_count($self->{dumpdisks}) : "")
     );
 
     print $fh swrite(
@@ -599,14 +598,6 @@ EOF
 			($marksize *
 			 ($stat_ref->{tapedisks} + $stat_ref->{tapechunks})))),
 		       $tapesize);
-
-        return sprintf(
-            "%3.1lf",
-            (
-                ( $stat_ref->{tapesize} + $marksize ) *
-                  ( $stat_ref->{tapedisks} + $stat_ref->{tapechunks} )
-              ) / $tapesize
-        );
     };
 
     print $fh swrite(
@@ -615,7 +606,7 @@ EOF
         $tape_usage->($total_stats),
         $tape_usage->($full_stats),
         $tape_usage->($incr_stats),
-        ( $incr_stats->{tapedisks} > 0 ? "(level:#disks ...)" : "" )
+        ($incr_stats->{tapedisks} > 0 ? "(level:#disks ...)" : "")
     );
 
     print $fh swrite(
@@ -624,18 +615,29 @@ EOF
         $total_stats->{tapedisks},
         $full_stats->{tapedisks},
         $incr_stats->{tapedisks},
-	by_level_count($self->{tapedisks})
+        (
+            $incr_stats->{tapedisks} > 0
+            ? by_level_count($self->{tapedisks})
+            : ""
+        )
     );
 
     print $fh swrite($st_format, "", "", "", "", "(level:#chunks ...)")
-       if scalar(@{$self->{tapechunks}}) > 1;
+      if $incr_stats->{tapechunks} > 0;
+
+    # NOTE: only print out the per-level tapechunks if there are
+    # incremental tapechunks
     print $fh swrite(
         $st_format,
         "Chunks Taped",
-        sprintf( "%4d", $total_stats->{tapechunks} ),
-        sprintf( "%4d", $full_stats->{tapechunks} ),
-        sprintf( "%4d", $incr_stats->{tapechunks} ),
-	by_level_count($self->{tapechunks})
+        sprintf("%4d", $total_stats->{tapechunks}),
+        sprintf("%4d", $full_stats->{tapechunks}),
+        sprintf("%4d", $incr_stats->{tapechunks}),
+        (
+            $incr_stats->{tapechunks} > 0
+            ? by_level_count($self->{tapechunks})
+            : ""
+        )
     );
 
     print $fh swrite(
