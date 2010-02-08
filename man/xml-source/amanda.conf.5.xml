@@ -293,7 +293,7 @@ length of 200M.</para>
 
 <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>org</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>org</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>daily</emphasis>.
@@ -304,13 +304,13 @@ mail reports distinct.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>mailer</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>mailer</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default found by configure. A mail program that can send mail with '<emphasis remap='I'>MAILER -s "subject" user &lt; message_file</emphasis>'.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>mailto</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>mailto</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>operators</emphasis>.
@@ -318,7 +318,7 @@ A space separated list of recipients for mail reports.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>send-amreport-on</emphasis> [all|strange|error|never]</term>
+  <term><emphasis remap='B'>send-amreport-on</emphasis> [ <emphasis remap='B'>all</emphasis> | <emphasis remap='B'>strange</emphasis> | <emphasis remap='B'>error</emphasis> | <emphasis remap='B'>never</emphasis> ]</term>
   <listitem>
 <para>Default:
 <emphasis remap='B'>all</emphasis>.
@@ -353,7 +353,7 @@ Specify which types of messages will trigger an email from amreport. amreport is
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>dumpcycle</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>dumpcycle</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>10 days</emphasis>.
@@ -375,7 +375,7 @@ are defined.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>runspercycle</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>runspercycle</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>same as dumpcycle</emphasis>.
@@ -392,7 +392,7 @@ days /
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>tapecycle</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>tapecycle</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>15 tapes</emphasis>.
@@ -428,7 +428,7 @@ with damaged or misplaced tapes or schedule adjustments that call for slight adj
 
   <varlistentry>
   <term><emphasis remap='B'>usetimestamps</emphasis>
-	<emphasis remap='I'> bool</emphasis></term>
+	<emphasis remap='I'>bool</emphasis></term>
     <listitem>
       <para>Default: <emphasis remap='B'>Yes</emphasis>.
 This option allows Amanda to track multiple runs per calendar
@@ -440,7 +440,7 @@ can't read logfiles written when this option was enabled.
 
   <varlistentry>
   <term><emphasis remap='B'>label_new_tapes</emphasis>
-        <emphasis remap='I'> string</emphasis></term>
+        <emphasis remap='I'>string</emphasis></term>
 <listitem>
     <para>Deprecated, use <emphasis remap='B'>autolabel</emphasis> option.</para>
     <para>Default: not set.
@@ -460,12 +460,8 @@ Example:
 
   <varlistentry>
   <term><emphasis remap='B'>autolabel</emphasis>
-        <emphasis remap='I'> string</emphasis>
-        <emphasis remap='B'> any</emphasis>
-        <emphasis remap='B'> other_config</emphasis>
-        <emphasis remap='B'> non_amanda</emphasis>
-        <emphasis remap='B'> volume_error</emphasis>
-        <emphasis remap='B'> empty</emphasis></term>
+        <emphasis remap='I'>string</emphasis>
+	[<emphasis remap='B'>any</emphasis>|<emphasis remap='B'>other_config</emphasis>|<emphasis remap='B'>non_amanda</emphasis>|<emphasis remap='B'>volume_error</emphasis>|<emphasis remap='B'>empty</emphasis>]*</term>
 <listitem>
     <para>Default: not set.
 When set, this directive will cause Amanda to automatically write an Amanda
@@ -515,7 +511,7 @@ Danger: this may erase arbitrary volumes due to transient errors.
 </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>dumpuser</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>dumpuser</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>amanda</emphasis>.
@@ -529,7 +525,7 @@ depending on how the Amanda software was built.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>printer</emphasis> string</term>
+  <term><emphasis remap='B'>printer</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Printer to use when doing tape labels.
 See the
@@ -540,7 +536,7 @@ option.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>tapedev</emphasis> string</term>
+  <term><emphasis remap='B'>tapedev</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <filename>null:</filename>.
@@ -567,7 +563,7 @@ option set to
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>device_property</emphasis> string string</term>
+  <term><emphasis remap='B'>device_property</emphasis> <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>These options can set various device properties.  See
 <manref name="amanda-devices" vol="7"/>
@@ -583,7 +579,7 @@ device_property "BLOCK_SIZE" "128k"
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>property</emphasis> [append] string string+</term>
+  <term><emphasis remap='B'>property</emphasis> [<emphasis remap='B'>append</emphasis>] <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis>+</term>
   <listitem>
 <para>These options can set various properties, they can be used by third
  party software to store information in the configuration file.
@@ -595,7 +591,7 @@ the property to set, and the others contains its values.
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>tpchanger</emphasis> string</term>
+  <term><emphasis remap='B'>tpchanger</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>none</emphasis>.
@@ -609,7 +605,7 @@ and enter that here.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>changerdev</emphasis> string</term>
+  <term><emphasis remap='B'>changerdev</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <filename>/dev/null</filename>.
@@ -620,7 +616,7 @@ option.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>changerfile</emphasis> string</term>
+  <term><emphasis remap='B'>changerfile</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <filename>/usr/adm/amanda/log/changer-status</filename>.
@@ -631,7 +627,7 @@ option.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>runtapes</emphasis> int</term>
+  <term><emphasis remap='B'>runtapes</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <literal>1</literal>.
@@ -649,7 +645,7 @@ the backup image Amanda was processing starts over again on the next tape.</para
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>maxdumpsize</emphasis> int</term>
+  <term><emphasis remap='B'>maxdumpsize</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>runtapes</emphasis>*<emphasis remap='I'>tape_length</emphasis>.
@@ -658,7 +654,7 @@ Maximum number of bytes the planner will schedule for a run.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>taperalgo</emphasis> [first|firstfit|largest|largestfit|smallest|last]</term>
+  <term><emphasis remap='B'>taperalgo</emphasis> [ <emphasis remap='B'>first</emphasis> | <emphasis remap='B'>firstfit</emphasis> | <emphasis remap='B'>largest</emphasis> | <emphasis remap='B'>largestfit</emphasis> | <emphasis remap='B'>smallest</emphasis> | <emphasis remap='B'>last</emphasis> ]</term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>first</emphasis>.
@@ -706,7 +702,7 @@ The algorithm used to choose which dump image to send to the taper.</para>
   </listitem>
   </varlistentry>
 <varlistentry>
-<term><emphasis remap='B'>labelstr</emphasis> <emphasis remap='I'> string</emphasis></term>
+<term><emphasis remap='B'>labelstr</emphasis> <emphasis remap='I'>string</emphasis></term>
 <listitem>
 <para>Default:
 <emphasis remap='I'>.*</emphasis>.
@@ -722,7 +718,7 @@ to avoid overwriting each other's tapes.</para>
 </listitem>
 </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>tapetype</emphasis> <emphasis remap='I'> identifier</emphasis></term>
+  <term><emphasis remap='B'>tapetype</emphasis> <emphasis remap='I'>identifier</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>"EXABYTE"</emphasis>.
@@ -741,7 +737,7 @@ of the tape media and device.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>ctimeout</emphasis> int</term>
+  <term><emphasis remap='B'>ctimeout</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>30 seconds</emphasis>.
@@ -751,7 +747,7 @@ will wait for each client host.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>dtimeout</emphasis> int</term>
+  <term><emphasis remap='B'>dtimeout</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>1800 seconds</emphasis>.
@@ -764,7 +760,7 @@ will wait before it fails with a data timeout error.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>etimeout</emphasis> int</term>
+  <term><emphasis remap='B'>etimeout</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>300 seconds</emphasis>.
@@ -781,7 +777,7 @@ per client instead of per disk.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>connect_tries</emphasis> int</term>
+  <term><emphasis remap='B'>connect_tries</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>3</emphasis>.
@@ -790,7 +786,7 @@ How many times the server will try a connection.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>req_tries</emphasis> int</term>
+  <term><emphasis remap='B'>req_tries</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>3</emphasis>.
@@ -799,7 +795,7 @@ How many times the server will resend a REQ packet if it doesn't get the ACK pac
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>netusage</emphasis> int</term>
+  <term><emphasis remap='B'>netusage</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>8000 Kbps</emphasis>.
@@ -810,7 +806,7 @@ section.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>inparallel</emphasis> int</term>
+  <term><emphasis remap='B'>inparallel</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <literal>10</literal>.
@@ -833,7 +829,7 @@ The unit used to print many numbers, k=kilo, m=mega, g=giga, t=tera.
   </varlistentry>
   
   <varlistentry>
-  <term><emphasis remap='B'>dumporder</emphasis> string</term>
+  <term><emphasis remap='B'>dumporder</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>tttTTTTTTT</emphasis>.
@@ -852,7 +848,7 @@ B: largest bandwidth
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>maxdumps</emphasis> int</term>
+  <term><emphasis remap='B'>maxdumps</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <literal>1</literal>.
@@ -875,7 +871,7 @@ are defined.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>bumpsize</emphasis> int</term>
+  <term><emphasis remap='B'>bumpsize</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>10 Mbytes</emphasis>.
@@ -901,7 +897,7 @@ See also the options
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>bumppercent</emphasis> int</term>
+  <term><emphasis remap='B'>bumppercent</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>0 percent</emphasis>.
@@ -929,7 +925,7 @@ See also the options
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>bumpmult</emphasis> <emphasis remap='I'> float</emphasis></term>
+  <term><emphasis remap='B'>bumpmult</emphasis> <emphasis remap='I'>float</emphasis></term>
   <listitem>
 <para>Default:
 <literal>1.5</literal>.
@@ -952,7 +948,7 @@ dumptype-definition.
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>bumpdays</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>bumpdays</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>2 days</emphasis>.
@@ -968,7 +964,7 @@ dumptype-definition.
   </varlistentry>
   
   <varlistentry>
-  <term><emphasis remap='B'>diskfile</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>diskfile</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>disklist</emphasis>.
@@ -978,7 +974,7 @@ file holding client hosts, disks and other client dumping information.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>infofile</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>infofile</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <filename>/usr/adm/amanda/curinfo</filename>.
@@ -991,7 +987,7 @@ client, then a directory per disk, then a text file of data.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>logdir</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>logdir</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <filename>/usr/adm/amanda</filename>.
@@ -1003,7 +999,7 @@ files.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>indexdir</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>indexdir</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default
 <filename>/usr/adm/amanda/index</filename>.
@@ -1017,7 +1013,7 @@ option enabled.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>tapelist</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>tapelist</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>tapelist</emphasis>.
@@ -1026,7 +1022,7 @@ Amanda maintains this file with information about the active set of tapes.</para
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>device_output_buffer_size</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>device_output_buffer_size</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <literal>1280k</literal>.
@@ -1038,7 +1034,7 @@ useful on fast tape drives and optical media.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>tapebufs</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>tapebufs</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <literal>20</literal>.
@@ -1050,7 +1046,7 @@ to use.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>reserve</emphasis> <emphasis remap='I'> number</emphasis></term>
+  <term><emphasis remap='B'>reserve</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <literal>100</literal>.
@@ -1063,7 +1059,7 @@ the amount of holding disk space reserved for incrementals should be lowered.</p
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>autoflush</emphasis> <emphasis remap='I'> bool</emphasis></term>
+  <term><emphasis remap='B'>autoflush</emphasis> <emphasis remap='I'>bool</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>off</emphasis>.
@@ -1071,7 +1067,7 @@ Whether an amdump run will flush the dumps from holding disk to tape.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>amrecover_do_fsf</emphasis> <emphasis remap='I'> bool</emphasis></term>
+  <term><emphasis remap='B'>amrecover_do_fsf</emphasis> <emphasis remap='I'>bool</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>on</emphasis>.
@@ -1079,7 +1075,7 @@ Amrecover will call amrestore with the -f flag for faster positioning of the tap
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>amrecover_check_label</emphasis> <emphasis remap='I'> bool</emphasis></term>
+  <term><emphasis remap='B'>amrecover_check_label</emphasis> <emphasis remap='I'>bool</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>on</emphasis>.
@@ -1087,7 +1083,7 @@ Amrecover will call amrestore with the -l flag to check the label.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>amrecover_changer</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>amrecover_changer</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default: ''.
 Amrecover will use the changer if you use 'settape &lt;string&gt;' and that string
@@ -1095,7 +1091,7 @@ is the same as the amrecover_changer setting.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>columnspec</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>columnspec</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para> default: "HostName=0:12:12,Disk=1:11:11,Level=1:1:1,OrigKB=1:-7:0,OutKB=1:-7:0,Compress=1:-6:1,DumpTime=1:-7:7,Dumprate=1:-6:1,TapeTime=1:-6:6,TapeRate=1:-6:1"</para>
 <para>Defines the width of columns <emphasis remap='B'>amreport</emphasis>
@@ -1150,7 +1146,7 @@ with one space before it.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>includefile</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>includefile</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>none</emphasis>.
@@ -1162,7 +1158,7 @@ Relative pathnames are relative to the configuration directory.
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_auth</emphasis> int</term>
+  <term><emphasis remap='B'>debug_auth</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>0</emphasis>.
@@ -1171,7 +1167,7 @@ Debug level of the auth module</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_event</emphasis> int</term>
+  <term><emphasis remap='B'>debug_event</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>0</emphasis>.
@@ -1180,7 +1176,7 @@ Debug level of the event module</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_holding</emphasis> int</term>
+  <term><emphasis remap='B'>debug_holding</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>0</emphasis>.
@@ -1189,7 +1185,7 @@ Debug level of the holdingdisk module</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_protocol</emphasis> int</term>
+  <term><emphasis remap='B'>debug_protocol</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>0</emphasis>.
@@ -1198,7 +1194,7 @@ Debug level of the protocol module</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_planner</emphasis> int</term>
+  <term><emphasis remap='B'>debug_planner</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>0</emphasis>.
@@ -1207,7 +1203,7 @@ Debug level of the planner process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_driver</emphasis> int</term>
+  <term><emphasis remap='B'>debug_driver</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>0</emphasis>.
@@ -1216,7 +1212,7 @@ Debug level of the driver process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_dumper</emphasis> int</term>
+  <term><emphasis remap='B'>debug_dumper</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>0</emphasis>.
@@ -1225,7 +1221,7 @@ Debug level of the dumper process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_chunker</emphasis> int</term>
+  <term><emphasis remap='B'>debug_chunker</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>0</emphasis>.
@@ -1234,7 +1230,7 @@ Debug level of the chunker process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_taper</emphasis> int</term>
+  <term><emphasis remap='B'>debug_taper</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>0</emphasis>.
@@ -1243,7 +1239,7 @@ Debug level of the taper process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>flush-threshold-dumped</emphasis> int</term>
+  <term><emphasis remap='B'>flush-threshold-dumped</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default: <emphasis remap='I'>0</emphasis>.
   Amanda will not begin writing data to a new volume until the amount of
@@ -1267,7 +1263,7 @@ Debug level of the taper process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>flush-threshold-scheduled</emphasis> int</term>
+  <term><emphasis remap='B'>flush-threshold-scheduled</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default: <emphasis remap='I'>0</emphasis>.
   Amanda will not begin writing data to a new volume until the sum of the
@@ -1298,7 +1294,7 @@ Debug level of the taper process</para>
 <!-- the entity '#215' below is U+00D7 MULTIPLICATION SIGN; the 'times' entity
      is not as portable as one might hope. -->
   <varlistentry>
-  <term><emphasis remap='B'>taperflush</emphasis> int</term>
+  <term><emphasis remap='B'>taperflush</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default: <emphasis remap='I'>0</emphasis>.
   At the end of a run, Amanda will start a new tape to flush remaining
@@ -1322,7 +1318,7 @@ Debug level of the taper process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>reserved-udp-port</emphasis> int,int</term>
+  <term><emphasis remap='B'>reserved-udp-port</emphasis> <emphasis remap='I'>int</emphasis>,<emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default: --with-udpportrange or 
 <emphasis remap='I'>512,1023</emphasis>.
@@ -1332,7 +1328,7 @@ Range is inclusive.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>reserved-tcp-port</emphasis> int,int</term>
+  <term><emphasis remap='B'>reserved-tcp-port</emphasis> <emphasis remap='I'>int</emphasis>,<emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default: --with-low-tcpportrange or 
 <emphasis remap='I'>512,1023</emphasis>.
@@ -1342,7 +1338,7 @@ Range is inclusive.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>unreserved-tcp-port</emphasis> int,int</term>
+  <term><emphasis remap='B'>unreserved-tcp-port</emphasis> <emphasis remap='I'>int</emphasis>,<emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default: --with-tcpportrange or 
 <emphasis remap='I'>1024,65535</emphasis>.
@@ -1375,7 +1371,7 @@ is a logical name for this holding disk.</para>
 
 <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>none</emphasis>.
@@ -1384,7 +1380,7 @@ A comment string describing this holding disk.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>directory</emphasis> <emphasis remap='I'> disk</emphasis></term>
+  <term><emphasis remap='B'>directory</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <filename>/dumps/amanda</filename>.
@@ -1393,7 +1389,7 @@ The path to this holding area.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>use</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>use</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>0 Gb</emphasis>.
@@ -1404,7 +1400,7 @@ If the value is negative, Amanda will use all available space minus that value.<
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>chunksize</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>chunksize</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>1 Gb</emphasis>.
@@ -1476,7 +1472,7 @@ are defined.</para>
 
 <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>auth</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>auth</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>bsd</emphasis>.
@@ -1485,7 +1481,7 @@ Type of authorization to perform between tape server and backup client hosts.  S
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>amandad_path</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>amandad_path</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>$libexec/amandad</emphasis>.
@@ -1495,7 +1491,7 @@ Specify the amandad path of the client, only use with rsh/ssh authentification.
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>client_username</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>client_username</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>CLIENT_LOGIN</emphasis>.
@@ -1517,7 +1513,7 @@ Specifies the port to connect to on the client.  It can be a service name or a n
 <!-- bumping parameters yanked from the global section above -->
 
   <varlistentry>
-  <term><emphasis remap='B'>bumpsize</emphasis> int</term>
+  <term><emphasis remap='B'>bumpsize</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>10 Mbytes</emphasis>.
@@ -1539,7 +1535,7 @@ See also the options
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>bumppercent</emphasis> int</term>
+  <term><emphasis remap='B'>bumppercent</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>0 percent</emphasis>.
@@ -1563,7 +1559,7 @@ See also the options
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>bumpmult</emphasis> <emphasis remap='I'> float</emphasis></term>
+  <term><emphasis remap='B'>bumpmult</emphasis> <emphasis remap='I'>float</emphasis></term>
   <listitem>
 <para>Default:
 <literal>1.5</literal>.
@@ -1582,7 +1578,7 @@ Mbytes for level two, 40 Mbytes for level three, and so on.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>bumpdays</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>bumpdays</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>2 days</emphasis>.
@@ -1594,7 +1590,7 @@ days, even if the other bump threshold criteria are met.</para>
   </varlistentry>
   
   <varlistentry>
-  <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>none</emphasis>.
@@ -1615,7 +1611,7 @@ compresses very little is backed up.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>compress [client|server]</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>compress</emphasis> [ <emphasis remap='B'>none</emphasis> | <emphasis remap='B'>client</emphasis> | <emphasis remap='B'>server</emphasis> ] [ <emphasis remap='B'>best</emphasis> | <emphasis remap='B'>fast</emphasis> | <emphasis remap='B'>custom</emphasis>]</term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>client fast</emphasis>.
@@ -1674,7 +1670,7 @@ or <emphasis remap='B'>mt</emphasis> option), Amanda (software) compression shou
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>dumpcycle</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>dumpcycle</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default: <emphasis remap='I'>10 days</emphasis>.
 The number of days in the backup cycle. Each disk using this set of options will get a full 
@@ -1684,7 +1680,7 @@ ten. Setting this to zero tries to do a full backup each run.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>encrypt [none|client|server]</emphasis></term>
+  <term><emphasis remap='B'>encrypt</emphasis> [<emphasis remap='B'>none</emphasis>|<emphasis remap='B'>client</emphasis>|<emphasis remap='B'>server</emphasis>]</term>
   <listitem>
 <para>Default: <emphasis remap='I'>none</emphasis>.
 To encrypt backup images, it can do so either on the backup client host before it crosses the network or on the tape
@@ -1729,7 +1725,7 @@ client-encryption AND server-compression is not supported.
 
 
   <varlistentry>
-  <term><emphasis remap='B'>estimate</emphasis> <emphasis remap='I'>client|calcsize|server [client|calcsize|server ..]</emphasis></term>
+  <term><emphasis remap='B'>estimate</emphasis>  [ <emphasis remap='B'>client</emphasis> | <emphasis remap='B'>calcsize</emphasis> | <emphasis remap='B'>server</emphasis> ]*</term>
   <listitem>
 <para>Default: <emphasis remap='I'>client</emphasis>.
 Determine the way Amanda estimates the size of each DLE before beginning a backup.  This is a list of acceptable estimate methods, and Amanda applies the first method supported by the application.  The methods are:</para>
@@ -1765,7 +1761,7 @@ Determine the way Amanda estimates the size of each DLE before beginning a backu
 
   
   <varlistentry>
-  <term><emphasis remap='B'>exclude</emphasis> [ list|file ][[optional][ append ][ <emphasis remap='I'>string</emphasis> ]+]</term>
+  <term><emphasis remap='B'>exclude</emphasis> [ <emphasis remap='B'>list</emphasis>|<emphasis remap='B'>file</emphasis> ][[<emphasis remap='B'>optional</emphasis>][ <emphasis remap='B'>append</emphasis> ][ <emphasis remap='I'>string</emphasis> ]+]</term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>file</emphasis>.
@@ -1817,7 +1813,7 @@ for a backup of <filename>/var</filename>,
 </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>holdingdisk</emphasis> [ never|auto|required ]</term>
+  <term><emphasis remap='B'>holdingdisk</emphasis> [ <emphasis remap='B'>never</emphasis>|<emphasis remap='B'>auto</emphasis>|<emphasis remap='B'>required</emphasis> ]</term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>auto</emphasis>.
@@ -1854,7 +1850,7 @@ to avoid backing up the holding disk into itself.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>ignore</emphasis> <emphasis remap='I'> boolean</emphasis></term>
+  <term><emphasis remap='B'>ignore</emphasis> <emphasis remap='I'>boolean</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>no</emphasis>.
@@ -1866,7 +1862,7 @@ some of which should not back up all the listed file systems.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>include</emphasis> [ list|file ][[optional][ append ][ <emphasis remap='I'>string</emphasis> ]+]</term>
+  <term><emphasis remap='B'>include</emphasis> [ <emphasis remap='B'>list</emphasis>|<emphasis remap='B'>file</emphasis> ][[<emphasis remap='B'>optional</emphasis>][ <emphasis remap='B'>append</emphasis> ][ <emphasis remap='I'>string</emphasis> ]+]</term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>file</emphasis>
@@ -1910,7 +1906,7 @@ If the file name is relative, the disk name being backed up is prepended.</para>
 </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>index</emphasis> <emphasis remap='I'> boolean</emphasis></term>
+  <term><emphasis remap='B'>index</emphasis> <emphasis remap='I'>boolean</emphasis></term>
   <listitem>
 <para>Default: <emphasis remap='I'>no</emphasis>.
 Whether an index (catalogue) of the backup should be generated and saved in
@@ -1920,7 +1916,7 @@ These catalogues are used by the <emphasis remap='B'>amrecover</emphasis> utilit
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>kencrypt</emphasis> <emphasis remap='I'> boolean</emphasis></term>
+  <term><emphasis remap='B'>kencrypt</emphasis> <emphasis remap='I'>boolean</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>no</emphasis>.
@@ -1929,7 +1925,7 @@ across the network from the backup client host to the tape server host.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>maxdumps</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>maxdumps</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <literal>1</literal>.
@@ -1938,7 +1934,7 @@ See also the main section parameter <emphasis remap='B'>inparallel</emphasis>.</
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>maxpromoteday</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>maxpromoteday</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <literal>10000</literal>.
@@ -1947,7 +1943,7 @@ promotion, set it to 1 or 2 if your disks get overpromoted.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>priority</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>priority</emphasis> [ <emphasis remap='B'>low</emphasis> | <emphasis remap='B'>medium</emphasis> | <emphasis remap='B'>high</emphasis> ]</term>
   <listitem>
 <para>Default: <emphasis remap='I'>medium</emphasis>.
 When there is no tape to write to, Amanda will do incremental backups
@@ -1956,7 +1952,7 @@ high (2), medium (1), low (0) or a number of your choice.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>program</emphasis> [DUMP|GNUTAR|APPLICATION]</term>
+  <term><emphasis remap='B'>program</emphasis> [ "DUMP" | "GNUTAR" | "APPLICATION" ]</term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>DUMP</emphasis>.
@@ -1985,19 +1981,19 @@ The type of backup to perform. Valid values are:</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>application</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>application</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>No default. Must be the name of an application if <emphasis>program</emphasis> is set to <emphasis remap='I'>APPLICATION</emphasis>. See APPLICATION SECTION below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>script</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>script</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>No default. Must be the name of a script. You can have many script. See SCRIPT SECTION below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>property</emphasis> [append] <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis>+</term>
+  <term><emphasis remap='B'>property</emphasis> [<emphasis remap='B'>append</emphasis>] <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis>+</term>
   <listitem>
 <para>These options can set various properties, they can be used by third
  party software to store information in the configuration file.
@@ -2009,7 +2005,7 @@ the property to set, and the others contains its values.
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>record</emphasis> <emphasis remap='I'> boolean</emphasis></term>
+  <term><emphasis remap='B'>record</emphasis> <emphasis remap='I'>boolean</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>yes</emphasis>.
@@ -2019,7 +2015,7 @@ This is normally enabled for daily backups and turned off for periodic archival 
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>skip-full</emphasis> <emphasis remap='I'> boolean</emphasis></term>
+  <term><emphasis remap='B'>skip-full</emphasis> <emphasis remap='I'>boolean</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>no</emphasis>. If <emphasis remap='I'>true</emphasis> and
@@ -2029,7 +2025,7 @@ level 1 incrementals in this configuration; this is probably a bug.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>skip-incr</emphasis> <emphasis remap='I'> boolean</emphasis></term>
+  <term><emphasis remap='B'>skip-incr</emphasis> <emphasis remap='I'>boolean</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>no</emphasis>. If <emphasis remap='I'>true</emphasis> and
@@ -2037,7 +2033,7 @@ level 1 incrementals in this configuration; this is probably a bug.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>ssh_keys</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>ssh_keys</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>No default</emphasis>.
@@ -2045,7 +2041,7 @@ The key file the ssh auth will use, it must be the private key. If this paramete
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>starttime</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>starttime</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>none</emphasis>.
@@ -2055,7 +2051,7 @@ The value should be hh*100+mm, e.g. 6:30PM (18:30) would be entered as
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>strategy</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>strategy</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
   <para>Default: <emphasis remap='I'>standard</emphasis>.
   Strategy to use when planning what level of backup to run next. Values are:</para>
@@ -2097,7 +2093,7 @@ The value should be hh*100+mm, e.g. 6:30PM (18:30) would be entered as
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>tape_splitsize</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>tape_splitsize</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>none</emphasis>.
@@ -2114,7 +2110,7 @@ A good rule of thumb, usually, is 1/10 of the size of your tape.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>split_diskbuffer</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>split_diskbuffer</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>none</emphasis>.
@@ -2124,7 +2120,7 @@ When dumping a split dump in PORT-WRITE mode (usually meaning "no holding disk")
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>fallback_splitsize</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>fallback_splitsize</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>10M</emphasis>.
@@ -2236,7 +2232,7 @@ option in the main part of the config file.</para>
 <para>The tapetype options and values are:</para>
 <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>none</emphasis>.
@@ -2244,7 +2240,7 @@ A comment string describing this set of tape information.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>filemark</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>filemark</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>1 kbytes</emphasis>.
@@ -2254,7 +2250,7 @@ convert it to kbytes using the device density.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>length</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>length</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>2000 kbytes</emphasis>. How much data will fit on a tape, expressed in kbytes.</para>
@@ -2268,7 +2264,7 @@ regardless of what value is entered for <emphasis remap='B'>length</emphasis>
   </varlistentry>
 
 <varlistentry>
-<term><emphasis remap='B'>blocksize</emphasis> <emphasis remap='I'> int</emphasis></term>
+<term><emphasis remap='B'>blocksize</emphasis> <emphasis remap='I'>int</emphasis></term>
 <listitem>
 <para>Default:
 <emphasis remap='I'>32 kbytes</emphasis>.
@@ -2276,7 +2272,7 @@ How much data will be written in each tape record, expressed in kbytes.  This is
   </listitem>
   </varlistentry>
 <varlistentry>
-<term><emphasis remap='B'>readblocksize</emphasis> <emphasis remap='I'> int</emphasis></term>
+<term><emphasis remap='B'>readblocksize</emphasis> <emphasis remap='I'>int</emphasis></term>
 <listitem>
 <para>Default: <emphasis remap="I">32 kytes</emphasis>
 How much data will be read in each tape record.  This can be used to override a
@@ -2290,7 +2286,7 @@ tape devices.
   </varlistentry>
   
   <varlistentry>
-  <term><emphasis remap='B'>speed</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>speed</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>200 bps</emphasis>.
@@ -2299,7 +2295,7 @@ This parameter is NOT currently used by Amanda.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>lbl-templ</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>lbl-templ</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>A PostScript template file used by
 <emphasis remap='B'>amreport</emphasis>
@@ -2374,7 +2370,7 @@ leaving throttling up to the operating system and network hardware.</para>
 <para>The interface options and values are:</para>
 <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>none</emphasis>.
@@ -2382,7 +2378,7 @@ A comment string describing this set of network information.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>use</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <term><emphasis remap='B'>use</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>8000 Kbps</emphasis>.
@@ -2436,7 +2432,7 @@ A comment string describing this application.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>property</emphasis> [append] [priority] <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis>+</term>
+  <term><emphasis remap='B'>property</emphasis> [<emphasis remap='B'>append</emphasis>] [<emphasis remap='B'>priority</emphasis>] <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis>+</term>
   <listitem>
 <para>No default. You can set property for the application, each application have a different set of property. Both strings are quoted; the first string contains the name of
 the property to set, and the others contains its values.
@@ -2484,13 +2480,13 @@ A comment string describing this script.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>order</emphasis> int</term>
+  <term><emphasis remap='B'>order</emphasis> <emphasis remap='I'>int</emphasis></term>
   <listitem>
 <para>Default: <emphasis remap='I'>5000</emphasis>. Scripts are executed in that order, it is useful if you have many scripts and they must be executed in a spefific order.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>execute_where</emphasis> [client|server]</term>
+  <term><emphasis remap='B'>execute_where</emphasis> [ <emphasis remap='B'>client</emphasis> | <emphasis remap='B'>server</emphasis> ]</term>
   <listitem>
 <para>Default: <emphasis remap='I'>client</emphasis>. Where the script must be executed, on the client or server.</para>
   </listitem>
@@ -2619,7 +2615,7 @@ script --post-recover
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>property</emphasis> [append] [priority] <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis>+</term>
+  <term><emphasis remap='B'>property</emphasis> [<emphasis remap='B'>append</emphasis>] [<emphasis remap='B'>priority</emphasis>] <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis>+</term>
   <listitem>
 <para>No default. You can set property for the script, each script have a different set of property. Both strings are quoted; the first string contains the name of
 the property to set, and the others contains its values.
