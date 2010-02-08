@@ -190,6 +190,9 @@ typedef enum {
     last_feature
 } am_feature_e;
 
+/* don't include this struct or the subsequent functions in Amanda::Feature SWIG */
+#ifndef AMANDA_FEATURE_SWG
+
 typedef struct am_feature_s {
     size_t		size;
     unsigned char	*bytes;
@@ -198,6 +201,7 @@ typedef struct am_feature_s {
 /*
  * Functions.
  */
+
 extern am_feature_t *am_init_feature_set(void);
 extern am_feature_t *am_set_default_feature_set(void);
 extern am_feature_t *am_allocate_feature_set(void);
@@ -207,5 +211,7 @@ extern int am_remove_feature(am_feature_t *f, am_feature_e n);
 extern int am_has_feature(am_feature_t *f, am_feature_e n);
 extern char *am_feature_to_string(am_feature_t *f);
 extern am_feature_t *am_string_to_feature(char *s);
+
+#endif
 
 #endif	/* !AMFEATURES_H */

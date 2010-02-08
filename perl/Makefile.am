@@ -216,6 +216,17 @@ MAINTAINERCLEANFILES += Amanda/Disklist.c Amanda/Disklist.pm
 endif
 EXTRA_DIST += Amanda/Disklist.swg Amanda/Disklist.pm Amanda/Disklist.pod
 
+# PACKAGE: Amanda::Feature
+libFeaturedir = $(amperldir)/auto/Amanda/Feature
+libFeature_LTLIBRARIES = libFeature.la
+libFeature_la_SOURCES = Amanda/Feature.c $(AMGLUE_SWG)
+libFeature_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
+libFeature_la_LIBADD = libamglue.la \
+	$(top_builddir)/common-src/libamanda.la
+Amanda_DATA += Amanda/Feature.pm
+MAINTAINERCLEANFILES += Amanda/Feature.c Amanda/Feature.pm
+EXTRA_DIST += Amanda/Feature.swg Amanda/Feature.pm Amanda/Feature.pod
+
 if WANT_SERVER
 # PACKAGE: Amanda::Interactive
 Amanda_DATA += Amanda/Interactive.pm

@@ -1,3 +1,11 @@
+2010-02-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am perl/Amanda/Feature.pod perl/Amanda/Feature.swg:
+	  SWIG amfeatures
+	* common-src/Makefile.am common-src/amfeatures.c: remove old hand-run
+	  tests
+	* common-src/amfeatures.h: add SWIG conditionals
+	* installcheck/Makefile.am installcheck/Amanda_Feature.pl: test it
+
 2010-02-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Config.pod: document autolabel format
 	* perl/Amanda/Config.swg: don't use PL_sv_undef as a hash val

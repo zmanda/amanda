@@ -10,6 +10,7 @@ common_tests = \
 	Amanda_Archive \
 	Amanda_Config \
 	Amanda_Debug \
+	Amanda_Feature \
 	Amanda_IPC_Binary \
 	Amanda_IPC_LineProtocol \
 	Amanda_MainLoop \

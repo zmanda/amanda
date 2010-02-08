@@ -1,0 +1,70 @@
+/*
+ * Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+ *
+ * Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
+ * Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
+ */
+
+%perlcode %{
+
+=head1 NAME
+
+Amanda::Feature - interface to Amanda feature bitfields
+
+=head1 SYNOPSIS
+
+    # set up features for this instance and print them
+    my $features = Amanda::Feature::Set->mine();
+    print "my features: $features\n";
+
+    # parse the other side's features
+    my $client_feat = Amanda::Feature::Set->from_string($feat_str);
+
+    # or assume the other side's features are old
+    my $client_feat = Amanda::Feature::Set->old()
+
+    # test for a feature
+    if ($feat->has($Amanda::Feature::fe_options_bsd_auth)) {
+	print "has BSD auth\n";
+    }
+
+=head1 DESCRIPTION
+
+C<Amanda::Feature::Set> objects are fairly simple.  The three constructors are
+shown in the SYNOPSIS: C<mine> (all currently-supported features), C<old> (only
+the features present in versions of Amanda before features were invented), or
+C<from_string>.
+
+An object has three methods to address specific bits:
+
+    # set a bit
+    $feat->add($Amanda::Feature::fe_req_xml);
+
+    # clear a bit
+    $feat->remove($Amanda::Feature::fe_req_xml);
+
+    # test a bit
+    if ($feat->has($Amanda::Feature::fe_req_xml)) ..
+
+And C<as_string> which converts the feature into a string.
+
+All features are available in scalars of the same name in the
+C<Amanda::Feature> namespace.
+
+=cut
+
+%}
+

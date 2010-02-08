@@ -153,7 +153,7 @@ version.c: genversion$(EXEEXT)
 BUILT_SOURCES += genversion.h version.c
 
 # these are used for testing only:
-TEST_PROGS = file bsdsecurity amfeatures 
+TEST_PROGS = file bsdsecurity
 
 CLEANFILES += *.test.c
 DISTCLEANFILES += version.c genversion genversion.h
@@ -186,9 +186,6 @@ bsdsecurity_LDADD = $(libamanda_a_LIBADD) \
 		    packet.lo \
 		    security.lo \
 		    ssh-security.lo
-
-amfeatures_SOURCES = amfeatures.test.c
-amfeatures_LDADD = $(libamanda_la_LIBADD) $(STANDARD_COMMON_STUFF)
 
 # libtestutils.la
 #
