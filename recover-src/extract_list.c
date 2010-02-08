@@ -1735,6 +1735,8 @@ extract_files_setup(
 	    amfree(clean_datestamp);
 	    return -1;
 	}
+    } else {
+	*tapesrv_features = *indexsrv_features;
     }
 
 
@@ -1991,7 +1993,8 @@ extract_files_child(
 	    script_t *script;
 
 	    merge_properties(dump_dle->application_property, proplist);
-	    application_property_add_to_argv(argv_ptr, dump_dle, NULL);
+	    application_property_add_to_argv(argv_ptr, dump_dle, NULL,
+					     tapesrv_features);
 	    for (scriptlist = dump_dle->scriptlist; scriptlist != NULL;
 		 scriptlist = scriptlist->next) {
 		script = (script_t *)scriptlist->data;

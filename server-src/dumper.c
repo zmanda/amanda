@@ -837,6 +837,10 @@ process_dumpline(
 	    break;
 	}
 
+	if (strcmp(tok, "no-op") == 0) {
+	    break;
+	}
+
 	if (strcmp(tok, "end") == 0) {
 	    SET(status, GOT_ENDLINE);
 	    break;

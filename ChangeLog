@@ -1,3 +1,15 @@
+2010-02-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c: New AMFEATURES application support option,
+	  application_property_add_to_argv take a amfeatures argument.
+	* client-src/client_util.h: New protoype.
+	* client-src/selfcheck.c, client-src/sendbackup.c,
+	  client-src/sendsize.c,
+	  recover-src/extract_list.c: Pass the server amfeatures as argument
+	  to application_property_add_to_argv.
+	* common-src/amfeatures.c: New fe_sendbackup_noop.
+	* common-src/amfeatures.h: New fe_sendbackup_noop.
+	* server-src/dumper.c: Ignore "sendbackup: no-op' message.
+
 2010-02-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am perl/Amanda/Feature.pod perl/Amanda/Feature.swg:
 	  SWIG amfeatures

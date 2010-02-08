@@ -2376,7 +2376,7 @@ getsize_application_api(
 	g_ptr_array_add(argv_ptr, stralloc("--calcsize"));
     }
 
-    application_property_add_to_argv(argv_ptr, dle, bsu);
+    application_property_add_to_argv(argv_ptr, dle, bsu, g_options->features);
 
     for (scriptlist = dle->scriptlist; scriptlist != NULL;
 	 scriptlist = scriptlist->next) {

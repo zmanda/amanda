@@ -641,7 +641,8 @@ void
 application_property_add_to_argv(
     GPtrArray *argv_ptr,
     dle_t *dle,
-    backup_support_option_t *bsu)
+    backup_support_option_t *bsu,
+    am_feature_t *amfeatures)
 {
     sle_t *incl, *excl;
 
@@ -682,6 +683,12 @@ application_property_add_to_argv(
 	if (bsu->exclude_optional && dle->exclude_optional) {
 	    g_ptr_array_add(argv_ptr, stralloc("--exclude-optional"));
 	    g_ptr_array_add(argv_ptr, stralloc("yes"));
+	}
+
+	if (bsu->features && amfeatures) {
+	    char *feature_string = am_feature_to_string(amfeatures);
+	    g_ptr_array_add(argv_ptr, stralloc("--amfeatures"));
+	    g_ptr_array_add(argv_ptr, feature_string);
 	}
 
 	if (dle->data_path == DATA_PATH_DIRECTTCP &&
@@ -832,6 +839,9 @@ backup_support_option(
 		bsu->recover_path = RECOVER_PATH_CWD;
 	    else if (strcasecmp(line+13, "REMOTE") == 0)
 		bsu->recover_path = RECOVER_PATH_REMOTE;
+	} else if (strncmp(line,"AMFEATURES ", 11) == 0) {
+	    if (strcmp(line+11, "YES") == 0)
+		bsu->features = 1;
 	} else {
 	    dbprintf(_("Invalid support line: %s\n"), line);
 	}

@@ -183,6 +183,7 @@ typedef enum {
     fe_xml_data_path,
     fe_xml_directtcp_list,
     fe_amidxtaped_datapath,
+    fe_sendbackup_noop,
 
     /*
      * All new features must be inserted immediately *before* this entry.

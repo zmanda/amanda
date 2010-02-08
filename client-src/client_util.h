@@ -65,6 +65,7 @@ typedef struct backup_support_option_s {
     int client_estimate;
     int multi_estimate;
     int smb_recover_mode;
+    int features;
     data_path_t data_path_set;  /* bitfield of all allowed data-path */
     recover_path_t recover_path;
 } backup_support_option_t;
@@ -118,7 +119,8 @@ int application_property_argv_size(dle_t *dle);
  */
 void application_property_add_to_argv(GPtrArray *argv_ptr,
 				      dle_t *dle,
-				      backup_support_option_t *bsu);
+				      backup_support_option_t *bsu,
+				      am_feature_t *amfeatures);
 
 char *fixup_relative(char *name, char *device);
 backup_support_option_t *backup_support_option(char *program,
