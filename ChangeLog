@@ -1,3 +1,6 @@
+2010-02-09 Dan Locks <dwlocks@zmanda.com>
+	*  amar-src/Makefile.am: add installperms stanza
+
 2010-02-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: Fix emphasis for keyword and type.
 

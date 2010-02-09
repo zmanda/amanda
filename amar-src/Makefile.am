@@ -36,3 +36,6 @@ noinst_PROGRAMS = $(TESTS)
 amar_test_SOURCES = amar-test.c
 amar_test_LDADD = libamar.la \
 	../common-src/libtestutils.la
+
+INSTALLPERMS_exec = \
+	dest=$(sbindir) chown=amanda chmod=0750 $(sbin_PROGRAMS)
