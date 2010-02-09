@@ -528,11 +528,9 @@ main(
     }
 
     /* establish a distinct data connection for dumpfile data */
-    if(am_has_feature(their_features, fe_recover_splits)) {
-	if(from_amandad == 1) {
-	    rst_flags->pipe_to_fd = datafdout;
-	}
-	else {
+    if (from_amandad == 1) {
+	rst_flags->pipe_to_fd = datafdout;
+    } else if(am_has_feature(their_features, fe_recover_splits)) {
 	    int data_fd;
 	    char *buf;
 
@@ -560,7 +558,6 @@ main(
 
 	    check_security_buffer(buf);
 	    rst_flags->pipe_to_fd = data_fd;
-	}
     }
     else {
 	rst_flags->pipe_to_fd = fileno(stdout);

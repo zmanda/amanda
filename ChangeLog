@@ -1,4 +1,8 @@
 2010-02-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* restore-src/amidxtaped.c: Check from_amandad before
+				    fe_recover_splits.
+
+2010-02-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: Fix note for tapecycle.
 
 2010-02-09  Paul C. Mantz <pcmantz@zmanda.com>
