@@ -184,8 +184,8 @@ sub calculate_stats
 
     ## initialize all relevant fields to 0
     map { $incr_stats->{$_} = $full_stats->{$_} = 0; }
-      qw/dumpdisks tapedisks tapechunks outsize origsize tapesize
-      coutsize corigsize taper_time dumper_time/;
+      qw/dumpdisk_count tapedisk_count tapechunk_count outsize origsize
+      tapesize coutsize corigsize taper_time dumper_time/;
 
     foreach my $dle_entry (@dles) {
 
@@ -194,8 +194,8 @@ sub calculate_stats
         my $stats =
           ( $dle->{estimate}{level} > 0 ) ? $incr_stats : $full_stats;
 
-        $stats->{tapechunks} += @{ $dle->{chunks} }
-          if ( exists $dle->{chunks} );
+        $stats->{tapechunk_count} += @{ $dle->{chunks} }
+          if (exists $dle->{chunks});
 
         foreach my $chunk ( @{ $dle->{chunks} } ) {
             $stats->{outsize} += $chunk->{kb};
@@ -217,7 +217,7 @@ sub calculate_stats
 
                 $stats->{origsize}    += $try->{dumper}{'orig-kb'};
                 $stats->{dumper_time} += $try->{dumper}{sec};
-                $stats->{dumpdisks}++;
+                $stats->{dumpdisk_count}++;
                 $dumpdisks->[$try->{dumper}{'level'}]++; #by level count
             }
 
@@ -226,7 +226,7 @@ sub calculate_stats
 
                 $stats->{tapesize}   += $try->{taper}{kb};
                 $stats->{taper_time} += $try->{taper}{sec};
-                $stats->{tapedisks}++;
+                $stats->{tapedisk_count}++;
                 $tapedisks->[$try->{taper}{'level'}]++; #by level count
                 $tapechunks->[$try->{taper}{'level'}] += @{ $dle->{chunks} }
                      if (exists $dle->{chunks});
@@ -400,9 +400,9 @@ sub output_tapeinfo
     my $run_tapes   = getconf($CNF_RUNTAPES);
 
     if ($run_tapes) {
-        ( $run_tapes > 1 )
-          ? print $fh "The next tape Amanda expects to use is: "
-          : print $fh "The next tapes Amanda expects to use are: ";
+        ($run_tapes > 1)
+          ? print $fh "The next tapes Amanda expects to use are: "
+          : print $fh "The next tape Amanda expects to use is: ";
     }
 
     foreach my $i ( 0 .. ( $run_tapes - 1 ) ) {
@@ -559,9 +559,9 @@ EOF
     print $fh swrite(
         $st_format,
         "Filesystems Dumped",
-        sprintf("%4d", $total_stats->{dumpdisks}),
-        sprintf("%4d", $full_stats->{dumpdisks}),
-        sprintf("%4d", $incr_stats->{dumpdisks}),
+        sprintf("%4d", $total_stats->{dumpdisk_count}),
+        sprintf("%4d", $full_stats->{dumpdisk_count}),
+        sprintf("%4d", $incr_stats->{dumpdisk_count}),
         (@{ $self->{dumpdisks} } > 1 ? by_level_count($self->{dumpdisks}) : "")
     );
 
@@ -594,10 +594,14 @@ EOF
 
     my $tape_usage = sub {
         my ($stat_ref) = @_;
-	return divzero((100 * ($stat_ref->{tapesize} +
-			($marksize *
-			 ($stat_ref->{tapedisks} + $stat_ref->{tapechunks})))),
-		       $tapesize);
+        return divzero(
+            100 * (
+                $marksize *
+                  ($stat_ref->{tapedisk_count} + $stat_ref->{tapechunk_count}) +
+                  $stat_ref->{tapesize}
+            ),
+            $tapesize
+        );
     };
 
     print $fh swrite(
@@ -623,16 +627,16 @@ EOF
     );
 
     print $fh swrite($st_format, "", "", "", "", "(level:#chunks ...)")
-      if $incr_stats->{tapechunks} > 0;
+      if $incr_stats->{tapechunk_count} > 0;
 
     # NOTE: only print out the per-level tapechunks if there are
     # incremental tapechunks
     print $fh swrite(
         $st_format,
         "Chunks Taped",
-        sprintf("%4d", $total_stats->{tapechunks}),
-        sprintf("%4d", $full_stats->{tapechunks}),
-        sprintf("%4d", $incr_stats->{tapechunks}),
+        sprintf("%4d", $total_stats->{tapechunk_count}),
+        sprintf("%4d", $full_stats->{tapechunk_count}),
+        sprintf("%4d", $incr_stats->{tapechunk_count}),
         (
             $incr_stats->{tapechunks} > 0
             ? by_level_count($self->{tapechunks})
