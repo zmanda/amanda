@@ -543,4 +543,33 @@
   </xsl:element>
 </xsl:template>
 
+<xsl:attribute-set name="amremapB">
+  <xsl:attribute name="remap">B</xsl:attribute>
+</xsl:attribute-set> 
+
+<xsl:attribute-set name="amremapI">
+  <xsl:attribute name="remap">I</xsl:attribute>
+</xsl:attribute-set> 
+
+<xsl:template match="amkeyword">
+  <xsl:element name="emphasis" use-attribute-sets="amremapB">
+    <xsl:value-of select="@keyword"/>
+    <xsl:apply-templates/>
+  </xsl:element>
+</xsl:template>
+
+<xsl:template match="amtype">
+  <xsl:element name="emphasis" use-attribute-sets="amremapI">
+    <xsl:value-of select="@type"/>
+    <xsl:apply-templates/>
+  </xsl:element>
+</xsl:template>
+
+<xsl:template match="amdefault">
+  <xsl:element name="emphasis" use-attribute-sets="amremapI">
+    <xsl:value-of select="@default"/>
+    <xsl:apply-templates/>
+  </xsl:element>
+</xsl:template>
+
 </xsl:stylesheet>

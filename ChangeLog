@@ -1,3 +1,8 @@
+2010-02-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xslt/expand-sambadoc.xsl: Define amkeyword, amtype and amdefault.
+	* man/xml-source/amanda-client.conf.5.xml,
+	  man/xml-source/amanda.conf.5.xml: Use them.
+
 2010-02-09 Dan Locks <dwlocks@zmanda.com>
 	*  amar-src/Makefile.am: add installperms stanza
 

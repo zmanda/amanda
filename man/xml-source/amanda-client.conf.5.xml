@@ -44,19 +44,19 @@ The syntax of &amclientconf; is identical to that for
 
 <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>conf</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><amkeyword>conf</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>Set by configure</emphasis>.
+<amdefault>Set by configure</amdefault>.
 The conf use by amrecover.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>client_username</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><amkeyword>client_username</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>CLIENT_LOGIN</emphasis>.
+<amdefault>CLIENT_LOGIN</amdefault>.
 Similar to the parameter of the same name in &amconf;, this specifies the username that
 &amrecover; should send when connecting to the server.  It should match the username
 specified in &amandahosts; on the server.</para>
@@ -64,119 +64,119 @@ specified in &amandahosts; on the server.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>client_port</emphasis> <emphasis remap='I'>int</emphasis>|<emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>client_port</amkeyword> [ <amtype>int</amtype> | <amtype>string</amtype> ]</term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>"amanda"</emphasis>.
+<amdefault>"amanda"</amdefault>.
 Similar to the parameter of the same name in &amconf;, this specifies the port to connect on the server. It can be a service name or a numeric port number.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>index_server</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><amkeyword>index_server</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>Set by configure</emphasis>.
+<amdefault>Set by configure</amdefault>.
 The amindexd server amrecover will connect to.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>tape_server</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><amkeyword>tape_server</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>Set by configure</emphasis>.
+<amdefault>Set by configure</amdefault>.
 The amidxtaped server amrecover will connect to.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>tapedev</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><amkeyword>tapedev</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>Set by configure</emphasis>.
+<amdefault>Set by configure</amdefault>.
 The tapedev amrecover will use.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>auth</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><amkeyword>auth</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>bsd</emphasis>.
+<amkeyword>"bsd"</amkeyword>.
 Type of authorization to perform between tape server and backup client hosts.</para>
-<para><emphasis remap='B'>bsd</emphasis>, bsd authorization with udp initial
+<para><amkeyword>"bsd"</amkeyword>, bsd authorization with udp initial
 connection and one tcp connection by data stream.</para>
-<para><emphasis remap='B'>bsdtcp</emphasis>, bsd authorization but use only
+<para><amkeyword>"bsdtcp"</amkeyword>, bsd authorization but use only
 one tcp connection.</para>
-<para><emphasis remap='B'>bsdudp</emphasis>, like bsd, but will use only one
+<para><amkeyword>"bsdudp"</amkeyword>, like bsd, but will use only one
 tcp connection for all data stream.</para>
-<para><emphasis remap='B'>krb5</emphasis> to use Kerberos-V
+<para><amkeyword>"krb5"</amkeyword> to use Kerberos-V
 authorization.</para>
-<para><emphasis remap='B'>local</emphasis>, if the client is the server, it 
+<para><amkeyword>"local"</amkeyword>, if the client is the server, it 
 doesn't require authencation setup.</para>
-<para><emphasis remap='B'>rsh</emphasis> to use rsh
+<para><amkeyword>"rsh"</amkeyword> to use rsh
 authorization.</para>
-<para><emphasis remap='B'>ssh</emphasis> to use OpenSSH
+<para><amkeyword>"ssh"</amkeyword> to use OpenSSH
 authorization.</para>
 
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>ssh_keys</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><amkeyword>ssh_keys</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>No default</emphasis>.
+<amdefault>No default</amdefault>.
 The key file the ssh auth will use, it must be the private key. If this parameter is not specified, then the default ssh key will be used.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>gnutar_list_dir</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><amkeyword>gnutar_list_dir</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default from configure 
-<emphasis remap='I'>--with-gnutar-listdir=DIR</emphasis>.
+<amdefault>--with-gnutar-listdir=DIR</amdefault>.
 The directory where gnutar keep its state file.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>mailer</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><amkeyword>mailer</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default found by configure. A mail program that can send mail with '<emphasis remap='I'>MAILER -s "subject" user &lt; message_file</emphasis>'.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>amandates</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><amkeyword>amandates</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default: 
-<emphasis remap='I'>/etc/amandates</emphasis>.
+<amdefault>/etc/amandates</amdefault>.
 The file where amanda keep the last date of each dumplevel.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>connect_tries</emphasis> int</term>
+  <term><amkeyword>connect_tries</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>3</emphasis>.
+<amdefault>3</amdefault>.
 How many times the server will try a connection.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>rep_tries</emphasis> int</term>
+  <term><amkeyword>rep_tries</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>5</emphasis>.
+<amdefault>5</amdefault>.
 How many times amandad will resend a REP packet if it doesn't get the ACK packet.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_amandad</emphasis> int</term>
+  <term><amkeyword>debug_amandad</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>0</emphasis>.
@@ -185,126 +185,126 @@ Debug level of the amandad process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_amidxtaped</emphasis> int</term>
+  <term><amkeyword>debug_amidxtaped</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the amidxtaped process</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_amindexd</emphasis> int</term>
+  <term><amkeyword>debug_amindexd</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the amindexd process</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_amrecover</emphasis> int</term>
+  <term><amkeyword>debug_amrecover</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the amrecover process</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_auth</emphasis> int</term>
+  <term><amkeyword>debug_auth</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the auth module</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_event</emphasis> int</term>
+  <term><amkeyword>debug_event</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the event module</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_holding</emphasis> int</term>
+  <term><amkeyword>debug_holding</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the holdingdisk module</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_protocol</emphasis> int</term>
+  <term><amkeyword>debug_protocol</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the protocol module</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_selfcheck</emphasis> int</term>
+  <term><amkeyword>debug_selfcheck</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the selfcheck process</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_sendsize</emphasis> int</term>
+  <term><amkeyword>debug_sendsize</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the sendsize process</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_sendbackup</emphasis> int</term>
+  <term><amkeyword>debug_sendbackup</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the sendbackup process</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>reserved-udp-port</emphasis> int,int</term>
+  <term><amkeyword>reserved-udp-port</amkeyword> <amtype>int</amtype>,<amtype>int</amtype></term>
   <listitem>
 <para>Default: --with-udpportrange or 
-<emphasis remap='I'>512,1023</emphasis>.
+<amdefault>512,1023</amdefault>.
 Reserved udp port that will be used (amrecover with bsd or bsdudp)</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>reserved-tcp-port</emphasis> int,int</term>
+  <term><amkeyword>reserved-tcp-port</amkeyword> <amtype>int</amtype>,<amtype>int</amtype></term>
   <listitem>
 <para>Default: --with-low-tcpportrange or 
-<emphasis remap='I'>512,1023</emphasis>.
+<amdefault>512,1023</amdefault>.
 Reserved tcp port that will be used (amrecover with bsdtcp)</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>unreserved-tcp-port</emphasis> int,int</term>
+  <term><amkeyword>unreserved-tcp-port</amkeyword> <amtype>int</amtype>,<amtype>int</amtype></term>
   <listitem>
 <para>Default: --with-tcpportrange or 
-<emphasis remap='I'>1025,65536</emphasis>.
+<amdefault>1025,65536</amdefault>.
 Unreserved tcp port that will be used (bsd, bsdudp)</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>property</emphasis> "name" "value"</term>
+  <term><amkeyword>property</amkeyword> <amtype>string</amtype> <amtype>string</amtype>+</term>
   <listitem>
-<para>Adds a global property for this client host, useful for e.g., Application API plugins.</para>
+<para>Adds a global property for this client host, useful for e.g., Application API plugins. The first string is the property name, the following strings are the property values</para>
   </listitem>
   </varlistentry>
 
@@ -315,33 +315,32 @@ Unreserved tcp port that will be used (bsd, bsdudp)</para>
 <para>The
 <emphasis remap='B'>amanda.conf</emphasis>
 file may define multiple types of application.
-The information is entered in a <emphasis remap='B'>application</emphasis>
+The information is entered in a <amkeyword>application</amkeyword>
 section, which looks like this:</para>
 
 <programlisting>
-define application "<emphasis remap='I'>name</emphasis>" {
-    <emphasis remap='I'>application-option</emphasis> <emphasis remap='I'>appli
-cation-value</emphasis>
+define application "<amtype>name</amtype>" {
+    <emphasis remap='I'>application-option</emphasis> <emphasis remap='I'>application-value</emphasis>
     <literal>...</literal>
 }
 </programlisting>
 
-<para><emphasis remap='I'>name</emphasis>
+<para><amtype>name</amtype>
 is the name of this type of application. It is referenced from the
-<emphasis remap='I'>dumptype</emphasis></para>
+<amkeyword>dumptype</amkeyword></para>
 
 <para>The application options and values are:</para>
 <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>none</emphasis>.
+<amdefault>none</amdefault>.
 A comment string describing this application.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>plugin</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>plugin</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>No default. Must be set to the name of the program. This program must be
 in the <emphasis remap='I'>$libexecdir/amanda/application</emphasis> directory
@@ -349,12 +348,12 @@ on the client.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>property</emphasis> [append] [priority] <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis>+</term>
+  <term><amkeyword>property</amkeyword> [<amkeyword>append</amkeyword>] [<amkeyword>priority</amkeyword>] <amtype>string</amtype> <amtype>string</amtype>+</term>
   <listitem>
 <para>No default. You can set property for the application, each application have a different set of property. Both strings are quoted; the first string contains the name of
 the property to set, and the others contains its values.
-<emphasis remap='B'>append</emphasis> keyword append the values to the list of values for that property.
-<emphasis remap='B'>priority</emphasis> keyword disallow the setting of that property on the server.
+<amkeyword>append</amkeyword> keyword append the values to the list of values for that property.
+<amkeyword>priority</amkeyword> keyword disallow the setting of that property on the server.
 </para>
   </listitem>
   </varlistentry>
@@ -369,142 +368,142 @@ The information is entered in a <emphasis remap='B'>script</emphasis>
 section, which looks like this:</para>
 
 <programlisting>
-define script "<emphasis remap='I'>name</emphasis>" {
+define script "<amtype>name</amtype>" {
     <emphasis remap='I'>script-option</emphasis> <emphasis remap='I'>script-value</emphasis>
     <literal>...</literal>
 }
 </programlisting>
 
-<para><emphasis remap='I'>name</emphasis>
+<para><amtype>name</amtype>
 is the name of this type of script. It is referenced from the
-<emphasis remap='I'>dumptype</emphasis></para>
+<amkeyword>dumptype</amkeyword></para>
 
 <para>The script options and values are:</para>
 <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>none</emphasis>.
+<amdefault>none</amdefault>.
 A comment string describing this script.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>plugin</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>plugin</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>No default. Must be set to the name of the program. This program must be in the <emphasis remap='I'>$libdir/amanda/application</emphasis> directory on the client and/or server.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>execute_where</emphasis> [client|server]</term>
+  <term><amkeyword>execute_where</amkeyword> [ <amkeyword>client</amkeyword> | <amkeyword>server</amkeyword> ]</term>
   <listitem>
-<para>Default: <emphasis remap='I'>client</emphasis>. Where the script must be executed, on the client or server. Only <emphasis remap='I'>client</emphasis> is valid.</para>
+<para>Default: <amkeyword>client</amkeyword>. Where the script must be executed, on the client or server. Only <amkeyword>client</amkeyword> is valid.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>execute_on</emphasis> <emphasis remap='I'>execute_on</emphasis>[,<emphasis remap='I'>execute_on</emphasis>]*</term>
+  <term><amkeyword>execute_on</amkeyword> <amtype>execute_on</amtype>[,<amtype>execute_on</amtype>]*</term>
   <listitem>
 <para>No default. When the script must be executed, you can specify many of them:</para>
     <!-- .RS -->
     <variablelist remap='TP'>
       <varlistentry>
-      <term><emphasis remap='B'>pre-dle-amcheck</emphasis></term>
+      <term><amkeyword>pre-dle-amcheck</amkeyword></term>
       <listitem>
 <para>Execute before the amcheck command for the dle.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>pre-host-amcheck</emphasis></term>
+      <term><amkeyword>pre-host-amcheck</amkeyword></term>
       <listitem>
 <para>Execute before the amcheck command for all dle for the client.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>post-dle-amcheck</emphasis></term>
+      <term><amkeyword>post-dle-amcheck</amkeyword></term>
       <listitem>
 <para>Execute after the amcheck command for the dle.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>post-host-amcheck</emphasis></term>
+      <term><amkeyword>post-host-amcheck</amkeyword></term>
       <listitem>
 <para>Execute after the amcheck command for all dle for the client.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>pre-dle-estimate</emphasis></term>
+      <term><amkeyword>pre-dle-estimate</amkeyword></term>
       <listitem>
 <para>Execute before the estimate command for the dle.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>pre-host-estimate</emphasis></term>
+      <term><amkeyword>pre-host-estimate</amkeyword></term>
       <listitem>
 <para>Execute before the estimate command for all dle for the client.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>post-dle-estimate</emphasis></term>
+      <term><amkeyword>post-dle-estimate</amkeyword></term>
       <listitem>
 <para>Execute after the estimate command for the dle.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>post-host-estimate</emphasis></term>
+      <term><amkeyword>post-host-estimate</amkeyword></term>
       <listitem>
 <para>Execute after the estimate command for all dle for the client.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>pre-dle-backup</emphasis></term>
+      <term><amkeyword>pre-dle-backup</amkeyword></term>
       <listitem>
 <para>Execute before the backup command for the dle.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>pre-host-backup</emphasis></term>
+      <term><amkeyword>pre-host-backup</amkeyword></term>
       <listitem>
 <para>Execute before the backup command for all dle for the client.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>post-dle-backup</emphasis></term>
+      <term><amkeyword>post-dle-backup</amkeyword></term>
       <listitem>
 <para>Execute after the backup command for the dle.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>post-host-backup</emphasis></term>
+      <term><amkeyword>post-host-backup</amkeyword></term>
       <listitem>
 <para>Execute after the backup command for all dle for the client.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>pre-recover</emphasis></term>
+      <term><amkeyword>pre-recover</amkeyword></term>
       <listitem>
 <para>Execute before any level is recovered.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>post-recover</emphasis></term>
+      <term><amkeyword>post-recover</amkeyword></term>
       <listitem>
 <para>Execute after all levels are recovered.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>pre-level-recover</emphasis></term>
+      <term><amkeyword>pre-level-recover</amkeyword></term>
       <listitem>
 <para>Execute before each level recovery.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>post-level-recover</emphasis></term>
+      <term><amkeyword>post-level-recover</amkeyword></term>
       <listitem>
 <para>Execute after each level recovery.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>inter-level-recover</emphasis></term>
+      <term><amkeyword>inter-level-recover</amkeyword></term>
       <listitem>
 <para>Execute between two levels of recovery.</para>
       </listitem>
@@ -513,12 +512,12 @@ A comment string describing this script.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>property</emphasis> [append] [priority] <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis>+</term>
+  <term><amkeyword>property</amkeyword> [<amkeyword>append</amkeyword>] [<amkeyword>priority</amkeyword>] <amtype>string</amtype> <amtype>string</amtype>+</term>
   <listitem>
 <para>No default. You can set property for the script, each script have a different set of property. Both strings are quoted; the first string contains the name of
 the property to set, and the others contains its values.
-<emphasis remap='B'>append</emphasis> keyword append the values to the list of values for that property.
-<emphasis remap='B'>priority</emphasis> keyword disallow the setting of that property on the server.
+<amkeyword>append</amkeyword> keyword append the values to the list of values for that property.
+<amkeyword>priority</amkeyword> keyword disallow the setting of that property on the server.
 </para>
   </listitem>
   </varlistentry>

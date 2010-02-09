@@ -52,25 +52,25 @@ The remainder of the line is ignored.</para>
 <refsect2><title>KEYWORDS AND IDENTIFIERS</title>
 
 <para>Keywords are case insensitive, i.e.
-<emphasis remap='B'>mailto</emphasis>
+<amkeyword>mailto</amkeyword>
 and
-<emphasis remap='B'>MailTo</emphasis>
+<amkeyword>MailTo</amkeyword>
 are treated the same.  Also, the characters
-<emphasis remap='B'>'-'</emphasis>
+'<amkeyword>-</amkeyword>'
 and
-<emphasis remap='B'>'_'</emphasis>
+'<amkeyword>_</amkeyword>'
 are interchangeable in all predefined Amanda keywords:
-<emphasis remap='B'>device_property</emphasis>
+<amkeyword>device_property</amkeyword>
 and
-<emphasis remap='B'>device-property</emphasis>
+<amkeyword>device-property</amkeyword>
 have the same meaning.</para>
 
 <para>Identifiers are names which are defined in the configuration itself, such
 as dumptypes or interfaces.  Identifiers are are case-insensitive, but
 sensitive to
-<emphasis remap='B'>'-'</emphasis>
+'<amkeyword>-</amkeyword>'
 vs.
-<emphasis remap='B'>'_'</emphasis>.
+'<amkeyword>_</amkeyword>'.
 Identifiers should be quoted in the configuration file, although For historical
 reasons, the quotes are optional.</para>
 
@@ -105,95 +105,95 @@ some of which have a multiplier effect:</para>
 
 <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>b byte bytes</emphasis></term>
+  <term><amkeyword>b byte bytes</amkeyword></term>
   <listitem>
 <para>Some number of bytes.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>bps</emphasis></term>
+  <term><amkeyword>bps</amkeyword></term>
   <listitem>
 <para>Some number of bytes per second.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>k kb kbyte kbytes kilobyte kilobytes</emphasis></term>
+  <term><amkeyword>k kb kbyte kbytes kilobyte kilobytes</amkeyword></term>
   <listitem>
 <para>Some number of kilobytes (bytes*1024).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>kps kbps</emphasis></term>
+  <term><amkeyword>kps kbps</amkeyword></term>
   <listitem>
 <para>Some number of kilobytes per second (bytes*1024).</para>
 <para>It is the default multiplier for all size options.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>m mb meg mbyte mbytes megabyte megabytes</emphasis></term>
+  <term><amkeyword>m mb meg mbyte mbytes megabyte megabytes</amkeyword></term>
   <listitem>
 <para>Some number of megabytes (bytes*1024*1024).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>mps mbps</emphasis></term>
+  <term><amkeyword>mps mbps</amkeyword></term>
   <listitem>
 <para>Some number of megabytes per second (bytes*1024*1024).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>g gb gbyte gbytes gigabyte gigabytes</emphasis></term>
+  <term><amkeyword>g gb gbyte gbytes gigabyte gigabytes</amkeyword></term>
   <listitem>
 <para>Some number of gigabytes (bytes*1024*1024*1024).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>t tb tbyte tbytes terabyte terabytes</emphasis></term>
+  <term><amkeyword>t tb tbyte tbytes terabyte terabytes</amkeyword></term>
   <listitem>
 <para>Some number of terabytes (bytes*1024*1024*1024*1024).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>tape tapes</emphasis></term>
+  <term><amkeyword>tape tapes</amkeyword></term>
   <listitem>
 <para>Some number of tapes.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>day days</emphasis></term>
+  <term><amkeyword>day days</amkeyword></term>
   <listitem>
 <para>Some number of days.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>week weeks</emphasis></term>
+  <term><amkeyword>week weeks</amkeyword></term>
   <listitem>
 <para>Some number of weeks (days*7).</para>
 
 <note><para>The value
-<emphasis remap='B'>inf</emphasis>
+<amkeyword>inf</amkeyword>
 may be used in most places where an integer is expected
 to mean an infinite amount.</para>
 
 <para>Boolean arguments may have any of the values
-<emphasis remap='B'>1</emphasis>,
-<emphasis remap='B'>y</emphasis>,
-<emphasis remap='B'>yes</emphasis>,
-<emphasis remap='B'>t</emphasis>,
-<emphasis remap='B'>true</emphasis>
+<amkeyword>1</amkeyword>,
+<amkeyword>y</amkeyword>,
+<amkeyword>yes</amkeyword>,
+<amkeyword>t</amkeyword>,
+<amkeyword>true</amkeyword>
 or
-<emphasis remap='B'>on</emphasis>
+<amkeyword>on</amkeyword>
 to indicate a true state, or
-<emphasis remap='B'>0</emphasis>,
-<emphasis remap='B'>n</emphasis>,
-<emphasis remap='B'>no</emphasis>,
-<emphasis remap='B'>f</emphasis>,
-<emphasis remap='B'>false</emphasis>
+<amkeyword>0</amkeyword>,
+<amkeyword>n</amkeyword>,
+<amkeyword>no</amkeyword>,
+<amkeyword>f</amkeyword>,
+<amkeyword>false</amkeyword>
 or
-<emphasis remap='B'>off</emphasis>
+<amkeyword>off</amkeyword>
 to indicate a false state.
 If no argument is given,
-<emphasis remap='B'>true</emphasis>
+<amkeyword>true</amkeyword>
 is assumed.
 </para>
 </note>
@@ -293,10 +293,10 @@ length of 200M.</para>
 
 <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>org</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>org</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>daily</emphasis>.
+<amdefault>"daily"</amdefault>.
 A descriptive name for the configuration.
 This string appears in the Subject line of mail reports.
 Each Amanda configuration should have a different string to keep
@@ -304,47 +304,47 @@ mail reports distinct.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>mailer</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>mailer</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default found by configure. A mail program that can send mail with '<emphasis remap='I'>MAILER -s "subject" user &lt; message_file</emphasis>'.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>mailto</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>mailto</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>operators</emphasis>.
+<amdefault>"operators"</amdefault>.
 A space separated list of recipients for mail reports.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>send-amreport-on</emphasis> [ <emphasis remap='B'>all</emphasis> | <emphasis remap='B'>strange</emphasis> | <emphasis remap='B'>error</emphasis> | <emphasis remap='B'>never</emphasis> ]</term>
+  <term><amkeyword>send-amreport-on</amkeyword> [ <amkeyword>all</amkeyword> | <amkeyword>strange</amkeyword> | <amkeyword>error</amkeyword> | <amkeyword>never</amkeyword> ]</term>
   <listitem>
 <para>Default:
-<emphasis remap='B'>all</emphasis>.
+<amkeyword>all</amkeyword>.
 Specify which types of messages will trigger an email from amreport. amreport is used by amdump and amflush.</para>
   <!-- .RS -->
     <variablelist remap='TP'>
       <varlistentry>
-      <term><emphasis remap='B'>all</emphasis></term>
+      <term><amkeyword>all</amkeyword></term>
       <listitem>
 <para>Send an email on any message.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>strange</emphasis></term>
+      <term><amkeyword>strange</amkeyword></term>
       <listitem>
 <para>Send an email on strange or error message. A strange message occurs when the dump succeeded, but returned one or more errors unknown to Amanda.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>error</emphasis></term>
+      <term><amkeyword>error</amkeyword></term>
       <listitem>
 <para>Send an email only on error messages.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>never</emphasis></term>
+      <term><amkeyword>never</amkeyword></term>
       <listitem>
 <para>Never send an email.</para>
       </listitem>
@@ -353,73 +353,73 @@ Specify which types of messages will trigger an email from amreport. amreport is
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>dumpcycle</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>dumpcycle</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>10 days</emphasis>.
+<amdefault>10 days</amdefault>.
 The number of days in the backup cycle.
 Each disk will get a full backup at least this often.
 Setting this to zero tries to do a full backup each run.</para>
 <note><para>This parameter may also be set in a specific
-<emphasis remap='B'>dumptype</emphasis>
+<amkeyword>dumptype</amkeyword>
 (see below).
 This value sets the default for all
-<emphasis remap='B'>dumptype</emphasis>s
+<amkeyword>dumptype</amkeyword>s
 so must appear in
 <emphasis remap='B'>amanda.conf</emphasis>
 before any
-<emphasis remap='B'>dumptype</emphasis>s
+<amkeyword>dumptype</amkeyword>s
 are defined.</para>
 </note>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>runspercycle</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>runspercycle</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>same as dumpcycle</emphasis>.
+<amdefault>same as dumpcycle</amdefault>.
 The number of amdump runs in 
-<emphasis remap='B'>dumpcycle</emphasis>
+<amkeyword>dumpcycle</amkeyword>
 days.
 A value of 0 means the same value as 
-<emphasis remap='B'>dumpcycle</emphasis>.
+<amkeyword>dumpcycle</amkeyword>.
 A value of -1 means guess the number of runs from the &tapelist; file,
 which is the number of tapes used in the last 
-<emphasis remap='B'>dumpcycle</emphasis>
+<amkeyword>dumpcycle</amkeyword>
 days / 
-<emphasis remap='B'>runtapes</emphasis>.</para>
+<amkeyword>runtapes</amkeyword>.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>tapecycle</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>tapecycle</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>15 tapes</emphasis>.
-Typically tapes are used by Amanda in an ordered rotation. The <emphasis remap='B'>tapecycle</emphasis> parameter 
+<amdefault>15 tapes</amdefault>.
+Typically tapes are used by Amanda in an ordered rotation. The <amkeyword>tapecycle</amkeyword> parameter 
 defines the size of that rotation. This parameter must be be larger than the number of tapes
 used in a dumpcycle.</para>
 <para>
 The number of tapes per dumpcycle is calculated by multiplying the number of
-&amdump; runs per dump cycle <emphasis remap='B'>runspercycle</emphasis> (the
+&amdump; runs per dump cycle <amkeyword>runspercycle</amkeyword> (the
 number of &amdump; runs per dump cycle) and <emphasis
 remap='B'>runtapes</emphasis> (the number of tapes used per run). Typically
-<emphasis remap='B'>tapecycle</emphasis> is set to two or four times the tapes
+<amkeyword>tapecycle</amkeyword> is set to two or four times the tapes
 per dumpcycle.</para>
 
 <note>Amanda is commonly misconfigured with <emphasis
 remap='B'>tapecycle</emphasis> equal to the number of tapes per dumpcycle.  In
-this misconfiguration, when all <emphasis remap='B'>tapecycle</emphasis> tapes
+this misconfiguration, when all <amkeyword>tapecycle</amkeyword> tapes
 are used, Amanda has no free tape to which it can write the next backup, and the
-dump will fail.  <emphasis remap='B'>tapecycle</emphasis> must be at least one
+dump will fail.  <amkeyword>tapecycle</amkeyword> must be at least one
 tape larger than the tapes per dumpcycle.
 </note>
 
 <para>While Amanda is always willing to use a new tape in its rotation, it refuses to reuse a tape until at
-least '<emphasis remap='B'>tapecycle</emphasis> -1' number of other tapes have been used. 
+least '<amkeyword>tapecycle</amkeyword> -1' number of other tapes have been used. 
 </para>
 <para>
-It is considered good administrative practice to set the <emphasis remap='B'>tapecycle</emphasis> parameter 
+It is considered good administrative practice to set the <amkeyword>tapecycle</amkeyword> parameter 
 slightly lower than the actual number of tapes in rotation. This allows the administrator to more easily cope 
 with damaged or misplaced tapes or schedule adjustments that call for slight adjustments in the rotation order.
 </para>
@@ -427,10 +427,10 @@ with damaged or misplaced tapes or schedule adjustments that call for slight adj
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>usetimestamps</emphasis>
-	<emphasis remap='I'>bool</emphasis></term>
+  <term><amkeyword>usetimestamps</amkeyword>
+	<amtype>bool</amtype></term>
     <listitem>
-      <para>Default: <emphasis remap='B'>Yes</emphasis>.
+      <para>Default: <amkeyword>Yes</amkeyword>.
 This option allows Amanda to track multiple runs per calendar
 day. The only reason one might disable it is that Amanda versions before 2.5.1
 can't read logfiles written when this option was enabled.
@@ -439,10 +439,10 @@ can't read logfiles written when this option was enabled.
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>label_new_tapes</emphasis>
-        <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>label_new_tapes</amkeyword>
+        <amtype>string</amtype></term>
 <listitem>
-    <para>Deprecated, use <emphasis remap='B'>autolabel</emphasis> option.</para>
+    <para>Deprecated, use <amkeyword>autolabel</amkeyword> option.</para>
     <para>Default: not set.
 When set, this directive will cause Amanda to automatically write an Amanda
 tape label to any blank tape she encounters. This option is DANGEROUS 
@@ -459,9 +459,13 @@ Example:
 </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>autolabel</emphasis>
-        <emphasis remap='I'>string</emphasis>
-	[<emphasis remap='B'>any</emphasis>|<emphasis remap='B'>other_config</emphasis>|<emphasis remap='B'>non_amanda</emphasis>|<emphasis remap='B'>volume_error</emphasis>|<emphasis remap='B'>empty</emphasis>]*</term>
+  <term><amkeyword>autolabel</amkeyword>
+        <amtype>string</amtype>
+        [<amkeyword>any</amkeyword>]
+        [<amkeyword>other_config</amkeyword>]
+        [<amkeyword>non_amanda</amkeyword>]
+        [<amkeyword>volume_error</amkeyword>]
+        [<amkeyword>empty</amkeyword>]</term>
 <listitem>
     <para>Default: not set.
 When set, this directive will cause Amanda to automatically write an Amanda
@@ -473,36 +477,36 @@ labels. The template should contain some number of contiguous '%'
 characters, which will be replaced with a generated number. Be sure to
 specify enough '%' characters that you do not run out of tape labels.
 Example:
-<markup>autolabel "DailySet1-%%%" empty</markup>
+<markup>autolabel &quot;DailySet1-%%%&quot; empty</markup>
 </para>
 <variablelist remap='TP'>
 <varlistentry>
-<term>any</term>
-<listitem>equivalent to 'other_config non_amanda volume_error empty'
+<term><amkeyword>any</amkeyword></term>
+<listitem>equivalent to '<amkeyword>other_config non_amanda volume_error empty</amkeyword>'
 </listitem>
 </varlistentry>
 <varlistentry>
-<term>other_config</term>
+<term><amkeyword>other_config</amkeyword></term>
 <listitem>Label volumes with a valid Amanda label that do not match our
-<emphasis remap='B'>labelstr</emphasis>. Danger: this may erase volumes
+<amkeyword>labelstr</amkeyword>. Danger: this may erase volumes
 from other Amanda configurations without warning!
 </listitem>
 </varlistentry>
 <varlistentry>
-<term>non_amanda</term>
+<term><amkeyword>non_amanda</amkeyword></term>
 <listitem>Label volumes which do not start with data that resembles an
 Amanda header. Danger: this may erase volumes from other backup applications
 without warning!
 </listitem>
 </varlistentry>
 <varlistentry>
-<term>volume_error</term>
+<term><amkeyword>volume_error</amkeyword></term>
 <listitem>Label volumes where an error occurs while trying to read the label.
 Danger: this may erase arbitrary volumes due to transient errors.
 </listitem>
 </varlistentry>
 <varlistentry>
-<term>empty</term>
+<term><amkeyword>empty</amkeyword></term>
 <listitem>Label volumes where a read returns 0 bytes.
 </listitem>
 </varlistentry>
@@ -511,10 +515,10 @@ Danger: this may erase arbitrary volumes due to transient errors.
 </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>dumpuser</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>dumpuser</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>amanda</emphasis>.
+<amdefault>&quot;amanda&quot;</amdefault>.
 The login name Amanda uses to run the backups.
 The backup client hosts must allow access
 from the tape server host as this user via
@@ -525,45 +529,45 @@ depending on how the Amanda software was built.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>printer</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>printer</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Printer to use when doing tape labels.
 See the
-<emphasis remap='B'>lbl-templ</emphasis>
-<emphasis remap='B'>tapetype</emphasis>
+<amkeyword>lbl-templ</amkeyword>
+<amkeyword>tapetype</amkeyword>
 option.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>tapedev</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>tapedev</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<filename>null:</filename>.
-The device name, referencing the name of a "device" section in the configuration file.  See
+<amdefault>&quot;null:&quot;</amdefault>.
+The device name, referencing the name of a &quot;device&quot; section in the configuration file.  See
 <manref name="amanda-devices" vol="7"/>
 for more information on device names.</para>
 
 <para>If a tape changer is configured
 (see the
-<emphasis remap='B'>tpchanger</emphasis>
+<amkeyword>tpchanger</amkeyword>
 option), this option might not be used.</para>
 
-<para>If <emphasis remap='B'>tapedev</emphasis> is
+<para>If <amkeyword>tapedev</amkeyword> is
 <emphasis remap='B'>null:</emphasis>,
 programs such as
 &amdump;
 will run normally but all images will be thrown away.
 This should only be used for debugging and testing,
 and probably only with the
-<emphasis remap='B'>record</emphasis>
+<amkeyword>record</amkeyword>
 option set to
-<emphasis remap='I'>no</emphasis>.</para>
+<amdefault>no</amdefault>.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>device_property</emphasis> <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>device_property</amkeyword> <amtype>string</amtype> <amtype>string</amtype></term>
   <listitem>
 <para>These options can set various device properties.  See
 <manref name="amanda-devices" vol="7"/>
@@ -579,22 +583,21 @@ device_property "BLOCK_SIZE" "128k"
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>property</emphasis> [<emphasis remap='B'>append</emphasis>] <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis>+</term>
+  <term><amkeyword>property</amkeyword> [<amkeyword>append</amkeyword>] <amtype>string</amtype> <amtype>string</amtype>+</term>
   <listitem>
 <para>These options can set various properties, they can be used by third
  party software to store information in the configuration file.
 Both strings are quoted; the first string contains the name of
 the property to set, and the others contains its values.
-<emphasis remap='B'>append</emphasis> keyword append the values to the list of values for that property.
+<amkeyword>append</amkeyword> keyword append the values to the list of values for that property.
 </para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>tpchanger</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>tpchanger</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>Default:
-<emphasis remap='I'>none</emphasis>.
+<para>Default: not set.
 The name of the tape changer.
 If a tape changer is not configured, this option is not used
 and should be commented out of the configuration file.</para>
@@ -605,32 +608,32 @@ and enter that here.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>changerdev</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>changerdev</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<filename>/dev/null</filename>.
+<amdefault>&quot;dev/null&quot;</amdefault>.
 A tape changer configuration parameter.
 Usage depends on the particular changer defined with the
-<emphasis remap='B'>tpchanger</emphasis>
+<amkeyword>tpchanger</amkeyword>
 option.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>changerfile</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>changerfile</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<filename>/usr/adm/amanda/log/changer-status</filename>.
+<amdefault>&quot;usr/adm/amanda/log/changer-status&quot;</amdefault>.
 A tape changer configuration parameter.
 Usage depends on the particular changer defined with the
-<emphasis remap='B'>tpchanger</emphasis>
+<amkeyword>tpchanger</amkeyword>
 option.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>runtapes</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>runtapes</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<literal>1</literal>.
+<amdefault>1</amdefault>.
 The maximum number of tapes used in a single run.
 If a tape changer is not configured, this option is not used
 and should be commented out of the configuration file.</para>
@@ -645,54 +648,54 @@ the backup image Amanda was processing starts over again on the next tape.</para
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>maxdumpsize</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>maxdumpsize</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>runtapes</emphasis>*<emphasis remap='I'>tape_length</emphasis>.
+<amdefault><amkeyword>runtapes</amkeyword>*<amkeyword>tape_length</amkeyword></amdefault>.
 Maximum number of bytes the planner will schedule for a run.</para>
 <para>The default unit is Kbytes if it is not specified.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>taperalgo</emphasis> [ <emphasis remap='B'>first</emphasis> | <emphasis remap='B'>firstfit</emphasis> | <emphasis remap='B'>largest</emphasis> | <emphasis remap='B'>largestfit</emphasis> | <emphasis remap='B'>smallest</emphasis> | <emphasis remap='B'>last</emphasis> ]</term>
+  <term><amkeyword>taperalgo</amkeyword> [ <amkeyword>first</amkeyword> | <amkeyword>firstfit</amkeyword> | <amkeyword>largest</amkeyword> | <amkeyword>largestfit</amkeyword> | <amkeyword>smallest</amkeyword> | <amkeyword>last</amkeyword> ]</term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>first</emphasis>.
+<amkeyword>first</amkeyword>.
 The algorithm used to choose which dump image to send to the taper.</para>
   <!-- .RS -->
     <variablelist remap='TP'>
       <varlistentry>
-      <term><emphasis remap='B'>first</emphasis></term>
+      <term><amkeyword>first</amkeyword></term>
       <listitem>
 <para>First in, first out.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>firstfit</emphasis></term>
+      <term><amkeyword>firstfit</amkeyword></term>
       <listitem>
 <para>The first dump image that will fit on the current tape.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>largest</emphasis></term>
+      <term><amkeyword>largest</amkeyword></term>
       <listitem>
 <para>The largest dump image.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>largestfit</emphasis></term>
+      <term><amkeyword>largestfit</amkeyword></term>
       <listitem>
 <para>The largest dump image that will fit on the current tape.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>smallest</emphasis></term>
+      <term><amkeyword>smallest</amkeyword></term>
       <listitem>
 <para>The smallest dump image.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>last</emphasis></term>
+      <term><amkeyword>last</amkeyword></term>
       <listitem>
 <para>Last in, first out.</para>
       </listitem>
@@ -702,10 +705,10 @@ The algorithm used to choose which dump image to send to the taper.</para>
   </listitem>
   </varlistentry>
 <varlistentry>
-<term><emphasis remap='B'>labelstr</emphasis> <emphasis remap='I'>string</emphasis></term>
+<term><amkeyword>labelstr</amkeyword> <amtype>string</amtype></term>
 <listitem>
 <para>Default:
-<emphasis remap='I'>.*</emphasis>.
+<amdefault>&quot;.*&quot;</amdefault>.
 The tape label constraint regular expression.
 All tape labels generated (see
 <manref name="amlabel" vol="8"/>)
@@ -718,39 +721,39 @@ to avoid overwriting each other's tapes.</para>
 </listitem>
 </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>tapetype</emphasis> <emphasis remap='I'>identifier</emphasis></term>
+  <term><amkeyword>tapetype</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>"EXABYTE"</emphasis>.
+<amdefault>"EXABYTE"</amdefault>.
 The type of tape drive associated with
-<emphasis remap='B'>tapedev</emphasis>
+<amkeyword>tapedev</amkeyword>
 or
-<emphasis remap='B'>tpchanger</emphasis>.
-This refers to one of the defined <emphasis remap='B'>tapetype</emphasis>s
+<amkeyword>tpchanger</amkeyword>.
+This refers to one of the defined <amkeyword>tapetype</amkeyword>s
 in the config file (see below), which specify various tape parameters,
 like the
-<emphasis remap='B'>length</emphasis>,
-<emphasis remap='B'>filemark</emphasis>
+<amkeyword>length</amkeyword>,
+<amkeyword>filemark</amkeyword>
 size, and
-<emphasis remap='B'>speed</emphasis>
+<amkeyword>speed</amkeyword>
 of the tape media and device.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>ctimeout</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>ctimeout</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>30 seconds</emphasis>.
+<amdefault>30 seconds</amdefault>.
 Maximum amount of time that
 <emphasis remap='B'>amcheck</emphasis>
 will wait for each client host.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>dtimeout</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>dtimeout</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>1800 seconds</emphasis>.
+<amdefault>1800 seconds</amdefault>.
 Amount of idle time per disk on a given client that a
 <emphasis remap='B'>dumper</emphasis>
 running from within
@@ -760,10 +763,10 @@ will wait before it fails with a data timeout error.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>etimeout</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>etimeout</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>300 seconds</emphasis>.
+<amdefault>300 seconds</amdefault>.
 Amount of time per estimate on a given client that the
 <emphasis remap='B'>planner</emphasis> step of
 <command>amdump</command> will wait to get the dump size estimates
@@ -777,28 +780,28 @@ per client instead of per disk.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>connect_tries</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>connect_tries</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>3</emphasis>.
+<amdefault>3</amdefault>.
 How many times the server will try a connection.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>req_tries</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>req_tries</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>3</emphasis>.
+<amdefault>3</amdefault>.
 How many times the server will resend a REQ packet if it doesn't get the ACK packet.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>netusage</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>netusage</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>8000 Kbps</emphasis>.
+<amdefault>8000 Kbps</amdefault>.
 The maximum network bandwidth allocated to Amanda, in Kbytes per second.
 See also the
 <emphasis remap='B'>interface</emphasis>
@@ -806,10 +809,10 @@ section.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>inparallel</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>inparallel</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<literal>10</literal>.
+<amdefault>10</amdefault>.
 The maximum number of backups that Amanda will attempt to run in parallel.
 Amanda will stay within the constraints of network bandwidth and
 holding disk space available, so it doesn't hurt to set
@@ -819,20 +822,20 @@ of backups, but this effect is relatively small on most systems.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>displayunit</emphasis> &quot;k|m|g|t&quot;</term>
+  <term><amkeyword>displayunit</amkeyword> &quot;k|m|g|t&quot;</term>
   <listitem>
 <para>Default:
-<literal>&quot;k&quot;</literal>.
+<amdefault>&quot;k&quot;</amdefault>.
 The unit used to print many numbers, k=kilo, m=mega, g=giga, t=tera.
 </para>
   </listitem>
   </varlistentry>
   
   <varlistentry>
-  <term><emphasis remap='B'>dumporder</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>dumporder</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>tttTTTTTTT</emphasis>.
+<amdefault>&quot;tttTTTTTTT&quot;</amdefault>.
 The priority order of each dumper:
 
 <programlisting>
@@ -848,33 +851,33 @@ B: largest bandwidth
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>maxdumps</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>maxdumps</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<literal>1</literal>.
+<amdefault>1</amdefault>.
 The maximum number of backups from a single host that Amanda will
 attempt to run in parallel. See also the
 <emphasis remap='B'>inparallel</emphasis>
 option.</para>
 
 <para>Note that this parameter may also be set in a specific
-<emphasis remap='B'>dumptype</emphasis>
+<amkeyword>dumptype</amkeyword>
 (see below).
 This value sets the default for all
-<emphasis remap='B'>dumptype</emphasis>s
+<amkeyword>dumptype</amkeyword>s
 so must appear in
 <emphasis remap='B'>amanda.conf</emphasis>
 before any
-<emphasis remap='B'>dumptype</emphasis>s
+<amkeyword>dumptype</amkeyword>s
 are defined.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>bumpsize</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>bumpsize</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>10 Mbytes</emphasis>.
+<amdefault>10 Mbytes</amdefault>.
 The minimum savings required to trigger an automatic
 bump from one incremental level to the next, expressed as size.
 If Amanda determines that the next higher backup level
@@ -890,17 +893,17 @@ dumptype-definition.
 </para>
 <para>
 See also the options 
-<emphasis remap='B'>bumppercent</emphasis>,
-<emphasis remap='B'>bumpmult</emphasis> and
-<emphasis remap='B'>bumpdays</emphasis>.</para>
+<amkeyword>bumppercent</amkeyword>,
+<amkeyword>bumpmult</amkeyword> and
+<amkeyword>bumpdays</amkeyword>.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>bumppercent</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>bumppercent</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0 percent</emphasis>.
+<amdefault>0</amdefault>.
 The minimum savings required to trigger an automatic
 bump from one incremental level to the next, expressed as percentage of the
 current size of the DLE (size of current level 0).
@@ -918,27 +921,27 @@ dumptype-definition.
 </para>
 <para>
 See also the options 
-<emphasis remap='B'>bumpsize</emphasis>,
-<emphasis remap='B'>bumpmult</emphasis> and
-<emphasis remap='B'>bumpdays</emphasis>.</para>
+<amkeyword>bumpsize</amkeyword>,
+<amkeyword>bumpmult</amkeyword> and
+<amkeyword>bumpdays</amkeyword>.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>bumpmult</emphasis> <emphasis remap='I'>float</emphasis></term>
+  <term><amkeyword>bumpmult</amkeyword> <amtype>float</amtype></term>
   <listitem>
 <para>Default:
-<literal>1.5</literal>.
+<amdefault>1.5</amdefault>.
 The bump size multiplier.
 Amanda multiplies
-<emphasis remap='B'>bumpsize</emphasis>
+<amkeyword>bumpsize</amkeyword>
 by this factor for each level.
 This prevents active filesystems from
 bumping too much by making it harder to bump to the next level.
 For example, with the default
-<emphasis remap='B'>bumpsize</emphasis>
+<amkeyword>bumpsize</amkeyword>
 and
-<emphasis remap='B'>bumpmult</emphasis>
+<amkeyword>bumpmult</amkeyword>
 set to 2.0, the bump threshold will be 10 Mbytes for level one, 20
 Mbytes for level two, 40 Mbytes for level three, and so on.</para>
 <para>
@@ -948,13 +951,13 @@ dumptype-definition.
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>bumpdays</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>bumpdays</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>2 days</emphasis>.
+<amdefault>2 days</amdefault>.
 To insure redundancy in the dumps, Amanda keeps filesystems at the
 same incremental level for at least
-<emphasis remap='B'>bumpdays</emphasis>
+<amkeyword>bumpdays</amkeyword>
 days, even if the other bump threshold criteria are met.</para>
 <para>
 The global setting of this parameter can be overwritten inside of a  
@@ -964,20 +967,20 @@ dumptype-definition.
   </varlistentry>
   
   <varlistentry>
-  <term><emphasis remap='B'>diskfile</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>diskfile</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>disklist</emphasis>.
+<amdefault>&quot;disklist&quot;</amdefault>.
 The file name for the
 <emphasis remap='I'>disklist</emphasis>
 file holding client hosts, disks and other client dumping information.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>infofile</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>infofile</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<filename>/usr/adm/amanda/curinfo</filename>.
+<amdefault>&quot;/usr/adm/amanda/curinfo&quot;</amdefault>.
 The file or directory name for the historical information database.
 If Amanda was configured to use DBM databases, this is the base file
 name for them.
@@ -987,10 +990,10 @@ client, then a directory per disk, then a text file of data.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>logdir</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>logdir</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<filename>/usr/adm/amanda</filename>.
+<amdefault>&quot;/usr/adm/amanda&quot;</amdefault>.
 The directory for the
 <command>amdump</command>
 and
@@ -999,33 +1002,33 @@ files.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>indexdir</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>indexdir</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default
-<filename>/usr/adm/amanda/index</filename>.
+<amdefault>&quot;/usr/adm/amanda/index&quot;</amdefault>.
 The directory where index files (backup image catalogues) are stored.
 Index files are
 only generated for filesystems whose
-<emphasis remap='B'>dumptype</emphasis>
+<amkeyword>dumptype</amkeyword>
 has the
-<emphasis remap='B'>index</emphasis>
+<amkeyword>index</amkeyword>
 option enabled.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>tapelist</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>tapelist</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>tapelist</emphasis>.
+<amdefault>&quot;tapelist&quot;</amdefault>.
 The file name for the active &tapelist;.
 Amanda maintains this file with information about the active set of tapes.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>device_output_buffer_size</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>device_output_buffer_size</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<literal>1280k</literal>.
+<amdefault>1280k</amdefault>.
 Controls the amount of memory used by Amanda
 to hold data as it is read from the network or disk before it is written to
 the output device. Higher values may be
@@ -1034,22 +1037,22 @@ useful on fast tape drives and optical media.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>tapebufs</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>tapebufs</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<literal>20</literal>.
+<amdefault>20</amdefault>.
 This option is deprecated; use
-the <emphasis remap='B'>device_output_buffer_size</emphasis> directive
-instead. <emphasis remap='B'>tapebufs</emphasis> works the same way,
+the <amkeyword>device_output_buffer_size</amkeyword> directive
+instead. <amkeyword>tapebufs</amkeyword> works the same way,
 but the number specified is multiplied by the device blocksize prior
 to use.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>reserve</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>reserve</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<literal>100</literal>.
+<amdefault>100</amdefault>.
 The part of holding-disk space that should be reserved for incremental
 backups if no tape is available, expressed as a percentage of the 
 available holding-disk space (0-100).
@@ -1059,39 +1062,39 @@ the amount of holding disk space reserved for incrementals should be lowered.</p
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>autoflush</emphasis> <emphasis remap='I'>bool</emphasis></term>
+  <term><amkeyword>autoflush</amkeyword> <amtype>bool</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>off</emphasis>.
+<amkeyword>off</amkeyword>.
 Whether an amdump run will flush the dumps from holding disk to tape.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>amrecover_do_fsf</emphasis> <emphasis remap='I'>bool</emphasis></term>
+  <term><amkeyword>amrecover_do_fsf</amkeyword> <amtype>bool</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>on</emphasis>.
+<amkeyword>on</amkeyword>.
 Amrecover will call amrestore with the -f flag for faster positioning of the tape.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>amrecover_check_label</emphasis> <emphasis remap='I'>bool</emphasis></term>
+  <term><amkeyword>amrecover_check_label</amkeyword> <amtype>bool</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>on</emphasis>.
+<amkeyword>on</amkeyword>.
 Amrecover will call amrestore with the -l flag to check the label.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>amrecover_changer</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>amrecover_changer</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>Default: ''.
+<para>Default: not set.
 Amrecover will use the changer if you use 'settape &lt;string&gt;' and that string
 is the same as the amrecover_changer setting.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>columnspec</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>columnspec</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para> default: "HostName=0:12:12,Disk=1:11:11,Level=1:1:1,OrigKB=1:-7:0,OutKB=1:-7:0,Compress=1:-6:1,DumpTime=1:-7:7,Dumprate=1:-6:1,TapeTime=1:-6:6,TapeRate=1:-6:1"</para>
 <para>Defines the width of columns <emphasis remap='B'>amreport</emphasis>
@@ -1146,10 +1149,10 @@ with one space before it.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>includefile</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>includefile</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>none</emphasis>.
+<amdefault>no default</amdefault>.
 The name of an Amanda configuration file to include within the current file.
 Useful for sharing dumptypes, tapetypes and interface definitions among several configurations.
 Relative pathnames are relative to the configuration directory.
@@ -1158,90 +1161,90 @@ Relative pathnames are relative to the configuration directory.
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_auth</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>debug_auth</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the auth module</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_event</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>debug_event</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the event module</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_holding</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>debug_holding</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the holdingdisk module</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_protocol</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>debug_protocol</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the protocol module</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_planner</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>debug_planner</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the planner process</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_driver</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>debug_driver</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the driver process</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_dumper</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>debug_dumper</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the dumper process</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_chunker</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>debug_chunker</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the chunker process</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>debug_taper</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>debug_taper</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0</emphasis>.
+<amdefault>0</amdefault>.
 Debug level of the taper process</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>flush-threshold-dumped</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>flush-threshold-dumped</amkeyword> <amtype>int</amtype></term>
   <listitem>
-<para>Default: <emphasis remap='I'>0</emphasis>.
+<para>Default: <amdefault>0</amdefault>.
   Amanda will not begin writing data to a new volume until the amount of
   data on the holding disk is at least this percentage of the volume
   size. In other words, Amanda will not begin until the
@@ -1257,15 +1260,15 @@ Debug level of the taper process</para>
   writing to a volume has begun, this constraint is not applied unless
   and until a new volume is needed.</para>
 <para> The value of this parameter may not exceed than that of
-  the <emphasis remap='B'>flush-threshold-scheduled</emphasis>
+  the <amkeyword>flush-threshold-scheduled</amkeyword>
   parameter.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>flush-threshold-scheduled</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>flush-threshold-scheduled</amkeyword> <amtype>int</amtype></term>
   <listitem>
-<para>Default: <emphasis remap='I'>0</emphasis>.
+<para>Default: <amdefault>0</amdefault>.
   Amanda will not begin writing data to a new volume until the sum of the
   amount of data on the holding disk and the estimated amount of data
   remaining to be dumped during this run is at least this percentage
@@ -1286,17 +1289,17 @@ Debug level of the taper process</para>
   writing to a volume has begun, this constraint is not applied unless
   and until a new volume is needed.</para>
 <para> The value of this parameter may not be less than that of
-  the <emphasis remap='B'>flush-threshold-dumped</emphasis>
-  or <emphasis remap='B'>taperflush</emphasis> parameters.</para>
+  the <amkeyword>flush-threshold-dumped</amkeyword>
+  or <amkeyword>taperflush</amkeyword> parameters.</para>
   </listitem>
   </varlistentry>
 
 <!-- the entity '#215' below is U+00D7 MULTIPLICATION SIGN; the 'times' entity
      is not as portable as one might hope. -->
   <varlistentry>
-  <term><emphasis remap='B'>taperflush</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>taperflush</amkeyword> <amtype>int</amtype></term>
   <listitem>
-<para>Default: <emphasis remap='I'>0</emphasis>.
+<para>Default: <amdefault>0</amdefault>.
   At the end of a run, Amanda will start a new tape to flush remaining
   data if there is more data on the holding disk at the end of a run
   than this setting allows; the amount is specified as a percentage of
@@ -1311,37 +1314,37 @@ Debug level of the taper process</para>
   and <mathphrase>f</mathphrase> is this parameter, expressed as a
   percentage.  This parameter may be greater than 100%.</para>
 <para> The value of this parameter may not exceed that of
-  the <emphasis remap='B'>flush-threshold-scheduled</emphasis>
-  parameter.; <emphasis remap='B'>autoflush</emphasis> must be set to 'yes' if
- <emphasis remap='B'>taperflush</emphasis> is greater than 0.</para>
+  the <amkeyword>flush-threshold-scheduled</amkeyword>
+  parameter.; <amkeyword>autoflush</amkeyword> must be set to 'yes' if
+ <amkeyword>taperflush</amkeyword> is greater than 0.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>reserved-udp-port</emphasis> <emphasis remap='I'>int</emphasis>,<emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>reserved-udp-port</amkeyword> <amtype>int</amtype>,<amtype>int</amtype></term>
   <listitem>
 <para>Default: --with-udpportrange or 
-<emphasis remap='I'>512,1023</emphasis>.
+<amdefault>512,1023</amdefault>.
 Reserved udp port that will be used (bsd, bsdudp).
 Range is inclusive.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>reserved-tcp-port</emphasis> <emphasis remap='I'>int</emphasis>,<emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>reserved-tcp-port</amkeyword> <amtype>int</amtype>,<amtype>int</amtype></term>
   <listitem>
 <para>Default: --with-low-tcpportrange or 
-<emphasis remap='I'>512,1023</emphasis>.
+<amdefault>512,1023</amdefault>.
 Reserved tcp port that will be used (bsdtcp).
 Range is inclusive.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>unreserved-tcp-port</emphasis> <emphasis remap='I'>int</emphasis>,<emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>unreserved-tcp-port</amkeyword> <amtype>int</amtype>,<amtype>int</amtype></term>
   <listitem>
 <para>Default: --with-tcpportrange or 
-<emphasis remap='I'>1024,65535</emphasis>.
+<amdefault>1024,65535</amdefault>.
 Unreserved tcp port that will be used (bsd, bsdudp).
 Range is inclusive.</para>
   </listitem>
@@ -1371,28 +1374,27 @@ is a logical name for this holding disk.</para>
 
 <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>Default:
-<emphasis remap='I'>none</emphasis>.
+<para>Default: not set.
 A comment string describing this holding disk.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>directory</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>directory</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<filename>/dumps/amanda</filename>.
+<amdefault>&quot;/dumps/amanda&quot;</amdefault>.
 The path to this holding area.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>use</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>use</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0 Gb</emphasis>.
+<amdefault>0 Gb</amdefault>.
 Amount of space that can be used in this holding disk area.
 If the value is zero, all available space on the file system is used.
 If the value is negative, Amanda will use all available space minus that value.</para>
@@ -1400,10 +1402,10 @@ If the value is negative, Amanda will use all available space minus that value.<
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>chunksize</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>chunksize</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>1 Gb</emphasis>.
+<amdefault>1 Gb</amdefault>.
 Holding disk chunk size. Dumps larger than the specified size will be stored in multiple
 holding disk files. The size of each chunk will not exceed the specified value.
 However, even though dump images are split in the holding disk, they are concatenated as 
@@ -1437,7 +1439,7 @@ that can benefit from high compression, another set that does not compress well,
 another set for file systems that should always get a full backup and so on.</para>
 
 <para>A set of backup options are entered in a
-<emphasis remap='B'>dumptype</emphasis>
+<amkeyword>dumptype</amkeyword>
 section, which looks like this:</para>
 
 <programlisting>
@@ -1453,58 +1455,58 @@ is the name of this set of backup options.
 It is referenced from the &disklist; file.</para>
 
 <para>Some of the options in a
-<emphasis remap='B'>dumptype</emphasis>
+<amkeyword>dumptype</amkeyword>
 section are the same as those in the main part of &amconf;.
 The main option value is used to set the default for all
-<emphasis remap='B'>dumptype</emphasis>
+<amkeyword>dumptype</amkeyword>
 sections. For instance, setting
-<emphasis remap='B'>dumpcycle</emphasis>
+<amkeyword>dumpcycle</amkeyword>
 to 50 in the main part of the config file causes all following
-<emphasis remap='B'>dumptype</emphasis>
+<amkeyword>dumptype</amkeyword>
 sections to start with that value,
 but the value may be changed on a section by section basis.
 Changes to variables in the main part of the config file must be
 done before (earlier in the file) any
-<emphasis remap='B'>dumptype</emphasis>s
+<amkeyword>dumptype</amkeyword>s
 are defined.</para>
 
 <para>The dumptype options and values are:</para>
 
 <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>auth</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>auth</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>bsd</emphasis>.
+<amdefault>&quot;bsd&quot;</amdefault>.
 Type of authorization to perform between tape server and backup client hosts.  See <manref name="amanda-auth" vol="7"/> for more detail.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>amandad_path</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>amandad_path</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>$libexec/amandad</emphasis>.
+<amdefault>&quot;$libexec/amandad&quot;</amdefault>.
 Specify the amandad path of the client, only use with rsh/ssh authentification.
 </para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>client_username</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>client_username</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>CLIENT_LOGIN</emphasis>.
+<amdefault>CLIENT_LOGIN</amdefault>.
 Specify the username to connect on the client, only use with rsh/ssh authentification.
 </para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>client_port</emphasis> <emphasis remap='I'>int</emphasis>|<emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>client_port</amkeyword> [ <amtype>int</amtype> | <amtype>string</amtype> ]</term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>"amanda"</emphasis>.
+<amdefault>&quot;amanda&quot;</amdefault>.
 Specifies the port to connect to on the client.  It can be a service name or a numeric port number.
 </para>
   </listitem>
@@ -1513,10 +1515,10 @@ Specifies the port to connect to on the client.  It can be a service name or a n
 <!-- bumping parameters yanked from the global section above -->
 
   <varlistentry>
-  <term><emphasis remap='B'>bumpsize</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>bumpsize</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>10 Mbytes</emphasis>.
+<amdefault>10 Mbytes</amdefault>.
 The minimum savings required to trigger an automatic
 bump from one incremental level to the next, expressed as size.
 If Amanda determines that the next higher backup level
@@ -1528,17 +1530,17 @@ The value of this parameter is used only if the parameter
 <para>The default unit is Kbytes if it is not specified.</para>
 <para>
 See also the options 
-<emphasis remap='B'>bumppercent</emphasis>,
-<emphasis remap='B'>bumpmult</emphasis> and
-<emphasis remap='B'>bumpdays</emphasis>.</para>
+<amkeyword>bumppercent</amkeyword>,
+<amkeyword>bumpmult</amkeyword> and
+<amkeyword>bumpdays</amkeyword>.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>bumppercent</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>bumppercent</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>0 percent</emphasis>.
+<amdefault>0</amdefault>.
 The minimum savings required to trigger an automatic
 bump from one incremental level to the next, expressed as percentage of the
 current size of the DLE (size of current level 0).
@@ -1552,57 +1554,55 @@ parameter <emphasis>bumpsize</emphasis> is used to trigger bumping.
 </para>
 <para>
 See also the options 
-<emphasis remap='B'>bumpsize</emphasis>,
-<emphasis remap='B'>bumpmult</emphasis> and
-<emphasis remap='B'>bumpdays</emphasis>.</para>
+<amkeyword>bumpsize</amkeyword>,
+<amkeyword>bumpmult</amkeyword> and
+<amkeyword>bumpdays</amkeyword>.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>bumpmult</emphasis> <emphasis remap='I'>float</emphasis></term>
+  <term><amkeyword>bumpmult</amkeyword> <amtype>float</amtype></term>
   <listitem>
 <para>Default:
-<literal>1.5</literal>.
+<amdefault>1.5</amdefault>.
 The bump size multiplier.
 Amanda multiplies
-<emphasis remap='B'>bumpsize</emphasis>
+<amkeyword>bumpsize</amkeyword>
 by this factor for each level.
 This prevents active filesystems from
 bumping too much by making it harder to bump to the next level.
 For example, with the default
-<emphasis remap='B'>bumpsize</emphasis>
+<amkeyword>bumpsize</amkeyword>
 and
-<emphasis remap='B'>bumpmult</emphasis>
+<amkeyword>bumpmult</amkeyword>
 set to 2.0, the bump threshold will be 10 Mbytes for level one, 20
 Mbytes for level two, 40 Mbytes for level three, and so on.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>bumpdays</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>bumpdays</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>2 days</emphasis>.
+<amdefault>2 days</amdefault>.
 To insure redundancy in the dumps, Amanda keeps filesystems at the
 same incremental level for at least
-<emphasis remap='B'>bumpdays</emphasis>
+<amkeyword>bumpdays</amkeyword>
 days, even if the other bump threshold criteria are met.</para>
   </listitem>
   </varlistentry>
   
   <varlistentry>
-  <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>Default:
-<emphasis remap='I'>none</emphasis>.
+<para>Default: not set.
 A comment string describing this set of backup options.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>comprate</emphasis> <emphasis remap='I'>float</emphasis> [, <emphasis remap='I'>float</emphasis> ]</term>
+  <term><amkeyword>comprate</amkeyword> <amtype>float</amtype> [, <amtype>float</amtype> ]</term>
   <listitem>
 <para>Default:
-<literal>0.50</literal>,
-<literal>0.50</literal>.
+<amdefault>0.50, 0.50</amdefault>.
 The expected full and incremental compression factor for dumps.
 It is only used if Amanda does not have any history information on
 compression rates for a filesystem, so should not usually need to be set.
@@ -1611,10 +1611,10 @@ compresses very little is backed up.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>compress</emphasis> [ <emphasis remap='B'>none</emphasis> | <emphasis remap='B'>client</emphasis> | <emphasis remap='B'>server</emphasis> ] [ <emphasis remap='B'>best</emphasis> | <emphasis remap='B'>fast</emphasis> | <emphasis remap='B'>custom</emphasis>]</term>
+  <term><amkeyword>compress</amkeyword> [ <amkeyword>none</amkeyword> | <amkeyword>client</amkeyword> | <amkeyword>server</amkeyword> ] [ <amkeyword>best</amkeyword> | <amkeyword>fast</amkeyword> | <amkeyword>custom</amkeyword> ]</term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>client fast</emphasis>.
+<amkeyword>client fast</amkeyword>.
 If Amanda does compression of the backup images, it can do so either on the backup client 
 host before it crosses the network or on the tape server host as it goes from the
 network into the holding disk or to tape.  Which place to do compression (if at all) depends on how well the
@@ -1623,15 +1623,15 @@ holding disk capacity, availability of tape hardware compression, etc.</para>
 
 <para>For either type of compression, Amanda also allows the selection
 of three styles of compression.
-<emphasis remap='B'>Best</emphasis>
+<amkeyword>best</amkeyword>
 is the best compression available, often at the expense of CPU overhead.
-<emphasis remap='B'>Fast</emphasis>
+<amkeyword>fast</amkeyword>
 is often not as good a compression as
-<emphasis remap='B'>best</emphasis>,
-but usually less CPU overhead. Or to specify <emphasis remap='B'>Custom</emphasis>
+<amkeyword>best</amkeyword>,
+but usually less CPU overhead. Or to specify <amkeyword>custom</amkeyword>
 to use your own compression method. (See dumptype custom-compress in example/amanda.conf for reference)</para>
 
-<para>So the <emphasis remap='B'>compress</emphasis> options line may be one of:</para>
+<para>So the <amkeyword>compress</amkeyword> options line may be one of:</para>
 
 <variablelist remap='TP'>
   <varlistentry>
@@ -1659,7 +1659,7 @@ to use your own compression method. (See dumptype custom-compress in example/ama
   <varlistentry>
     <term>compress server custom</term>
     <listitem>
-      <para>Specify <emphasis>server_custom_compress</emphasis> &quot;PROG&quot;</para>
+      <para>Specify <amkeyword>server_custom_compress</amkeyword> &quot;PROG&quot;</para>
       <para>PROG must not contain white space and it must accept -d for uncompress.</para>
     </listitem>
   </varlistentry>
@@ -1670,9 +1670,9 @@ or <emphasis remap='B'>mt</emphasis> option), Amanda (software) compression shou
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>dumpcycle</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>dumpcycle</amkeyword> <amtype>int</amtype></term>
   <listitem>
-<para>Default: <emphasis remap='I'>10 days</emphasis>.
+<para>Default: <amdefault>10 days</amdefault>.
 The number of days in the backup cycle. Each disk using this set of options will get a full 
 backup at least this of
 ten. Setting this to zero tries to do a full backup each run.</para>
@@ -1680,13 +1680,13 @@ ten. Setting this to zero tries to do a full backup each run.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>encrypt</emphasis> [<emphasis remap='B'>none</emphasis>|<emphasis remap='B'>client</emphasis>|<emphasis remap='B'>server</emphasis>]</term>
+  <term><amkeyword>encrypt</amkeyword> [ <amkeyword>none</amkeyword> | <amkeyword>client</amkeyword> | <amkeyword>server</amkeyword> ]</term>
   <listitem>
-<para>Default: <emphasis remap='I'>none</emphasis>.
+<para>Default: not set.
 To encrypt backup images, it can do so either on the backup client host before it crosses the network or on the tape
 server host as it goes from the network into the holding disk or to tape.</para>
 
-<para>So the <emphasis remap='B'>encrypt</emphasis> options line may be one
+<para>So the <amkeyword>encrypt</amkeyword> options line may be one
 	    of:</para>
 
 <variablelist remap='TP'>
@@ -1725,9 +1725,9 @@ client-encryption AND server-compression is not supported.
 
 
   <varlistentry>
-  <term><emphasis remap='B'>estimate</emphasis>  [ <emphasis remap='B'>client</emphasis> | <emphasis remap='B'>calcsize</emphasis> | <emphasis remap='B'>server</emphasis> ]*</term>
+  <term><amkeyword>estimate</amkeyword> [ <amkeyword>client</amkeyword> | <amkeyword>calcsize</amkeyword> | <amkeyword>server</amkeyword> ]+</term>
   <listitem>
-<para>Default: <emphasis remap='I'>client</emphasis>.
+<para>Default: <amkeyword>client</amkeyword>.
 Determine the way Amanda estimates the size of each DLE before beginning a backup.  This is a list of acceptable estimate methods, and Amanda applies the first method supported by the application.  The methods are:</para>
 <variablelist remap='TP'>
   <varlistentry>
@@ -1761,22 +1761,22 @@ Determine the way Amanda estimates the size of each DLE before beginning a backu
 
   
   <varlistentry>
-  <term><emphasis remap='B'>exclude</emphasis> [ <emphasis remap='B'>list</emphasis>|<emphasis remap='B'>file</emphasis> ][[<emphasis remap='B'>optional</emphasis>][ <emphasis remap='B'>append</emphasis> ][ <emphasis remap='I'>string</emphasis> ]+]</term>
+  <term><amkeyword>exclude</amkeyword> [ <amkeyword>list</amkeyword> | <amkeyword>file</amkeyword> ][[<amkeyword>optional</amkeyword>][<amkeyword>append</amkeyword>][ <amtype>string</amtype> ]+]</term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>file</emphasis>.
+<amkeyword>file</amkeyword>.
 There are two exclude lists,
-<emphasis remap='B'>exclude file</emphasis>
+<amkeyword>exclude</amkeyword> <amkeyword>file</amkeyword>
 and
-<emphasis remap='B'>exclude list.</emphasis>
+<amkeyword>exclude</amkeyword> <amkeyword>list.</amkeyword>
 With
-<emphasis remap='B'>exclude file</emphasis>
+<amkeyword>exclude</amkeyword> <amkeyword>file</amkeyword>
 , the
-<emphasis remap='I'>string</emphasis>
+<amtype>string</amtype>
 is a &gnutar; exclude expression. With
-<emphasis remap='B'>exclude list</emphasis>
+<amkeyword>exclude</amkeyword> <amkeyword>list</amkeyword>
 , the
-<emphasis remap='I'>string</emphasis>
+<amtype>string</amtype>
 is a file name on the client containing &gnutar; exclude expressions.
 The path to the specified exclude list file, if present (see description of
 'optional' below), must be readable by the Amanda user.</para>
@@ -1788,15 +1788,15 @@ as an <option>--exclude-from</option> argument.</para>
 head directory of the DLE.</para>
 
 <para>With the
-<emphasis remap='B'>append</emphasis> keyword, the
-<emphasis remap='I'>string</emphasis> is appended to the current list, without it, the
-<emphasis remap='I'>string</emphasis> overwrites the list.</para>
+<amkeyword>append</amkeyword> keyword, the
+<amtype>string</amtype> is appended to the current list, without it, the
+<amtype>string</amtype> overwrites the list.</para>
 
-<para>If <emphasis remap='B'>optional</emphasis>
-is specified for <emphasis remap='B'>exclude list</emphasis>,
+<para>If <amkeyword>optional</amkeyword>
+is specified for <amkeyword>exclude</amkeyword> <amkeyword>list</amkeyword>,
 then amcheck will not complain if the file doesn't exist or is not readable.</para>
 
-<para>For <emphasis remap='B'>exclude list</emphasis>,
+<para>For <amkeyword>exclude</amkeyword> <amkeyword>list</amkeyword>,
 if the file name is relative, the disk name being backed up is prepended.
 So if this is entered:</para>
 
@@ -1813,33 +1813,33 @@ for a backup of <filename>/var</filename>,
 </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>holdingdisk</emphasis> [ <emphasis remap='B'>never</emphasis>|<emphasis remap='B'>auto</emphasis>|<emphasis remap='B'>required</emphasis> ]</term>
+  <term><amkeyword>holdingdisk</amkeyword> [ <amkeyword>never</amkeyword> | <amkeyword>auto</amkeyword> | <amkeyword>required</amkeyword> ]</term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>auto</emphasis>.
+<amkeyword>auto</amkeyword>.
 Whether a holding disk should be used for these backups or whether they should go directly to tape.
 If the holding disk is a portion of another file system that Amanda
 is backing up, that file system should refer to a dumptype with
-<emphasis remap='B'>holdingdisk</emphasis>
+<amkeyword>holdingdisk</amkeyword>
 set to
 <emphasis remap='I'>never</emphasis>
 to avoid backing up the holding disk into itself.</para>
 
   <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>never</emphasis>|no|false|off</term>
+  <term><amkeyword>never</amkeyword>|no|false|off</term>
   <listitem>
   <para>Never use a holdingdisk, the dump will always go directly to tape. There will be no dump if you have a tape error.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>auto</emphasis>|yes|true|on</term>
+  <term><amkeyword>auto</amkeyword>|yes|true|on</term>
   <listitem>
   <para>Use the holding disk, unless there is a problem with the holding disk, the dump won't fit there or the medium doesn't require spooling (e.g., VFS device)</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>required</emphasis></term>
+  <term><amkeyword>required</amkeyword></term>
   <listitem>
   <para>Always dump to holdingdisk, never directly to tape. There will be no dump if it doesn't fit on holdingdisk</para>
   </listitem>
@@ -1850,10 +1850,10 @@ to avoid backing up the holding disk into itself.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>ignore</emphasis> <emphasis remap='I'>boolean</emphasis></term>
+  <term><amkeyword>ignore</amkeyword> <amtype>boolean</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>no</emphasis>.
+<amkeyword>no</amkeyword>.
 Whether disks associated with this backup type should be backed up or not.
 This option is useful when the
 <emphasis remap='I'>disklist</emphasis>
@@ -1862,23 +1862,23 @@ some of which should not back up all the listed file systems.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>include</emphasis> [ <emphasis remap='B'>list</emphasis>|<emphasis remap='B'>file</emphasis> ][[<emphasis remap='B'>optional</emphasis>][ <emphasis remap='B'>append</emphasis> ][ <emphasis remap='I'>string</emphasis> ]+]</term>
+  <term><amkeyword>include</amkeyword> [ <amkeyword>list</amkeyword> | <amkeyword>file</amkeyword> ][[<amkeyword>optional</amkeyword>][<amkeyword>append</amkeyword>][ <amtype>string</amtype> ]+]</term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>file</emphasis>
+<amkeyword>file</amkeyword>
 &quot;.&quot;.
 There are two include lists,
-<emphasis remap='B'>include file</emphasis>
+<amkeyword>include file</amkeyword>
 and
-<emphasis remap='B'>include list.</emphasis>
+<amkeyword>include list.</amkeyword>
 With
-<emphasis remap='B'>include file</emphasis>
+<amkeyword>include file</amkeyword>
 , the
-<emphasis remap='I'>string</emphasis>
+<amtype>string</amtype>
 is a glob expression. With
-<emphasis remap='B'>include list</emphasis>
+<amkeyword>include list</amkeyword>
 , the
-<emphasis remap='I'>string</emphasis>
+<amtype>string</amtype>
 is a file name on the client containing glob expressions.</para>
 
 <para>All include expressions are expanded by Amanda, concatenated in one file and passed to &gnutar; as a
@@ -1891,88 +1891,88 @@ head directory of the DLE.</para>
 the top level directory of the DLE must be readable by the Amanda user.</para>
 </note>
 
-<para>With the <emphasis remap='B'>append</emphasis> keyword, the
-<emphasis remap='I'>string</emphasis> is appended to the current list, without it, the
-<emphasis remap='I'>string</emphasis> overwrites the list.</para>
+<para>With the <amkeyword>append</amkeyword> keyword, the
+<amtype>string</amtype> is appended to the current list, without it, the
+<amtype>string</amtype> overwrites the list.</para>
 
 <para>If
-<emphasis remap='B'>optional</emphasis> is specified for
-<emphasis remap='B'>include list,</emphasis> then amcheck will not complain if the file 
+<amkeyword>optional</amkeyword> is specified for
+<amkeyword>include list</amkeyword>, then amcheck will not complain if the file 
 doesn't exist or is not readable.</para>
 
-<para>For <emphasis remap='B'>include list</emphasis>,
+<para>For <amkeyword>include list</amkeyword>,
 If the file name is relative, the disk name being backed up is prepended.</para>
 </listitem>
 </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>index</emphasis> <emphasis remap='I'>boolean</emphasis></term>
+  <term><amkeyword>index</amkeyword> <amtype>boolean</amtype></term>
   <listitem>
-<para>Default: <emphasis remap='I'>no</emphasis>.
+<para>Default: <amkeyword>no</amkeyword>.
 Whether an index (catalogue) of the backup should be generated and saved in
-<emphasis remap='B'>indexdir</emphasis>.
+<amkeyword>indexdir</amkeyword>.
 These catalogues are used by the <emphasis remap='B'>amrecover</emphasis> utility.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>kencrypt</emphasis> <emphasis remap='I'>boolean</emphasis></term>
+  <term><amkeyword>kencrypt</amkeyword> <amtype>boolean</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>no</emphasis>.
+<amkeyword>no</amkeyword>.
 Whether the backup image should be encrypted by Kerberos as it is sent
 across the network from the backup client host to the tape server host.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>maxdumps</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>maxdumps</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<literal>1</literal>.
+<amdefault>1</amdefault>.
 The maximum number of backups from a single host that Amanda will attempt to run in parallel.
-See also the main section parameter <emphasis remap='B'>inparallel</emphasis>.</para>
+See also the main section parameter <amkeyword>inparallel</amkeyword>.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>maxpromoteday</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>maxpromoteday</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<literal>10000</literal>.
+<amdefault>10000</amdefault>.
 The maximum number of day for a promotion, set it 0 if you don't want
 promotion, set it to 1 or 2 if your disks get overpromoted.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>priority</emphasis> [ <emphasis remap='B'>low</emphasis> | <emphasis remap='B'>medium</emphasis> | <emphasis remap='B'>high</emphasis> ]</term>
+  <term><amkeyword>priority</amkeyword> [ <amkeyword>low</amkeyword> | <amkeyword>medium</amkeyword> | <amkeyword>high</amkeyword> ]</term>
   <listitem>
-<para>Default: <emphasis remap='I'>medium</emphasis>.
+<para>Default: <amkeyword>medium</amkeyword>.
 When there is no tape to write to, Amanda will do incremental backups
 in priority order to the holding disk. The priority may be
 high (2), medium (1), low (0) or a number of your choice.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>program</emphasis> [ "DUMP" | "GNUTAR" | "APPLICATION" ]</term>
+  <term><amkeyword>program</amkeyword> [ <amkeyword>&quot;DUMP&quot;</amkeyword> | <amkeyword>&quot;GNUTAR&quot;</amkeyword> | <amkeyword>&quot;APPLICATION&quot;</amkeyword> ]</term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>DUMP</emphasis>.
+<amdefault>&quot;DUMP&quot;</amdefault>.
 The type of backup to perform. Valid values are:</para>
   <!-- .RS -->
     <variablelist remap='TP'>
       <varlistentry>
-      <term><emphasis remap='B'>DUMP</emphasis></term>
+      <term><amkeyword>&quot;DUMP&quot;</amkeyword></term>
       <listitem>
 <para>The native operating system backup program.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>GNUTAR</emphasis></term>
+      <term><amkeyword>&quot;GNUTAR&quot;</amkeyword></term>
       <listitem>
 <para>To use GNU-tar or to do PC backups using Samba.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>APPLICATION</emphasis></term>
+      <term><amkeyword>&quot;APPLICATION&quot;</amkeyword></term>
       <listitem>
 <para>To use an application, see the <emphasis>application</emphasis> option.</para>
       </listitem>
@@ -1981,108 +1981,106 @@ The type of backup to perform. Valid values are:</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>application</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>application</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>No default. Must be the name of an application if <emphasis>program</emphasis> is set to <emphasis remap='I'>APPLICATION</emphasis>. See APPLICATION SECTION below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>script</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>script</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>No default. Must be the name of a script. You can have many script. See SCRIPT SECTION below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>property</emphasis> [<emphasis remap='B'>append</emphasis>] <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis>+</term>
+  <term><amkeyword>property</amkeyword> [<amkeyword>append</amkeyword>] <amtype>string</amtype> <amtype>string</amtype>+</term>
   <listitem>
 <para>These options can set various properties, they can be used by third
  party software to store information in the configuration file.
 Both strings are quoted; the first string contains the name of
 the property to set, and the others contains its values.
-<emphasis remap='B'>append</emphasis> keyword append the values to the list of values for that property.
+<amkeyword>append</amkeyword> keyword append the values to the list of values for that property.
 </para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>record</emphasis> <emphasis remap='I'>boolean</emphasis></term>
+  <term><amkeyword>record</amkeyword> <amtype>boolean</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>yes</emphasis>.
+<amkeyword>yes</amkeyword>.
 Whether to ask the backup program to update its database (e.g. <filename>/etc/dumpdates</filename>
 for DUMP or <filename>/usr/local/var/amanda/gnutar-lists</filename> for GNUTAR) of time stamps.
 This is normally enabled for daily backups and turned off for periodic archival runs.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>skip-full</emphasis> <emphasis remap='I'>boolean</emphasis></term>
+  <term><amkeyword>skip-full</amkeyword> <amtype>boolean</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>no</emphasis>. If <emphasis remap='I'>true</emphasis> and
+<amkeyword>no</amkeyword>. If <amkeyword>true</amkeyword> and
 <emphasis remap='B'>planner</emphasis> has scheduled a full backup, these disks will be skipped, and
 full backups should be run off-line on these days. It was reported that Amanda only schedules 
 level 1 incrementals in this configuration; this is probably a bug.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>skip-incr</emphasis> <emphasis remap='I'>boolean</emphasis></term>
+  <term><amkeyword>skip-incr</amkeyword> <amtype>boolean</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>no</emphasis>. If <emphasis remap='I'>true</emphasis> and
+<amkeyword>no</amkeyword>. If <amkeyword>true</amkeyword> and
 <emphasis remap='B'>planner</emphasis> has scheduled an incremental backup, these disks will be skipped.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>ssh_keys</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>ssh_keys</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>Default:
-<emphasis remap='I'>No default</emphasis>.
+<para>Default: not set.
 The key file the ssh auth will use, it must be the private key. If this parameter is not specified, then the default ssh key will be used.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>starttime</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>starttime</amkeyword> <amtype>int</amtype></term>
   <listitem>
-<para>Default:
-<emphasis remap='I'>none</emphasis>.
+<para>Default: not set.
 Backup of these disks will not start until after this time of day.
 The value should be hh*100+mm, e.g. 6:30PM (18:30) would be entered as
 <literal>1830</literal>.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>strategy</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>strategy</amkeyword> [ <amkeyword>standard</amkeyword> | <amkeyword>nofull</amkeyword> | <amkeyword>noinc</amkeyword> | <amkeyword>skip</amkeyword> | <amkeyword>incronly</amkeyword> ]</term>
   <listitem>
-  <para>Default: <emphasis remap='I'>standard</emphasis>.
+  <para>Default: <amkeyword>standard</amkeyword>.
   Strategy to use when planning what level of backup to run next. Values are:</para>
 
   <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>standard</emphasis></term>
+  <term><amkeyword>standard</amkeyword></term>
   <listitem>
   <para>The standard Amanda schedule.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>nofull</emphasis></term>
+  <term><amkeyword>nofull</amkeyword></term>
   <listitem>
   <para>Never do full backups, only level 1 incrementals.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>noinc</emphasis></term>
+  <term><amkeyword>noinc</amkeyword></term>
   <listitem>
   <para>Never do incremental backups, only full dumps.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>skip</emphasis></term>
+  <term><amkeyword>skip</amkeyword></term>
   <listitem>
   <para>Never do backups (useful when sharing the <emphasis remap='I'>disklist</emphasis> file).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>incronly</emphasis></term>
+  <term><amkeyword>incronly</amkeyword></term>
   <listitem>
   <para>Only do incremental dumps. <command>amadmin force</command> should be used to tell
   Amanda that a full dump has been performed off-line, so that it resets to level 1.</para>
@@ -2093,10 +2091,9 @@ The value should be hh*100+mm, e.g. 6:30PM (18:30) would be entered as
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>tape_splitsize</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>tape_splitsize</amkeyword> <amtype>int</amtype></term>
   <listitem>
-<para>Default:
-<emphasis remap='I'>none</emphasis>.
+<para>Default: not set.
 Split dump file on tape into pieces of a specified size.
 This allows dumps to be spread across multiple tapes, and can potentially
 make more efficient use of tape space.
@@ -2110,20 +2107,19 @@ A good rule of thumb, usually, is 1/10 of the size of your tape.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>split_diskbuffer</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>split_diskbuffer</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>Default:
-<emphasis remap='I'>none</emphasis>.
+<para>Default: not set.
 When dumping a split dump in PORT-WRITE mode (usually meaning "no holding disk"), buffer the split chunks to a file in the directory specified by this option.
 </para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>fallback_splitsize</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>fallback_splitsize</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>10M</emphasis>.
+<amdefault>10M</amdefault>.
 When dumping a split dump in PORT-WRITE mode, if no split_diskbuffer is
 specified (or if we somehow fail to use our split_diskbuffer), we must
 buffer split chunks in memory.
@@ -2138,7 +2134,7 @@ the dump server may reasonably consume.
   </varlistentry>
 </variablelist>
 
-<para>The following <emphasis remap='B'>dumptype</emphasis> entries are predefined by Amanda:</para>
+<para>The following <amkeyword>dumptype</amkeyword> entries are predefined by Amanda:</para>
 
 <programlisting remap='.nf'>
 define dumptype "no-compress" {
@@ -2168,15 +2164,15 @@ define dumptype "no-full" {
 </programlisting>
 
 <para>In addition to options in a
-<emphasis remap='B'>dumptype</emphasis>
+<amkeyword>dumptype</amkeyword>
 section, one or more other
-<emphasis remap='B'>dumptype</emphasis>
+<amkeyword>dumptype</amkeyword>
 names may be supplied as identifiers, which make this
-<emphasis remap='B'>dumptype</emphasis>
+<amkeyword>dumptype</amkeyword>
 inherit options from other previously defined
-<emphasis remap='B'>dumptype</emphasis>s.
+<amkeyword>dumptype</amkeyword>s.
 For instance, two sections might be the same except for the
-<emphasis remap='B'>record</emphasis> option:</para>
+<amkeyword>record</amkeyword> option:</para>
 
 <programlisting remap='.nf'>
 define dumptype "normal" {
@@ -2193,16 +2189,16 @@ define dumptype "testing" {
 </programlisting>
 
 <para>Amanda provides a
-<emphasis remap='B'>dumptype</emphasis>
+<amkeyword>dumptype</amkeyword>
 named
 <emphasis remap='I'>global</emphasis>
 in the sample
 <emphasis remap='B'>amanda.conf</emphasis>
 file that all
-<emphasis remap='B'>dumptype</emphasis>s
+<amkeyword>dumptype</amkeyword>s
 should reference.
 This provides an easy place to make changes that will affect every
-<emphasis remap='B'>dumptype</emphasis>, although you must be careful
+<amkeyword>dumptype</amkeyword>, although you must be careful
 that every dumptype explicitly inherits from the
 <emphasis remap='I'>global</emphasis>
 dumptype - Amanda does not do so automatically.</para>
@@ -2212,11 +2208,11 @@ dumptype - Amanda does not do so automatically.</para>
 <para>The <emphasis remap='B'>amanda.conf</emphasis>
 file may define multiple types of tape media and devices.
 The information is entered in a
-<emphasis remap='B'>tapetype</emphasis>
+<amkeyword>tapetype</amkeyword>
 section, which looks like this in the config file:</para>
 
 <programlisting>
-define tapetype "<emphasis remap='I'>name</emphasis>" {
+define tapetype "<amtype>name</amtype>" {
     <emphasis remap='I'>tapetype-option</emphasis> <emphasis remap='I'>tapetype-value</emphasis>
     <literal>...</literal>
 }
@@ -2226,55 +2222,54 @@ define tapetype "<emphasis remap='I'>name</emphasis>" {
 <para><emphasis remap='I'>Name</emphasis>
 is the name of this type of tape medium/device.
 It is referenced from the
-<emphasis remap='B'>tapetype</emphasis>
+<amkeyword>tapetype</amkeyword>
 option in the main part of the config file.</para>
 
 <para>The tapetype options and values are:</para>
 <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>Default:
-<emphasis remap='I'>none</emphasis>.
+<para>Default: not set.
 A comment string describing this set of tape information.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>filemark</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>filemark</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>1 kbytes</emphasis>.
+<amdefault>1 kbytes</amdefault>.
 How large a file mark (tape mark) is, measured in kbytes.
 If the size is only known in some linear measurement (e.g. inches),
 convert it to kbytes using the device density.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>length</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>length</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>2000 kbytes</emphasis>. How much data will fit on a tape, expressed in kbytes.</para>
+<amdefault>2000 kbytes</amdefault>. How much data will fit on a tape, expressed in kbytes.</para>
 
 <para>Note that this value is only used by Amanda to schedule which backups will be run.
 Once the backups start, Amanda will continue to write to a tape until it gets an error, 
-regardless of what value is entered for <emphasis remap='B'>length</emphasis>
+regardless of what value is entered for <amkeyword>length</amkeyword>
 (but see <manref name="amanda-devices" vol="7" /> for exceptions).
  </para>
   </listitem>
   </varlistentry>
 
 <varlistentry>
-<term><emphasis remap='B'>blocksize</emphasis> <emphasis remap='I'>int</emphasis></term>
+<term><amkeyword>blocksize</amkeyword> <amtype>int</amtype></term>
 <listitem>
 <para>Default:
-<emphasis remap='I'>32 kbytes</emphasis>.
+<amdefault>32 kbytes</amdefault>.
 How much data will be written in each tape record, expressed in kbytes.  This is similar to the <emphasis remap="I">BLOCK_SIZE</emphasis> device property, but if the blocksize is not a multiple of 1024 bytes, then this parameter cannot be used to specify it, and the property must be used instead.</para>
   </listitem>
   </varlistentry>
 <varlistentry>
-<term><emphasis remap='B'>readblocksize</emphasis> <emphasis remap='I'>int</emphasis></term>
+<term><amkeyword>readblocksize</amkeyword> <amtype>int</amtype></term>
 <listitem>
-<para>Default: <emphasis remap="I">32 kytes</emphasis>
+<para>Default: <amdefault>32 kytes</amdefault>
 How much data will be read in each tape record.  This can be used to override a
 device's block size for reads only.  This may be useful, for example, in
 reading a tape written with a 256k block size when Amanda is configured to use
@@ -2286,18 +2281,19 @@ tape devices.
   </varlistentry>
   
   <varlistentry>
-  <term><emphasis remap='B'>speed</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>speed</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>200 bps</emphasis>.
+<amdefault>200 bps</amdefault>.
 How fast the drive will accept data, in bytes per second.
 This parameter is NOT currently used by Amanda.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>lbl-templ</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>lbl-templ</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>A PostScript template file used by
+<para>Default: not set.
+A PostScript template file used by
 <emphasis remap='B'>amreport</emphasis>
 to generate labels. Several sample files are provided with the Amanda sources in the
 <emphasis remap='I'>example</emphasis> directory.
@@ -2309,11 +2305,11 @@ man page for more information.</para>
 </variablelist>
 
 <para>In addition to options, another
-<emphasis remap='B'>tapetype</emphasis>
+<amkeyword>tapetype</amkeyword>
 name may be supplie as an identifier, which makes this
-<emphasis remap='B'>tapetype</emphasis>
+<amkeyword>tapetype</amkeyword>
 inherit options from another
-<emphasis remap='B'>tapetype</emphasis>.
+<amkeyword>tapetype</amkeyword>.
 For instance, the only difference between a DLT4000 tape drive using
 Compact-III tapes and one using Compact-IV tapes is the length of the tape.
 So they could be entered as:</para>
@@ -2343,7 +2339,7 @@ define tapetype "DLT4000-IV" {
 <para>The
 <emphasis remap='B'>amanda.conf</emphasis>
 file may define multiple types of network interfaces.
-The information is entered in an <emphasis remap='B'>interface</emphasis>
+The information is entered in an <amkeyword>interface</amkeyword>
 section, which looks like this:</para>
 
 <programlisting>
@@ -2370,29 +2366,28 @@ leaving throttling up to the operating system and network hardware.</para>
 <para>The interface options and values are:</para>
 <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>Default:
-<emphasis remap='I'>none</emphasis>.
+<para>Default: not set.
 A comment string describing this set of network information.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>use</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>use</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>8000 Kbps</emphasis>.
+<amdefault>8000 Kbps</amdefault>.
 The speed of the interface in Kbytes per second.</para>
   </listitem>
   </varlistentry>
 </variablelist>
 
 <para>In addition to options, another
-<emphasis remap='B'>interface</emphasis>
+<amkeyword>interface</amkeyword>
 name may be supplied as an identifier, which makes this
-<emphasis remap='B'>interface</emphasis>
+<amkeyword>interface</amkeyword>
 inherit options from another
-<emphasis remap='B'>interface</emphasis>.
+<amkeyword>interface</amkeyword>.
 At the moment, this is of little use.</para>
 </refsect1>
 
@@ -2400,7 +2395,7 @@ At the moment, this is of little use.</para>
 <para>The
 <emphasis remap='B'>amanda.conf</emphasis>
 file may define multiple types of application.
-The information is entered in a <emphasis remap='B'>application</emphasis>
+The information is entered in a <amkeyword>application</amkeyword>
 section, which looks like this:</para>
 
 <programlisting>
@@ -2418,26 +2413,25 @@ is the name of this type of application. It is referenced from the
 <para>The application options and values are:</para>
 <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>Default:
-<emphasis remap='I'>none</emphasis>.
+<para>Default: not set.
 A comment string describing this application.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>plugin</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>plugin</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>No default. Must be set to the name of the program. This program must be in the <emphasis remap='I'>$libexecdir/amanda/application</emphasis> directory on the client.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>property</emphasis> [<emphasis remap='B'>append</emphasis>] [<emphasis remap='B'>priority</emphasis>] <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis>+</term>
+  <term><amkeyword>property</amkeyword> [<amkeyword>append</amkeyword>] [<amkeyword>priority</amkeyword>] <amtype>string</amtype> <amtype>string</amtype>+</term>
   <listitem>
 <para>No default. You can set property for the application, each application have a different set of property. Both strings are quoted; the first string contains the name of
 the property to set, and the others contains its values.
-<emphasis remap='B'>append</emphasis> keyword append the values to the list of values for that property.
-<emphasis remap='B'>priority</emphasis> keyword disallow the setting of that property on the client.
+<amkeyword>append</amkeyword> keyword append the values to the list of values for that property.
+<amkeyword>priority</amkeyword> keyword disallow the setting of that property on the client.
 </para>
   </listitem>
   </varlistentry>
@@ -2448,7 +2442,7 @@ the property to set, and the others contains its values.
 <para>The
 <emphasis remap='B'>amanda.conf</emphasis>
 file may define multiple types of script. 
-The information is entered in a <emphasis remap='B'>script</emphasis>
+The information is entered in a <amkeyword>script</amkeyword>
 section, which looks like this:</para>
 
 <programlisting>
@@ -2466,135 +2460,134 @@ is the name of this type of script. It is referenced from the
 <para>The script options and values are:</para>
 <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>Default:
-<emphasis remap='I'>none</emphasis>.
+<para>Default: not set.
 A comment string describing this script.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>plugin</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><amkeyword>plugin</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>No default. Must be set to the name of the program. This program must be in the <emphasis remap='I'>$libexecdir/amanda/application</emphasis> directory on the client and/or server.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>order</emphasis> <emphasis remap='I'>int</emphasis></term>
+  <term><amkeyword>order</amkeyword> <amtype>int</amtype></term>
   <listitem>
-<para>Default: <emphasis remap='I'>5000</emphasis>. Scripts are executed in that order, it is useful if you have many scripts and they must be executed in a spefific order.</para>
+<para>Default: <amdefault>5000</amdefault>. Scripts are executed in that order, it is useful if you have many scripts and they must be executed in a spefific order.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>execute_where</emphasis> [ <emphasis remap='B'>client</emphasis> | <emphasis remap='B'>server</emphasis> ]</term>
+  <term><amkeyword>execute_where</amkeyword> [ <amkeyword>client</amkeyword> | <amkeyword>server</amkeyword> ]</term>
   <listitem>
-<para>Default: <emphasis remap='I'>client</emphasis>. Where the script must be executed, on the client or server.</para>
+<para>Default: <amkeyword>client</amkeyword>. Where the script must be executed, on the client or server.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>execute_on</emphasis> <emphasis remap='I'>execute_on</emphasis>[,<emphasis remap='I'>execute_on</emphasis>]*</term>
+  <term><amkeyword>>execute_on</amkeyword> <amtype>execute_on</amtype> [,<amtype>execute_on</amtype>]*</term>
   <listitem>
 <para>No default. When the script must be executed, you can specify many of them:</para>
     <!-- .RS -->
     <variablelist remap='TP'>
       <varlistentry>
-      <term><emphasis remap='B'>pre-dle-amcheck</emphasis></term>
+      <term><amkeyword>pre-dle-amcheck</amkeyword></term>
       <listitem>
 <para>Execute before the amcheck command for the dle.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>pre-host-amcheck</emphasis></term>
+      <term><amkeyword>pre-host-amcheck</amkeyword></term>
       <listitem>
 <para>Execute before the amcheck command for all dle for the client.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>post-dle-amcheck</emphasis></term>
+      <term><amkeyword>post-dle-amcheck</amkeyword></term>
       <listitem>
 <para>Execute after the amcheck command for the dle.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>post-host-amcheck</emphasis></term>
+      <term><amkeyword>post-host-amcheck</amkeyword></term>
       <listitem>
 <para>Execute after the amcheck command for all dle for the client.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>pre-dle-estimate</emphasis></term>
+      <term><amkeyword>pre-dle-estimate</amkeyword></term>
       <listitem>
 <para>Execute before the estimate command for the dle.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>pre-host-estimate</emphasis></term>
+      <term><amkeyword>pre-host-estimate</amkeyword></term>
       <listitem>
 <para>Execute before the estimate command for all dle for the client.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>post-dle-estimate</emphasis></term>
+      <term><amkeyword>post-dle-estimate</amkeyword></term>
       <listitem>
 <para>Execute after the estimate command for the dle.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>post-host-estimate</emphasis></term>
+      <term><amkeyword>post-host-estimate</amkeyword></term>
       <listitem>
 <para>Execute after the estimate command for all dle for the client.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>pre-dle-backup</emphasis></term>
+      <term><amkeyword>pre-dle-backup</amkeyword></term>
       <listitem>
 <para>Execute before the backup command for the dle.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>pre-host-backup</emphasis></term>
+      <term><amkeyword>pre-host-backup</amkeyword></term>
       <listitem>
 <para>Execute before the backup command for all dle for the client. It can't be run on client, it must be run on server</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>post-dle-backup</emphasis></term>
+      <term><amkeyword>post-dle-backup</amkeyword></term>
       <listitem>
 <para>Execute after the backup command for the dle.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>post-host-backup</emphasis></term>
+      <term><amkeyword>post-host-backup</amkeyword></term>
       <listitem>
 <para>Execute after the backup command for all dle for the client. It can't be run on client, it must be run on server</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>pre-recover</emphasis></term>
+      <term><amkeyword>pre-recover</amkeyword></term>
       <listitem>
 <para>Execute before any level is recovered.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>post-recover</emphasis></term>
+      <term><amkeyword>post-recover</amkeyword></term>
       <listitem>
 <para>Execute after all levels are recovered.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>pre-level-recover</emphasis></term>
+      <term><amkeyword>pre-level-recover</amkeyword></term>
       <listitem>
 <para>Execute before each level recovery.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>post-level-recover</emphasis></term>
+      <term><amkeyword>post-level-recover</amkeyword></term>
       <listitem>
 <para>Execute after each level recovery.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><emphasis remap='B'>inter-level-recover</emphasis></term>
+      <term><amkeyword>inter-level-recover</amkeyword></term>
       <listitem>
 <para>Execute between two levels of recovery.</para>
       </listitem>
@@ -2615,12 +2608,12 @@ script --post-recover
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>property</emphasis> [<emphasis remap='B'>append</emphasis>] [<emphasis remap='B'>priority</emphasis>] <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis>+</term>
+  <term><amkeyword>property</amkeyword>> [<amkeyword>append</amkeyword>] [<amkeyword>priority</amkeyword>] <amtype>string</amtype> <amtype>string</amtype>+</term>
   <listitem>
 <para>No default. You can set property for the script, each script have a different set of property. Both strings are quoted; the first string contains the name of
 the property to set, and the others contains its values.
-<emphasis remap='B'>append</emphasis> keyword append the values to the list of values for that property.
-<emphasis remap='B'>priority</emphasis> keyword disallow the setting of that property on the client.
+<amkeyword>append</amkeyword> keyword append the values to the list of values for that property.
+<amkeyword>priority</amkeyword> keyword disallow the setting of that property on the client.
 </para>
   </listitem>
   </varlistentry>
