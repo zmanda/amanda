@@ -20,6 +20,7 @@ common_tests = \
 	amarchiver
 
 client_tests = \
+        noop \
 	amgtar \
 	ampgsql \
 	amraw
@@ -134,6 +135,7 @@ endif
 test_utils = \
 	Installcheck.pm \
 	Installcheck/Config.pm \
+	Installcheck/ClientService.pm \
 	Installcheck/Mock.pm \
 	Installcheck/Run.pm \
 	Installcheck/Dumpcache.pm \

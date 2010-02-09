@@ -192,6 +192,15 @@ supported versions of perl.
 
 Return the number of microseconds since the UNIX epoch.
 
+=item fsync($fd)
+
+Invoke the C<fsync> syscall.
+
+=item set_blocking($fd, $blocking)
+
+Set or clear the C<O_NONBLOCK> fd flag on $fd; returns a negative value on
+failure, or 0 on success.
+
 =back
 
 =head1 String Utilities

@@ -1,3 +1,9 @@
+2010-02-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/ClientService.pm: utility to test
+	  client services (noop, sendbackup, etc.)
+	* installcheck/Makefile.am installcheck/noop.pl: new test
+	* perl/Amanda/Util.pod perl/Amanda/Util.swg: new set_blocking
+
 2010-02-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/amidxtaped.c: Check from_amandad before
 				    fe_recover_splits.

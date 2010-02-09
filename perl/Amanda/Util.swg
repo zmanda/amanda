@@ -392,10 +392,29 @@ void get_fs_usage_(const char *file, struct fs_usage *fsp)
 %}
 
 /*
- * File Syncing
+ * Operations that should be in Perl but aren't
  */
 
 int fsync(int fd);
+
+/* Perl's fcntl only operates on file handles */
+%inline %{
+int
+set_blocking(int fd, gboolean blocking)
+{
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags < 0)
+	return flags;
+    if (blocking)
+	flags &= ~O_NONBLOCK;
+    else
+	flags |= O_NONBLOCK;
+    flags = fcntl(fd, F_SETFL, flags);
+    if (flags < 0)
+	return flags;
+    return 0;
+}
+%}
 
 /*
  * Locking (see amflock.h)
