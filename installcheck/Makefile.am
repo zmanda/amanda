@@ -69,6 +69,7 @@ full_tests = \
 	amstatus \
 	amreport \
 	amadmin \
+	amidxtaped \
 	pp-scripts
 
 restore_tests = \

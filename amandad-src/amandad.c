@@ -1130,6 +1130,7 @@ s_ackwait(
     for (dh = &as->data[0]; dh < &as->data[DATA_FD_COUNT]; dh++) {
 	if (dh->netfd == NULL)
 	    continue;
+	dbprintf("opening security stream for fd %d\n", (int)(dh - as->data) + DATA_FD_OFFSET);
 	if (security_stream_accept(dh->netfd) < 0) {
 	    dbprintf(_("stream %td accept failed: %s\n"),
 		dh - &as->data[0], security_geterror(as->security_handle));
@@ -1468,6 +1469,9 @@ allocstream(
     int				handle)
 {
     struct datafd_handle *dh;
+
+    /* note that handle is in the range DATA_FD_OFFSET to DATA_FD_COUNT, but
+     * it is NOT a file descriptor! */
 
     /* if the handle is -1, then we don't bother */
     if (handle < 0)

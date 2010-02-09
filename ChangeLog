@@ -1,4 +1,12 @@
 2010-02-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.pl installcheck/amidxtaped.pl: amidxtaped
+	  tests
+	* amandad-src/amandad.c: comments
+	* common-src/amanda.h: comments
+	* restore-src/amidxtaped.c: don't check security when invoked with
+	  'installcheck' as argv[1]
+
+2010-02-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Installcheck/ClientService.pm: utility to test
 	  client services (noop, sendbackup, etc.)
 	* installcheck/Makefile.am installcheck/noop.pl: new test

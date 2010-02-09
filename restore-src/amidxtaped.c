@@ -59,6 +59,7 @@ extern char *rst_conf_logfile;
 
 static int get_lock = 0;
 static int from_amandad;
+static int skip_security = 0; /* for installchecks */
 
 static am_feature_t *our_features = NULL;
 static am_feature_t *their_features = NULL;
@@ -222,9 +223,13 @@ check_security_buffer(
 	/*NOTREACHED*/
     }
     skip_whitespace(s, ch);
-    if (!check_security((sockaddr_union *)&addr, s-1, 0, &errstr)) {
-	error(_("security check failed: %s"), errstr);
-	/*NOTREACHED*/
+    if (!skip_security) {
+	if (!check_security((sockaddr_union *)&addr, s-1, 0, &errstr)) {
+	    error(_("security check failed: %s"), errstr);
+	    /*NOTREACHED*/
+	}
+    } else {
+	dbprintf("running in installcheck; skipping security check for '%s'\n", s-1);
     }
 }
 
@@ -297,6 +302,10 @@ main(
     else {
 	from_amandad = 0;
 	safe_fd(-1, 0);
+	if (argv && argv[1] && strcmp(argv[1], "installcheck") == 0) {
+	    /* skip the check_security calls, since we're being run from an installcheck */
+	    skip_security = 1;
+	}
     }
 
     /* initialize */
@@ -366,7 +375,12 @@ main(
 	    }
 	}
 	/* send the REP packet */
-	g_printf("CONNECT CTL %d DATA %d\n", DATA_FD_OFFSET, DATA_FD_OFFSET+1);
+	g_printf("CONNECT CTL %d DATA %d\n",
+		/* note that these integers are NOT file descriptors!! */
+		/* ctl write: DATA_FD_OFFSET (ctlfdout), read: DATA_FD_OFFSET+1 (ctlfdin) */
+		DATA_FD_OFFSET,
+		/* data write: DATA_FD_OFFSET+2 (datafdout), read: DATA_FD_OFFSET+3 (none) */
+		DATA_FD_OFFSET+1);
 	g_printf("\n");
 	fflush(stdout);
 	fclose(stdin);
