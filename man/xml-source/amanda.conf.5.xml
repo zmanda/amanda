@@ -407,12 +407,11 @@ remap='B'>runtapes</emphasis> (the number of tapes used per run). Typically
 <amkeyword>tapecycle</amkeyword> is set to two or four times the tapes
 per dumpcycle.</para>
 
-<note>Amanda is commonly misconfigured with <emphasis
-remap='B'>tapecycle</emphasis> equal to the number of tapes per dumpcycle.  In
-this misconfiguration, when all <amkeyword>tapecycle</amkeyword> tapes
-are used, Amanda has no free tape to which it can write the next backup, and the
-dump will fail.  <amkeyword>tapecycle</amkeyword> must be at least one
-tape larger than the tapes per dumpcycle.
+<note>Amanda is commonly misconfigured with <amkeyword>tapecycle</amkeyword>
+equal to the number of tapes per <amkeyword>dumpcycle</amkeyword>.  In this
+misconfiguration, amanda may erase a full dump before a new one is completed,
+the recovery is then impossible. tapecycle must be at least one tape larger
+than the number of tapes per dumpcycle.
 </note>
 
 <para>While Amanda is always willing to use a new tape in its rotation, it refuses to reuse a tape until at

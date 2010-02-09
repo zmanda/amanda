@@ -1,3 +1,6 @@
+2010-02-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: Fix note for tapecycle.
+
 2010-02-09  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report/human.pm: renamed variables to be more descriptive
 
