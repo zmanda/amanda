@@ -1,4 +1,10 @@
 2010-02-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: Document undef state.
+	* perl/Amanda/Changer/multi.pm: Set state to SLOT_UNKNOWN.
+	* perl/Amanda/Changer/single.pm: Set state to undef.
+	* perl/Amanda/Recovery/Scan.pm: Handle undef state.
+
+2010-02-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.pl: Log no-tape error if no available tape.
 
 2010-02-10  Dustin J. Mitchell <dustin@zmanda.com>

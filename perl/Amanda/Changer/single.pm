@@ -116,7 +116,7 @@ sub inventory {
 
     my @inventory;
     my $s = { slot => 0,
-	      state => Amanda::Changer::SLOT_UNKNOWN,
+	      state => undef,
 	      device_status => undef,
 	      f_type => undef,
 	      label => undef };

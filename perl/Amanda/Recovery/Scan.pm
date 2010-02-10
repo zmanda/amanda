@@ -162,7 +162,7 @@ sub find_volume {
 			  # it's more interesting to report an error from the
 			  # device or ...
     my $slot_scanned;
-    my $remove_SLOT_UNKNOWN = 0;
+    my $remove_undef_state = 0;
     my $load_for_label = 0; # 1 = Try to load the slot with the correct label
                             # 0 = Load a slot with an unknown label
 
@@ -250,15 +250,15 @@ sub find_volume {
 
 	# Remove from seen all slot that have state == SLOT_UNKNOWN
 	# It is done when as scan is restarted from interactive object.
-	if ($remove_SLOT_UNKNOWN) {
+	if ($remove_undef_state) {
 	    for my $i (0..(scalar(@$inventory)-1)) {
 		my $slot = $inventory->[$i]->{slot};
-		if ($seen{$slot} &&
-		    $inventory->[$i]->{state} == Amanda::Changer::SLOT_UNKNOWN) {
+		if (exists($seen{$slot}) &&
+		    !defined($inventory->[$i]->{state})) {
 		    delete $seen{$slot}
 		}
 	    }
-	    $remove_SLOT_UNKNOWN = 0;
+	    $remove_undef_state = 0;
 	}
 
 	# remove any slots where the state has changed from the list of seen slots
@@ -266,19 +266,16 @@ sub find_volume {
 	    my $sl = $inventory->[$i];
 	    my $slot = $sl->{slot};
 	    if ($seen{$slot} &&
-		$sl->{'state'} != Amanda::Changer::SLOT_UNKNOWN &&
-		$seen{$slot}->{'device_status'} !=
-					$sl->{'device_status'} &&
-		(defined $seen{$slot}->{'device_status'} &&
-		 ($seen{$slot}->{'device_status'} != $DEVICE_STATUS_SUCCESS ||
-		  $seen{$slot}->{'f_type'} !=
-					$sl->{'f_type'})) &&
-		((defined $seen{$slot}->{'device_status'} &&
-		  $seen{$slot}->{'device_status'} != $DEVICE_STATUS_SUCCESS) ||
-		 (defined $seen{$slot}->{'f_type'} &&
-		  $seen{$slot}->{'f_type'} != $Amanda::Header::F_TAPESTART) ||
-		 $seen{$slot}->{'label'} !=
-					$sl->{'label'})) {
+		defined($sl->{'state'}) &&
+		(($seen{$slot}->{'device_status'} != $sl->{'device_status'}) ||
+		 (defined $seen{$slot}->{'device_status'} &&
+		  $seen{$slot}->{'device_status'} == $DEVICE_STATUS_SUCCESS &&
+		  $seen{$slot}->{'f_type'} != $sl->{'f_type'}) ||
+		 (defined $seen{$slot}->{'device_status'} &&
+		  $seen{$slot}->{'device_status'} == $DEVICE_STATUS_SUCCESS &&
+		  defined $seen{$slot}->{'f_type'} &&
+		  $seen{$slot}->{'f_type'} == $Amanda::Header::F_TAPESTART &&
+		  $seen{$slot}->{'label'} ne $sl->{'label'}))) {
 		delete $seen{$slot};
 	    }
 	}
@@ -409,8 +406,9 @@ sub find_volume {
 		$err->{reason} = "driveinuse";
 	    }
 	    $user_msg_fn->(" $err\n");
-	    $last_err = $err if !$err->notfound;
-	    if ($load_for_label == 1 && $err->volinuse) {
+
+	    $last_err = $err if $err->fatal || !$err->notfound;
+	    if ($load_for_label == 1 && $err->failed && $err->volinuse) {
 		# volinuse is an error
 		return $subs{'handle_error'}->($err, $subs{'load_released'});
 	    }
@@ -447,7 +445,7 @@ sub find_volume {
 
 	# prefer to use scan method for $last_err, if present
 	# TODO: does this mean the scanner reacts to errors "late"?
-	if ($last_err && $err->notfound) {
+	if ($last_err && $err->failed && $err->notfound) {
 	    $message = "$last_err";
 	
 	    if ($last_err->isa("Amanda::Changer::Error")) {
@@ -541,6 +539,7 @@ sub find_volume {
 	$interactive_running = 0;
 	$poll_src->remove() if defined $poll_src;
 	$poll_src = undef;
+	$last_err = undef;
 
 	if ($err) {
 	    if ($scan_running) {
@@ -560,7 +559,7 @@ sub find_volume {
 	    $self->{'chg'} = $new_chg;
 	    %seen = ();
 	} else {
-	    $remove_SLOT_UNKNOWN = 1;
+	    $remove_undef_state = 1;
 	}
 
 	if ($scan_running) {
@@ -617,9 +616,9 @@ sub _find_volume_no_inventory {
 	(my $err, $res) = @_;
 
 	if ($err) {
-	    if ($err->notfound) {
+	    if ($err->failed && $err->notfound) {
 		return $res_cb->($err, undef);
-	    } elsif ($err->volinuse and defined $err->{'slot'}) {
+	    } elsif ($err->failed && $err->volinuse and defined $err->{'slot'}) {
 		$last_slot = $err->{'slot'};
 	    } else {
 		#no interactivity yet.

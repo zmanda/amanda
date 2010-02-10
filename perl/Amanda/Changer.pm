@@ -368,8 +368,10 @@ Set to C<1> if it is the current slot.
 =item state
 
 Set to C<SLOT_FULL> if the slot is full, C<SLOT_EMPTY> if the slot is empty (no
-volume in slot), or C<SLOT_UNKNOWN> if the changer doesn't if the slot is full
-or not.  These constants are available in the C<:constants> export tag.
+volume in slot), C<SLOT_UNKNOWN> if the changer doesn't know if the slot is full
+or not (but it can know), or undef if the changer can't know if the slot is full or not.
+A changer that doesn't keep state must set it to undef, like chg-single.
+These constants are available in the C<:constants> export tag.
 
 A blank or erased volume is not the same as an empty slot.
 
