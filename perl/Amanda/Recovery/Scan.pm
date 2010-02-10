@@ -444,7 +444,6 @@ sub find_volume {
 	$poll_src = undef;
 
 	# prefer to use scan method for $last_err, if present
-	# TODO: does this mean the scanner reacts to errors "late"?
 	if ($last_err && $err->failed && $err->notfound) {
 	    $message = "$last_err";
 	
