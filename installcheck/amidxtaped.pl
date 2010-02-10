@@ -489,25 +489,31 @@ for my $emulate ('inetd', 'amandad') {
 
 ## directtcp device (NDMP)
 
-my $ndmp = Installcheck::Mock::NdmpServer->new();
-Installcheck::Dumpcache::load('ndmp');
-$ndmp->edit_config();
+SKIP: {
+    skip "not built with ndmp and server", 5 unless
+	Amanda::Util::built_with_component("ndmp") and
+	Amanda::Util::built_with_component("server");
 
-# test a real directtcp transfer both with and without a header
-test(emulate => 'amandad', splits => 1,
-    datapath => 'directtcp', header => 1, ndmp => $ndmp);
-test(emulate => 'amandad', splits => 1,
-    datapath => 'directtcp', header => 0, ndmp => $ndmp);
+    my $ndmp = Installcheck::Mock::NdmpServer->new();
+    Installcheck::Dumpcache::load('ndmp');
+    $ndmp->edit_config();
 
-# and likewise an amanda transfer with a directtcp device
-test(emulate => 'amandad', splits => 1,
-    datapath => 'amanda', header => 1, ndmp => $ndmp);
-test(emulate => 'amandad', splits => 1,
-    datapath => 'amanda', header => 0, ndmp => $ndmp);
+    # test a real directtcp transfer both with and without a header
+    test(emulate => 'amandad', splits => 1,
+	datapath => 'directtcp', header => 1, ndmp => $ndmp);
+    test(emulate => 'amandad', splits => 1,
+	datapath => 'directtcp', header => 0, ndmp => $ndmp);
 
-# and finally a datapath-free transfer with such a device
-test(emulate => 'amandad', splits => 1,
-    datapath => 'none', header => 1, ndmp => $ndmp);
+    # and likewise an amanda transfer with a directtcp device
+    test(emulate => 'amandad', splits => 1,
+	datapath => 'amanda', header => 1, ndmp => $ndmp);
+    test(emulate => 'amandad', splits => 1,
+	datapath => 'amanda', header => 0, ndmp => $ndmp);
+
+    # and finally a datapath-free transfer with such a device
+    test(emulate => 'amandad', splits => 1,
+	datapath => 'none', header => 1, ndmp => $ndmp);
+}
 
 ## cleanup
 
