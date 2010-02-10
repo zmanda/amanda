@@ -1,3 +1,6 @@
+2010-02-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* restore-src/restore.c: fix double-free error
+
 2010-02-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.pl installcheck/amidxtaped.pl: amidxtaped
 	  tests

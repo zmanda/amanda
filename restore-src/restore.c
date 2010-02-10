@@ -2344,7 +2344,7 @@ search_tapes(
 	if (flags->alt_tapedev) {
 	    cur_tapedev = stralloc(flags->alt_tapedev);
 	} else if(!cur_tapedev) {
-	    cur_tapedev = getconf_str(CNF_TAPEDEV);
+	    cur_tapedev = stralloc(getconf_str(CNF_TAPEDEV));
 	    if (cur_tapedev == NULL) {
 		error(_("No tapedev specified"));
 	    }
@@ -2390,7 +2390,8 @@ search_tapes(
                                  (use_changer ? slots : -1),
                                  logstream);
     }
-    amfree(cur_tapedev);
+    /* this may have been freed by restore_*_tapelist; leak it for now */
+    /* amfree(cur_tapedev); */
 
     if(logstream && logstream != stderr && logstream != stdout){
 	fclose(logstream);
