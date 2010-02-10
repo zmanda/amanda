@@ -1,4 +1,8 @@
 2010-02-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Recovery/Scan.pm: user_msg_fn take a hase as argument.
+	* server-src/amtape.pl: New user_msg_fn.
+
+2010-02-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Document undef state.
 	* perl/Amanda/Changer/multi.pm: Set state to SLOT_UNKNOWN.
 	* perl/Amanda/Changer/single.pm: Set state to undef.

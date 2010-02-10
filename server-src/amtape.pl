@@ -389,8 +389,25 @@ sub {
     my $gres;
 
     sub _user_msg_fn {
-	my $msg = shift;
-	print "$msg";
+	my %params = @_;
+
+	if (exists($params{'scan_slot'})) {
+	    print "slot $params{'slot'}:";
+	} elsif (exists($params{'slot_result'})) {
+	    if (defined($params{'err'})) {
+		print " $params{'err'}\n";
+	    } else { # res must be defined
+		my $res = $params{'res'};
+		my $dev = $res->{'device'};
+		if ($dev->status == $DEVICE_STATUS_SUCCESS) {
+		    my $volume_label = $res->{device}->volume_label;
+		    print " $volume_label\n";
+		} else {
+		    my $errmsg = $res->{device}->error_or_status();
+		    print " $errmsg\n";
+		}
+	    }
+	}
     };
 
     usage unless (@args == 1);

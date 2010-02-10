@@ -112,10 +112,31 @@ by another program.
                      set_current => 0)
 
 Find the volume labelled C<$label> and call C<$res_cb>.  C<$user_msg_fn> is
-used to send progress information, and takes a single argument, a
-newline-terminated string to display to the user.  As with the C<load> method
+used to send progress information, The argumnet it takes are describe in
+the next section.  As with the C<load> method
 of the changer API, C<set_current> should be set to 1 if you want the scan to
 set the current slot.
+
+=head3 user_msg_fn
+
+The user_msg_fn take various arguments
+
+Initiate the scan of the slot $slot:
+  $self->user_msg_fn(scan_slot => 1,
+                     slot      => $slot);
+
+Initiate the scan of the slot $slot which should have the label $label:
+  $self->user_msg_fn(scan_slot => 1,
+                     slot      => $slot,
+                     label     => $label);   
+
+The result of scanning slot $slot:
+  $self->user_msg_fn(slot_result => 1,
+                     slot        => $slot,
+                     err         => $err,
+                     res         => $res);
+
+Other option can be added at any time, the function can ignore then.
 
 =cut
 
@@ -237,7 +258,9 @@ sub find_volume {
 			    undef);
 		}
 		Amanda::Debug::debug("parse_inventory: load slot $slot_scanned with label '$label'");
-		$user_msg_fn->("slot $slot_scanned:");
+		$user_msg_fn->(scan_slot => 1,
+			       slot      => $slot_scanned,
+			       label     => $label);
 		$seen{$slot_scanned} = { device_status => $sl->{'device_status'},
 					 f_type        => $sl->{'f_type'},
 					 label         => $sl->{'label'} };
@@ -288,7 +311,7 @@ sub find_volume {
 		    !$sl->{'reserved'} &&
 		    !$seen{$slot}) {
 		    $slot_scanned = $slot;
-		    $user_msg_fn->("slot $slot_scanned:");
+		    $user_msg_fn->(scan_slot => 1, slot => $slot_scanned);
 		    $seen{$slot_scanned} = { device_status => $sl->{'device_status'},
 					     f_type        => $sl->{'f_type'},
 					     label         => $sl->{'label'} };
@@ -331,7 +354,7 @@ sub find_volume {
 		$current = $slot;
 		$slot_scanned = $current;
 		Amanda::Debug::debug("parse_inventory: load slot $current");
-		$user_msg_fn->("slot $slot_scanned:");
+		$user_msg_fn->(scan_slot => 1, slot => $slot_scanned);
 		$seen{$slot_scanned} = { device_status => $sl->{'device_status'},
 					 f_type        => $sl->{'f_type'},
 					 label         => $sl->{'label'} };
@@ -360,12 +383,15 @@ sub find_volume {
 	# we don't responsd to abort_scan or restart_scan here, since we
 	# have an open reservation that we should deal with.
 
+	$user_msg_fn->(slot_result => 1,
+		       slot => $slot_scanned,
+		       err  => $err,
+		       res  => $res);
 	if ($res) {
 	    if ($res->{device}->status == $DEVICE_STATUS_SUCCESS &&
 		$res->{device}->volume_label &&
 		$res->{device}->volume_label eq $label) {
 		my $volume_label = $res->{device}->volume_label;
-		$user_msg_fn->(" $volume_label\n");
 		return $subs{'call_res_cb'}->(undef, $res);
 	    }
 	    my $f_type;
@@ -386,16 +412,9 @@ sub find_volume {
 	    # notify the user
 	    if ($res->{device}->status == $DEVICE_STATUS_SUCCESS) {
 		$last_err = undef;
-		if (defined $res->{device}->volume_label) {
-		    my $volume_label = $res->{device}->volume_label;
-		    $user_msg_fn->(" $volume_label\n");
-		} else {
-		    $user_msg_fn->(" unknown\n");
-		}
 	    } else {
 		$last_err = Amanda::Changer::Error->new('fatal',
 				message => $res->{device}->error_or_status());
-		$user_msg_fn->(" $last_err\n");
 	    }
 	    return $res->release(finished_cb => $subs{'load_released'});
 	} else {
@@ -405,8 +424,6 @@ sub find_volume {
 		# volinuse to driveinuse.
 		$err->{reason} = "driveinuse";
 	    }
-	    $user_msg_fn->(" $err\n");
-
 	    $last_err = $err if $err->fatal || !$err->notfound;
 	    if ($load_for_label == 1 && $err->failed && $err->volinuse) {
 		# volinuse is an error
@@ -650,7 +667,7 @@ sub _find_volume_no_inventory {
 }
 
 sub _user_msg_fn {
-    my $msg = shift;
+    my %params = @_;
 }
 
 package Amanda::Recovery::Scan::Config;
