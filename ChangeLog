@@ -1,3 +1,6 @@
+2010-02-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper.pl: Log no-tape error if no available tape.
+
 2010-02-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amidxtaped.pl: skip DirectTCP tests if
 	  --without-ndmp

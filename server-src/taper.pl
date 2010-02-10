@@ -278,6 +278,10 @@ sub _scribe_started_cb {
 		handle => '99-9999', # fake handle
 		message => "$err");
 	$self->{'state'} = "error";
+
+	# log the error (note that the message is intentionally not quoted)
+	log_add($L_ERROR, "no-tape [$err]");
+
     } else {
 	$self->{'proto'}->send(main::Protocol::TAPER_OK);
 	$self->{'state'} = "idle";
