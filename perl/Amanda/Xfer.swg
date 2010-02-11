@@ -348,6 +348,9 @@ xfer_source_directtcp_listen_get_addrs(XferElement *elt) {
 }
 %}
 
+%newobject xfer_source_directtcp_connect;
+XferElement *xfer_source_directtcp_connect(DirectTCPAddr *addrs);
+
 %newobject xfer_filter_xor;
 XferElement *xfer_filter_xor(
     unsigned char xor_key);
@@ -374,6 +377,16 @@ void xfer_dest_buffer_get(
 %newobject xfer_dest_fd;
 XferElement *xfer_dest_fd(
     int fd);
+
+%newobject xfer_dest_directtcp_listen;
+XferElement *xfer_dest_directtcp_listen(void);
+
+%inline %{
+static DirectTCPAddr *
+xfer_dest_directtcp_listen_get_addrs(XferElement *elt) {
+    return elt->output_listen_addrs;
+}
+%}
 
 %newobject xfer_dest_directtcp_connect;
 XferElement *xfer_dest_directtcp_connect(DirectTCPAddr *addrs);
@@ -557,6 +570,12 @@ DECLARE_METHOD(get_addrs, Amanda::Xfer::xfer_source_directtcp_listen_get_addrs)
 
 /* ---- */
 
+PACKAGE(Amanda::Xfer::Source::DirectTCPConnect)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_source_directtcp_connect)
+
+/* ---- */
+
 PACKAGE(Amanda::Xfer::Source::Pattern)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_source_pattern)
@@ -591,6 +610,13 @@ PACKAGE(Amanda::Xfer::Dest::Buffer)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_dest_buffer)
 DECLARE_METHOD(get, Amanda::Xfer::xfer_dest_buffer_get)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Dest::DirectTCPListen)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_dest_directtcp_listen)
+DECLARE_METHOD(get_addrs, Amanda::Xfer::xfer_dest_directtcp_listen_get_addrs)
 
 /* ---- */
 

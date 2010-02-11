@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -331,6 +331,7 @@ xfer_mech_name(
 	case XFER_MECH_PULL_BUFFER: return "PULL_BUFFER";
 	case XFER_MECH_PUSH_BUFFER: return "PUSH_BUFFER";
 	case XFER_MECH_DIRECTTCP_LISTEN: return "DIRECTTCP_LISTEN";
+	case XFER_MECH_DIRECTTCP_CONNECT: return "DIRECTTCP_CONNECT";
 	default: return "UNKNOWN";
     }
 }

@@ -1,4 +1,17 @@
 2010-02-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* xfer-src/xfer.c xfer-src/xfer-element.h: add
+	  XFER_MECH_DIRECTTCP_CONNECT
+	* xfer-src/source-directtcp-connect.c: element that uses it
+	* xfer-src/dest-directtcp-listen.c: element that uses it
+	* xfer-src/element-glue.c: glue for it
+	* xfer-src/xfer-test.c: test it
+	* perl/Amanda/Xfer.pod perl/Amanda/Xfer.swg: SWIG it
+	* installcheck/Amanda_Xfer.pl: test it some more
+	* xfer-src/Makefile.am: new files
+	* xfer-src/dest-directtcp-connect.c: check addrs is not empty
+	* perl/amglue/directtcp.swg: handle empty address lists better
+
+2010-02-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am: don't run amidxtaped on
 	  --without-restore
 	* installcheck/Installcheck/ClientService.pm

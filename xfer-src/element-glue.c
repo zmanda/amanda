@@ -1,6 +1,6 @@
 /*
  * Amanda, The Advanced Maryland Automatic Network Disk Archiver
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -38,7 +38,8 @@ typedef struct XferElementGlue_ {
 	PUSH_TO_FD, /* write to *write_fdp */
 	PUSH_INVALID,
 
-	PUSH_CONNECT_FIRST = (1 << 16),
+	PUSH_ACCEPT_FIRST = (1 << 16),
+	PUSH_CONNECT_FIRST = (2 << 16),
     } on_push;
 
     /* instructions to pull_buffer_impl */
@@ -48,6 +49,7 @@ typedef struct XferElementGlue_ {
 	PULL_INVALID,
 
 	PULL_ACCEPT_FIRST = (1 << 16),
+	PULL_CONNECT_FIRST = (2 << 16),
     } on_pull;
 
     int *write_fdp;
@@ -58,7 +60,8 @@ typedef struct XferElementGlue_ {
     /* the stuff we might use, depending on what flavor of glue we're
      * providing.. */
     int pipe[2];
-    int listen_socket, data_socket;
+    int input_listen_socket, output_listen_socket;
+    int input_data_socket, output_data_socket;
 
     /* a ring buffer of ptr/size pairs with semaphores */
     struct { gpointer buf; size_t size; } *ring;
@@ -99,14 +102,51 @@ send_xfer_done(
 	    xmsg_new((XferElement *)self, XMSG_DONE, 0));
 }
 
-static int
-do_directtcp_accept(
-    XferElementGlue *self)
+static gboolean
+do_directtcp_listen(
+    XferElement *elt,
+    int *sockp,
+    DirectTCPAddr **addrsp)
 {
     int sock;
-    g_assert(self->listen_socket != -1);
+    sockaddr_union addr;
+    DirectTCPAddr *addrs;
+    socklen_t len;
 
-    if ((sock = accept(self->listen_socket, NULL, NULL)) == -1) {
+    sock = *sockp = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+	xfer_cancel_with_error(elt, "socket(): %s", strerror(errno));
+	return FALSE;
+    }
+
+    if (listen(sock, 1) < 0) {
+	xfer_cancel_with_error(elt, "listen(): %s", strerror(errno));
+	return FALSE;
+    }
+
+    /* TODO: which addresses should this display? all ifaces? localhost? */
+    len = sizeof(addr);
+    if (getsockname(sock, (struct sockaddr *)&addr, &len) < 0)
+	error("getsockname(): %s", strerror(errno));
+    g_assert(SU_GET_FAMILY(&addr) == AF_INET);
+
+    addrs = g_new0(DirectTCPAddr, 2);
+    addrs[0].ipv4 = ntohl(inet_addr("127.0.0.1")); /* TODO: be smarter! */
+    addrs[0].port = SU_GET_PORT(&addr);
+    *addrsp = addrs;
+
+    return TRUE;
+}
+
+static int
+do_directtcp_accept(
+    XferElementGlue *self,
+    int *socketp)
+{
+    int sock;
+    g_assert(*socketp != -1);
+
+    if ((sock = accept(*socketp, NULL, NULL)) == -1) {
 	xfer_cancel_with_error(XFER_ELEMENT(self),
 	    _("Error accepting incoming connection: %s"), strerror(errno));
 	wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);
@@ -114,22 +154,21 @@ do_directtcp_accept(
     }
 
     /* close the listening socket now, for good measure */
-    close(self->listen_socket);
-    self->listen_socket = -1;
+    close(*socketp);
+    *socketp = -1;
 
     return sock;
 }
 
 static int
 do_directtcp_connect(
-    XferElementGlue *self)
+    XferElementGlue *self,
+    DirectTCPAddr *addrs)
 {
     XferElement *elt = XFER_ELEMENT(self);
-    DirectTCPAddr *addrs;
     sockaddr_union addr;
     int sock;
 
-    addrs = elt->downstream->input_listen_addrs;
     if (!addrs) {
 	if (!elt->cancelled) {
 	    xfer_cancel_with_error(elt,
@@ -361,7 +400,6 @@ worker_thread(
 {
     XferElement *elt = XFER_ELEMENT(data);
     XferElementGlue *self = XFER_ELEMENT_GLUE(data);
-    int sock;
 
     switch (mech_pair(elt->input_mech, elt->output_mech)) {
     case mech_pair(XFER_MECH_READFD, XFER_MECH_WRITEFD):
@@ -384,34 +422,38 @@ worker_thread(
 
     case mech_pair(XFER_MECH_READFD, XFER_MECH_DIRECTTCP_LISTEN):
     case mech_pair(XFER_MECH_WRITEFD, XFER_MECH_DIRECTTCP_LISTEN):
-	if ((self->data_socket = do_directtcp_connect(self)) == -1)
+	if ((self->output_data_socket = do_directtcp_connect(self,
+				    elt->downstream->input_listen_addrs)) == -1)
 	    break;
-	self->write_fdp = &self->data_socket;
+	self->write_fdp = &self->output_data_socket;
 	read_and_write(self);
 	break;
 
     case mech_pair(XFER_MECH_PULL_BUFFER, XFER_MECH_DIRECTTCP_LISTEN):
-	if ((self->data_socket = do_directtcp_connect(self)) == -1)
+	if ((self->output_data_socket = do_directtcp_connect(self,
+				    elt->downstream->input_listen_addrs)) == -1)
 	    break;
-	self->write_fdp = &self->data_socket;
+	self->write_fdp = &self->output_data_socket;
 	pull_and_write(self);
 	break;
 
     case mech_pair(XFER_MECH_DIRECTTCP_LISTEN, XFER_MECH_READFD):
     case mech_pair(XFER_MECH_DIRECTTCP_LISTEN, XFER_MECH_WRITEFD):
-	if ((self->data_socket = do_directtcp_accept(self)) == -1)
+	if ((self->input_data_socket = do_directtcp_accept(self, &self->input_listen_socket)) == -1)
 	    break;
-	self->read_fdp = &self->data_socket;
+	self->read_fdp = &self->input_data_socket;
 	read_and_write(self);
 	break;
 
     case mech_pair(XFER_MECH_DIRECTTCP_LISTEN, XFER_MECH_PUSH_BUFFER):
-	if ((sock = do_directtcp_accept(self)) == -1)
+	if ((self->input_data_socket = do_directtcp_accept(self,
+					    &self->input_listen_socket)) == -1)
 	    break;
-	self->read_fdp = &sock;
+	self->read_fdp = &self->input_data_socket;
 	read_and_push(self);
 	break;
 
+    case mech_pair(XFER_MECH_DIRECTTCP_CONNECT, XFER_MECH_PULL_BUFFER):
     case mech_pair(XFER_MECH_DIRECTTCP_LISTEN, XFER_MECH_PULL_BUFFER):
     case mech_pair(XFER_MECH_READFD, XFER_MECH_PULL_BUFFER):
     case mech_pair(XFER_MECH_WRITEFD, XFER_MECH_READFD):
@@ -420,8 +462,69 @@ worker_thread(
     case mech_pair(XFER_MECH_PUSH_BUFFER, XFER_MECH_WRITEFD):
     case mech_pair(XFER_MECH_PUSH_BUFFER, XFER_MECH_PULL_BUFFER):
     case mech_pair(XFER_MECH_PUSH_BUFFER, XFER_MECH_DIRECTTCP_LISTEN):
+    case mech_pair(XFER_MECH_PUSH_BUFFER, XFER_MECH_DIRECTTCP_CONNECT):
     default:
 	g_assert_not_reached();
+	break;
+
+    case mech_pair(XFER_MECH_WRITEFD, XFER_MECH_DIRECTTCP_CONNECT):
+    case mech_pair(XFER_MECH_READFD, XFER_MECH_DIRECTTCP_CONNECT):
+	if ((self->output_data_socket = do_directtcp_accept(self,
+					    &self->output_listen_socket)) == -1)
+	    break;
+	self->write_fdp = &self->output_data_socket;
+	read_and_write(self);
+	break;
+
+    case mech_pair(XFER_MECH_DIRECTTCP_CONNECT, XFER_MECH_WRITEFD):
+    case mech_pair(XFER_MECH_DIRECTTCP_CONNECT, XFER_MECH_READFD):
+	if ((self->input_data_socket = do_directtcp_connect(self,
+				    elt->upstream->output_listen_addrs)) == -1)
+	    break;
+	self->read_fdp = &self->input_data_socket;
+	read_and_write(self);
+	break;
+
+    case mech_pair(XFER_MECH_DIRECTTCP_CONNECT, XFER_MECH_PUSH_BUFFER):
+	if ((self->input_data_socket = do_directtcp_connect(self,
+				    elt->upstream->output_listen_addrs)) == -1)
+	    break;
+	self->read_fdp = &self->input_data_socket;
+	read_and_push(self);
+	break;
+
+    case mech_pair(XFER_MECH_PULL_BUFFER, XFER_MECH_DIRECTTCP_CONNECT):
+	if ((self->output_data_socket = do_directtcp_accept(self,
+					    &self->output_listen_socket)) == -1)
+	    break;
+	self->write_fdp = &self->output_data_socket;
+	pull_and_write(self);
+	break;
+
+    case mech_pair(XFER_MECH_DIRECTTCP_LISTEN, XFER_MECH_DIRECTTCP_CONNECT):
+	/* TODO: use async accept's here to avoid order dependency */
+	if ((self->output_data_socket = do_directtcp_accept(self,
+					    &self->output_listen_socket)) == -1)
+	    break;
+	self->write_fdp = &self->output_data_socket;
+	if ((self->input_data_socket = do_directtcp_accept(self,
+					    &self->input_listen_socket)) == -1)
+	    break;
+	self->read_fdp = &self->input_data_socket;
+	read_and_write(self);
+	break;
+
+    case mech_pair(XFER_MECH_DIRECTTCP_CONNECT, XFER_MECH_DIRECTTCP_LISTEN):
+	/* TODO: use async connects and select() to avoid order dependency here */
+	if ((self->input_data_socket = do_directtcp_connect(self,
+				    elt->upstream->output_listen_addrs)) == -1)
+	    break;
+	self->read_fdp = &self->input_data_socket;
+	if ((self->output_data_socket = do_directtcp_connect(self,
+				    elt->downstream->input_listen_addrs)) == -1)
+	    break;
+	self->write_fdp = &self->output_data_socket;
+	read_and_write(self);
 	break;
     }
 
@@ -438,7 +541,8 @@ setup_impl(
 {
     XferElementGlue *self = (XferElementGlue *)elt;
     gboolean need_ring = FALSE;
-    gboolean need_listen = FALSE;
+    gboolean need_listen_input = FALSE;
+    gboolean need_listen_output = FALSE;
 
     g_assert(elt->input_mech != XFER_MECH_NONE);
     g_assert(elt->output_mech != XFER_MECH_NONE);
@@ -470,10 +574,17 @@ setup_impl(
 	break;
 
     case mech_pair(XFER_MECH_READFD, XFER_MECH_DIRECTTCP_LISTEN):
-	/* thread will first connect(), and then read from one fd and
-	 * write to the socket. */
+	/* thread will connect for output, then read from fd and write to the
+	 * socket. */
 	self->read_fdp = &neighboring_element_fd;
 	self->need_thread = TRUE;
+	break;
+
+    case mech_pair(XFER_MECH_READFD, XFER_MECH_DIRECTTCP_CONNECT):
+	/* thread will accept output conn, then read from upstream and write to socket */
+	self->read_fdp = &neighboring_element_fd;
+	self->need_thread = TRUE;
+	need_listen_output = TRUE;
 	break;
 
     case mech_pair(XFER_MECH_WRITEFD, XFER_MECH_READFD):
@@ -502,12 +613,22 @@ setup_impl(
 	break;
 
     case mech_pair(XFER_MECH_WRITEFD, XFER_MECH_DIRECTTCP_LISTEN):
-	/* thread will connect, then read from pipe and write to socket */
+	/* thread will connect for output, then read from pipe and write to socket */
 	make_pipe(self);
 	elt->input_fd = self->pipe[1];
 	self->pipe[1] = -1; /* upstream will close this for us */
 	self->read_fdp = &self->pipe[0];
 	self->need_thread = TRUE;
+	break;
+
+    case mech_pair(XFER_MECH_WRITEFD, XFER_MECH_DIRECTTCP_CONNECT):
+	/* thread will accept output conn, then read from pipe and write to socket */
+	make_pipe(self);
+	elt->input_fd = self->pipe[1];
+	self->pipe[1] = -1; /* upstream will close this for us */
+	self->read_fdp = &self->pipe[0];
+	self->need_thread = TRUE;
+	need_listen_output = TRUE;
 	break;
 
     case mech_pair(XFER_MECH_PUSH_BUFFER, XFER_MECH_READFD):
@@ -530,7 +651,14 @@ setup_impl(
 	break;
 
     case mech_pair(XFER_MECH_PUSH_BUFFER, XFER_MECH_DIRECTTCP_LISTEN):
+	/* push will connect for output first */
 	self->on_push = PUSH_TO_FD | PUSH_CONNECT_FIRST;
+	break;
+
+    case mech_pair(XFER_MECH_PUSH_BUFFER, XFER_MECH_DIRECTTCP_CONNECT):
+	/* push will accept for output first */
+	self->on_push = PUSH_TO_FD | PUSH_ACCEPT_FIRST;
+	need_listen_output = TRUE;
 	break;
 
     case mech_pair(XFER_MECH_PULL_BUFFER, XFER_MECH_READFD):
@@ -554,37 +682,81 @@ setup_impl(
 	break;
 
     case mech_pair(XFER_MECH_PULL_BUFFER, XFER_MECH_DIRECTTCP_LISTEN):
-	/* thread will connect, then pull from upstream and write to socket */
+	/* thread will connect for output, then pull from upstream and write to socket */
 	self->need_thread = TRUE;
 	break;
 
+    case mech_pair(XFER_MECH_PULL_BUFFER, XFER_MECH_DIRECTTCP_CONNECT):
+	/* thread will accept for output, then pull from upstream and write to socket */
+	self->need_thread = TRUE;
+	need_listen_output = TRUE;
+	break;
+
     case mech_pair(XFER_MECH_DIRECTTCP_LISTEN, XFER_MECH_READFD):
-	/* thread will accept, then read from socket and write to pipe */
+	/* thread will accept for input, then read from socket and write to pipe */
 	make_pipe(self);
 	elt->output_fd = self->pipe[0];
 	self->pipe[0] = -1; /* downstream will close this for us */
 	self->write_fdp = &self->pipe[1];
 	self->need_thread = TRUE;
-	need_listen = TRUE;
+	need_listen_input = TRUE;
 	break;
 
     case mech_pair(XFER_MECH_DIRECTTCP_LISTEN, XFER_MECH_WRITEFD):
-	/* thread will accept, then read from socket and write to downstream */
+	/* thread will accept for input, then read from socket and write to downstream */
 	self->write_fdp = &neighboring_element_fd;
 	self->need_thread = TRUE;
-	need_listen = TRUE;
+	need_listen_input = TRUE;
 	break;
 
     case mech_pair(XFER_MECH_DIRECTTCP_LISTEN, XFER_MECH_PUSH_BUFFER):
-	/* thread will accept, then read from socket and push downstream */
+	/* thread will accept for input, then read from socket and push downstream */
 	self->need_thread = TRUE;
-	need_listen = TRUE;
+	need_listen_input = TRUE;
 	break;
 
     case mech_pair(XFER_MECH_DIRECTTCP_LISTEN, XFER_MECH_PULL_BUFFER):
-	/* first pull will accept, then read from socket */
+	/* first pull will accept for input, then read from socket */
 	self->on_pull = PULL_FROM_FD | PULL_ACCEPT_FIRST;
-	need_listen = TRUE;
+	need_listen_input = TRUE;
+	break;
+
+    case mech_pair(XFER_MECH_DIRECTTCP_LISTEN, XFER_MECH_DIRECTTCP_CONNECT):
+	/* thread will accept on both sides, then copy from socket to socket */
+	self->need_thread = TRUE;
+	need_listen_input = TRUE;
+	need_listen_output = TRUE;
+	break;
+
+    case mech_pair(XFER_MECH_DIRECTTCP_CONNECT, XFER_MECH_READFD):
+	/* thread will connect for input, then read from socket and write to pipe */
+	make_pipe(self);
+	elt->output_fd = self->pipe[0];
+	self->pipe[0] = -1; /* downstream will close this for us */
+	self->write_fdp = &self->pipe[1];
+	self->need_thread = TRUE;
+	break;
+
+    case mech_pair(XFER_MECH_DIRECTTCP_CONNECT, XFER_MECH_WRITEFD):
+	/* thread will connect for input, then read from socket and write to downstream */
+	self->write_fdp = &neighboring_element_fd;
+	self->need_thread = TRUE;
+	break;
+
+    case mech_pair(XFER_MECH_DIRECTTCP_CONNECT, XFER_MECH_PUSH_BUFFER):
+	/* thread will connect for input, then read from socket and push downstream */
+	self->need_thread = TRUE;
+	break;
+
+    case mech_pair(XFER_MECH_DIRECTTCP_CONNECT, XFER_MECH_PULL_BUFFER):
+	/* first pull will connect for input, then read from socket */
+	self->on_pull = PULL_FROM_FD | PULL_CONNECT_FIRST;
+	break;
+
+    case mech_pair(XFER_MECH_DIRECTTCP_CONNECT, XFER_MECH_DIRECTTCP_LISTEN):
+	/* thread will connect on both sides, then copy from socket to socket */
+	self->on_pull = PULL_FROM_FD | PULL_ACCEPT_FIRST;
+	self->need_thread = TRUE;
 	break;
 
     default:
@@ -599,30 +771,15 @@ setup_impl(
 	self->ring_free_sem = semaphore_new_with_value(GLUE_RING_BUFFER_SIZE);
     }
 
-    if (need_listen) {
-	int sock;
-	sockaddr_union addr;
-	DirectTCPAddr *addrs;
-	socklen_t len;
-
-	/* set up self->listen_socket and set elt->input_listen_addrs */
-	sock = self->listen_socket = socket(AF_INET, SOCK_STREAM, 0);
-	if (sock < 0)
-	    xfer_cancel_with_error(elt, "socket(): %s", strerror(errno));
-
-	if (listen(sock, 1) < 0)
-	    xfer_cancel_with_error(elt, "listen(): %s", strerror(errno));
-
-	/* TODO: which addresses should this display? all ifaces? localhost? */
-	len = sizeof(addr);
-	if (getsockname(sock, (struct sockaddr *)&addr, &len) < 0)
-	    error("getsockname(): %s", strerror(errno));
-	g_assert(SU_GET_FAMILY(&addr) == AF_INET);
-
-	addrs = g_new0(DirectTCPAddr, 2);
-	addrs[0].ipv4 = ntohl(inet_addr("127.0.0.1")); /* TODO: be smarter! */
-	addrs[0].port = SU_GET_PORT(&addr);
-	elt->input_listen_addrs = addrs;
+    if (need_listen_input) {
+	if (!do_directtcp_listen(elt,
+		    &self->input_listen_socket, &elt->input_listen_addrs))
+	    return;
+    }
+    if (need_listen_output) {
+	if (!do_directtcp_listen(elt,
+		    &self->output_listen_socket, &elt->output_listen_addrs))
+	    return;
     }
 }
 
@@ -662,7 +819,8 @@ pull_buffer_impl(
 	    return NULL;
 	}
 
-	if ((self->data_socket = do_directtcp_accept(self)) == -1) {
+	if ((self->input_data_socket = do_directtcp_accept(self,
+					    &self->input_listen_socket)) == -1) {
 	    /* do_directtcp_accept already signalled an error; xfer
 	     * is cancelled */
 	    *size = 0;
@@ -670,7 +828,29 @@ pull_buffer_impl(
 	}
 
 	/* read from this new socket */
-	self->read_fdp = &self->data_socket;
+	self->read_fdp = &self->input_data_socket;
+    }
+
+    /* or connect first, if required */
+    if (self->on_pull & PULL_CONNECT_FIRST) {
+	/* don't connect the next time around */
+	self->on_pull &= ~PULL_CONNECT_FIRST;
+
+	if (elt->cancelled) {
+	    *size = 0;
+	    return NULL;
+	}
+
+	if ((self->input_data_socket = do_directtcp_connect(self,
+				    elt->upstream->output_listen_addrs)) == -1) {
+	    /* do_directtcp_connect already signalled an error; xfer
+	     * is cancelled */
+	    *size = 0;
+	    return NULL;
+	}
+
+	/* read from this new socket */
+	self->read_fdp = &self->input_data_socket;
     }
 
     switch (self->on_pull) {
@@ -766,6 +946,26 @@ push_buffer_impl(
     XferElementGlue *self = (XferElementGlue *)elt;
 
     /* accept first, if required */
+    if (self->on_push & PUSH_ACCEPT_FIRST) {
+	/* don't accept the next time around */
+	self->on_push &= ~PUSH_ACCEPT_FIRST;
+
+	if (elt->cancelled) {
+	    return;
+	}
+
+	if ((self->output_data_socket = do_directtcp_accept(self,
+					    &self->output_listen_socket)) == -1) {
+	    /* do_directtcp_accept already signalled an error; xfer
+	     * is cancelled */
+	    return;
+	}
+
+	/* write to this new socket */
+	self->write_fdp = &self->output_data_socket;
+    }
+
+    /* or connect first, if required */
     if (self->on_push & PUSH_CONNECT_FIRST) {
 	/* don't accept the next time around */
 	self->on_push &= ~PUSH_CONNECT_FIRST;
@@ -774,14 +974,15 @@ push_buffer_impl(
 	    return;
 	}
 
-	if ((self->data_socket = do_directtcp_connect(self)) == -1) {
-	    /* do_directtcp_accept already signalled an error; xfer
+	if ((self->output_data_socket = do_directtcp_connect(self,
+				    elt->downstream->input_listen_addrs)) == -1) {
+	    /* do_directtcp_connect already signalled an error; xfer
 	     * is cancelled */
 	    return;
 	}
 
 	/* read from this new socket */
-	self->write_fdp = &self->data_socket;
+	self->write_fdp = &self->output_data_socket;
     }
 
     switch (self->on_push) {
@@ -855,8 +1056,10 @@ instance_init(
     XferElement *elt = (XferElement *)self;
     elt->can_generate_eof = TRUE;
     self->pipe[0] = self->pipe[1] = -1;
-    self->listen_socket = -1;
-    self->data_socket = -1;
+    self->input_listen_socket = -1;
+    self->output_listen_socket = -1;
+    self->input_data_socket = -1;
+    self->output_data_socket = -1;
 }
 
 static void
@@ -864,12 +1067,15 @@ finalize_impl(
     GObject * obj_self)
 {
     XferElementGlue *self = XFER_ELEMENT_GLUE(obj_self);
+    g_debug("finalize %p", obj_self);
 
     /* close our pipes if they're still open (they shouldn't be!) */
     if (self->pipe[0] != -1) close(self->pipe[0]);
     if (self->pipe[1] != -1) close(self->pipe[1]);
-    if (self->listen_socket != -1) close(self->listen_socket);
-    if (self->data_socket != -1) close(self->data_socket);
+    if (self->input_listen_socket != -1) close(self->input_listen_socket);
+    if (self->output_listen_socket != -1) close(self->output_listen_socket);
+    if (self->input_data_socket != -1) close(self->input_data_socket);
+    if (self->output_data_socket != -1) close(self->output_data_socket);
 
     if (self->ring) {
 	/* empty the ring buffer, ignoring syncronization issues */
@@ -893,26 +1099,37 @@ static xfer_element_mech_pair_t _pairs[] = {
     { XFER_MECH_READFD, XFER_MECH_PUSH_BUFFER, 1, 1 }, /* read and call */
     { XFER_MECH_READFD, XFER_MECH_PULL_BUFFER, 1, 0 }, /* read on demand */
     { XFER_MECH_READFD, XFER_MECH_DIRECTTCP_LISTEN, 2, 1 }, /* splice or copy */
+    { XFER_MECH_READFD, XFER_MECH_DIRECTTCP_CONNECT, 2, 1 }, /* splice or copy */
 
     { XFER_MECH_WRITEFD, XFER_MECH_READFD, 0, 0 }, /* pipe */
     { XFER_MECH_WRITEFD, XFER_MECH_PUSH_BUFFER, 1, 1 }, /* pipe + read and call*/
     { XFER_MECH_WRITEFD, XFER_MECH_PULL_BUFFER, 1, 0 }, /* pipe + read on demand */
     { XFER_MECH_WRITEFD, XFER_MECH_DIRECTTCP_LISTEN, 2, 1 }, /* pipe + splice or copy*/
+    { XFER_MECH_WRITEFD, XFER_MECH_DIRECTTCP_CONNECT, 2, 1 }, /* splice or copy + pipe */
 
     { XFER_MECH_PUSH_BUFFER, XFER_MECH_READFD, 1, 0 }, /* write on demand + pipe */
     { XFER_MECH_PUSH_BUFFER, XFER_MECH_WRITEFD, 1, 0 }, /* write on demand */
     { XFER_MECH_PUSH_BUFFER, XFER_MECH_PULL_BUFFER, 0, 0 }, /* async queue */
     { XFER_MECH_PUSH_BUFFER, XFER_MECH_DIRECTTCP_LISTEN, 1, 0 }, /* write on demand */
+    { XFER_MECH_PUSH_BUFFER, XFER_MECH_DIRECTTCP_CONNECT, 1, 0 }, /* write on demand */
 
     { XFER_MECH_PULL_BUFFER, XFER_MECH_READFD, 1, 1 }, /* call and write + pipe */
     { XFER_MECH_PULL_BUFFER, XFER_MECH_WRITEFD, 1, 1 }, /* call and write */
     { XFER_MECH_PULL_BUFFER, XFER_MECH_PUSH_BUFFER, 0, 1 }, /* call and call */
     { XFER_MECH_PULL_BUFFER, XFER_MECH_DIRECTTCP_LISTEN, 1, 1 }, /* call and write */
+    { XFER_MECH_PULL_BUFFER, XFER_MECH_DIRECTTCP_CONNECT, 1, 1 }, /* call and write */
 
     { XFER_MECH_DIRECTTCP_LISTEN, XFER_MECH_READFD, 2, 1 }, /* splice or copy + pipe */
     { XFER_MECH_DIRECTTCP_LISTEN, XFER_MECH_WRITEFD, 2, 1 }, /* splice or copy */
     { XFER_MECH_DIRECTTCP_LISTEN, XFER_MECH_PUSH_BUFFER, 1, 1 }, /* read and call */
-    { XFER_MECH_DIRECTTCP_LISTEN, XFER_MECH_PULL_BUFFER, 1, 0 }, /* read and call */
+    { XFER_MECH_DIRECTTCP_LISTEN, XFER_MECH_PULL_BUFFER, 1, 0 }, /* read on demand */
+    { XFER_MECH_DIRECTTCP_LISTEN, XFER_MECH_DIRECTTCP_CONNECT, 2, 1 }, /* splice or copy */
+
+    { XFER_MECH_DIRECTTCP_CONNECT, XFER_MECH_READFD, 2, 1 }, /* splice or copy + pipe */
+    { XFER_MECH_DIRECTTCP_CONNECT, XFER_MECH_WRITEFD, 2, 1 }, /* splice or copy + pipe */
+    { XFER_MECH_DIRECTTCP_CONNECT, XFER_MECH_PUSH_BUFFER, 1, 1 }, /* read and call */
+    { XFER_MECH_DIRECTTCP_CONNECT, XFER_MECH_PULL_BUFFER, 1, 0 }, /* read on demand */
+    { XFER_MECH_DIRECTTCP_CONNECT, XFER_MECH_DIRECTTCP_LISTEN, 2, 1 }, /* splice or copy  */
 
     /* terminator */
     { XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},

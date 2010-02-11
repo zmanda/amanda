@@ -29,28 +29,26 @@
     AV *av;
     int i;
 
-    if (iter) {
-	i = 0;
-	av = newAV();
-	while (iter->ipv4) {
-	    struct in_addr in;
-	    char *addr;
-	    AV *tuple;
+    i = 0;
+    av = newAV();
+    while (iter && iter->ipv4) {
+	struct in_addr in;
+	char *addr;
+	AV *tuple;
 
-	    in.s_addr = htonl(iter->ipv4);
-	    addr = inet_ntoa(in);
+	in.s_addr = htonl(iter->ipv4);
+	addr = inet_ntoa(in);
 
-	    tuple = newAV();
-	    g_assert(NULL != av_store(tuple, 0,
-		    newSVpv(addr, 0)));
-	    g_assert(NULL != av_store(tuple, 1, newSViv(iter->port)));
-	    g_assert(NULL != av_store(av, i++, newRV_noinc((SV *)tuple)));
-	    iter++;
-	}
-
-	$result = newRV_noinc((SV *)av);
-	argvi++;
+	tuple = newAV();
+	g_assert(NULL != av_store(tuple, 0,
+		newSVpv(addr, 0)));
+	g_assert(NULL != av_store(tuple, 1, newSViv(iter->port)));
+	g_assert(NULL != av_store(av, i++, newRV_noinc((SV *)tuple)));
+	iter++;
     }
+
+    $result = newRV_noinc((SV *)av);
+    argvi++;
 }
 
 %typemap(in,numinputs=0) DirectTCPAddr **addrs

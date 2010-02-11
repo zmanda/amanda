@@ -21,12 +21,14 @@ libamxfer_la_SOURCES = \
 	dest-null.c \
 	dest-buffer.c \
 	dest-directtcp-connect.c \
+	dest-directtcp-listen.c \
 	element-glue.c \
 	filter-xor.c \
 	filter-process.c \
 	source-random.c \
 	source-fd.c \
 	source-pattern.c \
+	source-directtcp-connect.c \
 	source-directtcp-listen.c \
 	xfer-element.c \
 	xfer.c \

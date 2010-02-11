@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 31;
+use Test::More tests => 32;
 use File::Path;
 use strict;
 
@@ -376,16 +376,6 @@ SKIP: {
 
     my $disk_cache_dir = "$Installcheck::TMP";
     my $RANDOM_SEED = 0xFACADE;
-
-    # set up debugging so debug output doesn't interfere with test results
-    Amanda::Debug::dbopen("installcheck");
-    Installcheck::log_test_output();
-
-    # and disable Debug's die() and warn() overrides
-    Amanda::Debug::disable_die_override();
-
-    # initialize configuration for the device API
-    Amanda::Config::config_init(0, undef);
 
     # exercise device source and destination
     {
@@ -1058,3 +1048,72 @@ SKIP: {
     }
     $ndmp->cleanup();
 }
+
+# directtcp stuff
+
+{
+    my $RANDOM_SEED = 0x13131313; # 13 is bad luck, right?
+
+    # we want this to look like:
+    # A: [ Random -> DirectTCPConnect ]
+    #        --dtcp-->
+    # B: [ DirectTCPListen -> filter -> DirectTCPListen ]
+    #        --dtcp-->
+    # C: [ DirectTCPConnect -> filter -> Null ]
+    #
+    # this tests both XFER_MECH_DIRECTTCP_CONNECT and
+    # XFER_MECH_DIRECTTCP_LISTEN, as well as some of the glue
+    # used to attach those to filters.
+    #
+    # that means we need to start transfer B, since it has all of the
+    # addresses, before creating A or C.
+
+    my $done = { };
+    my $handle_msg = sub {
+	my ($letter, $src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    die $msg->{elt} . " failed: " . $msg->{message};
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
+	    $done->{$letter} = 1;
+	}
+	if ($done->{'A'} and $done->{'B'} and $done->{'C'}) {
+	    Amanda::MainLoop::quit();
+	}
+    };
+
+    my %cbs;
+    for my $letter ('A', 'B', 'C') {
+	$cbs{$letter} = sub { $handle_msg->($letter, @_); };
+    }
+
+    my $src_listen = Amanda::Xfer::Source::DirectTCPListen->new();
+    my $dst_listen = Amanda::Xfer::Dest::DirectTCPListen->new();
+    my $xferB = Amanda::Xfer->new([
+	$src_listen,
+	Amanda::Xfer::Filter::Xor->new(0x13),
+	$dst_listen
+    ]);
+
+    $xferB->start($cbs{'B'});
+
+    my $xferA = Amanda::Xfer->new([
+	Amanda::Xfer::Source::Random->new(1024*1024*3, $RANDOM_SEED),
+	Amanda::Xfer::Dest::DirectTCPConnect->new($src_listen->get_addrs())
+    ]);
+
+    $xferA->start($cbs{'A'});
+
+    my $xferC = Amanda::Xfer->new([
+	Amanda::Xfer::Source::DirectTCPConnect->new($dst_listen->get_addrs()),
+	Amanda::Xfer::Filter::Xor->new(0x13),
+	Amanda::Xfer::Dest::Null->new($RANDOM_SEED)
+    ]);
+
+    $xferC->start($cbs{'C'});
+
+    # let the already-started transfers go out of scope before they 
+    # complete, as a memory management test..
+    Amanda::MainLoop::run();
+    pass("Three xfers interlinked via DirectTCP complete successfully");
+}
+

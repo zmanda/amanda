@@ -59,7 +59,10 @@ typedef enum {
      * and sends the data over that connection */
     XFER_MECH_DIRECTTCP_LISTEN,
 
-    /* (XFER_MECH_DIRECTTCP_CONNECT is not impossible, but not implemented now) */
+    /* DirectTCP: downstream gets IP:PORT addresses from upstream to which a
+     * TCP connection should be made, then connects to one of the addreses and
+     * receives the data over that connection */
+    XFER_MECH_DIRECTTCP_CONNECT,
 
     /* (sentinel value) */
     XFER_MECH_MAX,
@@ -123,10 +126,14 @@ typedef struct XferElement {
     gint output_fd;
 
     /* array of IP:PORT pairs that can be used to connect to this element,
-     * terminated by a 0.0.0.0:0.  This is set by elements with an input mech
-     * of XFER_MECH_DIRECTTCP_LISTEN and accessed by their upstream neighbor. */
+     * terminated by a 0.0.0.0:0.  The first is set by elements with an input
+     * mech of XFER_MECH_DIRECTTCP_LISTEN and accessed by their upstream
+     * neighbor; the second is set by elements with an output mech of
+     * XFER_MECH_DIRECTTCP_CONNECT and accessed by their downstream neighbor.
+     * */
 
     DirectTCPAddr *input_listen_addrs;
+    DirectTCPAddr *output_listen_addrs;
 
     /* cache for repr() */
     char *repr;
@@ -337,6 +344,16 @@ XferElement * xfer_source_fd(
  */
 XferElement * xfer_source_directtcp_listen(void);
 
+/* A transfer source that connects to a DirectTCP address and pulls data
+ * from it into the transfer.
+ *
+ * Implemented in source-directtcp-listen.c
+ *
+ * @param addrs: DirectTCP addresses to connect to
+ * @return: new element
+ */
+XferElement * xfer_source_directtcp_connect(DirectTCPAddr *addrs);
+
 /* A transfer filter that executes an external application, feeding it data on
  * stdin and taking the results on stdout.
  *
@@ -411,7 +428,7 @@ void xfer_dest_buffer_get(
     gsize *size);
 
 /* A transfer dest that connects to a DirectTCPAddr and sends data to
- * it - mostly just useful for testing.
+ * it
  *
  * Implemented in dest-directtcp-connect.c
  *
@@ -419,5 +436,15 @@ void xfer_dest_buffer_get(
  * @return: new element
  */
 XferElement * xfer_dest_directtcp_connect(DirectTCPAddr *addrs);
+
+/* A transfer dest that listens for a DirecTCP connection and sends data to it
+ * when connected.  Listening addresses are exposed at
+ * elt->output_listen_addrs.
+ *
+ * Implemented in dest-directtcp-listen.c
+ *
+ * @return: new element
+ */
+XferElement * xfer_dest_directtcp_listen(void);
 
 #endif

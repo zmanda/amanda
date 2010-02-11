@@ -169,7 +169,7 @@ number of bytes.
 
 =head3 Amanda::Xfer::Source::Recovery (SERVER ONLY)
 
-  Amanda::Xfer::Source::Recovery->new()
+  Amanda::Xfer::Source::Recovery->new();
 
 This source reads a datastream composed of on-device files.  It contains no
 logic to decide I<which> files to assemble into the datastream; instead, it
@@ -190,14 +190,24 @@ parts.
 
 =head3 Amanda::Xfer::Source::DirectTCPListen
 
-  Amanda::Xfer::Source::DirectTCPListen->new()
+  Amanda::Xfer::Source::DirectTCPListen->new();
 
-This source is for use when the xfer data will come in via DirectTCP.  Set up
-the transfer, and after starting it, call its C<get_addrs> method to get an
-arrayref of ip/port pairs, e.g., C<[ "192.168.4.5", 9924 ]>, all of which
-are listening for an incoming data connection.
+This source is for use when the transfer data will come in via DirectTCP, with
+the data's I<source> connecting to the data's I<destination>.  Set up the
+transfer, and after starting it, call its C<get_addrs> method to get an
+arrayref of ip/port pairs, e.g., C<[ "192.168.4.5", 9924 ]>, all of which are
+listening for an incoming data connection.  Once a connection arrives, this
+element will read data from it and send those data into the transfer.
 
   my $addrs = $src->get_addrs();
+
+=head3 Amanda::Xfer::Source::DirectTCPConnect
+
+  Amanda::Xfer::Source::DirectTCPConnect->new($addrs);
+
+This source is for use when the transfer data will come in via DirectTCP, with
+the data's I<destination> connecting to the the data's I<source>.  The element
+connects to C<$addrs> and reads the transfer data from the connection.
 
 =head2 Transfer Filters
 
@@ -240,12 +250,26 @@ returns a copy of the buffer as a perl scalar:
 
     my $buf = $xdb->get();
 
+=head3 Amanda::Xfer::Dest::DirectTCPListen
+
+  Amanda::Xfer::Dest::DirectTCPListen->new();
+
+This destination is for use when the transfer data will come in via DirectTCP,
+with the data's I<destination> connecting to the data's I<source>.  Set up the
+transfer, and after starting it, call this element's C<get_addrs> method to get
+an arrayref of ip/port pairs, e.g., C<[ "192.168.4.5", 9924 ]>, all of which
+are listening for an incoming data connection.  Once a connection arrives, this
+element will write the transfer data to it.
+
+  my $addrs = $src->get_addrs();
+
 =head3 Amanda::Xfer::Dest::DirectTCPConnect
 
   Amanda::Xfer::Dest::DirectTCPConnect->new($addrs);
 
-This destination connects to an IP:PORT endpoint and sends the transfer
-data over the connection.
+This destination is for use when the transfer data will come in via DirectTCP,
+with the data's I<source> connecting to the the data's I<destination>.  The
+element connects to C<$addrs> and writes the transfer data to the connection.
 
 =head3 Amanda::Xfer::Dest::Fd
 
@@ -327,7 +351,7 @@ are allowed in the data stream described to C<cache_inform>.
 Furthermore, the location of each byte must be specified to this
 method I<before> it is sent through the transfer.
 
-  $dest->get_part_bytes_written()
+  $dest->get_part_bytes_written();
 
 This function returns the number of bytes written for the current part
 to the device.
