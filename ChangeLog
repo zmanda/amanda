@@ -1,3 +1,12 @@
+2010-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scan/traditional.pm,
+	  perl/Amanda/Taper/Scan.pm: user_msg_fn take a hash as argument.
+	* perl/Amanda/Recovery/Scan.pm: Fix doc.
+	* server-src/amcheck-device.pl: New user_msg_fn.
+	* server-src/amlabel.pl: New user_msg_fn.
+	* server-src/amtape.pl: New user_msg_fn.
+	* installcheck/amlabel.pl: Fix installcheck.
+
 2010-02-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/xfer.c xfer-src/xfer-element.h: add
 	  XFER_MECH_DIRECTTCP_CONNECT

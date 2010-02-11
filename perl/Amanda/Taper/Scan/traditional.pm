@@ -54,6 +54,9 @@ sub new {
     return $self;
 }
 
+sub _user_msg_fn {
+}
+
 sub scan {
     my $self = shift;
     my %params = @_;
@@ -61,7 +64,7 @@ sub scan {
     die "Can only run one scan at a time" if $self->{'scanning'};
     $self->{'scanning'} = 1;
     $self->{'result_cb'} = $params{'result_cb'};
-    $self->{'user_msg_fn'} = $params{'user_msg_fn'};
+    $self->{'user_msg_fn'} = $params{'user_msg_fn'} || \&_user_msg_fn;
 
     # refresh the tapelist at every scan
     $self->{'tapelist'} = $self->read_tapelist();
@@ -75,12 +78,8 @@ sub scan {
 
 sub _user_msg {
     my $self = shift;
-    my ($msg) = @_;
-    if (defined $self->{'user_msg_fn'}) {
-	$self->{'user_msg_fn'}->($msg);
-    } else {
-	Amanda::Debug::info("Amanda::Taper::Scan::traditional: $msg");
-    }
+    my %params = @_;
+    $self->{'user_msg_fn'}->(%params);
 }
 
 sub scan_result {
@@ -106,7 +105,8 @@ sub scan_result {
 	}
     } else {
 	my $devname = $res->{'device'}->device_name;
-	debug("Amanda::Taper::Scan::traditional result: '$label' on $devname, mode $mode");
+	my $slot = $res->{this_slot};
+	debug("Amanda::Taper::Scan::traditional result: '$label' on $devname slot $slot, mode $mode");
     }
     $self->{'scanning'} = 0;
     $self->{'result_cb'}->(@result);
@@ -119,16 +119,16 @@ sub stage_1 {
     my $self = shift;
     my %subs;
 
-    $self->_user_msg("stage 1: search for oldest reusable volume");
+    debug("Amanda::Taper::Scan::traditional stage 1: search for oldest reusable volume");
     my $oldest_reusable = $self->oldest_reusable_volume(
         new_label_ok => 0,      # stage 1 never selects new volumes
     );
 
     if (!defined $oldest_reusable) {
-	$self->_user_msg("no oldest reusable volume");
+	debug("Amanda::Taper::Scan::traditional no oldest reusable volume");
 	return $self->stage_2();
     }
-    $self->_user_msg("oldest reusable volume is '$oldest_reusable'");
+    debug("Amanda::Taper::Scan::traditional oldest reusable volume is '$oldest_reusable'");
 
     # try loading that oldest volume, but only if the changer is fast-search capable
 
@@ -146,10 +146,14 @@ sub stage_1 {
         }
 
         if ($results{'fast_search'}) {
+	    debug("Amanda::Taper::Scan::traditional stage 1: searching oldest reusable volume '$oldest_reusable'");
+	    $self->_user_msg(search_label => 1,
+			     label        => $oldest_reusable);
+
 	    $subs{'do_load'}->();
 	} else {
 	    # no fast search, so skip to stage 2
-	    $self->_user_msg("changer is not fast-searchable; skipping to stage 2");
+	    debug("Amanda::Taper::Scan::traditional changer is not fast-searchable; skipping to stage 2");
 	    $self->stage_2();
 	}
     };
@@ -163,9 +167,10 @@ sub stage_1 {
     $subs{'load_done'} = sub {
 	my ($err, $res) = @_;
 
+	$self->_user_msg(search_result => 1, res => $res, err => $err);
 	if ($err) {
 	    if ($err->failed and $err->notfound) {
-		$self->_user_msg("oldest reusable volume not found");
+		debug("Amanda::Taper::Scan::traditional oldest reusable volume not found");
 		return $self->stage_2();
 	    } else {
 		return $self->scan_result($err, $res);
@@ -211,22 +216,35 @@ sub try_volume {
 
         if ($label !~ /$labelstr/) {
 	    if (!$autolabel->{'other_config'}) {
-		$self->_user_msg("Volume label '$label' does not match labelstr '$labelstr'");
+		$self->_user_msg(slot_result             => 1,
+				 does_not_match_labelstr => 1,
+				 labelstr                => $labelstr,
+				 slot                    => $slot,
+				 res                     => $res);
 		return 0;
 	    }
         } else {
 	    # verify that the label is in the tapelist
 	    my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
 	    if (!$tle) {
-		$self->_user_msg("Volume label '$label' is not in the tapelist");
+		$self->_user_msg(slot_result     => 1,
+				 not_in_tapelist => 1,
+				 slot            => $slot,
+				 res             => $res);
 		return 0;
 	    }
 
 	    # see if it's reusable
 	    if (!$self->is_reusable_volume(label => $label, new_label_ok => 1)) {
-		$self->_user_msg("Volume with label '$label' is still active and cannot be overwritten");
+		$self->_user_msg(slot_result => 1,
+				 active      => 1,
+				 slot        => $slot,
+				 res         => $res);
 		return 0;
 	    }
+	    $self->_user_msg(slot_result => 1,
+			     slot        => $slot,
+			     res         => $res);
 	    $self->scan_result(undef, $res, $label, $ACCESS_WRITE, 0);
 	    return 1;
 	}
@@ -234,14 +252,18 @@ sub try_volume {
 
     if (!defined $autolabel->{'template'} ||
 	$autolabel->{'template'} eq "") {
+	$self->_user_msg(slot_result => 1,
+			 slot        => $slot,
+			 res         => $res);
 	return 0;
     }
+
+    $self->_user_msg(slot_result => 1, slot => $slot, res => $res);
 
     if ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
 	$dev->volume_header and
 	$dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY and
 	!$autolabel->{'empty'}) {
-	$self->_user_msg("Slot '$slot' contains an empty tape");
 	return 0;
     }
 
@@ -249,21 +271,18 @@ sub try_volume {
 	$dev->volume_header and
 	$dev->volume_header->{'type'} == $Amanda::Header::F_WEIRD and
 	!$autolabel->{'non_amanda'}) {
-	$self->_user_msg("Slot '$slot' contains a non-Amanda volume; check and " .
-			 "relabel it with 'amlabel -f'");
 	return 0;
     }
 
     if ($status & $DEVICE_STATUS_VOLUME_ERROR and
 	!$autolabel->{'volume_error'}) {
-	$self->_user_msg("Can't read label in slot '$slot'");
 	return 0;
     }
 
-    $label = $self->make_new_tape_label();
+    ($label, my $err) = $self->make_new_tape_label();
     if (!defined $label) {
         # make this fatal, rather than silently skipping new tapes
-        $self->scan_result("Could not invent new label for new volume", $res);
+        $self->scan_result($err, $res);
         return 1;
     }
 
@@ -294,7 +313,7 @@ sub stage_2 {
     my $last_slot;
     my %subs;
 
-    $self->_user_msg("stage 2: scan for any reusable volume");
+    debug("Amanda::Taper::Scan::traditional stage 2: scan for any reusable volume");
 
     $subs{'load'} = make_cb(load => sub {
 	my ($err) = @_;
@@ -334,12 +353,20 @@ sub stage_2 {
     $subs{'loaded'} = make_cb(loaded => sub {
         my ($err, $res) = @_;
 
+	if (defined $res) {
+	    $self->_user_msg(scan_slot => 1, slot => $res->{'this_slot'});
+	} elsif (defined $err->{'slot'}) {
+	    $self->_user_msg(scan_slot => 1, slot => $err->{'slot'});
+	} else {
+	    $self->_user_msg(scan_slot => 1, slot => "?");
+	}
+
 	if ($err and $err->failed and $err->notfound) {
             return $self->scan_result("No acceptable volumes found", $res);
 	}
 
 	if ($err && $err->{volinuse} && $err->{slot}) {
-	    $self->_user_msg("$err");
+	    $self->_user_msg(slot_result => 1, err => $err);
 	    $last_slot = $err->{slot};
 	    $self->{'seen'}->{$last_slot} = 1;
 
@@ -349,13 +376,13 @@ sub stage_2 {
 	} elsif ($err) {
             # if we have a fatal error or something other than "notfound"
             # or "volinuse", bail out.
+	    $self->_user_msg(slot_result => 1, err => $err);
             return $self->scan_result($err, $res);
         }
 
 	$self->{'seen'}->{$res->{'this_slot'}} = 1;
 
         # we're done if try_volume calls result_cb (with success or an error)
-	$self->_user_msg("trying slot $res->{this_slot}");
         return if ($self->try_volume($res));
 
         # no luck -- release this reservation and get the next

@@ -459,6 +459,60 @@ subcommand("taper", "taper", "perform the taperscan algorithm and display the re
 sub {
     my @args = @_;
 
+    sub taper_user_msg_fn {
+	my %params = @_;
+	if (exists($params{'text'})) {
+	    print STDERR "$params{'text'}\n";
+	} elsif (exists($params{'scan_slot'})) {
+	    print STDERR "slot $params{'slot'}:";
+	} elsif (exists($params{'search_label'})) {
+	    print STDERR "Searching for label '$params{'label'}':";
+	} elsif (exists($params{'slot_result'}) ||
+		 exists($params{'search_result'})) {
+	    if (defined($params{'err'})) {
+		if (exists($params{'search_result'}) &&
+		    defined($params{'err'}->{'slot'})) {
+		    print STDERR "slot $params{'err'}->{'slot'}:";
+		}
+		print STDERR " $params{'err'}\n";
+	    } else { # res must be defined
+		my $res = $params{'res'};
+		my $dev = $res->{'device'};
+		if (exists($params{'search_result'})) {
+		    print STDERR " found in slot $res->{'this_slot'}:";
+		}
+		if ($dev->status == $DEVICE_STATUS_SUCCESS) {
+		    my $volume_label = $res->{device}->volume_label;
+		    if ($params{'active'}) {
+			print STDERR " volume '$volume_label' is still active and cannot be overwritten\n";
+		    } elsif ($params{'does_not_match_labelstr'}) {
+			print STDERR " volume '$volume_label' does not match labelstr '$params{'labelstr'}'\n";
+		    } elsif ($params{'not_in_tapelist'}) {
+			print STDERR " volume '$volume_label' is not in the tapelist\n"
+		    } else {
+			print STDERR " volume '$volume_label'\n";
+		    }
+		} elsif ($dev->status & $DEVICE_STATUS_VOLUME_UNLABELED and
+			 $dev->volume_header and
+			 $dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY) {
+		    print STDERR " contains an empty volume\n";
+		} elsif ($dev->status & $DEVICE_STATUS_VOLUME_UNLABELED and
+			 $dev->volume_header and
+			 $dev->volume_header->{'type'} == $Amanda::Header::F_WEIRD) {
+		    print STDERR " contains a non-Amanda volume; check and relabel it with 'amlabel -f'\n";
+		} elsif ($dev->status & $DEVICE_STATUS_VOLUME_ERROR) {
+		    my $message = $dev->error_or_status();
+		    print STDERR " can't read label: $message\n";
+		} else {
+		    my $errmsg = $res->{device}->error_or_status();
+		    print STDERR " $errmsg\n";
+		}
+	    }
+	} else {
+	    print STDERR "UNKNOWN\n";
+	}
+    };
+
     usage unless (@args == 0);
     my $label = shift @args;
 
@@ -479,9 +533,7 @@ sub {
     my $taperscan = Amanda::Taper::Scan->new(changer => $chg);
     $taperscan->scan(
 	result_cb => $result_cb,
-	user_msg_fn => sub {
-	    print STDERR "$_[0]\n";
-	}
+	user_msg_fn => \&taper_user_msg_fn
     );
 });
 
@@ -576,5 +628,10 @@ sub main {
     Amanda::Util::finish_application();
     exit($exit_status);
 }
+
+#make STDOUT not line buffered
+my $previous_fh = select(STDOUT);
+$| = 1;
+select($previous_fh);
 
 main();

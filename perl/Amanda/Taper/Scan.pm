@@ -124,6 +124,53 @@ If no C<template> is provided, the function uses the value of
 C<autolabel> specified when the object was constructed; similarly,
 C<labelstr> defaults to the value specified at object construction.
 
+=head2 user_msg_fn
+
+Initiate a load by label:
+  $self->_user_msg(search_label => 1,
+                   label        => $label);
+
+The result of a load by label:
+  $self->_user_msg(search_result => 1,
+                   res           => $res,
+                   err           => $err);
+
+Initiate the scan of the slot $slot:
+  $self->user_msg_fn(scan_slot => 1,
+                     slot      => $slot);
+
+Initiate the scan of the slot $slot which should have the label $label:
+  $self->user_msg_fn(scan_slot => 1,
+                     slot      => $slot,
+                     label     => $label);
+
+The result of scanning slot $slot:
+  $self->user_msg_fn(slot_result => 1,
+                     slot        => $slot,
+                     err         => $err,
+                     res         => $res);
+
+The result if the read label doesn't match the labelstr:
+  $self->_user_msg(slot_result             => 1,
+                   does_not_match_labelstr => 1,
+                   labelstr                => $labelstr,
+                   slot                    => $slot,
+                   res                     => $res);
+
+The result if the read label is not in the tapelist:
+  $self->_user_msg(slot_result     => 1,
+                   not_in_tapelist => 1,
+                   slot            => $slot,
+                   res             => $res);
+
+The result if the read label can't be used because it is active:
+  $self->_user_msg(slot_result => 1,
+                   active      => 1,
+                   slot        => $slot,
+                   res         => $res);
+
+Other options can be added at any time.  The function can ignore them.
+
 =cut
 
 use strict;
@@ -258,12 +305,11 @@ sub make_new_tape_label {
     }
 
     # bail out if we didn't find an unused label
-    return undef if ($i >= $nlabels);
+    return (undef, "Can't label unlabeled volume: All label used") if ($i >= $nlabels);
 
     # verify $label matches $labelstr
     if ($label !~ /$labelstr/) {
-        warn "Newly-generated label '$label' does not match labelstr '$labelstr'";
-        return undef;
+        return (undef, "Newly-generated label '$label' does not match labelstr '$labelstr'");
     }
 
     return $label;

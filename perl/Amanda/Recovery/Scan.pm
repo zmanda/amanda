@@ -136,7 +136,7 @@ The result of scanning slot $slot:
                      err         => $err,
                      res         => $res);
 
-Other option can be added at any time, the function can ignore then.
+Other options can be added at any time.  The function can ignore them.
 
 =cut
 

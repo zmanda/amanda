@@ -124,6 +124,7 @@ $subs{'load'} = make_cb(load => sub {
     return failure($chg)
 	if $chg->isa("Amanda::Changer::Error");
 
+    print "Reading label...\n";
     if ($opt_slot) {
 	$chg->load(slot => $opt_slot, mode => "write",
 		res_cb => $subs{'loaded'});
@@ -166,7 +167,7 @@ $subs{'loaded'} = make_cb(loaded => sub {
 		"'" . Amanda::Config::get_config_name() . "'.\n";
 	    $dev_ok = 0 unless ($opt_force);
 	} elsif ($tl->lookup_tapelabel($label)) {
-	    print "Volume with label '$label' contains data from this configuration.\n";
+	    print "Volume with label '$label' is active and contains data from this configuration.\n";
 	    $dev_ok = 0 unless ($opt_force);
 	} else {
 	    print "Found Amanda volume '$label'.\n";
@@ -174,7 +175,7 @@ $subs{'loaded'} = make_cb(loaded => sub {
     }
 
     if ($dev_ok) {
-	print "Writing label '$opt_label'..\n";
+	print "Writing label '$opt_label'...\n";
 
 	if (!$dev->start($ACCESS_WRITE, $opt_label, "X")) {
 	    return failure("Error writing label: " . $dev->error_or_status());

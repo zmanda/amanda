@@ -92,7 +92,7 @@ is($dev->volume_label, "TESTCONF92", "volume is actually labeled");
 ok(!run('amlabel', 'TESTCONF', 'TESTCONF93'),
     "amlabel refuses to re-label a labeled volume");
 like($Installcheck::Run::stdout,
-    qr/Volume with label 'TESTCONF92' contains data from this configuration/,
+    qr/Volume with label 'TESTCONF92' is active and contains data from this configuration/,
     "with correct message");
 
 ok(!run('amlabel', 'TESTCONF', 'SomeTape'),
