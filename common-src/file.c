@@ -889,6 +889,8 @@ main(
 	g_fprintf(stderr, _(" done.\n"));
 
 	g_fprintf(stderr, _("Finished.\n"));
+
+	dbclose();
 	return 0;
 }
 

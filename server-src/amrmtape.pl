@@ -333,3 +333,5 @@ if ($log_created == 1) {
     unlink $log_file;
     $log_created = 0;
 }
+
+Amanda::Util::finish_application();

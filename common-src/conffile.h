@@ -447,6 +447,7 @@ typedef enum {
     CNF_UNRESERVED_TCP_PORT,
     CNF_HOLDINGDISK,
     CNF_AUTOLABEL,
+    CNF_DEBUG_DAYS,
     CNF_CNF /* sentinel */
 } confparm_key;
 

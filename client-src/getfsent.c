@@ -753,6 +753,7 @@ main(
 
     amfree(name);
 
+    dbclose();
     return 0;
 }
 

@@ -682,3 +682,5 @@ if (!defined $opt_property) {
         make_tapetype($device, $compression_enabled);
     }
 }
+
+Amanda::Util::finish_application();

@@ -741,6 +741,7 @@ main(
     close_infofile();
   }
 
+  dbclose();
   return 0;
 }
 

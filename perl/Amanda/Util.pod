@@ -113,6 +113,7 @@ programs that expect to be setuid-root.
 
 =item finish_application()
 
+Remove old debug files.
 All applications should call this before exiting.
 
 =item get_original_cwd()

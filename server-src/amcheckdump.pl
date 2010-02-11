@@ -539,4 +539,5 @@ if (defined $reservation) {
 close_validation_app();
 close_device();
 
+Amanda::Util::finish_application();
 exit($all_success? 0 : 1);

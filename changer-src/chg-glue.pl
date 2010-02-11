@@ -364,3 +364,4 @@ Amanda::MainLoop::run();
 if ($res) {
     $res->release();
 }
+Amanda::Util::finish_application();

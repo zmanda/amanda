@@ -467,3 +467,4 @@ Amanda::Util::finish_setup($RUNNING_AS_ANY);
 # start the copy
 my $vault = Amvault->new($src_write_timestamp, $dst_changer, $label_template);
 $vault->run();
+sAmanda::Util::finish_application();

@@ -1,4 +1,24 @@
 2010-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: New debug_days option.
+	* common-src/conffile.h: New debug_days option.
+	* man/xml-source/amanda-client.conf.5.xml: Document debug_days option.
+	* man/xml-source/amanda.conf.5.xml: Document debug_days option.
+	* common-src/debug.c: Don't do unlink in debug_open.
+	* common-src/Makefile.am: Fix for test program.
+	* common-src/amgetconf.pl: Correctly do dbopen and dbclose.
+				   Call Amanda::Util::finish_application.
+	* perl/Amanda/Util.swg: Add get_pname, get_ptype and get_pcontext.
+	* perl/Amanda/Util.pod: Document.
+	* common-src/file.c, client-src/getfsent.c,
+	  server-src/infofile.c: Call dbclose();
+	* changer-src/chg-glue.pl, device-src/amdevcheck.pl,
+	  device-src/amtapetype.pl, server-src/amcheckdump.pl,
+	  server-src/amcleanup.pl, server-src/amfetchdump.pl,
+	  server-src/amrestore.pl, server-src/amrmtape.pl,
+	  server-src/amvault.pl,
+	  server-src/taper.pl: Call Amanda::Util::finish_application.
+
+2010-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scan/traditional.pm,
 	  perl/Amanda/Taper/Scan.pm: user_msg_fn take a hash as argument.
 	* perl/Amanda/Recovery/Scan.pm: Fix doc.

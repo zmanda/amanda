@@ -193,18 +193,32 @@ sub build_param {
 sub db_param {
     my ($parameter, $opt_list) = @_;
     my ($appname, $filename);
+
+    # copy amgetconf pname and pcontext
+    my $pname = Amanda::Util::get_pname();
+    my $pcontext = Amanda::Util::get_pcontext();
+
     if (($appname) = $parameter =~ /^dbopen\.(.*)/) {
 	$appname =~ s/[^[:alnum:]]/_/g;
-	Amanda::Util::setup_application($appname, "server", $CONTEXT_CMDLINE);
+	# set pname and pcontext for the application
+	Amanda::Util::set_pname($appname);
+	Amanda::Util::set_pcontext($CONTEXT_CMDLINE);
+	Amanda::Debug::dbopen("server");
 	print Amanda::Debug::dbfn(), "\n";
     } elsif (($appname, $filename) = $parameter =~ /^dbclose\.([^:]*):(.*)/) {
 	fail("debug file $filename does not exist") unless (-f $filename);
+	# set pname and pcontext for the application
+	Amanda::Util::set_pname($appname);
+	Amanda::Util::set_pcontext($CONTEXT_CMDLINE);
 	Amanda::Debug::dbreopen($filename, '');
 	Amanda::Debug::dbclose();
 	print "$filename\n";
     } else {
 	fail("cannot parse $parameter");
     }
+    # reset pname and pcontext for amgetconf
+    Amanda::Util::set_pcontext($pcontext);
+    Amanda::Util::set_pname($pname);
 }
 
 ## regular configuration parameters
@@ -278,11 +292,13 @@ if (@ARGV == 1) {
 
 if ($parameter =~ /^build(?:\..*)?/) {
     build_param($parameter, $opt_list);
+    Amanda::Util::finish_application();
     exit(0);
 } 
 
 if ($parameter =~ /^db(open|close)\./) {
     db_param($parameter, $opt_list);
+    Amanda::Util::finish_application();
     exit(0);
 }
 
@@ -301,3 +317,5 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 Amanda::Util::finish_setup($RUNNING_AS_ANY);
 
 conf_param($parameter, $opt_list);
+
+Amanda::Util::finish_application();

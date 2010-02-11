@@ -64,6 +64,7 @@ int error_exit_status = 1;
 
 /* static function prototypes */
 static char *get_debug_name(time_t t, int n);
+static void debug_unlink_old(void);
 static void debug_setup_1(char *config, char *subdir);
 static void debug_setup_2(char *s, int fd, char *annotation);
 static char *msg_timestamp(void);
@@ -273,8 +274,7 @@ amanda_log_null(GLogLevelFlags log_level G_GNUC_UNUSED, const gchar *message G_G
 {
 }
 
-/* Set the global dbgdir according to 'config' and 'subdir', and clean
- * old debug files out of that directory
+/* Set the global dbgdir according to 'config' and 'subdir'
  *
  * The global open_time is set to the current time, and used to delete
  * old files.
@@ -285,25 +285,7 @@ amanda_log_null(GLogLevelFlags log_level G_GNUC_UNUSED, const gchar *message G_G
 static void
 debug_setup_1(char *config, char *subdir)
 {
-    char *pname;
-    size_t pname_len;
-    char *e = NULL;
-    char *s = NULL;
-    DIR *d;
-    struct dirent *entry;
-    int do_rename;
-    char *test_name;
-    size_t test_name_len;
-    size_t d_name_len;
-    struct stat sbuf;
-    char *dbfilename = NULL;
     char *sane_config = NULL;
-    int i;
-
-    memset(&sbuf, 0, SIZEOF(sbuf));
-
-    pname = get_pname();
-    pname_len = strlen(pname);
 
     /*
      * Create the debug directory if it does not yet exist.
@@ -326,20 +308,45 @@ debug_setup_1(char *config, char *subdir)
 	/*NOTREACHED*/
     }
     amfree(sane_config);
+}
 
-    /*
-     * Clean out old debug files.  We also rename files with old style
-     * names (XXX.debug or XXX.$PID.debug) into the new name format.
-     * We assume no system has 17 digit PID-s :-) and that there will
-     * not be a conflict between an old and new name.
-     */
+/*
+ * Clean out old debug files.  We also rename files with old style
+ * names (XXX.debug or XXX.$PID.debug) into the new name format.
+ * We assume no system has 17 digit PID-s :-) and that there will
+ * not be a conflict between an old and new name.
+ */
+static void
+debug_unlink_old(void)
+{
+    char *pname;
+    size_t pname_len;
+    char *e = NULL;
+    char *s = NULL;
+    struct dirent *entry;
+    int do_rename;
+    char *test_name;
+    size_t test_name_len;
+    size_t d_name_len;
+    char *dbfilename = NULL;
+    int i;
+    DIR *d;
+    struct stat sbuf;
+
+    assert(dbgdir != NULL);
+
+    memset(&sbuf, 0, SIZEOF(sbuf));
+
+    pname = get_pname();
+    pname_len = strlen(pname);
+
     if((d = opendir(dbgdir)) == NULL) {
 	error(_("open debug directory \"%s\": %s"),
 	      dbgdir, strerror(errno));
 	/*NOTREACHED*/
     }
     time(&open_time);
-    test_name = get_debug_name(open_time - (AMANDA_DEBUG_DAYS * 24 * 60 * 60), 0);
+    test_name = get_debug_name(open_time - (getconf_int(CNF_DEBUG_DAYS) * 24 * 60 * 60), 0);
     test_name_len = strlen(test_name);
     while((entry = readdir(d)) != NULL) {
 	if(is_dot_or_dotdot(entry->d_name)) {
@@ -434,7 +441,7 @@ debug_setup_2(
 		     db_filename, (int)get_client_uid(), (int)get_client_gid(), strerror(errno));
 	}
     }
-    amfree(dbgdir);
+
     /*
      * Move the file descriptor up high so it stays out of the way
      * of other processing, e.g. sendbackup.
@@ -604,8 +611,16 @@ debug_rename(
     if (!db_filename)
 	return;
 
+    if (get_pcontext() == CONTEXT_SCRIPTUTIL) {
+	return;
+    }
+
+    /* Remove old log from source directory */
+    debug_unlink_old();
     /* set 'dbgdir' and clean out old debug files */
     debug_setup_1(config, subdir);
+    /* Remove old log from destination directory */
+    debug_unlink_old();
 
     s = newvstralloc(s, dbgdir, db_name, NULL);
 
@@ -710,6 +725,12 @@ void
 debug_close(void)
 {
     time_t curtime;
+
+    if (get_pcontext() == CONTEXT_SCRIPTUTIL) {
+	return;
+    }
+
+    debug_unlink_old();
 
     time(&curtime);
     debug_printf(_("pid %ld finish time %s"), (long)getpid(), ctime(&curtime));

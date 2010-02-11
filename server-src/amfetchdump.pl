@@ -457,6 +457,7 @@ sub main {
 
     $subs{'start'}->();
     Amanda::MainLoop::run();
+    Amanda::Util::finish_application();
     exit $exit_status;
 }
 

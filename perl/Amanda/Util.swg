@@ -93,7 +93,9 @@ sub finish_setup {
 }
 
 sub finish_application {
-    dbclose();
+    if ($config_name) {
+	dbclose();
+    }
 }
 
 sub version_opt {
@@ -497,8 +499,11 @@ static guint64 gettimeofday_for_perl(void)
  * do not call them externally. */
 
 void set_pname(char *name);
+char *get_pname();
 void set_ptype(char *type);
+char *get_ptype();
 void set_pcontext(pcontext_t context);
+pcontext_t get_pcontext();
 void safe_cd(void);
 
 void check_running_as(running_as_flags who);

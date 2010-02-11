@@ -163,10 +163,14 @@ DISTCLEANFILES += version.c genversion genversion.h
 STANDARD_COMMON_STUFF_NOT_FILE = \
 	alloc.lo \
 	clock.lo \
+	conffile.lo \
 	debug.lo \
+	glib-util.lo \
 	util.lo \
 	match.lo \
-	sl.lo
+	sl.lo \
+	sockaddr-util.lo \
+	timestamp.lo
 
 STANDARD_COMMON_STUFF = \
 	$(STANDARD_COMMON_STUFF_NOT_FILE) \

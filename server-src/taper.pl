@@ -967,3 +967,4 @@ $controller->start();
 Amanda::MainLoop::run();
 
 log_add($L_INFO, "pid-done $$");
+Amanda::Util::finish_application();

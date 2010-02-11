@@ -137,6 +137,7 @@ typedef enum {
     CONF_REP_TRIES,		CONF_CONNECT_TRIES,	CONF_REQ_TRIES,
 
     /* debug config */
+    CONF_DEBUG_DAYS,
     CONF_DEBUG_AMANDAD,		CONF_DEBUG_AMIDXTAPED,	CONF_DEBUG_AMINDEXD,
     CONF_DEBUG_AMRECOVER,	CONF_DEBUG_AUTH,	CONF_DEBUG_EVENT,
     CONF_DEBUG_HOLDING,		CONF_DEBUG_PROTOCOL,	CONF_DEBUG_PLANNER,
@@ -732,6 +733,7 @@ keytab_t client_keytab[] = {
     { "REP_TRIES", CONF_REP_TRIES },
     { "REQ_TRIES", CONF_REQ_TRIES },
     { "CLIENT", CONF_CLIENT },
+    { "DEBUG_DAYS", CONF_DEBUG_DAYS },
     { "DEBUG_AMANDAD", CONF_DEBUG_AMANDAD },
     { "DEBUG_RECOVERY", CONF_DEBUG_RECOVERY },
     { "DEBUG_AMIDXTAPED", CONF_DEBUG_AMIDXTAPED },
@@ -827,6 +829,7 @@ keytab_t server_keytab[] = {
     { "CTIMEOUT", CONF_CTIMEOUT },
     { "CUSTOM", CONF_CUSTOM },
     { "DATA_PATH", CONF_DATA_PATH },
+    { "DEBUG_DAYS"       , CONF_DEBUG_DAYS },
     { "DEBUG_AMANDAD"    , CONF_DEBUG_AMANDAD },
     { "DEBUG_RECOVERY"   , CONF_DEBUG_RECOVERY },
     { "DEBUG_AMIDXTAPED" , CONF_DEBUG_AMIDXTAPED },
@@ -1070,6 +1073,7 @@ conf_var_t client_var [] = {
    { CONF_CONNECT_TRIES      , CONFTYPE_INT     , read_int     , CNF_CONNECT_TRIES      , validate_positive },
    { CONF_REP_TRIES          , CONFTYPE_INT     , read_int     , CNF_REP_TRIES          , validate_positive },
    { CONF_REQ_TRIES          , CONFTYPE_INT     , read_int     , CNF_REQ_TRIES          , validate_positive },
+   { CONF_DEBUG_DAYS         , CONFTYPE_INT     , read_int     , CNF_DEBUG_DAYS         , NULL },
    { CONF_DEBUG_AMANDAD      , CONFTYPE_INT     , read_int     , CNF_DEBUG_AMANDAD      , validate_debug },
    { CONF_DEBUG_RECOVERY     , CONFTYPE_INT     , read_int     , CNF_DEBUG_RECOVERY     , validate_debug },
    { CONF_DEBUG_AMIDXTAPED   , CONFTYPE_INT     , read_int     , CNF_DEBUG_AMIDXTAPED   , validate_debug },
@@ -1154,6 +1158,7 @@ conf_var_t server_var [] = {
    { CONF_CONNECT_TRIES        , CONFTYPE_INT      , read_int         , CNF_CONNECT_TRIES        , validate_positive },
    { CONF_REP_TRIES            , CONFTYPE_INT      , read_int         , CNF_REP_TRIES            , validate_positive },
    { CONF_REQ_TRIES            , CONFTYPE_INT      , read_int         , CNF_REQ_TRIES            , validate_positive },
+   { CONF_DEBUG_DAYS           , CONFTYPE_INT      , read_int         , CNF_DEBUG_DAYS           , NULL },
    { CONF_DEBUG_AMANDAD        , CONFTYPE_INT      , read_int         , CNF_DEBUG_AMANDAD        , validate_debug },
    { CONF_DEBUG_RECOVERY       , CONFTYPE_INT      , read_int         , CNF_DEBUG_RECOVERY       , validate_debug },
    { CONF_DEBUG_AMIDXTAPED     , CONFTYPE_INT      , read_int         , CNF_DEBUG_AMIDXTAPED     , validate_debug },
@@ -4475,6 +4480,7 @@ init_defaults(
     conf_init_int      (&conf_data[CNF_CONNECT_TRIES]        , 3);
     conf_init_int      (&conf_data[CNF_REP_TRIES]            , 5);
     conf_init_int      (&conf_data[CNF_REQ_TRIES]            , 3);
+    conf_init_int      (&conf_data[CNF_DEBUG_DAYS]           , AMANDA_DEBUG_DAYS);
     conf_init_int      (&conf_data[CNF_DEBUG_AMANDAD]        , 0);
     conf_init_int      (&conf_data[CNF_DEBUG_RECOVERY]       , 0);
     conf_init_int      (&conf_data[CNF_DEBUG_AMIDXTAPED]     , 0);

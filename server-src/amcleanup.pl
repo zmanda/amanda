@@ -180,3 +180,5 @@ if ($verbose) {
 } else {
     system $amcleanupdisk, $config_name;
 }
+
+Amanda::Util::finish_application();

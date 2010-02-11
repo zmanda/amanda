@@ -1160,6 +1160,15 @@ Relative pathnames are relative to the configuration directory.
   </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>debug_days</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default:
+<amdefault>3</amdefault>.
+The number of days the debug files are kept.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>debug_auth</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:

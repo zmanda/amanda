@@ -158,4 +158,6 @@ if ($result == $DEVICE_STATUS_SUCCESS) {
         exit 1;
     }
 }
+
+Amanda::Util::finish_application();
 exit 0;

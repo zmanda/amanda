@@ -176,6 +176,15 @@ How many times amandad will resend a REP packet if it doesn't get the ACK packet
   </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>debug_days</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default:
+<amdefault>3</amdefault>.
+The number of days the debug files are kept.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>debug_amandad</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
