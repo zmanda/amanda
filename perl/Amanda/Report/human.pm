@@ -1009,7 +1009,7 @@ sub set_col_spec
     my $disp_unit = $self->{disp_unit};
     my $unit_div  = $self->{unit_div};
 
-    my $col_spec = [
+    $self->{col_spec} = [
         [ "HostName", 0, 12, 12, 0, "%-*.*s", "HOSTNAME" ],
         [ "Disk",     1, 11, 11, 0, "%-*.*s", "DISK" ],
         [ "Level",    1, 1,  1,  0, "%*.*d",  "L" ],
@@ -1023,7 +1023,7 @@ sub set_col_spec
     ];
 
     $self->apply_col_spec_override();
-    return $self->{col_spec} = $col_spec;
+    return $self->{col_spec};
 }
 
 sub apply_col_spec_override
@@ -1031,7 +1031,7 @@ sub apply_col_spec_override
     my ($self) = @_;
     my $col_spec = $self->{col_spec};
 
-    my %col_spec_override = read_col_spec_override() || return;
+    my %col_spec_override = read_col_spec_override();
 
     foreach my $col (@$col_spec) {
         if ( my $col_override = $col_spec_override{ $col->[COLSPEC_NAME] } ) {
@@ -1057,19 +1057,33 @@ sub read_col_spec_override
     my $col_spec_str = getconf($CNF_COLUMNSPEC) || return;
     my %col_spec_override = ();
 
-    foreach ( split( ",", $col_spec_str ) ) {
-        if (
-            $_ =~ m/^(\w+)        # field name
-                =(\d*)            # prefix spaces
-                (?=:(\d*))        # width
-                (?=:(\d*))        # precision
+    foreach (split(",", $col_spec_str)) {
+
+        $_ =~ m/^(\w+)        # field name
+                =([-\d:]+)  # field values
                 $/x
-          ) {
-            $col_spec_override{$1} = [ $2, $3, $4 ];
-        } else {
-            die "error: malformed columnspec string:$col_spec_str";
+          or die "error: malformed columnspec string:$col_spec_str";
+
+        my $field              = $1;
+        my $field_value_string = $2;
+        my @field_values       = split ':', $field_value_string;
+
+        # too many values
+        die "error: malformed columnspec string:$col_spec_str"
+          if (@field_values > 3);
+
+        # < 3 values specified, make the rest blank
+        while (@field_values < 3) {
+            if ($field_value_string =~ m{^:}) {
+                unshift @field_values, '';
+            } else {
+                push @field_values, '';
+            }
         }
+
+        $col_spec_override{$field} = \@field_values;
     }
+
     return %col_spec_override;
 }
 
