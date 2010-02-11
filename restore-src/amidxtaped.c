@@ -301,7 +301,11 @@ main(
     }
     else {
 	from_amandad = 0;
-	safe_fd(-1, 0);
+	/* close some extra fd's that safe_fd skipped before */
+	close(DATA_FD_OFFSET);
+	close(DATA_FD_OFFSET+1);
+	close(DATA_FD_OFFSET+2);
+	close(DATA_FD_OFFSET+3);
 	if (argv && argv[1] && strcmp(argv[1], "installcheck") == 0) {
 	    /* skip the check_security calls, since we're being run from an installcheck */
 	    skip_security = 1;

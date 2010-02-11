@@ -1,3 +1,12 @@
+2010-02-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am: don't run amidxtaped on
+	  --without-restore
+	* installcheck/Installcheck/ClientService.pm
+	  installcheck/amidxtaped.pl: kill amidxtaped on timeout
+	* restore-src/amidxtaped.c: don't call safe_fd after the
+	  app has already started - it closes fd's in use by
+	  system libraries for e.g., LDAP access
+
 2010-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Application.swg: Add read_magic_block and
 				       write_magic_block.

@@ -86,6 +86,15 @@ The C<process_done> parameter gives a sub which is called with the service's
 wait status when the service exits and all of its file descriptors have been
 drained.
 
+=head2 Killing Subprocess
+
+To kill the subprocess, call
+
+  $service->kill();
+
+this will send a SIGINT.  Process termination proceeds as normal -
+C<process_done> will be called.
+
 =head2 Handling Streams
 
 Streams have simple strings as names; the standard names are described in the
@@ -273,6 +282,12 @@ sub expect {
     $self->{'expectations'}{$name} = [ @expectations ];
 
     $self->_check_expectations($name);
+}
+
+sub kill {
+    my $self = shift;
+
+    kill 'INT', $self->{'pid'};
 }
 
 # private methods

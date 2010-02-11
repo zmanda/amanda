@@ -80,8 +80,11 @@ sub test {
 	$chg_name = "chg-disk:" . Installcheck::Run::vtape_dir();
     }
 
-    # this test run shoud finish reasonably quickly
     alarm(120);
+    local $SIG{'ALRM'} = sub {
+	diag "TIMEOUT";
+	$service->kill();
+    };
 
     # useful sub to report an event
     my @events;
