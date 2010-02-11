@@ -64,6 +64,25 @@ sub default_validate {
 
     while (<STDIN>) {}
 }
+
+sub write_magic_block {
+    my $self = shift;
+    my $type = shift;
+
+    my $dump_str = pack("a512", $type);
+    print STDOUT $dump_str;
+}
+
+sub read_magic_block {
+    my $self = shift;
+
+    my $magic_block = Amanda::Util::full_read(0, 512);
+    #remove '\0' bytes
+    $magic_block =~ /^([^\0]*)/;
+    my $type = $1;
+
+    return $type;
+}
 %}
 
 /* C interfaces used by the above */

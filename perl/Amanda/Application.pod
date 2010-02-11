@@ -52,7 +52,20 @@ Amanda::Application - perl utility functions for Applications.
   my $application = Amanda::Application::my_application->new($opt_foo, $opt_bar);
   $application->do($cmd);
 
-=cut
+=head1 INTERFACE
 
+=head2 write_magic_block
+
+  $self->write_magic_block($type)
+
+Write a 512 bytes magic block to STDOUT.
+
+=head2 read_magic_bloc
+
+  $type = $self->read_magic_block()
+
+Read the 512 bytes magic block from STDIN and return the type.
+
+=cut
 
 %}
