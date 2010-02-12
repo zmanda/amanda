@@ -1,3 +1,6 @@
+2010-02-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Put stderr of tar in the debug file.
+
 2010-02-12  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report.pm: get per-tape info from L_PART instead of
 	  L_INFO lines

@@ -346,7 +346,11 @@ sub _run_tar_totals {
     while (my $l = <TAR_ERR>) {
         if ($l =~ /^Total bytes written: (\d+)/) {
             $size = $1;
-        }
+        } else {
+	    chomp $l;
+	    #$self->print_to_server($l, $Amanda::Script_App::ERROR);
+	    debug("TAR_ERR: $l");
+	}
     }
     waitpid($pid, 0);
     my $status = POSIX::WEXITSTATUS($?);
