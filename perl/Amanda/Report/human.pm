@@ -670,7 +670,7 @@ sub output_tape_stats
     }
     my $ts_format = "  @"
       . '<' x ($label_length - 1)
-      . "@>>>> @>>>>>>>> @>>>>> @>>>> @>>>>\n";
+      . "@>>>> @>>>>>>>>>>> @>>>>> @>>>> @>>>>\n";
 
     print $fh "USAGE BY TAPE:\n";
     print $fh swrite($ts_format, "Label", "Time", "Size", "%", "Nb", "Nc");
@@ -684,10 +684,8 @@ sub output_tape_stats
         print $fh swrite(
             $ts_format,
             $label,
-            hrmn($tape->{time}),    # time
-            sprintf("%8.0lf%s",
-                $tape->{kb} / $self->{unit_div},
-                $self->{disp_unit}),    # size
+            hrmn($tape->{time}),                                          # time
+            int($tape->{kb} / $self->{unit_div}) . $self->{disp_unit},    # size
             divzero(100 * $tape->{kb}, $tapesize),    # % usage
             $tape->{dle},                             # Nb of dles
             $tape->{files}                            # Nb of chunks

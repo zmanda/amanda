@@ -1,3 +1,9 @@
+2010-02-12  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Report.pm: get per-tape info from L_PART instead of
+	  L_INFO lines
+	* perl/Amanda/Report/human.pm: widen text field for tape usage
+	* installcheck/Amanda_Report.pl: installchecks
+
 2010-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Assert if a config is not set.
 	* common-src/amgetconf.pl, client-src/calcsize.c,

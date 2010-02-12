@@ -787,13 +787,11 @@ sub _handle_taper_line
 
         push @$chunks, $chunk;
 
-	if ($type = $L_PART) {
-	    $taper_p->{tapes}->{$tapevol}->{time} += $sec;
-	    if (!defined $dle->{last_label} || $dle->{last_label} ne $tapevol) {
-		$taper_p->{tapes}->{$tapevol}->{dle} += 1;
-	    }
-	}
-	$dle->{last_label} = $tapevol;
+        my $tape = ($taper_p->{tapes}{$tapevol} ||= {});
+        $tape->{kb}   += $kb;
+        $tape->{time} += $sec;
+        $tape->{files}++;
+        $tape->{dle}++ if $currpart == 1;
 
         if ( $type == $L_PARTPARTIAL ) {
 
@@ -826,28 +824,13 @@ sub _handle_taper_line
         $taper->{sec}   = $sec;
         $taper->{kb}    = $kb;
         $taper->{kps}   = $kps;
+
         return $taper->{status} = ( $type == $L_DONE ) ? "done" : "partial";
 
     } elsif ( $type == $L_INFO ) {
-
-        my @info = Amanda::Util::split_quoted_strings($str);
-        if ( $info[0] eq "tape" ) {
-
-	    $self->_handle_info_line("taper", $str);
-            my ( $label, $kb, $files ) = @info[ 1, 3, 5 ];
-            my $tapes = $taper_p->{tapes} ||= {};
-            my $tape  = $tapes->{$label}  ||= {};
-
-            # data here: label, size, taperfile
-            $tape->{kb} = $kb;
-            return $tape->{files} = $files;
-
-        } else {
-            return $self->_handle_info_line( "taper", $str );
-        }
+        return $self->_handle_info_line("taper", $str);
 
     } elsif ( $type == $L_WARNING ) {
-
 	return $self->_handle_warning_line("taper", $str);
 
     } elsif ( $type == $L_ERROR ) {

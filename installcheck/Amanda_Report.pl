@@ -568,12 +568,14 @@ $LogfileData{simple} = {
             start_time => "0.051",
             time       => "2167.581",
         },
-        taper   => {
+        taper => {
             tapes => {
                 "Conf-001" => {
-		    time => "4.813543",
-                    date => "20080111",
-		    dle  => "1"
+                    'files' => 1,
+                    'time'  => '4.813543',
+                    'date'  => '20080111',
+                    'kb'    => 419,
+                    'dle'   => 1
                 },
             },
         },
@@ -727,10 +729,17 @@ $LogfileData{fullExample} = {
             start => "20081002040002",
         },
         chunker => {},
-        taper =>
-          { tapes => { "FullBackup-14" => { time => "370.548573",
-					    date => "20081002040002",
-					    dle  => "5" }, }, },
+        taper   => {
+            tapes => {
+                "FullBackup-14" => {
+                    'files' => 5,
+                    'time'  => '370.548573',
+                    'date'  => '20081002040002',
+                    'kb'    => 28791982,
+                    'dle'   => 5
+                },
+            },
+        },
     },
     disklist => {
         "hostname.example.org" => {
@@ -738,7 +747,7 @@ $LogfileData{fullExample} = {
                 estimate => {
                     level => "1",
                     sec   => "39",
-                    nkb => "80542",
+                    nkb   => "80542",
                     kps   => "1024",
                     ckb   => "40288",
                 },
@@ -881,7 +890,7 @@ $LogfileData{fullExample} = {
                     level => "1",
                     sec   => "6"
                 },
-                tries    => [
+                tries => [
                     {
                         chunker => {
                             kps    => "1226.3",
@@ -1009,9 +1018,11 @@ $LogfileData{amflushExample} = {
         'taper' => {
             'tapes' => {
                 'DailyTapeDataSet-017' => {
-		    'time' => '4.180007',
-                    'date' => '20090622075550',
-		    'dle'  => '2'
+                    'files' => 2,
+                    'time'  => '4.180007',
+                    'date'  => '20090622075550',
+                    'kb'    => 37289,
+                    'dle'   => 2
                 },
             },
         },
