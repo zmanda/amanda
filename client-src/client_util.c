@@ -121,7 +121,7 @@ build_name(
 	/*NOTREACHED*/
     }
     test_name = get_name(diskname, exin,
-			 curtime - (AMANDA_DEBUG_DAYS * 24 * 60 * 60), 0);
+			 curtime - (getconf_int(CNF_DEBUG_DAYS) * 24 * 60 * 60), 0);
     match_len = strlen(get_pname()) + strlen(diskname) + 2;
     while((entry = readdir(d)) != NULL) {
 	if(is_dot_or_dotdot(entry->d_name)) {

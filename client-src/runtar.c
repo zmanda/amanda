@@ -35,6 +35,7 @@
  */
 #include "amanda.h"
 #include "util.h"
+#include "conffile.h"
 
 int main(int argc, char **argv);
 
@@ -68,6 +69,8 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     dbopen(DBG_SUBDIR_CLIENT);
+    config_init(CONFIG_INIT_CLIENT, NULL);
+
     if (argc < 3) {
 	error(_("Need at least 3 arguments\n"));
 	/*NOTREACHED*/

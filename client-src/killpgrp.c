@@ -35,6 +35,7 @@
  */
 #include "amanda.h"
 #include "util.h"
+#include "conffile.h"
 
 #ifdef HAVE_GETPGRP
 #ifdef GETPGRP_VOID
@@ -75,6 +76,8 @@ main(
     set_pname("killpgrp");
 
     dbopen(DBG_SUBDIR_CLIENT);
+    config_init(CONFIG_INIT_CLIENT, NULL);
+
     if (argc < 2) {
 	error("Need at least 2 arguments\n");
 	/*NOTREACHED*/

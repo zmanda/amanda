@@ -22,6 +22,7 @@ use strict;
 
 use lib "@amperldir@";
 use Amanda::Debug qw( :logging );
+use Amanda::Config;
 
 ## most failures of the debug module will just kill the process, so
 ## the main goal of this test script is just to make it to the end :)
@@ -30,6 +31,9 @@ my $fh;
 my $debug_text;
 my $pid;
 my $kid;
+
+# load default config
+Amanda::Config::config_init(0, undef);
 
 # set up debugging so debug output doesn't interfere with test results
 Amanda::Debug::dbopen("installcheck");

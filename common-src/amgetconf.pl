@@ -290,20 +290,23 @@ if (@ARGV == 1) {
 
 ## Now start looking at the parameter.
 
+Amanda::Util::setup_application("amgetconf", "server", $CONTEXT_SCRIPTUTIL);
+
 if ($parameter =~ /^build(?:\..*)?/) {
+    config_init(0|$execute_where, undef);
     build_param($parameter, $opt_list);
     Amanda::Util::finish_application();
     exit(0);
 } 
 
 if ($parameter =~ /^db(open|close)\./) {
+    config_init(0|$execute_where, undef);
     db_param($parameter, $opt_list);
     Amanda::Util::finish_application();
     exit(0);
 }
 
 # finally, finish up the application startup procedure
-Amanda::Util::setup_application("amgetconf", "server", $CONTEXT_SCRIPTUTIL);
 config_init($CONFIG_INIT_EXPLICIT_NAME | $CONFIG_INIT_USE_CWD | $execute_where, $config_name);
 apply_config_overrides($config_overrides);
 my ($cfgerr_level, @cfgerr_errors) = config_errors();

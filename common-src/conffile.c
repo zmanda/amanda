@@ -5608,6 +5608,7 @@ int
 val_t_to_int(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_INT) {
 	error(_("val_t_to_int: val.type is not CONFTYPE_INT"));
 	/*NOTREACHED*/
@@ -5619,6 +5620,7 @@ gint64
 val_t_to_int64(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_INT64) {
 	error(_("val_t_to_int64: val.type is not CONFTYPE_INT64"));
 	/*NOTREACHED*/
@@ -5630,6 +5632,7 @@ float
 val_t_to_real(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_REAL) {
 	error(_("val_t_to_real: val.type is not CONFTYPE_REAL"));
 	/*NOTREACHED*/
@@ -5641,6 +5644,7 @@ char *
 val_t_to_str(
     val_t *val)
 {
+    assert(config_initialized);
     /* support CONFTYPE_IDENT, too */
     if (val->type != CONFTYPE_STR && val->type != CONFTYPE_IDENT) {
 	error(_("val_t_to_str: val.type is not CONFTYPE_STR nor CONFTYPE_IDENT"));
@@ -5653,6 +5657,7 @@ char *
 val_t_to_ident(
     val_t *val)
 {
+    assert(config_initialized);
     /* support CONFTYPE_STR, too */
     if (val->type != CONFTYPE_STR && val->type != CONFTYPE_IDENT) {
 	error(_("val_t_to_ident: val.type is not CONFTYPE_IDENT nor CONFTYPE_STR"));
@@ -5665,6 +5670,7 @@ identlist_t
 val_t_to_identlist(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_IDENTLIST) {
 	error(_("val_t_to_ident: val.type is not CONFTYPE_IDENTLIST"));
 	/*NOTREACHED*/
@@ -5676,6 +5682,7 @@ time_t
 val_t_to_time(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_TIME) {
 	error(_("val_t_to_time: val.type is not CONFTYPE_TIME"));
 	/*NOTREACHED*/
@@ -5687,6 +5694,7 @@ ssize_t
 val_t_to_size(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_SIZE) {
 	error(_("val_t_to_size: val.type is not CONFTYPE_SIZE"));
 	/*NOTREACHED*/
@@ -5698,6 +5706,7 @@ int
 val_t_to_boolean(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_BOOLEAN) {
 	error(_("val_t_to_bool: val.type is not CONFTYPE_BOOLEAN"));
 	/*NOTREACHED*/
@@ -5709,6 +5718,7 @@ comp_t
 val_t_to_compress(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_COMPRESS) {
 	error(_("val_t_to_compress: val.type is not CONFTYPE_COMPRESS"));
 	/*NOTREACHED*/
@@ -5720,6 +5730,7 @@ encrypt_t
 val_t_to_encrypt(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_ENCRYPT) {
 	error(_("val_t_to_encrypt: val.type is not CONFTYPE_ENCRYPT"));
 	/*NOTREACHED*/
@@ -5731,6 +5742,7 @@ dump_holdingdisk_t
 val_t_to_holding(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_HOLDING) {
 	error(_("val_t_to_hold: val.type is not CONFTYPE_HOLDING"));
 	/*NOTREACHED*/
@@ -5742,6 +5754,7 @@ estimatelist_t
 val_t_to_estimatelist(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_ESTIMATELIST) {
 	error(_("val_t_to_estimatelist: val.type is not CONFTYPE_ESTIMATELIST"));
 	/*NOTREACHED*/
@@ -5753,6 +5766,7 @@ strategy_t
 val_t_to_strategy(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_STRATEGY) {
 	error(_("val_t_to_strategy: val.type is not CONFTYPE_STRATEGY"));
 	/*NOTREACHED*/
@@ -5764,6 +5778,7 @@ taperalgo_t
 val_t_to_taperalgo(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_TAPERALGO) {
 	error(_("val_t_to_taperalgo: val.type is not CONFTYPE_TAPERALGO"));
 	/*NOTREACHED*/
@@ -5775,6 +5790,7 @@ send_amreport_t
 val_t_to_send_amreport(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_SEND_AMREPORT_ON) {
 	error(_("val_t_to_send_amreport: val.type is not CONFTYPE_SEND_AMREPORT_ON"));
 	/*NOTREACHED*/
@@ -5786,6 +5802,7 @@ data_path_t
 val_t_to_data_path(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_DATA_PATH) {
 	error(_("val_t_to_data_path: val.type is not CONFTYPE_DATA_PATH"));
 	/*NOTREACHED*/
@@ -5797,6 +5814,7 @@ int
 val_t_to_priority(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_PRIORITY) {
 	error(_("val_t_to_priority: val.type is not CONFTYPE_PRIORITY"));
 	/*NOTREACHED*/
@@ -5808,6 +5826,7 @@ float *
 val_t_to_rate(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_RATE) {
 	error(_("val_t_to_rate: val.type is not CONFTYPE_RATE"));
 	/*NOTREACHED*/
@@ -5819,6 +5838,7 @@ exinclude_t
 val_t_to_exinclude(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_EXINCLUDE) {
 	error(_("val_t_to_exinclude: val.type is not CONFTYPE_EXINCLUDE"));
 	/*NOTREACHED*/
@@ -5831,6 +5851,7 @@ int *
 val_t_to_intrange(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_INTRANGE) {
 	error(_("val_t_to_intrange: val.type is not CONFTYPE_INTRANGE"));
 	/*NOTREACHED*/
@@ -5842,6 +5863,7 @@ proplist_t
 val_t_to_proplist(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_PROPLIST) {
 	error(_("val_t_to_proplist: val.type is not CONFTYPE_PROPLIST"));
 	/*NOTREACHED*/
@@ -5853,6 +5875,7 @@ autolabel_t
 val_t_to_autolabel(
     val_t *val)
 {
+    assert(config_initialized);
     if (val->type != CONFTYPE_AUTOLABEL) {
 	error(_("val_t_to_autolabel: val.type is not CONFTYPE_AUTOLABEL"));
 	/*NOTREACHED*/

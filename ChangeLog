@@ -1,4 +1,11 @@
 2010-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Assert if a config is not set.
+	* common-src/amgetconf.pl, client-src/calcsize.c,
+	  client-src/client_util.c, client-src/killpgrp.c,
+	  client-src/rundump.c, client-src/runtar.c,
+	  installcheck/Amanda_Debug.pl: Set a default config.
+
+2010-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: New debug_days option.
 	* common-src/conffile.h: New debug_days option.
 	* man/xml-source/amanda-client.conf.5.xml: Document debug_days option.
