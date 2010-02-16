@@ -1,4 +1,7 @@
 2010-02-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amadmin.c: Set a config for version subcommand.
+
+2010-02-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amfeatures.c: New fe_amrecover_origsize_in_header.
 	* common-src/amfeatures.h: New fe_amrecover_origsize_in_header.
 	* common-src/fileheader.c: Parse/read 'ORIGSIZE=' in header.

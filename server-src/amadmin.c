@@ -172,13 +172,13 @@ main(
 
     if(argc < 3) usage();
 
+    config_init(CONFIG_INIT_EXPLICIT_NAME, argv[1]);
+    apply_config_overrides(cfg_ovr);
+
     if(strcmp(argv[2],"version") == 0) {
 	show_version(argc, argv);
 	goto done;
     }
-
-    config_init(CONFIG_INIT_EXPLICIT_NAME, argv[1]);
-    apply_config_overrides(cfg_ovr);
 
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     read_diskfile(conf_diskfile, &diskq);
