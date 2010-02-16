@@ -129,11 +129,23 @@ while (<DATA>) {
     }
 
     # new dump
-    if (/^:dump (\S+) (\S+) (\S+) (\S+) (\d+) (\S+) (\S+) (\d+) (\S+) (\d+)/) {
+    if (/^:dump (\S+) (\S+) (\S+) (\S+) (\d+) (\S+) (\S+) (\d+) (\S+) (\d+) (\d+)/) {
 	$last_dump = $dumps{$1} = {
 	    'dump_timestamp' => $2,	'hostname' => $3,	    'diskname' => $4,
 	    'level' => $5+0,		'status' => $6,		    'message' => $7,
 	    'nparts' => $8,		'sec' => $9+0.0,	    'kb' => $10,
+	    'orig_kb' => $11,
+	    'write_timestamp' => $write_timestamp,
+	};
+	$last_dump->{'message'} = ''
+	    if $last_dump->{'message'} eq '""';
+	next;
+    } elsif (/^:dump (\S+) (\S+) (\S+) (\S+) (\d+) (\S+) (\S+) (\d+) (\S+) (\d+)/) {
+	$last_dump = $dumps{$1} = {
+	    'dump_timestamp' => $2,	'hostname' => $3,	    'diskname' => $4,
+	    'level' => $5+0,		'status' => $6,		    'message' => $7,
+	    'nparts' => $8,		'sec' => $9+0.0,	    'kb' => $10,
+	    'orig_kb' => 0,
 	    'write_timestamp' => $write_timestamp,
 	};
 	$last_dump->{'message'} = ''
@@ -146,6 +158,7 @@ while (<DATA>) {
 	$last_dump = $dumps{$1} = {
 	    'dump_timestamp' => $2,	'hostname' => $3,	    'diskname' => $4,
 	    'level' => $5+0,		'status' => $6,		    'kb' => $7,
+	    'orig_kb' => 0,
 	    'write_timestamp' => '00000000000000',
 	    'message' => '',
 	    'nparts' => 1,
@@ -157,6 +170,7 @@ while (<DATA>) {
 	    status => $last_dump->{'status'},
 	    sec => 0.0,
 	    kb => $last_dump->{'kb'},
+	    orig_kb => 0,
 	    partnum => 1,
 	};
 	$last_dump->{'parts'} = [ undef, $parts{$1}, ];
@@ -164,11 +178,19 @@ while (<DATA>) {
     }
 
     # new part
-    if (/^:part (\S+) (\S+) (\S+) (\d+) (\d+) (\S+) (\S+) (\d+)/) {
+    if (/^:part (\S+) (\S+) (\S+) (\d+) (\d+) (\S+) (\S+) (\d+) (\d+)/) {
 	$parts{$1} = {
 	    'dump' => $dumps{$2},	'label' => $3,		    'filenum' => $4,
 	    'partnum' => $5,		'status' => $6,		    'sec' => $7+0.0,
-	    'kb' => $8,
+	    'kb' => $8,			'orig_kb' => $9 
+	};
+	$last_dump->{'parts'}->[$parts{$1}->{'partnum'}] = $parts{$1};
+	next;
+    } elsif (/^:part (\S+) (\S+) (\S+) (\d+) (\d+) (\S+) (\S+) (\d+)/) {
+	$parts{$1} = {
+	    'dump' => $dumps{$2},	'label' => $3,		    'filenum' => $4,
+	    'partnum' => $5,		'status' => $6,		    'sec' => $7+0.0,
+	    'kb' => $8,			'orig_kb' => 0
 	};
 	$last_dump->{'parts'}->[$parts{$1}->{'partnum'}] = $parts{$1};
 	next;
@@ -186,10 +208,10 @@ Amanda::DB::Catalog::_clear_cache();
 # Test the timestamps
 
 is_deeply([ Amanda::DB::Catalog::get_write_timestamps(), ],
-    [ '20080111000000', '20080222222222', '20080313133333', '20080414144444' ],
+    [ '20080111000000', '20080222222222', '20080313133333', '20080414144444', '20080515155555' ],
     "get_write_timestamps returns all logfile datestamps in proper order, with zero-padding");
 
-is(Amanda::DB::Catalog::get_latest_write_timestamp(), '20080414144444',
+is(Amanda::DB::Catalog::get_latest_write_timestamp(), '20080515155555',
     "get_latest_write_timestamp correctly returns the latest write timestamp");
 
 ##
@@ -202,7 +224,7 @@ sub partstr {
 	       "$part->{dump}->{hostname} $part->{dump}->{diskname}";
    } else {
 	return "$part->{label}:$part->{filenum}: " .
-	       "$part->{dump}->{hostname} $part->{dump}->{diskname}";
+	       "$part->{dump}->{hostname} $part->{dump}->{diskname} $part->{dump}->{orig_kb}";
    }
 }
 
@@ -266,8 +288,14 @@ sub sortparts {
 	# convert bigints to strings and on to integers so is_deeply doesn't get confused
 	$_->{'dump'}->{'level'} = "$_->{dump}->{level}" + 0;
 	$_->{'dump'}->{'kb'} = "$_->{dump}->{kb}" + 0;
-	$_->{'filenum'} = "$_->{filenum}" + 0;
+	$_->{'dump'}->{'orig_kb'} = "$_->{dump}->{orig_kb}" + 0;
+	if (!defined $_->{filenum}) {
+	    $_->{'filenum'} = 0;
+	} else {
+	    $_->{'filenum'} = "$_->{filenum}" + 0;
+	}
 	$_->{'kb'} = "$_->{kb}" + 0;
+	$_->{'orig_kb'} = "$_->{orig_kb}" + 0;
 	$_->{'partnum'} = "$_->{partnum}" + 0;
 	$_;
     } sort {
@@ -353,6 +381,7 @@ sub sortdumps {
 	# convert bigints to strings and on to integers so is_deeply doesn't get confused
 	$_->{'level'} = "$_->{level}" + 0;
 	$_->{'kb'} = "$_->{kb}" + 0;
+	$_->{'orig_kb'} = "$_->{orig_kb}" + 0;
 	$_->{'nparts'} = "$_->{nparts}" + 0;
 	$_;
     } sort {
@@ -417,10 +446,10 @@ got_parts([ sortparts Amanda::DB::Catalog::get_parts(diskname_match => '/usr') ]
     "get_parts parameter diskname_match");
 
 got_parts([ sortparts Amanda::DB::Catalog::get_parts(label => 'Conf-001') ],
-    [ sortparts parts_matching { $_->{'label'} eq 'Conf-001' } ],
+    [ sortparts parts_matching { defined $_->{'label'} and $_->{'label'} eq 'Conf-001' } ],
     "get_parts parameter label");
 got_parts([ sortparts Amanda::DB::Catalog::get_parts(labels => ['Conf-002','Conf-003']) ],
-    [ sortparts parts_matching { $_->{'label'} eq 'Conf-002' or $_->{'label'} eq 'Conf-003' } ],
+    [ sortparts parts_matching { defined $_->{'label'} and ($_->{'label'} eq 'Conf-002' or $_->{'label'} eq 'Conf-003') } ],
     "get_parts parameter labels");
 
 got_parts([ sortparts Amanda::DB::Catalog::get_parts(level => 0) ],
@@ -890,3 +919,71 @@ FINISH driver date 20080414144444 time 6.959
 # holding-disk
 :holding otherbox_lib_20080414144444_holding 20080414144444 otherbox /lib 1 OK 256
 :holding oldbox_opt_20080414144444_holding 20080414144444 oldbox /opt 0 OK 1298
+
+# A logfile with orig-kb in taper line
+::: log.20080515155555.0
+:tapelist 20080515155555 Conf-006
+:timestamp 20080515155555
+DISK planner somebox /usr/bin
+DISK planner somebox /lib
+DISK planner otherbox /lib
+DISK planner otherbox /usr/bin
+START planner date 20080515155555
+START driver date 20080515155555
+STATS driver hostname somebox
+STATS driver startup time 0.059
+INFO planner Full dump of somebox:/lib promoted from 2 days ahead.
+FINISH planner date 20080515155555 time 0.286
+SUCCESS dumper somebox /usr/bin 20080515155555 1 [sec 0.001 kb 20 kps 10352.0 orig-kb 20]
+SUCCESS chunker somebox /usr/bin 20080515155555 1 [sec 1.023 kb 20 kps 50.8]
+STATS driver estimate somebox /usr/bin 20080515155555 1 [sec 0 nkb 52 ckb 64 kps 1024]
+START taper datestamp 20080515155555 label Conf-006 tape 1
+:dump somebox_usr_bin_20080515155555 20080515155555 somebox /usr/bin 1 OK "" 1 0.000370 20 20
+:part somebox_usr_bin_20080515155555 somebox_usr_bin_20080515155555 Conf-006 1 1 OK 0.000370 20 20
+PART taper Conf-006 1 somebox /usr/bin 20080515155555 1/1 1 [sec 0.000370 kb 20 kps 54054.054054 orig-kb 20]
+DONE taper somebox /usr/bin 20080515155555 1 1 [sec 0.000370 kb 20 kps 54054.054054 orig-kb 20]
+# a multi-part dump
+SUCCESS dumper somebox /lib 20080515155555 0 [sec 0.189 kb 3156 kps 50253.1 orig-kb 3156]
+SUCCESS chunker somebox /lib 20080515155555 0 [sec 5.250 kb 3156 kps 1815.5]
+STATS driver estimate somebox /lib 20080515155555 0 [sec 1 nkb 3156 ckb 3156 kps 9500]
+:dump somebox_lib_20080515155555 20080515155555 somebox /lib 0 OK "" 10 0.051436 3156 3156
+:part somebox_lib_20080515155555_p1 somebox_lib_20080515155555 Conf-006 2 1 OK 0.005621 1024 3156
+PART taper Conf-006 2 somebox /lib 20080515155555 1/10 0 [sec 0.005621 kb 1024 kps 182173.990393 orig-kb 3156]
+:part somebox_lib_20080515155555_p2 somebox_lib_20080515155555 Conf-006 3 2 OK 0.006527 1024 3156
+PART taper Conf-006 3 somebox /lib 20080515155555 2/10 0 [sec 0.006527 kb 1024 kps 156886.777999 orig-kb 3156]
+:part somebox_lib_20080515155555_p3 somebox_lib_20080515155555 Conf-006 4 3 OK 0.005854 1024 3156
+PART taper Conf-006 4 somebox /lib 20080515155555 3/10 0 [sec 0.005854 kb 1024 kps 174923.129484 orig-kb 3156]
+:part somebox_lib_20080515155555_p4 somebox_lib_20080515155555 Conf-006 5 4 OK 0.007344 1024 3156
+PART taper Conf-006 5 somebox /lib 20080515155555 4/10 0 [sec 0.007344 kb 1024 kps 147993.746743 orig-kb 3156]
+:part somebox_lib_20080515155555_p5 somebox_lib_20080515155555 Conf-006 6 5 OK 0.007344 1024 3156
+PART taper Conf-006 6 somebox /lib 20080515155555 5/10 0 [sec 0.007344 kb 1024 kps 147993.746743 orig-kb 3156]
+:part somebox_lib_20080515155555_p6 somebox_lib_20080515155555 Conf-006 7 6 OK 0.007344 1024 3156
+PART taper Conf-006 7 somebox /lib 20080515155555 6/10 0 [sec 0.007344 kb 1024 kps 147993.746743 orig-kb 3156]
+:part somebox_lib_20080515155555_p7 somebox_lib_20080515155555 Conf-006 8 7 OK 0.007344 1024 3156
+PART taper Conf-006 8 somebox /lib 20080515155555 7/10 0 [sec 0.007344 kb 1024 kps 147993.746743 orig-kb 3156]
+:part somebox_lib_20080515155555_p8 somebox_lib_20080515155555 Conf-006 9 8 OK 0.007344 1024 3156
+PART taper Conf-006 9 somebox /lib 20080515155555 8/10 0 [sec 0.007344 kb 1024 kps 147993.746743 orig-kb 3156]
+:part somebox_lib_20080515155555_p9 somebox_lib_20080515155555 Conf-006 10 9 OK 0.007344 1024 3156
+PART taper Conf-006 10 somebox /lib 20080515155555 9/10 0 [sec 0.007344 kb 1024 kps 147993.746743 orig-kb 3156]
+:part somebox_lib_20080515155555_p10 somebox_lib_20080515155555 Conf-006 11 10 OK 0.001919 284 3156
+PART taper Conf-006 11 somebox /lib 20080515155555 10/10 0 [sec 0.001919 kb 284 kps 147993.746743 orig-kb 3156]
+DONE taper somebox /lib 20080515155555 10 0 [sec 0.051436 kb 3156 kps 184695.543977 orig-kb 3156]
+SUCCESS dumper otherbox /lib 20080515155555 0 [sec 0.001 kb 190 kps 10352.0 orig-kb 20]
+SUCCESS chunker otherbox /lib 20080515155555 0 [sec 1.023 kb 190 kps 50.8]
+STATS driver estimate otherbox /lib 20080515155555 0 [sec 0 nkb 190 ckb 190 kps 1024]
+# this dump is from a previous run, with an older dump_timestamp
+:dump otherbox_usr_bin_20080515155555 20080511151155 otherbox /usr/bin 0 OK "" 1 0.002733 240 240
+:part otherbox_usr_bin_20080515155555 otherbox_usr_bin_20080515155555 Conf-006 12 1 OK 0.002733 240 240
+PART taper Conf-006 12 otherbox /usr/bin 20080511151155 1/1 0 [sec 0.002733 kb 240 kps 136425.648022 orig-kb 240]
+DONE taper otherbox /usr/bin 20080511151155 1 0 [sec 0.002733 kb 240 kps 136425.648022 orig-kb 240]
+:dump otherbox_lib_20080515155555 20080511151555 otherbox /lib 0 OK "" 1 0.001733 190 190
+:part otherbox_lib_20080515155555 otherbox_lib_20080515155555 Conf-006 13 1 OK 0.001733 190 190
+PART taper Conf-006 13 otherbox /lib 20080511151555 1/1 0 [sec 0.001733 kb 190 kps 136425.648022 orig-kb 190]
+DONE taper otherbox /lib 20080515155555 1 0 [sec 0.001733 kb 190 kps 136425.648022 orig-kb 190]
+# this dump is a direct to tape
+:dump otherbox_direct_20080515155555 20080515155555 otherbox /direct 0 OK "" 1 0.001 190 350
+:part otherbox_direct_20080515155555 otherbox_direct_20080515155555 Conf-006 14 1 OK 0.001 190 350
+SUCCESS dumper otherbox /direct 20080515155555 0 [sec 0.001 kb 190 kps 10352.0 orig-kb 350]
+PART taper Conf-006 14 otherbox /direct 20080515155555 1/1 0 [sec 0.001 kb 190 kps 10352.0]
+DONE taper otherbox /direct 20080515155555 1 0 [sec 0.001 kb 190 kps 10352.0 orig-kb 350]
+FINISH driver date 20080515155555 time 24.777

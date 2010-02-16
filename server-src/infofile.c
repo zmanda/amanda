@@ -36,8 +36,8 @@
 
 static void zero_info(info_t *);
 
-  static char *infodir = (char *)0;
-  static char *infofile = (char *)0;
+  static char *infodir = NULL;
+  static char *infofile = NULL;
   static char *newinfofile;
   static int writing;
 
@@ -501,7 +501,7 @@ int
 open_infofile(
     char *	filename)
 {
-    assert(infodir == (char *)0);
+    assert(infodir == NULL);
 
     infodir = stralloc(filename);
 
@@ -511,7 +511,7 @@ open_infofile(
 void
 close_infofile(void)
 {
-    assert(infodir != (char *)0);
+    assert(infodir != NULL);
 
     amfree(infodir);
 }

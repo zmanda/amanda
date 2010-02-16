@@ -41,6 +41,7 @@
 char * get_timestamp_from_time(time_t time);
 char * get_datestamp_from_time(time_t time);
 char * get_proper_stamp_from_time(time_t time);
+time_t get_time_from_timestamp(char *timestamp);
 
 typedef enum {
     TIME_STATE_REPLACE,

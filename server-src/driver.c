@@ -1488,17 +1488,18 @@ handle_taper_result(
 
 	case DUMPER_STATUS:  /* DUMPER-STATUS <handle> */
             if (result_argc != 2) {
-                error(_("error [taper NO_NEW_TAPE result_argc != 2: %d]"),
+                error(_("error [taper DUMPER_STATUS result_argc != 2: %d]"),
                       result_argc);
 		/*NOTREACHED*/
             }
+            dp = serial2disk(result_argv[1]);
 	    if (taper_dumper->result == LAST_TOK) {
 		taper_sendresult = 1;
 	    } else {
 		if( taper_dumper->result == DONE) {
-		    taper_cmd(DONE, NULL, NULL, 0, NULL);
+		    taper_cmd(DONE, dp, NULL, 0, NULL);
 		} else {
-		    taper_cmd(FAILED, NULL, NULL, 0, NULL);
+		    taper_cmd(FAILED, dp, NULL, 0, NULL);
 		}
 	    }
 	    break;
@@ -1783,6 +1784,7 @@ dumper_chunker_result(
 
     is_partial = dumper->result != DONE || chunker->result != DONE;
     rename_tmp_holding(sched(dp)->destname, !is_partial);
+    holding_set_origsize(sched(dp)->destname, sched(dp)->origsize);
 
     dummy = (off_t)0;
     for( i = 0, h = sched(dp)->holdp; i < activehd; i++ ) {
@@ -2001,9 +2003,9 @@ handle_dumper_result(
 	} else { /* send the dumper result to the taper */
 	    if (taper_sendresult) {
 		if (cmd == DONE) {
-		    taper_cmd(DONE, driver_timestamp, NULL, 0, NULL);
+		    taper_cmd(DONE, dp, NULL, 0, NULL);
 		} else {
-		    taper_cmd(FAILED, driver_timestamp, NULL, 0, NULL);
+		    taper_cmd(FAILED, dp, NULL, 0, NULL);
 		}
 		taper_sendresult = 0;
 	    }
@@ -2216,8 +2218,15 @@ read_flush(void)
     disklist_t tq;
     char *qname = NULL;
     char *qdestname = NULL;
+    char *conf_infofile;
 
     tq.head = tq.tail = NULL;
+
+    conf_infofile = config_dir_relative(getconf_str(CNF_INFOFILE));
+    if (open_infofile(conf_infofile)) {
+	error(_("could not open info db \"%s\""), conf_infofile);
+	/*NOTREACHED*/
+    }
 
     for(line = 0; (inpline = agets(stdin)) != NULL; free(inpline)) {
 	dumpfile_t file;
@@ -2366,6 +2375,7 @@ read_flush(void)
 	sp->est_csize = (off_t)0;
 	sp->est_time = 0;
 	sp->est_kps = 10;
+	sp->origsize = file.orig_size;
 	sp->priority = 0;
 	sp->degr_level = -1;
 	sp->dump_attempted = 0;
@@ -2382,6 +2392,7 @@ read_flush(void)
 	dumpfile_free_data(&file);
     }
     amfree(inpline);
+    close_infofile();
 
     /*@i@*/ return tq;
 }

@@ -184,6 +184,7 @@ typedef enum {
     fe_xml_directtcp_list,
     fe_amidxtaped_datapath,
     fe_sendbackup_noop,
+    fe_amrecover_origsize_in_header,
 
     /*
      * All new features must be inserted immediately *before* this entry.

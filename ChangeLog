@@ -1,4 +1,27 @@
 2010-02-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amfeatures.c: New fe_amrecover_origsize_in_header.
+	* common-src/amfeatures.h: New fe_amrecover_origsize_in_header.
+	* common-src/fileheader.c: Parse/read 'ORIGSIZE=' in header.
+	* common-src/fileheader.h (dumpfile_t): Add orig_size.
+	* common-src/timestamp.c (get_time_from_timestamp): New function to
+	  convert a char timestamp to time_t.
+	* common-src/timestamp.h (get_time_from_timestamp): Prototype.
+	* restore-src/restore.c: Check fe_amrecover_origsize_in_header.
+	* server-src/driver.c: Protoocl change to send orig_kb to taper.
+	* server-src/driverio.c: Protoocl change to send orig_kb to taper.
+	* server-src/find.c: Get orig_kb from log files.
+	* server-src/find.h (find_result_t): add orig_kb.
+	* server-src/holding.c (holding_set_origsize): New function to seti
+	  'ORIGSIZE' in an holding file.
+	* server-src/holding.h (holding_set_origsize): Prototype.
+	* server-src/infofile.c: '(char *)0' to NULL.
+	* server-src/taper.pl: Parse orig-kb in protocol, log it.
+	* perl/Amanda/DB/Catalog.pm: Set orig_kb.
+	* perl/Amanda/Logfile.swg (find_result_t): Add orig_kb.
+	* installcheck/Amanda_DB_Catalog.pl: Check orig-kb in taper stats.
+	* installcheck/taper.pl: Fix for orig-kb in protocol.
+
+2010-02-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/extract_list.c: Fix crash for non application restore.
 
 2010-02-16  Jean-Louis Martineau <martineau@zmanda.com>

@@ -37,6 +37,7 @@
 #include "diskfile.h"
 #include "infofile.h"
 #include "logfile.h"
+#include "timestamp.h"
 
 #define GLOBAL		/* the global variables defined here */
 #include "driverio.h"
@@ -292,6 +293,7 @@ taper_cmd(
     char number[NUM_STR_SIZE];
     char splitsize[NUM_STR_SIZE];
     char fallback_splitsize[NUM_STR_SIZE];
+    char orig_kb[NUM_STR_SIZE];
     char *diskbuffer = NULL;
     disk_t *dp;
     char *qname;
@@ -309,6 +311,8 @@ taper_cmd(
 	g_snprintf(number, SIZEOF(number), "%d", level);
 	g_snprintf(splitsize, SIZEOF(splitsize), "%lld",
 		 (long long)dp->tape_splitsize * 1024);
+	g_snprintf(orig_kb, SIZEOF(orig_kb), "%jd",
+		 (intmax_t)sched(dp)->origsize);
 	cmdline = vstralloc(cmdstr[cmd],
 			    " ", disk2serial(dp),
 			    " ", qdest,
@@ -317,6 +321,7 @@ taper_cmd(
 			    " ", number,
 			    " ", datestamp,
 			    " ", splitsize,
+			    " ", orig_kb,
 			    "\n", NULL);
 	amfree(qdest);
 	amfree(qname);
@@ -353,6 +358,14 @@ taper_cmd(
 	amfree(qname);
 	break;
     case DONE: /* handle */
+	dp = (disk_t *) ptr;
+	g_snprintf(number, SIZEOF(number), "%jd",
+		 (intmax_t)(sched(dp)->origsize));
+	cmdline = vstralloc(cmdstr[cmd],
+			    " ", disk2serial(dp),
+			    " ", number,
+			    "\n", NULL);
+	break;
     case FAILED: /* handle */
 	dp = (disk_t *) ptr;
 	cmdline = vstralloc(cmdstr[cmd],
@@ -821,7 +834,7 @@ update_info_dumper(
     infp->size = origsize;
     infp->csize = dumpsize;
     infp->secs = dumptime;
-    infp->date = sched(dp)->timestamp;
+    infp->date = get_time_from_timestamp(sched(dp)->datestamp);
 
     if(level == 0) perfp = &info.full;
     else perfp = &info.incr;
@@ -856,7 +869,7 @@ update_info_dumper(
 	info.history[0].level = level;
 	info.history[0].size  = origsize;
 	info.history[0].csize = dumpsize;
-	info.history[0].date  = sched(dp)->timestamp;
+	info.history[0].date  = get_time_from_timestamp(sched(dp)->datestamp);
 	info.history[0].secs  = dumptime;
     }
 

@@ -103,6 +103,10 @@ or C<"00000000000000"> for dumps in the holding disk.
 
 (integer) -- size (in kb) of this part
 
+=item orig_kb
+
+(integer) -- size (in kb) of the complete dump (uncompress and uncrypted).
+
 =item sec
 
 (integer) -- time (in seconds) spent writing this part
@@ -577,6 +581,7 @@ sub get_parts_and_dumps {
 		    hostname => $find_result->{'hostname'},
 		    diskname => $find_result->{'diskname'},
 		    level => $find_result->{'level'}+0,
+		    orig_kb => $find_result->{'orig_kb'},
 		    # the rest of these params are unknown until we see a taper
 		    # DONE, PARTIAL, or FAIL line, although we count nparts
 		    # manually instead of relying on the logfile
@@ -599,6 +604,7 @@ sub get_parts_and_dumps {
 		    status => $find_result->{'status'},
 		    sec => $find_result->{'sec'},
 		    kb => $find_result->{'kb'},
+		    orig_kb => $find_result->{'orig_kb'},
 		    partnum => $find_result->{'partnum'},
 		);
 	    } else {
@@ -609,6 +615,7 @@ sub get_parts_and_dumps {
 		    status => $find_result->{'status'},
 		    sec => 0.0,
 		    kb => $find_result->{'kb'},
+		    orig_kb => $find_result->{'orig_kb'},
 		    partnum => 1,
 		);
 		# and fix up the dump, too

@@ -68,6 +68,56 @@ char * get_proper_stamp_from_time(time_t when) {
     }
 }
 
+time_t get_time_from_timestamp(char *timestamp)
+{
+    struct tm tm;
+    char t[5];
+    time_t tt;
+
+    if (strlen(timestamp) >= 4) {
+	memcpy(t, timestamp, 4);
+	t[4]='\0';
+	tm.tm_year = atoi(t) - 1900;
+    }
+
+    if (strlen(timestamp) >= 6) {
+	memcpy(t, timestamp+4, 2);
+	t[2]='\0';
+	tm.tm_mon = atoi(t) - 1;
+    }
+
+    if (strlen(timestamp) >= 8) {
+	memcpy(t, timestamp+6, 2);
+	t[2]='\0';
+	tm.tm_mday = atoi(t);
+    }
+
+    if (strlen(timestamp) >= 10) {
+	memcpy(t, timestamp+8, 2);
+	t[2]='\0';
+	tm.tm_hour = atoi(t);
+    }
+
+    if (strlen(timestamp) >= 12) {
+	memcpy(t, timestamp+10, 2);
+	t[2]='\0';
+	tm.tm_min = atoi(t);
+    }
+
+    if (strlen(timestamp) >= 14) {
+	memcpy(t, timestamp+12, 2);
+	t[2]='\0';
+	tm.tm_sec = atoi(t);
+    }
+    tm.tm_wday = 0;
+    tm.tm_yday = 0;
+    tm.tm_isdst = -1;
+
+    tt = mktime(&tm);
+
+    return(tt);
+}
+
 time_state_t get_timestamp_state(char * timestamp) {
     if (timestamp == NULL || *timestamp == '\0') {
         return TIME_STATE_REPLACE;

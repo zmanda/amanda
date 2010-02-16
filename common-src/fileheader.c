@@ -445,6 +445,13 @@ parse_file_header(
 	}
 #undef SC
 
+#define SC "ORIGSIZE="
+	if (strncmp(line, SC, SIZEOF(SC) - 1) == 0) {
+	    line += SIZEOF(SC) - 1;
+	    file->orig_size = OFF_T_ATOI(line);
+	}
+#undef SC
+
 #define SC "DLE="
 	if (strncmp(line, SC, SIZEOF(SC) - 1) == 0) {
 	    line += SIZEOF(SC) - 1;
@@ -758,6 +765,10 @@ build_header(const dumpfile_t * file, size_t *size, size_t max_size)
 	}
 	if (file->is_partial != 0) {
             g_string_append_printf(rval, "PARTIAL=YES\n");
+	}
+	if (file->orig_size > 0) {
+	    g_string_append_printf(rval, "ORIGSIZE=%jd\n",
+					 (intmax_t)file->orig_size);
 	}
 	if (file->dle_str && strlen(file->dle_str) < max_size-2048) {
 	    char *heredoc = quote_heredoc(file->dle_str, "ENDDLE");

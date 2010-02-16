@@ -70,6 +70,7 @@ typedef struct file_s {
     int partnum;
     int totalparts; /* -1 == UNKNOWN */
     size_t blocksize;
+    off_t  orig_size;
 } dumpfile_t;
 
 /* local functions */

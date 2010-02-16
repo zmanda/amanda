@@ -142,7 +142,8 @@ typedef struct {
     int partnum;
     int totalparts;
     double sec;
-    size_t kb;
+    off_t kb;
+    off_t orig_kb;
     %mutable;
 } find_result_t;
 

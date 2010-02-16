@@ -285,15 +285,15 @@ run_taper(4096, "single-part and multipart FILE-WRITE");
 like(taper_reply, qr/^TAPER-OK$/,
 	"got TAPER-OK") or die;
 make_holding_file(1024*1024, "localhost", "/home");
-taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /home 0 $datestamp 0");
+taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /home 0 $datestamp 0 12");
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE") or die;
 taper_cmd("NEW-TAPE");
 like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
 	"got proper NEW-TAPE") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 1024 "\[sec [\d.]+ kb 1024 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 1024 "\[sec [\d.]+ kb 1024 kps [\d.]+ orig-kb 12\]"$/,
 	"got PARTDONE") or die;
-like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1024 kps [\d.]+\]" "" ""$/,
+like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1024 kps [\d.]+ orig-kb 12\]" "" ""$/,
 	"got DONE") or die;
 
 ##
@@ -302,12 +302,12 @@ like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1024 kp
 
 $handle = '11-22222';
 make_holding_file(1024*1024, "localhost", "/usr");
-taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /usr 0 $datestamp 524288");
-like(taper_reply, qr/^PARTDONE $handle TESTCONF01 2 512 "\[sec [\d.]+ kb 512 kps [\d.]+\]"$/,
+taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /usr 0 $datestamp 524288 512");
+like(taper_reply, qr/^PARTDONE $handle TESTCONF01 2 512 "\[sec [\d.]+ kb 512 kps [\d.]+ orig-kb 512\]"$/,
 	"got PARTDONE for filenum 2") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF01 3 512 "\[sec [\d.]+ kb 512 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE $handle TESTCONF01 3 512 "\[sec [\d.]+ kb 512 kps [\d.]+ orig-kb 512\]"$/,
 	"got PARTDONE for filenum 3") or die;
-like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1024 kps [\d.]+\]" "" ""$/,
+like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1024 kps [\d.]+ orig-kb 512\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -315,11 +315,11 @@ wait_for_exit();
 check_logs([
     qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
-    qr(^PART taper TESTCONF01 1 localhost /home $datestamp 1/-1 0 \[sec [\d.]+ kb 1024 kps [\d.]+\]$),
-    qr(^DONE taper localhost /home $datestamp 1 0 \[sec [\d.]+ kb 1024 kps [\d.]+\]$),
-    qr(^PART taper TESTCONF01 2 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ kb 512 kps [\d.]+\]$),
-    qr(^PART taper TESTCONF01 3 localhost /usr $datestamp 2/-1 0 \[sec [\d.]+ kb 512 kps [\d.]+\]$),
-    qr(^DONE taper localhost /usr $datestamp 2 0 \[sec [\d.]+ kb 1024 kps [\d.]+\]$),
+    qr(^PART taper TESTCONF01 1 localhost /home $datestamp 1/-1 0 \[sec [\d.]+ kb 1024 kps [\d.]+ orig-kb 12\]$),
+    qr(^DONE taper localhost /home $datestamp 1 0 \[sec [\d.]+ kb 1024 kps [\d.]+ orig-kb 12\]$),
+    qr(^PART taper TESTCONF01 2 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ kb 512 kps [\d.]+ orig-kb 512\]$),
+    qr(^PART taper TESTCONF01 3 localhost /usr $datestamp 2/-1 0 \[sec [\d.]+ kb 512 kps [\d.]+ orig-kb 512\]$),
+    qr(^DONE taper localhost /usr $datestamp 2 0 \[sec [\d.]+ kb 1024 kps [\d.]+ orig-kb 512\]$),
     qr(^INFO taper tape TESTCONF01 kb 2048 fm 4 \[OK\]$),
 ], "single-part and multi-part dump logged correctly");
 
@@ -406,8 +406,8 @@ like(taper_reply, qr/^PARTDONE $handle TESTCONF01 6 96 "\[sec [\d.]+ kb 96 kps [
 	"got PARTDONE for filenum 6") or die;
 like(taper_reply, qr/^DUMPER-STATUS $handle$/,
 	"got DUMPER-STATUS request") or die;
-taper_cmd("DONE $handle");
-like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 2016 kps [\d.]+\]" "" ""$/,
+taper_cmd("DONE $handle 712");
+like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 2016 kps [\d.]+ orig-kb 712\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -421,7 +421,7 @@ check_logs([
     qr(^PART taper TESTCONF01 4 localhost /var $datestamp 4/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
     qr(^PART taper TESTCONF01 5 localhost /var $datestamp 5/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
     qr(^PART taper TESTCONF01 6 localhost /var $datestamp 6/-1 0 \[sec [\d.]+ kb 96 kps [\d.]+\]$),
-    qr(^DONE taper localhost /var $datestamp 6 0 \[sec [\d.]+ kb 2016 kps [\d.]+\]$),
+    qr(^DONE taper localhost /var $datestamp 6 0 \[sec [\d.]+ kb 2016 kps [\d.]+ orig-kb 712\]$),
     qr(^INFO taper tape TESTCONF01 kb 2016 fm 6 \[OK\]$),
 ], "multipart PORT-WRITE logged correctly");
 
@@ -434,7 +434,7 @@ run_taper(4096, "testing NO-NEW-TAPE from the driver on 1st request");
 like(taper_reply, qr/^TAPER-OK$/,
 	"got TAPER-OK") or die;
 make_holding_file(1024*1024, "localhost", "/home");
-taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /home 0 $datestamp 0");
+taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /home 0 $datestamp 0 912");
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE") or die;
 taper_cmd("NO-NEW-TAPE sorry");
@@ -479,8 +479,8 @@ like(taper_reply, qr/^PARTDONE $handle TESTCONF02 2 3 "\[sec [\d.]+ kb 3 kps [\d
 	"got PARTDONE for filenum 2 on second tape") or die;
 like(taper_reply, qr/^DUMPER-STATUS $handle$/,
 	"got DUMPER-STATUS request") or die;
-taper_cmd("DONE $handle");
-like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1539 kps [\d.]+\]" "" ""$/,
+taper_cmd("DONE $handle 1012");
+like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1539 kps [\d.]+ orig-kb 1012\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -496,7 +496,7 @@ check_logs([
     qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
     qr(^PART taper TESTCONF02 1 localhost /usr/local $datestamp 2/-1 0 \[sec [\d.]+ kb 768 kps [\d.]+\]$),
     qr(^PART taper TESTCONF02 2 localhost /usr/local $datestamp 3/-1 0 \[sec [\d.]+ kb 3 kps [\d.]+\]$),
-    qr(^DONE taper localhost /usr/local $datestamp 3 0 \[sec [\d.]+ kb 1539 kps [\d.]+\]$),
+    qr(^DONE taper localhost /usr/local $datestamp 3 0 \[sec [\d.]+ kb 1539 kps [\d.]+ orig-kb 1012\]$),
     qr(^INFO taper tape TESTCONF02 kb 771 fm 2 \[OK\]$),
 ], "multivolume PORT-WRITE logged correctly");
 
@@ -509,24 +509,24 @@ run_taper(1024, "FILE-WRITE retry on EOT");
 like(taper_reply, qr/^TAPER-OK$/,
 	"got TAPER-OK") or die;
 make_holding_file(1575936, "localhost", "/usr");
-taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /usr 0 $datestamp 786432");
+taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /usr 0 $datestamp 786432 1112");
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE") or die;
 taper_cmd("NEW-TAPE");
 like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
 	"got proper NEW-TAPE") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 768 "\[sec [\d.]+ kb 768 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 768 "\[sec [\d.]+ kb 768 kps [\d.]+ orig-kb 1112\]"$/,
 	"got PARTDONE for filenum 1") or die;
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE") or die;
 taper_cmd("NEW-TAPE");
 like(taper_reply, qr/^NEW-TAPE $handle TESTCONF02$/,
 	"got proper NEW-TAPE") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF02 1 768 "\[sec [\d.]+ kb 768 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE $handle TESTCONF02 1 768 "\[sec [\d.]+ kb 768 kps [\d.]+ orig-kb 1112\]"$/,
 	"got PARTDONE for filenum 1 on second tape") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF02 2 3 "\[sec [\d.]+ kb 3 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE $handle TESTCONF02 2 3 "\[sec [\d.]+ kb 3 kps [\d.]+ orig-kb 1112\]"$/,
 	"got PARTDONE for filenum 2 on second tape") or die;
-like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1539 kps [\d.]+\]" "" ""$/,
+like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1539 kps [\d.]+ orig-kb 1112\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -534,15 +534,15 @@ wait_for_exit();
 check_logs([
     qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
-    qr(^PART taper TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ kb 768 kps [\d.]+\]$),
-    qr(^PARTPARTIAL taper TESTCONF01 2 localhost /usr $datestamp 2/-1 0 \[sec [\d.]+ kb 160 kps [\d.]+\] "No space left on device"$),
+    qr(^PART taper TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ kb 768 kps [\d.]+ orig-kb 1112\]$),
+    qr(^PARTPARTIAL taper TESTCONF01 2 localhost /usr $datestamp 2/-1 0 \[sec [\d.]+ kb 160 kps [\d.]+ orig-kb 1112\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 768 fm 2 \[OK\]$),
     qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
-    qr(^PART taper TESTCONF02 1 localhost /usr $datestamp 2/-1 0 \[sec [\d.]+ kb 768 kps [\d.]+\]$),
-    qr(^PART taper TESTCONF02 2 localhost /usr $datestamp 3/-1 0 \[sec [\d.]+ kb 3 kps [\d.]+\]$),
-    qr(^DONE taper localhost /usr $datestamp 3 0 \[sec [\d.]+ kb 1539 kps [\d.]+\]$),
+    qr(^PART taper TESTCONF02 1 localhost /usr $datestamp 2/-1 0 \[sec [\d.]+ kb 768 kps [\d.]+ orig-kb 1112\]$),
+    qr(^PART taper TESTCONF02 2 localhost /usr $datestamp 3/-1 0 \[sec [\d.]+ kb 3 kps [\d.]+ orig-kb 1112\]$),
+    qr(^DONE taper localhost /usr $datestamp 3 0 \[sec [\d.]+ kb 1539 kps [\d.]+ orig-kb 1112\]$),
     qr(^INFO taper tape TESTCONF02 kb 771 fm 2 \[OK\]$),
 ], "multivolume FILE-WRITE logged correctly");
 
@@ -576,8 +576,8 @@ like(taper_reply, qr/^PARTDONE $handle TESTCONF02 2 3 "\[sec [\d.]+ kb 3 kps [\d
 	"got PARTDONE for filenum 2 on second tape") or die;
 like(taper_reply, qr/^DUMPER-STATUS $handle$/,
 	"got DUMPER-STATUS request") or die;
-taper_cmd("DONE $handle");
-like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1539 kps [\d.]+\]" "" ""$/,
+taper_cmd("DONE $handle 1212");
+like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1539 kps [\d.]+ orig-kb 1212\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -593,7 +593,7 @@ check_logs([
     qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
     qr(^PART taper TESTCONF02 1 localhost /usr/local $datestamp 2/-1 0 \[sec [\d.]+ kb 768 kps [\d.]+\]$),
     qr(^PART taper TESTCONF02 2 localhost /usr/local $datestamp 3/-1 0 \[sec [\d.]+ kb 3 kps [\d.]+\]$),
-    qr(^DONE taper localhost /usr/local $datestamp 3 0 \[sec [\d.]+ kb 1539 kps [\d.]+\]$),
+    qr(^DONE taper localhost /usr/local $datestamp 3 0 \[sec [\d.]+ kb 1539 kps [\d.]+ orig-kb 1212\]$),
     qr(^INFO taper tape TESTCONF02 kb 771 fm 2 \[OK\]$),
 ], "multivolume PORT-WRITE (disk cache) logged correctly");
 
@@ -636,18 +636,18 @@ run_taper(512, "FILE-WRITE runs out of tapes");
 like(taper_reply, qr/^TAPER-OK$/,
 	"got TAPER-OK") or die;
 make_holding_file(512*1024, "localhost", "/music");
-taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /music 0 $datestamp 262144");
+taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /music 0 $datestamp 262144 1312");
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE") or die;
 taper_cmd("NEW-TAPE");
 like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
 	"got proper NEW-TAPE") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 256 "\[sec [\d.]+ kb 256 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 256 "\[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1312\]"$/,
 	"got PARTDONE for filenum 1 on first tape") or die;
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE") or die;
 taper_cmd("NO-NEW-TAPE \"that's enough\"");
-like(taper_reply, qr/^PARTIAL $handle INPUT-GOOD TAPE-ERROR "\[sec [\d.]+ kb 256 kps [\d.]+\]" "" "that's enough"$/,
+like(taper_reply, qr/^PARTIAL $handle INPUT-GOOD TAPE-ERROR "\[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1312\]" "" "that's enough"$/,
 	"got PARTIAL") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -655,13 +655,13 @@ wait_for_exit();
 check_logs([
     qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
-    qr(^PART taper TESTCONF01 1 localhost /music $datestamp 1/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+\]$),
-    qr(^PARTPARTIAL taper TESTCONF01 2 localhost /music $datestamp 2/-1 0 \[sec [\d.]+ kb 160 kps [\d.]+\] "No space left on device"$),
+    qr(^PART taper TESTCONF01 1 localhost /music $datestamp 1/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1312\]$),
+    qr(^PARTPARTIAL taper TESTCONF01 2 localhost /music $datestamp 2/-1 0 \[sec [\d.]+ kb 160 kps [\d.]+ orig-kb 1312\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 256 fm 2 \[OK\]$),
     qr(^ERROR taper no-tape \[that's enough\]$),
     qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
-    qr(^PARTIAL taper localhost /music $datestamp 2 0 \[sec [\d.]+ kb 256 kps [\d.]+\] "that's enough"$),
+    qr(^PARTIAL taper localhost /music $datestamp 2 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1312\] "that's enough"$),
 ], "running out of tapes (simulating runtapes=1) logged correctly");
 
 ##
@@ -717,33 +717,33 @@ run_taper(1024, "first in a sequence");
 like(taper_reply, qr/^TAPER-OK$/,
 	"got TAPER-OK") or die;
 make_holding_file(500000, "localhost", "/u01");
-taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /u01 0 $datestamp 262144");
+taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 1412");
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE") or die;
 taper_cmd("NEW-TAPE");
 like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
 	"got proper NEW-TAPE") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 256 "\[sec [\d.]+ kb 256 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 256 "\[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1412\]"$/,
 	"got PARTDONE for filenum 1") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF01 2 232 "\[sec [\d.]+ kb 232 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE $handle TESTCONF01 2 232 "\[sec [\d.]+ kb 232 kps [\d.]+ orig-kb 1412\]"$/,
 	"got PARTDONE for filenum 2") or die;
-like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 488 kps [\d.]+\]" "" ""$/,
+like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 488 kps [\d.]+ orig-kb 1412\]" "" ""$/,
 	"got DONE") or die;
 $handle = "33-22222";
 make_holding_file(614400, "localhost", "/u02");
-taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /u02 0 $datestamp 262144");
-like(taper_reply, qr/^PARTDONE $handle TESTCONF01 3 256 "\[sec [\d.]+ kb 256 kps [\d.]+\]"$/,
+taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /u02 0 $datestamp 262144 1512");
+like(taper_reply, qr/^PARTDONE $handle TESTCONF01 3 256 "\[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1512\]"$/,
 	"got PARTDONE for filenum 3") or die;
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE") or die;
 taper_cmd("NEW-TAPE");
 like(taper_reply, qr/^NEW-TAPE $handle TESTCONF02$/,
 	"got proper NEW-TAPE") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF02 1 256 "\[sec [\d.]+ kb 256 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE $handle TESTCONF02 1 256 "\[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1512\]"$/,
 	"got PARTDONE for filenum 1 on second tape") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF02 2 88 "\[sec [\d.]+ kb 88 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE $handle TESTCONF02 2 88 "\[sec [\d.]+ kb 88 kps [\d.]+ orig-kb 1512\]"$/,
 	"got PARTDONE for filenum 2 on second tape") or die;
-like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 600 kps [\d.]+\]" "" ""$/,
+like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 600 kps [\d.]+ orig-kb 1512\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -751,18 +751,18 @@ wait_for_exit();
 check_logs([
     qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
-    qr(^PART taper TESTCONF01 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+\]$),
-    qr(^PART taper TESTCONF01 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ kb 232 kps [\d.]+\]$),
-    qr(^DONE taper localhost /u01 $datestamp 2 0 \[sec [\d.]+ kb 488 kps [\d.]+\]$),
-    qr(^PART taper TESTCONF01 3 localhost /u02 $datestamp 1/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+\]$),
-    qr(^PARTPARTIAL taper TESTCONF01 4 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ kb 96 kps [\d.]+\] "No space left on device"$),
+    qr(^PART taper TESTCONF01 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1412\]$),
+    qr(^PART taper TESTCONF01 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ kb 232 kps [\d.]+ orig-kb 1412\]$),
+    qr(^DONE taper localhost /u01 $datestamp 2 0 \[sec [\d.]+ kb 488 kps [\d.]+ orig-kb 1412\]$),
+    qr(^PART taper TESTCONF01 3 localhost /u02 $datestamp 1/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1512\]$),
+    qr(^PARTPARTIAL taper TESTCONF01 4 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ kb 96 kps [\d.]+ orig-kb 1512\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 744 fm 4 \[OK\]$),
     qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
-    qr(^PART taper TESTCONF02 1 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+\]$),
-    qr(^PART taper TESTCONF02 2 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ kb 88 kps [\d.]+\]$),
-    qr(^DONE taper localhost /u02 $datestamp 3 0 \[sec [\d.]+ kb 600 kps [\d.]+\]$),
+    qr(^PART taper TESTCONF02 1 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1512\]$),
+    qr(^PART taper TESTCONF02 2 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ kb 88 kps [\d.]+ orig-kb 1512\]$),
+    qr(^DONE taper localhost /u02 $datestamp 3 0 \[sec [\d.]+ kb 600 kps [\d.]+ orig-kb 1512\]$),
     qr(^INFO taper tape TESTCONF02 kb 344 fm 2 \[OK\]$),
 ], "first taper invocation in sequence logged correctly");
 cleanup_log();
@@ -773,33 +773,33 @@ run_taper(1024, "second in a sequence", keep_config => 1);
 like(taper_reply, qr/^TAPER-OK$/,
 	"got TAPER-OK") or die;
 make_holding_file(300000, "localhost", "/u01");
-taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /u01 0 $datestamp 262144");
+taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 1612");
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE") or die;
 taper_cmd("NEW-TAPE");
 like(taper_reply, qr/^NEW-TAPE $handle TESTCONF03$/,
 	"got proper NEW-TAPE") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF03 1 256 "\[sec [\d.]+ kb 256 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE $handle TESTCONF03 1 256 "\[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1612\]"$/,
 	"got PARTDONE for filenum 1") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF03 2 36 "\[sec [\d.]+ kb 36 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE $handle TESTCONF03 2 36 "\[sec [\d.]+ kb 36 kps [\d.]+ orig-kb 1612\]"$/,
 	"got PARTDONE for filenum 2") or die;
-like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 292 kps [\d.]+\]" "" ""$/,
+like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 292 kps [\d.]+ orig-kb 1612\]" "" ""$/,
 	"got DONE") or die;
 $handle = "33-44444";
 make_holding_file(614400, "localhost", "/u02");
-taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /u02 0 $datestamp 262144");
-like(taper_reply, qr/^PARTDONE $handle TESTCONF03 3 256 "\[sec [\d.]+ kb 256 kps [\d.]+\]"$/,
+taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /u02 0 $datestamp 262144 1712");
+like(taper_reply, qr/^PARTDONE $handle TESTCONF03 3 256 "\[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1712\]"$/,
 	"got PARTDONE for filenum 3") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF03 4 256 "\[sec [\d.]+ kb 256 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE $handle TESTCONF03 4 256 "\[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1712\]"$/,
 	"got PARTDONE for filenum 4") or die;
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE") or die;
 taper_cmd("NEW-TAPE");
 like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
 	"got proper NEW-TAPE") or die;
-like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 88 "\[sec [\d.]+ kb 88 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 88 "\[sec [\d.]+ kb 88 kps [\d.]+ orig-kb 1712\]"$/,
 	"got PARTDONE for filenum 1 on second tape") or die;
-like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 600 kps [\d.]+\]" "" ""$/,
+like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 600 kps [\d.]+ orig-kb 1712\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -807,18 +807,18 @@ wait_for_exit();
 check_logs([
     qr(^INFO taper Will write new label `TESTCONF03' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF03 tape 1$),
-    qr(^PART taper TESTCONF03 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+\]$),
-    qr(^PART taper TESTCONF03 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ kb 36 kps [\d.]+\]$),
-    qr(^DONE taper localhost /u01 $datestamp 2 0 \[sec [\d.]+ kb 292 kps [\d.]+\]$),
-    qr(^PART taper TESTCONF03 3 localhost /u02 $datestamp 1/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+\]$),
-    qr(^PART taper TESTCONF03 4 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+\]$),
-    qr(^PARTPARTIAL taper TESTCONF03 5 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ kb 0 kps [\d.]+\] "No space left on device"$),
+    qr(^PART taper TESTCONF03 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1612\]$),
+    qr(^PART taper TESTCONF03 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ kb 36 kps [\d.]+ orig-kb 1612\]$),
+    qr(^DONE taper localhost /u01 $datestamp 2 0 \[sec [\d.]+ kb 292 kps [\d.]+ orig-kb 1612\]$),
+    qr(^PART taper TESTCONF03 3 localhost /u02 $datestamp 1/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1712\]$),
+    qr(^PART taper TESTCONF03 4 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1712\]$),
+    qr(^PARTPARTIAL taper TESTCONF03 5 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ kb 0 kps [\d.]+ orig-kb 1712\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF03 kb 804 fm 5 \[OK\]$),
     # note no "Will write new label.."
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 2$),
-    qr(^PART taper TESTCONF01 1 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ kb 88 kps [\d.]+\]$),
-    qr(^DONE taper localhost /u02 $datestamp 3 0 \[sec [\d.]+ kb 600 kps [\d.]+\]$),
+    qr(^PART taper TESTCONF01 1 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ kb 88 kps [\d.]+ orig-kb 1712\]$),
+    qr(^DONE taper localhost /u02 $datestamp 3 0 \[sec [\d.]+ kb 600 kps [\d.]+ orig-kb 1712\]$),
     qr(^INFO taper tape TESTCONF01 kb 88 fm 1 \[OK\]$),
 ], "second taper invocation in sequence logged correctly");
 cleanup_log();
@@ -832,7 +832,7 @@ run_taper(1024, "failure to overwrite a volume", keep_config => 1);
 like(taper_reply, qr/^TAPER-OK$/,
 	"got TAPER-OK") or die;
 make_holding_file(32768, "localhost", "/u03");
-taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /u03 0 $datestamp 262144");
+taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /u03 0 $datestamp 262144 1812");
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE") or die;
 # we've secretly replaced the tape in slot 1 with a read-only tape.. let's see
@@ -910,8 +910,8 @@ SKIP : {
 	    "got PARTDONE for part 5") or die;
     like(taper_reply, qr/^DUMPER-STATUS $handle$/,
 	    "got DUMPER-STATUS request") or die;
-    taper_cmd("DONE $handle");
-    like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1248 kps [\d.]+\]" "" ""$/,
+    taper_cmd("DONE $handle 1912");
+    like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1248 kps [\d.]+ orig-kb 1912\]" "" ""$/,
 	    "got DONE") or die;
     $handle = "55-22222";
     taper_cmd("PORT-WRITE $handle localhost /etc 0 $datestamp 524288 NULL 393216");
@@ -922,8 +922,8 @@ SKIP : {
 	    "got PARTDONE for part 1") or die;
     like(taper_reply, qr/^DUMPER-STATUS $handle$/,
 	    "got DUMPER-STATUS request") or die;
-    taper_cmd("DONE $handle");
-    like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 320 kps [\d.]+\]" "" ""$/,
+    taper_cmd("DONE $handle 2012");
+    like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 320 kps [\d.]+ orig-kb 2012\]" "" ""$/,
 	    "got DONE") or die;
     taper_cmd("QUIT");
     wait_for_exit();
@@ -940,9 +940,9 @@ SKIP : {
 	qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
 	qr(^PART taper TESTCONF02 1 localhost /var $datestamp 4/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
 	qr(^PART taper TESTCONF02 2 localhost /var $datestamp 5/-1 0 \[sec [\d.]+ kb 32 kps [\d.]+\]$),
-	qr(^DONE taper localhost /var $datestamp 5 0 \[sec [\d.]+ kb 1248 kps [\d.]+\]$),
+	qr(^DONE taper localhost /var $datestamp 5 0 \[sec [\d.]+ kb 1248 kps [\d.]+ orig-kb 1912\]$),
 	qr(^PART taper TESTCONF02 3 localhost /etc $datestamp 1/-1 0 \[sec [\d.]+ kb 320 kps [\d.]+\]$),
-	qr(^DONE taper localhost /etc $datestamp 1 0 \[sec [\d.]+ kb 320 kps [\d.]+\]$),
+	qr(^DONE taper localhost /etc $datestamp 1 0 \[sec [\d.]+ kb 320 kps [\d.]+ orig-kb 2012\]$),
 	qr(^INFO taper tape TESTCONF02 kb 736 fm 3 \[OK\]$),
     ], "multipart directtcp PORT-WRITE logged correctly");
 
@@ -978,8 +978,8 @@ SKIP : {
 	    "got PARTDONE for part 4") or die;
     like(taper_reply, qr/^DUMPER-STATUS $handle$/,
 	    "got DUMPER-STATUS request") or die;
-    taper_cmd("DONE $handle");
-    like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1632 kps [\d.]+\]" "" ""$/,
+    taper_cmd("DONE $handle 2112");
+    like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1632 kps [\d.]+ orig-kb 2112\]" "" ""$/,
 	    "got DONE") or die;
     taper_cmd("QUIT");
     wait_for_exit();
@@ -995,7 +995,7 @@ SKIP : {
 	qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
 	qr(^PART taper TESTCONF02 1 localhost /var $datestamp 3/-1 0 \[sec [\d.]+ kb 416 kps [\d.]+\]$),
 	qr(^PART taper TESTCONF02 2 localhost /var $datestamp 4/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
-	qr(^DONE taper localhost /var $datestamp 4 0 \[sec [\d.]+ kb 1632 kps [\d.]+\]$),
+	qr(^DONE taper localhost /var $datestamp 4 0 \[sec [\d.]+ kb 1632 kps [\d.]+ orig-kb 2112\]$),
 	qr(^INFO taper tape TESTCONF02 kb 800 fm 2 \[OK\]$),
     ], "multipart directtcp PORT-WRITE with a zero-byte part logged correctly");
 

@@ -206,9 +206,9 @@ search_holding_disk(
 {
     GSList *holding_file_list;
     GSList *e;
-    char *holding_file;
+    char   *holding_file;
     disk_t *dp;
-    char *orig_name;
+    char   *orig_name;
 
     holding_file_list = holding_get_files(NULL, 1);
 
@@ -262,7 +262,9 @@ search_holding_disk(
 		new_output_find->status=stralloc("PARTIAL");
 	    else
 		new_output_find->status=stralloc("OK");
-	    new_output_find->kb = (size_t)holding_file_size(holding_file, 1);
+	    new_output_find->kb = holding_file_size(holding_file, 1);
+	    new_output_find->orig_kb = file.orig_size;
+
 	    *output_find=new_output_find;
 	}
 	dumpfile_free_data(&file);
@@ -664,9 +666,10 @@ search_logfile(
     gboolean found_something = FALSE;
     regex_t regex;
     int reg_result;
-    regmatch_t pmatch[3];
+    regmatch_t pmatch[4];
     double sec;
-    size_t kb;
+    off_t kb;
+    off_t orig_kb;
 
     g_return_val_if_fail(output_find != NULL, 0);
     g_return_val_if_fail(logfile != NULL, 0);
@@ -826,11 +829,11 @@ search_logfile(
 		*s = '\0';
 	    }
 
-	    /* extract sec, kb, kps from 'rest', if present.  This isn't the stone age
+	    /* extract sec, kb, kps, orig-kb from 'rest', if present.  This isn't the stone age
 	     * anymore, so we'll just do it the easy way (a regex) */
 	    bzero(&regex, sizeof(regex));
 	    reg_result = regcomp(&regex,
-		    "\\[sec ([0-9.]+) kb ([0-9]+) kps [0-9.]+\\]", REG_EXTENDED);
+		    "\\[sec ([0-9.]+) kb ([0-9]+) kps [0-9.]+ orig-kb ([0-9]+)\\]", REG_EXTENDED);
 	    if (reg_result != 0) {
 		error("Error compiling regular expression for parsing log lines");
 		/* NOTREACHED */
@@ -848,9 +851,37 @@ search_logfile(
 		str = find_regex_substring(rest, pmatch[2]);
 		kb = OFF_T_ATOI(str);
 		amfree(str);
+
+		str = find_regex_substring(rest, pmatch[3]);
+		orig_kb = OFF_T_ATOI(str);
+		amfree(str);
 	    } else {
-		sec = 0;
-		kb = 0;
+		bzero(&regex, sizeof(regex));
+		reg_result = regcomp(&regex,
+		    "\\[sec ([0-9.]+) kb ([0-9]+) kps [0-9.]+\\]", REG_EXTENDED);
+		if (reg_result != 0) {
+		    error("Error compiling regular expression for parsing log lines");
+		    /* NOTREACHED */
+		}
+
+		/* an error here just means the line wasn't found -- not fatal. */
+		reg_result = regexec(&regex, rest, sizeof(pmatch)/sizeof(*pmatch), pmatch, 0);
+		if (reg_result == 0) {
+		    char *str;
+
+		    str = find_regex_substring(rest, pmatch[1]);
+		    sec = atof(str);
+		    amfree(str);
+
+		    str = find_regex_substring(rest, pmatch[2]);
+		    kb = OFF_T_ATOI(str);
+		    amfree(str);
+		    orig_kb = 0;
+		} else {
+		    sec = 0;
+		    kb = 0;
+		    orig_kb = 0;
+		}
 	    }
 	    regfree(&regex);
 
@@ -876,6 +907,7 @@ search_logfile(
 		    new_output_find->filenum=filenum;
 		    new_output_find->sec=sec;
 		    new_output_find->kb=kb;
+		    new_output_find->orig_kb=orig_kb;
 		    new_output_find->next=NULL;
 		    if (curlog == L_SUCCESS) {
 			new_output_find->status = stralloc("OK");
@@ -900,6 +932,9 @@ search_logfile(
 			         a_part_find = a_part_find->next) {
 				if (a_part_find->totalparts == -1) {
 				    a_part_find->totalparts = maxparts;
+				}
+				if (a_part_find->orig_kb == 0) {
+				    a_part_find->orig_kb = orig_kb;
 				}
 			    }
 			}
@@ -944,6 +979,7 @@ search_logfile(
 		    new_output_find->filenum=0;
 		    new_output_find->sec=sec;
 		    new_output_find->kb=kb;
+		    new_output_find->kb=orig_kb;
 		    new_output_find->status=vstralloc(
 			 "FAILED (",
 			 program_str[(int)curprog],
@@ -1043,6 +1079,7 @@ dumps_match(
 	    curmatch->filenum = cur_result->filenum;
 	    curmatch->sec = cur_result->sec;
 	    curmatch->kb = cur_result->kb;
+	    curmatch->orig_kb = cur_result->orig_kb;
 	    curmatch->status = stralloc(cur_result->status);
 	    curmatch->partnum = cur_result->partnum;
 	    curmatch->totalparts = cur_result->totalparts;

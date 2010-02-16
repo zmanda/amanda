@@ -36,7 +36,7 @@ use constant PORT_WRITE => message("PORT-WRITE",
 );
 
 use constant FILE_WRITE => message("FILE-WRITE",
-    format => [ qw( handle filename hostname diskname level datestamp splitsize ) ],
+    format => [ qw( handle filename hostname diskname level datestamp splitsize orig_kb) ],
 );
 
 use constant NEW_TAPE => message("NEW-TAPE",
@@ -62,7 +62,7 @@ use constant FAILED => message("FAILED",
 
 use constant DONE => message("DONE",
     format => {
-	in => [ qw( handle ) ],
+	in => [ qw( handle orig_kb ) ],
 	out => [ qw( handle input taper stats inputerr tapererr ) ],
     },
 );
@@ -411,7 +411,7 @@ sub notif_part_done {
 
     $self->{'last_partnum'} = $params{'partnum'};
 
-    my $stats = $self->make_stats($params{'size'}, $params{'duration'});
+    my $stats = $self->make_stats($params{'size'}, $params{'duration'}, $self->{'orig_kb'});
 
     # log the part, using PART or PARTPARTIAL
     my $logbase = sprintf("%s %s %s %s %s %s/%s %s %s",
@@ -521,13 +521,17 @@ sub _assert_in_state {
 # Make up the [sec .. kb .. kps ..] section of the result messages
 sub make_stats {
     my $self = shift;
-    my ($size, $duration) = @_;
+    my ($size, $duration, $orig_kb) = @_;
 
     $duration = 0.1 if $duration == 0;  # prevent division by zero
     my $kb = $size/1024;
     my $kps = "$kb.0"/$duration; # Perlish cast from BigInt to float
 
-    return sprintf("[sec %f kb %d kps %f]", $duration, $kb, $kps);
+    if (defined $orig_kb) {
+	return sprintf("[sec %f kb %d kps %f orig-kb %d]", $duration, $kb, $kps, $orig_kb);
+    } else {
+	return sprintf("[sec %f kb %d kps %f]", $duration, $kb, $kps);
+    }
 }
 
 sub create_status_file {
@@ -718,6 +722,7 @@ sub setup_dump {
     $self->{'level'} = $params{'level'};
     $self->{'header'} = undef; # no header yet
     $self->{'last_partnum'} = -1;
+    $self->{'orig_kb'} = $params{'orig_kb'};
 
     # setting up the dump is a bit complex, due to the requirements of
     # a directtcp port_write.  This function:
@@ -816,6 +821,8 @@ sub dump_cb {
     my $self = shift;
     my %params = @_;
 
+    $self->{'orig_kb'} = $params{'orig_kb'} if defined ($params{'orig_kb'});
+
     # if we need to the dumper status (to differentiate a dropped network
     # connection from a normal EOF) and have not done so yet, then send a
     # DUMPER_STATUS message and re-call this method (dump_cb) with the result.
@@ -823,7 +830,9 @@ sub dump_cb {
 	    and $self->{'doing_port_write'}
 	    and !exists $params{'dumper_status'}) {
 	$self->{'proto'}->set_message_cb(main::Protocol::DONE,
-	    make_cb(sub { $self->dump_cb(%params, dumper_status => "DONE"); }));
+	    make_cb(sub { my ($DONE_msgtype, %DONE_params) = @_;
+			  $self->{'orig_kb'} = $DONE_params{'orig_kb'};
+			  $self->dump_cb(%params, dumper_status => "DONE"); }));
 	$self->{'proto'}->set_message_cb(main::Protocol::FAILED,
 	    make_cb(sub { $self->dump_cb(%params, dumper_status => "FAILED"); }));
 	$self->{'proto'}->send(main::Protocol::DUMPER_STATUS,
@@ -857,7 +866,7 @@ sub dump_cb {
 	undef $self->{status_filename};
     }
 
-    my $stats = $self->make_stats($params{'size'}, $params{'duration'});
+    my $stats = $self->make_stats($params{'size'}, $params{'duration'}, $self->{'orig_kb'});
 
     # write a DONE/PARTIAL/FAIL log line
     my $have_msg = @{$params{'input_errors'}} || @{$params{'device_errors'}};

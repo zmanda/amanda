@@ -160,6 +160,14 @@ holding_cleanup(corrupt_dle_fn corrupt_dle,
  * application-specific support
  */
 
+/* Set the orig_size in the header
+ *
+ * @param holding_file: full pathname of holding file.
+ * @param orig_size: the size.
+ */
+void
+holding_set_origsize(char *holding_file, off_t orig_size);
+
 /* Rename holding files from the temporary names used during
  * creation.
  *
