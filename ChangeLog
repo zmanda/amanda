@@ -1,4 +1,7 @@
 2010-02-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/extract_list.c: Fix crash for non application restore.
+
+2010-02-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheckdump.pl: Less verbose, add --verbose option.
 	* man/xml-source/amcheckdump.8.xml: Document new --verbose option.
 
