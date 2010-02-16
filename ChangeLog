@@ -1,3 +1,7 @@
+2010-02-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheckdump.pl: Less verbose, add --verbose option.
+	* man/xml-source/amcheckdump.8.xml: Document new --verbose option.
+
 2010-02-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.pl: Log 'no-tape' if the changer creation failed.
 
