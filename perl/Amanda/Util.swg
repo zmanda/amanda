@@ -93,9 +93,7 @@ sub finish_setup {
 }
 
 sub finish_application {
-    if ($config_name) {
-	dbclose();
-    }
+    dbclose();
 }
 
 sub version_opt {

@@ -1,4 +1,7 @@
 2010-02-17  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Util.swg (finish_application): Don't check $config_name.
+
+2010-02-17  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report/human.pm: fixed output of 'incr dump only'
 	  fields
 
