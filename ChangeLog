@@ -1,3 +1,7 @@
+2010-02-17  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Report/human.pm: fixed output of 'incr dump only'
+	  fields
+
 2010-02-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndmjob_main.c, ndmp-src/amndmjob_main.c:
 	  add config_init(0, NULL);

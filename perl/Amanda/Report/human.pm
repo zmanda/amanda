@@ -135,9 +135,9 @@ sub new
         incr_stats  => {},
         full_stats  => {},
         total_stats => {},
-        dumpdisks   => [],
-        tapedisks   => [],
-        tapechunks  => []
+        dumpdisks   => [ 0, 0 ],    # full_count, incr_count
+        tapedisks   => [ 0, 0 ],
+        tapechunks  => [ 0, 0 ],
     };
 
     if (defined $report) {
@@ -553,7 +553,7 @@ EOF
         $comp_size->($total_stats),
         $comp_size->($full_stats),
         $comp_size->($incr_stats),
-        (@{ $self->{dumpdisks} } > 1 ? "(level:#disks ...)" : "")
+        ($self->{dumpdisks}[1] > 0 ? "(level:#disks ...)" : "")
     );
 
     print $fh swrite(
@@ -562,7 +562,7 @@ EOF
         sprintf("%4d", $total_stats->{dumpdisk_count}),
         sprintf("%4d", $full_stats->{dumpdisk_count}),
         sprintf("%4d", $incr_stats->{dumpdisk_count}),
-        (@{ $self->{dumpdisks} } > 1 ? by_level_count($self->{dumpdisks}) : "")
+        ($self->{dumpdisks}[1] > 0 ? by_level_count($self->{dumpdisks}) : "")
     );
 
     print $fh swrite(
@@ -610,17 +610,17 @@ EOF
         $tape_usage->($total_stats),
         $tape_usage->($full_stats),
         $tape_usage->($incr_stats),
-        ($incr_stats->{tapedisks} > 0 ? "(level:#disks ...)" : "")
+        ($self->{tapedisks}[1] > 0 ? "(level:#disks ...)" : "")
     );
 
     print $fh swrite(
         $st_format,
         "Filesystems Taped",
-        $total_stats->{tapedisks},
-        $full_stats->{tapedisks},
-        $incr_stats->{tapedisks},
+        $self->{tapedisks}[0] + $self->{tapedisks}[1],
+        $self->{tapedisks}[0],
+        $self->{tapedisks}[1],
         (
-            $incr_stats->{tapedisks} > 0
+            ($self->{tapedisks}[1] > 0)
             ? by_level_count($self->{tapedisks})
             : ""
         )
