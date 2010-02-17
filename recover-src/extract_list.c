@@ -2785,7 +2785,7 @@ start_processing_data(
     char *restore_dir;
 
     if (ctl_data->file.dumplevel == 0) {
-	restore_dir = g_strdup(g_hash_table_lookup(proplist, "directory"));
+	restore_dir = g_strdup(g_hash_table_lookup(proplist, "DIRECTORY"));
 	if (samba_extract_method == SAMBA_SMBCLIENT ||
 	    (ctl_data->bsu &&
 	     ctl_data->bsu->recover_path == RECOVER_PATH_REMOTE)) {

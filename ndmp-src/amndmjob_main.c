@@ -48,6 +48,7 @@ main (int ac, char *av[])
 
 	set_pname("amndmjob");
 	dbopen(DBG_SUBDIR_CLIENT);
+	config_init(0, NULL);
 
 	NDMOS_MACRO_ZEROFILL(&the_session);
 	d_debug = -1;

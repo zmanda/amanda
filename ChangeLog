@@ -1,3 +1,8 @@
+2010-02-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndmjob_main.c, ndmp-src/amndmjob_main.c:
+	  add config_init(0, NULL);
+	* recover-src/extract_list.c: Typo.
+
 2010-02-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin.c: Set a config for version subcommand.
 
