@@ -18,6 +18,7 @@
 
 use Test::More tests => 33;
 use File::Path;
+use Data::Dumper;
 use strict;
 
 use lib "@amperldir@";
@@ -537,20 +538,27 @@ SKIP: {
 	or diag(Dumper([@messages]));
     }
 
-    sub test_taper_source {
-	my ($src, $dest, $files, $expected_messages) = @_;
+    sub test_recovery_source {
+	my ($dest, $files, $expected_messages) = @_;
 	my $device;
 	my @filenums;
 	my @messages;
 	my %subs;
 	my $xfer;
 	my $dev;
+	my $src;
 
 	$subs{'setup'} = sub {
+	    # we need a device up front, so sneak a peek into @$files
+	    $dev = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($files->[0]));
+	    $src = Amanda::Xfer::Source::Recovery->new($dev);
 	    $xfer = Amanda::Xfer->new([ $src, $dest ]);
 
 	    $xfer->start($subs{'got_xmsg'});
+	    # got_xmsg will call got_ready when the element is ready
+	};
 
+	$subs{'got_ready'} = sub {
 	    $subs{'load_slot'}->();
 	};
 
@@ -600,6 +608,9 @@ SKIP: {
 	    } elsif ($msg->{'type'} == $XMSG_DONE) {
 		push @messages, "DONE";
 		Amanda::MainLoop::quit();
+	    } elsif ($msg->{'type'} == $XMSG_READY) {
+		push @messages, "READY";
+		$subs{'got_ready'}->();
 	    } elsif ($msg->{'type'} == $XMSG_CANCEL) {
 		push @messages, "CANCELLED";
 	    }
@@ -610,7 +621,7 @@ SKIP: {
 
 	is_deeply([@messages],
 	    $expected_messages,
-	    "files read back and verified successfully with Amanda::Xfer::Taper::Source")
+	    "files read back and verified successfully with Amanda::Xfer::Recovery::Source")
 	or diag(Dumper([@messages]));
     }
 
@@ -663,11 +674,11 @@ SKIP: {
 	  "PART-3-OK", "PART-4-OK", "PART-5-OK",
 	  "DONE" ],
 	"mem cache");
-    test_taper_source(
-	Amanda::Xfer::Source::Recovery->new(),
+    test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
 	[ 1 => [ 1, 2 ], 2 => [ 1, 2, 3 ], ],
 	[
+	  'READY',
 	  'PART',
 	  'KB-1024',
 	  'PART',
@@ -692,11 +703,11 @@ SKIP: {
 	  "PART-3-OK", "PART-4-OK", "PART-5-OK",
 	  "DONE" ],
 	"disk cache");
-    test_taper_source(
-	Amanda::Xfer::Source::Recovery->new(),
+    test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
 	[ 1 => [ 1, 2 ], 2 => [ 1, 2, 3 ], ],
 	[
+	  'READY',
 	  'PART',
 	  'KB-1024',
 	  'PART',
@@ -720,11 +731,11 @@ SKIP: {
 	[ "PART-1-OK", "PART-2-OK", "PART-3-OK",
 	  "DONE" ],
 	"no cache (no failed parts; exact multiple of part size)");
-    test_taper_source(
-	Amanda::Xfer::Source::Recovery->new(),
+    test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
 	[ 1 => [ 1, 2, 3 ], ],
 	[
+	  'READY',
 	  'PART',
 	  'KB-1024',
 	  'PART',
@@ -742,11 +753,11 @@ SKIP: {
 	},
 	[ "PART-1-OK", "DONE" ],
 	"no splitting (fits on volume)");
-    test_taper_source(
-	Amanda::Xfer::Source::Recovery->new(),
+    test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
 	[ 1 => [ 1 ], ],
 	[
+	  'READY',
 	  'PART',
 	  'KB-2048',
 	  'DONE'
@@ -1070,6 +1081,12 @@ SKIP: {
 	    or diag(Dumper([@messages]));
 	}
     }
+
+    # Amanda::Xfer::Source::Recovery's directtcp functionality is not
+    # tested here, as to do so would basically require re-implementing
+    # Amanda::Recovery::Clerk; the xfer source is adequately tested by
+    # the Amanda::Recovery::Clerk tests.
+
     $ndmp->cleanup();
 }
 

@@ -171,10 +171,12 @@ xfer_dest_taper_directtcp(
  * will not start transferring data until xfer_source_recovery_start_part is called to
  * give the device from which the data should flow.
  *
+ * @param first device: teh first device that will be used with this xfer
  * @returns: new element
  */
 XferElement *
-xfer_source_recovery(void);
+xfer_source_recovery(
+    Device *first_device);
 
 /* Start an XferSourceRecovery reading from a particular, pre-positioned device
  *

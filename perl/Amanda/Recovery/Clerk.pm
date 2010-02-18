@@ -244,6 +244,7 @@ sub get_xfer_src {
 
 	xfer_src => undef,
 	xfer => undef,
+	xfer_src_ready => 0,
 
 	recovery_cb => undef,
 	xfer_src_cb => $params{'xfer_src_cb'},
@@ -252,14 +253,6 @@ sub get_xfer_src {
 
 	errors => [],
     };
-
-    # choose the xfer source
-    if ($xfer_state->{'is_holding'}) {
-	$xfer_state->{'xfer_src'} = Amanda::Xfer::Source::Holding->new(
-		    $params{'dump'}->{'parts'}[1]{'holding_file'}),
-    } else {
-	$xfer_state->{'xfer_src'} = Amanda::Xfer::Source::Recovery->new(),
-    }
 
     $self->_maybe_start_part();
 }
@@ -294,6 +287,8 @@ sub handle_xmsg {
 	    $self->_xmsg_part_done($src, $msg, $xfer);
 	} elsif ($msg->{'type'} == $XMSG_ERROR) {
 	    $self->_xmsg_error($src, $msg, $xfer);
+	} elsif ($msg->{'type'} == $XMSG_READY) {
+	    $self->_xmsg_ready($src, $msg, $xfer);
 	}
     }
 
@@ -315,6 +310,17 @@ sub quit {
 	$self->{'current_res'}->release(finished_cb => $params{'finished_cb'});
     } else {
 	$params{'finished_cb'}->();
+    }
+}
+
+sub _xmsg_ready {
+    my $self = shift;
+    my ($src, $msg, $xfer) = @_;
+    my $xfer_state = $self->{'xfer_state'};
+
+    if (!$xfer_state->{'is_holding'}) {
+	$xfer_state->{'xfer_src_ready'} = 1;
+	$self->_maybe_start_part();
     }
 }
 
@@ -368,10 +374,21 @@ sub _maybe_start_part {
     my %subs;
 
     my $xfer_state = $self->{'xfer_state'};
+
+    # if we're still working on a part, do nothing
     return if $xfer_state->{'writing_part'};
 
     # NOTE: this is invoked *both* from get_xfer_src and start_recovery;
     # in the former case it merely loads the file and returns the header.
+
+    # if we have an xfer source already, and it's not ready, then don't start
+    # the part.  This happens when start_recovery is called before XMSG_READY.
+    return if $xfer_state->{'xfer_src'} and not $xfer_state->{'xfer_src_ready'};
+
+    # if we have an xfer source already, but the recovery hasn't started, then
+    # don't start the part.  This happens when XMSG_READY comes before
+    # start_recovery.
+    return if $xfer_state->{'xfer_src'} and not $xfer_state->{'recovery_cb'};
 
     $subs{'check_next'} = make_cb(check_next => sub {
 	# first, see if anything remains to be done
@@ -498,6 +515,10 @@ sub _maybe_start_part {
 	    my $cb = $xfer_state->{'xfer_src_cb'};
 	    $xfer_state->{'xfer_src_cb'} = undef;
 
+	    # make a new xfer_source
+	    $xfer_state->{'xfer_src'} = Amanda::Xfer::Source::Recovery->new($dev),
+	    $xfer_state->{'xfer_src_ready'} = 0;
+
 	    $self->dbg("successfully located first part for recovery");
 	    return $cb->(undef, $on_vol_hdr, $xfer_state->{'xfer_src'});
 	} else {
@@ -526,10 +547,16 @@ sub _maybe_start_part {
 	    return $subs{'handle_error'}->();
 	}
 
-	# now, either start the part, or invoke the xfer_src_cb.
+	# now invoke the xfer_src_cb if it hasn't already been called.
 	if ($xfer_state->{'xfer_src_cb'}) {
 	    my $cb = $xfer_state->{'xfer_src_cb'};
 	    $xfer_state->{'xfer_src_cb'} = undef;
+
+	    $xfer_state->{'xfer_src'} = Amanda::Xfer::Source::Holding->new(
+			$xfer_state->{'dump'}->{'parts'}[1]{'holding_file'}),
+
+	    # Amanda::Xfer::Source::Holding was *born* ready.
+	    $xfer_state->{'xfer_src_ready'} = 1;
 
 	    # notify caller of the part, *before* xfer_src_cb is called!
 	    $self->{'feedback'}->notif_holding($next_filename, $on_disk_hdr);

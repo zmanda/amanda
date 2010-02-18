@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 14;
+use Test::More tests => 18;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -24,6 +24,7 @@ use warnings;
 
 use lib "@amperldir@";
 use Installcheck::Config;
+use Installcheck::Dumpcache;
 use Amanda::Config qw( :init );
 use Amanda::Changer;
 use Amanda::Device qw( :constants );
@@ -44,6 +45,7 @@ Installcheck::log_test_output();
 
 my $testconf;
 $testconf = Installcheck::Config->new();
+$testconf->add_param('debug_recovery', '9');
 $testconf->write();
 
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
@@ -90,7 +92,6 @@ my $datestamp = "20100101010203";
 
     my $res;
     my $chg = Amanda::Changer->new("chg-disk:$taperoot");
-    my $scan = Amanda::Recovery::Scan->new(chg => $chg);
     my $label;
     my %subs;
     my ($slot, $xfer_info, $partnum);
@@ -314,6 +315,7 @@ sub try_recovery {
     my $clerk = $params{'clerk'};
     my $result;
     my %subs;
+    my $running_xfers = 0;
 
     $subs{'start'} = make_cb(start => sub {
 	$clerk->get_xfer_src(
@@ -339,12 +341,37 @@ sub try_recovery {
 	    $header->{'datestamp'} eq $params{'dump'}->{'dump_timestamp'} &&
 	    $header->{'dumplevel'} == $params{'dump'}->{'level'};
 
-	my $xfer = Amanda::Xfer->new([
-	    $xfer_src,
-	    Amanda::Xfer::Dest::Null->new($params{'seed'})
-	]);
+	my $xfer;
+	my $xfer_dest;
+	if ($params{'directtcp'}) {
+	    $xfer_dest = Amanda::Xfer::Dest::DirectTCPListen->new();
+	} else {
+	    $xfer_dest = Amanda::Xfer::Dest::Null->new($params{'seed'});
+	}
 
+	$xfer = Amanda::Xfer->new([ $xfer_src, $xfer_dest ]);
+	$running_xfers++;
 	$xfer->start(sub { $clerk->handle_xmsg(@_); });
+
+	if ($params{'directtcp'}) {
+	    # use another xfer to read from that directtcp connection and verify
+	    # it with Dest::Null
+	    my $dest_xfer = Amanda::Xfer->new([
+		Amanda::Xfer::Source::DirectTCPConnect->new($xfer_dest->get_addrs()),
+		Amanda::Xfer::Dest::Null->new($params{'seed'}),
+	    ]);
+	    $running_xfers++;
+	    $dest_xfer->start(sub {
+		my ($src, $msg, $xfer) = @_;
+		if ($msg->{type} == $XMSG_ERROR) {
+		    die $msg->{elt} . " failed: " . $msg->{message};
+		}
+		if ($msg->{'type'} == $XMSG_DONE) {
+		    $running_xfers--;
+		    $subs{'maybe_done'}->();
+		}
+	    });
+	}
 
 	$clerk->start_recovery(
 	    xfer => $xfer,
@@ -353,7 +380,12 @@ sub try_recovery {
 
     $subs{'recovery_cb'} = make_cb(recovery_cb => sub {
 	$result = { @_ };
-	Amanda::MainLoop::quit();
+	$running_xfers--;
+	$subs{'maybe_done'}->();
+    });
+
+    $subs{'maybe_done'} = make_cb(maybe_done => sub {
+	Amanda::MainLoop::quit() if ($running_xfers <= 0);
     });
 
     $subs{'start'}->();
@@ -472,11 +504,31 @@ try_recovery(
 
 try_recovery(
     clerk => $clerk,
+    seed => 0xF001,
+    dump => fake_dump("usr", "/usr", $datestamp, 0,
+	{ label => 'TESTCONF01', filenum => 2 },
+	{ label => 'TESTCONF01', filenum => 3 },
+	{ label => 'TESTCONF02', filenum => 1 },
+    ),
+    directtcp => 1,
+    msg => "multi-part recovery spanning tapes 1 and 2 successful, with directtcp");
+
+try_recovery(
+    clerk => $clerk,
     seed => $holding_key,
     dump => fake_dump("heldhost", "/to/holding", '21001010101010', 1,
 	{ holding_file => $holding_file },
     ),
     msg => "holding-disk recovery");
+
+try_recovery(
+    clerk => $clerk,
+    seed => $holding_key,
+    dump => fake_dump("heldhost", "/to/holding", '21001010101010', 1,
+	{ holding_file => $holding_file },
+    ),
+    directtcp => 1,
+    msg => "holding-disk recovery, with directtcp");
 
 # try some expected failures
 
@@ -530,9 +582,41 @@ try_recovery(
 	        "got dumplevel '0'; expected '13'" ],
     msg => "mismatched level detected");
 
-# use volume_not_found with no changer
-
 quit_clerk($clerk);
+
+# try a recovery from a DirectTCP-capable device.  Note that this is the only real
+# test of Amanda::Xfer::Source::Recovery's directtcp mode
+
+SKIP: {
+    skip "not built with ndmp and server", 2 unless
+	Amanda::Util::built_with_component("ndmp") and Amanda::Util::built_with_component("server");
+
+    Installcheck::Dumpcache::load("ndmp");
+
+    my $ndmp = Installcheck::Mock::NdmpServer->new(no_reset => 1);
+
+    $ndmp->edit_config();
+    my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+    if ($cfg_result != $CFGERR_OK) {
+	my ($level, @errors) = Amanda::Config::config_errors();
+	die(join "\n", @errors);
+    }
+
+    my $chg = Amanda::Changer->new();
+    my $scan = Amanda::Recovery::Scan->new(chg => $chg);
+    my $clerk = Amanda::Recovery::Clerk->new(scan => $scan, debug => 1);
+
+    try_recovery(
+	clerk => $clerk,
+	seed => 0, # no verification
+	dump => fake_dump("localhost", $Installcheck::Run::diskname,
+			  $Installcheck::Dumpcache::timestamps[0], 0,
+	    { label => 'TESTCONF01', filenum => 1 },
+	),
+	directtcp => 1,
+	msg => "recovery of a real dump via NDMP and directtcp");
+    quit_clerk($clerk);
+}
 
 # cleanup
 rmtree($taperoot);

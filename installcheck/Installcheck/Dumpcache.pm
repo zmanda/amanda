@@ -37,9 +37,10 @@ time of repeated slow 'amdump' invocations to test functionality that requires
 an existing dump.
 
 The dump cache captures everything: vtapes, curinfo, indexes, trace logs,
-tapelist, and configuration.
+tapelist, timestamp, and configuration.  When a flavor is loaded, the timestamp
+for all runs are available in the package variable C<@timestamps>.
 
-The function C<create_all> is called by the special installcheck _setupcache,
+The function C<create_all> is called by the special installcheck '=setupcache',
 and fills the cache.
 
 =head1 FLAVORS
@@ -87,6 +88,8 @@ use File::Path qw( mkpath rmtree );
 use IPC::Open3;
 use Cwd qw(abs_path getcwd);
 use Carp;
+
+our @timestamps;
 
 my $tarballdir = "$Installcheck::TMP/dumpcache";
 my %flavors;
@@ -268,6 +271,11 @@ sub load {
 	    die("Error untarring dump results: $?");
 	}
     }
+
+    # calculate the timestamps for this run
+    my @logfiles = glob "$CONFIG_DIR/TESTCONF/log/log.*";
+    my %timestamps = map { my ($ts) = ($_ =~ /log\.(\d+)\./); $ts?($ts, 1):() } @logfiles;
+    @timestamps = keys %timestamps; # set package variable
 }
 
 sub create_all {

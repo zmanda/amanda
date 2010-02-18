@@ -1,4 +1,18 @@
 2010-02-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-source-recovery.c: add XFER_MECH_DIRECTTCP_CONNECT,
+	  with attendant API changes (constructor takes a device; sends
+	  XMSG_READY)
+	* device-src/xfer-device.h: prototype changes
+	* xfer-src/element-glue.c: remove debug message
+	* perl/Amanda/Xfer.pod: docs
+	* perl/Amanda/XferServer.swg: SWIG new parameters
+	* perl/Amanda/Recovery/Clerk.pm: use new API
+	* installcheck/Amanda_Xfer.pl: test
+	* installcheck/Amanda_Recovery_Clerk.pl: test some more
+	* installcheck/Installcheck/Dumpcache.pm: add code to determine
+	  the timestamps for a cached dump after loading it
+
+2010-02-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/xfer.c xfer-src/xfer-element.c xfer-src/xfer-element.h:
 	  add a get_xfer_mechs method to xfer elements so that elements can
 	  dynamically specify their mech pairs

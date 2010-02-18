@@ -24,6 +24,8 @@
 #include "device.h"
 #include "property.h"
 #include "xfer-device.h"
+#include "arglist.h"
+#include "conffile.h"
 
 /*
  * Class declaration
@@ -49,6 +51,9 @@ static GObjectClass *parent_class = NULL;
 typedef struct XferSourceRecovery {
     XferElement __parent__;
 
+    /* thread for monitoring directtcp transfers */
+    GThread *thread;
+
     /* this mutex in this condition variable governs all variables below */
     GCond *start_part_cond;
     GMutex *start_part_mutex;
@@ -56,8 +61,11 @@ typedef struct XferSourceRecovery {
     /* is this device currently paused and awaiting a new part? */
     gboolean paused;
 
-    /* Already-positioned device to read from */
+    /* device to read from (refcounted) */
     Device *device;
+
+    /* directtcp connection (only valid after XMSG_READY) */
+    DirectTCPConnection *conn;
 
     /* and the block size for that device (reset to zero at the start of each
      * part) */
@@ -84,20 +92,187 @@ typedef struct {
 } XferSourceRecoveryClass;
 
 /*
+ * Debug Logging
+ */
+
+#define DBG(LEVEL, ...) if (debug_recovery >= LEVEL) { _xsr_dbg(__VA_ARGS__); }
+static void
+_xsr_dbg(const char *fmt, ...)
+{
+    va_list argp;
+    char msg[1024];
+
+    arglist_start(argp, fmt);
+    g_vsnprintf(msg, sizeof(msg), fmt, argp);
+    arglist_end(argp);
+    g_debug("XSR thd-%p: %s", g_thread_self(), msg);
+}
+
+/*
  * Implementation
  */
+
+static gpointer
+directtcp_thread(
+	gpointer data)
+{
+    XferSourceRecovery *self = XFER_SOURCE_RECOVERY(data);
+    XferElement *elt = XFER_ELEMENT(self);
+    char *errmsg;
+
+    /* first, we need to accept the incoming connection; we do this while
+     * holding the start_part_mutex, so that a part doesn't get started until
+     * we're finished with the device */
+    g_mutex_lock(self->start_part_mutex);
+
+    if (elt->cancelled) {
+	g_mutex_unlock(self->start_part_mutex);
+	goto send_done;
+    }
+
+    g_assert(self->device != NULL); /* have a device */
+    g_assert(elt->output_listen_addrs != NULL); /* listening on it */
+    DBG(2, "accepting DirectTCP connection on device %s", self->device->device_name);
+    if (!device_accept(self->device, &self->conn, NULL, NULL)) {
+	xfer_cancel_with_error(elt,
+	    _("error accepting DirectTCP connection: %s"),
+	    device_error_or_status(self->device));
+	g_mutex_unlock(self->start_part_mutex);
+	wait_until_xfer_cancelled(elt->xfer);
+	goto send_done;
+    }
+
+    /* send XMSG_READY to indicate it's OK to call start_part now */
+    DBG(2, "connection accepted; sending XMSG_READY");
+    xfer_queue_message(elt->xfer, xmsg_new(elt, XMSG_READY, 0));
+
+    /* now we sit around waiting for signals to write a part */
+    while (1) {
+	guint64 actual_size;
+	XMsg *msg;
+
+	while (self->paused && !elt->cancelled) {
+	    DBG(9, "waiting to be un-paused");
+	    g_cond_wait(self->start_part_cond, self->start_part_mutex);
+	}
+	DBG(9, "done waiting");
+
+	if (elt->cancelled) {
+	    g_mutex_unlock(self->start_part_mutex);
+	    goto send_done;
+	}
+
+	/* if the device is NULL, we're done */
+	if (!self->device)
+	    break;
+
+	/* read the part */
+	self->part_timer = g_timer_new();
+
+	while (1) {
+	    DBG(2, "reading part from %s", self->device->device_name);
+	    if (!device_read_to_connection(self->device, G_MAXUINT64, &actual_size)) {
+		xfer_cancel_with_error(elt, _("error reading from device: %s"),
+		    device_error_or_status(self->device));
+		g_mutex_unlock(self->start_part_mutex);
+		wait_until_xfer_cancelled(elt->xfer);
+		goto send_done;
+	    }
+
+	    /* break on EOF; otherwise do another read_to_connection */
+	    if (self->device->is_eof) {
+		break;
+	    }
+	}
+	DBG(2, "done reading part; sending XMSG_PART_DONE");
+
+	/* the device has signalled EOF (really end-of-part), so clean up instance
+	 * variables and report the EOP to the caller in the form of an xmsg */
+	msg = xmsg_new(XFER_ELEMENT(self), XMSG_PART_DONE, 0);
+	msg->size = actual_size;
+	msg->duration = g_timer_elapsed(self->part_timer, NULL);
+	msg->partnum = 0;
+	msg->fileno = self->device->file;
+	msg->successful = TRUE;
+	msg->eof = FALSE;
+	xfer_queue_message(elt->xfer, msg);
+
+	self->paused = TRUE;
+	g_object_unref(self->device);
+	self->device = NULL;
+	self->part_size = 0;
+	self->block_size = 0;
+	g_timer_destroy(self->part_timer);
+	self->part_timer = NULL;
+    }
+    g_mutex_unlock(self->start_part_mutex);
+
+    errmsg = directtcp_connection_close(self->conn);
+    g_object_unref(self->conn);
+    self->conn = NULL;
+    if (errmsg) {
+	xfer_cancel_with_error(elt, _("error closing DirectTCP connection: %s"), errmsg);
+	wait_until_xfer_cancelled(elt->xfer);
+	goto send_done;
+    }
+
+send_done:
+    xfer_queue_message(elt->xfer, xmsg_new(elt, XMSG_DONE, 0));
+
+    return NULL;
+}
+
+static void
+setup_impl(
+    XferElement *elt)
+{
+    XferSourceRecovery *self = XFER_SOURCE_RECOVERY(elt);
+
+    if (elt->output_mech == XFER_MECH_DIRECTTCP_CONNECT) {
+	g_assert(self->device != NULL);
+	DBG(2, "listening for DirectTCP connection on device %s", self->device->device_name);
+	if (!device_listen(self->device, FALSE, &elt->output_listen_addrs)) {
+	    xfer_cancel_with_error(elt,
+		_("error listening for DirectTCP connection: %s"),
+		device_error_or_status(self->device));
+	    return;
+	}
+    } else {
+	elt->output_listen_addrs = NULL;
+    }
+}
+
+static gboolean
+start_impl(
+    XferElement *elt)
+{
+    XferSourceRecovery *self = XFER_SOURCE_RECOVERY(elt);
+
+    if (elt->output_mech == XFER_MECH_DIRECTTCP_CONNECT) {
+	g_assert(elt->output_listen_addrs != NULL);
+	self->thread = g_thread_create(directtcp_thread, (gpointer)self, FALSE, NULL);
+	return TRUE; /* we'll send XMSG_DONE */
+    } else {
+	/* nothing to prepare for - we're ready already! */
+	DBG(2, "not using DirectTCP: sending XMSG_READY immediately");
+	xfer_queue_message(elt->xfer, xmsg_new(elt, XMSG_READY, 0));
+
+	return FALSE; /* we won't send XMSG_DONE */
+    }
+}
 
 static gpointer
 pull_buffer_impl(
     XferElement *elt,
     size_t *size)
 {
-    XferSourceRecovery *self = (XferSourceRecovery *)elt;
+    XferSourceRecovery *self = XFER_SOURCE_RECOVERY(elt);
     gpointer buf = NULL;
     int result;
     int devsize;
     XMsg *msg;
 
+    g_assert(elt->output_mech == XFER_MECH_PULL_BUFFER);
     g_mutex_lock(self->start_part_mutex);
 
     while (1) {
@@ -110,9 +285,11 @@ pull_buffer_impl(
             goto error;
 	}
 
-	/* start the timer if appropriate */
-	if (!self->part_timer)
+	/* start the timer if this is the first pull_buffer of this part */
+	if (!self->part_timer) {
+	    DBG(2, "first pull_buffer of new part");
 	    self->part_timer = g_timer_new();
+	}
 
 	/* loop until we read a full block, in case the blocks are larger than
 	 * expected */
@@ -153,6 +330,7 @@ pull_buffer_impl(
 
 	    /* the device has signalled EOF (really end-of-part), so clean up instance
 	     * variables and report the EOP to the caller in the form of an xmsg */
+	    DBG(2, "pull_buffer hit EOF; sending XMSG_PART_DONE");
 	    msg = xmsg_new(XFER_ELEMENT(self), XMSG_PART_DONE, 0);
 	    msg->size = self->part_size;
 	    msg->duration = g_timer_elapsed(self->part_timer, NULL);
@@ -163,6 +341,7 @@ pull_buffer_impl(
 	    xfer_queue_message(elt->xfer, msg);
 
 	    self->paused = TRUE;
+	    g_object_unref(self->device);
 	    self->device = NULL;
 	    self->part_size = 0;
 	    self->block_size = 0;
@@ -205,14 +384,48 @@ start_part_impl(
 {
     g_assert(!device || device->in_file);
 
+    DBG(2, "start_part called");
     g_mutex_lock(self->start_part_mutex);
 
+    /* make sure we're ready to go */
     g_assert(self->paused);
-    self->paused = FALSE;
-    self->device = device;
+    if (XFER_ELEMENT(self)->output_mech == XFER_MECH_DIRECTTCP_CONNECT) {
+	g_assert(self->conn != NULL);
+    }
 
+    if (device)
+	g_object_ref(device);
+    if (self->device)
+	g_object_unref(self->device);
+    self->device = device;
+    self->paused = FALSE;
+
+    DBG(2, "triggering condition variable");
     g_cond_broadcast(self->start_part_cond);
     g_mutex_unlock(self->start_part_mutex);
+}
+
+static xfer_element_mech_pair_t *
+get_mech_pairs_impl(
+    XferElement *elt)
+{
+    XferSourceRecovery *self = XFER_SOURCE_RECOVERY(elt);
+    static xfer_element_mech_pair_t basic_mech_pairs[] = {
+	{ XFER_MECH_NONE, XFER_MECH_PULL_BUFFER, 1, 0},
+	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
+    };
+    static xfer_element_mech_pair_t directtcp_mech_pairs[] = {
+	{ XFER_MECH_NONE, XFER_MECH_DIRECTTCP_CONNECT, 0, 1},
+	/* devices which support DirectTCP are usually not very efficient
+	 * at delivering data via device_read_block, so this counts an extra
+	 * byte operation in the cost metrics (2 here vs. 1 in basic_mech_pairs).
+	 * This is a hack, but it will do for now. */
+	{ XFER_MECH_NONE, XFER_MECH_PULL_BUFFER, 2, 0},
+	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
+    };
+
+    return device_directtcp_supported(self->device)?
+	directtcp_mech_pairs : basic_mech_pairs;
 }
 
 static void
@@ -220,6 +433,11 @@ finalize_impl(
     GObject * obj_self)
 {
     XferSourceRecovery *self = XFER_SOURCE_RECOVERY(obj_self);
+
+    if (self->conn)
+	g_object_unref(self->conn);
+    if (self->device)
+	g_object_unref(self->device);
 
     g_cond_free(self->start_part_cond);
     g_mutex_free(self->start_part_mutex);
@@ -231,7 +449,7 @@ instance_init(
 {
     XferSourceRecovery *self = XFER_SOURCE_RECOVERY(elt);
 
-    self->paused = 1;
+    self->paused = TRUE;
     self->start_part_cond = g_cond_new();
     self->start_part_mutex = g_mutex_new();
 }
@@ -242,16 +460,15 @@ class_init(
 {
     XferElementClass *klass = XFER_ELEMENT_CLASS(xst_klass);
     GObjectClass *gobject_klass = G_OBJECT_CLASS(xst_klass);
-    static xfer_element_mech_pair_t mech_pairs[] = {
-	{ XFER_MECH_NONE, XFER_MECH_PULL_BUFFER, 0, 1},
-	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
-    };
 
     klass->pull_buffer = pull_buffer_impl;
     klass->cancel = cancel_impl;
+    klass->start = start_impl;
+    klass->setup = setup_impl;
+    klass->get_mech_pairs = get_mech_pairs_impl;
 
     klass->perl_class = "Amanda::Xfer::Source::Recovery";
-    klass->mech_pairs = mech_pairs;
+    klass->mech_pairs = NULL; /* see get_mech_pairs_impl, above */
 
     xst_klass->start_part = start_part_impl;
 
@@ -303,10 +520,14 @@ xfer_source_recovery_start_part(
 
 /* create an element of this class; prototype is in xfer-device.h */
 XferElement *
-xfer_source_recovery(void)
+xfer_source_recovery(Device *first_device)
 {
     XferSourceRecovery *self = (XferSourceRecovery *)g_object_new(XFER_SOURCE_RECOVERY_TYPE, NULL);
     XferElement *elt = XFER_ELEMENT(self);
+
+    g_assert(first_device != NULL);
+    g_object_ref(first_device);
+    self->device = first_device;
 
     return elt;
 }

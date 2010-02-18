@@ -1062,7 +1062,6 @@ finalize_impl(
     GObject * obj_self)
 {
     XferElementGlue *self = XFER_ELEMENT_GLUE(obj_self);
-    g_debug("finalize %p", obj_self);
 
     /* close our pipes if they're still open (they shouldn't be!) */
     if (self->pipe[0] != -1) close(self->pipe[0]);

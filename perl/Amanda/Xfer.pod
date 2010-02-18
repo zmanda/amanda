@@ -169,11 +169,18 @@ number of bytes.
 
 =head3 Amanda::Xfer::Source::Recovery (SERVER ONLY)
 
-  Amanda::Xfer::Source::Recovery->new();
+  Amanda::Xfer::Source::Recovery->new($first_device);
 
-This source reads a datastream composed of on-device files.  It contains no
-logic to decide I<which> files to assemble into the datastream; instead, it
-relies on the caller to supply pre-positioned devices:
+This source reads a datastream composed of on-device files.  Its constructor
+takes a pointer to the first device that will be read from; this is used
+internally to determine whether DirectTCP is supported.
+
+The element sense C<$XMSG_READY> when it is ready for the first C<start_part>
+invocation.  Don't do anything with the device between the start of the
+transfer and when the element sends an C<$XMSG_READY>.
+
+The element contains no logic to decide I<which> files to assemble into the
+datastream; instead, it relies on the caller to supply pre-positioned devices:
 
   $src->start_part($device);
 

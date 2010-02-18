@@ -79,7 +79,7 @@ guint64 xfer_dest_taper_get_part_bytes_written(
     XferElement *self);
 
 %newobject xfer_source_recovery;
-XferElement *xfer_source_recovery(void);
+XferElement *xfer_source_recovery(Device *first_device);
 
 void xfer_source_recovery_start_part(
     XferElement *self,
