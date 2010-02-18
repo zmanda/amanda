@@ -157,6 +157,7 @@ worker_thread(
 	self->part_header = NULL;
 
 	fileno = self->device->file;
+	g_assert(fileno > 0);
 
 	/* write the part */
 	g_timer_start(timer);

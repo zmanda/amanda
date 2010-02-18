@@ -1,3 +1,8 @@
+2010-02-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/ndmp-device.c: sanity-check file number
+	* device-src/xfer-dest-taper-directtcp.c: same
+	* device-src/xfer-dest-taper-splitter.c: same
+
 2010-02-17  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Util.swg (finish_application): Don't check $config_name.
 

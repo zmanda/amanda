@@ -1,6 +1,6 @@
 /*
  * Amanda, The Advanced Maryland Automatic Network Disk Archiver
- * Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -957,6 +957,7 @@ device_thread_write_part(
     self->part_header = NULL;
 
     fileno = self->device->file;
+    g_assert(fileno > 0);
 
     if (!slab_source_setup(self, &src_state))
 	goto part_done;

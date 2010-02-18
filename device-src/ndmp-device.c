@@ -734,6 +734,9 @@ ndmp_device_start_file(
 	return FALSE;
     }
 
+    /* double-check that the tape agent gave us a non-bogus file number */
+    g_assert(dself->file > 0);
+
     return TRUE;
 }
 
