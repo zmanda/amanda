@@ -1,3 +1,6 @@
+2010-02-18  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Report/human.pm: fixed columnspec handling, removed POD
+
 2010-02-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/xfer-source-recovery.c: add XFER_MECH_DIRECTTCP_CONNECT,
 	  with attendant API changes (constructor takes a device; sends

@@ -1057,27 +1057,21 @@ sub read_col_spec_override
 
     foreach (split(",", $col_spec_str)) {
 
-        $_ =~ m/^(\w+)        # field name
-                =([-\d:]+)  # field values
+        $_ =~ m/^(\w+)           # field name
+                =([-:\d]+)       # field values
                 $/x
           or die "error: malformed columnspec string:$col_spec_str";
 
-        my $field              = $1;
-        my $field_value_string = $2;
-        my @field_values       = split ':', $field_value_string;
+        my $field = $1;
+        my @field_values = split ':', $2;
 
         # too many values
         die "error: malformed columnspec string:$col_spec_str"
           if (@field_values > 3);
 
-        # < 3 values specified, make the rest blank
-        while (@field_values < 3) {
-            if ($field_value_string =~ m{^:}) {
-                unshift @field_values, '';
-            } else {
-                push @field_values, '';
-            }
-        }
+        # all values *should* be in the right place.  If not enough
+        # were given, pad the array.
+        push @field_values, "" while (@field_values < 3);
 
         $col_spec_override{$field} = \@field_values;
     }
@@ -1086,52 +1080,3 @@ sub read_col_spec_override
 }
 
 1;
-__END__
-
-=head1 NAME
-
-human - Perl extension for blah blah blah
-
-=head1 SYNOPSIS
-
-   use human;
-   blah blah blah
-
-=head1 DESCRIPTION
-
-Stub documentation for human,
-
-Blah blah blah.
-
-=head2 EXPORT
-
-None by default.
-
-=head1 SEE ALSO
-
-Mention other useful documentation such as the documentation of
-related modules or operating system documentation (such as man pages
-in UNIX), or any relevant external documentation such as RFCs or
-standards.
-
-If you have a mailing list set up for your module, mention it here.
-
-If you have a web site set up for your module, mention it here.
-
-=head1 AUTHOR
-
-Paul C Mantz, E<lt>pcmantz@centralcityE<gt>
-
-=head1 COPYRIGHT AND LICENSE
-
-Copyright (C) 2009 by Paul C Mantz
-
-This program is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.8.2 or,
-at your option, any later version of Perl 5 you may have available.
-
-=head1 BUGS
-
-None reported... yet.
-
-=cut
