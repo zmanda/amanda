@@ -974,6 +974,8 @@ listen_impl(
 {
     NdmpDevice *self = NDMP_DEVICE(dself);
 
+    if (device_in_error(self)) return FALSE;
+
     /* check status */
     g_assert(!self->listen_addrs);
 
@@ -1024,6 +1026,8 @@ accept_impl(
     ndmp9_mover_mode mode;
     ndmp9_mover_pause_reason reason;
     guint64 seek_position;
+
+    if (device_in_error(self)) return FALSE;
 
     g_assert(self->listen_addrs);
 
@@ -1137,6 +1141,8 @@ write_from_connection_impl(
     ndmp9_mover_pause_reason pause_reason;
     guint64 bytes_moved_before, bytes_moved_after;
     gchar *err;
+
+    if (device_in_error(self)) return FALSE;
 
     if (actual_size)
 	*actual_size = 0;
@@ -1264,6 +1270,8 @@ read_to_connection_impl(
 
     if (actual_size)
 	*actual_size = 0;
+
+    if (device_in_error(self)) return FALSE;
 
     /* if this is false, then the caller did not use use_connection correctly */
     g_assert(self->ndmp == nconn->ndmp);

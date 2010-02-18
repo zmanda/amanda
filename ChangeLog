@@ -1,3 +1,12 @@
+2010-02-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/ndmp-device.c: check for fatal errors in directtcp
+	  methods
+	* device-src/xfer-dest-taper-directtcp.c: track device_listen
+	  failures better
+	* installcheck/Amanda_Xfer.pl: test setup cancellation
+	* perl/Amanda/Taper/Scribe.pm: remove leftover debug code
+	* xfer-src/element-glue.c: always send XMSG_DONE, even on error
+
 2010-02-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/ndmp-device.c: sanity-check file number
 	* device-src/xfer-dest-taper-directtcp.c: same

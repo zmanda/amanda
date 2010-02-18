@@ -170,6 +170,7 @@ do_directtcp_connect(
     int sock;
 
     if (!addrs) {
+	g_debug("element-glue got no directtcp addresses to connect to!");
 	if (!elt->cancelled) {
 	    xfer_cancel_with_error(elt,
 		"%s got no directtcp addresses to connect to",
@@ -255,8 +256,6 @@ pull_and_write(XferElementGlue *self)
      * set it to -1 to avoid accidental re-use */
     close(fd);
     *self->write_fdp = -1;
-
-    send_xfer_done(self);
 }
 
 static void
@@ -314,8 +313,6 @@ read_and_write(XferElementGlue *self)
     close(wfd);
     *self->write_fdp = -1;
 
-    send_xfer_done(self);
-
     amfree(buf);
 }
 
@@ -359,8 +356,6 @@ read_and_push(
      * re-use */
     close(fd);
     *self->read_fdp = -1;
-
-    send_xfer_done(self);
 }
 
 static void
@@ -390,8 +385,6 @@ pull_and_push(XferElementGlue *self)
 
     if (!eof_sent)
 	xfer_element_push_buffer(elt->downstream, NULL, 0);
-
-    send_xfer_done(self);
 }
 
 static gpointer
@@ -527,6 +520,8 @@ worker_thread(
 	read_and_write(self);
 	break;
     }
+
+    send_xfer_done(self);
 
     return NULL;
 }

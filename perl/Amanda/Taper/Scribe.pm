@@ -810,8 +810,6 @@ sub _operation_failed {
     # cancelling the xdt will eventually cause an XMSG_DONE, which will notice
     # the error and set the result correctly; but if there's no xfer, then we
     # can just call _dump_done directly.
-    use Data::Dumper;
-    $self->dbg(Dumper($self));
     if (defined $self->{'xfer'}) {
         $self->dbg("cancelling the transfer: $error");
 

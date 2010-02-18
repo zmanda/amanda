@@ -60,10 +60,14 @@ typedef struct XferDestTaperDirectTCP {
     Device *volatile device; /* device to write to (refcounted) */
     dumpfile_t *volatile part_header;
 
+    /* did the device listen proceed without error? */
+    gboolean listen_ok;
+
     /* part number in progress */
     volatile guint64 partnum;
 
-    DirectTCPConnection *conn; /* connection we're writing to (refcounted) */
+    /* connection we're writing to (refcounted) */
+    DirectTCPConnection *conn;
 
     /* is the element paused, waiting to start a new part? this is set to FALSE
      * by the main thread to start a part, and the worker thread waits on the
@@ -107,6 +111,14 @@ worker_thread(
 
     /* This thread's job is to accept() an incoming connection, then call
      * write_from_connection for each part, and then close the connection */
+
+    /* If the device_listen failed, then we will soon be cancelled, so wait
+     * for that to occur and then send XMSG_DONE */
+    if (!self->listen_ok) {
+	DBG(2, "listen failed; waiting for cancellation without attempting an accept");
+	wait_until_xfer_cancelled(elt->xfer);
+	goto send_xmsg_done;
+    }
 
     g_mutex_lock(self->state_mutex);
 
@@ -241,6 +253,7 @@ cancelled:
     g_mutex_unlock(self->state_mutex);
     g_timer_destroy(timer);
 
+send_xmsg_done:
     xfer_queue_message(elt->xfer, xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0));
 
     return NULL;
@@ -264,6 +277,8 @@ setup_impl(
 	    device_error_or_status(self->device));
 	return;
     }
+
+    self->listen_ok = TRUE;
 }
 
 static gboolean
