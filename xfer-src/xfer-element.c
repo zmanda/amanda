@@ -1,6 +1,6 @@
 /*
  * Amanda, The Advanced Maryland Automatic Network Disk Archiver
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -82,12 +82,19 @@ xfer_element_push_buffer_impl(
 {
 }
 
+static xfer_element_mech_pair_t *
+xfer_element_get_mech_pairs_impl(
+    XferElement *elt)
+{
+    return XFER_ELEMENT_GET_CLASS(elt)->mech_pairs;
+}
+
 static char *
 xfer_element_repr_impl(
     XferElement *elt)
 {
     if (!elt->repr) {
-	elt->repr = newvstrallocf(elt->repr, "<%s@%p>", 
+	elt->repr = newvstrallocf(elt->repr, "<%s@%p>",
 		G_OBJECT_TYPE_NAME(G_OBJECT(elt)),
 		elt);
     }
@@ -120,6 +127,7 @@ xfer_element_class_init(
     klass->cancel = xfer_element_cancel_impl;
     klass->pull_buffer = xfer_element_pull_buffer_impl;
     klass->push_buffer = xfer_element_push_buffer_impl;
+    klass->get_mech_pairs = xfer_element_get_mech_pairs_impl;
 
     goc->finalize = xfer_element_finalize;
 
@@ -219,6 +227,13 @@ xfer_element_push_buffer(
     /* There is no race condition with push_buffer, because downstream
      * elements are started first. */
     XFER_ELEMENT_GET_CLASS(elt)->push_buffer(elt, buf, size);
+}
+
+xfer_element_mech_pair_t *
+xfer_element_get_mech_pairs(
+	XferElement *elt)
+{
+    return XFER_ELEMENT_GET_CLASS(elt)->get_mech_pairs(elt);
 }
 
 /****

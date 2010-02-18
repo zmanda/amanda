@@ -180,7 +180,6 @@ xfer_start(
 {
     unsigned int len;
     unsigned int i;
-    XferElement *xe;
 
     g_assert(xfer != NULL);
     g_assert(xfer->status == XFER_INIT);
@@ -193,17 +192,6 @@ xfer_start(
     xfer_ref(xfer);
     xfer->num_active_elements = 0;
     xfer_set_status(xfer, XFER_START);
-
-    /* check that the first element is an XferSource and the last is an XferDest.
-     * A source is identified by having no input mechanisms. */
-    xe = (XferElement *)g_ptr_array_index(xfer->elements, 0);
-    if (XFER_ELEMENT_GET_CLASS(xe)->mech_pairs[0].input_mech != XFER_MECH_NONE)
-	error("Transfer element 0 is not a transfer source");
-
-    /* Similarly, a destination has no output mechanisms. */
-    xe = (XferElement *)g_ptr_array_index(xfer->elements, xfer->elements->len-1);
-    if (XFER_ELEMENT_GET_CLASS(xe)->mech_pairs[0].output_mech != XFER_MECH_NONE)
-	error("Last transfer element is not a transfer destination");
 
     /* Link the elements.  This calls error() on failure, and rewrites
      * xfer->elements */
@@ -306,6 +294,7 @@ xfer_set_status(
  * and find the optimal overall linkage. */
 typedef struct linkage {
     XferElement *elt;
+    xfer_element_mech_pair_t *mech_pairs;
     int elt_idx; /* index into elt's mech_pairs */
     int glue_idx; /* index into glue pairs for elt's output; -1 = no glue */
 } linkage;
@@ -379,7 +368,7 @@ link_recurse(
 
     /* recurse for each linkage we can make that starts with input_mech */
     my = &st->cur[idx];
-    elt_pairs = XFER_ELEMENT_GET_CLASS(my->elt)->mech_pairs;
+    elt_pairs = my->mech_pairs;
     glue_pairs = xfer_element_glue_mech_pairs;
 
     for (my->elt_idx = 0;
@@ -420,7 +409,6 @@ link_elements(
 {
     GPtrArray *new_elements;
     XferElement *elt;
-    XferElementClass *eltc;
     char *linkage_str;
     linking_state st;
     gint i, len;
@@ -437,7 +425,17 @@ link_elements(
     st.best_cost = MAX_COST;
     for (i = 0; i < st.nlinks; i++) {
 	st.cur[i].elt = (XferElement *)g_ptr_array_index(xfer->elements, i);
+	st.cur[i].mech_pairs = xfer_element_get_mech_pairs(st.cur[i].elt);
     }
+
+    /* check that the first element is an XferSource and the last is an XferDest.
+     * A source is identified by having no input mechanisms. */
+    if (st.cur[0].mech_pairs[0].input_mech != XFER_MECH_NONE)
+	error("Transfer element 0 is not a transfer source");
+
+    /* Similarly, a destination has no output mechanisms. */
+    if (st.cur[st.nlinks-1].mech_pairs[0].output_mech != XFER_MECH_NONE)
+	error("Last transfer element is not a transfer destination");
 
     /* start recursing with the first element, asserting that its input mech is NONE */
     link_recurse(&st, 0, XFER_MECH_NONE, 0);
@@ -452,17 +450,15 @@ link_elements(
     new_elements = g_ptr_array_sized_new(xfer->elements->len);
     for (i = 0; i < st.nlinks; i++) {
 	elt = st.best[i].elt;
-	eltc = XFER_ELEMENT_GET_CLASS(elt);
-	elt->input_mech = eltc->mech_pairs[st.best[i].elt_idx].input_mech;
-	elt->output_mech = eltc->mech_pairs[st.best[i].elt_idx].output_mech;
+	elt->input_mech = st.best[i].mech_pairs[st.best[i].elt_idx].input_mech;
+	elt->output_mech = st.best[i].mech_pairs[st.best[i].elt_idx].output_mech;
 	g_ptr_array_add(new_elements, elt);
 
 	if (st.best[i].glue_idx != -1) {
 	    elt = xfer_element_glue();
-	    eltc = XFER_ELEMENT_GET_CLASS(elt);
 	    elt->xfer = xfer;
-	    elt->input_mech = eltc->mech_pairs[st.best[i].glue_idx].input_mech;
-	    elt->output_mech = eltc->mech_pairs[st.best[i].glue_idx].output_mech;
+	    elt->input_mech = xfer_element_glue_mech_pairs[st.best[i].glue_idx].input_mech;
+	    elt->output_mech = xfer_element_glue_mech_pairs[st.best[i].glue_idx].output_mech;
 	    g_ptr_array_add(new_elements, elt);
 	}
     }

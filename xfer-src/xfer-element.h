@@ -211,6 +211,7 @@ typedef struct {
      *
      * @param elt: the XferElement
      * @param expect_eof: element should expect an EOF
+     * @returns: true if this element can return EOF
      */
     gboolean (*cancel)(XferElement *elt, gboolean expect_eof);
 
@@ -221,6 +222,7 @@ typedef struct {
      *
      * @param elt: the XferElement
      * @param size (output): size of resulting buffer
+     * @returns: buffer pointer
      */
     gpointer (*pull_buffer)(XferElement *elt, size_t *size);
 
@@ -236,6 +238,16 @@ typedef struct {
      */
     void (*push_buffer)(XferElement *elt, gpointer buf, size_t size);
 
+    /* Returns the mech_pairs that this element supports.  The default
+     * implementation just returns the class attribute 'mech_pairs', but
+     * subclasses can dynamically select the available mechanisms by overriding
+     * this method.  Note that the method is called before the setup() method.
+     *
+     * @param elt: the XferElement
+     * @returns: array of mech pairs, terminated by <NONE,NONE>
+     */
+    xfer_element_mech_pair_t *(*get_mech_pairs)(XferElement *elt);
+
     /* class variables */
 
     /* This is used by the perl bindings -- it is a class variable giving the
@@ -245,7 +257,8 @@ typedef struct {
     const char *perl_class;
 
     /* Statically allocated array of input/output mechanisms supported by this
-     * class (terminated by <XFER_MECH_NONE,XFER_MECH_NONE>) */
+     * class (terminated by <XFER_MECH_NONE,XFER_MECH_NONE>).  The default
+     * get_mech_pairs method returns this. */
     xfer_element_mech_pair_t *mech_pairs;
 } XferElementClass;
 
@@ -261,6 +274,7 @@ gboolean xfer_element_start(XferElement *elt);
 void xfer_element_push_buffer(XferElement *elt, gpointer buf, size_t size);
 gpointer xfer_element_pull_buffer(XferElement *elt, size_t *size);
 gboolean xfer_element_cancel(XferElement *elt, gboolean expect_eof);
+xfer_element_mech_pair_t *xfer_element_get_mech_pairs(XferElement *elt);
 
 /****
  * Subclass utilities

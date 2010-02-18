@@ -1,4 +1,9 @@
 2010-02-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* xfer-src/xfer.c xfer-src/xfer-element.c xfer-src/xfer-element.h:
+	  add a get_xfer_mechs method to xfer elements so that elements can
+	  dynamically specify their mech pairs
+
+2010-02-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/ndmp-device.c: check for fatal errors in directtcp
 	  methods
 	* device-src/xfer-dest-taper-directtcp.c: track device_listen
