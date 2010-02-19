@@ -34,46 +34,8 @@
 #include "arglist.h"
 #include "file.h"
 
-static int mk1dir(const char *, mode_t, uid_t, gid_t);
 static void areads_getbuf(const char *s, int l, int fd);
 static char *original_cwd = NULL;
-
-/* Make a directory (internal function).
- * If the directory already exists then we pretend we created it.
- *
- * The uid and gid are used only if we are running as root.
- */
-static int
-mk1dir(
-    const char *dir, /* directory to create */
-    mode_t	mode,	/* mode for new directory */
-    uid_t	uid,	/* uid for new directory */
-    gid_t	gid)	/* gid for new directory */
-{
-    int rc;	/* return code */
-
-    rc = mkdir(dir, mode);
-    if(rc != 0) {
-	int serrno;
-
-	serrno = errno;
-	if(access(dir, F_OK) == 0)
-	    rc = 0; /* someone just beat us to it, so it's OK */
-	errno = serrno;
-    }
-
-    /* mkdir is affected by umask, so set the mode bits manually */
-    if (rc == 0) {
-	rc = chmod(dir, mode);
-    }
-
-    if (rc == 0 && geteuid() == 0) {
-	rc = chown(dir, uid, gid);
-    }
-
-    return rc;
-}
-
 
 /*
  * Make a directory hierarchy given an entry to be created (by the caller)
@@ -89,23 +51,44 @@ mkpdir(
     gid_t	gid)	/* gid for new directories */
 {
     char *dir;
+    char *parent;
     char *p;
     int rc;	/* return code */
 
     rc = 0;
 
-    dir = stralloc(file);	/* make a copy we can play with */
+    /* Remove last member of file, put the result in dir */
+    dir = stralloc(file); /* make a copy we can play with */
     p = strrchr(dir, '/');
-    if(p != dir && p != NULL) {	/* got a '/' or a simple name */
-	*p = '\0';
+    *p = '\0';
 
-	if(access(dir, F_OK) != 0) {	/* doesn't exist */
-	    if(mkpdir(dir, mode, uid, gid) != 0 ||
-	       mk1dir(dir, mode, uid, gid) != 0) rc = -1; /* create failed */
+    rc = mkdir(dir, mode);
+    if (rc != 0) {
+	if (errno == ENOENT) { /* create parent directory */
+	    parent = stralloc(dir); /* make a copy we can play with */
+	    p = strrchr(parent, '/');
+	    *p = '\0';
+	    rc = mkpdir(parent, mode, uid, gid);
+	    amfree(parent);
+	    if (rc != 0)
+		return rc;
+	    rc = mkdir(dir, mode);
+	}
+	if (rc != 0 && errno == EEXIST) {
+	    return 0;
 	}
     }
 
-    amfree(dir);
+    /* mkdir succeded, set permission and ownership */
+    if (rc == 0) {
+	/* mkdir is affected by umask, so set the mode bits manually */
+	rc = chmod(dir, mode);
+
+	if (rc == 0 && geteuid() == 0) {
+	    rc = chown(dir, uid, gid);
+	}
+    }
+
     return rc;
 }
 

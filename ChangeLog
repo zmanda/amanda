@@ -1,3 +1,6 @@
+2010-02-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/file.c (mkpdir): Don't use access.
+
 2010-02-18  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report/human.pm: fixed columnspec handling, removed POD
 
