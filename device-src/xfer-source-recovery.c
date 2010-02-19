@@ -66,6 +66,7 @@ typedef struct XferSourceRecovery {
 
     /* directtcp connection (only valid after XMSG_READY) */
     DirectTCPConnection *conn;
+    gboolean listen_ok;
 
     /* and the block size for that device (reset to zero at the start of each
      * part) */
@@ -132,6 +133,8 @@ directtcp_thread(
 
     g_assert(self->device != NULL); /* have a device */
     g_assert(elt->output_listen_addrs != NULL); /* listening on it */
+    g_assert(self->listen_ok);
+
     DBG(2, "accepting DirectTCP connection on device %s", self->device->device_name);
     if (!device_accept(self->device, &self->conn, NULL, NULL)) {
 	xfer_cancel_with_error(elt,
@@ -222,7 +225,7 @@ send_done:
     return NULL;
 }
 
-static void
+static gboolean
 setup_impl(
     XferElement *elt)
 {
@@ -235,11 +238,14 @@ setup_impl(
 	    xfer_cancel_with_error(elt,
 		_("error listening for DirectTCP connection: %s"),
 		device_error_or_status(self->device));
-	    return;
+	    return FALSE;
 	}
+	self->listen_ok = TRUE;
     } else {
 	elt->output_listen_addrs = NULL;
     }
+
+    return TRUE;
 }
 
 static gboolean

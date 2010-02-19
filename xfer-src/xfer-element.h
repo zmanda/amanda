@@ -167,14 +167,26 @@ typedef struct {
      * elt->input_mech and elt->output_mech are already set when this function
      * is called, but upstream and downstream are not.
      *
+     * If the setup operation fails, the method should send an XMSG_ERROR and
+     * call XMSG_CANCEL, and return False.  In this situation, the start method
+     * will not be called.  The Xfer will appear to the user to start and
+     * immediately fail.
+     *
+     * Note that this method may never be called if other elements' setup methods
+     * fail first.
+     *
      * @param elt: the XferElement
+     * @return: false on failure, true on success
      */
-    void (*setup)(XferElement *elt);
+    gboolean (*setup)(XferElement *elt);
 
     /* Start transferring data.  The element downstream of this one will
      * already be started, while the upstream element will not, so data will
      * not begin flowing immediately.  It is safe to access attributes of
      * neighboring elements during this call.
+     *
+     * This method will *not* be called if all elements do not set up
+     * correctly.
      *
      * @param elt: the XferElement
      * @return: TRUE if this element will send XMSG_DONE
@@ -203,6 +215,9 @@ typedef struct {
      *
      * If this element can generate an EOF, it should return TRUE, otherwise
      * FALSE.
+     *
+     * This method may be called before start or setup if an error is
+     * encountered during setup.
      *
      * The default implementation sets self->expect_eof and self->cancelled
      * appropriately and returns self->can_generate_eof.
@@ -269,7 +284,7 @@ typedef struct {
 void xfer_element_unref(XferElement *elt);
 gboolean xfer_element_link_to(XferElement *elt, XferElement *successor);
 char *xfer_element_repr(XferElement *elt);
-void xfer_element_setup(XferElement *elt);
+gboolean xfer_element_setup(XferElement *elt);
 gboolean xfer_element_start(XferElement *elt);
 void xfer_element_push_buffer(XferElement *elt, gpointer buf, size_t size);
 gpointer xfer_element_pull_buffer(XferElement *elt, size_t *size);

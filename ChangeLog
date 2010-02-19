@@ -1,3 +1,14 @@
+2010-02-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* xfer-src/xfer-element.c xfer-src/xfer-element.h: setup now returns a
+	  boolean
+	* xfer-src/xfer.c: if any setup operation fails, skip the starts and
+	  return
+	* device-src/xfer-dest-taper-directtcp.c
+	  device-src/xfer-source-recovery.c xfer-src/dest-directtcp-connect.c
+	  xfer-src/element-glue.c xfer-src/source-directtcp-connect.c
+	  xfer-src/xfer-test.c: change setup() methods to return a boolean
+	* device-src/ndmp-device.c: clean up listen_addrs if not null
+
 2010-02-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/file.c (mkpdir): Fix.
 

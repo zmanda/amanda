@@ -530,7 +530,7 @@ worker_thread(
  * Implementation
  */
 
-static void
+static gboolean
 setup_impl(
     XferElement *elt)
 {
@@ -769,13 +769,15 @@ setup_impl(
     if (need_listen_input) {
 	if (!do_directtcp_listen(elt,
 		    &self->input_listen_socket, &elt->input_listen_addrs))
-	    return;
+	    return FALSE;
     }
     if (need_listen_output) {
 	if (!do_directtcp_listen(elt,
 		    &self->output_listen_socket, &elt->output_listen_addrs))
-	    return;
+	    return FALSE;
     }
+
+    return TRUE;
 }
 
 static gboolean

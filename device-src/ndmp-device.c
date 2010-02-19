@@ -426,6 +426,9 @@ static void ndmp_device_finalize(GObject * obj_self)
     if (self->directtcp_conn)
 	g_object_unref(self->directtcp_conn);
 
+    if (self->listen_addrs)
+	g_free(self->listen_addrs);
+
     close_connection(self);
 
     if (self->ndmp_hostname)

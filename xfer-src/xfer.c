@@ -180,6 +180,7 @@ xfer_start(
 {
     unsigned int len;
     unsigned int i;
+    gboolean setup_ok;
 
     g_assert(xfer != NULL);
     g_assert(xfer->status == XFER_INIT);
@@ -200,27 +201,37 @@ xfer_start(
     /* Tell all elements to set up.  This is done before upstream and downstream
      * are set so that elements cannot interfere with one another before setup()
      * is completed. */
+    setup_ok = TRUE;
     for (i = 0; i < xfer->elements->len; i++) {
 	XferElement *xe = (XferElement *)g_ptr_array_index(xfer->elements, i);
-	xfer_element_setup(xe);
+	if (!xfer_element_setup(xe)) {
+	    setup_ok = FALSE;
+	    break;
+	}
     }
 
-    /* Set the upstream and downstream links between elements */
-    len = xfer->elements->len;
-    for (i = 0; i < len; i++) {
-	XferElement *elt = g_ptr_array_index(xfer->elements, i);
+    /* If setup_ok is false, then there is an XMSG_CANCEL in the message queue
+     * already, so skip calling start for any of the elements and send an
+     * XMSG_DONE, since none of the elements will do so. */
 
-	if (i > 0)
-	    elt->upstream = g_ptr_array_index(xfer->elements, i-1);
-	if (i < len-1)
-	    elt->downstream = g_ptr_array_index(xfer->elements, i+1);
-    }
+    if (setup_ok) {
+	/* Set the upstream and downstream links between elements */
+	len = xfer->elements->len;
+	for (i = 0; i < len; i++) {
+	    XferElement *elt = g_ptr_array_index(xfer->elements, i);
 
-    /* now tell them all to start, in order from destination to source */
-    for (i = xfer->elements->len; i >= 1; i--) {
-	XferElement *xe = (XferElement *)g_ptr_array_index(xfer->elements, i-1);
-	if (xfer_element_start(xe))
-	    xfer->num_active_elements++;
+	    if (i > 0)
+		elt->upstream = g_ptr_array_index(xfer->elements, i-1);
+	    if (i < len-1)
+		elt->downstream = g_ptr_array_index(xfer->elements, i+1);
+	}
+
+	/* now tell them all to start, in order from destination to source */
+	for (i = xfer->elements->len; i >= 1; i--) {
+	    XferElement *xe = (XferElement *)g_ptr_array_index(xfer->elements, i-1);
+	    if (xfer_element_start(xe))
+		xfer->num_active_elements++;
+	}
     }
 
     /* (note that status can only change in the main thread, so we can be
@@ -232,7 +243,8 @@ xfer_start(
      * be done already.  We send a "fake" XMSG_DONE from the destination element,
      * so that all of the usual processing will take place. */
     if (xfer->num_active_elements == 0) {
-	g_debug("%s has no active elements; generating fake XMSG_DONE", xfer_repr(xfer));
+	if (setup_ok)
+	    g_debug("%s has no active elements; generating fake XMSG_DONE", xfer_repr(xfer));
 	xfer->num_active_elements++;
 	xfer_queue_message(xfer,
 	    xmsg_new((XferElement *)g_ptr_array_index(xfer->elements, xfer->elements->len-1),

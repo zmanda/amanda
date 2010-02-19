@@ -90,7 +90,7 @@ source_readfd_thread(
     return NULL;
 }
 
-static void
+static gboolean
 source_readfd_setup_impl(
     XferElement *elt)
 {
@@ -104,6 +104,8 @@ source_readfd_setup_impl(
 
     self->write_fd = p[1];
     XFER_ELEMENT(self)->output_fd = p[0];
+
+    return TRUE;
 }
 
 static gboolean
@@ -398,13 +400,15 @@ source_pull_pull_buffer_impl(
     return buf;
 }
 
-static void
+static gboolean
 source_pull_setup_impl(
     XferElement *elt)
 {
     XferSourcePull *self = XFER_SOURCE_PULL(elt);
 
     simpleprng_seed(&self->prng, RANDOM_SEED);
+
+    return TRUE;
 }
 
 static void
@@ -643,7 +647,7 @@ source_connect_thread(
     return NULL;
 }
 
-static void
+static gboolean
 source_connect_setup_impl(
     XferElement *elt)
 {
@@ -670,6 +674,8 @@ source_connect_setup_impl(
     addrs[0].ipv4 = ntohl(inet_addr("127.0.0.1"));
     addrs[0].port = SU_GET_PORT(&addr);
     elt->output_listen_addrs = addrs;
+
+    return TRUE;
 }
 
 static gboolean
@@ -886,7 +892,7 @@ dest_writefd_thread(
     return NULL;
 }
 
-static void
+static gboolean
 dest_writefd_setup_impl(
     XferElement *elt)
 {
@@ -900,6 +906,8 @@ dest_writefd_setup_impl(
 
     self->read_fd = p[0];
     XFER_ELEMENT(self)->input_fd = p[1];
+
+    return TRUE;
 }
 
 static gboolean
@@ -998,7 +1006,7 @@ dest_push_push_buffer_impl(
     self->bufpos += size;
 }
 
-static void
+static gboolean
 dest_push_setup_impl(
     XferElement *elt)
 {
@@ -1006,6 +1014,8 @@ dest_push_setup_impl(
 
     self->buf = g_malloc(TEST_XFER_SIZE);
     simpleprng_seed(&self->prng, RANDOM_SEED);
+
+    return TRUE;
 }
 
 static void
@@ -1209,7 +1219,7 @@ dest_listen_thread(
     return NULL;
 }
 
-static void
+static gboolean
 dest_listen_setup_impl(
     XferElement *elt)
 {
@@ -1236,6 +1246,8 @@ dest_listen_setup_impl(
     addrs[0].ipv4 = ntohl(inet_addr("127.0.0.1"));
     addrs[0].port = SU_GET_PORT(&addr);
     elt->input_listen_addrs = addrs;
+
+    return TRUE;
 }
 
 static gboolean

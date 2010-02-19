@@ -62,7 +62,7 @@ typedef struct {
  * Implementation
  */
 
-static void
+static gboolean
 setup_impl(
     XferElement *elt)
 {
@@ -70,6 +70,8 @@ setup_impl(
 
     g_assert(self->addrs && self->addrs->ipv4);
     elt->output_listen_addrs = self->addrs;
+
+    return TRUE;
 }
 
 static void

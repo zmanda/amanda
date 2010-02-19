@@ -263,7 +263,7 @@ send_xmsg_done:
  * Element mechanics
  */
 
-static void
+static gboolean
 setup_impl(
     XferElement *elt)
 {
@@ -275,10 +275,12 @@ setup_impl(
 	xfer_cancel_with_error(XFER_ELEMENT(self),
 	    "Error starting DirectTCP listen: %s",
 	    device_error_or_status(self->device));
-	return;
+	self->listen_ok = FALSE;
+	return FALSE;
     }
 
     self->listen_ok = TRUE;
+    return TRUE;
 }
 
 static gboolean

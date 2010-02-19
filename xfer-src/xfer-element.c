@@ -43,17 +43,18 @@ xfer_element_init(
     xe->repr = NULL;
 }
 
-static void
+static gboolean
 xfer_element_setup_impl(
     XferElement *elt G_GNUC_UNUSED)
 {
+    return TRUE; /* success */
 }
 
 static gboolean
 xfer_element_start_impl(
     XferElement *elt G_GNUC_UNUSED)
 {
-    return FALSE;
+    return FALSE; /* will not send XMSG_DONE */
 }
 
 static gboolean
@@ -181,11 +182,11 @@ xfer_element_repr(
     return XFER_ELEMENT_GET_CLASS(elt)->repr(elt);
 }
 
-void
+gboolean
 xfer_element_setup(
     XferElement *elt)
 {
-    XFER_ELEMENT_GET_CLASS(elt)->setup(elt);
+    return XFER_ELEMENT_GET_CLASS(elt)->setup(elt);
 }
 
 gboolean
