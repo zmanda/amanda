@@ -51,7 +51,6 @@ mkpdir(
     gid_t	gid)	/* gid for new directories */
 {
     char *dir;
-    char *parent;
     char *p;
     int rc;	/* return code */
 
@@ -65,11 +64,7 @@ mkpdir(
     rc = mkdir(dir, mode);
     if (rc != 0) {
 	if (errno == ENOENT) { /* create parent directory */
-	    parent = stralloc(dir); /* make a copy we can play with */
-	    p = strrchr(parent, '/');
-	    *p = '\0';
-	    rc = mkpdir(parent, mode, uid, gid);
-	    amfree(parent);
+	    rc = mkpdir(dir, mode, uid, gid);
 	    if (rc != 0)
 		return rc;
 	    rc = mkdir(dir, mode);
