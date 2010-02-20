@@ -1,3 +1,7 @@
+2010-02-19  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Report/human.pm: percents not displayed at 100%, print
+	  the end of a string in per-dump summary
+
 2010-02-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/xfer-element.c xfer-src/xfer-element.h: setup now returns a
 	  boolean

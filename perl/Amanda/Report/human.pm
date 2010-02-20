@@ -544,7 +544,9 @@ EOF
 
     my $comp_size = sub {
         my ($stats) = @_;
-        return divzero( 100 * $stats->{outsize}, $stats->{origsize} );
+        return (abs($stats->{outsize} - $stats->{origsize}) < 32)
+          ? "-- "
+          : divzero(100 * $stats->{outsize}, $stats->{origsize});
     };
 
     print $fh swrite(
@@ -638,7 +640,7 @@ EOF
         sprintf("%4d", $full_stats->{tapechunk_count}),
         sprintf("%4d", $incr_stats->{tapechunk_count}),
         (
-            $incr_stats->{tapechunks} > 0
+            $self->{tapechunks}[1] > 0
             ? by_level_count($self->{tapechunks})
             : ""
         )
@@ -814,6 +816,17 @@ sub get_summary_info
     my $dle_info = $report->get_dle_info(@$dle);
     my $last_try = $dle_info->{tries}->[-1];
 
+    my $tail_trunc = sub {
+        my ($str, $len) = @_;
+
+        return (length $str > $len)
+          ? '-' . substr($str, length($str) - ($len - 1), ($len - 1))
+          : $str;
+    };
+    
+    my $host_out = $tail_trunc->($hostname, $col_spec->[0]->[COLSPEC_WIDTH]);
+    my $disk_out = $tail_trunc->($disk,     $col_spec->[1]->[COLSPEC_WIDTH]);
+    
     my $level =
         exists $last_try->{taper}   ? $last_try->{taper}{level}
       : exists $last_try->{chunker} ? $last_try->{chunker}{level}
@@ -942,8 +955,8 @@ sub get_summary_info
     };
 
     return (
-        $col_format_field->(0, $hostname),
-        $col_format_field->(1, $disk),
+        $host_out,
+        $disk_out,
         $col_format_field->(2, $level),
         ($orig_size) ? $col_format_field->(3, $orig_size / $self->{'unit_div'})
         : "",
