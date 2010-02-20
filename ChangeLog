@@ -1,3 +1,9 @@
+2010-02-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Recovery_Clerk.pl: use an unbuffered write to
+	  make fake holding files; don't try to load a dumpcache unless both
+	  server and client components are present
+	* installcheck/Amanda_Xfer.pl: count tests right in skip
+
 2010-02-19  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report/human.pm: percents not displayed at 100%, print
 	  the end of a string in per-dump summary

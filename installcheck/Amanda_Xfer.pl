@@ -958,7 +958,7 @@ SKIP: {
 
 # test Amanda::Xfer::Dest::Taper::DirectTCP; do it twice, once with a cancellation
 SKIP: {
-    skip "not built with ndmp and server", 2 unless
+    skip "not built with ndmp and server", 3 unless
 	Amanda::Util::built_with_component("ndmp") and Amanda::Util::built_with_component("server");
 
     my $RANDOM_SEED = 0xFACADE;

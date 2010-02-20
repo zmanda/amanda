@@ -35,6 +35,7 @@ use Amanda::Xfer qw( :constants );
 use Amanda::Recovery::Clerk;
 use Amanda::Recovery::Scan;
 use Amanda::MainLoop;
+use Amanda::Util;
 
 # and disable Debug's die() and warn() overrides
 Amanda::Debug::disable_die_override();
@@ -230,7 +231,7 @@ my $holding_kb = 64;
     $hdr->{'program'} = "INSTALLCHECK";
     $hdr->{'is_partial'} = 0;
 
-    print $fh $hdr->to_string(32768,32768);
+    Amanda::Util::full_write(fileno($fh), $hdr->to_string(32768,32768), 32768);
 
     # transfer some data to that file
     my $xfer = Amanda::Xfer->new([
@@ -588,8 +589,10 @@ quit_clerk($clerk);
 # test of Amanda::Xfer::Source::Recovery's directtcp mode
 
 SKIP: {
-    skip "not built with ndmp and server", 2 unless
-	Amanda::Util::built_with_component("ndmp") and Amanda::Util::built_with_component("server");
+    skip "not built with ndmp and full client/server", 2 unless
+	    Amanda::Util::built_with_component("ndmp")
+	and Amanda::Util::built_with_component("client")
+	and Amanda::Util::built_with_component("server");
 
     Installcheck::Dumpcache::load("ndmp");
 
