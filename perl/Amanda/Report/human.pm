@@ -823,9 +823,7 @@ sub get_summary_info
           ? '-' . substr($str, length($str) - ($len - 1), ($len - 1))
           : $str;
     };
-    
-    my $host_out = $tail_trunc->($hostname, $col_spec->[0]->[COLSPEC_WIDTH]);
-    my $disk_out = $tail_trunc->($disk,     $col_spec->[1]->[COLSPEC_WIDTH]);
+    my $disk_out = $tail_trunc->($disk, $col_spec->[1]->[COLSPEC_WIDTH]);
     
     my $level =
         exists $last_try->{taper}   ? $last_try->{taper}{level}
@@ -955,7 +953,7 @@ sub get_summary_info
     };
 
     return (
-        $host_out,
+        $hostname,
         $disk_out,
         $col_format_field->(2, $level),
         ($orig_size) ? $col_format_field->(3, $orig_size / $self->{'unit_div'})
