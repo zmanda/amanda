@@ -20,6 +20,7 @@ use Test::More tests => 85;
 
 use strict;
 use warnings;
+use File::Path;
 use Data::Dumper;
 use Carp;
 use POSIX;
@@ -33,6 +34,7 @@ use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Header;
 use Amanda::Feature;
+use Amanda::Util;
 
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
@@ -199,8 +201,12 @@ sub test {
 	if ($params{'dumpspec'}) {
 	    $service->send($cmd_stream, "HOST=^localhost\$\r\n");
 	    $service->send($cmd_stream, "DISK=^$Installcheck::Run::diskname\$\r\n");
-	    # we don't know the datestamp from the dumpcache, so omit this for now
-	    #$service->send($cmd_stream, "DATESTAMP=^$datestamp\$\r\n");
+	    if ($params{'holding'}) {
+		$service->send($cmd_stream, "DATESTAMP=^20111111090909\$\r\n");
+	    } else {
+		my $timestamp = $Installcheck::Dumpcache::timestamps[0];
+		$service->send($cmd_stream, "DATESTAMP=^$timestamp\$\r\n");
+	    }
 	}
 	$service->send($cmd_stream, "CONFIG=TESTCONF\r\n");
 	if ($params{'digit_end'}) {
@@ -405,12 +411,17 @@ sub test {
 }
 
 sub make_holding_file {
-    my $hdr = Amanda::Header->new();
-    my $filename = "$Installcheck::TMP/holdingfile";
+
+    my $hdir = "$holdingdir/20111111090909";
+    my $safe_diskname = Amanda::Util::sanitise_filename($diskname);
+    my $filename = "$hdir/localhost.$safe_diskname.3";
+
+    mkpath($hdir) or die("Could not create $hdir");
     open(my $fh, ">", $filename) or die "opening '$filename': $!";
 
     # header plus 128k
 
+    my $hdr = Amanda::Header->new();
     $hdr->{'type'} = $Amanda::Header::F_DUMPFILE;
     $hdr->{'datestamp'} = '20111111090909';
     $hdr->{'dumplevel'} = 3;
@@ -440,13 +451,14 @@ sub make_holding_file {
 
 ## normal operation
 
-my $holdingfile = make_holding_file();
 Installcheck::Dumpcache::load('basic');
+my $holdingfile = make_holding_file();
 my $loaded_dumpcache = 'basic';
 
 for my $splits (0, 'basic', 'parts') { # two flavors of 'true'
     if ($splits and $splits ne $loaded_dumpcache) {
 	Installcheck::Dumpcache::load($splits);
+	my $holdingfile = make_holding_file();
 	$loaded_dumpcache = $splits;
     }
     for my $emulate ('inetd', 'amandad') {

@@ -1,4 +1,8 @@
 2010-02-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amidxtaped.pl: installcheck improvements:
+	  create a "real" holding file; send a DATESTAMP= command
+
+2010-02-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Recovery/Planner.pm: add support for predefined plans
 	* installcheck/Amanda_Recovery_Planner.pl: test
 
