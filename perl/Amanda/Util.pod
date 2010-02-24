@@ -202,7 +202,64 @@ Invoke the C<fsync> syscall.
 Set or clear the C<O_NONBLOCK> fd flag on $fd; returns a negative value on
 failure, or 0 on success.
 
+=item openbsd_fd_inform()
+
+Due to a particularly poor user-space implementation of threading on OpenBSD,
+executables that are run with nonstandard file descriptors open (fd > 2) find
+those descriptors to be in a nonblocking state.  This particularly affects
+amandad services, which begin with several file descriptors in the 50's open.
+
+This function "informs" the C library about these descriptors by making an
+C<fcntl(fd, F_GETFL)> call.  This is otherwise harmless, and is only perfomed
+on OpenBSD.
+
+=item built_with_component($comp)
+
+Returns true if Amanda was built with the given component.  Component names are
+in C<config/amanda/components.m4>.
+
 =back
+
+=head1 TCP Utilities
+
+These are thin wrappers over functions in C<common-src/stream.h> and other related
+functions.
+
+=over
+
+=item stream_server
+
+    my $family = $Amanda::Util::AF_INET;
+    my $bufsize = $Amanda::Util::STREAM_BUFSIZE;
+    my ($listensock, $port) = Amanda::Util::stream_server(
+	    $family, $bufsize, $bufsize, $priv);
+
+This function creates a new socket and binds it to a port, returning both the
+socket and port.  If the socket is -1, then an error occurred and is available
+in C<$!>.  The constants C<$AF_INET> and C<$STREAM_BUFSIZE> are universally
+used when calling this function.  If the final argument, C<$priv>, is true,
+then a the function opens a privileged port (below 1024).
+
+=item stream_accept
+
+    my $sock = Amanda::Util::stream_accept(
+	    $listen_sock, $timeout, $bufsize, $bufsize);
+
+This function accepts a connection on a listening socket.  If the connection is
+not made within C<$timeout> seconds, or some other error occurs, then the
+function returns -1.  The bufsize arguments are applied to the new socket.
+
+=item check_security
+
+    my $ok = Amanda::Util::check_security($socket, $userstr);
+
+This function takes a socket descriptor and a string of the form C<"USER foo">
+and performs BSD-style checks on that descriptor.  These include verifying
+round-trip DNS sanity; check that the user is in C<.rhosts> or C<.amandahosts>,
+and checking that the remote port is reserved.  Returns an error string on
+error, or C<undef> on success.
+
+=bac k
 
 =head1 String Utilities
 
@@ -279,10 +336,15 @@ already be loaded.
 meaning to a filesystem with underscores.  This operation is I<not> reversible,
 and distinct input filenames I<may> produce identical output filenames.
 
-=item built_with_component($comp)
+=item unmarshal_tapespec($tapespec)
+=item marshal_tapespec($filelist)
 
-Returns true if Amanda was built with the given component.  Component names are
-in C<config/amanda/components.m4>.
+These functions convert between a tapespec -- formerly, and confusingly, called
+a "tapelist" -- and a perl data structure like
+
+    [	$label1 => [ $filenum1, $filenum2, .. ],
+	$label2 => [ $filenum1, $filenum2, .. ],
+    ]
 
 =back
 

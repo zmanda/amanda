@@ -1,4 +1,4 @@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 94;
+use Test::More tests => 108;
 
 use lib "@amperldir@";
 use warnings;
@@ -274,3 +274,36 @@ $fl = Amanda::Util::file_lock->new($filename);
 is($fl->data, undef, "data is initially undefined");
 $fl->lock();
 is($fl->data, "THIS IS MY DATA", "data is set correctly after lock");
+
+## check (un)marshal_tapespec
+
+my @tapespecs = (
+    "FOO:1,2;BAR:3" => [ FOO => [ 1, 2 ], BAR => [ 3 ] ],
+    "SE\\;MI:0;COL\\:ON:3" => [ 'SE;MI' => [0], 'COL:ON' => [3] ],
+    "CO\\,MMA:88,99;BACK\\\\SLASH:3" => [ 'CO,MMA' => [88,99], 'BACK\\SLASH' => [3] ],
+    "FUNNY\\;:1;CHARS\\::2;AT\\,:3;END\\\\:4" =>
+	[ 'FUNNY;' => [ 1 ], 'CHARS:' => [ 2 ], 'AT,' => [ 3 ], 'END\\' => [ 4 ], ],
+    "\\;FUNNY:1;\\:CHARS:2;\\,AT:3;\\\\BEG:4" =>
+	[ ';FUNNY' => [ 1 ], ':CHARS' => [ 2 ], ',AT' => [ 3 ], '\\BEG' => [ 4 ], ],
+);
+
+while (@tapespecs) {
+    my $tapespec = shift @tapespecs;
+    my $filelist = shift @tapespecs;
+    is(Amanda::Util::marshal_tapespec($filelist), $tapespec,
+	    "marshal '$tapespec'");
+    is_deeply(Amanda::Util::unmarshal_tapespec($tapespec), $filelist,
+	    "unmarshal '$tapespec'");
+}
+
+is_deeply(Amanda::Util::unmarshal_tapespec("x:100,99"), [ x => [99,100] ],
+    "filenums are sorted when unmarshalled");
+
+is_deeply(Amanda::Util::marshal_tapespec([ x => [100, 99] ]), "x:100,99",
+    "un-sorted filenums are NOT sorted when marshalled");
+
+is_deeply(Amanda::Util::unmarshal_tapespec("x:34,34"), [ x => [34, 34] ],
+    "duplicate filenums are NOT collapsed when unmarshalled");
+
+is_deeply(Amanda::Util::marshal_tapespec([ x => [34, 34] ]), "x:34,34",
+    "duplicate filenums are NOT collapsed when marshalled");

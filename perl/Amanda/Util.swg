@@ -31,9 +31,11 @@
 #include "full-read.h"
 #include "full-write.h"
 #include "fsusage.h"
+#include "stream.h"
 /* use a relative path here to avoid conflicting with Perl's util.h. */
 #include "../common-src/util.h"
 #include "file.h"
+#include "sockaddr-util.h"
 %}
 
 %perlcode %{
@@ -490,6 +492,113 @@ static guint64 gettimeofday_for_perl(void)
     g_get_current_time(&t);
     return (guint64)t.tv_sec * G_USEC_PER_SEC + (guint64)t.tv_usec;
 }
+%}
+
+void openbsd_fd_inform(void);
+
+/*
+ * Streams
+ *
+ * TODO: this should move to Amanda::Security when the rest of the Security API
+ * is available from Perl.
+ */
+
+enum { AF_INET };
+enum { STREAM_BUFSIZE };
+%typemap(in, numinputs=0) in_port_t *port_ARGOUT (in_port_t port) {
+    $1 = &port;
+}
+%typemap(argout) in_port_t *port_ARGOUT {
+    $result = sv_2mortal(newSViv(*$1));
+    argvi++;
+}
+/* avoid BigInts for socket fd's */
+%{ typedef int socketfd; %}
+%typemap(out) socketfd {
+    $result = sv_2mortal(newSViv($1));
+    argvi++;
+}
+socketfd stream_server(int family, in_port_t *port_ARGOUT, size_t sendsize,
+		  size_t recvsize, gboolean privileged);
+
+socketfd stream_accept(int fd, int timeout, size_t sendsize, size_t recvsize);
+
+%newobject check_security_fd;
+%rename(check_security) check_security_fd;
+%inline %{
+char *check_security_fd(int fd, char *userstr)
+{
+    socklen_t_equiv i;
+    struct sockaddr_in addr;
+    char *errstr;
+
+    /* get the remote address */
+    i = SIZEOF(addr);
+    if (getpeername(fd, (struct sockaddr *)&addr, &i) == -1) {
+	return g_strdup_printf("getpeername: %s", strerror(errno));
+    }
+
+    /* require IPv4 and not port 20 -- apparently this was a common attack
+     * vector for much older Amandas */
+    if ((addr.sin_family != (sa_family_t)AF_INET)
+		|| (ntohs(addr.sin_port) == 20)) {
+	return g_strdup_printf("connection rejected from %s family %d port %d",
+             inet_ntoa(addr.sin_addr), addr.sin_family, htons(addr.sin_port));
+    }
+
+    /* call out to check_security */
+    if (!check_security((sockaddr_union *)&addr, userstr, 0, &errstr))
+	return errstr;
+
+    return NULL;
+}
+%}
+amglue_export_ok(
+	stream_server stream_accept check_security);
+amglue_export_tag(constants,
+	$AF_INET $STREAM_BUFSIZE);
+
+%perlcode %{
+
+# these functions were verified to work similarly to those in
+# common-src/tapelist.c - they pass the same tests, at least.
+
+sub marshal_tapespec {
+    my ($filelist) = @_;
+    my @filelist = @$filelist; # make a copy we can wreck
+    my @specs;
+
+    while (@filelist) {
+	my $label = shift @filelist;
+	my $files = shift @filelist;
+
+	$label =~ s/([\\:;,])/\\$1/g;
+	push @specs, "$label:" . join(",", @$files);
+    }
+    return join(";", @specs);
+}
+
+sub unmarshal_tapespec {
+    my ($tapespec) = @_;
+    my @filelist;
+
+    # use a lookbehind to mask out any quoted ;'s
+    my @volumes = split(/(?<!\\);/, $tapespec);
+    for my $vol (@volumes) {
+	my ($label, $files) = ($vol =~ /(.+):([\d,]+)/);
+
+	$label =~ s/\\([\\:;,])/$1/g;
+	push @filelist, $label;
+
+	my @files = split(/,/, $files);
+	@files = map { $_+0 } @files;
+	@files = sort { $a <=> $b } @files;
+	push @filelist, \@files;
+    }
+
+    return \@filelist;
+}
+
 %}
 
 /* -------------------------------------------------------------------------

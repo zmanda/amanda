@@ -1,3 +1,8 @@
+2010-02-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Util.pod perl/Amanda/Util.swg: stream support and
+	  tapespec marhsalling support
+	* installcheck/Amanda_Util.pl: tests (for tapespec anyway)
+
 2010-02-23  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report/human.pm: fixed hostname truncation
 
