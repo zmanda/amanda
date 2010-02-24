@@ -1,4 +1,11 @@
 2010-02-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amanda.h installcheck/Installcheck/ClientService.pm
+	  perl/Amanda/Constants.pm.in: move stream constants to
+	  Amanda::Constants
+	* perl/Makefile.am perl/Amanda/ClientService.pm: new package
+	* installcheck/Makefile.am installcheck/Amanda_ClientService.pl: tests
+
+2010-02-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Util.pod perl/Amanda/Util.swg: stream support and
 	  tapespec marhsalling support
 	* installcheck/Amanda_Util.pl: tests (for tapespec anyway)

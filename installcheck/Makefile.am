@@ -9,6 +9,7 @@ include $(top_srcdir)/config/automake/scripts.am
 common_tests = \
 	Amanda_Archive \
 	Amanda_Config \
+	Amanda_ClientService \
 	Amanda_Debug \
 	Amanda_Feature \
 	Amanda_IPC_Binary \

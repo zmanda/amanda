@@ -1191,8 +1191,7 @@ typedef enum {
 /* Constants to define the number of pre-opened pipes between amandad and
  * its services */
 
-/* If you change these (don't!), change them in
- * installcheck/Installcheck/ClientService.pm, too */
+/* If you change these (don't!), change them in perl/Amanda/Constants.pm, too */
 #define DATA_FD_COUNT   3               /* number of general-use pipes */
 #define DATA_FD_OFFSET  50
 

@@ -233,6 +233,10 @@ Amanda_DATA += Amanda/Interactive.pm
 endif
 EXTRA_DIST += Amanda/Interactive.pm
 
+# PACKAGE: Amanda::ClientService
+Amanda_DATA += Amanda/ClientService.pm
+EXTRA_DIST += Amanda/ClientService.pm
+
 if WANT_SERVER
 # PACKAGE: Amanda::Interactive::*
 AmandaInteractivedir = $(amperldir)/Amanda/Interactive

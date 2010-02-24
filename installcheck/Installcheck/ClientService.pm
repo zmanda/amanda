@@ -155,6 +155,7 @@ method completely replaces any previous expectations.
 use base qw( Exporter );
 use warnings;
 use strict;
+use Amanda::Constants;
 use Amanda::MainLoop;
 use Amanda::Paths;
 use Amanda::Util;
@@ -165,9 +166,8 @@ use Data::Dumper;
 use IO::Handle;
 use Socket;
 
-# these will need to be synchronized to the values in amanda.h
-use constant DATA_FD_OFFSET => 50;
-use constant DATA_FD_COUNT => 3;
+use constant DATA_FD_OFFSET => $Amanda::Constants::DATA_FD_OFFSET;
+use constant DATA_FD_COUNT => $Amanda::Constants::DATA_FD_COUNT;
 our @EXPORT_OK = qw(DATA_FD_OFFSET DATA_FD_COUNT);
 our %EXPORT_TAGS = ( constants => [ @EXPORT_OK ] );
 
