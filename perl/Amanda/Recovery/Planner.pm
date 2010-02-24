@@ -68,7 +68,8 @@ the user-configured algorithm should be applied.
 
 =head2 INSTANTIATING A PLAN
 
-Call C<make_plan> with the desired dumpspecs, a changer, and a callback:
+For most purposes, you should call C<make_plan> with the desired dumpspecs, a
+changer, and a callback:
 
     Amanda::Recovery::Planner::make_plan(
 	dumpspecs => [ $ds1, $ds2, .. ],
@@ -107,6 +108,37 @@ Some algorithms may consult the changer's inventory to determine what volumes
 are available.  It is because of this asynchronous operation that C<make_plan>
 takes a callback instead of simply returning the plan.
 
+=head3 Pre-defined Plans
+
+In some cases, you already know exactly where the data is, and just need a
+proper plan object to hand to L<Amanda::Recovery::Clerk>.  One such case is a
+recovery from a holding file.  In this case, use C<make_plan> like this:
+
+    Amanda::Recovery::Planner::make_plan(
+	holding_file => $hf,
+	dumpspec => $ds,
+	plan_cb => $plan_cb);
+
+This will create a plan to recover the data in C<$fh>.  The dumpspec is
+optional, but if present will be used to verify that the holding file contains
+the appropriate dump.
+
+Similarly, if you have a list of label:fileno pairs to use, call C<make_plan>
+like this:
+
+    Amanda::Recovery::Planner::make_plan(
+	filelist => [
+	    $label => [ $filenum, $filenum, .. ],
+	    $label => ..
+	],
+	dumpspec => $ds,
+	plan_cb => $plan_cb);
+
+This will verify the requested files against the catalog and the dumpspec, then
+hand back a plan that essentially embodies C<filelist>.
+
+Note that both of these functions will only create a single-dump plan.
+
 =head2 PLANS
 
 A Plan is a perl object describing the process for recovering zero or more
@@ -144,23 +176,20 @@ sub make_plan {
     $params{'dumpspecs'} = [ $params{'dumpspec'} ]
 	if exists $params{'dumpspec'};
 
-    for my $rq_param qw(changer plan_cb dumpspecs) {
-	croak "required parameter '$rq_param' mising"
-	    unless exists $params{$rq_param};
-    }
-
-    my $debug = $Amanda::Config::debug_recovery;
-    $debug = $params{'debug'}
-	if defined $params{'debug'} and $params{'debug'} > $debug;
-
     my $plan = Amanda::Recovery::Planner::Plan->new({
 	algo => $params{'algorithm'},
 	chg => $params{'changer'},
-	debug => $debug,
+	debug => $params{'debug'},
 	one_dump_per_part => $params{'one_dump_per_part'},
     });
 
-    $plan->make_plan($params{'dumpspecs'}, $params{'plan_cb'});
+    if ($params{'holding_file'}) {
+	$plan->make_holding_plan(%params);
+    } elsif ($params{'filelist'}) {
+	$plan->make_plan_from_filelist(%params);
+    } else {
+	$plan->make_plan(%params);
+    }
 }
 
 package Amanda::Recovery::Planner::Plan;
@@ -168,8 +197,10 @@ package Amanda::Recovery::Planner::Plan;
 use strict;
 use warnings;
 use Data::Dumper;
+use Carp;
 
 use Amanda::Device qw( :constants );
+use Amanda::Holding;
 use Amanda::Header;
 use Amanda::Config qw( :getconf config_dir_relative );
 use Amanda::Debug qw( :logging );
@@ -180,12 +211,23 @@ use Amanda::Tapelist;
 sub new {
     my $class = shift;
     my $self = shift;
+
+    $self->{'debug'} = $Amanda::Config::debug_recovery
+	if not defined $self->{'debug'}
+	    or $Amanda::Config::debug_recovery > $self->{'debug'};
+
     return bless($self, $class);
 }
 
 sub make_plan {
     my $self = shift;
-    my ($dumpspecs, $plan_cb) = @_;
+    my %params = @_;
+
+    for my $rq_param qw(changer plan_cb dumpspecs) {
+	croak "required parameter '$rq_param' mising"
+	    unless exists $params{$rq_param};
+    }
+    my $dumpspecs = $params{'dumpspecs'};
 
     # first, get the set of dumps that match these dumpspecs
     my @dumps = Amanda::DB::Catalog::get_dumps(dumpspecs => $dumpspecs);
@@ -285,7 +327,124 @@ sub make_plan {
 
     $self->{'dumps'} = \@dumps;
 
-    Amanda::MainLoop::call_later($plan_cb, undef, $self);
+    Amanda::MainLoop::call_later($params{'plan_cb'}, undef, $self);
+}
+
+sub make_holding_plan {
+    my $self = shift;
+    my %params = @_;
+
+    for my $rq_param qw(holding_file plan_cb) {
+	croak "required parameter '$rq_param' mising"
+	    unless exists $params{$rq_param};
+    }
+
+    # This is a little tricky.  The idea is to open up the holding file and
+    # read its header, then find that dump in the catalog.  This may seem like
+    # the long way around, but it adds an extra layer of security to the
+    # recovery process, as it prevents recovery from arbitrary files on the
+    # filesystem that are not under a recognized holding directory.
+
+    my $hdr = Amanda::Holding::get_header($params{'holding_file'});
+    if (!$hdr or $hdr->{'type'} != $Amanda::Header::F_DUMPFILE) {
+	return $params{'plan_cb'}->(
+		"could not open '$params{holding_file}': missing or not a holding file");
+    }
+
+    # look up this holding file in the catalog, adding the dumpspec we were
+    # given so that get_dumps will compare against it for us.
+    my $dump_timestamp = $hdr->{'datestamp'};
+    my $hostname = $hdr->{'name'};
+    my $diskname = $hdr->{'disk'};
+    my $level = $hdr->{'dumplevel'};
+    my @dumps = Amanda::DB::Catalog::get_dumps(
+	    $params{'dumpspec'}? (dumpspecs => [ $params{'dumpspec'} ]) : (),
+	    dump_timestamp => $dump_timestamp,
+	    hostname => $hostname,
+	    diskname => $diskname,
+	    level => $level,
+	    holding => 1,
+	);
+
+    if (!@dumps) {
+	return $params{'plan_cb'}->(
+		"Specified holding file does not match dumpspec");
+    }
+
+    # this would be weird..
+    $self->dbg("got multiple dumps from Amanda::DB::Catalog for a holding file!")
+	if (@dumps > 1);
+
+    # arbitrarily keepy the first dump if we got several
+    $self->{'dumps'} = [ $dumps[0] ];
+
+    Amanda::MainLoop::call_later($params{'plan_cb'}, undef, $self);
+}
+
+sub make_plan_from_filelist {
+    my $self = shift;
+    my %params = @_;
+
+    for my $rq_param qw(filelist plan_cb) {
+	croak "required parameter '$rq_param' mising"
+	    unless exists $params{$rq_param};
+    }
+
+    # This is similarly tricky - in this case, we search for dumps matching
+    # both the dumpspec and the labels, filter that down to just the parts we
+    # want, and then check that only one dump remains.  Then we look up that
+    # dump.
+
+    my @labels;
+    my %files;
+    my @filelist = @{$params{'filelist'}};
+    while (@filelist) {
+	my $label = shift @filelist;
+	push @labels, $label;
+	$files{$label} = shift @filelist;
+    }
+
+    my @parts = Amanda::DB::Catalog::get_parts(
+	    $params{'dumpspec'}? (dumpspecs => [ $params{'dumpspec'} ]) : (),
+	    labels => [ @labels ]);
+
+    # filter down to the parts that match filelist (using %files)
+    my $in_filelist = sub {
+	my $filenum = $_->{'filenum'};
+	grep { $_ == $filenum } @{$files{$_->{'label'}}};
+    };
+    @parts = grep $in_filelist, @parts;
+
+    # extract the dumps, using a hash to ensure uniqueness
+    my %dumps = map { my $d = $_->{'dump'}; ($d, $d) } @parts;
+    my @dumps = values %dumps;
+
+    if (!@dumps) {
+	return $params{'plan_cb'}->(
+		"Specified file list does not match dumpspec");
+    } elsif (@dumps > 1) {
+	return $params{'plan_cb'}->(
+		"Specified file list matches multiple dumps; cannot continue recovery");
+    }
+
+    # now, because of the weak linking used by Amanda::DB::Catalog, we need to
+    # re-query for this dump.  If we don't do this, the parts will all be
+    # garbage-collected when we hand back the plan.  This is, chartiably, "less than
+    # ideal".  Note that this has the side-effect of filling in any parts of the
+    # dump that were missing from the filelist.
+    @dumps = Amanda::DB::Catalog::get_dumps(
+	hostname => $dumps[0]->{'hostname'},
+	diskname => $dumps[0]->{'diskname'},
+	level => $dumps[0]->{'level'},
+	dump_timestamp => $dumps[0]->{'dump_timestamp'},
+	write_timestamp => $dumps[0]->{'write_timestamp'},
+	dumpspecs => $params{'dumpspecs'});
+
+    # sanity check
+    die unless @dumps;
+    $self->{'dumps'} = [ $dumps[0] ];
+
+    Amanda::MainLoop::call_later($params{'plan_cb'}, undef, $self);
 }
 
 sub split_dumps_per_part {

@@ -1,4 +1,8 @@
 2010-02-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Recovery/Planner.pm: add support for predefined plans
+	* installcheck/Amanda_Recovery_Planner.pl: test
+
+2010-02-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Xfer.swg: fix != override
 	* installcheck/Amanda_Xfer.pl: test
 	* perl/Amanda/Changer/robot.pm: don't use bogus 'device' failure type

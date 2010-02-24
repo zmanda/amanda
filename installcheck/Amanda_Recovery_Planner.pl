@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 7;
+use Test::More tests => 11;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -56,17 +56,21 @@ if ($cfg_result != $CFGERR_OK) {
 my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
 my $tapelist_fn = config_dir_relative(getconf($CNF_TAPELIST));
 my $holdingdir = "$Installcheck::TMP/holding";
+my %holding_filenames;
 my $write_timestamp;
 my $output;
 
 sub make_holding_file {
-    my ($dump) = @_;
+    my ($name, $dump) = @_;
 
     my $dir = "$holdingdir/$dump->{dump_timestamp}";
     my $safe_disk = $dump->{'diskname'};
     $safe_disk =~ tr{/}{_};
     my $filename = "$dir/$dump->{hostname}.$safe_disk";
     mkpath($dir);
+
+    # save the filename for later
+    $holding_filenames{$name} = $filename;
 
     # (note that multi-chunk holding files are not used at this point)
     my $hdr = Amanda::Header->new();
@@ -125,7 +129,7 @@ while (<DATA>) {
 	    'dump_timestamp' => $2,	'hostname' => $3,	    'diskname' => $4,
 	    'level' => $5+0,		'status' => $6,		    'kb' => $7,
 	};
-	make_holding_file($dump);
+	make_holding_file($1, $dump);
 	next;
     }
 
@@ -335,6 +339,65 @@ is_plan(make_plan_sync(
     ],
     "plan for a multipart dump, one_dump_per_part");
 
+is_plan(make_plan_sync(
+	    dumpspec => ds("oldbox", "^/opt", "20080414144444"),
+	    holding_file => $holding_filenames{'oldbox_opt_20080414144444_holding'}),
+    [
+	[   "oldbox", "/opt", "20080414144444", 0, [
+		'20080414144444/oldbox._opt',
+	    ],
+	],
+    ],
+    "make_plan creates an appropriate plan for an explicit holding-disk recovery");
+
+is_plan(make_plan_sync(
+	    holding_file => $holding_filenames{'oldbox_opt_20080414144444_holding'}),
+    [
+	[   "oldbox", "/opt", "20080414144444", 0, [
+		'20080414144444/oldbox._opt',
+	    ],
+	],
+    ],
+    "same, without a dumpspec");
+
+is_plan(make_plan_sync(
+	    dumpspec => ds("euclid", "/home/dustin/code/backuppc"),
+	    filelist => [
+		'Conf-013' => [1, 2, 3],
+		'Conf-014' => [1, 2, 3],
+	    ],
+	    changer => $changer),
+    [
+	[   "euclid", "/home/dustin/code/backuppc", "20100127172011", 0, [
+		'Conf-013' => 1,
+		'Conf-013' => 2,
+		'Conf-013' => 3,
+		'Conf-014' => 1,
+		'Conf-014' => 2,
+		'Conf-014' => 3,
+	    ],
+	],
+    ],
+    "plan based on filelist, with a dumpspec");
+
+is_plan(make_plan_sync(
+	    filelist => [
+		'Conf-013' => [1, 2, 3],
+		'Conf-014' => [1, 2, 3],
+	    ],
+	    changer => $changer),
+    [
+	[   "euclid", "/home/dustin/code/backuppc", "20100127172011", 0, [
+		'Conf-013' => 1,
+		'Conf-013' => 2,
+		'Conf-013' => 3,
+		'Conf-014' => 1,
+		'Conf-014' => 2,
+		'Conf-014' => 3,
+	    ],
+	],
+    ],
+    "plan based on filelist, without a dumpspec");
 
 __DATA__
 # a short-datestamp logfile with only a single, single-part file in it
