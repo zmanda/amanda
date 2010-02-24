@@ -514,7 +514,8 @@ sub new {
 %perlcode {
 use overload '""' => sub { $_[0]->repr(); };
 # overload comparison, so users can ask if one obj == another
-use overload '==' => sub { Amanda::Xfer::same_elements($_[0], $_[1]); };
+use overload '==' => sub {     Amanda::Xfer::same_elements($_[0], $_[1]); };
+use overload '!=' => sub { not Amanda::Xfer::same_elements($_[0], $_[1]); };
 }
 %enddef
 

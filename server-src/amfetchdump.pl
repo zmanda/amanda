@@ -317,7 +317,7 @@ sub main {
     });
 
     $subs{'xfer_src_cb'} = make_cb(xfer_src_cb => sub {
-	my ($errs, $hdr, $xfer_src) = @_;
+	my ($errs, $hdr, $xfer_src, $directtcp_supported) = @_;
 	return failure(join("; ", @$errs)) if $errs;
 
 	# and set up the destination..

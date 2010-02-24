@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -437,15 +437,14 @@ loop so that it will begin generating events.  The arguments to the
 callback depend on the event source, but the first argument is always
 the source itself.  Unless specified, no other arguments are provided.
 
-Event sources persist until they are removed with C<< $src->remove()
->>, even if the source itself is no longer accessible from Perl.
+Event sources persist until they are removed with
+C<< $src->remove() >>, even if the source itself is no longer accessible from Perl.
 Although Glib supports it, there is no provision for "automatically"
 removing an event source.  Also, calling C<< $src->remove() >> more than
 once is a potentially-fatal error. As an example:
 
   sub start_timer {
     my ($loops) = @_;
-
     Amanda::MainLoop::timeout_source(200)->set_callback(sub {
       my ($src) = @_;
       print "timer\n";

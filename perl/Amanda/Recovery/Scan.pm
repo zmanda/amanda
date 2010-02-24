@@ -237,7 +237,7 @@ sub find_volume {
     $subs{'parse_inventory'} = make_cb(parse_inventory => sub {
 	(my $err, $inventory) = @_;
 
-	# TODO: handle error
+	return $subs{'handle_error'}->($err, undef) if $err;
 
 	# throw out the inventory result and move on if the situation has
 	# changed while we were waiting

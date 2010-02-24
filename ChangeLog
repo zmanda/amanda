@@ -1,4 +1,16 @@
 2010-02-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Xfer.swg: fix != override
+	* installcheck/Amanda_Xfer.pl: test
+	* perl/Amanda/Changer/robot.pm: don't use bogus 'device' failure type
+	* perl/Amanda/MainLoop.pod: POD tweaks
+	* perl/Amanda/Recovery/Clerk.pm installcheck/Amanda_Recovery_Clerk.pl
+	  server-src/amfetchdump.pl: add directtcp_supported arg to
+	  xfer_src_cb; finish device when quitting clerk
+	* perl/Amanda/Recovery/Scan.pm: add error handling
+	* perl/Amanda/Header.swg perl/Amanda/Header.pod: add orig_size
+	* recover-src/extract_list.c: fix header debugging
+
+2010-02-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amanda.h installcheck/Installcheck/ClientService.pm
 	  perl/Amanda/Constants.pm.in: move stream constants to
 	  Amanda::Constants

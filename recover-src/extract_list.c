@@ -1874,7 +1874,7 @@ extract_files_child(
     }
 
     if(ctl_data->file.type != F_DUMPFILE) {
-	print_header(stdout, &ctl_data->file);
+	dump_dumpfile_t(&ctl_data->file);
 	error(_("bad header"));
 	/*NOTREACHED*/
     }

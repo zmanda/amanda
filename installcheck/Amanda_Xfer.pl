@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 33;
+use Test::More tests => 37;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -1158,3 +1158,12 @@ SKIP: {
     pass("Three xfers interlinked via DirectTCP complete successfully");
 }
 
+# test element comparison
+{
+    my $a = Amanda::Xfer::Filter::Xor->new(0);
+    my $b = Amanda::Xfer::Filter::Xor->new(1);
+    ok($a == $a, "elements compare equal to themselves");
+    ok(!($a == $b), ".. and not to other elements");
+    ok(!($a != $a), "elements do not compare != to themselves");
+    ok($a != $b, ".. but are != to other elements");
+}

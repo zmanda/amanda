@@ -45,7 +45,7 @@ Amanda::Recovery::Clerk - handle assembling dumpfiles from multiple parts
     });
 
     $subs{'xfer_src_cb'} = make_cb(xfer_src_cb => sub {
-	my ($errors, $header, $xfer_src) = @_;
+	my ($errors, $header, $xfer_src, $directtcp_supported) = @_;
 	die join("\n", @$errors) if ($errors);
 	print "restoring from " . $header->summary() . "\n";
 
@@ -125,10 +125,11 @@ During this operation, the Clerk looks up the first part in the dump and
 fetches its header.  Callers often need this header to construct a transfer
 appropriate to the data on the volume.  The C<$xfer_src_cb> is called with a
 transfer element and with the first header, or with a list of errors if
-something goes wrong:
+something goes wrong.  The final argument is true if the device from which
+the restore is done supports directtcp.
 
-    $xfer_src_cb->(undef, $header, $xfer_src); # OK
-    $xfer_src_cb->([ $err, $err2 ], undef, undef); # errors
+    $xfer_src_cb->(undef, $header, $xfer_src, $dtcp_supp); # OK
+    $xfer_src_cb->([ $err, $err2 ], undef, undef, undef); # errors
 
 Once C<$xfer_src_cb> has been called, build the transfer element into a
 transfer, and start the transfer.  Send all transfer messages to the clerk:
@@ -307,6 +308,7 @@ sub quit {
     # if we have a reservation, we need to release it; otherwise, we can
     # just call finished_cb
     if ($self->{'current_res'}) {
+	$self->{'current_dev'}->finish();
 	$self->{'current_res'}->release(finished_cb => $params{'finished_cb'});
     } else {
 	$params{'finished_cb'}->();
@@ -520,7 +522,8 @@ sub _maybe_start_part {
 	    $xfer_state->{'xfer_src_ready'} = 0;
 
 	    $self->dbg("successfully located first part for recovery");
-	    return $cb->(undef, $on_vol_hdr, $xfer_state->{'xfer_src'});
+	    return $cb->(undef, $on_vol_hdr, $xfer_state->{'xfer_src'},
+			    $dev->directtcp_supported());
 	} else {
 	    # notify caller of the part
 	    $self->{'feedback'}->notif_part($next_label, $next_filenum, $on_vol_hdr);
@@ -562,7 +565,7 @@ sub _maybe_start_part {
 	    $self->{'feedback'}->notif_holding($next_filename, $on_disk_hdr);
 
 	    $self->dbg("successfully located holding file for recovery");
-	    return $cb->(undef, $on_disk_hdr, $xfer_state->{'xfer_src'});
+	    return $cb->(undef, $on_disk_hdr, $xfer_state->{'xfer_src'}, 0);
 	}
 	# (nothing to do until the xfer is done)
     });
@@ -578,7 +581,7 @@ sub _maybe_start_part {
 	    $self->{'xfer_state'} = undef;
 
 	    return $xfer_state->{'xfer_src_cb'}->($xfer_state->{'errors'},
-			undef, undef);
+			undef, undef, undef);
 	} else {
 	    # cancelling the xfer will eventually invoke recovery_cb
 	    # via the XMSG_DONE

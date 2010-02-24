@@ -102,6 +102,7 @@ A header object has the following keys:
  partnum
  totalparts         (-1 == UNKNOWN)
  blocksize
+ orig_size
 
 C<type> is one of the following constants, which are availble for
 import in the tag C<:constants>:

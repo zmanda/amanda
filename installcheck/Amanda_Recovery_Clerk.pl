@@ -325,7 +325,7 @@ sub try_recovery {
     });
 
     $subs{'xfer_src_cb'} = make_cb(xfer_src_cb => sub {
-	my ($errors, $header, $xfer_src) = @_;
+	my ($errors, $header, $xfer_src, $dtcp_supp) = @_;
 
 	# simulate errors for xfail, below
 	if ($errors) {
@@ -341,6 +341,9 @@ sub try_recovery {
 	    $header->{'disk'} eq $params{'dump'}->{'diskname'} &&
 	    $header->{'datestamp'} eq $params{'dump'}->{'dump_timestamp'} &&
 	    $header->{'dumplevel'} == $params{'dump'}->{'level'};
+
+	die if $params{'expect_directtcp_supported'} and !$dtcp_supp;
+	die if !$params{'expect_directtcp_supported'} and $dtcp_supp;
 
 	my $xfer;
 	my $xfer_dest;
@@ -617,6 +620,7 @@ SKIP: {
 	    { label => 'TESTCONF01', filenum => 1 },
 	),
 	directtcp => 1,
+	expect_directtcp_supported => 1,
 	msg => "recovery of a real dump via NDMP and directtcp");
     quit_clerk($clerk);
 }

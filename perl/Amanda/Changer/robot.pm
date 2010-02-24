@@ -620,8 +620,7 @@ sub load_unlocked {
 	} elsif ($device->status & $DEVICE_STATUS_VOLUME_UNLABELED) {
 	    $label = undef;
 	} else {
-	    return $self->make_error("failed", $params{'res_cb'},
-		    reason => "device",
+	    return $self->make_error("fatal", $params{'res_cb'},
 		    message => "while waiting for '$device_name' to become ready: "
 			. $device->error_or_status());
 	}

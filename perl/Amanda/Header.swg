@@ -74,6 +74,7 @@ typedef struct {
     int partnum;
     int totalparts; /* -1 == UNKNOWN */
     size_t blocksize;
+    off_t  orig_size;
 
     %extend {
 	/* constructor */
