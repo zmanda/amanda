@@ -68,7 +68,7 @@ A single multi-part dump with nine parts (using a fallback_splitsize of 128k).
 
 =head2 compress
 
-A single dump of C<$diskname/dir> with server-side compression enabled.
+A single dump of C<$diskname> with server-side compression enabled.  This 
 
 =head2 multi
 
@@ -161,6 +161,9 @@ $flavors{'multi'} = sub {
     ok(Installcheck::Run::run('amdump', 'TESTCONF', '-otpchanger=', '-otapedev='),
 	"amdump for 'multi' step 3 (degraded mode)"),
 	or amdump_diag("Amdump run failed for 'multi' step 3 (degraded mode)");
+
+    # we made a mess of $diskname, so invalidate it
+    rmtree("$diskname");
 };
 
 $flavors{'parts'} = sub {
@@ -190,8 +193,26 @@ $flavors{'compress'} = sub {
     $testconf->add_dle("localhost $diskname installcheck-test-comp");
     $testconf->write();
 
-    ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'parts'"),
+    # add some compressible data to the dump
+    open(my $fh, ">>", "$diskname/compressible");
+    my $stuff = <<EOLOREM;
+Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
+incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
+nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
+fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
+culpa qui officia deserunt mollit anim id est laborum.
+EOLOREM
+    for my $i (1 .. 100) {
+	print $fh $stuff, $stuff;
+    }
+    close($fh);
+
+    ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'compress'"),
 	or amdump_diag("Amdump run failed for 'part'");
+
+    # we made a mess of $diskname, so invalidate it
+    rmtree("$diskname");
 };
 
 if (Amanda::Util::built_with_component("server")

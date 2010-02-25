@@ -279,6 +279,13 @@ sub expect {
     my $self = shift;
     my ($name, @expectations) = @_;
 
+    for my $exp (@expectations) {
+	# set up a byte counter for bytes_to_eof
+	if ($exp->[0] eq 'bytes_to_eof') {
+	    $exp->[2] = 0;
+	}
+    }
+
     $self->{'expectations'}{$name} = [ @expectations ];
 
     $self->_check_expectations($name);
@@ -602,14 +609,17 @@ sub _do_process_done {
     my $self = shift;
     my ($exitstatus) = @_;
 
+    $self->{'process_done_loops'} = ($self->{'process_done_loops'} || 0) + 1;
+
     # defer with call_after if there are still read fd's open or data in a read
     # buffer.  Since the process just died, presumably these will close in this
     # trip around the MainLoop, so this will be a very short busywait
-    for my $name (keys %{$self->{'stream_fds'}}) {
-	my $fds = $self->{'stream_fds'}{$name};
-	if ($self->{'read_buf'}{$name} or $fds->[0] != -1) {
-	    debug("waiting for stream $name to drain..");
-	    return Amanda::MainLoop::call_after(10, \&_do_process_done, $self, $exitstatus);
+    if ($self->{'process_done_loops'} < 100) {
+	for my $name (keys %{$self->{'stream_fds'}}) {
+	    my $fds = $self->{'stream_fds'}{$name};
+	    if ($self->{'read_buf'}{$name} or $fds->[0] != -1) {
+		return Amanda::MainLoop::call_after(10, \&_do_process_done, $self, $exitstatus);
+	    }
 	}
     }
 

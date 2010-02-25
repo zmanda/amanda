@@ -1,3 +1,13 @@
+2010-02-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Dumpcache.pm: include more compressible
+	  data and clean up afterward
+	* installcheck/Installcheck/ClientService.pm: handle 0 bytes of data
+	  better, and fix handling of failures to not loop forever
+	* installcheck/amidxtaped.pl: test that compressed dumps come back at
+	  their orig_size; check for a holding device without a trailing ":0";
+	  send DATA-PATH AMANDA DIRECT-TCP; check LABEL containing only a label,
+	  and even missing FSF=; check failure on unrecognized command lines
+
 2010-02-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amidxtaped.pl: installcheck improvements:
 	  create a "real" holding file; send a DATESTAMP= command

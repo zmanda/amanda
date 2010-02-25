@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 85;
+use Test::More tests => 102;
 
 use strict;
 use warnings;
@@ -44,24 +44,31 @@ my $debug = !exists $ENV{'HARNESS_ACTIVE'};
 #   emulate - inetd or amandad (default)
 #   datapath -
 #	none: do not send fe_amidxtaped_datapath
-#	amanda: send fe_amidxtaped_dtapth and do datapath negotiation, but send AMANDA
-#	amanda: send fe_amidxtaped_dtapth and do datapath negotiation and send DIRECT-TCP
-#		(expects an answer of DIRECT-TCP, too)
+#	amanda: send fe_amidxtaped_datapath and do datapath negotiation, but send AMANDA
+#	directtcp: send fe_amidxtaped_datapath and do datapath negotiation and send both
+#		(expects an answer of AMANDA, too)
 #   header - send HEADER and expect a header
-#   splits - send fe_recover_splits (value is 'basic' (one part) or 'parts' (multiple))
+#   splits - send fe_recover_splits (value is 0, 'basic' (one part; default), or 'parts' (multiple))
 #   digit_end - end command with digits instead of 'END'
-#   dumpspec - include DISK=, HOST=, (but not DATESTAMP=) that match the dump
+#   dumpspec - include DISK=, HOST=, (but not DATESTAMP=) that match the dump (default 1)
 #   feedme - send a bad device initially, and expect FEEDME response
 #   holding - filename of holding file to recover from
 #   bad_auth - send incorrect auth in OPTIONS (amandad only)
 #   holding_err - 'could not open' error from bogus holding file
+#   holding_no_colon_zero - do not append a :0 to the holding filename in DEVICE=
+#   no_config - do not send CONFIG=
+#   no_tapespec - do not send a tapespec in LABEL=, and send the first partnum in FSF=
+#	no_fsf - or don't send the first partnum in FSF= and leave amidxtaped to guess
 #   ndmp - using NDMP device (so expect directtcp connection)
+#   bad_cmd - send a bogus command line and expect an error
 sub test {
     my %params = @_;
 
     # sort out the parameters
     $params{'emulate'} ||= 'amandad';
     $params{'datapath'} ||= 'none';
+    $params{'splits'} = 'basic' unless exists $params{'splits'};
+    $params{'dumpspec'} = 1 unless exists $params{'dumpspec'};
 
     # ignore some incompatible combinations
     return if ($params{'datapath'} ne 'none' and not $params{'splits'});
@@ -70,11 +77,16 @@ sub test {
     return if ($params{'feedme'} and $params{'holding'});
     return if ($params{'holding_err'} and not $params{'holding'});
     return if ($params{'emulate'} eq 'amandad' and not $params{'splits'});
+    return if ($params{'holding_no_colon_zero'} and not $params{'holding'});
 
     my $service;
     my $datasize = 0;
     my $hdr;
-    my $expect_error = ($params{'bad_auth'} or $params{'holding_err'});
+
+    my $expect_error = ($params{'bad_auth'}
+		     or $params{'holding_err'}
+		     or $params{'bad_cmd'});
+
     my $chg_name;
     if ($params{'ndmp'}) {
 	$chg_name = "ndmp_server"; # changer name from ndmp dumpcache
@@ -107,6 +119,11 @@ sub test {
     $testmsg .= $params{'bad_auth'}? "bad_auth " : "";
     $testmsg .= $params{'holding_err'}? "holding_err " : "";
     $testmsg .= $params{'ndmp'}? "ndmp " : "";
+    $testmsg .= $params{'holding_no_colon_zero'}? "holding-no-:0 " : "";
+    $testmsg .= $params{'no_config'}? "no-config " : "";
+    $testmsg .= $params{'no_tapespec'}? "no-tapespec " : "";
+    $testmsg .= $params{'no_fsf'}? "no-fsf " : "";
+    $testmsg .= $params{'bad_cmd'}? "bad_cmd " : "";
 
     diag("starting $testmsg") if $debug;
 
@@ -156,6 +173,7 @@ sub test {
     });
 
     $subs{'send_cmd1'} = make_cb(send_cmd1 => sub {
+	# note that the earlier features are ignored..
 	my $sendfeat = Amanda::Feature::Set->mine();
 	if ($params{'datapath'} eq 'none') {
 	    $sendfeat->remove($Amanda::Feature::fe_amidxtaped_datapath);
@@ -163,8 +181,30 @@ sub test {
 	unless ($params{'splits'}) {
 	    $sendfeat->remove($Amanda::Feature::fe_recover_splits);
 	}
-	$service->send($cmd_stream, "LABEL=TESTCONF01:1\r\n") unless $params{'holding'};
-	$service->send($cmd_stream, "FSF=0\r\n");
+	if (!$params{'holding'}) {
+	    if ($params{'splits'} eq 'parts') {
+		# nine-part dump
+		if ($params{'no_tapespec'}) {
+		    $service->send($cmd_stream, "LABEL=TESTCONF01\r\n");
+		} else {
+		    $service->send($cmd_stream, "LABEL=TESTCONF01:1,2,3,4,5,6,7,8,9\r\n");
+		}
+	    } else {
+		# single-part dump
+		$service->send($cmd_stream, "LABEL=TESTCONF01:1\r\n");
+	    }
+	}
+	if (!$params{'no_fsf'}) {
+	    if ($params{'no_tapespec'}) {
+		$service->send($cmd_stream, "FSF=1\r\n");
+	    } else {
+		$service->send($cmd_stream, "FSF=0\r\n");
+	    }
+	}
+	if ($params{'bad_cmd'}) {
+	    $service->send($cmd_stream, "AWESOMENESS=11\r\n");
+	    return $subs{'expect_err_message'}->();
+	}
 	$service->send($cmd_stream, "HEADER\r\n") if $params{'header'};
 	$service->send($cmd_stream, "FEATURES=" . $sendfeat->as_string() . "\r\n");
 	$event->("SEND-FEAT");
@@ -190,7 +230,7 @@ sub test {
 	if ($params{'holding'}) {
 	    my $safe = $params{'holding'};
 	    $safe =~ s/([\\:;,])/\\$1/g;
-	    $safe .= ':0';
+	    $safe .= ':0' unless $params{'holding_no_colon_zero'};
 	    $service->send($cmd_stream, "DEVICE=$safe\r\n");
 	} elsif ($params{'feedme'}) {
 	    # bogus device name
@@ -208,7 +248,8 @@ sub test {
 		$service->send($cmd_stream, "DATESTAMP=^$timestamp\$\r\n");
 	    }
 	}
-	$service->send($cmd_stream, "CONFIG=TESTCONF\r\n");
+	$service->send($cmd_stream, "CONFIG=TESTCONF\r\n")
+	    unless $params{'no_config'};
 	if ($params{'digit_end'}) {
 	    $service->send($cmd_stream, "999\r\n"); # dunno why this works..
 	} else {
@@ -252,16 +293,10 @@ sub test {
 	    $service->expect($cmd_stream,
 		[ re => qr/^FEEDME TESTCONF01\r\n/, $subs{'got_feedme'} ]);
 	} elsif ($params{'holding_err'}) {
-	    $service->expect($cmd_stream,
-		[ re => qr/^MESSAGE could not open.*\r\n/, $subs{'got_holding_err'} ]);
+	    $subs{'expect_err_message'}->();
 	} else {
 	    $subs{'expect_header'}->();
 	}
-    });
-
-    $subs{'got_holding_err'} = make_cb(got_holding_err => sub {
-	$event->('GOT-HOLDING-ERR');
-	# process should exit..
     });
 
     $subs{'got_feedme'} = make_cb(got_feedme => sub {
@@ -290,9 +325,9 @@ sub test {
 
     $subs{'expect_datapath'} = make_cb(expect_datapath => sub {
 	if ($params{'datapath'} ne 'none') {
-	    my $dp = ($params{'datapath'} eq 'amanda')? 'AMANDA' : 'DIRECT-TCP';
+	    my $dp = ($params{'datapath'} eq 'amanda')? 'AMANDA' : 'AMANDA DIRECT-TCP';
 	    $service->send($cmd_stream, "DATA-PATH $dp\r\n");
-	    $event->("SENT-DP-$dp");
+	    $event->("SENT-DATAPATH");
 
 	    $service->expect($cmd_stream,
 		[ re => qr/^DATA-PATH .*\r\n/, $subs{'got_dp'} ]);
@@ -331,6 +366,26 @@ sub test {
 	$event->("DATA-TO-EOF");
     });
 
+    # expected errors jump right to this
+    $subs{'expect_err_message'} = make_cb(expect_err_message => sub {
+	$expect_error = 1;
+	$service->expect($cmd_stream,
+	    [ re => qr/^MESSAGE.*\r\n/, $subs{'got_err_message'} ])
+    });
+
+    $subs{'got_err_message'} = make_cb(got_err_message => sub {
+	my ($line) = @_;
+	if ($line =~ /^MESSAGE invalid command.*/) {
+	    $event->("ERR-INVAL-CMD");
+	} elsif ($line =~ /^MESSAGE could not open.*/) {
+	    $event->('GOT-HOLDING-ERR');
+	} else {
+	    $event->('UNKNOWN-MSG');
+	}
+
+	# process should exit now
+    });
+
     $subs{'process_done'} = make_cb(process_done => sub {
 	my ($w) = @_;
 	my $exitstatus = POSIX::WIFEXITED($w)? POSIX::WEXITSTATUS($w) : -1;
@@ -357,35 +412,58 @@ sub test {
 	    $ok = 0;
 	    is_deeply([ $hdr->{'name'}, $hdr->{'disk'} ],
 		      [ 'localhost',    $diskname ],
-		$testmsg);
+		"$testmsg (header mismatch; header logged to debug log)")
+		or $hdr->debug_dump();
 	}
     }
 
     if ($ok and !$expect_error) {
 	if ($params{'holding'}) {
 	    $ok = 0 if ($datasize != 131072);
+	    diag("got $datasize bytes of data but expected exactly 128k from holding file")
+		unless $ok;
 	} else {
-	    $ok = 0 if ($datasize < 65536);
+	    # get the original size from the header and calculate the size we
+	    # read, rounded up to the next kilobyte
+	    my $orig_size = $hdr? $hdr->{'orig_size'} : 0;
+	    my $got_kb = int($datasize / 1024);
+
+	    if ($orig_size) {
+		my $diff = abs($got_kb - $orig_size);
+
+		# allow 32k of "slop" here, for rounding, etc.
+		$ok = 0 if $diff > 32;
+		diag("got $got_kb kb; expected about $orig_size kb based on header")
+		    unless $ok;
+	    } else {
+		$ok = 0 if $got_kb < 64;
+		diag("got $got_kb; expected at least 64k")
+		    unless $ok;
+	    }
 	}
 
 	if (!$ok) {
 	    fail($testmsg);
-	    diag("got $datasize bytes of data");
 	}
     }
 
+    # check that this dump was uncompressed (we got more bytes than
+    # were on the volume)
     if ($ok) {
 	my $inetd = $params{'emulate'} eq 'inetd';
+
+	my @sec_evts = $inetd? ('MAIN-SECURITY') : ('SENT-REQ', 'GOT-REP'),
 	my @datapath_evts;
 	if ($params{'datapath'} eq 'amanda') {
-	    @datapath_evts = ('SENT-DP-AMANDA', 'GOT-DP-AMANDA');
+	    @datapath_evts = ('SENT-DATAPATH', 'GOT-DP-AMANDA');
 	} elsif ($params{'datapath'} eq 'directtcp' and not $params{'ndmp'}) {
-	    @datapath_evts = ('SENT-DP-DIRECT-TCP', 'GOT-DP-AMANDA');
+	    @datapath_evts = ('SENT-DATAPATH', 'GOT-DP-AMANDA');
 	} elsif ($params{'datapath'} eq 'directtcp' and $params{'ndmp'}) {
-	    @datapath_evts = ('SENT-DP-DIRECT-TCP', 'GOT-DP-DIRECT-TCP');
+	    @datapath_evts = ('SENT-DATAPATH', 'GOT-DP-DIRECT-TCP');
 	}
+
 	my @exp_events = (
-		    $inetd? ('MAIN-SECURITY') : ('SENT-REQ', 'GOT-REP'),
+		    @sec_evts,
 		    'SEND-FEAT', 'GOT-FEAT', 'SENT-CMD',
 		    ($inetd and $params{'splits'})? ('GOT-CONNECT', 'DATA-SECURITY') : (),
 		    $params{'feedme'}? ('GOT-FEEDME') : (),
@@ -393,12 +471,15 @@ sub test {
 		    @datapath_evts,
 		    'DATA-TO-EOF', 'EXIT-0', );
 	# handle a few error conditions differently
+	if ($params{'bad_cmd'}) {
+	    @exp_events = ( @sec_evts, 'ERR-INVAL-CMD', 'EXIT-0' );
+	}
 	if ($params{'bad_auth'}) {
 	    @exp_events = ( 'SENT-REQ', 'GOT-REP-ERR', 'EXIT-1' );
 	}
 	if ($params{'holding_err'}) {
 	    @exp_events = (
-		    $inetd? ('MAIN-SECURITY') : ('SENT-REQ', 'GOT-REP'),
+		    @sec_evts,
 		    'SEND-FEAT', 'GOT-FEAT', 'SENT-CMD',
 		    ($inetd and $params{'splits'})? ('GOT-CONNECT', 'DATA-SECURITY') : (),
 		    'GOT-HOLDING-ERR', 'EXIT-0' );
@@ -452,45 +533,55 @@ sub make_holding_file {
 ## normal operation
 
 Installcheck::Dumpcache::load('basic');
-my $holdingfile = make_holding_file();
 my $loaded_dumpcache = 'basic';
+my $holdingfile;
+my $emulate;
+
+test(emulate => 'amandad', bad_cmd => 1);
 
 for my $splits (0, 'basic', 'parts') { # two flavors of 'true'
     if ($splits and $splits ne $loaded_dumpcache) {
 	Installcheck::Dumpcache::load($splits);
-	my $holdingfile = make_holding_file();
 	$loaded_dumpcache = $splits;
     }
-    for my $emulate ('inetd', 'amandad') {
-	# note that 'directtcp' here expects amidxd to reply with AMANDA
+    for $emulate ('inetd', 'amandad') {
+	# note that 'directtcp' here expects amidxtaped to reply with AMANDA
 	for my $datapath ('none', 'amanda', 'directtcp') {
 	    for my $header (0, 1) {
 		for my $feedme (0, 1) {
-		    for my $holding (undef, $holdingfile) {
+		    for my $holding (0, 1) {
+			if ($holding and (!$holdingfile or ! -e $holdingfile)) {
+			    $holdingfile = make_holding_file();
+			}
 			test(
-			    dumpspec => 1,
 			    emulate => $emulate,
 			    datapath => $datapath,
 			    header => $header,
 			    splits => $splits,
 			    feedme => $feedme,
-			    holding => $holding,
+			    $holding? (holding => $holdingfile):(),
 			);
 		    }
 		}
 	    }
 	}
+
+	# dumps from media can omit the tapespec in the label (amrecover-2.4.5 does
+	# this).  We try it with multiple
+	test(emulate => $emulate, splits => $splits, no_tapespec => 1);
+
+	# and may even omit the FSF! (not sure what does this, but it's testable)
+	test(emulate => $emulate, splits => $splits, no_tapespec => 1, no_fsf => 1);
     }
 }
 
 Installcheck::Dumpcache::load("basic");
+$holdingfile = make_holding_file();
+$loaded_dumpcache = 'basic';
 
 ## miscellaneous edge cases
 
-# bad authentication triggers an error REP with amandad
-test(emulate => 'amandad', bad_auth => 1);
-
-for my $emulate ('inetd', 'amandad') {
+for $emulate ('inetd', 'amandad') {
     # can send something beginning with a digit instead of "END\r\n"
     test(emulate => $emulate, digit_end => 1);
 
@@ -498,9 +589,24 @@ for my $emulate ('inetd', 'amandad') {
     test(emulate => $emulate, dumpspec => 0);
 
     # missing holding generates error message
-    test(emulate => $emulate, splits => 1,
+    test(emulate => $emulate,
 	 holding => "$Installcheck::TMP/no-such-file", holding_err => 1);
+
+    # holding can omit the :0 suffix (amrecover-2.4.5 does this)
+    test(emulate => $emulate, holding => $holdingfile,
+	 holding_no_colon_zero => 1);
 }
+
+# bad authentication triggers an error message
+test(emulate => 'amandad', bad_auth => 1);
+
+## check decompression
+
+Installcheck::Dumpcache::load('compress');
+
+test(dumpspec => 0, emulate => 'amandad',
+     datapath => 'none', header => 1,
+     splits => 'basic', feedme => 0, holding => 0);
 
 ## directtcp device (NDMP)
 
@@ -514,19 +620,19 @@ SKIP: {
     $ndmp->edit_config();
 
     # test a real directtcp transfer both with and without a header
-    test(emulate => 'amandad', splits => 1,
+    test(emulate => 'amandad', splits => 'basic',
 	datapath => 'directtcp', header => 1, ndmp => $ndmp);
-    test(emulate => 'amandad', splits => 1,
+    test(emulate => 'amandad', splits => 'basic',
 	datapath => 'directtcp', header => 0, ndmp => $ndmp);
 
     # and likewise an amanda transfer with a directtcp device
-    test(emulate => 'amandad', splits => 1,
+    test(emulate => 'amandad', splits => 'basic',
 	datapath => 'amanda', header => 1, ndmp => $ndmp);
-    test(emulate => 'amandad', splits => 1,
+    test(emulate => 'amandad', splits => 'basic',
 	datapath => 'amanda', header => 0, ndmp => $ndmp);
 
     # and finally a datapath-free transfer with such a device
-    test(emulate => 'amandad', splits => 1,
+    test(emulate => 'amandad', splits => 'basic',
 	datapath => 'none', header => 1, ndmp => $ndmp);
 }
 
