@@ -12,9 +12,6 @@ endif
 if WANT_SERVER
 SERVER_SUBDIRS = device-src server-src changer-src
 endif
-if WANT_RESTORE
-RESTORE_SUBDIRS = restore-src
-endif
 if WANT_RECOVER
 RECOVER_SUBDIRS = recover-src oldrecover-src
 endif

@@ -346,6 +346,8 @@ a "tapelist" -- and a perl data structure like
 	$label2 => [ $filenum1, $filenum2, .. ],
     ]
 
+Note that a non-tapespec C<$string> will be unmarshalled as C<[ $string, [] ]>.
+
 =back
 
 =head1 Locking Files

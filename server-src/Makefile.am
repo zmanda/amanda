@@ -48,6 +48,8 @@ sbin_SCRIPTS_PERL = \
 	    amvault \
 	    amstatus
 if WANT_RESTORE
+amlibexec_SCRIPTS_PERL += \
+	    amidxtaped
 sbin_SCRIPTS_PERL += \
 	    amfetchdump \
 	    amrestore

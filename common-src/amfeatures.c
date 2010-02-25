@@ -106,7 +106,6 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_amidxtaped_disk);
 	am_add_feature(f, fe_amidxtaped_datestamp);
 	am_add_feature(f, fe_amidxtaped_header);
-	am_add_feature(f, fe_amidxtaped_nargs);
 	am_add_feature(f, fe_amidxtaped_config);
 
 	am_add_feature(f, fe_recover_splits);

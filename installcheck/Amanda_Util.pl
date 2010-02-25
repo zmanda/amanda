@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 108;
+use Test::More tests => 114;
 
 use lib "@amperldir@";
 use warnings;
@@ -307,3 +307,27 @@ is_deeply(Amanda::Util::unmarshal_tapespec("x:34,34"), [ x => [34, 34] ],
 
 is_deeply(Amanda::Util::marshal_tapespec([ x => [34, 34] ]), "x:34,34",
     "duplicate filenums are NOT collapsed when marshalled");
+
+is_deeply(Amanda::Util::unmarshal_tapespec("sim\\\\ple\\:quoted\\;file\\,name"),
+    [ "sim\\ple:quoted;file,name" => [0] ],
+    "simple non-tapespec string translated like string:0");
+
+is_deeply(Amanda::Util::unmarshal_tapespec("tricky\\,tricky\\:1,2,3"),
+    [ "tricky,tricky:1,2,3" => [0] ],
+    "tricky non-tapespec string also translated to string:0");
+
+is_deeply(Amanda::Util::unmarshal_tapespec("\\:3"), # one slash
+    [ ":3" => [0] ],
+    "one slash escapes the colon");
+
+is_deeply(Amanda::Util::unmarshal_tapespec("\\\\:3"), # two slashes
+    [ "\\" => [3] ],
+    "two slashes escape to one");
+
+is_deeply(Amanda::Util::unmarshal_tapespec("\\\\\\:3"), # three slashes
+    [ "\\:3" => [0] ],
+    "three slashes escape to a slash and a colon");
+
+is_deeply(Amanda::Util::unmarshal_tapespec("\\\\\\\\:3"), # four slashes
+    [ "\\\\" => [3] ],
+    "four slashes escape to two");

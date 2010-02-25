@@ -582,6 +582,19 @@ sub unmarshal_tapespec {
     my ($tapespec) = @_;
     my @filelist;
 
+    # detect a non-tapespec string for special handling; in particular, a string
+    # without an unquoted : followed by digits and commas at the end.  The easiest
+    # way to do this is to replace every quoted character with a dummy, then look
+    # for the colon and digits.
+    my $tmp = $tapespec;
+    $tmp =~ s/\\([\\:;,])/X/g;
+    if ($tmp !~ /:[,\d]+$/) {
+	# ok, it doesn't end with the right form, so unquote it and return it
+	# with filenum 0
+	$tapespec =~ s/\\([\\:;,])/$1/g;
+	return [ $tapespec, [ 0 ] ];
+    }
+
     # use a lookbehind to mask out any quoted ;'s
     my @volumes = split(/(?<!\\);/, $tapespec);
     for my $vol (@volumes) {

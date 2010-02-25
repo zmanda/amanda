@@ -1,4 +1,12 @@
 2010-02-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* Makefile.am: stop building restore-src
+	* common-src/amfeatures.c: remove no-longer-supported
+	  fe_amidxtaped_nargs (this hasn't been supported since 2.5.0!)
+	* perl/Amanda/Util.swg perl/Amanda/Util.pod: tapespec marhsalling edge case
+	* installcheck/Amanda_Util.pl: tests
+	* server-src/amidxtaped.pl server-src/Makefile.am: new perl amidxtaped
+
+2010-02-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Installcheck/Dumpcache.pm: include more compressible
 	  data and clean up afterward
 	* installcheck/Installcheck/ClientService.pm: handle 0 bytes of data
