@@ -1173,6 +1173,8 @@ start_server_check(
 		amfree(quoted);
 	    }
 	    for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
+		int may_use_fallback;
+
 		disk = sanitise_filename(dp->name);
 		if(hostinfodir) {
 		    char *quotedif;
@@ -1369,6 +1371,30 @@ start_server_check(
 			      _("ERROR: %s %s: fallback_splitsize > tape size\n"),
 			      hostp->hostname, dp->name);
 		    pgmbad = 1;
+		}
+
+		/* also check for part sizes that are too small */
+		if (dp->tape_splitsize && dp->tape_splitsize * 1000 < tape_size) {
+		    g_fprintf(outf,
+			      _("WARNING: %s %s: tape_splitsize of %juk < 0.1%% of tape size "
+				"which may create >1000 parts\n"),
+			      hostp->hostname, dp->name, (uintmax_t)dp->tape_splitsize);
+		}
+
+		/* fallback splitsize will be used if tape_splitsize is 0 or
+		 * split_diskbuffer is empty or NULL */
+		may_use_fallback = 0;
+		if (dp->tape_splitsize == 0 && dp->fallback_splitsize != 0)
+		    may_use_fallback = 1;
+		if (dp->tape_splitsize != 0 && dp->fallback_splitsize != 0 &&
+			(dp->split_diskbuffer == NULL || dp->split_diskbuffer[0] == '\0'))
+		    may_use_fallback = 1;
+
+		if (may_use_fallback && dp->fallback_splitsize * 1000 < tape_size) {
+		    g_fprintf(outf,
+			      _("WARNING: %s %s: fallback_splitsize of %juk < 0.1%% of tape size "
+				"and may be used for PORT_DUMP; check your configuration\n"),
+			      hostp->hostname, dp->name, (uintmax_t)dp->fallback_splitsize);
 		}
 
 		if (dp->data_path == DATA_PATH_DIRECTTCP) {

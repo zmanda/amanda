@@ -1,4 +1,8 @@
 2010-02-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amcheck.c: add warning if the config might generate >1000
+	  parts on a volume
+
+2010-02-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: don't use a base-class attribute name,
 	  and use an appropriate prefix for debug messages
 
