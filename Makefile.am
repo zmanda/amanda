@@ -94,7 +94,6 @@ lint:
 	(cd common-src; make lint)
 	(cd oldrecover-src; make lint)
 	(cd recover-src; make lint)
-	(cd restore-src; make lint)
 	(cd server-src; make lint)
 	(cd xfer-src; make lint)
 

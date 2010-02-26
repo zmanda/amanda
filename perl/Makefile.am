@@ -32,10 +32,6 @@ if WANT_CLIENT
 INCLUDES += -I$(top_srcdir)/client-src
 endif
 
-if WANT_RESTORE
-INCLUDES += -I$(top_srcdir)/restore-src
-endif
-
 if WANT_RECOVER
 INCLUDES += -I$(top_srcdir)/recover-src
 endif

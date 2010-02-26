@@ -1,4 +1,10 @@
 2010-02-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* Makefile.am: remove restore-src from lint rule
+	* configure.in: remove restore-src/Makefile
+	* restore-src/: remove
+	* perl/Makefile.am server-src/Makefile.am: remove -Irestore-src
+
+2010-02-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* Makefile.am: stop building restore-src
 	* common-src/amfeatures.c: remove no-longer-supported
 	  fe_amidxtaped_nargs (this hasn't been supported since 2.5.0!)

@@ -7,7 +7,6 @@ include $(top_srcdir)/config/automake/precompile.am
 
 INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src   \
-		-I$(top_srcdir)/restore-src  \
 		-I$(top_srcdir)/amandad-src  \
 		-I$(top_srcdir)/device-src   \
 		-I$(top_srcdir)/xfer-src   \
