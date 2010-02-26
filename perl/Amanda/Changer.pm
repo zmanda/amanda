@@ -89,6 +89,9 @@ creating a new changer is
 
 =head2 MEMBER VARIABLES
 
+Note that these variables are not set until after the subclass constructor is
+finished.
+
 =over 4
 
 =item C<< $chg->{'chg_name'} >>

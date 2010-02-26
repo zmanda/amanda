@@ -1,5 +1,5 @@
 # vim:ft=perl
-# Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -33,7 +33,7 @@ Installcheck - utilities for installchecks (not installed)
 
   use Amanda::Debug;
   Amanda::Debug::dbopen("installcheck");
-  Installchek::log_test_output();
+  Installcheck::log_test_output();
 
 =head1 DESCRIPTION
 

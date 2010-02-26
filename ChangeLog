@@ -1,3 +1,9 @@
+2010-02-26  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Changer_robot.pl: log test output too
+	* installcheck/Installcheck.pm: typo
+	* perl/Amanda/Changer.pm: note about member variables
+	* perl/Amanda/Changer/robot.pm: make debug callable during constructor
+
 2010-02-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c: Compute dump_status and message.
 	* server-src/find.c (print_find_result): Output dump_status and message.

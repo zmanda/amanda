@@ -111,9 +111,6 @@ See the amanda-changers(7) manpage for usage information.
 # Interface class.  This is written in such a way that it could be replaced
 # by a direct SCSI interface.
 
-# constants for the states that slots may be in; note that these states still
-# apply even if the tape is actually loaded in a drive
-
 sub new {
     my $class = shift;
     my ($config, $tpchanger) = @_;
@@ -1357,7 +1354,9 @@ sub _is_slot_allowed {
 sub _debug {
     my $self = shift;
     my ($msg) = @_;
-    debug("$self->{chg_name}: $msg");
+    # chg_name is not set until *after* the constructor finishes
+    my $chg_name = $self->{'chg_name'} || $self->{'class_name'};
+    debug("$chg_name: $msg");
 }
 
 ##

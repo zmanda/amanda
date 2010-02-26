@@ -1,4 +1,4 @@
-# Copyright (c) 2009 Zmanda Inc.  All Rights Reserved.
+# Copyright (c) 2009, 2010 Zmanda Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -38,6 +38,7 @@ Amanda::Debug::dbopen("installcheck");
 
 # and disable Debug's die() and warn() overrides
 Amanda::Debug::disable_die_override();
+Installcheck::log_test_output();
 
 my $chg_state_file = "$Installcheck::TMP/chg-robot-state";
 unlink($chg_state_file) if -f $chg_state_file;
