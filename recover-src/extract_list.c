@@ -2171,7 +2171,7 @@ writer_intermediary(
 		send_to_tape_server(amidxtaped_streams[CTLFD].fd, "ERROR");
 		break;
 	    }
-	} else if (strncmp_const(amidxtaped_line, "DATA-PATH ") == 0) {
+	} else if (strncmp_const(amidxtaped_line, "USE-DATAPATH ") == 0) {
 	    if (strncmp_const(amidxtaped_line+10, "AMANDA") == 0) {
 		ctl_data.data_path = DATA_PATH_AMANDA;
 	    } else if (strncmp_const(amidxtaped_line+10, "DIRECT-TCP") == 0) {
@@ -2755,7 +2755,7 @@ read_amidxtaped_data(
 	if (am_has_feature(tapesrv_features, fe_amidxtaped_datapath)) {
  	    char       *msg;
 	    /* send DATA-PATH request */
-	    msg = stralloc("DATA-PATH");
+	    msg = stralloc("AVAIL-DATAPATH");
 	    if (data_path_set & DATA_PATH_AMANDA)
 		vstrextend(&msg, " AMANDA", NULL);
 	    if (data_path_set & DATA_PATH_DIRECTTCP)
@@ -2853,4 +2853,7 @@ start_processing_data(
     aclose(ctl_data->child_pipe[0]);
     security_stream_read(amidxtaped_streams[DATAFD].fd, read_amidxtaped_data,
 			 ctl_data);
+    if (am_has_feature(tapesrv_features, fe_amidxtaped_datapath)) {
+	send_to_tape_server(amidxtaped_streams[CTLFD].fd, "DATAPATH-OK");
+    }
 }

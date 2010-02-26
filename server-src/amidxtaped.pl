@@ -518,8 +518,8 @@ sub expect_datapath {
     }
 
     my $dpline = $self->getline($self->{'ctl_stream'});
-    my ($dpspec) = ($dpline =~ /^DATA-PATH (.*)\r\n$/);
-    die "bad DATA-PATH line" unless $dpspec;
+    my ($dpspec) = ($dpline =~ /^AVAIL-DATAPATH (.*)\r\n$/);
+    die "bad AVAIL-DATAPATH line" unless $dpspec;
     my @avail_dps = split / /, $dpspec;
 
     if (grep /^DIRECT-TCP$/, @avail_dps) {
@@ -551,6 +551,14 @@ sub start_xfer {
 		$self->wfd($self->{'data_stream'})),
     }
 
+    if ($self->{'datapath'} eq 'amanda') {
+	$self->sendctlline("USE-DATAPATH AMANDA\r\n");
+	my $dpline = $self->getline($self->{'ctl_stream'});
+	if ($dpline ne "DATAPATH-OK\r\n") {
+	    die "expected DATAPATH-OK";
+	}
+    }
+
     # create and start the transfer
     $self->{'xfer'} = Amanda::Xfer->new([
 	$self->{'xfer_src'},
@@ -561,14 +569,14 @@ sub start_xfer {
     debug("started xfer; datapath=$self->{datapath}");
 
     # send the data-path response, if we have a datapath
-    if ($self->{'datapath'} ne 'none') {
-	if ($self->{'datapath'} eq 'directtcp') {
-	    my $addrs = $xfer_dest->get_addrs();
-	    $addrs = [ map { $_->[0] . ":" . $_->[1] } @$addrs ];
-	    $addrs = join(" ", @$addrs);
-	    $self->sendctlline("DATA-PATH DIRECT-TCP $addrs\r\n");
-	} else {
-	    $self->sendctlline("DATA-PATH AMANDA\r\n");
+    if ($self->{'datapath'} eq 'directtcp') {
+	my $addrs = $xfer_dest->get_addrs();
+	$addrs = [ map { $_->[0] . ":" . $_->[1] } @$addrs ];
+	$addrs = join(" ", @$addrs);
+	$self->sendctlline("USE-DATAPATH DIRECT-TCP $addrs\r\n");
+	my $dpline = $self->getline($self->{'ctl_stream'});
+	if ($dpline ne "DATAPATH-OK\r\n") {
+	    die "expected DATAPATH-OK";
 	}
     }
 

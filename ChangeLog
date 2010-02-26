@@ -1,3 +1,10 @@
+2010-02-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/extract_list.c: AVAIL-DATAPATH, USE-DATAPATH and
+				      DATAPATH-OK.
+	* server-src/amidxtaped.pl: AVAIL-DATAPATH, USE-DATAPATH and
+				    DATAPATH-OK.
+	* installcheck/amidxtaped.pl: Test them.
+
 2010-02-26  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Installcheck/ClientService.pm: fix to wait for streams
 	  to empty and hit EOF after exit

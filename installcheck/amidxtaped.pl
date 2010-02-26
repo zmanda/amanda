@@ -319,25 +319,32 @@ sub test {
 	my ($buf) = @_;
 	$event->("GOT-HEADER");
 
+	$service->expect($data_stream,
+	    [ bytes => 1, $subs{'got_early_bytes'} ]);
+
 	$hdr = Amanda::Header->from_string($buf);
 	$subs{'expect_datapath'}->();
+    });
+
+    $subs{'got_early_bytes'} = make_cb(got_early_bytes => sub {
+	$event->("GOT-EARLY-BYTES");
     });
 
     $subs{'expect_datapath'} = make_cb(expect_datapath => sub {
 	if ($params{'datapath'} ne 'none') {
 	    my $dp = ($params{'datapath'} eq 'amanda')? 'AMANDA' : 'AMANDA DIRECT-TCP';
-	    $service->send($cmd_stream, "DATA-PATH $dp\r\n");
+	    $service->send($cmd_stream, "AVAIL-DATAPATH $dp\r\n");
 	    $event->("SENT-DATAPATH");
 
 	    $service->expect($cmd_stream,
-		[ re => qr/^DATA-PATH .*\r\n/, $subs{'got_dp'} ]);
+		[ re => qr/^USE-DATAPATH .*\r\n/, $subs{'got_dp'} ]);
 	} else {
 	    $subs{'expect_data'}->();
 	}
     });
 
     $subs{'got_dp'} = make_cb(got_dp => sub {
-	my ($dp, $addrs) = ($_[0] =~ /DATA-PATH (\S+)(.*)\r\n/);
+	my ($dp, $addrs) = ($_[0] =~ /USE-DATAPATH (\S+)(.*)\r\n/);
 	$event->("GOT-DP-$dp");
 
 	# if this is a direct-tcp connection, then we need to connect to
@@ -345,6 +352,10 @@ sub test {
 	if ($dp eq 'DIRECT-TCP') {
 	    my ($port) = ($addrs =~ / 127.0.0.1:(\d+).*/);
 	    die "invalid DIRECT-TCP reply $addrs" unless ($port);
+	    #remove got_early_bytes on $data_stream
+	    $service->expect($data_stream,
+	        [ eof => $subs{'do_nothing'} ]);
+
 	    $service->connect('directtcp', $port);
 	    $data_stream = 'directtcp';
 	}
@@ -352,11 +363,20 @@ sub test {
 	$subs{'expect_data'}->();
     });
 
+    $subs{'do_nothing'} = make_cb(do_nothing => sub {
+    });
+
     $subs{'expect_data'} = make_cb(expect_data => sub {
 	$service->expect($data_stream,
 	    [ bytes_to_eof => $subs{'got_data'} ]);
 	# note that we ignore EOF on the control connection,
 	# as its timing is not very predictable
+
+	if ($params{'datapath'} ne 'none') {
+	    $service->send($cmd_stream, "DATAPATH-OK\r\n");
+	    $event->("SENT-DATAPATH-OK");
+	}
+
     });
 
     $subs{'got_data'} = make_cb(got_data => sub {
@@ -453,11 +473,11 @@ sub test {
 	my @sec_evts = $inetd? ('MAIN-SECURITY') : ('SENT-REQ', 'GOT-REP'),
 	my @datapath_evts;
 	if ($params{'datapath'} eq 'amanda') {
-	    @datapath_evts = ('SENT-DATAPATH', 'GOT-DP-AMANDA');
+	    @datapath_evts = ('SENT-DATAPATH', 'GOT-DP-AMANDA', 'SENT-DATAPATH-OK');
 	} elsif ($params{'datapath'} eq 'directtcp' and not $params{'ndmp'}) {
-	    @datapath_evts = ('SENT-DATAPATH', 'GOT-DP-AMANDA');
+	    @datapath_evts = ('SENT-DATAPATH', 'GOT-DP-AMANDA', 'SENT-DATAPATH-OK');
 	} elsif ($params{'datapath'} eq 'directtcp' and $params{'ndmp'}) {
-	    @datapath_evts = ('SENT-DATAPATH', 'GOT-DP-DIRECT-TCP');
+	    @datapath_evts = ('SENT-DATAPATH', 'GOT-DP-DIRECT-TCP', 'SENT-DATAPATH-OK');
 	}
 
 	my @exp_events = (
