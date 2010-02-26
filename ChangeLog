@@ -1,3 +1,7 @@
+2010-02-26  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Report/human.pm: added quoting of disks in per-disk
+	  summary
+
 2010-02-26  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Changer_robot.pl: log test output too
 	* installcheck/Installcheck.pm: typo

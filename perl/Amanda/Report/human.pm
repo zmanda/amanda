@@ -25,7 +25,7 @@ use warnings;
 use POSIX;
 
 use Amanda::Config qw(:getconf config_dir_relative);
-use Amanda::Util  qw (:constants);
+use Amanda::Util qw(:constants quote_string );
 use Amanda::Holding;
 use Amanda::Tapelist;
 
@@ -816,15 +816,29 @@ sub get_summary_info
     my $dle_info = $report->get_dle_info(@$dle);
     my $last_try = $dle_info->{tries}->[-1];
 
-    my $tail_trunc = sub {
+    my $tail_quote_trunc = sub {
         my ($str, $len) = @_;
 
-        return (length $str > $len)
-          ? '-' . substr($str, length($str) - ($len - 1), ($len - 1))
-          : $str;
+        my $q_str = quote_string($str);
+        my $qt_str;
+
+        if (length($q_str) > $len) {
+
+            $qt_str = substr($q_str, length($q_str) - $len, $len);
+            if ($q_str eq $str) {
+                $qt_str =~ s{^.}{-}
+            } else {
+                $qt_str =~ s{^..}{"-};
+            }
+        } else {
+            $qt_str = $q_str;
+        }
+
+        return $qt_str;
     };
-    my $disk_out = $tail_trunc->($disk, $col_spec->[1]->[COLSPEC_WIDTH]);
-    
+
+    my $disk_out = $tail_quote_trunc->($disk, $col_spec->[1]->[COLSPEC_WIDTH]);
+
     my $level =
         exists $last_try->{taper}   ? $last_try->{taper}{level}
       : exists $last_try->{chunker} ? $last_try->{chunker}{level}
