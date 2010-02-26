@@ -1,4 +1,20 @@
 2010-02-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/find.c: Compute dump_status and message.
+	* server-src/find.c (print_find_result): Output dump_status and message.
+	* server-src/find.c (search_logfile): Check if label is in tapelist.
+	* server-src/find.h: Add dump_status and message to find_result_t.
+	* perl/Amanda/Logfile.swg: Swig it.
+	* perl/Amanda/DB/Catalog.pm: Set dump_status and message.
+	* installcheck/Amanda_DB_Catalog.pl: Test it.
+	* installcheck/Amanda_Logfile.pl: Test it.
+	* server-src/amcheckdump.pl: Use new search_logfile behaviour.
+	* server-src/amindexd.c: Use dump_status.
+	* server-src/amoverview.pl: Use new 'amadmin find' output.
+	* server-src/disk_history.c: Remove code no longer needed.
+	* server-src/tapefile.c (lookup_tapelabel): const the label argument.
+	* server-src/tapefile.h (lookup_tapelabel): const the label argument.
+
+2010-02-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (set_config_overrides): new config override api.
 	* common-src/conffile.h (set_config_overrides): New prototype.
 	* perl/Amanda/Config.swg (set_config_overrides): Swigged.

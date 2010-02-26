@@ -46,7 +46,7 @@ typedef struct tape_s {
 int read_tapelist(char *tapefile);
 int write_tapelist(char *tapefile);
 void clear_tapelist(void);
-tape_t *lookup_tapelabel(char *label);
+tape_t *lookup_tapelabel(const char *label);
 tape_t *lookup_tapepos(int pos);
 tape_t *lookup_tapedate(char *datestamp);
 int lookup_nb_tape(void);

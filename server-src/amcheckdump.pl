@@ -352,6 +352,9 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
+my $tapelist_file = config_dir_relative(getconf($CNF_TAPELIST));
+my $tl = Amanda::Tapelist::read_tapelist($tapelist_file);
+
 # If we weren't given a timestamp, find the newer of
 # amdump.1 or amflush.1 and extract the datestamp from it.
 if (!defined $timestamp) {
@@ -421,20 +424,6 @@ my $nb_images = @images;
 # filter only "ok" dumps, removing partial and failed dumps
 @images = Amanda::Logfile::dumps_match([@images],
 	undef, undef, undef, undef, 1);
-
-# filter tape still alive
-my $tapelist_file = config_dir_relative(getconf($CNF_TAPELIST));
-my $tl = Amanda::Tapelist::read_tapelist($tapelist_file);
-my %to_remove;
-for my $image (@images) {
-    my $tle = $tl->lookup_tapelabel($image->{label});
-    if (!$tle || $tle->{datestamp} ne $timestamp) {
-	$to_remove{$image->{hostname}}{$image->{diskname}}{$image->{level}}{$image->{timestamp}} = 1
-    }
-}
-
-#remove all parts if a part is removed
-@images = grep { !defined $to_remove{$_->{hostname}}{$_->{diskname}}{$_->{level}}{$_->{timestamp}} } @images;
 
 if (!@images) {
     if ($nb_images == 0) {

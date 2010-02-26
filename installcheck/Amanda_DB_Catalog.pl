@@ -208,10 +208,10 @@ Amanda::DB::Catalog::_clear_cache();
 # Test the timestamps
 
 is_deeply([ Amanda::DB::Catalog::get_write_timestamps(), ],
-    [ '20080111000000', '20080222222222', '20080313133333', '20080414144444', '20080515155555' ],
+    [ '20080111000000', '20080222222222', '20080313133333', '20080414144444', '20080515155555', '20080616166666' ],
     "get_write_timestamps returns all logfile datestamps in proper order, with zero-padding");
 
-is(Amanda::DB::Catalog::get_latest_write_timestamp(), '20080515155555',
+is(Amanda::DB::Catalog::get_latest_write_timestamp(), '20080616166666',
     "get_latest_write_timestamp correctly returns the latest write timestamp");
 
 ##
@@ -987,3 +987,37 @@ SUCCESS dumper otherbox /direct 20080515155555 0 [sec 0.001 kb 190 kps 10352.0 o
 PART taper Conf-006 14 otherbox /direct 20080515155555 1/1 0 [sec 0.001 kb 190 kps 10352.0]
 DONE taper otherbox /direct 20080515155555 1 0 [sec 0.001 kb 190 kps 10352.0 orig-kb 350]
 FINISH driver date 20080515155555 time 24.777
+
+# A logfile with removed tape-kb in taper line
+::: log.20080616166666.0
+:tapelist 20080616166666 Conf-007
+# this tape is removed
+#:tapelist 20080616166666 Conf-007
+:timestamp 20080616166666
+DISK planner somebox /usr/bin
+DISK planner somebox /lib
+DISK planner otherbox /lib
+START planner date 20080616166666
+START driver date 20080616166666
+STATS driver hostname somebox
+STATS driver startup time 0.059
+FINISH planner date 20080616166666 time 0.286
+SUCCESS dumper somebox /usr/bin 20080616166666 1 [sec 0.001 kb 20 kps 10352.0 orig-kb 20]
+SUCCESS chunker somebox /usr/bin 20080616166666 1 [sec 1.023 kb 20 kps 50.8]
+STATS driver estimate somebox /usr/bin 20080616166666 1 [sec 0 nkb 52 ckb 64 kps 1024]
+START taper datestamp 20080616166666 label Conf-007 tape 1
+:dump somebox_usr_bin_20080616166666 20080616166666 somebox /usr/bin 1 OK "" 1 0.000370 20 20
+:part somebox_usr_bin_20080616166666 somebox_usr_bin_20080616166666 Conf-007 1 1 OK 0.000370 20 20
+PART taper Conf-007 1 somebox /usr/bin 20080616166666 1/1 1 [sec 0.000370 kb 20 kps 54054.054054 orig-kb 20]
+DONE taper somebox /usr/bin 20080616166666 1 1 [sec 0.000370 kb 20 kps 54054.054054 orig-kb 20]
+SUCCESS dumper somebox /lib 20080616166666 1 [sec 0.001 kb 20 kps 10352.0 orig-kb 20]
+SUCCESS chunker somebox /lib 20080616166666 1 [sec 1.023 kb 20 kps 50.8]
+:dump somebox_lib_20080616166666 20080616166666 somebox /lib 1 FAIL "" 1 0.000370 20 20
+:part somebox_lib_20080616166666 somebox_lib_20080616166666 Conf-007 2 1 OK 0.000370 20 20
+PART taper Conf-007 2 somebox /lib 20080616166666 1/2 1 [sec 0.000370 kb 20 kps 54054.054054 orig-kb 20]
+STATS driver estimate somebox /lib 20080616166666 1 [sec 0 nkb 52 ckb 64 kps 1024]
+START taper datestamp 20080616166666 label Conf-008 tape 1
+# this tape is removed
+#:part somebox_lib_20080616166666 somebox_lib_20080616166666 Conf-008 1 1 OK 0.000370 20 20
+PART taper Conf-008 1 somebox /lib 20080616166666 2/2 1 [sec 0.000370 kb 20 kps 54054.054054 orig-kb 20]
+DONE taper somebox /lib 20080616166666 1 1 [sec 0.000370 kb 20 kps 54054.054054 orig-kb 20]

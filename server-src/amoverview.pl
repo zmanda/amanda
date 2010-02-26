@@ -122,13 +122,14 @@ while (<$fh>) {
     next if /skipping cruft directory/;
     next if /skip-incr/;
 
-    ($date, $time, $host, $disk, $level, $tape, $file, $part, $status) = shellwords($_);
+    ($date, $time, $host, $disk, $level, $tape, $file, $part, $status, $remaining) = shellwords($_);
 
     next if $date eq 'date';
     next if $date eq 'Warning:';
     next if $date eq 'Scanning';
     next if $date eq "";
 
+    $status .= " " . $remaining;
     if($time !~/^\d\d:\d\d:\d\d$/) {
 	$status = $part;
 	$part = $file;
@@ -138,6 +139,7 @@ while (<$fh>) {
 	$disk = $host;
 	$host = $time;
     }
+    next if ($part != 1);
 
     if ($date =~ /^\d\d\d\d-\d\d-\d\d$/) {
 	if(defined $disks{$host}{$disk}) {

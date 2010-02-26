@@ -139,6 +139,8 @@ typedef struct {
     char *label;
     off_t filenum;
     char *status;
+    char *dump_status;
+    char *message;
     int partnum;
     int totalparts;
     double sec;

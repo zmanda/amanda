@@ -766,8 +766,9 @@ build_disk_table(void)
 	find_output != NULL; 
 	find_output = find_output->next) {
 	if(strcasecmp(dump_hostname, find_output->hostname) == 0 &&
-	   strcmp(disk_name    , find_output->diskname) == 0 &&
-	   strcmp("OK"         , find_output->status)   == 0) {
+	   strcmp(disk_name    , find_output->diskname)     == 0 &&
+	   strcmp("OK"         , find_output->status)       == 0 &&
+	   strcmp("OK"         , find_output->dump_status)  == 0) {
 	    /*
 	     * The sort order puts holding disk entries first.  We want to
 	     * use them if at all possible, so ignore any other entries

@@ -13,7 +13,9 @@ typedef struct find_result_s {
     int level;
     char *label;	/* holding filename for holding files */
     off_t filenum;
-    char *status;
+    char *status;	/* status of the part */
+    char *dump_status;	/* status of the dump; should be identical for all parts in dump */
+    char *message;	/* reason for dump_status; should be identical for all parts in dump */
     int partnum;	/* -1 for holding files */
     int totalparts;	/* -1 for holding files */
     double sec;		/* may be 0.0 for older log files or holding files */

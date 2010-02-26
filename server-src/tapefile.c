@@ -133,7 +133,7 @@ clear_tapelist(void)
 
 tape_t *
 lookup_tapelabel(
-    char *label)
+    const char *label)
 {
     tape_t *tp;
 
