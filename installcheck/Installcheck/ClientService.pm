@@ -613,13 +613,23 @@ sub _do_process_done {
 
     # defer with call_after if there are still read fd's open or data in a read
     # buffer.  Since the process just died, presumably these will close in this
-    # trip around the MainLoop, so this will be a very short busywait
+    # trip around the MainLoop, so this will be a very short busywait.  The upper
+    # bound on the wait is 1 second.
     if ($self->{'process_done_loops'} < 100) {
+	my $still_busy = 0;
 	for my $name (keys %{$self->{'stream_fds'}}) {
 	    my $fds = $self->{'stream_fds'}{$name};
-	    if ($self->{'read_buf'}{$name} or $fds->[0] != -1) {
-		return Amanda::MainLoop::call_after(10, \&_do_process_done, $self, $exitstatus);
+	    # if we're still expecting something on this stream..
+	    if ($self->{'expectations'}{$name}) {
+		$still_busy = 1;
 	    }
+	    # or the stream's not closed yet..
+	    if ($fds->[0] != -1) {
+		$still_busy = 1;
+	    }
+	}
+	if ($still_busy) {
+	    return Amanda::MainLoop::call_after(10, \&_do_process_done, $self, $exitstatus);
 	}
     }
 
@@ -692,6 +702,11 @@ sub _check_expectations {
 		# store the ongoing byte count in the expectation itself
 		$exp->[2] = ($exp->[2] || 0) + length($buf);
 		$self->{'read_buf'}{$name} = '';
+		# and if this stream *also* has EOF, call back
+		if ($self->{'got_eof'}{$name}) {
+		    $cb = $exp->[1];
+		    @args = ($exp->[2],); # byte count
+		}
 		last;
 	    } elsif ($exp->[0] eq 'bytes') {
 		if (length($buf) >= $exp->[1]) {

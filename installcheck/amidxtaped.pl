@@ -80,7 +80,7 @@ sub test {
     return if ($params{'holding_no_colon_zero'} and not $params{'holding'});
 
     my $service;
-    my $datasize = 0;
+    my $datasize = -1; # -1 means EOF never arrived
     my $hdr;
 
     my $expect_error = ($params{'bad_auth'}
@@ -447,8 +447,6 @@ sub test {
 	}
     }
 
-    # check that this dump was uncompressed (we got more bytes than
-    # were on the volume)
     if ($ok) {
 	my $inetd = $params{'emulate'} eq 'inetd';
 
@@ -537,8 +535,6 @@ my $loaded_dumpcache = 'basic';
 my $holdingfile;
 my $emulate;
 
-test(emulate => 'amandad', bad_cmd => 1);
-
 for my $splits (0, 'basic', 'parts') { # two flavors of 'true'
     if ($splits and $splits ne $loaded_dumpcache) {
 	Installcheck::Dumpcache::load($splits);
@@ -599,6 +595,9 @@ for $emulate ('inetd', 'amandad') {
 
 # bad authentication triggers an error message
 test(emulate => 'amandad', bad_auth => 1);
+
+# and a bad command triggers an error
+test(emulate => 'amandad', bad_cmd => 1);
 
 ## check decompression
 

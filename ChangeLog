@@ -1,3 +1,9 @@
+2010-02-26  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/ClientService.pm: fix to wait for streams
+	  to empty and hit EOF after exit
+	* installcheck/amidxtaped.pl: reorder bad_cmd test, remove bogus
+	  comment, and use -1 to signal no data EOF received
+
 2010-02-26  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report/human.pm: added quoting of disks in per-disk
 	  summary
