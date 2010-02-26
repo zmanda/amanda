@@ -319,9 +319,10 @@ sub test {
 	my ($buf) = @_;
 	$event->("GOT-HEADER");
 
-	$service->expect($data_stream,
-	    [ bytes => 1, $subs{'got_early_bytes'} ]);
-
+	if ($params{'datapath'} ne 'none') {
+	    $service->expect($data_stream,
+		[ bytes => 1, $subs{'got_early_bytes'} ]);
+	}
 	$hdr = Amanda::Header->from_string($buf);
 	$subs{'expect_datapath'}->();
     });

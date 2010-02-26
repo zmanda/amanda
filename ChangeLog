@@ -1,4 +1,7 @@
 2010-02-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/amidxtaped.pl: Fix for datapath eq "none".
+
+2010-02-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/ps.m4: Set PS_ARGUMENT_ARGS.
 	* perl/Amanda/Constants.pm.in: export PS_ARGUMENT_ARGS.
 	* perl/Amanda/Process.pm (set_master_process): New function.
