@@ -1,4 +1,8 @@
 2010-02-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: don't use a base-class attribute name,
+	  and use an appropriate prefix for debug messages
+
+2010-02-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* Makefile.am: remove restore-src from lint rule
 	* configure.in: remove restore-src/Makefile
 	* restore-src/: remove

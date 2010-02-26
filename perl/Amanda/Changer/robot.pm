@@ -123,8 +123,8 @@ sub new {
     $device_name =~ s/^[^:]*://;
 
     # get the 'chg-foo' form of this changer script
-    my $chg_name = $class;
-    $chg_name =~ s/Amanda::Changer::/chg-/;
+    my $class_name = $class;
+    $class_name =~ s/Amanda::Changer::/chg-/;
 
     my $self = {
         interface => undef,
@@ -143,7 +143,7 @@ sub new {
 	load_poll => [0, 2, 120], # delay, poll, until
 	eject_delay => 0, # in seconds
 	unload_delay => 0, # in seconds
-	chg_name => $chg_name,
+	class_name => $class_name,
     };
     bless ($self, $class);
 
@@ -152,13 +152,13 @@ sub new {
 
     if (defined $config->{'changerdev'} and $config->{'changerdev'} ne '') {
 	return Amanda::Changer->make_error("fatal", undef,
-	    message => "'changerdev' is not allowed with $self->{chg_name}");
+	    message => "'changerdev' is not allowed with $self->{class_name}");
     }
 
     if ($config->{'changerfile'}) {
         $self->{'statefile'} = Amanda::Config::config_dir_relative($config->{'changerfile'});
     } else {
-        my $safe_filename = "$self->{chg_name}:$device_name";
+        my $safe_filename = "$self->{class_name}:$device_name";
         $safe_filename =~ tr/a-zA-Z0-9/-/cs;
         $safe_filename =~ s/^-*//;
         $self->{'statefile'} = "$libexecdir/lib/amanda/$safe_filename";
@@ -1357,8 +1357,7 @@ sub _is_slot_allowed {
 sub _debug {
     my $self = shift;
     my ($msg) = @_;
-    my $pfx = "$self->{chg_name}:$self->{device_name}";
-    debug("$pfx: $msg");
+    debug("$self->{chg_name}: $msg");
 }
 
 ##
