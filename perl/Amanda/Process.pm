@@ -42,6 +42,8 @@ Amanda::Process -- interface to process
 
   Amanda::Process::add_child();
 
+  Amanda::Process::set_master_process(@pname);
+
   Amanda::Process::set_master($pname, $pid);
 
   Amanda::Process::kill_process($signal);
@@ -78,6 +80,12 @@ Parse all 'pid' and 'pid-done' lines of the logfile.
   $Amanda_process->add_child();
 
 Add all children of already known amanda processes.
+
+=item set_master_process
+
+  $Amanda_process->set_master_process($arg, @pname);
+
+Search the process table to find a process in @pname and make it the master, $arg must be an argument of the process.
 
 =item set_master
 
@@ -298,7 +306,33 @@ sub add_child() {
 # Set master_pname and master_pid.
 #
 # Side-effects:
-# - sets $master_pname and $master_pid.
+# - sets $self->{master_pname} and $self->{master_pid}.
+#
+sub set_master_process {
+    my $self = shift;
+    my $arg = shift;
+    my @pname = @_;
+
+    my $ps_argument_args = $Amanda::Constants::PS_ARGUMENT_ARGS;
+    for my $pname (@pname) {
+	my $pid;
+
+	if ($ps_argument_args eq "CYGWIN") {
+	    $pid = `ps -ef|grep -w ${pname}|grep -w ${arg}| grep -v grep | awk '{print \$2}'`;
+	} else {
+	    $pid = `$Amanda::Constants::PS $ps_argument_args|grep -w ${pname}|grep -w ${arg}| grep -v grep | awk '{print \$1}'`;
+	}
+	chomp $pid;
+	if ($pid ne "") {
+	    $self->set_master($pname, $pid);
+	}
+    }
+}
+
+# Set master_pname and master_pid.
+#
+# Side-effects:
+# - sets $self->{master_pname} and $self->{master_pid}.
 #
 sub set_master($$) {
     my $self = shift;
@@ -309,7 +343,6 @@ sub set_master($$) {
     $self->{master_pid} = $pid;
     $self->{pids}->{$pid} = $pname;
 }
-
 # Send a signal to all amanda process
 #
 # Side-effects:

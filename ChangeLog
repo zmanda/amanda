@@ -1,4 +1,10 @@
 2010-02-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/ps.m4: Set PS_ARGUMENT_ARGS.
+	* perl/Amanda/Constants.pm.in: export PS_ARGUMENT_ARGS.
+	* perl/Amanda/Process.pm (set_master_process): New function.
+	* server-src/amcleanup.pl: Use set_master_process.
+
+2010-02-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/extract_list.c: AVAIL-DATAPATH, USE-DATAPATH and
 				      DATAPATH-OK.
 	* server-src/amidxtaped.pl: AVAIL-DATAPATH, USE-DATAPATH and

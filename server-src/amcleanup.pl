@@ -87,14 +87,7 @@ $Amanda_process->load_ps_table();
 if (-f "$logfile") {
     $Amanda_process->scan_log($logfile);
 } elsif (!$process_alive) {
-    #check amdump/amflush process
-    foreach my $pname ("amdump", "amflush") {
-	my $pid = `ps -ef|grep -w ${pname}|grep -w ${config_name}| grep -v grep | awk '{print \$2}'`;
-	chomp $pid;
-	if ($pid ne "") {
-	    $Amanda_process->set_master($pname, $pid);
-	}
-    }
+    $Amanda_process->set_master_process($config_name, "amdump", "amflush");
 }
 
 $Amanda_process->add_child();
