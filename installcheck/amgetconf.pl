@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 80;
+use Test::More tests => 82;
 
 use lib "@amperldir@";
 use Installcheck;
@@ -215,7 +215,9 @@ $testconf = Installcheck::Config->new();
 $testconf->add_tapetype("cassette", [ length => "32 k" ]);
 $testconf->add_tapetype("reel2reel", [ length => "1 M" ]);
 $testconf->add_tapetype("scotch", [ length => "500 bytes" ]); # (use a sharpie)
-$testconf->add_dumptype("testdump", [ comment => '"testdump-dumptype"' ]);
+$testconf->add_dumptype("testdump", [ comment => '"testdump-dumptype"',
+				      auth => '"bsd"' ]);
+$testconf->add_dumptype("testdump1", [ inherit => 'testdump' ]);
 $testconf->add_interface("testiface", [ use => '10' ]);
 $testconf->add_holdingdisk("hd17", [ chunksize => '128' ]);
 $testconf->add_application('app_amgtar', [ plugin => '"amgtar"' ]);
@@ -282,6 +284,10 @@ is(run_get('amgetconf', 'TESTCONF', 'script_tOOl:my_script:eXECute-on'), 'PRE-DL
     "insensitive to case in subsec_key");
 is(run_get('amgetconf', 'TESTCONF', 'script-tool:my_script:execute_on'), 'PRE-DLE-AMCHECK',
     "insensitive to -/_ in subsec_key");
+is(run_get('amgetconf', 'TESTCONF', 'dumptype:testdump1:auth', '-odumptype:testdump:auth=SSH'), 'SSH',
+    "inherited setting are overrided");
+is(run_get('amgetconf', 'TESTCONF', 'dumptype:testdump1:compress', '-odumptype:testdump:compress=SERVER BEST'), 'SERVER BEST',
+    "inherited default are overrided");
 
 is_deeply([sort(split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'device')))],
           [sort("my_device")],
@@ -328,5 +334,4 @@ is_deeply([sort(+split(qr/\n/, run_get('amgetconf', 'TESTCONF', 'dumptype:testdu
 	  [sort('FILE OPTIONAL "ifo"',
 	        'LIST OPTIONAL "ilo"')],
     "a final 'OPTIONAL' makes the whole include/exclude optional")
-
 

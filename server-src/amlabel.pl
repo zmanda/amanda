@@ -71,8 +71,8 @@ if (@ARGV == 2) {
 $opt_config = $ARGV[0];
 $opt_label = $ARGV[1];
 
+set_config_overrides($config_overrides);
 config_init($CONFIG_INIT_EXPLICIT_NAME, $opt_config);
-apply_config_overrides($config_overrides);
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();

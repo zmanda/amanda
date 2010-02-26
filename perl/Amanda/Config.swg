@@ -742,16 +742,14 @@ void add_config_override(config_overrides_t *co,
 			 char *value);
 void add_config_override_opt(config_overrides_t *co,
 			      char *optarg);
-cfgerr_level_t apply_config_overrides(config_overrides_t *co);
-cfgerr_level_t reapply_config_overrides(void);
+void set_config_overrides(config_overrides_t *co);
 
 amglue_export_tag(init,
     config_init config_uninit get_config_options
     get_config_name get_config_dir get_config_filename
     config_print_errors config_clear_errors config_errors
     new_config_overrides free_config_overrides add_config_override
-    add_config_override_opt apply_config_overrides
-    reapply_config_overrides
+    add_config_override_opt set_config_overrides
 );
 
 /*

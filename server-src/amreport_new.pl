@@ -204,8 +204,8 @@ if ( $no_mail and defined $mailto ) {
 }
 
 $config_name = shift @ARGV;
+set_config_overrides($config_overrides);
 config_init( $CONFIG_INIT_EXPLICIT_NAME, $config_name );
-apply_config_overrides($config_overrides);
 
 my ( $cfgerr_level, @cfgerr_errors ) = config_errors();
 if ( $cfgerr_level >= $CFGERR_WARNINGS ) {

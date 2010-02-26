@@ -645,13 +645,15 @@ GetOptions(
 ) or usage();
 usage() if (@ARGV < 1 or @ARGV > 2);
 
+set_config_overrides($config_overrides);
 if (@ARGV == 2) {
     $opt_config = shift @ARGV;
     config_init($CONFIG_INIT_EXPLICIT_NAME, $opt_config);
+} else {
+    config_init(0, undef);
 }
 $opt_device_name= shift @ARGV;
 
-apply_config_overrides($config_overrides);
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();

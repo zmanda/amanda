@@ -952,8 +952,8 @@ if (@ARGV != 1) {
     die "USAGE: taper <config> <config-overwrites>";
 }
 
+set_config_overrides($config_overrides);
 config_init($CONFIG_INIT_EXPLICIT_NAME, $ARGV[0]);
-apply_config_overrides($config_overrides);
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();

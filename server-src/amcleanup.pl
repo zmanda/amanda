@@ -55,8 +55,8 @@ if ($kill_enable && $process_alive) {
     die "amcleanup: Can't use -k and -p simultaneously\n";
 }
 
+set_config_overrides($config_overrides);
 config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
-apply_config_overrides($config_overrides);
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();

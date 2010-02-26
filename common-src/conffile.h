@@ -1211,15 +1211,12 @@ config_overrides_t *
 extract_commandline_config_overrides(int *argc,
 				      char ***argv);
 
-/* Apply configuration overwrites to the current configuration and take
- * ownership of the config_overrides object.  It is the caller's
- * responsibility to handle any errors.
+/* Set configuration overwrites to the current configuration and take
+ * ownership of the config_overrides object.
  *
  * @param co: the config_overrides object
- * @returns: current error level
  */
-cfgerr_level_t apply_config_overrides(config_overrides_t *co);
-cfgerr_level_t reapply_config_overrides(void);
+void set_config_overrides(config_overrides_t *co);
 
 /*
  * Initialization

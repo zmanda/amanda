@@ -349,7 +349,12 @@ main(
     }
     localhost[MAX_HOSTNAME_LENGTH] = '\0';
 
+    /* treat amrecover-specific command line options as the equivalent
+     * -o command-line options to set configuration values */
+    cfg_ovr = new_config_overrides(argc/2);
+
     /* load the base client configuration */
+    set_config_overrides(cfg_ovr);
     config_init(CONFIG_INIT_CLIENT, NULL);
 
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
@@ -358,10 +363,6 @@ main(
 	    g_critical(_("errors processing config file"));
 	}
     }
-
-    /* treat amrecover-specific command line options as the equivalent
-     * -o command-line options to set configuration values */
-    cfg_ovr = new_config_overrides(argc/2);
 
     /* If the first argument is not an option flag, then we assume
      * it is a configuration name to match the syntax of the other
@@ -409,10 +410,8 @@ main(
     }
 
     /* and now try to load the configuration named in that file */
-    apply_config_overrides(cfg_ovr);
     config_init(CONFIG_INIT_CLIENT | CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_OVERLAY,
 		getconf_str(CNF_CONF));
-    reapply_config_overrides();
 
     check_running_as(RUNNING_AS_ROOT);
 

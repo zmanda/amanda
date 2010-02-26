@@ -99,8 +99,8 @@ main(
     dbopen(DBG_SUBDIR_SERVER);
     dbprintf(_("%s: version %s\n"), argv[0], VERSION);
 
+    set_config_overrides(cfg_ovr);
     config_init(CONFIG_INIT_EXPLICIT_NAME, argv[1]);
-    apply_config_overrides(cfg_ovr);
 
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     read_diskfile(conf_diskfile, &diskl);

@@ -142,9 +142,12 @@ SKIP: {
 	".. lookup_tapedate no longer finds it");
 
     ## set tapecycle to 0 to perform the next couple tests
+    config_uninit();
     my $cor = new_config_overrides(1);
-    add_config_override_opt($cor, "TAPECYCLE=0");
-    apply_config_overrides($cor);
+    add_config_override_opt($cor, "tapecycle=1");
+    set_config_overrides($cor);
+    config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF") == $CFGERR_OK
+	or die("config_init failed");
 
     is( Amanda::Tapelist::get_last_reusable_tape_label(0),
         'TESTCONF002', ".. get_last_reusable_tape_labe for skip=0" );

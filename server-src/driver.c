@@ -222,8 +222,8 @@ main(
 
     if (argc > 1)
 	cfg_opt = argv[1];
+    set_config_overrides(cfg_ovr);
     config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
-    apply_config_overrides(cfg_ovr);
 
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     read_diskfile(conf_diskfile, &origq);

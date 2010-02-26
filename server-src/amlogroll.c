@@ -76,8 +76,8 @@ main(
 
     /* read configuration files */
 
+    set_config_overrides(cfg_ovr);
     config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
-    apply_config_overrides(cfg_ovr);
 
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
 	config_print_errors();

@@ -48,13 +48,14 @@ is(config_init(0, ''), $CFGERR_OK,
     "Initialize with no configuration")
     or diag_config_errors();
 
+config_uninit();
+$config_overrides = new_config_overrides(1);
+add_config_override($config_overrides, "tapedev", "null:TEST");
+set_config_overrides($config_overrides);
+
 is(config_init(0, undef), $CFGERR_OK,
     "Initialize with no configuration, passing a NULL config name")
     or diag_config_errors();
-
-$config_overrides = new_config_overrides(1);
-add_config_override($config_overrides, "tapedev", "null:TEST");
-apply_config_overrides($config_overrides);
 
 is(getconf($CNF_TAPEDEV), "null:TEST",
     "config overwrites work with null config");
@@ -519,11 +520,13 @@ SKIP: { # changer
 ##
 # Test config overwrites (using the config from above)
 
+config_uninit();
 $config_overrides = new_config_overrides(1); # note estimate is too small
 add_config_override($config_overrides, "tapedev", "null:TEST");
 add_config_override($config_overrides, "tpchanger", "chg-test");
 add_config_override_opt($config_overrides, "org=KAOS");
-apply_config_overrides($config_overrides);
+set_config_overrides($config_overrides);
+config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 
 is(getconf($CNF_TAPEDEV), "null:TEST",
     "config overwrites work with real config");
@@ -531,9 +534,11 @@ is(getconf($CNF_ORG), "KAOS",
     "add_config_override_opt parsed correctly");
 
 # introduce an error
+config_uninit();
 $config_overrides = new_config_overrides(1);
 add_config_override($config_overrides, "bogusparam", "foo");
-apply_config_overrides($config_overrides);
+set_config_overrides($config_overrides);
+config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 
 my ($error_level, @errors) = Amanda::Config::config_errors();
 is($error_level, $CFGERR_ERRORS, "bogus config overwrite flagged as an error");

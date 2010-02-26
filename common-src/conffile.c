@@ -399,7 +399,8 @@ static void handle_deprecated_keyword(void);
  */
 static void read_block(conf_var_t *read_var, val_t *valarray, 
 		       char *errormsg, int read_brace,
-		       void (*copy_function)(void));
+		       void (*copy_function)(void),
+		       char *type, char *name);
 
 /* For each subsection type, we have a global and  four functions:
  *  - foocur is a temporary struct used to assemble new subsections
@@ -560,8 +561,8 @@ static gboolean config_initialized = FALSE;
  * with CONFIG_INIT_CLIENT) */
 static gboolean config_client = FALSE;
 
-/* What config overwrites are applied? */
-static config_overrides_t *applied_config_overrides = NULL;
+/* What config overwrites to use? */
+static config_overrides_t *config_overrides = NULL;
 
 /* All global parameters */
 static val_t conf_data[CNF_CNF];
@@ -609,6 +610,9 @@ static void init_defaults(void);
  */
 static void update_derived_values(gboolean is_client);
 
+static cfgerr_level_t apply_config_overrides(config_overrides_t *co,
+					     char *key_ovr);
+
 /* per-type conf_init functions, used as utilities for init_defaults
  * and for each subsection's init_foo_defaults.
  *
@@ -647,8 +651,9 @@ static void conf_init_autolabel(val_t *val);
  */
 
 typedef struct config_override_s {
-    char *key;
-    char *value;
+    char     *key;
+    char     *value;
+    gboolean  applied;
 } config_override_t;
 
 struct config_overrides_s {
@@ -1857,10 +1862,14 @@ read_block(
     val_t    *valarray,
     char     *errormsg,
     int       read_brace,
-    void      (*copy_function)(void))
+    void      (*copy_function)(void),
+    char     *type,
+    char     *name)
 {
     conf_var_t *np;
-    int    done;
+    int         done;
+    char       *key_ovr;
+    int         i;
 
     if(read_brace) {
 	get_conftoken(CONF_LBRACE);
@@ -1906,6 +1915,64 @@ read_block(
 	if(tok != CONF_NL && tok != CONF_END && tok != CONF_RBRACE)
 	    get_conftoken(CONF_NL);
     } while(!done);
+
+    if (!config_overrides)
+	return;
+
+    key_ovr = vstralloc(type, ":", name, NULL);
+    for (i = 0; i < config_overrides->n_used; i++) {
+	config_override_t *co = &config_overrides->ovr[i];
+	char              *key = co->key;
+	char              *keyword;
+	char              *value;
+	keytab_t          *kt;
+
+	if (key_ovr && strncasecmp(key_ovr, key, strlen(key_ovr)) != 0)
+	    continue;
+
+	if (strlen(key) <= strlen(key_ovr) + 1)
+	    continue;
+
+	keyword = key + strlen(key_ovr) + 1;
+	value = co->value;
+
+	/* find the token in keytable */
+	for (kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
+	    if (kt->keyword && strcasecmp(kt->keyword, keyword) == 0)
+		break;
+	}
+	if (kt->token == CONF_UNKNOWN)
+	     continue;
+
+	/* find the var in read_var */
+	for (np = read_var; np->token != CONF_UNKNOWN; np++)
+	    if (np->token == kt->token) break;
+	if (np->token == CONF_UNKNOWN)
+	    continue;
+
+	/* now set up a fake line and use the relevant read_function to
+	 * parse it.  This is sneaky! */
+	if (np->type == CONFTYPE_STR) {
+	    current_line = quote_string_always(value);
+	} else {
+	    current_line = stralloc(value);
+	}
+
+	current_char = current_line;
+	token_pushed = 0;
+	current_line_num = -2;
+	allow_overwrites = 1;
+	co->applied = TRUE;
+
+	np->read_function(np, &valarray[np->parm]);
+	if (np->validate_function)
+	    np->validate_function(np, &valarray[np->parm]);
+
+	amfree(current_line);
+	current_char = NULL;
+    }
+    amfree(key_ovr);
+
 }
 
 static void
@@ -1943,7 +2010,8 @@ get_holdingdisk(
 	} else {
 	    unget_conftoken();
 	    read_block(holding_var, hdcur.value,
-		     _("holding disk parameter expected"), 1, copy_holdingdisk);
+		     _("holding disk parameter expected"), 1, copy_holdingdisk,
+		     "HOLDINGDISK", hdcur.name);
 	    get_conftoken(CONF_NL);
             save_holdingdisk();
 	    if (!is_define) {
@@ -2074,7 +2142,8 @@ read_dumptype(
 
     read_block(dumptype_var, dpcur.value,
 	       _("dumptype parameter expected"),
-	       (name == NULL), copy_dumptype);
+	       (name == NULL), copy_dumptype,
+	       "DUMPTYPE", dpcur.name);
 
     if(!name) /* !name => reading disklist, not conffile */
 	get_conftoken(CONF_NL);
@@ -2225,7 +2294,8 @@ get_tapetype(void)
     tpcur.seen.linenum = current_line_num;
 
     read_block(tapetype_var, tpcur.value,
-	       _("tapetype parameter expected"), 1, copy_tapetype);
+	       _("tapetype parameter expected"), 1, copy_tapetype,
+	       "TAPETYPE", tpcur.name);
     get_conftoken(CONF_NL);
 
     if (tapetype_get_readblocksize(&tpcur) <
@@ -2315,7 +2385,8 @@ get_interface(void)
     ifcur.seen.linenum = current_line_num;
 
     read_block(interface_var, ifcur.value,
-	       _("interface parameter expected"), 1, copy_interface);
+	       _("interface parameter expected"), 1, copy_interface,
+	       "INTERFACE", ifcur.name);
     get_conftoken(CONF_NL);
 
     save_interface();
@@ -2419,7 +2490,8 @@ read_application(
 
     read_block(application_var, apcur.value,
 	       _("application parameter expected"),
-	       (name == NULL), *copy_application);
+	       (name == NULL), *copy_application,
+	       "APPLICATION", apcur.name);
     if(!name)
 	get_conftoken(CONF_NL);
 
@@ -2544,7 +2616,8 @@ read_pp_script(
 
     read_block(pp_script_var, pscur.value,
 	       _("script parameter expected"),
-	       (name == NULL), *copy_pp_script);
+	       (name == NULL), *copy_pp_script,
+	       "SCRIPT", pscur.name);
     if(!name)
 	get_conftoken(CONF_NL);
 
@@ -2672,7 +2745,8 @@ read_device_config(
 
     read_block(device_config_var, dccur.value,
 	       _("device parameter expected"),
-	       (name == NULL), *copy_device_config);
+	       (name == NULL), *copy_device_config,
+	       "DEVICE", dccur.name);
     if(!name)
 	get_conftoken(CONF_NL);
 
@@ -2796,7 +2870,8 @@ read_changer_config(
 
     read_block(changer_config_var, cccur.value,
 	       _("changer parameter expected"),
-	       (name == NULL), *copy_changer_config);
+	       (name == NULL), *copy_changer_config,
+	       "CHANGER", cccur.name);
     if(!name)
 	get_conftoken(CONF_NL);
 
@@ -3438,6 +3513,7 @@ read_dapplication(
 	conf_parserror(_("application name expected: %d %d"), tok, CONF_STRING);
 	return;
     }
+    amfree(val->v.s);
     val->v.s = stralloc(application->name);
     ckseen(&val->seen);
 }
@@ -4262,13 +4338,29 @@ config_init(
 	amfree(config_name);
 	config_dir = newstralloc(config_dir, CONFIG_DIR);
     } else {
-	/* ok, then, we won't read anything (for e.g., amrestore), but
-	 * will set up for server-side config_overrides */
+	/* ok, then, we won't read anything (for e.g., amrestore) */
 	amfree(config_name);
 	amfree(config_dir);
+    }
+
+    /* setup for apply_config_overrides */
+    if (flags & CONFIG_INIT_CLIENT) {
+	keytable = client_keytab;
+	parsetable = client_var;
+    } else {
 	keytable = server_keytab;
 	parsetable = server_var;
     }
+
+    if (config_overrides) {
+	int i;
+	for (i = 0; i < config_overrides->n_used; i++) {
+	    config_overrides->ovr[i].applied = FALSE;
+	}
+    }
+
+    /* apply config overrides to default setting */
+    apply_config_overrides(config_overrides, NULL);
 
     /* If we have a config_dir, we can try reading something */
     if (config_dir) {
@@ -4283,6 +4375,19 @@ config_init(
 		flags & CONFIG_INIT_CLIENT);
     } else {
 	amfree(config_filename);
+    }
+
+    /* apply config overrides to default setting */
+    apply_config_overrides(config_overrides, NULL);
+
+    if (config_overrides) {
+	int i;
+	for (i = 0; i < config_overrides->n_used; i++) {
+	    if (config_overrides->ovr[i].applied == FALSE) {
+		conf_parserror(_("unknown parameter '%s'"),
+			       config_overrides->ovr[i].key);
+	    }
+	}
     }
 
     update_derived_values(flags & CONFIG_INIT_CLIENT);
@@ -4390,9 +4495,9 @@ config_uninit(void)
     for(i=0; i<CNF_CNF; i++)
 	free_val_t(&conf_data[i]);
 
-    if (applied_config_overrides) {
-	free_config_overrides(applied_config_overrides);
-	applied_config_overrides = NULL;
+    if (config_overrides) {
+	free_config_overrides(config_overrides);
+	config_overrides = NULL;
     }
 
     amfree(config_name);
@@ -4605,18 +4710,18 @@ get_config_options(
 {
     char             **config_options;
     char	     **config_option;
-    int		     n_applied_config_overrides = 0;
+    int		     n_config_overrides = 0;
     int		     i;
 
-    if (applied_config_overrides)
-	n_applied_config_overrides = applied_config_overrides->n_used;
+    if (config_overrides)
+	n_config_overrides = config_overrides->n_used;
 
-    config_options = alloc((first+n_applied_config_overrides+1)*SIZEOF(char *));
+    config_options = alloc((first+n_config_overrides+1)*SIZEOF(char *));
     config_option = config_options + first;
 
-    for (i = 0; i < n_applied_config_overrides; i++) {
-	char *key = applied_config_overrides->ovr[i].key;
-	char *value = applied_config_overrides->ovr[i].value;
+    for (i = 0; i < n_config_overrides; i++) {
+	char *key = config_overrides->ovr[i].key;
+	char *value = config_overrides->ovr[i].value;
 	*config_option = vstralloc("-o", key, "=", value, NULL);
 	config_option++;
     }
@@ -5508,55 +5613,26 @@ extract_commandline_config_overrides(
     return co;
 }
 
-static cfgerr_level_t internal_apply_config_overrides(config_overrides_t *co);
-
-cfgerr_level_t
-apply_config_overrides(
+void
+set_config_overrides(
     config_overrides_t *co)
 {
     int i;
 
-    if(!co) return cfgerr_level;
-    assert(keytable != NULL);
-    assert(parsetable != NULL);
+    config_overrides = co;
 
-    cfgerr_level = internal_apply_config_overrides(co);
-
-    /* merge these overwrites with previous overwrites, if necessary */
-    if (applied_config_overrides) {
-	for (i = 0; i < co->n_used; i++) {
-	    char *key = co->ovr[i].key;
-	    char *value = co->ovr[i].value;
-
-	    add_config_override(applied_config_overrides, key, value);
-	}
-	free_config_overrides(co);
-    } else {
-	applied_config_overrides = co;
+g_debug("set_config_overrides");
+    for (i = 0; i < co->n_used; i++) {
+	g_debug("config_overrides: %s %s", co->ovr[i].key, co->ovr[i].value);
     }
 
-    update_derived_values(config_client);
-
-    return cfgerr_level;
-}
-
-cfgerr_level_t
-reapply_config_overrides(void)
-{
-    if(!applied_config_overrides) return cfgerr_level;
-    assert(keytable != NULL);
-    assert(parsetable != NULL);
-
-    cfgerr_level = internal_apply_config_overrides(applied_config_overrides);
-
-    update_derived_values(config_client);
-
-    return cfgerr_level;
+    return;
 }
 
 static cfgerr_level_t
-internal_apply_config_overrides(
-    config_overrides_t *co)
+apply_config_overrides(
+    config_overrides_t *co,
+    char *key_ovr)
 {
     int i;
 
@@ -5570,14 +5646,17 @@ internal_apply_config_overrides(
 	val_t *key_val;
 	conf_var_t *key_parm;
 
+	if (key_ovr && strncasecmp(key_ovr, key, strlen(key_ovr)) != 0) {
+	    continue;
+	}
+
 	if (!parm_key_info(key, &key_parm, &key_val)) {
-	    conf_parserror(_("unknown parameter '%s'"), key);
+	    /* not an error, only default config is loaded */
 	    continue;
 	}
 
 	/* now set up a fake line and use the relevant read_function to
 	 * parse it.  This is sneaky! */
-
 	if (key_parm->type == CONFTYPE_STR) {
 	    current_line = quote_string_always(value);
 	} else {
@@ -5588,6 +5667,7 @@ internal_apply_config_overrides(
 	token_pushed = 0;
 	current_line_num = -2;
 	allow_overwrites = 1;
+        co->ovr[i].applied = TRUE;
 
 	key_parm->read_function(key_parm, key_val);
 	if ((key_parm)->validate_function)

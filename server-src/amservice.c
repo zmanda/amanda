@@ -123,8 +123,8 @@ main(
     if(argc < 3) usage();
 
     /* set a default config */
+    set_config_overrides(cfg_ovr);
     config_init(CONFIG_INIT_CLIENT, NULL);
-    apply_config_overrides(cfg_ovr);
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     if (config_errors(NULL) >= CFGERR_WARNINGS) {

@@ -411,7 +411,11 @@ sub _write_amanda_conf_subsection {
 	while (@values) {
 	    $param = shift @values;
 	    $value = shift @values;
-	    print $amanda_conf "$param $value\n";
+	    if ($param eq "inherit") {
+		print $amanda_conf "$value\n";
+	    } else {
+	        print $amanda_conf "$param $value\n";
+	    }
 	}
 	print $amanda_conf "}\n";
     }

@@ -341,8 +341,8 @@ main(
     cfg_ovr = extract_commandline_config_overrides(&argc, &argv);
     if (argc > 1)
 	cfg_opt = argv[1];
+    set_config_overrides(cfg_ovr);
     config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
-    apply_config_overrides(cfg_ovr);
 
     if (!dumper_setuid) {
 	error(_("dumper must be run setuid root"));

@@ -1,3 +1,25 @@
+2010-02-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (set_config_overrides): new config override api.
+	* common-src/conffile.h (set_config_overrides): New prototype.
+	* perl/Amanda/Config.swg (set_config_overrides): Swigged.
+	* changer-src/chg-glue.pl, common-src/amgetconf.pl,
+	* common-src/file.c, device-src/amdevcheck.pl,
+	* device-src/amtapetype.pl, installcheck/Amanda_Config.pl,
+	* installcheck/Amanda_Tapelist.pl, installcheck/Installcheck/Config.pm,
+	* installcheck/amgetconf.pl, recover-src/amrecover.c,
+	* server-src/amadmin.c, server-src/amcheck-device.pl,
+	* server-src/amcheck.c, server-src/amcheckdump.pl,
+	* server-src/amcleanup.pl, server-src/amfetchdump.pl,
+	* server-src/amflush.c, server-src/amlabel.pl,
+	* server-src/amlogroll.c, server-src/amreport_new.pl,
+	* server-src/amrestore.pl, server-src/amrmtape.pl,
+	* server-src/amservice.c, server-src/amtape.pl,
+	* server-src/amtrmidx.c, server-src/amtrmlog.c,
+	* server-src/amvault.pl, server-src/chunker.c,
+	* server-src/driver.c, server-src/dumper.c,
+	* server-src/planner.c, server-src/reporter.c,
+	* server-src/taper.pl: Use new config override api.
+
 2010-02-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amcheck.c: add warning if the config might generate >1000
 	  parts on a volume

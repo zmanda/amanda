@@ -70,6 +70,7 @@ mkpdir(
 	    rc = mkdir(dir, mode);
 	}
 	if (rc != 0 && errno == EEXIST) {
+	    amfree(dir);
 	    return 0;
 	}
     }
@@ -84,6 +85,7 @@ mkpdir(
 	}
     }
 
+    amfree(dir);
     return rc;
 }
 

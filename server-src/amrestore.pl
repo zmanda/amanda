@@ -94,12 +94,12 @@ usage("Cannot use both -r (raw) and -c/-C (compression) -- use -h instead")
 # -r implies -h, plus appending ".RAW" to filenames
 $opt_header = 1 if $opt_raw;
 
+set_config_overrides($config_overrides);
 if ($opt_config) {
     config_init($CONFIG_INIT_EXPLICIT_NAME, $opt_config);
 } else {
     config_init(0, undef);
 }
-apply_config_overrides($config_overrides);
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();
