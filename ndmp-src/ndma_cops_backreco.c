@@ -36,6 +36,7 @@
 
 
 #include "ndmagents.h"
+#include "util.h"
 
 
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT

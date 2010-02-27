@@ -1,3 +1,8 @@
+2010-02-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/amndmjob_main.c: #include "config.h"
+	* ndmp-src/ndma_cops_backreco.c: #include "util.h"
+	* ndmp-src/ndmjob_main.c: #include "config.h"
+
 2010-02-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/amidxtaped.pl: Fix for datapath eq "none".
 
