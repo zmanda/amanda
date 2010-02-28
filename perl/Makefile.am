@@ -213,6 +213,7 @@ endif
 EXTRA_DIST += Amanda/Disklist.swg Amanda/Disklist.pm Amanda/Disklist.pod
 
 # PACKAGE: Amanda::Feature
+Amanda/Feature.pm: ../common-src/amfeatures.h
 libFeaturedir = $(amperldir)/auto/Amanda/Feature
 libFeature_LTLIBRARIES = libFeature.la
 libFeature_la_SOURCES = Amanda/Feature.c $(AMGLUE_SWG)
