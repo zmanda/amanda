@@ -1,4 +1,7 @@
 2010-03-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Feature.pod: document known features
+
+2010-03-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Xfer.pod: no need to remove sources
 	* perl/Amanda/Xfer.swg: remove reference loop, call correct callback
 
