@@ -1772,16 +1772,19 @@ Determine the way Amanda estimates the size of each DLE before beginning a backu
   <term><amkeyword>exclude</amkeyword> [ <amkeyword>list</amkeyword> | <amkeyword>file</amkeyword> ][[<amkeyword>optional</amkeyword>][<amkeyword>append</amkeyword>][ <amtype>string</amtype> ]+]</term>
   <listitem>
 <para>Default:
-<amkeyword>file</amkeyword>.
-There are two exclude lists,
+<amkeyword>file</amkeyword>.  Exclude is the opposite of
+<amkeyword>include</amkeyword> and specifies files that will be excluded from
+the backup.  The format of the exclude expressions depends on the application,
+and some applications do not support excluding files at all.</para>
+
+<para>There are two exclude parameters,
 <amkeyword>exclude</amkeyword> <amkeyword>file</amkeyword>
 and
 <amkeyword>exclude</amkeyword> <amkeyword>list.</amkeyword>
 With
-<amkeyword>exclude</amkeyword> <amkeyword>file</amkeyword>
-, the
+<amkeyword>exclude</amkeyword> <amkeyword>file</amkeyword>, the
 <amtype>string</amtype>
-is a &gnutar; exclude expression. With
+is an exclude expression. With
 <amkeyword>exclude</amkeyword> <amkeyword>list</amkeyword>
 , the
 <amtype>string</amtype>
@@ -1789,11 +1792,12 @@ is a file name on the client containing &gnutar; exclude expressions.
 The path to the specified exclude list file, if present (see description of
 'optional' below), must be readable by the Amanda user.</para>
 
-<para>All exclude expressions are concatenated in one file and passed to &gnutar;
-as an <option>--exclude-from</option> argument.</para>
+<para>All exclude expressions are concatenated in one file and passed to the
+application as an <option>--exclude-from</option> argument.</para>
 
-<para>Exclude expressions must always be specified as relative to the
-head directory of the DLE.</para>
+<para>For &gnutar;, exclude expressions must always be specified as relative to the
+top-level directory of the DLE, and must start with "./".  See the manpages for individual
+applications for more information on supported exclude expressions.</para>
 
 <para>With the
 <amkeyword>append</amkeyword> keyword, the

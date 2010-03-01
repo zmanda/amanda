@@ -1,4 +1,10 @@
 2010-03-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: add more detail about
+	  include/exclude
+	* man/xml-source/amgtar.8.xml: and specific documentation of the
+	  patterns for amgtar
+
+2010-03-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Feature.pod: document known features
 
 2010-03-01  Dustin J. Mitchell <dustin@zmanda.com>

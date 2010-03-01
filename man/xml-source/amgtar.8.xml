@@ -136,6 +136,39 @@ List all regex (POSIX Extended Regular Expression syntax) that are strange outpu
 
 </refsect1>
 
+<refsect1><title>INCLUDE AND EXCLUDE LISTS</title>
+
+<para>This application supplies exclude lists via the &gnutar;
+<option>--exclude-from</option> option.  This option accepts normal
+shell-style wildcard expressions, using <option>*</option> to match any
+number of characters and <option>?</option> to match a single character.
+Character classes are represented with <option>[..]</option>, which will
+match any of the characters in the brackets.  Expressions can be "anchored"
+to the base directory of the DLE by prefixing them with "./".  Without this
+prefix, they will match at any directory level.  Expressions that begin or
+end with a "/" will not match anything: to completely exclude a directory,
+do not include the trailing slash.  Example expressions:
+<programlisting>
+  ./temp-files           # exclude top-level directory entirely
+  ./temp-files/          # BAD: does nothing
+  /temp-files            # BAD: does nothing
+  ./temp-files/*         # exclude directory contents; include directory
+  temp-files             # exclude anything named "temp-files"
+  generated-*            # exclude anything beginning with "generated-"
+  *.iso                  # exclude ISO files
+  proxy/local/cache      # exclude "cache" in dir "local" in "proxy"
+</programlisting>
+</para>
+
+<para>Similarly, include expressions are supplied to &gnutar;'s
+<option>--files-from</option> option.  This option ordinarily does not
+accept any sort of wildcards, but amgtar "manually" applies glob pattern
+matching to include expressions with only one slash.  The expressions must
+still begin with "./", so this effectively only allows expressions like
+"./[abc]*" or "./*.txt".</para>
+
+</refsect1>
+
 <refsect1><title>EXAMPLE</title>
 <para>
 <programlisting>
