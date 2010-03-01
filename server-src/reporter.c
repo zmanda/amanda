@@ -2724,7 +2724,12 @@ handle_failed(void)
 	   strcmp(errstr, "[Not enough holding disk space]") == 0) ||
 	  (curprog == P_CHUNKER &&
 	   strcmp(errstr, "[cannot read header: got 0 bytes instead of 32768]") == 0))) {
-	str = vstrallocf(_("FAILED %s"), errstr);
+	if (curprog == P_TAPER &&
+	    repdata->chunker.result == L_BOGUS) {
+	    str = vstrallocf(_("FLUSH %s"), errstr);
+	} else {
+	    str = vstrallocf(_("FAILED %s"), errstr);
+	}
 	addtoX_summary(&first_failed, &last_failed, hostname, qdiskname, level,
 		       str);
 	amfree(str);
@@ -2994,6 +2999,7 @@ find_repdata(
 	repdata->datestamp = stralloc(datestamp ? datestamp : "");
 	repdata->level = level;
 	repdata->dumper.result = L_BOGUS;
+	repdata->chunker.result = L_BOGUS;
 	repdata->taper.result = L_BOGUS;
 	repdata->next = NULL;
 	if(prev)

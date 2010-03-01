@@ -1,3 +1,6 @@
+2010-03-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/reporter.c: Print FLUSH for failed flush.
+
 2010-03-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/fileheader.c: fix typos
 	* server-src/amfetchdump.pl: add support for decryption
