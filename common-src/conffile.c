@@ -5621,7 +5621,6 @@ set_config_overrides(
 
     config_overrides = co;
 
-g_debug("set_config_overrides");
     for (i = 0; i < co->n_used; i++) {
 	g_debug("config_overrides: %s %s", co->ovr[i].key, co->ovr[i].value);
     }
