@@ -107,6 +107,7 @@ typedef struct application_argument_s {
     int        collection;
     int        calcsize;
     GSList    *level;
+    GSList    *command_options;
     dle_t      dle;
     int        argc;
     char     **argv;
@@ -156,7 +157,7 @@ static struct option long_options[] = {
     {"include-list"    , 1, NULL, 19},
     {"exclude-list"    , 1, NULL, 20},
     {"directory"       , 1, NULL, 21},
-
+    {"command-options" , 1, NULL, 22},
     { NULL, 0, NULL, 0}
 };
 
@@ -237,6 +238,7 @@ main(
     argument.collection = 0;
     argument.calcsize   = 0;
     argument.level      = NULL;
+    argument.command_options = NULL;
     init_dle(&argument.dle);
 
     opterr = 0;
@@ -314,7 +316,9 @@ main(
 	case 21: if (optarg)
 		     star_directory = stralloc(optarg);
 		 break;
-
+	case 22: argument.command_options =
+			g_slist_append(argument.command_options,
+				       stralloc(optarg));
 	case ':':
 	case '?':
 		break;
@@ -905,6 +909,7 @@ static GPtrArray *amstar_build_argv(
     GPtrArray *argv_ptr = g_ptr_array_new();
     char      *s;
     char      *tardumpfile;
+    GSList    *copt;
 
     if (star_directory) {
 	dirname = amname_to_dirname(star_directory);
@@ -961,6 +966,10 @@ static GPtrArray *amstar_build_argv(
     if (star_sparse)
 	g_ptr_array_add(argv_ptr, stralloc("-sparse"));
     g_ptr_array_add(argv_ptr, stralloc("-dodesc"));
+
+    for (copt = argument->command_options; copt != NULL; copt = copt->next) {
+	g_ptr_array_add(argv_ptr, stralloc((char *)copt->data));
+    }
 
     if (command == CMD_BACKUP && argument->dle.create_index)
 	g_ptr_array_add(argv_ptr, stralloc("-v"));

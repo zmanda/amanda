@@ -1,3 +1,9 @@
+2010-03-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c, application-src/amstar.c:
+	  new COMMAND-OPTIONS property.
+	* man/xml-source/amgtar.8.xml, man/xml-source/amstar.8.xml:
+	  document new COMMAND-OPTIONS property.
+
 2010-02-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Makefile.am: Add dependendcy to build Amanda::Feature.pm if
 			    common-src/amfeatures.h is modified.

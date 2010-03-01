@@ -112,6 +112,7 @@ typedef struct application_argument_s {
     int        calcsize;
     char      *tar_blocksize;
     GSList    *level;
+    GSList    *command_options;
     dle_t      dle;
     int        argc;
     char     **argv;
@@ -182,6 +183,7 @@ static struct option long_options[] = {
     {"acls"            , 1, NULL, 30},
     {"selinux"         , 1, NULL, 31},
     {"xattrs"          , 1, NULL, 32},
+    {"command-options" , 1, NULL, 33},
     {NULL, 0, NULL, 0}
 };
 
@@ -269,6 +271,7 @@ main(
     argument.calcsize   = 0;
     argument.tar_blocksize = NULL;
     argument.level      = NULL;
+    argument.command_options = NULL;
     init_dle(&argument.dle);
 
     while (1) {
@@ -386,6 +389,10 @@ main(
         case 32: if (optarg && strcasecmp(optarg, "YES") == 0)
                    gnutar_xattrs = 1;
                  break;
+	case 33: argument.command_options =
+			g_slist_append(argument.command_options,
+				       stralloc(optarg));
+		 break;
 	case ':':
 	case '?':
 		break;
@@ -1183,6 +1190,7 @@ GPtrArray *amgtar_build_argv(
     char  *dirname;
     char   tmppath[PATH_MAX];
     GPtrArray *argv_ptr = g_ptr_array_new();
+    GSList    *copt;
 
     amgtar_build_exinclude(&argument->dle, 1,
 			   &nb_exclude, &file_exclude,
@@ -1232,6 +1240,10 @@ GPtrArray *amgtar_build_argv(
     }
     g_ptr_array_add(argv_ptr, stralloc("--ignore-failed-read"));
     g_ptr_array_add(argv_ptr, stralloc("--totals"));
+
+    for (copt = argument->command_options; copt != NULL; copt = copt->next) {
+	g_ptr_array_add(argv_ptr, stralloc((char *)copt->data));
+    }
 
     if(file_exclude) {
 	g_ptr_array_add(argv_ptr, stralloc("--exclude-from"));

@@ -50,6 +50,18 @@ If "YES" (the default), amgtar use the <emphasis>--atime-preserve=system</emphas
 If "YES" (the default), amgtar checks that the device number doesn't change for each file. If "NO", changes in device number are ignored.  To ignore device numbers, tar must support the <emphasis>--no-check-device</emphasis> option (gnutar 1.19.90 and newer). This option is needed for some filesystems and devices on which device numbers change frequently, such as LVM or FiberChannel.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>COMMAND-OPTIONS</term><listitem>
+<para>If set, theses options are passed asis to gtar. Each option must be a different value of the property. Some option can break how amanda do backup, use it with care.</para>
+Use:
+<programlisting>
+  property "COMMAND-OPTIONS" "--foo" "bar"
+</programlisting>
+Do not use:
+<programlisting>
+  property "COMMAND-OPTIONS" "--foo bar"
+</programlisting>
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>DIRECTORY</term><listitem>
 If set, gnutar will backup from that directory instead of the <emphasis>diskdevice</emphasis> set by the DLE. On restore, the data is restore in that directory instead of the current working directory.
 </listitem></varlistentry>
