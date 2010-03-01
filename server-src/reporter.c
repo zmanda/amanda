@@ -2633,7 +2633,7 @@ handle_failed(void)
     char *s, *fp, *qdiskname;
     int ch;
     char *str = NULL;
-    repdata_t *repdata;
+    repdata_t *repdata = NULL;
     timedata_t *sp;
 
     hostname = NULL;
@@ -2724,7 +2724,7 @@ handle_failed(void)
 	   strcmp(errstr, "[Not enough holding disk space]") == 0) ||
 	  (curprog == P_CHUNKER &&
 	   strcmp(errstr, "[cannot read header: got 0 bytes instead of 32768]") == 0))) {
-	if (curprog == P_TAPER &&
+	if (curprog == P_TAPER && repdata &&
 	    repdata->chunker.result == L_BOGUS) {
 	    str = vstrallocf(_("FLUSH %s"), errstr);
 	} else {

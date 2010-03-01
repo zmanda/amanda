@@ -1,3 +1,6 @@
+2010-03-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/reporter.c: Set and check repdata.
+
 2010-03-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amcheck.c: adjust split-size warnings for more
 	  detail with less overall verbosity
