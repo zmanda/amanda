@@ -89,7 +89,7 @@ transfer.  The clerk then uses a changer to find the required volumes, seeks to
 the appropriate files, and reads the data into the transfer.  Note that the
 clerk can also recover holding-disk files.
 
-Because the clerk operates transfers (see L<Amanda::Xfer) and the Changer API
+Because the clerk operates transfers (see L<Amanda::Xfer>) and the Changer API
 (L<Amanda::Changer>), its operations assume that L<Amanda::MainLoop> is in use.
 
 =head1 OPERATING A CLERK

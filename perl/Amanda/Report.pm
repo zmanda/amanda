@@ -103,10 +103,10 @@ otherwise.
 
 =head1 DATA DESCRIPTION
 
-The data in the logfile is stored in the module at C<< $report->{data}
->>.  Beyond that, there are a number of subdivisions that track both
-global and per-host status of the given Amanda run that the logfile
-represents.
+The data in the logfile is stored in the module at
+C<< $report->{data} >>.  Beyond that, there are a number of subdivisions
+that track both global and per-host status of the given Amanda run that
+the logfile represents.
 
 =head2 $data->{programs}
 
@@ -202,10 +202,12 @@ number of files seen by this backup on the tape.  Here is an example:
 
 =head2 $data->{boguses}
 
-The C<boguses> key refers to a list of arrayrefs of the form C<[$prog,
-$type, $str]>, as returned directly by
-C<Amanda::Logfile::get_logline>.  These lines were not parseable
-because they were not in a recognized format of loglines.
+The C<boguses> key refers to a list of arrayrefs of the form
+
+  [$prog, $type, $str]
+
+as returned directly by C<Amanda::Logfile::get_logline>.  These lines were not
+parseable because they were not in a recognized format of loglines.
 
 =head2 $data->{disklist}
 

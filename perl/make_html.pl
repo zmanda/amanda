@@ -1,5 +1,5 @@
 #! @PERL@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -118,10 +118,10 @@ sub postprocess {
 
     $html =~ s{<title>.*</title>}{<title>$module</title>};
     $html =~ s{<link rev="made" [^>]*/>}{};
-    $html =~ s{html">the (\S+) manpage</a>}{html">\1</a>}g;
+    $html =~ s{html">the (\S+) manpage</a>}{html">$1</a>}g;
 
     # write it out
-    open(my $fh, ">", $filename) or die("open $filename: $!");
+    open($fh, ">", $filename) or die("open $filename: $!");
     print $fh $html;
     close($fh);
 }

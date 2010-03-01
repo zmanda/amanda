@@ -1,4 +1,11 @@
 2010-03-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer.pm perl/Amanda/Feature.pod
+	  perl/Amanda/MainLoop.pod perl/Amanda/Recovery/Clerk.pm
+	  perl/Amanda/Report.pm perl/Amanda/Taper/Scan.pm
+	  perl/Amanda/Util.pod: fix bad POD formatting
+	* perl/make_html.pl: fix perl warnings
+
+2010-03-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: add more detail about
 	  include/exclude
 	* man/xml-source/amgtar.8.xml: and specific documentation of the

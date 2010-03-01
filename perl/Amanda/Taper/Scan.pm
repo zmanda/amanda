@@ -1,4 +1,4 @@
-# Copyright (c) Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This library is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License version 2.1 as
@@ -94,7 +94,7 @@ as blessed hashrefs, and sets keys corresponding to the constructor arguments.
 
 To read the tapelist, call C<read_tapelist>.  This method caches the result in
 C<< $self->{'tapelist'} >>, which will be used by the other functions here.  In
-general, call C<read_tapelist at most once per C<scan()> invocation.
+general, call C<read_tapelist> at most once per C<scan()> invocation.
 
 To see if a volume is reusable, call the C<is_reusable_volume> method.  This takes
 several keyword parameters:

@@ -201,7 +201,7 @@ will lead to unpredictable results.
 This function adds a new FdSource every time it is invoked, so it is
 not well-suited to processing large amounts of data.  For that
 purpose, consider using the low-level interface or, better, the
-transfer architecture (see L<Amanda:Xfer>).
+transfer architecture (see L<Amanda::Xfer>).
 
 =head3 async_write
 

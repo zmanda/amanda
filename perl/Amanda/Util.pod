@@ -259,7 +259,7 @@ round-trip DNS sanity; check that the user is in C<.rhosts> or C<.amandahosts>,
 and checking that the remote port is reserved.  Returns an error string on
 error, or C<undef> on success.
 
-=bac k
+=back
 
 =head1 String Utilities
 

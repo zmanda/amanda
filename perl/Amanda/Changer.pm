@@ -480,16 +480,19 @@ First, if the method C<info_setup> is defined, C<info> calls it, passing it a
 C<finished_cb> and the list of desired keys, C<info>.  This method is useful to
 gather information that is useful for several info keys.
 
-Next, for each requested key, C<info> calls C<< $self->info_key($key, %params)
->>, including a regular C<info_cb> callback.  The C<info> method will wait for
+Next, for each requested key, C<info> calls
+
+  $self->info_key($key, %params)
+
+including a regular C<info_cb> callback.  The C<info> method will wait for
 all C<info_key> invocations to finish, then collect the results or errors that
 occur.
 
 =head2 PROPERTY PARSING
 
 Many properties are boolean, and Amanda has a habit of accepting a number of
-different ways of writing boolean values.  The method C<<
-$self->get_boolean_property($config, $prop, $default) >> will parse such a
+different ways of writing boolean values.  The method
+C<< $self->get_boolean_property($config, $prop, $default) >> will parse such a
 property, returning 0 or 1 if the property is specified, C<$default> if it is
 not specified, or C<undef> if the property cannot be parsed.
 
@@ -497,8 +500,8 @@ not specified, or C<undef> if the property cannot be parsed.
 
 To create a new error object, use C<< $self->make_error($type, $cb, %args) >>.
 This method will create a new C<Amanda::Changer::Error> object and optionally
-invoke a callback with it.  If C<$type> is C<fatal>, then C<<
-$chg->{'fatal_error'} >> is made a reference to the new error object.  The
+invoke a callback with it.  If C<$type> is C<fatal>, then
+C<< $chg->{'fatal_error'} >> is made a reference to the new error object.  The
 callback C<$cb> (which should be made using C<make_cb()> from
 C<Amanda::MainLoop>) is called with the new error object.  The C<%args> are
 added to the new error object.  In use, this looks something like:
@@ -533,8 +536,8 @@ Any additional keyword arguments to C<make_combined_error> are put into the
 combined error; this is useful to set the C<slot> attribute.
 
 The method C<< $self->check_error($cb) >> is a useful method for subclasses to
-avoid doing anything after a fatal error.  This method checks C<<
-$self->{'fatal_error'} >>.  If the error is defined, the method calls C<$cb>
+avoid doing anything after a fatal error.  This method checks
+C<< $self->{'fatal_error'} >>.  If the error is defined, the method calls C<$cb>
 and returns true.  The usual recipe is
 
   sub load {

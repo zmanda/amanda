@@ -211,6 +211,8 @@ forked amrestore with these arguments.
 
 This feature is no longer supported.
 
+=back
+
 =cut
 
 %}
