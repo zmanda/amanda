@@ -245,12 +245,12 @@ sub xfer_start_with_callback {
     if (defined $cb) {
 	my $releasing_cb = sub {
 	    my ($src, $msg, $xfer) = @_;
+	    my $done = $msg->{'type'} == $XMSG_DONE;
+	    $src->remove() if $done;
 	    $cb->(@_);
-	    if ($msg->{'type'} == $XMSG_DONE) {
-		$src->remove();
-	    }
+	    $cb = undef if $done; # break potential reference loop
 	};
-	$xfer->get_source()->set_callback($cb);
+	$xfer->get_source()->set_callback($releasing_cb);
     }
     xfer_start($xfer);
 }

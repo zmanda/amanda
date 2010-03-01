@@ -40,7 +40,6 @@ Amanda::Xfer - the transfer architecture
       my ($src, $xmsg, $xfer) = @_;
       print "Message from $xfer: $xmsg\n"; # use stringify operations
       if ($msg->{'type'} == $XMSG_DONE) {
-	  $src->remove();
 	  Amanda::MainLoop::quit();
       }
   });
