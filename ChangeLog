@@ -1,3 +1,6 @@
+2010-03-01 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/rpm/amanda.spec: remove Provides: librestore
+
 2010-03-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c, application-src/amstar.c:
 	  new COMMAND-OPTIONS property.

@@ -251,7 +251,6 @@ Provides: amanda-backup_client = %{amanda_version}
 Provides: libamclient-%{version}.so = %{amanda_version}
 Provides: libamanda-%{version}.so = %{amanda_version}
 Provides: libamserver-%{version}.so = %{amanda_version}
-Provides: librestore-%{version}.so = %{amanda_version}
 Provides: libamtape-%{version}.so = %{amanda_version}
 Provides: libamdevice-%{version}.so = %{amanda_version}
 Conflicts: amanda-backup_client
