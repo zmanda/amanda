@@ -1092,6 +1092,18 @@ start_server_check(
 	char *disk;
 	int conf_tapecycle, conf_runspercycle;
 	identlist_t pp_scriptlist;
+	gboolean printed_small_tape_splitsize_warning = FALSE;
+	char *small_tape_splitsize_warning =
+	    _(" This may create > 1000 parts, severely degrading backup/restore performance.\n"
+	    " To remedy, increase tape_splitsize or disable splitting by setting it to 0\n"
+	    " See http://wiki.zmanda.com/index.php/Splitsize_too_small for more information.\n");
+
+	gboolean printed_small_fallback_splitsize_warning = FALSE;
+	char *small_fallback_splitsize_warning =
+	    _(" This may create > 1000 parts, severely degrading backup/restore performance.\n"
+	    " To remedy, create/set a split_diskbuffer or increase fallback_splitsize\n"
+	    " See http://wiki.zmanda.com/index.php/Splitsize_too_small for more information.\n");
+
 
 	conf_tapecycle = getconf_int(CNF_TAPECYCLE);
 	conf_runspercycle = getconf_int(CNF_RUNSPERCYCLE);
@@ -1172,8 +1184,6 @@ start_server_check(
 		amfree(quoted);
 	    }
 	    for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
-		int may_use_fallback;
-
 		disk = sanitise_filename(dp->name);
 		if(hostinfodir) {
 		    char *quotedif;
@@ -1375,25 +1385,30 @@ start_server_check(
 		/* also check for part sizes that are too small */
 		if (dp->tape_splitsize && dp->tape_splitsize * 1000 < tape_size) {
 		    g_fprintf(outf,
-			      _("WARNING: %s %s: tape_splitsize of %juk < 0.1%% of tape size "
-				"which may create >1000 parts\n"),
-			      hostp->hostname, dp->name, (uintmax_t)dp->tape_splitsize);
+			      _("WARNING: %s %s: tape_splitsize of %ju %sB < 0.1%% of tape length.\n"),
+			      hostp->hostname, dp->name,
+			      (uintmax_t)dp->tape_splitsize/(uintmax_t)unitdivisor,
+			      displayunit);
+		    if (!printed_small_tape_splitsize_warning) {
+			printed_small_tape_splitsize_warning = TRUE;
+			g_fprintf(outf, "%s", small_tape_splitsize_warning);
+		    }
 		}
 
-		/* fallback splitsize will be used if tape_splitsize is 0 or
-		 * split_diskbuffer is empty or NULL */
-		may_use_fallback = 0;
-		if (dp->tape_splitsize == 0 && dp->fallback_splitsize != 0)
-		    may_use_fallback = 1;
+		/* fallback splitsize will be used if split_diskbuffer is empty or NULL */
 		if (dp->tape_splitsize != 0 && dp->fallback_splitsize != 0 &&
-			(dp->split_diskbuffer == NULL || dp->split_diskbuffer[0] == '\0'))
-		    may_use_fallback = 1;
-
-		if (may_use_fallback && dp->fallback_splitsize * 1000 < tape_size) {
+			(dp->split_diskbuffer == NULL ||
+			 dp->split_diskbuffer[0] == '\0') &&
+			dp->fallback_splitsize * 1000 < tape_size) {
 		    g_fprintf(outf,
-			      _("WARNING: %s %s: fallback_splitsize of %juk < 0.1%% of tape size "
-				"and may be used for PORT_DUMP; check your configuration\n"),
-			      hostp->hostname, dp->name, (uintmax_t)dp->fallback_splitsize);
+			  _("WARNING: %s %s: fallback_splitsize of %ju %sB < 0.1%% of tape length.\n"),
+			  hostp->hostname, dp->name,
+			  (uintmax_t)dp->fallback_splitsize/(uintmax_t)unitdivisor,
+			  displayunit);
+		    if (!printed_small_fallback_splitsize_warning) {
+			printed_small_fallback_splitsize_warning = TRUE;
+			g_fprintf(outf, "%s", small_fallback_splitsize_warning);
+		    }
 		}
 
 		if (dp->data_path == DATA_PATH_DIRECTTCP) {
