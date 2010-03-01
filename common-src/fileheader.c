@@ -614,11 +614,11 @@ validate_encrypt_suffix(
 {
     if (encrypted) {
 	if (!suff[0] || (0 == strcmp(suff, "N"))) {
-	    error(_("Invalid encr_suffix '%s'\n"), suff);
+	    error(_("Invalid encrypt_suffix '%s'\n"), suff);
 	}
     } else {
 	if (suff[0] && (0 != strcmp(suff, "N"))) {
-	    error(_("Invalid header: encr_suffix '%s' specified but not encrypted\n"), suff);
+	    error(_("Invalid header: encrypt_suffix '%s' specified but not encrypted\n"), suff);
 	}
     }
 }

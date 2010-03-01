@@ -1,4 +1,10 @@
 2010-03-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/fileheader.c: fix typos
+	* server-src/amfetchdump.pl: add support for decryption
+	* server-src/amidxtaped.pl: same
+	* server-src/amrestore.pl: same
+
+2010-03-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm perl/Amanda/Feature.pod
 	  perl/Amanda/MainLoop.pod perl/Amanda/Recovery/Clerk.pm
 	  perl/Amanda/Report.pm perl/Amanda/Taper/Scan.pm

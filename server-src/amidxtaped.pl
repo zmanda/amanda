@@ -444,30 +444,49 @@ sub xfer_src_cb {
 
     debug("recovering from " . $header->summary());
 
-    # set up any filters that need to be applied
+    # set up any filters that need to be applied, decryption first
     my @filters;
+    if ($header->{'encrypted'}) {
+	if ($header->{'srv_encrypt'}) {
+	    push @filters,
+		Amanda::Xfer::Filter::Process->new(
+		    [ $header->{'srv_encrypt'}, $header->{'srv_decrypt_opt'} ], 0);
+	} elsif ($header->{'clnt_encrypt'}) {
+	    push @filters,
+		Amanda::Xfer::Filter::Process->new(
+		    [ $header->{'clnt_encrypt'}, $header->{'clnt_decrypt_opt'} ], 0);
+	} else {
+	    $self->sendmessage("could not decrypt encrypted dump: no program specified");
+	    return $self->quit();
+	}
+
+	$header->{'encrypted'} = 0;
+	$header->{'srv_encrypt'} = '';
+	$header->{'srv_decrypt_opt'} = '';
+	$header->{'clnt_encrypt'} = '';
+	$header->{'clnt_decrypt_opt'} = '';
+	$header->{'encrypt_suffix'} = 'N';
+    }
+
     if ($header->{'compressed'}) {
 	# need to uncompress this file
 	debug("..with decompression applied");
 
 	if ($header->{'srvcompprog'}) {
 	    # TODO: this assumes that srvcompprog takes "-d" to decrypt
-	    @filters = (
+	    push @filters,
 		Amanda::Xfer::Filter::Process->new(
-		    [ $header->{'srvcompprog'}, "-d" ], 0)
-	    );
+		    [ $header->{'srvcompprog'}, "-d" ], 0);
 	} elsif ($header->{'clntcompprog'}) {
 	    # TODO: this assumes that clntcompprog takes "-d" to decrypt
-	    @filters = (
+	    push @filters,
 		Amanda::Xfer::Filter::Process->new(
-		    [ $header->{'clntcompprog'}, "-d" ], 0)
-	    );
+		    [ $header->{'clntcompprog'}, "-d" ], 0);
 	} else {
-	    @filters = (
+	    push @filters,
 		Amanda::Xfer::Filter::Process->new(
 		    [ $Amanda::Constants::UNCOMPRESS_PATH,
-		      $Amanda::Constants::UNCOMPRESS_OPT ], 0),
-	    );
+		      $Amanda::Constants::UNCOMPRESS_OPT ], 0);
 	}
 
 	# adjust the header

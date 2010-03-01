@@ -1,5 +1,5 @@
 #! @PERL@
-# Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -271,29 +271,46 @@ sub main {
 	}
 	$dest = Amanda::Xfer::Dest::Fd->new($dest_fh);
 
-	# set up any filters that need to be applied
+	# set up any filters that need to be applied, decryption first
 	my @filters;
+	if ($hdr->{'encrypted'} and not $opt_raw) {
+	    if ($hdr->{'srv_encrypt'}) {
+		push @filters,
+		    Amanda::Xfer::Filter::Process->new(
+			[ $hdr->{'srv_encrypt'}, $hdr->{'srv_decrypt_opt'} ], 0);
+	    } elsif ($hdr->{'clnt_encrypt'}) {
+		push @filters,
+		    Amanda::Xfer::Filter::Process->new(
+			[ $hdr->{'clnt_encrypt'}, $hdr->{'clnt_decrypt_opt'} ], 0);
+	    } else {
+		return failure("could not decrypt encrypted dump: no program specified");
+	    }
+
+	    $hdr->{'encrypted'} = 0;
+	    $hdr->{'srv_encrypt'} = '';
+	    $hdr->{'srv_decrypt_opt'} = '';
+	    $hdr->{'clnt_encrypt'} = '';
+	    $hdr->{'clnt_decrypt_opt'} = '';
+	    $hdr->{'encrypt_suffix'} = 'N';
+	}
 	if (!$opt_raw and $hdr->{'compressed'} and not $opt_compress) {
 	    # need to uncompress this file
 
 	    if ($hdr->{'srvcompprog'}) {
 		# TODO: this assumes that srvcompprog takes "-d" to decompress
-		@filters = (
+		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'srvcompprog'}, "-d" ], 0)
-		);
+			[ $hdr->{'srvcompprog'}, "-d" ], 0);
 	    } elsif ($hdr->{'clntcompprog'}) {
 		# TODO: this assumes that clntcompprog takes "-d" to decompress
-		@filters = (
+		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'clntcompprog'}, "-d" ], 0)
-		);
+			[ $hdr->{'clntcompprog'}, "-d" ], 0);
 	    } else {
-		@filters = (
+		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
 			[ $Amanda::Constants::UNCOMPRESS_PATH,
-			  $Amanda::Constants::UNCOMPRESS_OPT ], 0),
-		);
+			  $Amanda::Constants::UNCOMPRESS_OPT ], 0);
 	    }
 	    
 	    # adjust the header
