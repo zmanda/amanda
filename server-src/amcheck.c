@@ -35,7 +35,6 @@
 #include "fsusage.h"
 #include "diskfile.h"
 #include "tapefile.h"
-#include "changer.h"
 #include "packet.h"
 #include "security.h"
 #include "protocol.h"

@@ -43,14 +43,9 @@ http://wiki.zmanda.com.</para>
 <para>The Amanda Changer API is in transition from version 1.0 - driven by
 shell scripts invoked for each changer operation - to version 2.0, composed of
 perl objects that can manage parallel access to multiple devices and other
-complexity.  When this transition is complete, Amanda devices will, in general,
-be specified via a changer, which will provide the necessary device specifier
-to access a requested volume.  In the interim, support for the "new" changer
-syntax is limited to the experimental
-<manref name="amvault" vol="8"/>.
-Older applications access the new changer API through a "glue" layer (chg-glue)
-which limits the functionality to version-1.0 features, and in many cases still
-run the old shell scripts via chg-compat.</para>
+complexity.  At this point, all Amanda programs use the new Changer API directly,
+although 1.0 changer scripts are still fully supported via <code>chg-compat</code>.
+</para>
 
 <para>The Changer API strives to treat all changers identically, so that
 Amanda's behavior is independent of the changer in use.  However, some parts of

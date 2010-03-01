@@ -93,7 +93,7 @@ LDADD = ../common-src/libamanda.la   \
 	../common-src/libamanda.la   \
         $(READLINE_LIBS)
 
-libamserver_la_SOURCES=	amindex.c	changer.c			\
+libamserver_la_SOURCES=	amindex.c	\
 			diskfile.c	driverio.c	cmdline.c  \
 			holding.c	infofile.c	logfile.c	\
 			tapefile.c	find.c		server_util.c   \
@@ -118,7 +118,7 @@ amindexd_SOURCES =	disk_history.h	list_dir.h	$(amindexd_CSRC)
 
 amreport_SOURCES =	reporter.c
 
-noinst_HEADERS = 	amindex.h	changer.h	cmdline.h	\
+noinst_HEADERS = 	amindex.h	cmdline.h	\
 			diskfile.h	driverio.h	\
 			holding.h	infofile.h	logfile.h	\
 			tapefile.h	find.h		server_util.h	\
