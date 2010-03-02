@@ -1,4 +1,7 @@
 2010-03-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Wait up to 5 seconds for children termination.
+
+2010-03-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amflush.c: Delay creation of log file.
 
 2010-03-02  Jean-Louis Martineau <martineau@zmanda.com>

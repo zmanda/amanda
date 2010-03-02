@@ -1736,6 +1736,8 @@ service_delete(
     struct active_service *	as)
 {
     int i;
+    int   count;
+    pid_t pid;
     struct datafd_handle *dh;
 
     amandad_debug(1, _("closing service: %s\n"),
@@ -1785,7 +1787,16 @@ service_delete(
 
     assert(as->pid > 0);
     kill(as->pid, SIGTERM);
-    waitpid(as->pid, NULL, WNOHANG);
+    pid = waitpid(as->pid, NULL, WNOHANG);
+    count = 5;
+    while (pid != as->pid && count > 0) {
+	count--;
+	sleep(1);
+	pid = waitpid(as->pid, NULL, WNOHANG);
+    }
+    if (pid != as->pid) {
+	g_debug("Process %d failed to exit", (int)as->pid);
+    }
 
     serviceq = g_slist_remove(serviceq, (gpointer)as);
 
