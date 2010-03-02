@@ -1,4 +1,8 @@
 2010-03-02  Paul C. Mantz <pcmantz@zmanda.com>
+	* server-src/amreport_new.pl perl/Amanda/Report/human.pm : fixed
+	  tapelist loading
+
+2010-03-02  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report.pm: added tape_labels field for preserving tape
 	  order
 	* perl/Amanda/Report/human.pm: use of tape_labels

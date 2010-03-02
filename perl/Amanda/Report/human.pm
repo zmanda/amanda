@@ -401,28 +401,27 @@ sub output_tapeinfo
 
     if ($run_tapes) {
         ($run_tapes > 1)
-          ? print $fh "The next tapes Amanda expects to use are: "
+          ? print $fh "The next $run_tapes tapes Amanda expects to use are: "
           : print $fh "The next tape Amanda expects to use is: ";
     }
 
+    my $first = 1;
     foreach my $i ( 0 .. ( $run_tapes - 1 ) ) {
 
         if ( my $tape_label =
             Amanda::Tapelist::get_last_reusable_tape_label($i) ) {
 
-            print $fh "$nb_new_tape new tape"
-              . ( $nb_new_tape > 1 ? "s, " : ", " )
-              . $tape_label
-              if $nb_new_tape > 0;
-            $nb_new_tape = 0;
-
+	    print $fh
+		$first ? "" : ", ",
+		$tape_label;
+	    $first = 0;
         } else {
             $nb_new_tape++;
         }
     }
 
     if ($nb_new_tape) {
-        print $fh "$nb_new_tape new tape"
+        print $fh ", $nb_new_tape new tape"
           . ( $nb_new_tape > 1 ? "s" : "" ) . ".\n";
     }
 

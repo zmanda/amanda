@@ -217,6 +217,10 @@ if ( $cfgerr_level >= $CFGERR_WARNINGS ) {
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
+# read the tapelist
+my $tl_file = config_dir_relative(getconf($CNF_TAPELIST));
+my $tl = Amanda::Tapelist::read_tapelist($tl_file);
+
 ## Make sure options are valid before parsing
 
 if ( defined $psfname && ( defined $mailto || $xmlout ) ) {
