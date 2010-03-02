@@ -337,24 +337,24 @@ sub output_tapeinfo
     my $fh       = $self->{fh};
     my $logfname = $self->{logfname};
 
-    my $taper = $report->get_program_info("taper")
-      or return;
-    my $tapes = $report->get_program_info( "taper", "tapes" );
+    my $taper       = $report->get_program_info("taper");
+    my $tapes       = $taper->{tapes}       || {};
+    my $tape_labels = $taper->{tape_labels} || [];
 
     my %full_stats  = %{ $self->{full_stats} };
     my %incr_stats  = %{ $self->{incr_stats} };
     my %total_stats = %{ $self->{total_stats} };
 
-    if ( keys %$tapes > 0 ) {
+    if (@$tape_labels > 0) {
 
         my $tapelist_str =
             "These dumps were "
-          . ( $report->get_flag("amflush_run") ? "flushed "  : "" )
-          . ( keys %$tapes > 1                 ? "to tapes " : "to tape " );
+          . ($report->get_flag("amflush_run") ? "flushed "  : "")
+          . (@$tape_labels > 1                ? "to tapes " : "to tape ");
 
         # TODO: figure out the best way to add these.  there was a
         # call to plural on these
-        $tapelist_str .= join( ", ", keys %$tapes ) . ".\n";
+        $tapelist_str .= join(", ", @$tape_labels) . ".\n";
         print $fh $tapelist_str;
     }
 
@@ -664,10 +664,16 @@ sub output_tape_stats
     my ($self) = @_;
     my $fh     = $self->{fh};
     my $report = $self->{report};
-    my $tapes = $report->get_program_info("taper", "tapes");
+
+    my $taper       = $report->get_program_info("taper");
+    my $tapes       = $taper->{tapes}       || {};
+    my $tape_labels = $taper->{tape_labels} || [];
+
+    # if no tapes used, do nothing
+    return if (!@$tape_labels);
 
     my $label_length = 19;
-    foreach my $label (keys %$tapes) {
+    foreach my $label (@$tape_labels) {
         $label_length = length($label) if length($label) > $label_length;
     }
     my $ts_format = "  @"
@@ -681,8 +687,9 @@ sub output_tape_stats
     my $tapetype      = lookup_tapetype($tapetype_name);
     my $tapesize      = "" . tapetype_getconf($tapetype, $TAPETYPE_LENGTH);
 
-    while (my ($label, $tape) = each %$tapes) {
+    foreach my $label (@$tape_labels) {
 
+        my $tape = $tapes->{$label};
         print $fh swrite(
             $ts_format,
             $label,

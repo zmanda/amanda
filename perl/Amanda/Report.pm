@@ -200,6 +200,14 @@ number of files seen by this backup on the tape.  Here is an example:
 
 =back
 
+=item C<tape_labels>
+
+The C<tape_labels> field is a reference to a list which records the
+order that the tapes have been seen.  This list should be used as an
+index for outputting the contents of C<tapes>.
+
+=back
+
 =head2 $data->{boguses}
 
 The C<boguses> key refers to a list of arrayrefs of the form
@@ -480,6 +488,22 @@ sub get_program_info
       : $self->{data}{programs}{$program};
 }
 
+sub get_tape
+{
+    my ($self, $label) = @_;
+
+    my $taper       = $self->get_program_info("taper");
+    my $tapes       = $taper->{tapes}       ||= {};
+    my $tape_labels = $taper->{tape_labels} ||= [];
+
+    if (!exists $tapes->{$label}) {
+        push @$tape_labels, $label;
+        $tapes->{$label} = {};
+    }
+
+    return $tapes->{$label};
+}
+
 sub get_flag
 {
     my ( $self, $flag ) = @_;
@@ -746,9 +770,8 @@ sub _handle_taper_line
         # format is:
         # START taper datestamp <start> label <label> tape <tapenum>
         my @info = Amanda::Util::split_quoted_strings($str);
-        my ( $datestamp, $label, $files ) = @info[ 1, 3, 5 ];
-        my $tapes = $taper_p->{tapes} ||= {};
-        my $tape  = $tapes->{$label}  ||= {};
+        my ($datestamp, $label, $files) = @info[ 1, 3, 5 ];
+        my $tape = $self->get_tape($label);
 
         #
         # Nothing interesting is happening here, so return the label
@@ -789,7 +812,7 @@ sub _handle_taper_line
 
         push @$chunks, $chunk;
 
-        my $tape = ($taper_p->{tapes}{$tapevol} ||= {});
+        my $tape = $self->get_tape($tapevol);
         $tape->{kb}   += $kb;
         $tape->{time} += $sec;
         $tape->{files}++;
