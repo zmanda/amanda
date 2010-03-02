@@ -204,9 +204,7 @@ main(
 	error(_("%s exists: %s is already running, or you must run amcleanup"), conf_logfile, process_name);
 	/*NOTREACHED*/
     }
-    amfree(conf_logfile);
 
-    log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
     driver_program = vstralloc(amlibexecdir, "/", "driver", NULL);
     reporter_program = vstralloc(sbindir, "/", "amreport", NULL);
     logroll_program = vstralloc(amlibexecdir, "/", "amlogroll", NULL);
@@ -260,6 +258,13 @@ main(
 	g_printf(_("Could not find any valid dump image, check directory.\n"));
 	exit(1);
     }
+
+    if (access(conf_logfile, F_OK) == 0) {
+	char *process_name = get_master_process(conf_logfile);
+	error(_("%s exists: someone started %s"), conf_logfile, process_name);
+	/*NOTREACHED*/
+    }
+    log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
 
     if(!batch) confirm(datestamp_list);
 

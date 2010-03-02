@@ -1,4 +1,7 @@
 2010-03-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amflush.c: Delay creation of log file.
+
+2010-03-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Correctly set autolabel from label_new_tapes.
 
 2010-03-02  Paul C. Mantz <pcmantz@zmanda.com>
