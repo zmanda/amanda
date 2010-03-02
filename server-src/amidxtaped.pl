@@ -536,8 +536,11 @@ sub expect_datapath {
 	return $self->start_xfer();
     }
 
-    my $dpline = $self->getline($self->{'ctl_stream'});
-    my ($dpspec) = ($dpline =~ /^AVAIL-DATAPATH (.*)\r\n$/);
+    my $line = $self->getline($self->{'ctl_stream'});
+    if ($line eq "ABORT\r\n") {
+	return Amanda::MainLoop::quit();
+    }
+    my ($dpspec) = ($line =~ /^AVAIL-DATAPATH (.*)\r\n$/);
     die "bad AVAIL-DATAPATH line" unless $dpspec;
     my @avail_dps = split / /, $dpspec;
 

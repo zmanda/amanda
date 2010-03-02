@@ -159,6 +159,14 @@ amrecover.
  dle_in_header          dle_str
  origsize_in_header     orig_size
 
+=item fe_amidxtaped_abort
+
+ PROTOCOL: amidxtaped
+ FEATURE OF: server
+
+If set, amidxtaped can handle an ABORT message just before the datapath
+negotiation begins.
+
 =item fe_amidxtaped_datapath
 
  PROTOCOL: amidxtaped

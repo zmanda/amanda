@@ -185,6 +185,7 @@ typedef enum {
     fe_amidxtaped_datapath,
     fe_sendbackup_noop,
     fe_amrecover_origsize_in_header,
+    fe_amidxtaped_abort,
 
     /*
      * All new features must be inserted immediately *before* this entry.

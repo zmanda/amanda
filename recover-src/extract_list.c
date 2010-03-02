@@ -144,6 +144,7 @@ int writer_intermediary(EXTRACT_LIST *elist);
 int get_amidxtaped_line(void);
 static void read_amidxtaped_data(void *, void *, ssize_t);
 static char *merge_path(char *path1, char *path2);
+static gboolean ask_file_overwrite(ctl_data_t *ctl_data);
 static void start_processing_data(ctl_data_t *ctl_data);
 
 /*
@@ -2659,6 +2660,9 @@ get_amidxtaped_line(void)
 	ctl_buffer = stralloc("");
 
     while (!strstr(ctl_buffer,"\r\n")) {
+	if (amidxtaped_streams[CTLFD].fd == NULL)
+	    return -1;
+
         size = security_stream_read_sync(amidxtaped_streams[CTLFD].fd, &buf);
         if(size < 0) {
             return -1;
@@ -2752,6 +2756,15 @@ read_amidxtaped_data(
 	}
 	/* handle backup_support_option failure */
 
+	ctl_data->header_done = 1;
+	if (!ask_file_overwrite(ctl_data)) {
+	    if (am_has_feature(tapesrv_features, fe_amidxtaped_abort)) {
+		send_to_tape_server(amidxtaped_streams[CTLFD].fd, "ABORT");
+	    }
+	    stop_amidxtaped();
+	    return;
+	}
+
 	if (am_has_feature(tapesrv_features, fe_amidxtaped_datapath)) {
  	    char       *msg;
 	    /* send DATA-PATH request */
@@ -2762,9 +2775,7 @@ read_amidxtaped_data(
 		vstrextend(&msg, " DIRECT-TCP", NULL);
 	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, msg);
 	    amfree(msg);
-	}
-	ctl_data->header_done = 1;
-	if (!am_has_feature(tapesrv_features, fe_amidxtaped_datapath)) {
+	} else {
 	    start_processing_data(ctl_data);
 	}
     } else {
@@ -2778,8 +2789,8 @@ read_amidxtaped_data(
     }
 }
 
-static void
-start_processing_data(
+static gboolean
+ask_file_overwrite(
     ctl_data_t *ctl_data)
 {
     char *restore_dir;
@@ -2813,7 +2824,7 @@ start_processing_data(
 	if (!okay_to_continue(0,0,0)) {
 	    free_unlink_list();
 	    amfree(restore_dir);
-	    return;
+	    return FALSE;
 	}
 	g_printf("\n");
 
@@ -2824,12 +2835,19 @@ start_processing_data(
 			  restore_dir);
 		free_unlink_list();
 		amfree(restore_dir);
-		return;
+		return FALSE;
 	    }
 	    free_unlink_list();
 	}
 	amfree(restore_dir);
     }
+    return TRUE;
+}
+
+static void
+start_processing_data(
+    ctl_data_t *ctl_data)
+{
     if (pipe(ctl_data->child_pipe) == -1) {
 	error(_("extract_list - error setting up pipe to extractor: %s\n"),
 	      strerror(errno));
