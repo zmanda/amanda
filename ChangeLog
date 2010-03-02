@@ -1,4 +1,8 @@
 2010-03-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Correctly set autolabel from command line
+				 '-olabel_new_tapes=' options.
+
+2010-03-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amidxtaped.pl: Exit if receive ABORT message.
 	* recover-src/extract_list.c: Send abort message on user request.
 	* common-src/amfeatures.c: Add fe_amidxtaped_abort.
