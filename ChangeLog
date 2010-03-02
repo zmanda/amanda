@@ -1,3 +1,6 @@
+2010-03-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Correctly set autolabel from label_new_tapes.
+
 2010-03-02  Paul C. Mantz <pcmantz@zmanda.com>
 	* server-src/amreport_new.pl perl/Amanda/Report/human.pm : fixed
 	  tapelist loading

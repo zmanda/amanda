@@ -4797,8 +4797,8 @@ update_derived_values(
 	     getconf_seen(CNF_AUTOLABEL) < 0)) {
 		conf_parserror(_("Can't defined both label_new_tapes and autolabel"));
 	}
-	if (getconf_seen(CNF_LABEL_NEW_TAPES) < 0 &&
-	    getconf_seen(CNF_AUTOLABEL) >= 0) {
+	if (getconf_seen(CNF_LABEL_NEW_TAPES) != 0 &&
+	    getconf_seen(CNF_AUTOLABEL) == 0) {
 	    autolabel_t *autolabel = &(conf_data[CNF_AUTOLABEL].v.autolabel);
 	    autolabel->template = getconf_str(CNF_LABEL_NEW_TAPES);
 	    autolabel->autolabel = AL_VOLUME_ERROR | AL_EMPTY;
