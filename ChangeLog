@@ -1,3 +1,6 @@
+2010-03-03  Paul C. mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Report/human.pm: tape num. blocks print as 0 if undefined
+
 2010-03-02  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report.pm; added three-arg form of get_program_info()
 	* perl/Amanda/Report/human.pm: usage of three-arg form

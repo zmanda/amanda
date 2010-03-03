@@ -698,8 +698,8 @@ sub output_tape_stats
             hrmn($tape->{time}),                                          # time
             int($tape->{kb} / $self->{unit_div}) . $self->{disp_unit},    # size
             divzero(100 * $tape->{kb}, $tapesize),    # % usage
-            $tape->{dle},                             # Nb of dles
-            $tape->{files}                            # Nb of chunks
+            int($tape->{dle}),                        # Nb of dles
+            int($tape->{files})                       # Nb of chunks
         );
     }
     print $fh "\n";
