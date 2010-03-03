@@ -119,7 +119,7 @@ sub mnsc
 
 sub new
 {
-    my ( $class, $report, $fh, $config_name, $logfname ) = @_;
+    my ($class, $report, $fh, $config_name, $logfname) = @_;
 
     my $self = {
         report      => $report,
@@ -145,17 +145,17 @@ sub new
         my (@errors, @stranges, @notes);
 
         @errors =
-          map { @{ $report->get_program_info($_, "errors") || [] }; }
+          map { @{ $report->get_program_info($_, "errors", []) }; }
           keys %{ $report->{data}{programs} };
         @stranges =
-          map { @{ $report->get_program_info($_, "stranges") || [] }; }
+          map { @{ $report->get_program_info($_, "stranges", []) }; }
           keys %{ $report->{data}{programs} };
-	##prepend program name to notes lines.
-	foreach my $program (keys %{ $report->{data}{programs} }) {
-	    push @notes,
-	      map { "$program: $_" }
-	      @{ $report->get_program_info($program, "notes") || [] };
-	}
+        ## prepend program name to notes lines.
+        foreach my $program (keys %{ $report->{data}{programs} }) {
+            push @notes,
+              map { "$program: $_" }
+              @{ $report->get_program_info($program, "notes", []) };
+        }
 
         $self->{errors}   = \@errors;
         $self->{stranges} = \@stranges;
@@ -234,14 +234,16 @@ sub calculate_stats
         }
     }
 
-    $total_stats->{planner_time} = $report->get_program_info("planner", "time");
+    $total_stats->{planner_time} =
+      $report->get_program_info("planner", "time", 0);
 
     %$total_stats = map { $_ => $incr_stats->{$_} + $full_stats->{$_} }
       keys %$incr_stats;
 
-    if ( $report->get_flag("got_finish") ) {
-        $total_stats->{total_time} = $report->get_program_info( "driver", "time" )
-          || $report->get_program_info( "amflush", "time" );
+    if ($report->get_flag("got_finish")) {
+        $total_stats->{total_time} =
+             $report->get_program_info("driver",  "time", 0)
+          || $report->get_program_info("amflush", "time", 0);
     } else {
         $total_stats->{total_time} =
           $total_stats->{taper_time} + $total_stats->{planner_time};
@@ -307,24 +309,24 @@ sub print_header
     my $hostname = $hosts[-1];
     my $org      = getconf($CNF_ORG);
 
-    my $datestamp =
-      $report->get_program_info(
-        $report->get_flag("amflush_run") ? "amflush" : "planner", "start" );
+    my $datestamp = $report->get_program_info(
+        ($report->get_flag("amflush_run") ? "amflush" : "planner"),
+        "start", 0);
     $datestamp /= 1000000 if $datestamp > 99999999;
     $datestamp = int($datestamp);
-    my $year  = int( $datestamp / 10000 ) - 1900;
-    my $month = int( ( $datestamp / 100 ) % 100 ) - 1;
-    my $day   = int( $datestamp % 100 );
-    my $date  = POSIX::strftime( '%B %d, %Y', 0, 0, 0, $day, $month, $year );
+    my $year  = int($datestamp / 10000) - 1900;
+    my $month = int(($datestamp / 100) % 100) - 1;
+    my $day   = int($datestamp % 100);
+    my $date  = POSIX::strftime('%B %d, %Y', 0, 0, 0, $day, $month, $year);
 
     my $header_format = <<EOF;
 @<<<<<<<: @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<...
 EOF
 
-    print $fh swrite( $header_format, "Hostname", $hostname );
-    print $fh swrite( $header_format, "Org",      $org );
-    print $fh swrite( $header_format, "Config",   $config_name );
-    print $fh swrite( $header_format, "Date",     $date );
+    print $fh swrite($header_format, "Hostname", $hostname);
+    print $fh swrite($header_format, "Org",      $org);
+    print $fh swrite($header_format, "Config",   $config_name);
+    print $fh swrite($header_format, "Date",     $date);
     print $fh "\n";
 
     return;
@@ -358,9 +360,9 @@ sub output_tapeinfo
         print $fh $tapelist_str;
     }
 
-    if ( $report->get_flag("degraded_mode") ) {
+    if ($report->get_flag("degraded_mode")) {
 
-        my $tape_errors = $report->get_program_info( "taper", "errors" );
+        my $tape_errors = $report->get_program_info("taper", "errors", []);
         print $fh "*** A TAPE ERROR OCCURRED: " . $tape_errors->[0] . ".\n";
     }
 

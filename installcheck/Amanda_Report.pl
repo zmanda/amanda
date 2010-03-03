@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
-use Test::More tests => 30;
+use Test::More tests => 33;
 use strict;
 use warnings;
 
@@ -1230,9 +1230,34 @@ is_deeply(
     'check: Amanda::Report::get_program_info($program)'
 );
 
-is( $report->get_program_info( 'driver', 'start' ),
+is(
+    $report->get_program_info('driver', 'start', 0),
     "20081002040002",
-    'check: Amanda::Report::get_program_info($program, $field)' );
+'check: Amanda::Report::get_program_info($program, $field, $default) field exists'
+);
+
+# dummy check, makes sure default value gets set correctly
+is(
+    $report->get_program_info('planner', 'fake_field', 67),
+    67,
+'check: Amanda::Report::get_program_info($program, $field, $default) default case'
+);
+
+is(
+    $report->get_program_info('planner', 'fake_field', 32),
+    67,
+'check: Amanda::Report::get_program_info($program, $field, $default) default "sticks"'
+);
+
+$report->get_program_info('planner', 'fake_field2', 0);
+
+is(
+    $report->get_program_info('planner', 'fake_field2', 1),
+    0,
+'check: Amanda::Report::get_program_info($program, $field, $default) false default "sticks"'
+);
+
+
 
 # clean up
 unlink($log_filename) if -f $log_filename;

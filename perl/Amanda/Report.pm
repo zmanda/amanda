@@ -87,13 +87,14 @@ reference to the data as it is stored in the internal data
 structure. Modifying the return value will modify the values in the
 C<Amanda::Report> object.
 
-=head2 my $info = $report->get_program_info($program [,$field] );
+=head2 my $info = $report->get_program_info($program [,$field, $default] );
 
 This method returns a reference to the data for the given C<$program>.
 If the optional argument C<$field> is provided, that field in the
-indicated program is returned.  The returned value is a reference to
-the internal C<Amanda::Report> data structure and will in turn modify
-the C<$report> object.
+indicated program is returned.  If the key C<$field> does not exist in
+the program, then it is inserted with the value C<$default>, The
+returned value is a reference to the internal C<Amanda::Report> data
+structure and will in turn modify the C<$report> object.
 
 =head2 if ( $report->get_flag($flag) ) { ... }
 
@@ -480,12 +481,12 @@ sub get_dle_info
 
 sub get_program_info
 {
-    my $self = shift @_;
-    my ($program, $field) = @_;
+    my ($self, $program, $field, $default) = @_;
+    my $prog = $self->{data}{programs}{$program};
 
-    return (defined $field)
-      ? $self->{data}{programs}{$program}{$field}
-      : $self->{data}{programs}{$program};
+    $prog->{$field} = $default if (defined $field && !defined $prog->{$field});
+
+    return (defined $field) ? $prog->{$field} : $prog;
 }
 
 sub get_tape
