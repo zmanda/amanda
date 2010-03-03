@@ -139,7 +139,8 @@ sub get_mailfh
     my $year  = int( $datestamp / 10000 ) - 1900;
     my $month = int( ( $datestamp / 100 ) % 100 ) - 1;
     my $day   = int( $datestamp % 100 );
-    my $date  = POSIX::strftime( '%B %d, %Y', 0, 0, 0, $day, $month, $year );
+    my $date  = POSIX::strftime( '%B %e, %Y', 0, 0, 0, $day, $month, $year );
+    $date =~ s/  / /g;
 
     my $subj_str =
         getconf($CNF_ORG)
