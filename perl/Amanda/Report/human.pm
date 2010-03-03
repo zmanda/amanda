@@ -305,8 +305,7 @@ sub print_header
     my $fh          = $self->{fh};
     my $config_name = $self->{config_name};
 
-    my @hosts    = $report->get_hosts();
-    my $hostname = $hosts[-1];
+    my $hostname = $report->{hostname};
     my $org      = getconf($CNF_ORG);
 
     my $datestamp = $report->get_program_info(

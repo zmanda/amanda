@@ -580,7 +580,7 @@ sub _handle_driver_line
         my @info = Amanda::Util::split_quoted_strings($str);
         if ( $info[0] eq "hostname" ) {
 
-            # do nothing
+            $self->{hostname} = $info[1];
 
         } elsif ( $info[0] eq "startup" ) {
 
