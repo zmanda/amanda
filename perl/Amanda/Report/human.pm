@@ -421,7 +421,8 @@ sub output_tapeinfo
     }
 
     if ($nb_new_tape) {
-        print $fh ", $nb_new_tape new tape"
+        print $fh ", " if !$first;
+        print $fh "$nb_new_tape new tape"
           . ( $nb_new_tape > 1 ? "s" : "" ) . ".\n";
     }
 
