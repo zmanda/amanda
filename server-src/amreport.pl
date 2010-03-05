@@ -330,7 +330,7 @@ my $logfile = $opt_logfname
            || config_dir_relative( getconf($CNF_LOGDIR) ) . "/log";
 my $historical = defined $opt_logfname;
 
-Amanda::Debug::debug("using logfile: $logfile");
+debug("using logfile: $logfile");
 $report = Amanda::Report->new($logfile, $historical);
 my $exit_status = $report->get_flag("exit_status");
 

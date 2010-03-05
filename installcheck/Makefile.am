@@ -86,7 +86,9 @@ mock_tests = \
 
 # mock scripts
 mocks = \
-	mock/mtx
+	mock/mail \
+	mock/mtx \
+	mock/lpr
 
 # data for test scripts
 test_data = \

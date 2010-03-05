@@ -1,3 +1,18 @@
+2010-03-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in config/amanda/progs.m4: AC_SUBST LPR-related
+	  variables, and don't define them
+	* perl/Amanda/Constants.pm.in: add LPR-related constants
+	* installcheck/amreport.pl: lots of new tests, all hand-verified to
+	  pass for the C amreport as well, sometimes with minor differences
+	* installcheck/mock/lpr.pl: mock 'lpr' for installchecks
+	* installcheck/mock/mail.pl: mock 'mail' for installchecks
+	* installcheck/Makefile.am: new mocks
+	* perl/Makefile.am perl/Amanda/Report/postscript.pm: postscript output
+	  support for amreport
+	* server-src/Makefile.am server-src/amreport.pl
+	  server-src/amreport_new.pl server-src/reporter.c:
+	  make the perl amreport "live"
+
 2010-03-05  Dustin J. Mitchell <dustin@zmanda.com>,
 	    Jean-Louis Martineau <martineau@zmanda.com>,
 	    Paul C. mantz <pcmantz@zmanda.com>

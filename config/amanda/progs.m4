@@ -152,40 +152,36 @@ AC_DEFUN([AMANDA_PROG_GNUPLOT],
 
 # SYNOPSIS
 #
-#   AMANDA_PROG_PRINT
+#   AMANDA_PROG_LPR
 #
 # OVERVIEW
 #
 #   Search for a binary for printing, usually either 'lp' or 'lpr', and put its
-#   path in PRINT, as well as defining it in LPRCMD in config.h.
+#   path in LPR.
 #
-#   LPRFLAG is defined in config.h as the appropriate command-line flag to use 
+#   LPRFLAG is substituted as the appropriate command-line flag to use 
 #   to select a printer; either -P or -d.
 #
-AC_DEFUN([AMANDA_PROG_PRINT],
+AC_DEFUN([AMANDA_PROG_LPR],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
 
-    AC_PATH_PROGS(PRINT, lpr lp)
-    if test ! -z "$PRINT"; then
-	AC_DEFINE_UNQUOTED(LPRCMD, "$PRINT",
-		[Command for starting printing jobs. ])
-
+    AC_PATH_PROGS(LPR, lpr lp)
+    if test ! -z "$LPR"; then
 	AC_CACHE_CHECK([which flag to use to select a printer],
 	    amanda_cv_printer_flag, [
-	    amanda_cv_printer_flag=$PRINTER_FLAG
-	    case "$PRINT" in
+	    amanda_cv_printer_flag=$LPRFLAG
+	    case "$LPR" in
 		lpr|*/lpr) amanda_cv_printer_flag="-P";;
 		lp|*/lp) amanda_cv_printer_flag="-d";;
 	    esac
 	])
-	if test ! -z "$amanda_cv_printer_flag"; then
-	    AC_DEFINE_UNQUOTED(LPRFLAG, "$amanda_cv_printer_flag",
-		    [LPRCMD switch for specifying a printer name. ])
-	else
+	if test -z "$amanda_cv_printer_flag"; then
 	    AMANDA_MSG_WARN([WARNING: amanda will always print to the default printer])
 	fi
     fi
+    AC_SUBST([LPR])
+    AC_SUBST([LPRFLAG])
 ])
 
 # SYNOPSIS

@@ -22,7 +22,7 @@ amlib_LTLIBRARIES = 	libamserver.la
 
 sbin_PROGRAMS =		amadmin		amcheck		\
 			amflush		\
-			amservice	amreport
+			amservice
 
 amlibexec_PROGRAMS =	amindexd	amlogroll	amtrmidx	\
 			amtrmlog	driver		dumper		\
@@ -42,7 +42,7 @@ sbin_SCRIPTS_PERL = \
 	    amcleanup \
 	    amrmtape \
 	    amlabel \
-	    amreport_new \
+	    amreport \
 	    amtape \
 	    amvault \
 	    amstatus
@@ -116,8 +116,6 @@ CLEANFILES += *.test.c
 amindexd_CSRC =		amindexd.c	disk_history.c	list_dir.c
 amindexd_SOURCES =	disk_history.h	list_dir.h	$(amindexd_CSRC)
 
-amreport_SOURCES =	reporter.c
-
 noinst_HEADERS = 	amindex.h	cmdline.h	\
 			diskfile.h	driverio.h	\
 			holding.h	infofile.h	logfile.h	\
@@ -129,8 +127,6 @@ lint:
 		p=`basename $$p $(EXEEXT)`;					\
 		if [ $$p = "amindexd" ]; then					\
 			s="$(amindexd_CSRC)";					\
-		elif [ $$p = "amreport" ]; then					\
-			s="$(amreport_SOURCES)";				\
 		else								\
 			s=$$p.c;						\
 		fi; 								\
