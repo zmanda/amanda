@@ -19,10 +19,12 @@
 package Amanda::Report;
 use strict;
 use warnings;
+use Data::Dumper;
 
 use Amanda::Disklist;
 use Amanda::Logfile qw/:logtype_t :program_t/;
 use Amanda::Util;
+use Amanda::Debug qw( debug warning );
 
 =head1 NAME
 
@@ -41,17 +43,20 @@ This module reads the logfile passed to it and aggregates the data in
 a format of nested hashes for convenient output.  All data read in is
 stored in C<< $report->{data} >>.
 
-=head2 my $report = Amanda::Report->new($logfile);
+=head2 my $report = Amanda::Report->new($logfile, $historical);
 
-The constructor does no real actions aside from calling C<read_file>
-on the log file that it is passed.  The value C<$logfile> is a
-mandatory argument.
+The constructor reads the logfile and produces the report, which can then be
+queried with the other methods.  C<$logfile> should specify the path to the
+logfile from which the report is prepared.  If the logfile is not the "current"
+logfile, then C<$historical> should be false.  Non-historical reports may draw
+information from the current Amanda environment, e.g., holding disks and info
+files.
 
-=head2 $report->read_file($logfile);
+=head2 my $datestamp = $report->get_timestamp();
 
-This is used by C<new> to read in the log file.  This function can
-also be used to read in additional logfiles.  All existing data in
-C<$report> is deleted from the object before reading C<$logfile>.
+This returns the run timestamp for this dump run.  This is determined from one
+of several START entries.  This returns a full 14-digit timestamp regardless of
+the setting of C<usetimestamps> now or during the dump run.
 
 =head2 my @hosts = $report->get_hosts();
 
@@ -184,18 +189,20 @@ number of files seen by this backup on the tape.  Here is an example:
     $report->{data}{programs}{taper}{tapes} =
     {
 	FakeTape01 => {
-	    date  => "",
-	    kb    => "",
-	    files => "",
-	    dle   => "",
-	    time  => "",
+	    label => "FakeTape01",
+	    date  => "", # ??
+	    kb    => "", # ??
+	    files => "", # ??
+	    dle   => 13, # number of dumpfiles that *end* on this tape
+	    time  => "", # ??
 	},
 	FakeTape02 => {
-	    date  => "",
-	    kb    => "",
-	    files => "",
-	    dle   => "",
-	    time  => "",
+	    label => "FakeTape02",
+	    date  => "", # ??
+	    kb    => "", # ??
+	    files => "", # ??
+	    dle   => 27,
+	    time  => "", # ??
 	},
     };
 
@@ -291,7 +298,7 @@ tape.
 
 =head3 Chunks
 
-The list C<< $dle->{chunks} >> describes each of the chunks
+The list C<< $dle->{try}[]->{chunks} >> describes each of the chunks
 that are written by the taper.  Each item in the
 list is a hash reference with the following fields:
 
@@ -337,22 +344,42 @@ error that forces it into degraded mode.
 =item C<normal_run> - This flag is set when planner is run.  Its value
 should be opposite of C<amflush_run>.
 
+=item C<results_missing> - If this was a normal run, but some DLEs named by the
+planner do not have any results, then this flag is set.  Users should look for
+DLEs with empty C<tries> to enumerate the missing results.
+
+=item C<historical> - This flag is set if this is a "historical" report.  It is
+based on the value passed to the constructor.
+
 =back
 
 =cut
 
+use constant STATUS_STRANGE => 2;
+use constant STATUS_FAILED  => 4;
+use constant STATUS_MISSING => 8;
+use constant STATUS_TAPE    => 16;
 
 sub new
 {
     my $class = shift @_;
-    my ($logfname) = @_;
+    my ($logfname, $historical) = @_;
 
     my $self = {
         data => {},
+
+	## inputs
+	_logfname => $logfname,
+	_historical => $historical,
+
+	## logfile-parsing state
+	
+	# the tape currently being writen
+	_current_tape => undef,
     };
     bless $self, $class;
 
-    $self->read_file($logfname);
+    $self->read_file();
     return $self;
 }
 
@@ -360,30 +387,48 @@ sub new
 sub read_file
 {
     my $self       = shift @_;
-    my ($logfname) = @_;
     my $data       = $self->{data} = {};
+    my $logfname   = $self->{_logfname};
 
     # clear the program and DLE data
     $data->{programs} = {};
     $data->{disklist} = {};
     $self->{cache}    = {};
     $self->{flags}    = {};
+    $self->{run_timestamp} = '00000000000000';
 
     my $logfh = Amanda::Logfile::open_logfile($logfname)
-      or die "cannot open $logfname: $!";
+      or die "cannot open '$logfname': $!";
+
+    $self->{flags}{exit_status} = 0;
 
     while ( my ( $type, $prog, $str ) = Amanda::Logfile::get_logline($logfh) ) {
         $self->read_line( $type, $prog, $str );
     }
 
-    # set post-run flags
+    ## set post-run flags
+
+    $self->{flags}{historical} = $self->{_historical};
+    $self->{flags}{amflush_run} = 0;
     if (
         !$self->get_flag("normal_run")
         && (   ( defined $self->get_program_info("amflush") )
             && ( scalar %{ $self->get_program_info("amflush") } ) )
       ) {
+	debug("detected an amflush run");
         $self->{flags}{amflush_run} = 1;
     }
+
+    # check for missing results
+    $self->check_missing() if $self->get_flag('normal_run');
+
+    # clean up any temporary values in the data
+    $self->cleanup();
+}
+
+sub cleanup
+{
+    my $self = shift;
 
     #remove last_label field
     foreach my $dle ($self->get_dles()) {
@@ -399,6 +444,13 @@ sub read_line
 {
     my $self = shift @_;
     my ( $type, $prog, $str ) = @_;
+
+    if ( $type == $L_CONT ) {
+	${$self->{nbline_ref}}++;
+	push @{$self->{contline}}, $str if ${$self->{nbline_ref}} <= 100;
+	return;
+    }
+    $self->{contline} = undef;
 
     if ( $prog == $P_PLANNER ) {
         return $self->_handle_planner_line( $type, $str );
@@ -427,6 +479,12 @@ sub read_line
     } else {
         return $self->_handle_bogus_line( $prog, $type, $str );
     }
+}
+
+sub get_timestamp
+{
+    my $self = shift;
+    return $self->{'run_timestamp'};
 }
 
 sub get_hosts
@@ -499,7 +557,11 @@ sub get_tape
 
     if (!exists $tapes->{$label}) {
         push @$tape_labels, $label;
-        $tapes->{$label} = {};
+        $tapes->{$label} = {date => "",
+			    kb => 0,
+			    files => "",
+			    dle => 0,
+			    time => 0};
     }
 
     return $tapes->{$label};
@@ -542,6 +604,9 @@ sub _handle_planner_line
     } elsif ( $type == $L_ERROR ) {
         return $self->_handle_error_line( "planner", $str );
 
+    } elsif ( $type == $L_FATAL ) {
+        return $self->_handle_fatal_line( "planner", $str );
+
     } elsif ( $type == $L_FAIL ) {
 
         # TODO: these are not like other failure messages: later
@@ -580,7 +645,7 @@ sub _handle_driver_line
         my @info = Amanda::Util::split_quoted_strings($str);
         if ( $info[0] eq "hostname" ) {
 
-            $self->{hostname} = $info[1];
+            return $self->{hostname} = $info[1];
 
         } elsif ( $info[0] eq "startup" ) {
 
@@ -592,18 +657,18 @@ sub _handle_driver_line
             # estimate format:
             # STATS driver estimate <hostname> <disk> <timestamp>
             # <level> [sec <sec> nkb <nkb> ckb <ckb> jps <kps>]
-	    # note that the [..] section is *not* quoted properly
-            my ( $hostname, $disk, $timestamp, $level ) = @info[ 1 .. 4 ];
-            my $dle;
+            # note that the [..] section is *not* quoted properly
+            my ($hostname, $disk, $timestamp, $level) = @info[ 1 .. 4 ];
 
             # if the planner didn't define the DLE then this is a bad
             # line
-            unless ( $dle = $disklist->{$hostname}->{$disk} ) {
-                return $self->_handle_bogus_line( $P_DRIVER, $type, $str );
+            unless (exists $disklist->{$hostname}{$disk}) {
+                return $self->_handle_bogus_line($P_DRIVER, $type, $str);
             }
 
-            my ( $sec, $nkb, $ckb, $kps ) = @info[ 6, 8, 10, 12 ];
-            $kps =~ s{\]}{}; # strip trailing "]"
+            my $dle = $self->get_dle_info($hostname, $disk);
+            my ($sec, $nkb, $ckb, $kps) = @info[ 6, 8, 10, 12 ];
+            $kps =~ s{\]}{};    # strip trailing "]"
 
             $dle->{estimate} = {
                 level => $level,
@@ -619,26 +684,16 @@ sub _handle_driver_line
 
     } elsif ( $type == $L_WARNING ) {
 
-        if ( $str eq "Taper protocol error" ) {
+        $self->{flags}{exit_status} |= STATUS_TAPE
+          if ($str eq "Taper protocol error");
 
-            # DUSTIN: I realize reporter.c does this, so just
-            # duplicate its functionality, but please also file a bug
-            # so that we're not looking for magic strings in the
-            # logfile, and are instead indicating the protocol error
-            # in some machine-parsable way
-            #
-            # TODO: left as comment, figure out what global these are
-            # and implement correctly
-            #
-            # $self->{exit_status} |= $STATUS_TAPE;
-            #
-            # DUSTIN: rather than exit_status, this should be some
-            # field or set of fields that give an overall_status for
-            # the dump run.  This is related to the possible return
-            # values for amreport, so consult the manpage to see what
-            # those are.
-        }
-        return $self->_handle_warning_line( "driver", $str );
+        return $self->_handle_warning_line("driver", $str);
+
+    } elsif ( $type == $L_ERROR ) {
+        return $self->_handle_error_line( "driver", $str );
+
+    } elsif ( $type == $L_FATAL ) {
+        return $self->_handle_fatal_line( "driver", $str );
 
     } elsif ( $type == $L_FAIL ) {
         return $self->_handle_fail_line( "driver", $str );
@@ -665,23 +720,24 @@ sub _handle_dumper_line
 
         my @info = Amanda::Util::split_quoted_strings($str);
         my ( $hostname, $disk, $level ) = @info[ 0 .. 2 ];
-
-        #either this:
-        #
-        # my $strange = join " ", @info[ 3 .. -1 ];
-        # $strange =~ s{^\[}{};
-        # $strange =~ s{\]$}{};
-        #
-        # or
-        my $strange = $info[3];
+        my ( $sec, $kb, $kps, $orig_kb ) = @info[ 4, 6, 8, 10 ];
+        $orig_kb =~ s{\]$}{};
 
         my $dle    = $disklist->{$hostname}->{$disk};
         my $try    = $self->_get_try( $dle, "dumper" );
         my $dumper = $try->{dumper} ||= {};
+	$dumper->{level} = $level;
+	$dumper->{status} = 'strange';
+        $dumper->{sec}       = $sec;
+        $dumper->{kb}        = $kb;
+        $dumper->{kps}       = $kps;
+        $dumper->{'orig-kb'} = $orig_kb;
 
-        # TODO: should this go on the program or DLE notes?
-        my $stranges = $dumper->{stranges} ||= [];
-        push @$stranges, $strange;
+	$self->{contline} = $dumper->{stranges} ||= [];
+	$dumper->{nb_stranges} = 0;
+	$self->{nbline_ref} = \$dumper->{nb_stranges};
+
+        return $self->{flags}{exit_status} |= STATUS_STRANGE
 
     } elsif ( $type == $L_WARNING ) {
 
@@ -703,9 +759,15 @@ sub _handle_dumper_line
         $dumper->{sec}       = $sec;
         $dumper->{kb}        = $kb;
         $dumper->{kps}       = $kps;
-        $dumper->{"orig-kb"} = $orig_kb;
+        $dumper->{'orig-kb'} = $orig_kb;
 
         return $dumper->{status} = "success";
+
+    } elsif ( $type == $L_ERROR ) {
+        return $self->_handle_error_line( "dumper", $str );
+
+    } elsif ( $type == $L_FATAL ) {
+        return $self->_handle_fatal_line( "dumper", $str );
 
     } elsif ( $type == $L_FAIL ) {
         return $self->_handle_fail_line( "dumper", $str );
@@ -737,7 +799,7 @@ sub _handle_chunker_line
 
         my $dle     = $disklist->{$hostname}->{$disk};
         my $try     = $self->_get_try( $dle, "chunker" );
-        my $chunker = $try->{chunker};
+        my $chunker = $try->{chunker} ||= {};
 
         $chunker->{date}  = $timestamp;
         $chunker->{level} = $level;
@@ -747,6 +809,12 @@ sub _handle_chunker_line
 
         return $chunker->{status} =
           ( $type == $L_SUCCESS ) ? "success" : "partial";
+
+    } elsif ( $type == $L_ERROR ) {
+        return $self->_handle_error_line( "chunker", $str );
+
+    } elsif ( $type == $L_FATAL ) {
+        return $self->_handle_fatal_line( "chunker", $str );
 
     } elsif ( $type == $L_FAIL ) {
         return $self->_handle_fail_line( "chunker", $str );
@@ -767,42 +835,47 @@ sub _handle_taper_line
     my $taper_p  = $programs->{taper} ||= {};
 
     if ( $type == $L_START ) {
-
         # format is:
         # START taper datestamp <start> label <label> tape <tapenum>
         my @info = Amanda::Util::split_quoted_strings($str);
-        my ($datestamp, $label, $files) = @info[ 1, 3, 5 ];
+        my ($datestamp, $label, $tapenum) = @info[ 1, 3, 5 ];
         my $tape = $self->get_tape($label);
+        $tape->{date} = $datestamp;
+        $tape->{label} = $label;
 
-        #
-        # Nothing interesting is happening here, so return the label
-        # name, just in case
-        #
-        return $tape->{date} = $datestamp;
+	# keep this tape for later
+	$self->{'_current_tape'} = $tape;
 
+	# call through to the generic start line function
+        $self->_handle_start_line( "taper", $str );
     } elsif ( $type == $L_PART || $type == $L_PARTPARTIAL ) {
 
 # format is:
-# <tapevolume> <tapefile> <hostname> <disk> <timestamp> <currpart>/<predparts> <level> [sec <sec> kb <kb> kps <kps>]
+# <label> <tapefile> <hostname> <disk> <timestamp> <currpart>/<predparts> <level> [sec <sec> kb <kb> kps <kps>]
 #
 # format for $L_PARTPARTIAL is the same as $L_PART, plus <err> at the end
         my @info = Amanda::Util::split_quoted_strings($str);
-        my ( $tapevol, $tapefile, $hostname, $disk, $timestamp ) =
+        my ( $label, $tapefile, $hostname, $disk, $timestamp ) =
           @info[ 0 .. 4 ];
 
         $info[5] =~ m{^(\d+)\/(-?\d+)$};
         my ( $currpart, $predparts ) = ( $1, $2 );
 
-        my ( $level, $sec, $kb, $kps ) = @info[ 6, 8, 10, 12 ];
+        my ( $level, $sec, $kb, $kps, $orig_kb ) = @info[ 6, 8, 10, 12, 14 ];
         $kps =~ s{\]$}{};
+        $orig_kb =~ s{\]$}{} if defined($orig_kb);
+
+	if (!$self->{'_current_tape'} || $label ne $self->{'_current_tape'}->{'label'}) {
+	    warning("corrupted logfile - PART or PARTPARTIAL does not match previous START taper");
+	}
 
         my $dle    = $disklist->{$hostname}->{$disk};
         my $try    = $self->_get_try( $dle, "taper" );
         my $taper  = $try->{taper}  ||= {};
-        my $chunks = $dle->{chunks} ||= [];
+        my $chunks = $try->{chunks} ||= [];
 
         my $chunk = {
-            label => $tapevol,
+            label => $label,
             date  => $timestamp,
             file  => $tapefile,
             part  => $currpart,
@@ -811,13 +884,14 @@ sub _handle_taper_line
             kps   => $kps,
         };
 
+	$taper->{orig_kb} = $orig_kb;
+
         push @$chunks, $chunk;
 
-        my $tape = $self->get_tape($tapevol);
+        my $tape = $self->get_tape($label);
         $tape->{kb}   += $kb;
         $tape->{time} += $sec;
         $tape->{files}++;
-        $tape->{dle}++ if $currpart == 1;
 
         if ( $type == $L_PARTPARTIAL ) {
 
@@ -829,7 +903,7 @@ sub _handle_taper_line
             $taper->{status} = "part+partial";
         }
 
-        return $chunk->{part};
+        $chunk->{part};
 
     } elsif ( $type == $L_DONE || $type == $L_PARTIAL ) {
 
@@ -838,8 +912,17 @@ sub _handle_taper_line
 # $type taper <hostname> <disk> <timestamp> <part> <level> [sec <sec> kb <kb> kps <kps>]
         my @info = Amanda::Util::split_quoted_strings($str);
         my ( $hostname, $disk, $timestamp, $parts, $level ) = @info[ 0 .. 4 ];
-        my ( $sec, $kb, $kps ) = @info[ 6, 8, 10 ];
+        my ( $sec, $kb, $kps, $orig_kb ) = @info[ 6, 8, 10, 12 ];
+	my $error;
+	if ($type == $L_PARTIAL) {
+	    if ($kps =~ /\]$/) {
+	        $error = join " ", @info[ 11 .. $#info ];
+	    } else {
+	        $error = join " ", @info[ 13 .. $#info ];
+	    }
+	}
         $kps =~ s{\]$}{};
+        $orig_kb =~ s{\]$}{} if defined $orig_kb;
 
         my $dle    = $disklist->{$hostname}->{$disk};
         my $try    = $self->_get_try( $dle, "taper" );
@@ -851,27 +934,40 @@ sub _handle_taper_line
         $taper->{kb}    = $kb;
         $taper->{kps}   = $kps;
 
-        return $taper->{status} = ( $type == $L_DONE ) ? "done" : "partial";
+        $taper->{status} = ( $type == $L_DONE ) ? "done" : "partial";
+	$taper->{error} = $error if $type == $L_PARTIAL;
+
+	# count this dle on the tape it *ends* on .. weird, but that's the way
+	# we like it.
+	my $tape = $self->{'_current_tape'};
+        $tape->{dle}++;
 
     } elsif ( $type == $L_INFO ) {
-        return $self->_handle_info_line("taper", $str);
+        $self->_handle_info_line("taper", $str);
 
     } elsif ( $type == $L_WARNING ) {
-	return $self->_handle_warning_line("taper", $str);
+	$self->_handle_warning_line("taper", $str);
 
     } elsif ( $type == $L_ERROR ) {
 
-        $self->{flags}{degraded_mode} = 1;
-        return $self->_handle_error_line( "taper", $str );
+        if ($str =~ m{^no-tape}) {
+
+            $self->{flags}{exit_status} |= STATUS_TAPE;
+            $self->{flags}{degraded_mode} = 1;
+            $taper_p->{tape_error} = $str;
+
+        } else {
+            $self->_handle_error_line("taper", $str);
+        }
+        
+    } elsif ( $type == $L_FATAL ) {
+        return $self->_handle_fatal_line( "taper", $str );
 
     } elsif ( $type == $L_FAIL ) {
-
-        # TODO: taper fail line also includes level.  parse out at
-        # later date.
-        return $self->_handle_fail_line( "taper", $str );
+        $self->_handle_fail_line( "taper", $str );
 
     } else {
-        return $self->_handle_bogus_line( $P_TAPER, $type, $str );
+        $self->_handle_bogus_line( $P_TAPER, $type, $str );
     }
 }
 
@@ -915,6 +1011,9 @@ sub _handle_amdump_line
     } elsif ( $type == $L_START ) {
         $self->_handle_start_line("amdump", $str);
 
+    } elsif ( $type == $L_FATAL ) {
+        return $self->_handle_fatal_line( "amdump", $str );
+
     } elsif ( $type == $L_ERROR ) {
         $self->_handle_error_line("amdump", $str);
     }
@@ -923,35 +1022,38 @@ sub _handle_amdump_line
 
 sub _handle_fail_line
 {
-    my $self = shift @_;
-    my ( $program, $str ) = @_;
+    my ($self, $program, $str) = @_;
+
     my @info = Amanda::Util::split_quoted_strings($str);
-
-    my $data     = $self->{data};
-    my $disklist = $data->{disklist};
-    my $programs = $data->{programs};
-
-    my ( $hostname, $disk, $date, $level ) = $info[ 0 .. 3 ];
-
-    #either this
-    # my $error = join " ", @info[ 4 .. -1 ];
-    # $error =~ s{^\[}{};
-    # $error =~ s{\]$}{};
-    #
-    # or this
-    my $error = $info[4];
+    my ($hostname, $disk, $date, $level) = @info;
+    my $error = join " ", @info[ 4 .. $#info ];
 
     #TODO: verify that this reaches the right try.  Also, DLE or
     #program?
-    my $dle       = $disklist->{$hostname}->{$disk};
-    my $try       = $self->_get_try( $dle, $program );
-    my $program_d = $try->{$program};
-    my $program_p = $programs->{$program};
+    my $dle = $self->get_dle_info($hostname, $disk);
 
+    my $program_d;
+    if ($program eq "planner" ||
+        $program eq "driver") {
+	$program_d = $dle->{$program} ||= {};
+    } else {
+        my $try = $self->_get_try($dle, $program);
+        $program_d = $try->{$program} ||= {};
+    }
+
+    $program_d->{level}  = $level;
     $program_d->{status} = "fail";
+    $program_d->{error}  = $error;
 
-    my $errors_p = $program_p->{errors} ||= [];
-    push @$errors_p, $error;
+    my $errors = $self->get_program_info("program", "errors", []);
+    push @$errors, $error;
+
+    $self->{flags}{exit_status} |= STATUS_FAILED;
+    if ($program eq "dumper") {
+        $self->{contline} = $program_d->{errors} ||= [];
+	$program_d->{nb_errors} = 0;
+	$self->{nbline_ref} = \$program_d->{nb_errors};
+    }
 }
 
 
@@ -959,14 +1061,31 @@ sub _handle_error_line
 {
     my $self = shift @_;
     my ( $program, $str ) = @_;
-    my @info = Amanda::Util::split_quoted_strings($str);
 
     my $data      = $self->{data};
     my $programs  = $data->{programs};
     my $program_p = $programs->{$program};
     my $errors_p  = $program_p->{errors} ||= [];
 
+    $self->{flags}{exit_status} |= 1;
+
     push @$errors_p, $str;
+}
+
+
+sub _handle_fatal_line
+{
+    my $self = shift @_;
+    my ( $program, $str ) = @_;
+
+    my $data      = $self->{data};
+    my $programs  = $data->{programs};
+    my $program_p = $programs->{$program};
+    my $fatal_p  = $program_p->{fatal} ||= [];
+
+    $self->{flags}{exit_status} |= 1;
+
+    push @$fatal_p, $str;
 }
 
 
@@ -982,7 +1101,17 @@ sub _handle_start_line
     my $program_p = $programs->{$program} ||= {};
 
     my @info = Amanda::Util::split_quoted_strings($str);
+    my $timestamp = $info[1];
     $program_p->{start} = $info[1];
+
+    # extend to 14 digits
+    $timestamp .= '0' x (14 - length($timestamp));
+    if ($self->{'run_timestamp'} ne '00000000000000'
+		and $self->{'run_timestamp'} ne $timestamp) {
+	warning("not all timestamps in this file are the same; "
+		. "$self->{run_timestamp}; $timestamp");
+    }
+    $self->{'run_timestamp'} = $timestamp;
 }
 
 
@@ -1000,7 +1129,7 @@ sub _handle_disk_line
     $disklist->{$hostname} ||= {};
     my $dle = $disklist->{$hostname}->{$disk} = {};
 
-    $dle->{estimate} = undef;
+    delete $dle->{estimate};
     $dle->{tries}    = [];
 }
 
@@ -1043,6 +1172,23 @@ sub _handle_bogus_line
     my $data = $self->{data};
     my $boguses = $data->{boguses} ||= [];
     push @$boguses, [ $prog, $type, $str ];
+}
+
+sub check_missing
+{
+    my ($self) = @_;
+    my @dles = $self->get_dles();
+
+    foreach my $dle_entry (@dles) {
+
+        my $tries = $self->get_dle_info(@$dle_entry, "tries");
+
+        if (!@$tries) {
+            $self->{flags}{results_missing} = 1;
+            $self->{flags}{exit_status} |= STATUS_MISSING;
+            last;
+        }
+    }
 }
 
 #

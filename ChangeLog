@@ -1,3 +1,11 @@
+2010-03-05  Dustin J. Mitchell <dustin@zmanda.com>,
+	    Jean-Louis Martineau <martineau@zmanda.com>,
+	    Paul C. mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Report.pm perl/Amanda/Report/human.pm
+	  server-src/amreport_new.pl installcheck/Amanda_Report.pl: major
+	  overhaul to perl reporting framework (collaborative effort of three
+	  developers)
+
 2010-03-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report/human.pm: Remove leading 0 on day date.
 	* server-src/amreport_new.pl: Remove leading 0 on day date.

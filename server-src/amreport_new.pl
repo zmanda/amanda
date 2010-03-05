@@ -21,7 +21,6 @@ use lib '@amperldir@';
 use strict;
 use warnings;
 
-use Data::Dumper; # TODO: remove before committing
 use Getopt::Long;
 use IPC::Open3;
 use Cwd qw( abs_path );
@@ -31,15 +30,15 @@ use POSIX;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Util qw( :constants );
 use Amanda::Tapelist;
-
+use Amanda::Constants;
+use Amanda::Debug qw( debug warning );
 use Amanda::Report;
 use Amanda::Report::human;
 
-
 ## Global Variables
 
-my $no_mail = 0;
-my ( $mailto, $outfname, $logfname, $psfname, $xmlout );
+my $opt_nomail = 0;
+my ( $opt_mailto, $opt_filename, $opt_logfname, $opt_psfname, $opt_xml );
 my ( $config_name, $report, $outfh );
 
 
@@ -56,6 +55,7 @@ EOF
 sub error
 {
     my ( $error_msg, $exit_code ) = @_;
+    warning("error: $error_msg");
     print STDERR $error_msg;
     exit $exit_code;
 }
@@ -99,37 +99,114 @@ sub mnsc
     return sprintf( '%d:%02d', $mn, $sc );
 }
 
-sub get_filefh
-{
+sub calculate_outputs {
+    # Part of the "options" is the configuration.  Do we have a template?  And a
+    # mailto? And mailer?
+    my $ttyp = getconf($CNF_TAPETYPE);
+    my $tt = lookup_tapetype($ttyp) if $ttyp;
+    my $cfg_template = "" . tapetype_getconf($tt, $TAPETYPE_LBL_TEMPL) if $tt;
 
-    $outfname = Amanda::Util::get_original_cwd() . "/$outfname"
-      unless ( $outfname eq "-" || $outfname =~ m{^/} );
+    my $cfg_mailer = getconf($CNF_MAILER);
+    my $cfg_printer = getconf($CNF_PRINTER);
+    if (!defined $opt_mailto) {
+	# ignore the default value for mailto
+	$opt_mailto = getconf_seen($CNF_MAILTO)? getconf($CNF_MAILTO) : undef;
+    } else {
+	# check that mailer is defined if we got an explicit -M, but go on
+	# processing (we will probably do nothing..)
+	if (!$cfg_mailer) {
+	    warning("a mailer is not defined; will not send mail");
+	    print "Warning: a mailer is not defined";
+	}
+    }
 
-    Amanda::Debug::debug("Writing to file $outfname");
-    ## takes no arguments
-    local *fh = undef;
-    open *fh, ">$outfname" or die "open: $!";
-    return \*fh;
+    # list of [ report-spec, output-spec ]
+    my @outputs;
+
+    # should we send a mail?
+    if ($cfg_mailer and $opt_mailto) {
+	# -i and -f override this
+	if (!$opt_nomail and !$opt_filename) {
+	    push @outputs, [ [ 'human' ], [ 'mail', $opt_mailto ] ];
+	}
+    }
+
+    # human/xml output to a file?
+    if ($opt_filename) {
+	if ($opt_xml) {
+	    push @outputs, [ [ 'xml' ], [ 'file', $opt_filename ] ];
+	} else {
+	    push @outputs, [ [ 'human' ], [ 'file', $opt_filename ] ];
+	}
+    }
+
+    # postscript output to a printer?
+    # (this is just silly)
+    if ($Amanda::Constants::LPR and $cfg_template) {
+	# oddly, -i ($opt_nomail) will disable printing, but -i -f prints.
+	if ((!$opt_nomail and !$opt_psfname) or ($opt_nomail and $opt_filename)) {
+	    # but we don't print if the text report isn't going anywhere
+	    unless ((!$cfg_mailer or !$opt_mailto) and !($opt_filename and !$opt_xml)) {
+		push @outputs, [ [ 'postscript', $cfg_template ], [ 'printer', $cfg_printer ] ]
+	    }
+	}
+    }
+
+    # postscript output to a file?
+    if ($opt_psfname and $cfg_template) {
+	push @outputs, [ [ 'postscript', $cfg_template ], [ 'file', $opt_psfname ] ];
+    }
+
+    for my $output (@outputs) {
+	debug("planned output: " . join(" ", @{$output->[0]}, @{$output->[1]}));
+    }
+
+    return @outputs;
 }
 
-sub get_mailfh
+sub open_file_output {
+    my ($report, $outputspec) = @_;
+
+    my $filename = $outputspec->[1];
+    $filename = Amanda::Util::get_original_cwd() . "/$filename"
+      unless ($filename eq "-" || $filename =~ m{^/});
+
+    if ($filename eq "-") {
+	return \*STDOUT;
+    } else {
+	open my $fh, ">", $filename or die "Cannot open '$filename': $!";
+	return $fh;
+    }
+}
+
+sub open_printer_output
 {
-    ## takes no arguments
-    my ($mailer);
-    local *mailfh = undef;
+    my ($report, $outputspec) = @_;
+    my $printer = $outputspec->[1];
 
-    unless ( $mailer = getconf($CNF_MAILER) ) {
-        error(
-"You must run amreport with '-f <output file>' because a mailer is not defined\n",
-            1
-        );
+    my @cmd;
+    if ($printer and $Amanda::Constants::LPRFLAG) {
+	@cmd = ( $Amanda::Constants::LPR, $Amanda::Constants::LPRFLAG, $printer );
+    } else {
+	@cmd = ( $Amanda::Constants::LPR );
     }
 
-    unless ($mailto) {
-        error( "mail address has invalid characters", 1 );
+    debug("invoking printer: " . join(" ", @cmd));
+
+    my $pid = open3( my $fh, undef, undef, @cmd)
+      or error("cannot start $cmd[0]: $!", 1);
+    return ($pid, $fh);
+}
+
+sub open_mail_output
+{
+    my ($report, $outputspec) = @_;
+    my $mailto = $outputspec->[1];
+
+    if ($mailto =~ /[*<>()\[\];:\\\/"!$|]/) {
+        error("mail address has invalid characters", 1);
     }
 
-    Amanda::Debug::debug("Sending mail to $mailto");
     my $datestamp =
       $report->get_program_info(
         $report->get_flag("amflush_run") ? "amflush" : "planner", "start" );
@@ -148,36 +225,54 @@ sub get_mailfh
       . " MAIL REPORT FOR "
       . $date;
 
-    open3( *mailfh, undef, undef, "$mailer -s \"$subj_str\" \"$mailto\"" )
-      or die "open3: $!";
-    return \*mailfh;
+    my $cfg_mailer = getconf($CNF_MAILER);
+
+    my @cmd = ("$cfg_mailer", "-s", $subj_str, $mailto);
+    debug("invoking mail app: " . join(" ", @cmd));
+
+    my $pid = open3( my $fh, undef, undef, @cmd)
+      or error("cannot start $cfg_mailer: $!", 1);
+    return ($pid, $fh);
 }
 
-sub get_psfh
-{
-    ## takes no arguments
-    # TODO
-    error( "error: get_psfh() has not been implemented yet.\n", 1 );
-}
+sub run_output {
+    my ($output) = @_;
+    my ($reportspec, $outputspec) = @$output;
 
-sub get_outfh
-{
-    ## takes no arguments
-    my $outcount = defined($mailto) + defined($outfname) + defined($psfname);
-
-    if ( $outcount > 1 ) {
-        error(
-"you cannot specify more than one output format (-[Mfp]) at a time\n",
-            1
-        );
+    # get the output
+    my ($pid, $fh);
+    if ($outputspec->[0] eq 'file') {
+	$fh = open_file_output($report, $outputspec);
+    } elsif ($outputspec->[0] eq 'printer') {
+	($pid, $fh) = open_printer_output($report, $outputspec);
+    } elsif ($outputspec->[0] eq 'mail') {
+	($pid, $fh) = open_mail_output($report, $outputspec);
     }
 
-    return
-        defined $outfname ? get_filefh()
-      : defined $mailto   ? get_mailfh()
-      : defined $psfname  ? get_psfh()
-      : # default case: Use mail from config
-      ( $mailto = getconf($CNF_MAILTO) ) && get_mailfh();
+    # TODO: modularize these better
+    if ($reportspec->[0] eq 'xml') {
+	print $fh $report->xml_output();
+    } elsif ($reportspec->[0] eq 'human') {
+	my $hr =
+	  Amanda::Report::human->new( $report, $fh, $config_name, $opt_logfname );
+	$hr->print_human_amreport();
+    } elsif ($reportspec->[0] eq 'postscript') {
+	use Amanda::Report::postscript;
+	my $rep =
+	  Amanda::Report::postscript->new( $report, $config_name, $opt_logfname );
+	$rep->write_report($fh);
+    }
+
+    close $fh;
+
+    # clean up any subprocess
+    if (defined $pid) {
+	debug("waiting for child process to finish..");
+	waitpid($pid, 0);
+	if ($? != 0) {
+	    warning("child exited with status $?");
+	}
+    }
 }
 
 
@@ -189,20 +284,16 @@ my $config_overrides = new_config_overrides( scalar(@ARGV) + 1 );
 
 Getopt::Long::Configure(qw/bundling/);
 GetOptions(
-    "i"   => \$no_mail,
-    opt_set_var("M", \$mailto),
-    opt_set_var("f", \$outfname),
-    opt_set_var("l", \$logfname),
-    opt_set_var("p", \$psfname),
+    "i"   => \$opt_nomail,
+    opt_set_var("M", \$opt_mailto),
+    opt_set_var("f", \$opt_filename),
+    opt_set_var("l", \$opt_logfname),
+    opt_set_var("p", \$opt_psfname),
     "o=s" => sub { add_config_override_opt( $config_overrides, $_[1] ); },
-    "xml" => sub { $xmlout = 1 },
+    "xml" => sub { $opt_xml = 1 },
 ) or usage();
 
 usage() unless ( scalar(@ARGV) == 1 );
-
-if ( $no_mail and defined $mailto ) {
-    error( "you cannot specify both -i & -M at the same time\n", 1 );
-}
 
 $config_name = shift @ARGV;
 set_config_overrides($config_overrides);
@@ -218,47 +309,36 @@ if ( $cfgerr_level >= $CFGERR_WARNINGS ) {
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
+# shim for installchecks
+$Amanda::Constants::LPR = $ENV{'INSTALLCHECK_MOCK_PRINTER'}
+    if exists $ENV{'INSTALLCHECK_MOCK_PRINTER'};
+
+# Process the options and decide what outputs we will produce
+my @outputs = calculate_outputs();
+if (!@outputs) {
+    print "no output specified, nothing to do\n";
+    exit(0);
+}
+
 # read the tapelist
 my $tl_file = config_dir_relative(getconf($CNF_TAPELIST));
 my $tl = Amanda::Tapelist::read_tapelist($tl_file);
 
-## Make sure options are valid before parsing
-
-if ( defined $psfname && ( defined $mailto || $xmlout ) ) {
-    error( "you may not specify printer output with -M or --xml.\n", 1 );
-}
-
-## apply summary-specific output configuration and set global
-## variables based on configuration.
-
 ## Parse the report & set output
 
-$logfname ||= config_dir_relative( getconf($CNF_LOGDIR) ) . "/log";
-$report = Amanda::Report->new($logfname)
-  or error("could not open $logfname: $!");
+my $logfile = $opt_logfname
+           || config_dir_relative( getconf($CNF_LOGDIR) ) . "/log";
+my $historical = defined $opt_logfname;
 
-unless ( $outfh = get_outfh() ) {
-    error( "error: $!", 1 );
-}
+Amanda::Debug::debug("using logfile: $logfile");
+$report = Amanda::Report->new($logfile, $historical);
+my $exit_status = $report->get_flag("exit_status");
 
 ## Output
 
-if ($xmlout) {    #xml output
-
-    print $outfh $report->xml_output();
-    close $outfh;
-    exit 0;
-
-} elsif ($psfname) {    # postscript output
-    error( "this has not been implemented yet.\n", 0 );
-
-} else {                # default is human-readable output
-
-    my $hr =
-      Amanda::Report::human->new( $report, $outfh, $config_name, $logfname );
-    $hr->print_human_amreport();
+for my $output (@outputs) {
+    run_output($output);
 }
 
 Amanda::Util::finish_application();
-
-__END__
+exit $exit_status;

@@ -1,4 +1,4 @@
-# Copyright (c) 2008 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
-use Test::More tests => 33;
+use Test::More tests => 34;
 use strict;
 use warnings;
 
@@ -27,6 +27,10 @@ use lib "@amperldir@";
 
 use Installcheck;
 use Amanda::Report;
+use Amanda::Debug;
+
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 my %LogfileContents;
 my %LogfileFlags;
@@ -67,15 +71,12 @@ $LogfileData{planner} = {
     disklist => {
         localhost => {
             "/root" => {
-                estimate => undef,
                 tries    => [],
             },
             "/etc" => {
-                estimate => undef,
                 tries    => [],
             },
             "/var/log" => {
-                estimate => undef,
                 tries    => [],
             },
         },
@@ -440,12 +441,14 @@ $LogfileData{taper} = {
         dumper  => {},
         chunker => {},
         taper   => {
+	    start => '20080111',
             notes => [
                 "Will write new label `TESTCONF01' to new tape",
                 "tape TESTCONF01 kb 2016 fm 4 [OK]"
             ],
             tapes => {
                 TESTCONF01 => {
+                    'label' => 'TESTCONF01',
                     time  => "0.011669",
                     date  => "20080111",
                     kb    => "2016",
@@ -486,51 +489,53 @@ $LogfileData{taper} = {
                             kps    => "1478.7",
                         },
                         taper => {
-                            status => "partial",
-                            parts  => "4",
-                            level  => "0",
-                            sec    => "0.011669",
-                            kb     => "2016",
-                            kps    => "172765.446911",
+                            status  => "partial",
+                            parts   => "4",
+                            level   => "0",
+                            sec     => "0.011669",
+                            kb      => "2016",
+                            kps     => "172765.446911",
+                            orig_kb => undef,
+                            error   => '',
                         },
-                    },
-                ],
-                chunks => [
-                    {
-                        label => "TESTCONF01",
-                        date  => "20080111",
-                        file  => "1",
-                        part  => "1",
-                        sec   => "0.004722",
-                        kb    => "640",
-                        kps   => "135535.789920",
-                    },
-                    {
-                        label => "TESTCONF01",
-                        date  => "20080111",
-                        file  => "2",
-                        part  => "2",
-                        sec   => "0.003438",
-                        kb    => "640",
-                        kps   => "186154.741129",
-                    },
-                    {
-                        label => "TESTCONF01",
-                        date  => "20080111",
-                        file  => "3",
-                        part  => "3",
-                        sec   => "0.002931",
-                        kb    => "640",
-                        kps   => "218355.510065",
-                    },
-                    {
-                        label => "TESTCONF01",
-                        date  => "20080111",
-                        file  => "4",
-                        part  => "4",
-                        sec   => "0.000578",
-                        kb    => "96",
-                        kps   => "166089.965398",
+                        chunks => [
+                            {
+                                label => "TESTCONF01",
+                                date  => "20080111",
+                                file  => "1",
+                                part  => "1",
+                                sec   => "0.004722",
+                                kb    => "640",
+                                kps   => "135535.789920",
+                            },
+                            {
+                                label => "TESTCONF01",
+                                date  => "20080111",
+                                file  => "2",
+                                part  => "2",
+                                sec   => "0.003438",
+                                kb    => "640",
+                                kps   => "186154.741129",
+                            },
+                            {
+                                label => "TESTCONF01",
+                                date  => "20080111",
+                                file  => "3",
+                                part  => "3",
+                                sec   => "0.002931",
+                                kb    => "640",
+                                kps   => "218355.510065",
+                            },
+                            {
+                                label => "TESTCONF01",
+                                date  => "20080111",
+                                file  => "4",
+                                part  => "4",
+                                sec   => "0.000578",
+                                kb    => "96",
+                                kps   => "166089.965398",
+                            },
+                        ],
                     },
                 ],
             },
@@ -572,8 +577,10 @@ $LogfileData{simple} = {
             time       => "2167.581",
         },
         taper => {
+            start => '20080111',
             tapes => {
                 "Conf-001" => {
+                    'label' => 'Conf-001',
                     'files' => 1,
                     'time'  => '4.813543',
                     'date'  => '20080111',
@@ -608,12 +615,13 @@ $LogfileData{simple} = {
                             "orig-kb" => "1970",
                         },
                         taper => {
-                            status => "done",
-                            parts  => "1",
-                            level  => "0",
-                            sec    => "4.813543",
-                            kb     => "419",
-                            kps    => "87.133307",
+                            status  => "done",
+                            parts   => "1",
+                            level   => "0",
+                            sec     => "4.813543",
+                            kb      => "419",
+                            kps     => "87.133307",
+			    orig_kb => undef,
                         },
                         chunker => {
                             status => "success",
@@ -623,17 +631,17 @@ $LogfileData{simple} = {
                             kb     => "420",
                             kps    => "1478.7",
                         },
-                    },
-                ],
-                chunks => [
-                    {
-                        label => "Conf-001",
-                        date  => "20080111",
-                        file  => "1",
-                        part  => "1",
-                        sec   => "4.813543",
-                        kb    => "419",
-                        kps   => "87.133307",
+                        chunks => [
+                            {
+                                label => "Conf-001",
+                                date  => "20080111",
+                                file  => "1",
+                                part  => "1",
+                                sec   => "4.813543",
+                                kb    => "419",
+                                kps   => "87.133307",
+                            },
+                        ],
                     },
                 ],
             },
@@ -734,8 +742,10 @@ $LogfileData{fullExample} = {
         },
         chunker => {},
         taper   => {
+	    start => '20081002040002',
             tapes => {
                 "FullBackup-14" => {
+                    'label' => 'FullBackup-14',
                     'files' => 5,
                     'time'  => '370.548573',
                     'date'  => '20081002040002',
@@ -772,7 +782,8 @@ $LogfileData{fullExample} = {
                             sec    => '0.088934',
                             status => 'done',
                             parts  => '1',
-                            kb     => '8392'
+                            kb     => '8392',
+                            orig_kb => undef
                         },
                         dumper => {
                             kps       => "2771.1",
@@ -783,17 +794,17 @@ $LogfileData{fullExample} = {
                             kb        => "8393",
                             "orig-kb" => "82380"
                         },
-                    },
-                ],
-                chunks => [
-                    {
-                        kps   => "94368.875374",
-                        sec   => "0.088934",
-                        date  => "20081002040002",
-                        part  => "1",
-                        file  => "4",
-                        kb    => "8392",
-                        label => "FullBackup-14"
+                        chunks => [
+                            {
+                                kps   => "94368.875374",
+                                sec   => "0.088934",
+                                date  => "20081002040002",
+                                part  => "1",
+                                file  => "4",
+                                kb    => "8392",
+                                label => "FullBackup-14"
+                            },
+                        ],
                     },
                 ],
             },
@@ -817,25 +828,26 @@ $LogfileData{fullExample} = {
                             "orig-kb" => "28776940",
                         },
                         taper => {
-                            kps    => "77695.214669",
-                            level  => "0",
-                            sec    => "370.382399",
-                            status => "done",
-                            parts  => "1",
-                            kb     => "28776940",
+                            kps     => "77695.214669",
+                            level   => "0",
+                            sec     => "370.382399",
+                            status  => "done",
+                            parts   => "1",
+                            kb      => "28776940",
+                            orig_kb => undef
                         },
+                        chunks => [
+                            {
+                                label => 'FullBackup-14',
+                                date  => '20081002040002',
+                                kps   => '77695.214669',
+                                sec   => '370.382399',
+                                part  => '1',
+                                file  => '5',
+                                kb    => '28776940',
+                            }
+                        ],
                     },
-                ],
-                chunks => [
-                    {
-                        label => 'FullBackup-14',
-                        date  => '20081002040002',
-                        kps   => '77695.214669',
-                        sec   => '370.382399',
-                        part  => '1',
-                        file  => '5',
-                        kb    => '28776940',
-                    }
                 ],
             },
             "/moreapps" => {
@@ -857,12 +869,13 @@ $LogfileData{fullExample} = {
                             'kb'     => '10'
                         },
                         'taper' => {
-                            'kps'    => '3765.060241',
-                            'level'  => '1',
-                            'sec'    => '0.002656',
-                            'status' => 'done',
-                            'parts'  => '1',
-                            'kb'     => '10'
+                            'kps'     => '3765.060241',
+                            'level'   => '1',
+                            'sec'     => '0.002656',
+                            'status'  => 'done',
+                            'parts'   => '1',
+                            'kb'      => '10',
+                            'orig_kb' => undef
                         },
                         'dumper' => {
                             'kps'     => '250.8',
@@ -872,19 +885,19 @@ $LogfileData{fullExample} = {
                             'date'    => '20081002040002',
                             'kb'      => '10',
                             'orig-kb' => '10'
-                        }
+                        },
+                        chunks => [
+                            {
+                                kps   => "3765.060241",
+                                sec   => "0.002656",
+                                date  => "20081002040002",
+                                part  => "1",
+                                file  => "2",
+                                kb    => "10",
+                                label => "FullBackup-14"
+                            },
+                        ],
                     }
-                ],
-                chunks => [
-                    {
-                        kps   => "3765.060241",
-                        sec   => "0.002656",
-                        date  => "20081002040002",
-                        part  => "1",
-                        file  => "2",
-                        kb    => "10",
-                        label => "FullBackup-14"
-                    },
                 ],
             },
             "/apps" => {
@@ -906,12 +919,13 @@ $LogfileData{fullExample} = {
                             kb     => "6630"
                         },
                         taper => {
-                            kps    => "92329.545455",
-                            level  => "1",
-                            sec    => "0.071808",
-                            status => "done",
-                            parts  => "1",
-                            kb     => "6630"
+                            kps     => "92329.545455",
+                            level   => "1",
+                            sec     => "0.071808",
+                            status  => "done",
+                            parts   => "1",
+                            kb      => "6630",
+                            orig_kb => undef,
                         },
                         dumper => {
                             kps       => "16013.4",
@@ -922,17 +936,17 @@ $LogfileData{fullExample} = {
                             kb        => "6630",
                             "orig-kb" => "6630"
                         },
-                    },
-                ],
-                chunks => [
-                    {
-                        kps   => "92329.545455",
-                        sec   => "0.071808",
-                        date  => "20081002040002",
-                        part  => "1",
-                        file  => "3",
-                        kb    => "6630",
-                        label => "FullBackup-14"
+                        chunks => [
+                            {
+                                kps   => "92329.545455",
+                                sec   => "0.071808",
+                                date  => "20081002040002",
+                                part  => "1",
+                                file  => "3",
+                                kb    => "6630",
+                                label => "FullBackup-14"
+                            },
+                        ],
                     },
                 ],
             },
@@ -955,12 +969,13 @@ $LogfileData{fullExample} = {
                             kb     => "10",
                         },
                         taper => {
-                            kps    => "3602.305476",
-                            level  => "1",
-                            sec    => "0.002776",
-                            status => "done",
-                            parts  => "1",
-                            kb     => "10",
+                            kps     => "3602.305476",
+                            level   => "1",
+                            sec     => "0.002776",
+                            status  => "done",
+                            parts   => "1",
+                            kb      => "10",
+                            orig_kb => undef
                         },
                         dumper => {
                             kps       => "250.4",
@@ -971,17 +986,17 @@ $LogfileData{fullExample} = {
                             kb        => "10",
                             "orig-kb" => "10",
                         },
-                    },
-                ],
-                chunks => [
-                    {
-                        kps   => "3602.305476",
-                        sec   => "0.002776",
-                        date  => "20081002040002",
-                        part  => "1",
-                        file  => "1",
-                        kb    => "10",
-                        label => "FullBackup-14",
+                        chunks => [
+                            {
+                                kps   => "3602.305476",
+                                sec   => "0.002776",
+                                date  => "20081002040002",
+                                part  => "1",
+                                file  => "1",
+                                kb    => "10",
+                                label => "FullBackup-14",
+                            },
+                        ],
                     },
                 ],
             },
@@ -1021,8 +1036,10 @@ $LogfileFlags{amflushExample} = {
 $LogfileData{amflushExample} = {
     'programs' => {
         'taper' => {
+            'start' => '20090622075550',
             'tapes' => {
                 'DailyTapeDataSet-017' => {
+                    'label' => 'DailyTapeDataSet-017',
                     'files' => 2,
                     'time'  => '4.180007',
                     'date'  => '20090622075550',
@@ -1045,65 +1062,62 @@ $LogfileData{amflushExample} = {
                 'tries' => [
                     {
                         'taper' => {
-                            'kps'    => '14766.518895',
-                            'level'  => '1',
-                            'sec'    => '2.504314',
-                            'status' => 'done',
-                            'parts'  => '1',
-                            'kb'     => '36980'
+                            'kps'     => '14766.518895',
+                            'level'   => '1',
+                            'sec'     => '2.504314',
+                            'status'  => 'done',
+                            'parts'   => '1',
+                            'kb'      => '36980',
+                            'orig_kb' => undef
                         },
+                        'chunks' => [
+                            {
+                                'kps'   => '14766.518895',
+                                'sec'   => '2.504314',
+                                'date'  => '20090620020002',
+                                'part'  => '1',
+                                'file'  => '1',
+                                'kb'    => '36980',
+                                'label' => 'DailyTapeDataSet-017'
+                            },
+                        ],
                     },
                 ],
-                'chunks' => [
-                    {
-                        'kps'   => '14766.518895',
-                        'sec'   => '2.504314',
-                        'date'  => '20090620020002',
-                        'part'  => '1',
-                        'file'  => '1',
-                        'kb'    => '36980',
-                        'label' => 'DailyTapeDataSet-017'
-                    },
-                ],
-                'estimate' => undef
             },
             '/backups/oracle' => {
                 'tries'    => [],
-                'estimate' => undef
             },
             '/usr/local/bin' => {
                 'tries' => [
                     {
                         'taper' => {
-                            'kps'    => '184.632684',
-                            'level'  => '1',
-                            'sec'    => '1.675693',
-                            'status' => 'done',
-                            'parts'  => '1',
-                            'kb'     => '309'
+                            'kps'     => '184.632684',
+                            'level'   => '1',
+                            'sec'     => '1.675693',
+                            'status'  => 'done',
+                            'parts'   => '1',
+                            'kb'      => '309',
+                            'orig_kb' => undef
                         },
+                        'chunks' => [
+                            {
+                                'kps'   => '184.632684',
+                                'sec'   => '1.675693',
+                                'date'  => '20090620020002',
+                                'part'  => '1',
+                                'file'  => '2',
+                                'kb'    => '309',
+                                'label' => 'DailyTapeDataSet-017'
+                            },
+                        ],
                     },
                 ],
-                'chunks' => [
-                    {
-                        'kps'   => '184.632684',
-                        'sec'   => '1.675693',
-                        'date'  => '20090620020002',
-                        'part'  => '1',
-                        'file'  => '2',
-                        'kb'    => '309',
-                        'label' => 'DailyTapeDataSet-017'
-                    },
-                ],
-                'estimate' => undef
             },
             '/home' => {
                 'tries'    => [],
-                'estimate' => undef
             },
             '/backups/mysql' => {
                 'tries'    => [],
-                'estimate' => undef
             },
         },
     },
@@ -1116,7 +1130,7 @@ foreach my $test ( keys %LogfileContents ) {
     }
 
     my $report =
-      Amanda::Report->new( write_logfile( $LogfileContents{$test} ) );
+      Amanda::Report->new( write_logfile( $LogfileContents{$test} ), 1 );
     is_deeply( $report->{data}, $LogfileData{$test}, "data check: $test" );
 
     map {
@@ -1132,7 +1146,7 @@ foreach my $test ( keys %LogfileContents ) {
 # Test the report API
 #
 my $report =
-  Amanda::Report->new( write_logfile( $LogfileContents{fullExample} ) );
+  Amanda::Report->new( write_logfile( $LogfileContents{fullExample} ), 1 );
 
 is_deeply( [ $report->get_hosts() ],
     ['hostname.example.org'], 'check: Amanda::Report::get_hosts()' );
@@ -1176,12 +1190,13 @@ is_deeply(
                     kb     => "6630"
                 },
                 taper => {
-                    kps    => "92329.545455",
-                    level  => "1",
-                    sec    => "0.071808",
-                    status => "done",
-                    parts  => "1",
-                    kb     => "6630"
+                    kps     => "92329.545455",
+                    level   => "1",
+                    sec     => "0.071808",
+                    status  => "done",
+                    parts   => "1",
+                    kb      => "6630",
+                    orig_kb => undef,
                 },
                 dumper => {
                     kps       => "16013.4",
@@ -1192,17 +1207,17 @@ is_deeply(
                     kb        => "6630",
                     "orig-kb" => "6630"
                 },
-            },
-        ],
-        chunks => [
-            {
-                kps   => "92329.545455",
-                sec   => "0.071808",
-                date  => "20081002040002",
-                part  => "1",
-                file  => "3",
-                kb    => "6630",
-                label => "FullBackup-14"
+                chunks => [
+                    {
+                        kps   => "92329.545455",
+                        sec   => "0.071808",
+                        date  => "20081002040002",
+                        part  => "1",
+                        file  => "3",
+                        kb    => "6630",
+                        label => "FullBackup-14"
+                    },
+                ],
             },
         ],
     },
@@ -1257,7 +1272,8 @@ is(
 'check: Amanda::Report::get_program_info($program, $field, $default) false default "sticks"'
 );
 
-
+ok($report->get_flag('historical'),
+    "historical flag processed correctly");
 
 # clean up
 unlink($log_filename) if -f $log_filename;
