@@ -24,7 +24,7 @@
 # Buildbot exports some useful env variables.
 # Check for $AMVER.  I couldn't come up with a good way to detect it.
 if [ -z $AMVER ]; then
-    AMVER=amanda-2.6.2alpha
+    AMVER=amanda-3.2alpha
 fi
 
 PKG_TARBALL=${AMVER}.tar.gz

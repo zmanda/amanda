@@ -1,4 +1,4 @@
-amanda (2.6.2alpha-1) unstable; urgency=low
+amanda (3.2alpha-1) unstable; urgency=low
 
   * Initial debian release.
   * Thanks to Jim Barber: Swap AMHOMEDIR for AMANDAHOMEDIR in postinstall,

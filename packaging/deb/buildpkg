@@ -50,7 +50,7 @@ fi
 # TODO:  Can we delete this block?
 if [ -z $AMVER ]
 then
-    AMVER=amanda-2.6.2alpha
+    AMVER=amanda-3.2alpha
 fi
 
 #### Build functions
