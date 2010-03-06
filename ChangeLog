@@ -1,3 +1,7 @@
+2010-03-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report/human.pm: Report orig_size for FLUSH line.
+	* installcheck/amreport.pl: check it.
+
 2010-03-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/amndmjob_main.c, ndmp-src/ndmjob_main.c:
 	  include conffile.h, not config.h.

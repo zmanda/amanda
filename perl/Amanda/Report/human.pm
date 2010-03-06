@@ -1274,7 +1274,7 @@ sub get_summary_info
 	push @rv, $fmt_col_field->(2, $level);
 	push @rv, $orig_size ? $fmt_col_field->(4, $self->tounits($orig_size)) :'';
 	push @rv, $out_size ? $fmt_col_field->(4, $self->tounits($out_size)) : '';
-	push @rv, '-- ';
+	push @rv, ($compression == 100) ? '-- ' : $fmt_col_field->(5, $compression);
 	push @rv, '';
 	push @rv, '';
 	push @rv, $fmt_col_field->(8,

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 103;
+use Test::More tests => 107;
 
 use strict;
 use warnings;
@@ -577,6 +577,24 @@ results_match($out_filename, $datas{'fatal-rpt'},
     "..result matches");
 ok(-f $printer_output && -z $printer_output,
     "..printer output is empty (no dumps, no tapes)");
+
+cleanup();
+burp($current_log_filename, $datas{'flush-origsize'});
+
+run($amreport, 'TESTCONF', '-f', $out_filename);
+is($Installcheck::Run::exit_code, 0,
+    "amreport with fatal logfile");
+results_match($out_filename, $datas{'flush-origsize-rpt'},
+    "..result matches flush-origsize-rpt");
+
+cleanup();
+burp($current_log_filename, $datas{'flush-noorigsize'});
+
+run($amreport, 'TESTCONF', '-f', $out_filename);
+is($Installcheck::Run::exit_code, 0,
+    "amreport with fatal logfile");
+results_match($out_filename, $datas{'flush-noorigsize-rpt'},
+    "..result matches flush-origsize-rpt");
 
 cleanup();
 
@@ -2037,5 +2055,127 @@ DUMP SUMMARY:
 HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
 -------------------------- ------------------------------------- -------------
 localhost    /boot         MISSING -------------------------------------------
+
+(brought to you by Amanda version 2.6.2alpha)
+%%%% flush-origsize
+INFO amflush amflush pid 11753
+DISK amflush localhost /boot
+START amflush date 20100303132501
+INFO driver driver pid 11755
+START driver date 20100303132501
+STATS driver hostname localhost.localdomain
+STATS driver startup time 0.020
+INFO taper taper pid 11756
+START taper datestamp 20100303132501 label TESTCONF02 tape 1
+PART taper TESTCONF02 1 localhost /boot 20100303132432 1/-1 0 [sec 0.493936 kb 83480 kps 169009.900121 orig-kb 148870]
+DONE taper localhost /boot 20100303132432 1 0 [sec 0.493936 kb 83480 kps 169009.900121 orig-kb 148870]
+INFO taper tape TESTCONF02 kb 83480 fm 9 [OK]
+INFO taper pid-done 11756
+FINISH driver date 20100303132501 time 1.966
+INFO driver pid-done 11755
+INFO amflush pid-done 11754
+%%%% flush-origsize-rpt
+Hostname: localhost.localdomain                   
+Org     : DailySet1                               
+Config  : TESTCONF                                
+Date    : March 3, 2010                           
+
+The dumps were flushed to tape TESTCONF02.
+The next tape Amanda expects to use is: 1 new tape.
+
+
+STATISTICS:
+                          Total       Full      Incr.
+                        --------   --------   --------
+Estimate Time (hrs:min)     0:00
+Run Time (hrs:min)          0:00
+Dump Time (hrs:min)         0:00       0:00       0:00
+Output Size (meg)            0.0        0.0        0.0
+Original Size (meg)          0.0        0.0        0.0
+Avg Compressed Size (%)      --         --         --
+Filesystems Dumped             0          0          0
+Avg Dump Rate (k/s)          --         --         --
+
+Tape Time (hrs:min)         0:00       0:00       0:00
+Tape Size (meg)             81.5       81.5        0.0
+Tape Used (%)              271.8      271.8        0.0
+Filesystems Taped              1          1          0
+Chunks Taped                   1          1          0
+Avg Tp Write Rate (k/s)   169010     169010        --
+
+USAGE BY TAPE:
+  Label               Time         Size      %    Nb    Nc
+  TESTCONF02          0:00       83480k  271.8     1     1
+
+NOTES:
+  taper: tape TESTCONF02 kb 83480 fm 9 [OK]
+
+
+DUMP SUMMARY:
+                                       DUMPER STATS                TAPER STATS
+HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS     KB/s
+-------------------------- ------------------------------------- ---------------
+localhost    /boot       0  148870   83480   56.1     FLUSH        0:00 169009.9
+
+(brought to you by Amanda version 2.6.2alpha)
+%%%% flush-noorigsize
+INFO amflush amflush pid 11753
+DISK amflush localhost /boot
+START amflush date 20100303132501
+INFO driver driver pid 11755
+START driver date 20100303132501
+STATS driver hostname localhost.localdomain
+STATS driver startup time 0.020
+INFO taper taper pid 11756
+START taper datestamp 20100303132501 label TESTCONF02 tape 1
+PART taper TESTCONF02 1 localhost /boot 20100303132432 1/-1 0 [sec 0.493936 kb 83480 kps 169009.900121]
+DONE taper localhost /boot 20100303132432 1 0 [sec 0.493936 kb 83480 kps 169009.900121]
+INFO taper tape TESTCONF02 kb 83480 fm 9 [OK]
+INFO taper pid-done 11756
+FINISH driver date 20100303132501 time 1.966
+INFO driver pid-done 11755
+INFO amflush pid-done 11754
+%%%% flush-noorigsize-rpt
+Hostname: localhost.localdomain                   
+Org     : DailySet1                               
+Config  : TESTCONF                                
+Date    : March 3, 2010                           
+
+The dumps were flushed to tape TESTCONF02.
+The next tape Amanda expects to use is: 1 new tape.
+
+
+STATISTICS:
+                          Total       Full      Incr.
+                        --------   --------   --------
+Estimate Time (hrs:min)     0:00
+Run Time (hrs:min)          0:00
+Dump Time (hrs:min)         0:00       0:00       0:00
+Output Size (meg)            0.0        0.0        0.0
+Original Size (meg)          0.0        0.0        0.0
+Avg Compressed Size (%)      --         --         --
+Filesystems Dumped             0          0          0
+Avg Dump Rate (k/s)          --         --         --
+
+Tape Time (hrs:min)         0:00       0:00       0:00
+Tape Size (meg)             81.5       81.5        0.0
+Tape Used (%)              271.8      271.8        0.0
+Filesystems Taped              1          1          0
+Chunks Taped                   1          1          0
+Avg Tp Write Rate (k/s)   169010     169010        --
+
+USAGE BY TAPE:
+  Label               Time         Size      %    Nb    Nc
+  TESTCONF02          0:00       83480k  271.8     1     1
+
+NOTES:
+  taper: tape TESTCONF02 kb 83480 fm 9 [OK]
+
+
+DUMP SUMMARY:
+                                       DUMPER STATS                TAPER STATS
+HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS     KB/s
+-------------------------- ------------------------------------- ---------------
+localhost    /boot       0           83480    --      FLUSH        0:00 169009.9
 
 (brought to you by Amanda version 2.6.2alpha)
