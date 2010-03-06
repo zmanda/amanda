@@ -1,4 +1,8 @@
 2010-03-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/amndmjob_main.c, ndmp-src/ndmjob_main.c:
+	  include conffile.h, not config.h.
+
+2010-03-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/version.m4: Allow 2 digits version.
 
 2010-03-05  Jean-Louis Martineau <martineau@zmanda.com>
