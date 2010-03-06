@@ -1,3 +1,8 @@
+2010-03-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amreport.pl: don't use undef for stdout, stderr when
+	  invoking mail or lpr - some don't like to have their std streams
+	  closed
+
 2010-03-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amreport.pl: fix use of relative path for -l argument.
 

@@ -193,7 +193,8 @@ sub open_printer_output
 
     debug("invoking printer: " . join(" ", @cmd));
 
-    my $pid = open3( my $fh, undef, undef, @cmd)
+    # redirect stdout/stderr to stderr, which is usually the amdump log
+    my $pid = open3( my $fh, ">&2", ">&2", @cmd)
       or error("cannot start $cmd[0]: $!", 1);
     return ($pid, $fh);
 }
@@ -230,7 +231,8 @@ sub open_mail_output
     my @cmd = ("$cfg_mailer", "-s", $subj_str, $mailto);
     debug("invoking mail app: " . join(" ", @cmd));
 
-    my $pid = open3( my $fh, undef, undef, @cmd)
+    # redirect stdout/stderr to stderr, which is usually the amdump log
+    my $pid = open3( my $fh, ">&2", ">&2", @cmd)
       or error("cannot start $cfg_mailer: $!", 1);
     return ($pid, $fh);
 }
