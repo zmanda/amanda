@@ -39,7 +39,7 @@
 #include "ndmjob.h"
 #include "debug.h"
 #include "util.h"
-#include "config.h"
+#include "conffile.h"
 
 
 int
