@@ -293,6 +293,9 @@ GetOptions(
     "xml" => sub { $opt_xml = 1 },
 ) or usage();
 
+$opt_logfname = Amanda::Util::get_original_cwd() . "/" . $opt_logfname
+	if defined $opt_logfname and $opt_logfname !~ /^\//;
+
 usage() unless ( scalar(@ARGV) == 1 );
 
 $config_name = shift @ARGV;
