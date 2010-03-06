@@ -1,4 +1,7 @@
 2010-03-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/version.m4: Allow 2 digits version.
+
+2010-03-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* packaging/deb/changelog, packaging/deb/rules,
 	  packaging/deb/buildpkg, packaging/rpm/buildpkg,
 	  packaging/rpm/amanda.spec,

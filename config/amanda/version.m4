@@ -44,7 +44,12 @@ AC_DEFUN([AMANDA_SPLIT_VERSION],
     VERSION_MAJOR=`expr "$VERSION" : '\([0-9]*\)'`
     VERSION_MINOR=`expr "$VERSION" : '[0-9]*\.\([0-9]*\)'`
     VERSION_PATCH=`expr "$VERSION" : '[0-9]*\.[0-9]*\.\([0-9]*\)'`
-    VERSION_COMMENT=\"`expr "$VERSION" : '[0-9]*\.[0-9]*\.[0-9]*\(.*\)'`\"
+    if test -z "$VERSION_PATCH"; then
+	VERSION_PATCH=0
+        VERSION_COMMENT=\"`expr "$VERSION" : '[0-9]*\.[0-9]*\(.*\)'`\"
+    else
+        VERSION_COMMENT=\"`expr "$VERSION" : '[0-9]*\.[0-9]*\.[0-9]*\(.*\)'`\"
+    fi
     changequote([,])
 
     AC_SUBST(VERSION_MAJOR)
