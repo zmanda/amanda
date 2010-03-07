@@ -312,9 +312,8 @@ mail reports distinct.</para>
   <varlistentry>
   <term><amkeyword>mailto</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>Default:
-<amdefault>"operators"</amdefault>.
-A space separated list of recipients for mail reports.</para>
+<para>Default: none.
+A space separated list of recipients for mail reports.  If not specified, amdump will not send any mail.</para>
   </listitem>
   </varlistentry>
   <varlistentry>

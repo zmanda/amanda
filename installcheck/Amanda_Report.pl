@@ -207,7 +207,7 @@ $LogfileData{dumper} = {
                             sec       => "0.02",
                             kb        => "42",
                             kps       => "2100",
-                            "orig-kb" => "42",
+                            orig_kb   => "42",
                         },
                     },
                 ],
@@ -229,7 +229,7 @@ $LogfileData{dumper} = {
                             sec       => "0.87",
                             kb        => "2048",
                             kps       => "2354",
-                            "orig-kb" => "2048",
+                            orig_kb   => "2048",
                         },
                     },
                 ],
@@ -251,7 +251,7 @@ $LogfileData{dumper} = {
                             sec       => "1.68421",
                             kb        => "4096",
                             kps       => "2354",
-                            "orig-kb" => "4096",
+                            orig_kb   => "4096",
                         },
                     },
                 ],
@@ -321,7 +321,7 @@ $LogfileData{chunker} = {
                             sec       => "0.02",
                             kb        => "42",
                             kps       => "2100",
-                            "orig-kb" => "42",
+                            orig_kb   => "42",
                         },
                         chunker => {
                             status => "success",
@@ -351,7 +351,7 @@ $LogfileData{chunker} = {
                             sec       => "0.87",
                             kb        => "2048",
                             kps       => "2354",
-                            "orig-kb" => "2048",
+                            orig_kb   => "2048",
                         },
                         chunker => {
                             status => "success",
@@ -381,7 +381,7 @@ $LogfileData{chunker} = {
                             sec       => "1.68421",
                             kb        => "4096",
                             kps       => "2354",
-                            "orig-kb" => "4096",
+                            orig_kb   => "4096",
                         },
                         chunker => {
                             status => "partial",
@@ -478,7 +478,7 @@ $LogfileData{taper} = {
                             sec       => "0.209",
                             kb        => "1970",
                             kps       => "9382.2",
-                            "orig-kb" => "1970",
+                            orig_kb   => "1970",
                         },
                         chunker => {
                             status => "success",
@@ -612,7 +612,7 @@ $LogfileData{simple} = {
                             sec       => "0.209",
                             kb        => "1970",
                             kps       => "9382.2",
-                            "orig-kb" => "1970",
+                            orig_kb   => "1970",
                         },
                         taper => {
                             status  => "done",
@@ -792,7 +792,7 @@ $LogfileData{fullExample} = {
                             status    => "success",
                             date      => "20081002040002",
                             kb        => "8393",
-                            "orig-kb" => "82380"
+                            orig_kb   => "82380"
                         },
                         chunks => [
                             {
@@ -825,7 +825,7 @@ $LogfileData{fullExample} = {
                             status    => "success",
                             date      => "20081002040002",
                             kb        => "28776940",
-                            "orig-kb" => "28776940",
+                            orig_kb   => "28776940",
                         },
                         taper => {
                             kps     => "77695.214669",
@@ -875,7 +875,7 @@ $LogfileData{fullExample} = {
                             'status'  => 'done',
                             'parts'   => '1',
                             'kb'      => '10',
-                            'orig_kb' => undef
+                            orig_kb   => undef
                         },
                         'dumper' => {
                             'kps'     => '250.8',
@@ -884,7 +884,7 @@ $LogfileData{fullExample} = {
                             'status'  => 'success',
                             'date'    => '20081002040002',
                             'kb'      => '10',
-                            'orig-kb' => '10'
+                            orig_kb   => '10'
                         },
                         chunks => [
                             {
@@ -934,7 +934,7 @@ $LogfileData{fullExample} = {
                             status    => "success",
                             date      => "20081002040002",
                             kb        => "6630",
-                            "orig-kb" => "6630"
+                            orig_kb   => "6630"
                         },
                         chunks => [
                             {
@@ -984,7 +984,7 @@ $LogfileData{fullExample} = {
                             status    => "success",
                             date      => "20081002040002",
                             kb        => "10",
-                            "orig-kb" => "10",
+                            orig_kb   => "10",
                         },
                         chunks => [
                             {
@@ -1068,7 +1068,7 @@ $LogfileData{amflushExample} = {
                             'status'  => 'done',
                             'parts'   => '1',
                             'kb'      => '36980',
-                            'orig_kb' => undef
+                            orig_kb   => undef
                         },
                         'chunks' => [
                             {
@@ -1097,7 +1097,7 @@ $LogfileData{amflushExample} = {
                             'status'  => 'done',
                             'parts'   => '1',
                             'kb'      => '309',
-                            'orig_kb' => undef
+                            orig_kb   => undef
                         },
                         'chunks' => [
                             {
@@ -1205,7 +1205,7 @@ is_deeply(
                     status    => "success",
                     date      => "20081002040002",
                     kb        => "6630",
-                    "orig-kb" => "6630"
+                    orig_kb   => "6630"
                 },
                 chunks => [
                     {

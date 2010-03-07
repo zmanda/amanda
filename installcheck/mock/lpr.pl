@@ -20,8 +20,8 @@
 use strict;
 use warnings;
 
-my $outfile = $ENV{'INSTALLCHECK_MOCK_PRINTER_OUTPUT'};
-die "INSTALLCHECK_MOCK_PRINTER_OUTPUT not defined" unless defined $outfile;
+my $outfile = $ENV{'INSTALLCHECK_MOCK_LPR_OUTPUT'};
+die "INSTALLCHECK_MOCK_LPR_OUTPUT not defined" unless defined $outfile;
 
 # just copy data
 open(my $out, ">", $outfile) or die("Could not open '$outfile'");

@@ -288,7 +288,7 @@ in kb/sec.
 
 =back
 
-The C<dumper> hash also has an C<orig-kb> field, giving the size of
+The C<dumper> hash also has an C<orig_kb> field, giving the size of
 the data dumped from the source, before any compression.  The C<taper>
 hash contains all the exit status data given by the taper.  Because
 the taper has timestamped chunks, the program itself does not have a
@@ -731,7 +731,7 @@ sub _handle_dumper_line
         $dumper->{sec}       = $sec;
         $dumper->{kb}        = $kb;
         $dumper->{kps}       = $kps;
-        $dumper->{'orig-kb'} = $orig_kb;
+        $dumper->{orig_kb}   = $orig_kb;
 
 	$self->{contline} = $dumper->{stranges} ||= [];
 	$dumper->{nb_stranges} = 0;
@@ -759,7 +759,7 @@ sub _handle_dumper_line
         $dumper->{sec}       = $sec;
         $dumper->{kb}        = $kb;
         $dumper->{kps}       = $kps;
-        $dumper->{'orig-kb'} = $orig_kb;
+        $dumper->{orig_kb}   = $orig_kb;
 
         return $dumper->{status} = "success";
 

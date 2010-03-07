@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 107;
+use Test::More tests => 110;
 
 use strict;
 use warnings;
@@ -49,8 +49,8 @@ BEGIN {
 
 # set up a fake "printer" for postscript output
 my $printer_output = "$Installcheck::TMP/postscript-output";
-$ENV{'INSTALLCHECK_MOCK_PRINTER_OUTPUT'} = $printer_output;
-$ENV{'INSTALLCHECK_MOCK_PRINTER'} = abs_path("mock") . "/lpr";
+$ENV{'INSTALLCHECK_MOCK_LPR_OUTPUT'} = $printer_output;
+$ENV{'INSTALLCHECK_MOCK_LPR'} = abs_path("mock") . "/lpr";
 
 # and a fake template
 my $ps_template = "$Installcheck::TMP/postscript-template";
@@ -196,6 +196,16 @@ burp($current_log_filename, $datas{'normal'});
 like(run_err($amreport, 'TESTCONF-NOSUCH'),
     qr/could not open conf/,
     "amreport with bogus config exits with error status and error message");
+
+ok(!run($amreport, 'TESTCONF-NOSUCH', '--help'),
+    "amreport --help exits with status 1");
+like($Installcheck::Run::stdout,
+    qr/Usage: amreport conf/,
+    "..and prints usage message");
+
+like(run_get($amreport, 'TESTCONF-NOSUCH', '--version'),
+    qr/^amreport-.*/,
+    "amreport --version gives version");
 
 ok(run($amreport, 'TESTCONF'),
     "no-args amreport (as run from amdump) with mailer, mailto, and a template")
