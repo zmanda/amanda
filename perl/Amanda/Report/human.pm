@@ -821,25 +821,6 @@ sub output_tape_stats
 	my $tapeused = $tape->{'kb'};
 	$tapeused += $marksize * (1 + $tape->{'files'});
 
-	# TEMPORARY: add a filemark for each dumpfile, to account for the header
-	# .. an approximation since we don't have a block size
-	my $ndumps = 0;
-	foreach my $dle ($self->{'report'}->get_dles()) {
-	    my ($host, $disk) = @$dle;
-	    my $dle_info = $self->{'report'}->get_dle_info($host, $disk);
-	    # run once for each try for this DLE
-	    foreach my $try (@{$dle_info->{'tries'}}) {
-		next unless exists $try->{'taper'} and exists $try->{'chunks'};
-
-		# note that this report only prints a row for the *first* part in the DLE,
-		# and only if that's on this tape.
-		my $chunks = $try->{'chunks'};
-		next unless ($chunks->[0] and $chunks->[0]{'label'} eq $label);
-		$ndumps++;
-	    }
-	}
-	$tapeused += $ndumps * $marksize;
-
         print $fh swrite(
             $ts_format,
             $label,
