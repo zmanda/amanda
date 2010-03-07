@@ -278,19 +278,18 @@ sub load {
     my $conf_tarball = "$tarballdir/$flavor-conf.tgz";
 
     if (! -f $tmp_tarball || ! -f $conf_tarball) {
-	generate_and_store($flavor);
-    } else {
-	if (system("$Amanda::Constants::GNUTAR",
-		    "-zxf", "$tmp_tarball",
-		    "-C", "$Installcheck::TMP")) {
-	    die("Error untarring dump results: $?");
-	}
+	die "Cached dump '$flavor' is not available.  Re-run the '=setupcache' check";
+    }
+    if (system("$Amanda::Constants::GNUTAR",
+		"-zxf", "$tmp_tarball",
+		"-C", "$Installcheck::TMP")) {
+	die("Error untarring dump results: $?");
+    }
 
-	if (system("$Amanda::Constants::GNUTAR",
-		    "-zxf", "$conf_tarball",
-		    "-C", "$CONFIG_DIR")) {
-	    die("Error untarring dump results: $?");
-	}
+    if (system("$Amanda::Constants::GNUTAR",
+		"-zxf", "$conf_tarball",
+		"-C", "$CONFIG_DIR")) {
+	die("Error untarring dump results: $?");
     }
 
     # calculate the timestamps for this run
