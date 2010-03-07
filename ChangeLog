@@ -1,4 +1,8 @@
 2010-03-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Report/postscript.pm perl/Amanda/Report/human.pm: use %f
+	  instead of %lf
+
+2010-03-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amfetchdump.pl: fix usage message
 	* man/xml-source/amanda.conf.5.xml common-src/conffile.c: remove
 	   default for mailto, as it is ignored

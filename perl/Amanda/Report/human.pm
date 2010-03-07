@@ -53,8 +53,8 @@ sub divzero
     return
         ( $b == 0 )              ? "-- "
       : ( ($q = $a / $b) > 99999.95 ) ? "#####"
-      : ( $q > 999.95 ) ? sprintf( "%5.0lf", $q )
-      :                   sprintf( "%5.1lf", $q );
+      : ( $q > 999.95 ) ? sprintf( "%5.0f", $q )
+      :                   sprintf( "%5.1f", $q );
 }
 
 sub divzero_wide
@@ -64,8 +64,8 @@ sub divzero_wide
     return
         ( $b == 0 )              ? "-- "
       : ( ($q = $a / $b) > 9999999.95 ) ? "#######"
-      : ( $q > 99999.95 ) ? sprintf( "%7.0lf", $q )
-      :                     sprintf( "%7.1lf", $q );
+      : ( $q > 99999.95 ) ? sprintf( "%7.0f", $q )
+      :                     sprintf( "%7.1f", $q );
 }
 
 sub divzero_col
@@ -655,18 +655,18 @@ EOF
     print $fh swrite(
         $st_format,
         "Output Size (meg)",
-        sprintf( "%8.1lf", $total_stats->{outsize}/1024 ),
-        sprintf( "%8.1lf", $full_stats->{outsize}/1024 ),
-        sprintf( "%8.1lf", $incr_stats->{outsize}/1024 ),
+        sprintf( "%8.1f", $total_stats->{outsize}/1024 ),
+        sprintf( "%8.1f", $full_stats->{outsize}/1024 ),
+        sprintf( "%8.1f", $incr_stats->{outsize}/1024 ),
         "",
     );
 
     print $fh swrite(
         $st_format,
         "Original Size (meg)",
-        sprintf( "%8.1lf", $total_stats->{origsize}/1024 ),
-        sprintf( "%8.1lf", $full_stats->{origsize}/1024 ),
-        sprintf( "%8.1lf", $incr_stats->{origsize}/1024 ),
+        sprintf( "%8.1f", $total_stats->{origsize}/1024 ),
+        sprintf( "%8.1f", $full_stats->{origsize}/1024 ),
+        sprintf( "%8.1f", $incr_stats->{origsize}/1024 ),
         "",
     );
 
@@ -714,9 +714,9 @@ EOF
     print $fh swrite(
         $st_format,
         "Tape Size (meg)",
-        sprintf( "%8.1lf", $total_stats->{tapesize}/1024 ),
-        sprintf( "%8.1lf", $full_stats->{tapesize}/1024 ),
-        sprintf( "%8.1lf", $incr_stats->{tapesize}/1024 ),
+        sprintf( "%8.1f", $total_stats->{tapesize}/1024 ),
+        sprintf( "%8.1f", $full_stats->{tapesize}/1024 ),
+        sprintf( "%8.1f", $incr_stats->{tapesize}/1024 ),
         ""
     );
 
@@ -930,7 +930,7 @@ sub output_details
 
             push @$notes,
               "big estimate: $hostname $qdisk $dle->{estimate}{level}",
-              sprintf('                est: %.0lf%s    out %.0lf%s',
+              sprintf('                est: %.0f%s    out %.0f%s',
                 $est->{ckb}, $disp_unit, $outsize, $disp_unit)
               if ( ($est->{ckb} * .9 > $outsize)
                 && ($est->{ckb} - $outsize > 1.0e5));
@@ -1391,13 +1391,13 @@ sub set_col_spec
         [ "HostName", 0, 12, 12, 0, "%-*.*s", "HOSTNAME" ],
         [ "Disk",     1, 11, 11, 0, "%-*.*s", "DISK" ],
         [ "Level",    1, 1,  1,  0, "%*.*d",  "L" ],
-        [ "OrigKB",   1, 7,  0,  1, "%*.*lf", "ORIG-" . $disp_unit . "B" ],
-        [ "OutKB",    1, 7,  0,  1, "%*.*lf", "OUT-" . $disp_unit . "B" ],
-        [ "Compress", 1, 6,  1,  1, "%*.*lf", "COMP%" ],
+        [ "OrigKB",   1, 7,  0,  1, "%*.*f",  "ORIG-" . $disp_unit . "B" ],
+        [ "OutKB",    1, 7,  0,  1, "%*.*f",  "OUT-" . $disp_unit . "B" ],
+        [ "Compress", 1, 6,  1,  1, "%*.*f",  "COMP%" ],
         [ "DumpTime", 1, 7,  7,  1, "%*.*s",  "MMM:SS" ],
-        [ "DumpRate", 1, 6,  1,  1, "%*.*lf", "KB/s" ],
+        [ "DumpRate", 1, 6,  1,  1, "%*.*f",  "KB/s" ],
         [ "TapeTime", 1, 6,  6,  1, "%*.*s",  "MMM:SS" ],
-        [ "TapeRate", 1, 6,  1,  1, "%*.*lf", "KB/s" ]
+        [ "TapeRate", 1, 6,  1,  1, "%*.*f",  "KB/s" ]
     ];
 
     $self->apply_col_spec_override();
