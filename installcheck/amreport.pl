@@ -1955,7 +1955,7 @@ euclid       -server-src 0   21830   21830    --     0:00 82641.8   0:00 244170.
 (Compression Ratio:    --  %) DrawStat
 (Filesystems Taped:    0) DrawStat
 (-) (Conf-001) (-) (  0) (      32) (      32) DrawHost
-(euclid) (/A/b/server-src) (0) (  1) (   21830) (   21830) DrawHost
+(euclid) (/A/b/server-src) (0) (  1) (   21830) (   20320) DrawHost
 
 showpage
 --PS-TEMPLATE--

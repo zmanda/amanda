@@ -1,4 +1,8 @@
 2010-03-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amreport.pl perl/Amanda/Report/postscript.pm: always
+	  print the on-medi size of a dumpfile, not its total size
+
+2010-03-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amreport.pl perl/Amanda/Report/human.pm
 	  perl/Amanda/Report/postscript.pm: remove rounding when orig and
 	  outsize are within 32k
