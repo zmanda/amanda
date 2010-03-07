@@ -161,14 +161,6 @@ sub _write_report_tape
 		$origsize = $try_taper->{'orig-kb'} if $try_taper->{'orig_kb'};
 	    }
 
-	    # TODO TEMPORARY
-	    # reporter.c uses the total outsize rather than the sum of the on-tape
-	    # parts for all but the final tape containing a split dump.  This is odd,
-	    # but we'll be compatible
-	    if (@$chunks && $chunks->[-1]->{'label'} ne $label) {
-		$outsize = $try->{'taper'}->{'kb'};
-	    }
-
 	    $total_outsize += $outsize;
 	    $total_origsize += $origsize;
 
