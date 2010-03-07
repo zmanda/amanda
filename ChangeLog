@@ -1,4 +1,8 @@
 2010-03-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Dumpcache.pm: don't automatically generate
+	  cached dumps - it causes more problems than it solves
+
+2010-03-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Report/postscript.pm perl/Amanda/Report/human.pm: use %f
 	  instead of %lf
 
