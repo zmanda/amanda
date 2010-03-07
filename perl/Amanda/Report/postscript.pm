@@ -177,10 +177,7 @@ sub _write_report_tape
     $tapeused += $self->{'marksize'} * (1 + $tape->{'files'});
 
     # sort @first_parts by filenum
-    # TEMPORARY: no, sort them by DLE to duplicate reporter.c
-    @first_parts = sort {
-	($a->[0] cmp $b->[0]) or ($a->[1] cmp $b->[1]) or ($a->[3] <=> $b->[3])
-    } @first_parts;
+    @first_parts = sort { $a->[3] <=> $b->[3] } @first_parts;
 
     ## output
 
