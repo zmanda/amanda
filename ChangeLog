@@ -1,4 +1,8 @@
 2010-03-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/ClientService.pm: process error from fork
+	  correctly
+
+2010-03-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Installcheck/Dumpcache.pm: don't automatically generate
 	  cached dumps - it causes more problems than it solves
 
