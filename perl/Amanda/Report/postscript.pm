@@ -162,9 +162,6 @@ sub _write_report_tape
 	    }
 
 	    # TODO TEMPORARY
-	    $origsize = $outsize if (abs($origsize - $outsize) < 32);
-
-	    # TODO TEMPORARY
 	    # reporter.c uses the total outsize rather than the sum of the on-tape
 	    # parts for all but the final tape containing a split dump.  This is odd,
 	    # but we'll be compatible
