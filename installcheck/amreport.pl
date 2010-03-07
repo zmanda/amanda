@@ -718,7 +718,7 @@ INFO driver pid-done 23684
 (Compression Ratio:    --  %) DrawStat
 (Filesystems Taped:    9) DrawStat
 (-) (DIRO-TEST-003) (-) (  0) (      32) (      32) DrawHost
-(localhost.localdomain) (/boot1) (0) (  1) (      12) (      12) DrawHost
+(localhost.localdomain) (/boot1) (0) (  1) (      16) (      12) DrawHost
 (localhost.localdomain) (/boot2) (0) (  2) (     167) (     123) DrawHost
 (localhost.localdomain) (/boot3) (0) (  3) (    1678) (    1234) DrawHost
 (localhost.localdomain) (/boot4) (0) (  4) (   16789) (   12345) DrawHost
@@ -772,7 +772,7 @@ DUMP SUMMARY:
                                           DUMPER STATS                    TAPER STATS
 HOSTNAME     DISK        L    ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
 -------------------------- -------------------------------------------- ---------------
-localhost.lo /boot1      0         12         12    --     0:02 24748.4   0:00 156611.1
+localhost.lo /boot1      0         16         12   75.0    0:02 24748.4   0:00 156611.1
 localhost.lo /boot2      0        167        123   73.7    0:02 24748.4   0:00 156611.1
 localhost.lo /boot3      0       1678       1234   73.5    0:02 24748.4   0:00 156611.1
 localhost.lo /boot4      0      16789      12345   73.5    0:02 24748.4   0:00 156611.1
@@ -826,7 +826,7 @@ DUMP SUMMARY:
                                             DUMPER STATS                     TAPER STATS
 HOSTNAME     DISK        L       ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
 -------------------------- ----------------------------------------------- ---------------
-localhost.lo /boot1      0         12.00         12    --     0:02 24748.4   0:00 156611.1
+localhost.lo /boot1      0         16.00         12   75.0    0:02 24748.4   0:00 156611.1
 localhost.lo /boot2      0        167.00        123   73.7    0:02 24748.4   0:00 156611.1
 localhost.lo /boot3      0       1678.00       1234   73.5    0:02 24748.4   0:00 156611.1
 localhost.lo /boot4      0      16789.00      12345   73.5    0:02 24748.4   0:00 156611.1
@@ -880,7 +880,7 @@ DUMP SUMMARY:
                                         DUMPER STATS                 TAPER STATS
 HOSTNAME     DISK        L ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
 -------------------------- --------------------------------------- ---------------
-localhost.lo /boot1      0    12         12    --     0:02 24748.4   0:00 156611.1
+localhost.lo /boot1      0    16         12   75.0    0:02 24748.4   0:00 156611.1
 localhost.lo /boot2      0   167        123   73.7    0:02 24748.4   0:00 156611.1
 localhost.lo /boot3      0  1678       1234   73.5    0:02 24748.4   0:00 156611.1
 localhost.lo /boot4      0 16789      12345   73.5    0:02 24748.4   0:00 156611.1
@@ -934,7 +934,7 @@ DUMP SUMMARY:
                                         DUMPER STATS                 TAPER STATS
 HOSTNAME     DISK        L ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
 -------------------------- --------------------------------------- ---------------
-localhost.lo /boot1 0 12.000000 12 -- 0:02 24748.4 0:00 156611.1
+localhost.lo /boot1 0 16.000000 12 75.0 0:02 24748.4 0:00 156611.1
 localhost.lo /boot2 0 167.000000 123 73.7 0:02 24748.4 0:00 156611.1
 localhost.lo /boot3 0 1678.000000 1234 73.5 0:02 24748.4 0:00 156611.1
 localhost.lo /boot4 0 16789.000000 12345 73.5 0:02 24748.4 0:00 156611.1
@@ -988,7 +988,7 @@ DUMP SUMMARY:
                                        DUMPER STATS                 TAPER STATS
 HOSTNAME     DISK        L ORIG-MB  OUT-MB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
 -------------------------- -------------------------------------- ---------------
-localhost.lo /boot1      0       0       0    --     0:02 24748.4   0:00 156611.1
+localhost.lo /boot1      0       0       0   75.0    0:02 24748.4   0:00 156611.1
 localhost.lo /boot2      0       0       0   73.7    0:02 24748.4   0:00 156611.1
 localhost.lo /boot3      0       2       1   73.5    0:02 24748.4   0:00 156611.1
 localhost.lo /boot4      0      16      12   73.5    0:02 24748.4   0:00 156611.1
@@ -1081,7 +1081,7 @@ Run Time (hrs:min)         0:01
 Dump Time (hrs:min)        0:00       0:00       0:00
 Output Size (meg)           1.6        0.0        1.6
 Original Size (meg)         1.6        0.0        1.6
-Avg Compressed Size (%)     --         --         --    (level:#disks ...)
+Avg Compressed Size (%)   100.0      100.0      100.0   (level:#disks ...)
 Filesystems Dumped            4          1          3   (1:3)
 Avg Dump Rate (k/s)      1555.1      134.2     1787.3
 
@@ -1256,7 +1256,7 @@ Run Time (hrs:min)        21:32
 Dump Time (hrs:min)        0:00       0:00       0:00
 Output Size (meg)          16.8       16.8        0.0
 Original Size (meg)        20.2       20.2        0.0
-Avg Compressed Size (%)    83.4       83.4        --
+Avg Compressed Size (%)    83.3       83.3        --
 Filesystems Dumped            2          2          0
 Avg Dump Rate (k/s)      4015.6     4015.6        --
 
@@ -1279,7 +1279,7 @@ HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
 -------------------------- ------------------------------------- --------------
 cnc.slikon.l /             MISSING --------------------------------------------
 cnc.slikon.l /boot       0   20670   17245   83.4    0:04 4052.7   0:01 23216.5
-ns-new.sliko //usr/local 0       1       1    --     0:00   24.6   0:00   153.5
+ns-new.sliko //usr/local 0      30       1    3.3    0:00   24.6   0:00   153.5
 ns-new.sliko /home         MISSING --------------------------------------------
 
 (brought to you by Amanda version x.y.z)
@@ -1295,7 +1295,7 @@ ns-new.sliko /home         MISSING --------------------------------------------
 (Filesystems Taped:    2) DrawStat
 (-) (Daily-36) (-) (  0) (      32) (      32) DrawHost
 (cnc.slikon.local) (/boot) (0) (  1) (   20670) (   17245) DrawHost
-(ns-new.slikon.local) (//usr/local) (0) (  2) (       1) (       1) DrawHost
+(ns-new.slikon.local) (//usr/local) (0) (  2) (      30) (       1) DrawHost
 
 showpage
 %%%% shortstrange
@@ -1793,7 +1793,7 @@ Run Time (hrs:min)         0:00
 Dump Time (hrs:min)        0:00       0:00       0:00
 Output Size (meg)           0.1        0.1        0.0
 Original Size (meg)         0.1        0.1        0.0
-Avg Compressed Size (%)     --         --         --
+Avg Compressed Size (%)   100.0      100.0        --
 Filesystems Dumped            1          1          0
 Avg Dump Rate (k/s)      2500.0     2500.0        --
 
@@ -1833,7 +1833,7 @@ Run Time (hrs:min)         0:00
 Dump Time (hrs:min)        0:00       0:00       0:00
 Output Size (meg)           0.1        0.1        0.0
 Original Size (meg)         0.1        0.1        0.0
-Avg Compressed Size (%)     --         --         --
+Avg Compressed Size (%)   100.0      100.0        --
 Filesystems Dumped            1          1          0
 Avg Dump Rate (k/s)      2500.0     2500.0        --
 
@@ -1913,7 +1913,7 @@ Run Time (hrs:min)         0:00
 Dump Time (hrs:min)        0:00       0:00       0:00
 Output Size (meg)          21.3       21.3        0.0
 Original Size (meg)        21.3       21.3        0.0
-Avg Compressed Size (%)     --         --         --
+Avg Compressed Size (%)   100.0      100.0        --
 Filesystems Dumped            1          1          0
 Avg Dump Rate (k/s)     82689.4    82689.4        --
 

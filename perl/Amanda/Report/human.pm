@@ -266,11 +266,6 @@ sub calculate_stats
                      if (exists $try->{chunks});
 	    }
 
-	    # apply the usual rounding of sizes within 32k (TEMPORARY)
-	    if (abs($origsize - $outsize) < 32) {
-		$origsize = $outsize;
-	    }
-
 	    # add those values to the stats
 	    $stats->{'origsize'} += $origsize;
 	    $stats->{'outsize'} += $outsize;
@@ -677,9 +672,7 @@ EOF
 
     my $comp_size = sub {
         my ($stats) = @_;
-        return (abs($stats->{coutsize} - $stats->{corigsize}) < 32)
-          ? "-- "
-          : divzero(100 * $stats->{outsize}, $stats->{origsize});
+        return divzero(100 * $stats->{outsize}, $stats->{origsize});
     };
 
     print $fh swrite(
@@ -1206,11 +1199,6 @@ sub get_summary_info
     my $compression;
     if (!defined $orig_size) {
 	$compression = 100;
-    } elsif (abs($out_size - $orig_size) < 32) {
-        # compression is too negligible to count
-        $compression = 100;
-	# and display orig_size == out_size for consistency
-	$orig_size = $out_size;
     } else {
         $compression =
           divzero_col((100 * $out_size), $orig_size, $col_spec->[5]);

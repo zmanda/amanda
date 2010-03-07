@@ -1,3 +1,8 @@
+2010-03-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amreport.pl perl/Amanda/Report/human.pm
+	  perl/Amanda/Report/postscript.pm: remove rounding when orig and
+	  outsize are within 32k
+
 2010-03-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amreport.pl: don't use undef for stdout, stderr when
 	  invoking mail or lpr - some don't like to have their std streams
