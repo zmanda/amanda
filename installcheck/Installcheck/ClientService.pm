@@ -319,7 +319,7 @@ sub _start_process_amandad {
 
     # fork and execute!
     $self->{'pid'} = POSIX::fork();
-    die "could not fork: $!" if ($self->{'pid'} < 0);
+    die "could not fork: $!" if (!defined $self->{'pid'} || $self->{'pid'} < 0);
     if ($self->{'pid'} == 0) {
 	# child
 
