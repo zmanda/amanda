@@ -1123,9 +1123,9 @@ strontium    -ository_13 1    1350    1350    --     0:01 2568.5   0:00 175006.5
 (Compression Ratio:    --  %) DrawStat
 (Filesystems Taped:    4) DrawStat
 (-) (metals-013) (-) (  0) (      32) (      32) DrawHost
-(strontium) (/etc) (1) (  3) (     270) (     270) DrawHost
 (strontium) (/home/elantra) (1) (  1) (      10) (      10) DrawHost
 (strontium) (/local) (0) (  2) (      20) (      20) DrawHost
+(strontium) (/etc) (1) (  3) (     270) (     270) DrawHost
 (strontium) (/zones/data/strontium.example.com/repositories/repository_13) (1) (  4) (    1350) (    1350) DrawHost
 
 showpage
@@ -1208,8 +1208,8 @@ localhost    /var/mysql  1           36980    --       FLUSH       0:03 14766.5
 (Compression Ratio:    --  %) DrawStat
 (Filesystems Taped:    2) DrawStat
 (-) (Flushy-017) (-) (  0) (      32) (      32) DrawHost
-(localhost) (/usr/lib) (1) (  2) (        ) (     309) DrawHost
 (localhost) (/var/mysql) (1) (  1) (        ) (   36980) DrawHost
+(localhost) (/usr/lib) (1) (  2) (        ) (     309) DrawHost
 
 showpage
 %%%% resultsmissing
