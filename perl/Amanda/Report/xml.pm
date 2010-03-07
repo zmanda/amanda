@@ -108,7 +108,7 @@ sub make_dumper_xml
         "dumper",
         sub {
             return join( xml_nl(),
-                make_xml_elt( "insize",  $dumper->{"orig-kb"} ),
+                make_xml_elt( "insize",  $dumper->{orig_kb} ),
                 make_xml_elt( "outsize", $dumper->{kb} ),
                 make_xml_elt( "time",    $dumper->{sec} ) );
         },

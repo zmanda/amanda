@@ -240,7 +240,7 @@ sub calculate_stats
                 && (   $try->{dumper}{status} eq 'success'
                     || $try->{dumper}{status} eq 'strange')) {
 
-                $origsize = $try->{dumper}{'orig-kb'};
+                $origsize = $try->{dumper}{orig_kb};
                 $stats->{dumper_time} += $try->{dumper}{sec};
                 $stats->{dumpdisk_count}++; # count this as a dumped filesystem
                 $dumpdisks->[$try->{dumper}{'level'}]++; #by level count
@@ -248,9 +248,9 @@ sub calculate_stats
 		&& exists $try->{taper} && defined $try->{taper}->{kb}
 		&& (   $try->{taper}{status} eq 'done'
 		    || $try->{taper}{status} eq 'partial')) {
-		# orig-kb doesn't always exist (older logfiles)
-		if ($try->{taper}->{'orig-kb'}) {
-		    $origsize = $try->{taper}->{'orig-kb'};
+		# orig_kb doesn't always exist (older logfiles)
+		if ($try->{taper}->{orig_kb}) {
+		    $origsize = $try->{taper}->{orig_kb};
 		}
 	    }
 
@@ -1112,7 +1112,7 @@ sub get_summary_info
 	    last;
 	}
     }
-    $orig_size = $dumper->{'orig-kb'}
+    $orig_size = $dumper->{orig_kb}
 	if defined $dumper;
 
     my ( $out_size, $dump_time, $dump_rate, $tape_time, $tape_rate ) = (0) x 5;

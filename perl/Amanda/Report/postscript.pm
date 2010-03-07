@@ -154,11 +154,11 @@ sub _write_report_tape
 	    if (exists $try->{'dumper'} and $try->{'dumper'}->{'status'} ne 'fail') {
 		my $try_dumper = $try->{'dumper'};
 		$level = $try_dumper->{'level'};
-		$origsize = $try_dumper->{'orig-kb'};
+		$origsize = $try_dumper->{orig_kb};
 	    } else { # we already know a taper run exists in this try
 		my $try_taper = $try->{'taper'};
 		$level = $try_taper->{'level'};
-		$origsize = $try_taper->{'orig-kb'} if $try_taper->{'orig_kb'};
+		$origsize = $try_taper->{orig_kb} if $try_taper->{orig_kb};
 	    }
 
 	    $total_outsize += $outsize;

@@ -4531,7 +4531,7 @@ init_defaults(
     conf_init_str(&conf_data[CNF_CLIENT_PORT], "");
     conf_init_str(&conf_data[CNF_GNUTAR_LIST_DIR], GNUTAR_LISTED_INCREMENTAL_DIR);
     conf_init_str(&conf_data[CNF_AMANDATES], DEFAULT_AMANDATES_FILE);
-    conf_init_str(&conf_data[CNF_MAILTO], "operators");
+    conf_init_str(&conf_data[CNF_MAILTO], "");
     conf_init_str(&conf_data[CNF_DUMPUSER], CLIENT_LOGIN);
     conf_init_str(&conf_data[CNF_TAPEDEV], DEFAULT_TAPE_DEVICE);
     conf_init_proplist(&conf_data[CNF_DEVICE_PROPERTY]);

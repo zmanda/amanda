@@ -47,7 +47,8 @@ my ( $config_name, $report, $outfh );
 sub usage
 {
     print <<EOF;
-amreport conf [--xml] [-M address] [-f output-file] [-l logfile] [-p postscript-file] [-o configoption]*
+Usage: amreport conf [--version] [--xml] [-M address] [-f output-file]
+    [-l logfile] [-p postscript-file] [-o configoption]*
 EOF
     exit 1;
 }
@@ -83,20 +84,6 @@ sub opt_set_var
             }
         }
     );
-}
-
-sub hrmn
-{
-    my ($sec) = @_;
-    my ( $hr, $mn ) = ( int( $sec / ( 60 * 60 ) ), int( $sec / 60 ) % 60 );
-    return sprintf( '%d:%02d', $hr, $mn );
-}
-
-sub mnsc
-{
-    my ($sec) = @_;
-    my ( $mn, $sc ) = ( int( $sec / (60) ), int( $sec % 60 ) );
-    return sprintf( '%d:%02d', $mn, $sc );
 }
 
 sub calculate_outputs {
@@ -293,6 +280,8 @@ GetOptions(
     opt_set_var("p", \$opt_psfname),
     "o=s" => sub { add_config_override_opt( $config_overrides, $_[1] ); },
     "xml" => sub { $opt_xml = 1 },
+    'version' => \&Amanda::Util::version_opt,
+    'help' => \&usage,
 ) or usage();
 
 $opt_logfname = Amanda::Util::get_original_cwd() . "/" . $opt_logfname
@@ -315,8 +304,8 @@ if ( $cfgerr_level >= $CFGERR_WARNINGS ) {
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
 # shim for installchecks
-$Amanda::Constants::LPR = $ENV{'INSTALLCHECK_MOCK_PRINTER'}
-    if exists $ENV{'INSTALLCHECK_MOCK_PRINTER'};
+$Amanda::Constants::LPR = $ENV{'INSTALLCHECK_MOCK_LPR'}
+    if exists $ENV{'INSTALLCHECK_MOCK_LPR'};
 
 # Process the options and decide what outputs we will produce
 my @outputs = calculate_outputs();

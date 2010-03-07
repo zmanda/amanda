@@ -1,4 +1,15 @@
 2010-03-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amfetchdump.pl: fix usage message
+	* man/xml-source/amanda.conf.5.xml common-src/conffile.c: remove
+	   default for mailto, as it is ignored
+	* installcheck/Amanda_Report.pl installcheck/amreport.pl
+	  perl/Amanda/Report.pm perl/Amanda/Report/human.pm
+	  perl/Amanda/Report/postscript.pm perl/Amanda/Report/xml.pm
+	  server-src/amreport.pl: misc cleanup; replace orig-kb with orig_kb,
+	  add --help and --version, remove unused functions
+	* installcheck/mock/lpr.pl: use 'lpr' instead of 'printer'
+
+2010-03-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amreport.pl perl/Amanda/Report/postscript.pm: sort
 	  postscript output by filenum, not hostname/diskname
 

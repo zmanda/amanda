@@ -113,7 +113,7 @@ package main;
 sub usage {
     my ($msg) = @_;
     print STDERR <<EOF;
-Usage: amfetchdump [-c|-C|-l] [-p|-n] [-a]
+Usage: amfetchdump config [-c|-C|-l] [-p|-n] [-a]
     [-O directory] [-d device] [-o configoption]*
     [--header-file file] [--header-fd fd]
     hostname [diskname [datestamp [hostname [diskname [datestamp ... ]]]]]"));
