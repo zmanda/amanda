@@ -1095,7 +1095,7 @@ Avg Tp Write Rate (k/s)  143966    27624.3     151811
 
 USAGE BY TAPE:
   Label            Time      Size      %    Nb    Nc
-  metals-013       0:00     1650k    5.5     4     4
+  metals-013       0:00     1650k    5.4     4     4
 
 
 NOTES:
@@ -1119,7 +1119,7 @@ strontium    -ository_13 1    1350    1350    --     0:01 2568.5   0:00 175006.5
 (Amanda Version x.y.z) DrawVers
 (metals-013) DrawTitle
 (Total Size:           1.6 MB) DrawStat
-(Tape Used (%)         5.5 %) DrawStat
+(Tape Used (%)         5.4 %) DrawStat
 (Compression Ratio:    --  %) DrawStat
 (Filesystems Taped:    4) DrawStat
 (-) (metals-013) (-) (  0) (      32) (      32) DrawHost

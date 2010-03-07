@@ -175,8 +175,6 @@ sub _write_report_tape
     # count filemarks in the tapeused assessment
     my $tapeused = $tape->{'kb'};
     $tapeused += $self->{'marksize'} * (1 + $tape->{'files'});
-    # TEMPORARY: add a filemark for each dumpfile, to account for the header .. an approximation
-    $tapeused += @first_parts * $self->{'marksize'};
 
     # sort @first_parts by filenum
     # TEMPORARY: no, sort them by DLE to duplicate reporter.c
