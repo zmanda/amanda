@@ -181,7 +181,7 @@ sub _write_report_tape
 
     ## output
 
-    print $fh psstr(sprintf('Total Size:        %6.1lf MB', $tape->{kb} / 1024)),
+    print $fh psstr(sprintf('Total Size:        %6.1f MB', $tape->{kb} / 1024)),
 	    " DrawStat\n";
     print $fh psstr(sprintf('Tape Used (%%)       %4s %%',
 				$self->divzero($tapeused * 100, $self->{'tapelen'}))),
@@ -239,8 +239,8 @@ sub divzero
     return
         ( $b == 0 )              ? "-- "
       : ( ($q = $a / $b) > 99999.95 ) ? "#####"
-      : ( $q > 999.95 ) ? sprintf( "%5.0lf", $q )
-      :                   sprintf( "%5.1lf", $q );
+      : ( $q > 999.95 ) ? sprintf( "%5.0f", $q )
+      :                   sprintf( "%5.1f", $q );
 }
 
 1;
