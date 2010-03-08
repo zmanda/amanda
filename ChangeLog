@@ -1,3 +1,11 @@
+2010-03-08 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/rpm/amanda.spec, packaging/deb/changelog: change version
+	   number to %%VERSION%%
+	*  packaging/rpm/buildpkg, packaging/deb/buildpkg: pull correct
+	   version from configure.in, substitute version in appropriate files
+	*  packaging/README: correct list of packages, add note on debian
+	   package creation.
+
 2010-03-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Installcheck/ClientService.pm: process error from fork
 	  correctly
