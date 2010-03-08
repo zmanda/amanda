@@ -20,11 +20,11 @@
 # statements immediately above it. good luck.
 
 # This is useful for debugging
-# set -x
-# Buildbot exports some useful env variables.
-# Check for $AMVER.  I couldn't come up with a good way to detect it.
+ set -x
+# Check for $AMVER, or pull it from configure.in
 if [ -z $AMVER ]; then
-    AMVER=amanda-2.6.2alpha
+    VER=`grep "AM_INIT_AUTOMAKE" configure.in| sed 's/.*"\(.*\)".*/\1/'`
+    AMVER=amanda-${VER}
 fi
 
 PKG_TARBALL=${AMVER}.tar.gz
