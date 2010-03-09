@@ -856,13 +856,12 @@ sub _handle_taper_line
 #
 # format for $L_PARTPARTIAL is the same as $L_PART, plus <err> at the end
         my @info = Amanda::Util::split_quoted_strings($str);
-        my ( $label, $tapefile, $hostname, $disk, $timestamp ) =
-          @info[ 0 .. 4 ];
+        my ($label, $tapefile, $hostname, $disk, $timestamp) = @info[ 0 .. 4 ];
 
         $info[5] =~ m{^(\d+)\/(-?\d+)$};
         my ( $currpart, $predparts ) = ( $1, $2 );
 
-        my ( $level, $sec, $kb, $kps, $orig_kb ) = @info[ 6, 8, 10, 12, 14 ];
+        my ($level, $sec, $kb, $kps, $orig_kb) = @info[ 6, 8, 10, 12, 14 ];
         $kps =~ s{\]$}{};
         $orig_kb =~ s{\]$}{} if defined($orig_kb);
 
@@ -871,7 +870,7 @@ sub _handle_taper_line
 	}
 
         my $dle    = $disklist->{$hostname}->{$disk};
-        my $try    = $self->_get_try( $dle, "taper" );
+        my $try    = $self->_get_try($dle, "taper");
         my $taper  = $try->{taper}  ||= {};
         my $chunks = $try->{chunks} ||= [];
 
@@ -893,18 +892,6 @@ sub _handle_taper_line
         $tape->{kb}   += $kb;
         $tape->{time} += $sec;
         $tape->{files}++;
-
-        if ( $type == $L_PARTPARTIAL ) {
-
-            my @info   = Amanda::Util::split_quoted_strings($str);
-            my $errors = $taper_p->{errors};
-            my $error  = $info[13];
-            push @$errors, $error;
-
-            $taper->{status} = "part+partial";
-        }
-
-        $chunk->{part};
 
     } elsif ( $type == $L_DONE || $type == $L_PARTIAL ) {
 
