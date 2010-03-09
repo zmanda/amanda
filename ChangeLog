@@ -1,3 +1,7 @@
+2010-03-08  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Report.pm: record DLEs in seen order in the cache
+	* installcheck/Amanda_Report.pm: installcheck fixes
+
 2010-03-08 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/rpm/amanda.spec, packaging/deb/changelog: change version
 	   number to %%VERSION%%
