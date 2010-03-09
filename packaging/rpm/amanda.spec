@@ -1519,17 +1519,17 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{AMLIBEXECDIR}/killpgrp
 %{AMLIBEXECDIR}/rundump
 %{AMLIBEXECDIR}/runtar
-%defattr(0750,%{amanda_user},%{amanda_group})
+%defattr(0750,%{amanda_user},%{amanda_group},0750)
 %{LOGDIR}
 %{SBINDIR}/amaespipe
 %{SBINDIR}/amcryp*
 %{SBINDIR}/amgpgcrypt
 %{SBINDIR}/amoldrecover
 %{SBINDIR}/amrecover
+%{SYSCONFDIR}/amanda
 %defattr(0644,%{amanda_user},%{amanda_group},0755)
 %{LOCALSTATEDIR}/amanda
 %{PERLSITELIB}/Amanda
-%{SYSCONFDIR}/amanda
 %{AMLIBEXECDIR}/amcat.awk
 %{AMANDAHOMEDIR}/gnutar-lists
 %doc %{AMANDAHOMEDIR}/amanda-release
@@ -1555,7 +1555,6 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 
 %files backup_server
 %defattr(0755,%{amanda_user},%{amanda_group})
-%{SYSCONFDIR}/amanda
 %{AMLIBEXECDIR}
 %{AMLIBDIR}
 %{PERLSITELIB}/Amanda
@@ -1573,8 +1572,9 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{AMLIBEXECDIR}/dumper
 %{AMLIBEXECDIR}/planner
 %{SBINDIR}/amcheck
-%defattr(0750,%{amanda_user},%{amanda_group})
+%defattr(0750,%{amanda_user},%{amanda_group},0750)
 %{LOGDIR}
+%{SYSCONFDIR}/amanda
 # Files in standard dirs must be listed explicitly
 %{SBINDIR}/activate-devpay
 %{SBINDIR}/amaespipe
