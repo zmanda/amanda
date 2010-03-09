@@ -141,7 +141,8 @@ binary-arch: build
 	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(client)/$(LOGDIR) $(server)/$(LOGDIR)
 	#chmod -R u=rwX,g=rwX,o-rwx $(server)/$(LOGDIR)
 	chown -R $(AMANDAUSER):$(AMANDAGROUP)  $(client)/$(SYSCONFDIR)/amanda $(server)/$(SYSCONFDIR)/amanda
-	#chmod -R u=rwX,g=rwX,o-rwx $(server)/$(SYSCONFDIR)/amanda
+	chmod -R u=rwX,g=rwX,o-rwx $(client)/$(SYSCONFDIR)/amanda
+	chmod -R u=rwX,g=rwX,o-rwx $(server)/$(SYSCONFDIR)/amanda
 	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(client)/$(AMANDAHOMEDIR)/gnutar-lists $(server)/$(AMANDAHOMEDIR)/gnutar-lists
 	chmod -R u=rwX,g=rwX,o-rwx  $(client)/$(AMANDAHOMEDIR)/gnutar-lists $(server)/$(AMANDAHOMEDIR)/gnutar-lists
 	# .. setuid
