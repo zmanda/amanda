@@ -72,6 +72,31 @@
 
 </refsect1>
 
+<refsect1><title>DEFINING APPLICATIONS</title>
+
+<para>An application is defined in &amconf; as follows:
+
+<programlisting>
+define application-tool $appconfigname {
+   plugin "$pluginname"
+   property "$PROPERTY_NAME" "$PROPERTY_VALUE"
+   ...
+}
+</programlisting>
+and then referenced in a dumptype as
+<programlisting>
+define dumptype $dumptypename {
+   ...
+   program "APPLICATION"
+   application "$appconfigname"
+}
+</programlisting></para>
+
+<para>See the individual plugin documentation for properties applicable to each
+plugin.</para>
+
+</refsect1>
+
 <seealso>
 <manref name="amanda.conf" vol="5"/>
 </seealso>
