@@ -72,9 +72,10 @@ disks seen, belonging to the hostname.
 
 =head2 my @dles = $report->get_dles();
 
-This method returns a list of list references that point to hostname
-and disk pairs.  The list returned by C<get_dles> contains all DLE
-entries encountered during lo parsing in the following format:
+This method returns a list of list references.  Each referenced list
+contains a hostname & disk pair that has been reported by either the
+planner or amflush.  The DLEs are stored in the order that they appear
+in the logfile.
 
 @dles = (
     [ 'example1', '/home' ],
@@ -1118,19 +1119,25 @@ sub _handle_start_line
 sub _handle_disk_line
 {
     my $self = shift @_;
-    my ( $program, $str ) = @_;
+    my ($program, $str) = @_;
 
     my $data     = $self->{data};
+    my $dles     = $self->{cache}{dles};
     my $disklist = $data->{disklist};
 
     my @info = Amanda::Util::split_quoted_strings($str);
-    my ( $hostname, $disk ) = @info;
+    my ($hostname, $disk) = @info;
 
     $disklist->{$hostname} ||= {};
-    my $dle = $disklist->{$hostname}->{$disk} = {};
 
-    delete $dle->{estimate};
-    $dle->{tries}    = [];
+    if (!exists $disklist->{$hostname}{$disk}) {
+
+        push @$dles, [ $hostname, $disk ];
+        my $dle = $disklist->{$hostname}{$disk} = {};
+        $dle->{estimate} = undef;
+        $dle->{tries}    = [];
+    }
+    return;
 }
 
 

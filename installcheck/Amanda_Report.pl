@@ -65,18 +65,19 @@ $LogfileFlags{planner} = {
 };
 
 $LogfileData{planner} = {
-    programs => {
-        planner => { start => "20090728160530", },
-    },
+    programs => { planner => { start => "20090728160530", }, },
     disklist => {
         localhost => {
             "/root" => {
+                estimate => undef,
                 tries    => [],
             },
             "/etc" => {
+                estimate => undef,
                 tries    => [],
             },
             "/var/log" => {
+                estimate => undef,
                 tries    => [],
             },
         },
@@ -1059,16 +1060,17 @@ $LogfileData{amflushExample} = {
     'disklist' => {
         'localhost' => {
             '/etc' => {
-                'tries' => [
+                estimate => undef,
+                'tries'  => [
                     {
                         'taper' => {
-                            'kps'     => '14766.518895',
-                            'level'   => '1',
-                            'sec'     => '2.504314',
-                            'status'  => 'done',
-                            'parts'   => '1',
-                            'kb'      => '36980',
-                            orig_kb   => undef
+                            'kps'    => '14766.518895',
+                            'level'  => '1',
+                            'sec'    => '2.504314',
+                            'status' => 'done',
+                            'parts'  => '1',
+                            'kb'     => '36980',
+                            orig_kb  => undef
                         },
                         'chunks' => [
                             {
@@ -1085,19 +1087,21 @@ $LogfileData{amflushExample} = {
                 ],
             },
             '/backups/oracle' => {
-                'tries'    => [],
+                estimate => undef,
+                'tries'  => [],
             },
             '/usr/local/bin' => {
-                'tries' => [
+                estimate => undef,
+                'tries'  => [
                     {
                         'taper' => {
-                            'kps'     => '184.632684',
-                            'level'   => '1',
-                            'sec'     => '1.675693',
-                            'status'  => 'done',
-                            'parts'   => '1',
-                            'kb'      => '309',
-                            orig_kb   => undef
+                            'kps'    => '184.632684',
+                            'level'  => '1',
+                            'sec'    => '1.675693',
+                            'status' => 'done',
+                            'parts'  => '1',
+                            'kb'     => '309',
+                            orig_kb  => undef
                         },
                         'chunks' => [
                             {
@@ -1114,10 +1118,12 @@ $LogfileData{amflushExample} = {
                 ],
             },
             '/home' => {
-                'tries'    => [],
+                estimate => undef,
+                'tries'  => [],
             },
             '/backups/mysql' => {
-                'tries'    => [],
+                estimate => undef,
+                'tries'  => [],
             },
         },
     },
