@@ -1211,7 +1211,7 @@ localhost    /var/mysql  1           36980    --       FLUSH       0:03 14766.5
 --PS-TEMPLATE--
 (June 22, 2009) DrawDate
 
-(Amanda Version 2.6.2alpha) DrawVers
+(Amanda Version x.y.z) DrawVers
 (Flushy-017) DrawTitle
 (Total Size:          36.4 MB) DrawStat
 (Tape Used (%)       121.4 %) DrawStat
@@ -1297,7 +1297,7 @@ ns-new.sliko /home         MISSING --------------------------------------------
 --PS-TEMPLATE--
 (March 26, 2009) DrawDate
 
-(Amanda Version 2.6.2alpha) DrawVers
+(Amanda Version x.y.z) DrawVers
 (Daily-36) DrawTitle
 (Total Size:          16.8 MB) DrawStat
 (Tape Used (%)        56.2 %) DrawStat
@@ -1400,7 +1400,7 @@ bsdfw.slikon /           0 5401240 2293470   42.5   29:36 1305.4   2:37 14596.6
 --PS-TEMPLATE--
 (March 26, 2009) DrawDate
 
-(Amanda Version 2.6.2alpha) DrawVers
+(Amanda Version x.y.z) DrawVers
 (Daily-36) DrawTitle
 (Total Size:        2239.7 MB) DrawStat
 (Tape Used (%)        7466 %) DrawStat
@@ -1586,7 +1586,7 @@ ns-new.sliko /opt/var    0           54929    --      PARTIAL      0:04 15451.0 
 --PS-TEMPLATE--
 (March 26, 2009) DrawDate
 
-(Amanda Version 2.6.2alpha) DrawVers
+(Amanda Version x.y.z) DrawVers
 (Daily-13) DrawTitle
 (Total Size:          53.6 MB) DrawStat
 (Tape Used (%)       178.8 %) DrawStat
@@ -1658,7 +1658,7 @@ home.slikon. /opt/public 0 72987320 50917369   69.8   46:57 18078.1  31:06 27287
 --PS-TEMPLATE--
 (March 26, 2009) DrawDate
 
-(Amanda Version 2.6.2alpha) DrawVers
+(Amanda Version x.y.z) DrawVers
 (Daily-36) DrawTitle
 (Total Size:        49724.0 MB) DrawStat
 (Tape Used (%)       ##### %) DrawStat
@@ -1742,7 +1742,7 @@ jamon.slikon /var        0 2985670  268356    9.0    0:53 5029.5   0:16 17213.6
 --PS-TEMPLATE--
 (March 26, 2009) DrawDate
 
-(Amanda Version 2.6.2alpha) DrawVers
+(Amanda Version x.y.z) DrawVers
 (Daily-36) DrawTitle
 (Total Size:         262.1 MB) DrawStat
 (Tape Used (%)       873.6 %) DrawStat
@@ -1958,7 +1958,7 @@ euclid       -server-src 0   21830   21830    --     0:00 82641.8   0:00 244170.
 --PS-TEMPLATE--
 (March 3, 2010) DrawDate
 
-(Amanda Version 2.6.2alpha) DrawVers
+(Amanda Version x.y.z) DrawVers
 (Conf-001) DrawTitle
 (Total Size:          19.8 MB) DrawStat
 (Tape Used (%)        66.2 %) DrawStat
@@ -1971,7 +1971,7 @@ showpage
 --PS-TEMPLATE--
 (March 3, 2010) DrawDate
 
-(Amanda Version 2.6.2alpha) DrawVers
+(Amanda Version x.y.z) DrawVers
 (Conf-002) DrawTitle
 (Total Size:           6.3 MB) DrawStat
 (Tape Used (%)        21.1 %) DrawStat
@@ -2066,7 +2066,7 @@ HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
 -------------------------- ------------------------------------- -------------
 localhost    /boot         MISSING -------------------------------------------
 
-(brought to you by Amanda version 2.6.2alpha)
+(brought to you by Amanda version x.y.z)
 %%%% flush-origsize
 INFO amflush amflush pid 11753
 DISK amflush localhost /boot
@@ -2127,7 +2127,7 @@ HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS     KB/s
 -------------------------- ------------------------------------- ---------------
 localhost    /boot       0  148870   83480   56.1     FLUSH        0:00 169009.9
 
-(brought to you by Amanda version 2.6.2alpha)
+(brought to you by Amanda version x.y.z)
 %%%% flush-noorigsize
 INFO amflush amflush pid 11753
 DISK amflush localhost /boot
@@ -2188,4 +2188,4 @@ HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS     KB/s
 -------------------------- ------------------------------------- ---------------
 localhost    /boot       0           83480    --      FLUSH        0:00 169009.9
 
-(brought to you by Amanda version 2.6.2alpha)
+(brought to you by Amanda version x.y.z)
