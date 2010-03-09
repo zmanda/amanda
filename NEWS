@@ -1,4 +1,4 @@
-Changes in release @VERSION@
+Changes in release 3.1.0rcXX
    * Deprecated old changers; see amanda-changers(7) for replacements.  These
      changers are still available in the distribution, but will be removed in a
      future release.
