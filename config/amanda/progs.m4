@@ -168,6 +168,9 @@ AC_DEFUN([AMANDA_PROG_LPR],
 
     AC_PATH_PROGS(LPR, lpr lp)
     if test ! -z "$LPR"; then
+	AC_DEFINE([HAVE_LPR_CMD], [1],
+	    [Set to 1 if an LPR command was found at configure time])
+
 	AC_CACHE_CHECK([which flag to use to select a printer],
 	    amanda_cv_printer_flag, [
 	    amanda_cv_printer_flag=$LPRFLAG
@@ -180,6 +183,7 @@ AC_DEFUN([AMANDA_PROG_LPR],
 	    AMANDA_MSG_WARN([WARNING: amanda will always print to the default printer])
 	fi
     fi
+
     AC_SUBST([LPR])
     AC_SUBST([LPRFLAG])
 ])

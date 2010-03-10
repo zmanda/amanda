@@ -1,5 +1,6 @@
-2010-03-10 Dan Locks <dwlocks@zmanda.com>
-	* configure.in: increment version to rc03
+2010-03-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/progs.m4: add a define if LPR is found
+	* server-src/amcheck.c: check it
 
 2010-03-09  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report.pm: fixed caching of hostnames and dles
