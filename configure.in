@@ -7,7 +7,7 @@ AC_CANONICAL_HOST
 PACKAGE=amanda
 AC_SUBST(PACKAGE)
 
-AM_INIT_AUTOMAKE(amanda, "3.1.0rc01")
+AM_INIT_AUTOMAKE(amanda, "3.1.0rc02")
 AC_CONFIG_HEADERS([config/config.h])
 
 dnl Minimum Autoconf version required.

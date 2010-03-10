@@ -1,3 +1,6 @@
+2010-03-09 Dan Locks <dwlocks@zmanda.com>
+	*  configure.in: rc02
+
 2010-03-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda-applications.7.xml: add brief example of
 	  setting properties for an application
