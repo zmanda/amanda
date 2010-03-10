@@ -186,14 +186,7 @@ sub _write_report_tape
     print $fh psstr(sprintf('Tape Used (%%)       %4s %%',
 				$self->divzero($tapeused * 100, $self->{'tapelen'}))),
 	    " DrawStat\n";
-# TODO it looks like the C version always calculates corigsize == 0, so this is
-# always "--"
-# the 'resultsmissing' logfile in the installcheck verifies this: it should have 83.5%
-# compression, but the ps output has "--"
-# (if this is removed permanently, then $comp_* above can go, too)
-    print $fh psstr(sprintf('Compression Ratio:   %4s %%',
-	    " -- ")),
-#				$self->divzero($total_outsize * 100, $total_origsize))),
+    print $fh psstr(sprintf('Number of files:  %5s', $tape->{'files'})),
 	    " DrawStat\n";
     print $fh psstr(sprintf('Filesystems Taped: %4d', $tape->{dle})),
 	    " DrawStat\n";

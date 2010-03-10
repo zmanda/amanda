@@ -869,6 +869,10 @@ sub _handle_taper_line
 	    warning("corrupted logfile - PART or PARTPARTIAL does not match previous START taper");
 	}
 
+	# count this as a filesystem if this is the first part
+        $self->{'_current_tape'}->{dle}++ if $currpart == 1;
+
+
         my $dle    = $disklist->{$hostname}->{$disk};
         my $try    = $self->_get_try($dle, "taper");
         my $taper  = $try->{taper}  ||= {};
@@ -924,11 +928,6 @@ sub _handle_taper_line
 
         $taper->{status} = ( $type == $L_DONE ) ? "done" : "partial";
 	$taper->{error} = $error if $type == $L_PARTIAL;
-
-	# count this dle on the tape it *ends* on .. weird, but that's the way
-	# we like it.
-	my $tape = $self->{'_current_tape'};
-        $tape->{dle}++;
 
     } elsif ( $type == $L_INFO ) {
         $self->_handle_info_line("taper", $str);

@@ -725,7 +725,7 @@ INFO driver pid-done 23684
 (DIRO-TEST-003) DrawTitle
 (Total Size:        1339591.9 MB) DrawStat
 (Tape Used (%)       ##### %) DrawStat
-(Compression Ratio:    --  %) DrawStat
+(Number of files:      9) DrawStat
 (Filesystems Taped:    9) DrawStat
 (-) (DIRO-TEST-003) (-) (  0) (      32) (      32) DrawHost
 (localhost.localdomain) (/boot1) (0) (  1) (      16) (      12) DrawHost
@@ -1130,7 +1130,7 @@ strontium    -ository_13 1    1350    1350    --     0:01 2568.5   0:00 175006.5
 (metals-013) DrawTitle
 (Total Size:           1.6 MB) DrawStat
 (Tape Used (%)         5.4 %) DrawStat
-(Compression Ratio:    --  %) DrawStat
+(Number of files:      4) DrawStat
 (Filesystems Taped:    4) DrawStat
 (-) (metals-013) (-) (  0) (      32) (      32) DrawHost
 (strontium) (/home/elantra) (1) (  1) (      10) (      10) DrawHost
@@ -1215,7 +1215,7 @@ localhost    /var/mysql  1           36980    --       FLUSH       0:03 14766.5
 (Flushy-017) DrawTitle
 (Total Size:          36.4 MB) DrawStat
 (Tape Used (%)       121.4 %) DrawStat
-(Compression Ratio:    --  %) DrawStat
+(Number of files:      2) DrawStat
 (Filesystems Taped:    2) DrawStat
 (-) (Flushy-017) (-) (  0) (      32) (      32) DrawHost
 (localhost) (/var/mysql) (1) (  1) (        ) (   36980) DrawHost
@@ -1301,7 +1301,7 @@ ns-new.sliko /home         MISSING --------------------------------------------
 (Daily-36) DrawTitle
 (Total Size:          16.8 MB) DrawStat
 (Tape Used (%)        56.2 %) DrawStat
-(Compression Ratio:    --  %) DrawStat
+(Number of files:      2) DrawStat
 (Filesystems Taped:    2) DrawStat
 (-) (Daily-36) (-) (  0) (      32) (      32) DrawHost
 (cnc.slikon.local) (/boot) (0) (  1) (   20670) (   17245) DrawHost
@@ -1404,7 +1404,7 @@ bsdfw.slikon /           0 5401240 2293470   42.5   29:36 1305.4   2:37 14596.6
 (Daily-36) DrawTitle
 (Total Size:        2239.7 MB) DrawStat
 (Tape Used (%)        7466 %) DrawStat
-(Compression Ratio:    --  %) DrawStat
+(Number of files:      1) DrawStat
 (Filesystems Taped:    1) DrawStat
 (-) (Daily-36) (-) (  0) (      32) (      32) DrawHost
 (bsdfw.slikon.local) (/) (0) (  1) ( 5401240) ( 2293470) DrawHost
@@ -1590,7 +1590,7 @@ ns-new.sliko /opt/var    0           54929    --      PARTIAL      0:04 15451.0 
 (Daily-13) DrawTitle
 (Total Size:          53.6 MB) DrawStat
 (Tape Used (%)       178.8 %) DrawStat
-(Compression Ratio:    --  %) DrawStat
+(Number of files:      1) DrawStat
 (Filesystems Taped:    1) DrawStat
 (-) (Daily-13) (-) (  0) (      32) (      32) DrawHost
 (ns-new.slikon.local) (/opt/var) (0) (  1) (        ) (   54929) DrawHost
@@ -1662,7 +1662,7 @@ home.slikon. /opt/public 0 72987320 50917369   69.8   46:57 18078.1  31:06 27287
 (Daily-36) DrawTitle
 (Total Size:        49724.0 MB) DrawStat
 (Tape Used (%)       ##### %) DrawStat
-(Compression Ratio:    --  %) DrawStat
+(Number of files:      3) DrawStat
 (Filesystems Taped:    1) DrawStat
 (-) (Daily-36) (-) (  0) (      32) (      32) DrawHost
 (home.slikon.local) (/opt/public) (0) (  1) (72987320) (50917369) DrawHost
@@ -1746,7 +1746,7 @@ jamon.slikon /var        0 2985670  268356    9.0    0:53 5029.5   0:16 17213.6
 (Daily-36) DrawTitle
 (Total Size:         262.1 MB) DrawStat
 (Tape Used (%)       873.6 %) DrawStat
-(Compression Ratio:    --  %) DrawStat
+(Number of files:      1) DrawStat
 (Filesystems Taped:    1) DrawStat
 (-) (Daily-36) (-) (  0) (      32) (      32) DrawHost
 (jamon.slikon.local) (/var) (0) (  1) ( 2985670) (  268356) DrawHost
@@ -1937,8 +1937,8 @@ Avg Tp Write Rate (k/s)  244170     244170        --
 
 USAGE BY TAPE:
   Label          Time      Size      %    Nb    Nc
-  Conf-001       0:00    20320k   66.2     0     4
-  Conf-002       0:00     6470k   21.1     1     2
+  Conf-001       0:00    20320k   66.2     1     4
+  Conf-002       0:00     6470k   21.1     0     2
 
 
 NOTES:
@@ -1962,8 +1962,8 @@ euclid       -server-src 0   21830   21830    --     0:00 82641.8   0:00 244170.
 (Conf-001) DrawTitle
 (Total Size:          19.8 MB) DrawStat
 (Tape Used (%)        66.2 %) DrawStat
-(Compression Ratio:    --  %) DrawStat
-(Filesystems Taped:    0) DrawStat
+(Number of files:      4) DrawStat
+(Filesystems Taped:    1) DrawStat
 (-) (Conf-001) (-) (  0) (      32) (      32) DrawHost
 (euclid) (/A/b/server-src) (0) (  1) (   21830) (   20320) DrawHost
 
@@ -1975,8 +1975,8 @@ showpage
 (Conf-002) DrawTitle
 (Total Size:           6.3 MB) DrawStat
 (Tape Used (%)        21.1 %) DrawStat
-(Compression Ratio:    --  %) DrawStat
-(Filesystems Taped:    1) DrawStat
+(Number of files:      2) DrawStat
+(Filesystems Taped:    0) DrawStat
 (-) (Conf-002) (-) (  0) (      32) (      32) DrawHost
 
 showpage
