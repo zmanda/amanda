@@ -374,7 +374,7 @@ sub new
 	_historical => $historical,
 
 	## logfile-parsing state
-	
+
 	# the tape currently being writen
 	_current_tape => undef,
     };
@@ -947,7 +947,7 @@ sub _handle_taper_line
         } else {
             $self->_handle_error_line("taper", $str);
         }
-        
+
     } elsif ( $type == $L_FATAL ) {
         return $self->_handle_fatal_line( "taper", $str );
 
@@ -1109,13 +1109,18 @@ sub _handle_disk_line
     my ($program, $str) = @_;
 
     my $data     = $self->{data};
-    my $dles     = $self->{cache}{dles};
     my $disklist = $data->{disklist};
+    my $hosts    = $self->{cache}{hosts} ||= [];
+    my $dles     = $self->{cache}{dles}  ||= [];
 
     my @info = Amanda::Util::split_quoted_strings($str);
     my ($hostname, $disk) = @info;
 
-    $disklist->{$hostname} ||= {};
+    if (!exists $disklist->{$hostname}) {
+
+        $disklist->{$hostname} = {};
+        push @$hosts, $hostname;
+    }
 
     if (!exists $disklist->{$hostname}{$disk}) {
 
