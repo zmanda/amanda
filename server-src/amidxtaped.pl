@@ -327,7 +327,7 @@ sub make_plan {
     my $chg;
     if ($is_holding) {
 	# for holding, give the clerk a null; it won't touch it
-	$chg = Amanda::Changer->new("chg-single:null:");
+	$chg = Amanda::Changer->new("chg-null:");
     } else {
 	# if not doing a holding-disk recovery, then we will need a changer.
 	# If we're using the "default" changer, instantiate that.  There are
@@ -343,6 +343,13 @@ sub make_plan {
 	    $chg = Amanda::Changer->new();
 	} else {
 	    $chg = Amanda::Changer->new($self->{'command'}{'DEVICE'});
+	}
+
+	# if we got a bogus changer, log it to the debug log, but allow the
+	# scan algorithm to find a good one later.
+	if ($chg->isa("Amanda::Changer::Error")) {
+	    warning("$chg");
+	    $chg = Amanda::Changer->new("chg-null:");
 	}
     }
     my $inter = main::Interactive->new(clientservice => $self);
