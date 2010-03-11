@@ -44,6 +44,10 @@ use constant COLSPEC_MAXWIDTH  => 4;    # resize if set
 use constant COLSPEC_FORMAT    => 5;    # sprintf format
 use constant COLSPEC_TITLE     => 6;    # column title
 
+use constant PROGRAM_ORDER =>
+  qw(amdump planner amflush driver dumper chunker taper reporter);
+
+
 ## helper functions
 
 sub divzero
@@ -168,17 +172,16 @@ sub new
 
         @errors =
           map { @{ $report->get_program_info($_, "errors", []) }; }
-          keys %{ $report->{data}{programs} };
+          PROGRAM_ORDER;
         ## prepend program name to notes lines.
-        foreach my $program (keys %{ $report->{data}{programs} }) {
+        foreach my $program (PROGRAM_ORDER) {
             push @notes,
               map { "$program: $_" }
               @{ $report->get_program_info($program, "notes", []) };
         }
 
-        $self->{errors}   = \@errors;
-        $self->{notes}    = \@notes;
-
+        $self->{errors} = \@errors;
+        $self->{notes}  = \@notes;
     }
 
     bless $self, $class;
@@ -493,14 +496,14 @@ sub output_error_summaries
     my @dump_failures = ();
     my @stranges = ();
 
-    foreach my $program (keys %{ $report->{data}{programs} }) {
-	push @fatal_failures,
-		map { "$program: FATAL $_" }
-		    @{ $report->get_program_info($program, "fatal", []) };
-	push @error_failures,
-		map { "$program: ERROR $_" }
-		    @{ $report->get_program_info($program, "errors", []) };
-	
+    foreach my $program (PROGRAM_ORDER) {
+
+        push @fatal_failures,
+          map { "$program: FATAL $_" }
+          @{ $report->get_program_info($program, "fatal", []) };
+        push @error_failures,
+          map { "$program: ERROR $_" }
+          @{ $report->get_program_info($program, "errors", []) };
     }
 
     foreach my $dle_entry (@dles) {
