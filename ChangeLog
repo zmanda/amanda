@@ -1,4 +1,9 @@
 2010-03-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/null.pm: note that constructor will not fail
+	* server-src/amidxtaped.pl: use chg-null if the changer constructor
+	  fails
+
+2010-03-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Report.pm: count DLEs on the first tape
 	* perl/Amanda/Report/postscript.pm: display total part count
 	* installcheck/amreport.pl: changed output
