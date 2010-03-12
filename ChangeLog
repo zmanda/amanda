@@ -1,3 +1,6 @@
+2010-03-11 Dan Locks <dwlocks@zmanda.com>
+	*  configure.in: update to rc05. 
+
 2010-03-11  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report.pm: fixed order that messages are reported
 
