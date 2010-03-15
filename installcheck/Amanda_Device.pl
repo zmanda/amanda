@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 428;
+use Test::More tests => 464;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -83,6 +83,8 @@ sub write_file {
 	unless ($length < 1024*1024*10);
     Amanda::Tests::write_random_file($seed, $length, $input_filename);
 
+    $dumpfile->{'datestamp'} = "2000010101010$filenum";
+
     ok($dev->start_file($dumpfile),
 	"start file $filenum")
 	or diag($dev->error_or_status());
@@ -115,8 +117,8 @@ sub verify_file {
 	or diag($dev->error_or_status());
     is($dev->file(), $filenum,
 	"device is really at file $filenum");
-    is($read_dumpfile->{name}, "localhost",
-	"header looks vaguely familiar")
+    ok(header_for($read_dumpfile, $filenum),
+	"header is correct")
 	or diag($dev->error_or_status());
 
     my ($output, $queue_fd) = make_queue_fd($output_filename, ">");
@@ -127,6 +129,11 @@ sub verify_file {
 
     ok(Amanda::Tests::verify_random_file($seed, $length, $output_filename, 0),
 	"verified file contents");
+}
+
+sub header_for {
+    my ($hdr, $filenum) = @_;
+    return ($hdr and $hdr->{'datestamp'} eq "2000010101010$filenum");
 }
 
 # properties test
@@ -894,9 +901,9 @@ my $TAPE_DEVICE = $ENV{'INSTALLCHECK_TAPE_DEVICE'};
 my $run_tape_tests = defined $TAPE_DEVICE;
 SKIP: {
     skip "define \$INSTALLCHECK_TAPE_DEVICE to run tape tests",
-	    17 +
-	    3 * $verify_file_count +
-	    4 * $write_file_count
+	    28 +
+	    7 * $verify_file_count +
+	    5 * $write_file_count
 	unless $run_tape_tests;
 
     $dev_name = "tape:$TAPE_DEVICE";
@@ -918,7 +925,7 @@ SKIP: {
 	"not unlabeled anymore")
 	or diag($dev->error_or_status());
 
-    for (my $i = 1; $i <= 3; $i++) {
+    for (my $i = 1; $i <= 4; $i++) {
 	write_file(0x2FACE+$i, $dev->block_size()*10+17, $i);
     }
 
@@ -938,8 +945,8 @@ SKIP: {
     # append one more copy, to test ACCESS_APPEND
 
     # if final_filemarks is 1, then the tape device will use F_NOOP,
-    # inserting an extra file, and we'll be appending at file number 5.
-    my $append_fileno = ($dev->property_get("FINAL_FILEMARKS") == 2)? 4:5;
+    # inserting an extra file, and we'll be appending at file number 6.
+    my $append_fileno = ($dev->property_get("FINAL_FILEMARKS") == 2)? 5:6;
 
     SKIP: {
         skip "APPEND not supported", $write_file_count + 2
@@ -978,15 +985,26 @@ SKIP: {
 	"start in read mode")
 	or diag($dev->error_or_status());
 
-    verify_file(0x2FACE+2, $dev->block_size()*10+17, 2);
-    verify_file(0x2FACE+3, $dev->block_size()*10+17, 3);
+    # now verify those files in a particular order to trigger all of the
+    # seeking edge cases
 
-    # try two seek_file's in a row
-    my $hdr;
-    $hdr = $dev->seek_file(2);
-    is($hdr? $hdr->{'type'} : -1, $Amanda::Header::F_DUMPFILE, "seek_file the first time");
-    $hdr = $dev->seek_file(2);
-    is($hdr? $hdr->{'type'} : -1, $Amanda::Header::F_DUMPFILE, "seek_file the second time");
+    verify_file(0x2FACE+1, $dev->block_size()*10+17, 1);
+    verify_file(0x2FACE+2, $dev->block_size()*10+17, 2);
+    verify_file(0x2FACE+4, $dev->block_size()*10+17, 4);
+    verify_file(0x2FACE+3, $dev->block_size()*10+17, 3);
+    verify_file(0x2FACE+1, $dev->block_size()*10+17, 1);
+
+    # try re-seeking to the same file
+    ok(header_for($dev->seek_file(2), 2), "seek to file 2 the first time");
+    verify_file(0x2FACE+2, $dev->block_size()*10+17, 2);
+    ok(header_for($dev->seek_file(2), 2), "seek to file 2 the third time");
+
+    # and seek through the same pattern *without* reading to EOF
+    ok(header_for($dev->seek_file(1), 1), "seek to file 1");
+    ok(header_for($dev->seek_file(2), 2), "seek to file 2");
+    ok(header_for($dev->seek_file(4), 4), "seek to file 4");
+    ok(header_for($dev->seek_file(3), 3), "seek to file 3");
+    ok(header_for($dev->seek_file(1), 1), "seek to file 1");
 
     SKIP: {
         skip "APPEND not supported", $verify_file_count
@@ -998,6 +1016,28 @@ SKIP: {
 	"finish device after read")
 	or diag($dev->error_or_status());
 
+    # finally, run the device with FSF and BSF set to "no", to test the
+    # fallback schemes for this condition
+
+    $dev = undef;
+    $dev = Amanda::Device->new($dev_name);
+    is($dev->status(), $DEVICE_STATUS_SUCCESS,
+	"$dev_name: re-create successful")
+	or diag($dev->error_or_status());
+    $dev->property_set("fsf", "no");
+    $dev->property_set("bsf", "no");
+
+    ok($dev->start($ACCESS_READ, undef, undef),
+	"start in read mode")
+	or diag($dev->error_or_status());
+
+    ok(header_for($dev->seek_file(1), 1), "seek to file 1");
+    ok(header_for($dev->seek_file(4), 4), "seek to file 4");
+    ok(header_for($dev->seek_file(2), 2), "seek to file 2");
+
+    ok($dev->finish(),
+	"finish device after read")
+	or diag($dev->error_or_status());
 }
 
 SKIP: {

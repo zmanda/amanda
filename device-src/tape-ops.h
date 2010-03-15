@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -40,14 +40,17 @@ gboolean tape_fsf(int fd, guint count);
 gboolean tape_bsf(int fd, guint count);
 gboolean tape_fsr(int fd, guint count);
 gboolean tape_bsr(int fd, guint count);
+gint tape_fileno(int fd);
+
+/* tape_fileno returns tape position file number, or one of these: */
+#define TAPE_OP_ERROR -1
+#define TAPE_POSITION_UNKNOWN -2
 
 /* Sets attributes of the device to indicate which of the above operations
  * are available in this device. */
 void tape_device_detect_capabilities(TapeDevice * self);
 
-/* Returns tape position file number, or one of these: */
-#define TAPE_OP_ERROR -1
-#define TAPE_POSITION_UNKNOWN -2
+/* returns a fileno like tape_fileno */
 gint tape_eod(int fd);
 
 gboolean tape_weof(int fd, guint8 count);

@@ -1,4 +1,13 @@
 2010-03-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/tape-aix.c device-src/tape-ops.h device-src/tape-posix.c
+	  device-src/tape-uware.c device-src/tape-xenix.c: add tape_fileno
+	  function
+	* installcheck/Amanda_Device.pl: add lots of tape-positioning
+	  installcehcks
+	* device-src/tape-device.c: fix positioning (adjust for funny bsf
+	  behavior only in tape_device_seek_file)
+
+2010-03-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c: rename the default tapetype, since EXABYTE
 	  sounds like it might actually be useful, but it's only 2M
 	* man/xml-source/amanda.conf.5.xml: remove default
