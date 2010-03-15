@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -63,6 +63,10 @@ gboolean tape_fsr(int fd, guint count) {
 
 gboolean tape_bsr(int fd, guint count) {
     return 0 == ioctl(fd, T_SBB, count);
+}
+
+gint tape_fileno(int fd) {
+    return TAPE_POSITION_UNKNOWN;
 }
 
 gint tape_eod(int fd G_GNUC_UNUSED) {

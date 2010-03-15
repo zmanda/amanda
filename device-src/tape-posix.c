@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -90,6 +90,17 @@ gboolean tape_bsr(int fd, guint count) {
     mt.mt_op = MTBSR;
     mt.mt_count = count;
     return 0 == ioctl(fd, MTIOCTOP, &mt);
+}
+
+gint tape_fileno(int fd) {
+    struct mtget get;
+
+    if (0 != ioctl(fd, MTIOCGET, &get))
+        return TAPE_POSITION_UNKNOWN;
+    if (get.mt_fileno < 0)
+        return TAPE_POSITION_UNKNOWN;
+    else
+        return get.mt_fileno;
 }
 
 gint tape_eod(int fd) {

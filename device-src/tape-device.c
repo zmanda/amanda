@@ -107,7 +107,6 @@ static IoResult tape_device_robust_read (TapeDevice * self, void * buf,
                                                int * count, char **errmsg);
 static IoResult tape_device_robust_write (TapeDevice * self, void * buf, int count, char **errmsg);
 static gboolean tape_device_fsf (TapeDevice * self, guint count);
-static gboolean tape_device_bsf (TapeDevice * self, guint count, guint file);
 static gboolean tape_device_fsr (TapeDevice * self, guint count);
 static gboolean tape_device_bsr (TapeDevice * self, guint count, guint file, guint block);
 static gboolean tape_device_eod (TapeDevice * self);
@@ -1199,6 +1198,7 @@ tape_device_finish_file (Device * d_self) {
 static dumpfile_t *
 tape_device_seek_file (Device * d_self, guint file) {
     TapeDevice * self;
+    gint got_file;
     int difference;
     char * header_buffer;
     dumpfile_t * rval;
@@ -1236,24 +1236,56 @@ reseek:
     } else { /* (difference <= 0) */
         /* Seeking backwards, or to this file itself */
 
-	/* bsf one more than the difference */
-        if (!tape_device_bsf(self, -difference + 1, d_self->file)) {
-            tape_rewind(self->fd);
-	    device_set_error(d_self,
-		vstrallocf(_("Could not seek backward to file %d"), file),
-		DEVICE_STATUS_VOLUME_ERROR | DEVICE_STATUS_DEVICE_ERROR);
-            return NULL;
-        }
+	/* if the drive supports bsf, we can do this the fancy way */
+	if (self->bsf) {
+	    /* bsf one more than the difference */
+	    if (!tape_bsf(self->fd, -difference + 1)) {
+		tape_rewind(self->fd);
+		device_set_error(d_self,
+		    vstrallocf(_("Could not seek backward to file %d"), file),
+		    DEVICE_STATUS_VOLUME_ERROR | DEVICE_STATUS_DEVICE_ERROR);
+		return NULL;
+	    }
 
-	/* now we are on the BOT side of the desired filemark, so FSF to get to the
-	 * EOT side of it */
-        if (!tape_device_fsf(self, 1)) {
-            tape_rewind(self->fd);
-	    device_set_error(d_self,
-		vstrallocf(_("Could not seek forward to file %d"), file),
-		DEVICE_STATUS_VOLUME_ERROR | DEVICE_STATUS_DEVICE_ERROR);
-            return NULL;
-        }
+	    /* now we are on the BOT side of the desired filemark, so FSF to get to the
+	     * EOT side of it */
+	    if (!tape_device_fsf(self, 1)) {
+		tape_rewind(self->fd);
+		device_set_error(d_self,
+		    vstrallocf(_("Could not seek forward to file %d"), file),
+		    DEVICE_STATUS_VOLUME_ERROR | DEVICE_STATUS_DEVICE_ERROR);
+		return NULL;
+	    }
+	} else {
+	    /* no BSF, so just rewind and seek forward */
+	    if (!tape_rewind(self->fd)) {
+		device_set_error(d_self,
+		    vstrallocf(_("Could not rewind drive")),
+		    DEVICE_STATUS_VOLUME_ERROR | DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    }
+
+	    if (!tape_device_fsf(self, file)) {
+		tape_rewind(self->fd);
+		device_set_error(d_self,
+		    vstrallocf(_("Could not seek forward to file %d"), file),
+		    DEVICE_STATUS_VOLUME_ERROR | DEVICE_STATUS_DEVICE_ERROR);
+		return NULL;
+	    }
+	}
+    }
+
+    /* double-check that we're on the right fileno, if possible.  This is most
+     * likely a programming error if it occurs, but could also be due to a weird
+     * tape drive or driver (and that would *never* happen, right?) */
+    got_file = tape_fileno(self->fd);
+    if (got_file >= 0 && (guint)got_file != file) {
+	device_set_error(d_self,
+		vstrallocf(_("Could not seek to file %d correctly; got %d"),
+			    file, got_file),
+		DEVICE_STATUS_DEVICE_ERROR);
+	d_self->file = (guint)got_file;
+	return NULL;
     }
 
     buffer_len = tape_device_read_size(d_self);
@@ -1681,9 +1713,6 @@ static int drain_tape_blocks(TapeDevice * self, int count) {
     return count;
 }
 
-/* FIXME: Make sure that there are no cycles in reimplementation
-   dependencies. */
-
 static gboolean
 tape_device_fsf (TapeDevice * self, guint count) {
     if (self->fsf) {
@@ -1696,31 +1725,6 @@ tape_device_fsf (TapeDevice * self, guint count) {
         }
         return TRUE;
     }
-}
-
-/* Seek back over count + 1 filemarks to the start of the given file. */
-static gboolean
-tape_device_bsf (TapeDevice * self, guint count, guint file) {
-    if (self->bsf) {
-        /* The BSF operation is not very smart; it includes the
-           filemark of the present file as part of the count, and seeks
-           to the wrong (BOT) side of the filemark. We compensate for
-           this by seeking one filemark too many, then FSFing back over
-           it.
-
-           If this procedure fails for some reason, we can still try
-           the backup plan. */
-        if (tape_bsf(self->fd, count + 1) &&
-            tape_device_fsf(self, 1))
-            return TRUE;
-    } /* Fall through to backup plan. */
-
-    /* We rewind the tape, then seek forward the given number of
-       files. */
-    if (!tape_rewind(self->fd))
-        return FALSE;
-
-    return tape_device_fsf(self, file);
 }
 
 
@@ -1741,10 +1745,22 @@ static gboolean
 tape_device_bsr (TapeDevice * self, guint count, guint file, guint block) {
     if (self->bsr) {
         return tape_bsr(self->fd, count);
-    } else {
-        /* We BSF, then FSR. */
-        if (!tape_device_bsf(self, 0, file))
+    } else if (self->bsf && self->fsf) {
+        /* BSF, FSF to the right side of the filemark, and then FSR. */
+        if (!tape_bsf(self->fd, 1))
             return FALSE;
+
+        if (!tape_fsf(self->fd, 1))
+            return FALSE;
+
+        return tape_device_fsr(self, block);
+    } else {
+	/* rewind, FSF, and FSR */
+	if (!tape_rewind(self->fd))
+	    return FALSE;
+
+	if (!tape_device_fsf(self, file))
+	    return FALSE;
 
         return tape_device_fsr(self, block);
     }
