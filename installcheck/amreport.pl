@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 110;
+use Test::More tests => 112;
 
 use strict;
 use warnings;
@@ -593,7 +593,7 @@ burp($current_log_filename, $datas{'flush-origsize'});
 
 run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 0,
-    "amreport with fatal logfile");
+    "..exit status is correct");
 results_match($out_filename, $datas{'flush-origsize-rpt'},
     "..result matches flush-origsize-rpt");
 
@@ -602,9 +602,18 @@ burp($current_log_filename, $datas{'flush-noorigsize'});
 
 run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 0,
-    "amreport with fatal logfile");
+    "..exit status is correct");
 results_match($out_filename, $datas{'flush-noorigsize-rpt'},
     "..result matches flush-origsize-rpt");
+
+cleanup();
+burp($current_log_filename, $datas{'plannerfail'});
+
+run($amreport, 'TESTCONF', '-f', $out_filename);
+is($Installcheck::Run::exit_code, 12,
+    "..exit status is correct (failed|missing)");
+results_match($out_filename, $datas{'plannerfail-rpt'},
+    "..result matches plannerfail-rpt");
 
 cleanup();
 
@@ -1019,7 +1028,7 @@ DISK planner strontium /home/elantra
 DISK planner strontium /zones/data/strontium.example.com/repositories/repository_13
 INFO driver driver pid 12945
 START driver date 20100107111335
-STATS driver hostname zmanda1.dc3
+STATS driver hostname advantium
 STATS driver startup time 0.016
 INFO dumper dumper pid 12947
 INFO dumper dumper pid 12948
@@ -1074,7 +1083,7 @@ INFO taper pid-done 12946
 FINISH driver date 20100107111335 time 49.037
 INFO driver pid-done 12945
 %%%% strontium-rpt
-Hostname: zmanda1.dc3
+Hostname: advantium
 Org     : DailySet1
 Config  : TESTCONF
 Date    : January 7, 2010
@@ -2188,4 +2197,75 @@ HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS     KB/s
 -------------------------- ------------------------------------- ---------------
 localhost    /boot       0           83480    --      FLUSH        0:00 169009.9
 
-(brought to you by Amanda version 2.6.2alpha)
+(brought to you by Amanda version x.y.z)
+%%%% plannerfail
+START planner date 20100313212012
+START driver date 20100313212012
+DISK planner 1.2.3.4 SystemState
+STATS driver hostname advantium
+DISK planner 1.2.3.4 "C:/"
+DISK planner 1.2.3.4 "E:/Replication/Scripts"
+DISK planner 1.2.3.4 "G:/"
+STATS driver startup time 0.051
+INFO dumper dumper pid 11362
+INFO dumper dumper pid 11359
+INFO dumper dumper pid 11360
+INFO dumper dumper pid 11361
+INFO taper taper pid 11358
+INFO taper Will write new label `winsafe-002' to new tape
+FAIL planner 1.2.3.4 "G:/" 20100313212012 0 "[Request to 1.2.3.4 failed: recv error: Connection reset by peer]"
+FAIL planner 1.2.3.4 "E:/Replication/Scripts" 20100313212012 0 "[Request to 1.2.3.4 failed: recv error: Connection reset by peer]"
+FAIL planner 1.2.3.4 "C:/" 20100313212012 0 "[Request to 1.2.3.4 failed: recv error: Connection reset by peer]"
+FAIL planner 1.2.3.4 SystemState 20100313212012 0 "[Request to 1.2.3.4 failed: recv error: Connection reset by peer]"
+FINISH planner date 20100313212012 time 2113.308
+WARNING driver WARNING: got empty schedule from planner
+FINISH driver date 20100313212012 time 2114.332
+%%%% plannerfail-rpt
+Hostname: advantium
+Org     : DailySet1
+Config  : TESTCONF
+Date    : March 13, 2010
+
+The next tape Amanda expects to use is: 1 new tape.
+FAILURE DUMP SUMMARY:
+  1.2.3.4 SystemState lev 0  FAILED [Request to 1.2.3.4 failed: recv error: Connection reset by peer]
+  1.2.3.4 "C:/" lev 0  FAILED [Request to 1.2.3.4 failed: recv error: Connection reset by peer]
+  1.2.3.4 "E:/Replication/Scripts" lev 0  FAILED [Request to 1.2.3.4 failed: recv error: Connection reset by peer]
+  1.2.3.4 "G:/" lev 0  FAILED [Request to 1.2.3.4 failed: recv error: Connection reset by peer]
+
+
+
+STATISTICS:
+                          Total       Full      Incr.
+                        --------   --------   --------
+Estimate Time (hrs:min)     0:35
+Run Time (hrs:min)          0:35
+Dump Time (hrs:min)         0:00       0:00       0:00
+Output Size (meg)            0.0        0.0        0.0
+Original Size (meg)          0.0        0.0        0.0
+Avg Compressed Size (%)      --         --         --
+Filesystems Dumped             0          0          0
+Avg Dump Rate (k/s)          --         --         --
+
+Tape Time (hrs:min)         0:00       0:00       0:00
+Tape Size (meg)              0.0        0.0        0.0
+Tape Used (%)                0.0        0.0        0.0
+Filesystems Taped              0          0          0
+Chunks Taped                   0          0          0
+Avg Tp Write Rate (k/s)      --         --         --
+
+NOTES:
+  driver: WARNING: got empty schedule from planner
+  taper: Will write new label `winsafe-002' to new tape
+
+
+DUMP SUMMARY:
+                                       DUMPER STATS               TAPER STATS
+HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
+-------------------------- ------------------------------------- -------------
+1.2.3.4      "C:/"         MISSING -------------------------------------------
+1.2.3.4      "-/Scripts"   MISSING -------------------------------------------
+1.2.3.4      "G:/"         MISSING -------------------------------------------
+1.2.3.4      SystemState   MISSING -------------------------------------------
+
+(brought to you by Amanda version x.y.z)
