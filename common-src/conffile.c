@@ -4544,7 +4544,7 @@ init_defaults(
     conf_init_str   (&conf_data[CNF_INFOFILE]             , "/usr/adm/amanda/curinfo");
     conf_init_str   (&conf_data[CNF_LOGDIR]               , "/usr/adm/amanda");
     conf_init_str   (&conf_data[CNF_INDEXDIR]             , "/usr/adm/amanda/index");
-    conf_init_ident    (&conf_data[CNF_TAPETYPE]             , "EXABYTE");
+    conf_init_ident    (&conf_data[CNF_TAPETYPE]             , "DEFAULT_TAPE");
     conf_init_identlist(&conf_data[CNF_HOLDINGDISK]          , NULL);
     conf_init_int      (&conf_data[CNF_DUMPCYCLE]            , 10);
     conf_init_int      (&conf_data[CNF_RUNSPERCYCLE]         , 0);
@@ -4767,12 +4767,13 @@ update_derived_values(
 
 	/* Check the tapetype is defined */
 	if (lookup_tapetype(getconf_str(CNF_TAPETYPE)) == NULL) {
-	    /* Create a default tapetype */
+	    /* Create a default tapetype so that other code has
+	     * something to refer to, but don't pretend it's real */
 	    if (!getconf_seen(CNF_TAPETYPE) &&
-		strcmp(getconf_str(CNF_TAPETYPE), "EXABYTE") == 0 &&
-		!lookup_tapetype("EXABYTE")) {
+		strcmp(getconf_str(CNF_TAPETYPE), "DEFAULT_TAPE") == 0 &&
+		!lookup_tapetype("DEFAULT_TAPE")) {
 		init_tapetype_defaults();
-		tpcur.name = stralloc("EXABYTE");
+		tpcur.name = stralloc("DEFAULT_TAPE");
 		tpcur.seen = val_t__seen(getconf(CNF_TAPETYPE));
 		save_tapetype();
 	    } else {
