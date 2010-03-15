@@ -1,4 +1,7 @@
 2010-03-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amsamba.8.xml: document include/exclude expressions
+
+2010-03-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* UPGRADING: add note about accidentally linking new versions against old
 
 2010-03-15  Paul C. Mantz <pcmantz@zmanda.com>
