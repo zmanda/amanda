@@ -1,4 +1,8 @@
 2010-03-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amreport.pl: add tests for exit status for planner
+	  failure
+
+2010-03-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: remove input_errors, as that's now the
 	  caller's responsibility
 	* installcheck/Amanda_Taper_Scribe.pl: corresponding changes
