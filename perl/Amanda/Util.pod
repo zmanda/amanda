@@ -380,7 +380,21 @@ and unlock the lock with
 Note that the file will be automatically unlocked if the C<file_lock> object is
 garbage-collected.
 
-=cut
+=head1 Simple File Reading & Writing
 
+For reading small files directly into memory with little code
+overhead, we can use C<slurp>.
+
+  my $data = slurp $filename;
+
+After processing the data, we can write it back to file with C<burp>.
+
+  burp $filename, $header;
+  burp $filename, @data_lines;    # appends newline after each element
+  burp $filename, $footer;
+
+These functions can (and should) be exported to the main namespace
+  
+=cut
 
 %}
