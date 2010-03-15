@@ -722,7 +722,7 @@ to avoid overwriting each other's tapes.</para>
   <term><amkeyword>tapetype</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<amdefault>"EXABYTE"</amdefault>.
+<amdefault>no default</amdefault>.
 The type of tape drive associated with
 <amkeyword>tapedev</amkeyword>
 or

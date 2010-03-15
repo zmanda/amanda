@@ -751,6 +751,14 @@ start_server_check(
 	    g_fprintf(outf, _("ERROR: Cannot resolve `localhost': %s\n"), gai_strerror(res));
 	    confbad = 1;
 	}
+
+	if (!getconf_seen(CNF_TAPETYPE)) {
+	    g_fprintf(outf,
+		      _("ERROR: no tapetype specified; you must give a value for "
+			"the 'tapetype' parameter\n"));
+	    confbad = 1;
+	}
+
     }
 
     /*
@@ -1369,13 +1377,13 @@ start_server_check(
 			      hostp->hostname, dp->name);
 		    pgmbad = 1;
 		}
-		if (dp->fallback_splitsize * 1024 > physmem_total()) {
+		if (dp->tape_splitsize && dp->fallback_splitsize * 1024 > physmem_total()) {
 		    g_fprintf(outf,
 			      _("ERROR: %s %s: fallback_splitsize > total available memory\n"),
 			      hostp->hostname, dp->name);
 		    pgmbad = 1;
 		}
-		if (dp->fallback_splitsize > tape_size) {
+		if (dp->tape_splitsize && dp->fallback_splitsize > tape_size) {
 		    g_fprintf(outf,
 			      _("ERROR: %s %s: fallback_splitsize > tape size\n"),
 			      hostp->hostname, dp->name);

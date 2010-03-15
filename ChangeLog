@@ -1,3 +1,16 @@
+2010-03-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c: rename the default tapetype, since EXABYTE
+	  sounds like it might actually be useful, but it's only 2M
+	* man/xml-source/amanda.conf.5.xml: remove default
+	* server-src/amcheck.c: only check whether fallback_splitsize < tape
+	  length if splitting is enabled; check for a missing tapetype param
+
+2010-03-14 Dan Locks <dwlocks@zmanda.com>
+	*  configure.in: update to rc06.  NOTEST
+
+2010-03-11 Dan Locks <dwlocks@zmanda.com>
+	*  configure.in: update to rc05. 
+
 2010-03-11  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report.pm: fixed order that messages are reported
 
