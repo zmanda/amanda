@@ -115,6 +115,30 @@ For restore command only, the data is recoved in that directory. Must be a unix 
 
 </refsect1>
 
+<refsect1><title>INCLUDE AND EXCLUDE LISTS</title>
+
+<para>This application supplies exclude lists via the
+<command>smbclient</command> <option>-TX</option> option.  Normal shell-style
+wildcard expressions, using * and ?, are not supported.  All expressions are
+matched only from the base directory of the DLE.  Expressions that match a
+directory may have a leading or trailing "/".  Example expressions:
+<programlisting>
+  ./temp-files           # exclude top-level dir "temp-files" entirely
+  ./temp-files/          # same
+  /temp-files            # same
+  temp-files             # same
+  ./temp-files/*         # BAD: does nothing
+  *.iso                  # BAD: does nothing
+  proxy/local/cache      # exclude "cache" in dir "proxy/local"
+</programlisting>
+</para>
+
+<para>Include lists are supported only if excludes are not given.  They are
+handled via the <command>smbclient</command> <option>-TI</option> option.
+Include matching is identical to the exclude matching described above.</para>
+
+</refsect1>
+
 <refsect1><title>EXAMPLE</title>
 <programlisting>
   define application app_amsamba {
