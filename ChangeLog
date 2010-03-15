@@ -1,3 +1,6 @@
+2010-03-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* UPGRADING: add note about accidentally linking new versions against old
+
 2010-03-15  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Util.pod: added POD for slurp and burp
 

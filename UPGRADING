@@ -13,6 +13,15 @@ are upgrading.
 See also http://wiki.zmanda.com/index.php/Version_compatibility for notes
 on the compatibility of various versions of Amanda.
 
+General Notes
+-------------
+
+When upgrading, be careful not to allow the new version of Amanda to find
+already-installed libraries from the old version.  The safest way to ensure
+this is to move the old libraries out of the way or remove them before
+compiling the new version.  There may be more effective ways to do so that are
+specific to your operating system.
+
 Upgrading from pre-2.4.0
 ------------------------
 
