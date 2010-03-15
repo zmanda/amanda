@@ -393,7 +393,6 @@ sub run_scribe_xfer {
 
 	main::event("dump_cb",
 	    $params{'result'},
-	    [ map { undef_or_str($_) } @{ $params{'input_errors'} } ],
 	    [ map { undef_or_str($_) } @{ $params{'device_errors'} } ],
 	    $params{'size'});
 
@@ -441,7 +440,7 @@ is_deeply([ @events ], [
       [ 'notif_part_done', bi(1), bi(1), 1, bi(131072) ],
       [ 'notif_part_done', bi(2), bi(2), 1, bi(131072) ],
       [ 'notif_part_done', bi(3), bi(3), 1, bi(45056) ],
-      [ 'dump_cb', 'DONE', [], [], bi(307200) ],
+      [ 'dump_cb', 'DONE', [], bi(307200) ],
     ], "correct event sequence for a multipart scribe of less than a whole volume")
     or diag(Dumper([@events]));
 
@@ -451,7 +450,7 @@ run_scribe_xfer(1024*30, $scribe);
 
 is_deeply([ @events ], [
       [ 'notif_part_done', bi(1), bi(4), 1, bi(30720) ],
-      [ 'dump_cb', 'DONE', [], [], bi(30720) ],
+      [ 'dump_cb', 'DONE', [], bi(30720) ],
     ], "correct event sequence for a subsequent single-part scribe, still on the same volume")
     or diag(Dumper([@events]));
 
@@ -492,7 +491,7 @@ is_deeply([ @events ], [
       [ 'notif_part_done', bi(5), bi(2), 1, bi(131072) ],
       # empty part is written but not notified
 
-      [ 'dump_cb', 'DONE', [], [], bi(655360) ],
+      [ 'dump_cb', 'DONE', [], bi(655360) ],
     ], "correct event sequence for a multipart scribe of more than a whole volume")
     or print (Dumper([@events]));
 
@@ -526,7 +525,7 @@ is_deeply([ @events ], [
       [ 'scan-finished', $experr, 'slot: none' ],
       [ 'notif_new_tape', $experr, undef ],
 
-      [ 'dump_cb', 'PARTIAL', [], [$experr], bi(393216) ],
+      [ 'dump_cb', 'PARTIAL', [$experr], bi(393216) ],
     ], "correct event sequence for a multivolume scribe where the second volume isn't found")
     or print (Dumper([@events]));
 
@@ -558,8 +557,7 @@ is_deeply([ @events ], [
       [ 'request_volume_permission', 'answer:', "sorry!" ],
       [ 'scan-finished', undef, 'slot: 2' ],
 
-      [ 'dump_cb', 'PARTIAL',
-	    [], ["sorry!"], bi(393216) ],
+      [ 'dump_cb', 'PARTIAL', ["sorry!"], bi(393216) ],
     ], "correct event sequence for a multivolume scribe where the second volume isn't permitted")
     or print (Dumper([@events]));
 
@@ -582,7 +580,7 @@ is_deeply([ @events ], [
       [ 'request_volume_permission', 'answer:', undef ],
       [ 'notif_new_tape', undef, 'FAKELABEL' ],
       [ 'notif_part_done', bi(1), bi(1), 1, bi(307200) ],
-      [ 'dump_cb', 'DONE', [], [], bi(307200) ],
+      [ 'dump_cb', 'DONE', [], bi(307200) ],
     ], "correct event sequence for a non-splitting scribe of less than a whole volume")
     or diag(Dumper([@events]));
 

@@ -233,7 +233,6 @@ parameters.
 
   $dump_cb->(
         result => $result,
-        input_errors => $input_errors,
         device_errors => $device_errors,
         size => $size,
         duration => $duration);
@@ -243,13 +242,6 @@ All parameters will be present on every call.
 The C<result> is one of C<"FAILED">, C<"PARTIAL">, or C<"DONE">.  Even when
 C<dump_cb> reports a fatal error, C<result> may be C<"PARTIAL"> if some data
 was written successfully.
-
-C<input_errors> is an arrayref containing any errors that occurred on the input
-side of the Scribe -- problems with the C<xfer_elements> given to
-C<start_xfer>.  Similarly, C<device_errors> is an arrayref containing any fatal
-errors encountered while writing to the device.  Recall that most device errors
-are treated as end-of-media and trigger a scan for a new tape; such errors are
-not reported here.
 
 The final parameters, C<size> (in bytes) and C<duration> (in seconds) describe
 the total transfer, and are a sum of all of the parts written to the device.
@@ -380,7 +372,6 @@ sub new {
 	last_part_successful => 0,
 	started_writing => 0,
 	device_errors => [],
-	input_errors => [],
     };
 
     return bless ($self, $class);
@@ -514,7 +505,6 @@ sub get_xfer_dest {
     $self->{'last_part_successful'} = 1;
     $self->{'started_writing'} = 0;
     $self->{'device_errors'} = [];
-    $self->{'input_errors'} = [];
 
     # set the callback
     $self->{'dump_cb'} = undef;
@@ -629,17 +619,22 @@ sub handle_xmsg {
     my $self = shift;
     my ($src, $msg, $xfer) = @_;
 
-    $self->dbg("got msg from xfer: $msg");
-    if ($msg->{'type'} == $XMSG_PART_DONE) {
-	$self->_xmsg_part_done($src, $msg, $xfer);
-    } elsif ($msg->{'type'} == $XMSG_READY) {
-	$self->_xmsg_ready($src, $msg, $xfer);
-    } elsif ($msg->{'type'} == $XMSG_INFO) {
-	info($msg->{'message'});
-    } elsif ($msg->{'type'} == $XMSG_ERROR) {
-	$self->_xmsg_error($src, $msg, $xfer);
-    } elsif ($msg->{'type'} == $XMSG_DONE) {
+    if ($msg->{'type'} == $XMSG_DONE) {
 	$self->_xmsg_done($src, $msg, $xfer);
+	return;
+    }
+
+    # for anything else we only pay attention to messages from
+    # our own element
+    if ($msg->{'elt'} == $self->{'xdt'}) {
+	$self->dbg("got msg from xfer dest: $msg");
+	if ($msg->{'type'} == $XMSG_PART_DONE) {
+	    $self->_xmsg_part_done($src, $msg, $xfer);
+	} elsif ($msg->{'type'} == $XMSG_READY) {
+	    $self->_xmsg_ready($src, $msg, $xfer);
+	} elsif ($msg->{'type'} == $XMSG_ERROR) {
+	    $self->_xmsg_error($src, $msg, $xfer);
+	}
     }
 }
 
@@ -732,26 +727,20 @@ sub _xmsg_ready {
     my $self = shift;
     my ($src, $msg, $xfer) = @_;
 
-    #if ($src == $self->{'xdt'}) {
-	$self->dbg("XDT is ready");
-	$self->{'xdt_ready'} = 1;
-	if ($self->{'start_part_on_xdt_ready'}) {
-	    $self->{'start_part_on_xdt_ready'} = 0;
-	    $self->_start_part();
-	}
-    #}
+    $self->dbg("XDT is ready");
+    $self->{'xdt_ready'} = 1;
+    if ($self->{'start_part_on_xdt_ready'}) {
+	$self->{'start_part_on_xdt_ready'} = 0;
+	$self->_start_part();
+    }
 }
 
 sub _xmsg_error {
     my $self = shift;
     my ($src, $msg, $xfer) = @_;
 
-    if ($msg->{'elt'}->isa("Amanda::Xfer::Dest::Taper")) {
-	# XMSG_ERROR from the XDT is always fatal
-	$self->_operation_failed($msg->{'message'});
-    } else {
-	push @{$self->{'input_errors'}}, $msg->{'message'};
-    }
+    # XMSG_ERROR from the XDT is always fatal
+    $self->_operation_failed($msg->{'message'});
 }
 
 sub _xmsg_done {
@@ -771,7 +760,7 @@ sub _dump_done {
 
     # determine the correct final status - DONE if we're done, PARTIAL
     # if we've started writing to the volume, otherwise FAILED
-    if (@{$self->{'device_errors'}} or @{$self->{'input_errors'}}) {
+    if (@{$self->{'device_errors'}}) {
 	$result = $self->{'started_writing'}? 'PARTIAL' : 'FAILED';
     } else {
 	$result = 'DONE';
@@ -780,7 +769,6 @@ sub _dump_done {
     my $dump_cb = $self->{'dump_cb'};
     my %dump_cb_args = (
 	result => $result,
-	input_errors => $self->{'input_errors'},
 	device_errors => $self->{'device_errors'},
 	size => $self->{'size'},
 	duration => $self->{'duration'});
@@ -793,7 +781,6 @@ sub _dump_done {
     $self->{'size'} = 0;
     $self->{'duration'} = 0.0;
     $self->{'device_errors'} = [];
-    $self->{'input_errors'} = [];
 
     # and call the callback
     $dump_cb->(%dump_cb_args);

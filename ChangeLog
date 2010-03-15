@@ -1,4 +1,10 @@
 2010-03-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: remove input_errors, as that's now the
+	  caller's responsibility
+	* installcheck/Amanda_Taper_Scribe.pl: corresponding changes
+	* server-src/taper.pl: handle input errors directly
+
+2010-03-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/tape-aix.c device-src/tape-ops.h device-src/tape-posix.c
 	  device-src/tape-uware.c device-src/tape-xenix.c: add tape_fileno
 	  function
