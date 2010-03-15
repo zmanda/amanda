@@ -148,6 +148,7 @@ sub new {
 	header => undef,
 	last_partnum => -1,
 	doing_port_write => undef,
+	input_errors => [],
 
 	# periodic status updates
 	timer => undef,
@@ -723,6 +724,7 @@ sub setup_dump {
     $self->{'header'} = undef; # no header yet
     $self->{'last_partnum'} = -1;
     $self->{'orig_kb'} = $params{'orig_kb'};
+    $self->{'input_errors'} = [];
 
     # setting up the dump is a bit complex, due to the requirements of
     # a directtcp port_write.  This function:
@@ -747,7 +749,14 @@ sub setup_dump {
 
         $self->{'xfer'} = Amanda::Xfer->new([$xfer_source, $xfer_dest]);
         $self->{'xfer'}->start(sub {
-            $self->{'scribe'}->handle_xmsg(@_);
+	    my ($src, $msg, $xfer) = @_;
+            $self->{'scribe'}->handle_xmsg($src, $msg, $xfer);
+
+	    # if this is an error message that's not from the scribe's element, then
+	    # we'll need to keep track of it ourselves
+	    if ($msg->{'type'} == $XMSG_ERROR and $msg->{'elt'} != $xfer_dest) {
+		push @{$self->{'input_errors'}}, $msg->{'message'};
+	    }
         });
 
 	# we've started the xfer now, but the destination won't actually write
@@ -786,7 +795,6 @@ sub setup_dump {
         if ($err) {
             return $self->dump_cb(
                 result => "FAILED",
-                input_errors => [],
                 device_errors => [ $err ],
                 size => 0,
                 duration => 0.0);
@@ -869,8 +877,8 @@ sub dump_cb {
     my $stats = $self->make_stats($params{'size'}, $params{'duration'}, $self->{'orig_kb'});
 
     # write a DONE/PARTIAL/FAIL log line
-    my $have_msg = @{$params{'input_errors'}} || @{$params{'device_errors'}};
-    my $msg = join("; ", @{$params{'input_errors'}}, @{$params{'device_errors'}});
+    my $have_msg = @{$params{'device_errors'}};
+    my $msg = join("; ", @{$params{'device_errors'}});
     $msg = quote_string($msg);
 
     if ($logtype == $L_FAIL) {
@@ -896,14 +904,16 @@ sub dump_cb {
 	handle => $self->{'handle'},
     );
 
-    if (@{$params{'input_errors'}}) {
+    # reflect errors in our own elements in INPUT-ERROR or INPUT-GOOD
+    if (@{$self->{'input_errors'}}) {
 	$msg_params{'input'} = 'INPUT-ERROR';
-	$msg_params{'inputerr'} = join("; ", @{$params{'input_errors'}});
+	$msg_params{'inputerr'} = join("; ", @{$self->{'input_errors'}});
     } else {
 	$msg_params{'input'} = 'INPUT-GOOD';
 	$msg_params{'inputerr'} = '';
     }
 
+    # and errors from the scribe in TAPE-ERROR or TAPE-GOOD
     if (@{$params{'device_errors'}}) {
 	$msg_params{'taper'} = 'TAPE-ERROR';
 	$msg_params{'tapererr'} = join("; ", @{$params{'device_errors'}});
