@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -233,5 +233,33 @@ error:
     close(fd);
     return FALSE;
 }
+%}
 
+/*
+ * Simple threading test (start a thread and join it)
+ */
+
+%{
+static gpointer
+thread_fn(gpointer data)
+{
+    guint *d = data;
+    *d = 1;
+    return NULL;
+}
+%}
+
+%inline %{
+void
+try_threads(void)
+{
+    guint data = 0;
+    GThread *thd;
+
+    glib_init();
+
+    thd = g_thread_create(thread_fn, (gpointer)&data, TRUE, NULL);
+    g_thread_join(thd);
+    g_assert(data == 1);
+}
 %}
