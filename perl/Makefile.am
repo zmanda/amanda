@@ -524,7 +524,9 @@ install-data-hook:
 	done
 endif
 
-check-local:
+check-local: syntax-check thread-check
+
+syntax-check:
 	@MODULES_TO_CHECK="$(PM_FILES)"; \
 	if test -f $(top_builddir)/perl/.libs/libConfig.so -o -f $(top_builddir)/perl/libConfig.so; then \
 		if test -n "$(PERL)"; then \
@@ -537,3 +539,14 @@ check-local:
 			done; \
 		fi \
         fi
+
+if WANT_SERVER
+thread-check: libTests.la
+	$(PERL) -I$(builddir) -I$(builddir)/.libs -I$(srcdir) \
+			-MAmanda::Tests -e 'alarm(10); Amanda::Tests::try_threads' \
+	|| echo "Perl cannot run extensions which use threads; consider linking perl" \
+		"with -pthreads or compiling perl with threading enabled"
+else
+thread-check:
+	@echo "skipping thread check: server component not being built"
+endif
