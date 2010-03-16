@@ -308,6 +308,8 @@ debug_setup_1(char *config, char *subdir)
 	/*NOTREACHED*/
     }
     amfree(sane_config);
+
+    time(&open_time);
 }
 
 /*
@@ -345,7 +347,6 @@ debug_unlink_old(void)
 	      dbgdir, strerror(errno));
 	/*NOTREACHED*/
     }
-    time(&open_time);
     test_name = get_debug_name(open_time - (getconf_int(CNF_DEBUG_DAYS) * 24 * 60 * 60), 0);
     test_name_len = strlen(test_name);
     while((entry = readdir(d)) != NULL) {

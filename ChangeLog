@@ -1,3 +1,6 @@
+2010-03-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/debug.c: Set open_time in debug_setup_1.
+
 2010-03-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amsamba.8.xml: document include/exclude expressions
 
