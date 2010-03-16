@@ -50,19 +50,19 @@ For restore command only, the data is recoved in that directory. Must be a unix 
 
  <!-- ==== -->
  <varlistentry><term>GNUTAR-PATH</term><listitem>
- Path to the GNU tar executable. This option only has an effect during restore.
- The default is set when Amanda is built by the --with-gnutar configure option.
+Path to the GNU tar executable. This option only has an effect during restore.
+The default is set when Amanda is built by the --with-gnutar configure option.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>STATEDIR</term><listitem>
- Directory for saving state about backups already made. The default is set
- when Amanda is built by the --with-gnutar-listdir configure option.
+Directory for saving state about backups already made. The default is set
+when Amanda is built by the --with-gnutar-listdir configure option.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>TMPDIR</term><listitem>
- Directory to use for temporary files during the backup process. It should
- have enough space to store a complete copy of the database. The default is set
- when Amanda is built by the --with-tmpdir configure option.
+Directory to use for temporary files during the backup process. It should
+have enough space to store a complete copy of the database. The default is set
+when Amanda is built by the --with-tmpdir configure option.
 </listitem></varlistentry>
 
 </variablelist>
@@ -84,51 +84,51 @@ Disknames are specified in the <manref name="disklist" vol="5"/>.
 <variablelist>
  <!-- ==== -->
  <varlistentry><term>PG-ARCHIVEDIR</term><listitem>
- Directory that WAL segment files are archived to, as specified by the archive_command
- in PosgreSQL's postgresql.conf .
+Directory that WAL segment files are archived to, as specified by the archive_command
+in PosgreSQL's postgresql.conf .
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PG-CLEANUPWAL</term><listitem>
- Whether or not to remove old WAL segment files during base backups.
- Defaults to yes.
+Whether or not to remove old WAL segment files during base backups.
+Defaults to yes.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PG-DATADIR</term><listitem>
- Cluster data directory
+Cluster data directory
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PG-DB</term><listitem>
- Database to connect to. Defaults to "template1" (which exists by default).
+Database to connect to. Defaults to "template1" (which exists by default).
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PG-HOST</term><listitem>
- Host to connect to. If it starts with "/" it will be interepreted as a directory
- that holds the socket file. PostgreSQL defaults to /tmp.
+Host to connect to. If it starts with "/" it will be interepreted as a directory
+that holds the socket file. PostgreSQL defaults to /tmp.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PG-PASSFILE</term><listitem>
- Connect using the creditials in this file. Each line should have the format
- "hostname:port:database:username:password". The permissions must
- permit it to be read only by the user, or the file will not be used.
- Only usable with Postgres 8.1 and up.
+Connect using the creditials in this file. Each line should have the format
+"hostname:port:database:username:password". The permissions must
+permit it to be read only by the user, or the file will not be used.
+Only usable with Postgres 8.1 and up.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PG-PASSWORD</term><listitem>
- Password to use when connecting. Deprecated in favor of passfiles.
+Password to use when connecting. Deprecated in favor of passfiles.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PG-PORT</term><listitem>
- The TCP port to connect to, or the suffix of the socket file. PostgreSQL
- defaults to 5432.
+The TCP port to connect to, or the suffix of the socket file. PostgreSQL
+defaults to 5432.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PG-USER</term><listitem>
- User to connect as. It must be a superuser.
+User to connect as. It must be a superuser.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PSQL-PATH</term><listitem>
- Path to the psql binary. If not specified, the PATH environment variable
- will be searched.
+Path to the psql binary. If not specified, the PATH environment variable
+will be searched.
 </listitem></varlistentry>
 </variablelist>
 
