@@ -43,11 +43,12 @@ AES256 as the symmetric cipher.</para>
 
 <refsect1><title>How to Create Passphrase</title>
 
-Store  the  passphrase  inside the home-directory of the AMANDA-user($amanda_user) and protect it with proper permissions:
-
-   echo my_secret_passphrase > ~$amanda_user/.am_passphrase
-   chown $amanda_user:disk ~$amanda_user/.am_passphrase
-   chmod 700 ~$amanda_user/.am_passphrase
+<para>Store the passphrase inside the home-directory of the Amanda user ($amanda_user) and protect it with proper permissions:
+<programlisting>
+echo my_secret_passphrase > ~$amanda_user/.am_passphrase
+chown $amanda_user:disk ~$amanda_user/.am_passphrase
+chmod 700 ~$amanda_user/.am_passphrase
+</programlisting></para>
 </refsect1>
 
 <refsect1><title>NOTES</title>

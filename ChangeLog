@@ -1,3 +1,6 @@
+2010-03-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amcryptsimple.8.xml: Fix formatting
+
 2010-03-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/ampgsql.8.xml: Fix formatting.
 
