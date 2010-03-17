@@ -1094,7 +1094,10 @@ sub get_summary_info
         return $qt_str;
     };
 
-    my $disk_out = $tail_quote_trunc->($disk, $col_spec->[1]->[COLSPEC_WIDTH]);
+    my $disk_out =
+      ($col_spec->[1]->[COLSPEC_MAXWIDTH])
+      ? quote_string($disk)
+      : $tail_quote_trunc->($disk, $col_spec->[1]->[COLSPEC_WIDTH]);
 
     my $last_try = $dle_info->{tries}->[-1];
     my $level =
@@ -1366,6 +1369,8 @@ sub get_summary_col_format
     ## if necessary, resize COLSPEC_WIDTH to the maximum widht
     ## of any row
     if ($col->[COLSPEC_MAXWIDTH]) {
+
+        push @entries, $col->[COLSPEC_TITLE];
 	my $strmax = max( map { length $_ } @entries );
 	$col_width = max($strmax, $col_width);
 	# modify the spec in place, so the headers and
