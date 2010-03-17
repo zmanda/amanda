@@ -1,3 +1,6 @@
+2010-03-17 Dan Locks <dwlocks@zmanda.com>
+	*  configure.in: update to rc08.  NOTEST
+
 2010-03-17  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report/human.pm: fixed premature disk truncation in
          dump summary
