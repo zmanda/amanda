@@ -1,3 +1,6 @@
+2010-03-18  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Report.pm: updated POD
+
 2010-03-18 Dan Locks <dwlocks@zmanda.com>
 	*  configure.in: update to rc10.  NOTEST
 
