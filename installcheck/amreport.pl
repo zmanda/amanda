@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 112;
+use Test::More tests => 141;
 
 use strict;
 use warnings;
@@ -101,13 +101,21 @@ sub results_match
 {
     my ( $a_filename, $b, $msg ) = @_;
 
-    if (!-f $a_filename) {
-	diag("'$a_filename' does not exist");
-	fail($msg);
-	return;
+    if ($a_filename eq 'stdout') {
+	$a = $Installcheck::Run::stdout;
+	if (!$a) {
+	    diag("stdout is empty");
+	    fail($msg);
+	    return;
+	}
+    } else {
+	if (!-f $a_filename) {
+	    diag("'$a_filename' does not exist");
+	    fail($msg);
+	    return;
+	}
+	$a = slurp($a_filename);
     }
-
-    $a = slurp($a_filename);
 
     my $is_ps = ($b =~ m/^--PS-TEMPLATE--/);
 
@@ -187,7 +195,8 @@ while (<DATA>) {
 	s{$trigger_line}{$replacement};
 }
 
-## try a few various options with a pretty normal logfile
+## try a few various options with a pretty normal logfile.  Note that
+## these tests all use amreport's script mode
 
 setup_config(want_mailer => 1, want_mailto => 1, want_template => 1);
 cleanup();
@@ -207,8 +216,8 @@ like(run_get($amreport, 'TESTCONF-NOSUCH', '--version'),
     qr/^amreport-.*/,
     "amreport --version gives version");
 
-ok(run($amreport, 'TESTCONF'),
-    "no-args amreport (as run from amdump) with mailer, mailto, and a template")
+ok(run($amreport, 'TESTCONF', '--from-amdump'),
+    "amreport, as run from amdump, with mailer, mailto, and a template")
     or diag($Installcheck::Run::stderr);
 is($Installcheck::Run::stdout, "", "..produces no output");
 results_match($mail_output,
@@ -251,13 +260,116 @@ results_match($mail_output,
     "..mail matches");
 ok(! -f $printer_output,
     "..doesn't print");
-results_match($out_filename,
+results_match($out_filename, $datas{'normal-postscript'}, "..postscript file matches");
+
+# test a bare 'amreport', which should now output to stdout
+cleanup();
+burp($current_log_filename, $datas{'normal'});
+
+ok(run($amreport, 'TESTCONF'),
+    "amreport with no other options outputs to stdout for user convenience")
+  or diag($Installcheck::Run::stderr);
+results_match('stdout', $datas{'normal-rpt1'},
+    "..output matches");
+ok(!-f $printer_output, "..no printer output")
+  or diag("error: printer output!:\n" . burp($printer_output));
+ok(!-f $mail_output, "..no mail output")
+  or diag("error: mail output!:\n" . burp($printer_output));
+
+# test long-form file option
+cleanup();
+burp($current_log_filename, $datas{'normal'});
+
+ok(run($amreport, 'TESTCONF', "--text=$out_filename"),
+    "amreport --text=foo, no other options")
+  or diag($Installcheck::Run::stderr);
+results_match($out_filename, $datas{'normal-rpt1'},
+    "..output matches");
+ok(!-f $printer_output, "..no printer output")
+  or diag("error: printer output!:\n" . burp($printer_output));
+ok(!-f $mail_output, "..no mail output")
+  or diag("error: mail output!:\n" . burp($printer_output));
+
+# test long form postscript option
+cleanup();
+burp($current_log_filename, $datas{'normal'});
+
+ok(
+    run($amreport, 'TESTCONF', '--ps', $out_filename),
+    "amreport --ps foo, no other options"
+);
+results_match($out_filename, $datas{"normal-postscript"}, '..results match');
+ok(!-f $printer_output, "..no printer output");
+ok(!-f $mail_output, "..no mail output");
+
+cleanup();
+
+# test new mail option, using config mailto
+setup_config(want_mailer => 1, want_mailto => 1, want_template => 1);
+burp($current_log_filename, $datas{'normal'});
+ok(run($amreport, 'TESTCONF', '--mail-text'),
+    "amreport --mail-text, no other options, built-in mailto");
+results_match(
+    $mail_output,
+    make_mail(
+        $datas{'normal-rpt1'}, "DailySet1",
+        "February 25, 2009",   "nobody\@localhost"
+    ),
+    "..mail matches"
+);
+ok(!-f $printer_output, "..no printer output");
+ok(!-f $out_filename,   "..no file output");
+
+cleanup();
+
+# test new mail option, using passed mailto
+burp($current_log_filename, $datas{'normal'});
+ok(run($amreport, 'TESTCONF', '--mail-text=somebody@localhost',),
+    'amreport --mail-text=somebody\@localhost, no other options');
+results_match(
+    $mail_output,
+    make_mail(
+        $datas{'normal-rpt1'}, "DailySet1",
+        "February 25, 2009",   "somebody\@localhost"
+    ),
+    "..mail matches"
+);
+ok(!-f $printer_output, "..no printer output");
+ok(!-f $out_filename, "..no file output");
+
+cleanup();
+
+# test long-form old log option
+burp($old_log_filename, $datas{'normal'});
+ok(
+    run($amreport, 'TESTCONF', '--log', $old_log_filename),
+    "amreport --log with old log, no other config options"
+);
+results_match('stdout', $datas{'normal-rpt1'},
+    '..stdout output matches');
+ok(!-f $mail_output, "..no mail output");
+ok(!-f $out_filename, "..no file output");
+ok(!-f $printer_output, "..no printer output");
+
+cleanup();
+
+# test long-form print option, without specified printer
+setup_config(want_template => 1);
+burp($current_log_filename, $datas{'normal'});
+ok(run($amreport, 'TESTCONF', '--print'),
+    'amreport --print, no other options');
+results_match(
+    $printer_output,
     $datas{'normal-postscript'},
-    "..postscript output in -p file matches");
+    "..printer output matches"
+);
+ok(!-f $mail_output,  "..no mail output");
+ok(!-f $out_filename, "..no file output");
 
 cleanup();
 burp($current_log_filename, $datas{'normal'});
 
+setup_config(want_mailer => 1, want_mailto => 1, want_template => 1);
 ok(run($amreport, 'TESTCONF', '-i', '-p', $out_filename),
     "amreport -i -p, with mailer, mailto, and a template")
     or diag($Installcheck::Run::stderr);
@@ -304,16 +416,17 @@ setup_config(want_mailer => 1);
 cleanup();
 burp($current_log_filename, $datas{'normal'});
 
-like(run_get($amreport, 'TESTCONF'),
+like(run_get($amreport, 'TESTCONF', '--from-amdump'),
     qr/nothing to do/,
-    "plain amreport, with mailer but no mailto and no template, prints an error but exit==0");
+    "amreport --from-amdump, with mailer but no mailto and no template, "
+    . "prints an error but exit==0");
 ok(! -f $mail_output, "..doesn't mail");
 ok(! -f $printer_output, "..doesn't print");
 
 cleanup();
 burp($current_log_filename, $datas{'normal'});
 
-ok(run($amreport, 'TESTCONF', '-o', 'mailto=hello'),
+ok(run($amreport, 'TESTCONF', '--from-amdump', '-o', 'mailto=hello'),
     "amreport -o to set mailto, with mailer but no mailto and no template")
     or diag($Installcheck::Run::stderr);
 is($Installcheck::Run::stdout, "", "..produces no output");
@@ -326,7 +439,7 @@ ok(! -f $printer_output,
 cleanup();
 burp($current_log_filename, $datas{'normal'});
 
-like(run_err($amreport, 'TESTCONF', '-o', 'mailto=ill\egal'),
+like(run_err($amreport, 'TESTCONF', '--from-amdump', '-o', 'mailto=ill\egal'),
     qr/mail address has invalid characters/,
     "amreport with illegal email in -o, with mailer but no mailto and no template, errors out");
 
@@ -334,8 +447,8 @@ setup_config(want_mailer => 1, want_template => 1);
 cleanup();
 burp($current_log_filename, $datas{'normal'});
 
-like(run_get($amreport, 'TESTCONF'),
-    qr/nothing to do/, ## XXX this is arguably a bug
+like(run_get($amreport, 'TESTCONF', '--from-amdump'),
+    qr/nothing to do/, ## this is arguably a bug, but we'll keep it
     "no-args amreport with mailer, no mailto, and a template does nothing even though it could "
 	. "print a label");
 ok(! -f $mail_output, "..doesn't mail");
@@ -344,7 +457,7 @@ ok(! -f $printer_output, "..doesn't print");
 cleanup();
 burp($current_log_filename, $datas{'normal'});
 
-ok(run($amreport, 'TESTCONF', '-o', 'mailto=dustin'),
+ok(run($amreport, 'TESTCONF', '--from-amdump', '-o', 'mailto=dustin'),
     "amreport with mailer, no mailto, and a template, but mailto in config override works")
     or diag($Installcheck::Run::stderr);
 is($Installcheck::Run::stdout, "", "..produces no output");

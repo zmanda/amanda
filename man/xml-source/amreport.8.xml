@@ -29,37 +29,117 @@
 <cmdsynopsis>
   <command>amreport</command>    
     <arg choice='opt'><replaceable>config</replaceable></arg>
+    &configoverride.synopsis;
+    <group>
+	<synopfragmentref linkend="cmdline">command-line options</synopfragmentref> | <synopfragmentref linkend="script">script options</synopfragmentref>
+    </group>
+  <synopfragment id="cmdline">
+    <arg choice='opt'>--log=<replaceable>logfile</replaceable></arg>
+    <arg choice='opt'>--ps=<replaceable>filename</replaceable></arg>
+    <arg choice='opt'>--text=<replaceable>filename</replaceable></arg>
+    <arg choice='opt'>--xml=<replaceable>filename</replaceable></arg>
+    <arg choice='opt'>--print=<replaceable>printer</replaceable></arg>
+    <arg choice='opt'>--mail-text=<replaceable>recipient</replaceable></arg>
+  </synopfragment>
+  <synopfragment id="script">
     <arg choice='opt'>-i</arg>
     <arg choice='opt'>-M <replaceable>address</replaceable></arg>
     <arg choice='opt'>-l <replaceable>logfile</replaceable></arg>
     <arg choice='opt'>-f <replaceable>outputfile</replaceable></arg>
     <arg choice='opt'>-p <replaceable>postscriptfile</replaceable></arg>
-    &configoverride.synopsis;
+    <arg choice='opt'>--from-amdump</arg>
+  </synopfragment>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1><title>DESCRIPTION</title>
-<para><emphasis remap='B'>Amreport</emphasis>
-generates a summary report of an
-<manref name="amanda" vol="8"/>
-backup run.
-If no configuration name is specified, amanda.conf is
-read from the current directory.</para>
 
-<para>See the
-<manref name="amanda" vol="8"/>
-man page for more details about Amanda.</para>
+<para><emphasis remap='B'>Amreport</emphasis> generates a summary report of an
+Amanda backup run.  </para>
+
+<para>See the <manref name="amanda" vol="8"/> man page for more details about
+Amanda.</para>
+
 </refsect1>
 
 <refsect1><title>OPTIONS</title>
+
 <variablelist remap='TP'>
   <varlistentry>
   <term><emphasis remap='I'>config</emphasis></term>
   <listitem>
-<para>Name of the configuration to process.</para>
+<para>Name of the configuration to process.  If no configuration name is
+specified, amanda.conf is read from the current directory.</para>
   </listitem>
   </varlistentry>
+  &configoverride.varlistentry;
+</variablelist>
+
+<para>Amreport operates in two distinct modes.  Command-line mode is intended for use
+by an administrator from the command line, and uses long command-line options
+for clarity.  Script mode is intended for use from scripts such as amdump, and
+has a lot of non-obvious default behaviors to suit that need.</para>
+
+<para>Unless a script-mode option is given, amreport defaults to command-line mode.
+If no options are given, amreport writes a report for the most recent logfile to
+stdout.</para>
+
+<refsect2><title>Command-Line Mode Options</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>--log=<replaceable>logfile</replaceable></option></term>
+  <listitem>
+<para>Use this logfile as the basis for the report.  If this option is given, then
+the report is a "historical" report and will not include current state from
+e.g., holding disk and curinfo.  If this option is not specified, then the
+most recent logfile will be used.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--ps=<replaceable>filename</replaceable></option></term>
+  <listitem>
+<para>Write a postscript label to <replaceable>filename</replaceable>.
+See "LABEL PRINTING" below.  If filename is not specified, then the
+label is written to stdout.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--text=<replaceable>filename</replaceable></option></term>
+  <listitem>
+<para>Write a human-readable text report to <replaceable>filename</replaceable>.
+If filename is not specified, then the report is written to stdout.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--xml=<replaceable>filename</replaceable></option></term>
+  <listitem>
+<para>Write an XML-formatted report to <replaceable>filename</replaceable>.
+If filename is not specified, then the report is written to stdout.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--print=<replaceable>printer</replaceable></option></term>
+  <listitem>
+<para>Pipe a postscript label to <command>lp</command> or <command>lpr</command>,
+specifying the given <replaceable>printer</replaceable>.  If the printer is
+not specified, uses the default from the Amanda configuration, or the system
+default printer.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--mail-text=<replaceable>recipient</replaceable></option></term>
+  <listitem>
+<para>Send a human-readable text report to the given <replaceable>recipient</replaceable> via
+the mailer specified in the Amanda configuration.  If the recipient is
+not specified, this uses the <emphasis>mailto</emphasis> from the Amanda configuration.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect2>
+
+<refsect2><title>Script Mode Options</title>
+<variablelist remap='TP'>
   <varlistentry>
   <term><option>-i</option></term>
   <listitem>
@@ -69,11 +149,8 @@ man page for more details about Amanda.</para>
   <varlistentry>
   <term><option>-M</option> <replaceable>address</replaceable></term>
   <listitem>
-<para>Mail the report to
-<emphasis remap='I'>address</emphasis>
-instead of the
-<emphasis remap='B'>mailto</emphasis>
-value from
+<para>Mail the report to <emphasis remap='I'>address</emphasis>
+instead of the <emphasis remap='B'>mailto</emphasis> value from
 <emphasis remap='I'>amanda.conf</emphasis>.
 </para>
   </listitem>
@@ -82,52 +159,38 @@ value from
   <term><option>-l</option> <replaceable>logfile</replaceable></term>
   <listitem>
 <para>Name of the log file to parse to generate the report.
-If a log file is not specified, it defaults to the file:</para>
+If a log file is not specified, it defaults to the file
+<filename>$logdir/log</filename>, where
+<filename>$logdir</filename> is the log directory defined in amanda.conf.</para>
   </listitem>
   </varlistentry>
-</variablelist>
-
-<!-- .RS -->
-<!-- .RS -->
-<para><emphasis remap='I'>logdir</emphasis>/log</para>
-<!-- .RE -->
-<!-- .RE -->
-
-<para>where
-<emphasis remap='I'>logdir</emphasis>
-is the log directory defined in amanda.conf.</para>
-<variablelist remap='TP'>
   <varlistentry>
   <term><option>-f</option> <replaceable>outputfile</replaceable></term>
   <listitem>
-<para>Normally,
-<command>amreport</command>
-sends the report via e-mail to the
-<emphasis remap='I'>mailto</emphasis>
-user as defined in the amanda.conf file.
-If
-<emphasis remap='I'>outputfile</emphasis>
-is specified, then the report is put in
-<emphasis remap='I'>outputfile</emphasis>.</para>
+<para>Normally, <command>amreport</command> sends the report via e-mail to the
+<emphasis remap='I'>mailto</emphasis> user as defined in the amanda.conf
+file.  If <emphasis remap='I'>outputfile</emphasis> is specified, then the
+report is put in <emphasis remap='I'>outputfile</emphasis>.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
   <term><option>-p</option> <replaceable>postscriptfile</replaceable></term>
   <listitem>
 <para>Send the postscript output to the file
-<emphasis remap='I'>postscriptfile</emphasis>
-instead of to the
-<manref name="lpr" vol="1"/>
-command.
-This option has an effect only if the
-<emphasis remap='I'>lbl-templ</emphasis>
-directive is specified in amanda.conf.</para>
+<emphasis remap='I'>postscriptfile</emphasis> instead of to the
+<manref name="lpr" vol="1"/> command.  This option has an effect only if the
+<emphasis remap='I'>lbl-templ</emphasis> directive is specified in amanda.conf.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--from-amdump</option></term>
+  <listitem>
+  <para>Force script mode.  Has no other effect.</para>
   </listitem>
   </varlistentry>
 
-  &configoverride.varlistentry;
-
 </variablelist>
+</refsect2>
 </refsect1>
 
 <refsect1><title>LABEL PRINTING</title>

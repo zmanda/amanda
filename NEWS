@@ -31,6 +31,9 @@ Changes in release 2.6.2alpha
       calculate this value in advance
     - there is no logging or reporting of zero-byte, successful parts (this may
       cause gaps in filenums in the catalog)
+   * Redesigned amreport
+    - much more natural command-line interface (just run 'amreport $config')
+    - experimental XML output
 
 Changes in release 2.6.1
 
