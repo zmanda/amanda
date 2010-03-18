@@ -1,3 +1,6 @@
+2010-03-18  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Report.pm: updated POD
+
 2010-03-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* application-src/ampgsql.pl: add a die_cb in command_validate and
 	  command_selfcheck

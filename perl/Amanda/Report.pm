@@ -77,13 +77,13 @@ contains a hostname & disk pair that has been reported by either the
 planner or amflush.  The DLEs are stored in the order that they appear
 in the logfile.
 
-@dles = (
-    [ 'example1', '/home' ],
-    [ 'example1', '/var/log' ],
-    [ 'example2', '/etc' ],
-    [ 'example2', '/home' ],
-    [ 'example3', '/var/www' ],
-);
+    @dles = (
+        [ 'example1', '/home' ],
+        [ 'example1', '/var/log' ],
+        [ 'example2', '/etc' ],
+        [ 'example2', '/home' ],
+        [ 'example3', '/var/www' ],
+    );
 
 =head2 my $dle = $report->get_dle_info($hostname, $disk [,$field] );
 
@@ -187,27 +187,16 @@ The C<tapes> field is a hash reference keyed by the label of the tape.
 each value of the key is another hash which stores date, size, and the
 number of files seen by this backup on the tape.  Here is an example:
 
-    $report->{data}{programs}{taper}{tapes} =
-    {
-	FakeTape01 => {
-	    label => "FakeTape01",
-	    date  => "", # ??
-	    kb    => "", # ??
-	    files => "", # ??
-	    dle   => 13, # number of dumpfiles that *end* on this tape
-	    time  => "", # ??
-	},
-	FakeTape02 => {
-	    label => "FakeTape02",
-	    date  => "", # ??
-	    kb    => "", # ??
-	    files => "", # ??
-	    dle   => 27,
-	    time  => "", # ??
-	},
+    $report->{data}{programs}{taper}{tapes} = {
+        FakeTape01 => {
+            label => "FakeTape01",
+            date  => "20100318141930",
+            kb    => 7894769,          # data written to tape this session
+            files => 14,               # parts written to tape this session
+            dle   => 13,               # number of dumps that begin on this tape
+            time  => 2.857,            # time spent writing to this tape
+        },
     };
-
-=back
 
 =item C<tape_labels>
 
@@ -232,14 +221,14 @@ The C<disklist> key points to a two-level hash of hostnames and
 disknames as present in the logfile.  It looks something like this:
 
     $report->{data}{disklist} = {
-	"server.example.org"      => {
-	    "/home" => { ... },
-	    "/var"  => { ... },
-	},
-	"workstation.example.org" = {
-	    "/etc"     => { ... },
-	    "/var/www" => { ... },
-	},
+        "server.example.org" => {
+            "/home" => {...},
+            "/var"  => {...},
+        },
+        "workstation.example.org" => {
+            "/etc"     => {...},
+            "/var/www" => {...},
+        },
     };
 
 In the below, C<$dle> represents one disklist entry (C<{ ... }> in the
@@ -270,6 +259,9 @@ A try is a hash with at least one dumper, taper, and/or chunker DLE
 program as a key.  These entries contain the exit conditions of that
 particular program for that particular try.
 
+In addition, there is a field C<chunks> which records the parts taped
+during the taper processes in a try.
+
 There are a number of common fields between all three elements:
 
 =over
@@ -287,21 +279,29 @@ There are a number of common fields between all three elements:
 =item C<kps> - the rate at which the program was able to process data,
 in kb/sec.
 
+=item C<error> - if the program fails, this field is set to record the
+error message.
+
 =back
 
-The C<dumper> hash also has an C<orig_kb> field, giving the size of
-the data dumped from the source, before any compression.  The C<taper>
-hash contains all the exit status data given by the taper.  Because
-the taper has timestamped chunks, the program itself does not have a
-C<date> field.  Taper has one unique field, C<parts>, giving the
-number of chunks (described in the next section) that were written to
-tape.
+The C<dumper> hash has an C<orig_kb> field, giving the size of the
+data dumped from the source, before any compression. If encountered,
+the C<dumper> hash may also contain a C<stranges> field, which is a
+list reference to all the messages of type C<L_STRANGE> encountered
+during the process.
+
+The C<taper> hash contains all the exit status data given by the
+taper.  Because the taper has timestamped chunks, the program itself
+does not have a C<date> field.  Taper has one unique field, C<parts>,
+giving the number of chunks (described in the next section) that were
+written to tape.
 
 =head3 Chunks
 
-The list C<< $dle->{try}[]->{chunks} >> describes each of the chunks
-that are written by the taper.  Each item in the
-list is a hash reference with the following fields:
+For a given C<$try> in the C<< $dle->{tries} >> list, there is a list
+located at C< $try->{chunks}> which describes each of the chunks that
+are written by the taper.  Each item in the list is a hash reference
+with the following fields:
 
 =over
 
