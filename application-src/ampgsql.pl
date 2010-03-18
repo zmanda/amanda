@@ -1,5 +1,5 @@
 #!@PERL@
-# Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -209,6 +209,13 @@ sub _run_psql_command {
 
 sub command_selfcheck {
     my $self = shift;
+
+   # set up to handle errors correctly
+   $self->{'die_cb'} = sub {
+       my ($msg) = @_;
+       print "$msg\n";
+       exit(1);
+   };
 
     for my $k (keys %{$self->{'args'}}) {
         print "OK application property: $k = $self->{'args'}->{$k}\n";
@@ -662,6 +669,13 @@ sub command_restore {
 
 sub command_validate {
    my $self = shift;
+
+   # set up to handle errors correctly
+   $self->{'die_cb'} = sub {
+       my ($msg) = @_;
+       print "$msg\n";
+       exit(1);
+   };
 
    if (!defined($self->{'args'}->{'gnutar-path'}) ||
        !-x $self->{'args'}->{'gnutar-path'}) {
