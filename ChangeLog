@@ -1,3 +1,7 @@
+2010-03-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* application-src/ampgsql.pl: add a die_cb in command_validate and
+	  command_selfcheck
+
 2010-03-17  Paul C. Mantz <pcmantz@zmanda.com>
 	* server-src/amreport.pl: added new command line options
 	* server-src/amdump.sh: updated usage of amreport
