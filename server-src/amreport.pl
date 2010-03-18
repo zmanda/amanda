@@ -34,21 +34,55 @@ use Amanda::Constants;
 use Amanda::Debug qw( debug warning );
 use Amanda::Report;
 use Amanda::Report::human;
+use Amanda::Logfile;
+
+# constants for dealing with outputs
+use constant FORMAT  => 0;
+use constant FMT_TYP => 0;
+use constant FMT_TEMPLATE => 1;
+
+use constant OUTPUT  => 1;
+use constant OUT_TYP => 0;
+use constant OUT_DST => 1;
+
+# what mode is this running in? MODE_SCRIPT is when run from scripts like
+# amdump, while MODE_CMDLINE is when run from the command line
+use constant MODE_NONE    => 0;
+use constant MODE_SCRIPT  => 1;
+use constant MODE_CMDLINE => 2;
 
 ## Global Variables
 
 my $opt_nomail = 0;
-my ( $opt_mailto, $opt_filename, $opt_logfname, $opt_psfname, $opt_xml );
-my ( $config_name, $report, $outfh );
+my ($opt_mailto, $opt_filename, $opt_logfname, $opt_psfname, $opt_xml);
+my ($config_name, $report, $outfh);
+my $mode = MODE_NONE;
 
+# list of [ report-spec, output-spec ]
+my (@outputs, @output_queue);
 
 ## Program subroutines
 
 sub usage
 {
     print <<EOF;
-Usage: amreport conf [--version] [--xml] [-M address] [-f output-file]
-    [-l logfile] [-p postscript-file] [-o configoption]*
+Usage: amreport conf [--version] [--help] [-o configoption]
+  command-line mode options:
+    [--log=logfile] [--ps=filename] [--text=filename] [--xml=filename]
+    [--print=printer] [--mail-text=recipient]
+  script-mode options:
+    [-i] [-M address] [-f output-file] [-l logfile] [-p postscript-file]
+    [--from-amdump]
+
+Amreport uses short options for use from shell scripts (e.g., amreport), or
+long options for use on the command line.
+
+If the printer is omitted, the printer from the configuration is used.  If the
+filename is omitted or is "-", output is to stdout.  If the recipient is
+omitted, then the default mailto from the configuration is used.
+
+If no options are given, a text report is printed to stdout.  The --from-amdump
+option triggers script mode, and is used by amdump.
 EOF
     exit 1;
 }
@@ -57,8 +91,20 @@ sub error
 {
     my ( $error_msg, $exit_code ) = @_;
     warning("error: $error_msg");
-    print STDERR $error_msg;
+    print STDERR "$error_msg\n";
     exit $exit_code;
+}
+
+sub set_mode
+{
+    my ($new_mode) = @_;
+
+    if ($mode != MODE_NONE && $mode != $new_mode) {
+	error("cannot mix long options (command-line mode), and "
+	    . "short options (script mode) with each other", 1);
+    }
+
+    $mode = $new_mode;
 }
 
 # Takes a string specifying an option name (e.g. "M") and a reference to a
@@ -68,17 +114,20 @@ sub error
 # print an error message and exit otherwise.
 sub opt_set_var
 {
-    my ( $opt, $ref ) = @_;
-    die "must pass scalar ref to opt_set_var"
-      unless ( ref($ref) eq "SCALAR" );
+    my ($opt, $ref) = @_;
+    error("must pass scalar ref to opt_set_var", 1)
+      unless (ref($ref) eq "SCALAR");
 
     return (
         "$opt=s",
         sub {
-            my ( $op, $val ) = @_;
-            if ( defined($$ref) ) {
-                print "you may specify at most one -$op\n";
-                exit 1;
+            my ($op, $val) = @_;
+
+	    # all short options are legacy options
+	    set_mode(MODE_SCRIPT);
+
+            if (defined($$ref)) {
+                error("you may specify at most one -$op\n", 1);
             } else {
                 $$ref = $val;
             }
@@ -86,18 +135,90 @@ sub opt_set_var
     );
 }
 
-sub calculate_outputs {
+
+sub opt_push_queue
+{
+    my ($output) = @_;
+
+    unless ((ref $output eq "ARRAY")
+        && (ref $output->[0] eq "ARRAY")
+        && (ref $output->[1] eq "ARRAY")) {
+        die "error: bad argument to opt_push_queue()";
+    }
+
+    # all queue-pushing options are command-line options
+    set_mode(MODE_CMDLINE);
+
+    push @output_queue, $output;
+}
+
+sub get_default_logfile
+{
+    # return the "current" logfile if it exists
+    my $current_logfile = config_dir_relative(getconf($CNF_LOGDIR)) . "/log";
+    return $current_logfile if -f $current_logfile;
+
+    # otherwise, if we're in command-line mode, use the most recent logfile
+    if ($mode == MODE_CMDLINE) {
+	my @logfiles = Amanda::Logfile::find_log();
+	if (@logfiles) {
+	    @logfiles = sort @logfiles;
+	    my $latest = $logfiles[-1];
+	    return config_dir_relative(getconf($CNF_LOGDIR)) . "/$latest";
+	}
+    }
+
+    # otherwise, bail out
+    error("nothing to report on!", 1);
+}
+
+sub apply_output_defaults
+{
+    my $ttyp         = getconf($CNF_TAPETYPE);
+    my $tt           = lookup_tapetype($ttyp) if $ttyp;
+    my $cfg_template = "" . tapetype_getconf($tt, $TAPETYPE_LBL_TEMPL) if $tt;
+
+    my $cfg_printer = getconf($CNF_PRINTER);
+    my $cfg_mailto = getconf_seen($CNF_MAILTO) ? getconf($CNF_MAILTO) : undef;
+
+    foreach my $job (@output_queue) {
+
+	# supply the configured template if none was given.
+        if (   $job->[FORMAT]->[FMT_TYP] eq 'postscript'
+            && !$job->[FORMAT]->[FMT_TEMPLATE]) {
+            $job->[FORMAT]->[FMT_TEMPLATE] = $cfg_template;
+        }
+
+	# apply default destinations for each destination type
+        if (!$job->[OUTPUT][OUT_DST]) {
+            $job->[OUTPUT][OUT_DST] =
+                ($job->[OUTPUT]->[OUT_TYP] eq 'printer') ? $cfg_printer
+              : ($job->[OUTPUT]->[OUT_TYP] eq 'mail')    ? $cfg_mailto
+              : ($job->[OUTPUT]->[OUT_TYP] eq 'file')    ? '-'
+              :   undef;    # will result in error
+        }
+
+        push @outputs, $job;
+    }
+}
+
+
+sub calculate_legacy_outputs {
     # Part of the "options" is the configuration.  Do we have a template?  And a
     # mailto? And mailer?
+
     my $ttyp = getconf($CNF_TAPETYPE);
     my $tt = lookup_tapetype($ttyp) if $ttyp;
     my $cfg_template = "" . tapetype_getconf($tt, $TAPETYPE_LBL_TEMPL) if $tt;
 
     my $cfg_mailer = getconf($CNF_MAILER);
     my $cfg_printer = getconf($CNF_PRINTER);
+    my $cfg_mailto  = getconf_seen($CNF_MAILTO) ? getconf($CNF_MAILTO) : undef;
+
     if (!defined $opt_mailto) {
 	# ignore the default value for mailto
 	$opt_mailto = getconf_seen($CNF_MAILTO)? getconf($CNF_MAILTO) : undef;
+	# (note that we still may not send mail if CNF_MAILER is not set)
     } else {
 	# check that mailer is defined if we got an explicit -M, but go on
 	# processing (we will probably do nothing..)
@@ -106,9 +227,6 @@ sub calculate_outputs {
 	    print "Warning: a mailer is not defined";
 	}
     }
-
-    # list of [ report-spec, output-spec ]
-    my @outputs;
 
     # should we send a mail?
     if ($cfg_mailer and $opt_mailto) {
@@ -143,12 +261,6 @@ sub calculate_outputs {
     if ($opt_psfname and $cfg_template) {
 	push @outputs, [ [ 'postscript', $cfg_template ], [ 'file', $opt_psfname ] ];
     }
-
-    for my $output (@outputs) {
-	debug("planned output: " . join(" ", @{$output->[0]}, @{$output->[1]}));
-    }
-
-    return @outputs;
 }
 
 sub open_file_output {
@@ -273,23 +385,35 @@ my $config_overrides = new_config_overrides( scalar(@ARGV) + 1 );
 
 Getopt::Long::Configure(qw/bundling/);
 GetOptions(
-    "i"   => \$opt_nomail,
+
+    ## old legacy configuration opts
+    "i" => sub { set_mode(MODE_SCRIPT); $opt_nomail = 1; },
     opt_set_var("M", \$opt_mailto),
     opt_set_var("f", \$opt_filename),
     opt_set_var("l", \$opt_logfname),
     opt_set_var("p", \$opt_psfname),
-    "o=s" => sub { add_config_override_opt( $config_overrides, $_[1] ); },
-    "xml" => sub { $opt_xml = 1 },
+
+    "o=s" => sub { add_config_override_opt($config_overrides, $_[1]); },
+
+    ## trigger default amdump behavior
+    "from-amdump" => sub { set_mode(MODE_SCRIPT) },
+
+    ## new configuration opts
+    "log=s" => sub { set_mode(MODE_CMDLINE); $opt_logfname = $_[1]; },
+    "ps:s" => sub { opt_push_queue([ ['postscript'], [ 'file', $_[1] ] ]); },
+    "mail-text:s" => sub { opt_push_queue([ ['human'], [ 'mail', $_[1] ] ]); },
+    "text:s"      => sub { opt_push_queue([ ['human'], [ 'file', $_[1] ] ]); },
+    "xml:s"       => sub { opt_push_queue([ ['xml'],   [ 'file', $_[1] ] ]); },
+    "print:s"     => sub { opt_push_queue([ [ 'postscript' ], [ 'printer', $_[1] ] ]); },
+
     'version' => \&Amanda::Util::version_opt,
-    'help' => \&usage,
+    'help'    => \&usage,
 ) or usage();
 
-$opt_logfname = Amanda::Util::get_original_cwd() . "/" . $opt_logfname
-	if defined $opt_logfname and $opt_logfname !~ /^\//;
-
-usage() unless ( scalar(@ARGV) == 1 );
+usage() unless ( scalar(@ARGV) <= 1 );
 
 $config_name = shift @ARGV;
+$config_name ||= '.'; # default config is current dir, if not specified
 set_config_overrides($config_overrides);
 config_init( $CONFIG_INIT_EXPLICIT_NAME, $config_name );
 
@@ -303,28 +427,44 @@ if ( $cfgerr_level >= $CFGERR_WARNINGS ) {
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
+# read the tapelist
+my $tl_file = config_dir_relative(getconf($CNF_TAPELIST));
+my $tl = Amanda::Tapelist::read_tapelist($tl_file);
+
 # shim for installchecks
 $Amanda::Constants::LPR = $ENV{'INSTALLCHECK_MOCK_LPR'}
     if exists $ENV{'INSTALLCHECK_MOCK_LPR'};
 
-# Process the options and decide what outputs we will produce
-my @outputs = calculate_outputs();
+# set command line mode if no options were given
+$mode = MODE_CMDLINE if ($mode == MODE_NONE);
+
+# calculate the logfile to read from
+$opt_logfname = Amanda::Util::get_original_cwd() . "/" . $opt_logfname
+	if defined $opt_logfname and $opt_logfname !~ /^\//;
+my $logfile = $opt_logfname || get_default_logfile();
+my $historical = defined $opt_logfname;
+debug("using logfile: $logfile" . ($historical? " (historical)" : ""));
+
+if ($mode == MODE_CMDLINE) {
+    debug("operating in cmdline mode");
+    apply_output_defaults();
+    push @outputs, [ ['human'], [ 'file', '-' ] ] if !@outputs;
+} else {
+    debug("operating in script mode");
+    calculate_legacy_outputs();
+}
+
+for my $output (@outputs) {
+    debug("planned output: " . join(" ", @{ $output->[FORMAT] }, @{ $output->[OUTPUT] }));
+}
+
 if (!@outputs) {
     print "no output specified, nothing to do\n";
     exit(0);
 }
 
-# read the tapelist
-my $tl_file = config_dir_relative(getconf($CNF_TAPELIST));
-my $tl = Amanda::Tapelist::read_tapelist($tl_file);
-
 ## Parse the report & set output
 
-my $logfile = $opt_logfname
-           || config_dir_relative( getconf($CNF_LOGDIR) ) . "/log";
-my $historical = defined $opt_logfname;
-
-debug("using logfile: $logfile");
 $report = Amanda::Report->new($logfile, $historical);
 my $exit_status = $report->get_flag("exit_status");
 

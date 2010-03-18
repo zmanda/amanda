@@ -113,7 +113,7 @@ if test -f $errfile || test -f $logdir/log; then
 	echo "INFO amdump amdump pid $$" > $logdir/log.$$
 	echo "START driver date $date_starttime" >> $logdir/log.$$
 	echo "ERROR amdump " `_ '%s is already running, or you must run amcleanup' "${process_name}"` >> $logdir/log.$$
-	$sbindir/amreport $conf -l $logdir/log.$$ "$@"
+	$sbindir/amreport $conf --from-amdump -l $logdir/log.$$ "$@"
 	rm -f $logdir/log.$$
 	exit 1;
 fi
@@ -170,7 +170,7 @@ exit_code=$?
 printf '%s: end at %s\n' "amdump" "`date`"
 
 # Send out a report on the dumps.
-$sbindir/amreport $conf "$@"
+$sbindir/amreport $conf --from-amdump "$@"
 exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code
 

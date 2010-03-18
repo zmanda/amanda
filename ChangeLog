@@ -1,3 +1,10 @@
+2010-03-17  Paul C. Mantz <pcmantz@zmanda.com>
+	* server-src/amreport.pl: added new command line options
+	* server-src/amdump.sh: updated usage of amreport
+	* installchecks/amreport.pl: installchecks
+	* man/xml-source/amreport.8.xml: usage doc update
+	* NEWS: added info about rewrite
+
 2010-03-17 Dan Locks <dwlocks@zmanda.com>
 	*  configure.in: update to rc08.  NOTEST
 
