@@ -1,3 +1,7 @@
+2010-03-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Continue flush on new tape if holdingdisk is
+			       full.
+
 2010-03-18  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report.pm: updated POD
 
