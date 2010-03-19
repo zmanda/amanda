@@ -353,17 +353,6 @@ main(
      * -o command-line options to set configuration values */
     cfg_ovr = new_config_overrides(argc/2);
 
-    /* load the base client configuration */
-    set_config_overrides(cfg_ovr);
-    config_init(CONFIG_INIT_CLIENT, NULL);
-
-    if (config_errors(NULL) >= CFGERR_WARNINGS) {
-	config_print_errors();
-	if (config_errors(NULL) >= CFGERR_ERRORS) {
-	    g_critical(_("errors processing config file"));
-	}
-    }
-
     /* If the first argument is not an option flag, then we assume
      * it is a configuration name to match the syntax of the other
      * Amanda utilities. */
@@ -407,6 +396,17 @@ main(
     if (optind != argc) {
 	(void)g_fprintf(stderr, USAGE);
 	exit(1);
+    }
+
+    /* load the base client configuration */
+    set_config_overrides(cfg_ovr);
+    config_init(CONFIG_INIT_CLIENT, NULL);
+
+    if (config_errors(NULL) >= CFGERR_WARNINGS) {
+	config_print_errors();
+	if (config_errors(NULL) >= CFGERR_ERRORS) {
+	    g_critical(_("errors processing config file"));
+	}
     }
 
     /* and now try to load the configuration named in that file */

@@ -1,4 +1,8 @@
 2010-03-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/amrecover.c: Do add_config_override before loading the
+				   config.
+
+2010-03-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Continue flush on new tape if holdingdisk is
 			       full.
 
