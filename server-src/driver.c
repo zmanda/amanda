@@ -1029,6 +1029,10 @@ start_some_dumps(
 	holdp = holdp_accept;
 
 	idle_reason = max(idle_reason, cur_idle);
+	if (diskp == NULL && idle_reason == IDLE_NO_DISKSPACE) {
+	    /* continue flush waiting for new tape */
+	    startaflush();
+	}
 
 	/*
 	 * If we have no disk at this point, and there are disks that
@@ -2137,6 +2141,8 @@ handle_chunker_result(
 		     * determined in continue_port_dumps(). */
 		    enqueue_disk( &roomq, dp );
 		    continue_port_dumps();
+		    /* continue flush waiting for new tape */
+		    startaflush();
 		} else {
 		    /* OK, allocate space for disk and have chunker continue */
 		    sched(dp)->activehd = assign_holdingdisk( h, dp );
