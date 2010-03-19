@@ -1,3 +1,6 @@
+2010-03-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amxml.c: data_path default ot DATA_PATH_AMANDA.
+
 2010-03-19 Dan Locks <dwlocks@zmanda.com>
 	*  configure.in: update to rc11.  NOTEST
 
