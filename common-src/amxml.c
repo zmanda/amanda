@@ -106,7 +106,7 @@ init_dle(
     dle->include_optional = 0;
     dle->application_property = NULL;
     dle->scriptlist = NULL;
-    dle->data_path = 0;
+    dle->data_path = DATA_PATH_AMANDA;
     dle->directtcp_list = NULL;
     dle->next = NULL;
 }
