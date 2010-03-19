@@ -1,3 +1,6 @@
+2010-03-19 Dan Locks <dwlocks@zmanda.com>
+	*  configure.in: update to rc11.  NOTEST
+
 2010-03-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/amrecover.c: Do add_config_override before loading the
 				   config.
