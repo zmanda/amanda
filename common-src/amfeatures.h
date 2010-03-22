@@ -186,6 +186,7 @@ typedef enum {
     fe_sendbackup_noop,
     fe_amrecover_origsize_in_header,
     fe_amidxtaped_abort,
+    fe_amrecover_correct_disk_quoting,
 
     /*
      * All new features must be inserted immediately *before* this entry.

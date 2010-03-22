@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 102;
+use Test::More tests => 103;
 
 use strict;
 use warnings;
@@ -61,6 +61,7 @@ my $debug = !exists $ENV{'HARNESS_ACTIVE'};
 #	no_fsf - or don't send the first partnum in FSF= and leave amidxtaped to guess
 #   ndmp - using NDMP device (so expect directtcp connection)
 #   bad_cmd - send a bogus command line and expect an error
+#   bad_quoting - send a bogus DISK= without fe_amrecover_correct_disk_quoting
 sub test {
     my %params = @_;
 
@@ -124,6 +125,7 @@ sub test {
     $testmsg .= $params{'no_tapespec'}? "no-tapespec " : "";
     $testmsg .= $params{'no_fsf'}? "no-fsf " : "";
     $testmsg .= $params{'bad_cmd'}? "bad_cmd " : "";
+    $testmsg .= $params{'bad_quoting'}? "bad_quoting " : "";
 
     diag("starting $testmsg") if $debug;
 
@@ -177,6 +179,9 @@ sub test {
 	my $sendfeat = Amanda::Feature::Set->mine();
 	if ($params{'datapath'} eq 'none') {
 	    $sendfeat->remove($Amanda::Feature::fe_amidxtaped_datapath);
+	}
+	if ($params{'bad_quoting'}) {
+	    $sendfeat->remove($Amanda::Feature::fe_amrecover_correct_disk_quoting);
 	}
 	unless ($params{'splits'}) {
 	    $sendfeat->remove($Amanda::Feature::fe_recover_splits);
@@ -240,7 +245,11 @@ sub test {
 	}
 	if ($params{'dumpspec'}) {
 	    $service->send($cmd_stream, "HOST=^localhost\$\r\n");
-	    $service->send($cmd_stream, "DISK=^$Installcheck::Run::diskname\$\r\n");
+	    if ($params{'bad_quoting'}) {
+		$service->send($cmd_stream, "DISK=^/foo/bar\$\r\n");
+	    } else {
+		$service->send($cmd_stream, "DISK=^$Installcheck::Run::diskname\$\r\n");
+	    }
 	    if ($params{'holding'}) {
 		$service->send($cmd_stream, "DATESTAMP=^20111111090909\$\r\n");
 	    } else {
@@ -616,6 +625,9 @@ for $emulate ('inetd', 'amandad') {
 
 # bad authentication triggers an error message
 test(emulate => 'amandad', bad_auth => 1);
+
+# bad quoting should work just fine, with the proper feature missing
+test(emulate => 'amandad', bad_quoting => 1);
 
 # and a bad command triggers an error
 test(emulate => 'amandad', bad_cmd => 1);

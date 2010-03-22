@@ -1,3 +1,15 @@
+2010-03-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amfeatures.c common-src/amfeatures.h
+	  perl/Amanda/Feature.pod: add a new feature to indicate that
+	  amrecover quotes disks right: fe_amrecover_correct_disk_quoting
+	* common-src/match.c common-src/amanda.h: add an 'anchor' arg to
+	  clean_regex
+	* oldrecover-src/extract_list.c oldrecover-src/set_commands.c
+	  recover-src/extract_list.c recover-src/set_commands.c
+	  server-src/diskfile.c: use it
+	* server-src/amidxtaped.pl: ignore DISK if it's not quoted correctly
+	* installcheck/amidxtaped.pl: test that
+
 2010-03-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amxml.c: data_path default ot DATA_PATH_AMANDA.
 

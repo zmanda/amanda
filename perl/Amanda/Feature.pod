@@ -219,6 +219,14 @@ forked amrestore with these arguments.
 
 This feature is no longer supported.
 
+=item fe_amrecover_correct_disk_quoting
+
+ PROTOCOL: amidxtaped
+ FEATURE OF: amrecover
+
+Amrecovers that do not have this flag may send incorrectly-quoted DISK lines, so
+those DISK lines should be ignored.
+
 =back
 
 =cut

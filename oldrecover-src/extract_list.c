@@ -623,7 +623,7 @@ void add_file(
 	    path_on_disk = stralloc2("/", regex);
 	}
     } else {
-	char *clean_disk_path = clean_regex(disk_path);
+	char *clean_disk_path = clean_regex(disk_path, 0);
 	path_on_disk = vstralloc(clean_disk_path, "/", regex, NULL);
 	amfree(clean_disk_path);
     }
@@ -942,7 +942,7 @@ delete_file(
 	    path_on_disk = stralloc2("/", regex);
 	}
     } else {
-	char *clean_disk_path = clean_regex(disk_path);
+	char *clean_disk_path = clean_regex(disk_path, 0);
 	path_on_disk = vstralloc(clean_disk_path, "/", regex, NULL);
 	amfree(clean_disk_path);
     }

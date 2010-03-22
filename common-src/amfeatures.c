@@ -160,6 +160,7 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_sendbackup_noop);
 	am_add_feature(f, fe_amrecover_origsize_in_header);
 	am_add_feature(f, fe_amidxtaped_abort);
+	am_add_feature(f, fe_amrecover_correct_disk_quoting);
     }
     return f;
 }

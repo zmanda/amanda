@@ -865,7 +865,7 @@ add_file(
 	    path_on_disk = stralloc2("/", regex);
 	}
     } else {
-	char *clean_disk_path = clean_regex(disk_path);
+	char *clean_disk_path = clean_regex(disk_path, 0);
 	path_on_disk = vstralloc(clean_disk_path, "/", regex, NULL);
 	amfree(clean_disk_path);
     }
@@ -1229,7 +1229,7 @@ delete_file(
 	    path_on_disk = stralloc2("/", regex);
 	}
     } else {
-	char *clean_disk_path = clean_regex(disk_path);
+	char *clean_disk_path = clean_regex(disk_path, 0);
 	path_on_disk = vstralloc(clean_disk_path, "/", regex, NULL);
 	amfree(clean_disk_path);
     }
@@ -1663,53 +1663,8 @@ extract_files_setup(
 	return -1;
     }
 
-    disk_regex = alloc(strlen(disk_name) * 2 + 3);
-
-    ch = disk_name;
-    ch1 = disk_regex;
-
-    /* we want to force amrestore to only match disk_name exactly */
-    *(ch1++) = '^';
-
-    /* We need to escape some characters first... NT compatibilty crap */
-    for (; *ch != 0; ch++, ch1++) {
-	switch (*ch) {     /* done this way in case there are more */
-	case '$':
-	    *(ch1++) = '\\';
-	    /* no break; we do want to fall through... */
-	default:
-	    *ch1 = *ch;
-	}
-    }
-
-    /* we want to force amrestore to only match disk_name exactly */
-    *(ch1++) = '$';
-
-    *ch1 = '\0';
-
-    host_regex = alloc(strlen(dump_hostname) * 2 + 3);
-
-    ch = dump_hostname;
-    ch1 = host_regex;
-
-    /* we want to force amrestore to only match dump_hostname exactly */
-    *(ch1++) = '^';
-
-    /* We need to escape some characters first... NT compatibilty crap */
-    for (; *ch != 0; ch++, ch1++) {
-	switch (*ch) {     /* done this way in case there are more */
-	case '$':
-	    *(ch1++) = '\\';
-	    /* no break; we do want to fall through... */
-	default:
-	    *ch1 = *ch;
-	}
-    }
-
-    /* we want to force amrestore to only match dump_hostname exactly */
-    *(ch1++) = '$';
-
-    *ch1 = '\0';
+    disk_regex = clean_regex(disk_name, 1);
+    host_regex = clean_regex(dump_hostname, 1);
 
     clean_datestamp = stralloc(dump_datestamp);
     for(ch=ch1=clean_datestamp;*ch1 != '\0';ch1++) {
