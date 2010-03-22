@@ -55,18 +55,24 @@ validate_regexp(
 
 char *
 clean_regex(
-    const char *	regex)
+    const char *	str,
+    gboolean		anchor)
 {
     char *result;
     int j;
     size_t i;
-    result = alloc(2*strlen(regex)+1);
+    result = alloc(2*strlen(str)+3);
 
-    for(i=0,j=0;i<strlen(regex);i++) {
-	if(!isalnum((int)regex[i]))
+    j = 0;
+    if (anchor)
+	result[j++] = '^';
+    for(i=0;i<strlen(str);i++) {
+	if(!isalnum((int)str[i]))
 	    result[j++]='\\';
-	result[j++]=regex[i];
+	result[j++]=str[i];
     }
+    if (anchor)
+	result[j++] = '$';
     result[j] = '\0';
     return result;
 }

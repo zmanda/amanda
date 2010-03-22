@@ -311,9 +311,14 @@ sub make_plan {
     if (exists $self->{'command'}{'HOST'}
      || exists $self->{'command'}{'DISK'}
      || exists $self->{'command'}{'DATESTAMP'}) {
+	my $disk = $self->{'command'}{'DISK'};
+	if (!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_correct_disk_quoting)) {
+	    debug("ignoring specified DISK, as it may be badly quoted");
+	    $disk = undef;
+	}
 	$spec = Amanda::Cmdline::dumpspec_t->new(
 	    $self->{'command'}{'HOST'},
-	    $self->{'command'}{'DISK'},
+	    $disk,
 	    $self->{'command'}{'DATESTAMP'},
 	    undef); # amidxtaped protocol does not provide a level (!?)
     }

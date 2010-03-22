@@ -510,8 +510,8 @@ parse_diskline(
 	    disk = host->disks;
 	    do {
 		char *a1, *a2;
-		a1 = clean_regex(diskname);
-		a2 = clean_regex(disk->name);
+		a1 = clean_regex(diskname, 1);
+		a2 = clean_regex(disk->name, 1);
 
 		if (match_disk(a1, disk->name) && match_disk(a2, diskname)) {
 		    dup = 1;
