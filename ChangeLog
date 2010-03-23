@@ -1,3 +1,12 @@
+2010-03-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* application-src/ampgsql.pl: handle empty incrementals, wait for WAL
+	  files to be archived during full backup, don't backup postmaster.pid
+	  or pg_xlog
+	* man/xml-source/ampgsql.8.xml: new property, fix typos, add a section
+	  describing the operation
+	* installcheck/ampgsql.pl: test restores more carefully, including
+	  an empty incremental
+
 2010-03-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amfeatures.c common-src/amfeatures.h
 	  perl/Amanda/Feature.pod: add a new feature to indicate that
