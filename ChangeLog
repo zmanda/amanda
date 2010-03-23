@@ -1,4 +1,7 @@
 2010-03-22 Dan Locks <dwlocks@zmanda.com>
+	*  configure.in: update to rc13  NOTEST
+
+2010-03-22 Dan Locks <dwlocks@zmanda.com>
 	*  configure.in: update to rc12  NOTEST
 
 2010-03-22  Dustin J. Mitchell <dustin@zmanda.com>
