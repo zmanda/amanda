@@ -1,9 +1,47 @@
-		Release Notes for amanda-2.6.2
+		Release Notes for amanda-3.1.0
+
+config
+  * The 'rawtapedev' keyword was removed, and the 'label_new_tapes' keyword
+    was deprecated.
+  * New warnings for dangerous splitting configurations
+
+changer
+  We have many changers implementing the new changer API. The new changers are
+  faster, more reliable, and have many new features.  One new features is that
+  the changer keeps track of which label is in which slot, allowing it to
+  locate a tape faster. But with some changers (new chg-multi or chg-robot
+  without a barcode), it doesn't get automaticaly notified if you change the
+  volume in a slot. In this case, you must notify the changer of it with the
+  'amtape <conf> update' command:
+    amtape DailySet1 update 3-8
+    amtape DailySet1 update 3-8=
+    amtape DailySet1 update 3=DailySet-003
+  See amanda-changers(7) for more information.
+
+ndmp, dvdrw
+  New Amanda devices - see amanda-devices(7) for more information.
 
 amsamba
   The default amandapass file for the amsamba application is
   $CONFIG_DIR/amandapass, but it is /etc/amandapass for program GNUTAR.
   Don't forget to move the file if you switch to the amsamba application.
+
+ampgsql, amsuntar, amraw
+  New applications to back up PostgreSQL databases, Solaris systems, and
+  raw device files, respectively.
+
+amtape
+  Amtape's behavior has changed; see NEWS
+
+amrmtape
+  Rewritten with new command-line interface; see NEWS
+
+amdevcheck
+  New --label and --properties options give more information about device
+
+amreport
+  New, more natural command-line interface (try 'amreport $config')
+
 
 		Release Notes for amanda-2.6.1
 

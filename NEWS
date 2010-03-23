@@ -1,4 +1,5 @@
-Changes in release 2.6.2alpha
+Changes in release 3.1.0
+
    * Deprecated old changers; see amanda-changers(7) for replacements.  These
      changers are still available in the distribution, but will be removed in a
      future release.
@@ -7,13 +8,27 @@ Changes in release 2.6.2alpha
       o chg-rait
       o chg-disk
       o chg-multi
-   * Removed configuration keywords:
-      o rawtapedev -- this parameter is no longer needed and should be deleted
-   * Removed compile-time default --with-changer-device: specify a device 
-     explicitly in amanda.conf instead
    * Although chg-zd-mtx is still supported, we recommend that all users upgrade
      to the more efficient chg-robot.  See contrib/convert-zd-mtx-to-robot.sh
      for a useful conversion script.
+   * Amanda server configuration file changes (amanda.conf)
+      o removed configuration keywords:
+         + rawtapedev
+      o new configuration keyword
+         + autolabel   -- replace label_new_tapes
+         + columnspec  -- can specify a precision.
+         + order       -- in script, to specify script order execution.
+         + client_port -- in dumptype, to specify which port to connect on
+                          the client.
+         + estimate    -- in dumptype, can specify multiple estimate method.
+      o accept 'define' keyword for defining an holdingdisk
+   * Amanda client configuration file changes (amanda-client.conf)
+      o new configuration keyword
+         + debug_days  -- how many days to keep debug files.
+         + client_port -- use by amrecover, specify which port to connect on
+                          the server.
+   * Removed compile-time default --with-changer-device: specify a device
+     explicitly in amanda.conf instead
    * amtape behavior has changed:
       o 'device' subcommand removed
       o 'slot advance' subcommand removed
@@ -21,19 +36,69 @@ Changes in release 2.6.2alpha
         is not supported by all changers
       o taperscan output has changed
       o new 'inventory' subcommand
+   * amrmtape rewrite
+      o use long option
+         + --changer    -- Specify which changer to use
+         + --cleanup    -- Remove logs and indexes associated with label
+         + --dryrun     -- do not update the original copies.
+         + --erase      -- Attempt to erase the data contained on the volume
+         + --keep-label -- Do not remove label from the tapelist
+         + --quiet      -- Opposite of --verbose
+         + --verbose    -- List backups of hosts and disks that are being
+                           discarded.
+   * amdevcheck
+      o new --label option.
+      o new --properties option.
    * Device API
       o changed wildcard setting for S3_BUCKET_LOCATION from "" to "*"
+      o new 'ndmp:' device to write to a tape on an ndmp server.
+      o new 'dvdrw:' device to write to a dvd drive.
    * Application API
-      o ampgsql: Backup PostgreSQL using continuous WAL archiving
+      o new properties to many applications
+      o amgtar
+         + new ACLS, SELINUX and XATTRS properties
+      o amsamba
+         + Allow '\' in diskname and amandapass.
+         + new ALLOW-ANONYMOUS property.
+      o new applications:
+         + ampgsql  -- Backup PostgreSQL using continuous WAL archiving
+         + amsuntar -- Backup filesytem with the SUN tar
+         + amraw    -- Backup only one directory entry
    * New taper, with DirectTCP support, changed tape and catalog format:
-    - all dumpfiles are now F_SPLIT_DUMPFILE
-    - all on-tape dumpfiles have numparts=-1, since it's no longer possible to
-      calculate this value in advance
-    - there is no logging or reporting of zero-byte, successful parts (this may
-      cause gaps in filenums in the catalog)
+      o all dumpfiles are now F_SPLIT_DUMPFILE
+      o all on-tape dumpfiles have numparts=-1, since it's no longer possible
+        to calculate this value in advance
+      o there is no logging or reporting of zero-byte, successful parts (this
+        may cause gaps in filenums in the catalog)
    * Redesigned amreport
-    - much more natural command-line interface (just run 'amreport $config')
-    - experimental XML output
+      o much more natural command-line interface (just run 'amreport $config')
+      o experimental XML output
+   * configuration override for dumptype works with inheritance.
+
+Changes in release 2.6.1p2
+   * amtapetype: new -p option
+   * Bugs fixed
+      o S3 device driver
+      o amcheckdump
+      o file not removed from holding disk
+      o sendbackup compatibility with a 2.4.2 server
+      o handle EROFS error from tape device.
+      o zfs snapshot name us the diskname.
+      o fix fd allocation in amandad
+      o crash in amflush
+
+Changes in release 2.6.1p1
+
+   * amplot: better output
+   * Don't include genversion.h in distribution tarballs.
+   * Bugs fixed
+      o S3 device driver
+      o rait device driver
+      o amstatus
+      o configure
+      o application-api
+      o compilation on some platform
+      o others small bug
 
 Changes in release 2.6.1
 

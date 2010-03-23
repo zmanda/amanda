@@ -1,3 +1,6 @@
+2010-03-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS, ReleaseNotes: Change for 3.1.0
+
 2010-03-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* application-src/ampgsql.pl: handle empty incrementals, wait for WAL
 	  files to be archived during full backup, don't backup postmaster.pid
