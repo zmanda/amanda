@@ -1,4 +1,8 @@
 2010-03-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsamba.pl: check open failure correctly,
+				      improve debugging message.
+
+2010-03-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS, ReleaseNotes: Change for 3.1.0
 
 2010-03-23  Dustin J. Mitchell <dustin@zmanda.com>
