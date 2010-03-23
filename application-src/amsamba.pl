@@ -205,10 +205,12 @@ sub findpass {
     $self->{username} = undef;
     $self->{password} = undef;
 
-    if (open($amandapass, $self->{amandapass}) == 0) {
+    debug("amandapass: $self->{amandapass}");
+    if (!open($amandapass, $self->{amandapass})) {
 	if ($self->{allow_anonymous}) {
 	    $self->{username} = $self->{allow_anonymous};
 	    debug("cannot open password file '$self->{amandapass}': $!\n");
+	    debug("Using anonymous user: $self->{username}");
 	    return;
 	} else {
 	    $self->print_to_server_and_die(
@@ -259,6 +261,7 @@ sub findpass {
     if ($self->{allow_anonymous}) {
 	$self->{username} = $self->{allow_anonymous};
 	debug("Cannot find password for share $self->{share} in $self->{amandapass}");
+	debug("Using anonymous user: $self->{username}");
 	return;
     }
     $self->print_to_server_and_die(
