@@ -33,6 +33,36 @@ in conjunction with WAL archiving.</para>
 
 <note><para>Tablespaces are not currently supported.</para></note>
 
+<note><para>On versions of PostgreSQL earlier than 8.2, if the database is
+quiet during a full backup, then the backup may not complete until
+enough database activity takes place to trigger the archiving of the
+current WAL file.  Consider adjusting the PG-MAX-WAL-WAIT property from
+its default (60s) to compensate.  Note that you will need to increase
+<option>dtimeout</option> on the server accordingly.</para></note>
+
+</refsect1>
+
+<refsect1><title>OPERATION</title>
+
+<para>This application implements the backup strategy described in <ulink
+url="http://www.postgresql.org/docs/current/static/continuous-archiving.html"
+>http://www.postgresql.org/docs/current/static/continuous-archiving.html</ulink>.
+For a level zero (full) backup, ampgsql:
+<itemizedlist>
+    <listitem><para>execute PG_START_BACKUP()</para></listitem>
+    <listitem><para>dump the data directory</para></listitem>
+    <listitem><para>execute PG_STOP_BACKUP()</para></listitem>
+    <listitem><para>wait for the final WAL file to be archived</para></listitem>
+    <listitem><para>back up the required WAL files</para></listitem>
+    <listitem><para>optionally delete WAL files that are no longer necessary</para></listitem>
+</itemizedlist>
+The two dumps are made with GNU Tar, to <filename>data_dir.tar</filename> and
+<filename>archive_dir</filename>, respectively.  They are then combined into a
+single tar file.</para>
+
+<para>A level N backup creates a single tar file containing all WAL files since the
+previous level N-1 backup.</para>
+
 </refsect1>
 
 <refsect1><title>PROPERTIES</title>
@@ -74,9 +104,9 @@ when Amanda is built by the --with-tmpdir configure option.
 <para>This section lists the <manref name="amanda-client.conf" vol="5"/> properties that control ampsql's functionality.
 If a property is prefixed with the diskname and an underscore,
 then it will be used when that diskname is being backed up.
-For example, if the properties PG-DATA and foo-PG-DATA are set,
-the value of PG-DATA will be used when bar and baz are being backed up,
-but foo-PG-DATA will be used when foo is being backed up.
+For example, if the properties PG-DATADIR and foo-PG-DATADIR are set,
+the value of PG-DATADIR will be used when bar and baz are being backed up,
+but foo-PG-DATADIR will be used when foo is being backed up.
 Disknames are specified in the <manref name="disklist" vol="5"/>.
 </para>
 
@@ -104,6 +134,14 @@ Database to connect to. Defaults to "template1" (which exists by default).
  <varlistentry><term>PG-HOST</term><listitem>
 Host to connect to. If it starts with "/" it will be interepreted as a directory
 that holds the socket file. PostgreSQL defaults to /tmp.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PG-MAX-WAL-WAIT</term><listitem>
+<para>The maximum amount of time to wait for PG_STOP_BACKUP to archive a WAL
+file.  In versions of PostgreSQL before 8.2, PG_STOP_BACKUP does not
+automatically archive the latest WAL file, so a quiet database may
+wait a very long time before archiving the WAL file.  Default: 60
+seconds.  Set to 0 to wait forever.</para>
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PG-PASSFILE</term><listitem>
