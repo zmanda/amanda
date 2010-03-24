@@ -1,4 +1,7 @@
 2010-03-23 Dan Locks <dwlocks@zmanda.com>
+	*  configure.in: update to rc14  NOTEST
+
+2010-03-23 Dan Locks <dwlocks@zmanda.com>
 	*  configure.in: update to beta1  NOTEST
 
 2010-03-23  Jean-Louis Martineau <martineau@zmanda.com>
