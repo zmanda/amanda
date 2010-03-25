@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 141;
+use Test::More tests => 145;
 
 use strict;
 use warnings;
@@ -68,15 +68,16 @@ my $out_filename="$Installcheck::TMP/installcheck-amreport-output";
 sub setup_config {
     my %params = @_;
     my $testconf = Installcheck::Run::setup();
-    if ($params{'want_mailer'}) {
-	$testconf->add_param('mailer', "\"$mail_mock\"");
-    } else {
-	# override the default value, which might be set
-	$testconf->add_param('mailer', '""');
-    }
-    if ($params{'want_mailto'}) {
-	$testconf->add_param('mailto', "\"nobody\@localhost\"");
-    }
+
+    my $mailer =
+        $params{want_mailer}  ? "\"$mail_mock\""
+      : $params{bogus_mailer} ? "\"$mail_mock.bogus\""
+      :                         '""';                    #default
+
+    $testconf->add_param('mailer', $mailer);
+    $testconf->add_param('mailto',
+        $params{want_mailto} ? '"nobody\@localhost"' : '""');
+
     $testconf->add_tapetype('TEST-TAPE-TEMPLATE', [
 	'length' => '30 mbytes',
 	'filemark' => '4 kbytes',
@@ -507,6 +508,9 @@ results_match($mail_output,
 ok(! -f $printer_output,
     "..doesn't print");
 
+cleanup();
+burp($current_log_filename, $datas{'normal'});
+
 ok(run($amreport, 'TESTCONF', '-o', "tapetype:TEST-TAPE-TEMPLATE:lbl_templ=$ps_template",
 					    '-p', $out_filename),
     "amreport with mailer, mailto, but no template, minds -p option if template given via -o")
@@ -518,6 +522,21 @@ results_match($mail_output,
 results_match($out_filename,
     $datas{'normal-postscript'},
     "..printer output matches");
+
+cleanup();
+burp($current_log_filename, $datas{'normal'});
+setup_config(bogus_mailer => 1, want_mailto => 1, want_template => 1);
+
+ok(run($amreport, 'TESTCONF', '--from-amdump'),
+    "amreport with bogus mailer; doesn't mail, still prints")
+  or diag($Installcheck::Run::stderr);
+ok(!-f $mail_output, "..produces no mail output");
+is($Installcheck::Run::stdout, "", "..produces no stdout output");
+results_match(
+    $printer_output,
+    $datas{'normal-postscript'},
+    "..printer output matches"
+);
 
 ## test columnspec adjustments, etc.
 
