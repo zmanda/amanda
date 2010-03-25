@@ -330,9 +330,21 @@ sub open_mail_output
     my @cmd = ("$cfg_mailer", "-s", $subj_str, $mailto);
     debug("invoking mail app: " . join(" ", @cmd));
 
-    # redirect stdout/stderr to stderr, which is usually the amdump log
-    my $pid = open3( my $fh, ">&2", ">&2", @cmd)
-      or error("cannot start $cfg_mailer: $!", 1);
+
+    my ($pid, $fh);
+    eval { $pid = open3($fh, ">&2", ">&2", @cmd); 1; } or do {
+
+        ($pid, $fh) = (0, undef);
+        my $errstr =
+          "error: could not run command: " . join(" ", @cmd) . ": $@";
+
+        if ($mode == MODE_SCRIPT) {
+            debug($errstr);
+        } else {
+            error($errstr, 1);
+        }
+    };
+
     return ($pid, $fh);
 }
 
@@ -349,6 +361,10 @@ sub run_output {
     } elsif ($outputspec->[0] eq 'mail') {
 	($pid, $fh) = open_mail_output($report, $outputspec);
     }
+
+
+    # TODO: add some generic error handling here.  must be compatible
+    # with legacy behavior.
 
     # TODO: modularize these better
     if ($reportspec->[0] eq 'xml') {

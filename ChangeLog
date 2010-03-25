@@ -1,3 +1,7 @@
+2010-03-25  Paul C. Mantz <pcmantz@zmanda.com>
+	* server-src/amreport.pl: amreport exits w/o error if mailer fails
+	* installchecks/amreport.pl: installcheck
+
 2010-03-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/compat.pm: err on the side of caution when
 	  emulating except_slots in chg-compat, preventing an infinite
