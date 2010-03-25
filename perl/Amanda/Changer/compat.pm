@@ -136,8 +136,11 @@ sub load {
 	    # slot, or we're in trouble.  We don't know what the current slot is, so we
 	    # can't verify, but the current slot is set on *every* load, so this works.
 
-	    # if we've already seen nslots slots, then the next slot is certainly
-	    # one of them, so the iteration should terminate
+	    # if we've already seen nslots slots, then the next slot is
+	    # certainly one of them, so the iteration should terminate.
+	    # However, not all changers will return nslots distinct slots
+	    # (chg-zd-mtx skips empty slots, for example), so we will need to
+	    # protect against except_slots in other ways, too.
 	    if (exists $params{'except_slots'} and (keys %{$params{'except_slots'}}) == $self->{'nslots'}) {
 		return $self->make_error("failed", $params{'res_cb'},
 		    reason => 'notfound',
@@ -164,6 +167,16 @@ sub load {
 	    return $self->make_error("failed", $params{'res_cb'},
 		reason => "notfound",
 		message => $rest);
+	}
+
+	# re-check except_slots, and return 'notfound' if we've loaded a
+	# forbidden slot.  This will generally happen when scanning, and when
+	# the underlying changer script has "skipped" some slots and looped
+	# around earlier than we expected.
+	if (exists $params{'except_slots'} and exists $params{'except_slots'}{$slot}) {
+	    return $self->make_error("failed", $params{'res_cb'},
+		reason => 'notfound',
+		message => "all slots have been loaded");
 	}
 
 	return $self->_make_res($params{'res_cb'}, $slot, $rest, undef);
