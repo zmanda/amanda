@@ -1,3 +1,8 @@
+2010-03-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/compat.pm: err on the side of caution when
+	  emulating except_slots in chg-compat, preventing an infinite
+	  loop
+
 2010-03-25 Dan Locks <dwlocks@zmanda.com>
 	*  configure.in: update to rc16  NOTEST
 
