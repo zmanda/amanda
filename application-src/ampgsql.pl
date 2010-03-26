@@ -384,7 +384,11 @@ sub _run_tar_totals {
 
     close(TAR_ERR);
     debug("size of generated tar file: " . (defined($size)? $size : "undef"));
-    (0 == $status) or $self->{'die_cb'}->("Tar failed (exit status $status)");
+    if ($status == 1) {
+	debug("ignored non-fatal tar exit status of 1");
+    } elsif ($status) {
+	$self->{'die_cb'}->("Tar failed (exit status $status)");
+    }
     $size;
 }
 
