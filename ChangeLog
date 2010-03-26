@@ -1,4 +1,9 @@
 2010-03-26  Dustin J. Mitchell <dustin@zmanda.com>
+	* application-src/ampgsql.pl: change 'confess' to 'die' and add a hack
+	  to force WAL file archives on ancient postgres versions
+	* installcheck/ampgsql.pl: don't skip tests on ancient versions
+
+2010-03-26  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/Makefile.am common-src/match-test.c: test (some) match
 	  functions
 	* common-src/match.c: add make_exact_disk_expression and

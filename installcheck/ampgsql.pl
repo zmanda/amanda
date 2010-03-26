@@ -57,9 +57,6 @@ sub get_pg_version {
     return $maj * 10000 + $min * 100 + $pat;
 }
 my $pg_version = get_pg_version();
-if ($pg_version < 80200) {
-    skip_all("installcheck will hang forever without >=postgres-8.2 (cannot backup quiescent db)");
-}
 
 my $SIGINT = 2;
 my $DB_NAME = "installcheck";
