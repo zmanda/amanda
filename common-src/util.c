@@ -29,6 +29,7 @@
 
 #include "amanda.h"
 #include "util.h"
+#include "match.h"
 #include <regex.h>
 #include "arglist.h"
 #include "clock.h"

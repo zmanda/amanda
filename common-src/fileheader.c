@@ -29,6 +29,7 @@
 
 #include "amanda.h"
 #include "fileheader.h"
+#include "match.h"
 #include <glib.h>
 #include "util.h"
 

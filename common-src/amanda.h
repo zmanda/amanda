@@ -471,23 +471,7 @@ extern int debug_amtable_alloc(const char *file,
 extern void amtable_free(void **, size_t *);
 
 char **	safe_env(void);
-char *	validate_regexp(const char *regex);
-char *	validate_glob(const char *glob);
 
-/* quote any regular-expression metacharacters in str, so that the result will
- * only match the original string.  If anchor is true, then add ^ and $ to make
- * sure that substrings will not match. */
-char *	clean_regex(const char *str, gboolean anchor);
-int	match(const char *regex, const char *str);
-int	match_no_newline(const char *regex, const char *str);
-int	match_glob(const char *glob, const char *str);
-char *	glob_to_regex(const char *glob);
-int	match_tar(const char *glob, const char *str);
-char *	tar_to_regex(const char *glob);
-int	match_host(const char *glob, const char *host);
-int	match_disk(const char *glob, const char *disk);
-int	match_datestamp(const char *dateexp, const char *datestamp);
-int	match_level(const char *levelexp, const char *level);
 time_t	unctime(char *timestr);
 
 /*

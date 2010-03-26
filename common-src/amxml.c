@@ -33,6 +33,7 @@
 #include "amanda.h"
 #include "util.h"
 #include "amxml.h"
+#include "match.h"
 #include "glib.h"
 #include "conffile.h"
 #include "base64.h"

@@ -30,6 +30,7 @@
  * read disklist file
  */
 #include "amanda.h"
+#include "match.h"
 #include "arglist.h"
 #include "conffile.h"
 #include "diskfile.h"

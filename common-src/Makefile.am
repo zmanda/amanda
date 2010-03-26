@@ -108,6 +108,7 @@ noinst_HEADERS =		\
 	file.h			\
 	fileheader.h		\
 	glib-util.h		\
+	match.h			\
 	packet.h		\
 	pipespawn.h		\
 	protocol.h		\
@@ -205,7 +206,7 @@ libtestutils_la_SOURCES = \
 # automake-style tests
 
 TESTS = amflock-test event-test semaphore-test queueing-test quoting-test \
-	ipc-binary-test hexencode-test fileheader-test
+	ipc-binary-test hexencode-test fileheader-test match-test
 noinst_PROGRAMS = $(TESTS)
 
 amflock_test_SOURCES = amflock-test.c
@@ -231,6 +232,9 @@ hexencode_test_LDADD = libamanda.la libtestutils.la
 
 fileheader_test_SOURCES = fileheader-test.c
 fileheader_test_LDADD = libamanda.la libtestutils.la
+
+match_test_SOURCES = match-test.c
+match_test_LDADD = libamanda.la libtestutils.la
 
 # scripts
 

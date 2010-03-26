@@ -30,6 +30,7 @@
  */
 
 #include "amanda.h"
+#include "match.h"
 #include "conffile.h"
 #include "amrecover.h"
 #include "fileheader.h"
