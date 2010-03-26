@@ -132,7 +132,7 @@ is_deeply([ @results ], [
 	'server-ready', 'config-set', 'use-sethost',
 	'> sethost localhost',
 	'host-set',
-	'> setdisk /A/p/tmp/installchecks/backmeup',
+	"> setdisk $diskname",
 	'disk-set',
 	'> add 1kilobyte',
 	'added-file',
