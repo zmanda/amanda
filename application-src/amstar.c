@@ -45,6 +45,7 @@
  */
 
 #include "amanda.h"
+#include "match.h"
 #include "pipespawn.h"
 #include "amfeatures.h"
 #include "amandates.h"
@@ -53,7 +54,6 @@
 #include "getfsent.h"
 #include "client_util.h"
 #include "conffile.h"
-#include "amandad.h"
 #include "getopt.h"
 #include "sendbackup.h"
 

@@ -30,11 +30,11 @@
  */
 
 #include "amanda.h"
+#include "match.h"
 #include "sendbackup.h"
 #include "clock.h"
 #include "pipespawn.h"
 #include "amfeatures.h"
-#include "amandad.h"
 #include "arglist.h"
 #include "getfsent.h"
 #include "conffile.h"

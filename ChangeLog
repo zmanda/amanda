@@ -1,3 +1,22 @@
+2010-03-26  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/Makefile.am common-src/match-test.c: test (some) match
+	  functions
+	* common-src/match.c: add make_exact_disk_expression and
+	  make_exact_host_expression
+	* installcheck/Installcheck/Dumpcache.pm: add amrecover_changer
+	* installcheck/Makefile.am installcheck/amrecover.pl: new integration
+	  tests
+	* oldrecover-src/extract_list.c recover-src/extract_list.c: use the
+	  make_exact_.. functions
+	* common-src/amanda.h common-src/match.h application-src/amgtar.c
+	  application-src/amstar.c client-src/calcsize.c client-src/sendbackup.c
+	  client-src/sendsize.c common-src/amxml.c common-src/fileheader.c
+	  common-src/local-security.c common-src/util.c
+	  oldrecover-src/set_commands.c recover-src/set_commands.c
+	  server-src/amflush.c server-src/cmdline.c server-src/diskfile.c
+	  server-src/find.c server-src/tapefile.c: move match.c prototypes from
+	  amanda.h to match.h
+
 2010-03-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Don't exit with non-zero if '-l' and amdump
 				or amflush is running.

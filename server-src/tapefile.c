@@ -29,6 +29,7 @@
  * routines to read and write the amanda active tape list
  */
 #include "amanda.h"
+#include "match.h"
 #include "tapefile.h"
 #include "conffile.h"
 

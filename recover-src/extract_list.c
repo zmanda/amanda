@@ -30,6 +30,7 @@
  */
 
 #include "amanda.h"
+#include "match.h"
 #include "amrecover.h"
 #include "fileheader.h"
 #include "dgram.h"
@@ -1663,8 +1664,8 @@ extract_files_setup(
 	return -1;
     }
 
-    disk_regex = clean_regex(disk_name, 1);
-    host_regex = clean_regex(dump_hostname, 1);
+    disk_regex = make_exact_disk_expression(disk_name);
+    host_regex = make_exact_host_expression(dump_hostname);
 
     clean_datestamp = stralloc(dump_datestamp);
     for(ch=ch1=clean_datestamp;*ch1 != '\0';ch1++) {

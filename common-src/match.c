@@ -30,9 +30,11 @@
  */
 
 #include "amanda.h"
+#include "match.h"
 #include <regex.h>
 
 static int match_word(const char *glob, const char *word, const char separator);
+static char *tar_to_regex(const char *glob);
 
 char *
 validate_regexp(
@@ -73,6 +75,75 @@ clean_regex(
     }
     if (anchor)
 	result[j++] = '$';
+    result[j] = '\0';
+    return result;
+}
+
+char *
+make_exact_host_expression(
+    const char *	host)
+{
+    char *result;
+    int j;
+    size_t i;
+    result = alloc(2*strlen(host)+3);
+
+    j = 0;
+    result[j++] = '^';
+    for(i=0;i<strlen(host);i++) {
+	/* quote host expression metcharacters *except* '.'.  Note that
+	 * most of these are invalid in a DNS hostname anyway. */
+	switch (host[i]) {
+	    case '\\':
+	    case '/':
+	    case '^':
+	    case '$':
+	    case '?':
+	    case '*':
+	    case '[':
+	    case ']':
+	    result[j++]='\\';
+	    /* fall through */
+
+	    default:
+	    result[j++]=host[i];
+	}
+    }
+    result[j++] = '$';
+    result[j] = '\0';
+    return result;
+}
+
+char *
+make_exact_disk_expression(
+    const char *	disk)
+{
+    char *result;
+    int j;
+    size_t i;
+    result = alloc(2*strlen(disk)+3);
+
+    j = 0;
+    result[j++] = '^';
+    for(i=0;i<strlen(disk);i++) {
+	/* quote disk expression metcharacters *except* '/' */
+	switch (disk[i]) {
+	    case '\\':
+	    case '.':
+	    case '^':
+	    case '$':
+	    case '?':
+	    case '*':
+	    case '[':
+	    case ']':
+	    result[j++]='\\';
+	    /* fall through */
+
+	    default:
+	    result[j++]=disk[i];
+	}
+    }
+    result[j++] = '$';
     result[j] = '\0';
     return result;
 }
@@ -295,7 +366,7 @@ match_tar(
     return result == 0;
 }
 
-char *
+static char *
 tar_to_regex(
     const char *	glob)
 {

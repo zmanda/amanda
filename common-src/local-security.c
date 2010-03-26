@@ -34,6 +34,7 @@
  */
 
 #include "amanda.h"
+#include "match.h"
 #include "util.h"
 #include "event.h"
 #include "packet.h"

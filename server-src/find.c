@@ -30,6 +30,7 @@
  * controlling process for the Amanda backup system
  */
 #include "amanda.h"
+#include "match.h"
 #include "conffile.h"
 #include "tapefile.h"
 #include "logfile.h"

@@ -68,6 +68,7 @@ full_tests = \
 	amrmtape \
 	amservice \
 	amstatus \
+	amrecover \
 	amreport \
 	amadmin \
 	pp-scripts

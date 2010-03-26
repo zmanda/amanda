@@ -32,6 +32,7 @@
  * argv[1] is the config name or NOCONFIG
  */
 #include "amanda.h"
+#include "match.h"
 #include "conffile.h"
 #include "fsusage.h"
 #include "sl.h"
