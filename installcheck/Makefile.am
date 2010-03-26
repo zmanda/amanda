@@ -68,13 +68,13 @@ full_tests = \
 	amrmtape \
 	amservice \
 	amstatus \
-	amrecover \
 	amreport \
 	amadmin \
 	pp-scripts
 
 restore_tests = \
 	amfetchdump \
+	amrecover \
 	amidxtaped \
 	amrestore
 
