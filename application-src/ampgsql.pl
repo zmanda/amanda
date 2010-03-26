@@ -218,6 +218,7 @@ sub command_selfcheck {
    # set up to handle errors correctly
    $self->{'die_cb'} = sub {
        my ($msg) = @_;
+       debug("$msg");
        print "$msg\n";
        exit(1);
    };
@@ -391,9 +392,9 @@ sub command_estimate {
    my $self = shift;
 
    $self->{'out_h'} = new IO::File("/dev/null", "w");
-   $self->{'out_h'} or confess("Could not /dev/null");
+   $self->{'out_h'} or die("Could not open /dev/null");
    $self->{'index_h'} = new IO::File("/dev/null", "w");
-   $self->{'index_h'} or confess("Could not /dev/null");
+   $self->{'index_h'} or die("Could not open /dev/null");
 
    $self->{'done_cb'} = sub {
        my $size = shift @_;
@@ -404,8 +405,9 @@ sub command_estimate {
    };
    $self->{'die_cb'} = sub {
        my $msg = shift @_;
+       debug("$msg");
        $self->{'done_cb'}->(-1);
-       confess($msg);
+       die($msg);
    };
    $self->{'state_cb'} = sub {
        # do nothing
@@ -472,16 +474,61 @@ sub _get_backup_info {
    ($start_wal, $end_wal);
 }
 
+# return the postgres version as an integer
+sub _get_pg_version {
+    my $self = shift;
+
+    local *VERSOUT;
+
+    my @cmd = ($self->{'props'}->{'psql-path'});
+    push @cmd, "-X";
+    push @cmd, "--version";
+    my $pid = open3('>&STDIN', \*VERSOUT, '>&STDERR', @cmd)
+	or $self->{'die_cb'}->("could not open psql to determine version");
+    my @lines = <VERSOUT>;
+    waitpid($pid, 0);
+    $self->{'die_cb'}->("could not run psql to determine version") if (($? >> 8) != 0);
+
+    my ($maj, $min, $pat) = ($lines[0] =~ / ([0-9]+)\.([0-9]+)\.([0-9]+)$/);
+    return $maj * 10000 + $min * 100 + $pat;
+}
+
+# create a large table and immediately drop it; this can help to push a WAL file out
+sub _write_garbage_to_db {
+    my $self = shift;
+
+    debug("writing garbage to database to force a WAL archive");
+
+    # note: lest ye be tempted to add "if exists" to the drop table here, note that
+    # the clause was not supported in 8.1
+    _run_psql_command($self, <<EOF) or
+CREATE TABLE _ampgsql_garbage AS SELECT * FROM GENERATE_SERIES(1, 500000);
+DROP TABLE _ampgsql_garbage;
+EOF
+        $self->{'die_cb'}->("Failed to create or drop table _ampgsql_garbage");
+}
+
 # wait up to pg-max-wal-wait seconds for a WAL file to appear
 sub _wait_for_wal {
     my ($self, $wal) = @_;
+    my $pg_version = $self->_get_pg_version();
 
     my $archive_dir = $self->{'props'}->{'pg-archivedir'};
     my $maxwait = 0+$self->{'props'}->{'pg-max-wal-wait'};
+
+    my $stoptime = time() + $maxwait;
+    my $count = 0;
     debug("waiting $maxwait s for WAL $wal to be archived..");
-    for (my $count = 0; $maxwait and $count < $maxwait; $count++) {
+    while (time < $stoptime || $count++ < 4) {
 	return if -f "$archive_dir/$wal";
-	sleep(1);
+	
+	# for versions 8.0 or 8.1, the only way to "force" a WAL archive is to write
+	# garbage to the database.
+	if ($pg_version < 802000) {
+	    $self->_write_garbage_to_db();
+	} else {
+	    sleep(1);
+	}
     }
 
     $self->{'die_cb'}->("WAL file $wal was not archived in $maxwait seconds");
@@ -495,7 +542,8 @@ sub _base_backup {
    my $label = "$self->{'label-prefix'}-" . time();
    my $tmp = "$self->{'args'}->{'tmpdir'}/$label";
 
-   -d $self->{'props'}->{'pg-archivedir'} or confess("WAL file archive directory does not exist (or is not a directory)");
+   -d $self->{'props'}->{'pg-archivedir'} or
+	die("WAL file archive directory does not exist (or is not a directory)");
 
    # try to protect what we create
    my $old_umask = umask();
@@ -625,11 +673,11 @@ sub command_backup {
    my $self = shift;
 
    $self->{'out_h'} = IO::Handle->new_from_fd(1, 'w');
-   $self->{'out_h'} or confess("Could not open data fd");
+   $self->{'out_h'} or die("Could not open data fd");
    my $msg_fd = IO::Handle->new_from_fd(3, 'w');
-   $msg_fd or confess("Could not open message fd");
+   $msg_fd or die("Could not open message fd");
    $self->{'index_h'} = IO::Handle->new_from_fd(4, 'w');
-   $self->{'index_h'} or confess("Could not open index fd");
+   $self->{'index_h'} or die("Could not open index fd");
 
    $self->{'done_cb'} = sub {
        my $size = shift @_;
@@ -644,9 +692,10 @@ sub command_backup {
    };
    $self->{'die_cb'} = sub {
        my $msg = shift @_;
+       debug("$msg");
        $msg_fd->print("! $msg\n");
        $self->{'done_cb'}->(0);
-       confess($msg);
+       exit(1);
    };
    $self->{'state_cb'} = sub {
        my ($self, $end_wal) = @_;
@@ -655,7 +704,7 @@ sub command_backup {
    my $cleanup_wal_val = $self->{'props'}->{'pg-cleanupwal'} || 'yes';
    my $cleanup_wal = string_to_boolean($cleanup_wal_val);
    if (!defined($cleanup_wal)) {
-       confess("couldn't interpret PG-CLEANUPWAL value '$cleanup_wal_val' as a boolean");
+       $self->{'die_cb'}->("couldn't interpret PG-CLEANUPWAL value '$cleanup_wal_val' as a boolean");
    } elsif ($cleanup_wal) {
        $self->{'unlink_cb'} = sub {
            my $filename = shift @_;
@@ -693,7 +742,7 @@ sub command_restore {
    my $cur_dir = POSIX::getcwd();
 
    if (!-d $_ARCHIVE_DIR_RESTORE) {
-       mkdir($_ARCHIVE_DIR_RESTORE) or confess("could not create archive WAL directory: $!");
+       mkdir($_ARCHIVE_DIR_RESTORE) or die("could not create archive WAL directory: $!");
    }
    my $status;
    if ($self->{'args'}->{'level'} > 0) {
@@ -701,26 +750,26 @@ sub command_restore {
        $status = system($self->{'args'}->{'gnutar-path'}, '--extract',
 	   '--exclude', 'empty-incremental',
            '--directory', $_ARCHIVE_DIR_RESTORE) >> 8;
-       (0 == $status) or confess("Failed to extract level $self->{'args'}->{'level'} backup (exit status: $status)");
+       (0 == $status) or die("Failed to extract level $self->{'args'}->{'level'} backup (exit status: $status)");
    } else {
        debug("extracting base of full backup");
        if (!-d $_DATA_DIR_RESTORE) {
-           mkdir($_DATA_DIR_RESTORE) or confess("could not create archive WAL directory: $!");
+           mkdir($_DATA_DIR_RESTORE) or die("could not create archive WAL directory: $!");
        }
        $status = system($self->{'args'}->{'gnutar-path'}, '--extract') >> 8;
-       (0 == $status) or confess("Failed to extract base backup (exit status: $status)");
+       (0 == $status) or die("Failed to extract base backup (exit status: $status)");
 
        debug("extracting archive dir to $cur_dir/$_ARCHIVE_DIR_RESTORE");
        $status = system($self->{'args'}->{'gnutar-path'}, '--extract',
 	  '--exclude', 'empty-incremental',
           '--file', $_ARCHIVE_DIR_TAR, '--directory', $_ARCHIVE_DIR_RESTORE) >> 8;
-       (0 == $status) or confess("Failed to extract archived WAL files from base backup (exit status: $status)");
+       (0 == $status) or die("Failed to extract archived WAL files from base backup (exit status: $status)");
        unlink($_ARCHIVE_DIR_TAR);
 
        debug("extracting data dir to $cur_dir/$_DATA_DIR_RESTORE");
        $status = system($self->{'args'}->{'gnutar-path'}, '--extract',
           '--file', $_DATA_DIR_TAR, '--directory', $_DATA_DIR_RESTORE) >> 8;
-       (0 == $status) or confess("Failed to extract data directory from base backup (exit status: $status)");
+       (0 == $status) or die("Failed to extract data directory from base backup (exit status: $status)");
        unlink($_DATA_DIR_TAR);
    }
 }
@@ -731,6 +780,7 @@ sub command_validate {
    # set up to handle errors correctly
    $self->{'die_cb'} = sub {
        my ($msg) = @_;
+       debug("$msg");
        print "$msg\n";
        exit(1);
    };
