@@ -1021,7 +1021,7 @@ start_server_check(
 	}
 	amfree(quoted);
 
-	if(access(logfile, F_OK) == 0) {
+	if(logbad == 0 && access(logfile, F_OK) == 0) {
 	    testtape = 0;
 	    logbad = 2;
 	    if(access(logfile, W_OK) != 0) {
@@ -1033,20 +1033,20 @@ start_server_check(
 
 	olddir = vstralloc(conf_logdir, "/oldlog", NULL);
 	quoted = quote_string(olddir);
-	if (stat(olddir,&stat_old) == 0) { /* oldlog exist */
+	if (logbad == 0 && stat(olddir,&stat_old) == 0) { /* oldlog exist */
 	    if(!(S_ISDIR(stat_old.st_mode))) {
 		g_fprintf(outf, _("ERROR: oldlog directory %s is not a directory\n"),
 			quoted);
 		g_fprintf(outf, _("Remove the entry and create a new directory\n"));
 		logbad = 1;
 	    }
-	    if(access(olddir, W_OK) == -1) {
+	    if(logbad == 0 && access(olddir, W_OK) == -1) {
 		g_fprintf(outf, _("ERROR: oldlog dir %s: not writable\n"), quoted);
 		g_fprintf(outf, _("Check permissions\n"));
 		logbad = 1;
 	    }
 	}
-	else if(lstat(olddir,&stat_old) == 0) {
+	else if(logbad == 0 && lstat(olddir,&stat_old) == 0) {
 	    g_fprintf(outf, _("ERROR: oldlog directory %s is not a directory\n"),
 		    quoted);
 		g_fprintf(outf, _("Remove the entry and create a new directory\n"));
@@ -1054,7 +1054,7 @@ start_server_check(
 	}
 	amfree(quoted);
 
-	if (testtape) {
+	if (logbad == 0 && testtape) {
 	    logfile = newvstralloc(logfile, conf_logdir, "/amdump", NULL);
 	    if (access(logfile, F_OK) == 0) {
 		testtape = 0;
@@ -1073,8 +1073,12 @@ start_server_check(
 	g_fprintf(outf, _("WARNING: skipping tape test because amdump or amflush seem to be running\n"));
 	g_fprintf(outf, _("WARNING: if they are not, you must run amcleanup\n"));
     } else if (logbad == 2) {
-	g_fprintf(outf, _("WARNING: amdump or amflush seem to be running\n"));
-	g_fprintf(outf, _("WARNING: if they are not, you must run amcleanup\n"));
+	g_fprintf(outf, _("NOTE: amdump or amflush seem to be running\n"));
+	g_fprintf(outf, _("NOTE: if they are not, you must run amcleanup\n"));
+
+	/* we skipped the tape checks, but this is just a NOTE and
+	 * should not result in a nonzero exit status, so reset logbad to 0 */
+	logbad = 0;
     } else {
 	g_fprintf(outf, _("NOTE: skipping tape checks\n"));
     }
@@ -1480,6 +1484,14 @@ start_server_check(
     g_fprintf(outf, _("Server check took %s seconds\n"), walltime_str(curclock()));
 
     fflush(outf);
+    g_debug("userbad: %d", userbad);
+    g_debug("confbad: %d", confbad);
+    g_debug("tapebad: %d", tapebad);
+    g_debug("disklow: %d", disklow);
+    g_debug("logbad: %d", logbad);
+    g_debug("infobad: %d", infobad);
+    g_debug("indexbad: %d", indexbad);
+    g_debug("pgmbad: %d", pgmbad);
 
     exit(userbad \
 	 || confbad \
