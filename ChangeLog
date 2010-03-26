@@ -1,3 +1,6 @@
+2010-03-26  Dan Locks <dwlocks@zmanda.com>
+        * configure.in: update to rc17
+
 2010-03-26  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amrecover.pl: fix stupid error in installcheck
 
