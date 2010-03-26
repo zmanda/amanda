@@ -2,6 +2,10 @@
         * configure.in: update to rc17
 
 2010-03-26  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am: don't run amrecover test under
+	  --without-restore
+
+2010-03-26  Dustin J. Mitchell <dustin@zmanda.com>
 	* application-src/ampgsql.pl: don't die when gnutar issues non-fatal
 	  errors, e.g., "file changed as we read it"
 
