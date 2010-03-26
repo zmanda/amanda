@@ -1,4 +1,7 @@
 2010-03-26  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amrecover.pl: fix stupid error in installcheck
+
+2010-03-26  Dustin J. Mitchell <dustin@zmanda.com>
 	* application-src/ampgsql.pl: change 'confess' to 'die' and add a hack
 	  to force WAL file archives on ancient postgres versions
 	* installcheck/ampgsql.pl: don't skip tests on ancient versions
