@@ -1,3 +1,7 @@
+2010-03-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Don't exit with non-zero if '-l' and amdump
+				or amflush is running.
+
 2010-03-25  Paul C. Mantz <pcmantz@zmanda.com>
 	* server-src/amreport.pl: amreport exits w/o error if mailer fails
 	* installchecks/amreport.pl: installcheck
