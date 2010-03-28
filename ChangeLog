@@ -1,4 +1,9 @@
 2010-03-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Run.pm: catch signal exits too
+	* installcheck/Makefile.am installcheck/amvault.pl: basic amvault
+	  installcheck
+
+2010-03-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amvault.pl: update with Changer and Catalog API changes
 
 2010-03-26  Dan Locks <dwlocks@zmanda.com>
