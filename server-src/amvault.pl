@@ -132,14 +132,14 @@ sub add_part_to_db {
     my $dump = {
 	'label' => $self->{'dst_label'},
 	'filenum' => $filenum,
-	'dump_timestamp' => $next_file->{'dump_timestamp'},
+	'dump_timestamp' => $next_file->{'dump'}->{'dump_timestamp'},
 	'write_timestamp' => $self->{'dst_timestamp'},
-	'hostname' => $next_file->{'hostname'},
-	'diskname' => $next_file->{'diskname'},
-	'level' => $next_file->{'level'},
+	'hostname' => $next_file->{'dump'}->{'hostname'},
+	'diskname' => $next_file->{'dump'}->{'diskname'},
+	'level' => $next_file->{'dump'}->{'level'},
 	'status' => 'OK',
 	'partnum' => $next_file->{'partnum'},
-	'nparts' => $next_file->{'nparts'},
+	'nparts' => $next_file->{'dump'}->{'nparts'},
 	'kb' => 0, # unknown
 	'sec' => 0, # unknown
     };
@@ -154,8 +154,10 @@ sub start_next_file {
 
     # bail if we're finished
     if (!defined $next_file) {
-	Amanda::MainLoop::quit();
 	vlog("all files copied");
+	$self->release_reservations(sub {
+	    Amanda::MainLoop::quit();
+	});
 	return;
     }
 
@@ -174,8 +176,8 @@ sub load_next_volumes {
     my $self = shift;
     my ($next_file) = @_;
     my ($src_loaded, $dst_loaded) = (0,0);
-    my ($release_src, $load_src, $open_src, $set_labeled_src,
-        $release_dst, $load_dst, $open_dst,
+    my ($release_src, $load_src, $got_src, $set_labeled_src,
+        $release_dst, $load_dst, $got_dst,
 	$maybe_done);
 
     # For the source changer, we release the previous device, load the next
@@ -202,36 +204,26 @@ sub load_next_volumes {
 
 	$self->{'src_chg'}->load(
 	    label => $next_file->{'label'},
-	    res_cb => $open_src);
+	    res_cb => $got_src);
     });
 
-    $open_src = make_cb('open_src' => sub {
+    $got_src = make_cb(got_src => sub {
 	my ($err, $res) = @_;
 	fail $err if $err;
-	debug("Opening source device $res->{device_name}");
 
-	$self->{'src_res'} = $res;
-	my $dev = $self->{'src_dev'} =
-	    Amanda::Device->new($res->{'device_name'});
-	if ($dev->status() != $DEVICE_STATUS_SUCCESS) {
-	    fail ("Could not open device $res->{device_name}: " .
-		 $dev->error_or_status());
-	}
+	debug("Opened source device");
 
-	$res->set_label($dev->volume_label(),
-			finished_cb => $set_labeled_src);
-    });
+	my $res = $self->{'src_res'} = $res;
+	my $dev = $self->{'src_dev'} = $res->{'device'};
+	my $device_name = $dev->device_name;
 
-    $set_labeled_src = make_cb('set_labelel' => sub {
-	my $dev = $self->{'src_dev'};
-	my $res = $self->{'src_res'};
 	if ($dev->volume_label ne $next_file->{'label'}) {
-	    fail ("Volume in $res->{device_name} has unexpected label " .
+	    fail ("Volume in $device_name has unexpected label " .
 		 $dev->volume_label);
 	}
 
 	$dev->start($ACCESS_READ, undef, undef)
-	    or fail ("Could not start device $res->{device_name}: " .
+	    or fail ("Could not start device $device_name: " .
 		$dev->error_or_status());
 
 	# OK, it all matches up now..
@@ -268,19 +260,20 @@ sub load_next_volumes {
 		relative_slot => 'next',
 		slot => $self->{'dst_res'}->{'this_slot'},
 		set_current => 1,
-		res_cb => $open_dst);
+		res_cb => $got_dst);
 	} else {
 	    $self->{'dst_chg'}->load(
 		relative_slot => "current",
 		set_current => 1,
-		res_cb => $open_dst);
+		res_cb => $got_dst);
 	}
     });
 
-    $open_dst = make_cb('open_dst' => sub {
+    $got_dst = make_cb('got_dst' => sub {
 	my ($err, $res) = @_;
 	fail $err if $err;
-	debug("Opening destination device $res->{device_name}");
+
+	debug("Opened destination device");
 
 	# if we've tried this slot before, we're out of destination slots
 	if (defined $self->{'first_dst_slot'}) {
@@ -292,12 +285,8 @@ sub load_next_volumes {
 	}
 
 	$self->{'dst_res'} = $res;
-	my $dev = $self->{'dst_dev'} =
-	    Amanda::Device->new($res->{'device_name'});
-	if ($dev->status() != $DEVICE_STATUS_SUCCESS) {
-	    fail ("Could not open device $res->{device_name}: " .
-		 $dev->error_or_status());
-	}
+	my $dev = $self->{'dst_dev'} = $res->{'device'};
+	my $device_name = $dev->device_name;
 
 	# for now, we only overwrite absolutely empty volumes.  This will need
 	# to change when we introduce use of a taperscan algorithm.
@@ -306,7 +295,7 @@ sub load_next_volumes {
 	if (!($status & $DEVICE_STATUS_VOLUME_UNLABELED)) {
 	    # if UNLABELED is only one possibility, give a device error msg
 	    if ($status & ~$DEVICE_STATUS_VOLUME_UNLABELED) {
-		fail ("Could not read label from $res->{device_name}: " .
+		fail ("Could not read label from $device_name: " .
 		     $dev->error_or_status());
 	    } else {
 		vlog("Volume in destination slot $res->{this_slot} is already labeled; going to next slot");
@@ -324,7 +313,7 @@ sub load_next_volumes {
 	my $new_label = $self->generate_new_dst_label();
 
 	$dev->start($ACCESS_WRITE, $new_label, $self->{'dst_timestamp'})
-	    or fail ("Could not start device $res->{device_name}: " .
+	    or fail ("Could not start device $device_name: " .
 		$dev->error_or_status());
 
 	# OK, it all matches up now..
@@ -409,6 +398,41 @@ sub seek_and_copy {
     $xfer->start($xfer_cb);
 }
 
+sub release_reservations {
+    my $self = shift;
+    my ($finished_cb) = @_;
+    my %subs;
+
+    $subs{'release_src'} = make_cb('release_src' => sub {
+	if ($self->{'src_res'}) {
+	    $self->{'src_res'}->release(
+		finished_cb => $subs{'release_dst'});
+	} else {
+	    $subs{'release_dst'}->(undef);
+	}
+    });
+
+    $subs{'release_dst'} = make_cb('release_dst' => sub {
+	my ($err) = @_;
+	vlog("$err") if $err;
+
+	if ($self->{'dst_res'}) {
+	    $self->{'dst_res'}->release(
+		finished_cb => $subs{'done'});
+	} else {
+	    $subs{'done'}->(undef);
+	}
+    });
+
+    $subs{'done'} = make_cb(done => sub {
+	my ($err) = @_;
+	vlog("$err") if $err;
+	$finished_cb->();
+    });
+
+    $subs{'release_src'}->();
+}
+
 ## Application initialization
 package Main;
 use Amanda::Config qw( :init :getconf );
@@ -467,4 +491,4 @@ Amanda::Util::finish_setup($RUNNING_AS_ANY);
 # start the copy
 my $vault = Amvault->new($src_write_timestamp, $dst_changer, $label_template);
 $vault->run();
-sAmanda::Util::finish_application();
+Amanda::Util::finish_application();
