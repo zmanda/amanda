@@ -456,9 +456,10 @@ main(
 	/*
 	 * This is the child process.
 	 */
-	config_options = get_config_options(2);
+	config_options = get_config_options(3);
 	config_options[0] = "amreport";
 	config_options[1] = get_config_name();
+        config_options[2] = "--from-amdump";
 	safe_fd(-1, 0);
 	execve(reporter_program, config_options, safe_env());
 	error(_("cannot exec %s: %s"), reporter_program, strerror(errno));
