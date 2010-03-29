@@ -131,9 +131,9 @@ if ($nb_amanda_process > 0) {
 # rotate log
 if (-f $logfile) {
     Amanda::Debug::debug("Processing log file");
-    system $amreport, $config_name;
-    system $amlogroll, $config_name;
-    system $amtrmidx, $config_name;
+    system qw/$amreport $config_name --from-amdump/;
+    system qw/$amlogroll $config_name/;
+    system qw/$amtrmidx $config_name/;
 } else {
     print "amcleanup: no unprocessed logfile to clean up.\n";
 }
