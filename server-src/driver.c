@@ -1256,15 +1256,11 @@ continue_port_dumps(void)
      * a) diskspace has been allocated for other dumps which are
      *    still running or already being written to tape
      * b) all other dumps have been suspended due to lack of diskspace
-     * c) this dump doesn't fit on all the holding disks
      * Case a) is not a problem. We just wait for the diskspace to
      * be freed by moving the current disk to a queue.
      * If case b) occurs, we have a deadlock situation. We select
      * a dump from the queue to be aborted and abort it. It will
-     * be retried later dumping to disk.
-     * If case c) is detected, the dump is aborted. Next time
-     * it will be dumped directly to tape. Actually, case c is a special
-     * manifestation of case b) where only one dumper is busy.
+     * be retried directly to tape.
      */
     for(dp=NULL, dumper = dmptable; dumper < (dmptable+inparallel); dumper++) {
 	if( dumper->busy ) {
@@ -1279,11 +1275,8 @@ continue_port_dumps(void)
     }
     if((dp != NULL) && (active_dumpers == 0) && (busy_dumpers > 0) && 
         ((!taper_busy && empty(tapeq)) || degraded_mode) &&
-	pending_aborts == 0 ) { /* not case a */
-	if( busy_dumpers == 1 ) { /* case c */
-	    sched(dp)->no_space = 1;
-	}
-	/* case b */
+	pending_aborts == 0 ) { /* case b */
+	sched(dp)->no_space = 1;
 	/* At this time, dp points to the dump with the smallest est_size.
 	 * We abort that dump, hopefully not wasting too much time retrying it.
 	 */

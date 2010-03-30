@@ -1,3 +1,7 @@
+2010-03-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Retry direct to tape all aborted dump because
+			       of missing holdingdisk space.
+
 2010-03-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in: update to rc18
 
