@@ -1,4 +1,8 @@
 2010-03-30  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Run.pm: be selective in import from POSIX
+	* server-src/amvault.pl: fix duplicate variable
+
+2010-03-30  Dustin J. Mitchell <dustin@zmanda.com>
 	* Makefile.am: add VERSION to EXTRA_DIST
 	* config/amanda/version.m4: use $srcdir/VERSION
 

@@ -148,7 +148,7 @@ use File::Path;
 use IPC::Open3;
 use Cwd qw(abs_path getcwd);
 use Carp;
-use POSIX;
+use POSIX qw( WIFEXITED );
 use Test::More;
 use Amanda::Config qw( :init );
 use Amanda::Util qw(slurp);
@@ -366,7 +366,7 @@ sub run {
 
     # and return true if the exit status was zero
     $exit_code = $status >> 8;
-    return POSIX::WIFEXITED($status) && $exit_code == 0;
+    return WIFEXITED($status) && $exit_code == 0;
 }
 
 sub run_get {
