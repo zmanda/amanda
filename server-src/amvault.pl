@@ -213,7 +213,7 @@ sub load_next_volumes {
 
 	debug("Opened source device");
 
-	my $res = $self->{'src_res'} = $res;
+	$self->{'src_res'} = $res;
 	my $dev = $self->{'src_dev'} = $res->{'device'};
 	my $device_name = $dev->device_name;
 
