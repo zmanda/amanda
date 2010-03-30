@@ -1,5 +1,46 @@
 # Amanda version handling macros
 
+AC_DEFUN([AMANDA_VERSION],
+[
+    AMANDA_GET_SVN_INFO
+    AMANDA_GET_GIT_INFO
+    if test -n "$SVN_REV"; then
+        VERSION=`cat VERSION`
+
+        if test "${SVN_TYPE}" = "branches"; then
+	    AC_MSG_NOTICE("building from svn branch ${SVN_BRANCH} revision ${SVN_REV}")
+            # This makes it clear if a build is "unofficial"
+            VERSION=${VERSION}-svn-${SVN_REV}
+	else if test "${SVN_TYPE}" = "trunk"; then
+	    AC_MSG_NOTICE("building from trunk revision ${SVN_REV}")
+            # This makes it clear if a build is "unofficial"
+            VERSION=${VERSION}-svn-${SVN_REV}
+        else
+	    AC_MSG_NOTICE("building from tag ${SVN_BRANCH} revision ${SVN_REV}")
+            RC=`echo "${SVN_BRANCH}"| grep "rc"`
+            if test -n "$RC"; then
+                # Override version for zmanda tags.
+		changequote(,)
+                VERSION=`echo "${SVN_BRANCH}"| sed 's/[^0-9]*// ; s/[_.]//g'`
+                VERSION=`echo ${VERSION}| sed 's/^\([0-9]\)\([0-9]\)\([0-9]\)/\1.\2.\3/'`
+		changequote([,])
+            fi
+        fi
+	fi
+
+    else if test -n "$GIT_SHA1"; then
+	AC_MSG_NOTICE("building from git revision ${GIT_SHA1}")
+        # This makes it clear if a build is "unofficial"
+        VERSION=`cat VERSION`"-git-"${GIT_SHA1}
+
+    else
+	AC_MSG_NOTICE("building from source")
+        # This makes it clear if a build is "unofficial"
+        VERSION=`cat VERSION`"-"`date "+%Y%m%d"`
+    fi
+    fi
+    AC_MSG_NOTICE("version: $VERSION")
+])
 # SYNOPSIS
 #
 #   AMANDA_SNAPSHOT_STAMP

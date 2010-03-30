@@ -36,10 +36,14 @@ AC_DEFUN([AMANDA_GET_SVN_INFO],
     AC_PATH_PROG(SVN, svn,, $LOCSYSPATH)
     AC_MSG_CHECKING([Subversion revision information])
     if test -d $srcdir/.svn && test -n "$SVN" && (cd $srcdir > /dev/null ; $SVN info . ) > conftemp.svn; then
-	rev=`$GREP Revision: conftemp.svn|cut -d: -f 2|cut -c2-`
+	SVN_REV=`$GREP Revision: conftemp.svn|cut -d: -f 2|cut -c2-`
+	SVN_URL=`$GREP URL: conftemp.svn|cut -d: -f 2-|cut -c2-`
+	SVN_PATH=`$GREP URL: conftemp.svn|cut -d "/" -f 7-`
+	SVN_TYPE=`echo ${SVN_PATH} |cut -d "/" -f 1`
+	SVN_BRANCH=`echo "${SVN_PATH}"| cut -d "/" -f 2`
 	url=`$GREP URL: conftemp.svn|cut -d: -f 2-|cut -c2-`
-	( echo '#define BUILT_REV "'$rev'"'
-	  echo '#define BUILT_BRANCH "'`basename "$url"`'"'
+	( echo '#define BUILT_REV "'$SVN_REV'"'
+	  echo '#define BUILT_BRANCH "'$SVN_BRANCH'"'
 	) > common-src/svn-info.h
 
 	AC_MSG_RESULT([updated])
@@ -55,4 +59,34 @@ AC_DEFUN([AMANDA_GET_SVN_INFO],
     fi
 
     rm -f conftemp.svn
+])
+
+# SYNOPSIS
+#
+#   AMANDA_GET_GIT_INFO
+#
+# OVERVIEW
+#
+#   If the build is in a git working copy, and if an git client
+#   is available, then set GIT_SHA1
+#
+AC_DEFUN([AMANDA_GET_GIT_INFO],
+[
+    AC_REQUIRE([AMANDA_INIT_PROGS])
+    AC_REQUIRE([AMANDA_PROG_GREP])
+
+    AC_PATH_PROG(GIT, git,, $LOCSYSPATH)
+    AC_MSG_CHECKING([git revision information])
+    if test -d $srcdir/.git && test -n "$GIT"; then
+	GIT_SHA1=`(cd $srcdir > /dev/null ; $GIT rev-parse HEAD | cut -c -8 )`
+	if test -n "$GIT_SHA1"; then
+	    AC_MSG_RESULT([$GIT_SHA1])
+	else
+	    AC_MSG_RESULT(['git rev-parse HEAD' failed])
+	fi
+    else 
+	AC_MSG_RESULT([not available])
+    fi
+
+    rm -f conftemp.git
 ])

@@ -1,3 +1,9 @@
+2010-03-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* VERSION: 3.1.0beta1.
+	* configure.in: Call AMANDA_VERSION.
+	* config/amanda/version.m4: Add AMANDA_VERSION.
+	* config/amanda/config.m4: Add AMANDA_GET_GIT_INFO.
+
 2010-03-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in: update to rc19
 
