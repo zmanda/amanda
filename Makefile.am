@@ -72,7 +72,8 @@ EXTRA_DIST += $(SNAPSHOT_STAMP) \
 	patches/samba-largefs.patch	\
 	patches/tar-1.12.patch		\
 	UPGRADING			\
-	DEVELOPING
+	DEVELOPING			\
+	VERSION
 
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status --recheck
