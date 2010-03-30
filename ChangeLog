@@ -1,3 +1,7 @@
+2010-03-30  Dustin J. Mitchell <dustin@zmanda.com>
+	* Makefile.am: add VERSION to EXTRA_DIST
+	* config/amanda/version.m4: use $srcdir/VERSION
+
 2010-03-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* VERSION: 3.2.0alpha.
 	* configure.in: Call AMANDA_VERSION.

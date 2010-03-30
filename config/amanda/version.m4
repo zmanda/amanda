@@ -5,7 +5,7 @@ AC_DEFUN([AMANDA_VERSION],
     AMANDA_GET_SVN_INFO
     AMANDA_GET_GIT_INFO
     if test -n "$SVN_REV"; then
-        VERSION=`cat VERSION`
+        VERSION=`cat $srcdir/VERSION`
 
         if test "${SVN_TYPE}" = "branches"; then
 	    AC_MSG_NOTICE("building from svn branch ${SVN_BRANCH} revision ${SVN_REV}")
@@ -31,12 +31,12 @@ AC_DEFUN([AMANDA_VERSION],
     else if test -n "$GIT_SHA1"; then
 	AC_MSG_NOTICE("building from git revision ${GIT_SHA1}")
         # This makes it clear if a build is "unofficial"
-        VERSION=`cat VERSION`"-git-"${GIT_SHA1}
+        VERSION=`cat $srcdir/VERSION`"-git-"${GIT_SHA1}
 
     else
 	AC_MSG_NOTICE("building from source")
         # This makes it clear if a build is "unofficial"
-        VERSION=`cat VERSION`"-"`date "+%Y%m%d"`
+        VERSION=`cat $srcdir/VERSION`"-"`date "+%Y%m%d"`
     fi
     fi
     AC_MSG_NOTICE("version: $VERSION")
