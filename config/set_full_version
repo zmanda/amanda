@@ -2,7 +2,7 @@
 
 srcdir=$1
 
-if test -d .svn && svn info . > conftemp.svn; then
+if test -d .svn -a svn info . > conftemp.svn; then
     SVN_REV=`grep Revision: conftemp.svn|cut -d: -f 2|cut -c2-`
     SVN_URL=`grep URL: conftemp.svn|cut -d: -f 2-|cut -c2-`
     SVN_PATH=`grep URL: conftemp.svn|cut -d "/" -f 7-`
@@ -17,7 +17,7 @@ fi
 
 if test -f FULL_VERSION; then
     OLD_VERSION=`cat FULL_VERSION`
-else if test -n "$srcdir" && -f $srcdir/FULL_VERSION; then
+else if test -n "$srcdir" -a -f $srcdir/FULL_VERSION; then
     OLD_VERSION=`cat FULL_VERSION`
 fi
 fi
