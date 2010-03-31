@@ -73,7 +73,13 @@ EXTRA_DIST += $(SNAPSHOT_STAMP) \
 	patches/tar-1.12.patch		\
 	UPGRADING			\
 	DEVELOPING			\
-	VERSION
+	VERSION				\
+	FULL_VERSION
+
+FULL_VERSION: VERSION
+	config/set_full_version $(top_srcdir)
+
+config.status: FULL_VERSION
 
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status --recheck
