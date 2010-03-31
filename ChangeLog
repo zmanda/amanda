@@ -1,4 +1,8 @@
 2010-03-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/set_full_version: fix.
+	* config/amanda/config.m4: fix.
+
+2010-03-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/config.m4: Use -a.
 
 2010-03-31  Jean-Louis Martineau <martineau@zmanda.com>

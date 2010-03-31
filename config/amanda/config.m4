@@ -35,7 +35,7 @@ AC_DEFUN([AMANDA_GET_SVN_INFO],
 
     AC_PATH_PROG(SVN, svn,, $LOCSYSPATH)
     AC_MSG_CHECKING([Subversion revision information])
-    if test -d $srcdir/.svn -a test -n "$SVN" -a (cd $srcdir > /dev/null ; $SVN info . ) > conftemp.svn; then
+    if test -d $srcdir/.svn -a -n "$SVN" && (cd $srcdir > /dev/null ; $SVN info . ) > conftemp.svn; then
 	SVN_REV=`$GREP Revision: conftemp.svn|cut -d: -f 2|cut -c2-`
 	SVN_URL=`$GREP URL: conftemp.svn|cut -d: -f 2-|cut -c2-`
 	SVN_PATH=`$GREP URL: conftemp.svn|cut -d "/" -f 7-`
@@ -77,7 +77,7 @@ AC_DEFUN([AMANDA_GET_GIT_INFO],
 
     AC_PATH_PROG(GIT, git,, $LOCSYSPATH)
     AC_MSG_CHECKING([git revision information])
-    if test -d $srcdir/.git -a test -n "$GIT"; then
+    if test -d $srcdir/.git -a -n "$GIT"; then
 	GIT_SHA1=`(cd $srcdir > /dev/null ; $GIT rev-parse HEAD | cut -c -8 )`
 	if test -n "$GIT_SHA1"; then
 	    AC_MSG_RESULT([$GIT_SHA1])

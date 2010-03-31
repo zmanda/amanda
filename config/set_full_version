@@ -2,7 +2,14 @@
 
 srcdir=$1
 
-if test -d .svn -a svn info . > conftemp.svn; then
+if test -d .svn; then
+    svn info . > conftemp.svn
+else
+    echo "" > conftemp.svn
+fi
+
+if test -d .svn && ( grep Revision: conftemp.svn > /dev/null; ); then
+#if grep Revision: conftemp.svn > /dev/null ; then
     SVN_REV=`grep Revision: conftemp.svn|cut -d: -f 2|cut -c2-`
     SVN_URL=`grep URL: conftemp.svn|cut -d: -f 2-|cut -c2-`
     SVN_PATH=`grep URL: conftemp.svn|cut -d "/" -f 7-`
@@ -16,17 +23,23 @@ if test -d .git; then
 fi
 
 if test -f FULL_VERSION; then
-    OLD_VERSION=`cat FULL_VERSION`
+    FULL_VERSION_FILE="FULL_VERSION"
+    OLD_VERSION=`cat $FULL_VERSION_FILE`
 else if test -n "$srcdir" -a -f $srcdir/FULL_VERSION; then
-    OLD_VERSION=`cat FULL_VERSION`
+    FULL_VERSION_FILE="$srcdir/FULL_VERSION"
+    OLD_VERSION=`cat $FULL_VERSION_FILE`
+else
+    FULL_VERSION_FILE="FULL_VERSION"
+    OLD_VERSION=
 fi
 fi
 
 if test -n "$srcdir"; then
-    VERSION=`cat $srcdir/VERSION`
+    VERSION_FILE="$srcdir/VERSION"
 else
-    VERSION=`cat VERSION`
+    VERSION_FILE="VERSION"
 fi
+VERSION=`cat $VERSION_FILE`
 
 if test -n "$SVN_REV"; then
     if test "${SVN_TYPE}" = "branches"; then
@@ -45,10 +58,13 @@ if test -n "$SVN_REV"; then
 else if test -n "$GIT_SHA1"; then
     VERSION=${VERSION}".git."${GIT_SHA1}
 
-else
+else if test -n "$OLD_VERSION"; then
     VERSION=$OLD_VERSION
 fi
 fi
+fi
 
+if test "$VERSION" != "$OLD_VERSION" -o $VERSION_FILE -nt FULL_VERSION; then
     echo "$VERSION" > FULL_VERSION
+fi
 
