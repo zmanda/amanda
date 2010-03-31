@@ -23,7 +23,7 @@
 # set -x
 # Check for $AMVER, or pull it from configure.in
 if [ -z $AMVER ]; then
-    VER=`grep "AM_INIT_AUTOMAKE" configure.in| sed 's/.*"\(.*\)".*/\1/'`
+    VER=`cat FULL_VERSION`
     AMVER=amanda-${VER}
 fi
 

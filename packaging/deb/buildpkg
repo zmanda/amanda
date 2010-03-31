@@ -76,7 +76,7 @@ do_distro() {
 	DEB_REL=""
     fi
     # First get a version from configure.in
-    VER=`grep "AM_INIT_AUTOMAKE" configure.in| sed -r 's/.*"(.*)".*/\1/'`
+    VER=`cat FULL_VERSION`
     # We're perhaps overly careful to preserve the -1 suffix.  It could be -2,
     # but has never yet gotten there.
     CHANGELOG_VER=`sed -r  "s/.*\(%%VERSION%%(-.)\).*/${VER}\1/;q" packaging/deb/changelog`

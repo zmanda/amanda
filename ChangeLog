@@ -1,3 +1,14 @@
+2010-03-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/set_full_version: New script to update FULL_VERSION from
+				   VERSION, svn and git
+	* autogen: Execute config/set_full_version
+	* Makefile.am: Add dependencies to execute set_full_version if VERSION
+	  change, and to re-run configure if FULL_VERSION change.
+	* config/amanda/version.m4: Use FULL_VERSION.
+	* packaging/deb/buildpkg: Use FULL_VERSION.
+	* packaging/rpm/amanda.spec: Use FULL_VERSION.
+	* packaging/rpm/buildpkg: Use FULL_VERSION.
+
 2010-03-30  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Installcheck/Run.pm: be selective in import from POSIX
 	* server-src/amvault.pl: fix duplicate variable
