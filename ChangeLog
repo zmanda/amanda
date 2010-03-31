@@ -1,4 +1,8 @@
 2010-03-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: use Carp qw( confess cluck );
+	* perl/Amanda/Changer/robot.pm: $self->make_error("failed",...
+
+2010-03-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/set_full_version: fix.
         * config/amanda/config.m4: fix.
 
