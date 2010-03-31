@@ -20,7 +20,7 @@ package Amanda::Changer;
 
 use strict;
 use warnings;
-use Carp;
+use Carp qw( confess cluck );
 use POSIX ();
 use Fcntl qw( O_RDWR O_CREAT LOCK_EX LOCK_NB );
 use Data::Dumper;
