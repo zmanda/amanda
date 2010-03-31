@@ -1,4 +1,7 @@
 2010-03-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/set_full_version: Use grep.
+
+2010-03-31  Jean-Louis Martineau <martineau@zmanda.com>
 	config/Makefile.am: Add set_full_version to EXTRA_DIST.
 	* config/set_full_version: Add the file.
 

@@ -3,12 +3,12 @@
 srcdir=$1
 
 if test -d .svn && svn info . > conftemp.svn; then
-    SVN_REV=`$GREP Revision: conftemp.svn|cut -d: -f 2|cut -c2-`
-    SVN_URL=`$GREP URL: conftemp.svn|cut -d: -f 2-|cut -c2-`
-    SVN_PATH=`$GREP URL: conftemp.svn|cut -d "/" -f 7-`
+    SVN_REV=`grep Revision: conftemp.svn|cut -d: -f 2|cut -c2-`
+    SVN_URL=`grep URL: conftemp.svn|cut -d: -f 2-|cut -c2-`
+    SVN_PATH=`grep URL: conftemp.svn|cut -d "/" -f 7-`
     SVN_TYPE=`echo ${SVN_PATH} |cut -d "/" -f 1`
     SVN_BRANCH=`echo "${SVN_PATH}"| cut -d "/" -f 2`
-    url=`$GREP URL: conftemp.svn|cut -d: -f 2-|cut -c2-`
+    url=`grep URL: conftemp.svn|cut -d: -f 2-|cut -c2-`
 fi
 
 if test -d .git; then
