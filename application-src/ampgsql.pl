@@ -261,6 +261,12 @@ sub command_selfcheck {
         _check("PG-ARCHIVEDIR $self->{'props'}->{'pg-archivedir'}",
                "is a directory", "is NOT a directory",
                sub {-d $_[0]}, $self->{'props'}->{'pg-archivedir'});
+        _check("PG-ARCHIVEDIR $self->{'props'}->{'pg-archivedir'}",
+               "is readable", "is NOT readable",
+               sub {-r $_[0]}, $self->{'props'}->{'pg-archivedir'});
+        _check("PG-ARCHIVEDIR $self->{'props'}->{'pg-archivedir'}",
+               "is executable", "is NOT executable",
+               sub {-x $_[0]}, $self->{'props'}->{'pg-archivedir'});
         _check_parent_dirs($self->{'props'}->{'pg-archivedir'});
         _check("Are both PG-PASSFILE and PG-PASSWORD set?",
                "No (okay)",
@@ -461,14 +467,16 @@ sub _get_backup_info {
                    $end_wal = $end;
                    $bfile = $fname;
                    last;
-               }
+               } else {
+		   debug("logfile had non-matching label");
+	       }
            }
        }
        $adir->close();
        if ($start_wal and $end_wal) {
 	   debug("$bfile named WALs $start_wal .. $end_wal");
 
-           # try to cleanup a bit
+           # try to cleanup a bit, although this may fail and that's ok
            unlink("$self->{'props'}->{'pg-archivedir'}/$bfile");
            last;
        }
@@ -520,10 +528,15 @@ sub _wait_for_wal {
     my $archive_dir = $self->{'props'}->{'pg-archivedir'};
     my $maxwait = 0+$self->{'props'}->{'pg-max-wal-wait'};
 
+    if ($maxwait) {
+	debug("waiting $maxwait s for WAL $wal to be archived..");
+    } else {
+	debug("waiting forever for WAL $wal to be archived..");
+    }
+
+    my $count = 0; # try at least 4 cycles
     my $stoptime = time() + $maxwait;
-    my $count = 0;
-    debug("waiting $maxwait s for WAL $wal to be archived..");
-    while (time < $stoptime || $count++ < 4) {
+    while ($maxwait == 0 || time < $stoptime || $count++ < 4) {
 	return if -f "$archive_dir/$wal";
 	
 	# for versions 8.0 or 8.1, the only way to "force" a WAL archive is to write

@@ -115,7 +115,9 @@ Disknames are specified in the <manref name="disklist" vol="5"/>.
  <!-- ==== -->
  <varlistentry><term>PG-ARCHIVEDIR</term><listitem>
 Directory that WAL segment files are archived to, as specified by the archive_command
-in PosgreSQL's postgresql.conf .
+in PosgreSQL's postgresql.conf.  The amanda user on the client must have at least read
+and execute permission on this directory, and preferably write.  Without write permission,
+Amanda cannot clean up expired WAL and backup files.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PG-CLEANUPWAL</term><listitem>
