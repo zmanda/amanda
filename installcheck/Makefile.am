@@ -75,9 +75,19 @@ full_tests = \
 
 restore_tests = \
 	amfetchdump \
-	amrecover \
 	amidxtaped \
 	amrestore
+
+if WANT_RECOVER
+if WANT_CHECK_USERID
+EXTRA_DIST += amrecover.pl
+else
+restore_tests += \
+	amrecover
+endif
+else
+EXTRA_DIST += amrecover.pl
+endif
 
 ndmp_tests = \
 	Amanda_Changer_ndmp \

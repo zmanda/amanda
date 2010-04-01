@@ -61,7 +61,7 @@ int		process_line(char *line);
 %x propertyappend
 %x propertypriority
 
-LINEFEED	("\n"|"\r"|"\r\n")
+LINEFEED	[[:space:]]*("\n"|"\r"|"\r\n")
 %{
 static char *string_buf = NULL;
 %}

@@ -1,3 +1,10 @@
+2010-04-01  Jean-Louis Martineau <martineau@zmanda.com>
+* config/amanda/userid.m4: AM_CONDITIONAL(WANT_CHECK_USERID
+* installcheck/Makefile.am: Do not check amrecover if WANT_CHECK_USERID.
+* installcheck/amrecover.pl: Check 'localhost' hostname,
+                             remove '^' from expect regex
+* recover-src/uscan.l: Add [[:space:]]* in LINEFEED.
+
 2010-04-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* application-src/ampgsql.pl: check permissions on archive dir, and
 	  fail selfcheck if they are not sufficient.  Also implement the
