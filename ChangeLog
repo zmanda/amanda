@@ -1,3 +1,7 @@
+2010-04-01  Paul C. Mantz <pcmantz@gmail.com>
+	* server-src/amreport.pl: accepts and ignores disk args in script mode
+	* installcheck/amreport.pl: checks
+
 2010-04-01  Jean-Louis Martineau <martineau@zmanda.com>
 * config/amanda/userid.m4: AM_CONDITIONAL(WANT_CHECK_USERID
 * installcheck/Makefile.am: Do not check amrecover if WANT_CHECK_USERID.

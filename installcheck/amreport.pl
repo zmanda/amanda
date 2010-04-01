@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 145;
+use Test::More tests => 149;
 
 use strict;
 use warnings;
@@ -227,6 +227,18 @@ results_match($mail_output,
 results_match($printer_output,
     $datas{'normal-postscript'},
     "..printer output matches");
+
+ok(run($amreport, 'TESTCONF', '--from-amdump', '/garbage/directory/'),
+    "amreport, as run from amdump, with mailer, mailto, and a template, and  bogus option")
+    or diag($Installcheck::Run::stderr);
+is($Installcheck::Run::stdout, "", "..produces no output");
+results_match($mail_output,
+    make_mail($datas{'normal-rpt1'}, "DailySet1", "February 25, 2009", "nobody\@localhost"),
+    "..mail matches");
+results_match($printer_output,
+    $datas{'normal-postscript'},
+    "..printer output matches");
+
 
 cleanup();
 burp($current_log_filename, $datas{'normal'});
