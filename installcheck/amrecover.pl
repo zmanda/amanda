@@ -26,6 +26,7 @@ use Installcheck::Dumpcache;
 
 use File::Path qw(rmtree mkpath);
 use Data::Dumper;
+use Sys::Hostname;
 
 use Amanda::Paths;
 use Amanda::Header;
@@ -41,6 +42,12 @@ if (!$Installcheck::Run::have_expect) {
     }
     exit 0;
 }
+
+# amrecover can successfully set the host if its hostname is localhost
+my $hostname = hostname;
+my $set_host_succeed = 0;
+$set_host_succeed=1 if (   ($hostname eq "localhost")
+		        or ($hostname =~ /localhost\./));
 
 my $debug = !exists $ENV{'HARNESS_ACTIVE'};
 diag("logging amrecover conversations to stdout because Test::Harness not in use")
@@ -90,7 +97,7 @@ sub run_amrecover {
 	[ qr{Load tape \S+ now}, mkcont "load-tape" ],
 	[ qr{Restoring files into directory}, mkcont "restoring-into" ],
 	[ qr{All existing files.*can be deleted}, mkcont "can-delete" ],
-	[ qr{^\./1kilobyte}, mkcont "restored-file" ],
+	[ qr{\./1kilobyte}, mkcont "restored-file" ],
 	[ qr{200 Good bye}, mkcont "bye" ],
 
 	[ qr{amrecover> }, sub {
@@ -130,7 +137,8 @@ run_amrecover(
 	]);
 
 is_deeply([ @results ], [
-	'server-ready', 'config-set', 'use-sethost',
+	'server-ready', 'config-set',
+	($set_host_succeed) ? 'host-set' : 'use-sethost',
 	'> sethost localhost',
 	'host-set',
 	"> setdisk $diskname",
@@ -154,8 +162,6 @@ ok((-f "1kilobyte" and ! -z "1kilobyte"),
 
 ## parser check
 
-TODO: {
-    local $TODO = "known parser bug";
 run_amrecover(
 	commands => [
 	    "sethost localhost ", # <-- note extra space
@@ -164,7 +170,8 @@ run_amrecover(
 	]);
 
 is_deeply([ @results ], [
-	'server-ready', 'config-set', 'use-sethost',
+	'server-ready', 'config-set',
+	($set_host_succeed) ? 'host-set' : 'use-sethost',
 	'> sethost localhost ',
 	'host-set',
 	'> sethost localhost',
@@ -172,9 +179,8 @@ is_deeply([ @results ], [
 	'> quit',
 	'bye'
     ],
-    "simple restore follows the correct steps")
+    "check trailling space")
     or die Dumper([@results]);
-}
 
 ## cleanup
 

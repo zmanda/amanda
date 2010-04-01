@@ -52,6 +52,7 @@ AC_DEFUN([AMANDA_WITH_FORCE_UID],
             AC_MSG_ERROR([*** You must not supply an argument to --with-force-uid option.])
     esac
     AC_SUBST(CHECK_USERID)
+    AM_CONDITIONAL(WANT_CHECK_USERID, test x"$CHECK_USERID" = x"1")
 ])
 
 # SYNOPSIS
