@@ -43,7 +43,8 @@ if (!$Installcheck::Run::have_expect) {
 }
 
 my $debug = !exists $ENV{'HARNESS_ACTIVE'};
-diag("logging amrecover conversations to stdout because Test::Harness not in use");
+diag("logging amrecover conversations to stdout because Test::Harness not in use")
+    if $debug;
 
 my @results;
 my $testdir = "$Installcheck::TMP/amfetchdump-installcheck/files";
