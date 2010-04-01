@@ -1,3 +1,9 @@
+2010-04-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* application-src/ampgsql.pl: check permissions on archive dir, and
+	  fail selfcheck if they are not sufficient.  Also implement the
+	  wal-max-wait=0 that's already documented
+	* man/xml-source/ampgsql.8.xml: document required permissions
+
 2010-03-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amrecover.pl: fix diag()
 
