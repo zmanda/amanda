@@ -1,3 +1,6 @@
+2010-03-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amrecover.pl: fix diag()
+
 2010-03-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: use Carp qw( confess cluck );
 	* perl/Amanda/Changer/robot.pm: $self->make_error("failed",...
