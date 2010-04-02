@@ -1,3 +1,7 @@
+2010-04-02  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Application.swg: fix situation where sizeof(IV) >
+	  sizeof(gint)
+
 2010-04-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: '$size{$hostpart} = 0' in taper cmd.
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -107,7 +107,9 @@ sub read_magic_block {
     num = av_len(tempav);
     for (i=0; i <= num; i++) {
 	tv = av_fetch(tempav, i, 0);
-	level = g_slist_append(level, GINT_TO_POINTER(SvIV(*tv)));
+	/* (gint) cast is required because sizeof(IV) may not be sizeof(gint).
+	 * Both will be >= 32 bits, though, and that's sufficient for a level. */
+	level = g_slist_append(level, GINT_TO_POINTER((gint)SvIV(*tv)));
     }
     $1 = level;
 }
