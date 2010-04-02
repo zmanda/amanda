@@ -1,4 +1,7 @@
 2010-04-02  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Util.pod: correct inaccurate claims in burp
+
+2010-04-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Application.swg: fix situation where sizeof(IV) >
 	  sizeof(gint)
 
