@@ -405,6 +405,7 @@ while($lineX = <AMDUMP>) {
 					#$chunk_started{$hostpart}=1;
 					$chunk_time{$hostpart}=$current_time;
 					#$chunk_finished{$hostpart}=0;
+					$size{$hostpart} = 0;
 				}
 				elsif($line[6] eq "CONTINUE") {
 					#7:handle 8:filename 9:chunksize 10:use
@@ -470,6 +471,7 @@ while($lineX = <AMDUMP>) {
 					$taper_started{$hostpart}=1;
 					$taper_finished{$hostpart}=0;
 					$taper_time{$hostpart}=$current_time;
+					$size{$hostpart} = 0;
 					$ntchunk_size = 0;
 				}
 			}
