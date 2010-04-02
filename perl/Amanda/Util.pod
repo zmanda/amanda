@@ -387,11 +387,10 @@ overhead, we can use C<slurp>.
 
   my $data = slurp $filename;
 
-After processing the data, we can write it back to file with C<burp>.
+After processing the data, we can write it back to file with C<burp>.  This
+function always completely overwrites the file.
 
   burp $filename, $header;
-  burp $filename, @data_lines;    # appends newline after each element
-  burp $filename, $footer;
 
 These functions can (and should) be exported to the main namespace
   
