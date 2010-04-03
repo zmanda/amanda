@@ -211,7 +211,7 @@ sub calculate_legacy_outputs {
     my $tt = lookup_tapetype($ttyp) if $ttyp;
     my $cfg_template = "" . tapetype_getconf($tt, $TAPETYPE_LBL_TEMPL) if $tt;
 
-    my $cfg_mailer = getconf($CNF_MAILER);
+    my $cfg_mailer  = getconf($CNF_MAILER);
     my $cfg_printer = getconf($CNF_PRINTER);
     my $cfg_mailto  = getconf_seen($CNF_MAILTO) ? getconf($CNF_MAILTO) : undef;
 
@@ -230,7 +230,7 @@ sub calculate_legacy_outputs {
 
     # should we send a mail?
     if ($cfg_mailer and $opt_mailto) {
-	# -i and -f override this
+        # -i and -f override this
 	if (!$opt_nomail and !$opt_filename) {
 	    push @outputs, [ [ 'human' ], [ 'mail', $opt_mailto ] ];
 	}
@@ -261,6 +261,76 @@ sub calculate_legacy_outputs {
     if ($opt_psfname and $cfg_template) {
 	push @outputs, [ [ 'postscript', $cfg_template ], [ 'file', $opt_psfname ] ];
     }
+}
+
+sub legacy_send_amreport
+{
+    my ($output) = @_;
+    my $cfg_send = getconf($CNF_SEND_AMREPORT_ON);
+
+    ## only check $cfg_send if we are in script mode and sending mail
+    return 1 if ($mode != MODE_SCRIPT);
+    return 1 if !($output->[OUTPUT]->[OUT_TYP] eq "mail");
+
+    ## do not bother checking for errors or stranges if set to 'all' or 'never'
+    return 1 if ($cfg_send == $SEND_AMREPORT_ALL);
+    return 0 if ($cfg_send == $SEND_AMREPORT_NEVER);
+
+    my $output_name = join(" ", @{ $output->[FORMAT] }, @{ $output->[OUTPUT] });
+    my ($send_amreport, $process_stranges, $process_fails) = (0, 0, 0);
+
+    debug("testingamreport_send_on=$cfg_send, output:$output_name");
+
+    foreach my $dle ($report->get_dles()) {
+
+        my $dle_info = $report->get_dle_info(@$dle);
+        my $tries    = $dle_info->{tries};
+
+        foreach my $try (@$tries) {
+
+            foreach my $program (keys %$try) {
+
+                next if $program eq "chunks";
+
+                $process_stranges++ if $try->{$program}{status} eq 'strange';
+                $process_fails++    if $try->{$program}{status} eq 'fail';
+            }
+        }
+    }
+
+    if ($cfg_send == $SEND_AMREPORT_STRANGE) {
+
+        if (   !$report->get_flag("got_finish")
+            || ($report->get_flag("exit_status") != 0)
+            || $process_stranges
+            || $process_fails) {
+
+            debug("send_amreport_on=$cfg_send, condition filled for $output_name");
+            $send_amreport = 1;
+
+        } else {
+
+            debug("send_amreport_on=$cfg_send, condition not filled for $output_name");
+            $send_amreport = 0;
+        }
+
+    } elsif ($cfg_send = $SEND_AMREPORT_ERROR) {
+
+        if (   !$report->get_flag("got_finish")
+            || ($report->get_flag("exit_status") != 0)
+            || $process_fails) {
+
+            debug("send_amreport_on=$cfg_send, condition filled for $output_name");
+            $send_amreport = 1;
+
+        } else {
+
+            debug("send_amreport_on=$cfg_send, condition not filled for $output_name");
+            $send_amreport = 0;
+        }
+    }
+
+    return $send_amreport;
 }
 
 sub open_file_output {
@@ -475,10 +545,6 @@ if ($mode == MODE_CMDLINE) {
     calculate_legacy_outputs();
 }
 
-for my $output (@outputs) {
-    debug("planned output: " . join(" ", @{ $output->[FORMAT] }, @{ $output->[OUTPUT] }));
-}
-
 if (!@outputs) {
     print "no output specified, nothing to do\n";
     exit(0);
@@ -488,6 +554,14 @@ if (!@outputs) {
 
 $report = Amanda::Report->new($logfile, $historical);
 my $exit_status = $report->get_flag("exit_status");
+
+## filter outputs by errors & stranges
+
+@outputs = grep { legacy_send_amreport($_) } @outputs;
+
+for my $output (@outputs) {
+    debug("planned output: " . join(" ", @{ $output->[FORMAT] }, @{ $output->[OUTPUT] }));
+}
 
 ## Output
 
