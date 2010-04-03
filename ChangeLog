@@ -1,3 +1,8 @@
+2010-04-02  Paul C. Mantz <pcmantz@zmanda.com>
+	* server-src/amreport.pl: honor SEND_AMREPORT_ON in script mode
+	* perl/Amanda/Config.swg: swig CNF_SEND_AMREPORT_ON
+	* installcheck/amreport.pl: installchecks
+
 2010-04-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Util.pod: correct inaccurate claims in burp
 

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 149;
+use Test::More tests => 153;
 
 use strict;
 use warnings;
@@ -29,6 +29,7 @@ use Amanda::Paths;
 use Amanda::Constants;
 use Amanda::Util qw( slurp burp );
 use Amanda::Debug;
+use Amanda::Config qw (:getconf);
 
 # easy knob to twiddle to check amreport_new instead
 my $amreport = "amreport";
@@ -84,6 +85,12 @@ sub setup_config {
 	$params{'want_template'}? ('lbl_templ' => "\"$ps_template\""):(),
     ]);
     $testconf->add_param('tapetype', "\"TEST-TAPE-TEMPLATE\"");
+
+    $testconf->remove_param('send_amreport_on');
+    $testconf->add_param('send_amreport_on',
+        exists $params{send_amreport} ? uc($params{send_amreport}) : "ALL"
+    );
+
     $testconf->remove_param('logdir');
     $testconf->add_param('logdir', "\"$Installcheck::TMP\"");
     $testconf->write();
@@ -544,6 +551,28 @@ ok(run($amreport, 'TESTCONF', '--from-amdump'),
   or diag($Installcheck::Run::stderr);
 ok(!-f $mail_output, "..produces no mail output");
 is($Installcheck::Run::stdout, "", "..produces no stdout output");
+results_match(
+    $printer_output,
+    $datas{'normal-postscript'},
+    "..printer output matches"
+);
+
+cleanup();
+burp($current_log_filename, $datas{'normal'});
+setup_config(
+    want_mailer   => 1,
+    want_mailto   => 1,
+    want_template => 1,
+    send_amreport => 'error'
+);
+
+ok(
+    run($amreport, 'TESTCONF', '--from-amdump'),
+"amreport with CNF_SEND_AMREPORT_ON set to errors only, no mail, still prints"
+) or diag($Installcheck::Run::stderr);
+ok(!-f $mail_output, "..produces no mail output") or diag(slurp $mail_output);
+is($Installcheck::Run::stdout, "", "..produces no stdout output")
+  or diag($Installcheck::Run::stdout);
 results_match(
     $printer_output,
     $datas{'normal-postscript'},
