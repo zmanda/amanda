@@ -426,10 +426,18 @@ GetOptions(
     'help'    => \&usage,
 ) or usage();
 
-usage() unless ( scalar(@ARGV) <= 1 );
+# set command line mode if no options were given
+$mode = MODE_CMDLINE if ($mode == MODE_NONE);
 
-$config_name = shift @ARGV;
-$config_name ||= '.'; # default config is current dir, if not specified
+if ($mode == MODE_CMDLINE) {
+    (scalar @ARGV == 1) or usage();
+} else {    # MODE_SCRIPT
+    (scalar @ARGV > 0) or usage();
+}
+
+$config_name = shift @ARGV;    # only use first argument
+$config_name ||= '.';          # default config is current dir
+
 set_config_overrides($config_overrides);
 config_init( $CONFIG_INIT_EXPLICIT_NAME, $config_name );
 
@@ -450,9 +458,6 @@ my $tl = Amanda::Tapelist::read_tapelist($tl_file);
 # shim for installchecks
 $Amanda::Constants::LPR = $ENV{'INSTALLCHECK_MOCK_LPR'}
     if exists $ENV{'INSTALLCHECK_MOCK_LPR'};
-
-# set command line mode if no options were given
-$mode = MODE_CMDLINE if ($mode == MODE_NONE);
 
 # calculate the logfile to read from
 $opt_logfname = Amanda::Util::get_original_cwd() . "/" . $opt_logfname
