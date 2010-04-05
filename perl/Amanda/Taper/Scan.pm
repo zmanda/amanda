@@ -126,50 +126,65 @@ C<labelstr> defaults to the value specified at object construction.
 
 =head2 user_msg_fn
 
+This interface is temporary and will change in the next release.
+
 Initiate a load by label:
-  $self->_user_msg(search_label => 1,
+
+  user_msg_fn(search_label => 1,
                    label        => $label);
 
 The result of a load by label:
-  $self->_user_msg(search_result => 1,
+
+  user_msg_fn(search_result => 1,
                    res           => $res,
                    err           => $err);
 
 Initiate the scan of the slot $slot:
+
   $self->user_msg_fn(scan_slot => 1,
                      slot      => $slot);
 
 Initiate the scan of the slot $slot which should have the label $label:
+
   $self->user_msg_fn(scan_slot => 1,
                      slot      => $slot,
                      label     => $label);
 
 The result of scanning slot $slot:
+
   $self->user_msg_fn(slot_result => 1,
                      slot        => $slot,
                      err         => $err,
                      res         => $res);
 
 The result if the read label doesn't match the labelstr:
-  $self->_user_msg(slot_result             => 1,
+
+  user_msg_fn(slot_result             => 1,
                    does_not_match_labelstr => 1,
                    labelstr                => $labelstr,
                    slot                    => $slot,
                    res                     => $res);
 
 The result if the read label is not in the tapelist:
-  $self->_user_msg(slot_result     => 1,
+
+  user_msg_fn(slot_result     => 1,
                    not_in_tapelist => 1,
                    slot            => $slot,
                    res             => $res);
 
 The result if the read label can't be used because it is active:
-  $self->_user_msg(slot_result => 1,
+
+  user_msg_fn(slot_result => 1,
                    active      => 1,
                    slot        => $slot,
                    res         => $res);
 
-Other options can be added at any time.  The function can ignore them.
+The scan has failed, possibly with some additional information as to what the
+scan was looking for.
+
+  user_msg_fn(scan_failed => 1,
+	      expected_label => $label, # optional
+	      expected_new => 1); # optional
 
 =cut
 

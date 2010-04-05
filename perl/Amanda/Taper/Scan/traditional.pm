@@ -1,4 +1,4 @@
-# Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This library is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License version 2.1 as
@@ -54,9 +54,6 @@ sub new {
     return $self;
 }
 
-sub _user_msg_fn {
-}
-
 sub scan {
     my $self = shift;
     my %params = @_;
@@ -64,7 +61,7 @@ sub scan {
     die "Can only run one scan at a time" if $self->{'scanning'};
     $self->{'scanning'} = 1;
     $self->{'result_cb'} = $params{'result_cb'};
-    $self->{'user_msg_fn'} = $params{'user_msg_fn'} || \&_user_msg_fn;
+    $self->{'user_msg_fn'} = $params{'user_msg_fn'} || sub {};
 
     # refresh the tapelist at every scan
     $self->{'tapelist'} = $self->read_tapelist();
@@ -103,11 +100,23 @@ sub scan_result {
 	    });
 	    return $res->release(finished_cb => $finished_cb);
 	}
-    } else {
+    } elsif ($res) {
 	my $devname = $res->{'device'}->device_name;
 	my $slot = $res->{this_slot};
 	debug("Amanda::Taper::Scan::traditional result: '$label' on $devname slot $slot, mode $mode");
+    } else {
+	debug("Amanda::Taper::Scan::traditional result: scan failed");
+
+	# we may not ever have looked for this, the oldest reusable volume, if
+	# the changer is not fast-searchable.  But we'll tell the user about it
+	# anyway.
+	my $oldest_reusable = $self->oldest_reusable_volume(new_label_ok => 0);
+	$self->_user_msg(scan_failed => 1,
+			 expected_label => $oldest_reusable,
+			 expected_new => 1);
+	@result = ("No acceptable volumes found");
     }
+
     $self->{'scanning'} = 0;
     $self->{'result_cb'}->(@result);
 }
@@ -353,6 +362,12 @@ sub stage_2 {
     $subs{'loaded'} = make_cb(loaded => sub {
         my ($err, $res) = @_;
 
+	# bail out immediately if the scan is complete
+	if ($err and $err->failed and $err->notfound) {
+            return $self->scan_result(); # end of the scan
+	}
+
+	# tell user_msg which slot we're looking at..
 	if (defined $res) {
 	    $self->_user_msg(scan_slot => 1, slot => $res->{'this_slot'});
 	} elsif (defined $err->{'slot'}) {
@@ -361,10 +376,8 @@ sub stage_2 {
 	    $self->_user_msg(scan_slot => 1, slot => "?");
 	}
 
-	if ($err and $err->failed and $err->notfound) {
-            return $self->scan_result("No acceptable volumes found", $res);
-	}
-
+	# and then tell it the result if already known (error) or try
+	# loading the volume.
 	if ($err && $err->{volinuse} && $err->{slot}) {
 	    $self->_user_msg(slot_result => 1, err => $err);
 	    $last_slot = $err->{slot};
