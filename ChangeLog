@@ -1,4 +1,8 @@
 2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/version.m4: be resilient to all but the first
+	  digit of the version number missing
+
+2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm perl/Amanda/Changer/robot.pm: clean up
 	  reference loop in %subs (interim solution -- this arrangement
 	  leaks everywhere)
