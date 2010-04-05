@@ -1,4 +1,4 @@
-# Copyright (c) Zmanda Inc.  All Rights Reserved.
+# Copyright (c) 2010 Zmanda Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 8;
+use Test::More tests => 9;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -118,7 +118,7 @@ sub run_scan {
 sub set_current_slot {
     my ($slot) = @_;
 
-    -e "$taperoot/data" && unlink("$taperoot/data");
+    unlink("$taperoot/data");
     symlink("slot$slot", "$taperoot/data");
 }
 
@@ -212,6 +212,18 @@ $taperscan = Amanda::Taper::Scan->new(
 is_deeply([ @results ],
 	  [ undef, "TEST-5", $ACCESS_WRITE ],
 	  "labels new tapes in blank slots")
+	  or diag(Dumper(\@results));
+
+set_current_slot(6);
+$taperscan = Amanda::Taper::Scan->new(
+    algorithm => "traditional",
+    tapecycle => 1,
+    autolabel => { },
+    changer => Amanda::Changer->new("chg-disk:$taperoot"));
+@results = run_scan($taperscan);
+is_deeply([ @results ],
+	  [ undef, "TEST-2", $ACCESS_WRITE ],
+	  "handles an invalid current slot by going to the next")
 	  or diag(Dumper(\@results));
 
 # simulate "amlabel"

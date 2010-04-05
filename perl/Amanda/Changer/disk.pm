@@ -235,7 +235,7 @@ sub _load_by_slot {
 
     if (!$self->_slot_exists($slot)) {
 	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "notfound",
+	    reason => "invalid",
 	    message => "Slot $slot not found");
     }
 
