@@ -1,4 +1,9 @@
 2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer.pm perl/Amanda/Changer/robot.pm: clean up
+	  reference loop in %subs (interim solution -- this arrangement
+	  leaks everywhere)
+
+2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/ndmp.pm: close the NDMP connection after
 	  every Interface operation, so that objects are not unreffed
 	  during Perl's global cleanup.

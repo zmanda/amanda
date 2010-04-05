@@ -1635,6 +1635,7 @@ sub _with_updated_state {
 	# finally, call through to the user's method; $params{$cbname} has been
 	# properly patched to release the state lock when this method is done.
 	$sub->(%params);
+	%subs = ();
     });
 
     $subs{'start'}->();
