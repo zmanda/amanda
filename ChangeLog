@@ -1,4 +1,8 @@
 2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/ndmp-device.c: treat NDMP9_DEVICE_BUSY_ERR as
+	  DEVICE_STATUS_DEVICE_BUSY
+
+2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm: check $err->failed before returning reason
 
 2010-04-02  Paul C. Mantz <pcmantz@zmanda.com>

@@ -346,6 +346,12 @@ set_error_from_ndmp(
 			    DEVICE_STATUS_VOLUME_MISSING);
 	    break;
 
+	case NDMP9_DEVICE_BUSY_ERR:
+	    device_set_error(DEVICE(self),
+		    g_strdup(_("device busy")),
+			    DEVICE_STATUS_DEVICE_BUSY);
+	    break;
+
 	case NDMP9_IO_ERR:
 	    device_set_error(DEVICE(self),
 		    g_strdup(_("IO error")),
