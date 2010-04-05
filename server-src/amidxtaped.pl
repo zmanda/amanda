@@ -57,7 +57,15 @@ sub user_request {
     my %subs;
     my $buffer = "";
 
-    $subs{'check_features'} = make_cb(check_features => sub {
+    $subs{'send_message'} = make_cb(send_message => sub {
+	if ($params{'err'}) {
+	    $self->{'clientservice'}->sendmessage("$params{err}");
+	}
+
+	$subs{'check_fe_feedme'}->();
+    });
+
+    $subs{'check_fe_feedme'} = make_cb(check_fe_feedme => sub {
 	# note that fe_amrecover_FEEDME implies fe_amrecover_splits
 	if (!$self->{'clientservice'}->{'their_features'}->has(
 				    $Amanda::Feature::fe_amrecover_FEEDME)) {
@@ -91,7 +99,7 @@ sub user_request {
 	}
     });
 
-    $subs{'check_features'}->();
+    $subs{'send_message'}->();
 };
 
 ##
