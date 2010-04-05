@@ -159,12 +159,12 @@ test_utils = \
 	Installcheck/Changer.pm
 EXTRA_DIST += $(test_utils)
 
+# and finally some development utilities
+noinst_SCRIPTS = \
+	run-ndmp
+
 CHECK_PERL_FLAGS=-I$(top_srcdir)/installcheck
-
-SCRIPTS_PERL = $(tests) $(mocks)
-
-# we don't need to syntax check the test scripts..
-SKIP_CHECKS = true
+SCRIPTS_PERL = $(tests) $(mocks) $(noinst_SCRIPTS)
 
 .PHONY: clobber_my_config_is_ok
 clobber_my_config_is_ok:
