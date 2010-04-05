@@ -1,4 +1,12 @@
 2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Taper/Scan.pm: POD fixes, add user_msg_fn key
+	* perl/Amanda/Taper/Scan/traditional.pm: call user_msg_fn on
+	  search failure; check for failure before printing "slot N"
+	  prefix
+	* server-src/amcheck-device.pl: implement new user_msg_fn key
+	  to print expected volume on failure
+
+2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Device.pod: document that finish() can be called even
 	  if start() was not, to release resources
 	* device-src/ndmp-device.c: implement

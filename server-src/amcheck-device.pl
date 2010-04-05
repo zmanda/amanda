@@ -1,5 +1,5 @@
 #! @PERL@
-# Copyright (c) 2009 Zmanda Inc.  All Rights Reserved.
+# Copyright (c) 2009, 2010 Zmanda Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -66,7 +66,20 @@ my $exit_status = 0;
 
 sub _user_msg_fn {
         my %params = @_;
-        if (exists($params{'text'})) {
+        if (exists $params{'scan_failed'}) {
+	    print STDERR "Taper scan algorithm did not find an acceptable volume.\n";
+	    if ($params{'expected_label'} or $params{'expected_new'}) {
+		my @exp;
+		if ($params{'expected_label'}) {
+		    push @exp, "volume '$params{expected_label}'";
+		}
+		if ($params{'expected_new'}) {
+		    push @exp, "a new volume";
+		}
+		my $exp = join(" or ", @exp);
+		print STDERR "    (expecting $exp)\n";
+	    }
+	} elsif (exists($params{'text'})) {
             print STDERR "$params{'text'}\n";
         } elsif (exists($params{'scan_slot'})) {
             print STDERR "slot $params{'slot'}:";
