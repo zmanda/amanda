@@ -1191,12 +1191,12 @@ sub fatal { $_[0]->{'type'} eq 'fatal'; }
 sub failed { $_[0]->{'type'} eq 'failed'; }
 
 # reasons
-sub notfound { $_[0]->{'reason'} eq 'notfound'; }
-sub invalid { $_[0]->{'reason'} eq 'invalid'; }
-sub notimpl { $_[0]->{'reason'} eq 'notimpl'; }
-sub driveinuse { $_[0]->{'reason'} eq 'driveinuse'; }
-sub volinuse { $_[0]->{'reason'} eq 'volinuse'; }
-sub unknown { $_[0]->{'reason'} eq 'unknown'; }
+sub notfound { $_[0]->failed && $_[0]->{'reason'} eq 'notfound'; }
+sub invalid { $_[0]->failed && $_[0]->{'reason'} eq 'invalid'; }
+sub notimpl { $_[0]->failed && $_[0]->{'reason'} eq 'notimpl'; }
+sub driveinuse { $_[0]->failed && $_[0]->{'reason'} eq 'driveinuse'; }
+sub volinuse { $_[0]->failed && $_[0]->{'reason'} eq 'volinuse'; }
+sub unknown { $_[0]->failed && $_[0]->{'reason'} eq 'unknown'; }
 
 # slot accessor
 sub slot { $_[0]->{'slot'}; }
