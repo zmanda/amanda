@@ -1,4 +1,9 @@
 2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/infofile.c: use %lld in scanning instead of %jd,
+	  since Solaris 8 doesn't have %j support; also fix handling
+	  of parse errors
+
+2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/ndmp-device.c: treat NDMP9_DEVICE_BUSY_ERR as
 	  DEVICE_STATUS_DEVICE_BUSY
 
