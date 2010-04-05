@@ -1241,6 +1241,13 @@ sub release {
 
     return if $self->{'released'};
 
+    # always finish the device on release; it's illegal for anything
+    # else to use the device after this point, anyway, so we want to
+    # release the device's resources immediately
+    if (defined $self->{'device'}) {
+	$self->{'device'}->finish();
+    }
+
     $self->{'released'} = 1;
     $self->do_release(%params);
 }

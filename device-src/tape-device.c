@@ -1432,8 +1432,12 @@ tape_device_finish (Device * d_self) {
 
     if (device_in_error(self)) return FALSE;
 
-    if (d_self->access_mode == ACCESS_NULL)
+    /* if we're already in ACCESS_NULL, then there are no filemarks or anything
+     * to worry about, but we need to release the kernel device */
+    if (d_self->access_mode == ACCESS_NULL) {
+        robust_close(self->fd);
 	return TRUE;
+    }
 
     /* Polish off this file, if relevant. */
     if (d_self->in_file && IS_WRITABLE_ACCESS_MODE(d_self->access_mode)) {

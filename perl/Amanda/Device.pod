@@ -264,6 +264,30 @@ Devices which do not support EOM simply return a VOLUME_ERROR when the volume
 is full.  If this occurs during a C<write_block> operation, then the volume may
 or may not contain the block - the situation is indeterminate.
 
+=head2 Device Resources
+
+Some device types have a "locking" mechanism that prevents other parts of the
+system from accessing the underlying resource while an operation is in
+progress.  For example, a typical UNIX tape driver cannot be opened by two
+processes at once.
+
+Amanda Devices will lock the underlying resource when C<start> or C<read_label>
+is called, and unlock the resource either when the Device object is
+garbage-collected or in the C<finish> method.  Thus in a calling sequence such as
+
+    read_label
+    start
+    seek_file
+    ...
+    finish
+
+the underlying resource remains locked for the entire sequence, even between
+read_label and finish.
+
+It is unwise to rely on Perl's garbage-collection to automatically release
+resources.  Instead, always explicitly release resources with a C<finish> call.
+The Changer API is careful to do this in its C<release> method.
+
 =head2 Member Variables
 
 All member variables are implemented using accessor methods, rather than the
@@ -557,8 +581,9 @@ uses C<read_block>, so there is no need for subclasses to override it.
  $success = $dev->finish();
 
 This undoes the effects of start, returning the device to a neutral state
-(C<$ACCESS_NULL>). After C<finish>, it is not an error to call C<start> again,
-even with a different mode.
+(C<$ACCESS_NULL>).  It will also release any resources acquired by
+C<read_label>, even if C<start> was not called.  After C<finish>, it is not an
+error to call C<start> again, even with a different mode.
 
 =head3 recycle_file
 

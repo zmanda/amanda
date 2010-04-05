@@ -667,6 +667,9 @@ ndmp_device_finish(
 	return FALSE;
     }
 
+    if (self->ndmp)
+	close_connection(self);
+
     return TRUE;
 }
 
