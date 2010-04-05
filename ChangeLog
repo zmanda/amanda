@@ -1,4 +1,9 @@
 2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/ndmp.pm: close the NDMP connection after
+	  every Interface operation, so that objects are not unreffed
+	  during Perl's global cleanup.
+
+2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Taper/Scan.pm: POD fixes, add user_msg_fn key
 	* perl/Amanda/Taper/Scan/traditional.pm: call user_msg_fn on
 	  search failure; check for failure before printing "slot N"

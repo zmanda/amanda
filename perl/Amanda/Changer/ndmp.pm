@@ -72,17 +72,13 @@ sub get_interface {
 	}
     }
 
-    my $conn = Amanda::NDMP::NDMPConnection->new(
-	$host, $port,
-	$self->{'ndmp-username'}, $self->{'ndmp-password'},
-	$self->{'ndmp-auth'});
+    # assemble the arguments to NDMPConnection's constructor, so that the interface
+    # can create a connection as needed
+    my $connargs = [ $host, $port,
+		     $self->{'ndmp-username'}, $self->{'ndmp-password'},
+		     $self->{'ndmp-auth'} ];
 
-    if ($conn->err_code()) {
-	return Amanda::Changer->make_error("fatal", undef,
-	    message => "error opening NDMP connection: " . $conn->err_msg());
-    }
-
-    return Amanda::Changer::ndmp::Interface->new($conn, $scsi_dev, $ignore_barcodes),
+    return Amanda::Changer::ndmp::Interface->new($connargs, $scsi_dev, $ignore_barcodes),
 }
 
 sub get_device {
@@ -118,10 +114,10 @@ use Amanda::MainLoop;
 
 sub new {
     my $class = shift;
-    my ($conn, $scsi_dev, $ignore_barcodes) = @_;
+    my ($connargs, $scsi_dev, $ignore_barcodes) = @_;
 
     return bless {
-	conn => $conn,
+	connargs => $connargs,
 	scsi_dev => $scsi_dev,
 	ignore_barcodes => $ignore_barcodes,
 	# have we called READ ELEMENT STATUS yet?
@@ -145,29 +141,17 @@ sub inquiry {
     my $self = shift;
     my ($inquiry_cb) = @_;
 
-    if (!$self->{'conn'}->scsi_open($self->{'scsi_dev'})) {
-	return $inquiry_cb->($self->{'conn'}->err_msg());
-    }
-
-    # patch scsi_close into the callback, so it will be executed in error and
-    # success conditions
-    my $orig_inquiry_cb = $inquiry_cb;
-    $inquiry_cb = sub {
-	my ($err, $res) = @_;
-	if (!$self->{'conn'}->scsi_close()) {
-	    return $orig_inquiry_cb->($self->{'conn'}->err_msg()) unless ($err);
-	}
-	return $orig_inquiry_cb->($err, $res);
-    };
+    my $conn = $self->_get_scsi_conn(\$inquiry_cb);
+    return $inquiry_cb->($conn->err_msg()) if $conn->err_code();
 
     # send a TEST UNIT READY first
-    my $res = $self->{'conn'}->scsi_execute_cdb(
+    my $res = $conn->scsi_execute_cdb(
 	flags => 0,
 	timeout => 1*1000,
 	cdb => pack('CxxxxC', 0, 0)
     );
     if (!$res) {
-	return $inquiry_cb->($self->{'conn'}->err_msg());
+	return $inquiry_cb->($conn->err_msg());
     }
     if ($res->{'status'} != 0) {
 	my $sense_info = $self->_get_scsi_err($res);
@@ -175,14 +159,14 @@ sub inquiry {
     }
 
     # now send an INQUIRY
-    $res = $self->{'conn'}->scsi_execute_cdb(
+    $res = $conn->scsi_execute_cdb(
 	flags => $NDMP9_SCSI_DATA_DIR_IN,
 	timeout => 5*1000,
 	cdb => pack('CCCnC', 0x12, 0, 0, 96, 0),
 	datain_len => 96
     );
     if (!$res) {
-	return $inquiry_cb->($self->{'conn'}->err_msg());
+	return $inquiry_cb->($conn->err_msg());
     }
     if ($res->{'status'} != 0) {
 	my $sense_info = $self->_get_scsi_err($res);
@@ -214,23 +198,11 @@ sub status {
     # variable will be changed, later
     my $bufsize = 8;
 
-    if (!$self->{'conn'}->scsi_open($self->{'scsi_dev'})) {
-	return $status_cb->($self->{'conn'}->err_msg());
-    }
-
-    # patch scsi_close into the callback, so it will be executed in error and
-    # success conditions
-    my $orig_status_cb = $status_cb;
-    $status_cb = sub {
-	my ($err, $res) = @_;
-	if (!$self->{'conn'}->scsi_close()) {
-	    return $orig_status_cb->($self->{'conn'}->err_msg()) unless ($err);
-	}
-	return $orig_status_cb->($err, $res);
-    };
+    my $conn = $self->_get_scsi_conn(\$status_cb);
+    return $status_cb->($conn->err_msg()) if $conn->err_code();
 
 send_cdb:
-    my $res = $self->{'conn'}->scsi_execute_cdb(
+    my $res = $conn->scsi_execute_cdb(
 	flags => $NDMP9_SCSI_DATA_DIR_IN,
 	timeout => 2*1000,
 	cdb => pack('CCnnCCnxC',
@@ -245,7 +217,7 @@ send_cdb:
 	datain_len => $bufsize
     );
     if (!$res) {
-	return $status_cb->($self->{'conn'}->err_msg());
+	return $status_cb->($conn->err_msg());
     }
     if ($res->{'status'} != 0) {
 	my $sense_info = $self->_get_scsi_err($res);
@@ -294,23 +266,12 @@ sub transfer {
 sub _do_move_medium {
     my $self = shift;
     my ($op, $src, $dst, $finished_cb) = @_;
+    my $conn;
     my %subs;
 
-    $subs{'scsi_open'} = make_cb(scsi_open => sub {
-	if (!$self->{'conn'}->scsi_open($self->{'scsi_dev'})) {
-	    return $finished_cb->($self->{'conn'}->err_msg());
-	}
-
-	# patch scsi_close into the callback, so it will be executed in error and
-	# success conditions
-	my $orig_finished_cb = $finished_cb;
-	$finished_cb = sub {
-	    my ($err) = @_;
-	    if (!$self->{'conn'}->scsi_close()) {
-		return $orig_finished_cb->($self->{'conn'}->err_msg()) unless ($err);
-	    }
-	    return $orig_finished_cb->($err);
-	};
+    $subs{'get_conn'} = make_cb(get_conn => sub {
+	$conn = $self->_get_scsi_conn(\$finished_cb);
+	return $finished_cb->($conn->err_msg()) if $conn->err_code();
 
 	$subs{'get_status'}->();
     });
@@ -350,7 +311,7 @@ sub _do_move_medium {
 	}
 
 	# send a MOVE MEDIUM command
-	my $res = $self->{'conn'}->scsi_execute_cdb(
+	my $res = $conn->scsi_execute_cdb(
 	    # mtx uses data dir "out", but ndmjob uses 0.  A NetApp filer
 	    # segfaults with data dir "out", so we use 0.
 	    flags => $NDMP9_SCSI_DATA_DIR_NONE,
@@ -372,7 +333,7 @@ sub _do_move_medium {
 	my ($res) = @_;
 
 	if (!$res) {
-	    return $finished_cb->($self->{'conn'}->err_msg());
+	    return $finished_cb->($conn->err_msg());
 	}
 	if ($res->{'status'} != 0) {
 	    my $sense_info = $self->_get_scsi_err($res);
@@ -382,7 +343,7 @@ sub _do_move_medium {
 	return $finished_cb->(undef);
     });
 
-    $subs{'scsi_open'}->();
+    $subs{'get_conn'}->();
 }
 
 # a selected set of errors we might see; keyed by ASC . ASCQ
@@ -533,6 +494,42 @@ sub _parse_read_element_status {
     }
 
     return $result;
+}
+
+# this method is responsible for opening a new NDMPConnection and calling scsi_open,
+# as well as patching the given callback to automatically close the connection on
+# completion.
+sub _get_scsi_conn {
+    my $self = shift;
+    my ($cbref) = @_;
+
+    my $conn = Amanda::NDMP::NDMPConnection->new(@{$self->{'connargs'}});
+    if ($conn->err_code()) {
+	return $conn;
+    }
+
+    if (!$conn->scsi_open($self->{'scsi_dev'})) {
+	return $conn;
+    }
+
+    # patch scsi_close into the callback, so it will be executed in error and
+    # success conditions
+    my $orig_cb = $$cbref;
+    $$cbref = sub {
+	my @args = @_;
+
+	if (!$conn->scsi_close()) {
+	    if (!$args[0]) { # only report an error if one hasn't already occurred
+		my $err = Amanda::Changer->make_error("fatal", undef,
+		    message => "".$conn->err_msg());
+		return $orig_cb->($err);
+	    }
+	}
+
+	return $orig_cb->(@args);
+    };
+
+    return $conn;
 }
 
 1;
