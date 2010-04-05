@@ -1118,6 +1118,7 @@ sub with_locked_state {
 	# call through to the original callback with the original
 	# arguments
 	$cb->(@args);
+	%subs = ();
     };
 
     $subs{'open'}->();
