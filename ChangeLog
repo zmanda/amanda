@@ -1,4 +1,8 @@
 2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/run-ndmp.pl: development util to run ndmjob test daemon
+	* installcheck/Makefile.am: add util
+
+2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/infofile.c: use %lld in scanning instead of %jd,
 	  since Solaris 8 doesn't have %j support; also fix handling
 	  of parse errors
