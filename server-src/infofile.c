@@ -221,7 +221,6 @@ read_txinfofile(
 	stats_t onestat;	/* one stat record */
 	int level = 0;
 	long long off_t_tmp;
-	intmax_t time_t_tmp;
 
 	if (line[0] == '\0')
 	    continue;
@@ -241,62 +240,64 @@ read_txinfofile(
 	s = line;
 	ch = *s++;
 
+	/* from here on, we had better be parsing a 'stats' line */
 	if(strncmp_const_skip(line, "stats:", s, ch) != 0) {
-	    break;
+	    return -1;
 	}
 
 	skip_whitespace(s, ch);
 	if(ch == '\0' || sscanf((s - 1), "%d", &level) != 1) {
-	    break;
+	    return -1;
 	}
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
 	if(ch == '\0' || sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
-	    break;
+	    return -1;
 	}
 	onestat.size = (off_t)off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
 	if(ch == '\0' || sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
-	    break;
+	    return -1;
 	}
 	onestat.csize = (off_t)off_t_tmp;
 	skip_integer(s, ch);
 
+	/* assume that the time fits in a long long */
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), "%jd", &time_t_tmp) != 1) {
-	    break;
+	if(ch == '\0' || sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
+	    return -1;
 	}
-        onestat.secs = (time_t)time_t_tmp;
+        onestat.secs = (time_t)off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), "%jd", &time_t_tmp) != 1) {
-	    break;
+	if(ch == '\0' || sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
+	    return -1;
 	}
-	onestat.date = (time_t)time_t_tmp;
+	onestat.date = (time_t)off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
 	if(ch != '\0') {
 	    if(sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
-		break;
+		return -1;
 	    }
 	    onestat.filenum = (off_t)off_t_tmp;
 	    skip_integer(s, ch);
 
 	    skip_whitespace(s, ch);
 	    if(ch == '\0') {
-		break;
+		return -1;
 	    }
 	    strncpy(onestat.label, s-1, SIZEOF(onestat.label)-1);
 	    onestat.label[SIZEOF(onestat.label)-1] = '\0';
 	}
 
 	if(level < 0 || level > DUMP_LEVELS-1)
-	    break;
+	    return -1;
 
 	info->inf[level] = onestat;
     }
@@ -318,7 +319,6 @@ read_txinfofile(
     for(rc = -2; (line = agets(infof)) != NULL; free(line)) {
 	history_t onehistory;	/* one history record */
 	long long off_t_tmp;
-	intmax_t time_t_tmp;
 
 	if (line[0] == '\0')
 	    continue;
@@ -363,21 +363,21 @@ read_txinfofile(
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), "%jd", &time_t_tmp) != 1) {
+	if(ch == '\0' || sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
 	    amfree(line);
 	    break;
 	}
-	onehistory.date = (time_t)time_t_tmp;
+	onehistory.date = (time_t)off_t_tmp;
 	skip_integer(s, ch);
 
 	onehistory.secs = (unsigned long)-1;
 	skip_whitespace(s, ch);
 	if(ch != '\0') {
-	    if(sscanf((s - 1), "%jd", &time_t_tmp) != 1) {
+	    if(sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
 		amfree(line);
 		break;
 	    }
-	    onehistory.secs = (time_t)time_t_tmp;
+	    onehistory.secs = (time_t)off_t_tmp;
 	    skip_integer(s, ch);
 	}
 
