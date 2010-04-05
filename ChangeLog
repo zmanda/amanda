@@ -1,4 +1,11 @@
 2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Device.pod: document that finish() can be called even
+	  if start() was not, to release resources
+	* device-src/ndmp-device.c: implement
+	* device-src/tape-device.c: implement
+	* perl/Amanda/Changer.pm: always finish() a device in $res->release()
+
+2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/run-ndmp.pl: development util to run ndmjob test daemon
 	* installcheck/Makefile.am: add util
 
