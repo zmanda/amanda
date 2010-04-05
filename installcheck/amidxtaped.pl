@@ -300,12 +300,20 @@ sub test {
     $subs{'expect_feedme'} = make_cb(expect_feedme => sub  {
 	if ($params{'feedme'}) {
 	    $service->expect($cmd_stream,
-		[ re => qr/^FEEDME TESTCONF01\r\n/, $subs{'got_feedme'} ]);
+		[ re => qr/^FEEDME TESTCONF01\r\n/, $subs{'got_feedme'} ],
+		[ re => qr/^MESSAGE [^\r]*\r\n/, $subs{'got_message'} ]);
 	} elsif ($params{'holding_err'}) {
 	    $subs{'expect_err_message'}->();
 	} else {
 	    $subs{'expect_header'}->();
 	}
+    });
+
+    $subs{'got_message'} = make_cb(got_message => sub {
+	# this is usually an error message
+	$event->('GOT-MESSAGE');
+	# loop back to expect a feedme..
+	$subs{'expect_feedme'}->();
     });
 
     $subs{'got_feedme'} = make_cb(got_feedme => sub {
@@ -494,7 +502,7 @@ sub test {
 		    @sec_evts,
 		    'SEND-FEAT', 'GOT-FEAT', 'SENT-CMD',
 		    ($inetd and $params{'splits'})? ('GOT-CONNECT', 'DATA-SECURITY') : (),
-		    $params{'feedme'}? ('GOT-FEEDME') : (),
+		    $params{'feedme'}? ('GOT-MESSAGE', 'GOT-FEEDME') : (),
 		    $params{'header'}? ('GOT-HEADER') : (),
 		    @datapath_evts,
 		    'DATA-TO-EOF', 'EXIT-0', );

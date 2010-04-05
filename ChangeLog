@@ -1,4 +1,8 @@
 2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amidxtaped.pl: send changer error with MESSAGE
+	* installcheck/amidxtaped.pl: test for it
+
+2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/version.m4: be resilient to all but the first
 	  digit of the version number missing
 
