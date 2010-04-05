@@ -2106,6 +2106,7 @@ writer_intermediary(
 
     while(get_amidxtaped_line() >= 0) {
 	char desired_tape[MAX_TAPE_LABEL_BUF];
+	g_debug("get amidxtaped line: %s", amidxtaped_line);
 
 	/* if prompted for a tape, relay said prompt to the user */
 	if(sscanf(amidxtaped_line, "FEEDME %132s\n", desired_tape) == 1) {
@@ -2129,11 +2130,13 @@ writer_intermediary(
 		break;
 	    }
 	} else if (strncmp_const(amidxtaped_line, "USE-DATAPATH ") == 0) {
-	    if (strncmp_const(amidxtaped_line+10, "AMANDA") == 0) {
+	    if (strncmp_const(amidxtaped_line+13, "AMANDA") == 0) {
 		ctl_data.data_path = DATA_PATH_AMANDA;
-	    } else if (strncmp_const(amidxtaped_line+10, "DIRECT-TCP") == 0) {
+		g_debug("Using AMANDA data-path");
+	    } else if (strncmp_const(amidxtaped_line+13, "DIRECT-TCP") == 0) {
 		ctl_data.data_path = DATA_PATH_DIRECTTCP;
-		ctl_data.addrs = stralloc(amidxtaped_line+21);
+		ctl_data.addrs = stralloc(amidxtaped_line+24);
+		g_debug("Using DIRECT-TCP data-path with %s", ctl_data.addrs);
 	    }
 	    start_processing_data(&ctl_data);
 	} else if(strncmp_const(amidxtaped_line, "MESSAGE ") == 0) {
@@ -2752,7 +2755,11 @@ ask_file_overwrite(
     char *restore_dir;
 
     if (ctl_data->file.dumplevel == 0) {
-	restore_dir = g_strdup(g_hash_table_lookup(proplist, "DIRECTORY"));
+	property_t *property = g_hash_table_lookup(proplist, "directory");
+	if (property && property->values && property->values->data) {
+	    /* take first property value */
+	    restore_dir = strdup(property->values->data);
+	}
 	if (samba_extract_method == SAMBA_SMBCLIENT ||
 	    (ctl_data->bsu &&
 	     ctl_data->bsu->recover_path == RECOVER_PATH_REMOTE)) {
