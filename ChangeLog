@@ -1,4 +1,10 @@
 2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/disk.pm: reply with 'invalid' on invalid slots
+	* perl/Amanda/Taper/Scan/traditional.pm: skip invalid slots when
+	  loading slot 'current'
+	* installcheck/Amanda_Taper_Scan_traditional.pl: test it
+
+2010-04-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amidxtaped.pl: send changer error with MESSAGE
 	* installcheck/amidxtaped.pl: test for it
 

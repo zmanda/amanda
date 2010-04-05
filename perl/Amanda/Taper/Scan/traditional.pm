@@ -320,6 +320,7 @@ sub stage_2 {
     my $self = shift;
 
     my $last_slot;
+    my $load_current = ($self->{'scan_num'} == 1);
     my %subs;
 
     debug("Amanda::Taper::Scan::traditional stage 2: scan for any reusable volume");
@@ -334,22 +335,18 @@ sub stage_2 {
 
         # load the current or next slot
 	my @load_args;
-	if (defined $last_slot) {
-	    @load_args = (
-		relative_slot => 'next',
-		slot => $last_slot,
-	    );
-	} elsif ($self->{'scan_num'} > 1) {
-	    # don't bother to load 'current' if this is our second scan
-	    @load_args = (
-		relative_slot => 'next',
-	    );
-	} else {
+	if ($load_current) {
 	    # load 'current' the first time through
 	    @load_args = (
 		relative_slot => 'current',
 	    );
+	} else {
+	    @load_args = (
+		relative_slot => 'next',
+		(defined $last_slot)? (slot => $last_slot) : (),
+	    );
 	}
+
 	$self->{'changer'}->load(
 	    @load_args,
 	    set_current => 1,
@@ -361,6 +358,8 @@ sub stage_2 {
 
     $subs{'loaded'} = make_cb(loaded => sub {
         my ($err, $res) = @_;
+	my $loaded_current = $load_current;
+	$load_current = 0; # don't load current a second time
 
 	# bail out immediately if the scan is complete
 	if ($err and $err->failed and $err->notfound) {
@@ -378,20 +377,29 @@ sub stage_2 {
 
 	# and then tell it the result if already known (error) or try
 	# loading the volume.
-	if ($err && $err->{volinuse} && $err->{slot}) {
-	    $self->_user_msg(slot_result => 1, err => $err);
-	    $last_slot = $err->{slot};
-	    $self->{'seen'}->{$last_slot} = 1;
+	if ($err) {
+	    my $ignore_error = 0;
+	    # there are two "acceptable" errors: if the slot exists but the volume
+	    # is already in use
+	    $ignore_error = 1 if ($err->volinuse && $err->{slot});
+	    # or if we loaded the 'current' slot and it was invalid (this happens if
+	    # the user changes 'use-slots', for example
+	    $ignore_error = 1 if ($loaded_current && $err->invalid);
 
-	    # Load the next
-	    $subs{'load'}->(undef);
-	    return;
-	} elsif ($err) {
-            # if we have a fatal error or something other than "notfound"
-            # or "volinuse", bail out.
-	    $self->_user_msg(slot_result => 1, err => $err);
-            return $self->scan_result($err, $res);
-        }
+	    if ($ignore_error) {
+		$self->_user_msg(slot_result => 1, err => $err);
+		if ($err->{'slot'}) {
+		    $last_slot = $err->{slot};
+		    $self->{'seen'}->{$last_slot} = 1;
+		}
+		return $subs{'load'}->(undef);
+	    } else {
+		# if we have a fatal error or something other than "notfound"
+		# or "volinuse", bail out.
+		$self->_user_msg(slot_result => 1, err => $err);
+		return $self->scan_result($err, $res);
+	    }
+	}
 
 	$self->{'seen'}->{$res->{'this_slot'}} = 1;
 
