@@ -575,6 +575,18 @@ ndmconn_handle_notify(
 		break;
 	    }
 
+            case NDMP4_LOG_FILE:
+            case NDMP4_LOG_MESSAGE:
+            case NDMP4_LOG_NORMAL:
+            case NDMP4_LOG_DEBUG:
+            case NDMP4_LOG_ERROR:
+            case NDMP4_LOG_WARNING: {
+                ndmp4_log_message_post *post =
+                    &nmb->body.ndmp4_log_message_post_body;
+                g_debug("%s", post->entry);
+                break;
+            }
+
 	    default:
 		self->last_rc = NDMCONN_CALL_STATUS_REPLY_ERROR;
 		self->conn->last_reply_error = NDMP4_ILLEGAL_STATE_ERR;

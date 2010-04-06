@@ -1,3 +1,8 @@
+2010-04-06  Paul C. Mantz <pcmantz@zmanda.com>
+	* ndmp-src/ndmpconnobj.c: send NDMP4_LOG_* messages to debug log
+	* ndmp-src/ndma_tape.c ndmp-src/ndma_tape_simulator.c: added
+	  NDMP4_LOG_* messages for testing
+
 2010-04-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/extract_list.c: Fix USE-DATA-PATH offset and directory
 	  property.

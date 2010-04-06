@@ -121,9 +121,11 @@ ndmos_tape_open (struct ndm_session *sess, char *drive_name, int will_write)
 	char			pos_buf[32];
 	off_t			pos = -1;
 
-	if (ta->tape_fd >= 0) {
-		return NDMP9_DEVICE_OPENED_ERR;
-	}
+        if (ta->tape_fd >= 0) {
+                ndma_send_logmsg(sess, NDMP9_LOG_ERROR, sess->plumb.control,
+                         "device simulator is already open");
+                return NDMP9_DEVICE_OPENED_ERR;
+        }
 
 	if (stat (drive_name, &st) < 0) {
 		return NDMP9_NO_DEVICE_ERR;
