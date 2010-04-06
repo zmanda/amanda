@@ -1,3 +1,6 @@
+2010-04-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/extract_list.c: Set restore_dir to NULL.
+
 2010-04-06  Paul C. Mantz <pcmantz@zmanda.com>
 	* ndmp-src/ndmpconnobj.c: send NDMP4_LOG_* messages to debug log
 	* ndmp-src/ndma_tape.c ndmp-src/ndma_tape_simulator.c: added
