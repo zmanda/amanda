@@ -2752,7 +2752,7 @@ static gboolean
 ask_file_overwrite(
     ctl_data_t *ctl_data)
 {
-    char *restore_dir;
+    char *restore_dir = NULL;
 
     if (ctl_data->file.dumplevel == 0) {
 	property_t *property = g_hash_table_lookup(proplist, "directory");
