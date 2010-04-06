@@ -235,6 +235,8 @@ ndmta_mover_start_active (struct ndm_session *sess)
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
 
 	ndmalogf (sess, 0, 6, "mover going active");
+	ndma_send_logmsg(sess, NDMP9_LOG_DEBUG, sess->plumb.control,
+		"mover going active");
 
 	switch (ta->mover_state.mode) {
 	case NDMP9_MOVER_MODE_READ:
