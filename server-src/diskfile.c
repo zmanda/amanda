@@ -1737,6 +1737,7 @@ match_disklist(
     int match_a_host;
     int match_a_disk;
     int prev_match;
+    disk_t *dp_skip;
     disk_t *dp;
 
     if(sargc <= 0)
@@ -1755,6 +1756,7 @@ match_disklist(
 		match_a_host = 1;
 	}
 	match_a_disk = 0;
+	dp_skip = NULL;
 	for(dp = origqp->head; dp != NULL; dp = dp->next) {
 	    if(prevhost != NULL &&
 	       match_host(prevhost, dp->host->hostname) &&
@@ -1769,6 +1771,10 @@ match_disklist(
 			dp->todo = 1;
 			match_a_disk = 1;
 			prev_match = 0;
+		    } else { /* dp->todo == 0 */
+			match_a_disk = 1;
+			prev_match = 0;
+			dp_skip = dp;
 		    }
 		}
 	    }
@@ -1778,8 +1784,16 @@ match_disklist(
 		if(prev_match == 1) { /* all disk of the previous host */
 		    for(dp = origqp->head; dp != NULL; dp = dp->next) {
 			if(match_host(prevhost,dp->host->hostname))
-			    if(dp->todo == -1)
+			    if(dp->todo == -1) {
 				dp->todo = 1;
+				match_a_disk = 1;
+			    }
+		    }
+		    if (!match_a_disk) {
+			char *errstr1;
+			errstr1 = vstrallocf(_("All disks on host '%s' are ignored or have strategy \"skip\".\n"), prevhost);
+			vstrextend(&errstr, errstr1, NULL);
+			amfree(errstr1);
 		    }
 		}
 		prevhost = sargv[i];
@@ -1796,14 +1810,33 @@ match_disklist(
 		amfree(errstr1);
 		prev_match = 0;
 	    }
+	} else if (dp_skip) {
+		char *errstr1;
+		if (dp_skip->strategy == DS_SKIP) {
+		    errstr1 = vstrallocf(_("Argument '%s' matches a disk with strategy \"skip\".\n"), sargv[i]);
+		} else {
+		    errstr1 = vstrallocf(_("Argument '%s' matches a disk marked \"ignore\".\n"), sargv[i]);
+		}
+		vstrextend(&errstr, errstr1, NULL);
+		amfree(errstr1);
+		prev_match = 0;
 	}
     }
 
     if(prev_match == 1) { /* all disk of the previous host */
+	match_a_disk = 0;
 	for(dp = origqp->head; dp != NULL; dp = dp->next) {
 	    if(match_host(prevhost,dp->host->hostname))
-		if(dp->todo == -1)
+		if(dp->todo == -1) {
 		    dp->todo = 1;
+		    match_a_disk = 1;
+		}
+	}
+	if (!match_a_disk) {
+	    char *errstr1;
+	    errstr1 = vstrallocf(_("All disks on host '%s' are ignored or have strategy \"skip\".\n"), prevhost);
+	    vstrextend(&errstr, errstr1, NULL);
+	    amfree(errstr1);
 	}
     }
 

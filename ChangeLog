@@ -1,3 +1,8 @@
+2010-04-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Don't exit on match_disklist error.
+	* server-src/diskfile.c (match_disklist): Generate better message for
+	  strategy "skip" or ignore dle.
+
 2010-04-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/extract_list.c: Set restore_dir to NULL.
 

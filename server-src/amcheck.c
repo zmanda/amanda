@@ -262,7 +262,6 @@ main(
     if (errstr) {
 	g_printf(_("%s"),errstr);
 	amfree(errstr);
-	exit(1);
     }
 
     /*
