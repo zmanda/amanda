@@ -2087,7 +2087,10 @@ The value should be hh*100+mm, e.g. 6:30PM (18:30) would be entered as
   <varlistentry>
   <term><amkeyword>skip</amkeyword></term>
   <listitem>
-  <para>Never do backups (useful when sharing the <emphasis remap='I'>disklist</emphasis> file).</para>
+  <para>Treat this DLE as if it doesn't exist (useful to disable DLEs
+  when sharing the <emphasis remap='I'>disklist</emphasis> file between
+  multiple configurations). Skipped DLEs will not be checked or
+  dumped, and will not be matched by disklist expressions.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
