@@ -233,7 +233,7 @@ disknames as present in the logfile.  It looks something like this:
 
 In the below, C<$dle> represents one disklist entry (C<{ ... }> in the
 above).  Each DLE has three major components: estimates, tries, and
-chunks.
+parts.
 
 =head3 Estimates
 
@@ -259,7 +259,7 @@ A try is a hash with at least one dumper, taper, and/or chunker DLE
 program as a key.  These entries contain the exit conditions of that
 particular program for that particular try.
 
-In addition, there is a field C<chunks> which records the parts taped
+In addition, there is a field C<parts> which records the parts taped
 during the taper processes in a try.
 
 There are a number of common fields between all three elements:
@@ -291,35 +291,35 @@ list reference to all the messages of type C<L_STRANGE> encountered
 during the process.
 
 The C<taper> hash contains all the exit status data given by the
-taper.  Because the taper has timestamped chunks, the program itself
+taper.  Because the taper has timestamped parts, the program itself
 does not have a C<date> field.  Taper has one unique field, C<parts>,
-giving the number of chunks (described in the next section) that were
+giving the number of parts (described in the next section) that were
 written to tape.
 
-=head3 Chunks
+=head3 Parts
 
 For a given C<$try> in the C<< $dle->{tries} >> list, there is a list
-located at C< $try->{chunks}> which describes each of the chunks that
+located at C< $try->{parts}> which describes each of the parts that
 are written by the taper.  Each item in the list is a hash reference
 with the following fields:
 
 =over
 
-=item C<label> - the name of the tape that the chunk was written to.
+=item C<label> - the name of the tape that the part was written to.
 
-=item C<date> - the datestamp at which this chunk was written.
+=item C<date> - the datestamp at which this part was written.
 
-=item C<file> - the filename of the chunk.
+=item C<file> - the filename of the part.
 
-=item C<part> - the sequence number of the chunk for the DLE that the
-chunk is archiving.
+=item C<part> - the sequence number of the part for the DLE that the
+part is archiving.
 
-=item C<sec> - the length of time, in seconds, that the chunk took to
+=item C<sec> - the length of time, in seconds, that the part took to
 be written.
 
-=item C<kb> - the total size of the chunk.
+=item C<kb> - the total size of the part.
 
-=item C<kps> - the speed at which the chunk was written.
+=item C<kps> - the speed at which the part was written.
 
 =back
 
@@ -876,9 +876,9 @@ sub _handle_taper_line
         my $dle    = $disklist->{$hostname}->{$disk};
         my $try    = $self->_get_try($dle, "taper");
         my $taper  = $try->{taper}  ||= {};
-        my $chunks = $try->{chunks} ||= [];
+        my $parts = $try->{parts} ||= [];
 
-        my $chunk = {
+        my $part = {
             label => $label,
             date  => $timestamp,
             file  => $tapefile,
@@ -890,7 +890,7 @@ sub _handle_taper_line
 
 	$taper->{orig_kb} = $orig_kb;
 
-        push @$chunks, $chunk;
+        push @$parts, $part;
 
         my $tape = $self->get_tape($label);
         $tape->{kb}   += $kb;

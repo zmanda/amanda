@@ -163,7 +163,7 @@ sub new
         total_stats => {},
         dumpdisks   => [ 0, 0 ],    # full_count, incr_count
         tapedisks   => [ 0, 0 ],
-        tapechunks  => [ 0, 0 ],
+        tapeparts  => [ 0, 0 ],
     };
 
     if (defined $report) {
@@ -201,11 +201,11 @@ sub calculate_stats
     my $total_stats = $self->{total_stats};
     my $dumpdisks   = $self->{dumpdisks};
     my $tapedisks   = $self->{tapedisks};
-    my $tapechunks  = $self->{tapechunks};
+    my $tapeparts  = $self->{tapeparts};
 
     ## initialize all relevant fields to 0
     map { $incr_stats->{$_} = $full_stats->{$_} = 0; }
-      qw/dumpdisk_count tapedisk_count tapechunk_count outsize origsize
+      qw/dumpdisk_count tapedisk_count tapepart_count outsize origsize
       tapesize coutsize corigsize taper_time dumper_time/;
 
     foreach my $dle_entry (@dles) {
@@ -220,8 +220,8 @@ sub calculate_stats
 			0;
 	    my $stats = ($level > 0) ? $incr_stats : $full_stats;
 
-	    $stats->{tapechunk_count} += @{ $try->{chunks} }
-		if (exists $try->{chunks});
+	    $stats->{tapepart_count} += @{ $try->{parts} }
+		if (exists $try->{parts});
 
 	    # compute out size, skipping flushes (tries without a dumper run)
 	    my $outsize = 0;
@@ -265,8 +265,8 @@ sub calculate_stats
                 $stats->{taper_time} += $try->{taper}{sec};
                 $stats->{tapedisk_count}++;
                 $tapedisks->[$try->{taper}{'level'}]++; #by level count
-                $tapechunks->[$try->{taper}{'level'}] += @{ $try->{chunks} }
-                     if (exists $try->{chunks});
+                $tapeparts->[$try->{taper}{'level'}] += @{ $try->{parts} }
+                     if (exists $try->{parts});
 	    }
 
 	    # add those values to the stats
@@ -728,7 +728,7 @@ EOF
         return divzero(
             100 * (
                 $marksize *
-                  ($stat_ref->{tapedisk_count} + $stat_ref->{tapechunk_count}) +
+                  ($stat_ref->{tapedisk_count} + $stat_ref->{tapepart_count}) +
                   $stat_ref->{tapesize}
             ),
             $tapesize
@@ -757,20 +757,20 @@ EOF
         )
     );
 
-    print $fh swrite($st_format, "", "", "", "", "(level:#chunks ...)")
-      if $incr_stats->{tapechunk_count} > 0;
+    print $fh swrite($st_format, "", "", "", "", "(level:#parts ...)")
+      if $incr_stats->{tapepart_count} > 0;
 
-    # NOTE: only print out the per-level tapechunks if there are
-    # incremental tapechunks
+    # NOTE: only print out the per-level tapeparts if there are
+    # incremental tapeparts
     print $fh swrite(
         $st_format,
-        "Chunks Taped",
-        sprintf("%4d", $total_stats->{tapechunk_count}),
-        sprintf("%4d", $full_stats->{tapechunk_count}),
-        sprintf("%4d", $incr_stats->{tapechunk_count}),
+        "Parts Taped",
+        sprintf("%4d", $total_stats->{tapepart_count}),
+        sprintf("%4d", $full_stats->{tapepart_count}),
+        sprintf("%4d", $incr_stats->{tapepart_count}),
         (
-            $self->{tapechunks}[1] > 0
-            ? by_level_count($self->{tapechunks})
+            $self->{tapeparts}[1] > 0
+            ? by_level_count($self->{tapeparts})
             : ""
         )
     );
@@ -831,7 +831,7 @@ sub output_tape_stats
             sprintf("%.0f", $self->tounits($tape->{kb})) . $self->{disp_unit},  # size
             divzero(100 * $tapeused, $tapesize),    # % usage
             int($tape->{dle}),                        # Nb of dles
-            int($tape->{files})                       # Nb of chunks
+            int($tape->{files})                       # Nb of parts
         );
     }
     print $fh "\n";

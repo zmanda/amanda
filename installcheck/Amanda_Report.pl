@@ -499,7 +499,7 @@ $LogfileData{taper} = {
                             orig_kb => undef,
                             error   => '',
                         },
-                        chunks => [
+                        parts => [
                             {
                                 label => "TESTCONF01",
                                 date  => "20080111",
@@ -632,7 +632,7 @@ $LogfileData{simple} = {
                             kb     => "420",
                             kps    => "1478.7",
                         },
-                        chunks => [
+                        parts => [
                             {
                                 label => "Conf-001",
                                 date  => "20080111",
@@ -795,7 +795,7 @@ $LogfileData{fullExample} = {
                             kb        => "8393",
                             orig_kb   => "82380"
                         },
-                        chunks => [
+                        parts => [
                             {
                                 kps   => "94368.875374",
                                 sec   => "0.088934",
@@ -837,7 +837,7 @@ $LogfileData{fullExample} = {
                             kb      => "28776940",
                             orig_kb => undef
                         },
-                        chunks => [
+                        parts => [
                             {
                                 label => 'FullBackup-14',
                                 date  => '20081002040002',
@@ -887,7 +887,7 @@ $LogfileData{fullExample} = {
                             'kb'      => '10',
                             orig_kb   => '10'
                         },
-                        chunks => [
+                        parts => [
                             {
                                 kps   => "3765.060241",
                                 sec   => "0.002656",
@@ -937,7 +937,7 @@ $LogfileData{fullExample} = {
                             kb        => "6630",
                             orig_kb   => "6630"
                         },
-                        chunks => [
+                        parts => [
                             {
                                 kps   => "92329.545455",
                                 sec   => "0.071808",
@@ -987,7 +987,7 @@ $LogfileData{fullExample} = {
                             kb        => "10",
                             orig_kb   => "10",
                         },
-                        chunks => [
+                        parts => [
                             {
                                 kps   => "3602.305476",
                                 sec   => "0.002776",
@@ -1072,7 +1072,7 @@ $LogfileData{amflushExample} = {
                             'kb'     => '36980',
                             orig_kb  => undef
                         },
-                        'chunks' => [
+                        'parts' => [
                             {
                                 'kps'   => '14766.518895',
                                 'sec'   => '2.504314',
@@ -1103,7 +1103,7 @@ $LogfileData{amflushExample} = {
                             'kb'     => '309',
                             orig_kb  => undef
                         },
-                        'chunks' => [
+                        'parts' => [
                             {
                                 'kps'   => '184.632684',
                                 'sec'   => '1.675693',
@@ -1213,7 +1213,7 @@ is_deeply(
                     kb        => "6630",
                     orig_kb   => "6630"
                 },
-                chunks => [
+                parts => [
                     {
                         kps   => "92329.545455",
                         sec   => "0.071808",

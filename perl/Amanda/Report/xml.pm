@@ -193,20 +193,20 @@ sub make_estimate_xml
       : "";
 }
 
-sub make_chunk_xml
+sub make_part_xml
 {
-    my ($chunk) = @_;
+    my ($part) = @_;
     return make_xml_elt(
-        "chunk",
+        "part",
         sub {
             return join( xml_nl(),
-                make_xml_elt( "label", $chunk->{label} ),
-                make_xml_elt( "date",  $chunk->{date} ),
-                make_xml_elt( "file",  $chunk->{file} ),
-                make_xml_elt( "part",  $chunk->{part} ),
-                make_xml_elt( "time",  $chunk->{sec} ),
-                make_xml_elt( "bytes", $chunk->{kb} * 1024 ),
-                make_xml_elt( "bps",   $chunk->{kps} * 1024 ) );
+                make_xml_elt( "label", $part->{label} ),
+                make_xml_elt( "date",  $part->{date} ),
+                make_xml_elt( "file",  $part->{file} ),
+                make_xml_elt( "part",  $part->{part} ),
+                make_xml_elt( "time",  $part->{sec} ),
+                make_xml_elt( "bytes", $part->{kb} * 1024 ),
+                make_xml_elt( "bps",   $part->{kps} * 1024 ) );
         }
     );
 }
@@ -225,8 +225,8 @@ sub make_dle_xml
                 : (),
                 exists $dle->{tries} ? map { make_try_xml($_) }
                   @{ $dle->{tries} } : (),
-                exists $dle->{chunks} ? map { make_chunk_xml($_) }
-                  @{ $dle->{chunks} } : () );
+                exists $dle->{parts} ? map { make_part_xml($_) }
+                  @{ $dle->{parts} } : () );
         }
     );
 }

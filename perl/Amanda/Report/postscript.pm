@@ -128,22 +128,22 @@ sub _write_report_tape
 
 	# run once for each try for this DLE
 	foreach my $try (@{$dle_info->{'tries'}}) {
-	    next unless exists $try->{'taper'} and exists $try->{'chunks'};
+	    next unless exists $try->{'taper'} and exists $try->{'parts'};
 
 	    # note that this report only prints a row for the *first* part in the DLE,
 	    # and only if that's on this tape.
-	    my $chunks = $try->{'chunks'};
-	    next unless ($chunks->[0] and $chunks->[0]{'label'} eq $label);
+	    my $parts = $try->{'parts'};
+	    next unless ($parts->[0] and $parts->[0]{'label'} eq $label);
 
 	    # the filenum printed will be this first filenum
-	    my $filenum = $chunks->[0]{'file'};
+	    my $filenum = $parts->[0]{'file'};
 
-	    # sum the chunk sizes on this label to get the outsize.  Note that the postscript
-	    # output does not contain a row for each part, but for each chunk..
+	    # sum the part sizes on this label to get the outsize.  Note that the postscript
+	    # output does not contain a row for each part, but for each part..
 	    my $outsize = 0;
-	    for my $chunk (@$chunks) {
-		next unless $chunk->{'label'} eq $label;
-		$outsize += $chunk->{'kb'};
+	    for my $part (@$parts) {
+		next unless $part->{'label'} eq $label;
+		$outsize += $part->{'kb'};
 	    }
 
 	    # Get origsize for this try.
