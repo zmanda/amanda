@@ -1,10 +1,6 @@
-# Note that this architecture assumes a full install -- not just server
-# or just client.  Neither is sufficiently test-able on its own.
-
 include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
-
-# Add your tests here.
+all_tests =
 
 common_tests = \
 	Amanda_Archive \
@@ -19,12 +15,14 @@ common_tests = \
 	Amanda_Util \
 	Amanda_Xfer \
 	amarchiver
+all_tests += $(common_tests)
 
 client_tests = \
         noop \
 	amgtar \
 	ampgsql \
 	amraw
+all_tests += $(client_tests)
 
 server_tests = \
 	Amanda_Changer \
@@ -58,6 +56,7 @@ server_tests = \
         amtape \
         amlabel \
 	amtapetype
+all_tests += $(server_tests)
 
 full_tests = \
 	=setupcache \
@@ -72,29 +71,26 @@ full_tests = \
 	amadmin \
 	amvault \
 	pp-scripts
+all_tests += $(full_tests)
 
 restore_tests = \
 	amfetchdump \
 	amidxtaped \
 	amrestore
+all_tests += $(restore_tests)
 
-if WANT_RECOVER
-if WANT_CHECK_USERID
-EXTRA_DIST += amrecover.pl
-else
-restore_tests += \
+restore_tests_no_check_userid = \
 	amrecover
-endif
-else
-EXTRA_DIST += amrecover.pl
-endif
+all_tests += $(restore_tests_no_check_userid)
 
 ndmp_tests = \
 	Amanda_Changer_ndmp \
 	Amanda_NDMP
+all_tests += $(ndmp_tests)
 
 mock_tests = \
 	mock_mtx
+all_tests += $(mock_tests)
 
 # mock scripts
 mocks = \
@@ -108,14 +104,6 @@ test_data = \
 EXTRA_DIST += $(test_data)
 
 tests =
-
-# tests requiring a client and a server (any tests that run amdump)
-# these come first to catch any major problems, if possible
-if WANT_SERVER
-if WANT_CLIENT
-tests += $(full_tests)
-endif
-endif
 
 # tests requiring neither client nor server
 tests += $(common_tests)
@@ -134,12 +122,22 @@ endif
 # tests requiring a client and a server AND restore facilities (any tests that run amdump)
 if WANT_SERVER
 if WANT_CLIENT
+# tests requiring a client and a server (any tests that run amdump)
+tests += $(full_tests)
+
+# tests requiring a client, a server, *and* restore code
 if WANT_RESTORE
 tests += $(restore_tests)
+
+# and tests requiring all that *and* requiring CHECK_USERID is not set
+if !CHECK_USERID
+tests += $(restore_tests_no_check_userid)
+endif
 endif
 endif
 endif
 
+# tests that need a server with NDMP support
 if WANT_NDMP
 if WANT_SERVER
 tests += $(ndmp_tests)
@@ -164,7 +162,9 @@ noinst_SCRIPTS = \
 	run-ndmp
 
 CHECK_PERL_FLAGS=-I$(top_srcdir)/installcheck
+
 SCRIPTS_PERL = $(tests) $(mocks) $(noinst_SCRIPTS)
+SCRIPTS_EXTRA_DIST = $(all_tests)
 
 .PHONY: clobber_my_config_is_ok
 clobber_my_config_is_ok:

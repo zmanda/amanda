@@ -23,18 +23,23 @@
 # be built down to extensionless executables (e.g., foo.pl -> foo), or to 
 # files with the usual extension (foo-lib.sh.in -> foo.sh).
 #
-# Files which support it are syntax-checked when the user invokes 'make check'.
+# Files which support it are syntax-checked when the user invokes 'make check',
+# unless the Makefile.am defines SKIP_CHECKS.
 #
-# All *target* filenames must be listed in SCRIPTS_SHELL, SCRIPTS_PERL, and 
-# SCRIPTS_AWK to support 'make dist', and 'make distclean'. No
-# files which are not substituted by config.status should be included in
-# SCRIPTS_PERL, SCRIPTS_SHELL, or SCRIPTS_AWK.  If non-generated files are listed
-# for installation, then Automake will figure out that they should be distributed;
+# All *target* filenames must be listed in SCRIPTS_SHELL, SCRIPTS_PERL, and
+# SCRIPTS_AWK to support 'make dist', and 'make distclean'. No files which are
+# not substituted by config.status should be included in SCRIPTS_PERL,
+# SCRIPTS_SHELL, or SCRIPTS_AWK.  If non-generated files are listed for
+# installation, then Automake will figure out that they should be distributed;
 # otherwise, include them in EXTRA_DIST.
 #
 # All SCRIPTS_SHELL and SCRIPTS_PERL are syntax-checked on 'make check'.  There is
 # a fix in place to run these syntax checks against the perl modules in the build
 # tree, rather than against the (potentially old) installed perl modules.
+#
+# To emulate EXTRA_DIST for scripts, use SCRIPTS_EXTRA_DIST, e.g.,
+#   SCRIPTS_SHELL = $(selected_scripts)
+#   SCRIPTS_EXTRA_DIST = $(all_scripts)
 #
 # USAGE:
 #
@@ -45,7 +50,7 @@
 #   SCRIPTS_SHELL = shell1 shell2 sh-lib.sh
 #   SCRIPTS_AWK = talk balk chalk awk-lib.awk
 #   sbin_SCRIPTS = not-subbed
-#   EXTRA_DIST = util-script.pl
+#   SCRIPTS_EXTRA_DIST = util-script
 #
 # with the corresponding files in the repository:
 #
@@ -107,21 +112,23 @@ DISTCLEANFILES += $(SCRIPTS_SHELL) $(SCRIPTS_PERL) $(SCRIPTS_AWK) $(SCRIPTS_INCL
 # syntax-check perl scripts on 'make check'
 check-perl: $(SCRIPTS_PERL)
 	@SCRIPTS_PERL="$(SCRIPTS_PERL)"; \
-	if test -f $(top_builddir)/perl/.libs/libCmdline.so -o -f $(top_builddir)/perl/libCmdline.so; then \
-		if test -n "$(PERL)"; then \
-			for perlobj in $$SCRIPTS_PERL; do \
-				sed "s,^use lib '$(amperldir),# use lib '$(amperldir)," < $$perlobj > $$perlobj.nouselib; \
-				$(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -w $$perlobj.nouselib || exit 1; \
-				rm $$perlobj.nouselib; \
-			done; \
-		fi \
+	if test x"$(SKIP_CHECKS)" = x"" && \
+	    test -f $(top_builddir)/perl/.libs/libCmdline.so -o -f $(top_builddir)/perl/libCmdline.so; then \
+	    if test -n "$(PERL)"; then \
+		    for perlobj in $$SCRIPTS_PERL; do \
+			    sed "s,^use lib '$(amperldir),# use lib '$(amperldir)," < $$perlobj > $$perlobj.nouselib; \
+			    $(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -w $$perlobj.nouselib || exit 1; \
+			    rm $$perlobj.nouselib; \
+		    done; \
+	    fi \
 	fi
 check-local: check-perl
 
 # syntax-check perl scripts on 'make installcheck'
 installcheck-perl: $(SCRIPTS_PERL)
 	@SCRIPTS_PERL="$(SCRIPTS_PERL)"; \
-	if test -n "$(PERL)"; then \
+	if test x"$(SKIP_CHECKS)" = x"" && \
+	    test -n "$(PERL)"; then \
 		for perlobj in $$SCRIPTS_PERL; do \
 			$(PERL) $(CHECK_PERL_FLAGS) -c -w $$perlobj || exit 1; \
 		done; \
@@ -131,7 +138,8 @@ installcheck-local: installcheck-perl
 # syntax-check shell scripts on 'make check'
 check-shell: $(SCRIPTS_SHELL)
 	@SCRIPTS_SHELL="$(SCRIPTS_SHELL)"; \
-	if test -n "$$SCRIPTS_SHELL"; then \
+	if test x"$(SKIP_CHECKS)" = x"" && \
+	    test -n "$$SCRIPTS_SHELL"; then \
 		if test -n "$(BASH)"; then \
 			for shobj in $$SCRIPTS_SHELL; do \
 				if $(BASH) -n $$shobj; then \
@@ -150,7 +158,9 @@ check-local: check-shell
 # make sure that the sources for all shell and perl scripts get included
 # in the distribution
 dist-scripts:
-	@SCRIPTS_PERL="$(SCRIPTS_PERL)"; SCRIPTS_SHELL="$(SCRIPTS_SHELL)"; SCRIPTS_AWK="$(SCRIPTS_AWK)"; \
+	@SCRIPTS_PERL="$(SCRIPTS_PERL) $(SCRIPTS_EXTRA_DIST)"; \
+	SCRIPTS_SHELL="$(SCRIPTS_SHELL) $(SCRIPTS_EXTRA_DIST)"; \
+	SCRIPTS_AWK="$(SCRIPTS_AWK) $(SCRIPTS_EXTRA_DIST)"; \
 	SCRIPTS_DIST=; \
 	for script in $$SCRIPTS_PERL; do \
 		test -f $(srcdir)/$${script}.pl && \
@@ -173,6 +183,7 @@ dist-scripts:
 		if test -n "$$dir" && test ! -d "$(distdir)/$$dir"; then \
 			mkdir -p "$(distdir)/$$dir" || exit 1; \
 		fi; \
+		test -f "$(distdir)/$${script}" && continue; \
 		echo "distributing $${script}"; \
 		cp -p "$(srcdir)/$${script}" "$(distdir)/$${script}" || exit 1; \
 	done; \

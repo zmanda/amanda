@@ -1,3 +1,8 @@
+2010-04-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/userid.m4: CHECK_USERID conditional
+	* config/automake/scripts.am: add SCRIPTS_EXTRA_DIST
+	* installcheck/Makefile.am: use it
+
 2010-04-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Don't exit on match_disklist error.
 	* server-src/diskfile.c (match_disklist): Generate better message for
