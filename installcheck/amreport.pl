@@ -948,7 +948,7 @@ Tape Size (meg)        1339591.9   1339591.9        0.0
 Tape Used (%)             #####      #####        0.0
 Filesystems Taped             9          9          0
 
-Chunks Taped                  9          9          0
+Parts Taped                   9          9          0
 Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
@@ -1002,7 +1002,7 @@ Tape Size (meg)        1339591.9   1339591.9        0.0
 Tape Used (%)             #####      #####        0.0
 Filesystems Taped             9          9          0
 
-Chunks Taped                  9          9          0
+Parts Taped                   9          9          0
 Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
@@ -1056,7 +1056,7 @@ Tape Size (meg)        1339591.9   1339591.9        0.0
 Tape Used (%)             #####      #####        0.0
 Filesystems Taped             9          9          0
 
-Chunks Taped                  9          9          0
+Parts Taped                   9          9          0
 Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
@@ -1110,7 +1110,7 @@ Tape Size (meg)        1339591.9   1339591.9        0.0
 Tape Used (%)             #####      #####        0.0
 Filesystems Taped             9          9          0
 
-Chunks Taped                  9          9          0
+Parts Taped                   9          9          0
 Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
@@ -1164,7 +1164,7 @@ Tape Size (meg)        1339591.9   1339591.9        0.0
 Tape Used (%)             #####      #####        0.0
 Filesystems Taped             9          9          0
 
-Chunks Taped                  9          9          0
+Parts Taped                   9          9          0
 Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
@@ -1281,8 +1281,8 @@ Tape Time (hrs:min)        0:00       0:00       0:00
 Tape Size (meg)             1.6        0.0        1.6
 Tape Used (%)               5.5        0.1        5.4   (level:#disks ...)
 Filesystems Taped             4          1          3   (1:3)
-   (level:#chunks ...)
-Chunks Taped                  4          1          3   (1:3)
+   (level:#parts ...)
+Parts Taped                   4          1          3   (1:3)
 Avg Tp Write Rate (k/s)  143966    27624.3     151811
 
 USAGE BY TAPE:
@@ -1369,8 +1369,8 @@ Tape Time (hrs:min)        0:00       0:00       0:00
 Tape Size (meg)            36.4        0.0       36.4
 Tape Used (%)             121.4        0.0      121.4   (level:#disks ...)
 Filesystems Taped             2          0          2   (1:2)
-   (level:#chunks ...)
-Chunks Taped                  2          0          2   (1:2)
+   (level:#parts ...)
+Parts Taped                   2          0          2   (1:2)
 Avg Tp Write Rate (k/s)  8920.8        --      8920.8
 
 USAGE BY TAPE:
@@ -1457,7 +1457,7 @@ Tape Size (meg)            16.8       16.8        0.0
 Tape Used (%)              56.2       56.2        0.0
 Filesystems Taped             2          2          0
 
-Chunks Taped                  2          2          0
+Parts Taped                   2          2          0
 Avg Tp Write Rate (k/s) 23070.7    23070.7        --
 
 USAGE BY TAPE:
@@ -1543,7 +1543,7 @@ Tape Size (meg)          2239.7     2239.7        0.0
 Tape Used (%)              7466       7466        0.0
 Filesystems Taped             1          1          0
 
-Chunks Taped                  1          1          0
+Parts Taped                   1          1          0
 Avg Tp Write Rate (k/s) 14596.6    14596.6        --
 
 USAGE BY TAPE:
@@ -1617,7 +1617,7 @@ Tape Size (meg)          2239.7     2239.7        0.0
 Tape Used (%)              7466       7466        0.0
 Filesystems Taped             1          1          0
 
-Chunks Taped                  1          1          0
+Parts Taped                   1          1          0
 Avg Tp Write Rate (k/s) 14596.6    14596.6        --
 
 USAGE BY TAPE:
@@ -1715,7 +1715,7 @@ Tape Size (meg)            53.6       53.6        0.0
 Tape Used (%)             178.8      178.8        0.0
 Filesystems Taped             1          1          0
 
-Chunks Taped                  1          1          0
+Parts Taped                   1          1          0
 Avg Tp Write Rate (k/s) 15450.8    15450.8        --
 
 USAGE BY TAPE:
@@ -1816,7 +1816,7 @@ Tape Size (meg)         49724.0    49724.0        0.0
 Tape Used (%)             #####      #####        0.0
 Filesystems Taped             1          1          0
 
-Chunks Taped                  3          3          0
+Parts Taped                   3          3          0
 Avg Tp Write Rate (k/s) 27287.8    27287.8        --
 
 USAGE BY TAPE:
@@ -1894,7 +1894,7 @@ Tape Size (meg)           262.1      262.1        0.0
 Tape Used (%)             873.6      873.6        0.0
 Filesystems Taped             1          1          0
 
-Chunks Taped                  1          1          0
+Parts Taped                   1          1          0
 Avg Tp Write Rate (k/s) 17213.6    17213.6        --
 
 USAGE BY TAPE:
@@ -1994,7 +1994,7 @@ Tape Size (meg)             0.0        0.0        0.0
 Tape Used (%)               0.0        0.0        0.0
 Filesystems Taped             0          0          0
 
-Chunks Taped                  0          0          0
+Parts Taped                   0          0          0
 Avg Tp Write Rate (k/s)     --         --         --
 
 
@@ -2034,7 +2034,7 @@ Tape Size (meg)             0.0        0.0        0.0
 Tape Used (%)               0.0        0.0        0.0
 Filesystems Taped             0          0          0
 
-Chunks Taped                  0          0          0
+Parts Taped                   0          0          0
 Avg Tp Write Rate (k/s)     --         --         --
 
 
@@ -2114,7 +2114,7 @@ Tape Size (meg)            21.3       21.3        0.0
 Tape Used (%)              71.2       71.2        0.0
 Filesystems Taped             1          1          0
 
-Chunks Taped                  6          6          0
+Parts Taped                   6          6          0
 Avg Tp Write Rate (k/s)  244170     244170        --
 
 USAGE BY TAPE:
@@ -2231,7 +2231,7 @@ Tape Size (meg)             0.0        0.0        0.0
 Tape Used (%)               0.0        0.0        0.0
 Filesystems Taped             0          0          0
 
-Chunks Taped                  0          0          0
+Parts Taped                   0          0          0
 Avg Tp Write Rate (k/s)     --         --         -- 
 
 
@@ -2292,7 +2292,7 @@ Tape Time (hrs:min)         0:00       0:00       0:00
 Tape Size (meg)             81.5       81.5        0.0
 Tape Used (%)              271.8      271.8        0.0
 Filesystems Taped              1          1          0
-Chunks Taped                   1          1          0
+Parts Taped                    1          1          0
 Avg Tp Write Rate (k/s)   169010     169010        --
 
 USAGE BY TAPE:
@@ -2353,7 +2353,7 @@ Tape Time (hrs:min)         0:00       0:00       0:00
 Tape Size (meg)             81.5       81.5        0.0
 Tape Used (%)              271.8      271.8        0.0
 Filesystems Taped              1          1          0
-Chunks Taped                   1          1          0
+Parts Taped                    1          1          0
 Avg Tp Write Rate (k/s)   169010     169010        --
 
 USAGE BY TAPE:
@@ -2424,7 +2424,7 @@ Tape Time (hrs:min)         0:00       0:00       0:00
 Tape Size (meg)              0.0        0.0        0.0
 Tape Used (%)                0.0        0.0        0.0
 Filesystems Taped              0          0          0
-Chunks Taped                   0          0          0
+Parts Taped                    0          0          0
 Avg Tp Write Rate (k/s)      --         --         --
 
 NOTES:
