@@ -772,7 +772,6 @@ setup_estimate(
     ep = alloc(SIZEOF(est_t));
     dp->up = (void *) ep;
     ep->state = DISK_READY;
-    ep->dump_est = &default_one_est;
     ep->dump_priority = dp->priority;
     ep->errstr = 0;
     ep->promote = 0;
@@ -1105,6 +1104,9 @@ est_for_level(
     int level)
 {
     int i;
+
+    if (level < 0 || level >= DUMP_LEVELS)
+	return &default_one_est;
 
     for (i = 0; i < MAX_LEVELS; i++) {
         if (level == est(dp)->estimate[i].level) {
@@ -2007,7 +2009,7 @@ static void handle_result(
 		    (est(dp)->estimate[2].level != -1 &&
                      est(dp)->estimate[2].nsize > (gint64)0)) {
 
-                    for (i=MAX_LEVELS; i >=0; i--) {
+                    for (i=MAX_LEVELS-1; i >=0; i--) {
 		        if (est(dp)->estimate[i].level != -1 &&
                             est(dp)->estimate[i].nsize < (gint64)0) {
 			    est(dp)->estimate[i].level = -1;

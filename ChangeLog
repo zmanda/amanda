@@ -1,3 +1,7 @@
+2010-04-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/planner.c: fix two bugs that caused planner to generate a
+	  bogus schedule; remove a redundant assignment
+
 2010-04-07 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/rpm/amanda.spec: specify mandir explicitly to work around
 	   old autoconf
