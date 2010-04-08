@@ -336,21 +336,24 @@ is_deeply([ @events ], [
 ## test Scribe
 ##
 
-sub run_scribe_xfer {
+sub run_scribe_xfer_async {
     my ($data_length, $scribe, %params) = @_;
     my $xfer;
-    my %subs;
 
-    $subs{'start_scribe'} = make_cb(start_scribe => sub {
+    my $finished_cb = $params{'finished_cb'};
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
+    step start_scribe => sub {
 	if ($params{'start_scribe'}) {
 	    $scribe->start(%{ $params{'start_scribe'} },
-			finished_cb => $subs{'get_xdt'});
+			finished_cb => $steps->{'get_xdt'});
 	} else {
-	    $subs{'get_xdt'}->();
+	    $steps->{'get_xdt'}->();
 	}
-    });
+    };
 
-    $subs{'get_xdt'} = make_cb(get_xdt => sub {
+    step get_xdt => sub {
 	my ($err) = @_;
 	die $err if $err;
 
@@ -385,10 +388,10 @@ sub run_scribe_xfer {
         $scribe->start_dump(
 	    xfer => $xfer,
             dump_header => $hdr,
-            dump_cb => $subs{'dump_cb'});
-    });
+            dump_cb => $steps->{'dump_cb'});
+    };
 
-    $subs{'dump_cb'} = make_cb(dump_cb => sub {
+    step dump_cb => sub {
 	my %params = @_;
 
 	main::event("dump_cb",
@@ -396,10 +399,14 @@ sub run_scribe_xfer {
 	    [ map { undef_or_str($_) } @{ $params{'device_errors'} } ],
 	    $params{'size'});
 
-	Amanda::MainLoop::quit();
-    });
+	$finished_cb->();
+    };
+}
 
-    $subs{'start_scribe'}->();
+sub run_scribe_xfer {
+    my ($data_length, $scribe, %params) = @_;
+    $params{'finished_cb'} = \&Amanda::MainLoop::quit;
+    run_scribe_xfer_async($data_length, $scribe, %params);
     Amanda::MainLoop::run();
 }
 

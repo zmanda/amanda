@@ -243,15 +243,29 @@ sub eject {
 sub update {
     my $self = shift;
     my %params = @_;
-    my %subs;
     my @slots_to_check;
     my $state;
     my $set_to_unknown = 0;
 
     my $user_msg_fn = $params{'user_msg_fn'};
-    $user_msg_fn ||= sub { Amanda::Debug::info("chg-robot: " . $_[0]); };
+    $user_msg_fn ||= sub { Amanda::Debug::info("chg-multi: " . $_[0]); };
 
-    $subs{'handle_assignment'} = make_cb(handle_assignment => sub {
+    my $steps = define_steps
+	cb_ref => \$params{'finished_cb'};
+
+    step lock => sub {
+	$self->with_locked_state($self->{'state_filename'},
+				 $params{'finished_cb'}, sub {
+	    my ($state, $finished_cb) = @_;
+
+	    $params{state} = $state;
+	    $params{'finished_cb'} = $finished_cb;
+
+	    $steps->{'handle_assignment'}->();
+	});
+    };
+
+    step handle_assignment => sub {
 	$state = $params{state};
 	# check for the SL=LABEL format, and handle it here
 	if (exists $params{'changed'} and
@@ -287,13 +301,13 @@ sub update {
 	       $params{'changed'} =~ /^(.+)=$/) {
 	    $params{'changed'} = $1;
 	    $set_to_unknown = 1;
-	    $subs{'calculate_slots'}->();
+	    $steps->{'calculate_slots'}->();
 	} else {
-	    $subs{'calculate_slots'}->();
+	    $steps->{'calculate_slots'}->();
 	}
-    });
+    };
 
-    $subs{'calculate_slots'} = make_cb(calculate_slots => sub {
+    step calculate_slots => sub {
 	if (exists $params{'changed'}) {
 	    # parse the string just like use-slots, using a hash for uniqueness
 	    my %changed;
@@ -314,33 +328,33 @@ sub update {
 	# sort them so we don't confuse the user with a "random" order
 	@slots_to_check = sort @slots_to_check;
 
-	$subs{'update_slot'}->();
-    });
+	$steps->{'update_slot'}->();
+    };
 
     # TODO: parallelize, we have one drive by slot
 
-    $subs{'update_slot'} = make_cb(update_slot => sub {
-	return $subs{'done'}->() if (!@slots_to_check);
+    step update_slot => sub {
+	return $steps->{'done'}->() if (!@slots_to_check);
 	my $slot = shift @slots_to_check;
 	if ($self->_is_slot_in_use($state, $slot)) {
 	    $user_msg_fn->("Slot $slot is already in use");
-	    return $subs{'update_slot'}->();
+	    return $steps->{'update_slot'}->();
 	}
 
 	if ($set_to_unknown == 1) {
 	    $user_msg_fn->("removing entry for slot $slot");
 	    my $unaliased = $self->{unaliased}->{$slot};
 	    delete $state->{slots}->{$unaliased};
-	    return $subs{'update_slot'}->();
+	    return $steps->{'update_slot'}->();
 	} else {
 	    $user_msg_fn->("scanning slot $slot");
 	    $params{'slot'} = $slot;
-	    $params{'res_cb'} = $subs{'slot_loaded'};
+	    $params{'res_cb'} = $steps->{'slot_loaded'};
 	    $self->_load_by_slot(%params);
 	}
-    });
+    };
 
-    $subs{'slot_loaded'} = make_cb(slot_loaded => sub {
+    step slot_loaded => sub {
 	my ($err, $res) = @_;
 	if ($err) {
 	    return $params{'finished_cb'}->($err);
@@ -353,35 +367,23 @@ sub update {
 	$self->_update_slot_state(state => $state, dev => $dev, slot =>$slot);
 	$user_msg_fn->("recording volume '$label' in slot $slot");
 	$res->release(
-	    finished_cb => $subs{'released'},
+	    finished_cb => $steps->{'released'},
 	    unlocked => 1,
 	    state => $state);
-    });
+    };
 
-    $subs{'released'} = make_cb(released => sub {
+    step released => sub {
 	my ($err) = @_;
 	if ($err) {
 	    return $params{'finished_cb'}->($err);
 	}
 
-	$subs{'update_slot'}->();
-    });
+	$steps->{'update_slot'}->();
+    };
 
-    $subs{'done'} = make_cb(done => sub {
+    step done => sub {
 	$params{'finished_cb'}->(undef);
-    });
-
-
-
-    $self->with_locked_state($self->{'state_filename'},
-			     $params{'finished_cb'}, sub {
-	my ($state, $finished_cb) = @_;
-
-	$params{state} = $state;
-	$params{'finished_cb'} = $finished_cb;
-
-	$subs{'handle_assignment'}->();
-    });
+    };
 }
 
 sub inventory {

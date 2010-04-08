@@ -279,6 +279,11 @@ lock.
 
 =head1 ASYNCHRONOUS STYLE
 
+When writing asynchronous code, it's easy to write code that is *very*
+difficult to read or debug.  The suggestions in this section will help
+write code that is more readable, and also ensure that all asynchronous
+code in Amanda uses similar, common idioms.
+
 =head2 USING CALLBACKS
 
 Most often, callbacks are short, and can be specified as anonymous
@@ -306,53 +311,154 @@ sub "wrapper", which can be written on one line:
 
     some_async_function(sub { $self->foo_cb(@_) });
 
-Some operations require a long chain of asynchronous operations.  For
-example, if the results of one operation are required to initiate
-another.  It's easy for such code to become virtually unreadable, with
-execution jumping from line to line.  Using a C<%subs> hash can help
-make the code more linear - executing from the top to the bottom.  The
-idea is to place each callback into the hash under a short but
-descriptive key, and then chain the callbacks together using the
-values from that hash.
+=head2 LINEARITY
+
+The single most important factor in readability is linearity.  If a function
+that performs operations A, B, and C in that order, then the code for A, B, and
+C should appear in that order in the source file.  This seems obvious, but it's
+all too easy to write
+
+    sub three_ops {
+	my $do_c = sub { .. };
+	my $do_b = sub { .. $do_c->() .. };
+	my $do_a = sub { .. $do_b->() .. };
+	$do_a->();
+    }
+
+Which isn't very readable.  Be readable.
+
+=head2 SINGLE ENTRY AND EXIT
+
+Amanda's use of callbacks emulates continuation-passing style.  As such, when a
+function finishes -- whether successfully or with an error -- it should call a
+single callback.  This ensures that the function has a simple control
+interface: perform the operation and call the callback.
+
+=head2 MULTIPLE STEPS
+
+Some operations require a long squence of asynchronous operations.  For
+example, often the results of one operation are required to initiate
+another.  The I<step> syntax is useful to make this much more readable, and
+also eliminate some nasty reference-counting bugs.  The idea is that each "step"
+in the process gets its own sub, and then each step calls the next step.  The
+first step defined will be called automatically.
 
     sub send_file {
 	my ($hostname, $port, $data, $sendfile_cb) = @_;
 	my ($addr, $socket); # shared lexical variables
-	my %subs;
-	$subs{'lookup_addr'} = make_cb(lookup_addr => sub {
-	    return async_gethostbyname(hostname => $hostname, ghbn_cb => $subs{'got_addr'});
-	});
-	$subs{'ghbn_cb'} = make_cb(ghbn_cb => sub {
+	my $steps = define_steps
+		cb => \$sendfile_cb;
+	step lookup_addr => sub {
+	    return async_gethostbyname(hostname => $hostname,
+				ghbn_cb => $steps->{'got_addr'});
+	};
+	step ghbn_cb => sub {
 	    my ($err, $hostinfo) = @_;
 	    die $err if $err;
 	    $addr = $hostinfo->{'ipaddr'};
-	    return $subs{'connect'}->();
-	});
-	$subs{'connect'} = make_cb(connect => sub {
+	    return $steps->{'connect'}->();
+	};
+	step connect => sub {
 	    return async_connect(
 		ipaddr => $addr,
 		port => $port,
-		connect_cb => $subs{'connect_cb'},
+		connect_cb => $steps->{'connect_cb'},
 	    );
-	});
-	$subs{'connect_cb'} = make_cb(connect_cb => sub {
+	};
+	step connect_cb => sub {
 	    my ($err, $conn_sock) = @_;
 	    die $err if $err;
 	    $socket = $conn_sock;
-	    return $subs{'write_block'}->();
-	});
+	    return $steps->{'write_block'}->();
+	};
 	# ...
-	$subs{'lookup_addr'}->();
     }
 
-There are more anonymous subs here than are strictly necessary: the
-body of C<connect> could be appended to C<ghbn_cb>.  The extra subs
-make the overall operation more readable by adding "punctuation" to
-separate the task of handling a callback (C<ghbn_cb>) from starting
-the next operation (C<connect>).
+The C<define_steps> function sets the stage.  It is given a reference to the
+callback for this function (recall there is only one exit point!), and
+"patches" that reference to free C<$steps>, which otherwise forms a reference
+loop, on exit.
+
+WARNING: if the function or method needs to do any kind of setup before its
+first step, that setup should be done either in a C<setup> step or I<before>
+the C<define_steps> invocation.  Do not write any statements other than step
+declarations after the C<define_steps> call.
+
+Note that there are more steps in this example than are strictly necessary: the
+body of C<connect> could be appended to C<ghbn_cb>.  The extra steps make the
+overall operation more readable by adding "punctuation" to separate the task of
+handling a callback (C<ghbn_cb>) from starting the next operation (C<connect>).
 
 Also note that the enclosing scope contains some lexical (C<my>)
 variables which are shared by several of the callbacks.
+
+All of the steps are wrapped by C<make_cb>, so each step will be executed on a
+separate iteration of the MainLoop.  This generally has the effect of making
+asynchronous functions share CPU time more fairly.  Sometimes, especially when
+using the low-level interface, a callback must be called immediately.  To
+achieve this for all callbacks, add C<< immediate => 1 >> to the C<define_steps>
+invocation:
+
+    my $steps = define_steps
+	    cb => $finished_cb,
+	    immediate => 1;
+
+To do the same for a single step, add the same keyword to the C<step> invocation:
+
+    step immediate => 1,
+	 connect => sub { .. };
+
+=head2 JOINING ASYNCHRONOUS "THREADS"
+
+With slow operations, it is often useful to perform multiple operations
+simultaneously.  As an example, the following code might run two system
+commands simultaneously and capture their output:
+
+    sub run_two_commands {
+	my ($finished_cb) = @_;
+	my $running_commands = 0;
+	my ($result1, $result2);
+	my $steps = define_steps
+	    cb_ref => $finished_cb;
+	step start => sub {
+	    $running_commands++;
+	    run_command($command1,
+		run_cb => $steps->{'command1_done'});
+	    $running_commands++;
+	    run_command($command2,
+		run_cb => $steps->{'command2_done'});
+	};
+	step command1_done {
+	    $result1 = $_[0];
+	    $steps->{'maybe_done'}->();
+	};
+	step command2_done {
+	    $result2 = $_[0];
+	    $steps->{'maybe_done'}->();
+	};
+	step maybe_done {
+	    return if --$running_commands; # not done yet
+	    $finished_cb->($result1, $result2);
+	};
+    }
+
+It is tempting to optimize out the C<$running_commands> with something like:
+
+    step maybe_done { ## BAD!
+	return unless defined $result1 and defined $result2;
+	$finished_cb->($result1, $result2);
+    }
+
+However this can lead to trouble.  Remember that define_steps automatically
+applies C<make_cb> to each step, so a C<maybe_done> is not invoked immediately
+by C<command1_done> and C<command2_done> - instead, C<maybe_done> is scheduled
+for invocation in the next loop of the mainloop (via C<call_later>).  If both
+commands finish before C<maybe_done> is invoked, C<call_later> will be called
+I<twice>, with both C<$result1> and C<$result2> defined both times.  The result
+is that C<$finished_cb> is called twice, and mayhem ensues.
+
+This is a complex case, but worth understanding if you want to be able to debug
+difficult MainLoop bugs.
 
 =head2 WRITING ASYNCHRONOUS INTERFACES
 

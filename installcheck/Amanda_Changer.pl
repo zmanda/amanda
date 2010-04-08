@@ -1,4 +1,4 @@
-# Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -442,25 +442,28 @@ is($chg->{'config'}->get_property("testprop"), "testval",
 }
 
 # test reset and clean and inventory
-{
-    my %subs;
+sub test_simple {
+    my ($finished_cb) = @_;
 
-    $subs{'do_reset'} = make_cb('do_reset' => sub {
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
+    step do_reset => sub {
         $chg->reset(finished_cb => sub {
             is($chg->{'curslot'}, 0,
                 "reset() resets to slot 0");
-            $subs{'do_clean'}->();
+            $steps->{'do_clean'}->();
         });
-    });
+    };
 
-    $subs{'do_clean'} = make_cb('do_clean' => sub {
+    step do_clean => sub {
         $chg->clean(finished_cb => sub {
             ok($chg->{'clean'}, "clean 'cleaned' the changer");
-	    $subs{'do_inventory'}->();
+	    $steps->{'do_inventory'}->();
         });
-    });
+    };
 
-    $subs{'do_inventory'} = make_cb('do_inventory' => sub {
+    step do_inventory => sub {
         $chg->inventory(inventory_cb => sub {
 	    is_deeply($_[1], [ {
 		    slot => 1,
@@ -471,17 +474,12 @@ is($chg->{'config'}->get_property("testprop"), "testval",
 		    import_export => 0,
 		    loaded_in => undef,
 		}], "inventory returns an inventory");
-	    $subs{'quit'}->();
+	    $finished_cb->();
         });
-    });
-
-    $subs{'quit'} = sub {
-	Amanda::MainLoop::quit();
     };
-
-    $subs{'do_reset'}->();
-    Amanda::MainLoop::run();
 }
+test_simple(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
 
 # test info
 {
@@ -637,16 +635,21 @@ is_deeply( Amanda::Changer->new("mychanger"), [ "chg-disk:/foo", "cc" ],
 
 # test with_locked_state *within* a process
 
-{
-    my %subs;
+sub test_locked_state {
+    my ($finished_cb) = @_;
     my $chg;
     my $stfile = "$Installcheck::TMP/test-statefile";
     my $num_outstanding = 0;
 
-    $subs{'start'} = sub {
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
+    step start => sub {
+	$chg = Amanda::Changer->new("chg-null:");
+
 	for my $num (qw( one two three )) {
 	    ++$num_outstanding;
-	    $chg->with_locked_state($stfile, $subs{'maybe_done'}, sub {
+	    $chg->with_locked_state($stfile, $steps->{'maybe_done'}, sub {
 		my ($state, $maybe_done) = @_;
 
 		$state->{$num} = $num;
@@ -657,7 +660,7 @@ is_deeply( Amanda::Changer->new("mychanger"), [ "chg-disk:/foo", "cc" ],
 	}
     };
 
-    $subs{'maybe_done'} = sub {
+    step maybe_done => sub {
 	my ($err, $state) = @_;
 	die $err if $err;
 
@@ -670,14 +673,10 @@ is_deeply( Amanda::Changer->new("mychanger"), [ "chg-disk:/foo", "cc" ],
 	    count => 3,
 	}, "state is maintained correctly (within a process)");
 
-	Amanda::MainLoop::quit();
+	unlink($stfile) if -f $stfile;
+
+	$finished_cb->();
     };
-
-    unlink($stfile) if -f $stfile;
-
-    $chg = Amanda::Changer->new("chg-null:");
-    Amanda::MainLoop::call_later($subs{'start'});
-    Amanda::MainLoop::run();
-
-    unlink($stfile) if -f $stfile;
 }
+test_locked_state(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();

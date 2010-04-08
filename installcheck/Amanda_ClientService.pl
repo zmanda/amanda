@@ -124,19 +124,23 @@ Amanda::Debug::dbopen('installcheck');
 }
 
 # test add_connection and half-close operations
-{
-    my %subs;
+sub test_connections {
+    my ($finished_cb) = @_;
+
     my $port;
     my $cs = Amanda::ClientService->new();
     $cs->{'_argv'} = [ ];
 
-    $subs{'listen'} = make_cb(listen => sub {
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
+    step listen => sub {
 	$port = $cs->connection_listen('FOO', 0);
 
-	$subs{'fork'}->();
-    });
+	$steps->{'fork'}->();
+    };
 
-    $subs{'fork'} = make_cb(fork => sub {
+    step fork => sub {
 	# fork off a child to connect to and write to that port
 	if (fork() == 0) {
 	    socket(my $foo, PF_INET, SOCK_STREAM, getprotobyname('tcp'))
@@ -148,15 +152,15 @@ Amanda::Debug::dbopen('installcheck');
 	    close($foo);
 	    exit(0);
 	} else {
-	    $subs{'accept'}->();
+	    $steps->{'accept'}->();
 	}
-    });
+    };
 
-    $subs{'accept'} = make_cb(accept => sub {
-	$cs->connection_accept('FOO', 90, $subs{'accept_finished'});
-    });
+    step accept => sub {
+	$cs->connection_accept('FOO', 90, $steps->{'accept_finished'});
+    };
 
-    $subs{'accept_finished'} = make_cb(accept_finished => sub {
+    step accept_finished => sub {
 	# write a message to the fd and read back the result; this is
 	# synchronous
 	my $msg = "HELLO WORLD";
@@ -174,12 +178,11 @@ Amanda::Debug::dbopen('installcheck');
 	is($input, "GOT[HELLO WORLD]",
 	    "both directions of the FOO stream work");
 
-	Amanda::MainLoop::quit();
-    });
-
-    Amanda::MainLoop::call_later($subs{'listen'});
-    Amanda::MainLoop::run();
+	$finished_cb->();
+    };
 }
+test_connections(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
 
 # check rfd and wfd
 {

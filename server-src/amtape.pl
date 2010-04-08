@@ -1,5 +1,5 @@
 #! @PERL@
-# Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -43,6 +43,9 @@ my $exit_status = 0;
 my %subcommands;
 
 sub usage {
+    my ($finished_cb) = @_;
+    $finished_cb ||= sub { exit(1); };
+
     print STDERR <<EOF;
 Usage: amtape <conf> <command> {<args>} [-o configoption]*
   Valid commands are:
@@ -53,7 +56,8 @@ EOF
 	$descr = wrap('', ' ' x 20, $descr);
 	printf("    %-15s %s\n", $syntax, $descr);
     }
-    exit(1);
+    $exit_status = 1;
+    $finished_cb->();
 }
 
 sub subcommand($$$&) {
@@ -63,10 +67,10 @@ sub subcommand($$$&) {
 }
 
 sub invoke_subcommand {
-    my ($subcmd, @args) = @_;
+    my ($subcmd, $finished_cb, @args) = @_;
     die "invalid subcommand $subcmd" unless exists $subcommands{$subcmd};
 
-    $subcommands{$subcmd}->[2]->(@args);
+    $subcommands{$subcmd}->[2]->($finished_cb, @args);
 }
 
 ##
@@ -74,34 +78,32 @@ sub invoke_subcommand {
 
 subcommand("usage", "usage", "this message",
 sub {
-    my @args = @_;
+    my ($finished_cb, @args) = @_;
 
-    usage();
+    usage($finished_cb);
 });
 
 subcommand("reset", "reset", "reset changer to known state",
 sub {
-    my @args = @_;
-    my %subs;
+    my ($finished_cb, @args) = @_;
 
-    my $chg = load_changer() or return;
+    my $chg = load_changer($finished_cb) or return;
 
     $chg->reset(finished_cb => sub {
 	    my ($err) = @_;
-	    return failure($err) if $err;
+	    return failure($err, $finished_cb) if $err;
 
 	    print STDERR "changer is reset\n";
-	    Amanda::MainLoop::quit();
+	    $finished_cb->();
 	});
 });
 
 subcommand("eject", "eject [<drive>]", "eject the volume in the specified drive",
 sub {
-    my @args = @_;
-    my %subs;
+    my ($finished_cb, @args) = @_;
     my @drive_args;
 
-    my $chg = load_changer() or return;
+    my $chg = load_changer($finished_cb) or return;
 
     if (@args) {
 	@drive_args = (drive => shift @args);
@@ -109,79 +111,80 @@ sub {
     $chg->eject(@drive_args,
 	finished_cb => sub {
 	    my ($err) = @_;
-	    return failure($err) if $err;
+	    return failure($err, $finished_cb) if $err;
 
 	    print STDERR "drive ejected\n";
-	    Amanda::MainLoop::quit();
+	    $finished_cb->();
 	});
 });
 
 subcommand("clean", "clean [<drive>]", "clean a drive in the changer",
 sub {
-    my @args = @_;
-    my %subs;
+    my ($finished_cb, @args) = @_;
     my @drive_args;
 
-    my $chg = load_changer() or return;
+    my $chg = load_changer($finished_cb) or return;
 
     if (@args == 1) {
 	@drive_args = (drive => shift @args);
     } elsif (@args != 0) {
-	return usage();
+	return usage($finished_cb);
     }
 
     $chg->clean(@drive_args,
 	finished_cb => sub {
 	    my ($err) = @_;
-	    return failure($err) if $err;
+	    return failure($err, $finished_cb) if $err;
 
 	    print STDERR "drive cleaned\n";
-	    Amanda::MainLoop::quit();
+	    $finished_cb->();
 	});
 });
 
 subcommand("show", "show", "scan all slots in the changer, starting with the current slot",
 sub {
-    my @args = @_;
-    my %subs;
+    my ($finished_cb, @args) = @_;
     my $last_slot;
     my %seen_slots;
     my $gres;
 
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
     if (@args != 0) {
-	return usage();
+	return usage($finished_cb);
     }
 
-    my $chg = load_changer() or return;
+    my $chg = load_changer($finished_cb) or return;
 
-    $subs{'start'} = sub {
-	$chg->info(info => [ 'num_slots' ], info_cb => $subs{'info_cb'});
+    step start => sub {
+	$chg->info(info => [ 'num_slots' ], info_cb => $steps->{'info_cb'});
     };
 
-    $subs{'info_cb'} = sub {
+    step info_cb => sub {
 	my ($err, %info) = @_;
-	return failure($err) if $err;
+	return failure($err, $finished_cb) if $err;
 
 	print STDERR "amtape: scanning all $info{num_slots} slots in changer:\n";
 
-	$subs{'load_current'}->();
+	$steps->{'load_current'}->();
     };
 
-    $subs{'load_current'} = sub {
-	$chg->load(relative_slot => 'current', mode => "read", res_cb => $subs{'loaded'});
+    step load_current => sub {
+	$chg->load(relative_slot => 'current', mode => "read", res_cb => $steps->{'loaded'});
     };
 
-    $subs{'loaded'} = sub {
+    step loaded => sub {
 	my ($err, $res) = @_;
 	if ($err) {
 	    if ($err->notfound) {
 		# no more interesting slots
-		Amanda::MainLoop::quit();
+		$finished_cb->();
 		return;
 	    } elsif ($err->volinuse and defined $err->{'slot'}) {
 		$last_slot = $err->{'slot'};
 	    } else {
-		return failure($err) if $err;
+		return failure($err, $finished_cb) if $err;
 	    }
 	} else {
 	    $last_slot = $res->{'this_slot'};
@@ -198,7 +201,7 @@ sub {
 			$dev->volume_label());
 		$gres = $res;
 		return $res->set_label(label => $dev->volume_label(),
-				       finished_cb => $subs{'set_labeled'});
+				       finished_cb => $steps->{'set_labeled'});
 	    } elsif ($st == $DEVICE_STATUS_VOLUME_UNLABELED) {
 		print STDERR sprintf("slot %3s: unlabeled volume\n", $last_slot);
 	    } else {
@@ -209,33 +212,30 @@ sub {
 	}
 
 	if ($res) {
-	    $res->release(finished_cb => $subs{'released'});
+	    $res->release(finished_cb => $steps->{'released'});
 	} else {
-	    $subs{'released'}->();
+	    $steps->{'released'}->();
 	}
     };
 
-    $subs{'set_labeled'} = sub {
-	$gres->release(finished_cb => $subs{'released'});
+    step set_labeled => sub {
+	$gres->release(finished_cb => $steps->{'released'});
     };
 
-    $subs{'released'} = sub {
+    step released => sub {
 	$chg->load(relative_slot => 'next', slot => $last_slot,
-		   except_slots => { %seen_slots }, res_cb => $subs{'loaded'});
+		   except_slots => { %seen_slots }, res_cb => $steps->{'loaded'});
     };
-
-    $subs{'start'}->();
 });
 
 subcommand("inventory", "inventory", "show inventory of changer slots",
 sub {
-    my @args = @_;
-    my %subs;
+    my ($finished_cb, @args) = @_;
 
-    my $chg = load_changer() or return;
+    my $chg = load_changer($finished_cb) or return;
 
     if (@args != 0) {
-	return usage();
+	return usage($finished_cb);
     }
 
     # TODO -- support an --xml option
@@ -249,8 +249,7 @@ sub {
 		print STDERR "$err\n";
 	    }
 
-	    Amanda::MainLoop::quit();
-	    return;
+	    return $finished_cb->();
 	}
 
 	for my $sl (@$inv) {
@@ -287,47 +286,53 @@ sub {
 	    print "$line\n";
 	}
 
-	Amanda::MainLoop::quit();
+	$finished_cb->();
     });
     $chg->inventory(inventory_cb => $inventory_cb);
 });
 
 subcommand("current", "current", "load and show the contents of the current slot",
 sub {
+    my ($finished_cb, @args) = @_;
+
+    return usage($finished_cb) if @args;
+
     # alias for 'slot current'
-    return invoke_subcommand("slot", "current");
+    return invoke_subcommand("slot", $finished_cb, "current");
 });
 
 subcommand("slot", "slot <slot>",
 	   "load the volume in slot <slot>; <slot> can also be 'current', 'next', 'first', or 'last'",
 sub {
-    my @args = @_;
+    my ($finished_cb, @args) = @_;
     my @slotarg;
-    my %subs;
     my $gres;
+
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
     # NOTE: the syntax of this subcommand precludes actual slots named
     # 'current' or 'next' ..  when we have a changer using such slot names,
     # this subcommand will need to support a --literal flag
 
-    usage unless (@args == 1);
+    usage($finished_cb) unless (@args == 1);
     my $slot = shift @args;
 
-    my $chg = load_changer() or return;
+    my $chg = load_changer($finished_cb) or return;
 
-    $subs{'get_slot'} = make_cb(get_slot => sub {
+    step get_slot => sub {
 	if ($slot eq 'current' or $slot eq 'next') {
 	    @slotarg = (relative_slot => $slot);
 	} elsif ($slot eq 'first' or $slot eq 'last') {
-	    return $chg->inventory(inventory_cb => $subs{'inventory_cb'});
+	    return $chg->inventory(inventory_cb => $steps->{'inventory_cb'});
 	} else {
 	    @slotarg = (slot => $slot);
 	}
 
-	$subs{'do_load'}->();
-    });
+	$steps->{'do_load'}->();
+    };
 
-    $subs{'inventory_cb'} = make_cb(inventory_cb => sub {
+    step inventory_cb => sub {
 	my ($err, $inv) = @_;
 	if ($err) {
 	    if ($err->failed and $err->notimpl) {
@@ -343,17 +348,17 @@ sub {
 	    @slotarg = (slot => $inv->[-1]->{'slot'});
 	}
 
-	$subs{'do_load'}->();
-    });
+	$steps->{'do_load'}->();
+    };
 
-    $subs{'do_load'} = make_cb(do_load => sub {
+    step do_load => sub {
 	$chg->load(@slotarg, set_current => 1,
-	    res_cb => $subs{'done_load'});
-    });
+	    res_cb => $steps->{'done_load'});
+    };
 
-    $subs{'done_load'} = make_cb(done_load => sub {
+    step done_load => sub {
 	my ($err, $res) = @_;
-	return failure($err) if ($err);
+	return failure($err, $finished_cb) if ($err);
 
 	show_slot($res);
 	my $gotslot = $res->{'this_slot'};
@@ -362,67 +367,74 @@ sub {
 	if ($res->{device}->volume_label) {
 	    $gres = $res;
 	    $res->set_label(label => $res->{device}->volume_label(),
-			    finished_cb => $subs{'set_labeled'});
+			    finished_cb => $steps->{'set_labeled'});
 	} else {
-	    $res->release(finished_cb => $subs{'released'});
+	    $res->release(finished_cb => $steps->{'released'});
 	}
-    });
-
-    $subs{'set_labeled'} = sub {
-	$gres->release(finished_cb => $subs{'released'});
     };
 
-    $subs{'released'} = make_cb(released => sub {
+    step set_labeled => sub {
+	$gres->release(finished_cb => $steps->{'released'});
+    };
+
+    step released => sub {
 	my ($err) = @_;
-	return failure($err) if ($err);
+	return failure($err, $finished_cb) if ($err);
 
-	Amanda::MainLoop::quit();
-    });
-
-    $subs{'get_slot'}->();
+	$finished_cb->();
+    };
 });
 
 subcommand("label", "label <label>", "load the volume with label <label>",
 sub {
-    my @args = @_;
-    my %subs;
+    my ($finished_cb, @args) = @_;
     my $gres;
+    my $inter;
+    my $scan;
 
-    sub _user_msg_fn {
-	my %params = @_;
-
-	if (exists($params{'scan_slot'})) {
-	    print "slot $params{'slot'}:";
-	} elsif (exists($params{'slot_result'})) {
-	    if (defined($params{'err'})) {
-		print " $params{'err'}\n";
-	    } else { # res must be defined
-		my $res = $params{'res'};
-		my $dev = $res->{'device'};
-		if ($dev->status == $DEVICE_STATUS_SUCCESS) {
-		    my $volume_label = $res->{device}->volume_label;
-		    print " $volume_label\n";
-		} else {
-		    my $errmsg = $res->{device}->error_or_status();
-		    print " $errmsg\n";
-		}
-	    }
-	}
-    };
-
-    usage unless (@args == 1);
+    usage($finished_cb) unless (@args == 1);
     my $label = shift @args;
 
-    my $inter = Amanda::Interactive->new(name => 'stdin');
-    my $scan = Amanda::Recovery::Scan->new(interactive => $inter);
-    if ($scan->isa("Amanda::Changer::Error")) {
-	print "$scan\n";;
-	exit 1;
-    }
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    $subs{'done_load'} = make_cb(done_load => sub {
+    step start => sub {
+	my $_user_msg_fn = sub {
+	    my %params = @_;
+
+	    if (exists($params{'scan_slot'})) {
+		print "slot $params{'slot'}:";
+	    } elsif (exists($params{'slot_result'})) {
+		if (defined($params{'err'})) {
+		    print " $params{'err'}\n";
+		} else { # res must be defined
+		    my $res = $params{'res'};
+		    my $dev = $res->{'device'};
+		    if ($dev->status == $DEVICE_STATUS_SUCCESS) {
+			my $volume_label = $res->{device}->volume_label;
+			print " $volume_label\n";
+		    } else {
+			my $errmsg = $res->{device}->error_or_status();
+			print " $errmsg\n";
+		    }
+		}
+	    }
+	};
+
+	$inter = Amanda::Interactive->new(name => 'stdin');
+	$scan = Amanda::Recovery::Scan->new(interactive => $inter);
+	return failure("$scan", $finished_cb)
+	    if ($scan->isa("Amanda::Changer::Error"));
+
+	$scan->find_volume(label  => $label,
+			   res_cb => $steps->{'done_load'},
+			   user_msg_fn => $_user_msg_fn,
+			   set_current => 1);
+    };
+
+    step done_load => sub {
 	my ($err, $res) = @_;
-	return failure($err) if ($err);
+	return failure($err, $finished_cb) if ($err);
 
 	my $gotslot = $res->{'this_slot'};
 	my $devname = $res->{'device'}->device_name;
@@ -432,34 +444,29 @@ sub {
 	if ($res->{device}->volume_label) {
 	    $gres = $res;
 	    $res->set_label(label => $res->{device}->volume_label(),
-			    finished_cb => $subs{'set_labeled'});
+			    finished_cb => $steps->{'set_labeled'});
 	} else {
-	    $res->release(finished_cb => $subs{'released'});
+	    $res->release(finished_cb => $steps->{'released'});
 	}
-    });
-
-    $subs{'set_labeled'} = sub {
-	$gres->release(finished_cb => $subs{'released'});
     };
 
-    $subs{'released'} = make_cb(released => sub {
+    step set_labeled => sub {
+	$gres->release(finished_cb => $steps->{'released'});
+    };
+
+    step released => sub {
 	my ($err) = @_;
-	return failure($err) if ($err);
+	return failure($err, $finished_cb) if ($err);
 
-	Amanda::MainLoop::quit();
-    });
-
-    $scan->find_volume(label  => $label,
-                       res_cb => $subs{'done_load'},
-			user_msg_fn => \&_user_msg_fn,
-		       set_current => 1);
+	$finished_cb->();
+    };
 });
 
 subcommand("taper", "taper", "perform the taperscan algorithm and display the result",
 sub {
-    my @args = @_;
+    my ($finished_cb, @args) = @_;
 
-    sub taper_user_msg_fn {
+    my $taper_user_msg_fn = sub {
 	my %params = @_;
 	if (exists($params{'text'})) {
 	    print STDERR "$params{'text'}\n";
@@ -513,37 +520,39 @@ sub {
 	}
     };
 
-    usage unless (@args == 0);
+    usage($finished_cb) unless (@args == 0);
     my $label = shift @args;
 
-    my $chg = load_changer() or return;
+    my $chg = load_changer($finished_cb) or return;
 
     my $result_cb = make_cb(result_cb => sub {
 	my ($err, $res, $label, $mode) = @_;
-	return failure($err) if $err;
+	return failure($err, $finished_cb) if $err;
 
 	my $modestr = ($mode == $ACCESS_APPEND)? "append" : "write";
 	my $slot = $res->{'this_slot'};
 	print STDERR "Will $modestr to volume $label in slot $slot.\n";
 	$res->release(finished_cb => sub {
-	    Amanda::MainLoop::quit();
+	    my ($err) = @_;
+	    die "$err" if $err;
+
+	    $finished_cb->();
 	});
     });
 
     my $taperscan = Amanda::Taper::Scan->new(changer => $chg);
     $taperscan->scan(
 	result_cb => $result_cb,
-	user_msg_fn => \&taper_user_msg_fn
+	user_msg_fn => $taper_user_msg_fn,
     );
 });
 
 subcommand("update", "update [WHAT]", "update the changer's state; see changer docs for syntax of WHAT",
 sub {
-    my @args = @_;
-    my %subs;
+    my ($finished_cb, @args) = @_;
     my @changed_args;
 
-    my $chg = load_changer() or return;
+    my $chg = load_changer($finished_cb) or return;
 
     if (@args) {
 	@changed_args = (changed => shift @args);
@@ -554,10 +563,10 @@ sub {
 	},
 	finished_cb => sub {
 	    my ($err) = @_;
-	    return failure($err) if $err;
+	    return failure($err, $finished_cb) if $err;
 
 	    print STDERR "update complete\n";
-	    Amanda::MainLoop::quit();
+	    $finished_cb->();
 	});
 });
 
@@ -565,16 +574,18 @@ sub {
 # Utilities
 
 sub load_changer {
+    my ($finished_cb) = @_;
+
     my $chg = Amanda::Changer->new();
-    return failure($chg) if ($chg->isa("Amanda::Changer::Error"));
+    return failure($chg, $finished_cb) if ($chg->isa("Amanda::Changer::Error"));
     return $chg;
 }
 
 sub failure {
-    my ($msg) = @_;
+    my ($msg, $finished_cb) = @_;
     print STDERR "ERROR: $msg\n";
     $exit_status = 1;
-    Amanda::MainLoop::quit();
+    $finished_cb->();
 }
 
 # show the slot contents in the old-fashioned format
@@ -595,43 +606,44 @@ sub show_slot {
 ##
 # main
 
-sub main {
-    Amanda::Util::setup_application("amtape", "server", $CONTEXT_CMDLINE);
+Amanda::Util::setup_application("amtape", "server", $CONTEXT_CMDLINE);
 
-    my $config_overrides = new_config_overrides($#ARGV+1);
+my $config_overrides = new_config_overrides($#ARGV+1);
 
-    Getopt::Long::Configure(qw(bundling));
-    GetOptions(
-	'help|usage|?' => \&usage,
-	'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
-    ) or usage();
+Getopt::Long::Configure(qw(bundling));
+GetOptions(
+    'help|usage|?' => \&usage,
+    'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
+) or usage();
 
-    usage() if (@ARGV < 1);
+usage() if (@ARGV < 1);
 
-    my $config_name = shift @ARGV;
-    set_config_overrides($config_overrides);
-    config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
-    my ($cfgerr_level, @cfgerr_errors) = config_errors();
-    if ($cfgerr_level >= $CFGERR_WARNINGS) {
-	config_print_errors();
-	if ($cfgerr_level >= $CFGERR_ERRORS) {
-	    die("errors processing config file");
-	}
+my $config_name = shift @ARGV;
+set_config_overrides($config_overrides);
+config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
+my ($cfgerr_level, @cfgerr_errors) = config_errors();
+if ($cfgerr_level >= $CFGERR_WARNINGS) {
+    config_print_errors();
+    if ($cfgerr_level >= $CFGERR_ERRORS) {
+	die("errors processing config file");
     }
-
-    Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
-
-    my $subcmd = shift @ARGV;
-    usage unless defined($subcmd) and exists ($subcommands{$subcmd});
-    invoke_subcommand($subcmd, @ARGV);
-    Amanda::MainLoop::run();
-    Amanda::Util::finish_application();
-    exit($exit_status);
 }
+
+Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
 #make STDOUT not line buffered
 my $previous_fh = select(STDOUT);
 $| = 1;
 select($previous_fh);
 
-main();
+sub main {
+    my ($finished_cb) = @_;
+
+    my $subcmd = shift @ARGV;
+    usage($finished_cb) unless defined($subcmd) and exists ($subcommands{$subcmd});
+    invoke_subcommand($subcmd, $finished_cb, @ARGV);
+}
+main(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
+Amanda::Util::finish_application();
+exit($exit_status);

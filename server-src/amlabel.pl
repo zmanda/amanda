@@ -1,5 +1,5 @@
 #! @PERL@
-# Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -84,148 +84,159 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
-my %subs;
 my ($tlf, $tl, $res);
 
 sub failure {
-    my ($msg) = @_;
+    my ($msg, $finished_cb) = @_;
     print STDERR "$msg\n";
     $exit_status = 1;
     if ($res) {
-	$res->release(finished_cb => sub { Amanda::MainLoop::quit(); });
+	$res->release(finished_cb => sub {
+	    # ignore error
+	    $finished_cb->()
+	});
     } else {
-	Amanda::MainLoop::quit();
+	$finished_cb->();
     }
 }
 
-$subs{'start'} = make_cb(start => sub {
-    my $labelstr = getconf($CNF_LABELSTR);
-    if ($opt_label !~ /$labelstr/) {
-	return failure("Label '$opt_label' doesn't match labelstr '$labelstr'.");
-    }
+sub main {
+    my ($finished_cb) = @_;
 
-    $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-    $tl = Amanda::Tapelist::read_tapelist($tlf);
-    if (!defined $tl) {
-	return failure("Can't load tapelist file ($tlf)");
-    }
-    if (!$opt_force) {
-	if ($tl->lookup_tapelabel($opt_label)) {
-	    return failure("Label '$opt_label' already on a volume");
-	}
-    }
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    $subs{'load'}->();
-});
-
-$subs{'load'} = make_cb(load => sub {
-    my $chg = Amanda::Changer->new();
-
-    return failure($chg)
-	if $chg->isa("Amanda::Changer::Error");
-
-    print "Reading label...\n";
-    if ($opt_slot) {
-	$chg->load(slot => $opt_slot, mode => "write",
-		res_cb => $subs{'loaded'});
-    } else {
-	$chg->load(relative_slot => "current", mode => "write",
-		res_cb => $subs{'loaded'});
-    }
-});
-
-$subs{'loaded'} = make_cb(loaded => sub {
-    (my $err, $res) = @_;
-
-    return failure($err) if $err;
-
-    my $dev = $res->{'device'};
-    my $dev_ok = 1;
-    if ($dev->status & $DEVICE_STATUS_VOLUME_UNLABELED) {
-	if (!$dev->volume_header or $dev->volume_header->{'type'} == $F_EMPTY) {
-	    print "Found an empty tape.\n";
-	} else {
-	    # force is required for non-Amanda tapes
-	    print "Found a non-Amanda tape.\n";
-	    $dev_ok = 0 unless ($opt_force);
-	}
-    } elsif ($dev->status & $DEVICE_STATUS_VOLUME_ERROR) {
-	# it's OK to force through VOLUME_ERROR
-	print "Error reading volume label: " . $dev->error_or_status(), "\n";
-	$dev_ok = 0 unless ($opt_force);
-    } elsif ($dev->status != $DEVICE_STATUS_SUCCESS) {
-	# but anything else is fatal
-	print "Error reading volume label: " . $dev->error_or_status(), "\n";
-	$dev_ok = 0;
-    } else {
-	# this is a labeled Amanda tape
-	my $label = $dev->volume_label;
+    step start => sub {
 	my $labelstr = getconf($CNF_LABELSTR);
+	if ($opt_label !~ /$labelstr/) {
+	    return failure("Label '$opt_label' doesn't match labelstr '$labelstr'.", $finished_cb);
+	}
 
-	if ($label !~ /$labelstr/) {
-	    print "Found label '$label', but it is not from configuration " .
-		"'" . Amanda::Config::get_config_name() . "'.\n";
-	    $dev_ok = 0 unless ($opt_force);
-	} elsif ($tl->lookup_tapelabel($label)) {
-	    print "Volume with label '$label' is active and contains data from this configuration.\n";
-	    $dev_ok = 0 unless ($opt_force);
+	$tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+	$tl = Amanda::Tapelist::read_tapelist($tlf);
+	if (!defined $tl) {
+	    return failure("Can't load tapelist file ($tlf)", $finished_cb);
+	}
+	if (!$opt_force) {
+	    if ($tl->lookup_tapelabel($opt_label)) {
+		return failure("Label '$opt_label' already on a volume", $finished_cb);
+	    }
+	}
+
+	$steps->{'load'}->();
+    };
+
+    step load => sub {
+	my $chg = Amanda::Changer->new();
+
+	return failure($chg, $finished_cb)
+	    if $chg->isa("Amanda::Changer::Error");
+
+	print "Reading label...\n";
+	if ($opt_slot) {
+	    $chg->load(slot => $opt_slot, mode => "write",
+		    res_cb => $steps->{'loaded'});
 	} else {
-	    print "Found Amanda volume '$label'.\n";
+	    $chg->load(relative_slot => "current", mode => "write",
+		    res_cb => $steps->{'loaded'});
 	}
-    }
+    };
 
-    if ($dev_ok) {
-	print "Writing label '$opt_label'...\n";
+    step loaded => sub {
+	(my $err, $res) = @_;
 
-	if (!$dev->start($ACCESS_WRITE, $opt_label, "X")) {
-	    return failure("Error writing label: " . $dev->error_or_status());
-	} elsif (!$dev->finish()) {
-	    return failure("Error finishing device: " . $dev->error_or_status());
+	return failure($err, $finished_cb) if $err;
+
+	my $dev = $res->{'device'};
+	my $dev_ok = 1;
+	if ($dev->status & $DEVICE_STATUS_VOLUME_UNLABELED) {
+	    if (!$dev->volume_header or $dev->volume_header->{'type'} == $F_EMPTY) {
+		print "Found an empty tape.\n";
+	    } else {
+		# force is required for non-Amanda tapes
+		print "Found a non-Amanda tape.\n";
+		$dev_ok = 0 unless ($opt_force);
+	    }
+	} elsif ($dev->status & $DEVICE_STATUS_VOLUME_ERROR) {
+	    # it's OK to force through VOLUME_ERROR
+	    print "Error reading volume label: " . $dev->error_or_status(), "\n";
+	    $dev_ok = 0 unless ($opt_force);
+	} elsif ($dev->status != $DEVICE_STATUS_SUCCESS) {
+	    # but anything else is fatal
+	    print "Error reading volume label: " . $dev->error_or_status(), "\n";
+	    $dev_ok = 0;
+	} else {
+	    # this is a labeled Amanda tape
+	    my $label = $dev->volume_label;
+	    my $labelstr = getconf($CNF_LABELSTR);
+
+	    if ($label !~ /$labelstr/) {
+		print "Found label '$label', but it is not from configuration " .
+		    "'" . Amanda::Config::get_config_name() . "'.\n";
+		$dev_ok = 0 unless ($opt_force);
+	    } elsif ($tl->lookup_tapelabel($label)) {
+		print "Volume with label '$label' is active and contains data from this configuration.\n";
+		$dev_ok = 0 unless ($opt_force);
+	    } else {
+		print "Found Amanda volume '$label'.\n";
+	    }
 	}
 
-	print "Checking label...\n";
-	my $status = $dev->read_label();
-	if ($status != $DEVICE_STATUS_SUCCESS) {
-	    return failure("Checking the tape label failed: " . $dev->error_or_status());
-	} elsif (!$dev->volume_label) {
-	    return failure("No label found.");
-	} elsif ($dev->volume_label ne $opt_label) {
-	    my $got = $dev->volume_label;
-	    return failure("Read back a different label: got '$got', but expected '$opt_label'");
-	} elsif ($dev->volume_time ne "X") {
-	    my $got = $dev->volume_time;
-	    return failure("Read back a different timetstamp: got '$got', but expected 'X'");
+	if ($dev_ok) {
+	    print "Writing label '$opt_label'...\n";
+
+	    if (!$dev->start($ACCESS_WRITE, $opt_label, "X")) {
+		return failure("Error writing label: " . $dev->error_or_status(), $finished_cb);
+	    } elsif (!$dev->finish()) {
+		return failure("Error finishing device: " . $dev->error_or_status(), $finished_cb);
+	    }
+
+	    print "Checking label...\n";
+	    my $status = $dev->read_label();
+	    if ($status != $DEVICE_STATUS_SUCCESS) {
+		return failure("Checking the tape label failed: " . $dev->error_or_status(),
+			$finished_cb);
+	    } elsif (!$dev->volume_label) {
+		return failure("No label found.", $finished_cb);
+	    } elsif ($dev->volume_label ne $opt_label) {
+		my $got = $dev->volume_label;
+		return failure("Read back a different label: got '$got', but expected '$opt_label'",
+			$finished_cb);
+	    } elsif ($dev->volume_time ne "X") {
+		my $got = $dev->volume_time;
+		return failure("Read back a different timetstamp: got '$got', but expected 'X'",
+			$finished_cb);
+	    }
+
+	    # update the tapelist
+	    $tl->remove_tapelabel($opt_label);
+	    $tl->add_tapelabel("0", $opt_label, undef);
+	    $tl->write($tlf);
+
+	    print "Success!\n";
+
+	    # notify the changer
+	    $res->set_label(label => $opt_label, finished_cb => $steps->{'labeled'});
+	} else {
+	    return failure("Volume not labeled.", $finished_cb);
 	}
+    };
 
-	# update the tapelist
-	$tl->remove_tapelabel($opt_label);
-	$tl->add_tapelabel("0", $opt_label, undef);
-	$tl->write($tlf);
+    step labeled => sub {
+	my ($err) = @_;
+	return failure($err, $finished_cb) if $err;
 
-	print "Success!\n";
+	$res->release(finished_cb => $steps->{'released'});
+    };
 
-	# notify the changer
-	$res->set_label(label => $opt_label, finished_cb => $subs{'labeled'});
-    } else {
-	return failure("Volume not labeled.");
-    }
-});
+    step released => sub {
+	my ($err) = @_;
+	return failure($err, $finished_cb) if $err;
 
-$subs{'labeled'} = make_cb(labeled => sub {
-    my ($err) = @_;
-    return failure($err) if $err;
-
-    $res->release(finished_cb => $subs{'released'});
-});
-
-$subs{'released'} = make_cb(released => sub {
-    my ($err) = @_;
-    return failure($err) if $err;
-
-    Amanda::MainLoop::quit();
-});
-
-$subs{'start'}->();
+	$finished_cb->();
+    };
+}
+main(\&Amanda::MainLoop::quit);
 Amanda::MainLoop::run();
 Amanda::Util::finish_application();
 exit($exit_status);

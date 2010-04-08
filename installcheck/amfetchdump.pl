@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More; # plan given below
+use Test::More tests => 33;
 
 use lib "@amperldir@";
 use Installcheck;
@@ -32,11 +32,11 @@ use warnings;
 use strict;
 no strict 'subs';
 
-if ($Installcheck::Run::have_expect) {
-    plan tests => 33;
-} else {
-    plan skip_all => "Expect.pm not available";
-    exit(0);
+unless ($Installcheck::Run::have_expect) {
+    SKIP: {
+        skip("Expect.pm not available", Test::More->builder->expected_tests);
+    }
+    exit 0;
 }
 
 ## NOTE:

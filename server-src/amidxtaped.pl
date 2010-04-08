@@ -54,39 +54,41 @@ sub abort() {
 sub user_request {
     my $self = shift;
     my %params = @_;
-    my %subs;
     my $buffer = "";
 
-    $subs{'send_message'} = make_cb(send_message => sub {
+    my $steps = define_steps
+	cb_ref => \$params{'finished_cb'};
+
+    step send_message => sub {
 	if ($params{'err'}) {
 	    $self->{'clientservice'}->sendmessage("$params{err}");
 	}
 
-	$subs{'check_fe_feedme'}->();
-    });
+	$steps->{'check_fe_feedme'}->();
+    };
 
-    $subs{'check_fe_feedme'} = make_cb(check_fe_feedme => sub {
+    step check_fe_feedme => sub {
 	# note that fe_amrecover_FEEDME implies fe_amrecover_splits
 	if (!$self->{'clientservice'}->{'their_features'}->has(
 				    $Amanda::Feature::fe_amrecover_FEEDME)) {
 	    return $params{'finished_cb'}->("remote cannot prompt for volumes", undef);
 	}
-	$subs{'send_feedme'}->();
-    });
+	$steps->{'send_feedme'}->();
+    };
 
-    $subs{'send_feedme'} = make_cb(send_feedme => sub {
-	$self->{'clientservice'}->sendctlline("FEEDME $params{label}\r\n", $subs{'read_response'});
-    });
+    step send_feedme => sub {
+	$self->{'clientservice'}->sendctlline("FEEDME $params{label}\r\n", $steps->{'read_response'});
+    };
 
-    $subs{'read_response'} = make_cb(read_response => sub {
+    step read_response => sub {
 	my ($err, $written) = @_;
 	return $params{'finished_cb'}->($err, undef) if $err;
 
 	$self->{'clientservice'}->getline_async(
-		$self->{'clientservice'}->{'ctl_stream'}, $subs{'got_response'});
-    });
+		$self->{'clientservice'}->{'ctl_stream'}, $steps->{'got_response'});
+    };
 
-    $subs{'got_response'} = make_cb(got_response => sub {
+    step got_response => sub {
 	my ($err, $line) = @_;
 	return $params{'finished_cb'}->($err, undef) if $err;
 
@@ -97,9 +99,7 @@ sub user_request {
 	} else {
 	    return $params{'finished_cb'}->("got invalid response from remote", undef);
 	}
-    });
-
-    $subs{'send_message'}->();
+    };
 };
 
 ##

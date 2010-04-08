@@ -1,4 +1,4 @@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -140,81 +140,86 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 }
 
 # check relative slot ("current" and "next") functionality
-{
-    # load the "current" slot, which should be 4
-    my %subs;
+sub test_relative_slot {
+    my ($finished_cb) = @_;
     my $slot;
 
-    $subs{'load_current'} = make_cb('load_current' => sub {
-	$chg->load(relative_slot => "current", res_cb => $subs{'check_current_cb'});
-    });
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    $subs{'check_current_cb'} = make_cb('check_current_cb' => sub {
+    step load_current => sub {
+	# load the "current" slot, which should be 4
+	$chg->load(relative_slot => "current", res_cb => $steps->{'check_current_cb'});
+    };
+
+    step check_current_cb => sub {
         my ($err, $res) = @_;
         die $err if $err;
 
 	is ($res->{'this_slot'}, 5, "'current' is slot 5");
 	$slot = $res->{'this_slot'};
 
-	$res->release(finished_cb => $subs{'released1'});
-    });
+	$res->release(finished_cb => $steps->{'released1'});
+    };
 
-    $subs{'released1'} = make_cb(released1 => sub {
+    step released1 => sub {
 	my ($err) = @_;
 	die $err if $err;
 
         $chg->load(relative_slot => 'next', slot => $slot,
-		   res_cb => $subs{'check_next_cb'});
-    });
+		   res_cb => $steps->{'check_next_cb'});
+    };
 
-    $subs{'check_next_cb'} = make_cb('check_next_cb' => sub {
+    step check_next_cb => sub {
         my ($err, $res) = @_;
         die $err if $err;
 
 	is ($res->{'this_slot'}, 1, "'next' from there is slot 1");
 
-	$res->release(finished_cb => $subs{'released2'});
-    });
+	$res->release(finished_cb => $steps->{'released2'});
+    };
 
-    $subs{'released2'} = make_cb(released2 => sub {
+    step released2 => sub {
 	my ($err) = @_;
 	die $err if $err;
 
-        $chg->reset(finished_cb => $subs{'reset_finished_cb'});
-    });
+        $chg->reset(finished_cb => $steps->{'reset_finished_cb'});
+    };
 
-    $subs{'reset_finished_cb'} = make_cb('reset_finished_cb' => sub {
+    step reset_finished_cb => sub {
         my ($err) = @_;
         die $err if $err;
 
-	$chg->load(relative_slot => "current", res_cb => $subs{'check_reset_cb'});
-    });
+	$chg->load(relative_slot => "current", res_cb => $steps->{'check_reset_cb'});
+    };
 
-    $subs{'check_reset_cb'} = make_cb('check_reset_cb' => sub {
+    step check_reset_cb => sub {
         my ($err, $res) = @_;
         die $err if $err;
 
 	is ($res->{'this_slot'}, 1, "after reset, 'current' is slot 1");
 
-	$res->release(finished_cb => $subs{'released3'});
-    });
+	$res->release(finished_cb => $steps->{'released3'});
+    };
 
-    $subs{'released3'} = make_cb(released1 => sub {
+    step released3 => sub {
 	my ($err) = @_;
 	die $err if $err;
 
-        Amanda::MainLoop::quit();
-    });
-
-    $subs{'load_current'}->();
-    Amanda::MainLoop::run();
+        $finished_cb->();
+    };
 }
+test_relative_slot(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
 
 # test loading relative_slot "next"
-{
-    my %subs;
+sub test_relative_slot_next {
+    my ($finished_cb) = @_;
 
-    $subs{'load_next'} = make_cb(load_next => sub {
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
+    step load_next => sub {
         $chg->load(relative_slot => "next",
             res_cb => sub {
                 my ($err, $res) = @_;
@@ -222,43 +227,45 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 
 		is ($res->{'this_slot'}, 2, "loading relative slot 'next' loads the correct slot");
 
-		$subs{'release'}->($res);
+		$steps->{'release'}->($res);
             }
         );
-    });
+    };
 
-    $subs{'release'} = make_cb(release => sub {
+    step release => sub {
 	my ($res) = @_;
 
 	$res->release(finished_cb => sub {
 	    my ($err) = @_;
 	    die $err if $err;
 
-	    Amanda::MainLoop::quit();
+	    $finished_cb->();
 	});
-    });
-
-    $subs{'load_next'}->();
-    Amanda::MainLoop::run();
+    };
 }
+test_relative_slot_next(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
 
 # scan the changer using except_slots
-{
-    my %subs;
+sub test_except_slots {
+    my ($finished_cb) = @_;
     my $slot;
     my %except_slots;
 
-    $subs{'start'} = make_cb(start => sub {
-	$chg->load(slot => "5", except_slots => { %except_slots },
-		   res_cb => $subs{'loaded'});
-    });
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    $subs{'loaded'} = make_cb(loaded => sub {
+    step start => sub {
+	$chg->load(slot => "5", except_slots => { %except_slots },
+		   res_cb => $steps->{'loaded'});
+    };
+
+    step loaded => sub {
         my ($err, $res) = @_;
 	if ($err) {
 	    if ($err->notfound) {
 		# this means the scan is done
-		return $subs{'quit'}->();
+		return $steps->{'quit'}->();
 	    } elsif ($err->volinuse and defined $err->{'slot'}) {
 		$slot = $err->{'slot'};
 	    } else {
@@ -271,31 +278,29 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 	$except_slots{$slot} = 1;
 
 	if ($res) {
-	    $res->release(finished_cb => $subs{'released'});
+	    $res->release(finished_cb => $steps->{'released'});
 	} else {
-	    $subs{'released'}->();
+	    $steps->{'released'}->();
 	}
-    });
+    };
 
-    $subs{'released'} = make_cb(released => sub {
+    step released => sub {
 	my ($err) = @_;
 	die $err if $err;
 
         $chg->load(relative_slot => 'next', slot => $slot,
 		   except_slots => { %except_slots },
-		   res_cb => $subs{'loaded'});
-    });
+		   res_cb => $steps->{'loaded'});
+    };
 
-    $subs{'quit'} = make_cb(quit => sub {
-        Amanda::MainLoop::quit();
-    });
-
-    $subs{'start'}->();
-    Amanda::MainLoop::run();
-
-    is_deeply({ %except_slots }, { 5=>1, 1=>1, 2=>1, 3=>1, 4=>1 },
-	    "scanning with except_slots works");
+    step quit => sub {
+	is_deeply({ %except_slots }, { 5=>1, 1=>1, 2=>1, 3=>1, 4=>1 },
+		"scanning with except_slots works");
+        $finished_cb->();
+    };
 }
+test_except_slots(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
 
 # eject is not implemented
 {

@@ -295,43 +295,43 @@ sub _scribe_started_cb {
 sub quit {
     my $self = shift;
     my %params = @_;
-    my %subs;
-    my @errors = @_;
+    my @errors = ();
 
-    $subs{'stop_socket'} = make_cb(stop_socket => sub {
+    my $steps = define_steps
+	cb_ref => \$params{'finished_cb'};
+
+    step stop_socket => sub {
 	$self->{'header_socket_src'}->remove();
 	$self->{'header_socket'}->close();
 
-	$subs{'quit_scribe'}->();
-    });
+	$steps->{'quit_scribe'}->();
+    };
 
-    $subs{'quit_scribe'} = make_cb(quit_scribe => sub {
+    step quit_scribe => sub {
 	$self->{'scribe'}->quit(finished_cb => sub {
 	    my ($err) = @_;
 	    push @errors, $err if ($err);
 
-	    $subs{'stop_proto'}->();
+	    $steps->{'stop_proto'}->();
 	});
-    });
+    };
 
-    $subs{'stop_proto'} = make_cb(stop_proto => sub {
+    step stop_proto => sub {
 	$self->{'proto'}->stop(finished_cb => sub {
 	    my ($err) = @_;
 	    push @errors, $err if ($err);
 
-	    $subs{'done'}->();
+	    $steps->{'done'}->();
 	});
-    });
+    };
 
-    $subs{'done'} = make_cb(done => sub {
+    step done => sub {
 	if (@errors) {
 	    $params{'finished_cb'}->(join("; ", @errors));
 	} else {
 	    $params{'finished_cb'}->();
 	}
-    });
-
-    $subs{'stop_socket'}->();
+    };
 }
 
 ##
@@ -472,7 +472,9 @@ sub msg_FILE_WRITE {
 
     $self->{'doing_port_write'} = 0;
 
-    $self->setup_dump($msgtype, %params);
+    $self->setup_and_start_dump($msgtype,
+	dump_cb => sub { $self->dump_cb(@_); },
+	%params);
 }
 
 sub msg_PORT_WRITE {
@@ -484,7 +486,9 @@ sub msg_PORT_WRITE {
 
     $self->{'doing_port_write'} = 1;
 
-    $self->setup_dump($msgtype, %params);
+    $self->setup_and_start_dump($msgtype,
+	dump_cb => sub { $self->dump_cb(@_); },
+	%params);
 }
 
 sub msg_QUIT {
@@ -561,7 +565,7 @@ sub create_status_file {
     });
 }
 
-# utility function for setup_dump, returning keyword args
+# utility function for setup_and_start_dump, returning keyword args
 # for $scribe->get_xfer_dest
 sub get_splitting_config {
     my $self = shift;
@@ -643,17 +647,19 @@ sub send_port_and_get_header {
     my $self = shift;
     my ($finished_cb) = @_;
 
-    my %subs;
     my $connected_socket;
     my $header_xfer;
     my ($xsrc, $xdst);
     my $errmsg;
 
-    $subs{'send_port'} = make_cb(send_port => sub {
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
+    step send_port => sub {
 	# set up so that an incoming connection on the header socket gets sent here
 	die "header_socket_connect_cb should be undef"
 	    if defined $self->{'header_socket_connect_cb'};
-	$self->{'header_socket_connect_cb'} = $subs{'header_socket_connect_cb'};
+	$self->{'header_socket_connect_cb'} = $steps->{'header_socket_connect_cb'};
 
 	# get the ip:port pairs for the data connection from the data xfer source,
 	# which should be an Amanda::Xfer::Source::DirectTCPListen
@@ -664,9 +670,9 @@ sub send_port_and_get_header {
 	$self->{'proto'}->send(main::Protocol::PORT,
 	    port => $self->{'header_socket'}->sockport(),
 	    ipports => $addrs);
-    });
+    };
 
-    $subs{'header_socket_connect_cb'} = make_cb(header_socket_connect_cb => sub {
+    step header_socket_connect_cb => sub {
 	($connected_socket) = @_; # keep the socket so Perl doesn't close it!
 
 	# now read a header block from that socket - note that this does not specify
@@ -675,10 +681,10 @@ sub send_port_and_get_header {
 	    Amanda::Xfer::Source::Fd->new($connected_socket->fileno()),
 	    Amanda::Xfer::Dest::Buffer->new(0));
 	$header_xfer = Amanda::Xfer->new([$xsrc, $xdst]);
-	$header_xfer->start($subs{'header_xfer_xmsg_cb'});
-    });
+	$header_xfer->start($steps->{'header_xfer_xmsg_cb'});
+    };
 
-    $subs{'header_xfer_xmsg_cb'} = make_cb(header_xfer_xmsg_cb => sub {
+    step header_xfer_xmsg_cb => sub {
 	my ($src, $xmsg, $xfer) = @_;
 	if ($xmsg->{'type'} == $XMSG_INFO) {
 	    info($xmsg->{'message'});
@@ -688,12 +694,12 @@ sub send_port_and_get_header {
 	    if ($errmsg) {
 		$finished_cb->($errmsg);
 	    } else {
-		$subs{'got_header'}->();
+		$steps->{'got_header'}->();
 	    }
 	}
-    });
+    };
 
-    $subs{'got_header'} = make_cb(got_header => sub {
+    step got_header => sub {
 	my $hdr_buf = $xdst->get();
 
 	# close stuff up
@@ -704,27 +710,14 @@ sub send_port_and_get_header {
 	$self->{'header'} = Amanda::Header->from_string($hdr_buf);
 
 	$finished_cb->(undef);
-    });
-
-    $subs{'send_port'}->();
+    };
 }
 
 # do the work of starting a new xfer; this contains the code common to
 # msg_PORT_WRITE and msg_FILE_WRITE.
-sub setup_dump {
+sub setup_and_start_dump {
     my $self = shift;
     my ($msgtype, %params) = @_;
-    my %subs;
-
-    $self->{'handle'} = $params{'handle'};
-    $self->{'hostname'} = $params{'hostname'};
-    $self->{'diskname'} = $params{'diskname'};
-    $self->{'datestamp'} = $params{'datestamp'};
-    $self->{'level'} = $params{'level'};
-    $self->{'header'} = undef; # no header yet
-    $self->{'last_partnum'} = -1;
-    $self->{'orig_kb'} = $params{'orig_kb'};
-    $self->{'input_errors'} = [];
 
     # setting up the dump is a bit complex, due to the requirements of
     # a directtcp port_write.  This function:
@@ -732,7 +725,24 @@ sub setup_dump {
     # 2. gets the header
     # 3. calls the scribe's start_dump method with the new header
 
-    $subs{'make_xfer'} = make_cb(make_xfer => sub {
+    my $steps = define_steps
+	cb_ref => \$params{'dump_cb'};
+
+    step setup => sub {
+	$self->{'handle'} = $params{'handle'};
+	$self->{'hostname'} = $params{'hostname'};
+	$self->{'diskname'} = $params{'diskname'};
+	$self->{'datestamp'} = $params{'datestamp'};
+	$self->{'level'} = $params{'level'};
+	$self->{'header'} = undef; # no header yet
+	$self->{'last_partnum'} = -1;
+	$self->{'orig_kb'} = $params{'orig_kb'};
+	$self->{'input_errors'} = [];
+
+	$steps->{'make_xfer'}->();
+    };
+
+    step make_xfer => sub {
         $self->_assert_in_state("idle") or return;
         $self->{'state'} = 'making_xfer';
 
@@ -762,10 +772,10 @@ sub setup_dump {
 	# we've started the xfer now, but the destination won't actually write
 	# any data until we call start_dump.  And we'll need a header for that.
 
-	$subs{'get_header'}->();
-    });
+	$steps->{'get_header'}->();
+    };
 
-    $subs{'get_header'} = make_cb(get_header => sub {
+    step get_header => sub {
         $self->_assert_in_state("making_xfer") or return;
         $self->{'state'} = 'getting_header';
 
@@ -775,16 +785,16 @@ sub setup_dump {
 	    if (!defined $hdr || $hdr->{'type'} != $Amanda::Header::F_DUMPFILE) {
 		die("Could not read header from '$params{filename}'");
 	    }
-	    $subs{'start_dump'}->(undef);
+	    $steps->{'start_dump'}->(undef);
 	} else {
 	    # ..but quite a bit harder for PORT-WRITE; this method will send the
 	    # proper PORT command, then read the header from the dumper and parse
 	    # it, placing the result in $self->{'header'}
-	    $self->send_port_and_get_header($subs{'start_dump'});
+	    $self->send_port_and_get_header($steps->{'start_dump'});
 	}
-    });
+    };
 
-    $subs{'start_dump'} = make_cb(start_dump => sub {
+    step start_dump => sub {
 	my ($err) = @_;
 
         $self->_assert_in_state("getting_header") or return;
@@ -793,7 +803,7 @@ sub setup_dump {
         # if $err is set, call through to dump_cb to handle the situation, treating
         # it as a device error
         if ($err) {
-            return $self->dump_cb(
+            return $params{'dump_cb'}->(
                 result => "FAILED",
                 device_errors => [ $err ],
                 size => 0,
@@ -819,10 +829,8 @@ sub setup_dump {
         $self->{'scribe'}->start_dump(
 	    xfer => $self->{'xfer'},
             dump_header => $hdr,
-            dump_cb => sub { $self->dump_cb(@_); });
-    });
-
-    $subs{'make_xfer'}->();
+            dump_cb => $params{'dump_cb'});
+    };
 }
 
 sub dump_cb {

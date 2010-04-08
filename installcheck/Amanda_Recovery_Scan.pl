@@ -160,36 +160,36 @@ Amanda::Config::config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 # sub to label a slot in a changer
 sub amlabel {
     my ($chg, $chg_name, $slot, $label, $finished_cb) = @_;
-    my %subs;
     my $res;
 
-    $subs{'start'} = make_cb(start => sub {
-	$chg->load(slot => $slot, res_cb => $subs{'res_cb'});
-    });
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    $subs{'res_cb'} = make_cb(res_cb => sub {
+    step start => sub {
+	$chg->load(slot => $slot, res_cb => $steps->{'res_cb'});
+    };
+
+    step res_cb => sub {
 	(my $err, $res) = @_;
 	die "$err" if $err;
 
 	$res->{'device'}->start($ACCESS_WRITE, $label, "20100201010203");
-	$res->set_label(label => $label, finished_cb => $subs{'set_label_finished'});
-    });
+	$res->set_label(label => $label, finished_cb => $steps->{'set_label_finished'});
+    };
 
-    $subs{'set_label_finished'} = make_cb(set_label_finished => sub {
+    step set_label_finished => sub {
 	my ($err) = @_;
 	die "$err" if $err;
 
-	$res->release(finished_cb => $subs{'finished_cb'});
-    });
+	$res->release(finished_cb => $steps->{'finished_cb'});
+    };
 
-    $subs{'finished_cb'} = make_cb(finished_cb => sub {
+    step finished_cb => sub {
 	my ($err) = @_;
 	die "$err" if $err;
 	pass("label slot $slot of $chg_name with label '$label'");
 	$finished_cb->();
-    });
-
-    $subs{'start'}->();
+    };
 }
 
 sub amlabel_sync {
@@ -201,56 +201,47 @@ sub amlabel_sync {
 }
 
 # searching tests
-foreach my $chg_name ("disk-changer", "multi-changer", "compat-changer",
-		      "single-changer") {
-    my %subs;
+sub test_searching {
+    my ($chg, $chg_name, $finished_cb) = @_;
     my $scan;
     my $res01;
     my $res02;
     my $res03;
 
-    # amlabel has to be done outside of Amanda::MainLoop
-    my $chg = Amanda::Changer->new($chg_name);
-    if ($chg_name eq "single-changer") {
-	amlabel_sync($chg, $chg_name, 1, 'TESTCONF02');
-    } else {
-	amlabel_sync($chg, $chg_name, 1, 'TESTCONF01');
-	amlabel_sync($chg, $chg_name, 2, 'TESTCONF02');
-	amlabel_sync($chg, $chg_name, 3, 'TESTCONF03');
-    }
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    $subs{'start'} = make_cb(start => sub {
+    step start => sub {
 	$scan = Amanda::Recovery::Scan->new(chg => $chg);
+	$steps->{'find_04'}->();
+    };
 
-	$subs{'find_04'}->();
-    });
-
-    $subs{'find_04'} = make_cb(find_o4 => sub {
+    step find_04 => sub {
 	$scan->find_volume(label  => "TESTCONF04",
-                           res_cb => $subs{'res_cb_04'});
-    });
+                           res_cb => $steps->{'res_cb_04'});
+    };
 
-    $subs{'res_cb_04'} = sub {
+    step res_cb_04 => sub {
 	my ($err, $res) = @_;
 
 	ok(!$res, "$chg_name didn't find TESTCONF04");
 	ok($err->notfound, "$chg_name: TESTCONF04 error is notfound");
 
 	$scan->find_volume(label  => "TESTCONF02",
-                           res_cb => $subs{'res_cb_02'});
+                           res_cb => $steps->{'res_cb_02'});
     };
 
-    $subs{'res_cb_02'} = sub {
+    step res_cb_02 => sub {
 	(my $err, $res02) = @_;
 
 	ok(!$err, "$chg_name found TESTCONF02");
 	ok($res02, "$chg_name: TESTCONF02 give a reservation");
 
 	$scan->find_volume(label  => "TESTCONF02",
-			   res_cb => $subs{'res_cb_02_volinuse'});
+			   res_cb => $steps->{'res_cb_02_volinuse'});
     };
 
-    $subs{'res_cb_02_volinuse'} = make_cb(res_cb_02_volinuse => sub {
+    step res_cb_02_volinuse => sub {
 	my ($err, $res) = @_;
 
 	ok(!$res, "$chg_name doesn't reserve an already reserved slot");
@@ -264,10 +255,10 @@ foreach my $chg_name ("disk-changer", "multi-changer", "compat-changer",
 	}
 
 	$scan->find_volume(label  => "TESTCONF03",
-			   res_cb => $subs{'res_cb_03'});
-    });
+			   res_cb => $steps->{'res_cb_03'});
+    };
 
-    $subs{'res_cb_03'} = sub {
+    step res_cb_03 => sub {
 	(my $err, $res03) = @_;
 
 	if ($chg_name eq "compat-changer" ||
@@ -281,10 +272,10 @@ foreach my $chg_name ("disk-changer", "multi-changer", "compat-changer",
 	    ok($res03, "$chg_name: TESTCONF03 give a reservation");
 	}
 	$scan->find_volume(label  => "TESTCONF01",
-			   res_cb => $subs{'res_cb_01'});
+			   res_cb => $steps->{'res_cb_01'});
     };
 
-    $subs{'res_cb_01'} = sub {
+    step res_cb_01 => sub {
 	(my $err, $res01) = @_;
 
 	if ($chg_name eq "compat-changer" ||
@@ -298,10 +289,10 @@ foreach my $chg_name ("disk-changer", "multi-changer", "compat-changer",
 	    ok($res01, "$chg_name: TESTCONF01 give a reservation");
 	}
 	$scan->find_volume(label  => "TESTCONF05",
-			   res_cb => $subs{'res_cb_05'});
+			   res_cb => $steps->{'res_cb_05'});
     };
 
-    $subs{'res_cb_05'} = sub {
+    step res_cb_05 => sub {
 	my ($err, $res) = @_;
 
 	if ($chg_name eq "compat-changer" ||
@@ -315,10 +306,10 @@ foreach my $chg_name ("disk-changer", "multi-changer", "compat-changer",
 	    ok($err->notfound, "$chg_name: TESTCONF05 is notfound");
 	}
 	$scan->find_volume(label  => "TESTCONF01",
-			   res_cb => $subs{'res_cb_01_volinuse'});
+			   res_cb => $steps->{'res_cb_01_volinuse'});
     };
 
-    $subs{'res_cb_01_volinuse'} = sub {
+    step res_cb_01_volinuse => sub {
 	my ($err, $res) = @_;
 
 	ok($err, "$chg_name doesn't found TESTCONF01");
@@ -331,85 +322,104 @@ foreach my $chg_name ("disk-changer", "multi-changer", "compat-changer",
 		diag($err."\n");
 	}
 	ok(!$res, "$chg_name: TESTCONF01 give no reservation");
-	$subs{'release01'}->();
+	$steps->{'release01'}->();
     };
 
-    $subs{'release01'} = sub {
+    step release01 => sub {
 	if ($res01) {
-	    $res01->release(finished_cb => $subs{'release02'});
+	    $res01->release(finished_cb => $steps->{'release02'});
 	} else {
-	    $subs{'release02'}->();
+	    $steps->{'release02'}->();
 	}
     };
 
-    $subs{'release02'} = sub {
-	$res02->release(finished_cb => $subs{'release03'});
+    step release02 => sub {
+	$res02->release(finished_cb => $steps->{'release03'});
     };
 
-    $subs{'release03'} = sub {
+    step release03 => sub {
 	if ($res03) {
-	    $res03->release(finished_cb => $subs{'done'});
+	    $res03->release(finished_cb => $steps->{'done'});
 	} else {
-	    $subs{'done'}->();
+	    $steps->{'done'}->();
 	}
     };
 
-    $subs{'done'} = sub {
+    step done => sub {
 	pass("done with searching test on $chg_name");
-	Amanda::MainLoop::quit();
+	$finished_cb->();
     };
+}
 
-    $subs{'start'}->();
+foreach my $chg_name ("disk-changer", "multi-changer", "compat-changer",
+		      "single-changer") {
+    # amlabel has to be done outside of Amanda::MainLoop
+    my $chg = Amanda::Changer->new($chg_name);
+    if ($chg_name eq "single-changer") {
+	amlabel_sync($chg, $chg_name, 1, 'TESTCONF02');
+    } else {
+	amlabel_sync($chg, $chg_name, 1, 'TESTCONF01');
+	amlabel_sync($chg, $chg_name, 2, 'TESTCONF02');
+	amlabel_sync($chg, $chg_name, 3, 'TESTCONF03');
+    }
+
+    test_searching($chg, $chg_name, \&Amanda::MainLoop::quit);
     Amanda::MainLoop::run();
 }
 
 #test SCAN_POLL
-foreach my $chg_name ("disk-changer", "multi-changer") {
-        my %subs;
+sub test_scan_poll {
+    my ($chg_name, $finished_cb) = @_;
+
     my $scan;
     my $chg;
     my $res04;
 
-    $subs{'start'} = make_cb(start => sub {
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
+    step start => sub {
 	$chg = Amanda::Changer->new($chg_name);
 	$scan = Amanda::Recovery::Scan->new(chg => $chg);
 	$scan->{'scan_conf'}->{'notfound'} = Amanda::Recovery::Scan::SCAN_POLL;
 	$scan->{'scan_conf'}->{'volinuse'} = Amanda::Recovery::Scan::SCAN_POLL;
 	$scan->{'scan_conf'}->{'poll_delay'} = 10; # 10 ms
 
-	$subs{'find_04'}->();
-    });
+	$steps->{'find_04'}->();
+    };
 
-    $subs{'find_04'} = make_cb(find_04 => sub {
-	Amanda::MainLoop::call_after(100, $subs{'label_04'});
+    step find_04 => sub {
+	Amanda::MainLoop::call_after(100, $steps->{'label_04'});
 	$scan->find_volume(label  => "TESTCONF04",
-			   res_cb => $subs{'res_cb_04'});
+			   res_cb => $steps->{'res_cb_04'});
 	pass("began searching for TESTCONF04");
-    });
+    };
 
-    $subs{'label_04'} = make_cb(label_04 => sub {
+    step label_04 => sub {
 	# this needs to be run on a different process.
 	ok(run('amlabel', '-f', "-otpchanger=$chg_name", 'TESTCONF',
 	       'TESTCONF04', 'slot', '3'),
 	   "label slot 3 of $chg_name with label TESTCONF04");
 	# note: nothing to do in the amlabel callback
-    });
+    };
 
-    $subs{'res_cb_04'} = sub {
+    step res_cb_04 => sub {
 	(my $err, $res04) = @_;
 
 	ok(!$err, "$chg_name found TESTCONF04 after POLL");
 	ok($res04, "$chg_name: TESTCONF04 give a reservation after POLL");
 
-	$res04->release(finished_cb => $subs{'done'});
+	$res04->release(finished_cb => $steps->{'done'});
     };
 
-    $subs{'done'} = sub {
+    step done => sub {
 	pass("done with SCAN_POLL on $chg_name");
-        Amanda::MainLoop::quit();
+        $finished_cb->();
     };
+}
 
-    $subs{'start'}->();
+foreach my $chg_name ("disk-changer", "multi-changer") {
+    test_scan_poll($chg_name, \&Amanda::MainLoop::quit);
     Amanda::MainLoop::run();
 }
 
@@ -417,8 +427,8 @@ foreach my $chg_name ("disk-changer", "multi-changer") {
 #label TESTCONF05 in multi-changer
 #start the scan on disk-changer
 #interactivity module change changer to multi-changer
-{
-    my %subs;
+sub test_scan_ask_poll {
+    my ($finished_cb) = @_;
     my $scan;
     my $res05;
 
@@ -427,21 +437,24 @@ foreach my $chg_name ("disk-changer", "multi-changer") {
     amlabel_sync($chg, $chg_name, 2, 'TESTCONF05');
     $chg = Amanda::Changer->new("disk-changer");
 
-    $subs{'start'} = make_cb(start => sub {
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
+    step start => sub {
 	my $interactive = Amanda::Interactive::Installcheck->new();
 	$scan = Amanda::Recovery::Scan->new(chg =>         $chg,
 					    interactive => $interactive);
 	$scan->{'scan_conf'}->{'poll_delay'} = 10; # 10 ms
 
-	$subs{'find_05'}->();
-    });
+	$steps->{'find_05'}->();
+    };
 
-    $subs{'find_05'} = make_cb(find_05 => sub {
+    step find_05 => sub {
 	$scan->find_volume(label  => "TESTCONF05",
-			   res_cb => $subs{'res_cb_05'});
-    });
+			   res_cb => $steps->{'res_cb_05'});
+    };
 
-    $subs{'res_cb_05'} = sub {
+    step res_cb_05 => sub {
 	(my $err, $res05) = @_;
 
 	ok(!$err, "found TESTCONF05 on changer multi");
@@ -449,18 +462,16 @@ foreach my $chg_name ("disk-changer", "multi-changer") {
 	is($res05->{'chg'}->{'chg_name'}, $chg_name,
 	   "found TESTCONF05 on correct changer: $chg_name");
 
-	$res05->release(finished_cb => $subs{'done'});
+	$res05->release(finished_cb => $steps->{'done'});
     };
 
-    $subs{'done'} = sub {
+    step done => sub {
 	pass("done with SCAN_ASK_POLL");
-        Amanda::MainLoop::quit();
+        $finished_cb->();
     };
-
-    $subs{'start'}->();
-    Amanda::MainLoop::run();
 }
-
+test_scan_ask_poll(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
 
 rmtree($taperoot_disk);
 rmtree($taperoot_multi);

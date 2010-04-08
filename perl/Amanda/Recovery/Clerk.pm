@@ -34,17 +34,16 @@ use Amanda::MainLoop;
 Amanda::Recovery::Clerk - handle assembling dumpfiles from multiple parts
 
 =head1 SYNOPSIS
-
     my $clerk = Amanda::Recovery::Clerk->new(
 	scan => $scan)
 
-    $subs{'setup'} = make_cb(setup => sub {
+    step setup => sub {
       $clerk->get_xfer_src(
 	    dump => $dump, # from Amanda::Recovery::Planner or Amanda::DB::Catalog
-	    xfer_src_cb => $subs{'xfer_src_cb'});
-    });
+	    xfer_src_cb => $steps->{'xfer_src_cb'});
+    };
 
-    $subs{'xfer_src_cb'} = make_cb(xfer_src_cb => sub {
+    step xfer_src_cb => sub {
 	my ($errors, $header, $xfer_src, $directtcp_supported) = @_;
 	die join("\n", @$errors) if ($errors);
 	print "restoring from " . $header->summary() . "\n";
@@ -53,20 +52,20 @@ Amanda::Recovery::Clerk - handle assembling dumpfiles from multiple parts
 	$xfer->start(sub { $clerk->handle_xmsg(@_); });
 	$clerk->start_recovery(
 	    xfer => $xfer,
-	    recovery_cb => $subs{'recovery_cb'});
-    });
+	    recovery_cb => $steps->{'recovery_cb'});
+    };
 
-    $subs{'recovery_cb'} = make_cb(recovery_cb => sub {
+    step recovery_cb => sub {
 	my %params = @_;
 	die join("\n", @{$params{'errors'}}) if ($params{'errors'});
 	print "result: $params{result}\n";
-    });
+    };
 
     # ...
 
     $clerk->quit(finished_cb => sub {
-	Amanda::MainLoop::quit();
-    });
+	$next_op_cb->();
+    };
 
 =head1 OVERVIEW
 
@@ -373,34 +372,50 @@ sub _xmsg_done {
 
 sub _maybe_start_part {
     my $self = shift;
-    my %subs;
-
+    my ($finished_cb) = @_;
     my $xfer_state = $self->{'xfer_state'};
 
-    # if we're still working on a part, do nothing
-    return if $xfer_state->{'writing_part'};
-
-    # NOTE: this is invoked *both* from get_xfer_src and start_recovery;
+    # NOTE: this method is invoked *both* from get_xfer_src and start_recovery;
     # in the former case it merely loads the file and returns the header.
 
-    # if we have an xfer source already, and it's not ready, then don't start
-    # the part.  This happens when start_recovery is called before XMSG_READY.
-    return if $xfer_state->{'xfer_src'} and not $xfer_state->{'xfer_src_ready'};
+    # The finished_cb is called when the method is done thinking about starting
+    # a new part, which usually isn't a very interesting event.  It can safely
+    # be omitted.
+    $finished_cb ||= sub { };
 
-    # if we have an xfer source already, but the recovery hasn't started, then
-    # don't start the part.  This happens when XMSG_READY comes before
-    # start_recovery.
-    return if $xfer_state->{'xfer_src'} and not $xfer_state->{'recovery_cb'};
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    $subs{'check_next'} = make_cb(check_next => sub {
+    step check_ready => sub {
+	# if we're still working on a part, do nothing
+	return $finished_cb->()
+	    if $xfer_state->{'writing_part'};
+
+	# if we have an xfer source already, and it's not ready, then don't start
+	# the part.  This happens when start_recovery is called before XMSG_READY.
+	return $finished_cb->()
+	    if $xfer_state->{'xfer_src'} and not $xfer_state->{'xfer_src_ready'};
+
+	# if we have an xfer source already, but the recovery hasn't started, then
+	# don't start the part.  This happens when XMSG_READY comes before
+	# start_recovery.
+	return $finished_cb->()
+	    if $xfer_state->{'xfer_src'} and not $xfer_state->{'recovery_cb'};
+
+	$steps->{'check_next'}->();
+    };
+
+    step check_next => sub {
 	# first, see if anything remains to be done
 	if (!exists $xfer_state->{'dump'}{'parts'}[$xfer_state->{'next_part_idx'}]) {
 	    # this should not happen until the xfer is started..
 	    die "xfer should be running already"
 		unless $xfer_state->{'xfer'};
+
 	    # tell the source to generate EOF
 	    $xfer_state->{'xfer_src'}->start_part(undef);
-	    return;
+
+	    return $finished_cb->();
 	}
 
 	$xfer_state->{'next_part'} =
@@ -408,7 +423,7 @@ sub _maybe_start_part {
 
 	# short-circuit for a holding disk
 	if ($xfer_state->{'is_holding'}) {
-	    return $subs{'holding_recovery'}->();
+	    return $steps->{'holding_recovery'}->();
 	}
 
 	my $next_label = $xfer_state->{'next_part'}->{'label'};
@@ -416,29 +431,29 @@ sub _maybe_start_part {
 	if ($self->{'current_label'} and
 	     $self->{'current_label'} eq $next_label) {
 	    # jump to the seek_file call
-	    return $subs{'seek_and_check'}->();
+	    return $steps->{'seek_and_check'}->();
 	}
 
 	# need to get a new tape
-	return $subs{'release'}->();
-    });
+	return $steps->{'release'}->();
+    };
 
-    $subs{'release'} = make_cb(release => sub {
+    step release => sub {
 	if (!$self->{'current_res'}) {
-	    return $subs{'released'}->();
+	    return $steps->{'released'}->();
 	}
 
 	$self->{'current_dev'}->finish();
 	$self->{'current_res'}->release(
-		finished_cb => $subs{'released'});
-    });
+		finished_cb => $steps->{'released'});
+    };
 
-    $subs{'released'} = make_cb(released => sub {
+    step released => sub {
 	my ($err) = @_;
 
 	if ($err) {
 	    push @{$xfer_state->{'errors'}}, "$err";
-	    return $subs{'handle_error'}->();
+	    return $steps->{'handle_error'}->();
 	}
 
 	$self->{'current_dev'} = undef;
@@ -451,17 +466,17 @@ sub _maybe_start_part {
 
 	$self->dbg("loading volume '$next_label'");
 	$self->{'scan'}->find_volume(label => $next_label,
-			res_cb => $subs{'loaded_label'});
-    });
+			res_cb => $steps->{'loaded_label'});
+    };
 
-    $subs{'loaded_label'} = make_cb(loaded_label => sub {
+    step loaded_label => sub {
 	my ($err, $res) = @_;
 
 	my $next_label = $xfer_state->{'next_part'}->{'label'};
 
 	if ($err) {
 	    push @{$xfer_state->{'errors'}}, "$err";
-	    return $subs{'handle_error'}->();
+	    return $steps->{'handle_error'}->();
 	}
 
 	$self->{'current_res'} = $res;
@@ -478,7 +493,7 @@ sub _maybe_start_part {
 		$self->{'current_label'} = $res->{'device'}->volume_label;
 
 		# success!
-		return $subs{'seek_and_check'}->();
+		return $steps->{'seek_and_check'}->();
 	    }
 	}
 
@@ -488,15 +503,15 @@ sub _maybe_start_part {
 
 	    if ($release_err) { # geez, someone is having a bad day!
 		push @{$xfer_state->{'errors'}}, "$release_err";
-		return $subs{'handle_error'}->();
+		return $steps->{'handle_error'}->();
 	    }
 
 	    push @{$xfer_state->{'errors'}}, "$err";
-	    return $subs{'handle_error'}->();
+	    return $steps->{'handle_error'}->();
 	});
-    });
+    };
 
-    $subs{'seek_and_check'} = make_cb(seek_and_check => sub {
+    step seek_and_check => sub {
 	my $next_label = $xfer_state->{'next_part'}->{'label'};
 	my $next_filenum = $xfer_state->{'next_part'}->{'filenum'};
 	my $dev = $self->{'current_dev'};
@@ -504,12 +519,12 @@ sub _maybe_start_part {
 
 	if (!$on_vol_hdr) {
 	    push @{$xfer_state->{'errors'}}, $dev->error_or_status();
-	    return $subs{'handle_error'}->();
+	    return $steps->{'handle_error'}->();
 	}
 
 	if (!$self->_header_expected($on_vol_hdr)) {
 	    # _header_expected already pushed an error message or two
-	    return $subs{'handle_error'}->();
+	    return $steps->{'handle_error'}->();
 	}
 
 	# now, either start the part, or invoke the xfer_src_cb.
@@ -521,33 +536,39 @@ sub _maybe_start_part {
 	    $xfer_state->{'xfer_src'} = Amanda::Xfer::Source::Recovery->new($dev),
 	    $xfer_state->{'xfer_src_ready'} = 0;
 
+	    # invoke the xfer_src_cb
 	    $self->dbg("successfully located first part for recovery");
-	    return $cb->(undef, $on_vol_hdr, $xfer_state->{'xfer_src'},
+	    $cb->(undef, $on_vol_hdr, $xfer_state->{'xfer_src'},
 			    $dev->directtcp_supported());
+
 	} else {
 	    # notify caller of the part
 	    $self->{'feedback'}->notif_part($next_label, $next_filenum, $on_vol_hdr);
 
+	    # start the part
 	    $self->dbg("reading file $next_filenum on '$next_label'");
-	    return $xfer_state->{'xfer_src'}->start_part($dev);
+	    $xfer_state->{'xfer_src'}->start_part($dev);
 	}
-    });
+
+	# inform the caller that we're done
+	$finished_cb->();
+    };
 
     # ---
 
     # handle a holding restore
-    $subs{'holding_recovery'} = make_cb(holding_recovery => sub {
+    step holding_recovery => sub {
 	my $next_filename = $xfer_state->{'next_part'}->{'holding_file'};
 	my $on_disk_hdr = Amanda::Holding::get_header($next_filename);
 
 	if (!$on_disk_hdr) {
 	    push @{$xfer_state->{'errors'}}, "error loading header from '$next_filename'";
-	    return $subs{'handle_error'}->();
+	    return $steps->{'handle_error'}->();
 	}
 
 	if (!$self->_header_expected($on_disk_hdr)) {
 	    # _header_expected already pushed an error message or two
-	    return $subs{'handle_error'}->();
+	    return $steps->{'handle_error'}->();
 	}
 
 	# now invoke the xfer_src_cb if it hasn't already been called.
@@ -565,31 +586,32 @@ sub _maybe_start_part {
 	    $self->{'feedback'}->notif_holding($next_filename, $on_disk_hdr);
 
 	    $self->dbg("successfully located holding file for recovery");
-	    return $cb->(undef, $on_disk_hdr, $xfer_state->{'xfer_src'}, 0);
+	    $cb->(undef, $on_disk_hdr, $xfer_state->{'xfer_src'}, 0);
 	}
-	# (nothing to do until the xfer is done)
-    });
 
+	# (nothing else to do until the xfer is done)
+	$finished_cb->();
+    };
 
     # ----
 
     # this utility sub handles errors differently depending on which phase is active.
-    $subs{'handle_error'} = make_cb(handle_error => sub {
+    step handle_error => sub {
 	if ($xfer_state->{'xfer_src_cb'}) {
 	    # xfer_src_cb hasn't been called yet, so invoke it now,
 	    # after deleting the xfer state
 	    $self->{'xfer_state'} = undef;
 
-	    return $xfer_state->{'xfer_src_cb'}->($xfer_state->{'errors'},
-			undef, undef, undef);
+	    $xfer_state->{'xfer_src_cb'}->($xfer_state->{'errors'},
+					   undef, undef, undef);
 	} else {
 	    # cancelling the xfer will eventually invoke recovery_cb
 	    # via the XMSG_DONE
-	    return $xfer_state->{'xfer'}->cancel();
+	    $xfer_state->{'xfer'}->cancel();
 	}
-    });
 
-    $subs{'check_next'}->();
+	$finished_cb->();
+    };
 }
 
 sub _header_expected {

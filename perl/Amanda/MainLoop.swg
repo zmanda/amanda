@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -254,6 +254,76 @@ sub synchronized {
 }
 push @EXPORT_OK, "synchronized";
 
+{   # privat variables to track the "current" step definition
+    my $current_steps;
+    my $immediate;
+    my $first_step;
+
+    sub define_steps (@) {
+	my (%params) = @_;
+	my $cb_ref = $params{'cb_ref'};
+	my %steps;
+
+	croak "cb_ref is undefined" unless defined $cb_ref;
+	croak "cb_ref is not a reference" unless ref($cb_ref) eq 'REF';
+	croak "cb_ref is not a code double-reference" unless ref($$cb_ref) eq 'CODE';
+
+	# arrange to clear out $steps when $exit_cb is called; this eliminates
+	# reference loops (values in %steps are closures which point to %steps).
+	# This also clears $current_steps, which is likely holding a reference to
+	# the steps hash.
+	my $orig_cb = $$cb_ref;
+	$$cb_ref = sub {
+	    %steps = ();
+	    $current_steps = undef;
+	    goto $orig_cb;
+	};
+
+	# set up state
+	$current_steps = \%steps;
+	$immediate = $params{'immediate'};
+	$first_step = 1;
+
+	return $current_steps;
+    }
+    push @EXPORT, "define_steps";
+
+    sub step (@) {
+	my (%params) = @_;
+	my $step_immediate = $immediate || $params{'immediate'};
+	delete $params{'immediate'} if $step_immediate;
+
+	my ($name) = keys %params;
+	my $cb = $params{$name};
+
+	croak "expected a sub at key $name" unless ref($cb) eq 'CODE';
+
+	# make the sub delayed
+	unless ($step_immediate) {
+	    my $orig_cb = $cb;
+	    $cb = sub { Amanda::MainLoop::call_later($orig_cb, @_); }
+	}
+
+	# patch up the callback
+	my ($pkg, $filename, $line) = caller;
+	my $newname = sprintf('$%s::%s@l%s', $pkg, $name, $line);
+	$cb = subname($newname => $cb);
+
+	# store the step for later
+	$current_steps->{$name} = $cb;
+
+	# and invoke it, if it's the first step given
+	if ($first_step) {
+	    if ($step_immediate) {
+		call_later($cb);
+	    } else {
+		$cb->();
+	    }
+	}
+	$first_step = 0;
+    }
+    push @EXPORT, "step";
+}
 %}
 
 %inline %{

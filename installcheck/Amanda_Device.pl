@@ -1325,79 +1325,89 @@ SKIP: {
     # this doesn't work so well if there's an error in the xfer (e.g., a
     # random value mismatch).  But tests are supposed to succeed!
 
-    {
+    sub test_read2conn {
+	my ($finished_cb) = @_;
 	my @events;
-	my $addrs = $dev->listen(0);
-
-	# now connect to that
-	my $sock = IO::Socket::INET->new(
-	    Proto => "tcp",
-	    PeerHost => $addrs->[0][0],
-	    PeerPort => $addrs->[0][1],
-	    Blocking => 1,
-	);
-
-	# and set up a transfer to read from that socket
-	my $xfer = Amanda::Xfer->new([
-		Amanda::Xfer::Source::Fd->new($sock),
-		Amanda::Xfer::Dest::Null->new(0xB00) ]);
-
-	$xfer->start(make_cb(xmsg_cb => sub {
-	    my ($src, $msg, $xfer) = @_;
-	    if ($msg->{'type'} == $XMSG_ERROR) {
-		die $msg->{'elt'} . " failed: " . $msg->{'message'};
-	    }
-	    if ($msg->{'type'} == $XMSG_DONE) {
-		push @events, "DONE";
-		Amanda::MainLoop::quit();
-	    }
-	}));
-
-	# set up to accept and then read_to_connection for each part
 	my $file = 1;
-	my $conn;
-	my %subs;
+	my ($conn, $sock);
 
-	$subs{'accept'} = make_cb(accept => sub {
+	my $steps = define_steps
+	    cb_ref => \$finished_cb;
+
+	step setup => sub {
+	    my $addrs = $dev->listen(0);
+
+	    # now connect to that
+	    $sock = IO::Socket::INET->new(
+		Proto => "tcp",
+		PeerHost => $addrs->[0][0],
+		PeerPort => $addrs->[0][1],
+		Blocking => 1,
+	    );
+
+	    # and set up a transfer to read from that socket
+	    my $xfer = Amanda::Xfer->new([
+		    Amanda::Xfer::Source::Fd->new($sock),
+		    Amanda::Xfer::Dest::Null->new(0xB00) ]);
+
+	    $xfer->start(make_cb(xmsg_cb => sub {
+		my ($src, $msg, $xfer) = @_;
+		if ($msg->{'type'} == $XMSG_ERROR) {
+		    die $msg->{'elt'} . " failed: " . $msg->{'message'};
+		}
+		if ($msg->{'type'} == $XMSG_DONE) {
+		    push @events, "DONE";
+		    $steps->{'quit'}->();
+		}
+	    }));
+
+	    $steps->{'accept'}->();
+	};
+
+	step accept => sub {
 	    $conn = $dev->accept();
 	    die $dev->error_or_status() unless ($conn);
 
-	    Amanda::MainLoop::call_later($subs{'start_dev'});
-	});
+	    Amanda::MainLoop::call_later($steps->{'start_dev'});
+	};
 
-	$subs{'start_dev'} = make_cb(start_dev => sub {
+	step start_dev => sub {
 	    ok($dev->start($ACCESS_READ, undef, undef),
 		"start device in read mode")
 		or diag $dev->error_or_status();
 
-	    Amanda::MainLoop::call_later($subs{'read_part_cb'});
-	});
+	    Amanda::MainLoop::call_later($steps->{'read_part_cb'});
+	};
 
-	$subs{'read_part_cb'} = make_cb(read_part_cb => sub {
+	step read_part_cb => sub {
 	    my $hdr = $dev->seek_file($file);
 	    die $dev->error_or_status() unless ($hdr);
 	    my $size = $dev->read_to_connection(0);
 	    push @events, "READ-$size";
 
 	    if (++$file <= 3) {
-		Amanda::MainLoop::call_later($subs{'read_part_cb'});
+		Amanda::MainLoop::call_later($steps->{'read_part_cb'});
 	    } else {
 		# close the connection, which will end the xfer, which will
-		# result in a call to Amanda::MainLoop::quit.  So there.
+		# result in a call to finished_cb.  So there.
 		push @events, "CLOSE";
 		$conn->close();
 	    }
-	});
+	};
 
-	Amanda::MainLoop::call_later($subs{'accept'});
-	Amanda::MainLoop::run();
+	step quit => sub {
+	    close $sock or die "close: $!";
 
-	close $sock or die "close: $!";
+	    is_deeply([@events],
+		[ "READ-491520", "READ-491520", "READ-131072", "CLOSE", "DONE" ],
+		"sequential read_to_connection operations read the right amounts " .
+		"and bytestream matches");
 
-	is_deeply([@events],
-	    [ "READ-491520", "READ-491520", "READ-131072", "CLOSE", "DONE" ],
-	    "sequential read_to_connection operations read the right amounts and bytestream matches");
+	    $finished_cb->();
+	};
     }
+    test_read2conn(\&Amanda::MainLoop::quit);
+    Amanda::MainLoop::run();
 
     # try two seek_file's in a row
     $hdr = $dev->seek_file(2);

@@ -27,13 +27,12 @@ use vars qw( @ISA );
 use Data::Dumper;
 use File::Path;
 use Amanda::Paths;
-use Amanda::MainLoop qw( :GIOCondition );
+use Amanda::MainLoop qw( :GIOCondition make_cb define_steps step );
 use Amanda::Config qw( :getconf );
 use Amanda::Debug qw( debug warning );
 use Amanda::Device qw( :constants );
 use Amanda::Changer;
 use Amanda::Constants;
-use Amanda::MainLoop;
 
 =head1 NAME
 
@@ -316,12 +315,13 @@ sub load {
 sub load_unlocked {
     my $self = shift;
     my %params = @_;
-    my %subs;
     my ($slot, $drive, $need_unload);
-
     my $state = $params{'state'};
 
-    $subs{'calculate_slot'} = make_cb(calculate_slot => sub {
+    my $steps = define_steps
+	cb_ref => \$params{'res_cb'};
+
+    step calculate_slot => sub {
 	# make sure the slot is numeric
 	if (exists $params{'slot'}) {
 	    if ($params{'slot'} =~ /^\d+$/) {
@@ -420,10 +420,10 @@ sub load_unlocked {
 		    message => "slot $slot is empty");
 	}
 
-	return $subs{'calculate_drive'}->();
-    });
+	return $steps->{'calculate_drive'}->();
+    };
 
-    $subs{'calculate_drive'} = make_cb(calculate_drive => sub {
+    step calculate_drive => sub {
         # $slot is set
 	$need_unload = 0;
 
@@ -453,7 +453,7 @@ sub load_unlocked {
 	    }
 
 	    # otherwise, we can jump all the way to the end of this process
-	    return $subs{'check_device'}->();
+	    return $steps->{'check_device'}->();
 	}
 
 	# here is where we implement each of the drive-selection algorithms
@@ -516,52 +516,52 @@ sub load_unlocked {
 
 	$self->_debug("using drive $drive");
 
-	$subs{'wait_to_start'}->();
-    });
+	$steps->{'wait_to_start'}->();
+    };
 
-    $subs{'wait_to_start'} = make_cb(wait_to_start => sub {
-	$self->_after_delay($state, $subs{'start_operation'});
-    });
+    step wait_to_start => sub {
+	$self->_after_delay($state, $steps->{'start_operation'});
+    };
 
-    $subs{'start_operation'} = make_cb(start_operation => sub {
-	# $need_unload is set in $subs{calculate_drive}
+    step start_operation => sub {
+	# $need_unload is set in $steps->{calculate_drive}
 	if ($need_unload) {
-	    $subs{'start_eject'}->();
+	    $steps->{'start_eject'}->();
 	} else {
-	    $subs{'start_load'}->();
+	    $steps->{'start_load'}->();
 	}
-    });
+    };
 
-    $subs{'start_eject'} = make_cb(start_eject => sub {
+    step start_eject => sub {
 	# we use the 'eject' method to unload here -- it ejects the volume
 	# if the configuration calls for it, then puts the volume away in its
 	# original slot.
 	$self->eject_unlocked(
-		finished_cb => $subs{'eject_finished'},
+		finished_cb => $steps->{'eject_finished'},
 		drive => $drive,
 		state => $state);
-    });
+    };
 
-    $subs{'eject_finished'} = make_cb(eject_finished => sub {
+    step eject_finished => sub {
         my ($err) = @_;
 
         if ($err) {
 	   return $params{'res_cb'}->($err);
         }
 
-	$subs{'wait_to_load'}->();
-    });
+	$steps->{'wait_to_load'}->();
+    };
 
-    $subs{'wait_to_load'} = make_cb(wait_to_load => sub {
-	$self->_after_delay($state, $subs{'start_load'});
-    });
+    step wait_to_load => sub {
+	$self->_after_delay($state, $steps->{'start_load'});
+    };
 
-    $subs{'start_load'} = make_cb(start_load => sub {
+    step start_load => sub {
         # $slot and $drive are set
-	$self->{'interface'}->load($slot, $drive, $subs{'load_finished'});
-    });
+	$self->{'interface'}->load($slot, $drive, $steps->{'load_finished'});
+    };
 
-    $subs{'load_finished'} = make_cb(load_finished => sub {
+    step load_finished => sub {
         # $slot and $drive are set
         my ($err) = @_;
 
@@ -571,20 +571,20 @@ sub load_unlocked {
                     message => $err);
         }
 
-	$subs{'start_polling'}->();
-    });
+	$steps->{'start_polling'}->();
+    };
 
     my ($next_poll, $last_poll);
-    $subs{'start_polling'} = make_cb(start_polling => sub {
+    step start_polling => sub {
 	my ($delay, $poll, $until) = @{ $self->{'load_poll'} };
 	my $now = time;
 	$next_poll = $now + $delay;
 	$last_poll = $now + $until;
 
-	return Amanda::MainLoop::call_after(1000 * ($next_poll - $now), $subs{'check_device'});
-    });
+	return Amanda::MainLoop::call_after(1000 * ($next_poll - $now), $steps->{'check_device'});
+    };
 
-    $subs{'check_device'} = make_cb(check_device => sub {
+    step check_device => sub {
 	my $device_name = $self->{'drive2device'}->{$drive};
 	die "drive $drive not found in drive2device" unless $device_name; # shouldn't happen
 
@@ -606,7 +606,7 @@ sub load_unlocked {
 	    $next_poll = $now + 1 if ($next_poll < $now);
 	    if ($poll != 0 and $next_poll < $last_poll) {
 		return Amanda::MainLoop::call_after(
-			1000 * ($next_poll - $now), $subs{'check_device'});
+			1000 * ($next_poll - $now), $steps->{'check_device'});
 	    }
 
 	    # (fall through if we're done polling)
@@ -623,10 +623,10 @@ sub load_unlocked {
 	}
 
 	# success!
-	$subs{'make_res'}->($device, $label);
-    });
+	$steps->{'make_res'}->($device, $label);
+    };
 
-    $subs{'make_res'} = make_cb(make_res => sub {
+    step make_res => sub {
 	my ($device, $label) = @_;
 
 	# check the label against the desired label, in case this isn't the
@@ -697,9 +697,7 @@ sub load_unlocked {
 	}
 
         return $params{'res_cb'}->(undef, $res);
-    });
-
-    $subs{'calculate_slot'}->();
+    };
 }
 
 sub info_key {
@@ -753,7 +751,6 @@ sub info_key_num_slots {
 sub info_key_num_slots_unlocked {
     my $self = shift;
     my %params = @_;
-    my %subs;
     my $state = $params{'state'};
 
     my @allowed_slots = grep { $self->_is_slot_allowed($_) }
@@ -919,16 +916,18 @@ sub eject {
 sub eject_unlocked {
     my $self = shift;
     my %params = @_;
-    my %subs;
     my $state = $params{'state'};
     my ($drive, $drive_info);
 
     return if $self->check_error($params{'finished_cb'});
 
+    my $steps = define_steps
+	cb_ref => \$params{'finished_cb'};
+
     # note that this changer treats "eject" as "unload", which may also require an eject
     # operation if the eject_before_unload property is set
 
-    $subs{'start'} = make_cb(start => sub {
+    step start => sub {
 	# if drive isn't specified, see if we only have one
 	if (!exists $params{'drive'}) {
 	    if ((keys %{$self->{'drive2device'}}) == 1) {
@@ -958,17 +957,17 @@ sub eject_unlocked {
 	}
 
 	if ($self->{'eject_before_unload'}) {
-	    $subs{'wait_to_eject'}->();
+	    $steps->{'wait_to_eject'}->();
 	} else {
-	    $subs{'wait_to_unload'}->();
+	    $steps->{'wait_to_unload'}->();
 	}
-    });
+    };
 
-    $subs{'wait_to_eject'} = make_cb(wait_to_eject => sub {
-	$self->_after_delay($state, $subs{'eject'});
-    });
+    step wait_to_eject => sub {
+	$self->_after_delay($state, $steps->{'eject'});
+    };
 
-    $subs{'eject'} = make_cb(eject => sub {
+    step eject => sub {
 	my $device_name = $self->{'drive2device'}->{$drive};
 	$self->_debug("ejecting $device_name before unload");
 
@@ -984,21 +983,21 @@ sub eject_unlocked {
 
 	$self->_set_delay($state, $self->{'eject_delay'});
 
-	$subs{'wait_to_unload'}->();
-    });
+	$steps->{'wait_to_unload'}->();
+    };
 
-    $subs{'wait_to_unload'} = make_cb(wait_to_unload => sub {
-	$self->_after_delay($state, $subs{'unload'});
-    });
+    step wait_to_unload => sub {
+	$self->_after_delay($state, $steps->{'unload'});
+    };
 
-    $subs{'unload'} = make_cb(unload => sub {
+    step unload => sub {
 	# find target slot and unload it - note that the target slot may not be
 	# in the USE-SLOTS list, as it may belong to another config
 	my $orig_slot = $drive_info->{'orig_slot'};
-	$self->{'interface'}->unload($drive, $orig_slot, $subs{'unload_finished'});
-    });
+	$self->{'interface'}->unload($drive, $orig_slot, $steps->{'unload_finished'});
+    };
 
-    $subs{'unload_finished'} = make_cb(unload_finished => sub {
+    step unload_finished => sub {
 	my ($err) = @_;
 
         if ($err) {
@@ -1020,9 +1019,7 @@ sub eject_unlocked {
 
 	$self->_set_delay($state, $self->{'unload_delay'});
 	$params{'finished_cb'}->();
-    });
-
-    $subs{'start'}->();
+    };
 }
 
 sub update {
@@ -1038,7 +1035,6 @@ sub update {
 sub update_unlocked {
     my $self = shift;
     my %params = @_;
-    my %subs;
     my @slots_to_check;
     my $state = $params{'state'};
     my $set_to_unknown = 0;
@@ -1048,7 +1044,10 @@ sub update_unlocked {
     my $user_msg_fn = $params{'user_msg_fn'};
     $user_msg_fn ||= sub { $self->_debug($_[0]); };
 
-    $subs{'handle_assignment'} = make_cb(handle_assignment => sub {
+    my $steps = define_steps
+	cb_ref => \$params{'finished_cb'};
+
+    step handle_assignment => sub {
 	# check for the SL=LABEL format, and handle it here
 	if (exists $params{'changed'} and $params{'changed'} =~ /^\d+=\S+$/) {
 	    my ($slot, $label) = ($params{'changed'} =~ /^(\d+)=(\S+)$/);
@@ -1102,12 +1101,13 @@ sub update_unlocked {
 		 $params{'changed'} =~ /^(.+)=$/) {
 	    $params{'changed'} = $1;
 	    $set_to_unknown = 1;
-	    $subs{'calculate_slots'}->($subs{'set_to_unknown'});
+	    $steps->{'calculate_slots'}->($steps->{'set_to_unknown'});
 	} else {
-	    $subs{'calculate_slots'}->($subs{'update_slot'});
+	    $steps->{'calculate_slots'}->($steps->{'update_slot'});
 	}
-    });
-    $subs{'calculate_slots'} = make_cb(calculate_slots => sub {
+    };
+
+    step calculate_slots => sub {
 	my ($update_slot_cb) = shift @_;
 	if (exists $params{'changed'}) {
 	    # parse the string just like use-slots, using a hash for uniqueness
@@ -1133,10 +1133,10 @@ sub update_unlocked {
 	@slots_to_check = sort { $a <=> $b } @slots_to_check;
 
 	$update_slot_cb->();
-    });
+    };
 
-    $subs{'set_to_unknown'} = make_cb(set_to_unknown => sub {
-	return $subs{'done'}->() if (!@slots_to_check);
+    step set_to_unknown => sub {
+	return $steps->{'done'}->() if (!@slots_to_check);
 
 	my $slot = shift @slots_to_check;
 	$user_msg_fn->("Removing entry for slot $slot");
@@ -1151,24 +1151,24 @@ sub update_unlocked {
 					Amanda::Changer::SLOT_FULL;
 	    }
 	}
-	$subs{'set_to_unknown'}->();
-    });
+	$steps->{'set_to_unknown'}->();
+    };
 
     # TODO: parallelize this if multiple drives are available
 
-    $subs{'update_slot'} = make_cb(update_slot => sub {
-	return $subs{'done'}->() if (!@slots_to_check);
+    step update_slot => sub {
+	return $steps->{'done'}->() if (!@slots_to_check);
 
 	my $slot = shift @slots_to_check;
 	$user_msg_fn->("scanning slot $slot");
 
 	$self->load_unlocked(
 		slot => $slot,
-		res_cb => $subs{'slot_loaded'},
+		res_cb => $steps->{'slot_loaded'},
 		state => $state);
-    });
+    };
 
-    $subs{'slot_loaded'} = make_cb(slot_loaded => sub {
+    step slot_loaded => sub {
 	my ($err, $res) = @_;
 	if ($err) {
 	    return $params{'finished_cb'}->($err);
@@ -1177,25 +1177,23 @@ sub update_unlocked {
 	# load() already fixed up the metadata, so just release; but we have to
 	# be careful to do an unlocked release.
 	$res->release(
-	    finished_cb => $subs{'released'},
+	    finished_cb => $steps->{'released'},
 	    unlocked => 1,
 	    state => $state);
-    });
+    };
 
-    $subs{'released'} = make_cb(released => sub {
+    step released => sub {
 	my ($err) = @_;
 	if ($err) {
 	    return $params{'finished_cb'}->($err);
 	}
 
-	$subs{'update_slot'}->();
-    });
+	$steps->{'update_slot'}->();
+    };
 
-    $subs{'done'} = make_cb(done => sub {
+    step done => sub {
 	$params{'finished_cb'}->(undef);
-    });
-
-    $subs{'handle_assignment'}->();
+    };
 }
 
 sub inventory {
@@ -1413,14 +1411,16 @@ sub _with_updated_state {
     my ($paramsref, $cbname, $sub) = @_;
     my %params = %$paramsref;
     my $state;
-    my %subs;
 
-    $subs{'start'} = make_cb(start => sub {
+    my $steps = define_steps
+	cb_ref => \$paramsref->{$cbname};
+
+    step start => sub {
 	$self->with_locked_state($self->{'statefile'},
-	    $params{$cbname}, $subs{'got_lock'});
-    });
+	    $params{$cbname}, $steps->{'got_lock'});
+    };
 
-    $subs{'got_lock'} = make_cb(got_lock => sub {
+    step got_lock => sub {
 	($state, my $new_cb) = @_;
 
 	# set up params for calling through to $sub later
@@ -1443,21 +1443,21 @@ sub _with_updated_state {
 	if (defined $state->{'last_status'}
 	    and time < $state->{'last_status'} + $self->{'status_interval'}) {
 	    $self->_debug("too early for another 'status' invocation");
-	    $subs{'done'}->();
+	    $steps->{'done'}->();
 	} else {
-	    $subs{'wait'}->();
+	    $steps->{'wait'}->();
 	}
-    });
+    };
 
-    $subs{'wait'} = make_cb(wait => sub {
-	$self->_after_delay($state, $subs{'call_status'});
-    });
+    step wait => sub {
+	$self->_after_delay($state, $steps->{'call_status'});
+    };
 
-    $subs{'call_status'} = make_cb(call_status => sub {
-	$self->{'interface'}->status($subs{'status_cb'});
-    });
+    step call_status => sub {
+	$self->{'interface'}->status($steps->{'status_cb'});
+    };
 
-    $subs{'status_cb'} = make_cb(status_cb => sub {
+    step status_cb => sub {
 	my ($err, $status) = @_;
 	if ($err) {
 	    return $self->make_error("fatal", $params{$cbname},
@@ -1628,17 +1628,14 @@ sub _with_updated_state {
 	    $state->{'current_slot'} = $self->_get_next_slot($state, -1);
 	}
 
-	$subs{'done'}->();
-    });
+	$steps->{'done'}->();
+    };
 
-    $subs{'done'} = make_cb(done => sub {
+    step done => sub {
 	# finally, call through to the user's method; $params{$cbname} has been
 	# properly patched to release the state lock when this method is done.
 	$sub->(%params);
-	%subs = ();
-    });
-
-    $subs{'start'}->();
+    };
 }
 
 ##
@@ -1775,10 +1772,9 @@ package Amanda::Changer::robot::Interface;
 package Amanda::Changer::robot::Interface::MTX;
 
 use Amanda::Paths;
-use Amanda::MainLoop qw( :GIOCondition );
 use Amanda::Config qw( :getconf );
 use Amanda::Debug qw( debug warning );
-use Amanda::MainLoop qw( synchronized make_cb );
+use Amanda::MainLoop qw( :GIOCondition synchronized make_cb define_steps step );
 use Amanda::Device qw( :constants );
 
 sub new {
@@ -1994,21 +1990,23 @@ sub _run_system_command {
     my $child_dead = 0;
     my $child_exit_status = 0;
     my ($fdsrc, $cwsrc);
-    my %subs;
+    my $open_sources = 0;
 
-    $subs{'maybe_finished'} = sub {
-	return unless $child_eof;
-	return unless $child_dead;
+    my $steps = define_steps
+	cb_ref => \$sys_cb;
 
-	# everything is finished -- process the results and invoke the callback
-	chomp $child_output;
+    step setup => sub {
+	$open_sources++;
+	Amanda::MainLoop::fd_source($readfd, $G_IO_IN | $G_IO_ERR | $G_IO_HUP)
+	    ->set_callback($steps->{'fd_source_cb'});
 
-	# let the callback take care of any further interpretation
-	my $exitval = POSIX::WEXITSTATUS($child_exit_status);
-	$sys_cb->($exitval, $child_output);
+	$open_sources++;
+	Amanda::MainLoop::child_watch_source($pid)
+	    ->set_callback($steps->{'child_watch_source_cb'});
     };
 
-    $subs{'fd_source_cb'} = sub {
+    step immediate => 1,
+	 fd_source_cb => sub {
 	my ($fdsrc) = @_;
 	my ($len, $bytes);
 	$len = POSIX::read($readfd, $bytes, 1024);
@@ -2019,27 +2017,34 @@ sub _run_system_command {
 	    POSIX::close($readfd);
 	    $fdsrc->remove();
 	    $fdsrc = undef; # break a reference loop
-	    $subs{'maybe_finished'}->();
+	    $steps->{'maybe_finished'}->();
 	} else {
 	    # otherwise, just keep the bytes
 	    $child_output .= $bytes;
 	}
     };
 
-    $subs{'child_watch_source_cb'} = sub {
+    step immediate => 1,
+	 child_watch_source_cb => sub {
 	my ($cwsrc, $got_pid, $got_status) = @_;
 	$cwsrc->remove();
 	$cwsrc = undef; # break a reference loop
 	$child_dead = 1;
 	$child_exit_status = $got_status;
 
-	$subs{'maybe_finished'}->();
+	$steps->{'maybe_finished'}->();
     };
 
-    Amanda::MainLoop::fd_source($readfd, $G_IO_IN | $G_IO_ERR | $G_IO_HUP)
-	->set_callback($subs{'fd_source_cb'});
-    Amanda::MainLoop::child_watch_source($pid)
-	->set_callback($subs{'child_watch_source_cb'});
+    step maybe_finished => sub {
+	return if --$open_sources;
+
+	# everything is finished -- process the results and invoke the callback
+	chomp $child_output;
+
+	# let the callback take care of any further interpretation
+	my $exitval = POSIX::WEXITSTATUS($child_exit_status);
+	$sys_cb->($exitval, $child_output);
+    };
 }
 
 1;

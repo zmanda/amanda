@@ -163,10 +163,8 @@ sub new {
 sub find_volume {
     my $self = shift;
     my %params = @_;
-    my %subs;
 
     my $label = $params{'label'};
-    my $res_cb = $params{'res_cb'};
     my $user_msg_fn = $params{'user_msg_fn'} || \&_user_msg_fn;
     my $res;
     my %seen = ();
@@ -187,14 +185,17 @@ sub find_volume {
     my $load_for_label = 0; # 1 = Try to load the slot with the correct label
                             # 0 = Load a slot with an unknown label
 
-    Amanda::Debug::debug("find_volume labeled '$label'");
+    my $steps = define_steps
+	cb_ref => \$params{'res_cb'};
 
-    $subs{'get_first_inventory'} = make_cb(get_first_inventory => sub {
+    step get_first_inventory => sub {
+	Amanda::Debug::debug("find_volume labeled '$label'");
+
 	$scan_running = 1;
-	$self->{'chg'}->inventory(inventory_cb => $subs{'got_first_inventory'});
-    });
+	$self->{'chg'}->inventory(inventory_cb => $steps->{'got_first_inventory'});
+    };
 
-    $subs{'got_first_inventory'} = make_cb(got_first_inventory => sub {
+    step got_first_inventory => sub {
 	(my $err, $inventory) = @_;
 
 	if ($err && $err->notimpl) {
@@ -202,7 +203,7 @@ sub find_volume {
 	    return $self->_find_volume_no_inventory(%params);
 	} elsif ($err) {
 	    #inventory fail
-	    return $subs{'call_res_cb'}->($err, undef);
+	    return $steps->{'call_res_cb'}->($err, undef);
 	}
 
 	# find current slot and keep a private copy of the value
@@ -222,27 +223,27 @@ sub find_volume {
 	}
 
 	# continue parsing the inventory
-	$subs{'parse_inventory'}->($err, $inventory);
-    });
+	$steps->{'parse_inventory'}->($err, $inventory);
+    };
 
-    $subs{'restart_scan'} = make_cb(restart_scan => sub {
+    step restart_scan => sub {
 	$restart_scan = 0;
-	return $subs{'get_inventory'}->();
-    });
+	return $steps->{'get_inventory'}->();
+    };
 
-    $subs{'get_inventory'} = make_cb(get_inventory => sub {
-	$self->{'chg'}->inventory(inventory_cb => $subs{'parse_inventory'});
-    });
+    step get_inventory => sub {
+	$self->{'chg'}->inventory(inventory_cb => $steps->{'parse_inventory'});
+    };
 
-    $subs{'parse_inventory'} = make_cb(parse_inventory => sub {
+    step parse_inventory => sub {
 	(my $err, $inventory) = @_;
 
-	return $subs{'handle_error'}->($err, undef) if $err;
+	return $steps->{'handle_error'}->($err, undef) if $err;
 
 	# throw out the inventory result and move on if the situation has
 	# changed while we were waiting
-	return $subs{'abort_scan'}->() if $abort_scan;
-	return $subs{'restart_scan'}->() if $restart_scan;
+	return $steps->{'abort_scan'}->() if $abort_scan;
+	return $steps->{'restart_scan'}->() if $restart_scan;
 
 	# check if label is in the inventory
 	for my $i (0..(scalar(@$inventory)-1)) {
@@ -251,7 +252,7 @@ sub find_volume {
 		$sl->{'label'} eq $label) {
 		$slot_scanned = $sl->{'slot'};
 		if ($sl->{'reserved'}) {
-		    return $subs{'handle_error'}->(
+		    return $steps->{'handle_error'}->(
 			    Amanda::Changer::Error->new('failed',
 				reason => 'volinuse',
 				message => "Volume '$label' in slot $slot_scanned is reserved"),
@@ -266,7 +267,7 @@ sub find_volume {
 					 label         => $sl->{'label'} };
 		$load_for_label = 1;
 		return $self->{'chg'}->load(slot => $slot_scanned,
-				  res_cb => $subs{'slot_loaded'},
+				  res_cb => $steps->{'slot_loaded'},
 				  set_current => $params{'set_current'});
 	    }
 	}
@@ -317,7 +318,7 @@ sub find_volume {
 					     label         => $sl->{'label'} };
 		    $load_for_label = 0;
 		    return $self->{'chg'}->load(slot => $slot_scanned,
-				      res_cb => $subs{'slot_loaded'},
+				      res_cb => $steps->{'slot_loaded'},
 				      set_current => $params{'set_current'});
 		}
 	    }
@@ -360,24 +361,24 @@ sub find_volume {
 					 label         => $sl->{'label'} };
 		$load_for_label = 0;
 		return $self->{'chg'}->load(slot => $slot_scanned,
-				res_cb => $subs{'slot_loaded'},
+				res_cb => $steps->{'slot_loaded'},
 				set_current => $params{'set_current'});
 	    }
         }
 
 	#All slots are seen or empty.
 	if ($last_err) {
-	    return $subs{'handle_error'}->($last_err, undef);
+	    return $steps->{'handle_error'}->($last_err, undef);
 	} else {
-	    return $subs{'handle_error'}->(
+	    return $steps->{'handle_error'}->(
 		    Amanda::Changer::Error->new('failed',
 			    reason => 'notfound',
 			    message => "Volume '$label' not found"),
 		    undef);
 	}
-    });
+    };
 
-    $subs{'slot_loaded'} = make_cb(slot_loaded => sub {
+    step slot_loaded => sub {
 	(my $err, $res) = @_;
 
 	# we don't responsd to abort_scan or restart_scan here, since we
@@ -392,7 +393,7 @@ sub find_volume {
 		$res->{device}->volume_label &&
 		$res->{device}->volume_label eq $label) {
 		my $volume_label = $res->{device}->volume_label;
-		return $subs{'call_res_cb'}->(undef, $res);
+		return $steps->{'call_res_cb'}->(undef, $res);
 	    }
 	    my $f_type;
 	    if (defined $res->{device}->volume_header) {
@@ -416,7 +417,7 @@ sub find_volume {
 		$last_err = Amanda::Changer::Error->new('fatal',
 				message => $res->{device}->error_or_status());
 	    }
-	    return $res->release(finished_cb => $subs{'load_released'});
+	    return $res->release(finished_cb => $steps->{'load_released'});
 	} else {
 	    if ($load_for_label == 0 && $err->volinuse) {
 		# Scan semantics for volinuse is different than changer.
@@ -427,13 +428,13 @@ sub find_volume {
 	    $last_err = $err if $err->fatal || !$err->notfound;
 	    if ($load_for_label == 1 && $err->failed && $err->volinuse) {
 		# volinuse is an error
-		return $subs{'handle_error'}->($err, $subs{'load_released'});
+		return $steps->{'handle_error'}->($err, $steps->{'load_released'});
 	    }
-	    return $subs{'load_released'}->();
+	    return $steps->{'load_released'}->();
 	}
-    });
+    };
 
-    $subs{'load_released'} = make_cb(load_released => sub {
+    step load_released => sub {
 	my ($err) = @_;
 
 	# TODO: handle error
@@ -442,14 +443,14 @@ sub find_volume {
 
 	# throw out the inventory result and move on if the situation has
 	# changed while we were loading a volume
-	return $subs{'abort_scan'}->() if $abort_scan;
-	return $subs{'restart_scan'}->() if $restart_scan;
+	return $steps->{'abort_scan'}->() if $abort_scan;
+	return $steps->{'restart_scan'}->() if $restart_scan;
 
 	$new_slot = $current;
-	$subs{'get_inventory'}->();
-    });
+	$steps->{'get_inventory'}->();
+    };
 
-    $subs{'handle_error'} = make_cb(error => sub {
+    step handle_error => sub {
 	my ($err, $continue_cb) = @_;
 
 	my $scan_method = undef;
@@ -508,34 +509,34 @@ sub find_volume {
 	}
 
 	if ($scan_method == SCAN_ASK) {
-	    return $subs{'scan_interactive'}->("$message");
+	    return $steps->{'scan_interactive'}->("$message");
 	} elsif ($scan_method == SCAN_POLL) {
 	    $poll_src = Amanda::MainLoop::call_after(
 				$self->{'scan_conf'}->{'poll_delay'},
-				$subs{'after_poll'});
+				$steps->{'after_poll'});
 	    return;
 	} elsif ($scan_method == SCAN_ASK_POLL) {
-	    $subs{'scan_interactive'}->("$message\n");
+	    $steps->{'scan_interactive'}->("$message\n");
 	    $poll_src = Amanda::MainLoop::call_after(
 				$self->{'scan_conf'}->{'poll_delay'},
-				$subs{'after_poll'});
+				$steps->{'after_poll'});
 	    return;
 	} elsif ($scan_method == SCAN_FAIL) {
-	    return $subs{'call_res_cb'}->($err, undef);
+	    return $steps->{'call_res_cb'}->($err, undef);
 	} elsif ($scan_method == SCAN_CONTINUE) {
 	    return $continue_cb->($err, undef);
 	} else {
 	    die("Invalid SCAN_* value:$err:$err->{'reason'}:$scan_method");
 	}
-    });
+    };
 
-    $subs{'after_poll'} = make_cb(after_poll => sub {
+    step after_poll => sub {
 	$poll_src->remove() if defined $poll_src;
 	$poll_src = undef;
-	return $subs{'restart_scan'}->();
-    });
+	return $steps->{'restart_scan'}->();
+    };
 
-    $subs{'scan_interactive'} = make_cb(scan_interactive => sub {
+    step scan_interactive => sub {
 	my ($err_message) = @_;
 	if (!$interactive_running) {
 	    $interactive_running = 1;
@@ -545,12 +546,12 @@ sub find_volume {
 				label       => $label,
 				err         => "$err_message",
 				chg_name    => $self->{'chg'}->{'chg_name'},
-				finished_cb => $subs{'scan_interactive_cb'});
+				finished_cb => $steps->{'scan_interactive_cb'});
 	}
 	return;
-    });
+    };
 
-    $subs{'scan_interactive_cb'} = make_cb(scan_interactive_cb => sub {
+    step scan_interactive_cb => sub {
 	my ($err, $message) = @_;
 	$interactive_running = 0;
 	$poll_src->remove() if defined $poll_src;
@@ -562,7 +563,7 @@ sub find_volume {
 		$abort_scan = $err;
 		return;
 	    } else {
-		return $subs{'call_res_cb'}->($err, undef);
+		return $steps->{'call_res_cb'}->($err, undef);
 	    }
 	}
 
@@ -570,7 +571,7 @@ sub find_volume {
 	    # use a new changer
 	    my $new_chg = Amanda::Changer->new($message);
 	    if ($new_chg->isa("Amanda::Changer::Error")) {
-		return $subs{'scan_interactive'}->("$new_chg");
+		return $steps->{'scan_interactive'}->("$new_chg");
 	    }
 	    $self->{'chg'} = $new_chg;
 	    %seen = ();
@@ -582,15 +583,15 @@ sub find_volume {
 	    $restart_scan = 1;
 	    return;
 	} else {
-	    return $subs{'restart_scan'}->();
+	    return $steps->{'restart_scan'}->();
 	}
-    });
+    };
 
-    $subs{'abort_scan'} = make_cb(abort_scan => sub {
-	$subs{'call_res_cb'}->($abort_scan, undef);
-    });
+    step abort_scan => sub {
+	$steps->{'call_res_cb'}->($abort_scan, undef);
+    };
 
-    $subs{'call_res_cb'} = make_cb(call_res_cb => sub {
+    step call_res_cb => sub {
 	(my $err, $res) = @_;
 
 	# TODO: what happens if the search was aborted or
@@ -601,21 +602,16 @@ sub find_volume {
 	$poll_src = undef;
 	$interactive_running = 0;
 	$self->{'interactive'}->abort() if defined $self->{'interactive'};
-	$res_cb->($err, $res);
-    });
-
-    $subs{'get_first_inventory'}->();
+	$params{'res_cb'}->($err, $res);
+    };
 }
 
 #
 sub _find_volume_no_inventory {
     my $self = shift;
     my %params = @_;
-    my %subs;
 
     my $label = $params{'label'};
-    my $res_cb = $params{'res_cb'};
-
     my $res;
     my %seen_slots = ();
     my $inventory;
@@ -623,22 +619,25 @@ sub _find_volume_no_inventory {
     my $new_slot;
     my $last_slot;
 
-    $subs{'load_label'} = make_cb(load_label => sub {
-	return $self->{'chg'}->load(relative_slot => "current",
-				    res_cb => $subs{'load_label_cb'});
-    });
+    my $steps = define_steps
+	cb_ref => \$params{'res_cb'};
 
-    $subs{'load_label_cb'} = make_cb(load_label_cb => sub {
+    step load_label => sub {
+	return $self->{'chg'}->load(relative_slot => "current",
+				    res_cb => $steps->{'load_label_cb'});
+    };
+
+    step load_label_cb => sub {
 	(my $err, $res) = @_;
 
 	if ($err) {
 	    if ($err->failed && $err->notfound) {
-		return $res_cb->($err, undef);
+		return $params{'res_cb'}->($err, undef);
 	    } elsif ($err->failed && $err->volinuse and defined $err->{'slot'}) {
 		$last_slot = $err->{'slot'};
 	    } else {
 		#no interactivity yet.
-		return $res_cb->($err, undef);
+		return $params{'res_cb'}->($err, undef);
 	    }
 	} else {
 	    $last_slot = $res->{'this_slot'}
@@ -648,22 +647,20 @@ sub _find_volume_no_inventory {
 	if ($res) {
 	    my $dev = $res->{'device'};
 	    if (defined $dev->volume_label && $dev->volume_label eq $label) {
-		return $res_cb->(undef, $res);
+		return $params{'res_cb'}->(undef, $res);
 	    }
-	    return $res->release(finished_cb => $subs{'released'});
+	    return $res->release(finished_cb => $steps->{'released'});
 	} else {
-	    return $subs{'released'}->()
+	    return $steps->{'released'}->()
 	}
-    });
+    };
 
-    $subs{'released'} = make_cb(released => sub {
+    step released => sub {
 	$self->{'chg'}->load(relative_slot => "next",
 		   except_slots => \%seen_slots,
-		   res_cb => $subs{'load_label_cb'},
+		   res_cb => $steps->{'load_label_cb'},
 		   set_current => 1);
-    });
-
-    $subs{'load_label'}->();
+    };
 }
 
 sub _user_msg_fn {

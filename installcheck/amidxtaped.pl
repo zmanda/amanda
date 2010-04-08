@@ -62,87 +62,105 @@ my $debug = !exists $ENV{'HARNESS_ACTIVE'};
 #   ndmp - using NDMP device (so expect directtcp connection)
 #   bad_cmd - send a bogus command line and expect an error
 #   bad_quoting - send a bogus DISK= without fe_amrecover_correct_disk_quoting
-sub test {
+sub run_amidxtaped {
     my %params = @_;
-
-    # sort out the parameters
-    $params{'emulate'} ||= 'amandad';
-    $params{'datapath'} ||= 'none';
-    $params{'splits'} = 'basic' unless exists $params{'splits'};
-    $params{'dumpspec'} = 1 unless exists $params{'dumpspec'};
-
-    # ignore some incompatible combinations
-    return if ($params{'datapath'} ne 'none' and not $params{'splits'});
-    return if ($params{'bad_auth'} and $params{'emulate'} ne 'amandad');
-    return if ($params{'feedme'} and not $params{'splits'});
-    return if ($params{'feedme'} and $params{'holding'});
-    return if ($params{'holding_err'} and not $params{'holding'});
-    return if ($params{'emulate'} eq 'amandad' and not $params{'splits'});
-    return if ($params{'holding_no_colon_zero'} and not $params{'holding'});
-
     my $service;
     my $datasize = -1; # -1 means EOF never arrived
     my $hdr;
-
-    my $expect_error = ($params{'bad_auth'}
-		     or $params{'holding_err'}
-		     or $params{'bad_cmd'});
-
+    my $expect_error;
     my $chg_name;
-    if ($params{'ndmp'}) {
-	$chg_name = "ndmp_server"; # changer name from ndmp dumpcache
-    } else {
-	$chg_name = "chg-disk:" . Installcheck::Run::vtape_dir();
-    }
-
-    alarm(120);
-    local $SIG{'ALRM'} = sub {
-	diag "TIMEOUT";
-	$service->kill();
-    };
-
-    # useful sub to report an event
+    my $testmsg;
+    my ($data_stream, $cmd_stream);
     my @events;
+
     my $event = sub {
 	my ($evt) = @_;
 	diag($evt) if $debug;
 	push @events, $evt;
     };
 
-    my $testmsg = $params{'emulate'} . " ";
-    $testmsg .= $params{'header'}? "header " : "no-header ";
-    $testmsg .= "datapath($params{'datapath'}) ";
-    $testmsg .= $params{'splits'}? "fe-splits($params{splits}) " : "!fe-splits ";
-    $testmsg .= $params{'feedme'}? "feedme " : "!feedme ";
-    $testmsg .= $params{'holding'}? "holding " : "media ";
-    $testmsg .= $params{'dumpspec'}? "dumpspec " : "";
-    $testmsg .= $params{'digit_end'}? "digits " : "";
-    $testmsg .= $params{'bad_auth'}? "bad_auth " : "";
-    $testmsg .= $params{'holding_err'}? "holding_err " : "";
-    $testmsg .= $params{'ndmp'}? "ndmp " : "";
-    $testmsg .= $params{'holding_no_colon_zero'}? "holding-no-:0 " : "";
-    $testmsg .= $params{'no_config'}? "no-config " : "";
-    $testmsg .= $params{'no_tapespec'}? "no-tapespec " : "";
-    $testmsg .= $params{'no_fsf'}? "no-fsf " : "";
-    $testmsg .= $params{'bad_cmd'}? "bad_cmd " : "";
-    $testmsg .= $params{'bad_quoting'}? "bad_quoting " : "";
-
-    diag("starting $testmsg") if $debug;
+    my $steps = define_steps
+	cb_ref => \$params{'finished_cb'};
 
     # walk the service through its paces, using the Expect functionality from
     # ClientService. This has lots of $params conditionals, so it can be a bit
     # difficult to read!
 
-    my %subs;
-    my ($data_stream, $cmd_stream);
+    step setup => sub {
+	# sort out the parameters
+	$params{'emulate'} ||= 'amandad';
+	$params{'datapath'} ||= 'none';
+	$params{'splits'} = 'basic' unless exists $params{'splits'};
+	$params{'dumpspec'} = 1 unless exists $params{'dumpspec'};
 
-    $subs{'start'} = make_cb(send_cmd => sub {
+	# ignore some incompatible combinations
+	return $params{'finished_cb'}->()
+	    if ($params{'datapath'} ne 'none' and not $params{'splits'});
+	return $params{'finished_cb'}->()
+	    if ($params{'bad_auth'} and $params{'emulate'} ne 'amandad');
+	return $params{'finished_cb'}->()
+	    if ($params{'feedme'} and not $params{'splits'});
+	return $params{'finished_cb'}->()
+	    if ($params{'feedme'} and $params{'holding'});
+	return $params{'finished_cb'}->()
+	    if ($params{'holding_err'} and not $params{'holding'});
+	return $params{'finished_cb'}->()
+	    if ($params{'emulate'} eq 'amandad' and not $params{'splits'});
+	return $params{'finished_cb'}->()
+	    if ($params{'holding_no_colon_zero'} and not $params{'holding'});
+
+
+	$expect_error = ($params{'bad_auth'}
+			 or $params{'holding_err'}
+			 or $params{'bad_cmd'});
+
+	if ($params{'ndmp'}) {
+	    $chg_name = "ndmp_server"; # changer name from ndmp dumpcache
+	} else {
+	    $chg_name = "chg-disk:" . Installcheck::Run::vtape_dir();
+	}
+
+	alarm(120);
+	local $SIG{'ALRM'} = sub {
+	    diag "TIMEOUT";
+	    $service->kill();
+	};
+
+	$testmsg = $params{'emulate'} . " ";
+	$testmsg .= $params{'header'}? "header " : "no-header ";
+	$testmsg .= "datapath($params{'datapath'}) ";
+	$testmsg .= $params{'splits'}? "fe-splits($params{splits}) " : "!fe-splits ";
+	$testmsg .= $params{'feedme'}? "feedme " : "!feedme ";
+	$testmsg .= $params{'holding'}? "holding " : "media ";
+	$testmsg .= $params{'dumpspec'}? "dumpspec " : "";
+	$testmsg .= $params{'digit_end'}? "digits " : "";
+	$testmsg .= $params{'bad_auth'}? "bad_auth " : "";
+	$testmsg .= $params{'holding_err'}? "holding_err " : "";
+	$testmsg .= $params{'ndmp'}? "ndmp " : "";
+	$testmsg .= $params{'holding_no_colon_zero'}? "holding-no-:0 " : "";
+	$testmsg .= $params{'no_config'}? "no-config " : "";
+	$testmsg .= $params{'no_tapespec'}? "no-tapespec " : "";
+	$testmsg .= $params{'no_fsf'}? "no-fsf " : "";
+	$testmsg .= $params{'bad_cmd'}? "bad_cmd " : "";
+	$testmsg .= $params{'bad_quoting'}? "bad_quoting " : "";
+
+	diag("starting $testmsg") if $debug;
+
+	$service = Installcheck::ClientService->new(
+		emulate => $params{'emulate'},
+		service => 'amidxtaped',
+		process_done => $steps->{'process_done'});
+
+	$steps->{'start'}->();
+    };
+
+    step start => sub {
 	$cmd_stream = 'main';
 	if ($params{'emulate'} eq 'inetd') {
 	    # send security line
 	    $service->send('main', "SECURITY USER installcheck\r\n");
 	    $event->("MAIN-SECURITY");
-	    $subs{'send_cmd1'}->();
+	    $steps->{'send_cmd1'}->();
 	} else {
 	    # send REQ packet
 	    my $featstr = Amanda::Feature::Set->mine()->as_string();
@@ -150,31 +168,31 @@ sub test {
 	    $service->send('main', "OPTIONS features=$featstr;auth=$auth;");
 	    $service->close('main', 'w');
 	    $event->('SENT-REQ');
-	    $subs{'expect_rep'}->();
+	    $steps->{'expect_rep'}->();
 	}
-    });
+    };
 
-    $subs{'expect_rep'} = make_cb(expect_rep => sub {
+    step expect_rep => sub {
 	my $ctl_hdl = DATA_FD_OFFSET;
 	my $data_hdl = DATA_FD_OFFSET+1;
 	$service->expect('main',
-	    [ re => qr/^CONNECT CTL $ctl_hdl DATA $data_hdl\n\n/, $subs{'got_rep'} ],
-	    [ re => qr/^ERROR .*\n/, $subs{'got_rep_err'} ]);
-    });
+	    [ re => qr/^CONNECT CTL $ctl_hdl DATA $data_hdl\n\n/, $steps->{'got_rep'} ],
+	    [ re => qr/^ERROR .*\n/, $steps->{'got_rep_err'} ]);
+    };
 
-    $subs{'got_rep'} = make_cb(got_rep => sub {
+    step got_rep => sub {
 	$event->('GOT-REP');
 	$cmd_stream = 'stream1';
 	$service->expect('main',
-	    [ eof => $subs{'send_cmd1'} ]);
-    });
+	    [ eof => $steps->{'send_cmd1'} ]);
+    };
 
-    $subs{'got_rep_err'} = make_cb(got_rep_err => sub {
+    step got_rep_err => sub {
 	die "$_[0]" unless $expect_error;
 	$event->('GOT-REP-ERR');
-    });
+    };
 
-    $subs{'send_cmd1'} = make_cb(send_cmd1 => sub {
+    step send_cmd1 => sub {
 	# note that the earlier features are ignored..
 	my $sendfeat = Amanda::Feature::Set->mine();
 	if ($params{'datapath'} eq 'none') {
@@ -208,7 +226,7 @@ sub test {
 	}
 	if ($params{'bad_cmd'}) {
 	    $service->send($cmd_stream, "AWESOMENESS=11\r\n");
-	    return $subs{'expect_err_message'}->();
+	    return $steps->{'expect_err_message'}->();
 	}
 	$service->send($cmd_stream, "HEADER\r\n") if $params{'header'};
 	$service->send($cmd_stream, "FEATURES=" . $sendfeat->as_string() . "\r\n");
@@ -221,14 +239,14 @@ sub test {
 	    # for the exact feature sequence we expect.
 	    my $mine = Amanda::Feature::Set->mine()->as_string();
 	    $service->expect($cmd_stream,
-		[ re => qr/^$mine/, $subs{'got_feat'} ]);
+		[ re => qr/^$mine/, $steps->{'got_feat'} ]);
 	} else {
 	    $service->expect($cmd_stream,
-		[ re => qr/^FEATURES=[0-9a-f]+\r\n/, $subs{'got_feat'} ]);
+		[ re => qr/^FEATURES=[0-9a-f]+\r\n/, $steps->{'got_feat'} ]);
 	}
-    });
+    };
 
-    $subs{'got_feat'} = make_cb(got_feat => sub {
+    step got_feat => sub {
 	$event->("GOT-FEAT");
 
 	# continue sending the command
@@ -266,26 +284,26 @@ sub test {
 	}
 	$event->("SENT-CMD");
 
-	$subs{'expect_connect'}->();
-    });
+	$steps->{'expect_connect'}->();
+    };
 
-    $subs{'expect_connect'} = make_cb(expect_connect => sub {
+    step expect_connect => sub {
 	if ($params{'splits'}) {
 	    if ($params{'emulate'} eq 'inetd') {
 		$service->expect($cmd_stream,
-		    [ re => qr/^CONNECT \d+\n/, $subs{'got_connect'} ]);
+		    [ re => qr/^CONNECT \d+\n/, $steps->{'got_connect'} ]);
 	    } else {
 		$data_stream = 'stream2';
-		$subs{'expect_feedme'}->();
+		$steps->{'expect_feedme'}->();
 	    }
 	} else {
 	    # with no split parts, data comes on the command stream
 	    $data_stream = $cmd_stream;
-	    $subs{'expect_feedme'}->();
+	    $steps->{'expect_feedme'}->();
 	}
-    });
+    };
 
-    $subs{'got_connect'} = make_cb(got_connect => sub {
+    step got_connect => sub {
 	my ($port) = ($_[0] =~ /CONNECT (\d+)/);
 	$event->("GOT-CONNECT");
 
@@ -294,74 +312,74 @@ sub test {
 	$service->send($data_stream, "SECURITY USER installcheck\r\n");
 	$event->("DATA-SECURITY");
 
-	$subs{'expect_feedme'}->();
-    });
+	$steps->{'expect_feedme'}->();
+    };
 
-    $subs{'expect_feedme'} = make_cb(expect_feedme => sub  {
+    step expect_feedme => sub  {
 	if ($params{'feedme'}) {
 	    $service->expect($cmd_stream,
-		[ re => qr/^FEEDME TESTCONF01\r\n/, $subs{'got_feedme'} ],
-		[ re => qr/^MESSAGE [^\r]*\r\n/, $subs{'got_message'} ]);
+		[ re => qr/^FEEDME TESTCONF01\r\n/, $steps->{'got_feedme'} ],
+		[ re => qr/^MESSAGE [^\r]*\r\n/, $steps->{'got_message'} ]);
 	} elsif ($params{'holding_err'}) {
-	    $subs{'expect_err_message'}->();
+	    $steps->{'expect_err_message'}->();
 	} else {
-	    $subs{'expect_header'}->();
+	    $steps->{'expect_header'}->();
 	}
-    });
+    };
 
-    $subs{'got_message'} = make_cb(got_message => sub {
+    step got_message => sub {
 	# this is usually an error message
 	$event->('GOT-MESSAGE');
 	# loop back to expect a feedme..
-	$subs{'expect_feedme'}->();
-    });
+	$steps->{'expect_feedme'}->();
+    };
 
-    $subs{'got_feedme'} = make_cb(got_feedme => sub {
+    step got_feedme => sub {
 	$event->('GOT-FEEDME');
 	my $dev_name = "file:" . Installcheck::Run::vtape_dir();
 	$service->send($cmd_stream, "TAPE $dev_name\r\n");
-	$subs{'expect_header'}->();
-    });
+	$steps->{'expect_header'}->();
+    };
 
-    $subs{'expect_header'} = make_cb(expect_header => sub {
+    step expect_header => sub {
 	if ($params{'header'}) {
 	    $service->expect($data_stream,
-		[ bytes => 32768, $subs{'got_header'} ]);
+		[ bytes => 32768, $steps->{'got_header'} ]);
 	} else {
-	    $subs{'expect_datapath'}->();
+	    $steps->{'expect_datapath'}->();
 	}
-    });
+    };
 
-    $subs{'got_header'} = make_cb(got_header => sub {
+    step got_header => sub {
 	my ($buf) = @_;
 	$event->("GOT-HEADER");
 
 	if ($params{'datapath'} ne 'none') {
 	    $service->expect($data_stream,
-		[ bytes => 1, $subs{'got_early_bytes'} ]);
+		[ bytes => 1, $steps->{'got_early_bytes'} ]);
 	}
 	$hdr = Amanda::Header->from_string($buf);
-	$subs{'expect_datapath'}->();
-    });
+	$steps->{'expect_datapath'}->();
+    };
 
-    $subs{'got_early_bytes'} = make_cb(got_early_bytes => sub {
+    step got_early_bytes => sub {
 	$event->("GOT-EARLY-BYTES");
-    });
+    };
 
-    $subs{'expect_datapath'} = make_cb(expect_datapath => sub {
+    step expect_datapath => sub {
 	if ($params{'datapath'} ne 'none') {
 	    my $dp = ($params{'datapath'} eq 'amanda')? 'AMANDA' : 'AMANDA DIRECT-TCP';
 	    $service->send($cmd_stream, "AVAIL-DATAPATH $dp\r\n");
 	    $event->("SENT-DATAPATH");
 
 	    $service->expect($cmd_stream,
-		[ re => qr/^USE-DATAPATH .*\r\n/, $subs{'got_dp'} ]);
+		[ re => qr/^USE-DATAPATH .*\r\n/, $steps->{'got_dp'} ]);
 	} else {
-	    $subs{'expect_data'}->();
+	    $steps->{'expect_data'}->();
 	}
-    });
+    };
 
-    $subs{'got_dp'} = make_cb(got_dp => sub {
+    step got_dp => sub {
 	my ($dp, $addrs) = ($_[0] =~ /USE-DATAPATH (\S+)(.*)\r\n/);
 	$event->("GOT-DP-$dp");
 
@@ -372,21 +390,21 @@ sub test {
 	    die "invalid DIRECT-TCP reply $addrs" unless ($port);
 	    #remove got_early_bytes on $data_stream
 	    $service->expect($data_stream,
-	        [ eof => $subs{'do_nothing'} ]);
+	        [ eof => $steps->{'do_nothing'} ]);
 
 	    $service->connect('directtcp', $port);
 	    $data_stream = 'directtcp';
 	}
 
-	$subs{'expect_data'}->();
-    });
+	$steps->{'expect_data'}->();
+    };
 
-    $subs{'do_nothing'} = make_cb(do_nothing => sub {
-    });
+    step do_nothing => sub {
+    };
 
-    $subs{'expect_data'} = make_cb(expect_data => sub {
+    step expect_data => sub {
 	$service->expect($data_stream,
-	    [ bytes_to_eof => $subs{'got_data'} ]);
+	    [ bytes_to_eof => $steps->{'got_data'} ]);
 	# note that we ignore EOF on the control connection,
 	# as its timing is not very predictable
 
@@ -395,23 +413,23 @@ sub test {
 	    $event->("SENT-DATAPATH-OK");
 	}
 
-    });
+    };
 
-    $subs{'got_data'} = make_cb(got_data => sub {
+    step got_data => sub {
 	my ($bytes) = @_;
 
 	$datasize = $bytes;
 	$event->("DATA-TO-EOF");
-    });
+    };
 
     # expected errors jump right to this
-    $subs{'expect_err_message'} = make_cb(expect_err_message => sub {
+    step expect_err_message => sub {
 	$expect_error = 1;
 	$service->expect($cmd_stream,
-	    [ re => qr/^MESSAGE.*\r\n/, $subs{'got_err_message'} ])
-    });
+	    [ re => qr/^MESSAGE.*\r\n/, $steps->{'got_err_message'} ])
+    };
 
-    $subs{'got_err_message'} = make_cb(got_err_message => sub {
+    step got_err_message => sub {
 	my ($line) = @_;
 	if ($line =~ /^MESSAGE invalid command.*/) {
 	    $event->("ERR-INVAL-CMD");
@@ -422,109 +440,113 @@ sub test {
 	}
 
 	# process should exit now
-    });
+    };
 
-    $subs{'process_done'} = make_cb(process_done => sub {
+    step process_done => sub {
 	my ($w) = @_;
 	my $exitstatus = POSIX::WIFEXITED($w)? POSIX::WEXITSTATUS($w) : -1;
 	$event->("EXIT-$exitstatus");
-	Amanda::MainLoop::quit();
-    });
+	$steps->{'verify'}->();
+    };
 
-    $service = Installcheck::ClientService->new(
-	    emulate => $params{'emulate'},
-	    service => 'amidxtaped',
-	    process_done => $subs{'process_done'});
-    Amanda::MainLoop::call_later($subs{'start'});
-    Amanda::MainLoop::run();
+    step verify => sub {
+	# reset the alarm - the risk of deadlock has passed
+	alarm(0);
 
-    # reset the alarm - the risk of deadlock has passed
-    alarm(0);
+	# do a little bit of gymnastics to only treat this as one test
 
-    # do a little bit of gymnastics to only treat this as one test
+	my $ok = 1;
 
-    my $ok = 1;
-
-    if ($ok and !$expect_error and $params{'header'}) {
-	if ($hdr->{'name'} ne 'localhost' or $hdr->{'disk'} ne $diskname) {
-	    $ok = 0;
-	    is_deeply([ $hdr->{'name'}, $hdr->{'disk'} ],
-		      [ 'localhost',    $diskname ],
-		"$testmsg (header mismatch; header logged to debug log)")
-		or $hdr->debug_dump();
-	}
-    }
-
-    if ($ok and !$expect_error) {
-	if ($params{'holding'}) {
-	    $ok = 0 if ($datasize != 131072);
-	    diag("got $datasize bytes of data but expected exactly 128k from holding file")
-		unless $ok;
-	} else {
-	    # get the original size from the header and calculate the size we
-	    # read, rounded up to the next kilobyte
-	    my $orig_size = $hdr? $hdr->{'orig_size'} : 0;
-	    my $got_kb = int($datasize / 1024);
-
-	    if ($orig_size) {
-		my $diff = abs($got_kb - $orig_size);
-
-		# allow 32k of "slop" here, for rounding, etc.
-		$ok = 0 if $diff > 32;
-		diag("got $got_kb kb; expected about $orig_size kb based on header")
-		    unless $ok;
-	    } else {
-		$ok = 0 if $got_kb < 64;
-		diag("got $got_kb; expected at least 64k")
-		    unless $ok;
+	if ($ok and !$expect_error and $params{'header'}) {
+	    if ($hdr->{'name'} ne 'localhost' or $hdr->{'disk'} ne $diskname) {
+		$ok = 0;
+		is_deeply([ $hdr->{'name'}, $hdr->{'disk'} ],
+			  [ 'localhost',    $diskname ],
+		    "$testmsg (header mismatch; header logged to debug log)")
+		    or $hdr->debug_dump();
 	    }
 	}
 
-	if (!$ok) {
-	    fail($testmsg);
-	}
-    }
+	if ($ok and !$expect_error) {
+	    if ($params{'holding'}) {
+		$ok = 0 if ($datasize != 131072);
+		diag("got $datasize bytes of data but expected exactly 128k from holding file")
+		    unless $ok;
+	    } else {
+		# get the original size from the header and calculate the size we
+		# read, rounded up to the next kilobyte
+		my $orig_size = $hdr? $hdr->{'orig_size'} : 0;
+		my $got_kb = int($datasize / 1024);
 
-    if ($ok) {
-	my $inetd = $params{'emulate'} eq 'inetd';
+		if ($orig_size) {
+		    my $diff = abs($got_kb - $orig_size);
 
-	my @sec_evts = $inetd? ('MAIN-SECURITY') : ('SENT-REQ', 'GOT-REP'),
-	my @datapath_evts;
-	if ($params{'datapath'} eq 'amanda') {
-	    @datapath_evts = ('SENT-DATAPATH', 'GOT-DP-AMANDA', 'SENT-DATAPATH-OK');
-	} elsif ($params{'datapath'} eq 'directtcp' and not $params{'ndmp'}) {
-	    @datapath_evts = ('SENT-DATAPATH', 'GOT-DP-AMANDA', 'SENT-DATAPATH-OK');
-	} elsif ($params{'datapath'} eq 'directtcp' and $params{'ndmp'}) {
-	    @datapath_evts = ('SENT-DATAPATH', 'GOT-DP-DIRECT-TCP', 'SENT-DATAPATH-OK');
+		    # allow 32k of "slop" here, for rounding, etc.
+		    $ok = 0 if $diff > 32;
+		    diag("got $got_kb kb; expected about $orig_size kb based on header")
+			unless $ok;
+		} else {
+		    $ok = 0 if $got_kb < 64;
+		    diag("got $got_kb; expected at least 64k")
+			unless $ok;
+		}
+	    }
+
+	    if (!$ok) {
+		fail($testmsg);
+	    }
 	}
 
-	my @exp_events = (
-		    @sec_evts,
-		    'SEND-FEAT', 'GOT-FEAT', 'SENT-CMD',
-		    ($inetd and $params{'splits'})? ('GOT-CONNECT', 'DATA-SECURITY') : (),
-		    $params{'feedme'}? ('GOT-MESSAGE', 'GOT-FEEDME') : (),
-		    $params{'header'}? ('GOT-HEADER') : (),
-		    @datapath_evts,
-		    'DATA-TO-EOF', 'EXIT-0', );
-	# handle a few error conditions differently
-	if ($params{'bad_cmd'}) {
-	    @exp_events = ( @sec_evts, 'ERR-INVAL-CMD', 'EXIT-0' );
-	}
-	if ($params{'bad_auth'}) {
-	    @exp_events = ( 'SENT-REQ', 'GOT-REP-ERR', 'EXIT-1' );
-	}
-	if ($params{'holding_err'}) {
-	    @exp_events = (
-		    @sec_evts,
-		    'SEND-FEAT', 'GOT-FEAT', 'SENT-CMD',
-		    ($inetd and $params{'splits'})? ('GOT-CONNECT', 'DATA-SECURITY') : (),
-		    'GOT-HOLDING-ERR', 'EXIT-0' );
-	}
-	$ok = is_deeply([@events], [@exp_events],
-	    $testmsg);
-    }
+	if ($ok) {
+	    my $inetd = $params{'emulate'} eq 'inetd';
 
-    diag(Dumper([@events])) if not $ok;
+	    my @sec_evts = $inetd? ('MAIN-SECURITY') : ('SENT-REQ', 'GOT-REP'),
+	    my @datapath_evts;
+	    if ($params{'datapath'} eq 'amanda') {
+		@datapath_evts = ('SENT-DATAPATH', 'GOT-DP-AMANDA', 'SENT-DATAPATH-OK');
+	    } elsif ($params{'datapath'} eq 'directtcp' and not $params{'ndmp'}) {
+		@datapath_evts = ('SENT-DATAPATH', 'GOT-DP-AMANDA', 'SENT-DATAPATH-OK');
+	    } elsif ($params{'datapath'} eq 'directtcp' and $params{'ndmp'}) {
+		@datapath_evts = ('SENT-DATAPATH', 'GOT-DP-DIRECT-TCP', 'SENT-DATAPATH-OK');
+	    }
+
+	    my @exp_events = (
+			@sec_evts,
+			'SEND-FEAT', 'GOT-FEAT', 'SENT-CMD',
+			($inetd and $params{'splits'})? ('GOT-CONNECT', 'DATA-SECURITY') : (),
+			$params{'feedme'}? ('GOT-MESSAGE', 'GOT-FEEDME') : (),
+			$params{'header'}? ('GOT-HEADER') : (),
+			@datapath_evts,
+			'DATA-TO-EOF', 'EXIT-0', );
+	    # handle a few error conditions differently
+	    if ($params{'bad_cmd'}) {
+		@exp_events = ( @sec_evts, 'ERR-INVAL-CMD', 'EXIT-0' );
+	    }
+	    if ($params{'bad_auth'}) {
+		@exp_events = ( 'SENT-REQ', 'GOT-REP-ERR', 'EXIT-1' );
+	    }
+	    if ($params{'holding_err'}) {
+		@exp_events = (
+			@sec_evts,
+			'SEND-FEAT', 'GOT-FEAT', 'SENT-CMD',
+			($inetd and $params{'splits'})? ('GOT-CONNECT', 'DATA-SECURITY') : (),
+			'GOT-HOLDING-ERR', 'EXIT-0' );
+	    }
+	    $ok = is_deeply([@events], [@exp_events],
+		$testmsg);
+	}
+
+	diag(Dumper([@events])) if not $ok;
+
+	$params{'finished_cb'}->();
+    };
+}
+
+sub test {
+    my %params = @_;
+    $params{'finished_cb'} = \&Amanda::MainLoop::quit;
+    run_amidxtaped(%params);
+    Amanda::MainLoop::run();
 }
 
 sub make_holding_file {
