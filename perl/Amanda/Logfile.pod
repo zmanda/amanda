@@ -139,8 +139,21 @@ Functions in this section extract information from logfiles.
 
 =item C<find_log()>
 
-Return a list of logfiles for active tapes.  The tapelist must be
-loaded before this function is called (see L<Amanda::Tapelist>).
+Return a list of logfiles for active tapes.  The tapelist must be loaded
+before this function is called (see L<Amanda::Tapelist>).  This function uses
+the C API which indexes logfiles with tapes.  If there is no corresponding
+tape, the logfile will not be found.
+
+=item C<find_all_logs([dir])>
+
+Return a list of all logs the configuration.  An optional directory argument
+can be specified, if not present, C<find_all_logs> checks C<LOGDIR>.
+
+=item C<find_latest_log([dir])>
+
+Returns the most recent logfile in the list of logfiles returned by
+C<find_all_logs>.  The optional directory argument is passed to
+C<find_all_logs>.
 
 =item C<search_logfile($label, $datestamp, $logfile, $add_missing_disks)>
 

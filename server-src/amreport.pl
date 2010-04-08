@@ -34,7 +34,7 @@ use Amanda::Constants;
 use Amanda::Debug qw( debug warning );
 use Amanda::Report;
 use Amanda::Report::human;
-use Amanda::Logfile;
+use Amanda::Logfile qw( find_latest_log);
 
 # constants for dealing with outputs
 use constant FORMAT  => 0;
@@ -154,18 +154,16 @@ sub opt_push_queue
 
 sub get_default_logfile
 {
-    # return the "current" logfile if it exists
-    my $current_logfile = config_dir_relative(getconf($CNF_LOGDIR)) . "/log";
-    return $current_logfile if -f $current_logfile;
+    my $logdir  = config_dir_relative(getconf($CNF_LOGDIR));
+    my $logfile = "$logdir/log";
 
-    # otherwise, if we're in command-line mode, use the most recent logfile
-    if ($mode == MODE_CMDLINE) {
-	my @logfiles = Amanda::Logfile::find_log();
-	if (@logfiles) {
-	    @logfiles = sort @logfiles;
-	    my $latest = $logfiles[-1];
-	    return config_dir_relative(getconf($CNF_LOGDIR)) . "/$latest";
-	}
+    if (-f $logfile) {
+        return $logfile;
+
+    } elsif ($mode == MODE_CMDLINE) {
+
+        $logfile = "$logdir/" . find_latest_log($logdir);
+        return $logfile if -f $logfile;
     }
 
     # otherwise, bail out
