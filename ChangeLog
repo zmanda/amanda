@@ -1,4 +1,7 @@
 2010-04-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/automake/scripts.am: comment double quote 'use lib'.
+
+2010-04-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsamba.pl: Use tarmode.
 
 2010-04-08  Jean-Louis Martineau <martineau@zmanda.com>
