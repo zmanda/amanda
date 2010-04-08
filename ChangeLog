@@ -1,3 +1,7 @@
+2010-04-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndma_comm_dispatch.c:
+	  Comment "Second add_dir entry is non-conforming".
+
 2010-04-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/planner.c: fix two bugs that caused planner to generate a
 	  bogus schedule; remove a redundant assignment
