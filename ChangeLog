@@ -1,4 +1,8 @@
 2010-04-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/amrecover.c: Print to debug what is sent to amindexd.
+	* recover-src/uparse.y: Parse setdate correctly.
+
+2010-04-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndma_comm_dispatch.c:
 	  Comment "Second add_dir entry is non-conforming".
 
