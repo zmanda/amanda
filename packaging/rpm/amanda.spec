@@ -356,6 +356,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
         --localstatedir=%{LOCALSTATEDIR} \
         --libdir=%{LIBDIR} \
         --includedir=%{INCLUDEDIR} \
+	--mandir=%{MANDIR} \
 	--with-amdatadir=%{AMDATADIR} \
         --with-gnuplot=/usr/bin/gnuplot \
         --with-gnutar=/bin/tar \
