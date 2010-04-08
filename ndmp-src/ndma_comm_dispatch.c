@@ -3117,9 +3117,10 @@ ndmp_sxa_fh_add_dir (struct ndm_session *sess,
 					/* goodness */
 				} else {
 					/* ungoodness */
-					ndmalogf (sess, 0, 0,
+					/* NetApp is non-conforming */
+					/* ndmalogf (sess, 0, 0,
 						"WARNING: Second add_dir "
-						"entry is non-conforming");
+						"entry is non-conforming"); */
 				}
 				break;
 
