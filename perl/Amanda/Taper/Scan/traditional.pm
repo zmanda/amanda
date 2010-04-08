@@ -37,7 +37,7 @@ use Amanda::Config qw( :getconf );
 use Amanda::Device qw( :constants );
 use Amanda::Header;
 use Amanda::Debug qw( :logging );
-use Amanda::MainLoop qw( make_cb );
+use Amanda::MainLoop;
 
 sub new {
     my $class = shift;
@@ -60,7 +60,6 @@ sub scan {
 
     die "Can only run one scan at a time" if $self->{'scanning'};
     $self->{'scanning'} = 1;
-    $self->{'result_cb'} = $params{'result_cb'};
     $self->{'user_msg_fn'} = $params{'user_msg_fn'} || sub {};
 
     # refresh the tapelist at every scan
@@ -70,7 +69,7 @@ sub scan {
     # first scan
     $self->{'scan_num'}++;
 
-    $self->stage_1();
+    $self->stage_1($params{'result_cb'});
 }
 
 sub _user_msg {
@@ -81,29 +80,32 @@ sub _user_msg {
 
 sub scan_result {
     my $self = shift;
-    my ($err, $res, $label, $mode) = @_;
-    my @result = @_;
+    my %params = @_;
 
-    if ($err) {
-	debug("Amanda::Taper::Scan::traditional result: error=$err");
+    my @result = ($params{'error'}, $params{'res'}, $params{'label'},
+		  $params{'mode'}, $params{'is_new'});
+
+    if ($params{'error'}) {
+	debug("Amanda::Taper::Scan::traditional result: error=$params{'error'}");
 
 	# if we already had a reservation when the error occurred, then we'll need
 	# to release that reservation before signalling the error
-	if ($res) {
+	if ($params{'res'}) {
 	    my $finished_cb = make_cb(finished_cb => sub {
 		my ($err) = @_;
 		# if there was an error releasing, log it and ignore it
 		Amanda::Debug::warn("while releasing reservation: $err") if $err;
 
 		$self->{'scanning'} = 0;
-		$self->{'result_cb'}->(@result);
+		$params{'result_cb'}->(@result);
 	    });
-	    return $res->release(finished_cb => $finished_cb);
+	    return $params{'res'}->release(finished_cb => $finished_cb);
 	}
-    } elsif ($res) {
-	my $devname = $res->{'device'}->device_name;
-	my $slot = $res->{this_slot};
-	debug("Amanda::Taper::Scan::traditional result: '$label' on $devname slot $slot, mode $mode");
+    } elsif ($params{'res'}) {
+	my $devname = $params{'res'}->{'device'}->device_name;
+	my $slot = $params{'res'}->{'this_slot'};
+	debug("Amanda::Taper::Scan::traditional result: '$params{label}' " .
+	      "on $devname slot $slot, mode $params{mode}");
     } else {
 	debug("Amanda::Taper::Scan::traditional result: scan failed");
 
@@ -118,7 +120,7 @@ sub scan_result {
     }
 
     $self->{'scanning'} = 0;
-    $self->{'result_cb'}->(@result);
+    $params{'result_cb'}->(@result);
 }
 
 ##
@@ -126,63 +128,72 @@ sub scan_result {
 
 sub stage_1 {
     my $self = shift;
-    my %subs;
+    my ($result_cb) = @_;
+    my $oldest_reusable;
 
-    debug("Amanda::Taper::Scan::traditional stage 1: search for oldest reusable volume");
-    my $oldest_reusable = $self->oldest_reusable_volume(
-        new_label_ok => 0,      # stage 1 never selects new volumes
-    );
+    my $steps = define_steps
+	cb_ref => \$result_cb;
 
-    if (!defined $oldest_reusable) {
-	debug("Amanda::Taper::Scan::traditional no oldest reusable volume");
-	return $self->stage_2();
-    }
-    debug("Amanda::Taper::Scan::traditional oldest reusable volume is '$oldest_reusable'");
+    step setup => sub {
+	debug("Amanda::Taper::Scan::traditional stage 1: search for oldest reusable volume");
+	$oldest_reusable = $self->oldest_reusable_volume(
+	    new_label_ok => 0,      # stage 1 never selects new volumes
+	);
 
-    # try loading that oldest volume, but only if the changer is fast-search capable
+	if (!defined $oldest_reusable) {
+	    debug("Amanda::Taper::Scan::traditional no oldest reusable volume");
+	    return $self->stage_2($result_cb);
+	}
+	debug("Amanda::Taper::Scan::traditional oldest reusable volume is '$oldest_reusable'");
 
-    $subs{'get_info'} = sub {
+	# try loading that oldest volume, but only if the changer is fast-search capable
+	$steps->{'get_info'}->();
+    };
+
+    step get_info => sub {
         $self->{'changer'}->info(
             info => [ "fast_search" ],
-            info_cb => $subs{'got_info'},
+            info_cb => $steps->{'got_info'},
         );
     };
 
-    $subs{'got_info'} = sub {
+    step got_info => sub {
         my ($error, %results) = @_;
         if ($error) {
-            return $self->scan_result($error);
+            return $self->scan_result(error => $error, result_cb => $result_cb);
         }
 
         if ($results{'fast_search'}) {
-	    debug("Amanda::Taper::Scan::traditional stage 1: searching oldest reusable volume '$oldest_reusable'");
+	    debug("Amanda::Taper::Scan::traditional stage 1: searching oldest reusable " .
+		  "volume '$oldest_reusable'");
 	    $self->_user_msg(search_label => 1,
 			     label        => $oldest_reusable);
 
-	    $subs{'do_load'}->();
+	    $steps->{'do_load'}->();
 	} else {
 	    # no fast search, so skip to stage 2
 	    debug("Amanda::Taper::Scan::traditional changer is not fast-searchable; skipping to stage 2");
-	    $self->stage_2();
+	    $self->stage_2($result_cb);
 	}
     };
 
-    $subs{'do_load'} = sub {
+    step do_load => sub {
 	$self->{'changer'}->load(
 	    label => $oldest_reusable,
-	    res_cb => $subs{'load_done'});
+	    res_cb => $steps->{'load_done'});
     };
 
-    $subs{'load_done'} = sub {
+    step load_done => sub {
 	my ($err, $res) = @_;
 
 	$self->_user_msg(search_result => 1, res => $res, err => $err);
 	if ($err) {
 	    if ($err->failed and $err->notfound) {
 		debug("Amanda::Taper::Scan::traditional oldest reusable volume not found");
-		return $self->stage_2();
+		return $self->stage_2($result_cb);
 	    } else {
-		return $self->scan_result($err, $res);
+		return $self->scan_result(error => $err,
+			res => $res, result_cb => $result_cb);
 	    }
 	}
 
@@ -191,7 +202,7 @@ sub stage_1 {
         my $status = $res->{'device'}->status;
         if ($status != $DEVICE_STATUS_SUCCESS) {
             warning "Error reading label after searching for '$oldest_reusable'";
-            return $self->release_and_stage_2($res);
+            return $self->release_and_stage_2($res, $result_cb);
         }
 
         # go on to stage 2 if we didn't get the expected volume
@@ -199,19 +210,18 @@ sub stage_1 {
         my $labelstr = $self->{'labelstr'};
         if ($label !~ /$labelstr/) {
             warning "Searched for label '$oldest_reusable' but found a volume labeled '$label'";
-            return $self->release_and_stage_2($res);
+            return $self->release_and_stage_2($res, $result_cb);
         }
 
 	# great! -- volume found
-	return $self->scan_result(undef, $res, $oldest_reusable, $ACCESS_WRITE, 0);
+	return $self->scan_result(res => $res, label => $oldest_reusable,
+		    mode => $ACCESS_WRITE, is_new => 0, result_cb => $result_cb);
     };
-
-    $subs{'get_info'}->();
 }
 
 sub try_volume {
     my $self = shift;
-    my ($res) = @_;
+    my ($res, $result_cb) = @_;
 
     my $slot = $res->{'this_slot'};
     my $dev = $res->{'device'};
@@ -254,7 +264,8 @@ sub try_volume {
 	    $self->_user_msg(slot_result => 1,
 			     slot        => $slot,
 			     res         => $res);
-	    $self->scan_result(undef, $res, $label, $ACCESS_WRITE, 0);
+	    $self->scan_result(res => $res, label => $label,
+		    mode => $ACCESS_WRITE, is_new => 0, result_cb => $result_cb);
 	    return 1;
 	}
     }
@@ -291,11 +302,12 @@ sub try_volume {
     ($label, my $err) = $self->make_new_tape_label();
     if (!defined $label) {
         # make this fatal, rather than silently skipping new tapes
-        $self->scan_result($err, $res);
+        $self->scan_result(error => $err, res => $res, result_cb => $result_cb);
         return 1;
     }
 
-    $self->scan_result(undef, $res, $label, $ACCESS_WRITE, 1);
+    $self->scan_result(res => $res, label => $label, mode => $ACCESS_WRITE,
+	    is_new => 1, result_cb => $result_cb);
     return 1;
 }
 
@@ -304,33 +316,35 @@ sub try_volume {
 
 sub release_and_stage_2 {
     my $self = shift;
-    my ($res) = @_;
+    my ($res, $result_cb) = @_;
 
     $res->release(finished_cb => sub {
 	my ($error) = @_;
 	if ($error) {
-	    $self->scan_result($error);
+	    $self->scan_result(error => $error, result_cb => $result_cb);
 	} else {
-	    $self->stage_2();
+	    $self->stage_2($result_cb);
 	}
     });
 }
 
 sub stage_2 {
     my $self = shift;
+    my ($result_cb) = @_;
 
     my $last_slot;
     my $load_current = ($self->{'scan_num'} == 1);
-    my %subs;
+    my $steps = define_steps
+	cb_ref => \$result_cb;
 
-    debug("Amanda::Taper::Scan::traditional stage 2: scan for any reusable volume");
-
-    $subs{'load'} = make_cb(load => sub {
+    step load => sub {
 	my ($err) = @_;
+
+	debug("Amanda::Taper::Scan::traditional stage 2: scan for any reusable volume");
 
         # bail on an error releasing a reservation
         if ($err) {
-            return $self->scan_result($err);
+            return $self->scan_result(error => $err, result_cb => $result_cb);
         }
 
         # load the current or next slot
@@ -350,20 +364,21 @@ sub stage_2 {
 	$self->{'changer'}->load(
 	    @load_args,
 	    set_current => 1,
-	    res_cb => $subs{'loaded'},
+	    res_cb => $steps->{'loaded'},
 	    except_slots => $self->{'seen'},
 	    mode => "write",
 	);
-    });
+    };
 
-    $subs{'loaded'} = make_cb(loaded => sub {
+    step loaded => sub {
         my ($err, $res) = @_;
 	my $loaded_current = $load_current;
 	$load_current = 0; # don't load current a second time
 
 	# bail out immediately if the scan is complete
 	if ($err and $err->failed and $err->notfound) {
-            return $self->scan_result(); # end of the scan
+	    # no error, no reservation -> end of the scan
+            return $self->scan_result(result_cb => $result_cb);
 	}
 
 	# tell user_msg which slot we're looking at..
@@ -392,28 +407,26 @@ sub stage_2 {
 		    $last_slot = $err->{slot};
 		    $self->{'seen'}->{$last_slot} = 1;
 		}
-		return $subs{'load'}->(undef);
+		return $steps->{'load'}->(undef);
 	    } else {
 		# if we have a fatal error or something other than "notfound"
 		# or "volinuse", bail out.
 		$self->_user_msg(slot_result => 1, err => $err);
-		return $self->scan_result($err, $res);
+		return $self->scan_result(error => $err, res => $res,
+					result_cb => $result_cb);
 	    }
 	}
 
 	$self->{'seen'}->{$res->{'this_slot'}} = 1;
 
         # we're done if try_volume calls result_cb (with success or an error)
-        return if ($self->try_volume($res));
+        return if ($self->try_volume($res, $result_cb));
 
         # no luck -- release this reservation and get the next
         $last_slot = $res->{'this_slot'};
 
-        $res->release(finished_cb => $subs{'load'});
-    });
-
-    # kick the whole thing off
-    $subs{'load'}->();
+        $res->release(finished_cb => $steps->{'load'});
+    };
 }
 
 1;

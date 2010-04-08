@@ -31,6 +31,7 @@ use Amanda::Util;
 use Amanda::Config qw( :getconf string_to_boolean );
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( debug );
+use Amanda::MainLoop;
 
 =head1 NAME
 
@@ -1063,31 +1064,33 @@ sub lock_statefile {
 sub with_locked_state {
     my $self = shift;
     my ($statefile, $cb, $sub) = @_;
-    my %subs;
     my ($filelock, $STATE);
     my $poll = 0; # first delay will be 0.1s; see below
 
-    $subs{'open'} = sub {
+    my $steps = define_steps
+	cb_ref => \$cb;
+
+    step open => sub {
 	$filelock = Amanda::Util::file_lock->new($statefile);
 
-	$subs{'lock'}->();
+	$steps->{'lock'}->();
     };
 
-    $subs{'lock'} = sub {
+    step lock => sub {
 	my $rv = $filelock->lock();
 	if ($rv == 1) {
 	    # loop until we get the lock, increasing $poll to 10s
 	    $poll += 100 unless $poll >= 10000;
-	    return Amanda::MainLoop::call_after($poll, $subs{'lock'});
+	    return Amanda::MainLoop::call_after($poll, $steps->{'lock'});
 	} elsif ($rv == -1) {
 	    return $self->make_error("fatal", $cb,
 		    message => "Error locking '$statefile'");
 	}
 
-	$subs{'read'}->();
+	$steps->{'read'}->();
     };
 
-    $subs{'read'} = sub {
+    step read => sub {
 	my $contents = $filelock->data();
 	if ($contents) {
 	    eval $contents;
@@ -1104,10 +1107,10 @@ sub with_locked_state {
 	    $STATE = {};
 	}
 
-	$sub->($STATE, $subs{'cb_wrap'});
+	$sub->($STATE, $steps->{'cb_wrap'});
     };
 
-    $subs{'cb_wrap'} =  sub {
+    step cb_wrap =>  sub {
 	my @args = @_;
 
 	my $dumper = Data::Dumper->new([ $STATE ], ["STATE"]);
@@ -1118,10 +1121,7 @@ sub with_locked_state {
 	# call through to the original callback with the original
 	# arguments
 	$cb->(@args);
-	%subs = ();
     };
-
-    $subs{'open'}->();
 }
 
 sub validate_params {

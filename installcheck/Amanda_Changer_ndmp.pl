@@ -1,4 +1,4 @@
-# Copyright (c) 2009 Zmanda Inc.  All Rights Reserved.
+# Copyright (c) 2009, 2010 Zmanda Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -68,46 +68,53 @@ sub check_inventory {
 ##
 # test the "interface" package
 
-{
-    my $testconf = Installcheck::Config->new();
-    $testconf->add_changer('robo', [
-	tpchanger => "\"chg-ndmp:127.0.0.1:$ndmp->{port}\@$ndmp->{changer}\"",
-	changerfile => "\"$chg_state_file\"",
+sub test_interface {
+    my ($finished_cb) = @_;
+    my ($interface, $chg);
 
-	property => "       \"tape-device\" \"0=ndmp:127.0.0.1:$ndmp->{port}\@$ndmp->{drive0}\"",
-	property => "append \"tape-device\" \"1=ndmp:127.0.0.1:$ndmp->{port}\@$ndmp->{drive1}\"",
-    ]);
-    $testconf->write();
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-    if ($cfg_result != $CFGERR_OK) {
-	my ($level, @errors) = Amanda::Config::config_errors();
-	die(join "\n", @errors);
-    }
+    step start => sub {
+	my $testconf = Installcheck::Config->new();
+	$testconf->add_changer('robo', [
+	    tpchanger => "\"chg-ndmp:127.0.0.1:$ndmp->{port}\@$ndmp->{changer}\"",
+	    changerfile => "\"$chg_state_file\"",
 
-    my $chg = Amanda::Changer->new("robo");
-    die "$chg" if $chg->isa("Amanda::Changer::Error");
-    my $interface = $chg->{'interface'};
-    my %subs;
+	    property => "       \"tape-device\" \"0=ndmp:127.0.0.1:$ndmp->{port}\@$ndmp->{drive0}\"",
+	    property => "append \"tape-device\" \"1=ndmp:127.0.0.1:$ndmp->{port}\@$ndmp->{drive1}\"",
+	]);
+	$testconf->write();
 
-    $subs{'start'} = sub {
-	$interface->inquiry(sub {
-	    my ($error, $info) = @_;
+	my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+	if ($cfg_result != $CFGERR_OK) {
+	    my ($level, @errors) = Amanda::Config::config_errors();
+	    die(join "\n", @errors);
+	}
 
-	    die $error if $error;
+	$chg = Amanda::Changer->new("robo");
+	die "$chg" if $chg->isa("Amanda::Changer::Error");
 
-	    is_deeply($info, {
-		'revision' => '1.0',
-		'product id' => 'FakeRobot',
-		'vendor id' => 'NDMJOB',
-		'product type' => 'Medium Changer'
-		}, "robot::Interface inquiry() info is correct");
-
-	    $subs{'status1'}->();
-	});
+	$interface = $chg->{'interface'};
+	$interface->inquiry($steps->{'inquiry_cb'});
     };
 
-    $subs{'status1'} = sub {
+    step inquiry_cb => sub {
+	my ($error, $info) = @_;
+
+	die $error if $error;
+
+	is_deeply($info, {
+	    'revision' => '1.0',
+	    'product id' => 'FakeRobot',
+	    'vendor id' => 'NDMJOB',
+	    'product type' => 'Medium Changer'
+	    }, "robot::Interface inquiry() info is correct");
+
+	$steps->{'status1'}->();
+    };
+
+    step status1 => sub {
 	$interface->status(sub {
 	    my ($error, $status) = @_;
 
@@ -135,22 +142,22 @@ sub check_inventory {
 	    }, "robot::Interface status() output is correct (no drives loaded)")
 		or die("robot does not look like I expect it to");
 
-	    $subs{'load0'}->();
+	    $steps->{'load0'}->();
 	});
     };
 
-    $subs{'load0'} = sub {
+    step load0 => sub {
 	$interface->load(3, 0, sub {
 	    my ($error) = @_;
 
 	    die $error if $error;
 
 	    pass("load");
-	    $subs{'status2'}->();
+	    $steps->{'status2'}->();
 	});
     };
 
-    $subs{'status2'} = sub {
+    step status2 => sub {
 	$interface->status(sub {
 	    my ($error, $status) = @_;
 
@@ -178,22 +185,22 @@ sub check_inventory {
 	    }, "robot::Interface status() output is correct (one drive loaded)")
 		or die("robot does not look like I expect it to");
 
-	    $subs{'load1'}->();
+	    $steps->{'load1'}->();
 	});
     };
 
-    $subs{'load1'} = sub {
+    step load1 => sub {
 	$interface->load(12, 1, sub {
 	    my ($error) = @_;
 
 	    die $error if $error;
 
 	    pass("load");
-	    $subs{'status3'}->();
+	    $steps->{'status3'}->();
 	});
     };
 
-    $subs{'status3'} = sub {
+    step status3 => sub {
 	$interface->status(sub {
 	    my ($error, $status) = @_;
 
@@ -221,22 +228,22 @@ sub check_inventory {
 	    }, "robot::Interface status() output is correct (two drives loaded)")
 		or die("robot does not look like I expect it to");
 
-	    $subs{'transfer'}->();
+	    $steps->{'transfer'}->();
 	});
     };
 
-    $subs{'transfer'} = sub {
+    step transfer => sub {
 	$interface->transfer(5, 2, sub {
 	    my ($error) = @_;
 
 	    die $error if $error;
 
 	    pass("transfer");
-	    $subs{'status4'}->();
+	    $steps->{'status4'}->();
 	});
     };
 
-    $subs{'status4'} = sub {
+    step status4 => sub {
 	$interface->status(sub {
 	    my ($error, $status) = @_;
 
@@ -264,79 +271,73 @@ sub check_inventory {
 	    }, "robot::Interface status() output is correct after transfer")
 		or die("robot does not look like I expect it to");
 
-	    $subs{'quit'}->();
+	    $finished_cb->();
 	});
     };
-
-    $subs{'quit'} = sub {
-	Amanda::MainLoop::quit();
-    };
-
-    Amanda::MainLoop::call_later($subs{'start'});
-    Amanda::MainLoop::run();
 }
+test_interface(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
 
 ##
 # Test the real deal
 
-# These tests are run over a number of different mtx configurations, to ensure
-# that the behavior is identical regardless of the changer/mtx characteristics
-for my $mtx_config (
-    { barcodes => 1, track_orig => 1, },
-    { barcodes => 0, track_orig => 1, },
-    { barcodes => 1, track_orig => -1, },
-    { barcodes => 0, track_orig => 0, },
-    { barcodes => -1, track_orig => 0, },
-) {
-    my %subs;
+sub test_changer {
+    my ($mtx_config, $finished_cb) = @_;
     my $chg;
     my ($res1, $res2);
-
+    my ($drive0_name, $drive1_name);
     my $pfx = "BC=$mtx_config->{barcodes}; TORIG=$mtx_config->{track_orig}";
 
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
     # clean up
-    unlink($chg_state_file) if -f $chg_state_file;
-    %Amanda::Changer::changers_by_uri_cc = ();
+    step setup => sub {
+	unlink($chg_state_file) if -f $chg_state_file;
+	%Amanda::Changer::changers_by_uri_cc = ();
 
-    my @ignore_barcodes = ( property => "\"ignore-barcodes\" \"y\"")
-	if ($mtx_config->{'barcodes'} == -1);
+	my @ignore_barcodes = ( property => "\"ignore-barcodes\" \"y\"")
+	    if ($mtx_config->{'barcodes'} == -1);
 
-    my $drive0_name = "ndmp:127.0.0.1:$ndmp->{port}\@$ndmp->{drive0}";
-    my $drive1_name = "ndmp:127.0.0.1:$ndmp->{port}\@$ndmp->{drive1}";
+	$drive0_name = "ndmp:127.0.0.1:$ndmp->{port}\@$ndmp->{drive0}";
+	$drive1_name = "ndmp:127.0.0.1:$ndmp->{port}\@$ndmp->{drive1}";
 
-    my $testconf = Installcheck::Config->new();
-    $testconf->add_changer('robo', [
-	tpchanger => "\"chg-ndmp:127.0.0.1:$ndmp->{port}\@$ndmp->{changer}\"",
-	changerfile => "\"$chg_state_file\"",
+	my $testconf = Installcheck::Config->new();
+	$testconf->add_changer('robo', [
+	    tpchanger => "\"chg-ndmp:127.0.0.1:$ndmp->{port}\@$ndmp->{changer}\"",
+	    changerfile => "\"$chg_state_file\"",
 
-	property => "       \"tape-device\" \"0=$drive0_name\"",
-	property => "append \"tape-device\" \"1=$drive1_name\"",
-	property => "\"use-slots\" \"1-5\"",
-	@ignore_barcodes,
-    ]);
-    $testconf->write();
+	    property => "       \"tape-device\" \"0=$drive0_name\"",
+	    property => "append \"tape-device\" \"1=$drive1_name\"",
+	    property => "\"use-slots\" \"1-5\"",
+	    @ignore_barcodes,
+	]);
+	$testconf->write();
 
-    config_uninit();
-    my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-    if ($cfg_result != $CFGERR_OK) {
-	my ($level, @errors) = Amanda::Config::config_errors();
-	die(join "\n", @errors);
-    }
+	config_uninit();
+	my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+	if ($cfg_result != $CFGERR_OK) {
+	    my ($level, @errors) = Amanda::Config::config_errors();
+	    die(join "\n", @errors);
+	}
 
-    # reset the changer to its base state
-    $ndmp->reset();
+	# reset the changer to its base state
+	$ndmp->reset();
 
-    $subs{'start'} = sub {
+	$steps->{'start'}->();
+    };
+
+    step start => sub {
 	$chg = Amanda::Changer->new("robo");
 	ok(!$chg->isa("Amanda::Changer::Error"),
 	    "$pfx: Create working chg-robot instance: $chg")
 	    or die("no sense going on");
 
 	$chg->info(info => [qw(vendor_string num_slots fast_search)],
-		    info_cb => $subs{'info_cb'});
+		    info_cb => $steps->{'info_cb'});
     };
 
-    $subs{'info_cb'} = sub {
+    step info_cb => sub {
 	my ($err, %info) = @_;
 	die $err if $err;
 
@@ -346,11 +347,11 @@ for my $mtx_config (
 	    vendor_string => "NDMJOB FakeRobot",
 	}, "$pfx: info keys num_slots, fast_search, vendor_string are correct");
 
-	$subs{'inventory1'}->();
+	$steps->{'inventory1'}->();
     };
 
-    $subs{'inventory1'} = sub {
-	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'load_slot_1'}, [
+    step inventory1 => sub {
+	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $steps->{'load_slot_1'}, [
 	    { slot => 1, state => Amanda::Changer::SLOT_EMPTY,
 	      import_export => 1,
 	      device_status => undef, f_type => undef, label => undef },
@@ -369,11 +370,11 @@ for my $mtx_config (
 	], "$pfx: inventory is correct on start-up");
     };
 
-    $subs{'load_slot_1'} = sub {
-	$chg->load(slot => 3, res_cb => $subs{'loaded_slot_1'});
+    step load_slot_1 => sub {
+	$chg->load(slot => 3, res_cb => $steps->{'loaded_slot_1'});
     };
 
-    $subs{'loaded_slot_1'} = sub {
+    step loaded_slot_1 => sub {
 	(my $err, $res1) = @_;
 	die $err if $err;
 
@@ -388,14 +389,14 @@ for my $mtx_config (
 		orig_slot => 3,
 	    }, "$pfx: slot 3 'loaded_in' and drive 0 'orig_slot' are correct");
 
-	$subs{'load_slot_2'}->();
+	$steps->{'load_slot_2'}->();
     };
 
-    $subs{'load_slot_2'} = sub {
-	$chg->load(slot => 4, res_cb => $subs{'loaded_slot_2'});
+    step load_slot_2 => sub {
+	$chg->load(slot => 4, res_cb => $steps->{'loaded_slot_2'});
     };
 
-    $subs{'loaded_slot_2'} = sub {
+    step loaded_slot_2 => sub {
 	(my $err, $res2) = @_;
 	die $err if $err;
 
@@ -418,10 +419,10 @@ for my $mtx_config (
 		orig_slot => 4,
 	    }, "$pfx: slot 4 'loaded_in' and drive 1 'orig_slot' are correct");
 
-	$subs{'check_loads'}->();
+	$steps->{'check_loads'}->();
     };
 
-    $subs{'check_loads'} = sub {
+    step check_loads => sub {
 	# peek into the interface to check that things are loaded correctly
 	$chg->{'interface'}->status(sub {
 	    my ($error, $status) = @_;
@@ -436,12 +437,12 @@ for my $mtx_config (
 		}, "$pfx: double-check: loading drives with the changer gets the right drives loaded");
 	    }
 
-	    $subs{'inventory2'}->();
+	    $steps->{'inventory2'}->();
 	});
     };
 
-    $subs{'inventory2'} = sub {
-	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'load_slot_3'}, [
+    step inventory2 => sub {
+	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $steps->{'load_slot_3'}, [
 	    { slot => 1, state => Amanda::Changer::SLOT_EMPTY,
 	      import_export => 1,
 	      device_status => undef, f_type => undef, label => undef },
@@ -461,11 +462,11 @@ for my $mtx_config (
 	], "$pfx: inventory is updated when slots are loaded");
     };
 
-    $subs{'load_slot_3'} = sub {
-	$chg->load(slot => 5, res_cb => $subs{'loaded_slot_3'});
+    step load_slot_3 => sub {
+	$chg->load(slot => 5, res_cb => $steps->{'loaded_slot_3'});
     };
 
-    $subs{'loaded_slot_3'} = sub {
+    step loaded_slot_3 => sub {
 	my ($err, $no_res) = @_;
 
 	chg_err_like($err,
@@ -474,17 +475,17 @@ for my $mtx_config (
 	      type => 'failed' },
 	    "$pfx: trying to load a third slot fails with 'no drives available'");
 
-	$subs{'label_tape_1'}->();
+	$steps->{'label_tape_1'}->();
     };
 
-    $subs{'label_tape_1'} = sub {
+    step label_tape_1 => sub {
 	$res1->{'device'}->start($Amanda::Device::ACCESS_WRITE, "TAPE-1", undef);
 	$res1->{'device'}->finish();
 
-	$res1->set_label(label => "TAPE-1", finished_cb => $subs{'label_tape_2'});
+	$res1->set_label(label => "TAPE-1", finished_cb => $steps->{'label_tape_2'});
     };
 
-    $subs{'label_tape_2'} = sub {
+    step label_tape_2 => sub {
 	my ($err) = @_;
 	die $err if $err;
 
@@ -514,10 +515,10 @@ for my $mtx_config (
 	$res2->{'device'}->start($Amanda::Device::ACCESS_WRITE, "TAPE-2", undef);
 	$res2->{'device'}->finish();
 
-	$res2->set_label(label => "TAPE-2", finished_cb => $subs{'release1'});
+	$res2->set_label(label => "TAPE-2", finished_cb => $steps->{'release1'});
     };
 
-    $subs{'release1'} = sub {
+    step release1 => sub {
 	my ($err) = @_;
 	die $err if $err;
 
@@ -535,15 +536,15 @@ for my $mtx_config (
 		drive_label => 'TAPE-2',
 	    }, "$pfx: label is correctly reflected in changer state");
 
-	$res2->release(finished_cb => $subs{'inventory3'});
+	$res2->release(finished_cb => $steps->{'inventory3'});
     };
 
-    $subs{'inventory3'} = sub {
+    step inventory3 => sub {
 	my ($err) = @_;
 	die "$err" if $err;
 	pass("$pfx: slot 4/drive 1 released");
 
-	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'check_state_after_release1'}, [
+	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $steps->{'check_state_after_release1'}, [
 	    { slot => 1, state => Amanda::Changer::SLOT_EMPTY,
 	      import_export => 1,
 	      device_status => undef, f_type => undef, label => undef },
@@ -565,20 +566,20 @@ for my $mtx_config (
 	], "$pfx: inventory is still up to date");
     };
 
-    $subs{'check_state_after_release1'} = sub {
+    step check_state_after_release1 => sub {
 	is($chg->{'__last_state'}->{'drives'}->{1}->{'res_info'}, undef,
 		"$pfx: drive is not reserved");
 	is($chg->{'__last_state'}->{'drives'}->{1}->{'label'}, 'TAPE-2',
 		"$pfx: tape is still in drive");
 
-	$subs{'load_current_1'}->();
+	$steps->{'load_current_1'}->();
     };
 
-    $subs{'load_current_1'} = sub {
-	$chg->load(relative_slot => "current", res_cb => $subs{'loaded_current_1'});
+    step load_current_1 => sub {
+	$chg->load(relative_slot => "current", res_cb => $steps->{'loaded_current_1'});
     };
 
-    $subs{'loaded_current_1'} = sub {
+    step loaded_current_1 => sub {
 	my ($err, $res) = @_;
 
 	chg_err_like($err,
@@ -587,15 +588,15 @@ for my $mtx_config (
 	      type => 'failed' },
 	    "$pfx: loading 'current' when set_current hasn't been used yet gets slot 1 (which is in use)");
 
-	$subs{'load_slot_4'}->();
+	$steps->{'load_slot_4'}->();
     };
 
     # this should unload what's in drive 1 and load the empty volume in slot 4
-    $subs{'load_slot_4'} = sub {
-	$chg->load(slot => 5, set_current => 1, res_cb => $subs{'loaded_slot_4'});
+    step load_slot_4 => sub {
+	$chg->load(slot => 5, set_current => 1, res_cb => $steps->{'loaded_slot_4'});
     };
 
-    $subs{'loaded_slot_4'} = sub {
+    step loaded_slot_4 => sub {
 	(my $err, $res2) = @_;
 	die "$err" if $err;
 
@@ -626,22 +627,22 @@ for my $mtx_config (
 		orig_slot => 5,
 	    }, "$pfx: slot 5 'loaded_in' and drive 1 'orig_slot' are correct");
 
-	$subs{'label_tape_4'}->();
+	$steps->{'label_tape_4'}->();
     };
 
-    $subs{'label_tape_4'} = sub {
+    step label_tape_4 => sub {
 	$res2->{'device'}->start($Amanda::Device::ACCESS_WRITE, "TAPE-4", undef);
 	$res2->{'device'}->finish();
 
-	$res2->set_label(label => "TAPE-4", finished_cb => $subs{'inventory4'});
+	$res2->set_label(label => "TAPE-4", finished_cb => $steps->{'inventory4'});
     };
 
-    $subs{'inventory4'} = sub {
+    step inventory4 => sub {
 	my ($err) = @_;
 	die "$err" if $err;
 	pass("$pfx: labeled TAPE-4 in drive 1");
 
-	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'release2'}, [
+	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $steps->{'release2'}, [
 	    { slot => 1, state => Amanda::Changer::SLOT_EMPTY,
 	      import_export => 1,
 	      device_status => undef, f_type => undef, label => undef },
@@ -664,7 +665,7 @@ for my $mtx_config (
 	], "$pfx: inventory is up to date after more labelings");
     };
 
-    $subs{'release2'} = sub {
+    step release2 => sub {
 	is_deeply({
 		loaded_in => $chg->{'__last_state'}->{'slots'}->{5}->{'loaded_in'},
 		orig_slot => $chg->{'__last_state'}->{'drives'}->{1}->{'orig_slot'},
@@ -677,10 +678,10 @@ for my $mtx_config (
 		drive_label => 'TAPE-4',
 	    }, "$pfx: label is correctly reflected in changer state");
 
-	$res1->release(finished_cb => $subs{'release2_done'});
+	$res1->release(finished_cb => $steps->{'release2_done'});
     };
 
-    $subs{'release2_done'} = sub {
+    step release2_done => sub {
 	my ($err) = @_;
 	die $err if $err;
 
@@ -689,17 +690,17 @@ for my $mtx_config (
 	is($chg->{'__last_state'}->{'drives'}->{0}->{'label'}, 'TAPE-1',
 		"$pfx: tape is still in drive");
 
-	$subs{'release3'}->();
+	$steps->{'release3'}->();
     };
 
-    $subs{'release3'} = sub {
+    step release3 => sub {
 	my ($err) = @_;
 	die $err if $err;
 
-	$res2->release(finished_cb => $subs{'release3_done'});
+	$res2->release(finished_cb => $steps->{'release3_done'});
     };
 
-    $subs{'release3_done'} = sub {
+    step release3_done => sub {
 	my ($err) = @_;
 	die $err if $err;
 
@@ -708,19 +709,30 @@ for my $mtx_config (
 	is($chg->{'__last_state'}->{'drives'}->{1}->{'label'},
 		'TAPE-4', "$pfx: tape is still in drive");
 
-	$subs{'quit'}->();
+	$steps->{'quit'}->();
     };
 
-    # note that Amanda_Changer_robot performs a *lot* more tests in here; they're
-    # duplicative for this test, so they are omitted
+    # note that Amanda_Changer_robot performs a *lot* more tests; they're
+    # duplicative for this changer, so they are omitted
 
-    $subs{'quit'} = sub {
-	Amanda::MainLoop::quit();
+    step quit => sub {
+	unlink($chg_state_file) if -f $chg_state_file;
+	$finished_cb->();
     };
-
-    Amanda::MainLoop::call_later($subs{'start'});
-    Amanda::MainLoop::run();
-
-    unlink($chg_state_file) if -f $chg_state_file;
+    # ^^ remove final call to first sub XXX
 }
+
+# These tests are run over a number of different mtx configurations, to ensure
+# that the behavior is identical regardless of the changer/mtx characteristics
+for my $mtx_config (
+    { barcodes => 1, track_orig => 1, },
+    { barcodes => 0, track_orig => 1, },
+    { barcodes => 1, track_orig => -1, },
+    { barcodes => 0, track_orig => 0, },
+    { barcodes => -1, track_orig => 0, },
+    ) {
+    test_changer($mtx_config, \&Amanda::MainLoop::quit);
+    Amanda::MainLoop::run();
+}
+
 $ndmp->cleanup();

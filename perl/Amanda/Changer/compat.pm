@@ -96,6 +96,7 @@ sub new {
 sub load {
     my $self = shift;
     my %params = @_;
+
     $self->validate_params('load', \%params);
     return if $self->check_error($params{'res_cb'});
 
@@ -105,14 +106,15 @@ sub load {
 	    message => "Changer is already reserved: '" . $self->{'reserved'}->device_name . "'");
     }
 
-    my %subs;
+    my $steps = define_steps
+	cb_ref => \$params{'res_cb'};
 
     # make sure the info is loaded, and re-call load() if we have to wait
-    $subs{'get_info'} = make_cb(get_info => sub {
-	$self->_get_info($subs{'got_info'});
-    });
+    step get_info => sub {
+	$self->_get_info($steps->{'got_info'});
+    };
 
-    $subs{'got_info'} = make_cb(got_info => sub {
+    step got_info => sub {
 	my ($exitval, $message) = @_;
 	if (defined $exitval) { # error
 	    # this is always fatal - we can't load without info
@@ -120,13 +122,13 @@ sub load {
 		message => $message);
 	}
 
-	$subs{'start_load'}->();
-    });
+	$steps->{'start_load'}->();
+    };
 
-    $subs{'start_load'} = make_cb(start_load => sub {
+    step start_load => sub {
 	if (exists $params{'label'}) {
 	    if ($self->{'searchable'}) {
-		$self->_run_tpchanger($subs{'load_run_done'}, "-search", $params{'label'});
+		$self->_run_tpchanger($steps->{'load_run_done'}, "-search", $params{'label'});
 	    } else {
 		# not searchable -- run a manual scan
 		$self->_manual_scan(%params);
@@ -147,13 +149,13 @@ sub load {
 		    message => "all slots have been loaded");
 	    }
 
-	    $self->_run_tpchanger($subs{'load_run_done'}, "-slot", $params{'relative_slot'});
+	    $self->_run_tpchanger($steps->{'load_run_done'}, "-slot", $params{'relative_slot'});
 	} elsif (exists $params{'slot'}) {
-	    $self->_run_tpchanger($subs{'load_run_done'}, "-slot", $params{'slot'});
+	    $self->_run_tpchanger($steps->{'load_run_done'}, "-slot", $params{'slot'});
 	}
-    });
+    };
 
-    $subs{'load_run_done'} = make_cb(load_run_done => sub {
+    step load_run_done => sub {
 	my ($exitval, $slot, $rest) = @_;
 	if ($exitval == 0) {
 	    if (!$rest) {
@@ -180,9 +182,7 @@ sub load {
 	}
 
 	return $self->_make_res($params{'res_cb'}, $slot, $rest, undef);
-    });
-
-    $subs{'get_info'}->();
+    };
 }
 
 sub _manual_scan {

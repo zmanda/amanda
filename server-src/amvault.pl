@@ -401,36 +401,35 @@ sub seek_and_copy {
 sub release_reservations {
     my $self = shift;
     my ($finished_cb) = @_;
-    my %subs;
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    $subs{'release_src'} = make_cb('release_src' => sub {
+    step release_src => sub {
 	if ($self->{'src_res'}) {
 	    $self->{'src_res'}->release(
-		finished_cb => $subs{'release_dst'});
+		finished_cb => $steps->{'release_dst'});
 	} else {
-	    $subs{'release_dst'}->(undef);
+	    $steps->{'release_dst'}->(undef);
 	}
-    });
+    };
 
-    $subs{'release_dst'} = make_cb('release_dst' => sub {
+    step release_dst => sub {
 	my ($err) = @_;
 	vlog("$err") if $err;
 
 	if ($self->{'dst_res'}) {
 	    $self->{'dst_res'}->release(
-		finished_cb => $subs{'done'});
+		finished_cb => $steps->{'done'});
 	} else {
-	    $subs{'done'}->(undef);
+	    $steps->{'done'}->(undef);
 	}
-    });
+    };
 
-    $subs{'done'} = make_cb(done => sub {
+    step done => sub {
 	my ($err) = @_;
 	vlog("$err") if $err;
 	$finished_cb->();
-    });
-
-    $subs{'release_src'}->();
+    };
 }
 
 ## Application initialization

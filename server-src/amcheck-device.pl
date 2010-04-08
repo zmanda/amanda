@@ -132,96 +132,100 @@ sub _user_msg_fn {
 }
 
 sub failure {
-    my ($msg) = @_;
+    my ($msg, $finished_cb) = @_;
     print STDERR "ERROR: $msg\n";
     $exit_status = 1;
-    Amanda::MainLoop::quit();
+    $finished_cb->();
 }
 
-my %subs;
-my ($res, $label, $mode);
+sub do_check {
+    my ($finished_cb) = @_;
+    my ($res, $label, $mode);
 
-$subs{'start'} = make_cb(start => sub {
-    my $chg = Amanda::Changer->new();
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    return failure($chg) if ($chg->isa("Amanda::Changer::Error"));
+    step start => sub {
+	my $chg = Amanda::Changer->new();
 
-    my $taperscan = Amanda::Taper::Scan->new(changer => $chg);
-    $taperscan->scan(
-	result_cb => $subs{'result_cb'},
-	user_msg_fn => \&_user_msg_fn
-    );
-});
+	return failure($chg, $finished_cb) if ($chg->isa("Amanda::Changer::Error"));
 
-$subs{'result_cb'} = make_cb(result_cb => sub {
-    (my $err, $res, $label, $mode) = @_;
-    return failure($err) if $err;
-
-    if (defined $res->{'device'}->volume_label()) {
-	$res->set_label(label => $res->{'device'}->volume_label(),
-			finished_cb => $subs{'set_labeled'});
-    } else {
-	$subs{'set_labeled'}->(undef);
+	my $taperscan = Amanda::Taper::Scan->new(changer => $chg);
+	$taperscan->scan(
+	    result_cb => $steps->{'result_cb'},
+	    user_msg_fn => \&_user_msg_fn
+	);
     };
-});
 
-$subs{'set_labeled'} = make_cb(set_labeled => sub {
-    my $modestr = ($mode == $ACCESS_APPEND)? "append" : "write";
-    my $slot = $res->{'this_slot'};
-    if (defined $res->{'device'}->volume_label()) {
-	print "Will $modestr to volume '$label' in slot $slot.\n";
-    } else {
-	print "Will $modestr label '$label' to new volume in slot $slot.\n";
-    }
+    step result_cb => sub {
+	(my $err, $res, $label, $mode) = @_;
+	return failure($err, $finished_cb) if $err;
 
-    $subs{'check_access_type'}->();
-});
+	if (defined $res->{'device'}->volume_label()) {
+	    $res->set_label(label => $res->{'device'}->volume_label(),
+			    finished_cb => $steps->{'set_labeled'});
+	} else {
+	    $steps->{'set_labeled'}->(undef);
+	};
+    };
 
-$subs{'check_access_type'} = make_cb(check_access_type => sub {
-    my $mat = $res->{'device'}->property_get('medium_access_type');
-    if (defined $mat and $mat == $MEDIA_ACCESS_MODE_WRITE_ONLY) {
-	print "WARNING: Media access mode is WRITE_ONLY; dumps may not be recoverable\n";
-    }
+    step set_labeled => sub {
+	my $modestr = ($mode == $ACCESS_APPEND)? "append" : "write";
+	my $slot = $res->{'this_slot'};
+	if (defined $res->{'device'}->volume_label()) {
+	    print "Will $modestr to volume '$label' in slot $slot.\n";
+	} else {
+	    print "Will $modestr label '$label' to new volume in slot $slot.\n";
+	}
 
-    $subs{'check_overwrite'}->();
-});
+	$steps->{'check_access_type'}->();
+    };
 
-$subs{'check_overwrite'} = make_cb(check_overwrite => sub {
-    # if we're not overwriting, just release the reservation
-    if (!$overwrite) {
-        print "NOTE: skipping tape-writable test\n";
-	return $subs{'release'}->();
-    }
+    step check_access_type => sub {
+	my $mat = $res->{'device'}->property_get('medium_access_type');
+	if (defined $mat and $mat == $MEDIA_ACCESS_MODE_WRITE_ONLY) {
+	    print "WARNING: Media access mode is WRITE_ONLY; dumps may not be recoverable\n";
+	}
 
-    if ($mode != $ACCESS_WRITE) {
-	my $modestr = Amanda::Device::DeviceAccessMode_to_string($mode);
-	print "NOTE: taperscan specified access mode $modestr; skipping volume-writeable test\n";
-	return $subs{'release'}->();
-    }
+	$steps->{'check_overwrite'}->();
+    };
 
-    print "Writing label '$label' to check writablility\n";
-    if (!$res->{'device'}->start($ACCESS_WRITE, $label, "X")) {
-	print "ERROR: writing to volume: " . $res->{'device'}->error_or_status(), "\n";
-	$exit_status = 1;
-    } else {
-	print "Volume '$label' is writeable.\n";
-    }
+    step check_overwrite => sub {
+	# if we're not overwriting, just release the reservation
+	if (!$overwrite) {
+	    print "NOTE: skipping tape-writable test\n";
+	    return $steps->{'release'}->();
+	}
 
-    $subs{'release'}->();
-});
+	if ($mode != $ACCESS_WRITE) {
+	    my $modestr = Amanda::Device::DeviceAccessMode_to_string($mode);
+	    print "NOTE: taperscan specified access mode $modestr; skipping volume-writeable test\n";
+	    return $steps->{'release'}->();
+	}
 
-$subs{'release'} = make_cb(release => sub {
-    $res->release(finished_cb => $subs{'released'});
-});
+	print "Writing label '$label' to check writablility\n";
+	if (!$res->{'device'}->start($ACCESS_WRITE, $label, "X")) {
+	    print "ERROR: writing to volume: " . $res->{'device'}->error_or_status(), "\n";
+	    $exit_status = 1;
+	} else {
+	    print "Volume '$label' is writeable.\n";
+	}
 
-$subs{'released'} = make_cb(released => sub {
-    my ($err) = @_;
-    return failure($err) if $err;
+	$steps->{'release'}->();
+    };
 
-    Amanda::MainLoop::quit();
-});
+    step release => sub {
+	$res->release(finished_cb => $steps->{'released'});
+    };
 
-$subs{'start'}->();
+    step released => sub {
+	my ($err) = @_;
+	return failure($err, $finished_cb) if $err;
+
+	$finished_cb->();
+    };
+}
+do_check(\&Amanda::MainLoop::quit);
 Amanda::MainLoop::run();
 Amanda::Util::finish_application();
 exit($exit_status);

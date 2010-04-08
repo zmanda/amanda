@@ -65,7 +65,6 @@ sub abort() {
 sub user_request {
     my $self = shift;
     my %params = @_;
-    my %subs;
     my $buffer = "";
 
     my $message  = $params{'message'};
@@ -73,7 +72,7 @@ sub user_request {
     my $err      = $params{'err'};
     my $chg_name = $params{'chg_name'};
 
-    $subs{'data_in'} = sub {
+    my $data_in = sub {
 	my $b;
 	my $n_read = POSIX::read(0, $b, 1);
 	if (!defined $n_read) {
@@ -104,7 +103,7 @@ sub user_request {
     print STDERR "and press enter, or ^D to abort.\n";
 
     $self->{'input_src'} = Amanda::MainLoop::fd_source(0, $G_IO_IN|$G_IO_HUP|$G_IO_ERR);
-    $self->{'input_src'}->set_callback($subs{'data_in'});
+    $self->{'input_src'}->set_callback($data_in);
     return;
 };
 
@@ -185,13 +184,16 @@ Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 my $exit_status = 0;
 my $clerk;
 sub failure {
-    my ($msg) = @_;
+    my ($msg, $finished_cb) = @_;
     print STDERR "ERROR: $msg\n";
     $exit_status = 1;
     if ($clerk) {
-	$clerk->quit(finished_cb => sub { Amanda::MainLoop::quit(); });
+	$clerk->quit(finished_cb => sub {
+	    # ignore error
+	    $finished_cb->();
+	});
     } else {
-	Amanda::MainLoop::quit();
+	$finished_cb->();
     }
 }
 
@@ -228,19 +230,22 @@ sub notif_holding {
 package main;
 
 sub main {
-    my %subs;
+    my ($finished_cb) = @_;
     my $current_dump;
     my $plan;
     my @xfer_errs;
 
-    $subs{'start'} = make_cb(start => sub {
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
+    step start => sub {
 	my $chg;
 
 	# first, go to opt_directory or the original working directory we
 	# were started in
 	my $destdir = $opt_chdir || Amanda::Util::get_original_cwd();
 	if (!chdir($destdir)) {
-	    return failure("Cannot chdir to $destdir: $!");
+	    return failure("Cannot chdir to $destdir: $!", $finished_cb);
 	}
 
 	my $interactive = Amanda::Interactive::amfetchdump->new();
@@ -248,18 +253,18 @@ sub main {
 	# we operate the changer via Amanda::Recovery::Scan
 	if (defined $opt_device) {
 	    $chg = Amanda::Changer->new($opt_device);
-	    return failure($chg) if $chg->isa("Amanda::Changer::Error");
+	    return failure($chg, $finished_cb) if $chg->isa("Amanda::Changer::Error");
 	    my $scan = Amanda::Recovery::Scan->new(
 				chg => $chg,
 				interactive => $interactive);
-	    return failure($scan) if $scan->isa("Amanda::Changer::Error");
+	    return failure($scan, $finished_cb) if $scan->isa("Amanda::Changer::Error");
 	    $clerk = Amanda::Recovery::Clerk->new(
 		feedback => main::Feedback->new($chg, $opt_device),
 		scan     => $scan);
 	} else {
 	    my $scan = Amanda::Recovery::Scan->new(
 				interactive => $interactive);
-	    return failure($scan) if $scan->isa("Amanda::Changer::Error");
+	    return failure($scan, $finished_cb) if $scan->isa("Amanda::Changer::Error");
 
 	    $clerk = Amanda::Recovery::Clerk->new(
 		changer => $chg,
@@ -271,16 +276,16 @@ sub main {
 	Amanda::Recovery::Planner::make_plan(
 	    dumpspecs => [ @opt_dumpspecs ],
 	    changer => $chg,
-	    plan_cb => $subs{'plan_cb'},
+	    plan_cb => $steps->{'plan_cb'},
 	    $opt_no_reassembly? (one_dump_per_part => 1) : ());
-    });
+    };
 
-    $subs{'plan_cb'} = make_cb(plan_cb => sub {
+    step plan_cb => sub {
 	(my $err, $plan) = @_;
-	return failure($err) if $err;
+	return failure($err, $finished_cb) if $err;
 
 	if (!@{$plan->{'dumps'}}) {
-	    return failure("No matching dumps found");
+	    return failure("No matching dumps found", $finished_cb);
 	}
 
 	my @needed_labels = $plan->get_volume_list();
@@ -302,23 +307,23 @@ sub main {
 	    my $resp = <STDIN>;
 	}
 
-	$subs{'start_dump'}->();
-    });
+	$steps->{'start_dump'}->();
+    };
 
-    $subs{'start_dump'} = make_cb(start_dump => sub {
+    step start_dump => sub {
 	$current_dump = shift @{$plan->{'dumps'}};
 	if (!$current_dump) {
-	    return $subs{'finished'}->();
+	    return $steps->{'finished'}->();
 	}
 
 	$clerk->get_xfer_src(
 	    dump => $current_dump,
-	    xfer_src_cb => $subs{'xfer_src_cb'});
-    });
+	    xfer_src_cb => $steps->{'xfer_src_cb'});
+    };
 
-    $subs{'xfer_src_cb'} = make_cb(xfer_src_cb => sub {
+    step xfer_src_cb => sub {
 	my ($errs, $hdr, $xfer_src, $directtcp_supported) = @_;
-	return failure(join("; ", @$errs)) if $errs;
+	return failure(join("; ", @$errs), $finished_cb) if $errs;
 
 	# and set up the destination..
 	my $dest_fh;
@@ -341,7 +346,7 @@ sub main {
 	    }
 
 	    if (!open($dest_fh, ">", $filename)) {
-		return failure("Could not open '$filename' for writing: $!");
+		return failure("Could not open '$filename' for writing: $!", $finished_cb);
 	    }
 	}
 
@@ -359,7 +364,8 @@ sub main {
 		    Amanda::Xfer::Filter::Process->new(
 			[ $hdr->{'clnt_encrypt'}, $hdr->{'clnt_decrypt_opt'} ], 0);
 	    } else {
-		return failure("could not decrypt encrypted dump: no program specified");
+		return failure("could not decrypt encrypted dump: no program specified",
+			    $finished_cb);
 	    }
 
 	    $hdr->{'encrypted'} = 0;
@@ -417,22 +423,22 @@ sub main {
 	    my $hdr_fh = $dest_fh;
 	    if (defined $opt_header_file) {
 		open($hdr_fh, ">", $opt_header_file)
-		    or return failure("could not open '$opt_header_file': $!");
+		    or return failure("could not open '$opt_header_file': $!", $finished_cb);
 	    } elsif (defined $opt_header_fd) {
 		open($hdr_fh, "<&".($opt_header_fd+0))
-		    or return failure("could not open fd $opt_header_fd: $!");
+		    or return failure("could not open fd $opt_header_fd: $!", $finished_cb);
 	    }
 	    print $hdr_fh $hdr->to_string(32768, 32768);
 	}
 
 	my $xfer = Amanda::Xfer->new([ $xfer_src, @filters, $xfer_dest ]);
-	$xfer->start($subs{'handle_xmsg'});
+	$xfer->start($steps->{'handle_xmsg'});
 	$clerk->start_recovery(
 	    xfer => $xfer,
-	    recovery_cb => $subs{'recovery_cb'});
-    });
+	    recovery_cb => $steps->{'recovery_cb'});
+    };
 
-    $subs{'handle_xmsg'} = make_cb(handle_xmsg => sub {
+    step handle_xmsg => sub {
 	my ($src, $msg, $xfer) = @_;
 
 	$clerk->handle_xmsg($src, $msg, $xfer);
@@ -441,41 +447,39 @@ sub main {
 	} elsif ($msg->{'type'} == $XMSG_ERROR) {
 	    push @xfer_errs, $msg->{'message'};
 	}
-    });
+    };
 
-    $subs{'recovery_cb'} = make_cb(recovery_cb => sub {
+    step recovery_cb => sub {
 	my %params = @_;
 
 	@xfer_errs = (@xfer_errs, @{$params{'errors'}})
 	    if $params{'errors'};
-	return failure(join("; ", @xfer_errs)) if @xfer_errs;
-
-	return failure("recovery failed")
+	return failure(join("; ", @xfer_errs), $finished_cb)
+	    if @xfer_errs;
+	return failure("recovery failed", $finished_cb)
 	    if $params{'result'} ne 'DONE';
 
-	$subs{'start_dump'}->();
-    });
+	$steps->{'start_dump'}->();
+    };
 
-    $subs{'finished'} = make_cb(finished => sub {
+    step finished => sub {
 	if ($clerk) {
-	    $clerk->quit(finished_cb => $subs{'quit'});
+	    $clerk->quit(finished_cb => $steps->{'quit'});
 	} else {
-	    $subs{'quit'}->();
+	    $steps->{'quit'}->();
 	}
-    });
+    };
 
-    $subs{'quit'} = make_cb(quit => sub {
+    step quit => sub {
 	my ($err) = @_;
 
-	return failure($err) if $err;
+	return failure($err, $finished_cb) if $err;
 
-	Amanda::MainLoop::quit();
-    });
-
-    $subs{'start'}->();
-    Amanda::MainLoop::run();
-    Amanda::Util::finish_application();
-    exit $exit_status;
+	$finished_cb->();
+    };
 }
 
-main();
+main(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
+Amanda::Util::finish_application();
+exit $exit_status;

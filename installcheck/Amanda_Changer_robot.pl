@@ -85,50 +85,57 @@ sub check_inventory {
 ##
 # test the "interface" package
 
-{
-    my $testconf = Installcheck::Config->new();
-    $testconf->add_changer('robo', [
-	tpchanger => "\"chg-robot:$mtx_state_file\"",
-	changerfile => "\"$chg_state_file\"",
+sub test_interface {
+    my ($finished_cb) = @_;
+    my ($interface, $chg);
 
-	# point to the two vtape "drives" that mock/mtx will set up
-	property => "\"tape-device\" \"0=null:drive0\"",
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-	# an point to the mock mtx
-	property => "\"mtx\" \"$mock_mtx_path\"",
-    ]);
-    $testconf->write();
+    step start => sub {
+	my $testconf = Installcheck::Config->new();
+	$testconf->add_changer('robo', [
+	    tpchanger => "\"chg-robot:$mtx_state_file\"",
+	    changerfile => "\"$chg_state_file\"",
 
-    my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-    if ($cfg_result != $CFGERR_OK) {
-	my ($level, @errors) = Amanda::Config::config_errors();
-	die(join "\n", @errors);
-    }
+	    # point to the two vtape "drives" that mock/mtx will set up
+	    property => "\"tape-device\" \"0=null:drive0\"",
 
-    my $chg = Amanda::Changer->new("robo");
-    die "$chg" if $chg->isa("Amanda::Changer::Error");
-    my $interface = $chg->{'interface'};
-    my %subs;
+	    # an point to the mock mtx
+	    property => "\"mtx\" \"$mock_mtx_path\"",
+	]);
+	$testconf->write();
 
-    $subs{'start'} = sub {
-	$interface->inquiry(sub {
-	    my ($error, $info) = @_;
+	my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+	if ($cfg_result != $CFGERR_OK) {
+	    my ($level, @errors) = Amanda::Config::config_errors();
+	    die(join "\n", @errors);
+	}
 
-	    die $error if $error;
+	$chg = Amanda::Changer->new("robo");
+	die "$chg" if $chg->isa("Amanda::Changer::Error");
+	$interface = $chg->{'interface'};
 
-	    is_deeply($info, {
-		'revision' => '0416',
-		'product id' => 'SSL2000 Series',
-		'attached changer' => 'No',
-		'vendor id' => 'COMPAQ',
-		'product type' => 'Medium Changer'
-		}, "robot::Interface inquiry() info is correct");
-
-	    $subs{'status1'}->();
-	});
+	$interface->inquiry($steps->{'inquiry_cb'});
     };
 
-    $subs{'status1'} = sub {
+    step inquiry_cb => sub {
+	my ($error, $info) = @_;
+
+	die $error if $error;
+
+	is_deeply($info, {
+	    'revision' => '0416',
+	    'product id' => 'SSL2000 Series',
+	    'attached changer' => 'No',
+	    'vendor id' => 'COMPAQ',
+	    'product type' => 'Medium Changer'
+	    }, "robot::Interface inquiry() info is correct");
+
+	$steps->{'status1'}->();
+    };
+
+    step status1 => sub {
 	$interface->status(sub {
 	    my ($error, $status) = @_;
 
@@ -148,22 +155,22 @@ sub check_inventory {
 		    6 => { empty => 1, ie => 1 },
 		},
 	    }, "robot::Interface status() output is correct (no drives loaded)");
-	    $subs{'load0'}->();
+	    $steps->{'load0'}->();
 	});
     };
 
-    $subs{'load0'} = sub {
+    step load0 => sub {
 	$interface->load(2, 0, sub {
 	    my ($error) = @_;
 
 	    die $error if $error;
 
 	    pass("load");
-	    $subs{'status2'}->();
+	    $steps->{'status2'}->();
 	});
     };
 
-    $subs{'status2'} = sub {
+    step status2 => sub {
 	$interface->status(sub {
 	    my ($error, $status) = @_;
 
@@ -184,22 +191,22 @@ sub check_inventory {
 		},
 	    }, "robot::Interface status() output is correct (one drive loaded)");
 
-	    $subs{'load1'}->();
+	    $steps->{'load1'}->();
 	});
     };
 
-    $subs{'load1'} = sub {
+    step load1 => sub {
 	$interface->load(4, 1, sub {
 	    my ($error) = @_;
 
 	    die $error if $error;
 
 	    pass("load");
-	    $subs{'status3'}->();
+	    $steps->{'status3'}->();
 	});
     };
 
-    $subs{'status3'} = sub {
+    step status3 => sub {
 	$interface->status(sub {
 	    my ($error, $status) = @_;
 
@@ -220,22 +227,22 @@ sub check_inventory {
 		},
 	    }, "robot::Interface status() output is correct (two drives loaded)");
 
-	    $subs{'transfer'}->();
+	    $steps->{'transfer'}->();
 	});
     };
 
-    $subs{'transfer'} = sub {
+    step transfer => sub {
 	$interface->transfer(3, 6, sub {
 	    my ($error) = @_;
 
 	    die $error if $error;
 
 	    pass("transfer");
-	    $subs{'status4'}->();
+	    $steps->{'status4'}->();
 	});
     };
 
-    $subs{'status4'} = sub {
+    step status4 => sub {
 	$interface->status(sub {
 	    my ($error, $status) = @_;
 
@@ -256,17 +263,12 @@ sub check_inventory {
 		},
 	    }, "robot::Interface status() output is correct after transfer");
 
-	    $subs{'quit'}->();
+	    $finished_cb->();
 	});
     };
-
-    $subs{'quit'} = sub {
-	Amanda::MainLoop::quit();
-    };
-
-    Amanda::MainLoop::call_later($subs{'start'});
-    Amanda::MainLoop::run();
 }
+test_interface(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
 
 {
     my $testconf = Installcheck::Config->new();
@@ -365,86 +367,82 @@ sub check_inventory {
 ##
 # Test the real deal
 
-# These tests are run over a number of different mtx configurations, to ensure
-# that the behavior is identical regardless of the changer/mtx characteristics
-for my $mtx_config (
-    { barcodes => 1, track_orig => 1, },
-    { barcodes => 0, track_orig => 1, },
-    { barcodes => 1, track_orig => -1, },
-    { barcodes => 0, track_orig => 0, },
-    { barcodes => -1, track_orig => 0, },
-) {
-    my %subs;
+sub test_changer {
+    my ($mtx_config, $finished_cb) = @_;
     my $chg;
-    my ($res1, $res2);
-
+    my ($res1, $res2, $mtx_state_file);
     my $pfx = "BC=$mtx_config->{barcodes}; TORIG=$mtx_config->{track_orig}";
-
-    # clean up
-    unlink($chg_state_file) if -f $chg_state_file;
-    unlink($mtx_state_file) if -f $mtx_state_file;
-    %Amanda::Changer::changers_by_uri_cc = ();
-
-    # set up some vtapes
     my $vtape_root = "$Installcheck::TMP/chg-robot-vtapes";
-    rmtree($vtape_root);
-    mkpath($vtape_root);
 
-    my @ignore_barcodes = ( property => "\"ignore-barcodes\" \"y\"")
-	if ($mtx_config->{'barcodes'} == -1);
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    my $testconf = Installcheck::Config->new();
-    $testconf->add_changer('robo', [
-	tpchanger => "\"chg-robot:$mtx_state_file\"",
-	changerfile => "\"$chg_state_file\"",
+    step setup => sub {
+	# clean up
+	unlink($chg_state_file) if -f $chg_state_file;
+	%Amanda::Changer::changers_by_uri_cc = ();
 
-	# point to the two vtape "drives" that mock/mtx will set up
-	property => "\"tape-device\" \"0=file:$vtape_root/drive0\"",
-	property => "append \"tape-device\" \"1=file:$vtape_root/drive1\"",
-	property => "\"use-slots\" \"1-5\"",
-	property => "\"mtx\" \"$mock_mtx_path\"",
-	@ignore_barcodes,
-    ]);
-    $testconf->write();
+	# set up some vtapes
+	rmtree($vtape_root);
+	mkpath($vtape_root);
 
-    config_uninit();
-    my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-    if ($cfg_result != $CFGERR_OK) {
-	my ($level, @errors) = Amanda::Config::config_errors();
-	die(join "\n", @errors);
-    }
+	# reset the mock mtx
+	$mtx_state_file = setup_mock_mtx (
+		 %$mtx_config,
+		 num_slots => 6,
+		 num_ie => 1,
+		 num_drives => 2,
+		 loaded_slots => {
+		    1 => '11111',
+		    2 => '22222',
+		    3 => '33333',
+		    4 => '44444',
+		    # slot 5 is empty
+		    6 => '66666', # slot 6 is full, but not in use-slots
+		 },
+		 first_slot => 1,
+		 first_drive => 0,
+		 first_ie => 6,
+		 vtape_root => $vtape_root,
+	       );
 
-    # reset the mock mtx
-    my $mtx_state_file = setup_mock_mtx (
-	     %$mtx_config,
-	     num_slots => 6,
-	     num_ie => 1,
-	     num_drives => 2,
-	     loaded_slots => {
-		1 => '11111',
-		2 => '22222',
-		3 => '33333',
-		4 => '44444',
-		# slot 5 is empty
-		6 => '66666', # slot 6 is full, but not in use-slots
-	     },
-	     first_slot => 1,
-	     first_drive => 0,
-	     first_ie => 6,
-	     vtape_root => $vtape_root,
-	   );
+	my @ignore_barcodes = ( property => "\"ignore-barcodes\" \"y\"")
+	    if ($mtx_config->{'barcodes'} == -1);
 
+	my $testconf = Installcheck::Config->new();
+	$testconf->add_changer('robo', [
+	    tpchanger => "\"chg-robot:$mtx_state_file\"",
+	    changerfile => "\"$chg_state_file\"",
 
-    $subs{'start'} = sub {
+	    # point to the two vtape "drives" that mock/mtx will set up
+	    property => "\"tape-device\" \"0=file:$vtape_root/drive0\"",
+	    property => "append \"tape-device\" \"1=file:$vtape_root/drive1\"",
+	    property => "\"use-slots\" \"1-5\"",
+	    property => "\"mtx\" \"$mock_mtx_path\"",
+	    @ignore_barcodes,
+	]);
+	$testconf->write();
+
+	config_uninit();
+	my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+	if ($cfg_result != $CFGERR_OK) {
+	    my ($level, @errors) = Amanda::Config::config_errors();
+	    die(join "\n", @errors);
+	}
+
+	$steps->{'start'}->();
+    };
+
+    step start => sub {
 	$chg = Amanda::Changer->new("robo");
 	ok(!$chg->isa("Amanda::Changer::Error"),
 	    "$pfx: Create working chg-robot instance")
-	    or die("no sense going on");
+	    or die("no sense going on: $chg");
 
-	$chg->info(info => [qw(vendor_string num_slots fast_search)], info_cb => $subs{'info_cb'});
+	$chg->info(info => [qw(vendor_string num_slots fast_search)], info_cb => $steps->{'info_cb'});
     };
 
-    $subs{'info_cb'} = sub {
+    step info_cb => sub {
 	my ($err, %info) = @_;
 	die $err if $err;
 
@@ -454,11 +452,11 @@ for my $mtx_config (
 	    vendor_string => "COMPAQ SSL2000 Series",
 	}, "$pfx: info keys num_slots, fast_search, vendor_string are correct");
 
-	$subs{'inventory1'}->();
+	$steps->{'inventory1'}->();
     };
 
-    $subs{'inventory1'} = sub {
-	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'load_slot_1'}, [
+    step inventory1 => sub {
+	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $steps->{'load_slot_1'}, [
 	    { slot => 1, state => Amanda::Changer::SLOT_FULL,
 	      barcode => '11111', current => 1,
 	      device_status => undef, f_type => undef, label => undef },
@@ -476,11 +474,11 @@ for my $mtx_config (
 	], "$pfx: inventory is correct on start-up");
     };
 
-    $subs{'load_slot_1'} = sub {
-	$chg->load(slot => 1, res_cb => $subs{'loaded_slot_1'});
+    step load_slot_1 => sub {
+	$chg->load(slot => 1, res_cb => $steps->{'loaded_slot_1'});
     };
 
-    $subs{'loaded_slot_1'} = sub {
+    step loaded_slot_1 => sub {
 	(my $err, $res1) = @_;
 	die $err if $err;
 
@@ -495,14 +493,14 @@ for my $mtx_config (
 		orig_slot => 1,
 	    }, "$pfx: slot 1 'loaded_in' and drive 0 'orig_slot' are correct");
 
-	$subs{'load_slot_2'}->();
+	$steps->{'load_slot_2'}->();
     };
 
-    $subs{'load_slot_2'} = sub {
-	$chg->load(slot => 2, res_cb => $subs{'loaded_slot_2'});
+    step load_slot_2 => sub {
+	$chg->load(slot => 2, res_cb => $steps->{'loaded_slot_2'});
     };
 
-    $subs{'loaded_slot_2'} = sub {
+    step loaded_slot_2 => sub {
 	(my $err, $res2) = @_;
 	die $err if $err;
 
@@ -525,10 +523,10 @@ for my $mtx_config (
 		orig_slot => 2,
 	    }, "$pfx: slot 2 'loaded_in' and drive 1 'orig_slot' are correct");
 
-	$subs{'check_loads'}->();
+	$steps->{'check_loads'}->();
     };
 
-    $subs{'check_loads'} = sub {
+    step check_loads => sub {
 	# peek into the interface to check that things are loaded correctly
 	$chg->{'interface'}->status(sub {
 	    my ($error, $status) = @_;
@@ -543,12 +541,12 @@ for my $mtx_config (
 		}, "$pfx: double-check: loading drives with the changer gets the right drives loaded");
 	    }
 
-	    $subs{'inventory2'}->();
+	    $steps->{'inventory2'}->();
 	});
     };
 
-    $subs{'inventory2'} = sub {
-	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'load_slot_3'}, [
+    step inventory2 => sub {
+	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $steps->{'load_slot_3'}, [
 	    { slot => 1, state => Amanda::Changer::SLOT_FULL,
 	      barcode => '11111', reserved => 1, loaded_in => 0, current => 1,
 	      device_status => undef, f_type => undef, label => undef },
@@ -566,11 +564,11 @@ for my $mtx_config (
 	], "$pfx: inventory is updated when slots are loaded");
     };
 
-    $subs{'load_slot_3'} = sub {
-	$chg->load(slot => 3, res_cb => $subs{'loaded_slot_3'});
+    step load_slot_3 => sub {
+	$chg->load(slot => 3, res_cb => $steps->{'loaded_slot_3'});
     };
 
-    $subs{'loaded_slot_3'} = sub {
+    step loaded_slot_3 => sub {
 	my ($err, $no_res) = @_;
 
 	chg_err_like($err,
@@ -579,17 +577,17 @@ for my $mtx_config (
 	      type => 'failed' },
 	    "$pfx: trying to load a third slot fails with 'no drives available'");
 
-	$subs{'label_tape_1'}->();
+	$steps->{'label_tape_1'}->();
     };
 
-    $subs{'label_tape_1'} = sub {
+    step label_tape_1 => sub {
 	$res1->{'device'}->start($Amanda::Device::ACCESS_WRITE, "TAPE-1", undef);
 	$res1->{'device'}->finish();
 
-	$res1->set_label(label => "TAPE-1", finished_cb => $subs{'label_tape_2'});
+	$res1->set_label(label => "TAPE-1", finished_cb => $steps->{'label_tape_2'});
     };
 
-    $subs{'label_tape_2'} = sub {
+    step label_tape_2 => sub {
 	my ($err) = @_;
 	die $err if $err;
 
@@ -619,10 +617,10 @@ for my $mtx_config (
 	$res2->{'device'}->start($Amanda::Device::ACCESS_WRITE, "TAPE-2", undef);
 	$res2->{'device'}->finish();
 
-	$res2->set_label(label => "TAPE-2", finished_cb => $subs{'release1'});
+	$res2->set_label(label => "TAPE-2", finished_cb => $steps->{'release1'});
     };
 
-    $subs{'release1'} = sub {
+    step release1 => sub {
 	my ($err) = @_;
 	die $err if $err;
 
@@ -640,15 +638,15 @@ for my $mtx_config (
 		drive_label => 'TAPE-2',
 	    }, "$pfx: label is correctly reflected in changer state");
 
-	$res2->release(finished_cb => $subs{'inventory3'});
+	$res2->release(finished_cb => $steps->{'inventory3'});
     };
 
-    $subs{'inventory3'} = sub {
+    step inventory3 => sub {
 	my ($err) = @_;
 	die "$err" if $err;
 	pass("$pfx: slot 2/drive 1 released");
 
-	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'check_state_after_release1'}, [
+	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $steps->{'check_state_after_release1'}, [
 	    { slot => 1, state => Amanda::Changer::SLOT_FULL,
 	      barcode => '11111', reserved => 1, loaded_in => 0, current => 1,
 	      device_status => $DEVICE_STATUS_SUCCESS,
@@ -668,20 +666,20 @@ for my $mtx_config (
 	], "$pfx: inventory is still up to date");
     };
 
-    $subs{'check_state_after_release1'} = sub {
+    step check_state_after_release1 => sub {
 	is($chg->{'__last_state'}->{'drives'}->{1}->{'res_info'}, undef,
 		"$pfx: drive is not reserved");
 	is($chg->{'__last_state'}->{'drives'}->{1}->{'label'}, 'TAPE-2',
 		"$pfx: tape is still in drive");
 
-	$subs{'load_current_1'}->();
+	$steps->{'load_current_1'}->();
     };
 
-    $subs{'load_current_1'} = sub {
-	$chg->load(relative_slot => "current", res_cb => $subs{'loaded_current_1'});
+    step load_current_1 => sub {
+	$chg->load(relative_slot => "current", res_cb => $steps->{'loaded_current_1'});
     };
 
-    $subs{'loaded_current_1'} = sub {
+    step loaded_current_1 => sub {
 	my ($err, $res) = @_;
 
 	chg_err_like($err,
@@ -690,15 +688,15 @@ for my $mtx_config (
 	      type => 'failed' },
 	    "$pfx: loading 'current' when set_current hasn't been used yet gets slot 1 (which is in use)");
 
-	$subs{'load_slot_4'}->();
+	$steps->{'load_slot_4'}->();
     };
 
     # this should unload what's in drive 1 and load the empty volume in slot 4
-    $subs{'load_slot_4'} = sub {
-	$chg->load(slot => 4, set_current => 1, res_cb => $subs{'loaded_slot_4'});
+    step load_slot_4 => sub {
+	$chg->load(slot => 4, set_current => 1, res_cb => $steps->{'loaded_slot_4'});
     };
 
-    $subs{'loaded_slot_4'} = sub {
+    step loaded_slot_4 => sub {
 	(my $err, $res2) = @_;
 	die "$err" if $err;
 
@@ -729,22 +727,22 @@ for my $mtx_config (
 		orig_slot => 4,
 	    }, "$pfx: slot 4 'loaded_in' and drive 1 'orig_slot' are correct");
 
-	$subs{'label_tape_4'}->();
+	$steps->{'label_tape_4'}->();
     };
 
-    $subs{'label_tape_4'} = sub {
+    step label_tape_4 => sub {
 	$res2->{'device'}->start($Amanda::Device::ACCESS_WRITE, "TAPE-4", undef);
 	$res2->{'device'}->finish();
 
-	$res2->set_label(label => "TAPE-4", finished_cb => $subs{'inventory4'});
+	$res2->set_label(label => "TAPE-4", finished_cb => $steps->{'inventory4'});
     };
 
-    $subs{'inventory4'} = sub {
+    step inventory4 => sub {
 	my ($err) = @_;
 	die "$err" if $err;
 	pass("$pfx: labeled TAPE-4 in drive 1");
 
-	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'release2'}, [
+	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $steps->{'release2'}, [
 	    { slot => 1, state => Amanda::Changer::SLOT_FULL,
 	      barcode => '11111',
 	      device_status => $DEVICE_STATUS_SUCCESS,
@@ -766,7 +764,7 @@ for my $mtx_config (
 	], "$pfx: inventory is up to date after more labelings");
     };
 
-    $subs{'release2'} = sub {
+    step release2 => sub {
 	is_deeply({
 		loaded_in => $chg->{'__last_state'}->{'slots'}->{4}->{'loaded_in'},
 		orig_slot => $chg->{'__last_state'}->{'drives'}->{1}->{'orig_slot'},
@@ -779,10 +777,10 @@ for my $mtx_config (
 		drive_label => 'TAPE-4',
 	    }, "$pfx: label is correctly reflected in changer state");
 
-	$res1->release(finished_cb => $subs{'release2_done'});
+	$res1->release(finished_cb => $steps->{'release2_done'});
     };
 
-    $subs{'release2_done'} = sub {
+    step release2_done => sub {
 	my ($err) = @_;
 	die $err if $err;
 
@@ -791,17 +789,17 @@ for my $mtx_config (
 	is($chg->{'__last_state'}->{'drives'}->{0}->{'label'}, 'TAPE-1',
 		"$pfx: tape is still in drive");
 
-	$subs{'release3'}->();
+	$steps->{'release3'}->();
     };
 
-    $subs{'release3'} = sub {
+    step release3 => sub {
 	my ($err) = @_;
 	die $err if $err;
 
-	$res2->release(finished_cb => $subs{'release3_done'});
+	$res2->release(finished_cb => $steps->{'release3_done'});
     };
 
-    $subs{'release3_done'} = sub {
+    step release3_done => sub {
 	my ($err) = @_;
 	die $err if $err;
 
@@ -810,52 +808,52 @@ for my $mtx_config (
 	is($chg->{'__last_state'}->{'drives'}->{1}->{'label'},
 		'TAPE-4', "$pfx: tape is still in drive");
 
-	$subs{'load_preloaded_by_slot'}->();
+	$steps->{'load_preloaded_by_slot'}->();
     };
 
     # try loading a slot that's already in a drive
-    $subs{'load_preloaded_by_slot'} = sub {
-	$chg->load(slot => 1, res_cb => $subs{'loaded_preloaded_by_slot'});
+    step load_preloaded_by_slot => sub {
+	$chg->load(slot => 1, res_cb => $steps->{'loaded_preloaded_by_slot'});
     };
 
-    $subs{'loaded_preloaded_by_slot'} = sub {
+    step loaded_preloaded_by_slot => sub {
 	(my $err, $res1) = @_;
 	die $err if $err;
 
 	is($res1->{'device'}->device_name, "file:$vtape_root/drive0",
 	    "$pfx: loading a tape (by slot) that's already in a drive returns that drive");
 
-	$res1->release(finished_cb => $subs{'load_preloaded_by_label'});
+	$res1->release(finished_cb => $steps->{'load_preloaded_by_label'});
     };
 
     # try again, this time by label
-    $subs{'load_preloaded_by_label'} = sub {
+    step load_preloaded_by_label => sub {
 	pass("$pfx: slot 1/drive 0 released");
 
-	$chg->load(label => 'TAPE-4', res_cb => $subs{'loaded_preloaded_by_label'});
+	$chg->load(label => 'TAPE-4', res_cb => $steps->{'loaded_preloaded_by_label'});
     };
 
-    $subs{'loaded_preloaded_by_label'} = sub {
+    step loaded_preloaded_by_label => sub {
 	(my $err, $res1) = @_;
 	die $err if $err;
 
 	is($res1->{'device'}->device_name, "file:$vtape_root/drive1",
 	    "$pfx: loading a tape (by label) that's already in a drive returns that drive");
 
-	$res1->release(finished_cb => $subs{'load_unloaded_by_label'});
+	$res1->release(finished_cb => $steps->{'load_unloaded_by_label'});
     };
 
     # test out searching by label
-    $subs{'load_unloaded_by_label'} = sub {
+    step load_unloaded_by_label => sub {
 	my ($err) = @_;
 	die $err if $err;
 
 	pass("$pfx: slot 4/drive 1 released");
 
-	$chg->load(label => 'TAPE-2', res_cb => $subs{'loaded_unloaded_by_label'});
+	$chg->load(label => 'TAPE-2', res_cb => $steps->{'loaded_unloaded_by_label'});
     };
 
-    $subs{'loaded_unloaded_by_label'} = sub {
+    step loaded_unloaded_by_label => sub {
 	(my $err, $res1) = @_;
 	die $err if $err;
 
@@ -864,14 +862,14 @@ for my $mtx_config (
 	    "$pfx: loading a tape (by label) that's *not* already in a drive returns " .
 	    "the correct device");
 
-	$subs{'release4'}->();
+	$steps->{'release4'}->();
     };
 
-    $subs{'release4'} = sub {
-	$res1->release(finished_cb => $subs{'release4_done'}, eject => 1);
+    step release4 => sub {
+	$res1->release(finished_cb => $steps->{'release4_done'}, eject => 1);
     };
 
-    $subs{'release4_done'} = sub {
+    step release4_done => sub {
 	my ($err) = @_;
 	die $err if $err;
 
@@ -887,14 +885,14 @@ for my $mtx_config (
 		drive_label => undef,
 	    }, "$pfx: and TAPE-2 ejected");
 
-	$subs{'load_current_2'}->();
+	$steps->{'load_current_2'}->();
     };
 
-    $subs{'load_current_2'} = sub {
-	$chg->load(relative_slot => "current", res_cb => $subs{'loaded_current_2'});
+    step load_current_2 => sub {
+	$chg->load(relative_slot => "current", res_cb => $steps->{'loaded_current_2'});
     };
 
-    $subs{'loaded_current_2'} = sub {
+    step loaded_current_2 => sub {
 	(my $err, $res1) = @_;
 	die $err if $err;
 
@@ -902,23 +900,23 @@ for my $mtx_config (
 	is($res1->{'device'}->volume_label, "TAPE-4",
 	    "$pfx: loading 'current' returns the correct device");
 
-	$subs{'release5'}->();
+	$steps->{'release5'}->();
     };
 
-    $subs{'release5'} = sub {
-	$res1->release(finished_cb => $subs{'load_slot_next'});
+    step release5 => sub {
+	$res1->release(finished_cb => $steps->{'load_slot_next'});
     };
 
-    $subs{'load_slot_next'} = sub {
+    step load_slot_next => sub {
 	my ($err) = @_;
 	die $err if $err;
 
 	pass("$pfx: slot 4/drive 1 released");
 
-	$chg->load(relative_slot => "next", res_cb => $subs{'loaded_slot_next'});
+	$chg->load(relative_slot => "next", res_cb => $steps->{'loaded_slot_next'});
     };
 
-    $subs{'loaded_slot_next'} = sub {
+    step loaded_slot_next => sub {
 	(my $err, $res1) = @_;
 	die $err if $err;
 
@@ -927,15 +925,15 @@ for my $mtx_config (
 	    "$pfx: loading 'next' returns the correct slot, skipping slot 5 and " .
 		    "looping around to the beginning");
 
-	$subs{'load_res1_next_slot'}->();
+	$steps->{'load_res1_next_slot'}->();
     };
 
-    $subs{'load_res1_next_slot'} = sub {
+    step load_res1_next_slot => sub {
 	$chg->load(relative_slot => "next", slot => $res1->{'this_slot'},
-		   res_cb => $subs{'loaded_res1_next_slot'});
+		   res_cb => $steps->{'loaded_res1_next_slot'});
     };
 
-    $subs{'loaded_res1_next_slot'} = sub {
+    step loaded_res1_next_slot => sub {
 	(my $err, $res2) = @_;
 	die $err if $err;
 
@@ -947,32 +945,32 @@ for my $mtx_config (
                 "$pfx: result has a barcode");
         }
 
-	$subs{'release6'}->();
+	$steps->{'release6'}->();
     };
 
-    $subs{'release6'} = sub {
-	$res1->release(finished_cb => $subs{'release7'});
+    step release6 => sub {
+	$res1->release(finished_cb => $steps->{'release7'});
     };
 
-    $subs{'release7'} = sub {
+    step release7 => sub {
 	my ($err) = @_;
 	die "$err" if $err;
 
 	pass("$pfx: slot 1 released");
 
-	$res2->release(finished_cb => $subs{'load_disallowed_slot'});
+	$res2->release(finished_cb => $steps->{'load_disallowed_slot'});
     };
 
-    $subs{'load_disallowed_slot'} = sub {
+    step load_disallowed_slot => sub {
 	my ($err) = @_;
 	die $err if $err;
 
 	pass("$pfx: slot 2 released");
 
-	$chg->load(slot => 6, res_cb => $subs{'loaded_disallowed_slot'});
+	$chg->load(slot => 6, res_cb => $steps->{'loaded_disallowed_slot'});
     };
 
-    $subs{'loaded_disallowed_slot'} = sub {
+    step loaded_disallowed_slot => sub {
 	(my $err, $res1) = @_;
 
 	chg_err_like($err,
@@ -981,11 +979,11 @@ for my $mtx_config (
 	      type => 'failed' },
 	    "$pfx: loading a disallowed slot fails propertly");
 
-	$subs{'inventory5'}->();
+	$steps->{'inventory5'}->();
     };
 
-    $subs{'inventory5'} = sub {
-	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'try_update'}, [
+    step inventory5 => sub {
+	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $steps->{'try_update'}, [
 	    { slot => 1, state => Amanda::Changer::SLOT_FULL,
 	      barcode => '11111', loaded_in => 1,
 	      device_status => $DEVICE_STATUS_SUCCESS,
@@ -1006,7 +1004,7 @@ for my $mtx_config (
 	], "$pfx: inventory still accurate");
     };
 
-    $subs{'try_update'} = sub {
+    step try_update => sub {
 	# first, add a label in slot 3, which hasn't been written
 	# to yet
 	my $dev = Amanda::Device->new("file:$vtape_root/slot3");
@@ -1017,10 +1015,10 @@ for my $mtx_config (
 	$dev->finish();
 
 	# now update that slot
-	$chg->update(changed => "2-4", finished_cb => $subs{'update_finished'});
+	$chg->update(changed => "2-4", finished_cb => $steps->{'update_finished'});
     };
 
-    $subs{'update_finished'} = sub {
+    step update_finished => sub {
 	my ($err) = @_;
 	die "$err" if $err;
 
@@ -1048,15 +1046,15 @@ for my $mtx_config (
 		}, "$pfx: bc2lb is correct, too");
 	}
 
-	$subs{'try_update2'}->();
+	$steps->{'try_update2'}->();
     };
 
-    $subs{'try_update2'} = sub {
+    step try_update2 => sub {
 	# lie about slot 2
-	$chg->update(changed => "2=SURPRISE!", finished_cb => $subs{'update_finished2'});
+	$chg->update(changed => "2=SURPRISE!", finished_cb => $steps->{'update_finished2'});
     };
 
-    $subs{'update_finished2'} = sub {
+    step update_finished2 => sub {
 	my ($err) = @_;
 	die "$err" if $err;
 
@@ -1076,15 +1074,15 @@ for my $mtx_config (
 		}, "$pfx: bc2lb is correct, too");
 	}
 
-	$subs{'try_update3'}->();
+	$steps->{'try_update3'}->();
     };
 
-    $subs{'try_update3'} = sub {
+    step try_update3 => sub {
 	# lie about slot 2
-	$chg->update(changed => "5=NO!", finished_cb => $subs{'update_finished3'});
+	$chg->update(changed => "5=NO!", finished_cb => $steps->{'update_finished3'});
     };
 
-    $subs{'update_finished3'} = sub {
+    step update_finished3 => sub {
 	my ($err) = @_;
 	chg_err_like($err,
 	    { message => "slot 5 is empty",
@@ -1092,13 +1090,13 @@ for my $mtx_config (
 	      type => 'failed' },
 	    "$pfx: assignment-style update of an empty slot gives error");
 
-	$subs{'inventory6'}->();
+	$steps->{'inventory6'}->();
     };
 
-    $subs{'inventory6'} = sub {
+    step inventory6 => sub {
 	# note that the loading behavior of update() is not required, so the loaded_in
 	# keys here may change if update() gets smarter
-	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'move1'}, [
+	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $steps->{'move1'}, [
 	    { slot => 1, state => Amanda::Changer::SLOT_FULL,
 	      barcode => '11111',
 	      device_status => $DEVICE_STATUS_SUCCESS,
@@ -1119,12 +1117,12 @@ for my $mtx_config (
 	], "$pfx: inventory reflects updates");
     };
 
-    $subs{'move1'} = sub {
+    step move1 => sub {
 	# move to a full slot
-	$chg->move(from_slot => 2, to_slot => 1, finished_cb => $subs{'moved1'});
+	$chg->move(from_slot => 2, to_slot => 1, finished_cb => $steps->{'moved1'});
     };
 
-    $subs{'moved1'} = sub {
+    step moved1 => sub {
 	my ($err) = @_;
 
 	chg_err_like($err,
@@ -1133,16 +1131,16 @@ for my $mtx_config (
 	      type => 'failed' },
 	    "$pfx: moving to a full slot is an error");
 
-	$subs{'move2'}->();
+	$steps->{'move2'}->();
     };
 
-    $subs{'move2'} = sub {
+    step move2 => sub {
 	# move to a full slot that's loaded (so there's not *actually* a tape
 	# in the slot)
-	$chg->move(from_slot => 2, to_slot => 3, finished_cb => $subs{'moved2'});
+	$chg->move(from_slot => 2, to_slot => 3, finished_cb => $steps->{'moved2'});
     };
 
-    $subs{'moved2'} = sub {
+    step moved2 => sub {
 	my ($err) = @_;
 
 	chg_err_like($err,
@@ -1151,15 +1149,15 @@ for my $mtx_config (
 	      type => 'failed' },
 	    "$pfx: moving to a full slot is an error even if that slot is loaded");
 
-	$subs{'move3'}->();
+	$steps->{'move3'}->();
     };
 
-    $subs{'move3'} = sub {
+    step move3 => sub {
 	# move from an empty slot
-	$chg->move(from_slot => 5, to_slot => 3, finished_cb => $subs{'moved3'});
+	$chg->move(from_slot => 5, to_slot => 3, finished_cb => $steps->{'moved3'});
     };
 
-    $subs{'moved3'} = sub {
+    step moved3 => sub {
 	my ($err) = @_;
 
 	chg_err_like($err,
@@ -1168,15 +1166,15 @@ for my $mtx_config (
 	      type => 'failed' },
 	    "$pfx: moving from an empty slot is an error");
 
-	$subs{'move4'}->();
+	$steps->{'move4'}->();
     };
 
-    $subs{'move4'} = sub {
+    step move4 => sub {
 	# move from a loaded slot to an empty slot
-	$chg->move(from_slot => 4, to_slot => 5, finished_cb => $subs{'moved4'});
+	$chg->move(from_slot => 4, to_slot => 5, finished_cb => $steps->{'moved4'});
     };
 
-    $subs{'moved4'} = sub {
+    step moved4 => sub {
 	my ($err) = @_;
 
 	chg_err_like($err,
@@ -1185,15 +1183,15 @@ for my $mtx_config (
 	      type => 'failed' },
 	    "$pfx: moving from a loaded slot is an error");
 
-	$subs{'move5'}->();
+	$steps->{'move5'}->();
     };
 
-    $subs{'move5'} = sub {
-	$chg->move(from_slot => 2, to_slot => 5, finished_cb => $subs{'inventory7'});
+    step move5 => sub {
+	$chg->move(from_slot => 2, to_slot => 5, finished_cb => $steps->{'inventory7'});
     };
 
 
-    $subs{'inventory7'} = sub {
+    step inventory7 => sub {
 	my ($err) = @_;
 	die $err if $err;
 
@@ -1201,7 +1199,7 @@ for my $mtx_config (
 
 	# note that the loading behavior of update() is not required, so the loaded_in
 	# keys here may change if update() gets smarter
-	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'start_scan'}, [
+	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $steps->{'start_scan'}, [
 	    { slot => 1, state => Amanda::Changer::SLOT_FULL,
 	      barcode => '11111',
 	      device_status => $DEVICE_STATUS_SUCCESS,
@@ -1225,17 +1223,17 @@ for my $mtx_config (
     # test a scan, using except_slots
     my %except_slots;
 
-    $subs{'start_scan'} = make_cb(start_scan => sub {
+    step start_scan => sub {
 	$chg->load(relative_slot => "current", except_slots => { %except_slots },
-		   res_cb => $subs{'loaded_for_scan'});
-    });
+		   res_cb => $steps->{'loaded_for_scan'});
+    };
 
-    $subs{'loaded_for_scan'} = make_cb(loaded_for_scan => sub {
+    step loaded_for_scan => sub {
         (my $err, $res1) = @_;
 	my $slot;
 	if ($err) {
 	    if ($err->notfound) {
-		return $subs{'scan_done'}->();
+		return $steps->{'scan_done'}->();
 	    } elsif ($err->volinuse and defined $err->{'slot'}) {
 		$slot = $err->{'slot'};
 	    } else {
@@ -1247,22 +1245,22 @@ for my $mtx_config (
 
 	$except_slots{$slot} = 1;
 
-	$res1->release(finished_cb => $subs{'released_for_scan'});
-    });
+	$res1->release(finished_cb => $steps->{'released_for_scan'});
+    };
 
-    $subs{'released_for_scan'} = make_cb(released_for_scan => sub {
+    step released_for_scan => sub {
 	my ($err) = @_;
 	die $err if $err;
 
         $chg->load(relative_slot => 'next', slot => $res1->{'this_slot'},
 		   except_slots => { %except_slots },
-		   res_cb => $subs{'loaded_for_scan'});
-    });
+		   res_cb => $steps->{'loaded_for_scan'});
+    };
 
-    $subs{'scan_done'} = make_cb(scan_done => sub {
+    step scan_done => sub {
 	is_deeply({ %except_slots }, { 4=>1, 5=>1, 1=>1, 3=>1 },
 		"$pfx: scanning with except_slots works");
-	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'update_unknown'}, [
+	check_inventory($chg, $mtx_config->{'barcodes'} > 0, $steps->{'update_unknown'}, [
 	    { slot => 1, state => Amanda::Changer::SLOT_FULL,
 	      barcode => '11111', loaded_in => 0,
 	      device_status => $DEVICE_STATUS_SUCCESS,
@@ -1281,18 +1279,18 @@ for my $mtx_config (
 	      device_status => $DEVICE_STATUS_SUCCESS,
 	      f_type => $Amanda::Header::F_TAPESTART, label => 'TAPE-2' },
 	], "$pfx: inventory before updates with unknown state");
-    });
+    };
 
-    $subs{'update_unknown'} = make_cb(update_unknown => sub {
-	$chg->update(changed => "3-4=", finished_cb => $subs{'update_unknown_finished'});
-    });
+    step update_unknown => sub {
+	$chg->update(changed => "3-4=", finished_cb => $steps->{'update_unknown_finished'});
+    };
 
-    $subs{'update_unknown_finished'} = sub {
+    step update_unknown_finished => sub {
 	my ($err) = @_;
 	die "$err" if $err;
 
 	if ($mtx_config->{'barcodes'} > 0) {
-	    check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'quit'}, [
+	    check_inventory($chg, $mtx_config->{'barcodes'} > 0, $steps->{'quit'}, [
 		{ slot => 1, state => Amanda::Changer::SLOT_FULL,
 		  barcode => '11111', loaded_in => 0,
 		  device_status => $DEVICE_STATUS_SUCCESS,
@@ -1312,7 +1310,7 @@ for my $mtx_config (
 		  f_type => $Amanda::Header::F_TAPESTART, label => 'TAPE-2' },
 	    ], "$pfx: inventory reflects updates with unknown state with barcodes");
 	} else {
-	    check_inventory($chg, $mtx_config->{'barcodes'} > 0, $subs{'quit'}, [
+	    check_inventory($chg, $mtx_config->{'barcodes'} > 0, $steps->{'quit'}, [
 		{ slot => 1, state => Amanda::Changer::SLOT_FULL,
 		  barcode => '11111', loaded_in => 0,
 		  device_status => $DEVICE_STATUS_SUCCESS,
@@ -1333,14 +1331,24 @@ for my $mtx_config (
 	}
     };
 
-    $subs{'quit'} = sub {
-	Amanda::MainLoop::quit();
+    step quit => sub {
+	unlink($chg_state_file) if -f $chg_state_file;
+	unlink($mtx_state_file) if -f $mtx_state_file;
+	rmtree($vtape_root);
+
+	$finished_cb->();
     };
+}
 
-    Amanda::MainLoop::call_later($subs{'start'});
+# These tests are run over a number of different mtx configurations, to ensure
+# that the behavior is identical regardless of the changer/mtx characteristics
+for my $mtx_config (
+    { barcodes => 1, track_orig => 1, },
+    { barcodes => 0, track_orig => 1, },
+    { barcodes => 1, track_orig => -1, },
+    { barcodes => 0, track_orig => 0, },
+    { barcodes => -1, track_orig => 0, },
+    ) {
+    test_changer($mtx_config, \&Amanda::MainLoop::quit);
     Amanda::MainLoop::run();
-
-    unlink($chg_state_file) if -f $chg_state_file;
-    unlink($mtx_state_file) if -f $mtx_state_file;
-    rmtree($vtape_root);
 }

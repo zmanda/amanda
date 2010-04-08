@@ -62,7 +62,6 @@ sub abort {
 sub user_request {
     my $self = shift @_;
     my %params = @_;
-    my %subs;
     my $buffer = "";
 
     my $message  = $params{'message'};
@@ -70,7 +69,7 @@ sub user_request {
     my $err      = $params{'err'};
     my $chg_name = $params{'chg_name'};
 
-    $subs{'data_in'} = sub {
+    my $data_in = sub {
 	my $b;
 	my $n_read = POSIX::read(0, $b, 1);
 	if (!defined $n_read) {
@@ -101,7 +100,7 @@ sub user_request {
     print "and press <enter> enter, or ^D to abort.\n";
 
     $self->{'input_src'} = Amanda::MainLoop::fd_source(0, $G_IO_IN|$G_IO_HUP|$G_IO_ERR);
-    $self->{'input_src'}->set_callback($subs{'data_in'});
+    $self->{'input_src'}->set_callback($data_in);
     return;
 }
 

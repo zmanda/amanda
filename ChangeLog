@@ -1,3 +1,27 @@
+2010-04-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/MainLoop.swg: introduce define_steps and step, to
+	  eliminate reference loops created by use of %subs
+	* perl/Amanda/MainLoop.pod: document it
+	* installcheck/Amanda_Changer.pl installcheck/Amanda_Changer_compat.pl
+	  installcheck/Amanda_Changer_disk.pl
+	  installcheck/Amanda_Changer_multi.pl
+	  installcheck/Amanda_Changer_ndmp.pl
+	  installcheck/Amanda_Changer_rait.pl
+	  installcheck/Amanda_Changer_robot.pl
+	  installcheck/Amanda_ClientService.pl installcheck/Amanda_Device.pl
+	  installcheck/Amanda_MainLoop.pl installcheck/Amanda_Recovery_Clerk.pl
+	  installcheck/Amanda_Recovery_Scan.pl
+	  installcheck/Amanda_Taper_Scribe.pl installcheck/Amanda_Xfer.pl
+	  installcheck/amfetchdump.pl installcheck/amidxtaped.pl
+	  installcheck/amlabel.pl perl/Amanda/Changer.pm
+	  perl/Amanda/Changer/compat.pm perl/Amanda/Changer/multi.pm
+	  perl/Amanda/Changer/ndmp.pm perl/Amanda/Changer/robot.pm
+	  perl/Amanda/Interactive/stdin.pm perl/Amanda/Recovery/Clerk.pm
+	  perl/Amanda/Recovery/Scan.pm perl/Amanda/Taper/Scan/traditional.pm
+	  server-src/amcheck-device.pl server-src/amfetchdump.pl
+	  server-src/amidxtaped.pl server-src/amlabel.pl server-src/amrestore.pl
+	  server-src/amtape.pl server-src/amvault.pl server-src/taper.pl: use it
+
 2010-04-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/automake/scripts.am: comment double quote 'use lib'.
 

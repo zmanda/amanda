@@ -267,28 +267,29 @@ sub _do_move_medium {
     my $self = shift;
     my ($op, $src, $dst, $finished_cb) = @_;
     my $conn;
-    my %subs;
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    $subs{'get_conn'} = make_cb(get_conn => sub {
+    step get_conn => sub {
 	$conn = $self->_get_scsi_conn(\$finished_cb);
 	return $finished_cb->($conn->err_msg()) if $conn->err_code();
 
-	$subs{'get_status'}->();
-    });
+	$steps->{'get_status'}->();
+    };
 
-    $subs{'get_status'} = make_cb(get_status => sub {
+    step get_status => sub {
 	if ($self->{'have_status'}) {
-	    return $subs{'send_move_medium'}->();
+	    return $steps->{'send_move_medium'}->();
 	} else {
 	    $self->status(sub {
 		my ($err, $status) = @_;
 		return $finished_cb->($err) if ($err);
-		return $subs{'send_move_medium'}->();
+		return $steps->{'send_move_medium'}->();
 	    });
 	}
-    });
+    };
 
-    $subs{'send_move_medium'} = make_cb(send_move_medium => sub {
+    step send_move_medium => sub {
 	# figure out what $slot and $drive are in terms of elements
 	my ($src_elem, $dst_elem);
 	if ($op eq "load") {
@@ -326,10 +327,10 @@ sub _do_move_medium {
 		0) # control
 	);
 
-	$subs{'scsi_done'}->($res);
-    });
+	$steps->{'scsi_done'}->($res);
+    };
 
-    $subs{'scsi_done'} = make_cb(scsi_done => sub {
+    step scsi_done => sub {
 	my ($res) = @_;
 
 	if (!$res) {
@@ -341,9 +342,7 @@ sub _do_move_medium {
 	}
 
 	return $finished_cb->(undef);
-    });
-
-    $subs{'get_conn'}->();
+    };
 }
 
 # a selected set of errors we might see; keyed by ASC . ASCQ

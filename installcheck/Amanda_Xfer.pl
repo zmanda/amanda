@@ -538,31 +538,33 @@ SKIP: {
 	or diag(Dumper([@messages]));
     }
 
-    sub test_recovery_source {
-	my ($dest, $files, $expected_messages) = @_;
+    sub run_recovery_source {
+	my ($dest, $files, $expected_messages, $finished_cb) = @_;
 	my $device;
 	my @filenums;
 	my @messages;
-	my %subs;
 	my $xfer;
 	my $dev;
 	my $src;
 
-	$subs{'setup'} = sub {
+	my $steps = define_steps
+	    cb_ref => \$finished_cb;
+
+	step setup => sub {
 	    # we need a device up front, so sneak a peek into @$files
 	    $dev = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($files->[0]));
 	    $src = Amanda::Xfer::Source::Recovery->new($dev);
 	    $xfer = Amanda::Xfer->new([ $src, $dest ]);
 
-	    $xfer->start($subs{'got_xmsg'});
+	    $xfer->start($steps->{'got_xmsg'});
 	    # got_xmsg will call got_ready when the element is ready
 	};
 
-	$subs{'got_ready'} = sub {
-	    $subs{'load_slot'}->();
+	step got_ready => sub {
+	    $steps->{'load_slot'}->();
 	};
 
-	$subs{'load_slot'} = sub {
+	step load_slot => sub {
 	    if (!@$files) {
 		return $src->start_part(undef);
 		# (will trigger an XMSG_DONE; see below)
@@ -579,12 +581,12 @@ SKIP: {
 		die $dev->error_or_status();
 	    }
 
-	    $subs{'seek_file'}->();
+	    $steps->{'seek_file'}->();
 	};
 
-	$subs{'seek_file'} = sub {
+	step seek_file => sub {
 	    if (!@filenums) {
-		return $subs{'load_slot'}->();
+		return $steps->{'load_slot'}->();
 	    }
 
 	    my $hdr = $dev->seek_file(shift @filenums);
@@ -597,32 +599,38 @@ SKIP: {
 	    $src->start_part($dev);
 	};
 
-	$subs{'got_xmsg'} = sub {
+	step got_xmsg => sub {
 	    my ($src, $msg, $xfer) = @_;
 
 	    if ($msg->{'type'} == $XMSG_ERROR) {
 		die $msg->{'elt'} . " failed: " . $msg->{'message'};
 	    } elsif ($msg->{'type'} == $XMSG_PART_DONE) {
 		push @messages, "KB-" . ($msg->{'size'}/1024);
-		$subs{'seek_file'}->();
+		$steps->{'seek_file'}->();
 	    } elsif ($msg->{'type'} == $XMSG_DONE) {
 		push @messages, "DONE";
-		Amanda::MainLoop::quit();
+		$steps->{'quit'}->();
 	    } elsif ($msg->{'type'} == $XMSG_READY) {
 		push @messages, "READY";
-		$subs{'got_ready'}->();
+		$steps->{'got_ready'}->();
 	    } elsif ($msg->{'type'} == $XMSG_CANCEL) {
 		push @messages, "CANCELLED";
 	    }
 	};
 
-	Amanda::MainLoop::call_later($subs{'setup'});
-	Amanda::MainLoop::run();
+	step quit => sub {
+	    is_deeply([@messages],
+		$expected_messages,
+		"files read back and verified successfully with Amanda::Xfer::Recovery::Source")
+	    or diag(Dumper([@messages]));
 
-	is_deeply([@messages],
-	    $expected_messages,
-	    "files read back and verified successfully with Amanda::Xfer::Recovery::Source")
-	or diag(Dumper([@messages]));
+	    $finished_cb->();
+	};
+    }
+
+    sub test_recovery_source {
+	run_recovery_source(@_, \&Amanda::MainLoop::quit);
+	Amanda::MainLoop::run();
     }
 
     my $holding_base = "$Installcheck::TMP/source-holding";

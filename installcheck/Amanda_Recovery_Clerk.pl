@@ -61,17 +61,12 @@ my $datestamp = "20100101010203";
 # set up a 2-tape disk changer with some spanned dumps in it, and add those
 # dumps to the catalog, too.  To avoid re-implementing Amanda::Taper::Scan, this
 # uses individual transfers for each part.
-
-{
-    if (-d $taperoot) {
-	rmtree($taperoot);
-    }
-    mkpath($taperoot);
-
-    for my $slot (1 .. 2) {
-	mkdir("$taperoot/slot$slot")
-	    or die("Could not mkdir: $!");
-    }
+sub setup_changer {
+    my ($finished_cb) = @_;
+    my $res;
+    my $chg;
+    my $label;
+    my ($slot, $xfer_info, $partnum);
 
     ## specification of the on-tape data
 
@@ -91,41 +86,54 @@ my $datestamp = "20100101010203";
 	[ 2,   $xfer_info[2],   2 ],
     );
 
-    my $res;
-    my $chg = Amanda::Changer->new("chg-disk:$taperoot");
-    my $label;
-    my %subs;
-    my ($slot, $xfer_info, $partnum);
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    $subs{'next'} = make_cb(next => sub {
-	return $subs{'done'}->() unless @to_write;
+    step setup => sub {
+	if (-d $taperoot) {
+	    rmtree($taperoot);
+	}
+	mkpath($taperoot);
+
+	for my $slot (1 .. 2) {
+	    mkdir("$taperoot/slot$slot")
+		or die("Could not mkdir: $!");
+	}
+
+	$chg = Amanda::Changer->new("chg-disk:$taperoot");
+
+	$steps->{'next'}->();
+    };
+
+    step next => sub {
+	return $steps->{'done'}->() unless @to_write;
 
 	($slot, $xfer_info, $partnum) = @{shift @to_write};
 	die "xfer len <= 0" if $xfer_info->[0] <= 0;
 
 	if (!$res || $res->{'this_slot'} != $slot) {
-	    $subs{'new_dev'}->();
+	    $steps->{'new_dev'}->();
 	} else {
-	    $subs{'run_xfer'}->();
+	    $steps->{'run_xfer'}->();
 	}
-    });
+    };
 
-    $subs{'new_dev'} = make_cb(new_dev => sub {
+    step new_dev => sub {
 	if ($res) {
-	    $res->release(finished_cb => $subs{'released'});
+	    $res->release(finished_cb => $steps->{'released'});
 	} else {
-	    $subs{'released'}->();
+	    $steps->{'released'}->();
 	}
-    });
+    };
 
-    $subs{'released'} = make_cb(released => sub {
+    step released => sub {
 	my ($err) = @_;
 	die "$err" if $err;
 
-	$chg->load(slot => $slot, res_cb => $subs{'loaded'});
-    });
+	$chg->load(slot => $slot, res_cb => $steps->{'loaded'});
+    };
 
-    $subs{'loaded'} = make_cb(loaded => sub {
+    step loaded => sub {
 	(my $err, $res) = @_;
 	die "$err" if $err;
 
@@ -137,10 +145,10 @@ my $datestamp = "20100101010203";
 	$dev->start($Amanda::Device::ACCESS_WRITE, $label, $datestamp)
 	    or die("starting dev: " . $dev->error_or_status());
 
-	$res->set_label(label => $label, finished_cb => $subs{'run_xfer'});
-    });
+	$res->set_label(label => $label, finished_cb => $steps->{'run_xfer'});
+    };
 
-    $subs{'run_xfer'} = make_cb(run_xfer => sub {
+    step run_xfer => sub {
 	my $dev = $res->{'device'};
 	my $name = $xfer_info->[2];
 
@@ -193,27 +201,26 @@ my $datestamp = "20100101010203";
 		    });
 
 		# and do the next part
-		$subs{'next'}->();
+		$steps->{'next'}->();
 	    }
 	});
-    });
+    };
 
-    $subs{'done'} = make_cb(done => sub {
+    step done => sub {
 	if ($res) {
-	    $res->release(finished_cb => $subs{'done_released'});
+	    $res->release(finished_cb => $steps->{'done_released'});
 	} else {
-	    $subs{'done_released'}->();
+	    $steps->{'done_released'}->();
 	}
-    });
+    };
 
-    $subs{'done_released'} = make_cb(done_released => sub {
-	Amanda::MainLoop::quit();
-    });
-
-    $subs{'next'}->();
-    Amanda::MainLoop::run();
-    pass("successfully set up test data");
+    step done_released => sub {
+	$finished_cb->();
+    };
 }
+setup_changer(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
+pass("successfully set up test data");
 
 # make a holding file
 my $holding_file = "$Installcheck::TMP/holding_file";
@@ -315,23 +322,25 @@ sub try_recovery {
     my %params = @_;
     my $clerk = $params{'clerk'};
     my $result;
-    my %subs;
     my $running_xfers = 0;
 
-    $subs{'start'} = make_cb(start => sub {
+    my $finished_cb = \&Amanda::MainLoop::quit;
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
+    step start => sub {
 	$clerk->get_xfer_src(
 	    dump => $params{'dump'},
-	    xfer_src_cb => $subs{'xfer_src_cb'});
-    });
+	    xfer_src_cb => $steps->{'xfer_src_cb'});
+    };
 
-    $subs{'xfer_src_cb'} = make_cb(xfer_src_cb => sub {
+    step xfer_src_cb => sub {
 	my ($errors, $header, $xfer_src, $dtcp_supp) = @_;
 
 	# simulate errors for xfail, below
 	if ($errors) {
 	    $result = { result => "FAILED", errors => $errors };
-	    Amanda::MainLoop::quit();
-	    return;
+	    return $steps->{'verify'}->();
 	}
 
 	# double-check the header; the Clerk should have checked this, so these
@@ -371,58 +380,58 @@ sub try_recovery {
 		    die $msg->{elt} . " failed: " . $msg->{message};
 		}
 		if ($msg->{'type'} == $XMSG_DONE) {
-		    $running_xfers--;
-		    $subs{'maybe_done'}->();
+		    $steps->{'maybe_done'}->();
 		}
 	    });
 	}
 
 	$clerk->start_recovery(
 	    xfer => $xfer,
-	    recovery_cb => $subs{'recovery_cb'});
-    });
+	    recovery_cb => $steps->{'recovery_cb'});
+    };
 
-    $subs{'recovery_cb'} = make_cb(recovery_cb => sub {
+    step recovery_cb => sub {
 	$result = { @_ };
-	$running_xfers--;
-	$subs{'maybe_done'}->();
-    });
+	$steps->{'maybe_done'}->();
+    };
 
-    $subs{'maybe_done'} = make_cb(maybe_done => sub {
-	Amanda::MainLoop::quit() if ($running_xfers <= 0);
-    });
+    step maybe_done => sub {
+	$steps->{'verify'}->() unless --$running_xfers;
+    };
 
-    $subs{'start'}->();
-    Amanda::MainLoop::run();
-
-    # verify the results
-
-    my $msg = $params{'msg'};
-    if (@{$result->{'errors'}}) {
-	if ($params{'xfail'}) {
-	    if ($result->{'result'} ne 'FAILED') {
-		diag("expected failure, but got $result->{result}");
+    step verify => sub {
+	# verify the results
+	my $msg = $params{'msg'};
+	if (@{$result->{'errors'}}) {
+	    if ($params{'xfail'}) {
+		if ($result->{'result'} ne 'FAILED') {
+		    diag("expected failure, but got $result->{result}");
+		    fail($msg);
+		}
+		is_deeply($result->{'errors'}, $params{'xfail'}, $msg);
+	    } else {
+		diag("errors:");
+		for (@{$result->{'errors'}}) {
+		    diag("$_");
+		}
+		if ($result->{'result'} ne 'FAILED') {
+		    diag("XXX and result is " . $result->{'result'});
+		}
 		fail($msg);
 	    }
-	    is_deeply($result->{'errors'}, $params{'xfail'}, $msg);
-	    return;
-	}
-	diag("errors:");
-	for (@{$result->{'errors'}}) {
-	    diag("$_");
-	}
-	if ($result->{'result'} ne 'FAILED') {
-	    diag("XXX and result is " . $result->{'result'});
-	}
-	fail($msg);
-    } else {
-	if ($result->{'result'} ne 'DONE') {
-	    diag("XXX no errors but result is " . $result->{'result'});
-	    fail($msg);
 	} else {
-	    pass($msg);
+	    if ($result->{'result'} ne 'DONE') {
+		diag("XXX no errors but result is " . $result->{'result'});
+		fail($msg);
+	    } else {
+		pass($msg);
+	    }
 	}
-    }
+
+	$finished_cb->();
+    };
+
+    Amanda::MainLoop::run();
 }
 
 sub quit_clerk {

@@ -112,107 +112,116 @@ Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
 my $exit_status = 0;
 my $res;
+
 sub failure {
-    my ($msg) = @_;
+    my ($msg, $finished_cb) = @_;
     print STDERR "ERROR: $msg\n";
     $exit_status = 1;
     if ($res) {
-	$res->release(finished_cb => sub { Amanda::MainLoop::quit(); });
+	$res->release(finished_cb => sub {
+	    # ignore error
+	    $finished_cb->();
+	});
     } else {
-	Amanda::MainLoop::quit();
+	$finished_cb->();
     }
 }
 
 sub main {
-    my %subs;
+    my ($finished_cb) = @_;
+
     my $dev;
     my $hdr;
     my $filenum = $opt_filenum;
     $filenum = 1 if (!$filenum);
     $filenum = 0 + "$filenum"; # convert to integer
 
-    $subs{'start'} = make_cb(start => sub {
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
+    step start => sub {
 	# first, return to the original working directory we were started in
 	if (!chdir Amanda::Util::get_original_cwd()) {
-	    return failure("Cannot chdir to original working directory");
+	    return failure("Cannot chdir to original working directory", $finished_cb);
 	}
 
 	if ($opt_holding) {
-	    $subs{'read_header'}->();
+	    $steps->{'read_header'}->();
 	} else {
 	    my $chg = Amanda::Changer->new($opt_restore_src);
 	    if ($chg->isa("Amanda::Changer::Error")) {
-		return failure($chg);
+		return failure($chg, $finished_cb);
 	    }
 
 	    $chg->load(relative_slot => "current", mode => "read",
-		res_cb => $subs{'slot_loaded'});
+		res_cb => $steps->{'slot_loaded'});
 	}
-    });
+    };
 
-    $subs{'slot_loaded'} = make_cb(slot_loaded => sub {
+    step slot_loaded => sub {
 	(my $err, $res) = @_;
-	return failure($err) if $err;
+	return failure($err, $finished_cb) if $err;
 
 	$dev = $res->{'device'};
 	if ($dev->status != $DEVICE_STATUS_SUCCESS) {
-	    return failure($dev->error_or_status);
+	    return failure($dev->error_or_status, $finished_cb);
 	}
 
-	$subs{'check_label'}->();
-    });
+	$steps->{'check_label'}->();
+    };
 
-    $subs{'check_label'} = make_cb(check_label => sub {
+    step check_label => sub {
 	if ($dev->status != $DEVICE_STATUS_SUCCESS) {
-	    return failure($dev->error_or_status);
+	    return failure($dev->error_or_status, $finished_cb);
 	}
 
 	$res->set_label(label => $dev->volume_label,
-		        finished_cb => $subs{'set_labeled'});
-    });
+		        finished_cb => $steps->{'set_labeled'});
+    };
 
-    $subs{'set_labeled'} = make_cb(set_labeled => sub {
+    step set_labeled => sub {
 	if ($opt_label) {
 	    if ($dev->volume_label ne $opt_label) {
 		my $got = $dev->volume_label;
-		return failure("Found unexpected label '$got'");
+		return failure("Found unexpected label '$got'", $finished_cb);
 	    }
 	}
 
 	my $lbl = $dev->volume_label;
 	print STDERR "Restoring from tape $lbl starting with file $filenum.\n";
 
-	$subs{'start_device'}->();
-    });
+	$steps->{'start_device'}->();
+    };
 
-    $subs{'start_device'} = make_cb(start_device => sub {
+    step start_device => sub {
 	if (!$dev->start($ACCESS_READ, undef, undef)) {
-	    return failure($dev->error_or_status());
+	    return failure($dev->error_or_status(), $finished_cb);
 	}
 
-	$subs{'read_header'}->();
-    });
+	$steps->{'read_header'}->();
+    };
 
-    $subs{'read_header'} = make_cb(read_header => sub {
+    step read_header => sub {
 	if ($opt_holding) {
 	    print STDERR "Reading from '$opt_restore_src'\n";
 	    $hdr = Amanda::Holding::get_header($opt_restore_src);
 	} else {
 	    $hdr = $dev->seek_file($filenum);
 	    if (!$hdr) {
-		return failure("while reading next header: " . $dev->error_or_status());
+		return failure("while reading next header: " . $dev->error_or_status(),
+			    $finished_cb);
 	    } elsif ($hdr->{'type'} == $Amanda::Header::F_TAPEEND) {
-		return $subs{'finished'}->();
+		return $steps->{'finished'}->();
 	    }
 
 	    # seek_file may have skipped ahead; plan accordingly
 	    $filenum = $dev->file + 1;
 	}
 
-	$subs{'filter_dumpspecs'}->();
-    });
+	$steps->{'filter_dumpspecs'}->();
+    };
 
-    $subs{'filter_dumpspecs'} = make_cb(filter_dumpspecs => sub {
+    step filter_dumpspecs => sub {
 	if (@opt_dumpspecs and not $hdr->matches_dumpspecs([@opt_dumpspecs])) {
 	    if (!$opt_holding) {
 		my $dev_filenum = $dev->file;
@@ -221,7 +230,7 @@ sub main {
 	    }
 
 	    # skip to the next file without restoring this one
-	    return $subs{'next_file'}->();
+	    return $steps->{'next_file'}->();
 	}
 
 	if (!$opt_holding) {
@@ -230,10 +239,10 @@ sub main {
 	}
 	print STDERR $hdr->summary(), "\n";
 
-	$subs{'xfer_dumpfile'}->();
-    });
+	$steps->{'xfer_dumpfile'}->();
+    };
 
-    $subs{'xfer_dumpfile'} = make_cb(xfer_dumpfile => sub {
+    step xfer_dumpfile => sub {
 	my ($src, $dest);
 
 	# set up the source..
@@ -266,7 +275,7 @@ sub main {
 	    }
 
 	    if (!open($dest_fh, ">", $filename)) {
-		return failure("Could not open '$filename' for writing: $!");
+		return failure("Could not open '$filename' for writing: $!", $finished_cb);
 	    }
 	}
 	$dest = Amanda::Xfer::Dest::Fd->new($dest_fh);
@@ -283,7 +292,8 @@ sub main {
 		    Amanda::Xfer::Filter::Process->new(
 			[ $hdr->{'clnt_encrypt'}, $hdr->{'clnt_decrypt_opt'} ], 0);
 	    } else {
-		return failure("could not decrypt encrypted dump: no program specified");
+		return failure("could not decrypt encrypted dump: no program specified",
+			    $finished_cb);
 	    }
 
 	    $hdr->{'encrypted'} = 0;
@@ -352,51 +362,48 @@ sub main {
 		$got_err = $msg->{'message'};
 	    } elsif ($msg->{'type'} == $XMSG_DONE) {
 		$src->remove();
-		$subs{'xfer_done'}->($got_err);
+		$steps->{'xfer_done'}->($got_err);
 	    }
 	});
 	$xfer->start();
-    });
+    };
 
-    $subs{'xfer_done'} = make_cb(xfer_done => sub {
+    step xfer_done => sub {
 	my ($err) = @_;
-	return failure($err) if $err;
+	return failure($err, $finished_cb) if $err;
 
-	$subs{'next_file'}->();
-    });
+	$steps->{'next_file'}->();
+    };
 
-    $subs{'next_file'} = make_cb(next_file => sub {
+    step next_file => sub {
 	# amrestore does not loop over multiple files when reading from
 	# holding or when outputting to a pipe
 	if ($opt_holding or $opt_pipe) {
-	    return $subs{'finished'}->();
+	    return $steps->{'finished'}->();
 	}
 
 	# otherwise, try to read the next header from the device
-	$subs{'read_header'}->();
-    });
+	$steps->{'read_header'}->();
+    };
 
-    $subs{'finished'} = make_cb(finished => sub {
+    step finished => sub {
 	if ($res) {
-	    $res->release(finished_cb => $subs{'quit'});
+	    $res->release(finished_cb => $steps->{'quit'});
 	} else {
-	    $subs{'quit'}->();
+	    $steps->{'quit'}->();
 	}
-    });
+    };
 
-    $subs{'quit'} = make_cb(quit => sub {
+    step quit => sub {
 	my ($err) = @_;
 	$res = undef;
 
-	return failure($err) if $err;
+	return failure($err, $finished_cb) if $err;
 
-	Amanda::MainLoop::quit();
-    });
-
-    $subs{'start'}->();
-    Amanda::MainLoop::run();
-    Amanda::Util::finish_application();
-    exit $exit_status;
+	$finished_cb->();
+    };
 }
-
-main();
+main(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
+Amanda::Util::finish_application();
+exit $exit_status;

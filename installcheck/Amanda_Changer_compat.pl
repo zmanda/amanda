@@ -450,50 +450,55 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 $chg = Amanda::Changer->new();
 die($chg) if $chg->isa("Amanda::Changer::Error");
 
-{
-    my %subs;
+sub test_get_infos {
+    my ($finished_cb) = @_;
     my $n_info_results = 0;
 
-    $subs{'get_infos'} = sub {
-        $chg->info(info_cb => $subs{'got_info_result'}, info => [ 'num_slots' ]);
-        $chg->info(info_cb => $subs{'got_info_result'}, info => [ 'fast_search' ]);
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
+    step get_infos => sub {
+	# convince the changer that it has not gotten any info yet
+	$chg->{'got_info'} = 0;
+
+        $chg->info(info_cb => $steps->{'got_info_result'}, info => [ 'num_slots' ]);
+        $chg->info(info_cb => $steps->{'got_info_result'}, info => [ 'fast_search' ]);
     };
 
-    $subs{'got_info_result'} = sub {
+    step got_info_result => sub {
 	my ($err, %info) = @_;
 	die $err if $err;
 	++$n_info_results;
 	if ($n_info_results >= 2) {
-	    Amanda::MainLoop::quit();
+	    pass("two simultaneous info() invocations are successful");
+	    $finished_cb->();
 	}
     };
-
-    # convince the changer that it has not gotten any info yet
-    $chg->{'got_info'} = 0;
-
-    Amanda::MainLoop::call_later($subs{'get_infos'});
-    Amanda::MainLoop::run();
-    pass("two simultaneous info() invocations are successful");
 }
+test_get_infos(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
 
 # scan the changer using except_slots
-{
-    my %subs;
+sub test_except_slots {
+    my ($finished_cb) = @_;
     my $slot;
     my %except_slots;
 
-    $subs{'start'} = make_cb(start => sub {
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
+    step start => sub {
 	$chg->load(relative_slot => "current",
 		   except_slots => { %except_slots },
-		   res_cb => $subs{'loaded'});
-    });
+		   res_cb => $steps->{'loaded'});
+    };
 
-    $subs{'loaded'} = make_cb(loaded => sub {
+    step loaded => sub {
         my ($err, $res) = @_;
 	if ($err) {
 	    if ($err->notfound) {
 		# this means the scan is done
-		return $subs{'quit'}->();
+		return $steps->{'quit'}->();
 	    } elsif ($err->volinuse and defined $err->{'slot'}) {
 		$slot = $err->{'slot'};
 	    } else {
@@ -506,31 +511,29 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 	$except_slots{$slot} = 1;
 
 	if ($res) {
-	    $res->release(finished_cb => $subs{'released'});
+	    $res->release(finished_cb => $steps->{'released'});
 	} else {
-	    $subs{'released'}->();
+	    $steps->{'released'}->();
 	}
-    });
+    };
 
-    $subs{'released'} = make_cb(released => sub {
+    step released => sub {
 	my ($err) = @_;
 	die $err if $err;
 
         $chg->load(relative_slot => 'next', slot => $slot,
 		   except_slots => { %except_slots },
-		   res_cb => $subs{'loaded'});
-    });
+		   res_cb => $steps->{'loaded'});
+    };
 
-    $subs{'quit'} = make_cb(quit => sub {
-        Amanda::MainLoop::quit();
-    });
-
-    $subs{'start'}->();
-    Amanda::MainLoop::run();
-
-    is_deeply({ %except_slots }, { 1=>1, 2=>1, 3=>1 },
-	    "scanning with except_slots works");
+    step quit => sub {
+	is_deeply({ %except_slots }, { 1=>1, 2=>1, 3=>1 },
+		"scanning with except_slots works");
+	$finished_cb->();
+    };
 }
+test_except_slots(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
 
 unlink($changer_filename);
 unlink($result_file);

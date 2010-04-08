@@ -1,4 +1,4 @@
-# Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -95,25 +95,21 @@ label_vtape(3,4,"mytape");
 	"constructor errors in child devices detected and handled");
 }
 
-{
+sub test_threeway {
+    my ($finished_cb) = @_;
+
     my $chg = Amanda::Changer->new("chg-rait:chg-disk:$tapebase/{1,2,3}");
     pass("Create 3-way RAIT of vtapes");
-    my ($get_info, $check_info,
-	$do_load_current, $got_res_current,
-	$do_load_next, $got_res_next,
-	$do_load_label, $got_res_label,
-	$do_load_slot, $got_res_slot,
-	$do_load_slot_nobraces, $got_res_slot_nobraces,
-	$do_load_slot_failure, $got_res_slot_failure,
-	$do_load_slot_multifailure, $got_res_slot_multifailure,
-	$do_inventory, $got_inventory,
-    );
 
-    $get_info = make_cb('get_info' => sub {
-        $chg->info(info_cb => $check_info, info => [ 'num_slots', 'vendor_string', 'fast_search' ]);
-    });
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    $check_info = make_cb('check_info' => sub {
+    step get_info => sub {
+        $chg->info(info_cb => $steps->{'check_info'},
+	    info => [ 'num_slots', 'vendor_string', 'fast_search' ]);
+    };
+
+    step check_info => sub {
         my ($err, %results) = @_;
         die($err) if defined($err);
 
@@ -124,14 +120,14 @@ label_vtape(3,4,"mytape");
         is($results{'fast_search'}, 1,
 	    "info() returns the correct fast_search");
 
-	$do_load_current->();
-    });
+	$steps->{'do_load_current'}->();
+    };
 
-    $do_load_current = make_cb('do_load_current' => sub {
-	$chg->load(relative_slot => "current", res_cb => $got_res_current);
-    });
+    step do_load_current => sub {
+	$chg->load(relative_slot => "current", res_cb => $steps->{'got_res_current'});
+    };
 
-    $got_res_current = make_cb('got_res_current' => sub {
+    step got_res_current => sub {
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading slot 'current'")
 	    or diag($err);
@@ -141,18 +137,18 @@ label_vtape(3,4,"mytape");
 	is($res->{'this_slot'}, '{1,1,1}',
 	    "returns correct 'this_slot' name");
 
-	$res->release(finished_cb => $do_load_next);
-    });
+	$res->release(finished_cb => $steps->{'do_load_next'});
+    };
 
-    $do_load_next = make_cb('do_load_next' => sub {
+    step do_load_next => sub {
 	my ($err) = @_;
 	die $err if $err;
 
 	# (use a slot-relative 'next', rather than relative to current)
-	$chg->load(relative_slot => "next", slot => '{1,1,1}', res_cb => $got_res_next);
-    });
+	$chg->load(relative_slot => "next", slot => '{1,1,1}', res_cb => $steps->{'got_res_next'});
+    };
 
-    $got_res_next = make_cb('got_res_next' => sub {
+    step got_res_next => sub {
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading slot 'next'")
 	    or diag($err);
@@ -162,17 +158,17 @@ label_vtape(3,4,"mytape");
 	is($res->{'this_slot'}, '{2,2,2}',
 	    "returns correct 'this_slot' name");
 
-	$res->release(finished_cb => $do_load_label);
-    });
+	$res->release(finished_cb => $steps->{'do_load_label'});
+    };
 
-    $do_load_label = make_cb('do_load_label' => sub {
+    step do_load_label => sub {
 	my ($err) = @_;
 	die $err if $err;
 
-	$chg->load(label => "mytape", res_cb => $got_res_label);
-    });
+	$chg->load(label => "mytape", res_cb => $steps->{'got_res_label'});
+    };
 
-    $got_res_label = make_cb('got_res_label' => sub {
+    step got_res_label => sub {
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading slot 'label'")
 	    or diag($err);
@@ -182,17 +178,17 @@ label_vtape(3,4,"mytape");
 	is($res->{'this_slot'}, '{1,3,4}',
 	    "returns correct 'this_slot' name, even with different slots");
 
-	$res->release(finished_cb => $do_load_slot);
-    });
+	$res->release(finished_cb => $steps->{'do_load_slot'});
+    };
 
-    $do_load_slot = make_cb('do_load_slot' => sub {
+    step do_load_slot => sub {
 	my ($err) = @_;
 	die $err if $err;
 
-	$chg->load(slot => "{1,2,3}", res_cb => $got_res_slot);
-    });
+	$chg->load(slot => "{1,2,3}", res_cb => $steps->{'got_res_slot'});
+    };
 
-    $got_res_slot = make_cb('got_res_slot' => sub {
+    step got_res_slot => sub {
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading slot '{1,2,3}'")
 	    or diag($err);
@@ -202,18 +198,18 @@ label_vtape(3,4,"mytape");
 	is($res->{'this_slot'}, '{1,2,3}',
 	    "returns the 'this_slot' I requested");
 
-	$res->release(finished_cb => $do_load_slot_nobraces);
-    });
+	$res->release(finished_cb => $steps->{'do_load_slot_nobraces'});
+    };
 
-    $do_load_slot_nobraces = make_cb('do_load_slot_nobraces' => sub {
+    step do_load_slot_nobraces => sub {
 	my ($err) = @_;
 	die $err if $err;
 
 	# test the shorthand "2" -> "{2,2,2}"
-	$chg->load(slot => "2", res_cb => $got_res_slot_nobraces);
-    });
+	$chg->load(slot => "2", res_cb => $steps->{'got_res_slot_nobraces'});
+    };
 
-    $got_res_slot_nobraces = make_cb('got_res_slot_nobraces' => sub {
+    step got_res_slot_nobraces => sub {
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading slot '2'")
 	    or diag($err);
@@ -223,85 +219,93 @@ label_vtape(3,4,"mytape");
 	is($res->{'this_slot'}, '{2,2,2}',
 	    "returns an expanded 'this_slot' of {2,2,2} in response to the shorthand '2'");
 
-	$res->release(finished_cb => $do_load_slot_failure);
-    });
+	$res->release(finished_cb => $steps->{'do_load_slot_failure'});
+    };
 
-    $do_load_slot_failure = make_cb('do_load_slot_failure' => sub {
+    step do_load_slot_failure => sub {
 	my ($err) = @_;
 	die $err if $err;
 
-	$chg->load(slot => "{1,99,1}", res_cb => $got_res_slot_failure);
-    });
+	$chg->load(slot => "{1,99,1}", res_cb => $steps->{'got_res_slot_failure'});
+    };
 
-    $got_res_slot_failure = make_cb('got_res_slot_failure' => sub {
+    step got_res_slot_failure => sub {
 	my ($err, $res) = @_;
 	chg_err_like($err,
 	    { message => qr/from chg-disk.*2: Slot 99 not found/,
 	      type => 'failed',
-	      reason => 'notfound' },
+	      reason => 'invalid' },
 	    "failure of a child to load a slot is correctly propagated");
 
-	$do_load_slot_multifailure->();
-    });
+	$steps->{'do_load_slot_multifailure'}->();
+    };
 
-    $do_load_slot_multifailure = make_cb('do_load_slot_multifailure' => sub {
+    step do_load_slot_multifailure => sub {
 	my ($err) = @_;
 	die $err if $err;
 
-	$chg->load(slot => "{99,1,99}", res_cb => $got_res_slot_multifailure);
-    });
+	$chg->load(slot => "{99,1,99}", res_cb => $steps->{'got_res_slot_multifailure'});
+    };
 
-    $got_res_slot_multifailure = make_cb('got_res_slot_multifailure' => sub {
+    step got_res_slot_multifailure => sub {
 	my ($err, $res) = @_;
 	chg_err_like($err,
 	    { message => qr/from chg-disk.*1: Slot 99 not found; from chg-disk.*3: /,
 	      type => 'failed',
-	      reason => 'notfound' },
+	      reason => 'invalid' },
 	    "failure of multiple chilren to load a slot is correctly propagated");
 
-	$do_inventory->();
-    });
+	$steps->{'do_inventory'}->();
+    };
 
-    $do_inventory = make_cb('do_inventory' => sub {
-	$chg->inventory(inventory_cb => $got_inventory);
-    });
+    step do_inventory => sub {
+	$chg->inventory(inventory_cb => $steps->{'got_inventory'});
+    };
 
-    $got_inventory = make_cb('got_inventory' => sub {
+    step got_inventory => sub {
 	my ($err, $inv) = @_;
 	die $err if $err;
 
 	is_deeply($inv,  [
-          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS, f_type => $Amanda::Header::F_EMPTY, label => undef, reserved => 0, # undef because labels don't match
+          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS,
+	    f_type => $Amanda::Header::F_EMPTY, label => undef, # undef because labels don't match
+	    reserved => 0,
 	    slot => '{1,1,1}', import_export => undef },
-          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS, f_type => $Amanda::Header::F_EMPTY, label => undef, reserved => 0, # all blank
+          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS,
+	    f_type => $Amanda::Header::F_EMPTY, label => undef, # all blank
+	    reserved => 0,
 	    slot => '{2,2,2}', import_export => undef },
-          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS, f_type => $Amanda::Header::F_EMPTY, label => undef, reserved => 0, # mismatched labels
+          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS,
+	    f_type => $Amanda::Header::F_EMPTY, label => undef, # mismatched labels
+	    reserved => 0,
 	    slot => '{3,3,3}', import_export => undef },
-          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS, f_type => $Amanda::Header::F_EMPTY, label => undef, reserved => 0, # mismatched labels
+          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS,
+	    f_type => $Amanda::Header::F_EMPTY, label => undef, # mismatched labels
+	    reserved => 0,
 	    slot => '{4,4,4}', import_export => undef } ,
         ], "inventory is correct");
-	Amanda::MainLoop::quit();
-    });
 
-    # start the loop
-    $get_info->();
-    Amanda::MainLoop::run();
+	$finished_cb->();
+    };
 }
+test_threeway(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
 
-{
+sub test_threeway_error {
+    my ($finished_cb) = @_;
+
     my $chg = Amanda::Changer->new("chg-rait:{chg-disk:$tapebase/1,chg-disk:$tapebase/2,ERROR}");
     pass("Create 3-way RAIT of vtapes, with the third errored out");
-    my ($get_info, $check_info,
-	$do_load_current, $got_res_current,
-	$do_load_label, $got_res_label,
-	$do_reset, $finished_reset,
-    );
 
-    $get_info = make_cb('get_info' => sub {
-        $chg->info(info_cb => $check_info, info => [ 'num_slots', 'fast_search' ]);
-    });
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    $check_info = make_cb('check_info' => sub {
+    step get_info => sub {
+        $chg->info(info_cb => $steps->{'check_info'},
+	    info => [ 'num_slots', 'fast_search' ]);
+    };
+
+    step check_info => sub {
         my $err = shift;
         my %results = @_;
         die($err) if defined($err);
@@ -309,14 +313,14 @@ label_vtape(3,4,"mytape");
         is($results{'num_slots'}, 4, "info() returns the correct num_slots");
         is($results{'fast_search'}, 1, "info() returns the correct fast_search");
 
-	$do_load_current->();
-    });
+	$steps->{'do_load_current'}->();
+    };
 
-    $do_load_current = make_cb('do_load_current' => sub {
-	$chg->load(relative_slot => "current", res_cb => $got_res_current);
-    });
+    step do_load_current => sub {
+	$chg->load(relative_slot => "current", res_cb => $steps->{'got_res_current'});
+    };
 
-    $got_res_current = make_cb('got_res_current' => sub {
+    step got_res_current => sub {
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading slot 'current'")
 	    or diag($err);
@@ -326,17 +330,17 @@ label_vtape(3,4,"mytape");
 	is($res->{'this_slot'}, '{1,1,ERROR}',
 	    "returns correct 'this_slot' name");
 
-	$res->release(finished_cb => $do_load_label);
-    });
+	$res->release(finished_cb => $steps->{'do_load_label'});
+    };
 
-    $do_load_label = make_cb('do_load_label' => sub {
+    step do_load_label => sub {
 	my ($err) = @_;
 	die $err if $err;
 
-	$chg->load(label => "mytape", res_cb => $got_res_label);
-    });
+	$chg->load(label => "mytape", res_cb => $steps->{'got_res_label'});
+    };
 
-    $got_res_label = make_cb('got_res_label' => sub {
+    step got_res_label => sub {
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading slot 'label'")
 	    or diag($err);
@@ -346,55 +350,63 @@ label_vtape(3,4,"mytape");
 	is($res->{'this_slot'}, '{1,3,ERROR}',
 	    "returns correct 'this_slot' name, even with different slots");
 
-	$res->release(finished_cb => sub {
-	    my ($err) = @_;
-	    die $err if $err;
+	$res->release(finished_cb => $steps->{'released'});
+    };
 
-	    $do_reset->();
-	});
-    });
+    step released => sub {
+	my ($err) = @_;
+	die $err if $err;
+
+	$steps->{'do_reset'}->();
+    };
 
     # unfortunately, reset, clean, and update are pretty boring with vtapes, so
     # it's hard to test them effectively.
 
-    $do_reset = make_cb('do_reset' => sub {
+    step do_reset => sub {
 	my ($err) = @_;
 	die $err if $err;
 
-	$chg->reset(finished_cb => $finished_reset);
-    });
+	$chg->reset(finished_cb => $steps->{'finished_reset'});
+    };
 
-    $finished_reset = make_cb('finished_reset' => sub {
+    step finished_reset => sub {
 	my ($err) = @_;
 	ok(!$err, "no error resetting");
 
-	Amanda::MainLoop::quit();
-    });
-
-    # start the loop
-    $get_info->();
-    Amanda::MainLoop::run();
+	$finished_cb->();
+    };
 }
+test_threeway_error(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
 
 # test inventory under "normal" circumstances
-reset_taperoot();
-label_vtape(1,1,"mytape-1");
-label_vtape(2,1,"mytape-1");
-label_vtape(3,1,"mytape-1");
-label_vtape(1,2,"mytape-2");
-label_vtape(2,2,"mytape-2");
-label_vtape(3,2,"mytape-2");
-{
-    my ($do_inventory, $got_inventory);
+sub test_normal_inventory {
+    my ($finished_cb) = @_;
 
     my $chg = Amanda::Changer->new("chg-rait:chg-disk:$tapebase/{1,2,3}");
     pass("Create 3-way RAIT of vtapes with correctly-labeled children");
 
-    $do_inventory = make_cb('do_inventory' => sub {
-	$chg->inventory(inventory_cb => $got_inventory);
-    });
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    $got_inventory = make_cb('got_inventory' => sub {
+    step setup => sub {
+	reset_taperoot();
+	label_vtape(1,1,"mytape-1");
+	label_vtape(2,1,"mytape-1");
+	label_vtape(3,1,"mytape-1");
+	label_vtape(1,2,"mytape-2");
+	label_vtape(2,2,"mytape-2");
+	label_vtape(3,2,"mytape-2");
+
+	$steps->{'do_inventory'}->();
+    };
+
+    step do_inventory => sub {
+	$chg->inventory(inventory_cb => $steps->{'got_inventory'});
+    };
+
+    step got_inventory => sub {
 	my ($err, $inv) = @_;
 	die $err if $err;
 
@@ -408,13 +420,13 @@ label_vtape(3,2,"mytape-2");
           { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS, f_type => $Amanda::Header::F_EMPTY, label => undef, reserved => 0,
 	    slot => '{4,4,4}', import_export => undef } ,
         ], "second inventory is correct");
-	Amanda::MainLoop::quit();
-    });
 
-    # start the loop
-    Amanda::MainLoop::call_later($do_inventory);
-    Amanda::MainLoop::run();
+	$finished_cb->();
+    };
 }
+test_normal_inventory(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
+
 ##
 # Test configuring the device with device_property
 
@@ -432,21 +444,27 @@ if ($cfg_result != $CFGERR_OK) {
     die(join "\n", @errors);
 }
 
-reset_taperoot();
-label_vtape(1,1,"mytape");
-label_vtape(2,2,"mytape");
-label_vtape(3,3,"mytape");
 
-{
+sub test_properties {
+    my ($finished_cb) = @_;
+
     my $chg = Amanda::Changer->new("myrait");
-    ok($chg->isa("Amanda::Changer::rait"), "Create RAIT device from a named config subsection");
-    my ($do_load_1, $got_res_1, $quit);
+    ok($chg->isa("Amanda::Changer::rait"),
+	"Create RAIT device from a named config subsection");
 
-    $do_load_1 = make_cb('do_load_1' => sub {
-	$chg->load(slot => "1", res_cb => $got_res_1);
-    });
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    $got_res_1 = make_cb('got_res_1' => sub {
+    step do_load_1 => sub {
+	reset_taperoot();
+	label_vtape(1,1,"mytape");
+	label_vtape(2,2,"mytape");
+	label_vtape(3,3,"mytape");
+
+	$chg->load(slot => "1", res_cb => $steps->{'got_res_1'});
+    };
+
+    step got_res_1 => sub {
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading slot '1'")
 	    or diag($err);
@@ -458,41 +476,43 @@ label_vtape(3,3,"mytape");
 	is($res->{'device'}->property_get("comment"), "hello, world",
 	    "property from device_property appears on RAIT device");
 
-	$res->release(finished_cb => $quit);
-    });
+	$res->release(finished_cb => $steps->{'quit'});
+    };
 
-    $quit = make_cb('quit' => sub {
+    step quit => sub {
 	my ($err) = @_;
 	die $err if $err;
 
-	Amanda::MainLoop::quit();
-    });
-
-    # start the loop
-    $do_load_1->();
-    Amanda::MainLoop::run();
+	$finished_cb->();
+    };
 }
+test_properties(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
 
 # scan the changer using except_slots
-{
-    my %subs;
+sub test_except_slots {
+    my ($finished_cb) = @_;
     my $slot;
     my %except_slots;
+    my $chg;
 
-    my $chg = Amanda::Changer->new("myrait");
-    die "error creating" unless $chg->isa("Amanda::Changer::rait");
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    $subs{'start'} = make_cb(start => sub {
+    step start => sub {
+	$chg = Amanda::Changer->new("myrait");
+	die "error creating" unless $chg->isa("Amanda::Changer::rait");
+
 	$chg->load(relative_slot => "current", except_slots => { %except_slots },
-		   res_cb => $subs{'loaded'});
-    });
+		   res_cb => $steps->{'loaded'});
+    };
 
-    $subs{'loaded'} = make_cb(loaded => sub {
+    step loaded => sub {
         my ($err, $res) = @_;
 	if ($err) {
 	    if ($err->notfound) {
 		# this means the scan is done
-		return $subs{'quit'}->();
+		return $steps->{'quit'}->();
 	    } elsif ($err->volinuse and defined $err->{'slot'}) {
 		$slot = $err->{'slot'};
 	    } else {
@@ -505,30 +525,28 @@ label_vtape(3,3,"mytape");
 	$except_slots{$slot} = 1;
 
 	if ($res) {
-	    $res->release(finished_cb => $subs{'released'});
+	    $res->release(finished_cb => $steps->{'released'});
 	} else {
-	    $subs{'released'}->();
+	    $steps->{'released'}->();
 	}
-    });
+    };
 
-    $subs{'released'} = make_cb(released => sub {
+    step released => sub {
 	my ($err) = @_;
 	die $err if $err;
 
         $chg->load(relative_slot => 'next', slot => $slot,
 		   except_slots => { %except_slots },
-		   res_cb => $subs{'loaded'});
-    });
+		   res_cb => $steps->{'loaded'});
+    };
 
-    $subs{'quit'} = make_cb(quit => sub {
-        Amanda::MainLoop::quit();
-    });
-
-    $subs{'start'}->();
-    Amanda::MainLoop::run();
-
-    is_deeply({ %except_slots }, { "{1,1,1}"=>1, "{2,2,2}"=>1, "{3,3,3}"=>1, "{4,4,4}"=>1 },
-	    "scanning with except_slots works");
+    step quit => sub {
+	is_deeply({ %except_slots }, { "{1,1,1}"=>1, "{2,2,2}"=>1, "{3,3,3}"=>1, "{4,4,4}"=>1 },
+		"scanning with except_slots works");
+	$finished_cb->();
+    };
 }
+test_except_slots(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
 
 rmtree($tapebase);
