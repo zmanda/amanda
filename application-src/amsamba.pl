@@ -550,25 +550,28 @@ sub command_backup {
 	if (defined $self->{subdir}) {
 	    push @ARGV, "-D", $self->{subdir},
 	}
+
 	my $comm ;
 	if ($level == 0) {
-	    $comm = "-Tqca";
+	    $comm = "tarmode full reset hidden system quiet;";
 	} else {
-	    $comm = "-Tqcg";
+	    $comm = "tarmode inc noreset hidden system quiet;";
 	}
+	$comm .= " tar c";
 	if ($#{$self->{exclude}} >= 0) {
 	    $comm .= "X";
 	}
 	if ($#{$self->{include}} >= 0) {
 	    $comm .= "I";
 	}
-	push @ARGV, $comm, "-";
+	$comm .= " -";
 	if ($#{$self->{exclude}} >= 0) {
-	    push @ARGV, @{$self->{exclude}};
+	    $comm .= " " . join(" ", @{$self->{exclude}});
 	}
 	if ($#{$self->{include}} >= 0) {
-	    push @ARGV, @{$self->{include}};
+	    $comm .= " " . join(" ", @{$self->{include}});
 	}
+	push @ARGV, "-c", $comm;
 	debug("execute: " . $self->{smbclient} . " " .
 	      join(" ", @ARGV));
 	exec {$self->{smbclient}} @ARGV;
@@ -611,6 +614,7 @@ sub command_backup {
 	chomp;
 	debug("stderr: " . $_);
 	next if /^Domain=/;
+	next if /^tarmode is now /;
 	next if /dumped (\d+) files and directories/;
 	if (/^Total bytes written: (\d*)/) {
 	    $size = $1;
