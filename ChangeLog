@@ -1,3 +1,7 @@
+2010-04-07 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/rpm/amanda.spec: specify mandir explicitly to work around
+	   old autoconf
+
 2010-04-07  Paul C. Mantz <pcmantz@zmanda.com>
 	* server-src/amreport.pl perl/Amanda/Report.pm
 	perl/Amanda/Report/human.pm perl/Amanda/Report/postscript.pm
