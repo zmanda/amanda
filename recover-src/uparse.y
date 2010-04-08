@@ -142,9 +142,7 @@ setdate_command:
 			}
 			if (sscanf(mydate, "---%d", &d) == 1 ||
 			    sscanf(mydate, "--%d-%d", &m, &d) == 2 ||
-			    sscanf(mydate, "%d-%d-%d", &y, &m, &d) == 3 ||
-			    sscanf(mydate, "%d-%d-%d-%d-%d", &y, &m, &d, &h, &mi) == 5 ||
-			    sscanf(mydate, "%d-%d-%d-%d-%d-%d", &y, &m, &d, &h, &mi, &s) == 6) {
+			    sscanf(mydate, "%d-%d-%d-%d-%d-%d", &y, &m, &d, &h, &mi, &s) >= 3) {
 			    if (y < 70) {
 				y += 2000;
 			    } else if (y < 100) {
