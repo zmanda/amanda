@@ -292,3 +292,29 @@ amanda_log_handler_t *amanda_log_trace_log;
 amglue_export_ok(
     $amanda_log_trace_log
 );
+
+
+amglue_export_ok(
+    find_all_logs find_latest_log
+);
+
+%perlcode %{
+
+sub find_all_logs
+{
+    my $logdir = shift @_ || config_dir_relative(getconf($CNF_LOGDIR));
+
+    opendir my $logdh, $logdir or die("can't read $logdir");
+    my @logfiles = grep { m{^log\.\d+\.\d+$} } readdir $logdh;
+
+    return @logfiles;
+}
+
+sub find_latest_log
+{
+    my $logdir = shift @_;
+    my @logs = find_all_logs($logdir || ());
+    return $logs[-1];
+}
+
+%}

@@ -1,3 +1,9 @@
+2010-04-08  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Logfile.swg: added find_all_logs and find_latest log
+	  which search the logdir instead of the tapelist
+	* perl/Amanda/Logfile.pod: documentation
+	* server-src/amreport.pl: use find_latest_log insted of find_log
+
 2010-04-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/MainLoop.swg: introduce define_steps and step, to
 	  eliminate reference loops created by use of %subs
