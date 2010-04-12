@@ -1,4 +1,7 @@
 2010-04-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report/human.pm: typo.
+
+2010-04-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.pl: Check hdr_buf, cancel_dump on error.
 	* perl/Amanda/Taper/Scribe.pm (cancel_dump): New method.
 	* perl/Amanda/Report/human.pm: Print taper error message.

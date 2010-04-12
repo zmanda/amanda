@@ -551,7 +551,7 @@ sub output_error_summaries
 		    # if the error message is omitted, then the taper only got a partial
 		    # dump from the dumper/chunker, rather than failing with a taper error
 		    my $errmsg = $try->{taper}{error} || "successfully taped a partial dump";
-		    $flush .= "partial taper: $errmsg"
+		    $flush = "partial taper: $errmsg";
 		} else {
 		    $flush .= " " . $try->{taper}{error};
 		}
