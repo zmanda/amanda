@@ -1070,6 +1070,7 @@ Whether an amdump run will flush the dumps from holding disk to tape.</para>
   <varlistentry>
   <term><amkeyword>amrecover_do_fsf</amkeyword> <amtype>bool</amtype></term>
   <listitem>
+<para>Deprecated; amrecover always uses fsf, and does not invoke amrestore.</para>
 <para>Default:
 <amkeyword>on</amkeyword>.
 Amrecover will call amrestore with the -f flag for faster positioning of the tape.</para>
@@ -1078,6 +1079,7 @@ Amrecover will call amrestore with the -f flag for faster positioning of the tap
   <varlistentry>
   <term><amkeyword>amrecover_check_label</amkeyword> <amtype>bool</amtype></term>
   <listitem>
+<para>Deprecated; amrecover always checks the label, and does not invoke amrestore.</para>
 <para>Default:
 <amkeyword>on</amkeyword>.
 Amrecover will call amrestore with the -l flag to check the label.</para>

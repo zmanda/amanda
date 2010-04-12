@@ -1795,6 +1795,8 @@ handle_deprecated_keyword(void)
         CONF_TAPEBUFS,    /* 2007-10-15 */
 	CONF_FILE_PAD,	  /* 2008-07-01 */
 	CONF_LABEL_NEW_TAPES,	/* 2010-02-05 */
+	CONF_AMRECOVER_DO_FSF,	/* 2010-04-09 */
+	CONF_AMRECOVER_CHECK_LABEL, /* 2010-04-09 */
         0
     };
 

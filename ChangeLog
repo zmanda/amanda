@@ -1,3 +1,10 @@
+2010-04-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c: deprecate amrecover_do_fsf and
+	  amrecover_check_label
+	* example/amanda.conf.in example/template.d/advanced.conf.in: remove
+	* man/xml-source/amanda.conf.5.xml: indicate deprecation
+	* NEWS: mention deprecation
+
 2010-04-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report/human.pm: typo.
 

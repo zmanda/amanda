@@ -140,10 +140,6 @@ maxdumpsize -1		# Maximum number of bytes the planner will schedule
 tapetype HP-DAT		# what kind of tape it is (see tapetypes below)
 labelstr "^@DEFAULT_CONFIG@-[0-9][0-9]*$"	# label constraint regex: all tapes must match
 
-amrecover_do_fsf yes		# amrecover will call amrestore with the
-				# -f flag for faster positioning of the tape.
-amrecover_check_label yes	# amrecover will call amrestore with the
-				# -l flag to check the label.
 amrecover_changer "changer"	# amrecover will use the changer if you restore
     # from this device. It could be a string like 'changer' and amrecover will use your
     # changer if you set your tape to 'changer' with 'setdevice changer' or via 
