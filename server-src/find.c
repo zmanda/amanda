@@ -713,7 +713,7 @@ search_logfile(
     int  maxparts = -1;
     char *number;
     int fileno;
-    char *current_label = NULL;
+    char *current_label = stralloc("");
     char *rest;
     char *ck_label=NULL;
     int level = 0;
