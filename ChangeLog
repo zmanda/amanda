@@ -1,3 +1,9 @@
+2010-04-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper.pl: Check hdr_buf, cancel_dump on error.
+	* perl/Amanda/Taper/Scribe.pm (cancel_dump): New method.
+	* perl/Amanda/Report/human.pm: Print taper error message.
+	* server-src/find.c: Set current_label to "".
+
 2010-04-08  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Logfile.swg: added find_all_logs and find_latest log
 	  which search the logdir instead of the tapelist

@@ -706,6 +706,10 @@ sub send_port_and_get_header {
 	$header_xfer = $xsrc = $xdst = undef;
 	$connected_socket->close();
 
+	if (!defined $hdr_buf) {
+	    return $finished_cb->("Got empty header");
+	}
+
 	# parse the header, finally!
 	$self->{'header'} = Amanda::Header->from_string($hdr_buf);
 
@@ -800,14 +804,12 @@ sub setup_and_start_dump {
         $self->_assert_in_state("getting_header") or return;
         $self->{'state'} = 'writing';
 
-        # if $err is set, call through to dump_cb to handle the situation, treating
-        # it as a device error
+        # if $err is set, cancel the dump, treating it as a input error
         if ($err) {
-            return $params{'dump_cb'}->(
-                result => "FAILED",
-                device_errors => [ $err ],
-                size => 0,
-                duration => 0.0);
+	    push @{$self->{'input_errors'}}, $err;
+	    return $self->{'scribe'}->cancel_dump(
+		xfer => $self->{'xfer'},
+		dump_cb => $params{'dump_cb'});
         }
 
         # sanity check the header..
@@ -886,7 +888,7 @@ sub dump_cb {
 
     # write a DONE/PARTIAL/FAIL log line
     my $have_msg = @{$params{'device_errors'}};
-    my $msg = join("; ", @{$params{'device_errors'}});
+    my $msg = join("; ", @{$params{'device_errors'}}, @{$self->{'input_errors'}});
     $msg = quote_string($msg);
 
     if ($logtype == $L_FAIL) {
