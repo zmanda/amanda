@@ -1,3 +1,8 @@
+2010-04-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* NEWS: add info about deprecations in 2.6.1
+	* man/xml-source/amanda-compatibility.7.xml: update manpage to
+	  reflect info in NEWS
+
 2010-04-13  Paul C. Mantz <pcmantz@zmanda.com>
 	* server-src/amreport.pl: load holding disk before making report
 	* perl/Amanda/Report/human.pm: report holding disk correctly

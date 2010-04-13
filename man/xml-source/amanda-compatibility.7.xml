@@ -58,10 +58,32 @@ using only shell, mt and dd is also possible.)</para>
 
 <refsect1><title>UPGRADES</title>
 
-The recommended course for Amanda upgrades is to upgrade the server first, and
-test backups and restores before upgrading clients.  Consult the changes
-described below for the relevant span of versions to determine what
-adjustments, if any, are required.
+<para>The recommended course for Amanda upgrades is to upgrade the server
+first, and test backups and restores before upgrading clients.  Consult the
+changes described below for the relevant span of versions to determine what
+adjustments, if any, are required.  Also see the NEWS file shipped with
+each Amanda release for more detailed information.</para>
+
+<refsect2><title>Amanda 3.1</title>
+
+<para>Although it is a significant rewrite, there are no incompatible changes
+in this release.</para>
+
+<para>Old-style changer scripts are deprecated in this release.  While they
+remain available, they may be removed in a future release.  Consider
+upgrading to one of the new changer scripts.  Users of
+<emphasis>chg-zd-mtx</emphasis> are particularly encouraged to consider the
+much more intelligent <emphasis>chg-robot</emphasis>.  See <manref
+name="amanda-changers" vol="7" /> for more information.</para>
+
+<para>The following configuration configration keywords are deprecated.  This is
+currently a warning, but will become an error soon.
+<itemizedlist>
+<listitem><para><computeroutput>label_new_tapes</computeroutput> - use <computeroutput>autolabel</computeroutput></para></listitem>
+</itemizedlist>
+</para>
+
+</refsect2>
 
 <refsect2><title>Amanda 2.6.1</title>
 
@@ -69,8 +91,8 @@ adjustments, if any, are required.
 to some of the new applications instead of the old GNUTAR and DUMP
 programs.</para>
 
-<para>The following configuration configration keywords are deprecated and will
-be removed in the next release:
+<para>The following configuration configration keywords are deprecated.  This is
+currently a warning, but will become an error soon.
 <itemizedlist>
 <listitem><para><computeroutput>tapebufs</computeroutput> - use <computeroutput>device-output-buffer-size</computeroutput> instead</para></listitem>
 <listitem><para><computeroutput>rawtapedev</computeroutput> - use <computeroutput>tapedev</computeroutput> instead</para></listitem>

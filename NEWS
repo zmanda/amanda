@@ -12,8 +12,12 @@ Changes in release 3.1.0
      to the more efficient chg-robot.  See contrib/convert-zd-mtx-to-robot.sh
      for a useful conversion script.
    * Amanda server configuration file changes (amanda.conf)
-      o removed configuration keywords:
+      o deprecated configuration keywords:
+	 + label_new_tapes
+      o keywords deprecated in 2.6.1:
          + rawtapedev
+	 + tapebufs
+	 + file-pad
       o new configuration keyword
          + autolabel   -- replace label_new_tapes
          + columnspec  -- can specify a precision.
@@ -102,6 +106,11 @@ Changes in release 2.6.1p1
 
 Changes in release 2.6.1
 
+   * Amanda server configuration file changes (amanda.conf)
+      o deprecated configuration keywords:
+         + rawtapedev
+	 + tapebufs
+	 + file-pad
    * Application API: Allow to easily write wrappers around any backup program,
      See the 'amanda-applications' man page.
       o amgtar: Use GNU tar, it is a lot more configurable than the GNUTAR
