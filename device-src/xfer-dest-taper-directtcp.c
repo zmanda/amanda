@@ -209,6 +209,10 @@ worker_thread(
 	msg->successful = TRUE;
 	msg->eom = eom;
 	msg->eof = eof;
+
+	/* time runs backward on some test boxes, so make sure this is positive */
+	if (msg->duration < 0) msg->duration = 0;
+
 	xfer_queue_message(elt->xfer, msg);
 
         self->partnum++;

@@ -1011,6 +1011,9 @@ part_done:
     msg->eom = !self->last_part_successful;
     msg->eof = self->no_more_parts;
 
+    /* time runs backward on some test boxes, so make sure this is positive */
+    if (msg->duration < 0) msg->duration = 0;
+
     if (self->last_part_successful)
 	self->partnum++;
 
