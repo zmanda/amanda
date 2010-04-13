@@ -1,3 +1,7 @@
+2010-04-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndml_conn.c, ndmp-src/ndml_nmb.c:
+	  Always log NOTIFY_DATA_HALTED.
+
 2010-04-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c: deprecate amrecover_do_fsf and
 	  amrecover_check_label

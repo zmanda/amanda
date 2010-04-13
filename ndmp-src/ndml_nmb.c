@@ -85,6 +85,17 @@ ndmnmb_snoop (
 	int		rc, nl, i;
 	char		buf[2048];
 	int		(*ndmpp)();
+	int		level5 = 5;
+	int		level6 = 6;
+
+	 if (level < 6 && nmb->protocol_version == 4) {
+		ndmp4_header *header = (ndmp4_header *)&nmb->header;
+		if (header->message_code == NDMP4_NOTIFY_DATA_HALTED) {
+			level = 6;
+			level5 = 0;
+			level6 = 0;
+		}
+	}
 
 	if (!log || level < 5) {
 		return;
@@ -92,7 +103,7 @@ ndmnmb_snoop (
 
 	rc = ndmp_pp_header (nmb->protocol_version, &nmb->header, buf);
 #if 0
-	ndmlogf (log, tag, 5, "%s %s", buf, whence);
+	ndmlogf (log, tag, level5, "%s %s", buf, whence);
 #else
 	{
 		char combo[3];
@@ -106,7 +117,7 @@ ndmnmb_snoop (
 		}
 		combo[2] = 0;
 
-		ndmlogf (log, tag, 5, "%s %s", combo, buf+2);
+		ndmlogf (log, tag, level5, "%s %s", combo, buf+2);
 	}
 #endif
 
@@ -132,7 +143,7 @@ ndmnmb_snoop (
 		if (nl == 0)
 			break;		/* no printable body (void) */
 
-		ndmlogf (log, tag, 6, "   %s", buf);
+		ndmlogf (log, tag, level6, "   %s", buf);
 	}
 }
 
