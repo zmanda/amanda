@@ -401,7 +401,6 @@ typedef enum {
     CNF_ETIMEOUT,
     CNF_DTIMEOUT,
     CNF_CTIMEOUT,
-    CNF_TAPEBUFS,
     CNF_DEVICE_OUTPUT_BUFFER_SIZE,
     CNF_PRINTER,
     CNF_MAILER,
@@ -560,7 +559,6 @@ typedef enum {
     TAPETYPE_LENGTH,
     TAPETYPE_FILEMARK,
     TAPETYPE_SPEED,
-    TAPETYPE_FILE_PAD,
     TAPETYPE_TAPETYPE /* sentinel */
 } tapetype_key;
 
@@ -611,7 +609,6 @@ char *tapetype_name(tapetype_t *ttyp);
 #define tapetype_get_length(ttyp)          (val_t_to_int64(tapetype_getconf((ttyp), TAPETYPE_LENGTH)))
 #define tapetype_get_filemark(ttyp)        (val_t_to_int64(tapetype_getconf((ttyp), TAPETYPE_FILEMARK)))
 #define tapetype_get_speed(ttyp)           (val_t_to_int(tapetype_getconf((ttyp), TAPETYPE_SPEED)))
-#define tapetype_get_file_pad(ttyp)        (val_t_to_boolean(tapetype_getconf((ttyp), TAPETYPE_FILE_PAD)))
 
 /*
  * Dumptype parameter access

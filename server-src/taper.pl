@@ -572,16 +572,7 @@ sub get_splitting_config {
     my ($msgtype, %params) = @_;
     my %get_xfer_dest_args;
 
-    my $max_memory;
-    if (getconf_seen($CNF_DEVICE_OUTPUT_BUFFER_SIZE)) {
-        $max_memory = getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE);
-    } elsif (getconf_seen($CNF_TAPEBUFS)) {
-        $max_memory = getconf($CNF_TAPEBUFS) * 32768;
-    } else {
-        # use the default value
-        $max_memory = getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE);
-    }
-    $get_xfer_dest_args{'max_memory'} = $max_memory;
+    $get_xfer_dest_args{'max_memory'} = getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE);
 
     # here, things look a little bit different depending on whether we're
     # reading from holding (FILE_WRITE) or from a network socket (PORT_WRITE)

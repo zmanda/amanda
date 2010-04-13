@@ -64,6 +64,18 @@ changes described below for the relevant span of versions to determine what
 adjustments, if any, are required.  Also see the NEWS file shipped with
 each Amanda release for more detailed information.</para>
 
+<refsect2><title>(NEXT RELEASE)</title>
+
+<para>The following configuration configration keywords are deprecated.  This is
+currently a warning, but will become an error soon.
+<itemizedlist>
+<listitem><para><computeroutput>amrecover_do_fsf</computeroutput> - amrecover always seeks to files when recovering</para></listitem>
+<listitem><para><computeroutput>amrecover_check_label</computeroutput> - amrecover always checks the volume label when recovering</para></listitem>
+</itemizedlist>
+</para>
+
+</refsect2>
+
 <refsect2><title>Amanda 3.1</title>
 
 <para>Although it is a significant rewrite, there are no incompatible changes

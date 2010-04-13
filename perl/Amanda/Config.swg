@@ -78,7 +78,6 @@ amglue_add_constant(CNF_MAXDUMPS, confparm_key);
 amglue_add_constant(CNF_ETIMEOUT, confparm_key);
 amglue_add_constant(CNF_DTIMEOUT, confparm_key);
 amglue_add_constant(CNF_CTIMEOUT, confparm_key);
-amglue_add_constant(CNF_TAPEBUFS, confparm_key);
 amglue_add_constant(CNF_DEVICE_OUTPUT_BUFFER_SIZE, confparm_key);
 amglue_add_constant(CNF_PRINTER, confparm_key);
 amglue_add_constant(CNF_AUTOFLUSH, confparm_key);
@@ -132,7 +131,6 @@ amglue_add_constant(TAPETYPE_READBLOCKSIZE, tapetype_key);
 amglue_add_constant(TAPETYPE_LENGTH, tapetype_key);
 amglue_add_constant(TAPETYPE_FILEMARK, tapetype_key);
 amglue_add_constant(TAPETYPE_SPEED, tapetype_key);
-amglue_add_constant(TAPETYPE_FILE_PAD, tapetype_key);
 amglue_copy_to_tag(tapetype_key, getconf);
 
 amglue_add_enum_tag_fns(dumptype_key);

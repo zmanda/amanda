@@ -63,7 +63,7 @@ typedef enum {
     CONF_CHANGERDEV,		CONF_CHANGERFILE,	CONF_LABELSTR,
     CONF_BUMPPERCENT,		CONF_BUMPSIZE,		CONF_BUMPDAYS,
     CONF_BUMPMULT,		CONF_ETIMEOUT,		CONF_DTIMEOUT,
-    CONF_CTIMEOUT,		CONF_TAPEBUFS,		CONF_TAPELIST,
+    CONF_CTIMEOUT,		CONF_TAPELIST,
     CONF_DEVICE_OUTPUT_BUFFER_SIZE,
     CONF_DISKFILE,		CONF_INFOFILE,		CONF_LOGDIR,
     CONF_LOGFILE,		CONF_DISKDIR,		CONF_DISKSIZE,
@@ -125,7 +125,7 @@ typedef enum {
     CONF_CLIENT_USERNAME,	CONF_CLIENT_PORT,
 
     /* tape type */
-    /*COMMENT,*/		CONF_BLOCKSIZE,		CONF_FILE_PAD,
+    /*COMMENT,*/		CONF_BLOCKSIZE,
     CONF_LBL_TEMPL,		CONF_FILEMARK,		CONF_LENGTH,
     CONF_SPEED,			CONF_READBLOCKSIZE,
 
@@ -877,7 +877,6 @@ keytab_t server_keytab[] = {
     { "FALLBACK_SPLITSIZE", CONF_FALLBACK_SPLITSIZE },
     { "FAST", CONF_FAST },
     { "FILE", CONF_EFILE },
-    { "FILE_PAD", CONF_FILE_PAD },
     { "FILEMARK", CONF_FILEMARK },
     { "FIRST", CONF_FIRST },
     { "FIRSTFIT", CONF_FIRSTFIT },
@@ -973,7 +972,6 @@ keytab_t server_keytab[] = {
     { "STARTTIME", CONF_STARTTIME },
     { "STRANGE", CONF_STRANGE },
     { "STRATEGY", CONF_STRATEGY },
-    { "TAPEBUFS", CONF_TAPEBUFS },
     { "DEVICE_OUTPUT_BUFFER_SIZE", CONF_DEVICE_OUTPUT_BUFFER_SIZE },
     { "TAPECYCLE", CONF_TAPECYCLE },
     { "TAPEDEV", CONF_TAPEDEV },
@@ -1140,7 +1138,6 @@ conf_var_t server_var [] = {
    { CONF_ETIMEOUT             , CONFTYPE_INT      , read_int         , CNF_ETIMEOUT             , validate_positive },
    { CONF_DTIMEOUT             , CONFTYPE_INT      , read_int         , CNF_DTIMEOUT             , validate_positive },
    { CONF_CTIMEOUT             , CONFTYPE_INT      , read_int         , CNF_CTIMEOUT             , validate_positive },
-   { CONF_TAPEBUFS             , CONFTYPE_INT      , read_int         , CNF_TAPEBUFS             , validate_positive },
    { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE , read_size        , CNF_DEVICE_OUTPUT_BUFFER_SIZE, validate_positive },
    { CONF_COLUMNSPEC           , CONFTYPE_STR      , read_str         , CNF_COLUMNSPEC           , NULL },
    { CONF_TAPERALGO            , CONFTYPE_TAPERALGO, read_taperalgo   , CNF_TAPERALGO            , NULL },
@@ -1195,7 +1192,6 @@ conf_var_t tapetype_var [] = {
    { CONF_LENGTH        , CONFTYPE_INT64   , read_int64 , TAPETYPE_LENGTH       , validate_nonnegative },
    { CONF_FILEMARK      , CONFTYPE_INT64   , read_int64 , TAPETYPE_FILEMARK     , NULL },
    { CONF_SPEED         , CONFTYPE_INT     , read_int   , TAPETYPE_SPEED        , validate_nonnegative },
-   { CONF_FILE_PAD      , CONFTYPE_BOOLEAN , read_bool  , TAPETYPE_FILE_PAD     , NULL },
    { CONF_UNKNOWN       , CONFTYPE_INT     , NULL       , TAPETYPE_TAPETYPE     , NULL }
 };
 
@@ -1792,8 +1788,6 @@ handle_deprecated_keyword(void)
      */
 
     static tok_t warning_deprecated[] = {
-        CONF_TAPEBUFS,    /* 2007-10-15 */
-	CONF_FILE_PAD,	  /* 2008-07-01 */
 	CONF_LABEL_NEW_TAPES,	/* 2010-02-05 */
 	CONF_AMRECOVER_DO_FSF,	/* 2010-04-09 */
 	CONF_AMRECOVER_CHECK_LABEL, /* 2010-04-09 */
@@ -1814,17 +1808,29 @@ handle_invalid_keyword(
 {
     static const char * error_deprecated[] = {
 	"rawtapedev",
+	"tapebufs", /* deprecated: 2007-10-15; invalid: 2010-04-14 */
+	"file-pad", /* deprecated: 2008-07-01; invalid: 2010-04-14 */
         NULL
     };
     const char ** s;
+    char *folded_token, *p;
+
+    /* convert '_' to '-' in TOKEN */
+    folded_token = g_strdup(token);
+    for (p = folded_token; *p; p++) {
+	if (*p == '_') *p = '-';
+    }
 
     for (s = error_deprecated; *s != NULL; s ++) {
-	if (g_ascii_strcasecmp(*s, token) == 0) {
+	if (g_ascii_strcasecmp(*s, folded_token) == 0) {
 	    conf_parserror(_("error: Keyword %s is deprecated."),
 			   token);
+	    g_free(folded_token);
 	    return;
 	}
     }
+    g_free(folded_token);
+
     if (*s == NULL) {
         conf_parserror(_("configuration keyword expected"));
     }
@@ -2320,7 +2326,6 @@ init_tapetype_defaults(void)
     conf_init_int64 (&tpcur.value[TAPETYPE_LENGTH]       , ((gint64)2000));
     conf_init_int64 (&tpcur.value[TAPETYPE_FILEMARK]     , (gint64)1);
     conf_init_int   (&tpcur.value[TAPETYPE_SPEED]        , 200);
-    conf_init_bool  (&tpcur.value[TAPETYPE_FILE_PAD]     , 1);
 }
 
 static void
@@ -4564,7 +4569,6 @@ init_defaults(
     conf_init_int      (&conf_data[CNF_ETIMEOUT]             , 300);
     conf_init_int      (&conf_data[CNF_DTIMEOUT]             , 1800);
     conf_init_int      (&conf_data[CNF_CTIMEOUT]             , 30);
-    conf_init_int      (&conf_data[CNF_TAPEBUFS]             , 20);
     conf_init_size     (&conf_data[CNF_DEVICE_OUTPUT_BUFFER_SIZE], 40*32768);
     conf_init_str   (&conf_data[CNF_PRINTER]              , "");
     conf_init_str   (&conf_data[CNF_MAILER]               , DEFAULT_MAILER);
