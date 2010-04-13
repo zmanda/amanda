@@ -1972,7 +1972,7 @@ Config  : TESTCONF
 Date    : March 3, 2010
 
 *** A TAPE ERROR OCCURRED: [Virtual-tape directory /A/p/vtapes does not exist.].
-No dumps are left in the holding disk. 0k
+No dumps are left in the holding disk.
 
 The next tape Amanda expects to use is: 1 new tape.
 

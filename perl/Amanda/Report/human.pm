@@ -426,9 +426,11 @@ sub output_tapeinfo
         my @holding_list = Amanda::Holding::get_files_for_flush();
         my $h_size = 0;
         foreach my $holding_file (@holding_list) {
-            $h_size += 0 + Amanda::Holding::file_size($holding_file, 1);
+            $h_size += (0 + Amanda::Holding::file_size($holding_file, 1));
         }
-        my $h_size_u = $self->tounits($h_size) . $self->{disp_unit};
+
+        my $h_size_u =
+          sprintf("%.0f%s", $self->tounits($h_size), $self->{disp_unit});
 
         if ($h_size > 0) {
             print $fh
@@ -439,7 +441,7 @@ sub output_tapeinfo
               : print $fh "Run amflush to flush them to tape.\n\n";
 
         } elsif ($report->get_flag("degraded_mode")) {
-            print $fh "No dumps are left in the holding disk. $h_size_u\n\n";
+            print $fh "No dumps are left in the holding disk.\n\n";
         }
     }
 
