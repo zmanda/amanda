@@ -1,4 +1,7 @@
 2010-04-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c: fix derived value for autolabel
+
+2010-04-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda-applications.7.xml: info about properties
 	* man/xml-source/amanda-devices.7.xml: info about properties
 	* man/xml-source/amanda-scripts.7.xml: info about properties
