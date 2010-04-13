@@ -100,218 +100,6 @@ There is no way to reset a device property to its default value.
 
 </refsect1>
 
-<refsect1><title>DEVICES</title>
-
-<para>This section lists the device drivers included with Amanda, and basic instructions for using them.  For complete How-To information, consult the Amanda wiki at http://wiki.zmanda.com.</para>
-
-<refsect2><title>Null Device</title>
-<programlisting>
-tapedev "null:"
-</programlisting>
-
-<para>The null device driver only supports writing, and discards all data.  It is
-generally only useful for testing purposes.</para>
-
-</refsect2>
-
-<refsect2><title>RAIT Device</title>
-<programlisting>
-tapedev "rait:tape:/dev/rmt/tps0d{4,5,6}n"
-</programlisting>
-
-<para>The RAIT device driver mirrors or stripes data over multiple "child"
-devices.  The child devices are specified using a shell-like syntax, where
-alternatives are enclosed in braces and separated by commas.  Braces and commas
-can be escaped with a backslash.  Note that the backslash itself must be
-escaped in most contexts.  For example:
-<programlisting>
-tapedev "rait:{commandev:foo\\,bar,bracedev:foo\\}bar}"
-</programlisting>
-</para>
-
-<para>With two child devices, the RAIT device driver mirrors data such that the
-two devices contain identical data and can be used singly for
-  recovery.  With more than two devices, the RAIT device "stripes"
-  data across all but one device and writes a parity block to the
-  final device, usable for data recovery in the event of a device or
-  volume failure.  The RAIT device scales its blocksize as necessary
-  to match the number of children that will be used to store data.</para>
-
-<para>When a child device is known to have failed, the RAIT device should be reconfigured to replace that device with the text "ERROR", e.g.,
-<programlisting>
-tapedev "rait:{tape:/dev/st0,ERROR,tape:/dev/st2}"
-</programlisting>
-This will cause the RAIT device to start up in degraded mode, reconstructing the data from the missing device.
-</para>
-
-<para>Like ordinary RAID drivers, the RAIT device driver can automatically
-enter degraded mode when one of its child devices fails.  However, the RAIT
-device cannot automatically recover from any write error nor write any data in
-degraded mode.  When reading, certain errors may be fatal (rather than causing
-degraded mode).  And in any case, labels on all volumes must initially match
-(labeled or otherwise).  If you have lost one volume from a set, explicitly
-start the device in degraded mode as described above.</para>
-
-<refsect3><title>Child Device Block Sizes</title>
-
-<para>The RAIT device driver requires that all of its child devices use the
-same block size.  If no block sizes are specified, the driver selects the block
-size closest to 32k that is within the MIN_BLOCK_SIZE - MAX_BLOCK_SIZE range of
-all child devices, and calculates its own blocksize according to the formula
-<emphasis>rait_blocksize = child_blocksize * (num_children - 1)</emphasis>.  If
-a block size is specified for the RAIT device, then it calculates its child
-block sizes according to the formula <emphasis>child_blocksize = rait_blocksize
-/ (num_children - 1)</emphasis>.  Either way, it sets the BLOCK_SIZE property
-of each child device accordingly.</para>
-
-</refsect3>
-
-</refsect2>
-
-<refsect2><title>S3 Device</title>
-<programlisting>
-tapedev "s3:foocorp-backups/DailySet1-"
-device_property "S3_ACCESS_KEY" "MYACCESSKEY"
-device_property "S3_SECRET_KEY" "MYSECRETKEY"
-</programlisting>
-
-<para>The S3 device driver uploads data to the Amazon S3 "storage cloud".  Its
-device name is a slash-sparated combination of bucket name and prefix:
-"s3:BUCKET/PREFIX".  Since buckets must be unique across all Amazon S3 users,
-and since the number of buckets allowed to each user is limited, the driver can
-store multiple Amanda volumes in a single S3 bucket, distinguished by prefix.
-The prefix and slash can be omitted if they are not needed: "s3:BUCKET".</para>
-
-<para>The access and secret keys used to authenticate to Amazon S3 are provided
-as properties.</para>
-
-<para>The S3 device driver stores each block in a distinct S3 object.  Due to
-high HTTP overhead for each request, use of larger than normal block
-  sizes (&gt; 1 megabyte) is reccomended with the S3 device.</para>
-
-<para>
-Amanda automatically creates a bucket when writing, if the bucket doesn't
-already exist. At that time, it specifies where Amazon should store the data
-based on the S3_BUCKET_LOCATION property. Currently, there are two valid settings:
-"*" (any location, probably US) and "EU" (Europe). If this property is not set,
-Amazon's default value of "*" is used. The bucket location has both billing and
-legal concerns, so you are encouraged to consult Amazon's documentation for details.
-</para>
-
-<para>
-Amazon does not permit changes to bucket locations, so this is a permanent
-specification. If the bucket already exists and the property is set,
-then Amanda checks the property against the location of the bucket, and
-produces an error if they do not match.
-</para>
-
-<note><para>
-If a location constraint is set, the bucket name must consist only of
-lower-case letters, numbers, dashes, and dots.
-</para></note>
-
-<para>This driver supports the VERBOSE property, but use it carefully -- it
-produces a great deal of output, and may cause spurious failures by filling
-your debug log partition.  Its logging is generally only useful for developers
-chasing down a problem in communications with Amazon's servers.</para>
-
-</refsect2>
-
-<refsect2><title>Tape Device</title>
-<programlisting>
-tapedev "tape:/dev/nst0"
-</programlisting>
-
-<para>The tape device driver interacts with a tape drive.  The device uses the
-operating system's built-in tape support, which is generally similar to that
-available via the command-line utilities dd(1) and mt(1).</para>
-
-<para>The tape device name should specify a path to the operating system's
-device file.</para>
-
-</refsect2>
-
-<refsect2><title>NDMP Device</title>
-<programlisting>
-tapedev "ndmp:my.filer.com:10000@st1"
-device_property "NDMP_USERNAME" "jimmy"
-device_property "NDMP_PASSWORD" "thelock"
-</programlisting>
-
-<para>This device enables Amanda to communicate with a tape service on an NDMP
-server.  The device name specifies the hostname and optionally the TCP port of
-the NDMP server, followed by the name of the tape device on the server
-(<command>st1</command> in the example above).</para>
-
-<para>The properties <command>NDMP_USERNAME</command> and
-<command>NDMP_PASSWORD</command> set the username and password with which to
-access the NDMP server.  The default for both is "ndmp".</para>
-
-</refsect2>
-
-<refsect2><title>VFS Device</title>
-<programlisting>
-tapedev "file:/path/to/vtape"
-</programlisting>
-
-<para>The VFS device driver stores data on a UNIX filesystem. Note
-  that although one typically uses the VFS device driver to store data
-  on hard disks, the driver does not interface with any hardware on a
-  block level.</para>
-
-<para>The device name specifies a path to a directory which must exist and
-contain a "data/" subdirectory.  Each tape file is stored as a distinct file in
-this directory, the name of which reflects the Amanda header in the tape file.
-Block boundaries are not maintained: the driver supports reads of arbitrary
-size, regardless of the blocksize used to write the data.</para>
-
-</refsect2>
-
-<refsect2><title>DVD-RW Device</title>
-<programlisting>
-tapedev "dvdrw:/var/cache/amanda/dvd-cache:/dev/scd0"
-device_property "DVDRW_MOUNT_POINT" "/media/dvd"
-device_property "DVDRW_KEEP_CACHE" "false"
-device_property "DVDRW_UNLABELLED_WHEN_UNMOUNTABLE" "true"
-</programlisting>
-
-<para>The DVD-RW device driver reads and writes optical media such as DVDs and
-CDs. The device name must specify a cache directory for data to be temporarily
-stored, followed by the operating system name for the optical drive. The cache
-directory must contain a "data/" subdirectory.</para>
-
-<para>The DVDRW_MOUNT_POINT property is required, and specifies a directory
-where the optical media can be mounted. This directory must be configured to
-enable non-root users to mount the optical media. On Linux, that means a line
-similar to the following in /etc/fstab:</para>
-<programlisting>
-/dev/scd0 /media/dvd auto ro,user,noauto 0 0
-</programlisting>
-
-<para>Note the "user" option.</para>
-
-<para>When writing data, the device acts as a VFS device using the given cache
-directory. On completion of writing the tape, the cache directory is written
-to optical media. The DVDRW_KEEP_CACHE property controls whether the cache
-contents are immediately deleted. When reading, the optical media is first
-mounted and read as a VFS device.</para>
-
-<para>Attempting to mount unformatted media or media that is formatted but
-contains no filesystem will usually result in an error. The boolean
-DVDRW_UNLABELLED_WHEN_UNMOUNTABLE property specifies whether media that cannot
-be mounted should be treated as an empty, unlabelled volume when attempting to
-read the volume label. It is necessary to set this property to "true" when
-labelling such media.</para>
-
-<para>The properties DVDRW_GROWISOFS_COMMAND, DVDRW_MOUNT_COMMAND and
-DVDRW_UMOUNT_COMMAND specify alternative commands for writing, mounting and
-unmounting optical media. The default is to find the programs using the PATH
-environment variable.</para>
-
-</refsect2>
-
-</refsect1>
-
 <refsect1><title>PROPERTIES</title>
 
 <para>Device drivers use <emphasis>properties</emphasis> as a generic means to
@@ -329,13 +117,15 @@ device_property "BYTES_PER_FORTNIGHT" "128k"
 device_property "USE_QUBITS" "no"
 </programlisting></para>
 
-<para>Both the property name and the property value are always quoted.  String
-values are given as simple strings, like FROBNICATOR_PATH in the example above.
-Integer values can be specified with any of the suffixes given in the "VALUE
-SUFFIXES" section of &amconf;, like BYTES_PER_FORTNIGHT, above.  Boolean values
-can be specified using the same names as in &amconf;, like
-USE_QUBITS, above.  Some properties have special formats, as described
-below.</para>
+<para>Both the property name and the property value are always quoted.
+Property names, like Amanda configuration parameters, are not
+case-sensitive, and <literal>-</literal> (dash) and <literal>_</literal>
+(underscore) may be used interchangeably.  String values are given as
+simple strings, like FROBNICATOR_PATH in the example above.  Integer values
+can be specified with any of the suffixes given in the "VALUE SUFFIXES"
+section of &amconf;, like BYTES_PER_FORTNIGHT, above.  Boolean values can
+be specified using the same names as in &amconf;, like USE_QUBITS, above.
+Some properties have special formats, as described below.</para>
 
 <para>Some properties are set based on other configuration values, such as
 tapetype parameters.  These special cases are detailed under the appropriate
@@ -463,9 +253,136 @@ size.</para></note>
 
 </refsect2>
 
-<refsect2><title>DRIVER-SPECIFIC PROPERTIES</title>
+</refsect1>
 
-<refsect3><title>S3 Device</title>
+<refsect1><title>DEVICES</title>
+
+<para>This section lists the device drivers included with Amanda, and basic instructions for using them.  For complete How-To information, consult the Amanda wiki at http://wiki.zmanda.com.</para>
+
+<refsect2><title>Null Device</title>
+<programlisting>
+tapedev "null:"
+</programlisting>
+
+<para>The null device driver only supports writing, and discards all data.  It is
+generally only useful for testing purposes.</para>
+
+</refsect2>
+
+<refsect2><title>RAIT Device</title>
+<programlisting>
+tapedev "rait:tape:/dev/rmt/tps0d{4,5,6}n"
+</programlisting>
+
+<para>The RAIT device driver mirrors or stripes data over multiple "child"
+devices.  The child devices are specified using a shell-like syntax, where
+alternatives are enclosed in braces and separated by commas.  Braces and commas
+can be escaped with a backslash.  Note that the backslash itself must be
+escaped in most contexts.  For example:
+<programlisting>
+tapedev "rait:{commandev:foo\\,bar,bracedev:foo\\}bar}"
+</programlisting>
+</para>
+
+<para>With two child devices, the RAIT device driver mirrors data such that the
+two devices contain identical data and can be used singly for
+  recovery.  With more than two devices, the RAIT device "stripes"
+  data across all but one device and writes a parity block to the
+  final device, usable for data recovery in the event of a device or
+  volume failure.  The RAIT device scales its blocksize as necessary
+  to match the number of children that will be used to store data.</para>
+
+<para>When a child device is known to have failed, the RAIT device should be reconfigured to replace that device with the text "ERROR", e.g.,
+<programlisting>
+tapedev "rait:{tape:/dev/st0,ERROR,tape:/dev/st2}"
+</programlisting>
+This will cause the RAIT device to start up in degraded mode, reconstructing the data from the missing device.
+</para>
+
+<para>Like ordinary RAID drivers, the RAIT device driver can automatically
+enter degraded mode when one of its child devices fails.  However, the RAIT
+device cannot automatically recover from any write error nor write any data in
+degraded mode.  When reading, certain errors may be fatal (rather than causing
+degraded mode).  And in any case, labels on all volumes must initially match
+(labeled or otherwise).  If you have lost one volume from a set, explicitly
+start the device in degraded mode as described above.</para>
+
+<refsect3><title>Child Device Block Sizes</title>
+
+<para>The RAIT device driver requires that all of its child devices use the
+same block size.  If no block sizes are specified, the driver selects the block
+size closest to 32k that is within the MIN_BLOCK_SIZE - MAX_BLOCK_SIZE range of
+all child devices, and calculates its own blocksize according to the formula
+<emphasis>rait_blocksize = child_blocksize * (num_children - 1)</emphasis>.  If
+a block size is specified for the RAIT device, then it calculates its child
+block sizes according to the formula <emphasis>child_blocksize = rait_blocksize
+/ (num_children - 1)</emphasis>.  Either way, it sets the BLOCK_SIZE property
+of each child device accordingly.</para>
+
+</refsect3>
+
+</refsect2>
+
+<refsect2><title>S3 Device</title>
+<programlisting>
+tapedev "s3:foocorp-backups/DailySet1-"
+device_property "S3_ACCESS_KEY" "MYACCESSKEY"
+device_property "S3_SECRET_KEY" "MYSECRETKEY"
+</programlisting>
+
+<para>The S3 device driver uploads data to the Amazon S3 "storage cloud".  Its
+device name is a slash-sparated combination of bucket name and prefix:
+"s3:BUCKET/PREFIX".  Since buckets must be unique across all Amazon S3 users,
+and since the number of buckets allowed to each user is limited, the driver can
+store multiple Amanda volumes in a single S3 bucket, distinguished by prefix.
+The prefix and slash can be omitted if they are not needed: "s3:BUCKET".</para>
+
+<para>The access and secret keys used to authenticate to Amazon S3 are provided
+as properties.</para>
+
+<para>The S3 device driver stores each block in a distinct S3 object.  Due to
+high HTTP overhead for each request, use of larger than normal block
+  sizes (&gt; 1 megabyte) is reccomended with the S3 device.</para>
+
+<para>
+Amanda automatically creates a bucket when writing, if the bucket doesn't
+already exist. At that time, it specifies where Amazon should store the data
+based on the S3_BUCKET_LOCATION property. Currently, there are two valid settings:
+"*" (any location, probably US) and "EU" (Europe). If this property is not set,
+Amazon's default value of "*" is used. The bucket location has both billing and
+legal concerns, so you are encouraged to consult Amazon's documentation for details.
+</para>
+
+<para>
+Amazon does not permit changes to bucket locations, so this is a permanent
+specification. If the bucket already exists and the property is set,
+then Amanda checks the property against the location of the bucket, and
+produces an error if they do not match.
+</para>
+
+<note><para>
+If a location constraint is set, the bucket name must consist only of
+lower-case letters, numbers, dashes, and dots.
+</para></note>
+
+<para>This driver supports the VERBOSE property, but use it carefully -- it
+produces a great deal of output, and may cause spurious failures by filling
+your debug log partition.  Its logging is generally only useful for developers
+chasing down a problem in communications with Amazon's servers.</para>
+
+<refsect3><title>Device-Specific Properties</title>
+
+<para>In addition to the common properties, the S3 device supports the
+properties listed in this section.</para>
+
+<para>Most Amanda devices work just fine without any properties, but not the S3
+device.  A typical S3 configuration will have an access key and secret key
+specified:
+
+<programlisting>
+device_property "S3_ACCESS_KEY" "27D3B8C6C4E7AA423C2B37C72A0D22C8"
+device_property "S3_SECRET_KEY" "agphc2Q7Zmxragphc2RmO2xragpzZGY7a2xqCgr"
+</programlisting></para>
 
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 <variablelist>
@@ -520,18 +437,23 @@ The value is passed to curl_easy_setopt(3) as CURLOPT_CAINFO.
  <!-- ==== -->
 </variablelist>
 
-<para>Most Amanda devices work just fine without any properties, but not the S3
-device.  A typical S3 configuration will have an access key and secret key
-specified:
-
-<programlisting>
-device_property "S3_ACCESS_KEY" "27D3B8C6C4E7AA423C2B37C72A0D22C8"
-device_property "S3_SECRET_KEY" "agphc2Q7Zmxragphc2RmO2xragpzZGY7a2xqCgr"
-</programlisting></para>
-
 </refsect3>
 
-<refsect3><title>Tape Device</title>
+</refsect2>
+
+<refsect2><title>Tape Device</title>
+<programlisting>
+tapedev "tape:/dev/nst0"
+</programlisting>
+
+<para>The tape device driver interacts with a tape drive.  The device uses the
+operating system's built-in tape support, which is generally similar to that
+available via the command-line utilities dd(1) and mt(1).</para>
+
+<para>The tape device name should specify a path to the operating system's
+device file.</para>
+
+<refsect3><title>Device-Specific Properties</title>
 
 <para>Most of these properties are automatically detected, but can be
 overridden in the configuration file if the autodetection fails. Note that tape
@@ -595,7 +517,25 @@ operations can be emulated with the MTREW and read data operations.</para>
 
 </refsect3>
 
-<refsect3><title>NDMP Device</title>
+</refsect2>
+
+<refsect2><title>NDMP Device</title>
+<programlisting>
+tapedev "ndmp:my.filer.com:10000@st1"
+device_property "NDMP_USERNAME" "jimmy"
+device_property "NDMP_PASSWORD" "thelock"
+</programlisting>
+
+<para>This device enables Amanda to communicate with a tape service on an NDMP
+server.  The device name specifies the hostname and optionally the TCP port of
+the NDMP server, followed by the name of the tape device on the server
+(<command>st1</command> in the example above).</para>
+
+<refsect3><title>Device-Specific Properties</title>
+
+<para>The properties <command>NDMP_USERNAME</command> and
+<command>NDMP_PASSWORD</command> set the username and password with which to
+access the NDMP server.  The default for both is "ndmp".</para>
 
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 <variablelist>
@@ -618,7 +558,70 @@ no authentication attempt at all).
 
 </refsect3>
 
-<refsect3><title>DVD-RW Device</title>
+</refsect2>
+
+<refsect2><title>VFS Device</title>
+<programlisting>
+tapedev "file:/path/to/vtape"
+</programlisting>
+
+<para>The VFS device driver stores data on a UNIX filesystem. Note
+  that although one typically uses the VFS device driver to store data
+  on hard disks, the driver does not interface with any hardware on a
+  block level.</para>
+
+<para>The device name specifies a path to a directory which must exist and
+contain a "data/" subdirectory.  Each tape file is stored as a distinct file in
+this directory, the name of which reflects the Amanda header in the tape file.
+Block boundaries are not maintained: the driver supports reads of arbitrary
+size, regardless of the blocksize used to write the data.</para>
+
+</refsect2>
+
+<refsect2><title>DVD-RW Device</title>
+<programlisting>
+tapedev "dvdrw:/var/cache/amanda/dvd-cache:/dev/scd0"
+device_property "DVDRW_MOUNT_POINT" "/media/dvd"
+device_property "DVDRW_KEEP_CACHE" "false"
+device_property "DVDRW_UNLABELLED_WHEN_UNMOUNTABLE" "true"
+</programlisting>
+
+<para>The DVD-RW device driver reads and writes optical media such as DVDs and
+CDs. The device name must specify a cache directory for data to be temporarily
+stored, followed by the operating system name for the optical drive. The cache
+directory must contain a "data/" subdirectory.</para>
+
+<para>The DVDRW_MOUNT_POINT property is required, and specifies a directory
+where the optical media can be mounted. This directory must be configured to
+enable non-root users to mount the optical media. On Linux, that means a line
+similar to the following in /etc/fstab:</para>
+<programlisting>
+/dev/scd0 /media/dvd auto ro,user,noauto 0 0
+</programlisting>
+
+<para>Note the "user" option.</para>
+
+<para>When writing data, the device acts as a VFS device using the given cache
+directory. On completion of writing the tape, the cache directory is written
+to optical media. The DVDRW_KEEP_CACHE property controls whether the cache
+contents are immediately deleted. When reading, the optical media is first
+mounted and read as a VFS device.</para>
+
+<para>Attempting to mount unformatted media or media that is formatted but
+contains no filesystem will usually result in an error. The boolean
+DVDRW_UNLABELLED_WHEN_UNMOUNTABLE property specifies whether media that cannot
+be mounted should be treated as an empty, unlabelled volume when attempting to
+read the volume label. It is necessary to set this property to "true" when
+labelling such media.</para>
+
+<refsect3><title>Device-Specific Properties</title>
+
+<para>The properties DVDRW_GROWISOFS_COMMAND, DVDRW_MOUNT_COMMAND and
+DVDRW_UMOUNT_COMMAND specify alternative commands for writing, mounting and
+unmounting optical media. The default is to find the programs using the PATH
+environment variable.</para>
+
+<para>The DVDRW_MOUNT_POINT property is required. Other properties are optional.</para>
 
 <variablelist>
  <varlistentry><term>DVDRW_KEEP_CACHE</term><listitem>
@@ -640,8 +643,6 @@ no authentication attempt at all).
  (read-write) The command to invoke to unmount the DVD.
 </listitem></varlistentry>
 </variablelist>
-
-<para>The DVDRW_MOUNT_POINT property is required. Other properties are optional.</para>
 
 </refsect3>
 

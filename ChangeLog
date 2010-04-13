@@ -1,4 +1,10 @@
 2010-04-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda-applications.7.xml: info about properties
+	* man/xml-source/amanda-devices.7.xml: info about properties
+	* man/xml-source/amanda-scripts.7.xml: info about properties
+	* man/xml-source/amzfs-snapshot.8.xml: fix typo
+
+2010-04-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* NEWS: add info about deprecations in 2.6.1
 	* man/xml-source/amanda-compatibility.7.xml: update manpage to
 	  reflect info in NEWS

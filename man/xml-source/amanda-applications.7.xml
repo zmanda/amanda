@@ -92,6 +92,10 @@ define dumptype $dumptypename {
 }
 </programlisting></para>
 
+<para>Application properties, like Amanda configuration parameters, are
+insensitive to case, and <literal>-</literal> (dash) and
+<literal>_</literal> (underscore) may be used interchangeably.</para>
+
 <para>See the individual plugin documentation for properties applicable to each
 plugin.</para>
 

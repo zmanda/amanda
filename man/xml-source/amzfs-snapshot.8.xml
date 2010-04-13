@@ -32,7 +32,7 @@
 not be run by users directly.  It create a zfs snapshot of the filesystem
 where the path specified is mounted.</para>
 
-<para>PRE-DLE-* create a snapshot and the POST_DLE_* destroy the snapshot,
+<para>PRE-DLE-* create a snapshot and the POST-DLE-* destroy the snapshot,
 *-DLE-AMCHECK, *-DLE-ESTIMATE and *-DLE-BACKUP must be set to be executed on the client:
 <programlisting>
     execute-on  pre-dle-amcheck, post-dle-amcheck, pre-dle-estimate, post-dle-estimate, pre-dle-backup, post-dle-backup
