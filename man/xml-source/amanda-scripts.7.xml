@@ -50,6 +50,10 @@ see http://wiki.zmanda.com/index.php/Script_API.</para>
 </listitem>
 </itemizedlist>
 
+<para>Script properties work just like application properties: they are
+insensitive to case, and <literal>-</literal> (dash) and
+<literal>_</literal> (underscore) may be used interchangeably.</para>
+
 </refsect1>
 
 <seealso>
