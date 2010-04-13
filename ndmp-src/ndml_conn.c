@@ -1014,7 +1014,7 @@ ndmconn_snoop_nmb (struct ndmconn *conn,
   struct ndmp_msg_buf *nmb,
   char *whence)
 {
-	if (!conn->snoop_log || conn->snoop_level < 5) {
+	if (!conn->snoop_log) {
 		return;
 	}
 
