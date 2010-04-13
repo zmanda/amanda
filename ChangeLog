@@ -1,3 +1,8 @@
+2010-04-13  Paul C. Mantz <pcmantz@zmanda.com>
+	* server-src/amreport.pl: load holding disk before making report
+	* perl/Amanda/Report/human.pm: report holding disk correctly
+	* installcheck/amreport.pl: installcheck
+
 2010-04-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndml_conn.c, ndmp-src/ndml_nmb.c:
 	  Always log NOTIFY_DATA_HALTED.

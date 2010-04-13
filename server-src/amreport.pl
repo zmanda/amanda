@@ -30,6 +30,7 @@ use POSIX;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Util qw( :constants );
 use Amanda::Tapelist;
+use Amanda::Disklist;
 use Amanda::Constants;
 use Amanda::Debug qw( debug warning );
 use Amanda::Report;
@@ -522,6 +523,11 @@ Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 # read the tapelist
 my $tl_file = config_dir_relative(getconf($CNF_TAPELIST));
 my $tl = Amanda::Tapelist::read_tapelist($tl_file);
+
+# read the disklist
+my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
+$cfgerr_level += Amanda::Disklist::read_disklist('filename' => $diskfile);
+($cfgerr_level < $CFGERR_ERRORS) || die "Errors processing disklist";
 
 # shim for installchecks
 $Amanda::Constants::LPR = $ENV{'INSTALLCHECK_MOCK_LPR'}
