@@ -1,3 +1,6 @@
+2010-04-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndml_nmb.c: Always log NOTIFY_MOVER_HALTED.
+
 2010-04-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c: fix derived value for autolabel
 
