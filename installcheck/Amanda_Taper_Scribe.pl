@@ -437,7 +437,7 @@ $scribe = Amanda::Taper::Scribe->new(
 
 reset_events();
 run_scribe_xfer(1024*300, $scribe,
-	    start_scribe => { dump_timestamp => "20010203040506" });
+	    start_scribe => { write_timestamp => "20010203040506" });
 
 is_deeply([ @events ], [
       [ 'scan' ],
@@ -476,7 +476,7 @@ $scribe = Amanda::Taper::Scribe->new(
 
 reset_events();
 run_scribe_xfer($volume_length + $volume_length / 4, $scribe,
-	    start_scribe => { dump_timestamp => "20010203040506" });
+	    start_scribe => { write_timestamp => "20010203040506" });
 
 is_deeply([ @events ], [
       [ 'scan' ],
@@ -513,7 +513,7 @@ $scribe = Amanda::Taper::Scribe->new(
 
 reset_events();
 run_scribe_xfer($volume_length + $volume_length / 4, $scribe,
-	    start_scribe => { dump_timestamp => "20010203040507" });
+	    start_scribe => { write_timestamp => "20010203040507" });
 
 $experr = 'Slot bogus not found';
 is_deeply([ @events ], [
@@ -547,7 +547,7 @@ $scribe = Amanda::Taper::Scribe->new(
 
 reset_events();
 run_scribe_xfer($volume_length + $volume_length / 4, $scribe,
-	    start_scribe => { dump_timestamp => "20010203040507" });
+	    start_scribe => { write_timestamp => "20010203040507" });
 
 is_deeply([ @events ], [
       [ 'scan' ],
@@ -579,7 +579,7 @@ $scribe = Amanda::Taper::Scribe->new(
 
 reset_events();
 run_scribe_xfer(1024*300, $scribe, split_method => 'none',
-	    start_scribe => { dump_timestamp => "20010203040506" });
+	    start_scribe => { write_timestamp => "20010203040506" });
 
 is_deeply([ @events ], [
       [ 'scan' ],

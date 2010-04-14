@@ -132,7 +132,7 @@ Start the scribe's operation by calling its C<start> method.  This will invoke
 the taperscan algorithm and scan for a volume.  The method takes two parameters:
 
   $scribe->start(
-        dump_timestamp => $ts,
+        write_timestamp => $ts,
 	finished_cb => $start_finished_cb);
 
 The timestamp will be written to each volume written by the Scribe.  The
@@ -347,7 +347,7 @@ sub new {
     my $self = {
 	feedback => $params{'feedback'},
 	debug => $params{'debug'},
-	dump_timestamp => undef,
+	write_timestamp => undef,
 	started => 0,
 
 	# device handling, and our current device and reservation
@@ -383,7 +383,7 @@ sub start {
     my $self = shift;
     my %params = @_;
 
-    for my $rq_param qw(dump_timestamp finished_cb) {
+    for my $rq_param qw(write_timestamp finished_cb) {
 	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }
@@ -391,7 +391,7 @@ sub start {
     die "scribe already started" if $self->{'started'};
 
     $self->dbg("starting");
-    $self->{'dump_timestamp'} = $params{'dump_timestamp'};
+    $self->{'write_timestamp'} = $params{'write_timestamp'};
 
     # start up the DevHandling object, making sure we know
     # when it's done with its startup process
@@ -494,7 +494,7 @@ sub get_xfer_dest {
     debug("Amanda::Taper::Scribe setting up a transfer with split method $params{split_method}");
 
     die "not yet started"
-	unless ($self->{'dump_timestamp'});
+	unless ($self->{'write_timestamp'});
     die "xfer element already returned"
 	if ($self->{'xdt'});
     die "xfer already running"
@@ -941,7 +941,7 @@ sub _volume_cb  {
     # inform the xdt about this new device before starting it
     $self->{'xdt'}->use_device($device);
 
-    if (!$device->start($access_mode, $new_label, $self->{'dump_timestamp'})) {
+    if (!$device->start($access_mode, $new_label, $self->{'write_timestamp'})) {
 	# try reading the label to see whether we erased the tape
 	my $erased = 0;
 	CHECK_READ_LABEL: {

@@ -458,7 +458,7 @@ sub msg_START_TAPER {
     $self->_assert_in_state("init") or return;
 
     $self->{'state'} = "starting";
-    $self->{'scribe'}->start(dump_timestamp => $params{'timestamp'},
+    $self->{'scribe'}->start(write_timestamp => $params{'timestamp'},
 	finished_cb => sub { $self->_scribe_started_cb(@_); });
     $self->{'timestamp'} = $params{'timestamp'};
 }
