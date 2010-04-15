@@ -1,4 +1,7 @@
 2010-04-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Recovery_Scan.pl: don't use a system-global path
+
+2010-04-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/xfer-dest-device.c: don't use queueing anymore; this
 	  removes the max_memory constructor argument
 	* perl/Amanda/XferServer.swg device-src/xfer-device.h: prototype
