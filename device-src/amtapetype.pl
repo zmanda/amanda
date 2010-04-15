@@ -138,7 +138,7 @@ sub write_one_file(%) {
     } else {
 	die "Unknown PATTERN $pattern";
     }
-    $dest = Amanda::Xfer::Dest::Device->new($device, 0);
+    $dest = Amanda::Xfer::Dest::Device->new($device);
     $xfer = Amanda::Xfer->new([$source, $dest]);
 
     # set up the relevant callbacks

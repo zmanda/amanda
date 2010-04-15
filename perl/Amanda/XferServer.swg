@@ -40,8 +40,7 @@ XferElement *xfer_source_device(
 
 %newobject xfer_dest_device;
 XferElement *xfer_dest_device(
-    Device *device,
-    size_t max_memory);
+    Device *device);
 
 %newobject xfer_source_holding;
 XferElement * xfer_source_holding(

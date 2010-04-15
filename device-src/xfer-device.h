@@ -44,13 +44,10 @@ XferElement *xfer_source_device(
  * Implemented in xfer-dest-device.c
  *
  * @param device: the Device to write to, with a file started
- * @param max_memory: total amount of memory to use for buffers, or zero
- *                    for a reasonable default.
  * @return: new element
  */
 XferElement *xfer_dest_device(
-    Device *device,
-    size_t max_memory);
+    Device *device);
 
 /*
  * class declaration for XferDestTaper (an abstract base class)

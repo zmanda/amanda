@@ -1,4 +1,15 @@
 2010-04-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-dest-device.c: don't use queueing anymore; this
+	  removes the max_memory constructor argument
+	* perl/Amanda/XferServer.swg device-src/xfer-device.h: prototype
+	  change
+	* perl/Amanda/Xfer.pod: docs
+	* device-src/amtapetype.pl installcheck/Amanda_Device.pl
+	  installcheck/Amanda_Recovery_Clerk.pl installcheck/Amanda_Xfer.pl
+	  installcheck/amrestore.pl server-src/amvault.pl: change constructor
+	  invocation
+
+2010-04-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/util.c common-src/util.h: new interruptible_accept that
 	  uses a prolong function to stop waiting
 	* common-src/stream.c: use interruptible_accept in stream_accept

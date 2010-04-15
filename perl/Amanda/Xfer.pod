@@ -239,12 +239,12 @@ through it.
 
 =head3 Amanda::Xfer::Dest::Device (SERVER ONLY)
 
-  Amanda::Xfer::Dest::Device->new($device, $max_memory);
+  Amanda::Xfer::Dest::Device->new($device);
 
-This source writes data to a device.  The device should be ready for
-writing (C<< $device->start_file(..) >>).  No more than C<$max_memory>
-will be used for buffers.  Use zero for the default buffer size.  On
-completion of the transfer, the file will be finished.
+This source writes data to a device.  The device should be ready for writing
+(C<< $device->start_file(..) >>).  On completion of the transfer, the file will
+be finished.  Note that this element does not apply any sort of stream
+buffering.
 
 =head3 Amanda::Xfer::Dest::Buffer
 

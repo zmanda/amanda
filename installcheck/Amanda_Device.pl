@@ -1113,7 +1113,7 @@ SKIP: {
     {   # write to the file
 	my $xfer = Amanda::Xfer->new([
 		Amanda::Xfer::Source::Random->new(32768*21, 0xBEEFEE00),
-		Amanda::Xfer::Dest::Device->new($dev, 32768*5) ]);
+		Amanda::Xfer::Dest::Device->new($dev) ]);
 	$xfer->start(make_cb(xmsg_cb => sub {
 	    my ($src, $msg, $xfer) = @_;
 	    if ($msg->{'type'} == $XMSG_ERROR) {
