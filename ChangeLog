@@ -1,3 +1,11 @@
+2010-04-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/util.c common-src/util.h: new interruptible_accept that
+	  uses a prolong function to stop waiting
+	* common-src/stream.c: use interruptible_accept in stream_accept
+	* xfer-src/element-glue.c: use interruptible_accept to allow
+	  directtcp_accept to be cancelled
+	* installcheck/Amanda_Xfer.pl: test xfer cancellation
+
 2010-04-14  Jean-Louis Martineau <martineau@zmanda.com>
 	    Satya Ganga <gsat@zmanda.com>
 	* application-src/amsamba.pl: Fix use of include/exclude list.

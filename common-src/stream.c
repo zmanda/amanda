@@ -315,6 +315,14 @@ stream_client(
 static sockaddr_union addr;
 static socklen_t_equiv addrlen;
 
+static gboolean
+stream_accept_prolong(
+    gpointer data)
+{
+    time_t *tp = data;
+    return time(NULL) <= *tp;
+}
+
 int
 stream_accept(
     int server_socket,
@@ -322,60 +330,31 @@ stream_accept(
     size_t sendsize,
     size_t recvsize)
 {
-    SELECT_ARG_TYPE readset;
-    struct timeval tv;
-    int nfound, connected_socket;
+    time_t timeout_time;
+    int connected_socket;
     int save_errno;
-    int ntries = 0;
     in_port_t port;
 
     assert(server_socket >= 0);
 
-    do {
-	ntries++;
-	memset(&tv, 0, SIZEOF(tv));
-	tv.tv_sec = timeout;
-	memset(&readset, 0, SIZEOF(readset));
-	FD_ZERO(&readset);
-	FD_SET(server_socket, &readset);
-	nfound = select(server_socket+1, &readset, NULL, NULL, &tv);
-	if(nfound <= 0 || !FD_ISSET(server_socket, &readset)) {
-	    save_errno = errno;
-	    if(nfound < 0) {
-		g_debug(_("stream_accept: select() failed: %s"),
-		      strerror(save_errno));
-	    } else if(nfound == 0) {
-		g_debug(plural(_("stream_accept: timeout after %d second"),
-			        _("stream_accept: timeout after %d seconds"),
-			       timeout),
-			 timeout);
-		errno = ETIMEDOUT;
-		return -1;
-	    } else if (!FD_ISSET(server_socket, &readset)) {
-		int i;
-
-		for(i = 0; i < server_socket + 1; i++) {
-		    if(FD_ISSET(i, &readset)) {
-			g_debug(_("stream_accept: got fd %d instead of %d"),
-			      i,
-			      server_socket);
-		    }
-		}
-	        save_errno = EBADF;
-	    }
-	    if (ntries > 5) {
-		errno = save_errno;
-		return -1;
-	    }
-        }
-    } while (nfound <= 0);
+    /* set the time we want to stop accepting */
+    timeout_time = time(NULL) + timeout;
 
     while(1) {
 	addrlen = (socklen_t_equiv)sizeof(sockaddr_union);
-	connected_socket = accept(server_socket,
+	connected_socket = interruptible_accept(server_socket,
 				  (struct sockaddr *)&addr,
-				  &addrlen);
+				  &addrlen, stream_accept_prolong,
+				  &timeout_time);
 	if(connected_socket < 0) {
+	    if (errno == 0) {
+		g_debug(plural(_("stream_accept: timeout after %d second"),
+			       _("stream_accept: timeout after %d seconds"),
+			      timeout),
+			timeout);
+		errno = ETIMEDOUT;
+		return -1;
+	    }
 	    break;
 	}
 	g_debug(_("stream_accept: connection from %s"),

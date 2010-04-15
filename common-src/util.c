@@ -322,6 +322,50 @@ bind_portrange(
     return -1;
 }
 
+int
+interruptible_accept(
+    int sock,
+    struct sockaddr *addr,
+    socklen_t *addrlen,
+    gboolean (*prolong)(gpointer data),
+    gpointer prolong_data)
+{
+    SELECT_ARG_TYPE readset;
+    struct timeval tv;
+    int nfound;
+
+    memset(&tv, 0, SIZEOF(tv));
+    tv.tv_sec = 1;
+
+    memset(&readset, 0, SIZEOF(readset));
+    FD_ZERO(&readset);
+    FD_SET(sock, &readset);
+
+    while (1) {
+	if (!prolong(prolong_data)) {
+	    errno = 0;
+	    return -1;
+	}
+
+	/* try accepting for 1s */
+	nfound = select(sock+1, &readset, NULL, NULL, &tv);
+	if (nfound < 0) {
+	    return -1;
+	} else if (nfound == 0) {
+	    continue;
+	} else if (!FD_ISSET(sock, &readset)) {
+	    g_debug("interruptible_accept: select malfunction");
+	    errno = EBADF;
+	    return -1;
+	} else {
+	    int rv = accept(sock, addr, addrlen);
+	    if (rv < 0 && errno == EAGAIN)
+		continue;
+	    return rv;
+	}
+    }
+}
+
 /*
  * Writes out the entire iovec
  */

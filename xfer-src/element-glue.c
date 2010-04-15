@@ -23,6 +23,7 @@
 #include "element-glue.h"
 #include "amanda.h"
 #include "directtcp.h"
+#include "util.h"
 #include "sockaddr-util.h"
 
 /*
@@ -138,6 +139,13 @@ do_directtcp_listen(
     return TRUE;
 }
 
+static gboolean
+prolong_accept(
+    gpointer data)
+{
+    return !XFER_ELEMENT(data)->cancelled;
+}
+
 static int
 do_directtcp_accept(
     XferElementGlue *self,
@@ -146,7 +154,13 @@ do_directtcp_accept(
     int sock;
     g_assert(*socketp != -1);
 
-    if ((sock = accept(*socketp, NULL, NULL)) == -1) {
+    if ((sock = interruptible_accept(*socketp, NULL, NULL,
+				     prolong_accept, self)) == -1) {
+	/* if the accept was interrupted due to a cancellation, then do not
+	 * add a further error message */
+	if (errno == 0 && XFER_ELEMENT(self)->cancelled)
+	    return -1;
+
 	xfer_cancel_with_error(XFER_ELEMENT(self),
 	    _("Error accepting incoming connection: %s"), strerror(errno));
 	wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);

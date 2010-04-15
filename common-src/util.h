@@ -62,6 +62,15 @@ int	connect_portrange(sockaddr_union *, in_port_t, in_port_t, char *,
 int	bind_portrange(int, sockaddr_union *, in_port_t, in_port_t,
 		       char *);
 
+/* just like an accept() call, but periodically calling PROLONG(PROLONG_DATA) and
+ * returning -1 with errno set to 0 if PROLONG returns false.  Note that the socket
+ * need not be configured as non-blocking.
+ *
+ * Other arguments are just like for accept(2).
+ */
+int	interruptible_accept(int sock, struct sockaddr *addr, socklen_t *addrlen,
+	    gboolean (*prolong)(gpointer data), gpointer prolong_data);
+
 ssize_t	full_writev(int, struct iovec *, int);
 
 char *	construct_datestamp(time_t *t);

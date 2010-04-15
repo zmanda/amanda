@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 37;
+use Test::More tests => 38;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -1164,6 +1164,33 @@ SKIP: {
     # complete, as a memory management test..
     Amanda::MainLoop::run();
     pass("Three xfers interlinked via DirectTCP complete successfully");
+}
+
+# try cancelling a DirectTCP xfer while it's waiting in accept()
+{
+    my $xfer_src = Amanda::Xfer::Source::DirectTCPListen->new();
+    my $xfer_dst = Amanda::Xfer::Dest::Null->new(0);
+    my $xfer = Amanda::Xfer->new([ $xfer_src, $xfer_dst ]);
+
+    # start up the transfer, which starts a thread which will accept
+    # soon after that.
+    $xfer->start(sub {
+	my ($src, $msg, $xfer) = @_;
+	if ($msg->{'type'} == $XMSG_DONE) {
+	    Amanda::MainLoop::quit();
+	}
+    });
+
+    sleep(1);
+
+    # Now, ideally we'd wait until the accept() is running, maybe testing it
+    # with a SYN or something like that.  This is not terribly critical,
+    # because the element glue does not check for cancellation before it begins
+    # accepting.
+    $xfer->cancel();
+
+    Amanda::MainLoop::run();
+    pass("A DirectTCP accept operation can be cancelled");
 }
 
 # test element comparison
