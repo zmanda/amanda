@@ -130,7 +130,7 @@ use Amanda::Config;
 
 sub new
 {
-    my ( $class, $infofile ) = @_;
+    my ($class, $infofile) = @_;
 
     my $self = {
         command => undef,
@@ -143,7 +143,7 @@ sub new
     };
 
     bless $self, $class;
-    $self->read_infofile($infofile) if defined $infofile;
+    $self->read_infofile($infofile) if -e $infofile;
 
     return $self;
 }
@@ -194,32 +194,48 @@ sub read_infofile
 
 sub read_infofile_perfs
 {
-    my ( $self, $fh ) = @_;
+    my ($self, $fh) = @_;
 
     my $fail = sub {
         my ($line) = @_;
         croak "error: malformed infofile header in $self->infofile:$line\n";
     };
 
-    ( <$fh> =~ /^version: ($numdot+)/ ) ? 1 : $fail->($_);
+    my $skip_blanks = sub {
+        my $line = "";
+        while ($line eq "") {
+            croak "error: infofile ended prematurely" if eof($fh);
+            $line = <$fh>;
+        }
+        return $line;
+    };
 
-    ( <$fh> =~ /^command: ($numdot+)/ ) ? $self->{command} = $1 : $fail->($_);
+    # version not paid attention to right now
+    my $line = $skip_blanks->();
+    ($line =~ /^version: ($numdot+)/) ? 1 : $fail->($line);
 
-    ( <$fh> =~ /^full-rate: ($numdot+) ($numdot+) ($numdot+)/ )
-      ? $self->{full}->set_rate( $1, $2, $3 )
-      : $fail->($_);
+    $line = $skip_blanks->();
+    ($line =~ /^command: ($numdot+)/) ? $self->{command} = $1 : $fail->($line);
 
-    ( <$fh> =~ /^full-comp: ($numdot+) ($numdot+) ($numdot+)/ )
-      ? $self->{full}->set_comp( $1, $2, $3 )
-      : $fail->($_);
+    $line = $skip_blanks->();
+    ($line =~ /^full-rate: ($numdot+) ($numdot+) ($numdot+)/)
+      ? $self->{full}->set_rate($1, $2, $3)
+      : $fail->($line);
 
-    ( <$fh> =~ /^incr-rate: ($numdot+) ($numdot+) ($numdot+)/ )
-      ? $self->{incr}->set_rate( $1, $2, $3 )
-      : $fail->($_);
+    $line = $skip_blanks->();
+    ($line =~ /^full-comp: ($numdot+) ($numdot+) ($numdot+)/)
+      ? $self->{full}->set_comp($1, $2, $3)
+      : $fail->($line);
 
-    ( <$fh> =~ /^incr-comp: ($numdot+) ($numdot+) ($numdot+)/ )
-      ? $self->{incr}->set_comp( $1, $2, $3 )
-      : $fail->($_);
+    $line = $skip_blanks->();
+    ($line =~ /^incr-rate: ($numdot+) ($numdot+) ($numdot+)/)
+      ? $self->{incr}->set_rate($1, $2, $3)
+      : $fail->($line);
+
+    $line = $skip_blanks->();
+    ($line =~ /^incr-comp: ($numdot+) ($numdot+) ($numdot+)/)
+      ? $self->{incr}->set_comp($1, $2, $3)
+      : $fail->($line);
 
     return 1;
 }
@@ -294,6 +310,7 @@ sub write_to_file
     my ( $self, $infofile ) = @_;
 
     unlink $infofile if -f $infofile;
+
     open my $fh, ">", $infofile or die "error: couldn't open $infofile: $!";
 
     ## print basics

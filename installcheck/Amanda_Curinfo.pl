@@ -18,13 +18,14 @@
 
 use strict;
 
-use Test::More qw(no_plan);
+use Test::More tests => 18;
 use File::Path qw(mkpath);
 use Data::Dumper;
 
 use lib "@amperldir@";
 use Installcheck::Config;
 use Amanda::Config qw( :init :getconf config_dir_relative );
+use Amanda::Util qw( slurp burp sanitise_filename );
 
 use Amanda::Curinfo;
 use Amanda::Curinfo::Info;
@@ -157,43 +158,38 @@ history: 2 220 139 1203053015 0
 //
 EOF
 
-sub mk_info_file
-{
-    my ( $host, $disk, $data ) = @_;
+## set up the temporary infofile to read from
+my $tmp_infofile = "$Installcheck::TMP/temporary-infofile";
+burp $tmp_infofile, $data;
 
-    my $infofiledir = "$infodir/$host/$disk";
-    my $infofile    = "$infodir/$host/$disk/info";
+my $host   = "fakehost";
+my $disk   = "/home/fakeuser/disk";
+my $host_q = sanitise_filename($host);
+my $disk_q = sanitise_filename($disk);
 
-    ( -d $infofiledir ) or ( mkpath $infofiledir ) or die "error: $!";
-    open my $info_fh, ">", $infofile or die "error: $!";
+my $curinfo_file = "$infodir/$host_q/$disk_q/info";
 
-    print $info_fh $data;
-}
-
-my $host = "fakehost";
-my $disk = "fakedisk";
-
-
-# write the dummy infofile, set
-mk_info_file( $host, $disk, $data );
-
-ok(
-    my $ci = Amanda::Curinfo->new($infodir),
-    "create the Amanda::Curinfo object"
-);
+## start running tests
+ok(my $ci = Amanda::Curinfo->new($infodir),
+    "create the Amanda::Curinfo object");
 
 is_deeply(
     $ci,
-    bless( { 'infodir' => $infodir, }, 'Amanda::Curinfo' ),
+    bless({ 'infodir' => $infodir }, 'Amanda::Curinfo'),
     "Amanda::Curinfo object check"
 );
 
-## check each field of Amanda::Curinfo::Info separately
+ok(my $info = Amanda::Curinfo::Info->new($tmp_infofile),
+    "create the Amanda::Curinfo::Info object");
+ok($ci->put_info($host, $disk, $info),
+    "test writing the Info object to the Curinfo database");
+ok(-f $curinfo_file, "Info object installed in the correct location");
 
-ok(
-    my $info = $ci->get_info( $host, $disk ),
-    "Amanda::Curinfo::Info constructor check"
-);
+## re-load Amanda::Curinfo::Info and check each field separately
+
+undef $info;
+ok($info = $ci->get_info($host, $disk),
+    "Amanda::Curinfo::Info constructor check");
 
 ## Test components of Amanda::Curinfo::Info separately
 
@@ -1275,8 +1271,8 @@ is( $info->get_dumpdate(1),
 
 ## delete the file
 
-$ci->del_info( $host, $disk );
-ok( !-f "$infodir/$host/$disk/info", "infofile successfully deleted" );
+$ci->del_info($host, $disk);
+ok(!-f "$infodir/$host_q/$disk_q/info", "infofile successfully deleted");
 
 ## rewrite it using the built-in
 
@@ -1288,34 +1284,27 @@ sub diff_wi
 {
     my ( $from, $to ) = @_;
 
-    $from =~ s{\s+}{ }g;
-    $to   =~ s{\s+}{ }g;
+    $$from =~ s{\s+}{ }g;
+    $$to   =~ s{\s+}{ }g;
 
     return diff($from, $to);
 }
 
-my $filedata;
-{
-    undef $/;
-    my $infofile = "$infodir/$host/$disk/info";
-    open my $fh, "<", $infofile
-      or die "can't open $infofile: $!";
-    $filedata = <$fh>;
-}
+my $filedata = slurp $curinfo_file;
 
 if ($use_diff) {
 
-    my $diff_txt = diff_wi( \$filedata, \$data );
+    my $diff_txt = diff_wi(\$filedata, \$data);
 
-    is( $diff_txt, "", "file writing functional. " )
-      or diag( "original and written infofile different.  diff:\n"
-          . diff_wi( \$filedata, \$data ) );
+    is($diff_txt, "", "file writing functional.")
+      or diag("original and written infofile different.  diff:\n"
+          . diff_wi(\$filedata, \$data));
 
 } else {
 
     $filedata =~ s{\s+}{ }g;
     $data     =~ s{\s+}{ }g;
 
-    is( $filedata, $data, "file writing functional. " )
+    is($filedata, $data, "file writing functional. ")
       or diag("original and written infofile different.");
 }
