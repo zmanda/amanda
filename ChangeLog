@@ -1,3 +1,7 @@
+2010-04-14  Jean-Louis Martineau <martineau@zmanda.com>
+	    Satya Ganga <gsat@zmanda.com>
+	* application-src/amsamba.pl: Fix use of include/exclude list.
+
 2010-04-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Taper_Scribe.pl perl/Amanda/Taper/Scribe.pm
 	  server-src/taper.pl: rename dump_timestamp -> write_timestamp

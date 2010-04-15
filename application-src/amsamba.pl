@@ -131,8 +131,8 @@ sub validate_inexclude {
 	$self->{include} = [ @{$self->{include_file}} ];
     }
     foreach my $file (@{$self->{include_list}}) {
-	if (open(FF, $file)) {
-	    if ($self->{action} eq 'check') {
+	if (!open(FF, $file)) {
+	    if ($self->{action} eq 'check' && !$self->{include_optional}) {
 		$self->print_to_server("Open of '$file' failed: $!",
 				       $Amanda::Script_App::ERROR);
 	    }
@@ -749,10 +749,10 @@ sub command_restore {
 	    }
 	    push @cmd, "--directory", $self->{directory};
 	}
-	if ($#{$self->{include_list}} == 1) {
+	if ($#{$self->{include_list}} == 0) {
 	    push @cmd, "--files-from", $self->{include_list}[0];
 	}
-	if ($#{$self->{exclude_list}} == 1) {
+	if ($#{$self->{exclude_list}} == 0) {
 	    push @cmd, "--exclude-from", $self->{exclude_list}[0];
 	}
 	for(my $i=1;defined $ARGV[$i]; $i++) {
