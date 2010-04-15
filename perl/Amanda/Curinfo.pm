@@ -21,6 +21,11 @@ package Amanda::Curinfo;
 use strict;
 use warnings;
 use Carp;
+use File::Copy;
+use File::Path qw( mkpath );
+
+use Amanda::Debug qw( :logging );
+use Amanda::Util qw( sanitise_filename );
 
 use Amanda::Curinfo::Info;
 
@@ -116,12 +121,12 @@ Paul C. Mantz E<lt>pcmantz@zmanda.comE<gt>
 
 sub new
 {
-    my ( $class, $infodir ) = @_;
+    my ($class, $infodir) = @_;
 
-    ( defined $infodir )
+    (defined $infodir)
       || croak("error: infodir not provided to Amanda::Curinfo");
 
-    my $self = { infodir => $infodir, };
+    my $self = { infodir => $infodir };
 
     bless $self, $class;
     return $self;
@@ -129,30 +134,58 @@ sub new
 
 sub get_info
 {
-    my ( $self, $host, $disk ) = @_;
+    my ($self, $host, $disk) = @_;
 
     my $infodir  = $self->{infodir};
-    my $infofile = "$infodir/$host/$disk/info";
+    my $host_q   = sanitise_filename($host);
+    my $disk_q   = sanitise_filename($disk);
+    my $infofile = "$infodir/$host_q/$disk_q/info";
 
     return Amanda::Curinfo::Info->new($infofile);
 }
 
 sub put_info
 {
-    my ( $self, $host, $disk, $info ) = @_;
+    my ($self, $host, $disk, $info) = @_;
 
-    my $infodir  = $self->{infodir};
-    my $infofile = "$infodir/$host/$disk/info";
+    my $infodir     = $self->{infodir};
+    my $host_q      = sanitise_filename($host);
+    my $disk_q      = sanitise_filename($disk);
+    my $infofiledir = "$infodir/$host_q/$disk_q";
+    my $infofile    = "$infofiledir/info";
+    my $infofile_tmp = "$infofile.tmp";
 
-    return $info->write_to_file($infofile);
+    if (-e $infofile) {
+        copy($infofile, $infofile_tmp)
+          || croak "error: couldn't back up $infofile";
+    } elsif (!-d $infofiledir) {
+        mkpath($infofiledir)
+          || croak "error: couldn't make path $infofiledir";
+    }
+
+    my $restore = sub {
+        if (-e $infofile_tmp) {
+            copy($infofile_tmp, $infofile)
+              || croak
+              "error: couldn't restore infofile from backup $infofile_tmp";
+            unlink $infofile_tmp;
+        }
+        croak "error encountered when writing info to $infofile";
+    };
+
+    $info->write_to_file($infofile) || $restore->();
+    unlink $infofile_tmp if -e $infofile_tmp;
+    return 1;
 }
 
 sub del_info
 {
-    my ( $self, $host, $disk ) = @_;
+    my ($self, $host, $disk) = @_;
 
     my $infodir  = $self->{infodir};
-    my $infofile = "$infodir/$host/$disk/info";
+    my $host_q   = sanitise_filename($host);
+    my $disk_q   = sanitise_filename($disk);
+    my $infofile = "$infodir/$host_q/$disk_q/info";
 
     return unlink $infofile;
 }
