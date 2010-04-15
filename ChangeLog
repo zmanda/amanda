@@ -1,4 +1,8 @@
 2010-04-14  Jean-Louis Martineau <martineau@zmanda.com>
+	    Satya Ganga <gsat@zmanda.com>
+	* application-src/amsamba.pl: Fix use of include/exclude list.
+
+2010-04-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndml_nmb.c: Always log NOTIFY_MOVER_HALTED.
 
 2010-04-13  Dustin J. Mitchell <dustin@zmanda.com>
