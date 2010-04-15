@@ -110,6 +110,8 @@ my $taperoot_multi = "$Installcheck::TMP/Amanda_Recovery_Scan_Multi";
 }
 
 my $taperoot_compat = "$Installcheck::TMP/Amanda_Recovery_Scan_Compat";
+my $changerfile = "$Installcheck::TMP/scan-changerfile";
+
 #create a compat changer
 {
     if (-d $taperoot_compat) {
@@ -126,7 +128,6 @@ my $taperoot_compat = "$Installcheck::TMP/Amanda_Recovery_Scan_Compat";
 	push @names, $slot;
     }
 
-    my $changerfile = "/tmp/aa";
     open (CONF, ">$changerfile");
     print CONF "firstslot=1\n";
     print CONF "lastslot=3\n";
@@ -477,3 +478,4 @@ rmtree($taperoot_disk);
 rmtree($taperoot_multi);
 rmtree($taperoot_compat);
 rmtree($taperoot_single);
+unlink($changerfile);
