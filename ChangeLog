@@ -1,3 +1,8 @@
+2010-04-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amadmin.c: show all custom compression/encryption options
+	  in amadmin disklist
+	* man/xml-source/amanda.conf.5.xml: document undocumented params
+
 2010-04-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amcleanup.pl: don't fail when run with no args
 
