@@ -1,5 +1,5 @@
 #!@PERL@
-# Copyright (c) 2008 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2010 Zmanda, Inc.  All Rights Reserved.
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published 
@@ -49,7 +49,7 @@ GetOptions(
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
 ) or usage();
 
-my $config_name = shift @ARGV;
+my $config_name = shift @ARGV or usage;
 
 if ($kill_enable && $process_alive) {
     die "amcleanup: Can't use -k and -p simultaneously\n";
