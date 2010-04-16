@@ -312,8 +312,7 @@ amglue_copy_to_tag(data_path_t, getconf);
  * val_t typemaps
  */
 
-/* Typemap to convert a val_t, the union in which config values are
- * stored, to a Perl value of the appropriate type.  This converts:
+/* Typemap to convert a val_t to an SV, using a static function since it's huge.  This converts:
  *  - CONFTYPE_SIZE, CONFTYPE_INT, CONFTYPE_INT64,
  *    CONFTYPE_BOOLEAN -> IV
  *  - CONFTYPE_REAL -> NV
@@ -331,32 +330,30 @@ amglue_copy_to_tag(data_path_t, getconf);
  *  - CONFTYPE_PROPLIST -> hashref of hashref with keys 'append' (IV), 'priority' (IV),
  *							'values' (listref)
  */
-%typemap (out) val_t * {
-    if (!$1) {
-	$result = &PL_sv_undef;
-	argvi++;
+%{
+static int
+val_t_to_sv(val_t *val, SV **results) {
+    if (!val) {
+	results[0] = &PL_sv_undef;
+	return 1;
     } else {
-	switch ($1->type) {
+	switch (val->type) {
 	    case CONFTYPE_RATE: {
-		$result= sv_newmortal();
-		sv_setnv($result, val_t__rate($1)[0]);
-		argvi++;
+		results[0] = sv_newmortal();
+		sv_setnv(results[0], val_t__rate(val)[0]);
 
-		$result= sv_newmortal();
-		sv_setnv($result, val_t__rate($1)[1]);
-		argvi++;
-		break;
+		results[1] = sv_newmortal();
+		sv_setnv(results[1], val_t__rate(val)[1]);
+		return 2;
 	    }
 
 	    case CONFTYPE_INTRANGE: {
-		$result= sv_newmortal();
-		sv_setiv($result, val_t__intrange($1)[0]);
-		argvi++;
+		results[0] = sv_newmortal();
+		sv_setiv(results[0], val_t__intrange(val)[0]);
 
-		$result= sv_newmortal();
-		sv_setiv($result, val_t__intrange($1)[1]);
-		argvi++;
-		break;
+		results[1] = sv_newmortal();
+		sv_setiv(results[1], val_t__intrange(val)[1]);
+		return 2;
 	    }
 
 	    case CONFTYPE_EXINCLUDE: {
@@ -366,7 +363,7 @@ amglue_copy_to_tag(data_path_t, getconf);
 		 *	'optional' : 1,
 		 * }
 		 */
-		exinclude_t *ei = &val_t__exinclude($1);
+		exinclude_t *ei = &val_t__exinclude(val);
 		AV *list_entries = (AV *)sv_2mortal((SV *)newAV());
 		AV *file_entries = (AV *)sv_2mortal((SV *)newAV());
 		SV *optional = sv_newmortal();
@@ -397,27 +394,21 @@ amglue_copy_to_tag(data_path_t, getconf);
 		hv_store(hv, "optional", 8, optional, 0);
 		SvREFCNT_inc(optional);
 
-		$result = sv_2mortal(newRV((SV *)hv));
-		argvi++;
-		break;
+		results[0] = sv_2mortal(newRV((SV *)hv));
+		return 1;
 	    }
 
 	    case CONFTYPE_PROPLIST:
-		$result = sv_2mortal(g_hash_table_to_hashref_property(val_t__proplist($1)));
-		argvi++;
-		break;
+		results[0] = sv_2mortal(g_hash_table_to_hashref_property(val_t__proplist(val)));
+		return 1;
 
 	    case CONFTYPE_SIZE:
-		SP += argvi; PUTBACK;
-		$result = sv_2mortal(amglue_newSVi64(val_t__size($1)));
-		SPAGAIN; SP -= argvi; argvi++;
-		break;
+		results[0] = sv_2mortal(amglue_newSVi64(val_t__size(val)));
+		return 1;
 
 	    case CONFTYPE_INT64:
-		SP += argvi; PUTBACK;
-		$result = sv_2mortal(amglue_newSVi64(val_t__int64($1)));
-		SPAGAIN; SP -= argvi; argvi++;
-		break;
+		results[0] = sv_2mortal(amglue_newSVi64(val_t__int64(val)));
+		return 1;
 
 	    case CONFTYPE_BOOLEAN:	    /* all same as INT.. */
 	    case CONFTYPE_COMPRESS:
@@ -431,57 +422,49 @@ amglue_copy_to_tag(data_path_t, getconf);
 	    case CONFTYPE_SEND_AMREPORT_ON:
 	    case CONFTYPE_DATA_PATH:
 	    case CONFTYPE_INT:
-		SP += argvi; PUTBACK;
-		$result = sv_2mortal(amglue_newSVi64(val_t__int($1)));
-		SPAGAIN; SP -= argvi; argvi++;
-		break;
+		results[0] = sv_2mortal(amglue_newSVi64(val_t__int(val)));
+		return 1;
 
            case CONFTYPE_ESTIMATELIST: {
 		AV *elist = newAV();
 		estimatelist_t el;
-		for (el=val_t__estimatelist($1); el != NULL; el = el->next) {
+		for (el=val_t__estimatelist(val); el != NULL; el = el->next) {
 		    av_push(elist, newSVuv(GPOINTER_TO_INT(el->data)));
 		}
-		$result = sv_2mortal(newRV_noinc((SV *)elist));
-		argvi++;
-		break;
+		results[0] = sv_2mortal(newRV_noinc((SV *)elist));
+		return 1;
 	    }
 
 	    case CONFTYPE_TIME:
-		SP += argvi; PUTBACK;
-		$result = sv_2mortal(amglue_newSVi64(val_t__time($1)));
-		SPAGAIN; SP -= argvi; argvi++;
-		break;
+		results[0] = sv_2mortal(amglue_newSVi64(val_t__time(val)));
+		return 1;
 
 	    case CONFTYPE_REAL:
-		$result = sv_newmortal();
-		sv_setnv($result, val_t__real($1));
-		argvi++;
-		break;
+		results[0] = sv_newmortal();
+		sv_setnv(results[0], val_t__real(val));
+		return 1;
 
 	    case CONFTYPE_IDENT:	    /* same as STRING */
 	    case CONFTYPE_STR:
 	    case CONFTYPE_APPLICATION:
-		$result = sv_newmortal();
-		sv_setpv($result, val_t__str($1));
-		argvi++;
-		break;
+		results[0] = sv_newmortal();
+		sv_setpv(results[0], val_t__str(val));
+		return 1;
 
 	    case CONFTYPE_IDENTLIST: {
 		AV *ilist = newAV();
 
 		identlist_t il;
-		for (il=val_t__identlist($1); il != NULL; il = il->next) {
+		for (il=val_t__identlist(val); il != NULL; il = il->next) {
 		    av_push(ilist, newSVpv((char *)il->data, 0));
 		}
 
-		$result = sv_2mortal(newRV_noinc((SV *)ilist));
-		argvi++;
-		break;
+		results[0] = sv_2mortal(newRV_noinc((SV *)ilist));
+		return 1;
 	    }
 
 	    case CONFTYPE_AUTOLABEL: {
-		autolabel_t *autolabel = &val_t__autolabel($1);
+		autolabel_t *autolabel = &val_t__autolabel(val);
 		HV *hv;
 
 		/* now build the hash */
@@ -502,9 +485,8 @@ amglue_copy_to_tag(data_path_t, getconf);
 			(autolabel->autolabel & AL_EMPTY)? &PL_sv_yes : &PL_sv_no,
 			0);
 
-		$result = sv_2mortal(newRV((SV *)hv));
-		argvi++;
-		break;
+		results[0] = sv_2mortal(newRV((SV *)hv));
+		return 1;
 	    }
 
 	    /* No match yet -> not one of the "complex" types */
@@ -512,6 +494,28 @@ amglue_copy_to_tag(data_path_t, getconf);
 		SWIG_exception(SWIG_TypeError, "Unknown val_t conftype");
 		break;
 	}
+    }
+
+    return 0;
+
+fail:
+    SWIG_croak_null();
+}
+%}
+
+%typemap (out) val_t * {
+    SV *results[3], **iter;
+    int nresults;
+
+    /* save the stack, since val_t_to_sv may invoke arbitrary Perl code */
+    SP += argvi; PUTBACK;
+    nresults = val_t_to_sv($1, results);
+    SPAGAIN; SP -= argvi;
+
+    /* add val_t_to_sv's results to the stack */
+    for (iter = results; nresults; iter++, nresults--) {
+	$result = *iter;
+	argvi++;
     }
 }
 
