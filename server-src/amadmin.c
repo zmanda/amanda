@@ -2171,6 +2171,8 @@ disklist_one(
 	break;
     case COMP_CUST:
 	g_printf("CLIENT CUSTOM\n");
+	g_printf("        client_custom_compress \"%s\"\n",
+		    dp->clntcompprog? dp->clntcompprog : "");
 	break;
     case COMP_SERVER_FAST:
 	g_printf("SERVER FAST\n");
@@ -2180,6 +2182,8 @@ disklist_one(
 	break;
     case COMP_SERVER_CUST:
 	g_printf("SERVER CUSTOM\n");
+	g_printf("        server_custom_compress \"%s\"\n",
+		    dp->srvcompprog? dp->srvcompprog : "");
 	break;
     }
     if(dp->compress != COMP_NONE) {
@@ -2194,9 +2198,17 @@ disklist_one(
 	break;
     case ENCRYPT_CUST:
 	g_printf("CLIENT\n");
+	g_printf("        client_encrypt \"%s\"\n",
+		    dp->clnt_encrypt? dp->clnt_encrypt : "");
+	g_printf("        client_decrypt_option \"%s\"\n",
+		    dp->clnt_decrypt_opt? dp->clnt_decrypt_opt : "");
 	break;
     case ENCRYPT_SERV_CUST:
 	g_printf("SERVER\n");
+	g_printf("        server_encrypt \"%s\"\n",
+		    dp->srv_encrypt? dp->srv_encrypt : "");
+	g_printf("        server_decrypt_option \"%s\"\n",
+		    dp->srv_decrypt_opt? dp->srv_decrypt_opt : "");
 	break;
     }
 

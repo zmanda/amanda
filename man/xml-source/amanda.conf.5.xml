@@ -1678,6 +1678,25 @@ to do with whether that is used. If hardware compression is used (usually via a 
 or <emphasis remap='B'>mt</emphasis> option), Amanda (software) compression should be disabled.</para>
   </listitem>
   </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>client_custom_compress</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: none.
+    The program to use to perform compression/decompression on the client; used with
+"compress client custom".  Must not contain whitespace.  Must accept -d to uncompress.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>server_custom_compress</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: none.
+    The program to use to perform compression/decompression on the server; used with
+"compress server custom".  Must not contain whitespace.  Must accept -d to uncompress.</para>
+  </listitem>
+  </varlistentry>
+
   <varlistentry>
   <term><amkeyword>dumpcycle</amkeyword> <amtype>int</amtype></term>
   <listitem>
@@ -1732,6 +1751,41 @@ client-encryption AND server-compression is not supported.
 </listitem>
 </varlistentry>
 
+  <varlistentry>
+  <term><amkeyword>client_encrypt</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: none.
+The program to use to perform encryption/decryption on the client; used with
+"encrypt client".  Must not contain whitespace.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>client_decrypt_option</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: -d.
+The option that can be passed to client_encrypt to make it decrypt instead.
+Must not contain whitespace.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>server_encrypt</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: none.
+The program to use to perform encryption/decryption on the server; used with
+"encrypt server".  Must not contain whitespace.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>server_decrypt_option</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: -d.
+The option that can be passed to server_encrypt to make it decrypt instead.
+Must not contain whitespace.</para>
+  </listitem>
+  </varlistentry>
 
   <varlistentry>
   <term><amkeyword>estimate</amkeyword> [ <amkeyword>client</amkeyword> | <amkeyword>calcsize</amkeyword> | <amkeyword>server</amkeyword> ]+</term>
