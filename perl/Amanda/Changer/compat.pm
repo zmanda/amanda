@@ -190,6 +190,7 @@ sub _manual_scan {
     my %params = @_;
     my $nchecked = 0;
     my ($get_info, $got_info, $run_cb, $load_next);
+    my $first_scanned_slot = -1;
 
     my $user_msg_fn = $params{'user_msg_fn'};
     $user_msg_fn ||= sub { Amanda::Debug::info("chg-compat: " . $_[0]); };
@@ -208,6 +209,13 @@ sub _manual_scan {
     };
     $run_cb = sub {
         my ($exitval, $slot, $rest) = @_;
+
+	if ($slot == $first_scanned_slot) {
+	    $nchecked = $self->{'nslots'};
+	    return $load_next->();
+	}
+
+	$first_scanned_slot = $slot if $first_scanned_slot == -1;
 
 	$user_msg_fn->("updated slot $slot");
 	if ($exitval == 0) {
