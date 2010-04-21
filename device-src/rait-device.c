@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -392,7 +392,7 @@ rait_device_base_init (RaitDeviceClass * c)
 	    property_get_free_space_fn, NULL);
 
     device_class_register_property(device_class, PROPERTY_MAX_VOLUME_USAGE,
-	    PROPERTY_ACCESS_GET_MASK,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    property_get_max_volume_usage_fn,
 	    property_set_max_volume_usage_fn);
 }
@@ -2506,7 +2506,9 @@ property_get_max_volume_usage_fn(Device *dself,
 
         cur = g_value_get_uint64(&(op->value));
 
-	result = MIN(cur, result);
+	if (!result || (cur && cur < result)) {
+	    result = cur;
+	}
     }
 
     g_ptr_array_free_full(ops);

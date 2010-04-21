@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 464;
+use Test::More tests => 466;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -372,6 +372,12 @@ ok($dev->property_set("block_size", 32768*16),
     "rait device accepts an explicit block size");
 
 is($dev->property_get("block_size"), 32768*16,
+    "..and remembers it");
+
+ok($dev->property_set("max_volume_usage", 32768*1000),
+    "rait device accepts property MAX_VOLUME_USAGE");
+
+is($dev->property_get("max_volume_usage"), 32768*1000,
     "..and remembers it");
 
 $dev->read_label();
