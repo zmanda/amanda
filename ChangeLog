@@ -1,3 +1,6 @@
+2010-04-22  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Report/xml.pm: tries need to show all programs
+
 2010-04-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/ndmp.pm: $conn = undef
 
