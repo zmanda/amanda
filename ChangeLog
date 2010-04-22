@@ -1,3 +1,6 @@
+2010-04-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* example/Makefile.am: fix 'make clean' to not erase source files.
+
 2010-04-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/progs.m4: check for, and reject, Solaris's
 	  SGU lex, which is badly broken

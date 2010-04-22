@@ -9,27 +9,47 @@ server_exampledir    = $(amanda_dir)/example
 client_exampledir    = $(amanda_dir)/example
 lbltempldir   = $(amanda_dir)/example/label-templates
 
-template_DATA = template.d/advanced.conf \
-		template.d/amanda-harddisk.conf \
-		template.d/amanda-single-tape.conf \
-		template.d/amanda-tape-changer.conf \
-		template.d/amanda-S3.conf \
+template_in_FILE = \
+		template.d/advanced.conf.in \
+		template.d/amanda-harddisk.conf.in \
+		template.d/amanda-single-tape.conf.in \
+		template.d/amanda-tape-changer.conf.in \
+		template.d/amanda-S3.conf.in
+template_FILE = \
 		template.d/dumptypes \
 		template.d/tapetypes \
 		template.d/README   \
 		template.d/chg-manual.conf   
+template_generated_FILE = $(template_in_FILE:%.in=%)
+template_DATA = $(template_FILE) $(template_generated_FILE)
+EXTRA_DIST += $(template_FILE) $(template_in_FILE)
+DISTCLEANFILES += $(template_generated_FILE)
 
-server_example_DATA = amanda.conf \
-	       inetd.conf.amandaserver \
-	       xinetd.amandaserver \
-	       chg-multi.conf \
-	       chg-scsi.conf \
-	       disklist
 
-client_example_DATA = amanda-client.conf \
-	       amanda-client-postgresql.conf \
-	       inetd.conf.amandaclient \
-	       xinetd.amandaclient
+server_example_in_FILE = \
+		amanda.conf.in \
+		inetd.conf.amandaserver.in \
+		xinetd.amandaserver.in
+server_example_FILE = \
+		chg-multi.conf \
+		chg-scsi.conf \
+		disklist
+server_example_generated_FILE = $(server_example_in_FILE:%.in=%)
+server_example_DATA = $(server_example_FILE) $(server_example_generated_FILE)
+EXTRA_DIST += $(server_example_FILE) $(server_example_in_FILE)
+DISTCLEANFILES += $(server_example_generated_FILE)
+
+client_example_in_FILE = \
+		amanda-client.conf.in \
+		amanda-client-postgresql.conf.in \
+		inetd.conf.amandaclient.in \
+		xinetd.amandaclient.in
+client_example_FILE = 
+client_example_generated_FILE = $(client_example_in_FILE:%.in=%)
+client_example_DATA = $(client_example_FILE) $(client_example_generated_FILE)
+EXTRA_DIST += $(client_example_FILE) $(client_example_in_FILE)
+DISTCLEANFILES += $(client_example_generated_FILE)
+
 
 lbltempl_DATA = DLT.ps \
                 EXB-8500.ps \
@@ -38,6 +58,7 @@ lbltempl_DATA = DLT.ps \
                 3hole.ps \
 		DLT-A4.ps \
                 DIN-A4.ps 
+EXTRA_DIST += $(lbltempl_DATA)
 
 # build foo from foo.in where necessary
 %: %.in $(top_builddir)/config.status
@@ -48,31 +69,6 @@ CLEANFILES += config.log
 
 # figure out whether to put foo.in or foo itself into the dist tarball, based on whether
 # foo.in exists.
-
-# Start with only client examples
-EXAMPLE_FILES = $(client_example_DATA)
-if WANT_SERVER
-EXAMPLE_FILES += $(template_DATA) $(server_example_DATA) $(lbltempl_DATA)
-endif
-
-# Add all example files because the .in rule will make them regardless
-DISTCLEANFILES += $(template_DATA) \
-	$(server_example_DATA) \
-	$(client_example_DATA) \
-	$(lbltempl_DATA)
-
-dist-example-files:
-	@EXAMPLE_FILES="$(EXAMPLE_FILES)"; \
-	for file in $$EXAMPLE_FILES; do \
-		test -f $(srcdir)/$${file}.in && file=$${file}.in; \
-		dir=`dirname $${file}`; \
-		if test -n "$$dir" && test ! -d "$(distdir)/$$dir"; then \
-			mkdir -p "$(distdir)/$$dir" || exit 1; \
-		fi; \
-		echo "distributing $${file}"; \
-		cp -p "$(srcdir)/$${file}" "$(distdir)/$${file}" || exit 1; \
-	done
-dist-hook: dist-example-files
 
 INSTALLPERMS_data = chown=amanda \
 	dest=$(templatedir) $(template_DATA) \
