@@ -406,3 +406,21 @@ AC_DEFUN([AMANDA_PROG_RPCGEN],
     # on systems where rpcgen is not available
     AM_CONDITIONAL([HAVE_RPCGEN], [test "x$RPCGEN" != "x"])
 ])
+
+AC_DEFUN([AMANDA_PROG_LEX],
+[
+    AC_REQUIRE([AM_PROG_LEX])
+    AC_REQUIRE([AMANDA_PROG_GREP])
+    if test x"$LEX" != x""; then
+	AC_MSG_CHECKING([whether lex is broken Solaris (SGU) lex])
+	$LEX -V < /dev/null >/dev/null 2>conftest.out
+	if grep SGU conftest.out >/dev/null; then
+	    AC_MSG_RESULT([yes - disabled (set LEX=/path/to/lex to use a specific binary)])
+	    LEX='echo no lex equivalent available; false'
+	else
+	    AC_MSG_RESULT([no])
+	fi
+	rm conftest.out
+    fi
+])
+

@@ -1,4 +1,9 @@
 2010-04-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/progs.m4: check for, and reject, Solaris's
+	  SGU lex, which is badly broken
+	* configure.in: use AMANDA_PROG_LEX
+
+2010-04-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda-changers.7.xml: fix typo, thanks to
 	  Jean-Francois Malouin
 
