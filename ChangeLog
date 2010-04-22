@@ -1,3 +1,7 @@
+2010-04-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda-changers.7.xml: fix typo, thanks to
+	  Jean-Francois Malouin
+
 2010-04-22  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report/xml.pm: use bytes as data unit
 
