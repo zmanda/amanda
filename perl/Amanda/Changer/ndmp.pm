@@ -517,7 +517,9 @@ sub _get_scsi_conn {
     $$cbref = sub {
 	my @args = @_;
 
-	if (!$conn->scsi_close()) {
+	my $result = $conn->scsi_close();
+	$conn = undef;
+	if (!$result) {
 	    if (!$args[0]) { # only report an error if one hasn't already occurred
 		my $err = Amanda::Changer->make_error("fatal", undef,
 		    message => "".$conn->err_msg());
