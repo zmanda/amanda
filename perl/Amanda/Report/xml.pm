@@ -107,10 +107,12 @@ sub make_dumper_xml
     return make_xml_elt(
         "dumper",
         sub {
-            return join( xml_nl(),
-                make_xml_elt( "insize",  $dumper->{orig_kb} ),
-                make_xml_elt( "outsize", $dumper->{kb} ),
-                make_xml_elt( "time",    $dumper->{sec} ) );
+            return join(
+                xml_nl(),
+                make_xml_elt("insize",  $dumper->{orig_kb} * 1024),
+                make_xml_elt("outsize", $dumper->{kb} * 1024),
+                make_xml_elt("time",    $dumper->{sec})
+            );
         },
         { "result" => $dumper->{status} }
     );
@@ -175,18 +177,19 @@ sub make_try_xml
 sub make_estimate_xml
 {
     my ($estimate) = @_;
-    return ( defined $estimate )
+    return (defined $estimate)
       ? make_xml_elt(
         "estimate",
         sub {
-            return join( xml_nl(),
-                make_xml_elt( "level", $estimate->{level} ),
-                make_xml_elt( "time",  $estimate->{sec} ),
-                make_xml_elt( "nkb",   $estimate->{nkb} ),
-                make_xml_elt( "ckb",   $estimate->{ckb} ),
-                make_xml_elt( "kps",   $estimate->{kps} ) );
-          }
-
+            return join(
+                xml_nl(),
+                make_xml_elt("level",  $estimate->{level}),
+                make_xml_elt("time",   $estimate->{sec}),
+                make_xml_elt("nbytes", $estimate->{nkb} * 1024),
+                make_xml_elt("cbytes", $estimate->{ckb} * 1024),
+                make_xml_elt("bps",    $estimate->{kps} * 1024)
+            );
+        }
       )
       : "";
 }
