@@ -161,15 +161,13 @@ sub make_try_xml
     return make_xml_elt(
         "try",
         sub {
-            foreach my $program ( keys %$try ) {
-                if ( $program eq "dumper" ) {
-                    return make_dumper_xml( $try->{$program} );
-                } elsif ( $program eq "chunker" ) {
-                    return make_chunker_xml( $try->{$program} );
-                } elsif ( $program eq "taper" ) {
-                    return make_taper_xml( $try->{$program} );
-                }
-            }
+            return join "\n", map {
+                    ($_ eq "dumper")  ? make_dumper_xml($try->{$_})
+                  : ($_ eq "chunker") ? make_chunker_xml($try->{$_})
+                  : ($_ eq "taper")   ? make_taper_xml($try->{$_})
+                  : ($_ eq "parts") ? map { make_part_xml($_) } @{ $try->{$_} }
+                  :                   "";
+            } keys %$try;
         }
     );
 }
