@@ -1,3 +1,6 @@
+2010-04-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/ndmp.pm: $conn = undef
+
 2010-04-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/match-test.c: lots of new tests
 	* common-src/match.c: fix comments, minor bugs in tar_to_regex and
