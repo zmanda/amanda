@@ -337,11 +337,10 @@ It only needs to be readable by the Amanda-user on the Samba server.  </para>
 The command applies to all DLEs that match the arguments.
 This section describes the matcher.</para>
 
-<para>The matcher matches by word, each word is a glob expression, words
-are separated by the separator '.' for host and '/' for disk. You
-can anchor the expression at left with a '^'. You can
-anchor the expression at right with a '$'. The matcher
-is case insensitive for host but is case sensitive for disk. A match
+<para>The matcher matches by word. Each word is a glob expression, and words
+are separated by the separator '.' for host expressions and '/' for disk expressions. You
+can anchor the expression on the left with a '^' or on the right with a '$'. The matcher
+is case insensitive for hosts but case sensitive for disks. A match
 succeeds if all words in your expression match contiguous words in 
 the host or disk.</para>
 
@@ -427,7 +426,7 @@ the host or disk.</para>
     <term>host?</term>
     <listitem><para>
     Will match <filename>hosta</filename> and <filename>hostb</filename>, but
-    not <filename>host</filename>.
+    not <filename>host</filename> or <filename>hostabc</filename>.
     </para></listitem>
     </varlistentry>
 

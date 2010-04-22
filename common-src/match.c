@@ -280,6 +280,7 @@ glob_to_regex(
      *
      *  ?      -> [^/]
      *  *      -> [^/]*
+     *  [...] ->  [...]
      *  [!...] -> [^...]
      *
      * The following are given a leading backslash to protect them
@@ -381,13 +382,14 @@ tar_to_regex(
      * one expansion.
      */
     len = strlen(glob);
-    regex = alloc(1 + len * 5 + 1 + 1);
+    regex = alloc(1 + len * 5 + 5 + 5);
 
     /*
      * Do the conversion:
      *
      *  ?      -> [^/]
      *  *      -> .*
+     *  [...]  -> [...]
      *  [!...] -> [^...]
      *
      * The following are given a leading backslash to protect them
@@ -395,13 +397,19 @@ tar_to_regex(
      *
      *   ( ) { } + . ^ $ |
      *
-     * Put a leading ^ and trailing $ around the result.  If the last
-     * non-escaped character is \ leave the $ off to cause a syntax
+     * The expression must begin and end either at the beginning/end of the string or
+     * at at a pathname separator.
+     *
+     * If the last non-escaped character is \ leave the $ off to cause a syntax
      * error when the regex is compiled.
      */
 
     r = regex;
+    *r++ = '(';
     *r++ = '^';
+    *r++ = '|';
+    *r++ = '/';
+    *r++ = ')';
     last_ch = '\0';
     for (ch = *glob++; ch != '\0'; last_ch = ch, ch = *glob++) {
 	if (last_ch == '\\') {
@@ -435,7 +443,11 @@ tar_to_regex(
 	}
     }
     if (last_ch != '\\') {
+	*r++ = '(';
 	*r++ = '$';
+	*r++ = '|';
+	*r++ = '/';
+	*r++ = ')';
     }
     *r = '\0';
 
@@ -782,9 +794,9 @@ match_level(
 	mylevelexp[strlen(levelexp)] = '\0';
     }
 
-    if(mylevelexp[strlen(mylevelexp)] == '$') {
+    if(mylevelexp[strlen(mylevelexp)-1] == '$') {
 	match_exact = 1;
-	mylevelexp[strlen(mylevelexp)] = '\0';
+	mylevelexp[strlen(mylevelexp)-1] = '\0';
     }
     else
 	match_exact = 0;

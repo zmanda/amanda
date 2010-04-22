@@ -1,3 +1,10 @@
+2010-04-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/match-test.c: lots of new tests
+	* common-src/match.c: fix comments, minor bugs in tar_to_regex and
+	  match_level
+	* common-src/match.h: comments to describe each function
+	* man/xml-source/amanda.8.xml: update expression docs
+
 2010-04-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amlabel.pl: add warning when the old label is in the
 	  tapelist
