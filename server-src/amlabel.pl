@@ -176,7 +176,14 @@ sub main {
 		$dev_ok = 0 unless ($opt_force);
 	    } elsif ($tl->lookup_tapelabel($label)) {
 		print "Volume with label '$label' is active and contains data from this configuration.\n";
-		$dev_ok = 0 unless ($opt_force);
+		if ($opt_force) {
+		    # if -f, then the user should clean things up..
+		    print "Consider using 'amrmtape' to remove volume '$label' from the catalog.\n";
+		    # note that we don't run amrmtape automatically, as it could result in data loss when
+		    # multiple volumes have (perhaps accidentally) the same label
+		} else {
+		    $dev_ok = 0
+		}
 	    } else {
 		print "Found Amanda volume '$label'.\n";
 	    }
