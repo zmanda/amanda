@@ -96,7 +96,7 @@ Amanda programs.  For example:
 define changer hp-robot {
     tapedev "chg-robot:/dev/sg1"
     property "tape-device" "0=tape:/dev/nst0"
-    property append "tape-device" "1=tape:/dev/nst0"
+    property append "tape-device" "1=tape:/dev/nst1"
     device_property "BLOCK_SIZE" "512k"
 }
 # ...
