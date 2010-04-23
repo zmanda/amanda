@@ -105,7 +105,6 @@ use constant DUMPER_STATUS => message("DUMPER-STATUS",
 
 package main::Controller;
 
-use IO::Socket;
 use POSIX qw( :errno_h );
 use Amanda::Changer;
 use Amanda::Config qw( :getconf config_dir_relative );
@@ -132,9 +131,6 @@ sub new {
 	# filled in at start
 	proto => undef,
 	scribe => undef,
-	header_socket => undef,
-	header_socket_src => undef,
-	header_socket_connect_cb => undef,
 	tape_num => 0,
 
 	# filled in when a write starts:
@@ -235,41 +231,6 @@ sub start {
 	taperscan => $taperscan,
 	feedback => $self,
 	debug => $Amanda::Config::debug_taper);
-
-    # set up a listening socket on an arbitrary port
-    my $sock = $self->{'header_socket'} = IO::Socket::INET->new(
-	LocalHost => "127.0.0.1",
-	Proto => "tcp",
-	Listen => 1,
-	ReuseAddr => 1,
-	Blocking => 0,
-    );
-    $sock->listen(5);
-
-    # arrange to call header_socket_connect_cb when a new connection comes in
-    $self->{'header_socket_src'} =
-	Amanda::MainLoop::fd_source($sock->fileno(), $G_IO_IN);
-    $self->{'header_socket_src'}->set_callback(sub {
-	my ($src) = @_;
-	# this is called when a new connection comes in on the header_socket, and calls
-	# through to $self->{'header_socket_connect_cb'}, or rejects the connection if
-	# there is no such callback running
-
-	my $child_sock = $self->{'header_socket'}->accept();
-
-	# and make sure it's set to blocking mode
-	$child_sock->blocking(1);
-
-	if ($self->{'header_socket_connect_cb'}) {
-	    my $cb = $self->{'header_socket_connect_cb'};
-	    # reset the callback first to avoid double-calling it
-	    $self->{'header_socket_connect_cb'} = undef;
-	    return $cb->($child_sock);
-	} else {
-	    # reject connections when we haven't sent a PORT request
-	    $child_sock->close();
-	}
-    });
 }
 
 # called when the scribe is fully started up and ready to go
@@ -299,13 +260,6 @@ sub quit {
 
     my $steps = define_steps
 	cb_ref => \$params{'finished_cb'};
-
-    step stop_socket => sub {
-	$self->{'header_socket_src'}->remove();
-	$self->{'header_socket'}->close();
-
-	$steps->{'quit_scribe'}->();
-    };
 
     step quit_scribe => sub {
 	$self->{'scribe'}->quit(finished_cb => sub {
@@ -647,7 +601,6 @@ sub send_port_and_get_header {
     my $self = shift;
     my ($finished_cb) = @_;
 
-    my $connected_socket;
     my $header_xfer;
     my ($xsrc, $xdst);
     my $errmsg;
@@ -656,32 +609,31 @@ sub send_port_and_get_header {
 	cb_ref => \$finished_cb;
 
     step send_port => sub {
-	# set up so that an incoming connection on the header socket gets sent here
-	die "header_socket_connect_cb should be undef"
-	    if defined $self->{'header_socket_connect_cb'};
-	$self->{'header_socket_connect_cb'} = $steps->{'header_socket_connect_cb'};
-
 	# get the ip:port pairs for the data connection from the data xfer source,
 	# which should be an Amanda::Xfer::Source::DirectTCPListen
-	my $addrs = $self->{'xfer_source'}->get_addrs();
-	$addrs = join ";", map { $_->[0] . ':' . $_->[1] } @$addrs;
+	my $data_addrs = $self->{'xfer_source'}->get_addrs();
+	$data_addrs = join ";", map { $_->[0] . ':' . $_->[1] } @$data_addrs;
 
-	# and tell the driver which port we're listening on
-	$self->{'proto'}->send(main::Protocol::PORT,
-	    port => $self->{'header_socket'}->sockport(),
-	    ipports => $addrs);
-    };
-
-    step header_socket_connect_cb => sub {
-	($connected_socket) = @_; # keep the socket so Perl doesn't close it!
-
-	# now read a header block from that socket - note that this does not specify
-	# a maximum size, so this portion of Amanda at least can handle any size header
+	# and set up an xfer for the header, too, using DirectTCP as an easy
+	# way to implement a listen/accept/read process.  Note that this does
+	# not enforce a maximum size, so this portion of Amanda at least can
+	# handle any size header
 	($xsrc, $xdst) = (
-	    Amanda::Xfer::Source::Fd->new($connected_socket->fileno()),
+	    Amanda::Xfer::Source::DirectTCPListen->new(),
 	    Amanda::Xfer::Dest::Buffer->new(0));
 	$header_xfer = Amanda::Xfer->new([$xsrc, $xdst]);
 	$header_xfer->start($steps->{'header_xfer_xmsg_cb'});
+
+	my $header_addrs = $xsrc->get_addrs();
+	$header_addrs = [ grep { $_->[0] eq '127.0.0.1' } @$header_addrs ];
+	die "Source::DirectTCPListen did not return a localhost address"
+	    unless @$header_addrs;
+	my $header_port = $header_addrs->[0][1];
+
+	# and tell the driver which ports we're listening on
+	$self->{'proto'}->send(main::Protocol::PORT,
+	    port => $header_port,
+	    ipports => $data_addrs);
     };
 
     step header_xfer_xmsg_cb => sub {
@@ -704,7 +656,6 @@ sub send_port_and_get_header {
 
 	# close stuff up
 	$header_xfer = $xsrc = $xdst = undef;
-	$connected_socket->close();
 
 	if (!defined $hdr_buf) {
 	    return $finished_cb->("Got empty header");
