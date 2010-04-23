@@ -90,8 +90,10 @@ ndmnmb_snoop (
 
 	 if (level < 6 && nmb->protocol_version == 4) {
 		ndmp4_header *header = (ndmp4_header *)&nmb->header;
-		if (header->message_code == NDMP4_NOTIFY_DATA_HALTED ||
-		    header->message_code == NDMP4_NOTIFY_MOVER_HALTED) {
+		if ((header->message_code == NDMP4_NOTIFY_DATA_HALTED &&
+		     header->error_code == NDMP4_DATA_HALT_SUCCESSFUL) ||
+		    (header->message_code == NDMP4_NOTIFY_MOVER_HALTED &&
+		     header->error_code == NDMP4_MOVER_HALT_CONNECT_CLOSED)) {
 			level = 6;
 			level5 = 0;
 			level6 = 0;

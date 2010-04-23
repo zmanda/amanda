@@ -838,7 +838,8 @@ process_dumpline(
 	}
 
 	if (strcmp(tok, "no-op") == 0) {
-	    break;
+	    amfree(buf);
+	    return;
 	}
 
 	if (strcmp(tok, "end") == 0) {
