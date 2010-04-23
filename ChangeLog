@@ -1,3 +1,10 @@
+2010-04-23  Paul C. Mantz <pcmantz@zmanda.com>
+	* server-src/amreport.pl perl/Amanda/Report.pm
+ 	  perl/Amanda/Report/xml.pm.orig perl/Amanda/Report/human.pm
+	  perl/Amanda/Report/postscript.pm perl/Amanda/Report/xml.pm: fixed
+ 	  location of tape parts in Amanda::Report
+	* installcheck/Amanda_Report.pl: installchecks
+
 2010-04-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndmagents.h: prototype of exit_on_stdin_eof_thread.
 	* ndmp-src/amndmjob_main.c: Create exit_on_stdin_eof_thread thread.

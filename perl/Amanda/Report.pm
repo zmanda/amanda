@@ -259,9 +259,6 @@ A try is a hash with at least one dumper, taper, and/or chunker DLE
 program as a key.  These entries contain the exit conditions of that
 particular program for that particular try.
 
-In addition, there is a field C<parts> which records the parts taped
-during the taper processes in a try.
-
 There are a number of common fields between all three elements:
 
 =over
@@ -293,15 +290,14 @@ during the process.
 The C<taper> hash contains all the exit status data given by the
 taper.  Because the taper has timestamped parts, the program itself
 does not have a C<date> field.  Taper has one unique field, C<parts>,
-giving the number of parts (described in the next section) that were
-written to tape.
+which is a reference to a list of hash references which describe the
+parts that have been taped during execution.
 
 =head3 Parts
 
-For a given C<$try> in the C<< $dle->{tries} >> list, there is a list
-located at C< $try->{parts}> which describes each of the parts that
-are written by the taper.  Each item in the list is a hash reference
-with the following fields:
+Every taper process logs the parts it writes to tape in a list located
+at C<$taper->{parts}>.  Each item in the list is a hash reference with
+the following fields:
 
 =over
 
@@ -872,20 +868,19 @@ sub _handle_taper_line
 	# count this as a filesystem if this is the first part
         $self->{'_current_tape'}->{dle}++ if $currpart == 1;
 
-
-        my $dle    = $disklist->{$hostname}->{$disk};
-        my $try    = $self->_get_try($dle, "taper");
-        my $taper  = $try->{taper}  ||= {};
-        my $parts = $try->{parts} ||= [];
+        my $dle   = $disklist->{$hostname}{$disk};
+        my $try   = $self->_get_try($dle, "taper");
+        my $taper = $try->{taper} ||= {};
+        my $parts = $taper->{parts} ||= [];
 
         my $part = {
             label => $label,
             date  => $timestamp,
             file  => $tapefile,
-            part  => $currpart,
             sec   => $sec,
             kb    => $kb,
             kps   => $kps,
+            partnum  => $currpart,
         };
 
 	$taper->{orig_kb} = $orig_kb;
@@ -903,7 +898,7 @@ sub _handle_taper_line
 # $type = DONE | PARTIAL
 # $type taper <hostname> <disk> <timestamp> <part> <level> [sec <sec> kb <kb> kps <kps>]
         my @info = Amanda::Util::split_quoted_strings($str);
-        my ( $hostname, $disk, $timestamp, $parts, $level ) = @info[ 0 .. 4 ];
+        my ( $hostname, $disk, $timestamp, $part_ct, $level ) = @info[ 0 .. 4 ];
         my ( $sec, $kb, $kps, $orig_kb ) = @info[ 6, 8, 10, 12 ];
 	my $error;
 	if ($type == $L_PARTIAL) {
@@ -916,11 +911,15 @@ sub _handle_taper_line
         $kps =~ s{\]$}{};
         $orig_kb =~ s{\]$}{} if defined $orig_kb;
 
-        my $dle    = $disklist->{$hostname}->{$disk};
-        my $try    = $self->_get_try( $dle, "taper" );
-        my $taper  = $try->{taper}  ||= {};
+        my $dle   = $disklist->{$hostname}->{$disk};
+        my $try   = $self->_get_try($dle, "taper");
+        my $taper = $try->{taper} ||= {};
+        my $parts = $taper->{parts};
 
-        $taper->{parts} = $parts;
+        if ($part_ct - $#$parts != 1) {
+            ## this should always be true; do nothing right now
+        }
+
         $taper->{level} = $level;
         $taper->{sec}   = $sec;
         $taper->{kb}    = $kb;
