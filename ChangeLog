@@ -1,4 +1,9 @@
 2010-04-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndmagents.h: prototype of exit_on_stdin_eof_thread.
+	* ndmp-src/amndmjob_main.c: Create exit_on_stdin_eof_thread thread.
+	* ndmp-src/ndma_comm_session.c: exit_on_stdin_eof_thread is not static.
+
+2010-04-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndml_nmb.c: Don't log successful halt.
 	* server-src/dumper.c: Don't log no-op command.
 

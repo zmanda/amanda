@@ -141,7 +141,7 @@ ndma_server_session (struct ndm_session *sess, int control_sock)
 	return 0;
 }
 
-static gpointer
+gpointer
 exit_on_stdin_eof_thread(gpointer data G_GNUC_UNUSED)
 {
     char buf[32];

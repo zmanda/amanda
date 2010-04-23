@@ -1100,6 +1100,7 @@ extern int	ndma_session_quantum (struct ndm_session *sess,
 extern int	ndma_session_initialize (struct ndm_session *sess);
 extern int	ndma_session_commission (struct ndm_session *sess);
 extern int	ndma_session_decommission (struct ndm_session *sess);
+extern gpointer	exit_on_stdin_eof_thread(gpointer data G_GNUC_UNUSED);
 
 
 
