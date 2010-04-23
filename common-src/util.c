@@ -334,6 +334,11 @@ interruptible_accept(
     struct timeval tv;
     int nfound;
 
+    if (sock < 0 || sock >= FD_SETSIZE) {
+	g_debug("interruptible_accept: bad socket %d", sock);
+	return EBADF;
+    }
+
     memset(&tv, 0, SIZEOF(tv));
     tv.tv_sec = 1;
 

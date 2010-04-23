@@ -346,8 +346,11 @@ read_and_push(
 	if (len < GLUE_BUFFER_SIZE) {
 	    if (errno) {
 		if (!elt->cancelled) {
+		    int saved_errno = errno;
 		    xfer_cancel_with_error(elt,
-			_("Error reading from fd %d: %s"), fd, strerror(errno));
+			_("Error reading from fd %d: %s"), fd, strerror(saved_errno));
+		    g_debug("element-glue: error reading from fd %d: %s",
+			    fd, strerror(saved_errno));
 		    wait_until_xfer_cancelled(elt->xfer);
 		}
 		break;
