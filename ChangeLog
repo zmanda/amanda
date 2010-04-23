@@ -1,4 +1,8 @@
 2010-04-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-dest-taper-splitter.c: fix assertion failure
+	  reported by Wojciech Giel <wojciech.giel@cimr.cam.ac.uk>
+
+2010-04-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/taper.pl: don't use IO::Socket, as it is badly broken
 	  and not thread-safe on Solaris 8
 	* xfer-src/element-glue.c: add debugging checks
