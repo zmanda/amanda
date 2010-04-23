@@ -1,4 +1,8 @@
 2010-04-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-dest-taper-splitter.c: fix assertion failure
+	  reported by Wojciech Giel <wojciech.giel@cimr.cam.ac.uk>
+
+2010-04-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Header.pl: add checks for all fields
 
 2010-04-23  Dustin J. Mitchell <dustin@zmanda.com>

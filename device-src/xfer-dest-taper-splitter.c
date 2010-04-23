@@ -622,6 +622,9 @@ slab_source_prebuffer(
     guint64 i;
     Slab *slab;
 
+    /* always prebuffer at least one slab, even if max_memory is 0 */
+    if (prebuffer_slabs == 0) prebuffer_slabs = 1;
+
     /* pre-buffering is not necessary if we're reading from a disk cache */
     if (self->retry_part && self->part_slices)
 	return TRUE;
@@ -849,13 +852,16 @@ slab_source_get(
 	if (self->streaming == STREAMING_REQUIREMENT_DESIRED) {
 	    if (!slab_source_prebuffer(self))
 		return NULL;
-	} else {
-	    while (self->device_slab == NULL && !elt->cancelled) {
-		DBG(9, "waiting for the next slab");
-		g_cond_wait(self->slab_cond, self->slab_mutex);
-	    }
-	    DBG(9, "done waiting");
+
+	    /* fall through to make sure we have a device_slab;
+	     * slab_source_prebuffer doesn't guarantee device_slab != NULL */
 	}
+
+	while (self->device_slab == NULL && !elt->cancelled) {
+	    DBG(9, "waiting for the next slab");
+	    g_cond_wait(self->slab_cond, self->slab_mutex);
+	}
+	DBG(9, "done waiting");
 
 	if (elt->cancelled)
 	    goto fatal_error;
