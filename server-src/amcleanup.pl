@@ -128,12 +128,35 @@ if ($nb_amanda_process > 0) {
     }
 }
 
+sub run_system {
+    my $check_code = shift;
+    my @cmd = @_;
+    my $pgm = $cmd[0];
+
+    system @cmd;
+    my $err = $?;
+    my $res = $!;
+
+    if ($err == -1) {
+	Amanda::Debug::debug("failed to execute $pgm: $res");
+	print "failed to execute $pgm: $res\n";
+    } elsif ($err & 127) {
+	Amanda::Debug::debug(sprintf("$pgm died with signal %d, %s coredump",
+		      ($err & 127), ($err & 128) ? 'with' : 'without'));
+	printf "$pgm died with signal %d, %s coredump\n",
+		($err & 127), ($err & 128) ? 'with' : 'without';
+    } elsif ($check_code && $err > 0) {
+	Amanda::Debug::debug(sprintf("$pgm exited with value %d", $err >> 8));
+	printf "$pgm exited with value %d %d\n", $err >> 8, $err;
+    }
+}
+
 # rotate log
 if (-f $logfile) {
     Amanda::Debug::debug("Processing log file");
-    system qw/$amreport $config_name --from-amdump/;
-    system qw/$amlogroll $config_name/;
-    system qw/$amtrmidx $config_name/;
+    run_system(0, $amreport, $config_name, "--from-amdump");
+    run_system(1, $amlogroll, $config_name);
+    run_system(1, $amtrmidx, $config_name);
 } else {
     print "amcleanup: no unprocessed logfile to clean up.\n";
 }

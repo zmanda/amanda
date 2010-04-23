@@ -1,4 +1,7 @@
 2010-04-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcleanup.pl: Fix running command with system.
+
+2010-04-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* example/Makefile.am: fix 'make clean' to not erase source files.
 
 2010-04-22  Dustin J. Mitchell <dustin@zmanda.com>
