@@ -148,9 +148,9 @@ sub make_taper_xml
                 make_xml_elt( "date",  $taper->{date} ),
                 make_xml_elt( "level", $taper->{level} ),
                 make_xml_elt( "time",  $taper->{sec} ),
-                make_xml_elt( "parts", $taper->{parts} ),
                 make_xml_elt( "bytes", $taper->{kb} * 1024 ),
-                make_xml_elt( "bps",   $taper->{kps} * 1024 )
+                make_xml_elt( "bps",   $taper->{kps} * 1024 ),
+                map { make_part_xml($_) } @{ $taper->{parts} }
             );
         },
         { result => $taper->{status} }
@@ -163,11 +163,10 @@ sub make_try_xml
     return make_xml_elt(
         "try",
         sub {
-            return join "\n", map {
+            return join xml_nl(), map {
                     ($_ eq "dumper")  ? make_dumper_xml($try->{$_})
                   : ($_ eq "chunker") ? make_chunker_xml($try->{$_})
                   : ($_ eq "taper")   ? make_taper_xml($try->{$_})
-                  : ($_ eq "parts") ? map { make_part_xml($_) } @{ $try->{$_} }
                   :                   "";
             } keys %$try;
         }
@@ -204,10 +203,11 @@ sub make_part_xml
                 make_xml_elt( "label", $part->{label} ),
                 make_xml_elt( "date",  $part->{date} ),
                 make_xml_elt( "file",  $part->{file} ),
-                make_xml_elt( "part",  $part->{part} ),
                 make_xml_elt( "time",  $part->{sec} ),
                 make_xml_elt( "bytes", $part->{kb} * 1024 ),
-                make_xml_elt( "bps",   $part->{kps} * 1024 ) );
+                make_xml_elt( "bps",   $part->{kps} * 1024 ),
+                make_xml_elt( "partnum", $part->{partnum} )
+            );
         }
     );
 }

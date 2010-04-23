@@ -128,18 +128,21 @@ sub _write_report_tape
 
 	# run once for each try for this DLE
 	foreach my $try (@{$dle_info->{'tries'}}) {
-	    next unless exists $try->{'taper'} and exists $try->{'parts'};
 
-	    # note that this report only prints a row for the *first* part in the DLE,
-	    # and only if that's on this tape.
-	    my $parts = $try->{'parts'};
-	    next unless ($parts->[0] and $parts->[0]{'label'} eq $label);
+            next unless exists $try->{taper};
+            my $taper = $try->{taper};
 
-	    # the filenum printed will be this first filenum
-	    my $filenum = $parts->[0]{'file'};
+            my $parts = $taper->{parts};
+            next unless @$parts > 0;
 
-	    # sum the part sizes on this label to get the outsize.  Note that the postscript
-	    # output does not contain a row for each part, but for each part..
+            my $first_part = $parts->[0];
+            next unless $first_part->{label} eq $label;
+
+            my $filenum = $first_part->{file};
+
+	    # sum the part sizes on this label to get the outsize.  Note that
+	    # the postscript output does not contain a row for each part, but
+	    # for each part..
 	    my $outsize = 0;
 	    for my $part (@$parts) {
 		next unless $part->{'label'} eq $label;
@@ -150,16 +153,15 @@ sub _write_report_tape
 	    my $origsize = 0;
 	    my $level = -1;
 
-	    # TODO: this is complex and should probably be in a parent-class method
-	    if (exists $try->{'dumper'} and $try->{'dumper'}->{'status'} ne 'fail') {
-		my $try_dumper = $try->{'dumper'};
-		$level = $try_dumper->{'level'};
-		$origsize = $try_dumper->{orig_kb};
-	    } else { # we already know a taper run exists in this try
-		my $try_taper = $try->{'taper'};
-		$level = $try_taper->{'level'};
-		$origsize = $try_taper->{orig_kb} if $try_taper->{orig_kb};
-	    }
+            # TODO: this is complex and should probably be in a parent-class method
+            if (exists $try->{dumper} and ($try->{dumper}{status} ne 'fail')) {
+                my $try_dumper = $try->{dumper};
+                $level    = $try_dumper->{level};
+                $origsize = $try_dumper->{orig_kb};
+            } else {    # we already know a taper run exists in this try
+                $level = $taper->{level};
+                $origsize = $taper->{orig_kb} if $taper->{orig_kb};
+            }
 
 	    $total_outsize += $outsize;
 	    $total_origsize += $origsize;

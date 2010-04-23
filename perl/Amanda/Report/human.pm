@@ -220,9 +220,6 @@ sub calculate_stats
 			0;
 	    my $stats = ($level > 0) ? $incr_stats : $full_stats;
 
-	    $stats->{tapepart_count} += @{ $try->{parts} }
-		if (exists $try->{parts});
-
 	    # compute out size, skipping flushes (tries without a dumper run)
 	    my $outsize = 0;
 	    if (exists $try->{dumper}
@@ -263,10 +260,11 @@ sub calculate_stats
 
                 $stats->{tapesize}   += $try->{taper}{kb};
                 $stats->{taper_time} += $try->{taper}{sec};
+                $stats->{tapepart_count} += @{ $try->{taper}{parts} };
                 $stats->{tapedisk_count}++;
-                $tapedisks->[$try->{taper}{'level'}]++; #by level count
-                $tapeparts->[$try->{taper}{'level'}] += @{ $try->{parts} }
-                     if (exists $try->{parts});
+
+                $tapedisks->[ $try->{taper}{level} ]++;    #by level count
+                $tapeparts->[$try->{taper}{level}] += @{ $try->{taper}{parts} };
 	    }
 
 	    # add those values to the stats

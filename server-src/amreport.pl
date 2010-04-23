@@ -289,8 +289,6 @@ sub legacy_send_amreport
 
             foreach my $program (keys %$try) {
 
-                next if $program eq "parts";
-
                 $process_stranges++ if $try->{$program}{status} eq 'strange';
                 $process_fails++    if $try->{$program}{status} eq 'fail';
             }
