@@ -1,4 +1,8 @@
 2010-04-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda-devices.7.xml: more detail for
+	  STREAMING property
+
+2010-04-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/xfer-dest-taper-splitter.c: fix assertion failure
 	  reported by Wojciech Giel <wojciech.giel@cimr.cam.ac.uk>
 

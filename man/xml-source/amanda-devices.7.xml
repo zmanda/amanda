@@ -209,7 +209,14 @@ for future expansion.  Not all devices implement all of these properties.</para>
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>STREAMING</term><listitem>
- (read-only) This property gives the streaming requirement for this device.  For example, tape drives often require a steady supply of data to avoid shoe-shining, while disk devices have no such requirement.
+(read-only) This property gives the streaming requirement for this device.  For
+example, tape drives often require a steady supply of data to avoid
+shoe-shining, while disk devices have no such requirement.  Streaming is
+accomplished by buffering <command>device_output_buffer_size</command> bytes of
+data.  The allowed values are "none" (no streaming buffer necessary),
+"required" (fill the buffer before starting to write), or "desired" (fill the
+buffer before starting to write, and if the buffer becomes empty, stop writing
+until it is completely full again).
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>VERBOSE</term><listitem>
