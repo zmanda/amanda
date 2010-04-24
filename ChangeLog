@@ -1,3 +1,6 @@
+2010-04-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheckdump.pl: Check all process status.
+
 2010-04-23  Paul C. Mantz <pcmantz@zmanda.com>
 	* server-src/amreport.pl perl/Amanda/Report.pm
  	  perl/Amanda/Report/xml.pm.orig perl/Amanda/Report/human.pm
