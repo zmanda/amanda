@@ -22,6 +22,8 @@ use strict;
 
 use File::Basename;
 use Getopt::Long;
+use IPC::Open3;
+use Symbol;
 
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
@@ -212,52 +214,97 @@ sub open_validation_app {
 	return $current_validation_pipeline;
     }
 
-    my $validation_command = find_validation_command($header);
+    my @command = find_validation_command($header);
+
+    if ($#command == 0) {
+	$command[0]->{fd} = Symbol::gensym;
+	$command[0]->{pid} = open3($current_validation_pipeline, "/dev/null", $command[0]->{stderr}, $command[0]->{pgm});
+    } else {
+	my $nb = $#command;
+	$command[$nb]->{fd} = "VAL_GLOB_$nb";
+	$command[$nb]->{stderr} = Symbol::gensym;
+	$command[$nb]->{pid} = open3($command[$nb]->{fd}, "/dev/null", $command[$nb]->{stderr}, $command[$nb]->{pgm});
+	while ($nb-- > 1) {
+	    $command[$nb]->{fd} = "VAL_GLOB_$nb";
+	    $command[$nb]->{stderr} = Symbol::gensym;
+	    $command[$nb]->{pid} = open3($command[$nb]->{fd}, ">&". $command[$nb+1]->{fd}, $command[$nb]->{stderr}, $command[$nb]->{pgm});
+	}
+	$command[$nb]->{stderr} = Symbol::gensym;
+	$command[$nb]->{pid} = open3($current_validation_pipeline, ">&".$command[$nb+1]->{fd}, $command[$nb]->{stderr}, $command[$nb]->{pgm});
+    
+    }
+    my @com;
+    for my $i (0..$#command) {
+	push @com, $command[$i]->{pgm};
+    }
+    my $validation_command = join (" | ", @com);
     Amanda::Debug::debug("  using '$validation_command'");
     print "  using '$validation_command'\n" if $verbose;
-    $current_validation_pid = open($current_validation_pipeline, "|-", $validation_command);
         
-    if (!$current_validation_pid) {
-	my $error = $!;
-	Amanda::Debug::debug("Can't execute validation command: $error");
-	print "Can't execute validation command: $error";
-	undef $current_validation_pid;
-	undef $current_validation_pipeline;
-	return undef;
-    }
-
     $current_validation_image = $image;
-    return $current_validation_pipeline;
+    return $current_validation_pipeline, \@command;
 }
 
 # Close any running validation app, checking its exit status for errors.  Sets
 # $all_success to false if there is an error.
 sub close_validation_app {
+    my $command = shift;
+
     if (!defined($current_validation_pipeline)) {
 	return;
     }
 
     # first close the applications standard input to signal it to stop
-    if (!close($current_validation_pipeline)) {
-	my $exit_value = $? >> 8;
-	my $full_status = $?;
-	Amanda::Debug::debug("Image was not successfully validated: Validation process returned $exit_value (full status $full_status)");
-	print "Image was not successfully validated: Validation process returned $exit_value (full status $full_status)\n";
+    close($current_validation_pipeline);
+    my $result = 0;
+    while (my $cmd = pop @$command) {
+	#read its stderr
+	my $fd = $cmd->{stderr};
+	while(<$fd>) {
+	    print $_;
+	    $result++;
+	}
+	waitpid $cmd->{pid}, 0;
+	my $err = $?;
+	my $res = $!;
+
+	if ($err == -1) {
+	    Amanda::Debug::debug("failed to execute $cmd->{pgm}: $res");
+	    print "failed to execute $cmd->{pgm}: $res\n";
+	    $result++;
+	} elsif ($err & 127) {
+	    Amanda::Debug::debug(sprintf("$cmd->{pgm} died with signal %d, %s coredump",
+		($err & 127), ($err & 128) ? 'with' : 'without'));
+	    printf "$cmd->{pgm} died with signal %d, %s coredump\n",
+		($err & 127), ($err & 128) ? 'with' : 'without';
+	    $result++;
+	} elsif ($err > 0) {
+	    Amanda::Debug::debug(sprintf("$cmd->{pgm} exited with value %d", $err >> 8));
+	    printf "$cmd->{pgm} exited with value %d %d\n", $err >> 8, $err;
+	    $result++;
+	}
+
+    }
+
+    if ($result) {
+	Amanda::Debug::debug("Image was not successfully validated");
+	print "Image was not successfully validated\n\n";
 	$all_success = 0; # flag this as a failure
     } else {
         Amanda::Debug::debug("Image was successfully validated");
-        print("Image was successfully validated.\n") if $verbose;
+        print("Image was successfully validated.\n\n") if $verbose;
     }
 
-    $current_validation_pid = undef;
     $current_validation_pipeline = undef;
     $current_validation_image = undef;
 }
 
 # Given a dumpfile_t, figure out the command line to validate.
+# return an array of command to execute
 sub find_validation_command {
     my ($header) = @_;
 
+	my @result = ();
     # We base the actual archiver on our own table, but just trust
     # whatever is listed as the decrypt/uncompress commands.
     my $program = uc(basename($header->{program}));
@@ -298,25 +345,45 @@ sub find_validation_command {
 	    }
 	}
     }
+
+    my %command = {};
+
     if (!defined $validation_program) {
-        $validation_program = "cat > /dev/null";
-    } else {
-        # This is to clean up any extra output the program doesn't read.
-        $validation_program .= " > /dev/null && cat > /dev/null";
+        $command{pgm} = "cat";
     }
     
-    my $cmdline = "";
     if (defined $header->{decrypt_cmd} && 
         length($header->{decrypt_cmd}) > 0) {
-        $cmdline .= $header->{decrypt_cmd};
+	if ($header->{dle_str} =~ /<encrypt>CUSTOM/) {
+            $command{pgm} = "cat";
+	    push @result, \%command;
+	    return @result;
+	}
+	my %cmd = {};
+	$cmd{pgm} = $header->{decrypt_cmd};
+	$cmd{pgm} =~ s/ *\|$//g;
+	push @result, \%cmd
     }
     if (defined $header->{uncompress_cmd} && 
         length($header->{uncompress_cmd}) > 0) {
-        $cmdline .= $header->{uncompress_cmd};
+	#If the image is not compressed, the decryption is here
+	if ((!defined $header->{decrypt_cmd} ||
+	     length($header->{decrypt_cmd}) == 0 ) and
+	    $header->{dle_str} =~ /<encrypt>CUSTOM/) {
+            $command{pgm} = "cat";
+	    push @result, \%command;
+	    return @result;
+	}
+	my %cmd = {};
+	$cmd{pgm} = $header->{uncompress_cmd};
+	$cmd{pgm} =~ s/ *\|$//g;
+	push @result, \%cmd
     }
-    $cmdline .= $validation_program;
+    %command = {};
+    $command{pgm} = $validation_program;
+    push @result, \%command;
 
-    return $cmdline;
+    return @result;
 }
 
 ## Application initialization
@@ -459,6 +526,7 @@ print "Press enter when ready\n";
 # Now loop over the images, verifying each one.  
 
 my $header;
+my $command;
 
 IMAGE:
 for my $image (@images) {
@@ -476,7 +544,7 @@ for my $image (@images) {
     my $new_image = !(defined $header);
     if (!$new_image) {
 	if (!is_part_of_same_image($image, $header)) {
-	close_validation_app();
+	close_validation_app($command);
 	$new_image = 1;
 }
     }
@@ -532,7 +600,7 @@ for my $image (@images) {
     }
     
     # get the validation application pipeline that will process this dump.
-    my $pipeline = open_validation_app($image, $header);
+    (my $pipeline, $command) = open_validation_app($image, $header);
 
     # send the datastream from the device straight to the application
     my $queue_fd = Amanda::Device::queue_fd_t->new(fileno($pipeline));
@@ -561,7 +629,7 @@ if (defined $reservation) {
 }
 
 # clean up
-close_validation_app();
+close_validation_app($command);
 close_device();
 
 if ($all_success) {
