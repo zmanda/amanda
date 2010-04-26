@@ -2942,6 +2942,8 @@ static int promote_hills(void)
 	       dp->strategy == DS_INCRONLY)
 		continue;
 	    level0_est = est_for_level(dp, 0);
+	    if (level0_est->nsize <= (gint64)0)
+		continue;
 	    new_total = total_size - est(dp)->dump_est->csize + level0_est->csize;
 	    if(new_total > tape_length)
 		continue;

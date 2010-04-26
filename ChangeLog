@@ -1,3 +1,6 @@
+2010-04-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Do not promote if no full estimate.
+
 2010-04-26  Paul C. Mantz <pcmantz@zmanda.com>
 	* installcheck/Amanda_Report.pl: changed part to partnum
 
