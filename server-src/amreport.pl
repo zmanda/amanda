@@ -429,13 +429,12 @@ sub run_output {
 	($pid, $fh) = open_mail_output($report, $outputspec);
     }
 
-
     # TODO: add some generic error handling here.  must be compatible
     # with legacy behavior.
 
     # TODO: modularize these better
     if ($reportspec->[0] eq 'xml') {
-	print $fh $report->xml_output();
+        print $fh $report->xml_output("" . getconf($CNF_ORG), $config_name);
     } elsif ($reportspec->[0] eq 'human') {
 	my $hr =
 	  Amanda::Report::human->new( $report, $fh, $config_name, $opt_logfname );

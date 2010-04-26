@@ -1,3 +1,6 @@
+2010-04-26  Paul C. Mantz <pcmantz@zmanda.com>
+	* server-src/amreport.pl: print org & config in xml output
+
 2010-04-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Recovery/Scan.pm: Use default change if message is
 					$DEFAULT_CHANGER
