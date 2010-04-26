@@ -1,3 +1,6 @@
+2010-04-26  Paul C. Mantz <pcmantz@zmanda.com>
+	* installcheck/Amanda_Report.pl: changed part to partnum
+
 2010-04-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheckdump.pl: Check all process status.
 
