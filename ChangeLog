@@ -1,3 +1,9 @@
+2010-04-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Recovery/Scan.pm: Use default change if message is 
+					$DEFAULT_CHANGER
+	* server-src/amidxtaped.pl: Use DEFAULT_CHANGER if message eq 
+				    AMRECOVER_CHANGER
+
 2010-04-26  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: give total time from
 	  dump start to dump end as total_duration

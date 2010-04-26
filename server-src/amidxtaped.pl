@@ -30,6 +30,8 @@ use Amanda::Util qw( weaken_ref );
 use Amanda::MainLoop;
 use Amanda::Feature;
 use Amanda::Debug qw( debug );
+use Amanda::Config qw( :getconf );
+use Amanda::Recovery::Scan qw( $DEFAULT_CHANGER );
 
 sub new {
     my $class = shift;
@@ -95,7 +97,11 @@ sub user_request {
 	if ($line eq "OK\r\n") {
 	    return $params{'finished_cb'}->(undef, undef); # carry on as you were
 	} elsif ($line =~ /^TAPE (.*)\r\n$/) {
-	    return $params{'finished_cb'}->(undef, $1); # use this device
+	    my $tape = $1;
+	    if ($tape eq getconf($CNF_AMRECOVER_CHANGER)) {
+		$tape = $Amanda::Recovery::Scan::DEFAULT_CHANGER;
+	    }
+	    return $params{'finished_cb'}->(undef, $tape); # use this device
 	} else {
 	    return $params{'finished_cb'}->("got invalid response from remote", undef);
 	}
