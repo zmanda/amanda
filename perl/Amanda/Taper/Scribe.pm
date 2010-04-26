@@ -235,7 +235,8 @@ parameters.
         result => $result,
         device_errors => $device_errors,
         size => $size,
-        duration => $duration);
+        duration => $duration,
+	total_duration => $total_duration);
 
 All parameters will be present on every call.
 
@@ -243,9 +244,11 @@ The C<result> is one of C<"FAILED">, C<"PARTIAL">, or C<"DONE">.  Even when
 C<dump_cb> reports a fatal error, C<result> may be C<"PARTIAL"> if some data
 was written successfully.
 
-The final parameters, C<size> (in bytes) and C<duration> (in seconds) describe
-the total transfer, and are a sum of all of the parts written to the device.
-Note that C<duration> does not include time spent operating the changer.
+The final parameters, C<size> (in bytes), C<duration>, and C<total_duration>
+(in seconds) describe the total transfer, and are a sum of all of the parts
+written to the device.  Note that C<duration> does not include time spent
+operating the changer, while C<total_duration> reflects the time from the
+C<start_dump> call to the invocation of the C<dump_cb>.
 
 TODO: cancel_dump
 
@@ -371,6 +374,7 @@ sub new {
 	start_part_on_xdt_ready => 0,
 	size => 0,
 	duration => 0.0,
+	dump_start_time => undef,
 	last_part_successful => 0,
 	started_writing => 0,
 	device_errors => [],
@@ -504,6 +508,7 @@ sub get_xfer_dest {
     $self->{'xdt'} = undef;
     $self->{'size'} = 0;
     $self->{'duration'} = 0.0;
+    $self->{'dump_start_time'} = undef;
     $self->{'last_part_successful'} = 1;
     $self->{'started_writing'} = 0;
     $self->{'device_errors'} = [];
@@ -566,6 +571,7 @@ sub start_dump {
     # set up the dump_cb for when this dump is done, and keep the xfer
     $self->{'dump_cb'} = $params{'dump_cb'};
     $self->{'xfer'} = $params{'xfer'};
+    $self->{'dump_start_time'} = time;
 
     # and start the part
     $self->_start_part();
@@ -590,7 +596,8 @@ sub cancel_dump {
 	result => "FAILED",
 	device_errors => [],
 	size => 0,
-	duration => 0.0);
+	duration => 0.0,
+	total_duration => 0);
     $self->{'xdt'} = undef;
     $self->{'xfer'} = undef;
 }
@@ -797,7 +804,8 @@ sub _dump_done {
 	result => $result,
 	device_errors => $self->{'device_errors'},
 	size => $self->{'size'},
-	duration => $self->{'duration'});
+	duration => $self->{'duration'},
+	total_duration => time - $self->{'dump_start_time'});
 
     # reset everything and let the original caller know we're done
     $self->{'xfer'} = undef;
@@ -806,6 +814,7 @@ sub _dump_done {
     $self->{'dump_cb'} = undef;
     $self->{'size'} = 0;
     $self->{'duration'} = 0.0;
+    $self->{'dump_start_time'} = undef;
     $self->{'device_errors'} = [];
 
     # and call the callback

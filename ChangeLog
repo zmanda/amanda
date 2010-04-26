@@ -1,3 +1,8 @@
+2010-04-26  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: give total time from
+	  dump start to dump end as total_duration
+	* server-src/taper.pl: use total_duration
+
 2010-04-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Do not promote if no full estimate.
 
