@@ -24,6 +24,8 @@ use Carp;
 use POSIX ();
 use Data::Dumper;
 use vars qw( @ISA );
+use base qw(Exporter);
+our @EXPORT_OK = qw($DEFAULT_CHANGER);
 
 use Amanda::Paths;
 use Amanda::Util;
@@ -139,6 +141,8 @@ The result of scanning slot $slot:
 Other options can be added at any time.  The function can ignore them.
 
 =cut
+
+our $DEFAULT_CHANGER = {};
 
 sub new {
     my $class = shift;
@@ -569,7 +573,12 @@ sub find_volume {
 
 	if ($message ne '') {
 	    # use a new changer
-	    my $new_chg = Amanda::Changer->new($message);
+	    my $new_chg;
+	    if (ref($message) eq 'HASH' and $message == $DEFAULT_CHANGER) {
+		$new_chg = Amanda::Changer->new();
+	    } else {
+		$new_chg = Amanda::Changer->new($message);
+	    }
 	    if ($new_chg->isa("Amanda::Changer::Error")) {
 		return $steps->{'scan_interactive'}->("$new_chg");
 	    }
