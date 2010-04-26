@@ -835,7 +835,11 @@ sub dump_cb {
 	undef $self->{status_filename};
     }
 
-    my $stats = $self->make_stats($params{'size'}, $params{'duration'}, $self->{'orig_kb'});
+    # note that we use total_duration here, which is the total time between
+    # start_dump and dump_cb, so the kps generated here is much less than the
+    # actual tape write speed.  Think of this as the *taper* speed, rather than
+    # the *tape* speed.
+    my $stats = $self->make_stats($params{'size'}, $params{'total_duration'}, $self->{'orig_kb'});
 
     # write a DONE/PARTIAL/FAIL log line
     my $have_msg = @{$params{'device_errors'}};
