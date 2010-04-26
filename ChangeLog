@@ -1,3 +1,7 @@
+2010-04-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Recovery/Scan.pm: Call _find_volume_no_inventory if new
+	  changer have no inventory.
+
 2010-04-26  Paul C. Mantz <pcmantz@zmanda.com>
 	* server-src/amreport.pl: print org & config in xml output
 

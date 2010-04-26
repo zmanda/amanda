@@ -242,6 +242,10 @@ sub find_volume {
     step parse_inventory => sub {
 	(my $err, $inventory) = @_;
 
+	if ($err && $err->notimpl) {
+	    #inventory not implemented
+	    return $self->_find_volume_no_inventory(%params);
+	}
 	return $steps->{'handle_error'}->($err, undef) if $err;
 
 	# throw out the inventory result and move on if the situation has
