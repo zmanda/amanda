@@ -1,4 +1,8 @@
 2010-04-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Recovery/Scan.pm: Call _find_volume_no_inventory if new 
+	  changer have no inventory.
+
+2010-04-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Recovery/Scan.pm: Use default change if message is 
 					$DEFAULT_CHANGER
 	* server-src/amidxtaped.pl: Use DEFAULT_CHANGER if message eq 
