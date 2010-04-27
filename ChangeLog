@@ -1,3 +1,7 @@
+2010-04-27  Paul C. Mantz <pcmantz@zmanda.com>
+	* perl/Amanda/Report/human.pm: better per-tape stat labels
+	* installcheck/amreport.pl: updated tests
+
 2010-04-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Logfile.swg (find_all_logs): Sort the list.
 

@@ -952,7 +952,7 @@ Parts Taped                   9          9          0
 Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
-  Label               Time      Size      %    Nb    Nc
+  Label               Time        Size      %  DLEs Parts
   DIRO-TEST-003       0:00 1371742094k  #####     9     9
 
 
@@ -1006,7 +1006,7 @@ Parts Taped                   9          9          0
 Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
-  Label               Time      Size      %    Nb    Nc
+  Label               Time        Size      %  DLEs Parts
   DIRO-TEST-003       0:00 1371742094k  #####     9     9
 
 
@@ -1060,7 +1060,7 @@ Parts Taped                   9          9          0
 Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
-  Label               Time      Size      %    Nb    Nc
+  Label               Time        Size      %  DLEs Parts
   DIRO-TEST-003       0:00 1371742094k  #####     9     9
 
 
@@ -1114,7 +1114,7 @@ Parts Taped                   9          9          0
 Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
-  Label               Time      Size      %    Nb    Nc
+  Label               Time        Size      %  DLEs Parts
   DIRO-TEST-003       0:00 1371742094k  #####     9     9
 
 
@@ -1168,7 +1168,7 @@ Parts Taped                   9          9          0
 Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
-  Label               Time      Size      %    Nb    Nc
+  Label               Time      Size      %  DLEs Parts
   DIRO-TEST-003       0:00  1339592M  #####     9     9
 
 
@@ -1286,7 +1286,7 @@ Parts Taped                   4          1          3   (1:3)
 Avg Tp Write Rate (k/s)  143966    27624.3     151811
 
 USAGE BY TAPE:
-  Label            Time      Size      %    Nb    Nc
+  Label            Time      Size      %  DLEs Parts
   metals-013       0:00     1650k    5.4     4     4
 
 
@@ -1374,7 +1374,7 @@ Parts Taped                   2          0          2   (1:2)
 Avg Tp Write Rate (k/s)  8920.8        --      8920.8
 
 USAGE BY TAPE:
-  Label            Time      Size      %    Nb    Nc
+  Label            Time      Size      %  DLEs Parts
   Flushy-017       0:00    37289k  121.4     2     2
 
 
@@ -1461,7 +1461,7 @@ Parts Taped                   2          2          0
 Avg Tp Write Rate (k/s) 23070.7    23070.7        --
 
 USAGE BY TAPE:
-  Label          Time      Size      %    Nb    Nc
+  Label          Time      Size      %  DLEs Parts
   Daily-36       0:00    17246k   56.2     2     2
 
 
@@ -1547,7 +1547,7 @@ Parts Taped                   1          1          0
 Avg Tp Write Rate (k/s) 14596.6    14596.6        --
 
 USAGE BY TAPE:
-  Label          Time      Size      %    Nb    Nc
+  Label          Time      Size      %  DLEs Parts
   Daily-36       0:03  2293470k   7466     1     1
 
 
@@ -1621,7 +1621,7 @@ Parts Taped                   1          1          0
 Avg Tp Write Rate (k/s) 14596.6    14596.6        --
 
 USAGE BY TAPE:
-  Label          Time      Size      %    Nb    Nc
+  Label          Time      Size      %  DLEs Parts
   Daily-36       0:03  2293470k   7466     1     1
 
 
@@ -1719,7 +1719,7 @@ Parts Taped                   1          1          0
 Avg Tp Write Rate (k/s) 15450.8    15450.8        --
 
 USAGE BY TAPE:
-  Label          Time      Size      %    Nb    Nc
+  Label          Time      Size      %  DLEs Parts
   Daily-13       0:00    54929k  178.8     1     1
 
 FAILED DUMP DETAILS:
@@ -1820,7 +1820,7 @@ Parts Taped                   3          3          0
 Avg Tp Write Rate (k/s) 27287.8    27287.8        --
 
 USAGE BY TAPE:
-  Label          Time      Size      %    Nb    Nc
+  Label          Time      Size      %  DLEs Parts
   Daily-36       0:31 50917369k  #####     1     3
 
 
@@ -1898,7 +1898,7 @@ Parts Taped                   1          1          0
 Avg Tp Write Rate (k/s) 17213.6    17213.6        --
 
 USAGE BY TAPE:
-  Label          Time      Size      %    Nb    Nc
+  Label           Time     Size      %  DLEs Parts
   Daily-36       0:00   268356k  873.6     1     1
 
 
@@ -2118,7 +2118,7 @@ Parts Taped                   6          6          0
 Avg Tp Write Rate (k/s)  244170     244170        --
 
 USAGE BY TAPE:
-  Label          Time      Size      %    Nb    Nc
+  Label          Time      Size      %  DLEs Parts
   Conf-001       0:00    20320k   66.2     1     4
   Conf-002       0:00     6470k   21.1     0     2
 
@@ -2296,7 +2296,7 @@ Parts Taped                    1          1          0
 Avg Tp Write Rate (k/s)   169010     169010        --
 
 USAGE BY TAPE:
-  Label               Time         Size      %    Nb    Nc
+  Label               Time         Size      %  DLEs Parts
   TESTCONF02          0:00       83480k  271.8     1     1
 
 NOTES:
@@ -2357,7 +2357,7 @@ Parts Taped                    1          1          0
 Avg Tp Write Rate (k/s)   169010     169010        --
 
 USAGE BY TAPE:
-  Label               Time         Size      %    Nb    Nc
+  Label               Time         Size      %  DLEs Parts
   TESTCONF02          0:00       83480k  271.8     1     1
 
 NOTES:
