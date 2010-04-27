@@ -386,8 +386,28 @@ sub open_mail_output
     my $date  = POSIX::strftime( '%B %e, %Y', 0, 0, 0, $day, $month, $year );
     $date =~ s/  / /g;
 
+    my $process_fails = 0;
+
+    foreach my $dle ($report->get_dles()) {
+	my $dle_info = $report->get_dle_info(@$dle);
+	my $tries    = $dle_info->{tries};
+
+	foreach my $try (@$tries) {
+	    foreach my $program (keys %$try) {
+		$process_fails++    if $try->{$program}{status} eq 'fail';
+	    }
+	}
+    }
+
+    my $done = "";
+    if (  !$report->get_flag("got_finish")
+	|| ($report->get_flag("exit_status") != 0)
+	|| $process_fails) {
+	$done = " FAIL:";
+    }
+
     my $subj_str =
-        getconf($CNF_ORG)
+        getconf($CNF_ORG) . $done
       . ( $report->get_flag("amflush_run") ? " AMFLUSH" : " AMANDA" )
       . " MAIL REPORT FOR "
       . $date;

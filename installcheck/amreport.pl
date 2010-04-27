@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 153;
+use Test::More tests => 156;
 
 use strict;
 use warnings;
@@ -170,9 +170,11 @@ sub results_match
 
 # convert a regular report into what we expect to see in a mail
 sub make_mail {
-    my ($report, $config, $date, $addr) = @_;
+    my ($report, $config, $error, $date, $addr) = @_;
+    my $error_msg ="";
+    $error_msg = " FAIL:" if $error;
     return <<EOF . $report;
-\$ARGS = ['-s','$config AMANDA MAIL REPORT FOR $date','$addr'];
+\$ARGS = ['-s','$config${error_msg} AMANDA MAIL REPORT FOR $date','$addr'];
 EOF
 }
 
@@ -229,7 +231,7 @@ ok(run($amreport, 'TESTCONF', '--from-amdump'),
     or diag($Installcheck::Run::stderr);
 is($Installcheck::Run::stdout, "", "..produces no output");
 results_match($mail_output,
-    make_mail($datas{'normal-rpt1'}, "DailySet1", "February 25, 2009", "nobody\@localhost"),
+    make_mail($datas{'normal-rpt1'}, "DailySet1", 0, "February 25, 2009", "nobody\@localhost"),
     "..mail matches");
 results_match($printer_output,
     $datas{'normal-postscript'},
@@ -240,7 +242,7 @@ ok(run($amreport, 'TESTCONF', '--from-amdump', '/garbage/directory/'),
     or diag($Installcheck::Run::stderr);
 is($Installcheck::Run::stdout, "", "..produces no output");
 results_match($mail_output,
-    make_mail($datas{'normal-rpt1'}, "DailySet1", "February 25, 2009", "nobody\@localhost"),
+    make_mail($datas{'normal-rpt1'}, "DailySet1", 0, "February 25, 2009", "nobody\@localhost"),
     "..mail matches");
 results_match($printer_output,
     $datas{'normal-postscript'},
@@ -255,7 +257,7 @@ ok(run($amreport, 'TESTCONF', '-M', 'somebody@localhost'),
     or diag($Installcheck::Run::stderr);
 is($Installcheck::Run::stdout, "", "..produces no output");
 results_match($mail_output,
-    make_mail($datas{'normal-rpt1'}, "DailySet1", "February 25, 2009", "somebody\@localhost"),
+    make_mail($datas{'normal-rpt1'}, "DailySet1", 0, "February 25, 2009", "somebody\@localhost"),
     "..mail matches");
 results_match($printer_output,
     $datas{'normal-postscript'},
@@ -276,7 +278,7 @@ ok(run($amreport, 'TESTCONF', '-p', $out_filename),
     or diag($Installcheck::Run::stderr);
 is($Installcheck::Run::stdout, "", "..produces no output");
 results_match($mail_output,
-    make_mail($datas{'normal-rpt1'}, "DailySet1", "February 25, 2009", "nobody\@localhost"),
+    make_mail($datas{'normal-rpt1'}, "DailySet1", 0, "February 25, 2009", "nobody\@localhost"),
     "..mail matches");
 ok(! -f $printer_output,
     "..doesn't print");
@@ -332,7 +334,7 @@ ok(run($amreport, 'TESTCONF', '--mail-text'),
 results_match(
     $mail_output,
     make_mail(
-        $datas{'normal-rpt1'}, "DailySet1",
+        $datas{'normal-rpt1'}, "DailySet1", 0,
         "February 25, 2009",   "nobody\@localhost"
     ),
     "..mail matches"
@@ -349,7 +351,7 @@ ok(run($amreport, 'TESTCONF', '--mail-text=somebody@localhost',),
 results_match(
     $mail_output,
     make_mail(
-        $datas{'normal-rpt1'}, "DailySet1",
+        $datas{'normal-rpt1'}, "DailySet1", 0,
         "February 25, 2009",   "somebody\@localhost"
     ),
     "..mail matches"
@@ -426,7 +428,7 @@ ok(run($amreport, 'TESTCONF', '-l', $old_log_filename),
     or diag($Installcheck::Run::stderr);
 is($Installcheck::Run::stdout, "", "..produces no output");
 results_match($mail_output,
-    make_mail($datas{'normal-rpt1'}, "DailySet1", "February 25, 2009", "nobody\@localhost"),
+    make_mail($datas{'normal-rpt1'}, "DailySet1", 0, "February 25, 2009", "nobody\@localhost"),
     "..mail matches");
 results_match($printer_output,
     $datas{'normal-postscript'},
@@ -451,7 +453,7 @@ ok(run($amreport, 'TESTCONF', '--from-amdump', '-o', 'mailto=hello'),
     or diag($Installcheck::Run::stderr);
 is($Installcheck::Run::stdout, "", "..produces no output");
 results_match($mail_output,
-    make_mail($datas{'normal-rpt1'}, "DailySet1", "February 25, 2009", "hello"),
+    make_mail($datas{'normal-rpt1'}, "DailySet1", 0, "February 25, 2009", "hello"),
     "..mail matches");
 ok(! -f $printer_output,
     "..doesn't print");
@@ -482,11 +484,22 @@ ok(run($amreport, 'TESTCONF', '--from-amdump', '-o', 'mailto=dustin'),
     or diag($Installcheck::Run::stderr);
 is($Installcheck::Run::stdout, "", "..produces no output");
 results_match($mail_output,
-    make_mail($datas{'normal-rpt1'}, "DailySet1", "February 25, 2009", "dustin"),
+    make_mail($datas{'normal-rpt1'}, "DailySet1", 0, "February 25, 2009", "dustin"),
     "..mail matches");
 results_match($printer_output,
     $datas{'normal-postscript'},
     "..printer output matches");
+
+cleanup();
+burp($current_log_filename, $datas{'doublefailure'});
+
+ok(!run($amreport, 'TESTCONF', '-M', 'dustin'),
+    "amreport with log in error")
+    or diag($Installcheck::Run::stderr);
+is($Installcheck::Run::stdout, "", "..produces no output");
+results_match($mail_output,
+    make_mail($datas{'doublefailure-rpt'}, "DailySet1", 1, "March 26, 2009", "dustin"),
+    "..mail matches");
 
 cleanup();
 burp($current_log_filename, $datas{'normal'});
@@ -496,7 +509,7 @@ ok(run($amreport, 'TESTCONF', '-M', 'pcmantz'),
     or diag($Installcheck::Run::stderr);
 is($Installcheck::Run::stdout, "", "..produces no output");
 results_match($mail_output,
-    make_mail($datas{'normal-rpt1'}, "DailySet1", "February 25, 2009", "pcmantz"),
+    make_mail($datas{'normal-rpt1'}, "DailySet1", 0, "February 25, 2009", "pcmantz"),
     "..mail matches");
 results_match($printer_output,
     $datas{'normal-postscript'},
@@ -522,7 +535,7 @@ ok(run($amreport, 'TESTCONF', '-p', $out_filename), # XXX another probable bug
     or diag($Installcheck::Run::stderr);
 is($Installcheck::Run::stdout, "", "..produces no output");
 results_match($mail_output,
-    make_mail($datas{'normal-rpt1'}, "DailySet1", "February 25, 2009", "nobody\@localhost"),
+    make_mail($datas{'normal-rpt1'}, "DailySet1", 0, "February 25, 2009", "nobody\@localhost"),
     "..mail matches");
 ok(! -f $printer_output,
     "..doesn't print");
@@ -536,7 +549,7 @@ ok(run($amreport, 'TESTCONF', '-o', "tapetype:TEST-TAPE-TEMPLATE:lbl_templ=$ps_t
     or diag($Installcheck::Run::stderr);
 is($Installcheck::Run::stdout, "", "..produces no output");
 results_match($mail_output,
-    make_mail($datas{'normal-rpt1'}, "DailySet1", "February 25, 2009", "nobody\@localhost"),
+    make_mail($datas{'normal-rpt1'}, "DailySet1", 0, "February 25, 2009", "nobody\@localhost"),
     "..mail matches");
 results_match($out_filename,
     $datas{'normal-postscript'},
