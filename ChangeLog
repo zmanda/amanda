@@ -1,3 +1,7 @@
+2010-04-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/planner.c: change degraded-mode messages to make more
+	  sense to the user
+
 2010-04-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Recovery/Scan.pm: Call _find_volume_no_inventory if new
 	  changer have no inventory.

@@ -811,7 +811,7 @@ setup_estimate(
 	    ep->next_level0 = next_level0(dp, &info);
 	}
 	else {
-	    ep->degr_mesg = _("Can't switch to degraded mode when using a force-full disk");
+	    ep->degr_mesg = _("Skipping: force-full disk can't be dumped in degraded mode");
 	    ep->last_level = -1;
 	    ep->next_level0 = -conf_dumpcycle;
 	    log_add(L_INFO, _("Forcing full dump of %s:%s as directed."),
@@ -1010,7 +1010,7 @@ setup_estimate(
     if(!dp->skip_incr && !(dp->strategy == DS_NOINC)) {
 	if(ep->last_level == -1) {		/* a new disk */
 	    if (ep->degr_mesg == NULL)
-		ep->degr_mesg = _("Can't switch to degraded mode when using a new disk");
+		ep->degr_mesg = _("Skipping: new disk can't be dumped in degraded mode");
 	    if(dp->strategy == DS_NOFULL || dp->strategy == DS_INCRONLY) {
 		askfor(ep, i++, 1, &info);
 	    } else {
@@ -1027,13 +1027,13 @@ setup_estimate(
 		}
 		log_add(L_INFO,_("Preventing bump of %s:%s as directed."),
 			dp->host->hostname, qname);
-		ep->degr_mesg = _("Can't switch to degraded mode when using a force-no-bump disk");
+		ep->degr_mesg = _("Skipping: force-no-bump disk can't be dumped in degraded mode");
 	    } else if (ISSET(info.command, FORCE_BUMP)
 		       && curr_level + 1 < DUMP_LEVELS) {
 		askfor(ep, i++, curr_level+1, &info);
 		log_add(L_INFO,_("Bumping of %s:%s at level %d as directed."),
 			dp->host->hostname, qname, curr_level+1);
-		ep->degr_mesg = _("Can't switch to degraded mode when using a force-bump disk");
+		ep->degr_mesg = _("Skipping: force-bump disk can't be dumped in degraded mode");
 	    } else if (curr_level == 0) {
 		askfor(ep, i++, 1, &info);
 	    } else {
@@ -2168,7 +2168,7 @@ static void analyze_estimate(
 		g_fprintf(stderr,_("(%s disk, can't switch to degraded mode)\n"),
 			dp->skip_incr? "skip-incr":_("new"));
 		if (dp->skip_incr  && ep->degr_mesg == NULL) {
-		    ep->degr_mesg = _("Can't switch to degraded mode when using a skip-incr disk");
+		    ep->degr_mesg = _("Skpping: skip-incr disk can't be dumped in degraded mode");
 		}
 		ep->degr_est = &default_one_est;
 	    }
@@ -2182,7 +2182,7 @@ static void analyze_estimate(
 		if (ep->degr_est->csize == (gint64)-1) {
 		    g_fprintf(stderr,_("(no inc estimate)"));
 		    if (ep->degr_mesg == NULL)
-			ep->degr_mesg = _("Can't switch to degraded mode because an incremental estimate could not be performed");
+			ep->degr_mesg = _("Skipping: an incremental estimate could not be performed, so disk cannot be dumped in degraded mode");
 		    ep->degr_est = &default_one_est;
 		}
 		g_fprintf(stderr,"\n");
@@ -2204,7 +2204,7 @@ static void analyze_estimate(
 	    ep->dump_est = est_for_level(dp, 0);
 	}
 	if (ep->degr_mesg == NULL) {
-	    ep->degr_mesg = _("Can't switch to degraded mode because a full is not planned");
+	    ep->degr_mesg = _("Skipping: a full is not planned, so can't dump in degraded mode");
 	}
     }
 
@@ -3062,7 +3062,7 @@ static void output_scheduleline(
 	if (ep->degr_mesg) {
 	    degr_mesg = quote_string(ep->degr_mesg);
 	} else {
-	    degr_mesg = quote_string(_("Can't switch to degraded mode for unknown reason"));
+	    degr_mesg = quote_string(_("Skipping: cannot dump in degraded mode for unknown reason"));
 	}
 	degr_str = vstralloc(" ", degr_mesg, NULL);
 	amfree(degr_mesg);
