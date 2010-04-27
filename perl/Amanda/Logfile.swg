@@ -305,7 +305,7 @@ sub find_all_logs
     my $logdir = shift @_ || config_dir_relative(getconf($CNF_LOGDIR));
 
     opendir my $logdh, $logdir or die("can't read $logdir");
-    my @logfiles = grep { m{^log\.\d+\.\d+$} } readdir $logdh;
+    my @logfiles = sort grep { m{^log\.\d+\.\d+$} } readdir $logdh;
 
     return @logfiles;
 }
