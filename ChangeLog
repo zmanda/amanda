@@ -1,4 +1,7 @@
 2010-04-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* VERSION: 3.1.0beta2
+
+2010-04-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/planner.c: change degraded-mode messages to make more
 	  sense to the user
 
