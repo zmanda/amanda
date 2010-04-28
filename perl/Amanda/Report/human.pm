@@ -812,7 +812,7 @@ sub output_tape_stats
       . "@>>>> @>>>>>>>>>>> @>>>>> @>>>> @>>>>\n";
 
     print $fh "USAGE BY TAPE:\n";
-    print $fh swrite($ts_format, "Label", "Time", "Size", "%", "DLEs", "Parts");
+    print $fh swrite($ts_format, "Label", "Time", "Size", "%", "Nb", "Nc");
 
     my $tapetype_name = getconf($CNF_TAPETYPE);
     my $tapetype      = lookup_tapetype($tapetype_name);
@@ -832,8 +832,8 @@ sub output_tape_stats
             hrmn($tape->{time}),                               # time
             sprintf("%.0f", $self->tounits($tape->{kb})) . $self->{disp_unit},  # size
             divzero(100 * $tapeused, $tapesize),    # % usage
-            int($tape->{dle}),                        # # of dles
-            int($tape->{files})                       # # of parts
+            int($tape->{dle}),                        # Nb of dles
+            int($tape->{files})                       # Nb of parts
         );
     }
     print $fh "\n";
