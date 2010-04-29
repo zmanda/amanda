@@ -116,7 +116,7 @@ static char *
 directtcp_connection_socket_close(DirectTCPConnection *dself)
 {
     DirectTCPConnectionSocket *self = DIRECTTCP_CONNECTION_SOCKET(dself);
-    if (self->socket >= 0 && !close(self->socket)) {
+    if (self->socket >= 0 && close(self->socket)) {
         return g_strdup_printf("while closing socket: %s", strerror(errno));
     }
     self->socket = -1;
