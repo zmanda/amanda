@@ -1,3 +1,7 @@
+2010-04-30  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Changer_robot.pl: fix installchecks
+	  to pass after previous change
+
 2010-04-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Default state file is in 
 					$localstatedir/amanda
