@@ -406,8 +406,8 @@ of the library.</para>
 but the <command>changerfile</command> parameter can be used to specify a
 filename at which it should store its state.  Ordinarily, this state is stored
 in a file named after the changer device under
-<emphasis>$localstatedir/lib/amanda</emphasis>, e.g.,
-<command>/var/lib/amanda/chg-robot-dev-sg0</command>.  There should be a single
+<emphasis>$localstatedir/amanda</emphasis>, e.g.,
+<command>/var/amanda/chg-robot-dev-sg0</command>.  There should be a single
 such statefile for each distinct tape library attached to the Amanda server, even
 if multiple Amanda configurations reference that library.</para>
 
