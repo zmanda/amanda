@@ -157,7 +157,7 @@ sub new {
         my $safe_filename = "$self->{class_name}:$device_name";
         $safe_filename =~ tr/a-zA-Z0-9/-/cs;
         $safe_filename =~ s/^-*//;
-        $self->{'statefile'} = "$libexecdir/lib/amanda/$safe_filename";
+        $self->{'statefile'} = "$localstatedir/amanda/$safe_filename";
     }
     $self->_debug("using statefile '$self->{statefile}'");
 

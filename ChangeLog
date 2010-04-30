@@ -1,4 +1,9 @@
 2010-04-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: Default state file is in 
+					$localstatedir/amanda
+	* man/xml-source/amanda-changers.7.xml: Document new location.
+
+2010-04-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/directtcp-connection.c: Typo.
 
 2010-04-27  Jean-Louis Martineau <martineau@zmanda.com>
