@@ -225,7 +225,7 @@ sub main {
 	    # notify the changer
 	    $res->set_label(label => $opt_label, finished_cb => $steps->{'labeled'});
 	} else {
-	    return failure("Volume not labeled.", $finished_cb);
+	    return failure("Not writing label.", $finished_cb);
 	}
     };
 
