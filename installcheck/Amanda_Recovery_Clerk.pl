@@ -606,7 +606,7 @@ rmtree($taperoot);
 # test of Amanda::Xfer::Source::Recovery's directtcp mode
 
 SKIP: {
-    skip "not built with ndmp and full client/server", 2 unless
+    skip "not built with ndmp and full client/server", 5 unless
 	    Amanda::Util::built_with_component("ndmp")
 	and Amanda::Util::built_with_component("client")
 	and Amanda::Util::built_with_component("server");
