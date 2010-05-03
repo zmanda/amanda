@@ -194,6 +194,13 @@ L<Amanda::Xfer::Msg>, with the following keys:
 Call C<start_part> with C<$device = undef> to indicate that there are no more
 parts.
 
+To switch to a new device in mid-transfer, use C<use_device>:
+
+  $dest->use_device($device);
+
+This method must be called with a device that is not yet started, and thus must
+be called before the C<start_part> method is called with a new device.
+
 =head3 Amanda::Xfer::Source::DirectTCPListen
 
   Amanda::Xfer::Source::DirectTCPListen->new();

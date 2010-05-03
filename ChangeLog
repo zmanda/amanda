@@ -1,3 +1,12 @@
+2010-05-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Recovery_Clerk.pl: test a multi-volume
+	  recovery
+	* device-src/ndmp-device.c: add extra assertion
+	* device-src/xfer-device.h device-src/xfer-source-recovery.c
+	  installcheck/Amanda_Xfer.pl perl/Amanda/XferServer.swg
+	  perl/Amanda/Xfer.pod: add use_device method, fix bugs in cancellation
+	* perl/Amanda/Recovery/Clerk.pm: call use_device
+
 2010-04-30  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Changer_robot.pl: fix installchecks
 	  to pass after previous change

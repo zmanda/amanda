@@ -188,4 +188,15 @@ xfer_source_recovery_start_part(
     XferElement *elt,
     Device *device);
 
+/* Prepare to read subsequent parts from the given device.  The device must
+ * not be started yet.  It is not necessary to call this method for the first
+ * device used in a transfer.
+ *
+ * @param self: the XferSourceRecovery object
+ * @param device: the device
+ */
+void xfer_source_recovery_use_device(
+    XferElement *self,
+    Device *device);
+
 #endif

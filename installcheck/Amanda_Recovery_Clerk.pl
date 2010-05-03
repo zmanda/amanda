@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 18;
+use Test::More tests => 21;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -36,6 +36,7 @@ use Amanda::Recovery::Clerk;
 use Amanda::Recovery::Scan;
 use Amanda::MainLoop;
 use Amanda::Util;
+use Amanda::Tapelist;
 
 # and disable Debug's die() and warn() overrides
 Amanda::Debug::disable_die_override();
@@ -62,53 +63,26 @@ my $datestamp = "20100101010203";
 # dumps to the catalog, too.  To avoid re-implementing Amanda::Taper::Scan, this
 # uses individual transfers for each part.
 sub setup_changer {
-    my ($finished_cb) = @_;
+    my ($finished_cb, $chg_name, $to_write, $part_len) = @_;
     my $res;
     my $chg;
     my $label;
     my ($slot, $xfer_info, $partnum);
 
-    ## specification of the on-tape data
-
-    my @xfer_info = (
-	# length,	random, name ]
-	[ 1024*288,	0xF000, "home" ],
-	[ 1024*1088,	0xF001, "usr" ],
-	[ 1024*768,	0xF002, "games" ],
-    );
-    my @to_write = (
-	# slot xfer		partnum
-	[ 1,   $xfer_info[0],   1 ],
-	[ 1,   $xfer_info[1],   1 ],
-	[ 1,   $xfer_info[1],   2 ],
-	[ 2,   $xfer_info[1],   3 ],
-	[ 2,   $xfer_info[2],   1 ],
-	[ 2,   $xfer_info[2],   2 ],
-    );
-
     my $steps = define_steps
 	cb_ref => \$finished_cb;
 
     step setup => sub {
-	if (-d $taperoot) {
-	    rmtree($taperoot);
-	}
-	mkpath($taperoot);
-
-	for my $slot (1 .. 2) {
-	    mkdir("$taperoot/slot$slot")
-		or die("Could not mkdir: $!");
-	}
-
-	$chg = Amanda::Changer->new("chg-disk:$taperoot");
+	$chg = Amanda::Changer->new($chg_name);
+	die "$chg" if $chg->isa("Amanda::Changer::Error");
 
 	$steps->{'next'}->();
     };
 
     step next => sub {
-	return $steps->{'done'}->() unless @to_write;
+	return $steps->{'done'}->() unless @$to_write;
 
-	($slot, $xfer_info, $partnum) = @{shift @to_write};
+	($slot, $xfer_info, $partnum) = @{shift @$to_write};
 	die "xfer len <= 0" if $xfer_info->[0] <= 0;
 
 	if (!$res || $res->{'this_slot'} != $slot) {
@@ -138,10 +112,9 @@ sub setup_changer {
 	die "$err" if $err;
 
 	my $dev = $res->{'device'};
-	my $next_write = $to_write[0];
 
 	# label the device
-	$label = "TESTCONF0" . $next_write->[0];
+	$label = "TESTCONF0" . $slot;
 	$dev->start($Amanda::Device::ACCESS_WRITE, $label, $datestamp)
 	    or die("starting dev: " . $dev->error_or_status());
 
@@ -167,7 +140,7 @@ sub setup_changer {
 	    or die("starting file: " . $dev->error_or_status());
 
 	my $len = $xfer_info->[0];
-	$len = 512*1024 if $len > 512*1024;
+	$len = $part_len if $len > $part_len;
 	my $key = $xfer_info->[1];
 
 	my $xsrc = Amanda::Xfer::Source::Random->new($len, $key);
@@ -218,9 +191,40 @@ sub setup_changer {
 	$finished_cb->();
     };
 }
-setup_changer(\&Amanda::MainLoop::quit);
-Amanda::MainLoop::run();
-pass("successfully set up test data");
+
+{
+    # clean out the vtape root
+    if (-d $taperoot) {
+	rmtree($taperoot);
+    }
+    mkpath($taperoot);
+
+    for my $slot (1 .. 2) {
+	mkdir("$taperoot/slot$slot")
+	    or die("Could not mkdir: $!");
+    }
+
+    ## specification of the on-tape data
+    my @xfer_info = (
+	# length,	random, name ]
+	[ 1024*288,	0xF000, "home" ],
+	[ 1024*1088,	0xF001, "usr" ],
+	[ 1024*768,	0xF002, "games" ],
+    );
+    my @to_write = (
+	# slot xfer		partnum
+	[ 1,   $xfer_info[0],   1 ],
+	[ 1,   $xfer_info[1],   1 ],
+	[ 1,   $xfer_info[1],   2 ],
+	[ 2,   $xfer_info[1],   3 ],
+	[ 2,   $xfer_info[2],   1 ],
+	[ 2,   $xfer_info[2],   2 ],
+    );
+
+    setup_changer(\&Amanda::MainLoop::quit, "chg-disk:$taperoot", \@to_write, 512*1024);
+    Amanda::MainLoop::run();
+    pass("successfully set up test vtapes");
+}
 
 # make a holding file
 my $holding_file = "$Installcheck::TMP/holding_file";
@@ -596,6 +600,7 @@ try_recovery(
     msg => "mismatched level detected");
 
 quit_clerk($clerk);
+rmtree($taperoot);
 
 # try a recovery from a DirectTCP-capable device.  Note that this is the only real
 # test of Amanda::Xfer::Source::Recovery's directtcp mode
@@ -617,6 +622,9 @@ SKIP: {
 	die(join "\n", @errors);
     }
 
+    my $tapelist = Amanda::Config::config_dir_relative("tapelist");
+    my $tl = Amanda::Tapelist::read_tapelist($tapelist);
+
     my $chg = Amanda::Changer->new();
     my $scan = Amanda::Recovery::Scan->new(chg => $chg);
     my $clerk = Amanda::Recovery::Clerk->new(scan => $scan, debug => 1);
@@ -631,6 +639,38 @@ SKIP: {
 	directtcp => 1,
 	expect_directtcp_supported => 1,
 	msg => "recovery of a real dump via NDMP and directtcp");
+    quit_clerk($clerk);
+
+    ## specification of the on-tape data
+    my @xfer_info = (
+	# length,	random, name ]
+	[ 1024*160,	0xB000, "home" ],
+    );
+    my @to_write = (
+	# slot xfer		partnum
+	[ 4,   $xfer_info[0],   1 ],
+	[ 5,   $xfer_info[0],   2 ],
+	[ 5,   $xfer_info[0],   3 ],
+    );
+
+    setup_changer(\&Amanda::MainLoop::quit, "ndmp_server", \@to_write, 64*1024);
+    Amanda::MainLoop::run();
+    pass("successfully set up ndmp test data");
+
+    $chg = Amanda::Changer->new();
+    $scan = Amanda::Recovery::Scan->new(chg => $chg);
+    $clerk = Amanda::Recovery::Clerk->new(scan => $scan, debug => 1);
+
+    try_recovery(
+	clerk => $clerk,
+	seed => 0xB000,
+	dump => fake_dump("home", "/home", $datestamp, 0,
+	    { label => 'TESTCONF04', filenum => 1 },
+	    { label => 'TESTCONF05', filenum => 1 },
+	    { label => 'TESTCONF05', filenum => 2 },
+	),
+	msg => "multi-part ndmp recovery successful",
+	expect_directtcp_supported => 1);
     quit_clerk($clerk);
 }
 
