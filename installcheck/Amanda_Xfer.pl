@@ -577,6 +577,9 @@ SKIP: {
 	    if ($dev->status != $Amanda::Device::DEVICE_STATUS_SUCCESS) {
 		die $dev->error_or_status();
 	    }
+
+	    $src->use_device($dev);
+
 	    if (!$dev->start($Amanda::Device::ACCESS_READ, undef, undef)) {
 		die $dev->error_or_status();
 	    }

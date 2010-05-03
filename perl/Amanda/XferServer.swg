@@ -84,6 +84,10 @@ void xfer_source_recovery_start_part(
     XferElement *self,
     Device *device);
 
+void xfer_source_recovery_use_device(
+    XferElement *self,
+    Device *device);
+
 /* ---- */
 
 PACKAGE(Amanda::Xfer::Source::Device)
@@ -129,3 +133,4 @@ PACKAGE(Amanda::Xfer::Source::Recovery)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_source_recovery)
 DECLARE_METHOD(start_part, Amanda::XferServer::xfer_source_recovery_start_part)
+DECLARE_METHOD(use_device, Amanda::XferServer::xfer_source_recovery_use_device)

@@ -1286,6 +1286,7 @@ read_to_connection_impl(
     if (device_in_error(self)) return FALSE;
 
     /* if this is false, then the caller did not use use_connection correctly */
+    g_assert(nconn != NULL);
     g_assert(self->ndmp == nconn->ndmp);
 
     if (!ndmp_connection_mover_get_state(self->ndmp,

@@ -481,16 +481,24 @@ sub _maybe_start_part {
 
 	$self->{'current_res'} = $res;
 
+	# tell the XSR to use this device, before we start it.  If we don't actually
+	# end up using this device, it's no big deal.
+	my $dev = $res->{'device'};
+	if ($xfer_state->{'xfer_src'}
+		and $xfer_state->{'xfer_src'}->isa("Amanda::Xfer::Source::Recovery")) {
+	    $xfer_state->{'xfer_src'}->use_device($dev);
+	}
+
 	# open the device and check the label, then go to seek_and_check
-	if (!$res->{'device'}->start($Amanda::Device::ACCESS_READ, undef, undef)) {
-	    $err = $res->{'device'}->error_or_status();
+	if (!$dev->start($Amanda::Device::ACCESS_READ, undef, undef)) {
+	    $err = $dev->error_or_status();
 	} else {
-	    if ($res->{'device'}->volume_label ne $next_label) {
+	    if ($dev->volume_label ne $next_label) {
 		$err = "expected volume label '$next_label', but found volume " .
-		       "label '" . $res->{'device'}->volume_label . "'";
+		       "label '" . $dev->volume_label . "'";
 	    } else {
-		$self->{'current_dev'} = $res->{'device'};
-		$self->{'current_label'} = $res->{'device'}->volume_label;
+		$self->{'current_dev'} = $dev;
+		$self->{'current_label'} = $dev->volume_label;
 
 		# success!
 		return $steps->{'seek_and_check'}->();

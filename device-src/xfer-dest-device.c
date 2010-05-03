@@ -87,7 +87,6 @@ push_buffer_impl(
 {
     XferDestDevice *self = XFER_DEST_DEVICE(elt);
 
-    g_debug("got %zd bytes", len);
     /* Handle EOF */
     if (!buf) {
 	/* write out the partial buffer, if there's anything in it */
