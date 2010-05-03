@@ -1,4 +1,7 @@
 2010-05-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Recovery_Clerk.pl: fix skip counts
+
+2010-05-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Recovery_Clerk.pl: test a multi-volume
 	  recovery
 	* device-src/ndmp-device.c: add extra assertion
