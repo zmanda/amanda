@@ -74,6 +74,22 @@ add_dump(
     if(tape[0] == '/')
 	isafile = 1; /* XXX kludgey, like this whole thing */
 
+    /* See if we already have partnum=partnum-1 */
+    if (partnum > 1) {
+	for(item = disk_hist, before = NULL; item;
+	    before = item, item = item->next) {
+	    if (!strcmp(item->date, date) &&
+		    item->level == level && item->is_split) {
+		item->tapes = append_to_tapelist(item->tapes, tape, file,
+						 partnum, isafile);
+		if (maxpart > item->maxpart)
+		    item->maxpart = maxpart;
+		return;
+	    }
+	}
+	return;
+    }
+
     new = (DUMP_ITEM *)alloc(SIZEOF(DUMP_ITEM));
     strncpy(new->date, date, SIZEOF(new->date)-1);
     new->date[SIZEOF(new->date)-1] = '\0';
