@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -38,24 +38,13 @@ glib_init(void) {
     if (did_glib_init) return;
     did_glib_init = TRUE;
 
-    /* Initialize glib's type system */
-    g_type_init();
-
     /* set up libcurl (this must happen before threading 
      * is initialized) */
 #ifdef HAVE_LIBCURL
 # ifdef G_THREADS_ENABLED
-    g_assert(!g_thread_supported());
+    g_assert(!g_thread_supported()); /* assert threads aren't initialized yet */
 # endif
     g_assert(curl_global_init(CURL_GLOBAL_ALL) == 0);
-#endif
-
-    /* And set up glib's threads */
-#if defined(G_THREADS_ENABLED) && !defined(G_THREADS_IMPL_NONE)
-    if (g_thread_supported()) {
-        return;
-    }
-    g_thread_init(NULL);
 #endif
 
     /* do a version check */
@@ -70,6 +59,16 @@ glib_init(void) {
 	    exit(1); /* glib_init may be called before error handling is set up */
 	}
     }
+#endif
+
+    /* Initialize glib's type system.  On glib >= 2.24, this will initialize
+     * threads, so it must be done after curl is initialized. */
+    g_type_init();
+
+    /* And set up glib's threads */
+#if defined(G_THREADS_ENABLED) && !defined(G_THREADS_IMPL_NONE)
+    if (!g_thread_supported())
+	g_thread_init(NULL);
 #endif
 }
 
