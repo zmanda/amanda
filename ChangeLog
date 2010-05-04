@@ -1,3 +1,8 @@
+2010-05-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amvault.pl: add an --autolabel option to allow control
+	  over which tapes are overwritten
+	* man/xml-source/amvault.8.xml: document it
+
 2010-05-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Free packet on close.
 

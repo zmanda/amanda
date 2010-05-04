@@ -27,6 +27,7 @@
 <cmdsynopsis>
   <command>amvault</command>
     &configoverride.synopsis;
+    <arg choice='opt'>-q|--quiet</arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>src-run-timestamp</replaceable></arg>
     <arg choice='plain'><replaceable>dst-changer</replaceable></arg>
@@ -79,8 +80,16 @@ define changer vaulting_tape {
 }
 </programlisting></para>
 
-<para>The label template functions identically to the <emphasis
-remap='I'>label-new-tapes</emphasis> parameter in &amconf;.</para>
+<para>The <emphasis>--quiet</emphasis> option reduces the verbosity of the
+utility; this can be useful for volumes containing many split parts.  The
+<emphasis>--autolabel</emphasis> option defines which tertiary volumes
+amlabel will overwrite.  It can have any of the values defined for
+<amkeyword>autolabel</amkeyword> in <manref name="amanda.conf" vol="5" />,
+with the addition of "this_config", meaning volumes matching the labelstr
+for this configuration.  The option defaults to "empty".  Multiple
+values can be separated with commas.  The label template functions
+identically to the template for teh <amkeyword>autolabel</amkeyword>
+parameter.</para>
 
 </refsect1>
 
