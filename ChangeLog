@@ -1,3 +1,7 @@
+2010-05-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda-devices.7.xml: add more regions
+	* man/xml-source/amcheckdump.8.xml: remove duplicate section
+
 2010-05-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Free packet on close.
 

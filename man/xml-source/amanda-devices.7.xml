@@ -354,9 +354,8 @@ high HTTP overhead for each request, use of larger than normal block
 <para>
 Amanda automatically creates a bucket when writing, if the bucket doesn't
 already exist. At that time, it specifies where Amazon should store the data
-based on the S3_BUCKET_LOCATION property. Currently, there are two valid settings:
-"*" (any location, probably US) and "EU" (Europe). If this property is not set,
-Amazon's default value of "*" is used. The bucket location has both billing and
+based on the S3_BUCKET_LOCATION property. If this property is not set,
+Amazon's default value (equivalent to "*") is used. The bucket location has both billing and
 legal concerns, so you are encouraged to consult Amazon's documentation for details.
 </para>
 
@@ -412,9 +411,11 @@ writing long enough to bring the average below this value.
  <!-- ==== -->
  <varlistentry><term>S3_BUCKET_LOCATION</term><listitem>
  (read-write) Location constraint for buckets on Amazon S3.
-Currently, it can be set to "", for no constraint (i.e. store data in the US),
-or "EU" (i.e. store data in the EU).
-See Amazon's documentation for details and latest information
+As of this writing, it can be set to "*" (US Standard, i.e. lowest-latency
+choice of US East or West), "us-west-1" (US West, Northern California), "EU"
+(European Union), or "ap-southeast-1" (Asia Pacific).  See <ulink
+url="http://docs.amazonwebservices.com/AmazonS3/latest/index.html?LocationSelection.html"
+/> for the most up-to-date list.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>SSL_CA_INFO</term><listitem>
