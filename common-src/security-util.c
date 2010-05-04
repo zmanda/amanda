@@ -724,6 +724,9 @@ tcpma_stream_close(
     struct sec_stream *rs = s;
     char buf = 0;
 
+    amfree(rs->rc->pkt);
+    rs->rc->pktlen = 0;
+
     assert(rs != NULL);
 
     auth_debug(1, _("sec: tcpma_stream_close: closing stream %d\n"), rs->handle);

@@ -1,3 +1,6 @@
+2010-05-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Free packet on close.
+
 2010-05-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/glib-util.c: reorgnize glib_init to be compatible with
 	  glib-2.24+
