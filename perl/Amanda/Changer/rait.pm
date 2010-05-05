@@ -569,7 +569,9 @@ sub _merge_inventories {
 	    }
 	    $c->{'label_set'} = 1;
 
-	    $c->{'device_status'} |= $k->{'device_status'};
+	    $c->{'device_status'} |= $k->{'device_status'}
+		if defined $k->{'device_status'};
+
 	    if (!defined $c->{'f_type'} ||
 		$k->{'f_type'} != $Amanda::Header::F_TAPESTART) {
 		$c->{'f_type'} = $k->{'f_type'};
