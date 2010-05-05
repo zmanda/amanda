@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -1561,7 +1561,7 @@ s3_read_block_write_func(void *ptr, size_t size, size_t nmemb, void *stream)
     new_bytes = (guint) size * nmemb;
     bytes_needed = dat->size_written + new_bytes;
 
-    if (bytes_needed > (guint)dat->size_written) {
+    if (bytes_needed > (guint)dat->size_req) {
 	/* this read will overflow the user's buffer, so malloc ourselves
 	 * a new buffer and keep reading */
 	dat->curl.buffer = g_malloc(bytes_needed);
@@ -1572,7 +1572,10 @@ s3_read_block_write_func(void *ptr, size_t size, size_t nmemb, void *stream)
 	return s3_buffer_write_func(ptr, size, nmemb, (void *)(&dat->curl));
     }
 
-    memcpy(dat->data + dat->size_written, ptr, bytes_needed);
+    /* copy it into the dat->data buffer, and increment the size */
+    memcpy(dat->data + dat->size_written, ptr, new_bytes);
+    dat->size_written += new_bytes;
+
     return new_bytes;
 }
 
@@ -1671,6 +1674,6 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
      * set and return the size */
     pself->block++;
     g_free(key);
-    *size_req = dat.size_req;
-    return dat.size_req;
+    *size_req = dat.size_written;
+    return dat.size_written;
 }
