@@ -1,4 +1,8 @@
 2010-05-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/rait.pm: eliminate warning when device does not
+	  have a valid status
+
+2010-05-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/s3-device.c: fix several fatal flaws in the
 	  read_block implementation
 
