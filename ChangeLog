@@ -1,3 +1,6 @@
+2010-05-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Report/human.pm: don't assume parts are defined
+
 2010-05-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda-devices.7.xml: add more regions
 	* man/xml-source/amcheckdump.8.xml: remove duplicate section

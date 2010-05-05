@@ -260,11 +260,13 @@ sub calculate_stats
 
                 $stats->{tapesize}   += $try->{taper}{kb};
                 $stats->{taper_time} += $try->{taper}{sec};
-                $stats->{tapepart_count} += @{ $try->{taper}{parts} };
+                $stats->{tapepart_count} += @{ $try->{taper}{parts} }
+		    if $try->{taper}{parts};
                 $stats->{tapedisk_count}++;
 
                 $tapedisks->[ $try->{taper}{level} ]++;    #by level count
-                $tapeparts->[$try->{taper}{level}] += @{ $try->{taper}{parts} };
+                $tapeparts->[$try->{taper}{level}] += @{ $try->{taper}{parts} }
+		    if $try->{taper}{parts};
 	    }
 
 	    # add those values to the stats
