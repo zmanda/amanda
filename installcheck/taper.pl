@@ -438,15 +438,15 @@ taper_cmd("FILE-WRITE $handle \"$test_filename\" localhost /home 0 $datestamp 0 
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE") or die;
 taper_cmd("NO-NEW-TAPE sorry");
-like(taper_reply, qr/^FAILED $handle INPUT-GOOD TAPE-ERROR "" "?sorry"?.*$/,
+like(taper_reply, qr/^FAILED $handle INPUT-GOOD TAPE-ERROR "" "CONFIG:sorry"?.*$/,
 	"got FAILED") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
     qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
-    qr(^ERROR taper no-tape \[sorry\]$),
-    qr(^FAIL taper localhost /home $datestamp 0 sorry$),
+    qr(^ERROR taper no-tape \[CONFIG:sorry\]$),
+    qr(^FAIL taper localhost /home $datestamp 0 "CONFIG:sorry"$),
 ], "NO-NEW-TAPE logged correctly");
 
 ##
@@ -647,7 +647,7 @@ like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 256 "\[sec [\d.]+ kb 256 kps
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE") or die;
 taper_cmd("NO-NEW-TAPE \"that's enough\"");
-like(taper_reply, qr/^PARTIAL $handle INPUT-GOOD TAPE-ERROR "\[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1312\]" "" "that's enough"$/,
+like(taper_reply, qr/^PARTIAL $handle INPUT-GOOD TAPE-ERROR "\[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1312\]" "" "CONFIG:that's enough"$/,
 	"got PARTIAL") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -659,9 +659,9 @@ check_logs([
     qr(^PARTPARTIAL taper TESTCONF01 2 localhost /music $datestamp 2/-1 0 \[sec [\d.]+ kb 160 kps [\d.]+ orig-kb 1312\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 256 fm 2 \[OK\]$),
-    qr(^ERROR taper no-tape \[that's enough\]$),
+    qr(^ERROR taper no-tape \[CONFIG:that's enough\]$),
     qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
-    qr(^PARTIAL taper localhost /music $datestamp 2 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1312\] "that's enough"$),
+    qr(^PARTIAL taper localhost /music $datestamp 2 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1312\] "CONFIG:that's enough"$),
 ], "running out of tapes (simulating runtapes=1) logged correctly");
 
 ##
@@ -846,7 +846,7 @@ chmod(0755, Installcheck::Run::vtape_dir(2));
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE") or die;
 taper_cmd("NO-NEW-TAPE \"sorry\"");
-like(taper_reply, qr/^FAILED $handle INPUT-GOOD TAPE-ERROR "" "?sorry"?.*$/,
+like(taper_reply, qr/^FAILED $handle INPUT-GOOD TAPE-ERROR "" "CONFIG:sorry"?.*$/,
 	"got FAILED") or die;
 taper_cmd("QUIT");
 wait_for_exit();

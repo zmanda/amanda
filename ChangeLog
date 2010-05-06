@@ -1,4 +1,7 @@
 2010-05-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/taper.pl: Fix installcheck for previous patch.
+
+2010-05-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.pl: prepend "CONFIG:" to the error message if it
 	  is an error because of a configuration setting.
 	* perl/Amanda/Report/human.pm: Don't report such error.
