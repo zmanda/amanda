@@ -1,3 +1,8 @@
+2010-05-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper.pl: prepend "CONFIG:" to the error message if it
+	  is an error because of a configuration setting.
+	* perl/Amanda/Report/human.pm: Don't report such error.
+
 2010-05-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/rait.pm: eliminate warning when device does not
 	  have a valid status

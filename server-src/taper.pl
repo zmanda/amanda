@@ -307,9 +307,9 @@ sub request_volume_permission {
 	my ($msgtype, %msg_params) = @_;
 
 	# log the error (note that the message is intentionally not quoted)
-	log_add($L_ERROR, "no-tape [$msg_params{reason}]");
+	log_add($L_ERROR, "no-tape [CONFIG:$msg_params{reason}]");
 
-	$params{'perm_cb'}->($msg_params{'reason'});
+	$params{'perm_cb'}->("CONFIG:$msg_params{'reason'}");
     });
     $self->{'proto'}->set_message_cb(main::Protocol::NO_NEW_TAPE,
 	$no_new_tape_cb);

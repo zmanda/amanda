@@ -411,7 +411,13 @@ sub output_tapeinfo
         $report->get_program_info("taper", "tape_error", undef)) {
 
         $tape_error =~ s{^no-tape }{};
-        print $fh "*** A TAPE ERROR OCCURRED: $tape_error.\n";
+	if ($tape_error =~ /^\[CONFIG:/) {
+	    $tape_error =~ s/^\[CONFIG://;
+	    $tape_error =~ s/\]$//;
+	    print $fh "Not using all tapes because $tape_error.\n";
+	} else {
+            print $fh "*** A TAPE ERROR OCCURRED: $tape_error.\n";
+	}
     }
 
     ## if this is a historical report, do not generate holding disk
@@ -549,17 +555,19 @@ sub output_error_summaries
 	    #&& $try->{taper}->{error} ne ""))) {
 		my $flush = "FLUSH";
 		$flush = "FAILED" if exists $try->{dumper} && !exists $try->{chunker};
-		if ($try->{taper}->{status} eq 'partial') {
-		    # if the error message is omitted, then the taper only got a partial
-		    # dump from the dumper/chunker, rather than failing with a taper error
-		    my $errmsg = $try->{taper}{error} || "successfully taped a partial dump";
-		    $flush = "partial taper: $errmsg";
-		} else {
-		    $flush .= " " . $try->{taper}{error};
-		}
+		if ($flush ne "FLUSH" or $try->{taper}->{error} !~ /CONFIG:/) {
+		    if ($try->{taper}->{status} eq 'partial') {
+			# if the error message is omitted, then the taper only got a partial
+			# dump from the dumper/chunker, rather than failing with a taper error
+			my $errmsg = $try->{taper}{error} || "successfully taped a partial dump";
+			$flush = "partial taper: $errmsg";
+		    } else {
+			$flush .= " " . $try->{taper}{error};
+		    }
 
-		push @dump_failures, "$hostname $qdisk lev $try->{taper}->{level}  $flush";
-		$failed = 1;
+		    push @dump_failures, "$hostname $qdisk lev $try->{taper}->{level}  $flush";
+		    $failed = 1;
+		}
 	    }
 	    if (   $failed
 		&& exists $try->{dumper}
@@ -1154,8 +1162,13 @@ sub get_summary_info
             $tape_time = $try->{taper}{sec} if !$tape_time;
             $tape_rate = $try->{taper}{kps} if !$tape_rate;
         } elsif (exists $try->{taper} && ( $try->{taper}{status} eq "fail")) {
-            $tape_time = undef;
-            $tape_rate = undef;
+	    if ($try->{taper}{error} =~ /CONFIG:/) {
+		$tape_time = 0;
+		$tape_rate = 0;
+	    } else {
+		$tape_time = undef;
+		$tape_rate = undef;
+	    }
 	}
 
 	if (!$out_size &&
