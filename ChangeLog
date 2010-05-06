@@ -1,3 +1,13 @@
+2010-05-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: New INCLUDE-LIST-GLOB and EXCLUDE-LIST-GLOB
+	  for restore, escape the non glob include and exclude.
+	* client-src/client_util.h: Add include_list_glob and exclude_list_glob
+	  to backup_support_option_t.
+	* client-src/client_util.c: Parse new support option.
+	* man/xml-source/amgtar.8.xml: Ducument new properties.
+	* server-src/amindexd.c: Don't clean_backslash, indexd should be sent
+	  asis to amrecover.
+
 2010-05-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/rait.pm: eliminate warning when device does not
 	  have a valid status

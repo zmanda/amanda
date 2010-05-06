@@ -118,7 +118,6 @@ static int tapedev_is(void);
 static int are_dumps_compressed(void);
 static char *amindexd_nicedate (char *datestamp);
 static int cmp_date (const char *date1, const char *date2);
-static char *clean_backslash(char *line);
 static char *get_index_name(char *dump_hostname, char *hostname,
 			    char *diskname, char *timestamps, int level);
 static int get_index_dir(char *dump_hostname, char *hostname, char *diskname);
@@ -289,7 +288,6 @@ uncompress_file(
 
 	/* start a subprocess */
 	/* send all ouput from uncompress process to sort process */
-	/* clean the data with clean_backslash */
 	pid_index = fork();
 	switch (pid_index) {
 	case -1:
@@ -305,7 +303,6 @@ uncompress_file(
 	    while (fgets(line, STR_SIZE, pipe_stream) != NULL) {
 		if (line[0] != '\0') {
 		    if (strchr(line,'/')) {
-			clean_backslash(line);
 			full_write(pipe_to_sort,line,strlen(line));
 		    }
 		}
@@ -1752,42 +1749,6 @@ cmp_date(
 {
     return strncmp(date1, date2, strlen(date2));
 }
-
-static char *
-clean_backslash(
-    char *line)
-{
-    char *s = line, *s1, *s2;
-    char *p = line;
-    int i;
-
-    while(*s != '\0') {
-	if (*s == '\\') {
-	    s++;
-	    s1 = s+1;
-	    s2 = s+2;
-	    if (*s != '\0' && isdigit((int)*s) &&
-		*s1 != '\0' && isdigit((int)*s1) &&
-		*s2 != '\0' &&  isdigit((int)*s2)) {
-		/* this is \000, an octal value */
-		i = ((*s)-'0')*64 + ((*s1)-'0')*8 + ((*s2)-'0');
-		*p++ = i;
-		s += 3;
-	    } else if (*s == '\\') { /* we remove one / */
-		*p++ = *s++;
-	    } else { /* we keep the / */
-		*p++ = '\\';
-		*p++ = *s++;
-	    }
-	} else {
-	    *p++ = *s++;
-	}
-    }
-    *p = '\0';
-
-    return line;
-}
-
 
 static int
 get_index_dir(

@@ -45,9 +45,11 @@
  * XATTRS          (default NO)
  * INCLUDE-FILE
  * INCLUDE-LIST
+ * INCLUDE-LIST-GLOB
  * INCLUDE-OPTIONAL
  * EXCLUDE-FILE
  * EXCLUDE-LIST
+ * EXCLUDE-LIST-GLOB
  * EXCLUDE-OPTIONAL
  * NORMAL
  * IGNORE
@@ -113,6 +115,8 @@ typedef struct application_argument_s {
     char      *tar_blocksize;
     GSList    *level;
     GSList    *command_options;
+    char      *include_list_glob;
+    char      *exclude_list_glob;
     dle_t      dle;
     int        argc;
     char     **argv;
@@ -184,8 +188,93 @@ static struct option long_options[] = {
     {"selinux"         , 1, NULL, 31},
     {"xattrs"          , 1, NULL, 32},
     {"command-options" , 1, NULL, 33},
+    {"include-list-glob", 1, NULL, 34},
+    {"exclude-list-glob", 1, NULL, 35},
     {NULL, 0, NULL, 0}
 };
+
+static char *
+escape_tar_glob(
+    char *str,
+    int  *in_argv)
+{
+    char *result = malloc(4*strlen(str)+1);
+    char *r = result;
+    char *s;
+
+    *in_argv = 0;
+    for (s = str; *s != '\0'; s++) {
+	if (*s == '\\') {
+	    char c = *(s+1);
+	    if (c == '\\') {
+		*r++ = '\\';
+		*r++ = '\\';
+		*r++ = '\\';
+		s++;
+	    } else if (c == '?') {
+		*r++ = 127;
+		s++;
+		continue;
+	    } else if (c == 'a') {
+		*r++ = 7;
+		s++;
+		continue;
+	    } else if (c == 'b') {
+		*r++ = 8;
+		s++;
+		continue;
+	    } else if (c == 'f') {
+		*r++ = 12;
+		s++;
+		continue;
+	    } else if (c == 'n') {
+		*r++ = 10;
+		s++;
+		*in_argv = 1;
+		continue;
+	    } else if (c == 'r') {
+		*r++ = 13;
+		s++;
+		*in_argv = 1;
+		continue;
+	    } else if (c == 't') {
+		*r++ = 9;
+		s++;
+		continue;
+	    } else if (c == 'v') {
+		*r++ = 11;
+		s++;
+		continue;
+	    } else if (c >= '0' && c <= '9') {
+		char d = c-'0';
+		s++;
+		c = *(s+1);
+		if (c >= '0' && c <= '9') {
+		    d = (d*8)+(c-'0');
+		    s++;
+		    c = *(s+1);
+		    if (c >= '0' && c <= '9') {
+			d = (d*8)+(c-'0');
+			s++;
+		    }
+		}
+		*r++ = d;
+		continue;
+	    } else {
+		*r++ = '\\';
+	    }
+	} else if (*s == '?') {
+	    *r++ = '\\';
+	    *r++ = '\\';
+	} else if (*s == '*' || *s == '[') {
+	    *r++ = '\\';
+	}
+	*r++ = *s;
+    }
+    *r = '\0';
+
+    return result;
+}
 
 
 int
@@ -272,6 +361,8 @@ main(
     argument.tar_blocksize = NULL;
     argument.level      = NULL;
     argument.command_options = NULL;
+    argument.include_list_glob = NULL;
+    argument.exclude_list_glob = NULL;
     init_dle(&argument.dle);
 
     while (1) {
@@ -392,6 +483,12 @@ main(
 	case 33: argument.command_options =
 			g_slist_append(argument.command_options,
 				       stralloc(optarg));
+		 break;
+	case 34: if (optarg)
+		     argument.include_list_glob = stralloc(optarg);
+		 break;
+	case 35: if (optarg)
+		     argument.exclude_list_glob = stralloc(optarg);
 		 break;
 	case ':':
 	case '?':
@@ -515,9 +612,11 @@ amgtar_support(
     fprintf(stdout, "RECORD YES\n");
     fprintf(stdout, "INCLUDE-FILE YES\n");
     fprintf(stdout, "INCLUDE-LIST YES\n");
+    fprintf(stdout, "INCLUDE-LIST-GLOB YES\n");
     fprintf(stdout, "INCLUDE-OPTIONAL YES\n");
     fprintf(stdout, "EXCLUDE-FILE YES\n");
     fprintf(stdout, "EXCLUDE-LIST YES\n");
+    fprintf(stdout, "EXCLUDE-LIST-GLOB YES\n");
     fprintf(stdout, "EXCLUDE-OPTIONAL YES\n");
     fprintf(stdout, "COLLECTION NO\n");
     fprintf(stdout, "MULTI-ESTIMATE YES\n");
@@ -968,22 +1067,109 @@ amgtar_restore(
 	g_ptr_array_add(argv_ptr, stralloc("--directory"));
 	g_ptr_array_add(argv_ptr, stralloc(gnutar_directory));
     }
-    g_ptr_array_add(argv_ptr, stralloc("--no-wildcards"));
+
+    g_ptr_array_add(argv_ptr, stralloc("--wildcards"));
     if (argument->dle.exclude_list &&
 	argument->dle.exclude_list->nb_element == 1) {
+	FILE      *exclude;
+	char      *sdisk;
+	char      *filename;
+	int        in_argv;
+	int        entry_in_exclude = 0;
+	char       line[2*PATH_MAX];
+	FILE      *exclude_list;
+
+	if (argument->dle.disk) {
+	    sdisk = sanitise_filename(argument->dle.disk);
+	} else {
+	    sdisk = g_strdup_printf("installcheck-exclude-%d", getpid());
+	}
+	filename = vstralloc(AMANDA_TMPDIR, "/", "exclude-", sdisk,  NULL);
+	exclude_list = fopen(argument->dle.exclude_list->first->name, "r");
+
+	exclude = fopen(filename, "w");
+	while (fgets(line, 2*PATH_MAX, exclude_list)) {
+	    char *escaped;
+	    line[strlen(line)-1] = '\0'; /* remove '\n' */
+	    escaped = escape_tar_glob(line, &in_argv);
+	    if (in_argv) {
+		g_ptr_array_add(argv_ptr, "--exclude");
+		g_ptr_array_add(argv_ptr, escaped);
+	    } else {
+		fprintf(exclude,"%s\n", escaped);
+		entry_in_exclude++;
+		amfree(escaped);
+	    }
+	}
+	fclose(exclude);
 	g_ptr_array_add(argv_ptr, stralloc("--exclude-from"));
-	g_ptr_array_add(argv_ptr,
-			stralloc(argument->dle.exclude_list->first->name));
-    }
-    if (argument->dle.include_list &&
-	argument->dle.include_list->nb_element == 1) {
-	g_ptr_array_add(argv_ptr, stralloc("--files-from"));
-	g_ptr_array_add(argv_ptr,
-			stralloc(argument->dle.include_list->first->name));
+	g_ptr_array_add(argv_ptr, filename);
     }
 
-    for (j=1; j< argument->argc; j++) {
-	g_ptr_array_add(argv_ptr, stralloc(argument->argv[j]));
+    if (argument->exclude_list_glob) {
+	g_ptr_array_add(argv_ptr, stralloc("--exclude-from"));
+	g_ptr_array_add(argv_ptr, stralloc(argument->exclude_list_glob));
+    }
+
+    {
+	GPtrArray *argv_include = g_ptr_array_new();
+	FILE      *include;
+	char      *sdisk;
+	char      *filename;
+	int        in_argv;
+	guint      i;
+	int        entry_in_include = 0;
+
+	if (argument->dle.disk) {
+	    sdisk = sanitise_filename(argument->dle.disk);
+	} else {
+	    sdisk = g_strdup_printf("installcheck-include-%d", getpid());
+	}
+	filename = vstralloc(AMANDA_TMPDIR, "/", "include-", sdisk,  NULL);
+	include = fopen(filename, "w");
+	if (argument->dle.include_list &&
+	    argument->dle.include_list->nb_element == 1) {
+	    char line[2*PATH_MAX];
+	    FILE *include_list = fopen(argument->dle.include_list->first->name, "r");
+	    while (fgets(line, 2*PATH_MAX, include_list)) {
+		char *escaped;
+		line[strlen(line)-1] = '\0'; /* remove '\n' */
+		escaped = escape_tar_glob(line, &in_argv);
+		if (in_argv) {
+		    g_ptr_array_add(argv_include, escaped);
+		} else {
+		    fprintf(include,"%s\n", escaped);
+		    entry_in_include++;
+		    amfree(escaped);
+		}
+	    }
+	}
+
+	for (j=1; j< argument->argc; j++) {
+	    char *escaped = escape_tar_glob(argument->argv[j], &in_argv);
+	    if (in_argv) {
+		g_ptr_array_add(argv_include, escaped);
+	    } else {
+		fprintf(include,"%s\n", escaped);
+		entry_in_include++;
+		amfree(escaped);
+	    }
+	}
+	fclose(include);
+
+	if (entry_in_include) {
+	    g_ptr_array_add(argv_ptr, stralloc("--files-from"));
+	    g_ptr_array_add(argv_ptr, filename);
+	}
+
+	if (argument->include_list_glob) {
+	    g_ptr_array_add(argv_ptr, stralloc("--files-from"));
+	    g_ptr_array_add(argv_ptr, stralloc(argument->include_list_glob));
+	}
+
+	for (i = 0; i < argv_include->len; i++) {
+	    g_ptr_array_add(argv_ptr, (char *)g_ptr_array_index(argv_include,i));
+	}
     }
     g_ptr_array_add(argv_ptr, NULL);
 
@@ -1246,7 +1432,7 @@ GPtrArray *amgtar_build_argv(
     }
 
     if(file_exclude) {
-	g_ptr_array_add(argv_ptr, stralloc("--exclude-from"));
+	g_ptr_array_add(argv_ptr, stralloc("--files-from"));
 	g_ptr_array_add(argv_ptr, stralloc(file_exclude));
     }
 

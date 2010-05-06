@@ -74,6 +74,14 @@ The directory where gnutar stores the database it uses to generate incremental d
 The path to the gnutar binary.  The default is set when Amanda is built.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>INCLUDE-LIST-GLOB</term><listitem>
+A filename containing include glob expression for the restore command.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>EXCLUDE-LIST-GLOB</term><listitem>
+A filename containing exclude glob expression for the restore command.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>ONE-FILE-SYSTEM</term><listitem>
 If "YES" (the default), do not allow gnutar to cross filesystem boundaries. If "NO", gnutar will cross filesystem boundaries.  This corresponds to the <emphasis>--one-filesystem</emphasis> option of gnutar.
 </listitem></varlistentry>
