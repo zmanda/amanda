@@ -800,6 +800,9 @@ backup_support_option(
 	} else if (strncmp(line,"INCLUDE-LIST ", 13) == 0) {
 	    if (strcmp(line+13, "YES") == 0)
 		bsu->include_list = 1;
+	} else if (strncmp(line,"INCLUDE-LIST-GLOB ", 17) == 0) {
+	    if (strcmp(line+17, "YES") == 0)
+		bsu->include_list_glob = 1;
 	} else if (strncmp(line,"INCLUDE-OPTIONAL ", 17) == 0) {
 	    if (strcmp(line+17, "YES") == 0)
 		bsu->include_optional = 1;
@@ -809,6 +812,9 @@ backup_support_option(
 	} else if (strncmp(line,"EXCLUDE-LIST ", 13) == 0) {
 	    if (strcmp(line+13, "YES") == 0)
 		bsu->exclude_list = 1;
+	} else if (strncmp(line,"EXCLUDE-LIST-GLOB ", 17) == 0) {
+	    if (strcmp(line+17, "YES") == 0)
+		bsu->exclude_list_glob = 1;
 	} else if (strncmp(line,"EXCLUDE-OPTIONAL ", 17) == 0) {
 	    if (strcmp(line+17, "YES") == 0)
 		bsu->exclude_optional = 1;

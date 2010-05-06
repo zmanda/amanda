@@ -56,9 +56,11 @@ typedef struct backup_support_option_s {
     int record;
     int include_file;
     int include_list;
+    int include_list_glob;
     int include_optional;
     int exclude_file;
     int exclude_list;
+    int exclude_list_glob;
     int exclude_optional;
     int collection;
     int calcsize;
