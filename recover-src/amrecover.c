@@ -128,6 +128,7 @@ get_line(void)
 	newbuf[strlen(mesg_buffer)+size] = '\0';
 	amfree(mesg_buffer);
 	mesg_buffer = newbuf;
+	amfree(buf);
     }
 
     s = strstr(mesg_buffer,"\r\n");

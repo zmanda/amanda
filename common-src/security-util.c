@@ -359,6 +359,10 @@ tcpm_stream_read(
     rs->arg = arg;
 }
 
+/* buffer for tcpm_stream_read_sync function */
+static ssize_t  sync_pktlen;
+static void    *sync_pkt;
+
 /*
  * Write a chunk of data to a stream.  Blocks until completion.
  */
@@ -377,12 +381,15 @@ tcpm_stream_read_sync(
     if (rs->ev_read != NULL) {
 	return -1;
     }
+    sync_pktlen = 0;
+    sync_pkt = NULL;
     rs->ev_read = event_register((event_id_t)rs->rc->event_id, EV_WAIT,
         stream_read_sync_callback, rs);
     sec_tcp_conn_read(rs->rc);
     event_wait(rs->ev_read);
-    *buf = rs->rc->pkt;
-    return (rs->rc->pktlen);
+    /* Can't use rs or rc, they can be freed */
+    *buf = sync_pkt;
+    return (sync_pktlen);
 }
 
 /*
@@ -723,9 +730,6 @@ tcpma_stream_close(
 {
     struct sec_stream *rs = s;
     char buf = 0;
-
-    amfree(rs->rc->pkt);
-    rs->rc->pktlen = 0;
 
     assert(rs != NULL);
 
@@ -1643,6 +1647,10 @@ stream_read_sync_callback(
      * way if they reschedule it.
      */
     tcpm_stream_read_cancel(rs);
+
+    sync_pktlen = rs->rc->pktlen;
+    sync_pkt = malloc(sync_pktlen);
+    memcpy(sync_pkt, rs->rc->pkt, sync_pktlen);
 
     if (rs->rc->pktlen <= 0) {
 	auth_debug(1, _("sec: stream_read_sync_callback: %s\n"), rs->rc->errmsg);

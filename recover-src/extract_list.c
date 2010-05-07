@@ -2635,6 +2635,7 @@ get_amidxtaped_line(void)
         newbuf[strlen(ctl_buffer)+size] = '\0';
         amfree(ctl_buffer);
         ctl_buffer = newbuf;
+	amfree(buf);
     }
 
     s = strstr(ctl_buffer,"\r\n");
