@@ -381,7 +381,7 @@ sub info_key {
 # reset, clean, etc. are all *very* similar to one another, so we create them
 # generically
 sub _mk_simple_op {
-    my ($op) = @_;
+    my ($op, $has_drive) = @_;
     sub {
 	my $self = shift;
 	my %params = @_;
@@ -406,13 +406,37 @@ sub _mk_simple_op {
 	    $params{'finished_cb'}->() if $params{'finished_cb'};
 	};
 
+	# get the drives for the kids, if necessary
+	my @kid_args;
+	if ($has_drive and $params{'drive'}) {
+	    my $drive = $params{'drive'};
+	    my @kid_drives = expand_braced_alternates($drive);
+
+	    if (@kid_drives == 1) {
+		@kid_drives = ( $kid_drives[0] ) x $self->{'num_children'};
+	    }
+
+	    if (@kid_drives != $self->{'num_children'}) {
+		return $self->make_error("failed", $params{'finished_cb'},
+			reason => "invalid",
+			message => "drive string '$drive' does not specify " .
+			"$self->{num_children} child drives");
+	    }
+
+	    @kid_args = map { { drive => $_ } } @kid_drives;
+	    delete $params{'drive'};
+	} else {
+	    @kid_args = ( {} ) x $self->{'num_children'};
+	}
+
 	$self->_for_each_child(
 	    oksub => sub {
-		my ($kid_chg, $kid_cb) = @_;
-		$kid_chg->$op(%params, finished_cb => $kid_cb);
+		my ($kid_chg, $kid_cb, $args) = @_;
+		$kid_chg->$op(%params, finished_cb => $kid_cb, %$args);
 	    },
 	    errsub => undef,
 	    parent_cb => $all_kids_done_cb,
+	    args => \@kid_args,
 	);
     };
 }
@@ -421,10 +445,10 @@ sub _mk_simple_op {
     # perl doesn't like that these symbols are only mentioned once
     no warnings;
 
-    *reset = _mk_simple_op("reset");
-    *update = _mk_simple_op("update");
-    *clean = _mk_simple_op("clean");
-    *eject = _mk_simple_op("eject");
+    *reset = _mk_simple_op("reset", 0);
+    *update = _mk_simple_op("update", 0);
+    *clean = _mk_simple_op("clean", 1);
+    *eject = _mk_simple_op("eject", 1);
 }
 
 sub inventory {

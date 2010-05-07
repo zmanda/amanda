@@ -1,3 +1,12 @@
+2010-05-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/rait-device.c: fix assertion failure when a child device
+	  gives an error
+	* perl/Amanda/Changer/rait.pm: add support for braced drive specs
+	* perl/Amanda/Changer/robot.pm: bail out if the drive is not allowed
+	  for an eject operation
+	* man/xml-source/amanda-changers.7.xml: document rait changer drive
+	  specifications
+
 2010-05-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: New INCLUDE-LIST-GLOB and EXCLUDE-LIST-GLOB
 	  for restore, escape the non glob include and exclude.

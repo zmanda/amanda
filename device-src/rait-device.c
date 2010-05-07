@@ -681,6 +681,7 @@ set_block_size_on_children(RaitDevice *self, gsize child_block_size)
         if (device_property_get_ex(child, PROPERTY_BLOCK_SIZE,
 				 &property_result, NULL, &source)) {
 	    gsize from_child = g_value_get_int(&property_result);
+	    g_value_unset(&property_result);
 	    if (source != PROPERTY_SOURCE_DEFAULT
 		    && from_child != child_block_size) {
 		device_set_error((Device *)self,
@@ -694,7 +695,6 @@ set_block_size_on_children(RaitDevice *self, gsize child_block_size)
 	    g_warning("Error getting BLOCK_SIZE from %s: %s",
 		    child->device_name, device_error_or_status(child));
 	}
-	g_value_unset(&property_result);
 
 	if (!device_property_set(child, PROPERTY_BLOCK_SIZE, &val)) {
 	    device_set_error((Device *)self,
