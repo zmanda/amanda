@@ -906,7 +906,6 @@ sub eject {
     my $self = shift;
     my %params = @_;
 
-    debug("$self->eject()");
     return if $self->check_error($params{'finished_cb'});
 
     $self->_with_updated_state(\%params, 'finished_cb',
@@ -947,6 +946,15 @@ sub eject_unlocked {
 		    reason => "invalid",
 		    message => "invalid drive '$drive'");
 	}
+
+	# if the drive exists, but not configured in this changer, then
+	# bail out.
+	if (!defined $self->{'drive2device'}->{$drive}) {
+	    return $self->make_error("failed", $params{'finished_cb'},
+		    reason => "invalid",
+		    message => "this changer instance is not configured to access drive $drive");
+	}
+
 
 	# check for a reservation
 	if ($drive_info->{'res_info'}

@@ -366,6 +366,8 @@ tpchanger "chg-rait:{vtape,robot}"
 
 <para>As a convenience to the user, the RAIT changer will also accept un-braced slot names, and supply the same name to each child changer. Thus with a 4-device RAIT changer, "<computeroutput>17</computeroutput>" is equivalent to "<computeroutput>{17,17,17,17}</computeroutput>".</para>
 
+<para>Drive names are parsed in a similar fashion, for operations that take drive names (clean and eject).</para>
+
 <para>This changer is fast-search capable only if all of its child changers are fast-search capable.</para>
 
 <note>The old chg-rait script is no longer supported nor shipped with Amanda, although the old script will continue to function via <command>chg-compat</command>, giving users time to upgrade their configuration.
