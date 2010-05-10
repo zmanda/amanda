@@ -540,6 +540,10 @@ bsd_stream_read(
     bs->arg = arg;
 }
 
+/* buffer for bsd_stream_read_sync function */
+static ssize_t  sync_pktlen;
+static void    *sync_pkt;
+
 /*
  * Read a chunk of data to a stream.  Blocks until completion.
  */
@@ -558,11 +562,13 @@ bsd_stream_read_sync(
     if(bs->ev_read != NULL) {
         return -1;
     }
+    sync_pktlen = 0;
+    sync_pkt = NULL;
     bs->ev_read = event_register((event_id_t)bs->fd, EV_READFD,
 			stream_read_sync_callback, bs);
     event_wait(bs->ev_read);
-    *buf = bs->databuf;
-    return (bs->len);
+    *buf = sync_pkt;
+    return (sync_pktlen);
 }
 
 
@@ -590,6 +596,9 @@ stream_read_sync_callback(
     if (n < 0)
         security_stream_seterror(&bs->secstr, "%s", strerror(errno));
     bs->len = n;
+    sync_pktlen = bs->len;
+    sync_pkt = malloc(sync_pktlen);
+    memcpy(sync_pkt, bs->databuf, sync_pktlen);
 }
 
 /*

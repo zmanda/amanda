@@ -1,5 +1,8 @@
+2010-05-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/bsd-security.c: Use global buffer for bsd_stream_read_sync
+
 2010-05-07  Jean-Louis Martineau <martineau@zmanda.com>
-	* common-src/security-util.c; Use global buffer for 
+	* common-src/security-util.c: Use global buffer for 
 	  security_stream_read_sync.
 	* recover-src/amrecover.c, recover-src/extract_list.c: Free buffer
 	  returnned by security_stream_read_sync.
