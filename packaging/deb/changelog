@@ -1,7 +1,0 @@
-amanda (%%VERSION%%-1) unstable; urgency=low
-
-  * Initial debian release.
-  * Thanks to Jim Barber: Swap AMHOMEDIR for AMANDAHOMEDIR in postinstall,
-    install .am_passphrase 0600, and add libglib2.0-dev to build-depends
-
- -- Zmanda <support@zmanda.com>  Wed, 5 Aug 2009 13:34:09 -0600
