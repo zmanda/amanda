@@ -1,3 +1,13 @@
+2010-05-11 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/common/substitute.pl: added.  contains much machinery not
+	   yet used in packaging. 
+	*  packaging/deb/changelog.src: added %%DEB_REL%%,%%DISTRO%% and
+	   %%DATE%% macros which are expanded by substitute.pl.
+	*  packaging/deb/changelog: renamed to above
+	*  packaging/deb/rules: fix stray configure option
+	*  packaging/deb/buildpkg: adjust to use substitute.pl instead of
+	   figuring VERSION out directly.
+
 2010-05-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/bsd-security.c: Use global buffer for bsd_stream_read_sync
 

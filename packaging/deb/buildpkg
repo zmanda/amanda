@@ -5,7 +5,7 @@ SRCDIR=$(pwd)
 # You can pass your own temp directory as an environment variable.
 if [ -z $TMPDIR ]
 then
-    TMPDIR="/tmp/buildpkg.deb"
+    TMPDIR="`pwd`/buildpkg.deb"
 fi
 # This prefix is prepended to all directories during "make install" 
 FAKEROOT="${TMPDIR}/froot"
@@ -47,42 +47,15 @@ then
     exit 1
 fi
 
-# TODO:  Can we delete this block?
-if [ -z $AMVER ]
-then
-    AMVER=amanda-2.6.2alpha
-fi
-
 #### Build functions
 
-do_distro() {
+do_substitute() {
     # We need to edit packaging/deb/changelog to reflect our current distro
-    # and release.  This can't be done withing the debian packaging system;
+    # and release.  This can't be done within the debian packaging system;
     # dpkg assumes that packages will have the same name on all releases and
     # that apt will prevent users from downloading the wrong build.  We want
     # this information helpfully obvious since we can't rely on apt.
-    if [ -x /usr/bin/lsb_release ] ; then
-	# Just to be safe...
-        DISTRO=`/usr/lsb_release -i| cut -f2`
-    else
-	DISTRO=Debian
-    fi
-    if [ "${DISTRO}" = "Debian" ] ; then
-	DEB_REL=`cat /etc/debian_version | cut -d"." -f"1,2"`
-    elif [ "${DISTRO}" = "Ubuntu" ] ; then
-	DEB_REL=`/usr/lsb_release -i| cut -f2`
-    else
-	# Blank is better than some random version
-	DEB_REL=""
-    fi
-    # First get a version from configure.in
-    VER=`cat FULL_VERSION`
-    # We're perhaps overly careful to preserve the -1 suffix.  It could be -2,
-    # but has never yet gotten there.
-    CHANGELOG_VER=`sed -r  "s/.*\(%%VERSION%%(-.)\).*/${VER}\1/;q" packaging/deb/changelog`
-    # Now Sub those values into the Debian changelog.
-    sed -r -i".orig" -e "1s/%%VERSION%%-./${CHANGELOG_VER}${DISTRO}${DEB_REL}/" packaging/deb/changelog
-    BUILDDIR=amanda-${CHANGELOG_VER}${DISTRO}${DEB_REL}
+    /usr/bin/perl packaging/common/substitute.pl packaging/deb/changelog.src packaging/deb/changelog
 }
 
 do_resources() {
@@ -94,7 +67,7 @@ do_resources() {
     if [ -d $BUILDDIR ]; then
         rm -rf $BUILDDIR
     fi
-    mkdir $BUILDDIR
+    mkdir -p $BUILDDIR
     cp -Rfp * $BUILDDIR
 }
 
@@ -106,6 +79,6 @@ do_package() {
     dpkg-buildpackage -rfakeroot -uc -us
 }
 
-do_distro
+do_substitute
 do_resources
 do_package
