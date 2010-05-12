@@ -1,3 +1,8 @@
+2010-05-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Device.pl: add regression test
+	* device-src/tape-device.c: set self->fd to -1 when closing; add
+	  better error messages
+
 2010-05-11 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/common/substitute.pl: added.  contains much machinery not
 	   yet used in packaging. 

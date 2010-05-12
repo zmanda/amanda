@@ -779,11 +779,10 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
     /* Rewind it. */
     if (!tape_rewind(self->fd)) {
 	device_set_error(dself,
-	    vstrallocf(_("Error rewinding device %s: %s"),
+	    vstrallocf(_("Error rewinding device %s to read label: %s"),
 		    self->private->device_filename, strerror(errno)),
 	      DEVICE_STATUS_DEVICE_ERROR
 	    | DEVICE_STATUS_VOLUME_ERROR);
-        robust_close(self->fd);
         return dself->status;
     }
 
@@ -1066,7 +1065,7 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
             return FALSE;
         } else if (!tape_rewind(self->fd)) {
 	    device_set_error(d_self,
-		vstrallocf(_("Couldn't rewind device: %s"), strerror(errno)),
+		vstrallocf(_("Error rewinding device to start: %s"), strerror(errno)),
 		DEVICE_STATUS_DEVICE_ERROR);
 	    return FALSE;
         }
@@ -1096,7 +1095,7 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
 
         if (!tape_rewind(self->fd)) {
 	    device_set_error(d_self,
-		vstrallocf(_("Couldn't rewind device: %s"), strerror(errno)),
+		vstrallocf(_("Error rewinding device after reading label: %s"), strerror(errno)),
 		DEVICE_STATUS_DEVICE_ERROR);
             return FALSE;
         }
@@ -1260,7 +1259,7 @@ reseek:
 	    /* no BSF, so just rewind and seek forward */
 	    if (!tape_rewind(self->fd)) {
 		device_set_error(d_self,
-		    vstrallocf(_("Could not rewind drive")),
+		    vstrallocf(_("Could not rewind device while emulating BSF")),
 		    DEVICE_STATUS_VOLUME_ERROR | DEVICE_STATUS_DEVICE_ERROR);
 		return FALSE;
 	    }
@@ -1405,7 +1404,7 @@ tape_device_eject (Device * d_self) {
     /* Rewind it. */
     if (!tape_rewind(self->fd)) {
 	device_set_error(d_self,
-	    vstrallocf(_("Error rewinding device %s: %s"),
+	    vstrallocf(_("Error rewinding device %s before ejecting: %s"),
 		       self->private->device_filename, strerror(errno)),
 	      DEVICE_STATUS_DEVICE_ERROR
 	    | DEVICE_STATUS_VOLUME_ERROR);
@@ -1436,6 +1435,7 @@ tape_device_finish (Device * d_self) {
      * to worry about, but we need to release the kernel device */
     if (d_self->access_mode == ACCESS_NULL) {
         robust_close(self->fd);
+	self->fd = -1;
 	return TRUE;
     }
 
@@ -1483,13 +1483,17 @@ tape_device_finish (Device * d_self) {
     /* Rewind (the kernel will write a filemark first) */
     if (!tape_rewind(self->fd)) {
 	device_set_error(d_self,
-	    vstrallocf(_("Couldn't rewind device: %s"), strerror(errno)),
+	    vstrallocf(_("Couldn't rewind device to finish: %s"), strerror(errno)),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }
 
     d_self->is_eof = FALSE;
     d_self->access_mode = ACCESS_NULL;
+
+    /* release the kernel's device */
+    robust_close(self->fd);
+    self->fd = -1;
 
     return TRUE;
 }
