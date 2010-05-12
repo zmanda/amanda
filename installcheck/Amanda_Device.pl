@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 464;
+use Test::More tests => 466;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -901,7 +901,7 @@ my $TAPE_DEVICE = $ENV{'INSTALLCHECK_TAPE_DEVICE'};
 my $run_tape_tests = defined $TAPE_DEVICE;
 SKIP: {
     skip "define \$INSTALLCHECK_TAPE_DEVICE to run tape tests",
-	    28 +
+	    30 +
 	    7 * $verify_file_count +
 	    5 * $write_file_count
 	unless $run_tape_tests;
@@ -1014,6 +1014,15 @@ SKIP: {
 
     ok($dev->finish(),
 	"finish device after read")
+	or diag($dev->error_or_status());
+
+    # tickle a regression in improperly closing fd's
+    ok($dev->finish(),
+	"finish device again after read")
+	or diag($dev->error_or_status());
+
+    ok($dev->read_label() == $DEVICE_STATUS_SUCCESS,
+	"read_label after second finish (used to fail)")
 	or diag($dev->error_or_status());
 
     # finally, run the device with FSF and BSF set to "no", to test the
