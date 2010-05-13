@@ -64,6 +64,7 @@ my $scan;
 my $reservation;
 my $current_device;
 my $current_device_label;
+my $current_command;
 
 sub find_next_device {
     my $label = shift;
@@ -211,7 +212,7 @@ sub open_validation_app {
 	and $current_validation_image->{level} == $image->{level}) {
 	# TODO: also check that the part number is correct
         Amanda::Debug::debug("Continuing with previously started validation process");
-	return $current_validation_pipeline;
+	return $current_validation_pipeline, $current_command;
     }
 
     my @command = find_validation_command($header);
@@ -224,15 +225,18 @@ sub open_validation_app {
 	$command[$nb]->{fd} = "VAL_GLOB_$nb";
 	$command[$nb]->{stderr} = Symbol::gensym;
 	$command[$nb]->{pid} = open3($command[$nb]->{fd}, "/dev/null", $command[$nb]->{stderr}, $command[$nb]->{pgm});
+	close($command[$nb]->{stderr});
 	while ($nb-- > 1) {
 	    $command[$nb]->{fd} = "VAL_GLOB_$nb";
 	    $command[$nb]->{stderr} = Symbol::gensym;
 	    $command[$nb]->{pid} = open3($command[$nb]->{fd}, ">&". $command[$nb+1]->{fd}, $command[$nb]->{stderr}, $command[$nb]->{pgm});
+	    close($command[$nb+1]->{fd});
 	}
 	$command[$nb]->{stderr} = Symbol::gensym;
 	$command[$nb]->{pid} = open3($current_validation_pipeline, ">&".$command[$nb+1]->{fd}, $command[$nb]->{stderr}, $command[$nb]->{pgm});
-    
+	close($command[$nb+1]->{fd});
     }
+
     my @com;
     for my $i (0..$#command) {
 	push @com, $command[$i]->{pgm};
@@ -257,7 +261,7 @@ sub close_validation_app {
     # first close the applications standard input to signal it to stop
     close($current_validation_pipeline);
     my $result = 0;
-    while (my $cmd = pop @$command) {
+    while (my $cmd = shift @$command) {
 	#read its stderr
 	my $fd = $cmd->{stderr};
 	while(<$fd>) {
@@ -304,7 +308,8 @@ sub close_validation_app {
 sub find_validation_command {
     my ($header) = @_;
 
-	my @result = ();
+    my @result = ();
+
     # We base the actual archiver on our own table, but just trust
     # whatever is listed as the decrypt/uncompress commands.
     my $program = uc(basename($header->{program}));
@@ -346,23 +351,19 @@ sub find_validation_command {
 	}
     }
 
-    my %command = {};
-
-    if (!defined $validation_program) {
-        $command{pgm} = "cat";
-    }
-    
     if (defined $header->{decrypt_cmd} && 
         length($header->{decrypt_cmd}) > 0) {
 	if ($header->{dle_str} =~ /<encrypt>CUSTOM/) {
-            $command{pgm} = "cat";
-	    push @result, \%command;
+	    # Can't decrypt client encrypted image
+	    my $cmd;
+            $cmd->{pgm} = "cat";
+	    push @result, $cmd;
 	    return @result;
 	}
-	my %cmd = {};
-	$cmd{pgm} = $header->{decrypt_cmd};
-	$cmd{pgm} =~ s/ *\|$//g;
-	push @result, \%cmd
+	my $cmd;
+	$cmd->{pgm} = $header->{decrypt_cmd};
+	$cmd->{pgm} =~ s/ *\|$//g;
+	push @result, $cmd;
     }
     if (defined $header->{uncompress_cmd} && 
         length($header->{uncompress_cmd}) > 0) {
@@ -370,18 +371,26 @@ sub find_validation_command {
 	if ((!defined $header->{decrypt_cmd} ||
 	     length($header->{decrypt_cmd}) == 0 ) and
 	    $header->{dle_str} =~ /<encrypt>CUSTOM/) {
-            $command{pgm} = "cat";
-	    push @result, \%command;
+	    # Can't decrypt client encrypted image
+	    my $cmd;
+            $cmd->{pgm} = "cat";
+	    push @result, $cmd;
 	    return @result;
 	}
-	my %cmd = {};
-	$cmd{pgm} = $header->{uncompress_cmd};
-	$cmd{pgm} =~ s/ *\|$//g;
-	push @result, \%cmd
+	my $cmd;
+	$cmd->{pgm} = $header->{uncompress_cmd};
+	$cmd->{pgm} =~ s/ *\|$//g;
+	push @result, $cmd;
     }
-    %command = {};
-    $command{pgm} = $validation_program;
-    push @result, \%command;
+
+    my $command;
+    if (!defined $validation_program) {
+        $command->{pgm} = "cat";
+    } else {
+	$command->{pgm} = $validation_program;
+    }
+
+    push @result, $command;
 
     return @result;
 }
@@ -526,7 +535,6 @@ print "Press enter when ready\n";
 # Now loop over the images, verifying each one.  
 
 my $header;
-my $command;
 
 IMAGE:
 for my $image (@images) {
@@ -544,7 +552,7 @@ for my $image (@images) {
     my $new_image = !(defined $header);
     if (!$new_image) {
 	if (!is_part_of_same_image($image, $header)) {
-	close_validation_app($command);
+	close_validation_app($current_command);
 	$new_image = 1;
 }
     }
@@ -600,7 +608,7 @@ for my $image (@images) {
     }
     
     # get the validation application pipeline that will process this dump.
-    (my $pipeline, $command) = open_validation_app($image, $header);
+    (my $pipeline, $current_command) = open_validation_app($image, $header);
 
     # send the datastream from the device straight to the application
     my $queue_fd = Amanda::Device::queue_fd_t->new(fileno($pipeline));
@@ -629,7 +637,7 @@ if (defined $reservation) {
 }
 
 # clean up
-close_validation_app($command);
+close_validation_app($current_command);
 close_device();
 
 if ($all_success) {
