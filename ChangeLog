@@ -1,4 +1,7 @@
 2010-05-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amcryptsimple.pl: Exit on error if gpg fail.
+
+2010-05-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndml_scsi.c: Increase length of amndmjob -r argument.
 
 2010-05-13  Jean-Louis Martineau <martineau@zmanda.com>

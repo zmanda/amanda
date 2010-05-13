@@ -56,10 +56,30 @@ $ENV{'GNUPGHOME'} = "$AMANDA_HOME/.gnupg";
 
 sub encrypt() {
     system "gpg --batch --no-secmem-warning --disable-mdc --symmetric --cipher-algo AES256 --passphrase-fd 3  3<$AM_PASS";
+    if ($? == -1) {
+	print STDERR "failed to execute gpg: $!\n";
+	exit (1);
+    } elsif ($? & 127) {
+	printf STDERR "gpg died with signal %d\n", ($? & 127);
+	exit ($?);
+    } elsif ($? >> 8) {
+	printf STDERR "gpg exited with value %d\n", ($? >> 8);
+	exit ($? >> 8);
+    }
 }
 
 sub decrypt() {
-     system "gpg --batch --quiet --no-mdc-warning --decrypt --passphrase-fd 3  3<$AM_PASS";
+    system "gpg --batch --quiet --no-mdc-warning --decrypt --passphrase-fd 3  3<$AM_PASS";
+    if ($? == -1) {
+	print STDERR "failed to execute gpg: $!\n";
+	exit (1);
+    } elsif ($? & 127) {
+	printf STDERR "gpg died with signal %d\n", ($? & 127);
+	exit ($?);
+    } elsif ($? >> 8) {
+	printf STDERR "gpg exited with value %d\n", ($? >> 8);
+	exit ($? >> 8);
+    }
 }
 
 sub int_catcher {
