@@ -1,4 +1,7 @@
 2010-05-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndml_scsi.c: Increase length of amndmjob -r argument.
+
+2010-05-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: fix exclude-file.
 
 2010-05-12  Dustin J. Mitchell <dustin@zmanda.com>
