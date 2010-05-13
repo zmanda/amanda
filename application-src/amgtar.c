@@ -1432,7 +1432,7 @@ GPtrArray *amgtar_build_argv(
     }
 
     if(file_exclude) {
-	g_ptr_array_add(argv_ptr, stralloc("--files-from"));
+	g_ptr_array_add(argv_ptr, stralloc("--exclude-from"));
 	g_ptr_array_add(argv_ptr, stralloc(file_exclude));
     }
 
