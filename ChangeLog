@@ -1,4 +1,8 @@
 2010-05-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheckdump.pl: Check subprocess exit status and print
+	  their stderr.
+
+2010-05-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amcryptsimple.pl: Exit on error if gpg fail.
 
 2010-05-13  Jean-Louis Martineau <martineau@zmanda.com>
