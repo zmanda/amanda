@@ -65,7 +65,7 @@ ndmscsi_target_from_str (struct ndmscsi_target *targ, char *str)
 		*p++ = 0;
 	}
 
-	if (strlen (str) > 30) {
+	if (strlen (str) >= PATH_MAX) {
 		if (p) p[-1] = ',';
 		return -2;
 	}
