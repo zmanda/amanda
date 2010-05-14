@@ -1,4 +1,8 @@
 2010-05-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/ndmp-device.c: add indirecttcp support
+	* installcheck/Amanda_Device.pl: test it lightly
+
+2010-05-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndmpconnobj.c ndmp-src/ndmpconnobj.h: add window_length and
 	  window_offset to mover_get_state
 	* device-src/ndmp-device.c: insert corresponding NULLs
