@@ -1,3 +1,8 @@
+2010-05-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndmpconnobj.c ndmp-src/ndmpconnobj.h: add window_length and
+	  window_offset to mover_get_state
+	* device-src/ndmp-device.c: insert corresponding NULLs
+
 2010-05-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheckdump.pl: Check subprocess exit status and print
 	  their stderr.

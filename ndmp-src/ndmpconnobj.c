@@ -531,7 +531,9 @@ ndmp_connection_mover_close(
 gboolean ndmp_connection_mover_get_state(
 	NDMPConnection *self,
 	ndmp9_mover_state *state,
-	guint64 *bytes_moved)
+	guint64 *bytes_moved,
+	guint64 *window_offset,
+	guint64 *window_length)
 {
     g_assert(!self->startup_err);
 
@@ -539,6 +541,8 @@ gboolean ndmp_connection_mover_get_state(
 	NDMP_CALL(self);
 	if (state) *state = reply->state;
 	if (bytes_moved) *bytes_moved = reply->bytes_moved;
+	if (window_offset) *window_offset = reply->window_offset;
+	if (window_length) *window_length = reply->window_length;
 	NDMP_FREE();
     NDMP_END
     return TRUE;
