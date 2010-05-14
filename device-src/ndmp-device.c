@@ -1057,7 +1057,7 @@ accept_impl(
 	gulong backoff = G_USEC_PER_SEC/20; /* 5 msec */
 	while (1) {
 	    if (!ndmp_connection_mover_get_state(self->ndmp,
-		    &state, &bytes_moved)) {
+		    &state, &bytes_moved, NULL, NULL)) {
 		set_error_from_ndmp(self);
 		return FALSE;
 	    }
@@ -1164,7 +1164,7 @@ write_from_connection_impl(
     g_assert(self->ndmp == nconn->ndmp);
 
     if (!ndmp_connection_mover_get_state(self->ndmp,
-		&mover_state, &bytes_moved_before)) {
+		&mover_state, &bytes_moved_before, NULL, NULL)) {
 	set_error_from_ndmp(self);
 	return FALSE;
     }
@@ -1239,7 +1239,7 @@ write_from_connection_impl(
      * In any case, we want to know how many bytes were written. */
 
     if (!ndmp_connection_mover_get_state(self->ndmp,
-		&mover_state, &bytes_moved_after)) {
+		&mover_state, &bytes_moved_after, NULL, NULL)) {
 	set_error_from_ndmp(self);
 	return FALSE;
     }
@@ -1290,7 +1290,7 @@ read_to_connection_impl(
     g_assert(self->ndmp == nconn->ndmp);
 
     if (!ndmp_connection_mover_get_state(self->ndmp,
-		&mover_state, &bytes_moved_before)) {
+		&mover_state, &bytes_moved_before, NULL, NULL)) {
 	set_error_from_ndmp(self);
 	return FALSE;
     }
@@ -1365,7 +1365,7 @@ read_to_connection_impl(
      * In any case, we want to know how many bytes were written. */
 
     if (!ndmp_connection_mover_get_state(self->ndmp,
-		&mover_state, &bytes_moved_after)) {
+		&mover_state, &bytes_moved_after, NULL, NULL)) {
 	set_error_from_ndmp(self);
 	return FALSE;
     }
@@ -1700,7 +1700,8 @@ directtcp_connection_ndmp_close(DirectTCPConnection *dself)
 
     /* based on the current state, we may need to abort or stop the
      * mover before closing it */
-    if (!ndmp_connection_mover_get_state(self->ndmp, &state, &bytes_moved)) {
+    if (!ndmp_connection_mover_get_state(self->ndmp, &state,
+				    &bytes_moved, NULL, NULL)) {
 	rv = ndmp_connection_err_msg(self->ndmp);
 	goto error;
     }

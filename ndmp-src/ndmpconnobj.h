@@ -202,7 +202,9 @@ gboolean ndmp_connection_mover_close(
 gboolean ndmp_connection_mover_get_state(
 	NDMPConnection *self,
 	ndmp9_mover_state *state,
-	guint64 *bytes_moved);
+	guint64 *bytes_moved,
+	guint64 *window_offset,
+	guint64 *window_length);
 	/* (other state variables should be added as needed) */
 
 /* Synchronous notification interface.  This handles all types of notification,
