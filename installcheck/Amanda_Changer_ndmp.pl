@@ -310,6 +310,7 @@ sub test_changer {
 	    property => "       \"tape-device\" \"0=$drive0_name\"",
 	    property => "append \"tape-device\" \"1=$drive1_name\"",
 	    property => "\"use-slots\" \"1-5\"",
+	    property => "\"verbose\" \"1\"",
 	    @ignore_barcodes,
 	]);
 	$testconf->write();

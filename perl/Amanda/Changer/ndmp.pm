@@ -62,7 +62,8 @@ sub get_interface {
     $self->{'ndmp-username'} = 'ndmp';
     $self->{'ndmp-password'} = 'ndmp';
     $self->{'ndmp-auth'} = 'md5';
-    for my $propname (qw(ndmp-username ndmp-password ndmp-auth)) {
+    $self->{'verbose'} = 0;
+    for my $propname (qw(ndmp-username ndmp-password ndmp-auth verbose)) {
 	if (exists $self->{'config'}->{'properties'}->{$propname}) {
 	    if (@{$self->{'config'}->{'properties'}->{$propname}->{'values'}} > 1) {
 		return Amanda::Changer->make_error("fatal", undef,
@@ -78,7 +79,8 @@ sub get_interface {
 		     $self->{'ndmp-username'}, $self->{'ndmp-password'},
 		     $self->{'ndmp-auth'} ];
 
-    return Amanda::Changer::ndmp::Interface->new($connargs, $scsi_dev, $ignore_barcodes),
+    return Amanda::Changer::ndmp::Interface->new($connargs, $scsi_dev, $ignore_barcodes,
+						 $self->{'verbose'}),
 }
 
 sub get_device {
@@ -114,12 +116,14 @@ use Amanda::MainLoop;
 
 sub new {
     my $class = shift;
-    my ($connargs, $scsi_dev, $ignore_barcodes) = @_;
+    my ($connargs, $scsi_dev, $ignore_barcodes, $verbose) = @_;
 
     return bless {
 	connargs => $connargs,
 	scsi_dev => $scsi_dev,
 	ignore_barcodes => $ignore_barcodes,
+	verbose => $verbose,
+
 	# have we called READ ELEMENT STATUS yet?
 	have_status => 0,
 
@@ -509,6 +513,10 @@ sub _get_scsi_conn {
 
     if (!$conn->scsi_open($self->{'scsi_dev'})) {
 	return $conn;
+    }
+
+    if ($self->{'verbose'}) {
+	$conn->set_verbose(1);
     }
 
     # patch scsi_close into the callback, so it will be executed in error and
