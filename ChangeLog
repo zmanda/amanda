@@ -1,4 +1,8 @@
 2010-05-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amfetchdump.pl: use syswrite so the filehandle gets
+	  properly flushed
+
+2010-05-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Device.pl: use IO::Socket::INET instead of
 	  shelling out to 'nc'
 

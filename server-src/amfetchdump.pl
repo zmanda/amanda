@@ -428,7 +428,7 @@ sub main {
 		open($hdr_fh, "<&".($opt_header_fd+0))
 		    or return failure("could not open fd $opt_header_fd: $!", $finished_cb);
 	    }
-	    print $hdr_fh $hdr->to_string(32768, 32768);
+	    syswrite $hdr_fh, $hdr->to_string(32768, 32768), 32768;
 	}
 
 	my $xfer = Amanda::Xfer->new([ $xfer_src, @filters, $xfer_dest ]);
