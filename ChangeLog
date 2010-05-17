@@ -1,4 +1,8 @@
 2010-05-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Device.pl: use IO::Socket::INET instead of
+	  shelling out to 'nc'
+
+2010-05-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/ndmp.pm: add verbose property
 	* installcheck/Amanda_Changer_ndmp.pl: use it
 

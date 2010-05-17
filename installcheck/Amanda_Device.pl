@@ -1273,12 +1273,26 @@ SKIP: {
 	$dev->property_set("_force_indirecttcp", 1);
 
 	my $addrs = $dev->listen(1);
-	ok($addrs, "listen returns successfully") or die($dev->error_or_status());
+	is_deeply([ scalar @$addrs, $addrs->[0][0] ],
+	    [ 1, '255.255.255.255' ],
+	    "listen returns successfully with indirecttcp sentinel")
+	    or die($dev->error_or_status());
 
 	# fork off to evaluate the indirecttcp addresses and then set up an
 	# xfer to write to the device
 	if (POSIX::fork() == 0) {
-	    my $sockresult = `nc localhost $addrs->[0][1] < /dev/null`;
+	    # NOTE: do not use IO::Socket in normal Amanda code - it is diabolically
+	    # not threadsafe!  It's OK here since this is just a test script and
+	    # since we're in a subprocess
+	    use IO::Socket;
+	    my $sock = new IO::Socket::INET(
+		    PeerAddr => '127.0.0.1',
+		    PeerPort => $addrs->[0][1],
+		    Proto => 'tcp')
+		or die("Could not create connecting socket");
+	    $sock->shutdown(1); # send EOF
+	    my $sockresult = <$sock>;
+	    $sock->close();
 
 	    my @sockresult = map { [ split(/:/, $_) ] } split(/ /, $sockresult);
 	    $addrs = [ map { $_->[1] = 0 + $_->[1]; $_ } @sockresult ];
