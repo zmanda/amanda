@@ -1459,12 +1459,43 @@ read_mesgfd(
 	}
 	close(db->fd);
 	if (data_path == DATA_PATH_AMANDA) {
-	    g_debug(_("Sending data to %s:%d\n"), data_host, data_port);
+	    char buffer[32770];
+	    if (strcmp(data_host, "255.255.255.255") == 0) {
+		int size;
+		char *s;
+		g_debug(_("Using indirect-tcp from port %d"), data_port);
+		db->fd = stream_client("127.0.0.1", data_port,
+				       STREAM_BUFSIZE, 0, NULL, 0);
+		if (db->fd == -1) {
+		    errstr = newvstrallocf(errstr,
+				       _("Can't open indirect-tcp stream: %s"),
+				       strerror(errno));
+		    dump_result = 2;
+		    stop_dump();
+		    return;
+		}
+		size = full_read(db->fd, buffer, 32768);
+		if (size <= 0) {
+		    errstr = newvstrallocf(errstr,
+				  _("Can't read from indirect-tcp stream: %s"),
+				  strerror(errno));
+		    dump_result = 2;
+		    stop_dump();
+		    return;
+		}
+		buffer[size] = '\0';
+		s = strchr(buffer, ':');
+		*s++ = '\0';
+		data_host = buffer;
+		data_port = atoi(s);
+		aclose(db->fd);
+	    }
+	    g_debug(_("Sending data to %s:%d"), data_host, data_port);
 	    db->fd = stream_client(data_host, data_port,
 				   STREAM_BUFSIZE, 0, NULL, 0);
 	    if (db->fd == -1) {
 		errstr = newvstrallocf(errstr,
-				       _("Can't opendata output stream: %s"),
+				       _("Can't open data output stream: %s"),
 				       strerror(errno));
 		dump_result = 2;
 		stop_dump();

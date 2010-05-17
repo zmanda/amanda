@@ -1,4 +1,7 @@
 2010-05-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Handle indirecttcp.
+
+2010-05-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup.c: Handle indirecttcp.
 
 2010-05-14  Dustin J. Mitchell <dustin@zmanda.com>
