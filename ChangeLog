@@ -1,3 +1,7 @@
+2010-05-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/ndmp.pm: add verbose property
+	* installcheck/Amanda_Changer_ndmp.pl: use it
+
 2010-05-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Handle indirecttcp.
 
