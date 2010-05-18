@@ -1,4 +1,8 @@
 2010-05-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/rait.pm: add debug message when child slot
+	  counts differ
+
+2010-05-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/net.m4: correct help messages
 
 2010-05-18  Dustin J. Mitchell <dustin@zmanda.com>

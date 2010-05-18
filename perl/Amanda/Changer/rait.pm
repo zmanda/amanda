@@ -304,6 +304,7 @@ sub info_key {
 		next unless exists($kid_info{'num_slots'});
 		my $kid_num_slots = $kid_info{'num_slots'};
 		if (defined $num_slots and $num_slots != $kid_num_slots) {
+		    debug("chg-rait: children have different slot counts!");
 		    $num_slots = -1;
 		} else {
 		    $num_slots = $kid_num_slots;
