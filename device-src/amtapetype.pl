@@ -300,7 +300,7 @@ sub data_to_null {
 }
 
 sub check_property {
-    my ($device) = @_;
+    my $device = open_device();
 
     my $fsf_after_filemark = $device->property_get("FSF_AFTER_FILEMARK");
 
@@ -376,11 +376,15 @@ sub check_property {
 	    die ("Wrong disk: " . $hdr->{disk} . " expected /test3");
 	}
 	data_to_null($device);
+
+	$device->finish();
     } else {
 	$need_fsf_after_filemark = 1;
-    }
 
-    $device->finish();
+	# $device is in error, so open a new one
+	$device->finish();
+	$device = open_device();
+    }
 
     #verify need_fsf_after_filemark
     my $fsf_after_filemark_works = 0;
@@ -664,10 +668,10 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 
 Amanda::Util::finish_setup($RUNNING_AS_ANY);
 
-my $device = open_device();
-
 # Find property of the device.
-check_property($device);
+check_property();
+
+my $device = open_device();
 
 if (!defined $opt_property) {
     my $compression_enabled = check_compression($device);
