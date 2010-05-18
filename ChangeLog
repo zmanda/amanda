@@ -1,4 +1,8 @@
 2010-05-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/amtapetype.pl: don't fail when fsf_after_filemark is
+	  required
+
+2010-05-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/rait.pm: add debug message when child slot
 	  counts differ
 
