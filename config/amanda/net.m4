@@ -64,7 +64,7 @@ AC_DEFUN([AMANDA_WITH_REUSEPORTS], [
 #
 AC_DEFUN([AMANDA_WITH_PORTRANGES], [
     AC_ARG_WITH(low-tcpportrange,
-	AS_HELP_STRING([--with-low-tcpportrange=low/high],
+	AS_HELP_STRING([--with-low-tcpportrange=low,high],
 	    [bind reserved TCP server sockets to ports within this range (default: unlimited)]),
 	[ LOW_TCPPORTRANGE="$withval" ],
 	[ LOW_TCPPORTRANGE=unlimited ])
@@ -90,7 +90,7 @@ AC_DEFUN([AMANDA_WITH_PORTRANGES], [
     fi
 
     AC_ARG_WITH(tcpportrange,
-	AS_HELP_STRING([--with-tcpportrange=low/high],
+	AS_HELP_STRING([--with-tcpportrange=low,high],
 	    [bind unreserved TCP server sockets to ports within this range (default: unlimited)]),
 	[ TCPPORTRANGE="$withval" ],
 	[ TCPPORTRANGE="unlimited" ])
@@ -116,7 +116,7 @@ AC_DEFUN([AMANDA_WITH_PORTRANGES], [
     fi
 
     AC_ARG_WITH(udpportrange,
-	AS_HELP_STRING([--with-udpportrange=low/high],
+	AS_HELP_STRING([--with-udpportrange=low,high],
 	    [bind reserved UDP server sockets to ports within this range (default: unlimited)]),
 	[ UDPPORTRANGE="$withval" ],
 	[ UDPPORTRANGE="unlimited" ])
