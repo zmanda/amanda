@@ -91,7 +91,7 @@ tapetype "EXABYTE"        # optional      insensitive     sensitive
 
 define dumptype "dt" {    # optional      insensitive     sensitive
   "dumptype-common"       # optional      insensitive     sensitive
-  strategy noincr         # prohibited    insensitive     insensitive
+  strategy noinc          # prohibited    insensitive     insensitive
 }
 </programlisting>
 </para>
