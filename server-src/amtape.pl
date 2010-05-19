@@ -268,18 +268,18 @@ sub {
 		} else {
 		    $line .= " unknown";
 		}
-		if ($sl->{'barcode'}) {
-		    $line .= " barcode $sl->{barcode}";
-		}
-		if ($sl->{'reserved'}) {
-		    $line .= " reserved";
-		}
-		if (defined $sl->{'loaded_in'}) {
-		    $line .= " (in drive $sl->{'loaded_in'})";
-		}
-		if ($sl->{'import_export'}) {
-		    $line .= " (import/export slot)";
-		}
+	    }
+	    if ($sl->{'barcode'}) {
+		$line .= " barcode $sl->{barcode}";
+	    }
+	    if ($sl->{'reserved'}) {
+		$line .= " reserved";
+	    }
+	    if (defined $sl->{'loaded_in'}) {
+		$line .= " (in drive $sl->{'loaded_in'})";
+	    }
+	    if ($sl->{'import_export'}) {
+		$line .= " (import/export slot)";
 	    }
 
 	    # note that inventory goes to stdout

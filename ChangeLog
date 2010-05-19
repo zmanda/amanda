@@ -1,4 +1,7 @@
 2010-05-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amtape.pl (inventory): print barcode from unknown state.
+
+2010-05-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Application.swg (default_validate): Use sysread.
 
 2010-05-18  Dustin J. Mitchell <dustin@zmanda.com>
