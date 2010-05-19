@@ -1,4 +1,7 @@
 2010-05-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/fileheader.c: don't print to stderr anymore
+
+2010-05-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/Makefile.am: use BUILT_SOURCES to build rpcgen products
 	  first, since they are not solaris-compatible
 

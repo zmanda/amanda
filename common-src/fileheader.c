@@ -37,7 +37,6 @@ static const char *	filetype2str(filetype_t);
 static filetype_t	str2filetype(const char *);
 static void		strange_header(dumpfile_t *, const char *,
 				size_t, const char *, const char *);
-static ssize_t 		hexdump(const char *buffer, size_t len);
 static char            *quote_heredoc(char *text, char *delimiter_prefix);
 static char            *parse_heredoc(char *line, char **saveptr);
 
@@ -63,11 +62,8 @@ strange_header(
     if (expected == NULL)
 	expected = "<null>";
 
-    g_fprintf(stderr, _("%s: strange amanda header: \"%.*s\"\n"), get_pname(),
-		(int)buflen, buffer);
-
-    g_fprintf(stderr, _("%s: Expected: \"%s\"  Actual: \"%s\"\n"), get_pname(),
-		expected, actual);
+    g_debug("strange amanda header: \"%.*s\"", (int)buflen, buffer);
+    g_debug("Expected: \"%s\"  Actual: \"%s\"", expected, actual);
 
     file->type = F_WEIRD;
 }
@@ -136,10 +132,7 @@ parse_file_header(
 
     tok = strtok_r(line1, " ", &saveptr);
     if (tok == NULL) {
-        g_fprintf(stderr, _("%s: Empty amanda header: buflen=%zu lsize=%zu\n"), get_pname(),
-	    buflen, 
-	    lsize);
-	hexdump(buffer, lsize);
+        g_debug("Empty amanda header: buflen=%zu lsize=%zu", buflen, lsize);
 	strange_header(file, buffer, buflen, _("<Non-empty line>"), tok);
 	goto out;
     }
@@ -1049,25 +1042,6 @@ void dumpfile_free_data(dumpfile_t* info) {
 void dumpfile_free(dumpfile_t* info) {
     dumpfile_free_data(info);
     amfree(info);
-}
-
-static ssize_t
-hexdump(
-    const char *buffer,
-    size_t	len)
-{
-    ssize_t rc = -1;
-
-    FILE *stream = popen("od -c -x -", "w");
-	
-    if (stream != NULL) {
-	fflush(stdout);
-	rc = (ssize_t)fwrite(buffer, len, 1, stream);
-	if (ferror(stream))
-	    rc = -1;
-	pclose(stream);
-    }
-    return rc;
 }
 
 static char *quote_heredoc(
