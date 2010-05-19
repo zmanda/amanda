@@ -1,4 +1,7 @@
 2010-05-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsamba.pl: filter "Server not using user level ..."
+
+2010-05-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amtape.pl (inventory): print barcode from unknown state.
 
 2010-05-19  Jean-Louis Martineau <martineau@zmanda.com>
