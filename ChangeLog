@@ -1,3 +1,6 @@
+2010-05-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Application.swg (default_validate): Use sysread.
+
 2010-05-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/amtapetype.pl: don't fail when fsf_after_filemark is
 	  required

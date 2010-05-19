@@ -61,8 +61,11 @@ sub run_calcsize {
 
 sub default_validate {
     my $self = shift;
+    my $buffer;
 
-    while (<STDIN>) {}
+    do {
+	sysread STDIN, $buffer, 1048576;
+    } while (defined $buffer and length($buffer) > 0);
 }
 
 sub write_magic_block {
