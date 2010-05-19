@@ -227,6 +227,19 @@ ndmp4.h ndmp4_xdr.c : ndmp4.x
 
 ndmp9.h ndmp9_xdr.c : ndmp9.x
 	rpcgen ndmp9.x
+
+# cause these files to be built before those that might depend on them
+BUILT_SOURCES = \
+	ndmp0.h \
+	ndmp0_xdr.c \
+	ndmp2.h \
+	ndmp2_xdr.c \
+	ndmp3.h \
+	ndmp3_xdr.c \
+	ndmp4.h \
+	ndmp4_xdr.c \
+	ndmp9.h \
+	ndmp9_xdr.c
 endif
 
 noinst_HEADERS = \
