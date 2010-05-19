@@ -378,6 +378,8 @@ sub command_selfcheck {
 	chomp;
 	debug("stderr: " . $_);
 	next if /^Domain=/;
+	# message if samba server is configured with 'security = share'
+	next if /Server not using user level security and no password supplied./;
 	$self->print_to_server("smbclient: $_",
 			       $Amanda::Script_App::ERROR);
     }
@@ -466,6 +468,8 @@ sub parse_estimate {
 	next if /^\s*$/;
 	next if /^Domain=/;
 	next if /dumped \d+ files and directories/;
+	# message if samba server is configured with 'security = share'
+	next if /Server not using user level security and no password supplied./;
 	debug("stderr: $_");
 	if ($_ =~ /^Total number of bytes: (\d*)/) {
 	    $size = $1;
@@ -616,6 +620,8 @@ sub command_backup {
 	next if /^Domain=/;
 	next if /^tarmode is now /;
 	next if /dumped (\d+) files and directories/;
+	# message if samba server is configured with 'security = share'
+	next if /Server not using user level security and no password supplied./;
 	if (/^Total bytes written: (\d*)/) {
 	    $size = $1;
 	} else {
