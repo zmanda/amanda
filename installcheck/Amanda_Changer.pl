@@ -16,8 +16,9 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 43;
+use Test::More tests => 47;
 use File::Path;
+use Data::Dumper;
 use strict;
 
 use lib "@amperldir@";
@@ -525,13 +526,14 @@ Amanda::MainLoop::run();
 # _new_from_uri so we can monitor the result
 sub my_new_from_uri {
     my ($uri, $cc, $name) = @_;
+    return $uri if (ref $uri and $uri->isa("Amanda::Changer::Error"));
     return [ $uri, $cc? "cc" : undef ];
 }
 *saved_new_from_uri = *Amanda::Changer::_new_from_uri;
 *Amanda::Changer::_new_from_uri = *my_new_from_uri;
 
 sub loadconfig {
-    my ($global_tapedev, $global_tpchanger, $defn_tpchanger) = @_;
+    my ($global_tapedev, $global_tpchanger, $defn_tpchanger, $custom_defn) = @_;
 
     $testconf = Installcheck::Config->new();
 
@@ -549,6 +551,11 @@ sub loadconfig {
 	]);
     }
 
+    if (defined($custom_defn)) {
+	$testconf->add_changer("customchanger", $custom_defn);
+	$testconf->add_param('tpchanger', '"customchanger"');
+    }
+
     $testconf->write();
 
     my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
@@ -559,77 +566,103 @@ sub loadconfig {
 }
 
 sub assert_invalid {
-    my ($global_tapedev, $global_tpchanger, $defn_tpchanger,
+    my ($global_tapedev, $global_tpchanger, $defn_tpchanger, $custom_defn,
 	$name, $regexp, $msg) = @_;
-    loadconfig($global_tapedev, $global_tpchanger, $defn_tpchanger);
+    loadconfig($global_tapedev, $global_tpchanger, $defn_tpchanger, $custom_defn);
     my $err = Amanda::Changer->new($name);
     if ($err->isa("Amanda::Changer::Error")) {
 	like($err->{'message'}, $regexp, $msg);
     } else {
-	diag("Amanda::Changer->new did not return an Error object");
+	diag("Amanda::Changer->new did not return an Error object:");
+	diag("".Dumper($err));
 	fail($msg);
     }
 }
 
-assert_invalid(undef, undef, undef, undef,
+assert_invalid(undef, undef, undef, undef, undef,
     qr/You must specify one of 'tapedev' or 'tpchanger'/,
     "supplying a nothing is invalid");
 
-loadconfig(undef, "file:/foo", undef);
+loadconfig(undef, "file:/foo", undef, undef);
 is_deeply( Amanda::Changer->new(), [ "chg-single:file:/foo", undef ],
     "default changer with global tpchanger naming a device");
 
-loadconfig(undef, "chg-disk:/foo", undef);
+loadconfig(undef, "chg-disk:/foo", undef, undef);
 is_deeply( Amanda::Changer->new(), [ "chg-disk:/foo", undef ],
     "default changer with global tpchanger naming a changer");
 
-loadconfig(undef, "mychanger", "chg-disk:/bar");
+loadconfig(undef, "mychanger", "chg-disk:/bar", undef);
 is_deeply( Amanda::Changer->new(), [ "chg-disk:/bar", "cc" ],
     "default changer with global tpchanger naming a defined changer with a uri");
 
-loadconfig(undef, "mychanger", "chg-zd-mtx");
+loadconfig(undef, "mychanger", "chg-zd-mtx", undef);
 is_deeply( Amanda::Changer->new(), [ "chg-compat:chg-zd-mtx", "cc" ],
     "default changer with global tpchanger naming a defined changer with a compat script");
 
-loadconfig(undef, "chg-zd-mtx", undef);
+loadconfig(undef, "chg-zd-mtx", undef, undef);
 is_deeply( Amanda::Changer->new(), [ "chg-compat:chg-zd-mtx", undef ],
     "default changer with global tpchanger naming a compat script");
 
-loadconfig("tape:/dev/foo", undef, undef);
+loadconfig("tape:/dev/foo", undef, undef, undef);
 is_deeply( Amanda::Changer->new(), [ "chg-single:tape:/dev/foo", undef ],
     "default changer with global tapedev naming a device and no tpchanger");
 
-assert_invalid("tape:/dev/foo", "tape:/dev/foo", undef, undef,
+assert_invalid("tape:/dev/foo", "tape:/dev/foo", undef, undef, undef,
     qr/Cannot specify both 'tapedev' and 'tpchanger'/,
     "supplying a device for both tpchanger and tapedev is invalid");
 
-assert_invalid("tape:/dev/foo", "chg-disk:/foo", undef, undef,
+assert_invalid("tape:/dev/foo", "chg-disk:/foo", undef, undef, undef,
     qr/Cannot specify both 'tapedev' and 'tpchanger'/,
     "supplying a device for tapedev and a changer for tpchanger is invalid");
 
-loadconfig("tape:/dev/foo", 'chg-zd-mtx', undef);
+loadconfig("tape:/dev/foo", 'chg-zd-mtx', undef, undef);
 is_deeply( Amanda::Changer->new(), [ "chg-compat:chg-zd-mtx", undef ],
     "default changer with global tapedev naming a device and a global tpchanger naming a compat script");
 
-assert_invalid("chg-disk:/foo", "tape:/dev/foo", undef, undef,
+assert_invalid("chg-disk:/foo", "tape:/dev/foo", undef, undef, undef,
     qr/Cannot specify both 'tapedev' and 'tpchanger'/,
     "supplying a changer for tapedev and a device for tpchanger is invalid");
 
-loadconfig("chg-disk:/foo", undef, undef);
+loadconfig("chg-disk:/foo", undef, undef, undef);
 is_deeply( Amanda::Changer->new(), [ "chg-disk:/foo", undef ],
     "default changer with global tapedev naming a device");
 
-loadconfig("mychanger", undef, "chg-disk:/bar");
+loadconfig("mychanger", undef, "chg-disk:/bar", undef);
 is_deeply( Amanda::Changer->new(), [ "chg-disk:/bar", "cc" ],
     "default changer with global tapedev naming a defined changer with a uri");
 
-loadconfig("mychanger", undef, "chg-zd-mtx");
+loadconfig("mychanger", undef, "chg-zd-mtx", undef);
 is_deeply( Amanda::Changer->new(), [ "chg-compat:chg-zd-mtx", "cc" ],
     "default changer with global tapedev naming a defined changer with a compat script");
 
-loadconfig(undef, undef, "chg-disk:/foo");
+loadconfig(undef, undef, "chg-disk:/foo", undef);
 is_deeply( Amanda::Changer->new("mychanger"), [ "chg-disk:/foo", "cc" ],
     "named changer loads the proper definition");
+
+loadconfig(undef, undef, undef, [
+    tapedev => '"chg-disk:/foo"',
+]);
+is_deeply( Amanda::Changer->new(), [ "chg-disk:/foo", "cc" ],
+    "defined changer with tapedev loads the proper definition");
+
+loadconfig(undef, undef, undef, [
+    tpchanger => '"chg-disk:/bar"',
+]);
+is_deeply( Amanda::Changer->new(), [ "chg-disk:/bar", "cc" ],
+    "defined changer with tpchanger loads the proper definition");
+
+assert_invalid(undef, undef, undef, [
+	tpchanger => '"chg-disk:/bar"',
+	tapedev => '"file:/bar"',
+    ], undef,
+    qr/Cannot specify both 'tapedev' and 'tpchanger'/,
+    "supplying both a new tpchanger and tapedev in a definition is invalid");
+
+assert_invalid(undef, undef, undef, [
+	property => '"this" "will not work"',
+    ], undef,
+    qr/You must specify one of 'tapedev' or 'tpchanger'/,
+    "supplying neither a tpchanger nor tapedev in a definition is invalid");
 
 *Amanda::Changer::_new_from_uri = *saved_new_from_uri;
 

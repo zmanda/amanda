@@ -1,4 +1,11 @@
 2010-05-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Changer.pl: test more configs
+	* man/xml-source/amanda.conf.5.xml: point users to
+	  amanda-changers(7)
+	* perl/Amanda/Changer.pm: support either tpchanger or
+	  tapedev in changer defs
+
+2010-05-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/progs.m4: always use rpcgen
 	* ndmp-src/Makefile.am: always build rpc outputs
 	* ndmp-src/ndmp0.h ndmp-src/ndmp0_xdr.c ndmp-src/ndmp2.h
