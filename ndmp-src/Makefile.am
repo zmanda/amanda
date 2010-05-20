@@ -209,24 +209,20 @@ ndmjob_LDADD = libndmjob.la \
 amndmjob_LDADD = libndmjob.la \
 		   ../common-src/libamanda.la
 
-# for systems without rpcgen, don't even include rules that *might*
-# regenerate things from the .x files.  These would rarely change
-# upstream, and *definitely* shouldn't change in Amanda.
-if HAVE_RPCGEN
 ndmp0.h ndmp0_xdr.c : ndmp0.x
-	rpcgen ndmp0.x
+	$(RPCGEN) ndmp0.x
 
 ndmp2.h ndmp2_xdr.c : ndmp2.x
-	rpcgen ndmp2.x
+	$(RPCGEN) ndmp2.x
 
 ndmp3.h ndmp3_xdr.c : ndmp3.x
-	rpcgen ndmp3.x
+	$(RPCGEN) ndmp3.x
 
 ndmp4.h ndmp4_xdr.c : ndmp4.x
-	rpcgen ndmp4.x
+	$(RPCGEN) ndmp4.x
 
 ndmp9.h ndmp9_xdr.c : ndmp9.x
-	rpcgen ndmp9.x
+	$(RPCGEN) ndmp9.x
 
 # cause these files to be built before those that might depend on them
 BUILT_SOURCES = \
@@ -240,7 +236,6 @@ BUILT_SOURCES = \
 	ndmp4_xdr.c \
 	ndmp9.h \
 	ndmp9_xdr.c
-endif
 
 noinst_HEADERS = \
 	md5.h            ndmp0_enum_strs.h  ndmp3.x            ndmprotocol.h \
