@@ -995,9 +995,6 @@ default_device_property_get_ex(
     /* Most of this function's job is to sanity-check everything, then
      * call the relevant getter. */
 
-    if (device_in_error(self))
-	return FALSE;
-
     class_properties = DEVICE_GET_CLASS(self)->class_properties;
     if (id >= class_properties->len)
 	return FALSE;

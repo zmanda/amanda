@@ -1,3 +1,7 @@
+2010-05-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/amtapetype.pl: get the block_size property earlier
+	* device-src/device.c: allow property_get after a DEVICE_ERROR
+
 2010-05-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Always report "taperflush criteria not met".
 

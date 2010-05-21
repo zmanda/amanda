@@ -117,6 +117,9 @@ sub write_one_file(%) {
     my $pattern = $options{'PATTERN'} || 'FIXED';
     my $max_time = $options{'MAX_TIME'} || 0;
 
+    # get the block size now, while the device is still working
+    my $block_size = $device->property_get("block_size");
+
     # start the device
     my $hdr = Amanda::Header->new();
     $hdr->{type} = $Amanda::Header::F_DUMPFILE;
@@ -182,7 +185,6 @@ sub write_one_file(%) {
 
     # OK, we finished, update statistics (even if we saw an error)
     my $blocks_written = $device->block();
-    my $block_size = $device->property_get("block_size");
     $stats->{$pattern}->{BYTES} += $blocks_written * $block_size;
     $stats->{$pattern}->{FILES} += 1;
     $stats->{$pattern}->{TIME}  += $duration;
