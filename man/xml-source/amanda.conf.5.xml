@@ -2727,8 +2727,7 @@ in the form of "changer" sections, which look like this:</para>
 <programlisting>
 define changer <emphasis remap='I'>name</emphasis> {
     comment "<emphasis remap='I'>comment (optional)</emphasis>"
-    tapedev "<emphasis remap='I'>tape-device</emphasis>"
-    tpchanger "<emphasis remap='I'>changer-type</emphasis>"
+    tpchanger "<emphasis remap='I'>changer-spec</emphasis>"
     changerdev "<emphasis remap='I'>device-name</emphasis>"
     changerfile "<emphasis remap='I'>state-file</emphasis>"
     <literal>...</literal>
@@ -2739,6 +2738,8 @@ define changer <emphasis remap='I'>name</emphasis> {
 <para><emphasis remap='I'>name</emphasis> is the user-specified name of this
 device. The remaining parameters are specific to the changer type selected.
 </para>
+
+<para>See <manref name="amanda-changers" vol="7" /> for more information on configuring changers.</para>
 
 </refsect1>
 

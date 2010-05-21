@@ -741,9 +741,26 @@ sub _changer_alias_to_uri {
     my $cc = Amanda::Config::lookup_changer_config($name);
     if ($cc) {
 	my $tpchanger = changer_config_getconf($cc, $CHANGER_CONFIG_TPCHANGER);
-	if (my $uri = _old_script_to_uri($tpchanger)) {
-	    return ($uri, $cc);
-	} elsif (_uri_to_pkgname($tpchanger)) {
+	if ($tpchanger) {
+	    if (my $uri = _old_script_to_uri($tpchanger)) {
+		return ($uri, $cc);
+	    }
+	}
+
+	my $seen_tpchanger = changer_config_seen($cc, $CHANGER_CONFIG_TPCHANGER);
+	my $seen_tapedev = changer_config_seen($cc, $CHANGER_CONFIG_TAPEDEV);
+	if ($seen_tpchanger and $seen_tapedev) {
+	    return Amanda::Changer::Error->new('fatal',
+		message => "Cannot specify both 'tapedev' and 'tpchanger' " .
+		    "**unless using an old-style changer script");
+	}
+	if (!$seen_tpchanger and !$seen_tapedev) {
+	    return Amanda::Changer::Error->new('fatal',
+		message => "You must specify one of 'tapedev' or 'tpchanger'");
+	}
+	$tpchanger ||= changer_config_getconf($cc, $CHANGER_CONFIG_TAPEDEV);
+
+	if (_uri_to_pkgname($tpchanger)) {
 	    return ($tpchanger, $cc);
 	} else {
 	    die "Changer '$name' specifies invalid tpchanger '$tpchanger'";
@@ -756,6 +773,8 @@ sub _changer_alias_to_uri {
 
 sub _old_script_to_uri {
     my ($name) = @_;
+
+    die("empty changer script name") unless $name;
 
     if ((-x "$amlibexecdir/$name") or (($name =~ qr{^/}) and (-x $name))) {
 	return "chg-compat:$name"
@@ -808,6 +827,13 @@ our %changers_by_uri_cc = ();
 
 sub _new_from_uri { # (note: this sub is patched by the installcheck)
     my ($uri, $cc, $name) = @_;
+
+    # as a special case, if the URI came back as an error, just pass
+    # that along.  This lets the _xxx_to_uri methods return errors more
+    # easily
+    if (ref $uri and $uri->isa("Amanda::Changer::Error")) {
+	return $uri;
+    }
 
     # make up a key for our hash of already-instantiated objects,
     # using a newline as a separator, since perl can't use tuples
