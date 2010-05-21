@@ -385,6 +385,10 @@ ndmca_monitor_get_post_backup_env (struct ndm_session *sess)
 	ndmp9_pval *		pv;
 
 	rc = ndmca_data_get_env (sess);
+	if (rc && ca->data_state.error == NDMP9_ILLEGAL_STATE_ERR) {
+		ndmalogf (sess, 0, 2, "fetch post backup env failed");
+		return 0;
+	}
 	if (rc) {
 		ndmalogf (sess, 0, 0, "fetch post backup env failed");
 		return -1;
