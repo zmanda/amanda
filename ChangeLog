@@ -1,3 +1,6 @@
+2010-05-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Always report "taperflush criteria not met".
+
 2010-05-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Changer.pl: test more configs
 	* man/xml-source/amanda.conf.5.xml: point users to
