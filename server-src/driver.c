@@ -3379,13 +3379,7 @@ static TapeAction tape_action(char **why_no_new_tape)
 		 dump_to_disk_terminated))		//  or all dump to disk terminated
 	      ) {
 	result |= TAPE_ACTION_NO_NEW_TAPE;
-	if (flush_threshold_dumped >= tapeq_size) {
-	    *why_no_new_tape = _("flush-threshold-dumped criteria not met");
-	} else if (flush_threshold_scheduled >= sched_size) {
-	    *why_no_new_tape = _("flush-threshold-scheduled criteria not met");
-	} else {
-	    *why_no_new_tape = _("taperflush criteria not met");
-	}
+	*why_no_new_tape = _("taperflush criteria not met");
     }
 
     // when to start a flush
