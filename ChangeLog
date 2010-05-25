@@ -1,4 +1,7 @@
 2010-05-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am: add libamxfer as a dependency of libamglue
+
+2010-05-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amtapetype.pl: use force for subsequent runs
 
 2010-05-25  Dustin J. Mitchell <dustin@zmanda.com>
