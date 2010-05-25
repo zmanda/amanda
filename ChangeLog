@@ -1,3 +1,8 @@
+2010-05-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/amtapetype.pl: close and re-open devices between tests
+	* device-src/xfer-dest-device.c: fix memory leak
+	* man/xml-source/amtapetype.8.xml: fix -f docs
+
 2010-05-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndma_cops_backreco.c: Log 'fetch post backup env failed'
 	  with level if NDMP9_ILLEGAL_STATE_ERR.

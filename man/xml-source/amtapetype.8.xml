@@ -69,8 +69,7 @@ This takes a few minutes only.</para>
   <varlistentry>
   <term><option>-f</option></term>
   <listitem>
-<para>Run amtapetype even if the loaded volume is already in use or compression
-is enabled.</para>
+<para>Run amtapetype even if the loaded volume is already labeled.</para>
   </listitem>
   </varlistentry>
   <varlistentry>

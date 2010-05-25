@@ -86,6 +86,7 @@ push_buffer_impl(
     size_t len)
 {
     XferDestDevice *self = XFER_DEST_DEVICE(elt);
+    gpointer to_free = buf;
 
     /* Handle EOF */
     if (!buf) {
@@ -122,6 +123,7 @@ push_buffer_impl(
     if (self->partial_length == self->block_size) {
 	if (!device_write_block(self->device, self->block_size, self->partial)) {
 	    handle_device_error(self);
+	    g_free(to_free);
 	    return;
 	}
 	self->partial_length = 0;
@@ -131,6 +133,7 @@ push_buffer_impl(
     while (len >= self->block_size) {
 	if (!device_write_block(self->device, self->block_size, buf)) {
 	    handle_device_error(self);
+	    g_free(to_free);
 	    return;
 	}
 
@@ -143,6 +146,8 @@ push_buffer_impl(
 	memmove(self->partial, buf, len);
 	self->partial_length = len;
     }
+
+    g_free(to_free);
 }
 
 static void
