@@ -1,4 +1,4 @@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 4;
+use Test::More tests => 5;
 
 use lib "@amperldir@";
 use Installcheck::Run qw(run run_get run_err vtape_dir);
@@ -44,6 +44,9 @@ like(run_get('amtapetype', 'TESTCONF', 'smallvtape'),
     qr/define tapetype unknown-tapetype.*blocksize 32 kbytes/s,
     "amtapetype runs successfully on a small vtape");
 
-like(run_get('amtapetype', 'TESTCONF', '-b', '33000', 'smallvtape'),
+ok(run_err('amtapetype', 'TESTCONF', 'smallvtape'),
+    "a second run on the same device fails because -f isn't used") or die;
+
+like(run_get('amtapetype', 'TESTCONF', '-f', '-b', '33000', 'smallvtape'),
     qr/add device_property/,
     "with a non-kilobyte block size, directs user to add a device_property");
