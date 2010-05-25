@@ -51,7 +51,9 @@ my $opt_property;
 # drive is.
 my $device_speed_estimate;
 
-# open up a device, optionally check its label, and start it in ACCESS_WRITE.
+# open up a device, optionally check its label on the first invocation,
+# and start it in ACCESS_WRITE.
+my $_label_checked = 0;
 sub open_device {
     my $device = Amanda::Device->new($opt_device_name);
     if ($device->status() != $DEVICE_STATUS_SUCCESS) {
@@ -67,26 +69,42 @@ sub open_device {
 	    or die "Error setting blocksize: " . $device->error_or_status();
     }
 
-    if (!$opt_force) {
+    if (!$opt_force and !$_label_checked) {
 	my $read_label_status = $device->read_label();
 	if ($read_label_status & $DEVICE_STATUS_VOLUME_UNLABELED) {
-	    if ($device->volume_label) {
-		die "Volume in device $opt_device_name has Amanda label '" .
-		    {$device->volume_label} . "'. Giving up.";
-	    }
+	    # unlabeled is OK
 	} elsif ($read_label_status != $DEVICE_STATUS_SUCCESS) {
 	    die "Error reading label: " . $device->error_or_status();
+	} elsif ($device->volume_label) {
+	    die "Volume in device $opt_device_name has Amanda label '" .
+		$device->volume_label . "'. Giving up.";
 	}
+	$_label_checked = 1;
     }
 
-    return $device;
-}
+    my $start_time = time;
+    my $retries = 0;
+    my $backoff = 1;
+    while (1) {
+	last if ($device->start($ACCESS_WRITE, $opt_label, undef));
+	if (!($device->status & $DEVICE_STATUS_DEVICE_BUSY)) {
+	    die("Error writing label '$opt_label': ". $device->error_or_status());
+	}
 
-sub start_device {
-    my ($device) = @_;
+	if ($retries == 0) {
+	    print STDERR "Device is busy.  Amtapetype will retry forever; hit ctrl-C to quit.\n";
+	}
 
-    if (!$device->start($ACCESS_WRITE, $opt_label, undef)) {
-	die("Error writing label '$opt_label': ". $device->error_or_status());
+	sleep($backoff);
+	$backoff *= 2;
+	$backoff = 120 if $backoff > 120;
+	$retries++;
+    }
+
+    if ($retries) {
+	my $elapsed = time - $start_time;
+	print STDERR "Drive was busy for $elapsed seconds.\n";
+	print STDERR "If this device is used in a changer, you may want to set timeouts appropriately.\n";
     }
 
     return $device;
@@ -210,7 +228,7 @@ sub write_one_file(%) {
 }
 
 sub check_compression {
-    my ($device) = @_;
+    my $device = open_device();
 
     # Check compression status here by property query. If the device can answer
     # the question, there's no reason to investigate further.
@@ -240,8 +258,6 @@ sub check_compression {
 
     my $stats = { };
 
-    start_device($device);
-
     my $err = write_one_file(
 		    DEVICE => $device,
 		    STATS => $stats,
@@ -251,9 +267,18 @@ sub check_compression {
     if ($err != 'TIMEOUT') {
 	die $err;
     }
+    $device->finish();
 
-    # restart the device to rewind it
-    start_device($device);
+    # speed calculations are a little tricky: BigInt * float comes out to NaN, so we
+    # cast the BigInts to float first
+    my $random_speed = ($stats->{RANDOM}->{BYTES} . "") / $stats->{RANDOM}->{TIME};
+    print STDERR "Wrote random (uncompressible) data at $random_speed bytes/sec\n";
+
+    # sock this away for make_tapetype's use
+    $device_speed_estimate = $random_speed;
+
+    # restart the device to clear any errors and rewind it
+    $device = open_device();
 
     $err = write_one_file(
 		    DEVICE => $device,
@@ -263,17 +288,10 @@ sub check_compression {
     if ($err) {
 	die $err;
     }
+    $device->finish();
 
-    # speed calculations are a little tricky: BigInt * float comes out to NaN, so we
-    # cast the BigInts to float first
-    my $random_speed = ($stats->{RANDOM}->{BYTES} . "") / $stats->{RANDOM}->{TIME};
     my $fixed_speed = ($stats->{FIXED}->{BYTES} . "") / $stats->{FIXED}->{TIME};
-
-    print STDERR "Wrote random (uncompressible) data at $random_speed bytes/sec\n";
     print STDERR "Wrote fixed (compressible) data at $fixed_speed bytes/sec\n";
-
-    # sock this away for make_tapetype's use
-    $device_speed_estimate = $random_speed;
 
     $compression_enabled =
 	($fixed_speed / $random_speed > $compression_check_min_ratio);
@@ -304,6 +322,7 @@ sub data_to_null {
 sub check_property {
     my $device = open_device();
 
+    print STDERR "Checking for FSF_AFTER_FILEMARK requirement\n";
     my $fsf_after_filemark = $device->property_get("FSF_AFTER_FILEMARK");
 
     # not a 'tape:' device
@@ -532,13 +551,14 @@ sub check_property {
 }
 
 sub make_tapetype {
-    my ($device, $compression_enabled) = @_;
+    my ($compression_enabled) = @_;
+
+    my $device = open_device();
     my $blocksize = $device->property_get("BLOCK_SIZE");
 
     # First, write one very long file to get the total tape length
     print STDERR "Writing one file to fill the volume.\n";
     my $stats = {};
-    start_device($device);
     my $err = write_one_file(
 		DEVICE => $device,
 		STATS => $stats,
@@ -561,8 +581,9 @@ sub make_tapetype {
     $file_size -= $file_size % $blocksize;
 
     print STDERR "Writing smaller files ($file_size bytes) to determine filemark.\n";
+    $device->finish();
+    $device = open_device(); # re-open to rewind and clear errors
     $stats = {};
-    start_device($device);
     while (!write_one_file(
 			DEVICE => $device,
 			STATS => $stats,
@@ -673,10 +694,8 @@ Amanda::Util::finish_setup($RUNNING_AS_ANY);
 # Find property of the device.
 check_property();
 
-my $device = open_device();
-
 if (!defined $opt_property) {
-    my $compression_enabled = check_compression($device);
+    my $compression_enabled = check_compression();
     print STDERR "Compression: ",
         $compression_enabled? "enabled" : "disabled",
         "\n";
@@ -687,7 +706,7 @@ if (!defined $opt_property) {
     }
 
     if (!$opt_only_compression) {
-        make_tapetype($device, $compression_enabled);
+        make_tapetype($compression_enabled);
     }
 }
 
