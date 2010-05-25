@@ -1,4 +1,7 @@
 2010-05-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amtapetype.pl: use force for subsequent runs
+
+2010-05-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/amtapetype.pl: close and re-open devices between tests
 	* device-src/xfer-dest-device.c: fix memory leak
 	* man/xml-source/amtapetype.8.xml: fix -f docs
