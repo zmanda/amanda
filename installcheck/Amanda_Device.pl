@@ -1311,7 +1311,9 @@ SKIP: {
 	    }));
 
 	    Amanda::MainLoop::run();
-	    exit(0);
+
+	    # exit without doing any of perl's cleanup
+	    POSIX::_exit(0);
 	}
 
 	# write files from the connection until EOF
