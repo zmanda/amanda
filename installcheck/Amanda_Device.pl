@@ -1295,7 +1295,7 @@ SKIP: {
 	    $sock->close();
 
 	    my @sockresult = map { [ split(/:/, $_) ] } split(/ /, $sockresult);
-	    $addrs = [ map { $_->[1] = 0 + $_->[1]; $_ } @sockresult ];
+	    $addrs = [ map { $_->[1] = int($_->[1]); $_ } @sockresult ];
 
 	    my $xfer = Amanda::Xfer->new([
 		    Amanda::Xfer::Source::Random->new(32768*34, 0xB00),

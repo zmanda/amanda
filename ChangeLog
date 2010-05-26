@@ -1,4 +1,7 @@
 2010-05-26  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Device.pl: cast port to integer
+
+2010-05-26  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Device.pl: exit harder, to avoid cleanup
 
 2010-05-25  Dustin J. Mitchell <dustin@zmanda.com>
