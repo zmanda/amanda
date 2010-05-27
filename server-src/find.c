@@ -817,6 +817,8 @@ search_logfile(
 		s[-1] = '\0';
 		fileno = atoi(number);
 		filenum = fileno;
+		if (filenum == 0)
+		    continue;
 
 		skip_whitespace(s, ch);
 		if(ch == '\0') {
