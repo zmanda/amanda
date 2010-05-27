@@ -1,3 +1,9 @@
+2010-05-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/taper.pl: test for a new write after EOM without
+	  splitting
+	* perl/Amanda/Taper/Scribe.pm: handle the case correctly by tracking
+	  this condition and switching to a new volume appropriately
+
 2010-05-26  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/libs.m4: Allow user to specify glib config explicitly
 

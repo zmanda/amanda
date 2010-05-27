@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 166;
+use Test::More tests => 172;
 
 use lib '@amperldir@';
 use Installcheck::Run;
@@ -598,7 +598,8 @@ check_logs([
 ], "multivolume PORT-WRITE (disk cache) logged correctly");
 
 ##
-# Test failure on EOT (via PORT-WRITE with no cache)
+# Test failure on EOT (via PORT-WRITE with no cache), and a new try on the
+# next tape.
 
 $handle = "11-88888";
 $datestamp = "20090424173000";
@@ -616,6 +617,24 @@ like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
 	"got proper NEW-TAPE") or die;
 like(taper_reply, qr/^PARTIAL $handle INPUT-GOOD TAPE-ERROR "\[sec [\d.]+ kb 0 kps [\d.]+\]" "" "No space left on device"$/,
 	"got PARTIAL") or die;
+# retry on the next tape
+$handle = "11-88899";
+taper_cmd("PORT-WRITE $handle localhost /boot 0 $datestamp 0 NULL 0");
+like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+	"got PORT with data address");
+write_to_port($last_taper_reply, 65536, "localhost", "/boot", 0);
+like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
+	"got REQUEST-NEW-TAPE") or die;
+taper_cmd("NEW-TAPE");
+like(taper_reply, qr/^NEW-TAPE $handle TESTCONF02$/,
+	"got proper NEW-TAPE") or die;
+like(taper_reply, qr/^PARTDONE $handle TESTCONF02 1 64 "\[sec [\d.]+ kb 64 kps [\d.]+\]"$/,
+	"got PARTDONE for filenum 1 on second tape") or die;
+like(taper_reply, qr/^DUMPER-STATUS $handle$/,
+	"got DUMPER-STATUS request") or die;
+taper_cmd("DONE $handle 64");
+like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 64 kps [\d.]+ orig-kb 64\]" "" ""$/,
+	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
@@ -625,7 +644,12 @@ check_logs([
     qr(^PARTPARTIAL taper TESTCONF01 1 localhost /var/log $datestamp 1/-1 0 \[sec [\d.]+ kb 960 kps [\d.]+\] "No space left on device"$),
     qr(^PARTIAL taper localhost /var/log $datestamp 1 0 \[sec [\d.]+ kb 0 kps [\d.]+\] "No space left on device"$),
     qr(^INFO taper tape TESTCONF01 kb 0 fm 1 \[OK\]$),
-], "failure on EOT (no cache) logged correctly");
+    qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
+    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
+    qr(^PART taper TESTCONF02 1 localhost /boot $datestamp 1/-1 0 \[sec [\d.]+ kb 64 kps [\d.]+\]$),
+    qr(^DONE taper localhost /boot $datestamp 1 0 \[sec [\d.]+ kb 64 kps [\d.]+ orig-kb 64\]$),
+    qr(^INFO taper tape TESTCONF02 kb 64 fm 1 \[OK\]$),
+], "failure on EOT (no cache) with subsequent dump logged correctly");
 
 ##
 # Test running out of tapes (second REQUEST-NEW-TAPE fails)
