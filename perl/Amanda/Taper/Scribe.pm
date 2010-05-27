@@ -361,6 +361,7 @@ sub new {
 	reservation => undef,
 	device => undef,
 	device_size => undef,
+	device_at_eom => undef, # device still exists, but is full
 
         # callback passed to start_dump
 	dump_cb => undef,
@@ -626,8 +627,10 @@ sub _start_part {
     }
 
     # we need an actual, permitted device at this point, so if we don't have
-    # one, then defer this start_part call until we do
-    if (!$self->{'device'}) {
+    # one, then defer this start_part call until we do.  The device may still
+    # exist, but be at EOM, if the last dump failed at EOM and was not retried
+    # on a new volume.
+    if (!$self->{'device'} or $self->{'device_at_eom'}) {
 	# _get_new_volume calls _start_part when it has a new volume in hand
 	return $self->_get_new_volume();
     }
@@ -637,7 +640,7 @@ sub _start_part {
     # Note that this should be caught in the XMSG_PART_DONE handler -- this is just
     # here for backup.
     if (!$self->{'last_part_successful'} and $self->{'split_method'} eq 'none') {
-	$self->_operation_failed("No space left on device");
+	$self->_operation_failed("No space left on device (uncaught)");
 	return;
     }
 
@@ -723,6 +726,10 @@ sub _xmsg_part_done {
 	    if (!$msg->{'successful'}) {
 		# if no caching was going on, then the dump has failed
 		if ($self->{'split_method'} eq 'none') {
+		    # mark this device as at EOM, since we are not going to look
+		    # for another one yet
+		    $self->{'device_at_eom'} = 1;
+
 		    my $msg = "No space left on device";
 		    if ($self->{'device'}->status() != $DEVICE_STATUS_SUCCESS) {
 			$msg = $self->{'device'}->error_or_status();
@@ -869,6 +876,7 @@ sub _get_new_volume {
 
     $self->_log_volume_done();
     $self->{'device'} = undef;
+    $self->{'device_at_eom'} = 0;
 
     # release first, if necessary
     if ($self->{'reservation'}) {
