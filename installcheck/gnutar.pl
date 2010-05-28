@@ -1,0 +1,533 @@
+# Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+#
+# Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
+# Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
+
+use Test::More tests => 161;
+use File::Path;
+use Data::Dumper;
+use POSIX qw( WIFEXITED );
+use warnings;
+use strict;
+
+use lib "@amperldir@";
+use Installcheck;
+use IPC::Open3;
+use Amanda::Constants;
+use Amanda::Util qw( slurp );
+
+## this is an unusual installcheck, because it does not test anything about
+## Amanda itself.  However, it validates the accuracy of our understanding of
+## GNU Tar's behavior, as recorded at
+##  http://wiki.zmanda.com/index.php/GNU_Tar_Include_and_Exclude_Behavior
+
+my $gnutar = $Amanda::Constants::GNUTAR;
+$gnutar = $ENV{'GNUTAR'} if exists $ENV{'GNUTAR'};
+
+## get set up
+
+my @filenames = (qw{A*A AxA B?B BxB C[C CC D]D E\E F'F G"G}, 'H H');
+
+my $tarfile = "$Installcheck::TMP/gnutar-tests.tar";
+my $datadir = "$Installcheck::TMP/gnutar-tests";
+
+sub make_tarfile
+{
+    my @extra_args = @_;
+
+    rmtree($datadir) if -e $datadir;
+    mkpath($datadir);
+
+    for my $fn (@filenames) {
+	open(my $fh, ">", "$datadir/$fn");
+	print $fh "data";
+	close($fh);
+    }
+
+    system($gnutar, "-C", $datadir, "-cf", $tarfile, @extra_args, '.');
+    die "could not run gnutar" unless $? == 0;
+
+    rmtree($datadir) if -e $datadir;
+}
+
+## gnutar version
+
+my ($v, $numeric_version);
+{
+    my $verstring = `$gnutar --version`;
+    die "could not run gnutar" unless $? == 0;
+    ($v) = ($verstring =~ /tar [^0-9]*([0-9.]+)\n/);
+    my ($maj, $min, $mic) = ($v =~ /([0-9]+)\.([0-9]+)(?:\.([0-9]+))?/);
+
+    $numeric_version = 0;
+    $numeric_version += $maj * 10000 if $maj;
+    $numeric_version += $min * 100 if $min;
+    $numeric_version += $mic if $mic;
+}
+
+my %version_classes = (
+    '<1.16' => $numeric_version < 11600,
+    '>=1.16' => $numeric_version >= 11600,
+    '<1.23' => $numeric_version < 12300,
+    '>=1.23' => $numeric_version >= 12300,
+    '*' => 1,
+    '1.23' => $numeric_version == 12300,
+    '!1.23' => $numeric_version != 12300,
+);
+
+sub get_version_index {
+    my @versions = @{$_[0]};
+
+    my $vi;
+    for (0 .. $#versions) {
+	if ($version_classes{$versions[$_]}) {
+	    return $_;
+	}
+    }
+    return undef;
+}
+
+## utils
+
+my ($stderr, $stdout, $exit_code);
+sub run_gnutar {
+    my %params = @_;
+    my @args = @{ $params{'args'} };
+
+    my $errtempfile = "$Installcheck::TMP/stderr$$.out";
+
+    # use a temporary file for error output -- this eliminates synchronization
+    # problems between reading stderr and stdout
+    local (*INFH, *OUTFH, *ERRFH);
+    open(ERRFH, ">", $errtempfile);
+
+    my $pid = IPC::Open3::open3("INFH", "OUTFH", ">&ERRFH", $gnutar, @args);
+    my $cmdline = "$gnutar " . join(' ', @args);
+
+    # immediately close the child's stdin
+    close(INFH);
+
+    # read from stdout until it's closed
+    $stdout = do { local $/; <OUTFH> };
+    close(OUTFH);
+
+    # and wait for the kid to die
+    waitpid $pid, 0 or croak("Error waiting for gnutar die: $@");
+    my $status = $?;
+    close(ERRFH);
+
+    # fetch stderr from the temporary file
+    $stderr = slurp($errtempfile);
+    unlink($errtempfile);
+
+    # get the exit status
+    $exit_code = WIFEXITED($status)? ($status >> 8) : 0xffff;
+
+    if ($exit_code != 0) {
+	return 0;
+    } else {
+	return 1;
+    }
+}
+
+## inclusion tests (using -x and filenames on the command line)
+
+sub test_gnutar_inclusion {
+    my %params = @_;
+
+    # figure out which version index we're using
+    my $vi = get_version_index($params{'versions'});
+
+    # skip these tests if there's no matching version
+    if (!defined $vi) {
+	SKIP: {
+	    my $msg = (join " ", @{$params{'extra_args'}}) .
+			" not supported in version $v";
+	    my $count = @{ $params{'patterns'}} / 3;
+	    skip $msg, $count;
+	}
+	return;
+    }
+
+    make_tarfile();
+    my @patterns = @{ $params{'patterns'} };
+    while (@patterns) {
+	my $pat = shift @patterns;
+	my $file = shift @patterns;
+	my $exp = shift @patterns;
+
+	$exp = $exp->[$vi];
+
+	my $eargs = '';
+	$eargs = ', ' . join(' ', @{$params{'extra_args'}}) if @{$params{'extra_args'}};
+	my $match = $exp? "matches" : "does not match";
+	my $msg = "inclusion$eargs, pattern $pat $match file $file";
+
+	rmtree($datadir) if -e $datadir;
+	mkpath($datadir);
+
+	my $ok = run_gnutar(args => [ '-C', $datadir, '-x', '-f', $tarfile, @{$params{'extra_args'}}, $pat ]);
+	$ok = 0 unless -f "$datadir/$file";
+	if ($ok and !$exp) {
+	    fail($msg);
+	    diag("  unexpected success with version $v");
+	} elsif (!$ok and $exp) {
+	    fail($msg);
+	    diag("  unexpected failure with version $v:\n$stderr");
+	} else {
+	    pass($msg);
+	}
+    }
+    rmtree($datadir) if -e $datadir;
+}
+
+# We'll trust that the following logic is implemented correctly in GNU Tar
+# --no-wildcards is the default (same as no args)
+# --unquote is the default (same as no args)
+
+# --no-wildcards and --unquote
+test_gnutar_inclusion(
+    extra_args => [],
+    versions =>				[ '<1.16', '>=1.16' ],
+    patterns => [
+	# pattern	file		expectations
+	'./A*A' =>	'A*A' =>	[ 1,       1 ],
+	'./A*A' =>	'AxA' =>	[ 1,       0 ],
+	'./B?B' =>	'B?B' =>	[ 1,       1 ],
+	'./B?B' =>	'BxB' =>	[ 1,       0 ],
+	'./C[C' =>	'C[C' =>	[ 0,       1 ],
+	'./D]D' =>	'D]D' =>	[ 1,       1 ],
+	'./E\\E' =>	'E\\E' =>	[ 1,       1 ],
+	'./F\'F' =>	'F\'F' =>	[ 1,       1 ],
+	'./G"G' =>	'G"G' =>	[ 1,       1 ],
+	'./H H' =>	'H H' =>	[ 1,       1 ],
+	'./A\\*A' =>	'A*A' =>	[ 1,       0 ],
+	'./A\\*A' =>	'AxA' =>	[ 0,       0 ],
+	'./B\\?B' =>	'B?B' =>	[ 0,       0 ],
+	'./B\\?B' =>	'BxB' =>	[ 0,       0 ],
+	'./C\\[C' =>	'C[C' =>	[ 1,       0 ],
+	'./D\\]D' =>	'D]D' =>	[ 0,       0 ],
+	'./E\\\\E' =>	'E\\E' =>	[ 1,       1 ],
+	'./F\\\'F' =>	'F\'F' =>	[ 0,       0 ],
+	'./G\\"G' =>	'G"G' =>	[ 0,       0 ],
+	'./H\\ H' =>	'H H' =>	[ 0,       0 ],
+    ],
+);
+
+# --no-wildcards and --no-unquote
+test_gnutar_inclusion(
+    extra_args => [ '--no-unquote' ],
+    versions =>				[ '>=1.16' ],
+    patterns => [
+	# pattern	file		expectations
+	'./A*A' =>	'A*A' =>	[ 1 ], # like epsilon
+	'./A*A' =>	'AxA' =>	[ 0 ],
+	'./B?B' =>	'B?B' =>	[ 1 ],
+	'./B?B' =>	'BxB' =>	[ 0 ],
+	'./C[C' =>	'C[C' =>	[ 1 ],
+	'./D]D' =>	'D]D' =>	[ 1 ],
+	'./E\\E' =>	'E\\E' =>	[ 1 ],
+	'./F\'F' =>	'F\'F' =>	[ 1 ],
+	'./G"G' =>	'G"G' =>	[ 1 ],
+	'./H H' =>	'H H' =>	[ 1 ],
+	'./A\\*A' =>	'A*A' =>	[ 0 ],
+	'./A\\*A' =>	'AxA' =>	[ 0 ],
+	'./B\\?B' =>	'B?B' =>	[ 0 ],
+	'./B\\?B' =>	'BxB' =>	[ 0 ],
+	'./C\\[C' =>	'C[C' =>	[ 0 ],
+	'./D\\]D' =>	'D]D' =>	[ 0 ],
+	'./E\\\\E' =>	'E\\E' =>	[ 0 ],
+	'./F\\\'F' =>	'F\'F' =>	[ 0 ],
+	'./G\\"G' =>	'G"G' =>	[ 0 ],
+	'./H\\ H' =>	'H H' =>	[ 0 ],
+    ],
+);
+
+# --wildcards and --unquote
+test_gnutar_inclusion(
+    extra_args => [ '--wildcards' ],
+    versions =>				[ '<1.16', '>=1.16' ],
+    patterns => [
+	# pattern	file		expectations
+	'./A*A' =>	'A*A' =>	[ 1,       1 ],
+	'./A*A' =>	'AxA' =>	[ 1,       1 ],
+	'./B?B' =>	'B?B' =>	[ 1,       1 ],
+	'./B?B' =>	'BxB' =>	[ 1,       1 ],
+	'./C[C' =>	'C[C' =>	[ 0,       0 ],
+	'./D]D' =>	'D]D' =>	[ 1,       1 ],
+	'./E\\E' =>	'E\\E' =>	[ 1,       0 ],
+	'./F\'F' =>	'F\'F' =>	[ 1,       1 ],
+	'./G"G' =>	'G"G' =>	[ 1,       1 ],
+	'./H H' =>	'H H' =>	[ 1,       1 ],
+	'./A\\*A' =>	'A*A' =>	[ 1,       1 ],
+	'./A\\*A' =>	'AxA' =>	[ 0,       0 ],
+	'./B\\?B' =>	'B?B' =>	[ 0,       0 ],
+	'./B\\?B' =>	'BxB' =>	[ 0,       0 ],
+	'./C\\[C' =>	'C[C' =>	[ 1,       1 ],
+	'./D\\]D' =>	'D]D' =>	[ 0,       1 ],
+	'./E\\\\E' =>	'E\\E' =>	[ 1,       0 ],
+	'./F\\\'F' =>	'F\'F' =>	[ 0,       1 ],
+	'./G\\"G' =>	'G"G' =>	[ 0,       1 ],
+	'./H\\ H' =>	'H H' =>	[ 0,       1 ],
+    ],
+);
+
+# --wildcards and --no-unquote
+test_gnutar_inclusion(
+    extra_args => [ '--wildcards', '--no-unquote' ],
+    versions =>				[ '>=1.16' ],
+    patterns => [
+	# pattern	file		expectations
+	'./A*A' =>	'A*A' =>	[ 1 ],  # like gamma
+	'./A*A' =>	'AxA' =>	[ 1 ],
+	'./B?B' =>	'B?B' =>	[ 1 ],
+	'./B?B' =>	'BxB' =>	[ 1 ],
+	'./C[C' =>	'C[C' =>	[ 0 ],
+	'./D]D' =>	'D]D' =>	[ 1 ],
+	'./E\\E' =>	'E\\E' =>	[ 0 ],
+	'./F\'F' =>	'F\'F' =>	[ 1 ],
+	'./G"G' =>	'G"G' =>	[ 1 ],
+	'./H H' =>	'H H' =>	[ 1 ],
+	'./A\\*A' =>	'A*A' =>	[ 1 ],
+	'./A\\*A' =>	'AxA' =>	[ 0 ],
+	'./B\\?B' =>	'B?B' =>	[ 1 ],
+	'./B\\?B' =>	'BxB' =>	[ 0 ],
+	'./C\\[C' =>	'C[C' =>	[ 1 ],
+	'./D\\]D' =>	'D]D' =>	[ 1 ],
+	'./E\\\\E' =>	'E\\E' =>	[ 1 ],
+	'./F\\\'F' =>	'F\'F' =>	[ 1 ],
+	'./G\\"G' =>	'G"G' =>	[ 1 ],
+	'./H\\ H' =>	'H H' =>	[ 1 ],
+    ],
+);
+
+## exclusion tests (using -t and filenames on the command line)
+
+sub test_gnutar_exclusion {
+    my %params = @_;
+
+    my $vi = get_version_index($params{'versions'});
+
+    make_tarfile();
+    my @patterns = @{ $params{'patterns'} };
+    while (@patterns) {
+	my $pat = shift @patterns;
+	my $file = shift @patterns;
+	my $exp = shift @patterns;
+	$exp = $exp->[$vi];
+
+	my $eargs = '';
+	$eargs = ', ' . join(' ', @{$params{'extra_args'}}) if @{$params{'extra_args'}};
+	my $match = $exp? "matches" : "does not match";
+	my $msg = "exclusion$eargs, extract, pattern $pat $match $file";
+
+	rmtree($datadir) if -e $datadir;
+	mkpath($datadir);
+
+	my $ok = run_gnutar(args => [ '-C', $datadir, '-x', '-f', $tarfile, @{$params{'extra_args'}}, "--exclude=$pat" ]);
+
+	# fail if the excluded file was extracted anyway..
+	if ($ok) {
+	    my $excluded_ok = ! -f "$datadir/$file";
+	    if ($excluded_ok and !$exp) {
+		fail($msg);
+		diag("  exclusion unexpectedly worked with version $v");
+	    } elsif (!$excluded_ok and $exp) {
+		fail($msg);
+		diag("  exclusion unexpectedly failed with version $v");
+	    } else {
+		pass($msg);
+	    }
+	} else {
+	    fail($msg);
+	    diag("  unexpected error exit with version $v:\n$stderr");
+	}
+    }
+
+    # test again, but this time during a 'c'reate operation
+    @patterns = @{ $params{'patterns'} };
+    while (@patterns) {
+	my $pat = shift @patterns;
+	my $file = shift @patterns;
+	my $exp = shift @patterns;
+	$exp = $exp->[$vi];
+
+	my $eargs = '';
+	$eargs = ', ' . join(' ', @{$params{'extra_args'}}) if @{$params{'extra_args'}};
+	my $match = $exp? "matches" : "does not match";
+	my $msg = "exclusion$eargs, create, pattern $pat $match $file";
+
+	# this time around, we create the tarball with the exclude, then extract the whole
+	# thing.  We extract rather than using 't' because 't' has a funny habit of backslashing
+	# its output that we don't want to deal with here.
+	make_tarfile(@{$params{'extra_args'}}, "--exclude=$pat");
+
+	rmtree($datadir) if -e $datadir;
+	mkpath($datadir);
+	my $ok = run_gnutar(args => [ '-C', $datadir, '-x', '-f', $tarfile]);
+
+	# fail if the excluded file was extracted anyway..
+	if ($ok) {
+	    my $excluded_ok = ! -f "$datadir/$file";
+	    if ($excluded_ok and !$exp) {
+		fail($msg);
+		diag("  exclusion unexpectedly worked with version $v");
+	    } elsif (!$excluded_ok and $exp) {
+		fail($msg);
+		diag("  exclusion unexpectedly failed with version $v");
+	    } else {
+		pass($msg);
+	    }
+	} else {
+	    fail($msg);
+	    diag("  unexpected error exit with version $v:\n$stderr");
+	}
+    }
+
+    rmtree($datadir) if -e $datadir;
+}
+
+# We'll trust that the following logic is implemented correctly in GNU Tar
+# --wildcards is the default (same as no args)
+# --no-unquote / --unquote has no effect
+
+# --wildcards
+test_gnutar_exclusion(
+    extra_args => [],
+    versions =>				[ '!1.23', '1.23' ],
+    patterns => [
+	# pattern	file		expectations
+	'./A*A' =>	'A*A' =>	[ 1,       1, ],
+	'./A*A' =>	'AxA' =>	[ 1,       1, ],
+	'./B?B' =>	'B?B' =>	[ 1,       1, ],
+	'./B?B' =>	'BxB' =>	[ 1,       1, ],
+	'./C[C' =>	'C[C' =>	[ 0,       0, ],
+	'./D]D' =>	'D]D' =>	[ 1,       1, ],
+	'./E\\E' =>	'E\\E' =>	[ 0,       1, ],
+	'./F\'F' =>	'F\'F' =>	[ 1,       1, ],
+	'./G"G' =>	'G"G' =>	[ 1,       1, ],
+	'./H H' =>	'H H' =>	[ 1,       1, ],
+	'./A\\*A' =>	'A*A' =>	[ 1,       0, ],
+	'./A\\*A' =>	'AxA' =>	[ 0,       0, ],
+	'./B\\?B' =>	'B?B' =>	[ 1,       0, ],
+	'./B\\?B' =>	'BxB' =>	[ 0,       0, ],
+	'./C\\[C' =>	'C[C' =>	[ 1,       0, ],
+	'./D\\]D' =>	'D]D' =>	[ 1,       0, ],
+	'./E\\\\E' =>	'E\\E' =>	[ 1,       0, ],
+	'./F\\\'F' =>	'F\'F' =>	[ 1,       0, ],
+	'./G\\"G' =>	'G"G' =>	[ 1,       0, ],
+	'./H\\ H' =>	'H H' =>	[ 1,       0, ],
+    ],
+);
+
+# --no-wildcards
+test_gnutar_exclusion(
+    extra_args => [ '--no-wildcards' ],
+    versions =>				[ '*' ],
+    patterns => [
+	# pattern	file		expectations
+	'./A*A' =>	'A*A' =>	[ 1, ],
+	'./A*A' =>	'AxA' =>	[ 0, ],
+	'./B?B' =>	'B?B' =>	[ 1, ],
+	'./B?B' =>	'BxB' =>	[ 0, ],
+	'./C[C' =>	'C[C' =>	[ 1, ],
+	'./D]D' =>	'D]D' =>	[ 1, ],
+	'./E\\E' =>	'E\\E' =>	[ 1, ],
+	'./F\'F' =>	'F\'F' =>	[ 1, ],
+	'./G"G' =>	'G"G' =>	[ 1, ],
+	'./H H' =>	'H H' =>	[ 1, ],
+	'./A\\*A' =>	'A*A' =>	[ 0, ],
+	'./A\\*A' =>	'AxA' =>	[ 0, ],
+	'./B\\?B' =>	'B?B' =>	[ 0, ],
+	'./B\\?B' =>	'BxB' =>	[ 0, ],
+	'./C\\[C' =>	'C[C' =>	[ 0, ],
+	'./D\\]D' =>	'D]D' =>	[ 0, ],
+	'./E\\\\E' =>	'E\\E' =>	[ 0, ],
+	'./F\\\'F' =>	'F\'F' =>	[ 0, ],
+	'./G\\"G' =>	'G"G' =>	[ 0, ],
+	'./H\\ H' =>	'H H' =>	[ 0, ],
+    ],
+);
+
+## list (-t)
+
+sub test_gnutar_toc {
+    my %params = @_;
+
+    my $vi = get_version_index($params{'versions'});
+
+    my @patterns = @{ $params{'patterns'} };
+    my @filenames;
+    my @expectations;
+    while (@patterns) {
+	my $file = shift @patterns;
+	my $exp = shift @patterns;
+	$exp = $exp->[$vi];
+
+	push @filenames, $file;
+	push @expectations, $exp;
+    }
+
+    my $eargs = '';
+    $eargs = ', ' . join(' ', @{$params{'extra_args'}}) if @{$params{'extra_args'}};
+    my $msg = "list$eargs, with lots of funny characters";
+
+    # make a tarfile containing the filenames, then run -t over it
+    rmtree($datadir) if -e $datadir;
+    mkpath($datadir);
+
+    for my $fn (@filenames) {
+	open(my $fh, ">", "$datadir/$fn");
+	print $fh "data";
+	close($fh);
+    }
+
+    system($gnutar, "-C", $datadir, "-cf", $tarfile, '.');
+    die "could not run gnutar" unless $? == 0;
+
+    rmtree($datadir) if -e $datadir;
+    my $ok = run_gnutar(args => [ '-t', '-f', $tarfile, @{$params{'extra_args'}}]);
+    if (!$ok) {
+	fail($msg);
+	diag("gnutar exited with nonzero status for version $v");
+    }
+
+    my @toc_members = sort split(/\n/, $stdout);
+    shift @toc_members; # strip off './'
+    is_deeply([ @toc_members ], [ @expectations ], $msg);
+}
+
+# there are no extra_args that seem to affect this behavior
+test_gnutar_toc(
+    extra_args => [],
+    versions =>  [ '*' ],
+    patterns => [
+	"A\007", [ './A\a' ],
+	"B\010", [ './B\b' ],
+	"C\011", [ './C\t' ],
+	"D\012", [ './D\n' ],
+	"E\013", [ './E\v' ],
+	"F\014", [ './F\f' ],
+	"G\015", [ './G\r' ],
+	"H\\",   [ './H\\\\' ], # H\ -> H\\
+	"I\177", [ './I\\177' ],
+	"J\200", [ './J\\200' ],
+	"K\\x",  [ './K\\\\x' ],
+	"L\\\\", [ './L\\\\\\\\' ],
+    ],
+);
+
+unlink($tarfile);
