@@ -1,4 +1,5 @@
 EXTRA_DIST = \
+	common \
 	deb \
 	rpm \
 	Makefile.am \
