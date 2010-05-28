@@ -1,4 +1,7 @@
 2010-05-28 Dan Locks <dwlocks@zmanda.com>
+	*  VERSION: Update for release
+
+2010-05-28 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/Makefile.am: include common in EXTRA_DIST
 
 2010-05-28 Dan Locks <dwlocks@zmanda.com>
