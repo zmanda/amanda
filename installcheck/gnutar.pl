@@ -84,8 +84,8 @@ my %version_classes = (
     '<1.23' => $numeric_version < 12300,
     '>=1.23' => $numeric_version >= 12300,
     '*' => 1,
-    '1.23' => $numeric_version == 12300,
-    '!1.23' => $numeric_version != 12300,
+    '1.23' => ($numeric_version >= 12290 and $numeric_version <= 12300),
+    '!1.23' => ($numeric_version < 12290 || $numeric_version > 12300),
 );
 
 sub get_version_index {

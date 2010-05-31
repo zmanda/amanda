@@ -1,4 +1,7 @@
 2010-05-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/gnutar.pl: gnutar exclude in 1.22.90 is like 1.23.
+
+2010-05-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c(print_find_result): Quote label.
 
 2010-05-31  Jean-Louis Martineau <martineau@zmanda.com>
