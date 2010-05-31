@@ -444,7 +444,9 @@ print_find_result(
 	    max_len_diskname = (int)len;
 
         if (output_find_result->label != NULL) {
-            len=strlen(output_find_result->label);
+            char *qlabel = quote_string(output_find_result->label);
+            len=strlen(qlabel);
+            amfree(qlabel);
             if((int)len > max_len_label)
                 max_len_label = (int)len;
         }
@@ -488,9 +490,10 @@ print_find_result(
 	    char *status;
 
 	    qdiskname = quote_string(output_find_result->diskname);
-            formatted_label = output_find_result->label;
-            if (formatted_label == NULL)
-                formatted_label = "";
+            if (output_find_result->label == NULL)
+                formatted_label = stralloc("");
+	    else
+		formatted_label = quote_string(output_find_result->label);
 
 	    if (strcmp(output_find_result->status, "OK") != 0 ||
 		strcmp(output_find_result->dump_status, "OK") != 0) {
@@ -521,6 +524,7 @@ print_find_result(
 	    amfree(s);
 	    /*@end@*/
 	    amfree(qdiskname);
+	    amfree(formatted_label);
 	}
     }
 }

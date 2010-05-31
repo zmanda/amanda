@@ -1,4 +1,7 @@
 2010-05-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/find.c(print_find_result): Quote label.
+
+2010-05-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/set_full_version: Add comments.
 
 2010-05-28  Dustin J. Mitchell <dustin@zmanda.com>
