@@ -1,5 +1,18 @@
 #!/bin/bash
-
+#
+# This script is run by autogen to create the FULL_VERSION file.
+#
+# If run from a git branch, it append '.git.' + git sha1 to the VERSION file.
+# If run from a svn branch, it append '.svn.' + svn number to the VERSION file.
+# If run from a svn tag that match /rc/ it use only the tag name to set the
+#  VERSION, this is done specifically for zmanda rc build.
+# If run from a svn tag that doesn't match /rc/ it use only the VERSION file.
+#
+# It is important to update the VERSION file before creating a tag.
+#
+# ./autogen run config/set_full_version, it create the FULL_VERSION file.
+# ./configure use the FULL_VERSION file.
+#
 srcdir=$1
 
 if test -d .svn; then
