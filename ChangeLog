@@ -1,3 +1,7 @@
+2010-06-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Drop root privilege before executing compression
+	  or encryption program.
+
 2010-05-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c(print_find_result): Quote label.
 

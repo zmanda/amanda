@@ -1773,6 +1773,7 @@ runcompress(
 	    log_add(L_INFO, "%s pid %ld", basename(base), (long)getpid());
 	    amfree(base);
 	    safe_fd(-1, 0);
+	    set_root_privs(-1);
 	    execlp(COMPRESS_PATH, COMPRESS_PATH, (  comptype == COMP_BEST ?
 		COMPRESS_BEST_OPT : COMPRESS_FAST_OPT), (char *)NULL);
 	    error(_("error: couldn't exec %s: %s"), COMPRESS_PATH, strerror(errno));
@@ -1782,6 +1783,7 @@ runcompress(
 	    log_add(L_INFO, "%s pid %ld", basename(base), (long)getpid());
 	    amfree(base);
 	    safe_fd(-1, 0);
+	    set_root_privs(-1);
 	    execlp(srvcompprog, srvcompprog, (char *)0);
 	    error(_("error: couldn't exec server custom filter%s.\n"), srvcompprog);
 	    /*NOTREACHED*/
@@ -1842,6 +1844,7 @@ runencrypt(
 	amfree(base);
 	safe_fd(-1, 0);
 	if ((encrypttype == ENCRYPT_SERV_CUST) && *srv_encrypt) {
+	    set_root_privs(-1);
 	    execlp(srv_encrypt, srv_encrypt, (char *)0);
 	    error(_("error: couldn't exec server encryption%s.\n"), srv_encrypt);
 	    /*NOTREACHED*/
