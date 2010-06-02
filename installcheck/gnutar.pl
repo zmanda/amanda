@@ -69,7 +69,7 @@ my ($v, $numeric_version);
 {
     my $verstring = `$gnutar --version`;
     die "could not run gnutar" unless $? == 0;
-    ($v) = ($verstring =~ /tar [^0-9]*([0-9.]+)\n/);
+    ($v) = ($verstring =~ /tar \(GNU tar\) *([0-9.]+)/);
     my ($maj, $min, $mic) = ($v =~ /([0-9]+)\.([0-9]+)(?:\.([0-9]+))?/);
 
     $numeric_version = 0;
@@ -490,7 +490,8 @@ sub test_gnutar_toc {
     mkpath($datadir);
 
     for my $fn (@filenames) {
-	open(my $fh, ">", "$datadir/$fn");
+	open(my $fh, ">", "$datadir/$fn")
+	    or die("opening $datadir/$fn: $!");
 	print $fh "data";
 	close($fh);
     }
@@ -524,7 +525,7 @@ test_gnutar_toc(
 	"G\015", [ './G\r' ],
 	"H\\",   [ './H\\\\' ], # H\ -> H\\
 	"I\177", [ './I\\177' ],
-	"J\200", [ './J\\200' ],
+	"J\317\264", [ './J\\317\\264' ], # use legitimate utf-8, for mac os fs
 	"K\\x",  [ './K\\\\x' ],
 	"L\\\\", [ './L\\\\\\\\' ],
     ],

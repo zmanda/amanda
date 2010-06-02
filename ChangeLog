@@ -1,3 +1,7 @@
+2010-06-02  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/gnutar.pl: fix version regex, and use utf-8 friendly
+	  high-ascii characters in -t test
+
 2010-05-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/gnutar.pl: gnutar exclude in 1.22.90 is like 1.23.
 
