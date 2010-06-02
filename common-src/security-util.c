@@ -432,11 +432,18 @@ tcpm_send_token(
     char		*encbuf;
     ssize_t		encsize;
     int			save_errno;
+    time_t		logtime;
 
     assert(SIZEOF(netlength) == 4);
 
+    logtime = time(NULL);
+    if (logtime > rc->logstamp + 10) {
+	g_debug("tcpm_send_token: data is still flowing");
+        rc->logstamp = logtime;
+    }
+
     auth_debug(1, "tcpm_send_token: write %zd bytes to handle %d\n",
-	  len, handle);
+	       len, handle);
     /*
      * Format is:
      *   32 bit length (network byte order)
@@ -865,8 +872,15 @@ tcp_stream_write(
     size_t	size)
 {
     struct sec_stream *rs = s;
+    time_t             logtime;
 
     assert(rs != NULL);
+
+    logtime = time(NULL);
+    if (logtime > rs->rc->logstamp + 10) {
+	g_debug("tcp_stream_write: data is still flowing");
+	rs->rc->logstamp = logtime;
+    }
 
     if (full_write(rs->fd, buf, size) < size) {
         security_stream_seterror(&rs->secstr,
@@ -1673,8 +1687,15 @@ stream_read_callback(
     void *	arg)
 {
     struct sec_stream *rs = arg;
+    time_t             logtime;
+
     assert(rs != NULL);
 
+    logtime = time(NULL);
+    if (logtime > rs->rc->logstamp + 10) {
+	g_debug("stream_read_callback: data is still flowing");
+	rs->rc->logstamp = logtime;
+    }
     auth_debug(1, _("sec: stream_read_callback: handle %d\n"), rs->handle);
 
     /*

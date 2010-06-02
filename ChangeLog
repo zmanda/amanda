@@ -1,4 +1,9 @@
 2010-06-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Print a debug message every 10 minutes if
+	  something is transmitted.
+	* common-src/security-util.h (tcp_conn): Add logstamp.
+
+2010-06-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Drop root privilege before executing compression
 	  or encryption program.
 
