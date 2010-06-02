@@ -1,3 +1,7 @@
+2010-06-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Drop root privilege before executing compression
+	  or encryption program.
+
 2010-06-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/gnutar.pl: fix version regex, and use utf-8 friendly
 	  high-ascii characters in -t test
