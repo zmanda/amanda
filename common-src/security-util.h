@@ -84,6 +84,7 @@ struct tcp_conn {
     int			auth;
     char *              (*conf_fn)(char *, void *);
     void *              datap;
+    time_t              logstamp;
 #ifdef KRB5_SECURITY
     gss_ctx_id_t	gss_context;
 #endif
