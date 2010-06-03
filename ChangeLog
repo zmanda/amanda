@@ -1,5 +1,11 @@
 2010-06-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/gnutar.pl: always set LC_CTYPES=C for -t output; detect
+	  redhat systems that change the wildcard default for include; and
+	  consider 1.15.91 >= 1.16
+
+2010-06-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Fix printf format.
+
 2010-06-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/ampgsql.8.xml: suggestively document the ampgsql
 	  restore process

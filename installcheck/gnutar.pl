@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 161;
+use Test::More tests => 201;
 use File::Path;
 use Data::Dumper;
 use POSIX qw( WIFEXITED );
@@ -78,15 +78,118 @@ my ($v, $numeric_version);
     $numeric_version += $mic if $mic;
 }
 
+# see if the default for --wildcards during inclusion has been changed
+my $wc_default_changed = 0;
+{
+    my $help_output = `$gnutar --help`;
+    # redhatty patches helpfully change the help message
+    if ($help_output =~ /--wildcards\s*use wildcards \(default\)$/m) {
+	$wc_default_changed = 1;
+    }
+}
+
 my %version_classes = (
-    '<1.16' => $numeric_version < 11600,
-    '>=1.16' => $numeric_version >= 11600,
+    '<1.16' => $numeric_version < 11591,
+    '>=1.16' => $numeric_version >= 11591,
+    '>=1.16-no-wc' => $numeric_version >= 11591 && !$wc_default_changed, # normal
+    '>=1.16-wc' => $numeric_version >= 11591 && $wc_default_changed, # stupid distros screw things up!
+
     '<1.23' => $numeric_version < 12300,
     '>=1.23' => $numeric_version >= 12300,
     '*' => 1,
     '1.23' => ($numeric_version >= 12290 and $numeric_version <= 12300),
     '!1.23' => ($numeric_version < 12290 || $numeric_version > 12300),
 );
+
+# include and exclude all use the same set of patterns and filenames
+my $patterns = [
+	'./A*A' =>	'A*A',
+	'./A*A' =>	'AxA',
+	'./B?B' =>	'B?B',
+	'./B?B' =>	'BxB',
+	'./C[C' =>	'C[C',
+	'./D]D' =>	'D]D',
+	'./E\\E' =>	'E\\E',
+	'./F\'F' =>	'F\'F',
+	'./G"G' =>	'G"G',
+	'./H H' =>	'H H',
+	'./A\\*A' =>	'A*A',
+	'./A\\*A' =>	'AxA',
+	'./B\\?B' =>	'B?B',
+	'./B\\?B' =>	'BxB',
+	'./C\\[C' =>	'C[C',
+	'./D\\]D' =>	'D]D',
+	'./E\\\\E' =>	'E\\E',
+	'./F\\\'F' =>	'F\'F',
+	'./G\\"G' =>	'G"G',
+	'./H\\ H' =>	'H H',
+];
+
+my $named_expectations = [
+    [ 'alpha',
+         'beta',
+	    'gamma',
+	       'delta',
+	          'epsilon',
+		     'empty', ],
+    #  al be ga de ep empty
+    [  1, 1, 1, 1, 1, 1,     ], # './A*A' =>	'A*A',
+    [  1, 1, 1, 1, 0, 0,     ], # './A*A' =>	'AxA',
+    [  1, 1, 1, 1, 1, 1,     ], # './B?B' =>	'B?B',
+    [  1, 1, 1, 1, 0, 0,     ], # './B?B' =>	'BxB',
+    [  0, 0, 0, 0, 1, 1,     ], # './C[C' =>	'C[C',
+    [  1, 1, 1, 1, 1, 1,     ], # './D]D' =>	'D]D',
+    [  1, 0, 0, 1, 1, 1,     ], # './E\\E' =>	'E\\E',
+    [  1, 1, 1, 1, 1, 1,     ], # './F\'F' =>	'F\'F',
+    [  1, 1, 1, 1, 1, 1,     ], # './G"G' =>	'G"G',
+    [  1, 1, 1, 1, 1, 1,     ], # './H H' =>	'H H',
+    [  1, 1, 1, 0, 0, 0,     ], # './A\\*A' =>	'A*A',
+    [  0, 0, 0, 0, 0, 0,     ], # './A\\*A' =>	'AxA',
+    [  0, 0, 1, 0, 0, 0,     ], # './B\\?B' =>	'B?B',
+    [  0, 0, 0, 0, 0, 0,     ], # './B\\?B' =>	'BxB',
+    [  1, 1, 1, 0, 0, 0,     ], # './C\\[C' =>	'C[C',
+    [  0, 1, 1, 0, 0, 0,     ], # './D\\]D' =>	'D]D',
+    [  1, 0, 1, 0, 1, 0,     ], # './E\\\\E' =>	'E\\E',
+    [  0, 1, 1, 0, 0, 0,     ], # './F\\\'F' =>	'F\'F',
+    [  0, 1, 1, 0, 0, 0,     ], # './G\\"G' =>	'G"G',
+    [  0, 1, 1, 0, 0, 0,     ], # './H\\ H' =>	'H H',
+];
+
+sub get_expectation {
+    my ($name) = @_;
+    my @names = @{$named_expectations->[0]};
+
+    # get the index for that greek letter
+    my $i;
+    for (0 .. $#names) {
+	if ($names[$_] eq $name) {
+	    $i = $_;
+	    last;
+	}
+    }
+
+    # then assemble the result
+    my @rv;
+    my @exps = @$named_expectations;
+    shift @exps;
+    for (@exps) {
+	push @rv, $_->[$i];
+    }
+
+    return @rv;
+}
+
+sub get_matching_type {
+    my ($expectations) = @_;
+
+    # find the type for the first matching version
+    for (keys %$expectations) {
+	if ($version_classes{$_}) {
+	    return $expectations->{$_};
+	}
+    }
+    return undef;
+}
 
 sub get_version_index {
     my @versions = @{$_[0]};
@@ -113,6 +216,14 @@ sub run_gnutar {
     # problems between reading stderr and stdout
     local (*INFH, *OUTFH, *ERRFH);
     open(ERRFH, ">", $errtempfile);
+
+    local %ENV;
+    if ($params{'env'}) {
+	my %env = %{$params{'env'}};
+	for (keys %env) {
+	    $ENV{$_} = $env{$_};
+	}
+    }
 
     my $pid = IPC::Open3::open3("INFH", "OUTFH", ">&ERRFH", $gnutar, @args);
     my $cmdline = "$gnutar " . join(' ', @args);
@@ -148,28 +259,26 @@ sub run_gnutar {
 sub test_gnutar_inclusion {
     my %params = @_;
 
-    # figure out which version index we're using
-    my $vi = get_version_index($params{'versions'});
+    my $matching_type = get_matching_type($params{'expectations'});
 
     # skip these tests if there's no matching version
-    if (!defined $vi) {
+    if (!defined $matching_type) {
 	SKIP: {
 	    my $msg = (join " ", @{$params{'extra_args'}}) .
 			" not supported in version $v";
-	    my $count = @{ $params{'patterns'}} / 3;
+	    my $count = @$patterns / 2;
 	    skip $msg, $count;
 	}
 	return;
     }
 
     make_tarfile();
-    my @patterns = @{ $params{'patterns'} };
+    my @patterns = @$patterns;
+    my @expectations = get_expectation($matching_type);
     while (@patterns) {
 	my $pat = shift @patterns;
 	my $file = shift @patterns;
-	my $exp = shift @patterns;
-
-	$exp = $exp->[$vi];
+	my $exp = shift @expectations;
 
 	my $eargs = '';
 	$eargs = ', ' . join(' ', @{$params{'extra_args'}}) if @{$params{'extra_args'}};
@@ -195,123 +304,57 @@ sub test_gnutar_inclusion {
 }
 
 # We'll trust that the following logic is implemented correctly in GNU Tar
-# --no-wildcards is the default (same as no args)
-# --unquote is the default (same as no args)
+# --no-wildcards is the default (same as no args) (but not everywhere!!)
+# --unquote is the default (same as no args) (this seems true universally)
 
-# --no-wildcards and --unquote
 test_gnutar_inclusion(
     extra_args => [],
-    versions =>				[ '<1.16', '>=1.16' ],
-    patterns => [
-	# pattern	file		expectations
-	'./A*A' =>	'A*A' =>	[ 1,       1 ],
-	'./A*A' =>	'AxA' =>	[ 1,       0 ],
-	'./B?B' =>	'B?B' =>	[ 1,       1 ],
-	'./B?B' =>	'BxB' =>	[ 1,       0 ],
-	'./C[C' =>	'C[C' =>	[ 0,       1 ],
-	'./D]D' =>	'D]D' =>	[ 1,       1 ],
-	'./E\\E' =>	'E\\E' =>	[ 1,       1 ],
-	'./F\'F' =>	'F\'F' =>	[ 1,       1 ],
-	'./G"G' =>	'G"G' =>	[ 1,       1 ],
-	'./H H' =>	'H H' =>	[ 1,       1 ],
-	'./A\\*A' =>	'A*A' =>	[ 1,       0 ],
-	'./A\\*A' =>	'AxA' =>	[ 0,       0 ],
-	'./B\\?B' =>	'B?B' =>	[ 0,       0 ],
-	'./B\\?B' =>	'BxB' =>	[ 0,       0 ],
-	'./C\\[C' =>	'C[C' =>	[ 1,       0 ],
-	'./D\\]D' =>	'D]D' =>	[ 0,       0 ],
-	'./E\\\\E' =>	'E\\E' =>	[ 1,       1 ],
-	'./F\\\'F' =>	'F\'F' =>	[ 0,       0 ],
-	'./G\\"G' =>	'G"G' =>	[ 0,       0 ],
-	'./H\\ H' =>	'H H' =>	[ 0,       0 ],
-    ],
+    expectations => {
+	'<1.16' => 'alpha',
+	'>=1.16-no-wc' => 'epsilon',
+	'>=1.16-wc' => 'beta', # acts like --wildcards
+    },
 );
 
-# --no-wildcards and --no-unquote
+test_gnutar_inclusion(
+    extra_args => [ '--no-wildcards' ],
+    expectations => {
+	'<1.16' => 'alpha',
+	'>=1.16' => 'epsilon',
+    },
+);
+
 test_gnutar_inclusion(
     extra_args => [ '--no-unquote' ],
-    versions =>				[ '>=1.16' ],
-    patterns => [
-	# pattern	file		expectations
-	'./A*A' =>	'A*A' =>	[ 1 ], # like epsilon
-	'./A*A' =>	'AxA' =>	[ 0 ],
-	'./B?B' =>	'B?B' =>	[ 1 ],
-	'./B?B' =>	'BxB' =>	[ 0 ],
-	'./C[C' =>	'C[C' =>	[ 1 ],
-	'./D]D' =>	'D]D' =>	[ 1 ],
-	'./E\\E' =>	'E\\E' =>	[ 1 ],
-	'./F\'F' =>	'F\'F' =>	[ 1 ],
-	'./G"G' =>	'G"G' =>	[ 1 ],
-	'./H H' =>	'H H' =>	[ 1 ],
-	'./A\\*A' =>	'A*A' =>	[ 0 ],
-	'./A\\*A' =>	'AxA' =>	[ 0 ],
-	'./B\\?B' =>	'B?B' =>	[ 0 ],
-	'./B\\?B' =>	'BxB' =>	[ 0 ],
-	'./C\\[C' =>	'C[C' =>	[ 0 ],
-	'./D\\]D' =>	'D]D' =>	[ 0 ],
-	'./E\\\\E' =>	'E\\E' =>	[ 0 ],
-	'./F\\\'F' =>	'F\'F' =>	[ 0 ],
-	'./G\\"G' =>	'G"G' =>	[ 0 ],
-	'./H\\ H' =>	'H H' =>	[ 0 ],
-    ],
+    expectations => {
+	'<1.16' => undef,
+	'>=1.16-no-wc' => 'empty',
+	'>=1.16-wc' => 'gamma', # acts like --wildcards --no-unquote
+    },
 );
 
-# --wildcards and --unquote
+test_gnutar_inclusion(
+    extra_args => [ '--no-wildcards', '--no-unquote' ],
+    expectations => {
+	'<1.16' => undef,
+	'>=1.16' => 'empty',
+    },
+);
+
 test_gnutar_inclusion(
     extra_args => [ '--wildcards' ],
-    versions =>				[ '<1.16', '>=1.16' ],
-    patterns => [
-	# pattern	file		expectations
-	'./A*A' =>	'A*A' =>	[ 1,       1 ],
-	'./A*A' =>	'AxA' =>	[ 1,       1 ],
-	'./B?B' =>	'B?B' =>	[ 1,       1 ],
-	'./B?B' =>	'BxB' =>	[ 1,       1 ],
-	'./C[C' =>	'C[C' =>	[ 0,       0 ],
-	'./D]D' =>	'D]D' =>	[ 1,       1 ],
-	'./E\\E' =>	'E\\E' =>	[ 1,       0 ],
-	'./F\'F' =>	'F\'F' =>	[ 1,       1 ],
-	'./G"G' =>	'G"G' =>	[ 1,       1 ],
-	'./H H' =>	'H H' =>	[ 1,       1 ],
-	'./A\\*A' =>	'A*A' =>	[ 1,       1 ],
-	'./A\\*A' =>	'AxA' =>	[ 0,       0 ],
-	'./B\\?B' =>	'B?B' =>	[ 0,       0 ],
-	'./B\\?B' =>	'BxB' =>	[ 0,       0 ],
-	'./C\\[C' =>	'C[C' =>	[ 1,       1 ],
-	'./D\\]D' =>	'D]D' =>	[ 0,       1 ],
-	'./E\\\\E' =>	'E\\E' =>	[ 1,       0 ],
-	'./F\\\'F' =>	'F\'F' =>	[ 0,       1 ],
-	'./G\\"G' =>	'G"G' =>	[ 0,       1 ],
-	'./H\\ H' =>	'H H' =>	[ 0,       1 ],
-    ],
+    expectations => {
+	'<1.16' => 'alpha',
+	'>=1.16' => 'beta',
+    },
 );
 
-# --wildcards and --no-unquote
 test_gnutar_inclusion(
     extra_args => [ '--wildcards', '--no-unquote' ],
-    versions =>				[ '>=1.16' ],
-    patterns => [
-	# pattern	file		expectations
-	'./A*A' =>	'A*A' =>	[ 1 ],  # like gamma
-	'./A*A' =>	'AxA' =>	[ 1 ],
-	'./B?B' =>	'B?B' =>	[ 1 ],
-	'./B?B' =>	'BxB' =>	[ 1 ],
-	'./C[C' =>	'C[C' =>	[ 0 ],
-	'./D]D' =>	'D]D' =>	[ 1 ],
-	'./E\\E' =>	'E\\E' =>	[ 0 ],
-	'./F\'F' =>	'F\'F' =>	[ 1 ],
-	'./G"G' =>	'G"G' =>	[ 1 ],
-	'./H H' =>	'H H' =>	[ 1 ],
-	'./A\\*A' =>	'A*A' =>	[ 1 ],
-	'./A\\*A' =>	'AxA' =>	[ 0 ],
-	'./B\\?B' =>	'B?B' =>	[ 1 ],
-	'./B\\?B' =>	'BxB' =>	[ 0 ],
-	'./C\\[C' =>	'C[C' =>	[ 1 ],
-	'./D\\]D' =>	'D]D' =>	[ 1 ],
-	'./E\\\\E' =>	'E\\E' =>	[ 1 ],
-	'./F\\\'F' =>	'F\'F' =>	[ 1 ],
-	'./G\\"G' =>	'G"G' =>	[ 1 ],
-	'./H\\ H' =>	'H H' =>	[ 1 ],
-    ],
+    expectations => {
+	'<1.16' => undef,
+	'>=1.16' => 'gamma',
+    },
 );
 
 ## exclusion tests (using -t and filenames on the command line)
@@ -319,15 +362,26 @@ test_gnutar_inclusion(
 sub test_gnutar_exclusion {
     my %params = @_;
 
-    my $vi = get_version_index($params{'versions'});
+    my $matching_type = get_matching_type($params{'expectations'});
+
+    # skip these tests if there's no matching version
+    if (!defined $matching_type) {
+	SKIP: {
+	    my $msg = (join " ", @{$params{'extra_args'}}) .
+			" not supported in version $v";
+	    my $count = @$patterns; # two elements per test, but we run each one twice
+	    skip $msg, $count;
+	}
+	return;
+    }
 
     make_tarfile();
-    my @patterns = @{ $params{'patterns'} };
+    my @patterns = @$patterns;
+    my @expectations = get_expectation($matching_type);
     while (@patterns) {
 	my $pat = shift @patterns;
 	my $file = shift @patterns;
-	my $exp = shift @patterns;
-	$exp = $exp->[$vi];
+	my $exp = shift @expectations;
 
 	my $eargs = '';
 	$eargs = ', ' . join(' ', @{$params{'extra_args'}}) if @{$params{'extra_args'}};
@@ -358,12 +412,12 @@ sub test_gnutar_exclusion {
     }
 
     # test again, but this time during a 'c'reate operation
-    @patterns = @{ $params{'patterns'} };
+    @patterns = @$patterns;
+    @expectations = get_expectation($matching_type);
     while (@patterns) {
 	my $pat = shift @patterns;
 	my $file = shift @patterns;
-	my $exp = shift @patterns;
-	$exp = $exp->[$vi];
+	my $exp = shift @expectations;
 
 	my $eargs = '';
 	$eargs = ', ' . join(' ', @{$params{'extra_args'}}) if @{$params{'extra_args'}};
@@ -407,59 +461,18 @@ sub test_gnutar_exclusion {
 # --wildcards
 test_gnutar_exclusion(
     extra_args => [],
-    versions =>				[ '!1.23', '1.23' ],
-    patterns => [
-	# pattern	file		expectations
-	'./A*A' =>	'A*A' =>	[ 1,       1, ],
-	'./A*A' =>	'AxA' =>	[ 1,       1, ],
-	'./B?B' =>	'B?B' =>	[ 1,       1, ],
-	'./B?B' =>	'BxB' =>	[ 1,       1, ],
-	'./C[C' =>	'C[C' =>	[ 0,       0, ],
-	'./D]D' =>	'D]D' =>	[ 1,       1, ],
-	'./E\\E' =>	'E\\E' =>	[ 0,       1, ],
-	'./F\'F' =>	'F\'F' =>	[ 1,       1, ],
-	'./G"G' =>	'G"G' =>	[ 1,       1, ],
-	'./H H' =>	'H H' =>	[ 1,       1, ],
-	'./A\\*A' =>	'A*A' =>	[ 1,       0, ],
-	'./A\\*A' =>	'AxA' =>	[ 0,       0, ],
-	'./B\\?B' =>	'B?B' =>	[ 1,       0, ],
-	'./B\\?B' =>	'BxB' =>	[ 0,       0, ],
-	'./C\\[C' =>	'C[C' =>	[ 1,       0, ],
-	'./D\\]D' =>	'D]D' =>	[ 1,       0, ],
-	'./E\\\\E' =>	'E\\E' =>	[ 1,       0, ],
-	'./F\\\'F' =>	'F\'F' =>	[ 1,       0, ],
-	'./G\\"G' =>	'G"G' =>	[ 1,       0, ],
-	'./H\\ H' =>	'H H' =>	[ 1,       0, ],
-    ],
+    expectations => {
+	'!1.23' => 'gamma',
+	'1.23' => 'delta',
+    },
 );
 
 # --no-wildcards
 test_gnutar_exclusion(
     extra_args => [ '--no-wildcards' ],
-    versions =>				[ '*' ],
-    patterns => [
-	# pattern	file		expectations
-	'./A*A' =>	'A*A' =>	[ 1, ],
-	'./A*A' =>	'AxA' =>	[ 0, ],
-	'./B?B' =>	'B?B' =>	[ 1, ],
-	'./B?B' =>	'BxB' =>	[ 0, ],
-	'./C[C' =>	'C[C' =>	[ 1, ],
-	'./D]D' =>	'D]D' =>	[ 1, ],
-	'./E\\E' =>	'E\\E' =>	[ 1, ],
-	'./F\'F' =>	'F\'F' =>	[ 1, ],
-	'./G"G' =>	'G"G' =>	[ 1, ],
-	'./H H' =>	'H H' =>	[ 1, ],
-	'./A\\*A' =>	'A*A' =>	[ 0, ],
-	'./A\\*A' =>	'AxA' =>	[ 0, ],
-	'./B\\?B' =>	'B?B' =>	[ 0, ],
-	'./B\\?B' =>	'BxB' =>	[ 0, ],
-	'./C\\[C' =>	'C[C' =>	[ 0, ],
-	'./D\\]D' =>	'D]D' =>	[ 0, ],
-	'./E\\\\E' =>	'E\\E' =>	[ 0, ],
-	'./F\\\'F' =>	'F\'F' =>	[ 0, ],
-	'./G\\"G' =>	'G"G' =>	[ 0, ],
-	'./H\\ H' =>	'H H' =>	[ 0, ],
-    ],
+    expectations => {
+	'*' => 'empty',
+    },
 );
 
 ## list (-t)
@@ -500,7 +513,12 @@ sub test_gnutar_toc {
     die "could not run gnutar" unless $? == 0;
 
     rmtree($datadir) if -e $datadir;
-    my $ok = run_gnutar(args => [ '-t', '-f', $tarfile, @{$params{'extra_args'}}]);
+    my %env;
+    if ($params{'env'}) {
+	%env = %{$params{'env'}};
+    }
+    my $ok = run_gnutar(args => [ '-t', '-f', $tarfile, @{$params{'extra_args'}}],
+			env => \%env);
     if (!$ok) {
 	fail($msg);
 	diag("gnutar exited with nonzero status for version $v");
@@ -514,6 +532,7 @@ sub test_gnutar_toc {
 # there are no extra_args that seem to affect this behavior
 test_gnutar_toc(
     extra_args => [],
+    env => { LC_CTYPE => 'C' }, # avoid any funniness with ctypes
     versions =>  [ '*' ],
     patterns => [
 	"A\007", [ './A\a' ],
