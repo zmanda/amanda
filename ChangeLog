@@ -1,4 +1,9 @@
 2010-06-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcleanupdisk.c: Use CLR and SET.
+	* server-src/planner.c: Use CLR, SET and ISSET.
+	  Don't update csize if level < 0.
+
+2010-06-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Tapelist.swg: Return empty array if tapelist doesn't
 	  exists.
 
