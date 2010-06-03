@@ -33,6 +33,7 @@ use Amanda::MainLoop;
 use Amanda::Tapelist;
 use Amanda::Util qw( :constants );
 use File::Copy;
+use File::Basename;
 use Getopt::Long;
 
 my $amadmin = "$sbindir/amadmin";
@@ -181,23 +182,26 @@ my $scrub_db = sub {
         die "Could not read the tapelist";
     }
 
+    my $t = $tapelist->lookup_tapelabel($label);
     if ($keep_label) {
-        my $t = $tapelist->lookup_tapelabel($label);
         $t->{'datestamp'} = 0 if $t;
+    } elsif (!defined $t) {
+	print "label '$label' not found in $tapelist_file\n";
+	exit 0;
     } else {
         $tapelist->remove_tapelabel($label);
     }
-    my $tmp_tapelist_file = "$AMANDA_TMPDIR/tapelist-amrmtape-" . time();
-    my $backup_tapelist_file = "$AMANDA_TMPDIR/tapelist-backup-amrmtape-" . time();
-    unless (copy($tapelist_file, $backup_tapelist_file)) {
-        die "Failed to copy/backup $tapelist_file to $backup_tapelist_file";
+
+    #take a copy in case we roolback
+    my $backup_tapelist_file = dirname($tapelist_file) . "-backup-amrmtape-" . time();
+    if (-x $tapelist_file) {
+	unless (copy($tapelist_file, $backup_tapelist_file)) {
+	    die "Failed to copy/backup $tapelist_file to $backup_tapelist_file";
+	}
     }
-    # writing to temp and then moving is generally safer than writing directly
+
     unless ($dry_run) {
-        $tapelist->write($tmp_tapelist_file);
-        unless (move($tmp_tapelist_file, $tapelist_file)) {
-            die "Failed to replace old tapelist  with new tapelist.";
-        }
+        $tapelist->write($tapelist_file);
     }
 
     my $tmp_curinfo_file = "$AMANDA_TMPDIR/curinfo-amrmtape-" . time();
