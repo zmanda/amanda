@@ -2217,8 +2217,8 @@ static void analyze_estimate(
 	    if (est(dp)->estimate[i].level >= 0) {
 		g_fprintf(stderr,("    level: %d  nsize: %lld csize: %lld\n"),
 			  est(dp)->estimate[i].level,
-			  est(dp)->estimate[i].nsize,
-			  est(dp)->estimate[i].csize);
+			  (long long)est(dp)->estimate[i].nsize,
+			  (long long)est(dp)->estimate[i].csize);
 	    }
 	}
 	log_add(L_WARNING, _("%s %s %s 0 %s"), dp->host->hostname, qname,
