@@ -67,8 +67,8 @@ corrupt_dle(
 	hostname, disk);
 
     get_info(hostname, disk, &info);
-    info.command &= ~FORCE_BUMP;
-    info.command |= FORCE_NO_BUMP;
+    CLR(info.command, FORCE_BUMP);
+    SET(info.command, FORCE_NO_BUMP);
     if(put_info(hostname, disk, &info)) {
 	dbprintf(_("could not put info record for %s:%s: %s"),
 	      hostname, disk, strerror(errno));

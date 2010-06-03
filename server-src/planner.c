@@ -975,7 +975,7 @@ setup_estimate(
 	 (!ISSET(info.command, FORCE_BUMP) ||
 	  dp->skip_incr ||
 	  ep->last_level == -1))) {
-	if(info.command & FORCE_BUMP && ep->last_level == -1) {
+	if(ISSET(info.command, FORCE_BUMP) && ep->last_level == -1) {
 	    log_add(L_INFO,
 		  _("Remove force-bump command of %s:%s because it's a new disk."),
 		    dp->host->hostname, qname);
@@ -989,7 +989,7 @@ setup_estimate(
 			"because the strategy is NOINC."),
 			dp->host->hostname, qname);
 	    }
-	    if(info.command & FORCE_BUMP) {
+	    if(ISSET(info.command, FORCE_BUMP)) {
 		log_add(L_INFO,
 		 _("Ignoring FORCE_BUMP for %s:%s because the strategy is NOINC."),
 			dp->host->hostname, qname);
@@ -1168,7 +1168,7 @@ static gint64 est_tape_size(
     one_est_t *dump_est;
 
     dump_est = est_for_level(dp, level);
-    if (dump_est->csize <= -1)
+    if (dump_est->level >= 0 && dump_est->csize <= -1)
 	est_csize(dp, dump_est);
     return dump_est->csize;
 }
@@ -2148,7 +2148,7 @@ static void analyze_estimate(
     ep->degr_est = &default_one_est;
 
     if (ep->next_level0 <= 0 || (have_info && ep->last_level == 0
-       && (info.command & FORCE_NO_BUMP))) {
+       && (ISSET(info.command, FORCE_NO_BUMP)))) {
 	if (ep->next_level0 <= 0) {
 	    g_fprintf(stderr,_("(due for level 0) "));
 	}
@@ -2206,6 +2206,24 @@ static void analyze_estimate(
 	if (ep->degr_mesg == NULL) {
 	    ep->degr_mesg = _("Skipping: a full is not planned, so can't dump in degraded mode");
 	}
+    }
+
+    if (ep->dump_est->level < 0) {
+	int   i;
+	char *q = quote_string("no estimate");
+
+	g_fprintf(stderr,_("  no valid estimate\n"));
+	for(i=0; i<MAX_LEVELS; i++) {
+	    if (est(dp)->estimate[i].level >= 0) {
+		g_fprintf(stderr,("    level: %d  nsize: %ld csize: %ld\n"),
+			  est(dp)->estimate[i].level,
+			  est(dp)->estimate[i].nsize,
+			  est(dp)->estimate[i].csize);
+	    }
+	}
+	log_add(L_WARNING, _("%s %s %s 0 %s"), dp->host->hostname, qname,
+		planner_timestamp, q);
+	amfree(q);
     }
 
     g_fprintf(stderr,_("  curr level %d nsize %lld csize %lld "),
@@ -2320,8 +2338,10 @@ static one_est_t *pick_inclevel(
     /* if we didn't get an estimate, we can't do an inc */
     if (base_est->nsize == (gint64)-1) {
 	bump_est = est_for_level(dp, base_est->level + 1);
-	if (bump_est->nsize > (gint64)0) /* FORCE_BUMP */
+	if (bump_est->nsize > (gint64)0) { /* FORCE_BUMP */
+	    g_fprintf(stderr,_("   picklev: bumping to level %d\n"), bump_est->level);
 	    return bump_est;
+	}
 	g_fprintf(stderr,_("   picklev: no estimate for level %d, so no incs\n"), base_est->level);
 	return base_est;
     }
@@ -2511,7 +2531,7 @@ static void delay_dumps(void)
 	if(est(dp)->dump_est->level != 0) continue;
 
 	get_info(dp->host->hostname, dp->name, &info);
-	if(info.command & FORCE_FULL) {
+	if(ISSET(info.command, FORCE_FULL)) {
 	    nb_forced_level_0 += 1;
 	    preserve = dp;
 	    continue;
