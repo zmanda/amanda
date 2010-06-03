@@ -1,4 +1,7 @@
 2010-06-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Fix printf format.
+
+2010-06-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Tapelist.swg (write): Safely write the tapelist file.
 	* server-src/amrmtape.pl: Rely on A::Tapelist::write to do it safely.
 	* installcheck/amrmtape.pl: Fix.

@@ -2215,7 +2215,7 @@ static void analyze_estimate(
 	g_fprintf(stderr,_("  no valid estimate\n"));
 	for(i=0; i<MAX_LEVELS; i++) {
 	    if (est(dp)->estimate[i].level >= 0) {
-		g_fprintf(stderr,("    level: %d  nsize: %ld csize: %ld\n"),
+		g_fprintf(stderr,("    level: %d  nsize: %lld csize: %lld\n"),
 			  est(dp)->estimate[i].level,
 			  est(dp)->estimate[i].nsize,
 			  est(dp)->estimate[i].csize);
