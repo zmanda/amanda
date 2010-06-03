@@ -1,4 +1,6 @@
 2010-06-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/planner.c: Fix printf format.
+2010-06-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/ampgsql.8.xml: suggestively document the ampgsql
 	  restore process
 
