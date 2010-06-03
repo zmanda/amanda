@@ -1,3 +1,7 @@
+2010-06-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Tapelist.swg: Return empty array if tapelist doesn't
+	  exists.
+
 2010-06-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Print a debug message every 10 minutes if
 	  something is transmitted.

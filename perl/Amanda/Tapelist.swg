@@ -40,8 +40,8 @@ sub read_tapelist {
     C_read_tapelist($filename);
 
     # and then read it ourselves
-    open(my $fh, "<", $filename) or return undef;
     my @tles;
+    open(my $fh, "<", $filename) or return bless \@tles, "Amanda::Tapelist";
     while (my $line = <$fh>) {
 	my ($datestamp, $label, $reuse, $comment)
 	    = $line =~ m/^([0-9]*)\s([^\s]*)\s(reuse|no-reuse)\s*(?:\#(.*))?$/mx;
