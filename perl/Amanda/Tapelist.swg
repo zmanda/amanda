@@ -30,6 +30,9 @@
 
 %perlcode %{
 use Amanda::Debug qw(:logging);
+use Amanda::Config qw( config_dir_relative );
+use File::Copy;
+use File::Basename;
 
 ## package functions
 
@@ -145,7 +148,9 @@ sub write {
     my $self = shift;
     my ($filename) = @_;
 
-    open(my $fh, ">", $filename) or die("Could not open '$filename' for writing: $!");
+    my $new_tapelist_file = dirname($filename) . "-new-" . time();
+
+    open(my $fh, ">", $new_tapelist_file) or die("Could not open '$filename' for writing: $!");
     for my $tle (@$self) {
 	my $datestamp = $tle->{'datestamp'};
 	my $label = $tle->{'label'};
@@ -154,9 +159,13 @@ sub write {
 	print $fh "$datestamp $label $reuse$comment\n";
     }
     close($fh);
+    unless (move($new_tapelist_file, $filename)) {
+	die ("failed to write $filename: $!");
+    }
 
     # re-read from the C side to synchronize
     C_read_tapelist($filename);
+    return undef;
 }
 
 ## private methods

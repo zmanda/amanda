@@ -66,13 +66,13 @@ Installcheck::Dumpcache::load("notimestamps");
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 
 cmp_ok(
-    run(qw(amrmtape -o tapelist="/this/is/a/fake/tapelist" TESTCONF TESTCONF01)),
-    "==", 0, "config override run"
+    run(qw(amrmtape -o tapelist=/this/is/a/fake/tapelist TESTCONF TESTCONF01)),
+    "==", 1, "config override run"
 ) or proc_diag();
 
 cmp_ok(
-    $Installcheck::Run::stderr, "=~",
-    qr/amrmtape: Could not read the tapelist/,
+    $Installcheck::Run::stdout, "=~",
+    qr/label 'TESTCONF01' not found in \/this\/is\/a\/fake\/tapelist/,
     "config overrides handled correctly"
 ) or proc_diag();
 
