@@ -1,16 +1,12 @@
 #! /bin/bash
 set -x
 #### Configure variables.  Feel free to change these, but be careful!
-SRCDIR=$(pwd)
+SRCDIR=$PWD
 # You can pass your own temp directory as an environment variable.
-if [ -z $TMPDIR ]
-then
-    TMPDIR="`pwd`/buildpkg.deb"
-fi
 # This prefix is prepended to all directories during "make install" 
-FAKEROOT="${TMPDIR}/froot"
+FAKEROOT="${SRCDIR}/froot"
 # Configure and Compilation directory.
-BUILDDIR="${TMPDIR}/build"
+BUILDDIR="${SRCDIR}/build"
 # Config variables to mirror those in RPM .spec file
 amanda_user=amandabackup
 amanda_group=admin

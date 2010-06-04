@@ -1,3 +1,6 @@
+2010-06-03 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/deb/buildpkg: remove TMPDIR, use SRCDIR instead.
+
 2010-06-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/gnutar.pl: always set LC_CTYPES=C for -t output; detect
 	  redhat systems that change the wildcard default for include; and
