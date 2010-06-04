@@ -187,6 +187,7 @@ typedef enum {
     fe_amrecover_origsize_in_header,
     fe_amidxtaped_abort,
     fe_amrecover_correct_disk_quoting,
+    fe_amindexd_quote_label,
 
     /*
      * All new features must be inserted immediately *before* this entry.

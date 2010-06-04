@@ -1,3 +1,12 @@
+2010-06-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amfeatures.h: New fe_amindexd_quote_label.
+	* common-src/amfeatures.c: fe_amindexd_quote_label.
+	* perl/Amanda/Feature.pod: fe_amindexd_quote_label.
+	* server-src/amindexd.c: Quote label if fe_amindexd_quote_label.
+	* recover-src/amrecover.c: Add debugging statement.
+	* recover-src/display_commands.c: Parse quoted label.
+	* recover-src/extract_list.c: Parse quoted label.
+
 2010-06-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/xfer-element.h common-src/Makefile.am
 	  common-src/queueing-test.c common-src/queueing.c
@@ -9,7 +18,6 @@
 	* perl/Amanda/Device.pod perl/Amanda/Device.swg: remove queue_fd,
 	  write_from_fd, and read_to_fd; add test utilities to move random data
 	  onto and off of devices
-
 
 2010-06-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Xfer.pl perl/Amanda/Xfer.pod

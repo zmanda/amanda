@@ -972,9 +972,10 @@ add_file(
 			continue;
 		    }
                     fp = s-1;
-                    skip_non_whitespace(s, ch);
+                    skip_quoted_string(s, ch);
                     s[-1] = '\0';
-                    lditem.tape = newstralloc(lditem.tape, fp);
+		    amfree(lditem.tape);
+		    lditem.tape = unquote_string(fp);
                     s[-1] = (char)ch;
 
 		    if(am_has_feature(indexsrv_features, fe_amindexd_fileno_in_ORLD)) {

@@ -227,6 +227,13 @@ This feature is no longer supported.
 Amrecovers that do not have this flag may send incorrectly-quoted DISK lines, so
 those DISK lines should be ignored.
 
+=item fe_amindexd_quote_label
+
+ PROTOCOL: amindexd
+ FEATURE OF: server
+
+If set, amindexd quote the label (holdingdisk filename)
+
 =back
 
 =cut

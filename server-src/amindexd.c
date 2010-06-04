@@ -1067,8 +1067,9 @@ void opaque_ls_one(
     am_feature_e marshall_feature,
     int		 recursive)
 {
-   char date[20];
-   char *tapelist_str;
+    char date[20];
+    char *tapelist_str;
+    char *qtapelist_str;
     char *qpath;
 
     if (am_has_feature(their_features, marshall_feature)) {
@@ -1077,6 +1078,11 @@ void opaque_ls_one(
 	tapelist_str = dir_item->dump->tapes->label;
     }
 
+    if (am_has_feature(their_features, fe_amindexd_quote_label)) {
+	qtapelist_str = quote_string(tapelist_str);
+    } else {
+	qtapelist_str = stralloc(tapelist_str);
+    }
     strncpy(date, dir_item->dump->date, 20);
     date[19] = '\0';
     if(!am_has_feature(their_features,fe_amrecover_timestamp))
@@ -1090,7 +1096,7 @@ void opaque_ls_one(
 	fast_lreply(201, " %s %d %s %lld %s",
 		    date,
 		    dir_item->dump->level,
-		    tapelist_str,
+		    qtapelist_str,
 		    (long long)dir_item->dump->file,
 		    qpath);
     }
@@ -1098,12 +1104,13 @@ void opaque_ls_one(
 
 	fast_lreply(201, " %s %d %s %s",
 		    date, dir_item->dump->level,
-		    tapelist_str, qpath);
+		    qtapelist_str, qpath);
     }
     amfree(qpath);
     if(am_has_feature(their_features, marshall_feature)) {
 	amfree(tapelist_str);
     }
+    amfree(qtapelist_str);
 }
 
 /*
