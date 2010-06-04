@@ -1,3 +1,7 @@
+2010-06-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Recovery/Scan.pm: Subsitute "all slots have been loaded"
+	  by "label '$label' not found" for old changer scripts.
+
 2010-06-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/find.c: zero-pad timestamps out to 14 digits for
 	  comparison

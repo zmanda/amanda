@@ -645,6 +645,9 @@ sub _find_volume_no_inventory {
 
 	if ($err) {
 	    if ($err->failed && $err->notfound) {
+		if ($err->{'message'} eq "all slots have been loaded") {
+		    $err->{'message'} = "label '$label' not found";
+		}
 		return $params{'res_cb'}->($err, undef);
 	    } elsif ($err->failed && $err->volinuse and defined $err->{'slot'}) {
 		$last_slot = $err->{'slot'};
