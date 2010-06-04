@@ -622,6 +622,14 @@ sub _maybe_start_part {
     };
 }
 
+sub _zeropad {
+    my ($timestamp) = @_;
+    if (length($timestamp) == 8) {
+	return $timestamp."000000";
+    }
+    return $timestamp;
+}
+
 sub _header_expected {
     my $self = shift;
     my ($on_vol_hdr) = @_;
@@ -637,7 +645,10 @@ sub _header_expected {
 	push @errs, "got disk '$on_vol_hdr->{disk}'; " .
 		    "expected '$next_part->{dump}->{diskname}'";
     }
-    if ($on_vol_hdr->{'datestamp'} ne $next_part->{'dump'}->{'dump_timestamp'}) {
+    # zeropad the datestamps before comparing them, to avoid any compliations
+    # from usetimestamps=0
+    if (_zeropad($on_vol_hdr->{'datestamp'})
+	ne _zeropad($next_part->{'dump'}->{'dump_timestamp'})) {
 	push @errs, "got datestamp '$on_vol_hdr->{datestamp}'; " .
 		    "expected '$next_part->{dump}->{dump_timestamp}'";
     }

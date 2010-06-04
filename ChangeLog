@@ -1,3 +1,8 @@
+2010-06-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/find.c: zero-pad timestamps out to 14 digits for
+	  comparison
+	* perl/Amanda/Recovery/Clerk.pm: same
+
 2010-06-03 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/deb/buildpkg: remove TMPDIR, use SRCDIR instead.
 
