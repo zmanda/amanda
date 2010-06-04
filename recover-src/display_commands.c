@@ -230,10 +230,11 @@ suck_dir_list_from_server(void)
 	    continue;
 	}
 	tape = s - 1;
-	skip_non_whitespace(s, ch);
+	skip_quoted_string(s, ch);
 	tape_undo = s - 1;
 	tape_undo_ch = *tape_undo;
 	*tape_undo = '\0';
+	tape = unquote_string(tape);
 
 	if(am_has_feature(indexsrv_features, fe_amindexd_fileno_in_OLSD)) {
 	    long long fileno_ = (long long)0;
@@ -263,6 +264,7 @@ suck_dir_list_from_server(void)
 	    dir = stralloc(disk_path_slash_dot);
 	}
 	add_dir_list_item(date, level, tape, fileno, dir);
+	amfree(tape);
 	amfree(dir);
     }
     amfree(disk_path_slash_dot);

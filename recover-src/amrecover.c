@@ -137,6 +137,7 @@ get_line(void)
     server_line = newstralloc(server_line, mesg_buffer);
     amfree(mesg_buffer);
     mesg_buffer = newbuf;
+    amrecover_debug(1, "server_line: %s\n", server_line);
     amrecover_debug(1, "get: %s\n", mesg_buffer);
     return 0;
 }

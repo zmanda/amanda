@@ -1,4 +1,13 @@
 2010-06-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amfeatures.h: New fe_amindexd_quote_label.
+	* common-src/amfeatures.c: fe_amindexd_quote_label.
+	* perl/Amanda/Feature.pod: fe_amindexd_quote_label.
+	* server-src/amindexd.c: Quote label if fe_amindexd_quote_label.
+	* recover-src/amrecover.c: Add debugging statement.
+	* recover-src/display_commands.c: Parse quoted label.
+	* recover-src/extract_list.c: Parse quoted label.
+
+2010-06-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Recovery/Scan.pm: Subsitute "all slots have been loaded"
 	  by "label '$label' not found" for old changer scripts.
 
