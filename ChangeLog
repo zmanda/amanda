@@ -1,3 +1,6 @@
+2010-06-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Device.swg: fix uninitialized variable
+
 2010-06-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amfeatures.h: New fe_amindexd_quote_label.
 	* common-src/amfeatures.c: fe_amindexd_quote_label.

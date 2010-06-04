@@ -640,7 +640,7 @@ verify_random_from_device(guint32 seed, size_t length, Device *device) {
 
     while (length) {
 	int bytes_read;
-	int size;
+	int size = block_size;
 
 	bytes_read = device_read_block(device, buf, &size);
 	if (bytes_read == 0 && size > block_size) {
