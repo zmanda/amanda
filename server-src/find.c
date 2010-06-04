@@ -1224,12 +1224,23 @@ dumps_match_dumpspecs(
 	cur_result;
 	cur_result=cur_result->next) {
 	char level_str[NUM_STR_SIZE];
+	char *zeropad_ts = NULL;
 	g_snprintf(level_str, SIZEOF(level_str), "%d", cur_result->level);
+
+	/* get the timestamp padded to full width */
+	if (strlen(cur_result->timestamp) < 14) {
+	    zeropad_ts = g_new0(char, 15);
+	    memset(zeropad_ts, '0', 14);
+	    memcpy(zeropad_ts, cur_result->timestamp, strlen(cur_result->timestamp));
+	}
+
 	for (dumpspec = dumpspecs; dumpspec; dumpspec = dumpspec->next) {
 	    ds = (dumpspec_t *)dumpspec->data;
 	    if((!ds->host || *ds->host == '\0' || match_host(ds->host, cur_result->hostname)) &&
 	       (!ds->disk || *ds->disk == '\0' || match_disk(ds->disk, cur_result->diskname)) &&
-	       (!ds->datestamp || *ds->datestamp== '\0' || match_datestamp(ds->datestamp, cur_result->timestamp)) &&
+	       (!ds->datestamp || *ds->datestamp== '\0'
+			|| match_datestamp(ds->datestamp, cur_result->timestamp)
+			|| (zeropad_ts && match_datestamp(ds->datestamp, zeropad_ts))) &&
 	       (!ds->level || *ds->level== '\0' || match_level(ds->level, level_str)) &&
 	       (!ok || !strcmp(cur_result->status, "OK")) &&
 	       (!ok || !strcmp(cur_result->dump_status, "OK"))) {
@@ -1254,6 +1265,8 @@ dumps_match_dumpspecs(
 		break;
 	    }
 	}
+
+	amfree(zeropad_ts);
     }
 
     return(matches);
