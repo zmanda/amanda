@@ -286,11 +286,11 @@ sub main {
 	    if ($hdr->{'srv_encrypt'}) {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'srv_encrypt'}, $hdr->{'srv_decrypt_opt'} ], 0);
+			[ $hdr->{'srv_encrypt'}, $hdr->{'srv_decrypt_opt'} ], 0, 0);
 	    } elsif ($hdr->{'clnt_encrypt'}) {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'clnt_encrypt'}, $hdr->{'clnt_decrypt_opt'} ], 0);
+			[ $hdr->{'clnt_encrypt'}, $hdr->{'clnt_decrypt_opt'} ], 0, 0);
 	    } else {
 		return failure("could not decrypt encrypted dump: no program specified",
 			    $finished_cb);
@@ -310,17 +310,17 @@ sub main {
 		# TODO: this assumes that srvcompprog takes "-d" to decompress
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'srvcompprog'}, "-d" ], 0);
+			[ $hdr->{'srvcompprog'}, "-d" ], 0, 0);
 	    } elsif ($hdr->{'clntcompprog'}) {
 		# TODO: this assumes that clntcompprog takes "-d" to decompress
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'clntcompprog'}, "-d" ], 0);
+			[ $hdr->{'clntcompprog'}, "-d" ], 0, 0);
 	    } else {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
 			[ $Amanda::Constants::UNCOMPRESS_PATH,
-			  $Amanda::Constants::UNCOMPRESS_OPT ], 0);
+			  $Amanda::Constants::UNCOMPRESS_OPT ], 0, 0);
 	    }
 	    
 	    # adjust the header
@@ -335,7 +335,7 @@ sub main {
 	    @filters = (
 		Amanda::Xfer::Filter::Process->new(
 		    [ $Amanda::Constants::COMPRESS_PATH,
-		      $compress_opt ], 0),
+		      $compress_opt ], 0, 0),
 	    );
 	    
 	    # adjust the header

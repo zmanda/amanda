@@ -41,7 +41,7 @@ Amanda::Recovery::Planner - use the catalog to plan recoveries
     });
 
     $subs{'start_next_dumpfile'} = make_cb(start_next_dumpfile => sub {
-	my $dump = $plan->shift_dump();
+	my $dump = shift @{$plan->{'dumps'}};
 	if (!$dump) {
 	    # .. all done!
 	}

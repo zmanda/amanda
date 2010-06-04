@@ -1,3 +1,12 @@
+2010-06-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Xfer.pl perl/Amanda/Xfer.pod
+	  perl/Amanda/Xfer.swg perl/Amanda/Recovery/Planner.pm
+	  server-src/amfetchdump.pl server-src/amidxtaped.pl
+	  server-src/amrestore.pl xfer-src/filter-process.c
+	  xfer-src/xfer-element.h: add a log_stderr argument to
+	  Amanda::Xfer::Filter::Process
+	* server-src/amcheckdump.pl: use the transfer architecture
+
 2010-06-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Recovery/Scan.pm: Subsitute "all slots have been loaded"
 	  by "label '$label' not found" for old changer scripts.

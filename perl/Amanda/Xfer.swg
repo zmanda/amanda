@@ -358,7 +358,8 @@ XferElement *xfer_filter_xor(
 %newobject xfer_filter_process;
 XferElement *xfer_filter_process(
     gchar **argv,
-    gboolean need_root);
+    gboolean need_root,
+    gboolean log_stderr);
 
 %newobject xfer_dest_null;
 XferElement *xfer_dest_null(

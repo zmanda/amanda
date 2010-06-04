@@ -1,6 +1,6 @@
 /*
  * Amanda, The Advanced Maryland Automatic Network Disk Archiver
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -50,6 +50,7 @@ typedef struct XferFilterProcess {
 
     gchar **argv;
     gboolean need_root;
+    gboolean log_stderr;
 
     pid_t child_pid;
     GSource *child_watch;
@@ -142,7 +143,8 @@ start_impl(
 	    /* set up stdin, stdout, and stderr */
 	    dup2(elt->upstream->output_fd, STDIN_FILENO);
 	    dup2(elt->downstream->input_fd, STDOUT_FILENO);
-	    debug_dup_stderr_to_debug();
+	    if (!self->log_stderr)
+		debug_dup_stderr_to_debug();
 
 	    /* and close everything else */
 	    safe_fd(-1, 0);
@@ -295,7 +297,8 @@ xfer_filter_process_get_type (void)
 XferElement *
 xfer_filter_process(
     gchar **argv,
-    gboolean need_root)
+    gboolean need_root,
+    gboolean log_stderr)
 {
     XferFilterProcess *xfp = (XferFilterProcess *)g_object_new(XFER_FILTER_PROCESS_TYPE, NULL);
     XferElement *elt = XFER_ELEMENT(xfp);
@@ -305,6 +308,7 @@ xfer_filter_process(
 
     xfp->argv = argv;
     xfp->need_root = need_root;
+    xfp->log_stderr = log_stderr;
 
     return elt;
 }
