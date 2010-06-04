@@ -34,7 +34,6 @@ libamanda_la_SOURCES =		\
 	packet.c		\
 	pipespawn.c		\
 	protocol.c		\
-	queueing.c		\
 	semaphore.c		\
 	security.c		\
 	security-util.c		\
@@ -112,7 +111,6 @@ noinst_HEADERS =		\
 	packet.h		\
 	pipespawn.h		\
 	protocol.h		\
-	queueing.h		\
 	semaphore.h		\
 	security.h		\
 	security-util.h		\
@@ -205,7 +203,7 @@ libtestutils_la_SOURCES = \
 
 # automake-style tests
 
-TESTS = amflock-test event-test semaphore-test queueing-test quoting-test \
+TESTS = amflock-test event-test semaphore-test quoting-test \
 	ipc-binary-test hexencode-test fileheader-test match-test
 noinst_PROGRAMS = $(TESTS)
 
@@ -217,9 +215,6 @@ event_test_LDADD = libamanda.la libtestutils.la
 
 semaphore_test_SOURCES = semaphore-test.c
 semaphore_test_LDADD = libamanda.la libtestutils.la
-
-queueing_test_SOURCES = queueing-test.c
-queueing_test_LDADD = libamanda.la libtestutils.la
 
 quoting_test_SOURCES = quoting-test.c
 quoting_test_LDADD = libamanda.la libtestutils.la

@@ -1,4 +1,17 @@
 2010-06-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* xfer-src/xfer-element.h common-src/Makefile.am
+	  common-src/queueing-test.c common-src/queueing.c
+	  common-src/queueing.h: remove queueing support
+	* installcheck/Amanda_Device.pl device-src/Makefile.am
+	  device-src/device-queueing.c device-src/device-queueing.h
+	  device-src/device.c device-src/device.h device-src/property.h: remove
+	  queue_fd, device_write_from_fd and device_read_to_fd
+	* perl/Amanda/Device.pod perl/Amanda/Device.swg: remove queue_fd,
+	  write_from_fd, and read_to_fd; add test utilities to move random data
+	  onto and off of devices
+
+
+2010-06-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Xfer.pl perl/Amanda/Xfer.pod
 	  perl/Amanda/Xfer.swg perl/Amanda/Recovery/Planner.pm
 	  server-src/amfetchdump.pl server-src/amidxtaped.pl

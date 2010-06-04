@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -23,7 +23,6 @@
 
 #include <glib.h>
 #include <glib-object.h>
-#include "queueing.h" /* for StreamingRequirement */
 
 /* The properties interface defines define capabilities and other interesting
  * properties. */
@@ -196,6 +195,11 @@ extern DevicePropertyBase device_property_concurrency;
 #define PROPERTY_CONCURRENCY (device_property_concurrency.ID)
 
 /* Value is a StreamingRequirement */
+typedef enum {
+    STREAMING_REQUIREMENT_NONE,
+    STREAMING_REQUIREMENT_DESIRED,
+    STREAMING_REQUIREMENT_REQUIRED
+} StreamingRequirement;
 extern DevicePropertyBase device_property_streaming;
 #define PROPERTY_STREAMING (device_property_streaming.ID)
 

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 468;
+use Test::More tests => 452;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -32,7 +32,6 @@ use Amanda::Config qw( :getconf :init );
 use Amanda::Xfer qw( :constants );
 use Amanda::Header qw( :constants );
 use Amanda::Paths;
-use Amanda::Tests;
 use Amanda::Util;
 use Amanda::MainLoop;
 use IO::Socket;
@@ -44,7 +43,6 @@ my ($input_filename, $output_filename) =
     ( "$Installcheck::TMP/input.tmp", "$Installcheck::TMP/output.tmp" );
 my $taperoot = "$Installcheck::TMP/Amanda_Device_test_tapes";
 my $testconf;
-my $queue_fd;
 
 # we'll need some vtapes..
 sub mkvtape {
@@ -67,21 +65,9 @@ $dumpfile->{name} = "localhost";
 $dumpfile->{disk} = "/home";
 $dumpfile->{program} = "INSTALLCHECK";
 
-# function to set up a queue_fd for a filename
-sub make_queue_fd {
-    my ($filename, $mode) = @_;
-
-    open(my $fd, $mode, $filename) or die("Could not open $filename: $!");
-    return $fd, Amanda::Device::queue_fd_t->new($fd);
-}
-
 my $write_file_count = 5;
 sub write_file {
     my ($seed, $length, $filenum) = @_;
-
-    croak ("selected file size $length is *way* too big")
-	unless ($length < 1024*1024*10);
-    Amanda::Tests::write_random_file($seed, $length, $input_filename);
 
     $dumpfile->{'datestamp'} = "2000010101010$filenum";
 
@@ -92,11 +78,10 @@ sub write_file {
     is($dev->file(), $filenum,
 	"Device has correct filenum");
 
-    my ($input, $queue_fd) = make_queue_fd($input_filename, "<");
-    ok($dev->write_from_fd($queue_fd),
-	"write some data")
-	or diag($dev->error_or_status());
-    close($input) or die("Error closing $input_filename");
+    croak ("selected file size $length is *way* too big")
+	unless ($length < 1024*1024*10);
+    ok(Amanda::Device::write_random_to_device($seed, $length, $dev),
+	"write random data");
 
     if(ok($dev->in_file(),
 	"still in_file")) {
@@ -108,7 +93,7 @@ sub write_file {
     }
 }
 
-my $verify_file_count = 5;
+my $verify_file_count = 4;
 sub verify_file {
     my ($seed, $length, $filenum) = @_;
 
@@ -120,14 +105,7 @@ sub verify_file {
     ok(header_for($read_dumpfile, $filenum),
 	"header is correct")
 	or diag($dev->error_or_status());
-
-    my ($output, $queue_fd) = make_queue_fd($output_filename, ">");
-    ok($dev->read_to_fd($queue_fd),
-	"read data from file $filenum")
-	or diag($dev->error_or_status());
-    close($output) or die("Error closing $output_filename");
-
-    ok(Amanda::Tests::verify_random_file($seed, $length, $output_filename, 0),
+    ok(Amanda::Device::verify_random_from_device($seed, $length, $dev),
 	"verified file contents");
 }
 

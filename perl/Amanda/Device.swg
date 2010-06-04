@@ -30,6 +30,7 @@
 #include "property.h"
 #include "fileheader.h"
 #include "glib-util.h"
+#include "simpleprng.h"
 %}
 
 %init %{
@@ -255,29 +256,6 @@ typedef struct DirectTCPConnection {
  * Device struct, %extend-ed into a Perl class
  */
 
-typedef struct queue_fd_t {
-    /* Instance variables -- all readonly */
-    %immutable;
-    int fd;
-    char *errmsg;
-
-    %mutable;
-
-    /* methods */
-    %extend {
-	/* constructor */
-	queue_fd_t(int fd) {
-	    return queue_fd_new(fd, NULL);
-	}
-
-	/* destructor */
-	~queue_fd_t() {
-	    amfree(self->errmsg);
-	    g_free(self);
-	}
-    }
-} queue_fd_t;
-
 %name(unaliased_name) extern char *device_unaliased_name(char *);
 
 typedef struct Device {
@@ -339,11 +317,6 @@ typedef struct Device {
 	}
 
 	gboolean
-	write_from_fd(queue_fd_t *queue_fd) {
-	    return device_write_from_fd(self, queue_fd);
-	}
-
-	gboolean
 	finish_file() {
 	    return device_finish_file(self);
 	}
@@ -361,10 +334,6 @@ typedef struct Device {
 	int
 	read_block(gpointer buffer, int *size) {
 	    return device_read_block(self, buffer, size);
-	}
-
-	gboolean read_to_fd(queue_fd_t *queue_fd) {
-	    return device_read_to_fd(self, queue_fd);
 	}
 
 	gboolean
@@ -623,6 +592,86 @@ Device *rait_device_open_from_children(GSList *child_devices);
 sub new_rait_from_children {
     my $class = shift; # strip the $class from the arguments
     return rait_device_open_from_children([@_]);
+}
+%}
+
+/*
+ * Utilities for installchecks (not described in POD)
+ */
+
+%inline %{
+
+/* write LENGTH bytes of random data to FILENAME, seeded with SEED */
+gboolean
+write_random_to_device(guint32 seed, size_t length, Device *device) {
+    simpleprng_state_t prng;
+    char *buf;
+    gsize block_size = device->block_size;
+    g_assert(block_size < G_MAXUINT);
+
+    buf = g_malloc(block_size);
+    simpleprng_seed(&prng, seed);
+
+    while (length) {
+	size_t to_write = min(block_size, length);
+
+	simpleprng_fill_buffer(&prng, buf, to_write);
+	if (!device_write_block(device, (guint)block_size, buf)) {
+	    g_free(buf);
+	    return FALSE;
+	}
+	length -= to_write;
+    }
+
+    g_free(buf);
+    return TRUE;
+}
+
+/* read LENGTH bytes of random data from FILENAME verifying it against
+ * a PRNG seeded with SEED.  Sends any error messages to stderr.
+ */
+gboolean
+verify_random_from_device(guint32 seed, size_t length, Device *device) {
+    simpleprng_state_t prng;
+    char *buf = NULL; /* first device_read_block will get the size */
+    int block_size = 0;
+
+    simpleprng_seed(&prng, seed);
+
+    while (length) {
+	int bytes_read;
+	int size;
+
+	bytes_read = device_read_block(device, buf, &size);
+	if (bytes_read == 0 && size > block_size) {
+	    g_free(buf);
+	    block_size = size;
+	    buf = g_malloc(block_size);
+	    continue;
+	}
+	if (bytes_read == -1) {
+	    if (device->status == DEVICE_STATUS_SUCCESS) {
+		g_assert(device->is_eof);
+		g_debug("verify_random_from_device got unexpected EOF");
+	    }
+	    goto error;
+	}
+
+	/* strip padding */
+	bytes_read = min(bytes_read, length);
+
+	if (!simpleprng_verify_buffer(&prng, buf, bytes_read))
+	    goto error;
+
+	length -= bytes_read;
+    }
+
+    g_free(buf);
+    return TRUE;
+
+error:
+    g_free(buf);
+    return FALSE;
 }
 %}
 

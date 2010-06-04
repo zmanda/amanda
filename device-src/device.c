@@ -28,8 +28,6 @@
 #include <regex.h>
 
 #include "device.h"
-#include "queueing.h"
-#include "device-queueing.h"
 #include "property.h"
 
 #include "timestamp.h"
@@ -184,9 +182,6 @@ static void simple_property_free(SimpleProperty *o);
 static void default_device_open_device(Device * self, char * device_name,
 				    char * device_type, char * device_node);
 static gboolean default_device_configure(Device *self, gboolean use_global_config);
-static gboolean default_device_write_from_fd(Device *self,
-					     queue_fd_t *queue_fd);
-static gboolean default_device_read_to_fd(Device *self, queue_fd_t *queue_fd);
 static gboolean default_device_property_get_ex(Device * self, DevicePropertyId id,
 					       GValue * val,
 					       PropertySurety *surety,
@@ -307,8 +302,6 @@ device_class_init (DeviceClass * device_class)
 
     device_class->open_device = default_device_open_device;
     device_class->configure = default_device_configure;
-    device_class->write_from_fd = default_device_write_from_fd;
-    device_class->read_to_fd = default_device_read_to_fd;
     device_class->property_get_ex = default_device_property_get_ex;
     device_class->property_set_ex = default_device_property_set_ex;
     g_object_class->finalize = device_finalize;
@@ -1071,60 +1064,6 @@ device_property_get_list (Device * self)
     return DEVICE_GET_CLASS(self)->class_properties_list;
 }
 
-static gboolean
-default_device_read_to_fd(Device *self, queue_fd_t *queue_fd) {
-    GValue val;
-    StreamingRequirement streaming_mode;
-
-    if (device_in_error(self)) return FALSE;
-
-    /* Get the device's parameters */
-    bzero(&val, sizeof(val));
-    if (!device_property_get(self, PROPERTY_STREAMING, &val)
-	|| !G_VALUE_HOLDS(&val, STREAMING_REQUIREMENT_TYPE)) {
-	streaming_mode = STREAMING_REQUIREMENT_REQUIRED;
-    } else {
-	streaming_mode = g_value_get_enum(&val);
-    }
-
-    return QUEUE_SUCCESS ==
-	do_consumer_producer_queue_full(
-	    device_read_producer,
-	    self,
-	    fd_write_consumer,
-	    queue_fd,
-	    self->block_size,
-	    DEFAULT_MAX_BUFFER_MEMORY,
-	    streaming_mode);
-}
-
-static gboolean
-default_device_write_from_fd(Device *self, queue_fd_t *queue_fd) {
-    GValue val;
-    StreamingRequirement streaming_mode;
-
-    if (device_in_error(self)) return FALSE;
-
-    /* Get the device's parameters */
-    bzero(&val, sizeof(val));
-    if (!device_property_get(self, PROPERTY_STREAMING, &val)
-	|| !G_VALUE_HOLDS(&val, STREAMING_REQUIREMENT_TYPE)) {
-	streaming_mode = STREAMING_REQUIREMENT_REQUIRED;
-    } else {
-	streaming_mode = g_value_get_enum(&val);
-    }
-
-    return QUEUE_SUCCESS ==
-	do_consumer_producer_queue_full(
-	    fd_read_producer,
-	    queue_fd,
-	    device_write_consumer,
-	    self,
-	    self->block_size,
-	    DEFAULT_MAX_BUFFER_MEMORY,
-	    streaming_mode);
-}
-
 /* XXX WARNING XXX
  * All the functions below this comment are stub functions that do nothing
  * but implement the virtual function table. Call these functions and they
@@ -1242,20 +1181,6 @@ device_write_block (Device * self, guint size, gpointer block)
 }
 
 gboolean
-device_write_from_fd (Device * self, queue_fd_t * queue_fd)
-{
-    DeviceClass *klass;
-
-    g_assert(IS_DEVICE (self));
-    g_assert(queue_fd->fd >= 0);
-    g_assert(IS_WRITABLE_ACCESS_MODE(self->access_mode));
-
-    klass = DEVICE_GET_CLASS(self);
-    g_assert(klass->write_from_fd);
-    return (klass->write_from_fd)(self,queue_fd);
-}
-
-gboolean
 device_start_file (Device * self, dumpfile_t * jobInfo) {
     DeviceClass * klass;
 
@@ -1328,21 +1253,6 @@ device_read_block (Device * self, gpointer buffer, int * size)
     g_assert(klass->read_block);
     return (klass->read_block)(self,buffer,size);
 }
-
-gboolean
-device_read_to_fd (Device * self, queue_fd_t *queue_fd)
-{
-    DeviceClass *klass;
-
-    g_assert(IS_DEVICE (self));
-    g_assert(queue_fd->fd >= 0);
-    g_assert(self->access_mode == ACCESS_READ);
-
-    klass = DEVICE_GET_CLASS(self);
-    g_assert(klass->read_to_fd);
-    return (klass->read_to_fd)(self,queue_fd);
-}
-
 
 gboolean
 device_property_get_ex(

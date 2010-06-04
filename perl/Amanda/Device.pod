@@ -474,23 +474,6 @@ set C<is_eom> whenever the situation is ambiguous.
 This function ensures that C<block> is correct on exit. Even in an
 error condition, it does not finish the current file for the caller.
 
-=head3 write_from_fd (DEPRECATED)
-
- my $qfd = Amanda::Device::queue_fd_t->new(fileno($fh));
- if (!$dev->write_from_fd($fd)) {
-   print STDERR $qfd->{errmsg}, "\n" if ($qfd->{errmsg});
-   print STDERR $dev->status_or_error(), "\n" if ($dev->status());
- }
-
-This method reads from the given file descriptor until EOF, writing the data to
-a Device file which should already be started, and not returning until the
-operation is complete. The file is not automatically finished. This method is
-deprecated; the better solution is to use the transfer architecture
-(L<Amanda::Xfer>).
-
-This is a virtual method, but the default implementation in the Device class
-uses C<write_block>, so there is no need for subclasses to override it.
-
 =head3 finish_file
 
  $success = $dev->finish_file();
@@ -558,23 +541,6 @@ while reading the last block, and will set C<is_eof> at that time. Others must
 wait for the next read to fail. It is never an error to call C<read_block>
 after an EOF, so there is no need to check C<is_eof> except when C<read_block>
 returns -1.
-
-=head3 read_to_fd (DEPRECATED)
-
- queue_fd_t *qfd = queue_fd_new(fd, NULL);
- my $qfd = Amanda::Device::queue_fd_t->new(fileno($fh));
- if (!$dev->read_to_fd($fd)) {
-   print STDERR $qfd->{errmsg}, "\n" if ($qfd->{errmsg});
-   print STDERR $dev->status_or_error(), "\n" if ($dev->status());
- }
-
-This method reads the current file from the device and writes to the given file
-descriptor, not returning until the operation is complete. This method is
-deprecated; new uses of devices use the transfer architecture
-(L<Amanda::Xfer>).
-
-This is a virtual method, but the default implementation in the Device class
-uses C<read_block>, so there is no need for subclasses to override it.
 
 =head3 finish
 

@@ -28,7 +28,6 @@
 #include <glib.h>
 #include <glib-object.h>
 #include "xfer.h"
-#include "queueing.h"
 #include "directtcp.h"
 
 typedef enum {

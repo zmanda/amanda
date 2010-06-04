@@ -31,7 +31,6 @@ libamdevice_la_LDFLAGS = -release $(VERSION)
 libamdevice_la_SOURCES = \
 	property.c \
 	device.c \
-	device-queueing.c \
 	directtcp-connection.c \
 	null-device.c \
 	rait-device.c \
@@ -101,7 +100,6 @@ endif
 ## headers
 
 noinst_HEADERS = \
-	device-queueing.h \
 	device.h \
 	directtcp-connection.h \
 	property.h \
