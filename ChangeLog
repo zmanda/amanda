@@ -1,3 +1,7 @@
+2010-06-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndml_agent.c: add INADDR_NONE
+	* ndmp-src/ndmos_glib.h: remove solaris-specific conditional
+
 2010-06-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amfeatures.h: New fe_amindexd_quote_label.
 	* common-src/amfeatures.c: fe_amindexd_quote_label.
