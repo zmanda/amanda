@@ -100,16 +100,6 @@ chg_scsi_chio_SOURCES = libscsi.h $(chg_scsi_chio_CSRC)
 
 EXTRA_DIST += scsi-proto.c
 
-INSTALLPERMS_exec = \
-	chown=amanda \
-	dest=$(sbindir) $(sbin_PROGRAMS) \
-	dest=$(amlibexecdir) $(amlibexec_PROGRAMS) 
-
-INSTALLPERMS_data = \
-	chown=amanda \
-	dest=$(sbindir) $(sbin_SCRIPTS) \
-	dest=$(amlibexecdir) $(amlibexec_SCRIPTS) $(amlibexec_DATA)
-
 lint:
 	@ for p in $(amlibexec_PROGRAMS) $(EXTRA_PROGRAMS); do			\
 		p=`basename $$p $(EXEEXT)`;					\

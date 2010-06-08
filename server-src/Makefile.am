@@ -64,21 +64,10 @@ sbin_SCRIPTS = $(sbin_SCRIPTS_PERL) $(sbin_SCRIPTS_SHELL)
 amlibexec_SCRIPTS = $(amlibexec_SCRIPTS_PERL) $(amlibexec_SCRIPTS_SHELL)
 
 INSTALLPERMS_exec = \
-	dest=$(sbindir) chown=amanda chmod= \
-		$(sbin_PROGRAMS) \
-	chown=root chmod=04750 \
+	dest=$(sbindir) chown=root chmod=04750 \
 		amcheck amservice \
-	dest=$(amlibexecdir) chown=amanda chmod= \
-		$(amlibexec_PROGRAMS) \
-		$(amlibexec_SCRIPTS) \
-	chown=root chmod=04750 \
+	dest=$(amlibexecdir) \
 		dumper planner
-
-INSTALLPERMS_data = \
-	dest=$(sbindir) chown=amanda chmod= \
-		$(sbin_SCRIPTS) \
-	dest=$(amlibexecdir) chown=amanda chmod= \
-		$(amlibexec_SCRIPTS)
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system

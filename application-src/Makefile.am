@@ -48,13 +48,7 @@ LDADD = ../common-src/libamanda.la \
 	../common-src/libamanda.la \
 	../gnulib/libgnu.la
 
-INSTALLPERMS_exec = dest=$(amlibexecdir) chown=amanda $(amlibexec_PROGRAMS) \
-		    dest=$(applicationdir) chown=amanda $(applicationexec_PROGRAMS) \
-		    dest=$(applicationdir) chown=amanda $(applicationexec_SCRIPTS)
-
-INSTALLPERMS_data = dest=$(amlibexecdir) chown=amanda $(amlibexec_SCRIPTS)
-
 if WANT_SETUID_CLIENT
-INSTALLPERMS_exec += dest=$(applicationdir) chown=root chmod=04750 \
-		     amgtar amstar
+INSTALLPERMS_exec = dest=$(applicationdir) chown=root chmod=04750 \
+		    amgtar amstar
 endif

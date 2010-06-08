@@ -36,14 +36,6 @@ LDADD = ../common-src/libamanda.la \
 	../common-src/libamanda.la \
 	../gnulib/libgnu.la
 
-INSTALLPERMS_exec = \
-	dest=$(amlibexecdir) chown=amanda \
-		$(amlibexec_PROGRAMS)
-
-INSTALLPERMS_data = \
-	dest=$(amlibexecdir) chown=amanda \
-		$(amlibexec_SCRIPTS)
-
 lint:
 	@ for p in $(amlibexec_PROGRAMS); do					\
 		p=`basename $$p $(EXEEXT)`;					\

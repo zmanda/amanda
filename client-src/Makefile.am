@@ -61,15 +61,8 @@ sendbackup_SOURCES = 	sendbackup.c		sendbackup.h	  \
 noinst_HEADERS	= 	amandates.h	getfsent.h	\
 			findpass.h	client_util.h
 			
-INSTALLPERMS_exec = chown=amanda \
-	dest=$(amlibexecdir) $(amlibexec_PROGRAMS)
-
-INSTALLPERMS_data = chown=amanda \
-	dest=$(sbindir) $(sbin_SCRIPTS) \
-	dest=$(amlibexecdir) $(amlibexec_SCRIPTS)
-
 if WANT_SETUID_CLIENT
-INSTALLPERMS_exec += dest=$(amlibexecdir) chown=root chmod=04750 \
+INSTALLPERMS_exec = dest=$(amlibexecdir) chown=root chmod=04750 \
 		calcsize killpgrp rundump runtar
 endif
 

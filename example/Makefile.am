@@ -66,12 +66,3 @@ EXTRA_DIST += $(lbltempl_DATA)
 
 # config.status leaves config.log files around
 CLEANFILES += config.log
-
-# figure out whether to put foo.in or foo itself into the dist tarball, based on whether
-# foo.in exists.
-
-INSTALLPERMS_data = chown=amanda \
-	dest=$(templatedir) $(template_DATA) \
-	dest=$(server_exampledir) $(example_DATA) \
-	dest=$(client_exampledir) $(example_DATA) \
-	dest=$(lbltempldir) $(lbltempl_DATA)

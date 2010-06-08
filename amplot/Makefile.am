@@ -22,7 +22,3 @@ amplot.gp: amplot.g
 	echo "pause -1;" >> amplot.gp.new
 	rm -f amplot.gp
 	mv amplot.gp.new amplot.gp
-
-INSTALLPERMS_data = \
-	dest=$(amplotdir) chown=amanda $(amplot_DATA) \
-	dest=$(sbindir) chown=amanda $(sbin_SCRIPTS)
