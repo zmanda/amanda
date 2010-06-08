@@ -51,6 +51,13 @@
 
 #include "ndmlib.h"
 
+/* On some solaris distributions INADDR_NONE is not defined,
+ * so define it here..
+ */
+
+#ifndef INADDR_NONE
+#define INADDR_NONE     ((in_addr_t)-1)
+#endif
 
 int
 ndmagent_from_str (struct ndmagent *agent, char *str)

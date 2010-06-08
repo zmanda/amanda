@@ -1,3 +1,7 @@
+2010-06-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndml_agent.c: add INADDR_NONE
+	* ndmp-src/ndmos_glib.h: remove solaris-specific conditional
+
 2010-06-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Device.swg: fix uninitialized variable
 
