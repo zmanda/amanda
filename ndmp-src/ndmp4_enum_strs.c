@@ -235,6 +235,7 @@ int ndmp4_tape_open_mode_from_str (ndmp4_tape_open_mode *valp, char *str) {
 struct ndmp_enum_str_table ndmp4_tape_open_mode_table[] = {
 	{ "NDMP4_TAPE_READ_MODE",	NDMP4_TAPE_READ_MODE, },
 	{ "NDMP4_TAPE_RDWR_MODE",	NDMP4_TAPE_RDWR_MODE, },
+	{ "NDMP4_TAPE_RAW_MODE",	NDMP4_TAPE_RAW_MODE, },
 	{ 0 }
 };
 

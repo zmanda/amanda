@@ -1,3 +1,6 @@
+2010-06-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndmp4_enum_strs.c: add missing enum
+
 2010-06-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndml_agent.c: add INADDR_NONE
 	* ndmp-src/ndmos_glib.h: remove solaris-specific conditional
