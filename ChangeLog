@@ -1,3 +1,12 @@
+2010-06-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm (check_data_path): New method to check
+	  the data_path.
+	* server-src/driver.c: Check FAILED result after PORT command.
+	* server-src/driverio.c: Send data_path in taper PORT-WRITE command.
+	* server-src/taper.pl: Parse data_path in PORT-WRITE command, call the
+	  scribe check_data_path method.
+	* installcheck/taper.pl: Test it.
+
 2010-06-09 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/rpm/amanda.spec: remove Provides from main section,
 	   remove amanda-client from server provides section.

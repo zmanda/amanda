@@ -32,7 +32,7 @@ use constant START_TAPER => message("START-TAPER",
 
 use constant PORT_WRITE => message("PORT-WRITE",
     format => [ qw( handle hostname diskname level datestamp splitsize
-		    split_diskbuffer fallback_splitsize ) ],
+		    split_diskbuffer fallback_splitsize data_path) ],
 );
 
 use constant FILE_WRITE => message("FILE-WRITE",
@@ -685,6 +685,14 @@ sub setup_and_start_dump {
 	$self->{'orig_kb'} = $params{'orig_kb'};
 	$self->{'input_errors'} = [];
 
+	if (my $err = $self->{'scribe'}->check_data_path($params{'data_path'})) {
+	    return $params{'dump_cb'}->(
+		result => "FAILED",
+		device_errors => ["$err"],
+		size => 0,
+		duration => 0.0,
+		total_duration => 0);
+	}
 	$steps->{'make_xfer'}->();
     };
 
