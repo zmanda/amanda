@@ -938,9 +938,14 @@ sub _handle_taper_line
 
         if ($str =~ m{^no-tape}) {
 
+	    my @info = Amanda::Util::split_quoted_strings($str);
+	    my $failure_from = $info[1];
+	    my $error = join " ", @info[ 2 .. $#info ];
+
             $self->{flags}{exit_status} |= STATUS_TAPE;
             $self->{flags}{degraded_mode} = 1;
-            $taper_p->{tape_error} = $str;
+	    $taper_p->{failure_from} = $failure_from;
+            $taper_p->{tape_error} = $error;
 
         } else {
             $self->_handle_error_line("taper", $str);
@@ -1012,7 +1017,14 @@ sub _handle_fail_line
 
     my @info = Amanda::Util::split_quoted_strings($str);
     my ($hostname, $disk, $date, $level) = @info;
-    my $error = join " ", @info[ 4 .. $#info ];
+    my $error;
+    my $failure_from;
+    if ($program eq 'taper') {
+	$failure_from = $info[4];
+	$error = join " ", @info[ 5 .. $#info ];
+    } else {
+	$error = join " ", @info[ 4 .. $#info ];
+    }
 
     #TODO: verify that this reaches the right try.  Also, DLE or
     #program?
@@ -1029,6 +1041,7 @@ sub _handle_fail_line
 
     $program_d->{level}  = $level;
     $program_d->{status} = "fail";
+    $program_d->{failure_from}  = $failure_from;
     $program_d->{error}  = $error;
 
     my $errors = $self->get_program_info("program", "errors", []);

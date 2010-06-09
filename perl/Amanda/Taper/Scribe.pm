@@ -333,7 +333,7 @@ A typical Feedback subclass might begin like this:
     my $self = shift;
     my %params = @_;
 
-    $params{'perm_cb'}->("NO VOLUMES FOR YOU!");
+    $params{'perm_cb'}->("ERROR", "NO VOLUMES FOR YOU!");
   }
 
 =cut
@@ -831,8 +831,13 @@ sub _dump_done {
 sub _operation_failed {
     my $self = shift;
     my ($error) = @_;
+    my $error_message = $error;
 
-    $self->dbg("operation failed: $error");
+    if (ref($error) eq "ARRAY") {
+	Amanda::Debug::debug("error is an array: ".$error->[0]." : ".$error->[1]);
+	$error_message = $error->[1];
+    }
+    $self->dbg("operation failed: $error_message");
 
     push @{$self->{'device_errors'}}, $error;
 
@@ -840,7 +845,7 @@ sub _operation_failed {
     # the error and set the result correctly; but if there's no xfer, then we
     # can just call _dump_done directly.
     if (defined $self->{'xfer'}) {
-        $self->dbg("cancelling the transfer: $error");
+        $self->dbg("cancelling the transfer: $error_message");
 
 	$self->{'xfer'}->cancel();
     } else {
@@ -1187,11 +1192,15 @@ sub _start_request {
     $self->{'request_pending'} = 1;
 
     $self->{'feedback'}->request_volume_permission(perm_cb => sub {
-	my ($refusal_reason) = @_;
+	my (@refusal_reason) = @_;
 
 	$self->{'request_pending'} = 0;
 	$self->{'request_complete'} = 1;
-	$self->{'request_denied_reason'} = $refusal_reason;
+	if (defined($refusal_reason[0])) {
+	    $self->{'request_denied_reason'} = \@refusal_reason;
+	} else {
+	    $self->{'request_denied_reason'} = undef;
+	}
 
 	$self->_maybe_callback();
     });

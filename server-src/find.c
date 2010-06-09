@@ -952,6 +952,8 @@ search_logfile(
 		    orig_kb = 0;
 		}
 	    }
+	    if (strncmp(rest, "error ", 6) == 0) rest += 6;
+	    if (strncmp(rest, "config ", 7) == 0) rest += 7;
 	    regfree(&regex);
 
 	    dp = lookup_disk(host,disk);

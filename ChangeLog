@@ -1,4 +1,13 @@
 2010-06-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_DB_Catalog.pl, installcheck/Amanda_Logfile.pl,
+	  installcheck/Amanda_Recovery_Planner.pl,
+	  installcheck/Amanda_Taper_Scribe.pl, installcheck/amreport.pl,
+	  installcheck/taper.pl, perl/Amanda/Report.pm,
+	  perl/Amanda/Report/human.pm, perl/Amanda/Taper/Scribe.pm,
+	  server-src/find.c, server-src/taper.pl: taper log a "config|error"
+	  keyword in the "ERROR no-tape" line.
+
+2010-06-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Allow negative etimeout.
 
 2010-06-08  Dustin J. Mitchell <dustin@zmanda.com>

@@ -147,6 +147,9 @@ sub scan {
 
 package Mock::Feedback;
 use base qw( Amanda::Taper::Scribe::Feedback );
+use Test::More;
+use Data::Dumper;
+use Installcheck::Config;
 
 sub new {
     my $class = shift;
@@ -161,7 +164,11 @@ sub request_volume_permission {
     my %params = @_;
     my $answer = shift @{$self->{'rq_answers'}};
     main::event("request_volume_permission", "answer:", $answer);
-    $params{'perm_cb'}->($answer);
+    if (!defined($answer)) {
+	$params{'perm_cb'}->(undef);
+    } else {
+	$params{'perm_cb'}->($answer->[0], $answer->[1]);
+    }
 }
 
 sub notif_new_tape {
@@ -290,15 +297,15 @@ is_deeply([ @events ], [
     ], "correct event sequence for basic run of DevHandling")
     or diag(Dumper([@events]));
 
-run_devh(1, Mock::Taperscan->new(), Mock::Feedback->new('no-can-do'));
+run_devh(1, Mock::Taperscan->new(), Mock::Feedback->new(['config', 'no-can-do']));
 is_deeply([ @events ], [
       [ 'start' ],
       [ 'scan' ],
 
       [ 'get_volume' ],
-      [ 'request_volume_permission', 'answer:', 'no-can-do' ],
+      [ 'request_volume_permission', 'answer:', ['config','no-can-do'] ],
       [ 'scan-finished', undef, "slot: 1" ],
-      [ 'got_volume', undef, 'no-can-do', undef ],
+      [ 'got_volume', undef, ['config','no-can-do'], undef ],
 
       [ 'quit' ],
     ], "correct event sequence for a run without permission")
@@ -318,15 +325,15 @@ is_deeply([ @events ], [
     ], "correct event sequence for a run with a changer error")
     or diag(Dumper([@events]));
 
-run_devh(1, Mock::Taperscan->new("bogus"), Mock::Feedback->new("not this time"));
+run_devh(1, Mock::Taperscan->new("bogus"), Mock::Feedback->new(['config',"not this time"]));
 is_deeply([ @events ], [
       [ 'start' ],
       [ 'scan' ],
 
       [ 'get_volume' ],
-      [ 'request_volume_permission', 'answer:', 'not this time' ],
+      [ 'request_volume_permission', 'answer:', ['config','not this time'] ],
       [ 'scan-finished', "Slot bogus not found", "slot: none" ],
-      [ 'got_volume', 'Slot bogus not found', 'not this time', undef ],
+      [ 'got_volume', 'Slot bogus not found', ['config','not this time'], undef ],
 
       [ 'quit' ],
     ], "correct event sequence for a run with no permission AND a changer error")
@@ -394,9 +401,21 @@ sub run_scribe_xfer_async {
     step dump_cb => sub {
 	my %params = @_;
 
+	my @errors;
+	foreach my $error (@{ $params{'device_errors'} }) {
+	    if (ref($error) eq 'ARRAY') {
+		push @errors, $error;
+	    } else {
+		push @errors, undef_or_str($error);
+	    }
+	}
+	if ($#errors == -1) {
+	    push @errors, [];
+	}
 	main::event("dump_cb",
 	    $params{'result'},
-	    [ map { undef_or_str($_) } @{ $params{'device_errors'} } ],
+	    @errors,
+	    #[ map { undef_or_str($_) } @{ $params{'device_errors'} } ],
 	    $params{'size'});
 
 	$finished_cb->();
@@ -532,7 +551,7 @@ is_deeply([ @events ], [
       [ 'scan-finished', $experr, 'slot: none' ],
       [ 'notif_new_tape', $experr, undef ],
 
-      [ 'dump_cb', 'PARTIAL', [$experr], bi(393216) ],
+      [ 'dump_cb', 'PARTIAL', $experr, bi(393216) ],
     ], "correct event sequence for a multivolume scribe where the second volume isn't found")
     or print (Dumper([@events]));
 
@@ -543,7 +562,7 @@ quit_scribe($scribe);
 reset_taperoot(2);
 $scribe = Amanda::Taper::Scribe->new(
     taperscan => Mock::Taperscan->new(),
-    feedback => Mock::Feedback->new(undef, "sorry!"));
+    feedback => Mock::Feedback->new(undef, ['config',"sorry!"]));
 
 reset_events();
 run_scribe_xfer($volume_length + $volume_length / 4, $scribe,
@@ -561,10 +580,10 @@ is_deeply([ @events ], [
       [ 'notif_part_done', bi(4), bi(0), 0, bi(0) ],
 
       [ 'scan' ],
-      [ 'request_volume_permission', 'answer:', "sorry!" ],
+      [ 'request_volume_permission', 'answer:', ['config',"sorry!"] ],
       [ 'scan-finished', undef, 'slot: 2' ],
 
-      [ 'dump_cb', 'PARTIAL', ["sorry!"], bi(393216) ],
+      [ 'dump_cb', 'PARTIAL', ['config',"sorry!"], bi(393216) ],
     ], "correct event sequence for a multivolume scribe where the second volume isn't permitted")
     or print (Dumper([@events]));
 

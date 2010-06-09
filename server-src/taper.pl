@@ -215,7 +215,7 @@ sub start {
 		message => "$changer");
 
 	# log the error (note that the message is intentionally not quoted)
-	log_add($L_ERROR, "no-tape [$changer]");
+	log_add($L_ERROR, "no-tape error [$changer]");
 
 	# wait for it to be transmitted, then exit
 	$self->{'proto'}->stop(finished_cb => sub {
@@ -245,7 +245,7 @@ sub _scribe_started_cb {
 	$self->{'state'} = "error";
 
 	# log the error (note that the message is intentionally not quoted)
-	log_add($L_ERROR, "no-tape [$err]");
+	log_add($L_ERROR, "no-tape error [$err]");
 
     } else {
 	$self->{'proto'}->send(main::Protocol::TAPER_OK);
@@ -307,9 +307,9 @@ sub request_volume_permission {
 	my ($msgtype, %msg_params) = @_;
 
 	# log the error (note that the message is intentionally not quoted)
-	log_add($L_ERROR, "no-tape [$msg_params{reason}]");
+	log_add($L_ERROR, "no-tape config [$msg_params{reason}]");
 
-	$params{'perm_cb'}->($msg_params{'reason'});
+	$params{'perm_cb'}->("config", $msg_params{'reason'});
     });
     $self->{'proto'}->set_message_cb(main::Protocol::NO_NEW_TAPE,
 	$no_new_tape_cb);
@@ -833,16 +833,29 @@ sub dump_cb {
     my $stats = $self->make_stats($params{'size'}, $params{'total_duration'}, $self->{'orig_kb'});
 
     # write a DONE/PARTIAL/FAIL log line
+    my $failure_from = 'error';
     my $have_msg = @{$params{'device_errors'}};
-    my $msg = join("; ", @{$params{'device_errors'}}, @{$self->{'input_errors'}});
+    my @device_msg;
+    foreach my $error (@{$params{'device_errors'}}) {
+	if (ref($error) eq 'ARRAY') {
+	    if ($error->[0] eq 'config') {
+		$failure_from = 'config';
+	    }
+	    push @device_msg, $error->[1];
+	} else {
+	    push @device_msg, $error;
+	}
+    }
+    my $msg = join("; ", @device_msg, @{$self->{'input_errors'}});
     $msg = quote_string($msg);
 
     if ($logtype == $L_FAIL) {
-	log_add($L_FAIL, sprintf("%s %s %s %s %s",
+	log_add($L_FAIL, sprintf("%s %s %s %s %s %s",
 	    quote_string($self->{'hostname'}.""), # " is required for SWIG..
 	    quote_string($self->{'diskname'}.""),
 	    $self->{'datestamp'},
 	    $self->{'level'},
+	    $failure_from,
 	    $msg));
     } else {
 	log_add($logtype, sprintf("%s %s %s %s %s %s%s",
@@ -872,7 +885,7 @@ sub dump_cb {
     # and errors from the scribe in TAPE-ERROR or TAPE-GOOD
     if (@{$params{'device_errors'}}) {
 	$msg_params{'taper'} = 'TAPE-ERROR';
-	$msg_params{'tapererr'} = join("; ", @{$params{'device_errors'}});
+	$msg_params{'tapererr'} = join("; ", @device_msg);
     } else {
 	$msg_params{'taper'} = 'TAPE-GOOD';
 	$msg_params{'tapererr'} = '';

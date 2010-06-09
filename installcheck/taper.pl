@@ -445,8 +445,8 @@ wait_for_exit();
 
 check_logs([
     qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
-    qr(^ERROR taper no-tape \[sorry\]$),
-    qr(^FAIL taper localhost /home $datestamp 0 sorry$),
+    qr(^ERROR taper no-tape config \[sorry\]$),
+    qr(^FAIL taper localhost /home $datestamp 0 config sorry$),
 ], "NO-NEW-TAPE logged correctly");
 
 ##
@@ -683,7 +683,7 @@ check_logs([
     qr(^PARTPARTIAL taper TESTCONF01 2 localhost /music $datestamp 2/-1 0 \[sec [\d.]+ kb 160 kps [\d.]+ orig-kb 1312\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 256 fm 2 \[OK\]$),
-    qr(^ERROR taper no-tape \[that's enough\]$),
+    qr(^ERROR taper no-tape config \[that's enough\]$),
     qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
     qr(^PARTIAL taper localhost /music $datestamp 2 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1312\] "that's enough"$),
 ], "running out of tapes (simulating runtapes=1) logged correctly");

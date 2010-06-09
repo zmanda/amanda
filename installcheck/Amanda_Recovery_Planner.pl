@@ -486,7 +486,7 @@ INFO taper Will request retry of failed split part.
 WARNING driver Out of tapes; going into degraded mode.
 PARTIAL taper otherbox /lib 20080414144444 1 1 [sec 0.000540 kb 32 kps 59259.259259] "full-up"
 # a completely failed dump
-FAIL taper otherbox /boot 20080414144444 0 "no-space"
+FAIL taper otherbox /boot 20080414144444 0 error "no-space"
 FINISH driver date 20080414144444 time 6.959
 
 # a spanned dump (yep, a real dump)

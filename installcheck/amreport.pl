@@ -1961,7 +1961,7 @@ STATS driver startup time 0.130
 INFO dumper dumper pid 32338
 INFO dumper dumper pid 32335
 INFO taper taper pid 32326
-ERROR taper no-tape [Virtual-tape directory /A/p/vtapes does not exist.]
+ERROR taper no-tape error [Virtual-tape directory /A/p/vtapes does not exist.]
 FINISH planner date 20100303133320 time 1.137
 INFO planner pid-done 32323
 INFO chunker chunker pid 32351

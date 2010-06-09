@@ -249,7 +249,7 @@ PART taper TESTCONF002 10 thatbox /u_lose 20071109010002 2/4 2 [multi-part failu
 PARTPARTIAL taper TESTCONF002 11 thatbox /u_lose 20071109010002  3/4 2 [multi-part retry]
 START taper datestamp 20071109010002 label TESTCONF003 tape 1
 PART taper TESTCONF003 1 thatbox /u_lose 20071109010002 3/4 2 [multi-part failure]
-FAIL taper thatbox /u_lose 20071109010002 2 "Oh no!"
+FAIL taper thatbox /u_lose 20071109010002 2 error "Oh no!"
 PART taper TESTCONF003 2 thatbox /u_win 20071109010002 1/4 3 [multi-part retry]
 PART taper TESTCONF003 3 thatbox /u_win 20071109010002 2/4 3 [multi-part retry]
 PARTPARTIAL taper TESTCONF003 4 thatbox /u_win 20071109010002  3/4 3 [multi-part retry]
