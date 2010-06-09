@@ -3204,7 +3204,17 @@ dump_to_tape(
 
     taper_cmd(PORT_WRITE, dp, NULL, sched(dp)->level, sched(dp)->datestamp);
     cmd = getresult(taper, 1, &result_argc, &result_argv);
-    if (cmd != PORT) {
+    if (cmd == FAILED) {
+	char *pname = get_pname();
+	/* write a dumper error message */
+	set_pname("dumper");
+	log_add(L_FAIL, _("%s %s %s %d %s"),
+		dp->host->hostname, qname, sched(dp)->datestamp,
+		sched(dp)->level, result_argv[5]);
+	set_pname(pname);
+	amfree(qname);
+	return; /* fatal problem */
+    } else if (cmd != PORT) {
 	g_printf(_("driver: did not get PORT from taper for %s:%s\n"),
 		dp->host->hostname, qname);
 	fflush(stdout);

@@ -383,7 +383,7 @@ $datestamp = "19780615010203";
 run_taper(4096, "multipart PORT-WRITE");
 like(taper_reply, qr/^TAPER-OK$/,
 	"got TAPER-OK") or die;
-taper_cmd("PORT-WRITE $handle localhost /var 0 $datestamp 524288 NULL 393216");
+taper_cmd("PORT-WRITE $handle localhost /var 0 $datestamp 524288 NULL 393216 AMANDA");
 like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_taper_reply, 63*32768, "localhost", "/var", 0);
@@ -457,7 +457,7 @@ $datestamp = "19750711095836";
 run_taper(1024, "PORT-WRITE retry on EOT (mem cache)");
 like(taper_reply, qr/^TAPER-OK$/,
 	"got TAPER-OK") or die;
-taper_cmd("PORT-WRITE $handle localhost /usr/local 0 $datestamp 786432 NULL 786432");
+taper_cmd("PORT-WRITE $handle localhost /usr/local 0 $datestamp 786432 NULL 786432 AMANDA");
 like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_taper_reply, 1575936, "localhost", "/usr/local", 0);
@@ -554,7 +554,7 @@ $datestamp = "20090427212500";
 run_taper(1024, "PORT-WRITE retry on EOT (disk cache)");
 like(taper_reply, qr/^TAPER-OK$/,
 	"got TAPER-OK") or die;
-taper_cmd("PORT-WRITE $handle localhost /usr/local 0 $datestamp 786432 \"$Installcheck::TMP\" 786432");
+taper_cmd("PORT-WRITE $handle localhost /usr/local 0 $datestamp 786432 \"$Installcheck::TMP\" 786432 AMANDA");
 like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_taper_reply, 1575936, "localhost", "/usr/local", 0);
@@ -606,7 +606,7 @@ $datestamp = "20090424173000";
 run_taper(1024, "PORT-WRITE failure on EOT (no cache)");
 like(taper_reply, qr/^TAPER-OK$/,
 	"got TAPER-OK") or die;
-taper_cmd("PORT-WRITE $handle localhost /var/log 0 $datestamp 0 NULL 0");
+taper_cmd("PORT-WRITE $handle localhost /var/log 0 $datestamp 0 NULL 0 AMANDA");
 like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_taper_reply, 1575936, "localhost", "/var/log", 1);
@@ -619,7 +619,7 @@ like(taper_reply, qr/^PARTIAL $handle INPUT-GOOD TAPE-ERROR "\[sec [\d.]+ kb 0 k
 	"got PARTIAL") or die;
 # retry on the next tape
 $handle = "11-88899";
-taper_cmd("PORT-WRITE $handle localhost /boot 0 $datestamp 0 NULL 0");
+taper_cmd("PORT-WRITE $handle localhost /boot 0 $datestamp 0 NULL 0 AMANDA");
 like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_taper_reply, 65536, "localhost", "/boot", 0);
@@ -696,7 +696,7 @@ $datestamp = "20200202222222";
 run_taper(4096, "multipart PORT-WRITE");
 like(taper_reply, qr/^TAPER-OK$/,
 	"got TAPER-OK") or die;
-taper_cmd("PORT-WRITE $handle localhost /sbin 0 $datestamp 10 NULL 655360");
+taper_cmd("PORT-WRITE $handle localhost /sbin 0 $datestamp 10 NULL 655360 AMANDA");
 like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_taper_reply, 63*32768, "localhost", "/sbin", 0);
@@ -908,7 +908,7 @@ SKIP : {
 	    "got TAPER-OK") or die;
     # note that Amanda uses the fallback splitsize here, even though it doesn't
     # need a disk_splitbuffer
-    taper_cmd("PORT-WRITE $handle localhost /var 0 $datestamp 524288 NULL 393216");
+    taper_cmd("PORT-WRITE $handle localhost /var 0 $datestamp 524288 NULL 393216 DIRECTTCP");
     like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	    "got PORT with data address");
     write_to_port($last_taper_reply, 1230*1024, "localhost", "/var", 0);
@@ -938,7 +938,7 @@ SKIP : {
     like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 1248 kps [\d.]+ orig-kb 1912\]" "" ""$/,
 	    "got DONE") or die;
     $handle = "55-22222";
-    taper_cmd("PORT-WRITE $handle localhost /etc 0 $datestamp 524288 NULL 393216");
+    taper_cmd("PORT-WRITE $handle localhost /etc 0 $datestamp 524288 NULL 393216 DIRECTTCP");
     like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	    "got PORT with data address");
     write_to_port($last_taper_reply, 300*1024, "localhost", "/etc", 0);
@@ -977,7 +977,7 @@ SKIP : {
     like(taper_reply, qr/^TAPER-OK$/,
 	    "got TAPER-OK") or die;
     # use a different part size this time, to hit EOM "on the head"
-    taper_cmd("PORT-WRITE $handle localhost /var 0 $datestamp 524288 NULL 425984");
+    taper_cmd("PORT-WRITE $handle localhost /var 0 $datestamp 524288 NULL 425984 DIRECTTCP");
     like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	    "got PORT with data address");
     write_to_port($last_taper_reply, 1632*1024, "localhost", "/var", 0);

@@ -150,6 +150,26 @@ Scribe, then start the transfer, and finally let the Scribe know that the
 transfer has started.  Note that the Scribe supplies and manages the transfer
 destination, but the transfer itself remains the responsibility of the caller.
 
+=head3 Get device
+
+Call C<get_device> to get the first device the xfer will be working with.
+
+  $device = $scribe->get_device();
+
+This method must be called after C<start> has completed.
+
+=head3 Check device compatibily for the data path
+
+Call C<check_data_path>, supplying the data_path requested by the user.
+
+  if (my $err = $scribe->check_data_path($data_path)) {
+      # handle error message
+  }
+
+This method must be called after C<start> has completed and before
+C<get_xfer_dest> is called, it return undef on success or an error message
+if the supplied data_path is incompatible with the device.
+
 =head3 Get a Transfer Destination
 
 Call C<get_xfer_dest> to get the transfer element, supplying information on how
@@ -458,6 +478,45 @@ sub quit {
     }
 }
 
+sub get_device {
+    my $self = shift;
+
+    # Can return a device we already have, or "peek" at the
+    # DevHandling object's device.
+    # It might not have right permission on the device.
+
+    my $device;
+    if (defined $self->{'device'}) {
+	$device = $self->{'device'};
+    } else {
+	$device = $self->{'devhandling'}->peek_device();
+    }
+    return $device;
+}
+
+sub check_data_path {
+    my $self = shift;
+    my $data_path = shift;
+
+    my $device = $self->get_device();
+
+    if (!defined $device) {
+	die "no device is available to check the data_path";
+    }
+
+    my $use_directtcp = $device->directtcp_supported();
+
+    my $xdt;
+    if (!$use_directtcp) {
+	if ($data_path eq 'DIRECTTCP') {
+	    return "Can't dump DIRECTTCP data-path dle to a device ('" .
+		   $device->device_name .
+		   "') that doesn't support it";
+	}
+    }
+    return undef;
+}
+
 # Get a transfer destination; does not use a callback
 sub get_xfer_dest {
     my $self = shift;
@@ -517,15 +576,7 @@ sub get_xfer_dest {
     # set the callback
     $self->{'dump_cb'} = undef;
 
-    # to build an xfer destination, we need a device, although we don't necessarily
-    # need permission to write to it yet.  So we can either use a device we already
-    # have, or we "peek" at the DevHandling object's device.
-    my $xdt_first_dev;
-    if (defined $self->{'device'}) {
-	$xdt_first_dev = $self->{'device'};
-    } else {
-	$xdt_first_dev = $self->{'devhandling'}->peek_device();
-    }
+    my $xdt_first_dev = $self->get_device();
 
     if (!defined $xdt_first_dev) {
 	die "no device is available to create an xfer_dest";

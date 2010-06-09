@@ -295,6 +295,7 @@ taper_cmd(
     char fallback_splitsize[NUM_STR_SIZE];
     char orig_kb[NUM_STR_SIZE];
     char *diskbuffer = NULL;
+    char *data_path;
     disk_t *dp;
     char *qname;
     char *qdest;
@@ -330,6 +331,7 @@ taper_cmd(
 	dp = (disk_t *) ptr;
         qname = quote_string(dp->name);
 	g_snprintf(number, SIZEOF(number), "%d", level);
+	data_path = data_path_to_string(dp->data_path);
 
 	/*
           If we haven't been given a place to buffer split dumps to disk,
@@ -354,6 +356,7 @@ taper_cmd(
 			    " ", splitsize,
 			    " ", diskbuffer,
 			    " ", fallback_splitsize,
+			    " ", data_path,
 			    "\n", NULL);
 	amfree(qname);
 	break;
