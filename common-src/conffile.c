@@ -518,6 +518,7 @@ static void ckseen(seen_t *seen);
  * a parser table entry.  They call conf_parserror if the value in their
  * second argument is invalid.  */
 static void validate_nonnegative(conf_var_t *, val_t *);
+static void validate_non_zero(conf_var_t *, val_t *);
 static void validate_positive(conf_var_t *, val_t *);
 static void validate_runspercycle(conf_var_t *, val_t *);
 static void validate_bumppercent(conf_var_t *, val_t *);
@@ -1137,7 +1138,7 @@ conf_var_t server_var [] = {
    { CONF_INPARALLEL           , CONFTYPE_INT      , read_int         , CNF_INPARALLEL           , validate_inparallel },
    { CONF_DUMPORDER            , CONFTYPE_STR      , read_str         , CNF_DUMPORDER            , NULL },
    { CONF_MAXDUMPS             , CONFTYPE_INT      , read_int         , CNF_MAXDUMPS             , validate_positive },
-   { CONF_ETIMEOUT             , CONFTYPE_INT      , read_int         , CNF_ETIMEOUT             , validate_positive },
+   { CONF_ETIMEOUT             , CONFTYPE_INT      , read_int         , CNF_ETIMEOUT             , validate_non_zero },
    { CONF_DTIMEOUT             , CONFTYPE_INT      , read_int         , CNF_DTIMEOUT             , validate_positive },
    { CONF_CTIMEOUT             , CONFTYPE_INT      , read_int         , CNF_CTIMEOUT             , validate_positive },
    { CONF_TAPEBUFS             , CONFTYPE_INT      , read_int         , CNF_TAPEBUFS             , validate_positive },
@@ -4090,6 +4091,33 @@ validate_nonnegative(
 	break;
     default:
 	conf_parserror(_("validate_nonnegative invalid type %d\n"), val->type);
+    }
+}
+
+static void
+validate_non_zero(
+    struct conf_var_s *np,
+    val_t        *val)
+{
+    switch(val->type) {
+    case CONFTYPE_INT:
+	if(val_t__int(val) == 0)
+	    conf_parserror(_("%s must not be 0"), get_token_name(np->token));
+	break;
+    case CONFTYPE_INT64:
+	if(val_t__int64(val) == 0)
+	    conf_parserror(_("%s must not be 0"), get_token_name(np->token));
+	break;
+    case CONFTYPE_TIME:
+	if(val_t__time(val) == 0)
+	    conf_parserror(_("%s must not be 0"), get_token_name(np->token));
+	break;
+    case CONFTYPE_SIZE:
+	if(val_t__size(val) == 0)
+	    conf_parserror(_("%s must not be 0"), get_token_name(np->token));
+	break;
+    default:
+	conf_parserror(_("validate_non_zero invalid type %d\n"), val->type);
     }
 }
 

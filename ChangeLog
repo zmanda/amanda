@@ -1,3 +1,6 @@
+2010-06-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Allow negative etimeout.
+
 2010-06-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndml_agent.c: add INADDR_NONE
 	* ndmp-src/ndmos_glib.h: remove solaris-specific conditional
