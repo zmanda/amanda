@@ -208,7 +208,6 @@ Requires: tar >= %{tarver}
 Requires: readline
 %{?requires_libtermcap}
 %{?requires_initscripts}
-Provides: amanda-backup_client = %{amanda_version}, amanda-backup_server = %{amanda_version}
 
 %package backup_client
 Summary: The Amanda Backup and Archiving Client
@@ -247,7 +246,6 @@ Requires: xinetd
 Requires: perl >= 5.6.0
 Requires: tar >= %{tarver}
 Provides: amanda-backup_server = %{amanda_version}
-Provides: amanda-backup_client = %{amanda_version}
 Provides: libamclient-%{version}.so = %{amanda_version}
 Provides: libamanda-%{version}.so = %{amanda_version}
 Provides: libamserver-%{version}.so = %{amanda_version}
