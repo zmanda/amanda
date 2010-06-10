@@ -21,11 +21,9 @@
 
 # This is useful for debugging
  set -x
-# Check for $AMVER, or pull it from configure.in
-if [ -z $AMVER ]; then
-    VER=`cat FULL_VERSION`
-    AMVER=amanda-${VER}
-fi
+# Check for $VER, or pull it from configure.in
+VER=3.1.0
+AMVER=amanda-${VER}
 
 PKG_TARBALL=${AMVER}.tar.gz
 if [ ! -f "${PKG_TARBALL}" ]; then
@@ -61,6 +59,7 @@ cp packaging/rpm/amanda.spec rpm/SPECS || exit 1
 # default value of some rpm.spec variable, just pass extra --define options.
 # this is useful for changing %amanda_release or %amanda_version
 rpmbuild -ba --define "_topdir ${PKG_DIR}/rpm" \
+	     --define "amanda_version ${VER}" \
              ${PKG_DIR}/rpm/SPECS/amanda.spec || exit 1
 cp rpm/RPMS/*/*.rpm . || exit 1
 cp rpm/SRPMS/*.rpm . || exit 1
