@@ -339,6 +339,10 @@ error that forces it into degraded mode.
 =item C<normal_run> - This flag is set when planner is run.  Its value
 should be opposite of C<amflush_run>.
 
+=item C<dump_failed> - If a dump failed.
+
+=item C<dump_strange> - If a dump end in strange result.
+
 =item C<results_missing> - If this was a normal run, but some DLEs named by the
 planner do not have any results, then this flag is set.  Users should look for
 DLEs with an empty C<dump> key to enumerate the missing results.
@@ -396,6 +400,9 @@ sub read_file
       or die "cannot open '$logfname': $!";
 
     $self->{flags}{exit_status} = 0;
+    $self->{flags}{results_missing} = 0;
+    $self->{flags}{dump_failed} = 0;
+    $self->{flags}{dump_strange} = 0;
 
     while ( my ( $type, $prog, $str ) = Amanda::Logfile::get_logline($logfh) ) {
         $self->read_line( $type, $prog, $str );
@@ -414,8 +421,8 @@ sub read_file
         $self->{flags}{amflush_run} = 1;
     }
 
-    # check for missing results
-    $self->check_missing() if $self->get_flag('normal_run');
+    # check for missing, fail and strange results
+    $self->check_missing_fail_strange() if $self->get_flag('normal_run');
 
     # clean up any temporary values in the data
     $self->cleanup();
@@ -1088,8 +1095,6 @@ sub _handle_start_line
     my $timestamp = $info[1];
     $program_p->{start} = $info[1];
 
-    # extend to 14 digits
-    $timestamp .= '0' x (14 - length($timestamp));
     if ($self->{'run_timestamp'} ne '00000000000000'
 		and $self->{'run_timestamp'} ne $timestamp) {
 	warning("not all timestamps in this file are the same; "
@@ -1169,19 +1174,37 @@ sub _handle_bogus_line
     push @$boguses, [ $prog, $type, $str ];
 }
 
-sub check_missing
+sub check_missing_fail_strange
 {
     my ($self) = @_;
     my @dles = $self->get_dles();
 
     foreach my $dle_entry (@dles) {
 
-        my $alltries = $self->get_dle_info(@$dle_entry, 'dumps');
+        my $alldumps = $self->get_dle_info(@$dle_entry, 'dumps');
 
-	if (!defined $alltries->{$self->{'run_timestamp'}}) {
+	if (!defined $alldumps->{$self->{'run_timestamp'}}) {
 	    $self->{flags}{results_missing} = 1;
 	    $self->{flags}{exit_status} |= STATUS_MISSING;
-	    return;
+	} else {
+	    #get latest try
+	    my $tries = $alldumps->{$self->{'run_timestamp'}};
+	    my $try = @$tries[-1];
+
+	    if ($try->{dumper}->{status} eq 'fail') {
+		$self->{flags}{dump_failed} = 1;
+	    } elsif ((defined($try->{'chunker'}) &&
+		 $try->{'chunker'}->{status} eq 'success') ||
+		(defined($try->{'taper'}) &&
+		 $try->{'taper'}->{status} eq 'done')) {
+		#chunker or taper success, use dumper status
+		if ($try->{'dumper'}->{status} eq 'strange') {
+		    $self->{flags}{dump_strange} = 1;
+		}
+	    } else {
+		#chunker or taper failed, the dump is not valid.
+		$self->{flags}{dump_failed} = 1;
+	    }
 	}
     }
 }

@@ -1,4 +1,9 @@
 2010-06-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report.pm: Set dump_failed and dump_strange flags.
+	* server-src/amreport.pl: Add STRANGE or MISSING to email subject.
+	* installcheck/Amanda_Report.pl: Test new flags.
+
+2010-06-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report.pm: Rename 'tries' to 'dumps', it is a hash of
 	  timestamps, each value is an array of try.
 	* perl/Amanda/Report/human.pm: Use 'dumps'.

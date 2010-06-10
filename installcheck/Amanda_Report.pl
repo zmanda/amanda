@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
-use Test::More tests => 34;
+use Test::More tests => 58;
 use strict;
 use warnings;
 
@@ -62,6 +62,9 @@ EOF
 
 $LogfileFlags{planner} = {
     normal_run => 1,
+    results_missing => 1,
+    dump_failed => 0,
+    dump_strange => 0
 };
 
 $LogfileData{planner} = {
@@ -106,6 +109,9 @@ EOF
 $LogfileFlags{driver} = {
     got_finish => 1,
     normal_run => 1,
+    results_missing => 1,
+    dump_failed => 0,
+    dump_strange => 0
 };
 
 $LogfileData{driver} = {
@@ -177,6 +183,9 @@ EOF
 $LogfileFlags{dumper} = {
     got_finish => 1,
     normal_run => 1,
+    results_missing => 0,
+    dump_failed => 1,
+    dump_strange => 0
 };
 
 $LogfileData{dumper} = {
@@ -296,6 +305,9 @@ EOF
 $LogfileFlags{chunker} = {
     got_finish => 1,
     normal_run => 1,
+    results_missing => 0,
+    dump_failed => 1,
+    dump_strange => 0
 };
 
 $LogfileData{chunker} = {
@@ -438,6 +450,9 @@ EOF
 $LogfileFlags{taper} = {
     got_finish => 1,
     normal_run => 1,
+    results_missing => 0,
+    dump_failed => 0,
+    dump_strange => 0
 };
 
 $LogfileData{taper} = {
@@ -577,6 +592,9 @@ EOF
 $LogfileFlags{simple} = {
     got_finish => 1,
     normal_run => 1,
+    results_missing => 0,
+    dump_failed => 0,
+    dump_strange => 0
 };
 
 $LogfileData{simple} = {
@@ -722,7 +740,8 @@ INFO dumper pid-done 11816
 PART taper FullBackup-14 4 hostname.example.org / 20081002040002 1/1 1 [sec 0.088934 kb 8392 kps 94368.875374]
 DONE taper hostname.example.org / 20081002040002 1 1 [sec 0.088934 kb 8392 kps 94368.875374]
 INFO dumper gzip pid 11861
-SUCCESS dumper hostname.example.org /somedir2 20081002040002 0 [sec 372.700 kb 28776940 kps 77212.0 orig-kb 28776940]
+STRANGE dumper hostname.example.org /somedir2 0 [sec 372.700 kb 28776940 kps 77212.0 orig-kb 28776940]
+  ! strange data
 PART taper FullBackup-14 5 hostname.example.org /somedir2 20081002040002 1/1 0 [sec 370.382399 kb 28776940 kps 77695.214669]
 DONE taper hostname.example.org /somedir2 20081002040002 1 0 [sec 370.382399 kb 28776940 kps 77695.214669]
 INFO dumper pid-done 11861
@@ -742,6 +761,9 @@ EOF
 $LogfileFlags{fullExample} = {
     got_finish => 1,
     normal_run => 1,
+    results_missing => 0,
+    dump_failed => 0,
+    dump_strange => 1
 };
 
 $LogfileData{fullExample} = {
@@ -841,10 +863,12 @@ $LogfileData{fullExample} = {
                             kps     => "77212.0",
                             level   => "0",
                             sec     => "372.700",
-                            status  => "success",
-                            date    => "20081002040002",
+                            status  => "strange",
+                            #date    => "20081002040002",
                             kb      => "28776940",
                             orig_kb => "28776940",
+			    nb_stranges => 1,
+			    stranges => [ "! strange data" ],
                         },
                         taper => {
                             kps    => "77695.214669",
@@ -1076,6 +1100,9 @@ EOF
 $LogfileFlags{amflushExample} = {
     got_finish  => 1,
     amflush_run => 1,
+    results_missing => 0,
+    dump_failed => 0,
+    dump_strange => 0
 };
 
 $LogfileData{amflushExample} = {
