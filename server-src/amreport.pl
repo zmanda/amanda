@@ -276,31 +276,16 @@ sub legacy_send_amreport
     return 0 if ($cfg_send == $SEND_AMREPORT_NEVER);
 
     my $output_name = join(" ", @{ $output->[FORMAT] }, @{ $output->[OUTPUT] });
-    my ($send_amreport, $process_stranges, $process_fails) = (0, 0, 0);
+    my $send_amreport = 0;
 
     debug("testingamreport_send_on=$cfg_send, output:$output_name");
-
-    foreach my $dle ($report->get_dles()) {
-
-        my $dle_info = $report->get_dle_info(@$dle);
-        my $alldumps = $dle_info->{'dumps'};
-
-	while( my ($timestamp, $tries) = each %$alldumps ) {
-            foreach my $try (@$tries) {
-		foreach my $program (keys %$try) {
-                    $process_stranges++ if $try->{$program}{status} eq 'strange';
-                    $process_fails++    if $try->{$program}{status} eq 'fail';
-		}
-            }
-        }
-    }
 
     if ($cfg_send == $SEND_AMREPORT_STRANGE) {
 
         if (   !$report->get_flag("got_finish")
-            || ($report->get_flag("exit_status") != 0)
-            || $process_stranges
-            || $process_fails) {
+	    || ($report->get_flag("dump_failed") != 0)
+	    || ($report->get_flag("results_missing") != 0)
+	    || ($report->get_flag("dump_strange") != 0)) {
 
             debug("send_amreport_on=$cfg_send, condition filled for $output_name");
             $send_amreport = 1;
@@ -315,7 +300,9 @@ sub legacy_send_amreport
 
         if (   !$report->get_flag("got_finish")
             || ($report->get_flag("exit_status") != 0)
-            || $process_fails) {
+            || ($report->get_flag("dump_failed") != 0)
+            || ($report->get_flag("results_missing") != 0)
+            || ($report->get_flag("dump_strange") != 0)) {
 
             debug("send_amreport_on=$cfg_send, condition filled for $output_name");
             $send_amreport = 1;
@@ -386,26 +373,14 @@ sub open_mail_output
     my $date  = POSIX::strftime( '%B %e, %Y', 0, 0, 0, $day, $month, $year );
     $date =~ s/  / /g;
 
-    my $process_fails = 0;
-
-    foreach my $dle ($report->get_dles()) {
-	my $dle_info = $report->get_dle_info(@$dle);
-        my $alldumps = $dle_info->{'dumps'};
-
-	while( my ($timestamp, $tries) = each %$alldumps ) {
-	    foreach my $try (@$tries) {
-		foreach my $program (keys %$try) {
-		    $process_fails++    if $try->{$program}{status} eq 'fail';
-		}
-	    }
-	}
-    }
-
     my $done = "";
     if (  !$report->get_flag("got_finish")
-	|| ($report->get_flag("exit_status") != 0)
-	|| $process_fails) {
+	|| $report->get_flag("dump_failed") != 0) {
 	$done = " FAIL:";
+    } elsif ($report->get_flag("results_missing") != 0) {
+	$done = " MISSING:";
+    } elsif ($report->get_flag("dump_strange") != 0) {
+	$done = " STRANGE:";
     }
 
     my $subj_str =
