@@ -409,13 +409,13 @@ sub make_plan_from_filelist {
 	    labels => [ @labels ]);
 
     # filter down to the parts that match filelist (using %files)
-    my $in_filelist = sub {
+    @parts = grep {
 	my $filenum = $_->{'filenum'};
 	grep { $_ == $filenum } @{$files{$_->{'label'}}};
-    };
-    @parts = grep $in_filelist, @parts;
+    } @parts;
 
-    # extract the dumps, using a hash to ensure uniqueness
+    # extract the dumps, using a hash (on the perl identity of the dump) to
+    # ensure uniqueness
     my %dumps = map { my $d = $_->{'dump'}; ($d, $d) } @parts;
     my @dumps = values %dumps;
 
