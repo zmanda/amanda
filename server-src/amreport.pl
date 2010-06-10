@@ -283,14 +283,14 @@ sub legacy_send_amreport
     foreach my $dle ($report->get_dles()) {
 
         my $dle_info = $report->get_dle_info(@$dle);
-        my $tries    = $dle_info->{tries};
+        my $alldumps = $dle_info->{'dumps'};
 
-        foreach my $try (@$tries) {
-
-            foreach my $program (keys %$try) {
-
-                $process_stranges++ if $try->{$program}{status} eq 'strange';
-                $process_fails++    if $try->{$program}{status} eq 'fail';
+	while( my ($timestamp, $tries) = each %$alldumps ) {
+            foreach my $try (@$tries) {
+		foreach my $program (keys %$try) {
+                    $process_stranges++ if $try->{$program}{status} eq 'strange';
+                    $process_fails++    if $try->{$program}{status} eq 'fail';
+		}
             }
         }
     }
@@ -390,11 +390,13 @@ sub open_mail_output
 
     foreach my $dle ($report->get_dles()) {
 	my $dle_info = $report->get_dle_info(@$dle);
-	my $tries    = $dle_info->{tries};
+        my $alldumps = $dle_info->{'dumps'};
 
-	foreach my $try (@$tries) {
-	    foreach my $program (keys %$try) {
-		$process_fails++    if $try->{$program}{status} eq 'fail';
+	while( my ($timestamp, $tries) = each %$alldumps ) {
+	    foreach my $try (@$tries) {
+		foreach my $program (keys %$try) {
+		    $process_fails++    if $try->{$program}{status} eq 'fail';
+		}
 	    }
 	}
     }

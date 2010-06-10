@@ -121,8 +121,7 @@ DLE = element dle {
    HostName,
    Disk,
    Estimate,
-   Try+,
-   Chunk+
+   Dump+
 }
 
 Estimate = element estimate {
@@ -133,6 +132,12 @@ Estimate = element estimate {
    element bps { xsd:float }
 }
 
+# A dump reprsents a particular dump of this DLE, as more than one dump of
+# a DLE may be performed in a single run
+Dump = element dump {
+    Date,
+    Try+
+}
 
 # a try is a set of actions intended to back up a DLE.  It may invoke
 # the following sub-processes.
@@ -177,16 +182,6 @@ Chunker = element chunker {
  & Time
  & Bytes
  & BPS
-}
-
-Chunk = element chunk {
-   element label { text }
-   & Date
-   & element file { text }
-   & element part { text }
-   & Time
-   & Bytes
-   & BPS
 }
 
 InSize = element insize { xsd:float }

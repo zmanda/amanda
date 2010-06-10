@@ -601,23 +601,23 @@ burp($current_log_filename, $datas{'normal'});
 ok(run($amreport, 'TESTCONF', '-f', $out_filename, '-o', 'columnspec=OrigKB=::2'),
     "amreport with OrigKB=::2");
 results_match($out_filename, $datas{'normal-rpt2'},
-    "..result matches");
+    "..result matches 1");
 
 ok(run($amreport, 'TESTCONF', '-f', $out_filename, '-o', 'columnspec=OrigKB=:5'),
     "amreport with OrigKB=:5");
 results_match($out_filename, $datas{'normal-rpt3'},
-    "..result matches");
+    "..result matches 2");
 
 ok(run($amreport, 'TESTCONF', '-f', $out_filename, '-o', 'columnspec=OrigKB=:5:6'),
     "amreport with OrigKB=:5:6");
 results_match($out_filename, $datas{'normal-rpt4'},
-    "..result matches");
+    "..result matches 3");
 # TODO: do a lot more tests of the colspec stuff
 
 ok(run($amreport, 'TESTCONF', '-f', $out_filename, '-o', 'displayunit=m'),
     "amreport with displayunit=m");
 results_match($out_filename, $datas{'normal-rpt5'},
-    "..result matches");
+    "..result matches 4");
 
 ## some (anonymized) real logfiles, for regression testing
 
@@ -628,7 +628,7 @@ burp($current_log_filename, $datas{'strontium'});
 ok(run($amreport, 'TESTCONF', '-f', $out_filename),
     "amreport with strontium logfile (simple example with multiple levels)");
 results_match($out_filename, $datas{'strontium-rpt'},
-    "..result matches");
+    "..result matches 5");
 results_match($printer_output,
     $datas{'strontium-postscript'},
     "..printer output matches");
@@ -639,7 +639,7 @@ burp($current_log_filename, $datas{'amflush'});
 ok(run($amreport, 'TESTCONF', '-f', $out_filename),
     "amreport with amflush logfile (regression check for flush-related DUMP STATUS)");
 results_match($out_filename, $datas{'amflush-rpt'},
-    "..result matches");
+    "..result matches 6");
 results_match($printer_output,
     $datas{'amflush-postscript'},
     "..printer output matches");
@@ -651,7 +651,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 8,
     "amreport with resultsmissing logfile ('RESULTS MISSING') exit==8");
 results_match($out_filename, $datas{'resultsmissing-rpt'},
-    "..result matches");
+    "..result matches 7");
 results_match($printer_output,
     $datas{'resultsmissing-postscript'},
     "..printer output matches");
@@ -663,7 +663,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 2,
     "amreport with shortstrange logfile exit==2");
 results_match($out_filename, $datas{'shortstrange-rpt'},
-    "..result matches");
+    "..result matches 8");
 results_match($printer_output,
     $datas{'shortstrange-postscript'},
     "..printer output matches");
@@ -675,7 +675,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 2,
     "amreport with longstrange logfile exit==2");
 results_match($out_filename, $datas{'longstrange-rpt'},
-    "..result matches");
+    "..result matches 9");
 
 cleanup();
 burp($current_log_filename, $datas{'doublefailure'});
@@ -684,7 +684,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 4,
     "amreport with doublefailure logfile exit==4");
 results_match($out_filename, $datas{'doublefailure-rpt'},
-    "..result matches");
+    "..result matches 10");
 results_match($printer_output,
     $datas{'doublefailure-postscript'},
     "..printer output matches");
@@ -696,7 +696,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 0,
     "amreport with bigestimate logfile exit==0");
 results_match($out_filename, $datas{'bigestimate-rpt'},
-    "..result matches");
+    "..result matches 11");
 results_match($printer_output,
     $datas{'bigestimate-postscript'},
     "..printer output matches");
@@ -708,7 +708,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 4,
     "amreport with retried logfile exit==4");
 results_match($out_filename, $datas{'retried-rpt'},
-    "..result matches");
+    "..result matches 12");
 results_match($printer_output,
     $datas{'retried-postscript'},
     "..printer output matches");
@@ -729,7 +729,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 4,
     "amreport with retried logfile where driver did not finish exit==4");
 results_match($out_filename, $datas{'retried-rpt'},
-    "..result matches");
+    "..result matches 13");
 
 cleanup();
 burp($current_log_filename, $datas{'taperr'});
@@ -738,7 +738,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 16,
     "amreport with taperr logfile exit==16");
 results_match($out_filename, $datas{'taperr-rpt-holding'},
-    "..result matches");
+    "..result matches 14");
 ok((-f $printer_output and -z $printer_output),
     "..printer output exists but is empty");
 cleanup();
@@ -749,7 +749,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename, '-l', $old_log_filename);
 is($Installcheck::Run::exit_code, 16,
     "amreport with taperr logfile specified explicitly exit==16");
 results_match($out_filename, $datas{'taperr-rpt-noholding'},
-    "..result matches");
+    "..result matches 15");
 
 cleanup();
 burp($current_log_filename, $datas{'spanned'});
@@ -758,7 +758,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 0,
     "amreport with spanned logfile");
 results_match($out_filename, $datas{'spanned-rpt'},
-    "..result matches");
+    "..result matches 16");
 results_match($printer_output,
     $datas{'spanned-postscript'},
     "..printer output matches");
@@ -770,7 +770,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 13,
     "amreport with fatal logfile");
 results_match($out_filename, $datas{'fatal-rpt'},
-    "..result matches");
+    "..result matches 17");
 ok(-f $printer_output && -z $printer_output,
     "..printer output is empty (no dumps, no tapes)");
 

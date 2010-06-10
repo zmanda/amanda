@@ -232,8 +232,7 @@ disknames as present in the logfile.  It looks something like this:
     };
 
 In the below, C<$dle> represents one disklist entry (C<{ ... }> in the
-above).  Each DLE has three major components: estimates, tries, and
-parts.
+above).  Each DLE has two major components: estimates and dumps.
 
 =head3 Estimates
 
@@ -248,12 +247,13 @@ the planner.
 	kps   => "",     # speed of the backup (kb/sec)
     };
 
-=head3 Tries
+=head3 Dumps
 
-Tries are located at C<< $dle->{tries} >>.  This is a list of tries,
-each of which is a hash that represents a specific attempt to back up
-this DLE.  If an error occurs during the backup of a DLE and is
-retried, a second try is pushed to the tries list.
+Each dump of the DLE is represented in C<< $dle->{dumps} >>.  This is a hash,
+keyed by dump timestamp with a list of tries as the value for each dump.  Each
+try represents a specific attempt to finish this dump.  If an error occurs
+during the backup of a DLE and is retried, a second try is pushed to the tries
+list.
 
 A try is a hash with at least one dumper, taper, and/or chunker DLE
 program as a key.  These entries contain the exit conditions of that
@@ -289,15 +289,13 @@ during the process.
 
 The C<taper> hash contains all the exit status data given by the
 taper.  Because the taper has timestamped parts, the program itself
-does not have a C<date> field.  Taper has one unique field, C<parts>,
-which is a reference to a list of hash references which describe the
-parts that have been taped during execution.
+does not have a C<date> field.
 
-=head3 Parts
+=head4 Parts
 
-Every taper process logs the parts it writes to tape in a list located
-at C<$taper->{parts}>.  Each item in the list is a hash reference with
-the following fields:
+Every taper process logs the parts it writes to tape in a list located at
+C<< $taper->{parts} >>, where C<$taper> is the taper portion of the try.  Each item
+in the list is a hash reference with the following fields:
 
 =over
 
@@ -343,7 +341,7 @@ should be opposite of C<amflush_run>.
 
 =item C<results_missing> - If this was a normal run, but some DLEs named by the
 planner do not have any results, then this flag is set.  Users should look for
-DLEs with empty C<tries> to enumerate the missing results.
+DLEs with an empty C<dump> key to enumerate the missing results.
 
 =item C<historical> - This flag is set if this is a "historical" report.  It is
 based on the value passed to the constructor.
@@ -721,7 +719,7 @@ sub _handle_dumper_line
         $orig_kb =~ s{\]$}{};
 
         my $dle    = $disklist->{$hostname}->{$disk};
-        my $try    = $self->_get_try( $dle, "dumper" );
+        my $try    = $self->_get_try( $dle, "dumper", $self->{'run_timestamp'});
         my $dumper = $try->{dumper} ||= {};
 	$dumper->{level} = $level;
 	$dumper->{status} = 'strange';
@@ -748,7 +746,7 @@ sub _handle_dumper_line
         $orig_kb =~ s{\]$}{};
 
         my $dle    = $disklist->{$hostname}->{$disk};
-        my $try    = $self->_get_try( $dle, "dumper" );
+        my $try    = $self->_get_try( $dle, "dumper", $timestamp );
         my $dumper = $try->{dumper} ||= {};
 
         $dumper->{date}      = $timestamp;
@@ -795,7 +793,7 @@ sub _handle_chunker_line
         $kps =~ s{\]$}{};
 
         my $dle     = $disklist->{$hostname}->{$disk};
-        my $try     = $self->_get_try( $dle, "chunker" );
+        my $try     = $self->_get_try( $dle, "chunker", $timestamp );
         my $chunker = $try->{chunker} ||= {};
 
         $chunker->{date}  = $timestamp;
@@ -869,7 +867,7 @@ sub _handle_taper_line
         $self->{'_current_tape'}->{dle}++ if $currpart == 1;
 
         my $dle   = $disklist->{$hostname}{$disk};
-        my $try   = $self->_get_try($dle, "taper");
+        my $try   = $self->_get_try($dle, "taper", $timestamp);
         my $taper = $try->{taper} ||= {};
         my $parts = $taper->{parts} ||= [];
 
@@ -912,7 +910,7 @@ sub _handle_taper_line
         $orig_kb =~ s{\]$}{} if defined $orig_kb;
 
         my $dle   = $disklist->{$hostname}->{$disk};
-        my $try   = $self->_get_try($dle, "taper");
+        my $try   = $self->_get_try($dle, "taper", $timestamp);
         my $taper = $try->{taper} ||= {};
         my $parts = $taper->{parts};
 
@@ -1011,7 +1009,7 @@ sub _handle_fail_line
     my ($self, $program, $str) = @_;
 
     my @info = Amanda::Util::split_quoted_strings($str);
-    my ($hostname, $disk, $date, $level) = @info;
+    my ($hostname, $disk, $timestamp, $level) = @info;
     my $error = join " ", @info[ 4 .. $#info ];
 
     #TODO: verify that this reaches the right try.  Also, DLE or
@@ -1023,7 +1021,7 @@ sub _handle_fail_line
         $program eq "driver") {
 	$program_d = $dle->{$program} ||= {};
     } else {
-        my $try = $self->_get_try($dle, $program);
+        my $try = $self->_get_try($dle, $program, $timestamp);
         $program_d = $try->{$program} ||= {};
     }
 
@@ -1124,8 +1122,8 @@ sub _handle_disk_line
 
         push @$dles, [ $hostname, $disk ];
         my $dle = $disklist->{$hostname}{$disk} = {};
-        $dle->{estimate} = undef;
-        $dle->{tries}    = [];
+        $dle->{'estimate'} = undef;
+        $dle->{'dumps'}    = {};
     }
     return;
 }
@@ -1178,13 +1176,13 @@ sub check_missing
 
     foreach my $dle_entry (@dles) {
 
-        my $tries = $self->get_dle_info(@$dle_entry, "tries");
+        my $alltries = $self->get_dle_info(@$dle_entry, 'dumps');
 
-        if (!@$tries) {
-            $self->{flags}{results_missing} = 1;
-            $self->{flags}{exit_status} |= STATUS_MISSING;
-            last;
-        }
+	if (!defined $alltries->{$self->{'run_timestamp'}}) {
+	    $self->{flags}{results_missing} = 1;
+	    $self->{flags}{exit_status} |= STATUS_MISSING;
+	    return;
+	}
     }
 }
 
@@ -1195,8 +1193,8 @@ sub check_missing
 sub _get_try
 {
     my $self = shift @_;
-    my ( $dle, $program ) = @_;
-    my $tries = $dle->{tries} ||= [];
+    my ( $dle, $program, $timestamp ) = @_;
+    my $tries = $dle->{'dumps'}{$timestamp} ||= [];
 
     if (
         !@$tries    # no tries

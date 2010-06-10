@@ -1,3 +1,14 @@
+2010-06-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report.pm: Rename 'tries' to 'dumps', it is a hash of
+	  timestamps, each value is an array of try.
+	* perl/Amanda/Report/human.pm: Use 'dumps'.
+	* perl/Amanda/Report/postscript.pm: Use 'dumps'.
+	* perl/Amanda/Report/xml.pm: Use 'dumps'.
+	* contrib/amreport.rnc: Add 'dumps'
+	* server-src/amreport.pl: Use 'dumps'
+	* installcheck/amreport.pl: Check 'dumps'
+	* installcheck/Amanda_Report.pl: Check 'dumps'
+
 2010-06-09 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/rpm/amanda.spec: remove Provides from main section,
 	   remove amanda-client from server provides section.

@@ -212,6 +212,20 @@ sub make_part_xml
     );
 }
 
+sub make_dump_xml
+{
+    my ($dle, $timestamp) = @_;
+
+    return make_xml_elt(
+	"dump",
+	sub {
+	    return join( xml_nl(),
+		make_xml_elt("date", $timestamp),
+		map { make_try_xml($_) } @{$dle->{'dumps'}->{$timestamp}});
+	}
+    );
+}
+
 sub make_dle_xml
 {
     my ( $hostname, $disk, $dle ) = @_;
@@ -221,13 +235,16 @@ sub make_dle_xml
             return join( xml_nl(),
                 make_xml_elt( "hostname", $hostname ),
                 make_xml_elt( "disk",     $disk ),
-                ( defined $dle->{estimate} && %{ $dle->{estimate} } > 0 )
-                ? make_estimate_xml( $dle->{estimate} )
-                : (),
-                exists $dle->{tries} ? map { make_try_xml($_) }
-                  @{ $dle->{tries} } : (),
-                exists $dle->{parts} ? map { make_part_xml($_) }
-                  @{ $dle->{parts} } : () );
+                ( defined $dle->{estimate} && %{ $dle->{estimate} } > 0 )?
+		      make_estimate_xml( $dle->{estimate} )
+		    : (),
+		( keys %{$dle->{'dumps'}} > 0 ) ?
+		      map { make_dump_xml($dle, $_) } keys %{$dle->{'dumps'}}
+		    : (),
+                exists $dle->{parts} ?
+		      map { make_part_xml($_) } @{ $dle->{parts} }
+		    : ()
+	    );
         }
     );
 }
