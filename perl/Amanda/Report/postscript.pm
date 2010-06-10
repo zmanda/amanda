@@ -126,52 +126,56 @@ sub _write_report_tape
 	my ($host, $disk) = @$dle;
         my $dle_info = $self->{'report'}->get_dle_info($host, $disk);
 
-	# run once for each try for this DLE
-	foreach my $try (@{$dle_info->{'tries'}}) {
+	my $alldumps = $dle_info->{'dumps'};
 
-            next unless exists $try->{taper};
-            my $taper = $try->{taper};
+	while( my ($timestamp, $tries) = each %$alldumps ) {
+	    # run once for each try for this DLE
+	    foreach my $try (@$tries) {
 
-            my $parts = $taper->{parts};
-            next unless @$parts > 0;
+		next unless exists $try->{taper};
+		my $taper = $try->{taper};
 
-            my $first_part = $parts->[0];
-            next unless $first_part->{label} eq $label;
+		my $parts = $taper->{parts};
+		next unless @$parts > 0;
 
-            my $filenum = $first_part->{file};
+		my $first_part = $parts->[0];
+		next unless $first_part->{label} eq $label;
 
-	    # sum the part sizes on this label to get the outsize.  Note that
-	    # the postscript output does not contain a row for each part, but
-	    # for each part..
-	    my $outsize = 0;
-	    for my $part (@$parts) {
-		next unless $part->{'label'} eq $label;
-		$outsize += $part->{'kb'};
+		my $filenum = $first_part->{file};
+
+		# sum the part sizes on this label to get the outsize.  Note that
+		# the postscript output does not contain a row for each part, but
+		# for each part..
+		my $outsize = 0;
+		for my $part (@$parts) {
+		    next unless $part->{'label'} eq $label;
+		    $outsize += $part->{'kb'};
+		}
+
+		# Get origsize for this try.
+		my $origsize = 0;
+		my $level = -1;
+
+		# TODO: this is complex and should probably be in a parent-class method
+		if (exists $try->{dumper} and ($try->{dumper}{status} ne 'fail')) {
+		    my $try_dumper = $try->{dumper};
+		    $level    = $try_dumper->{level};
+		    $origsize = $try_dumper->{orig_kb};
+		} else {    # we already know a taper run exists in this try
+		    $level = $taper->{level};
+		    $origsize = $taper->{orig_kb} if $taper->{orig_kb};
+		}
+
+		$total_outsize += $outsize;
+		$total_origsize += $origsize;
+
+		if ($outsize != $origsize) {
+		    $comp_outsize += $outsize;
+		    $comp_origsize += $origsize;
+		}
+
+		push @first_parts, [$host, $disk, $level, $filenum, $origsize, $outsize];
 	    }
-
-	    # Get origsize for this try.
-	    my $origsize = 0;
-	    my $level = -1;
-
-            # TODO: this is complex and should probably be in a parent-class method
-            if (exists $try->{dumper} and ($try->{dumper}{status} ne 'fail')) {
-                my $try_dumper = $try->{dumper};
-                $level    = $try_dumper->{level};
-                $origsize = $try_dumper->{orig_kb};
-            } else {    # we already know a taper run exists in this try
-                $level = $taper->{level};
-                $origsize = $taper->{orig_kb} if $taper->{orig_kb};
-            }
-
-	    $total_outsize += $outsize;
-	    $total_origsize += $origsize;
-
-	    if ($outsize != $origsize) {
-		$comp_outsize += $outsize;
-		$comp_origsize += $origsize;
-	    }
-
-	    push @first_parts, [$host, $disk, $level, $filenum, $origsize, $outsize];
 	}
     }
     # count filemarks in the tapeused assessment
