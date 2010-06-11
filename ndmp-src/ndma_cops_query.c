@@ -720,6 +720,7 @@ ndmca_opq_show_device_info (struct ndm_session *sess,
 
 			ndmalogqr (sess, "    device     %s", dc->device);
 			if (!strcmp(what, "tape")) {
+#ifndef NDMOS_OPTION_NO_NDMP3
 			    if (sess->plumb.tape->protocol_version == 3) {
 				attr = dc->v3attr.value;
 				ndmalogqr (sess, "      attr       0x%lx",
@@ -729,6 +730,18 @@ ndmca_opq_show_device_info (struct ndm_session *sess,
 				if (attr & NDMP3_TAPE_ATTR_UNLOAD)
 				    ndmalogqr (sess, "        UNLOAD");
 			    }
+#endif /* !NDMOS_OPTION_NO_NDMP3 */
+#ifndef NDMOS_OPTION_NO_NDMP4
+			    if (sess->plumb.tape->protocol_version == 4) {
+				attr = dc->v4attr.value;
+				ndmalogqr (sess, "      attr       0x%lx",
+					   attr);
+				if (attr & NDMP4_TAPE_ATTR_REWIND)
+				    ndmalogqr (sess, "        REWIND");
+				if (attr & NDMP4_TAPE_ATTR_UNLOAD)
+				    ndmalogqr (sess, "        UNLOAD");
+			    }
+#endif /* !NDMOS_OPTION_NO_NDMP4 */
 			}
 			for (k = 0; k < dc->capability.capability_len; k++) {
 				ndmalogqr (sess, "      set        %s=%s",

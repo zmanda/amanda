@@ -1241,7 +1241,7 @@ ndmp_sxa_tape_mtio (struct ndm_session *sess,
 	default:
 		NDMADR_RAISE_ILLEGAL_ARGS("tape_op");
 
-	case NDMP2_MTIO_EOF:
+	case NDMP9_MTIO_EOF:
 		will_write = 1;
 		tape_op = NDMP9_MTIO_EOF;
 		break;
@@ -1702,7 +1702,7 @@ ndmp_sxa_data_stop (struct ndm_session *sess,
 {
 	struct ndm_data_agent *	da = &sess->data_acb;
 
-      NDMS_WITH_VOID_REQUEST(ndmp2_data_stop)
+      NDMS_WITH_VOID_REQUEST(ndmp9_data_stop)
 	if (da->data_state.state != NDMP9_DATA_STATE_HALTED) {
 		NDMADR_RAISE_ILLEGAL_STATE("data_state !HALTED");
 	}
@@ -2727,7 +2727,7 @@ int
 ndmp_sxa_notify_connected (struct ndm_session *sess,
   struct ndmp_xa_buf *xa, struct ndmconn *ref_conn)
 {
-      NDMS_WITH_NO_REPLY(ndmp2_notify_connected)
+      NDMS_WITH_NO_REPLY(ndmp9_notify_connected)
 	xa->reply.flags |= NDMNMB_FLAG_NO_SEND;
 	/* Just ignore? */
 	return 0;
@@ -2746,7 +2746,7 @@ ndmp_sxa_notify_mover_halted (struct ndm_session *sess,
 {
 	struct ndm_control_agent *	ca = &sess->control_acb;
 
-      NDMS_WITH_NO_REPLY(ndmp2_notify_mover_halted)
+      NDMS_WITH_NO_REPLY(ndmp9_notify_mover_halted)
 	xa->reply.flags |= NDMNMB_FLAG_NO_SEND;
 
 	ca->pending_notify_mover_halted++;

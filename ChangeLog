@@ -1,4 +1,8 @@
 2010-06-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/ndma_comm_dispatch.c ndmp-src/ndma_cops_query.c: fix
+	  NDMOS_OPTION_NO_NDMPvX precompiler conditionals
+
+2010-06-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Device.pl: test the connect method
 
 2010-06-11  Dustin J. Mitchell <dustin@zmanda.com>
