@@ -1,4 +1,9 @@
 2010-06-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/fileheader.c: fix inaccurate partnum in such headers
+	* installcheck/Amanda_Recovery_Clerk.pl: add test for recovering with
+	  DUMPFILE headers
+
+2010-06-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/s3-device.c: add S3_STORAGE_CLASS property
 	* device-src/s3.c device-src/s3.h: add storage_class
 	* installcheck/Amanda_Device.pl: set the property
