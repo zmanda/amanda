@@ -70,6 +70,10 @@ rt_partnum(dumpfile_t *hdr)
 	hdr->partnum = 2;
 	hdr->totalparts = -1;
 	if (!PREV_RT(hdr)) return 0;
+    } else if (hdr->type == F_DUMPFILE) {
+	hdr->partnum = 1;
+	hdr->totalparts = 1;
+	if (!PREV_RT(hdr)) return 0;
     } else {
 	hdr->partnum = 0;
 	hdr->totalparts = 0;
