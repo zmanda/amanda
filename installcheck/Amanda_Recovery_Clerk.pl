@@ -60,7 +60,7 @@ my $taperoot = "$Installcheck::TMP/Amanda_Recovery_Clerk";
 my $datestamp = "20100101010203";
 
 # set up a 2-tape disk changer with some spanned dumps in it, and add those
-# dumps to the catalog, too.  To avoid re-implementing Amanda::Taper::Scan, this
+# dumps to the catalog, too.  To avoid re-implementing Amanda::Taper::Scribe, this
 # uses individual transfers for each part.
 sub setup_changer {
     my ($finished_cb, $chg_name, $to_write, $part_len) = @_;
@@ -126,7 +126,8 @@ sub setup_changer {
 	my $name = $xfer_info->[2];
 
 	my $hdr = Amanda::Header->new();
-	$hdr->{'type'} = $Amanda::Header::F_SPLIT_DUMPFILE;
+	# if the partnum is 0, write a DUMPFILE like Amanda < 3.1 did
+	$hdr->{'type'} = $partnum? $Amanda::Header::F_SPLIT_DUMPFILE : $Amanda::Header::F_DUMPFILE;
 	$hdr->{'datestamp'} = $datestamp;
 	$hdr->{'dumplevel'} = 0;
 	$hdr->{'name'} = $name;
@@ -167,7 +168,8 @@ sub setup_changer {
 			diskname => "/$name",
 			level => 0,
 			status => "OK",
-			partnum => $partnum,
+			# get the partnum right, even if this wasn't split
+			partnum => $partnum? $partnum : ($partnum+1),
 			nparts => -1,
 			kb => $len / 1024,
 			sec => 1.2,
@@ -213,7 +215,7 @@ sub setup_changer {
     );
     my @to_write = (
 	# slot xfer		partnum
-	[ 1,   $xfer_info[0],   1 ],
+	[ 1,   $xfer_info[0],   0 ], # partnum 0 => old non-split header
 	[ 1,   $xfer_info[1],   1 ],
 	[ 1,   $xfer_info[1],   2 ],
 	[ 2,   $xfer_info[1],   3 ],

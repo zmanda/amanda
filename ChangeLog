@@ -1,4 +1,9 @@
 2010-06-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/fileheader.c: fix inaccurate partnum in such headers
+	* installcheck/Amanda_Recovery_Clerk.pl: add test for recovering with
+	  DUMPFILE headers
+
+2010-06-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndma_comm_dispatch.c ndmp-src/ndma_cops_query.c: fix
 	  NDMOS_OPTION_NO_NDMPvX precompiler conditionals
 
