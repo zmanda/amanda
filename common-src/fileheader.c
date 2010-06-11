@@ -227,9 +227,13 @@ parse_file_header(
 		strange_header(file, buffer, buflen, _("<total parts param>"), tok);
 		goto out;
 	    }
-	} else {
+	} else if (file->type == F_DUMPFILE) {
 	    /* only one part in this dump, so call it partnum 1 */
 	    file->partnum = 1;
+	    file->totalparts = 1;
+	} else {
+	    file->partnum = 0;
+	    file->totalparts = 0;
 	}
 
 	tok = strtok_r(NULL, " ", &saveptr);

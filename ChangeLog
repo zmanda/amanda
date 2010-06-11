@@ -1,4 +1,8 @@
 2010-06-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/fileheader-test.c: don't expect partnum=0 on dumpfiles
+	* common-src/fileheader.c: don't put partnum=1 on tape headers, etc.
+
+2010-06-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/fileheader.c: fix inaccurate partnum in such headers
 	* installcheck/Amanda_Recovery_Clerk.pl: add test for recovering with
 	  DUMPFILE headers
