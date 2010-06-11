@@ -64,8 +64,8 @@ AC_DEFUN([AMANDA_WITH_REUSEPORTS], [
 #
 AC_DEFUN([AMANDA_WITH_PORTRANGES], [
     AC_ARG_WITH(low-tcpportrange,
-	AS_HELP_STRING([--with-low-tcpportrange=low,high],
-	    [bind reserved TCP server sockets to ports within this range (default: unlimited)]),
+[  --with-low-tcpportrange=low,high
+                          bind reserved TCP server sockets to ports within],
 	[ LOW_TCPPORTRANGE="$withval" ],
 	[ LOW_TCPPORTRANGE=unlimited ])
      
@@ -89,9 +89,10 @@ AC_DEFUN([AMANDA_WITH_PORTRANGES], [
  * reserved TCP port numbers sockets should be bound to. (mainly for amrecover) ])
     fi
 
+    dnl note that AS_HELP_STRING cannot handle commas in its argument..
     AC_ARG_WITH(tcpportrange,
-	AS_HELP_STRING([--with-tcpportrange=low,high],
-	    [bind unreserved TCP server sockets to ports within this range (default: unlimited)]),
+[  --with-tcpportrange=low,high
+                          bind unreserved TCP server sockets to ports within],
 	[ TCPPORTRANGE="$withval" ],
 	[ TCPPORTRANGE="unlimited" ])
 
@@ -116,8 +117,8 @@ AC_DEFUN([AMANDA_WITH_PORTRANGES], [
     fi
 
     AC_ARG_WITH(udpportrange,
-	AS_HELP_STRING([--with-udpportrange=low,high],
-	    [bind reserved UDP server sockets to ports within this range (default: unlimited)]),
+[  --with-udpportrange=low,high
+                          bind reserved UDP server sockets to ports within],
 	[ UDPPORTRANGE="$withval" ],
 	[ UDPPORTRANGE="unlimited" ])
     if test x"$UDPPORTRANGE" != x"unlimited"; then
