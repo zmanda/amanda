@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -92,6 +92,8 @@
     <LocationConstraint>%s</LocationConstraint>\n\
   </CreateBucketConfiguration>"
 
+#define AMAZON_STORAGE_CLASS_HEADER "x-amz-storage-class"
+
 #define AMAZON_WILDCARD_LOCATION "*"
 
 /* parameters for exponential backoff in the face of retriable errors */
@@ -132,7 +134,9 @@ struct S3Handle {
     char *secret_key;
     char *user_token;
 
+    /* attributes for new objects */
     char *bucket_location;
+    char *storage_class;
 
     char *ca_info;
 
@@ -618,12 +622,20 @@ authenticate_request(S3Handle *hdl,
     g_string_append(auth_string, date);
     g_string_append(auth_string, "\n");
 
+    /* CanonicalizedAmzHeaders, sorted lexicographically */
     if (is_non_empty_string(hdl->user_token)) {
         g_string_append(auth_string, AMAZON_SECURITY_HEADER);
         g_string_append(auth_string, ":");
         g_string_append(auth_string, hdl->user_token);
         g_string_append(auth_string, ",");
         g_string_append(auth_string, STS_PRODUCT_TOKEN);
+        g_string_append(auth_string, "\n");
+    }
+
+    if (is_non_empty_string(hdl->storage_class)) {
+        g_string_append(auth_string, AMAZON_STORAGE_CLASS_HEADER);
+        g_string_append(auth_string, ":");
+        g_string_append(auth_string, hdl->storage_class);
         g_string_append(auth_string, "\n");
     }
 
@@ -673,6 +685,13 @@ authenticate_request(S3Handle *hdl,
         headers = curl_slist_append(headers, buf);
         g_free(buf);
     }
+
+    if (is_non_empty_string(hdl->storage_class)) {
+	buf = g_strdup_printf(AMAZON_STORAGE_CLASS_HEADER ": %s", hdl->storage_class);
+	headers = curl_slist_append(headers, buf);
+	g_free(buf);
+    }
+
 
     buf = g_strdup_printf("Authorization: AWS %s:%s",
                           hdl->access_key, auth_base64);
@@ -1415,6 +1434,7 @@ s3_open(const char *access_key,
         const char *secret_key,
         const char *user_token,
         const char *bucket_location,
+        const char *storage_class,
         const char *ca_info
         ) {
     S3Handle *hdl;
@@ -1434,6 +1454,9 @@ s3_open(const char *access_key,
 
     /* NULL is okay */
     hdl->bucket_location = g_strdup(bucket_location);
+
+    /* NULL is ok */
+    hdl->storage_class = g_strdup(storage_class);
 
     /* NULL is okay */
     hdl->ca_info = g_strdup(ca_info);
@@ -1458,6 +1481,7 @@ s3_free(S3Handle *hdl)
         g_free(hdl->secret_key);
         if (hdl->user_token) g_free(hdl->user_token);
         if (hdl->bucket_location) g_free(hdl->bucket_location);
+        if (hdl->storage_class) g_free(hdl->storage_class);
         if (hdl->curl) curl_easy_cleanup(hdl->curl);
 
         g_free(hdl);

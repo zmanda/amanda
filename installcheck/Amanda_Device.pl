@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 452;
+use Test::More tests => 463;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -526,7 +526,7 @@ my $run_s3_tests = defined $S3_SECRET_KEY && defined $S3_ACCESS_KEY;
 my $run_devpay_tests = defined $DEVPAY_SECRET_KEY &&
     defined $DEVPAY_ACCESS_KEY && $DEVPAY_USER_TOKEN;
 
-my $s3_make_device_count = 6;
+my $s3_make_device_count = 7;
 sub s3_make_device($$) {
     my ($dev_name, $kind) = @_;
     $dev = Amanda::Device->new($dev_name);
@@ -541,6 +541,11 @@ sub s3_make_device($$) {
 
     ok($dev->property_set('BLOCK_SIZE', 32768*2),
 	"set block size")
+	or diag($dev->error_or_status());
+
+    # might as well save a few cents while testing this property..
+    ok($dev->property_set('S3_STORAGE_CLASS', 'REDUCED_REDUNDANCY'),
+	"set storage class")
 	or diag($dev->error_or_status());
 
     if ($kind eq "s3") {

@@ -431,6 +431,13 @@ The value is passed to curl_easy_setopt(3) as CURLOPT_CAINFO.
  (read-write) This property gives the Amazon S3 secret key used to access the service.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>S3_STORAGE_CLASS</term><listitem>
+(read-write) Storage class for new objects, currently one of "STANDARD" (the default)
+or "REDUCED_REDUNDANCY" (cheaper, but less redundant).  See
+<ulink url="http://docs.amazonwebservices.com/AmazonS3/latest/dev/index.html?DataDurability.html" />
+for the most up-to-date list.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>S3_SSL</term><listitem>
  (read-write) Whether or not to use SSL/TLS to secure communications with Amazon S3.
 </listitem></varlistentry>
