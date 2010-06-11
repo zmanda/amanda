@@ -1122,9 +1122,116 @@ accept_impl(
     self->listen_addrs = NULL;
 
     if (self->for_writing)
-	mode = NDMP4_MOVER_MODE_WRITE;
-    else
 	mode = NDMP4_MOVER_MODE_READ;
+    else
+	mode = NDMP4_MOVER_MODE_WRITE;
+
+    /* set up the new directtcp connection */
+    if (self->directtcp_conn)
+	g_object_unref(self->directtcp_conn);
+    self->directtcp_conn =
+	directtcp_connection_ndmp_new(self->ndmp, mode);
+    *dtcpconn = DIRECTTCP_CONNECTION(self->directtcp_conn);
+
+    /* reference it for the caller */
+    g_object_ref(*dtcpconn);
+
+    return TRUE;
+}
+
+static gboolean
+connect_impl(
+    Device *dself,
+    gboolean for_writing,
+    DirectTCPAddr *addrs,
+    DirectTCPConnection **dtcpconn,
+    ProlongProc prolong,
+    gpointer prolong_data)
+{
+    NdmpDevice *self = NDMP_DEVICE(dself);
+    ndmp9_mover_mode mode;
+    ndmp9_mover_pause_reason reason;
+    guint64 seek_position;
+
+    g_assert(!self->listen_addrs);
+
+    *dtcpconn = NULL;
+    self->for_writing = for_writing;
+
+    /* TODO: support aborting this operation - maybe just always poll? */
+    prolong = prolong;
+    prolong_data = prolong_data;
+
+    if (!open_tape_agent(self)) {
+	/* error message was set by open_tape_agent */
+	return FALSE;
+    }
+
+    /* first, set the window to an empty span so that the mover doesn't start
+     * reading or writing data immediately.  NDMJOB tends to reset the record
+     * size periodically (in direct contradiction to the spec), so we reset it
+     * here as well. */
+    if (!ndmp_connection_mover_set_record_size(self->ndmp,
+		DEVICE(self)->block_size)) {
+	set_error_from_ndmp(self);
+	return FALSE;
+    }
+
+    if (!ndmp_connection_mover_set_window(self->ndmp, 0, 0)) {
+	set_error_from_ndmp(self);
+	return FALSE;
+    }
+
+    if (self->for_writing)
+	mode = NDMP4_MOVER_MODE_READ;
+    else
+	mode = NDMP4_MOVER_MODE_WRITE;
+
+    if (!ndmp_connection_mover_connect(self->ndmp, mode, addrs)) {
+	set_error_from_ndmp(self);
+	return FALSE;
+    }
+
+    if (!self->for_writing) {
+	/* The agent is in the ACTIVE state, and will remain so until we tell
+	 * it to do something else.  The thing we want to is for it to start
+	 * reading data from the tape, which will immediately trigger an EOW or
+	 * SEEK pause. */
+	if (!ndmp_connection_mover_read(self->ndmp, 0, G_MAXUINT64)) {
+	    set_error_from_ndmp(self);
+	    return FALSE;
+	}
+
+	/* now we should expect a notice that the mover has paused */
+    } else {
+	/* when writing, the mover will pause as soon as the first byte comes
+	 * in, so there's no need to do anything to trigger the pause. */
+    }
+
+    /* NDMJOB sends NDMP9_MOVER_PAUSE_SEEK to indicate that it wants to write
+     * outside the window, while the standard specifies .._EOW, instead.  When
+     * reading to a connection, we get the appropriate .._SEEK.  It's easy
+     * enough to handle both. */
+
+    if (!ndmp_connection_wait_for_notify(self->ndmp,
+	    NULL,
+	    NULL,
+	    &reason, &seek_position)) {
+	set_error_from_ndmp(self);
+	return FALSE;
+    }
+
+    if (reason != NDMP9_MOVER_PAUSE_SEEK && reason != NDMP9_MOVER_PAUSE_EOW) {
+	device_set_error(DEVICE(self),
+	    g_strdup_printf("got NOTIFY_MOVER_PAUSED, but not because of EOW or SEEK"),
+	    DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+    }
+
+    if (self->listen_addrs) {
+	g_free(self->listen_addrs);
+	self->listen_addrs = NULL;
+    }
 
     /* set up the new directtcp connection */
     if (self->directtcp_conn)
@@ -1162,6 +1269,7 @@ write_from_connection_impl(
     /* if this is false, then the caller did not use use_connection correctly */
     g_assert(self->directtcp_conn != NULL);
     g_assert(self->ndmp == nconn->ndmp);
+    g_assert(nconn->mode == NDMP4_MOVER_MODE_READ);
 
     if (!ndmp_connection_mover_get_state(self->ndmp,
 		&mover_state, &bytes_moved_before, NULL, NULL)) {
@@ -1288,6 +1396,7 @@ read_to_connection_impl(
     /* if this is false, then the caller did not use use_connection correctly */
     g_assert(nconn != NULL);
     g_assert(self->ndmp == nconn->ndmp);
+    g_assert(nconn->mode == NDMP4_MOVER_MODE_WRITE);
 
     if (!ndmp_connection_mover_get_state(self->ndmp,
 		&mover_state, &bytes_moved_before, NULL, NULL)) {
@@ -1521,6 +1630,7 @@ ndmp_device_class_init(NdmpDeviceClass * c G_GNUC_UNUSED)
     device_class->directtcp_supported = TRUE;
     device_class->listen = listen_impl;
     device_class->accept = accept_impl;
+    device_class->connect = connect_impl;
     device_class->write_from_connection = write_from_connection_impl;
     device_class->read_to_connection = read_to_connection_impl;
     device_class->use_connection = use_connection_impl;

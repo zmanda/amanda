@@ -190,6 +190,11 @@ gboolean ndmp_connection_mover_listen(
 	ndmp9_addr_type addr_type,
 	DirectTCPAddr **addrs);
 
+gboolean ndmp_connection_mover_connect(
+	NDMPConnection *self,
+	ndmp9_mover_mode mode,
+	DirectTCPAddr *addrs);
+
 gboolean ndmp_connection_mover_abort(
 	NDMPConnection *self);
 

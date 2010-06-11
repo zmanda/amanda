@@ -489,6 +489,39 @@ ndmp_connection_mover_listen(
     return TRUE;
 }
 
+ndmp_connection_mover_connect(
+	NDMPConnection *self,
+	ndmp9_mover_mode mode,
+	DirectTCPAddr *addrs)
+{
+    unsigned int naddrs, i;
+    ndmp4_tcp_addr *na;
+
+    g_assert(!self->startup_err);
+
+    /* count addrs */
+    g_assert(addrs);
+    for (naddrs = 0; addrs[naddrs].ipv4; naddrs++) ;
+
+    /* convert addrs to an ndmp4_tcp_addr */
+    na = g_new0(ndmp4_tcp_addr, naddrs);
+    for (i = 0; i < naddrs; i++) {
+	na[i].ip_addr = addrs[i].ipv4;
+	na[i].port = addrs[i].port;
+    }
+
+
+    NDMP_TRANS(self, ndmp4_mover_connect)
+	request->mode = mode;
+	request->addr.addr_type = NDMP4_ADDR_TCP;
+	request->addr.ndmp4_addr_u.tcp_addr.tcp_addr_len = naddrs;
+	request->addr.ndmp4_addr_u.tcp_addr.tcp_addr_val = na;
+	NDMP_CALL(self);
+	NDMP_FREE();
+    NDMP_END
+    return TRUE;
+}
+
 gboolean
 ndmp_connection_mover_abort(
 	NDMPConnection *self)

@@ -1384,6 +1384,28 @@ device_accept(
 }
 
 gboolean
+device_connect(
+    Device *self,
+    gboolean for_writing,
+    DirectTCPAddr *addrs,
+    DirectTCPConnection **conn,
+    ProlongProc prolong,
+    gpointer prolong_data)
+{
+    DeviceClass *klass;
+
+    klass = DEVICE_GET_CLASS(self);
+    if(klass->connect) {
+	return (klass->connect)(self, for_writing, addrs, conn, prolong, prolong_data);
+    } else {
+	device_set_error(self,
+	    stralloc(_("Unimplemented method")),
+	    DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+    }
+}
+
+gboolean
 device_write_from_connection(
     Device *self,
     guint64 size,

@@ -373,6 +373,21 @@ typedef struct Device {
 	    return conn;
 	}
 
+	%newobject connect; /* connection is already ref'd, so we own it */
+	DirectTCPConnection *
+	connect(gboolean for_writing, DirectTCPAddr *addrs) {
+	    DirectTCPConnection *conn = NULL;
+	    gboolean rv;
+
+	    rv = device_connect(self, for_writing, addrs, &conn, NULL, NULL);
+	    if (!rv && conn) {
+		/* conn is ref'd for our convenience, but we don't want it */
+		g_object_unref(conn);
+		conn = NULL;
+	    }
+	    return conn;
+	}
+
 	gboolean
 	use_connection(DirectTCPConnection *conn) {
 	    return device_use_connection(self, conn);

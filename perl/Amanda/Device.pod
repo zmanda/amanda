@@ -618,6 +618,18 @@ connection ever occurs.  The C implementation returns an already-referenced
 connection object, so the caller should call C<g_object_unref> when the
 connection is no longer needed.
 
+=head3 connect
+
+  $conn = $dev->connect($for_writing, $addrs);
+
+This method initiates a connection to one of the addresses in C<$addrs>,
+returning an established DirectTCPConnection object (see below).  The
+C<$for_writing> parameter is TRUE if the connection will be used to write to
+the device.  It returns C<undef> on failure.  Note that this method may block
+indefinitely if no connection ever occurs.  The C implementation returns an
+already-referenced connection object, so the caller should call
+C<g_object_unref> when the connection is no longer needed.
+
 =head3 use_connection
 
   my $ok = $dev->use_connection($conn);
@@ -633,9 +645,9 @@ C<write_to_connection> calls will use this connection.
   ($ok, $actual_size) = $dev->write_from_connection($size);
 
 This method reads data from the DirectTCPConnection specified with
-C<use_connection> or returned from C<accept> and writes it to the volume.   It
-writes at most C<$size> bytes, and returns the number of bytes written in
-C<$actual_size>.  On error, C<$ok> is false.
+C<use_connection> or returned from C<accept> or C<connect> and writes it to the
+volume.   It writes at most C<$size> bytes, and returns the number of bytes
+written in C<$actual_size>.  On error, C<$ok> is false.
 
 When an EOF is received over the connection, signalling the end of the data
 stream, then this method returns without error (C<$ok> is true), with
@@ -678,9 +690,9 @@ or imported with the C<:constant> import tag.
 
 =head2 DirectTCPConnection objects
 
-The C<accept> method returns an object to represent the ongoing DirectTCP
-connection.  This object is mostly useful as a "token" to be passed to
-C<write_from_connection> and C<read_to_connection>.  In particular, a
+The C<accept> and C<connect> methods return an object to represent the ongoing
+DirectTCP connection.  This object is mostly useful as a "token" to be passed
+to C<write_from_connection> and C<read_to_connection>.  In particular, a
 connection created by one device can be used with another device; this is how
 DirectTCP dumps are spanned over multiple volumes.
 
