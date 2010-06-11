@@ -2562,9 +2562,6 @@ ndmp_sxa_mover_set_record_size (struct ndm_session *sess,
 
 
 
-#ifdef notyet
-
-
 #ifndef NDMOS_EFFECT_NO_NDMP3_NOR_NDMP4	/* Surrounds NDMPv[34] MOVER intfs */
 
 static int		mover_connect_common34 (struct ndm_session *sess,
@@ -2577,46 +2574,8 @@ static int		mover_connect_common34 (struct ndm_session *sess,
  * NDMP[34]_MOVER_CONNECT
  */
 int
-ndmadr_mover_connect (struct ndm_session *sess,
+ndmp_sxa_mover_connect (struct ndm_session *sess,
   struct ndmp_xa_buf *xa, struct ndmconn *ref_conn)
-{
-    switch (xa->request.protocol_version) {
-    default: return NDMADR_UNIMPLEMENTED_VERSION; /* should never happen */
-
-#ifndef NDMOS_OPTION_NO_NDMP2
-    case NDMP2VER:
-	/* not part of NDMPv2 */
-	return NDMADR_UNSPECIFIED_MESSAGE;
-#endif /* !NDMOS_OPTION_NO_NDMP2 */
-
-#ifndef NDMOS_OPTION_NO_NDMP3
-    case NDMP3VER:
-      NDMS_WITH(ndmp3_mover_connect)
-	ndmp9_mover_mode	mover_mode;
-	ndmp9_addr		data_addr;
-
-	switch (request->mode) {
-	default:		mover_mode = -1; break;
-	case NDMP3_MOVER_MODE_READ: mover_mode = NDMP9_MOVER_MODE_READ; break;
-	case NDMP3_MOVER_MODE_WRITE:mover_mode = NDMP9_MOVER_MODE_WRITE;break;
-	}
-
-	ndmp_3to9_addr (&request->addr, &data_addr);
-
-	return mover_connect_common34 (sess, xa, ref_conn,
-				&data_addr, mover_mode);
-      NDMS_ENDWITH
-      break;
-#endif /* !NDMOS_OPTION_NO_NDMP3 */
-    }
-    return 0;
-}
-
-/* this same intf is expected in v4, so _common() now */
-static int
-mover_connect_common34 (struct ndm_session *sess,
-  struct ndmp_xa_buf *xa, struct ndmconn *ref_conn,
-  ndmp9_addr *data_addr, ndmp9_mover_mode mover_mode)
 {
 #ifndef NDMOS_OPTION_NO_DATA_AGENT
 	struct ndm_data_agent *	da = &sess->data_acb;
@@ -2626,8 +2585,10 @@ mover_connect_common34 (struct ndm_session *sess,
 	int			will_write;
 	char			reason[100];
 
+      NDMS_WITH(ndmp9_mover_connect)
+
 	/* Check args */
-	switch (mover_mode) {
+	switch (request->mode) {
 	default:		NDMADR_RAISE_ILLEGAL_ARGS("mover_mode");
 	case NDMP9_MOVER_MODE_READ:
 		will_write = 1;
@@ -2638,7 +2599,7 @@ mover_connect_common34 (struct ndm_session *sess,
 		break;
 	}
 
-	switch (data_addr->addr_type) {
+	switch (request->addr.addr_type) {
 	default:		NDMADR_RAISE_ILLEGAL_ARGS("mover_addr_type");
 	case NDMP9_ADDR_LOCAL:
 #ifdef NDMOS_OPTION_NO_DATA_AGENT
@@ -2654,7 +2615,7 @@ mover_connect_common34 (struct ndm_session *sess,
 	if (ta->mover_state.state != NDMP9_MOVER_STATE_IDLE)
 		NDMADR_RAISE_ILLEGAL_STATE("mover_state !IDLE");
 #ifndef NDMOS_OPTION_NO_DATA_AGENT
-	if (data_addr->addr_type == NDMP9_ADDR_LOCAL) {
+	if (request->addr.addr_type == NDMP9_ADDR_LOCAL) {
 		ndmp9_data_get_state_reply *ds = &da->data_state;
 
 		if (ds->state != NDMP9_DATA_STATE_LISTEN)
@@ -2678,26 +2639,25 @@ mover_connect_common34 (struct ndm_session *sess,
 	 * us an extra measure of robustness and sanity
 	 * check on the implementation.
 	 */
-	error = ndmis_audit_tape_connect (sess, data_addr->addr_type, reason);
+	error = ndmis_audit_tape_connect (sess, request->addr.addr_type, reason);
 	if (error != NDMP9_NO_ERR) NDMADR_RAISE(error, reason);
 
-	error = ndmis_tape_connect (sess, data_addr, reason);
+	error = ndmis_tape_connect (sess, &request->addr, reason);
 	if (error != NDMP9_NO_ERR) NDMADR_RAISE(error, reason);
 
-	ta->mover_state.data_connection_addr = *data_addr;
+	ta->mover_state.data_connection_addr = request->addr;
 	/* alt: ta->....data_connection_addr = sess->...peer_addr */
 
-	error = ndmta_mover_connect (sess, mover_mode);
+	error = ndmta_mover_connect (sess, request->mode);
 	if (error != NDMP9_NO_ERR) {
 		/* TODO: belay ndmis_tape_connect() */
 		NDMADR_RAISE(error, "!mover_connect");
 	}
 
 	return 0;
+      NDMS_ENDWITH
 }
 #endif /* !NDMOS_EFFECT_NO_NDMP3_NOR_NDMP4  Surrounds NDMPv[34] MOVER intfs */
-
-#endif /* notyet */
 
 
 
@@ -3423,9 +3383,7 @@ struct ndm_dispatch_request_table ndma_dispatch_request_table_v9[] = {
    { NDMP9_MOVER_READ,			0, ndmp_sxa_mover_read },
    { NDMP9_MOVER_CLOSE,			0, ndmp_sxa_mover_close },
    { NDMP9_MOVER_SET_RECORD_SIZE,	0, ndmp_sxa_mover_set_record_size },
-#ifdef notyet
    { NDMP9_MOVER_CONNECT,		0, ndmp_sxa_mover_connect },
-#endif /* notyet */
 #endif /* !NDMOS_OPTION_NO_TAPE_AGENT */	/* Surrounds MOVER intfs */
    {0}
 };
