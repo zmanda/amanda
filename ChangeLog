@@ -1,6 +1,18 @@
 2010-06-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Device.pl: test the connect method
+
+2010-06-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndma_comm_dispatch.c: uncomment and update code
 	  to support NDMP_MOVER_CONNECT via ndmta.
+
+2010-06-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Device.pod perl/Amanda/Device.swg device-src/device.c
+	  device-src/device.h: add a device_connect method
+	* device-src/ndmp-device.c: implement it
+	* ndmp-src/ndmpconnobj.c ndmp-src/ndmpconnobj.h: add
+	  ndmp_connection_mover_connect
+	* perl/Amanda/Xfer.pod: update documentation using the word
+	  "initiator"
 
 2010-06-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/s3-device.c: add S3_STORAGE_CLASS property

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 463;
+use Test::More tests => 477;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -1039,7 +1039,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "not built with ndmp and server", 61 unless
+    skip "not built with ndmp and server", 75 unless
 	Amanda::Util::built_with_component("ndmp") and
 	Amanda::Util::built_with_component("server");
 
@@ -1176,16 +1176,23 @@ SKIP: {
     # test the directtcp-target implementation
     #
 
-    {
-	ok($dev->directtcp_supported(), "is a directtcp target");
+    ok($dev->directtcp_supported(), "is a directtcp target");
+    for my $dev_use ('initiator', 'listener') {
+	my ($xfer, $addrs, $dest_elt);
+	if ($dev_use eq 'listener') {
+	    $addrs = $dev->listen(1);
+	    ok($addrs, "listen returns successfully") or die($dev->error_or_status());
 
-	my $addrs = $dev->listen(1);
-	ok($addrs, "listen returns successfully") or die($dev->error_or_status());
-
-	# set up an xfer to write to the device
-	my $xfer = Amanda::Xfer->new([
+	    # set up an xfer to write to the device
+	    $dest_elt = Amanda::Xfer::Dest::DirectTCPConnect->new($addrs);
+	} else {
+	    # set up an xfer to write to the device
+	    $dest_elt = Amanda::Xfer::Dest::DirectTCPListen->new();
+	}
+	$xfer = Amanda::Xfer->new([
 		Amanda::Xfer::Source::Random->new(32768*34, 0xB00),
-		Amanda::Xfer::Dest::DirectTCPConnect->new($addrs) ]);
+		$dest_elt,
+	    ]);
 
 	my @messages;
 	$xfer->start(make_cb(xmsg_cb => sub {
@@ -1200,12 +1207,19 @@ SKIP: {
 	# write files from the connection until EOF
 	my $num_files;
 	my $conn;
-	my ($call_accept, $start_device, $write_file_cb);
+	my ($finish_connection, $start_device, $write_file_cb);
 
-	$call_accept = make_cb(call_accept => sub {
-	    $conn = $dev->accept();
+
+	$finish_connection = make_cb(finish_connection => sub {
+	    if ($dev_use eq 'listener') {
+		$conn = $dev->accept();
+	    } else {
+		$addrs = $dest_elt->get_addrs();
+		$conn = $dev->connect(1, $addrs);
+	    }
 	    Amanda::MainLoop::call_later($start_device);
 	});
+
 
 	$start_device = make_cb(start_device => sub {
 	    ok($dev->start($ACCESS_WRITE, "TEST2", "20090915000000"),
@@ -1236,7 +1250,7 @@ SKIP: {
 	    }
 	});
 
-	Amanda::MainLoop::call_later($call_accept);
+	Amanda::MainLoop::call_later($finish_connection);
 	Amanda::MainLoop::run();
 	is_deeply([@messages], [
 		'WRITE-OK-491520-!eof-!eom',
