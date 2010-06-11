@@ -1,3 +1,9 @@
+2010-06-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/s3-device.c: add S3_STORAGE_CLASS property
+	* device-src/s3.c device-src/s3.h: add storage_class
+	* installcheck/Amanda_Device.pl: set the property
+	* man/xml-source/amanda-devices.7.xml: document it
+
 2010-06-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Recovery/Planner.pm: fix matching on filelists - fixes
 	  problems with amidxtaped: "Specified file list matches multiple

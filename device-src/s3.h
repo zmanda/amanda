@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -226,13 +226,14 @@ s3_init(void);
  * @param secret_key: the secret key for Amazon Web Services
  * @param user_token: the user token for Amazon DevPay
  * @param bucket_location: the location constraint for buckets
+ * @param storage_class: the storage class for new objects
  * @param ca_info: the path to pass to libcurl as the certificate authority.
  *                 see curl_easy_setopt() CURLOPT_CAINFO for more
  * @returns: the new S3Handle
  */
 S3Handle *
 s3_open(const char * access_key, const char *secret_key, const char * user_token,
-        const char * bucket_location, const char * ca_info);
+        const char * bucket_location, const char * storage_class, const char * ca_info);
 
 /* Deallocate an S3Handle
  *
