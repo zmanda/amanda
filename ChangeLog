@@ -1,3 +1,6 @@
+2010-06-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Report.pm: POD overhaul
+
 2010-06-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/fileheader-test.c: don't expect partnum=0 on dumpfiles
 	* common-src/fileheader.c: don't put partnum=1 on tape headers, etc.
