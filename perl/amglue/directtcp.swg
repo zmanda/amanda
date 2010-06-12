@@ -91,7 +91,7 @@
     addrs_av = (AV *)SvRV($input);
     num_addrs = av_len(addrs_av)+1;
 
-    $1 = g_new0(DirectTCPAddr, num_addrs);
+    $1 = g_new0(DirectTCPAddr, num_addrs+1);
 
     for (i = 0; i < num_addrs; i++) {
         SV **svp = av_fetch(addrs_av, i, 0);

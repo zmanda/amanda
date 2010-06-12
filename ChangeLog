@@ -1,3 +1,6 @@
+2010-06-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/amglue/directtcp.swg: fix unterminated array
+
 2010-06-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/net.m4: remove use of AS_HELP_STRING
 
