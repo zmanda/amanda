@@ -9,10 +9,12 @@
 #  - chown= controls changes in ownership; value is first argument to chown
 #  - chmod= controls changes in permissions; value is first argument to chmod
 #
-# As a special case, chown=amanda is taken as equivalent to 
-# chown=$(BINARY_OWNER):$(SETUID_GROUP), which may otherwise have problems with
-# whitespace in the user/group names.
-# 
+# The following special cases are available:
+# 	amanda:setuid = $(BINARY_OWNER):$(SETUID_GROUP)
+# 	root:setuid = root:$(SETUID_GROUP)
+# These variables might otherwise have problems with whitespace in the user/group
+# names.
+#
 # when a filename is seen, the currently active variables are applied.
 #
 # Note that scripts are data, not executables!
@@ -70,32 +72,28 @@ do_file=pa="$$dest"/`echo "$$cmd"|sed '$(strip_leading_dirs)'|sed '$(transform)'
 DISTCLEANFILES += $(installperms_sh)
 endif
 
-installperms-exec:
-	@installperms="$(INSTALLPERMS_exec)"; \
-	test -n "$$installperms" && echo "Setting installation permissions on executables"; \
-	dest=; chown=; chmod=; \
+do_installperms=dest=; chown=; chmod=; \
 	for cmd in $$installperms; do \
 	    case "$$cmd" in \
-		chown=amanda) \
-			echo "  ($$cmd)"; chown="$(BINARY_OWNER):$(SETUID_GROUP)";; \
+		chown=amanda:setuid) \
+		    echo "  ($$cmd)"; chown="$(BINARY_OWNER):$(SETUID_GROUP)";; \
+		chown=root:setuid) \
+		    echo "  ($$cmd)"; chown="root:$(SETUID_GROUP)";; \
 		dest=*|chown=*|chmod=*) \
 			echo "  ($$cmd)"; eval $$cmd;; \
 	    	*) $(do_file) ;; \
 	    esac; \
 	done
 
+installperms-exec:
+	@installperms="$(INSTALLPERMS_exec)"; \
+	test -n "$$installperms" && echo "Setting installation permissions on executables"; \
+	$(do_installperms)
+
 installperms-data:
 	@installperms="$(INSTALLPERMS_data)"; \
-	dest=; chown=; chmod=; \
-	for cmd in $$installperms; do \
-	    case "$$cmd" in \
-		chown=amanda) \
-			echo "  ($$cmd)"; chown="$(BINARY_OWNER):$(SETUID_GROUP)";; \
-		dest=*|chown=*|chmod=*) \
-			echo "  ($$cmd)"; eval $$cmd;; \
-		*)  $(do_file) ;; \
-	    esac; \
-	done
+	test -n "$$installperms" && echo "Setting installation permissions on data"; \
+	$(do_installperms)
 
 install-exec-hook: installperms-exec
 install-data-hook: installperms-data

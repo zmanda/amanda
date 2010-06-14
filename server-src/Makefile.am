@@ -64,7 +64,7 @@ sbin_SCRIPTS = $(sbin_SCRIPTS_PERL) $(sbin_SCRIPTS_SHELL)
 amlibexec_SCRIPTS = $(amlibexec_SCRIPTS_PERL) $(amlibexec_SCRIPTS_SHELL)
 
 INSTALLPERMS_exec = \
-	dest=$(sbindir) chown=root chmod=04750 \
+	dest=$(sbindir) chown=root:setuid chmod=04750 \
 		amcheck amservice \
 	dest=$(amlibexecdir) \
 		dumper planner

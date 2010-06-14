@@ -62,7 +62,7 @@ noinst_HEADERS	= 	amandates.h	getfsent.h	\
 			findpass.h	client_util.h
 			
 if WANT_SETUID_CLIENT
-INSTALLPERMS_exec = dest=$(amlibexecdir) chown=root chmod=04750 \
+INSTALLPERMS_exec = dest=$(amlibexecdir) chown=root:setuid chmod=04750 \
 		calcsize killpgrp rundump runtar
 endif
 

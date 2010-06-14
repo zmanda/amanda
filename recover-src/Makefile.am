@@ -53,9 +53,6 @@ uscan.$(OBJEXT): uscan.c ../common-src/amanda.h uparse.h
 uparse.$(OBJEXT): uparse.c ../common-src/amanda.h amrecover.h
 	$(CC) $(CFLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(CPPFLAGS) -c $<
 
-INSTALLPERMS_exec = \
-	dest=$(sbindir) chown=amanda chmod=0750 $(sbin_PROGRAMS)
-
 lint:
 	@f="$(amrecover_CSRC)";							\
 	(cd ../common-src; make listlibsrc);					\

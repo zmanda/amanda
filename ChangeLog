@@ -1,3 +1,10 @@
+2010-06-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/automake/installperms.am: add new special cases
+
+	* application-src/Makefile.am client-src/Makefile.am
+	  oldrecover-src/Makefile.am recover-src/Makefile.am
+	  server-src/Makefile.am: only use installperms for setuid executables
+
 2010-06-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Report.pm: POD overhaul
 

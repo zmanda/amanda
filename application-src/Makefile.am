@@ -49,6 +49,6 @@ LDADD = ../common-src/libamanda.la \
 	../gnulib/libgnu.la
 
 if WANT_SETUID_CLIENT
-INSTALLPERMS_exec = dest=$(applicationdir) chown=root chmod=04750 \
+INSTALLPERMS_exec = dest=$(applicationdir) chown=root:setuid chmod=04750 \
 		    amgtar amstar
 endif
