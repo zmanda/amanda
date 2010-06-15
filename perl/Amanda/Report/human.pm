@@ -1122,7 +1122,15 @@ sub get_summary_info
       : $tail_quote_trunc->($disk, $col_spec->[1]->[COLSPEC_WIDTH]);
 
     my $alldumps = $dle_info->{'dumps'};
-    if (keys %{$alldumps} == 0) {
+    if ($dle_info->{'planner'} &&
+        $dle_info->{'planner'}->{'status'} eq 'fail') {
+	my @rv;
+	push @rv, 'nodump-FAILED';
+	push @rv, $hostname;
+	push @rv, $disk_out;
+	push @rv, ("",) x 8;
+	push @rvs, [@rv];
+    } elsif (keys %{$alldumps} == 0) {
 	my @rv;
 	push @rv, $report->get_flag("amflush_run")? 'noflush' : 'missing';
 	push @rv, $hostname;

@@ -648,8 +648,8 @@ cleanup();
 burp($current_log_filename, $datas{'resultsmissing'});
 
 run($amreport, 'TESTCONF', '-f', $out_filename);
-is($Installcheck::Run::exit_code, 8,
-    "amreport with resultsmissing logfile ('RESULTS MISSING') exit==8");
+is($Installcheck::Run::exit_code, 12,
+    "amreport with resultsmissing logfile ('RESULTS MISSING') exit==12");
 results_match($out_filename, $datas{'resultsmissing-rpt'},
     "..result matches 7");
 results_match($printer_output,
@@ -767,7 +767,7 @@ cleanup();
 burp($current_log_filename, $datas{'fatal'});
 
 run($amreport, 'TESTCONF', '-f', $out_filename);
-is($Installcheck::Run::exit_code, 13,
+is($Installcheck::Run::exit_code, 5,
     "amreport with fatal logfile");
 results_match($out_filename, $datas{'fatal-rpt'},
     "..result matches 17");
@@ -796,8 +796,8 @@ cleanup();
 burp($current_log_filename, $datas{'plannerfail'});
 
 run($amreport, 'TESTCONF', '-f', $out_filename);
-is($Installcheck::Run::exit_code, 12,
-    "..exit status is correct (failed|missing)");
+is($Installcheck::Run::exit_code, 4,
+    "..exit status is correct (failed)");
 results_match($out_filename, $datas{'plannerfail-rpt'},
     "..result matches plannerfail-rpt");
 
@@ -1428,6 +1428,8 @@ DISK planner cnc.slikon.local /
 INFO taper taper pid 22044
 DISK planner ns-new.slikon.local //usr/local
 DISK planner ns-new.slikon.local /home
+DISK planner ns-new.slikon.local /boot
+FAIL planner ns-new.slikon.local /boot 20090326001503 0 "[planner failed]"
 SUCCESS dumper ns-new.slikon.local //usr/local 20090326001503 0 [sec 0.040 kb 1 kps 24.6 orig-kb 30]
 START taper datestamp 20090326001503 label Daily-36 tape 1
 SUCCESS dumper cnc.slikon.local /boot 20090326001503 0 [sec 4.255 kb 17246 kps 4052.7 orig-kb 20670]
@@ -1451,6 +1453,7 @@ The next tape Amanda expects to use is: 1 new tape.
 FAILURE DUMP SUMMARY:
    cnc.slikon.local    /      RESULTS MISSING
    ns-new.slikon.local /home  RESULTS MISSING
+   ns-new.slikon.local /boot  lev 0 FAILED [planner failed]
 
 
 STATISTICS:
@@ -1485,6 +1488,7 @@ HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
 cnc.slikon.l /             MISSING --------------------------------------------
 cnc.slikon.l /boot       0   20670   17245   83.4    0:04 4052.7   0:01 23216.5
 ns-new.sliko //usr/local 0      30       1    3.3    0:00   24.6   0:00   153.5
+ns-new.sliko /boot         FAILED
 ns-new.sliko /home         MISSING --------------------------------------------
 
 (brought to you by Amanda version x.y.z)
@@ -2259,7 +2263,7 @@ DUMP SUMMARY:
                                        DUMPER STATS               TAPER STATS 
 HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
 -------------------------- ------------------------------------- -------------
-localhost    /boot         MISSING -------------------------------------------
+localhost    /boot         FAILED
 
 (brought to you by Amanda version x.y.z)
 %%%% flush-origsize
@@ -2449,9 +2453,9 @@ DUMP SUMMARY:
                                        DUMPER STATS               TAPER STATS
 HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
 -------------------------- ------------------------------------- -------------
-1.2.3.4      "C:/"         MISSING -------------------------------------------
-1.2.3.4      "-/Scripts"   MISSING -------------------------------------------
-1.2.3.4      "G:/"         MISSING -------------------------------------------
-1.2.3.4      SystemState   MISSING -------------------------------------------
+1.2.3.4      "C:/"         FAILED
+1.2.3.4      "-/Scripts"   FAILED
+1.2.3.4      "G:/"         FAILED
+1.2.3.4      SystemState   FAILED
 
 (brought to you by Amanda version x.y.z)

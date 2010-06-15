@@ -1233,8 +1233,11 @@ sub check_missing_fail_strange
     foreach my $dle_entry (@dles) {
 
         my $alldumps = $self->get_dle_info(@$dle_entry, 'dumps');
+	my $planner = $self->get_dle_info(@$dle_entry, 'planner');
 
-	if (!defined $alldumps->{$self->{'run_timestamp'}}) {
+	if ($planner && $planner->{'status'} eq 'fail') {
+	    $self->{flags}{dump_failed} = 1;
+	} elsif (!defined $alldumps->{$self->{'run_timestamp'}}) {
 	    $self->{flags}{results_missing} = 1;
 	    $self->{flags}{exit_status} |= STATUS_MISSING;
 	} else {

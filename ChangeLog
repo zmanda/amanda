@@ -1,3 +1,8 @@
+2010-06-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report.pm, perl/Amanda/Report/human.pm: 'FAIL planner'
+	  line should result in FAILED dump (not MISSING dump).
+	* installcheck/amreport.pl: Test it.
+
 2010-06-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Report.pm: POD overhaul
 
