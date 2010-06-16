@@ -183,13 +183,14 @@ clobber_my_config_is_ok:
 		exit 1; \
 	fi
 
+# newer Test::Harness (v3.18-3.21) implementations get confused by executable
+# test scripts, so this rule chmod -x's them first
 installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL)
 	rm -rf "$(AMANDA_TMPDIR)/installchecks"
 	$(mkdir_p) "$(AMANDA_TMPDIR)/installchecks"
 	@if test -f "$(CONFIG_DIR)/amanda-client.conf" -a ! -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
 	    cp "$(CONFIG_DIR)/amanda-client.conf" "$(CONFIG_DIR)/amanda-client.conf.install-backup"; \
 	fi 
-	# newer Test::Harness implementations get confused by executable test scripts
 	for f in $(tests); do chmod -x $$f; done
 	$(PERL) -I$(srcdir) -I. -e 'use Test::Harness qw(&runtests); runtests(sort @ARGV);' $(tests)
 	rm -rf "$(CONFIG_DIR)/TESTCONF"
