@@ -685,7 +685,8 @@ sub setup_and_start_dump {
 	$self->{'orig_kb'} = $params{'orig_kb'};
 	$self->{'input_errors'} = [];
 
-	if (my $err = $self->{'scribe'}->check_data_path($params{'data_path'})) {
+	if ($msgtype eq main::Protocol::PORT_WRITE &&
+	    (my $err = $self->{'scribe'}->check_data_path($params{'data_path'}))) {
 	    return $params{'dump_cb'}->(
 		result => "FAILED",
 		device_errors => ["$err"],
