@@ -1,4 +1,7 @@
 2010-06-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am: use chmod a-x instead of chmod -x
+
+2010-06-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am: remove comment from Makefile rule
 
 2010-06-16  Jean-Louis Martineau <martineau@zmanda.com>
