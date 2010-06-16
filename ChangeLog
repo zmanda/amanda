@@ -1,3 +1,7 @@
+2010-06-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am: add chmod -x for more recent Test::Harness
+	  implementations that are confused by executable tests
+
 2010-06-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report.pm, perl/Amanda/Report/human.pm: 'FAIL planner'
 	  line should result in FAILED dump (not MISSING dump).
