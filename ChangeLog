@@ -1,3 +1,9 @@
+2010-06-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/bsd-security.c common-src/bsdtcp-security.c
+	  common-src/bsdudp-security.c common-src/local-security.c
+	  common-src/security-util.c common-src/ssh-security.c: zero out new
+	  structures, and protect logtime messages from NULL dereferences
+
 2010-06-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am: use chmod a-x instead of chmod -x
 

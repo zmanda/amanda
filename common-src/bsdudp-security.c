@@ -120,7 +120,7 @@ bsdudp_connect(
     (void)datap;	/* Quiet unused parameter warning */
     assert(hostname != NULL);
 
-    bh = alloc(sizeof(*bh));
+    bh = g_new0(struct sec_handle, 1);
     bh->proto_handle=NULL;
     bh->rc = NULL;
     security_handleinit(&bh->sech, &bsdudp_security_driver);

@@ -437,7 +437,7 @@ tcpm_send_token(
     assert(SIZEOF(netlength) == 4);
 
     logtime = time(NULL);
-    if (logtime > rc->logstamp + 10) {
+    if (rc && logtime > rc->logstamp + 10) {
 	g_debug("tcpm_send_token: data is still flowing");
         rc->logstamp = logtime;
     }
@@ -661,7 +661,7 @@ tcpma_stream_client(
 	return (NULL);
     }
 
-    rs = alloc(SIZEOF(*rs));
+    rs = g_new0(struct sec_stream, 1);
     security_streaminit(&rs->secstr, rh->sech.driver);
     rs->handle = id;
     rs->ev_read = NULL;
@@ -695,7 +695,7 @@ tcpma_stream_server(
 
     assert(rh != NULL);
 
-    rs = alloc(SIZEOF(*rs));
+    rs = g_new0(struct sec_stream, 1);
     security_streaminit(&rs->secstr, rh->sech.driver);
     rs->closed_by_me = 0;
     rs->closed_by_network = 0;
@@ -763,7 +763,7 @@ tcp1_stream_server(
 
     assert(rh != NULL);
 
-    rs = alloc(SIZEOF(*rs));
+    rs = g_new0(struct sec_stream, 1);
     security_streaminit(&rs->secstr, rh->sech.driver);
     rs->closed_by_me = 0;
     rs->closed_by_network = 0;
@@ -835,7 +835,7 @@ tcp1_stream_client(
 
     assert(rh != NULL);
 
-    rs = alloc(SIZEOF(*rs));
+    rs = g_new0(struct sec_stream, 1);
     security_streaminit(&rs->secstr, rh->sech.driver);
     rs->handle = id;
     rs->ev_read = NULL;
@@ -877,7 +877,7 @@ tcp_stream_write(
     assert(rs != NULL);
 
     logtime = time(NULL);
-    if (logtime > rs->rc->logstamp + 10) {
+    if (rs && rs->rc && logtime > rs->rc->logstamp + 10) {
 	g_debug("tcp_stream_write: data is still flowing");
 	rs->rc->logstamp = logtime;
     }
@@ -1393,7 +1393,7 @@ udp_netfd_read_callback(
 	return;
     }
 
-    rh = alloc(SIZEOF(*rh));
+    rh = g_new0(struct sec_handle, 1);
     rh->proto_handle=NULL;
     rh->udp = udp;
     rh->rc = NULL;
@@ -1474,7 +1474,7 @@ sec_tcp_conn_get(
     /*
      * We can't be creating a new handle if we are the client
      */
-    rc = alloc(SIZEOF(*rc));
+    rc = g_new0(struct tcp_conn, 1);
     rc->read = rc->write = -1;
     rc->driver = NULL;
     rc->pid = -1;
@@ -1692,7 +1692,7 @@ stream_read_callback(
     assert(rs != NULL);
 
     logtime = time(NULL);
-    if (logtime > rs->rc->logstamp + 10) {
+    if (rs && rs->rc && logtime > rs->rc->logstamp + 10) {
 	g_debug("stream_read_callback: data is still flowing");
 	rs->rc->logstamp = logtime;
     }
@@ -1805,7 +1805,7 @@ sec_tcp_conn_read_callback(
 	return;
     }
 
-    rh = alloc(SIZEOF(*rh));
+    rh = g_new0(struct sec_handle, 1);
     security_handleinit(&rh->sech, rc->driver);
     rh->hostname = stralloc(rc->hostname);
     rh->ev_timeout = NULL;
