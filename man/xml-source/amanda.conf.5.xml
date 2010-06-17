@@ -542,25 +542,9 @@ option.</para>
   <listitem>
 <para>Default:
 <amdefault>&quot;null:&quot;</amdefault>.
-The device name, referencing the name of a &quot;device&quot; section in the configuration file.  See
-<manref name="amanda-devices" vol="7"/>
-for more information on device names.</para>
+This parameter can either specify a device (explicitly or by referencing a device definition - see <manref name="amanda-devices" vol="7" />)
+or a tape changer (explicitly or by referencing a device definition - see <manref name="amanda-changers" vol="7" />).</para>
 
-<para>If a tape changer is configured
-(see the
-<amkeyword>tpchanger</amkeyword>
-option), this option might not be used.</para>
-
-<para>If <amkeyword>tapedev</amkeyword> is
-<emphasis remap='B'>null:</emphasis>,
-programs such as
-&amdump;
-will run normally but all images will be thrown away.
-This should only be used for debugging and testing,
-and probably only with the
-<amkeyword>record</amkeyword>
-option set to
-<amdefault>no</amdefault>.</para>
   </listitem>
   </varlistentry>
 
@@ -595,13 +579,12 @@ the property to set, and the others contains its values.
   <varlistentry>
   <term><amkeyword>tpchanger</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>Default: not set.
-The name of the tape changer.
-If a tape changer is not configured, this option is not used
-and should be commented out of the configuration file.</para>
-<para>If a tape changer is configured, choose one of the changer scripts
-(e.g.  <emphasis remap='B'>chg-scsi</emphasis>)
-and enter that here.</para>
+<para>Default: not set.  The tape changer to use.  In most cases, only one of
+<amkeyword>tpchanger</amkeyword> or <amkeyword>tapedev</amkeyword> is
+specified, although for backward compatibility both may be specified if
+<amkeyword>tpchanger</amkeyword> gives the name of an old changer script.
+See <manref name="amanda-changers" vol="7" /> for more information on
+configuring changers.</para>
   </listitem>
   </varlistentry>
 
@@ -620,7 +603,7 @@ option.</para>
   <term><amkeyword>changerfile</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<amdefault>&quot;usr/adm/amanda/log/changer-status&quot;</amdefault>.
+<amdefault>&quot;/usr/adm/amanda/log/changer-status&quot;</amdefault>.
 A tape changer configuration parameter.
 Usage depends on the particular changer defined with the
 <amkeyword>tpchanger</amkeyword>
