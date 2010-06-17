@@ -118,7 +118,7 @@ bsdtcp_connect(
 
     auth_debug(1, _("bsdtcp: bsdtcp_connect: %s\n"), hostname);
 
-    rh = alloc(sizeof(*rh));
+    rh = g_new0(struct sec_handle, 1);
     security_handleinit(&rh->sech, &bsdtcp_security_driver);
     rh->hostname = NULL;
     rh->rs = NULL;

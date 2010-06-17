@@ -113,7 +113,7 @@ ssh_connect(
 
     auth_debug(1, "ssh_connect: %s\n", hostname);
 
-    rh = alloc(SIZEOF(*rh));
+    rh = g_new0(struct sec_handle, 1);
     security_handleinit(&rh->sech, &ssh_security_driver);
     rh->hostname = NULL;
     rh->rs = NULL;

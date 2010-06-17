@@ -110,7 +110,7 @@ local_connect(
 
     auth_debug(1, _("local: local_connect: %s\n"), hostname);
 
-    rh = alloc(SIZEOF(*rh));
+    rh = g_new0(struct sec_handle, 1);
     security_handleinit(&rh->sech, &local_security_driver);
     rh->hostname = NULL;
     rh->rs = NULL;

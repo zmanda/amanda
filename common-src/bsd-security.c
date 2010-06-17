@@ -138,7 +138,7 @@ bsd_connect(
     (void)conf_fn;	/* Quiet unused parameter warning */
     (void)datap;        /* Quiet unused parameter warning */
 
-    bh = alloc(SIZEOF(*bh));
+    bh = g_new0(struct sec_handle, 1);
     bh->proto_handle=NULL;
     security_handleinit(&bh->sech, &bsd_security_driver);
 
@@ -398,7 +398,7 @@ bsd_stream_server(
 
     assert(bh != NULL);
 
-    bs = alloc(SIZEOF(*bs));
+    bs = g_new0(struct sec_stream, 1);
     security_streaminit(&bs->secstr, &bsd_security_driver);
     bs->socket = stream_server(SU_GET_FAMILY(&bh->udp->peer), &bs->port,
 			       (size_t)STREAM_BUFSIZE, (size_t)STREAM_BUFSIZE,
@@ -453,7 +453,7 @@ bsd_stream_client(
 
     assert(bh != NULL);
 
-    bs = alloc(SIZEOF(*bs));
+    bs = g_new0(struct sec_stream, 1);
     security_streaminit(&bs->secstr, &bsd_security_driver);
     bs->fd = stream_client(bh->hostname, (in_port_t)id,
 	STREAM_BUFSIZE, STREAM_BUFSIZE, &bs->port, 0);
