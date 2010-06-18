@@ -90,8 +90,7 @@ INSTALLPERMS_data = \
 LDADD = ../common-src/libamanda.la   \
 	libamserver.la               \
 	../device-src/libamdevice.la     \
-	../common-src/libamanda.la   \
-        $(READLINE_LIBS)
+	../common-src/libamanda.la
 
 libamserver_la_SOURCES=	amindex.c	\
 			diskfile.c	driverio.c	cmdline.c  \

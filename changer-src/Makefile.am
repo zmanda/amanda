@@ -61,8 +61,7 @@ amlibexec_DATA = $(SCRIPTS_INCLUDE)
 LDADD = ../common-src/libamanda.la \
 	../common-src/libamanda.la \
 	../device-src/libamdevice.la \
-	../gnulib/libgnu.la \
-	$(READLINE_LIBS)
+	../gnulib/libgnu.la
 
 chg_scsi_CSRC = chg-scsi.c scsi-changer-driver.c sense.c 
 if WANT_SCSI_AIX
