@@ -1,4 +1,7 @@
 2010-06-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/Makefile.am changer-src/Makefile.am: remove READLINE_LIBS
+
+2010-06-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: update tapedev and tpchanger docs
 	  to match new changer API
 
