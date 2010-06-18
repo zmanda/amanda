@@ -579,7 +579,8 @@ sub _async_read_cb {
     # and process this data
     $self->{'rx_buffer'} .= $data;
 
-    while (my ($line, $rest) = ($self->{'rx_buffer'} =~ /([^\n]*)\n(.*)/)) {
+    while ($self->{'rx_buffer'} =~ /\n/) {
+	my ($line, $rest) = split '\n', $self->{'rx_buffer'}, 2;
 	$self->{'rx_buffer'} = $rest;
 	$self->_incoming_line($line);
     }

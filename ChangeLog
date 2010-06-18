@@ -1,3 +1,6 @@
+2010-06-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/IPC/LineProtocol.pm: Fix for multiline.
+
 2010-06-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/Makefile.am changer-src/Makefile.am: remove READLINE_LIBS
 
