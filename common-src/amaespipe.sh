@@ -1,6 +1,6 @@
 #! @SHELL@
 #
-# Copyright (c) 2007,2008 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2007, 2008, 2010 Zmanda Inc.  All Rights Reserved.
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -52,24 +52,25 @@ FDNUMBER=3
 
 if test x$1 = x-d ; then
     # decrypt
-    n=`head -c 10 - | tr -d -c 0-9a-zA-Z`
+    n=`/bin/dd bs=10 count=1 2> /dev/null | tr -d -c 0-9a-zA-Z`
     if test x${n} != xbz2aespipe ; then
-        echo `_ 'bz2aespipe: wrong magic - aborted'` >/dev/tty
+        echo "bz2aespipe: wrong magic - aborted" >/dev/tty
         exit 1
     fi
-    itercountk=`head -c 10 - | tr -d -c 0-9`
+    itercountk=`/bin/dd bs=10 count=1 2> /dev/null | tr -d -c 0-9`
     if test x${itercountk} = x ; then itercountk=0; fi
-    n=`head -c 1 - | tr -d -c 0-9`
+    n=`/bin/dd bs=1 count=1 2> /dev/null | tr -d -c 0-9`
     encryption=AES128
     if test x${n} = x1 ; then encryption=AES192; fi
     if test x${n} = x2 ; then encryption=AES256; fi
-    n=`head -c 1 - | tr -d -c 0-9`
+    n=`/bin/dd bs=1 count=1 2> /dev/null | tr -d -c 0-9`
     hashfunc=SHA256
     if test x${n} = x1 ; then hashfunc=SHA384; fi
     if test x${n} = x2 ; then hashfunc=SHA512; fi
     if test x${n} = x3 ; then hashfunc=RMD160; fi
-    seedstr=`head -c 24 - | tr -d -c 0-9a-zA-Z+/`
-    aespipe -K ${GPGKEY} -p ${FDNUMBER} -e ${encryption} -H ${hashfunc} -S ${seedstr} -C ${itercountk} -d
+    seedstr=`/bin/dd bs=24 count=1 2> /dev/null | tr -d -c 0-9a-zA-Z+/`
+    aespipe -K ${GPGKEY} -p ${FDNUMBER} -e ${encryption} -H ${hashfunc} \
+	-S ${seedstr} -C ${itercountk} -d
 else
     # encrypt
     echo -n bz2aespipe
@@ -85,6 +86,7 @@ else
     if test x${n} = x160 ; then hashstr=3; fi
     seedstr=`head -c 18 /dev/urandom | uuencode -m - | head -n 2 | tail -n 1`
     echo -n ${aesstr}${hashstr}${seedstr}
-    aespipe -K ${GPGKEY} -p ${FDNUMBER} -e ${ENCRYPTION} -H ${HASHFUNC} -S ${seedstr} -C ${ITERCOUNTK} -w ${WAITSECONDS}
+    aespipe -K ${GPGKEY} -p ${FDNUMBER} -e ${ENCRYPTION} -H ${HASHFUNC} \
+	-S ${seedstr} -C ${ITERCOUNTK} -w ${WAITSECONDS}
 fi
 exit 0

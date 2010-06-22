@@ -1,3 +1,7 @@
+2010-06-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amaespipe.sh: change head to dd; thanks to Angelo Höngens
+	 and Marco Poli
+
 2010-06-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/tape-device.c: Handle write returning 0 for LEOM.
 
