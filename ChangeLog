@@ -1,3 +1,6 @@
+2010-06-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/tape-device.c: Handle write returning 0 for LEOM.
+
 2010-06-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am: list libamglue in _SOURCES variables, too,
 	  so that dependencies are correct and parallel makes do not
