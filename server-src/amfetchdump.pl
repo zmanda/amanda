@@ -156,7 +156,7 @@ $opt_compress = 1 if $opt_compress_best;
 
 usage("must specify at least a hostname") unless @ARGV;
 @opt_dumpspecs = Amanda::Cmdline::parse_dumpspecs([@ARGV],
-    $Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP);
+    $Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP | $Amanda::Cmdline::CMDLINE_PARSE_LEVEL);
 
 usage("The -b option is no longer supported; set readblocksize in the tapetype section\n" .
       "of amanda.conf instead.")
@@ -286,6 +286,11 @@ sub main {
 
 	if (!@{$plan->{'dumps'}}) {
 	    return failure("No matching dumps found", $finished_cb);
+	}
+
+	# if we are doing a -p operation, only keep the first dump
+	if ($opt_pipe) {
+	    @{$plan->{'dumps'}} = ($plan->{'dumps'}[0]);
 	}
 
 	my @needed_labels = $plan->get_volume_list();

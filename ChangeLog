@@ -1,4 +1,7 @@
 2010-06-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amfetchdump.pl: fix parsing levels and -p
+
+2010-06-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amaespipe.sh: change head to dd; thanks to Angelo Höngens
 	 and Marco Poli
 
