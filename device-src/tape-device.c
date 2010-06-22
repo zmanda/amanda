@@ -1606,7 +1606,13 @@ tape_device_robust_write (TapeDevice * self, void * buf, int count, char **errms
 
             self->private->write_count ++;
             return RESULT_SUCCESS;
-        } else if (result >= 0) {
+        } else if (result == 0) {
+            /* write() returned 0. It can be a LEOM. */
+	    /* http://lists.freebsd.org/pipermail/freebsd-scsi/2010-June/004414.html */
+	    *errmsg = g_strdup_printf("Got LEOM: Tried %d, got %d",
+				count, result);
+            return RESULT_NO_SPACE;
+        } else if (result > 0) {
             /* write() returned a short count. This should not happen. */
 	    *errmsg = g_strdup_printf("Mysterious short write on tape device: Tried %d, got %d",
 				count, result);
