@@ -245,11 +245,11 @@ sub command_selfcheck {
 
     _check("TMPDIR $self->{'args'}->{'tmpdir'}",
            "is an acessible directory", "is NOT an acessible directory",
-           sub {-d $_[0] && -r $_[0] && -w $_[0] && -x $_[0]},
+           sub {$_[0] && -d $_[0] && -r $_[0] && -w $_[0] && -x $_[0]},
            $self->{'args'}->{'tmpdir'});
     _check("STATEDIR $self->{'args'}->{'statedir'}",
            "is an acessible directory", "is NOT an acessible directory",
-           sub {-d $_[0] && -r $_[0] && -w $_[0] && -x $_[0]},
+           sub {$_[0] && -d $_[0] && -r $_[0] && -w $_[0] && -x $_[0]},
            $self->{'args'}->{'statedir'});
     _check_parent_dirs($self->{'args'}->{'statedir'});
 
@@ -258,16 +258,19 @@ sub command_selfcheck {
             print "OK client property: $k = $self->{'props'}->{$k}\n";
         }
 
-        _check("PG-ARCHIVEDIR $self->{'props'}->{'pg-archivedir'}",
-               "is a directory", "is NOT a directory",
-               sub {-d $_[0]}, $self->{'props'}->{'pg-archivedir'});
-        _check("PG-ARCHIVEDIR $self->{'props'}->{'pg-archivedir'}",
-               "is readable", "is NOT readable",
-               sub {-r $_[0]}, $self->{'props'}->{'pg-archivedir'});
-        _check("PG-ARCHIVEDIR $self->{'props'}->{'pg-archivedir'}",
-               "is executable", "is NOT executable",
-               sub {-x $_[0]}, $self->{'props'}->{'pg-archivedir'});
-        _check_parent_dirs($self->{'props'}->{'pg-archivedir'});
+        if (_check("PG-ARCHIVEDIR property", "is set", "is NOT set",
+               sub { $_[0] }, $self->{'props'}->{'pg-archivedir'})) {
+	    _check("PG-ARCHIVEDIR $self->{'props'}->{'pg-archivedir'}",
+		   "is a directory", "is NOT a directory",
+		   sub {-d $_[0]}, $self->{'props'}->{'pg-archivedir'});
+	    _check("PG-ARCHIVEDIR $self->{'props'}->{'pg-archivedir'}",
+		   "is readable", "is NOT readable",
+		   sub {-r $_[0]}, $self->{'props'}->{'pg-archivedir'});
+	    _check("PG-ARCHIVEDIR $self->{'props'}->{'pg-archivedir'}",
+		   "is executable", "is NOT executable",
+		   sub {-x $_[0]}, $self->{'props'}->{'pg-archivedir'});
+	    _check_parent_dirs($self->{'props'}->{'pg-archivedir'});
+	}
         _check("Are both PG-PASSFILE and PG-PASSWORD set?",
                "No (okay)",
                "Yes. Please set only one or the other",
