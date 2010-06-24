@@ -161,6 +161,7 @@ sub _check {
 
 sub _check_parent_dirs {
     my ($dir) = @_;
+    my $ok = 1;
     my $is_abs = substr($dir, 0, 1) eq "/";
     _check("$dir is an absolute path?", "Yes", "No. It should start with '/'",
        sub {$is_abs});
@@ -170,11 +171,14 @@ sub _check_parent_dirs {
     my $partial_path = '';
     for my $path_part (@parts) {
         $partial_path .= $path_part . (($partial_path || $is_abs)? '/' : '');
-        _check("$partial_path is executable?", "Yes", "No",
+        $ok &&=
+	    _check("$partial_path is executable?", "Yes", "No",
                sub {-x $_[0]}, $partial_path);
-        _check("$partial_path is a directory?", "Yes", "No",
+        $ok &&=
+	    _check("$partial_path is a directory?", "Yes", "No",
                sub {-d $_[0]}, $partial_path);
     }
+    $ok;
 }
 
 sub _ok_passfile_perms {
@@ -254,6 +258,8 @@ sub command_selfcheck {
     _check_parent_dirs($self->{'args'}->{'statedir'});
 
     if ($self->{'args'}->{'device'}) {
+	my $try_connect = 1;
+
         for my $k (keys %{$self->{'props'}}) {
             print "OK client property: $k = $self->{'props'}->{$k}\n";
         }
@@ -271,37 +277,57 @@ sub command_selfcheck {
 		   sub {-x $_[0]}, $self->{'props'}->{'pg-archivedir'});
 	    _check_parent_dirs($self->{'props'}->{'pg-archivedir'});
 	}
-        _check("Are both PG-PASSFILE and PG-PASSWORD set?",
-               "No (okay)",
-               "Yes. Please set only one or the other",
-               sub {!($self->{'props'}->{'pg-passfile'} and
-                      $self->{'props'}->{'pg-password'})});
+
+	$try_connect &&=
+	    _check("Are both PG-PASSFILE and PG-PASSWORD set?",
+		   "No (okay)",
+		   "Yes. Please set only one or the other",
+		   sub {!($self->{'props'}->{'pg-passfile'} and
+			  $self->{'props'}->{'pg-password'})});
+
         if ($self->{'props'}->{'pg-passfile'}) {
-            _check("PG-PASSFILE $self->{'props'}->{'pg-passfile'}",
+	    $try_connect &&=
+		_check("PG-PASSFILE $self->{'props'}->{'pg-passfile'}",
                    "has correct permissions", "does not have correct permissions",
                    \&_ok_passfile_perms, $self->{'props'}->{'pg-passfile'});
-            _check_parent_dirs($self->{'props'}->{'pg-passfile'});
+	    $try_connect &&=
+		_check_parent_dirs($self->{'props'}->{'pg-passfile'});
         }
-        _check("PSQL-PATH $self->{'props'}->{'psql-path'}",
-               "is executable", "is NOT executable",
-               sub {-x $_[0]}, $self->{'props'}->{'psql-path'});
-        _check("PSQL-PATH $self->{'props'}->{'psql-path'}",
-               "is not a directory (okay)", "is a directory (it shouldn't be)",
-               sub {!(-d $_[0])}, $self->{'props'}->{'psql-path'});
-        _check_parent_dirs($self->{'props'}->{'psql-path'});
-        _check("Connecting to database server", "succeeded", "failed",
-               \&_run_psql_command, $self, '');
-        
-        my $label = "$self->{'label-prefix'}-selfcheck-" . time();
-        if (_check("Call pg_start_backup", "succeeded",
-                   "failed (is another backup running?)",
-                   \&_run_psql_command, $self, "SELECT pg_start_backup('$label')")
-            and _check("Call pg_stop_backup", "succeeded", "failed",
-                       \&_run_psql_command, $self, "SELECT pg_stop_backup()")) {
 
-            _check("Get info from .backup file", "succeeded", "failed",
-                   sub {my ($start, $end) = _get_backup_info($self, $label); $start and $end});
-        }
+        if (_check("PSQL-PATH property", "is set", "is NOT set and psql is not in \$PATH",
+               sub { $_[0] }, $self->{'props'}->{'psql-path'})) {
+	    $try_connect &&=
+		_check("PSQL-PATH $self->{'props'}->{'psql-path'}",
+		       "is executable", "is NOT executable",
+		       sub {-x $_[0]}, $self->{'props'}->{'psql-path'});
+	    $try_connect &&=
+		_check("PSQL-PATH $self->{'props'}->{'psql-path'}",
+		       "is not a directory (okay)", "is a directory (it shouldn't be)",
+		       sub {!(-d $_[0])}, $self->{'props'}->{'psql-path'});
+	    $try_connect &&=
+		_check_parent_dirs($self->{'props'}->{'psql-path'});
+	} else {
+	    $try_connect = 0;
+	}
+
+	if ($try_connect) {
+	    $try_connect &&=
+		_check("Connecting to database server", "succeeded", "failed",
+		   \&_run_psql_command, $self, '');
+	}
+        
+	if ($try_connect) {
+	    my $label = "$self->{'label-prefix'}-selfcheck-" . time();
+	    if (_check("Call pg_start_backup", "succeeded",
+		       "failed (is another backup running?)",
+		       \&_run_psql_command, $self, "SELECT pg_start_backup('$label')")
+		and _check("Call pg_stop_backup", "succeeded", "failed",
+			   \&_run_psql_command, $self, "SELECT pg_stop_backup()")) {
+
+		_check("Get info from .backup file", "succeeded", "failed",
+		       sub {my ($start, $end) = _get_backup_info($self, $label); $start and $end});
+	    }
+	}
     }
 }
 

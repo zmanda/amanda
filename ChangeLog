@@ -1,3 +1,7 @@
+2010-06-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* application-src/ampgsql.pl: use conditionals to skip useless
+	  selfcheck checks
+
 2010-06-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* application-src/ampgsql.pl: conditionalize some checks on property
 	  being set
