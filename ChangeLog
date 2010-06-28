@@ -1,4 +1,7 @@
 2010-06-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/driverio.c: fix format specifies
+
+2010-06-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Config.swg common-src/conffile.c common-src/conffile.h:
 	  add new tapetype params: PART_SIZE, PART_CACHE_TYPE, PART_CACHE_DIR,
 	  and PART_CACHE_MAX_SIZE and dumptype param ALLOW_SPLIT; only print

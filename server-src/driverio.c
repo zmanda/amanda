@@ -297,7 +297,7 @@ taper_splitting_args(
 
     /* old dumptype-based parameters, using empty strings when not seen */
     if (dumptype_seen(dt, DUMPTYPE_TAPE_SPLITSIZE)) {
-	g_string_append_printf(args, "%zu ",
+	g_string_append_printf(args, "%ju ",
 		    (uintmax_t)dumptype_get_tape_splitsize(dt)*1024);
     } else {
 	g_string_append(args, "\"\" ");
@@ -309,7 +309,7 @@ taper_splitting_args(
     g_free(q);
 
     if (dumptype_seen(dt, DUMPTYPE_FALLBACK_SPLITSIZE)) {
-	g_string_append_printf(args, "%zu ",
+	g_string_append_printf(args, "%ju ",
 		    (uintmax_t)dumptype_get_fallback_splitsize(dt)*1024);
     } else {
 	g_string_append(args, "\"\" ");
@@ -324,7 +324,7 @@ taper_splitting_args(
 
     /* new tapetype-based parameters */
     if (tapetype_seen(tt, TAPETYPE_PART_SIZE)) {
-	g_string_append_printf(args, "%zu ",
+	g_string_append_printf(args, "%ju ",
 		    (uintmax_t)tapetype_get_part_size(tt)*1024);
     } else {
 	g_string_append(args, "\"\" ");
@@ -357,7 +357,7 @@ taper_splitting_args(
     g_free(q);
 
     if (tapetype_seen(tt, TAPETYPE_PART_CACHE_MAX_SIZE)) {
-	g_string_append_printf(args, "%zd ",
+	g_string_append_printf(args, "%ju ",
 		    (uintmax_t)tapetype_get_part_cache_max_size(tt)*1024);
     } else {
 	g_string_append(args, "\"\" ");
