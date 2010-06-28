@@ -131,6 +131,10 @@ amglue_add_constant(TAPETYPE_READBLOCKSIZE, tapetype_key);
 amglue_add_constant(TAPETYPE_LENGTH, tapetype_key);
 amglue_add_constant(TAPETYPE_FILEMARK, tapetype_key);
 amglue_add_constant(TAPETYPE_SPEED, tapetype_key);
+amglue_add_constant(TAPETYPE_PART_SIZE, tapetype_key);
+amglue_add_constant(TAPETYPE_PART_CACHE_TYPE, tapetype_key);
+amglue_add_constant(TAPETYPE_PART_CACHE_DIR, tapetype_key);
+amglue_add_constant(TAPETYPE_PART_CACHE_MAX_SIZE, tapetype_key);
 amglue_copy_to_tag(tapetype_key, getconf);
 
 amglue_add_enum_tag_fns(dumptype_key);
@@ -177,6 +181,7 @@ amglue_add_constant(DUMPTYPE_APPLICATION, dumptype_key);
 amglue_add_constant(DUMPTYPE_SCRIPTLIST, dumptype_key);
 amglue_add_constant(DUMPTYPE_PROPERTY, dumptype_key);
 amglue_add_constant(DUMPTYPE_DATA_PATH, dumptype_key);
+amglue_add_constant(DUMPTYPE_ALLOW_SPLIT, dumptype_key);
 amglue_copy_to_tag(dumptype_key, getconf);
 
 amglue_add_enum_tag_fns(interface_key);
@@ -308,6 +313,12 @@ amglue_add_constant(DATA_PATH_AMANDA, data_path_t);
 amglue_add_constant(DATA_PATH_DIRECTTCP, data_path_t);
 amglue_copy_to_tag(data_path_t, getconf);
 
+amglue_add_enum_tag_fns(part_cache_type_t);
+amglue_add_constant(PART_CACHE_TYPE_NONE, part_cache_type_t);
+amglue_add_constant(PART_CACHE_TYPE_DISK, part_cache_type_t);
+amglue_add_constant(PART_CACHE_TYPE_MEMORY, part_cache_type_t);
+amglue_copy_to_tag(part_cache_type_t, getconf);
+
 /*
  * val_t typemaps
  */
@@ -322,7 +333,7 @@ amglue_copy_to_tag(data_path_t, getconf);
  *  - CONFTYPE_COMPRESS, CONFTYPE_ENCRYPT, CONFTYPE_ESTIMATELIST, CONFTYPE_STRATEGY,
  *    CONFTYPE_TAPERALGO, CONFTYPE_PRIORITY, CONFTYPE_HOLDING, CONFTYPE_EXECUTE_ON,
  *    CONFTYPE_EXECUTE_WHERE, CONFTYPE_SEND_AMREPORT_ON,
- *    CONFTYPE_DATA_PATH -> IV (enums)
+ *    CONFTYPE_DATA_PATH, CONFTYPE_PART_CACHE_TYPE -> IV (enums)
  *  - CONFTYPE_RATE -> list of two NVs
  *  - CONFTYPE_INTRANGE -> list of two IVs
  *  - CONFTYPE_EXINCLUDE -> hashref with keys 'list' (listref), 'file' (listref),
@@ -421,6 +432,7 @@ val_t_to_sv(val_t *val, SV **results) {
 	    case CONFTYPE_EXECUTE_WHERE:
 	    case CONFTYPE_SEND_AMREPORT_ON:
 	    case CONFTYPE_DATA_PATH:
+	    case CONFTYPE_PART_CACHE_TYPE:
 	    case CONFTYPE_INT:
 		results[0] = sv_2mortal(amglue_newSVi64(val_t__int(val)));
 		return 1;

@@ -131,26 +131,6 @@
 #                              only be performed when an 'amadmin force' 
 #                              has been issued 
 #		  Default: [strategy standard]
-# tape_splitsize - (optional) split dump file into pieces of a specified size.
-#		  This allows dumps to be spread across multiple tapes, and can
-#		  potentially make more efficient use of tape space.  Note that
-#		  if this value is too large (more than half the size of the
-#		  average dump being split), substantial tape space can be
-#		  wasted.  If too small, large dumps will be split into
-#		  innumerable tiny dumpfiles, adding to restoration complexity.
-#		  A good rule of thumb, usually, is 1/10 of the size of your
-#		  tape.  Default: [disabled]
-# split_diskbuffer - (optional) When dumping a split dump  in  PORT-WRITE
-#                 mode (usually meaning "no holding disk"), buffer the split
-#		  chunks to a file in the directory specified by this option.
-#		  Default: [none]
-# fallback_splitsize - (optional) When dumping a split dump  in  PORT-WRITE
-#                 mode, if no split_diskbuffer is specified (or if we somehow
-#                 fail to use our split_diskbuffer), we must buffer split
-#                 chunks in memory.  This specifies the maximum size split
-#                 chunks can be in this scenario, and thus the maximum amount
-#                 of memory consumed for in-memory splitting.  Default: [10m]
-#
 #
 # Note that you may specify previously defined dumptypes as a shorthand way
 # of defining parameters.
@@ -184,7 +164,6 @@ define dumptype user-star {
 
 define dumptype user-star-span {
     root-star
-    tape_splitsize 3 Gb
     comment "tape-spanning user partitions dumped with star"
     priority medium
 }
@@ -232,7 +211,6 @@ define dumptype user-tar {
 
 define dumptype user-tar-span {
     root-tar
-    tape_splitsize 3 Gb
     comment "tape-spanning user partitions dumped with tar"
     priority medium
 }
@@ -277,7 +255,6 @@ define dumptype comp-user {
 
 define dumptype comp-user-span {
     global
-    tape_splitsize 5 Gb
     comment "Tape-spanning non-root partitions on reasonably fast machines"
     compress client fast
     priority medium

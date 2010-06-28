@@ -122,7 +122,7 @@ typedef enum {
     CONF_SPLIT_DISKBUFFER,	CONF_FALLBACK_SPLITSIZE,CONF_SRVCOMPPROG,
     CONF_CLNTCOMPPROG,		CONF_SRV_ENCRYPT,	CONF_CLNT_ENCRYPT,
     CONF_SRV_DECRYPT_OPT,	CONF_CLNT_DECRYPT_OPT,	CONF_AMANDAD_PATH,
-    CONF_CLIENT_USERNAME,	CONF_CLIENT_PORT,
+    CONF_CLIENT_USERNAME,	CONF_CLIENT_PORT,	CONF_ALLOW_SPLIT,
 
     /* tape type */
     /*COMMENT,*/		CONF_BLOCKSIZE,
@@ -159,6 +159,10 @@ typedef enum {
     /* autolabel */
     CONF_AUTOLABEL,		CONF_ANY_VOLUME,	CONF_OTHER_CONFIG,
     CONF_NON_AMANDA,		CONF_VOLUME_ERROR,	CONF_EMPTY,
+
+    /* part_cache_type */
+    CONF_PART_SIZE,		CONF_PART_CACHE_TYPE,	CONF_PART_CACHE_DIR,
+    CONF_PART_CACHE_MAX_SIZE,	CONF_DISK,		CONF_MEMORY,
 
     /* holdingdisk */
     CONF_NEVER,			CONF_AUTO,		CONF_REQUIRED,
@@ -494,6 +498,7 @@ static void read_execute_where(conf_var_t *, val_t *);
 static void read_holdingdisk(conf_var_t *, val_t *);
 static void read_int_or_str(conf_var_t *, val_t *);
 static void read_autolabel(conf_var_t *, val_t *);
+static void read_part_cache_type(conf_var_t *, val_t *);
 
 /* Functions to get various types of values.  These are called by
  * read_functions to take care of any variations in the way that these
@@ -646,6 +651,7 @@ static void conf_init_intrange(val_t *val, int i1, int i2);
 static void conf_init_proplist(val_t *val); /* to empty list */
 static void conf_init_application(val_t *val);
 static void conf_init_autolabel(val_t *val);
+static void conf_init_part_cache_type(val_t *val, part_cache_type_t i);
 
 /*
  * Command-line Handling
@@ -798,6 +804,7 @@ keytab_t client_keytab[] = {
 
 keytab_t server_keytab[] = {
     { "ALL", CONF_ALL },
+    { "ALLOW_SPLIT", CONF_ALLOW_SPLIT },
     { "AMANDA", CONF_AMANDA },
     { "AMANDAD_PATH", CONF_AMANDAD_PATH },
     { "AMRECOVER_CHANGER", CONF_AMRECOVER_CHANGER },
@@ -858,6 +865,7 @@ keytab_t server_keytab[] = {
     { "DEVICE_PROPERTY", CONF_DEVICE_PROPERTY },
     { "DIRECTORY", CONF_DIRECTORY },
     { "DIRECTTCP", CONF_DIRECTTCP },
+    { "DISK", CONF_DISK },
     { "DISKFILE", CONF_DISKFILE },
     { "DISPLAYUNIT", CONF_DISPLAYUNIT },
     { "DTIMEOUT", CONF_DTIMEOUT },
@@ -912,6 +920,7 @@ keytab_t server_keytab[] = {
     { "MAXDUMPS", CONF_MAXDUMPS },
     { "MAXDUMPSIZE", CONF_MAXDUMPSIZE },
     { "MAXPROMOTEDAY", CONF_MAXPROMOTEDAY },
+    { "MEMORY", CONF_MEMORY },
     { "MEDIUM", CONF_MEDIUM },
     { "NETUSAGE", CONF_NETUSAGE },
     { "NEVER", CONF_NEVER },
@@ -923,6 +932,10 @@ keytab_t server_keytab[] = {
     { "ORDER", CONF_ORDER },
     { "ORG", CONF_ORG },
     { "OTHER_CONFIG", CONF_OTHER_CONFIG },
+    { "PART_CACHE_DIR", CONF_PART_CACHE_DIR },
+    { "PART_CACHE_MAX_SIZE", CONF_PART_CACHE_MAX_SIZE },
+    { "PART_CACHE_TYPE", CONF_PART_CACHE_TYPE },
+    { "PART_SIZE", CONF_PART_SIZE },
     { "PLUGIN", CONF_PLUGIN },
     { "PRE_DLE_AMCHECK", CONF_PRE_DLE_AMCHECK },
     { "PRE_HOST_AMCHECK", CONF_PRE_HOST_AMCHECK },
@@ -1186,14 +1199,18 @@ conf_var_t server_var [] = {
 };
 
 conf_var_t tapetype_var [] = {
-   { CONF_COMMENT       , CONFTYPE_STR     , read_str   , TAPETYPE_COMMENT      , NULL },
-   { CONF_LBL_TEMPL     , CONFTYPE_STR     , read_str   , TAPETYPE_LBL_TEMPL    , NULL },
-   { CONF_BLOCKSIZE     , CONFTYPE_SIZE    , read_size  , TAPETYPE_BLOCKSIZE    , validate_blocksize },
-   { CONF_READBLOCKSIZE , CONFTYPE_SIZE    , read_size  , TAPETYPE_READBLOCKSIZE, validate_blocksize },
-   { CONF_LENGTH        , CONFTYPE_INT64   , read_int64 , TAPETYPE_LENGTH       , validate_nonnegative },
-   { CONF_FILEMARK      , CONFTYPE_INT64   , read_int64 , TAPETYPE_FILEMARK     , NULL },
-   { CONF_SPEED         , CONFTYPE_INT     , read_int   , TAPETYPE_SPEED        , validate_nonnegative },
-   { CONF_UNKNOWN       , CONFTYPE_INT     , NULL       , TAPETYPE_TAPETYPE     , NULL }
+   { CONF_COMMENT              , CONFTYPE_STR     , read_str          , TAPETYPE_COMMENT         , NULL },
+   { CONF_LBL_TEMPL            , CONFTYPE_STR     , read_str          , TAPETYPE_LBL_TEMPL       , NULL },
+   { CONF_BLOCKSIZE            , CONFTYPE_SIZE    , read_size         , TAPETYPE_BLOCKSIZE       , validate_blocksize },
+   { CONF_READBLOCKSIZE        , CONFTYPE_SIZE    , read_size         , TAPETYPE_READBLOCKSIZE   , validate_blocksize },
+   { CONF_LENGTH               , CONFTYPE_INT64   , read_int64        , TAPETYPE_LENGTH          , validate_nonnegative },
+   { CONF_FILEMARK             , CONFTYPE_INT64   , read_int64        , TAPETYPE_FILEMARK        , NULL },
+   { CONF_SPEED                , CONFTYPE_INT     , read_int          , TAPETYPE_SPEED           , validate_nonnegative },
+   { CONF_PART_SIZE            , CONFTYPE_INT64    , read_int64       , TAPETYPE_PART_SIZE       , validate_nonnegative },
+   { CONF_PART_CACHE_TYPE      , CONFTYPE_PART_CACHE_TYPE, read_part_cache_type, TAPETYPE_PART_CACHE_TYPE, NULL },
+   { CONF_PART_CACHE_DIR       , CONFTYPE_STR      , read_str         , TAPETYPE_PART_CACHE_DIR	 , NULL },
+   { CONF_PART_CACHE_MAX_SIZE  , CONFTYPE_INT64    , read_int64       , TAPETYPE_PART_CACHE_MAX_SIZE, validate_nonnegative },
+   { CONF_UNKNOWN              , CONFTYPE_INT     , NULL              , TAPETYPE_TAPETYPE        , NULL }
 };
 
 conf_var_t dumptype_var [] = {
@@ -1238,8 +1255,9 @@ conf_var_t dumptype_var [] = {
    { CONF_SRV_DECRYPT_OPT   , CONFTYPE_STR      , read_str      , DUMPTYPE_SRV_DECRYPT_OPT   , NULL },
    { CONF_CLNT_DECRYPT_OPT  , CONFTYPE_STR      , read_str      , DUMPTYPE_CLNT_DECRYPT_OPT  , NULL },
    { CONF_APPLICATION       , CONFTYPE_STR      , read_dapplication, DUMPTYPE_APPLICATION    , NULL },
-   { CONF_SCRIPT            , CONFTYPE_STR      , read_dpp_script, DUMPTYPE_SCRIPTLIST    , NULL },
-   { CONF_DATA_PATH         , CONFTYPE_DATA_PATH, read_data_path, DUMPTYPE_DATA_PATH      , NULL },
+   { CONF_SCRIPT            , CONFTYPE_STR      , read_dpp_script, DUMPTYPE_SCRIPTLIST       , NULL },
+   { CONF_DATA_PATH         , CONFTYPE_DATA_PATH, read_data_path, DUMPTYPE_DATA_PATH         , NULL },
+   { CONF_ALLOW_SPLIT       , CONFTYPE_BOOLEAN  , read_bool    , DUMPTYPE_ALLOW_SPLIT       , NULL },
    { CONF_UNKNOWN           , CONFTYPE_INT      , NULL          , DUMPTYPE_DUMPTYPE          , NULL }
 };
 
@@ -1776,29 +1794,36 @@ read_confline(
 static void
 handle_deprecated_keyword(void)
 {
-    tok_t *dep;
     /* Procedure for deprecated keywords:
-     * 1) At time of deprecation, add to warning_deprecated below.
-     *    Note the date of deprecation.  The keyword will still be
-     *    parsed, and can still be used from other parts of Amanda,
-     *    during this time.
-     * 2) After two years, move the keyword (as a string) to
+     *
+     * 1) At time of deprecation, add to warning_deprecated below.  Note the
+     *    version in which deprecation will expire.  The keyword will still be
+     *    parsed, and can still be used from other parts of Amanda, during this
+     *    time.
+     * 2) After it has expired, move the keyword (as a string) to
      *    error_deprecated below. Remove the token (CONF_XXX) and
      *    config parameter (CNF_XXX) from the rest of the module.
      *    Note the date of the move.
      */
 
-    static tok_t warning_deprecated[] = {
-	CONF_LABEL_NEW_TAPES,	/* 2010-02-05 */
-	CONF_AMRECOVER_DO_FSF,	/* 2010-04-09 */
-	CONF_AMRECOVER_CHECK_LABEL, /* 2010-04-09 */
-        0
-    };
+    static struct { tok_t tok; gboolean warned; }
+    warning_deprecated[] = {
+	{ CONF_LABEL_NEW_TAPES, 0 },	/* exp in Amanda-3.2 */
+	{ CONF_AMRECOVER_DO_FSF, 0 },	/* exp in Amanda-3.3 */
+	{ CONF_AMRECOVER_CHECK_LABEL, 0 }, /* exp in Amanda-3.3 */
+	{ CONF_TAPE_SPLITSIZE, 0 },	/* exp. in Amanda-3.3 */
+	{ CONF_SPLIT_DISKBUFFER, 0 },	/* exp. in Amanda-3.3 */
+	{ CONF_FALLBACK_SPLITSIZE, 0 }, /* exp. in Amanda-3.3 */
+	{ 0, 0 },
+    }, *dep;
 
-    for (dep = warning_deprecated; *dep; dep++) {
-	if (tok == *dep) {
-            conf_parswarn(_("warning: Keyword %s is deprecated."),
-                           tokenval.v.s);
+    for (dep = warning_deprecated; dep->tok; dep++) {
+	if (tok == dep->tok) {
+	    if (!dep->warned)
+		conf_parswarn(_("warning: Keyword %s is deprecated."),
+			       tokenval.v.s);
+	    dep->warned = 1;
+	    break;
 	}
     }
 }
@@ -1889,6 +1914,8 @@ read_block(
     do {
 	current_line_num += 1;
 	get_conftoken(CONF_ANY);
+	handle_deprecated_keyword();
+
 	switch(tok) {
 	case CONF_RBRACE:
 	    done = 1;
@@ -2229,6 +2256,7 @@ init_dumptype_defaults(void)
     conf_init_application(&dpcur.value[DUMPTYPE_APPLICATION]);
     conf_init_identlist(&dpcur.value[DUMPTYPE_SCRIPTLIST], NULL);
     conf_init_proplist(&dpcur.value[DUMPTYPE_PROPERTY]);
+    conf_init_bool     (&dpcur.value[DUMPTYPE_ALLOW_SPLIT]       , 1);
 }
 
 static void
@@ -2327,6 +2355,10 @@ init_tapetype_defaults(void)
     conf_init_int64 (&tpcur.value[TAPETYPE_LENGTH]       , ((gint64)2000));
     conf_init_int64 (&tpcur.value[TAPETYPE_FILEMARK]     , (gint64)1);
     conf_init_int   (&tpcur.value[TAPETYPE_SPEED]        , 200);
+    conf_init_int64(&tpcur.value[TAPETYPE_PART_SIZE], 0);
+    conf_init_part_cache_type(&tpcur.value[TAPETYPE_PART_CACHE_TYPE], PART_CACHE_TYPE_NONE);
+    conf_init_str(&tpcur.value[TAPETYPE_PART_CACHE_DIR], "");
+    conf_init_int64(&tpcur.value[TAPETYPE_PART_CACHE_MAX_SIZE], 0);
 }
 
 static void
@@ -2345,6 +2377,7 @@ save_tapetype(void)
 
     tp = alloc(sizeof(tapetype_t));
     *tp = tpcur;
+
     /* add at end of list */
     if(!tapelist)
 	tapelist = tp;
@@ -3689,6 +3722,38 @@ read_autolabel(
     }
 }
 
+static void
+read_part_cache_type(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t *val)
+{
+   part_cache_type_t part_cache_type;
+
+   ckseen(&val->seen);
+
+   get_conftoken(CONF_ANY);
+   switch(tok) {
+   case CONF_NONE:
+     part_cache_type = PART_CACHE_TYPE_NONE;
+     break;
+
+   case CONF_DISK:
+     part_cache_type = PART_CACHE_TYPE_DISK;
+     break;
+
+   case CONF_MEMORY:
+     part_cache_type = PART_CACHE_TYPE_MEMORY;
+     break;
+
+   default:
+     conf_parserror(_("NONE, DISK or MEMORY expected"));
+     part_cache_type = PART_CACHE_TYPE_NONE;
+     break;
+   }
+
+   val_t__part_cache_type(val) = (int)part_cache_type;
+}
+
 /* get_* functions */
 
 /* these functions use precompiler conditionals to skip useless size checks
@@ -5024,6 +5089,17 @@ conf_init_encrypt(
 }
 
 static void
+conf_init_part_cache_type(
+    val_t *val,
+    part_cache_type_t    i)
+{
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
+    val->type = CONFTYPE_PART_CACHE_TYPE;
+    val_t__part_cache_type(val) = (int)i;
+}
+
+static void
 conf_init_data_path(
     val_t *val,
     data_path_t    i)
@@ -5031,7 +5107,7 @@ conf_init_data_path(
     val->seen.linenum = 0;
     val->seen.filename = NULL;
     val->type = CONFTYPE_DATA_PATH;
-    val_t__encrypt(val) = (int)i;
+    val_t__data_path(val) = (int)i;
 }
 
 static void
@@ -5859,6 +5935,18 @@ val_t_to_encrypt(
     return val_t__encrypt(val);
 }
 
+part_cache_type_t
+val_t_to_part_cache_type(
+    val_t *val)
+{
+    assert(config_initialized);
+    if (val->type != CONFTYPE_PART_CACHE_TYPE) {
+	error(_("val_t_to_part_cache_type: val.type is not CONFTYPE_PART_CACHE_TYPE"));
+	/*NOTREACHED*/
+    }
+    return val_t__part_cache_type(val);
+}
+
 dump_holdingdisk_t
 val_t_to_holding(
     val_t *val)
@@ -6062,6 +6150,7 @@ copy_val_t(
 	case CONFTYPE_STRATEGY:
 	case CONFTYPE_TAPERALGO:
 	case CONFTYPE_PRIORITY:
+	case CONFTYPE_PART_CACHE_TYPE:
 	    valdst->v.i = valsrc->v.i;
 	    break;
 
@@ -6224,6 +6313,7 @@ free_val_t(
 	case CONFTYPE_REAL:
 	case CONFTYPE_RATE:
 	case CONFTYPE_INTRANGE:
+	case CONFTYPE_PART_CACHE_TYPE:
 	    break;
 
 	case CONFTYPE_IDENT:
@@ -6814,6 +6904,22 @@ val_t_display_strs(
 
 	case ENCRYPT_SERV_CUST:
 	    buf[0] = vstrallocf("SERVER");
+	    break;
+	}
+	break;
+
+     case CONFTYPE_PART_CACHE_TYPE:
+	switch(val_t__part_cache_type(val)) {
+	case PART_CACHE_TYPE_NONE:
+	    buf[0] = vstrallocf("NONE");
+	    break;
+
+	case PART_CACHE_TYPE_DISK:
+	    buf[0] = vstrallocf("DISK");
+	    break;
+
+	case PART_CACHE_TYPE_MEMORY:
+	    buf[0] = vstrallocf("MEMORY");
 	    break;
 	}
 	break;

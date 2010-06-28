@@ -1,4 +1,29 @@
 2010-06-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Config.swg common-src/conffile.c common-src/conffile.h:
+	  add new tapetype params: PART_SIZE, PART_CACHE_TYPE, PART_CACHE_DIR,
+	  and PART_CACHE_MAX_SIZE and dumptype param ALLOW_SPLIT; only print
+	  deprecation warnings once per process; deprecate TAPE_SPLITSIZE,
+	  FALLBACK_SPLITSIZE, and SPLIT_DISKBUFFER
+	* example/amanda.conf.in example/template.d/amanda-S3.conf.in
+	  example/template.d/amanda-harddisk.conf.in
+	  example/template.d/dumptypes: remove old params
+	* installcheck/Amanda_Config.pl
+	  installcheck/Amanda_Taper_Scribe.pl
+	  installcheck/Installcheck/Dumpcache.pm
+	  installcheck/taper.pl: update tests
+	* man/xml-source/amanda-compatibility.7.xml: document deprecations
+	  and what to do about them
+	* man/xml-source/amanda.conf.5.xml: document deprecations and new
+	  params
+	* perl/Amanda/Device.pod: add doc about size=0 for
+	  write_from_connection, fix typo
+	* perl/Amanda/Taper/Scribe.pm: add get_splitting_args_from_config
+	* server-src/diskfile.c server-src/diskfile.h: add dumptype->config
+	* server-src/amcheck.c: checks for the new params
+	* server-src/driverio.c server-src/taper.pl: add all config params to
+	  the driver/taper protocol
+
+2010-06-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/xfer-dest-taper-directtcp.c: round part size to a
 	  multiple of the block size
 	* installcheck/Amanda_Xfer.pl: test it

@@ -641,6 +641,7 @@ parse_diskline(
     }
 
     disk->dtype_name	     = dumptype_name(dtype);
+    disk->config	     = dtype;
     disk->program	     = dumptype_get_program(dtype);
     disk->exclude_list     = duplicate_sl(dumptype_get_exclude(dtype).sl_list);
     disk->exclude_file     = duplicate_sl(dumptype_get_exclude(dtype).sl_file);

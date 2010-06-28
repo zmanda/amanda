@@ -64,13 +64,40 @@ changes described below for the relevant span of versions to determine what
 adjustments, if any, are required.  Also see the NEWS file shipped with
 each Amanda release for more detailed information.</para>
 
-<refsect2><title>(NEXT RELEASE)</title>
+<refsect2><title>Amanda 3.2</title>
 
 <para>The following configuration configration keywords are deprecated.  This is
 currently a warning, but will become an error soon.
 <itemizedlist>
-<listitem><para><computeroutput>amrecover_do_fsf</computeroutput> - amrecover always seeks to files when recovering</para></listitem>
-<listitem><para><computeroutput>amrecover_check_label</computeroutput> - amrecover always checks the volume label when recovering</para></listitem>
+<listitem><para><amkeyword>amrecover_do_fsf</amkeyword> - amrecover always seeks to files when recovering</para></listitem>
+<listitem><para><amkeyword>amrecover_check_label</amkeyword> - amrecover always checks the volume label when recovering</para></listitem>
+<listitem>
+
+    <para>Dumptype parameters <amkeyword>tape_splitsize</amkeyword>,
+	<amkeyword>split_diskbuffer</amkeyword>, and
+	<amkeyword>fallback_splitsize</amkeyword> - see
+	<amkeyword>allow_split</amkeyword> and tapetype parameters
+	<amkeyword>part_size</amkeyword>,
+	<amkeyword>part_cache_type</amkeyword>,
+	<amkeyword>part_cache_dir</amkeyword>, and
+	<amkeyword>part_cache_max_size</amkeyword>.  See <manref
+	    name="amanda.conf" vol="5" /> for more information on these new
+	parameters, noting particularly that all but the first are tapetype
+	parameters, not dumptype parameters.</para>
+
+    <para>To convert most cases to the new parameters, set
+	<amkeyword>part_size</amkeyword> to the old value of
+	<amkeyword>tape_splitsize</amkeyword> and
+	<amkeyword>part_cache_dir</amkeyword> to the old value of
+	<amkeyword>split_diskbuffer</amkeyword>, if present.  If
+	<amkeyword>split_diskbuffer</amkeyword> was set, then set
+	<amkeyword>part_cache_type</amkeyword> to <amkeyword>disk</amkeyword>,
+	otherwise <amkeyword>memory</amkeyword>.  Finally, if using memory
+	caching, set <amkeyword>part_cache_max_size</amkeyword> to the previous
+	value of <amkeyword>fallback_splitsize</amkeyword>.  Be sure to remove
+	all of the old keywords from your configuration.</para>
+
+</listitem>
 </itemizedlist>
 </para>
 

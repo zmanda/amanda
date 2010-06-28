@@ -16,18 +16,6 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-package Amanda::Taper::Scribe;
-
-use strict;
-use warnings;
-use Carp;
-
-use Amanda::Xfer qw( :constants );
-use Amanda::Device qw( :constants );
-use Amanda::Header;
-use Amanda::Debug qw( :logging );
-use Amanda::MainLoop;
-
 =head1 NAME
 
 Amanda::Taper::Scribe
@@ -216,6 +204,31 @@ C<Amanda::Xfer::Dest::Taper>'s C<cache_inform> method:
         split_method => 'cache_inform',
         part_size => $part_size);
 
+The utility function C<get_splitting_args_from_config> can determine the
+appropriate C<split_method>, C<part_size>, and C<disk_cache_dirname> based on a
+few Amanda configuration parameters.  If a parameter was not seen in the
+configuration, it should be omitted or passed as C<undef>.  The function
+returns a hash to pass to get_xfer_dest, although that hash may have an
+C<warning> key containing a message if there is a problem that the user
+should know about.
+
+  use Amanda::Taper::Scribe qw( get_splitting_args_from_config );
+  my %splitting_args = get_splitting_args_from_config(
+    # Amanda dumptype configuration parameters,
+    dle_tape_splitsize => ..,
+    dle_split_diskbuffer => ..,
+    dle_fallback_splitsize => ..,
+    dle_allow_split => ..,
+    # Amanda tapetype configuration parameters,
+    part_size => ..,
+    part_cache_type => ..,
+    part_cache_dir => ..,
+    part_cache_max_size => ..,
+    # and some metainformation.
+    can_cache_inform => .., # is the cache_inform method an option?
+  );
+  if ($splitting_args{'error'}) { .. }
+
 An C<Amanda::Taper::Scribe> object can only run one transfer at a time, so
 do not call C<get_xfer_dest> until the C<dump_cb> for the previous C<start_dump>
 has been called.
@@ -357,6 +370,21 @@ A typical Feedback subclass might begin like this:
   }
 
 =cut
+
+package Amanda::Taper::Scribe;
+
+use strict;
+use warnings;
+use Carp;
+
+use Amanda::Xfer qw( :constants );
+use Amanda::Device qw( :constants );
+use Amanda::Header;
+use Amanda::Debug qw( :logging );
+use Amanda::MainLoop;
+use base qw( Exporter );
+
+our @EXPORT_OK = qw( get_splitting_args_from_config );
 
 sub new {
     my $class = shift;
@@ -555,7 +583,18 @@ sub get_xfer_dest {
         croak("invalid split_method $params{split_method}");
     }
 
-    debug("Amanda::Taper::Scribe setting up a transfer with split method $params{split_method}");
+    my $splitting_msg;
+    if ($params{'split_method'} eq 'none') {
+	$splitting_msg = "without splitting";
+    } elsif ($params{'split_method'} eq 'cache_inform') {
+	$splitting_msg = "splitting at $params{part_size} K from holding disk";
+    } elsif ($params{'split_method'} eq 'disk') {
+	$splitting_msg = "splitting at $params{part_size} K " .
+			 "with disk cache directory '$params{disk_cache_dirname}'";
+    } elsif ($params{'split_method'} eq 'memory') {
+	$splitting_msg = "splitting at $params{part_size} K in memory";
+    }
+    debug("Amanda::Taper::Scribe preparing to write, $splitting_msg");
 
     die "not yet started"
 	unless ($self->{'write_timestamp'});
@@ -1084,6 +1123,142 @@ sub dbg {
     }
 }
 
+sub get_splitting_args_from_config {
+    my %params = @_;
+
+    my %splitting_args;
+
+    # get "real" values for each parameter, using defaults where not available, and
+    # converting to integers
+    my $dle_tape_splitsize = ($params{'dle_tape_splitsize'} || 0) + 0;
+    my $dle_split_diskbuffer = $params{'dle_split_diskbuffer'} || '';
+    my $dle_fallback_splitsize = ($params{'dle_fallback_splitsize'} || 0) + 0;
+    my $dle_allow_split = ($params{'dle_allow_split'} || 0) + 0;
+    my $part_size = ($params{'part_size'} || 0) + 0;
+    my $part_cache_type = $params{'part_cache_type'} || 'none';
+    my $part_cache_dir = $params{'part_cache_dir'} || '';
+    my $part_cache_max_size = $params{'part_cache_max_size'} || '';
+
+    # if dle_splitting is false, then we don't split - easy.
+    if (defined $params{'dle_allow_split'} and !$dle_allow_split) {
+	$splitting_args{'split_method'} = 'none';
+	return %splitting_args;
+    }
+
+    # utility for below
+    my $have_space = sub {
+	my ($dirname, $part_size) = @_;
+
+	my $fsusage = Amanda::Util::get_fs_usage($dirname);
+	my $avail = $fsusage->{'blocks'} * $fsusage->{'bavail'};
+	if ($avail < $part_size) {
+	    Amanda::Debug::debug("disk cache has $avail bytes available on $dirname, but " .
+				 "needs $part_size");
+	    return 0;
+	} else {
+	    return 1;
+	}
+    };
+
+    # if any of the dle_* parameters are set, use those and ignore the
+    # tapetype-derived parameters. Here, things look a little bit different
+    # depending on whether we're reading from holding (FILE_WRITE) or from
+    # a network socket (PORT_WRITE)
+    if (defined $params{'dle_tape_splitsize'} or
+	defined $params{'dle_split_diskbuffer'} or
+	defined $params{'dle_fallback_splitsize'}) {
+	if ($params{'can_cache_inform'}) {
+	    if ($dle_tape_splitsize ne 0) {
+		$splitting_args{'split_method'} = 'cache_inform';
+		$splitting_args{'part_size'} = $dle_tape_splitsize;
+	    } else {
+		$splitting_args{'split_method'} = 'none';
+	    }
+	} elsif (!defined $params{'dle_tape_splitsize'} or $dle_tape_splitsize == 0) {
+	    # the user has requested no splitting (this is the default anyway)
+	    $splitting_args{'split_method'} = 'none';
+	} else {
+	    # we're using disk caching, but we may have to fall back
+	    $splitting_args{'split_method'} = 'disk';
+	    $splitting_args{'disk_cache_dirname'} = $dle_split_diskbuffer;
+	    $splitting_args{'part_size'} = $dle_tape_splitsize;
+
+	    # implement the fallback to memory buffering if the disk buffer was not config'd,
+	    # does not exist, or doesnt have enough space.
+	    my $need_fallback = 0;
+	    my $need_warning = 0;
+	    if ($splitting_args{'split_method'} eq 'disk') {
+		my $dcdirname = $splitting_args{'disk_cache_dirname'};
+
+		if (!defined $dcdirname or !$dcdirname) {
+		    $need_fallback = "tape_splitsize was specified but not split_diskbuffer";
+		} elsif (! -d $dcdirname) {
+		    $need_fallback = "'$dcdirname' is not a directory";
+		} elsif (!$have_space->($dcdirname, $splitting_args{'part_size'})) {
+		    $need_fallback = "insufficient space in disk cache directory";
+		    $need_warning = 1;
+		}
+	    }
+
+	    if ($need_fallback) {
+		my $msg = "falling back to memory buffer for splitting: $need_fallback";
+		Amanda::Debug::debug($msg);
+		$splitting_args{'warning'} = $msg if ($need_warning);
+
+		# default fallback is 10M (yes it's tiny, but also historical)
+		$splitting_args{'part_size'} = $dle_fallback_splitsize || 10*1024*1024;
+		$splitting_args{'split_method'} = 'memory';
+		delete $splitting_args{'disk_cache_dirname'};
+	    }
+	}
+    } else {
+	if ($params{'can_cache_inform'}) {
+	    if ($part_size != 0) {
+		$splitting_args{'split_method'} = 'cache_inform';
+		$splitting_args{'part_size'} = $part_size;
+	    } else {
+		$splitting_args{'split_method'} = 'none';
+	    }
+	} else {
+	    my $part_size_cache = $part_size;
+	    # we'll be using a part cache, so apply the part_cache_max_size
+	    if (defined $params{'part_cache_max_size'} and $part_cache_max_size
+		    and $part_size > $part_cache_max_size) {
+		$part_size_cache = $part_cache_max_size;
+	    }
+
+	    my $type = lc($part_cache_type);
+	    return { error => "invalid part cache type from driver" }
+		unless ($type =~ /^(none|disk|memory)$/);
+	    $splitting_args{'split_method'} = $type;
+
+	    if ($type eq 'disk') {
+		my $disk_bad = '';
+		$disk_bad = "no part_cache_dir specified"
+		    unless defined $params{'part_cache_dir'};
+		$disk_bad = "'$part_cache_dir' is not a directory"
+		    unless !$disk_bad && -d $part_cache_dir;
+		$disk_bad = "insufficient space for split cache in part_cache_dir"
+		    unless !$disk_bad && $have_space->($part_cache_dir, $part_size_cache);
+
+		# if the disk is bad, we'll fall back to "none" with no part caching
+		# going on -- along with a warning.  TODO: support splitting here
+		# anyway (the scribe doesn't support this yet)
+		if ($disk_bad) {
+		    $splitting_args{'split_method'} = 'none';
+		    $splitting_args{'warning'} = "not caching split parts: $disk_bad";
+		} else {
+		    $splitting_args{'part_size'} = $part_size_cache;
+		    $splitting_args{'disk_cache_dirname'} = $part_cache_dir;
+		}
+	    } elsif ($type eq 'memory') {
+		$splitting_args{'part_size'} = $part_size_cache;
+	    }
+	}
+    }
+
+    return %splitting_args;
+}
 ##
 ## Feedback
 ##

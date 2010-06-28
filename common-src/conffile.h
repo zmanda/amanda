@@ -202,6 +202,14 @@ typedef GHashTable* proplist_t;
 /* A GSlist where each element is a 'char*' */
 typedef GSList* identlist_t;
 
+/* part_cache_types */
+typedef enum {
+    PART_CACHE_TYPE_NONE,
+    PART_CACHE_TYPE_MEMORY,
+    PART_CACHE_TYPE_DISK,
+} part_cache_type_t;
+
+
 /* Names for the type of value in a val_t.  Mostly for internal use, but useful
  * for wrapping val_t's, too. */
 typedef enum {
@@ -231,6 +239,7 @@ typedef enum {
     CONFTYPE_IDENTLIST,
     CONFTYPE_DATA_PATH,
     CONFTYPE_AUTOLABEL,
+    CONFTYPE_PART_CACHE_TYPE,
 } conftype_t;
 
 /* A "seen" struct.  Rather than allocate strings all over the place, this
@@ -293,6 +302,7 @@ execute_where_t       val_t_to_execute_where(val_t *);
 send_amreport_t       val_t_to_send_amreport(val_t *);
 data_path_t           val_t_to_data_path(val_t *);
 autolabel_t           val_t_to_autolabel(val_t *);
+part_cache_type_t     val_t_to_part_cache_type(val_t *);
 
 /* Has the given val_t been seen in a configuration file or config overwrite?
  *
@@ -342,6 +352,8 @@ autolabel_t           val_t_to_autolabel(val_t *);
 #define val_t__execute_where(val) ((val)->v.i)
 #define val_t__data_path(val)     ((val)->v.i)
 #define val_t__autolabel(val)     ((val)->v.autolabel)
+#define val_t__part_cache_type(val) ((val)->v.i)
+
 /*
  * Parameters
  *
@@ -496,6 +508,7 @@ val_t *getconf(confparm_key key);
 #define getconf_proplist(key)     (val_t_to_proplist(getconf((key))))
 #define getconf_send_amreport(key) (val_t_to_send_amreport(getconf((key))))
 #define getconf_autolabel(key)    (val_t_to_autolabel(getconf((key))))
+#define getconf_part_cache_type(key) (val_t_to_part_cache_type(getconf((key))))
 
 /* Get a list of names for subsections of the given type
  *
@@ -559,6 +572,10 @@ typedef enum {
     TAPETYPE_LENGTH,
     TAPETYPE_FILEMARK,
     TAPETYPE_SPEED,
+    TAPETYPE_PART_SIZE,
+    TAPETYPE_PART_CACHE_TYPE,
+    TAPETYPE_PART_CACHE_DIR,
+    TAPETYPE_PART_CACHE_MAX_SIZE,
     TAPETYPE_TAPETYPE /* sentinel */
 } tapetype_key;
 
@@ -602,13 +619,17 @@ char *tapetype_name(tapetype_t *ttyp);
  * @param ttyp: the tapetype to examine
  * @returns: various
  */
-#define tapetype_get_comment(ttyp)         (val_t_to_str(tapetype_getconf((ttyp), TAPETYPE_COMMENT)))
-#define tapetype_get_lbl_templ(ttyp)       (val_t_to_str(tapetype_getconf((ttyp), TAPETYPE_LBL_TEMPL)))
-#define tapetype_get_blocksize(ttyp)       (val_t_to_size(tapetype_getconf((ttyp), TAPETYPE_BLOCKSIZE)))
-#define tapetype_get_readblocksize(ttyp)   (val_t_to_size(tapetype_getconf((ttyp), TAPETYPE_READBLOCKSIZE)))
-#define tapetype_get_length(ttyp)          (val_t_to_int64(tapetype_getconf((ttyp), TAPETYPE_LENGTH)))
-#define tapetype_get_filemark(ttyp)        (val_t_to_int64(tapetype_getconf((ttyp), TAPETYPE_FILEMARK)))
-#define tapetype_get_speed(ttyp)           (val_t_to_int(tapetype_getconf((ttyp), TAPETYPE_SPEED)))
+#define tapetype_get_comment(ttyp)             (val_t_to_str(tapetype_getconf((ttyp), TAPETYPE_COMMENT)))
+#define tapetype_get_lbl_templ(ttyp)           (val_t_to_str(tapetype_getconf((ttyp), TAPETYPE_LBL_TEMPL)))
+#define tapetype_get_blocksize(ttyp)           (val_t_to_size(tapetype_getconf((ttyp), TAPETYPE_BLOCKSIZE)))
+#define tapetype_get_readblocksize(ttyp)       (val_t_to_size(tapetype_getconf((ttyp), TAPETYPE_READBLOCKSIZE)))
+#define tapetype_get_length(ttyp)              (val_t_to_int64(tapetype_getconf((ttyp), TAPETYPE_LENGTH)))
+#define tapetype_get_filemark(ttyp)            (val_t_to_int64(tapetype_getconf((ttyp), TAPETYPE_FILEMARK)))
+#define tapetype_get_speed(ttyp)               (val_t_to_int(tapetype_getconf((ttyp), TAPETYPE_SPEED)))
+#define tapetype_get_part_size(ttyp)           (val_t_to_int64(tapetype_getconf((ttyp), TAPETYPE_PART_SIZE)))
+#define tapetype_get_part_cache_type(ttyp)     (val_t_to_part_cache_type(tapetype_getconf((ttyp), TAPETYPE_PART_CACHE_TYPE)))
+#define tapetype_get_part_cache_dir(ttyp)      (val_t_to_str(tapetype_getconf((ttyp), TAPETYPE_PART_CACHE_DIR)))
+#define tapetype_get_part_cache_max_size(ttyp) (val_t_to_int64(tapetype_getconf((ttyp), TAPETYPE_PART_CACHE_MAX_SIZE)))
 
 /*
  * Dumptype parameter access
@@ -660,6 +681,7 @@ typedef enum {
     DUMPTYPE_PROPERTY,
     DUMPTYPE_CLIENT_PORT,
     DUMPTYPE_DATA_PATH,
+    DUMPTYPE_ALLOW_SPLIT,
     DUMPTYPE_DUMPTYPE /* sentinel */
 } dumptype_key;
 
@@ -748,6 +770,7 @@ char *dumptype_name(dumptype_t *dtyp);
 #define dumptype_get_property(dtyp)            (val_t_to_proplist(dumptype_getconf((dtyp), DUMPTYPE_PROPERTY)))
 #define dumptype_get_client_port(dtyp)             (val_t_to_str(dumptype_getconf((dtyp), DUMPTYPE_CLIENT_PORT)))
 #define dumptype_get_data_path(dtyp)             (val_t_to_data_path(dumptype_getconf((dtyp), DUMPTYPE_DATA_PATH)))
+#define dumptype_get_allow_split(dtyp)         (val_t_to_boolean(dumptype_getconf((dtyp), DUMPTYPE_ALLOW_SPLIT)))
 
 /*
  * Interface parameter access

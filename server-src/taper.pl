@@ -31,12 +31,17 @@ use constant START_TAPER => message("START-TAPER",
 );
 
 use constant PORT_WRITE => message("PORT-WRITE",
-    format => [ qw( handle hostname diskname level datestamp splitsize
-		    split_diskbuffer fallback_splitsize data_path) ],
+    format => [ qw( handle hostname diskname level datestamp
+	    dle_tape_splitsize dle_split_diskbuffer dle_fallback_splitsize dle_allow_split
+	    part_size part_cache_type part_cache_dir part_cache_max_size
+	    data_path ) ],
 );
 
 use constant FILE_WRITE => message("FILE-WRITE",
-    format => [ qw( handle filename hostname diskname level datestamp splitsize orig_kb) ],
+    format => [ qw( handle filename hostname diskname level datestamp
+	    dle_tape_splitsize dle_split_diskbuffer dle_fallback_splitsize dle_allow_split
+	    part_size part_cache_type part_cache_dir part_cache_max_size
+	    orig_kb) ],
 );
 
 use constant NEW_TAPE => message("NEW-TAPE",
@@ -113,7 +118,7 @@ use Amanda::Holding;
 use Amanda::MainLoop qw( :GIOCondition );
 use Amanda::MainLoop;
 use Amanda::Taper::Scan;
-use Amanda::Taper::Scribe;
+use Amanda::Taper::Scribe qw( get_splitting_args_from_config );
 use Amanda::Logfile qw( :logtype_t log_add );
 use Amanda::Xfer qw( :constants );
 use Amanda::Util qw( quote_string );
@@ -519,75 +524,6 @@ sub create_status_file {
     });
 }
 
-# utility function for setup_and_start_dump, returning keyword args
-# for $scribe->get_xfer_dest
-sub get_splitting_config {
-    my $self = shift;
-    my ($msgtype, %params) = @_;
-    my %get_xfer_dest_args;
-
-    $get_xfer_dest_args{'max_memory'} = getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE);
-
-    # here, things look a little bit different depending on whether we're
-    # reading from holding (FILE_WRITE) or from a network socket (PORT_WRITE)
-    if ($msgtype eq main::Protocol::FILE_WRITE) {
-        if ($params{'splitsize'} ne 0) {
-            $get_xfer_dest_args{'split_method'} = 'cache_inform';
-            $get_xfer_dest_args{'part_size'} = $params{'splitsize'}+0;
-        } else {
-            $get_xfer_dest_args{'split_method'} = 'none';
-        }
-    } else {
-        # if we have a disk buffer, use it
-        if ($params{'split_diskbuffer'} ne "NULL") {
-            if ($params{'splitsize'} ne 0) {
-                $get_xfer_dest_args{'split_method'} = 'disk';
-                $get_xfer_dest_args{'disk_cache_dirname'} = $params{'split_diskbuffer'};
-                $get_xfer_dest_args{'part_size'} = $params{'splitsize'}+0;
-            } else {
-                $get_xfer_dest_args{'split_method'} = 'none';
-            }
-        } else {
-            # otherwise, if splitsize is nonzero, use memory
-            if ($params{'splitsize'} ne 0) {
-                my $size = $params{'fallback_splitsize'}+0;
-                $size = $params{'splitsize'}+0 unless ($size);
-                $get_xfer_dest_args{'split_method'} = 'memory';
-                $get_xfer_dest_args{'part_size'} = $size;
-            } else {
-                $get_xfer_dest_args{'split_method'} = 'none';
-            }
-        }
-    }
-
-    # implement the fallback to memory buffering if the disk buffer does
-    # not exist or doesnt have enough space
-    my $need_fallback = 0;
-    if ($get_xfer_dest_args{'split_method'} eq 'disk') {
-        if (! -d $get_xfer_dest_args{'disk_cache_dirname'}) {
-            $need_fallback = "'$get_xfer_dest_args{disk_cache_dirname}' not found or not a directory";
-        } else {
-            my $fsusage = Amanda::Util::get_fs_usage($get_xfer_dest_args{'disk_cache_dirname'});
-            my $avail = $fsusage->{'blocks'} * $fsusage->{'bavail'};
-            my $dir = $get_xfer_dest_args{'disk_cache_dirname'};
-            Amanda::Debug::debug("disk cache has $avail bytes available on $dir, but need $get_xfer_dest_args{part_size}");
-            if ($fsusage->{'blocks'} * $fsusage->{'bavail'} < $get_xfer_dest_args{'part_size'}) {
-                $need_fallback = "insufficient space in disk cache directory";
-            }
-        }
-    }
-
-    if ($need_fallback) {
-        Amanda::Debug::warning("falling back to memory buffer for splitting: $need_fallback");
-        my $size = $params{'fallback_splitsize'}+0;
-        $get_xfer_dest_args{'split_method'} = 'memory';
-        $get_xfer_dest_args{'part_size'} = $size if $size != 0;
-        delete $get_xfer_dest_args{'disk_cache_dirname'};
-    }
-
-    return %get_xfer_dest_args;
-}
-
 sub send_port_and_get_header {
     my $self = shift;
     my ($finished_cb) = @_;
@@ -664,6 +600,7 @@ sub send_port_and_get_header {
 sub setup_and_start_dump {
     my $self = shift;
     my ($msgtype, %params) = @_;
+    my %get_xfer_dest_args;
 
     # setting up the dump is a bit complex, due to the requirements of
     # a directtcp port_write.  This function:
@@ -694,6 +631,39 @@ sub setup_and_start_dump {
 		duration => 0.0,
 		total_duration => 0);
 	}
+	$steps->{'process_args'}->();
+    };
+
+    step process_args => sub {
+	# extract the splitting-related parameters, stripping out empty strings
+	my %splitting_args = map {
+	    ($params{$_} ne '')? ($_, $params{$_}) : ()
+	} qw(
+	    dle_tape_splitsize dle_split_diskbuffer dle_fallback_splitsize dle_allow_split
+	    part_size part_cache_type part_cache_dir part_cache_max_size
+	);
+
+	# convert numeric values to BigInts
+	for (qw(dle_tape_splitsize dle_fallback_splitsize part_size part_cache_max_size)) {
+	    $splitting_args{$_} = Math::BigInt->new($splitting_args{$_})
+		if (exists $splitting_args{$_});
+	}
+
+	# and convert those to get_xfer_dest args
+        %get_xfer_dest_args = get_splitting_args_from_config(
+		can_cache_inform => ($msgtype eq main::Protocol::FILE_WRITE),
+		%splitting_args);
+	$get_xfer_dest_args{'max_memory'} = getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE);
+
+	# if we're unable to fulfill the user's splitting needs, we can still give
+	# the dump a shot - but we'll warn them about the problem
+	if ($get_xfer_dest_args{'warning'}) {
+	    log_add($L_FAIL, sprintf("%s:%s: %s",
+		    $params{'hostname'}, $params{'diskname'},
+		    $get_xfer_dest_args{'warning'}));
+	    delete $get_xfer_dest_args{'warning'};
+	}
+
 	$steps->{'make_xfer'}->();
     };
 
@@ -701,7 +671,6 @@ sub setup_and_start_dump {
         $self->_assert_in_state("idle") or return;
         $self->{'state'} = 'making_xfer';
 
-        my %get_xfer_dest_args = $self->get_splitting_config($msgtype, %params);
         my $xfer_dest = $self->{'scribe'}->get_xfer_dest(%get_xfer_dest_args);
 
 	my $xfer_source;

@@ -179,12 +179,12 @@ $flavors{'parts'} = sub {
     my $testconf = Installcheck::Run::setup();
     basic_settings($testconf);
     use_new_chg_disk($testconf);
-    $testconf->add_dumptype("installcheck-test-parts", [
-	"installcheck-test", "",
-	"tape_splitsize", "128k",
-	"fallback_splitsize", "128k",
+    $testconf->add_tapetype("TEST-TAPE", [
+	"length", "50M",
+	"part_size", "128k",
+	"part_cache_type", "memory",
     ]);
-    $testconf->add_dle("localhost $diskname installcheck-test-parts");
+    $testconf->add_dle("localhost $diskname installcheck-test");
     $testconf->write();
 
     ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'parts'"),

@@ -637,8 +637,8 @@ C<g_object_unref> when the connection is no longer needed.
 Call this method to use a DirectTCPConnection object created with another
 device.  The method must be called before the device is started (so
 C<access_mode> is C<$ACCESS_NULL>), as some devices cannot support switching
-connections without rewinding.  Any subsequent C<read_from_connection> or
-C<write_to_connection> calls will use this connection.
+connections without rewinding.  Any subsequent C<read_to_connection> or
+C<write_from_connection> calls will use this connection.
 
 =head3 write_from_connection
 
@@ -647,7 +647,8 @@ C<write_to_connection> calls will use this connection.
 This method reads data from the DirectTCPConnection specified with
 C<use_connection> or returned from C<accept> or C<connect> and writes it to the
 volume.   It writes at most C<$size> bytes, and returns the number of bytes
-written in C<$actual_size>.  On error, C<$ok> is false.
+written in C<$actual_size>.  If C<$size> is zero, it will write until EOF, EOM,
+or a device error.  On error, C<$ok> is false.
 
 When an EOF is received over the connection, signalling the end of the data
 stream, then this method returns without error (C<$ok> is true), with

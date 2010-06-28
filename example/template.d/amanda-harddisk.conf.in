@@ -46,6 +46,8 @@ define dumptype gui-base {
 define tapetype HARDDISK {
     comment "Virtual Tapes"
     length 5000 mbytes
+    part_size 500 mbytes
+    part_cache_type none
 }
 
 includefile "./advanced.conf"

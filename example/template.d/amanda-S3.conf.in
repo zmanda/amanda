@@ -51,14 +51,11 @@ define dumptype gui-base {
         index yes
 }
 
-define tapetype HARDDISK {
-    comment "Virtual Tapes"
-    length 5000 mbytes
-}
-
 define tapetype S3 {
-    comment "S3 Bucket"
-    length 10240 gigabytes # Bucket size 10TB
+    comment "S3 pseudo-tape"
+    length 10240 gigabytes
+    part_size 100G
+    part_cache_type none
 }
 
 includefile "./advanced.conf"

@@ -660,8 +660,12 @@ start_server_check(
     tapetype_t *tp = NULL;
     char *quoted;
     int res;
-    intmax_t kb_avail;
+    intmax_t kb_avail, kb_needed;
     off_t tape_size;
+    gboolean printed_small_part_size_warning = FALSE;
+    char *small_part_size_warning =
+	_(" This may create > 1000 parts, severely degrading backup/restore performance.\n"
+	" See http://wiki.zmanda.com/index.php/Splitsize_too_small for more information.\n");
 
     switch(pid = fork()) {
     case -1:
@@ -757,7 +761,6 @@ start_server_check(
 			"the 'tapetype' parameter\n"));
 	    confbad = 1;
 	}
-
     }
 
     /*
@@ -829,7 +832,10 @@ start_server_check(
 	char *holdfile;
         char * tapename;
 	struct stat statbuf;
-	
+	guint64 part_size, part_cache_max_size, tape_size;
+	part_cache_type_t part_cache_type;
+	char *part_cache_dir;
+
 	tapefile = config_dir_relative(getconf_str(CNF_TAPELIST));
 	/*
 	 * XXX There Really Ought to be some error-checking here... dhw
@@ -900,6 +906,121 @@ start_server_check(
 		g_fprintf(outf, _("WARNING:Parameter \"tapedev\" or \"tpchanger\" not specified in amanda.conf.\n"));
 		testtape = 0;
 		do_tapechk = 0;
+	    }
+	}
+
+	/* check tapetype-based splitting parameters */
+	part_size = tapetype_get_part_size(tp);
+	part_cache_type = tapetype_get_part_cache_type(tp);
+	part_cache_dir = tapetype_get_part_cache_dir(tp);
+	part_cache_max_size = tapetype_get_part_cache_max_size(tp);
+
+	if (!tapetype_seen(tp, TAPETYPE_PART_SIZE)) {
+	    if (tapetype_seen(tp, TAPETYPE_PART_CACHE_TYPE)) {
+		g_fprintf(outf, "ERROR: part_cache_type specified, but no part_size\n");
+		tapebad = 1;
+	    }
+	    if (tapetype_seen(tp, TAPETYPE_PART_CACHE_DIR)) {
+		g_fprintf(outf, "ERROR: part_cache_dir specified, but no part_size\n");
+		tapebad = 1;
+	    }
+	    if (tapetype_seen(tp, TAPETYPE_PART_CACHE_MAX_SIZE)) {
+		g_fprintf(outf, "ERROR: part_cache_max_size specified, but no part_size\n");
+		tapebad = 1;
+	    }
+	} else {
+	    switch (part_cache_type) {
+	    case PART_CACHE_TYPE_DISK:
+		if (!tapetype_seen(tp, TAPETYPE_PART_CACHE_DIR)
+			    || !part_cache_dir || !*part_cache_dir) {
+		    g_fprintf(outf,
+			"ERROR: part_cache_type is DISK, but no part_cache_dir specified\n");
+		    tapebad = 1;
+		} else {
+		    if(get_fs_usage(part_cache_dir, NULL, &fsusage) == -1) {
+			g_fprintf(outf, "ERROR: part_cache_dir '%s': %s",
+				part_cache_dir, strerror(errno));
+			tapebad = 1;
+		    }
+		    kb_avail = fsusage.fsu_bavail_top_bit_set?
+			0 : fsusage.fsu_bavail / 1024 * fsusage.fsu_blocksize;
+		    kb_needed = part_size;
+		    if (tapetype_seen(tp, TAPETYPE_PART_CACHE_MAX_SIZE)) {
+			kb_needed = part_cache_max_size;
+		    }
+		    if (kb_avail < kb_needed) {
+			g_fprintf(outf,
+			    "ERROR: part_cache_dir has %ju %sB available, but needs %ju %sB\n",
+			    kb_avail/(uintmax_t)unitdivisor, displayunit,
+			    kb_needed/(uintmax_t)unitdivisor, displayunit);
+			tapebad = 1;
+		    }
+		}
+		break;
+
+	    case PART_CACHE_TYPE_MEMORY:
+		kb_avail = physmem_total() / 1024;
+		kb_needed = part_size;
+		if (tapetype_seen(tp, TAPETYPE_PART_CACHE_MAX_SIZE)) {
+		    kb_needed = part_cache_max_size;
+		}
+		if (kb_avail < kb_needed) {
+		    g_fprintf(outf,
+			"ERROR: system has %ju %sB memory, but part cache needs %ju %sB\n",
+			kb_avail/(uintmax_t)unitdivisor, displayunit,
+			kb_needed/(uintmax_t)unitdivisor, displayunit);
+		    tapebad = 1;
+		}
+
+		/* FALL THROUGH */
+
+	    case PART_CACHE_TYPE_NONE:
+		if (tapetype_seen(tp, TAPETYPE_PART_CACHE_DIR)) {
+		    g_fprintf(outf,
+			"ERROR: part_cache_dir specified, but part_cache_type is not DISK\n");
+		    tapebad = 1;
+		}
+		break;
+	    }
+	}
+
+	if (tapetype_seen(tp, TAPETYPE_PART_SIZE) && part_size == 0
+		&& part_cache_type != PART_CACHE_TYPE_NONE) {
+	    g_fprintf(outf,
+		    "ERROR: part_size is zero, but part_cache_type is not 'none'\n");
+	    tapebad = 1;
+	}
+
+	if (tapetype_seen(tp, TAPETYPE_PART_CACHE_MAX_SIZE)) {
+	    if (part_cache_type == PART_CACHE_TYPE_NONE) {
+		g_fprintf(outf,
+		    "ERROR: part_cache_max_size is specified but no part cache is in use\n");
+		tapebad = 1;
+	    }
+
+	    if (part_cache_max_size > part_size) {
+		g_fprintf(outf,
+		    "WARNING: part_cache_max_size is greater than part_size\n");
+	    }
+	}
+
+	/* small-parts warnings - TODO */
+	tape_size = tapetype_get_length(tp);
+	if (part_size && part_size * 1000 < tape_size) {
+	    g_fprintf(outf,
+		      _("WARNING: part_size of %ju %sB < 0.1%% of tape length.\n"),
+		      (uintmax_t)part_size/(uintmax_t)unitdivisor, displayunit);
+	    if (!printed_small_part_size_warning) {
+		printed_small_part_size_warning = TRUE;
+		g_fprintf(outf, "%s", small_part_size_warning);
+	    }
+	} else if (part_cache_max_size && part_cache_max_size * 1000 < tape_size) {
+	    g_fprintf(outf,
+		      _("WARNING: part_cache_max_size of %ju %sB < 0.1%% of tape length.\n"),
+		      (uintmax_t)part_cache_max_size/(uintmax_t)unitdivisor, displayunit);
+	    if (!printed_small_part_size_warning) {
+		printed_small_part_size_warning = TRUE;
+		g_fprintf(outf, "%s", small_part_size_warning);
 	    }
 	}
     }
@@ -1103,18 +1224,6 @@ start_server_check(
 	char *disk;
 	int conf_tapecycle, conf_runspercycle;
 	identlist_t pp_scriptlist;
-	gboolean printed_small_tape_splitsize_warning = FALSE;
-	char *small_tape_splitsize_warning =
-	    _(" This may create > 1000 parts, severely degrading backup/restore performance.\n"
-	    " To remedy, increase tape_splitsize or disable splitting by setting it to 0\n"
-	    " See http://wiki.zmanda.com/index.php/Splitsize_too_small for more information.\n");
-
-	gboolean printed_small_fallback_splitsize_warning = FALSE;
-	char *small_fallback_splitsize_warning =
-	    _(" This may create > 1000 parts, severely degrading backup/restore performance.\n"
-	    " To remedy, create/set a split_diskbuffer or increase fallback_splitsize\n"
-	    " See http://wiki.zmanda.com/index.php/Splitsize_too_small for more information.\n");
-
 
 	conf_tapecycle = getconf_int(CNF_TAPECYCLE);
 	conf_runspercycle = getconf_int(CNF_RUNSPERCYCLE);
@@ -1372,53 +1481,57 @@ start_server_check(
 		  }
 		}
 
-		/* check tape_splitsize */
-		tape_size = tapetype_get_length(tp);
-		if (dp->tape_splitsize > tape_size) {
-		    g_fprintf(outf,
-			      _("ERROR: %s %s: tape_splitsize > tape size\n"),
-			      hostp->hostname, dp->name);
-		    pgmbad = 1;
-		}
-		if (dp->tape_splitsize && dp->fallback_splitsize * 1024 > physmem_total()) {
-		    g_fprintf(outf,
-			      _("ERROR: %s %s: fallback_splitsize > total available memory\n"),
-			      hostp->hostname, dp->name);
-		    pgmbad = 1;
-		}
-		if (dp->tape_splitsize && dp->fallback_splitsize > tape_size) {
-		    g_fprintf(outf,
-			      _("ERROR: %s %s: fallback_splitsize > tape size\n"),
-			      hostp->hostname, dp->name);
-		    pgmbad = 1;
-		}
-
-		/* also check for part sizes that are too small */
-		if (dp->tape_splitsize && dp->tape_splitsize * 1000 < tape_size) {
-		    g_fprintf(outf,
-			      _("WARNING: %s %s: tape_splitsize of %ju %sB < 0.1%% of tape length.\n"),
-			      hostp->hostname, dp->name,
-			      (uintmax_t)dp->tape_splitsize/(uintmax_t)unitdivisor,
-			      displayunit);
-		    if (!printed_small_tape_splitsize_warning) {
-			printed_small_tape_splitsize_warning = TRUE;
-			g_fprintf(outf, "%s", small_tape_splitsize_warning);
+		/* check deprecated splitting parameters */
+		if (dumptype_seen(dp->config, DUMPTYPE_TAPE_SPLITSIZE)
+		    || dumptype_seen(dp->config, DUMPTYPE_SPLIT_DISKBUFFER)
+		    || dumptype_seen(dp->config, DUMPTYPE_FALLBACK_SPLITSIZE)) {
+		    tape_size = tapetype_get_length(tp);
+		    if (dp->tape_splitsize > tape_size) {
+			g_fprintf(outf,
+				  _("ERROR: %s %s: tape_splitsize > tape size\n"),
+				  hostp->hostname, dp->name);
+			pgmbad = 1;
 		    }
-		}
+		    if (dp->tape_splitsize && dp->fallback_splitsize * 1024 > physmem_total()) {
+			g_fprintf(outf,
+				  _("ERROR: %s %s: fallback_splitsize > total available memory\n"),
+				  hostp->hostname, dp->name);
+			pgmbad = 1;
+		    }
+		    if (dp->tape_splitsize && dp->fallback_splitsize > tape_size) {
+			g_fprintf(outf,
+				  _("ERROR: %s %s: fallback_splitsize > tape size\n"),
+				  hostp->hostname, dp->name);
+			pgmbad = 1;
+		    }
 
-		/* fallback splitsize will be used if split_diskbuffer is empty or NULL */
-		if (dp->tape_splitsize != 0 && dp->fallback_splitsize != 0 &&
-			(dp->split_diskbuffer == NULL ||
-			 dp->split_diskbuffer[0] == '\0') &&
-			dp->fallback_splitsize * 1000 < tape_size) {
-		    g_fprintf(outf,
-			  _("WARNING: %s %s: fallback_splitsize of %ju %sB < 0.1%% of tape length.\n"),
-			  hostp->hostname, dp->name,
-			  (uintmax_t)dp->fallback_splitsize/(uintmax_t)unitdivisor,
-			  displayunit);
-		    if (!printed_small_fallback_splitsize_warning) {
-			printed_small_fallback_splitsize_warning = TRUE;
-			g_fprintf(outf, "%s", small_fallback_splitsize_warning);
+		    /* also check for part sizes that are too small */
+		    if (dp->tape_splitsize && dp->tape_splitsize * 1000 < tape_size) {
+			g_fprintf(outf,
+				  _("WARNING: %s %s: tape_splitsize of %ju %sB < 0.1%% of tape length.\n"),
+				  hostp->hostname, dp->name,
+				  (uintmax_t)dp->tape_splitsize/(uintmax_t)unitdivisor,
+				  displayunit);
+			if (!printed_small_part_size_warning) {
+			    printed_small_part_size_warning = TRUE;
+			    g_fprintf(outf, "%s", small_part_size_warning);
+			}
+		    }
+
+		    /* fallback splitsize will be used if split_diskbuffer is empty or NULL */
+		    if (dp->tape_splitsize != 0 && dp->fallback_splitsize != 0 &&
+			    (dp->split_diskbuffer == NULL ||
+			     dp->split_diskbuffer[0] == '\0') &&
+			    dp->fallback_splitsize * 1000 < tape_size) {
+			g_fprintf(outf,
+			      _("WARNING: %s %s: fallback_splitsize of %ju %sB < 0.1%% of tape length.\n"),
+			      hostp->hostname, dp->name,
+			      (uintmax_t)dp->fallback_splitsize/(uintmax_t)unitdivisor,
+			      displayunit);
+			if (!printed_small_part_size_warning) {
+			    printed_small_part_size_warning = TRUE;
+			    g_fprintf(outf, "%s", small_part_size_warning);
+			}
 		    }
 		}
 

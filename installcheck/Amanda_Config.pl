@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 176;
+use Test::More tests => 181;
 use strict;
 
 use lib "@amperldir@";
@@ -143,6 +143,10 @@ $testconf->add_param('debug_auth', '1');
 $testconf->add_tapetype('mytapetype', [
     'comment' => '"mine"',
     'length' => '128 M',
+    'part_size' => '100M',
+    'part_cache_type' => 'disk',
+    'part_cache_dir' => '"/usr/bin"',
+    'part_cache_max_size' => '50M',
 ]);
 $testconf->add_dumptype('mydump-type', [    # note dash
     'comment' => '"mine"',
@@ -163,7 +167,9 @@ $testconf->add_dumptype('mydump-type', [    # note dash
     'include file optional' => '"rhyme"',
     'property' => '"prop" "erty"',
     'property' => '"DROP" "qwerty" "asdfg"',
-    'estimate' => 'server calcsize client'
+    'estimate' => 'server calcsize client',
+    'allow_split' => 'no',
+    'allow_split' => 'no',
 ]);
 $testconf->add_dumptype('second_dumptype', [ # note underscore
     '' => 'mydump-type',
@@ -217,305 +223,284 @@ $testconf->add_changer('my_changer', [
 $testconf->write();
 
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-is($cfg_result, $CFGERR_OK,
-    "Load test configuration")
-    or diag_config_errors();
-
-SKIP: {
-    skip "error loading config", 3 unless $cfg_result == $CFGERR_OK;
-
-    is(Amanda::Config::get_config_name(), "TESTCONF", 
-	"config_name set");
-    is(Amanda::Config::get_config_dir(), "$CONFIG_DIR/TESTCONF", 
-	"config_dir set");
-    is(Amanda::Config::get_config_filename(),
-	"$CONFIG_DIR/TESTCONF/amanda.conf", 
-	"config_filename set");
+if (!is($cfg_result, $CFGERR_OK,
+    "Load test configuration")) {
+    diag_config_errors();
+    die "aborting after config errors";
 }
 
-SKIP: { # global parameters
-    skip "error loading config", 13 unless $cfg_result == $CFGERR_OK;
+is(Amanda::Config::get_config_name(), "TESTCONF",
+    "config_name set");
+is(Amanda::Config::get_config_dir(), "$CONFIG_DIR/TESTCONF",
+    "config_dir set");
+is(Amanda::Config::get_config_filename(),
+    "$CONFIG_DIR/TESTCONF/amanda.conf",
+    "config_filename set");
 
-    is(getconf($CNF_RESERVE), 75,
-	"integer global confparm");
-    is(getconf($CNF_BUMPSIZE), $int64_num+0,
-	"int64 global confparm");
-    is(getconf($CNF_TAPEDEV), "/dev/foo",
-	"string global confparm");
-    is(getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE), $size_t_num+0,
-	"size global confparm");
-    ok(getconf($CNF_AUTOFLUSH),
-	"boolean global confparm");
-    is(getconf($CNF_USETIMESTAMPS), 0,
-	"boolean global confparm, passing an integer (0)");
-    is(getconf($CNF_TAPERALGO), $Amanda::Config::ALGO_LAST,
-	"taperalgo global confparam");
-    is_deeply([getconf($CNF_RESERVED_UDP_PORT)], [100,200],
-	"intrange global confparm");
-    is(getconf($CNF_DISPLAYUNIT), "M",
-	"displayunit is correctly uppercased");
-    is_deeply(getconf($CNF_DEVICE_PROPERTY),
-	      { "foo" => { priority => 0, append => 0, values => ["bar"]},
-		"blue" => { priority => 0, append => 0,
-			    values => ["car", "tar"]} },
-	    "proplist global confparm");
-    is_deeply(getconf($CNF_AUTOLABEL),
-	    { template => undef, other_config => '',
-	      non_amanda => 1, volume_error => '', empty => 1 },
-	    "'autolabel non-amanda empty' represented correctly");
-    ok(getconf_seen($CNF_TAPEDEV),
-	"'tapedev' parm was seen");
-    ok(!getconf_seen($CNF_CHANGERFILE),
-	"'changerfile' parm was not seen");
-}
+is(getconf($CNF_RESERVE), 75,
+    "integer global confparm");
+is(getconf($CNF_BUMPSIZE), $int64_num+0,
+    "int64 global confparm");
+is(getconf($CNF_TAPEDEV), "/dev/foo",
+    "string global confparm");
+is(getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE), $size_t_num+0,
+    "size global confparm");
+ok(getconf($CNF_AUTOFLUSH),
+    "boolean global confparm");
+is(getconf($CNF_USETIMESTAMPS), 0,
+    "boolean global confparm, passing an integer (0)");
+is(getconf($CNF_TAPERALGO), $Amanda::Config::ALGO_LAST,
+    "taperalgo global confparam");
+is_deeply([getconf($CNF_RESERVED_UDP_PORT)], [100,200],
+    "intrange global confparm");
+is(getconf($CNF_DISPLAYUNIT), "M",
+    "displayunit is correctly uppercased");
+is_deeply(getconf($CNF_DEVICE_PROPERTY),
+	  { "foo" => { priority => 0, append => 0, values => ["bar"]},
+	    "blue" => { priority => 0, append => 0,
+			values => ["car", "tar"]} },
+	"proplist global confparm");
+is_deeply(getconf($CNF_AUTOLABEL),
+	{ template => undef, other_config => '',
+	  non_amanda => 1, volume_error => '', empty => 1 },
+	"'autolabel non-amanda empty' represented correctly");
+ok(getconf_seen($CNF_TAPEDEV),
+    "'tapedev' parm was seen");
+ok(!getconf_seen($CNF_CHANGERFILE),
+    "'changerfile' parm was not seen");
 
-SKIP: { # derived values
-    skip "error loading config", 3 unless $cfg_result == $CFGERR_OK;
+is(Amanda::Config::getconf_unit_divisor(), 1024,
+    "correct unit divisor (from displayunit -> KB)");
+ok($Amanda::Config::debug_auth,
+    "debug_auth setting reflected in global variable");
+ok(!$Amanda::Config::debug_amandad,
+    "debug_amandad defaults to false");
 
-    is(Amanda::Config::getconf_unit_divisor(), 1024, 
-	"correct unit divisor (from displayunit -> KB)");
-    ok($Amanda::Config::debug_auth, 
-	"debug_auth setting reflected in global variable");
-    ok(!$Amanda::Config::debug_amandad, 
-	"debug_amandad defaults to false");
-}
+my $ttyp = lookup_tapetype("mytapetype");
+ok($ttyp, "found mytapetype");
+is(tapetype_getconf($ttyp, $TAPETYPE_COMMENT), 'mine',
+    "tapetype comment");
+is(tapetype_getconf($ttyp, $TAPETYPE_LENGTH), 128 * 1024,
+    "tapetype comment");
 
-SKIP: { # tapetypes
-    skip "error loading config", 6 unless $cfg_result == $CFGERR_OK;
-    my $ttyp = lookup_tapetype("mytapetype");
-    ok($ttyp, "found mytapetype");
-    is(tapetype_getconf($ttyp, $TAPETYPE_COMMENT), 'mine', 
-	"tapetype comment");
-    is(tapetype_getconf($ttyp, $TAPETYPE_LENGTH), 128 * 1024, 
-	"tapetype comment");
+ok(tapetype_seen($ttyp, $TAPETYPE_COMMENT),
+    "tapetype comment was seen");
+ok(!tapetype_seen($ttyp, $TAPETYPE_LBL_TEMPL),
+    "tapetype lbl_templ was not seen");
 
-    ok(tapetype_seen($ttyp, $TAPETYPE_COMMENT),
-	"tapetype comment was seen");
-    ok(!tapetype_seen($ttyp, $TAPETYPE_LBL_TEMPL),
-	"tapetype lbl_templ was not seen");
+is(tapetype_getconf($ttyp, $TAPETYPE_PART_SIZE), 100*1024,
+    "tapetype part_size");
+is(tapetype_getconf($ttyp, $TAPETYPE_PART_CACHE_TYPE), $PART_CACHE_TYPE_DISK,
+    "tapetype part_cache_type");
+is(tapetype_getconf($ttyp, $TAPETYPE_PART_CACHE_DIR), "/usr/bin",
+    "tapetype part_cache_dir");
+is(tapetype_getconf($ttyp, $TAPETYPE_PART_CACHE_MAX_SIZE), 50*1024,
+    "tapetype part_cache_max_size");
 
-    is_deeply([ sort(+getconf_list("tapetype")) ],
-	      [ sort("mytapetype", "TEST-TAPE") ],
-	"getconf_list lists all tapetypes");
-}
+is_deeply([ sort(+getconf_list("tapetype")) ],
+	  [ sort("mytapetype", "TEST-TAPE") ],
+    "getconf_list lists all tapetypes");
 
-SKIP: { # dumptypes
-    skip "error loading config", 18 unless $cfg_result == $CFGERR_OK;
+my $dtyp = lookup_dumptype("mydump-type");
+ok($dtyp, "found mydump-type");
+is(dumptype_getconf($dtyp, $DUMPTYPE_COMMENT), 'mine',
+    "dumptype string");
+is(dumptype_getconf($dtyp, $DUMPTYPE_PRIORITY), 2,
+    "dumptype priority");
+is(dumptype_getconf($dtyp, $DUMPTYPE_BUMPSIZE), $int64_num+0,
+    "dumptype size");
+is(dumptype_getconf($dtyp, $DUMPTYPE_BUMPMULT), 1.75,
+    "dumptype real");
+is(dumptype_getconf($dtyp, $DUMPTYPE_STARTTIME), 1829,
+    "dumptype time");
+is(dumptype_getconf($dtyp, $DUMPTYPE_HOLDINGDISK), $HOLD_REQUIRED,
+    "dumptype holdingdisk");
+is(dumptype_getconf($dtyp, $DUMPTYPE_COMPRESS), $COMP_BEST,
+    "dumptype compress");
+is(dumptype_getconf($dtyp, $DUMPTYPE_ENCRYPT), $ENCRYPT_SERV_CUST,
+    "dumptype encrypt");
+is(dumptype_getconf($dtyp, $DUMPTYPE_STRATEGY), $DS_INCRONLY,
+    "dumptype strategy");
+is_deeply([dumptype_getconf($dtyp, $DUMPTYPE_COMPRATE)], [0.25, 0.75],
+    "dumptype comprate");
+is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_INCLUDE),
+    { 'file' => [ 'rhyme' ],
+      'list' => [ 'bing', 'ting', 'string', 'fling' ],
+      'optional' => 1 },
+    "dumptype include list");
+is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_EXCLUDE),
+    { 'file' => [ 'foolist' ],
+      'list' => [ 'foo', 'bar', 'true', 'star' ],
+      'optional' => 0 },
+    "dumptype exclude list");
+is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_ESTIMATELIST),
+	  [ $ES_SERVER, $ES_CALCSIZE, $ES_CLIENT ],
+    "dumptype estimate list");
+is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_PROPERTY),
+	  { "prop" => { priority => 0, append => 0, values => ["erty"]},
+	    "drop" => { priority => 0, append => 0,
+			values => ["qwerty", "asdfg"] }},
+	"dumptype proplist");
 
-    my $dtyp = lookup_dumptype("mydump-type");
-    ok($dtyp, "found mydump-type");
-    is(dumptype_getconf($dtyp, $DUMPTYPE_COMMENT), 'mine', 
-	"dumptype string");
-    is(dumptype_getconf($dtyp, $DUMPTYPE_PRIORITY), 2, 
-	"dumptype priority");
-    is(dumptype_getconf($dtyp, $DUMPTYPE_BUMPSIZE), $int64_num+0,
-	"dumptype size");
-    is(dumptype_getconf($dtyp, $DUMPTYPE_BUMPMULT), 1.75,
-	"dumptype real");
-    is(dumptype_getconf($dtyp, $DUMPTYPE_STARTTIME), 1829,
-	"dumptype time");
-    is(dumptype_getconf($dtyp, $DUMPTYPE_HOLDINGDISK), $HOLD_REQUIRED,
-	"dumptype holdingdisk");
-    is(dumptype_getconf($dtyp, $DUMPTYPE_COMPRESS), $COMP_BEST,
-	"dumptype compress");
-    is(dumptype_getconf($dtyp, $DUMPTYPE_ENCRYPT), $ENCRYPT_SERV_CUST,
-	"dumptype encrypt");
-    is(dumptype_getconf($dtyp, $DUMPTYPE_STRATEGY), $DS_INCRONLY,
-	"dumptype strategy");
-    is_deeply([dumptype_getconf($dtyp, $DUMPTYPE_COMPRATE)], [0.25, 0.75],
-	"dumptype comprate");
-    is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_INCLUDE),
-	{ 'file' => [ 'rhyme' ],
-	  'list' => [ 'bing', 'ting', 'string', 'fling' ],
-	  'optional' => 1 },
-	"dumptype include list");
-    is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_EXCLUDE),
-	{ 'file' => [ 'foolist' ],
-	  'list' => [ 'foo', 'bar', 'true', 'star' ],
-	  'optional' => 0 },
-	"dumptype exclude list");
-    is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_ESTIMATELIST),
-	      [ $ES_SERVER, $ES_CALCSIZE, $ES_CLIENT ],
-	"dumptype estimate list");
-    is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_PROPERTY),
-	      { "prop" => { priority => 0, append => 0, values => ["erty"]},
-		"drop" => { priority => 0, append => 0,
-			    values => ["qwerty", "asdfg"] }},
-	    "dumptype proplist");
+ok(dumptype_seen($dtyp, $DUMPTYPE_EXCLUDE),
+    "'exclude' parm was seen");
+ok(!dumptype_seen($dtyp, $DUMPTYPE_RECORD),
+    "'record' parm was not seen");
 
-    ok(dumptype_seen($dtyp, $DUMPTYPE_EXCLUDE),
-	"'exclude' parm was seen");
-    ok(!dumptype_seen($dtyp, $DUMPTYPE_RECORD),
-	"'record' parm was not seen");
+is_deeply([ sort(+getconf_list("dumptype")) ],
+	  [ sort(qw(
+	    mydump-type second_dumptype third_dumptype
+	    NO-COMPRESS COMPRESS-FAST COMPRESS-BEST COMPRESS-CUST
+	    SRVCOMPRESS BSD-AUTH NO-RECORD NO-HOLD
+	    NO-FULL
+	    )) ],
+    "getconf_list lists all dumptypes (including defaults)");
+is(dumptype_getconf($dtyp, $DUMPTYPE_ALLOW_SPLIT), 0,
+    "dumptype allow_split");
 
-    is_deeply([ sort(+getconf_list("dumptype")) ],
-	      [ sort(qw(
-	        mydump-type second_dumptype third_dumptype 
-	        NO-COMPRESS COMPRESS-FAST COMPRESS-BEST COMPRESS-CUST
-		SRVCOMPRESS BSD-AUTH NO-RECORD NO-HOLD
-		NO-FULL
-		)) ],
-	"getconf_list lists all dumptypes (including defaults)");
-}
+my $iface = lookup_interface("ethernet");
+ok($iface, "found ethernet");
+is(interface_name($iface), "ethernet",
+    "interface knows its name");
+is(interface_getconf($iface, $INTER_COMMENT), 'mine',
+    "interface comment");
+is(interface_getconf($iface, $INTER_MAXUSAGE), 100,
+    "interface maxusage");
 
-SKIP: { # interfaces
-    skip "error loading config", 8 unless $cfg_result == $CFGERR_OK;
-    my $iface = lookup_interface("ethernet");
-    ok($iface, "found ethernet");
-    is(interface_name($iface), "ethernet",
-	"interface knows its name");
-    is(interface_getconf($iface, $INTER_COMMENT), 'mine', 
-	"interface comment");
-    is(interface_getconf($iface, $INTER_MAXUSAGE), 100, 
-	"interface maxusage");
+$iface = lookup_interface("nic");
+ok($iface, "found nic");
+ok(interface_seen($iface, $INTER_COMMENT),
+    "seen set for parameters that appeared");
+ok(!interface_seen($iface, $INTER_MAXUSAGE),
+    "seen not set for parameters that did not appear");
 
-    $iface = lookup_interface("nic");
-    ok($iface, "found nic");
-    ok(interface_seen($iface, $INTER_COMMENT),
-	"seen set for parameters that appeared");
-    ok(!interface_seen($iface, $INTER_MAXUSAGE),
-	"seen not set for parameters that did not appear");
+is_deeply([ sort(+getconf_list("interface")) ],
+	  [ sort('ethernet', 'nic', 'default') ],
+    "getconf_list lists all interfaces (in any order)");
 
-    is_deeply([ sort(+getconf_list("interface")) ],
-	      [ sort('ethernet', 'nic', 'default') ],
-	"getconf_list lists all interfaces (in any order)");
-}
+skip "error loading config", 13 unless $cfg_result == $CFGERR_OK;
+my $hdisk = lookup_holdingdisk("hd1");
+ok($hdisk, "found hd1");
+is(holdingdisk_name($hdisk), "hd1",
+    "hd1 knows its name");
+is(holdingdisk_getconf($hdisk, $HOLDING_COMMENT), 'mine',
+    "holdingdisk comment");
+is(holdingdisk_getconf($hdisk, $HOLDING_DISKDIR), '/mnt/hd1',
+    "holdingdisk diskdir (directory)");
+is(holdingdisk_getconf($hdisk, $HOLDING_DISKSIZE), 100*1024,
+    "holdingdisk disksize (use)");
+is(holdingdisk_getconf($hdisk, $HOLDING_CHUNKSIZE), 1024,
+    "holdingdisk chunksize");
 
-SKIP: { # holdingdisks
-    skip "error loading config", 13 unless $cfg_result == $CFGERR_OK;
-    my $hdisk = lookup_holdingdisk("hd1");
-    ok($hdisk, "found hd1");
-    is(holdingdisk_name($hdisk), "hd1",
-	"hd1 knows its name");
-    is(holdingdisk_getconf($hdisk, $HOLDING_COMMENT), 'mine', 
-	"holdingdisk comment");
-    is(holdingdisk_getconf($hdisk, $HOLDING_DISKDIR), '/mnt/hd1',
-	"holdingdisk diskdir (directory)");
-    is(holdingdisk_getconf($hdisk, $HOLDING_DISKSIZE), 100*1024, 
-	"holdingdisk disksize (use)");
-    is(holdingdisk_getconf($hdisk, $HOLDING_CHUNKSIZE), 1024, 
-	"holdingdisk chunksize");
+$hdisk = lookup_holdingdisk("hd2");
+ok($hdisk, "found hd2");
+ok(holdingdisk_seen($hdisk, $HOLDING_COMMENT),
+    "seen set for parameters that appeared");
+ok(!holdingdisk_seen($hdisk, $HOLDING_CHUNKSIZE),
+    "seen not set for parameters that did not appear");
 
-    $hdisk = lookup_holdingdisk("hd2");
-    ok($hdisk, "found hd2");
-    ok(holdingdisk_seen($hdisk, $HOLDING_COMMENT),
-	"seen set for parameters that appeared");
-    ok(!holdingdisk_seen($hdisk, $HOLDING_CHUNKSIZE),
-	"seen not set for parameters that did not appear");
+# only holdingdisks have this linked-list structure
+# exposed
+my $hdisklist = getconf($CNF_HOLDINGDISK);
+my $first_disk = @$hdisklist[0];
+$hdisk = lookup_holdingdisk($first_disk);
+like(holdingdisk_name($hdisk), qr/hd[12]/,
+    "one disk is first in list of holdingdisks");
+$hdisk = lookup_holdingdisk(@$hdisklist[1]);
+like(holdingdisk_name($hdisk), qr/hd[12]/,
+    "another is second in list of holdingdisks");
+ok($#$hdisklist == 1,
+    "no third holding disk");
 
-    # only holdingdisks have this linked-list structure
-    # exposed
-    my $hdisklist = getconf($CNF_HOLDINGDISK);
-    my $first_disk = @$hdisklist[0];
-    $hdisk = lookup_holdingdisk($first_disk);
-    like(holdingdisk_name($hdisk), qr/hd[12]/,
-	"one disk is first in list of holdingdisks");
-    $hdisk = lookup_holdingdisk(@$hdisklist[1]);
-    like(holdingdisk_name($hdisk), qr/hd[12]/,
-	"another is second in list of holdingdisks");
-    ok($#$hdisklist == 1,
-	"no third holding disk");
+is_deeply([ sort(+getconf_list("holdingdisk")) ],
+	  [ sort('hd1', 'hd2') ],
+    "getconf_list lists all holdingdisks (in any order)");
 
-    is_deeply([ sort(+getconf_list("holdingdisk")) ],
-	      [ sort('hd1', 'hd2') ],
-	"getconf_list lists all holdingdisks (in any order)");
-}
+skip "error loading config", 5 unless $cfg_result == $CFGERR_OK;
+my $app = lookup_application("my_app");
+ok($app, "found my_app");
+is(application_name($app), "my_app",
+    "my_app knows its name");
+is(application_getconf($app, $APPLICATION_COMMENT), 'my_app_comment',
+    "application comment");
+is(application_getconf($app, $APPLICATION_PLUGIN), 'amgtar',
+    "application plugin (amgtar)");
 
-SKIP: { # application
-    skip "error loading config", 5 unless $cfg_result == $CFGERR_OK;
-    my $app = lookup_application("my_app");
-    ok($app, "found my_app");
-    is(application_name($app), "my_app",
-	"my_app knows its name");
-    is(application_getconf($app, $APPLICATION_COMMENT), 'my_app_comment', 
-	"application comment");
-    is(application_getconf($app, $APPLICATION_PLUGIN), 'amgtar',
-	"application plugin (amgtar)");
+is_deeply([ sort(+getconf_list("application-tool")) ],
+	  [ sort("my_app") ],
+    "getconf_list lists all applications");
+# test backward compatibility
+is_deeply([ sort(+getconf_list("application")) ],
+	  [ sort("my_app") ],
+    "getconf_list works for 'application-tool', too");
 
-    is_deeply([ sort(+getconf_list("application-tool")) ],
-	      [ sort("my_app") ],
-	"getconf_list lists all applications");
-    # test backward compatibility
-    is_deeply([ sort(+getconf_list("application")) ],
-	      [ sort("my_app") ],
-	"getconf_list works for 'application-tool', too");
-}
+my $sc = lookup_pp_script("my_script");
+ok($sc, "found my_script");
+is(pp_script_name($sc), "my_script",
+    "my_script knows its name");
+is(pp_script_getconf($sc, $PP_SCRIPT_COMMENT), 'my_script_comment',
+    "script comment");
+is(pp_script_getconf($sc, $PP_SCRIPT_PLUGIN), 'script-email',
+    "script plugin (script-email)");
+is(pp_script_getconf($sc, $PP_SCRIPT_EXECUTE_WHERE), $ES_CLIENT,
+    "script execute_where (client)");
+is(pp_script_getconf($sc, $PP_SCRIPT_EXECUTE_ON),
+    $EXECUTE_ON_PRE_HOST_BACKUP|$EXECUTE_ON_POST_HOST_BACKUP,
+    "script execute_on");
 
-SKIP: { # script
-    skip "error loading config", 7 unless $cfg_result == $CFGERR_OK;
-    my $sc = lookup_pp_script("my_script");
-    ok($sc, "found my_script");
-    is(pp_script_name($sc), "my_script",
-	"my_script knows its name");
-    is(pp_script_getconf($sc, $PP_SCRIPT_COMMENT), 'my_script_comment', 
-	"script comment");
-    is(pp_script_getconf($sc, $PP_SCRIPT_PLUGIN), 'script-email',
-	"script plugin (script-email)");
-    is(pp_script_getconf($sc, $PP_SCRIPT_EXECUTE_WHERE), $ES_CLIENT,
-	"script execute_where (client)");
-    is(pp_script_getconf($sc, $PP_SCRIPT_EXECUTE_ON),
-	$EXECUTE_ON_PRE_HOST_BACKUP|$EXECUTE_ON_POST_HOST_BACKUP,
-	"script execute_on");
+is_deeply([ sort(+getconf_list("script")) ],
+	  [ sort("my_script") ],
+    "getconf_list lists all script");
 
-    is_deeply([ sort(+getconf_list("script")) ],
-	      [ sort("my_script") ],
-	"getconf_list lists all script");
+is_deeply([ sort(+getconf_list("script-tool")) ],
+	  [ sort("my_script") ],
+    "getconf_list works for 'script-tool', too");
 
-    is_deeply([ sort(+getconf_list("script-tool")) ],
-	      [ sort("my_script") ],
-	"getconf_list works for 'script-tool', too");
-}
+my $dc = lookup_device_config("my_device");
+ok($dc, "found my_device");
+is(device_config_name($dc), "my_device",
+    "my_device knows its name");
+is(device_config_getconf($dc, $DEVICE_CONFIG_COMMENT), 'my device is mine, not yours',
+    "device comment");
+is(device_config_getconf($dc, $DEVICE_CONFIG_TAPEDEV), 'tape:/dev/nst0',
+    "device tapedev");
+# TODO do we really need all of this equipment for device properties?
+is_deeply(device_config_getconf($dc, $DEVICE_CONFIG_DEVICE_PROPERTY),
+      { "block_size" => { 'priority' => 0, 'values' => ["128k"], 'append' => 0 }, },
+    "device config proplist");
 
-SKIP: { # device
-    skip "error loading config", 6 unless $cfg_result == $CFGERR_OK;
-    my $dc = lookup_device_config("my_device");
-    ok($dc, "found my_device");
-    is(device_config_name($dc), "my_device",
-	"my_device knows its name");
-    is(device_config_getconf($dc, $DEVICE_CONFIG_COMMENT), 'my device is mine, not yours',
-	"device comment");
-    is(device_config_getconf($dc, $DEVICE_CONFIG_TAPEDEV), 'tape:/dev/nst0',
-	"device tapedev");
-    # TODO do we really need all of this equipment for device properties?
-    is_deeply(device_config_getconf($dc, $DEVICE_CONFIG_DEVICE_PROPERTY),
-          { "block_size" => { 'priority' => 0, 'values' => ["128k"], 'append' => 0 }, },
-        "device config proplist");
+is_deeply([ sort(+getconf_list("device")) ],
+	  [ sort("my_device") ],
+    "getconf_list lists all devices");
 
-    is_deeply([ sort(+getconf_list("device")) ],
-	      [ sort("my_device") ],
-	"getconf_list lists all devices");
-}
+skip "error loading config", 7 unless $cfg_result == $CFGERR_OK;
+$dc = lookup_changer_config("my_changer");
+ok($dc, "found my_changer");
+is(changer_config_name($dc), "my_changer",
+    "my_changer knows its name");
+is(changer_config_getconf($dc, $CHANGER_CONFIG_COMMENT), 'my changer is mine, not yours',
+    "changer comment");
+is(changer_config_getconf($dc, $CHANGER_CONFIG_CHANGERDEV), '/dev/sg0',
+    "changer tapedev");
+is_deeply(changer_config_getconf($dc, $CHANGER_CONFIG_PROPERTY),
+    { 'testprop' => {
+	    'priority' => 0,
+	    'values' => [ 'testval' ],
+	    'append' => 0,
+	}
+    }, "changer properties represented correctly");
 
-SKIP: { # changer
-    skip "error loading config", 7 unless $cfg_result == $CFGERR_OK;
-    my $dc = lookup_changer_config("my_changer");
-    ok($dc, "found my_changer");
-    is(changer_config_name($dc), "my_changer",
-	"my_changer knows its name");
-    is(changer_config_getconf($dc, $CHANGER_CONFIG_COMMENT), 'my changer is mine, not yours',
-	"changer comment");
-    is(changer_config_getconf($dc, $CHANGER_CONFIG_CHANGERDEV), '/dev/sg0',
-	"changer tapedev");
-    is_deeply(changer_config_getconf($dc, $CHANGER_CONFIG_PROPERTY),
-	{ 'testprop' => {
-		'priority' => 0,
-		'values' => [ 'testval' ],
-		'append' => 0,
-	    }
-        }, "changer properties represented correctly");
+is_deeply(changer_config_getconf($dc, $CHANGER_CONFIG_DEVICE_PROPERTY),
+    { 'testdprop' => {
+	    'priority' => 0,
+	    'values' => [ 'testdval' ],
+	    'append' => 0,
+	}
+    }, "changer device properties represented correctly");
 
-    is_deeply(changer_config_getconf($dc, $CHANGER_CONFIG_DEVICE_PROPERTY),
-	{ 'testdprop' => {
-		'priority' => 0,
-		'values' => [ 'testdval' ],
-		'append' => 0,
-	    }
-        }, "changer device properties represented correctly");
-
-    is_deeply([ sort(+getconf_list("changer")) ],
-	      [ sort("my_changer") ],
-	"getconf_list lists all changers");
-}
+is_deeply([ sort(+getconf_list("changer")) ],
+	  [ sort("my_changer") ],
+    "getconf_list lists all changers");
 
 ##
 # Test config overwrites (using the config from above)

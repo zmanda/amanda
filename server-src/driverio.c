@@ -281,6 +281,92 @@ getresult(
 }
 
 
+static char *
+taper_splitting_args(
+	disk_t *dp)
+{
+    GString *args = NULL;
+    char *q = NULL;
+    dumptype_t *dt = dp->config;
+    tapetype_t *tt;
+
+    tt = lookup_tapetype(getconf_str(CNF_TAPETYPE));
+    g_assert(tt != NULL);
+
+    args = g_string_new("");
+
+    /* old dumptype-based parameters, using empty strings when not seen */
+    if (dumptype_seen(dt, DUMPTYPE_TAPE_SPLITSIZE)) {
+	g_string_append_printf(args, "%zu ",
+		    (uintmax_t)dumptype_get_tape_splitsize(dt)*1024);
+    } else {
+	g_string_append(args, "\"\" ");
+    }
+
+    q = quote_string(dumptype_seen(dt, DUMPTYPE_SPLIT_DISKBUFFER)?
+	    dumptype_get_split_diskbuffer(dt) : "");
+    g_string_append_printf(args, "%s ", q);
+    g_free(q);
+
+    if (dumptype_seen(dt, DUMPTYPE_FALLBACK_SPLITSIZE)) {
+	g_string_append_printf(args, "%zu ",
+		    (uintmax_t)dumptype_get_fallback_splitsize(dt)*1024);
+    } else {
+	g_string_append(args, "\"\" ");
+    }
+
+    if (dumptype_seen(dt, DUMPTYPE_ALLOW_SPLIT)) {
+	g_string_append_printf(args, "%d ",
+		    (int)dumptype_get_allow_split(dt));
+    } else {
+	g_string_append(args, "\"\" ");
+    }
+
+    /* new tapetype-based parameters */
+    if (tapetype_seen(tt, TAPETYPE_PART_SIZE)) {
+	g_string_append_printf(args, "%zu ",
+		    (uintmax_t)tapetype_get_part_size(tt)*1024);
+    } else {
+	g_string_append(args, "\"\" ");
+    }
+
+    q = "";
+    if (tapetype_seen(tt, TAPETYPE_PART_CACHE_TYPE)) {
+	switch (tapetype_get_part_cache_type(tt)) {
+	    default:
+	    case PART_CACHE_TYPE_NONE:
+		q = "none";
+		break;
+
+	    case PART_CACHE_TYPE_MEMORY:
+		q = "memory";
+		break;
+
+	    case PART_CACHE_TYPE_DISK:
+		q = "disk";
+		break;
+	}
+    }
+    q = quote_string(q);
+    g_string_append_printf(args, "%s ", q);
+    g_free(q);
+
+    q = quote_string(tapetype_seen(tt, TAPETYPE_PART_CACHE_DIR)?
+	    tapetype_get_part_cache_dir(tt) : "");
+    g_string_append_printf(args, "%s ", q);
+    g_free(q);
+
+    if (tapetype_seen(tt, TAPETYPE_PART_CACHE_MAX_SIZE)) {
+	g_string_append_printf(args, "%zd ",
+		    (uintmax_t)tapetype_get_part_cache_max_size(tt)*1024);
+    } else {
+	g_string_append(args, "\"\" ");
+    }
+
+
+    return g_string_free(args, FALSE);
+}
+
 int
 taper_cmd(
     cmd_t cmd,
@@ -291,15 +377,13 @@ taper_cmd(
 {
     char *cmdline = NULL;
     char number[NUM_STR_SIZE];
-    char splitsize[NUM_STR_SIZE];
-    char fallback_splitsize[NUM_STR_SIZE];
     char orig_kb[NUM_STR_SIZE];
-    char *diskbuffer = NULL;
     char *data_path;
     disk_t *dp;
     char *qname;
     char *qdest;
     char *q;
+    char *splitargs;
 
     switch(cmd) {
     case START_TAPER:
@@ -310,10 +394,9 @@ taper_cmd(
         qname = quote_string(dp->name);
 	qdest = quote_string(destname);
 	g_snprintf(number, SIZEOF(number), "%d", level);
-	g_snprintf(splitsize, SIZEOF(splitsize), "%lld",
-		 (long long)dp->tape_splitsize * 1024);
 	g_snprintf(orig_kb, SIZEOF(orig_kb), "%jd",
 		 (intmax_t)sched(dp)->origsize);
+	splitargs = taper_splitting_args(dp);
 	cmdline = vstralloc(cmdstr[cmd],
 			    " ", disk2serial(dp),
 			    " ", qdest,
@@ -321,12 +404,14 @@ taper_cmd(
 			    " ", qname,
 			    " ", number,
 			    " ", datestamp,
-			    " ", splitsize,
-			    " ", orig_kb,
+			    " ", splitargs,
+			         orig_kb,
 			    "\n", NULL);
+	amfree(splitargs);
 	amfree(qdest);
 	amfree(qname);
 	break;
+
     case PORT_WRITE:
 	dp = (disk_t *) ptr;
         qname = quote_string(dp->name);
@@ -338,26 +423,17 @@ taper_cmd(
           make the argument something besides and empty string so's taper
           won't get confused
 	*/
-	if(!dp->split_diskbuffer || dp->split_diskbuffer[0] == '\0'){
-	    diskbuffer = "NULL";
-	} else {
-	    diskbuffer = dp->split_diskbuffer;
-	}
-	g_snprintf(splitsize, SIZEOF(splitsize), "%lld",
-		 (long long)dp->tape_splitsize * 1024);
-	g_snprintf(fallback_splitsize, SIZEOF(fallback_splitsize), "%lld",
-		 (long long)dp->fallback_splitsize * 1024);
+	splitargs = taper_splitting_args(dp);
 	cmdline = vstralloc(cmdstr[cmd],
 			    " ", disk2serial(dp),
 			    " ", dp->host->hostname,
 			    " ", qname,
 			    " ", number,
 			    " ", datestamp,
-			    " ", splitsize,
-			    " ", diskbuffer,
-			    " ", fallback_splitsize,
-			    " ", data_path,
+			    " ", splitargs,
+			         data_path,
 			    "\n", NULL);
+	amfree(splitargs);
 	amfree(qname);
 	break;
     case DONE: /* handle */

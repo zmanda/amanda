@@ -264,8 +264,13 @@ indexdir "@CONFIG_DIR@/@DEFAULT_CONFIG@/index"		# index directory
 #     lbl-templ "@CONFIG_DIR@/config/lbl.exabyte.ps"
 # }
 
+define tapetype global {
+    part_size 3G
+    part_cache_type none
+}
 
 define tapetype QIC-60 {
+    global
     comment "Archive Viper"
     length 60 mbytes
     filemark 100 kbytes		# don't know a better value
@@ -273,6 +278,7 @@ define tapetype QIC-60 {
 }
 
 define tapetype DEC-DLT2000 {
+    global
     comment "DEC Differential Digital Linear Tape 2000"
     length 15000 mbytes
     filemark 8 kbytes
@@ -282,6 +288,7 @@ define tapetype DEC-DLT2000 {
 # goluboff@butch.Colorado.EDU
 # in amanda-users (Thu Dec 26 01:55:38 MEZ 1996)
 define tapetype DLT {
+    global
     comment "DLT tape drives"
     length 20000 mbytes		# 20 Gig tapes
     filemark 2000 kbytes	# I don't know what this means
@@ -289,6 +296,7 @@ define tapetype DLT {
 }
 
 define tapetype SURESTORE-1200E {
+    global
     comment "HP AutoLoader"
     length 3900 mbytes
     filemark 100 kbytes
@@ -296,6 +304,7 @@ define tapetype SURESTORE-1200E {
 }
 
 define tapetype EXB-8500 {
+    global
     comment "Exabyte EXB-8500 drive on decent machine"
     length 4200 mbytes
     filemark 48 kbytes
@@ -303,6 +312,7 @@ define tapetype EXB-8500 {
 }
 
 define tapetype EXB-8200 {
+    global
     comment "Exabyte EXB-8200 drive on decent machine"
     length 2200 mbytes
     filemark 2130 kbytes
@@ -310,6 +320,7 @@ define tapetype EXB-8200 {
 }
 
 define tapetype HP-DAT {
+    global
     comment "DAT tape drives"
     # data provided by Rob Browning <rlb@cs.utexas.edu>
     length 1930 mbytes
@@ -318,6 +329,7 @@ define tapetype HP-DAT {
 }
 
 define tapetype DAT {
+    global
     comment "DAT tape drives"
     length 1000 mbytes		# these numbers are not accurate
     filemark 100 kbytes		# but you get the idea
@@ -325,6 +337,7 @@ define tapetype DAT {
 }
 
 define tapetype MIMSY-MEGATAPE {
+    global
     comment "Megatape (Exabyte based) drive through Emulex on Vax 8600"
     length 2200 mbytes
     filemark 2130 kbytes
@@ -332,10 +345,11 @@ define tapetype MIMSY-MEGATAPE {
 }
 
 define tapetype SEAGATE-ULTRIUM-LTO {
-     comment "SEAGATE ULTRIUM 06242 LTO, compression off"
-     length 99584 mbytes
-     filemark 0 kbytes
-     speed 11288 kps
+    global
+    comment "SEAGATE ULTRIUM 06242 LTO, compression off"
+    length 99584 mbytes
+    filemark 0 kbytes
+    speed 11288 kps
 }
 
 # dumptypes
@@ -471,25 +485,6 @@ define tapetype SEAGATE-ULTRIUM-LTO {
 #                              only be performed when an 'amadmin force' 
 #                              has been issued 
 #		  Default: [strategy standard]
-# tape_splitsize - (optional) split dump file into pieces of a specified size.
-#		  This allows dumps to be spread across multiple tapes, and can
-#		  potentially make more efficient use of tape space.  Note that
-#		  if this value is too large (more than half the size of the
-#		  average dump being split), substantial tape space can be
-#		  wasted.  If too small, large dumps will be split into
-#		  innumerable tiny dumpfiles, adding to restoration complexity.
-#		  A good rule of thumb, usually, is 1/10 of the size of your
-#		  tape.  Default: [disabled]
-# split_diskbuffer - (optional) When dumping a split dump  in  PORT-WRITE
-#                 mode (usually meaning "no holding disk"), buffer the split
-#		  chunks to a file in the directory specified by this option.
-#		  Default: [none]
-# fallback_splitsize - (optional) When dumping a split dump  in  PORT-WRITE
-#                 mode, if no split_diskbuffer is specified (or if we somehow
-#                 fail to use our split_diskbuffer), we must buffer split
-#                 chunks in memory.  This specifies the maximum size split
-#                 chunks can be in this scenario, and thus the maximum amount
-#                 of memory consumed for in-memory splitting.  Default: [10m]
 #
 # Note that you may specify previously defined dumptypes as a shorthand way of
 # defining parameters.
@@ -540,7 +535,6 @@ define dumptype user-tar {
 
 define dumptype user-tar-span {
     root-tar
-    tape_splitsize 3 Gb
     comment "tape-spanning user partitions dumped with tar"
     priority medium
 }
@@ -583,7 +577,6 @@ define dumptype comp-user {
 
 define dumptype comp-user-span {
     global
-    tape_splitsize 5 Gb
     comment "Tape-spanning non-root partitions on reasonably fast machines"
     compress client fast
     priority medium

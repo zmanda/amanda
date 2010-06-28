@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 10;
+use Test::More tests => 35;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -29,7 +29,7 @@ use Amanda::Device qw( :constants );
 use Amanda::Debug;
 use Amanda::Header;
 use Amanda::Xfer;
-use Amanda::Taper::Scribe;
+use Amanda::Taper::Scribe qw( get_splitting_args_from_config );
 use Amanda::MainLoop;
 
 # and disable Debug's die() and warn() overrides
@@ -613,5 +613,251 @@ is_deeply([ @events ], [
 quit_scribe($scribe);
 
 # DirectTCP support is tested through the taper installcheck
+
+# test get_splitting_args_from_config thoroughly
+my $maxint64 = Math::BigInt->new("9223372036854775808");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+    ) },
+    { split_method => 'none' },
+    "default for no cache_inform is split_method none");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 1,
+    ) },
+    { split_method => 'none' },
+    "default for cache_inform is also split_method none");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 1,
+	tape_splitsize => 0,
+	split_diskbuffer => $Installcheck::TMP,
+	fallback_splitsize => 100,
+    ) },
+    { split_method => 'none' },
+    "tape_splitsize = 0 indicates split_method none, not fallback");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	dle_allow_split => 0,
+	can_cache_inform => 1,
+	part_size => 100,
+	part_cache_dir => "/tmp",
+    ) },
+    { split_method => 'none' },
+    "default if dle_allow_split is false, no splitting");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 1,
+	dle_tape_splitsize => 200,
+	dle_fallback_splitsize => 250,
+    ) },
+    { split_method => 'cache_inform', part_size => 200 },
+    "when cache_inform is available, tape_splitsize is used, not fallback");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+	dle_tape_splitsize => 200,
+	dle_fallback_splitsize => 250,
+    ) },
+    { split_method => 'memory', part_size => 250, },
+    "if split_diskbuffer is missing, fall back");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+	dle_tape_splitsize => 200,
+    ) },
+    { split_method => 'memory', part_size => 1024*1024*10, },
+    "no split_diskbuffer and no fallback_splitsize, fall back to default (10M)");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+	dle_tape_splitsize => 200,
+	dle_split_diskbuffer => "$Installcheck::TMP/does!not!exist!",
+	dle_fallback_splitsize => 250,
+    ) },
+    { split_method => 'memory', part_size => 250, },
+    "invalid split_diskbuffer => fall back (silently)");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+	dle_tape_splitsize => 200,
+	dle_split_diskbuffer => "$Installcheck::TMP/does!not!exist!",
+    ) },
+    { split_method => 'memory', part_size => 1024*1024*10, },
+    ".. even to the default fallback (10M)");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+	dle_tape_splitsize => $maxint64,
+	dle_split_diskbuffer => "$Installcheck::TMP",
+	dle_fallback_splitsize => 250,
+    ) },
+    { split_method => 'memory', part_size => 250,
+      warning => "falling back to memory buffer for splitting: " .
+		 "insufficient space in disk cache directory" },
+    "not enough space in split_diskbuffer => fall back (with warning)");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+	dle_tape_splitsize => 200,
+	dle_split_diskbuffer => "$Installcheck::TMP",
+	dle_fallback_splitsize => 250,
+    ) },
+    { split_method => 'disk', part_size => 200,
+      disk_cache_dirname => "$Installcheck::TMP" },
+    "if split_diskbuffer exists and splitsize is nonzero, use it");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+	dle_tape_splitsize => 0,
+	dle_split_diskbuffer => "$Installcheck::TMP",
+	dle_fallback_splitsize => 250,
+    ) },
+    { split_method => 'none' },
+    ".. but if splitsize is zero, no splitting");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+	dle_split_diskbuffer => "$Installcheck::TMP",
+	dle_fallback_splitsize => 250,
+    ) },
+    { split_method => 'none' },
+    ".. and if splitsize is missing, no splitting");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 1,
+	part_size => 300,
+    ) },
+    { split_method => 'cache_inform', part_size => 300 },
+    "With cache_inform and a part_size, splitting is done");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+	part_size => 300,
+	part_cache_type => 'none',
+    ) },
+    { split_method => 'none' },
+    "part_cache_type 'none' translates correctly");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+	part_size => 300,
+	part_cache_type => 'memory',
+    ) },
+    { split_method => 'memory', part_size => 300 },
+    "part_cache_type 'memory' translates correctly");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+	part_size => 300,
+	part_cache_type => 'memory',
+	part_cache_max_size => 100,
+    ) },
+    { split_method => 'memory', part_size => 100 },
+    ".. and part_cache_max_size is minded");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+	part_size => 250,
+	part_cache_type => 'memory',
+	part_cache_max_size => 500,
+    ) },
+    { split_method => 'memory', part_size => 250 },
+    ".. but treated as a maximum");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+	part_size => 300,
+	part_cache_type => 'disk',
+	part_cache_dir => $Installcheck::TMP,
+    ) },
+    { split_method => 'disk',
+      part_size => 300,
+      disk_cache_dirname => $Installcheck::TMP },
+    "part_cache_type 'disk' translates correctly");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+	part_size => 300,
+	part_cache_type => 'disk',
+	part_cache_dir => $Installcheck::TMP,
+	part_cache_max_size => 100,
+    ) },
+    { split_method => 'disk',
+      part_size => 100,
+      disk_cache_dirname => $Installcheck::TMP },
+    ".. and part_cache_max_size is minded");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+	part_size => 300,
+	part_cache_type => 'disk',
+	part_cache_dir => "$Installcheck::TMP/does!not!exist!",
+    ) },
+    { split_method => 'none',
+      warning => "not caching split parts: " .
+		 "insufficient space for split cache in part_cache_dir" },
+    "warning when part_size is larger than part_cache_dir");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+	part_size => 300,
+	part_cache_type => 'disk',
+    ) },
+    { split_method => 'none',
+      warning => "not caching split parts: " .
+		 "insufficient space for split cache in part_cache_dir" },
+    "warning when part_size is larger than part_cache_dir");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+	part_size => $maxint64,
+	part_cache_type => 'disk',
+	part_cache_dir => $Installcheck::TMP
+    ) },
+    { split_method => 'none',
+      warning => "not caching split parts: " .
+		 "insufficient space for split cache in part_cache_dir" },
+    "warning when part_size is larger than part_cache_dir");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 1,
+	part_size => 0,
+    ) },
+    { split_method => 'none' },
+    "a zero partsize with can_cache_inform is passed along properly");
+
+is_deeply(
+    { get_splitting_args_from_config(
+	can_cache_inform => 0,
+	part_size => 0,
+    ) },
+    { split_method => 'none' },
+    "a zero partsize without can_cache_inform is passed along properly");
 
 rmtree($taperoot);

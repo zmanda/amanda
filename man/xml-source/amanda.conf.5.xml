@@ -2144,23 +2144,28 @@ The value should be hh*100+mm, e.g. 6:30PM (18:30) would be entered as
   </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>allow_split</amkeyword> <amtype>bool</amtype></term>
+  <listitem>
+<para>Default: true.
+If true, then dumps with this dumptype can be split on the storage media.  If false, then
+the dump will be written in a single file on the media.  See "Dump Splitting Configuration"
+below.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>tape_splitsize</amkeyword> <amtype>int</amtype></term>
   <listitem>
+      <para>Deprecated.  See "Dump Splitting Configuration" below.</para>
 <para>Default: not set.
 Split dump file on tape into pieces of a specified size.
-This allows dumps to be spread across multiple tapes, and can potentially
-make more efficient use of tape space.
-Note that if this value is too large (more than half the size of the
-average dump being split), substantial tape space can be wasted.
-If too small, large dumps will be split into innumerable tiny dumpfiles,
-adding to restoration complexity.
-A good rule of thumb, usually, is 1/10 of the size of your tape.</para>
-<para>The default unit is Kbytes if it is not specified.</para>
+The default unit is Kbytes if it is not specified.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
   <term><amkeyword>split_diskbuffer</amkeyword> <amtype>string</amtype></term>
+      <para>Deprecated.  See "Dump Splitting Configuration" below.</para>
   <listitem>
 <para>Default: not set.
 When dumping a split dump in PORT-WRITE mode (usually meaning "no holding disk"), buffer the split chunks to a file in the directory specified by this option.
@@ -2171,18 +2176,12 @@ When dumping a split dump in PORT-WRITE mode (usually meaning "no holding disk")
   <varlistentry>
   <term><amkeyword>fallback_splitsize</amkeyword> <amtype>int</amtype></term>
   <listitem>
+      <para>Deprecated.  See "Dump Splitting Configuration" below.</para>
 <para>Default:
 <amdefault>10M</amdefault>.
-When dumping a split dump in PORT-WRITE mode, if no split_diskbuffer is
-specified (or if we somehow fail to use our split_diskbuffer), we must
-buffer split chunks in memory.
-This specifies the maximum size split chunks can be in this scenario,
+This specifies the part size used when no <amkeyword>split_diskbuffer</amkeyword> is specified, or when it is too small or does not exist,
 and thus the maximum amount of memory consumed for in-memory splitting.
-The size of this buffer can be changed from its (very conservative) default
-to a value reflecting the amount of memory that each taper process on
-the dump server may reasonably consume.
-</para>
-<para>The default unit is Kbytes if it is not specified.</para>
+The default unit is Kbytes if it is not specified.</para>
   </listitem>
   </varlistentry>
 </variablelist>
@@ -2334,6 +2333,54 @@ tape devices.
   </varlistentry>
   
   <varlistentry>
+  <term><amkeyword>part_size</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default: none.  This is the size (in KB if no units are specified) of
+each split part written to the volume.  It is reduced to
+<amkeyword>part_cache_max_size</amkeyword> when part caching is required.
+If this is set to zero, then no splitting will take place; in this case,
+some devices can span dumps from volume to volume, while others will cause
+the entire dump to fail if they encounter end-of-medium before the dump is
+complete.  See "Dump Splitting Configuration" below.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>part_cache_type</amkeyword> [ <amkeyword>none</amkeyword> | <amkeyword>disk</amkeyword> | <amkeyword>memory</amkeyword> ] </term>
+  <listitem>
+<para>Default: none.  When part caching is required, this parameter specifies
+the type of caching that will be used.  The options include no caching
+(<amkeyword>none</amkeyword>), in which case a failed part will cause the
+entire dump to fail; on-disk caching (<amkeyword>disk</amkeyword>), for
+which <amkeyword>part_cache_dir</amkeyword> must be set properly; and
+in-memory caching (<amkeyword>memory</amkeyword>), which on most systems
+severely restrains the size of the part that can be written.  See "Dump
+Splitting Configuration" below.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>part_cache_dir</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: none.
+The directory in which part-cache files can be written when caching on disk.
+See "Dump Splitting Configuration" below.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>part_cache_max_size</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default: none.
+The maximum part size to use when caching is in effect.  This is used to limit
+the part size when disk or memory space for caching is constrained.  This value
+can be zero, in which case dumps from holding disk will be split using
+<amkeyword>part_size</amkeyword>, but dumps that would otherwise require a cache
+will be written without splitting.  See "Dump Splitting Configuration" below.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>speed</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
@@ -2359,7 +2406,7 @@ man page for more information.</para>
 
 <para>In addition to options, another
 <amkeyword>tapetype</amkeyword>
-name may be supplie as an identifier, which makes this
+name may be supplied as an identifier, which makes this
 <amkeyword>tapetype</amkeyword>
 inherit options from another
 <amkeyword>tapetype</amkeyword>.
@@ -2725,6 +2772,60 @@ device. The remaining parameters are specific to the changer type selected.
 </para>
 
 <para>See <manref name="amanda-changers" vol="7" /> for more information on configuring changers.</para>
+
+</refsect1>
+
+<refsect1><title>Dump Splitting Configuration</title>
+
+    <para>Amanda can "split" dumps into parts while writing them to storage
+	media.  This allows Amanda to recover gracefully from a failure while
+	writing a part to a volume, by simply selecting a new volume and
+	re-writing the dump from the beginning of the failed part.  Parts also
+	allow Amanda to seek directly to the required data, although this
+	functionality is not yet used.</para>
+
+    <para>In order to support re-writing from the beginning of a failed part,
+	Amanda must have access to the contents of the part after it has been
+	partially written.  If the dump is being read from holding disk, then
+	the part contents are availble there.  Otherwise, the part must be
+	cached, and this can be done memory or on disk.  In either of the
+	latter cases, the cache must have enough space to hold an entire
+	part.</para>
+
+    <para>Because it is common for a single Amanda configuration to use both
+	holding-disk (FILE-WRITE) and direct (known as PORT-WRITE) dumps, Amanda
+	allows the configuration of different split sizes for the two cases.  This
+	allows, for example, for a part size appropriate to large tapes when
+	performing FILE-WRITE dumps, with a part size limited by available disk
+	or memory when performing PORT-WRITE dumps.</para>
+
+    <para>Selecting a proper split size is a delicate matter.  If the parts are
+	too large, substantial storage space may be wasted in failed parts.  If
+	too small, large dumps will be split into innumerable tiny dumpfiles,
+	adding to restoration complexity; furthermore, an excess of filemarks
+	will cause slower tape drive operation and reduce the usable space on
+	tape.  A good rule of thumb is 1/10 of the size of a volume of storage
+	media.</para>
+
+    <para>In versions of Amanda through 3.1.*, splitting was controlled by the
+	dumptype parameters <amkeyword>tape_splitsize</amkeyword>,
+	<amkeyword>split_diskbuffer</amkeyword>, and
+	<amkeyword>fallback_splitsize</amkeyword>.  These keywords had
+	confusing and non-intuitive interactions, and have since been
+	deprecated.</para>
+
+    <para>If the deprecated keywords are not present, subsequent versions
+	of Amanda use the dumptype parameter
+	<amkeyword>allow_split</amkeyword> to control whether a DLE can be
+	split, and the <emphasis>tapetype</emphasis> parameters
+	<amkeyword>part_size</amkeyword>,
+	<amkeyword>part_cache_type</amkeyword>,
+	<amkeyword>part_cache_dir</amkeyword>, and
+	<amkeyword>part_cache_max_size</amkeyword>.  The
+	<amkeyword>part_size</amkeyword> specifies the "normal" part size,
+	while the <amkeyword>part_cache_*</amkeyword> parameters describe
+	how to behave when caching is required (on PORT-WRITE).  Full
+	details on these parameters are given above.</para>
 
 </refsect1>
 
