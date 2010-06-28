@@ -1,3 +1,8 @@
+2010-06-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-dest-taper-directtcp.c: round part size to a
+	  multiple of the block size
+	* installcheck/Amanda_Xfer.pl: test it
+
 2010-06-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* application-src/ampgsql.pl: use conditionals to skip useless
 	  selfcheck checks

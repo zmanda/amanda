@@ -135,6 +135,12 @@ worker_thread(
     DBG(2, "connection accepted; sending XMSG_READY");
     xfer_queue_message(elt->xfer, xmsg_new(elt, XMSG_READY, 0));
 
+    /* round the part size up to the next multiple of the block size */
+    if (self->part_size) {
+	self->part_size += self->device->block_size-1;
+	self->part_size -= self->part_size % self->device->block_size;
+    }
+
     /* now loop until we're out of parts */
     while (1) {
 	guint64 size;

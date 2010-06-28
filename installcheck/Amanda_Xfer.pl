@@ -1008,7 +1008,8 @@ SKIP: {
 
 	# and create the xfer
 	my $src = Amanda::Xfer::Source::Random->new(32768*34-7, $RANDOM_SEED);
-	my $dest = Amanda::Xfer::Dest::Taper::DirectTCP->new($dev, 32768*16);
+	# note we ask for slightly less than 15 blocks; the dest should round up
+	my $dest = Amanda::Xfer::Dest::Taper::DirectTCP->new($dev, 32768*16-99);
 	$xfer = Amanda::Xfer->new([ $src, $dest ]);
 
 	my $start_new_part; # forward declaration
