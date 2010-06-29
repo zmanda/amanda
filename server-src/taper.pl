@@ -570,7 +570,11 @@ sub get_splitting_config {
     }
 
     # implement the fallback to memory buffering if the disk buffer does
-    # not exist or doesnt have enough space
+    # not exist or doesnt have enough space, *and* if we're not using directtcp
+    if ($params{'data_path'} eq 'DIRECTTCP') {
+	return %get_xfer_dest_args;
+    }
+
     my $need_fallback = 0;
     if ($get_xfer_dest_args{'split_method'} eq 'disk') {
         if (! -d $get_xfer_dest_args{'disk_cache_dirname'}) {

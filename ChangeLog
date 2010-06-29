@@ -1,3 +1,6 @@
+2010-06-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/taper.pl: skip disk-size checks in directtcp mode
+
 2010-06-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* application-src/ampgsql.pl: conditionalize some checks on property
 	  being set
