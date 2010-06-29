@@ -28,7 +28,7 @@
 #include "fileheader.h"
 %}
 
-amglue_add_flag_tag_fns(filetype_t);
+amglue_add_enum_tag_fns(filetype_t);
 amglue_add_constant(F_UNKNOWN, filetype_t);
 amglue_add_constant(F_WEIRD, filetype_t);
 amglue_add_constant(F_TAPESTART, filetype_t);

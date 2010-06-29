@@ -1,3 +1,9 @@
+2010-06-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am installcheck/chunker.pl: new check
+	* perl/Amanda/Header.swg: bug fix
+	* server-src/chunker.c: bug fixes, add support for a fake ENOSPC for
+	  testing
+
 2010-06-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/driverio.c: fix format specifies
 

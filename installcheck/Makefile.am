@@ -56,7 +56,8 @@ server_tests = \
 	amgetconf \
         amtape \
         amlabel \
-	amtapetype
+	amtapetype \
+	chunker
 all_tests += $(server_tests)
 
 full_tests = \
