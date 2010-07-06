@@ -1360,7 +1360,7 @@ s3_internal_header_func(void *ptr, size_t size, size_t nmemb, void * stream)
             /* Offset time */
             data->hdl->time_offset_with_s3 = remote_time_in_sec - local_time;
 
-	    if (hdl->verbose)
+	    if (data->hdl->verbose)
 		g_debug("Time Offset (remote - local) :%ld",(long)data->hdl->time_offset_with_s3);
         }
 

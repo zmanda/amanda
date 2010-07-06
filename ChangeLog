@@ -1,3 +1,6 @@
+2010-07-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/s3.c: fix typo (that I added, not Nandan)
+
 2010-07-06  Nandan Athawale <nandan.athawale@gmail.com>
 	* device-src/s3.c: use Amazon's HTTP response headers to calculate a
 	  time offset for the local clock, to automatically work around time
