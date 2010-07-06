@@ -129,7 +129,7 @@ while (<$fh>) {
     next if $date eq 'Scanning';
     next if $date eq "";
 
-    $status .= " " . $remaining;
+    $status .= " " . $remaining if defined($remaining);
     if($time !~/^\d\d:\d\d:\d\d$/) {
 	$status = $part;
 	$part = $file;
@@ -139,7 +139,7 @@ while (<$fh>) {
 	$disk = $host;
 	$host = $time;
     }
-    next if ($part != 1);
+    next if ($part !~ m,^1/,);
 
     if ($date =~ /^\d\d\d\d-\d\d-\d\d$/) {
 	if(defined $disks{$host}{$disk}) {
