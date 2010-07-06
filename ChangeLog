@@ -1,3 +1,8 @@
+2010-07-06  Nandan Athawale <nandan.athawale@gmail.com>
+	* device-src/s3.c: use Amazon's HTTP response headers to calculate a
+	  time offset for the local clock, to automatically work around time
+	  skew
+
 2010-06-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am installcheck/chunker.pl: new check
 	* perl/Amanda/Header.swg: bug fix
