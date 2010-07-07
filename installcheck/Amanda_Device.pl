@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 477;
+use Test::More tests => 480;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -582,7 +582,7 @@ my $base_name;
 
 SKIP: {
     skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
-            67 +
+            70 +
             1 * $verify_file_count +
             4 * $write_file_count +
             10 * $s3_make_device_count
@@ -730,7 +730,8 @@ SKIP: {
 
     ok($dev->finish(),
        "finish device after read")
-        or diag($dev->error_or_status());    # (note: we don't use write_max_size here, as the maximum for S3 is very large)
+        or diag($dev->error_or_status());    # (note: we don't use write_max_size here,
+					     # as the maximum for S3 is very large)
 
     ok($dev->erase(),
        "erase device")
@@ -769,6 +770,12 @@ SKIP: {
        "status is either OK or possibly unlabeled")
         or diag($dev->error_or_status());
 
+    $dev->finish();
+
+    ok($dev->erase(),
+       "erase device")
+       or diag($dev->error_or_status());
+
     # try a eu-constrained bucket
     $dev_name = lc("s3:$base_name-s3-eu");
     $dev = s3_make_device($dev_name, "s3");
@@ -785,6 +792,10 @@ SKIP: {
         or diag($dev->error_or_status());
 
     $dev->finish();
+
+    ok($dev->erase(),
+       "erase device")
+       or diag($dev->error_or_status());
 
     # try a wildcard-constrained bucket
     $dev_name = lc("s3:$base_name-s3-wild");
@@ -844,7 +855,13 @@ SKIP: {
         is($dev->status(), $DEVICE_STATUS_SUCCESS,
            "status is OK")
             or diag($dev->error_or_status());
+
+	$dev->finish();
     }
+
+    ok($dev->erase(),
+       "erase device")
+       or diag($dev->error_or_status());
 
     # bucket names incompatible with location constraint
     $dev_name = "s3:-$base_name-s3-eu";

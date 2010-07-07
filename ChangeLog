@@ -1,4 +1,8 @@
 2010-07-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Device.pl: erase each S3 volume after the tests
+	  are finished with it
+
+2010-07-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Taper_Scribe.pl: stringify changer errors
 
 2010-07-07  Dustin J. Mitchell <dustin@zmanda.com>
