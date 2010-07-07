@@ -1,3 +1,6 @@
+2010-07-06  Orion Poplawski <orion@cora.nwra.com>
+	* server-src/amoverview.pl: fix parsing for newer amadmin find output
+
 2010-06-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/taper.pl: skip disk-size checks in directtcp mode
 
