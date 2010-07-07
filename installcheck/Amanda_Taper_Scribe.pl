@@ -414,7 +414,7 @@ sub run_scribe_xfer_async {
 
 	main::event("dump_cb",
 	    $params{'result'},
-	    $params{'device_errors'},
+	    [ map { "$_" } @{$params{'device_errors'}} ],
 	    $params{'config_denial_message'},
 	    $params{'size'});
 
