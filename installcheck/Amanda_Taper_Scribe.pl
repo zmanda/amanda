@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 35;
+use Test::More tests => 36;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -162,13 +162,9 @@ sub new {
 sub request_volume_permission {
     my $self = shift;
     my %params = @_;
-    my $answer = shift @{$self->{'rq_answers'}};
+    my $answer = shift @{$self->{'rq_answers'}} || [undef, undef];
     main::event("request_volume_permission", "answer:", $answer);
-    if (!defined($answer)) {
-	$params{'perm_cb'}->(undef);
-    } else {
-	$params{'perm_cb'}->($answer->[0], $answer->[1]);
-    }
+    $params{'perm_cb'}->(@$answer);
 }
 
 sub notif_new_tape {
@@ -235,14 +231,15 @@ sub run_devh {
     });
 
     $got_volume = make_cb(got_volume => sub {
-	my ($scan_error, $request_denied_reason, $reservation, $volume_label, $access_mode) = @_;
+	my ($scan_error, $config_denial_message, $error_denial_message,
+	    $reservation, $volume_label, $access_mode) = @_;
 
 	event("got_volume",
 	    undef_or_str($scan_error),
-	    $request_denied_reason,
+	    $config_denial_message, $error_denial_message,
 	    $reservation? ("slot: ".$reservation->{'this_slot'}) : undef);
 
-	if ($scan_error or $request_denied_reason) {
+	if ($scan_error or $config_denial_message or $error_denial_message) {
 	    $quit->();
 	    return;
 	}
@@ -274,23 +271,23 @@ is_deeply([ @events ], [
       [ 'scan' ], # scan starts *before* get_volume
 
       [ 'get_volume' ],
-      [ 'request_volume_permission', 'answer:', undef ],
+      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', undef, "slot: 1" ],
-      [ 'got_volume', undef, undef, "slot: 1" ],
+      [ 'got_volume', undef, undef, undef, "slot: 1" ],
       [ 'release', undef ],
 
       [ 'get_volume' ],
       [ 'scan' ], # scan starts *after* get_volume this time
-      [ 'request_volume_permission', 'answer:', undef ],
+      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', undef, "slot: 2" ],
-      [ 'got_volume', undef, undef, "slot: 2" ],
+      [ 'got_volume', undef, undef, undef, "slot: 2" ],
       [ 'release', undef ],
 
       [ 'get_volume' ],
       [ 'scan' ],
-      [ 'request_volume_permission', 'answer:', undef ],
+      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', undef, "slot: 3" ],
-      [ 'got_volume', undef, undef, "slot: 3" ],
+      [ 'got_volume', undef, undef, undef, "slot: 3" ],
       [ 'release', undef ],
 
       [ 'quit' ],
@@ -305,7 +302,7 @@ is_deeply([ @events ], [
       [ 'get_volume' ],
       [ 'request_volume_permission', 'answer:', ['config','no-can-do'] ],
       [ 'scan-finished', undef, "slot: 1" ],
-      [ 'got_volume', undef, ['config','no-can-do'], undef ],
+      [ 'got_volume', undef, 'no-can-do', undef, undef ],
 
       [ 'quit' ],
     ], "correct event sequence for a run without permission")
@@ -317,9 +314,9 @@ is_deeply([ @events ], [
       [ 'scan' ],
 
       [ 'get_volume' ],
-      [ 'request_volume_permission', 'answer:', undef ],
+      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', "Slot bogus not found", "slot: none" ],
-      [ 'got_volume', 'Slot bogus not found', undef, undef ],
+      [ 'got_volume', 'Slot bogus not found', undef, undef, undef ],
 
       [ 'quit' ],
     ], "correct event sequence for a run with a changer error")
@@ -333,7 +330,21 @@ is_deeply([ @events ], [
       [ 'get_volume' ],
       [ 'request_volume_permission', 'answer:', ['config','not this time'] ],
       [ 'scan-finished', "Slot bogus not found", "slot: none" ],
-      [ 'got_volume', 'Slot bogus not found', ['config','not this time'], undef ],
+      [ 'got_volume', 'Slot bogus not found', 'not this time', undef, undef ],
+
+      [ 'quit' ],
+    ], "correct event sequence for a run with no permission AND a changer config denial")
+    or diag(Dumper([@events]));
+
+run_devh(1, Mock::Taperscan->new("bogus"), Mock::Feedback->new(['error',"frobnicator exploded!"]));
+is_deeply([ @events ], [
+      [ 'start' ],
+      [ 'scan' ],
+
+      [ 'get_volume' ],
+      [ 'request_volume_permission', 'answer:', ['error',"frobnicator exploded!"] ],
+      [ 'scan-finished', "Slot bogus not found", "slot: none" ],
+      [ 'got_volume', 'Slot bogus not found', undef, "frobnicator exploded!", undef ],
 
       [ 'quit' ],
     ], "correct event sequence for a run with no permission AND a changer error")
@@ -401,21 +412,10 @@ sub run_scribe_xfer_async {
     step dump_cb => sub {
 	my %params = @_;
 
-	my @errors;
-	foreach my $error (@{ $params{'device_errors'} }) {
-	    if (ref($error) eq 'ARRAY') {
-		push @errors, $error;
-	    } else {
-		push @errors, undef_or_str($error);
-	    }
-	}
-	if ($#errors == -1) {
-	    push @errors, [];
-	}
 	main::event("dump_cb",
 	    $params{'result'},
-	    @errors,
-	    #[ map { undef_or_str($_) } @{ $params{'device_errors'} } ],
+	    $params{'device_errors'},
+	    $params{'config_denial_message'},
 	    $params{'size'});
 
 	$finished_cb->();
@@ -461,12 +461,12 @@ run_scribe_xfer(1024*300, $scribe,
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'request_volume_permission', 'answer:', undef ],
+      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'notif_new_tape', undef, 'FAKELABEL' ],
       [ 'notif_part_done', bi(1), bi(1), 1, bi(131072) ],
       [ 'notif_part_done', bi(2), bi(2), 1, bi(131072) ],
       [ 'notif_part_done', bi(3), bi(3), 1, bi(45056) ],
-      [ 'dump_cb', 'DONE', [], bi(307200) ],
+      [ 'dump_cb', 'DONE', [], undef, bi(307200) ],
     ], "correct event sequence for a multipart scribe of less than a whole volume")
     or diag(Dumper([@events]));
 
@@ -476,7 +476,7 @@ run_scribe_xfer(1024*30, $scribe);
 
 is_deeply([ @events ], [
       [ 'notif_part_done', bi(1), bi(4), 1, bi(30720) ],
-      [ 'dump_cb', 'DONE', [], bi(30720) ],
+      [ 'dump_cb', 'DONE', [], undef, bi(30720) ],
     ], "correct event sequence for a subsequent single-part scribe, still on the same volume")
     or diag(Dumper([@events]));
 
@@ -500,7 +500,7 @@ run_scribe_xfer($volume_length + $volume_length / 4, $scribe,
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'request_volume_permission', 'answer:', undef ],
+      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'notif_new_tape', undef, 'FAKELABEL' ],
 
       [ 'notif_part_done', bi(1), bi(1), 1, bi(131072) ],
@@ -509,7 +509,7 @@ is_deeply([ @events ], [
       [ 'notif_part_done', bi(4), bi(0), 0, bi(0) ],
 
       [ 'scan' ],
-      [ 'request_volume_permission', 'answer:', undef ],
+      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', undef, 'slot: 2' ],
       [ 'notif_new_tape', undef, 'FAKELABEL' ],
 
@@ -517,7 +517,7 @@ is_deeply([ @events ], [
       [ 'notif_part_done', bi(5), bi(2), 1, bi(131072) ],
       # empty part is written but not notified
 
-      [ 'dump_cb', 'DONE', [], bi(655360) ],
+      [ 'dump_cb', 'DONE', [], undef, bi(655360) ],
     ], "correct event sequence for a multipart scribe of more than a whole volume")
     or print (Dumper([@events]));
 
@@ -538,7 +538,7 @@ $experr = 'Slot bogus not found';
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'request_volume_permission', 'answer:', undef ],
+      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'notif_new_tape', undef, 'FAKELABEL' ],
 
       [ 'notif_part_done', bi(1), bi(1), 1, bi(131072) ],
@@ -547,11 +547,11 @@ is_deeply([ @events ], [
       [ 'notif_part_done', bi(4), bi(0), 0, bi(0) ],
 
       [ 'scan' ],
-      [ 'request_volume_permission', 'answer:', undef ],
+      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', $experr, 'slot: none' ],
       [ 'notif_new_tape', $experr, undef ],
 
-      [ 'dump_cb', 'PARTIAL', $experr, bi(393216) ],
+      [ 'dump_cb', 'PARTIAL', [$experr], undef, bi(393216) ],
     ], "correct event sequence for a multivolume scribe where the second volume isn't found")
     or print (Dumper([@events]));
 
@@ -571,7 +571,7 @@ run_scribe_xfer($volume_length + $volume_length / 4, $scribe,
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'request_volume_permission', 'answer:', undef ],
+      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'notif_new_tape', undef, 'FAKELABEL' ],
 
       [ 'notif_part_done', bi(1), bi(1), 1, bi(131072) ],
@@ -583,7 +583,7 @@ is_deeply([ @events ], [
       [ 'request_volume_permission', 'answer:', ['config',"sorry!"] ],
       [ 'scan-finished', undef, 'slot: 2' ],
 
-      [ 'dump_cb', 'PARTIAL', ['config',"sorry!"], bi(393216) ],
+      [ 'dump_cb', 'PARTIAL', [], "sorry!", bi(393216) ],
     ], "correct event sequence for a multivolume scribe where the second volume isn't permitted")
     or print (Dumper([@events]));
 
@@ -603,10 +603,10 @@ run_scribe_xfer(1024*300, $scribe, split_method => 'none',
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'request_volume_permission', 'answer:', undef ],
+      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'notif_new_tape', undef, 'FAKELABEL' ],
       [ 'notif_part_done', bi(1), bi(1), 1, bi(307200) ],
-      [ 'dump_cb', 'DONE', [], bi(307200) ],
+      [ 'dump_cb', 'DONE', [], undef, bi(307200) ],
     ], "correct event sequence for a non-splitting scribe of less than a whole volume")
     or diag(Dumper([@events]));
 

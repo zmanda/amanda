@@ -267,15 +267,23 @@ parameters.
   $dump_cb->(
         result => $result,
         device_errors => $device_errors,
+	config_denial_message => $cdm,
         size => $size,
         duration => $duration,
 	total_duration => $total_duration);
 
-All parameters will be present on every call.
+All parameters will be present on every call, although the order is not
+guaranteed.
 
 The C<result> is one of C<"FAILED">, C<"PARTIAL">, or C<"DONE">.  Even when
 C<dump_cb> reports a fatal error, C<result> may be C<"PARTIAL"> if some data
 was written successfully.
+
+The C<device_error> key points to a list of errors, each given as a string,
+that describe what went wrong to cause the dump to fail.  The
+C<config_denial_message> parrots the reason provided by C<$perm_cb> (see below)
+for denying use of a new tape if the cause was 'config', and is C<undef>
+otherwise.
 
 The final parameters, C<size> (in bytes), C<duration>, and C<total_duration>
 (in seconds) describe the total transfer, and are a sum of all of the parts
@@ -316,9 +324,16 @@ to limit the number of volumes the Scribe consumes.  It is called as
 
   $fb->request_volume_permission(perm_cb => $cb);
 
-where the C<perm_cb> is a callback which expects a single argument:
-C<undef> if permission is granted, or reason (as a string) if permission
-is denied.  The default implementation always calls C<< perm_cb->(undef) >>.
+where the C<perm_cb> is a callback which expects two arguments.  Those
+arguments should be C<undef> if permission is granted, or the cause ('config'
+or 'error') and reason, e.g., 
+
+  $perm_cb->('config', "only 3 tapes allowed by runtapes");
+  $perm_cb->('error', "catalog access failed");
+
+A cause of 'config' indicates that the denial is due to the user's
+configuration, and thus should not be presented as an error.  The default
+implementation always calls C<< perm_cb->(undef, undef) >>.
 
 All of the remaining methods are notifications, and do not take a
 callback.
@@ -336,7 +351,8 @@ contents of the volume were erased, but no useful, new data was written
 to the volume.
 
 This method will be called exactly once for every call to
-C<request_volume_permission> that calls C<< perm_cb->(undef) >>.
+C<request_volume_permission> that calls back with C<< perm_cb->(undef, undef)
+>>.
 
   $fb->notif_part_done(
         partnum => $partnum,
@@ -366,7 +382,7 @@ A typical Feedback subclass might begin like this:
     my $self = shift;
     my %params = @_;
 
-    $params{'perm_cb'}->("ERROR", "NO VOLUMES FOR YOU!");
+    $params{'perm_cb'}->("error", "NO VOLUMES FOR YOU!");
   }
 
 =cut
@@ -427,6 +443,7 @@ sub new {
 	last_part_successful => 0,
 	started_writing => 0,
 	device_errors => [],
+	config_denial_message => undef,
     };
 
     return bless ($self, $class);
@@ -611,6 +628,7 @@ sub get_xfer_dest {
     $self->{'last_part_successful'} = 1;
     $self->{'started_writing'} = 0;
     $self->{'device_errors'} = [];
+    $self->{'config_denial_message'} = undef;
 
     # set the callback
     $self->{'dump_cb'} = undef;
@@ -686,6 +704,7 @@ sub cancel_dump {
     $self->{'dump_cb'}->(
 	result => "FAILED",
 	device_errors => [],
+	config_denial_message => undef,
 	size => 0,
 	duration => 0.0,
 	total_duration => 0);
@@ -730,7 +749,7 @@ sub _start_part {
     # Note that this should be caught in the XMSG_PART_DONE handler -- this is just
     # here for backup.
     if (!$self->{'last_part_successful'} and $self->{'split_method'} eq 'none') {
-	$self->_operation_failed("No space left on device (uncaught)");
+	$self->_operation_failed(device_error => "No space left on device (uncaught)");
 	return;
     }
 
@@ -824,7 +843,7 @@ sub _xmsg_part_done {
 		    if ($self->{'device'}->status() != $DEVICE_STATUS_SUCCESS) {
 			$msg = $self->{'device'}->error_or_status();
 		    }
-		    $self->_operation_failed($msg);
+		    $self->_operation_failed(device_error => $msg);
 		    return;
 		}
 
@@ -843,7 +862,7 @@ sub _xmsg_part_done {
 		if ($self->{'device'}->status() != $DEVICE_STATUS_SUCCESS) {
 		    $msg = $self->{'device'}->error_or_status();
 		}
-		$self->_operation_failed($msg);
+		$self->_operation_failed(device_error => $msg);
 		return;
 	    }
 
@@ -870,7 +889,7 @@ sub _xmsg_error {
     my ($src, $msg, $xfer) = @_;
 
     # XMSG_ERROR from the XDT is always fatal
-    $self->_operation_failed($msg->{'message'});
+    $self->_operation_failed(device_error => $msg->{'message'});
 }
 
 sub _xmsg_done {
@@ -890,7 +909,7 @@ sub _dump_done {
 
     # determine the correct final status - DONE if we're done, PARTIAL
     # if we've started writing to the volume, otherwise FAILED
-    if (@{$self->{'device_errors'}}) {
+    if (@{$self->{'device_errors'}} or $self->{'config_denial_message'}) {
 	$result = $self->{'started_writing'}? 'PARTIAL' : 'FAILED';
     } else {
 	$result = 'DONE';
@@ -900,6 +919,7 @@ sub _dump_done {
     my %dump_cb_args = (
 	result => $result,
 	device_errors => $self->{'device_errors'},
+	config_denial_message => $self->{'config_denial_message'},
 	size => $self->{'size'},
 	duration => $self->{'duration'},
 	total_duration => time - $self->{'dump_start_time'});
@@ -913,23 +933,29 @@ sub _dump_done {
     $self->{'duration'} = 0.0;
     $self->{'dump_start_time'} = undef;
     $self->{'device_errors'} = [];
+    $self->{'config_denial_message'} = undef;
 
     # and call the callback
     $dump_cb->(%dump_cb_args);
 }
 
+# keyword parameters are utilities to the caller: either specify
+# device_error to add to the device_errors list or config_denial_message
+# to set the corresponding key in $self.
 sub _operation_failed {
     my $self = shift;
-    my ($error) = @_;
-    my $error_message = $error;
+    my %params = @_;
 
-    if (ref($error) eq "ARRAY") {
-	Amanda::Debug::debug("error is an array: ".$error->[0]." : ".$error->[1]);
-	$error_message = $error->[1];
-    }
+    my $error_message = $params{'device_error'}
+		     || $params{'config_denial_message'}
+		     || 'no reason';
     $self->dbg("operation failed: $error_message");
 
-    push @{$self->{'device_errors'}}, $error;
+    # tuck the message away as desired
+    push @{$self->{'device_errors'}}, $params{'device_error'}
+	if defined $params{'device_error'};
+    $self->{'config_denial_message'} = $params{'config_denial_message'} 
+	if $params{'config_denial_message'};
 
     # cancelling the xdt will eventually cause an XMSG_DONE, which will notice
     # the error and set the result correctly; but if there's no xfer, then we
@@ -940,10 +966,10 @@ sub _operation_failed {
 	$self->{'xfer'}->cancel();
     } else {
         if (defined $self->{'dump_cb'}) {
-            # _dump_done uses device_errors, set above
+            # _dump_done constructs the dump_cb from $self parameters
             $self->_dump_done();
         } else {
-            die "error with no callback to handle it: $error";
+            die "error with no callback to handle it: $error_message";
         }
     }
 }
@@ -984,7 +1010,7 @@ sub _get_new_volume {
 	    my ($error) = @_;
 
 	    if ($error) {
-		$self->_operation_failed($error);
+		$self->_operation_failed(device_error => $error);
 	    } else {
 		$self->_get_new_volume();
 	    }
@@ -998,15 +1024,20 @@ sub _get_new_volume {
 
 sub _volume_cb  {
     my $self = shift;
-    my ($scan_error, $request_denied_reason, $reservation,
+    my ($scan_error, $config_denial_message, $error_denial_message, $reservation,
 	$new_label, $access_mode, $is_new) = @_;
 
-    # note that we prefer the request_denied_reason over the scan error.  If
+    # note that we prefer the request_denied_* info over the scan error.  If
     # both occurred, then the results of the scan are immaterial -- we
     # shouldn't have been looking for a new volume anyway.
 
-    if ($request_denied_reason) {
-	$self->_operation_failed($request_denied_reason);
+    if ($config_denial_message) {
+	$self->_operation_failed(config_denial_message => $config_denial_message);
+	return;
+    }
+
+    if ($error_denial_message) {
+	$self->_operation_failed(device_error => $error_denial_message);
 	return;
     }
 
@@ -1017,7 +1048,7 @@ sub _volume_cb  {
 	    error => $scan_error,
 	    volume_label => undef);
 
-	$self->_operation_failed($scan_error);
+	$self->_operation_failed(device_error => $scan_error);
 	return;
     }
 
@@ -1265,15 +1296,12 @@ sub get_splitting_args_from_config {
 
 package Amanda::Taper::Scribe::Feedback;
 
-# request permission to use a volume.
-#
-# $params{'perm_cb'} - callback taking one argument: an error message or 'undef'
 sub request_volume_permission {
     my $self = shift;
     my %params = @_;
 
     # sure, you can have as many volumes as you want!
-    $params{'perm_cb'}->(undef);
+    $params{'perm_cb'}->(undef, undef);
 }
 
 sub notif_new_tape { }
@@ -1322,7 +1350,9 @@ sub new {
 	# requests for permissiont to use a new volume
 	request_pending => 0,
 	request_complete => 0,
-	request_denied_reason => undef,
+	request_denied => 0,
+	config_denial_message => undef,
+	error_denial_message => undef,
 
 	volume_cb => undef, # callback for get_volume
 	start_finished_cb => undef, # callback for start
@@ -1345,11 +1375,12 @@ sub start {
 # Get an open, started device and label to start writing to.  The
 # volume_callback takes the following arguments:
 #   $scan_error -- error message, or undef if no error occurred
-#   $request_denied_reason -- reason volume request was denied, or undef
+#   $config_denial_reason -- config-related reason request was denied, or undef
+#   $error_denial_reason -- error-related reason request was denied, or undef
 #   $reservation -- Amanda::Changer reservation
 #   $device -- open, started device
 # It is the responsibility of the caller to close the device and release the
-# reservation when finished.  If $scan_error or $request_denied_reason are
+# reservation when finished.  If $scan_error or $request_denied_info are
 # defined, then $reservation and $device will be undef.
 sub get_volume {
     my $self = shift;
@@ -1418,14 +1449,18 @@ sub _start_request {
     $self->{'request_pending'} = 1;
 
     $self->{'feedback'}->request_volume_permission(perm_cb => sub {
-	my (@refusal_reason) = @_;
+	my ($cause, $message) = @_;
+	die "bad cause" unless !defined $cause or $cause =~ /^(error|config)$/;
 
 	$self->{'request_pending'} = 0;
 	$self->{'request_complete'} = 1;
-	if (defined($refusal_reason[0])) {
-	    $self->{'request_denied_reason'} = \@refusal_reason;
-	} else {
-	    $self->{'request_denied_reason'} = undef;
+	if (defined $cause) {
+	    $self->{'request_denied'} = 1;
+	    if ($cause eq 'config') {
+		$self->{'config_denial_message'} = $message;
+	    } elsif ($cause eq 'error') {
+		$self->{'error_denial_message'} = $message;
+	    }
 	}
 
 	$self->_maybe_callback();
@@ -1437,7 +1472,7 @@ sub _maybe_callback {
 
     # if we have any kind of error, release the reservation and come back
     # later
-    if (($self->{'scan_error'} or $self->{'request_denied_reason'}) and $self->{'reservation'}) {
+    if (($self->{'scan_error'} or $self->{'request_denied'}) and $self->{'reservation'}) {
 	$self->{'device'} = undef;
 
 	$self->{'reservation'}->release(finished_cb => sub {
@@ -1473,7 +1508,8 @@ sub _maybe_callback {
 	my $volume_cb = $self->{'volume_cb'};
 	my @volume_cb_args = (
 	    $self->{'scan_error'},
-	    $self->{'request_denied_reason'},
+	    $self->{'config_denial_message'},
+	    $self->{'error_denial_message'},
 	    $self->{'reservation'},
 	    $self->{'volume_label'},
 	    $self->{'access_mode'},
@@ -1488,6 +1524,9 @@ sub _maybe_callback {
 	$self->{'volume_label'} = undef;
 
 	$self->{'request_complete'} = 0;
+	$self->{'request_denied'} = 0;
+	$self->{'config_denial_message'} = undef;
+	$self->{'error_denial_message'} = undef;
 	$self->{'volume_cb'} = undef;
 
 	$volume_cb->(@volume_cb_args);

@@ -626,7 +626,7 @@ sub setup_and_start_dump {
 	    (my $err = $self->{'scribe'}->check_data_path($params{'data_path'}))) {
 	    return $params{'dump_cb'}->(
 		result => "FAILED",
-		device_errors => ["$err"],
+		device_errors => [ ['error', "$err"] ],
 		size => 0,
 		duration => 0.0,
 		total_duration => 0);
@@ -810,23 +810,14 @@ sub dump_cb {
     # the *tape* speed.
     my $stats = $self->make_stats($params{'size'}, $params{'total_duration'}, $self->{'orig_kb'});
 
-    # write a DONE/PARTIAL/FAIL log line
-    my $failure_from = 'error';
-    my $have_msg = @{$params{'device_errors'}};
-    my @device_msg;
-    foreach my $error (@{$params{'device_errors'}}) {
-	if (ref($error) eq 'ARRAY') {
-	    if ($error->[0] eq 'config') {
-		$failure_from = 'config';
-	    }
-	    push @device_msg, $error->[1];
-	} else {
-	    push @device_msg, $error;
-	}
-    }
-    my $msg = join("; ", @device_msg, @{$self->{'input_errors'}});
-    $msg = quote_string($msg);
+    # consider this a config-derived failure only if there were no errors
+    my $failure_from = (@{$params{'device_errors'}})?  'error' : 'config';
 
+    my @all_messages = @{$params{'device_errors'}}, @{$self->{'input_errors'}};
+    push @all_messages, $params{'config_denial_message'} if $params{'config_denial_message'};
+    my $msg = quote_string(join("; ", @all_messages));
+
+    # write a DONE/PARTIAL/FAIL log line
     if ($logtype == $L_FAIL) {
 	log_add($L_FAIL, sprintf("%s %s %s %s %s %s",
 	    quote_string($self->{'hostname'}.""), # " is required for SWIG..
@@ -843,7 +834,7 @@ sub dump_cb {
 	    $self->{'last_partnum'},
 	    $self->{'level'},
 	    $stats,
-	    ($logtype == $L_PARTIAL and $have_msg)? " $msg" : ""));
+	    ($logtype == $L_PARTIAL and @all_messages)? " $msg" : ""));
     }
 
     # and send a message back to the driver
@@ -863,7 +854,10 @@ sub dump_cb {
     # and errors from the scribe in TAPE-ERROR or TAPE-GOOD
     if (@{$params{'device_errors'}}) {
 	$msg_params{'taper'} = 'TAPE-ERROR';
-	$msg_params{'tapererr'} = join("; ", @device_msg);
+	$msg_params{'tapererr'} = join("; ", @{$params{'device_errors'}})
+    } elsif ($params{'config_denial_message'}) {
+	$msg_params{'taper'} = 'TAPE-ERROR';
+	$msg_params{'tapererr'} = $params{'config_denial_message'};
     } else {
 	$msg_params{'taper'} = 'TAPE-GOOD';
 	$msg_params{'tapererr'} = '';

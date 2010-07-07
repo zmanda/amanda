@@ -1,3 +1,10 @@
+2010-07-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: more consistent handling of denial
+	  of use of a second tape due to user configuration; dump_cb adds
+	  the config_denial_message parameter
+	* server-src/taper.pl: use new parameter
+	* installcheck/Amanda_Taper_Scribe.pl: updated tests
+
 2010-07-06  Orion Poplawski <orion@cora.nwra.com>
 	* server-src/amoverview.pl: fix parsing for newer amadmin find output
 
