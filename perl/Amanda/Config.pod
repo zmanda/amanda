@@ -41,8 +41,7 @@ Amanda::Config - access to Amanda configuration parameters
 
     print "tape device is ", getconf($CNF_TAPEDEV), "\n";
 
-This API closely parallels the C API.  See F<conffile.h> for details on the
-configuration parameter constants.
+This API closely parallels the C API.
 
 =head1 INITIALIZATION
 
@@ -326,7 +325,11 @@ C<string_to_boolean()> takes a string and returns 0 if it matches any of
 Amanda's names for false, or 1 if matches a name for true. If it can't be
 interpreted, C<undef> is returned.
 
-=cut
+=head1 CONSTANTS
 
+This section lists all of the configuration parameter constants defined in this
+module.  All of these constants are available with the C<:getconf> export tag.
+
+=cut
 
 %}

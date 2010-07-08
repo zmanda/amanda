@@ -1,3 +1,10 @@
+2010-07-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/amglue/constants.swg: new SWIG precompiler magic to allow
+	  flexible handling of lists of constants
+	* perl/Amanda/Config.pod: add section header
+	* perl/Amanda/Config.swg: include all config param constants in the
+	  POD
+
 2010-07-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Device.pl: erase each S3 volume after the tests
 	  are finished with it

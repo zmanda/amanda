@@ -29,203 +29,253 @@
 %}
 
 /*
+ * Documentation Macro
+ */
+
+%define constant_pod(DESCRIPTION, FORALL_FN)
+%perlcode %{
+=pod
+
+DESCRIPTION: amglue_constants_list(FORALL_FN)
+
+=cut
+%}
+%enddef
+
+/*
  * Parameter access
 */
 
 /* All of the CNF_ flags from conffile.h */
 
+#define FOR_ALL_CONFPARM_KEY(APPLY)\
+APPLY(CNF_ORG)\
+APPLY(CNF_CONF)\
+APPLY(CNF_INDEX_SERVER)\
+APPLY(CNF_TAPE_SERVER)\
+APPLY(CNF_AUTH)\
+APPLY(CNF_SSH_KEYS)\
+APPLY(CNF_AMANDAD_PATH)\
+APPLY(CNF_CLIENT_USERNAME)\
+APPLY(CNF_CLIENT_PORT)\
+APPLY(CNF_GNUTAR_LIST_DIR)\
+APPLY(CNF_AMANDATES)\
+APPLY(CNF_MAILER)\
+APPLY(CNF_MAILTO)\
+APPLY(CNF_DUMPUSER)\
+APPLY(CNF_TAPEDEV)\
+APPLY(CNF_DEVICE_PROPERTY)\
+APPLY(CNF_PROPERTY)\
+APPLY(CNF_CHANGERDEV)\
+APPLY(CNF_CHANGERFILE)\
+APPLY(CNF_LABELSTR)\
+APPLY(CNF_AUTOLABEL)\
+APPLY(CNF_TAPELIST)\
+APPLY(CNF_DISKFILE)\
+APPLY(CNF_INFOFILE)\
+APPLY(CNF_LOGDIR)\
+APPLY(CNF_INDEXDIR)\
+APPLY(CNF_TAPETYPE)\
+APPLY(CNF_DUMPCYCLE)\
+APPLY(CNF_RUNSPERCYCLE)\
+APPLY(CNF_TAPECYCLE)\
+APPLY(CNF_NETUSAGE)\
+APPLY(CNF_INPARALLEL)\
+APPLY(CNF_DUMPORDER)\
+APPLY(CNF_BUMPPERCENT)\
+APPLY(CNF_BUMPSIZE)\
+APPLY(CNF_BUMPMULT)\
+APPLY(CNF_BUMPDAYS)\
+APPLY(CNF_TPCHANGER)\
+APPLY(CNF_RUNTAPES)\
+APPLY(CNF_MAXDUMPS)\
+APPLY(CNF_ETIMEOUT)\
+APPLY(CNF_DTIMEOUT)\
+APPLY(CNF_CTIMEOUT)\
+APPLY(CNF_DEVICE_OUTPUT_BUFFER_SIZE)\
+APPLY(CNF_PRINTER)\
+APPLY(CNF_AUTOFLUSH)\
+APPLY(CNF_RESERVE)\
+APPLY(CNF_MAXDUMPSIZE)\
+APPLY(CNF_COLUMNSPEC)\
+APPLY(CNF_AMRECOVER_DO_FSF)\
+APPLY(CNF_AMRECOVER_CHECK_LABEL)\
+APPLY(CNF_AMRECOVER_CHANGER)\
+APPLY(CNF_TAPERALGO)\
+APPLY(CNF_FLUSH_THRESHOLD_DUMPED)\
+APPLY(CNF_FLUSH_THRESHOLD_SCHEDULED)\
+APPLY(CNF_TAPERFLUSH)\
+APPLY(CNF_DISPLAYUNIT)\
+APPLY(CNF_KRB5KEYTAB)\
+APPLY(CNF_KRB5PRINCIPAL)\
+APPLY(CNF_LABEL_NEW_TAPES)\
+APPLY(CNF_USETIMESTAMPS)\
+APPLY(CNF_REP_TRIES)\
+APPLY(CNF_CONNECT_TRIES)\
+APPLY(CNF_REQ_TRIES)\
+APPLY(CNF_DEBUG_AMANDAD)\
+APPLY(CNF_DEBUG_RECOVERY)\
+APPLY(CNF_DEBUG_AMIDXTAPED)\
+APPLY(CNF_DEBUG_AMINDEXD)\
+APPLY(CNF_DEBUG_AMRECOVER)\
+APPLY(CNF_DEBUG_AUTH)\
+APPLY(CNF_DEBUG_EVENT)\
+APPLY(CNF_DEBUG_HOLDING)\
+APPLY(CNF_DEBUG_PROTOCOL)\
+APPLY(CNF_DEBUG_PLANNER)\
+APPLY(CNF_DEBUG_DRIVER)\
+APPLY(CNF_DEBUG_DUMPER)\
+APPLY(CNF_DEBUG_CHUNKER)\
+APPLY(CNF_DEBUG_TAPER)\
+APPLY(CNF_DEBUG_SELFCHECK)\
+APPLY(CNF_DEBUG_SENDSIZE)\
+APPLY(CNF_DEBUG_SENDBACKUP)\
+APPLY(CNF_RESERVED_UDP_PORT)\
+APPLY(CNF_RESERVED_TCP_PORT)\
+APPLY(CNF_UNRESERVED_TCP_PORT)\
+APPLY(CNF_HOLDINGDISK)\
+APPLY(CNF_SEND_AMREPORT_ON)
+
 amglue_add_enum_tag_fns(confparm_key);
-amglue_add_constant(CNF_ORG, confparm_key);
-amglue_add_constant(CNF_CONF, confparm_key);
-amglue_add_constant(CNF_INDEX_SERVER, confparm_key);
-amglue_add_constant(CNF_TAPE_SERVER, confparm_key);
-amglue_add_constant(CNF_AUTH, confparm_key);
-amglue_add_constant(CNF_SSH_KEYS, confparm_key);
-amglue_add_constant(CNF_AMANDAD_PATH, confparm_key);
-amglue_add_constant(CNF_CLIENT_USERNAME, confparm_key);
-amglue_add_constant(CNF_CLIENT_PORT, confparm_key);
-amglue_add_constant(CNF_GNUTAR_LIST_DIR, confparm_key);
-amglue_add_constant(CNF_AMANDATES, confparm_key);
-amglue_add_constant(CNF_MAILER, confparm_key);
-amglue_add_constant(CNF_MAILTO, confparm_key);
-amglue_add_constant(CNF_DUMPUSER, confparm_key);
-amglue_add_constant(CNF_TAPEDEV, confparm_key);
-amglue_add_constant(CNF_DEVICE_PROPERTY, confparm_key);
-amglue_add_constant(CNF_PROPERTY, confparm_key);
-amglue_add_constant(CNF_CHANGERDEV, confparm_key);
-amglue_add_constant(CNF_CHANGERFILE, confparm_key);
-amglue_add_constant(CNF_LABELSTR, confparm_key);
-amglue_add_constant(CNF_AUTOLABEL, confparm_key);
-amglue_add_constant(CNF_TAPELIST, confparm_key);
-amglue_add_constant(CNF_DISKFILE, confparm_key);
-amglue_add_constant(CNF_INFOFILE, confparm_key);
-amglue_add_constant(CNF_LOGDIR, confparm_key);
-amglue_add_constant(CNF_INDEXDIR, confparm_key);
-amglue_add_constant(CNF_TAPETYPE, confparm_key);
-amglue_add_constant(CNF_DUMPCYCLE, confparm_key);
-amglue_add_constant(CNF_RUNSPERCYCLE, confparm_key);
-amglue_add_constant(CNF_TAPECYCLE, confparm_key);
-amglue_add_constant(CNF_NETUSAGE, confparm_key);
-amglue_add_constant(CNF_INPARALLEL, confparm_key);
-amglue_add_constant(CNF_DUMPORDER, confparm_key);
-amglue_add_constant(CNF_BUMPPERCENT, confparm_key);
-amglue_add_constant(CNF_BUMPSIZE, confparm_key);
-amglue_add_constant(CNF_BUMPMULT, confparm_key);
-amglue_add_constant(CNF_BUMPDAYS, confparm_key);
-amglue_add_constant(CNF_TPCHANGER, confparm_key);
-amglue_add_constant(CNF_RUNTAPES, confparm_key);
-amglue_add_constant(CNF_MAXDUMPS, confparm_key);
-amglue_add_constant(CNF_ETIMEOUT, confparm_key);
-amglue_add_constant(CNF_DTIMEOUT, confparm_key);
-amglue_add_constant(CNF_CTIMEOUT, confparm_key);
-amglue_add_constant(CNF_DEVICE_OUTPUT_BUFFER_SIZE, confparm_key);
-amglue_add_constant(CNF_PRINTER, confparm_key);
-amglue_add_constant(CNF_AUTOFLUSH, confparm_key);
-amglue_add_constant(CNF_RESERVE, confparm_key);
-amglue_add_constant(CNF_MAXDUMPSIZE, confparm_key);
-amglue_add_constant(CNF_COLUMNSPEC, confparm_key);
-amglue_add_constant(CNF_AMRECOVER_DO_FSF, confparm_key);
-amglue_add_constant(CNF_AMRECOVER_CHECK_LABEL, confparm_key);
-amglue_add_constant(CNF_AMRECOVER_CHANGER, confparm_key);
-amglue_add_constant(CNF_TAPERALGO, confparm_key);
-amglue_add_constant(CNF_FLUSH_THRESHOLD_DUMPED, confparm_key);
-amglue_add_constant(CNF_FLUSH_THRESHOLD_SCHEDULED, confparm_key);
-amglue_add_constant(CNF_TAPERFLUSH, confparm_key);
-amglue_add_constant(CNF_DISPLAYUNIT, confparm_key);
-amglue_add_constant(CNF_KRB5KEYTAB, confparm_key);
-amglue_add_constant(CNF_KRB5PRINCIPAL, confparm_key);
-amglue_add_constant(CNF_LABEL_NEW_TAPES, confparm_key);
-amglue_add_constant(CNF_USETIMESTAMPS, confparm_key);
-amglue_add_constant(CNF_REP_TRIES, confparm_key);
-amglue_add_constant(CNF_CONNECT_TRIES, confparm_key);
-amglue_add_constant(CNF_REQ_TRIES, confparm_key);
-amglue_add_constant(CNF_DEBUG_AMANDAD, confparm_key);
-amglue_add_constant(CNF_DEBUG_RECOVERY, confparm_key);
-amglue_add_constant(CNF_DEBUG_AMIDXTAPED, confparm_key);
-amglue_add_constant(CNF_DEBUG_AMINDEXD, confparm_key);
-amglue_add_constant(CNF_DEBUG_AMRECOVER, confparm_key);
-amglue_add_constant(CNF_DEBUG_AUTH, confparm_key);
-amglue_add_constant(CNF_DEBUG_EVENT, confparm_key);
-amglue_add_constant(CNF_DEBUG_HOLDING, confparm_key);
-amglue_add_constant(CNF_DEBUG_PROTOCOL, confparm_key);
-amglue_add_constant(CNF_DEBUG_PLANNER, confparm_key);
-amglue_add_constant(CNF_DEBUG_DRIVER, confparm_key);
-amglue_add_constant(CNF_DEBUG_DUMPER, confparm_key);
-amglue_add_constant(CNF_DEBUG_CHUNKER, confparm_key);
-amglue_add_constant(CNF_DEBUG_TAPER, confparm_key);
-amglue_add_constant(CNF_DEBUG_SELFCHECK, confparm_key);
-amglue_add_constant(CNF_DEBUG_SENDSIZE, confparm_key);
-amglue_add_constant(CNF_DEBUG_SENDBACKUP, confparm_key);
-amglue_add_constant(CNF_RESERVED_UDP_PORT, confparm_key);
-amglue_add_constant(CNF_RESERVED_TCP_PORT, confparm_key);
-amglue_add_constant(CNF_UNRESERVED_TCP_PORT, confparm_key);
-amglue_add_constant(CNF_HOLDINGDISK, confparm_key);
-amglue_add_constant(CNF_SEND_AMREPORT_ON, confparm_key);
+amglue_add_constants(FOR_ALL_CONFPARM_KEY, confparm_key);
 amglue_copy_to_tag(confparm_key, getconf);
+constant_pod(Global Parameters, FOR_ALL_CONFPARM_KEY)
+
+#define FOR_ALL_TAPETYPE_KEY(APPLY)\
+APPLY(TAPETYPE_COMMENT)\
+APPLY(TAPETYPE_LBL_TEMPL)\
+APPLY(TAPETYPE_BLOCKSIZE)\
+APPLY(TAPETYPE_READBLOCKSIZE)\
+APPLY(TAPETYPE_LENGTH)\
+APPLY(TAPETYPE_FILEMARK)\
+APPLY(TAPETYPE_SPEED)\
+APPLY(TAPETYPE_PART_SIZE)\
+APPLY(TAPETYPE_PART_CACHE_TYPE)\
+APPLY(TAPETYPE_PART_CACHE_DIR)\
+APPLY(TAPETYPE_PART_CACHE_MAX_SIZE)
 
 amglue_add_enum_tag_fns(tapetype_key);
-amglue_add_constant(TAPETYPE_COMMENT, tapetype_key);
-amglue_add_constant(TAPETYPE_LBL_TEMPL, tapetype_key);
-amglue_add_constant(TAPETYPE_BLOCKSIZE, tapetype_key);
-amglue_add_constant(TAPETYPE_READBLOCKSIZE, tapetype_key);
-amglue_add_constant(TAPETYPE_LENGTH, tapetype_key);
-amglue_add_constant(TAPETYPE_FILEMARK, tapetype_key);
-amglue_add_constant(TAPETYPE_SPEED, tapetype_key);
-amglue_add_constant(TAPETYPE_PART_SIZE, tapetype_key);
-amglue_add_constant(TAPETYPE_PART_CACHE_TYPE, tapetype_key);
-amglue_add_constant(TAPETYPE_PART_CACHE_DIR, tapetype_key);
-amglue_add_constant(TAPETYPE_PART_CACHE_MAX_SIZE, tapetype_key);
+amglue_add_constants(FOR_ALL_TAPETYPE_KEY, tapetype_key);
 amglue_copy_to_tag(tapetype_key, getconf);
+constant_pod(Tapetype Parameters, FOR_ALL_TAPETYPE_KEY)
+
+#define FOR_ALL_DUMPTYPE_KEY(APPLY)\
+APPLY(DUMPTYPE_COMMENT)\
+APPLY(DUMPTYPE_PROGRAM)\
+APPLY(DUMPTYPE_SRVCOMPPROG)\
+APPLY(DUMPTYPE_CLNTCOMPPROG)\
+APPLY(DUMPTYPE_SRV_ENCRYPT)\
+APPLY(DUMPTYPE_CLNT_ENCRYPT)\
+APPLY(DUMPTYPE_AMANDAD_PATH)\
+APPLY(DUMPTYPE_CLIENT_USERNAME)\
+APPLY(DUMPTYPE_CLIENT_PORT)\
+APPLY(DUMPTYPE_SSH_KEYS)\
+APPLY(DUMPTYPE_AUTH)\
+APPLY(DUMPTYPE_EXCLUDE)\
+APPLY(DUMPTYPE_INCLUDE)\
+APPLY(DUMPTYPE_PRIORITY)\
+APPLY(DUMPTYPE_DUMPCYCLE)\
+APPLY(DUMPTYPE_MAXDUMPS)\
+APPLY(DUMPTYPE_MAXPROMOTEDAY)\
+APPLY(DUMPTYPE_BUMPPERCENT)\
+APPLY(DUMPTYPE_BUMPSIZE)\
+APPLY(DUMPTYPE_BUMPDAYS)\
+APPLY(DUMPTYPE_BUMPMULT)\
+APPLY(DUMPTYPE_STARTTIME)\
+APPLY(DUMPTYPE_STRATEGY)\
+APPLY(DUMPTYPE_ESTIMATELIST)\
+APPLY(DUMPTYPE_COMPRESS)\
+APPLY(DUMPTYPE_ENCRYPT)\
+APPLY(DUMPTYPE_SRV_DECRYPT_OPT)\
+APPLY(DUMPTYPE_CLNT_DECRYPT_OPT)\
+APPLY(DUMPTYPE_COMPRATE)\
+APPLY(DUMPTYPE_TAPE_SPLITSIZE)\
+APPLY(DUMPTYPE_FALLBACK_SPLITSIZE)\
+APPLY(DUMPTYPE_SPLIT_DISKBUFFER)\
+APPLY(DUMPTYPE_RECORD)\
+APPLY(DUMPTYPE_SKIP_INCR)\
+APPLY(DUMPTYPE_SKIP_FULL)\
+APPLY(DUMPTYPE_HOLDINGDISK)\
+APPLY(DUMPTYPE_KENCRYPT)\
+APPLY(DUMPTYPE_IGNORE)\
+APPLY(DUMPTYPE_INDEX)\
+APPLY(DUMPTYPE_APPLICATION)\
+APPLY(DUMPTYPE_SCRIPTLIST)\
+APPLY(DUMPTYPE_PROPERTY)\
+APPLY(DUMPTYPE_DATA_PATH)\
+APPLY(DUMPTYPE_ALLOW_SPLIT)
 
 amglue_add_enum_tag_fns(dumptype_key);
-amglue_add_constant(DUMPTYPE_COMMENT, dumptype_key);
-amglue_add_constant(DUMPTYPE_PROGRAM, dumptype_key);
-amglue_add_constant(DUMPTYPE_SRVCOMPPROG, dumptype_key);
-amglue_add_constant(DUMPTYPE_CLNTCOMPPROG, dumptype_key);
-amglue_add_constant(DUMPTYPE_SRV_ENCRYPT, dumptype_key);
-amglue_add_constant(DUMPTYPE_CLNT_ENCRYPT, dumptype_key);
-amglue_add_constant(DUMPTYPE_AMANDAD_PATH, dumptype_key);
-amglue_add_constant(DUMPTYPE_CLIENT_USERNAME, dumptype_key);
-amglue_add_constant(DUMPTYPE_CLIENT_PORT, dumptype_key);
-amglue_add_constant(DUMPTYPE_SSH_KEYS, dumptype_key);
-amglue_add_constant(DUMPTYPE_AUTH, dumptype_key);
-amglue_add_constant(DUMPTYPE_EXCLUDE, dumptype_key);
-amglue_add_constant(DUMPTYPE_INCLUDE, dumptype_key);
-amglue_add_constant(DUMPTYPE_PRIORITY, dumptype_key);
-amglue_add_constant(DUMPTYPE_DUMPCYCLE, dumptype_key);
-amglue_add_constant(DUMPTYPE_MAXDUMPS, dumptype_key);
-amglue_add_constant(DUMPTYPE_MAXPROMOTEDAY, dumptype_key);
-amglue_add_constant(DUMPTYPE_BUMPPERCENT, dumptype_key);
-amglue_add_constant(DUMPTYPE_BUMPSIZE, dumptype_key);
-amglue_add_constant(DUMPTYPE_BUMPDAYS, dumptype_key);
-amglue_add_constant(DUMPTYPE_BUMPMULT, dumptype_key);
-amglue_add_constant(DUMPTYPE_STARTTIME, dumptype_key);
-amglue_add_constant(DUMPTYPE_STRATEGY, dumptype_key);
-amglue_add_constant(DUMPTYPE_ESTIMATELIST, dumptype_key);
-amglue_add_constant(DUMPTYPE_COMPRESS, dumptype_key);
-amglue_add_constant(DUMPTYPE_ENCRYPT, dumptype_key);
-amglue_add_constant(DUMPTYPE_SRV_DECRYPT_OPT, dumptype_key);
-amglue_add_constant(DUMPTYPE_CLNT_DECRYPT_OPT, dumptype_key);
-amglue_add_constant(DUMPTYPE_COMPRATE, dumptype_key);
-amglue_add_constant(DUMPTYPE_TAPE_SPLITSIZE, dumptype_key);
-amglue_add_constant(DUMPTYPE_FALLBACK_SPLITSIZE, dumptype_key);
-amglue_add_constant(DUMPTYPE_SPLIT_DISKBUFFER, dumptype_key);
-amglue_add_constant(DUMPTYPE_RECORD, dumptype_key);
-amglue_add_constant(DUMPTYPE_SKIP_INCR, dumptype_key);
-amglue_add_constant(DUMPTYPE_SKIP_FULL, dumptype_key);
-amglue_add_constant(DUMPTYPE_HOLDINGDISK, dumptype_key);
-amglue_add_constant(DUMPTYPE_KENCRYPT, dumptype_key);
-amglue_add_constant(DUMPTYPE_IGNORE, dumptype_key);
-amglue_add_constant(DUMPTYPE_INDEX, dumptype_key);
-amglue_add_constant(DUMPTYPE_APPLICATION, dumptype_key);
-amglue_add_constant(DUMPTYPE_SCRIPTLIST, dumptype_key);
-amglue_add_constant(DUMPTYPE_PROPERTY, dumptype_key);
-amglue_add_constant(DUMPTYPE_DATA_PATH, dumptype_key);
-amglue_add_constant(DUMPTYPE_ALLOW_SPLIT, dumptype_key);
+amglue_add_constants(FOR_ALL_DUMPTYPE_KEY, dumptype_key);
 amglue_copy_to_tag(dumptype_key, getconf);
+constant_pod(Dumptype Parameters, FOR_ALL_DUMPTYPE_KEY)
+
+#define FOR_ALL_INTERFACE_KEY(APPLY)\
+APPLY(INTER_COMMENT)\
+APPLY(INTER_MAXUSAGE)
 
 amglue_add_enum_tag_fns(interface_key);
-amglue_add_constant(INTER_COMMENT, interface_key);
-amglue_add_constant(INTER_MAXUSAGE, interface_key);
+amglue_add_constants(FOR_ALL_INTERFACE_KEY, interface_key);
 amglue_copy_to_tag(interface_key, getconf);
+constant_pod(Dumptype Parameters, FOR_ALL_INTERFACE_KEY)
+
+#define FOR_ALL_HOLDINGDISK_KEY(APPLY)\
+APPLY(HOLDING_COMMENT)\
+APPLY(HOLDING_DISKDIR)\
+APPLY(HOLDING_DISKSIZE)\
+APPLY(HOLDING_CHUNKSIZE)
 
 amglue_add_enum_tag_fns(holdingdisk_key);
-amglue_add_constant(HOLDING_COMMENT, holdingdisk_key);
-amglue_add_constant(HOLDING_DISKDIR, holdingdisk_key);
-amglue_add_constant(HOLDING_DISKSIZE, holdingdisk_key);
-amglue_add_constant(HOLDING_CHUNKSIZE, holdingdisk_key);
+amglue_add_constants(FOR_ALL_HOLDINGDISK_KEY, holdingdisk_key);
 amglue_copy_to_tag(holdingdisk_key, getconf);
+constant_pod(Holdingdisk Parameters, FOR_ALL_HOLDINGDISK_KEY)
+
+#define FOR_ALL_APPLICATION_KEY(APPLY)\
+APPLY(APPLICATION_COMMENT)\
+APPLY(APPLICATION_PLUGIN)\
+APPLY(APPLICATION_PROPERTY)
 
 amglue_add_enum_tag_fns(application_key);
-amglue_add_constant(APPLICATION_COMMENT, application_key);
-amglue_add_constant(APPLICATION_PLUGIN, application_key);
-amglue_add_constant(APPLICATION_PROPERTY, application_key);
+amglue_add_constants(FOR_ALL_APPLICATION_KEY, application_key);
 amglue_copy_to_tag(application_key, getconf);
+constant_pod(Application Parameters, FOR_ALL_APPLICATION_KEY)
+
+#define FOR_ALL_PP_SCRIPT_KEY(APPLY)\
+APPLY(PP_SCRIPT_COMMENT)\
+APPLY(PP_SCRIPT_PLUGIN)\
+APPLY(PP_SCRIPT_PROPERTY)\
+APPLY(PP_SCRIPT_EXECUTE_ON)\
+APPLY(PP_SCRIPT_EXECUTE_WHERE)\
+APPLY(PP_SCRIPT_ORDER)
 
 amglue_add_enum_tag_fns(pp_script_key);
-amglue_add_constant(PP_SCRIPT_COMMENT, pp_script_key);
-amglue_add_constant(PP_SCRIPT_PLUGIN, pp_script_key);
-amglue_add_constant(PP_SCRIPT_PROPERTY, pp_script_key);
-amglue_add_constant(PP_SCRIPT_EXECUTE_ON, pp_script_key);
-amglue_add_constant(PP_SCRIPT_EXECUTE_WHERE, pp_script_key);
-amglue_add_constant(PP_SCRIPT_ORDER, pp_script_key);
+amglue_add_constants(FOR_ALL_PP_SCRIPT_KEY, pp_script_key);
 amglue_copy_to_tag(pp_script_key, getconf);
+constant_pod(Pre/Post-Script Parameters, FOR_ALL_PP_SCRIPT_KEY)
+
+#define FOR_ALL_DEVICE_CONFIG_KEY(APPLY)\
+APPLY(DEVICE_CONFIG_COMMENT)\
+APPLY(DEVICE_CONFIG_TAPEDEV)\
+APPLY(DEVICE_CONFIG_DEVICE_PROPERTY)
 
 amglue_add_enum_tag_fns(device_config_key);
-amglue_add_constant(DEVICE_CONFIG_COMMENT, device_config_key);
-amglue_add_constant(DEVICE_CONFIG_TAPEDEV, device_config_key);
-amglue_add_constant(DEVICE_CONFIG_DEVICE_PROPERTY, device_config_key);
+amglue_add_constants(FOR_ALL_DEVICE_CONFIG_KEY, device_config_key);
 amglue_copy_to_tag(device_config_key, getconf);
+constant_pod(Pre/Post-Script Parameters, FOR_ALL_DEVICE_CONFIG_KEY)
+
+#define FOR_ALL_CHANGER_CONFIG_KEY(APPLY)\
+APPLY(CHANGER_CONFIG_COMMENT)\
+APPLY(CHANGER_CONFIG_TAPEDEV)\
+APPLY(CHANGER_CONFIG_TPCHANGER)\
+APPLY(CHANGER_CONFIG_CHANGERDEV)\
+APPLY(CHANGER_CONFIG_CHANGERFILE)\
+APPLY(CHANGER_CONFIG_PROPERTY)\
+APPLY(CHANGER_CONFIG_DEVICE_PROPERTY)
 
 amglue_add_enum_tag_fns(changer_config_key);
-amglue_add_constant(CHANGER_CONFIG_COMMENT, changer_config_key);
-amglue_add_constant(CHANGER_CONFIG_TAPEDEV, changer_config_key);
-amglue_add_constant(CHANGER_CONFIG_TPCHANGER, changer_config_key);
-amglue_add_constant(CHANGER_CONFIG_CHANGERDEV, changer_config_key);
-amglue_add_constant(CHANGER_CONFIG_CHANGERFILE, changer_config_key);
-amglue_add_constant(CHANGER_CONFIG_PROPERTY, changer_config_key);
-amglue_add_constant(CHANGER_CONFIG_DEVICE_PROPERTY, changer_config_key);
+amglue_add_constants(FOR_ALL_CHANGER_CONFIG_KEY, changer_config_key);
 amglue_copy_to_tag(changer_config_key, getconf);
+constant_pod(Pre/Post-Script Parameters, FOR_ALL_CHANGER_CONFIG_KEY)
 
 /*
  * Various enumerated conftypes

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -23,6 +23,29 @@
  */
 
 %include "amglue/exports.swg"
+
+/*
+ * Internal support for iterating over lists of symbols; users will define
+ * the list as e.g.,
+ *
+ *   #define FOR_ALL_WHATEVER(APPLY) APPLY(SYMBOL1) APPLY(SYMBOL2) ..
+ *
+ * and then passes FOR_ALL_WHATEVER as the FORALL_FN argument to one of the
+ * macros below.  This uses the "X Macro" trick; see
+ * http://www.drdobbs.com/blog/archives/2010/06/the_x_macro.html
+ *
+ * NOTE: SWIG's %define macros add C-style comments when they are expanded, so
+ * this method must use #define, not %define.  Also note that this always expands
+ * to a single line, making the result very ugly.
+ */
+
+#define _amglue_apply_null(V) V
+#define _amglue_apply_leading_scalar(V) $V
+#define _amglue_apply_trailing_comma(V) V,
+#define _amglue_apply_C_scalar(V) C<$V>
+#define _amglue_forall_join_whitespace(FORALL_FN) FORALL_FN(_amglue_apply_null)
+#define _amglue_forall_scalars(FORALL_FN) FORALL_FN(_amglue_apply_leading_scalar)
+#define _amglue_forall_terminated_by_comma(FORALL_FN) FORALL_FN(_amglue_apply_trailing_comma)
 
 /* Rather than try to use glib's flag/enum architecture, which is only used
  * for a few constants (mostly in property.h), .swg files define constants using
@@ -111,6 +134,21 @@ $_ ## TAG ## _VALUES{`CONSTNAME`} = $CONSTNAME;
 %}
 %enddef
 
+/* Add a bunch of constants all at once; this is more efficient with
+ * a large list of constants
+ *
+ * @param FORALL_FN: the FORALL_FN listing all of the constants (see above)
+ * @param TAG: the tag for these constants
+ */
+#define amglue_add_constants(FORALL_FN, TAG) \
+enum { _amglue_forall_terminated_by_comma(FORALL_FN) }; \
+amglue_export_tag(TAG, _amglue_forall_scalars(FORALL_FN)) \
+%perlcode %{ \
+    foreach (qw( _amglue_forall_join_whitespace(FORALL_FN))) { \
+	$_ ## TAG ## _VALUES{$_} = $$_; \
+    } \
+%}
+
 /* Add the given constant with a short name
  *
  * @param CONSTNAME: the name of the constant, as used in C code
@@ -136,3 +174,12 @@ $_ ## TAG ## _VALUES{`SHORTNAME`} = $CONSTNAME;
 enum { CONSTNAME }; /* pass the constant to SWIG */
 amglue_export_tag(TAG, $CONSTNAME);
 %enddef
+
+/* Return the symbols alone, separated by whitespace.  Note that this will
+ * being with whitespace, too.  Be careful if using it in POD.
+ *
+ * @param FORALL_FN: the forall function to use (see above)
+ */
+#define amglue_constants_list(FORALL_FN) \
+    FORALL_FN(_amglue_apply_C_scalar)
+
