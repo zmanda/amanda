@@ -136,7 +136,7 @@ the file for you!
 
 This source reads data from a holding file (see L<Amanda::Holding>).
 If the transfer only consists of a C<Amanda::Xfer::Source::Holding>
-and an C<Amanda::Xfer::Dest::Taper::Splitter> (with no filters), then the source
+and an C<Amanda::Xfer::Dest::Taper::Cacher> (with no filters), then the source
 will call the destination's C<cache_inform> method so that it can use
 holding chunks for a split-part cache.
 
@@ -308,7 +308,7 @@ validation is performed if C<$seed> is zero.
 
 =head3 Amanda::Xfer::Dest::Taper (SERVER ONLY)
 
-This is the parent class to C<Amanda::Xfer::Dest::Taper::Splitter> and
+This is the parent class to C<Amanda::Xfer::Dest::Taper::Cacher> and
 C<Amanda::Xfer::Dest::Taper::DirectTCP>. These subclasses allow a single
 transfer to write to multiple files (parts) on a device, and even spread those
 parts over multiple devices, without interrupting the transfer itself.
@@ -376,19 +376,30 @@ to the device.
 
 =head3 Amanda::Xfer::Dest::Taper::Splitter
 
-  Amanda::Xfer::Dest::Taper::Splitter->new($first_device, $max_memory,
+  Amanda::Xfer::Dest::Taper::Cacher->new($first_device, $max_memory,
+                        $part_size);
+
+This class splits a data stream into parts on the storage media.  Since parts
+are not cached, it cannot re-write a partial part, so if it is used with
+devices that do not support LEOM, then it may fail an entire transfer if the
+device reaches EOM.
+
+The C<$part_size> and C<$first_device> parameters are described above for
+C<Amanda::Xfer::Dest::Taper>.
+
+=head3 Amanda::Xfer::Dest::Taper::Cacher
+
+  Amanda::Xfer::Dest::Taper::Cacher->new($first_device, $max_memory,
                         $part_size, $use_mem_cache, $disk_cache_dirname);
 
-This class caches data from each part in one of a variety of ways, and supports
-"rewinding" to retry a failed part (e.g., one that does not fit on a device).
-It assumes that when a device reaches EOM while writing, the entire file is
-corrupt.  It does not (yet) support logical EOM, which can render this
-assumption incorrect.
+This class is similar to the splitter, but caches data from each part in one of
+a variety of ways, and supports "rewinding" to retry a failed part (e.g., one
+that does not fit on a device).  It assumes that when a device reaches EOM
+while writing, the entire file is corrupt - that is, that the device does not
+support logical EOM.
 
-The C<$first_device> is used to calculate some internal constants, notably the
-slab size, based on the device characteristics.   Subsequent devices must have
-the same block size.  The C<$part_size> and C<$first_device> parameters are
-described above.
+The C<$part_size> and C<$first_device> parameters are described above for
+C<Amanda::Xfer::Dest::Taper>.
 
 If C<$use_mem_cache> is true, each part will be cached in memory (using
 C<$part_size> bytes of memory; plan accordingly!).  If C<$disk_cache_dirname>

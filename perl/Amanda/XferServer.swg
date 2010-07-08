@@ -50,6 +50,12 @@ XferElement * xfer_source_holding(
 XferElement *xfer_dest_taper_splitter(
     Device *first_device,
     size_t max_memory,
+    guint64 part_size);
+
+%newobject xfer_dest_taper_cacher;
+XferElement *xfer_dest_taper_cacher(
+    Device *first_device,
+    size_t max_memory,
     guint64 part_size,
     gboolean use_mem_cache,
     const char *disk_cache_dirname);
@@ -120,6 +126,12 @@ DECLARE_METHOD(get_part_bytes_written, Amanda::XferServer::xfer_dest_taper_get_p
 PACKAGE(Amanda::Xfer::Dest::Taper::Splitter)
 XFER_ELEMENT_SUBCLASS_OF(Amanda::Xfer::Dest::Taper)
 DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_dest_taper_splitter)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Dest::Taper::Cacher)
+XFER_ELEMENT_SUBCLASS_OF(Amanda::Xfer::Dest::Taper)
+DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_dest_taper_cacher)
 
 /* ---- */
 

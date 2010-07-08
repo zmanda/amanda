@@ -1,4 +1,17 @@
 2010-07-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-dest-taper-splitter.c: new, non-caching taper dest
+	* device-src/xfer-dest-taper-cacher.c: new name for old .._splitter
+	* perl/Amanda/Xfer.pod perl/Amanda/XferServer.swg: SWIG new class
+	  and renamed class
+	* device-src/xfer-dest-taper-directtcp.c 
+	  device-src/xfer-dest-taper.c: move null cach_inform to parent class
+	* device-src/xfer-device.h: prototypes
+	* device-src/Makefile.am: new file
+	* installcheck/Amanda_Device.pl: LEOM tests
+	* installcheck/Amanda_Xfer.pl: tests for new taper dest
+	* perl/Amanda/Taper/Scribe.pm: use new name (..::Cacher)
+
+2010-07-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/property.c device-src/property.h device-src/device.c: add
 	  LEOM property
 	* perl/Amanda/Device.pod man/xml-source/amanda-devices.7.xml

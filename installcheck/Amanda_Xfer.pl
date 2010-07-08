@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 38;
+use Test::More tests => 47;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -467,15 +467,16 @@ SKIP: {
 	$device = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($vtape_num++));
 	die("Could not open VFS device: " . $device->error())
 	    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_SUCCESS);
-	$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
 	$device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
+	$device->property_set("LEOM", $params{'disable_leom'}? 0 : 1);
+	$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
 	my $dest = $dest_sub->($device);
 
 	# and create the xfer
 	$xfer = Amanda::Xfer->new([ $src, $dest ]);
 
 	my $start_new_part = sub {
-	    my ($successful, $eof, $partnum) = @_;
+	    my ($successful, $eof, $partnum, $eom) = @_;
 
 	    if (exists $params{'cancel_after_partnum'}
 		    and $params{'cancel_after_partnum'} == $partnum) {
@@ -484,7 +485,7 @@ SKIP: {
 		return;
 	    }
 
-	    if (!$device || !$successful) {
+	    if (!$device || $eom) {
 		# set up a device and start writing a part to it
 		$device->finish() if $device;
 		$device = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($vtape_num++));
@@ -518,7 +519,8 @@ SKIP: {
 		die $msg->{'elt'} . " failed: " . $msg->{'message'};
 	    } elsif ($msg->{'type'} == $XMSG_PART_DONE) {
 		push @messages, "PART-" . $msg->{'partnum'} . '-' . ($msg->{'successful'}? "OK" : "FAILED");
-		$start_new_part->($msg->{'successful'}, $msg->{'eof'}, $msg->{'partnum'});
+		push @messages, "EOM" if $msg->{'eom'};
+		$start_new_part->($msg->{'successful'}, $msg->{'eof'}, $msg->{'partnum'}, $msg->{'eom'});
 	    } elsif ($msg->{'type'} == $XMSG_DONE) {
 		push @messages, "DONE";
 		Amanda::MainLoop::quit();
@@ -673,18 +675,129 @@ SKIP: {
 	return "$holding_base/file0";
     }
 
+    # first, test the simpler Splitter class
+    test_taper_dest(
+	Amanda::Xfer::Source::Random->new(1024*1951, $RANDOM_SEED),
+	sub {
+	    my ($first_dev) = @_;
+	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
+						     520*1024);
+	},
+	[ "PART-1-OK", "PART-2-OK", "PART-3-OK", "PART-4-OK",
+	  "DONE" ],
+	"Amanda::Xfer::Dest::Taper::Splitter - simple splitting");
+    test_recovery_source(
+	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
+	[ 1 => [ 1, 2, 3, 4 ], ],
+	[
+	  'READY',
+	  'PART',
+	  'KB-544',
+	  'PART',
+	  'KB-544',
+	  'PART',
+	  'KB-544',
+	  'PART',
+	  'KB-319',
+	  'DONE'
+	]);
+
+    test_taper_dest(
+	Amanda::Xfer::Source::Random->new(1024*1024*3.1, $RANDOM_SEED),
+	sub {
+	    my ($first_dev) = @_;
+	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
+						     1024*1024);
+	},
+	[ "PART-1-OK", "PART-2-OK", "PART-3-OK", "EOM",
+	  "PART-4-OK",
+	  "DONE" ],
+	"Amanda::Xfer::Dest::Taper::Splitter - splitting and spanning with LEOM");
+    test_recovery_source(
+	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
+	[ 1 => [ 1, 2, 3 ], 2 => [ 1, ], ],
+	[
+	  'READY',
+	  'PART',
+	  'KB-1024',
+	  'PART',
+	  'KB-1024',
+	  'PART',
+	  'KB-288',
+	  'PART',
+	  'KB-838',
+	  'DONE'
+	]);
+
+    test_taper_dest(
+	Amanda::Xfer::Source::Random->new(1024*1024*1.5, $RANDOM_SEED),
+	sub {
+	    my ($first_dev) = @_;
+	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
+						     0);
+	},
+	[ "PART-1-OK",
+	  "DONE" ],
+	"Amanda::Xfer::Dest::Taper::Splitter - no splitting");
+    test_recovery_source(
+	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
+	[ 1 => [ 1, ], ],
+	[
+	  'READY',
+	  'PART',
+	  'KB-1536',
+	  'DONE'
+	]);
+
+    test_taper_dest(
+	Amanda::Xfer::Source::Random->new(1024*1024*3.1, $RANDOM_SEED),
+	sub {
+	    my ($first_dev) = @_;
+	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
+						     2368*1024);
+	},
+	[ "PART-1-OK", "PART-2-OK", "EOM",
+	  "PART-3-OK",
+	  "DONE" ],
+	"Amanda::Xfer::Dest::Taper::Splitter - LEOM hits in file 2 header");
+    test_recovery_source(
+	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
+	[ 1 => [ 1, 2 ], 2 => [ 1, ], ],
+	[
+	  'READY',
+	  'PART',
+	  'KB-2368',
+	  'PART',
+	  'KB-0', # this wouldn't be in the catalog, but it's on the vtape
+	  'PART',
+	  'KB-806',
+	  'DONE'
+	]);
+
+    test_taper_dest(
+	Amanda::Xfer::Source::Random->new(1024*1024*3.1, $RANDOM_SEED),
+	sub {
+	    my ($first_dev) = @_;
+	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
+						     2368*1024);
+	},
+	[ "PART-1-OK", "PART-2-FAILED", "EOM",
+	  "NOT-RETRYING", "CANCELLED", "DONE" ],
+	"Amanda::Xfer::Dest::Taper::Splitter - LEOM fails, PEOM => failure",
+	disable_leom => 1, do_not_retry => 1);
+
     # run this test in each of a few different cache permutations
     test_taper_dest(
 	Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
 	sub {
 	    my ($first_dev) = @_;
-	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
+	    Amanda::Xfer::Dest::Taper::Cacher->new($first_dev, 128*1024,
 						     1024*1024, 1, undef),
 	},
-	[ "PART-1-OK", "PART-2-OK", "PART-3-FAILED",
+	[ "PART-1-OK", "PART-2-OK", "PART-3-FAILED", "EOM",
 	  "PART-3-OK", "PART-4-OK", "PART-5-OK",
 	  "DONE" ],
-	"mem cache");
+	"Amanda::Xfer::Dest::Taper::Cacher - mem cache");
     test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
 	[ 1 => [ 1, 2 ], 2 => [ 1, 2, 3 ], ],
@@ -707,13 +820,13 @@ SKIP: {
 	Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
 	sub {
 	    my ($first_dev) = @_;
-	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
+	    Amanda::Xfer::Dest::Taper::Cacher->new($first_dev, 128*1024,
 					      1024*1024, 0, $disk_cache_dir),
 	},
-	[ "PART-1-OK", "PART-2-OK", "PART-3-FAILED",
+	[ "PART-1-OK", "PART-2-OK", "PART-3-FAILED", "EOM",
 	  "PART-3-OK", "PART-4-OK", "PART-5-OK",
 	  "DONE" ],
-	"disk cache");
+	"Amanda::Xfer::Dest::Taper::Cacher - disk cache");
     test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
 	[ 1 => [ 1, 2 ], 2 => [ 1, 2, 3 ], ],
@@ -736,12 +849,12 @@ SKIP: {
 	Amanda::Xfer::Source::Random->new(1024*1024*2, $RANDOM_SEED),
 	sub {
 	    my ($first_dev) = @_;
-	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
+	    Amanda::Xfer::Dest::Taper::Cacher->new($first_dev, 128*1024,
 						    1024*1024, 0, undef),
 	},
 	[ "PART-1-OK", "PART-2-OK", "PART-3-OK",
 	  "DONE" ],
-	"no cache (no failed parts; exact multiple of part size)");
+	"Amanda::Xfer::Dest::Taper::Cacher - no cache (no failed parts; exact multiple of part size)");
     test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
 	[ 1 => [ 1, 2, 3 ], ],
@@ -760,10 +873,10 @@ SKIP: {
 	Amanda::Xfer::Source::Random->new(1024*1024*2, $RANDOM_SEED),
 	sub {
 	    my ($first_dev) = @_;
-	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024, 0, 0, undef),
+	    Amanda::Xfer::Dest::Taper::Cacher->new($first_dev, 128*1024, 0, 0, undef),
 	},
 	[ "PART-1-OK", "DONE" ],
-	"no splitting (fits on volume)");
+	"Amanda::Xfer::Dest::Taper::Cacher - no splitting (fits on volume)");
     test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
 	[ 1 => [ 1 ], ],
@@ -778,23 +891,24 @@ SKIP: {
 	Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
 	sub {
 	    my ($first_dev) = @_;
-	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024, 0, 0, undef),
+	    Amanda::Xfer::Dest::Taper::Cacher->new($first_dev, 128*1024, 0, 0, undef),
 	},
-	[ "PART-1-FAILED", "NOT-RETRYING", "CANCELLED", "DONE" ],
-	"no splitting (doesn't fit on volume -> fails)",
+	[ "PART-1-FAILED", "EOM",
+	  "NOT-RETRYING", "CANCELLED", "DONE" ],
+	"Amanda::Xfer::Dest::Taper::Cacher - no splitting (doesn't fit on volume -> fails)",
 	do_not_retry => 1);
 
     test_taper_dest(
 	Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
 	sub {
 	    my ($first_dev) = @_;
-	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
+	    Amanda::Xfer::Dest::Taper::Cacher->new($first_dev, 128*1024,
 					    1024*1024, 0, $disk_cache_dir),
 	},
-	[ "PART-1-OK", "PART-2-OK", "PART-3-FAILED",
+	[ "PART-1-OK", "PART-2-OK", "PART-3-FAILED", "EOM",
 	  "PART-3-OK", "PART-4-OK", "CANCEL",
 	  "CANCELLED", "DONE" ],
-	"cancellation after success",
+	"Amanda::Xfer::Dest::Taper::Cacher - cancellation after success",
 	cancel_after_partnum => 4);
 
     # set up a few holding chunks and read from those
@@ -803,14 +917,15 @@ SKIP: {
 	Amanda::Xfer::Source::Holding->new($holding_file),
 	sub {
 	    my ($first_dev) = @_;
-	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
+	    Amanda::Xfer::Dest::Taper::Cacher->new($first_dev, 128*1024,
 					    1024*1024, 0, undef),
 	},
-	[ "PART-1-OK", "PART-2-OK", "PART-3-FAILED",
-	  "PART-3-OK", "PART-4-OK", "PART-5-FAILED",
+	[ "PART-1-OK", "PART-2-OK", "PART-3-FAILED", "EOM",
+	  "PART-3-OK", "PART-4-OK", "PART-5-FAILED", "EOM",
 	  "PART-5-OK", "PART-6-OK", "PART-7-OK",
 	  "DONE" ],
-	"Amanda::Xfer::Source::Holding acts as a source and supplies cache_inform");
+	"Amanda::Xfer::Dest::Taper::Cacher - Amanda::Xfer::Source::Holding "
+	. "acts as a source and supplies cache_inform");
 
     ##
     # test the cache_inform method
@@ -888,7 +1003,7 @@ SKIP: {
 	$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
 	$device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
 
-	my $dest = Amanda::Xfer::Dest::Taper::Splitter->new($device, 128*1024,
+	my $dest = Amanda::Xfer::Dest::Taper::Cacher->new($device, 128*1024,
 						    1024*1024, 0, undef);
 	$xfer = Amanda::Xfer->new([
 	    Amanda::Xfer::Source::Fd->new(fileno($fh)),

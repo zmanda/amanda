@@ -127,6 +127,22 @@ guint64 xfer_dest_taper_get_part_bytes_written(
     XferElement *self);
 
 /* Constructor for XferDestTaperSplitter, which writes data to devices block by
+ * block and splitting parts but no caching.
+ *
+ * @param first_device: the first device that will be used with this xfer, used
+ *                      to calculate some internal parameters
+ * @param max_memory: total amount of memory to use for buffers, or zero
+ *                    for a reasonable default.
+ * @param part_size: the desired size of each part
+ * @return: new element
+ */
+XferElement *
+xfer_dest_taper_splitter(
+    Device *first_device,
+    size_t max_memory,
+    guint64 part_size);
+
+/* Constructor for XferDestTaperCacher, which writes data to devices block by
  * block and handles caching and splitting parts.
  *
  * @param first_device: the first device that will be used with this xfer, used
@@ -140,7 +156,7 @@ guint64 xfer_dest_taper_get_part_bytes_written(
  * @return: new element
  */
 XferElement *
-xfer_dest_taper_splitter(
+xfer_dest_taper_cacher(
     Device *first_device,
     size_t max_memory,
     guint64 part_size,

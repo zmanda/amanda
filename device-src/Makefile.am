@@ -38,8 +38,9 @@ libamdevice_la_SOURCES = \
 	xfer-source-device.c \
 	xfer-dest-device.c \
 	xfer-dest-taper.c \
-	xfer-dest-taper-splitter.c \
+	xfer-dest-taper-cacher.c \
 	xfer-dest-taper-directtcp.c \
+	xfer-dest-taper-splitter.c \
 	xfer-source-recovery.c
 libamdevice_la_LIBADD = \
 	../common-src/libamanda.la \

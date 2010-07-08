@@ -398,16 +398,6 @@ use_device_impl(
     g_mutex_unlock(self->state_mutex);
 }
 
-static void
-cache_inform_impl(
-    XferDestTaper *xdtself G_GNUC_UNUSED,
-    const char *filename G_GNUC_UNUSED,
-    off_t offset G_GNUC_UNUSED,
-    off_t length G_GNUC_UNUSED)
-{
-    /* do nothing */
-}
-
 static guint64
 get_part_bytes_written_impl(
     XferDestTaper *xdtself G_GNUC_UNUSED)
@@ -476,7 +466,6 @@ class_init(
     klass->cancel = cancel_impl;
     xdt_klass->start_part = start_part_impl;
     xdt_klass->use_device = use_device_impl;
-    xdt_klass->cache_inform = cache_inform_impl;
     xdt_klass->get_part_bytes_written = get_part_bytes_written_impl;
     goc->finalize = finalize_impl;
 

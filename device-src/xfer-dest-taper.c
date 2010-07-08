@@ -1,6 +1,6 @@
 /*
  * Amanda, The Advanced Maryland Automatic Network Disk Archiver
- * Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -23,10 +23,21 @@
 #include "xfer-device.h"
 
 static void
+cache_inform_impl(
+    XferDestTaper *xdtself G_GNUC_UNUSED,
+    const char *filename G_GNUC_UNUSED,
+    off_t offset G_GNUC_UNUSED,
+    off_t length G_GNUC_UNUSED)
+{
+    /* do nothing */
+}
+
+static void
 class_init(
     XferDestTaperClass * selfc)
 {
     XferElementClass *klass = XFER_ELEMENT_CLASS(selfc);
+    selfc->cache_inform = cache_inform_impl;
 
     klass->perl_class = "Amanda::Xfer::Dest::Taper";
 }

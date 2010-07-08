@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 481;
+use Test::More tests => 499;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -325,6 +325,72 @@ ok($dev->erase(),
 
 ok($dev->finish(),
    "finish device after erase")
+    or diag($dev->error_or_status());
+
+# test the LEOM functionality
+
+$dev = undef;
+$dev = Amanda::Device->new($dev_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "$dev_name: re-create successful")
+    or diag($dev->error_or_status());
+ok($dev->property_set("MAX_VOLUME_USAGE", "512k"),
+    "set MAX_VOLUME_USAGE to test LEOM");
+ok($dev->property_set("LEOM", 1),
+    "set LEOM");
+
+ok($dev->start($ACCESS_WRITE, 'TESTCONF23', undef),
+    "start in write mode")
+    or diag($dev->error_or_status());
+
+ok($dev->start_file($dumpfile),
+    "start file 1")
+    or diag($dev->error_or_status());
+
+ok(!$dev->is_eom,
+    "device does not indicate LEOM before writing");
+
+ok(Amanda::Device::write_random_to_device(0xCAFE, 440*1024, $dev),
+    "write random data into the early-warning zone");
+
+ok($dev->is_eom,
+    "device indicates LEOM after writing");
+
+ok($dev->finish_file(),
+    "..but a finish_file is allowed to complete")
+    or diag($dev->error_or_status());
+
+ok($dev->finish(),
+   "finish device after LEOM test")
+    or diag($dev->error_or_status());
+
+$dev = undef;
+$dev = Amanda::Device->new($dev_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "$dev_name: re-create successful")
+    or diag($dev->error_or_status());
+ok($dev->property_set("MAX_VOLUME_USAGE", "160k"),
+    "set MAX_VOLUME_USAGE to test LEOM while writing the first header");
+ok($dev->property_set("LEOM", 1),
+    "set LEOM");
+
+ok($dev->start($ACCESS_WRITE, 'TESTCONF23', undef),
+    "start in write mode")
+    or diag($dev->error_or_status());
+
+ok($dev->start_file($dumpfile),
+    "start file 1")
+    or diag($dev->error_or_status());
+
+ok($dev->is_eom,
+    "device indicates LEOM after writing first header");
+
+ok($dev->finish_file(),
+    "..but a finish_file is allowed to complete")
+    or diag($dev->error_or_status());
+
+ok($dev->finish(),
+   "finish device after LEOM test")
     or diag($dev->error_or_status());
 
 ####

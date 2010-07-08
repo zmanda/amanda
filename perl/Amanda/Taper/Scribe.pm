@@ -664,7 +664,7 @@ sub get_xfer_dest {
 	    $xdt_first_dev, $part_size);
 	$self->{'xdt_ready'} = 0; # xdt isn't ready until we get XMSG_READY
     } else {
-	$xdt = Amanda::Xfer::Dest::Taper::Splitter->new(
+	$xdt = Amanda::Xfer::Dest::Taper::Cacher->new(
 	    $xdt_first_dev, $params{'max_memory'}, $part_size,
 	    $use_mem_cache, $disk_cache_dirname);
 	$self->{'xdt_ready'} = 1; # xdt is ready immediately
