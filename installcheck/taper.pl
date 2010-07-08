@@ -73,6 +73,10 @@ sub run_taper {
 	    $ndmp->reset();
 	    $ndmp->config($testconf);
 	}
+	unless ($params{'leom'} or $params{'ndmp_server'}) {
+	    $testconf->add_param('device_property', '"LEOM" "OFF"');
+	}
+	$testconf->add_param('debug_taper', '9'); ## TEMPORARY
 	$testconf->add_tapetype('TEST-TAPE', [
 	    'length' =>  "$length",
 	    ]);
@@ -696,7 +700,7 @@ $datestamp = "20200202222222";
 run_taper(4096, "multipart PORT-WRITE");
 like(taper_reply, qr/^TAPER-OK$/,
 	"got TAPER-OK") or die;
-taper_cmd("PORT-WRITE $handle localhost /sbin 0 $datestamp 10 \"\" 655360 1 \"\" \"\" \"\" \"\" AMANDA");
+taper_cmd("PORT-WRITE $handle localhost /sbin 0 $datestamp 999999 \"\" 655360 1 \"\" \"\" \"\" \"\" AMANDA");
 like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_taper_reply, 63*32768, "localhost", "/sbin", 0);
@@ -906,9 +910,10 @@ SKIP : {
 	ndmp_server => $ndmp);
     like(taper_reply, qr/^TAPER-OK$/,
 	    "got TAPER-OK") or die;
-    # note that Amanda uses the fallback splitsize here, even though it doesn't
-    # need a disk_splitbuffer
-    taper_cmd("PORT-WRITE $handle localhost /var 0 $datestamp 524288 \"\" 393216 \"\" \"\" \"\" \"\" \"\" DIRECTTCP");
+    # note that, with the addition of the new splitting params, this does the "sensible"
+    # thing and uses the tape_splitsize, not the fallback_splitsize (this is a change from
+    # Amanda-3.1)
+    taper_cmd("PORT-WRITE $handle localhost /var 0 $datestamp 393216 \"\" 327680 \"\" \"\" \"\" \"\" \"\" DIRECTTCP");
     like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	    "got PORT with data address");
     write_to_port($last_taper_reply, 1230*1024, "localhost", "/var", 0);
@@ -977,7 +982,7 @@ SKIP : {
     like(taper_reply, qr/^TAPER-OK$/,
 	    "got TAPER-OK") or die;
     # use a different part size this time, to hit EOM "on the head"
-    taper_cmd("PORT-WRITE $handle localhost /var 0 $datestamp 524288 \"\" 425984 \"\" \"\" \"\" \"\" \"\" DIRECTTCP");
+    taper_cmd("PORT-WRITE $handle localhost /var 0 $datestamp 425984 \"\" 327680 \"\" \"\" \"\" \"\" \"\" DIRECTTCP");
     like(taper_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	    "got PORT with data address");
     write_to_port($last_taper_reply, 1632*1024, "localhost", "/var", 0);

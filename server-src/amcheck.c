@@ -938,22 +938,23 @@ start_server_check(
 		    tapebad = 1;
 		} else {
 		    if(get_fs_usage(part_cache_dir, NULL, &fsusage) == -1) {
-			g_fprintf(outf, "ERROR: part_cache_dir '%s': %s",
+			g_fprintf(outf, "ERROR: part_cache_dir '%s': %s\n",
 				part_cache_dir, strerror(errno));
 			tapebad = 1;
-		    }
-		    kb_avail = fsusage.fsu_bavail_top_bit_set?
-			0 : fsusage.fsu_bavail / 1024 * fsusage.fsu_blocksize;
-		    kb_needed = part_size;
-		    if (tapetype_seen(tp, TAPETYPE_PART_CACHE_MAX_SIZE)) {
-			kb_needed = part_cache_max_size;
-		    }
-		    if (kb_avail < kb_needed) {
-			g_fprintf(outf,
-			    "ERROR: part_cache_dir has %ju %sB available, but needs %ju %sB\n",
-			    kb_avail/(uintmax_t)unitdivisor, displayunit,
-			    kb_needed/(uintmax_t)unitdivisor, displayunit);
-			tapebad = 1;
+		    } else {
+			kb_avail = fsusage.fsu_bavail_top_bit_set?
+			    0 : fsusage.fsu_bavail / 1024 * fsusage.fsu_blocksize;
+			kb_needed = part_size;
+			if (tapetype_seen(tp, TAPETYPE_PART_CACHE_MAX_SIZE)) {
+			    kb_needed = part_cache_max_size;
+			}
+			if (kb_avail < kb_needed) {
+			    g_fprintf(outf,
+				"ERROR: part_cache_dir has %ju %sB available, but needs %ju %sB\n",
+				kb_avail/(uintmax_t)unitdivisor, displayunit,
+				kb_needed/(uintmax_t)unitdivisor, displayunit);
+			    tapebad = 1;
+			}
 		    }
 		}
 		break;
@@ -1004,7 +1005,6 @@ start_server_check(
 	    }
 	}
 
-	/* small-parts warnings - TODO */
 	tape_size = tapetype_get_length(tp);
 	if (part_size && part_size * 1000 < tape_size) {
 	    g_fprintf(outf,

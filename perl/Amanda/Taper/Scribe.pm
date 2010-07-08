@@ -35,9 +35,11 @@ Amanda::Taper::Scribe
 
     my $xfer_dest = $scribe->get_xfer_dest(
 	max_memory => 64 * 1024,
-	split_method => 'disk',
+	can_cache_inform => 0,
 	part_size => 150 * 1024**2,
-	disk_cache_dirname => "$tmpdir/splitbuffer");
+	part_cache_type => 'disk',
+	part_cache_dir => "$tmpdir/splitbuffer",
+	part_cache_max_size => 20 * 1024**2);
 
     # .. set up the rest of the transfer ..
 
@@ -155,8 +157,9 @@ Call C<check_data_path>, supplying the data_path requested by the user.
   }
 
 This method must be called after C<start> has completed and before
-C<get_xfer_dest> is called, it return undef on success or an error message
-if the supplied data_path is incompatible with the device.
+C<get_xfer_dest> is called. It returns C<undef> on success or an error message
+if the supplied C<data_path> is incompatible with the device.  This is mainly
+used to detect when a DirectTCP dump is going to a non-DirectTCP device.
 
 =head3 Get a Transfer Destination
 
@@ -165,47 +168,49 @@ the dump should be split:
 
   $xdest = $scribe->get_xfer_dest(
         max_memory => $max_memory,
-        # .. split parameters
+        # .. splitting parameters
         );
 
 This method must be called after C<start> has completed, and will always return
-a transfer element immediately.
+a transfer element immediately.  The underlying C<Amanda::Xfer::Dest::Taper>
+handles device streaming properly.  It uses C<max_memory> bytes of memory for
+this purpose.
 
-The underlying C<Amanda::Xfer::Dest::Taper> handles device streaming
-properly.  It uses C<max_memory> bytes of memory for this purpose.
+The splitting parameters to C<get_xfer_dest> are:
 
-The arguments to C<get_xfer_dest> differ for the various split methods.
-For no splitting:
+=over 4
 
-  $scribe->get_xfer_dest(
-        # ...
-        split_method => 'none');
+=item C<part_size>
 
-For buffering the split parts in memory:
+the split part size to use, or 0 for no splitting
 
-  $scribe->get_xfer_dest(
-        # ...
-        split_method => 'memory',
-        part_size => $part_size);
+=item C<part_cache_type>
 
-For buffering the split parts on disk:
+when caching, the kind of caching to perform ('disk', 'memory' or the default,
+'none')
 
-  $scribe->get_xfer_dest(
-        # ...
-        split_method => 'disk',
-        part_size => $part_size,
-        disk_cache_dirname => $disk_cache_dirname);
+=item C<part_cache_dir>
 
-Finally, if the transfer source is capable of calling
-C<Amanda::Xfer::Dest::Taper>'s C<cache_inform> method:
+the directory to use for disk caching
 
-  $scribe->get_xfer_dest(
-        # ...
-        split_method => 'cache_inform',
-        part_size => $part_size);
+=item C<part_cache_max_size>
+
+the maximum part size to use when caching
+
+=item C<can_cache_inform>
+
+true if the transfer source can call the destination's C<cache_inform> method
+(e.g., C<Amanda::Xfer::Source::Holding>).
+
+=back
+
+The first four of these parameters correspond exactly to the eponymous tapetype
+configuration parameters, and have the same default values (when omitted or
+C<undef>).  The method will take this information, along with details of the
+device it intends to use, and set up the transfer destination.
 
 The utility function C<get_splitting_args_from_config> can determine the
-appropriate C<split_method>, C<part_size>, and C<disk_cache_dirname> based on a
+appropriate C<get_xfer_dest> splitting parameters based on a
 few Amanda configuration parameters.  If a parameter was not seen in the
 configuration, it should be omitted or passed as C<undef>.  The function
 returns a hash to pass to get_xfer_dest, although that hash may have an
@@ -224,8 +229,6 @@ should know about.
     part_cache_type => ..,
     part_cache_dir => ..,
     part_cache_max_size => ..,
-    # and some metainformation.
-    can_cache_inform => .., # is the cache_inform method an option?
   );
   if ($splitting_args{'error'}) { .. }
 
@@ -441,7 +444,7 @@ sub new {
 
 	# information for the current dumpfile
 	dump_header => undef,
-	split_method => undef,
+	retry_part_on_peom => undef,
 	xfer => undef,
 	xdt => undef,
 	xdt_ready => undef,
@@ -576,54 +579,13 @@ sub get_xfer_dest {
     my $self = shift;
     my %params = @_;
 
-    for my $rq_param qw(max_memory split_method) {
+    for my $rq_param qw(max_memory) {
 	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }
 
-    die "Scribe is not started yet" unless $self->{'started'};
-
-    $self->dbg("get_xfer_dest(split_method=$params{split_method})");
-
-    if ($params{'split_method'} ne 'none') {
-        croak("required parameter 'part_size' missing")
-            unless exists $params{'part_size'};
-    }
-
-    $self->{'split_method'} = $params{'split_method'};
-    my ($part_size, $use_mem_cache, $disk_cache_dirname) = (0, 0, undef);
-    if ($params{'split_method'} eq 'none') {
-        $part_size = 0;
-    } elsif ($params{'split_method'} eq 'memory') {
-        $part_size = $params{'part_size'};
-        $use_mem_cache = 1;
-    } elsif ($params{'split_method'} eq 'disk') {
-        $part_size = $params{'part_size'};
-        croak("required parameter 'disk_cache_dirname' missing")
-            unless exists $params{'disk_cache_dirname'};
-        $disk_cache_dirname = $params{'disk_cache_dirname'};
-    } elsif ($params{'split_method'} eq 'cache_inform') {
-        $part_size = $params{'part_size'};
-        $use_mem_cache = 0;
-    } else {
-        croak("invalid split_method $params{split_method}");
-    }
-
-    my $splitting_msg;
-    if ($params{'split_method'} eq 'none') {
-	$splitting_msg = "without splitting";
-    } elsif ($params{'split_method'} eq 'cache_inform') {
-	$splitting_msg = "splitting at $params{part_size} K from holding disk";
-    } elsif ($params{'split_method'} eq 'disk') {
-	$splitting_msg = "splitting at $params{part_size} K " .
-			 "with disk cache directory '$params{disk_cache_dirname}'";
-    } elsif ($params{'split_method'} eq 'memory') {
-	$splitting_msg = "splitting at $params{part_size} K in memory";
-    }
-    debug("Amanda::Taper::Scribe preparing to write, $splitting_msg");
-
     die "not yet started"
-	unless ($self->{'write_timestamp'});
+	unless $self->{'write_timestamp'} and $self->{'started'};
     die "xfer element already returned"
 	if ($self->{'xdt'});
     die "xfer already running"
@@ -641,28 +603,77 @@ sub get_xfer_dest {
 
     # set the callback
     $self->{'dump_cb'} = undef;
+    $self->{'retry_part_on_peom'} = 1;
+    $self->{'start_part_on_xdt_ready'} = 0;
+
+    # start getting parameters together to determine what kind of splitting
+    # and caching we're going to do
+    my $part_size = $params{'part_size'} || 0;
+    my ($use_mem_cache, $disk_cache_dirname) = (0, undef);
+    my $can_cache_inform = $params{'can_cache_inform'};
+    my $part_cache_type = $params{'part_cache_type'} || 'none';
 
     my $xdt_first_dev = $self->get_device();
-
     if (!defined $xdt_first_dev) {
 	die "no device is available to create an xfer_dest";
     }
+    my $leom_supported = $xdt_first_dev->property_get("leom");
+    my $use_directtcp = $xdt_first_dev->directtcp_supported();
+
+    # figure out the destination type we'll use, based on the circumstances
+    my ($dest_type, $dest_text);
+    if ($use_directtcp) {
+	$dest_type = 'directtcp';
+	$dest_text = "using DirectTCP";
+    } elsif ($leom_supported) {
+	$dest_type = 'splitter';
+	$dest_text = "using no caching (LEOM)";
+    } elsif ($can_cache_inform) {
+	$dest_type = 'cacher';
+	$dest_text = "using cache_inform";
+    } elsif ($part_cache_type ne 'none') {
+	$dest_type = 'cacher';
+
+	# we'll be caching, so apply the maximum size
+	my $part_cache_max_size = $params{'part_cache_max_size'} || 0;
+	$part_size = $part_cache_max_size
+	    if ($part_cache_max_size and $part_cache_max_size < $part_size);
+
+	# and figure out what kind of caching to apply
+	if ($part_cache_type eq 'memory') {
+	    $use_mem_cache = 1;
+	} else {
+	    # note that we assume this has already been checked; if it's wrong,
+	    # the xfer element will just fail immediately
+	    $disk_cache_dirname = $params{'part_cache_dir'};
+	}
+	$dest_text = "using cache type '$part_cache_type'";
+    } else {
+	$dest_type = 'splitter';
+	$dest_text = "using no cache (PEOM will be fatal)";
+
+	# no directtcp, no caching, no cache_inform, and no LEOM, so a PEOM will be fatal
+	$self->{'retry_part_on_peom'} = 0;
+    }
+
+    debug("Amanda::Taper::Scribe preparing to write, part size $part_size, "
+	. $dest_text
+	. ($leom_supported? " (LEOM)" : " (no LEOM)"));
 
     # set the device to verbose logging if we're in debug mode
     if ($self->{'debug'}) {
 	$xdt_first_dev->property_set("verbose", 1);
     }
 
-    my $use_directtcp = $xdt_first_dev->directtcp_supported();
-
     my $xdt;
-    if ($use_directtcp) {
-	# note: using the current configuration scheme, the user must specify either
-	# a disk cache or a fallback_splitsize in order to split a directtcp dump; the
-	# fix is to use a better set of config params for splitting
+    if ($dest_type eq 'directtcp') {
 	$xdt = Amanda::Xfer::Dest::Taper::DirectTCP->new(
 	    $xdt_first_dev, $part_size);
 	$self->{'xdt_ready'} = 0; # xdt isn't ready until we get XMSG_READY
+    } elsif ($dest_type eq 'splitter') {
+	$xdt = Amanda::Xfer::Dest::Taper::Splitter->new(
+	    $xdt_first_dev, $params{'max_memory'}, $part_size);
+	$self->{'xdt_ready'} = 1; # xdt is ready immediately
     } else {
 	$xdt = Amanda::Xfer::Dest::Taper::Cacher->new(
 	    $xdt_first_dev, $params{'max_memory'}, $part_size,
@@ -759,7 +770,7 @@ sub _start_part {
     # up to higher-level components to re-try this dump on a new volume, if desired.
     # Note that this should be caught in the XMSG_PART_DONE handler -- this is just
     # here for backup.
-    if (!$self->{'last_part_successful'} and $self->{'split_method'} eq 'none') {
+    if (!$self->{'last_part_successful'} and !$self->{'retry_part_on_peom'}) {
 	$self->_operation_failed(device_error => "No space left on device (uncaught)");
 	return;
     }
@@ -798,9 +809,9 @@ sub _xmsg_part_done {
     my $self = shift;
     my ($src, $msg, $xfer) = @_;
 
-	# this handles successful zero-byte parts as a special case - they
-	# are an implementation detail of the splitting done by the transfer
-	# destination.
+    # this handles successful zero-byte parts as a special case - they
+    # are an implementation detail of the splitting done by the transfer
+    # destination.
 
     if ($msg->{'successful'} and $msg->{'size'} == 0) {
 	$self->dbg("not notifying for empty, successful part");
@@ -845,7 +856,7 @@ sub _xmsg_part_done {
 	    # if the part failed..
 	    if (!$msg->{'successful'}) {
 		# if no caching was going on, then the dump has failed
-		if ($self->{'split_method'} eq 'none') {
+		if (!$self->{'retry_part_on_peom'}) {
 		    # mark this device as at EOM, since we are not going to look
 		    # for another one yet
 		    $self->{'device_at_eom'} = 1;
@@ -1168,30 +1179,22 @@ sub dbg {
 sub get_splitting_args_from_config {
     my %params = @_;
 
+    use Data::Dumper;
     my %splitting_args;
 
-    # get "real" values for each parameter, using defaults where not available, and
-    # converting to integers
-    my $dle_tape_splitsize = ($params{'dle_tape_splitsize'} || 0) + 0;
-    my $dle_split_diskbuffer = $params{'dle_split_diskbuffer'} || '';
-    my $dle_fallback_splitsize = ($params{'dle_fallback_splitsize'} || 0) + 0;
-    my $dle_allow_split = ($params{'dle_allow_split'} || 0) + 0;
-    my $part_size = ($params{'part_size'} || 0) + 0;
-    my $part_cache_type = $params{'part_cache_type'} || 'none';
-    my $part_cache_dir = $params{'part_cache_dir'} || '';
-    my $part_cache_max_size = $params{'part_cache_max_size'} || '';
-
     # if dle_splitting is false, then we don't split - easy.
-    if (defined $params{'dle_allow_split'} and !$dle_allow_split) {
-	$splitting_args{'split_method'} = 'none';
-	return %splitting_args;
+    if (defined $params{'dle_allow_split'} and !$params{'dle_allow_split'}) {
+	return ();
     }
 
     # utility for below
     my $have_space = sub {
 	my ($dirname, $part_size) = @_;
 
+	use Carp;
 	my $fsusage = Amanda::Util::get_fs_usage($dirname);
+	confess "$dirname" if (!$fsusage);
+
 	my $avail = $fsusage->{'blocks'} * $fsusage->{'bavail'};
 	if ($avail < $part_size) {
 	    Amanda::Debug::debug("disk cache has $avail bytes available on $dirname, but " .
@@ -1202,102 +1205,74 @@ sub get_splitting_args_from_config {
 	}
     };
 
-    # if any of the dle_* parameters are set, use those and ignore the
-    # tapetype-derived parameters. Here, things look a little bit different
-    # depending on whether we're reading from holding (FILE_WRITE) or from
-    # a network socket (PORT_WRITE)
+    # if any of the dle_* parameters are set, use those to set the part_*
+    # parameters, which are emptied out first.
     if (defined $params{'dle_tape_splitsize'} or
 	defined $params{'dle_split_diskbuffer'} or
 	defined $params{'dle_fallback_splitsize'}) {
-	if ($params{'can_cache_inform'}) {
-	    if ($dle_tape_splitsize ne 0) {
-		$splitting_args{'split_method'} = 'cache_inform';
-		$splitting_args{'part_size'} = $dle_tape_splitsize;
-	    } else {
-		$splitting_args{'split_method'} = 'none';
-	    }
-	} elsif (!defined $params{'dle_tape_splitsize'} or $dle_tape_splitsize == 0) {
-	    # the user has requested no splitting (this is the default anyway)
-	    $splitting_args{'split_method'} = 'none';
-	} else {
-	    # we're using disk caching, but we may have to fall back
-	    $splitting_args{'split_method'} = 'disk';
-	    $splitting_args{'disk_cache_dirname'} = $dle_split_diskbuffer;
-	    $splitting_args{'part_size'} = $dle_tape_splitsize;
 
-	    # implement the fallback to memory buffering if the disk buffer was not config'd,
-	    # does not exist, or doesnt have enough space.
-	    my $need_fallback = 0;
-	    my $need_warning = 0;
-	    if ($splitting_args{'split_method'} eq 'disk') {
-		my $dcdirname = $splitting_args{'disk_cache_dirname'};
+	$params{'part_size'} = $params{'dle_tape_splitsize'} || 0;
+	$params{'part_cache_type'} = 'none';
+	$params{'part_cache_dir'} = undef;
+	$params{'part_cache_max_size'} = undef;
 
-		if (!defined $dcdirname or !$dcdirname) {
-		    $need_fallback = "tape_splitsize was specified but not split_diskbuffer";
-		} elsif (! -d $dcdirname) {
-		    $need_fallback = "'$dcdirname' is not a directory";
-		} elsif (!$have_space->($dcdirname, $splitting_args{'part_size'})) {
-		    $need_fallback = "insufficient space in disk cache directory";
-		    $need_warning = 1;
+	# part cache type is memory unless we have a split_diskbuffer that fits the bill
+	if ($params{'part_size'}) {
+	    $params{'part_cache_type'} = 'memory';
+	    if (defined $params{'dle_split_diskbuffer'}
+		    and -d $params{'dle_split_diskbuffer'}) {
+		if ($have_space->($params{'dle_split_diskbuffer'}, $params{'part_size'})) {
+		    # disk cache checks out, so use it
+		    $params{'part_cache_type'} = 'disk';
+		    $params{'part_cache_dir'} = $params{'dle_split_diskbuffer'};
+		} else {
+		    my $msg = "falling back to memory buffer for splitting: " .
+				"insufficient space in disk cache directory";
+		    $splitting_args{'warning'} = $msg;
 		}
-	    }
-
-	    if ($need_fallback) {
-		my $msg = "falling back to memory buffer for splitting: $need_fallback";
-		Amanda::Debug::debug($msg);
-		$splitting_args{'warning'} = $msg if ($need_warning);
-
-		# default fallback is 10M (yes it's tiny, but also historical)
-		$splitting_args{'part_size'} = $dle_fallback_splitsize || 10*1024*1024;
-		$splitting_args{'split_method'} = 'memory';
-		delete $splitting_args{'disk_cache_dirname'};
 	    }
 	}
+
+	if ($params{'part_cache_type'} eq 'memory') {
+	    # fall back to 10M if fallback size is not given
+	    $params{'part_cache_max_size'} = $params{'dle_fallback_splitsize'} || 10*1024*1024;
+	}
     } else {
-	if ($params{'can_cache_inform'}) {
-	    if ($part_size != 0) {
-		$splitting_args{'split_method'} = 'cache_inform';
-		$splitting_args{'part_size'} = $part_size;
-	    } else {
-		$splitting_args{'split_method'} = 'none';
+	my $ps = $params{'part_size'};
+	my $pcms = $params{'part_cache_max_size'};
+	$ps = $pcms if (!defined $ps or (defined $pcms and $pcms < $ps));
+
+	# fail back from 'disk' to 'none' if the disk isn't set up correctly
+	if (defined $params{'part_cache_type'} and
+		    $params{'part_cache_type'} eq 'disk') {
+	    my $warning;
+	    if (!$params{'part_cache_dir'}) {
+		$warning = "no part_cache_dir specified; "
+			    . "using part_cache_type 'none'";
+	    } elsif (!-d $params{'part_cache_dir'}) {
+		$warning = "part_cache_dir '$params{part_cache_dir} "
+			    . "does not exist; using part_cache_type 'none'";
+	    } elsif (!$have_space->($params{'part_cache_dir'}, $ps)) {
+		$warning = "part_cache_dir '$params{part_cache_dir} "
+			    . "has insufficient space; using part_cache_type 'none'";
 	    }
-	} else {
-	    my $part_size_cache = $part_size;
-	    # we'll be using a part cache, so apply the part_cache_max_size
-	    if (defined $params{'part_cache_max_size'} and $part_cache_max_size
-		    and $part_size > $part_cache_max_size) {
-		$part_size_cache = $part_cache_max_size;
-	    }
 
-	    my $type = lc($part_cache_type);
-	    return { error => "invalid part cache type from driver" }
-		unless ($type =~ /^(none|disk|memory)$/);
-	    $splitting_args{'split_method'} = $type;
-
-	    if ($type eq 'disk') {
-		my $disk_bad = '';
-		$disk_bad = "no part_cache_dir specified"
-		    unless defined $params{'part_cache_dir'};
-		$disk_bad = "'$part_cache_dir' is not a directory"
-		    unless !$disk_bad && -d $part_cache_dir;
-		$disk_bad = "insufficient space for split cache in part_cache_dir"
-		    unless !$disk_bad && $have_space->($part_cache_dir, $part_size_cache);
-
-		# if the disk is bad, we'll fall back to "none" with no part caching
-		# going on -- along with a warning.  TODO: support splitting here
-		# anyway (the scribe doesn't support this yet)
-		if ($disk_bad) {
-		    $splitting_args{'split_method'} = 'none';
-		    $splitting_args{'warning'} = "not caching split parts: $disk_bad";
-		} else {
-		    $splitting_args{'part_size'} = $part_size_cache;
-		    $splitting_args{'disk_cache_dirname'} = $part_cache_dir;
-		}
-	    } elsif ($type eq 'memory') {
-		$splitting_args{'part_size'} = $part_size_cache;
+	    if (defined $warning) {
+		$splitting_args{'warning'} = $warning;
+		$params{'part_cache_type'} = 'none';
+		delete $params{'part_cache_dir'};
 	    }
 	}
     }
+
+    $splitting_args{'part_size'} = $params{'part_size'}
+	if defined($params{'part_size'});
+    $splitting_args{'part_cache_type'} = $params{'part_cache_type'}
+	if defined($params{'part_cache_type'});
+    $splitting_args{'part_cache_dir'} = $params{'part_cache_dir'}
+	if defined($params{'part_cache_dir'});
+    $splitting_args{'part_cache_max_size'} = $params{'part_cache_max_size'}
+	if defined($params{'part_cache_max_size'});
 
     return %splitting_args;
 }

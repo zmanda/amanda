@@ -1,4 +1,13 @@
 2010-07-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amcheck.c: small bugfixes
+	* perl/Amanda/Taper/Scribe.pm: change get_xfer_dest args to support
+	  LEOM configurations
+	* server-src/taper.pl: use new args; log warnings with L_WARNING, not
+	  L_FAIL
+	* installcheck/Amanda_Taper_Scribe.pl installcheck/taper.pl: test
+	  changes
+
+2010-07-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/xfer-dest-taper-splitter.c: new, non-caching taper dest
 	* device-src/xfer-dest-taper-cacher.c: new name for old .._splitter
 	* perl/Amanda/Xfer.pod perl/Amanda/XferServer.swg: SWIG new class

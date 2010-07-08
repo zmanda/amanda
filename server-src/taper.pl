@@ -651,14 +651,14 @@ sub setup_and_start_dump {
 
 	# and convert those to get_xfer_dest args
         %get_xfer_dest_args = get_splitting_args_from_config(
-		can_cache_inform => ($msgtype eq main::Protocol::FILE_WRITE),
 		%splitting_args);
 	$get_xfer_dest_args{'max_memory'} = getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE);
+	$get_xfer_dest_args{'can_cache_inform'} = ($msgtype eq main::Protocol::FILE_WRITE);
 
 	# if we're unable to fulfill the user's splitting needs, we can still give
 	# the dump a shot - but we'll warn them about the problem
 	if ($get_xfer_dest_args{'warning'}) {
-	    log_add($L_FAIL, sprintf("%s:%s: %s",
+	    log_add($L_WARNING, sprintf("%s:%s: %s",
 		    $params{'hostname'}, $params{'diskname'},
 		    $get_xfer_dest_args{'warning'}));
 	    delete $get_xfer_dest_args{'warning'};

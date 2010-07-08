@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 36;
+use Test::More tests => 29;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -102,9 +102,17 @@ use Amanda::MainLoop;
 
 sub new {
     my $class = shift;
-    my @slots = @_;
+    my %params = @_;
+    my @slots = @{ $params{'slots'} || [] };
     my $chg =  Amanda::Changer->new("chg-disk:$taperoot");
     die $chg if $chg->isa("Amanda::Changer::Error");
+
+    # wedge in an extra device property to disable LEOM support, if requested
+    if ($params{'disable_leom'}) {
+	$chg->{'config'}->{'device_properties'}->{'leom'}->{'values'} = [ 0 ];
+    } else {
+	$chg->{'config'}->{'device_properties'}->{'leom'}->{'values'} = [ 1 ];
+    }
 
     return bless {
 	chg => $chg,
@@ -308,7 +316,7 @@ is_deeply([ @events ], [
     ], "correct event sequence for a run without permission")
     or diag(Dumper([@events]));
 
-run_devh(1, Mock::Taperscan->new("bogus"), Mock::Feedback->new());
+run_devh(1, Mock::Taperscan->new(slots => ["bogus"]), Mock::Feedback->new());
 is_deeply([ @events ], [
       [ 'start' ],
       [ 'scan' ],
@@ -322,7 +330,8 @@ is_deeply([ @events ], [
     ], "correct event sequence for a run with a changer error")
     or diag(Dumper([@events]));
 
-run_devh(1, Mock::Taperscan->new("bogus"), Mock::Feedback->new(['config',"not this time"]));
+run_devh(1, Mock::Taperscan->new(slots => ["bogus"]),
+	    Mock::Feedback->new(['config',"not this time"]));
 is_deeply([ @events ], [
       [ 'start' ],
       [ 'scan' ],
@@ -336,7 +345,7 @@ is_deeply([ @events ], [
     ], "correct event sequence for a run with no permission AND a changer config denial")
     or diag(Dumper([@events]));
 
-run_devh(1, Mock::Taperscan->new("bogus"), Mock::Feedback->new(['error',"frobnicator exploded!"]));
+run_devh(1, Mock::Taperscan->new(slots => ["bogus"]), Mock::Feedback->new(['error',"frobnicator exploded!"]));
 is_deeply([ @events ], [
       [ 'start' ],
       [ 'scan' ],
@@ -378,9 +387,8 @@ sub run_scribe_xfer_async {
 	# set up a transfer
 	my $xdt = $scribe->get_xfer_dest(
 	    max_memory => 1024 * 64,
-            split_method => ($params{'split_method'} or 'memory'),
-	    part_size => 1024 * 128,
-	    use_mem_cache => 1,
+	    part_size => (defined $params{'part_size'})? $params{'part_size'} : (1024 * 128),
+            part_cache_type => $params{'part_cache_type'} || 'memory',
 	    disk_cache_dirname => undef);
 
         die "$err" if $err;
@@ -447,15 +455,16 @@ sub quit_scribe {
 my $scribe;
 my $experr;
 
-# write less than a tape full
+# write less than a tape full, without LEOM
 
 reset_taperoot(1);
 $scribe = Amanda::Taper::Scribe->new(
-    taperscan => Mock::Taperscan->new(),
+    taperscan => Mock::Taperscan->new(disable_leom => 1),
     feedback => Mock::Feedback->new());
 
 reset_events();
-run_scribe_xfer(1024*300, $scribe,
+run_scribe_xfer(1024*200, $scribe,
+	    part_size => 96*1024,
 	    start_scribe => { write_timestamp => "20010203040506" });
 
 is_deeply([ @events ], [
@@ -463,14 +472,14 @@ is_deeply([ @events ], [
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'notif_new_tape', undef, 'FAKELABEL' ],
-      [ 'notif_part_done', bi(1), bi(1), 1, bi(131072) ],
-      [ 'notif_part_done', bi(2), bi(2), 1, bi(131072) ],
-      [ 'notif_part_done', bi(3), bi(3), 1, bi(45056) ],
-      [ 'dump_cb', 'DONE', [], undef, bi(307200) ],
-    ], "correct event sequence for a multipart scribe of less than a whole volume")
+      [ 'notif_part_done', bi(1), bi(1), 1, bi(98304) ],
+      [ 'notif_part_done', bi(2), bi(2), 1, bi(98304) ],
+      [ 'notif_part_done', bi(3), bi(3), 1, bi(8192) ],
+      [ 'dump_cb', 'DONE', [], undef, bi(204800) ],
+    ], "correct event sequence for a multipart scribe of less than a whole volume, without LEOM")
     or diag(Dumper([@events]));
 
-# pick up where we left off, writing just a tiny bit more
+# pick up where we left off, writing just a tiny bit more.
 reset_events();
 run_scribe_xfer(1024*30, $scribe);
 
@@ -478,6 +487,32 @@ is_deeply([ @events ], [
       [ 'notif_part_done', bi(1), bi(4), 1, bi(30720) ],
       [ 'dump_cb', 'DONE', [], undef, bi(30720) ],
     ], "correct event sequence for a subsequent single-part scribe, still on the same volume")
+    or diag(Dumper([@events]));
+
+quit_scribe($scribe);
+
+# write less than a tape full, *with* LEOM (should look the same as above)
+
+reset_taperoot(1);
+$scribe = Amanda::Taper::Scribe->new(
+    taperscan => Mock::Taperscan->new(),
+    feedback => Mock::Feedback->new());
+
+reset_events();
+run_scribe_xfer(1024*200, $scribe,
+	    part_size => 96*1024,
+	    start_scribe => { write_timestamp => "20010203040506" });
+
+is_deeply([ @events ], [
+      [ 'scan' ],
+      [ 'scan-finished', undef, 'slot: 1' ],
+      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
+      [ 'notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'notif_part_done', bi(1), bi(1), 1, bi(98304) ],
+      [ 'notif_part_done', bi(2), bi(2), 1, bi(98304) ],
+      [ 'notif_part_done', bi(3), bi(3), 1, bi(8192) ],
+      [ 'dump_cb', 'DONE', [], undef, bi(204800) ],
+    ], "correct event sequence for a multipart scribe of less than a whole volume, with LEOM")
     or diag(Dumper([@events]));
 
 quit_scribe($scribe);
@@ -490,7 +525,7 @@ quit_scribe($scribe);
 
 reset_taperoot(2);
 $scribe = Amanda::Taper::Scribe->new(
-    taperscan => Mock::Taperscan->new(),
+    taperscan => Mock::Taperscan->new(disable_leom => 1),
     feedback => Mock::Feedback->new());
 
 reset_events();
@@ -518,7 +553,42 @@ is_deeply([ @events ], [
       # empty part is written but not notified
 
       [ 'dump_cb', 'DONE', [], undef, bi(655360) ],
-    ], "correct event sequence for a multipart scribe of more than a whole volume")
+    ], "correct event sequence for a multipart scribe of more than a whole volume, without LEOM")
+    or print (Dumper([@events]));
+
+quit_scribe($scribe);
+
+# same test, but with LEOM support
+
+reset_taperoot(2);
+$scribe = Amanda::Taper::Scribe->new(
+    taperscan => Mock::Taperscan->new(),
+    feedback => Mock::Feedback->new());
+
+reset_events();
+run_scribe_xfer(1024*520, $scribe,
+	    start_scribe => { write_timestamp => "20010203040506" });
+
+is_deeply([ @events ], [
+      [ 'scan' ],
+      [ 'scan-finished', undef, 'slot: 1' ],
+      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
+      [ 'notif_new_tape', undef, 'FAKELABEL' ],
+
+      [ 'notif_part_done', bi(1), bi(1), 1, bi(131072) ],
+      [ 'notif_part_done', bi(2), bi(2), 1, bi(131072) ],
+      [ 'notif_part_done', bi(3), bi(3), 1, bi(32768) ], # LEOM comes earlier than PEOM did
+
+      [ 'scan' ],
+      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
+      [ 'scan-finished', undef, 'slot: 2' ],
+      [ 'notif_new_tape', undef, 'FAKELABEL' ],
+
+      [ 'notif_part_done', bi(4), bi(1), 1, bi(131072) ],
+      [ 'notif_part_done', bi(5), bi(2), 1, bi(106496) ],
+
+      [ 'dump_cb', 'DONE', [], undef, bi(532480) ],
+    ], "correct event sequence for a multipart scribe of more than a whole volume, with LEOM")
     or print (Dumper([@events]));
 
 quit_scribe($scribe);
@@ -527,7 +597,7 @@ quit_scribe($scribe);
 
 reset_taperoot(1);
 $scribe = Amanda::Taper::Scribe->new(
-    taperscan => Mock::Taperscan->new("1", "bogus"),
+    taperscan => Mock::Taperscan->new(slots => ["1", "bogus"], disable_leom => 1),
     feedback => Mock::Feedback->new());
 
 reset_events();
@@ -552,7 +622,38 @@ is_deeply([ @events ], [
       [ 'notif_new_tape', $experr, undef ],
 
       [ 'dump_cb', 'PARTIAL', [$experr], undef, bi(393216) ],
-    ], "correct event sequence for a multivolume scribe where the second volume isn't found")
+    ], "correct event sequence for a multivolume scribe with no second vol, without LEOM")
+    or print (Dumper([@events]));
+
+quit_scribe($scribe);
+
+reset_taperoot(1);
+$scribe = Amanda::Taper::Scribe->new(
+    taperscan => Mock::Taperscan->new(slots => ["1", "bogus"]),
+    feedback => Mock::Feedback->new());
+
+reset_events();
+run_scribe_xfer($volume_length + $volume_length / 4, $scribe,
+	    start_scribe => { write_timestamp => "20010203040507" });
+
+$experr = 'Slot bogus not found';
+is_deeply([ @events ], [
+      [ 'scan' ],
+      [ 'scan-finished', undef, 'slot: 1' ],
+      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
+      [ 'notif_new_tape', undef, 'FAKELABEL' ],
+
+      [ 'notif_part_done', bi(1), bi(1), 1, bi(131072) ],
+      [ 'notif_part_done', bi(2), bi(2), 1, bi(131072) ],
+      [ 'notif_part_done', bi(3), bi(3), 1, bi(32768) ], # LEOM comes long before PEOM
+
+      [ 'scan' ],
+      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
+      [ 'scan-finished', $experr, 'slot: none' ],
+      [ 'notif_new_tape', $experr, undef ],
+
+      [ 'dump_cb', 'PARTIAL', [$experr], undef, bi(294912) ],
+    ], "correct event sequence for a multivolume scribe with no second vol, with LEOM")
     or print (Dumper([@events]));
 
 quit_scribe($scribe);
@@ -576,15 +677,14 @@ is_deeply([ @events ], [
 
       [ 'notif_part_done', bi(1), bi(1), 1, bi(131072) ],
       [ 'notif_part_done', bi(2), bi(2), 1, bi(131072) ],
-      [ 'notif_part_done', bi(3), bi(3), 1, bi(131072) ],
-      [ 'notif_part_done', bi(4), bi(0), 0, bi(0) ],
+      [ 'notif_part_done', bi(3), bi(3), 1, bi(32768) ],
 
       [ 'scan' ],
       [ 'request_volume_permission', 'answer:', ['config',"sorry!"] ],
       [ 'scan-finished', undef, 'slot: 2' ],
 
-      [ 'dump_cb', 'PARTIAL', [], "sorry!", bi(393216) ],
-    ], "correct event sequence for a multivolume scribe where the second volume isn't permitted")
+      [ 'dump_cb', 'PARTIAL', [], "sorry!", bi(294912) ],
+    ], "correct event sequence for a multivolume scribe with next vol denied")
     or print (Dumper([@events]));
 
 quit_scribe($scribe);
@@ -593,11 +693,11 @@ quit_scribe($scribe);
 
 reset_taperoot(2);
 $scribe = Amanda::Taper::Scribe->new(
-    taperscan => Mock::Taperscan->new(),
+    taperscan => Mock::Taperscan->new(disable_leom => 1),
     feedback => Mock::Feedback->new());
 
 reset_events();
-run_scribe_xfer(1024*300, $scribe, split_method => 'none',
+run_scribe_xfer(1024*300, $scribe, part_size => 0, part_cache_type => 'none',
 	    start_scribe => { write_timestamp => "20010203040506" });
 
 is_deeply([ @events ], [
@@ -607,7 +707,28 @@ is_deeply([ @events ], [
       [ 'notif_new_tape', undef, 'FAKELABEL' ],
       [ 'notif_part_done', bi(1), bi(1), 1, bi(307200) ],
       [ 'dump_cb', 'DONE', [], undef, bi(307200) ],
-    ], "correct event sequence for a non-splitting scribe of less than a whole volume")
+    ], "correct event sequence for a non-splitting scribe of less than a whole volume, without LEOM")
+    or diag(Dumper([@events]));
+
+quit_scribe($scribe);
+
+reset_taperoot(2);
+$scribe = Amanda::Taper::Scribe->new(
+    taperscan => Mock::Taperscan->new(),
+    feedback => Mock::Feedback->new());
+$Amanda::Config::debug_taper = 9;
+reset_events();
+run_scribe_xfer(1024*300, $scribe, part_size => 0, part_cache_type => 'none',
+	    start_scribe => { write_timestamp => "20010203040506" });
+
+is_deeply([ @events ], [
+      [ 'scan' ],
+      [ 'scan-finished', undef, 'slot: 1' ],
+      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
+      [ 'notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'notif_part_done', bi(1), bi(1), 1, bi(307200) ],
+      [ 'dump_cb', 'DONE', [], undef, bi(307200) ],
+    ], "correct event sequence for a non-splitting scribe of less than a whole volume, with LEOM")
     or diag(Dumper([@events]));
 
 quit_scribe($scribe);
@@ -619,91 +740,67 @@ my $maxint64 = Math::BigInt->new("9223372036854775808");
 
 is_deeply(
     { get_splitting_args_from_config(
-	can_cache_inform => 0,
     ) },
-    { split_method => 'none' },
-    "default for no cache_inform is split_method none");
+    { },
+    "default is no params");
 
 is_deeply(
     { get_splitting_args_from_config(
-	can_cache_inform => 1,
+	dle_tape_splitsize => 0,
+	dle_split_diskbuffer => $Installcheck::TMP,
+	dle_fallback_splitsize => 100,
     ) },
-    { split_method => 'none' },
-    "default for cache_inform is also split_method none");
-
-is_deeply(
-    { get_splitting_args_from_config(
-	can_cache_inform => 1,
-	tape_splitsize => 0,
-	split_diskbuffer => $Installcheck::TMP,
-	fallback_splitsize => 100,
-    ) },
-    { split_method => 'none' },
-    "tape_splitsize = 0 indicates split_method none, not fallback");
+    { part_size => 0, part_cache_type => 'none' },
+    "tape_splitsize = 0 indicates no splitting");
 
 is_deeply(
     { get_splitting_args_from_config(
 	dle_allow_split => 0,
-	can_cache_inform => 1,
 	part_size => 100,
 	part_cache_dir => "/tmp",
     ) },
-    { split_method => 'none' },
+    { },
     "default if dle_allow_split is false, no splitting");
 
 is_deeply(
     { get_splitting_args_from_config(
-	can_cache_inform => 1,
 	dle_tape_splitsize => 200,
-	dle_fallback_splitsize => 250,
+	dle_fallback_splitsize => 150,
     ) },
-    { split_method => 'cache_inform', part_size => 200 },
+    { part_cache_type => 'memory', part_size => 200, part_cache_max_size => 150 },
     "when cache_inform is available, tape_splitsize is used, not fallback");
 
 is_deeply(
     { get_splitting_args_from_config(
-	can_cache_inform => 0,
-	dle_tape_splitsize => 200,
-	dle_fallback_splitsize => 250,
-    ) },
-    { split_method => 'memory', part_size => 250, },
-    "if split_diskbuffer is missing, fall back");
-
-is_deeply(
-    { get_splitting_args_from_config(
-	can_cache_inform => 0,
 	dle_tape_splitsize => 200,
     ) },
-    { split_method => 'memory', part_size => 1024*1024*10, },
+    { part_size => 200, part_cache_type => 'memory', part_cache_max_size => 1024*1024*10, },
     "no split_diskbuffer and no fallback_splitsize, fall back to default (10M)");
 
 is_deeply(
     { get_splitting_args_from_config(
-	can_cache_inform => 0,
 	dle_tape_splitsize => 200,
 	dle_split_diskbuffer => "$Installcheck::TMP/does!not!exist!",
-	dle_fallback_splitsize => 250,
+	dle_fallback_splitsize => 150,
     ) },
-    { split_method => 'memory', part_size => 250, },
+    { part_size => 200, part_cache_type => 'memory', part_cache_max_size => 150 },
     "invalid split_diskbuffer => fall back (silently)");
 
 is_deeply(
     { get_splitting_args_from_config(
-	can_cache_inform => 0,
 	dle_tape_splitsize => 200,
 	dle_split_diskbuffer => "$Installcheck::TMP/does!not!exist!",
     ) },
-    { split_method => 'memory', part_size => 1024*1024*10, },
+    { part_size => 200, part_cache_type => 'memory', part_cache_max_size => 1024*1024*10 },
     ".. even to the default fallback (10M)");
 
 is_deeply(
     { get_splitting_args_from_config(
-	can_cache_inform => 0,
 	dle_tape_splitsize => $maxint64,
 	dle_split_diskbuffer => "$Installcheck::TMP",
 	dle_fallback_splitsize => 250,
     ) },
-    { split_method => 'memory', part_size => 250,
+    { part_size => $maxint64, part_cache_type => 'memory', part_cache_max_size => 250,
       warning => "falling back to memory buffer for splitting: " .
 		 "insufficient space in disk cache directory" },
     "not enough space in split_diskbuffer => fall back (with warning)");
@@ -713,151 +810,58 @@ is_deeply(
 	can_cache_inform => 0,
 	dle_tape_splitsize => 200,
 	dle_split_diskbuffer => "$Installcheck::TMP",
-	dle_fallback_splitsize => 250,
+	dle_fallback_splitsize => 150,
     ) },
-    { split_method => 'disk', part_size => 200,
-      disk_cache_dirname => "$Installcheck::TMP" },
+    { part_size => 200, part_cache_type => 'disk', part_cache_dir => "$Installcheck::TMP" },
     "if split_diskbuffer exists and splitsize is nonzero, use it");
 
 is_deeply(
     { get_splitting_args_from_config(
-	can_cache_inform => 0,
 	dle_tape_splitsize => 0,
 	dle_split_diskbuffer => "$Installcheck::TMP",
 	dle_fallback_splitsize => 250,
     ) },
-    { split_method => 'none' },
+    { part_size => 0, part_cache_type => 'none' },
     ".. but if splitsize is zero, no splitting");
 
 is_deeply(
     { get_splitting_args_from_config(
-	can_cache_inform => 0,
 	dle_split_diskbuffer => "$Installcheck::TMP",
 	dle_fallback_splitsize => 250,
     ) },
-    { split_method => 'none' },
+    { part_size => 0, part_cache_type => 'none' },
     ".. and if splitsize is missing, no splitting");
 
 is_deeply(
     { get_splitting_args_from_config(
-	can_cache_inform => 1,
-	part_size => 300,
-    ) },
-    { split_method => 'cache_inform', part_size => 300 },
-    "With cache_inform and a part_size, splitting is done");
-
-is_deeply(
-    { get_splitting_args_from_config(
-	can_cache_inform => 0,
 	part_size => 300,
 	part_cache_type => 'none',
     ) },
-    { split_method => 'none' },
-    "part_cache_type 'none' translates correctly");
+    { part_size => 300, part_cache_type => 'none' },
+    "part_* parameters handled correctly when missing");
 
 is_deeply(
     { get_splitting_args_from_config(
-	can_cache_inform => 0,
-	part_size => 300,
-	part_cache_type => 'memory',
-    ) },
-    { split_method => 'memory', part_size => 300 },
-    "part_cache_type 'memory' translates correctly");
-
-is_deeply(
-    { get_splitting_args_from_config(
-	can_cache_inform => 0,
-	part_size => 300,
-	part_cache_type => 'memory',
-	part_cache_max_size => 100,
-    ) },
-    { split_method => 'memory', part_size => 100 },
-    ".. and part_cache_max_size is minded");
-
-is_deeply(
-    { get_splitting_args_from_config(
-	can_cache_inform => 0,
-	part_size => 250,
-	part_cache_type => 'memory',
-	part_cache_max_size => 500,
-    ) },
-    { split_method => 'memory', part_size => 250 },
-    ".. but treated as a maximum");
-
-is_deeply(
-    { get_splitting_args_from_config(
-	can_cache_inform => 0,
 	part_size => 300,
 	part_cache_type => 'disk',
 	part_cache_dir => $Installcheck::TMP,
+	part_cache_max_size => 250,
     ) },
-    { split_method => 'disk',
-      part_size => 300,
-      disk_cache_dirname => $Installcheck::TMP },
-    "part_cache_type 'disk' translates correctly");
+    { part_size => 300, part_cache_type => 'disk',
+      part_cache_dir => $Installcheck::TMP, part_cache_max_size => 250, },
+    "part_* parameters handled correctly when specified");
 
 is_deeply(
     { get_splitting_args_from_config(
-	can_cache_inform => 0,
-	part_size => 300,
-	part_cache_type => 'disk',
-	part_cache_dir => $Installcheck::TMP,
-	part_cache_max_size => 100,
-    ) },
-    { split_method => 'disk',
-      part_size => 100,
-      disk_cache_dirname => $Installcheck::TMP },
-    ".. and part_cache_max_size is minded");
-
-is_deeply(
-    { get_splitting_args_from_config(
-	can_cache_inform => 0,
 	part_size => 300,
 	part_cache_type => 'disk',
 	part_cache_dir => "$Installcheck::TMP/does!not!exist!",
+	part_cache_max_size => 250,
     ) },
-    { split_method => 'none',
-      warning => "not caching split parts: " .
-		 "insufficient space for split cache in part_cache_dir" },
-    "warning when part_size is larger than part_cache_dir");
-
-is_deeply(
-    { get_splitting_args_from_config(
-	can_cache_inform => 0,
-	part_size => 300,
-	part_cache_type => 'disk',
-    ) },
-    { split_method => 'none',
-      warning => "not caching split parts: " .
-		 "insufficient space for split cache in part_cache_dir" },
-    "warning when part_size is larger than part_cache_dir");
-
-is_deeply(
-    { get_splitting_args_from_config(
-	can_cache_inform => 0,
-	part_size => $maxint64,
-	part_cache_type => 'disk',
-	part_cache_dir => $Installcheck::TMP
-    ) },
-    { split_method => 'none',
-      warning => "not caching split parts: " .
-		 "insufficient space for split cache in part_cache_dir" },
-    "warning when part_size is larger than part_cache_dir");
-
-is_deeply(
-    { get_splitting_args_from_config(
-	can_cache_inform => 1,
-	part_size => 0,
-    ) },
-    { split_method => 'none' },
-    "a zero partsize with can_cache_inform is passed along properly");
-
-is_deeply(
-    { get_splitting_args_from_config(
-	can_cache_inform => 0,
-	part_size => 0,
-    ) },
-    { split_method => 'none' },
-    "a zero partsize without can_cache_inform is passed along properly");
+    { part_size => 300, part_cache_type => 'none',
+      part_cache_max_size => 250,
+      warning => "part_cache_dir '$Installcheck::TMP/does!not!exist! does not exist; "
+	       . "using part_cache_type 'none'"},
+    "part_* parameters handled correctly when specified");
 
 rmtree($taperoot);
