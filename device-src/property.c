@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -260,6 +260,9 @@ void device_property_init(void) {
     device_property_fill_and_register(&device_property_comment,
                                      G_TYPE_STRING, "comment",
        "User-specified comment for the device");
+    device_property_fill_and_register(&device_property_leom,
+                                     G_TYPE_BOOLEAN, "leom",
+       "Does this device support LEOM?");
 }
 
 DevicePropertyBase device_property_concurrency;
@@ -277,5 +280,6 @@ DevicePropertyBase device_property_partial_deletion;
 DevicePropertyBase device_property_full_deletion;
 DevicePropertyBase device_property_free_space;
 DevicePropertyBase device_property_max_volume_usage;
-DevicePropertyBase device_property_verbose;
 DevicePropertyBase device_property_comment;
+DevicePropertyBase device_property_leom;
+DevicePropertyBase device_property_verbose;

@@ -321,6 +321,12 @@ dvdrw_device_init (DvdRwDevice *self)
     device_set_simple_property(dself, PROPERTY_FULL_DELETION,
 	&val, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&val);
+
+    g_value_init(&val, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&val, TRUE);
+    device_set_simple_property(dself, PROPERTY_LEOM,
+	&val, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
+    g_value_unset(&val);
 }
 
 static gboolean

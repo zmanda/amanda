@@ -370,6 +370,11 @@ device_base_init (DeviceClass * device_class)
 	    PROPERTY_ACCESS_GET_MASK|PROPERTY_ACCESS_SET_MASK,
 	    device_simple_property_get_fn,
 	    device_simple_property_set_fn);
+
+    device_class_register_property(device_class, PROPERTY_LEOM,
+	    PROPERTY_ACCESS_GET_MASK,
+	    device_simple_property_get_fn,
+	    device_simple_property_set_fn);
 }
 
 static void simple_property_free(SimpleProperty * resp) {

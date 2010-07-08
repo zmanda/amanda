@@ -1,4 +1,18 @@
 2010-07-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/property.c device-src/property.h device-src/device.c: add
+	  LEOM property
+	* perl/Amanda/Device.pod man/xml-source/amanda-devices.7.xml
+	  man/xml-source/amanda.conf.5.xml: document it
+	* installcheck/Amanda_Device.pl: test it
+	* device-src/dvdrw-device.c device-src/ndmp-device.c
+	  device-src/null-device.c device-src/rait-device.c
+	  device-src/s3-device.c device-src/tape-device.c: set LEOM property
+	  appropriately
+	* device-src/vfs-device.c device-src/vfs-device.h: set LEOM support
+	  property, and allow it to be changed for testing
+	* server-src/taper.pl: small bugfix
+
+2010-07-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: add docs, comments for cancel_dump
 
 2010-07-08  Dustin J. Mitchell <dustin@zmanda.com>

@@ -1704,6 +1704,12 @@ ndmp_device_init(NdmpDevice *self)
 	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
+    g_value_init(&response, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&response, TRUE);
+    device_set_simple_property(dself, PROPERTY_LEOM,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
+    g_value_unset(&response);
+
     g_value_init(&response, MEDIA_ACCESS_MODE_TYPE);
     g_value_set_enum(&response, MEDIA_ACCESS_MODE_READ_WRITE);
     device_set_simple_property(dself, PROPERTY_MEDIUM_ACCESS_TYPE,

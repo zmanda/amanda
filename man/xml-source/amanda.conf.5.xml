@@ -2374,9 +2374,7 @@ See "Dump Splitting Configuration" below.</para>
 <para>Default: none.
 The maximum part size to use when caching is in effect.  This is used to limit
 the part size when disk or memory space for caching is constrained.  This value
-can be zero, in which case dumps from holding disk will be split using
-<amkeyword>part_size</amkeyword>, but dumps that would otherwise require a cache
-will be written without splitting.  See "Dump Splitting Configuration" below.</para>
+must be greater than zero.</para>
   </listitem>
   </varlistentry>
 

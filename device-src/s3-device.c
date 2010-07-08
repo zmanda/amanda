@@ -752,6 +752,12 @@ s3_device_init(S3Device * self)
     g_value_unset(&response);
 
     g_value_init(&response, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&response, TRUE); /* well, there *is* no EOM on S3 .. */
+    device_set_simple_property(dself, PROPERTY_LEOM,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
+    g_value_unset(&response);
+
+    g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, FALSE);
     device_set_simple_property(dself, PROPERTY_COMPRESSION,
 	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);

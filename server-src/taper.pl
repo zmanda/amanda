@@ -813,7 +813,7 @@ sub dump_cb {
     # consider this a config-derived failure only if there were no errors
     my $failure_from = (@{$params{'device_errors'}})?  'error' : 'config';
 
-    my @all_messages = @{$params{'device_errors'}}, @{$self->{'input_errors'}};
+    my @all_messages = (@{$params{'device_errors'}}, @{$self->{'input_errors'}});
     push @all_messages, $params{'config_denial_message'} if $params{'config_denial_message'};
     my $msg = quote_string(join("; ", @all_messages));
 

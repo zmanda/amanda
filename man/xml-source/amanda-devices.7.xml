@@ -188,6 +188,10 @@ for future expansion.  Not all devices implement all of these properties.</para>
  (read-only) This property indicates whether the device supports erasing the entire volume.  Aside from S3 and VFS, most devices cannot support this feature.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>LEOM</term><listitem>
+(read-only) If this property is true, then the device an detect an EOM condition before actually running out of space, allowing Amanda to forgo caching parts while writing.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>MAX_BLOCK_SIZE</term><listitem>
  (read-only) This property gives the maximum block size this device can support.  See BLOCK SIZES, below.
 </listitem></varlistentry>
@@ -258,6 +262,19 @@ size.</para></note>
 
 </refsect3>
 
+<refsect3><title>LEOM DETECTION</title>
+
+<para>Some Amanda devices can detect end-of-medium (running out of space on the
+device) before it occurs.  This early warning is referred to as logical EOM,
+and where it is supported Amanda can operate more efficiently, since the
+possibility for data loss is reduced.</para>
+
+<para>The boolean LEOM property indicates whether or not a particular device
+supports LEOM detection.  The sections below also describe the degree of
+support.</para>
+
+</refsect3>
+
 </refsect2>
 
 </refsect1>
@@ -313,6 +330,8 @@ degraded mode.  When reading, certain errors may be fatal (rather than causing
 degraded mode).  And in any case, labels on all volumes must initially match
 (labeled or otherwise).  If you have lost one volume from a set, explicitly
 start the device in degraded mode as described above.</para>
+
+<para>This device can detect LEOM if and only if all of the child devices can detect LEOM.</para>
 
 <refsect3><title>Child Device Block Sizes</title>
 
@@ -375,6 +394,9 @@ lower-case letters, numbers, dashes, and dots.
 produces a great deal of output, and may cause spurious failures by filling
 your debug log partition.  Its logging is generally only useful for developers
 chasing down a problem in communications with Amazon's servers.</para>
+
+<para>Since Amazon storage is unlimited, the device never encounteres EOM, so
+LEOM detection is trivially enabled for this device.</para>
 
 <refsect3><title>Device-Specific Properties</title>
 
@@ -468,6 +490,8 @@ available via the command-line utilities dd(1) and mt(1).</para>
 <para>The tape device name should specify a path to the operating system's
 device file.</para>
 
+<para>This device cannot currently detect LEOM on any operating system.</para>
+
 <refsect3><title>Device-Specific Properties</title>
 
 <para>Most of these properties are automatically detected, but can be
@@ -546,6 +570,8 @@ server.  The device name specifies the hostname and optionally the TCP port of
 the NDMP server, followed by the name of the tape device on the server
 (<command>st1</command> in the example above).</para>
 
+<para>This device supports LEOM detection.</para>
+
 <refsect3><title>Device-Specific Properties</title>
 
 <para>The properties <command>NDMP_USERNAME</command> and
@@ -591,6 +617,8 @@ this directory, the name of which reflects the Amanda header in the tape file.
 Block boundaries are not maintained: the driver supports reads of arbitrary
 size, regardless of the blocksize used to write the data.</para>
 
+<para>This device does not support LEOM detection.</para>
+
 </refsect2>
 
 <refsect2><title>DVD-RW Device</title>
@@ -628,6 +656,8 @@ DVDRW_UNLABELLED_WHEN_UNMOUNTABLE property specifies whether media that cannot
 be mounted should be treated as an empty, unlabelled volume when attempting to
 read the volume label. It is necessary to set this property to "true" when
 labelling such media.</para>
+
+<para>This device does not support LEOM detection.</para>
 
 <refsect3><title>Device-Specific Properties</title>
 

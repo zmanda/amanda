@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 480;
+use Test::More tests => 481;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -582,7 +582,7 @@ my $base_name;
 
 SKIP: {
     skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
-            70 +
+            71 +
             1 * $verify_file_count +
             4 * $write_file_count +
             10 * $s3_make_device_count
@@ -598,6 +598,9 @@ SKIP: {
 
     ok($dev->property_get("full_deletion"),
        "property_get(full_deletion) on s3 device");
+
+    ok($dev->property_get("leom"),
+       "property_get(leom) on s3 device");
 
     # test parsing of boolean values
     # (s3 is the only device driver that has a writable boolean property at the

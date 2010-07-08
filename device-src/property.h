@@ -268,4 +268,8 @@ extern DevicePropertyBase device_property_verbose;
 extern DevicePropertyBase device_property_comment;
 #define PROPERTY_COMMENT (device_property_comment.ID)
 
+/* Does this device support LEOM? */
+extern DevicePropertyBase device_property_leom;
+#define PROPERTY_LEOM (device_property_leom.ID)
+
 #endif

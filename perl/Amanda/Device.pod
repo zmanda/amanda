@@ -260,9 +260,11 @@ C<start>, C<start_file>, C<finish_file>, and C<finish>.  API users that
 understand LEOM should take this as a signal to complete writing to the device
 and move on before hitting PEOM.
 
-Devices which do not support EOM simply return a VOLUME_ERROR when the volume
+Devices which do not support LEOM simply return a VOLUME_ERROR when the volume
 is full.  If this occurs during a C<write_block> operation, then the volume may
 or may not contain the block - the situation is indeterminate.
+
+Devices indicate their support for LEOM with the LEOM property.
 
 =head2 Device Resources
 

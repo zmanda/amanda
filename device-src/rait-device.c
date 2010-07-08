@@ -383,6 +383,10 @@ rait_device_base_init (RaitDeviceClass * c)
 	    PROPERTY_ACCESS_GET_MASK,
 	    property_get_boolean_and_fn, NULL);
 
+    device_class_register_property(device_class, PROPERTY_LEOM,
+	    PROPERTY_ACCESS_GET_MASK,
+	    property_get_boolean_and_fn, NULL);
+
     device_class_register_property(device_class, PROPERTY_MEDIUM_ACCESS_TYPE,
 	    PROPERTY_ACCESS_GET_MASK,
 	    property_get_medium_access_type_fn, NULL);

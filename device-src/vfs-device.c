@@ -40,6 +40,9 @@
 #define VFS_DEVICE_DEFAULT_BLOCK_SIZE (DISK_BLOCK_BYTES)
 #define VFS_DEVICE_LABEL_SIZE (32768)
 
+/* Allow comfortable room for another block and a header before PEOM */
+#define EOM_EARLY_WARNING_ZONE_BLOCKS 4
+
 /* This looks dangerous, but is actually modified by the umask. */
 #define VFS_DEVICE_CREAT_MODE 0666
 
@@ -94,6 +97,9 @@ static gboolean vfs_device_set_max_volume_usage_fn(Device *p_self,
 gboolean vfs_device_get_free_space_fn(struct Device *p_self,
 			    DevicePropertyBase *base, GValue *val,
 			    PropertySurety *surety, PropertySource *source);
+gboolean property_set_leom_fn(Device *p_self,
+			    DevicePropertyBase *base, GValue *val,
+			    PropertySurety surety, PropertySource source);
 //static char* lockfile_name(VfsDevice * self, guint file);
 static gboolean open_lock(VfsDevice * self, int file, gboolean exclusive);
 static void promote_volume_lock(VfsDevice * self);
@@ -155,6 +161,7 @@ vfs_device_init (VfsDevice * self) {
     self->open_file_fd = -1;
     self->volume_bytes = 0;
     self->volume_limit = 0;
+    self->leom = FALSE;
 
     /* Register Properties */
     bzero(&response, sizeof(response));
@@ -186,6 +193,12 @@ vfs_device_init (VfsDevice * self) {
     g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, TRUE);
     device_set_simple_property(dself, PROPERTY_FULL_DELETION,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
+    g_value_unset(&response);
+
+    g_value_init(&response, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&response, FALSE);
+    device_set_simple_property(dself, PROPERTY_LEOM,
 	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
@@ -246,6 +259,12 @@ vfs_device_base_init (VfsDeviceClass * c)
 	    PROPERTY_ACCESS_GET_MASK,
 	    device_simple_property_get_fn,
 	    NULL);
+
+    /* add the ability to set LEOM to FALSE, for testing purposes */
+    device_class_register_property(device_class, PROPERTY_LEOM,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    property_set_leom_fn);
 }
 
 gboolean
@@ -297,6 +316,18 @@ vfs_device_get_free_space_fn(struct Device *dself,
 	*source = PROPERTY_SOURCE_DETECTED;
 
     return TRUE;
+}
+
+gboolean
+property_set_leom_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    VfsDevice *self = VFS_DEVICE(p_self);
+
+    self->leom = g_value_get_boolean(val);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
 
 /* Drops everything associated with the volume file: Its name and fd. */
@@ -708,14 +739,22 @@ static gboolean vfs_device_write_block(Device * pself, guint size, gpointer data
 
     g_assert(self->open_file_fd >= 0);
 
-    if (self->volume_limit > 0 &&
-        self->volume_bytes + size > self->volume_limit) {
-        /* Simulate EOF. */
-        pself->is_eom = TRUE;
-	device_set_error(pself,
-	    stralloc(_("No space left on device")),
-	    DEVICE_STATUS_VOLUME_ERROR);
-        return FALSE;
+    if (self->volume_limit > 0) {
+	guint64 newsize = self->volume_bytes + size;
+	guint64 eom_warning_buffer = EOM_EARLY_WARNING_ZONE_BLOCKS * pself->block_size;
+
+	if (self->leom && newsize + eom_warning_buffer > self->volume_limit)
+	    /* Simulate LEOM */
+	    pself->is_eom = TRUE;
+
+        if (newsize > self->volume_limit) {
+	    /* Simulate PEOM */
+	    pself->is_eom = TRUE;
+	    device_set_error(pself,
+		stralloc(_("No space left on device")),
+		DEVICE_STATUS_VOLUME_ERROR);
+	    return FALSE;
+	}
     }
 
     result = vfs_device_robust_write(self, data, size);
@@ -969,13 +1008,22 @@ vfs_device_start_file (Device * dself, dumpfile_t * ji) {
      * 32k regardless of the block_size setting */
     ji->blocksize = 32768;
 
-    if (self->volume_limit > 0 &&
-        self->volume_bytes + VFS_DEVICE_LABEL_SIZE > self->volume_limit) {
-        dself->is_eom = TRUE;
-	device_set_error(dself,
-		stralloc(_("No space left on device")),
-		DEVICE_STATUS_DEVICE_ERROR);
-        return FALSE;
+    if (self->volume_limit > 0) {
+	guint64 newsize = self->volume_bytes + VFS_DEVICE_LABEL_SIZE;
+	guint64 eom_warning_buffer = EOM_EARLY_WARNING_ZONE_BLOCKS * dself->block_size;
+
+	if (self->leom && newsize + eom_warning_buffer > self->volume_limit)
+	    /* Simulate LEOM */
+	    dself->is_eom = TRUE;
+
+        if (newsize > self->volume_limit) {
+	    /* Simulate PEOM */
+	    dself->is_eom = TRUE;
+	    device_set_error(dself,
+		    stralloc(_("No space left on device")),
+		    DEVICE_STATUS_DEVICE_ERROR);
+	    return FALSE;
+	}
     }
 
     /* The basic idea here is thus:
@@ -1029,9 +1077,6 @@ vfs_device_finish_file(Device * dself) {
     release_file(self);
 
     dself->in_file = FALSE;
-
-    if (dself->is_eom)
-        return FALSE;
 
     return TRUE;
 }
