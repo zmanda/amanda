@@ -1,4 +1,7 @@
 2010-07-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: add docs, comments for cancel_dump
+
+2010-07-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/amglue/constants.swg: new SWIG precompiler magic to allow
 	  flexible handling of lists of constants
 	* perl/Amanda/Config.pod: add section header

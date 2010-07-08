@@ -291,7 +291,16 @@ written to the device.  Note that C<duration> does not include time spent
 operating the changer, while C<total_duration> reflects the time from the
 C<start_dump> call to the invocation of the C<dump_cb>.
 
-TODO: cancel_dump
+=head3 Cancelling a Dump
+
+After you have requested a transfer destination, the scribe is poised to begin the
+transfer.  If you cannot actually perform the transfer for some reason, you'll need
+to go through the motions all the same, but cancel the operation immediately.  That
+can be done by calling C<cancel_dump>:
+
+  $scribe->cancel_dump(
+	xfer => $xfer,
+	dump_cb => $dump_cb);
 
 =head2 QUIT
 
@@ -697,8 +706,10 @@ sub cancel_dump {
     $self->{'dump_cb'} = $params{'dump_cb'};
     $self->{'xfer'} = $params{'xfer'};
 
-    # The cancel should call dump_cb, but the xfer stay hanged in accept.
-    # That's why dump_cb is called and xdt and xfer are set to undef.
+    # XXX The cancel should call dump_cb, but right now the xfer stays hung in
+    # accept.  So we leave the xfer to its hang, and dump_cb is called and xdt
+    # and xfer are set to undef.  This should be fixed in 3.2.
+
     $self->{'xfer'}->cancel();
 
     $self->{'dump_cb'}->(
