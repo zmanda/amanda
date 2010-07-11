@@ -1,3 +1,7 @@
+2010-07-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/userid.m4: apply the default value for --with-gropu
+	  to the correct variable
+
 2010-07-06  Orion Poplawski <orion@cora.nwra.com>
 	* server-src/amoverview.pl: fix parsing for newer amadmin find output
 
