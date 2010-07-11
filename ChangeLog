@@ -1,3 +1,7 @@
+2010-07-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/userid.m4: apply the default value for --with-gropu
+	  to the correct variable
+
 2010-07-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amcheck.c: small bugfixes
 	* perl/Amanda/Taper/Scribe.pm: change get_xfer_dest args to support

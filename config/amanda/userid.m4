@@ -113,7 +113,7 @@ AC_DEFUN([AMANDA_WITH_GROUP],
             esac
         ], [
             AMANDA_MSG_WARN([[no group specified (--with-group) -- using 'backup']])
-	    CLIENT_LOGIN=backup
+	    SETUID_GROUP=backup
         ]
     )
     AC_SUBST(SETUID_GROUP)
