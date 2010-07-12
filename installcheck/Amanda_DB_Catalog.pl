@@ -221,10 +221,12 @@ sub partstr {
     my ($part) = @_;
     if (exists $part->{'holding_file'}) {
 	return "$part->{holding_file}: " .
-	       "$part->{dump}->{hostname} $part->{dump}->{diskname}";
+	       "$part->{dump}->{hostname} $part->{dump}->{diskname} " .
+	       "w$part->{dump}->{write_timestamp} d$part->{dump}->{dump_timestamp}";
    } else {
 	return "$part->{label}:$part->{filenum}: " .
-	       "$part->{dump}->{hostname} $part->{dump}->{diskname} $part->{dump}->{orig_kb}";
+	       "$part->{dump}->{hostname} $part->{dump}->{diskname} $part->{dump}->{orig_kb} " .
+	       "w$part->{dump}->{write_timestamp} d$part->{dump}->{dump_timestamp}";
    }
 }
 
@@ -257,12 +259,17 @@ sub got_parts {
     # filter recursive references to avoid confusing old is_deeply instances
     if (!is_deeply(filter_parts($got), filter_parts($exp), $msg)) {
 	diag("got parts:");
+	my $i = 0;
 	for (@$got) {
-	    diag("  " . partstr($_));
+	    diag(" [$i]  " . partstr($_));
+	    $i++;
 	}
+
 	diag("expected parts:");
+	$i = 0;
 	for (@$exp) {
-	    diag("  " . partstr($_));
+	    diag(" [$i]  " . partstr($_));
+	    $i++;
 	}
 	return '';
     }
@@ -770,10 +777,10 @@ got_dumps([ Amanda::DB::Catalog::sort_dumps(['-level'],
 got_dumps([ Amanda::DB::Catalog::sort_dumps(['dump_timestamp'],
 		@dumps{
 		    'somebox_lib_20080313133333', # dts=20080313133333
-		    'otherbox_usr_bin_20080313133333', # dts=20080311131133
+		    'otherbox_usr_bin_20080313133333_1', # dts=20080311131133
 		    }) ],
 	      [ @dumps{
-		    'otherbox_usr_bin_20080313133333', # dts=20080311131133
+		    'otherbox_usr_bin_20080313133333_1', # dts=20080311131133
 		    'somebox_lib_20080313133333', # dts=20080313133333
 		    } ],
 		"sort dumps by write_timestamp");
@@ -874,13 +881,18 @@ SUCCESS dumper otherbox /lib 20080313133333 0 [sec 0.001 kb 190 kps 10352.0 orig
 SUCCESS chunker otherbox /lib 20080313133333 0 [sec 1.023 kb 190 kps 50.8]
 STATS driver estimate otherbox /lib 20080313133333 0 [sec 0 nkb 190 ckb 190 kps 1024]
 # this dump is from a previous run, with an older dump_timestamp
-:dump otherbox_usr_bin_20080313133333 20080311131133 otherbox /usr/bin 0 OK "" 1 0.002733 240
-:part otherbox_usr_bin_20080313133333 otherbox_usr_bin_20080313133333 Conf-003 12 1 OK 0.002733 240
-PART taper Conf-003 12 otherbox /usr/bin 20080311131133 1/1 0 [sec 0.002733 kb 240 kps 136425.648022]
+:dump otherbox_usr_bin_20080313133333_2 20080311132233 otherbox /usr/bin 0 OK "" 1 0.002733 240
+:part otherbox_usr_bin_20080313133333_2 otherbox_usr_bin_20080313133333_2 Conf-003 12 1 OK 0.002733 240
+PART taper Conf-003 12 otherbox /usr/bin 20080311132233 1/1 0 [sec 0.002733 kb 240 kps 136425.648022]
+DONE taper otherbox /usr/bin 20080311132233 1 0 [sec 0.002733 kb 240 kps 136425.648022]
+# and another dump of the same DLE from an even older dump_timestamp
+:dump otherbox_usr_bin_20080313133333_1 20080311131133 otherbox /usr/bin 0 OK "" 1 0.002733 240
+:part otherbox_usr_bin_20080313133333_1 otherbox_usr_bin_20080313133333_1 Conf-003 13 1 OK 0.002733 240
+PART taper Conf-003 13 otherbox /usr/bin 20080311131133 1/1 0 [sec 0.002733 kb 240 kps 136425.648022]
 DONE taper otherbox /usr/bin 20080311131133 1 0 [sec 0.002733 kb 240 kps 136425.648022]
 :dump otherbox_lib_20080313133333 20080313133333 otherbox /lib 0 OK "" 1 0.001733 190
-:part otherbox_lib_20080313133333 otherbox_lib_20080313133333 Conf-003 13 1 OK 0.001733 190
-PART taper Conf-003 13 otherbox /lib 20080313133333 1/1 0 [sec 0.001733 kb 190 kps 136425.648022]
+:part otherbox_lib_20080313133333 otherbox_lib_20080313133333 Conf-003 14 1 OK 0.001733 190
+PART taper Conf-003 14 otherbox /lib 20080313133333 1/1 0 [sec 0.001733 kb 190 kps 136425.648022]
 DONE taper otherbox /lib 20080313133333 1 0 [sec 0.001733 kb 190 kps 136425.648022]
 FINISH driver date 20080313133333 time 24.777
 
@@ -979,7 +991,7 @@ DONE taper otherbox /usr/bin 20080511151155 1 0 [sec 0.002733 kb 240 kps 136425.
 :dump otherbox_lib_20080515155555 20080511151555 otherbox /lib 0 OK "" 1 0.001733 190 190
 :part otherbox_lib_20080515155555 otherbox_lib_20080515155555 Conf-006 13 1 OK 0.001733 190 190
 PART taper Conf-006 13 otherbox /lib 20080511151555 1/1 0 [sec 0.001733 kb 190 kps 136425.648022 orig-kb 190]
-DONE taper otherbox /lib 20080515155555 1 0 [sec 0.001733 kb 190 kps 136425.648022 orig-kb 190]
+DONE taper otherbox /lib 20080511151555 1 0 [sec 0.001733 kb 190 kps 136425.648022 orig-kb 190]
 # this dump is a direct to tape
 :dump otherbox_direct_20080515155555 20080515155555 otherbox /direct 0 OK "" 1 0.001 190 350
 :part otherbox_direct_20080515155555 otherbox_direct_20080515155555 Conf-006 14 1 OK 0.001 190 350

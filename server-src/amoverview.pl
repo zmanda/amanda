@@ -1,20 +1,33 @@
 #!@PERL@
+# Copyright (c) 2010 Zmanda Inc.  All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+#
+# Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
+# Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-# Catch for sh/csh on systems without #! ability.
-eval '(exit $?0)' && eval 'exec @PERL@ -S $0 ${1+"$@"}'
-	& eval 'exec @PERL@ -S $0 $argv:q'
-		if 0;
+use lib '@amperldir@';
+use strict;
+use warnings;
 
-require 5.001;
-
+use Amanda::Config qw( :init :getconf );
+use Amanda::Disklist;
+use Amanda::DB::Catalog;
 use FileHandle;
 use Getopt::Long;
-use Text::ParseWords;
 use Carp;
 use POSIX;
-
-delete @ENV{'IFS', 'CDPATH', 'ENV', 'BASH_ENV', 'PATH'};
-$ENV{'PATH'} = "/usr/bin:/usr/sbin:/sbin:/bin";
 
 sub Usage {
     print STDERR <<END;
@@ -32,24 +45,8 @@ END
     exit 1;
 }
 
-# Default paths for this installation of Amanda.
-my $prefix='@prefix@';
-$prefix=$prefix;		# avoid warnings about possible typo
-my $exec_prefix="@exec_prefix@";
-$exec_prefix=$exec_prefix;	# ditto
-my $amlibexecdir="@amlibexecdir@";
-my $sbindir="@sbindir@";
- 
-# The directory where configurations can be found.
-my $confdir="@CONFIG_DIR@";
-
-# The default configuration.
-my $config="@DEFAULT_CONFIG@";
-
-my $amadmin	= "$sbindir/amadmin";
-
 # overrideable defaults
-my $opt_config		= "$config";
+my $opt_config		= undef;
 my $opt_hostwidth	= 8;
 my $opt_diskwidth	= 20;
 my $opt_skipmissed	= 0;
@@ -68,107 +65,63 @@ GetOptions('config=s'		=> \$opt_config,
 	   'verbose'		=> \$opt_verbose)
 or Usage();
 
-if($#ARGV == 0) {
+if(@ARGV == 1) {
   $opt_config = $ARGV[0];
-}
-elsif($#ARGV > 0) {
+} else {
   Usage();
 }
 
-#untaint user input $ARGV[0]
-
-if ($opt_config =~ /^([\w.-]+)$/) {          # $1 is untainted
-   $opt_config = $1;
-} else {
-    die "filename '$opt_config' has invalid characters.\n";
+#Initialize configuration
+config_init($CONFIG_INIT_EXPLICIT_NAME, $opt_config);
+my ($cfgerr_level, @cfgerr_errors) = config_errors();
+if ($cfgerr_level >= $CFGERR_WARNINGS) {
+    config_print_errors();
+    if ($cfgerr_level >= $CFGERR_ERRORS) {
+        die("errors processing config file");
+    }
 }
-
-
--d "$confdir/$opt_config" or
-	die "$0: directory `$confdir/$opt_config' does not exist.\n";
 
 # read disklist
+$cfgerr_level = Amanda::Disklist::read_disklist();
+die("Config errors") if ($cfgerr_level >= $CFGERR_WARNINGS);
+
 my %disks = ();
-$::host = '';
-$::disk = '';
-$opt_verbose and
-    print STDERR "Running $amadmin $opt_config disklist\n";
-my $dlfh = new FileHandle "$amadmin $opt_config disklist|" or
-    die "$0: error in opening `$amadmin $opt_config disklist' pipe: $!\n";
-$/ = "";
-while (<$dlfh>) {
-    ($host, $disk) = m/    host (.*?):\n.*    disk (.*?):\n.*strategy (STANDARD|NOFULL|NOINC|HANOI|INCRONLY).*ignore NO/ms;
-    next unless $host;
-    $disks{$host}{$disk}++;
+foreach my $dle (Amanda::Disklist::all_disks()) {
+    $disks{$dle->{"host"}->{"hostname"}}{$dle->{"name"}}++;
 }
 
-$/ = "\n";
-$dlfh->close or
-    die "$0: error in closing `$amadmin $opt_config disklist|' pipe: $!\n";
-
-# Get backup dates
-%::dates = ();
-%::level = ();
-$::level = '';
-my ($date, $tape, $file, $status);
+# Get dumps
+my %dates = ();
+my %level = ();
+my ($date, $host, $disk);
 $opt_verbose and
-    print STDERR "Running $amadmin $opt_config find\n";
-my $fh = new FileHandle "$amadmin $opt_config find|" or
-    die "$0: error in opening `$amadmin $opt_config find' pipe: $!\n";
-<$fh>;
-while (<$fh>) {
-    chomp;
-    next if /found Amanda directory/;
-    next if /skipping cruft directory/;
-    next if /skip-incr/;
+    print STDERR "Processing $opt_config dumps\n";
+foreach my $dump (Amanda::DB::Catalog::sort_dumps(['hostname','diskname','write_timestamp'],Amanda::DB::Catalog::get_dumps())) {
+    $host = $dump->{"hostname"};
+    $disk = $dump->{"diskname"};
+    $date = substr($dump->{"dump_timestamp"},0,8);
 
-    ($date, $time, $host, $disk, $level, $tape, $file, $part, $status, $remaining) = shellwords($_);
-
-    next if $date eq 'date';
-    next if $date eq 'Warning:';
-    next if $date eq 'Scanning';
-    next if $date eq "";
-
-    $status .= " " . $remaining if defined($remaining);
-    if($time !~/^\d\d:\d\d:\d\d$/) {
-	$status = $part;
-	$part = $file;
-	$file = $tape;
-	$tape = $level;
-	$level = $disk;
-	$disk = $host;
-	$host = $time;
-    }
-    next if ($part !~ m,^1/,);
-
-    if ($date =~ /^\d\d\d\d-\d\d-\d\d$/) {
-	if(defined $disks{$host}{$disk}) {
-	    defined($level{$host}{$disk}{$date}) or
-		$level{$host}{$disk}{$date} = '';
-	    $level{$host}{$disk}{$date} .= ($status eq 'OK') ? $level : 'E';
-	    $dates{$date}++;
-	}
-    }
-    else {
-	print "bad date $date in $_\n";
+    if (defined $disks{$host}{$disk}) {
+        defined($level{$host}{$disk}{$date}) or
+            $level{$host}{$disk}{$date} = '';
+        $level{$host}{$disk}{$date} .= ($dump->{"status"} eq 'OK') ? $dump->{"level"} : 'E';
+        $dates{$date}++;
     }
 }
-$fh->close or
-    die "$0: error in closing `$amadmin $opt_config find|' pipe: $!\n";
 
 # Process the status to arrive at a "last" status
 if ($opt_last) {
     for $host (sort keys %disks) {
         for $disk (sort keys %{$disks{$host}}) {
-	    $level{$host}{$disk}{"0000-LA-ST"} = '';
+	    $level{$host}{$disk}{"0000LAST"} = '';
 	    for $date (sort keys %dates) {
 	        if ($level{$host}{$disk}{$date} eq "E"
-		     && $level{$host}{$disk}{"0000-LA-ST"} =~ /^\d/ ) {
-		    $level{$host}{$disk}{"0000-LA-ST"} .= $level{$host}{$disk}{$date};
+		     && $level{$host}{$disk}{"0000LAST"} =~ /^\d/ ) {
+		    $level{$host}{$disk}{"0000LAST"} .= $level{$host}{$disk}{$date};
 	        } elsif ($level{$host}{$disk}{$date} eq "") {
-		    $level{$host}{$disk}{"0000-LA-ST"} =~ s/E//;
+		    $level{$host}{$disk}{"0000LAST"} =~ s/E//;
 	        } else {
-		    $level{$host}{$disk}{"0000-LA-ST"} = $level{$host}{$disk}{$date};
+		    $level{$host}{$disk}{"0000LAST"} = $level{$host}{$disk}{$date};
 	        }
 	    }
         }
@@ -179,10 +132,10 @@ if ($opt_last) {
 if ($opt_num0) {
     for $host (sort keys %disks) {
         for $disk (sort keys %{$disks{$host}}) {
-            $level{$host}{$disk}{'0000-NM-L0'} = 0;
+            $level{$host}{$disk}{'0000NML0'} = 0;
             for $date (sort keys %dates) {
                 if ($level{$host}{$disk}{$date} =~ /0/) {
-                    $level{$host}{$disk}{'0000-NM-L0'} += 1;
+                    $level{$host}{$disk}{'0000NML0'} += 1;
                 }
             }
         }
@@ -193,11 +146,11 @@ if ($opt_num0) {
 if ($opt_togo0) {
     for $host (sort keys %disks) {
         for $disk (sort keys %{$disks{$host}}) {
-            $level{$host}{$disk}{'0000-TO-GO'} = 0;
+            $level{$host}{$disk}{'0000TOGO'} = 0;
             my $togo=0;
             for $date (sort keys %dates) {
                 if ($level{$host}{$disk}{$date} =~ /0/) {
-                    $level{$host}{$disk}{'0000-TO-GO'} = $togo;
+                    $level{$host}{$disk}{'0000TOGO'} = $togo;
                 }
                 $togo++;
             }
@@ -210,33 +163,33 @@ unless ($opt_skipmissed)
 {
     my ($start, $finish) = 
 	map {
-	    my($y,$m,$d) = split /-/, $_;
+	    my($y,$m,$d) = /(....)(..)(..)/;
 	    POSIX::mktime(0,0,0,$d,$m-1,$y-1900);
 	} (sort keys %dates)[0,-1];
 
     while ($start < $finish) {
 	my @l = localtime $start;
-	$dates{sprintf("%d-%02d-%02d", 1900+$l[5], $l[4]+1, $l[3])}++;
+	$dates{sprintf("%d%02d%02d", 1900+$l[5], $l[4]+1, $l[3])}++;
 	$start += 86400;
     }
 }
 
 #Add the "last" entry    
-$dates{"0000-LA-ST"}=1 if ($opt_last);
+$dates{"0000LAST"}=1 if ($opt_last);
 
 #Add the "Number of Level 0s" entry
-$dates{"0000-NM-L0"}=1 if ($opt_num0);
+$dates{"0000NML0"}=1 if ($opt_num0);
 
 #Add the "Runs to go" entry
-$dates{"0000-TO-GO"}=1 if ($opt_togo0);
+$dates{"0000TOGO"}=1 if ($opt_togo0);
 
 # make formats
 
 my $top_format = "format TOP =\n\n" .
     sprintf("%-0${opt_hostwidth}s %-0${opt_diskwidth}s ", '', 'date') .
-    join(' ', map((split(/-/, $_))[1], sort keys %dates)) . "\n" .
+    join(' ', map((/....(..)../)[0], sort keys %dates)) . "\n" .
     sprintf("%-0${opt_hostwidth}s %-0${opt_diskwidth}s ", 'host', 'disk') .
-    join(' ', map((split(/-/, $_))[2], sort keys %dates)) . "\n" .
+    join(' ', map((/......(..)/)[0], sort keys %dates)) . "\n" .
     "\n.\n";
 
 my $out_format = "format STDOUT =\n" .
