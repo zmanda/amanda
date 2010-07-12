@@ -572,7 +572,7 @@ sub get_parts_and_dumps {
 	    my $dump_timestamp = zeropad($find_result->{'timestamp'});
 
 	    my $dumpkey = join("\0", $find_result->{'hostname'}, $find_result->{'diskname'},
-			             $write_timestamp, $find_result->{'level'});
+			             $write_timestamp, $find_result->{'level'}, $dump_timestamp);
 	    my $dump = $dumps{$dumpkey};
 	    if (!defined $dump) {
 		$dump = $dumps{$dumpkey} = {
@@ -727,12 +727,13 @@ sub get_parts_and_dumps {
 		next unless $ok;
 	    }
 
-	    my $dumpkey = join("\0", $hostname, $diskname, $write_timestamp, $level);
+	    my $dumpkey = join("\0", $hostname, $diskname, $write_timestamp,
+				     $level, zeropad($dump_timestamp));
 	    my $dump = $dumps{$dumpkey};
 	    if (!defined $dump) {
 		# this will happen when a dump has no parts - a FAILed dump.
 		$dump = $dumps{$dumpkey} = {
-		    dump_timestamp => $dump_timestamp,
+		    dump_timestamp => zeropad($dump_timestamp),
 		    write_timestamp => $write_timestamp,
 		    hostname => $hostname,
 		    diskname => $diskname,
