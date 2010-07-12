@@ -3670,7 +3670,7 @@ read_autolabel(
 	else if (tok == CONF_EMPTY)
 	    val->v.autolabel.autolabel |= AL_EMPTY;
 	else {
-	    conf_parserror(_("ANY-VOLUME, NEW-VOLUME, OTHER-CONFIG, NON-AMANDA, VOLUME-ERROR or EMPTY is expected"));
+	    conf_parserror(_("ANY, NEW-VOLUME, OTHER-CONFIG, NON-AMANDA, VOLUME-ERROR or EMPTY is expected"));
 	}
 	get_conftoken(CONF_ANY);
     }

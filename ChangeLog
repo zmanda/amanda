@@ -1,4 +1,7 @@
 2010-07-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c: fix error message
+
+2010-07-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* example/amanda.conf.in example/template.d/advanced.conf.in
 	  example/template.d/amanda-S3.conf.in: replace label_new_tapes with
 	  autolabel
