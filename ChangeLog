@@ -1,5 +1,8 @@
+2010-07-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Xfer.pl: fix test counts under -without-server
+
 2010-07-10  Dustin J. Mitchell <dustin@zmanda.com>
-	* config/amanda/userid.m4: apply the default value for --with-gropu
+	* config/amanda/userid.m4: apply the default value for --with-group
 	  to the correct variable
 
 2010-07-08  Dustin J. Mitchell <dustin@zmanda.com>
