@@ -192,12 +192,13 @@ my $top_format = "format TOP =\n\n" .
     join(' ', map((/......(..)/)[0], sort keys %dates)) . "\n" .
     "\n.\n";
 
++ local ($::thishost,$::thisdisk);
 my $out_format = "format STDOUT =\n" .
     "@" . "<" x ($opt_hostwidth - 1) . ' ' .
     "@" . "<" x ($opt_diskwidth - 1) . ' ' .
     '@> ' x scalar(keys %dates) . "\n" .
-    join(', ', '$host', '$disk', 
-	 map("substr(\$level{\$host}{\$disk}{'$_'},-2)", sort keys %dates)) . "\n" .
+    join(', ', '$::thishost', '$::thisdisk',
+       map("substr(\$level{\$::thishost}{\$::thisdisk}{'$_'},-2)", sort keys %dates)) . "\n" .
     ".\n";
 
 eval $top_format;
@@ -206,8 +207,8 @@ $^ = 'TOP';
 eval $out_format;
 die $@ if $@;
 
-for $host (sort keys %disks) {
-    for $disk (sort keys %{$disks{$host}}) {
+for $::thishost (sort keys %disks) {
+    for $::thisdisk (sort keys %{$disks{$host}}) {
 	write;
     }
 }

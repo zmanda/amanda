@@ -1,4 +1,7 @@
 2010-07-12  Orion Poplawski <orion@cora.nwra.com>
+	* server-src/amoverview.pl: fix variable references in evals
+
+2010-07-12  Orion Poplawski <orion@cora.nwra.com>
 	* server-src/amoverview.pl: update to use Amanda::DB::Catalog
 	* perl/Amanda/DB/Catalog.pm: add dump_timestamp to the unique dump keys
 	* installcheck/Amanda_DB_Catalog.pl: update tests to check uniqueness
