@@ -11,9 +11,7 @@ tapecycle 10 tapes	# the number of tapes in rotation
 			# cycle
 runtapes 1		# number of tapes to be used in a single run of amdump
 tpchanger "chg-multi"	# the tape-changer glue script
-tapedev "S3:"		# the no-rewind tape device to be used
 changerfile "@CONFIG_DIR@/@DEFAULT_CONFIG@/changer.conf" 
-#changerdev "/dev/sg1"
 tapetype S3	# what kind of tape it is (see tapetypes below)
 
 holdingdisk hd2 {
@@ -21,7 +19,7 @@ holdingdisk hd2 {
     use 1000 Mb
     }
 
-label_new_tapes "@DEFAULT_CONFIG@-%%%%"	# Enable auto labeling 
+autolabel "@DEFAULT_CONFIG@-%%%%" empty
 labelstr "^@DEFAULT_CONFIG@-[0-9][0-9]*$"	# label constraint regex: all tapes must match
 
 dtimeout 1800		# number of idle seconds before a dump is aborted.

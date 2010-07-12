@@ -133,7 +133,7 @@ tapedev "@EXAMPLE_TAPEDEV@"	# tape changer or device to use
 # encounters, uncomment the line below. Note that this will ERASE any
 # non-Amanda tapes you may have, and may also ERASE any near-failing tapes.
 # Use with caution.
-## label_new_tapes "@DEFAULT_CONFIG@-%%%"
+## autolabel "@DEFAULT_CONFIG@-%%%" empty
 
 maxdumpsize -1		# Maximum number of bytes the planner will schedule
 			# for a run (default: runtapes * tape_length).

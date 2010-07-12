@@ -50,7 +50,7 @@ device_output_buffer_size 1280k
 # encounters, uncomment the line below. Note that this will ERASE any
 # non-Amanda tapes you may have, and may also ERASE any near-failing tapes.
 # Use with caution.
-## label_new_tapes "DailySet1-%%%"
+## autolabel "DailySet1-%%%" empty
 			
 maxdumpsize -1		# Maximum total size the planner will schedule
 			# for a run (default: runtapes * tape_length) (kbytes).

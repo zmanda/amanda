@@ -1,4 +1,9 @@
 2010-07-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* example/amanda.conf.in example/template.d/advanced.conf.in
+	  example/template.d/amanda-S3.conf.in: replace label_new_tapes with
+	  autolabel
+
+2010-07-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Xfer.pl: fix test counts under -without-server
 
 2010-07-10  Dustin J. Mitchell <dustin@zmanda.com>
