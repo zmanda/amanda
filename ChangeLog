@@ -1,3 +1,8 @@
+2010-07-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Report.pm: parse the planner's skipping a dump
+	* perl/Amanda/Report/human.pm: present it correctly
+	* installcheck/amreport.pl: adjust tests accordingly
+
 2010-07-12  Nandan Athawale <nandan.athawale@gmail.com>
 	* perl/Amanda/Taper/Scribe.pm: enable debugging whenever debug_taper
 	  is set

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 156;
+use Test::More tests => 158;
 
 use strict;
 use warnings;
@@ -601,23 +601,23 @@ burp($current_log_filename, $datas{'normal'});
 ok(run($amreport, 'TESTCONF', '-f', $out_filename, '-o', 'columnspec=OrigKB=::2'),
     "amreport with OrigKB=::2");
 results_match($out_filename, $datas{'normal-rpt2'},
-    "..result matches 1");
+    "..result matches");
 
 ok(run($amreport, 'TESTCONF', '-f', $out_filename, '-o', 'columnspec=OrigKB=:5'),
     "amreport with OrigKB=:5");
 results_match($out_filename, $datas{'normal-rpt3'},
-    "..result matches 2");
+    "..result matches");
 
 ok(run($amreport, 'TESTCONF', '-f', $out_filename, '-o', 'columnspec=OrigKB=:5:6'),
     "amreport with OrigKB=:5:6");
 results_match($out_filename, $datas{'normal-rpt4'},
-    "..result matches 3");
+    "..result matches");
 # TODO: do a lot more tests of the colspec stuff
 
 ok(run($amreport, 'TESTCONF', '-f', $out_filename, '-o', 'displayunit=m'),
     "amreport with displayunit=m");
 results_match($out_filename, $datas{'normal-rpt5'},
-    "..result matches 4");
+    "..result matches");
 
 ## some (anonymized) real logfiles, for regression testing
 
@@ -628,7 +628,7 @@ burp($current_log_filename, $datas{'strontium'});
 ok(run($amreport, 'TESTCONF', '-f', $out_filename),
     "amreport with strontium logfile (simple example with multiple levels)");
 results_match($out_filename, $datas{'strontium-rpt'},
-    "..result matches 5");
+    "..result matches");
 results_match($printer_output,
     $datas{'strontium-postscript'},
     "..printer output matches");
@@ -639,7 +639,7 @@ burp($current_log_filename, $datas{'amflush'});
 ok(run($amreport, 'TESTCONF', '-f', $out_filename),
     "amreport with amflush logfile (regression check for flush-related DUMP STATUS)");
 results_match($out_filename, $datas{'amflush-rpt'},
-    "..result matches 6");
+    "..result matches");
 results_match($printer_output,
     $datas{'amflush-postscript'},
     "..printer output matches");
@@ -651,7 +651,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 12,
     "amreport with resultsmissing logfile ('RESULTS MISSING') exit==12");
 results_match($out_filename, $datas{'resultsmissing-rpt'},
-    "..result matches 7");
+    "..result matches");
 results_match($printer_output,
     $datas{'resultsmissing-postscript'},
     "..printer output matches");
@@ -663,7 +663,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 2,
     "amreport with shortstrange logfile exit==2");
 results_match($out_filename, $datas{'shortstrange-rpt'},
-    "..result matches 8");
+    "..result matches");
 results_match($printer_output,
     $datas{'shortstrange-postscript'},
     "..printer output matches");
@@ -675,7 +675,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 2,
     "amreport with longstrange logfile exit==2");
 results_match($out_filename, $datas{'longstrange-rpt'},
-    "..result matches 9");
+    "..result matches");
 
 cleanup();
 burp($current_log_filename, $datas{'doublefailure'});
@@ -684,7 +684,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 4,
     "amreport with doublefailure logfile exit==4");
 results_match($out_filename, $datas{'doublefailure-rpt'},
-    "..result matches 10");
+    "..result matches");
 results_match($printer_output,
     $datas{'doublefailure-postscript'},
     "..printer output matches");
@@ -696,7 +696,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 0,
     "amreport with bigestimate logfile exit==0");
 results_match($out_filename, $datas{'bigestimate-rpt'},
-    "..result matches 11");
+    "..result matches");
 results_match($printer_output,
     $datas{'bigestimate-postscript'},
     "..printer output matches");
@@ -708,7 +708,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 4,
     "amreport with retried logfile exit==4");
 results_match($out_filename, $datas{'retried-rpt'},
-    "..result matches 12");
+    "..result matches");
 results_match($printer_output,
     $datas{'retried-postscript'},
     "..printer output matches");
@@ -729,7 +729,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 4,
     "amreport with retried logfile where driver did not finish exit==4");
 results_match($out_filename, $datas{'retried-rpt'},
-    "..result matches 13");
+    "..result matches");
 
 cleanup();
 burp($current_log_filename, $datas{'taperr'});
@@ -738,7 +738,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 16,
     "amreport with taperr logfile exit==16");
 results_match($out_filename, $datas{'taperr-rpt-holding'},
-    "..result matches 14");
+    "..result matches");
 ok((-f $printer_output and -z $printer_output),
     "..printer output exists but is empty");
 cleanup();
@@ -749,7 +749,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename, '-l', $old_log_filename);
 is($Installcheck::Run::exit_code, 16,
     "amreport with taperr logfile specified explicitly exit==16");
 results_match($out_filename, $datas{'taperr-rpt-noholding'},
-    "..result matches 15");
+    "..result matches");
 
 cleanup();
 burp($current_log_filename, $datas{'spanned'});
@@ -758,7 +758,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 0,
     "amreport with spanned logfile");
 results_match($out_filename, $datas{'spanned-rpt'},
-    "..result matches 16");
+    "..result matches");
 results_match($printer_output,
     $datas{'spanned-postscript'},
     "..printer output matches");
@@ -770,7 +770,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 5,
     "amreport with fatal logfile");
 results_match($out_filename, $datas{'fatal-rpt'},
-    "..result matches 17");
+    "..result matches");
 ok(-f $printer_output && -z $printer_output,
     "..printer output is empty (no dumps, no tapes)");
 
@@ -779,7 +779,7 @@ burp($current_log_filename, $datas{'flush-origsize'});
 
 run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 0,
-    "..exit status is correct");
+    "amreport with flush-origsize");
 results_match($out_filename, $datas{'flush-origsize-rpt'},
     "..result matches flush-origsize-rpt");
 
@@ -788,7 +788,7 @@ burp($current_log_filename, $datas{'flush-noorigsize'});
 
 run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 0,
-    "..exit status is correct");
+    "amreport with flush-noorigsize");
 results_match($out_filename, $datas{'flush-noorigsize-rpt'},
     "..result matches flush-origsize-rpt");
 
@@ -797,9 +797,19 @@ burp($current_log_filename, $datas{'plannerfail'});
 
 run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 4,
-    "..exit status is correct (failed)");
+    "amreport with a planner failure (failed)");
 results_match($out_filename, $datas{'plannerfail-rpt'},
     "..result matches plannerfail-rpt");
+
+cleanup();
+
+burp($current_log_filename, $datas{'skipped'});
+
+run($amreport, 'TESTCONF', '-f', $out_filename);
+is($Installcheck::Run::exit_code, 0,
+    "amreport with a planner skipped dump (succes)");
+results_match($out_filename, $datas{'skipped-rpt'},
+    "..result matches skipped-rpt");
 
 cleanup();
 
@@ -2457,5 +2467,54 @@ HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
 1.2.3.4      "-/Scripts"   FAILED
 1.2.3.4      "G:/"         FAILED
 1.2.3.4      SystemState   FAILED
+
+(brought to you by Amanda version x.y.z)
+%%%% skipped
+START planner date 20090326001503
+START driver date 20090326001503
+INFO amdump amdump pid 22014
+INFO driver driver pid 22043
+INFO planner planner pid 22042
+INFO taper taper pid 22044
+DISK planner ns-new.slikon.local /boot
+SUCCESS planner ns-new.slikon.local /boot 20090326001503 1 "[skipped: skip-incr]"
+START taper datestamp 20090326001503 label Daily-36 tape 1
+INFO dumper pid-done 7337
+FINISH driver date 20090326001503 time 77506.015
+INFO driver pid-done 22043
+%%%% skipped-rpt
+These dumps were to tape Daily-36.
+The next tape Amanda expects to use is: 1 new tape.
+
+STATISTICS:
+                          Total       Full      Incr.
+                        --------   --------   --------
+Estimate Time (hrs:min)    0:00
+Run Time (hrs:min)        21:32
+Dump Time (hrs:min)        0:00       0:00       0:00
+Output Size (meg)           0.0        0.0        0.0
+Original Size (meg)         0.0        0.0        0.0
+Avg Compressed Size (%)     --         --         --
+Filesystems Dumped            0          0          0
+Avg Dump Rate (k/s)         --         --         --
+
+Tape Time (hrs:min)        0:00       0:00       0:00
+Tape Size (meg)             0.0        0.0        0.0
+Tape Used (%)               0.0        0.0        0.0
+Filesystems Taped             0          0          0
+
+Parts Taped                   0          0          0
+Avg Tp Write Rate (k/s)     --         --         --
+
+USAGE BY TAPE:
+  Label          Time      Size      %    DLEs	Parts
+  Daily-36       0:00        0k    0.0     0     0
+
+
+DUMP SUMMARY:
+                                       DUMPER STATS               TAPER STATS
+HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
+-------------------------- ------------------------------------- -------------
+ns-new.sliko /boot         SKIPPED -------------------------------------------
 
 (brought to you by Amanda version x.y.z)
