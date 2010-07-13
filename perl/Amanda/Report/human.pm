@@ -953,7 +953,7 @@ sub output_details
               "big estimate: $hostname $qdisk $dle->{estimate}{level}",
               sprintf('                est: %.0f%s    out %.0f%s',
                 $est->{ckb}, $disp_unit, $outsize, $disp_unit)
-              if ( ($est->{ckb} * .9 > $outsize)
+              if (defined $est->{'ckb'} && ($est->{ckb} * .9 > $outsize)
                 && ($est->{ckb} - $outsize > 1.0e5));
         }
     }
@@ -1003,6 +1003,7 @@ sub output_summary
     my $nodump_PARTIAL_format = get_summary_format($col_spec, 'nodump-PARTIAL', @summary_linedata);
     my $nodump_FAILED_format = get_summary_format($col_spec, 'nodump-FAILED', @summary_linedata);
     my $nodump_FLUSH_format = get_summary_format($col_spec, 'nodump-FLUSH', @summary_linedata);
+    my $skipped_format = get_summary_format($col_spec, 'skipped', @summary_linedata);
 
     ## print the header names
     my $hdl =
@@ -1065,6 +1066,8 @@ sub output_summary
 	    print $fh sprintf($missing_format, @data[0..2]);
 	} elsif ($type eq 'noflush') {
 	    print $fh sprintf($noflush_format, @data[0..2]);
+	} elsif ($type eq 'skipped') {
+	    print $fh sprintf($skipped_format, @data[0..2]);
 	}
     }
 
@@ -1081,6 +1084,7 @@ sub output_summary
 ##  ('noflush', host, disk, '' ..) # NO FILE TO FLUSH ------
 ##  ('nodump-$msg', host, disk, level, '', out, '--', '',
 ##	    '', tapetime, taperate, taperpartial)  # ... {FLUSH|FAILED|PARTIAL} ...
+##  ('skipped', host, disk, '' ..) # SKIPPED -----
 ##
 ## the taperpartial column is not covered by the columnspec, and "hangs off"
 ## the right side.  It's usually empty, but set to " PARTIAL" when the taper
@@ -1126,6 +1130,14 @@ sub get_summary_info
         $dle_info->{'planner'}->{'status'} eq 'fail') {
 	my @rv;
 	push @rv, 'nodump-FAILED';
+	push @rv, $hostname;
+	push @rv, $disk_out;
+	push @rv, ("",) x 9;
+	push @rvs, [@rv];
+    } elsif ($dle_info->{'planner'} &&
+        $dle_info->{'planner'}->{'status'} eq 'skipped') {
+	my @rv;
+	push @rv, 'skipped';
 	push @rv, $hostname;
 	push @rv, $disk_out;
 	push @rv, ("",) x 8;
@@ -1393,6 +1405,14 @@ sub get_summary_format
 		  get_summary_col_format( $i, $col_spec->[$i],
 		    map { $_->[$i] } @summary_lines );
 	    }
+	} elsif ($type eq 'skipped') {
+	    # add a blank level column and the space for the origkb column
+	    push @col_format, ' ' x $col_spec->[2]->[COLSPEC_PRE_SPACE];
+	    push @col_format, ' ' x $col_spec->[2]->[COLSPEC_WIDTH];
+	    push @col_format, ' ' x $col_spec->[3]->[COLSPEC_PRE_SPACE];
+	    my $str = "SKIPPED ";
+	    $str .= '-' x ($rulewidth - length($str));
+	    push @col_format, $str;
 	}
     }
 

@@ -329,7 +329,9 @@ a timestamp of when the program finished (if the program exited)
 =item C<status>
 
 the status of the dump at this program on this try ("success", "partial",
-"done", or "failed")
+"done", or "failed").  The planner adds an extra "skipped" status which is
+added when the planner decides to skip a DLE due to user configuration (e.g.,
+C<skipincr>).
 
 =item C<level>
 
@@ -612,7 +614,7 @@ sub get_tape
         push @$tape_labels, $label;
         $tapes->{$label} = {date => "",
 			    kb => 0,
-			    files => "",
+			    files => 0,
 			    dle => 0,
 			    time => 0};
     }
@@ -653,6 +655,9 @@ sub _handle_planner_line
 
     } elsif ( $type == $L_DISK ) {
         return $self->_handle_disk_line( "planner", $str );
+
+    } elsif ( $type == $L_SUCCESS ) {
+        return $self->_handle_success_line( "planner", $str );
 
     } elsif ( $type == $L_ERROR ) {
         return $self->_handle_error_line( "planner", $str );
@@ -1184,6 +1189,25 @@ sub _handle_disk_line
     return;
 }
 
+sub _handle_success_line
+{
+    my $self = shift @_;
+    my ($program, $str) = @_;
+
+    my $data     = $self->{data};
+    my $disklist = $data->{disklist};
+    my $hosts    = $self->{cache}{hosts} ||= [];
+    my $dles     = $self->{cache}{dles}  ||= [];
+
+    my @info = Amanda::Util::split_quoted_strings($str);
+    my ($hostname, $disk, $timestamp, $level, $stat1, $stat2) = @info;
+
+    if ($stat1 =~ /skipped/) {
+        $disklist->{$hostname}{$disk}->{$program}->{'status'} = 'skipped';
+    }
+    return;
+}
+
 
 sub _handle_info_line
 {
@@ -1237,6 +1261,8 @@ sub check_missing_fail_strange
 
 	if ($planner && $planner->{'status'} eq 'fail') {
 	    $self->{flags}{dump_failed} = 1;
+	} elsif ($planner && $planner->{'status'} eq 'skipped') {
+	    # We don't want these to be counted as missing below
 	} elsif (!defined $alldumps->{$self->{'run_timestamp'}}) {
 	    $self->{flags}{results_missing} = 1;
 	    $self->{flags}{exit_status} |= STATUS_MISSING;

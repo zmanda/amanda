@@ -1,3 +1,8 @@
+2010-07-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Report.pm: parse the planner's skipping a dump
+	* perl/Amanda/Report/human.pm: present it correctly
+	* installcheck/amreport.pl: adjust tests accordingly
+
 2010-07-12  Orion Poplawski <orion@cora.nwra.com>
 	* server-src/amoverview.pl: fix variable references in evals
 
