@@ -1,3 +1,7 @@
+2010-07-12  Nandan Athawale <nandan.athawale@gmail.com>
+	* perl/Amanda/Taper/Scribe.pm: enable debugging whenever debug_taper
+	  is set
+
 2010-07-12  Orion Poplawski <orion@cora.nwra.com>
 	* server-src/amoverview.pl: fix variable references in evals
 

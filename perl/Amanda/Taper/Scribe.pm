@@ -410,6 +410,7 @@ use Amanda::Device qw( :constants );
 use Amanda::Header;
 use Amanda::Debug qw( :logging );
 use Amanda::MainLoop;
+use Amanda::Config;
 use base qw( Exporter );
 
 our @EXPORT_OK = qw( get_splitting_args_from_config );
@@ -418,6 +419,7 @@ sub new {
     my $class = shift;
     my %params = @_;
 
+    my $decide_debug = $Amanda::Config::debug_taper || $params{'debug'};
     for my $rq_param qw(taperscan feedback) {
 	croak "required parameter '$rq_param' mising"
 	    unless exists $params{$rq_param};
@@ -425,7 +427,7 @@ sub new {
 
     my $self = {
 	feedback => $params{'feedback'},
-	debug => $params{'debug'},
+	debug => $decide_debug,
 	write_timestamp => undef,
 	started => 0,
 
