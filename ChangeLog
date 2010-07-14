@@ -1,4 +1,8 @@
 2010-07-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Tapelist.swg: append a slash to dirname() and make error
+	  messages better
+
+2010-07-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in config/amanda/shmem.m4: remove unnecessary config
 	  checks
 

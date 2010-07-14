@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -148,9 +148,9 @@ sub write {
     my $self = shift;
     my ($filename) = @_;
 
-    my $new_tapelist_file = dirname($filename) . "-new-" . time();
+    my $new_tapelist_file = dirname($filename) . "/-new-" . time();
 
-    open(my $fh, ">", $new_tapelist_file) or die("Could not open '$filename' for writing: $!");
+    open(my $fh, ">", $new_tapelist_file) or die("Could not open '$new_tapelist_file' for writing: $!");
     for my $tle (@$self) {
 	my $datestamp = $tle->{'datestamp'};
 	my $label = $tle->{'label'};
@@ -160,7 +160,7 @@ sub write {
     }
     close($fh);
     unless (move($new_tapelist_file, $filename)) {
-	die ("failed to write $filename: $!");
+	die ("failed to rename '$new_tapelist_file' to '$filename': $!");
     }
 
     # re-read from the C side to synchronize
