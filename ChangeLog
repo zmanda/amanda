@@ -1,3 +1,7 @@
+2010-07-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in config/amanda/shmem.m4: remove unnecessary config
+	  checks
+
 2010-07-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Report.pm: parse the planner's skipping a dump
 	* perl/Amanda/Report/human.pm: present it correctly
