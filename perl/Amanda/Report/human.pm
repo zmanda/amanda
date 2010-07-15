@@ -764,12 +764,17 @@ EOF
         ($self->{tapedisks}[1] > 0 ? "(level:#disks ...)" : "")
     );
 
+    my $nb_incr_dle = 0;
+    my @incr_dle = @{$self->{tapedisks}};
+    foreach my $level (1 .. $#incr_dle) {
+	$nb_incr_dle += $incr_dle[$level];
+    }
     print $fh swrite(
         $st_format,
         "Filesystems Taped",
-        $self->{tapedisks}[0] + $self->{tapedisks}[1],
+        $self->{tapedisks}[0] + $nb_incr_dle,
         $self->{tapedisks}[0],
-        $self->{tapedisks}[1],
+        $nb_incr_dle,
         (
             ($self->{tapedisks}[1] > 0)
             ? by_level_count($self->{tapedisks})
