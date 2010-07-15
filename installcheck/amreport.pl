@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 158;
+use Test::More tests => 160;
 
 use strict;
 use warnings;
@@ -810,6 +810,16 @@ is($Installcheck::Run::exit_code, 0,
     "amreport with a planner skipped dump (succes)");
 results_match($out_filename, $datas{'skipped-rpt'},
     "..result matches skipped-rpt");
+
+cleanup();
+
++burp($current_log_filename, $datas{'filesystemstaped'});
+
+run($amreport, 'TESTCONF', '-f', $out_filename);
+is($Installcheck::Run::exit_code, 0,
+    "amreport correctly report filesystem taped (success)");
+results_match($out_filename, $datas{'filesystemstaped-rpt'},
+    "..result matches filesystemstaped-rpt");
 
 cleanup();
 
@@ -2516,5 +2526,70 @@ DUMP SUMMARY:
 HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
 -------------------------- ------------------------------------- -------------
 ns-new.sliko /boot         SKIPPED -------------------------------------------
+
+(brought to you by Amanda version x.y.z)
+%%%% filesystemstaped
+INFO amflush amflush pid 1239
+DISK amflush localhost.localdomain /boot
+START amflush date 20100713120014
+INFO driver driver pid 1240
+START driver date 20100713120014
+STATS driver hostname localhost.localdomain
+STATS driver startup time 0.015
+INFO taper taper pid 1241
+START taper datestamp 20100713120014 label DAILY-37 tape 1
+PART taper DAILY-37 1 localhost.localdomain /boot 20100713111516 1/-1 1 [sec 0.096877 kb 10240 kps 105701.444021 orig-kb 20480]
+PART taper DAILY-37 2 localhost.localdomain /boot 20100713111516 2/-1 1 [sec 0.079061 kb 10240 kps 129519.788435 orig-kb 20480]
+DONE taper localhost.localdomain /boot 20100713111516 2 1 [sec 0.100000 kb 20480 kps 446100.000000 orig-kb 20480]
+PART taper DAILY-37 3 localhost.localdomain /boot 20100713111517 1/-1 2 [sec 0.096877 kb 10240 kps 105701.444021 orig-kb 10240]
+DONE taper localhost.localdomain /boot 20100713111517 1 2 [sec 0.100000 kb 10240 kps 446100.000000 orig-kb 10240]
+INFO taper tape DAILY-37 kb 30720 fm 3 [OK]
+INFO taper pid-done 1241
+FINISH driver date 20100713120014 time 2.534
+INFO driver pid-done 1240
+INFO amflush pid-done 1239
+%%%% filesystemstaped-rpt
+Hostname: localhost.localdomain
+Org     : DailySet1
+Config  : TESTCONF
+Date    : July 13, 2010
+
+The dumps were flushed to tape DAILY-37.
+The next tape Amanda expects to use is: 1 new tape.
+
+STATISTICS:
+                          Total       Full      Incr.
+                        --------   --------   --------
+Estimate Time (hrs:min)     0:00
+Run Time (hrs:min)          0:00
+Dump Time (hrs:min)         0:00       0:00       0:00
+Output Size (meg)            0.0        0.0        0.0
+Original Size (meg)          0.0        0.0        0.0
+Avg Compressed Size (%)      --         --         --
+Filesystems Dumped             0          0          0
+Avg Dump Rate (k/s)          --         --         --
+
+Tape Time (hrs:min)         0:00       0:00       0:00
+Tape Size (meg)             30.0        0.0       30.0
+Tape Used (%)              100.1        0.0      100.1  (level:#disks ...)
+Filesystems Taped              2          0          2  (1:1 2:1)
+                                                        (level:#parts ...)
+Parts Taped                    3          0          3  (1:2 2:1)
+Avg Tp Write Rate (k/s)   153600        --      153600
+
+USAGE BY TAPE:
+  Label               Time         Size      %    Nb    Nc
+  DAILY-37            0:00       30720k  100.1     2     3
+
+NOTES:
+  taper: tape DAILY-37 kb 30720 fm 3 [OK]
+
+
+DUMP SUMMARY:
+                                      DUMPER STATS                TAPER STATS
+ HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS     KB/s
+ -------------------------- ------------------------------------- ---------------
+ localhost.lo /boot       2   10240   10240    --      FLUSH        0:00 446100.0
+ localhost.lo /boot       1   20480   20480    --      FLUSH        0:00 446100.0
 
 (brought to you by Amanda version x.y.z)
