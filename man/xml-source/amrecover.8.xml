@@ -34,6 +34,7 @@
     <arg choice='opt'>-s <replaceable>index-server</replaceable></arg>
     <arg choice='opt'>-t <replaceable>tape-server</replaceable></arg>
     <arg choice='opt'>-d <replaceable>tape-device</replaceable></arg>
+    <arg choice='opt'>-h <replaceable>hostname</replaceable></arg>
     <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -87,6 +88,12 @@ client-custom-compressed tapes.</para>
   <term><option>-d tape-device</option></term>
   <listitem>
 <para>Tape device to use on the tape server host.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-h hostname</option></term>
+  <listitem>
+<para>Hostname to begin restoring; defaults to the system's hostname.</para>
   </listitem>
   </varlistentry>
 

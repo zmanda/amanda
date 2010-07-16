@@ -1,4 +1,10 @@
 2010-07-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amrecover.8.xml recover-src/amrecover.c: add a -h
+	  parameter that sets the initial host
+	* installcheck/amrecover.pl: use it, so tests run even at 30,000 feet
+	  with no net connection
+
+2010-07-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/syshacks.m4: Mac OS X 10.6 (Snow Leopard) supported
 	* config/amanda/tape.m4: fix bugs causing tape support to always be
 	  built (symbols aren't defined in Snow Leopard)
