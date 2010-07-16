@@ -1,4 +1,14 @@
 2010-07-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/syshacks.m4: Mac OS X 10.6 (Snow Leopard) supported
+	* config/amanda/tape.m4: fix bugs causing tape support to always be
+	  built (symbols aren't defined in Snow Leopard)
+	* device-src/device.c: fix bug
+	* perl/Amanda/Device.swg: return undef for undefined properties,
+	  rather than crashing
+	* installcheck/Amanda_Changer_single.pl installcheck/amdevcheck.pl: do
+	  not assume tape device is defined
+
+2010-07-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/macro-archive/ac_prog_swig.m4: fix swig version detection
 	  - swig-2.0.0 works fine
 

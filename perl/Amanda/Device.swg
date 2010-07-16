@@ -467,10 +467,10 @@ typedef struct Device {
 	    if (SvPOK($input))
 		pname = SvPV_nolen($input);
 
-	    if (pname) $1 = (DevicePropertyBase *)device_property_get_by_name(pname);
-	    if (!pname || !$1) {
-		SWIG_exception_fail(SWIG_ValueError, "Invalid property name");
-	    }
+	    if (pname)
+		$1 = (DevicePropertyBase *)device_property_get_by_name(pname);
+	    else
+		$1 = NULL;
 	}
 
 	/* A typemap to convert the GValue in property_get to a return value.  The
@@ -516,7 +516,11 @@ typedef struct Device {
 	void
 	property_get(DevicePropertyBase *pbase, GValue *out_val, PropertySurety *surety,
 		     PropertySource *source, gboolean *val_found) {
-	    *val_found = device_property_get_ex(self, pbase->ID, out_val, surety, source);
+	    if (pbase) {
+		*val_found = device_property_get_ex(self, pbase->ID, out_val, surety, source);
+	    } else {
+		*val_found = FALSE;
+	    }
 	}
 
 	/* delete typemaps */

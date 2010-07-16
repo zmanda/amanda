@@ -68,7 +68,7 @@ AC_DEFUN([AMANDA_TAPE_DEVICE], [
     if test -n "$xenix_tapeio" ||
        test -n "$aix_tapeio" ||
        test -n "$uware_tapeio" ||
-       test -n "$HAVE_MTIOCTOP"; then
+       test x"$HAVE_MTIOCTOP" = x"yes"; then
 	want_tape_device=yes
 	AC_DEFINE(WANT_TAPE_DEVICE, 1, [Define if the tape-device will be built])
     fi
@@ -76,7 +76,7 @@ AC_DEFUN([AMANDA_TAPE_DEVICE], [
     AM_CONDITIONAL(WANT_TAPE_XENIX, test -n "$xenix_tapeio")
     AM_CONDITIONAL(WANT_TAPE_AIX, test -n "$aix_tapeio")
     AM_CONDITIONAL(WANT_TAPE_UWARE, test -n "$uware_tapeio")
-    AM_CONDITIONAL(WANT_TAPE_POSIX, test -n "$HAVE_MTIOCTOP")
+    AM_CONDITIONAL(WANT_TAPE_POSIX, test x"$HAVE_MTIOCTOP" = x"yes")
     AM_CONDITIONAL(WANT_TAPE_DEVICE, test -n "$want_tape_device")
 
     if test -n "$xenix_tapeio"; then

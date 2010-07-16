@@ -433,7 +433,7 @@ handle_device_regex(const char * user_name, char ** driver_name,
         *driver_name = stralloc("tape");
         *device = stralloc(user_name);
 #else /* !WANT_TAPE_DEVICE */
-	errmsg = newvstrallocf(errmsg, "\"%s\" is not a valid device name.\n", user_name);
+	*errmsg = newvstrallocf(*errmsg, "\"%s\" is not a valid device name.\n", user_name);
 	regfree(&regex);
 	return FALSE;
 #endif /* WANT_TAPE_DEVICE */
