@@ -225,7 +225,7 @@ ndmp9.h ndmp9_xdr.c : ndmp9.x
 	$(RPCGEN) ndmp9.x
 
 # cause these files to be built before those that might depend on them
-BUILT_SOURCES = \
+BUILT_SOURCES += \
 	ndmp0.h \
 	ndmp0_xdr.c \
 	ndmp2.h \
