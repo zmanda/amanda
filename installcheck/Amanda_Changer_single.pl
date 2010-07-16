@@ -1,4 +1,4 @@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -46,7 +46,8 @@ if ($cfg_result != $CFGERR_OK) {
     die(join "\n", @errors);
 }
 
-my $chg = Amanda::Changer->new("chg-single:tape:/foo");
+my $chg = Amanda::Changer->new("chg-single:null:/foo");
+die "$chg" if $chg->isa("Amanda::Changer::Error");
 
 {
     my ($held_res);
@@ -72,7 +73,7 @@ my $chg = Amanda::Changer->new("chg-single:tape:/foo");
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading relative slot 'current'")
 	    or diag($err);
-	is($res->{'device'}->device_name(), 'tape:/foo',
+	is($res->{'device'}->device_name(), 'null:/foo',
 	    "returns correct device name");
 
 	$held_res = $res; # hang onto it while loading another slot
@@ -84,7 +85,7 @@ my $chg = Amanda::Changer->new("chg-single:tape:/foo");
     $got_second_res = make_cb('got_second_res' => sub {
 	my ($err, $res) = @_;
 	chg_err_like($err,
-	    { message => qr{'tape:/foo' is already reserved},
+	    { message => qr{'null:/foo' is already reserved},
 	      type => 'failed',
 	      reason => 'volinuse' },
 	    "second simultaneous reservation rejected");
