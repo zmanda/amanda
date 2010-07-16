@@ -79,8 +79,9 @@ sub run_amrecover {
     my @commands = @{$params{'commands'}};
 
     cleandir();
+    my @h_opt = ('-h', 'localhost') unless $set_host_succeed;
     $exp = Installcheck::Run::run_expect('amrecover', 'TESTCONF',
-	'-t', 'localhost', '-o', 'auth=local');
+	@h_opt, '-s', 'localhost', '-t', 'localhost', '-o', 'auth=local');
     $exp->log_stdout($debug);
 
     @results = ();
@@ -138,7 +139,7 @@ run_amrecover(
 
 is_deeply([ @results ], [
 	'server-ready', 'config-set',
-	($set_host_succeed) ? 'host-set' : 'use-sethost',
+	'host-set',
 	'> sethost localhost',
 	'host-set',
 	"> setdisk $diskname",
@@ -171,7 +172,7 @@ run_amrecover(
 
 is_deeply([ @results ], [
 	'server-ready', 'config-set',
-	($set_host_succeed) ? 'host-set' : 'use-sethost',
+	'host-set',
 	'> sethost localhost ',
 	'host-set',
 	'> sethost localhost',

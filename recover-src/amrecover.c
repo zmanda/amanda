@@ -301,8 +301,6 @@ quit(void)
     stop_amindexd();
 }
 
-char *localhost = NULL;
-
 #ifdef DEFAULT_TAPE_SERVER
 # define DEFAULT_TAPE_SERVER_FAILOVER (DEFAULT_TAPE_SERVER)
 #else
@@ -326,6 +324,7 @@ main(
     int response_error;
     struct tm *tm;
     config_overrides_t *cfg_ovr;
+    char *starting_hostname = NULL;
 
     /*
      * Configure program for internationalization:
@@ -345,13 +344,6 @@ main(
 
     dbopen(DBG_SUBDIR_CLIENT);
 
-    localhost = alloc(MAX_HOSTNAME_LENGTH+1);
-    if (gethostname(localhost, MAX_HOSTNAME_LENGTH) != 0) {
-	error(_("cannot determine local host name\n"));
-	/*NOTREACHED*/
-    }
-    localhost[MAX_HOSTNAME_LENGTH] = '\0';
-
     /* treat amrecover-specific command line options as the equivalent
      * -o command-line options to set configuration values */
     cfg_ovr = new_config_overrides(argc/2);
@@ -368,7 +360,7 @@ main(
     }
 
     /* now parse regular command-line '-' options */
-    while ((i = getopt(argc, argv, "o:C:s:t:d:U")) != EOF) {
+    while ((i = getopt(argc, argv, "o:C:s:t:d:Uh:")) != EOF) {
 	switch (i) {
 	    case 'C':
 		add_config_override(cfg_ovr, "conf", optarg);
@@ -388,6 +380,10 @@ main(
 
 	    case 'o':
 		add_config_override_opt(cfg_ovr, optarg);
+		break;
+
+	    case 'h':
+		starting_hostname = g_strdup(optarg);
 		break;
 
 	    case 'U':
@@ -422,6 +418,15 @@ main(
 
     our_features = am_init_feature_set();
     our_features_string = am_feature_to_string(our_features);
+
+    if (!starting_hostname) {
+	starting_hostname = alloc(MAX_HOSTNAME_LENGTH+1);
+	if (gethostname(starting_hostname, MAX_HOSTNAME_LENGTH) != 0) {
+	    error(_("cannot determine local host name\n"));
+	    /*NOTREACHED*/
+	}
+	starting_hostname[MAX_HOSTNAME_LENGTH] = '\0';
+    }
 
     server_name = NULL;
     if (getconf_seen(CNF_INDEX_SERVER) == -2) { /* command line argument */
@@ -585,7 +590,7 @@ main(
     if (server_happy()) {
 	/* set host we are restoring to this host by default */
 	amfree(dump_hostname);
-	set_host(localhost);
+	set_host(starting_hostname);
 	if (dump_hostname)
 	    g_printf(_("Use the setdisk command to choose dump disk to recover\n"));
 	else
