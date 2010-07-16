@@ -1,3 +1,6 @@
+2010-07-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Tapelist.swg: better fix for temp filename
+
 2010-07-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report/human.pm: Correcly compute 'Filesystem taped' for
 				       incremental.
