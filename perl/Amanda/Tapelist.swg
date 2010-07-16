@@ -32,7 +32,6 @@
 use Amanda::Debug qw(:logging);
 use Amanda::Config qw( config_dir_relative );
 use File::Copy;
-use File::Basename;
 
 ## package functions
 
@@ -148,7 +147,7 @@ sub write {
     my $self = shift;
     my ($filename) = @_;
 
-    my $new_tapelist_file = dirname($filename) . "/-new-" . time();
+    my $new_tapelist_file = $filename . "-new-" . time();
 
     open(my $fh, ">", $new_tapelist_file) or die("Could not open '$new_tapelist_file' for writing: $!");
     for my $tle (@$self) {
