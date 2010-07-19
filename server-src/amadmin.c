@@ -2248,6 +2248,7 @@ disklist_one(
     }
     g_printf("        skip-incr %s\n", (dp->skip_incr? "YES" : "NO"));
     g_printf("        skip-full %s\n", (dp->skip_full? "YES" : "NO"));
+    g_printf("        allow-split %s\n", (dp->allow_split ? "YES" : "NO"));
     g_printf("        spindle %d\n", dp->spindle);
     pp_scriptlist = dp->pp_scriptlist;
     while (pp_scriptlist != NULL) {

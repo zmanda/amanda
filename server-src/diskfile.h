@@ -84,6 +84,8 @@ typedef struct disk_s {
     int		exclude_optional;	/* exclude list are optional */
     int		include_optional;	/* include list are optional */
     int		priority;		/* priority of disk */
+    int		allow_split;
+    off_t	splitsize;
     off_t	tape_splitsize;         /* size of dumpfile chunks on tape */
     char	*split_diskbuffer;      /* place where we can buffer PORT-WRITE dumps other than RAM */
     off_t	fallback_splitsize;     /* size for in-RAM PORT-WRITE buffers */

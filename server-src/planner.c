@@ -2443,7 +2443,7 @@ static void delay_dumps(void)
 
     for(dp = schedq.head; dp != NULL; dp = ndp) {
 	int avail_tapes = 1;
-	if (dp->tape_splitsize > (gint64)0)
+	if (dp->splitsize > (gint64)0)
 	    avail_tapes = conf_runtapes;
 
 	ndp = dp->next; /* remove_disk zaps this */
@@ -2451,7 +2451,7 @@ static void delay_dumps(void)
 	full_size = est_tape_size(dp, 0);
 	if (full_size > tapetype_get_length(tape) * (gint64)avail_tapes) {
 	    char *qname = quote_string(dp->name);
-	    if (conf_runtapes > 1 && dp->tape_splitsize == (gint64)0) {
+	    if (conf_runtapes > 1 && dp->splitsize == (gint64)0) {
 		log_add(L_WARNING, _("disk %s:%s, full dump (%lldKB) will be larger than available tape space"
 			", you could define a splitsize"),
 			dp->host->hostname, qname,
@@ -2639,7 +2639,7 @@ static void delay_dumps(void)
 	int avail_tapes = 1;
 	nbi = bi->prev;
 	dp = bi->dp;
-	if(dp->tape_splitsize > (gint64)0)
+	if(dp->splitsize > (gint64)0)
 	    avail_tapes = conf_runtapes;
 
 	if(bi->deleted) {

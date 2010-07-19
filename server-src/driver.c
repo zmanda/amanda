@@ -748,7 +748,7 @@ startaflush(void)
 	case ALGO_FIRSTFIT:
 		fit = tapeq.head;
 		while (fit != NULL) {
-		    extra_tapes = (fit->tape_splitsize > (off_t)0) ? 
+		    extra_tapes = (fit->splitsize > (off_t)0) ? 
 					conf_runtapes - current_tape : 0;
 		    if(sched(fit)->act_size <= (tape_left +
 		             tape_length * (off_t)extra_tapes) &&
@@ -776,7 +776,7 @@ startaflush(void)
 	case ALGO_LARGESTFIT:
 		fit = tapeq.head;
 		while (fit != NULL) {
-		    extra_tapes = (fit->tape_splitsize > (off_t)0) ? 
+		    extra_tapes = (fit->splitsize > (off_t)0) ? 
 					conf_runtapes - current_tape : 0;
 		    if(sched(fit)->act_size <=
 		       (tape_left + tape_length * (off_t)extra_tapes) &&

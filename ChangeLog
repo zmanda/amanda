@@ -1,4 +1,11 @@
 2010-07-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.h (disk_t) Add allow_split and splitsize.
+	* server-src/diskfile.c: Set allow_split and splitsize.
+	* server-src/driver.c: Use allow_split and splitsize.
+	* server-src/planner.c: Use allow_split and splitsize.
+	* server-src/amadmin.c (disklist_one): Print allow_split.
+
+2010-07-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.pl: Use ' to quote label in 'wrote label' line.
 	* server-src/amstatus.pl: Parse it.
 	* installcheck/amstatus.pl: Check it.
