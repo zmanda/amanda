@@ -740,31 +740,10 @@ while($lineX = <AMDUMP>) {
 		}
 	}
 	elsif($line[0] eq "taper") {
-		if($line[1] eq "slot") {
-			#2:slot 3:"wrote" 4:"label" 5:corrupted...
+		if($line[1] eq "wrote") {
+			#1:"wrote" 2:"label" 3:label
 			$nb_tape++;
-			$lineX =~ /wrote label `(\S*)'/;
-			$label = $1;
-			$ntlabel{$nb_tape} = $label;
-			$ntpartition{$nb_tape} = 0;
-			$ntsize{$nb_tape} = 0;
-			$ntesize{$nb_tape} = 0;
-		}
-		elsif($line[1] eq "wrote") {
-			#1:"wrote" 2:"label" 3:corrupted
-			$nb_tape++;
-			$lineX =~ /wrote label `(\S*)'/;
-			$label = $1;
-			$ntlabel{$nb_tape} = $label;
-			$ntpartition{$nb_tape} = 0;
-			$ntsize{$nb_tape} = 0;
-			$ntesize{$nb_tape} = 0;
-		}
-		elsif($line[1] eq "using") {
-			#1:"using" #2:"label" #3:`label' #4:date #5 `timestamp'
-			$nb_tape++;
-			$lineX =~ /using label `(\S*)'/;
-			$label = $1;
+			$label = $line[3];
 			$ntlabel{$nb_tape} = $label;
 			$ntpartition{$nb_tape} = 0;
 			$ntsize{$nb_tape} = 0;

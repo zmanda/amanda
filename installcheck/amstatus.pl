@@ -153,7 +153,7 @@ DUMP clienthost ffffffff9ffeffffffff1f /some/dir 20080618130147 14050 0 1970:1:1
 --------
 dumper: pid 4086 executable dumper0 version 9.8.7
 dumper: pid 4095 executable dumper3 version 9.8.7
-taper: using label `Conf-001' date `20080618130147'
+taper: wrote label 'Conf-001'
 driver: result time 1.312 from taper: TAPER-OK
 driver: state time 1.312 free kps: 600 space: 868352 taper: idle idle-dumpers: 4 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: not-idle
 driver: interface-state time 1.312 if default: free 600
@@ -270,7 +270,7 @@ DUMP clienthost ffffffff9ffeffffffff1f "C:\\Some Dir\\" 20080618130147 14050 0 1
 --------
 dumper: pid 4086 executable dumper0 version 9.8.7
 dumper: pid 4095 executable dumper3 version 9.8.7
-taper: using label `Conf-001' date `20080618130147'
+taper: wrote label 'Conf-001'
 driver: result time 1.312 from taper: TAPER-OK
 driver: state time 1.312 free kps: 600 space: 868352 taper: idle idle-dumpers: 4 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: not-idle
 driver: interface-state time 1.312 if default: free 600
@@ -414,7 +414,7 @@ DUMP localhost ffffffff9efeffffffffff01 /etc 20090410074759 14339 0 1970:1:1:0:0
 dumper: pid 4119 executable dumper3 version 3.0.0
 dumper: pid 4118 executable dumper2 version 3.0.0
 dumper: pid 4117 executable dumper1 version 3.0.0
-taper: using label `maitreyee-010' date `20090410074759'
+taper: wrote label 'maitreyee-010'
 driver: result time 2.928 from taper: TAPER-OK 
 driver: state time 2.937 free kps: 8000 space: 1215488 taper: idle idle-dumpers: 4 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: not-idle
 driver: interface-state time 2.937 if default: free 8000
