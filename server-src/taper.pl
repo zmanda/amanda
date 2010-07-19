@@ -344,7 +344,7 @@ sub notif_new_tape {
 		++$self->{'tape_num'}));
 
 	# and the amdump log
-	print STDERR "taper: wrote label `$self->{label}'\n";
+	print STDERR "taper: wrote label '$self->{label}'\n";
 
 	# and inform the driver
 	$self->{'proto'}->send(main::Protocol::NEW_TAPE,
