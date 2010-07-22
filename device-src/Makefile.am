@@ -83,13 +83,8 @@ endif
 
 ## automake-style tests
 
-TESTS = vfs-test
+TESTS =
 noinst_PROGRAMS = $(TESTS)
-
-vfs_test_SOURCES = vfs-test.c
-vfs_test_LDADD = \
-	../common-src/libtestutils.la \
-	libamdevice.la
 
 ## activate-devpay
 

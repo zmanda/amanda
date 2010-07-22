@@ -96,23 +96,6 @@ GType media_access_mode_get_type (void) {
     return type;
 }
 
-/* Copy function for GBoxed QualifiedSize. */
-static gpointer qualified_size_copy(gpointer source) {
-    gpointer rval = g_new(QualifiedSize, 1);
-    memcpy(rval, source, sizeof(QualifiedSize));
-    return rval;
-}
-
-GType qualified_size_get_type (void) {
-    static GType type = 0;
-    if (G_UNLIKELY(type == 0)) {
-        type = g_boxed_type_register_static ("QualifiedSize",
-                                             qualified_size_copy,
-                                             free);
-    }
-    return type;
-}
-
 /******
  * Property registration and lookup
  */
@@ -248,9 +231,6 @@ void device_property_init(void) {
     device_property_fill_and_register(&device_property_full_deletion,
                                      G_TYPE_BOOLEAN, "full_deletion",
       "Does this device support recycling the entire volume?" );
-    device_property_fill_and_register(&device_property_free_space,
-                                      QUALIFIED_SIZE_TYPE, "free_space",
-      "Remaining capacity of the device.");
     device_property_fill_and_register(&device_property_max_volume_usage,
                                       G_TYPE_UINT64, "max_volume_usage",
       "Artificial limit to data written to volume.");
@@ -278,7 +258,6 @@ DevicePropertyBase device_property_canonical_name;
 DevicePropertyBase device_property_medium_access_type;
 DevicePropertyBase device_property_partial_deletion;
 DevicePropertyBase device_property_full_deletion;
-DevicePropertyBase device_property_free_space;
 DevicePropertyBase device_property_max_volume_usage;
 DevicePropertyBase device_property_comment;
 DevicePropertyBase device_property_leom;

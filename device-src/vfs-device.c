@@ -94,9 +94,6 @@ static gboolean file_number_to_file_name_functor(const char * filename,
 static gboolean vfs_device_set_max_volume_usage_fn(Device *p_self,
 			    DevicePropertyBase *base, GValue *val,
 			    PropertySurety surety, PropertySource source);
-gboolean vfs_device_get_free_space_fn(struct Device *p_self,
-			    DevicePropertyBase *base, GValue *val,
-			    PropertySurety *surety, PropertySource *source);
 gboolean property_set_leom_fn(Device *p_self,
 			    DevicePropertyBase *base, GValue *val,
 			    PropertySurety surety, PropertySource source);
@@ -244,11 +241,6 @@ vfs_device_base_init (VfsDeviceClass * c)
 {
     DeviceClass *device_class = (DeviceClass *)c;
 
-    device_class_register_property(device_class, PROPERTY_FREE_SPACE,
-	    PROPERTY_ACCESS_GET_MASK,
-	    vfs_device_get_free_space_fn,
-	    NULL);
-
     device_class_register_property(device_class, PROPERTY_MAX_VOLUME_USAGE,
 	    (PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK) &
 			(~ PROPERTY_ACCESS_SET_INSIDE_FILE_WRITE),
@@ -277,45 +269,6 @@ vfs_device_set_max_volume_usage_fn(Device *p_self,
     self->volume_limit = g_value_get_uint64(val);
 
     return device_simple_property_set_fn(p_self, base, val, surety, source);
-}
-
-gboolean
-vfs_device_get_free_space_fn(struct Device *dself,
-    DevicePropertyBase *base G_GNUC_UNUSED, GValue *val,
-    PropertySurety *surety, PropertySource *source)
-{
-    VfsDevice *self = VFS_DEVICE(dself);
-    QualifiedSize qsize;
-    struct fs_usage fsusage;
-    guint64 bytes_avail;
-
-    if (get_fs_usage(self->dir_name, NULL, &fsusage) == 0) {
-	if (fsusage.fsu_bavail_top_bit_set)
-	    bytes_avail = 0;
-	else
-	    bytes_avail = fsusage.fsu_bavail * fsusage.fsu_blocksize;
-	if (self->volume_limit && (guint64)self->volume_limit < bytes_avail / 1024)
-	    bytes_avail = (guint64)self->volume_limit * 1024;
-
-	qsize.accuracy = SIZE_ACCURACY_REAL;
-	qsize.bytes = bytes_avail;
-	if (surety)
-	    *surety = PROPERTY_SURETY_GOOD;
-    } else {
-	g_warning(_("get_fs_usage('%s') failed: %s"), self->dir_name, strerror(errno));
-	qsize.accuracy = SIZE_ACCURACY_UNKNOWN;
-	qsize.bytes = 0;
-	if (surety)
-	    *surety = PROPERTY_SURETY_BAD;
-    }
-
-    g_value_unset_init(val, QUALIFIED_SIZE_TYPE);
-    g_value_set_boxed(val, &qsize);
-
-    if (source)
-	*source = PROPERTY_SOURCE_DETECTED;
-
-    return TRUE;
 }
 
 gboolean

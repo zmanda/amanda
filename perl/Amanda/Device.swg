@@ -66,30 +66,6 @@ set_sv_from_gvalue(GValue *value)
 
 	case G_TYPE_UINT64:
 	    return sv_2mortal(amglue_newSVu64(g_value_get_uint64(value)));
-
-	case G_TYPE_BOXED: {
-	    GType boxed_type = G_VALUE_TYPE(value);
-	    QualifiedSize qs;
-	    HV *hv;
-
-	    if (boxed_type == QUALIFIED_SIZE_TYPE) {
-		qs = *(QualifiedSize*)(g_value_get_boxed(value));
-
-		/* build a hash */
-		hv = (HV *)sv_2mortal((SV *)newHV());
-		hv_store(hv, "accuracy", 8, newSViv(qs.accuracy), 0);
-		hv_store(hv, "bytes", 5, amglue_newSVi64(qs.bytes), 0);
-
-		sv = newRV((SV *)hv);
-		return newRV((SV *)hv);
-	    } else {
-		warn("Unsupported boxed property type #%d", (int)boxed_type);
-
-		sv = sv_newmortal();
-		sv_setsv(sv, &PL_sv_undef);
-		return sv;
-	    }
-	}
     }
 
     /* simple types that can be constructed with sv_set*v */
@@ -773,12 +749,6 @@ amglue_add_constant_short(MEDIA_ACCESS_MODE_WORM, "WORM", MediaAccessMode);
 amglue_add_constant_short(MEDIA_ACCESS_MODE_READ_WRITE, "READ_WRITE", MediaAccessMode);
 amglue_add_constant_short(MEDIA_ACCESS_MODE_WRITE_ONLY, "WRITE_ONLY", MediaAccessMode);
 amglue_copy_to_tag(MediaAccessMode, constants);
-
-amglue_add_enum_tag_fns(SizeAccuracy);
-amglue_add_constant_short(SIZE_ACCURACY_UNKNOWN, "UNKNOWN", SizeAccuracy);
-amglue_add_constant_short(SIZE_ACCURACY_ESTIMATE, "ESTIMATE", SizeAccuracy);
-amglue_add_constant_short(SIZE_ACCURACY_REAL, "REAL", SizeAccuracy);
-amglue_copy_to_tag(SizeAccuracy, constants);
 
 amglue_add_flag_tag_fns(PropertySurety);
 amglue_add_constant_short(PROPERTY_SURETY_BAD, "SURETY_BAD", PropertySurety);

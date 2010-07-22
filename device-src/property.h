@@ -173,21 +173,6 @@ typedef enum {
 #define MEDIA_ACCESS_MODE_TYPE media_access_mode_get_type()
 GType media_access_mode_get_type (void);
 
-/* This one is not a Glibified enum */
-typedef enum {
-    SIZE_ACCURACY_UNKNOWN,
-    SIZE_ACCURACY_ESTIMATE,
-    SIZE_ACCURACY_REAL
-} SizeAccuracy;
-
-/* But SizeAccuracy does apear in this Glibified (gBoxed) struct. */
-typedef struct {
-    SizeAccuracy accuracy;
-    guint64           bytes;
-} QualifiedSize;
-#define QUALIFIED_SIZE_TYPE qualified_size_get_type()
-GType qualified_size_get_type (void);
-
 /* Standard property definitions follow. See also property.c. */
 
 /* Value is a ConcurrencyParadigm */
@@ -247,10 +232,6 @@ extern DevicePropertyBase device_property_partial_deletion;
 /* Value is a gboolean. */
 extern DevicePropertyBase device_property_full_deletion;
 #define PROPERTY_FULL_DELETION (device_property_full_deletion.ID)
-
-/* Value is a QualifiedSize, though the accuracy may be SIZE_ACCURACY_NONE. */
-extern DevicePropertyBase device_property_free_space;
-#define PROPERTY_FREE_SPACE (device_property_free_space.ID)
 
 /* Value is a guint64. On devices that support it, this property will
    limit the total amount of data written to a volume; attempts to

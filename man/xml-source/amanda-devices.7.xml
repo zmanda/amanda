@@ -180,10 +180,6 @@ for future expansion.  Not all devices implement all of these properties.</para>
  (read-only) This property indicates the level of concurrent access that this device supports.
 </listitem></varlistentry>
  <!-- ==== -->
- <varlistentry><term>FREE_SPACE</term><listitem>
- (read-only) This property gives the amount of free space available on the current volume, if known.  This is often an estimate; for example, tape devices can only estimate the amount of tape left on a spool.
-</listitem></varlistentry>
- <!-- ==== -->
  <varlistentry><term>FULL_DELETION</term><listitem>
  (read-only) This property indicates whether the device supports erasing the entire volume.  Aside from S3 and VFS, most devices cannot support this feature.
 </listitem></varlistentry>

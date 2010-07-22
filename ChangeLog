@@ -1,4 +1,13 @@
 2010-07-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/vfs-test.c device-src/Makefile.am: remove vfs-test
+	* device-src/property.c device-src/property.h: remove FREE_SPACE
+	  property, QualifiedSize, and SizeAccuracy
+	* device-src/vfs-device.c device-src/rait-device.c: remove FREE_SPACE
+	  support
+	* man/xml-source/amanda-devices.7.xml: remove docs
+	* perl/Amanda/Device.swg: remove SWIG interface for QualifiedSize
+
+2010-07-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/Makefile.am: add reference to new header file
 
 2010-07-22  Dustin J. Mitchell <dustin@zmanda.com>
