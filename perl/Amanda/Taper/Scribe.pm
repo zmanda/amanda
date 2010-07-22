@@ -627,11 +627,14 @@ sub get_xfer_dest {
     if ($use_directtcp) {
 	$dest_type = 'directtcp';
 	$dest_text = "using DirectTCP";
+    } elsif ($can_cache_inform && $leom_supported) {
+	$dest_type = 'splitter';
+	$dest_text = "using LEOM (falling back to holding disk as cache)";
     } elsif ($leom_supported) {
 	$dest_type = 'splitter';
-	$dest_text = "using no caching (LEOM)";
+	$dest_text = "using LEOM detection (no caching)";
     } elsif ($can_cache_inform) {
-	$dest_type = 'cacher';
+	$dest_type = 'splitter';
 	$dest_text = "using cache_inform";
     } elsif ($part_cache_type ne 'none') {
 	$dest_type = 'cacher';
@@ -659,8 +662,8 @@ sub get_xfer_dest {
     }
 
     debug("Amanda::Taper::Scribe preparing to write, part size $part_size, "
-	. $dest_text
-	. ($leom_supported? " (LEOM)" : " (no LEOM)"));
+	. "$dest_text ($dest_type) "
+	. ($leom_supported? " (LEOM supported)" : " (no LEOM)"));
 
     # set the device to verbose logging if we're in debug mode
     if ($self->{'debug'}) {
@@ -674,7 +677,7 @@ sub get_xfer_dest {
 	$self->{'xdt_ready'} = 0; # xdt isn't ready until we get XMSG_READY
     } elsif ($dest_type eq 'splitter') {
 	$xdt = Amanda::Xfer::Dest::Taper::Splitter->new(
-	    $xdt_first_dev, $params{'max_memory'}, $part_size);
+	    $xdt_first_dev, $params{'max_memory'}, $part_size, $can_cache_inform);
 	$self->{'xdt_ready'} = 1; # xdt is ready immediately
     } else {
 	$xdt = Amanda::Xfer::Dest::Taper::Cacher->new(

@@ -50,7 +50,8 @@ XferElement * xfer_source_holding(
 XferElement *xfer_dest_taper_splitter(
     Device *first_device,
     size_t max_memory,
-    guint64 part_size);
+    guint64 part_size,
+    gboolean expect_cache_inform);
 
 %newobject xfer_dest_taper_cacher;
 XferElement *xfer_dest_taper_cacher(

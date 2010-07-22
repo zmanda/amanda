@@ -1,3 +1,18 @@
+2010-07-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-dest-taper-cacher.c: remove support for
+	  cache_inform, simplify disk cache
+	* device-src/xfer-dest-taper-splitter.c: add support for cache_inform,
+	  use it even when LEOM is available
+	* device-src/xfer-dest-taper.c device-src/xfer-dest-taper.h
+	  device-src/xfer-device.h: move common methods to new header file; add
+	  instance_init
+	* installcheck/Amanda_Xfer.pl perl/Amanda/Taper/Scribe.pm: always use
+	  splitter for cache_inform
+	* perl/Amanda/Xfer.pod perl/Amanda/XferServer.swg: change function
+	  signatures
+	* perl/amglue/glib.swg: take any perl true or flase value to make
+	  a gboolean
+
 2010-07-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/diskfile.h (disk_t) Add allow_split and splitsize.
 	* server-src/diskfile.c: Set allow_split and splitsize.

@@ -68,28 +68,6 @@ typedef struct Slab {
 } Slab;
 
 /*
- * File Slices
- *
- * These objects are arranged in a linked list, and describe the files in which
- * the disk cache is stored.  Note that we assume that slices are added *before*
- * they are needed: the xfer element will fail if it tries to rewind and does not
- * find a suitable slice.
- */
-
-typedef struct FileSlice {
-    struct FileSlice *next;
-
-    /* fully-qualified filename to read from, or NULL to read from disk_cache_read_fd */
-    char *filename;
-
-    /* offset in file to start at */
-    off_t offset;
-
-    /* length of data to read */
-    gsize length;
-} FileSlice;
-
-/*
  * Xfer Dest Taper
  */
 
@@ -109,10 +87,10 @@ typedef struct XferDestTaperCacher {
     gsize max_memory;
 
     /* split buffering info; if we're doing memory buffering, use_mem_cache is
-     * true; if we're doing disk buffering, disk_cache_dirname is non-NULL
-     * and contains the (allocated) filename of the cache file.  Either way,
-     * part_size gives the desired cache size.  If part_size is zero, then
-     * no splitting takes place (so part_size is effectively infinite) */
+     * true; if we're doing disk buffering, disk_cache_dirname is non-NULL and
+     * contains the (allocated) filename of the cache file.  In any
+     * case, part_size gives the desired part size.  If part_size is zero, then
+     * no splitting takes place (so part_size is effectively infinite). */
     gboolean use_mem_cache;
     char *disk_cache_dirname;
     guint64 part_size; /* (bytes) */
@@ -231,9 +209,6 @@ typedef struct XferDestTaperCacher {
 
     /* the first serial in this part, and the serial to stop at */
     volatile guint64 part_first_serial, part_stop_serial;
-
-    /* file slices for the current part */
-    FileSlice *volatile part_slices;
 
     /* read and write file descriptors for the disk cache file, in use by the
      * disk_cache_thread.  If these are -1, wait on state_cond until they are
@@ -592,7 +567,7 @@ disk_cache_thread(
  * the slab source functions assume that self->slab_mutex is held, but may
  * release the mutex (either explicitly or via a g_cond_wait), so it is not
  * valid to assume that any slab pointers remain unchanged after a slab_source
- * function invication.
+ * function invocation.
  */
 
 /* This struct tracks the current state of the slab source */
@@ -600,17 +575,8 @@ typedef struct slab_source_state {
     /* temporary slab used for reading from disk */
     Slab *tmp_slab;
 
-    /* current source slice */
-    FileSlice *slice;
-
-    /* open fd in current slice, or -1 */
-    int slice_fd;
-
     /* next serial to read from disk */
     guint64 next_serial;
-
-    /* bytes remaining in this slice */
-    gsize slice_remaining;
 } slab_source_state;
 
 /* Called with the slab_mutex held, this function pre-buffers enough data into the slab
@@ -627,8 +593,8 @@ slab_source_prebuffer(
     /* always prebuffer at least one slab, even if max_memory is 0 */
     if (prebuffer_slabs == 0) prebuffer_slabs = 1;
 
-    /* pre-buffering is not necessary if we're reading from a disk cache */
-    if (self->retry_part && self->part_slices)
+    /* pre-buffering is not necessary if we're retrying a part */
+    if (self->retry_part)
 	return TRUE;
 
     /* pre-buffering means waiting until we have at least prebuffer_slabs in the
@@ -667,10 +633,8 @@ slab_source_setup(
     XferDestTaperCacher *self,
     slab_source_state *state)
 {
+    XferElement *elt = XFER_ELEMENT(self);
     state->tmp_slab = NULL;
-    state->slice_fd = -1;
-    state->slice = NULL;
-    state->slice_remaining = 0;
     state->next_serial = G_MAXUINT64;
 
     /* if we're to retry the part, rewind to the beginning */
@@ -685,8 +649,6 @@ slab_source_setup(
 		self->device_slab->refcount++;
 	    g_mutex_unlock(self->slab_mutex);
 	} else {
-	    g_assert(self->part_slices);
-
 	    g_mutex_lock(self->slab_mutex);
 
 	    /* we're going to read from the disk cache until we get to the oldest useful
@@ -718,8 +680,35 @@ slab_source_setup(
 	    }
 
 	    state->tmp_slab->size = self->slab_size;
-	    state->slice = self->part_slices;
 	    state->next_serial = self->part_first_serial;
+
+	    /* We're reading from the disk cache, so we need a file descriptor
+	     * to read from, so wait for disk_cache_thread to open the
+	     * disk_cache_read_fd */
+	    g_assert(self->disk_cache_dirname);
+	    g_mutex_lock(self->state_mutex);
+	    while (self->disk_cache_read_fd == -1 && !elt->cancelled) {
+		DBG(9, "waiting for disk_cache_thread to set disk_cache_read_fd");
+		g_cond_wait(self->state_cond, self->state_mutex);
+	    }
+	    DBG(9, "done waiting");
+	    g_mutex_unlock(self->state_mutex);
+
+	    if (elt->cancelled) {
+		self->last_part_successful = FALSE;
+		self->no_more_parts = TRUE;
+		return FALSE;
+	    }
+
+	    /* rewind to the beginning */
+	    if (lseek(self->disk_cache_read_fd, 0, SEEK_SET) == -1) {
+		xfer_cancel_with_error(XFER_ELEMENT(self),
+		    _("Could not seek disk cache file for reading: %s"),
+		    strerror(errno));
+		self->last_part_successful = FALSE;
+		self->no_more_parts = TRUE;
+		return FALSE;
+	    }
 	}
     }
 
@@ -748,88 +737,30 @@ slab_source_get_from_disk(
     slab_source_state *state,
     guint64 serial)
 {
-    XferElement *elt = XFER_ELEMENT(self);
-    gsize bytes_needed = self->slab_size;
-    gsize slab_offset = 0;
+    XferDestTaper *xdt = XFER_DEST_TAPER(self);
+    gsize bytes_read;
+
+    g_assert(state->next_serial == serial);
 
     /* NOTE: slab_mutex is held, but we don't need it here, so release it for the moment */
     g_mutex_unlock(self->slab_mutex);
 
-    g_assert(state->next_serial == serial);
-
-    while (bytes_needed > 0) {
-	gsize read_size, bytes_read;
-
-	if (state->slice_fd < 0) {
-	    g_assert(state->slice);
-	    if (state->slice->filename) {
-		/* regular cache_inform file - just open it */
-		state->slice_fd = open(state->slice->filename, O_RDONLY, 0);
-		if (state->slice_fd < 0) {
-		    xfer_cancel_with_error(XFER_ELEMENT(self),
-                        _("Could not open '%s' for reading: %s"),
-			state->slice->filename, strerror(errno));
-		    goto fatal_error;
-		}
-	    } else {
-		/* wait for the disk_cache_thread to open the disk_cache_read_fd, and then copy it */
-		g_mutex_lock(self->state_mutex);
-		while (self->disk_cache_read_fd == -1 && !elt->cancelled) {
-		    DBG(9, "waiting for disk_cache_thread to start up");
-		    g_cond_wait(self->state_cond, self->state_mutex);
-		}
-		DBG(9, "done waiting");
-		state->slice_fd = self->disk_cache_read_fd;
-		g_mutex_unlock(self->state_mutex);
-	    }
-
-	    if (lseek(state->slice_fd, state->slice->offset, SEEK_SET) == -1) {
-		xfer_cancel_with_error(XFER_ELEMENT(self),
-                    _("Could not seek '%s' for reading: %s"),
-		    state->slice->filename? state->slice->filename : "(cache file)",
-		    strerror(errno));
-		goto fatal_error;
-	    }
-
-	    state->slice_remaining = state->slice->length;
-	}
-
-	read_size = MIN(state->slice_remaining, bytes_needed);
-	bytes_read = full_read(state->slice_fd,
-			       state->tmp_slab->base + slab_offset,
-			       read_size);
-	if (bytes_read < read_size) {
-            xfer_cancel_with_error(XFER_ELEMENT(self),
-                _("Error reading '%s': %s"),
-		state->slice->filename? state->slice->filename : "(cache file)",
-		errno? strerror(errno) : _("Unexpected EOF"));
-            goto fatal_error;
-	}
-
-	state->slice_remaining -= bytes_read;
-	if (state->slice_remaining == 0) {
-	    if (close(state->slice_fd) < 0) {
-		xfer_cancel_with_error(XFER_ELEMENT(self),
-                    _("Could not close fd %d: %s"),
-		    state->slice_fd, strerror(errno));
-		goto fatal_error;
-	    }
-	    state->slice_fd = -1;
-	    state->slice = state->slice->next;
-	}
-
-	bytes_needed -= bytes_read;
-	slab_offset += bytes_read;
+    bytes_read = full_read(self->disk_cache_read_fd,
+			   state->tmp_slab->base,
+			   self->slab_size);
+    if ((gsize)bytes_read < self->slab_size) {
+	xfer_cancel_with_error(XFER_ELEMENT(xdt),
+	    _("Error reading disk cache: %s"),
+	    errno? strerror(errno) : _("Unexpected EOF"));
+	goto fatal_error;
     }
 
     state->tmp_slab->serial = state->next_serial++;
-
     g_mutex_lock(self->slab_mutex);
     return state->tmp_slab;
 
 fatal_error:
     g_mutex_lock(self->slab_mutex);
-
     self->last_part_successful = FALSE;
     self->no_more_parts = TRUE;
     return NULL;
@@ -894,9 +825,6 @@ slab_source_free(
     XferDestTaperCacher *self,
     slab_source_state *state)
 {
-    if (state->slice_fd != -1)
-	close(state->slice_fd);
-
     if (state->tmp_slab) {
 	g_mutex_lock(self->slab_mutex);
 	free_slab(state->tmp_slab);
@@ -1049,35 +977,8 @@ release_part_cache(
 	g_mutex_unlock(self->slab_mutex);
     }
 
-    /* the disk_cache_thread takes care of freeing its cache */
-    else if (self->disk_cache_dirname)
-	return;
-
-    /* if we have part_slices, fast-forward them. Note that we should have a
-     * full part's worth of slices by now. */
-    else if (self->part_slices) {
-	guint64 bytes_remaining = self->slabs_per_part * self->slab_size;
-	FileSlice *slice = self->part_slices;
-
-	/* consume slices until we've eaten the whole part */
-	while (bytes_remaining > 0) {
-	    if (slice == NULL)
-		g_critical("Not all data in part was represented to cache_inform");
-
-	    if (slice->length <= bytes_remaining) {
-		bytes_remaining -= slice->length;
-
-		self->part_slices = slice->next;
-		g_free(slice->filename);
-		g_free(slice);
-		slice = self->part_slices;
-	    } else {
-		slice->length -= bytes_remaining;
-		slice->offset += bytes_remaining;
-		break;
-	    }
-	}
-    }
+    /* the disk cache gets reused automatically (rewinding to offset 0), so
+     * there's nothing else to do */
 }
 
 static gpointer
@@ -1324,11 +1225,11 @@ cancel_impl(
 
 static void
 start_part_impl(
-    XferDestTaper *xdtself,
+    XferDestTaper *xdt,
     gboolean retry_part,
     dumpfile_t *header)
 {
-    XferDestTaperCacher *self = XFER_DEST_TAPER_CACHER(xdtself);
+    XferDestTaperCacher *self = XFER_DEST_TAPER_CACHER(xdt);
 
     g_assert(self->device != NULL);
     g_assert(!self->device->in_file);
@@ -1345,12 +1246,6 @@ start_part_impl(
     self->part_header = dumpfile_copy(header);
 
     if (retry_part) {
-	if (!self->use_mem_cache && !self->part_slices) {
-	    g_mutex_unlock(self->state_mutex);
-	    xfer_cancel_with_error(XFER_ELEMENT(self),
-		_("Failed part was not cached; cannot retry"));
-	    return;
-	}
 	g_assert(!self->last_part_successful);
 	self->retry_part = TRUE;
     } else {
@@ -1374,10 +1269,10 @@ start_part_impl(
 
 static void
 use_device_impl(
-    XferDestTaper *xdtself,
+    XferDestTaper *xdt,
     Device *device)
 {
-    XferDestTaperCacher *self = XFER_DEST_TAPER_CACHER(xdtself);
+    XferDestTaperCacher *self = XFER_DEST_TAPER_CACHER(xdt);
     GValue val;
 
     /* short-circuit if nothing is changing */
@@ -1411,50 +1306,11 @@ use_device_impl(
     g_mutex_unlock(self->state_mutex);
 }
 
-static void
-cache_inform_impl(
-    XferDestTaper *xdtself,
-    const char *filename,
-    off_t offset,
-    off_t length)
-{
-    XferDestTaperCacher *self = XFER_DEST_TAPER_CACHER(xdtself);
-    FileSlice *slice, *iter;
-
-    DBG(1, "cache_inform(\"%s\", %jd, %jd)", filename, (intmax_t)offset, (intmax_t)length);
-
-    /* do we even need this info? */
-    if (self->disk_cache_dirname || self->use_mem_cache || self->part_size == 0)
-	return;
-
-    /* handle the (admittedly unlikely) event that length is larger than gsize.
-     * Hopefully if sizeof(off_t) = sizeof(gsize), this will get optimized out */
-    while (sizeof(off_t) > sizeof(gsize) && length > (off_t)SIZE_MAX) {
-	cache_inform_impl(xdtself, filename, offset, (off_t)SIZE_MAX);
-	offset += (off_t)SIZE_MAX;
-	length -= (off_t)SIZE_MAX;
-    }
-
-    slice = g_new0(FileSlice, 1);
-    slice->filename = g_strdup(filename);
-    slice->offset = offset;
-    slice->length = (gsize)length;
-
-    g_mutex_lock(self->state_mutex);
-    if (self->part_slices) {
-	for (iter = self->part_slices; iter->next; iter = iter->next) {}
-	iter->next = slice;
-    } else {
-	self->part_slices = slice;
-    }
-    g_mutex_unlock(self->state_mutex);
-}
-
 static guint64
 get_part_bytes_written_impl(
-    XferDestTaper *xdtself)
+    XferDestTaper *xdt)
 {
-    XferDestTaperCacher *self = XFER_DEST_TAPER_CACHER(xdtself);
+    XferDestTaperCacher *self = XFER_DEST_TAPER_CACHER(xdt);
 
     /* NOTE: this access is unsafe and may return inconsistent results (e.g, a
      * partial write to the 64-bit value on a 32-bit system).  This is ok for
@@ -1488,7 +1344,6 @@ finalize_impl(
 {
     XferDestTaperCacher *self = XFER_DEST_TAPER_CACHER(obj_self);
     Slab *slab, *next_slab;
-    FileSlice *slice, *next_slice;
 
     if (self->disk_cache_dirname)
 	g_free(self->disk_cache_dirname);
@@ -1514,12 +1369,6 @@ finalize_impl(
     if (self->reader_slab) {
         free_slab(self->reader_slab);
         self->reader_slab = NULL;
-    }
-
-    for (slice = self->part_slices; slice; slice = next_slice) {
-	next_slice = slice->next;
-	g_free(slice->filename);
-	g_free(slice);
     }
 
     if (self->part_header)
@@ -1554,7 +1403,6 @@ class_init(
     klass->push_buffer = push_buffer_impl;
     xdt_klass->start_part = start_part_impl;
     xdt_klass->use_device = use_device_impl;
-    xdt_klass->cache_inform = cache_inform_impl;
     xdt_klass->get_part_bytes_written = get_part_bytes_written_impl;
     goc->finalize = finalize_impl;
 
@@ -1610,20 +1458,17 @@ xfer_dest_taper_cacher(
     g_object_ref(self->device);
 
     /* pick only one caching mechanism, caller! */
-    g_assert(!use_mem_cache || !disk_cache_dirname);
+    if (use_mem_cache)
+	g_assert(!disk_cache_dirname);
+    if (disk_cache_dirname)
+	g_assert(!use_mem_cache);
 
     /* and if part size is zero, then we don't do any caching */
     g_assert(part_size != 0 || (!use_mem_cache && !disk_cache_dirname));
 
     self->use_mem_cache = use_mem_cache;
-    if (disk_cache_dirname) {
+    if (disk_cache_dirname)
 	self->disk_cache_dirname = g_strdup(disk_cache_dirname);
-
-	self->part_slices = g_new0(FileSlice, 1);
-	self->part_slices->filename = NULL; /* indicates "use disk_cache_read_fd" */
-	self->part_slices->offset = 0;
-	self->part_slices->length = 0; /* will be filled in in start_part */
-    }
 
     /* calculate the device-dependent parameters */
     self->block_size = first_device->block_size;
@@ -1640,7 +1485,7 @@ xfer_dest_taper_cacher(
     if (self->part_size)
         self->slab_size = MIN(self->slab_size, self->part_size / 4);
     self->slab_size = MIN(self->slab_size, 10*1024*1024);
-    if (!self->use_mem_cache)
+    if (!use_mem_cache)
         self->slab_size = MIN(self->slab_size, self->max_memory / 4);
 
     /* round slab size up to the nearest multiple of the block size */
@@ -1655,14 +1500,11 @@ xfer_dest_taper_cacher(
         self->slabs_per_part = 0;
     }
 
-    /* fill in the file slice's length, now that we know the real part size */
-    if (self->disk_cache_dirname)
-        self->part_slices->length = self->part_size;
-
-    if (self->use_mem_cache) {
-        self->max_slabs = self->slabs_per_part;
+    /* set max_slabs */
+    if (use_mem_cache) {
+        self->max_slabs = self->slabs_per_part; /* increase max_slabs to serve as mem buf */
     } else {
-        self->max_slabs = (self->max_memory + self->slab_size - 1) / self->slab_size;
+	self->max_slabs = (self->max_memory + self->slab_size - 1) / self->slab_size;
     }
 
     /* Note that max_slabs == 1 will cause deadlocks, due to some assumptions in

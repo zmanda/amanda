@@ -26,9 +26,38 @@
 #include "conffile.h"
 
 /* A transfer destination that writes an entire dumpfile to one or more files
- * on one or more devices, without any caching - this assumes that once a block
- * is written, it is on media and no longer needed by Amanda.   This is
- * similar to the XferDestTaperCacher, but much simpler. */
+ * on one or more devices, without any caching.  This destination supports both
+ * LEOM-based splitting (in which parts are never rewound) and cache_inform-based
+ * splitting (in which rewound parts are read from holding disk). */
+
+/*
+ * File Slices - Cache Information
+ *
+ * The cache_inform implementation adds cache information to a linked list of
+ * these objects, in order.  The objects are arranged in a linked list, and
+ * describe the files in which the part data is stored.  Note that we assume
+ * that slices are added *before* they are needed: the xfer element will fail
+ * if it tries to rewind and does not find a suitable slice.
+ *
+ * The slices should be "fast forwarded" after every part, so that the first
+ * byte in part_slices is the first byte of the part; when a retry of a part is
+ * required, use the iterator methods to properly open the various files and do
+ * the buffering.
+ */
+
+typedef struct FileSlice {
+    struct FileSlice *next;
+
+    /* fully-qualified filename to read from (or NULL to read from
+     * disk_cache_read_fd in XferDestTaperCacher) */
+    char *filename;
+
+    /* offset in file to start at */
+    guint64 offset;
+
+    /* length of data to read */
+    guint64 length;
+} FileSlice;
 
 /*
  * Xfer Dest Taper
@@ -54,6 +83,9 @@ typedef struct XferDestTaperSplitter {
 
     /* block size expected by the target device */
     gsize block_size;
+
+    /* TRUE if this element is expecting slices via cache_inform */
+    gboolean expect_cache_inform;
 
     /* The thread doing the actual writes to tape; this also handles buffering
      * for streaming */
@@ -95,14 +127,31 @@ typedef struct XferDestTaperSplitter {
     Device *volatile device;
     dumpfile_t *volatile part_header;
 
+    /* bytes to read from cached slices before reading from the ring buffer */
+    guint64 bytes_to_read_from_slices;
+
     /* part number in progress */
     volatile guint64 partnum;
 
-    /* if true, the main thread should *not* call start_part */
-    volatile gboolean no_more_parts;
+    /* status of the last part */
+    gboolean last_part_eof;
+    gboolean last_part_eom;
+    gboolean last_part_successful;
+
+    /* true if the element is done writing to devices */
+    gboolean no_more_parts;
 
     /* total bytes written in the current part */
     volatile guint64 part_bytes_written;
+
+    /* The list of active slices for the current part.  The cache_inform method
+     * appends to this list. It is safe to read this linked list, beginning at
+     * the head, *if* you can guarantee that slices will not be fast-forwarded
+     * in the interim.  The finalize method for this class will take care of
+     * freeing any leftover slices. Take the part_slices mutex while modifying
+     * the links in this list. */
+    FileSlice *part_slices;
+    GMutex *part_slices_mutex;
 } XferDestTaperSplitter;
 
 static GType xfer_dest_taper_splitter_get_type(void);
@@ -133,6 +182,175 @@ _xdt_dbg(const char *fmt, ...)
     g_vsnprintf(msg, sizeof(msg), fmt, argp);
     arglist_end(argp);
     g_debug("XDT thd-%p: %s", g_thread_self(), msg);
+}
+
+/* "Fast forward" the slice list by the given length.  This will free any
+ * slices that are no longer necessary, and adjust the offset and length of the
+ * first remaining slice.  This assumes the state mutex is locked during its
+ * operation.
+ *
+ * @param self: element
+ * @param length: number of bytes to fast forward
+ */
+static void
+fast_forward_slices(
+	XferDestTaperSplitter *self,
+	guint64 length)
+{
+    FileSlice *slice;
+
+    /* consume slices until we've eaten the whole part */
+    g_mutex_lock(self->part_slices_mutex);
+    while (length > 0) {
+	g_assert(self->part_slices);
+	slice = self->part_slices;
+
+	if (slice->length <= length) {
+	    length -= slice->length;
+
+	    self->part_slices = slice->next;
+	    if (slice->filename)
+		g_free(slice->filename);
+	    g_free(slice);
+	    slice = self->part_slices;
+	} else {
+	    slice->length -= length;
+	    slice->offset += length;
+	    break;
+	}
+    }
+    g_mutex_unlock(self->part_slices_mutex);
+}
+
+/*
+ * Slice Iterator
+ */
+
+/* A struct for use in iterating over data in the slices */
+typedef struct SliceIterator {
+    /* current slice */
+    FileSlice *slice;
+
+    /* file descriptor of the current file, or -1 if it's not open yet */
+    int cur_fd;
+
+    /* bytes remaining in this slice */
+    guint64 slice_remaining;
+} SliceIterator;
+
+/* Utility functions for SliceIterator */
+
+/* Begin iterating over slices, starting at the first byte of the first slice.
+ * Initializes a pre-allocated SliceIterator.  The caller must ensure that
+ * fast_forward_slices is not called while an iteration is in
+ * progress.
+ */
+static void
+iterate_slices(
+	XferDestTaperSplitter *self,
+	SliceIterator *iter)
+{
+    iter->cur_fd = -1;
+    iter->slice_remaining = 0;
+    g_mutex_lock(self->part_slices_mutex);
+    iter->slice = self->part_slices;
+    /* it's safe to unlock this because, at worst, a new entry will
+     * be appended while the iterator is in progress */
+    g_mutex_unlock(self->part_slices_mutex);
+}
+
+
+/* Get a block of data from the iterator, returning a pointer to a buffer
+ * containing the data; the buffer remains the property of the iterator.
+ * Returns NULL on error, after calling xfer_cancel_with_error with an
+ * appropriate error message.  This function does not block, so it does not
+ * check for cancellation.
+ */
+static gpointer
+iterator_get_block(
+	XferDestTaperSplitter *self,
+	SliceIterator *iter,
+	gpointer buf,
+	gsize bytes_needed)
+{
+    gsize buf_offset = 0;
+    XferElement *elt = XFER_ELEMENT(self);
+
+    g_assert(iter != NULL);
+    g_assert(buf != NULL);
+
+    while (bytes_needed > 0) {
+	gsize read_size;
+	int bytes_read;
+
+	if (iter->cur_fd < 0) {
+	    guint64 offset;
+
+	    g_assert(iter->slice != NULL);
+	    g_assert(iter->slice->filename != NULL);
+
+	    iter->cur_fd = open(iter->slice->filename, O_RDONLY, 0);
+	    if (iter->cur_fd < 0) {
+		xfer_cancel_with_error(elt,
+		    _("Could not open '%s' for reading: %s"),
+		    iter->slice->filename, strerror(errno));
+		return NULL;
+	    }
+
+	    iter->slice_remaining = iter->slice->length;
+	    offset = iter->slice->offset;
+
+	    if (lseek(iter->cur_fd, offset, SEEK_SET) == -1) {
+		xfer_cancel_with_error(elt,
+		    _("Could not seek '%s' for reading: %s"),
+		    iter->slice->filename, strerror(errno));
+		return NULL;
+	    }
+	}
+
+	read_size = MIN(iter->slice_remaining, bytes_needed);
+	bytes_read = full_read(iter->cur_fd,
+			       buf + buf_offset,
+			       read_size);
+	if (bytes_read < 0 || (gsize)bytes_read < read_size) {
+	    xfer_cancel_with_error(elt,
+		_("Error reading '%s': %s"),
+		iter->slice->filename,
+		errno? strerror(errno) : _("Unexpected EOF"));
+	    return NULL;
+	}
+
+	iter->slice_remaining -= bytes_read;
+	buf_offset += bytes_read;
+	bytes_needed -= bytes_read;
+
+	if (iter->slice_remaining <= 0) {
+	    if (close(iter->cur_fd) < 0) {
+		xfer_cancel_with_error(elt,
+		    _("Could not close fd %d: %s"),
+		    iter->cur_fd, strerror(errno));
+		return NULL;
+	    }
+	    iter->cur_fd = -1;
+
+	    iter->slice = iter->slice->next;
+
+	    if (elt->cancelled)
+		return NULL;
+	}
+    }
+
+    return buf;
+}
+
+
+/* Free the iterator's resources */
+static void
+iterator_free(
+	SliceIterator *iter)
+{
+    if (iter->cur_fd >= 0)
+	close(iter->cur_fd);
 }
 
 /*
@@ -178,9 +396,6 @@ device_thread_wait_for_block(
     if (self->part_size)
        usable = MIN(usable, self->part_size - self->part_bytes_written);
 
-    DBG(8, "using %ju bytes in ring buffer starting at %ju",
-	    (uintmax_t)usable, (uintmax_t)self->ring_tail);
-
     return usable;
 }
 
@@ -191,8 +406,6 @@ device_thread_consume_block(
     XferDestTaperSplitter *self,
     gsize written)
 {
-    DBG(8, "consuming %ju bytes starting at %ju in ring buffer",
-	    (uintmax_t)written, (uintmax_t)self->ring_tail);
     self->ring_count -= written;
     self->ring_tail += written;
     if (self->ring_tail >= self->ring_length)
@@ -207,6 +420,7 @@ device_thread_write_part(
 {
     GTimer *timer = g_timer_new();
     XferElement *elt = XFER_ELEMENT(self);
+
     enum { PART_EOF, PART_LEOM, PART_EOP, PART_FAILED } part_status = PART_FAILED;
     int fileno = 0;
     XMsg *msg;
@@ -228,6 +442,59 @@ device_thread_write_part(
     /* free the header, now that it's written */
     dumpfile_free(self->part_header);
     self->part_header = NULL;
+
+    /* First, read the requisite number of bytes from the part_slices, if the part was
+     * unsuccessful. */
+    if (self->bytes_to_read_from_slices) {
+	SliceIterator iter;
+	gsize to_write = self->block_size;
+	gpointer buf = g_malloc(to_write);
+	gboolean successful = TRUE;
+	guint64 bytes_from_slices = self->bytes_to_read_from_slices;
+
+	DBG(5, "reading %ju bytes from slices", (uintmax_t)bytes_from_slices);
+
+	iterate_slices(self, &iter);
+	while (bytes_from_slices) {
+	    gboolean ok;
+
+	    if (!iterator_get_block(self, &iter, buf, to_write)) {
+		part_status = PART_FAILED;
+		successful = FALSE;
+		break;
+	    }
+
+	    /* note that it's OK to reference these ring_* vars here, as they
+	     * are static at this point */
+	    ok = device_write_block(self->device, (guint)to_write, buf);
+
+	    if (!ok) {
+		part_status = PART_FAILED;
+		successful = FALSE;
+		break;
+	    }
+
+	    self->part_bytes_written += to_write;
+	    bytes_from_slices -= to_write;
+
+	    if (self->part_size && self->part_bytes_written >= self->part_size) {
+		part_status = PART_EOP;
+		successful = FALSE;
+		break;
+	    } else if (self->device->is_eom) {
+		part_status = PART_LEOM;
+		successful = FALSE;
+		break;
+	    }
+	}
+
+	iterator_free(&iter);
+	g_free(buf);
+
+	/* if we didn't finish, get out of here now */
+	if (!successful)
+	    goto part_done;
+    }
 
     g_mutex_lock(self->ring_mutex);
     while (1) {
@@ -293,15 +560,16 @@ part_done:
     msg->duration = g_timer_elapsed(timer, NULL);
     msg->partnum = self->partnum;
     msg->fileno = fileno;
-    msg->successful = part_status != PART_FAILED;
-    msg->eom = (part_status == PART_LEOM || !msg->successful);
-    msg->eof = part_status == PART_EOF;
+    msg->successful = self->last_part_successful = part_status != PART_FAILED;
+    msg->eom = self->last_part_eom = (part_status == PART_LEOM || !msg->successful);
+    msg->eof = self->last_part_eof = part_status == PART_EOF;
 
     /* time runs backward on some test boxes, so make sure this is positive */
     if (msg->duration < 0) msg->duration = 0;
 
-    self->partnum++;
-    self->no_more_parts = msg->eof || !msg->successful;
+    if (msg->successful)
+	self->partnum++;
+    self->no_more_parts = msg->eof || (!msg->successful && !self->expect_cache_inform);
 
     g_timer_destroy(timer);
 
@@ -339,6 +607,11 @@ device_thread(
 
 	if (!msg) /* cancelled */
 	    break;
+
+	/* release the slices for this part, if there were any slices */
+	if (msg->successful && self->expect_cache_inform) {
+	    fast_forward_slices(self, msg->size);
+	}
 
 	xfer_queue_message(elt->xfer, msg);
 
@@ -477,11 +750,11 @@ cancel_impl(
 
 static void
 start_part_impl(
-    XferDestTaper *xdtself,
+    XferDestTaper *xdt,
     gboolean retry_part,
     dumpfile_t *header)
 {
-    XferDestTaperSplitter *self = XFER_DEST_TAPER_SPLITTER(xdtself);
+    XferDestTaperSplitter *self = XFER_DEST_TAPER_SPLITTER(xdt);
 
     g_assert(self->device != NULL);
     g_assert(!self->device->in_file);
@@ -489,11 +762,24 @@ start_part_impl(
 
     DBG(1, "start_part()");
 
-    /* this shouldn't happen, but just to double-check */
+    /* we can only retry the part if we're getting slices via cache_inform's */
     if (retry_part) {
-	xfer_cancel_with_error(XFER_ELEMENT(self),
-	    _("Previous part failed completely; cannot retry"));
-	return;
+	if (self->last_part_successful) {
+	    xfer_cancel_with_error(XFER_ELEMENT(self),
+		_("Previous part did not fail; cannot retry"));
+	    return;
+	}
+
+	if (!self->expect_cache_inform) {
+	    xfer_cancel_with_error(XFER_ELEMENT(self),
+		_("No cache for previous failed part; cannot retry"));
+	    return;
+	}
+
+	self->bytes_to_read_from_slices = self->part_bytes_written;
+    } else {
+	/* don't read any bytes from the slices, since we're not retrying */
+	self->bytes_to_read_from_slices = 0;
     }
 
     g_mutex_lock(self->state_mutex);
@@ -555,6 +841,31 @@ use_device_impl(
     g_mutex_unlock(self->state_mutex);
 }
 
+static void
+cache_inform_impl(
+    XferDestTaper *xdt,
+    const char *filename,
+    off_t offset,
+    off_t length)
+{
+    XferDestTaperSplitter *self = XFER_DEST_TAPER_SPLITTER(xdt);
+    FileSlice *slice = g_new(FileSlice, 1), *iter;
+
+    slice->next = NULL;
+    slice->filename = g_strdup(filename);
+    slice->offset = offset;
+    slice->length = length;
+
+    g_mutex_lock(self->part_slices_mutex);
+    if (self->part_slices) {
+	for (iter = self->part_slices; iter->next; iter = iter->next) {}
+	iter->next = slice;
+    } else {
+	self->part_slices = slice;
+    }
+    g_mutex_unlock(self->part_slices_mutex);
+}
+
 static guint64
 get_part_bytes_written_impl(
     XferDestTaper *xdtself)
@@ -579,12 +890,14 @@ instance_init(
     self->ring_mutex = g_mutex_new();
     self->ring_add_cond = g_cond_new();
     self->ring_free_cond = g_cond_new();
+    self->part_slices_mutex = g_mutex_new();
 
     self->device = NULL;
     self->paused = TRUE;
     self->part_header = NULL;
     self->partnum = 1;
     self->part_bytes_written = 0;
+    self->part_slices = NULL;
 }
 
 static void
@@ -592,6 +905,7 @@ finalize_impl(
     GObject * obj_self)
 {
     XferDestTaperSplitter *self = XFER_DEST_TAPER_SPLITTER(obj_self);
+    FileSlice *slice, *next_slice;
 
     g_mutex_free(self->state_mutex);
     g_cond_free(self->state_cond);
@@ -599,6 +913,15 @@ finalize_impl(
     g_mutex_free(self->ring_mutex);
     g_cond_free(self->ring_add_cond);
     g_cond_free(self->ring_free_cond);
+
+    g_mutex_free(self->part_slices_mutex);
+
+    for (slice = self->part_slices; slice; slice = next_slice) {
+	next_slice = slice->next;
+	if (slice->filename)
+	    g_free(slice->filename);
+	g_free(slice);
+    }
 
     if (self->ring_buffer)
 	g_free(self->ring_buffer);
@@ -630,6 +953,7 @@ class_init(
     klass->push_buffer = push_buffer_impl;
     xdt_klass->start_part = start_part_impl;
     xdt_klass->use_device = use_device_impl;
+    xdt_klass->cache_inform = cache_inform_impl;
     xdt_klass->get_part_bytes_written = get_part_bytes_written_impl;
     goc->finalize = finalize_impl;
 
@@ -672,7 +996,8 @@ XferElement *
 xfer_dest_taper_splitter(
     Device *first_device,
     size_t max_memory,
-    guint64 part_size)
+    guint64 part_size,
+    gboolean expect_cache_inform)
 {
     XferDestTaperSplitter *self = (XferDestTaperSplitter *)g_object_new(XFER_DEST_TAPER_SPLITTER_TYPE, NULL);
     GValue val;
@@ -688,6 +1013,7 @@ xfer_dest_taper_splitter(
     self->part_size = part_size;
     self->partnum = 1;
     self->device = first_device;
+
     g_object_ref(self->device);
     self->block_size = first_device->block_size;
     self->paused = TRUE;
@@ -710,6 +1036,9 @@ xfer_dest_taper_splitter(
         self->streaming = g_value_get_enum(&val);
     }
     g_value_unset(&val);
+
+    /* grab data from cache_inform, just in case we hit PEOM */
+    self->expect_cache_inform = expect_cache_inform;
 
     return XFER_ELEMENT(self);
 }

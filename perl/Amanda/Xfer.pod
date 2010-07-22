@@ -376,13 +376,17 @@ to the device.
 
 =head3 Amanda::Xfer::Dest::Taper::Splitter
 
-  Amanda::Xfer::Dest::Taper::Cacher->new($first_device, $max_memory,
-                        $part_size);
+  Amanda::Xfer::Dest::Taper::Splitter->new($first_device, $max_memory,
+                        $part_size, $expect_cache_inform);
 
-This class splits a data stream into parts on the storage media.  Since parts
-are not cached, it cannot re-write a partial part, so if it is used with
-devices that do not support LEOM, then it may fail an entire transfer if the
-device reaches EOM.
+This class splits a data stream into parts on the storage media.  It is for use
+when the device supports LEOM, when the dump is already available on disk
+(C<cache_inform>), or when no caching is desired.  It does not cache parts, so
+it can only retry a partial part if the transfer source is calling
+C<cache_inform>.  If the element is used with devices that do not support LEOM,
+then it will cancel the entire transfer if the device reaches EOM and
+C<cache_inform> is not in use.  Set C<$expect_cache_inform> appropriately based
+on the incoming data.
 
 The C<$part_size> and C<$first_device> parameters are described above for
 C<Amanda::Xfer::Dest::Taper>.
@@ -393,10 +397,10 @@ C<Amanda::Xfer::Dest::Taper>.
                         $part_size, $use_mem_cache, $disk_cache_dirname);
 
 This class is similar to the splitter, but caches data from each part in one of
-a variety of ways, and supports "rewinding" to retry a failed part (e.g., one
-that does not fit on a device).  It assumes that when a device reaches EOM
-while writing, the entire file is corrupt - that is, that the device does not
-support logical EOM.
+a variety of ways to support "rewinding" to retry a failed part (e.g., one that
+does not fit on a device).  It assumes that when a device reaches EOM while
+writing, the entire on-volume file is corrupt - that is, that the device does
+not support logical EOM.  The class does not support C<cache_inform>.
 
 The C<$part_size> and C<$first_device> parameters are described above for
 C<Amanda::Xfer::Dest::Taper>.
@@ -406,7 +410,7 @@ C<$part_size> bytes of memory; plan accordingly!).  If C<$disk_cache_dirname>
 is defined, then each part will be cached on-disk in a file in this directory.
 It is an error to specify both in-memory and on-disk caching.  If neither
 option is specified, the element will operate successfully, but will not be
-able to retry a part unless C<cache_inform> has been used properly (see above).
+able to retry a part, and will cancel the transfer if a part fails.
 
 =head3 Amanda::Xfer::Dest::Taper::DirectTCP
 

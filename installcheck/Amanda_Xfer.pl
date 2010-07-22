@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 47;
+use Test::More tests => 46;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -681,7 +681,7 @@ SKIP: {
 	sub {
 	    my ($first_dev) = @_;
 	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
-						     520*1024);
+						     520*1024, 0);
 	},
 	[ "PART-1-OK", "PART-2-OK", "PART-3-OK", "PART-4-OK",
 	  "DONE" ],
@@ -707,7 +707,7 @@ SKIP: {
 	sub {
 	    my ($first_dev) = @_;
 	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
-						     1024*1024);
+						     1024*1024, 0);
 	},
 	[ "PART-1-OK", "PART-2-OK", "PART-3-OK", "EOM",
 	  "PART-4-OK",
@@ -734,7 +734,7 @@ SKIP: {
 	sub {
 	    my ($first_dev) = @_;
 	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
-						     0);
+						     0, 0);
 	},
 	[ "PART-1-OK",
 	  "DONE" ],
@@ -754,7 +754,7 @@ SKIP: {
 	sub {
 	    my ($first_dev) = @_;
 	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
-						     2368*1024);
+						     2368*1024, 0);
 	},
 	[ "PART-1-OK", "PART-2-OK", "EOM",
 	  "PART-3-OK",
@@ -779,14 +779,14 @@ SKIP: {
 	sub {
 	    my ($first_dev) = @_;
 	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
-						     2368*1024);
+						     2368*1024, 0);
 	},
 	[ "PART-1-OK", "PART-2-FAILED", "EOM",
 	  "NOT-RETRYING", "CANCELLED", "DONE" ],
 	"Amanda::Xfer::Dest::Taper::Splitter - LEOM fails, PEOM => failure",
 	disable_leom => 1, do_not_retry => 1);
 
-    # run this test in each of a few different cache permutations
+    # run A::X::Dest::Taper::Cacher test in each of a few different cache permutations
     test_taper_dest(
 	Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
 	sub {
@@ -912,25 +912,28 @@ SKIP: {
 	cancel_after_partnum => 4);
 
     # set up a few holding chunks and read from those
+
     $holding_file = make_holding_files(3);
+
     test_taper_dest(
 	Amanda::Xfer::Source::Holding->new($holding_file),
 	sub {
 	    my ($first_dev) = @_;
-	    Amanda::Xfer::Dest::Taper::Cacher->new($first_dev, 128*1024,
-					    1024*1024, 0, undef),
+	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
+					    1024*1024, 1);
 	},
 	[ "PART-1-OK", "PART-2-OK", "PART-3-FAILED", "EOM",
 	  "PART-3-OK", "PART-4-OK", "PART-5-FAILED", "EOM",
 	  "PART-5-OK", "PART-6-OK", "PART-7-OK",
 	  "DONE" ],
-	"Amanda::Xfer::Dest::Taper::Cacher - Amanda::Xfer::Source::Holding "
-	. "acts as a source and supplies cache_inform");
+	"Amanda::Xfer::Dest::Taper::Splitter - Amanda::Xfer::Source::Holding "
+	. "acts as a source and supplies cache_inform",
+	disable_leom => 1);
 
     ##
     # test the cache_inform method
 
-    sub test_taper_dest_cache_inform {
+    sub test_taper_dest_splitter_cache_inform {
 	my %params = @_;
 	my $xfer;
 	my $device;
@@ -961,26 +964,24 @@ SKIP: {
 	# create a list of holding chuunks, some slab-aligned, some part-aligned,
 	# some not
 	my @holding_chunks;
-	if (!$params{'omit_chunks'}) {
-	    my $offset = 0;
-	    my $do_chunk = sub {
-		my ($break) = @_;
-		die unless $break > $offset;
-		push @holding_chunks, [ $cache_file, $offset, $break - $offset ];
-		$offset = $break;
-	    };
-	    $do_chunk->(277);
-	    $do_chunk->($part_size);
-	    $do_chunk->($part_size+128*1024);
-	    $do_chunk->($part_size*3);
-	    $do_chunk->($part_size*3+1024);
-	    $do_chunk->($part_size*3+1024*2);
-	    $do_chunk->($part_size*3+1024*3);
-	    $do_chunk->($part_size*4);
-	    $do_chunk->($part_size*4 + 77);
-	    $do_chunk->($file_size - 1);
-	    $do_chunk->($file_size);
-	}
+	my $offset = 0;
+	my $do_chunk = sub {
+	    my ($break) = @_;
+	    die unless $break > $offset;
+	    push @holding_chunks, [ $cache_file, $offset, $break - $offset ];
+	    $offset = $break;
+	};
+	$do_chunk->(277);
+	$do_chunk->($part_size);
+	$do_chunk->($part_size+128*1024);
+	$do_chunk->($part_size*3);
+	$do_chunk->($part_size*3+1024);
+	$do_chunk->($part_size*3+1024*2);
+	$do_chunk->($part_size*3+1024*3);
+	$do_chunk->($part_size*4);
+	$do_chunk->($part_size*4 + 77);
+	$do_chunk->($file_size - 1);
+	$do_chunk->($file_size);
 
 	# set up vtapes
 	my $testconf = Installcheck::Run::setup();
@@ -1003,8 +1004,8 @@ SKIP: {
 	$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
 	$device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
 
-	my $dest = Amanda::Xfer::Dest::Taper::Cacher->new($device, 128*1024,
-						    1024*1024, 0, undef);
+	my $dest = Amanda::Xfer::Dest::Taper::Splitter->new($device, 128*1024,
+						    1024*1024, 1);
 	$xfer = Amanda::Xfer->new([
 	    Amanda::Xfer::Source::Fd->new(fileno($fh)),
 	    $dest,
@@ -1067,17 +1068,11 @@ SKIP: {
 	return @messages;
     }
 
-    is_deeply([ test_taper_dest_cache_inform() ],
+    is_deeply([ test_taper_dest_splitter_cache_inform() ],
 	[ "PART-OK", "PART-OK", "PART-FAILED",
 	  "PART-OK", "PART-OK", "PART-OK",
 	  "DONE" ],
-	"cache_inform: element produces the correct series of messages");
-
-    is_deeply([ test_taper_dest_cache_inform(omit_chunks => 1) ],
-	[ "PART-OK", "PART-OK", "PART-FAILED",
-	  "ERROR: Failed part was not cached; cannot retry", "CANCELLED",
-	  "DONE" ],
-	"cache_inform: element produces the correct series of messages when a chunk is missing");
+	"cache_inform: splitter element produces the correct series of messages");
 
     rmtree($holding_base);
 }

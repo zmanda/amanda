@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -27,6 +27,10 @@
 %}
 
 typedef int gboolean;
+%typemap(in) gboolean {
+    $1 = SvTRUE($input);
+}
+
 %typemap(out) gboolean {
     if ($1)
 	$result = &PL_sv_yes;
