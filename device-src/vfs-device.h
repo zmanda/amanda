@@ -51,6 +51,18 @@ typedef struct {
     /* Properties */
     guint64 volume_bytes;
     guint64 volume_limit;
+
+    /* should we monitor free space? (controlled by MONITOR_FREE_SPACE property) */
+    gboolean monitor_free_space;
+
+    /* how many bytes were free at last check */
+    guint64 checked_fs_free_bytes;
+
+    /* when was that check performed? */
+    time_t checked_fs_free_time;
+
+    /* and how many bytes have been written since the last check? */
+    guint64 checked_bytes_used;
 } VfsDevice;
 
 /*

@@ -613,7 +613,28 @@ this directory, the name of which reflects the Amanda header in the tape file.
 Block boundaries are not maintained: the driver supports reads of arbitrary
 size, regardless of the blocksize used to write the data.</para>
 
-<para>This device does not support LEOM detection.</para>
+<para>This device supports LEOM detection.  LEOM will be indicated when the
+    MAX_VOLUME_USAGE is nearly met, or when the filesystem is nearly out of
+    space.  The latter circumstance is detected by monitoring the available
+    space on the filesystem, and this monitoring can be disabled with the
+    MONITOR_FREE_SPACE property.  Note that the device cannot detect other
+    circumstances that may cause a write to fail, such as a filesystem quota.
+    LEOM detection can be disabled by setting the LEOM property to
+    false.</para>
+
+<refsect3><title>Device-Specific Properties</title>
+
+<variablelist>
+ <varlistentry><term>MONITOR_FREE_SPACE</term><listitem>
+	 (read-write) This property controls whether the device will monitor
+	 the filesystem's free space to detect a full filesystem before an
+	 error occurs, and defaults to true.  The monitoring operation works on
+	 most filesystems, but if it causes problems, use this property to
+	 disable it.
+</listitem></varlistentry>
+</variablelist>
+
+</refsect3>
 
 </refsect2>
 
@@ -662,7 +683,9 @@ DVDRW_UMOUNT_COMMAND specify alternative commands for writing, mounting and
 unmounting optical media. The default is to find the programs using the PATH
 environment variable.</para>
 
-<para>The DVDRW_MOUNT_POINT property is required. Other properties are optional.</para>
+<para>The CDRW device supports all of the properties of the VFS device, as well
+    as the properties given below.  The DVDRW_MOUNT_POINT property is required.
+    Other properties are optional.</para>
 
 <variablelist>
  <varlistentry><term>DVDRW_KEEP_CACHE</term><listitem>

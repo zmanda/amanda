@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 499;
+use Test::More tests => 502;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -326,6 +326,18 @@ ok($dev->erase(),
 ok($dev->finish(),
    "finish device after erase")
     or diag($dev->error_or_status());
+
+# test monitor_free_space property (testing the monitoring would require a
+# dedicated partition for the tests - it's not worth it)
+
+ok($dev->property_get("monitor_free_space"),
+    "monitor_free_space property is set by default");
+
+ok($dev->property_set("monitor_free_space", 0),
+    "monitor_free_space property can be set to false");
+
+ok(!$dev->property_get("monitor_free_space"),
+    "monitor_free_space property value 'sticks'");
 
 # test the LEOM functionality
 

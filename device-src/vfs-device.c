@@ -43,6 +43,11 @@
 /* Allow comfortable room for another block and a header before PEOM */
 #define EOM_EARLY_WARNING_ZONE_BLOCKS 4
 
+/* Constants for free-space monitoring */
+#define MONITOR_FREE_SPACE_EVERY_SECONDS 5
+#define MONITOR_FREE_SPACE_EVERY_KB 102400
+#define MONITOR_FREE_SPACE_CLOSELY_WITHIN_BLOCKS 128
+
 /* This looks dangerous, but is actually modified by the umask. */
 #define VFS_DEVICE_CREAT_MODE 0666
 
@@ -94,7 +99,13 @@ static gboolean file_number_to_file_name_functor(const char * filename,
 static gboolean vfs_device_set_max_volume_usage_fn(Device *p_self,
 			    DevicePropertyBase *base, GValue *val,
 			    PropertySurety surety, PropertySource source);
-gboolean property_set_leom_fn(Device *p_self,
+static gboolean property_get_monitor_free_space_fn(Device *p_self,
+			    DevicePropertyBase *base, GValue *val,
+			    PropertySurety *surety, PropertySource *source);
+static gboolean property_set_monitor_free_space_fn(Device *p_self,
+			    DevicePropertyBase *base, GValue *val,
+			    PropertySurety surety, PropertySource source);
+static gboolean property_set_leom_fn(Device *p_self,
 			    DevicePropertyBase *base, GValue *val,
 			    PropertySurety surety, PropertySource source);
 //static char* lockfile_name(VfsDevice * self, guint file);
@@ -115,11 +126,28 @@ static gboolean get_last_file_number_functor(const char * filename,
 static char * make_new_file_name(VfsDevice * self, const dumpfile_t * ji);
 static gboolean try_unlink(const char * file);
 
+/* return TRUE if the device is going to hit ENOSPC "soon" - this is used to
+ * detect LEOM as represented by actually running out of space on the
+ * underlying filesystem.  Size is the size of the buffer that is about to
+ * be written. */
+static gboolean check_at_leom(VfsDevice *self, guint64 size);
+/* Similar, but for PEOM */
+static gboolean check_at_peom(VfsDevice *self, guint64 size);
+
 /* pointer to the classes of our parents */
 static DeviceClass *parent_class = NULL;
 
+/* device-specific properties */
+DevicePropertyBase device_property_monitor_free_space;
+#define PROPERTY_MONITOR_FREE_SPACE (device_property_monitor_free_space.ID)
+
 void vfs_device_register(void) {
     static const char * device_prefix_list[] = { "file", NULL };
+
+    device_property_fill_and_register(&device_property_monitor_free_space,
+                                      G_TYPE_BOOLEAN, "monitor_free_space",
+      "Should VFS device monitor the filesystem's available free space?");
+
     register_device(vfs_device_factory, device_prefix_list);
 }
 
@@ -158,7 +186,12 @@ vfs_device_init (VfsDevice * self) {
     self->open_file_fd = -1;
     self->volume_bytes = 0;
     self->volume_limit = 0;
-    self->leom = FALSE;
+    self->leom = TRUE;
+
+    self->monitor_free_space = TRUE;
+    self->checked_fs_free_bytes = G_MAXUINT64;
+    self->checked_fs_free_time = 0;
+    self->checked_fs_free_bytes = G_MAXUINT64;
 
     /* Register Properties */
     bzero(&response, sizeof(response));
@@ -241,6 +274,11 @@ vfs_device_base_init (VfsDeviceClass * c)
 {
     DeviceClass *device_class = (DeviceClass *)c;
 
+    device_class_register_property(device_class, PROPERTY_MONITOR_FREE_SPACE,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK,
+	    property_get_monitor_free_space_fn,
+	    property_set_monitor_free_space_fn);
+
     device_class_register_property(device_class, PROPERTY_MAX_VOLUME_USAGE,
 	    (PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK) &
 			(~ PROPERTY_ACCESS_SET_INSIDE_FILE_WRITE),
@@ -259,7 +297,7 @@ vfs_device_base_init (VfsDeviceClass * c)
 	    property_set_leom_fn);
 }
 
-gboolean
+static gboolean
 vfs_device_set_max_volume_usage_fn(Device *p_self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source)
@@ -271,7 +309,38 @@ vfs_device_set_max_volume_usage_fn(Device *p_self,
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
 
-gboolean
+static gboolean
+property_get_monitor_free_space_fn(Device *p_self, DevicePropertyBase *base G_GNUC_UNUSED,
+    GValue *val, PropertySurety *surety, PropertySource *source)
+{
+    VfsDevice *self = VFS_DEVICE(p_self);
+
+    g_value_unset_init(val, G_TYPE_BOOLEAN);
+    g_value_set_boolean(val, self->monitor_free_space);
+
+    if (surety)
+	*surety = PROPERTY_SURETY_GOOD;
+
+    if (source)
+	*source = PROPERTY_SOURCE_DEFAULT;
+
+    return TRUE;
+}
+
+
+static gboolean
+property_set_monitor_free_space_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    VfsDevice *self = VFS_DEVICE(p_self);
+
+    self->monitor_free_space = g_value_get_boolean(val);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
 property_set_leom_fn(Device *p_self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source)
@@ -692,22 +761,15 @@ static gboolean vfs_device_write_block(Device * pself, guint size, gpointer data
 
     g_assert(self->open_file_fd >= 0);
 
-    if (self->volume_limit > 0) {
-	guint64 newsize = self->volume_bytes + size;
-	guint64 eom_warning_buffer = EOM_EARLY_WARNING_ZONE_BLOCKS * pself->block_size;
+    if (check_at_leom(self, size))
+	pself->is_eom = TRUE;
 
-	if (self->leom && newsize + eom_warning_buffer > self->volume_limit)
-	    /* Simulate LEOM */
-	    pself->is_eom = TRUE;
-
-        if (newsize > self->volume_limit) {
-	    /* Simulate PEOM */
-	    pself->is_eom = TRUE;
-	    device_set_error(pself,
-		stralloc(_("No space left on device")),
-		DEVICE_STATUS_VOLUME_ERROR);
-	    return FALSE;
-	}
+    if (check_at_peom(self, size)) {
+	pself->is_eom = TRUE;
+	device_set_error(pself,
+	    stralloc(_("No space left on device")),
+	    DEVICE_STATUS_VOLUME_ERROR);
+	return FALSE;
     }
 
     result = vfs_device_robust_write(self, data, size);
@@ -717,6 +779,7 @@ static gboolean vfs_device_write_block(Device * pself, guint size, gpointer data
     }
 
     self->volume_bytes += size;
+    self->checked_bytes_used += size;
     pself->block ++;
 
     return TRUE;
@@ -961,22 +1024,15 @@ vfs_device_start_file (Device * dself, dumpfile_t * ji) {
      * 32k regardless of the block_size setting */
     ji->blocksize = 32768;
 
-    if (self->volume_limit > 0) {
-	guint64 newsize = self->volume_bytes + VFS_DEVICE_LABEL_SIZE;
-	guint64 eom_warning_buffer = EOM_EARLY_WARNING_ZONE_BLOCKS * dself->block_size;
+    if (check_at_leom(self, VFS_DEVICE_LABEL_SIZE))
+	dself->is_eom = TRUE;
 
-	if (self->leom && newsize + eom_warning_buffer > self->volume_limit)
-	    /* Simulate LEOM */
-	    dself->is_eom = TRUE;
-
-        if (newsize > self->volume_limit) {
-	    /* Simulate PEOM */
-	    dself->is_eom = TRUE;
-	    device_set_error(dself,
-		    stralloc(_("No space left on device")),
-		    DEVICE_STATUS_DEVICE_ERROR);
-	    return FALSE;
-	}
+    if (check_at_peom(self, VFS_DEVICE_LABEL_SIZE)) {
+	dself->is_eom = TRUE;
+	device_set_error(dself,
+		stralloc(_("No space left on device")),
+		DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
     }
 
     /* The basic idea here is thus:
@@ -1014,6 +1070,7 @@ vfs_device_start_file (Device * dself, dumpfile_t * ji) {
 
     /* handle some accounting business */
     self->volume_bytes += VFS_DEVICE_LABEL_SIZE;
+    self->checked_bytes_used += VFS_DEVICE_LABEL_SIZE;
     dself->in_file = TRUE;
     dself->block = 0;
     /* make_new_file_name set pself->file for us */
@@ -1181,6 +1238,74 @@ static gboolean try_unlink(const char * file) {
 }
 
 static gboolean
+check_at_leom(VfsDevice *self, guint64 size)
+{
+    gboolean recheck = FALSE;
+    guint64 est_avail_now;
+    struct fs_usage fsusage;
+    guint64 block_size = DEVICE(self)->block_size;
+    guint64 eom_warning_buffer = EOM_EARLY_WARNING_ZONE_BLOCKS * block_size;
+
+    if (!self->leom || !self->monitor_free_space)
+	return FALSE;
+
+    /* handle VOLUME_LIMIT */
+    if (self->volume_limit &&
+	    self->volume_bytes + size + eom_warning_buffer >= self->volume_limit) {
+	return TRUE;
+    }
+
+    /* handle actual filesystem available space, using some heuristics to avoid polling this
+     * too frequently */
+    est_avail_now = 0;
+    if (self->checked_fs_free_bytes >= self->checked_bytes_used + size)
+	est_avail_now = self->checked_fs_free_bytes - self->checked_bytes_used - size;
+
+    /* is it time to check again? */
+    if (est_avail_now <= block_size * MONITOR_FREE_SPACE_CLOSELY_WITHIN_BLOCKS) {
+	recheck = TRUE;
+    } else if (self->checked_bytes_used > MONITOR_FREE_SPACE_EVERY_KB * 1024) {
+	recheck = TRUE;
+    } else if (self->checked_fs_free_time + MONITOR_FREE_SPACE_EVERY_SECONDS <= time(NULL)) {
+	recheck = TRUE;
+    }
+
+    if (!recheck)
+	return FALSE;
+
+    if (get_fs_usage(self->dir_name, NULL, &fsusage) < 0 || fsusage.fsu_bavail_top_bit_set) {
+	g_warning("Filesystem cannot provide free space: %s; setting MONITOR_FREE_SPACE false",
+		fsusage.fsu_bavail_top_bit_set? "no result" : strerror(errno));
+	self->monitor_free_space = FALSE;
+	return FALSE;
+    }
+
+    self->checked_fs_free_bytes = fsusage.fsu_bavail * fsusage.fsu_blocksize;
+    self->checked_bytes_used = 0;
+    self->checked_fs_free_time = time(NULL);
+
+    if (self->checked_fs_free_bytes - size <= eom_warning_buffer) {
+	g_debug("%s: at LEOM", DEVICE(self)->device_name);
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+static gboolean
+check_at_peom(VfsDevice *self, guint64 size)
+{
+    if (self->volume_limit > 0) {
+	guint64 newtotal = self->volume_bytes + size;
+        if (newtotal > self->volume_limit) {
+	    return TRUE;
+	}
+    }
+
+    return FALSE;
+}
+
+static gboolean
 vfs_device_recycle_file (Device * dself, guint filenum) {
     VfsDevice * self = VFS_DEVICE(dself);
     struct stat file_status;
@@ -1341,3 +1466,5 @@ vfs_device_robust_write(VfsDevice * self,  char *buf, int count) {
     }
     return RESULT_SUCCESS;
 }
+
+/* TODO: add prop */

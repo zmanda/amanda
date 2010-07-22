@@ -1,4 +1,12 @@
 2010-07-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/vfs-device.c device-src/vfs-device.h: add support for
+	  monitoring free space to generate LEOM before ENOSPC hits; set LEOM
+	  property to TRUE by default
+	* installcheck/Amanda_Device.pl: test monitor_free_space prop
+	* man/xml-source/amanda-devices.7.xml: document VFS device LEOM
+	  support and the MONITOR_FREE_SPACE property
+
+2010-07-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/vfs-test.c device-src/Makefile.am: remove vfs-test
 	* device-src/property.c device-src/property.h: remove FREE_SPACE
 	  property, QualifiedSize, and SizeAccuracy
