@@ -1,4 +1,7 @@
 2010-07-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/Makefile.am: add reference to new header file
+
+2010-07-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/xfer-dest-taper-cacher.c: remove support for
 	  cache_inform, simplify disk cache
 	* device-src/xfer-dest-taper-splitter.c: add support for cache_inform,

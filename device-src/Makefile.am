@@ -109,6 +109,7 @@ noinst_HEADERS = \
 	tape-device.h \
 	tape-ops.h \
 	xfer-device.h \
+	xfer-dest-taper.h \
 	vfs-device.h
 
 aminclude_HEADERS = 
