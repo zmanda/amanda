@@ -84,7 +84,7 @@ typedef struct FileSlice {
     off_t offset;
 
     /* length of data to read */
-    gsize length;
+    off_t length;
 } FileSlice;
 
 /*
@@ -608,7 +608,7 @@ typedef struct slab_source_state {
     guint64 next_serial;
 
     /* bytes remaining in this slice */
-    gsize slice_remaining;
+    off_t slice_remaining;
 } slab_source_state;
 
 /* Called with the slab_mutex held, this function pre-buffers enough data into the slab

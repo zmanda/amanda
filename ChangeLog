@@ -1,3 +1,7 @@
+2010-07-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-dest-taper-splitter.c: use guint64 instead of gsize
+	  for on-disk counts
+
 2010-07-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.pl: Use ' to quote label in 'wrote label' line.
 	* server-src/amstatus.pl: Parse it.
