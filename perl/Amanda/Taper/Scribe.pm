@@ -511,17 +511,21 @@ sub quit {
 
     $self->dbg("quitting");
 
+    my $devhandling_cb = make_cb(devhandling_cb => sub {
+	my ($error) = @_;
+	push @errors, $error if $error;
+
+	$error = join("; ", @errors) if @errors >= 1;
+	$params{'finished_cb'}->($error);
+    });
+
     my $cleanup_cb = make_cb(cleanup_cb => sub {
 	my ($error) = @_;
 	push @errors, $error if $error;
 
-        if (@errors == 1) {
-            $error = $errors[0];
-        } elsif (@errors > 1) {
-            $error = join("; ", @errors);
-        }
-
-        $params{'finished_cb'}->($error);
+	$self->{'reservation'} = undef;
+	$self->{'device'} = undef;
+	$self->{'devhandling'}->quit(finished_cb => $devhandling_cb);
     });
 
     if ($self->{'reservation'}) {
@@ -1304,6 +1308,8 @@ sub notif_log_info { }
 ##
 
 package Amanda::Taper::Scribe::DevHandling;
+use Amanda::MainLoop;
+use Carp;
 
 # This class handles scanning for volumes, requesting permission for those
 # volumes (the driver likes to feel like it's in control), and providing those
@@ -1361,6 +1367,42 @@ sub start {
 
     $self->{'start_finished_cb'} = $params{'finished_cb'};
     $self->_start_scanning();
+}
+
+sub quit {
+    my $self = shift;
+    my %params = @_;
+
+    for my $rq_param qw(finished_cb) {
+	croak "required parameter '$rq_param' mising"
+	    unless exists $params{$rq_param};
+    }
+
+    # since there's little other option than to barrel on through the
+    # quitting procedure, quit() just accumulates its error messages
+    # and, if necessary, concantenates them for the finished_cb.
+    my @errors;
+
+    my $cleanup_cb = make_cb(cleanup_cb => sub {
+	my ($error) = @_;
+	push @errors, $error if $error;
+
+	$error = join("; ", @errors) if @errors >= 1;
+
+	$params{'finished_cb'}->($error);
+    });
+
+    if ($self->{'reservation'}) {
+	if ($self->{'device'}) {
+	    if (!$self->{'device'}->finish()) {
+		push @errors, $self->{'device'}->error_or_status();
+	    }
+	}
+
+	$self->{'reservation'}->release(finished_cb => $cleanup_cb);
+    } else {
+	$cleanup_cb->(undef);
+    }
 }
 
 # Get an open, started device and label to start writing to.  The

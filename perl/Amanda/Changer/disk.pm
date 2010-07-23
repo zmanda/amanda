@@ -376,7 +376,7 @@ sub _is_slot_in_use {
 
 	    #check if process is alive
 	    my $pid = $state->{drives}->{$drive}->{pid};
-	    if (defined $pid && !Amanda::Util::is_pid_alive($pid)) {
+	    if (!defined $pid or !Amanda::Util::is_pid_alive($pid)) {
 		unlink("$drive/data")
 		    or warn("Could not unlink '$drive/data': $!");
 		rmdir("$drive")

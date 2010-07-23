@@ -462,6 +462,10 @@ sub msg_QUIT {
     $self->{'quitting'} = 1;
 
     my $finished_cb = make_cb(finished_cb => sub {
+	my $err = shift;
+	if ($err) {
+	    Amanda::Debug::debug("Quit error: $err");
+	}
 	Amanda::MainLoop::quit();
     });
     $self->quit(finished_cb => $finished_cb);
