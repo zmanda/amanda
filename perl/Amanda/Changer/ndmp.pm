@@ -208,13 +208,13 @@ sub status {
 send_cdb:
     my $res = $conn->scsi_execute_cdb(
 	flags => $NDMP9_SCSI_DATA_DIR_IN,
-	timeout => 2*1000,
+	timeout => 60*1000, # 60-second timeout
 	cdb => pack('CCnnCCnxC',
 	    0xB8, # opcode
 	    0x10, # VOLTAG, all element types
 	    0, # start at addr 0
 	    0xffff, # and give me 65535 elements
-	    0, # CURDATA=0, so don't do an inventory
+	    2, # CURDATA=1, so the robot should use its cached state
 	    $bufsize >> 16, # allocation length high byte
 	    $bufsize & 0xffff, # allocation length low short
 	    0), # control
