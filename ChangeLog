@@ -1,4 +1,8 @@
 2010-07-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/ndmp.pm: increase the REQUEST ELEMENT STATUS
+	  timeout to 60s and set CURDATA=1 to use cached state
+
+2010-07-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/xfer-dest-taper-splitter.c: actually use guint64 for
 	  commit made yesterday, as claimed, rather than (signed) off_t
 
