@@ -1,3 +1,7 @@
+2010-07-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-dest-taper-splitter.c: actually use guint64 for
+	  commit made yesterday, as claimed, rather than (signed) off_t
+
 2010-07-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/disk.pm: unlink drive if pid not in state file.
 	* perl/Amanda/Taper/Scribe.pm: Release scribe reservation and
