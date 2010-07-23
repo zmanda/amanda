@@ -1,3 +1,9 @@
+2010-07-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/disk.pm: unlink drive if pid not in state file.
+	* perl/Amanda/Taper/Scribe.pm: Release scribe reservation and
+				       devhandling reservation.
+	* server-src/taper.pl: Write quit error meesage to debug file.
+
 2010-07-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/xfer-dest-taper-splitter.c: use guint64 instead of gsize
 	  for on-disk counts
