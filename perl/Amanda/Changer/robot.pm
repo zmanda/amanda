@@ -637,8 +637,8 @@ sub load_unlocked {
 	    # update metadata with this new information
 	    $state->{'slots'}->{$slot}->{'state'} = Amanda::Changer::SLOT_FULL;
 	    $state->{'slots'}->{$slot}->{'device_status'} = $device->status;
-	    if (defined $device->{'header'}) {
-		$state->{'slots'}->{$slot}->{'f_type'} = $device->{'header'}->{type};
+	    if (defined $device->{'volume_header'}) {
+		$state->{'slots'}->{$slot}->{'f_type'} = $device->{'volume_header'}->{type};
 	    } else {
 		$state->{'slots'}->{$slot}->{'f_type'} = undef;
 	    }
@@ -659,8 +659,8 @@ sub load_unlocked {
 	    # update metadata with this new information
 	    $state->{'slots'}->{$slot}->{'state'} = Amanda::Changer::SLOT_FULL;
 	    $state->{'slots'}->{$slot}->{'device_status'} = $device->status;
-	    if (defined $device->{'header'}) {
-		$state->{'slots'}->{$slot}->{'f_type'} = $device->{'header'}->{type};
+	    if (defined $device->{'volume_header'}) {
+		$state->{'slots'}->{$slot}->{'f_type'} = $device->{'volume_header'}->{type};
 	    } else {
 		$state->{'slots'}->{$slot}->{'f_type'} = undef;
 	    }
