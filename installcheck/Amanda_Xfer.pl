@@ -492,8 +492,9 @@ SKIP: {
 		die("Could not open VFS device: " . $device->error())
 		    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_SUCCESS);
 		$dest->use_device($device);
-		$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
+		$device->property_set("LEOM", $params{'disable_leom'}? 0 : 1);
 		$device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
+		$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
 	    }
 
 	    # bail out if we shouldn't retry this part
@@ -1001,8 +1002,9 @@ SKIP: {
 	$device = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($vtape_num++));
 	die("Could not open VFS device: " . $device->error())
 	    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_SUCCESS);
-	$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
 	$device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
+	$device->property_set("LEOM", 0);
+	$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
 
 	my $dest = Amanda::Xfer::Dest::Taper::Splitter->new($device, 128*1024,
 						    1024*1024, 1);
@@ -1021,8 +1023,9 @@ SKIP: {
 		die("Could not open VFS device: " . $device->error())
 		    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_SUCCESS);
 		$dest->use_device($device);
-		$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
+		$device->property_set("LEOM", 0);
 		$device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
+		$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
 	    }
 
 	    # feed enough chunks to cache_inform

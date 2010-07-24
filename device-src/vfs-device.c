@@ -1251,7 +1251,7 @@ check_at_leom(VfsDevice *self, guint64 size)
 
     /* handle VOLUME_LIMIT */
     if (self->volume_limit &&
-	    self->volume_bytes + size + eom_warning_buffer >= self->volume_limit) {
+	    self->volume_bytes + size + eom_warning_buffer > self->volume_limit) {
 	return TRUE;
     }
 
