@@ -1,3 +1,7 @@
+2010-07-25  Orion Poplawski <orion@cora.nwra.com>
+	* server-src/amoverview.pl: fix host iteration and handle case of only
+	  one write_timestamp
+
 2010-07-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/vfs-device.c: announce LEOM one byte later
 	* installcheck/Amanda_Xfer.pl: set device properties before starting

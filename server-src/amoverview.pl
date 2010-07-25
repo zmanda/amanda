@@ -167,6 +167,9 @@ unless ($opt_skipmissed)
 	    POSIX::mktime(0,0,0,$d,$m-1,$y-1900);
 	} (sort keys %dates)[0,-1];
 
+    # Special case of only one date
+    return if !defined($finish);
+
     while ($start < $finish) {
 	my @l = localtime $start;
 	$dates{sprintf("%d%02d%02d", 1900+$l[5], $l[4]+1, $l[3])}++;
@@ -208,7 +211,7 @@ eval $out_format;
 die $@ if $@;
 
 for $::thishost (sort keys %disks) {
-    for $::thisdisk (sort keys %{$disks{$host}}) {
+    for $::thisdisk (sort keys %{$disks{$::thishost}}) {
 	write;
     }
 }
