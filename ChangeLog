@@ -1,3 +1,7 @@
+2010-07-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Xfer.pl: correct number of tests for
+	  --without-server
+
 2010-07-25  Orion Poplawski <orion@cora.nwra.com>
 	* server-src/amoverview.pl: fix host iteration and handle case of only
 	  one write_timestamp
