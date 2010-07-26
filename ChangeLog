@@ -1,3 +1,7 @@
+2010-07-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Ignore the FORCE command if strategy is
+	  INCRONLY.
+
 2010-07-26  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Xfer.pl: *real* correct number of tests for
 	  --without-server

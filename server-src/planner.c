@@ -796,21 +796,24 @@ setup_estimate(
 	     * hosed when that tape gets re-used next.  Disallow this for
 	     * now.
 	     */
-	    log_add(L_ERROR,
+	    log_add(L_WARNING,
 		    _("Cannot force full dump of %s:%s with no-full option."),
 		    dp->host->hostname, qname);
 
 	    /* clear force command */
 	    CLR(info.command, FORCE_FULL);
-	    if(put_info(dp->host->hostname, dp->name, &info)) {
-		error(_("could not put info record for %s:%s: %s"),
-		      dp->host->hostname, qname, strerror(errno));
-		/*NOTREACHED*/
-	    }
 	    ep->last_level = last_level(&info);
 	    ep->next_level0 = next_level0(dp, &info);
-	}
-	else {
+	} else if (dp->strategy == DS_INCRONLY) {
+	    log_add(L_WARNING,
+		    _("Cannot force full dump of %s:%s with incronly option."),
+		    dp->host->hostname, qname);
+
+	    /* clear force command */
+	    CLR(info.command, FORCE_FULL);
+	    ep->last_level = last_level(&info);
+	    ep->next_level0 = next_level0(dp, &info);
+	} else {
 	    ep->degr_mesg = _("Skipping: force-full disk can't be dumped in degraded mode");
 	    ep->last_level = -1;
 	    ep->next_level0 = -conf_dumpcycle;
