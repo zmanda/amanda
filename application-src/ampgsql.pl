@@ -289,11 +289,10 @@ sub command_selfcheck {
                "is not a directory (okay)", "is a directory (it shouldn't be)",
                sub {!(-d $_[0])}, $self->{'props'}->{'psql-path'});
         _check_parent_dirs($self->{'props'}->{'psql-path'});
-        _check("Connecting to database server", "succeeded", "failed",
-               \&_run_psql_command, $self, '');
-        
         my $label = "$self->{'label-prefix'}-selfcheck-" . time();
-        if (_check("Call pg_start_backup", "succeeded",
+        if (_check("Connecting to database server", "succeeded", "failed",
+               \&_run_psql_command, $self, '')
+            and _check("Call pg_start_backup", "succeeded",
                    "failed (is another backup running?)",
                    \&_run_psql_command, $self, "SELECT pg_start_backup('$label')")
             and _check("Call pg_stop_backup", "succeeded", "failed",
