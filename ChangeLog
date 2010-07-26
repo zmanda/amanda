@@ -1,3 +1,9 @@
+2010-07-26  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_DB_Catalog.pl
+	  installcheck/Amanda_Recovery_Planner.pl installcheck/amidxtaped.pl
+	  installcheck/taper.pl server-src/amrestore.pl: skip perl's stdio
+	  buffering when writing holding-file headers
+
 2010-07-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Ignore the FORCE command if strategy is
 	  INCRONLY.

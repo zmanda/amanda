@@ -83,7 +83,7 @@ sub make_holding_file {
     $hdr->{'is_partial'} = ($dump->{'status'} ne 'OK');
 
     open(my $fh, ">", $filename) or die("opening '$filename': $!");
-    print $fh $hdr->to_string(32768,32768);
+    $fh->syswrite($hdr->to_string(32768,32768), 32768);
 
     # transfer some data to that file
     my $xfer = Amanda::Xfer->new([

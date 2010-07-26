@@ -348,7 +348,7 @@ sub main {
 	# write the header to the destination if requested
 	if ($opt_header) {
 	    $hdr->{'blocksize'} = Amanda::Holding::DISK_BLOCK_BYTES;
-	    print $dest_fh $hdr->to_string(32768, 32768);
+	    $dest_fh->syswrite($hdr->to_string(32768, 32768));
 	}
 	
 	my $xfer = Amanda::Xfer->new([ $src, @filters, $dest ]);

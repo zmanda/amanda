@@ -220,7 +220,7 @@ sub write_dumpfile_header_to {
     $hdr->{'program'} = "INSTALLCHECK";
     $hdr = $hdr->to_string(32768,32768);
 
-    $fh->write($hdr);
+    $fh->syswrite($hdr, 32768);
 }
 
 sub write_dumpfile_data_to {
