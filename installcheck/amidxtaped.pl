@@ -569,7 +569,7 @@ sub make_holding_file {
     $hdr->{'name'} = 'localhost';
     $hdr->{'disk'} = "$diskname";
     $hdr->{'program'} = "INSTALLCHECK";
-    print $fh $hdr->to_string(32768,32768);
+    $fh->syswrite($hdr->to_string(32768,32768), 32768);
 
     my $bytes_to_write = 131072;
     my $bufbase = substr((('='x127)."\n".('-'x127)."\n") x 4, 8, -3) . "1K\n";
