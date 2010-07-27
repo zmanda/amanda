@@ -1,3 +1,6 @@
+2010-07-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* application-src/ampgsql.pl: also check PG-DATADIR
+
 2010-07-26  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_DB_Catalog.pl
 	  installcheck/Amanda_Recovery_Planner.pl installcheck/amidxtaped.pl
