@@ -247,11 +247,20 @@ sub command_selfcheck {
            sub {!(-d $_[0])}, $Amanda::Constants::GNUTAR);
     _check_parent_dirs($Amanda::Constants::GNUTAR);
 
-    _check("TMPDIR $self->{'args'}->{'tmpdir'}",
+    _check("TMPDIR '$self->{'args'}->{'tmpdir'}'",
            "is an acessible directory", "is NOT an acessible directory",
            sub {$_[0] && -d $_[0] && -r $_[0] && -w $_[0] && -x $_[0]},
            $self->{'args'}->{'tmpdir'});
-    _check("STATEDIR $self->{'args'}->{'statedir'}",
+
+    if (_check("PG-DATADIR property", "is set", "is NOT set",
+	   sub { $_[0] }, $self->{'props'}->{'pg-datadir'})) {
+	_check("PG-DATADIR '$self->{'props'}->{'pg-datadir'}'",
+	       "is a readable directory", "is NOT a readable directory",
+	       sub {$_[0] && -d $_[0] && -r $_[0] && -x $_[0]},
+	       $self->{'props'}->{'pg-datadir'});
+    }
+
+    _check("STATEDIR '$self->{'args'}->{'statedir'}'",
            "is an acessible directory", "is NOT an acessible directory",
            sub {$_[0] && -d $_[0] && -r $_[0] && -w $_[0] && -x $_[0]},
            $self->{'args'}->{'statedir'});
