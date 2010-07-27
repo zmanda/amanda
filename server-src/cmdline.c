@@ -36,7 +36,8 @@ dumpspec_new(
     char *host, 
     char *disk, 
     char *datestamp,
-    char *level)
+    char *level,
+    char *write_timestamp)
 {
     dumpspec_t *rv;
 
@@ -45,6 +46,7 @@ dumpspec_new(
     if (disk) rv->disk = stralloc(disk);
     if (datestamp) rv->datestamp = stralloc(datestamp);
     if (level) rv->level = stralloc(level);
+    if (write_timestamp) rv->write_timestamp = stralloc(write_timestamp);
 
     return rv;
 }
@@ -58,6 +60,7 @@ dumpspec_free(
     if (dumpspec->disk) free(dumpspec->disk);
     if (dumpspec->datestamp) free(dumpspec->datestamp);
     if (dumpspec->level) free(dumpspec->level);
+    if (dumpspec->write_timestamp) free(dumpspec->write_timestamp);
     free(dumpspec);
 }
 
@@ -90,7 +93,7 @@ cmdline_parse_dumpspecs(
         switch (arg_state) {
             case ARG_GET_HOST:
                 arg_state = ARG_GET_DISK;
-                dumpspec = dumpspec_new(name, NULL, NULL, NULL);
+                dumpspec = dumpspec_new(name, NULL, NULL, NULL, NULL);
 		list = g_slist_append(list, (gpointer)dumpspec);
                 break;
 
@@ -124,7 +127,7 @@ cmdline_parse_dumpspecs(
     if (list == NULL && (flags & CMDLINE_EMPTY_TO_WILDCARD)) {
         dumpspec = dumpspec_new("", "", 
 		(flags & CMDLINE_PARSE_DATESTAMP)?"":NULL,
-		(flags & CMDLINE_PARSE_LEVEL)?"":NULL);
+		(flags & CMDLINE_PARSE_LEVEL)?"":NULL, "");
 	list = g_slist_append(list, (gpointer)dumpspec);
     }
 

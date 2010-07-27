@@ -133,6 +133,7 @@ typedef struct {
 
     %immutable;
     char *timestamp;
+    char *write_timestamp;
     char *hostname;
     char *diskname;
     int level;

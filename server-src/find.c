@@ -276,6 +276,7 @@ search_holding_disk(
 	    find_result_t *new_output_find = g_new0(find_result_t, 1);
 	    new_output_find->next=*output_find;
 	    new_output_find->timestamp = stralloc(file.datestamp);
+	    new_output_find->write_timestamp = stralloc("00000000000000");
 	    new_output_find->hostname = stralloc(file.name);
 	    new_output_find->diskname = stralloc(file.disk);
 	    new_output_find->level=file.dumplevel;
@@ -300,17 +301,6 @@ search_holding_disk(
     }
 
     g_slist_free_full(holding_file_list);
-}
-
-static char *
-get_write_timestamp(char *tapelabel)
-{
-    tape_t *tp;
-
-    if (!tapelabel || !(tp = lookup_tapelabel(tapelabel)))
-	return "0";
-
-    return tp->datestamp;
 }
 
 static int
@@ -351,8 +341,7 @@ find_compare(
 	case 'b' : compare=compare_possibly_null_strings(i->label,
                                                          j->label);
                    break;
-	case 'w': compare=strcmp(get_write_timestamp(i->label),
-				 get_write_timestamp(j->label));
+	case 'w': compare=strcmp(i->write_timestamp, j->write_timestamp);
 		   break;
 	case 'p' :
 		   compare=i->partnum - j->partnum;
@@ -541,6 +530,7 @@ free_find_result(
 	    output_find_result=output_find_result->next) {
 	amfree(prev);
 	amfree(output_find_result->timestamp);
+	amfree(output_find_result->write_timestamp);
 	amfree(output_find_result->hostname);
 	amfree(output_find_result->diskname);
 	amfree(output_find_result->label);
@@ -968,6 +958,7 @@ search_logfile(
 		if(curprog == P_TAPER) {
 		    find_result_t *new_output_find = g_new0(find_result_t, 1);
 		    new_output_find->timestamp = stralloc(date);
+		    new_output_find->write_timestamp = stralloc(datestamp);
 		    new_output_find->hostname=stralloc(host);
 		    new_output_find->diskname=stralloc(disk);
 		    new_output_find->level=level;
@@ -1077,6 +1068,7 @@ search_logfile(
 		    find_result_t *new_output_find = g_new0(find_result_t, 1);
 		    new_output_find->next=*output_find;
 		    new_output_find->timestamp = stralloc(date);
+		    new_output_find->write_timestamp = stralloc(datestamp);
 		    new_output_find->hostname=stralloc(host);
 		    new_output_find->diskname=stralloc(disk);
 		    new_output_find->level=level;
@@ -1183,6 +1175,7 @@ dumps_match(
 	    memcpy(curmatch, cur_result, SIZEOF(find_result_t));
 
 	    curmatch->timestamp = stralloc(cur_result->timestamp);
+	    curmatch->write_timestamp = stralloc(cur_result->write_timestamp);
 	    curmatch->hostname = stralloc(cur_result->hostname);
 	    curmatch->diskname = stralloc(cur_result->diskname);
 	    curmatch->level = cur_result->level;
@@ -1227,6 +1220,7 @@ dumps_match_dumpspecs(
 	cur_result=cur_result->next) {
 	char level_str[NUM_STR_SIZE];
 	char *zeropad_ts = NULL;
+	char *zeropad_w_ts = NULL;
 	g_snprintf(level_str, SIZEOF(level_str), "%d", cur_result->level);
 
 	/* get the timestamp padded to full width */
@@ -1234,6 +1228,11 @@ dumps_match_dumpspecs(
 	    zeropad_ts = g_new0(char, 15);
 	    memset(zeropad_ts, '0', 14);
 	    memcpy(zeropad_ts, cur_result->timestamp, strlen(cur_result->timestamp));
+	}
+	if (strlen(cur_result->write_timestamp) < 14) {
+	    zeropad_w_ts = g_new0(char, 15);
+	    memset(zeropad_w_ts, '0', 14);
+	    memcpy(zeropad_w_ts, cur_result->write_timestamp, strlen(cur_result->write_timestamp));
 	}
 
 	for (dumpspec = dumpspecs; dumpspec; dumpspec = dumpspec->next) {
@@ -1243,6 +1242,9 @@ dumps_match_dumpspecs(
 	       (!ds->datestamp || *ds->datestamp== '\0'
 			|| match_datestamp(ds->datestamp, cur_result->timestamp)
 			|| (zeropad_ts && match_datestamp(ds->datestamp, zeropad_ts))) &&
+	       (!ds->write_timestamp || *ds->write_timestamp== '\0'
+			|| match_datestamp(ds->write_timestamp, cur_result->write_timestamp)
+			|| (zeropad_w_ts && match_datestamp(ds->write_timestamp, zeropad_w_ts))) &&
 	       (!ds->level || *ds->level== '\0' || match_level(ds->level, level_str)) &&
 	       (!ok || !strcmp(cur_result->status, "OK")) &&
 	       (!ok || !strcmp(cur_result->dump_status, "OK"))) {
@@ -1251,6 +1253,7 @@ dumps_match_dumpspecs(
 		memcpy(curmatch, cur_result, SIZEOF(find_result_t));
 
 		curmatch->timestamp = stralloc(cur_result->timestamp);
+		curmatch->write_timestamp = stralloc(cur_result->write_timestamp);
 		curmatch->hostname = stralloc(cur_result->hostname);
 		curmatch->diskname = stralloc(cur_result->diskname);
 		curmatch->level = cur_result->level;

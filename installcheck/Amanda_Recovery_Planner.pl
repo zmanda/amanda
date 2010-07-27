@@ -161,7 +161,7 @@ sub make_plan_sync {
 }
 
 sub ds {
-    return Amanda::Cmdline::dumpspec_t->new($_[0], $_[1], $_[2], $_[3]);
+    return Amanda::Cmdline::dumpspec_t->new($_[0], $_[1], $_[2], $_[3], undef);
 }
 
 sub is_plan {

@@ -334,7 +334,8 @@ sub make_plan {
 	    $self->{'command'}{'HOST'},
 	    $disk,
 	    $self->{'command'}{'DATESTAMP'},
-	    undef); # amidxtaped protocol does not provide a level (!?)
+	    undef,  # amidxtaped protocol does not provide a level (!?)
+	    undef); # amidxtaped protocol does not provide a write timestamp
     }
 
     # figure out if this is a holding-disk recovery

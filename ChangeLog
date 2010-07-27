@@ -1,3 +1,20 @@
+2010-07-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/find.c (find_result_t): Add a write_timestamp.
+	* server-src/find.h: Set the write_timestamp.
+	* server-src/amcheckdump.pl: Use the write_timestamp.
+	* server-src/amidxtaped.pl: write_timestamp is undef.
+	* server-src/cmdline.h (dumpspec_t): Add a write_timestamp.
+	* server-src/cmdline.c (dumpspec_new): New write_timestamp argument.
+	* perl/Amanda/Logfile.swg (find_result_t): Add a write_timestamp.
+	* perl/Amanda/Cmdline.swg (dumpspec_t): Add a write_timestamp.
+	* perl/Amanda/Cmdline.pod: Document write_timestamp.
+	* perl/Amanda/DB/Catalog.pm (get_parts_and_dumps): Filter with dumpspec
+	  write_timestamp.
+	* installcheck/Amanda_Cmdline.pl: Fix and check new api.
+	* installcheck/Amanda_DB_Catalog.pl: Fix and check new api.
+	* installcheck/Amanda_Logfile.pl: Fix and check new api.
+	* installcheck/Amanda_Recovery_Planner.pl: Fix and check new api.
+
 2010-07-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in perl/amglue/Makefile.am: new Makefile for
 	  libamglue

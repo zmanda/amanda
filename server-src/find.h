@@ -7,7 +7,8 @@
 
 typedef struct find_result_s {
     struct find_result_s *next;
-    char *timestamp;
+    char *timestamp;		/* dump timestamp */
+    char *write_timestamp;
     char *hostname;
     char *diskname;
     int level;

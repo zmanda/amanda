@@ -290,7 +290,7 @@ sub main {
 	    scan     => $scan);
 
 	# make a plan
-	my $spec = Amanda::Cmdline::dumpspec_t->new(undef, undef, $timestamp, undef);
+	my $spec = Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, undef, $timestamp);
         Amanda::Recovery::Planner::make_plan(
             dumpspecs => [ $spec ],
             changer => $chg,

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 76;
+use Test::More tests => 77;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -723,6 +723,11 @@ got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(dumpspecs => [ @dumpspecs ]
     [ ],
     "get_dumps parameter dumpspecs with a dumpspec that matches nothing",
     zero_dumps_expected => 1);
+
+@dumpspecs = Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, undef, '20080222222222');
+got_dumps([ sortdumps Amanda::DB::Catalog::get_dumps(dumpspecs => [ @dumpspecs ]) ],
+    [ sortdumps dumps_matching { $_->{'write_timestamp'} eq '20080222222222' }],
+    "get_dumps parameter dumpspecs with write_timestamp");
 
 ## test dump sorting
 

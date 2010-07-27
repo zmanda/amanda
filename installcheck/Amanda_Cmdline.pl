@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 42;
+use Test::More tests => 43;
 
 use lib "@amperldir@";
 use Amanda::Paths;
@@ -31,65 +31,70 @@ sub ds2av {
 	$ds->{'disk'},
 	$ds->{'datestamp'},
 	$ds->{'level'},
+	$ds->{'write_timestamp'},
     );
 }
 
 # test dumpspec_t objects
 
-is_deeply([ ds2av(Amanda::Cmdline::dumpspec_t->new("h", "di", "ds", "l")) ],
-	  [ "h", "di", "ds", "l" ],
+is_deeply([ ds2av(Amanda::Cmdline::dumpspec_t->new("h", "di", "ds", "l", undef)) ],
+	  [ "h", "di", "ds", "l", undef ],
 	  "dumpspec_t constructor returns a valid dumpspec");
 
-is_deeply([ ds2av(Amanda::Cmdline::dumpspec_t->new("h", "di", "ds", undef)) ],
-	  [ "h", "di", "ds", undef ],
+is_deeply([ ds2av(Amanda::Cmdline::dumpspec_t->new("h", "di", "ds", undef, undef)) ],
+	  [ "h", "di", "ds", undef, undef ],
 	  "dumpspec_t constructor returns a valid dumpspec with only 3 args");
 
-is_deeply([ ds2av(Amanda::Cmdline::dumpspec_t->new("h", "di", undef, undef)) ],
-	  [ "h", "di", undef, undef ],
+is_deeply([ ds2av(Amanda::Cmdline::dumpspec_t->new("h", "di", undef, undef, undef)) ],
+	  [ "h", "di", undef, undef, undef ],
 	  "dumpspec_t constructor returns a valid dumpspec with only 2 args");
 
-is_deeply([ ds2av(Amanda::Cmdline::dumpspec_t->new("h", undef, undef, undef)) ],
-	  [ "h", undef, undef, undef ],
+is_deeply([ ds2av(Amanda::Cmdline::dumpspec_t->new("h", undef, undef, undef, undef)) ],
+	  [ "h", undef, undef, undef, undef ],
 	  "dumpspec_t constructor returns a valid dumpspec with only 1 arg");
+
+is_deeply([ ds2av(Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, undef, "wt")) ],
+	  [ undef, undef, undef, undef, "wt" ],
+	  "dumpspec_t constructor returns a valid dumpspec with only write_timestamp arg");
 
 # TODO: test parse_dumpspecs
 my @specs;
 
 @specs = Amanda::Cmdline::parse_dumpspecs(["h1", "d1", "h2", "d2"], 0);
 is(@specs, 2, "parse of four elements with no flags yields 2 specs");
-is_deeply([ ds2av($specs[0]) ], [ "h1", "d1", undef, undef ], "..first spec is correct");
-is_deeply([ ds2av($specs[1]) ], [ "h2", "d2", undef, undef ], "..second spec is correct");
+is_deeply([ ds2av($specs[0]) ], [ "h1", "d1", undef, undef, undef ], "..first spec is correct");
+is_deeply([ ds2av($specs[1]) ], [ "h2", "d2", undef, undef, undef ], "..second spec is correct");
 
 @specs = Amanda::Cmdline::parse_dumpspecs(["h1", "d1", "ds1", "h2", "d2", "ds2" ], $Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP);
 is(@specs, 2, "parse of six elements with CMDLINE_PARSE_DATESTAMP yields 2 specs");
-is_deeply([ ds2av($specs[0]) ], [ "h1", "d1", "ds1", undef ], "..first spec is correct");
-is_deeply([ ds2av($specs[1]) ], [ "h2", "d2", "ds2", undef ], "..second spec is correct");
+is_deeply([ ds2av($specs[0]) ], [ "h1", "d1", "ds1", undef, undef ], "..first spec is correct");
+is_deeply([ ds2av($specs[1]) ], [ "h2", "d2", "ds2", undef, undef ], "..second spec is correct");
 
 @specs = Amanda::Cmdline::parse_dumpspecs(["h1", "d1", "ds1", "lv1", "h2", "d2", "ds2", "lv2" ],
 		$Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP | $Amanda::Cmdline::CMDLINE_PARSE_LEVEL);
 is(@specs, 2, "parse of eight elements with CMDLINE_PARSE_DATESTAMP and CMDLINE_PARSE_LEVEL yields 2 specs");
-is_deeply([ ds2av($specs[0]) ], [ "h1", "d1", "ds1", "lv1" ], "..first spec is correct");
-is_deeply([ ds2av($specs[1]) ], [ "h2", "d2", "ds2", "lv2" ], "..second spec is correct");
+is_deeply([ ds2av($specs[0]) ], [ "h1", "d1", "ds1", "lv1", undef ], "..first spec is correct");
+is_deeply([ ds2av($specs[1]) ], [ "h2", "d2", "ds2", "lv2", undef ], "..second spec is correct");
 
 @specs = Amanda::Cmdline::parse_dumpspecs(["h1", "d1", "ds1", "lv1" ],
 		$Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP | $Amanda::Cmdline::CMDLINE_PARSE_LEVEL);
 is(@specs, 1, "parse of four elements with CMDLINE_PARSE_DATESTAMP and CMDLINE_PARSE_LEVEL yields one spec");
-is_deeply([ ds2av($specs[0]) ], [ "h1", "d1", "ds1", "lv1" ], "..which is correct");
+is_deeply([ ds2av($specs[0]) ], [ "h1", "d1", "ds1", "lv1", undef ], "..which is correct");
 
 @specs = Amanda::Cmdline::parse_dumpspecs(["h1", "d1", "ds1" ],
 		$Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP | $Amanda::Cmdline::CMDLINE_PARSE_LEVEL);
 is(@specs, 1, "parse of three elements with CMDLINE_PARSE_DATESTAMP and CMDLINE_PARSE_LEVEL yields one spec");
-is_deeply([ ds2av($specs[0]) ], [ "h1", "d1", "ds1", undef ], "..which is correct");
+is_deeply([ ds2av($specs[0]) ], [ "h1", "d1", "ds1", undef, undef ], "..which is correct");
 
 @specs = Amanda::Cmdline::parse_dumpspecs(["h1", "d1" ],
 		$Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP | $Amanda::Cmdline::CMDLINE_PARSE_LEVEL);
 is(@specs, 1, "parse of two elements with CMDLINE_PARSE_DATESTAMP and CMDLINE_PARSE_LEVEL yields one spec");
-is_deeply([ ds2av($specs[0]) ], [ "h1", "d1", undef, undef ], "..which is correct");
+is_deeply([ ds2av($specs[0]) ], [ "h1", "d1", undef, undef, undef ], "..which is correct");
 
 @specs = Amanda::Cmdline::parse_dumpspecs(["h1" ],
 		$Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP | $Amanda::Cmdline::CMDLINE_PARSE_LEVEL);
 is(@specs, 1, "parse of one element with CMDLINE_PARSE_DATESTAMP and CMDLINE_PARSE_LEVEL yields one spec");
-is_deeply([ ds2av($specs[0]) ], [ "h1", undef, undef, undef ], "..which is correct");
+is_deeply([ ds2av($specs[0]) ], [ "h1", undef, undef, undef, undef ], "..which is correct");
 
 @specs = Amanda::Cmdline::parse_dumpspecs([],
 		$Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP | $Amanda::Cmdline::CMDLINE_PARSE_LEVEL);
@@ -116,47 +121,47 @@ $hdr->{'type'} = $Amanda::Header::F_DUMPFILE;
 
 ok(!header_matches_dumpspecs($hdr, []), "header doesn't match empty list of dumpspecs");
 
-ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new('foo.bar.baz', undef, undef, undef)]),
+ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new('foo.bar.baz', undef, undef, undef, undef)]),
    'header matches exact host dumpspec');
-ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new('foo', undef, undef, undef)]),
+ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new('foo', undef, undef, undef, undef)]),
    'header matches partial host dumpspec');
-ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new('?a*', undef, undef, undef)]),
+ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new('?a*', undef, undef, undef, undef)]),
    'header matches host pattern dumpspec');
 
-ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, '/foo/bar/baz', undef, undef)]),
+ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, '/foo/bar/baz', undef, undef, undef)]),
    'header matches exact disk dumpspec');
-ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, 'bar', undef, undef)]),
+ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, 'bar', undef, undef, undef)]),
    'header matches partial disk dumpspec');
-ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, '*a?', undef, undef)]),
+ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, '*a?', undef, undef, undef)]),
    'header matches disk pattern dumpspec');
 
-ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, undef, '20090102030405', undef)]),
+ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, undef, '20090102030405', undef, undef)]),
    'header matches exact datestamp dumpspec');
-ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, undef, '2009', undef)]),
+ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, undef, '2009', undef, undef)]),
    'header matches partial datestamp dumpspec');
-ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, undef, '20090102030404-20090102030406', undef)]),
+ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, undef, '20090102030404-20090102030406', undef, undef)]),
    'header matches datestamp range dumpspec');
-ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, undef, '2009-2010', undef)]),
+ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, undef, '2009-2010', undef, undef)]),
    'header matches datestamp year-only range dumpspec');
-ok(!header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, undef, '20090102030406-20090102030407', undef)]),
+ok(!header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, undef, '20090102030406-20090102030407', undef, undef)]),
    "header doesn't match datestamp range dumpspec that it's outside of");
 
-ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, '31')]),
+ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, '31', undef)]),
    'header matches exact level dumpspec');
-ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, '30-32')]),
+ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, '30-32', undef)]),
    'header matches small level range dumpspec');
-ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, '4-50')]),
+ok(header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, '4-50', undef)]),
    'header matches large level range dumpspec');
-ok(!header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, '32-50')]),
+ok(!header_matches_dumpspecs($hdr, [Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, '32-50', undef)]),
    "header doesn't match level range it's outside of");
 
 ok(header_matches_dumpspecs($hdr, [
-    Amanda::Cmdline::dumpspec_t->new('foo.bar.baz', undef, undef, undef),
-    Amanda::Cmdline::dumpspec_t->new(undef, '/foo/bar/baz', undef, undef),
+    Amanda::Cmdline::dumpspec_t->new('foo.bar.baz', undef, undef, undef, undef),
+    Amanda::Cmdline::dumpspec_t->new(undef, '/foo/bar/baz', undef, undef, undef),
   ]),
   'header matches when two dumpspecs are possible matches');
 ok(!header_matches_dumpspecs($hdr, [
-    Amanda::Cmdline::dumpspec_t->new(undef, undef, '20090102030406-20090102030407', undef),
-    Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, '32-50'),
+    Amanda::Cmdline::dumpspec_t->new(undef, undef, '20090102030406-20090102030407', undef, undef),
+    Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, '32-50', undef),
   ]),
   'header matches when two dumpspecs are given and neither should match');

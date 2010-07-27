@@ -43,6 +43,7 @@ typedef struct dumpspec_s {
     char *disk;
     char *datestamp;
     char *level;
+    char *write_timestamp;
 } dumpspec_t;
 
 /*
@@ -55,6 +56,7 @@ typedef struct dumpspec_s {
  * @param disk: disk name
  * @param datestamp: datestamp
  * @param level: level (as a string, allowing regexes)
+ * @param write_timestamp: timestamp written to tape.
  * @returns: dumpspec, or NULL on error
  */
 dumpspec_t *
@@ -62,7 +64,8 @@ dumpspec_new(
     char *host, 
     char *disk, 
     char *datestamp,
-    char *level);
+    char *level,
+    char *write_timestamp);
 
 /* Free memory associated with a single dumpspec.  (Does not chase 
  * next pointers)

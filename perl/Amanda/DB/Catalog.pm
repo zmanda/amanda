@@ -720,7 +720,8 @@ sub get_parts_and_dumps {
 			    and !match_datestamp("".$ds->{'datestamp'}, $dump_timestamp));
 		    next if (defined $ds->{'level'}
 			    and !match_level("".$ds->{'level'}, $level));
-
+		    next if (defined $ds->{'write_timestamp'}
+			     and !match_datestamp("".$ds->{'write_timestamp'}, $write_timestamp));
 		    $ok = 1;
 		    last;
 		}

@@ -39,12 +39,13 @@ typedef struct dumpspec_t {
     char *disk;
     char *datestamp;
     char *level;
+    char *write_timestamp;
     %mutable;
 
     %extend {
 	/* constructor */
-	dumpspec_t(char *host, char *disk, char *datestamp, char *level) {
-	    return dumpspec_new(host, disk, datestamp, level);
+	dumpspec_t(char *host, char *disk, char *datestamp, char *level, char *write_timestamp) {
+	    return dumpspec_new(host, disk, datestamp, level, write_timestamp);
 	}
 
 	~dumpspec_t() {

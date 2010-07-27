@@ -28,7 +28,7 @@ Amanda::Cmdline - utilities for handling command lines
 
   use Amanda::Cmdline;
 
-  my $spec = Amanda::Cmdline::dumpspec_t->new($host, $disk, $datestamp, $level);
+  my $spec = Amanda::Cmdline::dumpspec_t->new($host, $disk, $datestamp, $level, $write_timestamp);
   print "host: $spec->{'host'}; disk: $spec->{'disk'}\n";
 
   my @specs = Amanda::Cmdline::parse_dumpspecs(["host", "disk", "date"],
@@ -46,7 +46,13 @@ Amanda::Cmdline - utilities for handling command lines
 
 =item C<$datestamp>
 
+Dump timestamp.
+
 =item C<$level>
+
+=item C<$write_timestamp>
+
+Timestamp when the dump is written to tape.
 
 =back
 
