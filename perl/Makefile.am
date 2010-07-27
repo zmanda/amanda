@@ -5,6 +5,9 @@
 include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
 
+# build amglue *first*
+SUBDIRS = amglue .
+
 # add the SWIG symbol to avoid conflicts with perl definitions.
 # $AMANDA_WARNING_CFLAGS is omitted because SWIG-generated files tend
 # to trigger warnings.
@@ -39,24 +42,6 @@ endif
 # (amplot has a conditional, but doesn't have any header files)
 
 ##
-## libamglue -- helper functions for gluing amanda to perl
-##
-
-amlib_LTLIBRARIES = libamglue.la
-libamglue_la_SOURCES = \
-	amglue/ghashtable.c \
-	amglue/gerror.c \
-	amglue/bigint.c \
-	amglue/source.c \
-	amglue/objwrap.c \
-	amglue/xferwrap.c \
-	amglue/amglue.h
-libamglue_la_LDFLAGS = $(PERL_EXT_LDFLAGS) -release $(VERSION)
-libamglue_la_LIBADD = \
-	$(top_builddir)/xfer-src/libamxfer.la
-EXTRA_DIST += $(libamglue_la_SOURCES)
-
-##
 ## HTML Generation
 ##
 
@@ -83,7 +68,7 @@ PERL_EXT_LDFLAGS = -avoid-version -shared
 # threading library
 PERL_EXT_LDFLAGS += $(PERLEXTLIBS)
 
-# list our SWIG libraries.
+# list our SWIG libraries; these are %included from .swg files
 AMGLUE_SWG = amglue/amglue.swg \
 	amglue/amglue.swg \
 	amglue/constants.swg \
@@ -131,9 +116,9 @@ PM_FILES += $(Amanda_DATA)
 # PACKAGE: Amanda::Archive
 libArchivedir = $(amperldir)/auto/Amanda/Archive
 libArchive_LTLIBRARIES = libArchive.la
-libArchive_la_SOURCES = libamglue.la Amanda/Archive.c $(AMGLUE_SWG)
+libArchive_la_SOURCES = Amanda/Archive.c $(AMGLUE_SWG)
 libArchive_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libArchive_la_LIBADD = libamglue.la \
+libArchive_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/amar-src/libamar.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Archive.pm
@@ -148,9 +133,9 @@ if WANT_SERVER
 # PACKAGE: Amanda::Device
 libDevicedir = $(amperldir)/auto/Amanda/Device
 libDevice_LTLIBRARIES = libDevice.la
-libDevice_la_SOURCES = libamglue.la Amanda/Device.c $(AMGLUE_SWG)
+libDevice_la_SOURCES = Amanda/Device.c $(AMGLUE_SWG)
 libDevice_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libDevice_la_LIBADD = libamglue.la \
+libDevice_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/device-src/libamdevice.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Device.pm
@@ -162,9 +147,9 @@ if WANT_SERVER
 # PACKAGE: Amanda::Logfile
 libLogfiledir = $(amperldir)/auto/Amanda/Logfile
 libLogfile_LTLIBRARIES = libLogfile.la
-libLogfile_la_SOURCES = libamglue.la Amanda/Logfile.c $(AMGLUE_SWG)
+libLogfile_la_SOURCES = Amanda/Logfile.c $(AMGLUE_SWG)
 libLogfile_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libLogfile_la_LIBADD = libamglue.la \
+libLogfile_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/server-src/libamserver.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Logfile.pm
@@ -176,9 +161,9 @@ if WANT_SERVER
 # PACKAGE: Amanda::Cmdline
 libCmdlinedir = $(amperldir)/auto/Amanda/Cmdline
 libCmdline_LTLIBRARIES = libCmdline.la
-libCmdline_la_SOURCES = libamglue.la Amanda/Cmdline.c $(AMGLUE_SWG)
+libCmdline_la_SOURCES = Amanda/Cmdline.c $(AMGLUE_SWG)
 libCmdline_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libCmdline_la_LIBADD = libamglue.la \
+libCmdline_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/server-src/libamserver.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Cmdline.pm
@@ -190,9 +175,9 @@ if WANT_SERVER
 # PACKAGE: Amanda::Tapelist
 libTapelistdir = $(amperldir)/auto/Amanda/Tapelist
 libTapelist_LTLIBRARIES = libTapelist.la
-libTapelist_la_SOURCES = libamglue.la Amanda/Tapelist.c $(AMGLUE_SWG)
+libTapelist_la_SOURCES = Amanda/Tapelist.c $(AMGLUE_SWG)
 libTapelist_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libTapelist_la_LIBADD = libamglue.la \
+libTapelist_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/server-src/libamserver.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Tapelist.pm
@@ -204,9 +189,9 @@ if WANT_SERVER
 # PACKAGE: Amanda::Disklist
 libDisklistdir = $(amperldir)/auto/Amanda/Disklist
 libDisklist_LTLIBRARIES = libDisklist.la
-libDisklist_la_SOURCES = libamglue.la Amanda/Disklist.c $(AMGLUE_SWG)
+libDisklist_la_SOURCES = Amanda/Disklist.c $(AMGLUE_SWG)
 libDisklist_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libDisklist_la_LIBADD = libamglue.la \
+libDisklist_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/server-src/libamserver.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Disklist.pm
@@ -218,9 +203,9 @@ EXTRA_DIST += Amanda/Disklist.swg Amanda/Disklist.pm Amanda/Disklist.pod
 Amanda/Feature.pm: ../common-src/amfeatures.h
 libFeaturedir = $(amperldir)/auto/Amanda/Feature
 libFeature_LTLIBRARIES = libFeature.la
-libFeature_la_SOURCES = libamglue.la Amanda/Feature.c $(AMGLUE_SWG)
+libFeature_la_SOURCES = Amanda/Feature.c $(AMGLUE_SWG)
 libFeature_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libFeature_la_LIBADD = libamglue.la \
+libFeature_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Feature.pm
 MAINTAINERCLEANFILES += Amanda/Feature.c Amanda/Feature.pm
@@ -330,9 +315,9 @@ EXTRA_DIST += Amanda/DB/Catalog.pm
 # PACKAGE: Amanda::Xfer
 libXferdir = $(amperldir)/auto/Amanda/Xfer
 libXfer_LTLIBRARIES = libXfer.la
-libXfer_la_SOURCES = libamglue.la Amanda/Xfer.c $(AMGLUE_SWG)
+libXfer_la_SOURCES = Amanda/Xfer.c $(AMGLUE_SWG)
 libXfer_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libXfer_la_LIBADD = libamglue.la \
+libXfer_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/xfer-src/libamxfer.la
 Amanda_DATA += Amanda/Xfer.pm
 MAINTAINERCLEANFILES += Amanda/Xfer.c Amanda/Xfer.pm
@@ -342,9 +327,9 @@ if WANT_NDMP
 # PACKAGE: Amanda::NDMP
 libNDMPdir = $(amperldir)/auto/Amanda/NDMP
 libNDMP_LTLIBRARIES = libNDMP.la
-libNDMP_la_SOURCES = libamglue.la Amanda/NDMP.c $(AMGLUE_SWG)
+libNDMP_la_SOURCES = Amanda/NDMP.c $(AMGLUE_SWG)
 libNDMP_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libNDMP_la_LIBADD = libamglue.la \
+libNDMP_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la \
 	$(top_builddir)/ndmp-src/libndmlib.la
 Amanda_DATA += Amanda/NDMP.pm
@@ -356,9 +341,9 @@ if WANT_SERVER
 # PACKAGE: Amanda::XferServer
 libXferServerdir = $(amperldir)/auto/Amanda/XferServer
 libXferServer_LTLIBRARIES = libXferServer.la
-libXferServer_la_SOURCES = libamglue.la Amanda/XferServer.c $(AMGLUE_SWG)
+libXferServer_la_SOURCES = Amanda/XferServer.c $(AMGLUE_SWG)
 libXferServer_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libXferServer_la_LIBADD = libamglue.la \
+libXferServer_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/server-src/libamserver.la
 Amanda_DATA += Amanda/XferServer.pm
 MAINTAINERCLEANFILES += Amanda/XferServer.c Amanda/XferServer.pm
@@ -389,9 +374,9 @@ EXTRA_DIST += Amanda/BigIntCompat.pm
 # PACKAGE: Amanda::Debug
 libDebugdir = $(amperldir)/auto/Amanda/Debug
 libDebug_LTLIBRARIES = libDebug.la
-libDebug_la_SOURCES = libamglue.la Amanda/Debug.c $(AMGLUE_SWG)
+libDebug_la_SOURCES = Amanda/Debug.c $(AMGLUE_SWG)
 libDebug_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libDebug_la_LIBADD = libamglue.la \
+libDebug_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Debug.pm
 EXTRA_DIST += Amanda/Debug.swg Amanda/Debug.pm Amanda/Debug.pod
@@ -400,9 +385,9 @@ MAINTAINERCLEANFILES += Amanda/Debug.c Amanda/Debug.pm
 # PACKAGE: Amanda::Config
 libConfigdir = $(amperldir)/auto/Amanda/Config
 libConfig_LTLIBRARIES = libConfig.la
-libConfig_la_SOURCES = libamglue.la Amanda/Config.c $(AMGLUE_SWG)
+libConfig_la_SOURCES = Amanda/Config.c $(AMGLUE_SWG)
 libConfig_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libConfig_la_LIBADD = libamglue.la \
+libConfig_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Config.pm
 EXTRA_DIST += Amanda/Config.swg Amanda/Config.pm Amanda/Config.pod
@@ -411,9 +396,9 @@ MAINTAINERCLEANFILES += Amanda/Config.c Amanda/Config.pm
 # PACKAGE: Amanda::Util
 libUtildir = $(amperldir)/auto/Amanda/Util
 libUtil_LTLIBRARIES = libUtil.la
-libUtil_la_SOURCES = libamglue.la Amanda/Util.c $(AMGLUE_SWG)
+libUtil_la_SOURCES = Amanda/Util.c $(AMGLUE_SWG)
 libUtil_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libUtil_la_LIBADD = libamglue.la \
+libUtil_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Util.pm
 EXTRA_DIST += Amanda/Util.swg Amanda/Util.pm Amanda/Util.pod
@@ -422,9 +407,9 @@ MAINTAINERCLEANFILES += Amanda/Util.c Amanda/Util.pm
 # PACKAGE: Amanda::Header
 libHeaderdir = $(amperldir)/auto/Amanda/Header
 libHeader_LTLIBRARIES = libHeader.la
-libHeader_la_SOURCES = libamglue.la Amanda/Header.c $(AMGLUE_SWG)
+libHeader_la_SOURCES = Amanda/Header.c $(AMGLUE_SWG)
 libHeader_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libHeader_la_LIBADD = libamglue.la \
+libHeader_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Header.pm
 EXTRA_DIST += Amanda/Header.swg Amanda/Header.pm Amanda/Header.pod
@@ -433,9 +418,9 @@ MAINTAINERCLEANFILES += Amanda/Header.c Amanda/Header.pm
 # PACKAGE: Amanda::Tests
 libTestsdir = $(amperldir)/auto/Amanda/Tests
 libTests_LTLIBRARIES = libTests.la
-libTests_la_SOURCES = libamglue.la Amanda/Tests.c $(AMGLUE_SWG)
+libTests_la_SOURCES = Amanda/Tests.c $(AMGLUE_SWG)
 libTests_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libTests_la_LIBADD = libamglue.la \
+libTests_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Tests.pm
 EXTRA_DIST += Amanda/Tests.swg Amanda/Tests.pm Amanda/Tests.pod
@@ -444,9 +429,9 @@ MAINTAINERCLEANFILES += Amanda/Tests.c Amanda/Tests.pm
 # PACKAGE: Amanda::MainLoop
 libMainLoopdir = $(amperldir)/auto/Amanda/MainLoop
 libMainLoop_LTLIBRARIES = libMainLoop.la
-libMainLoop_la_SOURCES = libamglue.la Amanda/MainLoop.c $(AMGLUE_SWG)
+libMainLoop_la_SOURCES = Amanda/MainLoop.c $(AMGLUE_SWG)
 libMainLoop_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libMainLoop_la_LIBADD = libamglue.la \
+libMainLoop_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/MainLoop.pm
 EXTRA_DIST += Amanda/MainLoop.swg Amanda/MainLoop.pm Amanda/MainLoop.pod
@@ -461,9 +446,9 @@ EXTRA_DIST += $(AmandaIPC_DATA)
 # PACKAGE: Amanda::IPC:Binary
 libIPCBinarydir = $(amperldir)/auto/Amanda/IPC/Binary
 libIPCBinary_LTLIBRARIES = libBinary.la
-libBinary_la_SOURCES = libamglue.la Amanda/IPC/Binary.c $(AMGLUE_SWG)
+libBinary_la_SOURCES = Amanda/IPC/Binary.c $(AMGLUE_SWG)
 libBinary_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libBinary_la_LIBADD = libamglue.la \
+libBinary_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 AmandaIPC_DATA += Amanda/IPC/Binary.pm
 EXTRA_DIST += Amanda/IPC/Binary.swg Amanda/IPC/Binary.pm Amanda/IPC/Binary.pod
@@ -494,9 +479,9 @@ if WANT_CLIENT
 # PACKAGE: Amanda::Application
 libApplicationdir = $(amperldir)/auto/Amanda/Application
 libApplication_LTLIBRARIES = libApplication.la
-libApplication_la_SOURCES = libamglue.la Amanda/Application.c $(AMGLUE_SWG)
+libApplication_la_SOURCES = Amanda/Application.c $(AMGLUE_SWG)
 libApplication_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libApplication_la_LIBADD = libamglue.la \
+libApplication_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/client-src/libamclient.la
 Amanda_DATA += Amanda/Application.pm
 MAINTAINERCLEANFILES += Amanda/Application.c Amanda/Application.pm

@@ -1,4 +1,12 @@
 2010-07-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in perl/amglue/Makefile.am: new Makefile for
+	  libamglue
+	* perl/Makefile.am: use SUBDIRS to build libamglue before
+	  any SWIG modules, as automake does not get inter-library
+	  dependencies right at install time if the libraries are
+	  all built in the same directory
+
+2010-07-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* application-src/ampgsql.pl: also check PG-DATADIR
 
 2010-07-26  Dustin J. Mitchell <dustin@zmanda.com>
