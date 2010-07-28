@@ -120,7 +120,7 @@ sub print_to_server {
             print {$self->{mesgout}} "? $msg\n";
 	}
     } elsif ($self->{action} eq "restore") {
-        print STDOUT "$msg\n";
+        print STDERR "$msg\n";
     } elsif ($self->{action} eq "validate") {
         print STDERR "$msg\n";
     } else {

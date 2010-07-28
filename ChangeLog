@@ -1,3 +1,6 @@
+2010-07-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Script_App.pm: Print restore message to STDERR.
+
 2010-07-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/progs.m4: require SWIG-1.3.39
 	* (all .c files): #include amanda.h first
