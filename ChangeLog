@@ -1,4 +1,10 @@
 2010-07-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/krb5-security.c (krb5_tcpm_recv_token): New function, a
+	  copy of tcpm_recv_token.
+	* common-src/security-util.c: New tcpm_recv_token without a timeout.
+	* common-src/security-util.h: Add field to keep a buffer in tcp_conn.
+
+2010-07-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Script_App.pm: Print restore message to STDERR.
 
 2010-07-28  Dustin J. Mitchell <dustin@zmanda.com>

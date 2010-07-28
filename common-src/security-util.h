@@ -45,6 +45,12 @@
 } while (0)
 
 
+/*
+ * Magic values for sec_conn->handle
+ */
+#define H_TAKEN -1		/* sec_conn->tok was already read */
+#define H_EOF   -2		/* this connection has been shut down */
+
 #ifdef KRB5_SECURITY
 #  define KRB5_DEPRECATED 1
 #  ifndef KRB5_HEIMDAL_INCLUDES
@@ -88,6 +94,10 @@ struct tcp_conn {
 #ifdef KRB5_SECURITY
     gss_ctx_id_t	gss_context;
 #endif
+    unsigned int	netint[2];
+    char *              buffer;
+    ssize_t             size_header_read;
+    ssize_t             size_buffer_read;
 };
 
 
@@ -212,7 +222,8 @@ void	tcpm_stream_read(void *, void (*)(void *, void *, ssize_t), void *);
 ssize_t	tcpm_stream_read_sync(void *, void **);
 void	tcpm_stream_read_cancel(void *);
 ssize_t	tcpm_send_token(struct tcp_conn *, int, int, char **, const void *, size_t);
-ssize_t	tcpm_recv_token(struct tcp_conn *, int, int *, char **, char **, ssize_t *, int);
+ssize_t	tcpm_recv_token_timeout(struct tcp_conn *, int, int *, char **, char **, ssize_t *, int);
+ssize_t	tcpm_recv_token(struct tcp_conn *, int, int *, char **, char **, ssize_t *);
 void	tcpm_close_connection(void *, char *);
 
 int	tcpma_stream_accept(void *);
