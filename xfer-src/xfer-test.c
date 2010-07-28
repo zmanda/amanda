@@ -20,10 +20,10 @@
  * Author: Dustin J. Mitchell <dustin@zmanda.com>
  */
 
+#include "amanda.h"
 #include "amxfer.h"
 #include "glib-util.h"
 #include "testutils.h"
-#include "amanda.h"
 #include "event.h"
 #include "simpleprng.h"
 #include "sockaddr-util.h"

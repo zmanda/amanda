@@ -19,8 +19,8 @@
  * Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
  */
 
-#include "amxfer.h"
 #include "amanda.h"
+#include "amxfer.h"
 
 /* parent class for XferElement */
 static GObjectClass *parent_class = NULL;

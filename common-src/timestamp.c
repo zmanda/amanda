@@ -24,6 +24,7 @@
  * file named AUTHORS, in the root directory of this distribution.
  */
 
+#include "amanda.h"
 #include "timestamp.h"
 #include "conffile.h"
 #include <glib.h>

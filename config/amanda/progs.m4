@@ -369,7 +369,8 @@ AC_DEFUN([AMANDA_PROG_SWIG],
     AC_ARG_VAR([SWIG], [Path to the 'swig' binary (developers only)])
     # 1.3.32 introduces a change in the way empty strings are handled (old versions
     # returned undef in Perl, while new versions return an empty Perl string)
-    AC_PROG_SWIG([1.3.32])
+    # 1.3.39 is required for the %begin block
+    AC_PROG_SWIG([1.3.39])
 ])
 
 AC_DEFUN([AMANDA_PROG_AR],

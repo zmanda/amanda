@@ -23,8 +23,8 @@
    http://www.ifthenfi.nl:8080/cgi-bin/ssl_getmanpage?tape+HW+XNX234+tape
 */
 
-#include <amanda.h>
-#include <tape-ops.h>
+#include "amanda.h"
+#include "tape-ops.h"
 #include "glib-util.h"
 
 /* Uncomment to test compilation on non-XENIX systems. */

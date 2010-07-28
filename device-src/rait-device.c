@@ -21,7 +21,7 @@
 /* The RAIT device encapsulates some number of other devices into a single
  * redundant device. */
 
-#include <amanda.h>
+#include "amanda.h"
 #include "property.h"
 #include "util.h"
 #include <glib.h>

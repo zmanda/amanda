@@ -25,8 +25,8 @@
  * Utility routines for handling command lines.
  */
 
-#include <ctype.h>
 #include "amanda.h"
+#include <ctype.h>
 #include "match.h"
 #include "cmdline.h"
 #include "holding.h"

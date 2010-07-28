@@ -18,6 +18,7 @@
  * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
  */
 
+#include "amanda.h"
 #include "simpleprng.h"
 
 /* A *very* basic linear congruential generator; values are as cited in

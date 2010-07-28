@@ -23,6 +23,7 @@
  * Utility routines for handling sockaddrs
  */
 
+#include "amanda.h"
 #include "sockaddr-util.h"
 
 void

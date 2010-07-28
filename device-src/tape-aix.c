@@ -18,7 +18,7 @@
  * Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
  */
 
-#include <amanda.h>
+#include "amanda.h"
 #include "glib-util.h"
 #include "tape-ops.h"
 

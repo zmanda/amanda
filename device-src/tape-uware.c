@@ -21,8 +21,8 @@
 /* Tape operations for SVR4 systems. Most of this stuff is based on
    documentation from http://docsrv.sco.com/cgi-bin/man/man?sdi+7 */
 
-#include <amanda.h>
-#include <tape-ops.h>
+#include "amanda.h"
+#include "tape-ops.h"
 #include "glib-util.h"
 
 /* Uncomment to test on non-SYSV4 systems. */

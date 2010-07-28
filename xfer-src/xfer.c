@@ -18,9 +18,9 @@
  * Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
  */
 
+#include "amanda.h"
 #include "amxfer.h"
 #include "element-glue.h"
-#include "amanda.h"
 #include "arglist.h"
 
 /* XMsgSource objects are GSource "subclasses" which manage

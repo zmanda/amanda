@@ -1,4 +1,9 @@
 2010-07-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/progs.m4: require SWIG-1.3.39
+	* (all .c files): #include amanda.h first
+	* perl/amglue/amglue.swg: use %begin to include config.h first
+
+2010-07-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/amtapetype.pl: detect LEOM and add appropriate
 	  comments
 	* device-src/xfer-dest-device.c device-src/xfer-device.h: add

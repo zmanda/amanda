@@ -28,6 +28,7 @@
  *
  */
 
+#include "amanda.h"
 #include "amandad.h"
 #include "util.h"
 

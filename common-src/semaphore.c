@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -21,8 +21,8 @@
 /* GLib does not provide semaphores, which are useful in queue.c.
    So, we implement it here. */
 
-#include "semaphore.h"
 #include "amanda.h"
+#include "semaphore.h"
 
 semaphore_t* semaphore_new_with_value(int value) {
     semaphore_t *rval;

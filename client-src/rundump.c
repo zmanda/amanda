@@ -33,8 +33,8 @@
  * argv[2] will be argv[0] of the DUMP program
  * ...
  */
-#include "util.h"
 #include "amanda.h"
+#include "util.h"
 #include "conffile.h"
 
 int main(int argc, char **argv);
