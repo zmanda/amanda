@@ -1,5 +1,5 @@
 #! @PERL@
-# Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published 
@@ -219,12 +219,14 @@ sub open_validation_app {
 
     if ($#command == 0) {
 	$command[0]->{fd} = Symbol::gensym;
-	$command[0]->{pid} = open3($current_validation_pipeline, "/dev/null", $command[0]->{stderr}, $command[0]->{pgm});
+	open(NULL, ">", "/dev/null") or die "couldn't open /dev/null for writing";
+	$command[0]->{pid} = open3($current_validation_pipeline, ">&NULL", $command[0]->{stderr}, $command[0]->{pgm});
     } else {
 	my $nb = $#command;
 	$command[$nb]->{fd} = "VAL_GLOB_$nb";
 	$command[$nb]->{stderr} = Symbol::gensym;
-	$command[$nb]->{pid} = open3($command[$nb]->{fd}, "/dev/null", $command[$nb]->{stderr}, $command[$nb]->{pgm});
+	open(NULL, ">", "/dev/null") or die "couldn't open /dev/null for writing";
+	$command[$nb]->{pid} = open3($command[$nb]->{fd}, ">&NULL", $command[$nb]->{stderr}, $command[$nb]->{pgm});
 	close($command[$nb]->{stderr});
 	while ($nb-- > 1) {
 	    $command[$nb]->{fd} = "VAL_GLOB_$nb";
