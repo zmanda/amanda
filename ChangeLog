@@ -1,3 +1,6 @@
+2010-07-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Script_App.pm: Print restore message to STDERR.
+
 2010-07-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* application-src/ampgsql.pl: also check PG-DATADIR
 
