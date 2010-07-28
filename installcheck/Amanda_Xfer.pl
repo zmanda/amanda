@@ -415,7 +415,7 @@ SKIP: {
 
 	$xfer = Amanda::Xfer->new([
 	    Amanda::Xfer::Source::Random->new(1024*1024, $RANDOM_SEED),
-	    Amanda::Xfer::Dest::Device->new($device),
+	    Amanda::Xfer::Dest::Device->new($device, 0),
 	]);
 
 	$xfer->start($quit_cb);

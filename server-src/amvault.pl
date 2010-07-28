@@ -390,7 +390,7 @@ sub seek_and_copy {
 
     $xfer = Amanda::Xfer->new([
 	Amanda::Xfer::Source::Device->new($self->{'src_dev'}),
-	Amanda::Xfer::Dest::Device->new($self->{'dst_dev'}),
+	Amanda::Xfer::Dest::Device->new($self->{'dst_dev'}, 0),
     ]);
 
     debug("starting transfer");

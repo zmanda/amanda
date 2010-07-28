@@ -145,7 +145,7 @@ sub setup_changer {
 	my $key = $xfer_info->[1];
 
 	my $xsrc = Amanda::Xfer::Source::Random->new($len, $key);
-	my $xdst = Amanda::Xfer::Dest::Device->new($dev);
+	my $xdst = Amanda::Xfer::Dest::Device->new($dev, 0);
 	my $xfer = Amanda::Xfer->new([$xsrc, $xdst]);
 
 	$xfer->start(sub {

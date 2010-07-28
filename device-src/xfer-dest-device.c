@@ -51,6 +51,8 @@ typedef struct XferDestDevice {
 
     Device *device;
 
+    gboolean cancel_at_leom;
+
     gpointer partial;
     gsize block_size;
     gsize partial_length;
@@ -68,15 +70,29 @@ typedef struct {
  * Implementation
  */
 
-static void
-handle_device_error(
-    XferDestDevice *self)
+static gboolean
+do_block(
+    XferDestDevice *self,
+    guint size,
+    gpointer data)
 {
     XferElement *elt = XFER_ELEMENT(self);
 
-    xfer_cancel_with_error(elt, "%s: %s",
-	    self->device->device_name, device_error_or_status(self->device));
-    wait_until_xfer_cancelled(elt->xfer);
+    if (!device_write_block(self->device, size, data)) {
+	xfer_cancel_with_error(elt, "%s: %s",
+		self->device->device_name, device_error_or_status(self->device));
+	wait_until_xfer_cancelled(elt->xfer);
+	return FALSE;
+    }
+
+    /* check for LEOM */
+    if (self->cancel_at_leom && self->device->is_eom) {
+	xfer_cancel_with_error(elt, "%s: LEOM detected", self->device->device_name);
+	wait_until_xfer_cancelled(elt->xfer);
+	return FALSE;
+    }
+
+    return TRUE;
 }
 
 static void
@@ -92,8 +108,8 @@ push_buffer_impl(
     if (!buf) {
 	/* write out the partial buffer, if there's anything in it */
 	if (self->partial_length) {
-	    if (!device_write_block(self->device, self->block_size, self->partial)) {
-		handle_device_error(self);
+	    if (!do_block(self, self->block_size, self->partial)) {
+		return;
 	    }
 	    self->partial_length = 0;
 	}
@@ -121,8 +137,7 @@ push_buffer_impl(
 
     /* and if the buffer is now full, write the block */
     if (self->partial_length == self->block_size) {
-	if (!device_write_block(self->device, self->block_size, self->partial)) {
-	    handle_device_error(self);
+	if (!do_block(self, self->block_size, self->partial)) {
 	    g_free(to_free);
 	    return;
 	}
@@ -131,8 +146,7 @@ push_buffer_impl(
 
     /* write any whole blocks directly from the push buffer */
     while (len >= self->block_size) {
-	if (!device_write_block(self->device, self->block_size, buf)) {
-	    handle_device_error(self);
+	if (!do_block(self, self->block_size, buf)) {
 	    g_free(to_free);
 	    return;
 	}
@@ -218,7 +232,8 @@ xfer_dest_device_get_type (void)
 /* create an element of this class; prototype is in xfer-device.h */
 XferElement *
 xfer_dest_device(
-    Device *device)
+    Device *device,
+    gboolean cancel_at_leom)
 {
     XferDestDevice *self = (XferDestDevice *)g_object_new(XFER_DEST_DEVICE_TYPE, NULL);
     XferElement *elt = XFER_ELEMENT(self);
@@ -226,6 +241,7 @@ xfer_dest_device(
     g_assert(device != NULL);
 
     self->device = device;
+    self->cancel_at_leom = cancel_at_leom;
 
     return elt;
 }

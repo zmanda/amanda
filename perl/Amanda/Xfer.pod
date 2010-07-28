@@ -249,12 +249,14 @@ through it.
 
 =head3 Amanda::Xfer::Dest::Device (SERVER ONLY)
 
-  Amanda::Xfer::Dest::Device->new($device);
+  Amanda::Xfer::Dest::Device->new($device, $cancel_at_eom);
 
 This source writes data to a device.  The device should be ready for writing
 (C<< $device->start_file(..) >>).  On completion of the transfer, the file will
-be finished.  Note that this element does not apply any sort of stream
-buffering.
+be finished.  If an error occurs, or if C<$cancel_at_eom> is true and the
+device signals LEOM, the transfer will be cancelled.
+
+Note that this element does not apply any sort of stream buffering.
 
 =head3 Amanda::Xfer::Dest::Buffer
 

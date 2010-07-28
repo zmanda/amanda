@@ -1,4 +1,14 @@
 2010-07-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/amtapetype.pl: detect LEOM and add appropriate
+	  comments
+	* device-src/xfer-dest-device.c device-src/xfer-device.h: add
+	  cancel_at_leom constructor arg
+	* installcheck/Amanda_Device.pl installcheck/Amanda_Recovery_Clerk.pl
+	  installcheck/Amanda_Xfer.pl installcheck/amrestore.pl
+	  perl/Amanda/Xfer.pod perl/Amanda/XferServer.swg
+	  server-src/amvault.pl: pass new argument
+
+2010-07-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/tape-device.c device-src/tape-device.h: autodetect
 	  the LEOM property, and handle various operating systems' LEOM
 	  indications

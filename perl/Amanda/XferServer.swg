@@ -40,7 +40,8 @@ XferElement *xfer_source_device(
 
 %newobject xfer_dest_device;
 XferElement *xfer_dest_device(
-    Device *device);
+    Device *device,
+    gboolean cancel_at_leom);
 
 %newobject xfer_source_holding;
 XferElement * xfer_source_holding(

@@ -159,7 +159,7 @@ sub write_one_file(%) {
     } else {
 	die "Unknown PATTERN $pattern";
     }
-    $dest = Amanda::Xfer::Dest::Device->new($device);
+    $dest = Amanda::Xfer::Dest::Device->new($device, 1);
     $xfer = Amanda::Xfer->new([$source, $dest]);
 
     # set up the relevant callbacks
@@ -214,6 +214,10 @@ sub write_one_file(%) {
 
     if ($device->status() != $Amanda::Device::DEVICE_STATUS_SUCCESS) {
 	return $device->error_or_status();
+    }
+
+    if ($got_error && $got_error =~ /LEOM detected/) {
+	return "LEOM";
     }
 
     if ($got_error) {
@@ -575,6 +579,12 @@ sub make_tapetype {
     $speed_estimate = int $speed_estimate;
     print STDERR "Wrote $volume_size_estimate bytes at $speed_estimate kb/sec\n";
 
+    my $leom = 0;
+    if ($err eq 'LEOM') {
+	print STDERR "Got LEOM indication, so drive and kernel together support LEOM\n";
+	$leom = 1;
+    }
+
     # now we want to write about 100 filemarks; round down to the blocksize
     # to avoid counting padding as part of the filemark
     my $file_size = $volume_size_estimate / 100;
@@ -622,6 +632,14 @@ define tapetype $opt_tapetype_name {
     $blocksize_line
 }
 EOF
+
+    if ($leom) {
+	print "# for this drive and kernel, LEOM is supported; add\n";
+	print "#   device_property \"LEOM\" \"TRUE\"\n";
+	print "# for this device.\n";
+    } else {
+	print "# LEOM is not supported for this drive and kernel\n";
+    }
 }
 
 sub usage {

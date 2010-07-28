@@ -40,15 +40,20 @@ XferElement *xfer_source_device(
 
 /* A transfer destination that writes bytes to a Device.  The device should have a
  * file started, ready for a device_write_block call.  On completion of the transfer,
- * the file will be finished.
+ * the file will be finished.  If a device error occurs, the transfer will be cancelled.
+ *
+ * If cancel_at_leom is true, then the transfer will also be cancelled on LEOM, with
+ * the error message containing the string "LEOM detected" (this is used by amtapetype).
  *
  * Implemented in xfer-dest-device.c
  *
  * @param device: the Device to write to, with a file started
+ * @param canel_at_leom: if true, the element will cancel the transfer at LEOM.
  * @return: new element
  */
 XferElement *xfer_dest_device(
-    Device *device);
+    Device *device,
+    gboolean canel_at_leom);
 
 /* Constructor for XferDestTaperSplitter, which writes data to devices block by
  * block and splitting parts but no caching.
