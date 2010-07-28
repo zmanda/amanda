@@ -1,3 +1,11 @@
+2010-07-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/tape-device.c device-src/tape-device.h: autodetect
+	  the LEOM property, and handle various operating systems' LEOM
+	  indications
+	* device-src/tape-aix.c device-src/tape-posix.c
+	  device-src/tape-uware.c device-src/tape-xenix.c: set LEOM property to
+	  FALSE by default
+
 2010-07-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c (find_result_t): Add a write_timestamp.
 	* server-src/find.h: Set the write_timestamp.

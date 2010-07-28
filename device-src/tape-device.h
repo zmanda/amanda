@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -51,6 +51,7 @@ typedef struct _TapeDevice {
 
     /* characteristics of the device */
     gboolean fsf, bsf, fsr, bsr, eom, bsf_after_eom, broken_gmt_online;
+    gboolean leom;
     gboolean nonblocking_open, fsf_after_filemark;
     int final_filemarks;
 
@@ -115,6 +116,7 @@ void tape_device_set_capabilities(TapeDevice *self,
 	gboolean fsr, PropertySurety fsr_surety, PropertySource fsr_source,
 	gboolean bsr, PropertySurety bsr_surety, PropertySource bsr_source,
 	gboolean eom, PropertySurety eom_surety, PropertySource eom_source,
+	gboolean leom, PropertySurety leom_surety, PropertySource leom_source,
 	gboolean bsf_after_eom, PropertySurety bae_surety, PropertySource bae_source,
 	guint final_filemarks, PropertySurety ff_surety, PropertySource ff_source);
 

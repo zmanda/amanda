@@ -164,6 +164,7 @@ tape_device_init (TapeDevice * self) {
     self->fsr = FALSE;
     self->bsr = FALSE;
     self->eom = FALSE;
+    self->leom = FALSE;
     self->bsf_after_eom = FALSE;
 
     g_value_init(&response, G_TYPE_BOOLEAN);
@@ -181,6 +182,8 @@ tape_device_init (TapeDevice * self) {
     device_set_simple_property(d_self, PROPERTY_BSR,
 	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
     device_set_simple_property(d_self, PROPERTY_EOM,
+	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
+    device_set_simple_property(d_self, PROPERTY_LEOM,
 	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
     device_set_simple_property(d_self, PROPERTY_BSF_AFTER_EOM,
 	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
@@ -240,12 +243,6 @@ tape_device_init (TapeDevice * self) {
     g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, FALSE);
     device_set_simple_property(d_self, PROPERTY_FULL_DELETION,
-	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
-    g_value_unset(&response);
-
-    g_value_init(&response, G_TYPE_BOOLEAN);
-    g_value_set_boolean(&response, FALSE);  /* for now; autodetect later */
-    device_set_simple_property(d_self, PROPERTY_LEOM,
 	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
@@ -701,6 +698,7 @@ tape_device_set_capabilities(TapeDevice *self,
 	gboolean fsr, PropertySurety fsr_surety, PropertySource fsr_source,
 	gboolean bsr, PropertySurety bsr_surety, PropertySource bsr_source,
 	gboolean eom, PropertySurety eom_surety, PropertySource eom_source,
+	gboolean leom, PropertySurety leom_surety, PropertySource leom_source,
 	gboolean bsf_after_eom, PropertySurety bae_surety, PropertySource bae_source,
 	guint final_filemarks, PropertySurety ff_surety, PropertySource ff_source)
 {
@@ -738,6 +736,10 @@ tape_device_set_capabilities(TapeDevice *self,
     self->eom = eom;
     g_value_set_boolean(&val, eom);
     device_set_simple_property(dself, PROPERTY_EOM, &val, eom_surety, eom_source);
+
+    self->leom = leom;
+    g_value_set_boolean(&val, leom);
+    device_set_simple_property(dself, PROPERTY_LEOM, &val, leom_surety, leom_source);
 
     self->bsf_after_eom = bsf_after_eom;
     g_value_set_boolean(&val, bsf_after_eom);
@@ -1135,8 +1137,6 @@ static gboolean tape_device_start_file(Device * d_self,
     IoResult result;
     char * amanda_header;
     char *msg = NULL;
-
-    d_self->is_eom = FALSE;
 
     self = TAPE_DEVICE(d_self);
 
@@ -1599,6 +1599,7 @@ static IoResult
 tape_device_robust_write (TapeDevice * self, void * buf, int count, char **errmsg) {
     Device * d_self;
     int result;
+    gboolean retry = FALSE;
 
     d_self = (Device*)self;
 
@@ -1607,23 +1608,51 @@ tape_device_robust_write (TapeDevice * self, void * buf, int count, char **errms
     for (;;) {
         result = write(self->fd, buf, count);
 
-        if (result == count) {
-            /* Success. */
-
-            self->private->write_count ++;
+	/* Success. */
+        if (result == count)
             return RESULT_SUCCESS;
-        } else if (result == 0) {
-            /* write() returned 0. It can be a LEOM. */
-	    /* http://lists.freebsd.org/pipermail/freebsd-scsi/2010-June/004414.html */
-	    *errmsg = g_strdup_printf("Got LEOM: Tried %d, got %d",
-				count, result);
-            return RESULT_NO_SPACE;
-        } else if (result > 0) {
-            /* write() returned a short count. This should not happen. */
-	    *errmsg = g_strdup_printf("Mysterious short write on tape device: Tried %d, got %d",
-				count, result);
+
+	if (result > 0) {
+            /* write() returned a short count. This should not happen if the block sizes
+	     * are properly aligned. */
+	    *errmsg = g_strdup_printf("Short write on tape device: Tried %d, got %d.  Is "
+			    "the drive using a block size smaller than %d bytes?",
+				count, result, count);
             return RESULT_ERROR;
-        } else if (0
+	}
+
+	/* Detect LEOM (early warning) and handle properly
+	 *
+	 * FreeBSD: 0-length write; next write will succeed
+	 *   http://lists.freebsd.org/pipermail/freebsd-scsi/2010-June/004414.html
+	 *
+	 * Solaris: 0-length write; next write will succeed
+	 *   (from Matthew Jacob on FreeBSD thread)
+	 *
+	 * Linux: -1/ENOSPC; next write will succeed
+	 *   http://www.mjmwired.net/kernel/Documentation/scsi/st.txt
+	 *
+	 * HP/UX: -1/ENOSPC; next write will succeed
+	 *   http://www.adssasia.com/Manual/IBM%203581%20tape%20autoloader.pdf
+	 */
+	if (result == 0
+#ifdef ENOSPC
+			|| (result < 0 && errno == ENOSPC)
+#endif
+	) {
+	    /* if we've retried once already, then we're probably really out of space */
+	    if (retry)
+		return RESULT_NO_SPACE;
+	    retry = TRUE;
+	    d_self->is_eom = TRUE;
+
+	    g_debug("empty write to tape; treating as LEOM early warning and retrying");
+            continue;
+        }
+
+	/* at this point result < 0, so an error occurred - sort out what */
+
+	if (0
 #ifdef EAGAIN
                    || errno == EAGAIN
 #endif
