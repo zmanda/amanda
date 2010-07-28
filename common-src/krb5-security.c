@@ -166,6 +166,9 @@ static int k5_encrypt(void *cookie, void *buf, ssize_t buflen,
 static int k5_decrypt(void *cookie, void *buf, ssize_t buflen,
 		      void **encbuf, ssize_t *encbuflen);
 
+static ssize_t krb5_tcpm_recv_token(struct tcp_conn *rc, int fd, int *handle,
+				    char **errmsg, char **buf, ssize_t *size,
+				    int timeout);
 /*
  * This is our interface to the outside world.
  */
@@ -516,7 +519,8 @@ gss_client(
 	if (maj_stat != (OM_uint32)GSS_S_CONTINUE_NEEDED)
 	    break;
 
-        rvalue = tcpm_recv_token(rc, rc->read, &rc->handle, &rc->errmsg,
+        rvalue = krb5_tcpm_recv_token(rc, rc->read, &rc->handle,
+				 &rc->errmsg,
 				 (void *)&recv_tok.value,
 				 (ssize_t *)&recv_tok.length, 60);
 	if (rvalue <= 0) {
@@ -604,7 +608,8 @@ gss_server(
 
     for (recv_tok.length = 0;;) {
 	recv_tok.value = NULL;
-        rvalue = tcpm_recv_token(rc, rc->read, &rc->handle, &rc->errmsg,
+        rvalue = krb5_tcpm_recv_token(rc, rc->read, &rc->handle,
+				 &rc->errmsg,
 				 /* (void *) is to avoid type-punning warning */
 				 (char **)(void *)&recv_tok.value,
 				 (ssize_t *)&recv_tok.length, 60);
@@ -1187,3 +1192,122 @@ common_exit:
     return(result);
 #endif /* AMANDA_PRINCIPAL */
 }
+
+/*
+ *  return -1 on error
+ *  return  0 on EOF:   *handle = H_EOF  && *size = 0    if socket closed
+ *  return  0 on EOF:   *handle = handle && *size = 0    if stream closed
+ *  return size     :   *handle = handle && *size = size for data read
+ */
+
+static ssize_t
+krb5_tcpm_recv_token(
+    struct tcp_conn    *rc,
+    int		fd,
+    int *	handle,
+    char **	errmsg,
+    char **	buf,
+    ssize_t *	size,
+    int		timeout)
+{
+    unsigned int netint[2];
+
+    assert(SIZEOF(netint) == 8);
+
+    switch (net_read(fd, &netint, SIZEOF(netint), timeout)) {
+    case -1:
+	if (errmsg)
+	    *errmsg = newvstrallocf(*errmsg, _("recv error: %s"), strerror(errno));
+	auth_debug(1, _("krb5_tcpm_recv_token: A return(-1)\n"));
+	return (-1);
+    case 0:
+	*size = 0;
+	*handle = H_EOF;
+	*errmsg = newvstrallocf(*errmsg, _("SOCKET_EOF"));
+	auth_debug(1, _("krb5_tcpm_recv_token: A return(0)\n"));
+	return (0);
+    default:
+	break;
+    }
+
+    *size = (ssize_t)ntohl(netint[0]);
+    *handle = (int)ntohl(netint[1]);
+    /* amanda protocol packet can be above NETWORK_BLOCK_BYTES */
+    if (*size > 128*NETWORK_BLOCK_BYTES || *size < 0) {
+	if (isprint((int)(*size        ) & 0xFF) &&
+	    isprint((int)(*size   >> 8 ) & 0xFF) &&
+	    isprint((int)(*size   >> 16) & 0xFF) &&
+	    isprint((int)(*size   >> 24) & 0xFF) &&
+	    isprint((*handle      ) & 0xFF) &&
+	    isprint((*handle >> 8 ) & 0xFF) &&
+	    isprint((*handle >> 16) & 0xFF) &&
+	    isprint((*handle >> 24) & 0xFF)) {
+	    char s[101];
+	    int i;
+	    s[0] = ((int)(*size)  >> 24) & 0xFF;
+	    s[1] = ((int)(*size)  >> 16) & 0xFF;
+	    s[2] = ((int)(*size)  >>  8) & 0xFF;
+	    s[3] = ((int)(*size)       ) & 0xFF;
+	    s[4] = (*handle >> 24) & 0xFF;
+	    s[5] = (*handle >> 16) & 0xFF;
+	    s[6] = (*handle >> 8 ) & 0xFF;
+	    s[7] = (*handle      ) & 0xFF;
+	    i = 8; s[i] = ' ';
+	    while(i<100 && isprint((int)s[i]) && s[i] != '\n') {
+		switch(net_read(fd, &s[i], 1, 0)) {
+		case -1: s[i] = '\0'; break;
+		case  0: s[i] = '\0'; break;
+		default:
+			 dbprintf(_("read: %c\n"), s[i]); i++; s[i]=' ';
+			 break;
+		}
+	    }
+	    s[i] = '\0';
+	    *errmsg = newvstrallocf(*errmsg, _("krb5_tcpm_recv_token: invalid size: %s"), s);
+	    dbprintf(_("krb5_tcpm_recv_token: invalid size %s\n"), s);
+	} else {
+	    *errmsg = newvstrallocf(*errmsg, _("krb5_tcpm_recv_token: invalid size"));
+	    dbprintf(_("krb5_tcpm_recv_token: invalid size %zd\n"), *size);
+	}
+	*size = -1;
+	return -1;
+    }
+    amfree(*buf);
+    *buf = alloc((size_t)*size);
+
+    if(*size == 0) {
+	auth_debug(1, _("krb5_tcpm_recv_token: read EOF from %d\n"), *handle);
+	*errmsg = newvstrallocf(*errmsg, _("EOF"));
+	return 0;
+    }
+    switch (net_read(fd, *buf, (size_t)*size, timeout)) {
+    case -1:
+	if (errmsg)
+	    *errmsg = newvstrallocf(*errmsg, _("recv error: %s"), strerror(errno));
+	auth_debug(1, _("krb5_tcpm_recv_token: B return(-1)\n"));
+	return (-1);
+    case 0:
+	*size = 0;
+	*errmsg = newvstrallocf(*errmsg, _("SOCKET_EOF"));
+	auth_debug(1, _("krb5_tcpm_recv_token: B return(0)\n"));
+	return (0);
+    default:
+	break;
+    }
+
+    auth_debug(1, _("krb5_tcpm_recv_token: read %zd bytes from %d\n"), *size, *handle);
+
+    if (*size > 0 && rc->driver->data_decrypt != NULL) {
+	void *decbuf;
+	ssize_t decsize;
+	rc->driver->data_decrypt(rc, *buf, *size, &decbuf, &decsize);
+	if (*buf != (char *)decbuf) {
+	    amfree(*buf);
+	    *buf = (char *)decbuf;
+	}
+	*size = decsize;
+    }
+
+    return((*size));
+}
+

@@ -43,12 +43,6 @@
 #include "sockaddr-util.h"
 
 /*
- * Magic values for sec_conn->handle
- */
-#define	H_TAKEN	-1		/* sec_conn->tok was already read */
-#define	H_EOF	-2		/* this connection has been shut down */
-
-/*
  * This is a queue of open connections
  */
 GSList *connq = NULL;
@@ -494,6 +488,7 @@ tcpm_send_token(
 }
 
 /*
+ *  return -2 for incomplete packet
  *  return -1 on error
  *  return  0 on EOF:   *handle = H_EOF  && *size = 0    if socket closed
  *  return  0 on EOF:   *handle = handle && *size = 0    if stream closed
@@ -507,93 +502,114 @@ tcpm_recv_token(
     int *	handle,
     char **	errmsg,
     char **	buf,
-    ssize_t *	size,
-    int		timeout)
+    ssize_t *	size)
 {
-    unsigned int netint[2];
+    ssize_t     rval;
 
-    assert(SIZEOF(netint) == 8);
+    assert(SIZEOF(rc->netint) == 8);
+    if (rc->size_header_read < (ssize_t)SIZEOF(rc->netint)) {
+	rval = read(fd, &rc->netint + rc->size_header_read,
+		        SIZEOF(rc->netint) - rc->size_header_read);
+	if (rval == -1) {
+	    if (errmsg)
+		*errmsg = newvstrallocf(*errmsg, _("recv error: %s"),
+					strerror(errno));
+	    auth_debug(1, _("tcpm_recv_token: A return(-1)\n"));
+	    return(-1);
+	} else if (rval == 0) {
+	    *size = 0;
+	    *handle = H_EOF;
+	    *errmsg = newvstrallocf(*errmsg, _("SOCKET_EOF"));
+	    auth_debug(1, _("tcpm_recv_token: A return(0)\n"));
+	    return(0);
+	} else if (rval < (ssize_t)SIZEOF(rc->netint) - rc->size_header_read) {
+	    rc->size_header_read += rval;
+	    return(-2);
+	}
+	rc->size_header_read += rval;
+        amfree(rc->buffer);
+	*size = (ssize_t)ntohl(rc->netint[0]);
+	*handle = (int)ntohl(rc->netint[1]);
+        rc->buffer = alloc((size_t)*size);
+	rc->size_buffer_read = 0;
 
-    switch (net_read(fd, &netint, SIZEOF(netint), timeout)) {
-    case -1:
-	if (errmsg)
-	    *errmsg = newvstrallocf(*errmsg, _("recv error: %s"), strerror(errno));
-	auth_debug(1, _("tcpm_recv_token: A return(-1)\n"));
-	return (-1);
-    case 0:
-	*size = 0;
-	*handle = H_EOF;
-	*errmsg = newvstrallocf(*errmsg, _("SOCKET_EOF"));
-	auth_debug(1, _("tcpm_recv_token: A return(0)\n"));
-	return (0);
-    default:
-	break;
-    }
-
-    *size = (ssize_t)ntohl(netint[0]);
-    *handle = (int)ntohl(netint[1]);
-    /* amanda protocol packet can be above NETWORK_BLOCK_BYTES */
-    if (*size > 128*NETWORK_BLOCK_BYTES || *size < 0) {
-	if (isprint((int)(*size        ) & 0xFF) &&
-	    isprint((int)(*size   >> 8 ) & 0xFF) &&
-	    isprint((int)(*size   >> 16) & 0xFF) &&
-	    isprint((int)(*size   >> 24) & 0xFF) &&
-	    isprint((*handle      ) & 0xFF) &&
-	    isprint((*handle >> 8 ) & 0xFF) &&
-	    isprint((*handle >> 16) & 0xFF) &&
-	    isprint((*handle >> 24) & 0xFF)) {
-	    char s[101];
-	    int i;
-	    s[0] = ((int)(*size)  >> 24) & 0xFF;
-	    s[1] = ((int)(*size)  >> 16) & 0xFF;
-	    s[2] = ((int)(*size)  >>  8) & 0xFF;
-	    s[3] = ((int)(*size)       ) & 0xFF;
-	    s[4] = (*handle >> 24) & 0xFF;
-	    s[5] = (*handle >> 16) & 0xFF;
-	    s[6] = (*handle >> 8 ) & 0xFF;
-	    s[7] = (*handle      ) & 0xFF;
-	    i = 8; s[i] = ' ';
-	    while(i<100 && isprint((int)s[i]) && s[i] != '\n') {
-		switch(net_read(fd, &s[i], 1, 0)) {
-		case -1: s[i] = '\0'; break;
-		case  0: s[i] = '\0'; break;
-		default:
+	/* amanda protocol packet can be above NETWORK_BLOCK_BYTES */
+	if (*size > 128*NETWORK_BLOCK_BYTES || *size < 0) {
+	    if (isprint((int)(*size        ) & 0xFF) &&
+		isprint((int)(*size   >> 8 ) & 0xFF) &&
+		isprint((int)(*size   >> 16) & 0xFF) &&
+		isprint((int)(*size   >> 24) & 0xFF) &&
+		isprint((*handle      ) & 0xFF) &&
+		isprint((*handle >> 8 ) & 0xFF) &&
+		isprint((*handle >> 16) & 0xFF) &&
+		isprint((*handle >> 24) & 0xFF)) {
+		char s[101];
+		int i;
+		s[0] = ((int)(*size)  >> 24) & 0xFF;
+		s[1] = ((int)(*size)  >> 16) & 0xFF;
+		s[2] = ((int)(*size)  >>  8) & 0xFF;
+		s[3] = ((int)(*size)       ) & 0xFF;
+		s[4] = (*handle >> 24) & 0xFF;
+		s[5] = (*handle >> 16) & 0xFF;
+		s[6] = (*handle >> 8 ) & 0xFF;
+		s[7] = (*handle      ) & 0xFF;
+		i = 8; s[i] = ' ';
+		while(i<100 && isprint((int)s[i]) && s[i] != '\n') {
+		    switch(net_read(fd, &s[i], 1, 0)) {
+		    case -1: s[i] = '\0'; break;
+		    case  0: s[i] = '\0'; break;
+		    default:
 			 dbprintf(_("read: %c\n"), s[i]); i++; s[i]=' ';
 			 break;
+		    }
 		}
+		s[i] = '\0';
+		*errmsg = newvstrallocf(*errmsg,
+				_("tcpm_recv_token: invalid size: %s"), s);
+		dbprintf(_("tcpm_recv_token: invalid size %s\n"), s);
+	    } else {
+		*errmsg = newvstrallocf(*errmsg,
+					_("tcpm_recv_token: invalid size"));
+		dbprintf(_("tcpm_recv_token: invalid size %zd\n"), *size);
 	    }
-	    s[i] = '\0';
-	    *errmsg = newvstrallocf(*errmsg, _("tcpm_recv_token: invalid size: %s"), s);
-	    dbprintf(_("tcpm_recv_token: invalid size %s\n"), s);
-	} else {
-	    *errmsg = newvstrallocf(*errmsg, _("tcpm_recv_token: invalid size"));
-	    dbprintf(_("tcpm_recv_token: invalid size %zd\n"), *size);
+	    *size = -1;
+	    return -1;
 	}
-	*size = -1;
-	return -1;
-    }
-    amfree(*buf);
-    *buf = alloc((size_t)*size);
 
-    if(*size == 0) {
-	auth_debug(1, _("tcpm_recv_token: read EOF from %d\n"), *handle);
-	*errmsg = newvstrallocf(*errmsg, _("EOF"));
-	return 0;
+	if (*size == 0) {
+	    auth_debug(1, _("tcpm_recv_token: read EOF from %d\n"), *handle);
+	    *errmsg = newvstrallocf(*errmsg, _("EOF"));
+	    rc->size_header_read = 0;
+	    return 0;
+	}
     }
-    switch (net_read(fd, *buf, (size_t)*size, timeout)) {
-    case -1:
+
+    *size = (ssize_t)ntohl(rc->netint[0]);
+    *handle = (int)ntohl(rc->netint[1]);
+
+    rval = read(fd, rc->buffer + rc->size_buffer_read,
+		    (size_t)*size - rc->size_buffer_read);
+    if (rval == -1) {
 	if (errmsg)
-	    *errmsg = newvstrallocf(*errmsg, _("recv error: %s"), strerror(errno));
+	    *errmsg = newvstrallocf(*errmsg, _("recv error: %s"),
+				    strerror(errno));
 	auth_debug(1, _("tcpm_recv_token: B return(-1)\n"));
 	return (-1);
-    case 0:
+    } else if (rval == 0) {
 	*size = 0;
 	*errmsg = newvstrallocf(*errmsg, _("SOCKET_EOF"));
 	auth_debug(1, _("tcpm_recv_token: B return(0)\n"));
 	return (0);
-    default:
-	break;
+    } else if (rval < (ssize_t)*size - rc->size_buffer_read) {
+	rc->size_buffer_read += rval;
+	return (-2);
     }
+    rc->size_buffer_read += rval;
+    amfree(*buf);
+    *buf = rc->buffer;
+    rc->size_header_read = 0;
+    rc->size_buffer_read = 0;
+    rc->buffer = NULL;
 
     auth_debug(1, _("tcpm_recv_token: read %zd bytes from %d\n"), *size, *handle);
 
@@ -1755,9 +1771,14 @@ sec_tcp_conn_read_callback(
 
     /* Read the data off the wire.  If we get errors, shut down. */
     rval = tcpm_recv_token(rc, rc->read, &rc->handle, &rc->errmsg, &rc->pkt,
-				&rc->pktlen, 60);
+				&rc->pktlen);
     auth_debug(1, _("sec: conn_read_callback: tcpm_recv_token returned %zd\n"),
 		   rval);
+
+    if (rval == -2) {
+	return;
+    }
+
     if (rval < 0 || rc->handle == H_EOF) {
 	rc->pktlen = rval;
 	rc->handle = H_EOF;
