@@ -1,4 +1,7 @@
 2010-07-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amvault.pl: only run as dumpuser
+
+2010-07-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda-auth.7.xml: consistently use the same
 	  username in examples (thanks to Amar Takhar)
 
