@@ -139,7 +139,14 @@ start_impl(
 	    /* NOTREACHED */
 
 	case 0: /* child */
-	    /* set up stdin, stdout, and stderr */
+	    /* first, copy our fd's out of the stdio range */
+	    while (elt->upstream->output_fd <= STDERR_FILENO)
+		elt->upstream->output_fd = dup(elt->upstream->output_fd);
+	    while (elt->downstream->input_fd <= STDERR_FILENO)
+		elt->downstream->input_fd = dup(elt->downstream->input_fd);
+
+	    /* set up stdin, stdout, and stderr, overwriting anything already open
+	     * on those fd's */
 	    dup2(elt->upstream->output_fd, STDIN_FILENO);
 	    dup2(elt->downstream->input_fd, STDOUT_FILENO);
 	    debug_dup_stderr_to_debug();

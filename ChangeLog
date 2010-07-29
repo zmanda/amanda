@@ -1,3 +1,6 @@
+2010-07-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* xfer-src/filter-process.c: handle fd's <= 2 correctly
+
 2010-07-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amcheckdump.pl: actually open /dev/null directly, instead
 	  of expecting open3 to do so (it won't)
