@@ -541,7 +541,7 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
     }
 }
 
-Amanda::Util::finish_setup($RUNNING_AS_ANY);
+Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
 # start the copy
 my $vault = Amvault->new($src_write_timestamp, $dst_changer, $label_template, $quiet, \%autolabel);
