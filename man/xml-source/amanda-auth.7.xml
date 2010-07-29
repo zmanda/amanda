@@ -79,6 +79,19 @@ Authentication	  Configure option(s)
 <para>If configuring with --with-krb4-security and/or --with-krb5-security, the configure script will search under /usr/kerberos/lib, /usr/cygnus/lib, /usr/lib, and /opt/kerberos/lib for the kerberos bits, libkrb.a, in this order.  Kerberos support will not be added if it does not find them.  If the kerberos bits are found under some other hierarchy, you can specify this via --with-krb5-security=DIR and/or --with-krb4-security=DIR, where DIR is where the kerberos bits live.  The configure script will then look in the 'lib' directory under this hierarchy for libkrb.a.</para>
 
 <para>The <emphasis remap='B'>auth</emphasis> parameter selects a communication/authentication method to use between the client and the backup server. These methods are described each in their own section below.</para>
+
+<refsect2><title>Usernames</title>
+
+<para>When Amanda is built, a username is specified with the
+<option>--with-user</option> option.  Most Amanda processes run under
+this user's identity, to minimize security risks.  In binary
+distributions, this username is usually one of 'amanda',
+'amandabackup', or 'backup'.  The examples below use 'amandabackup'
+since it is unambiguous. You may need to adjust accordingly for your
+system.</para>
+
+</refsect2>
+
 </refsect1>
 
 <refsect1><title>BSD, BSDUDP, AND BSDTCP COMMUNICATION AND AUTHENTICATION</title>
@@ -117,7 +130,7 @@ configuration file.</para>
 
 <para>If service is omitted, it defaults to <emphasis remap='B'>noop selfcheck sendsize sendbackup</emphasis> (which is equivalent to <emphasis remap='B'>amdump</emphasis>).</para>
 
-    <para>Example of the .amandahosts file on an Amanda client
+    <para>Example of the .amandahosts file on an Amanda client, where 'amandabackup' is the Amanda dumpuser.
 
 <programlisting>
     <emphasis remap='B'>amandaserver.example.com   amandabackup   amdump</emphasis>
@@ -161,14 +174,14 @@ configuration file.</para>
     <para>Client example of using <emphasis remap='B'>bsdtcp</emphasis> authorization for inetd server given Amanda user is "amandabackup":
 
 <programlisting>
-<emphasis remap='B'>   amanda stream tcp nowait amanda /path/to/amandad amandad -auth=bsdtcp amdump</emphasis>
+<emphasis remap='B'>   amanda stream tcp nowait amandabackup /path/to/amandad amandad -auth=bsdtcp amdump</emphasis>
 </programlisting>
     </para>
     <para><emphasis remap='B'>amindexd</emphasis> and <emphasis remap='B'>amidxtaped</emphasis> would typically be added at the end of the line as &amandad; server arguments for an Amanda server.</para>
     <para>Server example of using <emphasis remap='B'>bsdtcp</emphasis> authorization for inetd server given Amanda user is "amandabackup":
 
 <programlisting>
-<emphasis remap='B'>   amanda stream tcp nowait amanda /path/to/amandad amandad -auth=bsdtcp amdump amindexd amidxtaped</emphasis>
+<emphasis remap='B'>   amanda stream tcp nowait amandabackup /path/to/amandad amandad -auth=bsdtcp amdump amindexd amidxtaped</emphasis>
 </programlisting>
     </para>
     <para>For Amanda version 2.5.0 and earlier, remember that neither <emphasis remap='B'>bsdudp</emphasis> nor <emphasis remap='B'>bsdtcp</emphasis> are supported and the Amanda daemon &amandad; accepts no arguments.  Because of the latter, &amrecover; as of Amanda version 2.5.1  is not compatible with 2.5.0 and earlier servers.  Thus, servers that are 2.5.0 or earlier must, in addition to the <emphasis remap='I'>amanda</emphasis> service, run <emphasis remap='I'>amindexd</emphasis> and <emphasis remap='I'>amidxtaped</emphasis> Amanda services as their own network services, amandaidx and amidxtape, respectively (see below).</para>
@@ -178,8 +191,8 @@ configuration file.</para>
 <para>Example of amindexd and amidxtaped Amanda daemon services configured as their own network services for a 2.5.0 or earlier server or a newer server having 2.5.0 or earlier clients
 
 <programlisting>
-<emphasis remap='B'>   amandaidx stream tcp nowait amanda /usr/local/libexec/amanda/current/amindexd   amindexd</emphasis>
-<emphasis remap='B'>   amidxtape stream tcp nowait amanda /usr/local/libexec/amanda/current/amidxtaped amidxtaped</emphasis>
+<emphasis remap='B'>   amandaidx stream tcp nowait amandabackup /usr/local/libexec/amanda/current/amindexd   amindexd</emphasis>
+<emphasis remap='B'>   amidxtape stream tcp nowait amandabackup /usr/local/libexec/amanda/current/amidxtaped amidxtaped</emphasis>
 </programlisting>
 </para>
   </refsect2>

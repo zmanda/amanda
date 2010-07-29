@@ -1,4 +1,8 @@
 2010-07-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda-auth.7.xml: consistently use the same
+	  username in examples (thanks to Amar Takhar)
+
+2010-07-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/filter-process.c: handle fd's <= 2 correctly
 
 2010-07-28  Jean-Louis Martineau <martineau@zmanda.com>
