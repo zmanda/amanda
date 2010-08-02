@@ -339,12 +339,7 @@ interruptible_accept(
 	return EBADF;
     }
 
-    memset(&tv, 0, SIZEOF(tv));
-    tv.tv_sec = 1;
-
     memset(&readset, 0, SIZEOF(readset));
-    FD_ZERO(&readset);
-    FD_SET(sock, &readset);
 
     while (1) {
 	if (!prolong(prolong_data)) {
@@ -352,7 +347,13 @@ interruptible_accept(
 	    return -1;
 	}
 
+	FD_ZERO(&readset);
+	FD_SET(sock, &readset);
+
 	/* try accepting for 1s */
+	memset(&tv, 0, SIZEOF(tv));
+    	tv.tv_sec = 1;
+
 	nfound = select(sock+1, &readset, NULL, NULL, &tv);
 	if (nfound < 0) {
 	    return -1;

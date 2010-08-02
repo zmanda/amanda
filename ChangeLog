@@ -1,3 +1,7 @@
+2010-08-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c (interruptible_accept): Set the read set and
+	  timeout before each select call.
+
 2010-07-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amvault.pl: only run as dumpuser
 
