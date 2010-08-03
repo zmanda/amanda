@@ -120,7 +120,20 @@ fi
 
 umask 077
 
-echo "INFO amdump amdump pid $$" > $logdir/log
+echo "INFO amdump amdump pid $$" >> $logdir/log
+me=`head -n 1 $logdir/log | grep "INFO amdump amdump pid $$"`
+
+if [ -z "$me" ] ; then
+	process_name=`grep "^INFO .* .* pid " $logdir/log | head -n 1 | awk '{print $2}'`
+	echo `_ '%s: %s is already running, or you must run amcleanup' "$0" "${process_name}"` 1>&2
+	echo "INFO amdump amdump pid $$" > $logdir/log.$$
+	echo "START driver date $date_starttime" >> $logdir/log.$$
+	echo "ERROR amdump " `_ '%s is already running, or you must run amcleanup' "${process_name}"` >> $logdir/log.$$
+	$sbindir/amreport $conf --from-amdump -l $logdir/log.$$ "$@"
+	rm -f $logdir/log.$$
+	exit 1
+fi
+
 exit_code=0
 # Plan and drive the dumps.
 #exec </dev/null >$errfile 2>&1
