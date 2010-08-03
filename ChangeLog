@@ -1,4 +1,8 @@
 2010-08-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: add more info about appropriate
+	  settings for autolabel
+
+2010-08-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/security.h: move comments from wiki, reorder functions
 
 2010-08-03  Jean-Louis Martineau <martineau@zmanda.com>

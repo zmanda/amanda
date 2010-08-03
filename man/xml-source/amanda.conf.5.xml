@@ -440,7 +440,7 @@ can't read logfiles written when this option was enabled.
   <term><amkeyword>label_new_tapes</amkeyword>
         <amtype>string</amtype></term>
 <listitem>
-    <para>Deprecated, use <amkeyword>autolabel</amkeyword> option.</para>
+    <para>Deprecated, use <amkeyword>autolabel</amkeyword> option with options <amkeyword>volume_error empty</amkeyword> to get equivalent behavior.</para>
     <para>Default: not set.
 When set, this directive will cause Amanda to automatically write an Amanda
 tape label to any blank tape she encounters. This option is DANGEROUS 
@@ -477,6 +477,9 @@ specify enough '%' characters that you do not run out of tape labels.
 Example:
 <markup>autolabel &quot;DailySet1-%%%&quot; empty</markup>
 </para>
+<para>Note that many devices cannot distinguish an empty tape from an error
+condition, so it may is often necessary to include
+<amkeyword>volume_error</amkeyword> as an autolabel condition.</para>
 <variablelist remap='TP'>
 <varlistentry>
 <term><amkeyword>any</amkeyword></term>
