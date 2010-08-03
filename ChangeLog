@@ -1,3 +1,6 @@
+2010-08-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amdump.sh: Check it own the log file.
+
 2010-08-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c (interruptible_accept): Set the read set and
 	  timeout before each select call.
