@@ -102,11 +102,11 @@ main()
 	if test "$amanda_cv_working_ipv6" = yes; then
 	    WORKING_IPV6=yes
 	    AC_DEFINE(WORKING_IPV6,1,
-		[Target system has functional IPv6 support])
+		[This system has functional IPv6 support (kernel and compiler)])
 	else
 	    # error out only if the user specifically requested support
 	    if test x"$amanda_with_ipv6" = x"yes"; then
-		AC_MSG_ERROR([IPv6 support was requested, but it is not working.])
+		AC_MSG_ERROR([IPv6 support was requested, but opening an IPv6 socket failed])
 	    fi
 	fi
     fi
