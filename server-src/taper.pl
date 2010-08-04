@@ -324,7 +324,7 @@ sub request_volume_permission {
 	handle => $self->{'handle'});
 }
 
-sub notif_new_tape {
+sub scribe_notif_new_tape {
     my $self = shift;
     my %params = @_;
 
@@ -363,7 +363,7 @@ sub notif_new_tape {
     }
 }
 
-sub notif_part_done {
+sub scribe_notif_part_done {
     my $self = shift;
     my %params = @_;
 
@@ -400,7 +400,7 @@ sub notif_part_done {
     }
 }
 
-sub notif_log_info {
+sub scribe_notif_log_info {
     my $self = shift;
     my %params = @_;
 

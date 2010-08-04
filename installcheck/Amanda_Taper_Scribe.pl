@@ -175,20 +175,20 @@ sub request_volume_permission {
     $params{'perm_cb'}->(@$answer);
 }
 
-sub notif_new_tape {
+sub scribe_notif_new_tape {
     my $self = shift;
     my %params = @_;
 
-    main::event("notif_new_tape",
+    main::event("scribe_notif_new_tape",
 	main::undef_or_str($params{'error'}), $params{'volume_label'});
 }
 
-sub notif_part_done {
+sub scribe_notif_part_done {
     my $self = shift;
     my %params = @_;
 
     # this omits $duration, as it's not constant
-    main::event("notif_part_done",
+    main::event("scribe_notif_part_done",
 	$params{'partnum'}, $params{'fileno'},
 	$params{'successful'}, $params{'size'});
 }
@@ -471,10 +471,10 @@ is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
-      [ 'notif_new_tape', undef, 'FAKELABEL' ],
-      [ 'notif_part_done', bi(1), bi(1), 1, bi(98304) ],
-      [ 'notif_part_done', bi(2), bi(2), 1, bi(98304) ],
-      [ 'notif_part_done', bi(3), bi(3), 1, bi(8192) ],
+      [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(98304) ],
+      [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(98304) ],
+      [ 'scribe_notif_part_done', bi(3), bi(3), 1, bi(8192) ],
       [ 'dump_cb', 'DONE', [], undef, bi(204800) ],
     ], "correct event sequence for a multipart scribe of less than a whole volume, without LEOM")
     or diag(Dumper([@events]));
@@ -484,7 +484,7 @@ reset_events();
 run_scribe_xfer(1024*30, $scribe);
 
 is_deeply([ @events ], [
-      [ 'notif_part_done', bi(1), bi(4), 1, bi(30720) ],
+      [ 'scribe_notif_part_done', bi(1), bi(4), 1, bi(30720) ],
       [ 'dump_cb', 'DONE', [], undef, bi(30720) ],
     ], "correct event sequence for a subsequent single-part scribe, still on the same volume")
     or diag(Dumper([@events]));
@@ -507,10 +507,10 @@ is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
-      [ 'notif_new_tape', undef, 'FAKELABEL' ],
-      [ 'notif_part_done', bi(1), bi(1), 1, bi(98304) ],
-      [ 'notif_part_done', bi(2), bi(2), 1, bi(98304) ],
-      [ 'notif_part_done', bi(3), bi(3), 1, bi(8192) ],
+      [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(98304) ],
+      [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(98304) ],
+      [ 'scribe_notif_part_done', bi(3), bi(3), 1, bi(8192) ],
       [ 'dump_cb', 'DONE', [], undef, bi(204800) ],
     ], "correct event sequence for a multipart scribe of less than a whole volume, with LEOM")
     or diag(Dumper([@events]));
@@ -536,20 +536,20 @@ is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
-      [ 'notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
 
-      [ 'notif_part_done', bi(1), bi(1), 1, bi(131072) ],
-      [ 'notif_part_done', bi(2), bi(2), 1, bi(131072) ],
-      [ 'notif_part_done', bi(3), bi(3), 1, bi(131072) ],
-      [ 'notif_part_done', bi(4), bi(0), 0, bi(0) ],
+      [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(131072) ],
+      [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(131072) ],
+      [ 'scribe_notif_part_done', bi(3), bi(3), 1, bi(131072) ],
+      [ 'scribe_notif_part_done', bi(4), bi(0), 0, bi(0) ],
 
       [ 'scan' ],
       [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', undef, 'slot: 2' ],
-      [ 'notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
 
-      [ 'notif_part_done', bi(4), bi(1), 1, bi(131072) ],
-      [ 'notif_part_done', bi(5), bi(2), 1, bi(131072) ],
+      [ 'scribe_notif_part_done', bi(4), bi(1), 1, bi(131072) ],
+      [ 'scribe_notif_part_done', bi(5), bi(2), 1, bi(131072) ],
       # empty part is written but not notified
 
       [ 'dump_cb', 'DONE', [], undef, bi(655360) ],
@@ -573,19 +573,19 @@ is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
-      [ 'notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
 
-      [ 'notif_part_done', bi(1), bi(1), 1, bi(131072) ],
-      [ 'notif_part_done', bi(2), bi(2), 1, bi(131072) ],
-      [ 'notif_part_done', bi(3), bi(3), 1, bi(32768) ], # LEOM comes earlier than PEOM did
+      [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(131072) ],
+      [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(131072) ],
+      [ 'scribe_notif_part_done', bi(3), bi(3), 1, bi(32768) ], # LEOM comes earlier than PEOM did
 
       [ 'scan' ],
       [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', undef, 'slot: 2' ],
-      [ 'notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
 
-      [ 'notif_part_done', bi(4), bi(1), 1, bi(131072) ],
-      [ 'notif_part_done', bi(5), bi(2), 1, bi(106496) ],
+      [ 'scribe_notif_part_done', bi(4), bi(1), 1, bi(131072) ],
+      [ 'scribe_notif_part_done', bi(5), bi(2), 1, bi(106496) ],
 
       [ 'dump_cb', 'DONE', [], undef, bi(532480) ],
     ], "correct event sequence for a multipart scribe of more than a whole volume, with LEOM")
@@ -609,17 +609,17 @@ is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
-      [ 'notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
 
-      [ 'notif_part_done', bi(1), bi(1), 1, bi(131072) ],
-      [ 'notif_part_done', bi(2), bi(2), 1, bi(131072) ],
-      [ 'notif_part_done', bi(3), bi(3), 1, bi(131072) ],
-      [ 'notif_part_done', bi(4), bi(0), 0, bi(0) ],
+      [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(131072) ],
+      [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(131072) ],
+      [ 'scribe_notif_part_done', bi(3), bi(3), 1, bi(131072) ],
+      [ 'scribe_notif_part_done', bi(4), bi(0), 0, bi(0) ],
 
       [ 'scan' ],
       [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', $experr, 'slot: none' ],
-      [ 'notif_new_tape', $experr, undef ],
+      [ 'scribe_notif_new_tape', $experr, undef ],
 
       [ 'dump_cb', 'PARTIAL', [$experr], undef, bi(393216) ],
     ], "correct event sequence for a multivolume scribe with no second vol, without LEOM")
@@ -641,16 +641,16 @@ is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
-      [ 'notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
 
-      [ 'notif_part_done', bi(1), bi(1), 1, bi(131072) ],
-      [ 'notif_part_done', bi(2), bi(2), 1, bi(131072) ],
-      [ 'notif_part_done', bi(3), bi(3), 1, bi(32768) ], # LEOM comes long before PEOM
+      [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(131072) ],
+      [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(131072) ],
+      [ 'scribe_notif_part_done', bi(3), bi(3), 1, bi(32768) ], # LEOM comes long before PEOM
 
       [ 'scan' ],
       [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', $experr, 'slot: none' ],
-      [ 'notif_new_tape', $experr, undef ],
+      [ 'scribe_notif_new_tape', $experr, undef ],
 
       [ 'dump_cb', 'PARTIAL', [$experr], undef, bi(294912) ],
     ], "correct event sequence for a multivolume scribe with no second vol, with LEOM")
@@ -673,11 +673,11 @@ is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
-      [ 'notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
 
-      [ 'notif_part_done', bi(1), bi(1), 1, bi(131072) ],
-      [ 'notif_part_done', bi(2), bi(2), 1, bi(131072) ],
-      [ 'notif_part_done', bi(3), bi(3), 1, bi(32768) ],
+      [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(131072) ],
+      [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(131072) ],
+      [ 'scribe_notif_part_done', bi(3), bi(3), 1, bi(32768) ],
 
       [ 'scan' ],
       [ 'request_volume_permission', 'answer:', ['config',"sorry!"] ],
@@ -704,8 +704,8 @@ is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
-      [ 'notif_new_tape', undef, 'FAKELABEL' ],
-      [ 'notif_part_done', bi(1), bi(1), 1, bi(307200) ],
+      [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(307200) ],
       [ 'dump_cb', 'DONE', [], undef, bi(307200) ],
     ], "correct event sequence for a non-splitting scribe of less than a whole volume, without LEOM")
     or diag(Dumper([@events]));
@@ -725,8 +725,8 @@ is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
-      [ 'notif_new_tape', undef, 'FAKELABEL' ],
-      [ 'notif_part_done', bi(1), bi(1), 1, bi(307200) ],
+      [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(307200) ],
       [ 'dump_cb', 'DONE', [], undef, bi(307200) ],
     ], "correct event sequence for a non-splitting scribe of less than a whole volume, with LEOM")
     or diag(Dumper([@events]));

@@ -350,11 +350,11 @@ implementation always calls C<< perm_cb->(undef, undef) >>.
 All of the remaining methods are notifications, and do not take a
 callback.
 
-  $fb->notif_new_tape(
+  $fb->scribe_notif_new_tape(
         error => $error,
         volume_label => $volume_label);
 
-The Scribe calls C<notif_new_tape> when a new volume is started.  If the
+The Scribe calls C<scribe_notif_new_tape> when a new volume is started.  If the
 C<volume_label> is undefined, then the volume was not successfully
 relabled, and its previous contents may still be available.  If C<error>
 is defined, then no useful data was written to the volume.  Note that
@@ -366,23 +366,23 @@ This method will be called exactly once for every call to
 C<request_volume_permission> that calls back with C<< perm_cb->(undef, undef)
 >>.
 
-  $fb->notif_part_done(
+  $fb->scribe_notif_part_done(
         partnum => $partnum,
         fileno => $fileno,
         successful => $successful,
         size => $size,
         duration => $duration);
 
-The Scribe calls C<notif_part_done> for each part written to the volume,
+The Scribe calls C<scribe_notif_part_done> for each part written to the volume,
 including partial parts.  If the part was not written successfully, then
 C<successful> is false.  The C<size> is in bytes, and the C<duration> is
 a floating-point number of seconds.  If a part fails before a new device
 file is created, then C<fileno> may be zero.
 
 Finally, the Scribe sends a few historically significant trace log messages
-via C<notif_log_info>:
+via C<scribe_notif_log_info>:
 
-  $fb->notif_log_info(
+  $fb->scribe_notif_log_info(
 	message => $message);
 
 A typical Feedback subclass might begin like this:
@@ -830,7 +830,7 @@ sub _xmsg_part_done {
 	    unless ($self->{'dump_header'}->{'partnum'} == $msg->{'partnum'});
 
 	# notify
-	$self->{'feedback'}->notif_part_done(
+	$self->{'feedback'}->scribe_notif_part_done(
 	    partnum => $msg->{'partnum'},
 	    fileno => $msg->{'fileno'},
 	    successful => $msg->{'successful'},
@@ -879,7 +879,7 @@ sub _xmsg_part_done {
 		}
 
 		# log a message for amreport
-		$self->{'feedback'}->notif_log_info(
+		$self->{'feedback'}->scribe_notif_log_info(
 		    message => "Will request retry of failed split part.");
 	    }
 
@@ -1015,7 +1015,7 @@ sub _log_volume_done {
 	my $kb = $self->{'device_size'} / 1024;
 
 	# log a message for amreport
-	$self->{'feedback'}->notif_log_info(
+	$self->{'feedback'}->scribe_notif_log_info(
 	    message => "tape $label kb $kb fm $fm [OK]");
     }
 }
@@ -1075,7 +1075,7 @@ sub _volume_cb  {
     if ($scan_error) {
 	# we had permission to use a tape, but didn't find a tape, so we need
 	# to notify of such
-	$self->{'feedback'}->notif_new_tape(
+	$self->{'feedback'}->scribe_notif_new_tape(
 	    error => $scan_error,
 	    volume_label => undef);
 
@@ -1085,7 +1085,7 @@ sub _volume_cb  {
 
     $self->dbg("got new volume; writing new label");
 
-    # from here on, if an error occurs, we must send notif_new_tape, and look
+    # from here on, if an error occurs, we must send scribe_notif_new_tape, and look
     # for a new volume
     $self->{'reservation'} = $reservation;
     $self->{'device_size'} = 0;
@@ -1102,7 +1102,7 @@ sub _volume_cb  {
     if (!$is_new) {
 	if (($device->status & ~$DEVICE_STATUS_VOLUME_UNLABELED)
 	    && !($device->status & $DEVICE_STATUS_VOLUME_UNLABELED)) {
-	    $self->{'feedback'}->notif_new_tape(
+	    $self->{'feedback'}->scribe_notif_new_tape(
 		error => "while reading label on new volume: " . $device->error_or_status(),
 		volume_label => undef);
 
@@ -1152,7 +1152,7 @@ sub _volume_cb  {
 	    }
 	}
 
-	$self->{'feedback'}->notif_new_tape(
+	$self->{'feedback'}->scribe_notif_new_tape(
 	    error => "while labeling new volume: " . $device->error_or_status(),
 	    volume_label => $erased? $new_label : undef);
 
@@ -1160,7 +1160,7 @@ sub _volume_cb  {
     }
 
     # success!
-    $self->{'feedback'}->notif_new_tape(
+    $self->{'feedback'}->scribe_notif_new_tape(
 	error => undef,
 	volume_label => $new_label);
 
@@ -1168,7 +1168,7 @@ sub _volume_cb  {
     my $label_set_cb = make_cb(label_set_cb => sub {
 	my ($err) = @_;
 	if ($err) {
-	    $self->{'feedback'}->notif_log_info(
+	    $self->{'feedback'}->scribe_notif_log_info(
 		message => "Error from set_label: $err");
 	    # fall through to start_part anyway...
 	}
@@ -1299,9 +1299,9 @@ sub request_volume_permission {
     $params{'perm_cb'}->(undef, undef);
 }
 
-sub notif_new_tape { }
-sub notif_part_done { }
-sub notif_log_info { }
+sub scribe_notif_new_tape { }
+sub scribe_notif_part_done { }
+sub scribe_notif_log_info { }
 
 ##
 ## Device Handling
@@ -1466,7 +1466,7 @@ sub _start_scanning {
 	}
 
 	if (!$error and $is_new) {
-	    $self->{'feedback'}->notif_log_info(
+	    $self->{'feedback'}->scribe_notif_log_info(
 		message => "Will write new label `$volume_label' to new tape");
 	}
 

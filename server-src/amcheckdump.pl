@@ -179,14 +179,14 @@ sub new {
     }, $class;
 }
 
-sub notif_part {
+sub clerk_notif_part {
     my $self = shift;
     my ($label, $filenum, $header) = @_;
 
     print STDERR "Reading volume $label file $filenum\n";
 }
 
-sub notif_holding {
+sub clerk_notif_holding {
     my $self = shift;
     my ($filename, $header) = @_;
 

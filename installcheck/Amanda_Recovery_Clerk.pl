@@ -310,13 +310,13 @@ sub new {
     return bless \%params, $class;
 }
 
-sub notif_part {
+sub clerk_notif_part {
     my $self = shift;
 
-    if (exists $self->{'notif_part'}) {
-	$self->{'notif_part'}->(@_);
+    if (exists $self->{'clerk_notif_part'}) {
+	$self->{'clerk_notif_part'}->(@_);
     } else {
-	$self->SUPER::notif_part(@_);
+	$self->SUPER::clerk_notif_part(@_);
     }
 }
 
@@ -459,7 +459,7 @@ sub quit_clerk {
 
 my $clerk;
 my $feedback;
-my @notif_parts;
+my @clerk_notif_parts;
 my $chg = Amanda::Changer->new("chg-disk:$taperoot");
 my $scan = Amanda::Recovery::Scan->new(chg => $chg);
 
@@ -487,10 +487,10 @@ quit_clerk($clerk);
 
 # recover from TESTCONF02, then 01, and then 02 again
 
-@notif_parts = ();
+@clerk_notif_parts = ();
 $feedback = main::Feedback->new(
-    notif_part => sub {
-	push @notif_parts, [ $_[0], $_[1] ],
+    clerk_notif_part => sub {
+	push @clerk_notif_parts, [ $_[0], $_[1] ],
     },
 );
 
@@ -506,10 +506,10 @@ try_recovery(
     ),
     msg => "two-part recovery from second tape successful");
 
-is_deeply([ @notif_parts ], [
+is_deeply([ @clerk_notif_parts ], [
     [ 'TESTCONF02', 2 ],
     [ 'TESTCONF02', 3 ],
-    ], "..and notif_part calls are correct");
+    ], "..and clerk_notif_part calls are correct");
 
 try_recovery(
     clerk => $clerk,

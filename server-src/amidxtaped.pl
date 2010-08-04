@@ -109,44 +109,6 @@ sub user_request {
 };
 
 ##
-# Clerk Feedback class
-
-package main::Feedback;
-use Amanda::Recovery::Clerk;
-use Amanda::Util qw( weaken_ref );
-use base 'Amanda::Recovery::Clerk::Feedback';
-
-sub new {
-    my $class = shift;
-    my %params = @_;
-
-    my $self = bless {
-	clientservice => $params{'clientservice'}
-    }, $class;
-
-    # (weak ref here to eliminate reference loop)
-    weaken_ref($self->{'clientservice'});
-
-    return $self;
-}
-
-sub part_notif {
-    my $self = shift;
-
-    my ($label, $filenum, $hdr) = @_;
-    $self->{'clientservice'}->sendmessage("restoring part $hdr->{'partnum'} " .
-	  "from '$label' file $filenum");
-}
-
-sub holding_notif {
-    my $self = shift;
-
-    my ($holding_file, $hdr) = @_;
-    $self->{'clientservice'}->sendmessage("restoring from holding " .
-		"file $holding_file");
-}
-
-##
 # ClientService class
 
 package main::ClientService;
@@ -383,7 +345,8 @@ sub make_plan {
     $scan->{'scan_conf'}->{'notfound'} = Amanda::Recovery::Scan::SCAN_ASK;
 
     $self->{'clerk'} = Amanda::Recovery::Clerk->new(
-	feedback => main::Feedback->new($chg, undef),
+	# note that we don't have any use for clerk_notif's, so we don't pass
+	# a feedback object
 	scan => $scan);
 
     if ($is_holding) {
