@@ -86,11 +86,13 @@ C<$handle>, or nothing at the end of the logfile.
 
 =back
 
-To write a logfile, call C<log_add($logtype, $string)>.  On the first
-call, this function opens and locks C<$logdir/log>; subsequent calls
-just append to this file.  As such, this function is only appropriate
-for situations where C<amlogroll> will be invoked later to rename
-C<$logdir/log> to C<$logdir/log.$timestamp.$n>.
+=head3 Writing a "current" Logfile
+
+To write a logfile, call C<log_add($logtype, $string)>.  On the first call,
+this function opens and locks C<$logdir/log>; subsequent calls just append to
+this file.  As such, this function is only appropriate for situations where
+C<log_rename> will be invoked later to rename C<$logdir/log> to
+C<$logdir/log.$timestamp.$n>.
 
 All of the functions in this section can be imported by name if
 desired.
@@ -99,6 +101,11 @@ desired.
 
 These objects contain information about dumps, as read from logfiles.
 Instance variables are:
+
+To rename the current logfile to a datestamped logfile, call C<log_rename($ts)>
+where C<$ts> is the write timestamp for this dump.  The
+C<get_current_log_timestamp()> function will calculate this timestamp,
+returning C<undef> on error.
 
 =over
 

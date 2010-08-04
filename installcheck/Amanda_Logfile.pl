@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 36;
+use Test::More tests => 39;
 use File::Path;
 use strict;
 
@@ -190,12 +190,21 @@ my $logdir = $testconf->{'logdir'};
 
     -f "$filename" and unlink("$filename");
     log_add($L_INFO, "This is my info");
+    log_add($L_START, "blah blah blah date 20300405060708 blah blah");
 
     open(my $fh, "<", $filename) or die("open $filename: $!");
     my $logdata = do { local $/; <$fh> };
     close($fh);
 
     like($logdata, qr/^INFO Amanda_Logfile This is my info/, "log_add works");
+
+    is(Amanda::Logfile::get_current_log_timestamp(), "20300405060708",
+	"get_current_log_timestamp finds a timestamp");
+
+    Amanda::Logfile::log_rename("20300405060708");
+
+    ok(! -f $filename, "after log_rename, /log is gone");
+    ok(-f "$filename.20300405060708.0", "..and log.20300405060708.0 exists");
 }
 
 # set up and read the tapelist (we don't use Amanda::Tapelist to write this,

@@ -1,3 +1,10 @@
+2010-08-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Logfile.pod perl/Amanda/Logfile.swg: add log_rename
+	  and a method to find the proper timestamp for the current log
+	* installcheck/Amanda_Logfile.pl: test it
+	* server-src/Makefile.am server-src/amlogroll.c
+	  server-src/amlogroll.pl: rewrite in perl
+
 2010-08-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/ipv6.m4: fix config messages to not use the
 	  autoconf-specific word "target"

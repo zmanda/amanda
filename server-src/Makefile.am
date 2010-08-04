@@ -24,12 +24,13 @@ sbin_PROGRAMS =		amadmin		amcheck		\
 			amflush		\
 			amservice
 
-amlibexec_PROGRAMS =	amindexd	amlogroll	amtrmidx	\
+amlibexec_PROGRAMS =	amindexd	amtrmidx	\
 			amtrmlog	driver		dumper		\
 			planner		amcleanupdisk	\
 			chunker
 
 amlibexec_SCRIPTS_PERL = \
+	    amlogroll \
 	    taper \
 	    amcheck-device
 

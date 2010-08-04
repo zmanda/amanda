@@ -122,6 +122,8 @@ static void log_add_(logtype_t typ, char *message)
 }
 %}
 
+void log_rename(char *datestamp);
+
 typedef struct {
     %extend {
 	/* destructor */
@@ -241,7 +243,7 @@ typedef struct {
 }
 
 amglue_export_ok(
-    find_log search_logfile dumps_match
+    find_log search_logfile dumps_match log_rename
     match_host match_disk match_datestamp match_level
 );
 
@@ -297,6 +299,7 @@ amglue_export_ok(
 
 amglue_export_ok(
     find_all_logs find_latest_log
+    get_current_log_timestamp
 );
 
 %perlcode %{
@@ -316,6 +319,35 @@ sub find_latest_log
     my $logdir = shift @_;
     my @logs = find_all_logs($logdir || ());
     return $logs[-1];
+}
+
+use Amanda::Config;
+use Amanda::Debug;
+
+sub get_current_log_timestamp
+{
+    my $logfile = Amanda::Config::config_dir_relative(
+		Amanda::Config::getconf($Amanda::Config::CNF_LOGDIR)) . "/log";
+    if (! -f $logfile) {
+	Amanda::Debug::warning("no current logfile '$logfile'");
+	return undef;
+    }
+
+    my $logh = open_logfile("$logfile");
+    if (!$logh) {
+	Amanda::Debug::warning("could not open logfile '$logfile'");
+	return undef;
+    }
+    while (my ($type, $prog, $str) = get_logline($logh)) {
+	if ($type == $L_START) {
+	    my ($ts) = ($str =~ /date (\d+)/);
+	    return $ts if $ts;
+	}
+    }
+
+    # no timestamp, apparently
+    Amanda::Debug::warning("no current timestamp found in logfile");
+    return undef;
 }
 
 %}
