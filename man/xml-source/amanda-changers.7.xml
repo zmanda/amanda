@@ -667,6 +667,10 @@ The password for the NDMP server.
 The username for the NDMP server.
 </listitem></varlistentry>
 <!-- ==== -->
+<varlistentry><term>VERBOSE</term><listitem>
+If true, enables the NDMJOB library's verbose (packet-level) debugging.
+</listitem></varlistentry>
+<!-- ==== -->
 </variablelist>
 
 </refsect3>

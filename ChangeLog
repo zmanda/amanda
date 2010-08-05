@@ -1,3 +1,7 @@
+2010-08-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda-changers.7.xml: add chg-ndmp VERBOSE
+	  property
+
 2010-08-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Recovery/Clerk.pm: rename notif_* to clerk_notif_*
 	* perl/Amanda/Taper/Scribe.pm: rename notif_* to scribe_notif_*
