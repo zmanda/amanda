@@ -219,6 +219,11 @@ sub new {
     return bless($self, $class);
 }
 
+sub shift_dump {
+    my $self = shift;
+    return shift @{$self->{'dumps'}};
+}
+
 sub make_plan {
     my $self = shift;
     my %params = @_;

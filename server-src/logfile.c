@@ -96,34 +96,8 @@ amanda_log_trace_log(
     log_add(logtype, "%s", message);
 }
 
-
-printf_arglist_function2(char *log_genstring, logtype_t, typ, char *, pname, char *, format)
+static void log_add_full_v(logtype_t typ, char *pname, char *format, va_list argp)
 {
-    va_list argp;
-    char *leader = NULL;
-    char linebuf[STR_SIZE];
-    char *xlated_fmt = dgettext("C", format);
-
-    /* format error message */
-
-    if((int)typ <= (int)L_BOGUS || (int)typ > (int)L_MARKER) typ = L_BOGUS;
-
-    if(multiline > 0) {
-	leader = stralloc("  ");		/* continuation line */
-    } else {
-	leader = vstralloc(logtype_str[(int)typ], " ", pname, " ", NULL);
-    }
-
-    arglist_start(argp, format);
-    g_vsnprintf(linebuf, SIZEOF(linebuf)-1, xlated_fmt, argp);
-						/* -1 to allow for '\n' */
-    arglist_end(argp);
-    return(vstralloc(leader, linebuf, "\n", NULL));
-}
-
-printf_arglist_function1(void log_add, logtype_t, typ, char *, format)
-{
-    va_list argp;
     char *leader = NULL;
     char *xlated_fmt = gettext(format);
     char linebuf[STR_SIZE];
@@ -141,14 +115,12 @@ printf_arglist_function1(void log_add, logtype_t, typ, char *, format)
     if(multiline > 0) {
 	leader = stralloc("  ");		/* continuation line */
     } else {
-	leader = vstralloc(logtype_str[(int)typ], " ", get_pname(), " ", NULL);
+	leader = vstralloc(logtype_str[(int)typ], " ", pname, " ", NULL);
     }
 
-    arglist_start(argp, format);
     /* use sizeof(linebuf)-2 to save space for a trailing newline */
     g_vsnprintf(linebuf, SIZEOF(linebuf)-2, xlated_fmt, argp);
 						/* -1 to allow for '\n' */
-    arglist_end(argp);
 
     /* avoid recursive call from error() */
 
@@ -179,6 +151,24 @@ printf_arglist_function1(void log_add, logtype_t, typ, char *, format)
     else close_log();
 
     in_log_add = 0;
+}
+
+void log_add(logtype_t typ, char *format, ...)
+{
+    va_list argp;
+
+    arglist_start(argp, format);
+    log_add_full_v(typ, get_pname(), format, argp);
+    arglist_end(argp);
+}
+
+void log_add_full(logtype_t typ, char *pname, char *format, ...)
+{
+    va_list argp;
+
+    arglist_start(argp, format);
+    log_add_full_v(typ, pname, format, argp);
+    arglist_end(argp);
 }
 
 void

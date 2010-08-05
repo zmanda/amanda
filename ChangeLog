@@ -1,4 +1,16 @@
 2010-08-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amvault.pl: rewrite to use scribe, clerk
+	* installcheck/amvault.pl: check results better
+	* server-src/logfile.c server-src/logfile.h: add log_add_full
+	* perl/Amanda/Logfile.pod perl/Amanda/Logfile.swg: add log_add_full
+	  and make_stats methods
+	* perl/Amanda/MainLoop.pod: POD typos
+	* perl/Amanda/Recovery/Planner.pm: add shift_dump method
+	* perl/Amanda/Taper/Scan.pm: add POD, fix typos
+	* perl/Amanda/Taper/Scribe.pm: fix POD, add nparts argument to dump_cb
+	* server-src/taper.pl: use nparts, move make_stats to Amanda::Logfile
+
+2010-08-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda-changers.7.xml: add chg-ndmp VERBOSE
 	  property
 

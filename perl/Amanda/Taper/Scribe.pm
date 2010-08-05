@@ -22,17 +22,17 @@ Amanda::Taper::Scribe
 
 =head1 SYNOPSIS
 
-  my $scribe = Amanda::Taper::Scribe->new(
-	taperscan => $taperscan_algo,
-        feedback => $feedback_obj);
+  step start_scribe => sub {
+      my $scribe = Amanda::Taper::Scribe->new(
+	    taperscan => $taperscan_algo,
+	    feedback => $feedback_obj);
+    $scribe->start(
+	write_timestamp => $write_timestamp,
+	finished_cb => $steps->{'start_xfer'});
+  };
 
-  $subs{'start_scribe'} = make_cb(start_scribe => sub {
-    $scribe->start($datestamp, finished_cb => $subs{'start_xfer'});
-  });
-
-  $subs{'start_xfer'} = make_cb(start_xfer => sub {
+  step start_xfer => sub {
     my ($err) = @_;
-
     my $xfer_dest = $scribe->get_xfer_dest(
 	max_memory => 64 * 1024,
 	can_cache_inform => 0,
@@ -40,33 +40,26 @@ Amanda::Taper::Scribe
 	part_cache_type => 'disk',
 	part_cache_dir => "$tmpdir/splitbuffer",
 	part_cache_max_size => 20 * 1024**2);
-
     # .. set up the rest of the transfer ..
-
     $xfer->start(sub {
         my ($src, $msg, $xfer) = @_;
         $scribe->handle_xmsg($src, $msg, $xfer);
         # .. any other processing ..
-    });
-
+    };
     # tell the scribe to start dumping via this transfer
     $scribe->start_dump(
 	xfer => $xfer,
         dump_header => $hdr,
-        dump_cb => $subs{'dump_cb'});
-  });
+        dump_cb => $steps->{'dump_cb'});
+  };
 
-  $subs{'dump_cb'} = make_cb(dump_cb => sub {
+  step dump_cb => sub {
       my %params = @_;
       # .. handle dump results ..
-
       print "DONE\n";
-      Amanda::MainLoop::quit();
-  });
+      $finished_cb->();
+  };
 
-
-  $subs{'start_scribe'}->();
-  Amanda::MainLoop::run();
 
 =head1 OVERVIEW
 
@@ -273,7 +266,8 @@ parameters.
 	config_denial_message => $cdm,
         size => $size,
         duration => $duration,
-	total_duration => $total_duration);
+	total_duration => $total_duration,
+	nparts => $npargs);
 
 All parameters will be present on every call, although the order is not
 guaranteed.
@@ -288,10 +282,10 @@ C<config_denial_message> parrots the reason provided by C<$perm_cb> (see below)
 for denying use of a new tape if the cause was 'config', and is C<undef>
 otherwise.
 
-The final parameters, C<size> (in bytes), C<duration>, and C<total_duration>
-(in seconds) describe the total transfer, and are a sum of all of the parts
-written to the device.  Note that C<duration> does not include time spent
-operating the changer, while C<total_duration> reflects the time from the
+The final parameters, C<size> (in bytes), C<duration>, C<total_duration> (in
+seconds), and C<nparts> describe the total transfer, and are a sum of all of
+the parts written to the device.  Note that C<duration> does not include time
+spent operating the changer, while C<total_duration> reflects the time from the
 C<start_dump> call to the invocation of the C<dump_cb>.
 
 =head3 Cancelling a Dump
@@ -601,6 +595,7 @@ sub get_xfer_dest {
     $self->{'xdt'} = undef;
     $self->{'size'} = 0;
     $self->{'duration'} = 0.0;
+    $self->{'nparts'} = 0;
     $self->{'dump_start_time'} = undef;
     $self->{'last_part_successful'} = 1;
     $self->{'started_writing'} = 0;
@@ -738,7 +733,8 @@ sub cancel_dump {
 	config_denial_message => undef,
 	size => 0,
 	duration => 0.0,
-	total_duration => 0);
+	total_duration => 0,
+	nparts => 0);
     $self->{'xdt'} = undef;
     $self->{'xfer'} = undef;
 }
@@ -844,6 +840,7 @@ sub _xmsg_part_done {
 	$self->{'device_size'} += $msg->{'size'};
 	$self->{'size'} += $msg->{'size'};
 	$self->{'duration'} += $msg->{'duration'};
+	$self->{'nparts'}++;
     }
 
     if (!$msg->{'eof'}) {
@@ -953,7 +950,8 @@ sub _dump_done {
 	config_denial_message => $self->{'config_denial_message'},
 	size => $self->{'size'},
 	duration => $self->{'duration'},
-	total_duration => time - $self->{'dump_start_time'});
+	total_duration => time - $self->{'dump_start_time'},
+	nparts => $self->{'nparts'});
 
     # reset everything and let the original caller know we're done
     $self->{'xfer'} = undef;
@@ -962,6 +960,7 @@ sub _dump_done {
     $self->{'dump_cb'} = undef;
     $self->{'size'} = 0;
     $self->{'duration'} = 0.0;
+    $self->{'nparts'} = 0;
     $self->{'dump_start_time'} = undef;
     $self->{'device_errors'} = [];
     $self->{'config_denial_message'} = undef;

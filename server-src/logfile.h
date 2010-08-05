@@ -70,8 +70,7 @@ extern char *program_str[];
 
 void amanda_log_trace_log(GLogLevelFlags log_level, const gchar *message);
 void log_add(logtype_t typ, char * format, ...) G_GNUC_PRINTF(2, 3);
-char* log_genstring(logtype_t typ, char *pname, char * format, ...)
-    		    G_GNUC_PRINTF(3, 4);
+void log_add_full(logtype_t typ, char *pname, char *format, ...) G_GNUC_PRINTF(3, 4);
 void log_start_multiline(void);
 void log_end_multiline(void);
 void log_rename(char *datestamp);

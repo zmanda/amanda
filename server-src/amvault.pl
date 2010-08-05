@@ -20,419 +20,594 @@
 use lib '@amperldir@';
 use strict;
 
+package main::Interactive;
+use POSIX qw( :errno_h );
+use Amanda::MainLoop qw( :GIOCondition );
+use vars qw( @ISA );
+@ISA = qw( Amanda::Interactive );
+
+sub new {
+    my $class = shift;
+
+    my $self = {
+	input_src => undef};
+    return bless ($self, $class);
+}
+
+sub abort() {
+    my $self = shift;
+
+    if ($self->{'input_src'}) {
+	$self->{'input_src'}->remove();
+	$self->{'input_src'} = undef;
+    }
+}
+
+sub user_request {
+    my $self = shift;
+    my %params = @_;
+    my %subs;
+    my $buffer = "";
+
+    my $message  = $params{'message'};
+    my $label    = $params{'label'};
+    my $err      = $params{'err'};
+    my $chg_name = $params{'chg_name'};
+
+    $subs{'data_in'} = sub {
+	my $b;
+	my $n_read = POSIX::read(0, $b, 1);
+	if (!defined $n_read) {
+	    return if ($! == EINTR);
+	    $self->abort();
+	    return $params{'finished_cb'}->(
+		Amanda::Changer::Error->new('fatal',
+			message => "Fail to read from stdin"));
+	} elsif ($n_read == 0) {
+	    $self->abort();
+	    return $params{'finished_cb'}->(
+		Amanda::Changer::Error->new('fatal',
+			message => "Aborted by user"));
+	} else {
+	    $buffer .= $b;
+	    if ($b eq "\n") {
+		my $line = $buffer;
+		chomp $line;
+		$buffer = "";
+		$self->abort();
+		return $params{'finished_cb'}->(undef, $line);
+	    }
+	}
+    };
+
+    print STDERR "$err\n";
+    print STDERR "Insert volume labeled '$label' in $chg_name\n";
+    print STDERR "and press enter, or ^D to abort.\n";
+
+    $self->{'input_src'} = Amanda::MainLoop::fd_source(0, $G_IO_IN|$G_IO_HUP|$G_IO_ERR);
+    $self->{'input_src'}->set_callback($subs{'data_in'});
+    return;
+};
+
 package Amvault;
 
 use Amanda::Config qw( :getconf config_dir_relative );
 use Amanda::Debug qw( :logging );
-use Amanda::Device qw( :constants );
 use Amanda::Xfer qw( :constants );
 use Amanda::Header qw( :constants );
 use Amanda::MainLoop;
+use Amanda::Util qw( quote_string );
 use Amanda::DB::Catalog;
+use Amanda::Recovery::Planner;
+use Amanda::Recovery::Scan;
+use Amanda::Recovery::Clerk;
+use Amanda::Taper::Scan;
+use Amanda::Taper::Scribe;
+use Amanda::Tapelist;
 use Amanda::Changer;
+use Amanda::Cmdline;
+use Amanda::Logfile qw( :logtype_t log_add log_add_full
+			log_rename $amanda_log_trace_log make_stats );
 
-my $quiet = 0;
-
-sub fail($) {
-    print STDERR @_, "\n";
-    exit 1;
-}
-
-sub vlog($) {
-    if (!$quiet) {
-	print @_, "\n";
-    }
-}
+use base qw(
+    Amanda::Recovery::Clerk::Feedback
+    Amanda::Taper::Scribe::Feedback
+);
 
 sub new {
-    my ($class, $src_write_timestamp, $dst_changer, $dst_label_template) = @_;
+    my $class = shift;
+    my %params = @_;
+
+    bless {
+	quiet => $params{'quiet'},
+
+	src_write_timestamp => $params{'src_write_timestamp'},
+
+	dst_changer => $params{'dst_changer'},
+	dst_label_template => $params{'dst_label_template'},
+	dst_write_timestamp => $params{'dst_write_timestamp'},
+
+	src => undef,
+	dst => undef,
+	cleanup => {},
+
+	# called when the operation is complete, with the exit
+	# status
+	exit_cb => undef,
+    }, $class;
+}
+
+sub run {
+    my $self = shift;
+    my ($exit_cb) = @_;
+
+    die "already called" if $self->{'exit_cb'};
+    $self->{'exit_cb'} = $exit_cb;
 
     # check that the label template is valid
-    fail "Invalid label template '$dst_label_template'"
+    my $dst_label_template = $self->{'dst_label_template'};
+    return $self->failure("Invalid label template '$dst_label_template'")
 	if ($dst_label_template =~ /%[^%]+%/
 	    or $dst_label_template =~ /^[^%]+$/);
 
     # translate "latest" into the most recent timestamp
-    if ($src_write_timestamp eq "latest") {
-	$src_write_timestamp = Amanda::DB::Catalog::get_latest_write_timestamp();
+    if ($self->{'src_write_timestamp'} eq "latest") {
+	$self->{'src_write_timestamp'} = Amanda::DB::Catalog::get_latest_write_timestamp();
     }
 
-    fail "No dumps found"
-	unless (defined $src_write_timestamp);
+    return $self->failure("No dumps found")
+	unless (defined $self->{'src_write_timestamp'});
 
-    bless {
-	'src_write_timestamp' => $src_write_timestamp,
-	'dst_changer' => $dst_changer,
-	'dst_label_template' => $dst_label_template,
-	'first_dst_slot' => undef,
-    }, $class;
+    # open up a trace log file
+    log_add($L_INFO, "pid $$");
+    Amanda::Debug::add_amanda_log_handler($amanda_log_trace_log);
+    $self->{'cleanup'}{'roll_trace_log'} = 1;
+
+    $self->setup_src();
 }
 
-# Start a copy of a single file from src_dev to dest_dev.  If there are
-# no more files, call the callback.
-sub run {
+sub setup_src {
     my $self = shift;
 
-    $self->{'remaining_files'} = [
-	Amanda::DB::Catalog::sort_dumps([ "label", "filenum" ],
-	    Amanda::DB::Catalog::get_parts(
-		write_timestamp => $self->{'src_write_timestamp'},
-		ok => 1,
-	)) ];
+    my $src = $self->{'src'} = {};
 
-    $self->{'src_chg'} = Amanda::Changer->new();
-    $self->{'src_res'} = undef;
-    $self->{'src_dev'} = undef;
-    $self->{'src_label'} = undef;
+    # put together a clerk, which of course requires a changer, scan,
+    # interactive, and feedback
+    my $chg = Amanda::Changer->new();
+    return $self->failure("Error opening source changer: $chg")
+	if $chg->isa('Amanda::Changer::Error');
+    $src->{'chg'} = $chg;
 
-    $self->{'dst_chg'} = Amanda::Changer->new($self->{'dst_changer'});
-    $self->{'dst_res'} = undef;
-    $self->{'dst_dev'} = undef;
-    $self->{'dst_label'} = undef;
+    $src->{'interactive'} = main::Interactive->new();
 
-    $self->{'dst_timestamp'} = Amanda::Util::generate_timestamp();
+    $src->{'scan'} = Amanda::Recovery::Scan->new(
+	    chg => $src->{'chg'},
+	    interactive => $src->{'interactive'});
 
-    Amanda::MainLoop::call_later(sub { $self->start_next_file(); });
-    Amanda::MainLoop::run();
+    $src->{'clerk'} = Amanda::Recovery::Clerk->new(
+	    changer => $src->{'chg'},
+	    feedback => $self,
+	    scan => $src->{'scan'});
+    $self->{'cleanup'}{'quit_clerk'} = 1;
+
+    # convert the timestamp to a dumpspec for make_plan
+    my $ds = Amanda::Cmdline::dumpspec_t->new(
+	    undef, undef, $self->{'src_write_timestamp'}, undef, undef);
+
+    Amanda::Recovery::Planner::make_plan(
+	    dumpspec => $ds,
+	    changer => $src->{'chg'},
+	    plan_cb => sub { $self->plan_cb(@_) });
 }
 
-sub generate_new_dst_label {
+sub plan_cb {
     my $self = shift;
+    my ($err, $plan) = @_;
+    my $src = $self->{'src'};
 
-    # count the number of percents in there
-    (my $npercents =
-	$self->{'dst_label_template'}) =~ s/[^%]*(%+)[^%]*/length($1)/e;
-    my $nlabels = 10 ** $npercents;
+    return $self->failure($err) if $err;
 
-    # make up a sprintf pattern
-    (my $sprintf_pat =
-	$self->{'dst_label_template'}) =~ s/(%+)/"%0" . length($1) . "d"/e;
+    $src->{'plan'} = $plan;
 
-    my $tl = Amanda::Tapelist::read_tapelist(
-	config_dir_relative(getconf($CNF_TAPELIST)));
-    my %existing_labels =
-	map { $_->{'label'} => 1 } @$tl;
-
-    for (my $i = 0; $i < $nlabels; $i++) {
-	my $label = sprintf($sprintf_pat, $i);
-	next if (exists $existing_labels{$label});
-	return $label;
+    if (@{$plan->{'dumps'}} == 0) {
+	return $self->failure("No dumps to vault");
     }
 
-    fail "No unused labels matching '$self->{dst_label_template}' are available";
+    $self->setup_dst();
 }
 
-# add $next_file to the catalog db.  This assumes that the corresponding label
-# is already in the DB.
-
-sub add_part_to_db {
+sub setup_dst {
     my $self = shift;
-    my ($next_file, $filenum) = @_;
+    my $dst = $self->{'dst'} = {};
 
-    my $dump = {
-	'label' => $self->{'dst_label'},
-	'filenum' => $filenum,
-	'dump_timestamp' => $next_file->{'dump'}->{'dump_timestamp'},
-	'write_timestamp' => $self->{'dst_timestamp'},
-	'hostname' => $next_file->{'dump'}->{'hostname'},
-	'diskname' => $next_file->{'dump'}->{'diskname'},
-	'level' => $next_file->{'dump'}->{'level'},
-	'status' => 'OK',
-	'partnum' => $next_file->{'partnum'},
-	'nparts' => $next_file->{'dump'}->{'nparts'},
-	'kb' => 0, # unknown
-	'sec' => 0, # unknown
+    $dst->{'label'} = undef;
+    $dst->{'tape_num'} = 0;
+
+    my $chg = Amanda::Changer->new($self->{'dst_changer'});
+    return $self->failure("Error opening destination changer: $chg")
+	if $chg->isa('Amanda::Changer::Error');
+    $dst->{'chg'} = $chg;
+
+    # TODO: these should be configurable
+    my $autolabel = {
+	template => $self->{'dst_label_template'},
+	other_config => 1,
+	non_amanda => 1,
+	volume_error => 1,
+	empty => 1,
+    };
+    $dst->{'scan'} = Amanda::Taper::Scan->new(
+	changer => $dst->{'chg'},
+	labelstr => getconf($CNF_LABELSTR),
+	autolabel => $autolabel);
+
+    $dst->{'scribe'} = Amanda::Taper::Scribe->new(
+	taperscan => $dst->{'scan'},
+	feedback => $self);
+
+    $dst->{'scribe'}->start(
+	write_timestamp => $self->{'dst_write_timestamp'},
+	finished_cb => sub { $self->scribe_started(@_); })
+}
+
+sub scribe_started {
+    my $self = shift;
+    my ($err) = @_;
+
+    return $self->failure($err) if $err;
+
+    $self->{'cleanup'}{'quit_scribe'} = 1;
+
+    my $xfers_finished = sub {
+	my ($err) = @_;
+	$self->failure($err) if $err;
+	$self->quit(0);
     };
 
-    Amanda::DB::Catalog::add_part($dump);
+    $self->xfer_dumps($xfers_finished);
 }
 
-# This function is called to copy the next file in $self->{remaining_files}
-sub start_next_file {
-    my $self = shift;
-    my $next_file = shift @{$self->{'remaining_files'}};
-
-    # bail if we're finished
-    if (!defined $next_file) {
-	vlog("all files copied");
-	$self->release_reservations(sub {
-	    Amanda::MainLoop::quit();
-	});
-	return;
-    }
-
-    # make sure we're on the right device.  Note that we always change
-    # both volumes at the same time.
-    if (defined $self->{'src_label'} &&
-		$self->{'src_label'} eq $next_file->{'label'}) {
-	$self->seek_and_copy($next_file);
-    } else {
-	$self->load_next_volumes($next_file);
-    }
-}
-
-# Start both the source and destination changers seeking to the next volume
-sub load_next_volumes {
-    my $self = shift;
-    my ($next_file) = @_;
-    my ($src_loaded, $dst_loaded) = (0,0);
-    my ($release_src, $load_src, $got_src, $set_labeled_src,
-        $release_dst, $load_dst, $got_dst,
-	$maybe_done);
-
-    # For the source changer, we release the previous device, load the next
-    # volume by its label, and open the device.
-
-    $release_src = make_cb('release_src' => sub {
-	if ($self->{'src_dev'}) {
-	    $self->{'src_dev'}->finish()
-		or fail $self->{'src_dev'}->error_or_status();
-	    $self->{'src_dev'} = undef;
-	    $self->{'src_label'} = undef;
-
-	    $self->{'src_res'}->release(
-		finished_cb => $load_src);
-	} else {
-	    $load_src->(undef);
-	}
-    });
-
-    $load_src = make_cb('load_src' => sub {
-	my ($err) = @_;
-	fail $err if $err;
-	vlog("Loading source volume $next_file->{label}");
-
-	$self->{'src_chg'}->load(
-	    label => $next_file->{'label'},
-	    res_cb => $got_src);
-    });
-
-    $got_src = make_cb(got_src => sub {
-	my ($err, $res) = @_;
-	fail $err if $err;
-
-	debug("Opened source device");
-
-	$self->{'src_res'} = $res;
-	my $dev = $self->{'src_dev'} = $res->{'device'};
-	my $device_name = $dev->device_name;
-
-	if ($dev->volume_label ne $next_file->{'label'}) {
-	    fail ("Volume in $device_name has unexpected label " .
-		 $dev->volume_label);
-	}
-
-	$dev->start($ACCESS_READ, undef, undef)
-	    or fail ("Could not start device $device_name: " .
-		$dev->error_or_status());
-
-	# OK, it all matches up now..
-	$self->{'src_label'} = $next_file->{'label'};
-	$src_loaded = 1;
-
-	$maybe_done->();
-    });
-
-    # For the destination, we release the reservation after noting the 'next'
-    # slot, and either load that slot or "current".  When the slot is loaded,
-    # check that there is no label, invent a label, and write it to the volume.
-
-    $release_dst = make_cb('release_dst' => sub {
-	if ($self->{'dst_dev'}) {
-	    $self->{'dst_dev'}->finish()
-		or fail $self->{'dst_dev'}->error_or_status();
-	    $self->{'dst_dev'} = undef;
-
-	    $self->{'dst_res'}->release(
-		finished_cb => $load_dst);
-	} else {
-	    $load_dst->(undef);
-	}
-    });
-
-    $load_dst = make_cb('load_dst' => sub {
-	my ($err) = @_;
-	fail $err if $err;
-	vlog("Loading next destination slot");
-
-	if (defined $self->{'dst_res'}) {
-	    $self->{'dst_chg'}->load(
-		relative_slot => 'next',
-		slot => $self->{'dst_res'}->{'this_slot'},
-		set_current => 1,
-		res_cb => $got_dst);
-	} else {
-	    $self->{'dst_chg'}->load(
-		relative_slot => "current",
-		set_current => 1,
-		res_cb => $got_dst);
-	}
-    });
-
-    $got_dst = make_cb('got_dst' => sub {
-	my ($err, $res) = @_;
-	fail $err if $err;
-
-	debug("Opened destination device");
-
-	# if we've tried this slot before, we're out of destination slots
-	if (defined $self->{'first_dst_slot'}) {
-	    if ($res->{'this_slot'} eq $self->{'first_dst_slot'}) {
-		fail("No more unused destination slots");
-	    }
-	} else {
-	    $self->{'first_dst_slot'} = $res->{'this_slot'};
-	}
-
-	$self->{'dst_res'} = $res;
-	my $dev = $self->{'dst_dev'} = $res->{'device'};
-	my $device_name = $dev->device_name;
-
-	# for now, we only overwrite absolutely empty volumes.  This will need
-	# to change when we introduce use of a taperscan algorithm.
-
-	my $status = $dev->status;
-	if (!($status & $DEVICE_STATUS_VOLUME_UNLABELED)) {
-	    # if UNLABELED is only one possibility, give a device error msg
-	    if ($status & ~$DEVICE_STATUS_VOLUME_UNLABELED) {
-		fail ("Could not read label from $device_name: " .
-		     $dev->error_or_status());
-	    } else {
-		vlog("Volume in destination slot $res->{this_slot} is already labeled; going to next slot");
-		$release_dst->();
-		return;
-	    }
-	}
-
-	if (defined($dev->volume_header)) {
-	    vlog("Volume in destination slot $res->{this_slot} is not empty; going to next slot");
-	    $release_dst->();
-	    return;
-	}
-
-	my $new_label = $self->generate_new_dst_label();
-
-	$dev->start($ACCESS_WRITE, $new_label, $self->{'dst_timestamp'})
-	    or fail ("Could not start device $device_name: " .
-		$dev->error_or_status());
-
-	# OK, it all matches up now..
-	$self->{'dst_label'} = $new_label;
-	$dst_loaded = 1;
-
-	$res->set_label($dev->volume_label(),
-			finished_cb => $maybe_done);
-    });
-
-    # and finally, when both src and dst are finished, we move on to
-    # the next step.
-    $maybe_done = make_cb('maybe_done' => sub {
-	return if (!$src_loaded or !$dst_loaded);
-
-	vlog("Volumes loaded; starting copy");
-	$self->seek_and_copy($next_file);
-    });
-
-    # kick it off
-    $release_src->();
-    $release_dst->();
-}
-
-sub seek_and_copy {
-    my $self = shift;
-    my ($next_file) = @_;
-    my $dst_filenum;
-
-    vlog("Copying file #$next_file->{filenum}");
-
-    # seek the source device
-    my $hdr = $self->{'src_dev'}->seek_file($next_file->{'filenum'});
-    if (!defined $hdr) {
-	fail "Error seeking to read next file: " .
-		    $self->{'src_dev'}->error_or_status()
-    }
-    if ($hdr->{'type'} == $F_TAPEEND
-	    or $self->{'src_dev'}->file() != $next_file->{'filenum'}) {
-	fail "Attempt to seek to a non-existent file.";
-    }
-
-    if ($hdr->{'type'} != $F_DUMPFILE && $hdr->{'type'} != $F_SPLIT_DUMPFILE) {
-	fail "Unexpected header type $hdr->{type}";
-    }
-
-    # start the destination device with the same header
-    if (!$self->{'dst_dev'}->start_file($hdr)) {
-	fail "Error starting new file: " . $self->{'dst_dev'}->error_or_status();
-    }
-
-    # and track the destination filenum correctly
-    $dst_filenum = $self->{'dst_dev'}->file();
-
-    # now put together a transfer to copy that data.
-    my $xfer;
-    my $xfer_cb = sub {
-	my ($src, $msg, $elt) = @_;
-	if ($msg->{type} == $XMSG_INFO) {
-	    vlog("while transferring: $msg->{message}\n");
-	}
-	if ($msg->{type} == $XMSG_ERROR) {
-	    fail $msg->{elt} . " failed: " . $msg->{message};
-	} elsif ($msg->{'type'} == $XMSG_DONE) {
-	    debug("transfer completed");
-
-	    # add this dump to the logfile
-	    $self->add_part_to_db($next_file, $dst_filenum);
-
-	    # start up the next copy
-	    $self->start_next_file();
-	}
-    };
-
-    $xfer = Amanda::Xfer->new([
-	Amanda::Xfer::Source::Device->new($self->{'src_dev'}),
-	Amanda::Xfer::Dest::Device->new($self->{'dst_dev'}, 0),
-    ]);
-
-    debug("starting transfer");
-    $xfer->start($xfer_cb);
-}
-
-sub release_reservations {
+sub xfer_dumps {
     my $self = shift;
     my ($finished_cb) = @_;
+
+    my $src = $self->{'src'};
+    my $dst = $self->{'dst'};
+    my ($xfer_src, $xfer_dst, $xfer, $n_threads, $last_partnum);
+    my $current;
+
     my $steps = define_steps
-	cb_ref => \$finished_cb;
+	    cb_ref => \$finished_cb;
 
-    step release_src => sub {
-	if ($self->{'src_res'}) {
-	    $self->{'src_res'}->release(
-		finished_cb => $steps->{'release_dst'});
+    step get_dump => sub {
+	# reset tracking for teh current dump
+	$self->{'current'} = $current = {
+	    src_result => undef,
+	    src_errors => undef,
+
+	    dst_result => undef,
+	    dst_errors => undef,
+
+	    size => 0,
+	    duration => 0.0,
+	    total_duration => 0.0,
+	    nparts => 0,
+	    header => undef,
+	    dump => undef,
+	};
+
+	my $dump = $src->{'plan'}->shift_dump();
+	if (!$dump) {
+	    return $finished_cb->();
+	}
+
+	$current->{'dump'} = $dump;
+
+	$steps->{'get_xfer_src'}->();
+    };
+
+    step get_xfer_src => sub {
+	$src->{'clerk'}->get_xfer_src(
+	    dump => $current->{'dump'},
+	    xfer_src_cb => $steps->{'got_xfer_src'})
+    };
+
+    step got_xfer_src => sub {
+        my ($errors, $header, $xfer_src_, $directtcp_supported) = @_;
+	$xfer_src = $xfer_src_;
+
+	return $finished_cb->(join("\n", @$errors))
+	    if $errors;
+
+	$current->{'header'} = $header;
+
+	$xfer_dst = $dst->{'scribe'}->get_xfer_dest(
+	    max_memory => getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE),
+	    can_cache_inform => 0,
+	    part_size => 2*1024*1024, # TODO: get from config
+	);
+
+	# create and start the transfer
+	$xfer = Amanda::Xfer->new([ $xfer_src, $xfer_dst ]);
+	$xfer->start($steps->{'handle_xmsg'});
+
+	# count the "threads" running here (clerk and scribe)
+	$n_threads = 2;
+
+	# and let both the scribe and the clerk know that data is in motion
+	$src->{'clerk'}->start_recovery(
+	    xfer => $xfer,
+	    recovery_cb => $steps->{'recovery_cb'});
+	$dst->{'scribe'}->start_dump(
+	    xfer => $xfer,
+	    dump_header => $header,
+	    dump_cb => $steps->{'dump_cb'});
+    };
+
+    step handle_xmsg => sub {
+	$src->{'clerk'}->handle_xmsg(@_);
+	$dst->{'scribe'}->handle_xmsg(@_);
+    };
+
+    step recovery_cb => sub {
+	my %params = @_;
+	$current->{'src_result'} = $params{'result'};
+	$current->{'src_errors'} = $params{'errors'};
+	$steps->{'maybe_done'}->();
+    };
+
+    step dump_cb => sub {
+	my %params = @_;
+	$current->{'dst_result'} = $params{'result'};
+	$current->{'dst_errors'} = $params{'device_errors'};
+	$current->{'size'} = $params{'size'};
+	$current->{'duration'} = $params{'duration'};
+	$current->{'nparts'} = $params{'nparts'};
+	$current->{'total_duration'} = $params{'total_duration'};
+	$steps->{'maybe_done'}->();
+    };
+
+    step maybe_done => sub {
+	return unless --$n_threads == 0;
+	my @errors = (@{$current->{'src_errors'}}, @{$current->{'dst_errors'}});
+
+	# figure out how to log this, based on the results from the clerk (src)
+	# and scribe (dst)
+	my $logtype;
+	if ($current->{'src_result'} eq 'DONE') {
+	    if ($current->{'dst_result'} eq 'DONE') {
+		$logtype = $L_DONE;
+	    } elsif ($current->{'dst_result'} eq 'PARTIAL') {
+		$logtype = $L_PARTIAL;
+	    } else { # ($current->{'dst_result'} eq 'FAILED')
+		$logtype = $L_FAIL;
+	    }
 	} else {
-	    $steps->{'release_dst'}->(undef);
+	    if ($current->{'size'} > 0) {
+		$logtype = $L_PARTIAL;
+	    } else {
+		$logtype = $L_FAIL;
+	    }
+	}
+
+	my $dump = $current->{'dump'};
+	my $stats = make_stats($current->{'size'}, $current->{'total_duration'},
+				$dump->{'orig_kb'});
+	my $msg = quote_string(join("; ", @errors));
+
+	# write a DONE/PARTIAL/FAIL log line
+	if ($logtype == $L_FAIL) {
+	    log_add_full($L_FAIL, "taper", sprintf("%s %s %s %s %s %s",
+		quote_string($dump->{'hostname'}.""), # " is required for SWIG..
+		quote_string($dump->{'diskname'}.""),
+		$dump->{'dump_timestamp'},
+		$dump->{'level'},
+		'error',
+		$msg));
+	} else {
+	    log_add_full($logtype, "taper", sprintf("%s %s %s %s %s %s%s",
+		quote_string($dump->{'hostname'}.""), # " is required for SWIG..
+		quote_string($dump->{'diskname'}.""),
+		$dump->{'dump_timestamp'},
+		$current->{'nparts'},
+		$dump->{'level'},
+		$stats,
+		($logtype == $L_PARTIAL and @errors)? " $msg" : ""));
+	}
+
+	if (@errors) {
+	    return $finished_cb->("transfer failed: " .  join("; ", @errors));
+	} else {
+	    # rinse, wash, and repeat
+	    return $steps->{'get_dump'}->();
+	}
+    };
+}
+
+sub quit {
+    my $self = shift;
+    my ($exit_status) = @_;
+    my $exit_cb = $self->{'exit_cb'};
+
+    my $steps = define_steps
+	    cb_ref => \$exit_cb;
+
+    # we may have several resources to clean up..
+    step quit_scribe => sub {
+	if ($self->{'cleanup'}{'quit_scribe'}) {
+	    debug("quitting scribe..");
+	    $self->{'dst'}{'scribe'}->quit(
+		finished_cb => $steps->{'quit_scribe_finished'});
+	} else {
+	    $steps->{'quit_clerk'}->();
 	}
     };
 
-    step release_dst => sub {
+    step quit_scribe_finished => sub {
 	my ($err) = @_;
-	vlog("$err") if $err;
+	if ($err) {
+	    print STDERR "$err\n";
+	    $exit_status = 1;
+	}
 
-	if ($self->{'dst_res'}) {
-	    $self->{'dst_res'}->release(
-		finished_cb => $steps->{'done'});
+	$steps->{'quit_clerk'}->();
+    };
+
+    step quit_clerk => sub {
+	if ($self->{'cleanup'}{'quit_clerk'}) {
+	    debug("quitting clerk..");
+	    $self->{'src'}{'clerk'}->quit(
+		finished_cb => $steps->{'quit_clerk_finished'});
 	} else {
-	    $steps->{'done'}->(undef);
+	    $steps->{'roll_log'}->();
 	}
     };
 
-    step done => sub {
+    step quit_clerk_finished => sub {
 	my ($err) = @_;
-	vlog("$err") if $err;
-	$finished_cb->();
+	if ($err) {
+	    print STDERR "$err\n";
+	    $exit_status = 1;
+	}
+
+	$steps->{'roll_log'}->();
     };
+
+    step roll_log => sub {
+	if ($self->{'cleanup'}{'roll_trace_log'}) {
+	    debug("rolling logfile..");
+	    log_add($L_INFO, "pid-done $$");
+	    log_rename($self->{'dst_write_timestamp'});
+	}
+
+	$exit_cb->($exit_status);
+    };
+}
+
+# TODO: adjust verbosity: log dumpfiles by default, with debug logging of each part
+
+## utilities
+
+sub failure {
+    my $self = shift;
+    my ($msg) = @_;
+    print STDERR "$msg\n";
+
+    debug("failure: $msg");
+    $self->quit(1);
+}
+
+sub vlog {
+    my $self = shift;
+    if (!$self->{'quiet'}) {
+	print @_, "\n";
+    }
+}
+
+## scribe feedback methods
+
+# note that the trace log calls here all add "taper", as we're pretending
+# to be the taper in the logfiles.
+
+sub request_volume_permission {
+    my $self = shift;
+    my %params = @_;
+
+    # sure, use all the volumes you want, no problem!
+    # TODO: limit to a vaulting-specific value of runtapes
+    $params{'perm_cb'}->(undef);
+}
+
+sub scribe_notif_new_tape {
+    my $self = shift;
+    my %params = @_;
+
+    if ($params{'volume_label'}) {
+	$self->{'dst'}->{'label'} = $params{'volume_label'};
+
+	# register in the tapelist
+	my $tl_file = config_dir_relative(getconf($CNF_TAPELIST));
+	my $tl = Amanda::Tapelist::read_tapelist($tl_file);
+	my $tle = $tl->lookup_tapelabel($params{'volume_label'});
+	$tl->remove_tapelabel($params{'volume_label'});
+	$tl->add_tapelabel($self->{'dst_write_timestamp'}, $params{'volume_label'},
+		$tle? $tle->{'comment'} : undef);
+	$tl->write($tl_file);
+
+	# add to the trace log
+	log_add_full($L_START, "taper", sprintf("datestamp %s label %s tape %s",
+		$self->{'dst_write_timestamp'},
+		quote_string($self->{'dst'}->{'label'}),
+		++$self->{'dst'}->{'tape_num'}));
+
+	# and the amdump log
+	# TODO: should amvault create one?!
+	# print STDERR "taper: wrote label '$self->{label}'\n";
+    } else {
+	$self->{'dst'}->{'label'} = undef;
+
+	print STDERR "Could not start new destination volume: $params{error}";
+    }
+}
+
+sub scribe_notif_part_done {
+    my $self = shift;
+    my %params = @_;
+
+    $self->{'last_partnum'} = $params{'partnum'};
+
+    my $stats = make_stats($params{'size'}, $params{'duration'}, $self->{'orig_kb'});
+
+    # log the part, using PART or PARTPARTIAL
+    my $hdr = $self->{'current'}->{'header'};
+    my $logbase = sprintf("%s %s %s %s %s %s/%s %s %s",
+	quote_string($self->{'dst'}->{'label'}),
+	$params{'fileno'},
+	quote_string($hdr->{'name'}.""), # " is required for SWIG..
+	quote_string($hdr->{'disk'}.""),
+	$hdr->{'datestamp'}."",
+	$params{'partnum'}, -1, # totalparts is always -1
+	$hdr->{'dumplevel'},
+	$stats);
+    if ($params{'successful'}) {
+	log_add_full($L_PART, "taper", $logbase);
+    } else {
+	log_add_full($L_PARTPARTIAL, "taper",
+		"$logbase \"No space left on device\"");
+    }
+
+    if ($params{'successful'}) {
+	print STDERR "Wrote $self->{dst}->{label}:$params{'fileno'}: " . $hdr->summary() . "\n";
+    }
+}
+
+sub scribe_notif_log_info {
+    my $self = shift;
+    my %params = @_;
+
+    log_add_full($L_INFO, "taper", $params{'message'});
+}
+
+## clerk feedback methods
+
+sub clerk_notif_part {
+    my $self = shift;
+    my ($label, $fileno, $header) = @_;
+
+    print STDERR "Reading $label:$fileno: ", $header->summary(), "\n";
+}
+
+sub clerk_notif_holding {
+    my $self = shift;
+    my ($filename, $header) = @_;
+
+    # this used to give the fd from which the holding file was being read.. why??
+    print STDERR "Reading '$filename'\n", $header->summary(), "\n";
 }
 
 ## Application initialization
-package Main;
+package main;
+
 use Amanda::Config qw( :init :getconf );
 use Amanda::Debug qw( :logging );
 use Amanda::Util qw( :constants );
@@ -445,17 +620,13 @@ sub usage {
 Usage: amvault [-o configoption]* [-q|--quiet]
 	<conf> <src-run-timestamp> <dst-changer> <label-template>
 
-    -o: configuration overwrite (see amanda(8))
+    -o: configuration override (see amanda(8))
     -q: quiet progress messages
 
 Copies data from the run with timestamp <src-run-timestamp> onto volumes using
 the changer <dst-changer>, labeling new volumes with <label-template>.  If
-<src-run-timestamp> is "latest", then the most recent amdump or amflush run
-will be used.
-
-Each source volume will be copied to a new destination volume; no re-assembly
-or splitting will be performed.  Destination volumes must be at least as large
-as the source volumes.
+<src-run-timestamp> is "latest", then the most recent run of amdump, amflush, or
+amvault will be used.
 
 EOF
     exit(1);
@@ -464,10 +635,13 @@ EOF
 Amanda::Util::setup_application("amvault", "server", $CONTEXT_CMDLINE);
 
 my $config_overrides = new_config_overrides($#ARGV+1);
+my $opt_quiet = 0;
 Getopt::Long::Configure(qw{ bundling });
 GetOptions(
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
-    'q|quiet' => \$quiet,
+    'q|quiet' => \$opt_quiet,
+    'version' => \&Amanda::Util::version_opt,
+    'help' => \&usage,
 ) or usage();
 
 usage unless (@ARGV == 4);
@@ -480,13 +654,27 @@ my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();
     if ($cfgerr_level >= $CFGERR_ERRORS) {
-	fail("errors processing config file");
+	print STDERR "errors processing config file\n";
+	exit(1);
     }
 }
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
-# start the copy
-my $vault = Amvault->new($src_write_timestamp, $dst_changer, $label_template);
-$vault->run();
+my $exit_status;
+my $exit_cb = sub {
+    ($exit_status) = @_;
+    Amanda::MainLoop::quit();
+};
+
+my $vault = Amvault->new(
+    src_write_timestamp => $src_write_timestamp,
+    dst_changer => $dst_changer,
+    dst_label_template => $label_template,
+    dst_write_timestamp => Amanda::Util::generate_timestamp(),
+    quiet => $opt_quiet);
+Amanda::MainLoop::call_later(sub { $vault->run($exit_cb) });
+Amanda::MainLoop::run();
+
 Amanda::Util::finish_application();
+exit($exit_status);

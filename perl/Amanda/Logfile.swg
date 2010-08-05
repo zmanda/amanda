@@ -35,7 +35,7 @@
 
 amglue_export_ok(
     open_logfile get_logline close_logfile
-    log_add
+    log_add log_add_full
 );
 
 
@@ -115,10 +115,15 @@ typedef int LOGLINE_RETURN;
 LOGLINE_RETURN get_logline(FILE *logfile);
 
 %rename(log_add) log_add_;
+%rename(log_add_full) log_add_full_;
 %inline %{
 static void log_add_(logtype_t typ, char *message)
 {
     log_add(typ, "%s", message);
+}
+static void log_add_full_(logtype_t typ, char *pname, char *message)
+{
+    log_add_full(typ, pname, "%s", message);
 }
 %}
 
@@ -300,6 +305,7 @@ amglue_export_ok(
 amglue_export_ok(
     find_all_logs find_latest_log
     get_current_log_timestamp
+    make_stats
 );
 
 %perlcode %{
@@ -348,6 +354,20 @@ sub get_current_log_timestamp
     # no timestamp, apparently
     Amanda::Debug::warning("no current timestamp found in logfile");
     return undef;
+}
+
+sub make_stats {
+    my ($size, $duration, $orig_kb) = @_;
+
+    $duration = 0.1 if $duration == 0;  # prevent division by zero
+    my $kb = $size/1024;
+    my $kps = "$kb.0"/$duration; # Perlish cast from BigInt to float
+
+    if (defined $orig_kb) {
+	return sprintf("[sec %f kb %d kps %f orig-kb %d]", $duration, $kb, $kps, $orig_kb);
+    } else {
+	return sprintf("[sec %f kb %d kps %f]", $duration, $kb, $kps);
+    }
 }
 
 %}

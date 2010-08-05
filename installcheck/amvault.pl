@@ -20,12 +20,14 @@ use Test::More tests => 2;
 
 use lib "@amperldir@";
 use File::Path;
+use Data::Dumper;
 use Installcheck;
 use Installcheck::Dumpcache;
 use Installcheck::Config;
-use Installcheck::Run qw(run run_err $diskname amdump_diag);
-use Amanda::Config qw( :init );
+use Installcheck::Run qw(run run_err $diskname);
+use Amanda::DB::Catalog;
 use Amanda::Paths;
+use Amanda::Config qw( :init );
 
 my $vtape_root = "$Installcheck::TMP/tertiary";
 sub setup_chg_disk {
@@ -36,6 +38,13 @@ sub setup_chg_disk {
 
 # set up a basic dump
 Installcheck::Dumpcache::load("basic");
+
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my ($cfgerr_level, @cfgerr_errors) = config_errors();
+if ($cfgerr_level >= $CFGERR_WARNINGS) {
+    config_print_errors();
+    BAIL_OUT("config errors");
+}
 
 # and then set up a new vtape to vault onto
 my $tertiary_chg = setup_chg_disk();
@@ -48,5 +57,23 @@ my @tert_files = glob("$vtape_root/slot1/0*");
 ok(@tert_files > 0,
     "..and files appear on the tertiary volume!");
 
+my @dumps = Amanda::DB::Catalog::sort_dumps([ 'write_timestamp' ],
+	Amanda::DB::Catalog::get_dumps());
+
+is(scalar @dumps, 2,
+    "now there are two dumps in the catalog");
+
+sub summarize {
+    my ($dump) = @_;
+    return {
+	map { $_ => $dump->{$_} }
+	    qw(diskname hostname level dump_timestamp kb orig_kb)
+    };
+}
+is_deeply(summarize($dumps[1]), summarize($dumps[0]),
+    "and they match in all the right ways")
+    or diag(Dumper(@dumps));
+
+# clean up
 rmtree $vtape_root;
 Installcheck::Run::cleanup();

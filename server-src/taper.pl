@@ -119,7 +119,7 @@ use Amanda::MainLoop qw( :GIOCondition );
 use Amanda::MainLoop;
 use Amanda::Taper::Scan;
 use Amanda::Taper::Scribe qw( get_splitting_args_from_config );
-use Amanda::Logfile qw( :logtype_t log_add );
+use Amanda::Logfile qw( :logtype_t log_add make_stats );
 use Amanda::Xfer qw( :constants );
 use Amanda::Util qw( quote_string );
 use Amanda::Tapelist;
@@ -147,7 +147,6 @@ sub new {
         datestamp => undef,
         level => undef,
 	header => undef,
-	last_partnum => -1,
 	doing_port_write => undef,
 	input_errors => [],
 
@@ -369,9 +368,7 @@ sub scribe_notif_part_done {
 
     $self->_assert_in_state("writing") or return;
 
-    $self->{'last_partnum'} = $params{'partnum'};
-
-    my $stats = $self->make_stats($params{'size'}, $params{'duration'}, $self->{'orig_kb'});
+    my $stats = make_stats($params{'size'}, $params{'duration'}, $self->{'orig_kb'});
 
     # log the part, using PART or PARTPARTIAL
     my $logbase = sprintf("%s %s %s %s %s %s/%s %s %s",
@@ -483,22 +480,6 @@ sub _assert_in_state {
 	$self->{'proto'}->send(main::Protocol::BAD_COMMAND,
 	    message => "command not appropriate in state '$self->{state}'");
 	return 0;
-    }
-}
-
-# Make up the [sec .. kb .. kps ..] section of the result messages
-sub make_stats {
-    my $self = shift;
-    my ($size, $duration, $orig_kb) = @_;
-
-    $duration = 0.1 if $duration == 0;  # prevent division by zero
-    my $kb = $size/1024;
-    my $kps = "$kb.0"/$duration; # Perlish cast from BigInt to float
-
-    if (defined $orig_kb) {
-	return sprintf("[sec %f kb %d kps %f orig-kb %d]", $duration, $kb, $kps, $orig_kb);
-    } else {
-	return sprintf("[sec %f kb %d kps %f]", $duration, $kb, $kps);
     }
 }
 
@@ -622,7 +603,6 @@ sub setup_and_start_dump {
 	$self->{'datestamp'} = $params{'datestamp'};
 	$self->{'level'} = $params{'level'};
 	$self->{'header'} = undef; # no header yet
-	$self->{'last_partnum'} = -1;
 	$self->{'orig_kb'} = $params{'orig_kb'};
 	$self->{'input_errors'} = [];
 
@@ -812,7 +792,7 @@ sub dump_cb {
     # start_dump and dump_cb, so the kps generated here is much less than the
     # actual tape write speed.  Think of this as the *taper* speed, rather than
     # the *tape* speed.
-    my $stats = $self->make_stats($params{'size'}, $params{'total_duration'}, $self->{'orig_kb'});
+    my $stats = make_stats($params{'size'}, $params{'total_duration'}, $self->{'orig_kb'});
 
     # consider this a config-derived failure only if there were no errors
     my $failure_from = (@{$params{'device_errors'}})?  'error' : 'config';
@@ -835,7 +815,7 @@ sub dump_cb {
 	    quote_string($self->{'hostname'}.""), # " is required for SWIG..
 	    quote_string($self->{'diskname'}.""),
 	    $self->{'datestamp'},
-	    $self->{'last_partnum'},
+	    $params{'nparts'},
 	    $self->{'level'},
 	    $stats,
 	    ($logtype == $L_PARTIAL and @all_messages)? " $msg" : ""));

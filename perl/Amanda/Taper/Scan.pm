@@ -48,7 +48,7 @@ C<Amanda::Taper::Scan> subclasses represent algorithms used by
 C<Amanda::Taper::Scribe> (see L<Amanda::Taper::Scribe>) to scan for and select
 volumes for writing.
 
-Call C<Amanda::Taperscan->new()> to create a new taperscan
+Call C<< Amanda::Taperscan->new() >> to create a new taperscan
 algorithm.  The constructor takes the following keyword arguments:
 
     changer       Amanda::Changer object to use (required)
@@ -63,6 +63,9 @@ which case the class specified by the user in the Amanda configuration file is
 instantiated.  The remaining options will be taken from the configuration file
 if not specified.  Default values for all of these options are applied before a
 subclass's constructor is called.
+
+The autolabel option should look like the C<CNF_AUTOLABEL> hash - see
+L<Amanda::Config>.
 
 Subclasses must implement a single method: C<scan>.  It takes only one mandatory
 parameter, C<result_cb>:

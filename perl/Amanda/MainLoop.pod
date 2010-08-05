@@ -347,7 +347,7 @@ first step defined will be called automatically.
 	my ($hostname, $port, $data, $sendfile_cb) = @_;
 	my ($addr, $socket); # shared lexical variables
 	my $steps = define_steps
-		cb => \$sendfile_cb;
+		cb_ref => \$sendfile_cb;
 	step lookup_addr => sub {
 	    return async_gethostbyname(hostname => $hostname,
 				ghbn_cb => $steps->{'got_addr'});
@@ -400,7 +400,7 @@ achieve this for all callbacks, add C<< immediate => 1 >> to the C<define_steps>
 invocation:
 
     my $steps = define_steps
-	    cb => $finished_cb,
+	    cb_ref => \$finished_cb,
 	    immediate => 1;
 
 To do the same for a single step, add the same keyword to the C<step> invocation:
@@ -419,7 +419,7 @@ commands simultaneously and capture their output:
 	my $running_commands = 0;
 	my ($result1, $result2);
 	my $steps = define_steps
-	    cb_ref => $finished_cb;
+	    cb_ref => \$finished_cb;
 	step start => sub {
 	    $running_commands++;
 	    run_command($command1,
@@ -428,15 +428,15 @@ commands simultaneously and capture their output:
 	    run_command($command2,
 		run_cb => $steps->{'command2_done'});
 	};
-	step command1_done {
+	step command1_done => sub {
 	    $result1 = $_[0];
 	    $steps->{'maybe_done'}->();
 	};
-	step command2_done {
+	step command2_done => sub {
 	    $result2 = $_[0];
 	    $steps->{'maybe_done'}->();
 	};
-	step maybe_done {
+	step maybe_done => sub {
 	    return if --$running_commands; # not done yet
 	    $finished_cb->($result1, $result2);
 	};

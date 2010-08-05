@@ -94,8 +94,22 @@ this file.  As such, this function is only appropriate for situations where
 C<log_rename> will be invoked later to rename C<$logdir/log> to
 C<$logdir/log.$timestamp.$n>.
 
+If you need to write a log entry for another program, for example to simulate
+taper entries, call C<log_add_full($logtype, $pname, $string)>.
+
 All of the functions in this section can be imported by name if
 desired.
+
+=head3 Utilities
+
+Many trace log entries have a statistics entry in what used to be the error
+message slot, of the form C<[sec .. kb .. kps ..]>.  The function C<make_stats>
+will create such an entry for you:
+
+    make_stats($size, $duration, $orig_kb);
+
+Note that C<$orig_kb> can be undefined, in which case it will not appear in
+the statistics output.
 
 =head2 Amanda::Find::find_result_t objects
 
