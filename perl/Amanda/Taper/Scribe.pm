@@ -267,7 +267,7 @@ parameters.
         size => $size,
         duration => $duration,
 	total_duration => $total_duration,
-	nparts => $npargs);
+	nparts => $nparts);
 
 All parameters will be present on every call, although the order is not
 guaranteed.
@@ -284,8 +284,9 @@ otherwise.
 
 The final parameters, C<size> (in bytes), C<duration>, C<total_duration> (in
 seconds), and C<nparts> describe the total transfer, and are a sum of all of
-the parts written to the device.  Note that C<duration> does not include time
-spent operating the changer, while C<total_duration> reflects the time from the
+the parts written to the device.  Note that C<nparts> does not include any
+empty trailing parts.  Note that C<duration> does not include time spent
+operating the changer, while C<total_duration> reflects the time from the
 C<start_dump> call to the invocation of the C<dump_cb>.
 
 =head3 Cancelling a Dump
@@ -595,7 +596,7 @@ sub get_xfer_dest {
     $self->{'xdt'} = undef;
     $self->{'size'} = 0;
     $self->{'duration'} = 0.0;
-    $self->{'nparts'} = 0;
+    $self->{'nparts'} = undef;
     $self->{'dump_start_time'} = undef;
     $self->{'last_part_successful'} = 1;
     $self->{'started_writing'} = 0;
@@ -832,6 +833,9 @@ sub _xmsg_part_done {
 	    successful => $msg->{'successful'},
 	    size => $msg->{'size'},
 	    duration => $msg->{'duration'});
+
+	# increment nparts here, so empty parts are not counted
+	$self->{'nparts'} = $msg->{'partnum'};
     }
 
     $self->{'last_part_successful'} = $msg->{'successful'};
@@ -840,7 +844,6 @@ sub _xmsg_part_done {
 	$self->{'device_size'} += $msg->{'size'};
 	$self->{'size'} += $msg->{'size'};
 	$self->{'duration'} += $msg->{'duration'};
-	$self->{'nparts'}++;
     }
 
     if (!$msg->{'eof'}) {
@@ -960,7 +963,7 @@ sub _dump_done {
     $self->{'dump_cb'} = undef;
     $self->{'size'} = 0;
     $self->{'duration'} = 0.0;
-    $self->{'nparts'} = 0;
+    $self->{'nparts'} = undef;
     $self->{'dump_start_time'} = undef;
     $self->{'device_errors'} = [];
     $self->{'config_denial_message'} = undef;
