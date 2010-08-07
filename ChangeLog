@@ -1,3 +1,9 @@
+2010-08-06  Stephen Gelman <ssgelm@gmail.com>
+	* AUTHORS: add Stephen
+	* client-src/rundump.c client-src/runtar.c: unset
+	  SUN_PERSONALITY in runtar and rundump, to shut off
+	  Nexenta's tendency to magically run Sun binaries
+
 2010-08-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amvault.pl: rewrite to use scribe, clerk
 	* installcheck/amvault.pl: check results better
