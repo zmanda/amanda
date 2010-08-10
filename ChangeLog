@@ -1,4 +1,8 @@
 2010-08-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* amandad-src/amandad.c: unset SUN_PERSONALITY on startup
+	* client-src/rundump.c client-src/runtar.c: remove unsetenvs for SUN_PERSONALITY
+
+2010-08-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amlogroll.pl: ignore arguments after the first
 
 2010-08-06  Dustin J. Mitchell <dustin@zmanda.com>

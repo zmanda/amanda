@@ -213,6 +213,17 @@ main(
     safe_cd();
 
     /*
+     * Nexenta needs the SUN_PERSONALITY env variable to be unset, otherwise
+     * the Sun version of tar in /usr/sun/sbin/tar is called instead.
+     *
+     * On other operating systems this will have no effect.
+     */
+
+#ifdef HAVE_UNSETENV
+    unsetenv("SUN_PERSONALITY");
+#endif
+
+    /*
      * When called via inetd, it is not uncommon to forget to put the
      * argv[0] value on the config line.  On some systems (e.g. Solaris)
      * this causes argv and/or argv[0] to be NULL, so we have to be

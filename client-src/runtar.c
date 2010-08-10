@@ -93,16 +93,6 @@ main(
 #else
 
     /*
-     * Nexenta needs the SUN_PERSONALITY env variable to be unset, otherwise
-     * the Sun version of tar in /usr/sun/sbin/tar is called instead.
-     * http://www.nexenta.org/projects/site/wiki/DifferentPersonalities
-     *
-     * On other operating systems this will have no effect.
-     */
-
-    unsetenv("SUN_PERSONALITY");
-
-    /*
      * Print out version information for tar.
      */
     do {
