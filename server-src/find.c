@@ -916,8 +916,9 @@ search_logfile(
 		amfree(str);
 	    } else {
 		bzero(&regex, sizeof(regex));
+		/* the .* at the end of this captures the old {wr: .. } statistics */
 		reg_result = regcomp(&regex,
-		    "\\[sec ([0-9.]+) kb ([0-9]+) kps [0-9.]+\\]", REG_EXTENDED);
+		    "\\[sec ([0-9.]+) kb ([0-9]+) kps [0-9.]+.*\\]", REG_EXTENDED);
 		if (reg_result != 0) {
 		    error("Error compiling regular expression for parsing log lines");
 		    /* NOTREACHED */
@@ -977,6 +978,7 @@ search_logfile(
 			new_output_find->status = stralloc("OK");
 			new_output_find->dump_status = stralloc("OK");
 			new_output_find->next = *output_find;
+			new_output_find->partnum = 1; /* L_SUCCESS is pre-splitting */
 			*output_find = new_output_find;
                         found_something = TRUE;
 		    } else if (curlog == L_CHUNKSUCCESS || curlog == L_DONE ||

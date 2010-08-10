@@ -1,4 +1,9 @@
 2010-08-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/find.c: parse old SUCCESS lines properly
+	* perl/Amanda/DB/Catalog.pm: same
+	* installcheck/Amanda_DB_Catalog.pl: test old SUCCESS lines
+
+2010-08-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* amandad-src/amandad.c: unset SUN_PERSONALITY on startup
 	* client-src/rundump.c client-src/runtar.c: remove unsetenvs for SUN_PERSONALITY
 
