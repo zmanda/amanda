@@ -1,3 +1,6 @@
+2010-08-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amlogroll.pl: ignore arguments after the first
+
 2010-08-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amvault.pl: correct test count
 	* perl/Amanda/Taper/Scribe.pm: fix nparts calculation

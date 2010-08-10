@@ -35,8 +35,8 @@ GetOptions(
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
 ) or usage();
 
-if (@ARGV != 1) {
-    die "USAGE: amlogroll <config> <config-overwrites>";
+if (@ARGV < 1) {
+    die "USAGE: amlogroll <config> <config-overwrites> <ignored-stuff>";
 }
 
 set_config_overrides($config_overrides);
