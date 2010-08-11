@@ -1,3 +1,8 @@
+2010-08-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Util.pod perl/Amanda/Util.swg: add split_quoted_strings_friendly
+	* installcheck/Amanda_Util.pl: test it
+	* application-src/amsamba.pl: use it to parse amandapass
+
 2010-08-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/find.c: parse old SUCCESS lines properly
 	* perl/Amanda/DB/Catalog.pm: same
