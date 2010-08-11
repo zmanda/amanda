@@ -1,5 +1,5 @@
 #!@PERL@ 
-# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -222,10 +222,22 @@ sub findpass {
     while ($line = <$amandapass>) {
 	chomp $line;
 	next if $line =~ /^#/;
-	my ($diskname, $userpasswd, $domain, $extra) = Amanda::Util::split_quoted_string_friendly($line);
+	my ($diskname, $userpasswd, $domain, $extra);
+	($diskname, $userpasswd)   = Amanda::Util::skip_quoted_string($line);
+	if ($userpasswd) {
+	    ($userpasswd, $domain) =
+				Amanda::Util::skip_quoted_string($userpasswd);
+	}
+	if ($domain) {
+	    ($domain, $extra) =
+				Amanda::Util::skip_quoted_string($domain);
+	}
 	if ($extra) {
 	    debug("Trailling characters ignored in amandapass line");
 	}
+	$diskname = Amanda::Util::unquote_string($diskname);
+	$userpasswd = Amanda::Util::unquote_string($userpasswd);
+	$domain = Amanda::Util::unquote_string($domain);
 	if (defined $diskname &&
 	    ($diskname eq '*' ||
 	     ($self->{unc}==0 && $diskname =~ m,^(//[^/]+)/\*$, && $1 eq $self->{cifshost}) ||
