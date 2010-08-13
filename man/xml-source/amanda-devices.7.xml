@@ -591,6 +591,10 @@ no authentication attempt at all).
 (read-write) Username for md5 or text authentications.
 </listitem></varlistentry>
  <!-- ==== -->
+<varlistentry><term>READ_BLOCK_SIZE</term><listitem>
+(read-write) This property specifies the block size that will be used for reads; this should be large enough to contain any block that may be read from the device and must be larger than BLOCK_SIZE. See BLOCK_SIZES, above.
+</listitem></varlistentry>
+ <!-- === -->
 </variablelist>
 
 </refsect3>

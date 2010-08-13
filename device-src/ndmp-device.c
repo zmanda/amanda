@@ -65,6 +65,7 @@ struct NdmpDevice_ {
     gchar	 *ndmp_password;
     gchar	 *ndmp_auth;
     gboolean	 verbose;
+    gsize	 read_block_size;
 };
 
 /*
@@ -139,12 +140,17 @@ static DevicePropertyBase device_property_ndmp_auth;
 #define PROPERTY_NDMP_PASSWORD (device_property_ndmp_password.ID)
 #define PROPERTY_NDMP_AUTH (device_property_ndmp_auth.ID)
 
+
 /*
  * prototypes
  */
 
 void ndmp_device_register(void);
 static void set_error_from_ndmp(NdmpDevice *self);
+
+#define ndmp_device_read_size(self) \
+    (((NdmpDevice *)(self))->read_block_size? \
+	((NdmpDevice *)(self))->read_block_size : ((Device *)(self))->block_size)
 
 /*
  * Utility functions
@@ -457,6 +463,7 @@ ndmp_device_read_label(
     dumpfile_t       *header;
     gpointer buf = NULL;
     guint64 buf_size = 0;
+    gsize read_block_size = 0;
 
     amfree(dself->volume_label);
     amfree(dself->volume_time);
@@ -480,10 +487,11 @@ ndmp_device_read_label(
 
     /* read the tape header from the NDMP server */
     dself->status = 0;
-    buf = g_malloc(dself->block_size);
+    read_block_size = ndmp_device_read_size(self);
+    buf = g_malloc(read_block_size);
     if (!ndmp_connection_tape_read(self->ndmp,
 	buf,
-	dself->block_size,
+	read_block_size,
 	&buf_size)) {
 
 	/* handle known errors */
@@ -836,6 +844,7 @@ ndmp_device_seek_file(
     gpointer buf;
     guint64 buf_size;
     dumpfile_t *header;
+    gsize read_block_size = 0;
 
     if (device_in_error(dself)) return FALSE;
 
@@ -904,9 +913,10 @@ incomplete_bsf:
     dself->block = 0;
 
     /* now read the header */
-    buf = g_malloc(dself->block_size);
+    read_block_size = ndmp_device_read_size(self);
+    buf = g_malloc(read_block_size);
     if (!ndmp_connection_tape_read(self->ndmp,
-		buf, dself->block_size, &buf_size)) {
+		buf, read_block_size, &buf_size)) {
 	switch (ndmp_connection_err_code(self->ndmp)) {
 	    case NDMP9_EOF_ERR:
 	    case NDMP9_EOM_ERR:
@@ -944,13 +954,14 @@ static int
 ndmp_device_read_block (Device * dself, gpointer data, int *size_req) {
     NdmpDevice *self = NDMP_DEVICE(dself);
     guint64 requested, actual;
+    gsize read_block_size = ndmp_device_read_size(self);
 
     /* We checked the NDMP device's blocksize when the device was opened, which should
      * catch any misalignent of server block size and Amanda block size */
 
-    g_assert(dself->block_size < INT_MAX); /* check data type mismatch */
-    if (!data || *size_req < (int)(dself->block_size)) {
-	*size_req = (int)(dself->block_size);
+    g_assert(read_block_size < INT_MAX); /* check data type mismatch */
+    if (!data || *size_req < (int)(read_block_size)) {
+	*size_req = (int)(read_block_size);
 	return 0;
     }
 
@@ -1605,6 +1616,25 @@ ndmp_device_set_verbose_fn(Device *p_self, DevicePropertyBase *base,
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
 
+static gboolean
+ndmp_device_set_read_block_size_fn(Device *p_self, DevicePropertyBase *base G_GNUC_UNUSED,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    NdmpDevice *self = NDMP_DEVICE(p_self);
+    gsize read_block_size = g_value_get_uint(val);
+
+    if (read_block_size != 0 &&
+	    ((gsize)read_block_size < p_self->block_size ||
+	     (gsize)read_block_size > p_self->max_block_size))
+	return FALSE;
+
+    self->read_block_size = read_block_size;
+
+    /* use the READ_BLOCK_SIZE, even if we're invoked to get the old READ_BUFFER_SIZE */
+    return device_simple_property_set_fn(p_self, base,
+					val, surety, source);
+}
+
 static void
 ndmp_device_class_init(NdmpDeviceClass * c G_GNUC_UNUSED)
 {
@@ -1656,6 +1686,10 @@ ndmp_device_class_init(NdmpDeviceClass * c G_GNUC_UNUSED)
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK,
 	    device_simple_property_get_fn,
 	    ndmp_device_set_verbose_fn);
+    device_class_register_property(device_class, PROPERTY_READ_BLOCK_SIZE,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    ndmp_device_set_read_block_size_fn);
 }
 
 static void
@@ -1714,6 +1748,13 @@ ndmp_device_init(NdmpDevice *self)
     g_value_set_enum(&response, MEDIA_ACCESS_MODE_READ_WRITE);
     device_set_simple_property(dself, PROPERTY_MEDIUM_ACCESS_TYPE,
 	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
+    g_value_unset(&response);
+
+    self->read_block_size = 0;
+    g_value_init(&response, G_TYPE_UINT);
+    g_value_set_uint(&response, self->read_block_size);
+    device_set_simple_property(dself, PROPERTY_READ_BLOCK_SIZE,
+            &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DEFAULT);
     g_value_unset(&response);
 
     g_value_init(&response, G_TYPE_STRING);

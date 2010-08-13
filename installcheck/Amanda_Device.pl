@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 502;
+use Test::More tests => 505;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -1137,7 +1137,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "not built with ndmp and server", 75 unless
+    skip "not built with ndmp and server", 78 unless
 	Amanda::Util::built_with_component("ndmp") and
 	Amanda::Util::built_with_component("server");
 
@@ -1197,6 +1197,15 @@ SKIP: {
     # set 'em back to the defaults
     $dev->property_set("ndmp_username", "ndmp");
     $dev->property_set("ndmp_password", "ndmp");
+
+    # use a big read_block_size, checking that it's also settable
+    # via read_buffer_size
+    ok($dev->property_set("read_block_size", 256*1024),
+    "can set read_block_size");
+    is($dev->property_get("read_block_size"), 256*1024,
+    "and its value is reflected");
+    ok($dev->property_set("read_block_size", 64*1024),
+    "set read_block_size back to something smaller");
 
     # ok, let's fire the thing up
     ok($dev->start($ACCESS_WRITE, "TEST1", "20090915000000"),
