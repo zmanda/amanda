@@ -17,6 +17,8 @@
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
 use Test::More tests => 4;
+use strict;
+use warnings;
 
 use lib "@amperldir@";
 use File::Path;

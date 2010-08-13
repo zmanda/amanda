@@ -18,6 +18,7 @@
 
 use Test::More tests => 55;
 use strict;
+use warnings;
 
 use lib "@amperldir@";
 use Amanda::Header;

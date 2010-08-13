@@ -18,6 +18,7 @@
 
 use Test::More tests => 181;
 use strict;
+use warnings;
 
 use lib "@amperldir@";
 use Installcheck::Config;

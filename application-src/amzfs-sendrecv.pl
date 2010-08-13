@@ -1,5 +1,5 @@
 #!@PERL@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -19,6 +19,7 @@
 
 use lib '@amperldir@';
 use strict;
+use warnings;
 use Getopt::Long;
 
 package Amanda::Application::Amzfs_sendrecv;

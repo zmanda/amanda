@@ -1,3 +1,40 @@
+2010-08-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/debugging.m4: make the default for syntax-checks
+	  "disabled", add a warning when enabling
+	* perl/Makefile.am config/automake/scripts.am: don't do any checks
+	  that require linking perl extension modules unless SYNTAX_CHECKS is
+	  set
+	* installcheck/Makefile.am: always skip syntax checks
+	* application-src/amlog-script.pl application-src/amraw.pl
+	  application-src/amsamba.pl application-src/amsuntar.pl
+	  application-src/amzfs-sendrecv.pl application-src/amzfs-snapshot.pl
+	  application-src/script-email.pl common-src/amgetconf.pl
+	  device-src/amdevcheck.pl device-src/amtapetype.pl
+	  installcheck/Amanda_Changer.pl installcheck/Amanda_Changer_ndmp.pl
+	  installcheck/Amanda_Changer_null.pl
+	  installcheck/Amanda_Changer_rait.pl
+	  installcheck/Amanda_Changer_robot.pl
+	  installcheck/Amanda_Changer_single.pl installcheck/Amanda_Cmdline.pl
+	  installcheck/Amanda_Config.pl installcheck/Amanda_Curinfo.pl
+	  installcheck/Amanda_Debug.pl installcheck/Amanda_Device.pl
+	  installcheck/Amanda_Disklist.pl installcheck/Amanda_Feature.pl
+	  installcheck/Amanda_Header.pl installcheck/Amanda_Logfile.pl
+	  installcheck/Amanda_NDMP.pl installcheck/Amanda_Process.pl
+	  installcheck/Amanda_Recovery_Scan.pl installcheck/Amanda_Tapelist.pl
+	  installcheck/Amanda_Taper_Scribe.pl installcheck/Amanda_Xfer.pl
+	  installcheck/amadmin.pl installcheck/amarchiver.pl
+	  installcheck/amcheck-device.pl installcheck/amcheck.pl
+	  installcheck/amcheckdump.pl installcheck/amdevcheck.pl
+	  installcheck/amdump.pl installcheck/amgetconf.pl
+	  installcheck/amlabel.pl installcheck/amoverview.pl
+	  installcheck/amrmtape.pl installcheck/amservice.pl
+	  installcheck/amstatus.pl installcheck/amtape.pl
+	  installcheck/amtapetype.pl installcheck/amvault.pl
+	  installcheck/bigint.pl installcheck/mock_mtx.pl installcheck/taper.pl
+	  server-src/amcheckdump.pl server-src/amcleanup.pl
+	  server-src/amlabel.pl server-src/amtape.pl server-src/amvault.pl: add
+	  strict and/or warnings, and fix (trivial) resulting warnings
+
 2010-08-13  Nikhil Bhupale <nikhilb@zmanda.com>
 	* AUTHORS: add Nikhil
 	* device-src/ndmp-device.c: add READ_BLOCK_SIZE support

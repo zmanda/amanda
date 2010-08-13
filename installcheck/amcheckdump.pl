@@ -1,4 +1,4 @@
-# Copyright (c) 2007,2008 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2007, 2008, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -17,6 +17,8 @@
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
 use Test::More tests => 9;
+use strict;
+use warnings;
 
 use lib "@amperldir@";
 use Installcheck::Config;
@@ -72,7 +74,7 @@ like(run_get('amcheckdump', 'TESTCONF'), qr(Validating),
 
 my $vtape1 = Installcheck::Run::vtape_dir(1);
 opendir(my $vtape_dir, $vtape1) || die "can't opendir $vtape1: $!";
-@dump1 = grep { /^0+1/ } readdir($vtape_dir);
+my @dump1 = grep { /^0+1/ } readdir($vtape_dir);
 closedir $vtape_dir;
 
 for my $dumpfile (@dump1) {

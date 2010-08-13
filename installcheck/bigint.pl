@@ -1,4 +1,4 @@
-# Copyright (c) 2008 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -17,6 +17,8 @@
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
 use Test::More tests => 74;
+use strict;
+use warnings;
 
 use lib "@amperldir@";
 use Amanda::Tests;
@@ -25,39 +27,39 @@ use Amanda::BigIntCompat;
 
 # define some constants; Perl doesn't have native 64-bit numbers, so
 # none are tested 
-$G_MAXUINT64_bigint = Math::BigInt->new('18446744073709551615');
-$G_MAXINT64_bigint = Math::BigInt->new('9223372036854775807');
-$G_MININT64_bigint = Math::BigInt->new('-9223372036854775808');
+my $G_MAXUINT64_bigint = Math::BigInt->new('18446744073709551615');
+my $G_MAXINT64_bigint = Math::BigInt->new('9223372036854775807');
+my $G_MININT64_bigint = Math::BigInt->new('-9223372036854775808');
 
-$G_MAXUINT32_native = 2 ** 32 - 1;
-$G_MAXUINT32_double = 2.0 ** 32 - 1;
-$G_MAXUINT32_bigint = Math::BigInt->new('4294967295');
-$G_MAXINT32_native = 2 ** 31 - 1;
-$G_MAXINT32_double = 2.0 ** 31 - 1;
-$G_MAXINT32_bigint = Math::BigInt->new('2147483647');
-$G_MININT32_native = - 2 ** 31;
-$G_MININT32_double = - 2.0 ** 31;
-$G_MININT32_bigint = Math::BigInt->new('-2147483648');
+my $G_MAXUINT32_native = 2 ** 32 - 1;
+my $G_MAXUINT32_double = 2.0 ** 32 - 1;
+my $G_MAXUINT32_bigint = Math::BigInt->new('4294967295');
+my $G_MAXINT32_native = 2 ** 31 - 1;
+my $G_MAXINT32_double = 2.0 ** 31 - 1;
+my $G_MAXINT32_bigint = Math::BigInt->new('2147483647');
+my $G_MININT32_native = - 2 ** 31;
+my $G_MININT32_double = - 2.0 ** 31;
+my $G_MININT32_bigint = Math::BigInt->new('-2147483648');
 
-$G_MAXUINT16_native = 2 ** 16 - 1;
-$G_MAXUINT16_double = 2.0 ** 16 - 1;
-$G_MAXUINT16_bigint = Math::BigInt->new('65535');
-$G_MAXINT16_native = 2 ** 15 - 1;
-$G_MAXINT16_double = 2.0 ** 15 - 1;
-$G_MAXINT16_bigint = Math::BigInt->new('32767');
-$G_MININT16_native = - 2 ** 15;
-$G_MININT16_double = - 2.0 ** 15;
-$G_MININT16_bigint = Math::BigInt->new('-32768');
+my $G_MAXUINT16_native = 2 ** 16 - 1;
+my $G_MAXUINT16_double = 2.0 ** 16 - 1;
+my $G_MAXUINT16_bigint = Math::BigInt->new('65535');
+my $G_MAXINT16_native = 2 ** 15 - 1;
+my $G_MAXINT16_double = 2.0 ** 15 - 1;
+my $G_MAXINT16_bigint = Math::BigInt->new('32767');
+my $G_MININT16_native = - 2 ** 15;
+my $G_MININT16_double = - 2.0 ** 15;
+my $G_MININT16_bigint = Math::BigInt->new('-32768');
 
-$G_MAXUINT8_native = 2 ** 8 - 1;
-$G_MAXUINT8_double = 2.0 ** 8 - 1;
-$G_MAXUINT8_bigint = Math::BigInt->new('255');
-$G_MAXINT8_native = 2 ** 7 - 1;
-$G_MAXINT8_double = 2.0 ** 7 - 1;
-$G_MAXINT8_bigint = Math::BigInt->new('127');
-$G_MININT8_native = - 2 ** 7;
-$G_MININT8_double = - 2.0 ** 7;
-$G_MININT8_bigint = Math::BigInt->new('-128');
+my $G_MAXUINT8_native = 2 ** 8 - 1;
+my $G_MAXUINT8_double = 2.0 ** 8 - 1;
+my $G_MAXUINT8_bigint = Math::BigInt->new('255');
+my $G_MAXINT8_native = 2 ** 7 - 1;
+my $G_MAXINT8_double = 2.0 ** 7 - 1;
+my $G_MAXINT8_bigint = Math::BigInt->new('127');
+my $G_MININT8_native = - 2 ** 7;
+my $G_MININT8_double = - 2.0 ** 7;
+my $G_MININT8_bigint = Math::BigInt->new('-128');
 
 # first test "taking" integers -- Perl -> C
 

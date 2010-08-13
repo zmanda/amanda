@@ -17,6 +17,8 @@
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
 use Test::More tests => 172;
+use strict;
+use warnings;
 
 use lib '@amperldir@';
 use Installcheck::Run;
@@ -177,8 +179,8 @@ sub check_logs {
     close($logfile);
 
     while (@logfile and @$expected) {
-	$logline = shift @logfile;
-	$expline = shift @$expected;
+	my $logline = shift @logfile;
+	my $expline = shift @$expected;
 	chomp $logline;
 	if ($logline !~ $expline) {
 	    like($logline, $expline, $msg);

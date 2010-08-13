@@ -19,6 +19,7 @@
 
 use lib '@amperldir@';
 use strict;
+use warnings;
 
 use File::Basename;
 use Getopt::Long;

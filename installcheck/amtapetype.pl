@@ -17,6 +17,8 @@
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
 use Test::More tests => 5;
+use strict;
+use warnings;
 
 use lib "@amperldir@";
 use Installcheck::Run qw(run run_get run_err vtape_dir);

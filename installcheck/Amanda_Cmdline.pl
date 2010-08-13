@@ -1,4 +1,4 @@
-# Copyright (c) 2007,2008 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2007, 2008, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -17,11 +17,16 @@
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
 use Test::More tests => 43;
+use strict;
+use warnings;
 
 use lib "@amperldir@";
 use Amanda::Paths;
 use Amanda::Cmdline qw( header_matches_dumpspecs );
 use Amanda::Header;
+
+my @specs;
+my $hdr;
 
 # convert a dumpspec_t object to an array, for easy is_deeply() comparisons
 sub ds2av {
@@ -58,7 +63,6 @@ is_deeply([ ds2av(Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, undef, "
 	  "dumpspec_t constructor returns a valid dumpspec with only write_timestamp arg");
 
 # TODO: test parse_dumpspecs
-my @specs;
 
 @specs = Amanda::Cmdline::parse_dumpspecs(["h1", "d1", "h2", "d2"], 0);
 is(@specs, 2, "parse of four elements with no flags yields 2 specs");

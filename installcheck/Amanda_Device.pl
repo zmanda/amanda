@@ -21,6 +21,7 @@ use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
 use strict;
+use warnings;
 
 use lib "@amperldir@";
 use Installcheck;

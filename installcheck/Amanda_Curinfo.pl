@@ -16,9 +16,10 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use strict;
-
 use Test::More tests => 18;
+use strict;
+use warnings;
+
 use File::Path qw(mkpath);
 use Data::Dumper;
 

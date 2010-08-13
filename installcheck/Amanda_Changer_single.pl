@@ -19,6 +19,7 @@
 use Test::More tests => 6;
 use File::Path;
 use strict;
+use warnings;
 
 use lib "@amperldir@";
 use Installcheck::Config;

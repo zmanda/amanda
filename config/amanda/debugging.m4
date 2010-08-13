@@ -152,26 +152,30 @@ AC_DEFUN([AMANDA_WITH_TESTING],
 
 # SYNOPSIS
 #
-#   AMANDA_CHECK_SCRIPTS_AT_BUILD
+#   AMANDA_ENABLE_SYNTAX_CHECKS
 #
 # OVERVIEW
 #
-#   Handles the --disable-syntax-checks flag, which un-sets the
-#   CHECK_SCRIPTS_AT_BUILD automake conditional
+#   Handles the --enable-syntax-checks flag, which triggers syntax checks
+#   for most 'make' targets, but causes spurious errors in all but the most
+#   carefully-constructed build environments.
 
 AC_DEFUN([AMANDA_DISABLE_SYNTAX_CHECKS],
 [
     AC_ARG_ENABLE(syntax-checks,
-	AS_HELP_STRING([--disable-syntax-checks],
-	    [Do not perform syntax checks when installing]),
+	AS_HELP_STRING([--enable-syntax-checks],
+	    [Perform syntax checks when installing - developers only]),
 	[
 	    case "$enableval" in
-		no) CHECK_SCRIPTS_AT_BUILD=false;;
-		*) CHECK_SCRIPTS_AT_BUILD=true;;
+		no) SYNTAX_CHECKS=false;;
+		*)
+		    SYNTAX_CHECKS=true
+		    AMANDA_MSG_WARN([--enable-syntax-checks can cause build failures and should only be used by developers])
+		    ;;
 	    esac
 	], [
-	    CHECK_SCRIPTS_AT_BUILD=true
+	    SYNTAX_CHECKS=false
 	])
 
-    AM_CONDITIONAL(CHECK_SCRIPTS_AT_BUILD, $CHECK_SCRIPTS_AT_BUILD)
+    AM_CONDITIONAL(SYNTAX_CHECKS, $SYNTAX_CHECKS)
 ])

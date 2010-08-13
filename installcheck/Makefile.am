@@ -169,6 +169,9 @@ CHECK_PERL_FLAGS=-I$(top_srcdir)/installcheck
 SCRIPTS_PERL = $(tests) $(mocks) $(noinst_SCRIPTS)
 SCRIPTS_EXTRA_DIST = $(all_tests)
 
+# skip syntax checks on these files, since we're about to run all of them
+SKIP_CHECKS = yes
+
 .PHONY: clobber_my_config_is_ok
 clobber_my_config_is_ok:
 	@if test "$(CONFIG_CLOBBER_MY_CONFIG)" != "OK" -a \

@@ -19,6 +19,7 @@
 
 use lib '@amperldir@';
 use strict;
+use warnings;
 
 package main::Interactive;
 use POSIX qw( :errno_h );

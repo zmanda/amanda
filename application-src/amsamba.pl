@@ -19,6 +19,7 @@
 
 use lib '@amperldir@';
 use strict;
+use warnings;
 use Getopt::Long;
 
 package Amanda::Application::Amsamba;

@@ -511,21 +511,23 @@ install-data-hook:
 	done
 endif
 
-check-local: syntax-check thread-check
+check-local: thread-check
 
-syntax-check:
+# only syntax-check the .pm files if SYNTAX_CHECKS are enabled
+check-pm:
 	@MODULES_TO_CHECK="$(PM_FILES)"; \
 	if test -f $(top_builddir)/perl/.libs/libConfig.so -o -f $(top_builddir)/perl/libConfig.so; then \
-		if test -n "$(PERL)"; then \
-			for perlobj in $$MODULES_TO_CHECK; do \
-				if test -f $$perlobj; then \
-					$(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -T $$perlobj || exit 1; \
-				else \
-					$(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -T $(top_srcdir)/perl/$$perlobj || exit 1; \
-				fi \
-			done; \
+	    for perlobj in $$MODULES_TO_CHECK; do \
+		if test -f $$perlobj; then \
+		    $(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -T $$perlobj || exit 1; \
+		else \
+		    $(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -T $(top_srcdir)/perl/$$perlobj || exit 1; \
 		fi \
+	    done; \
         fi
+if SYNTAX_CHECKS
+check-local: check-pm
+endif
 
 if WANT_SERVER
 thread-check: libTests.la

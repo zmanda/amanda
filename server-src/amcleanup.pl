@@ -19,6 +19,7 @@
 
 use lib '@amperldir@';
 use strict;
+use warnings;
 
 use Getopt::Long;
 use Amanda::Config qw( :init :getconf config_dir_relative );
