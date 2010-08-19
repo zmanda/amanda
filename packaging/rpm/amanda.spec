@@ -121,8 +121,14 @@
 # Detect Suse variants. 
 %if %{_vendor} == "suse"
     %define dist SuSE
-    %define disttag %(awk '$1=="SUSE" {$3=="Enterprise" ? TAG="sles" : TAG="suse" ; print TAG}' /etc/SuSE-release)
-    %define distver %(awk '$1=="SUSE" {$3=="Enterprise" ? VER=$5 : VER=$3 ; print VER}' /etc/SuSE-release)
+    %if %(awk '$1 == "openSUSE" { exit 1; }' /etc/SuSE-release; echo $?)
+        %define disttag suse
+        %define distver %(awk '$1=="openSUSE" {print $2}' /etc/SuSE-release)
+    %endif
+    %if %(awk '$1 == "SUSE" { exit 1; }' /etc/SuSE-release; echo $?)
+        %define disttag %(awk '$1=="SUSE" {$3=="Enterprise" ? TAG="sles" : TAG="suse" ; print TAG}' /etc/SuSE-release)
+        %define distver %(awk '$1=="SUSE" {$3=="Enterprise" ? VER=$5 : VER=$3 ; print VER}' /etc/SuSE-release)
+    %endif
 %endif
 
 # Set options per distribution
@@ -178,6 +184,7 @@ BuildRequires: bison
 BuildRequires: flex
 BuildRequires: gcc
 BuildRequires: glibc >= 2.2.0
+BuildRequires: glib2-devel
 BuildRequires: readline
 # Note: newer distros have changed most *-devel to lib*-devel, and added a
 # provides tag for backwards compat.
@@ -1605,161 +1612,5 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 # --- ChangeLog
 
 %changelog
-* Mon Sep 15 2008 Dan Locks <dwlocks at zmanda dot com> 2.6.1alpha
-- Added detection of CentOS 4 and 5 as suggested by dswartz
-- graceful failure when Distro/version is not detected correctly
-* Thu Jun 12 2008 Dan Locks <dwlocks at zmanda dot com> 2.6.1alpha
-- install amgtar and amstar suid root
-* Mon Jun 09 2008 Dan Locks <dwlocks at zmanda dot com> 2.6.1alpha
-- Replaced individual SBINDIR/am... entries with SBINDIR/am* in %%files
-* Fri May 02 2008 Dan Locks <dwlocks at zmanda dot com>
-- Changed instances of ${ to %%{ where applicable
-* Tue Mar 11 2008 Dan Locks <dwlocks at zmanda dot com>
-- fixed many rpmlint complaints
-- added --quiet to configure statements
-- added PERLSITELIB to definitions section and perl files to %%files section
-* Wed Feb 13 2008 Dan Locks <dwlocks at zmanda dot com>
-- added an environment check for PKG_CONFIG_PATH
-- added PKG_CONFIG_PATH conditional to handle cross comp on FC8 (environment 
-  var is used if provided)
-* Fri Feb 01 2008 Dan Locks <dwlocks at zmanda dot com>
-- Removed amplot executable and manpages from client installation
-- Added amcheckdump.8 manpage
-- Fixed %%{LOCALSTATEDIR}/amanda dir creation.
-* Wed Jan 23 2008  Dan Locks <dwlocks at zmanda dot com>
-- Change %%{SYSCONFDIR}/amanda/amandates to %%{LOCALSTATEDIR}/amanda/amandates,
-  and added %%{LOCALSTATEDIR}/amanda to the files lists.
-* Mon Jan 14 2008  Dan Locks <dwlocks at zmanda dot com>
-- Updates for perlified amanda, file location moves, gpg setup.
-* Tue Nov  13 2007 Paddy Sreenivasan <paddy at zmanda dot com>
-- Added SYSCONFDIR to client rpm
-- Set xinetd and amanda-client.conf configuration files as part of postinstall
-* Thu Nov  8 2007 Dan Locks <dwlocks at zmanda dot com>
-- Added Linux distribution detection
-* Wed Nov 7 2007 Paddy Sreenivasan <paddy at zmanda dot com>
-- Added amserverconfig, amaddclient, amgpgcrypt, amcryptsimple and libamdevice.
-- Added amanda configuration template files
-* Fri Sep 21 2007 Paddy Sreenivasan <paddy at zmanda dot com>
-- Remove libamserver, libamtape from client rpm
-* Wed Sep 19 2007 Paddy Sreenivasan <paddy at zmanda dot com>
-- Added Fedora 7
-* Tue Jun 26 2007 Kevin Till <ktill at zmanda dot com>
-- set debug log to /var/log/amanda
-* Fri Jan 12 2007 Paddy Sreenivasan <paddy at zmanda dot com>
-- Added label templates
-* Thu Dec 07 2006 Paddy Sreenivasan <paddy at zmanda dot com>
-- Application API changes
-* Fri Jun 16 2006 Kevin Till <ktill at zmanda dot com>
-- make install will install necessary example files. 
-  No need to "cp"
-* Wed Jun 07 2006 Paddy Sreenivasan <paddy at zmanda dot com> -
-- Added amoldrecover and amanda-client.conf man page.
-* Thu Jun 01 2006 Kevin Till <ktill at zmanda dot com> -
-- Added amcrypt-ossl, amcrypt-ossl-asym by Ben Slusky.
-* Thu May 18 2006 Paddy Sreenivasan <paddy at zmanda dot com> -
-- Added SLES10, RHEL3 build options.
-* Tue May 09 2006 Chris Lee <cmlee at zmanda dot com> -
-- Added amanda-release file to amandabackup home directory.
-- Installation message logging cleanup.
-* Thu Apr 27 2006 Paddy Sreenivasan <paddy at zmanda dot com> -
-- Removed dependency on tar version.
-- Moved log directory creation after backup user creation.
-* Wed Apr 19 2006 Chris Lee <cmlee at zmanda dot com> -
-- Added informative message to note the location of pre- and post-
-- install script logs files.
-* Mon Apr 17 2006 Chris Lee <cmlee at zmanda dot com> -
-- Reworked installation message logging and reporting.
-* Fri Apr 14 2006 Chris Lee <cmlee at zmanda dot com> -
-- Changed behavior for creating required localhost entries in the
-- amandahosts file to check for these entries even when the file
-- already exists.
-* Wed Apr 12 2006 Chris Lee <cmlee at zmanda dot com> -
-- Removed pre-install check for "disk" group.  This group should exist
-- by default on almost all modern distributions.
-* Tue Apr 11 2006 Chris Lee <cmlee at zmanda dot com> -
-- Added amandahosts entry for "localhost" without domain.
-* Fri Apr 07 2006 Chris Lee <cmlee at zmanda dot com> -
-- Changed default entries in .amandahosts to use "localdomain" instead
-- of "localnet".
-- Updated amanda_version and release.
-* Mon Apr 03 2006 Chris Lee <cmlee at zmanda dot com> -
-- Added example amanda.conf to files.
-* Thu Mar 16 2006 Chris Lee <cmlee at zmanda dot com> -
-- Corrected an issue with pre-install scripts wrt bug #218.
-- Corrected an issue with post-install scripts and added testing .profile 
-- in amandabackup's home directory for setting environment variables wrt
-- bug #220.
-* Mon Mar 13 2006 Chris Lee <cmlee at zmanda dot com> -
-- Corrected a syntactical error with setting ownership of amandates file
-- wrt bug #216.
-* Wed Mar 08 2006 Chris Lee <cmlee at zmanda dot com> -
-- Added pre-install scripts to verify proper ownership of
-- amandabackup home directory.
-* Thu Feb 2 2006 Paddy Sreenivasan <paddy at zmanda dot com> -
-- Require xinetd. Require termcap and initscripts for Fedora and Redhat.
-* Mon Jan 09 2006 Chris Lee <cmlee at zmanda dot com> -
-- Pre/post install scripts updated:
-- o Resolved an issue where an empty amandates file was installed
--   even if the file already existed on the system.
-- o If .amandahosts does not exist a default is now created.
-- The Amanda user account has been changed to 'amandabackup' for
-- additional security.
-* Tue Jan 03 2006 Paddy Sreenivasan <paddy at zmanda dot com> -
-- Removed amandates from files list.
-* Thu Dec 29 2005 Chris Lee <cmlee at zmanda dot com> -
-- Corrected dependency for awk to "/bin/awk".
-* Thu Dec 29 2005 Kevin Till <ktill at zmanda dot com> -
-- add man pages for amcrypt and amaespipe
-* Thu Dec 29 2005 Chris Lee <cmlee at zmanda dot com> -
-- Updated dependancy info to depend on tar >= 1.15.
-- Included dependancies from top-level package in backup_client and
-- backup_server packages.
-- Reorganized files lists for readability (alphabetically).
-- Updated backup_client files list to include some missing files per
-- bug #129.
-- Updated pre- and post-install to handle potential issue when
-- /var/log/amanda exists and is a file rather than a directory.
-- Corrected permissions for /var/log/amanda in pre-install scripts
-- per bug #78 and 13 December change.
-* Thu Dec 22 2005 Paddy Sreenivasan <paddy at zmanda dot com> -
-- Added amaespipe and amcrypt
-- Added sles9 build definitions
-* Tue Dec 13 2005 Chris Lee <cmlee at zmanda dot com> -
-- Changed permissions for /var/log/amanda, removing set group id bit.
-- Added /etc/amandates to backup_client package.
-* Thu Dec 08 2005 Chris Lee <cmlee at zmanda dot com> -
-- Corrected an issue with detection of existing 'amanda' user account.
-- Corrected ownership of setuid executables per Bug #66.
-- Moved the gnutar and noop files to the backup_client package (where
-- they sould be).
-- Removed amqde from files list.
-- Added logging features to pre- and post-install scripts.
-* Wed Dec 07 2005 Chris Lee <cmlee at zmanda dot com> -
-- Changed a number of directory and file permissions from amanda:root
-- to amanda:disk in response to Bug #57.
-* Fri Dec 02 2005 Chris Lee <cmlee at zmanda dot com> -
-- Corrected SYSCONFDIR path definition.  Closes Bug #58.
-* Mon Nov 28 2005 Chris Lee <cmlee at zmanda dot com> -
-- Really fixed user creation preinstall scripts.
-* Wed Nov 23 2005 Paddy Sreenivasan <paddy at zmanda dot com> -
-- Updated package description.
-- Changed Group for packages.
-* Tue Nov 22 2005 Chris Lee <cmlee at zmanda dot com> -
-- Corrected dependancy packaging issue with amanda libraries.
-- Fixed creation of amanda user on systems which it does not exist.
-- Corrected Group definition for SuSE.
-- Updated descriptions to include amanda-libs package.
-- Updated release number to 2.
-* Tue Nov 08 2005 Chris Lee <cmlee at zmanda dot com> -
-- Permissions changes: now using user=amanda, group=disk
-* Sun Oct 30 2005 Chris Lee <cmlee at zmanda dot com> -
-- Parameters to configure options --with-user and --with-group changed
-- such that when test_build is set to '1' the username of the user who
-- runs rpmbuild is used for both values.  If test_build is set to '0'
-- then root is used for both values.
-- The release field was also changed to automatically reflect the
-- distribution and distribution release version for which the RPM was
-- built.
-* Tue Oct 18 2005 Chris Lee <cmlee at zmanda dot com> - 
-- Initial RPM SPEC file created.
-
+* Thu Aug 19 2010 Dan Locks <dwlocks at zmanda dot com> 3.2.0alpha
+- Added detection of openSuSE 11 as suggested by ssgelm
