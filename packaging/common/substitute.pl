@@ -17,7 +17,7 @@ if ( not -e "packaging/common/substitute.pl" ) {
 
 sub get_version {
 	# Two build cases: from checkout (svn info works), or dist tarball
-	# (configure.ac will have the version). First try configure.ac, then
+	# (FULL_VERSION will exist). First try FULL_VERSION, then
 	# try svn info, which takes more time and processing. We assume our url
 	# is structured something like this:
 	# http://<server>/<project>/<trunk|branches|tags>/[<branch>|<tag>]
@@ -25,19 +25,19 @@ sub get_version {
 	# file:/// and short DNS names should work too.
 	
 	my $VERSION;
-	my $version_file = "VERSION";
+	my $version_file = "FULL_VERSION";
 	my $version_handle;
 	my $versioned_tree = 'packaging/deb';
 	if (-e $version_file) {
-		# Autogen has been run, search VERSION file.
+		# Autogen has been run, search FULL_VERSION file.
 		if (-e "$version_file") {
 			open($version_handle, "<", "$version_file") or
-			    die "Could not open VERSION.";
+			    die "Could not open FULL_VERSION.";
 			chomp($VERSION = <$version_handle>);
 			close($version_file);
 			
 		} else {
-			die "Could not find VERSION file.";
+			die "Could not find FULL_VERSION file.";
 		}
 	}
 	if ( ! $VERSION ) {

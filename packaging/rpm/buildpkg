@@ -20,12 +20,16 @@
 # statements immediately above it. good luck.
 
 # This is useful for debugging
-# set -x
+ set -x
 # Check for $AMVER, or pull it from configure.in
 if [ -z $AMVER ]; then
     VER=`cat FULL_VERSION`
     AMVER=amanda-${VER}
 fi
+
+# Substitute amanda.spec.src
+/usr/bin/perl packaging/common/substitute.pl \
+    packaging/rpm/amanda.spec.src packaging/rpm/amanda.spec
 
 PKG_TARBALL=${AMVER}.tar.gz
 if [ ! -f "${PKG_TARBALL}" ]; then

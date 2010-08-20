@@ -152,8 +152,9 @@
 
 # --- Definitions ---
 
-# Define amanda_version from configure.in if it is not already defined.
-%{!?amanda_version: %define amanda_version %(eval %{__cat} FULL_VERSION) }
+# Define amanda_version using the value determined by
+# packaging/common/substitute.pl.
+%{!?amanda_version: %define amanda_version %%VERSION%% }
 %{!?amanda_release: %define amanda_release 1}
 %define amanda_version_info "Amanda Community Edition - version %{amanda_version}"
 %define amanda_user amandabackup
@@ -183,7 +184,7 @@ BuildRequires: binutils
 BuildRequires: bison
 BuildRequires: flex
 BuildRequires: gcc
-BuildRequires: glibc >= 2.2.0
+BuildRequires: glib2 >= 2.2.0
 BuildRequires: glib2-devel
 BuildRequires: readline
 # Note: newer distros have changed most *-devel to lib*-devel, and added a
@@ -1612,5 +1613,7 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 # --- ChangeLog
 
 %changelog
+* Fri Aug 20 2010 Dan Locks <dwlocks at zmanda dot com> 3.2.0alpha
+- use %%VERSION%% macro instead of reading a file.  error reported by ssgelm
 * Thu Aug 19 2010 Dan Locks <dwlocks at zmanda dot com> 3.2.0alpha
 - Added detection of openSuSE 11 as suggested by ssgelm

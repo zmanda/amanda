@@ -1,4 +1,13 @@
 2010-08-20 Dan Locks <dwlocks@zmanda.com>
+	*  The error fixed here was reported by ssgelm.
+	*  packaging/common/substitute.pl: Use FULL_VERSION instead of
+	   VERSION.
+	*  packaging/rpm/amanda.spec.src: renamed from amanda.spec, added
+	   %%VERSION%% macro for substitute.pl, fixed glib2 requires typo
+	*  packaging/rpm/buildpkg: refactored into "do_thing" functions, added
+	   substitute.pl machinery.
+
+2010-08-20 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/rpm/amanda.spec: add openSuSE 11 detection and
 	   buildrequires glib2-devel, as written by ssgelm
 
