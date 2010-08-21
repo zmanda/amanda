@@ -756,12 +756,10 @@ build_header(const dumpfile_t * file, size_t *size, size_t max_size)
         g_string_append_printf(rval, "\n");
         
 	if (file->cont_filename[0] != '\0') {
-	    validate_no_space(file->cont_filename, "cont_filename");
             g_string_append_printf(rval, "CONT_FILENAME=%s\n",
                                    file->cont_filename);
 	}
 	if (file->application[0] != '\0') {
-	    validate_no_space(file->application, "application");
             g_string_append_printf(rval, "APPLICATION=%s\n", file->application);
 	}
 	if (file->is_partial != 0) {
