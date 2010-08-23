@@ -3,15 +3,15 @@ Section: utils
 Priority: optional
 Maintainer: Zmanda Inc <support@zmanda.com>
 Build-Depends: debhelper, dump, fakeroot, flex, gnuplot|gnuplot-nox, libtool,
-	mailx|bsd-mailx, mtx, perl (>=5.6.0), smbclient, libcurl-dev,
+	mailx|bsd-mailx, mtx, perl (>=5.6.0), procps, smbclient, libcurl-dev,
 	libglib2.0-dev, libncurses5-dev, libreadline5-dev|libreadline-dev,
 	libssl-dev
 Standards-Version: 3.6.1
 
 Package: amanda-backup-server
 Architecture: any
-Depends: xinetd, perl (>=5.6.0), mailx|bsd-mailx, gnuplot|gnuplot-nox,
-	tar (>=1.15), ${shlibs:Depends}, ${perl:Depends}
+Depends: ca-certificates, xinetd, perl (>=5.6.0), mailx|bsd-mailx,
+	gnuplot|gnuplot-nox, tar (>=1.15), ${shlibs:Depends}, ${perl:Depends}
 Conflicts: amanda-client, amanda-common, amanda-server, amanda-backup-client
 Description: Amanda Network Backup and Archiving software
  .
@@ -27,8 +27,9 @@ Description: Amanda Network Backup and Archiving software
 
 Package: amanda-backup-client
 Architecture: any
-Depends: xinetd, perl (>=5.6.0), grep, ${shlibs:Depends}, ${perl:Depends}
-Conflicts: amanda-backup-server, amanda-client, amanda-common, amanda-server
+Depends: ca-certificates, xinetd, perl (>=5.6.0), grep, ${shlibs:Depends},
+	${perl:Depends} Conflicts: amanda-backup-server, amanda-client,
+	amanda-common, amanda-server
 Description: Amanda Network Backup and Archiving software
  .
  Amanda is the leading Open-Source Backup and Archiving software.
