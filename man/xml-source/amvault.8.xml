@@ -27,6 +27,8 @@
 <cmdsynopsis>
   <command>amvault</command>
     &configoverride.synopsis;
+    <arg choice='opt'>-q</arg> <arg choice='opt'>--quiet</arg>
+    <arg choice='opt'>--fulls-only </arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>src-run-timestamp</replaceable></arg>
     <arg choice='plain'><replaceable>dst-changer</replaceable></arg>
@@ -38,14 +40,13 @@
 <para>This application is not yet in its final form, and is subject to major revision
 in subsequent versions of Amanda.  Backward compatibility is not guaranteed.</para>
 
-<para>The significant limitations of this version of amvault are: tapetypes for
-secondary and tertiary volumes much match (including length and
-device_properties); tertiary volumes must be blank (manual erasure is required
-to re-use tertiary media; restore/recover operations will request tertiary
-media by label when dumpfiles are not found on secondary media, but there is no
-provision to automatically fetch such media from a different changer; and all
-dumpfiles on a secondary volume are moved to tertiary media - there is no
-provision to filter dumps.</para>
+<para>The significant limitations of this version of amvault are: tertiary
+volumes must be blank (manual erasure is required to re-use tertiary media;
+restore/recover operations will request tertiary media by label when
+dumpfiles are not found on secondary media, but there is no provision to
+automatically fetch such media from a different changer; and all dumpfiles
+on a secondary volume are moved to tertiary media - there is no provision
+to filter dumps, aside from the <arg>--fulls-only</arg> option.</para>
 
 <para>Feedback on and patches to this application are invited and
 encouraged!</para>
@@ -59,7 +60,8 @@ timestamp <emphasis remap='I'>src-run-timestamp</emphasis> onto volumes using
 the changer <emphasis remap='I'>dst-changer</emphasis>, labeling new volumes
 with <emphasis remap='I'>label-template</emphasis>.  If <emphasis
 remap='I'>src-run-timestamp</emphasis> is "latest", then the most recent amdump
-or amflush run will be used.</para>
+or amflush run will be used.  If <arg>--fulls-only</arg> is given, then only
+full (level-0) dumps are copied.</para>
 
 <para>In a vaulting operation, the source media is referred to as "secondary
 media", while the destination is referred to as "tertiary media".</para>

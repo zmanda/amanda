@@ -121,6 +121,7 @@ sub new {
 
     bless {
 	quiet => $params{'quiet'},
+	fulls_only => $params{'fulls_only'},
 
 	src_write_timestamp => $params{'src_write_timestamp'},
 
@@ -192,8 +193,9 @@ sub setup_src {
     $self->{'cleanup'}{'quit_clerk'} = 1;
 
     # convert the timestamp to a dumpspec for make_plan
+    my $levelspec = $self->{'fulls_only'}? "0" : undef;
     my $ds = Amanda::Cmdline::dumpspec_t->new(
-	    undef, undef, $self->{'src_write_timestamp'}, undef, undef);
+	    undef, undef, $self->{'src_write_timestamp'}, $levelspec, undef);
 
     Amanda::Recovery::Planner::make_plan(
 	    dumpspec => $ds,
@@ -618,11 +620,12 @@ sub usage {
     print <<EOF;
 **NOTE** this interface is under development and will change in future releases!
 
-Usage: amvault [-o configoption]* [-q|--quiet]
+Usage: amvault [-o configoption]* [-q|--quiet] [--fulls-only]
 	<conf> <src-run-timestamp> <dst-changer> <label-template>
 
     -o: configuration override (see amanda(8))
     -q: quiet progress messages
+    --fulls-only: only copy full (level-0) dumps
 
 Copies data from the run with timestamp <src-run-timestamp> onto volumes using
 the changer <dst-changer>, labeling new volumes with <label-template>.  If
@@ -637,10 +640,12 @@ Amanda::Util::setup_application("amvault", "server", $CONTEXT_CMDLINE);
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 my $opt_quiet = 0;
+my $opt_fulls_only = 0;
 Getopt::Long::Configure(qw{ bundling });
 GetOptions(
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
     'q|quiet' => \$opt_quiet,
+    'fulls-only' => \$opt_fulls_only,
     'version' => \&Amanda::Util::version_opt,
     'help' => \&usage,
 ) or usage();
@@ -673,7 +678,8 @@ my $vault = Amvault->new(
     dst_changer => $dst_changer,
     dst_label_template => $label_template,
     dst_write_timestamp => Amanda::Util::generate_timestamp(),
-    quiet => $opt_quiet);
+    quiet => $opt_quiet,
+    fulls_only => $opt_fulls_only);
 Amanda::MainLoop::call_later(sub { $vault->run($exit_cb) });
 Amanda::MainLoop::run();
 
