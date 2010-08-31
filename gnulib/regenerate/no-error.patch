@@ -9,6 +9,7 @@ Index: gnulib/Makefile.am
 +if GCC_COMPILER
 +  AM_CFLAGS = -Wno-error -Wno-sign-compare
 +endif
+ AM_CFLAGS =
  
  noinst_LTLIBRARIES += libgnu.la
  

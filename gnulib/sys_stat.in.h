@@ -1,9 +1,9 @@
 /* Provide a more complete sys/stat header file.
-   Copyright (C) 2005-2009 Free Software Foundation, Inc.
+   Copyright (C) 2005-2010 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
+   the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -38,18 +38,26 @@
 /* Get nlink_t.  */
 #include <sys/types.h>
 
+/* Get struct timespec.  */
+#include <time.h>
+
 /* The include_next requires a split double-inclusion guard.  */
 #@INCLUDE_NEXT@ @NEXT_SYS_STAT_H@
 
 #ifndef _GL_SYS_STAT_H
 #define _GL_SYS_STAT_H
 
-/* The definition of GL_LINK_WARNING is copied here.  */
+/* The definitions of _GL_FUNCDECL_RPL etc. are copied here.  */
+
+/* The definition of _GL_ARG_NONNULL is copied here.  */
+
+/* The definition of _GL_WARN_ON_USE is copied here.  */
 
 /* Before doing "#define mkdir rpl_mkdir" below, we need to include all
    headers that may declare mkdir().  */
 #if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
-# include <io.h>
+# include <io.h>     /* mingw32, mingw64 */
+# include <direct.h> /* mingw64 */
 #endif
 
 #ifndef S_IFMT
@@ -278,53 +286,96 @@
 # define S_IRWXUGO (S_IRWXU | S_IRWXG | S_IRWXO)
 #endif
 
-
-#ifdef __cplusplus
-extern "C" {
+/* Macros for futimens and utimensat.  */
+#ifndef UTIME_NOW
+# define UTIME_NOW (-1)
+# define UTIME_OMIT (-2)
 #endif
 
 
-#if @GNULIB_LSTAT@
-# if ! @HAVE_LSTAT@
-/* mingw does not support symlinks, therefore it does not have lstat.  But
-   without links, stat does just fine.  */
-#  define lstat stat
-# elif @REPLACE_LSTAT@
-#  undef lstat
-#  define lstat rpl_lstat
-extern int rpl_lstat (const char *name, struct stat *buf);
+#if @GNULIB_FCHMODAT@
+# if !@HAVE_FCHMODAT@
+_GL_FUNCDECL_SYS (fchmodat, int,
+                  (int fd, char const *file, mode_t mode, int flag)
+                  _GL_ARG_NONNULL ((2)));
 # endif
+_GL_CXXALIAS_SYS (fchmodat, int,
+                  (int fd, char const *file, mode_t mode, int flag));
+_GL_CXXALIASWARN (fchmodat);
 #elif defined GNULIB_POSIXCHECK
-# undef lstat
-# define lstat(p,b)							\
-  (GL_LINK_WARNING ("lstat is unportable - "				\
-		    "use gnulib module lstat for portability"),		\
-   lstat (p, b))
-#endif
-
-
-#if @REPLACE_MKDIR@
-# undef mkdir
-# define mkdir rpl_mkdir
-extern int mkdir (char const *name, mode_t mode);
-#else
-/* mingw's _mkdir() function has 1 argument, but we pass 2 arguments.
-   Additionally, it declares _mkdir (and depending on compile flags, an
-   alias mkdir), only in the nonstandard <io.h>, which is included above.  */
-# if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
-
-static inline int
-rpl_mkdir (char const *name, mode_t mode)
-{
-  return _mkdir (name);
-}
-
-#  define mkdir rpl_mkdir
+# undef fchmodat
+# if HAVE_RAW_DECL_FCHMODAT
+_GL_WARN_ON_USE (fchmodat, "fchmodat is not portable - "
+                 "use gnulib module openat for portability");
 # endif
 #endif
 
 
-/* Declare BSD extensions.  */
+#if @REPLACE_FSTAT@
+# if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#  define fstat rpl_fstat
+# endif
+_GL_FUNCDECL_RPL (fstat, int, (int fd, struct stat *buf) _GL_ARG_NONNULL ((2)));
+_GL_CXXALIAS_RPL (fstat, int, (int fd, struct stat *buf));
+#else
+_GL_CXXALIAS_SYS (fstat, int, (int fd, struct stat *buf));
+#endif
+_GL_CXXALIASWARN (fstat);
+
+
+#if @GNULIB_FSTATAT@
+# if @REPLACE_FSTATAT@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef fstatat
+#   define fstatat rpl_fstatat
+#  endif
+_GL_FUNCDECL_RPL (fstatat, int,
+                  (int fd, char const *name, struct stat *st, int flags)
+                  _GL_ARG_NONNULL ((2, 3)));
+_GL_CXXALIAS_RPL (fstatat, int,
+                  (int fd, char const *name, struct stat *st, int flags));
+# else
+#  if !@HAVE_FSTATAT@
+_GL_FUNCDECL_SYS (fstatat, int,
+                  (int fd, char const *name, struct stat *st, int flags)
+                  _GL_ARG_NONNULL ((2, 3)));
+#  endif
+_GL_CXXALIAS_SYS (fstatat, int,
+                  (int fd, char const *name, struct stat *st, int flags));
+# endif
+_GL_CXXALIASWARN (fstatat);
+#elif defined GNULIB_POSIXCHECK
+# undef fstatat
+# if HAVE_RAW_DECL_FSTATAT
+_GL_WARN_ON_USE (fstatat, "fstatat is not portable - "
+                 "use gnulib module openat for portability");
+# endif
+#endif
+
+
+#if @GNULIB_FUTIMENS@
+# if @REPLACE_FUTIMENS@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef futimens
+#   define futimens rpl_futimens
+#  endif
+_GL_FUNCDECL_RPL (futimens, int, (int fd, struct timespec const times[2]));
+_GL_CXXALIAS_RPL (futimens, int, (int fd, struct timespec const times[2]));
+# else
+#  if !@HAVE_FUTIMENS@
+_GL_FUNCDECL_SYS (futimens, int, (int fd, struct timespec const times[2]));
+#  endif
+_GL_CXXALIAS_SYS (futimens, int, (int fd, struct timespec const times[2]));
+# endif
+_GL_CXXALIASWARN (futimens);
+#elif defined GNULIB_POSIXCHECK
+# undef futimens
+# if HAVE_RAW_DECL_FUTIMENS
+_GL_WARN_ON_USE (futimens, "futimens is not portable - "
+                 "use gnulib module futimens for portability");
+# endif
+#endif
+
 
 #if @GNULIB_LCHMOD@
 /* Change the mode of FILENAME to MODE, without dereferencing it if FILENAME
@@ -337,22 +388,250 @@ rpl_mkdir (char const *name, mode_t mode)
    invocation of lchmod, but we know of no workarounds that are
    reliable in general.  You might try requesting support for lchmod
    from your operating system supplier.  */
-#  define lchmod chmod
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   define lchmod chmod
+#  endif
+/* Need to cast, because on mingw, the second parameter of chmod is
+                                                int mode.  */
+_GL_CXXALIAS_RPL_CAST_1 (lchmod, chmod, int,
+                         (const char *filename, mode_t mode));
+# else
+#  if 0 /* assume already declared */
+_GL_FUNCDECL_SYS (lchmod, int, (const char *filename, mode_t mode)
+                               _GL_ARG_NONNULL ((1)));
+#  endif
+_GL_CXXALIAS_SYS (lchmod, int, (const char *filename, mode_t mode));
 # endif
-# if 0 /* assume already declared */
-extern int lchmod (const char *filename, mode_t mode);
+# if @HAVE_LCHMOD@
+_GL_CXXALIASWARN (lchmod);
 # endif
 #elif defined GNULIB_POSIXCHECK
 # undef lchmod
-# define lchmod(f,m) \
-    (GL_LINK_WARNING ("lchmod is unportable - " \
-                      "use gnulib module lchmod for portability"), \
-     lchmod (f, m))
+# if HAVE_RAW_DECL_LCHMOD
+_GL_WARN_ON_USE (lchmod, "lchmod is unportable - "
+                 "use gnulib module lchmod for portability");
+# endif
 #endif
 
 
-#ifdef __cplusplus
+#if @GNULIB_LSTAT@
+# if ! @HAVE_LSTAT@
+/* mingw does not support symlinks, therefore it does not have lstat.  But
+   without links, stat does just fine.  */
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   define lstat stat
+#  endif
+_GL_CXXALIAS_RPL_1 (lstat, stat, int, (const char *name, struct stat *buf));
+# elif @REPLACE_LSTAT@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef lstat
+#   define lstat rpl_lstat
+#  endif
+_GL_FUNCDECL_RPL (lstat, int, (const char *name, struct stat *buf)
+                              _GL_ARG_NONNULL ((1, 2)));
+_GL_CXXALIAS_RPL (lstat, int, (const char *name, struct stat *buf));
+# else
+_GL_CXXALIAS_SYS (lstat, int, (const char *name, struct stat *buf));
+# endif
+# if @HAVE_LSTAT@
+_GL_CXXALIASWARN (lstat);
+# endif
+#elif defined GNULIB_POSIXCHECK
+# undef lstat
+# if HAVE_RAW_DECL_LSTAT
+_GL_WARN_ON_USE (lstat, "lstat is unportable - "
+                 "use gnulib module lstat for portability");
+# endif
+#endif
+
+
+#if @REPLACE_MKDIR@
+# if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#  undef mkdir
+#  define mkdir rpl_mkdir
+# endif
+_GL_FUNCDECL_RPL (mkdir, int, (char const *name, mode_t mode)
+                              _GL_ARG_NONNULL ((1)));
+_GL_CXXALIAS_RPL (mkdir, int, (char const *name, mode_t mode));
+#else
+/* mingw's _mkdir() function has 1 argument, but we pass 2 arguments.
+   Additionally, it declares _mkdir (and depending on compile flags, an
+   alias mkdir), only in the nonstandard includes <direct.h> and <io.h>,
+   which are included above.  */
+# if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
+
+static inline int
+rpl_mkdir (char const *name, mode_t mode)
+{
+  return _mkdir (name);
 }
+
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   define mkdir rpl_mkdir
+#  endif
+_GL_CXXALIAS_RPL (mkdir, int, (char const *name, mode_t mode));
+# else
+_GL_CXXALIAS_SYS (mkdir, int, (char const *name, mode_t mode));
+# endif
+#endif
+_GL_CXXALIASWARN (mkdir);
+
+
+#if @GNULIB_MKDIRAT@
+# if !@HAVE_MKDIRAT@
+_GL_FUNCDECL_SYS (mkdirat, int, (int fd, char const *file, mode_t mode)
+                                _GL_ARG_NONNULL ((2)));
+# endif
+_GL_CXXALIAS_SYS (mkdirat, int, (int fd, char const *file, mode_t mode));
+_GL_CXXALIASWARN (mkdirat);
+#elif defined GNULIB_POSIXCHECK
+# undef mkdirat
+# if HAVE_RAW_DECL_MKDIRAT
+_GL_WARN_ON_USE (mkdirat, "mkdirat is not portable - "
+                 "use gnulib module openat for portability");
+# endif
+#endif
+
+
+#if @GNULIB_MKFIFO@
+# if @REPLACE_MKFIFO@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef mkfifo
+#   define mkfifo rpl_mkfifo
+#  endif
+_GL_FUNCDECL_RPL (mkfifo, int, (char const *file, mode_t mode)
+                               _GL_ARG_NONNULL ((1)));
+_GL_CXXALIAS_RPL (mkfifo, int, (char const *file, mode_t mode));
+# else
+#  if !@HAVE_MKFIFO@
+_GL_FUNCDECL_SYS (mkfifo, int, (char const *file, mode_t mode)
+                               _GL_ARG_NONNULL ((1)));
+#  endif
+_GL_CXXALIAS_SYS (mkfifo, int, (char const *file, mode_t mode));
+# endif
+_GL_CXXALIASWARN (mkfifo);
+#elif defined GNULIB_POSIXCHECK
+# undef mkfifo
+# if HAVE_RAW_DECL_MKFIFO
+_GL_WARN_ON_USE (mkfifo, "mkfifo is not portable - "
+                 "use gnulib module mkfifo for portability");
+# endif
+#endif
+
+
+#if @GNULIB_MKFIFOAT@
+# if !@HAVE_MKFIFOAT@
+_GL_FUNCDECL_SYS (mkfifoat, int, (int fd, char const *file, mode_t mode)
+                                 _GL_ARG_NONNULL ((2)));
+# endif
+_GL_CXXALIAS_SYS (mkfifoat, int, (int fd, char const *file, mode_t mode));
+_GL_CXXALIASWARN (mkfifoat);
+#elif defined GNULIB_POSIXCHECK
+# undef mkfifoat
+# if HAVE_RAW_DECL_MKFIFOAT
+_GL_WARN_ON_USE (mkfifoat, "mkfifoat is not portable - "
+                 "use gnulib module mkfifoat for portability");
+# endif
+#endif
+
+
+#if @GNULIB_MKNOD@
+# if @REPLACE_MKNOD@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef mknod
+#   define mknod rpl_mknod
+#  endif
+_GL_FUNCDECL_RPL (mknod, int, (char const *file, mode_t mode, dev_t dev)
+                              _GL_ARG_NONNULL ((1)));
+_GL_CXXALIAS_RPL (mknod, int, (char const *file, mode_t mode, dev_t dev));
+# else
+#  if !@HAVE_MKNOD@
+_GL_FUNCDECL_SYS (mknod, int, (char const *file, mode_t mode, dev_t dev)
+                              _GL_ARG_NONNULL ((1)));
+#  endif
+_GL_CXXALIAS_SYS (mknod, int, (char const *file, mode_t mode, dev_t dev));
+# endif
+_GL_CXXALIASWARN (mknod);
+#elif defined GNULIB_POSIXCHECK
+# undef mknod
+# if HAVE_RAW_DECL_MKNOD
+_GL_WARN_ON_USE (mknod, "mknod is not portable - "
+                 "use gnulib module mknod for portability");
+# endif
+#endif
+
+
+#if @GNULIB_MKNODAT@
+# if !@HAVE_MKNODAT@
+_GL_FUNCDECL_SYS (mknodat, int,
+                  (int fd, char const *file, mode_t mode, dev_t dev)
+                  _GL_ARG_NONNULL ((2)));
+# endif
+_GL_CXXALIAS_SYS (mknodat, int,
+                  (int fd, char const *file, mode_t mode, dev_t dev));
+_GL_CXXALIASWARN (mknodat);
+#elif defined GNULIB_POSIXCHECK
+# undef mknodat
+# if HAVE_RAW_DECL_MKNODAT
+_GL_WARN_ON_USE (mknodat, "mknodat is not portable - "
+                 "use gnulib module mkfifoat for portability");
+# endif
+#endif
+
+
+#if @GNULIB_STAT@
+# if @REPLACE_STAT@
+/* We can't use the object-like #define stat rpl_stat, because of
+   struct stat.  This means that rpl_stat will not be used if the user
+   does (stat)(a,b).  Oh well.  */
+#  undef stat
+#  ifdef _LARGE_FILES
+    /* With _LARGE_FILES defined, AIX (only) defines stat to stat64,
+       so we have to replace stat64() instead of stat(). */
+#   define stat stat64
+#   undef stat64
+#   define stat64(name, st) rpl_stat (name, st)
+#  else /* !_LARGE_FILES */
+#   define stat(name, st) rpl_stat (name, st)
+#  endif /* !_LARGE_FILES */
+_GL_EXTERN_C int stat (const char *name, struct stat *buf) _GL_ARG_NONNULL ((1, 2));
+# endif
+#elif defined GNULIB_POSIXCHECK
+# undef stat
+# if HAVE_RAW_DECL_STAT
+_GL_WARN_ON_USE (stat, "stat is unportable - "
+                 "use gnulib module stat for portability");
+# endif
+#endif
+
+
+#if @GNULIB_UTIMENSAT@
+# if @REPLACE_UTIMENSAT@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef utimensat
+#   define utimensat rpl_utimensat
+#  endif
+_GL_FUNCDECL_RPL (utimensat, int, (int fd, char const *name,
+                                   struct timespec const times[2], int flag)
+                                  _GL_ARG_NONNULL ((2)));
+_GL_CXXALIAS_RPL (utimensat, int, (int fd, char const *name,
+                                   struct timespec const times[2], int flag));
+# else
+#  if !@HAVE_UTIMENSAT@
+_GL_FUNCDECL_SYS (utimensat, int, (int fd, char const *name,
+                                   struct timespec const times[2], int flag)
+                                  _GL_ARG_NONNULL ((2)));
+#  endif
+_GL_CXXALIAS_SYS (utimensat, int, (int fd, char const *name,
+                                   struct timespec const times[2], int flag));
+# endif
+_GL_CXXALIASWARN (utimensat);
+#elif defined GNULIB_POSIXCHECK
+# undef utimensat
+# if HAVE_RAW_DECL_UTIMENSAT
+_GL_WARN_ON_USE (utimensat, "utimensat is not portable - "
+                 "use gnulib module utimensat for portability");
+# endif
 #endif
 
 

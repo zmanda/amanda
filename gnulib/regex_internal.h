@@ -1,12 +1,12 @@
 /* Extended regular expression matching and search library.
-   Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010 Free
+   Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Isamu Hasegawa <isamu@yamato.ibm.com>.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
+   the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -28,9 +28,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _LIBC
-# include <langinfo.h>
-#else
+#include <langinfo.h>
+#ifndef _LIBC
 # include "localcharset.h"
 #endif
 #if defined HAVE_LOCALE_H || defined _LIBC
@@ -468,6 +467,8 @@ static unsigned int re_string_context_at (const re_string_t *input, Idx idx,
 # else
 /* alloca is implemented with malloc, so just use malloc.  */
 #  define __libc_use_alloca(n) 0
+#  undef alloca
+#  define alloca(n) malloc (n)
 # endif
 #endif
 
@@ -851,5 +852,22 @@ re_string_elem_size_at (const re_string_t *pstr, Idx idx)
     return 1;
 }
 #endif /* RE_ENABLE_I18N */
+
+#ifndef __GNUC_PREREQ
+# if defined __GNUC__ && defined __GNUC_MINOR__
+#  define __GNUC_PREREQ(maj, min) \
+         ((__GNUC__ << 16) + __GNUC_MINOR__ >= ((maj) << 16) + (min))
+# else
+#  define __GNUC_PREREQ(maj, min) 0
+# endif
+#endif
+
+#if __GNUC_PREREQ (3,4)
+# undef __attribute_warn_unused_result__
+# define __attribute_warn_unused_result__ \
+   __attribute__ ((__warn_unused_result__))
+#else
+# define __attribute_warn_unused_result__ /* empty */
+#endif
 
 #endif /*  _REGEX_INTERNAL_H */
