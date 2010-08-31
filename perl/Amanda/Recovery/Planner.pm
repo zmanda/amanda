@@ -183,9 +183,9 @@ sub make_plan {
 	one_dump_per_part => $params{'one_dump_per_part'},
     });
 
-    if ($params{'holding_file'}) {
+    if (exists $params{'holding_file'}) {
 	$plan->make_holding_plan(%params);
-    } elsif ($params{'filelist'}) {
+    } elsif (exists $params{'filelist'}) {
 	$plan->make_plan_from_filelist(%params);
     } else {
 	$plan->make_plan(%params);

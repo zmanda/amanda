@@ -1,3 +1,12 @@
+2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Catalogs.pm: tool to install catalogs
+	  dynamically, rather than including them in __DATA__
+	* installcheck/catalogs/*: new catalog files
+	* installcheck/Amanda_DB_Catalog.pl
+	  installcheck/Amanda_Recovery_Planner.pl installcheck/amreport.pl
+	  installcheck/amstatus.pl: use Installcheck::Catalog
+	* perl/Amanda/Recovery/Planner.pm: check that parameters exist
+
 2010-08-25 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/deb/control: Fix missing line break so dpkg can parse the
 	   control file
