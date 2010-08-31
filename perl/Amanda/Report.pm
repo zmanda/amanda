@@ -848,7 +848,7 @@ sub _handle_chunker_line
     if ( $type == $L_INFO ) {
         return $self->_handle_info_line( "chunker", $str );
 
-    } elsif ( $type == $L_SUCCESS || $L_PARTIAL ) {
+    } elsif ( $type == $L_SUCCESS || $type == $L_PARTIAL ) {
 
         my @info = Amanda::Util::split_quoted_strings($str);
         my ( $hostname, $disk, $timestamp, $level ) = @info[ 0 .. 3 ];
