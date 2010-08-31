@@ -282,14 +282,25 @@ Unquote a string as quoted with C<quote_string>.
 
 my($q, $remaider) = skip_quoted_string($str)
 
-Return the first quoted string and the remainder of the string.
+Return the first quoted string and the remainder of the string, as separated by
+any whitespace.  Note that the remainder of the string does not include the
+single separating whitespace character, but will include any subsequent
+whitespace.  The C<$q> is not unquoted.
 
 =item C<split_quoted_strings($str)>
 
-Split string on unquoted whitespace.  Multiple consecutive spaces are not
+Split string on unquoted whitespace.  Multiple consecutive spaces are I<not>
 collapsed into a single space: C<"x  y"> (with two spaces) parses as C<( "x",
 "", "y")>.  The strings are unquoted before they are returned.  An empty string
-is split into C<( "" )>.
+is split into C<( "" )>.  This method is generally used for parsing IPC messages,
+where blank space is significant and well-controlled.
+
+=item C<split_quoted_strings_friendly($str)>
+
+Similar to C<split_quoted_strings>, but intended for user-friendly uses.  In
+particular, this function treats any sequence of zero or more whitespace
+characters as a separator, rather than the more strict interpretation applied
+by C<split_quoted_strings>.  All of the strings are unquoted.
 
 All of these quoting-related functions are available under the export
 tag C<:quoting>.

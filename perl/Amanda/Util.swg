@@ -209,6 +209,21 @@ sub skip_quoted_string {
     return ($quoted_string, $remainder);
 }
 
+sub split_quoted_string_friendly {
+    my $str = shift;
+    my @result;
+
+    chomp $str;
+    $str =~ s/^\s+//;
+    while ($str) {
+	(my $elt, $str) = skip_quoted_string($str);
+	push @result, unquote_string($elt);
+	$str =~ s/^\s+// if $str;
+    }
+
+    return @result;
+}
+
 %}
 
 amglue_export_ok(slurp);
@@ -330,7 +345,8 @@ GPtrArray *expand_braced_alternates(char *);
 %newobject collapse_braced_alternates;
 char *collapse_braced_alternates(GPtrArray *source);
 gchar **split_quoted_strings(const gchar *string);
-amglue_export_tag(quoting, quote_string unquote_string skip_quoted_string sanitise_filename split_quoted_strings);
+amglue_export_tag(quoting, quote_string unquote_string skip_quoted_string
+		sanitise_filename split_quoted_strings split_quoted_strings_friendly);
 amglue_export_tag(alternates, expand_braced_alternates collapse_braced_alternates);
 
 %perlcode %{

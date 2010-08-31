@@ -1,4 +1,9 @@
 2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Util.pod perl/Amanda/Util.swg: add split_quoted_strings_friendly
+	* installcheck/Amanda_Util.pl: test it
+	* application-src/amsamba.pl: use it to parse amandapass
+
+2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* application-src/amgtar.c application-src/ampgsql.pl
 	  recover-src/extract_list.c server-src/amcheckdump.pl: Use
 	  --ignore-zeros in all -t or -x invocations of gtar
