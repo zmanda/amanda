@@ -1,4 +1,9 @@
 2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/.gitignore: don't ignore these files
+	* config/arg-nonnull.h config/c++defs.h config/warn-on-use.h: add
+	  ignored, but required, gnulib files
+
+2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* NEWS: note removal of changers
 	* changer-src/Makefile.am changer-src/chg-chio.pl
 	  changer-src/chg-chs.sh changer-src/chg-iomega.pl
