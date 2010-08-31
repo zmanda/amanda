@@ -1,6 +1,6 @@
 #!@PERL@
 #
-# Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -25,6 +25,8 @@ use Time::Local;
 use File::Copy;
 use Socket;   # for gethostbyname
 use Amanda::Paths;
+use Amanda::User;
+use Amanda::Constants;
 
 my $confdir="$CONFIG_DIR";
 my $tmpdir="$AMANDA_DBGDIR";
@@ -32,8 +34,8 @@ my $amandahomedir="$localstatedir/lib/amanda";
 my $templatedir="$amdatadir/template.d"; #rpm install template files here
 my $def_tapedev="file:$amandahomedir/vtapes";
 
-my $amanda_user="@CLIENT_LOGIN@";
-my $def_config="@DEFAULT_CONFIG@";
+my $amanda_user="$Amanda::Constants::CLIENT_LOGIN";
+my $def_config="$Amanda::Constants::DEFAULT_CONFIG";
 my $def_dtimeout="1800";
 my $def_ctimeout="30";
 my $def_etimeout="300";
@@ -101,14 +103,6 @@ sub log_and_die {
 	    print LOG "rmdir $confdir/$config failed: $!\n";
     }
     die $err;
-}
-
-
-sub is_user_right {
-    my $user = `whoami`;
-    chomp($user);
-    ( $user eq $amanda_user ) ||
-	die ("ERROR: $0 must be run by $amanda_user\n", 0);
 }
 
 
@@ -479,7 +473,9 @@ $date=`date +%Y%m%d%H%M%S`;
 chomp($date);
 my $logfile="$tmpdir/amserverconfig.$date.debug";
 
-&is_user_right;
+Amanda::Util::setup_application("amserverconfig", "server", $CONTEXT_CMDLINE);
+Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
+
 unless ( -e "$tmpdir" ) {
     mkdir ("$tmpdir", $def_perm) ||
 	die ("ERROR: mkdir: $tmpdir failed: $!\n");
@@ -655,3 +651,4 @@ $ENV{'PATH'} = $oldPATH;
 
 
 # THE END
+Amanda::Util::finish_application();

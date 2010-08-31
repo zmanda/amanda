@@ -1,4 +1,10 @@
 2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am: new tests
+	* installcheck/amserverconfig.pl: run amserverconfig
+	* installcheck/example.pl: test that templates parse properly
+	* server-src/amserverconfig.pl: minor cleanup of old perl
+
+2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/dumper.c changer-src/chg-scsi.c: use fseeko
 	* config/.gitignore config/config.rpath config/gnulib/* gnulib/*:
 	  upgrade gnulib

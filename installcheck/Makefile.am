@@ -62,17 +62,19 @@ all_tests += $(server_tests)
 
 full_tests = \
 	=setupcache \
+	amadmin \
 	amcheck \
-	amdump \
-	amdevcheck \
 	amcheckdump \
+	amdevcheck \
+	amdump \
 	amoverview \
+	amreport \
 	amrmtape \
+	amserverconfig \
 	amservice \
 	amstatus \
-	amreport \
-	amadmin \
 	amvault \
+	example \
 	pp-scripts
 all_tests += $(full_tests)
 
