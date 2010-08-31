@@ -23,9 +23,10 @@ use lib '@amperldir@';
 use Getopt::Long;
 use Time::Local;
 use File::Copy;
+use File::Path;
 use Socket;   # for gethostbyname
 use Amanda::Paths;
-use Amanda::User;
+use Amanda::Util qw( :constants );
 use Amanda::Constants;
 
 my $confdir="$CONFIG_DIR";
@@ -112,8 +113,8 @@ sub check_gnutarlist_dir {
 	&mprint ("$amandahomedir/gnutar-lists directory exists\n");
     }
     else {
-	mkdir ("$amandahomedir/gnutar-lists", $def_perm) ||
-	    &log_and_die ("ERROR: mkdir:$amandahomedir/gnutar-lists failed: $!\n", 0);
+	mkpath ("$amandahomedir/gnutar-lists", $def_perm) ||
+	    &log_and_die ("ERROR: mkpath:$amandahomedir/gnutar-lists failed: $!\n", 0);
     }
 }
 
@@ -122,14 +123,14 @@ sub create_conf_dir {
     &log_and_die ("ERROR: $confdir does not exist\n", 0);
   }
   unless ( -e "$confdir/$config" ) {
-    mkdir ("$confdir/$config", $def_perm) ||
-      &log_and_die ("ERROR: mkdir: $confdir/$config failed: $!\n", 0);	# $! = system error
+    mkpath ("$confdir/$config", $def_perm) ||
+      &log_and_die ("ERROR: mkpath: $confdir/$config failed: $!\n", 0);	# $! = system error
   } else {
     &log_and_die ("ERROR: Configuration $config exists\n", 0);
   }
   unless ( -e "$confdir/template.d" ) {
-    mkdir ("$confdir/template.d", $def_perm)  ||
-      &log_and_die ("ERROR: mkdir: $confdir/template.d failed: $!\n", 0);
+    mkpath ("$confdir/template.d", $def_perm)  ||
+      &log_and_die ("ERROR: mkpath: $confdir/template.d failed: $!\n", 0);
     &mprint ("$confdir/template.d directory created\n");
   }
 }
@@ -157,10 +158,10 @@ sub copy_template_file {
 
 
 sub create_curinfo_index_dir {
-    mkdir("$confdir/$config/curinfo", $def_perm) ||
-	&log_and_die ("ERROR: mkdir: $confdir/$config/curinfo failed: $!\n", 1);
-    mkdir("$confdir/$config/index", $def_perm) || 
-	&log_and_die ("ERROR: mkdir: $confdir/$config/index failed: $!\n", 1);
+    mkpath("$confdir/$config/curinfo", $def_perm) ||
+	&log_and_die ("ERROR: mkpath: $confdir/$config/curinfo failed: $!\n", 1);
+    mkpath("$confdir/$config/index", $def_perm) || 
+	&log_and_die ("ERROR: mkpath: $confdir/$config/index failed: $!\n", 1);
     &mprint ("curinfo and index directory created\n");
 }
 
@@ -202,23 +203,23 @@ sub create_holding {
     if (( $dfout[10] / $div )  > 1024000 ) { # holding disk is defined 1000 MB
 	&mprint ("creating holding disk directory\n");
 	unless ( -d "$amandahomedir/holdings" ) { 
-	mkdir ( "$amandahomedir/holdings", $def_perm) ||
-	    (&mprint ("WARNING: mkdir $amandahomedir/holdings failed: $!\n"), $holding_err++, return );
+	mkpath ( "$amandahomedir/holdings", $def_perm) ||
+	    (&mprint ("WARNING: mkpath $amandahomedir/holdings failed: $!\n"), $holding_err++, return );
     }
-	mkdir ( "$amandahomedir/holdings/$config", $def_perm) ||
-	    (&mprint ("WARNING: mkdir $amandahomedir/holdings/$config failed: $!\n"), $holding_err++, return) ;
+	mkpath ( "$amandahomedir/holdings/$config", $def_perm) ||
+	    (&mprint ("WARNING: mkpath $amandahomedir/holdings/$config failed: $!\n"), $holding_err++, return) ;
     }
 }
 
 #create default tape dir
 sub create_deftapedir{
     unless ( -e "$amandahomedir/vtapes" ) { 
-	mkdir ( "$amandahomedir/vtapes", $def_perm) ||
-	    ( &mprint ("WARNING: mkdir $amandahomedir/$config/vtapes failed: $!\n"), return );
+	mkpath ( "$amandahomedir/vtapes", $def_perm) ||
+	    ( &mprint ("WARNING: mkpath $amandahomedir/$config/vtapes failed: $!\n"), return );
     }
     unless ( -e "$amandahomedir/vtapes/$config" ) { 
-	mkdir ( "$amandahomedir/vtapes/$config", $def_perm) ||
-	    ( &mprint ("WARNING: mkdir $amandahomedir/vtapes/$config failed: $!\n"), return );
+	mkpath ( "$amandahomedir/vtapes/$config", $def_perm) ||
+	    ( &mprint ("WARNING: mkpath $amandahomedir/vtapes/$config failed: $!\n"), return );
     }
 	$parentdir="$amandahomedir/vtapes/$config";
 }
@@ -273,8 +274,8 @@ sub create_vtape {
 
 	for $i (1..$tp_cyclelimit) {
 		unless ( -e "slot$i"){
-		mkdir ("slot$i", $def_perm) ||
-		( &mprint ("WARNING: mkdir $parentdir/slot$i failed: $!\n"), $vtape_err++, return);
+		mkpath ("slot$i", $def_perm) ||
+		( &mprint ("WARNING: mkpath $parentdir/slot$i failed: $!\n"), $vtape_err++, return);
 		}
 		( @amlabel_out = `$sbindir/amlabel -f $config $mylabelprefix-$i slot $i`) ||
 	    ( &mprint ("WARNING: amlabel vtapes failed at slot $i: $!\n"), $vtape_err++, return);
@@ -477,8 +478,8 @@ Amanda::Util::setup_application("amserverconfig", "server", $CONTEXT_CMDLINE);
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
 unless ( -e "$tmpdir" ) {
-    mkdir ("$tmpdir", $def_perm) ||
-	die ("ERROR: mkdir: $tmpdir failed: $!\n");
+    mkpath ("$tmpdir", $def_perm) ||
+	die ("ERROR: mkpath: $tmpdir failed: $!\n");
 }
 
 open (LOG, ">$logfile") || die ("ERROR: Cannot create logfile: $!\n");

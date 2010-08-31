@@ -1,4 +1,12 @@
 2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Taper_Scribe.pl: spell it part-cache-dir
+	* installcheck/amtapetype.pl: spell it device-property
+	* server-src/amcheckdump.pl: tar requires -tf, not tf, after a long
+	  option
+	* server-src/amserverconfig.pl: use Amanda::Util and mkpath instead of
+	  mkdir
+
+2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am: new tests
 	* installcheck/amserverconfig.pl: run amserverconfig
 	* installcheck/example.pl: test that templates parse properly

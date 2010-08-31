@@ -861,8 +861,8 @@ is_deeply(
     ) },
     { part_size => 300, part_cache_type => 'none',
       part_cache_max_size => 250,
-      warning => "part_cache_dir '$Installcheck::TMP/does!not!exist! does not exist; "
-	       . "using part_cache_type 'none'"},
+      warning => "part-cache-dir '$Installcheck::TMP/does!not!exist! does not exist; "
+	       . "using part cache type 'none'"},
     "part_* parameters handled correctly when specified");
 
 rmtree($taperoot);
