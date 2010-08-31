@@ -1,4 +1,8 @@
 2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* application-src/ampgsql.pl: remove check for a directory that
+	  should not be readable to the amanda user
+
+2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* application-src/amgtar.c application-src/ampgsql.pl
 	  recover-src/extract_list.c server-src/amcheckdump.pl: Use
 	  --ignore-zeros in all -t or -x invocations of gtar
