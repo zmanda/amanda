@@ -803,6 +803,7 @@ sub command_restore {
    if ($self->{'args'}->{'level'} > 0) {
        debug("extracting incremental backup to $cur_dir/$_ARCHIVE_DIR_RESTORE");
        $status = system($self->{'args'}->{'gnutar-path'}, '--extract',
+	   '--ignore-zeros',
 	   '--exclude', 'empty-incremental',
            '--directory', $_ARCHIVE_DIR_RESTORE) >> 8;
        (0 == $status) or die("Failed to extract level $self->{'args'}->{'level'} backup (exit status: $status)");
@@ -845,7 +846,7 @@ sub command_validate {
       return $self->default_validate();
    }
 
-   my(@cmd) = ($self->{'args'}->{'gnutar-path'}, "-tf", "-");
+   my(@cmd) = ($self->{'args'}->{'gnutar-path'}, "--ignore-zeros", "-tf", "-");
    debug("cmd:" . join(" ", @cmd));
    my $pid = open3('>&STDIN', '>&STDOUT', '>&STDERR', @cmd) ||
       $self->print_to_server_and_die("Unable to run @cmd",

@@ -215,10 +215,10 @@ sub find_validation_command {
             "VDUMP" => [ $Amanda::Constants::VRESTORE, qw(tf -) ],
             "VXDUMP" => [ $Amanda::Constants::VXRESTORE, qw(tbf 2 -) ],
             "XFSDUMP" => [ $Amanda::Constants::XFSRESTORE, qw(-t -v silent -) ],
-            "TAR" => [ $Amanda::Constants::GNUTAR, qw(tf -) ],
-            "GTAR" => [ $Amanda::Constants::GNUTAR, qw(tf -) ],
-            "GNUTAR" => [ $Amanda::Constants::GNUTAR, qw(tf -) ],
-            "SMBCLIENT" => [ $Amanda::Constants::GNUTAR, qw(tf -) ],
+            "TAR" => [ $Amanda::Constants::GNUTAR, qw(--ignore-zeros tf -) ],
+            "GTAR" => [ $Amanda::Constants::GNUTAR, qw(--ignore-zeros tf -) ],
+            "GNUTAR" => [ $Amanda::Constants::GNUTAR, qw(--ignore-zeros tf -) ],
+            "SMBCLIENT" => [ $Amanda::Constants::GNUTAR, qw(--ignore-zeros tf -) ],
 	    "PKZIP" => undef,
         );
 	if (!exists $validation_programs{$program}) {

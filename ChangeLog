@@ -1,4 +1,9 @@
 2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* application-src/amgtar.c application-src/ampgsql.pl
+	  recover-src/extract_list.c server-src/amcheckdump.pl: Use
+	  --ignore-zeros in all -t or -x invocations of gtar
+
+2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda-auth.7.xml
 	  man/xml-source/amanda-changers.7.xml
 	  man/xml-source/amanda-client.conf.5.xml

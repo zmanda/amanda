@@ -1048,6 +1048,8 @@ amgtar_restore(
 	g_ptr_array_add(argv_ptr, stralloc("--selinux"));
     if (gnutar_xattrs)
 	g_ptr_array_add(argv_ptr, stralloc("--xattrs"));
+    /* ignore trailing zero blocks on input (this was the default until tar-1.21) */
+    g_ptr_array_add(argv_ptr, stralloc("--ignore-zeros"));
     g_ptr_array_add(argv_ptr, stralloc("-xpGvf"));
     g_ptr_array_add(argv_ptr, stralloc("-"));
     if (gnutar_directory) {
@@ -1199,6 +1201,8 @@ amgtar_validate(
 
     cmd = stralloc(gnutar_path);
     g_ptr_array_add(argv_ptr, stralloc(gnutar_path));
+    /* ignore trailing zero blocks on input (this was the default until tar-1.21) */
+    g_ptr_array_add(argv_ptr, stralloc("--ignore-zeros"));
     g_ptr_array_add(argv_ptr, stralloc("-tf"));
     g_ptr_array_add(argv_ptr, stralloc("-"));
     g_ptr_array_add(argv_ptr, NULL);
