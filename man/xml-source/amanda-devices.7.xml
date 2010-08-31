@@ -57,7 +57,7 @@ below.</para>
 <programlisting>
 define device top_drive {
     tapedev "tape:/dev/nst0"
-    device_property "BLOCK_SIZE" "131072"
+    device-property "BLOCK_SIZE" "131072"
 }
 </programlisting>
 Such a device defininition creates a device "alias", in this case named
@@ -112,9 +112,9 @@ tape devices, they will not share property values.</para>
 <para>Properties are specified in <emphasis>amanda.conf</emphasis> with the
 <emphasis>device-property</emphasis> parameter.  The syntax looks like this:
 <programlisting>
-device_property "FROBNICATOR_PATH" "/var/frobd/state"
-device_property "BYTES_PER_FORTNIGHT" "128k"
-device_property "USE_QUBITS" "no"
+device-property "FROBNICATOR_PATH" "/var/frobd/state"
+device-property "BYTES_PER_FORTNIGHT" "128k"
+device-property "USE_QUBITS" "no"
 </programlisting></para>
 
 <para>Both the property name and the property value are always quoted.
@@ -134,7 +134,7 @@ property, below.</para>
 <para>The order in which device properties are set is as follows:
 <orderedlist>
 <listitem><para>Tapetype parameters (including length, blocksize, and readblocksize) are translated into device properties and set accordingly.</para></listitem>
-<listitem><para>Device properties from any device_property
+<listitem><para>Device properties from any device-property
     configuration parameters are set, in the order they appear in the
     configuration file.</para>
 </listitem>
@@ -212,7 +212,7 @@ for future expansion.  Not all devices implement all of these properties.</para>
 (read-only) This property gives the streaming requirement for this device.  For
 example, tape drives often require a steady supply of data to avoid
 shoe-shining, while disk devices have no such requirement.  Streaming is
-accomplished by buffering <command>device_output_buffer_size</command> bytes of
+accomplished by buffering <amkeyword>device-output-buffer-size</amkeyword> bytes of
 data.  The allowed values are "none" (no streaming buffer necessary),
 "required" (fill the buffer before starting to write), or "desired" (fill the
 buffer before starting to write, and if the buffer becomes empty, stop writing
@@ -348,8 +348,8 @@ of each child device accordingly.</para>
 <refsect2><title>S3 Device</title>
 <programlisting>
 tapedev "s3:foocorp-backups/DailySet1-"
-device_property "S3_ACCESS_KEY" "MYACCESSKEY"
-device_property "S3_SECRET_KEY" "MYSECRETKEY"
+device-property "S3_ACCESS_KEY" "MYACCESSKEY"
+device-property "S3_SECRET_KEY" "MYSECRETKEY"
 </programlisting>
 
 <para>The S3 device driver uploads data to the Amazon S3 "storage cloud".  Its
@@ -404,8 +404,8 @@ device.  A typical S3 configuration will have an access key and secret key
 specified:
 
 <programlisting>
-device_property "S3_ACCESS_KEY" "27D3B8C6C4E7AA423C2B37C72A0D22C8"
-device_property "S3_SECRET_KEY" "agphc2Q7Zmxragphc2RmO2xragpzZGY7a2xqCgr"
+device-property "S3_ACCESS_KEY" "27D3B8C6C4E7AA423C2B37C72A0D22C8"
+device-property "S3_SECRET_KEY" "agphc2Q7Zmxragphc2RmO2xragpzZGY7a2xqCgr"
 </programlisting></para>
 
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
@@ -557,8 +557,8 @@ operations can be emulated with the MTREW and read data operations.</para>
 <refsect2><title>NDMP Device</title>
 <programlisting>
 tapedev "ndmp:my.filer.com:10000@st1"
-device_property "NDMP_USERNAME" "jimmy"
-device_property "NDMP_PASSWORD" "thelock"
+device-property "NDMP_USERNAME" "jimmy"
+device-property "NDMP_PASSWORD" "thelock"
 </programlisting>
 
 <para>This device enables Amanda to communicate with a tape service on an NDMP
@@ -645,9 +645,9 @@ size, regardless of the blocksize used to write the data.</para>
 <refsect2><title>DVD-RW Device</title>
 <programlisting>
 tapedev "dvdrw:/var/cache/amanda/dvd-cache:/dev/scd0"
-device_property "DVDRW_MOUNT_POINT" "/media/dvd"
-device_property "DVDRW_KEEP_CACHE" "false"
-device_property "DVDRW_UNLABELLED_WHEN_UNMOUNTABLE" "true"
+device-property "DVDRW_MOUNT_POINT" "/media/dvd"
+device-property "DVDRW_KEEP_CACHE" "false"
+device-property "DVDRW_UNLABELLED_WHEN_UNMOUNTABLE" "true"
 </programlisting>
 
 <para>The DVD-RW device driver reads and writes optical media such as DVDs and

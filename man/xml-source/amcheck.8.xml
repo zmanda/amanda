@@ -105,7 +105,7 @@ tape (which would otherwise cause the subsequent
 to fail).
 If the tape
 is writable, this check causes all data after the tape label to be
-erased. If the label_new_tapes option is enabled, this check may ERASE
+erased. If the <amkeyword>autolabel</amkeyword> option is enabled, this check may ERASE
 any non-Amanda tape in the drive or changer.
 The check enable the tape tests on the server host
 and is only made if the tape is otherwise correct.</para>

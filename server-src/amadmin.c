@@ -2171,7 +2171,7 @@ disklist_one(
 	break;
     case COMP_CUST:
 	g_printf("CLIENT CUSTOM\n");
-	g_printf("        client_custom_compress \"%s\"\n",
+	g_printf("        client-custom-compress \"%s\"\n",
 		    dp->clntcompprog? dp->clntcompprog : "");
 	break;
     case COMP_SERVER_FAST:
@@ -2182,7 +2182,7 @@ disklist_one(
 	break;
     case COMP_SERVER_CUST:
 	g_printf("SERVER CUSTOM\n");
-	g_printf("        server_custom_compress \"%s\"\n",
+	g_printf("        server-custom-compress \"%s\"\n",
 		    dp->srvcompprog? dp->srvcompprog : "");
 	break;
     }
@@ -2198,26 +2198,26 @@ disklist_one(
 	break;
     case ENCRYPT_CUST:
 	g_printf("CLIENT\n");
-	g_printf("        client_encrypt \"%s\"\n",
+	g_printf("        client-encrypt \"%s\"\n",
 		    dp->clnt_encrypt? dp->clnt_encrypt : "");
-	g_printf("        client_decrypt_option \"%s\"\n",
+	g_printf("        client-decrypt-option \"%s\"\n",
 		    dp->clnt_decrypt_opt? dp->clnt_decrypt_opt : "");
 	break;
     case ENCRYPT_SERV_CUST:
 	g_printf("SERVER\n");
-	g_printf("        server_encrypt \"%s\"\n",
+	g_printf("        server-encrypt \"%s\"\n",
 		    dp->srv_encrypt? dp->srv_encrypt : "");
-	g_printf("        server_decrypt_option \"%s\"\n",
+	g_printf("        server-decrypt-option \"%s\"\n",
 		    dp->srv_decrypt_opt? dp->srv_decrypt_opt : "");
 	break;
     }
 
     g_printf("        auth \"%s\"\n", dp->auth);
     g_printf("        kencrypt %s\n", (dp->kencrypt? "YES" : "NO"));
-    g_printf("        amandad_path \"%s\"\n", dp->amandad_path);
-    g_printf("        client_username \"%s\"\n", dp->client_username);
-    g_printf("        client_port \"%s\"\n", dp->client_port);
-    g_printf("        ssh_keys \"%s\"\n", dp->ssh_keys);
+    g_printf("        amandad-path \"%s\"\n", dp->amandad_path);
+    g_printf("        client-username \"%s\"\n", dp->client_username);
+    g_printf("        client-port \"%s\"\n", dp->client_port);
+    g_printf("        ssh-keys \"%s\"\n", dp->ssh_keys);
 
     g_printf("        holdingdisk ");
     switch(dp->to_holdingdisk) {
@@ -2236,14 +2236,14 @@ disklist_one(
     g_printf("        index %s\n", (dp->index? "YES" : "NO"));
     g_printf("        starttime %04d\n", (int)dp->starttime);
     if(dp->tape_splitsize > (off_t)0) {
-	g_printf("        tape_splitsize %lld\n",
+	g_printf("        tape-splitsize %lld\n",
 	       (long long)dp->tape_splitsize);
     }
     if(dp->split_diskbuffer) {
-	g_printf("        split_diskbuffer %s\n", dp->split_diskbuffer);
+	g_printf("        split-diskbuffer %s\n", dp->split_diskbuffer);
     }
     if(dp->fallback_splitsize > (off_t)0) {
-	g_printf("        fallback_splitsize %lldMb\n",
+	g_printf("        fallback-splitsize %lldMb\n",
 	       (long long)(dp->fallback_splitsize / (off_t)1024));
     }
     g_printf("        skip-incr %s\n", (dp->skip_incr? "YES" : "NO"));

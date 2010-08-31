@@ -559,7 +559,7 @@ sub check_data_path {
     my $device = $self->get_device();
 
     if (!defined $device) {
-	die "no device is available to check the data_path";
+	die "no device is available to check the datapath";
     }
 
     my $use_directtcp = $device->directtcp_supported();
@@ -1258,14 +1258,14 @@ sub get_splitting_args_from_config {
 		    $params{'part_cache_type'} eq 'disk') {
 	    my $warning;
 	    if (!$params{'part_cache_dir'}) {
-		$warning = "no part_cache_dir specified; "
-			    . "using part_cache_type 'none'";
+		$warning = "no part-cache-dir specified; "
+			    . "using part cache type 'none'";
 	    } elsif (!-d $params{'part_cache_dir'}) {
-		$warning = "part_cache_dir '$params{part_cache_dir} "
-			    . "does not exist; using part_cache_type 'none'";
+		$warning = "part-cache-dir '$params{part_cache_dir} "
+			    . "does not exist; using part cache type 'none'";
 	    } elsif (!$have_space->($params{'part_cache_dir'}, $ps)) {
-		$warning = "part_cache_dir '$params{part_cache_dir} "
-			    . "has insufficient space; using part_cache_type 'none'";
+		$warning = "part-cache-dir '$params{part_cache_dir} "
+			    . "has insufficient space; using part cache type 'none'";
 	    }
 
 	    if (defined $warning) {

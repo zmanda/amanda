@@ -53,7 +53,7 @@ The conf use by amrecover.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>client_username</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>client-username</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>CLIENT_LOGIN</amdefault>.
@@ -64,7 +64,7 @@ specified in &amandahosts; on the server.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>client_port</amkeyword> [ <amtype>int</amtype> | <amtype>string</amtype> ]</term>
+  <term><amkeyword>client-port</amkeyword> [ <amtype>int</amtype> | <amtype>string</amtype> ]</term>
   <listitem>
 <para>Default:
 <amdefault>"amanda"</amdefault>.
@@ -73,7 +73,7 @@ Similar to the parameter of the same name in &amconf;, this specifies the port t
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>index_server</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>index-server</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>Set by configure</amdefault>.
@@ -82,7 +82,7 @@ The amindexd server amrecover will connect to.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>tape_server</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>tape-server</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>Set by configure</amdefault>.
@@ -124,7 +124,7 @@ authorization.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>ssh_keys</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>ssh-keys</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>No default</amdefault>.
@@ -133,7 +133,7 @@ The key file the ssh auth will use, it must be the private key. If this paramete
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>gnutar_list_dir</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>gnutar-list-dir</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default from configure 
 <amdefault>--with-gnutar-listdir=DIR</amdefault>.
@@ -158,7 +158,7 @@ The file where amanda keep the last date of each dumplevel.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>connect_tries</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>connect-tries</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>3</amdefault>.
@@ -167,7 +167,7 @@ How many times the server will try a connection.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>rep_tries</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>rep-tries</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>5</amdefault>.
@@ -176,7 +176,7 @@ How many times amandad will resend a REP packet if it doesn't get the ACK packet
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_days</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-days</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>3</amdefault>.
@@ -185,7 +185,7 @@ The number of days the debug files are kept.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_amandad</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-amandad</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>0</emphasis>.
@@ -194,7 +194,7 @@ Debug level of the amandad process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_amidxtaped</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-amidxtaped</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -203,7 +203,7 @@ Debug level of the amidxtaped process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_amindexd</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-amindexd</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -212,7 +212,7 @@ Debug level of the amindexd process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_amrecover</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-amrecover</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -221,7 +221,7 @@ Debug level of the amrecover process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_auth</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-auth</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -230,7 +230,7 @@ Debug level of the auth module</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_event</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-event</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -239,7 +239,7 @@ Debug level of the event module</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_holding</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-holding</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -248,7 +248,7 @@ Debug level of the holdingdisk module</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_protocol</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-protocol</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -257,7 +257,7 @@ Debug level of the protocol module</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_selfcheck</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-selfcheck</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -266,7 +266,7 @@ Debug level of the selfcheck process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_sendsize</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-sendsize</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -275,7 +275,7 @@ Debug level of the sendsize process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_sendbackup</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-sendbackup</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -404,13 +404,13 @@ A comment string describing this script.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><amkeyword>execute_where</amkeyword> [ <amkeyword>client</amkeyword> | <amkeyword>server</amkeyword> ]</term>
+  <term><amkeyword>execute-where</amkeyword> [ <amkeyword>client</amkeyword> | <amkeyword>server</amkeyword> ]</term>
   <listitem>
 <para>Default: <amkeyword>client</amkeyword>. Where the script must be executed, on the client or server. Only <amkeyword>client</amkeyword> is valid.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><amkeyword>execute_on</amkeyword> <amtype>execute_on</amtype>[,<amtype>execute_on</amtype>]*</term>
+  <term><amkeyword>execute-on</amkeyword> <amtype>execute_on</amtype>[,<amtype>execute_on</amtype>]*</term>
   <listitem>
 <para>No default. When the script must be executed, you can specify many of them:</para>
     <!-- .RS -->

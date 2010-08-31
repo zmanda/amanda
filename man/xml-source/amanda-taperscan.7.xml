@@ -76,7 +76,7 @@ use.</para>
 available in the changer, then the algorithm begins a sequential scan of the
 changer, starting at the current slot.  It selects the first suitable volume it
 finds: a reusable volume (perhaps newly-labeled) or, if
-<emphasis>label_new_tapes</emphasis> is true, a blank volume.  Even across
+<amkeyword>autolabel</amkeyword> includes <amkeyword>empty</amkeyword>, a blank volume.  Even across
 multiple invocations (when <emphasis>runtapes &gt; 1</emphasis>), it will not
 return the same slot twice.</para>
 

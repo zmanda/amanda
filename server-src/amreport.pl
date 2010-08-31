@@ -287,12 +287,12 @@ sub legacy_send_amreport
 	    || ($report->get_flag("results_missing") != 0)
 	    || ($report->get_flag("dump_strange") != 0)) {
 
-            debug("send_amreport_on=$cfg_send, condition filled for $output_name");
+            debug("send-amreport-on=$cfg_send, condition filled for $output_name");
             $send_amreport = 1;
 
         } else {
 
-            debug("send_amreport_on=$cfg_send, condition not filled for $output_name");
+            debug("send-amreport-on=$cfg_send, condition not filled for $output_name");
             $send_amreport = 0;
         }
 
@@ -304,12 +304,12 @@ sub legacy_send_amreport
             || ($report->get_flag("results_missing") != 0)
             || ($report->get_flag("dump_strange") != 0)) {
 
-            debug("send_amreport_on=$cfg_send, condition filled for $output_name");
+            debug("send-amreport-on=$cfg_send, condition filled for $output_name");
             $send_amreport = 1;
 
         } else {
 
-            debug("send_amreport_on=$cfg_send, condition not filled for $output_name");
+            debug("send-amreport-on=$cfg_send, condition not filled for $output_name");
             $send_amreport = 0;
         }
     }

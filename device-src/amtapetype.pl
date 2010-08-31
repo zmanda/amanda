@@ -461,12 +461,12 @@ sub check_property {
 
     if ($need_fsf_after_filemark == 0 && $fsf_after_filemark_works == 0) {
 	if (defined $opt_property || $fsf_after_filemark) {
-	    print STDOUT "device_property \"FSF_AFTER_FILEMARK\" \"false\"\n";
+	    print STDOUT "device-property \"FSF_AFTER_FILEMARK\" \"false\"\n";
 	}
 	$device->property_set('FSF_AFTER_FILEMARK', 0);
     } elsif ($need_fsf_after_filemark == 1 && $fsf_after_filemark_works == 1) {
 	if (defined $opt_property || !$fsf_after_filemark) {
-	    print STDOUT "device_property \"FSF_AFTER_FILEMARK\" \"true\"\n";
+	    print STDOUT "device-property \"FSF_AFTER_FILEMARK\" \"true\"\n";
 	}
 	$device->property_set('FSF_AFTER_FILEMARK', 1);
     } else {
@@ -615,13 +615,13 @@ sub make_tapetype {
     my $volume_size_estimate_kb = $volume_size_estimate/1024;
     my $filemark_kb = $filemark_estimate/1024;
 
-    # and suggest using device_property for blocksize if it's not an even multiple
+    # and suggest using device-property for blocksize if it's not an even multiple
     # of 1kb
     my $blocksize_line;
     if ($blocksize % 1024 == 0) {
 	$blocksize_line = "blocksize " . $blocksize/1024 . " kbytes";
     } else {
-	$blocksize_line = "# add device_property \"BLOCK_SIZE\" \"$blocksize\" to the device";
+	$blocksize_line = "# add device-property \"BLOCK_SIZE\" \"$blocksize\" to the device";
     }
 
     print <<EOF;
@@ -636,7 +636,7 @@ EOF
 
     if ($leom) {
 	print "# for this drive and kernel, LEOM is supported; add\n";
-	print "#   device_property \"LEOM\" \"TRUE\"\n";
+	print "#   device-property \"LEOM\" \"TRUE\"\n";
 	print "# for this device.\n";
     } else {
 	print "# LEOM is not supported for this drive and kernel\n";

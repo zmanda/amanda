@@ -97,7 +97,7 @@ define changer hp-robot {
     tapedev "chg-robot:/dev/sg1"
     property "tape-device" "0=tape:/dev/nst0"
     property append "tape-device" "1=tape:/dev/nst1"
-    device_property "BLOCK_SIZE" "512k"
+    device-property "BLOCK_SIZE" "512k"
 }
 # ...
 tapedev "hp-robot"
@@ -111,7 +111,7 @@ changer definition, as in the <emphasis>hp-robot</emphasis> example, above.</par
 <para>Devices, too, can take properties to control their behavior (see <manref
 name="amanda-devices" vol="7" />).  Device properties can come from four
 places: implicit device properties (from tapetype parameters), global device
-properties (from global <emphasis>device_property</emphasis> parameters),
+properties (from global <emphasis>device-property</emphasis> parameters),
 properties in device definitions, and properties in changer definitions.
 Properties are applied in this order, with later properties taking
 priority.</para>

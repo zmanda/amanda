@@ -239,7 +239,7 @@ If the tape device is omitted, the default is used.</para>
 
 <para>If you want amrecover to use your changer, the 
 <emphasis remap='I'>tapedev</emphasis>
-must be equal to the amrecover_changer setting on the server.</para>
+must be equal to the <amkeyword>amrecover-changer</amkeyword> setting on the server.</para>
 
 <para>Since device names contain colons, you must always specify the hostname.</para>
 

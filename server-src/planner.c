@@ -988,7 +988,7 @@ setup_estimate(
 	case DS_NOINC:
 	    askfor(ep, i++, 0, &info);
 	    if(dp->skip_full) {
-		log_add(L_INFO, _("Ignoring skip_full for %s:%s "
+		log_add(L_INFO, _("Ignoring skip-full for %s:%s "
 			"because the strategy is NOINC."),
 			dp->host->hostname, qname);
 	    }

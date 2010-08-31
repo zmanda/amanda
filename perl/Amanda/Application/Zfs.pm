@@ -1,4 +1,4 @@
-# Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -38,7 +38,7 @@ sub zfs_set_value {
     my $self = shift;
 
     if (defined $self->{execute_where} && $self->{execute_where} ne "client") {
-	$self->print_to_server_and_die(" Script must be run on the client 'execute_where client'", $Amanda::Script_App::ERROR);
+	$self->print_to_server_and_die(" Script must be run on the client 'execute-where client'", $Amanda::Script_App::ERROR);
     }
     if ($self->{df_path} ne "df" && !-e $self->{df_path}) {
 	$self->print_to_server_and_die("Can't execute DF-PATH '$self->{df_path}' command",

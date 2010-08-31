@@ -56,21 +56,18 @@ The remainder of the line is ignored.</para>
 and
 <amkeyword>MailTo</amkeyword>
 are treated the same.  Also, the characters
-'<amkeyword>-</amkeyword>'
-and
-'<amkeyword>_</amkeyword>'
+'<amkeyword>-</amkeyword>' and '<amkeyword>_</amkeyword>'
 are interchangeable in all predefined Amanda keywords:
 <amkeyword>device_property</amkeyword>
 and
 <amkeyword>device-property</amkeyword>
-have the same meaning.</para>
+have the same meaning.  This manpage uses the dashed versions, but the
+underscored versions will be accepted for backward compatibility</para>
 
 <para>Identifiers are names which are defined in the configuration itself, such
 as dumptypes or interfaces.  Identifiers are are case-insensitive, but
 sensitive to
-'<amkeyword>-</amkeyword>'
-vs.
-'<amkeyword>_</amkeyword>'.
+'<amkeyword>-</amkeyword>' vs.  '<amkeyword>_</amkeyword>'.
 Identifiers should be quoted in the configuration file, although For historical
 reasons, the quotes are optional.</para>
 
@@ -437,22 +434,13 @@ can't read logfiles written when this option was enabled.
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>label_new_tapes</amkeyword>
+  <term><amkeyword>label-new-tapes</amkeyword>
         <amtype>string</amtype></term>
 <listitem>
-    <para>Deprecated, use <amkeyword>autolabel</amkeyword> option with options <amkeyword>volume_error empty</amkeyword> to get equivalent behavior.</para>
+    <para>Deprecated, use <amkeyword>autolabel</amkeyword> option with options <amkeyword>volume-error empty</amkeyword> to get equivalent behavior.</para>
     <para>Default: not set.
 When set, this directive will cause Amanda to automatically write an Amanda
-tape label to any blank tape she encounters. This option is DANGEROUS 
-because when set, Amanda will ERASE any non-Amanda tapes you may have, and may 
-also ERASE any near-failing tapes. Use with caution.</para>
-<para>When using this directive, specify the template for new tape 
-labels. The template should contain some number of contiguous '%' 
-characters, which will be replaced with a generated number. Be sure to 
-specify enough '%' characters that you do not run out of tape labels. 
-Example: 
-<markup>label_new_tapes "DailySet1-%%%"</markup>
-</para>
+tape label to any blank tape she encounters.</para>
 </listitem>
 </varlistentry>
 
@@ -460,9 +448,9 @@ Example:
   <term><amkeyword>autolabel</amkeyword>
         <amtype>string</amtype>
         [<amkeyword>any</amkeyword>]
-        [<amkeyword>other_config</amkeyword>]
-        [<amkeyword>non_amanda</amkeyword>]
-        [<amkeyword>volume_error</amkeyword>]
+        [<amkeyword>other-config</amkeyword>]
+        [<amkeyword>non-amanda</amkeyword>]
+        [<amkeyword>volume-error</amkeyword>]
         [<amkeyword>empty</amkeyword>]</term>
 <listitem>
     <para>Default: not set.
@@ -479,29 +467,29 @@ Example:
 </para>
 <para>Note that many devices cannot distinguish an empty tape from an error
 condition, so it may is often necessary to include
-<amkeyword>volume_error</amkeyword> as an autolabel condition.</para>
+<amkeyword>volume-error</amkeyword> as an autolabel condition.</para>
 <variablelist remap='TP'>
 <varlistentry>
 <term><amkeyword>any</amkeyword></term>
-<listitem>equivalent to '<amkeyword>other_config non_amanda volume_error empty</amkeyword>'
+<listitem>equivalent to '<amkeyword>other-config non-amanda volume-error empty</amkeyword>'
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><amkeyword>other_config</amkeyword></term>
+<term><amkeyword>other-config</amkeyword></term>
 <listitem>Label volumes with a valid Amanda label that do not match our
 <amkeyword>labelstr</amkeyword>. Danger: this may erase volumes
 from other Amanda configurations without warning!
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><amkeyword>non_amanda</amkeyword></term>
+<term><amkeyword>non-amanda</amkeyword></term>
 <listitem>Label volumes which do not start with data that resembles an
 Amanda header. Danger: this may erase volumes from other backup applications
 without warning!
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><amkeyword>volume_error</amkeyword></term>
+<term><amkeyword>volume-error</amkeyword></term>
 <listitem>Label volumes where an error occurs while trying to read the label.
 Danger: this may erase arbitrary volumes due to transient errors.
 </listitem>
@@ -552,7 +540,7 @@ or a tape changer (explicitly or by referencing a device definition - see <manre
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>device_property</amkeyword> <amtype>string</amtype> <amtype>string</amtype></term>
+  <term><amkeyword>device-property</amkeyword> <amtype>string</amtype> <amtype>string</amtype></term>
   <listitem>
 <para>These options can set various device properties.  See
 <manref name="amanda-devices" vol="7"/>
@@ -561,7 +549,7 @@ Both strings are always quoted; the first string contains the name of
 the property to set, and the second contains its value. For example, to set
 a fixed block size of 128k, write:</para>
 <programlisting>
-device_property "BLOCK_SIZE" "128k"
+device-property "BLOCK_SIZE" "128k"
 </programlisting>
 
   </listitem>
@@ -625,9 +613,6 @@ and should be commented out of the configuration file.</para>
 let Amanda write to more than one tape.</para>
 <para>Note that this is an upper bound on the number of tapes,
 and Amanda may use less.</para>
-<para>Also note that as of this release, Amanda does not support true tape overflow.
-When it reaches the end of one tape,
-the backup image Amanda was processing starts over again on the next tape.</para>
   </listitem>
   </varlistentry>
 
@@ -635,7 +620,7 @@ the backup image Amanda was processing starts over again on the next tape.</para
   <term><amkeyword>maxdumpsize</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<amdefault><amkeyword>runtapes</amkeyword>*<amkeyword>tape_length</amkeyword></amdefault>.
+<amdefault><amkeyword>runtapes</amkeyword>*<amkeyword>tape-length</amkeyword></amdefault>.
 Maximum number of bytes the planner will schedule for a run.</para>
 <para>The default unit is Kbytes if it is not specified.</para>
   </listitem>
@@ -764,7 +749,7 @@ per client instead of per disk.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>connect_tries</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>connect-tries</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>3</amdefault>.
@@ -773,7 +758,7 @@ How many times the server will try a connection.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>req_tries</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>req-tries</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>3</amdefault>.
@@ -1009,7 +994,7 @@ Amanda maintains this file with information about the active set of tapes.</para
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><amkeyword>device_output_buffer_size</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>device-output-buffer-size</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>1280k</amdefault>.
@@ -1026,7 +1011,7 @@ useful on fast tape drives and optical media.</para>
 <para>Default:
 <amdefault>20</amdefault>.
 This option is deprecated; use
-the <amkeyword>device_output_buffer_size</amkeyword> directive
+the <amkeyword>device-output-buffer-size</amkeyword> directive
 instead. <amkeyword>tapebufs</amkeyword> works the same way,
 but the number specified is multiplied by the device blocksize prior
 to use.</para>
@@ -1054,7 +1039,7 @@ Whether an amdump run will flush the dumps from holding disk to tape.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><amkeyword>amrecover_do_fsf</amkeyword> <amtype>bool</amtype></term>
+  <term><amkeyword>amrecover-do-fsf</amkeyword> <amtype>bool</amtype></term>
   <listitem>
 <para>Deprecated; amrecover always uses fsf, and does not invoke amrestore.</para>
 <para>Default:
@@ -1063,7 +1048,7 @@ Amrecover will call amrestore with the -f flag for faster positioning of the tap
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><amkeyword>amrecover_check_label</amkeyword> <amtype>bool</amtype></term>
+  <term><amkeyword>amrecover-check-label</amkeyword> <amtype>bool</amtype></term>
   <listitem>
 <para>Deprecated; amrecover always checks the label, and does not invoke amrestore.</para>
 <para>Default:
@@ -1072,11 +1057,11 @@ Amrecover will call amrestore with the -l flag to check the label.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><amkeyword>amrecover_changer</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>amrecover-changer</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default: not set.
 Amrecover will use the changer if you use 'settape &lt;string&gt;' and that string
-is the same as the amrecover_changer setting.</para>
+is the same as the <amkeyword>amrecover-changer</amkeyword> setting.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -1147,7 +1132,7 @@ Relative pathnames are relative to the configuration directory.
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_days</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-days</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>3</amdefault>.
@@ -1156,7 +1141,7 @@ The number of days the debug files are kept.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_auth</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-auth</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -1165,7 +1150,7 @@ Debug level of the auth module</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_event</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-event</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -1174,7 +1159,7 @@ Debug level of the event module</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_holding</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-holding</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -1183,7 +1168,7 @@ Debug level of the holdingdisk module</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_protocol</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-protocol</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -1192,7 +1177,7 @@ Debug level of the protocol module</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_planner</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-planner</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -1201,7 +1186,7 @@ Debug level of the planner process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_driver</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-driver</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -1210,7 +1195,7 @@ Debug level of the driver process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_dumper</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-dumper</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -1219,7 +1204,7 @@ Debug level of the dumper process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_chunker</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-chunker</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -1228,7 +1213,7 @@ Debug level of the chunker process</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>debug_taper</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>debug-taper</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>0</amdefault>.
@@ -1478,7 +1463,7 @@ Type of authorization to perform between tape server and backup client hosts.  S
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>amandad_path</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>amandad-path</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>&quot;$libexec/amandad&quot;</amdefault>.
@@ -1488,7 +1473,7 @@ Specify the amandad path of the client, only use with rsh/ssh authentification.
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>client_username</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>client-username</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
 <amdefault>CLIENT_LOGIN</amdefault>.
@@ -1498,7 +1483,7 @@ Specify the username to connect on the client, only use with rsh/ssh authentific
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>client_port</amkeyword> [ <amtype>int</amtype> | <amtype>string</amtype> ]</term>
+  <term><amkeyword>client-port</amkeyword> [ <amtype>int</amtype> | <amtype>string</amtype> ]</term>
   <listitem>
 <para>Default:
 <amdefault>&quot;amanda&quot;</amdefault>.
@@ -1641,7 +1626,7 @@ to use your own compression method. (See dumptype custom-compress in example/ama
   <varlistentry>
     <term>compress client custom</term>
     <listitem>
-      <para>Specify <emphasis>client_custom_compress</emphasis> &quot;PROG&quot;</para>
+      <para>Specify <amkeyword>client-custom-compress</amkeyword> &quot;PROG&quot;</para>
       <para>PROG must not contain white space and it must accept -d for uncompress.</para>
     </listitem>
   </varlistentry>
@@ -1654,7 +1639,7 @@ to use your own compression method. (See dumptype custom-compress in example/ama
   <varlistentry>
     <term>compress server custom</term>
     <listitem>
-      <para>Specify <amkeyword>server_custom_compress</amkeyword> &quot;PROG&quot;</para>
+      <para>Specify <amkeyword>server-custom-compress</amkeyword> &quot;PROG&quot;</para>
       <para>PROG must not contain white space and it must accept -d for uncompress.</para>
     </listitem>
   </varlistentry>
@@ -1666,7 +1651,7 @@ or <emphasis remap='B'>mt</emphasis> option), Amanda (software) compression shou
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>client_custom_compress</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>client-custom-compress</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default: none.
     The program to use to perform compression/decompression on the client; used with
@@ -1675,7 +1660,7 @@ or <emphasis remap='B'>mt</emphasis> option), Amanda (software) compression shou
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>server_custom_compress</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>server-custom-compress</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default: none.
     The program to use to perform compression/decompression on the server; used with
@@ -1710,9 +1695,9 @@ server host as it goes from the network into the holding disk or to tape.</para>
   <varlistentry>
     <term>encrypt client</term>
     <listitem>
-      <para>Specify client_encrypt &quot;PROG&quot;</para>
+      <para>Specify client-encrypt &quot;PROG&quot;</para>
       <para>PROG must not contain white space.</para>
-      <para>Specify client_decrypt_option &quot;decryption-parameter&quot; Default: &quot;-d&quot;</para>
+      <para>Specify client-decrypt-option &quot;decryption-parameter&quot; Default: &quot;-d&quot;</para>
       <para>decryption-parameter must not contain white space.</para>
       <para>(See dumptype client-encrypt-nocomp in example/amanda.conf for reference)</para>
     </listitem>
@@ -1720,9 +1705,9 @@ server host as it goes from the network into the holding disk or to tape.</para>
   <varlistentry>
     <term>encrypt server</term>
     <listitem>
-      <para>Specify server_encrypt &quot;PROG&quot;</para>
+      <para>Specify server-encrypt &quot;PROG&quot;</para>
       <para>PROG must not contain white space.</para>
-      <para>Specify server_decrypt_option &quot;decryption-parameter&quot; Default: &quot;-d&quot;</para>
+      <para>Specify server-decrypt-option &quot;decryption-parameter&quot; Default: &quot;-d&quot;</para>
       <para>decryption-parameter must not contain white space.</para>
       <para>(See dumptype server-encrypt-fast in example/amanda.conf for reference)</para>
     </listitem>
@@ -1738,7 +1723,7 @@ client-encryption AND server-compression is not supported.
 </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>client_encrypt</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>client-encrypt</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default: none.
 The program to use to perform encryption/decryption on the client; used with
@@ -1747,16 +1732,16 @@ The program to use to perform encryption/decryption on the client; used with
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>client_decrypt_option</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>client-decrypt-option</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default: -d.
-The option that can be passed to client_encrypt to make it decrypt instead.
+The option that can be passed to client-encrypt to make it decrypt instead.
 Must not contain whitespace.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>server_encrypt</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>server-encrypt</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default: none.
 The program to use to perform encryption/decryption on the server; used with
@@ -1765,10 +1750,10 @@ The program to use to perform encryption/decryption on the server; used with
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>server_decrypt_option</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>server-decrypt-option</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default: -d.
-The option that can be passed to server_encrypt to make it decrypt instead.
+The option that can be passed to server-encrypt to make it decrypt instead.
 Must not contain whitespace.</para>
   </listitem>
   </varlistentry>
@@ -2086,7 +2071,7 @@ level 1 incrementals in this configuration; this is probably a bug.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><amkeyword>ssh_keys</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>ssh-keys</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default: not set.
 The key file the ssh auth will use, it must be the private key. If this parameter is not specified, then the default ssh key will be used.</para>
@@ -2147,7 +2132,7 @@ The value should be hh*100+mm, e.g. 6:30PM (18:30) would be entered as
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>allow_split</amkeyword> <amtype>bool</amtype></term>
+  <term><amkeyword>allow-split</amkeyword> <amtype>bool</amtype></term>
   <listitem>
 <para>Default: true.
 If true, then dumps with this dumptype can be split on the storage media.  If false, then
@@ -2157,7 +2142,7 @@ below.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>tape_splitsize</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>tape-splitsize</amkeyword> <amtype>int</amtype></term>
   <listitem>
       <para>Deprecated.  See "Dump Splitting Configuration" below.</para>
 <para>Default: not set.
@@ -2167,7 +2152,7 @@ The default unit is Kbytes if it is not specified.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>split_diskbuffer</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>split-diskbuffer</amkeyword> <amtype>string</amtype></term>
       <para>Deprecated.  See "Dump Splitting Configuration" below.</para>
   <listitem>
 <para>Default: not set.
@@ -2177,12 +2162,12 @@ When dumping a split dump in PORT-WRITE mode (usually meaning "no holding disk")
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>fallback_splitsize</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>fallback-splitsize</amkeyword> <amtype>int</amtype></term>
   <listitem>
       <para>Deprecated.  See "Dump Splitting Configuration" below.</para>
 <para>Default:
 <amdefault>10M</amdefault>.
-This specifies the part size used when no <amkeyword>split_diskbuffer</amkeyword> is specified, or when it is too small or does not exist,
+This specifies the part size used when no <amkeyword>split-diskbuffer</amkeyword> is specified, or when it is too small or does not exist,
 and thus the maximum amount of memory consumed for in-memory splitting.
 The default unit is Kbytes if it is not specified.</para>
   </listitem>
@@ -2336,11 +2321,11 @@ tape devices.
   </varlistentry>
   
   <varlistentry>
-  <term><amkeyword>part_size</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>part-size</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default: none.  This is the size (in KB if no units are specified) of
 each split part written to the volume.  It is reduced to
-<amkeyword>part_cache_max_size</amkeyword> when part caching is required.
+<amkeyword>part-cache-max-size</amkeyword> when part caching is required.
 If this is set to zero, then no splitting will take place; in this case,
 some devices can span dumps from volume to volume, while others will cause
 the entire dump to fail if they encounter end-of-medium before the dump is
@@ -2349,13 +2334,13 @@ complete.  See "Dump Splitting Configuration" below.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>part_cache_type</amkeyword> [ <amkeyword>none</amkeyword> | <amkeyword>disk</amkeyword> | <amkeyword>memory</amkeyword> ] </term>
+  <term><amkeyword>part-cache-type</amkeyword> [ <amkeyword>none</amkeyword> | <amkeyword>disk</amkeyword> | <amkeyword>memory</amkeyword> ] </term>
   <listitem>
 <para>Default: none.  When part caching is required, this parameter specifies
 the type of caching that will be used.  The options include no caching
 (<amkeyword>none</amkeyword>), in which case a failed part will cause the
 entire dump to fail; on-disk caching (<amkeyword>disk</amkeyword>), for
-which <amkeyword>part_cache_dir</amkeyword> must be set properly; and
+which <amkeyword>part-cache-dir</amkeyword> must be set properly; and
 in-memory caching (<amkeyword>memory</amkeyword>), which on most systems
 severely restrains the size of the part that can be written.  See "Dump
 Splitting Configuration" below.</para>
@@ -2363,7 +2348,7 @@ Splitting Configuration" below.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>part_cache_dir</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>part-cache-dir</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default: none.
 The directory in which part-cache files can be written when caching on disk.
@@ -2372,7 +2357,7 @@ See "Dump Splitting Configuration" below.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>part_cache_max_size</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>part-cache-max-size</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default: none.
 The maximum part size to use when caching is in effect.  This is used to limit
@@ -2580,13 +2565,13 @@ A comment string describing this script.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><amkeyword>execute_where</amkeyword> [ <amkeyword>client</amkeyword> | <amkeyword>server</amkeyword> ]</term>
+  <term><amkeyword>execute-where</amkeyword> [ <amkeyword>client</amkeyword> | <amkeyword>server</amkeyword> ]</term>
   <listitem>
 <para>Default: <amkeyword>client</amkeyword>. Where the script must be executed, on the client or server.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><amkeyword>>execute_on</amkeyword> <amtype>execute_on</amtype> [,<amtype>execute_on</amtype>]*</term>
+  <term><amkeyword>execute-on</amkeyword> <amtype>execute_on</amtype> [,<amtype>execute_on</amtype>]*</term>
   <listitem>
 <para>No default. When the script must be executed, you can specify many of them:</para>
     <!-- .RS -->
@@ -2709,7 +2694,7 @@ script --post-recover
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><amkeyword>property</amkeyword>> [<amkeyword>append</amkeyword>] [<amkeyword>priority</amkeyword>] <amtype>string</amtype> <amtype>string</amtype>+</term>
+  <term><amkeyword>property</amkeyword> [<amkeyword>append</amkeyword>] [<amkeyword>priority</amkeyword>] <amtype>string</amtype> <amtype>string</amtype>+</term>
   <listitem>
 <para>No default. You can set property for the script, each script have a different set of property. Both strings are quoted; the first string contains the name of
 the property to set, and the others contains its values.
@@ -2730,7 +2715,7 @@ in the form of "device" sections, which look like this:</para>
 define device <emphasis remap='I'>name</emphasis> {
     commend "<emphasis remap='I'>comment (optional)</emphasis>"
     tapedev "<emphasis remap='I'>device-specifier</emphasis>"
-    device_property "<emphasis remap='I'>prop-name</emphasis>" "<emphasis remap='I'>prop-value</emphasis>"
+    device-property "<emphasis remap='I'>prop-name</emphasis>" "<emphasis remap='I'>prop-value</emphasis>"
     <literal>...</literal>
 }
 </programlisting>
@@ -2745,7 +2730,7 @@ As with most sections, the <emphasis remap='I'>comment</emphasis>
 parmeter is optional and only for the user's convenience.</para>
 
 <para>An arbitrary number of <emphasis
-remap='I'>device_property</emphasis> parameters can be specified.
+remap='I'>device-property</emphasis> parameters can be specified.
 Again, see
 <manref name="amanda-devices" vol="7"/>
 for information on device properties.</para>
@@ -2809,22 +2794,22 @@ device. The remaining parameters are specific to the changer type selected.
 	media.</para>
 
     <para>In versions of Amanda through 3.1.*, splitting was controlled by the
-	dumptype parameters <amkeyword>tape_splitsize</amkeyword>,
-	<amkeyword>split_diskbuffer</amkeyword>, and
-	<amkeyword>fallback_splitsize</amkeyword>.  These keywords had
+	dumptype parameters <amkeyword>tape-splitsize</amkeyword>,
+	<amkeyword>split-diskbuffer</amkeyword>, and
+	<amkeyword>fallback-splitsize</amkeyword>.  These keywords had
 	confusing and non-intuitive interactions, and have since been
 	deprecated.</para>
 
     <para>If the deprecated keywords are not present, subsequent versions
 	of Amanda use the dumptype parameter
-	<amkeyword>allow_split</amkeyword> to control whether a DLE can be
+	<amkeyword>allow-split</amkeyword> to control whether a DLE can be
 	split, and the <emphasis>tapetype</emphasis> parameters
-	<amkeyword>part_size</amkeyword>,
-	<amkeyword>part_cache_type</amkeyword>,
-	<amkeyword>part_cache_dir</amkeyword>, and
-	<amkeyword>part_cache_max_size</amkeyword>.  The
-	<amkeyword>part_size</amkeyword> specifies the "normal" part size,
-	while the <amkeyword>part_cache_*</amkeyword> parameters describe
+	<amkeyword>part-size</amkeyword>,
+	<amkeyword>part-cache-type</amkeyword>,
+	<amkeyword>part-cache-dir</amkeyword>, and
+	<amkeyword>part-cache-max-size</amkeyword>.  The
+	<amkeyword>part-size</amkeyword> specifies the "normal" part size,
+	while the <amkeyword>part-cache-*</amkeyword> parameters describe
 	how to behave when caching is required (on PORT-WRITE).  Full
 	details on these parameters are given above.</para>
 

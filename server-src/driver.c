@@ -311,8 +311,8 @@ main(
     flush_threshold_scheduled = (conf_flush_threshold_scheduled * tape_length) / 100;
     taperflush = (conf_taperflush *tape_length) / 100;
 
-    driver_debug(1, _("flush_threshold_dumped: %lld\n"), (long long)flush_threshold_dumped);
-    driver_debug(1, _("flush_threshold_scheduled: %lld\n"), (long long)flush_threshold_scheduled);
+    driver_debug(1, _("flush-threshold-dumped: %lld\n"), (long long)flush_threshold_dumped);
+    driver_debug(1, _("flush-threshold-scheduled: %lld\n"), (long long)flush_threshold_scheduled);
     driver_debug(1, _("taperflush: %lld\n"), (long long)taperflush);
 
     /* set up any configuration-dependent variables */

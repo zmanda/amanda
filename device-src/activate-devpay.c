@@ -194,9 +194,9 @@ static void do_output(Credentials * rare) {
         exit(EXIT_FAILURE);
     }
 
-    g_printf("device_property \"S3_USER_TOKEN\" \"%s\"\n"
-             "device_property \"S3_ACCESS_KEY\" \"%s\"\n"
-             "device_property \"S3_SECRET_KEY\" \"%s\"\n",
+    g_printf("device-property \"S3_USER_TOKEN\" \"%s\"\n"
+             "device-property \"S3_ACCESS_KEY\" \"%s\"\n"
+             "device-property \"S3_SECRET_KEY\" \"%s\"\n",
              rare->user_token->str, rare->access_key->str,
              rare->secret_key->str);
 }

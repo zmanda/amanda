@@ -4895,7 +4895,7 @@ update_derived_values(
 	     getconf_seen(CNF_AUTOLABEL) > 0)  ||
 	    (getconf_seen(CNF_LABEL_NEW_TAPES) < 0 &&
 	     getconf_seen(CNF_AUTOLABEL) < 0)) {
-		conf_parserror(_("Can't specify both label_new_tapes and autolabel"));
+		conf_parserror(_("Can't specify both label-new-tapes and autolabel"));
 	}
 	if ((getconf_seen(CNF_LABEL_NEW_TAPES) != 0 &&
 	     getconf_seen(CNF_AUTOLABEL) == 0) ||
@@ -7602,7 +7602,7 @@ data_path_to_string(
 	case DATA_PATH_AMANDA   : return "AMANDA";
 	case DATA_PATH_DIRECTTCP: return "DIRECTTCP";
     }
-    error(_("data_path is not DATA_PATH_AMANDA or DATA_PATH_DIRECTTCP"));
+    error(_("datapath is not DATA_PATH_AMANDA or DATA_PATH_DIRECTTCP"));
     /* NOTREACHED */
 }
 
@@ -7614,7 +7614,7 @@ data_path_from_string(
 	return DATA_PATH_AMANDA;
     if (strcmp(data, "DIRECTTCP") == 0)
 	return DATA_PATH_DIRECTTCP;
-    error(_("data_path is not AMANDA or DIRECTTCP :%s:"), data);
+    error(_("datapath is not AMANDA or DIRECTTCP :%s:"), data);
     /* NOTREACHED */
 }
 

@@ -1,4 +1,21 @@
 2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda-auth.7.xml
+	  man/xml-source/amanda-changers.7.xml
+	  man/xml-source/amanda-client.conf.5.xml
+	  man/xml-source/amanda-compatibility.7.xml
+	  man/xml-source/amanda-devices.7.xml
+	  man/xml-source/amanda-taperscan.7.xml man/xml-source/amanda.conf.5.xml
+	  man/xml-source/amcheck.8.xml man/xml-source/amrecover.8.xml: remove
+	  references to krb4 and to the pre-spanning days, and canonicalize
+	  all configuration parameters to use -, not _
+	* common-src/conffile.c device-src/activate-devpay.c
+	  device-src/amtapetype.pl perl/Amanda/Application/Zfs.pm
+	  perl/Amanda/Taper/Scribe.pm server-src/amadmin.c server-src/amcheck.c
+	  server-src/amreport.pl server-src/driver.c server-src/planner.c:
+	  canonicalize configuration parameter names in error messages to use -,
+	  not _
+
+2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Installcheck/Catalogs.pm: tool to install catalogs
 	  dynamically, rather than including them in __DATA__
 	* installcheck/catalogs/*: new catalog files
