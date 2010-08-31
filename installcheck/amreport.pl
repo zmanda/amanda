@@ -916,8 +916,8 @@ STATS driver estimate localhost.localdomain /boot8 20090225080737 0 [sec 1 nkb 1
 SUCCESS chunker localhost.localdomain /boot8 20090225080737 0 [sec 1.607 kb 123456789 kps 24426.5]
 INFO chunker pid-done 23733
 INFO dumper pid-done 23738
-PART taper DIRO-TEST-003 8 localhost.localdomain /boot8 20090225080737 1/1 0 [sec 0.250557 kb 123456789 kps 156611.070535]
-DONE taper localhost.localdomain /boot8 20090225080737 1 0 [sec 0.250557 kb 123456789 kps 156611.070535]
+PART taper DIRO-TEST-003 8 localhost.localdomain /boot8 20090225080737 1/1 0 [sec 0.250557 kb 123456789 kps 156611.070535 orig-kb 0]
+DONE taper localhost.localdomain /boot8 20090225080737 1 0 [sec 0.250557 kb 123456789 kps 156611.070535 orig-kb 0]
 INFO chunker chunker pid 23733
 INFO dumper gzip pid 23738
 SUCCESS dumper localhost.localdomain /boot9 20090225080737 0 [sec 1.585 kb 1234567890 kps 24748.4 orig-kb 1678901234]
@@ -925,8 +925,8 @@ STATS driver estimate localhost.localdomain /boot9 20090225080737 0 [sec 1 nkb 1
 SUCCESS chunker localhost.localdomain /boot9 20090225080737 0 [sec 1.607 kb 1234567890 kps 24426.5]
 INFO chunker pid-done 23733
 INFO dumper pid-done 23738
-PART taper DIRO-TEST-003 9 localhost.localdomain /boot9 20090225080737 1/1 0 [sec 0.250557 kb 1234567890 kps 156611.070535]
-DONE taper localhost.localdomain /boot9 20090225080737 1 0 [sec 0.250557 kb 1234567890 kps 156611.070535]
+PART taper DIRO-TEST-003 9 localhost.localdomain /boot9 20090225080737 1/1 0 [sec 0.250557 kb 1234567890 kps 156611.070535 orig-kb -1]
+DONE taper localhost.localdomain /boot9 20090225080737 1 0 [sec 0.250557 kb 1234567890 kps 156611.070535 orig-kb -1]
 INFO dumper pid-done 23686
 INFO taper tape DIRO-TEST-003 kb 39240 fm 10 [OK]
 INFO taper pid-done 23685

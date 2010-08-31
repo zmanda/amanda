@@ -605,7 +605,7 @@ sub by_level_count
 
     # start at level 1 - don't include fulls
     foreach my $i (1 .. (@$count - 1)) {
-        push @lc, "$i:$count->[$i]" if $count->[$i] > 0;
+        push @lc, "$i:$count->[$i]" if defined $count->[$i] and $count->[$i] > 0;
     }
     return '(' . join(' ', @lc) . ')';
 }
@@ -1246,9 +1246,15 @@ sub get_summary_info
 	    }
 	}
 
+	# sometimes the driver logs an orig_size of -1, which makes the
+	# compression percent very large and negative
+	$orig_size = 0 if ($orig_size < 0);
+
+	# pre-format the compression column, with '--' replacing 100% (i.e.,
+	# no compression)
 	my $compression;
-	if (!defined $orig_size) {
-	    $compression = 100;
+	if (!defined $orig_size || $orig_size == $out_size) {
+	    $compression = '--';
 	} else {
 	    $compression =
 	      divzero_col((100 * $out_size), $orig_size, $col_spec->[5]);
@@ -1286,7 +1292,7 @@ sub get_summary_info
 	    push @rv, $fmt_col_field->(2, $level);
 	    push @rv, $orig_size ? $fmt_col_field->(3, $self->tounits($orig_size)) : '';
 	    push @rv, $out_size ? $fmt_col_field->(4, $self->tounits($out_size)) : '';
-	    push @rv, ($compression == 100) ? '-- ' : $fmt_col_field->(5, $compression);
+	    push @rv, $compression;
 	    push @rv, $dump_time ? $fmt_col_field->(6, mnsc($dump_time)) : "PARTIAL";
 	    push @rv, $dump_rate ? $fmt_col_field->(7, $dump_rate) : "";
 	    push @rv, $fmt_col_field->(8,
@@ -1309,7 +1315,7 @@ sub get_summary_info
 	    push @rv, $fmt_col_field->(2, $level);
 	    push @rv, $orig_size ? $fmt_col_field->(4, $self->tounits($orig_size)) :'';
 	    push @rv, $out_size ? $fmt_col_field->(4, $self->tounits($out_size)) : '';
-	    push @rv, ($compression == 100) ? '-- ' : $fmt_col_field->(5, $compression);
+	    push @rv, $compression;
 	    push @rv, '';
 	    push @rv, '';
 	    push @rv, $fmt_col_field->(8,

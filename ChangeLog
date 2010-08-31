@@ -1,4 +1,11 @@
 2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/catalogs/normal.cat: add orig-size -1 and orig-size 0
+	  to logfiles to check handling of those cases
+	* perl/Amanda/Report.pm: fix (egregious) typo
+	* perl/Amanda/Report/human.pm: handle compression better, handle
+	  printing non-contiguous levels
+
+2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/fileheader.c: remove incorrect validations for
 	  CONT_FILENAME and APPLICATION
 
