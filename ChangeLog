@@ -1,4 +1,23 @@
 2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* NEWS: note removal of changers
+	* changer-src/Makefile.am changer-src/chg-chio.pl
+	  changer-src/chg-chs.sh changer-src/chg-iomega.pl
+	  changer-src/chg-juke.sh changer-src/chg-mcutil.sh
+	  changer-src/chg-mtx.sh changer-src/chg-null.sh changer-src/chg-rait.sh
+	  changer-src/chg-rth.pl changer-src/chg-scsi-chio.c
+	  changer-src/chg-scsi.c changer-src/libscsi.h changer-src/scsi-aix.c
+	  changer-src/scsi-bsd.c changer-src/scsi-cam.c
+	  changer-src/scsi-changer-driver.c changer-src/scsi-chio.c
+	  changer-src/scsi-defs.h changer-src/scsi-hpux.c
+	  changer-src/scsi-hpux_new.c changer-src/scsi-irix.c
+	  changer-src/scsi-linux.c changer-src/scsi-proto.c
+	  changer-src/scsi-solaris.c changer-src/sense.c: remove changers and
+	  system-specific SCSI code
+	* config/amanda/changer.m4: remove unnecessary checks
+	* config/amanda/progs.m4: remove checks for chio, chs, and mcutil
+	* configure.in: remove changer invocations
+
+2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/driverio.c: Don't write negative origsizes to the taper
 
 2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>

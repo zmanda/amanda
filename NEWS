@@ -4,6 +4,20 @@ Changes in release 3.2.0alpha
       o deprecated configuration keywords:
          + amrecover_do_fsf
 	 + amrecover_check_label
+   * Several old changers have been removed - these changers will work with
+     Amanda for the forseeable future, but are no longer included in the
+     distribution.
+      o chg-chio
+      o chg-chs
+      o chg-iomega
+      o chg-juke
+      o chg-mcutil
+      o chg-mtx
+      o chg-null (use the new "chg-null:")
+      o chg-rait (use the new "chg-rait:{dev1,dev2}")
+      o chg-rth
+      o chg-scsi-chio
+      o chg-scsi
 
 Changes in release 3.1.0
 
