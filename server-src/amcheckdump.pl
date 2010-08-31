@@ -325,10 +325,10 @@ sub find_validation_command {
             "VDUMP" => "$Amanda::Constants::VRESTORE tf -",
             "VXDUMP" => "$Amanda::Constants::VXRESTORE tbf 2 -",
             "XFSDUMP" => "$Amanda::Constants::XFSRESTORE -t -v silent -",
-            "TAR" => "$Amanda::Constants::GNUTAR tf -",
-            "GTAR" => "$Amanda::Constants::GNUTAR tf -",
-            "GNUTAR" => "$Amanda::Constants::GNUTAR tf -",
-            "SMBCLIENT" => "$Amanda::Constants::GNUTAR tf -",
+            "TAR" => "$Amanda::Constants::GNUTAR --ignore-zeros -tf -",
+            "GTAR" => "$Amanda::Constants::GNUTAR --ignore-zeros -tf -",
+            "GNUTAR" => "$Amanda::Constants::GNUTAR --ignore-zeros -tf -",
+            "SMBCLIENT" => "$Amanda::Constants::GNUTAR --ignore-zeros -tf -",
         );
         $validation_program = $validation_programs{$program};
 	if (!defined $validation_program) {

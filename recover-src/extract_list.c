@@ -1887,6 +1887,8 @@ extract_files_child(
     case IS_TAR:
     case IS_GNUTAR:
 	g_ptr_array_add(argv_ptr, stralloc("tar"));
+	/* ignore trailing zero blocks on input (this was the default until tar-1.21) */
+	g_ptr_array_add(argv_ptr, stralloc("--ignore-zeros"));
 	g_ptr_array_add(argv_ptr, stralloc("--numeric-owner"));
 	g_ptr_array_add(argv_ptr, stralloc("-xpGvf"));
 	g_ptr_array_add(argv_ptr, stralloc("-"));	/* data on stdin */
