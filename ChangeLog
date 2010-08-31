@@ -1,4 +1,7 @@
 2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/driverio.c: Don't write negative origsizes to the taper
+
+2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amcheck.c: drop root privs during the server check, so
 	  that access() will test the dumpuser's perms, not root's perms
 

@@ -384,6 +384,7 @@ taper_cmd(
     char *qdest;
     char *q;
     char *splitargs;
+    uintmax_t origsize;
 
     switch(cmd) {
     case START_TAPER:
@@ -394,8 +395,11 @@ taper_cmd(
         qname = quote_string(dp->name);
 	qdest = quote_string(destname);
 	g_snprintf(number, SIZEOF(number), "%d", level);
-	g_snprintf(orig_kb, SIZEOF(orig_kb), "%jd",
-		 (intmax_t)sched(dp)->origsize);
+	if (sched(dp)->origsize >= 0)
+	    origsize = sched(dp)->origsize;
+	else
+	    origsize = 0;
+	g_snprintf(orig_kb, SIZEOF(orig_kb), "%ju", origsize);
 	splitargs = taper_splitting_args(dp);
 	cmdline = vstralloc(cmdstr[cmd],
 			    " ", disk2serial(dp),
@@ -438,8 +442,11 @@ taper_cmd(
 	break;
     case DONE: /* handle */
 	dp = (disk_t *) ptr;
-	g_snprintf(number, SIZEOF(number), "%jd",
-		 (intmax_t)(sched(dp)->origsize));
+	if (sched(dp)->origsize >= 0)
+	    origsize = sched(dp)->origsize;
+	else
+	    origsize = 0;
+	g_snprintf(number, SIZEOF(number), "%ju", origsize);
 	cmdline = vstralloc(cmdstr[cmd],
 			    " ", disk2serial(dp),
 			    " ", number,
