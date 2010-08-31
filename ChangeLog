@@ -1,4 +1,8 @@
 2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amcheck.c: drop root privs during the server check, so
+	  that access() will test the dumpuser's perms, not root's perms
+
+2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Taper_Scribe.pl: spell it part-cache-dir
 	* installcheck/amtapetype.pl: spell it device-property
 	* server-src/amcheckdump.pl: tar requires -tf, not tf, after a long
