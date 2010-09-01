@@ -1,4 +1,7 @@
 2010-09-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in: add check for unsetenv
+
+2010-09-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am: add Installcheck::Catalog and the
 	  catalogs to the distribution
 
