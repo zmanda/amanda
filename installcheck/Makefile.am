@@ -153,6 +153,7 @@ endif
 # require configure-variable substitution) here:
 test_utils = \
 	Installcheck.pm \
+	Installcheck/Catalogs.pm \
 	Installcheck/Config.pm \
 	Installcheck/ClientService.pm \
 	Installcheck/Mock.pm \
@@ -161,6 +162,32 @@ test_utils = \
 	Installcheck/Application.pm \
 	Installcheck/Changer.pm
 EXTRA_DIST += $(test_utils)
+
+# the catalogs themselves
+catalogs = \
+	catalogs/amflush.cat \
+	catalogs/bigdb.cat \
+	catalogs/bigestimate.cat \
+	catalogs/chunker-partial.cat \
+	catalogs/doublefailure.cat \
+	catalogs/fatal.cat \
+	catalogs/filesystemstaped.cat \
+	catalogs/flush-noorigsize.cat \
+	catalogs/flush-origsize.cat \
+	catalogs/longstrange.cat \
+	catalogs/normal.cat \
+	catalogs/plannerfail.cat \
+	catalogs/quoted.cat \
+	catalogs/resultsmissing.cat \
+	catalogs/retried.cat \
+	catalogs/retried-nofinish.cat \
+	catalogs/shortstrange.cat \
+	catalogs/skipped.cat \
+	catalogs/spanned.cat \
+	catalogs/strontium.cat \
+	catalogs/taperr.cat
+EXTRA_DIST += $(catalogs)
+
 
 # and finally some development utilities
 noinst_SCRIPTS = \

@@ -1,3 +1,7 @@
+2010-09-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am: add Installcheck::Catalog and the
+	  catalogs to the distribution
+
 2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amserverconfig.pl: skip the correct number of tests
 
