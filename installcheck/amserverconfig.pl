@@ -61,7 +61,7 @@ ok(run("$sbindir/amserverconfig", 'TESTCONF', '--template', 'single-tape'),
 config_ok();
 
 SKIP: {
-    skip "tape-changer template requires mtx", 1
+    skip "tape-changer template requires mtx", 2
 	unless $Amanda::Constants::MTX && -x $Amanda::Constants::MTX;
     Installcheck::Run::cleanup();
     ok(run("$sbindir/amserverconfig", 'TESTCONF', '--template', 'tape-changer'),

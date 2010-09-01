@@ -1,4 +1,7 @@
 2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amserverconfig.pl: skip the correct number of tests
+
+2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amserverconfig.pl: don't try running tape-changer if
 	  MTX is not installed
 	* server-src/amserverconfig.pl: create $CONFIG_DIR if required.  This
