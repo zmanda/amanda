@@ -1,4 +1,10 @@
 2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amserverconfig.pl: don't try running tape-changer if
+	  MTX is not installed
+	* server-src/amserverconfig.pl: create $CONFIG_DIR if required.  This
+	  passes on my system and should pass on the Mac systems.
+
+2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/.gitignore: don't ignore these files
 	* config/arg-nonnull.h config/c++defs.h config/warn-on-use.h: add
 	  ignored, but required, gnulib files

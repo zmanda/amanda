@@ -119,9 +119,6 @@ sub check_gnutarlist_dir {
 }
 
 sub create_conf_dir {
-  unless ( -e $confdir ) {
-    &log_and_die ("ERROR: $confdir does not exist\n", 0);
-  }
   unless ( -e "$confdir/$config" ) {
     mkpath ("$confdir/$config", $def_perm) ||
       &log_and_die ("ERROR: mkpath: $confdir/$config failed: $!\n", 0);	# $! = system error

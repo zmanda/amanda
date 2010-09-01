@@ -23,6 +23,7 @@ use File::Path;
 use Installcheck;
 use Installcheck::Run qw(run run_err $diskname);
 use Amanda::Paths;
+use Amanda::Constants;
 use Amanda::Util qw( slurp burp );
 use Amanda::Config qw( :init );
 
@@ -59,10 +60,14 @@ ok(run("$sbindir/amserverconfig", 'TESTCONF', '--template', 'single-tape'),
     or diag($Installcheck::Run::stderr);
 config_ok();
 
-Installcheck::Run::cleanup();
-ok(run("$sbindir/amserverconfig", 'TESTCONF', '--template', 'tape-changer'),
-    "amserverconfig with tape-changer template")
-    or diag($Installcheck::Run::stderr);
-config_ok();
+SKIP: {
+    skip "tape-changer template requires mtx", 1
+	unless $Amanda::Constants::MTX && -x $Amanda::Constants::MTX;
+    Installcheck::Run::cleanup();
+    ok(run("$sbindir/amserverconfig", 'TESTCONF', '--template', 'tape-changer'),
+	"amserverconfig with tape-changer template")
+	or diag($Installcheck::Run::stderr);
+    config_ok();
+}
 
 Installcheck::Run::cleanup();
