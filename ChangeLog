@@ -1,3 +1,6 @@
+2010-09-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in: add check for unsetenv
+
 2010-08-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/catalogs/normal.cat: add orig-size -1 and orig-size 0
 	  to logfiles to check handling of those cases
