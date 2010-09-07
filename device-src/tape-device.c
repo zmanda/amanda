@@ -22,8 +22,17 @@
 #include "pipespawn.h"
 #include <string.h> /* memset() */
 #include "util.h"
-#include "tape-device.h"
-#include "tape-ops.h"
+#include "device.h"
+
+#ifdef HAVE_SYS_TAPE_H
+# include <sys/tape.h>
+#endif
+#ifdef HAVE_SYS_MTIO_H
+# include <sys/mtio.h>
+#endif
+#ifdef HAVE_LIMITS_H
+# include <limits.h>
+#endif
 
 /* This is equal to 2*1024*1024*1024 - 16*1024*1024 - 1, but written
    explicitly to avoid overflow issues. */
@@ -32,6 +41,41 @@
 /* Largest possible block size on SCSI systems. */
 #define LARGEST_BLOCK_ESTIMATE (16 * 1024 * 1024)
 
+/*
+ * Type checking and casting macros
+ */
+
+#define TYPE_TAPE_DEVICE	(tape_device_get_type())
+#define TAPE_DEVICE(obj)	G_TYPE_CHECK_INSTANCE_CAST((obj), tape_device_get_type(), TapeDevice)
+#define TAPE_DEVICE_CONST(obj)	G_TYPE_CHECK_INSTANCE_CAST((obj), tape_device_get_type(), TapeDevice const)
+#define TAPE_DEVICE_CLASS(klass)	G_TYPE_CHECK_CLASS_CAST((klass), tape_device_get_type(), TapeDeviceClass)
+#define IS_TAPE_DEVICE(obj)	G_TYPE_CHECK_INSTANCE_TYPE((obj), tape_device_get_type ())
+#define TAPE_DEVICE_GET_CLASS(obj)	G_TYPE_INSTANCE_GET_CLASS((obj), tape_device_get_type(), TapeDeviceClass)
+GType	tape_device_get_type	(void);
+
+/*
+ * Main object structure
+ */
+typedef struct TapeDevicePrivate_s TapeDevicePrivate;
+typedef struct _TapeDevice {
+    Device __parent__;
+
+    /* It should go without saying that all this stuff is
+     * look-but-don't-touch. */
+
+    /* characteristics of the device */
+    gboolean fsf, bsf, fsr, bsr, eom, bsf_after_eom, broken_gmt_online;
+    gboolean leom;
+    gboolean nonblocking_open, fsf_after_filemark;
+    int final_filemarks;
+
+    /* 0 if we opened with O_RDWR; error otherwise. */
+    gboolean write_open_errno;
+    int fd;
+
+    TapeDevicePrivate * private;
+} TapeDevice;
+
 struct TapeDevicePrivate_s {
     /* This holds the total number of bytes written to the device,
        modulus RESETOFS_THRESHOLD. */
@@ -39,6 +83,41 @@ struct TapeDevicePrivate_s {
     char * device_filename;
     gsize read_block_size;
 };
+
+/*
+ * Class definition
+ */
+
+typedef struct _TapeDeviceClass TapeDeviceClass;
+struct _TapeDeviceClass {
+	DeviceClass __parent__;
+};
+
+void tape_device_register(void);
+
+/* useful callback for tape ops */
+void tape_device_set_capabilities(TapeDevice *self,
+	gboolean fsf, PropertySurety fsf_surety, PropertySource fsf_source,
+	gboolean fsf_after_filemark, PropertySurety faf_surety, PropertySource faf_source,
+	gboolean bsf, PropertySurety bsf_surety, PropertySource bsf_source,
+	gboolean fsr, PropertySurety fsr_surety, PropertySource fsr_source,
+	gboolean bsr, PropertySurety bsr_surety, PropertySource bsr_source,
+	gboolean eom, PropertySurety eom_surety, PropertySource eom_source,
+	gboolean leom, PropertySurety leom_surety, PropertySource leom_source,
+	gboolean bsf_after_eom, PropertySurety bae_surety, PropertySource bae_source,
+	guint final_filemarks, PropertySurety ff_surety, PropertySource ff_source);
+
+/* Real Operations (always return FALSE if not implemented) */
+gboolean tape_rewind(int fd);
+gboolean tape_fsf(int fd, guint count);
+gboolean tape_bsf(int fd, guint count);
+gboolean tape_fsr(int fd, guint count);
+gboolean tape_bsr(int fd, guint count);
+gint tape_fileno(int fd);
+
+/* tape_fileno returns tape position file number, or one of these: */
+#define TAPE_OP_ERROR -1
+#define TAPE_POSITION_UNKNOWN -2
 
 /* Possible (abstracted) results from a system I/O operation. */
 typedef enum {
@@ -53,27 +132,47 @@ typedef enum {
     RESULT_MAX
 } IoResult;
 
-/*
- * Our device-specific properties.  These are not static because they are
- * accessed from the OS-specific tape-*.c files.
- */
-DevicePropertyBase device_property_broken_gmt_online;
-DevicePropertyBase device_property_fsf;
-DevicePropertyBase device_property_fsf_after_filemark;
-DevicePropertyBase device_property_bsf;
-DevicePropertyBase device_property_fsr;
-DevicePropertyBase device_property_bsr;
-DevicePropertyBase device_property_eom;
-DevicePropertyBase device_property_bsf_after_eom;
-DevicePropertyBase device_property_nonblocking_open;
-DevicePropertyBase device_property_final_filemarks;
-DevicePropertyBase device_property_read_buffer_size; /* old name for READ_BLOCK_SIZE */
+/* returns a fileno like tape_fileno */
+gint tape_eod(int fd);
 
-void tape_device_register(void);
+gboolean tape_weof(int fd, guint8 count);
+gboolean tape_setcompression(int fd, gboolean on);
+
+gboolean tape_offl(int fd);
+
+DeviceStatusFlags tape_is_tape_device(int fd);
+DeviceStatusFlags tape_is_ready(int fd, TapeDevice *t_self);
 
 #define tape_device_read_size(self) \
     (((TapeDevice *)(self))->private->read_block_size? \
 	((TapeDevice *)(self))->private->read_block_size : ((Device *)(self))->block_size)
+
+/*
+ * Our device-specific properties.
+ */
+
+#define PROPERTY_BROKEN_GMT_ONLINE (device_property_broken_gmt_online.ID)
+#define PROPERTY_FSF (device_property_fsf.ID)
+#define PROPERTY_FSF_AFTER_FILEMARK (device_property_fsf_after_filemark.ID)
+#define PROPERTY_BSF (device_property_bsf.ID)
+#define PROPERTY_FSR (device_property_fsr.ID)
+#define PROPERTY_BSR (device_property_bsr.ID)
+#define PROPERTY_EOM (device_property_eom.ID)
+#define PROPERTY_BSF_AFTER_EOM (device_property_bsf_after_eom.ID)
+#define PROPERTY_NONBLOCKING_OPEN (device_property_nonblocking_open.ID)
+#define PROPERTY_FINAL_FILEMARKS (device_property_final_filemarks.ID)
+
+static DevicePropertyBase device_property_broken_gmt_online;
+static DevicePropertyBase device_property_fsf;
+static DevicePropertyBase device_property_fsf_after_filemark;
+static DevicePropertyBase device_property_bsf;
+static DevicePropertyBase device_property_fsr;
+static DevicePropertyBase device_property_bsr;
+static DevicePropertyBase device_property_eom;
+static DevicePropertyBase device_property_bsf_after_eom;
+static DevicePropertyBase device_property_nonblocking_open;
+static DevicePropertyBase device_property_final_filemarks;
+static DevicePropertyBase device_property_read_buffer_size; /* old name for READ_BLOCK_SIZE */
 
 /* here are local prototypes */
 static void tape_device_init (TapeDevice * o);
@@ -672,88 +771,67 @@ static int try_open_tape_device(TapeDevice * self, char * device_filename) {
 }
 
 static void
-tape_device_open_device (Device * d_self, char * device_name,
+tape_device_open_device (Device * dself, char * device_name,
 			char * device_type, char * device_node) {
     TapeDevice * self;
+    GValue val;
 
-    self = TAPE_DEVICE(d_self);
+    self = TAPE_DEVICE(dself);
 
     self->fd = -1;
     self->private->device_filename = stralloc(device_node);
 
-    /* Get tape drive/OS info */
-    tape_device_detect_capabilities(self);
-
-    /* Chain up */
-    if (parent_class->open_device) {
-        parent_class->open_device(d_self, device_name, device_type, device_node);
-    }
-}
-
-void
-tape_device_set_capabilities(TapeDevice *self,
-	gboolean fsf, PropertySurety fsf_surety, PropertySource fsf_source,
-	gboolean fsf_after_filemark, PropertySurety faf_surety, PropertySource faf_source,
-	gboolean bsf, PropertySurety bsf_surety, PropertySource bsf_source,
-	gboolean fsr, PropertySurety fsr_surety, PropertySource fsr_source,
-	gboolean bsr, PropertySurety bsr_surety, PropertySource bsr_source,
-	gboolean eom, PropertySurety eom_surety, PropertySource eom_source,
-	gboolean leom, PropertySurety leom_surety, PropertySource leom_source,
-	gboolean bsf_after_eom, PropertySurety bae_surety, PropertySource bae_source,
-	guint final_filemarks, PropertySurety ff_surety, PropertySource ff_source)
-{
-    Device *dself = DEVICE(self);
-    GValue val;
-
-    /* this function is called by tape_device_detect_capabilities, and basically
-     * exists to take care of the GValue mechanics in one place */
-
-    g_assert(final_filemarks == 1 || final_filemarks == 2);
-
+    /* Set tape drive/OS info */
     bzero(&val, sizeof(val));
     g_value_init(&val, G_TYPE_BOOLEAN);
 
-    self->fsf = fsf;
-    g_value_set_boolean(&val, fsf);
-    device_set_simple_property(dself, PROPERTY_FSF, &val, fsf_surety, fsf_source);
+    self->fsf = TRUE;
+    g_value_set_boolean(&val, self->fsf);
+    device_set_simple_property(dself, PROPERTY_FSF, &val, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
 
-    self->fsf_after_filemark = fsf_after_filemark;
-    g_value_set_boolean(&val, fsf_after_filemark);
-    device_set_simple_property(dself, PROPERTY_FSF_AFTER_FILEMARK, &val, faf_surety, faf_source);
+    self->fsf_after_filemark = DEFAULT_FSF_AFTER_FILEMARK;
+    g_value_set_boolean(&val, self->fsf_after_filemark);
+    device_set_simple_property(dself, PROPERTY_FSF_AFTER_FILEMARK, &val, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
 
-    self->bsf = bsf;
-    g_value_set_boolean(&val, bsf);
-    device_set_simple_property(dself, PROPERTY_BSF, &val, bsf_surety, bsf_source);
+    self->bsf = TRUE;
+    g_value_set_boolean(&val, self->bsf);
+    device_set_simple_property(dself, PROPERTY_BSF, &val, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
 
-    self->fsr = fsr;
-    g_value_set_boolean(&val, fsr);
-    device_set_simple_property(dself, PROPERTY_FSR, &val, fsr_surety, fsr_source);
+    self->fsr = TRUE;
+    g_value_set_boolean(&val, self->fsr);
+    device_set_simple_property(dself, PROPERTY_FSR, &val, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
 
-    self->bsr = bsr;
-    g_value_set_boolean(&val, bsr);
-    device_set_simple_property(dself, PROPERTY_BSR, &val, bsr_surety, bsr_source);
+    self->bsr = TRUE;
+    g_value_set_boolean(&val, self->bsr);
+    device_set_simple_property(dself, PROPERTY_BSR, &val, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
 
-    self->eom = eom;
-    g_value_set_boolean(&val, eom);
-    device_set_simple_property(dself, PROPERTY_EOM, &val, eom_surety, eom_source);
+    self->eom = TRUE;
+    g_value_set_boolean(&val, self->eom);
+    device_set_simple_property(dself, PROPERTY_EOM, &val, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
 
-    self->leom = leom;
-    g_value_set_boolean(&val, leom);
-    device_set_simple_property(dself, PROPERTY_LEOM, &val, leom_surety, leom_source);
+    self->leom = FALSE;
+    g_value_set_boolean(&val, self->leom);
+    device_set_simple_property(dself, PROPERTY_LEOM, &val, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
 
-    self->bsf_after_eom = bsf_after_eom;
-    g_value_set_boolean(&val, bsf_after_eom);
-    device_set_simple_property(dself, PROPERTY_BSF_AFTER_EOM, &val, bae_surety, bae_source);
+    self->bsf_after_eom = FALSE;
+    g_value_set_boolean(&val, self->bsf_after_eom);
+    device_set_simple_property(dself, PROPERTY_BSF_AFTER_EOM, &val, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
 
     g_value_unset(&val);
     g_value_init(&val, G_TYPE_UINT);
 
-    self->final_filemarks = final_filemarks;
-    g_value_set_uint(&val, final_filemarks);
-    device_set_simple_property(dself, PROPERTY_FINAL_FILEMARKS, &val, ff_surety, ff_source);
+    self->final_filemarks = 2;
+    g_value_set_uint(&val, self->final_filemarks);
+    device_set_simple_property(dself, PROPERTY_FINAL_FILEMARKS, &val, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
 
     g_value_unset(&val);
+
+    /* Chain up */
+    if (parent_class->open_device) {
+        parent_class->open_device(dself, device_name, device_type, device_node);
+    }
 }
+
 
 static DeviceStatusFlags tape_device_read_label(Device * dself) {
     TapeDevice * self;
@@ -1880,3 +1958,184 @@ tape_device_factory (char * device_name, char * device_type, char * device_node)
     device_open_device(rval, device_name, device_type, device_node);
     return rval;
 }
+
+/*
+ * Tape Operations using the POSIX interface
+ */
+
+/* Having one name for every operation would be too easy. */
+#if !defined(MTCOMPRESSION) && defined(MTCOMP)
+# define MTCOMPRESSION MTCOMP
+#endif
+
+#if !defined(MTSETBLK) && defined(MTSETBSIZ)
+# define MTSETBLK MTSETBSIZ
+#endif
+
+#if !defined(MTEOM) && defined(MTEOD)
+# define MTEOM MTEOD
+#endif
+
+gboolean tape_rewind(int fd) {
+    int count = 5;
+    time_t stop_time;
+
+    /* We will retry this for up to 30 seconds or 5 retries,
+       whichever is less, because some hardware/software combinations
+       (notably EXB-8200 on FreeBSD) can fail to rewind. */
+    stop_time = time(NULL) + 30;
+
+    while (--count >= 0 && time(NULL) < stop_time) {
+        struct mtop mt;
+        mt.mt_op = MTREW;
+        mt.mt_count = 1;
+
+        if (0 == ioctl(fd, MTIOCTOP, &mt))
+            return TRUE;
+
+        sleep(3);
+    }
+
+    return FALSE;
+}
+
+gboolean tape_fsf(int fd, guint count) {
+    struct mtop mt;
+    mt.mt_op = MTFSF;
+    mt.mt_count = count;
+    return 0 == ioctl(fd, MTIOCTOP, &mt);
+}
+
+gboolean tape_bsf(int fd, guint count) {
+    struct mtop mt;
+    mt.mt_op = MTBSF;
+    mt.mt_count = count;
+    return 0 == ioctl(fd, MTIOCTOP, &mt);
+}
+
+gboolean tape_fsr(int fd, guint count) {
+    struct mtop mt;
+    mt.mt_op = MTFSR;
+    mt.mt_count = count;
+    return 0 == ioctl(fd, MTIOCTOP, &mt);
+}
+
+gboolean tape_bsr(int fd, guint count) {
+    struct mtop mt;
+    mt.mt_op = MTBSR;
+    mt.mt_count = count;
+    return 0 == ioctl(fd, MTIOCTOP, &mt);
+}
+
+gint tape_fileno(int fd) {
+    struct mtget get;
+
+    if (0 != ioctl(fd, MTIOCGET, &get))
+        return TAPE_POSITION_UNKNOWN;
+    if (get.mt_fileno < 0)
+        return TAPE_POSITION_UNKNOWN;
+    else
+        return get.mt_fileno;
+}
+
+gint tape_eod(int fd) {
+    struct mtop mt;
+    struct mtget get;
+    mt.mt_op = MTEOM;
+    mt.mt_count = 1;
+    if (0 != ioctl(fd, MTIOCTOP, &mt))
+        return TAPE_OP_ERROR;
+
+    /* Ignored result. This is just to flush buffers. */
+    mt.mt_op = MTNOP;
+    ioctl(fd, MTIOCTOP, &mt);
+
+    if (0 != ioctl(fd, MTIOCGET, &get))
+        return TAPE_POSITION_UNKNOWN;
+    if (get.mt_fileno < 0)
+        return TAPE_POSITION_UNKNOWN;
+    else
+        return get.mt_fileno;
+}
+
+gboolean tape_weof(int fd, guint8 count) {
+    struct mtop mt;
+    mt.mt_op = MTWEOF;
+    mt.mt_count = count;
+    return 0 == ioctl(fd, MTIOCTOP, &mt);
+}
+
+gboolean tape_setcompression(int fd G_GNUC_UNUSED, 
+	gboolean on G_GNUC_UNUSED) {
+#ifdef MTCOMPRESSION
+    struct mtop mt;
+    mt.mt_op = MTCOMPRESSION;
+    mt.mt_count = on;
+    return 0 == ioctl(fd, MTIOCTOP, &mt);
+#else
+    return 0;
+#endif
+}
+
+gboolean tape_offl(int fd) {
+    struct mtop mt;
+    int safe_errno;
+
+    mt.mt_op = MTOFFL;
+    mt.mt_count = 1;
+    if (0 == ioctl(fd, MTIOCTOP, &mt))
+	return TRUE;
+
+    safe_errno = errno;
+    g_debug("tape_off: ioctl(MTIOCTOP/MTOFFL) failed: %s", strerror(errno));
+    errno = safe_errno;
+
+    return FALSE;
+}
+
+DeviceStatusFlags tape_is_tape_device(int fd) {
+    struct mtop mt;
+    mt.mt_op = MTNOP;
+    mt.mt_count = 1;
+    if (0 == ioctl(fd, MTIOCTOP, &mt)) {
+        return DEVICE_STATUS_SUCCESS;
+#ifdef ENOMEDIUM
+    } else if (errno == ENOMEDIUM) {
+	return DEVICE_STATUS_VOLUME_MISSING;
+#endif
+    } else {
+	g_debug("tape_is_tape_device: ioctl(MTIOCTOP/MTNOP) failed: %s",
+		 strerror(errno));
+	if (errno == EIO) {
+	    /* some devices return EIO while the drive is busy loading */
+	    return DEVICE_STATUS_DEVICE_ERROR|DEVICE_STATUS_DEVICE_BUSY;
+	} else {
+	    return DEVICE_STATUS_DEVICE_ERROR;
+	}
+    }
+}
+
+DeviceStatusFlags tape_is_ready(int fd, TapeDevice *t_self G_GNUC_UNUSED) {
+    struct mtget get;
+    if (0 == ioctl(fd, MTIOCGET, &get)) {
+#if defined(GMT_ONLINE) || defined(GMT_DR_OPEN)
+        if (1
+#ifdef GMT_ONLINE
+            && (t_self->broken_gmt_online || GMT_ONLINE(get.mt_gstat))
+#endif
+#ifdef GMT_DR_OPEN
+            && !GMT_DR_OPEN(get.mt_gstat)
+#endif
+            ) {
+            return DEVICE_STATUS_SUCCESS;
+        } else {
+            return DEVICE_STATUS_VOLUME_MISSING;
+        }
+#else /* Neither macro is defined. */
+        return DEVICE_STATUS_SUCCESS;
+#endif
+    } else {
+        return DEVICE_STATUS_VOLUME_ERROR;
+    }
+}
+

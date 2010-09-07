@@ -46,26 +46,8 @@ libamdevice_la_LIBADD = \
 	../common-src/libamanda.la \
 	../xfer-src/libamxfer.la
 
-# tape-device has *lots* of conditionals; the first is whether to support
-# the device at all, and the remainder select a particular kind of OS-specific
-# backend.
-
 if WANT_TAPE_DEVICE
 libamdevice_la_SOURCES += tape-device.c
-
-if WANT_TAPE_XENIX
-libamdevice_la_SOURCES += tape-xenix.c
-endif
-if WANT_TAPE_AIX
-libamdevice_la_SOURCES += tape-aix.c
-endif
-if WANT_TAPE_UWARE
-libamdevice_la_SOURCES += tape-uware.c
-endif
-if WANT_TAPE_POSIX
-libamdevice_la_SOURCES += tape-posix.c
-endif
-
 endif
 
 if WANT_S3_DEVICE
@@ -101,8 +83,6 @@ noinst_HEADERS = \
 	property.h \
 	s3.h \
 	s3-util.h \
-	tape-device.h \
-	tape-ops.h \
 	xfer-device.h \
 	xfer-dest-taper.h \
 	vfs-device.h

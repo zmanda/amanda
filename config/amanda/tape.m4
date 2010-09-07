@@ -18,11 +18,8 @@ AC_DEFUN([AMANDA_WITH_MAXTAPEBLOCKSIZE], [
 #
 # OVERVIEW
 #
-#   Set up for the 'tape' device.  One of the conditionals WANT_TAPE_XENIX,
-#   WANT_TAPE_AIX, WANT_TAPE_UWARE, and WANT_TAPE_POSIX will be true; the
-#   corresponding symbols are also DEFINEd.  Finally, WANT_TAPE_DEVICE is
-#   defined nad AM_CONDITIONAL'd if the tape device should be supported (if
-#   at least one of the backends is available).
+#   Set up for the 'tape' device.  WANT_TAPE_DEVICE is defined and
+#   AM_CONDITIONAL'd if the tape device should be supported.
 #
 #   If 'struct mtget' fields mt_flags, mt_fileno, mt_blkno, mt_dsreg, and 
 #   mt_erreg, the corresponding HAVE_MT_* is DEFINEd.
@@ -55,41 +52,12 @@ AC_DEFUN([AMANDA_TAPE_DEVICE], [
 	HAVE_MTIOCTOP=$amanda_cv_HAVE_MTIOCTOP
     )
 
-    # decide which tape device to compile (arranged in such a way that
-    # only one actually gets compiled)
-    case "$host" in
-      *-ibm-aix*) aix_tapeio=yes ;;
-      *-sysv4.2uw2*) uware_tapeio=yes ;;
-      *-sco3.2v5*) xenix_tapeio=yes ;;
-      i386-pc-isc4*) xenix_tapeio=yes ;;
-    esac
-
     # maybe we have no tape device at all (e.g., Mac OS X)?
-    if test -n "$xenix_tapeio" ||
-       test -n "$aix_tapeio" ||
-       test -n "$uware_tapeio" ||
-       test x"$HAVE_MTIOCTOP" = x"yes"; then
+    if test x"$HAVE_MTIOCTOP" = x"yes"; then
 	want_tape_device=yes
 	AC_DEFINE(WANT_TAPE_DEVICE, 1, [Define if the tape-device will be built])
     fi
-
-    AM_CONDITIONAL(WANT_TAPE_XENIX, test -n "$xenix_tapeio")
-    AM_CONDITIONAL(WANT_TAPE_AIX, test -n "$aix_tapeio")
-    AM_CONDITIONAL(WANT_TAPE_UWARE, test -n "$uware_tapeio")
-    AM_CONDITIONAL(WANT_TAPE_POSIX, test x"$HAVE_MTIOCTOP" = x"yes")
     AM_CONDITIONAL(WANT_TAPE_DEVICE, test -n "$want_tape_device")
-
-    if test -n "$xenix_tapeio"; then
-      AC_DEFINE(WANT_TAPE_XENIX,1,[Define on XENIX/ISC. ])
-    fi
-
-    if test -n "$aix_tapeio"; then
-      AC_DEFINE(WANT_TAPE_AIX,1,[Define on AIX. ])
-    fi
-
-    if test -n "$uware_tapeio"; then
-      AC_DEFINE(WANT_TAPE_UWARE,1,[Define on UnixWare. ])
-    fi
 
     #
     # Check for various "mt status" related structure elements.

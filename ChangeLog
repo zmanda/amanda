@@ -1,3 +1,14 @@
+2010-09-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/tape-aix.c device-src/tape-uware.c
+	  device-src/tape-xenix.c: remove unmaintained, and apparently unused,
+	  implementations
+	* device-src/tape-posix.c device-src/tape-device.c: merge tape-posix.c
+	* device-src/tape-device.h: remove
+	* device-src/tape-ops.h: remove
+
+	* config/amanda/tape.m4: don't look for AIX, Uware, or Xenix anymore
+	* device-src/Makefile.am: remove tape ops conditionals
+
 2010-09-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in: add check for unsetenv
 
