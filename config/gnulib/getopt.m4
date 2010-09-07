@@ -54,6 +54,9 @@ AC_DEFUN([gl_GETOPT_CHECK_HEADERS],
   dnl Persuade Solaris <unistd.h> to declare optarg, optind, opterr, optopt.
   AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
 
+  dnl setenv is used for POSIXLY_CORRECT, below
+  AC_REQUIRE([gl_FUNC_SETENV])
+
   gl_CHECK_NEXT_HEADERS([getopt.h])
   AC_CHECK_HEADERS_ONCE([getopt.h])
   if test $ac_cv_header_getopt_h = yes; then
@@ -209,18 +212,19 @@ main ()
 
   if test -z "$gl_replace_getopt" && test $gl_getopt_required = GNU; then
     AC_CACHE_CHECK([for working GNU getopt function], [gl_cv_func_getopt_gnu],
-      [# Even with POSIXLY_CORRECT, the GNU extension of leading '-' in the
-       # optstring is necessary for programs like m4 that have POSIX-mandated
-       # semantics for supporting options interspersed with files.
-       # Also, since getopt_long is a GNU extension, we require optind=0.
-       gl_had_POSIXLY_CORRECT=${POSIXLY_CORRECT:+yes}
-       POSIXLY_CORRECT=1
-       export POSIXLY_CORRECT
+      [
        AC_RUN_IFELSE(
         [AC_LANG_PROGRAM([[#include <getopt.h>
+			   #include <stdlib.h>
                            #include <stddef.h>
                            #include <string.h>
            ]], [[
+	     /* Even with POSIXLY_CORRECT, the GNU extension of leading '-' in the
+	      * optstring is necessary for programs like m4 that have POSIX-mandated
+	      * semantics for supporting options interspersed with files.
+	      * Also, since getopt_long is a GNU extension, we require optind=0. */
+	     setenv("POSIXLY_CORRECT", "1", 1);
+
              /* This code succeeds on glibc 2.8, OpenBSD 4.0, Cygwin, mingw,
                 and fails on MacOS X 10.5, AIX 5.2, HP-UX 11, IRIX 6.5,
                 OSF/1 5.1, Solaris 10.  */
@@ -278,9 +282,6 @@ main ()
            *)                   gl_cv_func_getopt_gnu=yes;;
          esac
         ])
-       if test "$gl_had_POSIXLY_CORRECT" != yes; then
-         AS_UNSET([POSIXLY_CORRECT])
-       fi
       ])
     if test "$gl_cv_func_getopt_gnu" = "no"; then
       gl_replace_getopt=yes

@@ -40,7 +40,7 @@ shopt -u nullglob
 ######################################################################
 
 GNULIB_MODULES="getaddrinfo lock base64 physmem fsusage"
-GNULIB_MODULES="$GNULIB_MODULES mkdtemp getopt full-read full-write"
+GNULIB_MODULES="$GNULIB_MODULES mkdtemp getopt-gnu full-read full-write"
 GNULIB_MODULES="$GNULIB_MODULES lseek ftruncate fseeko ftello regex"
 
 ######################################################################

@@ -34,6 +34,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module btowc:
   # Code from module c++defs:
   # Code from module configmake:
+  # Code from module environ:
   # Code from module errno:
   # Code from module extensions:
   AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
@@ -47,7 +48,6 @@ AC_DEFUN([gl_EARLY],
   # Code from module full-read:
   # Code from module full-write:
   # Code from module getaddrinfo:
-  # Code from module getopt:
   # Code from module getopt-gnu:
   # Code from module getopt-posix:
   # Code from module gettext-h:
@@ -63,6 +63,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module lstat:
   # Code from module malloc:
   # Code from module malloc-posix:
+  # Code from module malloca:
   # Code from module mbrtowc:
   # Code from module mbsinit:
   # Code from module memchr:
@@ -76,6 +77,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module safe-read:
   # Code from module safe-write:
   # Code from module servent:
+  # Code from module setenv:
   # Code from module size_max:
   # Code from module snprintf:
   # Code from module socklen:
@@ -134,6 +136,9 @@ AC_DEFUN([gl_INIT],
   gl_WCHAR_MODULE_INDICATOR([btowc])
   # Code from module c++defs:
   # Code from module configmake:
+  # Code from module environ:
+  gl_ENVIRON
+  gl_UNISTD_MODULE_INDICATOR([environ])
   # Code from module errno:
   gl_HEADER_ERRNO_H
   # Code from module extensions:
@@ -155,7 +160,6 @@ AC_DEFUN([gl_INIT],
   # Code from module getaddrinfo:
   gl_GETADDRINFO
   gl_NETDB_MODULE_INDICATOR([getaddrinfo])
-  # Code from module getopt:
   # Code from module getopt-gnu:
   gl_FUNC_GETOPT_GNU
   gl_MODULE_INDICATOR_FOR_TESTS([getopt-gnu])
@@ -194,6 +198,8 @@ AC_DEFUN([gl_INIT],
   # Code from module malloc-posix:
   gl_FUNC_MALLOC_POSIX
   gl_STDLIB_MODULE_INDICATOR([malloc-posix])
+  # Code from module malloca:
+  gl_MALLOCA
   # Code from module mbrtowc:
   gl_FUNC_MBRTOWC
   gl_WCHAR_MODULE_INDICATOR([mbrtowc])
@@ -226,6 +232,9 @@ AC_DEFUN([gl_INIT],
   gl_SAFE_WRITE
   # Code from module servent:
   gl_SERVENT
+  # Code from module setenv:
+  gl_FUNC_SETENV
+  gl_STDLIB_MODULE_INDICATOR([setenv])
   # Code from module size_max:
   gl_SIZE_MAX
   # Code from module snprintf:
@@ -462,6 +471,9 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/lseek.c
   lib/lstat.c
   lib/malloc.c
+  lib/malloca.c
+  lib/malloca.h
+  lib/malloca.valgrind
   lib/mbrtowc.c
   lib/mbsinit.c
   lib/memchr.c
@@ -488,6 +500,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/safe-read.h
   lib/safe-write.c
   lib/safe-write.h
+  lib/setenv.c
   lib/size_max.h
   lib/snprintf.c
   lib/stat.c
@@ -523,6 +536,8 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/btowc.m4
   m4/codeset.m4
   m4/dos.m4
+  m4/eealloc.m4
+  m4/environ.m4
   m4/errno_h.m4
   m4/extensions.m4
   m4/fcntl-o.m4
@@ -554,6 +569,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/lseek.m4
   m4/lstat.m4
   m4/malloc.m4
+  m4/malloca.m4
   m4/mbrtowc.m4
   m4/mbsinit.m4
   m4/mbstate_t.m4
@@ -571,6 +587,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/safe-read.m4
   m4/safe-write.m4
   m4/servent.m4
+  m4/setenv.m4
   m4/size_max.m4
   m4/snprintf.m4
   m4/socklen.m4
