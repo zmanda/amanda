@@ -649,10 +649,11 @@ SKIP: {
 	[ 1024*160,	0xB000, "home" ],
     );
     my @to_write = (
+	# (note that slots 1 and 2 are i/e slots, and are initially empty)
 	# slot xfer		partnum
-	[ 4,   $xfer_info[0],   1 ],
-	[ 5,   $xfer_info[0],   2 ],
-	[ 5,   $xfer_info[0],   3 ],
+	[ 3,   $xfer_info[0],   1 ],
+	[ 4,   $xfer_info[0],   2 ],
+	[ 4,   $xfer_info[0],   3 ],
     );
 
     setup_changer(\&Amanda::MainLoop::quit, "ndmp_server", \@to_write, 64*1024);
@@ -667,9 +668,9 @@ SKIP: {
 	clerk => $clerk,
 	seed => 0xB000,
 	dump => fake_dump("home", "/home", $datestamp, 0,
+	    { label => 'TESTCONF03', filenum => 1 },
 	    { label => 'TESTCONF04', filenum => 1 },
-	    { label => 'TESTCONF05', filenum => 1 },
-	    { label => 'TESTCONF05', filenum => 2 },
+	    { label => 'TESTCONF04', filenum => 2 },
 	),
 	msg => "multi-part ndmp recovery successful",
 	expect_directtcp_supported => 1);

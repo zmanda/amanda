@@ -1,4 +1,8 @@
 2010-09-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Recovery_Clerk.pl: re-use already-full changer
+	  slots, to save space
+
+2010-09-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm: fix make_combined_error
 	* perl/Amanda/Changer/robot.pm: correctly set up polling for device
 	  ready; use 'unknown', not 'device', as a reason; always return a
