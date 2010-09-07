@@ -676,6 +676,9 @@ ndmp_connection_wait_for_notify(
 
     while (1) {
 	gboolean found = FALSE;
+	int fd;
+	SELECT_ARG_TYPE readset;
+	int nfound;
 
 	/* if any desired notifications have been received, then we're
 	 * done */
@@ -704,7 +707,18 @@ ndmp_connection_wait_for_notify(
 	    return TRUE;
 
 	/* otherwise, wait for an incoming packet and handle it, then try
-	 * again */
+	 * again.  There's some select trickery here to avoid hogging the
+	 * ndmlib_mutex - basically, we want to block as long as possible
+	 * outside of the ndmlib_mutex critical section.  This will also be
+	 * useful to allow the wait to be aborted. */
+	fd = self->conn->chan.fd;
+	FD_ZERO(&readset);
+	FD_SET(fd, &readset);
+	nfound = select(fd+1, &readset, NULL, NULL, NULL);
+
+	/* fall on through, blind to any errors - presumably the same error
+	 * condition will be caught by ndmconn_recv_nmb. */
+
 	g_static_mutex_lock(&ndmlib_mutex);
 	NDMOS_MACRO_ZEROFILL(&nmb);
 	nmb.protocol_version = NDMP4VER;
