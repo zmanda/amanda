@@ -1,4 +1,7 @@
 2010-09-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/alloc.c: remove unnecessary declaration of 'environ'
+
+2010-09-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: allow move to move loaded volumes
 	* installcheck/Amanda_Changer_robot.pl: test it
 

@@ -315,8 +315,6 @@ debug_vstrextend(
         return *oldstr;
 }
 
-
-extern char **environ;
 /*
  * safe_env - build a "safe" environment list.
  */
