@@ -1,4 +1,8 @@
 2010-09-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/gnulib/* gnulib/*: Gnulib fix reflected into Amanda; see
+	  http://www.mail-archive.com/bug-gnulib@gnu.org/msg19345.html
+
+2010-09-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Recovery_Clerk.pl: re-use already-full changer
 	  slots, to save space
 
