@@ -1286,10 +1286,14 @@ sub move_unlocked {
 		message => "slot $from_slot is empty");
     }
 
-    if (defined $state->{'slots'}->{$from_slot}->{'loaded_in'}) {
-	return $self->make_error("failed", $params{'finished_cb'},
-		reason => "invalid",
-		message => "slot $from_slot is currently loaded");
+    my $in_drive = $state->{'slots'}->{$from_slot}->{'loaded_in'};
+    if (defined $in_drive) {
+	my $info = $state->{'drives'}->{$in_drive};
+	if ($info->{'res_info'} and $self->_res_info_verify($info->{'res_info'})) {
+	    return $self->make_error("failed", $params{'finished_cb'},
+		    reason => "invalid",
+		    message => "slot $from_slot is currently loaded and reserved");
+	}
     }
 
     if ($state->{'slots'}->{$to_slot}->{'state'} == Amanda::Changer::SLOT_FULL) {
@@ -1306,17 +1310,49 @@ sub move_unlocked {
 	return $params{'finished_cb'}->($err) if $err;
 
 	# update metadata
-	$state->{'slots'}->{$to_slot} = { %{ $state->{'slots'}->{$from_slot} } };
-	$state->{'slots'}->{$from_slot}->{'state'} =
-						Amanda::Changer::SLOT_EMPTY;
-	$state->{'slots'}->{$from_slot}->{'device_status'} = undef;
-	$state->{'slots'}->{$from_slot}->{'f_type'} = undef;
-	$state->{'slots'}->{$from_slot}->{'label'} = undef;
-	$state->{'slots'}->{$from_slot}->{'barcode'} = undef;
+	if ($from_slot ne $to_slot) {
+	    my $f = $state->{'slots'}->{$from_slot};
+	    my $t = $state->{'slots'}->{$to_slot};
+
+	    $t->{'device_status'} = $f->{'device_status'};
+	    $f->{'device_status'} = undef;
+
+	    $t->{'state'} = $f->{'state'};
+	    $f->{'state'} = Amanda::Changer::SLOT_EMPTY;
+
+	    $t->{'f_type'} = $f->{'f_type'};
+	    $f->{'f_type'} = undef;
+
+	    $t->{'label'} = $f->{'label'};
+	    $f->{'label'} = undef;
+
+	    $t->{'barcode'} = $f->{'barcode'};
+	    $f->{'barcode'} = undef;
+	}
+
+	# properly represent the unload operation, if it was performed
+	if (defined $in_drive) {
+	    $state->{'slots'}->{$from_slot}->{'loaded_in'} = undef;
+	    $state->{'slots'}->{$to_slot}->{'loaded_in'} = undef;
+
+	    $state->{'drives'}->{$in_drive}->{'state'} =
+						    Amanda::Changer::SLOT_EMPTY;
+	    $state->{'drives'}->{$in_drive}->{'label'} = undef;
+	    $state->{'drives'}->{$in_drive}->{'barcode'} = undef;
+	    $state->{'drives'}->{$in_drive}->{'orig_slot'} = undef;
+	}
 
 	$params{'finished_cb'}->();
     });
-    $self->{'interface'}->transfer($from_slot, $to_slot, $transfer_complete);
+
+    # if the source slot is loaded, then this is just a directed unload operation;
+    # otherwise, it's a transfer.
+    if (defined $in_drive) {
+	Amanda::Debug::debug("move(): unloading drive $in_drive to slot $to_slot");
+	$self->{'interface'}->unload($in_drive, $to_slot, $transfer_complete);
+    } else {
+	$self->{'interface'}->transfer($from_slot, $to_slot, $transfer_complete);
+    }
 }
 
 ##

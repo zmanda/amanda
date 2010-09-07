@@ -1,4 +1,8 @@
 2010-09-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: allow move to move loaded volumes
+	* installcheck/Amanda_Changer_robot.pl: test it
+
+2010-09-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndmpconnobj.c: When listening for a notify, do not hog the
 	  ndmlib_mutex
 
