@@ -453,7 +453,7 @@ sub load_unlocked {
 	    }
 
 	    # otherwise, we can jump all the way to the end of this process
-	    return $steps->{'check_device'}->();
+	    return $steps->{'start_polling'}->();
 	}
 
 	# here is where we implement each of the drive-selection algorithms
@@ -728,7 +728,8 @@ sub info_key_vendor_string {
 
     $self->{'interface'}->inquiry(make_cb(inquiry_cb => sub {
 	my ($err, $info) = @_;
-	return $params{'info_cb'}->($err) if $err;
+	return $self->make_error("fatal", $params{'info_cb'},
+		message => "$err") if $err;
 
 	my $vendor_string = sprintf "%s %s",
 	    ($info->{'vendor id'} or "<unknown>"),
@@ -790,13 +791,13 @@ sub get_device { # (overridden by subclasses)
     my $device = Amanda::Device->new($device_name);
     if ($device->status != $DEVICE_STATUS_SUCCESS) {
 	return $self->make_error("failed", undef,
-		reason => "device",
+		reason => "unknown",
 		message => "opening '$device_name': " . $device->error_or_status());
     }
 
     if (my $err = $self->{'config'}->configure_device($device)) {
 	return $self->make_error("failed", undef,
-		reason => "device",
+		reason => "unknown",
 		message => $err);
     }
 

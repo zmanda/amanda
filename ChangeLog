@@ -1,4 +1,10 @@
 2010-09-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer.pm: fix make_combined_error
+	* perl/Amanda/Changer/robot.pm: correctly set up polling for device
+	  ready; use 'unknown', not 'device', as a reason; always return a
+	  changer error, not a string
+
+2010-09-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/tape-aix.c device-src/tape-uware.c
 	  device-src/tape-xenix.c: remove unmaintained, and apparently unused,
 	  implementations

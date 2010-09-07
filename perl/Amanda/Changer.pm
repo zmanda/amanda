@@ -1032,7 +1032,7 @@ sub make_combined_error {
 	    reason => $err->{'reason'},
 	    message => $suberrors->[0][0] . ": " . $err->{'message'});
     } else {
-	my $fatal = $classmeth or grep { $err->[1]{'fatal'} } @$suberrors;
+	my $fatal = $classmeth or grep { $_->[1]{'fatal'} } @$suberrors;
 
 	my $reason;
 	if (!$fatal) {
