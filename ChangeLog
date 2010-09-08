@@ -1,3 +1,6 @@
+2010-09-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Send tar stderr to the server.
+
 2010-09-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in: add check for unsetenv
 
