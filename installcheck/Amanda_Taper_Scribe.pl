@@ -194,6 +194,15 @@ sub scribe_notif_part_done {
 	$params{'successful'}, $params{'size'});
 }
 
+sub scribe_notif_tape_done {
+    my $self = shift;
+    my %params = @_;
+
+    main::event("scribe_notif_tape_done",
+	$params{'volume_label'}, $params{'num_files'},
+	$params{'size'});
+}
+
 
 ##
 ## test DevHandling
@@ -480,17 +489,18 @@ is_deeply([ @events ], [
     ], "correct event sequence for a multipart scribe of less than a whole volume, without LEOM")
     or diag(Dumper([@events]));
 
-# pick up where we left off, writing just a tiny bit more.
+# pick up where we left off, writing just a tiny bit more, and then quit
 reset_events();
 run_scribe_xfer(1024*30, $scribe);
+
+quit_scribe($scribe);
 
 is_deeply([ @events ], [
       [ 'scribe_notif_part_done', bi(1), bi(4), 1, bi(30720) ],
       [ 'dump_cb', 'DONE', [], undef, bi(30720) ],
+      [ 'scribe_notif_tape_done', 'FAKELABEL', bi(4), bi(235520) ],
     ], "correct event sequence for a subsequent single-part scribe, still on the same volume")
     or diag(Dumper([@events]));
-
-quit_scribe($scribe);
 
 # write less than a tape full, *with* LEOM (should look the same as above)
 
@@ -504,6 +514,8 @@ run_scribe_xfer(1024*200, $scribe,
 	    part_size => 96*1024,
 	    start_scribe => { write_timestamp => "20010203040506" });
 
+quit_scribe($scribe);
+
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
@@ -513,10 +525,9 @@ is_deeply([ @events ], [
       [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(98304) ],
       [ 'scribe_notif_part_done', bi(3), bi(3), 1, bi(8192) ],
       [ 'dump_cb', 'DONE', [], undef, bi(204800) ],
+      [ 'scribe_notif_tape_done', 'FAKELABEL', bi(3), bi(204800) ],
     ], "correct event sequence for a multipart scribe of less than a whole volume, with LEOM")
     or diag(Dumper([@events]));
-
-quit_scribe($scribe);
 
 # start over again and try a multivolume write
 #
@@ -533,6 +544,8 @@ reset_events();
 run_scribe_xfer($volume_length + $volume_length / 4, $scribe,
 	    start_scribe => { write_timestamp => "20010203040506" });
 
+quit_scribe($scribe);
+
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
@@ -544,6 +557,7 @@ is_deeply([ @events ], [
       [ 'scribe_notif_part_done', bi(3), bi(3), 1, bi(131072) ],
       [ 'scribe_notif_part_done', bi(4), bi(0), 0, bi(0) ],
 
+      [ 'scribe_notif_tape_done', 'FAKELABEL', bi(3), bi(393216) ],
       [ 'scan' ],
       [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', undef, 'slot: 2' ],
@@ -551,13 +565,13 @@ is_deeply([ @events ], [
 
       [ 'scribe_notif_part_done', bi(4), bi(1), 1, bi(131072) ],
       [ 'scribe_notif_part_done', bi(5), bi(2), 1, bi(131072) ],
-      # empty part is written but not notified
+      # empty part is written but not notified, although it is counted
+      # in scribe_notif_tape_done
 
       [ 'dump_cb', 'DONE', [], undef, bi(655360) ],
+      [ 'scribe_notif_tape_done', 'FAKELABEL', bi(3), bi(262144) ],
     ], "correct event sequence for a multipart scribe of more than a whole volume, without LEOM")
     or print (Dumper([@events]));
-
-quit_scribe($scribe);
 
 # same test, but with LEOM support
 
@@ -570,6 +584,8 @@ reset_events();
 run_scribe_xfer(1024*520, $scribe,
 	    start_scribe => { write_timestamp => "20010203040506" });
 
+quit_scribe($scribe);
+
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
@@ -580,6 +596,7 @@ is_deeply([ @events ], [
       [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(131072) ],
       [ 'scribe_notif_part_done', bi(3), bi(3), 1, bi(32768) ], # LEOM comes earlier than PEOM did
 
+      [ 'scribe_notif_tape_done', 'FAKELABEL', bi(3), bi(294912) ],
       [ 'scan' ],
       [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', undef, 'slot: 2' ],
@@ -589,10 +606,9 @@ is_deeply([ @events ], [
       [ 'scribe_notif_part_done', bi(5), bi(2), 1, bi(106496) ],
 
       [ 'dump_cb', 'DONE', [], undef, bi(532480) ],
+      [ 'scribe_notif_tape_done', 'FAKELABEL', bi(2), bi(237568) ],
     ], "correct event sequence for a multipart scribe of more than a whole volume, with LEOM")
     or print (Dumper([@events]));
-
-quit_scribe($scribe);
 
 # now a multivolume write where the second volume gives a changer error
 
@@ -604,6 +620,8 @@ $scribe = Amanda::Taper::Scribe->new(
 reset_events();
 run_scribe_xfer($volume_length + $volume_length / 4, $scribe,
 	    start_scribe => { write_timestamp => "20010203040507" });
+
+quit_scribe($scribe);
 
 $experr = 'Slot bogus not found';
 is_deeply([ @events ], [
@@ -617,16 +635,16 @@ is_deeply([ @events ], [
       [ 'scribe_notif_part_done', bi(3), bi(3), 1, bi(131072) ],
       [ 'scribe_notif_part_done', bi(4), bi(0), 0, bi(0) ],
 
+      [ 'scribe_notif_tape_done', 'FAKELABEL', bi(3), bi(393216) ],
       [ 'scan' ],
       [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', $experr, 'slot: none' ],
       [ 'scribe_notif_new_tape', $experr, undef ],
 
       [ 'dump_cb', 'PARTIAL', [$experr], undef, bi(393216) ],
+      # (no scribe_notif_tape_done)
     ], "correct event sequence for a multivolume scribe with no second vol, without LEOM")
     or print (Dumper([@events]));
-
-quit_scribe($scribe);
 
 reset_taperoot(1);
 $scribe = Amanda::Taper::Scribe->new(
@@ -636,6 +654,8 @@ $scribe = Amanda::Taper::Scribe->new(
 reset_events();
 run_scribe_xfer($volume_length + $volume_length / 4, $scribe,
 	    start_scribe => { write_timestamp => "20010203040507" });
+
+quit_scribe($scribe);
 
 $experr = 'Slot bogus not found';
 is_deeply([ @events ], [
@@ -648,16 +668,16 @@ is_deeply([ @events ], [
       [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(131072) ],
       [ 'scribe_notif_part_done', bi(3), bi(3), 1, bi(32768) ], # LEOM comes long before PEOM
 
+      [ 'scribe_notif_tape_done', 'FAKELABEL', bi(3), bi(294912) ],
       [ 'scan' ],
       [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', $experr, 'slot: none' ],
       [ 'scribe_notif_new_tape', $experr, undef ],
 
       [ 'dump_cb', 'PARTIAL', [$experr], undef, bi(294912) ],
+      # (no scribe_notif_tape_done)
     ], "correct event sequence for a multivolume scribe with no second vol, with LEOM")
     or print (Dumper([@events]));
-
-quit_scribe($scribe);
 
 # now a multivolume write where the second volume does not have permission
 
@@ -670,6 +690,8 @@ reset_events();
 run_scribe_xfer($volume_length + $volume_length / 4, $scribe,
 	    start_scribe => { write_timestamp => "20010203040507" });
 
+quit_scribe($scribe);
+
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
@@ -680,6 +702,7 @@ is_deeply([ @events ], [
       [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(131072) ],
       [ 'scribe_notif_part_done', bi(3), bi(3), 1, bi(32768) ],
 
+      [ 'scribe_notif_tape_done', 'FAKELABEL', bi(3), bi(294912) ],
       [ 'scan' ],
       [ 'request_volume_permission', 'answer:', ['config',"sorry!"] ],
       [ 'scan-finished', undef, 'slot: 2' ],
@@ -687,8 +710,6 @@ is_deeply([ @events ], [
       [ 'dump_cb', 'PARTIAL', [], "sorry!", bi(294912) ],
     ], "correct event sequence for a multivolume scribe with next vol denied")
     or print (Dumper([@events]));
-
-quit_scribe($scribe);
 
 # a non-splitting xfer on a single volume
 
@@ -701,6 +722,8 @@ reset_events();
 run_scribe_xfer(1024*300, $scribe, part_size => 0, part_cache_type => 'none',
 	    start_scribe => { write_timestamp => "20010203040506" });
 
+quit_scribe($scribe);
+
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
@@ -708,10 +731,9 @@ is_deeply([ @events ], [
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(307200) ],
       [ 'dump_cb', 'DONE', [], undef, bi(307200) ],
+      [ 'scribe_notif_tape_done', 'FAKELABEL', bi(1), bi(307200) ],
     ], "correct event sequence for a non-splitting scribe of less than a whole volume, without LEOM")
     or diag(Dumper([@events]));
-
-quit_scribe($scribe);
 
 reset_taperoot(2);
 $scribe = Amanda::Taper::Scribe->new(
@@ -722,6 +744,8 @@ reset_events();
 run_scribe_xfer(1024*300, $scribe, part_size => 0, part_cache_type => 'none',
 	    start_scribe => { write_timestamp => "20010203040506" });
 
+quit_scribe($scribe);
+
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
@@ -729,10 +753,9 @@ is_deeply([ @events ], [
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(307200) ],
       [ 'dump_cb', 'DONE', [], undef, bi(307200) ],
+      [ 'scribe_notif_tape_done', 'FAKELABEL', bi(1), bi(307200) ],
     ], "correct event sequence for a non-splitting scribe of less than a whole volume, with LEOM")
     or diag(Dumper([@events]));
-
-quit_scribe($scribe);
 
 # DirectTCP support is tested through the taper installcheck
 

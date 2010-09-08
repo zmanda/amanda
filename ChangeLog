@@ -1,3 +1,7 @@
+2010-09-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: add scribe_notif_tape_done
+	* installcheck/Amanda_Taper_Scribe.pl: test it
+
 2010-09-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Send tar stderr to the server.
 

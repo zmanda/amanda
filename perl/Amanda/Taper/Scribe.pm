@@ -361,6 +361,16 @@ This method will be called exactly once for every call to
 C<request_volume_permission> that calls back with C<< perm_cb->(undef, undef)
 >>.
 
+  $fb->scribe_notif_tape_done(
+	volume_label => $volume_label,
+	size => $size,
+	num_files => $num_files);
+
+The C<scribe_notif_tape_done> method is called after a volume is completely
+written and its reservation has been released.  Note that the scribe waits
+until the last possible moment to release a reservation, so this may be called
+later than expected, e.g., during a C<quit> invocation.
+
   $fb->scribe_notif_part_done(
         partnum => $partnum,
         fileno => $fileno,
@@ -484,56 +494,56 @@ sub quit {
     my $self = shift;
     my %params = @_;
 
-    for my $rq_param qw(finished_cb) {
-	croak "required parameter '$rq_param' mising"
-	    unless exists $params{$rq_param};
-    }
-
-    $self->_log_volume_done();
-
     # since there's little other option than to barrel on through the
     # quitting procedure, quit() just accumulates its error messages
     # and, if necessary, concantenates them for the finished_cb.
     my @errors;
 
-    if ($self->{'xfer'}) {
-	die "Scribe cannot quit while a transfer is active";
-        # Supporting this would be complicated:
-        # - cancel the xfer and wait for it to complete
-        # - ensure that the taperscan not be started afterward
-        # and isn't required for normal Amanda operation.
-    }
+    my $steps = define_steps
+	cb_ref => \$params{'finished_cb'};
 
-    $self->dbg("quitting");
+    step setup => sub {
+	$self->dbg("quitting");
 
-    my $devhandling_cb = make_cb(devhandling_cb => sub {
-	my ($error) = @_;
-	push @errors, $error if $error;
-
-	$error = join("; ", @errors) if @errors >= 1;
-	$params{'finished_cb'}->($error);
-    });
-
-    my $cleanup_cb = make_cb(cleanup_cb => sub {
-	my ($error) = @_;
-	push @errors, $error if $error;
-
-	$self->{'reservation'} = undef;
-	$self->{'device'} = undef;
-	$self->{'devhandling'}->quit(finished_cb => $devhandling_cb);
-    });
-
-    if ($self->{'reservation'}) {
-	if ($self->{'device'}) {
-	    if (!$self->{'device'}->finish()) {
-		push @errors, $self->{'device'}->error_or_status();
-	    }
+	if ($self->{'xfer'}) {
+	    die "Scribe cannot quit while a transfer is active";
+	    # Supporting this would be complicated:
+	    # - cancel the xfer and wait for it to complete
+	    # - ensure that the taperscan not be started afterward
+	    # and isn't required for normal Amanda operation.
 	}
 
-	$self->{'reservation'}->release(finished_cb => $cleanup_cb);
-    } else {
-	$cleanup_cb->(undef);
-    }
+	$steps->{'release'}->();
+    };
+
+    step release => sub {
+	if ($self->{'reservation'}) {
+	    $self->_release_reservation(finished_cb => $steps->{'released'});
+	} else {
+	    $steps->{'stop_devhandling'}->();
+	}
+    };
+
+    step released => sub {
+	my ($err) = @_;
+	push @errors, "$err" if $err;
+
+	$self->{'reservation'} = undef;
+
+	$steps->{'stop_devhandling'}->();
+    };
+
+    step stop_devhandling => sub {
+	$self->{'devhandling'}->quit(finished_cb => $steps->{'stopped_devhandling'});
+    };
+
+    step stopped_devhandling => sub {
+	my ($err) = @_;
+	push @errors, "$err" if $err;
+
+	my $errmsg = join("; ", @errors) if @errors >= 1;
+	$params{'finished_cb'}->($errmsg);
+    };
 }
 
 sub get_device {
@@ -1007,19 +1017,53 @@ sub _operation_failed {
     }
 }
 
-sub _log_volume_done {
+# release the outstanding reservation, calling scribe_notif_tape_done
+# after the release
+sub _release_reservation {
     my $self = shift;
+    my %params = @_;
+    my @errors;
+
+    my ($label, $fm, $kb);
 
     # if we've already written a volume, log it
     if ($self->{'device'} and defined $self->{'device'}->volume_label) {
-	my $label = $self->{'device'}->volume_label();
-	my $fm = $self->{'device'}->file();
-	my $kb = $self->{'device_size'} / 1024;
+	$label = $self->{'device'}->volume_label();
+	$fm = $self->{'device'}->file();
+	$kb = $self->{'device_size'} / 1024;
 
 	# log a message for amreport
 	$self->{'feedback'}->scribe_notif_log_info(
 	    message => "tape $label kb $kb fm $fm [OK]");
     }
+
+    # finish the device if it isn't finished yet
+    if ($self->{'device'}) {
+	my $already_in_error = $self->{'device'}->status() != $DEVICE_STATUS_SUCCESS;
+
+	if (!$self->{'device'}->finish() && !$already_in_error) {
+	    push @errors, $self->{'device'}->error_or_status();
+	}
+    }
+    $self->{'device'} = undef;
+    $self->{'device_at_eom'} = 0;
+
+    $self->{'reservation'}->release(finished_cb => sub {
+	my ($err) = @_;
+	push @errors, "$err" if $err;
+
+	$self->{'reservation'} = undef;
+
+	# notify the feedback that we've finished and released a tape
+	if ($label) {
+	    $self->{'feedback'}->scribe_notif_tape_done(
+		volume_label => $label,
+		size => $kb * 1024,
+		num_files => $fm);
+	}
+
+	$params{'finished_cb'}->(@errors? join("; ", @errors) : undef);
+    });
 }
 
 # invoke the devhandling to get a new device, with all of the requisite
@@ -1028,18 +1072,9 @@ sub _log_volume_done {
 sub _get_new_volume {
     my $self = shift;
 
-    $self->_log_volume_done();
-    $self->{'device'} = undef;
-    $self->{'device_at_eom'} = 0;
-
     # release first, if necessary
     if ($self->{'reservation'}) {
-	my $res = $self->{'reservation'};
-
-	$self->{'reservation'} = undef;
-	$self->{'device'} = undef;
-
-	$res->release(finished_cb => sub {
+	$self->_release_reservation(finished_cb => sub {
 	    my ($error) = @_;
 
 	    if ($error) {
@@ -1302,6 +1337,7 @@ sub request_volume_permission {
 }
 
 sub scribe_notif_new_tape { }
+sub scribe_notif_tape_done { }
 sub scribe_notif_part_done { }
 sub scribe_notif_log_info { }
 
