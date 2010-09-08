@@ -1,4 +1,4 @@
-# getopt.m4 serial 29
+# getopt.m4 serial 31
 dnl Copyright (C) 2002-2006, 2008-2010 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -50,12 +50,10 @@ AC_DEFUN([gl_GETOPT_IFELSE],
 AC_DEFUN([gl_GETOPT_CHECK_HEADERS],
 [
   AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
+  AC_REQUIRE([AC_PROG_AWK]) dnl for awk that supports ENVIRON
 
   dnl Persuade Solaris <unistd.h> to declare optarg, optind, opterr, optopt.
   AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
-
-  dnl setenv is used for POSIXLY_CORRECT, below
-  AC_REQUIRE([gl_FUNC_SETENV])
 
   gl_CHECK_NEXT_HEADERS([getopt.h])
   AC_CHECK_HEADERS_ONCE([getopt.h])
@@ -212,19 +210,27 @@ main ()
 
   if test -z "$gl_replace_getopt" && test $gl_getopt_required = GNU; then
     AC_CACHE_CHECK([for working GNU getopt function], [gl_cv_func_getopt_gnu],
-      [
+      [# Even with POSIXLY_CORRECT, the GNU extension of leading '-' in the
+       # optstring is necessary for programs like m4 that have POSIX-mandated
+       # semantics for supporting options interspersed with files.
+       # Also, since getopt_long is a GNU extension, we require optind=0.
+       # Bash ties 'set -o posix' to a non-exported POSIXLY_CORRECT;
+       # so take care to revert to the correct (non-)export state.
+dnl GNU Coding Standards currently allow awk but not env; besides, env
+dnl is ambiguous with environment values that contain newlines.
+       gl_awk_probe='BEGIN { if ("POSIXLY_CORRECT" in ENVIRON) print "x" }'
+       case ${POSIXLY_CORRECT+x}`$AWK "$gl_awk_probe" </dev/null` in
+         xx) gl_had_POSIXLY_CORRECT=exported ;;
+         x)  gl_had_POSIXLY_CORRECT=yes      ;;
+         *)  gl_had_POSIXLY_CORRECT=         ;;
+       esac
+       POSIXLY_CORRECT=1
+       export POSIXLY_CORRECT
        AC_RUN_IFELSE(
         [AC_LANG_PROGRAM([[#include <getopt.h>
-			   #include <stdlib.h>
                            #include <stddef.h>
                            #include <string.h>
            ]], [[
-	     /* Even with POSIXLY_CORRECT, the GNU extension of leading '-' in the
-	      * optstring is necessary for programs like m4 that have POSIX-mandated
-	      * semantics for supporting options interspersed with files.
-	      * Also, since getopt_long is a GNU extension, we require optind=0. */
-	     setenv("POSIXLY_CORRECT", "1", 1);
-
              /* This code succeeds on glibc 2.8, OpenBSD 4.0, Cygwin, mingw,
                 and fails on MacOS X 10.5, AIX 5.2, HP-UX 11, IRIX 6.5,
                 OSF/1 5.1, Solaris 10.  */
@@ -282,6 +288,11 @@ main ()
            *)                   gl_cv_func_getopt_gnu=yes;;
          esac
         ])
+       case $gl_had_POSIXLY_CORRECT in
+         exported) ;;
+         yes) AS_UNSET([POSIXLY_CORRECT]); POSIXLY_CORRECT=1 ;;
+         *) AS_UNSET([POSIXLY_CORRECT]) ;;
+       esac
       ])
     if test "$gl_cv_func_getopt_gnu" = "no"; then
       gl_replace_getopt=yes

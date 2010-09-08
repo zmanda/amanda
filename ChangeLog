@@ -1,4 +1,8 @@
 2010-09-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/gnulib/* gnulib/*: upgrade to get a fix to getopt.m4
+	* gnulib/regenerate/regenerate: change gnulib sha1
+
+2010-09-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amreport.8.xml: describe the format of the dump, with
 	  notes and details
 

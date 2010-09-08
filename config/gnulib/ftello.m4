@@ -1,4 +1,4 @@
-# ftello.m4 serial 7
+# ftello.m4 serial 8
 dnl Copyright (C) 2007-2010 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -15,8 +15,12 @@ AC_DEFUN([gl_FUNC_FTELLO],
 
   AC_CACHE_CHECK([for ftello], [gl_cv_func_ftello],
     [
-      AC_TRY_LINK([#include <stdio.h>], [ftello (stdin);],
-        [gl_cv_func_ftello=yes], [gl_cv_func_ftello=no])
+      AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM(
+           [[#include <stdio.h>]],
+           [[ftello (stdin);]])],
+        [gl_cv_func_ftello=yes],
+        [gl_cv_func_ftello=no])
     ])
   if test $gl_cv_func_ftello = no; then
     HAVE_FTELLO=0
@@ -43,7 +47,8 @@ changequote(,)dnl
             *)        gl_cv_func_ftello_works="guessing yes" ;;
           esac
 changequote([,])dnl
-          AC_TRY_RUN([
+          AC_RUN_IFELSE(
+            [AC_LANG_SOURCE([[
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -100,7 +105,9 @@ main (void)
   /* The file's contents is now "foogarsh!".  */
 
   return 0;
-}], [gl_cv_func_ftello_works=yes], [gl_cv_func_ftello_works=no], [:])
+}]])],
+            [gl_cv_func_ftello_works=yes],
+            [gl_cv_func_ftello_works=no], [:])
         ])
       case "$gl_cv_func_ftello_works" in
         *yes) ;;

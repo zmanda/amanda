@@ -4,7 +4,7 @@
 # same version as was used to generate the source in the repository,
 # run the following in your git repository:
 #
-#   git checkout acc262490748a9999e4def60e3f4510865ca3a5d
+#   git checkout 09b8fa6cb737f6e091931c494cbd56d12b3ad08d
 
 # get to the project root
 cd `dirname $0`/../..

@@ -507,14 +507,14 @@ EXTRA_libgnu_la_SOURCES += lstat.c
 
 ## end   gnulib module lstat
 
-## begin gnulib module malloc
+## begin gnulib module malloc-gnu
 
 
 EXTRA_DIST += malloc.c
 
 EXTRA_libgnu_la_SOURCES += malloc.c
 
-## end   gnulib module malloc
+## end   gnulib module malloc-gnu
 
 ## begin gnulib module malloc-posix
 
@@ -524,14 +524,6 @@ EXTRA_DIST += malloc.c
 EXTRA_libgnu_la_SOURCES += malloc.c
 
 ## end   gnulib module malloc-posix
-
-## begin gnulib module malloca
-
-libgnu_la_SOURCES += malloca.c
-
-EXTRA_DIST += malloca.h malloca.valgrind
-
-## end   gnulib module malloca
 
 ## begin gnulib module mbrtowc
 
@@ -667,15 +659,6 @@ EXTRA_DIST += safe-write.c safe-write.h
 EXTRA_libgnu_la_SOURCES += safe-write.c
 
 ## end   gnulib module safe-write
-
-## begin gnulib module setenv
-
-
-EXTRA_DIST += setenv.c
-
-EXTRA_libgnu_la_SOURCES += setenv.c
-
-## end   gnulib module setenv
 
 ## begin gnulib module size_max
 
@@ -1511,6 +1494,7 @@ wctype.h: wctype.in.h $(CXXDEFS_H) $(WARN_ON_USE_H)
 	      -e 's/@''HAVE_ISWBLANK''@/$(HAVE_ISWBLANK)/g' \
 	      -e 's/@''HAVE_ISWCNTRL''@/$(HAVE_ISWCNTRL)/g' \
 	      -e 's/@''HAVE_WINT_T''@/$(HAVE_WINT_T)/g' \
+	      -e 's/@''REPLACE_ISWBLANK''@/$(REPLACE_ISWBLANK)/g' \
 	      -e 's/@''REPLACE_ISWCNTRL''@/$(REPLACE_ISWCNTRL)/g' \
 	      -e '/definitions of _GL_FUNCDECL_RPL/r $(CXXDEFS_H)' \
 	      -e '/definition of _GL_WARN_ON_USE/r $(WARN_ON_USE_H)' \
