@@ -1,4 +1,9 @@
 2010-09-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* gnulib/regenerate/regenerate: add 'environ' module
+	* config/gnulib/gnulib-cache.m4 config/gnulib/gnulib-comp.m4
+	  gnulib/Makefile.am config/gnulib/environ.m4: new module
+
+2010-09-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/gnulib/* gnulib/*: upgrade to get a fix to getopt.m4
 	* gnulib/regenerate/regenerate: change gnulib sha1
 

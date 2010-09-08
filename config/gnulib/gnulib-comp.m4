@@ -35,6 +35,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module btowc:
   # Code from module c++defs:
   # Code from module configmake:
+  # Code from module environ:
   # Code from module errno:
   # Code from module extensions:
   AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
@@ -134,6 +135,9 @@ AC_DEFUN([gl_INIT],
   gl_WCHAR_MODULE_INDICATOR([btowc])
   # Code from module c++defs:
   # Code from module configmake:
+  # Code from module environ:
+  gl_ENVIRON
+  gl_UNISTD_MODULE_INDICATOR([environ])
   # Code from module errno:
   gl_HEADER_ERRNO_H
   # Code from module extensions:
@@ -522,6 +526,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/btowc.m4
   m4/codeset.m4
   m4/dos.m4
+  m4/environ.m4
   m4/errno_h.m4
   m4/extensions.m4
   m4/fcntl-o.m4
