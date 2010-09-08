@@ -49,6 +49,8 @@ my $holding_err=0;
 my $template_only=0;
 my $parentdir;
 my $host;
+my @pw = getpwuid($<);
+my $dumpuser = @pw[0];
 
 
 #usage
@@ -348,6 +350,7 @@ sub create_customconf{
 	    &log_and_die ("ERROR: Cannot set amanda.conf file access permission: $!\n", 1);
 
 	print CONF "org \"$config\"\t\t# your organization name for reports\n";
+	print CONF "dumpuser \"$dumpuser\"\t# the user to run dumps under\n";
 	print CONF "mailto \"$mailto\"\t# space separated list of operators at your site\n";
 	print CONF "dumpcycle $dumpcycle\t\t# the number of days in the normal dump cycle\n";
         print CONF "runspercycle $runspercycle\t\t# the number of amdump runs in dumpcycle days\n";
@@ -472,7 +475,7 @@ chomp($date);
 my $logfile="$tmpdir/amserverconfig.$date.debug";
 
 Amanda::Util::setup_application("amserverconfig", "server", $CONTEXT_CMDLINE);
-Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
+Amanda::Util::finish_setup($RUNNING_AS_ANY);
 
 unless ( -e "$tmpdir" ) {
     mkpath ("$tmpdir", $def_perm) ||
