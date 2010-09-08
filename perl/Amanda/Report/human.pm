@@ -578,7 +578,8 @@ sub output_error_summaries
 		}
 		if (   $failed
 		    && exists $try->{dumper}
-		    && $try->{dumper}->{status} eq "success"
+		    && (   $try->{dumper}->{status} eq "success"
+			|| $try->{dumper}->{status} eq "strange")
 		    && (   !exists $try->{chunker}
 			|| $try->{chunker}->{status} eq "success")
 		    && (   !exists $try->{taper}

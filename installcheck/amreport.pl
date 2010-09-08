@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 160;
+use Test::More tests => 162;
 
 use strict;
 use warnings;
@@ -658,6 +658,14 @@ results_match($out_filename, $cat->get_text('report'),
 results_match($printer_output,
     $cat->get_text('postscript'),
     "..printer output matches");
+
+setup_config(catalog => 'retried-strange');
+
+run($amreport, 'TESTCONF', '-f', $out_filename);
+is($Installcheck::Run::exit_code, 6,
+    "amreport with retried logfile, with strange exit==6");
+results_match($out_filename, $cat->get_text('report'),
+    "..result matches");
 
 setup_config(catalog => 'retried-nofinish', want_template => 1);
 

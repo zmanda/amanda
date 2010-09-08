@@ -1,4 +1,10 @@
 2010-09-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/catalogs/retried-strange.cat: add a retried dump
+	  where the retry is strange
+	* installcheck/amreport.pl: test it
+	* perl/Amanda/Report/human.pm: fix the bug it reveals
+
+2010-09-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* gnulib/regenerate/regenerate: add 'environ' module
 	* config/gnulib/gnulib-cache.m4 config/gnulib/gnulib-comp.m4
 	  gnulib/Makefile.am config/gnulib/environ.m4: new module
