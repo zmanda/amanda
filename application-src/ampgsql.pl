@@ -415,7 +415,7 @@ sub _run_tar_totals {
             $size = $1;
         } else {
 	    chomp $l;
-	    #$self->print_to_server($l, $Amanda::Script_App::ERROR);
+	    $self->print_to_server($l, $Amanda::Script_App::ERROR);
 	    debug("TAR_ERR: $l");
 	}
     }

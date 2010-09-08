@@ -1,4 +1,7 @@
 2010-09-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Send tar stderr to the server.
+
+2010-09-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amserverconfig.pl: use RUNNING_AS_ANY and
 					set dumpuser in amanda.conf.
 
