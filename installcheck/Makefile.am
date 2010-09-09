@@ -181,6 +181,7 @@ catalogs = \
 	catalogs/resultsmissing.cat \
 	catalogs/retried.cat \
 	catalogs/retried-nofinish.cat \
+	catalogs/retried-strange.cat \
 	catalogs/shortstrange.cat \
 	catalogs/skipped.cat \
 	catalogs/spanned.cat \
