@@ -29,6 +29,7 @@
     &configoverride.synopsis;
     <arg choice='opt'>-q</arg> <arg choice='opt'>--quiet</arg>
     <arg choice='opt'>--fulls-only </arg>
+    <arg choice='opt'>--export </arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>src-run-timestamp</replaceable></arg>
     <arg choice='plain'><replaceable>dst-changer</replaceable></arg>
@@ -47,6 +48,10 @@ dumpfiles are not found on secondary media, but there is no provision to
 automatically fetch such media from a different changer; and all dumpfiles
 on a secondary volume are moved to tertiary media - there is no provision
 to filter dumps, aside from the <arg>--fulls-only</arg> option.</para>
+
+<para>The <arg>--export</arg> option will cause amvault to attempt to move
+completed tertiary volumes to import/export slots, where they can be
+more easily removed by an operator.</para>
 
 <para>Feedback on and patches to this application are invited and
 encouraged!</para>

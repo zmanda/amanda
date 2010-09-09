@@ -105,7 +105,7 @@ use Amanda::Recovery::Clerk;
 use Amanda::Taper::Scan;
 use Amanda::Taper::Scribe;
 use Amanda::Tapelist;
-use Amanda::Changer;
+use Amanda::Changer qw( :constants );
 use Amanda::Cmdline;
 use Amanda::Logfile qw( :logtype_t log_add log_add_full
 			log_rename $amanda_log_trace_log make_stats );
@@ -122,6 +122,7 @@ sub new {
     bless {
 	quiet => $params{'quiet'},
 	fulls_only => $params{'fulls_only'},
+	opt_export => $params{'opt_export'},
 
 	src_write_timestamp => $params{'src_write_timestamp'},
 
@@ -132,6 +133,9 @@ sub new {
 	src => undef,
 	dst => undef,
 	cleanup => {},
+
+	exporting => 0, # is an export in progress?
+	call_after_export => undef, # call this when export complete
 
 	# called when the operation is complete, with the exit
 	# status
@@ -442,7 +446,7 @@ sub quit {
 	    $self->{'dst'}{'scribe'}->quit(
 		finished_cb => $steps->{'quit_scribe_finished'});
 	} else {
-	    $steps->{'quit_clerk'}->();
+	    $steps->{'check_exporting'}->();
 	}
     };
 
@@ -453,7 +457,17 @@ sub quit {
 	    $exit_status = 1;
 	}
 
-	$steps->{'quit_clerk'}->();
+	$steps->{'check_exporting'}->();
+    };
+
+    # the export may not start until we quit the scribe, so wait for it now..
+    step check_exporting => sub {
+	# if we're exporting the final volume, wait for that to complete
+	if ($self->{'exporting'}) {
+	    $self->{'call_after_export'} = $steps->{'quit_clerk'};
+	} else {
+	    $steps->{'quit_clerk'}->();
+	}
     };
 
     step quit_clerk => sub {
@@ -591,6 +605,97 @@ sub scribe_notif_log_info {
     log_add_full($L_INFO, "taper", $params{'message'});
 }
 
+sub scribe_notif_tape_done {
+    my $self = shift;
+    my %params = @_;
+
+    # immediately flag that we are busy exporting, to prevent amvault from
+    # quitting too soon.  The 'done' step will clear this flag.  We increment
+    # and decrement this to allow for the (unlikely) situation that multiple
+    # exports are going on simultaneously.
+    $self->{'exporting'}++;
+
+    my $finished_cb = sub {};
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
+    step check_option => sub {
+	if (!$self->{'opt_export'}) {
+	    return $steps->{'done'}->();
+	}
+
+	$steps->{'get_inventory'}->();
+    };
+    step get_inventory => sub {
+	$self->{'dst'}->{'chg'}->inventory(
+	    inventory_cb => $steps->{'inventory_cb'});
+    };
+
+    step inventory_cb => sub {
+	my ($err, $inventory) = @_;
+	if ($err) {
+	    print STDERR "Could not get destination inventory: $err\n";
+	    return $steps->{'done'}->();
+	}
+
+	# find the slots we want in the inventory
+	my ($ie_slot, $from_slot);
+	for my $info (@$inventory) {
+	    if (defined $info->{'state'}
+		&& $info->{'state'} != Amanda::Changer::SLOT_FULL
+		&& $info->{'import_export'}) {
+		$ie_slot = $info->{'slot'};
+	    }
+	    if ($info->{'label'} and $info->{'label'} eq $params{'volume_label'}) {
+		$from_slot = $info->{'slot'};
+	    }
+	}
+
+	if (!$ie_slot) {
+	    print STDERR "No import/export slots available; skipping export\n";
+	    return $steps->{'done'}->();
+	} elsif (!$from_slot) {
+	    print STDERR "Could not find the just-written tape; skipping export\n";
+	    return $steps->{'done'}->();
+	} else {
+	    return $steps->{'do_move'}->($ie_slot, $from_slot);
+	}
+    };
+
+    step do_move => sub {
+	my ($ie_slot, $from_slot) = @_;
+
+	# TODO: there is a risk here that the volume is no longer in the slot
+	# where we expect it to be, because the taperscan has moved it.  A
+	# failure from move() is not fatal, though, so this will only cause the
+	# volume to be left un-exported.
+
+	$self->{'dst'}->{'chg'}->move(
+	    from_slot => $from_slot,
+	    to_slot => $ie_slot,
+	    finished_cb => $steps->{'moved'});
+    };
+
+    step moved => sub {
+	my ($err) = @_;
+	if ($err) {
+	    print STDERR "While exporting just-written tape: $err (ignored)\n";
+	}
+	$steps->{'done'}->();
+    };
+
+    step done => sub {
+	if (--$self->{'exporting'} == 0) {
+	    if ($self->{'call_after_export'}) {
+		my $cae = $self->{'call_after_export'};
+		$self->{'call_after_export'} = undef;
+		$cae->();
+	    }
+	}
+	$finished_cb->();
+    };
+}
+
 ## clerk feedback methods
 
 sub clerk_notif_part {
@@ -620,12 +725,13 @@ sub usage {
     print <<EOF;
 **NOTE** this interface is under development and will change in future releases!
 
-Usage: amvault [-o configoption]* [-q|--quiet] [--fulls-only]
+Usage: amvault [-o configoption]* [-q|--quiet] [--fulls-only] [--export]
 	<conf> <src-run-timestamp> <dst-changer> <label-template>
 
     -o: configuration override (see amanda(8))
     -q: quiet progress messages
     --fulls-only: only copy full (level-0) dumps
+    --export: move completed destination volumes to import/export slots
 
 Copies data from the run with timestamp <src-run-timestamp> onto volumes using
 the changer <dst-changer>, labeling new volumes with <label-template>.  If
@@ -641,11 +747,13 @@ Amanda::Util::setup_application("amvault", "server", $CONTEXT_CMDLINE);
 my $config_overrides = new_config_overrides($#ARGV+1);
 my $opt_quiet = 0;
 my $opt_fulls_only = 0;
+my $opt_export = 0;
 Getopt::Long::Configure(qw{ bundling });
 GetOptions(
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
     'q|quiet' => \$opt_quiet,
     'fulls-only' => \$opt_fulls_only,
+    'export' => \$opt_export,
     'version' => \&Amanda::Util::version_opt,
     'help' => \&usage,
 ) or usage();
@@ -679,7 +787,8 @@ my $vault = Amvault->new(
     dst_label_template => $label_template,
     dst_write_timestamp => Amanda::Util::generate_timestamp(),
     quiet => $opt_quiet,
-    fulls_only => $opt_fulls_only);
+    fulls_only => $opt_fulls_only,
+    opt_export => $opt_export);
 Amanda::MainLoop::call_later(sub { $vault->run($exit_cb) });
 Amanda::MainLoop::run();
 

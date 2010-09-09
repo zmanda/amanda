@@ -1,4 +1,9 @@
 2010-09-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amvault.pl: add --export
+	* man/xml-source/amvault.8.xml: doc it
+	* installcheck/amvault.pl: test it
+
+2010-09-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/find.c: fix segfault and bug in failed-dumps-in-catalog
 	  hack
 
