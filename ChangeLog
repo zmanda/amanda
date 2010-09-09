@@ -1,3 +1,7 @@
+2010-09-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/find.c: fix segfault and bug in failed-dumps-in-catalog
+	  hack
+
 2010-09-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am: include
 	  installcheck/catalog/retried-strange.cat in distribution

@@ -1070,7 +1070,7 @@ search_logfile(
 		    find_result_t *new_output_find = g_new0(find_result_t, 1);
 		    new_output_find->next=*output_find;
 		    new_output_find->timestamp = stralloc(date);
-		    new_output_find->write_timestamp = stralloc(datestamp);
+		    new_output_find->write_timestamp = g_strdup("00000000000000"); /* dump was not written.. */
 		    new_output_find->hostname=stralloc(host);
 		    new_output_find->diskname=stralloc(disk);
 		    new_output_find->level=level;
