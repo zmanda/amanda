@@ -1,3 +1,6 @@
+2010-09-09  Lyndon Nerenberg <lyndon@orthanc.ca>
+	* Makefile.am: fix to enable builds outside srcdir
+
 2010-09-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amvault.pl: add --export
 	* man/xml-source/amvault.8.xml: doc it

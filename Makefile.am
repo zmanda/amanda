@@ -77,7 +77,7 @@ EXTRA_DIST += $(SNAPSHOT_STAMP) \
 	FULL_VERSION
 
 FULL_VERSION: VERSION
-	config/set_full_version $(top_srcdir)
+	$(srcdir)/config/set_full_version $(top_srcdir)
 
 config.status: FULL_VERSION
 
