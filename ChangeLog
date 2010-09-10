@@ -1,3 +1,9 @@
+2010-09-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Device.pl: use srcdir
+	* installcheck/Installcheck.pm: set srcdir from env
+	* installcheck/Installcheck/Catalogs.pm: use srcdir
+	* installcheck/Makefile.am: set $srcdir for tests
+
 2010-09-09  Lyndon Nerenberg <lyndon@orthanc.ca>
 	* Makefile.am: fix to enable builds outside srcdir
 

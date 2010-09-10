@@ -922,7 +922,7 @@ SKIP: {
     SKIP: {
 	skip "SSL not supported; can't check SSL_CA_INFO", 4
 	    unless $dev->property_get('S3_SSL');
-	ok($dev->property_set('SSL_CA_INFO', 'data/aws-bundle.crt'),
+	ok($dev->property_set('SSL_CA_INFO', "$srcdir/data/aws-bundle.crt"),
 	   "set our own SSL/TLS CA certificate bundle")
 	    or diag($dev->error_or_status());
 

@@ -64,10 +64,17 @@ eventual use.
 use strict;
 use warnings;
 use Socket;
+require Exporter;
+
+our @ISA = qw(Exporter);
+our @EXPORT = qw( $srcdir );
 
 use Amanda::Util;
 
 our $TMP = "$AMANDA_TMPDIR/installchecks";
+
+# the Makefile provides srcdir to us in most cases; if not, assume it's "."
+our $srcdir = $ENV{'srcdir'} || '.';
 
 # run this just before the script actually executes
 # (not during syntax checks)

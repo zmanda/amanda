@@ -145,6 +145,8 @@ package Installcheck::Catalogs::Catalog;
 
 use warnings;
 use strict;
+
+use Installcheck;
 use Amanda::Util;
 use Amanda::Paths;
 use Amanda::Xfer qw( :constants );
@@ -156,7 +158,7 @@ sub new {
     my $class = shift;
     my ($name) = @_;
 
-    my $filename = "catalogs/$name.cat";
+    my $filename = "$srcdir/catalogs/$name.cat";
     die "no catalog file '$filename'" unless -f $filename;
 
     my $self = bless {

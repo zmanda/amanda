@@ -228,7 +228,7 @@ installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL)
 	    cp "$(CONFIG_DIR)/amanda-client.conf" "$(CONFIG_DIR)/amanda-client.conf.install-backup"; \
 	fi 
 	for f in $(tests); do chmod a-x $$f; done
-	$(PERL) -I$(srcdir) -I. -e 'use Test::Harness qw(&runtests); runtests(sort @ARGV);' $(tests)
+	srcdir="$(srcdir)" $(PERL) -I$(srcdir) -I. -e 'use Test::Harness qw(&runtests); runtests(sort @ARGV);' $(tests)
 	rm -rf "$(CONFIG_DIR)/TESTCONF"
 	@if test -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
 	    mv -f "$(CONFIG_DIR)/amanda-client.conf.install-backup" "$(CONFIG_DIR)/amanda-client.conf"; \
