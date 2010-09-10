@@ -296,30 +296,34 @@ taper_splitting_args(
     args = g_string_new("");
 
     /* old dumptype-based parameters, using empty strings when not seen */
-    if (dumptype_seen(dt, DUMPTYPE_TAPE_SPLITSIZE)) {
-	g_string_append_printf(args, "%ju ",
-		    (uintmax_t)dumptype_get_tape_splitsize(dt)*1024);
-    } else {
-	g_string_append(args, "\"\" ");
-    }
+    if (dt) { /* 'dt' may be NULL for flushes */
+	if (dumptype_seen(dt, DUMPTYPE_TAPE_SPLITSIZE)) {
+	    g_string_append_printf(args, "%ju ",
+			(uintmax_t)dumptype_get_tape_splitsize(dt)*1024);
+	} else {
+	    g_string_append(args, "\"\" ");
+	}
 
-    q = quote_string(dumptype_seen(dt, DUMPTYPE_SPLIT_DISKBUFFER)?
-	    dumptype_get_split_diskbuffer(dt) : "");
-    g_string_append_printf(args, "%s ", q);
-    g_free(q);
+	q = quote_string(dumptype_seen(dt, DUMPTYPE_SPLIT_DISKBUFFER)?
+		dumptype_get_split_diskbuffer(dt) : "");
+	g_string_append_printf(args, "%s ", q);
+	g_free(q);
 
-    if (dumptype_seen(dt, DUMPTYPE_FALLBACK_SPLITSIZE)) {
-	g_string_append_printf(args, "%ju ",
-		    (uintmax_t)dumptype_get_fallback_splitsize(dt)*1024);
-    } else {
-	g_string_append(args, "\"\" ");
-    }
+	if (dumptype_seen(dt, DUMPTYPE_FALLBACK_SPLITSIZE)) {
+	    g_string_append_printf(args, "%ju ",
+			(uintmax_t)dumptype_get_fallback_splitsize(dt)*1024);
+	} else {
+	    g_string_append(args, "\"\" ");
+	}
 
-    if (dumptype_seen(dt, DUMPTYPE_ALLOW_SPLIT)) {
-	g_string_append_printf(args, "%d ",
-		    (int)dumptype_get_allow_split(dt));
+	if (dumptype_seen(dt, DUMPTYPE_ALLOW_SPLIT)) {
+	    g_string_append_printf(args, "%d ",
+			(int)dumptype_get_allow_split(dt));
+	} else {
+	    g_string_append(args, "\"\" ");
+	}
     } else {
-	g_string_append(args, "\"\" ");
+	g_string_append(args, "\"\" \"\" \"\" \"\" ");
     }
 
     /* new tapetype-based parameters */

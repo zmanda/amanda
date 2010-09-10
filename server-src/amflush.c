@@ -31,6 +31,7 @@
 #include "amanda.h"
 
 #include "match.h"
+#include "find.h"
 #include "conffile.h"
 #include "diskfile.h"
 #include "tapefile.h"
@@ -92,6 +93,8 @@ main(
     GSList *datestamp_list = NULL;
     config_overrides_t *cfg_ovr;
     char **config_options;
+    find_result_t *holding_files;
+    disklist_t holding_disklist = { NULL, NULL };
 
     /*
      * Configure program for internationalization:
@@ -171,6 +174,13 @@ main(
     check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
+
+    /* load DLEs from the holding disk, in case there's anything to flush there */
+    search_holding_disk(&holding_files, &holding_disklist);
+    /* note that the dumps are added to the global disklist, so we need not
+     * consult holding_files or holding_disklist after this.  The holding-only
+     * dumps will be filtered properly by match_disklist, setting the dp->todo
+     * flag appropriately. */
 
     errstr = match_disklist(&diskq, argc-1, argv+1);
     if (errstr) {
@@ -340,6 +350,7 @@ main(
 	holding_file_get_dumpfile((char *)holding_file->data, &file);
 
 	if (holding_file_size((char *)holding_file->data, 1) <= 0) {
+	    g_debug("%s is empty - ignoring", (char *)holding_file->data);
 	    log_add(L_INFO, "%s: removing file with no data.",
 		    (char *)holding_file->data);
 	    holding_file_unlink((char *)holding_file->data);
@@ -347,11 +358,12 @@ main(
 	    continue;
 	}
 
+	/* search_holding_disk should have already ensured that every
+	 * holding dumpfile has an entry in the dynamic disklist */
 	dp = lookup_disk(file.name, file.disk);
-	if (!dp) {
-	    error("dp == NULL");
-	    /*NOTREACHED*/
-	}
+	assert(dp != NULL);
+
+	/* but match_disklist may have indicated we should not flush it */
 	if (dp->todo == 0) continue;
 
 	qdisk = quote_string(file.disk);
@@ -363,6 +375,8 @@ main(
 		file.datestamp,
 		file.dumplevel,
 		qhname);
+
+	g_debug("flushing '%s'", (char *)holding_file->data);
 	g_fprintf(driver_stream,
 		"FLUSH %s %s %s %d %s\n",
 		file.name,

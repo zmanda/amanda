@@ -32,6 +32,7 @@
 #include "amanda.h"
 #include "util.h"
 #include "holding.h"
+#include "diskfile.h"
 #include "fileheader.h"
 #include "logfile.h"
 
@@ -516,7 +517,6 @@ holding_get_files_for_flush(
     GSList *file_list, *file_elt;
     GSList *date;
     int date_matches;
-    disk_t *dp;
     dumpfile_t file;
     GSList *result_list = NULL;
 
@@ -550,15 +550,6 @@ holding_get_files_for_flush(
 	    dumpfile_free_data(&file);
             continue;
 	}
-
-        /* check that the hostname and disk are in the disklist */
-        dp = lookup_disk(file.name, file.disk);
-        if (dp == NULL) {
-	    dbprintf(_("%s: disk %s:%s not in database, skipping it."),
-                        (char *)file_elt->data, file.name, file.disk);
-	    dumpfile_free_data(&file);
-            continue;
-        }
 
         /* passed all tests -- we'll flush this file */
         result_list = g_slist_insert_sorted(result_list, 

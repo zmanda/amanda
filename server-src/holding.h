@@ -50,7 +50,6 @@
 #define HOLDING_H
 
 #include "amanda.h"
-#include "diskfile.h"
 #include "fileheader.h"
 
 /* Get a list of holding disks.  This is equivalent to 
@@ -83,8 +82,8 @@ GSList *
 holding_get_file_chunks(char *hfile);
 
 /* Get a list of holding files that should be flushed, optionally
- * matching only certain datestamps.  This function filters out
- * files for host/disks that are no longer in the disklist.
+ * matching only certain datestamps.  This function does *not*
+ * match the dumps against the disklist.
  *
  * @param dateargs: GSList of datestamps expressions to dump, or NULL 
  * for all

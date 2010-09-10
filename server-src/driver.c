@@ -35,6 +35,7 @@
  */
 
 #include "amanda.h"
+#include "find.h"
 #include "clock.h"
 #include "conffile.h"
 #include "diskfile.h"
@@ -189,6 +190,8 @@ main(
     config_overrides_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
     holdalloc_t *ha, *ha_last;
+    find_result_t *holding_files;
+    disklist_t holding_disklist = { NULL, NULL };
 
     /*
      * Configure program for internationalization:
@@ -252,6 +255,11 @@ main(
     check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
+
+    /* load DLEs from the holding disk, in case there's anything to flush there */
+    search_holding_disk(&holding_files, &holding_disklist);
+    /* note that the dumps are added to the global disklist, so we need not consult
+     * holding_files or holding_disklist after this */
 
     amfree(driver_timestamp);
     /* read timestamp from stdin */

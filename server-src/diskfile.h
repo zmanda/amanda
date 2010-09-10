@@ -34,6 +34,7 @@
 
 #include "amanda.h"
 #include "conffile.h"
+#include "fileheader.h"
 #include "amfeatures.h"
 
 typedef struct netif_s {
@@ -173,6 +174,7 @@ char *xml_scripts(identlist_t pp_scriptlist, am_feature_t *their_features);
 void disable_skip_disk(disklist_t *origqp);
 
 char *match_disklist(disklist_t *origqp, int sargc, char **sargv);
+gboolean match_dumpfile(dumpfile_t *file, int sargc, char **sargv);
 void free_disklist(disklist_t *dl);
 
 netif_t *disklist_netifs(void);

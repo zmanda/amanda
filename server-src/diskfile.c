@@ -1858,6 +1858,37 @@ match_disklist(
     return errstr;
 }
 
+gboolean
+match_dumpfile(
+    dumpfile_t  *file,
+    int		sargc,
+    char **	sargv)
+{
+    disk_t d;
+    am_host_t h;
+    disklist_t dl;
+
+    /* rather than try to reproduce the adaptive matching logic in
+     * match_disklist, this simply creates a new, fake disklist with one
+     * element in it, and calls match_disklist directly */
+
+    bzero(&h, sizeof(h));
+    h.hostname = file->name;
+    h.disks = &d;
+
+    bzero(&d, sizeof(d));
+    d.host = &h;
+    d.hostname = file->name;
+    d.name = file->disk;
+    d.device = file->disk;
+    d.todo = 1;
+
+    dl.head = dl.tail = &d;
+
+    (void)match_disklist(&dl, sargc, sargv);
+    return d.todo;
+}
+
 netif_t *
 disklist_netifs(void)
 {

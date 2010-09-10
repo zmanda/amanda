@@ -1,4 +1,16 @@
 2010-09-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am installcheck/amflush.pl: new installcheck
+
+	* server-src/amflush.c: flush DLEs that aren't in the disklist anymore
+	* server-src/diskfile.c server-src/diskfile.h: add match_dumpfile,
+	  based on match_disklist
+	* server-src/driver.c: load holding-disk pseudo-DLEs at startup
+	* server-src/driverio.c: survive configuration-free DLEs
+	* server-src/holding.c server-src/holding.h: search_holding_file no
+	  longer checks against disklist
+	* server-src/planner.c: use match_dumpfile for holding-disk DLEs
+
+2010-09-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Device.pl: use srcdir
 	* installcheck/Installcheck.pm: set srcdir from env
 	* installcheck/Installcheck/Catalogs.pm: use srcdir

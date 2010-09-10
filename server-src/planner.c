@@ -30,6 +30,7 @@
  */
 #include "amanda.h"
 #include "arglist.h"
+#include "find.h"
 #include "conffile.h"
 #include "diskfile.h"
 #include "tapefile.h"
@@ -414,7 +415,8 @@ main(
 	GSList *holding_list, *holding_file;
 	char *qdisk, *qhname;
 
-	/* get *all* flushable files in holding */
+	/* get *all* flushable files in holding, without checking against
+	 * the disklist (which may not contain some of the dumps) */
 	holding_list = holding_get_files_for_flush(NULL);
 	for(holding_file=holding_list; holding_file != NULL;
 				       holding_file = holding_file->next) {
@@ -425,6 +427,12 @@ main(
 			(char *)holding_file->data);
 		holding_file_unlink((char *)holding_file->data);
 		dumpfile_free_data(&file);
+		continue;
+	    }
+
+	    /* see if this matches the command-line arguments */
+	    if (!match_dumpfile(&file, argc-diskarg_offset,
+				       argv+diskarg_offset)) {
 		continue;
 	    }
 
