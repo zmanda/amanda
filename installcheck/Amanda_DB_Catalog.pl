@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 77;
+use Test::More tests => 78;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -650,3 +650,17 @@ got_dumps([ Amanda::DB::Catalog::sort_dumps(['dump_timestamp'],
 		    'somebox_lib_20080313133333', # dts=20080313133333
 		    } ],
 		"sort dumps by write_timestamp");
+
+
+# install the multi-taper catalog
+$cat = Installcheck::Catalogs::load("multi-taper");
+$cat->install();
+%dumps = $cat->get_dumps();
+%parts = $cat->get_parts();
+
+Amanda::DB::Catalog::_clear_cache();
+
+got_parts([ sortparts Amanda::DB::Catalog::get_parts() ],
+	[ sortparts parts_named qr/.*/ ],
+	"get_parts returns all parts when given no parameters");
+

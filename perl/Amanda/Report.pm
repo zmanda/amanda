@@ -922,13 +922,6 @@ sub _handle_taper_line
         $kps =~ s{\]$}{};
         $orig_kb =~ s{\]$}{} if defined($orig_kb);
 
-	if (!$self->{'_current_tape'} || $label ne $self->{'_current_tape'}->{'label'}) {
-	    warning("corrupted logfile - PART or PARTPARTIAL does not match previous START taper");
-	}
-
-	# count this as a filesystem if this is the first part
-        $self->{'_current_tape'}->{dle}++ if $currpart == 1;
-
         my $dle   = $disklist->{$hostname}{$disk};
         my $try   = $self->_get_try($dle, "taper", $timestamp);
         my $taper = $try->{taper} ||= {};
@@ -949,6 +942,8 @@ sub _handle_taper_line
         push @$parts, $part;
 
         my $tape = $self->get_tape($label);
+	# count this as a filesystem if this is the first part
+        $tape->{dle}++ if $currpart == 1;
         $tape->{kb}   += $kb;
         $tape->{time} += $sec;
         $tape->{files}++;

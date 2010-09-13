@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 162;
+use Test::More tests => 164;
 
 use strict;
 use warnings;
@@ -752,6 +752,17 @@ setup_config(catalog => 'filesystemstaped', want_template => 1);
 run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 0,
     "amreport correctly report filesystem taped (success)");
+results_match($out_filename, $cat->get_text('report'),
+    "..result matches");
+
+setup_config(catalog => 'multi-taper', want_template => 0);
+
+my $logdir = `amgetconf TESTCONF logdir`;
+chomp $logdir;
+my $logfile = $logdir . "/log.20100908110856.0";
+run($amreport, 'TESTCONF', '-l', $logfile, '-f', $out_filename, '-o', 'TAPETYPE:TEST-TAPE-TEMPLATE:length=41m');
+is($Installcheck::Run::exit_code, 0,
+    "amreport correctly report multi-taper (success)");
 results_match($out_filename, $cat->get_text('report'),
     "..result matches");
 

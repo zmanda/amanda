@@ -176,6 +176,7 @@ catalogs = \
 	catalogs/flush-noorigsize.cat \
 	catalogs/flush-origsize.cat \
 	catalogs/longstrange.cat \
+	catalogs/multi-taper.cat \
 	catalogs/normal.cat \
 	catalogs/plannerfail.cat \
 	catalogs/quoted.cat \

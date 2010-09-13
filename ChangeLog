@@ -1,3 +1,11 @@
+2010-09-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/find.c: Parse log with taper lines mixed.
+	* perl/Amanda/Report.pm: Parse log with taper lines mixed.
+	* installcheck/Amanda_DB_Catalog.pl: Check it.
+	* installcheck/Makefile.am (catalogs) : Add catalogs/multi-taper.cat.
+	* installcheck/amreport.pl: Check it;
+	* installcheck/catalogs/multi-taper.cat: Catalog with taper lines mixed.
+
 2010-09-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amoverview.8.xml: document long options
 	* server-src/amoverview.pl: fix bugs, stop using perl formats, and

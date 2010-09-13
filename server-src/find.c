@@ -436,6 +436,7 @@ print_find_result(
 	len=strlen(s);
 	if((int)len > max_len_part)
 	    max_len_part = (int)len;
+	amfree(s);
     }
 
     /*
@@ -674,7 +675,6 @@ volume_matches(
     return TRUE;
 }
 
-
 /* WARNING: Function accesses globals find_diskqp, curlog, curlog, curstr,
  * dynamic_disklist */
 gboolean
@@ -703,7 +703,9 @@ search_logfile(
     char *s;
     int ch;
     disk_t *dp;
-    find_result_t *part_find = NULL;  /* List for all part of a DLE */
+    GHashTable* valid_label;
+    GHashTable* part_by_dle;
+    find_result_t *part_find;
     find_result_t *a_part_find;
     gboolean right_label = FALSE;
     gboolean found_something = FALSE;
@@ -713,10 +715,13 @@ search_logfile(
     double sec;
     off_t kb;
     off_t orig_kb;
+    int   taper_part = 0;
 
     g_return_val_if_fail(output_find != NULL, 0);
     g_return_val_if_fail(logfile != NULL, 0);
 
+    valid_label = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+    part_by_dle = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     datestamp = g_strdup(passed_datestamp);
 
     if((logf = fopen(logfile, "r")) == NULL) {
@@ -742,6 +747,10 @@ search_logfile(
             }
 
             right_label = volume_matches(label, ck_label, ck_datestamp);
+	    if (right_label && ck_label) {
+		g_hash_table_insert(valid_label, g_strdup(ck_label),
+				    GINT_TO_POINTER(1));
+	    }
 	    if (label && datestamp && right_label) {
 		found_something = TRUE;
 	    }
@@ -750,11 +759,15 @@ search_logfile(
             if (datestamp == NULL) {
                 datestamp = g_strdup(ck_datestamp);
             }
+	    filenum = (off_t)0;
 	}
 	if (right_label &&
 	    (curlog == L_SUCCESS ||
 	     curlog == L_CHUNK || curlog == L_PART || curlog == L_PARTPARTIAL) &&
 	    curprog == P_TAPER) {
+	    filenum++;
+	} else if (right_label && curlog == L_PARTIAL && curprog == P_TAPER &&
+		   taper_part == 0) {
 	    filenum++;
 	}
 	partnum = -1;
@@ -775,17 +788,15 @@ search_logfile(
 
 	    if (curlog == L_PART || curlog == L_PARTPARTIAL) {
 		char * part_label = s - 1;
+		taper_part++;
 		skip_non_whitespace(s, ch);
 		s[-1] = '\0';
 
-		if (!right_label)
+		if (!g_hash_table_lookup(valid_label, part_label))
 		    continue;
+		amfree(current_label);
+		current_label = stralloc(part_label);
 
-		if (strcmp(current_label, part_label) != 0) {
-		    g_printf("PART label %s doesn't match START label %s\n",
-                             part_label, current_label);
-		    continue;
-		}
 		skip_whitespace(s, ch);
 		if(ch == '\0') {
 		    g_printf("strange log line in %s \"%s\"\n",
@@ -807,6 +818,8 @@ search_logfile(
 			   logfile, curstr);
 		    continue;
 		}
+	    } else {
+		taper_part = 0;
 	    }
 
 	    host = s - 1;
@@ -844,7 +857,8 @@ search_logfile(
 		totalparts =1;
 	    } else {
 		if (curlog == L_CHUNK || curlog == L_PART ||
-		    curlog == L_PARTPARTIAL || curlog == L_DONE){
+		    curlog == L_PARTPARTIAL || curlog == L_PARTIAL ||
+		    curlog == L_DONE){
 		    skip_whitespace(s, ch);
 		    number = s - 1;
 		    skip_non_whitespace(s, ch);
@@ -944,7 +958,11 @@ search_logfile(
 	    }
             if (find_match(host, disk)) {
 		if(curprog == P_TAPER) {
+		    char *key = g_strdup_printf(
+					"HOST:%s DISK:%s: DATE:%s LEVEL:%d",
+					host, disk, date, level);
 		    find_result_t *new_output_find = g_new0(find_result_t, 1);
+		    part_find = g_hash_table_lookup(part_by_dle, key);
 		    new_output_find->timestamp = stralloc(date);
 		    new_output_find->write_timestamp = stralloc(datestamp);
 		    new_output_find->hostname=stralloc(host);
@@ -973,7 +991,8 @@ search_logfile(
 			/* result line */
 			if (curlog == L_PARTIAL || curlog == L_FAIL) {
 			    /* set dump_status of each part */
-			    for (a_part_find = part_find; a_part_find;
+			    for (a_part_find = part_find;
+				 a_part_find;
 				 a_part_find = a_part_find->next) {
 				amfree(a_part_find->dump_status);
 				if (curlog == L_PARTIAL)
@@ -988,14 +1007,16 @@ search_logfile(
 			    if (maxparts > -1) { /* format with part */
 				/* must check if all part are there */
 				int num_part = maxparts;
-				for (a_part_find = part_find; a_part_find;
+				for (a_part_find = part_find;
+				     a_part_find;
 				     a_part_find = a_part_find->next) {
 				    if (a_part_find->partnum == num_part &&
 					strcmp(a_part_find->status, "OK") == 0)
 					num_part--;
 			        }
 				/* set dump_status of each part */
-				for (a_part_find = part_find; a_part_find;
+				for (a_part_find = part_find;
+				     a_part_find;
 				     a_part_find = a_part_find->next) {
 				    amfree(a_part_find->dump_status);
 				    if (num_part == 0) {
@@ -1012,7 +1033,8 @@ search_logfile(
 			    }
 			}
 			if (curlog == L_DONE) {
-			    for (a_part_find = part_find; a_part_find;
+			    for (a_part_find = part_find;
+				 a_part_find;
 			         a_part_find = a_part_find->next) {
 				if (a_part_find->totalparts == -1) {
 				    a_part_find->totalparts = maxparts;
@@ -1033,6 +1055,7 @@ search_logfile(
 			    part_find = NULL;
 			    maxparts = -1;
                             found_something = TRUE;
+			    g_hash_table_remove(part_by_dle, key);
 			}
 			free_find_result(&new_output_find);
 		    } else { /* part line */
@@ -1044,10 +1067,18 @@ search_logfile(
 			    new_output_find->dump_status=stralloc("PARTIAL");
 			}
 			/* Add to part_find list */
-			new_output_find->next = part_find;
-			part_find = new_output_find;
+			if (part_find) {
+			    new_output_find->next = part_find;
+			    part_find = new_output_find;
+			} else {
+			    new_output_find->next = NULL;
+			    part_find = new_output_find;
+			}
+			g_hash_table_insert(part_by_dle, g_strdup(key),
+					    part_find);
 			found_something = TRUE;
 		    }
+		    amfree(key);
 		}
 		else if(curlog == L_FAIL) {
 		    /* print other failures too -- this is a hack to ensure that failures which
@@ -1055,7 +1086,7 @@ search_logfile(
 		     * users that do not want this information (e.g., Amanda::DB::Catalog) should
 		     * filter dumps with a NULL label. */
 		    find_result_t *new_output_find = g_new0(find_result_t, 1);
-		    new_output_find->next=*output_find;
+		    new_output_find->next = *output_find;
 		    new_output_find->timestamp = stralloc(date);
 		    new_output_find->write_timestamp = g_strdup("00000000000000"); /* dump was not written.. */
 		    new_output_find->hostname=stralloc(host);
@@ -1085,41 +1116,7 @@ search_logfile(
 	}
     }
 
-    /* This could propably be completely removed */
-    if (part_find != NULL) {
-	if (label) {
-	    /* parse log file until PARTIAL/DONE/SUCCESS/FAIL from taper */
-	    while(get_logline(logf)) {
-		if (curprog == P_TAPER &&
-		    (curlog == L_DONE || curlog == L_SUCCESS ||
-		     curlog == L_PARTIAL || curlog == L_FAIL)) {
-		    break;
-		}
-	    }
-	}
-	for (a_part_find = part_find; a_part_find;
-	     a_part_find = a_part_find->next) {
-	    if (curlog == L_PARTIAL)
-		a_part_find->status = stralloc("PARTIAL");
-	    else if (curlog == L_FAIL)
-		a_part_find->status = stralloc("FAIL");
-	    else if (curlog == L_DONE || curlog == L_SUCCESS) {
-		if (a_part_find->totalparts == -1) {
-		    a_part_find->totalparts = maxparts;
-		}
-	    }
-	}
-	for (a_part_find = part_find;
-	     a_part_find->next != NULL;
-	     a_part_find=a_part_find->next) {
-	}
-	/* merge part_find to *output_find */
-	a_part_find->next = *output_find;
-	*output_find = part_find;
-	part_find = NULL;
-	maxparts = -1;
-    }
-
+    g_hash_table_destroy(valid_label);
     afclose(logf);
     amfree(datestamp);
     amfree(current_label);
