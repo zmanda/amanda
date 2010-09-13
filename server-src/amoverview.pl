@@ -31,14 +31,15 @@ use POSIX;
 
 sub Usage {
     print STDERR <<END;
-Usage: $0 [[-config] CONFIG] [-hostwidth width] [-diskwidth width] [-skipmissed] [-last] [-num0] [-togo0] [-verbose]
+Usage: $0 [[--config] CONFIG] [--hostwidth width] [--diskwidth width]
+	  [-skipmissed] [--last] [--num0] [--togo0] [--verbose]
 
 This script generates to standard output an overview of the filesystems
 dumped over time and the type of dump done on a particular day, such as
 a full dump, or an incremental, or if the dump failed.
 
 You may override the default configuration `@DEFAULT_CONFIG@' by using
-the -config command line option.  On larger installations, this script
+the --config command line option.  On larger installations, this script
 will take a while to run.  In this case, run it with --verbose to see
 how far along it is.
 END
@@ -168,12 +169,12 @@ unless ($opt_skipmissed)
 	} (sort keys %dates)[0,-1];
 
     # Special case of only one date
-    return if !defined($finish);
-
-    while ($start < $finish) {
-	my @l = localtime $start;
-	$dates{sprintf("%d%02d%02d", 1900+$l[5], $l[4]+1, $l[3])}++;
-	$start += 86400;
+    if (defined($finish)) {
+	while ($start < $finish) {
+	    my @l = localtime $start;
+	    $dates{sprintf("%d%02d%02d", 1900+$l[5], $l[4]+1, $l[3])}++;
+	    $start += 86400;
+	}
     }
 }
 
@@ -188,30 +189,34 @@ $dates{"0000TOGO"}=1 if ($opt_togo0);
 
 # make formats
 
-my $top_format = "format TOP =\n\n" .
-    sprintf("%-0${opt_hostwidth}s %-0${opt_diskwidth}s ", '', 'date') .
-    join(' ', map((/....(..)../)[0], sort keys %dates)) . "\n" .
-    sprintf("%-0${opt_hostwidth}s %-0${opt_diskwidth}s ", 'host', 'disk') .
-    join(' ', map((/......(..)/)[0], sort keys %dates)) . "\n" .
-    "\n.\n";
+sub row {
+    my ($host, $disk, @cols) = @_;
+    $host = substr($host, 0, $opt_hostwidth);
+    $disk = substr($disk, 0, $opt_diskwidth);
+    print
+	sprintf("%-0${opt_hostwidth}s %-0${opt_diskwidth}s ", $host, $disk) .
+	join(" ", map(sprintf("%-2s ", $_), @cols)) .
+	"\n";
+}
 
-+ local ($::thishost,$::thisdisk);
-my $out_format = "format STDOUT =\n" .
-    "@" . "<" x ($opt_hostwidth - 1) . ' ' .
-    "@" . "<" x ($opt_diskwidth - 1) . ' ' .
-    '@> ' x scalar(keys %dates) . "\n" .
-    join(', ', '$::thishost', '$::thisdisk',
-       map("substr(\$level{\$::thishost}{\$::thisdisk}{'$_'},-2)", sort keys %dates)) . "\n" .
-    ".\n";
+sub fmt_levels {
+    my ($host, $disk, $date) = @_;
+    my $levels = $level{$host}{$disk}{$date};
 
-eval $top_format;
-die $@ if $@;
-$^ = 'TOP';
-eval $out_format;
-die $@ if $@;
+    # no dumps on this date
+    $levels = '-' unless defined($levels);
 
-for $::thishost (sort keys %disks) {
-    for $::thisdisk (sort keys %{$disks{$::thishost}}) {
-	write;
+    return substr($levels, -2);
+}
+
+# header
+row('',     'date', map((/....(..) .. /x)[0], sort keys %dates));
+row('host', 'disk', map((/.... .. (..)/x)[0], sort keys %dates));
+
+# body
+for $host (sort keys %disks) {
+    for $disk (sort keys %{$disks{$host}}) {
+	row($host, $disk,
+	    map(fmt_levels($host, $disk, $_), sort keys %dates));
     }
 }

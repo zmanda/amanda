@@ -28,14 +28,14 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amoverview</command>    
-    <arg choice='opt'><arg choice='opt'>-config </arg><arg choice='plain'><replaceable>config</replaceable></arg></arg>
-    <arg choice='opt'>-hostwidth <replaceable>width</replaceable></arg>
-    <arg choice='opt'>-diskwidth <replaceable>width</replaceable></arg>
-    <arg choice='opt'>-skipmissed</arg>
-    <arg choice='opt'>-last</arg>
-    <arg choice='opt'>-num0</arg>
-    <arg choice='opt'>-togo0</arg>
-    <arg choice='opt'>-verbose</arg>
+    <arg choice='opt'><arg choice='opt'>--config </arg><arg choice='plain'><replaceable>config</replaceable></arg></arg>
+    <arg choice='opt'>--hostwidth <replaceable>width</replaceable></arg>
+    <arg choice='opt'>--diskwidth <replaceable>width</replaceable></arg>
+    <arg choice='opt'>--skipmissed</arg>
+    <arg choice='opt'>--last</arg>
+    <arg choice='opt'>--num0</arg>
+    <arg choice='opt'>--togo0</arg>
+    <arg choice='opt'>--verbose</arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -53,7 +53,7 @@ man page for more details about Amanda.</para>
 <refsect1><title>OPTIONS</title>
 <variablelist remap='TP'>
   <varlistentry>
-  <term><option>-config</option> <replaceable>config</replaceable></term>
+  <term><option>--config</option> <replaceable>config</replaceable></term>
   <listitem>
 <para>Use configuration
 <emphasis remap='I'>config</emphasis>
@@ -61,7 +61,7 @@ instead of configuration daily.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-hostwidth</option> <replaceable>width</replaceable></term>
+  <term><option>--hostwidth</option> <replaceable>width</replaceable></term>
   <listitem>
 <para>Set
 <emphasis remap='B'>host</emphasis>
@@ -71,7 +71,7 @@ characters instead of 8.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-diskwidth</option> <replaceable>width</replaceable></term>
+  <term><option>--diskwidth</option> <replaceable>width</replaceable></term>
   <listitem>
 <para>Set
 <emphasis remap='B'>disk</emphasis>
@@ -81,7 +81,7 @@ characters instead of 20.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-skipmissed</option></term>
+  <term><option>--skipmissed</option></term>
   <listitem>
 <para>Compacts the output by only printing stats 
 for the days Amanda actually ran.
@@ -90,7 +90,7 @@ for the days Amanda actually ran.
   </varlistentry>
 
   <varlistentry>
-  <term><option>-last</option></term>
+  <term><option>--last</option></term>
   <listitem>
   <para>
   Outputs the last status of each disk at the start. 
@@ -100,7 +100,7 @@ for the days Amanda actually ran.
   </varlistentry>
 
   <varlistentry>
-  <term><option>-num0</option></term>
+  <term><option>--num0</option></term>
   <listitem>
   <para>
   Outputs the number of level 0 dumps for each disk.
@@ -109,7 +109,7 @@ for the days Amanda actually ran.
   </varlistentry>
   
   <varlistentry>
-  <term><option>-togo0</option></term>
+  <term><option>--togo0</option></term>
   <listitem>
   <para>
   Outputs the number of runs until the last level 0 dump is overwritten.
@@ -118,7 +118,7 @@ for the days Amanda actually ran.
   </varlistentry>
 
   <varlistentry>
-  <term><option>-verbose</option></term>
+  <term><option>--verbose</option></term>
   <listitem>
 <para><emphasis remap='B'>Amoverview</emphasis>
 can take a long while on large systems.

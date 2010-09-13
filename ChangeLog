@@ -1,4 +1,11 @@
 2010-09-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amoverview.8.xml: document long options
+	* server-src/amoverview.pl: fix bugs, stop using perl formats, and
+	  give long options in the usage message
+	* installcheck/catalogs/bigdb.cat: add disklist
+	* installcheck/amoverview.pl: more thorough tests based on bigdb
+
+2010-09-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amdump.8.xml: document --no-taper
 	* server-src/Makefile.am: rename amdump.sh -> .pl
 	* server-src/amdump.sh server-src/amdump.pl: rewrite in perl, add

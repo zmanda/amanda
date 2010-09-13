@@ -269,6 +269,14 @@ INFO taper tape Conf-009 kb 166976 fm 1 [OK]
 %H otherbox_lib_20080414144444_holding 20080414144444 otherbox /lib 1 OK 256
 %H oldbox_opt_20080414144444_holding 20080414144444 oldbox /opt 0 OK 1298
 
+%F disklist
+somebox /lib installcheck-test
+somebox /usr/bin installcheck-test
+otherbox /lib installcheck-test
+otherbox /usr/bin installcheck-test
+otherbox /direct installcheck-test
+lovelace /home/ada installcheck-test
+
 %F tapelist
 20080111 Conf-001
 20080222222222 Conf-002
