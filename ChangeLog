@@ -1,3 +1,11 @@
+2010-09-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amdump.8.xml: document --no-taper
+	* server-src/Makefile.am: rename amdump.sh -> .pl
+	* server-src/amdump.sh server-src/amdump.pl: rewrite in perl, add
+	  --no-taper
+	* server-src/driver.c: support --no-taper by not starting taper
+	* server-src/planner.c: support --no-taper by not sending flushes
+
 2010-09-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c (find_dump): Don't print the
 					 'log files found for tape' warning.

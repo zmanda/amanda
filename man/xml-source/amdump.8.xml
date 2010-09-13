@@ -30,6 +30,7 @@
 <cmdsynopsis>
   <command>amdump</command>    
     <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='opt'><option>--no-taper</option></arg>
     <arg choice='opt' rep='repeat'>
        <arg choice='plain'><replaceable>host</replaceable></arg>
        <arg choice='opt' rep='repeat'><replaceable>disk</replaceable></arg>
@@ -62,6 +63,11 @@ if the tape device is being used for some other purpose.
 While waiting,
 <command>amdump</command>
 checks for the hold file every minute.</para>
+
+<para>In some cases it is desirable to dump all Amanda clients to holding disk
+without writing anything to storage media.  The <option>--no-taper</option>
+option instructs Amanda to not start the taper, and thus enter degraded mode
+immediately.</para>
 
 <para>See the
 <manref name="amanda" vol="8"/>

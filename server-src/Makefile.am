@@ -46,6 +46,7 @@ sbin_SCRIPTS_PERL = \
 	    amreport \
 	    amtape \
 	    amvault \
+	    amdump \
 	    amstatus
 if WANT_RESTORE
 amlibexec_SCRIPTS_PERL += \
@@ -56,8 +57,8 @@ sbin_SCRIPTS_PERL += \
 endif
 
 sbin_SCRIPTS_SHELL = \
-	    amcheckdb \
-	    amdump
+	    amcheckdb
+
 
 SCRIPTS_PERL = $(sbin_SCRIPTS_PERL) $(amlibexec_SCRIPTS_PERL)
 SCRIPTS_SHELL = $(sbin_SCRIPTS_SHELL) $(amlibexec_SCRIPTS_SHELL)

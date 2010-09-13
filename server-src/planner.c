@@ -190,6 +190,7 @@ main(
     char *cfg_opt = NULL;
     int    planner_setuid;
     int exit_status = EXIT_SUCCESS;
+    gboolean no_taper = FALSE;
 
     /*
      * Configure program for internationalization:
@@ -256,9 +257,13 @@ main(
 	g_fprintf(stderr, _("%s: %s"), get_pname(), version_info[i]);
 
     diskarg_offset = 2;
-    if (argc > 3 && strcmp(argv[2], "--starttime") == 0) {
-	planner_timestamp = stralloc(argv[3]);
+    if (argc - diskarg_offset > 1 && strcmp(argv[diskarg_offset], "--starttime") == 0) {
+	planner_timestamp = stralloc(argv[diskarg_offset+1]);
 	diskarg_offset += 2;
+    }
+    if (argc - diskarg_offset > 0 && strcmp(argv[diskarg_offset], "--no-taper") == 0) {
+	no_taper = TRUE;
+	diskarg_offset += 1;
     }
 
 
@@ -410,7 +415,7 @@ main(
 
     g_fprintf(stderr,_("\nSENDING FLUSHES...\n"));
 
-    if(conf_autoflush) {
+    if(conf_autoflush && !no_taper) {
 	dumpfile_t  file;
 	GSList *holding_list, *holding_file;
 	char *qdisk, *qhname;

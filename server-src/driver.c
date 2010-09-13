@@ -192,6 +192,7 @@ main(
     holdalloc_t *ha, *ha_last;
     find_result_t *holding_files;
     disklist_t holding_disklist = { NULL, NULL };
+    int no_taper = FALSE;
 
     /*
      * Configure program for internationalization:
@@ -245,9 +246,19 @@ main(
 	   get_pname(), (long) getpid(), argv[0], VERSION);
 
     if(argc > 2) {
-        if(strncmp(argv[2], "nodump", 6) == 0) {
+        if(strcmp(argv[2], "nodump") == 0) {
             nodump = 1;
+	    argv++;
+	    argc--;
         }
+    }
+
+    if (argc > 2) {
+	if (strcmp(argv[2], "--no-taper") == 0) {
+	    no_taper = TRUE;
+	    argv++;
+	    argc--;
+	}
     }
 
     safe_cd(); /* do this *after* config_init */
@@ -416,7 +427,7 @@ main(
     /* taper takes a while to get going, so start it up right away */
 
     init_driverio();
-    if(conf_runtapes > 0) {
+    if(!no_taper) {
         startup_tape_process(taper_program);
         taper_cmd(START_TAPER, driver_timestamp, NULL, 0, NULL);
     }
@@ -453,14 +464,15 @@ main(
 
     /* ok, planner is done, now lets see if the tape is ready */
 
-    if (conf_runtapes > 0) {
+    if (no_taper) {
+	/* go directly to degraded mode; do not pass "Go", do not start the taper */
+	need_degraded = 1;
+    } else {
 	cmd = getresult(taper, 1, &result_argc, &result_argv);
 	if (cmd != TAPER_OK) {
 	    /* no tape, go into degraded mode: dump to holding disk */
 	    need_degraded = 1;
 	}
-    } else {
-	need_degraded = 1;
     }
 
     tape_left = tape_length;
