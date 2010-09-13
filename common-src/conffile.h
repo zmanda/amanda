@@ -148,7 +148,9 @@ typedef enum {
     ALGO_LARGEST,
     ALGO_LARGESTFIT,
     ALGO_SMALLEST,
+    ALGO_SMALLESTFIT,	/* for internal use */
     ALGO_LAST,
+    ALGO_LASTFIT,	/* for internal use */
     ALGO_ALGO /* sentinel */
 } taperalgo_t;
 
@@ -459,6 +461,7 @@ typedef enum {
     CNF_HOLDINGDISK,
     CNF_AUTOLABEL,
     CNF_DEBUG_DAYS,
+    CNF_TAPER_PARALLEL_WRITE,
     CNF_CNF /* sentinel */
 } confparm_key;
 
@@ -1117,11 +1120,11 @@ char *changer_config_name(changer_config_t *devconf);
  * @returns: various
  */
 
-#define changer_config_get_comment(devconf)   (val_t_to_str(changer_config_getconf((devconf), DEVICE_CONFIG_COMMENT)))
-#define changer_config_get_tapedev(devconf)   (val_t_to_str(changer_config_getconf((devconf), DEVICE_CONFIG_TAPEDEV)))
-#define changer_config_get_tpchanger(devconf)   (val_t_to_str(changer_config_getconf((devconf), DEVICE_CONFIG_TPCHANGER)))
-#define changer_config_get_changerdev(devconf)   (val_t_to_str(changer_config_getconf((devconf), DEVICE_CONFIG_CHANGERDEV)))
-#define changer_config_get_changerfile(devconf)   (val_t_to_str(changer_config_getconf((devconf), DEVICE_CONFIG_CHANGERFILE)))
+#define changer_config_get_comment(devconf)   (val_t_to_str(changer_config_getconf((devconf), CHANGER_CONFIG_COMMENT)))
+#define changer_config_get_tapedev(devconf)   (val_t_to_str(changer_config_getconf((devconf), CHANGER_CONFIG_TAPEDEV)))
+#define changer_config_get_tpchanger(devconf)   (val_t_to_str(changer_config_getconf((devconf), CHANGER_CONFIG_TPCHANGER)))
+#define changer_config_get_changerdev(devconf)   (val_t_to_str(changer_config_getconf((devconf), CHANGER_CONFIG_CHANGERDEV)))
+#define changer_config_get_changerfile(devconf)   (val_t_to_str(changer_config_getconf((devconf), CHANGER_CONFIG_CHANGERFILE)))
 
 changer_config_t *read_changer_config(char *name, FILE *from, char *fname, int *linenum);
 changer_config_t *lookup_changer_config(char *identifier);

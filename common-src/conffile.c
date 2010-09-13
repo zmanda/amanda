@@ -90,6 +90,7 @@ typedef enum {
     CONF_EXECUTE_ON,           CONF_EXECUTE_WHERE,	CONF_SEND_AMREPORT_ON,
     CONF_DEVICE,               CONF_ORDER,
     CONF_DATA_PATH,            CONF_AMANDA,		CONF_DIRECTTCP,
+    CONF_TAPER_PARALLEL_WRITE,
 
     /* execute on */
     CONF_PRE_DLE_AMCHECK,      CONF_PRE_HOST_AMCHECK,
@@ -991,6 +992,7 @@ keytab_t server_keytab[] = {
     { "TAPEDEV", CONF_TAPEDEV },
     { "TAPELIST", CONF_TAPELIST },
     { "TAPERALGO", CONF_TAPERALGO },
+    { "TAPER_PARALLEL_WRITE", CONF_TAPER_PARALLEL_WRITE },
     { "FLUSH_THRESHOLD_DUMPED", CONF_FLUSH_THRESHOLD_DUMPED },
     { "FLUSH_THRESHOLD_SCHEDULED", CONF_FLUSH_THRESHOLD_SCHEDULED },
     { "TAPERFLUSH", CONF_TAPERFLUSH },
@@ -1155,6 +1157,7 @@ conf_var_t server_var [] = {
    { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE , read_size        , CNF_DEVICE_OUTPUT_BUFFER_SIZE, validate_positive },
    { CONF_COLUMNSPEC           , CONFTYPE_STR      , read_str         , CNF_COLUMNSPEC           , NULL },
    { CONF_TAPERALGO            , CONFTYPE_TAPERALGO, read_taperalgo   , CNF_TAPERALGO            , NULL },
+   { CONF_TAPER_PARALLEL_WRITE , CONFTYPE_INT      , read_int         , CNF_TAPER_PARALLEL_WRITE , NULL },
    { CONF_SEND_AMREPORT_ON     , CONFTYPE_SEND_AMREPORT_ON, read_send_amreport_on, CNF_SEND_AMREPORT_ON       , NULL },
    { CONF_FLUSH_THRESHOLD_DUMPED, CONFTYPE_INT     , read_int         , CNF_FLUSH_THRESHOLD_DUMPED, validate_nonnegative },
    { CONF_FLUSH_THRESHOLD_SCHEDULED, CONFTYPE_INT  , read_int         , CNF_FLUSH_THRESHOLD_SCHEDULED, validate_nonnegative },
@@ -4673,6 +4676,7 @@ init_defaults(
     conf_init_str   (&conf_data[CNF_AMRECOVER_CHANGER]    , "");
     conf_init_bool     (&conf_data[CNF_AMRECOVER_CHECK_LABEL], 1);
     conf_init_taperalgo(&conf_data[CNF_TAPERALGO]            , 0);
+    conf_init_int      (&conf_data[CNF_TAPER_PARALLEL_WRITE]     , 1);
     conf_init_int      (&conf_data[CNF_FLUSH_THRESHOLD_DUMPED]   , 0);
     conf_init_int      (&conf_data[CNF_FLUSH_THRESHOLD_SCHEDULED], 0);
     conf_init_int      (&conf_data[CNF_TAPERFLUSH]               , 0);

@@ -1,3 +1,8 @@
+2010-09-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add taper-parallel-write.
+	* common-src/conffile.h: Add taper-parallel-write.
+	* man/xml-source/amanda.conf.5.xml:: Add taper-parallel-write.
+
 2010-09-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am installcheck/amflush.pl: new installcheck
 
