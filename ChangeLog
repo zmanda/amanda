@@ -1,4 +1,7 @@
 2010-09-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amserverconfig.pl: Use $pw[0].
+
+2010-09-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Add taper-parallel-write.
 	* common-src/conffile.h: Add taper-parallel-write.
 	* man/xml-source/amanda.conf.5.xml:: Add taper-parallel-write.

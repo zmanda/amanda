@@ -50,7 +50,7 @@ my $template_only=0;
 my $parentdir;
 my $host;
 my @pw = getpwuid($<);
-my $dumpuser = @pw[0];
+my $dumpuser = $pw[0];
 
 
 #usage
