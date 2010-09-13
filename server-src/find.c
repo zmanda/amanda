@@ -55,7 +55,6 @@ find_result_t * find_dump(disklist_t* diskqp) {
     tape_t *tp, *tp1;
     find_result_t *output_find = NULL;
     gboolean *tape_seen = NULL;
-    GSList   *label_list;
 
     conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     maxtape = lookup_nb_tape();
@@ -68,9 +67,7 @@ find_result_t * find_dump(disklist_t* diskqp) {
 	tp = lookup_tapepos(tape);
 	if(tp == NULL) continue;
 
-	/* find all tape with the same datestamp
-	   add them to label_list */
-	label_list = NULL;
+	/* find all tape with the same datestamp */
 	for (tape1 = tape; tape1 <= maxtape; tape1++) {
 	    tp1 = lookup_tapepos(tape1);
 	    if (tp1 == NULL) continue;
@@ -78,7 +75,6 @@ find_result_t * find_dump(disklist_t* diskqp) {
 		continue;
 
 	    tape_seen[tape1] = 1;
-	    label_list = g_slist_append(label_list, tp1->label);
 	}
 
 	/* search log files */
@@ -121,15 +117,6 @@ find_result_t * find_dump(disklist_t* diskqp) {
                 logs ++;
             }
 	}
-	if (logs == 0 && strcmp(tp->datestamp,"0") != 0) {
-	    GSList *l_label;
-	    for (l_label = label_list; l_label != NULL ; l_label = l_label->next) {
-		g_fprintf(stderr,
-                      _("Warning: no log files found for tape %s written %s\n"),
-                      (char *)l_label->data, find_nicedate(tp->datestamp));
-	    }
-	}
-	g_slist_free(label_list);
     }
     g_free(tape_seen);
     amfree(logfile);

@@ -1100,6 +1100,8 @@ find(
     char *sort_order = NULL;
     find_result_t *output_find;
     char *errstr;
+    char **output_find_log;
+    char **name;
 
     if(argc < 3) {
 	g_fprintf(stderr,
@@ -1146,6 +1148,13 @@ find(
 	start_argc=4;
     }
     errstr = match_disklist(&diskq, argc-(start_argc-1), argv+(start_argc-1));
+
+    /* check all log file exists */
+    output_find_log = find_log();
+    for (name = output_find_log; *name != NULL; name++) {
+        amfree(*name);
+    }
+    amfree(output_find_log);
 
     output_find = find_dump(&diskq); /* Add deleted dump to diskq */
     if(argc-(start_argc-1) > 0) {

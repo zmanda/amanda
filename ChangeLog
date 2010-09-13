@@ -1,4 +1,9 @@
 2010-09-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/find.c (find_dump): Don't print the
+					 'log files found for tape' warning.
+	* server-src/amadmin.c: Call find_log to print the warning.
+
+2010-09-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amserverconfig.pl: Use $pw[0].
 
 2010-09-13  Jean-Louis Martineau <martineau@zmanda.com>
