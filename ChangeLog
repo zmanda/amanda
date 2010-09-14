@@ -1,4 +1,7 @@
 2010-09-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/amreport.pl: Load the config instead of using amgetconf.
+
+2010-09-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/amreport.pl: Use full path to amgetconf.
 
 2010-09-13  Jean-Louis Martineau <martineau@zmanda.com>
