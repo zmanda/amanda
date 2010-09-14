@@ -284,8 +284,11 @@ if WANT_SERVER
 # PACKAGE: Amanda::Taper::*
 AmandaTaperdir = $(amperldir)/Amanda/Taper
 AmandaTaper_DATA = \
+	Amanda/Taper/Controller.pm \
+	Amanda/Taper/Protocol.pm \
 	Amanda/Taper/Scan.pm \
-	Amanda/Taper/Scribe.pm
+	Amanda/Taper/Scribe.pm \
+	Amanda/Taper/Worker.pm
 PM_FILES += $(AmandaTaper_DATA)
 endif
 EXTRA_DIST += $(AmandaTaper_DATA)

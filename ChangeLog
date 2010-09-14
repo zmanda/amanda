@@ -1,3 +1,10 @@
+2010-09-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper.pl: Split in many files, add the worker.
+	* perl/Amanda/Taper/Controller.pm: Splitted from taper.pl
+	* perl/Amanda/Taper/Protocol.pm: Splitted from taper.pl
+	* perl/Amanda/Taper/Worker.pm: New class
+	* perl/Makefile.am: Add Controller.pm, Protocol.pm and Worker.pm.
+
 2010-09-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: update 'tapecycle' description
 
