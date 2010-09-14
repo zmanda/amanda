@@ -34,7 +34,7 @@ use Amanda::Config qw (:getconf);
 
 # easy knob to twiddle to check amreport_new instead
 my $amreport = "amreport";
-my amgetconf = "$sbindir/amgetconf";
+my $amgetconf = "$sbindir/amgetconf";
 
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
