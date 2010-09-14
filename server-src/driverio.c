@@ -51,7 +51,7 @@ init_driverio(void)
 {
     dumper_t *dumper;
 
-    taper = -1;
+    taper_fd = -1;
 
     for(dumper = dmptable; dumper < dmptable + MAX_DUMPERS; dumper++) {
 	dumper->fd = -1;
@@ -66,7 +66,7 @@ childstr(
     static char buf[NUM_STR_SIZE + 32];
     dumper_t *dumper;
 
-    if (fd == taper)
+    if (fd == taper_fd)
 	return ("taper");
 
     for (dumper = dmptable; dumper < dmptable + MAX_DUMPERS; dumper++) {
@@ -82,10 +82,27 @@ childstr(
 
 void
 startup_tape_process(
-    char *taper_program)
+    char *taper_program,
+    int   taper_parallel_write)
 {
-    int    fd[2];
-    char **config_options;
+    int       fd[2];
+    char    **config_options;
+    taper_t  *taper;
+
+    tapetable = calloc(sizeof(taper_t), taper_parallel_write+1);
+    taper = tapetable;
+    taper->name = stralloc("worker1");
+    taper->sendresult = 0;
+    taper->input_error = NULL;
+    taper->tape_error = NULL;
+    taper->result = 0;
+    taper->dumper = NULL;
+    taper->disk = NULL;
+    taper->first_label = NULL;
+    taper->first_fileno = 0;
+    taper->state = TAPER_STATE_DEFAULT;
+    taper->left = 0;
+    taper->written = 0;
 
     if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd) == -1) {
 	error(_("taper pipe: %s"), strerror(errno));
@@ -121,7 +138,7 @@ startup_tape_process(
 
     default:	/* parent process */
 	aclose(fd[1]);
-	taper = fd[0];
+	taper_fd = fd[0];
 	taper_ev_read = NULL;
     }
 }
@@ -248,8 +265,7 @@ getresult(
 
     if((line = areads(fd)) == NULL) {
 	if(errno) {
-	    error(_("reading result from %s: %s"), childstr(fd), strerror(errno));
-	    /*NOTREACHED*/
+	    g_fprintf(stderr, _("reading result from %s: %s"), childstr(fd), strerror(errno));
 	}
 	*result_argv = NULL;
 	*result_argc = 0;				/* EOF */
@@ -484,14 +500,14 @@ taper_cmd(
     g_printf(_("driver: send-cmd time %s to taper: %s"),
 	   walltime_str(curclock()), cmdline);
     fflush(stdout);
-    if ((full_write(taper, cmdline, strlen(cmdline))) < strlen(cmdline)) {
+    if ((full_write(taper_fd, cmdline, strlen(cmdline))) < strlen(cmdline)) {
 	g_printf(_("writing taper command '%s' failed: %s\n"),
 		cmdline, strerror(errno));
 	fflush(stdout);
 	amfree(cmdline);
 	return 0;
     }
-    if(cmd == QUIT) aclose(taper);
+    if(cmd == QUIT) aclose(taper_fd);
     amfree(cmdline);
     return 1;
 }
@@ -765,7 +781,7 @@ chunker_cmd(
     return 1;
 }
 
-#define MAX_SERIAL MAX_DUMPERS+1	/* one for the taper */
+#define MAX_SERIAL MAX_DUMPERS*2	/* one for each dumper and taper */
 
 long generation = 1;
 
@@ -833,8 +849,8 @@ free_serial_dp(
 	}
     }
 
-    g_printf(_("driver: error time %s serial not found\n"),
-	   walltime_str(curclock()));
+    g_printf(_("driver: error time %s serial not found for disk %s\n"),
+	   walltime_str(curclock()), dp->name);
 }
 
 

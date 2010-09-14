@@ -1,4 +1,9 @@
 2010-09-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amflush.c: Don't include driverio.h
+	* server-src/driver.c, server-src/driverio.c, server-src/driverio.h:
+	  Put all taper variables in a taper_t structure.
+
+2010-09-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/amreport.pl: Load the config instead of using amgetconf.
 
 2010-09-13  Jean-Louis Martineau <martineau@zmanda.com>

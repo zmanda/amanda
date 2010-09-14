@@ -41,6 +41,15 @@
 #define GLOBAL extern
 #endif
 
+typedef enum {
+   TAPER_STATE_DEFAULT       = 0,
+   TAPER_STATE_DUMP_TO_TAPE  = (1 << 0), // if taper is doing a dump to tape
+   TAPER_STATE_WAIT_FOR_TAPE = (1 << 1), // if taper wait for a tape, after a
+					 //   REQUEST-NEW-TAPE
+   TAPER_STATE_TAPE_STARTED  = (1 << 2)	 // taper already started to write to
+					 //   a tape.
+} TaperState;
+
 /* chunker process structure */
 
 typedef struct chunker_s {
@@ -66,6 +75,22 @@ typedef struct dumper_s {
     disk_t *dp;			/* disk currently being dumped */
     chunker_t *chunker;
 } dumper_t;
+
+typedef struct taper_s {
+    char       *name;                  /* name of this taper */
+    int         sendresult;
+    char       *input_error;
+    char       *tape_error;
+    int         result;
+    dumper_t   *dumper;
+    disk_t     *disk;
+    char       *first_label;
+    off_t       first_fileno;
+    TaperState  state;
+    int         busy;
+    off_t       left;
+    off_t       written;               // Number of kb already written to tape
+} taper_t;
 
 /* holding disk reservation structure; this is built as a list parallel
  * to the configuration's linked list of holding disks. */
@@ -102,6 +127,7 @@ typedef struct sched_s {
     unsigned long est_kps, degr_kps;
     char *destname;				/* file/port name */
     dumper_t *dumper;
+    taper_t  *taper;
     assignedhd_t **holdp;
     time_t timestamp;
     char *datestamp;
@@ -115,34 +141,16 @@ typedef struct sched_s {
 
 GLOBAL dumper_t dmptable[MAX_DUMPERS];
 GLOBAL chunker_t chktable[MAX_DUMPERS];
+GLOBAL taper_t   *tapetable;
 
 /* command/result tokens */
 
-typedef enum {
-   TAPER_STATE_DEFAULT       = 0,
-   TAPER_STATE_DUMP_TO_TAPE  = (1 << 0), // if taper is doing a dump to tape
-   TAPER_STATE_WAIT_FOR_TAPE = (1 << 1), // if taper wait for a tape, after a
-					 //   REQUEST-NEW-TAPE
-   TAPER_STATE_TAPE_STARTED  = (1 << 2)	 // taper already started to write to
-					 //   a tape.
-} TaperState;
-
-GLOBAL int taper, taper_busy;
-GLOBAL int taper_sendresult;
-GLOBAL char *taper_input_error;
-GLOBAL char *taper_tape_error;
+GLOBAL int taper_fd;
 GLOBAL pid_t taper_pid;
-GLOBAL int taper_result;
-GLOBAL dumper_t *taper_dumper;
 GLOBAL event_handle_t *taper_ev_read;
-GLOBAL char *taper_first_label;
-GLOBAL off_t taper_first_fileno;
-GLOBAL TaperState taper_state;
-GLOBAL off_t taper_written;		// Number of kb already written to tape
-					//   for the DLE.
 
 void init_driverio(void);
-void startup_tape_process(char *taper_program);
+void startup_tape_process(char *taper_program, int taper_parallel_write);
 void startup_dump_process(dumper_t *dumper, char *dumper_program);
 void startup_dump_processes(char *dumper_program, int inparallel, char *timestamp);
 void startup_chunk_process(chunker_t *chunker, char *chunker_program);

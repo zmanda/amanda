@@ -38,7 +38,6 @@
 #include "logfile.h"
 #include "clock.h"
 #include "holding.h"
-#include "driverio.h"
 #include "server_util.h"
 #include "timestamp.h"
 
