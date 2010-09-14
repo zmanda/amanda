@@ -1,3 +1,6 @@
+2010-09-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: update 'tapecycle' description
+
 2010-09-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amflush.c: Don't include driverio.h
 	* server-src/driver.c, server-src/driverio.c, server-src/driverio.h:

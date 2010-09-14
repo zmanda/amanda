@@ -392,9 +392,25 @@ days /
   <listitem>
 <para>Default:
 <amdefault>15 tapes</amdefault>.
-Typically tapes are used by Amanda in an ordered rotation. The <amkeyword>tapecycle</amkeyword> parameter 
-defines the size of that rotation. This parameter must be be larger than the number of tapes
-used in a dumpcycle.</para>
+
+Specifies the number of "active" volumes - volumes that Amanda will not
+overwrite.  While Amanda is always willing to write to a new volume, it refuses
+to overwrite a volume unless at least '<amkeyword>tapecycle</amkeyword> -1'
+volumes have been written since.</para>
+
+<para> It is considered good administrative practice to set the
+<amkeyword>tapecycle</amkeyword> parameter slightly lower than the actual
+number of tapes in use. This allows the administrator to more easily cope
+with damaged or misplaced tapes or schedule adjustments that call for
+slight adjustments in the rotation order.</para>
+
+<para>Note: Amanda is commonly misconfigured with <amkeyword>tapecycle</amkeyword>
+equal to the number of tapes per <amkeyword>dumpcycle</amkeyword>.  In this
+misconfiguration, amanda may erase a full dump before a new one is
+completed.  Recovery is then impossible. The
+<amkeyword>tapecycle</amkeyword> must be at least one tape larger than the
+number of tapes per dumpcycle.</para>
+
 <para>
 The number of tapes per dumpcycle is calculated by multiplying the number of
 &amdump; runs per dump cycle <amkeyword>runspercycle</amkeyword> (the
@@ -403,21 +419,6 @@ remap='B'>runtapes</emphasis> (the number of tapes used per run). Typically
 <amkeyword>tapecycle</amkeyword> is set to two or four times the tapes
 per dumpcycle.</para>
 
-<note>Amanda is commonly misconfigured with <amkeyword>tapecycle</amkeyword>
-equal to the number of tapes per <amkeyword>dumpcycle</amkeyword>.  In this
-misconfiguration, amanda may erase a full dump before a new one is completed,
-the recovery is then impossible. tapecycle must be at least one tape larger
-than the number of tapes per dumpcycle.
-</note>
-
-<para>While Amanda is always willing to use a new tape in its rotation, it refuses to reuse a tape until at
-least '<amkeyword>tapecycle</amkeyword> -1' number of other tapes have been used. 
-</para>
-<para>
-It is considered good administrative practice to set the <amkeyword>tapecycle</amkeyword> parameter 
-slightly lower than the actual number of tapes in rotation. This allows the administrator to more easily cope 
-with damaged or misplaced tapes or schedule adjustments that call for slight adjustments in the rotation order.
-</para>
   </listitem>
   </varlistentry>
 
