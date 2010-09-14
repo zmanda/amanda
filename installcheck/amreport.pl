@@ -34,6 +34,7 @@ use Amanda::Config qw (:getconf);
 
 # easy knob to twiddle to check amreport_new instead
 my $amreport = "amreport";
+my amgetconf = "$sbindir/amgetconf";
 
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
@@ -757,7 +758,7 @@ results_match($out_filename, $cat->get_text('report'),
 
 setup_config(catalog => 'multi-taper', want_template => 0);
 
-my $logdir = `amgetconf TESTCONF logdir`;
+my $logdir = `$amgetconf TESTCONF logdir`;
 chomp $logdir;
 my $logfile = $logdir . "/log.20100908110856.0";
 run($amreport, 'TESTCONF', '-l', $logfile, '-f', $out_filename, '-o', 'TAPETYPE:TEST-TAPE-TEMPLATE:length=41m');

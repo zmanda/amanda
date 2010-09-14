@@ -1,4 +1,7 @@
 2010-09-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/amreport.pl: Use full path to amgetconf.
+
+2010-09-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c: Parse log with taper lines mixed.
 	* perl/Amanda/Report.pm: Parse log with taper lines mixed.
 	* installcheck/Amanda_DB_Catalog.pl: Check it.
