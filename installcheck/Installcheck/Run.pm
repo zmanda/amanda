@@ -189,10 +189,15 @@ our $taperoot = "$Installcheck::TMP/vtapes";
 our $holdingdir ="$Installcheck::TMP/holding";
 
 sub setup {
+    my $new_vtapes = shift;
     my $testconf = Installcheck::Config->new();
 
     (-d $diskname) or setup_backmeup();
-    setup_vtapes($testconf, 3);
+    if ($new_vtapes) {
+	setup_new_vtapes($testconf, 3);
+    } else {
+	setup_vtapes($testconf, 3);
+    }
     setup_holding($testconf, 25);
     setup_disklist($testconf);
 
@@ -279,6 +284,32 @@ sub setup_vtapes {
     $testconf->add_param("tapedev", "\"file:$taperoot\"");
     $testconf->add_param("tpchanger", "\"chg-disk\"");
     $testconf->add_param("changerfile", "\"$CONFIG_DIR/TESTCONF/ignored-filename\"");
+    $testconf->add_param("labelstr", "\"TESTCONF[0-9][0-9]\"");
+    $testconf->add_param("tapecycle", "$ntapes");
+
+    # this overwrites the existing TEST-TAPE tapetype
+    $testconf->add_tapetype('TEST-TAPE', [
+	'length' => '30 mbytes',
+	'filemark' => '4 kbytes',
+    ]);
+}
+
+sub setup_new_vtapes {
+    my ($testconf, $ntapes) = @_;
+    if (-d $taperoot) {
+	rmtree($taperoot);
+    }
+
+    # make each of the tape directories
+    for (my $i = 1; $i < $ntapes+1; $i++) {
+	my $tapepath = "$taperoot/slot$i";
+	mkpath("$tapepath");
+    }
+
+    load_vtape(1);
+
+    # set up the appropriate configuration
+    $testconf->add_param("tpchanger", "\"chg-disk:$taperoot\"");
     $testconf->add_param("labelstr", "\"TESTCONF[0-9][0-9]\"");
     $testconf->add_param("tapecycle", "$ntapes");
 

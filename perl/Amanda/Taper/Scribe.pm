@@ -318,6 +318,10 @@ is updated at least as each part is finished; for some modes of operation, it
 is updated continuously.  Notably, DirectTCP transfers do not update
 continuously.
 
+=head2 START_SCAN
+
+The C<start_scan> method initiate a scan of the changer to find a usable tape.
+
 =head1 FEEDBACK
 
 The C<Amanda::Taper::Scribe::Feedback> class is intended to be
@@ -331,16 +335,18 @@ to limit the number of volumes the Scribe consumes.  It is called as
 
   $fb->request_volume_permission(perm_cb => $cb);
 
-where the C<perm_cb> is a callback which expects two arguments.  Those
-arguments should be C<undef> if permission is granted, or the cause ('config'
-or 'error') and reason, e.g., 
+The C<perm_cb> is a callback which expects a hash as arguments. If C<allow>
+is set, then the scribe is allowed to use a new volume, otherwise a C<cause>
+and a C<message> describing why a new volume should not be used. must be
+set. e.g.
 
-  $perm_cb->('config', "only 3 tapes allowed by runtapes");
-  $perm_cb->('error', "catalog access failed");
+  perm_cb->(allow => 1);
+  perm_cb->(cause => 'config', message => $message);
+  perm_cb->(cause => 'error', message => $message);
 
 A cause of 'config' indicates that the denial is due to the user's
 configuration, and thus should not be presented as an error.  The default
-implementation always calls C<< perm_cb->(undef, undef) >>.
+implementation always calls C<< perm_cb->() >>.
 
 All of the remaining methods are notifications, and do not take a
 callback.
@@ -358,8 +364,7 @@ contents of the volume were erased, but no useful, new data was written
 to the volume.
 
 This method will be called exactly once for every call to
-C<request_volume_permission> that calls back with C<< perm_cb->(undef, undef)
->>.
+C<request_volume_permission> that calls back with C<< perm_cb->() >>.
 
   $fb->scribe_notif_tape_done(
 	volume_label => $volume_label,
@@ -399,7 +404,7 @@ A typical Feedback subclass might begin like this:
     my $self = shift;
     my %params = @_;
 
-    $params{'perm_cb'}->("error", "NO VOLUMES FOR YOU!");
+    $params{'perm_cb'}->(cause => "error", message => "NO VOLUMES FOR YOU!");
   }
 
 =cut
@@ -583,6 +588,12 @@ sub check_data_path {
 	}
     }
     return undef;
+}
+
+sub start_scan {
+    my $self = shift;
+
+    $self->{'devhandling'}->start_scan();
 }
 
 # Get a transfer destination; does not use a callback
@@ -1333,7 +1344,7 @@ sub request_volume_permission {
     my %params = @_;
 
     # sure, you can have as many volumes as you want!
-    $params{'perm_cb'}->(undef, undef);
+    $params{'perm_cb'}->(allow => 1);
 }
 
 sub scribe_notif_new_tape { }
@@ -1463,7 +1474,6 @@ sub get_volume {
     $self->{'volume_cb'} = $params{'volume_cb'};
 
     # kick off the relevant processes, if they're not already running
-    $self->_start_scanning();
     $self->_start_request();
 
     $self->_maybe_callback();
@@ -1476,6 +1486,14 @@ sub peek_device {
     my $self = shift;
 
     return $self->{'device'};
+}
+
+sub start_scan {
+    my $self = shift;
+
+    if (!$self->{'scan_running'} && !$self->{'reservation'}) {
+	$self->_start_scanning();
+    }
 }
 
 ## private methods
@@ -1519,19 +1537,23 @@ sub _start_request {
 
     $self->{'request_pending'} = 1;
 
-    $self->{'feedback'}->request_volume_permission(perm_cb => sub {
-	my ($cause, $message) = @_;
-	die "bad cause" unless !defined $cause or $cause =~ /^(error|config)$/;
+    $self->{'feedback'}->request_volume_permission(
+    perm_cb => sub {
+	my %params = @_;
 
 	$self->{'request_pending'} = 0;
 	$self->{'request_complete'} = 1;
-	if (defined $cause) {
+	if (defined $params{'cause'}) {
 	    $self->{'request_denied'} = 1;
-	    if ($cause eq 'config') {
-		$self->{'config_denial_message'} = $message;
-	    } elsif ($cause eq 'error') {
-		$self->{'error_denial_message'} = $message;
+	    if ($params{'cause'} eq 'config') {
+		$self->{'config_denial_message'} = $params{'message'};
+	    } elsif ($params{'cause'} eq 'error') {
+		$self->{'error_denial_message'} = $params{'message'};
+	    } else {
+		die "bad cause '" . $params{'cause'} . "'";
 	    }
+	} elsif (!defined $params{'allow'}) {
+	    die "no allow or cause defined";
 	}
 
 	$self->_maybe_callback();
@@ -1574,7 +1596,7 @@ sub _maybe_callback {
     }
 
     # if the volume_cb is good to get called, call it and reset to the ground state
-    if ($self->{'volume_cb'} and $self->{'scan_finished'} and $self->{'request_complete'}) {
+    if ($self->{'volume_cb'} and (!$self->{'scan_running'} or $self->{'scan_finished'}) and $self->{'request_complete'}) {
 	# get the cb and its arguments lined up before calling it..
 	my $volume_cb = $self->{'volume_cb'};
 	my @volume_cb_args = (

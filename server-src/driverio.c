@@ -502,6 +502,13 @@ taper_cmd(
 			    " ", disk2serial(dp),
 			    "\n", NULL);
 	break;
+    case START_SCAN:
+	dp = (disk_t *) ptr;
+	cmdline = vstralloc(cmdstr[cmd],
+			    " ", sched(dp)->taper->name,
+			    " ", disk2serial(dp),
+			    "\n", NULL);
+	break;
     case QUIT:
 	cmdline = stralloc2(cmdstr[cmd], "\n");
 	break;

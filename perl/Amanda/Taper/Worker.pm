@@ -157,13 +157,20 @@ sub PORT_WRITE {
 	%params);
 }
 
+sub START_SCAN {
+    my $self = shift;
+    my ($msgtype, %params) = @_;
+
+    $self->{'scribe'}->start_scan(undef);
+}
+
 sub NEW_TAPE {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
     $self->_assert_in_state("writing") or return;
 
-    $self->{'perm_cb'}->(undef);
+    $self->{'perm_cb'}->(allow => 1);
 }
 
 sub NO_NEW_TAPE {
@@ -175,7 +182,7 @@ sub NO_NEW_TAPE {
     # log the error (note that the message is intentionally not quoted)
     log_add($L_ERROR, "no-tape config [$params{reason}]");
 
-    $self->{'perm_cb'}->("config", $params{'reason'});
+    $self->{'perm_cb'}->(cause => "config", message => $params{'reason'});
 }
 
 sub DONE {

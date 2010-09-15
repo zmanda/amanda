@@ -532,7 +532,8 @@ sub request_volume_permission {
 
     # sure, use all the volumes you want, no problem!
     # TODO: limit to a vaulting-specific value of runtapes
-    $params{'perm_cb'}->(undef);
+    $self->{'dst'}->{'scribe'}->start_scan();
+    $params{'perm_cb'}->(allow => 1);
 }
 
 sub scribe_notif_new_tape {

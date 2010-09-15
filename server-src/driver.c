@@ -1480,12 +1480,16 @@ handle_taper_result(
 		taper->state |= TAPER_STATE_WAIT_FOR_TAPE;
 		result_tape_action = tape_action(&why_no_new_tape);
 		if (result_tape_action & TAPE_ACTION_NEW_TAPE) {
+		    taper_cmd(START_SCAN, taper->disk, NULL, 0, NULL);
 		    taper_cmd(NEW_TAPE, taper->disk, NULL, 0, NULL);
 		    taper->state &= ~TAPER_STATE_WAIT_FOR_TAPE;
 		} else if (result_tape_action & TAPE_ACTION_NO_NEW_TAPE) {
 		    taper_cmd(NO_NEW_TAPE, taper->disk, why_no_new_tape, 0, NULL);
 		    taper->state &= ~TAPER_STATE_WAIT_FOR_TAPE;
 		    start_degraded_mode(&runq);
+		} else {
+		    /* Don't know if a volume can be, start a scan anyway */
+		    taper_cmd(START_SCAN, taper->disk, NULL, 0, NULL);
 		}
 	    }
 	    break;

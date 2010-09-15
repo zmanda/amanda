@@ -216,6 +216,14 @@ sub msg_PORT_WRITE {
     $worker->PORT_WRITE(@_);
 }
 
+sub msg_START_SCAN {
+    my $self = shift;
+    my ($msgtype, %params) = @_;
+
+    my $worker = $self->{'worker'}->{$params{'worker_name'}};
+    $worker->START_SCAN(@_);
+}
+
 sub msg_NEW_TAPE {
     my $self = shift;
     my ($msgtype, %params) = @_;

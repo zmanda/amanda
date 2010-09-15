@@ -58,6 +58,10 @@ use constant FILE_WRITE => message("FILE-WRITE",
 	    orig_kb) ],
 );
 
+use constant START_SCAN => message("START-SCAN",
+    format => [ qw( worker_name handle ) ],
+);
+
 use constant NEW_TAPE => message("NEW-TAPE",
     format => {
 	in => [ qw( worker_name handle ) ],

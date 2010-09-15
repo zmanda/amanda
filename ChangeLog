@@ -1,4 +1,22 @@
 2010-09-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Changer_compat.pl: Fix Installcheck::Run::setup.
+	* installcheck/Installcheck/Run.pm (setup): Take an argument to set
+						    new vtapes.
+	* installcheck/Amanda_Taper_Scribe.pl: Fix for start_scan and perm_cb.
+	* installcheck/taper.pl: Fix and test for START_SCAN cmd.
+	* perl/Amanda/Taper/Controller.pm (msg_START_SCAN): New function.
+	* perl/Amanda/Taper/Protocol.pm (START_SCAN): New in protocol.
+	* perl/Amanda/Taper/Scribe.pm: Doesn't automaticaly start a scan,
+	  new perm_cb argument, new start_scan method.
+	* perl/Amanda/Taper/Worker.pm (START_SCAN): New method,
+	  call perm_cb with new argument.
+	* server-src/amvault.pl: Call start_scan and perm_cb with new argument.
+	* server-src/driver.c: Send START_SCAN command to taper.
+	* server-src/driverio.c (taper_cmd): Add START_SCAN.
+	* server-src/server_util.c (cmdstr): add "START-SCAN".
+	* server-src/server_util.h: Add START_SCAN.
+
+2010-09-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Protocol.pm: Add worker_name in protocol.
 	* perl/Amanda/Taper/Controller.pm,
 	* perl/Amanda/Taper/Worker.pm: Use worker_name.

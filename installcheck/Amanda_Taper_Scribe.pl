@@ -171,9 +171,10 @@ sub new {
 sub request_volume_permission {
     my $self = shift;
     my %params = @_;
-    my $answer = shift @{$self->{'rq_answers'}} || [undef, undef];
+    my $answer = shift @{$self->{'rq_answers'}};
     main::event("request_volume_permission", "answer:", $answer);
-    $params{'perm_cb'}->(@$answer);
+    $main::scribe->start_scan();
+    $params{'perm_cb'}->(%{$answer});
 }
 
 sub scribe_notif_new_tape {
@@ -210,6 +211,8 @@ sub scribe_notif_tape_done {
 
 package main;
 
+my $scribe;
+
 # utility fn to stringify changer errors (earlier perls' Test::More's
 # fail to do this automatically)
 sub undef_or_str { (defined $_[0])? "".$_[0] : undef; }
@@ -220,9 +223,10 @@ sub run_devh {
     reset_events();
 
     reset_taperoot($nruns);
-    $devh = Amanda::Taper::Scribe::DevHandling->new(
+    $main::scribe = Amanda::Taper::Scribe->new(
 	taperscan => $taperscan,
 	feedback => $feedback);
+    $devh = $main::scribe->{'devhandling'};
 
     my ($start, $get_volume, $got_volume, $quit);
 
@@ -283,27 +287,27 @@ sub run_devh {
 }
 
 reset_taperoot(1);
-run_devh(3, Mock::Taperscan->new(), Mock::Feedback->new());
+run_devh(3, Mock::Taperscan->new(), Mock::Feedback->new({allow => 1}, {allow => 1}, {allow => 1}));
 is_deeply([ @events ], [
       [ 'start' ],
       [ 'scan' ], # scan starts *before* get_volume
 
       [ 'get_volume' ],
-      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
+      [ 'request_volume_permission', 'answer:', { allow => 1 }, ],
       [ 'scan-finished', undef, "slot: 1" ],
       [ 'got_volume', undef, undef, undef, "slot: 1" ],
       [ 'release', undef ],
 
       [ 'get_volume' ],
-      [ 'scan' ], # scan starts *after* get_volume this time
-      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
+      [ 'request_volume_permission', 'answer:', { allow => 1 } ],
+      [ 'scan' ], # scan starts *after* request_volume_permission
       [ 'scan-finished', undef, "slot: 2" ],
       [ 'got_volume', undef, undef, undef, "slot: 2" ],
       [ 'release', undef ],
 
       [ 'get_volume' ],
+      [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scan' ],
-      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', undef, "slot: 3" ],
       [ 'got_volume', undef, undef, undef, "slot: 3" ],
       [ 'release', undef ],
@@ -312,13 +316,13 @@ is_deeply([ @events ], [
     ], "correct event sequence for basic run of DevHandling")
     or diag(Dumper([@events]));
 
-run_devh(1, Mock::Taperscan->new(), Mock::Feedback->new(['config', 'no-can-do']));
+run_devh(1, Mock::Taperscan->new(), Mock::Feedback->new({cause => 'config', message => 'no-can-do'}));
 is_deeply([ @events ], [
       [ 'start' ],
       [ 'scan' ],
 
       [ 'get_volume' ],
-      [ 'request_volume_permission', 'answer:', ['config','no-can-do'] ],
+      [ 'request_volume_permission', 'answer:', { cause => 'config', message => 'no-can-do' } ],
       [ 'scan-finished', undef, "slot: 1" ],
       [ 'got_volume', undef, 'no-can-do', undef, undef ],
 
@@ -326,13 +330,13 @@ is_deeply([ @events ], [
     ], "correct event sequence for a run without permission")
     or diag(Dumper([@events]));
 
-run_devh(1, Mock::Taperscan->new(slots => ["bogus"]), Mock::Feedback->new());
+run_devh(1, Mock::Taperscan->new(slots => ["bogus"]), Mock::Feedback->new({allow => 1}));
 is_deeply([ @events ], [
       [ 'start' ],
       [ 'scan' ],
 
       [ 'get_volume' ],
-      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
+      [ 'request_volume_permission', 'answer:', { allow => 1} ],
       [ 'scan-finished', "Slot bogus not found", "slot: none" ],
       [ 'got_volume', 'Slot bogus not found', undef, undef, undef ],
 
@@ -341,13 +345,13 @@ is_deeply([ @events ], [
     or diag(Dumper([@events]));
 
 run_devh(1, Mock::Taperscan->new(slots => ["bogus"]),
-	    Mock::Feedback->new(['config',"not this time"]));
+	    Mock::Feedback->new({cause => 'config', message => "not this time"}));
 is_deeply([ @events ], [
       [ 'start' ],
       [ 'scan' ],
 
       [ 'get_volume' ],
-      [ 'request_volume_permission', 'answer:', ['config','not this time'] ],
+      [ 'request_volume_permission', 'answer:', {cause => 'config', message =>'not this time'} ],
       [ 'scan-finished', "Slot bogus not found", "slot: none" ],
       [ 'got_volume', 'Slot bogus not found', 'not this time', undef, undef ],
 
@@ -355,13 +359,13 @@ is_deeply([ @events ], [
     ], "correct event sequence for a run with no permission AND a changer config denial")
     or diag(Dumper([@events]));
 
-run_devh(1, Mock::Taperscan->new(slots => ["bogus"]), Mock::Feedback->new(['error',"frobnicator exploded!"]));
+run_devh(1, Mock::Taperscan->new(slots => ["bogus"]), Mock::Feedback->new({cause => 'error', message => "frobnicator exploded!"}));
 is_deeply([ @events ], [
       [ 'start' ],
       [ 'scan' ],
 
       [ 'get_volume' ],
-      [ 'request_volume_permission', 'answer:', ['error',"frobnicator exploded!"] ],
+      [ 'request_volume_permission', 'answer:', {cause => 'error', message => "frobnicator exploded!"} ],
       [ 'scan-finished', "Slot bogus not found", "slot: none" ],
       [ 'got_volume', 'Slot bogus not found', undef, "frobnicator exploded!", undef ],
 
@@ -462,25 +466,24 @@ sub quit_scribe {
     Amanda::MainLoop::run();
 }
 
-my $scribe;
 my $experr;
 
 # write less than a tape full, without LEOM
 
 reset_taperoot(1);
-$scribe = Amanda::Taper::Scribe->new(
+$main::scribe = Amanda::Taper::Scribe->new(
     taperscan => Mock::Taperscan->new(disable_leom => 1),
-    feedback => Mock::Feedback->new());
+    feedback => Mock::Feedback->new({allow => 1}));
 
 reset_events();
-run_scribe_xfer(1024*200, $scribe,
+run_scribe_xfer(1024*200, $main::scribe,
 	    part_size => 96*1024,
 	    start_scribe => { write_timestamp => "20010203040506" });
 
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
+      [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(98304) ],
       [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(98304) ],
@@ -491,9 +494,9 @@ is_deeply([ @events ], [
 
 # pick up where we left off, writing just a tiny bit more, and then quit
 reset_events();
-run_scribe_xfer(1024*30, $scribe);
+run_scribe_xfer(1024*30, $main::scribe);
 
-quit_scribe($scribe);
+quit_scribe($main::scribe);
 
 is_deeply([ @events ], [
       [ 'scribe_notif_part_done', bi(1), bi(4), 1, bi(30720) ],
@@ -505,21 +508,21 @@ is_deeply([ @events ], [
 # write less than a tape full, *with* LEOM (should look the same as above)
 
 reset_taperoot(1);
-$scribe = Amanda::Taper::Scribe->new(
+$main::scribe = Amanda::Taper::Scribe->new(
     taperscan => Mock::Taperscan->new(),
-    feedback => Mock::Feedback->new());
+    feedback => Mock::Feedback->new({ allow => 1 }));
 
 reset_events();
-run_scribe_xfer(1024*200, $scribe,
+run_scribe_xfer(1024*200, $main::scribe,
 	    part_size => 96*1024,
 	    start_scribe => { write_timestamp => "20010203040506" });
 
-quit_scribe($scribe);
+quit_scribe($main::scribe);
 
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
+      [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(98304) ],
       [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(98304) ],
@@ -536,20 +539,20 @@ is_deeply([ @events ], [
 # data.  This is a much less common error path, so it's good to test it.
 
 reset_taperoot(2);
-$scribe = Amanda::Taper::Scribe->new(
+$main::scribe = Amanda::Taper::Scribe->new(
     taperscan => Mock::Taperscan->new(disable_leom => 1),
-    feedback => Mock::Feedback->new());
+    feedback => Mock::Feedback->new({ allow => 1 }, { allow => 1 }));
 
 reset_events();
-run_scribe_xfer($volume_length + $volume_length / 4, $scribe,
+run_scribe_xfer($volume_length + $volume_length / 4, $main::scribe,
 	    start_scribe => { write_timestamp => "20010203040506" });
 
-quit_scribe($scribe);
+quit_scribe($main::scribe);
 
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
+      [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
 
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(131072) ],
@@ -558,8 +561,8 @@ is_deeply([ @events ], [
       [ 'scribe_notif_part_done', bi(4), bi(0), 0, bi(0) ],
 
       [ 'scribe_notif_tape_done', 'FAKELABEL', bi(3), bi(393216) ],
+      [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scan' ],
-      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', undef, 'slot: 2' ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
 
@@ -576,20 +579,20 @@ is_deeply([ @events ], [
 # same test, but with LEOM support
 
 reset_taperoot(2);
-$scribe = Amanda::Taper::Scribe->new(
+$main::scribe = Amanda::Taper::Scribe->new(
     taperscan => Mock::Taperscan->new(),
-    feedback => Mock::Feedback->new());
+    feedback => Mock::Feedback->new({ allow => 1 },{ allow => 1 }));
 
 reset_events();
-run_scribe_xfer(1024*520, $scribe,
+run_scribe_xfer(1024*520, $main::scribe,
 	    start_scribe => { write_timestamp => "20010203040506" });
 
-quit_scribe($scribe);
+quit_scribe($main::scribe);
 
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
+      [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
 
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(131072) ],
@@ -597,8 +600,8 @@ is_deeply([ @events ], [
       [ 'scribe_notif_part_done', bi(3), bi(3), 1, bi(32768) ], # LEOM comes earlier than PEOM did
 
       [ 'scribe_notif_tape_done', 'FAKELABEL', bi(3), bi(294912) ],
+      [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scan' ],
-      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', undef, 'slot: 2' ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
 
@@ -613,21 +616,21 @@ is_deeply([ @events ], [
 # now a multivolume write where the second volume gives a changer error
 
 reset_taperoot(1);
-$scribe = Amanda::Taper::Scribe->new(
+$main::scribe = Amanda::Taper::Scribe->new(
     taperscan => Mock::Taperscan->new(slots => ["1", "bogus"], disable_leom => 1),
-    feedback => Mock::Feedback->new());
+    feedback => Mock::Feedback->new({ allow => 1 },{ allow => 1 }));
 
 reset_events();
-run_scribe_xfer($volume_length + $volume_length / 4, $scribe,
+run_scribe_xfer($volume_length + $volume_length / 4, $main::scribe,
 	    start_scribe => { write_timestamp => "20010203040507" });
 
-quit_scribe($scribe);
+quit_scribe($main::scribe);
 
 $experr = 'Slot bogus not found';
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
+      [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
 
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(131072) ],
@@ -636,8 +639,8 @@ is_deeply([ @events ], [
       [ 'scribe_notif_part_done', bi(4), bi(0), 0, bi(0) ],
 
       [ 'scribe_notif_tape_done', 'FAKELABEL', bi(3), bi(393216) ],
+      [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scan' ],
-      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', $experr, 'slot: none' ],
       [ 'scribe_notif_new_tape', $experr, undef ],
 
@@ -647,21 +650,21 @@ is_deeply([ @events ], [
     or print (Dumper([@events]));
 
 reset_taperoot(1);
-$scribe = Amanda::Taper::Scribe->new(
+$main::scribe = Amanda::Taper::Scribe->new(
     taperscan => Mock::Taperscan->new(slots => ["1", "bogus"]),
-    feedback => Mock::Feedback->new());
+    feedback => Mock::Feedback->new({ allow => 1 }, { allow => 1 }));
 
 reset_events();
-run_scribe_xfer($volume_length + $volume_length / 4, $scribe,
+run_scribe_xfer($volume_length + $volume_length / 4, $main::scribe,
 	    start_scribe => { write_timestamp => "20010203040507" });
 
-quit_scribe($scribe);
+quit_scribe($main::scribe);
 
 $experr = 'Slot bogus not found';
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
+      [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
 
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(131072) ],
@@ -669,8 +672,8 @@ is_deeply([ @events ], [
       [ 'scribe_notif_part_done', bi(3), bi(3), 1, bi(32768) ], # LEOM comes long before PEOM
 
       [ 'scribe_notif_tape_done', 'FAKELABEL', bi(3), bi(294912) ],
+      [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scan' ],
-      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
       [ 'scan-finished', $experr, 'slot: none' ],
       [ 'scribe_notif_new_tape', $experr, undef ],
 
@@ -682,20 +685,20 @@ is_deeply([ @events ], [
 # now a multivolume write where the second volume does not have permission
 
 reset_taperoot(2);
-$scribe = Amanda::Taper::Scribe->new(
+$main::scribe = Amanda::Taper::Scribe->new(
     taperscan => Mock::Taperscan->new(),
-    feedback => Mock::Feedback->new(undef, ['config',"sorry!"]));
+    feedback => Mock::Feedback->new({ allow => 1 }, { cause => 'config', message => "sorry!" }));
 
 reset_events();
-run_scribe_xfer($volume_length + $volume_length / 4, $scribe,
+run_scribe_xfer($volume_length + $volume_length / 4, $main::scribe,
 	    start_scribe => { write_timestamp => "20010203040507" });
 
-quit_scribe($scribe);
+quit_scribe($main::scribe);
 
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
+      [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
 
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(131072) ],
@@ -703,8 +706,8 @@ is_deeply([ @events ], [
       [ 'scribe_notif_part_done', bi(3), bi(3), 1, bi(32768) ],
 
       [ 'scribe_notif_tape_done', 'FAKELABEL', bi(3), bi(294912) ],
+      [ 'request_volume_permission', 'answer:', { cause => 'config', message => "sorry!" } ],
       [ 'scan' ],
-      [ 'request_volume_permission', 'answer:', ['config',"sorry!"] ],
       [ 'scan-finished', undef, 'slot: 2' ],
 
       [ 'dump_cb', 'PARTIAL', [], "sorry!", bi(294912) ],
@@ -714,20 +717,20 @@ is_deeply([ @events ], [
 # a non-splitting xfer on a single volume
 
 reset_taperoot(2);
-$scribe = Amanda::Taper::Scribe->new(
+$main::scribe = Amanda::Taper::Scribe->new(
     taperscan => Mock::Taperscan->new(disable_leom => 1),
-    feedback => Mock::Feedback->new());
+    feedback => Mock::Feedback->new({ allow => 1 }));
 
 reset_events();
-run_scribe_xfer(1024*300, $scribe, part_size => 0, part_cache_type => 'none',
+run_scribe_xfer(1024*300, $main::scribe, part_size => 0, part_cache_type => 'none',
 	    start_scribe => { write_timestamp => "20010203040506" });
 
-quit_scribe($scribe);
+quit_scribe($main::scribe);
 
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
+      [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(307200) ],
       [ 'dump_cb', 'DONE', [], undef, bi(307200) ],
@@ -736,20 +739,20 @@ is_deeply([ @events ], [
     or diag(Dumper([@events]));
 
 reset_taperoot(2);
-$scribe = Amanda::Taper::Scribe->new(
+$main::scribe = Amanda::Taper::Scribe->new(
     taperscan => Mock::Taperscan->new(),
-    feedback => Mock::Feedback->new());
+    feedback => Mock::Feedback->new({ allow => 1 }));
 $Amanda::Config::debug_taper = 9;
 reset_events();
-run_scribe_xfer(1024*300, $scribe, part_size => 0, part_cache_type => 'none',
+run_scribe_xfer(1024*300, $main::scribe, part_size => 0, part_cache_type => 'none',
 	    start_scribe => { write_timestamp => "20010203040506" });
 
-quit_scribe($scribe);
+quit_scribe($main::scribe);
 
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
-      [ 'request_volume_permission', 'answer:', [ undef, undef ] ],
+      [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(307200) ],
       [ 'dump_cb', 'DONE', [], undef, bi(307200) ],

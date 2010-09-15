@@ -337,7 +337,7 @@ try_run_changer(
 ## check chg-disk
 
 # Installcheck::Run sets up the whole chg-disk thing for us
-$testconf = Installcheck::Run->setup();
+$testconf = Installcheck::Run::setup();
 $testconf->write();
 
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
