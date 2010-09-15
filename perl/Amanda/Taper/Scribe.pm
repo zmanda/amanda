@@ -336,11 +336,13 @@ to limit the number of volumes the Scribe consumes.  It is called as
   $fb->request_volume_permission(perm_cb => $cb);
 
 The C<perm_cb> is a callback which expects a hash as arguments. If C<allow>
-is set, then the scribe is allowed to use a new volume, otherwise a C<cause>
+is set, then the scribe is allowed to use a new volume, if C<scribe> is set,
+then the xfer must be transfered to that scribe, otherwise a C<cause>
 and a C<message> describing why a new volume should not be used. must be
 set. e.g.
 
   perm_cb->(allow => 1);
+  perm_cb->(scribe => $new_scribe);
   perm_cb->(cause => 'config', message => $message);
   perm_cb->(cause => 'error', message => $message);
 
@@ -1103,10 +1105,10 @@ sub _get_new_volume {
 
 sub _volume_cb  {
     my $self = shift;
-    my ($scan_error, $config_denial_message, $error_denial_message, $reservation,
-	$new_label, $access_mode, $is_new) = @_;
+    my ($scan_error, $config_denial_message, $error_denial_message,
+	$reservation, $new_label, $access_mode, $is_new, $new_scribe) = @_;
 
-    # note that we prefer the request_denied_* info over the scan error.  If
+    # note that we prefer the config_denial_message over the scan error.  If
     # both occurred, then the results of the scan are immaterial -- we
     # shouldn't have been looking for a new volume anyway.
 
@@ -1117,6 +1119,42 @@ sub _volume_cb  {
 
     if ($error_denial_message) {
 	$self->_operation_failed(device_error => $error_denial_message);
+	return;
+    }
+
+    if ($new_scribe) {
+	# Transfer the xfer to the new scribe
+	$self->dbg("take scribe from");
+
+	$new_scribe->{'dump_cb'} = $self->{'dump_cb'};
+	$new_scribe->{'dump_header'} = $self->{'dump_header'};
+	$new_scribe->{'retry_part_on_peom'} = $self->{'retry_part_on_peom'};
+	$new_scribe->{'split_method'} = $self->{'split_method'};
+	$new_scribe->{'xfer'} = $self->{'xfer'};
+	$new_scribe->{'xdt'} = $self->{'xdt'};
+	$new_scribe->{'xdt_ready'} = $self->{'xdt_ready'};
+	$new_scribe->{'start_part_on_xdt_ready'} = $self->{'start_part_on_xdt_ready'};
+	$new_scribe->{'size'} = $self->{'size'};
+	$new_scribe->{'duration'} = $self->{'duration'};
+	$new_scribe->{'dump_start_time'} = $self->{'dump_start_time'};
+	$new_scribe->{'last_part_successful'} = $self->{'last_part_successful'};
+	$new_scribe->{'started_writing'} = $self->{'started_writing'};
+	$new_scribe->{'feedback'} = $self->{'feedback'};
+	$new_scribe->{'devhandling'}->{'feedback'} = $self->{'feedback'};
+	$self->{'dump_header'} = undef;
+	$self->{'dump_cb'} = undef;
+	$self->{'xfer'} = undef;
+	$self->{'xdt'} = undef;
+	$self->{'xdt_ready'} = undef;
+	$self->{'dump_start_time'} = undef;
+	$self->{'started_writing'} = 0;
+	$self->{'feedback'} = undef;
+	if (defined $new_scribe->{'device'}) {
+	    $new_scribe->{'xdt'}->use_device($new_scribe->{'device'});
+	}
+	# start it
+	$new_scribe->_start_part();
+
 	return;
     }
 
@@ -1543,7 +1581,11 @@ sub _start_request {
 
 	$self->{'request_pending'} = 0;
 	$self->{'request_complete'} = 1;
-	if (defined $params{'cause'}) {
+	if (defined $params{'scribe'}) {
+	    $self->{'new_scribe'} = $params{'scribe'};
+	    $self->{'scan_finished'} = 1;
+	    $self->{'request_complete'} = 1;
+	} elsif (defined $params{'cause'}) {
 	    $self->{'request_denied'} = 1;
 	    if ($params{'cause'} eq 'config') {
 		$self->{'config_denial_message'} = $params{'message'};
@@ -1607,6 +1649,7 @@ sub _maybe_callback {
 	    $self->{'volume_label'},
 	    $self->{'access_mode'},
 	    $self->{'is_new'},
+	    $self->{'new_scribe'},
 	);
 
 	# reset everything and prepare for a new scan
@@ -1621,6 +1664,7 @@ sub _maybe_callback {
 	$self->{'config_denial_message'} = undef;
 	$self->{'error_denial_message'} = undef;
 	$self->{'volume_cb'} = undef;
+	$self->{'new_scribe'} = undef;
 
 	$volume_cb->(@volume_cb_args);
     }

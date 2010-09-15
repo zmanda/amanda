@@ -256,6 +256,16 @@ sub msg_FAILED {
     $worker->FAILED(@_);
 }
 
+sub msg_TAKE_SCRIBE_FROM {
+    my $self = shift;
+    my ($msgtype, %params) = @_;
+
+    my $worker = $self->{'worker'}->{$params{'worker_name'}};
+    my $worker1 = $self->{'worker'}->{$params{'from_worker_name'}};
+    $worker->TAKE_SCRIBE_FROM($worker1, @_);
+    delete $self->{'worker'}->{$params{'from_worker_name'}};
+}
+
 sub msg_QUIT {
     my $self = shift;
     my ($msgtype, %params) = @_;

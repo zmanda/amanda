@@ -122,6 +122,10 @@ use constant BAD_COMMAND => message("BAD-COMMAND",
     format => [ qw( message ) ],
 );
 
+use constant TAKE_SCRIBE_FROM => message("TAKE-SCRIBE-FROM",
+    format => [ qw( worker_name handle from_worker_name) ],
+);
+
 use constant DUMPER_STATUS => message("DUMPER-STATUS",
     format => [ qw( handle ) ],
 );

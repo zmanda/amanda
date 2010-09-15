@@ -1,4 +1,13 @@
 2010-09-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Protocol.pm (TAKE_SCRIBE_FROM): New in protocol.
+	* perl/Amanda/Taper/Controller.pm (msg_TAKE_SCRIBE_FROM): New function.
+	* perl/Amanda/Taper/Scribe.pm: Add scribe parameter in perm_cb.
+	  transfert the xfer to a new scribe.
+	* perl/Amanda/Taper/Worker.pm (TAKE_SCRIBE_FROM): New method.
+	* perl/Amanda/Xfer.swg (xfer_set_callback): New method.
+	* installcheck/taper.pl: Test TAKE-SCRIBE-FROM command.
+
+2010-09-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Changer_compat.pl: Fix Installcheck::Run::setup.
 	* installcheck/Installcheck/Run.pm (setup): Take an argument to set
 						    new vtapes.

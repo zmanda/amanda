@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 187;
+use Test::More tests => 201;
 use strict;
 use warnings;
 
@@ -975,6 +975,63 @@ check_logs([
     qr(^DONE taper localhost /u02 $datestamp 3 0 \[sec [\d.]+ kb 600 kps [\d.]+ orig-kb 1712\]$),
     qr(^INFO taper tape TESTCONF01 kb 292 fm 2 \[OK\]$),
     qr(^INFO taper tape TESTCONF02 kb 600 fm 3 \[OK\]$),
+], "second taper invocation in sequence logged correctly");
+cleanup_log();
+
+##
+# A run with 2 workers and a take_scribe
+$handle = "66-22222";
+$datestamp = "20090202020000";
+run_taper(1024, "with 2 workers and a take_scribe", new_vtapes => 1);
+like(taper_reply, qr/^TAPER-OK worker0$/,
+	"got TAPER-OK") or die;
+make_holding_file(1000000, "localhost", "/u01");
+taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1612");
+like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
+	"got REQUEST-NEW-TAPE worker0 $handle") or die;
+taper_cmd("START-SCAN worker0 $handle");
+taper_cmd("NEW-TAPE worker0 $handle");
+like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0 $handle") or die;
+like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 256 "\[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1612\]"$/,
+	"got PARTDONE for filenum 1") or die;
+like(taper_reply, qr/^PARTDONE $handle TESTCONF01 2 256 "\[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1612\]"$/,
+	"got PARTDONE for filenum 2") or die;
+like(taper_reply, qr/^PARTDONE $handle TESTCONF01 3 256 "\[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1612\]"$/,
+	"got PARTDONE for filenum 3") or die;
+like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
+	"got REQUEST-NEW-TAPE worker0 $handle") or die;
+taper_cmd("START-TAPER worker1 $datestamp");
+like(taper_reply, qr/^TAPER-OK worker1$/,
+	"got TAPER-OK") or die;
+taper_cmd("TAKE-SCRIBE-FROM worker0 $handle worker1");
+like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
+	"got REQUEST-NEW-TAPE worker0 $handle") or die;
+taper_cmd("START-SCAN worker0 $handle");
+taper_cmd("NEW-TAPE worker0 $handle");
+like(taper_reply, qr/^NEW-TAPE $handle TESTCONF02$/,
+	"got proper NEW-TAPE worker0 $handle") or die;
+like(taper_reply, qr/^PARTDONE $handle TESTCONF02 1 208 "\[sec [\d.]+ kb 208 kps [\d.]+ orig-kb 1612\]"$/,
+	"got PARTDONE for filenum 4") or die;
+like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 976 kps [\d.]+ orig-kb 1612\]" "" ""$/,
+	"got DONE") or die;
+taper_cmd("QUIT");
+wait_for_exit();
+
+check_logs([
+    qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^PART taper TESTCONF01 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1612\]$),
+    qr(^PART taper TESTCONF01 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1612\]$),
+    qr(^PART taper TESTCONF01 3 localhost /u01 $datestamp 3/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1612\]$),
+    qr(^PARTPARTIAL taper TESTCONF01 4 localhost /u01 $datestamp 4/-1 0 \[sec [\d.]+ kb 96 kps [\d.]+ orig-kb 1612\] \"No space left on device\"$),
+    qr(^INFO taper Will request retry of failed split part.$),
+    qr(^INFO taper tape TESTCONF01 kb 768 fm 4 \[OK\]$),
+    qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
+    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
+    qr(^PART taper TESTCONF02 1 localhost /u01 $datestamp 4/-1 0 \[sec [\d.]+ kb 208 kps [\d.]+ orig-kb 1612\]$),
+    qr(^DONE taper localhost /u01 $datestamp 4 0 \[sec [\d.]+ kb 976 kps [\d.]+ orig-kb 1612\]$),
+    qr(^INFO taper tape TESTCONF02 kb 208 fm 1 \[OK\]$),
 ], "second taper invocation in sequence logged correctly");
 cleanup_log();
 

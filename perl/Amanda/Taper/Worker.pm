@@ -185,6 +185,36 @@ sub NO_NEW_TAPE {
     $self->{'perm_cb'}->(cause => "config", message => $params{'reason'});
 }
 
+sub TAKE_SCRIBE_FROM {
+    my $self = shift;
+    my ($worker1, $msgtype, %params) = @_;
+
+    $self->_assert_in_state("writing") or return;
+    $worker1->_assert_in_state("idle") or return;
+
+    my $scribe = $self->{'scribe'};
+    my $scribe1 = $worker1->{'scribe'};
+    $self->{'scribe'} = $scribe1;
+    $worker1->{'scribe'} = $scribe;
+    # Change the callback to call the new scribe
+    $self->{'xfer'}->set_callback(sub {
+	my ($src, $msg, $xfer) = @_;
+	$scribe1->handle_xmsg($src, $msg, $xfer);
+
+	# if this is an error message that's not from the scribe's element, then
+	# we'll need to keep track of it ourselves
+	if ($msg->{'type'} == $XMSG_ERROR and $msg->{'elt'} != $self->{'xfer_dest'}) {
+	    push @{$self->{'input_errors'}}, $msg->{'message'};
+	}
+    });
+
+    $self->{'label'} = $worker1->{'label'};
+    $self->{'perm_cb'}->(scribe => $scribe1);
+    delete $worker1->{'scribe'};
+    $worker1->{'state'} = 'error';
+    $scribe->quit(finished_cb => sub {});
+ }
+
 sub DONE {
     my $self = shift;
     my ($msgtype, %params) = @_;
