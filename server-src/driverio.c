@@ -408,7 +408,10 @@ taper_cmd(
 
     switch(cmd) {
     case START_TAPER:
-	cmdline = vstralloc(cmdstr[cmd], " ", (char *)ptr, "\n", NULL);
+	cmdline = vstralloc(cmdstr[cmd],
+			    " ", destname,
+			    " ", datestamp,
+			    "\n", NULL);
 	break;
     case FILE_WRITE:
 	dp = (disk_t *) ptr;
@@ -422,6 +425,7 @@ taper_cmd(
 	g_snprintf(orig_kb, SIZEOF(orig_kb), "%ju", origsize);
 	splitargs = taper_splitting_args(dp);
 	cmdline = vstralloc(cmdstr[cmd],
+			    " ", sched(dp)->taper->name,
 			    " ", disk2serial(dp),
 			    " ", qdest,
 			    " ", dp->host->hostname,
@@ -449,6 +453,7 @@ taper_cmd(
 	*/
 	splitargs = taper_splitting_args(dp);
 	cmdline = vstralloc(cmdstr[cmd],
+			    " ", sched(dp)->taper->name,
 			    " ", disk2serial(dp),
 			    " ", dp->host->hostname,
 			    " ", qname,
@@ -468,6 +473,7 @@ taper_cmd(
 	    origsize = 0;
 	g_snprintf(number, SIZEOF(number), "%ju", origsize);
 	cmdline = vstralloc(cmdstr[cmd],
+			    " ", sched(dp)->taper->name,
 			    " ", disk2serial(dp),
 			    " ", number,
 			    "\n", NULL);
@@ -475,17 +481,27 @@ taper_cmd(
     case FAILED: /* handle */
 	dp = (disk_t *) ptr;
 	cmdline = vstralloc(cmdstr[cmd],
+			    " ", sched(dp)->taper->name,
 			    " ", disk2serial(dp),
 			    "\n", NULL);
 	break;
     case NO_NEW_TAPE:
-	q = quote_string((char *)ptr);
+	dp = (disk_t *) ptr;
+	q = quote_string(destname);	/* reason why no new tape */
 	cmdline = vstralloc(cmdstr[cmd],
+			    " ", sched(dp)->taper->name,
+			    " ", disk2serial(dp),
 			    " ", q,
 			    "\n", NULL);
 	amfree(q);
 	break;
     case NEW_TAPE:
+	dp = (disk_t *) ptr;
+	cmdline = vstralloc(cmdstr[cmd],
+			    " ", sched(dp)->taper->name,
+			    " ", disk2serial(dp),
+			    "\n", NULL);
+	break;
     case QUIT:
 	cmdline = stralloc2(cmdstr[cmd], "\n");
 	break;

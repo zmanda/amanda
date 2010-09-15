@@ -1,3 +1,15 @@
+2010-09-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Protocol.pm: Add worker_name in protocol.
+	* perl/Amanda/Taper/Controller.pm,
+	* perl/Amanda/Taper/Worker.pm: Use worker_name.
+	* server-src/driverio.c (taper_cmd): Send worker_name to taper.
+	* server-src/driver.c: New argument to taper_cmd.
+	* server-src/amstatus.pl: Parse worker_name.
+	* installcheck/catalogs/chunker-partial.cat,
+	  installcheck/catalogs/normal.cat,
+	  installcheck/catalogs/quoted.cat: Add worker_name.
+	* installcheck/taper.pl: Add worker_name.
+
 2010-09-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.pl: Split in many files, add the worker.
 	* perl/Amanda/Taper/Controller.pm: Splitted from taper.pl

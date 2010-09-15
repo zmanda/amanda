@@ -119,7 +119,7 @@ sub start {
     if ($changer->isa("Amanda::Changer::Error")) {
 	# send a TAPE_ERROR right away
 	$self->{'proto'}->send(Amanda::Taper::Protocol::TAPE_ERROR,
-		handle => '99-9999',
+		worker_name => "SETUP",
 		message => "$changer");
 
 	# log the error (note that the message is intentionally not quoted)
@@ -190,12 +190,11 @@ sub quit {
 sub msg_START_TAPER {
     my $self = shift;
     my ($msgtype, %params) = @_;
-    $params{'name'} = 'worker1';
 
-    my $worker = new Amanda::Taper::Worker($params{'name'}, $self,
+    my $worker = new Amanda::Taper::Worker($params{'worker_name'}, $self,
 				  $params{'timestamp'});
 
-    $self->{'worker'}->{$params{'name'}} = $worker;
+    $self->{'worker'}->{$params{'worker_name'}} = $worker;
 
     $self->{'timestamp'} = $params{'timestamp'};
 }
@@ -204,54 +203,48 @@ sub msg_START_TAPER {
 sub msg_FILE_WRITE {
     my $self = shift;
     my ($msgtype, %params) = @_;
-    $params{'name'} = 'worker1';
 
-    my $worker = $self->{'worker'}->{$params{'name'}};
+    my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->FILE_WRITE(@_);
 }
 
 sub msg_PORT_WRITE {
     my $self = shift;
     my ($msgtype, %params) = @_;
-    $params{'name'} = 'worker1';
 
-    my $worker = $self->{'worker'}->{$params{'name'}};
+    my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->PORT_WRITE(@_);
 }
 
 sub msg_NEW_TAPE {
     my $self = shift;
     my ($msgtype, %params) = @_;
-    $params{'name'} = 'worker1';
 
-    my $worker = $self->{'worker'}->{$params{'name'}};
+    my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->NEW_TAPE(@_);
 }
 
 sub msg_NO_NEW_TAPE {
     my $self = shift;
     my ($msgtype, %params) = @_;
-    $params{'name'} = 'worker1';
 
-    my $worker = $self->{'worker'}->{$params{'name'}};
+    my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->NO_NEW_TAPE(@_);
 }
 
 sub msg_DONE {
     my $self = shift;
     my ($msgtype, %params) = @_;
-    $params{'name'} = 'worker1';
 
-    my $worker = $self->{'worker'}->{$params{'name'}};
+    my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->DONE(@_);
 }
 
 sub msg_FAILED {
     my $self = shift;
     my ($msgtype, %params) = @_;
-    $params{'name'} = 'worker1';
 
-    my $worker = $self->{'worker'}->{$params{'name'}};
+    my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->FAILED(@_);
 }
 

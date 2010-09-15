@@ -41,18 +41,18 @@ use Amanda::IPC::LineProtocol;
 use base "Amanda::IPC::LineProtocol";
 
 use constant START_TAPER => message("START-TAPER",
-    format => [ qw( timestamp ) ],
+    format => [ qw( worker_name timestamp ) ],
 );
 
 use constant PORT_WRITE => message("PORT-WRITE",
-    format => [ qw( handle hostname diskname level datestamp
+    format => [ qw( worker_name handle hostname diskname level datestamp
 	    dle_tape_splitsize dle_split_diskbuffer dle_fallback_splitsize dle_allow_split
 	    part_size part_cache_type part_cache_dir part_cache_max_size
 	    data_path ) ],
 );
 
 use constant FILE_WRITE => message("FILE-WRITE",
-    format => [ qw( handle filename hostname diskname level datestamp
+    format => [ qw( worker_name handle filename hostname diskname level datestamp
 	    dle_tape_splitsize dle_split_diskbuffer dle_fallback_splitsize dle_allow_split
 	    part_size part_cache_type part_cache_dir part_cache_max_size
 	    orig_kb) ],
@@ -60,28 +60,28 @@ use constant FILE_WRITE => message("FILE-WRITE",
 
 use constant NEW_TAPE => message("NEW-TAPE",
     format => {
-	in => [ qw( ) ],
+	in => [ qw( worker_name handle ) ],
 	out => [ qw( handle label ) ],
     },
 );
 
 use constant NO_NEW_TAPE => message("NO-NEW-TAPE",
     format => {
-	in => [ qw( reason ) ],
+	in => [ qw( worker_name handle reason ) ],
 	out => [ qw( handle ) ],
     }
 );
 
 use constant FAILED => message("FAILED",
     format => {
-	in => [ qw( handle ) ],
+	in => [ qw( worker_name handle ) ],
 	out => [ qw( handle input taper inputerr tapererr ) ],
     },
 );
 
 use constant DONE => message("DONE",
     format => {
-	in => [ qw( handle orig_kb ) ],
+	in => [ qw( worker_name handle orig_kb ) ],
 	out => [ qw( handle input taper stats inputerr tapererr ) ],
     },
 );
@@ -91,10 +91,11 @@ use constant QUIT => message("QUIT",
 );
 
 use constant TAPER_OK => message("TAPER-OK",
+    format => [ qw( worker_name ) ],
 );
 
 use constant TAPE_ERROR => message("TAPE-ERROR",
-    format => [ qw( handle message ) ],
+    format => [ qw( worker_name message ) ],
 );
 
 use constant PARTIAL => message("PARTIAL",
@@ -110,7 +111,7 @@ use constant REQUEST_NEW_TAPE => message("REQUEST-NEW-TAPE",
 );
 
 use constant PORT => message("PORT",
-    format => [ qw( port ipports ) ],
+    format => [ qw( worker_name handle port ipports ) ],
 );
 
 use constant BAD_COMMAND => message("BAD-COMMAND",

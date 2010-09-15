@@ -59,17 +59,17 @@ use base qw( Amanda::Taper::Scribe::Feedback );
 
 sub new {
     my $class           = shift;
-    my $name            = shift;
+    my $worker_name     = shift;
     my $controller      = shift;
     my $write_timestamp = shift;
 
     my $self = bless {
-	state      => "init",
-	name       => $name,
-	controller => $controller,
-	scribe     => undef,
-	timestamp  => $write_timestamp,
-	tape_num   => 0,
+	state       => "init",
+	worker_name => $worker_name,
+	controller  => $controller,
+	scribe      => undef,
+	timestamp   => $write_timestamp,
+	tape_num    => 0,
 
 	# filled in when a write starts:
 	xfer => undef,
@@ -111,11 +111,11 @@ sub new {
 # called when the scribe is fully started up and ready to go
 sub _scribe_started_cb {
     my $self = shift;
-    my ($err, $label) = @_;
+    my ($err) = @_;
 
     if ($err) {
 	$self->{'controller'}->{'proto'}->send(Amanda::Taper::Protocol::TAPE_ERROR,
-		handle  => '99-9999', # fake handle
+		worker_name  => $self->{'worker_name'},
 		message => "$err");
 	$self->{'state'} = "error";
 
@@ -123,7 +123,8 @@ sub _scribe_started_cb {
 	log_add($L_ERROR, "no-tape error [$err]");
 
     } else {
-	$self->{'controller'}->{'proto'}->send(Amanda::Taper::Protocol::TAPER_OK);
+	$self->{'controller'}->{'proto'}->send(Amanda::Taper::Protocol::TAPER_OK,
+		worker_name => $self->{'worker_name'});
 	$self->{'state'} = "idle";
     }
 }
@@ -485,6 +486,7 @@ sub send_port_and_get_header {
 
 	# and tell the driver which ports we're listening on
 	$self->{'controller'}->{'proto'}->send(Amanda::Taper::Protocol::PORT,
+	    worker_name => $self->{'worker_name'},
 	    handle => $self->{'handle'},
 	    port => $header_port,
 	    ipports => $data_addrs);

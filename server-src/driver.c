@@ -429,7 +429,7 @@ main(
     init_driverio();
     if(!no_taper) {
         startup_tape_process(taper_program, 1);
-        taper_cmd(START_TAPER, driver_timestamp, NULL, 0, NULL);
+        taper_cmd(START_TAPER, NULL, tapetable[0].name, 0, driver_timestamp);
     }
 
     /* fire up the dumpers now while we are waiting */
@@ -752,10 +752,10 @@ startaflush(void)
 
     if (result_tape_action & TAPE_ACTION_NEW_TAPE) {
 	taper->state &= ~TAPER_STATE_WAIT_FOR_TAPE;
-	taper_cmd(NEW_TAPE, NULL, NULL, 0, NULL);
+	taper_cmd(NEW_TAPE, taper->disk, NULL, 0, NULL);
     } else if (result_tape_action & TAPE_ACTION_NO_NEW_TAPE) {
 	taper->state &= ~TAPER_STATE_WAIT_FOR_TAPE;
-	taper_cmd(NO_NEW_TAPE, why_no_new_tape, NULL, 0, NULL);
+	taper_cmd(NO_NEW_TAPE, taper->disk, why_no_new_tape, 0, NULL);
 	start_degraded_mode(&runq);
     }
 
@@ -1468,7 +1468,7 @@ handle_taper_result(
 	    if (current_tape >= conf_runtapes) {
 		char *usermsg = g_strdup_printf(_("%d tapes filled; runtapes=%d "
 		    "does not allow additional tapes"), current_tape, conf_runtapes);
-		taper_cmd(NO_NEW_TAPE, usermsg, NULL, 0, NULL);
+		taper_cmd(NO_NEW_TAPE, taper->disk, usermsg, 0, NULL);
 		g_free(usermsg);
 		log_add(L_WARNING,
 			_("Out of tapes; going into degraded mode."));
@@ -1480,10 +1480,10 @@ handle_taper_result(
 		taper->state |= TAPER_STATE_WAIT_FOR_TAPE;
 		result_tape_action = tape_action(&why_no_new_tape);
 		if (result_tape_action & TAPE_ACTION_NEW_TAPE) {
-		    taper_cmd(NEW_TAPE, NULL, NULL, 0, NULL);
+		    taper_cmd(NEW_TAPE, taper->disk, NULL, 0, NULL);
 		    taper->state &= ~TAPER_STATE_WAIT_FOR_TAPE;
 		} else if (result_tape_action & TAPE_ACTION_NO_NEW_TAPE) {
-		    taper_cmd(NO_NEW_TAPE, why_no_new_tape, NULL, 0, NULL);
+		    taper_cmd(NO_NEW_TAPE, taper->disk, why_no_new_tape, 0, NULL);
 		    taper->state &= ~TAPER_STATE_WAIT_FOR_TAPE;
 		    start_degraded_mode(&runq);
 		}

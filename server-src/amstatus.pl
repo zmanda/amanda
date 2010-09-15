@@ -419,8 +419,8 @@ while($lineX = <AMDUMP>) {
 			}
 			elsif($line[5] =~ /taper/) {
 				if($line[6] eq "START-TAPER") {
-					#7:timestamp
-					$gdatestamp=$line[7];
+					#7:name 8:timestamp
+					$gdatestamp=$line[8];
 					if(!defined $datestamp{$gdatestamp}) {
 						$datestamp{$gdatestamp} = 1;
 						push @datestamp, $gdatestamp;
@@ -428,21 +428,22 @@ while($lineX = <AMDUMP>) {
 					$status_taper = "Searching for a new tape";
 				}
 				elsif($line[6] eq "NEW-TAPE") {
+					#7:name 8:handle
 					$status_taper = "Searching for a new tape";
 				}
 				elsif($line[6] eq "NO-NEW-TAPE") {
-					#7:handle 8:errmsg
-					$serial=$line[7];
-					$error=$line[8];
+					#7:name 8:handle 9:errmsg
+					$serial=$line[8];
+					$error=$line[9];
 					$status_taper = $error;
 				}
 				elsif($line[6] eq "FILE-WRITE") {
-					#7:handle 8:filename 9:host 10:disk 11:level 12:datestamp 13:splitsize
-					$serial=$line[7];
-					$host=$line[9];
-					$partition=$line[10];
-					$level=$line[11];
-					$ldatestamp=$line[12];
+					#7:name 8:handle 9:filename 10:host 11:disk 12:level 13:datestamp 14:splitsize
+					$serial=$line[8];
+					$host=$line[10];
+					$partition=$line[11];
+					$level=$line[12];
+					$ldatestamp=$line[13];
 					$status_taper = "Writing $host:$partition";
 					if(!defined $datestamp{$ldatestamp}) {
 						$datestamp{$ldatestamp} = 1;
@@ -459,12 +460,12 @@ while($lineX = <AMDUMP>) {
 					$ntchunk_size = 0;
 				}
 				elsif($line[6] eq "PORT-WRITE") {
-					#7:handle 8:host 9:disk 10:level 11:datestamp 12:splitsize 13:diskbuffer 14:fallback_splitsize
-					$serial=$line[7];
-					$host=$line[8];
-					$partition=$line[9];
-					$level=$line[10];
-					$ldatestamp=$line[11];
+					#7:name 8:handle 9:host 10:disk 11:level 12:datestamp 13:splitsize 14:diskbuffer 15:fallback_splitsize
+					$serial=$line[8];
+					$host=$line[9];
+					$partition=$line[10];
+					$level=$line[11];
+					$ldatestamp=$line[12];
 					$status_taper = "Writing $host:$partition";
 					$hostpart=&make_hostpart($host,$partition,$ldatestamp);
 					$serial{$serial}=$hostpart;
@@ -636,22 +637,14 @@ while($lineX = <AMDUMP>) {
 					}
 				}
 				elsif($line[6] eq "TAPER-OK") {
+					#7:name #8:label
 					$status_taper = "Idle";
 				}
-				elsif($line[6] eq "TRY-AGAIN" || $line[6] eq "TAPE-ERROR") {
-					#7:handle 8:errstr
-					$serial=$line[7];
+				elsif($line[6] eq "TAPE-ERROR") {
+					#7:name 8:errstr
 					$error=$line[8];
 					$status_taper = $error;
-					$hostpart=$serial{$serial};
-					if(defined $hostpart) {
-						$taper_finished{$hostpart}= $line[6] eq 'TAPE-ERROR' ? -2 : -1;
-						$busy_time{"taper"}+=($current_time-$taper_time{$hostpart});
-						$taper_time{$hostpart}=$current_time;
-						$error{$hostpart}="taper: $error";
-					} else {
-						$exit_status |= $STATUS_TAPE;
-					}
+					$exit_status |= $STATUS_TAPE;
 					undef $taper_status_file;
 				}
 				elsif($line[6] eq "FAILED") {
