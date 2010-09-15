@@ -86,23 +86,25 @@ startup_tape_process(
     int   taper_parallel_write)
 {
     int       fd[2];
+    int       i;
     char    **config_options;
     taper_t  *taper;
 
     tapetable = calloc(sizeof(taper_t), taper_parallel_write+1);
-    taper = tapetable;
-    taper->name = stralloc("worker1");
-    taper->sendresult = 0;
-    taper->input_error = NULL;
-    taper->tape_error = NULL;
-    taper->result = 0;
-    taper->dumper = NULL;
-    taper->disk = NULL;
-    taper->first_label = NULL;
-    taper->first_fileno = 0;
-    taper->state = TAPER_STATE_DEFAULT;
-    taper->left = 0;
-    taper->written = 0;
+    for (taper = tapetable, i = 0; i < taper_parallel_write; taper++, i++) {
+	taper->name = g_strdup_printf("worker%d", i);
+	taper->sendresult = 0;
+	taper->input_error = NULL;
+	taper->tape_error = NULL;
+	taper->result = 0;
+	taper->dumper = NULL;
+	taper->disk = NULL;
+	taper->first_label = NULL;
+	taper->first_fileno = 0;
+	taper->state = TAPER_STATE_DEFAULT;
+	taper->left = 0;
+	taper->written = 0;
+    }
 
     if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd) == -1) {
 	error(_("taper pipe: %s"), strerror(errno));
@@ -507,6 +509,14 @@ taper_cmd(
 	cmdline = vstralloc(cmdstr[cmd],
 			    " ", sched(dp)->taper->name,
 			    " ", disk2serial(dp),
+			    "\n", NULL);
+	break;
+    case TAKE_SCRIBE_FROM:
+	dp = (disk_t *) ptr;
+	cmdline = vstralloc(cmdstr[cmd],
+			    " ", sched(dp)->taper->name,
+			    " ", disk2serial(dp),
+			    " ", destname,  /* name of worker */
 			    "\n", NULL);
 	break;
     case QUIT:

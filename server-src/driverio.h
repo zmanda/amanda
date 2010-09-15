@@ -42,12 +42,20 @@
 #endif
 
 typedef enum {
-   TAPER_STATE_DEFAULT       = 0,
-   TAPER_STATE_DUMP_TO_TAPE  = (1 << 0), // if taper is doing a dump to tape
-   TAPER_STATE_WAIT_FOR_TAPE = (1 << 1), // if taper wait for a tape, after a
-					 //   REQUEST-NEW-TAPE
-   TAPER_STATE_TAPE_STARTED  = (1 << 2)	 // taper already started to write to
-					 //   a tape.
+   TAPER_STATE_DEFAULT        = 0,        //   0 Before TAPER-START
+   TAPER_STATE_INIT           = (1 << 0), //   1 Between TAPE-START and TAPE-OK
+   TAPER_STATE_RESERVATION    = (1 << 1), //   2 Have a reservation
+   TAPER_STATE_IDLE           = (1 << 2), //   4 tape started and do nothing
+   TAPER_STATE_DUMP_TO_TAPE   = (1 << 3), //   8 Doing a PORT-WRITE
+   TAPER_STATE_FILE_TO_TAPE   = (1 << 4), //  16 Doing a FILE-WRITE
+   TAPER_STATE_TAPE_REQUESTED = (1 << 5), //  32 REQUEST-NEW-TAPE received
+   TAPER_STATE_WAIT_FOR_TAPE  = (1 << 6), //  64 if taper wait for a tape,
+                                          //     after a START-SCAN send
+   TAPER_STATE_WAIT_NEW_TAPE  = (1 << 7), // 128 AFTER NEW-TAPE sent and before
+                                          //     NEW-TAPE received
+   TAPER_STATE_TAPE_STARTED   = (1 << 8), // 256 taper already started to write
+                                          //     to a tape.
+   TAPER_STATE_DONE           = (1 << 9),
 } TaperState;
 
 /* chunker process structure */
@@ -87,7 +95,6 @@ typedef struct taper_s {
     char       *first_label;
     off_t       first_fileno;
     TaperState  state;
-    int         busy;
     off_t       left;
     off_t       written;               // Number of kb already written to tape
 } taper_t;
@@ -148,6 +155,7 @@ GLOBAL taper_t   *tapetable;
 GLOBAL int taper_fd;
 GLOBAL pid_t taper_pid;
 GLOBAL event_handle_t *taper_ev_read;
+GLOBAL int taper_nb_wait_reply;
 
 void init_driverio(void);
 void startup_tape_process(char *taper_program, int taper_parallel_write);

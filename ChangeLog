@@ -1,4 +1,11 @@
 2010-09-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Use many worker.
+	* server-src/driverio.c: Init many worker.
+	* server-src/driverio.h (TaperState): New taper state.
+	* server-src/server_util.c: Add "TAKE-SCRIBE-FROM".
+	* server-src/server_util.h: Add TAKE_SCRIBE_FROM.
+
+2010-09-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Protocol.pm (TAKE_SCRIBE_FROM): New in protocol.
 	* perl/Amanda/Taper/Controller.pm (msg_TAKE_SCRIBE_FROM): New function.
 	* perl/Amanda/Taper/Scribe.pm: Add scribe parameter in perm_cb.

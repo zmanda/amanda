@@ -49,7 +49,7 @@ enum {
     START_TAPER, FILE_WRITE, NEW_TAPE, NO_NEW_TAPE,     /* taper... */
     PARTDONE, PORT_WRITE, DUMPER_STATUS,                /* ... cmds */
     PORT, TAPE_ERROR, TAPER_OK,				/* taper results */
-    REQUEST_NEW_TAPE, DIRECTTCP_PORT,
+    REQUEST_NEW_TAPE, DIRECTTCP_PORT, TAKE_SCRIBE_FROM,
     START_SCAN, LAST_TOK
 };
 extern const char *cmdstr[];
