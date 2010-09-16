@@ -57,6 +57,8 @@ use File::Temp;
 
 use base qw( Amanda::Taper::Scribe::Feedback );
 
+our $tape_num = 0;
+
 sub new {
     my $class           = shift;
     my $worker_name     = shift;
@@ -69,7 +71,6 @@ sub new {
 	controller  => $controller,
 	scribe      => undef,
 	timestamp   => $write_timestamp,
-	tape_num    => 0,
 
 	# filled in when a write starts:
 	xfer => undef,
@@ -388,7 +389,7 @@ sub scribe_notif_new_tape {
 	log_add($L_START, sprintf("datestamp %s label %s tape %s",
 		$self->{'timestamp'},
 		quote_string($self->{'label'}),
-		++$self->{'tape_num'}));
+		++$tape_num));
 
 	# and the amdump log
 	print STDERR "taper: wrote label '$self->{label}'\n";

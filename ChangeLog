@@ -1,3 +1,7 @@
+2010-09-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Worker.pm: Use 'our $tape_num'.
+	* installcheck/taper.pl: Fix for correct tape_num.
+
 2010-09-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Use many worker.
 	* server-src/driverio.c: Init many worker.

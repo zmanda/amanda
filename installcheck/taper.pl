@@ -968,7 +968,7 @@ check_logs([
     qr(^PART taper TESTCONF01 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ kb 36 kps [\d.]+ orig-kb 1612\]$),
     qr(^DONE taper localhost /u01 $datestamp 2 0 \[sec [\d.]+ kb 292 kps [\d.]+ orig-kb 1612\]$),
     qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
-    qr(^START taper datestamp $datestamp label TESTCONF02 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
     qr(^PART taper TESTCONF02 1 localhost /u02 $datestamp 1/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1712\]$),
     qr(^PART taper TESTCONF02 2 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1712\]$),
     qr(^PART taper TESTCONF02 3 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ kb 88 kps [\d.]+ orig-kb 1712\]$),
