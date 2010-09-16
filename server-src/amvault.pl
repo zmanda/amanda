@@ -126,7 +126,7 @@ sub new {
 	src_write_timestamp => $params{'src_write_timestamp'},
 
 	dst_changer => $params{'dst_changer'},
-	dst_label_template => $params{'dst_label_template'},
+	dst_autolabel => $params{'dst_autolabel'},
 	dst_write_timestamp => $params{'dst_write_timestamp'},
 
 	src => undef,
@@ -150,7 +150,7 @@ sub run {
     $self->{'exit_cb'} = $exit_cb;
 
     # check that the label template is valid
-    my $dst_label_template = $self->{'dst_label_template'};
+    my $dst_label_template = $self->{'dst_autolabel'}->{'template'};
     return $self->failure("Invalid label template '$dst_label_template'")
 	if ($dst_label_template =~ /%[^%]+%/
 	    or $dst_label_template =~ /^[^%]+$/);
@@ -234,18 +234,10 @@ sub setup_dst {
 	if $chg->isa('Amanda::Changer::Error');
     $dst->{'chg'} = $chg;
 
-    # TODO: these should be configurable
-    my $autolabel = {
-	template => $self->{'dst_label_template'},
-	other_config => 1,
-	non_amanda => 1,
-	volume_error => 1,
-	empty => 1,
-    };
     $dst->{'scan'} = Amanda::Taper::Scan->new(
 	changer => $dst->{'chg'},
 	labelstr => getconf($CNF_LABELSTR),
-	autolabel => $autolabel);
+	autolabel => $self->{'dst_autolabel'});
 
     $dst->{'scribe'} = Amanda::Taper::Scribe->new(
 	taperscan => $dst->{'scan'},
@@ -713,16 +705,22 @@ use Amanda::Util qw( :constants );
 use Getopt::Long;
 
 sub usage {
+    my ($msg) = @_;
+
     print <<EOF;
 **NOTE** this interface is under development and will change in future releases!
 
 Usage: amvault [-o configoption]* [-q|--quiet] [--fulls-only] [--export]
-	<conf> <src-run-timestamp> <dst-changer> <label-template>
+	--label-template=<label-template>
+	[--autolabel={other_config|non_amanda|volume_error|empty|any}]*
+	<conf> <src-run-timestamp> <dst-changer>
 
     -o: configuration override (see amanda(8))
     -q: quiet progress messages
     --fulls-only: only copy full (level-0) dumps
     --export: move completed destination volumes to import/export slots
+    --label-template: the template to use for new volume labels
+    --autolabel: similar to the amanda.conf parameter; may be repeated (default: empty)
 
 Copies data from the run with timestamp <src-run-timestamp> onto volumes using
 the changer <dst-changer>, labeling new volumes with <label-template>.  If
@@ -730,6 +728,9 @@ the changer <dst-changer>, labeling new volumes with <label-template>.  If
 amvault will be used.
 
 EOF
+    if ($msg) {
+	print "ERROR: $msg\n";
+    }
     exit(1);
 }
 
@@ -739,19 +740,53 @@ my $config_overrides = new_config_overrides($#ARGV+1);
 my $opt_quiet = 0;
 my $opt_fulls_only = 0;
 my $opt_export = 0;
+my $opt_autolabel = {};
+my $opt_autolabel_seen = 0;
+
+sub set_label_template {
+    usage("only one --label-template allowed") if $opt_autolabel->{'template'};
+    $opt_autolabel->{'template'} = $_[1];
+}
+
+sub add_autolabel {
+    my ($opt, $val) = @_;
+    $val = lc($val);
+    $val =~ s/-/_/g;
+
+    $opt_autolabel_seen = 1;
+    my @ok = qw(other_config non_amanda volume_error empty);
+    for (@ok) {
+	if ($val eq $_) {
+	    $opt_autolabel->{$_} = 1;
+	    return;
+	}
+    }
+    if ($val eq 'all') {
+	for (@ok) {
+	    $opt_autolabel->{$_} = 1;
+	}
+	return;
+    }
+    usage("unknown --autolabel value '$val'");
+}
+
 Getopt::Long::Configure(qw{ bundling });
 GetOptions(
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
     'q|quiet' => \$opt_quiet,
     'fulls-only' => \$opt_fulls_only,
     'export' => \$opt_export,
+    'label-template=s' => \&set_label_template,
+    'autolabel=s' => \&add_autolabel,
     'version' => \&Amanda::Util::version_opt,
     'help' => \&usage,
-) or usage();
+) or usage("usage error");
 
-usage unless (@ARGV == 4);
+usage("not enough arguments") unless (@ARGV == 3);
+usage("no --label-template given") unless $opt_autolabel->{'template'};
+$opt_autolabel->{'empty'} = 1 unless $opt_autolabel_seen;
 
-my ($config_name, $src_write_timestamp, $dst_changer, $label_template) = @ARGV;
+my ($config_name, $src_write_timestamp, $dst_changer) = @ARGV;
 
 set_config_overrides($config_overrides);
 config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
@@ -775,7 +810,7 @@ my $exit_cb = sub {
 my $vault = Amvault->new(
     src_write_timestamp => $src_write_timestamp,
     dst_changer => $dst_changer,
-    dst_label_template => $label_template,
+    dst_autolabel => $opt_autolabel,
     dst_write_timestamp => Amanda::Util::generate_timestamp(),
     quiet => $opt_quiet,
     fulls_only => $opt_fulls_only,

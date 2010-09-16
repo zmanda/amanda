@@ -18,6 +18,13 @@ Changes in release 3.2.0alpha
       o chg-rth
       o chg-scsi-chio
       o chg-scsi
+   * Amvault is much improved, but still experimental:
+      o supports assembling split parts on the source volume and re-splitting
+        them on the destination
+      o a --fulls-only option skips all incremental dumps on the source
+      o an --export option tries to move tertiary volumes to import/export
+        slots when completed
+      o command-line syntax has changed; see manpage or 'amvault --help'
 
 Changes in release 3.1.0
 

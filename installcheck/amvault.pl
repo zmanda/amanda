@@ -56,7 +56,8 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 # and then set up a new vtape to vault onto
 my $tertiary_chg = setup_chg_disk();
 
-ok(run("$sbindir/amvault", 'TESTCONF', 'latest', $tertiary_chg, "TESTCONF%%"),
+ok(run("$sbindir/amvault", '--autolabel=all', '--label-template', "TESTCONF%%",
+			    'TESTCONF', 'latest', $tertiary_chg),
     "amvault runs!")
     or diag($Installcheck::Run::stderr);
 
@@ -121,7 +122,8 @@ define changer "tertiary" {
 EOF
 
     $tertiary_chg = "tertiary";
-    ok(run("$sbindir/amvault", 'TESTCONF', 'latest', $tertiary_chg, "TESTCONF%%", '--export'),
+    ok(run("$sbindir/amvault", '--export', '--autolabel=all', '--label-template', "TESTCONF%%",
+			'TESTCONF', 'latest', $tertiary_chg),
 	"amvault runs with an NDMP device as secondary and tertiary, with --export")
 	or diag($Installcheck::Run::stderr);
 
@@ -168,4 +170,4 @@ EOF
 }
 
 # clean up
-Installcheck::Run::cleanup();
+#Installcheck::Run::cleanup();

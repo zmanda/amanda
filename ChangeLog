@@ -1,4 +1,10 @@
 2010-09-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* NEWS: mention improvements to amvault
+	* server-src/amvault.pl: Add --autolabel=.. and --label-template=..
+	* installcheck/amvault.pl: update tests
+	* man/xml-source/amvault.8.xml: update manpage
+
+2010-09-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amreport.pl: support more than one email address
 	* installcheck/amreport.pl: change error message
 
