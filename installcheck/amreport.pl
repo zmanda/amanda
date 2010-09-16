@@ -431,7 +431,7 @@ ok(! -f $printer_output,
 cleanup();
 
 like(run_err($amreport, 'TESTCONF', '--from-amdump', '-o', 'mailto=ill\egal'),
-    qr/mail address has invalid characters/,
+    qr/mail addresses have invalid characters/,
     "amreport with illegal email in -o, with mailer but no mailto and no template, errors out");
 
 setup_config(catalog => 'normal',

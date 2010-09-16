@@ -358,7 +358,7 @@ sub open_mail_output
     my $mailto = $outputspec->[1];
 
     if ($mailto =~ /[*<>()\[\];:\\\/"!$|]/) {
-        error("mail address has invalid characters", 1);
+        error("mail addresses have invalid characters", 1);
     }
 
     my $datestamp =
@@ -391,7 +391,7 @@ sub open_mail_output
 
     my $cfg_mailer = getconf($CNF_MAILER);
 
-    my @cmd = ("$cfg_mailer", "-s", $subj_str, $mailto);
+    my @cmd = ("$cfg_mailer", "-s", $subj_str, split(/ +/, $mailto));
     debug("invoking mail app: " . join(" ", @cmd));
 
 

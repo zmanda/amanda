@@ -1,3 +1,7 @@
+2010-09-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amreport.pl: support more than one email address
+	* installcheck/amreport.pl: change error message
+
 2010-09-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: Generate new label and reserved them
 	  in the tapelist file.
