@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -86,6 +86,10 @@ struct Xfer {
     /* Number of active elements remaining (a.k.a. the number of
      * XMSG_DONE messages to expect) */
     gint num_active_elements;
+
+    /* Used to coordinate handing off file descriptors among elements of this
+     * xfer */
+    GMutex *fd_mutex;
 };
 
 typedef struct Xfer Xfer;
@@ -214,5 +218,17 @@ xfer_status wait_until_xfer_running(Xfer *xfer);
  */
 void xfer_cancel_with_error(struct XferElement *elt, const char *fmt, ...)
 	G_GNUC_PRINTF(2,3);
+
+/* Return the fd in *FDP and set *FDP to NEWFD, all in one step.  The operation
+ * is atomic with respect to all other such operations in this transfer, making
+ * this a good way to "move" a file descriptor from one element to another.  If
+ * xfer is NULL, the operation proceeds with no locking.
+ *
+ * @param xfer: the xfer within which this fd is used
+ * @param fdp: pointer to the file descriptor to swap
+ * @param newfd: the new value for *FDP
+ * @returns: the previous contents of *fdp (may be -1)
+ */
+gint xfer_atomic_swap_fd(Xfer *xfer, gint *fdp, gint newfd);
 
 #endif /* XFER_H */

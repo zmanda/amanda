@@ -1,6 +1,6 @@
 /*
  * Amanda, The Advanced Maryland Automatic Network Disk Archiver
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -110,9 +110,9 @@ xfer_dest_fd(
 
     g_assert(fd >= 0);
 
-    /* We keep a *copy* of this fd, because our caller will close it to indicate
-     * EOF */
-    elt->input_fd = dup(fd);
+    /* We keep a *copy* of this fd, because our caller will close it to
+     * indicate EOF */
+    g_assert(xfer_element_swap_input_fd(elt, dup(fd)) == -1);
 
     return elt;
 }

@@ -103,7 +103,7 @@ source_readfd_setup_impl(
 	g_critical("Error from pipe(): %s", strerror(errno));
 
     self->write_fd = p[1];
-    XFER_ELEMENT(self)->output_fd = p[0];
+    g_assert(xfer_element_swap_output_fd(elt, p[0]) == -1);
 
     return TRUE;
 }
@@ -184,8 +184,12 @@ source_writefd_thread(
     gpointer data)
 {
     XferSourceWritefd *self = XFER_SOURCE_WRITEFD(data);
+    XferElement *elt = XFER_ELEMENT(data);
     char buf[TEST_XFER_SIZE];
-    int fd = XFER_ELEMENT(self)->downstream->input_fd;
+    int fd = xfer_element_swap_input_fd(elt->downstream, -1);
+
+    /* this shouldn't happen, although non-test elements handle it gracefully */
+    g_assert(fd != -1);
 
     simpleprng_fill_buffer(&self->prng, buf, sizeof(buf));
 
@@ -194,7 +198,6 @@ source_writefd_thread(
     }
 
     close(fd);
-    XFER_ELEMENT(self)->downstream->input_fd = -1;
 
     xfer_queue_message(XFER_ELEMENT(self)->xfer, xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0));
 
@@ -757,9 +760,13 @@ dest_readfd_thread(
     gpointer data)
 {
     XferDestReadfd *self = XFER_DEST_READFD(data);
+    XferElement *elt = XFER_ELEMENT(data);
     char buf[TEST_XFER_SIZE];
     size_t remaining;
-    int fd = XFER_ELEMENT(self)->upstream->output_fd;
+    int fd = xfer_element_swap_output_fd(elt->upstream, -1);
+
+    /* this shouldn't happen, although non-test elements handle it gracefully */
+    g_assert(fd != -1);
 
     remaining = sizeof(buf);
     while (remaining) {
@@ -778,7 +785,6 @@ dest_readfd_thread(
 	g_critical("data entering XferDestReadfd does not match");
 
     close(fd);
-    XFER_ELEMENT(self)->upstream->output_fd = -1;
 
     xfer_queue_message(XFER_ELEMENT(self)->xfer, xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0));
 
@@ -885,7 +891,6 @@ dest_writefd_thread(
 	g_critical("data entering XferDestWritefd does not match");
 
     close(fd);
-    XFER_ELEMENT(self)->upstream->output_fd = -1;
 
     xfer_queue_message(XFER_ELEMENT(self)->xfer, xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0));
 
@@ -905,7 +910,7 @@ dest_writefd_setup_impl(
 	g_critical("Error from pipe(): %s", strerror(errno));
 
     self->read_fd = p[0];
-    XFER_ELEMENT(self)->input_fd = p[1];
+    g_assert(xfer_element_swap_input_fd(elt, p[1]) == -1);
 
     return TRUE;
 }

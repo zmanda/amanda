@@ -1,3 +1,13 @@
+2010-09-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* xfer-src/xfer.c xfer-src/xfer.h: add xfer_atomic_swap_fd
+	* xfer-src/xfer-element.c xfer-src/xfer-element.h: add
+	  xfer_element_swap_input_fd and xfer_element_swap_output_fd and
+	  use them to access input_fd and output_fd atomically
+	* xfer-src/element-glue.c: add get_read_fd and get_write_fd to handle
+	  taking ownership of fd's even in pull_and_write and read_and_push
+	* xfer-src/filter-process.c xfer-src/source-fd.c xfer-src/xfer-test.c
+	  xfer-src/dest-fd.c: use xfer_element_swap_*_fd
+
 2010-09-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Worker.pm: Use 'our $tape_num'.
 	* installcheck/taper.pl: Fix for correct tape_num.

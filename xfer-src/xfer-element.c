@@ -39,7 +39,7 @@ xfer_element_init(
     xe->output_mech = XFER_MECH_NONE;
     xe->input_mech = XFER_MECH_NONE;
     xe->upstream = xe->downstream = NULL;
-    xe->input_fd = xe->output_fd = -1;
+    xe->_input_fd = xe->_output_fd = -1;
     xe->repr = NULL;
 }
 
@@ -108,9 +108,19 @@ xfer_element_finalize(
     GObject * obj_self)
 {
     XferElement *elt = XFER_ELEMENT(obj_self);
+    gint fd;
 
     /* free the repr cache */
     if (elt->repr) g_free(elt->repr);
+
+    /* close up the input/output file descriptors, being careful to do so
+     * atomically, and making any errors doing so into mere warnings */
+    fd = xfer_element_swap_input_fd(elt, -1);
+    if (fd != -1 && close(fd) != 0)
+	g_warning("error closing fd %d: %s", fd, strerror(errno));
+    fd = xfer_element_swap_output_fd(elt, -1);
+    if (fd != -1 && close(fd) != 0)
+	g_warning("error closing fd %d: %s", fd, strerror(errno));
 
     /* chain up */
     G_OBJECT_CLASS(parent_class)->finalize(obj_self);

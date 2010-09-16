@@ -122,6 +122,7 @@ start_impl(
     char **argv;
     char *errmsg;
     char **env;
+    int rfd, wfd;
 
     /* first build up a log message of what we're going to do, properly shell quoted */
     argv = self->argv;
@@ -133,6 +134,9 @@ start_impl(
     }
     g_debug("%s spawning: %s", xfer_element_repr(elt), cmd_str);
 
+    rfd = xfer_element_swap_output_fd(elt->upstream, -1);
+    wfd = xfer_element_swap_input_fd(elt->downstream, -1);
+
     /* now fork off the child and connect the pipes */
     switch (self->child_pid = fork()) {
 	case -1:
@@ -141,15 +145,15 @@ start_impl(
 
 	case 0: /* child */
 	    /* first, copy our fd's out of the stdio range */
-	    while (elt->upstream->output_fd <= STDERR_FILENO)
-		elt->upstream->output_fd = dup(elt->upstream->output_fd);
-	    while (elt->downstream->input_fd <= STDERR_FILENO)
-		elt->downstream->input_fd = dup(elt->downstream->input_fd);
+	    while (rfd <= STDERR_FILENO)
+		rfd = dup(rfd);
+	    while (wfd <= STDERR_FILENO)
+		wfd = dup(wfd);
 
 	    /* set up stdin, stdout, and stderr, overwriting anything already open
 	     * on those fd's */
-	    dup2(elt->upstream->output_fd, STDIN_FILENO);
-	    dup2(elt->downstream->input_fd, STDOUT_FILENO);
+	    dup2(rfd, STDIN_FILENO);
+	    dup2(wfd, STDOUT_FILENO);
 	    if (!self->log_stderr)
 		debug_dup_stderr_to_debug();
 
@@ -174,8 +178,8 @@ start_impl(
     g_free(cmd_str);
 
     /* close the pipe fd's */
-    close(elt->upstream->output_fd);
-    close(elt->downstream->input_fd);
+    close(rfd);
+    close(wfd);
 
     /* watch for child death */
     self->child_watch = new_child_watch_source(self->child_pid);

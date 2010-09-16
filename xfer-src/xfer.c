@@ -56,6 +56,7 @@ xfer_new(
     xfer->status = XFER_INIT;
     xfer->status_mutex = g_mutex_new();
     xfer->status_cond = g_cond_new();
+    xfer->fd_mutex = g_mutex_new();
 
     xfer->refcount = 1;
     xfer->repr = NULL;
@@ -116,6 +117,7 @@ xfer_unref(
 
     g_mutex_free(xfer->status_mutex);
     g_cond_free(xfer->status_cond);
+    g_mutex_free(xfer->fd_mutex);
 
     /* Free our references to the elements, and also set the 'xfer'
      * attribute of each to NULL, making them "unattached" (although 
@@ -698,3 +700,17 @@ xfer_cancel_with_error(
     xfer_cancel(elt->xfer);
 }
 
+gint
+xfer_atomic_swap_fd(Xfer *xfer, gint *fdp, gint newfd)
+{
+    gint rv;
+
+    if (xfer)
+	g_mutex_lock(xfer->fd_mutex);
+    rv = *fdp;
+    *fdp = newfd;
+    if (xfer)
+	g_mutex_unlock(xfer->fd_mutex);
+
+    return rv;
+}
