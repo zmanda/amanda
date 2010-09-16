@@ -376,15 +376,6 @@ sub scribe_notif_new_tape {
     if ($params{'volume_label'}) {
 	$self->{'label'} = $params{'volume_label'};
 
-	# register in the tapelist
-	my $tl_file = config_dir_relative(getconf($CNF_TAPELIST));
-	my $tl = Amanda::Tapelist->new($tl_file, 1);
-	my $tle = $tl->lookup_tapelabel($params{'volume_label'});
-	$tl->remove_tapelabel($params{'volume_label'});
-	$tl->add_tapelabel($self->{'timestamp'}, $params{'volume_label'},
-		$tle? $tle->{'comment'} : undef, 1);
-	$tl->write($tl_file);
-
 	# add to the trace log
 	log_add($L_START, sprintf("datestamp %s label %s tape %s",
 		$self->{'timestamp'},

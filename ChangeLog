@@ -1,4 +1,16 @@
 2010-09-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: Generate new label and reserved them
+	  in the tapelist file.
+	  Remove the "Will write new label `$LABEL' to new tape" message.
+	* perl/Amanda/Taper/Scan.pm (make_new_tape_label): Canget the tapelist
+	   in the argument.
+	* perl/Amanda/Taper/Worker.pm: Don't update the tapelist file.
+	* server-src/amvault.pl: Don't update the tapelist file.
+	* installcheck/Amanda_Report.pl: Remove 'Will write ...' message.
+	  installcheck/Amanda_Taper_Scribe.pl: Remove 'Will write ...' message.
+	  installcheck/taper.pl: Remove 'Will write ...' message.
+
+2010-09-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Tapelist.swg: New Amanda::Tapelist API with lock.
 	* perl/Amanda/Tapelist.pod: Document new API.
 	  perl/Amanda/DB/Catalog.pm, perl/Amanda/Recovery/Planner.pm,

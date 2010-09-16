@@ -435,7 +435,6 @@ SUCCESS dumper somebox /lib 20080111 0 [sec 0.209 kb 1970 kps 9382.2 orig-kb 197
 SUCCESS chunker somebox /lib 20080111 0 [sec 0.305 kb 420 kps 1478.7]
 STATS driver estimate somebox /lib 20080111 0 [sec 1 nkb 2002 ckb 480 kps 385]
 INFO taper taper pid 28023
-INFO taper Will write new label `TESTCONF01' to new tape
 START taper datestamp 20080111 label TESTCONF01 tape 1
 PART taper TESTCONF01 1 somebox /lib 20080111 1/-1 0 [sec 0.004722 kb 640 kps 135535.789920]
 PART taper TESTCONF01 2 somebox /lib 20080111 2/-1 0 [sec 0.003438 kb 640 kps 186154.741129]
@@ -471,7 +470,6 @@ $LogfileData{taper} = {
         taper   => {
             start => '20080111',
             notes => [
-                "Will write new label `TESTCONF01' to new tape",
                 "tape TESTCONF01 kb 2016 fm 4 [OK]"
             ],
             tapes => {

@@ -422,7 +422,8 @@ use Amanda::Device qw( :constants );
 use Amanda::Header;
 use Amanda::Debug qw( :logging );
 use Amanda::MainLoop;
-use Amanda::Config;
+use Amanda::Tapelist;
+use Amanda::Config qw( :getconf config_dir_relative );
 use base qw( Exporter );
 
 our @EXPORT_OK = qw( get_splitting_args_from_config );
@@ -438,6 +439,7 @@ sub new {
     }
 
     my $self = {
+	taperscan => $params{'taperscan'},
 	feedback => $params{'feedback'},
 	debug => $decide_debug,
 	write_timestamp => undef,
@@ -1201,7 +1203,8 @@ sub _volume_cb  {
     # inform the xdt about this new device before starting it
     $self->{'xdt'}->use_device($device);
 
-    if (!$device->start($access_mode, $new_label, $self->{'write_timestamp'})) {
+    my $result = $self->_device_start($device, $access_mode, $new_label, $is_new);
+    if ($result == 0) {
 	# try reading the label to see whether we erased the tape
 	my $erased = 0;
 	CHECK_READ_LABEL: {
@@ -1243,7 +1246,14 @@ sub _volume_cb  {
 	    volume_label => $erased? $new_label : undef);
 
 	return $self->_get_new_volume();
+    } elsif ($result != 1) {
+	$self->{'feedback'}->scribe_notif_new_tape(
+	    error => $result,
+	    volume_label => undef);
+	return $self->_get_new_volume();
     }
+
+    $new_label = $device->volume_label;
 
     # success!
     $self->{'feedback'}->scribe_notif_new_tape(
@@ -1262,6 +1272,59 @@ sub _volume_cb  {
     });
     $self->{'reservation'}->set_label(label => $new_label,
 	finished_cb => $label_set_cb);
+}
+
+# return 0 for device->start error
+# return 1 for success
+# return a message for others error
+sub _device_start {
+    my $self = shift;
+    my ($device, $access_mode, $new_label, $is_new) = @_;
+
+    my $tl = $self->{'taperscan'}->{'tapelist'};
+
+    if (!defined $tl) { # For Mock::Taperscan in installcheck
+	if (!$device->start($access_mode, $new_label, $self->{'write_timestamp'})) {
+	    return 0;
+	} else {
+	    return 1;
+	}
+    }
+
+    if ($is_new) {
+	# generate the new label and write it to the tapelist file
+	$tl->reload(1);
+	($new_label, my $err) = $self->{'taperscan'}->make_new_tape_label();
+	if (!defined $new_label) {
+	    $tl->unlock();
+	    return $err;
+	} else {
+	    $tl->add_tapelabel('0', $new_label, undef, 0);
+	    $tl->write();
+	}
+	$self->dbg("generate new label '$new_label'");
+    }
+
+    # write the label to the device
+    if (!$device->start($access_mode, $new_label, $self->{'write_timestamp'})) {
+	if ($is_new) {
+	    # remove the generated label from the tapelist file
+	    $tl->reload(1);
+	    $tl->remove_tapelabel($new_label);
+	    $tl->write();
+        }
+	return 0;
+    }
+
+    # rewrite the tapelist file
+    $tl->reload(1);
+    my $tle = $tl->lookup_tapelabel($new_label);
+    $tl->remove_tapelabel($new_label);
+    $tl->add_tapelabel($self->{'write_timestamp'}, $new_label,
+		       $tle? $tle->{'comment'} : undef, 1);
+    $tl->write();
+
+    return 1;
 }
 
 sub dbg {
@@ -1556,12 +1619,7 @@ sub _start_scanning {
 	    $self->{'device'} = $reservation->{'device'};
 	    $self->{'volume_label'} = $volume_label;
 	    $self->{'access_mode'} = $access_mode;
-	    $self->{'is_new'} = $access_mode;
-	}
-
-	if (!$error and $is_new) {
-	    $self->{'feedback'}->scribe_notif_log_info(
-		message => "Will write new label `$volume_label' to new tape");
+	    $self->{'is_new'} = $is_new;
 	}
 
 	$self->_maybe_callback();

@@ -325,7 +325,6 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
     qr(^PART taper TESTCONF01 1 localhost /home $datestamp 1/-1 0 \[sec [\d.]+ kb 1024 kps [\d.]+ orig-kb 12\]$),
     qr(^DONE taper localhost /home $datestamp 1 0 \[sec [\d.]+ kb 1024 kps [\d.]+ orig-kb 12\]$),
@@ -426,7 +425,6 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
     qr(^PART taper TESTCONF01 1 localhost /var $datestamp 1/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
     qr(^PART taper TESTCONF01 2 localhost /var $datestamp 2/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
@@ -457,7 +455,6 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
     qr(^ERROR taper no-tape config \[sorry\]$),
     qr(^FAIL taper localhost /home $datestamp 0 config sorry$),
 ], "NO-NEW-TAPE logged correctly");
@@ -501,13 +498,11 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
     qr(^PART taper TESTCONF01 1 localhost /usr/local $datestamp 1/-1 0 \[sec [\d.]+ kb 768 kps [\d.]+\]$),
     qr(^PARTPARTIAL taper TESTCONF01 2 localhost /usr/local $datestamp 2/-1 0 \[sec [\d.]+ kb 160 kps [\d.]+\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 768 fm 2 \[OK\]$),
-    qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
     qr(^PART taper TESTCONF02 1 localhost /usr/local $datestamp 2/-1 0 \[sec [\d.]+ kb 768 kps [\d.]+\]$),
     qr(^PART taper TESTCONF02 2 localhost /usr/local $datestamp 3/-1 0 \[sec [\d.]+ kb 3 kps [\d.]+\]$),
@@ -549,13 +544,11 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
     qr(^PART taper TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ kb 768 kps [\d.]+ orig-kb 1112\]$),
     qr(^PARTPARTIAL taper TESTCONF01 2 localhost /usr $datestamp 2/-1 0 \[sec [\d.]+ kb 160 kps [\d.]+ orig-kb 1112\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 768 fm 2 \[OK\]$),
-    qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
     qr(^PART taper TESTCONF02 1 localhost /usr $datestamp 2/-1 0 \[sec [\d.]+ kb 768 kps [\d.]+ orig-kb 1112\]$),
     qr(^PART taper TESTCONF02 2 localhost /usr $datestamp 3/-1 0 \[sec [\d.]+ kb 3 kps [\d.]+ orig-kb 1112\]$),
@@ -602,13 +595,11 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
     qr(^PART taper TESTCONF01 1 localhost /usr/local $datestamp 1/-1 0 \[sec [\d.]+ kb 768 kps [\d.]+\]$),
     qr(^PARTPARTIAL taper TESTCONF01 2 localhost /usr/local $datestamp 2/-1 0 \[sec [\d.]+ kb 160 kps [\d.]+\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 768 fm 2 \[OK\]$),
-    qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
     qr(^PART taper TESTCONF02 1 localhost /usr/local $datestamp 2/-1 0 \[sec [\d.]+ kb 768 kps [\d.]+\]$),
     qr(^PART taper TESTCONF02 2 localhost /usr/local $datestamp 3/-1 0 \[sec [\d.]+ kb 3 kps [\d.]+\]$),
@@ -660,12 +651,10 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
     qr(^PARTPARTIAL taper TESTCONF01 1 localhost /var/log $datestamp 1/-1 0 \[sec [\d.]+ kb 960 kps [\d.]+\] "No space left on device"$),
     qr(^PARTIAL taper localhost /var/log $datestamp 1 0 \[sec [\d.]+ kb 0 kps [\d.]+\] "No space left on device"$),
     qr(^INFO taper tape TESTCONF01 kb 0 fm 1 \[OK\]$),
-    qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
     qr(^PART taper TESTCONF02 1 localhost /boot $datestamp 1/-1 0 \[sec [\d.]+ kb 64 kps [\d.]+\]$),
     qr(^DONE taper localhost /boot $datestamp 1 0 \[sec [\d.]+ kb 64 kps [\d.]+ orig-kb 64\]$),
@@ -699,7 +688,6 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
     qr(^PART taper TESTCONF01 1 localhost /music $datestamp 1/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1312\]$),
     qr(^PARTPARTIAL taper TESTCONF01 2 localhost /music $datestamp 2/-1 0 \[sec [\d.]+ kb 160 kps [\d.]+ orig-kb 1312\] "No space left on device"$),
@@ -744,7 +732,6 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
     qr(^PART taper TESTCONF01 1 localhost /sbin $datestamp 1/-1 0 \[sec [\d.]+ kb 640 kps [\d.]+\]$),
     qr(^PART taper TESTCONF01 2 localhost /sbin $datestamp 2/-1 0 \[sec [\d.]+ kb 640 kps [\d.]+\]$),
@@ -797,7 +784,6 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
     qr(^PART taper TESTCONF01 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1412\]$),
     qr(^PART taper TESTCONF01 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ kb 232 kps [\d.]+ orig-kb 1412\]$),
@@ -806,7 +792,6 @@ check_logs([
     qr(^PARTPARTIAL taper TESTCONF01 4 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ kb 96 kps [\d.]+ orig-kb 1512\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 744 fm 4 \[OK\]$),
-    qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
     qr(^PART taper TESTCONF02 1 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1512\]$),
     qr(^PART taper TESTCONF02 2 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ kb 88 kps [\d.]+ orig-kb 1512\]$),
@@ -855,7 +840,6 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Will write new label `TESTCONF03' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF03 tape 1$),
     qr(^PART taper TESTCONF03 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1612\]$),
     qr(^PART taper TESTCONF03 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ kb 36 kps [\d.]+ orig-kb 1612\]$),
@@ -865,7 +849,6 @@ check_logs([
     qr(^PARTPARTIAL taper TESTCONF03 5 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ kb 0 kps [\d.]+ orig-kb 1712\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF03 kb 804 fm 5 \[OK\]$),
-    # note no "Will write new label.."
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 2$),
     qr(^PART taper TESTCONF01 1 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ kb 88 kps [\d.]+ orig-kb 1712\]$),
     qr(^DONE taper localhost /u02 $datestamp 3 0 \[sec [\d.]+ kb 600 kps [\d.]+ orig-kb 1712\]$),
@@ -925,6 +908,9 @@ $datestamp = "20090202020000";
 run_taper(1024, "with 2 workers", new_vtapes => 1);
 like(taper_reply, qr/^TAPER-OK worker0$/,
 	"got TAPER-OK") or die;
+taper_cmd("START-TAPER worker1 $datestamp");
+like(taper_reply, qr/^TAPER-OK worker1$/,
+       "got TAPER-OK") or die;
 make_holding_file(300000, "localhost", "/u01");
 taper_cmd("FILE-WRITE worker0 $handle0 \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1612");
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle0$/,
@@ -939,9 +925,6 @@ like(taper_reply, qr/^PARTDONE $handle0 TESTCONF01 2 36 "\[sec [\d.]+ kb 36 kps 
 	"got PARTDONE for filenum 2") or die;
 like(taper_reply, qr/^DONE $handle0 INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ kb 292 kps [\d.]+ orig-kb 1612\]" "" ""$/,
 	"got DONE") or die;
-taper_cmd("START-TAPER worker1 $datestamp");
-like(taper_reply, qr/^TAPER-OK worker1$/,
-	"got TAPER-OK") or die;
 make_holding_file(614400, "localhost", "/u02");
 taper_cmd("FILE-WRITE worker1 $handle1 \"$test_filename\" localhost /u02 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1712");
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle1$/,
@@ -962,12 +945,10 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
     qr(^PART taper TESTCONF01 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1612\]$),
     qr(^PART taper TESTCONF01 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ kb 36 kps [\d.]+ orig-kb 1612\]$),
     qr(^DONE taper localhost /u01 $datestamp 2 0 \[sec [\d.]+ kb 292 kps [\d.]+ orig-kb 1612\]$),
-    qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
     qr(^PART taper TESTCONF02 1 localhost /u02 $datestamp 1/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1712\]$),
     qr(^PART taper TESTCONF02 2 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1712\]$),
@@ -975,7 +956,7 @@ check_logs([
     qr(^DONE taper localhost /u02 $datestamp 3 0 \[sec [\d.]+ kb 600 kps [\d.]+ orig-kb 1712\]$),
     qr(^INFO taper tape TESTCONF01 kb 292 fm 2 \[OK\]$),
     qr(^INFO taper tape TESTCONF02 kb 600 fm 3 \[OK\]$),
-], "second taper invocation in sequence logged correctly");
+], "two workers logged correctly");
 cleanup_log();
 
 ##
@@ -984,6 +965,9 @@ $handle = "66-22222";
 $datestamp = "20090202020000";
 run_taper(1024, "with 2 workers and a take_scribe", new_vtapes => 1);
 like(taper_reply, qr/^TAPER-OK worker0$/,
+	"got TAPER-OK") or die;
+taper_cmd("START-TAPER worker1 $datestamp");
+like(taper_reply, qr/^TAPER-OK worker1$/,
 	"got TAPER-OK") or die;
 make_holding_file(1000000, "localhost", "/u01");
 taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1612");
@@ -1001,9 +985,6 @@ like(taper_reply, qr/^PARTDONE $handle TESTCONF01 3 256 "\[sec [\d.]+ kb 256 kps
 	"got PARTDONE for filenum 3") or die;
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-TAPER worker1 $datestamp");
-like(taper_reply, qr/^TAPER-OK worker1$/,
-	"got TAPER-OK") or die;
 taper_cmd("TAKE-SCRIBE-FROM worker0 $handle worker1");
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE worker0 $handle") or die;
@@ -1019,7 +1000,6 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
     qr(^PART taper TESTCONF01 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1612\]$),
     qr(^PART taper TESTCONF01 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ kb 256 kps [\d.]+ orig-kb 1612\]$),
@@ -1027,12 +1007,11 @@ check_logs([
     qr(^PARTPARTIAL taper TESTCONF01 4 localhost /u01 $datestamp 4/-1 0 \[sec [\d.]+ kb 96 kps [\d.]+ orig-kb 1612\] \"No space left on device\"$),
     qr(^INFO taper Will request retry of failed split part.$),
     qr(^INFO taper tape TESTCONF01 kb 768 fm 4 \[OK\]$),
-    qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
     qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
     qr(^PART taper TESTCONF02 1 localhost /u01 $datestamp 4/-1 0 \[sec [\d.]+ kb 208 kps [\d.]+ orig-kb 1612\]$),
     qr(^DONE taper localhost /u01 $datestamp 4 0 \[sec [\d.]+ kb 976 kps [\d.]+ orig-kb 1612\]$),
     qr(^INFO taper tape TESTCONF02 kb 208 fm 1 \[OK\]$),
-], "second taper invocation in sequence logged correctly");
+], "TAKE-SCRIBE logged correctly");
 cleanup_log();
 
 ##
@@ -1101,14 +1080,12 @@ SKIP : {
     wait_for_exit();
 
     check_logs([
-	qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
 	qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
 	qr(^PART taper TESTCONF01 1 localhost /var $datestamp 1/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
 	qr(^PART taper TESTCONF01 2 localhost /var $datestamp 2/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
 	qr(^PART taper TESTCONF01 3 localhost /var $datestamp 3/-1 0 \[sec [\d.]+ kb 64 kps [\d.]+\]$),
 	# note no "Will retry.."
 	qr(^INFO taper tape TESTCONF01 kb 832 fm 3 \[OK\]$),
-	qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
 	qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
 	qr(^PART taper TESTCONF02 1 localhost /var $datestamp 4/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),
 	qr(^PART taper TESTCONF02 2 localhost /var $datestamp 5/-1 0 \[sec [\d.]+ kb 32 kps [\d.]+\]$),
@@ -1159,13 +1136,11 @@ SKIP : {
     wait_for_exit();
 
     check_logs([
-	qr(^INFO taper Will write new label `TESTCONF01' to new tape$),
 	qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
 	qr(^PART taper TESTCONF01 1 localhost /var $datestamp 1/-1 0 \[sec [\d.]+ kb 416 kps [\d.]+\]$),
 	qr(^PART taper TESTCONF01 2 localhost /var $datestamp 2/-1 0 \[sec [\d.]+ kb 416 kps [\d.]+\]$),
 	# Note: zero-byte part is not logged, but is counted in this INFO line's 'fm' field
 	qr(^INFO taper tape TESTCONF01 kb 832 fm 3 \[OK\]$),
-	qr(^INFO taper Will write new label `TESTCONF02' to new tape$),
 	qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
 	qr(^PART taper TESTCONF02 1 localhost /var $datestamp 3/-1 0 \[sec [\d.]+ kb 416 kps [\d.]+\]$),
 	qr(^PART taper TESTCONF02 2 localhost /var $datestamp 4/-1 0 \[sec [\d.]+ kb 384 kps [\d.]+\]$),

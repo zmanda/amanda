@@ -35,6 +35,7 @@ This is an abstract base class for taperscan algorithms.
     die $err if $err;
     # write to $reservation->{'device'}, using label $label, and opening
     # the device with $access_mode (one of $ACCESS_WRITE or $ACCESS_APPEND)
+    # $is_new is set to 1 if the volume is not already labeled.
     # ..
   });
   my $user_msg_fn = sub {
@@ -194,6 +195,7 @@ scan was looking for.
 use strict;
 use warnings;
 use Amanda::Config qw( :getconf );
+use Amanda::Tapelist;
 
 sub new {
     my $class = shift;
@@ -302,6 +304,8 @@ sub is_reusable_volume {
 sub make_new_tape_label {
     my $self = shift;
     my %params = @_;
+
+    my $tl = exists $params{'tapelist'}? $params{'tapelist'} : $self->{'tapelist'};
     my $template = exists $params{'template'}? $params{'template'} : $self->{'autolabel'}->{'template'};
     my $labelstr = exists $params{'labelstr'}? $params{'labelstr'} : $self->{'labelstr'};
 
@@ -314,7 +318,7 @@ sub make_new_tape_label {
 	$template) =~ s/(%+)/"%0" . length($1) . "d"/e;
 
     my %existing_labels =
-	map { $_->{'label'} => 1 } @{$self->{'tapelist'}->{'tles'}};
+	map { $_->{'label'} => 1 } @{$tl->{'tles'}};
 
     my ($i, $label);
     for ($i = 1; $i < $nlabels; $i++) {

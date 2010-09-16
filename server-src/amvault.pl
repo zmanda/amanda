@@ -104,7 +104,6 @@ use Amanda::Recovery::Scan;
 use Amanda::Recovery::Clerk;
 use Amanda::Taper::Scan;
 use Amanda::Taper::Scribe;
-use Amanda::Tapelist;
 use Amanda::Changer qw( :constants );
 use Amanda::Cmdline;
 use Amanda::Logfile qw( :logtype_t log_add log_add_full
@@ -542,15 +541,6 @@ sub scribe_notif_new_tape {
 
     if ($params{'volume_label'}) {
 	$self->{'dst'}->{'label'} = $params{'volume_label'};
-
-	# register in the tapelist
-	my $tl_file = config_dir_relative(getconf($CNF_TAPELIST));
-	my $tl = Amanda::Tapelist->new($tl_file, 1);
-	my $tle = $tl->lookup_tapelabel($params{'volume_label'});
-	$tl->remove_tapelabel($params{'volume_label'});
-	$tl->add_tapelabel($self->{'dst_write_timestamp'}, $params{'volume_label'},
-	    $tle? $tle->{'comment'} : undef, 1);
-	$tl->write();
 
 	# add to the trace log
 	log_add_full($L_START, "taper", sprintf("datestamp %s label %s tape %s",

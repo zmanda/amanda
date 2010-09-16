@@ -122,6 +122,10 @@ sub new {
     }, $class;
 }
 
+sub make_new_tape_label {
+    return "FAKELABEL";
+}
+
 sub scan {
     my $self = shift;
     my %params = @_;
