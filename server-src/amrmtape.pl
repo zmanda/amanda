@@ -177,7 +177,7 @@ if ($cfgerr_level >= $CFGERR_ERRORS) {
 
 my $scrub_db = sub {
     my $tapelist_file = config_dir_relative(getconf($CNF_TAPELIST));
-    my $tapelist = Amanda::Tapelist::read_tapelist($tapelist_file);
+    my $tapelist = Amanda::Tapelist->new($tapelist_file, !$dry_run);
     unless ($tapelist) {
         die "Could not read the tapelist";
     }
@@ -201,7 +201,7 @@ my $scrub_db = sub {
     }
 
     unless ($dry_run) {
-        $tapelist->write($tapelist_file);
+        $tapelist->write();
     }
 
     my $tmp_curinfo_file = "$AMANDA_TMPDIR/curinfo-amrmtape-" . time();

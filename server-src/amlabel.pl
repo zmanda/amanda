@@ -114,7 +114,7 @@ sub main {
 	}
 
 	$tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-	$tl = Amanda::Tapelist::read_tapelist($tlf);
+	$tl = Amanda::Tapelist->new($tlf);
 	if (!defined $tl) {
 	    return failure("Can't load tapelist file ($tlf)", $finished_cb);
 	}
@@ -217,9 +217,10 @@ sub main {
 	    }
 
 	    # update the tapelist
+	    $tl->reload(1);
 	    $tl->remove_tapelabel($opt_label);
-	    $tl->add_tapelabel("0", $opt_label, undef);
-	    $tl->write($tlf);
+	    $tl->add_tapelabel("0", $opt_label, undef, 1);
+	    $tl->write();
 
 	    print "Success!\n";
 

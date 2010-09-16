@@ -393,7 +393,6 @@ use strict;
 
 # tapelist cache
 my $tapelist = undef;
-my $tapelist_filename = undef;
 
 # utility function
 sub zeropad {
@@ -936,19 +935,20 @@ sub add_part {
 	print $logfh
 	    "START taper datestamp $write_timestamp label $dump->{label} tape $i\n";
 
-	if (!defined $tapelist_filename) {
-	    $tapelist_filename = config_dir_relative(getconf($CNF_TAPELIST));
+	if (!defined $tapelist) {
+	    _load_tapelist();
+	} else {
+	    # reload the tapelist immediately, in case it's been modified
+	    $tapelist->reload();
 	}
-
-	# reload the tapelist immediately, in case it's been modified
-	$tapelist = Amanda::Tapelist::read_tapelist($tapelist_filename);
 
 	# see if we need to add an entry to the tapelist for this dump
 	if (!grep { $_->{'label'} eq $dump->{'label'}
 		    and zeropad($_->{'datestamp'}) eq zeropad($dump->{'write_timestamp'})
-		} @$tapelist) {
-	    $tapelist->add_tapelabel($write_timestamp, $dump->{'label'});
-	    $tapelist->write($tapelist_filename);
+		} @{$tapelist->{tles}}) {
+	    $tapelist->reload(1);
+	    $tapelist->add_tapelabel($write_timestamp, $dump->{'label'}, undef, 1);
+	    $tapelist->write();
 	}
     }
 
@@ -993,13 +993,13 @@ sub add_part {
 
 sub _load_tapelist {
     if (!defined $tapelist) {
-	$tapelist_filename = config_dir_relative(getconf($CNF_TAPELIST));
-	$tapelist = Amanda::Tapelist::read_tapelist($tapelist_filename);
+	my $tapelist_filename = config_dir_relative(getconf($CNF_TAPELIST));
+	$tapelist = Amanda::Tapelist->new($tapelist_filename);
     }
 }
 
 sub _clear_cache { # (used by installcheck)
-    $tapelist = $tapelist_filename = undef;
+    $tapelist = undef;
 }
 
 1;

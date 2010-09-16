@@ -239,6 +239,7 @@ sub new {
     $self->{'tapelist_filename'} = $params{'tapelist_filename'};
     $self->{'labelstr'} = $params{'labelstr'};
     $self->{'autolabel'} = $params{'autolabel'};
+    $self->{'tapelist'} = Amanda::Tapelist->new($self->{'tapelist_filename'});
 
     return $self;
 }
@@ -253,8 +254,7 @@ sub scan {
 sub read_tapelist {
     my $self = shift;
 
-    $self->{'tapelist'} = Amanda::Tapelist::read_tapelist($self->{'tapelist_filename'});
-    return $self->{'tapelist'};
+    $self->{'tapelist'}->reload();
 }
 
 sub oldest_reusable_volume {
@@ -263,7 +263,7 @@ sub oldest_reusable_volume {
 
     my $best = undef;
     my $num_acceptable = 0;
-    for my $tle (@{$self->{'tapelist'}}) {
+    for my $tle (@{$self->{'tapelist'}->{'tles'}}) {
 	next unless $tle->{'reuse'};
 	next if $tle->{'datestamp'} eq '0' and !$params{'new_label_ok'};
 	$num_acceptable++;
@@ -289,7 +289,7 @@ sub is_reusable_volume {
     }
 
     # see if it's in the collection of reusable volumes
-    my @tapelist = @{$self->{'tapelist'}};
+    my @tapelist = @{$self->{'tapelist'}->{'tles'}};
     my @reusable = @tapelist[$self->{'tapecycle'}-1 .. $#tapelist];
     for my $tle (@reusable) {
         return 1 if $tle eq $vol_tle;
@@ -314,7 +314,7 @@ sub make_new_tape_label {
 	$template) =~ s/(%+)/"%0" . length($1) . "d"/e;
 
     my %existing_labels =
-	map { $_->{'label'} => 1 } @{$self->{'tapelist'}};
+	map { $_->{'label'} => 1 } @{$self->{'tapelist'}->{'tles'}};
 
     my ($i, $label);
     for ($i = 1; $i < $nlabels; $i++) {

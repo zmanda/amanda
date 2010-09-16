@@ -625,7 +625,7 @@ SKIP: {
     }
 
     my $tapelist = Amanda::Config::config_dir_relative("tapelist");
-    my $tl = Amanda::Tapelist::read_tapelist($tapelist);
+    my $tl = Amanda::Tapelist->new($tapelist);
 
     my $chg = Amanda::Changer->new();
     my $scan = Amanda::Recovery::Scan->new(chg => $chg);

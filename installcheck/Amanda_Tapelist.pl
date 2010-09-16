@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 20;
+use Test::More tests => 24;
 use strict;
 use warnings;
 
@@ -24,6 +24,11 @@ use lib "@amperldir@";
 use Installcheck::Config;
 use Amanda::Tapelist;
 use Amanda::Config qw( :init :getconf config_dir_relative );
+use POSIX ":sys_wait_h";
+
+# put the debug messages somewhere
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 my $tl;
 my $tl_ok;
@@ -64,8 +69,11 @@ sub readtapelist {
 );
 mktapelist($tapelist, @lines);
 
-$tl = Amanda::Tapelist::read_tapelist($tapelist);
-$tl_ok = is_deeply($tl,	[
+$tl = Amanda::Tapelist->new($tapelist);
+$tl_ok = is_deeply($tl,	{
+ filename => $tapelist,
+ lockname => $tapelist . ".lock",
+ tles => [
   { 'datestamp' => '20071111010002', 'label' => 'TESTCONF004',
     'reuse' => 1, 'position' => 1, 'comment' => undef },
   { 'datestamp' => '20071110010002', 'label' => 'TESTCONF003',
@@ -74,7 +82,7 @@ $tl_ok = is_deeply($tl,	[
     'reuse' => 1, 'position' => 3, 'comment' => 'comment 2' },
   { 'datestamp' => '20071108010001', 'label' => 'TESTCONF001',
     'reuse' => '', 'position' => 4, 'comment' => 'comment 1' },
-], "A simple tapelist is parsed correctly");
+] }, "A simple tapelist is parsed correctly");
 
 SKIP: {
     skip "Tapelist is parsed incorrectly, so these tests are unlikely to work", 15,
@@ -110,8 +118,8 @@ SKIP: {
 	"lookup_tapedate returns undef on an unknown datestamp");
 
     # try some edits
-    $tl->add_tapelabel("20080112010203", "TESTCONF007", "seven");
-    is(scalar @$tl, 5, "add_tapelabel adds a new element to the tapelist");
+    $tl->add_tapelabel("20080112010203", "TESTCONF007", "seven", 1);
+    is(scalar @{$tl->{'tles'}}, 5, "add_tapelabel adds a new element to the tapelist");
 
     is_deeply($tl->lookup_tapepos(1),
 	{ 'datestamp' => '20080112010203', 'label' => 'TESTCONF007',
@@ -128,8 +136,20 @@ SKIP: {
 	  'reuse' => 1, 'position' => 1, 'comment' => 'seven' },
 	".. lookup_tapedate finds it");
 
+    # try some edits
+    $tl->add_tapelabel("20080112010204", "TESTCONF008", "eight", 0);
+    is(scalar @{$tl->{'tles'}}, 6, "add_tapelabel adds a new element to the tapelist no-reuse");
+
+    is_deeply($tl->lookup_tapelabel("TESTCONF008"),
+	{ 'datestamp' => '20080112010204', 'label' => 'TESTCONF008',
+	  'reuse' => 0, 'position' => 1, 'comment' => 'eight' },
+	".. lookup_tapelabel finds it no-reuse");
+
+    $tl->remove_tapelabel("TESTCONF008");
+    is(scalar @{$tl->{'tles'}}, 5, "remove_tapelabel removes an element from the tapelist, no-reuse");
+
     $tl->remove_tapelabel("TESTCONF002");
-    is(scalar @$tl, 4, "remove_tapelabel removes an element from the tapelist");
+    is(scalar @{$tl->{'tles'}}, 4, "remove_tapelabel removes an element from the tapelist");
 
     is_deeply($tl->lookup_tapepos(4), # used to be in position 5
 	{ 'datestamp' => '20071108010001', 'label' => 'TESTCONF001',
@@ -168,12 +188,27 @@ SKIP: {
 );
 mktapelist($tapelist, @lines);
 
-$tl = Amanda::Tapelist::read_tapelist($tapelist);
-is_deeply($tl,	[
+$tl = Amanda::Tapelist->new($tapelist);
+is_deeply($tl, {
+  filename => $tapelist,
+  lockname => $tapelist . ".lock",
+  tles => [
   { 'datestamp' => '2006123456', 'label' => 'FOO',
     'reuse' => 1, 'position' => 1, 'comment' => undef },
-], "Invalid lines are ignored");
+] }, "Invalid lines are ignored");
 
 # make sure clear_tapelist is empty
-$tl = Amanda::Tapelist::clear_tapelist();
-is_deeply($tl,	[ ], "clear_tapelist returns an empty tapelist");
+$tl->clear_tapelist();
+is_deeply($tl,	{ filename => $tapelist,
+                  lockname => $tapelist . ".lock",
+		  tles => [] }, "clear_tapelist returns an empty tapelist");
+
+$tl->reload();
+is_deeply($tl, {
+  filename => $tapelist,
+  lockname => $tapelist . ".lock",
+  tles => [
+  { 'datestamp' => '2006123456', 'label' => 'FOO',
+    'reuse' => 1, 'position' => 1, 'comment' => undef },
+] }, "reload works");
+

@@ -63,7 +63,7 @@ sub scan {
     $self->{'user_msg_fn'} = $params{'user_msg_fn'} || sub {};
 
     # refresh the tapelist at every scan
-    $self->{'tapelist'} = $self->read_tapelist();
+    $self->read_tapelist();
 
     # count the number of scans we do, so we can only load 'current' on the
     # first scan

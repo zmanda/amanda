@@ -263,7 +263,7 @@ sub main {
     step start => sub {
 	# set up the tapelist
 	my $tapelist_file = config_dir_relative(getconf($CNF_TAPELIST));
-	$tapelist = Amanda::Tapelist::read_tapelist($tapelist_file);
+	$tapelist = Amanda::Tapelist->new($tapelist_file);
 
 	# get the timestamp
 	$timestamp = $opt_timestamp;

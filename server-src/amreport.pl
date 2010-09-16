@@ -516,7 +516,7 @@ Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
 # read the tapelist
 my $tl_file = config_dir_relative(getconf($CNF_TAPELIST));
-my $tl = Amanda::Tapelist::read_tapelist($tl_file);
+my $tl = Amanda::Tapelist->new($tl_file);
 
 # read the disklist
 my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));

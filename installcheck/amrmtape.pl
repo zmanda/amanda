@@ -83,7 +83,7 @@ cmp_ok(
 Installcheck::Dumpcache::load("notimestamps");
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-my $tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
+my $tapelist = Amanda::Tapelist->new(config_dir_relative("tapelist"));
 ok($tapelist->lookup_tapelabel('TESTCONF01'), "looked up tape after dump");
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
@@ -94,7 +94,7 @@ ok(run('amrmtape', 'TESTCONF', 'TESTCONF01'), "amrmtape runs successfully")
 $idx_count_post = dir_file_count($CNF_INDEXDIR);
 is($idx_count_post, $idx_count_pre, "number of index files before and after is the same");
 
-$tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
+$tapelist->reload();
 ok(!$tapelist->lookup_tapelabel('TESTCONF01'),
      "should fail to look up tape that should has been removed");
 
@@ -121,7 +121,7 @@ ok(run('amrmtape', '--cleanup', 'TESTCONF', 'TESTCONF01'),
 $idx_count_post = dir_file_count($CNF_INDEXDIR);
 isnt($idx_count_post, $idx_count_pre, "number of index files before and after is different");
 
-$tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
+$tapelist->reload();
 ok(!$tapelist->lookup_tapelabel('TESTCONF01'),
      "succesfully looked up tape that should have been removed after --cleanup");
 
@@ -148,7 +148,7 @@ ok(run('amrmtape', '--erase', 'TESTCONF', 'TESTCONF01'),
 $idx_count_post = dir_file_count($CNF_INDEXDIR);
 is($idx_count_post, $idx_count_pre, "number of index files before and after is the same");
 
-$tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
+$tapelist->reload();
 ok(!$tapelist->lookup_tapelabel('TESTCONF01'),
      "succesfully looked up tape that should have been removed after --erase");
 
@@ -176,7 +176,7 @@ ok(run('amrmtape', '--keep-label', 'TESTCONF', 'TESTCONF01'),
 $idx_count_post = dir_file_count($CNF_INDEXDIR);
 is($idx_count_post, $idx_count_pre, "number of index files before and after is the same");
 
-$tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
+$tapelist->reload();
 my $tape = $tapelist->lookup_tapelabel('TESTCONF01');
 ok($tape, "succesfully looked up tape that should still be there");
 is($tape->{'datestamp'}, "0", "datestamp was zeroed");
@@ -204,7 +204,7 @@ ok(run('amrmtape', '--keep-label', '--erase', 'TESTCONF', 'TESTCONF01'),
 $idx_count_post = dir_file_count($CNF_INDEXDIR);
 is($idx_count_post, $idx_count_pre, "number of index files before and after is the same");
 
-$tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
+$tapelist->reload();
 $tape = $tapelist->lookup_tapelabel('TESTCONF01');
 ok($tape, "succesfully looked up tape that should still be there");
 is($tape->{'datestamp'}, "0", "datestamp was zeroed");
@@ -230,7 +230,7 @@ ok(run('amrmtape', '--keep-label', '--erase', 'TESTCONF', 'TESTCONF01'),
 $idx_count_post = dir_file_count($CNF_INDEXDIR);
 is($idx_count_post, $idx_count_pre, "number of index files before and after is the same");
 
-$tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
+$tapelist->reload();
 $tape = $tapelist->lookup_tapelabel('TESTCONF01');
 ok($tape, "succesfully looked up tape that should still be there");
 is($tape->{'datestamp'}, "0", "datestamp was zeroed");
@@ -256,7 +256,7 @@ ok(run('amrmtape', '--dryrun', '--erase', '--cleanup', 'TESTCONF', 'TESTCONF01')
 $idx_count_post = dir_file_count($CNF_INDEXDIR);
 is($idx_count_post, $idx_count_pre, "number of index files before and after is the same");
 
-$tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
+$tapelist->reload();
 ok($tapelist->lookup_tapelabel('TESTCONF01'),
      "succesfully looked up tape that should still be there");
 

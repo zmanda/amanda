@@ -71,7 +71,7 @@ sub setup_vtapes {
         or BAIL_OUT("device error");
 
     my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-    my $tl = Amanda::Tapelist::read_tapelist($tlf);
+    my $tl = Amanda::Tapelist->new($tlf, 1);
     $tl->add_tapelabel("0", "TESTCONF13", "test tape");
     $tl->write($tlf);
 }
