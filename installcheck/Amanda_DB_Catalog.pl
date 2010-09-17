@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 78;
+use Test::More tests => 85;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -48,6 +48,9 @@ is_deeply([ Amanda::DB::Catalog::get_write_timestamps() ], [],
 
 is_deeply(Amanda::DB::Catalog::get_latest_write_timestamp(), undef,
     "No latest write_timestamp in an empty catalog");
+
+is_deeply(Amanda::DB::Catalog::get_latest_write_timestamp(type => 'amvault'), undef,
+    "No latest write_timestamp in an empty catalog, even of a specific type");
 
 is_deeply([ Amanda::DB::Catalog::get_parts() ], [],
     "No parts in an empty catalog");
@@ -259,6 +262,25 @@ is_deeply([ Amanda::DB::Catalog::get_write_timestamps(), ],
 
 is(Amanda::DB::Catalog::get_latest_write_timestamp(), '20100722000000',
     "get_latest_write_timestamp correctly returns the latest write timestamp");
+
+is(Amanda::DB::Catalog::get_latest_write_timestamp(type => 'amdump'), '20100722000000',
+    "get_latest_write_timestamp correctly returns the latest write timestamp of type amdump");
+
+is(Amanda::DB::Catalog::get_latest_write_timestamp(type => 'amflush'), '20080111000000',
+    "get_latest_write_timestamp correctly returns the latest write timestamp of type amflush");
+
+is(Amanda::DB::Catalog::get_latest_write_timestamp(types => [qw(amvault amflush)]),
+    '20080222222222',
+    "get_latest_write_timestamp correctly returns the latest write timestamp of a set of ts's");
+
+is(Amanda::DB::Catalog::get_run_type('20080222222222'), "amvault",
+    "get_run_type detects amvault");
+
+is(Amanda::DB::Catalog::get_run_type('20080111'), "amflush",
+    "get_run_type detects amflush (short ts)");
+
+is(Amanda::DB::Catalog::get_run_type('20080111000000'), "amflush",
+    "get_run_type detects amflush (long ts)");
 
 ##
 # test get_parts and sort_parts

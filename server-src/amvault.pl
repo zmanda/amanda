@@ -155,16 +155,19 @@ sub run {
 	if ($dst_label_template =~ /%[^%]+%/
 	    or $dst_label_template =~ /^[^%]+$/);
 
-    # translate "latest" into the most recent timestamp
+    # translate "latest" into the most recent timestamp that wasn't created by amvault
     if ($self->{'src_write_timestamp'} eq "latest") {
-	$self->{'src_write_timestamp'} = Amanda::DB::Catalog::get_latest_write_timestamp();
+	my $ts = $self->{'src_write_timestamp'} =
+	    Amanda::DB::Catalog::get_latest_write_timestamp(types => ['amdump', 'amflush']);
+	$self->vlog("Using latest timestamp: $ts");
     }
 
     return $self->failure("No dumps found")
 	unless (defined $self->{'src_write_timestamp'});
 
-    # open up a trace log file
+    # open up a trace log file and put our imprimatur on it
     log_add($L_INFO, "pid $$");
+    log_add($L_START, "date " . $self->{'dst_write_timestamp'});
     Amanda::Debug::add_amanda_log_handler($amanda_log_trace_log);
     $self->{'cleanup'}{'roll_trace_log'} = 1;
 
@@ -685,7 +688,7 @@ sub clerk_notif_part {
     my $self = shift;
     my ($label, $fileno, $header) = @_;
 
-    print STDERR "Reading $label:$fileno: ", $header->summary(), "\n";
+    $self->vlog("Reading $label:$fileno: ", $header->summary());
 }
 
 sub clerk_notif_holding {
@@ -693,7 +696,7 @@ sub clerk_notif_holding {
     my ($filename, $header) = @_;
 
     # this used to give the fd from which the holding file was being read.. why??
-    print STDERR "Reading '$filename'\n", $header->summary(), "\n";
+    $self->vlog("Reading '$filename'\n", $header->summary());
 }
 
 ## Application initialization
@@ -724,8 +727,8 @@ Usage: amvault [-o configoption]* [-q|--quiet] [--fulls-only] [--export]
 
 Copies data from the run with timestamp <src-run-timestamp> onto volumes using
 the changer <dst-changer>, labeling new volumes with <label-template>.  If
-<src-run-timestamp> is "latest", then the most recent run of amdump, amflush, or
-amvault will be used.
+<src-run-timestamp> is "latest", then the most recent run of amdump or amflush
+will be used.
 
 EOF
     if ($msg) {

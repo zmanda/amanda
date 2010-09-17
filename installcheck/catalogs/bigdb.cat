@@ -23,9 +23,11 @@
 # the tests to construct the set of expected results.
 #
 
-# a short-datestamp logfile with only a single, single-part file in it
+# a short-datestamp logfile with only a single, single-part file in it, produced
+# by amflush
 %F log/log.20080111.0
 DISK planner somebox /lib
+START amflush date 20080111
 START planner date 20080111
 START driver date 20080111
 STATS driver hostname somebox
@@ -41,9 +43,10 @@ PART taper Conf-001 1 somebox /lib 20080111 1/1 0 [sec 4.813543 kb 419 kps 87.13
 DONE taper somebox /lib 20080111 1 0 [sec 4.813543 kb 419 kps 87.133307]
 FINISH driver date 20080111 time 2167.581
 
-# a long-datestamp logfile, also fairly simple
+# a long-datestamp logfile, also fairly simple; this one from amvault
 %F log/log.20080222222222.0
 DISK planner somebox /lib
+START amvault date 20080222222222
 START planner date 20080222222222
 START driver date 20080222222222
 STATS driver hostname somebox
@@ -255,6 +258,7 @@ DONE taper somebox /lib 20080616166666 1 1 [sec 0.000370 kb 20 kps 54054.054054 
 # an old-school logfile
 %F log/log.20100722.0
 :timestamp 20100722000000
+START planner date 20100722000000
 DISK planner lovelace /home/ada
 START taper datestamp 20100722 label Conf-009 tape 0
 SUCCESS dumper lovelace /home/ada 20100722 3 [sec 19.271 kb 166951 kps 8663.1 orig-kb 208420]

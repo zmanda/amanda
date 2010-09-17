@@ -170,4 +170,4 @@ EOF
 }
 
 # clean up
-#Installcheck::Run::cleanup();
+Installcheck::Run::cleanup();

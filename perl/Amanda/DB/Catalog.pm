@@ -208,9 +208,20 @@ Get a list of all write timestamps, sorted in chronological order.
 
 Return the most recent write timestamp.
 
+=item get_latest_write_timestamp(type => 'amvault')
+=item get_latest_write_timestamp(types => [ 'amvault', .. ])
+
+Return the timestamp of the most recent dump of the given type or types.  The
+available types are given below for C<get_run_type>.
+
 =item get_labels_written_at_timestamp($ts)
 
 Return a list of labels for volumes written at the given timestamp.
+
+=item get_run_type($ts)
+
+Return the type of run made at the given timestamp.  The result is one of
+C<amvault>, C<amdump>, C<amflush>, or the default, C<unknown>.
 
 =back
 
@@ -388,6 +399,7 @@ use Amanda::Logfile qw( :constants match_disk match_host
 use Amanda::Tapelist;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Util qw( quote_string weaken_ref );
+use File::Glob qw( :glob );
 use warnings;
 use strict;
 
@@ -418,15 +430,59 @@ sub get_write_timestamps {
 }
 
 sub get_latest_write_timestamp {
+    my %params = @_;
+
+    if ($params{'type'}) {
+	push @{$params{'types'}}, $params{'type'};
+    }
+
     # get all of the timestamps and select the last one
     my @timestamps = get_write_timestamps();
 
     if (@timestamps) {
-	return $timestamps[-1];
+	# if we're not looking for a particular type, then this is easy
+	if (!exists $params{'types'}) {
+	    return $timestamps[-1];
+	}
+
+	# otherwise we need to search backward until we find a logfile of
+	# the right type
+	while (@timestamps) {
+	    my $ts = pop @timestamps;
+	    my $typ = get_run_type($ts);
+	    if (grep { $_ eq $typ } @{$params{'types'}}) {
+		return $ts;
+	    }
+	}
     }
 
     return undef;
 }
+
+sub get_run_type {
+    my ($write_timestamp) = @_;
+
+    # find all of the logfiles with that name
+    my $logdir = getconf($CNF_LOGDIR);
+    my @matches = File::Glob::bsd_glob("$logdir/log.$write_timestamp.*", GLOB_NOSORT);
+    if ($write_timestamp =~ /000000$/) {
+	my $write_datestamp = substr($write_timestamp, 0, 8);
+	push @matches, File::Glob::bsd_glob("$logdir/log.$write_datestamp.*", GLOB_NOSORT);
+    }
+
+    for my $lf (@matches) {
+	open(my $fh, "<", $lf) or next;
+	while (<$fh>) {
+	    # amflush and amvault put their own names in
+	    return $1 if (/^START (amflush|amvault)/);
+	    # but for amdump we see planner
+	    return 'amdump' if (/^START planner/);
+	}
+    }
+
+    return "unknown";
+}
+
 
 # this generic function implements the loop of scanning logfiles to find
 # the requested data; get_parts and get_dumps then adjust the results to

@@ -1,3 +1,12 @@
+2010-09-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/DB/Catalog.pm: new methods to determine the type of
+	  a run
+	* installcheck/Amanda_DB_Catalog.pl: test them
+	* server-src/amvault.pl: 'latest' excludes amvault runs; add START
+	  amvault to identify such runs
+	* installcheck/catalogs/bigdb.cat: add 'START planner' where missing
+	* installcheck/amvault.pl: cleanup after tests
+
 2010-09-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* NEWS: mention improvements to amvault
 	* server-src/amvault.pl: Add --autolabel=.. and --label-template=..
