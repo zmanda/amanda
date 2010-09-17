@@ -83,14 +83,17 @@ childstr(
 void
 startup_tape_process(
     char *taper_program,
-    int   taper_parallel_write)
+    int   taper_parallel_write,
+    gboolean no_taper)
 {
     int       fd[2];
     int       i;
     char    **config_options;
     taper_t  *taper;
 
+    /* always allocate the tapetable */
     tapetable = calloc(sizeof(taper_t), taper_parallel_write+1);
+
     for (taper = tapetable, i = 0; i < taper_parallel_write; taper++, i++) {
 	taper->name = g_strdup_printf("worker%d", i);
 	taper->sendresult = 0;
@@ -104,7 +107,17 @@ startup_tape_process(
 	taper->state = TAPER_STATE_DEFAULT;
 	taper->left = 0;
 	taper->written = 0;
+
+	/* jump right to degraded mode if there's no taper */
+	if (no_taper) {
+	    taper->tape_error = g_strdup("no taper started (--no-taper)");
+	    taper->result = BOGUS;
+	}
     }
+
+    /* don't start the taper if we're not supposed to */
+    if (no_taper)
+	return;
 
     if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd) == -1) {
 	error(_("taper pipe: %s"), strerror(errno));

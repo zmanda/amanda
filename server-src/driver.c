@@ -102,7 +102,7 @@ static int   force_flush;			// All dump are terminated, we
 						// must now respect taper_flush
 static int taper_nb_scan_volume = 0;
 static int nb_sent_new_tape = 0;
-static int taper_set = 0;
+static int taper_started = 0;
 static taper_t *last_started_taper;
 
 static int wait_children(int count);
@@ -437,9 +437,7 @@ main(
     /* taper takes a while to get going, so start it up right away */
 
     init_driverio();
-    if(!no_taper) {
-        startup_tape_process(taper_program, conf_taper_parallel_write);
-    }
+    startup_tape_process(taper_program, conf_taper_parallel_write, no_taper);
 
     /* fire up the dumpers now while we are waiting */
     if(!nodump) startup_dump_processes(dumper_program, inparallel, driver_timestamp);
@@ -465,6 +463,7 @@ main(
 
     need_degraded = 0;
     if (no_taper || conf_runtapes <= 0) {
+	taper_started = 1; /* we'll pretend the taper started and failed immediately */
 	need_degraded = 1;
     } else {
 	tapetable[0].state = TAPER_STATE_INIT;
@@ -1102,7 +1101,8 @@ start_some_dumps(
     char *dumporder;
     int  dumper_to_holding = 0;
 
-    if (!taper_set) return;
+    /* don't start any actual dumps until the taper is started */
+    if (!taper_started) return;
 
     idle_reason = IDLE_NO_DUMPERS;
     sleep_time = 0;
@@ -1559,7 +1559,7 @@ handle_taper_result(
 	    }
 
 	    taper = NULL;
-	    taper_set = 1;
+	    taper_started = 1;
 	    for (i=0; i < conf_taper_parallel_write; i++) {
 		if (strcmp(tapetable[i].name, result_argv[1]) == 0) {
 		    taper= &tapetable[i];
@@ -1802,7 +1802,7 @@ handle_taper_result(
 	    break;
 
         case TAPE_ERROR: /* TAPE-ERROR <name> <err mess> */
-	    taper_set = 1;
+	    taper_started = 1;
 	    if (strcmp(result_argv[1], "SETUP") == 0) {
 		taper_nb_wait_reply = 0;
 		taper_nb_scan_volume = 0;

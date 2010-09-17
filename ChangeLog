@@ -1,4 +1,9 @@
 2010-09-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/driver.c: start up correctly with --no-taper
+	* server-src/driverio.c server-src/driverio.h: take no_taper as
+	  argument to startup_tape_process
+
+2010-09-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/DB/Catalog.pm: new methods to determine the type of
 	  a run
 	* installcheck/Amanda_DB_Catalog.pl: test them

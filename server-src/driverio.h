@@ -158,7 +158,7 @@ GLOBAL event_handle_t *taper_ev_read;
 GLOBAL int taper_nb_wait_reply;
 
 void init_driverio(void);
-void startup_tape_process(char *taper_program, int taper_parallel_write);
+void startup_tape_process(char *taper_program, int taper_parallel_write, gboolean no_taper);
 void startup_dump_process(dumper_t *dumper, char *dumper_program);
 void startup_dump_processes(char *dumper_program, int inparallel, char *timestamp);
 void startup_chunk_process(chunker_t *chunker, char *chunker_program);
