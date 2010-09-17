@@ -39,7 +39,7 @@ like(run_get("$amlibexecdir/amcheck-device", "TESTCONF"),
     qr/Will write label 'TESTCONF01' to new volume/,
     "a run of amcheck-device on a new config succeeds");
 
-ok(!run("$amlibexecdir/amcheck-device", "TESTCONF", "-o", "label_new_tapes="),
+ok(!run("$amlibexecdir/amcheck-device", "TESTCONF", "-o", "autolabel="),
     "accepts config_overrides, returns exit status on failure");
 
 like(run_get("$amlibexecdir/amcheck-device", "TESTCONF", "-w"),

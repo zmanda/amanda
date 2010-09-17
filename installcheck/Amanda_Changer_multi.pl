@@ -380,26 +380,20 @@ Amanda::MainLoop::run();
 		f_type => undef, label => undef,
 		reserved => 0 },
 	      { slot => 2, state => Amanda::Changer::SLOT_FULL,
-		device_status => ($DEVICE_STATUS_DEVICE_ERROR |
-				  $DEVICE_STATUS_VOLUME_UNLABELED |
-				  $DEVICE_STATUS_VOLUME_ERROR),
-		f_type => undef, label => undef,
+		device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
+		f_type => $Amanda::Header::F_EMPTY, label => undef,
 		reserved => 0 },
 	      { slot => 3, state => Amanda::Changer::SLOT_FULL,
-		device_status => ($DEVICE_STATUS_DEVICE_ERROR |
-				  $DEVICE_STATUS_VOLUME_UNLABELED |
-				  $DEVICE_STATUS_VOLUME_ERROR),
-		f_type => undef, label => undef,
+		device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
+		f_type => $Amanda::Header::F_EMPTY, label => undef,
 		reserved => 0 },
 	      { slot => 4, state => Amanda::Changer::SLOT_FULL,
 		device_status => $DEVICE_STATUS_SUCCESS,
 		f_type => $Amanda::Header::F_TAPESTART, label => "FOO?BAR",
 		reserved => 0, current => 1 },
 	      { slot => 5, state => Amanda::Changer::SLOT_FULL,
-		device_status => ($DEVICE_STATUS_DEVICE_ERROR |
-				  $DEVICE_STATUS_VOLUME_UNLABELED |
-				  $DEVICE_STATUS_VOLUME_ERROR),
-		f_type => undef, label => undef,
+		device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
+		f_type => $Amanda::Header::F_EMPTY, label => undef,
 		reserved => 0 },
 		], "inventory finds the labeled tape");
 

@@ -64,7 +64,7 @@ $testconf->write();
 
 ok(run('amdevcheck', 'TESTCONF'), "run succeeds with an unlabeled tape");
 is_deeply([ sort split "\n", $Installcheck::Run::stdout],
-	  [ sort "MESSAGE Error loading device header -- unlabeled volume?", "VOLUME_UNLABELED", "DEVICE_ERROR", "VOLUME_ERROR"],
+	  [ sort "MESSAGE File 0 not found", "VOLUME_UNLABELED"],
 	  "..and output is correct");
 
 ok(run('amdevcheck', 'TESTCONF', "--properties"),

@@ -460,7 +460,7 @@ ndmp_device_read_label(
     Device *dself)
 {
     NdmpDevice       *self = NDMP_DEVICE(dself);
-    dumpfile_t       *header;
+    dumpfile_t       *header = NULL;
     gpointer buf = NULL;
     guint64 buf_size = 0;
     gsize read_block_size = 0;
@@ -471,9 +471,6 @@ ndmp_device_read_label(
     dself->volume_header = NULL;
 
     if (device_in_error(self)) return dself->status;
-
-    header = dself->volume_header = g_new(dumpfile_t, 1);
-    fh_init(header);
 
     if (!open_tape_agent(self)) {
 	/* error status was set by open_tape_agent */
@@ -515,6 +512,8 @@ ndmp_device_read_label(
 		device_set_error(dself,
 			g_strdup(_("no tape label found")),
 				DEVICE_STATUS_VOLUME_UNLABELED);
+		header = dself->volume_header = g_new(dumpfile_t, 1);
+		fh_init(header);
 		goto read_err;
 
 	    default:
@@ -523,6 +522,8 @@ ndmp_device_read_label(
 	    }
 	}
 
+	header = dself->volume_header = g_new(dumpfile_t, 1);
+	fh_init(header);
 	parse_file_header(buf, header, buf_size);
 
 read_err:

@@ -282,20 +282,15 @@ sub try_volume {
 
     if ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
 	$dev->volume_header and
-	$dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY and
-	!$autolabel->{'empty'}) {
-	return 0;
-    }
-
-    if ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
+	$dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY) {
+	return 0 if (!$autolabel->{'empty'});
+    } elsif ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
 	$dev->volume_header and
-	$dev->volume_header->{'type'} == $Amanda::Header::F_WEIRD and
-	!$autolabel->{'non_amanda'}) {
-	return 0;
-    }
-
-    if ($status & $DEVICE_STATUS_VOLUME_ERROR and
-	!$autolabel->{'volume_error'}) {
+	$dev->volume_header->{'type'} == $Amanda::Header::F_WEIRD) {
+	return 0 if (!$autolabel->{'non_amanda'});
+    } elsif ($status & $DEVICE_STATUS_VOLUME_ERROR) {
+	return 0 if (!$autolabel->{'volume_error'});
+    } elsif ($status != $DEVICE_STATUS_SUCCESS) {
 	return 0;
     }
 

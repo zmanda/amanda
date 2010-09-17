@@ -733,7 +733,8 @@ static DeviceStatusFlags vfs_device_read_label(Device * dself) {
     /* close the fd we just opened */
     vfs_device_finish_file(dself);
 
-    if (amanda_header->type != F_TAPESTART) {
+    if (amanda_header->type != F_TAPESTART &&
+	amanda_header->type != F_EMPTY) {
         /* This is an error, and should not happen. */
 	device_set_error(dself,
 		stralloc(_("Got a bad volume label")),
@@ -742,11 +743,13 @@ static DeviceStatusFlags vfs_device_read_label(Device * dself) {
         return dself->status;
     }
 
-    dself->volume_label = g_strdup(amanda_header->name);
-    dself->volume_time = g_strdup(amanda_header->datestamp);
     /* self->volume_header is already set */
 
-    device_set_error(dself, NULL, DEVICE_STATUS_SUCCESS);
+    if (amanda_header->type == F_TAPESTART) {
+	dself->volume_label = g_strdup(amanda_header->name);
+	dself->volume_time = g_strdup(amanda_header->datestamp);
+	device_set_error(dself, NULL, DEVICE_STATUS_SUCCESS);
+    }
 
     update_volume_size(self);
 
@@ -1145,9 +1148,12 @@ vfs_device_seek_file (Device * dself, guint requested_file) {
     if (self->file_name == NULL) {
 	device_set_error(dself,
 	    vstrallocf(_("File %d not found"), file),
-	    DEVICE_STATUS_VOLUME_ERROR);
+	    file == 0 ? DEVICE_STATUS_VOLUME_UNLABELED
+		      : DEVICE_STATUS_VOLUME_ERROR);
         release_file(self);
-        return NULL;
+	rval = g_new(dumpfile_t, 1);
+	fh_init(rval);
+        return rval;
     }
 
     self->open_file_fd = robust_open(self->file_name, O_RDONLY, 0);

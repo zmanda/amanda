@@ -1,3 +1,14 @@
+2010-09-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/ndmp-device.c, device-src/tape-device.c,
+	* device-src/vfs-device.c: Don't set the header if nothing is read.
+	* device-src/vfs-device.c: Set header to F_EMTPY if file 0 doesn't
+	  exists
+	* perl/Amanda/Taper/Scan/traditional.pm: Correctly check device
+	  status and header.
+	* installcheck/Amanda_Changer_multi.pl: Updated.
+	* installcheck/amcheck-device.pl: Updated.
+	* installcheck/amdevcheck.pl: Updated.
+
 2010-09-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/driver.c: start up correctly with --no-taper
 	* server-src/driverio.c server-src/driverio.h: take no_taper as

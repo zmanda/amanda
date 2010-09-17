@@ -851,9 +851,6 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
 
     if (device_in_error(self)) return dself->status;
 
-    header = dself->volume_header = g_new(dumpfile_t, 1);
-    fh_init(header);
-
     if (self->fd == -1) {
         self->fd = try_open_tape_device(self, self->private->device_filename);
 	/* if the open failed, then try_open_tape_device already set the
@@ -885,12 +882,17 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
 	    msg = stralloc(_("no data"));
             new_status = (DEVICE_STATUS_VOLUME_ERROR |
 	                  DEVICE_STATUS_VOLUME_UNLABELED);
+	    header = dself->volume_header = g_new(dumpfile_t, 1);
+	    fh_init(header);
 	    break;
 
 	case RESULT_SMALL_BUFFER:
 	    msg = stralloc(_("block size too small"));
             new_status = (DEVICE_STATUS_DEVICE_ERROR |
 	                  DEVICE_STATUS_VOLUME_ERROR);
+	    header = dself->volume_header = g_new(dumpfile_t, 1);
+	    fh_init(header);
+	    header->type = F_WEIRD;
 	    break;
 
 	default:
@@ -908,6 +910,9 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
 	amfree(msg);
 	return dself->status;
     }
+
+    header = dself->volume_header = g_new(dumpfile_t, 1);
+    fh_init(header);
 
     parse_file_header(header_buffer, header, buffer_len);
     amfree(header_buffer);
