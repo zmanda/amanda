@@ -686,6 +686,9 @@ PACKAGE(Amanda::Xfer)
 # try to load Amanda::XferServer, which is server-only.  If it's not found, then
 # its classes just remain undefined.
 BEGIN {
-    eval "use Amanda::XferServer;";
+    use Amanda::Util;
+    if (Amanda::Util::built_with_component("server")) {
+	eval "use Amanda::XferServer;";
+    }
 }
 %}

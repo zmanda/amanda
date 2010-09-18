@@ -1,3 +1,7 @@
+2010-09-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Xfer.swg: conditionalize loading XferServer on server
+	  component
+
 2010-09-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Send filter STDERR to log file, backup is
 	  marked as failed.
