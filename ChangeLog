@@ -1,4 +1,8 @@
 2010-09-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda-devices.7.xml: more detail on LEOM handling in
+	  tape device
+
+2010-09-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Xfer.swg: conditionalize loading XferServer on server
 	  component
 

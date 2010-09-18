@@ -486,7 +486,13 @@ available via the command-line utilities dd(1) and mt(1).</para>
 <para>The tape device name should specify a path to the operating system's
 device file.</para>
 
-<para>This device cannot currently detect LEOM on any operating system.</para>
+<para>There is no simple way to determine whether a particular system
+(operating system and tape hardware) supports LEOM, so as a safe default
+the tape device has LEOM detection disabled.  However, on modern hardware
+and common operating systems (Linux, *BSD, and Solaris, at least), LEOM
+support is functional.  On these systems, enable LEOM by setting the LEOM
+property to "true" at the appropriate place in the Amanda
+configuration.</para>
 
 <refsect3><title>Device-Specific Properties</title>
 
