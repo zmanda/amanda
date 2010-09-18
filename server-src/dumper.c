@@ -73,6 +73,16 @@ struct databuf {
     pid_t encryptpid;		/* valid if fd is pipe to encrypt */
 };
 
+typedef struct filter_s {
+    int             fd;
+    char           *name;
+    char           *buffer;
+    gint64          first;           /* first byte used */
+    gint64          size;            /* number of byte use in the buffer */
+    gint64          allocated_size ; /* allocated size of the buffer     */
+    event_handle_t *event;
+} filter_t;
+
 static char *handle = NULL;
 
 static char *errstr = NULL;
@@ -155,7 +165,7 @@ static void	parse_info_line(char *);
 static void	log_msgout(logtype_t);
 static char *	dumper_get_security_conf (char *, void *);
 
-static int	runcompress(int, pid_t *, comp_t);
+static int	runcompress(int, pid_t *, comp_t, char *);
 static int	runencrypt(int, pid_t *,  encrypt_t);
 
 static void	sendbackup_response(void *, pkt_t *, security_handle_t *);
@@ -1131,6 +1141,8 @@ write_tapeheader(
     return -1;
 }
 
+int indexout = -1;
+
 static int
 do_dump(
     struct databuf *db)
@@ -1143,7 +1155,6 @@ do_dump(
     times_t runtime;
     double dumptime;	/* Time dump took in secs */
     char *errfname = NULL;
-    int indexout;
     pid_t indexpid = -1;
     char *m;
 
@@ -1193,7 +1204,7 @@ do_dump(
 			indexfile_tmp, strerror(errno));
 	    goto failed;
 	} else {
-	    if (runcompress(indexout, &indexpid, COMP_BEST) < 0) {
+	    if (runcompress(indexout, &indexpid, COMP_BEST, "index compress") < 0) {
 		aclose(indexout);
 		goto failed;
 	    }
@@ -1457,7 +1468,7 @@ read_mesgfd(
 	    stop_dump();
 	    return;
 	}
-	close(db->fd);
+	aclose(db->fd);
 	if (data_path == DATA_PATH_AMANDA) {
 	    g_debug(_("Sending data to %s:%d\n"), data_host, data_port);
 	    db->fd = stream_client(data_host, data_port,
@@ -1487,7 +1498,7 @@ read_mesgfd(
 	 * reading the datafd.
 	 */
 	if ((srvcompress != COMP_NONE) && (srvcompress != COMP_CUST)) {
-	    if (runcompress(db->fd, &db->compresspid, srvcompress) < 0) {
+	    if (runcompress(db->fd, &db->compresspid, srvcompress, "data compress") < 0) {
 		dump_result = 2;
 		stop_dump();
 		return;
@@ -1523,6 +1534,7 @@ read_datafd(
 	errstr = newvstrallocf(errstr, _("data read: %s"),
 	    security_stream_geterror(streams[DATAFD].fd));
 	dump_result = 2;
+	aclose(db->fd);
 	stop_dump();
 	return;
     }
@@ -1540,6 +1552,7 @@ read_datafd(
 	}
 	security_stream_close(streams[DATAFD].fd);
 	streams[DATAFD].fd = NULL;
+	aclose(db->fd);
 	/*
 	 * If the mesg fd and index fd has also shut down, then we're done.
 	 */
@@ -1603,6 +1616,7 @@ read_indexfd(
 	if ((set_datafd == 0 || streams[DATAFD].fd == NULL) &&
 	     streams[MESGFD].fd == NULL)
 	    stop_dump();
+	aclose(indexout);
 	return;
     }
 
@@ -1619,6 +1633,78 @@ read_indexfd(
 	}
     }
     security_stream_read(streams[INDEXFD].fd, read_indexfd, cookie);
+}
+
+static void
+handle_filter_stderr(
+    void *cookie)
+{
+    filter_t *filter = cookie;
+    ssize_t   nread;
+    char     *b, *p;
+    gint64    len;
+
+    event_release(filter->event);
+
+    if (filter->buffer == NULL) {
+	/* allocate initial buffer */
+	filter->buffer = g_malloc(2048);
+	filter->first = 0;
+	filter->size = 0;
+	filter->allocated_size = 2048;
+    } else if (filter->first > 0) {
+	if (filter->allocated_size - filter->size - filter->first < 1024) {
+	    memmove(filter->buffer, filter->buffer + filter->first,
+				    filter->size);
+	    filter->first = 0;
+	}
+    } else if (filter->allocated_size - filter->size < 1024) {
+	/* double the size of the buffer */
+	filter->allocated_size *= 2;
+	filter->buffer = g_realloc(filter->buffer, filter->allocated_size);
+    }
+
+    nread = read(filter->fd, filter->buffer + filter->first + filter->size,
+			     filter->allocated_size - filter->first - filter->size - 2);
+
+    if (nread != 0) {
+	dump_result = max(dump_result, 2);
+    }
+
+    if (nread <= 0) {
+	aclose(filter->fd);
+	if (filter->size > 0 && filter->buffer[filter->first + filter->size - 1] != '\n') {
+	    /* Add a '\n' at end of buffer */
+	    filter->buffer[filter->first + filter->size] = '\n';
+	    filter->size++;
+	}
+    } else {
+	filter->size += nread;
+    }
+
+    /* process all complete lines */
+    b = filter->buffer + filter->first;
+    filter->buffer[filter->first + filter->size] = '\0';
+    while (b < filter->buffer + filter->first + filter->size &&
+	   (p = strchr(b, '\n')) != NULL) {
+	*p = '\0';
+	g_fprintf(errf, _("? %s: %s\n"), filter->name, b);
+	if (errstr == NULL) {
+	    errstr = stralloc(b);
+	}
+	len = p - b + 1;
+	filter->first += len;
+	filter->size -= len;
+	b = p + 1;
+    }
+
+    if (nread <= 0) {
+	g_free(filter->buffer);
+	g_free(filter);
+    } else {
+	filter->event = event_register((event_id_t)filter->fd, EV_READFD,
+				       handle_filter_stderr, filter);
+    }
 }
 
 /*
@@ -1688,6 +1774,7 @@ stop_dump(void)
 	    streams[i].fd = NULL;
 	}
     }
+    aclose(indexout);
     timeout(0);
 }
 
@@ -1702,9 +1789,12 @@ static int
 runcompress(
     int		outfd,
     pid_t *	pid,
-    comp_t	comptype)
+    comp_t	comptype,
+    char       *name)
 {
     int outpipe[2], rval;
+    int errpipe[2];
+    filter_t *filter;
 
     assert(outfd >= 0);
     assert(pid != NULL);
@@ -1715,11 +1805,19 @@ runcompress(
 	return (-1);
     }
 
+    /* errpipe[0] is pipe's output, outpipe[1] is input. */
+    if (pipe(errpipe) < 0) {
+	errstr = newvstrallocf(errstr, _("pipe: %s"), strerror(errno));
+	return (-1);
+    }
+
     switch (*pid = fork()) {
     case -1:
 	errstr = newvstrallocf(errstr, _("couldn't fork: %s"), strerror(errno));
 	aclose(outpipe[0]);
 	aclose(outpipe[1]);
+	aclose(errpipe[0]);
+	aclose(errpipe[1]);
 	return (-1);
     default:
 	rval = dup2(outpipe[1], outfd);
@@ -1727,14 +1825,30 @@ runcompress(
 	    errstr = newvstrallocf(errstr, _("couldn't dup2: %s"), strerror(errno));
 	aclose(outpipe[1]);
 	aclose(outpipe[0]);
+	aclose(errpipe[1]);
+	filter = g_new0(filter_t, 1);
+	filter->fd = errpipe[0];
+	filter->name = name;
+	filter->buffer = NULL;
+	filter->size = 0;
+	filter->allocated_size = 0;
+	filter->event = event_register((event_id_t)filter->fd, EV_READFD,
+				       handle_filter_stderr, filter);
+g_debug("event register %s %d", name, filter->fd);
 	return (rval);
     case 0:
+	close(outpipe[1]);
+	close(errpipe[0]);
 	if (dup2(outpipe[0], 0) < 0) {
 	    error(_("err dup2 in: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
 	if (dup2(outfd, 1) == -1) {
 	    error(_("err dup2 out: %s"), strerror(errno));
+	    /*NOTREACHED*/
+	}
+	if (dup2(errpipe[1], 2) == -1) {
+	    error(_("err dup2 err: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
 	if (comptype != COMP_SERVER_CUST) {
@@ -1775,6 +1889,8 @@ runencrypt(
     encrypt_t	encrypttype)
 {
     int outpipe[2], rval;
+    int errpipe[2];
+    filter_t *filter;
 
     assert(outfd >= 0);
     assert(pid != NULL);
@@ -1785,11 +1901,19 @@ runencrypt(
 	return (-1);
     }
 
+    /* errpipe[0] is pipe's output, outpipe[1] is input. */
+    if (pipe(errpipe) < 0) {
+	errstr = newvstrallocf(errstr, _("pipe: %s"), strerror(errno));
+	return (-1);
+    }
+
     switch (*pid = fork()) {
     case -1:
 	errstr = newvstrallocf(errstr, _("couldn't fork: %s"), strerror(errno));
 	aclose(outpipe[0]);
 	aclose(outpipe[1]);
+	aclose(errpipe[0]);
+	aclose(errpipe[1]);
 	return (-1);
     default:
 	rval = dup2(outpipe[1], outfd);
@@ -1797,6 +1921,16 @@ runencrypt(
 	    errstr = newvstrallocf(errstr, _("couldn't dup2: %s"), strerror(errno));
 	aclose(outpipe[1]);
 	aclose(outpipe[0]);
+	aclose(errpipe[1]);
+	filter = g_new0(filter_t, 1);
+	filter->fd = errpipe[0];
+	filter->name = "encrypt";
+	filter->buffer = NULL;
+	filter->size = 0;
+	filter->allocated_size = 0;
+	filter->event = event_register((event_id_t)filter->fd, EV_READFD,
+				       handle_filter_stderr, filter);
+g_debug("event register %s %d", "encrypt data", filter->fd);
 	return (rval);
     case 0: {
 	char *base;
@@ -1808,6 +1942,11 @@ runencrypt(
 	    error(_("err dup2 out: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
+	if (dup2(errpipe[1], 2) == -1) {
+	    error(_("err dup2 err: %s"), strerror(errno));
+	    /*NOTREACHED*/
+	}
+	close(errpipe[0]);
 	base = stralloc(srv_encrypt);
 	log_add(L_INFO, "%s pid %ld", basename(base), (long)getpid());
 	amfree(base);

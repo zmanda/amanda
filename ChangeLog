@@ -1,4 +1,8 @@
 2010-09-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Send filter STDERR to log file, backup is
+	  marked as failed.
+
+2010-09-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/ndmp-device.c, device-src/tape-device.c,
 	* device-src/vfs-device.c: Don't set the header if nothing is read.
 	* device-src/vfs-device.c: Set header to F_EMTPY if file 0 doesn't
