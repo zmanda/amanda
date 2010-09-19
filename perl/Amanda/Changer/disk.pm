@@ -325,7 +325,7 @@ sub _alloc_drive {
 }
 
 # Internal function to enumerate all available slots.  Slots are described by
-# integers.
+# strings.
 sub _all_slots {
     my ($self) = @_;
     my $dir = _quote_glob($self->{'dir'});
@@ -337,7 +337,7 @@ sub _all_slots {
 	push @slots, $slot + 0;
     }
 
-    return sort { $a <=> $b } @slots;
+    return map { "$_"} sort { $a <=> $b } @slots;
 }
 
 # Internal function to determine whether a slot exists.
