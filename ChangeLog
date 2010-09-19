@@ -1,4 +1,7 @@
 2010-09-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/disk.pm: but still return stringy slot names
+
+2010-09-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/disk.pm: sort slots numerically; patch by
 	  'ghosts' on forums.zmanda.com
 
