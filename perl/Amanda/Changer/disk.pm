@@ -337,7 +337,7 @@ sub _all_slots {
 	push @slots, $slot + 0;
     }
 
-    return sort @slots;
+    return sort { $a <=> $b } @slots;
 }
 
 # Internal function to determine whether a slot exists.
