@@ -489,11 +489,6 @@ sub command_backup {
     my $self = shift;
 
     my $level = $self->{level}[0];
-    my $mesgout_fd;
-    open($mesgout_fd, '>&=3') ||
-	$self->print_to_server_and_die("Can't open mesgout_fd: $!",
-				       $Amanda::Script_App::ERROR);
-    $self->{mesgout} = $mesgout_fd;
 
     $self->parsesharename();
     $self->findpass();
@@ -595,11 +590,11 @@ sub command_backup {
 	open($indexout_fd, '>&=4') ||
 	    $self->print_to_server_and_die("Can't open indexout_fd: $!",
 					   $Amanda::Script_App::ERROR);
-	$self->parse_backup($index, $mesgout_fd, $indexout_fd);
+	$self->parse_backup($index, $self->{mesgout}, $indexout_fd);
 	close($indexout_fd);
     }
     else {
-	$self->parse_backup($index_fd, $mesgout_fd, undef);
+	$self->parse_backup($index_fd, $self->{mesgout}, undef);
     }
     close($index);
 
@@ -623,8 +618,8 @@ sub command_backup {
 	if ($ksize < 32) {
 	    $ksize = 32;
 	}
-	print $mesgout_fd "sendbackup: size $ksize\n";
-	print $mesgout_fd "sendbackup: end\n";
+	print {$self->{mesgout}} "sendbackup: size $ksize\n";
+	print {$self->{mesgout}} "sendbackup: end\n";
     }
 
     waitpid $pid, 0;

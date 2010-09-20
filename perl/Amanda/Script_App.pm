@@ -180,6 +180,10 @@ sub do {
 	$self->{action} = 'validate';
     }
 
+    if ($action eq 'backup') {
+	$self->_set_mesgout();
+    }
+
     # now convert it to a function name and see if it's
     # defined
     my $function_name = "command_$command";

@@ -159,11 +159,6 @@ sub command_backup {
     my $self = shift;
 
     my $level = $self->{level}[0];
-    my $mesgout_fd;
-    open($mesgout_fd, '>&=3') ||
-	$self->print_to_server_and_die("Can't open mesgout_fd: $!",
-				       $Amanda::Script_App::ERROR);
-    $self->{mesgout} = $mesgout_fd;
 
     if (defined($self->{index})) {
 	$self->{'index_out'} = IO::Handle->new_from_fd(4, 'w');
@@ -208,8 +203,8 @@ sub command_backup {
 	if ($ksize < 32) {
 	    $ksize = 32;
 	}
-	print $mesgout_fd "sendbackup: size $ksize\n";
-	print $mesgout_fd "sendbackup: end\n";
+	print {$self->{mesgout}} "sendbackup: size $ksize\n";
+	print {$self->{mesgout}} "sendbackup: end\n";
     }
 
     exit 0;

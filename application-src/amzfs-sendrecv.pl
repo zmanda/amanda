@@ -169,12 +169,6 @@ sub output_size {
 sub command_backup {
     my $self = shift;
 
-    my $mesgout_fd;
-    open($mesgout_fd, '>&=3') ||
-	$self->print_to_server_and_die("Can't open mesgout_fd: $!",
-				       $Amanda::Script_App::ERROR);
-    $self->{mesgout} = $mesgout_fd;
-
     if ($#{$self->{include_list}} >= 0) {
 	$self->print_to_server("include-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
@@ -225,8 +219,8 @@ sub command_backup {
     my($ksize) = int ($size/1024);
     $ksize=32 if ($ksize<32);
 
-    print $mesgout_fd "sendbackup: size $ksize\n";
-    print $mesgout_fd "sendbackup: end\n";
+    print {$self->{mesgout}} "sendbackup: size $ksize\n";
+    print {$self->{mesgout}} "sendbackup: end\n";
 
     # destroy all snapshot of this level and higher
     $self->zfs_purge_snapshot($level, 9);
