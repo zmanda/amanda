@@ -78,6 +78,8 @@ static int next_level0(disk_t *dp, info_t *info);
 int bump_thresh(int level);
 void export_db(int argc, char **argv);
 void import_db(int argc, char **argv);
+void hosts(int argc, char **argv);
+void dles(int argc, char **argv);
 void disklist(int argc, char **argv);
 void disklist_one(disk_t *dp);
 void show_version(int argc, char **argv);
@@ -110,6 +112,10 @@ static const struct {
 	T_(" [<hostname> [<disks>]* ]+\t# Clear bump command.") },
     { "disklist", disklist,
 	T_(" [<hostname> [<disks>]* ]*\t# Debug disklist entries.") },
+    { "hosts", hosts,
+	T_("\t\t\t\t\t# Show all distinct hosts in disklist.") },
+    { "dles", dles,
+	T_("\t\t\t\t\t# Show all dles in disklist, one per line.") },
     { "reuse", reuse,
 	T_(" <tapelabel> ...\t\t # re-use this tape.") },
     { "no-reuse", noreuse,
@@ -2295,6 +2301,44 @@ disklist(
 	for(dp = diskq.head; dp != NULL; dp = dp->next)
 	    disklist_one(dp);
 }
+
+/* ----------------------------------------------- */
+
+void
+hosts(
+    int		argc G_GNUC_UNUSED,
+    char **	argv G_GNUC_UNUSED)
+{
+    disk_t *dp;
+    gint sentinel = 1;
+    GHashTable *seen = g_hash_table_new(g_str_hash, g_str_equal);
+
+    /* enumerate all hosts, skipping those that have been seen (since
+     * there may be more than one DLE on a host */
+    for(dp = diskq.head; dp != NULL; dp = dp->next) {
+	char *hostname = dp->host->hostname;
+	if (g_hash_table_lookup(seen, hostname))
+	    continue;
+	g_printf("%s\n", hostname);
+	g_hash_table_insert(seen, hostname, &sentinel);
+    }
+    g_hash_table_destroy(seen);
+}
+
+/* ----------------------------------------------- */
+
+void
+dles(
+    int		argc G_GNUC_UNUSED,
+    char **	argv G_GNUC_UNUSED)
+{
+    disk_t *dp;
+
+    for(dp = diskq.head; dp != NULL; dp = dp->next)
+	g_printf("%s %s\n", dp->host->hostname, dp->name);
+}
+
+/* ----------------------------------------------- */
 
 void
 show_version(

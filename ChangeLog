@@ -1,3 +1,7 @@
+2010-09-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amadmin.c: add 'dles' and 'hosts' subcommands
+	* man/xml-source/amadmin.8.xml: document them
+
 2010-09-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Script_App.pm: Call _set_mesgout.
 	* perl/Amanda/Application.swg, perl/Amanda/Script.pm (_set_mesgout):

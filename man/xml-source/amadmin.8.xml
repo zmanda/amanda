@@ -302,6 +302,18 @@ Mostly used for debugging.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><emphasis remap='B'>hosts</emphasis></term>
+  <listitem>
+<para>Output a list of distinct hosts in the &disklist;, one per line, for easy use in shell scripts.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>dles</emphasis></term>
+  <listitem>
+<para>Output a list of distinct DLEs in the &disklist;, one per line with host and diskname separated by a space, for easy use in shell scripts.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><emphasis remap='B'>info</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]*</term>
   <listitem>
 <para>Display the
