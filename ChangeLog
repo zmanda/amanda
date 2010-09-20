@@ -1,3 +1,7 @@
+2010-09-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-source-recovery.c: add XFER_MECH_DIRECTTCP_LISTEN to
+	  XferSourceRecovery
+
 2010-09-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/disk.pm: but still return stringy slot names
 
