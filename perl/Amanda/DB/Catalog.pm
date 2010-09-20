@@ -89,7 +89,9 @@ or C<"00000000000000"> for dumps in the holding disk.
 
 =item status
 
-(string) -- "OK", "PARTIAL", or "FAIL"
+(string) -- The status of the dump - "OK", "PARTIAL", or "FAIL".  If a disk
+failed to dump at all, then it is not part of the catalog and thus will not
+have an associated dump row.
 
 =item message
 
@@ -151,7 +153,7 @@ on-media dumps)
 
 =item status
 
-(string) -- "OK", "PARTIAL" or some other descriptor
+(string) -- The status of the part - "OK", "PARTIAL", or "FAILED".
 
 =item partnum
 
@@ -362,9 +364,9 @@ access those values via the C<dump> attribute.
 
 This function returns a sequence of dumps.  Values in C<%parameters> restrict
 the set of dumps that are returned.  The same keys as are used for C<get_parts>
-are available here, with the exception of C<label> and C<labels>.  The
-C<status> key applies to the dump status, not the status of its constituent
-parts.
+are available here, with the exception of C<label> and C<labels>.  In this
+case, the C<status> parameter applies to the dump status, not the status of its
+constituent parts.
 
 =item sort_dumps([ $key1, $key2 ], @dumps)
 
@@ -615,6 +617,7 @@ sub get_parts_and_dumps {
 		and !exists($labels_hash{$find_result->{'label'}}));
 	    if ($get_what eq 'parts') {
 		next if (exists($params{'status'}) 
+		    and defined $find_result->{'status'}
 		    and $find_result->{'status'} ne $params{'status'});
 	    }
 
@@ -656,7 +659,7 @@ sub get_parts_and_dumps {
 		    label => $find_result->{'label'},
 		    filenum => $find_result->{'filenum'},
 		    dump => $dump,
-		    status => $find_result->{'status'},
+		    status => $find_result->{'status'} || 'FAILED',
 		    sec => $find_result->{'sec'},
 		    kb => $find_result->{'kb'},
 		    orig_kb => $find_result->{'orig_kb'},
@@ -667,14 +670,14 @@ sub get_parts_and_dumps {
 		%part = (
 		    holding_file => $find_result->{'label'},
 		    dump => $dump,
-		    status => $find_result->{'status'},
+		    status => $find_result->{'status'} || 'FAILED',
 		    sec => 0.0,
 		    kb => $find_result->{'kb'},
 		    orig_kb => $find_result->{'orig_kb'},
 		    partnum => 1,
 		);
 		# and fix up the dump, too
-		$dump->{'status'} = $find_result->{'status'};
+		$dump->{'status'} = $find_result->{'status'} || 'FAILED';
 		$dump->{'kb'} = $find_result->{'kb'};
 		$dump->{'sec'} = $find_result->{'sec'};
 	    }

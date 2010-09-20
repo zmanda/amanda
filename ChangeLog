@@ -1,4 +1,7 @@
 2010-09-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/DB/Catalog.pm: docs changes + defensive programming
+
+2010-09-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/find.c: only expect partnum/totalparts in taper log lines
 	* installcheck/catalogs/bigdb.cat: tests
 
