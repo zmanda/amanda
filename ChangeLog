@@ -1,4 +1,8 @@
 2010-09-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/find.c: only expect partnum/totalparts in taper log lines
+	* installcheck/catalogs/bigdb.cat: tests
+
+2010-09-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/xfer-source-recovery.c: add XFER_MECH_DIRECTTCP_LISTEN to
 	  XferSourceRecovery
 

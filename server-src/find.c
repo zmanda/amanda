@@ -856,9 +856,10 @@ search_logfile(
 		partnum = 1;
 		totalparts =1;
 	    } else {
-		if (curlog == L_CHUNK || curlog == L_PART ||
-		    curlog == L_PARTPARTIAL || curlog == L_PARTIAL ||
-		    curlog == L_DONE){
+		if (curprog == P_TAPER &&
+			(curlog == L_CHUNK || curlog == L_PART ||
+			 curlog == L_PARTPARTIAL || curlog == L_PARTIAL ||
+			 curlog == L_DONE)) {
 		    skip_whitespace(s, ch);
 		    number = s - 1;
 		    skip_non_whitespace(s, ch);

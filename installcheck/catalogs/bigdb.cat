@@ -157,6 +157,11 @@ PARTIAL taper otherbox /lib 20080414144444 1 1 [sec 0.000540 kb 32 kps 59259.259
 # a completely failed dump
 %D otherbox_boot_20080414144444 20080414144444 20080414144444 otherbox /boot 0 FAIL no-space 0 0.0 0 0
 FAIL taper otherbox /boot 20080414144444 0 error "no-space"
+# add a partially chunked dump; this should not appear in the catalog, as the partial
+# holding-disk file is no longer in the holding disk
+FAIL dumper ns-new.slikon.local /opt/var 20090326001503 0 [blargh]
+  sendbackup: boooo
+PARTIAL chunker ns-new.slikon.local /opt/var 20090326001503 0 [sec 187.313 kb 54930 kps 293.4]
 FINISH driver date 20080414144444 time 6.959
 
 # A logfile with orig-kb in taper line
