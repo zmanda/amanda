@@ -116,11 +116,10 @@ if ($opt_last) {
         for $disk (sort keys %{$disks{$host}}) {
 	    $level{$host}{$disk}{"0000LAST"} = '';
 	    for $date (sort keys %dates) {
+	        next unless defined($level{$host}{$disk}{$date});
 	        if ($level{$host}{$disk}{$date} eq "E"
 		     && $level{$host}{$disk}{"0000LAST"} =~ /^\d/ ) {
 		    $level{$host}{$disk}{"0000LAST"} .= $level{$host}{$disk}{$date};
-	        } elsif ($level{$host}{$disk}{$date} eq "") {
-		    $level{$host}{$disk}{"0000LAST"} =~ s/E//;
 	        } else {
 		    $level{$host}{$disk}{"0000LAST"} = $level{$host}{$disk}{$date};
 	        }
@@ -135,7 +134,8 @@ if ($opt_num0) {
         for $disk (sort keys %{$disks{$host}}) {
             $level{$host}{$disk}{'0000NML0'} = 0;
             for $date (sort keys %dates) {
-                if ($level{$host}{$disk}{$date} =~ /0/) {
+                if (defined($level{$host}{$disk}{$date})
+			&& $level{$host}{$disk}{$date} =~ /0/) {
                     $level{$host}{$disk}{'0000NML0'} += 1;
                 }
             }
@@ -150,7 +150,8 @@ if ($opt_togo0) {
             $level{$host}{$disk}{'0000TOGO'} = 0;
             my $togo=0;
             for $date (sort keys %dates) {
-                if ($level{$host}{$disk}{$date} =~ /0/) {
+                if (defined($level{$host}{$disk}{$date})
+                	&& $level{$host}{$disk}{$date} =~ /0/) {
                     $level{$host}{$disk}{'0000TOGO'} = $togo;
                 }
                 $togo++;

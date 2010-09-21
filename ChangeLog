@@ -1,3 +1,6 @@
+2010-09-21  Orion Poplawski <orion@cora.nwra.com>
+	* server-src/amoverview.pl: fix remaining uninitialized value warnings
+
 2010-09-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/DB/Catalog.pm: add a status even for dumps with no
 	  successful parts on tape; comments and POD
