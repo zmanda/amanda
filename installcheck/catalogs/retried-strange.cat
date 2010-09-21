@@ -83,21 +83,21 @@ STRANGE DUMP SUMMARY:
 
 
 STATISTICS:
-                          Total       Full      Incr.
-                        --------   --------   --------
+                          Total       Full      Incr.   Level:#
+                        --------   --------   --------  --------
 Estimate Time (hrs:min)    0:18
 Run Time (hrs:min)        27:10
 Dump Time (hrs:min)       13:38      13:38       0:00
 Output Size (meg)      455233.3   455233.3        0.0
 Original Size (meg)    526503.9   526503.9        0.0
 Avg Compressed Size (%)    86.5       86.5        --
-Filesystems Dumped            1          1          0
+DLEs Dumped            1          1          0
 Avg Dump Rate (k/s)      9500.3     9500.3        --
 
 Tape Time (hrs:min)        0:57       0:57       0:00
 Tape Size (meg)        252184.6   252184.6        0.0
 Tape Used (%)             #####      #####        0.0
-Filesystems Taped             1          1          0
+DLEs Taped             1          1          0
 
 Parts Taped                  13         13          0
 Avg Tp Write Rate (k/s) 75156.3    75156.3        --

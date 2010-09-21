@@ -32,23 +32,22 @@ The dumps were flushed to tape DAILY-37.
 The next tape Amanda expects to use is: 1 new tape.
 
 STATISTICS:
-                          Total       Full      Incr.
-                        --------   --------   --------
+                          Total       Full      Incr.   Level:#
+                        --------   --------   --------  --------
 Estimate Time (hrs:min)     0:00
 Run Time (hrs:min)          0:00
 Dump Time (hrs:min)         0:00       0:00       0:00
 Output Size (meg)            0.0        0.0        0.0
 Original Size (meg)          0.0        0.0        0.0
 Avg Compressed Size (%)      --         --         --
-Filesystems Dumped             0          0          0
+DLEs Dumped             0          0          0
 Avg Dump Rate (k/s)          --         --         --
 
 Tape Time (hrs:min)         0:00       0:00       0:00
 Tape Size (meg)             30.0        0.0       30.0
-Tape Used (%)              100.1        0.0      100.1  (level:#disks ...)
-Filesystems Taped              2          0          2  (1:1 2:1)
-                                                        (level:#parts ...)
-Parts Taped                    3          0          3  (1:2 2:1)
+Tape Used (%)              100.1        0.0      100.1
+DLEs Taped              2          0          2  1:1 2:1
+Parts Taped                    3          0          3  1:2 2:1
 Avg Tp Write Rate (k/s)   153600        --      153600
 
 USAGE BY TAPE:

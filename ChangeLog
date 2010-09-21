@@ -1,3 +1,23 @@
+2010-09-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/catalogs/amflush.cat
+	  installcheck/catalogs/bigestimate.cat
+	  installcheck/catalogs/doublefailure.cat
+	  installcheck/catalogs/fatal.cat
+	  installcheck/catalogs/filesystemstaped.cat
+	  installcheck/catalogs/flush-noorigsize.cat
+	  installcheck/catalogs/flush-origsize.cat
+	  installcheck/catalogs/longstrange.cat
+	  installcheck/catalogs/multi-taper.cat installcheck/catalogs/normal.cat
+	  installcheck/catalogs/plannerfail.cat
+	  installcheck/catalogs/resultsmissing.cat
+	  installcheck/catalogs/retried-nofinish.cat
+	  installcheck/catalogs/retried-strange.cat
+	  installcheck/catalogs/retried.cat
+	  installcheck/catalogs/shortstrange.cat
+	  installcheck/catalogs/skipped.cat installcheck/catalogs/spanned.cat
+	  installcheck/catalogs/strontium.cat installcheck/catalogs/taperr.cat:
+	  update expected reports to match updated amreport output
+
 2010-09-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c, server-src/driver.c, server-src/planner.c:
 	  Don't print warning for 'holdingdisk auto' and directtcp data path.

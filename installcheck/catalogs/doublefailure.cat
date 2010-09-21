@@ -48,21 +48,21 @@ FAILURE DUMP SUMMARY:
 
 
 STATISTICS:
-                          Total       Full      Incr.
-                        --------   --------   --------
+                          Total       Full      Incr.   Level:#
+                        --------   --------   --------  --------
 Estimate Time (hrs:min)    0:00
 Run Time (hrs:min)        21:32
 Dump Time (hrs:min)        0:00       0:00       0:00
 Output Size (meg)         107.3      107.3        0.0
 Original Size (meg)         0.0        0.0        0.0
 Avg Compressed Size (%)     --         --         --
-Filesystems Dumped            0          0          0
+DLEs Dumped            0          0          0
 Avg Dump Rate (k/s)         --         --         --
 
 Tape Time (hrs:min)        0:00       0:00       0:00
 Tape Size (meg)            53.6       53.6        0.0
 Tape Used (%)             178.8      178.8        0.0
-Filesystems Taped             1          1          0
+DLEs Taped             1          1          0
 
 Parts Taped                   1          1          0
 Avg Tp Write Rate (k/s) 15450.8    15450.8        --

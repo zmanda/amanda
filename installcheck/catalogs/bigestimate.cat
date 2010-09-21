@@ -23,21 +23,21 @@ The next tape Amanda expects to use is: 1 new tape.
 
 
 STATISTICS:
-                          Total       Full      Incr.
-                        --------   --------   --------
+                          Total       Full      Incr.   Level:#
+                        --------   --------   --------  --------
 Estimate Time (hrs:min)    0:00
 Run Time (hrs:min)        21:32
 Dump Time (hrs:min)        0:47       0:47       0:00
 Output Size (meg)       49724.0    49724.0        0.0
 Original Size (meg)     71276.7    71276.7        0.0
 Avg Compressed Size (%)    69.8       69.8        --
-Filesystems Dumped            1          1          0
+DLEs Dumped            1          1          0
 Avg Dump Rate (k/s)     18078.1    18078.1        --
 
 Tape Time (hrs:min)        0:31       0:31       0:00
 Tape Size (meg)         49724.0    49724.0        0.0
 Tape Used (%)             #####      #####        0.0
-Filesystems Taped             1          1          0
+DLEs Taped             1          1          0
 
 Parts Taped                   3          3          0
 Avg Tp Write Rate (k/s) 27287.8    27287.8        --
