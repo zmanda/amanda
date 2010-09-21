@@ -103,11 +103,12 @@ have an associated dump row.
 
 =item kb
 
-(integer) -- size (in kb) of this part
+(integer) -- size (in kb) of the dump on disk
 
 =item orig_kb
 
-(integer) -- size (in kb) of the complete dump (uncompress and uncrypted).
+(integer) -- size (in kb) of the complete dump (before compression or encryption); undef
+if not available
 
 =item sec
 
@@ -799,7 +800,12 @@ sub get_parts_and_dumps {
 		    hostname => $hostname,
 		    diskname => $diskname,
 		    level => $level+0,
+		    orig_kb => undef,
+		    status => "FAILED",
+		    # message set below
 		    nparts => $nparts, # hopefully 0?
+		    # kb set below
+		    # sec set below
 		};
 	    }
 

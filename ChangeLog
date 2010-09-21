@@ -1,4 +1,8 @@
 2010-09-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/DB/Catalog.pm: add a status even for dumps with no
+	  successful parts on tape; comments and POD
+
+2010-09-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/catalogs/amflush.cat
 	  installcheck/catalogs/bigestimate.cat
 	  installcheck/catalogs/doublefailure.cat
