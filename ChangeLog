@@ -1,3 +1,7 @@
+2010-09-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Report/human.pm: change some strings, and make
+	  the statistics section more succinct; suggested by Jon LaBadie
+
 2010-09-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amadmin.c: add 'dles' and 'hosts' subcommands
 	* man/xml-source/amadmin.8.xml: document them

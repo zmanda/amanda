@@ -612,7 +612,7 @@ sub by_level_count
     foreach my $i (1 .. (@$count - 1)) {
         push @lc, "$i:$count->[$i]" if defined $count->[$i] and $count->[$i] > 0;
     }
-    return '(' . join(' ', @lc) . ')';
+    return join(' ', @lc);
 }
 
 sub output_stats
@@ -625,8 +625,8 @@ sub output_stats
 
 
 STATISTICS:
-                          Total       Full      Incr.
-                        --------   --------   --------
+                          Total       Full      Incr.   Level:#
+                        --------   --------   --------  --------
 EOF
 
     my $st_format = <<EOF;
@@ -705,12 +705,11 @@ EOF
         $comp_size->($total_stats),
         $comp_size->($full_stats),
         $comp_size->($incr_stats),
-        ($self->{dumpdisks}[1] > 0 ? "(level:#disks ...)" : "")
     );
 
     print $fh swrite(
         $st_format,
-        "Filesystems Dumped",
+        "DLEs Dumped",
         sprintf("%4d", $total_stats->{dumpdisk_count}),
         sprintf("%4d", $full_stats->{dumpdisk_count}),
         sprintf("%4d", $incr_stats->{dumpdisk_count}),
@@ -762,7 +761,6 @@ EOF
         $tape_usage->($total_stats),
         $tape_usage->($full_stats),
         $tape_usage->($incr_stats),
-        ($self->{tapedisks}[1] > 0 ? "(level:#disks ...)" : "")
     );
 
     my $nb_incr_dle = 0;
@@ -772,7 +770,7 @@ EOF
     }
     print $fh swrite(
         $st_format,
-        "Filesystems Taped",
+        "DLEs Taped",
         $self->{tapedisks}[0] + $nb_incr_dle,
         $self->{tapedisks}[0],
         $nb_incr_dle,
@@ -782,9 +780,6 @@ EOF
             : ""
         )
     );
-
-    print $fh swrite($st_format, "", "", "", "", "(level:#parts ...)")
-      if $incr_stats->{tapepart_count} > 0;
 
     # NOTE: only print out the per-level tapeparts if there are
     # incremental tapeparts
