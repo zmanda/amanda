@@ -1557,11 +1557,6 @@ start_server_check(
 				  _("ERROR: %s %s: Holding disk can't be use for directtcp data-path\n"),
 				  hostp->hostname, dp->name);
 			pgmbad = 1;
-		    } else if (dp->to_holdingdisk == HOLD_AUTO) {
-			g_fprintf(outf,
-				  _("WARNING: %s %s: Holding disk can't be use for directtcp data-path\n"),
-				  hostp->hostname, dp->name);
-			pgmbad = 1;
 		    }
 		}
 

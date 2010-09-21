@@ -772,8 +772,6 @@ setup_estimate(
 	    amfree(qname);
 	    return;
 	} else if (dp->to_holdingdisk == HOLD_AUTO) {
-	    log_add(L_INFO, _("Disabling holding disk for %s:%s."),
-		    dp->host->hostname, qname);
 	    g_fprintf(stderr,_("%s:%s Disabling holding disk\n"),
 		      dp->host->hostname, qname);
 	    dp->to_holdingdisk = HOLD_NEVER;
