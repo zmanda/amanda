@@ -14,8 +14,8 @@ AC_DEFUN([AMANDA_SETUP_SWIG],
     AC_REQUIRE([AMANDA_PROG_SWIG])
     AC_REQUIRE([AMANDA_PROG_PERL])
 
-    # If we want cygwin to copy ddl to modules directory.
-    WANT_CYGWIN_COPY_PERL_DLL="false"
+    WANT_CYGWIN_COPY_PERL_DLL=false
+    WANT_MANDATORY_THREAD_CHECK=false
 
     # test for ExtUtils::Embed
     AC_PERL_MODULE_VERSION([ExtUtils::Embed 0.0], [], [
@@ -58,15 +58,26 @@ AC_DEFUN([AMANDA_SETUP_SWIG],
 	    #   http://lists.freebsd.org/pipermail/freebsd-stable/2006-June/026229.html
 
 	    PERLEXTLIBS="-lpthread"
+	    WANT_MANDATORY_THREAD_CHECK=true
 	    ;;
+
+	*freebsd*) # all FreeBSD not matched above
+	    # for all FreeBSD (including 1.0-6.0, above), we want to run the
+	    # thread-check rule in perl/Makefile.am to double-check that a Perl
+	    # script can call a C extension that uses threads.
+	    WANT_MANDATORY_THREAD_CHECK=true
+	    ;;
+
 	*-pc-cygwin)
 	    # When need -lperl and the '-L' where it is located,
 	    # we don't want the DynaLoader.a
 	    PERLEXTLIBS=`perl -MExtUtils::Embed -e ldopts | sed -e 's/^.*-L/-L/'`
+	    # we want cygwin to copy ddl to modules directory.
 	    WANT_CYGWIN_COPY_PERL_DLL="true";
 	    ;;
     esac
     AM_CONDITIONAL(WANT_CYGWIN_COPY_PERL_DLL,$WANT_CYGWIN_COPY_PERL_DLL)
+    AM_CONDITIONAL(WANT_MANDATORY_THREAD_CHECK,$WANT_MANDATORY_THREAD_CHECK)
 
     AC_ARG_WITH(perlextlibs,
 	AC_HELP_STRING([--with-perlextlibs=libs],[extra LIBS for Perl extensions]),

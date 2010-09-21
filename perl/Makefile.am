@@ -515,6 +515,9 @@ install-data-hook:
 endif
 
 check-local: thread-check
+if WANT_MANDATORY_THREAD_CHECK
+install-data-local: thread-check
+endif
 
 # only syntax-check the .pm files if SYNTAX_CHECKS are enabled
 check-pm:
