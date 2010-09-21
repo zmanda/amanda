@@ -140,6 +140,10 @@ List all regex (POSIX Extended Regular Expression syntax) that amanda ignore. Th
  <varlistentry><term>STRANGE</term><listitem>
 List all regex (POSIX Extended Regular Expression syntax) that are strange output from gtar. All gtar output that doesn't match a normal or ignore regex are strange by default. The result of the dump is STRANGE if gtar produce a strange output. These output are in the "FAILED DUMP DETAILS" section of the email report.
 </listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>VERBOSE</term><listitem>
+Default: "NO". If "YES", amgtar print more verbose debugging message and can leave temporary files in AMANDA_TMPDIR.
+</listitem></varlistentry>
 </variablelist>
 
 </refsect1>

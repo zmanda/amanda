@@ -57,6 +57,7 @@
  * EXIT-HANDLING   (1=GOOD 2=BAD)
  * TAR-BLOCKSIZE   (default does not add --blocking-factor option,
  *                  using tar's default)
+ * VERBOSE
  */
 
 #include "amanda.h"
@@ -120,6 +121,7 @@ typedef struct application_argument_s {
     dle_t      dle;
     int        argc;
     char     **argv;
+    int        verbose;
 } application_argument_t;
 
 enum { CMD_ESTIMATE, CMD_BACKUP };
@@ -136,7 +138,8 @@ static void amgtar_build_exinclude(dle_t *dle, int verbose,
 static char *amgtar_get_incrname(application_argument_t *argument, int level,
 				 FILE *mesgstream, int command);
 static GPtrArray *amgtar_build_argv(application_argument_t *argument,
-				char *incrname, int command);
+				char *incrname, char **file_exclude,
+				char **file_include, int command);
 static char *gnutar_path;
 static char *gnutar_listdir;
 static char *gnutar_directory;
@@ -190,6 +193,7 @@ static struct option long_options[] = {
     {"command-options" , 1, NULL, 33},
     {"include-list-glob", 1, NULL, 34},
     {"exclude-list-glob", 1, NULL, 35},
+    {"verbose"          , 1, NULL, 36},
     {NULL, 0, NULL, 0}
 };
 
@@ -363,6 +367,7 @@ main(
     argument.command_options = NULL;
     argument.include_list_glob = NULL;
     argument.exclude_list_glob = NULL;
+    argument.verbose = 0;
     init_dle(&argument.dle);
 
     while (1) {
@@ -489,6 +494,9 @@ main(
 		 break;
 	case 35: if (optarg)
 		     argument.exclude_list_glob = stralloc(optarg);
+		 break;
+	case 36: if (optarg  && strcasecmp(optarg, "YES") == 0)
+		     argument.verbose = 1;
 		 break;
 	case ':':
 	case '?':
@@ -686,6 +694,8 @@ amgtar_estimate(
     times_t    start_time;
     int        level;
     GSList    *levels;
+    char      *file_exclude;
+    char      *file_include;
 
     if (!argument->level) {
         fprintf(stderr, "ERROR No level argument\n");
@@ -704,8 +714,6 @@ amgtar_estimate(
 
     if (argument->calcsize) {
 	char *dirname;
-	char *file_exclude;
-	char *file_include;
 	int   nb_exclude;
 	int   nb_include;
 
@@ -720,6 +728,13 @@ amgtar_estimate(
 
 	run_calcsize(argument->config, "GNUTAR", argument->dle.disk, dirname,
 		     argument->level, file_exclude, file_include);
+
+	if (argument->verbose == 0) {
+	    if (file_exclude)
+		unlink(file_exclude);
+	    if (file_include)
+		unlink(file_include);
+        }
 	return;
     }
 
@@ -737,7 +752,8 @@ amgtar_estimate(
 	level = GPOINTER_TO_INT(levels->data);
 	incrname = amgtar_get_incrname(argument, level, stdout, CMD_ESTIMATE);
 	cmd = stralloc(gnutar_path);
-	argv_ptr = amgtar_build_argv(argument, incrname, CMD_ESTIMATE);
+	argv_ptr = amgtar_build_argv(argument, incrname, &file_exclude,
+				     &file_include, CMD_ESTIMATE);
 
 	start_time = curclock();
 
@@ -831,6 +847,14 @@ common_exit:
 	if (incrname) {
 	    unlink(incrname);
 	}
+
+	if (argument->verbose == 0) {
+	    if (file_exclude)
+		unlink(file_exclude);
+	    if (file_include)
+		unlink(file_include);
+        }
+
 	g_ptr_array_free_full(argv_ptr);
 	amfree(cmd);
 
@@ -876,6 +900,8 @@ amgtar_backup(
     amwait_t   wait_status;
     GPtrArray *argv_ptr;
     int        tarpid;
+    char      *file_exclude;
+    char      *file_include;
 
     mesgstream = fdopen(mesgf, "w");
     if (!mesgstream) {
@@ -908,7 +934,8 @@ amgtar_backup(
 				   GPOINTER_TO_INT(argument->level->data),
 				   mesgstream, CMD_BACKUP);
     cmd = stralloc(gnutar_path);
-    argv_ptr = amgtar_build_argv(argument, incrname, CMD_BACKUP);
+    argv_ptr = amgtar_build_argv(argument, incrname, &file_exclude,
+				 &file_include, CMD_BACKUP);
 
     tarpid = pipespawnv(cmd, STDIN_PIPE|STDERR_PIPE, 1,
 			&dumpin, &dataf, &outf, (char **)argv_ptr->pdata);
@@ -1017,6 +1044,13 @@ amgtar_backup(
 
     fclose(mesgstream);
 
+    if (argument->verbose == 0) {
+	if (file_exclude)
+	    unlink(file_exclude);
+	if (file_include)
+	    unlink(file_include);
+    }
+
     amfree(incrname);
     amfree(qdisk);
     amfree(cmd);
@@ -1032,6 +1066,9 @@ amgtar_restore(
     char      **env;
     int         j;
     char       *e;
+    char       *include_filename = NULL;
+    char       *exclude_filename = NULL;
+    int         tarpid;
 
     if (!gnutar_path) {
 	error(_("GNUTAR-PATH not defined"));
@@ -1075,7 +1112,6 @@ amgtar_restore(
 	argument->dle.exclude_list->nb_element == 1) {
 	FILE      *exclude;
 	char      *sdisk;
-	char      *filename;
 	int        in_argv;
 	int        entry_in_exclude = 0;
 	char       line[2*PATH_MAX];
@@ -1084,12 +1120,12 @@ amgtar_restore(
 	if (argument->dle.disk) {
 	    sdisk = sanitise_filename(argument->dle.disk);
 	} else {
-	    sdisk = g_strdup_printf("installcheck-exclude-%d", getpid());
+	    sdisk = g_strdup_printf("no_dle-%d", getpid());
 	}
-	filename = vstralloc(AMANDA_TMPDIR, "/", "exclude-", sdisk,  NULL);
+	exclude_filename= vstralloc(AMANDA_TMPDIR, "/", "exclude-", sdisk,  NULL);
 	exclude_list = fopen(argument->dle.exclude_list->first->name, "r");
 
-	exclude = fopen(filename, "w");
+	exclude = fopen(exclude_filename, "w");
 	while (fgets(line, 2*PATH_MAX, exclude_list)) {
 	    char *escaped;
 	    line[strlen(line)-1] = '\0'; /* remove '\n' */
@@ -1105,7 +1141,7 @@ amgtar_restore(
 	}
 	fclose(exclude);
 	g_ptr_array_add(argv_ptr, stralloc("--exclude-from"));
-	g_ptr_array_add(argv_ptr, filename);
+	g_ptr_array_add(argv_ptr, exclude_filename);
     }
 
     if (argument->exclude_list_glob) {
@@ -1117,7 +1153,6 @@ amgtar_restore(
 	GPtrArray *argv_include = g_ptr_array_new();
 	FILE      *include;
 	char      *sdisk;
-	char      *filename;
 	int        in_argv;
 	guint      i;
 	int        entry_in_include = 0;
@@ -1125,10 +1160,10 @@ amgtar_restore(
 	if (argument->dle.disk) {
 	    sdisk = sanitise_filename(argument->dle.disk);
 	} else {
-	    sdisk = g_strdup_printf("installcheck-include-%d", getpid());
+	    sdisk = g_strdup_printf("no_dle-%d", getpid());
 	}
-	filename = vstralloc(AMANDA_TMPDIR, "/", "include-", sdisk,  NULL);
-	include = fopen(filename, "w");
+	include_filename = vstralloc(AMANDA_TMPDIR, "/", "include-", sdisk,  NULL);
+	include = fopen(include_filename, "w");
 	if (argument->dle.include_list &&
 	    argument->dle.include_list->nb_element == 1) {
 	    char line[2*PATH_MAX];
@@ -1161,7 +1196,7 @@ amgtar_restore(
 
 	if (entry_in_include) {
 	    g_ptr_array_add(argv_ptr, stralloc("--files-from"));
-	    g_ptr_array_add(argv_ptr, filename);
+	    g_ptr_array_add(argv_ptr, include_filename);
 	}
 
 	if (argument->include_list_glob) {
@@ -1176,11 +1211,27 @@ amgtar_restore(
     g_ptr_array_add(argv_ptr, NULL);
 
     debug_executing(argv_ptr);
-    env = safe_env();
-    become_root();
-    execve(cmd, (char **)argv_ptr->pdata, env);
-    e = strerror(errno);
-    error(_("error [exec %s: %s]"), cmd, e);
+
+    tarpid = fork();
+    switch (tarpid) {
+    case -1: error(_("%s: fork returned: %s"), get_pname(), strerror(errno));
+    case 0:
+	env = safe_env();
+	become_root();
+	execve(cmd, (char **)argv_ptr->pdata, env);
+	e = strerror(errno);
+	error(_("error [exec %s: %s]"), cmd, e);
+	break;
+    default: break;
+    }
+
+    waitpid(tarpid, NULL, 0);
+    if (argument->verbose == 0) {
+	if (exclude_filename)
+	    unlink(exclude_filename);
+	if (include_filename)
+	    unlink(include_filename);
+    }
 }
 
 static void
@@ -1370,21 +1421,21 @@ amgtar_get_incrname(
 
 GPtrArray *amgtar_build_argv(
     application_argument_t *argument,
-    char *incrname,
-    int   command)
+    char  *incrname,
+    char **file_exclude,
+    char **file_include,
+    int    command)
 {
     int    nb_exclude;
     int    nb_include;
-    char  *file_exclude;
-    char  *file_include;
     char  *dirname;
     char   tmppath[PATH_MAX];
     GPtrArray *argv_ptr = g_ptr_array_new();
     GSList    *copt;
 
     amgtar_build_exinclude(&argument->dle, 1,
-			   &nb_exclude, &file_exclude,
-			   &nb_include, &file_include);
+			   &nb_exclude, file_exclude,
+			   &nb_include, file_include);
 
     if (gnutar_directory) {
 	dirname = gnutar_directory;
@@ -1435,14 +1486,14 @@ GPtrArray *amgtar_build_argv(
 	g_ptr_array_add(argv_ptr, stralloc((char *)copt->data));
     }
 
-    if(file_exclude) {
+    if (*file_exclude) {
 	g_ptr_array_add(argv_ptr, stralloc("--exclude-from"));
-	g_ptr_array_add(argv_ptr, stralloc(file_exclude));
+	g_ptr_array_add(argv_ptr, stralloc(*file_exclude));
     }
 
-    if(file_include) {
+    if (*file_include) {
 	g_ptr_array_add(argv_ptr, stralloc("--files-from"));
-	g_ptr_array_add(argv_ptr, stralloc(file_include));
+	g_ptr_array_add(argv_ptr, stralloc(*file_include));
     }
     else {
 	g_ptr_array_add(argv_ptr, stralloc("."));

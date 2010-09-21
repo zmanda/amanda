@@ -1,3 +1,8 @@
+2010-09-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Add VERBOSE property,
+	  unlink include/exclude file if VERBOSE if NO.
+	* man/xml-source/amgtar.8.xml: Document VERBOSE property.
+
 2010-09-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am: make the thread check mandatory on FreeBSD
 	* config/amanda/swig.m4: detect FreeBSD
