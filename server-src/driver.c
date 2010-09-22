@@ -892,7 +892,6 @@ startaflush_tape(
 		       (fit->splitsize ? extra_tapes_size : taper_left) &&
 		       (!dp || sched(fit)->act_size > sched(dp)->act_size) &&
 		       strcmp(sched(fit)->datestamp, datestamp) <= 0) {
-g_debug("%ld %ld %ld", fit->splitsize, extra_tapes_size, taper->left);
 			dp = fit;
 		    }
 		    fit = fit->next;
