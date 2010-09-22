@@ -1,4 +1,7 @@
 2010-09-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amvault.pl: add an INFO line for every source volume read
+
+2010-09-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amvault.pl: add extra logging for amreport, and invoke
 	  amreport at the end of a run
 	* perl/Amanda/Logfile.swg server-src/logfile.c server-src/logfile.h:

@@ -192,6 +192,8 @@ sub setup_src {
 	if $chg->isa('Amanda::Changer::Error');
     $src->{'chg'} = $chg;
 
+    $src->{'seen_labels'} = {};
+
     $src->{'interactive'} = main::Interactive->new();
 
     $src->{'scan'} = Amanda::Recovery::Scan->new(
@@ -700,6 +702,12 @@ sub scribe_notif_tape_done {
 sub clerk_notif_part {
     my $self = shift;
     my ($label, $fileno, $header) = @_;
+
+    # see if this is a new label
+    if (!exists $self->{'src'}->{'seen_labels'}->{$label}) {
+	$self->{'src'}->{'seen_labels'}->{$label} = 1;
+	log_add($L_INFO, "reading from source volume '$label'");
+    }
 
     $self->vlog("Reading $label:$fileno: ", $header->summary());
 }
