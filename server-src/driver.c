@@ -780,6 +780,7 @@ startaflush_tape(
     disk_t *fit = NULL;
     char *datestamp;
     off_t extra_tapes_size = 0;
+    off_t taper_left;
     char *qname;
     TapeAction result_tape_action;
     char *why_no_new_tape = NULL;
@@ -847,6 +848,11 @@ startaflush_tape(
 	    }
 	}
 
+	if (taper->state & TAPER_STATE_TAPE_STARTED) {
+	    taper_left = taper->left;
+	} else {
+	    taper_left = tape_length;
+	}
 	dp = NULL;
 	datestamp = sched(tapeq.head)->datestamp;
 	switch(taperalgo) {
@@ -857,7 +863,7 @@ startaflush_tape(
 		fit = tapeq.head;
 		while (fit != NULL) {
 		    if (sched(fit)->act_size <=
-		             (fit->splitsize ? extra_tapes_size : taper->left) &&
+		             (fit->splitsize ? extra_tapes_size : taper_left) &&
 			     strcmp(sched(fit)->datestamp, datestamp) <= 0) {
 			dp = fit;
 			fit = NULL;
@@ -883,9 +889,10 @@ startaflush_tape(
 		fit = tapeq.head;
 		while (fit != NULL) {
 		    if(sched(fit)->act_size <=
-		       (fit->splitsize ? extra_tapes_size : taper->left) &&
+		       (fit->splitsize ? extra_tapes_size : taper_left) &&
 		       (!dp || sched(fit)->act_size > sched(dp)->act_size) &&
 		       strcmp(sched(fit)->datestamp, datestamp) <= 0) {
+g_debug("%ld %ld %ld", fit->splitsize, extra_tapes_size, taper->left);
 			dp = fit;
 		    }
 		    fit = fit->next;
@@ -907,7 +914,7 @@ startaflush_tape(
 		fit = dp = tapeq.head;
 		while (fit != NULL) {
 		    if (sched(fit)->act_size <=
-			(fit->splitsize ? extra_tapes_size : taper->left) &&
+			(fit->splitsize ? extra_tapes_size : taper_left) &&
 			(!dp || sched(fit)->act_size < sched(dp)->act_size) &&
 			strcmp(sched(fit)->datestamp, datestamp) <= 0) {
 			dp = fit;
@@ -924,7 +931,7 @@ startaflush_tape(
 		fit = tapeq.tail;
 		while (fit != NULL) {
 		    if (sched(fit)->act_size <=
-			(fit->splitsize ? extra_tapes_size : taper->left) &&
+			(fit->splitsize ? extra_tapes_size : taper_left) &&
 			(!dp || sched(fit)->act_size < sched(dp)->act_size) &&
 			strcmp(sched(fit)->datestamp, datestamp) <= 0) {
 			dp = fit;

@@ -1,3 +1,7 @@
+2010-09-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c (startaflush_tape): Use tape_length if the
+	  tape is not started.
+
 2010-09-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xslt/html.xsl.in: include Amanda version in HTML footers
 
