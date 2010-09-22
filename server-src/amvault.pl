@@ -106,6 +106,7 @@ use Amanda::Taper::Scan;
 use Amanda::Taper::Scribe;
 use Amanda::Changer qw( :constants );
 use Amanda::Cmdline;
+use Amanda::Paths;
 use Amanda::Logfile qw( :logtype_t log_add log_add_full
 			log_rename $amanda_log_trace_log make_stats );
 
@@ -122,6 +123,7 @@ sub new {
 	quiet => $params{'quiet'},
 	fulls_only => $params{'fulls_only'},
 	opt_export => $params{'opt_export'},
+	config_name => $params{'config_name'},
 
 	src_write_timestamp => $params{'src_write_timestamp'},
 
@@ -166,10 +168,14 @@ sub run {
 	unless (defined $self->{'src_write_timestamp'});
 
     # open up a trace log file and put our imprimatur on it
-    log_add($L_INFO, "pid $$");
+    log_add($L_INFO, "amvault pid $$");
     log_add($L_START, "date " . $self->{'dst_write_timestamp'});
     Amanda::Debug::add_amanda_log_handler($amanda_log_trace_log);
     $self->{'cleanup'}{'roll_trace_log'} = 1;
+
+    # log the timestamp for the report
+    log_add($L_INFO, "vaulting source timestamp $self->{src_write_timestamp}"
+	. ($self->{'fulls_only'}? " (fulls only)" : ""));
 
     $self->setup_src();
 }
@@ -217,6 +223,16 @@ sub plan_cb {
     return $self->failure($err) if $err;
 
     $src->{'plan'} = $plan;
+
+    # output some 'DISK amvault' lines to indicate the disks we will be vaulting
+    my %seen;
+    for my $dump (@{$plan->{'dumps'}}) {
+	my $key = $dump->{'hostname'}."\0".$dump->{'diskname'};
+	next if $seen{$key};
+	$seen{$key} = 1;
+	log_add($L_DISK, quote_string($dump->{'hostname'})
+		 . " " . quote_string($dump->{'diskname'}));
+    }
 
     if (@{$plan->{'dumps'}} == 0) {
 	return $self->failure("No dumps to vault");
@@ -486,7 +502,10 @@ sub quit {
 
     step roll_log => sub {
 	if ($self->{'cleanup'}{'roll_trace_log'}) {
+	    debug("invoking amreport..");
+	    system("$sbindir/amreport", $self->{'config_name'}, "--from-amdump");
 	    debug("rolling logfile..");
+	    log_add_full($L_FINISH, "driver", "fake driver finish");
 	    log_add($L_INFO, "pid-done $$");
 	    log_rename($self->{'dst_write_timestamp'});
 	}
@@ -494,8 +513,6 @@ sub quit {
 	$exit_cb->($exit_status);
     };
 }
-
-# TODO: adjust verbosity: log dumpfiles by default, with debug logging of each part
 
 ## utilities
 
@@ -542,10 +559,6 @@ sub scribe_notif_new_tape {
 		$self->{'dst_write_timestamp'},
 		quote_string($self->{'dst'}->{'label'}),
 		++$self->{'dst'}->{'tape_num'}));
-
-	# and the amdump log
-	# TODO: should amvault create one?!
-	# print STDERR "taper: wrote label '$self->{label}'\n";
     } else {
 	$self->{'dst'}->{'label'} = undef;
 
@@ -580,7 +593,7 @@ sub scribe_notif_part_done {
     }
 
     if ($params{'successful'}) {
-	print STDERR "Wrote $self->{dst}->{label}:$params{'fileno'}: " . $hdr->summary() . "\n";
+	$self->vlog("Wrote $self->{dst}->{label}:$params{'fileno'}: " . $hdr->summary() . "\n");
     }
 }
 
@@ -811,6 +824,7 @@ my $exit_cb = sub {
 };
 
 my $vault = Amvault->new(
+    config_name => $config_name,
     src_write_timestamp => $src_write_timestamp,
     dst_changer => $dst_changer,
     dst_autolabel => $opt_autolabel,

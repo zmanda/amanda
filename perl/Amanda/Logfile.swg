@@ -76,6 +76,7 @@ amglue_add_constant(P_AMDUMP, program_t);
 amglue_add_constant(P_AMIDXTAPED, program_t);
 amglue_add_constant(P_AMFETCHDUMP, program_t);
 amglue_add_constant(P_AMCHECKDUMP, program_t);
+amglue_add_constant(P_AMVAULT, program_t);
 amglue_copy_to_tag(program_t, constants);
 
 /* TODO: support for writing logfiles is omitted for the moment. */

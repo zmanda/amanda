@@ -1,3 +1,11 @@
+2010-09-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amvault.pl: add extra logging for amreport, and invoke
+	  amreport at the end of a run
+	* perl/Amanda/Logfile.swg server-src/logfile.c server-src/logfile.h:
+	  add P_AMVAULT
+	* perl/Amanda/Report.pm perl/Amanda/Report/human.pm
+	  server-src/amreport.pl: handle amvault logs, too
+
 2010-09-21  Orion Poplawski <orion@cora.nwra.com>
 	* server-src/amoverview.pl: fix remaining uninitialized value warnings
 

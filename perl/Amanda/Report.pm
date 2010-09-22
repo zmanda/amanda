@@ -116,6 +116,10 @@ error that forces it into degraded mode.
 
 This flag is set if amflush is run instead of planner.
 
+=item C<amvault_run>
+
+This flag is set if the run was by amvault.
+
 =item C<normal_run>
 
 This flag is set when planner is run.  Its value
@@ -465,13 +469,17 @@ sub read_file
 
     $self->{flags}{historical} = $self->{_historical};
     $self->{flags}{amflush_run} = 0;
-    if (
-        !$self->get_flag("normal_run")
-        && (   ( defined $self->get_program_info("amflush") )
-            && ( scalar %{ $self->get_program_info("amflush") } ) )
-      ) {
-	debug("detected an amflush run");
-        $self->{flags}{amflush_run} = 1;
+    $self->{flags}{amvault_run} = 0;
+    if (!$self->get_flag("normal_run")) {
+        if (   ( defined $self->get_program_info("amflush") )
+            && ( scalar %{ $self->get_program_info("amflush") } ) ) {
+	    debug("detected an amflush run");
+	    $self->{flags}{amflush_run} = 1;
+	} elsif (   ( defined $self->get_program_info("amvault") )
+                 && ( scalar %{ $self->get_program_info("amvault") } ) ) {
+	    debug("detected an amvault run");
+	    $self->{flags}{amvault_run} = 1;
+	}
     }
 
     # check for missing, fail and strange results
@@ -524,6 +532,9 @@ sub read_line
 
     } elsif ( $prog == $P_AMFLUSH ) {
         return $self->_handle_amflush_line( $type, $str );
+
+    } elsif ( $prog == $P_AMVAULT ) {
+        return $self->_handle_amvault_line( $type, $str );
 
     } elsif ( $prog == $P_AMDUMP ) {
         return $self->_handle_amdump_line( $type, $str );
@@ -1036,6 +1047,29 @@ sub _handle_amflush_line
 
     } elsif ( $type == $L_INFO ) {
         return $self->_handle_info_line( "amflush", $str );
+
+    } else {
+        return $self->_handle_bogus_line( $P_AMFLUSH, $type, $str );
+    }
+}
+
+sub _handle_amvault_line
+{
+    my $self = shift @_;
+    my ( $type, $str ) = @_;
+    my $data      = $self->{data};
+    my $disklist  = $data->{disklist};
+    my $programs  = $data->{programs};
+    my $amvault_p = $programs->{amvault} ||= {};
+
+    if ( $type == $L_START ) {
+        return $self->_handle_start_line( "amvault", $str );
+
+    } elsif ( $type == $L_INFO ) {
+        return $self->_handle_info_line( "amvault", $str );
+
+    } elsif ( $type == $L_DISK ) {
+        return $self->_handle_disk_line( "amvault", $str );
 
     } else {
         return $self->_handle_bogus_line( $P_AMFLUSH, $type, $str );

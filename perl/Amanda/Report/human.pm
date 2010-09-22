@@ -45,7 +45,7 @@ use constant COLSPEC_FORMAT    => 5;    # sprintf format
 use constant COLSPEC_TITLE     => 6;    # column title
 
 use constant PROGRAM_ORDER =>
-  qw(amdump planner amflush driver dumper chunker taper reporter);
+  qw(amdump planner amflush amvault driver dumper chunker taper reporter);
 
 
 ## helper functions
@@ -398,10 +398,12 @@ sub output_tapeinfo
 
     if (@$tape_labels > 0) {
 
-	# slightly different sentence for amflush and amdump
+	# slightly different sentence depending on the run type
         my $tapelist_str;
 	if ($report->get_flag("amflush_run")) {
 	    $tapelist_str = "The dumps were flushed ";
+	} elsif ($report->get_flag("amvault_run")) {
+	    $tapelist_str = "The dumps were vaulted ";
 	} else {
 	    $tapelist_str = "These dumps were ";
 	}

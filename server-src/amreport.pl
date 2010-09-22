@@ -385,7 +385,8 @@ sub open_mail_output
 
     my $subj_str =
         getconf($CNF_ORG) . $done
-      . ( $report->get_flag("amflush_run") ? " AMFLUSH" : " AMANDA" )
+      . ( $report->get_flag("amflush_run") ? " AMFLUSH" :
+	  $report->get_flag("amvault_run") ? " AMVAULT" : " AMANDA" )
       . " MAIL REPORT FOR "
       . $date;
 
