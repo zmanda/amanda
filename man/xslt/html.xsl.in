@@ -149,4 +149,9 @@
   </span>
 </xsl:template>
 
+<xsl:template name="user.footer.content">
+  <hr />
+  <center>Amanda-@VERSION@</center>
+</xsl:template>
+
 </xsl:stylesheet>

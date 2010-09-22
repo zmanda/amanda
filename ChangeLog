@@ -1,4 +1,7 @@
 2010-09-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xslt/html.xsl.in: include Amanda version in HTML footers
+
+2010-09-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amvault.pl: add an INFO line for every source volume read
 
 2010-09-22  Dustin J. Mitchell <dustin@zmanda.com>
