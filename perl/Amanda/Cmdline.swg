@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -94,6 +94,7 @@ amglue_add_flag_tag_fns(cmdline_parse_dumpspecs_flags);
 amglue_add_constant(CMDLINE_PARSE_DATESTAMP, cmdline_parse_dumpspecs_flags);
 amglue_add_constant(CMDLINE_PARSE_LEVEL, cmdline_parse_dumpspecs_flags);
 amglue_add_constant(CMDLINE_EMPTY_TO_WILDCARD, cmdline_parse_dumpspecs_flags);
+amglue_copy_to_tag(cmdline_parse_dumpspecs_flags, constants);
 
 %rename(parse_dumpspecs) cmdline_parse_dumpspecs;
 amglue_dumpspec_list *cmdline_parse_dumpspecs(int argc, char **argv, int flags);
@@ -142,4 +143,4 @@ gboolean header_matches_dumpspecs(dumpfile_t *dumpfile, amglue_dumpspec_list *du
 }
 %}
 
-amglue_export_ok(header_matches_dumpspecs);
+amglue_export_ok(header_matches_dumpspecs parse_dumpspecs format_dumpspec_components);

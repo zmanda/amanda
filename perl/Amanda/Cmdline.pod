@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -36,23 +36,35 @@ Amanda::Cmdline - utilities for handling command lines
 
 =head1 Amanda::Cmdline::dumpspec_t Objects
 
-=head2 Instance Variables
+Note that this class was called C<Amanda::Cmdline::dumpspec_t> in older versions;
+that name will still work, but is deprecated.
+
+=head2 Keys
+
+Each key contains a match expression, in the form of a string, or undef.  Note
+that the values of these keys are read-only.
 
 =over
 
-=item C<$host>
+=item C<< $ds->{'host'} >>
 
-=item C<$disk>
+Hostname
 
-=item C<$datestamp>
+=item C<< $ds->{'disk'} >>
+
+Disk name
+
+=item C<< $ds->{'datestamp'} >>
 
 Dump timestamp.
 
-=item C<$level>
+=item C<< $ds->{'level'} >>
 
-=item C<$write_timestamp>
+Dump level
 
-Timestamp when the dump is written to tape.
+=item C<< $ds->{'write_timestamp'} >>
+
+Timestamp when the dump is written to storage media.
 
 =back
 
@@ -60,13 +72,13 @@ Timestamp when the dump is written to tape.
 
 =over
 
-=item C<format()>
+=item C<< $ds->format() >>
 
 Format the dumpspec as a string.
 
 =back
 
-=head1 Functions
+=head1 Package Functions
 
 =over
 
@@ -74,14 +86,25 @@ Format the dumpspec as a string.
 
 This function returns a string representing the formatted form of the
 given dumpspec.  This formatting is the same as performed by
-C<format_dumpspec_components>, but does not need a C<dumpspec_t>.
+C<< $ds->format() >>, but does not need a C<Dumpspec>.
 
 =item C<parse_dumpspecs([@cmdline], $flags)>
 
-This function parses C<@cmdline> into a list of C<dumpspec_t> objects,
+This function parses C<@cmdline> into a list of C<Dumpspec> objects,
 according to C<$flags>, which is a logical combination of zero or more
-of C<$CMDLINE_PARSE_DATESTAMP> to recognize datestamps and
-C<$CMDLINE_PARSE_LEVEL> to recognize levels.
+of
+
+ $CMDLINE_PARSE_DATESTAMP - recognize datestamps
+ $CMDLINE_PARSE_LEVEL - recognize levels
+ $CMDLINE_EMPTY_TO_WILDCARD - if @cmdline is empty, make a wildcard dumpspec
+
+These constants are available in export tag C<:constants>.  The command-line
+format is
+
+  [host [disk [datestamp [level [host [..]]]]]]
+
+Note that there is no facility for specifying C<write_timestamp> on the command
+line.
 
 =item C<header_matches_dumpspecs($hdr, [@dumpspecs])>
 

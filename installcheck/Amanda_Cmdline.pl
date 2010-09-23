@@ -62,8 +62,6 @@ is_deeply([ ds2av(Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, undef, "
 	  [ undef, undef, undef, undef, "wt" ],
 	  "dumpspec_t constructor returns a valid dumpspec with only write_timestamp arg");
 
-# TODO: test parse_dumpspecs
-
 @specs = Amanda::Cmdline::parse_dumpspecs(["h1", "d1", "h2", "d2"], 0);
 is(@specs, 2, "parse of four elements with no flags yields 2 specs");
 is_deeply([ ds2av($specs[0]) ], [ "h1", "d1", undef, undef, undef ], "..first spec is correct");

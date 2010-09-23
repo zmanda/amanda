@@ -34,32 +34,38 @@
 	    <replaceable>autolabel-arg</replaceable></arg></group>
     <arg choice='opt'>--fulls-only </arg>
     <arg choice='opt'>--export </arg>
+    <arg choice='req'><option>--src-timestamp</option>
+	    <replaceable>src-timestamp</replaceable></arg>
+    <arg choice='req'><option>--dst-changer</option>
+	    <replaceable>dst-changer</replaceable></arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
-    <arg choice='plain'><replaceable>src-run-timestamp</replaceable></arg>
-    <arg choice='plain'><replaceable>dst-changer</replaceable></arg>
+    <arg choice='opt'>
+      <arg choice='plain'><replaceable>hostname</replaceable></arg>
+      <arg choice='opt'>
+        <arg choice='plain'><replaceable>disk</replaceable></arg>
+        <arg choice='opt'>
+          <arg choice='plain'><replaceable>date</replaceable></arg>
+          <arg choice='opt'>
+            <arg choice='plain'><replaceable>level</replaceable></arg>
+            <arg choice='opt'>
+              <arg choice='plain'><replaceable>hostname</replaceable></arg>
+              <arg choice='opt'>...</arg>
+            </arg>
+          </arg>
+        </arg>
+      </arg>
+    </arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsect1><title>WARNING</title>
+
 <para>This application is not yet in its final form, and is subject to major revision
 in subsequent versions of Amanda.  Backward compatibility is not guaranteed.</para>
 
-<para>The <option>--label-template</option> option is required, and specifies a label
-template which is used to generate new labels for tertiary volumes.  The
-<option>--autolabel</option> option works just like the
-<amkeyword>autolabel</amkeyword> parameter in &amconf;, and can be
-specified multiple times if necessary.  The default is 'empty'.</para>
-
-<para>The significant limitations of this version of amvault are: 
-restore/recover operations will request tertiary media by label when
-dumpfiles are not found on secondary media, but there is no provision to
-automatically fetch such media from a different changer; and all dumpfiles
-on a secondary volume are moved to tertiary media - there is no provision
-to filter dumps, aside from the <option>--fulls-only</option> option.</para>
-
-<para>The <option>--export</option> option will cause amvault to attempt to move
-completed tertiary volumes to import/export slots, where they can be
-more easily removed by an operator.</para>
+<para>Note that Amanda restore/recover operations will request tertiary media
+by label when dumpfiles are not found on secondary media, but there is no
+provision to automatically fetch such media from a different changer</para>
 
 <para>Feedback on and patches to this application are invited and
 encouraged!</para>
@@ -68,20 +74,40 @@ encouraged!</para>
 
 <refsect1><title>DESCRIPTION</title>
 
+<para>Amvault is conceptually equivalent to "amfetchdump | taper".  That is, it reads
+specified dumps from secondary media and re-writes them on tertiary media.</para>
+
 <para><emphasis remap='B'>Amvault</emphasis> Copies data from the run with
-timestamp <option>src-run-timestamp</option> onto volumes using the changer
-<option>dst-changer</option>, labeling new volumes with
-<option>label-template</option>.  If <option>src-run-timestamp</option> is
+timestamp <option>src-timestamp</option> onto volumes using the changer
+<option>dst-changer</option>, and labeling new volumes with
+<option>label-template</option>.  If <option>src-timestamp</option> is
 "latest", then the most recent amdump or amflush run will be used.  If
 <option>--fulls-only</option> is given, then only full (level-0) dumps are
 copied.</para>
 
-<para>In a vaulting operation, the source media is referred to as "secondary
-media", while the destination is referred to as "tertiary media".</para>
+<refsect2><title>Secondary Media</title>
 
-<para>Each source volume will be copied to a new destination volume; no
-re-assembly or splitting will be performed.  Destination volumes must be at
-least as large as the source volumes.</para>
+<para>The dumps to be read from secondary media can be specified by any combination of
+dumpspecs (host, disk, datestamp, and level patterns, similar to amfetchdump),
+<option>--fulls-only</option>, and <option>--src-timestamp</option>.  At least one
+must be specified, lest amvault attempt to vault all dumps in the catalog.</para>
+
+<para>Note that the datestamp given in the dumpspec is the
+<emphasis>dump</emphasis> datestamp - the run in which the backup was taken
+on the Amanda client.  The <option>--src-timestamp</option>, on the other
+hand, is the <emphasis>write</emphasis> timestamp - the run in which the
+dump was written to secondary media.  The latter option facilitates
+duplicating the results of an entire backup run, including any dumps that
+might have been flushed from holding disk.</para>
+
+</refsect2>
+
+<refsect2><title>Tertiary Media</title>
+
+<para>The <option>--dst-changer</option> must be specified, and names the changer
+in which tertiary media are stored.  In general, this should be different
+from the secondary changer, to eliminate the possibility of overwriting
+secondary media with tertiary data.</para>
 
 <para>The changer parameter should specify the name of a changer defined in
 &amconf;.  For example:
@@ -94,10 +120,23 @@ define changer vaulting_tape {
 }
 </programlisting></para>
 
+<para>The <option>--label-template</option> option is required, and specifies a
+label template which is used to generate new labels for tertiary volumes.
+The <option>--autolabel</option> option works just like the
+<amkeyword>autolabel</amkeyword> parameter in &amconf;, and can be
+specified multiple times if necessary.  The default is 'empty'.</para>
+
+<para>The <option>--export</option> option will cause amvault to attempt to move
+completed tertiary volumes to import/export slots, where they can be
+more easily removed by an operator.</para>
+
+</refsect2>
+
 </refsect1>
 
 <seealso>
 <manref name="amanda-changers" vol="7"/>
+<manref name="amfetchdump" vol="8"/>
 </seealso>
 
 </refentry>

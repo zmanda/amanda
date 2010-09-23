@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 6;
+use Test::More tests => 9;
 use strict;
 use warnings;
 
@@ -56,8 +56,44 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 # and then set up a new vtape to vault onto
 my $tertiary_chg = setup_chg_disk();
 
-ok(run("$sbindir/amvault", '--autolabel=all', '--label-template', "TESTCONF%%",
-			    'TESTCONF', 'latest', $tertiary_chg),
+# try a few failures first
+like(run_err("$sbindir/amvault",
+		'--autolabel=all',
+		'--label-template', "TESTCONF%%",
+		'--src-timestamp', 'latest',
+		'--dst-changer', $tertiary_chg,
+		'TESTCONF', 'someotherhost'),
+    qr/No dumps to vault/,
+    "amvault with a non-matching dumpspec dumps nothing")
+    or diag($Installcheck::Run::stderr);
+
+like(run_err("$sbindir/amvault",
+		'--autolabel=all',
+		'--label-template', "TESTCONF%%",
+		'--src-timestamp', 'latest',
+		'--fulls-only',
+		'--dst-changer', $tertiary_chg,
+		'TESTCONF', '*', '*', '*', '1-3'),
+    qr/No dumps to vault/,
+    "amvault with --fulls-only but specifying non-full dumpspecs dumps nothing")
+    or diag($Installcheck::Run::stderr);
+
+like(run_err("$sbindir/amvault",
+		'--autolabel=all',
+		'--label-template', "TESTCONF%%",
+		'--dst-changer', $tertiary_chg,
+		'TESTCONF'),
+    qr/specify something to select/,
+    "amvault without any limiting factors is an error"),
+    or diag($Installcheck::Run::stderr);
+
+# now a successful vaulting
+ok(run("$sbindir/amvault",
+		'--autolabel=all',
+		'--label-template', "TESTCONF%%",
+		'--src-timestamp', 'latest',
+		'--dst-changer', $tertiary_chg,
+		'TESTCONF'),
     "amvault runs!")
     or diag($Installcheck::Run::stderr);
 
@@ -122,8 +158,13 @@ define changer "tertiary" {
 EOF
 
     $tertiary_chg = "tertiary";
-    ok(run("$sbindir/amvault", '--export', '--autolabel=all', '--label-template', "TESTCONF%%",
-			'TESTCONF', 'latest', $tertiary_chg),
+    ok(run("$sbindir/amvault",
+		    '--export',
+		    '--autolabel=all',
+		    '--label-template', "TESTCONF%%",
+		    '--src-timestamp', 'latest',
+		    '--dst-changer', $tertiary_chg,
+		    'TESTCONF'),
 	"amvault runs with an NDMP device as secondary and tertiary, with --export")
 	or diag($Installcheck::Run::stderr);
 

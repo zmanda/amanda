@@ -544,11 +544,6 @@ if ($mode == MODE_CMDLINE) {
     calculate_legacy_outputs();
 }
 
-if (!@outputs) {
-    print "no output specified, nothing to do\n";
-    exit(0);
-}
-
 ## Parse the report & set output
 
 $report = Amanda::Report->new($logfile, $historical);

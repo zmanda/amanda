@@ -108,7 +108,8 @@ use Amanda::Changer qw( :constants );
 use Amanda::Cmdline;
 use Amanda::Paths;
 use Amanda::Logfile qw( :logtype_t log_add log_add_full
-			log_rename $amanda_log_trace_log make_stats );
+			log_rename $amanda_log_trace_log make_stats
+			match_datestamp match_level );
 
 use base qw(
     Amanda::Recovery::Clerk::Feedback
@@ -123,6 +124,7 @@ sub new {
 	quiet => $params{'quiet'},
 	fulls_only => $params{'fulls_only'},
 	opt_export => $params{'opt_export'},
+	opt_dumpspecs => $params{'opt_dumpspecs'},
 	config_name => $params{'config_name'},
 
 	src_write_timestamp => $params{'src_write_timestamp'},
@@ -157,25 +159,11 @@ sub run {
 	if ($dst_label_template =~ /%[^%]+%/
 	    or $dst_label_template =~ /^[^%]+$/);
 
-    # translate "latest" into the most recent timestamp that wasn't created by amvault
-    if ($self->{'src_write_timestamp'} eq "latest") {
-	my $ts = $self->{'src_write_timestamp'} =
-	    Amanda::DB::Catalog::get_latest_write_timestamp(types => ['amdump', 'amflush']);
-	$self->vlog("Using latest timestamp: $ts");
-    }
-
-    return $self->failure("No dumps found")
-	unless (defined $self->{'src_write_timestamp'});
-
     # open up a trace log file and put our imprimatur on it
     log_add($L_INFO, "amvault pid $$");
     log_add($L_START, "date " . $self->{'dst_write_timestamp'});
     Amanda::Debug::add_amanda_log_handler($amanda_log_trace_log);
     $self->{'cleanup'}{'roll_trace_log'} = 1;
-
-    # log the timestamp for the report
-    log_add($L_INFO, "vaulting source timestamp $self->{src_write_timestamp}"
-	. ($self->{'fulls_only'}? " (fulls only)" : ""));
 
     $self->setup_src();
 }
@@ -206,13 +194,90 @@ sub setup_src {
 	    scan => $src->{'scan'});
     $self->{'cleanup'}{'quit_clerk'} = 1;
 
-    # convert the timestamp to a dumpspec for make_plan
-    my $levelspec = $self->{'fulls_only'}? "0" : undef;
-    my $ds = Amanda::Cmdline::dumpspec_t->new(
-	    undef, undef, $self->{'src_write_timestamp'}, $levelspec, undef);
+    # translate "latest" into the most recent timestamp that wasn't created by amvault
+    if (defined $self->{'src_write_timestamp'} && $self->{'src_write_timestamp'} eq "latest") {
+	my $ts = $self->{'src_write_timestamp'} =
+	    Amanda::DB::Catalog::get_latest_write_timestamp(types => ['amdump', 'amflush']);
+	return $self->failure("No dumps found")
+	    unless defined $ts;
+
+	$self->vlog("Using latest timestamp: $ts");
+    }
+
+    # we need to combine fulls_only, src_write_timestamp, and the set
+    # of dumpspecs.  If they contradict one another, then drop the
+    # non-matching dumpspec with a warning.
+    my @dumpspecs;
+    if ($self->{'opt_dumpspecs'}) {
+	my $level = $self->{'fulls_only'}? "0" : undef;
+	my $swt = $self->{'src_write_timestamp'};
+
+	# filter and adjust the dumpspecs
+	for my $ds (@{$self->{'opt_dumpspecs'}}) {
+	    my $ds_host = $ds->{'host'};
+	    my $ds_disk = $ds->{'disk'};
+	    my $ds_datestamp = $ds->{'datestamp'};
+	    my $ds_level = $ds->{'level'};
+	    my $ds_write_timestamp = $ds->{'write_timestamp'};
+
+	    if ($swt) {
+		# it's impossible for parse_dumpspecs to set write_timestamp,
+		# so there's no risk of overlap here
+		$ds_write_timestamp = $swt;
+	    }
+
+	    if (defined $level) {
+		if (defined $ds_level &&
+		    !match_level($ds_level, $level)) {
+		    $self->vlog("WARNING: dumpspec " . $ds->format() .
+			    " specifies non-full dumps, contradicting --fulls-only;" .
+			    " ignoring dumpspec");
+		    next;
+		}
+		$ds_level = $level;
+	    }
+
+	    # create a new dumpspec, since dumpspecs are immutable
+	    push @dumpspecs, Amanda::Cmdline::dumpspec_t->new(
+		$ds_host, $ds_disk, $ds_datestamp, $ds_level, $ds_write_timestamp);
+	}
+    } else {
+	# convert the timestamp and level to a dumpspec
+	my $level = $self->{'fulls_only'}? "0" : undef;
+	push @dumpspecs, Amanda::Cmdline::dumpspec_t->new(
+		undef, undef, $self->{'src_write_timestamp'}, $level, undef);
+    }
+
+    # if we ignored all of the dumpspecs and didn't create any, then dump
+    # nothing.  We do *not* want the wildcard "vault it all!" behavior.
+    if (!@dumpspecs) {
+	return $self->failure("No dumps to vault");
+    }
+
+    # summarize the requested dumps
+    my $request;
+    if ($self->{'src_write_timestamp'}) {
+	$request = "vaulting from volumes written " . $self->{'src_write_timestamp'};
+    } else {
+	$request = "vaulting";
+    }
+    if ($self->{'opt_dumpspecs'}) {
+	$request .= " dumps matching dumpspecs:";
+    }
+    if ($self->{'fulls_only'}) {
+	$request .= " (fulls only)";
+    }
+    log_add($L_INFO, $request);
+
+    # and log the dumpspecs if they were given
+    if ($self->{'opt_dumpspecs'}) {
+	for my $ds (@{$self->{'opt_dumpspecs'}}) {
+	    log_add($L_INFO, "  " . $ds->format());
+	}
+    }
 
     Amanda::Recovery::Planner::make_plan(
-	    dumpspec => $ds,
+	    dumpspecs => \@dumpspecs,
 	    changer => $src->{'chg'},
 	    plan_cb => sub { $self->plan_cb(@_) });
 }
@@ -524,6 +589,12 @@ sub failure {
     print STDERR "$msg\n";
 
     debug("failure: $msg");
+
+    # if we've got a logfile open that will be rolled, we might as well log
+    # an error.
+    if ($self->{'cleanup'}{'roll_trace_log'}) {
+	log_add($L_FATAL, "$msg");
+    }
     $self->quit(1);
 }
 
@@ -595,7 +666,7 @@ sub scribe_notif_part_done {
     }
 
     if ($params{'successful'}) {
-	$self->vlog("Wrote $self->{dst}->{label}:$params{'fileno'}: " . $hdr->summary() . "\n");
+	$self->vlog("Wrote $self->{dst}->{label}:$params{'fileno'}: " . $hdr->summary());
     }
 }
 
@@ -717,7 +788,7 @@ sub clerk_notif_holding {
     my ($filename, $header) = @_;
 
     # this used to give the fd from which the holding file was being read.. why??
-    $self->vlog("Reading '$filename'\n", $header->summary());
+    $self->vlog("Reading '$filename'", $header->summary());
 }
 
 ## Application initialization
@@ -727,33 +798,39 @@ use Amanda::Config qw( :init :getconf );
 use Amanda::Debug qw( :logging );
 use Amanda::Util qw( :constants );
 use Getopt::Long;
+use Amanda::Cmdline qw( :constants parse_dumpspecs );
 
 sub usage {
     my ($msg) = @_;
 
-    print <<EOF;
+    print STDERR <<EOF;
 **NOTE** this interface is under development and will change in future releases!
 
 Usage: amvault [-o configoption]* [-q|--quiet] [--fulls-only] [--export]
-	--label-template=<label-template>
+	[--src-timestamp=<src-timestamp>]
+	--label-template=<label-template> --dst-changer=<dst-changer>
 	[--autolabel={other_config|non_amanda|volume_error|empty|any}]*
-	<conf> <src-run-timestamp> <dst-changer>
+	<conf> [<host-expr> [<disk-expr> [<datestamp-expr> [<level-expr> ..]]]]
 
     -o: configuration override (see amanda(8))
     -q: quiet progress messages
     --fulls-only: only copy full (level-0) dumps
     --export: move completed destination volumes to import/export slots
+    --src-timestamp: the timestamp of the Amanda run that should be vaulted
     --label-template: the template to use for new volume labels
+    --dst-changer: the changer to which dumps should be written
     --autolabel: similar to the amanda.conf parameter; may be repeated (default: empty)
 
-Copies data from the run with timestamp <src-run-timestamp> onto volumes using
+Copies data from the run with timestamp <src-timestamp> onto volumes using
 the changer <dst-changer>, labeling new volumes with <label-template>.  If
-<src-run-timestamp> is "latest", then the most recent run of amdump or amflush
-will be used.
+<src-timestamp> is "latest", then the most recent run of amdump or amflush
+will be used.  If any dumpspecs are included (<host-expr> and so on), then only
+dumps matching those dumpspecs will be dumped.  At least one of --fulls-only,
+--src-timestamp, or a dumpspec must be specified.
 
 EOF
     if ($msg) {
-	print "ERROR: $msg\n";
+	print STDERR "ERROR: $msg\n";
     }
     exit(1);
 }
@@ -766,6 +843,8 @@ my $opt_fulls_only = 0;
 my $opt_export = 0;
 my $opt_autolabel = {};
 my $opt_autolabel_seen = 0;
+my $opt_src_write_timestamp;
+my $opt_dst_changer;
 
 sub set_label_template {
     usage("only one --label-template allowed") if $opt_autolabel->{'template'};
@@ -802,15 +881,23 @@ GetOptions(
     'export' => \$opt_export,
     'label-template=s' => \&set_label_template,
     'autolabel=s' => \&add_autolabel,
+    'src-timestamp=s' => \$opt_src_write_timestamp,
+    'dst-changer=s' => \$opt_dst_changer,
     'version' => \&Amanda::Util::version_opt,
     'help' => \&usage,
 ) or usage("usage error");
-
-usage("not enough arguments") unless (@ARGV == 3);
-usage("no --label-template given") unless $opt_autolabel->{'template'};
 $opt_autolabel->{'empty'} = 1 unless $opt_autolabel_seen;
 
-my ($config_name, $src_write_timestamp, $dst_changer) = @ARGV;
+usage("not enough arguments") unless (@ARGV >= 1);
+
+my $config_name = shift @ARGV;
+my @opt_dumpspecs = parse_dumpspecs(\@ARGV, $CMDLINE_PARSE_DATESTAMP|$CMDLINE_PARSE_LEVEL)
+    if (@ARGV);
+
+usage("no --label-template given") unless $opt_autolabel->{'template'};
+usage("no --dst-changer given") unless $opt_dst_changer;
+usage("specify something to select the source dumps") unless
+    $opt_src_write_timestamp or $opt_fulls_only or @opt_dumpspecs;
 
 set_config_overrides($config_overrides);
 config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
@@ -833,10 +920,11 @@ my $exit_cb = sub {
 
 my $vault = Amvault->new(
     config_name => $config_name,
-    src_write_timestamp => $src_write_timestamp,
-    dst_changer => $dst_changer,
+    src_write_timestamp => $opt_src_write_timestamp,
+    dst_changer => $opt_dst_changer,
     dst_autolabel => $opt_autolabel,
     dst_write_timestamp => Amanda::Util::generate_timestamp(),
+    opt_dumpspecs => @opt_dumpspecs? \@opt_dumpspecs : undef,
     quiet => $opt_quiet,
     fulls_only => $opt_fulls_only,
     opt_export => $opt_export);

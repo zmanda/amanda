@@ -1068,6 +1068,12 @@ sub _handle_amvault_line
     } elsif ( $type == $L_INFO ) {
         return $self->_handle_info_line( "amvault", $str );
 
+    } elsif ( $type == $L_ERROR ) {
+        return $self->_handle_error_line( "amvault", $str );
+
+    } elsif ( $type == $L_FATAL ) {
+        return $self->_handle_fatal_line( "amvault", $str );
+
     } elsif ( $type == $L_DISK ) {
         return $self->_handle_disk_line( "amvault", $str );
 

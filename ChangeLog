@@ -1,3 +1,15 @@
+2010-09-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Cmdline.pod perl/Amanda/Cmdline.swg: update POD, add
+	  exports
+	* server-src/amreport.pl: don't print anything in script mode when
+	  there is nothing to do
+	* perl/Amanda/Report.pm: handle ERROR and FATAL from amvault
+	* server-src/amvault.pl: make dst-changer and src-timestamp into
+	  --options and add support for dumpspecs
+	* man/xml-source/amvault.8.xml: document
+	* installcheck/amvault.pl: test changes
+	* installcheck/Amanda_Cmdline.pl: remove TODO
+
 2010-09-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c (startaflush_tape): Use tape_length if the
 	  tape is not started.
