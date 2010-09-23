@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 164;
+use Test::More tests => 166;
 
 use strict;
 use warnings;
@@ -244,9 +244,12 @@ results_match($printer_output,
 
 cleanup();
 
-like(run_get($amreport, 'TESTCONF', '-i'),
-    qr/nothing to do/,
-    "amreport -i, with mailer, mailto, and a template, prints an error but exit==0");
+ok(run($amreport, 'TESTCONF', '-i'),
+    "amreport -i, with mailer, mailto, and a template => no error");
+ok(! -f $mail_output,
+    "..doesn't mail");
+ok(! -f $printer_output,
+    "..doesn't print");
 
 cleanup();
 
@@ -409,10 +412,8 @@ results_match($printer_output,
 setup_config(catalog => 'normal',
     want_mailer => 1);
 
-like(run_get($amreport, 'TESTCONF', '--from-amdump'),
-    qr/nothing to do/,
-    "amreport --from-amdump, with mailer but no mailto and no template, "
-    . "prints an error but exit==0");
+ok(run($amreport, 'TESTCONF', '--from-amdump'),
+    "amreport --from-amdump, with mailer but no mailto and no template => exit==0");
 ok(! -f $mail_output, "..doesn't mail");
 ok(! -f $printer_output, "..doesn't print");
 
@@ -437,10 +438,9 @@ like(run_err($amreport, 'TESTCONF', '--from-amdump', '-o', 'mailto=ill\egal'),
 setup_config(catalog => 'normal',
     want_mailer => 1, want_template => 1);
 
-like(run_get($amreport, 'TESTCONF', '--from-amdump'),
-    qr/nothing to do/, ## this is arguably a bug, but we'll keep it
+ok(run($amreport, 'TESTCONF', '--from-amdump'),
     "no-args amreport with mailer, no mailto, and a template does nothing even though it could "
-	. "print a label");
+	. "print a label"); # arguably a bug, but we'll keep it for now
 ok(! -f $mail_output, "..doesn't mail");
 ok(! -f $printer_output, "..doesn't print");
 
