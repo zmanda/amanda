@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -54,6 +54,17 @@ char *  str_sockaddr(sockaddr_union *sa);
 int     cmp_sockaddr(sockaddr_union *su1,
 		     sockaddr_union *su2,
 		     int addr_only);
+
+/* Parse a string into a sockaddr.  This will try all available address
+ * families.
+ *
+ * @param src: the string representation of the address
+ * @param dst: the sockaddr_union in which to store the result
+ * @returns: 1 on success, -1 on error, or 0 if unparseable
+ */
+int	str_to_sockaddr(
+	const char *src,
+	sockaddr_union *dst);
 
 /* Copy a sockaddr object.
  *

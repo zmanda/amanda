@@ -34,6 +34,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module base64:
   # Code from module btowc:
   # Code from module c++defs:
+  # Code from module c-ctype:
   # Code from module configmake:
   # Code from module environ:
   # Code from module errno:
@@ -57,6 +58,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module hostent:
   # Code from module include_next:
   # Code from module inet_ntop:
+  # Code from module inet_pton:
   # Code from module langinfo:
   # Code from module localcharset:
   # Code from module lock:
@@ -134,6 +136,7 @@ AC_DEFUN([gl_INIT],
   gl_FUNC_BTOWC
   gl_WCHAR_MODULE_INDICATOR([btowc])
   # Code from module c++defs:
+  # Code from module c-ctype:
   # Code from module configmake:
   # Code from module environ:
   gl_ENVIRON
@@ -177,6 +180,9 @@ AC_DEFUN([gl_INIT],
   # Code from module inet_ntop:
   gl_FUNC_INET_NTOP
   gl_ARPA_INET_MODULE_INDICATOR([inet_ntop])
+  # Code from module inet_pton:
+  gl_FUNC_INET_PTON
+  gl_ARPA_INET_MODULE_INDICATOR([inet_pton])
   # Code from module langinfo:
   gl_LANGINFO_H
   # Code from module localcharset:
@@ -434,6 +440,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/base64.c
   lib/base64.h
   lib/btowc.c
+  lib/c-ctype.c
+  lib/c-ctype.h
   lib/config.charset
   lib/errno.in.h
   lib/float+.h
@@ -459,6 +467,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/glthread/lock.h
   lib/glthread/threadlib.c
   lib/inet_ntop.c
+  lib/inet_pton.c
   lib/langinfo.in.h
   lib/localcharset.c
   lib/localcharset.h
@@ -543,6 +552,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/hostent.m4
   m4/include_next.m4
   m4/inet_ntop.m4
+  m4/inet_pton.m4
   m4/intmax_t.m4
   m4/inttypes_h.m4
   m4/langinfo_h.m4

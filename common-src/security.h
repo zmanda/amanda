@@ -102,6 +102,9 @@ typedef struct security_driver {
     void (*accept)(const struct security_driver *, char *(*)(char *, void *),
 	    int, int, void (*)(struct security_handle *, pkt_t *), void *);
 
+    /* get the remote hostname */
+    char *(*get_authenticated_peer_name)(struct security_handle *handle);
+
     /*
      * Frees up handles allocated by the previous methods
      */
@@ -257,6 +260,18 @@ typedef struct security_handle {
  */
 #define	security_accept(driver, conf_fn, in, out, fn, datap)	\
     (*(driver)->accept)(driver, conf_fn, in, out, fn, datap)
+
+/* char *security_get_authenticated_peer_name(
+ *  security_handle_t *handle);
+ *
+ * Returns the fully qualified, authenticated hostname of the peer, or
+ * "localhost" for a local system.  The string is statically allocated and need
+ * not be freed.  The string will never be NULL, but may be an empty string if
+ * the remote identity is not known, not defined, or could not be
+ * authenticated.
+ */
+#define	security_get_authenticated_peer_name(handle) \
+    (*(handle)->driver->get_authenticated_peer_name)(handle)
 
 /* Closes a security stream created by a security_connect() or
  * security_accept() and frees up resources associated with it. */

@@ -102,7 +102,7 @@ sec_accept(
 {
     struct tcp_conn *rc;
 
-    rc = sec_tcp_conn_get("unknown",0);
+    rc = sec_tcp_conn_get("",0); /* no hostname yet */
     rc->read = in;
     rc->write = out;
     rc->accept_fn = fn;
@@ -2615,7 +2615,7 @@ check_name_give_sockaddr(
 	}
     }
 
-    dbprintf(_("%s doesn't resolve to %s"),
+    g_debug("%s doesn't resolve to %s",
 	    hostname, str_sockaddr((sockaddr_union *)addr));
     *errstr = newvstrallocf(*errstr,
 			   "%s doesn't resolve to %s",
@@ -2654,4 +2654,21 @@ find_port_for_service(
     }
 
     return port;
+}
+
+char *
+sec_get_authenticated_peer_name_localhost(
+    security_handle_t *hdl G_GNUC_UNUSED)
+{
+    return "localhost";
+}
+
+char *
+sec_get_authenticated_peer_name_hostname(
+    security_handle_t *hdl)
+{
+    char *hostname = ((struct sec_handle *)hdl)->hostname;
+    if (!hostname)
+	hostname = "";
+    return hostname;
 }

@@ -39,6 +39,7 @@
 #include "packet.h"
 #include "security.h"
 #include "security-util.h"
+#include "sockaddr-util.h"
 #include "stream.h"
 
 /*
@@ -58,6 +59,10 @@
 static void	ssh_connect(const char *, char *(*)(char *, void *),
 			void (*)(void *, security_handle_t *, security_status_t),
 			void *, void *);
+static void ssh_accept(const security_driver_t *driver, char *(*conf_fn)(char *, void *),
+			int in, int out,
+			void (*fn)(security_handle_t *, pkt_t *),
+			void *datap);
 
 /*
  * This is our interface to the outside world.
@@ -65,7 +70,8 @@ static void	ssh_connect(const char *, char *(*)(char *, void *),
 const security_driver_t ssh_security_driver = {
     "SSH",
     ssh_connect,
-    sec_accept,
+    ssh_accept,
+    sec_get_authenticated_peer_name_hostname,
     sec_close,
     stream_sendpkt,
     stream_recvpkt,
@@ -178,6 +184,90 @@ ssh_connect(
 
 error:
     (*fn)(arg, &rh->sech, S_ERROR);
+}
+
+/* like sec_accept, but first it gets the remote system's hostname */
+static void
+ssh_accept(
+    const security_driver_t *driver,
+    char       *(*conf_fn)(char *, void *),
+    int		in,
+    int		out,
+    void	(*fn)(security_handle_t *, pkt_t *),
+    void       *datap)
+{
+    struct sec_handle *rh;
+    struct tcp_conn *rc = sec_tcp_conn_get("", 0);
+    char *ssh_connection, *p;
+    char *errmsg = NULL;
+    sockaddr_union addr;
+    int result;
+
+    /* "Accepting" an SSH connection means that amandad was invoked via sshd, so
+     * we should have anSSH_CONNECTION env var.  If not, then this probably isn't
+     * a real SSH connection and we should bail out. */
+    ssh_connection = getenv("SSH_CONNECTION");
+    if (!ssh_connection) {
+	errmsg = g_strdup("$SSH_CONNECTION not set - was amandad started by sshd?");
+	goto error;
+    }
+
+    /* strip off the first component - the ASCII IP address */
+    if ((p = strchr(ssh_connection, ' ')) == NULL) {
+	errmsg = g_strdup("$SSH_CONNECTION malformed");
+	goto error;
+    }
+    *p = '\0';
+
+    /* ---- everything from here on is just a warning, leaving hostname at "" */
+
+    SU_INIT(&addr, AF_INET);
+
+    /* turn the string address into a sockaddr */
+    if ((result = str_to_sockaddr(ssh_connection, &addr)) != 1) {
+	if (result == 0) {
+	    g_warning("Could not parse peer address %s", ssh_connection);
+	} else {
+	    g_warning("Parsing peer address %s: %s", ssh_connection, gai_strerror(result));
+	}
+	goto done;
+    }
+
+    /* find the hostname */
+    result = getnameinfo((struct sockaddr *)&addr, SS_LEN(&addr),
+		 rc->hostname, sizeof(rc->hostname), NULL, 0, 0);
+    if (result != 0) {
+	g_warning("Could not get hostname for SSH client %s: %s", ssh_connection,
+		gai_strerror(result));
+	goto done;
+    }
+
+    /* and verify it */
+    if (check_name_give_sockaddr(rc->hostname,
+				 (struct sockaddr *)&addr, &errmsg) < 0) {
+	rc->hostname[0] = '\0'; /* null out the bad hostname */
+	g_warning("Checking SSH client DNS: %s", errmsg);
+	amfree(errmsg);
+	goto done;
+    }
+
+done:
+    rc->read = in;
+    rc->write = out;
+    rc->accept_fn = fn;
+    rc->driver = driver;
+    rc->conf_fn = conf_fn;
+    rc->datap = datap;
+    sec_tcp_conn_read(rc);
+    return;
+
+error:
+    /* make up a fake handle for the error */
+    rh = g_new0(struct sec_handle, 1);
+    security_handleinit(&rh->sech, driver);
+    security_seterror((security_handle_t*)rh, "ssh_accept: %s", errmsg);
+    amfree(errmsg);
+    (*fn)(&rh->sech, NULL);
 }
 
 /*

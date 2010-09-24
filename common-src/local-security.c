@@ -61,6 +61,7 @@ const security_driver_t local_security_driver = {
     "LOCAL",
     local_connect,
     sec_accept,
+    sec_get_authenticated_peer_name_localhost,
     sec_close,
     stream_sendpkt,
     stream_recvpkt,

@@ -176,6 +176,7 @@ const security_driver_t krb5_security_driver = {
     "KRB5",
     krb5_connect,
     krb5_accept,
+    sec_get_authenticated_peer_name_hostname,
     sec_close,
     stream_sendpkt,
     stream_recvpkt,

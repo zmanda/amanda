@@ -91,12 +91,30 @@ system.</para>
 
 </refsect2>
 
+<refsect2><title>Authenticated Peer Hostnames</title>
+
+<para>Amanda's authentication mechanisms provide an authenticated hostname of
+the system on the other end of the connection, which is used to restrict
+access to only particular hosts.  The degree of "authentication" performed
+on this hostname varies with the authentication mechanism, and is discussed
+below.</para>
+
+</refsect2>
+
 </refsect1>
 
 <refsect1><title>BSD, BSDUDP, AND BSDTCP COMMUNICATION AND AUTHENTICATION</title>
 <para>For additional information including example configurations, see http://wiki.zmanda.com/index.php/Configuring_bsd/bsdudp/bsdtcp_authentication.</para>
 
   <para>The <emphasis remap='B'>bsd</emphasis>, <emphasis remap='B'>bsdudp</emphasis>, and <emphasis remap='B'>bsdtcp</emphasis> communication methods use either UDP, TCP, or both protocols operating as a network service to authenticate and exchange data between server and clients.</para>
+
+  <para>The authentication proceeds as follows: for a new, incoming connection,
+  Amanda verifies that the source port is in the reserved range (less than
+  1024), which for UNIX hosts suggests that the remote user has root
+  privileges.  Amanda then verifies that the reverse DNS for the remote
+  address matches the forward DNS; that is, that the address maps to a
+  hostname which maps back to the same address.  Finally, the remote system
+  must provide a username that matches the username in .amandahosts.</para>
 
   <para>In addition to compilation and general configuration (see <emphasis remap='B'>COMPILATION AND GENERAL INFORMATION</emphasis> above), the authentication method that the client is configured to receive is specified by the <emphasis remap='B'>auth</emphasis> parameter in the network service configuration for Amanda. The authentication method used by an Amanda client to reach the server during recovery is the authentication method specified by the <emphasis remap='I'>auth</emphasis> parameter in the client's Amanda network service configuration or in its amanda-client.conf file (see amanda-client.conf(5)).</para>
 
@@ -307,6 +325,16 @@ bsdtcp		tcp		1 RPpAP [--with-low-tcpportrange]	10080
     <para>Amanda server also uses two ports (dumper process) to communicate with the chunker/taper processes. These ports are in the range set by --with-tcpportrange.</para>
 <para>You can override the default port ranges that Amanda was compiled with in each configuration using the <emphasis remap='I'>reserved-udp-port</emphasis>, <emphasis remap='I'>reserved-tcp-port</emphasis>, and <emphasis remap='I'>unreserved-tcp-port</emphasis> parameters in amanda.conf and amanda-client.conf configuration files (see &amconf; and &amclientconf;).</para>
   </refsect2>
+
+<refsect2><title>Authenticated Peer Hostnames with BSD Authentications</title>
+
+<para>The BSD authentication mechanisms only verify that the remote
+host's DNS is configured correctly and that the remote user has access to
+reserved ports.  As such, the peer hostname should only be trusted to the
+extent that the local DNS service is trusted.</para>
+
+</refsect2>
+
 </refsect1>
 
 <refsect1><title>KERBEROS COMMUNICATION AND AUTHENTICATION</title>
@@ -406,11 +434,25 @@ The kerberized AMANDA service uses a different port on the client hosts. The /et
 <para>Rather than using a .k5amandahosts or .k5login file, the easiest way is to use a principal named after the destination user, (such as amanda@TEST.COM in our example) and not have either a .k5amandahosts or .k5login file in the destination user's home directory.</para>
 
 <para>There is no attempt to verify the realm in this case (only a concern if you have cross-realm authentication setup).</para>
+
+<refsect2><title>Authenticated Peer Hostnames with Kerberos Authentication</title>
+
+<para>When accepting a new incoming connection, the Kerberos authentication
+mechanism performs a similar check to that done by the BSD authentications:
+the forward and reverse DNS entries for the remote host must match.  As
+such, while Kerberos authentication can cryptographically ensure that the
+remote system is recognized (since it has a ticket), its assurances about
+the remote host's identity are weaker and depend on the integrity of the
+DNS.</para>
+
+</refsect2>
+
 </refsect1>
 
 <refsect1><title>LOCAL COMMUNICATION</title>
 <para>The Amanda server communicates with the client internally versus over the network, ie. the client is also the server.</para>
 <para>This is the only method that requires no authentication as it is clearly not needed.</para>
+<para>The authenticated peer hostname for this authentication is always "localhost".</para>
 </refsect1>
 
 <refsect1><title>RSH COMMUNICATION AND AUTHENTICATION</title>
@@ -437,6 +479,13 @@ define dumptype rsh_example {
 }
 </programlisting>
 </para>
+
+<refsect2><title>Authenticated Peer Hostnames with RSH Authentication</title>
+
+<para>The RSH authentication mechanism does not provide an authenticated peer hostname.</para>
+
+</refsect2>
+
 </refsect1>
 
 <refsect1><title>SSH COMMUNICATION AND AUTHENTICATION</title>
@@ -506,6 +555,21 @@ If your server &amandad; path and client &amandad; path are different, you shoul
 </para>
 
 <para>As Amanda will not answer this question itself, you must manually make every connection (server to client and client to server) that you expect Amanda to make. Note that you must use the same username that Amanda will use (that is, ssh client and ssh client.domain.com are distinct).</para>
+
+<refsect2><title>Authenticated Peer Hostnames with SSH Authentication</title>
+
+<para>When accepting an incoming conneciton, the SSH daemon gives Amanda
+information about the remote system in the $SSH_CONNECTION environment
+variable.  Amanda parses this information to determine the remote
+address, and then performs a similar check to that done by the BSD
+authentications: the forward and reverse DNS entries for the remote
+host must match.  As such, while SSH authentication can
+cryptographically ensure that the remote system is recognized (since it
+had a recognized secret key), its assurances about the remote host's
+identity are weaker and depend on the integrity of the DNS.</para>
+
+</refsect2>
+
 </refsect1>
 
 <seealso>

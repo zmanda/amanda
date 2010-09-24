@@ -560,7 +560,7 @@ protocol_accept(
     }
 
     /*
-     * If we have errors (not warnings) from the config file, let the server
+     * If we have errors (not warnings) from the config file, let the remote system
      * know immediately.  Unfortunately, we only get one ERROR line, so if there
      * are multiple errors, we just show the first.
      */
@@ -584,6 +584,8 @@ protocol_accept(
 	security_close(handle);
 	return;
     }
+
+    g_debug("authenticated peer name is '%s'", security_get_authenticated_peer_name(handle));
 
     /*
      * If pkt is NULL, then there was a problem with the new connection.

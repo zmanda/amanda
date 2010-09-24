@@ -73,6 +73,7 @@ const security_driver_t bsd_security_driver = {
     "BSD",
     bsd_connect,
     bsd_accept,
+    sec_get_authenticated_peer_name_hostname,
     bsd_close,
     udpbsd_sendpkt,
     udp_recvpkt,

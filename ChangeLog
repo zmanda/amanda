@@ -1,3 +1,22 @@
+2010-09-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/security.h: add get_authenticated_peer_name method
+	* common-src/security-util.c common-src/security-util.h: add two
+	  implementations
+	* common-src/sockaddr-util.c common-src/sockaddr-util.h: add
+	  str_to_sockaddr
+	* amandad-src/amandad.c: log authenticated peer name
+	* common-src/bsd-security.c common-src/bsdtcp-security.c
+	  common-src/bsdudp-security.c common-src/krb5-security.c
+	  common-src/local-security.c common-src/rsh-security.c
+	  common-src/ssh-security.c: implement get_authenticated_peer_name
+	* common-src/util.h: fix comments
+	* config/gnulib/gnulib-cache.m4 config/gnulib/gnulib-comp.m4
+	  config/gnulib/inet_pton.m4 gnulib/Makefile.am gnulib/c-ctype.c
+	  gnulib/c-ctype.h gnulib/inet_pton.c gnulib/regenerate/regenerate: add
+	  inet_pton module
+	* man/xml-source/amanda-auth.7.xml: update manual to describe
+	  authenticated peer names
+
 2010-09-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Check size before allocating.
 

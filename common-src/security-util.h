@@ -274,6 +274,7 @@ void	show_stat_info(char *a, char *b);
 int     check_name_give_sockaddr(const char *hostname, struct sockaddr *addr,
 				 char **errstr);
 in_port_t find_port_for_service(char *service, char *proto);
-
+char	*sec_get_authenticated_peer_name_localhost(security_handle_t *);
+char	*sec_get_authenticated_peer_name_hostname(security_handle_t *);
 
 #endif /* _SECURITY_INFO_H */

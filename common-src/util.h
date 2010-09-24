@@ -193,10 +193,10 @@ int compare_possibly_null_strings(const char * a, const char * b);
  * not NULL.
  *
  * @param hostname: the hostname to start with
+ * @param socktype: the socket type (SOCK_DGRAM or SOCK_STREAM)
  * @param res: (result) if not NULL, the results from getaddrinfo()
- * @param canonname: (result) if not NULL, the canonical name of the host
- * @returns: newly allocated canonical hostname, or NULL if no
- * canonical hostname was available.
+ * @param canonname: (result) if not NULL, the newly-allocated canonical name of the host
+ * @returns: 0 on success, otherwise a getaddrinfo result (for use with gai_strerror)
  */
 int resolve_hostname(const char *hostname, int socktype,
 		     struct addrinfo **res, char **canonname);

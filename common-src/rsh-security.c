@@ -76,6 +76,7 @@ const security_driver_t rsh_security_driver = {
     "RSH",
     rsh_connect,
     sec_accept,
+    sec_get_authenticated_peer_name_hostname,
     sec_close,
     stream_sendpkt,
     stream_recvpkt,

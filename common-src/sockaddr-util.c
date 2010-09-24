@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007,2008 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2010 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -89,6 +89,28 @@ str_sockaddr(
     mystr_sockaddr[sizeof(mystr_sockaddr)-1] = '\0';
 
     return mystr_sockaddr;
+}
+
+int
+str_to_sockaddr(
+	const char *src,
+	sockaddr_union *dst)
+{
+    int result;
+
+    g_debug("parsing %s", src);
+    /* try AF_INET first */
+    SU_INIT(dst, AF_INET);
+    if ((result = inet_pton(AF_INET, src, &dst->sin.sin_addr)) == 1)
+	return result;
+
+    /* otherwise try AF_INET6, if supported */
+#ifdef WORKING_IPV6
+    SU_INIT(dst, AF_INET6);
+    return inet_pton(AF_INET6, src, &dst->sin6.sin6_addr);
+#else
+    return result;
+#endif
 }
 
 /* Unmap a V4MAPPED IPv6 address into its equivalent IPv4 address.  The location
