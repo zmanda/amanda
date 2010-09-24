@@ -1,3 +1,6 @@
+2010-09-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda-devices.7.xml: LEOM property is not read-only
+
 2010-09-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/xfer-dest-taper-splitter.c (device_thread_write_part):
 	  Don't write more than the block size.

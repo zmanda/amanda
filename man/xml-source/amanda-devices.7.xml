@@ -185,7 +185,7 @@ for future expansion.  Not all devices implement all of these properties.</para>
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>LEOM</term><listitem>
-(read-only) If this property is true, then the device an detect an EOM condition before actually running out of space, allowing Amanda to forgo caching parts while writing.
+(read-write) If this property is true, then the device can detect an EOM condition before actually running out of space, allowing Amanda to forgo caching parts while writing.  For some devices, it is necessary to override the conservative default value of this property.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>MAX_BLOCK_SIZE</term><listitem>
