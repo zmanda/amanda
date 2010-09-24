@@ -530,7 +530,7 @@ tcpm_recv_token(
         amfree(rc->buffer);
 	*size = (ssize_t)ntohl(rc->netint[0]);
 	*handle = (int)ntohl(rc->netint[1]);
-        rc->buffer = alloc((size_t)*size);
+        rc->buffer = NULL;
 	rc->size_buffer_read = 0;
 
 	/* amanda protocol packet can be above NETWORK_BLOCK_BYTES */
@@ -575,6 +575,7 @@ tcpm_recv_token(
 	    *size = -1;
 	    return -1;
 	}
+        rc->buffer = alloc((size_t)*size);
 
 	if (*size == 0) {
 	    auth_debug(1, _("tcpm_recv_token: read EOF from %d\n"), *handle);

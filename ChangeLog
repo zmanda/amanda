@@ -1,4 +1,7 @@
-2010-09-22  Dustin J. Mitchell <dustin@zmanda.com>
+2010-09-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Check size before allocating.
+
+2010-09-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda-devices.7.xml: LEOM property is not read-only
 
 2010-09-24  Jean-Louis Martineau <martineau@zmanda.com>
