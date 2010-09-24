@@ -503,6 +503,7 @@ device_thread_write_part(
 
 	/* wait for at least one block, and (if necessary) prebuffer */
 	to_write = device_thread_wait_for_block(self);
+	to_write = MIN(to_write, self->device->block_size);
 	if (elt->cancelled)
 	    break;
 

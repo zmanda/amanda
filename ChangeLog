@@ -1,3 +1,7 @@
+2010-09-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/xfer-dest-taper-splitter.c (device_thread_write_part):
+	  Don't write more than the block size.
+
 2010-09-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amreport.pl: update checks to match amreport change
 
