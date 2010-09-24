@@ -472,6 +472,14 @@ sub output_tapeinfo
         if ( my $tape_label =
             Amanda::Tapelist::get_last_reusable_tape_label($i) ) {
 
+	    if ($nb_new_tape) {
+		print $fh ", " if !$first;
+		print $fh "$nb_new_tape new tape"
+			. ( $nb_new_tape > 1 ? "s" : "" );
+		$nb_new_tape = 0;
+		$first = 0;
+	    }
+
 	    print $fh
 		$first ? "" : ", ",
 		$tape_label;

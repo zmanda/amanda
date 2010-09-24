@@ -1,3 +1,8 @@
+2010-09-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report/human.pm: Correctly print new tapes to use.
+	* installcheck/catalogs/filesystemstaped.cat: write the tapelist file
+	* installcheck/amreport.pl: Test it.
+
 2010-09-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* NEWS: amvault and other new news
 	* server-src/amvault.pl: support --dry-run

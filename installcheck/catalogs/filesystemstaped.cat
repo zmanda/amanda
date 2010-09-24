@@ -22,6 +22,12 @@ FINISH driver date 20100713120014 time 2.534
 INFO driver pid-done 1240
 INFO amflush pid-done 1239
 
+%F tapelist
+20100923000000 TESTCONF41 reuse
+20100922000000 TESTCONF40 reuse
+20100921000000 TESTCONF39 reuse
+20100920000000 TESTCONF38 reuse
+20100910000000 TESTCONF37 no-reuse
 %T report
 Hostname: localhost.localdomain
 Org     : DailySet1
@@ -29,7 +35,7 @@ Config  : TESTCONF
 Date    : July 13, 2010
 
 The dumps were flushed to tape DAILY-37.
-The next tape Amanda expects to use is: 1 new tape.
+The next 3 tapes Amanda expects to use are: 1 new tape, TESTCONF38, TESTCONF39.
 
 STATISTICS:
                           Total       Full      Incr.   Level:#

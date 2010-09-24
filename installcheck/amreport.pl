@@ -95,6 +95,15 @@ sub setup_config {
         exists $params{send_amreport} ? uc($params{send_amreport}) : "ALL"
     );
 
+    if (defined $params{'runtapes'}) {
+	$testconf->remove_param('runtapes');
+	$testconf->add_param('runtapes', $params{'runtapes'});
+    }
+    if (defined $params{'tapecycle'}) {
+	$testconf->remove_param('tapecycle');
+	$testconf->add_param('tapecycle', $params{'tapecycle'});
+    }
+
     $testconf->write();
 
     undef $cat;
@@ -747,7 +756,7 @@ is($Installcheck::Run::exit_code, 0,
 results_match($out_filename, $cat->get_text('report'),
     "..result matches");
 
-setup_config(catalog => 'filesystemstaped', want_template => 1);
+setup_config(catalog => 'filesystemstaped', want_template => 1, runtapes => 3, tapecycle => 5);
 
 run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 0,
