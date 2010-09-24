@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 9;
+use Test::More tests => 11;
 use strict;
 use warnings;
 
@@ -27,7 +27,7 @@ use Installcheck;
 use Installcheck::Dumpcache;
 use Installcheck::Config;
 use Installcheck::Mock;
-use Installcheck::Run qw(run run_err $diskname);
+use Installcheck::Run qw(run run_err run_get $diskname);
 use Amanda::DB::Catalog;
 use Amanda::Paths;
 use Amanda::Config qw( :init );
@@ -118,9 +118,58 @@ is_deeply(summarize($dumps[1]), summarize($dumps[0]),
     "and they match in all the right ways")
     or diag(Dumper(@dumps));
 
-# clean up the tertiary vtapes before loading the ndmp dump
+# clean up the tertiary vtapes before moving on
 rmtree $vtape_root;
 Installcheck::Run::cleanup();
+
+# try the multi dump, to get a better idea of the filtering possibilities
+Installcheck::Dumpcache::load("multi");
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+($cfgerr_level, @cfgerr_errors) = config_errors();
+if ($cfgerr_level >= $CFGERR_WARNINGS) {
+    config_print_errors();
+    die "config errors";
+}
+
+sub get_dry_run {
+    my $stdout = run_get(@_);
+    if (!$stdout) {
+	diag($Installcheck::Run::stderr);
+	return 'run-failed';
+    }
+
+    my @rv;
+    for my $line (split /\n/, $stdout) {
+	my ($tape, $file, $host, $disk, $datestamp, $level) =
+	    ($line =~ /^(\S+) (\d*) (\S+) (.+) (\d+) (\d+)$/);
+	$tape = 'holding' if $file eq '';
+	push @rv, [$tape, $file, $host, $disk,   $level]; # note: no datestamp
+    }
+    return @rv;
+}
+
+is_deeply([ get_dry_run("$sbindir/amvault",
+		'--dry-run',
+		'--autolabel=all',
+		'--label-template', "TESTCONF%%",
+		'--fulls-only',
+		'--dst-changer', $tertiary_chg,
+		'TESTCONF') ], [
+    [ "TESTCONF01", "1", "localhost", "$diskname/dir", "0" ],
+    [ "TESTCONF01", "2", "localhost", "$diskname",     "0" ],
+    [ "TESTCONF02", "2", "localhost", "$diskname",     "0" ]
+    ], "amvault with --fulls-only only dumps fulls");
+
+is_deeply([ get_dry_run("$sbindir/amvault",
+		'--dry-run',
+		'--autolabel=all',
+		'--label-template', "TESTCONF%%",
+		'--dst-changer', $tertiary_chg,
+		'TESTCONF', "localhost", "$diskname/dir") ], [
+    [ "holding", "",     "localhost", "$diskname/dir",     "1" ],
+    [ "TESTCONF01", "1", "localhost", "$diskname/dir",     "0" ],
+    [ "TESTCONF02", "1", "localhost", "$diskname/dir",     "1" ]
+    ], "amvault with a disk expression dumps only that disk");
 
 # Test NDMP-to-NDMP vaulting.  This will test all manner of goodness:
 #  - specifying a named changer on the amvault command line
@@ -169,7 +218,7 @@ EOF
 	or diag($Installcheck::Run::stderr);
 
     config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
-    my ($cfgerr_level, @cfgerr_errors) = config_errors();
+    ($cfgerr_level, @cfgerr_errors) = config_errors();
     if ($cfgerr_level >= $CFGERR_WARNINGS) {
 	config_print_errors();
 	die "config errors";

@@ -1,4 +1,10 @@
 2010-09-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* NEWS: amvault and other new news
+	* server-src/amvault.pl: support --dry-run
+	* man/xml-source/amvault.8.xml: docs
+	* installcheck/amvault.pl: tests
+
+2010-09-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/security.h: add get_authenticated_peer_name method
 	* common-src/security-util.c common-src/security-util.h: add two
 	  implementations

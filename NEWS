@@ -1,5 +1,13 @@
 Changes in release 3.2.0alpha
 
+   * Support for multiple simultaneous writes to storage devices
+      o TODO - details
+   * Support for LEOM in storage devices
+      o allows splitting without partial parts, saving space
+      o much more efficient, since parts need not be cached on disk in most cases
+   * new, simpler splitting commands in the tapetype section:
+     part-size, part-cache-type, part-cache-dir, part-cache-max-size; see
+     amanda.conf(5) for details
    * Amanda server configuration file changes (amanda.conf)
       o deprecated configuration keywords:
          + amrecover_do_fsf
@@ -21,10 +29,14 @@ Changes in release 3.2.0alpha
    * Amvault is much improved, but still experimental:
       o supports assembling split parts on the source volume and re-splitting
         them on the destination
+      o supports filtering dumps with the same syntax as amfetchdump
       o a --fulls-only option skips all incremental dumps on the source
       o an --export option tries to move tertiary volumes to import/export
         slots when completed
-      o command-line syntax has changed; see manpage or 'amvault --help'
+      o command-line syntax has changed incompatibly; see manpage or 'amvault --help'
+   * Rewritten and improved:
+      o amoverview
+      o amcheckdump
 
 Changes in release 3.1.0
 

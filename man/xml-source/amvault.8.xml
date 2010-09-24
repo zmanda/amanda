@@ -28,6 +28,7 @@
   <command>amvault</command>
     &configoverride.synopsis;
     <arg choice='opt'>-q</arg> <arg choice='opt'>--quiet</arg>
+    <arg choice='opt'>-n</arg> <arg choice='opt'>--dry-run</arg>
     <arg choice='plain'><option>--label-template</option>
 	    <replaceable>label-template</replaceable></arg>
     <group choice='opt' rep='repeat'><arg choice='req'><option>--autolabel</option>
@@ -84,6 +85,12 @@ timestamp <option>src-timestamp</option> onto volumes using the changer
 "latest", then the most recent amdump or amflush run will be used.  If
 <option>--fulls-only</option> is given, then only full (level-0) dumps are
 copied.</para>
+
+<para>The <option>--quiet</option> (<option>-q</option>) option will
+eliminate non-error messages, and is useful when running amvault from
+cron.  The <option>--dry-run</option> (<option>-n</option>) option will
+cause amvault to print the dumps it would vault, but not actually perform
+any vaulting operations.</para>
 
 <refsect2><title>Secondary Media</title>
 

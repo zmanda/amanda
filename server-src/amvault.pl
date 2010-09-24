@@ -125,6 +125,7 @@ sub new {
 	fulls_only => $params{'fulls_only'},
 	opt_export => $params{'opt_export'},
 	opt_dumpspecs => $params{'opt_dumpspecs'},
+	opt_dry_run => $params{'opt_dry_run'},
 	config_name => $params{'config_name'},
 
 	src_write_timestamp => $params{'src_write_timestamp'},
@@ -159,11 +160,13 @@ sub run {
 	if ($dst_label_template =~ /%[^%]+%/
 	    or $dst_label_template =~ /^[^%]+$/);
 
-    # open up a trace log file and put our imprimatur on it
-    log_add($L_INFO, "amvault pid $$");
-    log_add($L_START, "date " . $self->{'dst_write_timestamp'});
-    Amanda::Debug::add_amanda_log_handler($amanda_log_trace_log);
-    $self->{'cleanup'}{'roll_trace_log'} = 1;
+    # open up a trace log file and put our imprimatur on it, unless dry_runing
+    if (!$self->{'opt_dry_run'}) {
+	log_add($L_INFO, "amvault pid $$");
+	log_add($L_START, "date " . $self->{'dst_write_timestamp'});
+	Amanda::Debug::add_amanda_log_handler($amanda_log_trace_log);
+	$self->{'cleanup'}{'roll_trace_log'} = 1;
+    }
 
     $self->setup_src();
 }
@@ -254,25 +257,27 @@ sub setup_src {
 	return $self->failure("No dumps to vault");
     }
 
-    # summarize the requested dumps
-    my $request;
-    if ($self->{'src_write_timestamp'}) {
-	$request = "vaulting from volumes written " . $self->{'src_write_timestamp'};
-    } else {
-	$request = "vaulting";
-    }
-    if ($self->{'opt_dumpspecs'}) {
-	$request .= " dumps matching dumpspecs:";
-    }
-    if ($self->{'fulls_only'}) {
-	$request .= " (fulls only)";
-    }
-    log_add($L_INFO, $request);
+    if (!$self->{'opt_dry_run'}) {
+	# summarize the requested dumps
+	my $request;
+	if ($self->{'src_write_timestamp'}) {
+	    $request = "vaulting from volumes written " . $self->{'src_write_timestamp'};
+	} else {
+	    $request = "vaulting";
+	}
+	if ($self->{'opt_dumpspecs'}) {
+	    $request .= " dumps matching dumpspecs:";
+	}
+	if ($self->{'fulls_only'}) {
+	    $request .= " (fulls only)";
+	}
+	log_add($L_INFO, $request);
 
-    # and log the dumpspecs if they were given
-    if ($self->{'opt_dumpspecs'}) {
-	for my $ds (@{$self->{'opt_dumpspecs'}}) {
-	    log_add($L_INFO, "  " . $ds->format());
+	# and log the dumpspecs if they were given
+	if ($self->{'opt_dumpspecs'}) {
+	    for my $ds (@{$self->{'opt_dumpspecs'}}) {
+		log_add($L_INFO, "  " . $ds->format());
+	    }
 	}
     }
 
@@ -290,6 +295,27 @@ sub plan_cb {
     return $self->failure($err) if $err;
 
     $src->{'plan'} = $plan;
+
+    if ($self->{'opt_dry_run'}) {
+	my $total_size = Math::BigInt->new(0);
+
+	# iterate over each part of each dump, printing out the basic information
+	for my $dump (@{$plan->{'dumps'}}) {
+	    my @parts = @{$dump->{'parts'}};
+	    shift @parts; # skip partnum 0
+	    for my $part (@parts) {
+		print STDOUT
+		      ($part->{'label'} || $part->{'holding_file'}) . " " .
+		      ($part->{'filenum'} || '') . " " .
+		      $dump->{'hostname'} . " " .
+		      $dump->{'diskname'} . " " .
+		      $dump->{'dump_timestamp'} . " " .
+		      $dump->{'level'} . "\n";
+	    }
+	}
+
+	return $self->quit(0);
+    }
 
     # output some 'DISK amvault' lines to indicate the disks we will be vaulting
     my %seen;
@@ -607,7 +633,7 @@ sub vlog {
 
 ## scribe feedback methods
 
-# note that the trace log calls here all add "taper", as we're pretending
+# note that the trace log calls here all add "taper", as we're dry_runing
 # to be the taper in the logfiles.
 
 sub request_volume_permission {
@@ -839,6 +865,7 @@ Amanda::Util::setup_application("amvault", "server", $CONTEXT_CMDLINE);
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 my $opt_quiet = 0;
+my $opt_dry_run = 0;
 my $opt_fulls_only = 0;
 my $opt_export = 0;
 my $opt_autolabel = {};
@@ -877,6 +904,7 @@ Getopt::Long::Configure(qw{ bundling });
 GetOptions(
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
     'q|quiet' => \$opt_quiet,
+    'n|dry-run' => \$opt_dry_run,
     'fulls-only' => \$opt_fulls_only,
     'export' => \$opt_export,
     'label-template=s' => \&set_label_template,
@@ -925,6 +953,7 @@ my $vault = Amvault->new(
     dst_autolabel => $opt_autolabel,
     dst_write_timestamp => Amanda::Util::generate_timestamp(),
     opt_dumpspecs => @opt_dumpspecs? \@opt_dumpspecs : undef,
+    opt_dry_run => $opt_dry_run,
     quiet => $opt_quiet,
     fulls_only => $opt_fulls_only,
     opt_export => $opt_export);
