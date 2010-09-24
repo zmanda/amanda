@@ -124,6 +124,7 @@ static void amstar_validate(application_argument_t *argument);
 static GPtrArray *amstar_build_argv(application_argument_t *argument,
 				int level,
 				int command);
+static int check_device(application_argument_t *argument);
 
 static char *star_path;
 static char *star_tardumps;
@@ -440,6 +441,11 @@ amstar_selfcheck(
 	check_file(amandates_file, R_OK|W_OK);
     }
 
+    set_root_privs(1);
+    if (argument->dle.device) {
+	check_dir(argument->dle.device, R_OK);
+    }
+    set_root_privs(0);
 }
 
 static void
@@ -483,6 +489,10 @@ amstar_estimate(
     if (argument->dle.exclude_list &&
 	argument->dle.exclude_list->nb_element >= 0) {
 	fprintf(stderr, "ERROR exclude-list not supported for backup\n");
+    }
+
+    if (check_device(argument) == 0) {
+	return;
     }
 
     qdisk = quote_string(argument->dle.disk);
@@ -984,3 +994,39 @@ static GPtrArray *amstar_build_argv(
 
     return(argv_ptr);
 }
+
+static int
+check_device(
+    application_argument_t *argument)
+{
+    char *qdevice;
+    struct stat stat_buf;
+
+    qdevice = quote_string(argument->dle.device);
+    set_root_privs(1);
+    if(!stat(argument->dle.device, &stat_buf)) { 
+	if (!S_ISDIR(stat_buf.st_mode)) {
+	    set_root_privs(0);
+	    g_fprintf(stderr, _("ERROR %s is not a directory\n"), qdevice);
+	    amfree(qdevice);
+	    return 0;
+	}
+    } else {
+	set_root_privs(0);
+	g_fprintf(stderr, _("ERROR can not stat %s: %s\n"), qdevice,
+                  strerror(errno));
+	amfree(qdevice);
+	return 0;
+    }
+    if (access(argument->dle.device, R_OK|X_OK) == -1) {
+	set_root_privs(0);
+	g_fprintf(stderr, _("ERROR can not access %s: %s\n"),
+		  argument->dle.device, strerror(errno));
+	amfree(qdevice);
+	return 0;
+    }
+    set_root_privs(0);
+    amfree(qdevice);
+    return 1;
+}
+
