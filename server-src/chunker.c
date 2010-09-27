@@ -737,7 +737,6 @@ databuf_flush(
 		error(_("error [bad command after RQ-MORE-DISK: \"%s\"]"), q);
 		/*NOTREACHED*/
 	    }
-	    free_cmdargs(cmdargs);
 	}
 
 	/*

@@ -1,4 +1,8 @@
 2010-09-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amxml.c: Fix unallocating NULL g_hash.
+	* server-src/chunker.c: Don't free cmdargs.
+
+2010-09-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Fix pointer arithmetic.
 
 2010-09-27  Dustin J. Mitchell <dustin@zmanda.com>

@@ -98,7 +98,8 @@ free_dle(
     free_sl(dle->exclude_list);
     free_sl(dle->include_file);
     free_sl(dle->include_list);
-    g_hash_table_destroy(dle->application_property);
+    if (dle->application_property)
+	g_hash_table_destroy(dle->application_property);
     for(scriptlist = dle->scriptlist; scriptlist != NULL;
 				      scriptlist = scriptlist->next) {
 	free_script_data((script_t *)scriptlist->data);
@@ -113,7 +114,8 @@ free_script_data(
     script_t *script)
 {
     amfree(script->plugin);
-    g_hash_table_destroy(script->property);
+    if (script->property)
+	g_hash_table_destroy(script->property);
 }
 
 void
