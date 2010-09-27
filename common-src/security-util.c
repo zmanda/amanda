@@ -508,7 +508,7 @@ tcpm_recv_token(
 
     assert(SIZEOF(rc->netint) == 8);
     if (rc->size_header_read < (ssize_t)SIZEOF(rc->netint)) {
-	rval = read(fd, &rc->netint + rc->size_header_read,
+	rval = read(fd, ((char *)&rc->netint) + rc->size_header_read,
 		        SIZEOF(rc->netint) - rc->size_header_read);
 	if (rval == -1) {
 	    if (errmsg)
