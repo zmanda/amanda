@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 120;
+use Test::More tests => 130;
 
 use lib "@amperldir@";
 use warnings;
@@ -149,6 +149,56 @@ for my $strs (@try_bracing) {
     is_deeply($rt, $strs,
 	      "round-trip of " . Dumper($strs));
 }
+
+is_deeply(
+    [ Amanda::Util::expand_braced_alternates("t{0..3,5}") ],
+    [ qw(t0 t1 t2 t3 t5) ],
+    "expand_braced_alternates('t{0..3,5}')");
+
+is_deeply(
+    [ Amanda::Util::expand_braced_alternates("t{13..12}") ],
+    [ qw(t13..12) ],
+    "expand_braced_alternates('t{13..12}') (sequence not parsed)");
+
+is_deeply(
+    [ Amanda::Util::expand_braced_alternates("t{999..999}") ],
+    [ qw(t999) ],
+    "expand_braced_alternates('t{999..999}')");
+
+is_deeply(
+    [ Amanda::Util::expand_braced_alternates("t{0..3}") ],
+    [ qw(t0 t1 t2 t3) ],
+    "expand_braced_alternates('t{0..3}')");
+
+is_deeply(
+    [ Amanda::Util::expand_braced_alternates("t{10..13}") ],
+    [ qw(t10 t11 t12 t13) ],
+    "expand_braced_alternates('t{10..13}')");
+
+is_deeply(
+    [ Amanda::Util::expand_braced_alternates("t{9..13}") ],
+    [ qw(t9 t10 t11 t12 t13) ],
+    "expand_braced_alternates('t{9..13}')");
+
+is_deeply(
+    [ Amanda::Util::expand_braced_alternates("t{09..13}") ],
+    [ qw(t09 t10 t11 t12 t13) ],
+    "expand_braced_alternates('t{09..13}')");
+
+is_deeply(
+    [ Amanda::Util::expand_braced_alternates("t{009..13}") ],
+    [ qw(t009 t010 t011 t012 t013) ],
+    "expand_braced_alternates('t{009..13}') (ldigits > rdigits)");
+
+is_deeply(
+    [ sort(Amanda::Util::expand_braced_alternates("x{001..004}y{1..2}z")) ],
+    [ sort(qw( x001y1z x002y1z x003y1z x004y1z x001y2z x002y2z x003y2z x004y2z )) ],
+    "expand_braced_alternates('x{001..004}y{1..2}z')");
+
+is_deeply(
+    [ Amanda::Util::expand_braced_alternates("t{1..100}e") ],
+    [ map { "t$_"."e" } (1 .. 100) ],
+    "expand_braced_alternates('t{1..100}e')");
 
 my @try_sanitise = (
     [ '', '' ],

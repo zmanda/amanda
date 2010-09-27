@@ -183,6 +183,14 @@ all volumes for a configuration have different device names -- for example,
 if you have many standalone drive.  The <emphasis>changerfile</emphasis> must exist; it is used to save the state file.
 </para>
 
+<para>The child devices are specified using the same syntax as for the RAIT
+device (see <manref name="amanda-changers" vol="7"/>).  The range
+specification can be especially useful here:
+<programlisting>
+tpchanger "chg-multi:s3:mycompany-backups/tape-{001..100}"
+</programlisting>
+</para>
+
 <para>This changer is not fast-search capable.</para>
 
 <refsect3><title>Properties</title>
@@ -359,8 +367,10 @@ define changer robot {
 tpchanger "chg-rait:{vtape,robot}"
 </programlisting>
 
-<para>This changer script constructs RAIT devices out of the devices provided by several "sub-changers".  The sub-changers are specified using the same shell-like syntax as the RAIT device (see
-<manref name="amanda-devices" vol="7"/>).</para>
+<para>This changer script constructs RAIT devices out of the devices provided
+by several "sub-changers".  The sub-changers are specified using the same
+shell-like syntax as the RAIT device (see <manref name="amanda-devices"
+    vol="7"/>).</para>
 
 <para>Chg-rait does not require that all of the child changers have the same slot names: compound slot names are created by combining the slot names supplied by the child changers using the same shell-like syntax.  For example, if the child changers return slots "<computeroutput>top</computeroutput>", "<computeroutput>strange</computeroutput>", and "<computeroutput>3</computeroutput>", then the RAIT changer will return "<computeroutput>{top,strange,3}</computeroutput>".  This makes it possible to, for example, mirror data on tapes in slots 1-10 to tapes in slots 11-20 of the same robot, using two <command>chg-zd-mtx</command> child changers (and, naturally, two tape drives).  In this arrangement, the first slot would be named <computeroutput>{1,11}</computeroutput>.</para>
 

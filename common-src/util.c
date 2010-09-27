@@ -749,6 +749,67 @@ cleanup:
     return ret;
 }
 
+/* Helper for parse_braced_component; this will turn a single element array
+ * matching /^\d+\.\.\d+$/ into a sequence of numbered array elements. */
+static GPtrArray *
+expand_braced_sequence(GPtrArray *arr)
+{
+    char *elt, *p;
+    char *l, *r;
+    int ldigits, rdigits, ndigits;
+    guint64 start, end;
+    gboolean leading_zero;
+
+    /* check whether the element matches the pattern */
+    /* expand last element of the array only */
+    elt = g_ptr_array_index(arr, arr->len-1);
+    ldigits = 0;
+    for (l = p = elt; *p && g_ascii_isdigit(*p); p++)
+	ldigits++;
+    if (ldigits == 0)
+	return arr;
+    if (*(p++) != '.')
+	return arr;
+    if (*(p++) != '.')
+	return arr;
+    rdigits = 0;
+    for (r = p; *p && g_ascii_isdigit(*p); p++)
+	rdigits++;
+    if (rdigits == 0)
+	return arr;
+    if (*p)
+	return arr;
+
+    /* we have a match, so extract start and end */
+    start = g_ascii_strtoull(l, NULL, 10);
+    end = g_ascii_strtoull(r, NULL, 10);
+    leading_zero = *l == '0';
+    g_debug("leading_zero: %d", leading_zero);
+    ndigits = MAX(ldigits, rdigits);
+    if (start > end)
+	return arr;
+
+    /* sanity check.. */
+    if (end - start > 100000)
+	return arr;
+
+    /* remove last from the array */
+    g_ptr_array_remove_index(arr, arr->len - 1);
+
+    /* Add new elements */
+    while (start <= end) {
+	if (leading_zero) {
+	    g_ptr_array_add(arr, g_strdup_printf("%0*ju",
+			ndigits, (uintmax_t)start));
+	} else {
+	    g_ptr_array_add(arr, g_strdup_printf("%ju", (uintmax_t)start));
+	}
+	start++;
+    }
+
+    return arr;
+}
+
 /* Helper for expand_braced_alternates; returns a list of un-escaped strings
  * for the first "component" of str, where a component is a plain string or a
  * brace-enclosed set of alternatives.  str is pointing to the first character
@@ -775,6 +836,7 @@ parse_braced_component(char **str)
 	    if (*p == '}' || *p == ',') {
 		*c = '\0';
 		g_ptr_array_add(result, g_strdup(current));
+		result = expand_braced_sequence(result);
 		current = ++c;
 
 		if (*p == '}')

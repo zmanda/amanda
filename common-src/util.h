@@ -128,17 +128,8 @@ char * hexdecode_string(const char *str, GError **err);
 int     copy_file(char *dst, char *src, char **errmsg);
 
 /* These two functions handle "braced alternates", which is a syntax borrowed,
- * partially, from shells.  Comma-separated strings enclosed in curly braces
- * expand into multiple alternatives for the entire string.
- * For example:
- *
- *   "{foo,bar,bat}" -> [ "foo", "bar", "bat" ]
- *   "foo{1,2}bar" -> [ "foo1bar", "foo2bar" ]
- *   "foo{1\,2,3}bar" -> [ "foo1,2bar", "foo3bar" ]
- *   "{a,b}-{1,2}" -> [ "a-1", "a-2", "b-1", "b-2" ]
- *
- * Note that nested braces are not processed.  Braces, commas, and backslashes
- * may be escaped with backslashes.  Returns NULL on invalid strings.
+ * partially, from shells.  See perl/Amanda/Util.pod for a full description of
+ * the syntax they support.
  */
 GPtrArray * expand_braced_alternates(char * source);
 char * collapse_braced_alternates(GPtrArray *source);

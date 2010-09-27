@@ -331,8 +331,19 @@ For example:
   "{a,b}-{1,2}"     [ "a-1", "a-2", "b-1", "b-2" ]
 
 Note that nested braces are not processed.  Braces, commas, and
-backslashes may be escaped with backslashes.  On error,
-C<expand_braced_altnerates> returns undef.  These two functions are
+backslashes may be escaped with backslashes.
+
+As a special case for numeric ranges, if the braces contain only digits
+followed by two dots followed by more digits, and the digits sort in the
+correct order, then they will be treated as a sequence.  If the first number in
+the sequence has leading zeroes, then all generated numbers will have that
+length, padded with leading zeroes.
+
+  "tape-{01..10}"   [ "tape-01", "tape-02", "tape-03", "tape-04",
+                      "tape-05", "tape-06", "tape-07", "tape-08",
+		      "tape-09", "tape-10" ]
+
+On error, C<expand_braced_altnerates> returns undef.  These two functions are
 available in the export tag C<:alternates>.
 
 =item generate_timestamp()

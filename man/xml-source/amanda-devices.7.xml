@@ -300,7 +300,14 @@ alternatives are enclosed in braces and separated by commas.  Braces and commas
 can be escaped with a backslash.  Note that the backslash itself must be
 escaped in most contexts.  For example:
 <programlisting>
-tapedev "rait:{commandev:foo\\,bar,bracedev:foo\\}bar}"
+tapedev "rait:{file:/var/amanda/vtapes,tape:/dev/nst0}"
+tapedev "rait:{comma-dev:foo\\,bar,brace-dev:foo\\}bar}" # quoting
+</programlisting>
+If the braces contain a numeric range separated with two dots, that range will
+be filled in sequentially.  If the first number has a leading zero, then the results
+will be zero-padded to the maximum length.  For example:
+<programlisting>
+tapedev "rait:file:/var/amanda/vtapes/drive{01..04}"
 </programlisting>
 </para>
 
