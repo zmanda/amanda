@@ -12,6 +12,7 @@ COMMON_MAN_PAGES =  amanda.8 \
 		    amanda-scripts.7 \
 		    amanda-archive-format.5 \
 		    amanda-auth.7 \
+		    amanda-match.7 \
 		    amarchiver.8 \
 		    script-email.8
 

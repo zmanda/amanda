@@ -54,17 +54,9 @@ man page for more details about Amanda.</para>
 parameter pair operate on all disks in the &disklist; for that
 <emphasis remap='I'>hostname</emphasis> if no disks are specified.  Where
 <emphasis remap='I'>hostname</emphasis> is also marked as being optional,
-the command operates on all hosts and disks in the &disklist;.
+the command operates on all hosts and disks in the &disklist; when no hostname is given.
 Both <emphasis remap='I'>hostname</emphasis> and <emphasis remap='I'>disks</emphasis>
-are special expressions; see the &quot;HOST &amp; DISK EXPRESSION&quot; section
-of <manref name="amanda" vol="8"/>
-for a description.</para>
-
-<para>Commands that take one or more <emphasis remap='I'>dumpspec</emphasis> parameters operate
-on the set of dumps specified by all of the expressions.  See the &quot;DUMP SPECIFICATIONS&quot;
-section of
-<manref name="amanda" vol="8"/>
-for a description.</para>
+are match expressions; see <manref name="amanda-match" vol="7"/> for a description.</para>
 
 <variablelist remap='TP'>
   <varlistentry>
@@ -220,10 +212,12 @@ The default sort order is <emphasis remap='B'>hkdlpbfw</emphasis>.</para>
   <term><emphasis remap='B'>holding list</emphasis> [-l] [-d] [ <emphasis remap="I">hostname</emphasis> [ <emphasis remap="I">disk</emphasis> [ <emphasis remap="I">datestamp</emphasis> [ .. ] ] ] ]</term>
   <listitem>
 
-    <para>List holding files matching the given specification, or all holding
-    files if no specification is provided.  With '-l', additional information
-    (size, level, and whether the dump is outdated) is provided.  With '-d', only
-    outdated dumps are shown.</para>
+    <para>List holding files matching the given dump specification, or all
+	holding files if no specification is provided.  See <manref
+	    name="amanda-match" vol="7"/> for more information on dump
+	specifications.  With '-l', additional information (size, level, and
+	whether the dump is outdated) is provided.  With '-d', only outdated
+	dumps are shown.</para>
 
     <para>An outdated holding file is one which is not required for a
     restore of the <emphasis>most recent</emphasis> dump.  Note that
@@ -469,16 +463,13 @@ TOTAL      241  12412187   7316312   731631  (estimated 8 runs per dumpcycle)
 </programlisting>
 </refsect1>
 
-<refsect1><title>FILES</title>
-<para>/usr/local/etc/amanda/<emphasis remap='I'>config</emphasis>/amanda.conf</para>
-</refsect1>
-
 <seealso>
 <manref name="amanda" vol="8"/>,
 <manref name="amcheck" vol="8"/>,
 <manref name="amdump" vol="8"/>,
 <manref name="amrestore" vol="8"/>,
 <manref name="amfetchdump" vol="8"/>
+<manref name="amanda-match" vol="7"/>,
 </seealso>
 
 </refentry>

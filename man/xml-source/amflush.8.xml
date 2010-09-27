@@ -47,13 +47,18 @@
 <para><emphasis remap='B'>Amflush</emphasis>
 writes Amanda backups from the holding disks to tape,
 and updates the Amanda info database and &tapelist; accordingly.
+It is similar to amdump, but does not perform any backup operations on
+Amanda clients.
 Backups may stay in a holding disk when something is wrong with the tape
-at the time
-<emphasis remap='B'>amdump</emphasis>
-is run.
+at the time <command>amdump</command> is run.
 When this happens, the problem must be corrected and
-<command>amflush</command>
-run by hand.</para>
+<command>amflush</command> run by hand.</para>
+
+<para>The command optionally takes a set of DLE specifications
+    (see <manref
+    name="amanda-match" vol="7"/>) to narrow the DLEs for which dumps will be flushed.
+All dumps in holding are flushed if no expressions are given.</para>
+
 </refsect1>
 
 <refsect1><title>OPTIONS</title>
@@ -97,22 +102,22 @@ option.</para>
   <varlistentry>
   <term><option>-D datestamp</option></term>
   <listitem>
-<para>specify a  datestamp expression you want to flush, see the 
-&quot;DATESTAMP EXPRESSION&quot; section of
-<manref name="amanda" vol="8"/>
-for a description.
+<para>specify a datestamp expression you want to flush; see
+<manref name="amanda-match" vol="7"/>
+for details on the format of this expression.
 <option>-D 20001225-7</option>
-will flush all
-dumps from 25 december 2000 to 27 december 2000.</para>
+will flush all dumps from 25 december 2000 to 27 december 2000.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
   <term><replaceable>host</replaceable> [<replaceable>disk</replaceable>]*</term>
   <listitem>
-<para>Specify the host and disk on which the command will work.</para>
+<para>Specify the host and disk on which the command will work -- see
+    the description of DLE specifications in <manref name="amanda-match" vol="7"/>. </para>
   </listitem>
   </varlistentry>
+
 
   &configoverride.varlistentry;
 
@@ -193,6 +198,7 @@ The exit code of <command>amflush</command> is the ORed value of:
 
 <seealso>
 <manref name="amdump" vol="8"/>
+<manref name="amanda-match" vol="7"/>
 </seealso>
 
 </refentry>

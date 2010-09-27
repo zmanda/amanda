@@ -60,27 +60,22 @@ pulls one or more matching dumps from tape or from the holding disk,
 handling the reassembly of multi-tape split dump files as well as any
 tape autochanger operations.</para>
 
-<para>It will automatically use the logs created by
-<manref name="amdump" vol="8"/>
+<para>It will automatically use the Amanda catalog
 to locate available dumps on tape, in the same way that the <emphasis
 remap='B'>find</emphasis> feature of
 <manref name="amadmin" vol="8"/>
-lists available dumps. If these logs are unavailable, it can search
-tape-by-tape to find what it needs, and can generate new logs to serve
-as an emergency tape inventory.</para>
+lists available dumps.</para>
 
 <para>The 
 <emphasis remap='I'>hostname</emphasis>,
 <emphasis remap='I'>diskname</emphasis>,
 <emphasis remap='I'>datestamp</emphasis>,
 and
-<emphasis remap='I'>level</emphasis> dump pattern-matching works as in
-<manref name="amrestore" vol="8"/>,
-with the added requirement that at minimum a <emphasis
-remap='I'>hostname</emphasis> must be specified when not in inventory mode.</para>
+<emphasis remap='I'>level</emphasis> dump specifications are further described in
+<manref name="amanda-match" vol="7"/>.
+Note that at minimum a <emphasis remap='I'>hostname</emphasis> must be specified.</para>
 
-<para>Unless
-<option>-p</option>
+<para>Unless <option>-p</option>
 is used, backup images are extracted to files in the current directory named:</para>
 
 <para>If a changer error occurs, or the <option>-d</option> option is given,
@@ -199,10 +194,9 @@ instead.</para>
 </refsect1>
 
 <seealso>
+<manref name="amanda-match" vol="7"/>,
 <manref name="amadmin" vol="8"/>,
 <manref name="amrestore" vol="8"/>,
-<manref name="tar" vol="1"/>
-<manref name="restore" vol="8"/>
 </seealso>
 
 </refentry>

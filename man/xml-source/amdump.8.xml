@@ -42,20 +42,19 @@
 
 <refsect1><title>DESCRIPTION</title>
 <para><emphasis remap='B'>Amdump</emphasis>
-switches to the appropriate Amanda configuration directory,
-e.g. /usr/local/etc/amanda/<emphasis remap='I'>config</emphasis>,
-then attempts to back up every disk specified by the
-<emphasis remap='I'>amanda.conf</emphasis>
-file.
+is the main interface to the Amanda backup process.  It loads the specified configuration
+and attempts to back up every disk specified by the
+&disklist;.
 <emphasis remap='B'>Amdump</emphasis>
 is normally run by
 <emphasis remap='B'>cron</emphasis>.</para>
 
-<para>You can specify many host/disk expressions, only disks that
-match an expression will be dumped. All disks are dumped if no
-expressions are given.</para>
+<para>The command optionally takes a set of DLE specifications
+    (see <manref
+    name="amanda-match" vol="7"/>) to narrow the DLEs that will be dumped.
+All disks are dumped if no expressions are given.</para>
 
-<para>If the file /usr/local/etc/amanda/<emphasis remap='I'>config</emphasis>/hold exists,
+<para>If a file named <filename>hold</filename> exists in the configuration directory,
 <command>amdump</command>
 will wait until it is removed before starting the backups.
 This allows scheduled backups to be delayed when circumstances warrant, for example, 
@@ -80,7 +79,8 @@ man page for more details about Amanda.</para>
   <varlistentry>
   <term><replaceable>host</replaceable> [<replaceable>disk</replaceable>]*</term>
   <listitem>
-<para>Specify the host and disk on which the command will work.</para>
+<para>Specify the host and disk on which the command will work -- see
+    the description of DLE specifications in <manref name="amanda-match" vol="7"/>. </para>
   </listitem>
   </varlistentry>
 
@@ -149,6 +149,7 @@ The exit code of <command>amdump</command> is the ORed value of:
 <manref name="amrestore" vol="8"/>,
 <manref name="amflush" vol="8"/>,
 <manref name="cron" vol="8"/>
+<manref name="amanda-match" vol="7"/>
 </seealso>
 
 </refentry>

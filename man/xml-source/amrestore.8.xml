@@ -94,11 +94,8 @@ decompress the result.</para>
 <para>Only dumps matching the dump specification beginning with
 <replaceable>hostname</replaceable> are extracted.  If no specification is
 given, every file on the volume (or the entire holdingfile) is restored.  See
-the "HOST &amp; DISK EXPRESSIONS" section of <manref name="amanda" vol="8"/>
-for the format of the <replaceable>hostname</replaceable> and
-<replaceable>diskname</replaceable> parameters, and the "DATESTAMP EXPRESSIONS"
-section for the format of the <replaceable>datestamp</replaceable>
-parameters.</para>
+the "DUMP SPECIFICATIONS" section of <manref name="amanda-match" vol="7"/>
+for more information.</para>
 
 <para>Unless <option>-p</option> is used, candidate backup images are extracted
 to files in the current directory named:
@@ -227,6 +224,7 @@ images.</para>
 </refsect1>
 
 <seealso>
+<manref name="amanda-match" vol="7"/>,
 <manref name="amfetchdump" vol="8"/>,
 <manref name="amrecover" vol="8"/>,
 </seealso>

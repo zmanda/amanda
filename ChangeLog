@@ -1,4 +1,12 @@
 2010-09-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/Makefile.am man/xml-source/amanda-match.7.xml: new manpage with
+	  descriptions of match expressions
+	* man/xml-source/amadmin.8.xml man/xml-source/amanda.8.xml
+	  man/xml-source/amdump.8.xml man/xml-source/amfetchdump.8.xml
+	  man/xml-source/amflush.8.xml man/xml-source/amrestore.8.xml
+	  man/xml-source/amvault.8.xml: reference it
+
+2010-09-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/util.c common-src/util.h: support ##.## in braced
 	  alternates
 	* installcheck/Amanda_Util.pl: test it

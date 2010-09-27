@@ -94,10 +94,12 @@ any vaulting operations.</para>
 
 <refsect2><title>Secondary Media</title>
 
-<para>The dumps to be read from secondary media can be specified by any combination of
-dumpspecs (host, disk, datestamp, and level patterns, similar to amfetchdump),
-<option>--fulls-only</option>, and <option>--src-timestamp</option>.  At least one
-must be specified, lest amvault attempt to vault all dumps in the catalog.</para>
+<para>The dumps to be read from secondary media can be specified by any
+combination of dump specifications, <option>--fulls-only</option>, and
+<option>--src-timestamp</option>.  At least one must be specified, lest
+amvault attempt to vault all dumps in the catalog.  See <manref
+    name="amanda-match" vol="7"/> for more information on dump
+specifications.</para>
 
 <para>Note that the datestamp given in the dumpspec is the
 <emphasis>dump</emphasis> datestamp - the run in which the backup was taken
