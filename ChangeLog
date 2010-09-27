@@ -1,3 +1,6 @@
+2010-09-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Fix pointer arithmetic.
+
 2010-09-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/Makefile.am man/xml-source/amanda-match.7.xml: new manpage with
 	  descriptions of match expressions
