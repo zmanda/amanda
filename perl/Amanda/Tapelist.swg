@@ -70,6 +70,9 @@ sub reload {
 	$self->_take_lock();
     }
 
+    # clear the C copy
+    C_clear_tapelist();
+
     # let C read the file
     C_read_tapelist($self->{'filename'});
 

@@ -589,7 +589,7 @@ split_quoted_strings(
     result = g_new0(char *, strs->len + 1);
     memmove(result, strs->pdata, sizeof(char *) * strs->len);
 
-    g_ptr_array_free(strs, FALSE); /* FALSE => don't free strings */
+    g_ptr_array_free(strs, TRUE); /* TRUE => free pdata, strings are not freed */
     g_free(local);
 
     return result;

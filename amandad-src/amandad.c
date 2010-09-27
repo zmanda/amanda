@@ -1416,6 +1416,7 @@ process_readnetfd(
 
 	/* fill info_end_buf from the tail end of combined_buf */
 	memcpy(as->info_end_buf, combined_buf + n, INFO_END_LEN);
+	amfree(combined_buf);
 
 	/* if we did see info_end_str, start reading the data fd (fd 0) */
 	if (as->seen_info_end) {

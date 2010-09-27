@@ -66,6 +66,7 @@ GValue* g_value_unset_copy(const GValue* from, GValue * to);
  * pointers in the container before free()ing the container itself. */
 void g_list_free_full(GList * list);
 void g_slist_free_full(GSList * list);
+void g_slist_free_full_gpointer(gpointer list);
 void g_queue_free_full(GQueue * queue);
 void g_ptr_array_free_full(GPtrArray * array);
 

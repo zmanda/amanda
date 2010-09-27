@@ -568,7 +568,7 @@ dumper_cmd(
     char *cmdline = NULL;
     char number[NUM_STR_SIZE];
     char numberport[NUM_STR_SIZE];
-    char *o;
+    char *o, *oo;
     char *device;
     char *features;
     char *qname;
@@ -614,7 +614,9 @@ dumper_cmd(
 		    vstrextend(&o, xml_app, NULL);
 		    amfree(xml_app);
 		}
-		o = quote_string(o);
+		oo = quote_string(o);
+		amfree(o);
+		o = oo;
 	    } else {
 		o = optionstr(dp);
 	    }

@@ -1951,6 +1951,8 @@ start_host(
 	    }
 	    amfree(qname);
 	    amfree(qdevice);
+	    amfree(b64disk);
+	    amfree(b64device);
 	    l_len = strlen(l);
 	    amfree(o);
 

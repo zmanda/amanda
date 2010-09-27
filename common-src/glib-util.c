@@ -130,6 +130,10 @@ void g_slist_free_full(GSList * list) {
     g_slist_free(list);
 }
 
+void g_slist_free_full_gpointer(gpointer list) {
+    g_slist_free_full((GSList *)list);
+}
+
 void g_queue_free_full(GQueue * queue) {
     while (!g_queue_is_empty(queue)) {
         gpointer data;

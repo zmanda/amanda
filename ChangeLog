@@ -1,3 +1,14 @@
+2010-09-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c, client-src/client_util.c,
+	  client-src/selfcheck.c, client-src/sendsize.c, common-src/amxml.c,
+	  common-src/amxml.h, common-src/glib-util.c, common-src/glib-util.h,
+	  common-src/security-util.c, common-src/util.c,
+	  perl/Amanda/Tapelist.swg, server-src/amcheck.c, server-src/amtrmidx.c,
+	  server-src/chunker.c, server-src/diskfile.c, server-src/driver.c,
+	  server-src/driverio.c, server-src/dumper.c, server-src/find.c,
+	  server-src/holding.c, server-src/planner.c, server-src/server_util.c,
+	  server-src/xfer-source-holding.c: Fix memory leak.
+
 2010-09-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/alloc.c: remove amtable functions
 	* common-src/amanda.h: remove prototypes

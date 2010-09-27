@@ -178,7 +178,7 @@ pull_buffer_impl(
     size_t *size)
 {
     XferSourceHolding *self = (XferSourceHolding *)elt;
-    char *buf;
+    char *buf = NULL;
     size_t bytes_read;
 
     if (elt->cancelled)
@@ -211,6 +211,7 @@ pull_buffer_impl(
     }
 
 return_eof:
+    g_free(buf);
     *size = 0;
     return NULL;
 }

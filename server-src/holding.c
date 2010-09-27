@@ -943,9 +943,11 @@ rename_tmp_holding(
 		dumpfile_free_data(&file);
 		amfree(filename);
 		amfree(filename_tmp);
+		free(header);
 		close(fd);
 		return 0;
 	    }
+	    free(header);
 	    close(fd);
 	}
 	filename = newstralloc(filename, file.cont_filename);

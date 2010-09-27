@@ -87,6 +87,8 @@ typedef struct a_dle_s {
 
 dle_t *alloc_dle(void);
 void   init_dle(dle_t *dle);
+void   free_dle(dle_t *dle);
+void   free_script_data(script_t *script);
 dle_t *amxml_parse_node_CHAR(char *txt, char **errmsg);
 dle_t *amxml_parse_node_FILE(FILE *file, char **errmsg);
 char  *amxml_format_tag(char *tag, char *value);

@@ -917,6 +917,7 @@ search_logfile(
 		orig_kb = OFF_T_ATOI(str);
 		amfree(str);
 	    } else {
+		regfree(&regex);
 		bzero(&regex, sizeof(regex));
 		/* the .* at the end of this captures the old {wr: .. } statistics */
 		reg_result = regcomp(&regex,

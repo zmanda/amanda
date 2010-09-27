@@ -1594,6 +1594,9 @@ static void getsize(
 		    strappend(s, l);
 		    s_len += strlen(l);
 		    amfree(l);
+		    amfree(levelstr);
+		    amfree(spindlestr);
+		    amfree(o);
 		} else if (strcmp(dp->program,"DUMP") != 0 &&
 			   strcmp(dp->program,"GNUTAR") != 0) {
 		    est(dp)->errstr = newvstrallocf(est(dp)->errstr,
@@ -1710,6 +1713,8 @@ static void getsize(
 		    enqueue_disk(&failq, dp);
 		}
 	    }
+	    amfree(b64disk);
+	    amfree(b64device);
 	    amfree(qname);
 	    amfree(qdevice);
 	}

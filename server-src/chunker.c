@@ -188,6 +188,7 @@ main(
 	log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
 	error(_("Didn't get START command"));
     }
+    free_cmdargs(cmdargs);
 
     /* set up a fake ENOSPC for testing purposes.  Note that this counts
      * headers as well as data written to disk. */
@@ -328,6 +329,7 @@ main(
 		m = vstrallocf("[%s]", errstr);
 		q = quote_string(m);
 		amfree(m);
+		free_cmdargs(cmdargs);
 		if(command_in_transit != NULL) {
 		    cmdargs = command_in_transit;
 		    command_in_transit = NULL;
@@ -735,6 +737,7 @@ databuf_flush(
 		error(_("error [bad command after RQ-MORE-DISK: \"%s\"]"), q);
 		/*NOTREACHED*/
 	    }
+	    free_cmdargs(cmdargs);
 	}
 
 	/*

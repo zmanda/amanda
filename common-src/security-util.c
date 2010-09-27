@@ -764,6 +764,7 @@ tcpma_stream_close(
     security_stream_read_cancel(&rs->secstr);
     if(rs->closed_by_network == 0)
 	sec_tcp_conn_put(rs->rc);
+    amfree(((security_stream_t *)rs)->error);
     amfree(rs);
 }
 

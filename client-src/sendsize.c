@@ -693,8 +693,8 @@ free_estimates(
     amfree(est->qamdevice);
     amfree(est->dirname);
     amfree(est->qdirname);
-    if(est->dle) {
-/* free DLE */
+    if (est->dle) {
+	free_dle(est->dle);
     }
 }
 
@@ -864,11 +864,13 @@ application_api_calc_estimate(
     if (est->dle->data_path == DATA_PATH_AMANDA &&
 	(bsu->data_path_set & DATA_PATH_AMANDA)==0) {
 	g_printf("%s %d ERROR application %s doesn't support amanda data-path\n", est->qamname, 0, est->dle->program);
+	amfree(bsu);
 	return;
     }
     if (est->dle->data_path == DATA_PATH_DIRECTTCP &&
 	(bsu->data_path_set & DATA_PATH_DIRECTTCP)==0) {
 	g_printf("%s %d ERROR application %s doesn't support directtcp data-path\n", est->qamname, 0, est->dle->program);
+	amfree(bsu);
 	return;
     }
 
@@ -943,8 +945,10 @@ application_api_calc_estimate(
 	}
     }
 
-    if (nb_level == 0)
+    if (nb_level == 0) {
+	amfree(bsu);
 	return;
+    }
 
     if (bsu->multi_estimate) {
 	for (i=0;i<nb_level;i++) {
@@ -964,6 +968,8 @@ application_api_calc_estimate(
 	    }
 	}
     }
+
+    amfree(bsu);
 }
 
 

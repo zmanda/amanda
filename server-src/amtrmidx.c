@@ -171,6 +171,8 @@ main(
 		    strcmp(disk, dp_disk) == 0) {
 		    matching_dp = g_slist_append(matching_dp, dp);
 		}
+		amfree(dp_host);
+		amfree(dp_disk);
 	    }
 
 	    dbprintf("%s %s -> %s\n", diskp->host->hostname,

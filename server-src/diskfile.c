@@ -1226,13 +1226,13 @@ xml_optionstr(
     disk_t *		dp,
     int                 to_server)
 {
-    char *auth_opt = stralloc("");
-    char *kencrypt_opt = stralloc("");
-    char *compress_opt = stralloc("");
+    char *auth_opt;
+    char *kencrypt_opt;
+    char *compress_opt;
     char *encrypt_opt = stralloc("");
     char *decrypt_opt = stralloc("");
-    char *record_opt = stralloc("");
-    char *index_opt = stralloc("");
+    char *record_opt;
+    char *index_opt;
     char *data_path_opt = stralloc("");
     char *exclude = stralloc("");
     char *exclude_file = NULL;
@@ -1256,14 +1256,16 @@ xml_optionstr(
     qdpname = quote_string(dp->name);
     if (am_has_feature(their_features, fe_options_auth)) {
 	auth_opt = vstralloc("  <auth>", dp->auth, "</auth>\n", NULL);
+    } else {
+	auth_opt = stralloc("");
     }
 
     switch(dp->compress) {
     case COMP_FAST:
-	compress_opt = "  <compress>FAST</compress>\n";
+	compress_opt = stralloc("  <compress>FAST</compress>\n");
 	break;
     case COMP_BEST:
-	compress_opt = "  <compress>BEST</compress>\n";
+	compress_opt = stralloc("  <compress>BEST</compress>\n");
 	break;
     case COMP_CUST:
 	compress_opt = vstralloc("  <compress>CUSTOM"
@@ -1273,19 +1275,20 @@ xml_optionstr(
 				 "  </compress>\n", NULL);
 	break;
     case COMP_SERVER_FAST:
-	compress_opt = "  <compress>SERVER-FAST</compress>\n";
+	compress_opt = stralloc("  <compress>SERVER-FAST</compress>\n");
 	break;
     case COMP_SERVER_BEST:
-	compress_opt = "  <compress>SERVER-BEST</compress>\n";
+	compress_opt = stralloc("  <compress>SERVER-BEST</compress>\n");
 	break;
     case COMP_SERVER_CUST:
-	compress_opt = "  <compress>SERVER-CUSTOM</compress>\n";
 	compress_opt = vstralloc("  <compress>SERVER-CUSTOM"
 				 "<custom-compress-program>",
 				 dp->srvcompprog,
 				 "</custom-compress-program>\n"
 				 "  </compress>\n", NULL);
 	break;
+    default:
+	compress_opt = stralloc("");
     }
 
     switch(dp->encrypt) {
@@ -1331,15 +1334,20 @@ xml_optionstr(
 
     if(dp->index) {
 	index_opt = "  <index>YES</index>\n";
+    } else {
+	index_opt = "";
     }
 
     if (dp->kencrypt) {
 	kencrypt_opt = "  <kencrypt>YES</kencrypt>\n";
+    } else {
+	kencrypt_opt = "";
     }
 
     if (am_has_feature(their_features, fe_xml_data_path)) {
 	switch(dp->data_path) {
 	case DATA_PATH_AMANDA:
+	    amfree(data_path_opt);
 	    data_path_opt = stralloc("  <datapath>AMANDA</datapath>\n");
 	    break;
 	case DATA_PATH_DIRECTTCP:
@@ -1348,6 +1356,7 @@ xml_optionstr(
 		char *s, *sc;
 		char *value, *b64value;
 
+		amfree(data_path_opt);
 		data_path_opt = stralloc("  <datapath>DIRECTTCP");
 		if (dp->dataport_list) {
 		    s = sc = stralloc(dp->dataport_list);
@@ -1451,6 +1460,7 @@ xml_optionstr(
     amfree(qdpname);
     amfree(auth_opt);
     amfree(data_path_opt);
+    amfree(compress_opt);
     amfree(exclude);
     amfree(exclude_list);
     amfree(exclude_file);
@@ -1460,6 +1470,7 @@ xml_optionstr(
     amfree(exc);
     amfree(decrypt_opt);
     amfree(encrypt_opt);
+    amfree(script_opt);
 
     /* result contains at least 'auth=...' */
     return result;
@@ -1717,6 +1728,7 @@ xml_scripts(
 	xml_scr = vstrextend(&xml_scr, xml_scr1, xml_app.result, "  </script>\n", NULL);
 	amfree(b64plugin);
 	amfree(xml_app.result);
+	amfree(xml_scr1);
     }
     return xml_scr;
 }

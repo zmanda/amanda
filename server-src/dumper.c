@@ -304,6 +304,8 @@ xml_check_options(
     } else {
 	srvencrypt = ENCRYPT_NONE;
     }
+    free_dle(dle);
+    amfree(o);
 }
 
 
@@ -603,6 +605,10 @@ main(
 	    amfree(amandad_path);
 	    amfree(client_username);
 	    amfree(client_port);
+	    amfree(device);
+	    amfree(b64device);
+	    amfree(qdiskname);
+	    amfree(b64disk);
 
 	    break;
 
@@ -715,6 +721,7 @@ databuf_flush(
     if (written == 0) {
 	int save_errno = errno;
 	m = vstrallocf(_("data write: %s"), strerror(save_errno));
+	amfree(errstr);
 	errstr = quote_string(m);
 	amfree(m);
 	errno = save_errno;
@@ -1466,8 +1473,10 @@ read_mesgfd(
 				  strerror(errno));
 	    dump_result = 2;
 	    stop_dump();
+	    dumpfile_free_data(&file);
 	    return;
 	}
+	dumpfile_free_data(&file);
 	aclose(db->fd);
 	if (data_path == DATA_PATH_AMANDA) {
 	    g_debug(_("Sending data to %s:%d\n"), data_host, data_port);
@@ -1764,6 +1773,7 @@ stop_dump(void)
 	if (cmdargs->cmd != ABORT) {
 	    error(_("beurk"));
 	}
+	amfree(errstr);
 	errstr = stralloc(cmdargs->argv[1]);
 	free_cmdargs(cmdargs);
     }

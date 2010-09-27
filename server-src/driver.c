@@ -947,7 +947,7 @@ startaflush_tape(
 	    amfree(taper->tape_error);
 	    taper->result = LAST_TOK;
 	    taper->sendresult = 0;
-	    taper->first_label = NULL;
+	    amfree(taper->first_label);
 	    taper->written = 0;
 	    taper->state &= ~TAPER_STATE_IDLE;
 	    taper->state |= TAPER_STATE_FILE_TO_TAPE;
@@ -1703,6 +1703,7 @@ handle_taper_result(
 		/*NOTREACHED*/
             }
 	    if (!taper->first_label) {
+		amfree(taper->first_label);
 		taper->first_label = stralloc(result_argv[2]);
 		taper->first_fileno = OFF_T_ATOI(result_argv[3]);
 	    }
@@ -1846,9 +1847,9 @@ handle_taper_result(
 	    amfree(dp->dataport_list);
 	    dp->dataport_list = stralloc(result_argv[4]);
 
-	    taper->input_error = NULL;
-	    taper->tape_error = NULL;
-	    taper->first_label = NULL;
+	    amfree(taper->input_error);
+	    amfree(taper->tape_error);
+	    amfree(taper->first_label);
 	    taper->written = 0;
 	    taper->state |= TAPER_STATE_DUMP_TO_TAPE;
 
@@ -2651,6 +2652,7 @@ read_flush(
 	error(_("could not open info db \"%s\""), conf_infofile);
 	/*NOTREACHED*/
     }
+    amfree(conf_infofile);
 
     for(line = 0; (inpline = agets(stdin)) != NULL; free(inpline)) {
 	dumpfile_t file;

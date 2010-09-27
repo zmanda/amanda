@@ -306,7 +306,7 @@ main(
 
     if (am_has_feature(g_options->features, fe_req_xml)) {
 	char  *errmsg = NULL;
-	dle_t *dles, *dle;
+	dle_t *dles, *dle, *dle_next;
 
 	dles = amxml_parse_node_FILE(stdin, &errmsg);
 	if (errmsg) {
@@ -328,6 +328,10 @@ main(
 	for (dle = dles; dle != NULL; dle = dle->next) {
 	    run_client_scripts(EXECUTE_ON_POST_HOST_AMCHECK, g_options, dle,
 			       stdout);
+	}
+	for (dle = dles; dle != NULL; dle = dle_next) {
+	    dle_next = dle->next;
+	    free_dle(dle);
 	}
     }
 
