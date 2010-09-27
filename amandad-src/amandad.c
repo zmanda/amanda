@@ -1533,6 +1533,8 @@ service_new(
     struct active_service *as;
     pid_t pid;
     int newfd;
+    char *peer_name;
+    char *amanda_remote_host_env[2];
 
     assert(security_handle != NULL);
     assert(cmd != NULL);
@@ -1646,6 +1648,16 @@ service_new(
 	 * and start up.
 	 */
 
+	/* set up the AMANDA_AUTHENTICATED_PEER env var so child services
+	 * can use it to authenticate */
+	peer_name = security_get_authenticated_peer_name(security_handle);
+	amanda_remote_host_env[0] = NULL;
+	amanda_remote_host_env[1] = NULL;
+	if (*peer_name) {
+	    amanda_remote_host_env[0] =
+		g_strdup_printf("AMANDA_AUTHENTICATED_PEER=%s", peer_name);
+	}
+
 	/*
 	 * The data stream is stdin in the new process
 	 */
@@ -1735,7 +1747,7 @@ service_new(
         aclose(data_write[STDERR_PIPE][1]);
 	safe_fd(DATA_FD_OFFSET, DATA_FD_COUNT*2);
 
-	execle(cmd, cmd, "amandad", auth, (char *)NULL, safe_env());
+	execle(cmd, cmd, "amandad", auth, (char *)NULL, safe_env_full(amanda_remote_host_env));
 	error(_("could not exec service %s: %s\n"), cmd, strerror(errno));
 	/*NOTREACHED*/
     }

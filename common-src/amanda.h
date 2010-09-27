@@ -450,7 +450,11 @@ char *debug_vstrextend(const char *file, int line, char **oldstr, ...);
 #define agets(f)	      debug_agets(__FILE__,__LINE__,(f))
 #define areads(f)	      debug_areads(__FILE__,__LINE__,(f))
 
-char **	safe_env(void);
+/* return a "safe" version of the current environment; pass this to execle */
+#define safe_env() safe_env_full(NULL)
+
+/* like safe_env, but optionally add additional environment variables */
+char **	safe_env_full(char **add);
 
 time_t	unctime(char *timestr);
 

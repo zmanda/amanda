@@ -316,10 +316,10 @@ debug_vstrextend(
 }
 
 /*
- * safe_env - build a "safe" environment list.
+ * safe_env_full - build a "safe" environment list.
  */
 char **
-safe_env(void)
+safe_env_full(char **add)
 {
     static char *safe_env_list[] = {
 	"TZ",
@@ -349,14 +349,24 @@ safe_env(void)
     size_t l1, l2;
     char **env;
     int    env_cnt;
+    int nadd = 0;
+
+    /* count ADD */
+    for (p = add; p && *p; p++)
+	nadd++;
 
     if (getuid() == geteuid() && getgid() == getegid()) {
 	env_cnt = 1;
 	for (env = environ; *env != NULL; env++)
 	    env_cnt++;
-	if ((q = (char **)malloc(env_cnt*SIZEOF(char *))) != NULL) {
+	if ((q = (char **)malloc((nadd+env_cnt)*SIZEOF(char *))) != NULL) {
 	    envp = q;
 	    p = envp;
+	    /* copy in ADD */
+	    for (env = add; env && *env; env++) {
+		*p = *env;
+		p++;
+	    }
 	    for (env = environ; *env != NULL; env++) {
 		if (strncmp("LANG=", *env, 5) != 0 &&
 		    strncmp("LC_", *env, 3) != 0) {
@@ -369,8 +379,16 @@ safe_env(void)
 	return envp;
     }
 
-    if ((q = (char **)malloc(SIZEOF(safe_env_list))) != NULL) {
+    g_fprintf(stderr, "HERE\n");
+    if ((q = (char **)malloc(nadd*sizeof(char *) + SIZEOF(safe_env_list))) != NULL) {
 	envp = q;
+	/* copy in ADD */
+	for (p = add; p && *p; p++) {
+	    *q = *p;
+	    q++;
+	}
+
+	/* and copy any SAFE_ENV that are already set */
 	for (p = safe_env_list; *p != NULL; p++) {
 	    if ((v = getenv(*p)) == NULL) {
 		continue;			/* no variable to dup */
