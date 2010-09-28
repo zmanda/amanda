@@ -344,8 +344,8 @@ is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_PROPERTY),
 			values => ["qwerty", "asdfg"] }},
 	"dumptype proplist");
 is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_RECOVERY_LIMIT),
-    undef,
-    "dumptype recovery limit with no limit specified => undef");
+    [],
+    "dumptype recovery limit with no limit specified => empty");
 
 ok(dumptype_seen($dtyp, $DUMPTYPE_EXCLUDE),
     "'exclude' parm was seen");

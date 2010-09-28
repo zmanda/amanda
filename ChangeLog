@@ -1,4 +1,7 @@
 2010-09-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Config.pl: fix test
+
+2010-09-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* NEWS: update NEWS about it
 	* common-src/conffile.c common-src/conffile.h: add recovery-list
 	  parameters
