@@ -1,3 +1,7 @@
+2010-09-28 Dan Locks <dwlocks@zmanda.com>
+	*  config/amanda/progs.m4: remove first instance of
+	   AMANDA_PROG_GNUPLOT
+
 2010-09-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amanda.h common-src/alloc.c: add save_env_full
 	* amandad-src/amandad.c: set $AMANDA_AUTHENTICATED_PEER for services

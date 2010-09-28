@@ -122,36 +122,6 @@ AC_DEFUN([AMANDA_PROG_LINT],
 
 # SYNOPSIS
 #
-#   AMANDA_PROG_GNUPLOT
-#
-# OVERVIEW
-#
-#   Search for a 'gnuplot' binary, placing the result in the precious 
-#   variable GNUPLOT.  Also accepts --with-gnuplot to indicate the location
-#   of the binary.
-#
-AC_DEFUN([AMANDA_PROG_GNUPLOT],
-[
-    AC_REQUIRE([AMANDA_INIT_PROGS])
-
-    AC_ARG_WITH(gnuplot,
-    AS_HELP_STRING([--with-gnuplot=PATH],
-		   [use gnuplot executable at PATH in amplot]),
-	[
-	    case "$withval" in
-		y | ye | yes) : ;;
-		n | no) GNUPLOT= ;;
-		*) GNUPLOT="$withval" ;;
-	    esac
-	])
-    AC_PATH_PROG(GNUPLOT,gnuplot,,$LOCSYSPATH)
-
-    AC_ARG_VAR(GNUPLOT, [Location of the 'gnuplot' binary])
-    AC_SUBST(GNUPLOT)
-])
-
-# SYNOPSIS
-#
 #   AMANDA_PROG_LPR
 #
 # OVERVIEW
