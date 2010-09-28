@@ -72,6 +72,7 @@ typedef struct ctl_data_s {
   data_path_t              data_path;
   char                    *addrs;
   backup_support_option_t *bsu;
+  gint64                   bytes_read;
 } ctl_data_t;
 
 #define SKIP_TAPE 2
@@ -2103,6 +2104,7 @@ writer_intermediary(
     ctl_data.data_path     = DATA_PATH_AMANDA;
     ctl_data.addrs         = NULL;
     ctl_data.bsu           = NULL;
+    ctl_data.bytes_read    = 0;
 
     security_stream_read(amidxtaped_streams[DATAFD].fd,
 			 read_amidxtaped_data, &ctl_data);
@@ -2172,6 +2174,7 @@ writer_intermediary(
 	    return -1;
 	}
     }
+    g_debug("bytes read: %jd", (intmax_t)ctl_data.bytes_read);
     return(0);
 }
 
@@ -2742,6 +2745,7 @@ read_amidxtaped_data(
 	    start_processing_data(ctl_data);
 	}
     } else {
+	ctl_data->bytes_read += size;
 	/* Only the data is sent to the child */
 	/*
 	 * We ignore errors while writing to the index file.
