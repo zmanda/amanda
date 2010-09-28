@@ -297,7 +297,7 @@ sub plan_cb {
     $src->{'plan'} = $plan;
 
     if ($self->{'opt_dry_run'}) {
-	my $total_size = Math::BigInt->new(0);
+	my $total_kb = Math::BigInt->new(0);
 
 	# iterate over each part of each dump, printing out the basic information
 	for my $dump (@{$plan->{'dumps'}}) {
@@ -312,7 +312,10 @@ sub plan_cb {
 		      $dump->{'dump_timestamp'} . " " .
 		      $dump->{'level'} . "\n";
 	    }
+	    $total_kb += $dump->{'kb'};
 	}
+
+	print STDOUT "Total Size: $total_kb KB\n";
 
 	return $self->quit(0);
     }

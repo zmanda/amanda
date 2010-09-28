@@ -1,4 +1,7 @@
 2010-09-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amvault.pl: print total size on --dry-run
+
+2010-09-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Config.pl: fix test
 
 2010-09-28  Dustin J. Mitchell <dustin@zmanda.com>
