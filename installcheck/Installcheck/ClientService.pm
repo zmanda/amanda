@@ -37,6 +37,7 @@ sendbackup or selfcheck.
 			    service => 'amindexd',
 			    emulate => 'amandad',
 			    auth => 'bsdtcp',
+			    auth_peer => 'localhost',
 			    process_done => $process_done);
     # or
     $service = Installcheck::ClientService->new(
@@ -84,7 +85,8 @@ the name of the service to run.  The C<emulate> parameter determines how the
 service is invoked.  The C<args> and C<auth> parameters are described above.
 The C<process_done> parameter gives a sub which is called with the service's
 wait status when the service exits and all of its file descriptors have been
-drained.
+drained.  The C<auth_peer> parameter gives the value for
+C<$AMANDA_AUTHENTICATED_PEER> when emulating amandad.
 
 =head2 Killing Subprocess
 
@@ -181,6 +183,7 @@ sub new {
 	process_done => $params{'process_done'},
 	auth => $params{'auth'} || 'bsdtcp',
 	args => $params{'args'} || [],
+	auth_peer => $params{'auth_peer'},
 
 	# all hashes keyed by stream name
 	stream_fds => {},
@@ -374,6 +377,9 @@ sub _start_process_amandad {
 	    POSIX::close($out_c);
 	    POSIX::close($in_c);
 	}
+
+	delete $ENV{'AMANDA_AUTHENTICATED_PEER'};
+	$ENV{'AMANDA_AUTHENTICATED_PEER'} = $self->{'auth_peer'} if $self->{'auth_peer'};
 
 	# finally, execute!
 	# braces avoid warning

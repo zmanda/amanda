@@ -134,7 +134,9 @@ APPLY(CNF_RESERVED_UDP_PORT)\
 APPLY(CNF_RESERVED_TCP_PORT)\
 APPLY(CNF_UNRESERVED_TCP_PORT)\
 APPLY(CNF_HOLDINGDISK)\
-APPLY(CNF_SEND_AMREPORT_ON)
+APPLY(CNF_SEND_AMREPORT_ON)\
+APPLY(CNF_TAPER_PARALLEL_WRITE)\
+APPLY(CNF_RECOVERY_LIMIT)
 
 amglue_add_enum_tag_fns(confparm_key);
 amglue_add_constants(FOR_ALL_CONFPARM_KEY, confparm_key);
@@ -203,7 +205,8 @@ APPLY(DUMPTYPE_APPLICATION)\
 APPLY(DUMPTYPE_SCRIPTLIST)\
 APPLY(DUMPTYPE_PROPERTY)\
 APPLY(DUMPTYPE_DATA_PATH)\
-APPLY(DUMPTYPE_ALLOW_SPLIT)
+APPLY(DUMPTYPE_ALLOW_SPLIT)\
+APPLY(DUMPTYPE_RECOVERY_LIMIT)
 
 amglue_add_enum_tag_fns(dumptype_key);
 amglue_add_constants(FOR_ALL_DUMPTYPE_KEY, dumptype_key);
@@ -390,6 +393,8 @@ amglue_copy_to_tag(part_cache_type_t, getconf);
  *    and 'optional' (int)
  *  - CONFTYPE_PROPLIST -> hashref of hashref with keys 'append' (IV), 'priority' (IV),
  *							'values' (listref)
+ *  - CONFTYPE_RECOVERY_LIMIT -> listref of match expressions; undef in list is taken
+ *		    to mean 'same-host'
  */
 %{
 static int
@@ -522,6 +527,22 @@ val_t_to_sv(val_t *val, SV **results) {
 		}
 
 		results[0] = sv_2mortal(newRV_noinc((SV *)ilist));
+		return 1;
+	    }
+
+	    case CONFTYPE_RECOVERY_LIMIT: {
+		AV *av;
+		GSList *iter;
+		recovery_limit_t *rl = &val_t__recovery_limit(val);
+
+		av = newAV();
+		if (rl->same_host)
+		    av_push(av, &PL_sv_undef);
+		for (iter=rl->match_pats; iter != NULL; iter = iter->next) {
+		    av_push(av, newSVpv((char *)iter->data, 0));
+		}
+
+		results[0] = sv_2mortal(newRV_noinc((SV *)av));
 		return 1;
 	    }
 

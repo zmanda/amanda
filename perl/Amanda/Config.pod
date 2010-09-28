@@ -247,6 +247,9 @@ values is straightforward:
   CONFTYPE_EXECUTE_WHERE              Math::BigInt
   CONFTYPE_SEND_AMREPORT_ON           Math::BigInt
   CONFTYPE_IDENTLIST                  [ string, .. ]
+  CONFTYPE_PART_CACHE_TYPE	      Math::BigInt
+  CONFTYPE_RECOVERY_LIMIT             [ string, .. ] (undef if not specified;
+					    undef in the list means same-host)
 
 Note that C<CONFTYPE_INTRANGE> and C<CONFTYPE_RATE> each return two values, not
 an array reference.

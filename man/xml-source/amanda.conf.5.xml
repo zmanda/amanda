@@ -1339,6 +1339,36 @@ Range is inclusive.</para>
   </listitem>
   </varlistentry>
 
+  <varlistentry>
+  <term><amkeyword>recovery-limit</amkeyword> [ <amtype>string</amtype> | <amkeyword>same-host</amkeyword> ]</term>
+  <listitem>
+<para>Default: none (no limitations).  This parameter limits the hosts
+    that may do remote recoveries.  Hosts are identified by their authenticated
+    peer name, as described in <manref name="amanda-auth" vol="7"/>; if this is
+    not available and the recovery-limit parameter is present, recovery will be
+    denied.  The arguments to the parameter are strings giving host match
+    expressions (see <manref name="amanda-match" vol="7"/>) or the special
+    keyword same-host, which requires an exact match to the hostname of the
+    DLE being recovered.  Specifying no arguments at all will disable all
+    recoveries from any host.</para>
+
+<para>Note that match expressions can be constructed to be
+    forgiving of e.g., fully-qualified vs. unqualified hostnames, but
+    <amkeyword>same-host</amkeyword> requires an exact match.</para>
+
+<para>The error messages that appear in amrecover are intentionally vague to
+    avoid information leakage.  Consult the amindexd debug log for more details
+    on the reasons a recovery was rejected.</para>
+
+<para>Recovery limits can be refined on a per-DLE basis using the dumptype
+    parameter of the same name.  Note that the default value will apply to any
+    dumpfiles for disks which no longer appear in the disklist; thus leaving the
+    global parameter at its default value but setting it for all DLEs is not
+    sufficient to maintain secure backups.</para>
+
+  </listitem>
+  </varlistentry>
+
 </variablelist>
 </refsect1>
 
@@ -2179,6 +2209,18 @@ When dumping a split dump in PORT-WRITE mode (usually meaning "no holding disk")
 This specifies the part size used when no <amkeyword>split-diskbuffer</amkeyword> is specified, or when it is too small or does not exist,
 and thus the maximum amount of memory consumed for in-memory splitting.
 The default unit is Kbytes if it is not specified.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+      <term><amkeyword>recovery-limit</amkeyword>
+	    [ <amkeyword>same-host</amkeyword> | <amtype>string</amtype> ]*</term>
+  <listitem>
+
+<para>Default: global value.  This parameter overrides the global
+    <amkeyword>recovery-limit</amkeyword> parameter for DLEs of this
+    dumptype.</para>
+
   </listitem>
   </varlistentry>
 </variablelist>

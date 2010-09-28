@@ -211,6 +211,11 @@ typedef enum {
     PART_CACHE_TYPE_DISK,
 } part_cache_type_t;
 
+/* recovery_limit */
+typedef struct {
+    gboolean same_host;
+    GSList *match_pats;
+} recovery_limit_t;
 
 /* Names for the type of value in a val_t.  Mostly for internal use, but useful
  * for wrapping val_t's, too. */
@@ -242,6 +247,7 @@ typedef enum {
     CONFTYPE_DATA_PATH,
     CONFTYPE_AUTOLABEL,
     CONFTYPE_PART_CACHE_TYPE,
+    CONFTYPE_RECOVERY_LIMIT,
 } conftype_t;
 
 /* A "seen" struct.  Rather than allocate strings all over the place, this
@@ -270,6 +276,7 @@ typedef struct val_s {
 	estimatelist_t  estimatelist;
 	identlist_t     identlist;
         autolabel_t     autolabel;
+	recovery_limit_t recovery_limit;
     } v;
     seen_t seen;
     conftype_t type;
@@ -305,6 +312,7 @@ send_amreport_t       val_t_to_send_amreport(val_t *);
 data_path_t           val_t_to_data_path(val_t *);
 autolabel_t           val_t_to_autolabel(val_t *);
 part_cache_type_t     val_t_to_part_cache_type(val_t *);
+recovery_limit_t     *val_t_to_recovery_limit(val_t *);
 
 /* Has the given val_t been seen in a configuration file or config overwrite?
  *
@@ -355,6 +363,7 @@ part_cache_type_t     val_t_to_part_cache_type(val_t *);
 #define val_t__data_path(val)     ((val)->v.i)
 #define val_t__autolabel(val)     ((val)->v.autolabel)
 #define val_t__part_cache_type(val) ((val)->v.i)
+#define val_t__recovery_limit(val) ((val)->v.recovery_limit)
 
 /*
  * Parameters
@@ -462,6 +471,7 @@ typedef enum {
     CNF_AUTOLABEL,
     CNF_DEBUG_DAYS,
     CNF_TAPER_PARALLEL_WRITE,
+    CNF_RECOVERY_LIMIT,
     CNF_CNF /* sentinel */
 } confparm_key;
 
@@ -512,6 +522,7 @@ val_t *getconf(confparm_key key);
 #define getconf_send_amreport(key) (val_t_to_send_amreport(getconf((key))))
 #define getconf_autolabel(key)    (val_t_to_autolabel(getconf((key))))
 #define getconf_part_cache_type(key) (val_t_to_part_cache_type(getconf((key))))
+#define getconf_recovery_limit(key) (val_t_to_recovery_limit(getconf((key))))
 
 /* Get a list of names for subsections of the given type
  *
@@ -685,6 +696,7 @@ typedef enum {
     DUMPTYPE_CLIENT_PORT,
     DUMPTYPE_DATA_PATH,
     DUMPTYPE_ALLOW_SPLIT,
+    DUMPTYPE_RECOVERY_LIMIT,
     DUMPTYPE_DUMPTYPE /* sentinel */
 } dumptype_key;
 
@@ -774,6 +786,7 @@ char *dumptype_name(dumptype_t *dtyp);
 #define dumptype_get_client_port(dtyp)             (val_t_to_str(dumptype_getconf((dtyp), DUMPTYPE_CLIENT_PORT)))
 #define dumptype_get_data_path(dtyp)             (val_t_to_data_path(dumptype_getconf((dtyp), DUMPTYPE_DATA_PATH)))
 #define dumptype_get_allow_split(dtyp)         (val_t_to_boolean(dumptype_getconf((dtyp), DUMPTYPE_ALLOW_SPLIT)))
+#define dumptype_get_recovery_limit(dtyp)      (val_t_to_recovery_limit(dumptype_getconf((dtyp), DUMPTYPE_RECOVERY_LIMIT)))
 
 /*
  * Interface parameter access

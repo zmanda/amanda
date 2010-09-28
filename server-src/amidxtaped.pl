@@ -126,6 +126,8 @@ use Amanda::Recovery::Clerk;
 use Amanda::Recovery::Planner;
 use Amanda::Recovery::Scan;
 use Amanda::DB::Catalog;
+use Amanda::Disklist;
+use Amanda::Logfile qw( match_disk match_host );
 
 # Note that this class performs its control IO synchronously.  This is adequate
 # for this service, as it never receives unsolicited input from the remote
@@ -228,13 +230,22 @@ sub read_command {
 	$self->{'their_features'} = Amanda::Feature::Set->from_string($command->{'FEATURES'});
     }
 
-    if ($command->{'CONFIG'}) {
-	config_init($CONFIG_INIT_EXPLICIT_NAME, $command->{'CONFIG'});
-	my ($cfgerr_level, @cfgerr_errors) = config_errors();
-	if ($cfgerr_level >= $CFGERR_ERRORS) {
-	    die "configuration errors; aborting connection";
-	}
-	Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER_PREFERRED);
+    # load the configuration
+    if (!$command->{'CONFIG'}) {
+	die "no CONFIG line given";
+    }
+    config_init($CONFIG_INIT_EXPLICIT_NAME, $command->{'CONFIG'});
+    my ($cfgerr_level, @cfgerr_errors) = config_errors();
+    if ($cfgerr_level >= $CFGERR_ERRORS) {
+	die "configuration errors; aborting connection";
+    }
+    Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER_PREFERRED);
+
+    # and the disklist
+    my $diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));
+    $cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
+    if ($cfgerr_level >= $CFGERR_ERRORS) {
+	die "Errors processing disklist";
     }
 
     $self->setup_data_stream();
@@ -400,6 +411,48 @@ sub plan_cb {
     if (@{$plan->{'dumps'}} > 1) {
 	$self->sendmessage("multiple matching dumps; cannot recover");
 	return $self->quit();
+    }
+
+    # check that the request-limit for this DLE allows this recovery.  because
+    # of the bass-ackward way that amrecover specifies the dump to us, we can't
+    # check the results until *after* the plan was created.
+    my $dump = $plan->{'dumps'}->[0];
+    my $dle = Amanda::Disklist::get_disk($dump->{'hostname'}, $dump->{'diskname'});
+    if (!$dle) {
+	warning("client requested a dump which is no longer in the disklist; rejecting request.");
+	$self->sendmessage("No matching dumps found");
+	return $self->quit();
+    }
+    my $recovery_limit;
+    if (dumptype_seen($dle->{'config'}, $DUMPTYPE_RECOVERY_LIMIT)) {
+	debug("using DLE recovery limit");
+	$recovery_limit = dumptype_getconf($dle->{'config'}, $DUMPTYPE_RECOVERY_LIMIT);
+    } elsif (getconf_seen($CNF_RECOVERY_LIMIT)) {
+	debug("using global recovery limit as default");
+	$recovery_limit = getconf($CNF_RECOVERY_LIMIT);
+    }
+    my $peer = $ENV{'AMANDA_AUTHENTICATED_PEER'};
+    if (defined $recovery_limit) { # undef -> no recovery limit
+	if (!$peer) {
+	    warning("a recovery limit is specified for this DLE, but no authenticted ".
+		    "peer name is available; rejecting request.");
+	    $self->sendmessage("No matching dumps found");
+	    return $self->quit();
+	}
+	my $matched = 0;
+	for my $rl (@$recovery_limit) {
+	    $rl = $dump->{'hostname'} if (!defined $rl); # same-host
+	    if (match_host($rl, $peer)) {
+		$matched = 1;
+		last;
+	    }
+	}
+	if (!$matched) {
+	    warning("authenticated peer '$peer' did not match recovery-limit ".
+		    "config; rejecting request");
+	    $self->sendmessage("No matching dumps found");
+	    return $self->quit();
+	}
     }
 
     if (!$self->{'their_features'}->has($Amanda::Feature::fe_recover_splits)) {

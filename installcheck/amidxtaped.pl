@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 103;
+use Test::More tests => 105;
 
 use strict;
 use warnings;
@@ -34,7 +34,8 @@ use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Header;
 use Amanda::Feature;
-use Amanda::Util;
+use Amanda::Paths;
+use Amanda::Util qw( slurp burp );
 
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
@@ -56,12 +57,13 @@ my $debug = !exists $ENV{'HARNESS_ACTIVE'};
 #   bad_auth - send incorrect auth in OPTIONS (amandad only)
 #   holding_err - 'could not open' error from bogus holding file
 #   holding_no_colon_zero - do not append a :0 to the holding filename in DEVICE=
-#   no_config - do not send CONFIG=
 #   no_tapespec - do not send a tapespec in LABEL=, and send the first partnum in FSF=
 #	no_fsf - or don't send the first partnum in FSF= and leave amidxtaped to guess
 #   ndmp - using NDMP device (so expect directtcp connection)
 #   bad_cmd - send a bogus command line and expect an error
 #   bad_quoting - send a bogus DISK= without fe_amrecover_correct_disk_quoting
+#   recovery_limit - set a non-matching recovery-limit config
+#   no_peer_name - do not set AMANDA_AUTHENTICATED_PEER
 sub run_amidxtaped {
     my %params = @_;
     my $service;
@@ -72,6 +74,8 @@ sub run_amidxtaped {
     my $testmsg;
     my ($data_stream, $cmd_stream);
     my @events;
+    my $old_disklist;
+    my $disklist_file = "$CONFIG_DIR/TESTCONF/disklist";
 
     my $event = sub {
 	my ($evt) = @_;
@@ -109,7 +113,6 @@ sub run_amidxtaped {
 	return $params{'finished_cb'}->()
 	    if ($params{'holding_no_colon_zero'} and not $params{'holding'});
 
-
 	$expect_error = ($params{'bad_auth'}
 			 or $params{'holding_err'}
 			 or $params{'bad_cmd'});
@@ -138,17 +141,29 @@ sub run_amidxtaped {
 	$testmsg .= $params{'holding_err'}? "holding_err " : "";
 	$testmsg .= $params{'ndmp'}? "ndmp " : "";
 	$testmsg .= $params{'holding_no_colon_zero'}? "holding-no-:0 " : "";
-	$testmsg .= $params{'no_config'}? "no-config " : "";
 	$testmsg .= $params{'no_tapespec'}? "no-tapespec " : "";
 	$testmsg .= $params{'no_fsf'}? "no-fsf " : "";
 	$testmsg .= $params{'bad_cmd'}? "bad_cmd " : "";
 	$testmsg .= $params{'bad_quoting'}? "bad_quoting " : "";
+	$testmsg .= $params{'recovery_limit'}? "recovery_limit " : "";
+	$testmsg .= $params{'no_peer_name'}? "no_peer_name " : "";
+
+	# "hack" the disklist to check recovery_limit
+	if ($params{'recovery_limit'}) {
+	    $old_disklist = slurp($disklist_file);
+	    my $new_disklist = "localhost $diskname {\n installcheck-test\n".
+		    "recovery-limit \"some-other-host\"\n}\n";
+	    burp($disklist_file, $new_disklist);
+	}
 
 	diag("starting $testmsg") if $debug;
 
 	$service = Installcheck::ClientService->new(
 		emulate => $params{'emulate'},
 		service => 'amidxtaped',
+		auth_peer =>
+		    ($params{'emulate'} eq 'amandad' && !$params{'no_peer_name'})?
+			"localhost" : undef,
 		process_done => $steps->{'process_done'});
 
 	$steps->{'start'}->();
@@ -275,8 +290,7 @@ sub run_amidxtaped {
 		$service->send($cmd_stream, "DATESTAMP=^$timestamp\$\r\n");
 	    }
 	}
-	$service->send($cmd_stream, "CONFIG=TESTCONF\r\n")
-	    unless $params{'no_config'};
+	$service->send($cmd_stream, "CONFIG=TESTCONF\r\n");
 	if ($params{'digit_end'}) {
 	    $service->send($cmd_stream, "999\r\n"); # dunno why this works..
 	} else {
@@ -316,11 +330,12 @@ sub run_amidxtaped {
     };
 
     step expect_feedme => sub  {
+	Amanda::Debug::debug("HERE");
 	if ($params{'feedme'}) {
 	    $service->expect($cmd_stream,
 		[ re => qr/^FEEDME TESTCONF01\r\n/, $steps->{'got_feedme'} ],
 		[ re => qr/^MESSAGE [^\r]*\r\n/, $steps->{'got_message'} ]);
-	} elsif ($params{'holding_err'}) {
+	} elsif ($params{'holding_err'} || $params{'recovery_limit'}) {
 	    $steps->{'expect_err_message'}->();
 	} else {
 	    $steps->{'expect_header'}->();
@@ -435,6 +450,8 @@ sub run_amidxtaped {
 	    $event->("ERR-INVAL-CMD");
 	} elsif ($line =~ /^MESSAGE could not open.*/) {
 	    $event->('GOT-HOLDING-ERR');
+	} elsif ($line =~ /^MESSAGE No matching dumps found.*/) {
+	    $event->('GOT-NOMATCH');
 	} else {
 	    $event->('UNKNOWN-MSG');
 	}
@@ -452,6 +469,11 @@ sub run_amidxtaped {
     step verify => sub {
 	# reset the alarm - the risk of deadlock has passed
 	alarm(0);
+
+	# reset the disklist, if necessary
+	if ($old_disklist) {
+	    burp($disklist_file, $old_disklist);
+	}
 
 	# do a little bit of gymnastics to only treat this as one test
 
@@ -531,6 +553,12 @@ sub run_amidxtaped {
 			'SEND-FEAT', 'GOT-FEAT', 'SENT-CMD',
 			($inetd and $params{'splits'})? ('GOT-CONNECT', 'DATA-SECURITY') : (),
 			'GOT-HOLDING-ERR', 'EXIT-0' );
+	    }
+	    if ($params{'recovery_limit'}) {
+		@exp_events = (
+			@sec_evts,
+			'SEND-FEAT', 'GOT-FEAT', 'SENT-CMD',
+			'GOT-NOMATCH', 'EXIT-0' );
 	    }
 	    $ok = is_deeply([@events], [@exp_events],
 		$testmsg);
@@ -652,6 +680,12 @@ for $emulate ('inetd', 'amandad') {
     test(emulate => $emulate, holding => $holdingfile,
 	 holding_no_colon_zero => 1);
 }
+
+# missing peer name is not normally a problem
+test(emulate => 'amandad', no_peer_name => 1);
+
+# if the recovery_limit is given and not matching, we get an error..
+test(emulate => 'amandad', recovery_limit => 1);
 
 # bad authentication triggers an error message
 test(emulate => 'amandad', bad_auth => 1);

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 181;
+use Test::More tests => 189;
 use strict;
 use warnings;
 
@@ -179,6 +179,7 @@ $testconf->add_dumptype('second_dumptype', [ # note underscore
 $testconf->add_dumptype('third_dumptype', [
     '' => 'second_dumptype',
     'comment' => '"refers to second_dumptype with an underscore"',
+    'recovery-limit' => '"left" same-host "right"',
 ]);
 $testconf->add_interface('ethernet', [
     'comment' => '"mine"',
@@ -342,6 +343,9 @@ is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_PROPERTY),
 	    "drop" => { priority => 0, append => 0,
 			values => ["qwerty", "asdfg"] }},
 	"dumptype proplist");
+is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_RECOVERY_LIMIT),
+    undef,
+    "dumptype recovery limit with no limit specified => undef");
 
 ok(dumptype_seen($dtyp, $DUMPTYPE_EXCLUDE),
     "'exclude' parm was seen");
@@ -571,6 +575,8 @@ like($dump, qr/INCLUDE\s+LIST OPTIONAL "bing" "ting" "string" "fling"/i,
     "INCLUDE LIST is in the dump");
 like($dump, qr/INCLUDE\s+FILE OPTIONAL "rhyme"/i,
     "INCLUDE FILE is in the dump");
+like($dump, qr/RECOVERY_LIMIT.*SAME-HOST/i,
+    "RECOVERY-LIST is in the dump");
 
 ##
 # Test nested definitions inside a dumptype
@@ -645,6 +651,58 @@ SKIP: {
     ok($dtyp, "found mydump-type");
     is(dumptype_getconf($dtyp, $DUMPTYPE_EXCLUDE)->{'optional'}, 0,
 	"'optional' has no effect when not on the last occurrence");
+}
+
+##
+# Check out recovery-limit parsing
+
+$testconf = Installcheck::Config->new();
+$testconf->add_param('recovery-limit', '"foo" "bar"');
+$testconf->add_dumptype('rl1', [
+    'recovery-limit' => 'same-host',
+]);
+$testconf->add_dumptype('rl2', [
+    'recovery-limit' => '"somehost"',
+]);
+$testconf->add_dumptype('rl3', [
+    'recovery-limit' => 'same-host "somehost"',
+]);
+$testconf->add_dumptype('rl4', [
+    'recovery-limit' => '"foohost" same-host',
+]);
+$testconf->write();
+
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+is($cfg_result, $CFGERR_OK,
+    "recovery-limit config loaded")
+    or diag_config_errors();
+SKIP: {
+    skip "error loading config", 5 unless $cfg_result == $CFGERR_OK;
+    my $dtyp;
+
+    is_deeply(getconf($CNF_RECOVERY_LIMIT),
+	[ 'foo', 'bar' ],
+	"global recovery-limit parameter");
+
+    $dtyp = lookup_dumptype("rl1");
+    is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_RECOVERY_LIMIT),
+	[ undef ],
+	"same-host => undef in list");
+
+    $dtyp = lookup_dumptype("rl2");
+    is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_RECOVERY_LIMIT),
+	[ "somehost" ],
+	"hostname => match pattern");
+
+    $dtyp = lookup_dumptype("rl3");
+    is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_RECOVERY_LIMIT),
+	[ undef, "somehost" ],
+	"hostname and same-host parsed correctly");
+
+    $dtyp = lookup_dumptype("rl4");
+    is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_RECOVERY_LIMIT),
+	[ undef, "foohost" ], # note that the order is an implementation detail
+	".. even if same-host comes last");
 }
 
 ##

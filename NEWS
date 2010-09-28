@@ -12,6 +12,12 @@ Changes in release 3.2.0alpha
       o deprecated configuration keywords:
          + amrecover_do_fsf
 	 + amrecover_check_label
+   * the CONFIG parameter to amidxtaped is now required; this means that versions
+     of amrecover older than 2.4.3 will be unable to recover from servers running
+     Amanda-3.2 and later.
+   * The new dumptype and global parameters 'recovery-limit' can be used to
+     limit which hosts may recover from a particular DLE.  See amanda.conf(5)
+     and amanda-auth(7) for more information.
    * Several old changers have been removed - these changers will work with
      Amanda for the forseeable future, but are no longer included in the
      distribution.

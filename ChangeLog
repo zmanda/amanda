@@ -1,3 +1,15 @@
+2010-09-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* NEWS: update NEWS about it
+	* common-src/conffile.c common-src/conffile.h: add recovery-list
+	  parameters
+	* man/xml-source/amanda.conf.5.xml: document them
+	* perl/Amanda/Config.pod perl/Amanda/Config.swg: SWIG them
+	* installcheck/Amanda_Config.pl: test them
+	* server-src/amidxtaped.pl: check recovery limits
+	* installcheck/amidxtaped.pl
+	  installcheck/Installcheck/ClientService.pm: test it
+	* server-src/amindexd.c: check recovery limits
+
 2010-09-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/extract_list.c: Print number of bytes read.
 

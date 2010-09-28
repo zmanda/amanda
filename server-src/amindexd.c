@@ -45,6 +45,7 @@
 #include "diskfile.h"
 #include "arglist.h"
 #include "clock.h"
+#include "match.h"
 #include "amindex.h"
 #include "disk_history.h"
 #include "list_dir.h"
@@ -634,6 +635,61 @@ is_dump_host_valid(
 }
 
 
+static gboolean
+is_disk_allowed(
+    disk_t *disk)
+{
+    dumptype_t *dt = disk->config;
+    recovery_limit_t *rl = NULL;
+    char *peer;
+    char *hostname;
+    GSList *iter;
+
+    /* get the config: either for the DLE or the global config */
+    if (dt) {
+	if (dumptype_seen(dt, DUMPTYPE_RECOVERY_LIMIT)) {
+	    g_debug("using recovery limit from DLE");
+	    rl = dumptype_get_recovery_limit(dt);
+	}
+    }
+    if (!rl) {
+	if (getconf_seen(CNF_RECOVERY_LIMIT)) {
+	    g_debug("using global recovery limit");
+	    rl = getconf_recovery_limit(CNF_RECOVERY_LIMIT);
+	}
+    }
+    if (!rl) {
+	g_debug("no recovery limit found; allowing access");
+	return TRUE;
+    }
+
+    peer = getenv("AMANDA_AUTHENTICATED_PEER");
+    if (!peer || !*peer) {
+	g_warning("DLE has a recovery-limit, but no authenticated peer name is "
+		  "available; rejecting");
+	return FALSE;
+    }
+
+    /* check same-host */
+    hostname = disk->host? disk->host->hostname : NULL;
+    if (rl->same_host && hostname) {
+	if (0 == strcmp(disk->host->hostname, hostname))
+	    return TRUE;
+    }
+
+    /* check the match list */
+    for (iter = rl->match_pats; iter; iter = iter->next) {
+	char *pat = iter->data;
+	if (match_host(pat, peer))
+	    return TRUE;
+    }
+
+    g_warning("peer '%s' does not match any of the recovery-limit restrictions; rejecting",
+	    peer);
+
+    return FALSE;
+}
+
 static int
 is_disk_valid(
     char *disk)
@@ -650,11 +706,11 @@ is_disk_valid(
 	return -1;
     }
 
-    /* check that the config actually handles that disk */
+    /* check that the config actually handles that disk, and that recovery-limit allows it */
     idisk = lookup_disk(dump_hostname, disk);
-    if(idisk == NULL) {
+    if(idisk == NULL || !is_disk_allowed(idisk)) {
 	qdisk = quote_string(disk);
-	reply(501, _("Disk %s:%s is not in your disklist."), dump_hostname, qdisk);
+	reply(501, _("Disk %s:%s is not in the server's disklist."), dump_hostname, qdisk);
 	amfree(qdisk);
 	return -1;
     }
