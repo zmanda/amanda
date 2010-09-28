@@ -191,7 +191,7 @@ is_deeply(
     "expand_braced_alternates('t{009..13}') (ldigits > rdigits)");
 
 is_deeply(
-    [ sort(Amanda::Util::expand_braced_alternates("x{001..004}y{1..2}z")) ],
+    [ sort(+Amanda::Util::expand_braced_alternates("x{001..004}y{1..2}z")) ],
     [ sort(qw( x001y1z x002y1z x003y1z x004y1z x001y2z x002y2z x003y2z x004y2z )) ],
     "expand_braced_alternates('x{001..004}y{1..2}z')");
 

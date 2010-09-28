@@ -1,4 +1,8 @@
 2010-09-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/util.c: remove debugging call
+	* installcheck/Amanda_Util.pl: fix tests on perl-5.6
+
+2010-09-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amvault.pl: print total size on --dry-run
 
 2010-09-28  Dustin J. Mitchell <dustin@zmanda.com>

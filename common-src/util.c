@@ -784,7 +784,6 @@ expand_braced_sequence(GPtrArray *arr)
     start = g_ascii_strtoull(l, NULL, 10);
     end = g_ascii_strtoull(r, NULL, 10);
     leading_zero = *l == '0';
-    g_debug("leading_zero: %d", leading_zero);
     ndigits = MAX(ldigits, rdigits);
     if (start > end)
 	return arr;
