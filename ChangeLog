@@ -1,3 +1,6 @@
+2010-09-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/dumper.c: fix prints; use the correct disk_t fields
+
 2010-09-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/alloc.c: Remove a print to stderr.
 

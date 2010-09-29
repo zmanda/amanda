@@ -299,8 +299,8 @@ xml_check_options(
 	clnt_decrypt_opt = dle->clnt_decrypt_opt;
     } else if (dle->encrypt == ENCRYPT_SERV_CUST) {
 	srvencrypt = ENCRYPT_SERV_CUST;
-	srv_encrypt = dle->clnt_encrypt;
-	srv_decrypt_opt = dle->clnt_decrypt_opt;
+	srv_encrypt = dle->srv_encrypt;
+	srv_decrypt_opt = dle->srv_decrypt_opt;
     } else {
 	srvencrypt = ENCRYPT_NONE;
     }
@@ -1878,7 +1878,7 @@ g_debug("event register %s %d", name, filter->fd);
 	    safe_fd(-1, 0);
 	    set_root_privs(-1);
 	    execlp(srvcompprog, srvcompprog, (char *)0);
-	    error(_("error: couldn't exec server custom filter%s.\n"), srvcompprog);
+	    error(_("error: couldn't exec server custom compression '%s'.\n"), srvcompprog);
 	    /*NOTREACHED*/
 	}
     }
@@ -1964,7 +1964,7 @@ g_debug("event register %s %d", "encrypt data", filter->fd);
 	if ((encrypttype == ENCRYPT_SERV_CUST) && *srv_encrypt) {
 	    set_root_privs(-1);
 	    execlp(srv_encrypt, srv_encrypt, (char *)0);
-	    error(_("error: couldn't exec server encryption%s.\n"), srv_encrypt);
+	    error(_("error: couldn't exec server custom encryption '%s'.\n"), srv_encrypt);
 	    /*NOTREACHED*/
 	}
 	}
