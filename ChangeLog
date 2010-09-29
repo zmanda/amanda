@@ -1,4 +1,7 @@
 2010-09-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/alloc.c: Remove a print to stderr.
+
+2010-09-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS, ReleaseNotes: Update.
 
 2010-09-28  Dustin J. Mitchell <dustin@zmanda.com>

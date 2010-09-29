@@ -379,7 +379,6 @@ safe_env_full(char **add)
 	return envp;
     }
 
-    g_fprintf(stderr, "HERE\n");
     if ((q = (char **)malloc(nadd*sizeof(char *) + SIZEOF(safe_env_list))) != NULL) {
 	envp = q;
 	/* copy in ADD */
