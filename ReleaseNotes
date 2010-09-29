@@ -1,3 +1,59 @@
+		Release Notes for amanda-3.2.0
+
+* Support for multiple simultaneous writes to storage devices
+   o Can write to all available drives in parallel.
+   o Works only with the new changer API.
+   o Useful if two or more volumes are used in a single run.
+   o dump direct to tape can be scheduled any time during the run,
+     previously they were done sequencially after all dump to holding disk.
+   o enabled with the new 'taper-parallel-write' configuration option.
+* Support for LEOM in storage devices
+   o allows splitting without partial parts, saving space
+   o much more efficient, since parts need not be cached on disk in most
+     cases
+* new, simpler splitting commands in the tapetype section:
+  part-size, part-cache-type, part-cache-dir, part-cache-max-size; see
+  amanda.conf(5) for details
+* Amanda server configuration file changes (amanda.conf)
+   o new configuration keyword:
+      + taper-parallel-write -- How many drive amanda can write to
+                                in parallel.
+   o deprecated configuration keywords:
+      + amrecover_do_fsf
+      + amrecover_check_label
+* the CONFIG parameter to amidxtaped is now required; this means that
+  versions of amrecover older than 2.4.3 will be unable to recover from
+  servers running Amanda-3.2 and later.
+* The new dumptype and global parameters 'recovery-limit' can be used to
+  limit which hosts may recover from a particular DLE.  See amanda.conf(5)
+  and amanda-auth(7) for more information.
+* Several old changers have been removed - these changers will work with
+  Amanda for the forseeable future, but are no longer included in the
+  distribution.
+   o chg-chio
+   o chg-chs
+   o chg-iomega
+   o chg-juke
+   o chg-mcutil
+   o chg-mtx
+   o chg-null (use the new "chg-null:")
+   o chg-rait (use the new "chg-rait:{dev1,dev2}")
+   o chg-rth
+   o chg-scsi-chio
+   o chg-scsi
+* Amvault is much improved, but still experimental:
+   o supports assembling split parts on the source volume and re-splitting
+     them on the destination
+   o supports filtering dumps with the same syntax as amfetchdump
+   o a --fulls-only option skips all incremental dumps on the source
+   o an --export option tries to move tertiary volumes to import/export
+     slots when completed
+   o command-line syntax has changed incompatibly; see manpage or
+     'amvault --help'
+* Rewritten and improved:
+   o amoverview
+   o amcheckdump
+
 		Release Notes for amanda-3.1.0
 
 config

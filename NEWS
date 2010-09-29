@@ -1,20 +1,29 @@
 Changes in release 3.2.0alpha
 
    * Support for multiple simultaneous writes to storage devices
-      o TODO - details
+      o Can write to all available drives in parallel.
+      o Works only with the new changer API.
+      o Useful if two or more volumes are used in a single run.
+      o dump direct to tape can be scheduled any time during the run,
+        previously they were done sequencially after all dump to holding disk.
+      o enabled with the new 'taper-parallel-write' configuration option.
    * Support for LEOM in storage devices
       o allows splitting without partial parts, saving space
-      o much more efficient, since parts need not be cached on disk in most cases
+      o much more efficient, since parts need not be cached on disk in most
+        cases
    * new, simpler splitting commands in the tapetype section:
      part-size, part-cache-type, part-cache-dir, part-cache-max-size; see
      amanda.conf(5) for details
    * Amanda server configuration file changes (amanda.conf)
+      o new configuration keyword:
+         + taper-parallel-write -- How many drive amanda can write to
+                                   in parallel.
       o deprecated configuration keywords:
          + amrecover_do_fsf
-	 + amrecover_check_label
-   * the CONFIG parameter to amidxtaped is now required; this means that versions
-     of amrecover older than 2.4.3 will be unable to recover from servers running
-     Amanda-3.2 and later.
+         + amrecover_check_label
+   * the CONFIG parameter to amidxtaped is now required; this means that
+     versions of amrecover older than 2.4.3 will be unable to recover from
+     servers running Amanda-3.2 and later.
    * The new dumptype and global parameters 'recovery-limit' can be used to
      limit which hosts may recover from a particular DLE.  See amanda.conf(5)
      and amanda-auth(7) for more information.
@@ -39,7 +48,8 @@ Changes in release 3.2.0alpha
       o a --fulls-only option skips all incremental dumps on the source
       o an --export option tries to move tertiary volumes to import/export
         slots when completed
-      o command-line syntax has changed incompatibly; see manpage or 'amvault --help'
+      o command-line syntax has changed incompatibly; see manpage or
+        'amvault --help'
    * Rewritten and improved:
       o amoverview
       o amcheckdump
