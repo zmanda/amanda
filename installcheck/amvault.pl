@@ -140,6 +140,7 @@ sub get_dry_run {
 
     my @rv;
     for my $line (split /\n/, $stdout) {
+	next if ($line =~ /^Total Size:/);
 	my ($tape, $file, $host, $disk, $datestamp, $level) =
 	    ($line =~ /^(\S+) (\d*) (\S+) (.+) (\d+) (\d+)$/);
 	$tape = 'holding' if $file eq '';

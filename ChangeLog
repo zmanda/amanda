@@ -1,4 +1,7 @@
 2010-09-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amvault.pl: fix tests for total size
+
+2010-09-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/util.c: remove debugging call
 	* installcheck/Amanda_Util.pl: fix tests on perl-5.6
 
