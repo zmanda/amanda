@@ -117,5 +117,7 @@ showpage
 (Number of files:      2) DrawStat
 (Filesystems Taped:    0) DrawStat
 (-) (Conf-002) (-) (  0) (      32) (      32) DrawHost
+(euclid) (- /A/b/server-src) (0) (  1) (   21830) (    6470) DrawHost
+
 \
 showpage

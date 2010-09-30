@@ -139,7 +139,18 @@ sub _write_report_tape
 		next unless @$parts > 0;
 
 		my $first_part = $parts->[0];
-		next unless $first_part->{label} eq $label;
+		my $dlename = undef;
+		if ($first_part->{label} eq $label) {
+		    $dlename = $disk;
+		} else { #find if one part is on the volume
+		    foreach $parts (@$parts) {
+			if ($parts->{label} eq $label) {
+			    $dlename = '- ' . $disk;
+			    last;
+			}
+		    }
+		    next if !defined $dlename;
+		}
 
 		my $filenum = $first_part->{file};
 
@@ -174,7 +185,7 @@ sub _write_report_tape
 		    $comp_origsize += $origsize;
 		}
 
-		push @first_parts, [$host, $disk, $level, $filenum, $origsize, $outsize];
+		push @first_parts, [$host, $dlename, $level, $filenum, $origsize, $outsize];
 	    }
 	}
     }

@@ -1,3 +1,8 @@
+2010-09-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report/postscript.pm: print all dles that have a part
+	  on the volume.
+	* installcheck/catalogs/spanned.cat: Check it.
+
 2010-09-30  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Taper/Scan/traditional.pm: use set_current in stage 1,
 	  too
