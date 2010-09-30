@@ -1,3 +1,7 @@
+2010-09-30  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Taper/Scan/traditional.pm: use set_current in stage 1,
+	  too
+
 2010-09-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/dumper.c: fix prints; use the correct disk_t fields
 

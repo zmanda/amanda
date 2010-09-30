@@ -180,6 +180,7 @@ sub stage_1 {
     step do_load => sub {
 	$self->{'changer'}->load(
 	    label => $oldest_reusable,
+	    set_current => 1,
 	    res_cb => $steps->{'load_done'});
     };
 
