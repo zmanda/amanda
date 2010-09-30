@@ -1,4 +1,7 @@
 2010-09-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/event.c: Set the priority of EV_TIME to 10.
+
+2010-09-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report/postscript.pm: print all dles that have a part
 	  on the volume.
 	* installcheck/catalogs/spanned.cat: Check it.

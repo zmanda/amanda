@@ -180,6 +180,8 @@ event_register(
 
 	    /* But it doesn't give us the source directly.. */
 	    handle->source = g_main_context_find_source_by_id(NULL, handle->source_id);
+	    /* EV_TIME must always be handled after EV_READ */
+	    g_source_set_priority(handle->source, 10);
 	    break;
 
 	case EV_WAIT:
