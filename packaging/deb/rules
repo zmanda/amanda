@@ -1,7 +1,6 @@
 #!/usr/bin/make -f
 # debian/rules for amanda using debhelper. GNU copyright 2008 by Dan Locks, 
 # based on work by Bdale Garbee.
-# requires automake 1.2d (from experimental tree)
 
 #	Warning - do *not* use -j on an SMP machine, or the build gets
 #		confused... some sort of race condition in the makefiles?

@@ -1,4 +1,7 @@
 2010-10-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* packaging/deb/rules: remove misleading comment about automake-1.2
+
+2010-10-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* contrib/convert-zd-mtx-to-robot.sh: set default for driveslot, ask
 	  user to clear out 'tapedev' too
 
