@@ -206,7 +206,7 @@ The utility function C<get_splitting_args_from_config> can determine the
 appropriate C<get_xfer_dest> splitting parameters based on a
 few Amanda configuration parameters.  If a parameter was not seen in the
 configuration, it should be omitted or passed as C<undef>.  The function
-returns a hash to pass to get_xfer_dest, although that hash may have an
+returns a hash to pass to C<get_xfer_dest>, although that hash may have an
 C<warning> key containing a message if there is a problem that the user
 should know about.
 
@@ -218,8 +218,10 @@ should know about.
     dle_fallback_splitsize => ..,
     dle_allow_split => ..,
     # Amanda tapetype configuration parameters,
-    part_size => ..,
+    part_size => .., ## in bytes, not kb!!
+    part_size_kb => ..., ## or use this, in kb
     part_cache_type => ..,
+    part_cache_type_enum => ..., ## one of the enums from tapetype_getconf
     part_cache_dir => ..,
     part_cache_max_size => ..,
   );
@@ -1362,6 +1364,22 @@ sub get_splitting_args_from_config {
 	    return 1;
 	}
     };
+
+    # first, handle the alternate spellings for part_size and part_cache_type
+    $params{'part_size'} = $params{'part_size_kb'} * 1024
+	if (defined $params{'part_size_kb'});
+
+    if (defined $params{'part_cache_type_enum'}) {
+	$params{'part_cache_type'} = 'none'
+	    if ($params{'part_cache_type_enum'} == $PART_CACHE_TYPE_NONE);
+	$params{'part_cache_type'} = 'memory'
+	    if ($params{'part_cache_type_enum'} == $PART_CACHE_TYPE_MEMORY);
+	$params{'part_cache_type'} = 'disk'
+	    if ($params{'part_cache_type_enum'} == $PART_CACHE_TYPE_DISK);
+
+	$params{'part_cache_type'} = 'unknown'
+	    unless defined $params{'part_cache_type'};
+    }
 
     # if any of the dle_* parameters are set, use those to set the part_*
     # parameters, which are emptied out first.

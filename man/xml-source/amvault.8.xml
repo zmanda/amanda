@@ -135,6 +135,20 @@ The <option>--autolabel</option> option works just like the
 <amkeyword>autolabel</amkeyword> parameter in &amconf;, and can be
 specified multiple times if necessary.  The default is 'empty'.</para>
 
+<para>If &amconf; contains the new <amkeyword>part-size</amkeyword>
+splitting parameters, then amvault will use them without any additional configuration.
+However, if the configuration still uses the old splitting parameters
+(<amkeyword>tape_splitsize</amkeyword>,
+<amkeyword>split_diskbuffer</amkeyword>, and
+<amkeyword>fallback_splitsize</amkeyword>), then amvault will need some
+additional configuration in order to properly split dumps to tertiary
+media.  To do so, specify a new tapetype in &amconf;, say "TERTIARY",
+and set the <amkeyword>part-size</amkeyword> and other appropriate
+parameters there.  Then reference that tapetype in the amvault invocation:
+<programlisting>
+    amvault -otapetype=TERTIARY ...
+</programlisting></para>
+
 <para>The <option>--export</option> option will cause amvault to attempt to move
 completed tertiary volumes to import/export slots, where they can be
 more easily removed by an operator.</para>

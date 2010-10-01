@@ -1,4 +1,11 @@
 2010-10-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amvault.8.xml: mention that DLE splitting parameters
+	  are ignored by amvault
+	* server-src/amvault.pl: use tapetype parameters for splitting
+	* perl/Amanda/Taper/Scribe.pm: support splitting parameters straight
+	  from Amanda::Config
+
+2010-10-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* packaging/deb/rules: remove misleading comment about automake-1.2
 
 2010-10-01  Dustin J. Mitchell <dustin@zmanda.com>

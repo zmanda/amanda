@@ -103,7 +103,7 @@ use Amanda::Recovery::Planner;
 use Amanda::Recovery::Scan;
 use Amanda::Recovery::Clerk;
 use Amanda::Taper::Scan;
-use Amanda::Taper::Scribe;
+use Amanda::Taper::Scribe qw( get_splitting_args_from_config );
 use Amanda::Changer qw( :constants );
 use Amanda::Cmdline;
 use Amanda::Paths;
@@ -434,10 +434,28 @@ sub xfer_dumps {
 
 	$current->{'header'} = $header;
 
+	# set up splitting args from the tapetype only, since we have no DLEs
+	my $tt = lookup_tapetype(getconf($CNF_TAPETYPE));
+	sub empty2undef { $_[0]? $_[0] : undef }
+	my %xfer_dest_args;
+	if ($tt) {
+	    %xfer_dest_args = get_splitting_args_from_config(
+		part_size_kb =>
+		    empty2undef(tapetype_getconf($tt, $TAPETYPE_PART_SIZE)),
+		part_cache_type_enum =>
+		    empty2undef(tapetype_getconf($tt, $TAPETYPE_PART_CACHE_TYPE)),
+		part_cache_dir =>
+		    empty2undef(tapetype_getconf($tt, $TAPETYPE_PART_CACHE_DIR)),
+		part_cache_max_size =>
+		    empty2undef(tapetype_getconf($tt, $TAPETYPE_PART_CACHE_MAX_SIZE)),
+	    );
+	}
+	# (else leave %xfer_dest_args empty, for no splitting)
+
 	$xfer_dst = $dst->{'scribe'}->get_xfer_dest(
 	    max_memory => getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE),
 	    can_cache_inform => 0,
-	    part_size => 2*1024*1024, # TODO: get from config
+	    %xfer_dest_args,
 	);
 
 	# create and start the transfer
