@@ -79,6 +79,7 @@ done
 
 firstslot=${firstslot:-'-1'}				# default: mtx status
 lastslot=${lastslot:-'-1'}				# default: mtx status
+driveslot=${driveslot:-'0'}				# default: 0
 cleanslot=${cleanslot:-'-1'}				# default: -1
 cleancycle=${cleancycle:-'120'}				# default: two minutes
 if [ -z "$offline_before_unload" -a -n "$OFFLINE_BEFORE_UNLOAD" ]; then
@@ -123,7 +124,7 @@ showbool() {
 }
 
 echo "Remove the following parameters, if present, from your amanda.conf:"
-echo "   tpchanger changerfile changerdev "
+echo "   tpchanger changerfile changerdev tapedev"
 echo ""
 echo "Add the following to amanda.conf (you may want to use a more descriptive name for the changer):"
 echo ""

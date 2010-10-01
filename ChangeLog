@@ -1,3 +1,7 @@
+2010-10-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* contrib/convert-zd-mtx-to-robot.sh: set default for driveslot, ask
+	  user to clear out 'tapedev' too
+
 2010-09-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/event.c: Set the priority of EV_TIME to 10.
 
