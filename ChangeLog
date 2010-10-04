@@ -1,3 +1,7 @@
+2010-10-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amtape.pl: Add a 'return' for every usage() call.
+	  Add step in main.
+
 2010-10-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amvault.8.xml: mention that DLE splitting parameters
 	  are ignored by amvault

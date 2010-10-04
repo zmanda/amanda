@@ -45,7 +45,8 @@ my %subcommands;
 
 sub usage {
     my ($finished_cb) = @_;
-    $finished_cb ||= sub { exit(1); };
+
+    $finished_cb = sub { exit(1); } if (!$finished_cb or !(ref($finished_cb) eq "CODE"));
 
     print STDERR <<EOF;
 Usage: amtape <conf> <command> {<args>} [-o configoption]*
@@ -81,7 +82,7 @@ subcommand("usage", "usage", "this message",
 sub {
     my ($finished_cb, @args) = @_;
 
-    usage($finished_cb);
+    return usage($finished_cb);
 });
 
 subcommand("reset", "reset", "reset changer to known state",
@@ -316,7 +317,7 @@ sub {
     # 'current' or 'next' ..  when we have a changer using such slot names,
     # this subcommand will need to support a --literal flag
 
-    usage($finished_cb) unless (@args == 1);
+    return usage($finished_cb) unless (@args == 1);
     my $slot = shift @args;
 
     my $chg = load_changer($finished_cb) or return;
@@ -393,7 +394,7 @@ sub {
     my $inter;
     my $scan;
 
-    usage($finished_cb) unless (@args == 1);
+    return usage($finished_cb) unless (@args == 1);
     my $label = shift @args;
 
     my $steps = define_steps
@@ -521,7 +522,7 @@ sub {
 	}
     };
 
-    usage($finished_cb) unless (@args == 0);
+    return usage($finished_cb) unless (@args == 0);
     my $label = shift @args;
 
     my $chg = load_changer($finished_cb) or return;
@@ -640,10 +641,16 @@ select($previous_fh);
 sub main {
     my ($finished_cb) = @_;
 
-    my $subcmd = shift @ARGV;
-    usage($finished_cb) unless defined($subcmd) and exists ($subcommands{$subcmd});
-    invoke_subcommand($subcmd, $finished_cb, @ARGV);
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
+    step start => sub {
+	my $subcmd = shift @ARGV;
+	return usage($finished_cb) unless defined($subcmd) and exists ($subcommands{$subcmd});
+	invoke_subcommand($subcmd, $finished_cb, @ARGV);
+    }
 }
+
 main(\&Amanda::MainLoop::quit);
 Amanda::MainLoop::run();
 Amanda::Util::finish_application();
