@@ -810,14 +810,20 @@ amtext(
 	    error("XML: optional");
 	}
 	last_element2_name = last_element2->data;
-	dle->clnt_encrypt = tt;
+	if (dle->encrypt == ENCRYPT_SERV_CUST)
+	    dle->srv_encrypt = tt;
+	else
+	    dle->clnt_encrypt = tt;
     } else if(strcmp(last_element_name, "decrypt-option") == 0) {
 	last_element2 = g_slist_nth(data_user->element_names, 1);
 	if (!last_element2) {
 	    error("XML: optional");
 	}
 	last_element2_name = last_element2->data;
-	dle->clnt_decrypt_opt = tt;
+	if (dle->encrypt == ENCRYPT_SERV_CUST)
+	    dle->srv_decrypt_opt = tt;
+	else
+	    dle->clnt_decrypt_opt = tt;
     } else if(strcmp(last_element_name, "exclude") == 0 ||
 	      strcmp(last_element_name, "include") == 0) {
 	data_user->has_optional = 0;

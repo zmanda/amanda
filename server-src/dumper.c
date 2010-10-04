@@ -288,19 +288,19 @@ xml_check_options(
 	srvcompprog = dle->compprog;
     } else if (dle->compress == COMP_CUST) {
 	srvcompress = COMP_CUST;
-	clntcompprog = dle->compprog;
+	clntcompprog = g_strdup(dle->compprog);
     } else {
 	srvcompress = COMP_NONE;
     }
 
     if (dle->encrypt == ENCRYPT_CUST) {
 	srvencrypt = ENCRYPT_CUST;
-	clnt_encrypt = dle->clnt_encrypt;
-	clnt_decrypt_opt = dle->clnt_decrypt_opt;
+	clnt_encrypt = g_strdup(dle->clnt_encrypt);
+	clnt_decrypt_opt = g_strdup(dle->clnt_decrypt_opt);
     } else if (dle->encrypt == ENCRYPT_SERV_CUST) {
 	srvencrypt = ENCRYPT_SERV_CUST;
-	srv_encrypt = dle->srv_encrypt;
-	srv_decrypt_opt = dle->srv_decrypt_opt;
+	srv_encrypt = g_strdup(dle->srv_encrypt);
+	srv_decrypt_opt = g_strdup(dle->srv_decrypt_opt);
     } else {
 	srvencrypt = ENCRYPT_NONE;
     }
@@ -571,9 +571,9 @@ main(
 	    databuf_init(&db, outfd);
 
 	    if (am_has_feature(their_features, fe_req_xml))
-		xml_check_options(options);
+		xml_check_options(options); /* note: modifies globals */
 	    else
-		check_options(options);
+		check_options(options); /* note: modifies globals */
 
 	    rc = startup_dump(hostname,
 			      diskname,

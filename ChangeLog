@@ -1,4 +1,10 @@
 2010-10-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amxml.c: set the correct fields (encryption or
+	  compression)
+	* server-src/dumper.c: strdup strings so they are not gone after
+	  free_dle
+
+2010-10-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Report.pm: fix autovivification bug
 	* perl/Amanda/Report/human.pm: detect re-flushing; fix a lot of 
 	  undefined's
