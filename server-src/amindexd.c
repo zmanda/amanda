@@ -642,7 +642,7 @@ is_disk_allowed(
     dumptype_t *dt = disk->config;
     recovery_limit_t *rl = NULL;
     char *peer;
-    char *hostname;
+    char *dle_hostname;
     GSList *iter;
 
     /* get the config: either for the DLE or the global config */
@@ -671,10 +671,12 @@ is_disk_allowed(
     }
 
     /* check same-host */
-    hostname = disk->host? disk->host->hostname : NULL;
-    if (rl->same_host && hostname) {
-	if (0 == strcmp(disk->host->hostname, hostname))
+    dle_hostname = disk->host? disk->host->hostname : NULL;
+    if (rl->same_host && dle_hostname) {
+	if (0 == g_ascii_strcasecmp(peer, dle_hostname)) {
+	    g_debug("peer matched same-host ('%s')", dle_hostname);
 	    return TRUE;
+	}
     }
 
     /* check the match list */

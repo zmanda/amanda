@@ -418,13 +418,8 @@ sub plan_cb {
     # check the results until *after* the plan was created.
     my $dump = $plan->{'dumps'}->[0];
     my $dle = Amanda::Disklist::get_disk($dump->{'hostname'}, $dump->{'diskname'});
-    if (!$dle) {
-	warning("client requested a dump which is no longer in the disklist; rejecting request.");
-	$self->sendmessage("No matching dumps found");
-	return $self->quit();
-    }
     my $recovery_limit;
-    if (dumptype_seen($dle->{'config'}, $DUMPTYPE_RECOVERY_LIMIT)) {
+    if ($dle && dumptype_seen($dle->{'config'}, $DUMPTYPE_RECOVERY_LIMIT)) {
 	debug("using DLE recovery limit");
 	$recovery_limit = dumptype_getconf($dle->{'config'}, $DUMPTYPE_RECOVERY_LIMIT);
     } elsif (getconf_seen($CNF_RECOVERY_LIMIT)) {
@@ -441,7 +436,15 @@ sub plan_cb {
 	}
 	my $matched = 0;
 	for my $rl (@$recovery_limit) {
-	    $rl = $dump->{'hostname'} if (!defined $rl); # same-host
+	    if (!defined $rl) {
+		# handle same-host with a case-insensitive string compare, not match_host
+		if (lc($peer) eq lc($dump->{'hostname'})) {
+		    $matched = 1;
+		    last;
+		}
+	    }
+
+	    # otherwise use match_host to allow match expressions
 	    if (match_host($rl, $peer)) {
 		$matched = 1;
 		last;

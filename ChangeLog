@@ -1,4 +1,9 @@
 2010-10-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amidxtaped.pl: exact match for same-host, allow dumps
+	  that are not in the disklist
+	* server-src/amindexd.c: fix trivially permissive same-host
+
+2010-10-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amxml.c: set the correct fields (encryption or
 	  compression)
 	* server-src/dumper.c: strdup strings so they are not gone after
