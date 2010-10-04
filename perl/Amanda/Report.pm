@@ -1303,7 +1303,6 @@ sub check_missing_fail_strange
     my @dles = $self->get_dles();
 
     foreach my $dle_entry (@dles) {
-
         my $alldumps = $self->get_dle_info(@$dle_entry, 'dumps');
 	my $planner = $self->get_dle_info(@$dle_entry, 'planner');
 
@@ -1319,14 +1318,14 @@ sub check_missing_fail_strange
 	    my $tries = $alldumps->{$self->{'run_timestamp'}};
 	    my $try = @$tries[-1];
 
-	    if ($try->{dumper}->{status} eq 'fail') {
+	    if (exists $try->{dumper} && $try->{dumper}->{status} eq 'fail') {
 		$self->{flags}{dump_failed} = 1;
 	    } elsif ((defined($try->{'chunker'}) &&
 		 $try->{'chunker'}->{status} eq 'success') ||
 		(defined($try->{'taper'}) &&
 		 $try->{'taper'}->{status} eq 'done')) {
 		#chunker or taper success, use dumper status
-		if ($try->{'dumper'}->{status} eq 'strange') {
+		if (exists $try->{dumper} && $try->{dumper}->{status} eq 'strange') {
 		    $self->{flags}{dump_strange} = 1;
 		}
 	    } else {

@@ -534,7 +534,6 @@ sub output_error_summaries
         my $alldumps = $report->get_dle_info(@$dle_entry, "dumps");
 	my $dle = $report->get_dle_info($hostname, $disk);
         my $qdisk = quote_string($disk);
-	my $failed = 0;
 
 	if ($report->get_flag('results_missing') and
 	    !defined($alldumps->{$report->{run_timestamp}}) and
@@ -553,8 +552,10 @@ sub output_error_summaries
 	}
 
 	while( my ($timestamp, $tries) = each %$alldumps ) {
+	    my $failed = 0;
 	    foreach my $try (@$tries) {
 		if (exists $try->{dumper} &&
+		    $try->{dumper}->{status} &&
 		    $try->{dumper}->{status} eq 'fail') {
 		    push @dump_failures, "$hostname $qdisk lev $try->{dumper}->{level}  FAILED $try->{dumper}->{error}";
 		    $failed = 1;
@@ -567,8 +568,6 @@ sub output_error_summaries
 		if (   exists $try->{taper}
 		    && (   $try->{taper}->{status} eq 'fail'
 			|| (   $try->{taper}->{status} eq 'partial'))) {
-		#&& defined $try->{taper}->{error}
-		#&& $try->{taper}->{error} ne ""))) {
 		    my $flush = "FLUSH";
 		    $flush = "FAILED" if exists $try->{dumper} && !exists $try->{chunker};
 		    if ($flush ne "FLUSH" or !defined $try->{taper}->{failure_from}
@@ -586,6 +585,8 @@ sub output_error_summaries
 		        $failed = 1;
 		    }
 		}
+
+		# detect retried dumps
 		if (   $failed
 		    && exists $try->{dumper}
 		    && (   $try->{dumper}->{status} eq "success"
@@ -595,6 +596,17 @@ sub output_error_summaries
 		    && (   !exists $try->{taper}
 			|| $try->{taper}->{status} eq "done")) {
 		    push @dump_failures, "$hostname $qdisk lev $try->{dumper}->{level}  was successfully retried";
+		    $failed = 0;
+		}
+
+		# detect dumps re-flushed from holding
+		if (   $failed
+		    && !exists $try->{dumper}
+		    && !exists $try->{chunker}
+		    && exists $try->{taper}
+		    && $try->{taper}->{status} eq "done") {
+		    push @dump_failures, "$hostname $qdisk lev $try->{taper}->{level}  was successfully re-flushed";
+		    $failed = 0;
 		}
 
 		push @stranges,
@@ -683,7 +695,8 @@ EOF
         "Dump Time (hrs:min)",
         hrmn( $total_stats->{dumper_time} ),
         hrmn( $full_stats->{dumper_time} ),
-        hrmn( $incr_stats->{dumper_time} ), ""
+        hrmn( $incr_stats->{dumper_time} ),
+	""
     );
 
     print $fh swrite(
@@ -715,6 +728,7 @@ EOF
         $comp_size->($total_stats),
         $comp_size->($full_stats),
         $comp_size->($incr_stats),
+        "",
     );
 
     print $fh swrite(
@@ -741,7 +755,8 @@ EOF
         "Tape Time (hrs:min)",
         hrmn( $total_stats->{taper_time} ),
         hrmn( $full_stats->{taper_time} ),
-        hrmn( $incr_stats->{taper_time} ), ""
+        hrmn( $incr_stats->{taper_time} ),
+	""
     );
 
     print $fh swrite(
@@ -771,6 +786,7 @@ EOF
         $tape_usage->($total_stats),
         $tape_usage->($full_stats),
         $tape_usage->($incr_stats),
+	""
     );
 
     my $nb_incr_dle = 0;
