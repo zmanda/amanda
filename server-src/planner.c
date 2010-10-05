@@ -2356,7 +2356,7 @@ static one_est_t *pick_inclevel(
 
     /* if we didn't get an estimate, we can't do an inc */
     if (base_est->nsize == (gint64)-1) {
-	bump_est = est_for_level(dp, base_est->level + 1);
+	bump_est = est_for_level(dp, est(dp)->last_level + 1);
 	if (bump_est->nsize > (gint64)0) { /* FORCE_BUMP */
 	    g_fprintf(stderr,_("   picklev: bumping to level %d\n"), bump_est->level);
 	    return bump_est;

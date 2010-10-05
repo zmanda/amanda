@@ -1,4 +1,7 @@
 2010-10-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Use last_level to compute the bump level.
+
+2010-10-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Fix memory allocation.
 
 2010-10-04  Dustin J. Mitchell <dustin@zmanda.com>
