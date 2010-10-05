@@ -285,7 +285,7 @@ xml_check_options(
 	srvcompress = COMP_BEST;
     } else if (dle->compress == COMP_SERVER_CUST) {
 	srvcompress = COMP_SERVER_CUST;
-	srvcompprog = dle->compprog;
+	srvcompprog = g_strdup(dle->compprog);
     } else if (dle->compress == COMP_CUST) {
 	srvcompress = COMP_CUST;
 	clntcompprog = g_strdup(dle->compprog);
