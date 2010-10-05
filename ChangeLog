@@ -1,4 +1,10 @@
 2010-10-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/entities/global.entities.in: better formatting for config
+	  overrides
+	* man/xml-source/amvault.8.xml: better synopsis formatting
+	* server-src/amvault.pl: better synopsis formatting
+
+2010-10-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Logfile.swg: don't produce negative durations
 	* perl/Amanda/DB/Catalog.pm: but handle them when they occur
 

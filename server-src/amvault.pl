@@ -853,11 +853,12 @@ sub usage {
     print STDERR <<EOF;
 **NOTE** this interface is under development and will change in future releases!
 
-Usage: amvault [-o configoption]* [-q|--quiet] [--fulls-only] [--export]
-	[--src-timestamp=<src-timestamp>]
-	--label-template=<label-template> --dst-changer=<dst-changer>
-	[--autolabel={other_config|non_amanda|volume_error|empty|any}]*
-	<conf> [<host-expr> [<disk-expr> [<datestamp-expr> [<level-expr> ..]]]]
+Usage: amvault [-o configoption...] [-q] [--quiet] [-n] [--dry-run]
+	   [--fulls-only] [--export] [--src-timestamp src-timestamp]
+	   --label-template label-template --dst-changer dst-changer
+	   [--autolabel autolabel-arg...]
+	   config
+	   [hostname [ disk [ date [ level [ hostname [...] ] ] ] ]]
 
     -o: configuration override (see amanda(8))
     -q: quiet progress messages

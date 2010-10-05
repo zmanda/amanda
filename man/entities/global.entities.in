@@ -78,7 +78,7 @@
   </varlistentry>'>
 
 <!ENTITY configoverride.synopsis
-    '<group rep="repeat" choice="opt"><arg choice="req"><option>-o</option> <replaceable>configoption</replaceable></arg></group>'>
+    '<arg rep="repeat" choice="opt"><option>-o</option> <replaceable>configoption</replaceable></arg>'>
 
 <!ENTITY configoverride.varlistentry
   '<varlistentry>

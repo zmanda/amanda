@@ -29,16 +29,18 @@
     &configoverride.synopsis;
     <arg choice='opt'>-q</arg> <arg choice='opt'>--quiet</arg>
     <arg choice='opt'>-n</arg> <arg choice='opt'>--dry-run</arg>
-    <arg choice='plain'><option>--label-template</option>
-	    <replaceable>label-template</replaceable></arg>
-    <group choice='opt' rep='repeat'><arg choice='req'><option>--autolabel</option>
-	    <replaceable>autolabel-arg</replaceable></arg></group>
     <arg choice='opt'>--fulls-only </arg>
     <arg choice='opt'>--export </arg>
-    <arg choice='req'><option>--src-timestamp</option>
-	    <replaceable>src-timestamp</replaceable></arg>
-    <arg choice='req'><option>--dst-changer</option>
+    <arg choice='opt'><option>--src-timestamp</option>
+	<replaceable>src-timestamp</replaceable></arg>
+    <sbr/>
+    <arg choice='plain'><option>--label-template</option>
+	    <replaceable>label-template</replaceable></arg>
+    <arg choice='plain'><option>--dst-changer</option>
 	    <replaceable>dst-changer</replaceable></arg>
+    <arg choice='opt' rep='repeat'><option>--autolabel</option>
+	    <replaceable>autolabel-arg</replaceable></arg>
+    <sbr/>
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='opt'>
       <arg choice='plain'><replaceable>hostname</replaceable></arg>
