@@ -1,3 +1,7 @@
+2010-10-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Logfile.swg: don't produce negative durations
+	* perl/Amanda/DB/Catalog.pm: but handle them when they occur
+
 2010-10-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report/human.pm: Correctly print "Level:#".
 

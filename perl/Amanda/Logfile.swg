@@ -360,7 +360,7 @@ sub get_current_log_timestamp
 sub make_stats {
     my ($size, $duration, $orig_kb) = @_;
 
-    $duration = 0.1 if $duration == 0;  # prevent division by zero
+    $duration = 0.1 if $duration <= 0;  # prevent division by zero
     my $kb = $size/1024;
     my $kps = "$kb.0"/$duration; # Perlish cast from BigInt to float
 
