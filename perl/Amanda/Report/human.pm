@@ -737,7 +737,7 @@ EOF
         sprintf("%4d", $total_stats->{dumpdisk_count}),
         sprintf("%4d", $full_stats->{dumpdisk_count}),
         sprintf("%4d", $incr_stats->{dumpdisk_count}),
-        ($self->{dumpdisks}[1] > 0 ? by_level_count($self->{dumpdisks}) : "")
+        (has_incrementals($self->{dumpdisks}) ? by_level_count($self->{dumpdisks}) : "")
     );
 
     print $fh swrite(
@@ -801,7 +801,7 @@ EOF
         $self->{tapedisks}[0],
         $nb_incr_dle,
         (
-            ($self->{tapedisks}[1] > 0)
+            (has_incrementals($self->{tapedisks}))
             ? by_level_count($self->{tapedisks})
             : ""
         )
@@ -833,6 +833,16 @@ EOF
 
     print $fh "\n";
     return;
+}
+
+sub has_incrementals
+{
+    my $array = shift;
+
+    for ($a = 1; $a < @$array; $a+=1) {
+	return 1 if $array->[$a] > 0;
+    }
+    return 0;
 }
 
 sub output_tape_stats
