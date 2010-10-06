@@ -2564,23 +2564,23 @@ static gboolean
 rait_device_finish (Device * self) {
     GPtrArray * ops;
     gboolean success;
+    gboolean rval = TRUE;
 
-    if (rait_device_in_error(self)) return FALSE;
+    rval = !rait_device_in_error(self);
 
     ops = make_generic_boolean_op_array(RAIT_DEVICE(self));
 
     do_rait_child_ops(RAIT_DEVICE(self), finish_do_op, ops);
 
     success = g_ptr_array_and(ops, extract_boolean_generic_op);
+    if (!success)
+	rval = FALSE;
 
     g_ptr_array_free_full(ops);
 
     self->access_mode = ACCESS_NULL;
 
-    if (!success)
-        return FALSE;
-
-    return TRUE;
+    return rval;
 }
 
 static Device *

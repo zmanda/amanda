@@ -1,6 +1,18 @@
+2010-10-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/dvdrw-device.c: Always call parent_class->finish(dself).
+	* device-src/ndmp-device.c: Always call close_tape_agent and
+				    close_connection.
+	* device-src/null-device.c: Always set pself->access_mode to
+				    ACCESS_NULL.
+	* device-src/rait-device.c: Always call child finish.
+	* device-src/s3-device.c: Always set pself->access_mode to ACCESS_NULL.
+	* device-src/tape-device.c: Always close self->fd.
+	* device-src/vfs-device.c: Always set pself->access_mode to ACCESS_NULL.
+
 2010-10-06  Nandan Athawale <nandan.athawale@gmail.com>
 	* device-src/s3.c: replaced deprecated functions g_strncasecmp
 	  and g_strcasecmp with g_ascii_strncasecmp and g_ascii_strcasecmp.
+
 2010-10-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/entities/global.entities.in: better formatting for config
 	  overrides

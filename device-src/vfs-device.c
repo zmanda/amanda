@@ -879,10 +879,11 @@ vfs_device_finish (Device * pself) {
 
     release_file(self);
 
-    if (device_in_error(self)) return FALSE;
-
     pself->access_mode = ACCESS_NULL;
     pself->in_file = FALSE;
+
+    if (device_in_error(self)) return FALSE;
+
     return TRUE;
 }
 

@@ -1327,10 +1327,10 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
 
 static gboolean
 s3_device_finish (Device * pself) {
-    if (device_in_error(pself)) return FALSE;
-
     /* we're not in a file anymore */
     pself->access_mode = ACCESS_NULL;
+
+    if (device_in_error(pself)) return FALSE;
 
     return TRUE;
 }

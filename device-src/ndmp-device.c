@@ -665,21 +665,23 @@ static gboolean
 ndmp_device_finish(
     Device *dself)
 {
+    gboolean rval;
+
     NdmpDevice *self = NDMP_DEVICE(dself);
-    if (device_in_error(dself)) return FALSE;
+    rval = !device_in_error(dself);
 
     /* we're not in a file anymore */
     dself->access_mode = ACCESS_NULL;
 
     if (!close_tape_agent(self)) {
 	/* error is set by close_tape_agent */
-	return FALSE;
+	rval = FALSE;
     }
 
     if (self->ndmp)
 	close_connection(self);
 
-    return TRUE;
+    return rval;
 }
 
 static gboolean
