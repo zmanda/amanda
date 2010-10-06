@@ -514,11 +514,6 @@ install-data-hook:
 	done
 endif
 
-check-local: thread-check
-if WANT_MANDATORY_THREAD_CHECK
-install-data-local: thread-check
-endif
-
 # only syntax-check the .pm files if SYNTAX_CHECKS are enabled
 check-pm:
 	@MODULES_TO_CHECK="$(PM_FILES)"; \
@@ -533,6 +528,12 @@ check-pm:
         fi
 if SYNTAX_CHECKS
 check-local: check-pm
+endif
+
+if WANT_MANDATORY_THREAD_CHECK
+install-data-local: thread-check
+else
+installcheck-local: thread-check
 endif
 
 if WANT_SERVER
