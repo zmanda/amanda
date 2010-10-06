@@ -1,3 +1,7 @@
+2010-10-06 Dan Locks <dwlocks@zmanda.com>
+	*  config/amanda/libs.m4: update LIBCURL_CHECK_CONFIG help string,
+	   fix AC_PATH_PROG usage.
+
 2010-10-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am: only run the threading test after install
 
