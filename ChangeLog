@@ -1,3 +1,6 @@
+2010-10-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* VERSION: 3.2.0beta2
+
 2010-10-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am: fix the FreeBSD threading test to actually fail
 
