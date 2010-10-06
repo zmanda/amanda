@@ -1,4 +1,7 @@
 2010-10-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* VERSION: 3.2.0beta3
+
+2010-10-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am: only run the threading test after install
 
 2010-10-06  Jean-Louis Martineau <martineau@zmanda.com>
