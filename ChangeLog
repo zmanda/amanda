@@ -1,3 +1,6 @@
+2010-10-06  Nandan Athawale <nandan.athawale@gmail.com>
+	* device-src/s3.c: replaced deprecated functions g_strncasecmp
+	  and g_strcasecmp with g_ascii_strncasecmp and g_ascii_strcasecmp.
 2010-10-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/entities/global.entities.in: better formatting for config
 	  overrides
