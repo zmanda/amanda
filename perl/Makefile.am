@@ -539,8 +539,8 @@ if WANT_SERVER
 thread-check: libTests.la
 	$(PERL) -I$(builddir) -I$(builddir)/.libs -I$(srcdir) \
 			-MAmanda::Tests -e 'alarm(10); Amanda::Tests::try_threads' \
-	|| echo "Perl cannot run extensions which use threads; consider linking perl" \
-		"with -pthreads or compiling perl with threading enabled"
+	|| { echo "Perl cannot run extensions which use threads; consider linking perl" \
+		"with -pthreads or compiling perl with threading enabled"; false; }
 else
 thread-check:
 	@echo "skipping thread check: server component not being built"

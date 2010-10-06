@@ -1,3 +1,6 @@
+2010-10-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am: fix the FreeBSD threading test to actually fail
+
 2010-10-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/dvdrw-device.c: Always call parent_class->finish(dself).
 	* device-src/ndmp-device.c: Always call close_tape_agent and
