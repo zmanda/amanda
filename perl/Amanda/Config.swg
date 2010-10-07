@@ -34,6 +34,9 @@
 
 %define constant_pod(DESCRIPTION, FORALL_FN)
 %perlcode %{
+
+use Amanda::Config::FoldingHash;
+
 =pod
 
 DESCRIPTION: amglue_constants_list(FORALL_FN)
@@ -866,3 +869,6 @@ sub string_to_boolean {
 %}
 
 amglue_export_ok(string_to_boolean);
+
+gchar * amandaify_property_name(const gchar *name);
+amglue_export_ok(amandaify_property_name);
