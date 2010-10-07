@@ -1743,6 +1743,7 @@ static void getsize(
 	timeout = (time_t)getconf_int(CNF_CTIMEOUT);
     }
 
+    dbprintf(_("send request:\n----\n%s\n----\n\n"), req);
     secdrv = security_getdriver(hostp->disks->auth);
     if (secdrv == NULL) {
 	hostp->up = HOST_DONE;
@@ -1834,6 +1835,7 @@ static void handle_result(
 	}
     }
 
+    dbprintf(_("got reply:\n----\n%s\n----\n\n"), pkt->body);
     s = pkt->body;
     ch = *s++;
     while(ch) {
