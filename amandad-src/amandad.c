@@ -1811,17 +1811,22 @@ service_delete(
     if (as->security_handle != NULL)
 	security_close(as->security_handle);
 
+    /* try to kill the process; if this fails, then it's already dead and
+     * likely some of the other zombie cleanup ate its brains, so we don't
+     * bother to waitpid for it */
     assert(as->pid > 0);
-    kill(as->pid, SIGTERM);
     pid = waitpid(as->pid, NULL, WNOHANG);
-    count = 5;
-    while (pid != as->pid && count > 0) {
-	count--;
-	sleep(1);
+    if (pid != as->pid && kill(as->pid, SIGTERM) == 0) {
 	pid = waitpid(as->pid, NULL, WNOHANG);
-    }
-    if (pid != as->pid) {
-	g_debug("Process %d failed to exit", (int)as->pid);
+	count = 5;
+	while (pid != as->pid && count > 0) {
+	    count--;
+	    sleep(1);
+	    pid = waitpid(as->pid, NULL, WNOHANG);
+	}
+	if (pid != as->pid) {
+	    g_debug("Process %d failed to exit", (int)as->pid);
+	}
     }
 
     serviceq = g_slist_remove(serviceq, (gpointer)as);

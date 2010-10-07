@@ -1,3 +1,7 @@
+2010-10-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* amandad-src/amandad.c: don't wait 5 seconds if the service has
+	  already exited
+
 2010-10-06 Dan Locks <dwlocks@zmanda.com>
 	*  config/amanda/libs.m4: update LIBCURL_CHECK_CONFIG help string,
 	   fix AC_PATH_PROG usage.
