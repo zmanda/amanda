@@ -706,8 +706,7 @@ application_property_add_to_argv(
 	}
     }
 
-    g_hash_table_foreach(dle->application_property,
-			 &proplist_add_to_argv, argv_ptr);
+    property_add_to_argv(argv_ptr, dle->application_property);
     return;
 }
 

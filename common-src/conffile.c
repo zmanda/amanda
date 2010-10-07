@@ -3503,7 +3503,7 @@ read_property(
 	conf_parserror(_("key expected"));
 	return;
     }
-    key = g_ascii_strdown(tokenval.v.s, -1);
+    key = amandaify_property_name(tokenval.v.s);
 
     get_conftoken(CONF_ANY);
     if (tok == CONF_NL ||  tok == CONF_END) {
@@ -5287,7 +5287,8 @@ conf_init_proplist(
     val->seen.filename = NULL;
     val->type = CONFTYPE_PROPLIST;
     val_t__proplist(val) =
-        g_hash_table_new_full(g_str_hash, g_str_equal, &g_free, &free_property_t);
+        g_hash_table_new_full(g_str_amanda_hash, g_str_amanda_equal,
+			      &g_free, &free_property_t);
 }
 
 static void
@@ -6167,8 +6168,8 @@ merge_val_t(
     if (valsrc->type == CONFTYPE_PROPLIST) {
 	if (valsrc->v.proplist) {
 	    if (valdst->v.proplist == NULL) {
-	        valdst->v.proplist = g_hash_table_new_full(g_str_hash,
-							   g_str_equal,
+	        valdst->v.proplist = g_hash_table_new_full(g_str_amanda_hash,
+							   g_str_amanda_equal,
 							   &g_free,
 							   &free_property_t);
 	        g_hash_table_foreach(valsrc->v.proplist,
@@ -6288,8 +6289,8 @@ copy_val_t(
 
         case CONFTYPE_PROPLIST:
 	    if (valsrc->v.proplist) {
-		valdst->v.proplist = g_hash_table_new_full(g_str_hash,
-							   g_str_equal,
+		valdst->v.proplist = g_hash_table_new_full(g_str_amanda_hash,
+							   g_str_amanda_equal,
 							   &g_free,
 							   &free_property_t);
 
@@ -7660,15 +7661,6 @@ char *get_config_dir(void)
 char *get_config_filename(void)
 {
     return config_filename;
-}
-
-void
-property_add_to_argv(
-    GPtrArray  *argv_ptr,
-    proplist_t proplist)
-{
-    g_hash_table_foreach(proplist, &proplist_add_to_argv, argv_ptr);
-    return;
 }
 
 char *
