@@ -28,7 +28,7 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amoverview</command>    
-    <arg choice='opt'><arg choice='opt'>--config </arg><arg choice='plain'><replaceable>config</replaceable></arg></arg>
+    <arg choice='plain'><arg choice='opt'>--config </arg> <replaceable>config</replaceable></arg>
     <arg choice='opt'>--hostwidth <replaceable>width</replaceable></arg>
     <arg choice='opt'>--diskwidth <replaceable>width</replaceable></arg>
     <arg choice='opt'>--skipmissed</arg>
@@ -56,8 +56,7 @@ man page for more details about Amanda.</para>
   <term><option>--config</option> <replaceable>config</replaceable></term>
   <listitem>
 <para>Use configuration
-<emphasis remap='I'>config</emphasis>
-instead of configuration daily.</para>
+<emphasis remap='I'>config</emphasis>.</para>
   </listitem>
   </varlistentry>
   <varlistentry>

@@ -31,17 +31,15 @@ use POSIX;
 
 sub Usage {
     print STDERR <<END;
-Usage: $0 [[--config] CONFIG] [--hostwidth width] [--diskwidth width]
-	  [-skipmissed] [--last] [--num0] [--togo0] [--verbose]
+Usage: $0 [--config] CONFIG [--hostwidth width] [--diskwidth width]
+	  [--skipmissed] [--last] [--num0] [--togo0] [--verbose]
 
 This script generates to standard output an overview of the filesystems
 dumped over time and the type of dump done on a particular day, such as
 a full dump, or an incremental, or if the dump failed.
 
-You may override the default configuration `@DEFAULT_CONFIG@' by using
-the --config command line option.  On larger installations, this script
-will take a while to run.  In this case, run it with --verbose to see
-how far along it is.
+On larger installations, this script will take a while to run.  In this case,
+run it with --verbose to see how far along it is.
 END
     exit 1;
 }
