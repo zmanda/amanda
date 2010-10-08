@@ -1,4 +1,7 @@
 2010-10-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amvault.pl: add fake driver finish first
+
+2010-10-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amflush.c: write a "pid done" line when cancelling
 	* server-src/amcleanup.pl: run amlogroll internally
 

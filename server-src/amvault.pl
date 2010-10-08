@@ -616,11 +616,13 @@ sub quit {
 
     step roll_log => sub {
 	if ($self->{'cleanup'}{'roll_trace_log'}) {
-	    debug("invoking amreport..");
-	    system("$sbindir/amreport", $self->{'config_name'}, "--from-amdump");
-	    debug("rolling logfile..");
 	    log_add_full($L_FINISH, "driver", "fake driver finish");
 	    log_add($L_INFO, "pid-done $$");
+
+	    debug("invoking amreport..");
+	    system("$sbindir/amreport", $self->{'config_name'}, "--from-amdump");
+
+	    debug("rolling logfile..");
 	    log_rename($self->{'dst_write_timestamp'});
 	}
 
