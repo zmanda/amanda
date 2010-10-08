@@ -1,4 +1,9 @@
 2010-10-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Taper/Worker.pm: remove cont_filename from header before
+	  writing to a real volume
+	* perl/Amanda/Recovery/Clerk.pm: remove it when restoring, too
+
+2010-10-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amvault.pl: --autolabel any, not --autolabel all
 	* installcheck/amvault.pl: update the tests to use --autolabel=any
 

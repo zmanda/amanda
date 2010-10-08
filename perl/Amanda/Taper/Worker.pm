@@ -663,6 +663,10 @@ sub setup_and_start_dump {
 	if ($msgtype eq Amanda::Taper::Protocol::FILE_WRITE) {
 	    # getting the header is easy for FILE-WRITE..
 	    my $hdr = $self->{'header'} = Amanda::Holding::get_header($params{'filename'});
+
+	    # stip out header fields we don't need
+	    $hdr->{'cont_filename'} = '';
+
 	    if (!defined $hdr || $hdr->{'type'} != $Amanda::Header::F_DUMPFILE) {
 		die("Could not read header from '$params{filename}'");
 	    }
