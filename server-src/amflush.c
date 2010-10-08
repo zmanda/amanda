@@ -669,6 +669,7 @@ confirm(GSList *datestamp_list)
     }
 
     g_printf(_("Ok, quitting.  Run amflush again when you are ready.\n"));
+    log_add(L_INFO, "pid-done %ld", (long)getpid());
     exit(1);
 }
 

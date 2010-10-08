@@ -1,4 +1,8 @@
 2010-10-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amflush.c: write a "pid done" line when cancelling
+	* server-src/amcleanup.pl: run amlogroll internally
+
+2010-10-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Taper/Worker.pm: remove cont_filename from header before
 	  writing to a real volume
 	* perl/Amanda/Recovery/Clerk.pm: remove it when restoring, too
