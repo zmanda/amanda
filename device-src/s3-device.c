@@ -946,14 +946,6 @@ s3_device_set_ca_info_fn(Device *p_self, DevicePropertyBase *base,
 {
     S3Device *self = S3_DEVICE(p_self);
 
-    if (!self->use_ssl) {
-	device_set_error(p_self, stralloc(_(
-		"Path to certificate authority certificate can not be "
-		"set if SSL/TLS is not being used.")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-       return FALSE;
-    }
-
     amfree(self->ca_info);
     self->ca_info = g_value_dup_string(val);
     device_clear_volume_details(p_self);
@@ -1138,6 +1130,15 @@ static gboolean setup_handle(S3Device * self) {
 		stralloc(_("No Amazon secret key specified")),
 		DEVICE_STATUS_DEVICE_ERROR);
             return FALSE;
+	}
+
+	if (self->use_ssl && !self->ca_info) {
+	    device_set_error(d_self,
+		stralloc(_("ssl_ca_info not set but ssl in use")),
+		DEVICE_STATUS_DEVICE_ERROR);
+	    return FALSE;
+	} else if (!self->use_ssl && self->ca_info) {
+	    amfree(self->ca_info);
 	}
 
         self->s3 = s3_open(self->access_key, self->secret_key, self->user_token,
