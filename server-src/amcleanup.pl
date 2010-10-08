@@ -27,6 +27,7 @@ use Amanda::Util qw( :constants );
 use Amanda::Paths;
 use Amanda::Constants;
 use Amanda::Process;
+use Amanda::Logfile;
 
 my $kill_enable=0;
 my $process_alive=0;
@@ -71,7 +72,6 @@ Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 my $logdir=config_dir_relative(getconf($CNF_LOGDIR));
 my $logfile = "$logdir/log";
 my $amreport="$sbindir/amreport";
-my $amlogroll="$amlibexecdir/amlogroll";
 my $amtrmidx="$amlibexecdir/amtrmidx";
 my $amcleanupdisk="$amlibexecdir/amcleanupdisk";
 
@@ -156,7 +156,10 @@ sub run_system {
 if (-f $logfile) {
     Amanda::Debug::debug("Processing log file");
     run_system(0, $amreport, $config_name, "--from-amdump");
-    run_system(1, $amlogroll, $config_name);
+
+    my $ts = Amanda::Logfile::get_current_log_timestamp();
+    Amanda::Logfile::log_rename($ts);
+
     run_system(1, $amtrmidx, $config_name);
 } else {
     print "amcleanup: no unprocessed logfile to clean up.\n";
