@@ -574,6 +574,9 @@ sub _maybe_start_part {
 	    return $steps->{'handle_error'}->();
 	}
 
+	# remove CONT_FILENAME from the header, since it's not needed anymore
+	$on_disk_hdr->{'cont_filename'} = '';
+
 	if (!$self->_header_expected($on_disk_hdr)) {
 	    # _header_expected already pushed an error message or two
 	    return $steps->{'handle_error'}->();
