@@ -913,7 +913,7 @@ sub add_autolabel {
 	    return;
 	}
     }
-    if ($val eq 'all') {
+    if ($val eq 'any') {
 	for (@ok) {
 	    $opt_autolabel->{$_} = 1;
 	}

@@ -58,7 +58,7 @@ my $tertiary_chg = setup_chg_disk();
 
 # try a few failures first
 like(run_err("$sbindir/amvault",
-		'--autolabel=all',
+		'--autolabel=any',
 		'--label-template', "TESTCONF%%",
 		'--src-timestamp', 'latest',
 		'--dst-changer', $tertiary_chg,
@@ -68,7 +68,7 @@ like(run_err("$sbindir/amvault",
     or diag($Installcheck::Run::stderr);
 
 like(run_err("$sbindir/amvault",
-		'--autolabel=all',
+		'--autolabel=any',
 		'--label-template', "TESTCONF%%",
 		'--src-timestamp', 'latest',
 		'--fulls-only',
@@ -79,7 +79,7 @@ like(run_err("$sbindir/amvault",
     or diag($Installcheck::Run::stderr);
 
 like(run_err("$sbindir/amvault",
-		'--autolabel=all',
+		'--autolabel=any',
 		'--label-template', "TESTCONF%%",
 		'--dst-changer', $tertiary_chg,
 		'TESTCONF'),
@@ -89,7 +89,7 @@ like(run_err("$sbindir/amvault",
 
 # now a successful vaulting
 ok(run("$sbindir/amvault",
-		'--autolabel=all',
+		'--autolabel=any',
 		'--label-template', "TESTCONF%%",
 		'--src-timestamp', 'latest',
 		'--dst-changer', $tertiary_chg,
@@ -151,7 +151,7 @@ sub get_dry_run {
 
 is_deeply([ get_dry_run("$sbindir/amvault",
 		'--dry-run',
-		'--autolabel=all',
+		'--autolabel=any',
 		'--label-template', "TESTCONF%%",
 		'--fulls-only',
 		'--dst-changer', $tertiary_chg,
@@ -163,7 +163,7 @@ is_deeply([ get_dry_run("$sbindir/amvault",
 
 is_deeply([ get_dry_run("$sbindir/amvault",
 		'--dry-run',
-		'--autolabel=all',
+		'--autolabel=any',
 		'--label-template', "TESTCONF%%",
 		'--dst-changer', $tertiary_chg,
 		'TESTCONF', "localhost", "$diskname/dir") ], [
@@ -210,7 +210,7 @@ EOF
     $tertiary_chg = "tertiary";
     ok(run("$sbindir/amvault",
 		    '--export',
-		    '--autolabel=all',
+		    '--autolabel=any',
 		    '--label-template', "TESTCONF%%",
 		    '--src-timestamp', 'latest',
 		    '--dst-changer', $tertiary_chg,
