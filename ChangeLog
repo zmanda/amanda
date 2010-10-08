@@ -1,3 +1,6 @@
+2010-10-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amvault.pl: --autolabel any, not --autolabel all
+
 2010-10-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Don't give an error is ssl_ca_info is set
 	  and ssl is not used.
