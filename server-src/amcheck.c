@@ -2180,7 +2180,6 @@ handle_result(
     }
     start_host(hostp);
     if(hostp->up == HOST_DONE) {
-	security_close_connection(sech, hostp->hostname);
 	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 	    run_server_dle_scripts(EXECUTE_ON_POST_DLE_AMCHECK,
 			       get_config_name(), dp, -1);

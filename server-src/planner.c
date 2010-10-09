@@ -1994,8 +1994,6 @@ static void handle_result(
 	hostp->features = am_set_default_feature_set();
     }
 
-    security_close_connection(sech, hostp->hostname);
-
     /* XXX what about disks that only got some estimates...  do we care? */
     /* XXX amanda 2.1 treated that case as a bad msg */
 
