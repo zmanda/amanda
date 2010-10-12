@@ -163,7 +163,7 @@ bytes it read from the file descriptor.
 Return a "safe" environment hash.  For non-setuid programs, this means
 filtering out any localization variables.
 
-=item get_fs_usage(file, disk)
+=item get_fs_usage(file)
 
 This is a wrapper around the Gnulib function of the same name.  On success, it returns
 a hash with keys:

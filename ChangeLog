@@ -1,4 +1,12 @@
 2010-10-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Util.pod: fix typo
+	* server-src/amserverconfig.pl: don't specify duplicate 'dumpuser'
+	  parameter in amserverconfig (it's also in advanced.conf); use
+	  get_fs_usage; include weird size requirements in error message
+	* installcheck/amserverconfig.pl: test for this arrangement (used in
+	  the template + custom options case, I think)
+
+2010-10-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/amndmjob_main.c: remove exit on eof thread
 	* ndmp-src/ndmjob_main.c: add it here, in the right place
 

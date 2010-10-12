@@ -254,15 +254,16 @@ sub create_vtape {
 	if (defined $tapecycle) {
 		$tapecycle=~/^\d+/; 
 		$tp_cyclelimit=$&;
-			# check space
-		my $dfout =`df $parentdir`;
-		my $mul=1024;
-		@dfdata=split(" ",$dfout);
-		unless ( $dfdata[1] eq "1K-blocks" ) {
-			$mul=512;	# 512-blocks displayed by df
-		}
-		if (($dfdata[10]*$mul) < (($tp_cyclelimit*73728)+10240)){
-			&mprint ("WARNING: Not enough space for vtapes. Creation of vtapes failed\n");
+
+		# check space
+		my $fsinfo = Amanda::Util::get_fs_usage($parentdir);
+		my $avail_bytes = $fsinfo->{'blocksize'} * $fsinfo->{'bavail'};
+
+		# mysteriously, we need at least 72k per slot, plus 10k overhead.  The
+		# origin of these numbers is unknown.
+		my $needed_bytes = (($tp_cyclelimit*73728)+10240);
+		if ($avail_bytes < $needed_bytes){
+			&mprint ("WARNING: Not enough space for vtapes. Need 72k per slot plus 10k ($needed_bytes bytes); have $avail_bytes available.  Creation of vtapes failed\n");
 			$vtape_err++;
 			return;
 		}
@@ -350,7 +351,6 @@ sub create_customconf{
 	    &log_and_die ("ERROR: Cannot set amanda.conf file access permission: $!\n", 1);
 
 	print CONF "org \"$config\"\t\t# your organization name for reports\n";
-	print CONF "dumpuser \"$dumpuser\"\t# the user to run dumps under\n";
 	print CONF "mailto \"$mailto\"\t# space separated list of operators at your site\n";
 	print CONF "dumpcycle $dumpcycle\t\t# the number of days in the normal dump cycle\n";
         print CONF "runspercycle $runspercycle\t\t# the number of amdump runs in dumpcycle days\n";

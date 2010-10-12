@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 8;
+use Test::More tests => 10;
 
 use lib "@amperldir@";
 use File::Path;
@@ -45,19 +45,28 @@ sub config_ok {
 Installcheck::Run::cleanup();
 ok(run("$sbindir/amserverconfig", 'TESTCONF', '--template', 'S3'),
     "amserverconfig with S3 template")
-    or diag($Installcheck::Run::stderr);
+    or diag($Installcheck::Run::stdout);
 config_ok();
 
 Installcheck::Run::cleanup();
 ok(run("$sbindir/amserverconfig", 'TESTCONF', '--template', 'harddisk'),
     "amserverconfig with harddisk template")
-    or diag($Installcheck::Run::stderr);
+    or diag($Installcheck::Run::stdout);
+config_ok();
+
+Installcheck::Run::cleanup();
+mkpath(Installcheck::Run::vtape_dir());
+ok(run("$sbindir/amserverconfig", 'TESTCONF', '--template', 'harddisk',
+		    '--tapecycle', '2',
+		    '--tapedev', Installcheck::Run::vtape_dir()),
+    "amserverconfig with harddisk template and tapedev and tapecycle")
+    or diag($Installcheck::Run::stdout);
 config_ok();
 
 Installcheck::Run::cleanup();
 ok(run("$sbindir/amserverconfig", 'TESTCONF', '--template', 'single-tape'),
     "amserverconfig with single-tape template")
-    or diag($Installcheck::Run::stderr);
+    or diag($Installcheck::Run::stdout);
 config_ok();
 
 SKIP: {
@@ -66,7 +75,7 @@ SKIP: {
     Installcheck::Run::cleanup();
     ok(run("$sbindir/amserverconfig", 'TESTCONF', '--template', 'tape-changer'),
 	"amserverconfig with tape-changer template")
-	or diag($Installcheck::Run::stderr);
+	or diag($Installcheck::Run::stdout);
     config_ok();
 }
 
