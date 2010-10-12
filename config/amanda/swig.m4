@@ -31,7 +31,7 @@ AC_DEFUN([AMANDA_SETUP_SWIG],
     fi
 
     case "$host" in
-	*freebsd@<:@123456@:>@*) # up to and including FreeBSD 6.*
+	*freebsd@<:@123456@:>@.*) # up to and including FreeBSD 6.*
 	    # Before 7.0, FreeBSD systems don't include a DT_NEEDS segment in
 	    # libgthread to automatically pull in the desired threading library.
 	    # Instead, they assume that any application linking against
