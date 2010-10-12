@@ -88,10 +88,6 @@ main (int ac, char *av[])
 		return 0;
 	}
 
-	/* exit when our stdin goes away */
-	g_thread_init(NULL);
-	g_thread_create(exit_on_stdin_eof_thread, NULL, FALSE, NULL);
-
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
 	the_session.control_acb.swap_connect = (o_swap_connect != 0);
 
