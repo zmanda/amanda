@@ -1,4 +1,7 @@
 2010-10-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/ssh-security.c: don't munge $SSH_CONNETION
+
+2010-10-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/swig.m4: add '.' to freebsd versions
 	* perl/Makefile.am: spell it -pthread
 

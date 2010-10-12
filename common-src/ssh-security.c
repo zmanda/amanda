@@ -212,6 +212,9 @@ ssh_accept(
 	goto error;
     }
 
+    /* make a local copy, to munge */
+    ssh_connection = g_strdup(ssh_connection);
+
     /* strip off the first component - the ASCII IP address */
     if ((p = strchr(ssh_connection, ' ')) == NULL) {
 	errmsg = g_strdup("$SSH_CONNECTION malformed");
@@ -252,6 +255,9 @@ ssh_accept(
     }
 
 done:
+    if (ssh_connection)
+	g_free(ssh_connection);
+
     rc->read = in;
     rc->write = out;
     rc->accept_fn = fn;
@@ -262,6 +268,9 @@ done:
     return;
 
 error:
+    if (ssh_connection)
+	g_free(ssh_connection);
+
     /* make up a fake handle for the error */
     rh = g_new0(struct sec_handle, 1);
     security_handleinit(&rh->sech, driver);
