@@ -1,3 +1,7 @@
+2010-10-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/swig.m4: add '.' to freebsd versions
+	* perl/Makefile.am: spell it -pthread
+
 2010-10-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amvault.pl: add fake driver finish first
 
