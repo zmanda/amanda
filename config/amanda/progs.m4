@@ -20,7 +20,8 @@
 #
 #   SYSPATH is a list of likely system locations for a file, while
 #   LOCPATH is a list of likely local locations.  The two are combined
-#   in different orders in SYSLOCPATH and LOCSYSPATH.
+#   in different orders in SYSLOCPATH and LOCSYSPATH.  These path differences
+#   are known to affect Solaris 8.
 #
 AC_DEFUN([AMANDA_INIT_PROGS],
 [
@@ -294,6 +295,7 @@ AC_DEFUN([AMANDA_PROG_MTX],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
     AC_PATH_PROG(MTX,mtx,mtx,$LOCSYSPATH)
+    AC_ARG_VAR([MTX], [Path to the 'mtx' binary])
 ])
 
 AC_DEFUN([AMANDA_PROG_PCAT],

@@ -1,3 +1,7 @@
+2010-10-12 Dan Locks <dwlocks@zmanda.com>
+	*  config/amanda/progs.m4: add comment about sysloc- and locsys- path,
+	   make MTX a precious variable.
+
 2010-10-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Set default netusage to 80000 kbps.
 
