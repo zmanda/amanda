@@ -1132,12 +1132,7 @@ static gboolean setup_handle(S3Device * self) {
             return FALSE;
 	}
 
-	if (self->use_ssl && !self->ca_info) {
-	    device_set_error(d_self,
-		stralloc(_("ssl_ca_info not set but ssl in use")),
-		DEVICE_STATUS_DEVICE_ERROR);
-	    return FALSE;
-	} else if (!self->use_ssl && self->ca_info) {
+	if (!self->use_ssl && self->ca_info) {
 	    amfree(self->ca_info);
 	}
 

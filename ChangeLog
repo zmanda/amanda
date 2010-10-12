@@ -1,3 +1,6 @@
+2010-10-12  Jean-Louis Martineau <martineau@zmanda.com>
+        * device-src/s3-device.c: Don't check 'self->use_ssl && !self->ca_info'.
+
 2010-10-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/ndma_comm_session.c: add a g_debug message
 	* ndmp-src/ndmjob_main.c: remove redundant exit-on-stdin-eof
