@@ -1,4 +1,8 @@
 2010-10-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* ndmp-src/amndmjob_main.c: remove exit on eof thread
+	* ndmp-src/ndmjob_main.c: add it here, in the right place
+
+2010-10-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/ssh-security.c: don't munge $SSH_CONNETION
 
 2010-10-12  Dustin J. Mitchell <dustin@zmanda.com>
