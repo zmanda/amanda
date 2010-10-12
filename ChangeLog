@@ -1,3 +1,7 @@
+2010-10-12 Dan Locks <dwlocks@zmanda.com>
+	*  config/amanda/progs.m4: add comment about sysloc- and locsys- path,
+	   make MTX a precious variable.
+
 2010-10-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* ndmp-src/amndmjob_main.c: remove exit on eof thread
 	* ndmp-src/ndmjob_main.c: add it here, in the right place
