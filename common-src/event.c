@@ -75,6 +75,9 @@ struct event_handle {
  * events and for deleting dead events */
 GSList *all_events;
 
+/* should event_loop_run stop? */
+gboolean stop = FALSE;
+
 /*
  * Utility functions
  */
@@ -259,20 +262,35 @@ event_wakeup(
  * The event loop.
  */
 
-static void event_loop_wait (event_handle_t *, const int);
+static void event_loop_wait (event_handle_t *, const int, gboolean return_when_empty);
 
 void
 event_loop(
     int nonblock)
 {
-    event_loop_wait(NULL, nonblock);
+    event_loop_wait(NULL, nonblock, TRUE);
+}
+
+void
+event_loop_run(
+    void)
+{
+    stop = FALSE;
+    event_loop_wait(NULL, 0, FALSE);
+}
+
+void
+event_loop_quit(
+    void)
+{
+    stop = TRUE;
 }
 
 void
 event_wait(
     event_handle_t *eh)
 {
-    event_loop_wait(eh, 0);
+    event_loop_wait(eh, 0, TRUE);
 }
 
 /* Flush out any dead events in all_events.  Be careful that this
@@ -321,7 +339,8 @@ any_mainloop_events(void)
 static void
 event_loop_wait(
     event_handle_t *wait_eh,
-    int nonblock)
+    int nonblock,
+    gboolean return_when_empty)
 {
     event_debug(1, _("event: loop: enter: nonblockg=%d, eh=%p\n"), nonblock, wait_eh);
 
@@ -338,11 +357,15 @@ event_loop_wait(
 	/* if there's nothing to wait for, then don't block, but run an
 	 * iteration so that any other users of GMainLoop will get a chance
 	 * to run. */
-	if (!any_mainloop_events())
+	if (return_when_empty && !any_mainloop_events())
 	    break;
 
 	/* Do an interation */
 	g_main_context_iteration(NULL, !nonblock);
+
+	/* stop if we're told to */
+	if (!return_when_empty && stop)
+	    break;
 
 	/* If the event we've been waiting for has fired or been released, as
 	 * appropriate, we're done.  See the comments for event_wait in event.h
