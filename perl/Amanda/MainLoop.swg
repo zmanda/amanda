@@ -330,11 +330,11 @@ push @EXPORT_OK, "synchronized";
 
 %inline %{
 void run_c(void) {
-    g_main_loop_run(default_main_loop());
+    event_loop_forever();
 }
 
 void quit(void) {
-    g_main_loop_quit(default_main_loop());
+    event_loop_stop();
 }
 %}
 
