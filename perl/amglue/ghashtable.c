@@ -21,6 +21,11 @@
 #include "amglue.h"
 #include "conffile.h"
 
+/* PERL_MAGIC_tied is not defined in perl 5.6 */
+#if !defined PERL_MAGIC_tied
+#define PERL_MAGIC_tied 'P'
+#endif
+
 static void 
 foreach_fn(gpointer key_p, gpointer value_p, gpointer user_data_p)
 {

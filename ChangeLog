@@ -1,3 +1,6 @@
+2010-10-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/amglue/ghashtable.c: Define PERL_MAGIC_tied.
+
 2010-10-12  Jean-Louis Martineau <martineau@zmanda.com>
         * device-src/s3-device.c: Don't check 'self->use_ssl && !self->ca_info'.
 
