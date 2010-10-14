@@ -159,9 +159,6 @@
 %define amanda_version_info "Amanda Community Edition - version %{amanda_version}"
 %define amanda_user amandabackup
 %define amanda_group disk
-%define udpportrange "700,740"
-%define tcpportrange "11000,11040"
-%define low_tcpportrange "700,710"
 
 Summary: The Amanda Backup and Archiving System
 Name: amanda
@@ -376,9 +373,6 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
         --with-bsdtcp-security \
         --with-bsdudp-security \
         --with-ssh-security \
-        --with-udpportrange=%{udpportrange} \
-        --with-tcpportrange=%{tcpportrange} \
-        --with-low-tcpportrange=%{low_tcpportrange} \
         --with-debugging=%{LOGDIR} \
         --with-assertions \
         --disable-installperms \

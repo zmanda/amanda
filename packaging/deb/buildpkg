@@ -10,9 +10,6 @@ BUILDDIR="${SRCDIR}/build"
 # Config variables to mirror those in RPM .spec file
 amanda_user=amandabackup
 amanda_group=admin
-udpportrange="700,740"
-tcpportrange="11000,11040"
-low_tcpportrange="700,710"
 PREFIX="/usr"
 EPREFIX="${PREFIX}"
 BINDIR="${EPREFIX}/bin"

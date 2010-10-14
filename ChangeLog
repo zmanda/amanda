@@ -1,3 +1,8 @@
+2010-10-14 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/deb/rules, packaging/deb/buildpkg,
+	   packaging/rpm/amanda.spec.src: remove port range limits for
+	   rpm and deb packages
+
 2010-10-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/amglue/ghashtable.c: Define PERL_MAGIC_tied.
 

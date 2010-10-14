@@ -75,9 +75,6 @@ build-stamp: /sbin/dump /usr/bin/smbclient
 		--with-amandahosts \
 		--with-smbclient=$(BINDIR)/smbclient \
 		--with-debugging=$(LOGDIR) \
-		--with-tcpportrange=11000,11040 \
-                --with-low-tcpportrange=700,710 \
-		--with-udpportrange=700,740 \
 		--with-ssh-security \
 		--with-assertions \
 		--enable-s3-device \
