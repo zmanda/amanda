@@ -283,6 +283,9 @@ sub {
 	    if ($sl->{'import_export'}) {
 		$line .= " (import/export slot)";
 	    }
+	    if ($sl->{'current'}) {
+		$line .= " (current)";
+	    }
 
 	    # note that inventory goes to stdout
 	    print "$line\n";

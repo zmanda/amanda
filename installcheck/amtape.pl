@@ -215,7 +215,7 @@ like($Installcheck::Run::stderr,
 ok(run('amtape', 'TESTCONF', 'inventory'),
     "'amtape TESTCONF inventory'");
 like($Installcheck::Run::stdout,
-    qr/slot +1: blank\nslot +2: label MyTape\nslot +3/,
+    qr/slot +1: blank\nslot +2: label MyTape \(current\)\nslot +3/,
     "..result correct");
 
 ok(run('amtape', 'TESTCONF', 'taper'),

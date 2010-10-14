@@ -1,3 +1,7 @@
+2010-10-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amtape.pl (inventory): print current slot.
+	* installcheck/amtape.pl: check it.
+
 2010-10-14 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/deb/rules, packaging/deb/buildpkg,
 	   packaging/rpm/amanda.spec.src: remove port range limits for
