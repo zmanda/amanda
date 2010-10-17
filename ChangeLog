@@ -1,3 +1,7 @@
+2010-10-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (read_size_byte/get_size_byte):
+	  CNF_DEVICE_OUTPUT_BUFFER_SIZE is in bytes.
+
 2010-10-14 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/deb/rules, packaging/deb/buildpkg,
 	   packaging/rpm/amanda.spec.src: remove port range limits for
