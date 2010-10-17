@@ -481,6 +481,7 @@ static void read_str(conf_var_t *, val_t *);
 static void read_ident(conf_var_t *, val_t *);
 static void read_time(conf_var_t *, val_t *);
 static void read_size(conf_var_t *, val_t *);
+static void read_size_byte(conf_var_t *, val_t *);
 static void read_bool(conf_var_t *, val_t *);
 static void read_compress(conf_var_t *, val_t *);
 static void read_encrypt(conf_var_t *, val_t *);
@@ -513,6 +514,7 @@ static void read_recovery_limit(conf_var_t *, val_t *);
 static time_t  get_time(void);
 static int     get_int(void);
 static ssize_t get_size(void);
+static ssize_t get_size_byte(void);
 static gint64  get_int64(void);
 static int     get_bool(void);
 
@@ -1161,7 +1163,7 @@ conf_var_t server_var [] = {
    { CONF_ETIMEOUT             , CONFTYPE_INT      , read_int         , CNF_ETIMEOUT             , validate_non_zero },
    { CONF_DTIMEOUT             , CONFTYPE_INT      , read_int         , CNF_DTIMEOUT             , validate_positive },
    { CONF_CTIMEOUT             , CONFTYPE_INT      , read_int         , CNF_CTIMEOUT             , validate_positive },
-   { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE , read_size        , CNF_DEVICE_OUTPUT_BUFFER_SIZE, validate_positive },
+   { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE , read_size_byte   , CNF_DEVICE_OUTPUT_BUFFER_SIZE, validate_positive },
    { CONF_COLUMNSPEC           , CONFTYPE_STR      , read_str         , CNF_COLUMNSPEC           , NULL },
    { CONF_TAPERALGO            , CONFTYPE_TAPERALGO, read_taperalgo   , CNF_TAPERALGO            , NULL },
    { CONF_TAPER_PARALLEL_WRITE , CONFTYPE_INT      , read_int         , CNF_TAPER_PARALLEL_WRITE , NULL },
@@ -3084,6 +3086,15 @@ read_size(
 }
 
 static void
+read_size_byte(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t *val)
+{
+    ckseen(&val->seen);
+    val_t__size(val) = get_size_byte();
+}
+
+static void
 read_bool(
     conf_var_t *np G_GNUC_UNUSED,
     val_t *val)
@@ -4027,6 +4038,103 @@ get_size(void)
 	if (val < (INT_MIN / (1024 * 1024 * 1024)))
 	    conf_parserror(_("value too small"));
 	val *= 1024 * 1024 * 1024;
+	break;
+
+    default:	/* it was not a multiplier */
+	unget_conftoken();
+	break;
+    }
+
+    keytable = save_kt;
+    return val;
+}
+
+static ssize_t
+get_size_byte(void)
+{
+    ssize_t val;
+    keytab_t *save_kt;
+
+    save_kt = keytable;
+    keytable = numb_keytable;
+
+    get_conftoken(CONF_ANY);
+
+    switch(tok) {
+    case CONF_SIZE:
+	val = tokenval.v.size;
+	break;
+
+    case CONF_INT:
+#if SIZEOF_SIZE_T < SIZEOF_INT
+	if ((gint64)tokenval.v.i > (gint64)SSIZE_MAX)
+	    conf_parserror(_("value too large"));
+	if ((gint64)tokenval.v.i < (gint64)SSIZE_MIN)
+	    conf_parserror(_("value too small"));
+#endif
+	val = (ssize_t)tokenval.v.i;
+	break;
+
+    case CONF_INT64:
+#if SIZEOF_SIZE_T < SIZEOF_GINT64
+	if (tokenval.v.int64 > (gint64)SSIZE_MAX)
+	    conf_parserror(_("value too large"));
+	if (tokenval.v.int64 < (gint64)SSIZE_MIN)
+	    conf_parserror(_("value too small"));
+#endif
+	val = (ssize_t)tokenval.v.int64;
+	break;
+
+    case CONF_AMINFINITY:
+	val = (ssize_t)SSIZE_MAX;
+	break;
+
+    default:
+	conf_parserror(_("an integer is expected"));
+	val = 0;
+	break;
+    }
+
+    /* get multiplier, if any */
+    get_conftoken(CONF_ANY);
+
+    switch(tok) {
+    case CONF_NL:			/* multiply by one */
+    case CONF_MULT1:
+	break;
+    case CONF_MULT1K:
+	if (val > (ssize_t)(SSIZE_MAX / (ssize_t)1024))
+	    conf_parserror(_("value too large"));
+	if (val < (ssize_t)(SSIZE_MIN / (ssize_t)1024))
+	    conf_parserror(_("value too small"));
+	val *= (ssize_t)1024;
+
+    case CONF_MULT7:
+	if (val > (ssize_t)(SSIZE_MAX / 7))
+	    conf_parserror(_("value too large"));
+	if (val < (ssize_t)(SSIZE_MIN / 7))
+	    conf_parserror(_("value too small"));
+	val *= (ssize_t)7;
+	break;
+
+    case CONF_MULT1M:
+	if (val > (ssize_t)(SSIZE_MAX / (ssize_t)1024 * 1024))
+	    conf_parserror(_("value too large"));
+	if (val < (ssize_t)(SSIZE_MIN / (ssize_t)1024 * 1024))
+	    conf_parserror(_("value too small"));
+	val *= (ssize_t)(1024 * 1024);
+	break;
+
+    case CONF_MULT1G:
+	if (val > (ssize_t)(SSIZE_MAX / (1024 * 1024 * 1024)))
+	    conf_parserror(_("value too large"));
+	if (val < (ssize_t)(SSIZE_MIN / (1024 * 1024 * 1024)))
+	    conf_parserror(_("value too small"));
+	val *= (ssize_t)(1024 * 1024 * 1024);
+	break;
+
+    case CONF_MULT1T:
+	conf_parserror(_("value too large"));
 	break;
 
     default:	/* it was not a multiplier */
