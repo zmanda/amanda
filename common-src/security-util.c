@@ -543,7 +543,8 @@ tcpm_recv_token(
 		isprint((*handle >> 8 ) & 0xFF) &&
 		isprint((*handle >> 16) & 0xFF) &&
 		isprint((*handle >> 24) & 0xFF)) {
-		char s[101];
+		char s[201];
+		char *s1;
 		int i;
 		s[0] = ((int)(*size)  >> 24) & 0xFF;
 		s[1] = ((int)(*size)  >> 16) & 0xFF;
@@ -554,7 +555,7 @@ tcpm_recv_token(
 		s[6] = (*handle >> 8 ) & 0xFF;
 		s[7] = (*handle      ) & 0xFF;
 		i = 8; s[i] = ' ';
-		while(i<100 && isprint((int)s[i]) && s[i] != '\n') {
+		while(i<200 && isprint((int)s[i]) && s[i] != '\n') {
 		    switch(net_read(fd, &s[i], 1, 0)) {
 		    case -1: s[i] = '\0'; break;
 		    case  0: s[i] = '\0'; break;
@@ -564,9 +565,11 @@ tcpm_recv_token(
 		    }
 		}
 		s[i] = '\0';
+		s1 = quote_string(s);
 		*errmsg = newvstrallocf(*errmsg,
-				_("tcpm_recv_token: invalid size: %s"), s);
-		dbprintf(_("tcpm_recv_token: invalid size %s\n"), s);
+				_("tcpm_recv_token: invalid size: %s"), s1);
+		dbprintf(_("tcpm_recv_token: invalid size %s\n"), s1);
+		amfree(s1);
 	    } else {
 		*errmsg = newvstrallocf(*errmsg,
 					_("tcpm_recv_token: invalid size"));
