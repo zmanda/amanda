@@ -252,6 +252,15 @@ sub command_selfcheck {
            sub {$_[0] && -d $_[0] && -r $_[0] && -w $_[0] && -x $_[0]},
            $self->{'args'}->{'tmpdir'});
 
+    if (exists $self->{'props'}->{'pg-datadir'}) {
+	_check("PG-DATADIR property is",
+	       "same as diskdevice", "differrent than diskdevice",
+	       sub { $_[0] eq $_[1] },
+	       $self->{'props'}->{'pg-datadir'}, $self->{'args'}->{'device'});
+    } else {
+	$self->{'props'}->{'pg-datadir'} = $self->{'args'}->{'device'};
+    }
+
     _check("PG-DATADIR property", "is set", "is NOT set",
 	   sub { $_[0] }, $self->{'props'}->{'pg-datadir'});
        # note that the backup user need not be able ot read this dir
