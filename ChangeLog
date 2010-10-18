@@ -1,4 +1,7 @@
 2010-10-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* VERSION: 3.2.0
+
+2010-10-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Give an error if client property
 	  pg-datadir is different than diskdevice. Use diskdevice if client
 	  property pg-datadir is not set.
