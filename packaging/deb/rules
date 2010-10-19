@@ -52,6 +52,7 @@ build-stamp: /sbin/dump /usr/bin/smbclient
 		MAKEFLAGS="-j1 " \
 		CFLAGS="-pipe " \
 		MAILER=/usr/bin/mail \
+		LDFLAGS="-Wl,--as-needed" \
 		--quiet \
 		--host=$(DEB_HOST_GNU_TYPE) \
 		--build=$(DEB_BUILD_GNU_TYPE) \

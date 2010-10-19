@@ -1,3 +1,7 @@
+2010-10-19 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/deb/rules, packaging/rpm/amanda.spec.src: add
+	   -Wl,--as-needed to ./configure invocation in packages
+
 2010-10-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* ReleaseNotes NEWS: amdump --no-taper option.
 
