@@ -1,3 +1,11 @@
+2010-10-19  Nikhil Bhupale <nikhilb@zmanda.com>
+	* device-src/vfs-device.h device-src/vfs-device.c: add enforece_max_volume_usage
+	* device-src/s3-device.c: Added support for MAX_VOLUME_USAGE and ENFORCE_MAX_VOLUME_USAGE
+	* device-src/property.h device-src/property.c: Added property ENFORCE_MAX_VOLUME_USAGE
+	* device-src/s3.h device-src/s3.c: Calculate total volume usage for s3 device
+	* installcheck/Amanda_Device.pl: Test it
+	* man/xml-source/amanda-devices.7.xml: Document it
+
 2010-10-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Give an error if client property
 	  pg-datadir is different than diskdevice. Use diskdevice if client
