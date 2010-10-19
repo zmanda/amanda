@@ -41,6 +41,8 @@ Changes in release 3.2.0alpha
       o chg-rth
       o chg-scsi-chio
       o chg-scsi
+   * Amdump change:
+      o new '--no-taper' option to start the run in degraded mode
    * Amvault is much improved, but still experimental:
       o supports assembling split parts on the source volume and re-splitting
         them on the destination
