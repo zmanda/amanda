@@ -234,6 +234,9 @@ void device_property_init(void) {
     device_property_fill_and_register(&device_property_max_volume_usage,
                                       G_TYPE_UINT64, "max_volume_usage",
       "Artificial limit to data written to volume.");
+    device_property_fill_and_register(&device_property_enforce_max_volume_usage,
+                                      G_TYPE_BOOLEAN, "enforce_max_volume_usage",
+      "Does max_volume_usage enabled?");
     device_property_fill_and_register(&device_property_verbose,
                                      G_TYPE_BOOLEAN, "verbose",
        "Should the device produce verbose output?");
@@ -259,6 +262,7 @@ DevicePropertyBase device_property_medium_access_type;
 DevicePropertyBase device_property_partial_deletion;
 DevicePropertyBase device_property_full_deletion;
 DevicePropertyBase device_property_max_volume_usage;
+DevicePropertyBase device_property_enforce_max_volume_usage;
 DevicePropertyBase device_property_comment;
 DevicePropertyBase device_property_leom;
 DevicePropertyBase device_property_verbose;

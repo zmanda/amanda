@@ -99,6 +99,9 @@ static gboolean file_number_to_file_name_functor(const char * filename,
 static gboolean vfs_device_set_max_volume_usage_fn(Device *p_self,
 			    DevicePropertyBase *base, GValue *val,
 			    PropertySurety surety, PropertySource source);
+static gboolean vfs_device_set_enforce_max_volume_usage_fn(Device *p_self,
+			    DevicePropertyBase *base, GValue *val,
+			    PropertySurety surety, PropertySource source);
 static gboolean property_get_monitor_free_space_fn(Device *p_self,
 			    DevicePropertyBase *base, GValue *val,
 			    PropertySurety *surety, PropertySource *source);
@@ -187,6 +190,7 @@ vfs_device_init (VfsDevice * self) {
     self->volume_bytes = 0;
     self->volume_limit = 0;
     self->leom = TRUE;
+    self->enforce_volume_limit = TRUE;
 
     self->monitor_free_space = TRUE;
     self->checked_fs_free_bytes = G_MAXUINT64;
@@ -229,6 +233,12 @@ vfs_device_init (VfsDevice * self) {
     g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, FALSE);
     device_set_simple_property(dself, PROPERTY_LEOM,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
+    g_value_unset(&response);
+
+    g_value_init(&response, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&response, TRUE);
+    device_set_simple_property(dself, PROPERTY_ENFORCE_MAX_VOLUME_USAGE,
 	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
@@ -285,6 +295,12 @@ vfs_device_base_init (VfsDeviceClass * c)
 	    device_simple_property_get_fn,
 	    vfs_device_set_max_volume_usage_fn);
 
+    device_class_register_property(device_class, PROPERTY_ENFORCE_MAX_VOLUME_USAGE,
+            (PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK) &
+                        (~ PROPERTY_ACCESS_SET_INSIDE_FILE_WRITE),
+            device_simple_property_get_fn,
+            vfs_device_set_enforce_max_volume_usage_fn);
+
     device_class_register_property(device_class, PROPERTY_COMPRESSION,
 	    PROPERTY_ACCESS_GET_MASK,
 	    device_simple_property_get_fn,
@@ -305,6 +321,18 @@ vfs_device_set_max_volume_usage_fn(Device *p_self,
     VfsDevice *self = VFS_DEVICE(p_self);
 
     self->volume_limit = g_value_get_uint64(val);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+vfs_device_set_enforce_max_volume_usage_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    VfsDevice *self = VFS_DEVICE(p_self);
+
+    self->enforce_volume_limit = g_value_get_boolean(val);
 
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
@@ -1257,7 +1285,7 @@ check_at_leom(VfsDevice *self, guint64 size)
 	return FALSE;
 
     /* handle VOLUME_LIMIT */
-    if (self->volume_limit &&
+    if (self->enforce_volume_limit && self->volume_limit &&
 	    self->volume_bytes + size + eom_warning_buffer > self->volume_limit) {
 	return TRUE;
     }
@@ -1302,7 +1330,7 @@ check_at_leom(VfsDevice *self, guint64 size)
 static gboolean
 check_at_peom(VfsDevice *self, guint64 size)
 {
-    if (self->volume_limit > 0) {
+    if (self->enforce_volume_limit && (self->volume_limit > 0)) {
 	guint64 newtotal = self->volume_bytes + size;
         if (newtotal > self->volume_limit) {
 	    return TRUE;

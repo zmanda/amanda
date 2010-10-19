@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 505;
+use Test::More tests => 582;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -351,6 +351,42 @@ ok($dev->property_set("MAX_VOLUME_USAGE", "512k"),
     "set MAX_VOLUME_USAGE to test LEOM");
 ok($dev->property_set("LEOM", 1),
     "set LEOM");
+ok($dev->property_set("ENFORCE_MAX_VOLUME_USAGE", 0),
+    "set ENFORCE_MAX_VOLUME_USAGE");
+
+ok($dev->start($ACCESS_WRITE, 'TESTCONF23', undef),
+    "start in write mode")
+    or diag($dev->error_or_status());
+
+ok($dev->start_file($dumpfile),
+    "start file 1")
+    or diag($dev->error_or_status());
+
+ok(Amanda::Device::write_random_to_device(0xCAFE, 440*1024, $dev),
+    "write random data into the early-warning zone");
+
+ok(!$dev->is_eom,
+    "device does not indicates LEOM after writing when ENFORCE_MAX_VOLUME_USAGE is FALSE");
+
+ok($dev->finish_file(),
+    "..but a finish_file is allowed to complete")
+    or diag($dev->error_or_status());
+
+ok($dev->finish(),
+   "finish device after LEOM test")
+    or diag($dev->error_or_status());
+
+$dev = undef;
+$dev = Amanda::Device->new($dev_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "$dev_name: re-create successful")
+    or diag($dev->error_or_status());
+ok($dev->property_set("MAX_VOLUME_USAGE", "512k"),
+    "set MAX_VOLUME_USAGE to test LEOM");
+ok($dev->property_set("LEOM", 1),
+    "set LEOM");
+ok($dev->property_set("ENFORCE_MAX_VOLUME_USAGE", 1),
+    "set ENFORCE_MAX_VOLUME_USAGE");
 
 ok($dev->start($ACCESS_WRITE, 'TESTCONF23', undef),
     "start in write mode")
@@ -368,6 +404,41 @@ ok(Amanda::Device::write_random_to_device(0xCAFE, 440*1024, $dev),
 
 ok($dev->is_eom,
     "device indicates LEOM after writing");
+
+ok($dev->finish_file(),
+    "..but a finish_file is allowed to complete")
+    or diag($dev->error_or_status());
+
+ok($dev->finish(),
+   "finish device after LEOM test")
+    or diag($dev->error_or_status());
+
+$dev = undef;
+$dev = Amanda::Device->new($dev_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "$dev_name: re-create successful")
+    or diag($dev->error_or_status());
+ok($dev->property_set("MAX_VOLUME_USAGE", "512k"),
+    "set MAX_VOLUME_USAGE to test LEOM");
+ok($dev->property_set("LEOM", 1),
+    "set LEOM");
+
+ok($dev->start($ACCESS_WRITE, 'TESTCONF23', undef),
+    "start in write mode")
+    or diag($dev->error_or_status());
+
+ok($dev->start_file($dumpfile),
+    "start file 1")
+    or diag($dev->error_or_status());
+
+ok(!$dev->is_eom,
+    "device does not indicate LEOM before writing");
+
+ok(Amanda::Device::write_random_to_device(0xCAFE, 440*1024, $dev),
+    "write random data into the early-warning zone");
+
+ok($dev->is_eom,
+    "device indicates LEOM after writing as default value of ENFORCE_MAX_VOLUME_USAGE is true for vfs device");
 
 ok($dev->finish_file(),
     "..but a finish_file is allowed to complete")
@@ -661,10 +732,10 @@ my $base_name;
 
 SKIP: {
     skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
-            71 +
+            91 +
             1 * $verify_file_count +
-            4 * $write_file_count +
-            10 * $s3_make_device_count
+            7 * $write_file_count +
+            13 * $s3_make_device_count
 	unless $run_s3_tests;
 
     $dev_name = "s3:";
@@ -839,6 +910,90 @@ SKIP: {
        "erase device right after creation")
        or diag($dev->error_or_status());
 
+    $dev = s3_make_device($dev_name, "s3");
+
+    # set MAX_VOLUME_USAGE, LEOM=true, ENFORCE_MAX_VOLUME_USAGE=false
+    ok($dev->property_set('MAX_VOLUME_USAGE', "512k"),
+       "set MAX_VOLUME_USAGE to test LEOM");
+
+    ok($dev->property_set("LEOM", 1),
+        "set LEOM");
+
+    ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef), 
+       "start in write mode")
+        or diag($dev->error_or_status());
+
+    write_file(0x2FACE, 440*1024, 1);
+
+    ok(!$dev->is_eom,
+        "device does not indicate LEOM after writing as property ENFORCE_MAX_VOLUME_USAGE not set and its default value is false");
+
+    ok($dev->finish(),
+       "finish device after LEOM test")
+       or diag($dev->error_or_status());
+    
+    ok($dev->erase(),
+       "erase device")
+       or diag($dev->error_or_status());
+    
+    $dev = s3_make_device($dev_name, "s3");
+
+    # set MAX_VOLUME_USAGE, LEOM=true, ENFORCE_MAX_VOLUME_USAGE=true
+    ok($dev->property_set('MAX_VOLUME_USAGE', "512k"),
+       "set MAX_VOLUME_USAGE to test LEOM");
+
+    ok($dev->property_set('ENFORCE_MAX_VOLUME_USAGE', 1 ),
+       "set ENFORCE_MAX_VOLUME_USAGE");
+
+    ok($dev->property_set("LEOM", 1),
+        "set LEOM");
+
+    ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef), 
+       "start in write mode")
+        or diag($dev->error_or_status());
+
+    write_file(0x2FACE, 440*1024, 1);
+
+    ok($dev->is_eom,
+        "device indicates LEOM after writing, when property ENFORCE_MAX_VOLUME_USAGE set to true");
+
+    ok($dev->finish(),
+       "finish device after LEOM test")
+       or diag($dev->error_or_status());
+
+    ok($dev->erase(),
+       "erase device")
+       or diag($dev->error_or_status());
+    
+    $dev = s3_make_device($dev_name, "s3");
+
+    # set MAX_VOLUME_USAGE, LEOM=true, ENFORCE_MAX_VOLUME_USAGE=false
+    ok($dev->property_set('MAX_VOLUME_USAGE', "512k"),
+       "set MAX_VOLUME_USAGE to test LEOM");
+
+    ok($dev->property_set('ENFORCE_MAX_VOLUME_USAGE', 0 ),
+       "set ENFORCE_MAX_VOLUME_USAGE");
+
+    ok($dev->property_set("LEOM", 1),
+        "set LEOM");
+
+    ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef), 
+       "start in write mode")
+        or diag($dev->error_or_status());
+
+    write_file(0x2FACE, 440*1024, 1);
+
+    ok(!$dev->is_eom,
+        "device does not indicate LEOM after writing, when property ENFORCE_MAX_VOLUME_USAGE set to false");
+
+    ok($dev->finish(),
+       "finish device after LEOM test")
+       or diag($dev->error_or_status());
+    
+    ok($dev->erase(),
+       "erase device")
+       or diag($dev->error_or_status());
+    
     # try with empty user token
     $dev_name = lc("s3:$base_name-s3");
     $dev = s3_make_device($dev_name, "s3");

@@ -204,6 +204,10 @@ for future expansion.  Not all devices implement all of these properties.</para>
  (read-write) On devices that support it, this property will limit the total amount of data written to a volume; attempts to write beyond this point will cause the device to simulate "out of space."  Zero means no limit.  The tapetype parameter <emphasis>length</emphasis> sets this property.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>ENFORCE_MAX_VOLUME_USAGE</term><listitem>
+ (read-write) If this property is false, limit set by MAX_VOLUME_USAGE property (and thus the tapetype LENGTH parameter) will not be verified while writing to device, allowing the volume to expand without limit. If this property is true, then MAX_VOLUME_USAGE willbe enforced, limiting the total size of the volume. This property is not available on all devices; see below.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>PARTIAL_DELETION</term><listitem>
  (read-only) This property indicates whether the device supports deletion of specific files.  Aside from linear tapes and S3, most devices can support this feature.  It is currently unused by Amanda.
 </listitem></varlistentry>
@@ -400,6 +404,8 @@ chasing down a problem in communications with Amazon's servers.</para>
 
 <para>Since Amazon storage is unlimited, the device never encounteres EOM, so
 LEOM detection is trivially enabled for this device.</para>
+
+<para>This driver supports the ENFORCE_MAX_VOLUME_USAGE property. Default value is false. See COMMON_PROPERTIES, above.</para>
 
 <refsect3><title>Device-Specific Properties</title>
 
@@ -639,6 +645,7 @@ size, regardless of the blocksize used to write the data.</para>
     LEOM detection can be disabled by setting the LEOM property to
     false.</para>
 
+<para>This device supports the ENFORCE_MAX_VOLUME_USAGE property. Default value is true. See COMMON PROPERTIES, above.</para>
 <refsect3><title>Device-Specific Properties</title>
 
 <variablelist>

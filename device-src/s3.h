@@ -365,6 +365,7 @@ s3_upload(S3Handle *hdl,
  * @param prefix: the prefix
  * @param delimiter: delimiter (any length string)
  * @param list: (output) the list of files
+ * @param total_size: (output) sum of size of files 
  * @returns: FALSE if an error occurs
  */
 gboolean
@@ -372,7 +373,8 @@ s3_list_keys(S3Handle *hdl,
               const char *bucket,
               const char *prefix,
               const char *delimiter,
-              GSList **list);
+              GSList **list,
+              guint64 *total_size);
 
 /* Read an entire file, passing the contents to write_func buffer
  * by buffer.

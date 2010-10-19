@@ -51,6 +51,7 @@ typedef struct {
     /* Properties */
     guint64 volume_bytes;
     guint64 volume_limit;
+    gboolean enforce_volume_limit;
 
     /* should we monitor free space? (controlled by MONITOR_FREE_SPACE property) */
     gboolean monitor_free_space;

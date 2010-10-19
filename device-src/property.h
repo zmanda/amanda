@@ -240,6 +240,11 @@ extern DevicePropertyBase device_property_full_deletion;
 extern DevicePropertyBase device_property_max_volume_usage;
 #define PROPERTY_MAX_VOLUME_USAGE (device_property_max_volume_usage.ID)
 
+/* For devices supporting max_volume_usage this property will be used 
+disable/enable property max_volume_usage. If FALSE, max_volume_usage 
+will not be verified while writing to the device */
+extern DevicePropertyBase device_property_enforce_max_volume_usage;
+#define PROPERTY_ENFORCE_MAX_VOLUME_USAGE (device_property_enforce_max_volume_usage.ID)
 /* Should the device produce verbose output?  Value is a gboolean.  Not
  * present in all devices. */
 extern DevicePropertyBase device_property_verbose;

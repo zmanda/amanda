@@ -104,6 +104,12 @@ struct _S3Device {
     /* Throttling */
     guint64 max_send_speed;
     guint64 max_recv_speed;
+
+    gboolean leom;
+    guint64 volume_bytes;
+    guint64 volume_limit;
+    gboolean enforce_volume_limit;
+    
 };
 
 /*
@@ -129,6 +135,7 @@ struct _S3DeviceClass {
 #define S3_DEVICE_MIN_BLOCK_SIZE 1024
 #define S3_DEVICE_MAX_BLOCK_SIZE (100*1024*1024)
 #define S3_DEVICE_DEFAULT_BLOCK_SIZE (10*1024*1024)
+#define EOM_EARLY_WARNING_ZONE_BLOCKS 4
 
 /* This goes in lieu of file number for metadata. */
 #define SPECIAL_INFIX "special-"
@@ -318,6 +325,18 @@ static gboolean s3_device_set_max_recv_speed_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
+static gboolean s3_device_set_max_volume_usage_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean property_set_leom_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_enforce_max_volume_usage_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
 /*
  * virtual functions */
 
@@ -367,6 +386,14 @@ s3_device_recycle_file(Device *pself,
 
 static gboolean
 s3_device_erase(Device *pself);
+
+static gboolean
+check_at_leom(S3Device *self,
+                guint64 size);
+
+static gboolean
+check_at_peom(S3Device *self,
+                guint64 size);
 
 /*
  * Private functions
@@ -420,6 +447,18 @@ write_amanda_header(S3Device *self,
 	return FALSE;
     }
 
+    if(check_at_leom(self, header_size))
+    d_self->is_eom = TRUE;
+
+    if(check_at_peom(self, header_size)) {
+    d_self->is_eom = TRUE;
+    device_set_error(d_self,
+        stralloc(_("No space left on device")),
+        DEVICE_STATUS_DEVICE_ERROR);
+    g_free(amanda_header.buffer);
+    return FALSE;
+    }
+
     /* write out the header and flush the uploads. */
     key = special_file_to_key(self, "tapestart", -1);
     g_assert(header_size < G_MAXUINT); /* for cast to guint */
@@ -437,6 +476,7 @@ write_amanda_header(S3Device *self,
     } else {
 	dumpfile_free(d_self->volume_header);
 	d_self->volume_header = dumpinfo;
+        self->volume_bytes += header_size;
     }
 
     return result;
@@ -511,7 +551,7 @@ find_last_file(S3Device *self) {
     Device *d_self = DEVICE(self);
 
     /* list all keys matching C{PREFIX*-*}, stripping the C{-*} */
-    result = s3_list_keys(self->s3, self->bucket, self->prefix, "-", &keys);
+    result = s3_list_keys(self->s3, self->bucket, self->prefix, "-", &keys, NULL);
     if (!result) {
 	device_set_error(d_self,
 	    vstrallocf(_("While listing S3 keys: %s"), s3_strerror(self->s3)),
@@ -542,7 +582,7 @@ find_next_file(S3Device *self, int last_file) {
     Device *d_self = DEVICE(self);
 
     /* list all keys matching C{PREFIX*-*}, stripping the C{-*} */
-    result = s3_list_keys(self->s3, self->bucket, self->prefix, "-", &keys);
+    result = s3_list_keys(self->s3, self->bucket, self->prefix, "-", &keys, NULL);
     if (!result) {
 	device_set_error(d_self,
 	    vstrallocf(_("While listing S3 keys: %s"), s3_strerror(self->s3)),
@@ -576,10 +616,11 @@ delete_file(S3Device *self,
 {
     gboolean result;
     GSList *keys;
+    guint64 total_size = 0;
     char *my_prefix = g_strdup_printf("%sf%08x-", self->prefix, file);
     Device *d_self = DEVICE(self);
 
-    result = s3_list_keys(self->s3, self->bucket, my_prefix, NULL, &keys);
+    result = s3_list_keys(self->s3, self->bucket, my_prefix, NULL, &keys, &total_size);
     if (!result) {
 	device_set_error(d_self,
 	    vstrallocf(_("While listing S3 keys: %s"), s3_strerror(self->s3)),
@@ -599,6 +640,7 @@ delete_file(S3Device *self,
             return FALSE;
         }
     }
+    self->volume_bytes = total_size;
 
     return TRUE;
 }
@@ -716,6 +758,11 @@ s3_device_init(S3Device * self)
     Device * dself = DEVICE(self);
     GValue response;
 
+    self->volume_bytes = 0;
+    self->volume_limit = 0;
+    self->leom = TRUE;
+    self->enforce_volume_limit = FALSE;
+
     /* Register property values
      * Note: Some aren't added until s3_device_open_device()
      */
@@ -754,6 +801,12 @@ s3_device_init(S3Device * self)
     g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, TRUE); /* well, there *is* no EOM on S3 .. */
     device_set_simple_property(dself, PROPERTY_LEOM,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
+    g_value_unset(&response);
+
+    g_value_init(&response, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&response, FALSE);
+    device_set_simple_property(dself, PROPERTY_ENFORCE_MAX_VOLUME_USAGE,
 	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
@@ -851,6 +904,23 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    PROPERTY_ACCESS_GET_MASK,
 	    device_simple_property_get_fn,
 	    NULL);
+
+    device_class_register_property(device_class, PROPERTY_LEOM,
+            PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+            device_simple_property_get_fn,
+            property_set_leom_fn);
+
+    device_class_register_property(device_class, PROPERTY_MAX_VOLUME_USAGE,
+            (PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK) &
+                (~ PROPERTY_ACCESS_SET_INSIDE_FILE_WRITE),
+            device_simple_property_get_fn,
+            s3_device_set_max_volume_usage_fn);
+
+    device_class_register_property(device_class, PROPERTY_ENFORCE_MAX_VOLUME_USAGE,
+            (PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK) &
+                (~ PROPERTY_ACCESS_SET_INSIDE_FILE_WRITE),
+            device_simple_property_get_fn,
+            s3_device_set_enforce_max_volume_usage_fn);
 }
 
 static gboolean
@@ -1030,6 +1100,43 @@ s3_device_set_max_recv_speed_fn(Device *p_self,
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
 
+static gboolean
+s3_device_set_max_volume_usage_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    self->volume_limit = g_value_get_uint64(val);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+
+}
+
+static gboolean
+s3_device_set_enforce_max_volume_usage_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    self->enforce_volume_limit = g_value_get_boolean(val);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+
+}
+
+static gboolean
+property_set_leom_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    self->leom = g_value_get_boolean(val);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
 static Device*
 s3_device_factory(char * device_name, char * device_type, char * device_node)
 {
@@ -1181,7 +1288,6 @@ s3_device_read_label(Device *pself) {
     char *key;
     CurlBuffer buf = {NULL, 0, 0, S3_DEVICE_MAX_BLOCK_SIZE};
     dumpfile_t *amanda_header;
-
     /* note that this may be called from s3_device_start, when
      * self->access_mode is not ACCESS_NULL */
 
@@ -1252,6 +1358,9 @@ static gboolean
 s3_device_start (Device * pself, DeviceAccessMode mode,
                  char * label, char * timestamp) {
     S3Device * self;
+    GSList *keys;
+    guint64 total_size = 0;
+    gboolean result;
 
     self = S3_DEVICE(pself);
 
@@ -1310,7 +1419,17 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
 	    if (pself->volume_label == NULL && s3_device_read_label(pself) != DEVICE_STATUS_SUCCESS) {
 		/* s3_device_read_label already set our error message */
 		return FALSE;
-	    }
+	    } else {
+                result = s3_list_keys(self->s3, self->bucket, NULL, NULL, &keys, &total_size);
+                if(!result) {
+                    device_set_error(pself,
+                                 vstrallocf(_("While listing S3 keys: %s"), s3_strerror(self->s3)),
+                                 DEVICE_STATUS_DEVICE_ERROR|DEVICE_STATUS_VOLUME_ERROR);
+                    return FALSE;
+                } else {
+                    self->volume_bytes = total_size;
+                }
+            }
             return seek_to_end(self);
             break;
 
@@ -1362,11 +1481,21 @@ s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
     }
     amanda_header.buffer_len = header_size;
 
+    if(check_at_leom(self, header_size))
+    pself->is_eom = TRUE;
+
+    if(check_at_peom(self, header_size)) {
+    pself->is_eom = TRUE;
+    device_set_error(pself,
+        stralloc(_("No space left on device")),
+        DEVICE_STATUS_DEVICE_ERROR);
+    g_free(amanda_header.buffer);
+    return FALSE;
+    }
     /* set the file and block numbers correctly */
     pself->file = (pself->file > 0)? pself->file+1 : 1;
     pself->block = 0;
     pself->in_file = TRUE;
-
     /* write it out as a special block (not the 0th) */
     key = special_file_to_key(self, "filestart", pself->file);
     result = s3_upload(self->s3, self->bucket, key, S3_BUFFER_READ_FUNCS,
@@ -1380,6 +1509,7 @@ s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
         return FALSE;
     }
 
+    self->volume_bytes += header_size;
     return TRUE;
 }
 
@@ -1394,6 +1524,17 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
     g_assert (data != NULL);
     if (device_in_error(self)) return FALSE;
 
+    if(check_at_leom(self, size))
+    pself->is_eom = TRUE;
+
+    if(check_at_peom(self, size)) {
+    pself->is_eom = TRUE;
+    device_set_error(pself,
+        stralloc(_("No space left on device")),
+        DEVICE_STATUS_DEVICE_ERROR);
+    return FALSE;
+    }
+
     filename = file_and_block_to_key(self, pself->file, pself->block);
 
     result = s3_upload(self->s3, self->bucket, filename, S3_BUFFER_READ_FUNCS,
@@ -1407,7 +1548,7 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
     }
 
     pself->block++;
-
+    self->volume_bytes += size;
     return TRUE;
 }
 
@@ -1473,6 +1614,7 @@ s3_device_erase(Device *pself) {
             return FALSE;
         }
     }
+    self->volume_bytes = 0;
     return TRUE;
 }
 
@@ -1710,4 +1852,34 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
     g_free(key);
     *size_req = dat.size_written;
     return dat.size_written;
+}
+
+static gboolean
+check_at_peom(S3Device *self, guint64 size)
+{
+    if(self->enforce_volume_limit && (self->volume_limit > 0)) {
+        guint64 newtotal = self->volume_bytes + size;
+        if(newtotal > self->volume_limit) {
+        return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static gboolean
+check_at_leom(S3Device *self, guint64 size)
+{
+    guint64 block_size = DEVICE(self)->block_size;
+    guint64 eom_warning_buffer = EOM_EARLY_WARNING_ZONE_BLOCKS * block_size;
+   
+    if(!self->leom)
+    return FALSE;
+
+    if(self->enforce_volume_limit && (self->volume_limit > 0)) {
+        guint64 newtotal = self->volume_bytes + size + eom_warning_buffer;
+        if(newtotal > self->volume_limit) {
+        return TRUE;
+        }
+    }
+    return FALSE;
 }
