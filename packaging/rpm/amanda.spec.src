@@ -351,6 +351,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 ./configure \
         %{?PKG_CONFIG_PATH: PKG_CONFIG_PATH=%PKG_CONFIG_PATH} \
         CFLAGS="%{optflags} -g -pipe" CXXFLAGS="%{optflags}" \
+	LDFLAGS="-Wl,--as-needed" \
         --quiet \
         --prefix=%{PREFIX} \
         --sysconfdir=%{SYSCONFDIR} \
