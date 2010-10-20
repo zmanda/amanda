@@ -258,7 +258,7 @@ sub {
 	    my $line = "slot $sl->{slot}:";
 	    if (!defined($sl->{device_status}) && !defined($sl->{label})) {
 		$line .= " unknown state";
-	    } elsif ($sl->{'status'} == Amanda::Changer::SLOT_EMPTY) {
+	    } elsif ($sl->{'state'} == Amanda::Changer::SLOT_EMPTY) {
 		$line .= " empty";
 	    } else {
 		if (defined $sl->{label}) {
