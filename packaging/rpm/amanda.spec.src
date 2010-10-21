@@ -31,6 +31,10 @@
 
 %{?PKG_CONFIG_PATH:%{echo:PKG_CONFIG_PATH = %{PKG_CONFIG_PATH}}}
 
+# LDFLAGS: newer gnu linkers can use "-Wl,--as-needed", while older ones,
+# like rhel3 and sles9 can't.
+%define LDFLAGS -Wl,--as-needed
+
 # Define which Distribution we are building:
 # Try to detect the distribution we are building:
 %if %{_vendor} == redhat 
@@ -87,6 +91,7 @@
         %define tarver 1.14
 	%define requires_libtermcap Requires: libtermcap.so.2
 	%define without_ipv6 --without-ipv6
+	%undefine LDFLAGS
     %endif
     %if %(awk '$1 == "Red" && $7 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
@@ -348,10 +353,11 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 # Set PKG_CONFIG_PATH=some/path if some/path was set on the command line, or by 
 # the platform detection bits.
 # without_ipv6 should only be defined on rhel3.
+# LDFLAGS macro is defined except on rhel3.
 ./configure \
         %{?PKG_CONFIG_PATH: PKG_CONFIG_PATH=%PKG_CONFIG_PATH} \
         CFLAGS="%{optflags} -g -pipe" CXXFLAGS="%{optflags}" \
-	LDFLAGS="-Wl,--as-needed" \
+        %{?LDFLAGS:LDFLAGS="${LDFLAGS} %{?LDFLAGS:%LDFLAGS}"} \
         --quiet \
         --prefix=%{PREFIX} \
         --sysconfdir=%{SYSCONFDIR} \
