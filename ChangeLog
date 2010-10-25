@@ -1,3 +1,9 @@
+2010-10-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Worker.pm: Use 4*block_size for
+	  device_output_buffer_size if it is not set by the user.
+	* server-src/amcheck-device.pl: Check device_output_buffer_size is at
+	  least 2*block_size.
+
 2010-10-25 Dan Locks <dwlocks@zmanda.com>
 	*  config/amanda/libs.m4: update AMANDA_CHECK_CURL to add runtime link
 	   flags for all solaris platforms, remove our AC_PATH_PROG for curl-config,

@@ -22,7 +22,7 @@ use strict;
 use warnings;
 
 use Amanda::Util qw( :constants );
-use Amanda::Config qw( :init );
+use Amanda::Config qw( :init :getconf );
 use Amanda::Logfile qw( :logtype_t log_add $amanda_log_trace_log );
 use Amanda::Debug;
 use Amanda::Device qw( :constants );
@@ -187,6 +187,13 @@ sub do_check {
 	    print "WARNING: Media access mode is WRITE_ONLY; dumps may not be recoverable\n";
 	}
 
+	if (getconf_seen($CNF_DEVICE_OUTPUT_BUFFER_SIZE)) {
+	    my $dobs = getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE);
+	    my $block_size = $res->{'device'}->property_get("BLOCK_SIZE");
+	    if ($block_size * 2 > $dobs) {
+		print "WARNING: DEVICE-OUTPUT-BUFFER-SIZE is not at least twice the block size of the device, it should be increased for better throughput\n";
+	    }
+	}
 	$steps->{'check_overwrite'}->();
     };
 
