@@ -17,30 +17,28 @@
 #   the libcurl distribution for details.
 #
 AC_DEFUN([AMANDA_CHECK_LIBCURL], [
-    case "$host" in
-        sparc-sun-solaris2.10) # Solaris 10
-        # curl is not in the LD_LIBRARY_PATH on Solaris 10, so we search
-        # for it in a few common paths; we then extract the -L flags and
-        # translate them to -R flags, as required by the runtime linker.
-        AC_PATH_PROG(CURL_CONFIG, curl-config, [], $LOCSYSPATH:/opt/csw/bin:/usr/local/bin:/opt/local/bin)
-        if test -n "$CURL_CONFIG"; then
-            curlflags=`$CURL_CONFIG --libs 2>/dev/null`
-            for flag in curlflags; do
-                case $flag in
-                    -L*) LDFLAGS="$LDFLAGS "`echo "x$flag" | sed -e 's/^x-L/-R/'`;;
-                esac
-            done
-        fi
-        ;;
-    esac
-
     LIBCURL_CHECK_CONFIG(yes, 7.10.0, HAVE_CURL=yes, HAVE_CURL=no)
     if test x"$HAVE_CURL" = x"yes"; then
 	AMANDA_ADD_LIBS($LIBCURL)
 	AMANDA_ADD_CPPFLAGS($LIBCURL_CPPFLAGS)
 
 	AMANDA_CHECK_TYPE([curl_off_t], [off_t], [curl/curl.h])
+	case "$host" in
+	    *sun-solaris2*) # Solaris, all versions.
+	    # we extract the -L flags and translate them to -R flags, as required
+	    # by the runtime linker.
+	    if test -n "$_libcurl_config"; then
+		curlflags=`$_libcurl_config --libs 2>/dev/null`
+		for flag in curlflags; do
+		    case $flag in
+			-L*) LDFLAGS="$LDFLAGS "`echo "x$flag" | sed -e 's/^x-L/-R/'`;;
+		    esac
+		done
+	    fi
+	    ;;
+	esac
     fi
+
 ])
 
 # SYNOPSIS

@@ -1,4 +1,9 @@
 2010-10-25 Dan Locks <dwlocks@zmanda.com>
+	*  config/amanda/libs.m4: update AMANDA_CHECK_CURL to add runtime link
+	   flags for all solaris platforms, remove our AC_PATH_PROG for curl-config,
+	   and trust LIBCURL_CHECK_CONFIG (which is now fixed)
+
+2010-10-25 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/rpm/amanda.spec.src: exclude sles9 from
 	   LDFLAGS=-Wl,--as-needed
 
