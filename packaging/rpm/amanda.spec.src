@@ -133,6 +133,9 @@
     %if %(awk '$1 == "SUSE" { exit 1; }' /etc/SuSE-release; echo $?)
         %define disttag %(awk '$1=="SUSE" {$3=="Enterprise" ? TAG="sles" : TAG="suse" ; print TAG}' /etc/SuSE-release)
         %define distver %(awk '$1=="SUSE" {$3=="Enterprise" ? VER=$5 : VER=$3 ; print VER}' /etc/SuSE-release)
+	%if %{distver} == 9
+	    %undefine LDFLAGS
+	%endif
     %endif
 %endif
 
