@@ -610,6 +610,13 @@ sub setup_and_start_dump {
         %get_xfer_dest_args = get_splitting_args_from_config(
 		%splitting_args);
 	$get_xfer_dest_args{'max_memory'} = getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE);
+	if (!getconf_seen($CNF_DEVICE_OUTPUT_BUFFER_SIZE)) {
+	    my $device = $self->{'scribe'}->get_device();
+	    my $block_size4 = $device->block_size * 4;
+	    if ($block_size4 > $get_xfer_dest_args{'max_memory'}) {
+		$get_xfer_dest_args{'max_memory'} = $block_size4;
+	    }
+	}
 	$get_xfer_dest_args{'can_cache_inform'} = ($msgtype eq Amanda::Taper::Protocol::FILE_WRITE);
 
 	# if we're unable to fulfill the user's splitting needs, we can still give
