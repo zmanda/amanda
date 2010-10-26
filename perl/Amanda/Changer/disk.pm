@@ -25,7 +25,8 @@ use vars qw( @ISA );
 
 use File::Glob qw( :glob );
 use File::Path;
-use Amanda::Config qw( :getconf );
+use File::Basename;
+use Amanda::Config qw( :getconf string_to_boolean );
 use Amanda::Debug;
 use Amanda::Changer;
 use Amanda::MainLoop;
@@ -80,11 +81,7 @@ sub new {
     my $class = shift;
     my ($config, $tpchanger) = @_;
     my ($dir) = ($tpchanger =~ /chg-disk:(.*)/);
-
-    unless (-d $dir) {
-	return Amanda::Changer->make_error("fatal", undef,
-	    message => "directory '$dir' does not exist");
-    }
+    my $properties = $config->{'properties'};
 
     # note that we don't track outstanding Reservation objects -- we know
     # they're gone when they delete their drive directory
@@ -99,6 +96,15 @@ sub new {
     };
 
     bless ($self, $class);
+
+    $self->{'num-slot'} = $config->get_property('num-slot');
+    $self->{'auto-create-slot'} = $config->get_boolean_property(
+					'auto-create-slot', 0);
+    $self->{'removable'} = $config->get_boolean_property('removable', 0);
+
+    $self->_validate();
+    return $self->{'fatal_error'} if defined $self->{'fatal_error'};
+
     return $self;
 }
 
@@ -110,6 +116,9 @@ sub load {
 
     $self->validate_params('load', \%params);
 
+    return if $self->check_error($params{'res_cb'});
+
+    $self->_validate();
     return if $self->check_error($params{'res_cb'});
 
     $self->with_locked_state($self->{'state_filename'},
@@ -135,6 +144,9 @@ sub info_key {
 
     return if $self->check_error($params{'info_cb'});
 
+    $self->_validate();
+    return if $self->check_error($params{'info_cb'});
+
     # no need for synchronization -- all of these values are static
 
     if ($key eq 'num_slots') {
@@ -157,6 +169,9 @@ sub reset {
 
     return if $self->check_error($params{'finished_cb'});
 
+    $self->_validate();
+    return if $self->check_error($params{'finished_cb'});
+
     $self->with_locked_state($self->{'state_filename'},
 				     $params{'finished_cb'}, sub {
 	my ($state, $finished_cb) = @_;
@@ -172,6 +187,9 @@ sub inventory {
     my $self = shift;
     my %params = @_;
 
+    return if $self->check_error($params{'inventory_cb'});
+
+    $self->_validate();
     return if $self->check_error($params{'inventory_cb'});
 
     my @slots = $self->_all_slots();
@@ -500,6 +518,53 @@ sub _quote_glob {
     my ($filename) = @_;
     $filename =~ s/([]{}\\?*[])/\\$1/g;
     return $filename;
+}
+
+sub _validate() {
+    my $self = shift;
+    my $dir = $self->{'dir'};
+
+    unless (-d $dir) {
+	$self->{'fatal_error'} = Amanda::Changer->make_error("fatal", undef,
+	    message => "directory '$dir' does not exist");
+	return;
+    }
+
+    if ($self->{'removable'}) {
+	my ($dev, $ino) = stat $dir;
+	my $parentdir = dirname $dir;
+	my ($pdev, $pino) = stat $parentdir;
+	if ($dev == $pdev) {
+	    $self->{'fatal_error'} = Amanda::Changer->make_error("fatal", undef,
+		message => "No removable disk mounted on '$dir'");
+	    return;
+	}
+    }
+
+    if ($self->{'num-slot'}) {
+	for my $i (1..$self->{'num-slot'}) {
+	    my $slot_dir = "$dir/slot$i";
+	    if (!-e $slot_dir) {
+		if ($self->{'auto-create-slot'}) {
+		    if (!mkdir ($slot_dir)) {
+			$self->{'fatal_error'} = Amanda::Changer->make_error("fatal", undef,
+			    message => "Can't create '$slot_dir': $!");
+			return;
+		    }
+		} else {
+		    $self->{'fatal_error'} = Amanda::Changer->make_error("fatal", undef,
+			message => "slot $i doesn't exists '$slot_dir'");
+		    return;
+		}
+	    }
+	}
+    } else {
+	if ($self->{'auto-create-slot'}) {
+	    $self->{'fatal_error'} = Amanda::Changer->make_error("fatal", undef,
+		message => "property 'auto-create-slot' set but property 'num-slot' is not set");
+	    return;
+	}
+    }
 }
 
 package Amanda::Changer::disk::Reservation;

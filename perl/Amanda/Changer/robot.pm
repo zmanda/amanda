@@ -193,7 +193,7 @@ sub new {
     }
 
     # eject-before-unload
-    my $ebu = $self->get_boolean_property($self->{'config'},
+    my $ebu = $self->{'config'}->get_boolean_property(
 					    "eject-before-unload", 0);
     if (!defined $ebu) {
 	return Amanda::Changer->make_error("fatal", undef,
@@ -202,7 +202,7 @@ sub new {
     $self->{'eject_before_unload'} = $ebu;
 
     # fast-search
-    my $fast_search = $self->get_boolean_property($self->{'config'},
+    my $fast_search = $self->{'config'}->get_boolean_property(
 						"fast-search", 1);
     if (!defined $fast_search) {
 	return Amanda::Changer->make_error("fatal", undef,
@@ -287,7 +287,7 @@ sub new {
 	$self->{$key} = $time;
     }
 
-    my $ignore_barcodes = $self->get_boolean_property($self->{'config'},
+    my $ignore_barcodes = $self->{'config'}->get_boolean_property(
 					    "ignore-barcodes", 0);
     if (!defined $ignore_barcodes) {
 	return Amanda::Changer->make_error("fatal", undef,

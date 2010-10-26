@@ -28,7 +28,7 @@ use vars qw( @ISA );
 
 use Amanda::Paths;
 use Amanda::Util;
-use Amanda::Config qw( :getconf string_to_boolean );
+use Amanda::Config qw( :getconf );
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( debug );
 use Amanda::MainLoop;
@@ -489,14 +489,6 @@ including a regular C<info_cb> callback.  The C<info> method will wait for
 all C<info_key> invocations to finish, then collect the results or errors that
 occur.
 
-=head2 PROPERTY PARSING
-
-Many properties are boolean, and Amanda has a habit of accepting a number of
-different ways of writing boolean values.  The method
-C<< $self->get_boolean_property($config, $prop, $default) >> will parse such a
-property, returning 0 or 1 if the property is specified, C<$default> if it is
-not specified, or C<undef> if the property cannot be parsed.
-
 =head2 ERROR HANDLING
 
 To create a new error object, use C<< $self->make_error($type, $cb, %args) >>.
@@ -586,6 +578,12 @@ The C<get_property> method is a shortcut method to get the value of a changer
 property, ignoring its the priority and other attributes.  In a list context,
 it returns all values for the property; in a scalar context, it returns the
 first value specified.
+
+Many properties are boolean, and Amanda has a habit of accepting a number of
+different ways of writing boolean values.  The method
+C<< $config->get_boolean_property($prop, $default) >> will parse such a
+property, returning 0 or 1 if the property is specified, C<$default> if it is
+not specified, or C<undef> if the property cannot be parsed.
 
 =head2 PERSISTENT STATE AND LOCKING
 
@@ -975,18 +973,6 @@ sub info {
 
 # subclass helpers
 
-sub get_boolean_property {
-    my ($self) = shift;
-    my ($config, $propname, $default) = @_;
-
-    return $default
-	unless (exists $config->{'properties'}->{$propname});
-
-    my $propinfo = $config->{'properties'}->{$propname};
-    return undef unless @{$propinfo->{'values'}} == 1;
-    return string_to_boolean($propinfo->{'values'}->[0]);
-}
-
 sub make_error {
     my $self = shift;
     my ($type, $cb, %args) = @_;
@@ -1291,7 +1277,7 @@ sub do_release {
 }
 
 package Amanda::Changer::Config;
-use Amanda::Config qw( :getconf );
+use Amanda::Config qw( :getconf string_to_boolean );
 use Amanda::Device;
 
 sub new {
@@ -1376,6 +1362,18 @@ sub get_property {
     return undef unless defined($prophash);
 
     return wantarray? @{$prophash->{'values'}} : $prophash->{'values'}->[0];
+}
+
+sub get_boolean_property {
+    my ($self) = shift;
+    my ($propname, $default) = @_;
+
+    return $default
+	unless (exists $self->{'properties'}->{$propname});
+
+    my $propinfo = $self->{'properties'}->{$propname};
+    return undef unless @{$propinfo->{'values'}} == 1;
+    return string_to_boolean($propinfo->{'values'}->[0]);
 }
 
 sub _get_implicit_properties {

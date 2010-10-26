@@ -1,4 +1,13 @@
 2010-10-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda-changers.7.xml: Document new NUM-SLOT,
+	  AUTO-CREATE-SLOT and REMOVABLE chg-disk properties.
+	* perl/Amanda/Changer.pm (get_boolean_property) Moved from A::Changer
+	  to A::Changer::Config.
+	* perl/Amanda/Changer/disk.pm: New NUM-SLOT, AUTO-CREATE-SLOT and
+	  REMOVABLE properties. Use new get_boolean_property.
+	* perl/Amanda/Changer/robot.pm: Use new get_boolean_property.
+
+2010-10-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/fileheader.c (parse_file_header): Print buf.
 	* patching file recover-src/extract_list.c: Read header in multiple
 						    block.
