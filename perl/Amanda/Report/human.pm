@@ -964,14 +964,6 @@ sub output_details
 
 		# note: copied & modified from calculate_stats.
 		if (
-		       exists $try->{dumper}
-		    && exists $try->{taper}
-		    && defined $try->{taper}->{kb}
-		    && (   $try->{taper}{status} eq 'done'
-			|| $try->{taper}{status} eq 'partial')
-		  ) {
-		    $outsize = $try->{taper}->{kb};
-		} elsif (
 		    exists $try->{dumper}
 		    && exists $try->{chunker}
 		    && defined $try->{chunker}->{kb}
@@ -979,6 +971,14 @@ sub output_details
 			|| $try->{chunker}{status} eq 'partial')
 		  ) {
 		    $outsize = $try->{chunker}->{kb};
+		} elsif (
+		       exists $try->{dumper}
+		    && exists $try->{taper}
+		    && defined $try->{taper}->{kb}
+		    && (   $try->{taper}{status} eq 'done'
+			|| $try->{taper}{status} eq 'partial')
+		  ) {
+		    $outsize = $try->{taper}->{kb};
 		}
 	    }
 	}
@@ -993,7 +993,8 @@ sub output_details
             push @$notes,
               "big estimate: $hostname $qdisk $dle->{estimate}{level}",
               sprintf('                est: %.0f%s    out %.0f%s',
-                $est->{ckb}, $disp_unit, $outsize, $disp_unit)
+                $self->tounits($est->{ckb}), $disp_unit,
+		$self->tounits($outsize), $disp_unit)
               if (defined $est->{'ckb'} && ($est->{ckb} * .9 > $outsize)
                 && ($est->{ckb} - $outsize > 1.0e5));
         }
