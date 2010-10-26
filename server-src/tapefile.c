@@ -102,6 +102,8 @@ write_tapelist(
 	g_fprintf(tapef, "%s %s", tp->datestamp, tp->label);
 	if(tp->reuse) g_fprintf(tapef, " reuse");
 	else g_fprintf(tapef, " no-reuse");
+	if (tp->meta)
+	    g_fprintf(tapef, " META:%s", tp->meta);
 	if (tp->comment)
 	    g_fprintf(tapef, " #%s", tp->comment);
 	g_fprintf(tapef, "\n");
@@ -395,6 +397,16 @@ parse_tapeline(
 	skip_non_whitespace(s, ch);
 	s[-1] = '\0';
 	skip_whitespace(s, ch);
+    }
+
+    if (strncmp_const(s - 1, "META:") == 0) {
+	s1 = s - 1 + 5;
+	skip_non_whitespace(s, ch);
+	s[-1] = '\0';
+	skip_whitespace(s, ch);
+	tp->meta = stralloc(s1);
+    } else {
+	tp->meta = NULL;
     }
 
     if (*(s - 1) == '#') {

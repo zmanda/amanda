@@ -1205,75 +1205,90 @@ sub _volume_cb  {
     # inform the xdt about this new device before starting it
     $self->{'xdt'}->use_device($device);
 
-    my $result = $self->_device_start($device, $access_mode, $new_label, $is_new);
-    if ($result == 0) {
-	# try reading the label to see whether we erased the tape
-	my $erased = 0;
-	CHECK_READ_LABEL: {
+    my $cbX = sub {};
+    my $steps = define_steps
+	cb_ref => \$cbX;
+
+    step device_start => sub {
+	$self->_device_start($reservation, $access_mode, $new_label, $is_new,
+			     $steps->{'device_started'});
+    };
+
+    step device_started => sub {
+	my $result = shift;
+
+	if ($result == 0) {
+	    # try reading the label to see whether we erased the tape
+	    my $erased = 0;
+	    CHECK_READ_LABEL: {
 	    # don't worry about erasing new tapes
-	    if ($is_new) {
-		last CHECK_READ_LABEL;
+		if ($is_new) {
+		    last CHECK_READ_LABEL;
+		}
+
+		$device->read_label();
+
+		# does the device think something is broken now?
+		if (($device->status & ~$DEVICE_STATUS_VOLUME_UNLABELED)
+		    and !($device->status & $DEVICE_STATUS_VOLUME_UNLABELED)) {
+		    $erased = 1;
+		    last CHECK_READ_LABEL;
+		}
+
+		# has the label changed?
+		my $vol_label = $device->volume_label;
+		if ((!defined $old_label and defined $vol_label)
+		    or (defined $old_label and !defined $vol_label)
+		    or (defined $old_label and $old_label ne $vol_label)) {
+		    $erased = 1;
+		    last CHECK_READ_LABEL;
+		}
+
+		# has the timestamp changed?
+		my $vol_timestamp = $device->volume_time;
+		if ((!defined $old_timestamp and defined $vol_timestamp)
+		    or (defined $old_timestamp and !defined $vol_timestamp)
+		    or (defined $old_timestamp and $old_timestamp ne $vol_timestamp)) {
+		    $erased = 1;
+		    last CHECK_READ_LABEL;
+		}
 	    }
 
-	    $device->read_label();
+	    $self->{'feedback'}->scribe_notif_new_tape(
+		error => "while labeling new volume: " . $device->error_or_status(),
+		volume_label => $erased? $new_label : undef);
 
-	    # does the device think something is broken now?
-	    if (($device->status & ~$DEVICE_STATUS_VOLUME_UNLABELED)
-		and !($device->status & $DEVICE_STATUS_VOLUME_UNLABELED)) {
-		$erased = 1;
-		last CHECK_READ_LABEL;
-	    }
-
-	    # has the label changed?
-	    my $vol_label = $device->volume_label;
-	    if ((!defined $old_label and defined $vol_label)
-		or (defined $old_label and !defined $vol_label)
-		or (defined $old_label and $old_label ne $vol_label)) {
-		$erased = 1;
-		last CHECK_READ_LABEL;
-	    }
-
-	    # has the timestamp changed?
-	    my $vol_timestamp = $device->volume_time;
-	    if ((!defined $old_timestamp and defined $vol_timestamp)
-		or (defined $old_timestamp and !defined $vol_timestamp)
-		or (defined $old_timestamp and $old_timestamp ne $vol_timestamp)) {
-		$erased = 1;
-		last CHECK_READ_LABEL;
-	    }
+	    $self->_get_new_volume();
+	    return $cbX->();
+	} elsif ($result != 1) {
+	    $self->{'feedback'}->scribe_notif_new_tape(
+		error => $result,
+		volume_label => undef);
+	    $self->_get_new_volume();
+	    return $cbX->();
 	}
 
+	$new_label = $device->volume_label;
+
+	# success!
 	$self->{'feedback'}->scribe_notif_new_tape(
-	    error => "while labeling new volume: " . $device->error_or_status(),
-	    volume_label => $erased? $new_label : undef);
+	    error => undef,
+	    volume_label => $new_label);
 
-	return $self->_get_new_volume();
-    } elsif ($result != 1) {
-	$self->{'feedback'}->scribe_notif_new_tape(
-	    error => $result,
-	    volume_label => undef);
-	return $self->_get_new_volume();
-    }
+	$self->{'reservation'}->set_label(label => $new_label,
+	    finished_cb => $steps->{'set_labelled'});
+    };
 
-    $new_label = $device->volume_label;
-
-    # success!
-    $self->{'feedback'}->scribe_notif_new_tape(
-	error => undef,
-	volume_label => $new_label);
-
-    # notify the changer that we've labeled the tape, and start the part.
-    my $label_set_cb = make_cb(label_set_cb => sub {
+    step set_labelled => sub {
 	my ($err) = @_;
 	if ($err) {
 	    $self->{'feedback'}->scribe_notif_log_info(
 		message => "Error from set_label: $err");
 	    # fall through to start_part anyway...
 	}
-	return $self->_start_part();
-    });
-    $self->{'reservation'}->set_label(label => $new_label,
-	finished_cb => $label_set_cb);
+	$self->_start_part();
+	return $cbX->();
+    }
 }
 
 # return 0 for device->start error
@@ -1281,52 +1296,82 @@ sub _volume_cb  {
 # return a message for others error
 sub _device_start {
     my $self = shift;
-    my ($device, $access_mode, $new_label, $is_new) = @_;
+    my ($reservation, $access_mode, $new_label, $is_new, $finished_cb) = @_;
 
+    my $device = $reservation->{'device'};
     my $tl = $self->{'taperscan'}->{'tapelist'};
+    my $meta;
 
     if (!defined $tl) { # For Mock::Taperscan in installcheck
 	if (!$device->start($access_mode, $new_label, $self->{'write_timestamp'})) {
-	    return 0;
+	    return $finished_cb->(0);
 	} else {
-	    return 1;
+	    return $finished_cb->(1);
 	}
     }
 
-    if ($is_new) {
-	# generate the new label and write it to the tapelist file
-	$tl->reload(1);
-	($new_label, my $err) = $self->{'taperscan'}->make_new_tape_label();
-	if (!defined $new_label) {
-	    $tl->unlock();
-	    return $err;
-	} else {
-	    $tl->add_tapelabel('0', $new_label, undef, 0);
-	    $tl->write();
-	}
-	$self->dbg("generate new label '$new_label'");
-    }
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-    # write the label to the device
-    if (!$device->start($access_mode, $new_label, $self->{'write_timestamp'})) {
+    step setup => sub {
+	return $reservation->get_meta_label(
+				finished_cb => $steps->{'got_meta_label'});
+    };
+
+    step got_meta_label => sub {
+	my ($err, $meta) = @_;
+
 	if ($is_new) {
-	    # remove the generated label from the tapelist file
+	    # generate the new label and write it to the tapelist file
 	    $tl->reload(1);
-	    $tl->remove_tapelabel($new_label);
+	    ($new_label, my $err) = $self->{'taperscan'}->make_new_tape_label();
+	    if (!defined $new_label) {
+		$tl->unlock();
+		return $finished_cb->($err);
+	    }
+	    if (!$meta) {
+		($meta, $err) = $self->{'taperscan'}->make_new_meta_label();
+		if (defined $err) {
+		    $tl->unlock();
+		    return $finished_cb->($err);
+		}
+	    }
+	    $tl->add_tapelabel('0', $new_label, undef, $meta);
 	    $tl->write();
-        }
-	return 0;
+	    $self->dbg("generate new label '$new_label'");
+	} elsif (!defined $meta) {
+	    $tl->reload(0);
+	    my $tle = $tl->lookup_tapelabel($new_label);
+	    my $meta = $tle->{'meta'};
+	}
+
+	# write the label to the device
+	if (!$device->start($access_mode, $new_label, $self->{'write_timestamp'})) {
+	    if ($is_new) {
+		# remove the generated label from the tapelist file
+		$tl->reload(1);
+		$tl->remove_tapelabel($new_label);
+		$tl->write();
+            }
+	    return $finished_cb->(0);
+	}
+
+	# rewrite the tapelist file
+	$tl->reload(1);
+	my $tle = $tl->lookup_tapelabel($new_label);
+	$meta = $tle->{'meta'} if !$meta && $tle->{'meta'};
+	$tl->remove_tapelabel($new_label);
+	$tl->add_tapelabel($self->{'write_timestamp'}, $new_label,
+			   $tle? $tle->{'comment'} : undef, 1, $meta);
+	$tl->write();
+
+	$reservation->set_meta_label(meta => $meta,
+				     finished_cb => $steps->{'set_meta_label'});
+    };
+
+    step set_meta_label => sub {
+	return $finished_cb->(1);
     }
-
-    # rewrite the tapelist file
-    $tl->reload(1);
-    my $tle = $tl->lookup_tapelabel($new_label);
-    $tl->remove_tapelabel($new_label);
-    $tl->add_tapelabel($self->{'write_timestamp'}, $new_label,
-		       $tle? $tle->{'comment'} : undef, 1);
-    $tl->write();
-
-    return 1;
 }
 
 sub dbg {

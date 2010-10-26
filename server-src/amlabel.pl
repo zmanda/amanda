@@ -43,7 +43,7 @@ my %subcommands;
 
 sub usage {
     print STDERR "Usage: amlabel <conf> <label> [slot <slot-number>] "
-	       . "[-f] [-o configoption]*\n";
+	       . "[-f] [--meta <meta> [--assign]] [-o configoption]*\n";
     exit(1);
 }
 
@@ -51,15 +51,25 @@ Amanda::Util::setup_application("amlabel", "server", $CONTEXT_CMDLINE);
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 my ($opt_force, $opt_config, $opt_slot, $opt_label);
+my ($opt_meta, $opt_assign);
 
 $opt_force = 0;
+$opt_meta = undef;
+$opt_assign = undef;
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
     'help|usage|?' => \&usage,
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
     'f' => \$opt_force,
+    'm|meta=s' => \$opt_meta,
+    'assign' => \$opt_assign,
     'version' => \&Amanda::Util::version_opt,
 ) or usage();
+
+if ($opt_assign && !$opt_meta) {
+    print STDERR "--assign require --meta\n";
+    usage();
+}
 
 if (@ARGV == 2) {
     $opt_slot = undef;
@@ -103,6 +113,8 @@ sub failure {
 
 sub main {
     my ($finished_cb) = @_;
+    my $gerr;
+    my $chg;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb;
@@ -118,6 +130,16 @@ sub main {
 	if (!defined $tl) {
 	    return failure("Can't load tapelist file ($tlf)", $finished_cb);
 	}
+
+	$chg = Amanda::Changer->new();
+
+	return failure($chg, $finished_cb)
+	    if $chg->isa("Amanda::Changer::Error");
+
+	if ($opt_assign) {
+	    return $steps->{'assign'}->();
+	}
+
 	if (!$opt_force) {
 	    if ($tl->lookup_tapelabel($opt_label)) {
 		return failure("Label '$opt_label' already on a volume", $finished_cb);
@@ -128,11 +150,6 @@ sub main {
     };
 
     step load => sub {
-	my $chg = Amanda::Changer->new();
-
-	return failure($chg, $finished_cb)
-	    if $chg->isa("Amanda::Changer::Error");
-
 	print "Reading label...\n";
 	if ($opt_slot) {
 	    $chg->load(slot => $opt_slot, mode => "write",
@@ -216,35 +233,94 @@ sub main {
 			$finished_cb);
 	    }
 
-	    # update the tapelist
-	    $tl->reload(1);
-	    $tl->remove_tapelabel($opt_label);
-	    $tl->add_tapelabel("0", $opt_label, undef, 1);
-	    $tl->write();
-
-	    print "Success!\n";
-
-	    # notify the changer
-	    $res->set_label(label => $opt_label, finished_cb => $steps->{'labeled'});
+	    $res->get_meta_label(finished_cb => $steps->{'update_tapelist'});
 	} else {
 	    return failure("Not writing label.", $finished_cb);
 	}
     };
 
+    step update_tapelist => sub {
+	my ($err, $meta) = @_;
+
+	$opt_meta = $meta if defined $meta;
+
+	# update the tapelist
+	$tl->reload(1);
+	$tl->remove_tapelabel($opt_label);
+	$tl->add_tapelabel("0", $opt_label, undef, 1, $opt_meta);
+	$tl->write();
+
+	print "Success!\n";
+
+	# notify the changer
+	$res->set_label(label => $opt_label, finished_cb => $steps->{'set_meta_label'});
+    };
+
+    step set_meta_label => sub {
+	my ($gerr) = @_;
+
+	if ($opt_meta) {
+	    return $res->set_meta_label(meta => $opt_meta,
+					finished_cb => $steps->{'labeled'});
+	} else {
+	    return $steps->{'labeled'}->();
+	}
+    };
+
     step labeled => sub {
 	my ($err) = @_;
-	return failure($err, $finished_cb) if $err;
+	$gerr = $err if !$gerr;
 
 	$res->release(finished_cb => $steps->{'released'});
     };
 
     step released => sub {
 	my ($err) = @_;
+	return failure($gerr, $finished_cb) if $gerr;
 	return failure($err, $finished_cb) if $err;
 
 	$finished_cb->();
     };
+
+    step assign => sub {
+	my $tle;
+	$tle = $tl->lookup_tapelabel($opt_label);
+	if (defined $tle) {
+	    $tl->reload(1);
+	    $tl->remove_tapelabel($opt_label);
+	    $tl->add_tapelabel($tle->{'datestamp'}, $tle->{'label'},
+			       $tle->{'comment'}, $tle->{'reuse'}, $opt_meta);
+	    $tl->write();
+	} else {
+	    return failure("Label '$opt_label' is not in the tapelist file", $finished_cb);
+	}
+
+	$chg->inventory(inventory_cb => $steps->{'inventory'});
+    };
+
+    step inventory => sub {
+	my ($err, $inv) = @_;
+
+	if ($err) {
+	    return $finished_cb->() if $err->notimpl;
+	    return failure($err, $finished_cb);
+	}
+
+	for my $sl (@$inv) {
+	    if (defined $sl->{'label'} && $sl->{'label'} eq $opt_label) {
+		return $chg->set_meta_label(meta => $opt_meta,
+					    slot => $sl->{'slot'},
+					    finished_cb => $steps->{'done'});
+	    }
+	}
+	$finished_cb->();
+    };
+
+    step done => sub {
+	$finished_cb->();
+    }
 }
+
 main(\&Amanda::MainLoop::quit);
 Amanda::MainLoop::run();
 Amanda::Util::finish_application();

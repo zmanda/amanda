@@ -58,6 +58,7 @@ algorithm.  The constructor takes the following keyword arguments:
     tapecycle
     labelstr
     autolabel
+    meta_autolabel
 
 The changer object must always be provided, but C<algorithm> may be omitted, in
 which case the class specified by the user in the Amanda configuration file is
@@ -127,6 +128,17 @@ if no label could be created.
 If no C<template> is provided, the function uses the value of
 C<autolabel> specified when the object was constructed; similarly,
 C<labelstr> defaults to the value specified at object construction.
+
+Finally, to devise a new meta name for a volume, call C<make_new_meta_label>,
+passing a tapelist and a template.  This will return C<undef>
+if no label could be created.
+
+    $label = $self->make_new_meta_label(
+        template => "foo-%%%%",
+    );
+
+If no C<template> is provided, the function uses the value of
+C<meta_autolabel> specified when the object was constructed.
 
 =head2 user_msg_fn
 
@@ -216,6 +228,8 @@ sub new {
 	unless exists $params{'labelstr'};
     $params{'autolabel'} = getconf($CNF_AUTOLABEL)
 	unless exists $params{'autolabel'};
+    $params{'meta_autolabel'} = getconf($CNF_META_AUTOLABEL)
+	unless exists $params{'meta_autolabel'};
 
     # load the package
     my $pkgname = "Amanda::Taper::Scan::" . $params{'algorithm'};
@@ -241,6 +255,7 @@ sub new {
     $self->{'tapelist_filename'} = $params{'tapelist_filename'};
     $self->{'labelstr'} = $params{'labelstr'};
     $self->{'autolabel'} = $params{'autolabel'};
+    $self->{'meta_autolabel'} = $params{'meta_autolabel'};
     $self->{'tapelist'} = Amanda::Tapelist->new($self->{'tapelist_filename'});
 
     return $self;
@@ -335,6 +350,37 @@ sub make_new_tape_label {
     }
 
     return $label;
+}
+
+sub make_new_meta_label {
+    my $self = shift;
+    my %params = @_;
+
+    my $tl = exists $params{'tapelist'}? $params{'tapelist'} : $self->{'tapelist'};
+    my $template = exists $params{'template'}? $params{'template'} : $self->{'meta_autolabel'};
+    return if !defined $template;
+
+    (my $npercents =
+	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
+    my $nlabels = 10 ** $npercents;
+
+    # make up a sprintf pattern
+    (my $sprintf_pat =
+	$template) =~ s/(%+)/"%0" . length($1) . "d"/e;
+
+    my %existing_meta_labels =
+	map { $_->{'meta'} => 1 } @{$tl->{'tles'}};
+
+    my ($i, $meta);
+    for ($i = 1; $i < $nlabels; $i++) {
+	$meta = sprintf($sprintf_pat, $i);
+	last unless (exists $existing_meta_labels{$meta});
+    }
+
+    # bail out if we didn't find an unused label
+    return (undef, "Can't label unlabeled meta volume: All meta label used") if ($i >= $nlabels);
+
+    return $meta;
 }
 
 1;

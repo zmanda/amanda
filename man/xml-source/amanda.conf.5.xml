@@ -505,6 +505,14 @@ Danger: this may erase arbitrary volumes due to transient errors.
 </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>meta-autolabel</amkeyword>
+        <amtype>string</amtype></term>
+  <listitem>
+<para>Default: not set. When set and if the changer support meta-label, this directive will cause Amanda to automatically add a meta-label to a meta-volume.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>dumpuser</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:

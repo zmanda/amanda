@@ -1,4 +1,25 @@
 2010-10-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: New meta-autolabel.
+	* common-src/conffile.h: CNF_META_AUTOLABEL.
+	* perl/Amanda/Config.swg: CNF_META_AUTOLABEL.
+	* man/xml-source/amanda.conf.5.xml: Document meta-autolabel
+	* server-src/tapefile.c: Read/write meta-label to tapelist file
+	* server-src/tapefile.h (struct tape_s): Add meta.
+	* perl/Amanda/Tapelist.swg: Read/write meta-label to tapelist file
+	* perl/Amanda/Changer.pm (get_meta_label, set_meta_label): New methods
+	  in A::Changer and A::Changer::Reservation.
+	* perl/Amanda/Changer/disk.pm: Keep meta-label in state file.
+	* perl/Amanda/Changer/disk.pm (get_meta_label, set_meta_label):
+	  New methods
+	* perl/Amanda/Taper/Scan.pm (make_new_meta_label): New method.
+	* perl/Amanda/Taper/Scribe.pm: get/set meta label.
+	* server-src/amlabel.pl: New --meta and --assign option.
+	* server-src/amtape.pl (inventory): Print meta-label.
+	* man/xml-source/amlabel.8.xml: Document --meta and --assign options.
+	* installcheck/Amanda_Tapelist.pl: Test tapelist with meta-label.
+	* installcheck/amlabel.pl: Check meta.
+
+2010-10-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda-changers.7.xml: Document new NUM-SLOT,
 	  AUTO-CREATE-SLOT and REMOVABLE chg-disk properties.
 	* perl/Amanda/Changer.pm (get_boolean_property) Moved from A::Changer

@@ -35,6 +35,7 @@ use Amanda::MainLoop;
 use Amanda::Taper::Scan;
 use Amanda::Recovery::Scan;
 use Amanda::Interactive;
+use Amanda::Tapelist;
 
 my $exit_status = 0;
 
@@ -235,6 +236,11 @@ sub {
     my ($finished_cb, @args) = @_;
 
     my $chg = load_changer($finished_cb) or return;
+    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+    my $tl = Amanda::Tapelist->new($tlf);
+    if (!defined $tl) {
+	return failure("Can't load tapelist file ($tlf)", $finished_cb);
+    }
 
     if (@args != 0) {
 	return usage($finished_cb);
@@ -263,6 +269,10 @@ sub {
 	    } else {
 		if (defined $sl->{label}) {
 		    $line .= " label $sl->{label}";
+		    my $tle = $tl->lookup_tapelabel($sl->{label});
+		    if ($tle->{'meta'}) {
+			$line .= " ($tle->{'meta'})";
+		    }
 		} elsif ($sl->{'device_status'} != $DEVICE_STATUS_SUCCESS) {
 		    $line .= "device error";
 		} elsif ($sl->{'f_type'} != $Amanda::Header::F_TAPESTART) {

@@ -33,6 +33,7 @@
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>label</replaceable></arg>
     <arg choice='opt'>slot <replaceable>slot</replaceable></arg>
+    <arg choice='opt'><option>--meta <replaceable>meta</replaceable> <arg choice='opt'><option>--assign</option></arg></option></arg>
     <arg><option>-f</option></arg>
     &version.synopsis;
     &configoverride.synopsis;
@@ -68,6 +69,20 @@ verifications.</para>
 
 <refsect1><title>OPTIONS</title>
 <variablelist remap='TP'>
+
+  <varlistentry>
+  <term><option>--meta <replaceable>meta-label</replaceable></option></term>
+  <listitem>
+  <para>Assign the meta label to the label after labelling the volume.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--assign</option></term>
+  <listitem>
+  <para>Assign the meta label to the label without labelling the volume. The label must already be in the tapelist file.</para>
+  </listitem>
+  </varlistentry>
 
   <varlistentry>
   <term><option>-f</option></term>

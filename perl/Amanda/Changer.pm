@@ -889,6 +889,8 @@ sub eject { _stubop("eject", "finished_cb", @_); }
 sub update { _stubop("update", "finished_cb", @_); }
 sub inventory { _stubop("inventory", "inventory_cb", @_); }
 sub move { _stubop("move", "finished_cb", @_); }
+sub set_meta_label { _stubop("set_meta_label", "finished_cb", @_); }
+sub get_meta_label { _stubop("get_meta_label", "finished_cb", @_); }
 
 # info calls out to info_setup and info_key; see POD above
 sub info {
@@ -1275,6 +1277,29 @@ sub do_release {
 	$params{'finished_cb'}->(undef) if $params{'finished_cb'};
     }
 }
+
+sub get_meta_label {
+    my $self = shift;
+    my %params = @_;
+
+    # this is the one subclasses should override
+
+    if (exists $params{'finished_cb'}) {
+	$params{'finished_cb'}->(undef) if $params{'finished_cb'};
+    }
+}
+
+sub set_meta_label {
+    my $self = shift;
+    my %params = @_;
+
+    # this is the one subclasses should override
+
+    if (exists $params{'finished_cb'}) {
+	$params{'finished_cb'}->(undef) if $params{'finished_cb'};
+    }
+}
+
 
 package Amanda::Changer::Config;
 use Amanda::Config qw( :getconf string_to_boolean );

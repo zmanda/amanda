@@ -219,6 +219,41 @@ sub inventory {
     });
 }
 
+sub set_meta_label {
+    my $self = shift;
+    my %params = @_;
+
+    return if $self->check_error($params{'finished_cb'});
+
+    $self->_validate();
+    return if $self->check_error($params{'finished_cb'});
+
+    $self->with_locked_state($self->{'state_filename'},
+			     $params{'finished_cb'}, sub {
+	my ($state, $finished_cb) = @_;
+
+	$state->{'meta'} = $params{'meta'};
+	$finished_cb->(undef);
+    });
+}
+
+sub get_meta_label {
+    my $self = shift;
+    my %params = @_;
+
+    return if $self->check_error($params{'finished_cb'});
+
+    $self->_validate();
+    return if $self->check_error($params{'finished_cb'});
+
+    $self->with_locked_state($self->{'state_filename'},
+			     $params{'finished_cb'}, sub {
+	my ($state, $finished_cb) = @_;
+
+	$finished_cb->(undef, $state->{'meta'});
+    });
+}
+
 sub _load_by_slot {
     my $self = shift;
     my %params = @_;
@@ -612,4 +647,20 @@ sub do_release {
 
 	$finished_cb->();
     });
+}
+
+sub get_meta_label {
+    my $self = shift;
+    my %params = @_;
+
+    $params{'slot'} = $self->{'this_slot'};
+    $self->{'chg'}->get_meta_label(%params);
+}
+
+sub set_meta_label {
+    my $self = shift;
+    my %params = @_;
+
+    $params{'slot'} = $self->{'this_slot'};
+    $self->{'chg'}->set_meta_label(%params);
 }

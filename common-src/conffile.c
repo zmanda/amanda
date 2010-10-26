@@ -160,6 +160,7 @@ typedef enum {
     /* autolabel */
     CONF_AUTOLABEL,		CONF_ANY_VOLUME,	CONF_OTHER_CONFIG,
     CONF_NON_AMANDA,		CONF_VOLUME_ERROR,	CONF_EMPTY,
+    CONF_META_AUTOLABEL,
 
     /* part_cache_type */
     CONF_PART_SIZE,		CONF_PART_CACHE_TYPE,	CONF_PART_CACHE_DIR,
@@ -930,6 +931,7 @@ keytab_t server_keytab[] = {
     { "MAXPROMOTEDAY", CONF_MAXPROMOTEDAY },
     { "MEMORY", CONF_MEMORY },
     { "MEDIUM", CONF_MEDIUM },
+    { "META_AUTOLABEL", CONF_META_AUTOLABEL },
     { "NETUSAGE", CONF_NETUSAGE },
     { "NEVER", CONF_NEVER },
     { "NOFULL", CONF_NOFULL },
@@ -1179,6 +1181,7 @@ conf_var_t server_var [] = {
    { CONF_KRB5PRINCIPAL        , CONFTYPE_STR      , read_str         , CNF_KRB5PRINCIPAL        , NULL },
    { CONF_LABEL_NEW_TAPES      , CONFTYPE_STR      , read_str         , CNF_LABEL_NEW_TAPES      , NULL },
    { CONF_AUTOLABEL            , CONFTYPE_AUTOLABEL, read_autolabel   , CNF_AUTOLABEL            , NULL },
+   { CONF_META_AUTOLABEL       , CONFTYPE_STR      , read_str         , CNF_META_AUTOLABEL       , NULL },
    { CONF_USETIMESTAMPS        , CONFTYPE_BOOLEAN  , read_bool        , CNF_USETIMESTAMPS        , NULL },
    { CONF_AMRECOVER_DO_FSF     , CONFTYPE_BOOLEAN  , read_bool        , CNF_AMRECOVER_DO_FSF     , NULL },
    { CONF_AMRECOVER_CHANGER    , CONFTYPE_STR      , read_str         , CNF_AMRECOVER_CHANGER    , NULL },
@@ -4870,6 +4873,7 @@ init_defaults(
 #endif
     conf_init_send_amreport (&conf_data[CNF_SEND_AMREPORT_ON], SEND_AMREPORT_ALL);
     conf_init_autolabel(&conf_data[CNF_AUTOLABEL]);
+    conf_init_str(&conf_data[CNF_META_AUTOLABEL], NULL);
     conf_init_recovery_limit(&conf_data[CNF_RECOVERY_LIMIT]);
 
     /* reset internal variables */
