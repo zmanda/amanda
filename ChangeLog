@@ -1,4 +1,9 @@
 2010-10-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/fileheader.c (parse_file_header): Print buf.
+	* patching file recover-src/extract_list.c: Read header in multiple
+						    block.
+
+2010-10-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report/human.pm: Use chunker size to find big estimate.
 	* installcheck/catalogs/bigestimate.cat: Fix.
 
