@@ -132,7 +132,7 @@ parse_file_header(
 
     tok = strtok_r(line1, " ", &saveptr);
     if (tok == NULL) {
-        g_debug("Empty amanda header: buflen=%zu lsize=%zu", buflen, lsize);
+        g_debug("Empty amanda header: buflen=%zu lsize=%zu buf='%s'", buflen, lsize, buf);
 	strange_header(file, buffer, buflen, _("<Non-empty line>"), tok);
 	goto out;
     }
