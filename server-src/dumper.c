@@ -1484,7 +1484,7 @@ read_mesgfd(
 				   STREAM_BUFSIZE, 0, NULL, 0);
 	    if (db->fd == -1) {
 		errstr = newvstrallocf(errstr,
-				       _("Can't opendata output stream: %s"),
+				       _("Can't open data output stream: %s"),
 				       strerror(errno));
 		dump_result = 2;
 		stop_dump();

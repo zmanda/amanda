@@ -1,3 +1,6 @@
+2010-10-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Typo.
+
 2010-10-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: New meta-autolabel.
 	* common-src/conffile.h: CNF_META_AUTOLABEL.
