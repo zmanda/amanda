@@ -1,4 +1,7 @@
 2010-10-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: What is a meta label.
+
+2010-10-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Typo.
 
 2010-10-26  Jean-Louis Martineau <martineau@zmanda.com>

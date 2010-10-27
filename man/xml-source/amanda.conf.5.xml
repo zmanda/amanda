@@ -509,6 +509,9 @@ Danger: this may erase arbitrary volumes due to transient errors.
         <amtype>string</amtype></term>
   <listitem>
 <para>Default: not set. When set and if the changer support meta-label, this directive will cause Amanda to automatically add a meta-label to a meta-volume.</para>
+<para>A meta-volume is a containers that contains many volumes, eg. a removable
+hard-disk for use with chg-disk, each hard disk have many slots (volume).
+The meta-label is the label to put on the meta-volume.</para>
   </listitem>
   </varlistentry>
 
