@@ -2069,6 +2069,7 @@ disklist_one(
     sle_t *excl;
     identlist_t pp_scriptlist;
     estimatelist_t  estimates;
+    dumptype_t *dtype = lookup_dumptype(dp->dtype_name);
 
     hp = dp->host;
     ip = hp->netif;
@@ -2264,6 +2265,15 @@ disklist_one(
     g_printf("        skip-incr %s\n", (dp->skip_incr? "YES" : "NO"));
     g_printf("        skip-full %s\n", (dp->skip_full? "YES" : "NO"));
     g_printf("        allow-split %s\n", (dp->allow_split ? "YES" : "NO"));
+    if (dumptype_seen(dtype, DUMPTYPE_RECOVERY_LIMIT)) {
+	char **rl, **r1;
+	rl = val_t_display_strs(dumptype_getconf((dtype),
+				DUMPTYPE_RECOVERY_LIMIT), 1);
+	for(r1 = rl; *r1 != NULL; r1++) {
+	    g_printf("        recovery-limit %s\n", *r1);
+	free(*r1);
+	}
+    }
     g_printf("        spindle %d\n", dp->spindle);
     pp_scriptlist = dp->pp_scriptlist;
     while (pp_scriptlist != NULL) {
@@ -2272,10 +2282,8 @@ disklist_one(
     }
 
     {
-	dumptype_t *dtype;
 	char **prop, **p1;;
 
-	dtype = lookup_dumptype(dp->dtype_name);
 	prop = val_t_display_strs(dumptype_getconf((dtype), DUMPTYPE_PROPERTY),
 				  0);
 	for(p1 = prop; *p1 != NULL; p1++) {

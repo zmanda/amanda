@@ -7126,7 +7126,7 @@ val_t_display_strs(
 	    buf[0] = stralloc("");
 
 	while (iter) {
-	    strappend(buf[0], (char *)iter->data);
+	    strappend(buf[0], quote_string_always((char *)iter->data));
 	    strappend(buf[0], " ");
 	    iter = iter->next;
 	}
