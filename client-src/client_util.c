@@ -1221,7 +1221,6 @@ run_client_scripts(
 	    g_ptr_array_free(script->result->err, TRUE);
 	    script->result->err = NULL;
 	}
-	amfree(script->result);
     }
 }
 
