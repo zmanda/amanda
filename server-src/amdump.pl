@@ -192,7 +192,8 @@ sub start_logfiles {
     # undef first.. stupid perl.
     debug("beginning amdump log");
     $amdump_log = undef;
-    open($amdump_log, ">", $amdump_log_filename)
+    # Must be opened in append so that all subprocess can write to it.
+    open($amdump_log, ">>", $amdump_log_filename)
 	or die("could not open amdump log file '$amdump_log_filename': $!");
 }
 
