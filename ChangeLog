@@ -1,4 +1,7 @@
 2010-10-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amflush.c: Open 'amflush' log file in append mode.
+
+2010-10-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amdump.pl: Open 'amdump' log file in append mode.
 
 2010-10-28  Jean-Louis Martineau <martineau@zmanda.com>

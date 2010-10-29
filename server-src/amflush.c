@@ -681,7 +681,7 @@ redirect_stderr(void)
 
     fflush(stdout); fflush(stderr);
     errfile = vstralloc(conf_logdir, "/amflush", NULL);
-    if((fderr = open(errfile, O_WRONLY| O_CREAT | O_TRUNC, 0600)) == -1) {
+    if((fderr = open(errfile, O_WRONLY| O_APPEND | O_CREAT | O_TRUNC, 0600)) == -1) {
 	error(_("could not open %s: %s"), errfile, strerror(errno));
 	/*NOTREACHED*/
     }
