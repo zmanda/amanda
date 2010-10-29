@@ -1141,10 +1141,10 @@ finalize_impl(
     /* close our pipes and fd's if they're still open */
     if (self->pipe[0] != -1) close(self->pipe[0]);
     if (self->pipe[1] != -1) close(self->pipe[1]);
-    if (self->input_listen_socket != -1) close(self->input_listen_socket);
-    if (self->output_listen_socket != -1) close(self->output_listen_socket);
     if (self->input_data_socket != -1) close(self->input_data_socket);
     if (self->output_data_socket != -1) close(self->output_data_socket);
+    if (self->input_listen_socket != -1) close(self->input_listen_socket);
+    if (self->output_listen_socket != -1) close(self->output_listen_socket);
     if (self->read_fd != -1) close(self->read_fd);
     if (self->write_fd != -1) close(self->write_fd);
 
