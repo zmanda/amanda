@@ -1,4 +1,8 @@
 2010-10-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/chunker.c: Close listening socket are accepted socket.
+	* xfer-src/element-glue.c: Close listening socket are accepted socket.
+
+2010-10-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amflush.c: Open 'amflush' log file in append mode.
 
 2010-10-29  Jean-Louis Martineau <martineau@zmanda.com>

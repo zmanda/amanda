@@ -96,8 +96,8 @@ static ssize_t write_tapeheader(int, dumpfile_t *);
 static void databuf_init(struct databuf *, int, char *, off_t, off_t);
 static int databuf_flush(struct databuf *);
 
-static int startup_chunker(char *, off_t, off_t, struct databuf *, int *);
-static int do_chunk(int, struct databuf *, int);
+static int startup_chunker(char *, off_t, off_t, struct databuf *, int *, int *);
+static int do_chunk(int, struct databuf *, int, int);
 
 /* we use a function pointer for full_write, so that we can "shim" in
  * full_write_with_fake_enospc for testing */
@@ -122,6 +122,7 @@ main(
     config_overrides_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
     char *m;
+    int header_socket;
     int data_socket;
 
     /*
@@ -307,13 +308,13 @@ main(
 	    }
 
 	    if ((header_fd = startup_chunker(filename, use, chunksize, &db,
-					     &data_socket)) < 0) {
+					     &header_socket, &data_socket)) < 0) {
 		q = quote_string(vstrallocf(_("[chunker startup failed: %s]"), errstr));
 		putresult(TRYAGAIN, "%s %s\n", handle, q);
 		error("startup_chunker failed: %s", errstr);
 	    }
 	    command_in_transit = NULL;
-	    if (header_fd >= 0 && do_chunk(header_fd, &db, data_socket)) {
+	    if (header_fd >= 0 && do_chunk(header_fd, &db, header_socket, data_socket)) {
 		char kb_str[NUM_STR_SIZE];
 		char kps_str[NUM_STR_SIZE];
 		double rt;
@@ -430,6 +431,7 @@ startup_chunker(
     off_t		use,
     off_t		chunksize,
     struct databuf *	db,
+    int                *headersocket,
     int                *datasocket)
 {
     int header_fd, outfd;
@@ -475,7 +477,6 @@ startup_chunker(
 	aclose(data_socket);
 	return -1;
     }
-    aclose(header_socket);
 
     tmp_filename = vstralloc(filename, ".tmp", NULL);
     pc = strrchr(tmp_filename, '/');
@@ -505,6 +506,7 @@ startup_chunker(
     amfree(tmp_filename);
     databuf_init(db, outfd, filename, use, chunksize);
     db->filename_seq++;
+    *headersocket = header_socket;
     *datasocket = data_socket;
     return header_fd;
 }
@@ -513,6 +515,7 @@ static int
 do_chunk(
     int			header_fd,
     struct databuf *	db,
+    int                 header_socket,
     int                 data_socket)
 {
     size_t nread;
@@ -531,6 +534,8 @@ do_chunk(
      * chunk code will rewrite it.
      */
     nread = full_read(header_fd, header_buf, SIZEOF(header_buf));
+    aclose(header_fd);
+    aclose(header_socket);
     if (nread != sizeof(header_buf)) {
 	if(errno != 0) {
 	    errstr = vstrallocf(_("cannot read header: %s"), strerror(errno));
@@ -568,7 +573,6 @@ do_chunk(
 	aclose(data_socket);
 	return 0;
     }
-    aclose(data_socket);
 
     /*
      * We've written the file header.  Now, just write data until the
@@ -579,12 +583,16 @@ do_chunk(
 	db->datain += nread;
 	while(db->dataout < db->datain) {
 	    if(!databuf_flush(db)) {
+		aclose(data_fd);
+		aclose(data_socket);
 		return 0;
 	    }
 	}
     }
     while(db->dataout < db->datain) {
 	if(!databuf_flush(db)) {
+	    aclose(data_fd);
+	    aclose(data_socket);
 	    return 0;
 	}
     }
@@ -592,6 +600,8 @@ do_chunk(
 	dumpsize += (off_t)1;			/* count partial final KByte */
 	filesize += (off_t)1;
     }
+    aclose(data_fd);
+    aclose(data_socket);
     return 1;
 }
 
