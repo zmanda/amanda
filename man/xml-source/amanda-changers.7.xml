@@ -136,7 +136,7 @@ specified by an alias, then properties from that definition applied.</para>
 
 <refsect2><title>chg-disk:VTAPEROOT (new)</title>
 <programlisting>
-tpchanger "chg-disk:/u01/vtapes"
+tpchanger "chg-disk:/var/mnt/vtapes"
 property "num-slot" "10"
 property "auto-create-slot" "yes"
 property "removable" "no"
@@ -157,16 +157,20 @@ name="amrestore" vol="8" /> command line.</para>
 
 <variablelist>
 <!-- ==== -->
-<varlistentry><term>NUM-SLOT</term><listitem>
-This property set a minimum number of slot, the slot 1 to num-slot must exists.
+<varlistentry><term>AUTO-CREATE-SLOT</term><listitem>
+If a <computeroutput>slotN</computeroutput> directory in the range 1 to NUM-SLOT does not already exist, and this property is true, then the changer will create the directory.
 </listitem></varlistentry>
 <!-- ==== -->
-<varlistentry><term>AUTO-CREATE-SLOT</term><listitem>
-This property controls the creation of the slotXX directories if they don't exists for the slot 1 to num-slot
+<varlistentry><term>NUM-SLOT</term><listitem>
+The minimum number of slots in the changer, where the first slot is <computeroutput>slot1</computeroutput>.  If additional slot directories exist, they will also be used.
 </listitem></varlistentry>
 <!-- ==== -->
 <varlistentry><term>REMOVABLE</term><listitem>
-This property verify that the vtapes and its parent directory are on different filesystem. It ensure that the native filesystem is not used if you are using removable disk.
+If this property is true, then the changer will verify that the changer
+directory (e.g., <filename>/var/mnt/vtapes</filename>) is on a different
+filesystem from its parent directory (e.g., <filename>/var/mnt</filename>).
+This is useful for removable disks, as it will prevent Amanda from creating
+slot directories when the removable disk is not mounted.
 </listitem></varlistentry>
 
 </variablelist>

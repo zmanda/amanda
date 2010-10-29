@@ -1,3 +1,7 @@
+2010-10-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda-changers.7.xml: improve chg-disk properties
+	  documentation
+
 2010-10-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/chunker.c: Close listening socket are accepted socket.
 	* xfer-src/element-glue.c: Close listening socket are accepted socket.
