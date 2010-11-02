@@ -1,4 +1,12 @@
 2010-11-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c (quote_string_maybe): Don't use match.
+	* common-src/util.c (len_quote_string_maybe): New function.
+	* common-src/util.h (len_quote_string): Define.
+	* server-src/amadmin.c: Don't call find_dump twice.
+	* server-src/find.c (search_logfile): Don't use regex.
+	* server-src/find.c (print_find_result): Use len_quote_string.
+
+2010-11-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: debug-recovery default to 1.
 	* man/xml-source/amanda.conf.5.xml: Document it.
 

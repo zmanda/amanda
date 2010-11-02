@@ -438,52 +438,129 @@ quote_string_maybe(
 
     if ((str == NULL) || (*str == '\0')) {
 	ret = stralloc("\"\"");
-    } else if (!always && (match("[:\'\\\"[:space:][:cntrl:]]", str)) == 0) {
-	/*
-	 * String does not need to be quoted since it contains
-	 * neither whitespace, control or quote characters.
-	 */
-	ret = stralloc(str);
     } else {
-	/*
-	 * Allocate maximum possible string length.
-	 * (a string of all quotes plus room for leading ", trailing " and NULL)
-	 */
-	ret = s = alloc((strlen(str) * 2) + 2 + 1);
-	*(s++) = '"';
-	while (*str != '\0') {
-            if (*str == '\t') {
-                *(s++) = '\\';
-                *(s++) = 't';
-		str++;
-		continue;
-	    } else if (*str == '\n') {
-                *(s++) = '\\';
-                *(s++) = 'n';
-		str++;
-		continue;
-	    } else if (*str == '\r') {
-                *(s++) = '\\';
-                *(s++) = 'r';
-		str++;
-		continue;
-	    } else if (*str == '\f') {
-                *(s++) = '\\';
-                *(s++) = 'f';
-		str++;
-		continue;
-	    } else if (*str == '\\') {
-                *(s++) = '\\';
-                *(s++) = '\\';
-		str++;
-		continue;
-	    }
-            if (*str == '"')
-                *(s++) = '\\';
-            *(s++) = *(str++);
+	const char *r;
+	for (r = str; *r; r++) {
+	    if (*r == ':' || *r == '\'' || *r == '\\' || *r == '\"' ||
+		*r <= ' ' || *r == 0x7F )
+		always = 1;
+	}
+	if (!always) {
+	    /*
+	     * String does not need to be quoted since it contains
+	     * neither whitespace, control or quote characters.
+	     */
+	    ret = stralloc(str);
+	} else {
+	    /*
+	     * Allocate maximum possible string length.
+	     * (a string of all quotes plus room for leading ", trailing " and
+	     *  NULL)
+	     */
+	    ret = s = alloc((strlen(str) * 2) + 2 + 1);
+	    *(s++) = '"';
+	    while (*str != '\0') {
+                if (*str == '\t') {
+                    *(s++) = '\\';
+                    *(s++) = 't';
+		    str++;
+		    continue;
+	        } else if (*str == '\n') {
+                    *(s++) = '\\';
+                    *(s++) = 'n';
+		    str++;
+		    continue;
+	        } else if (*str == '\r') {
+                    *(s++) = '\\';
+                    *(s++) = 'r';
+		    str++;
+		    continue;
+	        } else if (*str == '\f') {
+                    *(s++) = '\\';
+                    *(s++) = 'f';
+		    str++;
+		    continue;
+	        } else if (*str == '\\') {
+                    *(s++) = '\\';
+                    *(s++) = '\\';
+		    str++;
+		    continue;
+	        }
+                if (*str == '"')
+                    *(s++) = '\\';
+                *(s++) = *(str++);
+            }
+            *(s++) = '"';
+            *s = '\0';
         }
-        *(s++) = '"';
-        *s = '\0';
+    }
+    return (ret);
+}
+
+
+int
+len_quote_string_maybe(
+    const char *str,
+    gboolean always)
+{
+    int   ret;
+
+    if ((str == NULL) || (*str == '\0')) {
+	ret = 0;
+    } else {
+	const char *r;
+	for (r = str; *r; r++) {
+	    if (*r == ':' || *r == '\'' || *r == '\\' || *r == '\"' ||
+		*r <= ' ' || *r == 0x7F )
+		always = 1;
+	}
+	if (!always) {
+	    /*
+	     * String does not need to be quoted since it contains
+	     * neither whitespace, control or quote characters.
+	     */
+	    ret = strlen(str);
+	} else {
+	    /*
+	     * Allocate maximum possible string length.
+	     * (a string of all quotes plus room for leading ", trailing " and
+	     *  NULL)
+	     */
+	    ret = 1;
+	        while (*str != '\0') {
+                if (*str == '\t') {
+                    ret++;
+                    ret++;
+		    str++;
+		    continue;
+	        } else if (*str == '\n') {
+                    ret++;
+                    ret++;
+		    str++;
+		    continue;
+	        } else if (*str == '\r') {
+                    ret++;
+                    ret++;
+		    str++;
+		    continue;
+	        } else if (*str == '\f') {
+                    ret++;
+                    ret++;
+		    str++;
+		    continue;
+	        } else if (*str == '\\') {
+                    ret++;
+                    ret++;
+		    str++;
+		    continue;
+	        }
+                if (*str == '"')
+		    ret++;
+	        ret++;
+                str++;
+            }
+	    ret++;
+	}
     }
     return (ret);
 }

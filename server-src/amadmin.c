@@ -1164,15 +1164,37 @@ find(
 
     output_find = find_dump(&diskq); /* Add deleted dump to diskq */
     if(argc-(start_argc-1) > 0) {
+	find_result_t *afind = NULL;
+	find_result_t *afind_next = NULL;
+	find_result_t *new_output_find = NULL;
+	disk_t *dp;
+
 	amfree(errstr);
-	free_find_result(&output_find);
 	errstr = match_disklist(&diskq, argc-(start_argc-1),
 					argv+(start_argc-1));
 	if (errstr) {
 	    g_printf("%s", errstr);
 	    amfree(errstr);
 	}
-	output_find = find_dump(NULL);
+	for (afind = output_find; afind; afind = afind_next) {
+	    afind_next = afind->next;
+	    dp = lookup_disk(afind->hostname, afind->diskname);
+	    if (dp->todo) {
+		afind->next = new_output_find;
+		new_output_find = afind;
+	    } else {
+		amfree(afind->timestamp);
+		amfree(afind->write_timestamp);
+		amfree(afind->hostname);
+		amfree(afind->diskname);
+		amfree(afind->label);
+		amfree(afind->status);
+		amfree(afind->dump_status);
+		amfree(afind->message);
+		amfree(afind);
+	    }
+	}
+	output_find = new_output_find;
     } else if (errstr) {
 	g_printf("%s", errstr);
 	amfree(errstr);
