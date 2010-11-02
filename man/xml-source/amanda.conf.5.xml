@@ -1242,6 +1242,15 @@ Debug level of the taper process</para>
   </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>debug-recovery</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default:
+<amdefault>1</amdefault>.
+Debug level of all recovery process</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>flush-threshold-dumped</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default: <amdefault>0</amdefault>.

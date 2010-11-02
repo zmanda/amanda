@@ -1,3 +1,7 @@
+2010-11-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: debug-recovery default to 1.
+	* man/xml-source/amanda.conf.5.xml: Document it.
+
 2010-11-02  Nikhil Bhupale <nikhilb@zmanda.com>
 	* server-src/amtape.pl: Remove call to set_label.
 	* server-src/amcheck-device.pl: Remove call to set_label.
