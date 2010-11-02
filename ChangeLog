@@ -1,3 +1,7 @@
+2010-11-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: debug-recovery default to 1.
+	* man/xml-source/amanda.conf.5.xml: Document it.
+
 2010-10-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/chunker.c: Close listening socket are accepted socket.
 	* xfer-src/element-glue.c: Close listening socket are accepted socket.

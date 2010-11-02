@@ -4837,7 +4837,7 @@ init_defaults(
     conf_init_int      (&conf_data[CNF_REQ_TRIES]            , 3);
     conf_init_int      (&conf_data[CNF_DEBUG_DAYS]           , AMANDA_DEBUG_DAYS);
     conf_init_int      (&conf_data[CNF_DEBUG_AMANDAD]        , 0);
-    conf_init_int      (&conf_data[CNF_DEBUG_RECOVERY]       , 0);
+    conf_init_int      (&conf_data[CNF_DEBUG_RECOVERY]       , 1);
     conf_init_int      (&conf_data[CNF_DEBUG_AMIDXTAPED]     , 0);
     conf_init_int      (&conf_data[CNF_DEBUG_AMINDEXD]       , 0);
     conf_init_int      (&conf_data[CNF_DEBUG_AMRECOVER]      , 0);
