@@ -1,3 +1,7 @@
+2010-11-02  Nikhil Bhupale <nikhilb@zmanda.com>
+	* server-src/amtape.pl: Remove call to set_label.
+	* server-src/amcheck-device.pl: Remove call to set_label.
+ 
 2010-10-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda-changers.7.xml: improve chg-disk properties
 	  documentation

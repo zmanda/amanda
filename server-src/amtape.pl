@@ -149,7 +149,6 @@ sub {
     my ($finished_cb, @args) = @_;
     my $last_slot;
     my %seen_slots;
-    my $gres;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb;
@@ -202,9 +201,6 @@ sub {
 		print STDERR sprintf("slot %3s: date %-14s label %s\n",
 			$last_slot, $dev->volume_time(),
 			$dev->volume_label());
-		$gres = $res;
-		return $res->set_label(label => $dev->volume_label(),
-				       finished_cb => $steps->{'set_labeled'});
 	    } elsif ($st == $DEVICE_STATUS_VOLUME_UNLABELED) {
 		print STDERR sprintf("slot %3s: unlabeled volume\n", $last_slot);
 	    } else {
@@ -219,10 +215,6 @@ sub {
 	} else {
 	    $steps->{'released'}->();
 	}
-    };
-
-    step set_labeled => sub {
-	$gres->release(finished_cb => $steps->{'released'});
     };
 
     step released => sub {
@@ -403,7 +395,6 @@ sub {
 subcommand("label", "label <label>", "load the volume with label <label>",
 sub {
     my ($finished_cb, @args) = @_;
-    my $gres;
     my $inter;
     my $scan;
 
@@ -456,17 +447,7 @@ sub {
 	show_slot($res);
 	print STDERR "label $label is now loaded from slot $gotslot\n";
 
-	if ($res->{device}->volume_label) {
-	    $gres = $res;
-	    $res->set_label(label => $res->{device}->volume_label(),
-			    finished_cb => $steps->{'set_labeled'});
-	} else {
-	    $res->release(finished_cb => $steps->{'released'});
-	}
-    };
-
-    step set_labeled => sub {
-	$gres->release(finished_cb => $steps->{'released'});
+	$res->release(finished_cb => $steps->{'released'});
     };
 
     step released => sub {

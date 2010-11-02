@@ -161,15 +161,6 @@ sub do_check {
 	(my $err, $res, $label, $mode) = @_;
 	return failure($err, $finished_cb) if $err;
 
-	if (defined $res->{'device'}->volume_label()) {
-	    $res->set_label(label => $res->{'device'}->volume_label(),
-			    finished_cb => $steps->{'set_labeled'});
-	} else {
-	    $steps->{'set_labeled'}->(undef);
-	};
-    };
-
-    step set_labeled => sub {
 	my $modestr = ($mode == $ACCESS_APPEND)? "append" : "write";
 	my $slot = $res->{'this_slot'};
 	if (defined $res->{'device'}->volume_label()) {
