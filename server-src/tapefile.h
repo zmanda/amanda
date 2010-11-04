@@ -40,6 +40,7 @@ typedef struct tape_s {
     char * datestamp;
     int reuse;
     char *label;
+    char *barcode;
     char *comment;
 } tape_t;
 

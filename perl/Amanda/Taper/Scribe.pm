@@ -1205,7 +1205,7 @@ sub _volume_cb  {
     # inform the xdt about this new device before starting it
     $self->{'xdt'}->use_device($device);
 
-    my $result = $self->_device_start($device, $access_mode, $new_label, $is_new);
+    my $result = $self->_device_start($reservation, $access_mode, $new_label, $is_new);
     if ($result == 0) {
 	# try reading the label to see whether we erased the tape
 	my $erased = 0;
@@ -1281,8 +1281,9 @@ sub _volume_cb  {
 # return a message for others error
 sub _device_start {
     my $self = shift;
-    my ($device, $access_mode, $new_label, $is_new) = @_;
+    my ($reservation, $access_mode, $new_label, $is_new) = @_;
 
+    my $device = $reservation->{'device'};
     my $tl = $self->{'taperscan'}->{'tapelist'};
 
     if (!defined $tl) { # For Mock::Taperscan in installcheck
@@ -1301,7 +1302,7 @@ sub _device_start {
 	    $tl->unlock();
 	    return $err;
 	} else {
-	    $tl->add_tapelabel('0', $new_label, undef, 0);
+	    $tl->add_tapelabel('0', $new_label, undef, 0, undef, $reservation->{'barcode'});
 	    $tl->write();
 	}
 	$self->dbg("generate new label '$new_label'");

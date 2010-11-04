@@ -124,7 +124,8 @@ sub remove_tapelabel {
 
 sub add_tapelabel {
     my $self = shift;
-    my ($datestamp, $label, $comment, $reuse) = @_;
+    my ($datestamp, $label, $comment, $reuse, $meta, $barcode) = @_;
+    # $meta is unused
     $reuse = 1 if !defined $reuse;
 
     # prepend this (presumably new) volume to the beginning of the list
@@ -132,6 +133,7 @@ sub add_tapelabel {
 	'datestamp' => $datestamp,
 	'label' => $label,
 	'reuse' => $reuse,
+	'barcode' => $barcode,
 	'comment' => $comment,
     };
     $self->_update_positions();
@@ -150,8 +152,9 @@ sub write {
 	my $datestamp = $tle->{'datestamp'};
 	my $label = $tle->{'label'};
 	my $reuse = $tle->{'reuse'} ? 'reuse' : 'no-reuse';
+	my $barcode = (defined $tle->{'barcode'})? (" BARCODE:" . $tle->{'barcode'}) : '';
 	my $comment = (defined $tle->{'comment'})? (" #" . $tle->{'comment'}) : '';
-	$result &&= print $fhn "$datestamp $label $reuse$comment\n";
+	$result &&= print $fhn "$datestamp $label $reuse$barcode$comment\n";
     }
     my $result_close = close($fhn);
     $result &&= $result_close;
@@ -203,13 +206,14 @@ sub _read_tapelist {
     my @tles;
     open(my $fh, "<", $self->{'filename'}) or return $self;
     while (my $line = <$fh>) {
-	my ($datestamp, $label, $reuse, $comment)
-	    = $line =~ m/^([0-9]*)\s([^\s]*)\s(reuse|no-reuse)\s*(?:\#(.*))?$/mx;
+	my ($datestamp, $label, $reuse, $barcode, $comment)
+	    = $line =~ m/^([0-9]*)\s([^\s]*)\s(reuse|no-reuse)\s*(?:BARCODE:([^\s]*))?\s*(?:\#(.*))?$/mx;
 	next if !defined $datestamp; # silently filter out bogus lines
 	push @tles, {
 	    'datestamp' => $datestamp,
 	    'label' => $label,
 	    'reuse' => ($reuse eq 'reuse'),
+	    'barcode' => $barcode,
 	    'comment' => $comment,
 	};
     }

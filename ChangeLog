@@ -1,4 +1,13 @@
 2010-11-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/tapefile.c: Add barcode in tapelist.
+	* server-src/tapefile.h: Add barcode in tapelist.
+	* perl/Amanda/Tapelist.swg: Add barcode in tapelist.
+	* perl/Amanda/Taper/Scribe.pm: Set the barcode.
+	* server-src/amlabel.pl: Set the barcode.
+	* installcheck/Amanda_Tapelist.pl: Test it.
+	* installcheck/amlabel.pl: Test it.
+
+2010-11-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c (quote_string_maybe): Don't use match.
 	* common-src/util.c (len_quote_string_maybe): New function.
 	* common-src/util.h (len_quote_string): Define.
