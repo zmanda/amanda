@@ -1,4 +1,8 @@
 2010-11-04  Jean-Louis Martineau <martineau@zmanda.com>
+        * server-src/amreport.pl: Set date correctly for amvault run.
+        * perl/Amanda/Report/human.pm: Fix warning.
+
+2010-11-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/aggregate.pm: New changer.
 	* man/xml-source/amanda-changers.7.xml: Document chg-aggregate.
 	* perl/Makefile.am: Add it.

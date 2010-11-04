@@ -1280,7 +1280,7 @@ sub get_summary_info
 
 	# sometimes the driver logs an orig_size of -1, which makes the
 	# compression percent very large and negative
-	$orig_size = 0 if ($orig_size < 0);
+	$orig_size = 0 if (defined $orig_size && $orig_size < 0);
 
 	# pre-format the compression column, with '--' replacing 100% (i.e.,
 	# no compression)
