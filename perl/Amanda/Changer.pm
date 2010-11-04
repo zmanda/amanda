@@ -1340,25 +1340,72 @@ sub make_new_tape_label {
     my $template = $self->{'chg'}->{'autolabel'}->{'template'};
     my $labelstr = $self->{'chg'}->{'labelstr'};
 
+    $template =~ s/\$\$/SUBSTITUTE_DOLLAR/g;
+    $template =~ s/\$b/SUBSTITUTE_BARCODE/g;
+    $template =~ s/\$m/SUBSTITUTE_META/g;
+    $template =~ s/\$o/SUBSTITUTE_ORG/g;
+    $template =~ s/\$c/SUBSTITUTE_CONFIG/g;
+
+    my $org = getconf($CNF_ORG);
+    my $config = Amanda::Config::get_config_name();
+    my $barcode = $params{'barcode'};
+    $barcode = $self->{'barcode'} if !defined $barcode;
+    $barcode = '' if !defined $barcode;
+    my $meta = $params{'meta'};
+    $meta = $self->{'meta'} if !defined $meta;
+    $meta = '' if !defined $meta;
+
+    $template =~ s/SUBSTITUTE_DOLLAR/\$/g;
+    $template =~ s/SUBSTITUTE_ORG/$org/g;
+    $template =~ s/SUBSTITUTE_CONFIG/$config/g;
+    $template =~ s/SUBSTITUTE_META/$meta/g;
+    # Do not susbtitute the barcode now
+
     (my $npercents =
 	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
     my $nlabels = 10 ** $npercents;
 
-    my %existing_labels =
-	map { $_->{'label'} => 1 } @{$tl->{'tles'}};
+    my $label;
+    if ($npercents == 0) {
+	if ($template =~ /SUBSTITUTE_BARCODE/ && defined $barcode) {
+            $label = $template;
+            $label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
+            if ($tl->lookup_tapelabel($label)) {
+		return (undef, "Label '$label' already exists");
+            }
+	} elsif ($template =~ /SUBSTITUTE_BARCODE/ && !defined $barcode) {
+	    return (undef, "Can't generate new label because volume have no barcode");
+	} else {
+	    return (undef, "autolabel require at least one '%'");
+	}
+    } else {
+	# make up a sprintf pattern
+	(my $sprintf_pat =
+	    $template) =~ s/(%+)/"%0" . length($1) . "d"/e;
 
-    # make up a sprintf pattern
-    (my $sprintf_pat = $template) =~ s/(%+)/"%0" . length($1) . "d"/e;
+	my %existing_labels;
+	for my $tle (@{$tl->{'tles'}}) {
+	    my $tle_label = $tle->{'label'};
+	    my $tle_barcode = $tle->{'barcode'};
+	    if (defined $tle_barcode) {
+		$tle_label =~ s/$tle_barcode/SUBSTITUTE_BARCODE/g;
+	    }
+	    $existing_labels{$tle_label} = 1;
+	}
 
-    my ($i, $label);
-    for ($i = 1; $i < $nlabels; $i++) {
-	$label = sprintf($sprintf_pat, $i);
-	last unless (exists $existing_labels{$label});
-    }
+	my ($i);
+	for ($i = 1; $i < $nlabels; $i++) {
+	    $label = sprintf($sprintf_pat, $i);
+	    last unless (exists $existing_labels{$label});
+	}
+	# susbtitute the barcode
 
-    # bail out if we didn't find an unused label
-    return (undef, "Can't label unlabeled volume: All label used")
+	$label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
+
+	# bail out if we didn't find an unused label
+	return (undef, "Can't label unlabeled volume: All label used")
 		if ($i >= $nlabels);
+    }
 
     # verify $label matches $labelstr
     if ($label !~ /$labelstr/) {
@@ -1378,7 +1425,19 @@ sub make_new_meta_label {
     my $template = $self->{'chg'}->{'meta_autolabel'};
     return if !defined $template;
 
-    (my $npercents = $template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
+    $template =~ s/\$\$/SUBSTITUTE_DOLLAR/g;
+    $template =~ s/\$o/SUBSTITUTE_ORG/g;
+    $template =~ s/\$c/SUBSTITUTE_CONFIG/g;
+
+    my $org = getconf($CNF_ORG);
+    my $config = Amanda::Config::get_config_name();
+
+    $template =~ s/SUBSTITUTE_DOLLAR/\$/g;
+    $template =~ s/SUBSTITUTE_ORG/$org/g;
+    $template =~ s/SUBSTITUTE_CONFIG/$config/g;
+
+    (my $npercents =
+	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
     my $nlabels = 10 ** $npercents;
 
     # make up a sprintf pattern

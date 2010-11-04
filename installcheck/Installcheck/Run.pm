@@ -190,13 +190,15 @@ our $holdingdir ="$Installcheck::TMP/holding";
 
 sub setup {
     my $new_vtapes = shift;
+    my $nb_slot = shift;
     my $testconf = Installcheck::Config->new();
 
+    $nb_slot = 3 if !defined $nb_slot;
     (-d $diskname) or setup_backmeup();
     if ($new_vtapes) {
-	setup_new_vtapes($testconf, 3);
+	setup_new_vtapes($testconf, $nb_slot);
     } else {
-	setup_vtapes($testconf, 3);
+	setup_vtapes($testconf, $nb_slot);
     }
     setup_holding($testconf, 25);
     setup_disklist($testconf);

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 19;
+use Test::More tests => 24;
 use strict;
 use warnings;
 
@@ -35,7 +35,8 @@ my $testconf;
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
 
-$testconf = Installcheck::Run::setup();
+$testconf = Installcheck::Run::setup(1, 4);
+$testconf->add_param('autolabel', '"TESTCONF%%" any');
 $testconf->write();
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
@@ -135,3 +136,41 @@ Writing label 'TESTCONF88'/,
 
 ok(run('amlabel', 'TESTCONF', 'TESTCONF88', '-f', 'slot', '2'),
     "-f option doesn't have to follow 'amlabel'");
+
+ok(run('amlabel', 'TESTCONF', 'TESTCONF88', '--meta', 'meta-01', '--barcode', 'bar-01', '--assign'),
+    "--assign works");
+
+$tl->reload();
+is_deeply($tl->{'tles'}->[0], {
+       'reuse' => 1,
+       'barcode' => 'bar-01',
+       'meta' => 'meta-01',
+       'comment' => undef,
+       'position' => 1,
+       'label' => 'TESTCONF88',
+       'datestamp' => '0'
+     },
+    "tapelist correctly updated after --assign");
+
+ok(run('amlabel', 'TESTCONF', 'slot', '4'),
+    "amlabel works without a label");
+like($Installcheck::Run::stdout,
+     qr/Reading label\.\.\.
+Found an empty tape\.
+Writing label 'TESTCONF01'\.\.\.
+Checking label\.\.\.
+Success!/,
+     "amlabel without label use autolabel");
+
+$tl->reload();
+is_deeply($tl->{'tles'}->[0], {
+       'reuse' => 1,
+       'barcode' => undef,
+       'meta' => 'meta-01',
+       'comment' => undef,
+       'position' => 1,
+       'label' => 'TESTCONF01',
+       'datestamp' => '0'
+     },
+    "tapelist correctly updated after autolabel");
+

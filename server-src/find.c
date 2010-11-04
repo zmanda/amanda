@@ -624,9 +624,10 @@ parse_taper_datestamp_log(
 	return 0;
     }
     *label = s - 1;
-    skip_non_whitespace(s, ch);
+    skip_quoted_string(s, ch);
     s[-1] = '\0';
 
+    *label = unquote_string(*label);
     return 1;
 }
 
@@ -634,7 +635,7 @@ parse_taper_datestamp_log(
 static gboolean logfile_has_tape(char * label, char * datestamp,
                                  char * logfile) {
     FILE * logf;
-    char * ck_datestamp, *ck_label;
+    char * ck_datestamp, *ck_label = NULL;
     if((logf = fopen(logfile, "r")) == NULL) {
 	error(_("could not open logfile %s: %s"), logfile, strerror(errno));
 	/*NOTREACHED*/
@@ -648,9 +649,11 @@ static gboolean logfile_has_tape(char * label, char * datestamp,
                          logfile, curstr);
 	    } else if(strcmp(ck_datestamp, datestamp) == 0
 		      && strcmp(ck_label, label) == 0) {
+		amfree(ck_label);
                 afclose(logf);
                 return TRUE;
 	    }
+	    amfree(ck_label);
 	}
     }
 
@@ -746,6 +749,7 @@ search_logfile(
                 if (strcmp(datestamp, ck_datestamp) != 0) {
                     g_printf(_("Log file %s stamped %s, expecting %s!\n"),
                              logfile, ck_datestamp, datestamp);
+		    amfree(ck_label);
                     break;
                 }
             }
@@ -759,7 +763,7 @@ search_logfile(
 		found_something = TRUE;
 	    }
             amfree(current_label);
-            current_label = g_strdup(ck_label);
+            current_label = ck_label;
             if (datestamp == NULL) {
                 datestamp = g_strdup(ck_datestamp);
             }
@@ -791,15 +795,19 @@ search_logfile(
 	    }
 
 	    if (curlog == L_PART || curlog == L_PARTPARTIAL) {
-		char * part_label = s - 1;
+		char *part_label;
+		char *qpart_label = s - 1;
 		taper_part++;
-		skip_non_whitespace(s, ch);
+		skip_quoted_string(s, ch);
 		s[-1] = '\0';
 
-		if (!g_hash_table_lookup(valid_label, part_label))
+		part_label = unquote_string(qpart_label);
+		if (!g_hash_table_lookup(valid_label, part_label)) {
+		    amfree(part_label);
 		    continue;
+		}
 		amfree(current_label);
-		current_label = stralloc(part_label);
+		current_label = part_label;
 
 		skip_whitespace(s, ch);
 		if(ch == '\0') {

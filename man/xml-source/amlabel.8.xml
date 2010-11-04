@@ -31,9 +31,11 @@
 <cmdsynopsis>
   <command>amlabel</command>    
     <arg choice='plain'><replaceable>config</replaceable></arg>
-    <arg choice='plain'><replaceable>label</replaceable></arg>
+    <arg choice='opt'><replaceable>label</replaceable></arg>
     <arg choice='opt'>slot <replaceable>slot</replaceable></arg>
-    <arg choice='opt'><option>--meta <replaceable>meta</replaceable> <arg choice='opt'><option>--assign</option></arg></option></arg>
+    <arg choice='opt'><option>--barcode <replaceable>barcode</replaceable></option></arg>
+    <arg choice='opt'><option>--meta <replaceable>meta-label</replaceable></option></arg>
+    <arg><option>--assign</option></arg>
     <arg><option>-f</option></arg>
     &version.synopsis;
     &configoverride.synopsis;
@@ -50,13 +52,16 @@ and <manref name="amflush" vol="8" /> verify the label before writing to make
 sure the proper volume is loaded, and the recovery programs use the label to
 ensure they are reading the data they expect.</para>
 
-<para>If no <arg choice="opt"><replaceable>slot</replaceable></arg> is given,
+<para>If no <arg choice="opt"><replaceable>slot</replaceable></arg> and no <arg choice="opt"><replaceable>barcode</replaceable></arg> is given,
 then <command>amlabel</command> labels the tape in the current slot of the
-default changer.  If a slot is given, it labels the volume in that slot.
+default changer.  If a slot is given, it labels the volume in that slot. If a barcode is given, it labels the volume with that barcode.
 <emphasis remap='I'>Label</emphasis> may be any string that does not contain
 whitespace and that matches the <emphasis remap='B'>labelstr</emphasis> (see
 <manref name="amanda.conf" vol="5" />).</para>
 
+<para>If <arg choice="opt"><replaceable>label</replaceable></arg> is not given, an autolabel is generated.</para>
+
+<para>If <arg><option>--assign</option></arg> is given, the barcode and meta-label are assigned to the label without labeling the volume. The label must already be in the tapelist file.</para>
 <para>This command also appends the new volume to the &tapelist; file, so that
 they will be used in the order they are labeled (depending on the taperscan in
 use &mdash; see <manref name="amanda-taperscan" vol="7" />).</para>
@@ -71,16 +76,24 @@ verifications.</para>
 <variablelist remap='TP'>
 
   <varlistentry>
+  <term><option>--barcode <replaceable>barcode</replaceable></option></term>
+  <listitem>
+  <para>With <arg choice="opt">--assign</arg>, assign the barcode to the label.
+Without <arg choice="opt">--assign</arg>, label the volume with that barcode.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><option>--meta <replaceable>meta-label</replaceable></option></term>
   <listitem>
-  <para>Assign the meta label to the label after labelling the volume.</para>
+  <para>Assign the meta label to the label after labeling the volume.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
   <term><option>--assign</option></term>
   <listitem>
-  <para>Assign the meta label to the label without labelling the volume. The label must already be in the tapelist file.</para>
+  <para>Assign the barcode or meta-label to the label without labeling the volume. The label must already be in the tapelist file.</para>
   </listitem>
   </varlistentry>
 
