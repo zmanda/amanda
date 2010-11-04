@@ -340,17 +340,23 @@ sub plan_cb {
 sub setup_dst {
     my $self = shift;
     my $dst = $self->{'dst'} = {};
+    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+    my $tl = Amanda::Tapelist->new($tlf);
 
     $dst->{'label'} = undef;
     $dst->{'tape_num'} = 0;
 
-    my $chg = Amanda::Changer->new($self->{'dst_changer'});
+    my $chg = Amanda::Changer->new($self->{'dst_changer'},
+				   tapelist => $tl,
+				   labelstr => getconf($CNF_LABELSTR),
+				   autolabel => $self->{'dst_autolabel'});
     return $self->failure("Error opening destination changer: $chg")
 	if $chg->isa('Amanda::Changer::Error');
     $dst->{'chg'} = $chg;
 
     $dst->{'scan'} = Amanda::Taper::Scan->new(
 	changer => $dst->{'chg'},
+	tapelist => $tl,
 	labelstr => getconf($CNF_LABELSTR),
 	autolabel => $self->{'dst_autolabel'});
 

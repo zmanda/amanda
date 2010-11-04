@@ -1324,13 +1324,13 @@ sub _device_start {
 	if ($is_new) {
 	    # generate the new label and write it to the tapelist file
 	    $tl->reload(1);
-	    ($new_label, my $err) = $self->{'taperscan'}->make_new_tape_label();
+	    ($new_label, my $err) = $reservation->make_new_tape_label();
 	    if (!defined $new_label) {
 		$tl->unlock();
 		return $finished_cb->($err);
 	    }
 	    if (!$meta) {
-		($meta, $err) = $self->{'taperscan'}->make_new_meta_label();
+		($meta, $err) = $reservation->make_new_meta_label();
 		if (defined $err) {
 		    $tl->unlock();
 		    return $finished_cb->($err);

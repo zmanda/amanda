@@ -24,7 +24,7 @@ use warnings;
 package main;
 
 use Amanda::Util qw( :constants );
-use Amanda::Config qw( :init );
+use Amanda::Config qw( :init :getconf );
 use Amanda::Logfile qw( :logtype_t log_add $amanda_log_trace_log );
 use Amanda::Debug;
 use Amanda::Taper::Controller;
@@ -63,8 +63,10 @@ Amanda::Debug::add_amanda_log_handler($amanda_log_trace_log);
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
+my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+my $tl = Amanda::Tapelist->new($tlf);
 # transfer control to the Amanda::Taper::Controller class implemented above
-my $controller = Amanda::Taper::Controller->new();
+my $controller = Amanda::Taper::Controller->new(tapelist => $tl);
 $controller->start();
 Amanda::MainLoop::run();
 

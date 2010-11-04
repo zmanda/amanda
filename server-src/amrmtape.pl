@@ -175,13 +175,14 @@ if ($cfgerr_level >= $CFGERR_ERRORS) {
     die "Errors processing disklist";
 }
 
-my $scrub_db = sub {
-    my $tapelist_file = config_dir_relative(getconf($CNF_TAPELIST));
-    my $tapelist = Amanda::Tapelist->new($tapelist_file, !$dry_run);
-    unless ($tapelist) {
-        die "Could not read the tapelist";
-    }
+my $tapelist_file = config_dir_relative(getconf($CNF_TAPELIST));
+my $tapelist = Amanda::Tapelist->new($tapelist_file, !$dry_run);
+unless ($tapelist) {
+    die "Could not read the tapelist";
+}
 
+
+my $scrub_db = sub {
     my $t = $tapelist->lookup_tapelabel($label);
     if ($keep_label) {
         $t->{'datestamp'} = 0 if $t;
@@ -295,7 +296,7 @@ my $erase_volume = make_cb('erase_volume' => sub {
         open(LOG, ">$log_file");
         print LOG "INFO amrmtape amrmtape pid $$\n";
         close LOG;
-	my $chg = Amanda::Changer->new($changer_name);
+	my $chg = Amanda::Changer->new($changer_name, tapelist => $tapelist);
 	$chg->load(
 	    'label' => $label,
 	    'res_cb' => sub {

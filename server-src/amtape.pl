@@ -38,6 +38,7 @@ use Amanda::Interactive;
 use Amanda::Tapelist;
 
 my $exit_status = 0;
+my $tl;
 
 ##
 # Subcommand handling
@@ -228,11 +229,6 @@ sub {
     my ($finished_cb, @args) = @_;
 
     my $chg = load_changer($finished_cb) or return;
-    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-    my $tl = Amanda::Tapelist->new($tlf);
-    if (!defined $tl) {
-	return failure("Can't load tapelist file ($tlf)", $finished_cb);
-    }
 
     if (@args != 0) {
 	return usage($finished_cb);
@@ -536,7 +532,8 @@ sub {
 	});
     });
 
-    my $taperscan = Amanda::Taper::Scan->new(changer => $chg);
+    my $taperscan = Amanda::Taper::Scan->new(changer => $chg,
+					     tapelist => $tl);
     $taperscan->scan(
 	result_cb => $result_cb,
 	user_msg_fn => $taper_user_msg_fn,
@@ -572,7 +569,7 @@ sub {
 sub load_changer {
     my ($finished_cb) = @_;
 
-    my $chg = Amanda::Changer->new();
+    my $chg = Amanda::Changer->new(undef, tapelist => $tl);
     return failure($chg, $finished_cb) if ($chg->isa("Amanda::Changer::Error"));
     return $chg;
 }
@@ -626,6 +623,9 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 }
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
+
+my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+$tl = Amanda::Tapelist->new($tlf);
 
 #make STDOUT not line buffered
 my $previous_fh = select(STDOUT);

@@ -227,9 +227,9 @@ sub try_volume {
     my $slot = $res->{'this_slot'};
     my $dev = $res->{'device'};
     my $status = $dev->status;
-    my $labelstr = $self->{'labelstr'};
+    my $labelstr = $res->{'chg'}->{'labelstr'};
     my $label;
-    my $autolabel = $self->{'autolabel'};
+    my $autolabel = $res->{'chg'}->{'autolabel'};
 
     if ($status == $DEVICE_STATUS_SUCCESS) {
         $label = $dev->volume_label;
@@ -295,7 +295,7 @@ sub try_volume {
 	return 0;
     }
 
-    ($label, my $err) = $self->make_new_tape_label();
+    ($label, my $err) = $res->make_new_tape_label();
     if (!defined $label) {
         # make this fatal, rather than silently skipping new tapes
         $self->scan_result(error => $err, res => $res, result_cb => $result_cb);

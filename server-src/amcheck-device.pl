@@ -141,16 +141,19 @@ sub failure {
 sub do_check {
     my ($finished_cb) = @_;
     my ($res, $label, $mode);
+    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+    my $tl = Amanda::Tapelist->new($tlf);
 
     my $steps = define_steps
 	cb_ref => \$finished_cb;
 
     step start => sub {
-	my $chg = Amanda::Changer->new();
+	my $chg = Amanda::Changer->new(undef, tapelist => $tl);
 
 	return failure($chg, $finished_cb) if ($chg->isa("Amanda::Changer::Error"));
 
-	my $taperscan = Amanda::Taper::Scan->new(changer => $chg);
+	my $taperscan = Amanda::Taper::Scan->new(changer => $chg,
+						 tapelist => $tl);
 	$taperscan->scan(
 	    result_cb => $steps->{'result_cb'},
 	    user_msg_fn => \&_user_msg_fn

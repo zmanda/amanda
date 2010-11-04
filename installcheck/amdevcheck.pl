@@ -103,5 +103,4 @@ is_deeply([ sort split "\n",
 	    run_get('amdevcheck', 'TESTCONF', 'file:'.$Installcheck::Run::taperoot) ],
 	  [ sort "SUCCESS" ],
     "used vtape described as SUCCESS");
-
 Installcheck::Run::cleanup();

@@ -33,6 +33,7 @@ use Amanda::MainLoop;
 use Amanda::Header;
 use Amanda::Holding;
 use Amanda::Cmdline;
+use Amanda::Tapelist;
 use Amanda::Xfer qw( :constants );
 
 sub usage {
@@ -148,7 +149,9 @@ sub main {
 	if ($opt_holding) {
 	    $steps->{'read_header'}->();
 	} else {
-	    my $chg = Amanda::Changer->new($opt_restore_src);
+	    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+	    my $tl = Amanda::Tapelist->new($tlf);
+	    my $chg = Amanda::Changer->new($opt_restore_src, tapelist => $tl);
 	    if ($chg->isa("Amanda::Changer::Error")) {
 		return failure($chg, $finished_cb);
 	    }

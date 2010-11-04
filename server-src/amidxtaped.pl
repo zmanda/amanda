@@ -332,10 +332,12 @@ sub make_plan {
 	    $use_default = 1;
 	}
 
+	my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+	my $tl = Amanda::Tapelist->new($tlf);
 	if ($use_default) {
-	    $chg = Amanda::Changer->new();
+	    $chg = Amanda::Changer->new(undef, tapelist => $tl);
 	} else {
-	    $chg = Amanda::Changer->new($self->{'command'}{'DEVICE'});
+	    $chg = Amanda::Changer->new($self->{'command'}{'DEVICE'}, tapelist => $tl);
 	}
 
 	# if we got a bogus changer, log it to the debug log, but allow the

@@ -131,7 +131,7 @@ sub main {
 	    return failure("Can't load tapelist file ($tlf)", $finished_cb);
 	}
 
-	$chg = Amanda::Changer->new();
+	$chg = Amanda::Changer->new(undef, tapelist => $tl);
 
 	return failure($chg, $finished_cb)
 	    if $chg->isa("Amanda::Changer::Error");

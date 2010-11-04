@@ -274,7 +274,7 @@ sub main {
 	$interactive = Amanda::Interactive::amcheckdump->new();
 
 	# make a changer
-	$chg = Amanda::Changer->new();
+	$chg = Amanda::Changer->new(undef, tapelist => $tapelist);
 	return $steps->{'quit'}->($chg)
 	    if $chg->isa("Amanda::Changer::Error");
 

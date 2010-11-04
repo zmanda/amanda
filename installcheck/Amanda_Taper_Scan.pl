@@ -38,10 +38,11 @@ Installcheck::log_test_output();
 # and disable Debug's die() and warn() overrides
 Amanda::Debug::disable_die_override();
 
-my $tapelist = "$Installcheck::TMP/tapelist";
+my $tapelist_filename = "$Installcheck::TMP/tapelist";
+my $tapelist = Amanda::Tapelist->new($tapelist_filename);
 sub set_tapelist {
     my ($content) = @_;
-    open(my $fh, ">", $tapelist) or die("opening '$tapelist': $!");
+    open(my $fh, ">", $tapelist_filename) or die("opening '$tapelist_filename': $!");
     print $fh $content;
     close($fh);
 }
@@ -52,7 +53,7 @@ sub set_tapelist {
 my $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",
     changer => {}, # (not used)
-    tapelist_filename => $tapelist,
+    tapelist => $tapelist,
     tapecycle => 1, # will be changed periodically below
     labelstr => "TEST-[0-9]",
     autolabel => { 'template'    => "TEST-%",

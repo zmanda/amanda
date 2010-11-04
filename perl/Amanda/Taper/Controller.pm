@@ -59,11 +59,13 @@ use File::Temp;
 
 sub new {
     my $class = shift;
+    my %params = @_;
 
     my $self = bless {
 
 	# filled in at start
 	proto => undef,
+	tapelist => $params{'tapelist'},
 
 	worker => {},
     }, $class;
@@ -115,7 +117,7 @@ sub start {
 	debug => $Amanda::Config::debug_taper?'driver/taper':'',
     );
 
-    my $changer = Amanda::Changer->new();
+    my $changer = Amanda::Changer->new(undef, tapelist => $self->{'tapelist'});
     if ($changer->isa("Amanda::Changer::Error")) {
 	# send a TAPE_ERROR right away
 	$self->{'proto'}->send(Amanda::Taper::Protocol::TAPE_ERROR,
@@ -134,7 +136,8 @@ sub start {
 	return;
     }
 
-    $self->{'taperscan'} = Amanda::Taper::Scan->new(changer => $changer);
+    $self->{'taperscan'} = Amanda::Taper::Scan->new(changer => $changer,
+					    tapelist => $self->{'tapelist'});
 }
 
 sub quit {

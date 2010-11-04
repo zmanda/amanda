@@ -54,7 +54,7 @@ algorithm.  The constructor takes the following keyword arguments:
 
     changer       Amanda::Changer object to use (required)
     algorithm     Taperscan algorithm to instantiate
-    tapelist_filename
+    tapelist      Amanda::Tapelist
     tapecycle
     labelstr
     autolabel
@@ -115,30 +115,6 @@ C<oldest_reusable_volume>:
     $self->oldest_reusable_volume(
         new_label_ok => $nlo,    # count newly labeled vols as reusable?
     );
-
-Finally, to devise a new name for a volume, call C<make_new_tape_label>,
-passing a tapelist, a labelstr, and a template.  This will return C<undef>
-if no label could be created.
-
-    $label = $self->make_new_tape_label(
-	labelstr => "foo-[0-9]+",
-        template => "foo-%%%%",
-    );
-
-If no C<template> is provided, the function uses the value of
-C<autolabel> specified when the object was constructed; similarly,
-C<labelstr> defaults to the value specified at object construction.
-
-Finally, to devise a new meta name for a volume, call C<make_new_meta_label>,
-passing a tapelist and a template.  This will return C<undef>
-if no label could be created.
-
-    $label = $self->make_new_meta_label(
-        template => "foo-%%%%",
-    );
-
-If no C<template> is provided, the function uses the value of
-C<meta_autolabel> specified when the object was constructed.
 
 =head2 user_msg_fn
 
@@ -221,9 +197,6 @@ sub new {
 	unless exists $params{'algorithm'};
     $params{'tapecycle'} = getconf($CNF_TAPECYCLE)
 	unless exists $params{'tapecycle'};
-    $params{'tapelist_filename'} =
-	Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST))
-	    unless exists $params{'tapelist_filename'};
     $params{'labelstr'} = getconf($CNF_LABELSTR)
 	unless exists $params{'labelstr'};
     $params{'autolabel'} = getconf($CNF_AUTOLABEL)
@@ -252,11 +225,10 @@ sub new {
     $self->{'changer'} = $params{'changer'};
     $self->{'algorithm'} = $params{'algorithm'};
     $self->{'tapecycle'} = $params{'tapecycle'};
-    $self->{'tapelist_filename'} = $params{'tapelist_filename'};
     $self->{'labelstr'} = $params{'labelstr'};
     $self->{'autolabel'} = $params{'autolabel'};
     $self->{'meta_autolabel'} = $params{'meta_autolabel'};
-    $self->{'tapelist'} = Amanda::Tapelist->new($self->{'tapelist_filename'});
+    $self->{'tapelist'} = $params{'tapelist'};
 
     return $self;
 }
@@ -314,73 +286,6 @@ sub is_reusable_volume {
 
 
     return 0;
-}
-
-sub make_new_tape_label {
-    my $self = shift;
-    my %params = @_;
-
-    my $tl = exists $params{'tapelist'}? $params{'tapelist'} : $self->{'tapelist'};
-    my $template = exists $params{'template'}? $params{'template'} : $self->{'autolabel'}->{'template'};
-    my $labelstr = exists $params{'labelstr'}? $params{'labelstr'} : $self->{'labelstr'};
-
-    (my $npercents =
-	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
-    my $nlabels = 10 ** $npercents;
-
-    # make up a sprintf pattern
-    (my $sprintf_pat =
-	$template) =~ s/(%+)/"%0" . length($1) . "d"/e;
-
-    my %existing_labels =
-	map { $_->{'label'} => 1 } @{$tl->{'tles'}};
-
-    my ($i, $label);
-    for ($i = 1; $i < $nlabels; $i++) {
-	$label = sprintf($sprintf_pat, $i);
-	last unless (exists $existing_labels{$label});
-    }
-
-    # bail out if we didn't find an unused label
-    return (undef, "Can't label unlabeled volume: All label used") if ($i >= $nlabels);
-
-    # verify $label matches $labelstr
-    if ($label !~ /$labelstr/) {
-        return (undef, "Newly-generated label '$label' does not match labelstr '$labelstr'");
-    }
-
-    return $label;
-}
-
-sub make_new_meta_label {
-    my $self = shift;
-    my %params = @_;
-
-    my $tl = exists $params{'tapelist'}? $params{'tapelist'} : $self->{'tapelist'};
-    my $template = exists $params{'template'}? $params{'template'} : $self->{'meta_autolabel'};
-    return if !defined $template;
-
-    (my $npercents =
-	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
-    my $nlabels = 10 ** $npercents;
-
-    # make up a sprintf pattern
-    (my $sprintf_pat =
-	$template) =~ s/(%+)/"%0" . length($1) . "d"/e;
-
-    my %existing_meta_labels =
-	map { $_->{'meta'} => 1 } @{$tl->{'tles'}};
-
-    my ($i, $meta);
-    for ($i = 1; $i < $nlabels; $i++) {
-	$meta = sprintf($sprintf_pat, $i);
-	last unless (exists $existing_meta_labels{$meta});
-    }
-
-    # bail out if we didn't find an unused label
-    return (undef, "Can't label unlabeled meta volume: All meta label used") if ($i >= $nlabels);
-
-    return $meta;
 }
 
 1;

@@ -1,3 +1,21 @@
+2010-11-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scan.pm (new): Take a tapelist argument, not a
+					   filename.
+	* perl/Amanda/Taper/Scan.pm: Remove make_new_tape_label and
+				     make_new_meta_label methods.
+	* perl/Amanda/Changer.pm (new): Take a tapelist argument.
+	* perl/Amanda/Changer.pm: Add make_new_tape_label and
+	  make_new_meta_label methods to Amanda::Changer::Reservation.
+	* installcheck/Amanda_Taper_Scan.pl,
+	  installcheck/Amanda_Taper_Scan_traditional.pl,
+	  installcheck/amdevcheck.pl, perl/Amanda/Taper/Controller.pm,
+	  perl/Amanda/Taper/Scan/traditional.pm, perl/Amanda/Taper/Scribe.pm,
+	  server-src/amcheck-device.pl, server-src/amcheckdump.pl,
+	  server-src/amidxtaped.pl, server-src/amlabel.pl,
+	  server-src/amrestore.pl, server-src/amrmtape.pl,
+	  server-src/amtape.pl, server-src/amvault.pl,
+	  server-src/taper.pl: Change for new tapelist argument.
+
 2010-11-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c (quote_string_maybe): Don't use match.
 	* common-src/util.c (len_quote_string_maybe): New function.

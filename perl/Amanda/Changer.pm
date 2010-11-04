@@ -426,6 +426,12 @@ user, and have meaning for the changer.
 
 =head2 RESERVATION OBJECTS
 
+=head3 Methods
+
+=head3 $res->{'chg'}
+
+This is the changer object.
+
 =head3 $res->{'device'}
 
 This is the fully configured device for the reserved volume.  The device is not
@@ -441,6 +447,16 @@ access this field after the reservation has been released.
 
 If this changer supports barcodes, then this is the barcode of the reserved
 volume.  This can be helpful for labeling tapes using their barcode.
+
+=head3 $label = $res->make_new_tape_label()
+
+To devise a new name for a volume.
+This will return C<undef> if no label could be created.
+
+=head3 $meta = $res->make_new_meta_label()
+
+To devise a new meta name for a meta volume.
+This will return C<undef> if no label could be created.
 
 =head3 $res->release(finished_cb => $cb, eject => $eject)
 
@@ -656,23 +672,24 @@ our %EXPORT_TAGS = (
 sub new {
     shift eq 'Amanda::Changer'
 	or die("Do not call the Amanda::Changer constructor from subclasses");
-    my ($name) = @_;
+    my ($name) = shift;
+    my %params = @_;
     my ($uri, $cc);
 
     # creating a named changer is a bit easier
     if (defined($name)) {
 	# first, is it a changer alias?
 	if (($uri,$cc) = _changer_alias_to_uri($name)) {
-	    return _new_from_uri($uri, $cc, $name);
+	    return _new_from_uri($uri, $cc, $name, %params);
 	}
 
 	# maybe a straight-up changer URI?
 	if (_uri_to_pkgname($name)) {
-	    return _new_from_uri($name, undef, $name);
+	    return _new_from_uri($name, undef, $name, %params);
 	}
 
 	# assume it's a device name or alias, and invoke the single-changer
-	return _new_from_uri("chg-single:$name", undef, $name);
+	return _new_from_uri("chg-single:$name", undef, $name, %params);
     } else { # !defined($name)
 	if ((getconf_linenum($CNF_TPCHANGER) == -2 ||
 	     (getconf_seen($CNF_TPCHANGER) &&
@@ -682,7 +699,7 @@ sub new {
 
 	    # first, is it an old changer script?
 	    if ($uri = _old_script_to_uri($tpchanger)) {
-		return _new_from_uri($uri, undef, $tpchanger);
+		return _new_from_uri($uri, undef, $tpchanger, %params);
 	    }
 
 	    # if not, then there had better be no tapdev
@@ -697,33 +714,33 @@ sub new {
 
 	    # maybe a changer alias?
 	    if (($uri,$cc) = _changer_alias_to_uri($tpchanger)) {
-		return _new_from_uri($uri, $cc, $tpchanger);
+		return _new_from_uri($uri, $cc, $tpchanger, %params);
 	    }
 
 	    # maybe a straight-up changer URI?
 	    if (_uri_to_pkgname($tpchanger)) {
-		return _new_from_uri($tpchanger, undef, $tpchanger);
+		return _new_from_uri($tpchanger, undef, $tpchanger, %params);
 	    }
 
 	    # assume it's a device name or alias, and invoke the single-changer
-	    return _new_from_uri("chg-single:$tpchanger", undef, $tpchanger);
+	    return _new_from_uri("chg-single:$tpchanger", undef, $tpchanger, %params);
 	} elsif (getconf_seen($CNF_TAPEDEV) and getconf($CNF_TAPEDEV) ne '') {
 	    my $tapedev = getconf($CNF_TAPEDEV);
 
 	    # first, is it a changer alias?
 	    if (($uri,$cc) = _changer_alias_to_uri($tapedev)) {
-		return _new_from_uri($uri, $cc, $tapedev);
+		return _new_from_uri($uri, $cc, $tapedev, %params);
 	    }
 
 	    # maybe a straight-up changer URI?
 	    if (_uri_to_pkgname($tapedev)) {
-		return _new_from_uri($tapedev, undef, $tapedev);
+		return _new_from_uri($tapedev, undef, $tapedev, %params);
 	    }
 
 	    # assume it's a device name or alias, and invoke chg-single.
 	    # chg-single will check the device immediately and error out
 	    # if the device name is invalid.
-	    return _new_from_uri("chg-single:$tapedev", undef, $tapedev);
+	    return _new_from_uri("chg-single:$tapedev", undef, $tapedev, %params);
 	} else {
 	    return Amanda::Changer::Error->new('fatal',
 		message => "You must specify one of 'tapedev' or 'tpchanger'");
@@ -824,7 +841,10 @@ sub _uri_to_pkgname {
 our %changers_by_uri_cc = ();
 
 sub _new_from_uri { # (note: this sub is patched by the installcheck)
-    my ($uri, $cc, $name) = @_;
+    my $uri = shift;
+    my $cc = shift;
+    my $name = shift;
+    my %params = @_;
 
     # as a special case, if the URI came back as an error, just pass
     # that along.  This lets the _xxx_to_uri methods return errors more
@@ -865,6 +885,16 @@ sub _new_from_uri { # (note: this sub is patched by the installcheck)
 	$changers_by_uri_cc{$uri_cc} = $rv;
     }
 
+    $rv->{'tapelist'} = $params{'tapelist'};
+    $rv->{'autolabel'} = $params{'autolabel'};
+    $rv->{'autolabel'} = getconf($CNF_AUTOLABEL)
+	unless defined $rv->{'autolabel'};
+    $rv->{'labelstr'} = $params{'labelstr'};
+    $rv->{'labelstr'} = getconf($CNF_LABELSTR)
+	unless defined $rv->{'labelstr'};
+    $rv->{'meta_autolabel'} = $params{'meta_autolabel'};
+    $rv->{'meta_autolabel'} = getconf($CNF_META_AUTOLABEL)
+	unless defined $rv->{'meta_autolabel'};
     $rv->{'chg_name'} = $name;
     return $rv;
 }
@@ -1218,6 +1248,7 @@ sub slot { $_[0]->{'slot'}; }
 
 package Amanda::Changer::Reservation;
 # this is a simple base class with stub method or two.
+use Amanda::Config qw( :getconf );
 
 sub new {
     my $class = shift;
@@ -1300,6 +1331,74 @@ sub set_meta_label {
     }
 }
 
+sub make_new_tape_label {
+    my $self = shift;
+    my %params = @_;
+
+    my $tl = $self->{'chg'}->{'tapelist'};
+    die ("make_new_meta_label: no tapelist") if !$tl;
+    my $template = $self->{'chg'}->{'autolabel'}->{'template'};
+    my $labelstr = $self->{'chg'}->{'labelstr'};
+
+    (my $npercents =
+	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
+    my $nlabels = 10 ** $npercents;
+
+    my %existing_labels =
+	map { $_->{'label'} => 1 } @{$tl->{'tles'}};
+
+    # make up a sprintf pattern
+    (my $sprintf_pat = $template) =~ s/(%+)/"%0" . length($1) . "d"/e;
+
+    my ($i, $label);
+    for ($i = 1; $i < $nlabels; $i++) {
+	$label = sprintf($sprintf_pat, $i);
+	last unless (exists $existing_labels{$label});
+    }
+
+    # bail out if we didn't find an unused label
+    return (undef, "Can't label unlabeled volume: All label used")
+		if ($i >= $nlabels);
+
+    # verify $label matches $labelstr
+    if ($label !~ /$labelstr/) {
+        return (undef, "Newly-generated label '$label' does not match labelstr '$labelstr'");
+    }
+
+    return $label;
+}
+
+
+sub make_new_meta_label {
+    my $self = shift;
+    my %params = @_;
+
+    my $tl = $self->{'chg'}->{'tapelist'};
+    die ("make_new_meta_label: no tapelist") if !$tl;
+    my $template = $self->{'chg'}->{'meta_autolabel'};
+    return if !defined $template;
+
+    (my $npercents = $template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
+    my $nlabels = 10 ** $npercents;
+
+    # make up a sprintf pattern
+    (my $sprintf_pat = $template) =~ s/(%+)/"%0" . length($1) . "d"/e;
+
+    my %existing_meta_labels =
+	map { $_->{'meta'} => 1 } @{$tl->{'tles'}};
+
+    my ($i, $meta);
+    for ($i = 1; $i < $nlabels; $i++) {
+	$meta = sprintf($sprintf_pat, $i);
+	last unless (exists $existing_meta_labels{$meta});
+    }
+
+    # bail out if we didn't find an unused label
+    return (undef, "Can't label unlabeled meta volume: All meta label used")
+		if ($i >= $nlabels);
+
+    return $meta;
+}
 
 package Amanda::Changer::Config;
 use Amanda::Config qw( :getconf string_to_boolean );
