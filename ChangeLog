@@ -1,4 +1,11 @@
 2010-11-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/aggregate.pm: New changer.
+	* man/xml-source/amanda-changers.7.xml: Document chg-aggregate.
+	* perl/Makefile.am: Add it.
+	* server-src/amtape.pl: Print better message if inventory is not
+				implemented.
+
+2010-11-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: $o $c $m $b in autolabel.
 	* perl/Amanda/Changer.pm: $o $c in meta-autolabel.
 	* server-src/amlabel.pl: New --barcode option, <label> is no longer

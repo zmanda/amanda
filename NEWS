@@ -1,4 +1,5 @@
 Changes in release 3.3.0alpha
+   * chg-aggregate: new changer taht use other changer sequentially.
    * meta-volume
    * Add barcode and meta label in tapelist file
    * chg-disk:

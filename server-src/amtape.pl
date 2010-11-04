@@ -240,7 +240,11 @@ sub {
 	my ($err, $inv) = @_;
 	if ($err) {
 	    if ($err->notimpl) {
-		print STDERR "inventory not supported by this changer\n";
+		if ($err->{'message'}) {
+		    print STDERR "inventory not supported by this changer: $err->{'message'}\n";
+		} else {
+		    print STDERR "inventory not supported by this changer\n";
+		}
 	    } else {
 		print STDERR "$err\n";
 	    }

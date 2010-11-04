@@ -134,6 +134,32 @@ specified by an alias, then properties from that definition applied.</para>
 
 <para>This section lists the changer drivers included with Amanda, and basic instructions for using them.  For complete How-To information, consult the Amanda wiki at http://wiki.zmanda.com.</para>
 
+<refsect2><title>chg-aggregate:changer (new)</title>
+<programlisting>
+define changer robot0 {
+  tpchanger "chg-robot:/dev/sg0"
+  property "tape-device" "0=tape:/dev/rmt/0" "1=tape:/dev/rmt/1"
+}
+define changer robot1 {
+  tpchanger "chg-robot:/dev/sg1"
+  property "tape-device" "0=tape:/dev/rmt/2" "1=tape:/dev/rmt/3"
+}
+define changer single {
+  tpchanger "chg-single:/dev/rmt/4"
+}
+define changer aggregate {
+  tpchanger "chg-aggregate:{robot0,robot1,single}"
+  property "state-filename" "/etc/amanda/CONF/aggregate.state"
+
+}
+tpchanger "aggregate"
+</programlisting>
+
+<para>This changer driver allow to use two or more changers or standalone
+drive in sequence.</para>
+
+</refsect2>
+
 <refsect2><title>chg-disk:VTAPEROOT (new)</title>
 <programlisting>
 tpchanger "chg-disk:/var/mnt/vtapes"
