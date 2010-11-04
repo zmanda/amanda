@@ -247,7 +247,7 @@ sub main {
 	# update the tapelist
 	$tl->reload(1);
 	$tl->remove_tapelabel($opt_label);
-	$tl->add_tapelabel("0", $opt_label, undef, 1, $opt_meta);
+	$tl->add_tapelabel("0", $opt_label, undef, 1, $opt_meta, $res->{'barcode'});
 	$tl->write();
 
 	print "Success!\n";
@@ -289,7 +289,8 @@ sub main {
 	    $tl->reload(1);
 	    $tl->remove_tapelabel($opt_label);
 	    $tl->add_tapelabel($tle->{'datestamp'}, $tle->{'label'},
-			       $tle->{'comment'}, $tle->{'reuse'}, $opt_meta);
+			       $tle->{'comment'}, $tle->{'reuse'}, $opt_meta,
+			       $tle->{'barcode'});
 	    $tl->write();
 	} else {
 	    return failure("Label '$opt_label' is not in the tapelist file", $finished_cb);

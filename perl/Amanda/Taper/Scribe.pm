@@ -1336,7 +1336,7 @@ sub _device_start {
 		    return $finished_cb->($err);
 		}
 	    }
-	    $tl->add_tapelabel('0', $new_label, undef, $meta);
+	    $tl->add_tapelabel('0', $new_label, undef, $meta, $reservation->{'barcode'});
 	    $tl->write();
 	    $self->dbg("generate new label '$new_label'");
 	} elsif (!defined $meta) {

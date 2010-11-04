@@ -79,6 +79,7 @@ like(run_get('amlabel', 'TESTCONF', 'TESTCONF92'),
 $tl->reload();
 is_deeply($tl->{'tles'}->[0], {
        'reuse' => 1,
+       'barcode' => undef,
        'meta' => undef,
        'comment' => undef,
        'position' => 1,

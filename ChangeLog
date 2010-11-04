@@ -1,4 +1,13 @@
 2010-11-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/tapefile.c: Add barcode intapelist.
+	* server-src/tapefile.h: Add barcode intapelist.
+	* perl/Amanda/Tapelist.swg: Add barcode intapelist.
+	* perl/Amanda/Taper/Scribe.pm: Set the barcode.
+	* server-src/amlabel.pl: Set the barcode.
+	* installcheck/Amanda_Tapelist.pl: Test it.
+	* installcheck/amlabel.pl: Test it.
+
+2010-11-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scan.pm (new): Take a tapelist argument, not a
 					   filename.
 	* perl/Amanda/Taper/Scan.pm: Remove make_new_tape_label and
