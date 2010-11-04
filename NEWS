@@ -1,4 +1,21 @@
-Changes in release 3.2.0alpha
+Changes in release 3.3.0alpha
+   * meta-volume
+   * Add barcode and meta label in tapelist file
+   * chg-disk:
+       o new NUM-SLOT property
+       o new AUTO-CREATE-SLOT property
+       o new REMOVABLE property
+   * Change in amanda.conf
+       o new meta-autolabel option
+       o autolabel can include org, config, barcode, meta in the label
+   * amlabel
+       o The label argument is no longer required, an autolabel can be
+	 generated
+       o new --meta option
+       o new --barcode option
+       o new --assign option
+
+Changes in release 3.2.0
 
    * Support for multiple simultaneous writes to storage devices
       o Can write to all available drives in parallel.
