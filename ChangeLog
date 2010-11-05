@@ -1,4 +1,7 @@
 2010-11-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/tapelist.5.xml: Document BARCODE.
+
+2010-11-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amdump.pl: Execute subprocess with the config overwrite.
 	* server-src/amvault.pl: Execute subprocess with the config overwrite.
 
