@@ -151,7 +151,7 @@ INFO amdump amdump pid $$
 START driver date $timestamp
 ERROR amdump $msg
 EOF
-    run_subprocess("$sbindir/amreport", $config_name, '--from-amdump', '-l', $fakelogfile);
+    run_subprocess("$sbindir/amreport", $config_name, '--from-amdump', '-l', $fakelogfile, @config_overrides_opts);
     unlink($fakelogfile);
 
     # and we're done here
@@ -164,7 +164,7 @@ sub do_amcleanup {
     # logfiles are still around.  First, try an amcleanup -p to see if
     # the actual processes are already dead
     debug("runing amcleanup -p");
-    run_subprocess("$sbindir/amcleanup", '-p', $config_name);
+    run_subprocess("$sbindir/amcleanup", '-p', $config_name, @config_overrides_opts);
 
     # and check again
     return unless -f $amdump_log_filename || -f $trace_log_filename;
@@ -262,7 +262,7 @@ sub planner_driver_pipeline {
 
 sub do_amreport {
     debug("running amreport");
-    run_subprocess("$sbindir/amreport", $config_name, '--from-amdump');
+    run_subprocess("$sbindir/amreport", $config_name, '--from-amdump', @config_overrides_opts);
 }
 
 sub roll_trace_logs {
@@ -273,12 +273,12 @@ sub roll_trace_logs {
 
 sub trim_trace_logs {
     debug("trimming old trace logs");
-    run_subprocess("$amlibexecdir/amtrmlog", $config_name);
+    run_subprocess("$amlibexecdir/amtrmlog", $config_name, @config_overrides_opts);
 }
 
 sub trim_indexes {
     debug("trimming old indexes");
-    run_subprocess("$amlibexecdir/amtrmidx", $config_name);
+    run_subprocess("$amlibexecdir/amtrmidx", $config_name, @config_overrides_opts);
 }
 
 sub roll_amdump_logs {

@@ -1,3 +1,7 @@
+2010-11-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amdump.pl: Execute subprocess with the config overwrite.
+	* server-src/amvault.pl: Execute subprocess with the config overwrite.
+
 2010-11-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amreport.pl: Set date correctly for amvault run.
 	* perl/Amanda/Report/human.pm: Fix warning.

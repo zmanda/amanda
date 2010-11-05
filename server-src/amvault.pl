@@ -140,6 +140,7 @@ sub new {
 
 	exporting => 0, # is an export in progress?
 	call_after_export => undef, # call this when export complete
+	config_overrides_opts => $params{'config_overrides_opts'},
 
 	# called when the operation is complete, with the exit
 	# status
@@ -619,8 +620,10 @@ sub quit {
 	    log_add_full($L_FINISH, "driver", "fake driver finish");
 	    log_add($L_INFO, "pid-done $$");
 
-	    debug("invoking amreport..");
-	    system("$sbindir/amreport", $self->{'config_name'}, "--from-amdump");
+	    my @amreport_cmd = ("$sbindir/amreport", $self->{'config_name'}, "--from-amdump",
+				 @{$self->{'config_overrides_opts'}});
+	    debug("invoking amreport (" . join(" ", @amreport_cmd) . ")");
+	    system(@amreport_cmd);
 
 	    debug("rolling logfile..");
 	    log_rename($self->{'dst_write_timestamp'});
@@ -888,6 +891,7 @@ EOF
 Amanda::Util::setup_application("amvault", "server", $CONTEXT_CMDLINE);
 
 my $config_overrides = new_config_overrides($#ARGV+1);
+my @config_overrides_opts;
 my $opt_quiet = 0;
 my $opt_dry_run = 0;
 my $opt_fulls_only = 0;
@@ -926,7 +930,10 @@ sub add_autolabel {
 
 Getopt::Long::Configure(qw{ bundling });
 GetOptions(
-    'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
+    'o=s' => sub {
+	push @config_overrides_opts, "-o" . $_[1];
+	add_config_override_opt($config_overrides, $_[1]);
+    },
     'q|quiet' => \$opt_quiet,
     'n|dry-run' => \$opt_dry_run,
     'fulls-only' => \$opt_fulls_only,
@@ -980,7 +987,8 @@ my $vault = Amvault->new(
     opt_dry_run => $opt_dry_run,
     quiet => $opt_quiet,
     fulls_only => $opt_fulls_only,
-    opt_export => $opt_export);
+    opt_export => $opt_export,
+    config_overrides_opts => \@config_overrides_opts);
 Amanda::MainLoop::call_later(sub { $vault->run($exit_cb) });
 Amanda::MainLoop::run();
 
