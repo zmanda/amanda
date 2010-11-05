@@ -34,7 +34,8 @@ tapes in active use.  This file is not ordinarily ordinarily edited or examined
 manually.  Its format may change, or it may be removed altogether, in future
 versions of Amanda.  It contains lines of the form:</para>
 
-<para><programlisting>YYYYMMDD label flags [#comment]
+<para><programlisting>
+YYYYMMDD label flags [BARCODE:barcode] [META:meta] [#comment]
 </programlisting></para>
 
 <para>Where
@@ -51,6 +52,8 @@ remap='B'>dumpcycle</emphasis> dumps.  See the
 <emphasis remap='B'>reuse</emphasis>
 options of
 <manref name="amadmin" vol="8"/>.
+The optional barcode is prefixed with 'BARCODE' if the volume have a barcode.
+The optional meta label is prefixed with 'META' if the volume is on a meta volume.
 The optional comment is prefixed with a '#' and continues to the end of the line.  Amanda
 will maintain this comment until the tape is overwritten.  Note that comments are not
 allowed on blank lines.</para>
