@@ -151,6 +151,10 @@ sub command_post_dle_estimate {
 sub command_pre_dle_backup {
     my $self = shift;
 
+    my $mesgout_fd;
+    open ($mesgout_fd, '>&=1') || die("Can't open mesgout_fd: $!");
+    $self->{mesgout} = $mesgout_fd;
+
     $self->zfs_snapshot_set_value();
     if ($self->{error_status} == $Amanda::Script_App::GOOD) {
 	$self->zfs_create_snapshot("backup");
@@ -160,6 +164,10 @@ sub command_pre_dle_backup {
 
 sub command_post_dle_backup {
     my $self = shift;
+
+    my $mesgout_fd;
+    open ($mesgout_fd, '>&=1') || die("Can't open mesgout_fd: $!");
+    $self->{mesgout} = $mesgout_fd;
 
     $self->zfs_snapshot_set_value("backup");
     $self->zfs_destroy_snapshot("backup");

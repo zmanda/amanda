@@ -1,5 +1,8 @@
+2010-11-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amzfs-snapshot.pl: set $self->{mesgout}.
+
 2010-10-29  Jean-Louis Martineau <martineau@zmanda.com>
-	* server-src/chunker.c: Close listening socket are accepted socket.
+	* server-src/chunker.c: Close listening socket before accepted socket.
 
 2010-10-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amtape.pl: Typo.
