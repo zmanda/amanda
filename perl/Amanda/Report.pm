@@ -1304,13 +1304,16 @@ sub check_missing_fail_strange
 
     foreach my $dle_entry (@dles) {
         my $alldumps = $self->get_dle_info(@$dle_entry, 'dumps');
+	my $driver = $self->get_dle_info(@$dle_entry, 'driver');
 	my $planner = $self->get_dle_info(@$dle_entry, 'planner');
 
 	if ($planner && $planner->{'status'} eq 'fail') {
 	    $self->{flags}{dump_failed} = 1;
 	} elsif ($planner && $planner->{'status'} eq 'skipped') {
 	    # We don't want these to be counted as missing below
-	} elsif (!defined $alldumps->{$self->{'run_timestamp'}}) {
+	} elsif (!defined $alldumps->{$self->{'run_timestamp'}} and
+		 !$driver and
+		 !$planner) {
 	    $self->{flags}{results_missing} = 1;
 	    $self->{flags}{exit_status} |= STATUS_MISSING;
 	} else {

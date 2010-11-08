@@ -537,6 +537,7 @@ sub output_error_summaries
 
 	if ($report->get_flag('results_missing') and
 	    !defined($alldumps->{$report->{run_timestamp}}) and
+	    !$dle->{driver} and
 	    !$dle->{planner}) {
 	    push @missing_failures, "$hostname $qdisk RESULTS MISSING";
 	}
@@ -1168,14 +1169,19 @@ sub get_summary_info
       : $tail_quote_trunc->($disk, $col_spec->[1]->[COLSPEC_WIDTH]);
 
     my $alldumps = $dle_info->{'dumps'};
-    if ($dle_info->{'planner'} &&
-        $dle_info->{'planner'}->{'status'} eq 'fail') {
-	my @rv;
-	push @rv, 'nodump-FAILED';
-	push @rv, $hostname;
-	push @rv, $disk_out;
-	push @rv, ("",) x 9;
-	push @rvs, [@rv];
+    if (($dle_info->{'planner'} &&
+         $dle_info->{'planner'}->{'status'} eq 'fail') or
+	($dle_info->{'driver'} &&
+         $dle_info->{'driver'}->{'status'} eq 'fail')) {
+	# Do not report driver error if we have a try
+	if (!exists $alldumps->{$report->{'run_timestamp'}}) {
+	    my @rv;
+	    push @rv, 'nodump-FAILED';
+	    push @rv, $hostname;
+	    push @rv, $disk_out;
+	    push @rv, ("",) x 9;
+	    push @rvs, [@rv];
+	}
     } elsif ($dle_info->{'planner'} &&
         $dle_info->{'planner'}->{'status'} eq 'skipped') {
 	my @rv;
