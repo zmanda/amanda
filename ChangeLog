@@ -1,3 +1,8 @@
+2010-11-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report.pm: Report driver FAIL as FAILED (not missing).
+	* perl/Amanda/Report/human.pm: Do not report driver error if there
+				       is a try.
+
 2010-11-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/tapelist.5.xml: Document BARCODE.
 
