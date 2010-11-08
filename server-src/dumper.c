@@ -1771,7 +1771,7 @@ stop_dump(void)
     cmdargs = get_pending_cmd();
     if (cmdargs) {
 	if (cmdargs->cmd != ABORT) {
-	    error(_("beurk"));
+	    error(_("beurk %d"), cmdargs->cmd);
 	}
 	amfree(errstr);
 	errstr = stralloc(cmdargs->argv[1]);

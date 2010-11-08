@@ -1,4 +1,9 @@
 2010-11-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Better handling of dump to tape.
+	  Set force_flush to 0 as soon as the runq is empty.
+	* server-src/dumper.c: Improving debugging.
+
+2010-11-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report.pm: Report driver FAIL as FAILED (not missing).
 	* perl/Amanda/Report/human.pm: Do not report driver error if there
 				       is a try.
