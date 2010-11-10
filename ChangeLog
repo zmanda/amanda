@@ -1,4 +1,8 @@
 2010-11-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/MainLoop.swg: Add finalize in define_step.
+	* perl/Amanda/MainLoop.pod: Document finalize.
+
+2010-11-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amstar.c: Support 'exclude file' and 'exclude list'.
 	* man/xml-source/amstar.8.xml: Document exclude limitation.
 

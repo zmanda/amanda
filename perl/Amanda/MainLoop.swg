@@ -262,6 +262,7 @@ push @EXPORT_OK, "synchronized";
     sub define_steps (@) {
 	my (%params) = @_;
 	my $cb_ref = $params{'cb_ref'};
+	my $finalize = $params{'finalize'};
 	my %steps;
 
 	croak "cb_ref is undefined" unless defined $cb_ref;
@@ -276,6 +277,7 @@ push @EXPORT_OK, "synchronized";
 	$$cb_ref = sub {
 	    %steps = ();
 	    $current_steps = undef;
+	    $finalize->() if defined($finalize);
 	    goto $orig_cb;
 	};
 

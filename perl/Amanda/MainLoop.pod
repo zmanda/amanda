@@ -408,6 +408,13 @@ To do the same for a single step, add the same keyword to the C<step> invocation
     step immediate => 1,
 	 connect => sub { .. };
 
+In some case, you want to execute some code when the step finish, it can
+be done by defining a finalize code in define_steps:
+
+    my $steps = define_steps
+	    cb_ref => \$finished_cb,
+	    finalize => sub { .. };
+
 =head2 JOINING ASYNCHRONOUS "THREADS"
 
 With slow operations, it is often useful to perform multiple operations
