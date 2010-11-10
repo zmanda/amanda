@@ -1,4 +1,7 @@
 2010-11-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/tape-device.c: Accept LEOM property.
+
+2010-11-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Fix use of Amanda::Changer->make_error
 
 2010-11-10  Jean-Louis Martineau <martineau@zmanda.com>

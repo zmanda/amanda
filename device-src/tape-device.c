@@ -458,6 +458,12 @@ tape_device_base_init (TapeDeviceClass * c)
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    tape_device_get_read_block_size_fn,
 	    tape_device_set_read_block_size_fn);
+
+    /* add the ability to set LEOM to FALSE, for testing purposes */
+    device_class_register_property(device_class, PROPERTY_LEOM,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    tape_device_set_feature_property_fn);
 }
 
 static gboolean
@@ -510,6 +516,8 @@ tape_device_set_feature_property_fn(Device *p_self, DevicePropertyBase *base,
 	self->bsf_after_eom = new_bool;
     else if (base->ID == PROPERTY_NONBLOCKING_OPEN)
 	self->nonblocking_open = new_bool;
+    else if (base->ID == PROPERTY_LEOM)
+	self->leom = new_bool;
     else
 	return FALSE; /* shouldn't happen */
 
