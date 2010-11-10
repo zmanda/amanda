@@ -38,6 +38,7 @@
 
 static GStaticMutex lock_lock = G_STATIC_MUTEX_INIT;
 static GHashTable *locally_locked_files = NULL;
+static int lock_rw_rd(file_lock *lock, short l_type);
 
 file_lock *
 file_lock_new(
@@ -155,6 +156,90 @@ done:
     return rv;
 }
 
+static int
+lock_rw_rd(
+    file_lock *lock,
+    short      l_type)
+{
+    int rv = -2;
+    int fd = -1;
+    int saved_errno;
+    struct flock lock_buf;
+    struct stat stat_buf;
+
+    g_assert(!lock->locked);
+
+    /* protect from overlapping lock operations within a process */
+    g_static_mutex_lock(&lock_lock);
+
+    /* The locks are advisory, so an error here never means the lock is already
+     * taken. */
+    lock->fd = fd = open(lock->filename, O_CREAT|O_RDWR, 0666);
+    if (fd < 0) {
+	rv = -1;
+	goto done;
+    }
+
+    /* now try locking it */
+    lock_buf.l_type = l_type;
+    lock_buf.l_start = 0;
+    lock_buf.l_whence = SEEK_SET;
+    lock_buf.l_len = 0; /* to EOF */
+    if (fcntl(fd, F_SETLK, &lock_buf) < 0) {
+	if (errno == EACCES || errno == EAGAIN)
+	    rv = 1;
+	else
+	    rv = -1;
+	goto done;
+    }
+
+    /* and read the file in its entirety */
+    if (fstat(fd, &stat_buf) < 0) {
+	rv = -1;
+	goto done;
+    }
+
+    if (!(stat_buf.st_mode & S_IFREG)) {
+	rv = -1;
+	errno = EINVAL;
+	goto done;
+    }
+
+    fd = -1; /* we'll keep the file now */
+    lock->locked = TRUE;
+
+    rv = 0;
+
+done:
+    saved_errno = errno;
+    g_static_mutex_unlock(&lock_lock);
+    if (fd >= 0) /* close and unlock if an error occurred */
+	close(fd);
+    errno = saved_errno;
+    return rv;
+}
+
+int
+file_lock_lock_wr(
+    file_lock *lock)
+{
+    return lock_rw_rd(lock, F_WRLCK);
+}
+
+int
+file_lock_lock_rd(
+    file_lock *lock)
+{
+    return lock_rw_rd(lock, F_RDLCK);
+}
+
+int
+file_lock_locked(
+    file_lock *lock)
+{
+    return lock->locked;
+}
+
 int
 file_lock_write(
     file_lock *lock,
@@ -198,7 +283,9 @@ file_lock_unlock(
     close(lock->fd);
 
     /* and the hash table entry */
-    g_hash_table_remove(locally_locked_files, lock->filename);
+    if (locally_locked_files) {
+	g_hash_table_remove(locally_locked_files, lock->filename);
+    }
 
     g_static_mutex_unlock(&lock_lock);
 

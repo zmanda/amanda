@@ -1,4 +1,10 @@
 2010-11-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amflock.c (lock_wr, lock_rd, lock_locked): New function
+	* common-src/amflock.h: Add their prototype.
+	* perl/Amanda/Util.swg: Swig them.
+	* perl/Amanda/Util.pod: Docuemnt them.
+
+2010-11-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Remove the changer cache.
 	* installcheck/Amanda_Taper_Scan_traditional.pl,
 	  installcheck/Amanda_Changer_robot.pl,

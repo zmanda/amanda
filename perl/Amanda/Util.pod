@@ -383,11 +383,17 @@ filename to lock:
 
   my $fl = Amanda::Util::file_lock->new($filename)
 
-then, lock the file:
+then, three ways to lock the file:
 
-  $fl->lock();
+  $fl->lock_wr();       # take a write lock (exclusive)
+  $fl->lock_rd();       # take a read lock
+  $fl->lock();	        # take a write lock and reads the contents of
+                        # the file into memory.
 
-which also reads the contents of the file into memory, accessible via
+they return -1 on failure, 0 if the lock is taken or 1 if the lock in not
+taken (you can retry later).
+
+to access the data in memory
 
   my $state = $fl->data();
 

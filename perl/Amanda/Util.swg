@@ -452,7 +452,10 @@ typedef struct file_lock {
 	}
 
 	int lock();
+	int lock_wr();
+	int lock_rd();
 	int unlock();
+	int locked();
 
 	%typemap(in) (const char *data, size_t len) {
 	    $1 = SvPV($input, $2);

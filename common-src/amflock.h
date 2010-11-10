@@ -77,6 +77,18 @@ void file_lock_free(file_lock *lock);
  */
 int file_lock_lock(file_lock *lock);
 
+/* Lock the file in write or read mode, the file is not read
+ *
+ * @param lock: the file_lock object @returns: -1 on error, 0 on success, 1 on
+ * a busy lock (see above)
+ */
+int file_lock_lock_wr(file_lock *lock);
+int file_lock_lock_rd(file_lock *lock);
+
+/* Return 1 if the object is already locked
+ */
+int file_lock_locked(file_lock *lock);
+
 /* Write the given data to the locked file, and reset the file_lock
  * data member to point to a copy of the new data.  This does not unlock
  * the file.
