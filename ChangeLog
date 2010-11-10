@@ -1,4 +1,7 @@
 2010-11-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: Fix use of Amanda::Changer->make_error
+
+2010-11-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amflock.c (lock_wr, lock_rd, lock_locked): New function
 	* common-src/amflock.h: Add their prototype.
 	* perl/Amanda/Util.swg: Swig them.
