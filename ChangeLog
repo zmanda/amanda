@@ -1,4 +1,10 @@
 2010-11-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: Remove the changer cache.
+	* installcheck/Amanda_Taper_Scan_traditional.pl,
+	  installcheck/Amanda_Changer_robot.pl,
+	  installcheck/Amanda_Changer_ndmp.pl: Do not reset the changer cache.
+
+2010-11-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/MainLoop.swg: Add finalize in define_step.
 	* perl/Amanda/MainLoop.pod: Document finalize.
 

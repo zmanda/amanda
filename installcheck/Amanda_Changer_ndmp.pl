@@ -295,7 +295,6 @@ sub test_changer {
     # clean up
     step setup => sub {
 	unlink($chg_state_file) if -f $chg_state_file;
-	%Amanda::Changer::changers_by_uri_cc = ();
 
 	my @ignore_barcodes = ( property => "\"ignore-barcodes\" \"y\"")
 	    if ($mtx_config->{'barcodes'} == -1);

@@ -206,7 +206,6 @@ is_deeply([ @results ],
 	  "starts sequential scan at 'current'")
 	  or diag(Dumper(\@results));
 
-%Amanda::Changer::changers_by_uri_cc = ();
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
@@ -223,7 +222,6 @@ is_deeply([ @results ],
 	  "labels new tapes in blank slots")
 	  or diag(Dumper(\@results));
 
-%Amanda::Changer::changers_by_uri_cc = ();
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
@@ -240,7 +238,6 @@ is_deeply([ @results ],
 
 # simulate "amlabel"
 label_slot(1, "TEST-6", "X", "reuse", 1);
-%Amanda::Changer::changers_by_uri_cc = ();
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",

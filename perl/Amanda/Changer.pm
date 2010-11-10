@@ -836,10 +836,6 @@ sub _uri_to_pkgname {
     return $pkgname;
 }
 
-# already-instantiated changer objects (using 'our' so that the installcheck
-# and reset this list as necessary)
-our %changers_by_uri_cc = ();
-
 sub _new_from_uri { # (note: this sub is patched by the installcheck)
     my $uri = shift;
     my $cc = shift;
@@ -863,10 +859,6 @@ sub _new_from_uri { # (note: this sub is patched by the installcheck)
 
     # return a pre-existing changer, if possible
 
-    if (exists($changers_by_uri_cc{$uri_cc})) {
-	return $changers_by_uri_cc{$uri_cc};
-    }
-
     # look up the type and load the class
     my $pkgname = _uri_to_pkgname($uri);
     if (!$pkgname) {
@@ -880,9 +872,6 @@ sub _new_from_uri { # (note: this sub is patched by the installcheck)
     if ($rv->isa("Amanda::Changer")) {
 	# add an instance variable or two
 	$rv->{'fatal_error'} = undef;
-
-	# store this in our cache for next time
-	$changers_by_uri_cc{$uri_cc} = $rv;
     }
 
     $rv->{'tapelist'} = $params{'tapelist'};

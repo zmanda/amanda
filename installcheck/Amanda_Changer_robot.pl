@@ -381,7 +381,6 @@ sub test_changer {
     step setup => sub {
 	# clean up
 	unlink($chg_state_file) if -f $chg_state_file;
-	%Amanda::Changer::changers_by_uri_cc = ();
 
 	# set up some vtapes
 	rmtree($vtape_root);
