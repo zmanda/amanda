@@ -33,6 +33,14 @@ by users directly.  It uses star to backup and restore data.</para>
 
 </refsect1>
 
+<refsect1><title>INCLUDE - EXCLUDE</title>
+
+<para>amstar doesn't support include. Both 'exclude list' and 'exclude file' are supported. There is a maximum of 100 patterns (limit of star).</para>
+
+<para>Moving directories into and out of directories on the exclude list
+causes incremental backups to not contain the files in the moved directories until the next full backup unless the moved files are modified after the move.</para>
+</refsect1>
+
 <refsect1><title>PROPERTIES</title>
 
 <para>This section lists the properties that control amstar's functionality.

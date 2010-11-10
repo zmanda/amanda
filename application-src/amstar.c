@@ -40,7 +40,8 @@
  * IGNORE
  * STRANGE
  * INCLUDE-LIST		(for restore only)
- * EXCLUDE-LIST		(for restore only)
+ * EXCLUDE-FILE
+ * EXCLUDE-LIST
  * DIRECTORY
  */
 
@@ -159,6 +160,7 @@ static struct option long_options[] = {
     {"exclude-list"    , 1, NULL, 20},
     {"directory"       , 1, NULL, 21},
     {"command-options" , 1, NULL, 22},
+    {"exclude-file"    , 1, NULL, 23},
     { NULL, 0, NULL, 0}
 };
 
@@ -320,6 +322,10 @@ main(
 	case 22: argument.command_options =
 			g_slist_append(argument.command_options,
 				       stralloc(optarg));
+	case 23: if (optarg)
+		     argument.dle.exclude_file =
+			 append_sl(argument.dle.exclude_file, optarg);
+		 break;
 	case ':':
 	case '?':
 		break;
@@ -417,10 +423,6 @@ amstar_selfcheck(
 	argument->dle.include_list->nb_element >= 0) {
 	fprintf(stdout, "ERROR include-list not supported for backup\n");
     }
-    if (argument->dle.exclude_list &&
-	argument->dle.exclude_list->nb_element >= 0) {
-	fprintf(stdout, "ERROR exclude-list not supported for backup\n");
-    }
 
     if (!star_path) {
 	fprintf(stdout, "ERROR STAR-PATH not defined\n");
@@ -485,10 +487,6 @@ amstar_estimate(
     if (argument->dle.include_list &&
 	argument->dle.include_list->nb_element >= 0) {
 	fprintf(stderr, "ERROR include-list not supported for backup\n");
-    }
-    if (argument->dle.exclude_list &&
-	argument->dle.exclude_list->nb_element >= 0) {
-	fprintf(stderr, "ERROR exclude-list not supported for backup\n");
     }
 
     if (check_device(argument) == 0) {
@@ -674,10 +672,6 @@ amstar_backup(
     if (argument->dle.include_list &&
 	argument->dle.include_list->nb_element >= 0) {
 	fprintf(mesgstream, "? include-list not supported for backup\n");
-    }
-    if (argument->dle.exclude_list &&
-	argument->dle.exclude_list->nb_element >= 0) {
-	fprintf(mesgstream, "? exclude-list not supported for backup\n");
     }
 
     level = GPOINTER_TO_INT(argument->level->data);
@@ -951,6 +945,7 @@ static GPtrArray *amstar_build_argv(
 	g_ptr_array_add(argv_ptr, stralloc("-"));
     }
     g_ptr_array_add(argv_ptr, stralloc("-C"));
+
 #if defined(__CYGWIN__)
     {
 	char tmppath[PATH_MAX];
@@ -969,6 +964,7 @@ static GPtrArray *amstar_build_argv(
     g_ptr_array_add(argv_ptr, stralloc2("tardumps=", tardumpfile));
     if (command == CMD_BACKUP)
 	g_ptr_array_add(argv_ptr, stralloc("-wtardumps"));
+
     g_ptr_array_add(argv_ptr, stralloc("-xattr"));
     g_ptr_array_add(argv_ptr, stralloc("-acl"));
     g_ptr_array_add(argv_ptr, stralloc("H=exustar"));
@@ -983,6 +979,54 @@ static GPtrArray *amstar_build_argv(
 
     if (command == CMD_BACKUP && argument->dle.create_index)
 	g_ptr_array_add(argv_ptr, stralloc("-v"));
+
+    if ((argument->dle.exclude_file &&
+	 argument->dle.exclude_file->nb_element >= 1) ||
+	(argument->dle.exclude_list &&
+	 argument->dle.exclude_list->nb_element >= 1)) {
+	g_ptr_array_add(argv_ptr, stralloc("-match-tree"));
+	g_ptr_array_add(argv_ptr, stralloc("-not"));
+    }
+    if (argument->dle.exclude_file &&
+	argument->dle.exclude_file->nb_element >= 1) {
+	sle_t *excl;
+	for (excl = argument->dle.exclude_file->first; excl != NULL;
+	     excl = excl->next) {
+	    char *ex;
+	    if (strcmp(excl->name, "./") == 0) {
+		ex = g_strdup_printf("pat=%s", excl->name+2);
+	    } else {
+		ex = g_strdup_printf("pat=%s", excl->name);
+	    }
+	    g_ptr_array_add(argv_ptr, ex);
+	}
+    }
+    if (argument->dle.exclude_list &&
+	argument->dle.exclude_list->nb_element >= 1) {
+	sle_t *excl;
+	for (excl = argument->dle.exclude_list->first; excl != NULL;
+	     excl = excl->next) {
+	    char *exclname = fixup_relative(excl->name, argument->dle.device);
+	    FILE *exclude;
+	    char *aexc;
+	    if ((exclude = fopen(exclname, "r")) != NULL) {
+		while ((aexc = agets(exclude)) != NULL) {
+		    if (aexc[0] != '\0') {
+			char *ex;
+			if (strcmp(aexc, "./") == 0) {
+			    ex = g_strdup_printf("pat=%s", aexc+2);
+			} else {
+			    ex = g_strdup_printf("pat=%s", aexc);
+			}
+			g_ptr_array_add(argv_ptr, ex);
+		    }
+		    amfree(aexc);
+		}
+	    }
+	    amfree(exclname);
+	    fclose(exclude);
+	}
+    }
 
     g_ptr_array_add(argv_ptr, stralloc("."));
 
