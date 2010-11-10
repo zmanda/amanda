@@ -790,13 +790,13 @@ sub get_device { # (overridden by subclasses)
 
     my $device = Amanda::Device->new($device_name);
     if ($device->status != $DEVICE_STATUS_SUCCESS) {
-	return $self->make_error("failed", undef,
+	return Amanda::Changer->make_error("fatal", undef,
 		reason => "unknown",
 		message => "opening '$device_name': " . $device->error_or_status());
     }
 
     if (my $err = $self->{'config'}->configure_device($device)) {
-	return $self->make_error("failed", undef,
+	return Amanda::Changer->make_error("fatal", undef,
 		reason => "unknown",
 		message => $err);
     }

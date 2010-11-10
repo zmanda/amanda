@@ -1,3 +1,6 @@
+2010-11-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: Fix use of Amanda::Changer->make_error
+
 2010-11-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Better handling of dump to tape.
 	  Set force_flush to 0 as soon as the runq is empty.
