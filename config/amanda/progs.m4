@@ -298,6 +298,20 @@ AC_DEFUN([AMANDA_PROG_MTX],
     AC_ARG_VAR([MTX], [Path to the 'mtx' binary])
 ])
 
+AC_DEFUN([AMANDA_PROG_MOUNT],
+[
+    AC_REQUIRE([AMANDA_INIT_PROGS])
+    AC_PATH_PROG(MOUNT,mount,mount,$LOCSYSPATH)
+    AC_ARG_VAR([MOUNT], [Path to the 'mount' binary])
+])
+
+AC_DEFUN([AMANDA_PROG_UMOUNT],
+[
+    AC_REQUIRE([AMANDA_INIT_PROGS])
+    AC_PATH_PROG(UMOUNT,umount,umount,$LOCSYSPATH)
+    AC_ARG_VAR([UMOUNT], [Path to the 'umount' binary])
+])
+
 AC_DEFUN([AMANDA_PROG_PCAT],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])

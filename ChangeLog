@@ -1,4 +1,10 @@
 2010-11-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/progs.m4(AMANDA_PROG_MOUNT, AMANDA_PROG_UMOUNT):
+	  find mount and umount binaries
+	* configure.in: Use AMANDA_PROG_MOUNT and AMANDA_PROG_UMOUNT.
+	* perl/Amanda/Constants.pm.in: Define MOUNT and UMOUNT.
+
+2010-11-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/tape-device.c: Accept LEOM property.
 
 2010-11-10  Jean-Louis Martineau <martineau@zmanda.com>
