@@ -1,3 +1,7 @@
+2010-11-11  Nikhil Bhupale <nikhilb@zmanda.com>
+	* server-src/amtape.pl: Remove call to set_label.
+	* server-src/amrestore.pl: Remove call to set_label.
+
 2010-11-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/progs.m4(AMANDA_PROG_MOUNT, AMANDA_PROG_UMOUNT):
 	  find mount and umount binaries

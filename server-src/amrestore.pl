@@ -178,11 +178,6 @@ sub main {
 	    return failure($dev->error_or_status, $finished_cb);
 	}
 
-	$res->set_label(label => $dev->volume_label,
-		        finished_cb => $steps->{'set_labeled'});
-    };
-
-    step set_labeled => sub {
 	if ($opt_label) {
 	    if ($dev->volume_label ne $opt_label) {
 		my $got = $dev->volume_label;

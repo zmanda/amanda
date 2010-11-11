@@ -313,7 +313,6 @@ subcommand("slot", "slot <slot>",
 sub {
     my ($finished_cb, @args) = @_;
     my @slotarg;
-    my $gres;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb;
@@ -371,17 +370,7 @@ sub {
 	my $gotslot = $res->{'this_slot'};
 	print STDERR "changed to slot $gotslot\n";
 
-	if ($res->{device}->volume_label) {
-	    $gres = $res;
-	    $res->set_label(label => $res->{device}->volume_label(),
-			    finished_cb => $steps->{'set_labeled'});
-	} else {
-	    $res->release(finished_cb => $steps->{'released'});
-	}
-    };
-
-    step set_labeled => sub {
-	$gres->release(finished_cb => $steps->{'released'});
+	$res->release(finished_cb => $steps->{'released'});
     };
 
     step released => sub {
