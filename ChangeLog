@@ -1,3 +1,7 @@
+2010-11-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driverio.c: Don't update last_level/consecutive_runs if
+	  the dump failed.
+
 2010-11-11  Nikhil Bhupale <nikhilb@zmanda.com>
 	* server-src/amtape.pl: Remove call to set_label.
 	* server-src/amrestore.pl: Remove call to set_label.
