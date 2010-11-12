@@ -1010,7 +1010,7 @@ update_info_dumper(
 
     if (origsize >= (off_t)0 && level == info.last_level) {
 	info.consecutive_runs++;
-    } else if (origsize >= (off_t)0 || level < info.last_level) {
+    } else if (origsize >= (off_t)0) {
 	info.last_level = level;
 	info.consecutive_runs = 1;
     }
