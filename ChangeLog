@@ -1,4 +1,8 @@
 2010-11-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Changer_single.pl: Typo.
+	* server-src/amtape.pl: Typo.
+
+2010-11-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c: Keep the complete error message.
 
 2010-11-16  Jean-Louis Martineau <martineau@zmanda.com>

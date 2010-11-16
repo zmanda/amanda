@@ -155,15 +155,15 @@ sub {
     my %seen_slots;
     my $chg;
 
-    my $steps = define_steps
-	cb_ref => \$finished_cb,
-	finalize => sub { $chg->quit() if defined $chg };
-
     if (@args != 0) {
 	return usage($finished_cb);
     }
 
     $chg = load_changer($finished_cb) or return;
+
+    my $steps = define_steps
+	cb_ref => \$finished_cb,
+	finalize => sub { $chg->quit() if defined $chg };
 
     step start => sub {
 	$chg->info(info => [ 'num_slots' ], info_cb => $steps->{'info_cb'});
