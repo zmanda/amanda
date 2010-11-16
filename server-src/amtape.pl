@@ -95,6 +95,7 @@ sub {
 
     $chg->reset(finished_cb => sub {
 	    my ($err) = @_;
+	    $chg->quit();
 	    return failure($err, $finished_cb) if $err;
 
 	    print STDERR "changer is reset\n";
@@ -115,6 +116,7 @@ sub {
     $chg->eject(@drive_args,
 	finished_cb => sub {
 	    my ($err) = @_;
+	    $chg->quit();
 	    return failure($err, $finished_cb) if $err;
 
 	    print STDERR "drive ejected\n";
@@ -138,6 +140,7 @@ sub {
     $chg->clean(@drive_args,
 	finished_cb => sub {
 	    my ($err) = @_;
+	    $chg->quit();
 	    return failure($err, $finished_cb) if $err;
 
 	    print STDERR "drive cleaned\n";
@@ -150,15 +153,17 @@ sub {
     my ($finished_cb, @args) = @_;
     my $last_slot;
     my %seen_slots;
+    my $chg;
 
     my $steps = define_steps
-	cb_ref => \$finished_cb;
+	cb_ref => \$finished_cb,
+	finalize => sub { $chg->quit() if defined $chg };
 
     if (@args != 0) {
 	return usage($finished_cb);
     }
 
-    my $chg = load_changer($finished_cb) or return;
+    $chg = load_changer($finished_cb) or return;
 
     step start => sub {
 	$chg->info(info => [ 'num_slots' ], info_cb => $steps->{'info_cb'});
@@ -249,6 +254,7 @@ sub {
 		print STDERR "$err\n";
 	    }
 
+	    $chg->quit();
 	    return $finished_cb->();
 	}
 
@@ -293,6 +299,7 @@ sub {
 	    print "$line\n";
 	}
 
+	$chg->quit();
 	$finished_cb->();
     });
     $chg->inventory(inventory_cb => $inventory_cb);
@@ -313,9 +320,11 @@ subcommand("slot", "slot <slot>",
 sub {
     my ($finished_cb, @args) = @_;
     my @slotarg;
+    my $chg
 
     my $steps = define_steps
-	cb_ref => \$finished_cb;
+	cb_ref => \$finished_cb,
+	finalize => sub { $chg->quit() if defined $chg };
 
     # NOTE: the syntax of this subcommand precludes actual slots named
     # 'current' or 'next' ..  when we have a changer using such slot names,
@@ -324,7 +333,7 @@ sub {
     return usage($finished_cb) unless (@args == 1);
     my $slot = shift @args;
 
-    my $chg = load_changer($finished_cb) or return;
+    $chg = load_changer($finished_cb) or return;
 
     step get_slot => sub {
 	if ($slot eq 'current' or $slot eq 'next') {
@@ -386,12 +395,15 @@ sub {
     my ($finished_cb, @args) = @_;
     my $inter;
     my $scan;
+    my $chg;
 
     return usage($finished_cb) unless (@args == 1);
     my $label = shift @args;
 
     my $steps = define_steps
-	cb_ref => \$finished_cb;
+	cb_ref => \$finished_cb,
+	finalize => sub { $scan->quit() if defined $scan;
+			  $chg->quit() if defined $chg };
 
     step start => sub {
 	my $_user_msg_fn = sub {
@@ -417,7 +429,9 @@ sub {
 	};
 
 	$inter = Amanda::Interactive->new(name => 'stdin');
-	$scan = Amanda::Recovery::Scan->new(interactive => $inter);
+	$chg = load_changer($finished_cb) or return;
+	$scan = Amanda::Recovery::Scan->new(chg => $chg,
+					    interactive => $inter);
 	return failure("$scan", $finished_cb)
 	    if ($scan->isa("Amanda::Changer::Error"));
 
@@ -509,6 +523,8 @@ sub {
     my $label = shift @args;
 
     my $chg = load_changer($finished_cb) or return;
+    my $taperscan = Amanda::Taper::Scan->new(changer => $chg,
+					     tapelist => $tl);
 
     my $result_cb = make_cb(result_cb => sub {
 	my ($err, $res, $label, $mode) = @_;
@@ -521,12 +537,11 @@ sub {
 	    my ($err) = @_;
 	    die "$err" if $err;
 
+	    $taperscan->quit() if defined $taperscan;
 	    $finished_cb->();
 	});
     });
 
-    my $taperscan = Amanda::Taper::Scan->new(changer => $chg,
-					     tapelist => $tl);
     $taperscan->scan(
 	result_cb => $result_cb,
 	user_msg_fn => $taper_user_msg_fn,
@@ -552,6 +567,7 @@ sub {
 	    return failure($err, $finished_cb) if $err;
 
 	    print STDERR "update complete\n";
+	    $chg->quit();
 	    $finished_cb->();
 	});
 });

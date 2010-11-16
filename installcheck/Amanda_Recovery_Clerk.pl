@@ -70,7 +70,8 @@ sub setup_changer {
     my ($slot, $xfer_info, $partnum);
 
     my $steps = define_steps
-	cb_ref => \$finished_cb;
+	cb_ref => \$finished_cb,
+	finalize => sub { $chg->quit() };
 
     step setup => sub {
 	$chg = Amanda::Changer->new($chg_name);
@@ -494,6 +495,8 @@ $feedback = main::Feedback->new(
     },
 );
 
+$chg = Amanda::Changer->new("chg-disk:$taperoot");
+$scan = Amanda::Recovery::Scan->new(chg => $chg);
 $clerk = Amanda::Recovery::Clerk->new(scan => $scan, debug => 1,
 				      feedback => $feedback);
 

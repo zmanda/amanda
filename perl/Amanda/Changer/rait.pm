@@ -64,8 +64,12 @@ sub new {
 	my @annotated_errs;
 	for my $i (0 .. @children-1) {
 	    next unless $children[$i]->isa("Amanda::Changer::Error");
-	    push @annotated_errs,
-		[ $kidspecs[$i], $children[$i] ];
+	    if ($children[$i]->isa("Amanda::Changer::Error")) {
+		push @annotated_errs,
+		    [ $kidspecs[$i], $children[$i] ];
+	    } elsif ($children[$i]->isa("Amanda::Changer")) {
+		$children[$i]->quit();
+	    }
 	}
 	return Amanda::Changer->make_combined_error(
 		"fatal", [ @annotated_errs ]);
@@ -79,6 +83,17 @@ sub new {
     };
     bless ($self, $class);
     return $self;
+}
+
+sub quit {
+    my $self = shift;
+
+    # quit each child
+    foreach my $child (@{$self->{'children'}}) {
+	$child->quit() if $child ne "ERROR";
+    }
+
+    $self->SUPER::quit();
 }
 
 # private method to help handle slot input

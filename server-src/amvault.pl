@@ -570,6 +570,16 @@ sub quit {
     my $steps = define_steps
 	    cb_ref => \$exit_cb;
 
+    # the export may not start until we quit the scribe, so wait for it now..
+    step check_exporting => sub {
+	# if we're exporting the final volume, wait for that to complete
+	if ($self->{'exporting'}) {
+	    $self->{'call_after_export'} = $steps->{'quit_scribe'};
+	} else {
+	    $steps->{'quit_scribe'}->();
+	}
+    };
+
     # we may have several resources to clean up..
     step quit_scribe => sub {
 	if ($self->{'cleanup'}{'quit_scribe'}) {
@@ -577,28 +587,19 @@ sub quit {
 	    $self->{'dst'}{'scribe'}->quit(
 		finished_cb => $steps->{'quit_scribe_finished'});
 	} else {
-	    $steps->{'check_exporting'}->();
+	    $steps->{'quit_clerk'}->();
 	}
     };
 
     step quit_scribe_finished => sub {
+	$self->{'dst'}{'scan'}->quit();
 	my ($err) = @_;
 	if ($err) {
 	    print STDERR "$err\n";
 	    $exit_status = 1;
 	}
 
-	$steps->{'check_exporting'}->();
-    };
-
-    # the export may not start until we quit the scribe, so wait for it now..
-    step check_exporting => sub {
-	# if we're exporting the final volume, wait for that to complete
-	if ($self->{'exporting'}) {
-	    $self->{'call_after_export'} = $steps->{'quit_clerk'};
-	} else {
-	    $steps->{'quit_clerk'}->();
-	}
+	$steps->{'quit_clerk'}->();
     };
 
     step quit_clerk => sub {
@@ -745,7 +746,7 @@ sub scribe_notif_tape_done {
     # exports are going on simultaneously.
     $self->{'exporting'}++;
 
-    my $finished_cb = sub {};
+    my $finished_cb = $params{'finished_cb'};
     my $steps = define_steps
 	cb_ref => \$finished_cb;
 

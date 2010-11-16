@@ -346,6 +346,7 @@ if ($cfg_result != $CFGERR_OK) {
     die(join "\n", @errors);
 }
 
+$chg->quit();
 $chg = Amanda::Changer->new();
 die($chg) if $chg->isa("Amanda::Changer::Error");
 
@@ -444,6 +445,7 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
     $get_info->();
     Amanda::MainLoop::run();
 }
+$chg->quit();
 
 # test two simultaneous invocations of info()
 
@@ -534,6 +536,7 @@ sub test_except_slots {
 }
 test_except_slots(\&Amanda::MainLoop::quit);
 Amanda::MainLoop::run();
+$chg->quit();
 
 unlink($changer_filename);
 unlink($result_file);

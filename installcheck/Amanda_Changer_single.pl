@@ -104,8 +104,10 @@ die "$chg" if $chg->isa("Amanda::Changer::Error");
     $get_info->();
     Amanda::MainLoop::run();
 }
+$chg->finalize();
 
 $chg = Amanda::Changer->new("chg-single:bogus:device");
 is("$chg",
     "chg-single: error opening device 'bogus:device': Device type bogus is not known.",
     "bogus device name detected early");
+$chg->finalize();

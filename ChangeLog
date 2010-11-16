@@ -1,3 +1,33 @@
+2010-11-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: Add quit method.
+	* perl/Amanda/Changer/aggregate.pm: Add quit method.
+	* perl/Amanda/Changer/rait.pm: Add quit method.
+	* perl/Amanda/Recovery/Clerk.pm: Call scan quit method.
+	* perl/Amanda/Recovery/Scan.pm: Add quit method.
+	* perl/Amanda/Taper/Controller.pm: Call scan quit method.
+	* perl/Amanda/Taper/Scan.pm: Add quit method.
+	* perl/Amanda/Taper/Scribe.pm: finished_cb to Add scribe_notif_tape_done
+	* server-src/amcheck-device.pl, server-src/amcheckdump.pl,
+	  server-src/amidxtaped.pl, server-src/amlabel.pl,
+	  server-src/amrestore.pl, server-src/amrmtape.pl,
+	  server-src/amtape.pl: Call scan/changer quit method.
+	* server-src/amvault.pl scribe_notif_tape_done with finished_cb.
+	* installcheck/Amanda_Changer.pl,
+	  installcheck/Amanda_Changer_compat.pl,
+	  installcheck/Amanda_Changer_disk.pl,
+	  installcheck/Amanda_Changer_multi.pl,
+	  installcheck/Amanda_Changer_ndmp.pl,
+	  installcheck/Amanda_Changer_null.pl,
+	  installcheck/Amanda_Changer_rait.pl,
+	  installcheck/Amanda_Changer_robot.pl,
+	  installcheck/Amanda_Changer_single.pl,
+	  installcheck/Amanda_Recovery_Clerk.pl,
+	  installcheck/Amanda_Recovery_Scan.pl,
+	  installcheck/Amanda_Taper_Scan.pl,
+	  installcheck/Amanda_Taper_Scan_traditional.pl,
+	  installcheck/Amanda_Taper_Scribe.pl,
+	  installcheck/amvault.pl: Add call to scan/changer quit method.
+
 2010-11-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driverio.c: Don't update last_level/consecutive_runs if
 	  the dump failed.

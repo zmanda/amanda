@@ -211,7 +211,8 @@ sub test_searching {
     my $res03;
 
     my $steps = define_steps
-	cb_ref => \$finished_cb;
+	cb_ref => \$finished_cb,
+	finalize => sub { $scan->quit() };
 
     step start => sub {
 	$scan = Amanda::Recovery::Scan->new(chg => $chg);
@@ -378,7 +379,8 @@ sub test_scan_poll {
     my $res04;
 
     my $steps = define_steps
-	cb_ref => \$finished_cb;
+	cb_ref => \$finished_cb,
+	finalize => sub { $scan->quit() };
 
     step start => sub {
 	$chg = Amanda::Changer->new($chg_name);
@@ -437,10 +439,12 @@ sub test_scan_ask_poll {
     my $chg_name = "multi-changer";
     my $chg = Amanda::Changer->new($chg_name);
     amlabel_sync($chg, $chg_name, 2, 'TESTCONF05');
+    $chg->quit();
     $chg = Amanda::Changer->new("disk-changer");
 
     my $steps = define_steps
-	cb_ref => \$finished_cb;
+	cb_ref => \$finished_cb,
+	finalize => sub { $scan->quit() };
 
     step start => sub {
 	my $interactive = Amanda::Interactive::Installcheck->new();

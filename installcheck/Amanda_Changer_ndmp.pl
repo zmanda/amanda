@@ -74,7 +74,8 @@ sub test_interface {
     my ($interface, $chg);
 
     my $steps = define_steps
-	cb_ref => \$finished_cb;
+	cb_ref => \$finished_cb,
+	finalize => sub { $chg->quit() if defined $chg};
 
     step start => sub {
 	my $testconf = Installcheck::Config->new();
@@ -290,7 +291,8 @@ sub test_changer {
     my $pfx = "BC=$mtx_config->{barcodes}; TORIG=$mtx_config->{track_orig}";
 
     my $steps = define_steps
-	cb_ref => \$finished_cb;
+	cb_ref => \$finished_cb,
+	finalize => sub { $chg->quit() if defined $chg};
 
     # clean up
     step setup => sub {

@@ -258,7 +258,9 @@ sub main {
     my @xfer_errs;
 
     my $steps = define_steps
-	cb_ref => \$finished_cb;
+	cb_ref => \$finished_cb,
+	finalize => sub { $scan->quit() if defined $scan;
+			  $chg->quit() if defined $chg    };
 
     step start => sub {
 	# set up the tapelist

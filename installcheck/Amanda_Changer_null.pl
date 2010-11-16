@@ -105,3 +105,5 @@ my $chg = Amanda::Changer->new("chg-null:");
     $try_eject->();
     Amanda::MainLoop::run();
 }
+
+$chg->quit();

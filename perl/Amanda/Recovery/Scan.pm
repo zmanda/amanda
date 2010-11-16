@@ -70,6 +70,9 @@ Amanda::Recovery::Scan -- interface to scan algorithm
     # later..
     $reservation->release(finished_cb => $start_next_volume);
 
+    # later..
+    $scan->quit(); # also quit the changer
+
     
 =head1 OVERVIEW
 
@@ -119,6 +122,12 @@ the next section.  As with the C<load> method
 of the changer API, C<set_current> should be set to 1 if you want the scan to
 set the current slot.
 
+=head3 quit
+
+  $scan->quit()
+
+The cleanly terminate a scan objet, the changer quit is also called.
+
 =head3 user_msg_fn
 
 The user_msg_fn take various arguments
@@ -162,6 +171,23 @@ sub new {
         interactive => $interactive,
     };
     return bless ($self, $class);
+}
+
+sub DESTROY {
+    my $self = shift;
+
+    die("Recovery::Scan detroyed without quit") if defined $self->{'scan_conf'};
+}
+
+sub quit {
+    my $self = shift;
+
+    $self->{'chg'}->quit() if defined $self->{'chg'};
+
+    foreach (keys %$self) {
+	delete $self->{$_};
+    }
+
 }
 
 sub find_volume {
@@ -586,6 +612,7 @@ sub find_volume {
 	    if ($new_chg->isa("Amanda::Changer::Error")) {
 		return $steps->{'scan_interactive'}->("$new_chg");
 	    }
+	    $self->{'chg'}->quit();
 	    $self->{'chg'} = $new_chg;
 	    %seen = ();
 	} else {

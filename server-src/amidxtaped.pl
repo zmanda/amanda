@@ -347,11 +347,15 @@ sub make_plan {
 	    $chg = Amanda::Changer->new("chg-null:");
 	}
     }
+    $self->{'chg'} = $chg;
+
     my $inter = main::Interactive->new(clientservice => $self);
 
     my $scan = Amanda::Recovery::Scan->new(
 			chg => $chg,
 			interactive => $inter);
+    $self->{'scan'} = $scan;
+
     # XXX temporary
     $scan->{'scan_conf'}->{'driveinuse'} = Amanda::Recovery::Scan::SCAN_ASK;
     $scan->{'scan_conf'}->{'volinuse'} = Amanda::Recovery::Scan::SCAN_ASK;
@@ -704,6 +708,7 @@ sub quit {
     if ($self->{'clerk'}) {
 	$self->{'clerk'}->quit(finished_cb => sub {
 	    my ($err) = @_;
+	    $self->{'chg'}->quit() if defined $self->{'chg'};
 	    if ($err) {
 		# it's *way* too late to report this to amrecover now!
 		warning("while quitting clerk: $err");
@@ -711,6 +716,8 @@ sub quit {
 	    Amanda::MainLoop::quit();
 	});
     } else {
+	$self->{'scan'}->quit() if defined $self->{'scan'};
+	$self->{'chg'}->quit() if defined $self->{'chg'};
 	Amanda::MainLoop::quit();
     }
 }

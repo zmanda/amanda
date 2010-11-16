@@ -320,6 +320,8 @@ my $erase_volume = make_cb('erase_volume' => sub {
 
 		$resv->release(finished_cb => sub {
 		    my ($err) = @_;
+
+		    $chg->quit();
 		    die $err if $err;
 
 		    $scrub_db->();

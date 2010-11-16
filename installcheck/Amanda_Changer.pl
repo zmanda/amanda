@@ -522,6 +522,7 @@ Amanda::MainLoop::run();
     $do_info->();
     Amanda::MainLoop::run();
 }
+$chg->quit();
 
 # Test the various permutations of configuration setup, with a patched
 # _new_from_uri so we can monitor the result
@@ -676,7 +677,8 @@ sub test_locked_state {
     my $num_outstanding = 0;
 
     my $steps = define_steps
-	cb_ref => \$finished_cb;
+	cb_ref => \$finished_cb,
+	finalize => sub { $chg->quit() if defined $chg };
 
     step start => sub {
 	$chg = Amanda::Changer->new("chg-null:");

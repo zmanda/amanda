@@ -43,6 +43,9 @@ This is an abstract base class for taperscan algorithms.
   };
   $taperscan->scan(result_cb => $result_cb, user_msg_fn => $user_msg_fn);
 
+  # later ..
+  $taperscan->quit(); # also quit the changer
+
 =head1 OVERVIEW
 
 C<Amanda::Taper::Scan> subclasses represent algorithms used by
@@ -90,6 +93,12 @@ The C<result_cb> takes the following positional parameters:
 The error message can be a simple string or an C<Amanda::Changer::Error> object
 (see L<Amanda::Changer>).  The C<$label> and C<$access_mode> specify parameters
 for starting the device contained in C<$reservation>.
+
+To cleanly terminate an Amanda::Taper::Scan object:
+
+  $taperscan->quit()
+
+It also terminate the changer by caller $chg->quit().
 
 =head1 SUBCLASS UTILITIES
 
@@ -231,6 +240,21 @@ sub new {
     $self->{'tapelist'} = $params{'tapelist'};
 
     return $self;
+}
+
+sub DESTROY {
+    my $self = shift;
+
+    die("Taper::Scan did not quit") if defined $self->{'changer'};
+}
+
+sub quit {
+    my $self = shift;
+
+    $self->{'changer'}->quit() if defined $self->{'changer'};
+    foreach (keys %$self) {
+        delete $self->{$_};
+    }
 }
 
 sub scan {

@@ -96,7 +96,6 @@ ok(run("$sbindir/amvault",
 		'TESTCONF'),
     "amvault runs!")
     or diag($Installcheck::Run::stderr);
-
 my @tert_files = glob("$vtape_root/slot1/0*");
 ok(@tert_files > 0,
     "..and files appear on the tertiary volume!");
@@ -237,6 +236,7 @@ EOF
     };
     Amanda::MainLoop::call_later(sub { $chg->inventory(inventory_cb => $inventory_cb); });
     Amanda::MainLoop::run();
+    $chg->quit();
 
     # find TESTCONF02 in the inventory, and check that it is in an i/e slot
     my $notfound = "tertiary volume not found";

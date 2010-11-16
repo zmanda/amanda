@@ -52,7 +52,7 @@ sub set_tapelist {
 # methods are never invoked in this test.
 my $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",
-    changer => {}, # (not used)
+    changer => undef, # (not used)
     tapelist => $tapelist,
     tapecycle => 1, # will be changed periodically below
     labelstr => "TEST-[0-9]",
@@ -140,4 +140,6 @@ ok( $taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 0), " TEST
 ok(!$taperscan->is_reusable_volume(label => "TEST-2", new_label_ok => 0), " TEST-2 not reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 0), " TEST-3 not reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-4", new_label_ok => 0), " TEST-4 not reusable");
+
+$taperscan->quit();
 

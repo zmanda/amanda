@@ -179,6 +179,7 @@ sub quit {
     };
 
     step done => sub {
+	$self->{'taperscan'}->quit() if defined $self->{'taperscan'};
 	if (@errors) {
 	    $params{'finished_cb'}->(join("; ", @errors));
 	} else {

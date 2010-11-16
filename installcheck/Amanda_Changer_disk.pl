@@ -421,4 +421,5 @@ Amanda::MainLoop::run();
     Amanda::MainLoop::run();
 }
 
+$chg->quit();
 rmtree($taperoot);

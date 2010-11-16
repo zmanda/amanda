@@ -300,18 +300,25 @@ sub handle_xmsg {
 sub quit {
     my $self = shift;
     my %params = @_;
+    my $finished_cb = $params{'finished_cb'};
 
     die "Cannot quit a Clerk while a transfer is in progress"
 	if $self->{'xfer_state'};
 
-    # if we have a reservation, we need to release it; otherwise, we can
-    # just call finished_cb
-    if ($self->{'current_res'}) {
-	$self->{'current_dev'}->finish();
-	$self->{'current_res'}->release(finished_cb => $params{'finished_cb'});
-    } else {
-	$params{'finished_cb'}->();
-    }
+    my $steps = define_steps 
+	cb_ref => \$finished_cb,
+	finalize => sub { $self->{'scan'}->quit() if defined $self->{'scan'} };
+
+    step release => sub {
+	# if we have a reservation, we need to release it; otherwise, we can
+	# just call finished_cb
+	if ($self->{'current_res'}) {
+	    $self->{'current_dev'}->finish();
+	    $self->{'current_res'}->release(finished_cb => $finished_cb);
+	} else {
+	    $finished_cb->();
+	}
+    };
 }
 
 sub _xmsg_ready {

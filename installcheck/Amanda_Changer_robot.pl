@@ -91,7 +91,8 @@ sub test_interface {
     my ($interface, $chg);
 
     my $steps = define_steps
-	cb_ref => \$finished_cb;
+	cb_ref => \$finished_cb,
+	finalize => sub { $chg->quit() };
 
     step start => sub {
 	my $testconf = Installcheck::Config->new();
@@ -346,6 +347,7 @@ Amanda::MainLoop::run();
     $dashed_mtx_state_file =~ s/^-*//;
     is($chg->{'statefile'}, "$localstatedir/amanda/chg-robot-$dashed_mtx_state_file",
         "statefile calculated correctly");
+    $chg->quit();
 
     # test no-fast-search
     $chg = Amanda::Changer->new("no-fast-search");
@@ -363,6 +365,7 @@ Amanda::MainLoop::run();
     my @allowed = map { $chg->_is_slot_allowed($_) } (0 .. 10);
     is_deeply([ @allowed ], [ 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0 ],
 	"_is_slot_allowed parses multiple properties and behaves as expected");
+    $chg->quit();
 }
 
 ##
@@ -376,7 +379,8 @@ sub test_changer {
     my $vtape_root = "$Installcheck::TMP/chg-robot-vtapes";
 
     my $steps = define_steps
-	cb_ref => \$finished_cb;
+	cb_ref => \$finished_cb,
+	finalize => sub { $chg->quit() };
 
     step setup => sub {
 	# clean up

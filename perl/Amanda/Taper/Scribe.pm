@@ -1073,10 +1073,13 @@ sub _release_reservation {
 
 	# notify the feedback that we've finished and released a tape
 	if ($label) {
-	    $self->{'feedback'}->scribe_notif_tape_done(
+	    return $self->{'feedback'}->scribe_notif_tape_done(
 		volume_label => $label,
 		size => $kb * 1024,
-		num_files => $fm);
+		num_files => $fm,
+		finished_cb => sub {
+		 $params{'finished_cb'}->(@errors? join("; ", @errors) : undef);
+		});
 	}
 
 	$params{'finished_cb'}->(@errors? join("; ", @errors) : undef);
@@ -1512,9 +1515,14 @@ sub request_volume_permission {
 }
 
 sub scribe_notif_new_tape { }
-sub scribe_notif_tape_done { }
 sub scribe_notif_part_done { }
 sub scribe_notif_log_info { }
+sub scribe_notif_tape_done {
+    my $self = shift;
+    my %params = @_;
+
+    $params{'finished_cb'}->();
+}
 
 ##
 ## Device Handling

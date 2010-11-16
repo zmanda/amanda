@@ -59,6 +59,9 @@ Amanda::Changer -- interface to changer scripts
     # later..
     $reservation->release(finished_cb => $start_next_volume);
 
+    # later..
+    $chg->quit();
+
 =head1 INTERFACE
 
 All operations in the module return immediately, and take as an argument a
@@ -190,6 +193,10 @@ tape immediately (with C<load>), and to progress from tape to tape using the
 C<relative_slot> parameter to C<load>.
 
 =head2 CHANGER OBJECTS
+
+=head3 quit
+
+To terminate a changer object.
 
 =head3 load
 
@@ -748,6 +755,21 @@ sub new {
     }
 }
 
+sub DESTROY {
+    my $self = shift;
+
+    die("Changer '$self->{'chg_name'}' not quit") if defined $self->{'chg_name'};
+}
+
+# do nothing in quit
+sub quit {
+    my $self = shift;
+
+    foreach (keys %$self) {
+        delete $self->{$_};
+    }
+}
+
 # helper functions for new
 
 sub _changer_alias_to_uri {
@@ -1219,6 +1241,9 @@ sub new {
 
     return bless (\%info, $class);
 }
+
+# do nothing in quit
+sub quit {}
 
 # types
 sub fatal { $_[0]->{'type'} eq 'fatal'; }

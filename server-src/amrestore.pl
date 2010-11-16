@@ -133,12 +133,14 @@ sub main {
 
     my $dev;
     my $hdr;
+    my $chg;
     my $filenum = $opt_filenum;
     $filenum = 1 if (!$filenum);
     $filenum = 0 + "$filenum"; # convert to integer
 
     my $steps = define_steps
-	cb_ref => \$finished_cb;
+	cb_ref => \$finished_cb,
+	finalize => sub { $chg->quit() if defined $chg };
 
     step start => sub {
 	# first, return to the original working directory we were started in
@@ -151,7 +153,7 @@ sub main {
 	} else {
 	    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
 	    my $tl = Amanda::Tapelist->new($tlf);
-	    my $chg = Amanda::Changer->new($opt_restore_src, tapelist => $tl);
+	    $chg = Amanda::Changer->new($opt_restore_src, tapelist => $tl);
 	    if ($chg->isa("Amanda::Changer::Error")) {
 		return failure($chg, $finished_cb);
 	    }

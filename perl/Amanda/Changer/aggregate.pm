@@ -111,6 +111,17 @@ sub new {
     return $self;
 }
 
+sub quit {
+    my $self = shift;
+
+    # quit each child
+    foreach my $child (@{$self->{'children'}}) {
+        $child->quit();
+    }
+
+    $self->SUPER::quit();
+}
+
 sub _get_current_slot
 {
     my $self = shift;

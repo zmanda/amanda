@@ -144,27 +144,31 @@ my $taperscan;
 my @results;
 
 # set up a traditional taperscan
+$chg = Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist);
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
     tapecycle => 4,
-    changer => Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist));
+    changer => $chg);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
 	  [ "No acceptable volumes found", undef, undef ],
 	  "no reusable tapes -> error")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
+$chg = Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist);
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
     tapecycle => 3,
-    changer => Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist));
+    changer => $chg);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
 	  [ undef, "TEST-1", $ACCESS_WRITE ],
 	  "finds the best reusable tape")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
 $chg = Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist);
 $chg->{'support_fast_search'} = 0; # no fast search -> skip stage 1
@@ -179,6 +183,10 @@ is_deeply([ @results ],
 	  [ undef, "TEST-2", $ACCESS_WRITE ],
 	  "finds the first reusable tape when fast_search is false")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
+
+$chg = Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist);
+$chg->{'support_fast_search'} = 1;
 
 label_slot(1); # remove TEST-1
 label_slot(4, "TEST-4", "20090424183004", "reuse", 1);
@@ -187,63 +195,72 @@ $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
     tapecycle => 2,
-    changer => Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist));
+    changer => $chg);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
 	  [ undef, "TEST-2", $ACCESS_WRITE ],
 	  "uses the first usable tape it finds when oldest is missing")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
+
+$chg = Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist);
 
 set_current_slot(3);
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
     tapecycle => 2,
-    changer => Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist));
+    changer => $chg);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
 	  [ undef, "TEST-3", $ACCESS_WRITE ],
 	  "starts sequential scan at 'current'")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
+$chg = Amanda::Changer->new("chg-disk:$taperoot",
+			tapelist => $tapelist,
+			autolabel => { 'template'     => "TEST-%",
+			               'empty'        => 1,
+			               'volume_error' => 1});
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
     tapecycle => 2,
-    changer => Amanda::Changer->new("chg-disk:$taperoot",
-			tapelist => $tapelist,
-			autolabel => { 'template'     => "TEST-%",
-			               'empty'        => 1,
-			               'volume_error' => 1}));
+    changer => $chg);
 set_current_slot(5);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
 	  [ undef, "TEST-5", $ACCESS_WRITE ],
 	  "labels new tapes in blank slots")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
+$chg = Amanda::Changer->new("chg-disk:$taperoot",
+			tapelist => $tapelist,
+			autolabel => { });
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
     tapecycle => 1,
-    changer => Amanda::Changer->new("chg-disk:$taperoot",
-			tapelist => $tapelist,
-			autolabel => { }));
+    changer => $chg);
 set_current_slot(6);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
 	  [ undef, "TEST-2", $ACCESS_WRITE ],
 	  "handles an invalid current slot by going to the next")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
+$chg = Amanda::Changer->new("chg-disk:$taperoot",
+			tapelist => $tapelist);
 # simulate "amlabel"
 label_slot(1, "TEST-6", "X", "reuse", 1);
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
     tapecycle => 2,
-    changer => Amanda::Changer->new("chg-disk:$taperoot",
-				    tapelist => $tapelist));
+    changer => $chg);
 set_current_slot(2);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
@@ -257,18 +274,22 @@ label_slot(1, "TEST-1", "20090424173001", "no-reuse", 1);
 label_slot(2, "TEST-2", "20090424173002", "reuse", 1);
 label_slot(3, "TEST-3", "20090424173003", "reuse", 1);
 label_slot(4, "TEST-4", "20090424173004", "reuse", 1);
+$taperscan->quit();
+
+$chg = Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist);
 set_current_slot(1);
 
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
     tapecycle => 2,
-    changer => Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist,));
+    changer => $chg);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
 	  [ undef, "TEST-2", $ACCESS_WRITE ],
 	  "skips a no-reuse volume")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
 rmtree($taperoot);
 unlink($tapelist);
