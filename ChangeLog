@@ -1,4 +1,10 @@
 2010-11-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/disk.pm: new MOUNT, UMOUNT, UMOUNT-LOCKFILE and
+				       UMOUNT-IDLE properties.
+	* man/xml-source/amanda-changers.7.xml: Add new chg-disk property.
+	* NEWS: Add new chg-disk property.
+
+2010-11-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Add quit method.
 	* perl/Amanda/Changer/aggregate.pm: Add quit method.
 	* perl/Amanda/Changer/rait.pm: Add quit method.

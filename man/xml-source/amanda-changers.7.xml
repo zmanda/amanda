@@ -165,7 +165,11 @@ drive in sequence.</para>
 tpchanger "chg-disk:/var/mnt/vtapes"
 property "num-slot" "10"
 property "auto-create-slot" "yes"
-property "removable" "no"
+property "removable" "yes"
+property "mount" "yes"
+property "umount" "yes"
+property "umount-lockfile" "/etc/amanda/conf/vtapes-lock"
+property "umount-idle" "1"
 </programlisting>
 
 <para>This changer driver replaces the old <command>chg-disk</command>,
@@ -187,6 +191,10 @@ name="amrestore" vol="8" /> command line.</para>
 If a <computeroutput>slotN</computeroutput> directory in the range 1 to NUM-SLOT does not already exist, and this property is true, then the changer will create the directory.
 </listitem></varlistentry>
 <!-- ==== -->
+<varlistentry><term>MOUNT</term><listitem>
+If this property is true, the changer try to mount the removable disk if nothing is mounted. The system must be configured to allow the amanda user to mount it.
+</listitem></varlistentry>
+<!-- ==== -->
 <varlistentry><term>NUM-SLOT</term><listitem>
 The minimum number of slots in the changer, where the first slot is <computeroutput>slot1</computeroutput>.  If additional slot directories exist, they will also be used.
 </listitem></varlistentry>
@@ -197,6 +205,18 @@ directory (e.g., <filename>/var/mnt/vtapes</filename>) is on a different
 filesystem from its parent directory (e.g., <filename>/var/mnt</filename>).
 This is useful for removable disks, as it will prevent Amanda from creating
 slot directories when the removable disk is not mounted.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>UMOUNT</term><listitem>
+If this property is true, the changer try to umount the removable disk when it exit. The system must be configured to allow the amanda user to umount it.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>UMOUNT-LOCKFILE</term><listitem>
+If UMOUNT is set, it require a lockfile outside of the mount point to prevent race.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>UMOUNT-IDLE</term><listitem>
+If set, the changer try to umount the removable disk when it is not in use. The umount-idle value is a delay in second to wait before doing the umount. A value &gt;= 1 is required to prevent useless mount/umount.
 </listitem></varlistentry>
 
 </variablelist>

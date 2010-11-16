@@ -6,6 +6,10 @@ Changes in release 3.3.0alpha
        o new NUM-SLOT property
        o new AUTO-CREATE-SLOT property
        o new REMOVABLE property
+       o new MOUNT property
+       o new UMOUNT property
+       o new UMOUNT-LOCKFILE property
+       o new UMOUNT-IDLE property
    * Change in amanda.conf
        o new meta-autolabel option
        o autolabel can include org, config, barcode, meta in the label
