@@ -320,7 +320,7 @@ subcommand("slot", "slot <slot>",
 sub {
     my ($finished_cb, @args) = @_;
     my @slotarg;
-    my $chg
+    my $chg;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb,
