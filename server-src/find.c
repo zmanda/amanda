@@ -969,10 +969,11 @@ search_logfile(
 		sec = 0;
 		kb = 0;
 		orig_kb = 0;
+		*rest_undo = ' ';
 	    }
 
-	    if (strcmp(rest, "error") == 0) rest += 6;
-	    if (strcmp(rest, "config") == 0) rest += 7;
+	    if (strncmp(rest, "error", 5) == 0) rest += 6;
+	    if (strncmp(rest, "config", 6) == 0) rest += 7;
 
 	    dp = lookup_disk(host,disk);
 	    if ( dp == NULL ) {
