@@ -748,8 +748,8 @@ start_server_check(
 	}
 
 	if (getconf_int(CNF_TAPERFLUSH) > 0 &&
-	    !getconf_boolean(CNF_AUTOFLUSH)) {
-	    g_fprintf(outf, _("WARNING: autoflush must be set to 'yes' if taperflush (%d) is greater that 0.\n"),
+	    !getconf_no_yes_all(CNF_AUTOFLUSH)) {
+	    g_fprintf(outf, _("WARNING: autoflush must be set to 'yes' or 'all' if taperflush (%d) is greater that 0.\n"),
 		      getconf_int(CNF_TAPERFLUSH));
 	}
 

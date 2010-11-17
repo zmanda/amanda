@@ -484,6 +484,7 @@ static void read_time(conf_var_t *, val_t *);
 static void read_size(conf_var_t *, val_t *);
 static void read_size_byte(conf_var_t *, val_t *);
 static void read_bool(conf_var_t *, val_t *);
+static void read_no_yes_all(conf_var_t *, val_t *);
 static void read_compress(conf_var_t *, val_t *);
 static void read_encrypt(conf_var_t *, val_t *);
 static void read_holding(conf_var_t *, val_t *);
@@ -518,6 +519,7 @@ static ssize_t get_size(void);
 static ssize_t get_size_byte(void);
 static gint64  get_int64(void);
 static int     get_bool(void);
+static int     get_no_yes_all(void);
 
 /* Check the given 'seen', flagging an error if this value has already
  * been seen and allow_overwrites is false.  Also marks the value as
@@ -642,6 +644,7 @@ static void conf_init_identlist(val_t *val, char *s);
 static void conf_init_time(val_t *val, time_t t);
 static void conf_init_size(val_t *val, ssize_t sz);
 static void conf_init_bool(val_t *val, int i);
+static void conf_init_no_yes_all(val_t *val, int i);
 static void conf_init_compress(val_t *val, comp_t i);
 static void conf_init_encrypt(val_t *val, encrypt_t i);
 static void conf_init_data_path(val_t *val, data_path_t i);
@@ -1083,6 +1086,22 @@ keytab_t bool_keytable[] = {
     { NULL, CONF_IDENT }
 };
 
+/* no_yes_all keywords -- all the ways to say "true" and "false" in amanda.conf */
+keytab_t no_yes_all_keytable[] = {
+    { "Y", CONF_ATRUE },
+    { "YES", CONF_ATRUE },
+    { "T", CONF_ATRUE },
+    { "TRUE", CONF_ATRUE },
+    { "ON", CONF_ATRUE },
+    { "N", CONF_AFALSE },
+    { "NO", CONF_AFALSE },
+    { "F", CONF_AFALSE },
+    { "FALSE", CONF_AFALSE },
+    { "OFF", CONF_AFALSE },
+    { "ALL", CONF_ALL },
+    { NULL, CONF_IDENT }
+};
+
 /* Now, the parser tables for client and server global parameters, and for
  * each of the server subsections */
 conf_var_t client_var [] = {
@@ -1174,7 +1193,7 @@ conf_var_t server_var [] = {
    { CONF_FLUSH_THRESHOLD_SCHEDULED, CONFTYPE_INT  , read_int         , CNF_FLUSH_THRESHOLD_SCHEDULED, validate_nonnegative },
    { CONF_TAPERFLUSH           , CONFTYPE_INT      , read_int         , CNF_TAPERFLUSH           , validate_nonnegative },
    { CONF_DISPLAYUNIT          , CONFTYPE_STR      , read_str         , CNF_DISPLAYUNIT          , validate_displayunit },
-   { CONF_AUTOFLUSH            , CONFTYPE_BOOLEAN  , read_bool        , CNF_AUTOFLUSH            , NULL },
+   { CONF_AUTOFLUSH            , CONFTYPE_NO_YES_ALL,read_no_yes_all  , CNF_AUTOFLUSH            , NULL },
    { CONF_RESERVE              , CONFTYPE_INT      , read_int         , CNF_RESERVE              , validate_reserve },
    { CONF_MAXDUMPSIZE          , CONFTYPE_INT64    , read_int64       , CNF_MAXDUMPSIZE          , NULL },
    { CONF_KRB5KEYTAB           , CONFTYPE_STR      , read_str         , CNF_KRB5KEYTAB           , NULL },
@@ -3107,6 +3126,15 @@ read_bool(
 }
 
 static void
+read_no_yes_all(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t *val)
+{
+    ckseen(&val->seen);
+    val_t__int(val) = get_no_yes_all();
+}
+
+static void
 read_compress(
     conf_var_t *np G_GNUC_UNUSED,
     val_t *val)
@@ -3348,8 +3376,8 @@ read_data_path(
 
     get_conftoken(CONF_ANY);
     switch(tok) {
-    case CONF_AMANDA   : val_t__send_amreport(val) = DATA_PATH_AMANDA   ; break;
-    case CONF_DIRECTTCP: val_t__send_amreport(val) = DATA_PATH_DIRECTTCP; break;
+    case CONF_AMANDA   : val_t__data_path(val) = DATA_PATH_AMANDA   ; break;
+    case CONF_DIRECTTCP: val_t__data_path(val) = DATA_PATH_DIRECTTCP; break;
     default:
 	conf_parserror(_("AMANDA or DIRECTTCP expected"));
     }
@@ -4282,6 +4310,59 @@ get_bool(void)
     return val;
 }
 
+static int
+get_no_yes_all(void)
+{
+    int val;
+    keytab_t *save_kt;
+
+    save_kt = keytable;
+    keytable = no_yes_all_keytable;
+
+    get_conftoken(CONF_ANY);
+
+    switch(tok) {
+    case CONF_INT:
+	val = tokenval.v.i;
+	break;
+
+    case CONF_SIZE:
+	val = tokenval.v.size;
+	break;
+
+    case CONF_INT64:
+	val = tokenval.v.int64;
+	break;
+
+    case CONF_ALL:
+	val = 2;
+	break;
+
+    case CONF_ATRUE:
+	val = 1;
+	break;
+
+    case CONF_AFALSE:
+	val = 0;
+	break;
+
+    case CONF_NL:
+	unget_conftoken();
+	val = 3; /* no argument - most likely TRUE */
+	break;
+    default:
+	unget_conftoken();
+	val = 3; /* a bad argument - most likely TRUE */
+	conf_parserror(_("%d: YES, NO, ALL, TRUE, FALSE, ON, OFF, 0, 1, 2 expected"), tok);
+	break;
+    }
+
+    if (val > 2 || val < 0)
+	val = 1;
+    keytable = save_kt;
+    return val;
+}
+
 void
 ckseen(
     seen_t *seen)
@@ -4818,7 +4899,7 @@ init_defaults(
     conf_init_size     (&conf_data[CNF_DEVICE_OUTPUT_BUFFER_SIZE], 40*32768);
     conf_init_str   (&conf_data[CNF_PRINTER]              , "");
     conf_init_str   (&conf_data[CNF_MAILER]               , DEFAULT_MAILER);
-    conf_init_bool     (&conf_data[CNF_AUTOFLUSH]            , 0);
+    conf_init_no_yes_all(&conf_data[CNF_AUTOFLUSH]            , 0);
     conf_init_int      (&conf_data[CNF_RESERVE]              , 100);
     conf_init_int64    (&conf_data[CNF_MAXDUMPSIZE]          , (gint64)-1);
     conf_init_str   (&conf_data[CNF_COLUMNSPEC]           , "");
@@ -5220,6 +5301,17 @@ conf_init_bool(
     val->seen.filename = NULL;
     val->type = CONFTYPE_BOOLEAN;
     val_t__boolean(val) = i;
+}
+
+static void
+conf_init_no_yes_all(
+    val_t *val,
+    int    i)
+{
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
+    val->type = CONFTYPE_NO_YES_ALL;
+    val_t__int(val) = i;
 }
 
 static void
@@ -6079,6 +6171,18 @@ val_t_to_boolean(
     return val_t__boolean(val);
 }
 
+int
+val_t_to_no_yes_all(
+    val_t *val)
+{
+    assert(config_initialized);
+    if (val->type != CONFTYPE_NO_YES_ALL) {
+	error(_("val_t_to_no_yes_all: val.type is not CONFTYPE_NO_YES_ALL"));
+	/*NOTREACHED*/
+    }
+    return val_t__no_yes_all(val);
+}
+
 comp_t
 val_t_to_compress(
     val_t *val)
@@ -6320,6 +6424,7 @@ copy_val_t(
 	switch(valsrc->type) {
 	case CONFTYPE_INT:
 	case CONFTYPE_BOOLEAN:
+	case CONFTYPE_NO_YES_ALL:
 	case CONFTYPE_COMPRESS:
 	case CONFTYPE_ENCRYPT:
 	case CONFTYPE_HOLDING:
@@ -6487,6 +6592,7 @@ free_val_t(
     switch(val->type) {
 	case CONFTYPE_INT:
 	case CONFTYPE_BOOLEAN:
+	case CONFTYPE_NO_YES_ALL:
 	case CONFTYPE_COMPRESS:
 	case CONFTYPE_ENCRYPT:
 	case CONFTYPE_HOLDING:
@@ -6963,6 +7069,20 @@ val_t_display_strs(
 	    buf[0] = stralloc("yes");
 	else
 	    buf[0] = stralloc("no");
+	break;
+
+    case CONFTYPE_NO_YES_ALL:
+	switch(val_t__no_yes_all(val)) {
+	case 0:
+	    buf[0] = stralloc("no");
+	    break;
+	case 1:
+	    buf[0] = stralloc("yes");
+	    break;
+	case 2:
+	    buf[0] = stralloc("all");
+	    break;
+	}
 	break;
 
     case CONFTYPE_STRATEGY:

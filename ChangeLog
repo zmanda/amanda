@@ -1,4 +1,13 @@
 2010-11-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add CONFTYPE_NO_YES_ALL, change type for
+	  autoflush.
+	* common-src/conffile.h: Add CONFTYPE_NO_YES_ALL.
+	* man/xml-source/amanda.conf.5.xml: New autoflush option.
+	* perl/Amanda/Config.swg: Add CONFTYPE_NO_YES_ALL.
+	* server-src/amcheck.c: Use new value of autoflush.
+	* server-src/planner.c: Use new value of autoflush.
+
+2010-11-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Correctly handle INPUT-ERROR and TAPE-ERROR.
 
 2010-11-17  Jean-Louis Martineau <martineau@zmanda.com>

@@ -381,7 +381,7 @@ amglue_copy_to_tag(part_cache_type_t, getconf);
  */
 
 /* Typemap to convert a val_t to an SV, using a static function since it's huge.  This converts:
- *  - CONFTYPE_SIZE, CONFTYPE_INT, CONFTYPE_INT64,
+ *  - CONFTYPE_SIZE, CONFTYPE_INT, CONFTYPE_INT64, CONFTYPE_NO_YES_ALL,
  *    CONFTYPE_BOOLEAN -> IV
  *  - CONFTYPE_REAL -> NV
  *  - CONFTYPE_STR, CONFTYPE_IDENT -> PV
@@ -481,6 +481,7 @@ val_t_to_sv(val_t *val, SV **results) {
 		return 1;
 
 	    case CONFTYPE_BOOLEAN:	    /* all same as INT.. */
+	    case CONFTYPE_NO_YES_ALL:
 	    case CONFTYPE_COMPRESS:
 	    case CONFTYPE_ENCRYPT:
 	    case CONFTYPE_STRATEGY:

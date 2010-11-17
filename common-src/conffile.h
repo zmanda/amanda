@@ -248,6 +248,7 @@ typedef enum {
     CONFTYPE_AUTOLABEL,
     CONFTYPE_PART_CACHE_TYPE,
     CONFTYPE_RECOVERY_LIMIT,
+    CONFTYPE_NO_YES_ALL,
 } conftype_t;
 
 /* A "seen" struct.  Rather than allocate strings all over the place, this
@@ -294,6 +295,7 @@ identlist_t           val_t_to_identlist(val_t *);
 time_t                val_t_to_time     (val_t *);
 ssize_t               val_t_to_size     (val_t *);
 int                   val_t_to_boolean  (val_t *);
+int                   val_t_to_no_yes_all(val_t *);
 comp_t                val_t_to_compress (val_t *);
 encrypt_t             val_t_to_encrypt  (val_t *);
 dump_holdingdisk_t    val_t_to_holding  (val_t *);
@@ -345,6 +347,7 @@ recovery_limit_t     *val_t_to_recovery_limit(val_t *);
 #define val_t__time(val)          ((val)->v.t)
 #define val_t__size(val)          ((val)->v.size)
 #define val_t__boolean(val)       ((val)->v.i)
+#define val_t__no_yes_all(val)    ((val)->v.i)
 #define val_t__compress(val)      ((val)->v.i)
 #define val_t__encrypt(val)       ((val)->v.i)
 #define val_t__holding(val)       ((val)->v.i)
@@ -509,6 +512,7 @@ val_t *getconf(confparm_key key);
 #define getconf_time(key)         (val_t_to_time(getconf((key))))
 #define getconf_size(key)         (val_t_to_size(getconf((key))))
 #define getconf_boolean(key)      (val_t_to_boolean(getconf((key))))
+#define getconf_no_yes_all(key)   (val_t_to_no_yes_all(getconf((key))))
 #define getconf_compress(key)     (val_t_to_compress(getconf((key))))
 #define getconf_encrypt(key)      (val_t_to_encrypt(getconf((key))))
 #define getconf_holding(key)      (val_t_to_holding(getconf((key))))

@@ -1076,11 +1076,13 @@ the amount of holding disk space reserved for incrementals should be lowered.</p
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><amkeyword>autoflush</amkeyword> <amtype>bool</amtype></term>
+  <term><amkeyword>autoflush</amkeyword> <amkeyword>no</amkeyword>|<amkeyword>yes</amkeyword>|<amkeyword>all</amkeyword></term>
   <listitem>
 <para>Default:
-<amkeyword>off</amkeyword>.
-Whether an amdump run will flush the dumps from holding disk to tape.</para>
+<amkeyword>no</amkeyword>.
+Whether an amdump run will flush the dumps from holding disk to tape.
+With <amkeyword>yes</amkeyword>, only dump matching the command line argument are flushed.
+With <amkeyword>all</amkeyword>, all dump are flushed.</para>
   </listitem>
   </varlistentry>
   <varlistentry>

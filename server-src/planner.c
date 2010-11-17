@@ -315,7 +315,7 @@ main(
     conf_tapecycle = getconf_int(CNF_TAPECYCLE);
     conf_etimeout = (time_t)getconf_int(CNF_ETIMEOUT);
     conf_reserve  = getconf_int(CNF_RESERVE);
-    conf_autoflush = getconf_boolean(CNF_AUTOFLUSH);
+    conf_autoflush = getconf_no_yes_all(CNF_AUTOFLUSH);
     conf_usetimestamps = getconf_boolean(CNF_USETIMESTAMPS);
 
     today = time(0);
@@ -436,7 +436,8 @@ main(
 	    }
 
 	    /* see if this matches the command-line arguments */
-	    if (!match_dumpfile(&file, argc-diskarg_offset,
+	    if (conf_autoflush == 1 &&
+		!match_dumpfile(&file, argc-diskarg_offset,
 				       argv+diskarg_offset)) {
 		continue;
 	    }
