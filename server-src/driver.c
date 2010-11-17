@@ -1583,6 +1583,9 @@ handle_taper_result(
 
 	    if (strcmp(result_argv[2], "INPUT-ERROR") == 0) {
 		taper->input_error = newstralloc(taper->input_error, result_argv[4]);
+		taper->result = FAILED;
+		amfree(qname);
+		break;
 	    } else if (strcmp(result_argv[2], "INPUT-GOOD") != 0) {
 		taper->tape_error = newstralloc(taper->tape_error,
 					       _("Taper protocol error"));
@@ -1596,6 +1599,9 @@ handle_taper_result(
 	    if (strcmp(result_argv[3], "TAPE-ERROR") == 0) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
 		taper->tape_error = newstralloc(taper->tape_error, result_argv[5]);
+		taper->result = FAILED;
+		amfree(qname);
+		break;
 	    } else if (strcmp(result_argv[3], "TAPE-GOOD") != 0) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
 		taper->tape_error = newstralloc(taper->tape_error,
@@ -1633,6 +1639,9 @@ handle_taper_result(
 
 	    if (strcmp(result_argv[2], "INPUT-ERROR") == 0) {
 		taper->input_error = newstralloc(taper->input_error, result_argv[5]);
+		taper->result = FAILED;
+		amfree(qname);
+		break;
 	    } else if (strcmp(result_argv[2], "INPUT-GOOD") != 0) {
 		taper->tape_error = newstralloc(taper->tape_error,
 					       _("Taper protocol error"));
@@ -1646,6 +1655,9 @@ handle_taper_result(
 	    if (strcmp(result_argv[3], "TAPE-ERROR") == 0) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
 		taper->tape_error = newstralloc(taper->tape_error, result_argv[6]);
+		taper->result = FAILED;
+		amfree(qname);
+		break;
 	    } else if (strcmp(result_argv[3], "TAPE-GOOD") != 0) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
 		taper->tape_error = newstralloc(taper->tape_error,
