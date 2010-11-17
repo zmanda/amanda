@@ -540,18 +540,20 @@ device_thread_write_part(
     g_mutex_unlock(self->ring_mutex);
 part_done:
 
-    if (elt->cancelled) {
-	g_timer_destroy(timer);
-	return NULL;
-    }
-
     /* if we write all of the blocks, but the finish_file fails, then likely
      * there was some buffering going on in the device driver, and the blocks
      * did not all make it to permanent storage -- so it's a failed part.  Note
      * that we try to finish_file even if the part failed, just to be thorough. */
     if (self->device->in_file) {
 	if (!device_finish_file(self->device))
-	    part_status = PART_FAILED;
+	    if (!elt->cancelled) {
+		part_status = PART_FAILED;
+	    }
+    }
+
+    if (elt->cancelled) {
+	g_timer_destroy(timer);
+	return NULL;
     }
 
     g_timer_stop(timer);
