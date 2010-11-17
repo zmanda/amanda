@@ -1,3 +1,6 @@
+2010-11-16 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/rpm/amanda.spec: add rhel6 stanza to distro detection
+
 2010-09-28 Dan Locks <dwlocks@zmanda.com>
 	*  VERSION: update to 3.1.3
 
