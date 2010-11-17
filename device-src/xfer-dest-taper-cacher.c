@@ -878,16 +878,20 @@ device_thread_write_part(
 {
     GTimer *timer = g_timer_new();
     XMsg *msg;
-    slab_source_state src_state;
+    slab_source_state src_state = {0, 0};
     guint64 serial, stop_serial;
     gboolean eof = FALSE;
     int fileno = 0;
+    int failed = 0;
+    int slab_source_set = 0;
 
     self->last_part_successful = FALSE;
     self->bytes_written = 0;
 
-    if (!device_start_file(self->device, self->part_header))
+    if (!device_start_file(self->device, self->part_header)) {
+	failed = 1;
 	goto part_done;
+    }
 
     dumpfile_free(self->part_header);
     self->part_header = NULL;
@@ -897,6 +901,7 @@ device_thread_write_part(
 
     if (!slab_source_setup(self, &src_state))
 	goto part_done;
+    slab_source_set = 1;
 
     g_timer_start(timer);
 
@@ -906,13 +911,17 @@ device_thread_write_part(
 	Slab *slab = slab_source_get(self, &src_state, serial);
 	DBG(8, "writing slab %p (serial %ju) to device", slab, serial);
 	g_mutex_unlock(self->slab_mutex);
-	if (!slab)
+	if (!slab) {
+	    failed = 1;
 	    goto part_done;
+	}
 
 	eof = slab->size < self->slab_size;
 
-	if (!write_slab_to_device(self, slab))
+	if (!write_slab_to_device(self, slab)) {
+	    failed = 1;
 	    goto part_done;
+	}
 
 	g_mutex_lock(self->slab_mutex);
 	DBG(8, "wrote slab %p to device", slab);
@@ -924,18 +933,22 @@ device_thread_write_part(
     }
     g_mutex_unlock(self->slab_mutex);
 
+part_done:
     /* if we write all of the blocks, but the finish_file fails, then likely
      * there was some buffering going on in the device driver, and the blocks
      * did not all make it to permanent storage -- so it's a failed part. */
-    if (!device_finish_file(self->device))
-	goto part_done;
+    if (self->device->in_file && !device_finish_file(self->device))
+	failed = 1;
 
-    slab_source_free(self, &src_state);
+    if (slab_source_set) {
+	slab_source_free(self, &src_state);
+    }
 
-    self->last_part_successful = TRUE;
-    self->no_more_parts = eof;
+    if (!failed) {
+	self->last_part_successful = TRUE;
+	self->no_more_parts = eof;
+    }
 
-part_done:
     g_timer_stop(timer);
 
     msg = xmsg_new(XFER_ELEMENT(self), XMSG_PART_DONE, 0);
