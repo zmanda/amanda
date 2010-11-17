@@ -739,14 +739,14 @@ cancel_impl(
 
     /* then signal all of our condition variables, so that threads waiting on them
      * wake up and see elt->cancelled. */
-    g_mutex_lock(self->state_mutex);
-    g_cond_broadcast(self->state_cond);
-    g_mutex_unlock(self->state_mutex);
-
     g_mutex_lock(self->ring_mutex);
     g_cond_broadcast(self->ring_add_cond);
     g_cond_broadcast(self->ring_free_cond);
     g_mutex_unlock(self->ring_mutex);
+
+    g_mutex_lock(self->state_mutex);
+    g_cond_broadcast(self->state_cond);
+    g_mutex_unlock(self->state_mutex);
 
     return rv;
 }

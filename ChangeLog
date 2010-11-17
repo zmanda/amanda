@@ -1,5 +1,11 @@
 2010-11-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/xfer-dest-taper-cacher.c,
+	  device-src/xfer-dest-taper-splitter.c: Cancel in correct order.
+	  Other thread own self->state_mutex while it wait for self->ring* or
+	  self->slab*
+
+2010-11-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/xfer-dest-taper-cacher.c,
 	  device-src/xfer-dest-taper-splitter.c: Always call device_finish_file
 	  if device_start_file succeed.
 
