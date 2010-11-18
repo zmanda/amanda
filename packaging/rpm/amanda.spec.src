@@ -161,7 +161,7 @@
 # Define amanda_version using the value determined by
 # packaging/common/substitute.pl.
 %{!?amanda_version: %define amanda_version %%VERSION%% }
-%{!?amanda_release: %define amanda_release 1}
+%{!?amanda_release: %define amanda_release 2}
 %define amanda_version_info "Amanda Community Edition - version %{amanda_version}"
 %define amanda_user amandabackup
 %define amanda_group disk
