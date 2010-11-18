@@ -155,7 +155,7 @@
 # Define amanda_version from configure.in if it is not already defined.
 
 %{!?amanda_version: %define amanda_version %(eval %{__cat} FULL_VERSION) }
-%{!?amanda_release: %define amanda_release 1}
+%{!?amanda_release: %define amanda_release 2}
 %define amanda_version_info "Amanda Community Edition - version %{amanda_version}"
 %define amanda_user amandabackup
 %define amanda_group disk
