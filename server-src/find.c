@@ -40,7 +40,8 @@
 #include "cmdline.h"
 
 int find_match(char *host, char *disk);
-char *find_nicedate(char *datestamp);
+static char *find_nicedate(char *datestamp);
+static int len_find_nicedate(char *datestamp);
 static int find_compare(const void *, const void *);
 static int parse_taper_datestamp_log(char *logline, char **datestamp, char **level);
 static gboolean logfile_has_tape(char * label, char * datestamp,
@@ -426,10 +427,9 @@ print_find_result(
     for(output_find_result=output_find;
 	output_find_result;
 	output_find_result=output_find_result->next) {
-	char *qdiskname;
 	char *s;
 
-	len=strlen(find_nicedate(output_find_result->timestamp));
+	len=len_find_nicedate(output_find_result->timestamp);
 	if((int)len > max_len_datestamp)
 	    max_len_datestamp=(int)len;
 
@@ -437,16 +437,12 @@ print_find_result(
 	if((int)len > max_len_hostname)
 	    max_len_hostname = (int)len;
 
-	qdiskname=quote_string(output_find_result->diskname);
-	len=strlen(qdiskname);
-	amfree(qdiskname);
+	len = len_quote_string(output_find_result->diskname);
 	if((int)len > max_len_diskname)
 	    max_len_diskname = (int)len;
 
         if (output_find_result->label != NULL) {
-            char *qlabel = quote_string(output_find_result->label);
-            len=strlen(qlabel);
-            amfree(qlabel);
+	    len = len_quote_string(output_find_result->label);
             if((int)len > max_len_label)
                 max_len_label = (int)len;
         }
@@ -458,6 +454,7 @@ print_find_result(
 	s = g_strdup_printf("%d/%d", output_find_result->partnum,
 				     output_find_result->totalparts);
 	len=strlen(s);
+	amfree(s);
 	if((int)len > max_len_part)
 	    max_len_part = (int)len;
     }
@@ -562,7 +559,7 @@ find_match(
     return (dp && dp->todo);
 }
 
-char *
+static char *
 find_nicedate(
     char *datestamp)
 {
@@ -596,6 +593,17 @@ find_nicedate(
     }
 
     return nice;
+}
+
+static int
+len_find_nicedate(
+    char *datestamp)
+{
+    if(strlen(datestamp) <= 8) {
+	return 10;
+    } else {
+	return 19;
+    }
 }
 
 static int
@@ -718,7 +726,7 @@ search_logfile(
     char *number;
     int fileno;
     char *current_label = stralloc("");
-    char *rest;
+    char *rest, *rest_undo;
     char *ck_label=NULL;
     int level = 0;
     off_t filenum;
@@ -730,9 +738,6 @@ search_logfile(
     find_result_t *a_part_find;
     gboolean right_label = FALSE;
     gboolean found_something = FALSE;
-    regex_t regex;
-    int reg_result;
-    regmatch_t pmatch[4];
     double sec;
     off_t kb;
     off_t orig_kb;
@@ -894,65 +899,78 @@ search_logfile(
 		continue;
 	    }
 	    rest = s - 1;
-	    if((s = strchr(s, '\n')) != NULL) {
-		*s = '\0';
-	    }
-
-	    /* extract sec, kb, kps, orig-kb from 'rest', if present.  This isn't the stone age
-	     * anymore, so we'll just do it the easy way (a regex) */
-	    bzero(&regex, sizeof(regex));
-	    reg_result = regcomp(&regex,
-		    "\\[sec ([0-9.]+) kb ([0-9]+) kps [0-9.]+ orig-kb ([0-9]+)\\]", REG_EXTENDED);
-	    if (reg_result != 0) {
-		error("Error compiling regular expression for parsing log lines");
-		/* NOTREACHED */
-	    }
-
-	    /* an error here just means the line wasn't found -- not fatal. */
-	    reg_result = regexec(&regex, rest, sizeof(pmatch)/sizeof(*pmatch), pmatch, 0);
-	    if (reg_result == 0) {
-		char *str;
-
-		str = find_regex_substring(rest, pmatch[1]);
-		sec = atof(str);
-		amfree(str);
-
-		str = find_regex_substring(rest, pmatch[2]);
-		kb = OFF_T_ATOI(str);
-		amfree(str);
-
-		str = find_regex_substring(rest, pmatch[3]);
-		orig_kb = OFF_T_ATOI(str);
-		amfree(str);
-	    } else {
-		bzero(&regex, sizeof(regex));
-		reg_result = regcomp(&regex,
-		    "\\[sec ([0-9.]+) kb ([0-9]+) kps [0-9.]+\\]", REG_EXTENDED);
-		if (reg_result != 0) {
-		    error("Error compiling regular expression for parsing log lines");
-		    /* NOTREACHED */
+	    skip_non_whitespace(s, ch);
+	    rest_undo = s - 1;
+	    *rest_undo = '\0';
+	    if (strcmp(rest, "[sec") == 0) {
+		skip_whitespace(s, ch);
+		if(ch == '\0') {
+		    g_printf(_("strange log line in %s \"%s\"\n"),
+			     logfile, curstr);
+		    continue;
+		}
+		sec = atof(s - 1);
+		skip_non_whitespace(s, ch);
+		skip_whitespace(s, ch);
+		rest = s - 1;
+		skip_non_whitespace(s, ch);
+		rest_undo = s - 1;
+		*rest_undo = '\0';
+		if (strcmp(rest, "kb") != 0) {
+		    g_printf(_("Bstrange log line in %s \"%s\"\n"),
+			     logfile, curstr);
+		    continue;
 		}
 
-		/* an error here just means the line wasn't found -- not fatal. */
-		reg_result = regexec(&regex, rest, sizeof(pmatch)/sizeof(*pmatch), pmatch, 0);
-		if (reg_result == 0) {
-		    char *str;
+		skip_whitespace(s, ch);
+		if (ch == '\0') {
+		    g_printf(_("strange log line in %s \"%s\"\n"),
+			     logfile, curstr);
+		    continue;
+		}
+		kb = atof(s - 1);
+		skip_non_whitespace(s, ch);
+		skip_whitespace(s, ch);
+		rest = s - 1;
+		skip_non_whitespace(s, ch);
+		rest_undo = s - 1;
+		*rest_undo = '\0';
+		if (strcmp(rest, "kps") != 0) {
+		    g_printf(_("Cstrange log line in %s \"%s\"\n"),
+			     logfile, curstr);
+		    continue;
+		}
 
-		    str = find_regex_substring(rest, pmatch[1]);
-		    sec = atof(str);
-		    amfree(str);
-
-		    str = find_regex_substring(rest, pmatch[2]);
-		    kb = OFF_T_ATOI(str);
-		    amfree(str);
+		skip_whitespace(s, ch);
+		if (ch == '\0') {
+		    g_printf(_("strange log line in %s \"%s\"\n"),
+			     logfile, curstr);
+		    continue;
+		}
+		/* kps = atof(s - 1); */
+		skip_non_whitespace(s, ch);
+		skip_whitespace(s, ch);
+		rest = s - 1;
+		skip_non_whitespace(s, ch);
+		rest_undo = s - 1;
+		*rest_undo = '\0';
+		if (strcmp(rest, "orig-kb") != 0) {
 		    orig_kb = 0;
 		} else {
-		    sec = 0;
-		    kb = 0;
-		    orig_kb = 0;
-		}
+		    skip_whitespace(s, ch);
+		    if (ch == '\0') {
+			g_printf(_("strange log line in %s \"%s\"\n"),
+				 logfile, curstr);
+			continue;
+		    }
+		    orig_kb = atof(s - 1);
+                }
+	    } else {
+		sec = 0;
+		kb = 0;
+		orig_kb = 0;
+		*rest_undo = ' ';
 	    }
-	    regfree(&regex);
 
 	    dp = lookup_disk(host,disk);
 	    if ( dp == NULL ) {

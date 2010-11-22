@@ -71,9 +71,11 @@ char *	construct_timestamp(time_t *t);
  * always adds "" around the string */
 #define quote_string(str) quote_string_maybe((str), 0)
 #define quote_string_always(str) quote_string_maybe((str), 1)
+#define len_quote_string(str) len_quote_string_maybe((str), 0);
 
 /*@only@*//*@null@*/char *quote_string_maybe(const char *str, gboolean always);
 /*@only@*//*@null@*/char *unquote_string(const char *str);
+/*@only@*//*@null@*/int   len_quote_string_maybe(const char *str, gboolean always);
 
 /* Split a string into space-delimited words, obeying quoting as created by
  * quote_string.  To keep compatibility with the old split(), this has the
