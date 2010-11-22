@@ -72,6 +72,8 @@ noinst_PROGRAMS = $(TESTS)
 
 if WANT_S3_DEVICE
 sbin_PROGRAMS += activate-devpay
+activate_devpay_LDADD = \
+	../gnulib/libgnu.la
 activate_devpay_SOURCES = activate-devpay.c
 endif
 
