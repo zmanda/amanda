@@ -1,3 +1,6 @@
+2010-11-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/Makefile.am: activate-devpay needs gnulib.
+
 2010-11-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Correctly handle INPUT-ERROR and TAPE-ERROR.
 
