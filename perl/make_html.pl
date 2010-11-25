@@ -27,6 +27,8 @@ use File::Temp;
 my ($targetdir, @sources) = @ARGV;
 @sources = sort @sources;
 
+my $version = "@VERSION@";
+
 my %dirs = ( '' => 1 );
 my ($dir, $pm);
 
@@ -117,9 +119,10 @@ sub postprocess {
     close($fh);
 
     $html =~ s{<title>.*</title>}{<title>$module</title>};
+    $html =~ s{<body>}{<body></div><center>$version<hr></center>};
     $html =~ s{<link rev="made" [^>]*/>}{};
     $html =~ s{html">the (\S+) manpage</a>}{html">$1</a>}g;
-
+    $html =~ s{</body>}{</div><hr><center>$version</center></body>};
     # write it out
     open($fh, ">", $filename) or die("open $filename: $!");
     print $fh $html;
