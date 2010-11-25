@@ -150,7 +150,7 @@ HEADER
 		my $html = pm2html($pm);
 		my $mod = pm2module($pm);
 		next unless ($pm =~ /^$dir/);
-		print $idx " <li><a href=\"/pod/$html\">$mod</a>\n";
+		print $idx " <li><a href=\"$html\">$mod</a>\n";
 	}
 	print $idx <<'FOOTER';
 </ul>
