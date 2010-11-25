@@ -1,4 +1,7 @@
 2010-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* * perl/make_html.pl: make relative url in index.html.
+
+2010-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/make_html.pl: Add amanda version in html headers and footers.
 
 2010-11-25  Jean-Louis Martineau <martineau@zmanda.com>
