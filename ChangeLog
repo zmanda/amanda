@@ -1,3 +1,6 @@
+2010-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xslt/html.xsl.in: Include Amanda version in HTML headers.
+
 2010-11-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/Makefile.am: activate-devpay needs gnulib.
 
