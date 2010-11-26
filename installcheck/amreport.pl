@@ -207,7 +207,7 @@ like(run_err($amreport, 'TESTCONF-NOSUCH'),
 ok(!run($amreport, 'TESTCONF-NOSUCH', '--help'),
     "amreport --help exits with status 1");
 like($Installcheck::Run::stdout,
-    qr/Usage: amreport conf/,
+    qr/Usage: amreport \[--version\]/,
     "..and prints usage message");
 
 like(run_get($amreport, 'TESTCONF-NOSUCH', '--version'),
