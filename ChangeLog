@@ -1,4 +1,7 @@
 2010-11-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/amreport.pl: Fix for previous patch.
+
+2010-11-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amadmin.8.xml, man/xml-source/amcheck.8.xml,
 	  man/xml-source/amcheckdump.8.xml, man/xml-source/amdevcheck.8.xml,
 	  man/xml-source/amdump.8.xml, man/xml-source/amfetchdump.8.xml,
