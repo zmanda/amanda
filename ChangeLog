@@ -1,4 +1,18 @@
 2010-11-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amadmin.8.xml, man/xml-source/amcheck.8.xml,
+	  man/xml-source/amcheckdump.8.xml, man/xml-source/amdevcheck.8.xml,
+	  man/xml-source/amdump.8.xml, man/xml-source/amfetchdump.8.xml,
+	  man/xml-source/amflush.8.xml, man/xml-source/amgetconf.8.xml,
+	  man/xml-source/amlabel.8.xml, man/xml-source/amoverview.8.xml,
+	  man/xml-source/amrecover.8.xml, man/xml-source/amreport.8.xml,
+	  man/xml-source/amservice.8.xml, man/xml-source/amstatus.8.xml,
+	  man/xml-source/amtape.8.xml: Fix synopsis.
+	* device-src/amdevcheck.pl, server-src/amadmin.c,
+	  server-src/amcheckdump.pl, server-src/amlabel.pl,
+	  server-src/amoverview.pl, server-src/amreport.pl,
+	  server-src/amstatus.pl, server-src/amtape.pl: Fix usage.
+
+2010-11-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Print configuration option with '-'.
 	* installcheck/Amanda_Config.pl: Fix for '-'.
 

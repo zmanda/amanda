@@ -30,12 +30,12 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amlabel</command>    
+    &version.synopsis;
+    &configoverride.synopsis;
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>label</replaceable></arg>
     <arg choice='opt'>slot <replaceable>slot</replaceable></arg>
     <arg><option>-f</option></arg>
-    &version.synopsis;
-    &configoverride.synopsis;
 </cmdsynopsis>
 </refsynopsisdiv>
 

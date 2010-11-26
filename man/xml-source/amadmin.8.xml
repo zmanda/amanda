@@ -30,10 +30,10 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amadmin</command>    
+    &configoverride.synopsis;
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>command</replaceable></arg>
     <arg choice='opt' rep='repeat'><replaceable>command_options</replaceable></arg>
-    &configoverride.synopsis;
 </cmdsynopsis>
 </refsynopsisdiv>
 

@@ -26,10 +26,10 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amcheckdump</command>    
-    <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='opt'>--timestamp|-t <replaceable>timestamp</replaceable></arg>
     <arg choice='opt'>--verbose</arg>
     &configoverride.synopsis;
+    <arg choice='plain'><replaceable>config</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 

@@ -79,7 +79,7 @@ sub print_result {
 
 sub usage {
     print <<EOF;
-Usage: amdevcheck <config> [ <device name> ] [ --properties {prop1,prop2,prop3} ]
+Usage: amdevcheck [--label] [--properties {prop1,prop2,prop3}] [-o configoption]* <config> [<device name>]
 EOF
     exit(1);
 }

@@ -29,8 +29,6 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amstatus</command>    
-    <arg choice='opt'>--config </arg>
-    <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='opt'><arg choice='plain'>--file </arg><arg choice='plain'><replaceable>amdumpfile</replaceable></arg></arg>
     <arg choice='opt'>--summary </arg>
     <arg choice='opt'>--dumping </arg>
@@ -44,6 +42,8 @@
     <arg choice='opt'>--gestimate </arg>
     <arg choice='opt'>--stats </arg>
     <arg choice='opt'>--locale-independent-date-format </arg>
+    <arg choice='opt'>--config </arg>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 

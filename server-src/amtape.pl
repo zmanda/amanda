@@ -49,7 +49,7 @@ sub usage {
     $finished_cb = sub { exit(1); } if (!$finished_cb or !(ref($finished_cb) eq "CODE"));
 
     print STDERR <<EOF;
-Usage: amtape <conf> <command> {<args>} [-o configoption]*
+Usage: amtape [-o configoption]* <conf> <command> {<args>}
   Valid commands are:
 EOF
     local $Text::Wrap::columns = 80 - 20;

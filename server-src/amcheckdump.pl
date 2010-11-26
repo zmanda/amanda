@@ -44,7 +44,7 @@ use Amanda::Xfer qw( :constants );
 
 sub usage {
     print <<EOF;
-USAGE:	amcheckdump config [ --timestamp|-t timestamp ] [-o configoption]*
+USAGE:	amcheckdump [ --timestamp|-t timestamp ] [-o configoption]* <conf>
     amcheckdump validates Amanda dump images by reading them from storage
 volume(s), and verifying archive integrity if the proper tool is locally
 available. amcheckdump does not actually compare the data located in the image

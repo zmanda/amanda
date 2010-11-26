@@ -1563,9 +1563,11 @@ sub busytime() {
 }
 
 sub usage() {
-	print "amstatus [--config] config [--file amdump_file]\n";
+	print "amstatus [--file amdump_file]\n";
 	print "         [--summary] [--dumping] [--waitdumping] [--waittaper]\n";
 	print "         [--dumpingtape] [--writingtape] [--finished] [--failed]\n";
-	print "         [--estimate] [--gestimate] [--stats] [--date] [--locale-independent-date-format]\n";
+	print "         [--estimate] [--gestimate] [--stats] [--date]\n";
+	print "         [--locale-independent-date-format]\n";
+	print "         [--config] <config>\n";
 	exit 0;
 }

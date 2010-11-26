@@ -30,10 +30,10 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amtape</command>    
+    &configoverride.synopsis;
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>subcommand</replaceable></arg>
     <arg choice='opt' rep='repeat'><replaceable>subcommand_options</replaceable></arg>
-    &configoverride.synopsis;
 </cmdsynopsis>
 </refsynopsisdiv>
 
