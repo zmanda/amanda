@@ -1,5 +1,9 @@
+2010-11-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Print configuration option with '-'.
+	* installcheck/Amanda_Config.pl: Fix for '-'.
+
 2010-11-25  Jean-Louis Martineau <martineau@zmanda.com>
-	* * perl/make_html.pl: make relative url in index.html.
+	* perl/make_html.pl: make relative url in index.html.
 
 2010-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/make_html.pl: Add amanda version in html headers and footers.

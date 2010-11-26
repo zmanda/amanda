@@ -566,14 +566,14 @@ $dump_filename =~ s/":$//g;
 is($dump_filename, $fn, 
     "config filename is included correctly");
 
-like($dump, qr/DEVICE_PROPERTY\s+"foo" "bar"\n/i,
-    "DEVICE_PROPERTY appears in dump output");
+like($dump, qr/DEVICE-PROPERTY\s+"foo" "bar"\n/i,
+    "DEVICE-PROPERTY appears in dump output");
 
-like($dump, qr/AMRECOVER_CHECK_LABEL\s+(yes|no)/i,
-    "AMRECOVER_CHECK_LABEL has a trailing space");
+like($dump, qr/AMRECOVER-CHECK-LABEL\s+(yes|no)/i,
+    "AMRECOVER-CHECK-LABEL has a trailing space");
 
-like($dump, qr/AMRECOVER_CHECK_LABEL\s+(yes|no)/i,
-    "AMRECOVER_CHECK_LABEL has a trailing space");
+like($dump, qr/AMRECOVER-CHECK-LABEL\s+(yes|no)/i,
+    "AMRECOVER-CHECK-LABEL has a trailing space");
 
 like($dump, qr/EXCLUDE\s+LIST "foo" "bar" "true" "star"/i,
     "EXCLUDE LIST is in the dump");
@@ -583,7 +583,7 @@ like($dump, qr/INCLUDE\s+LIST OPTIONAL "bing" "ting" "string" "fling"/i,
     "INCLUDE LIST is in the dump");
 like($dump, qr/INCLUDE\s+FILE OPTIONAL "rhyme"/i,
     "INCLUDE FILE is in the dump");
-like($dump, qr/RECOVERY_LIMIT.*SAME-HOST/i,
+like($dump, qr/RECOVERY-LIMIT.*SAME-HOST/i,
     "RECOVERY-LIST is in the dump");
 
 ##

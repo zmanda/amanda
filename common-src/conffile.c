@@ -226,6 +226,10 @@ static int current_line_num = 0; /* (technically, managed by the parser) */
 /* A static buffer for storing tokens while they are being scanned. */
 static char tkbuf[4096];
 
+/* Return a token formated for output */
+static char *str_keyword(keytab_t *kt);
+
+static char *str_keyword(keytab_t *kt);
 /* Look up the name of the given token in the current keytable */
 static char *get_token_name(tok_t);
 
@@ -1638,7 +1642,7 @@ negative_number: /* look for goto negative_number below sign is set there */
 	    if (kwp->keyword == NULL)
 		str = _("token not");
 	    else
-		str = kwp->keyword;
+		str = str_keyword(kwp);
 	    break;
 	}
 	conf_parserror(_("%s is expected"), str);
@@ -3645,7 +3649,7 @@ read_execute_on(
 	case CONF_POST_LEVEL_RECOVER:  val->v.i |= EXECUTE_ON_POST_LEVEL_RECOVER;  break;
 	case CONF_INTER_LEVEL_RECOVER: val->v.i |= EXECUTE_ON_INTER_LEVEL_RECOVER; break;
 	default:
-	conf_parserror(_("Execute_on expected"));
+	conf_parserror(_("Execute-on expected"));
 	}
 	get_conftoken(CONF_ANY);
 	if (tok != CONF_COMMA) {
@@ -6833,7 +6837,7 @@ val_t_print_token(
         for(dispstr=dispstrs; *dispstr!=NULL; dispstr++) {
 	    if (prefix)
 		g_fprintf(output, "%s", prefix);
-	    g_fprintf(output, format, kt->keyword);
+	    g_fprintf(output, format, str_keyword(kt));
 	    g_fprintf(output, "%s\n", *dispstr);
 	}
     } else {
@@ -7836,3 +7840,25 @@ amandaify_property_name(
     return ret;
 }
 
+static char keyword_str[1024];
+
+static char *
+str_keyword(
+    keytab_t *kt)
+{
+    char *p = kt->keyword;
+    char *s = keyword_str;
+
+    while(*p != '\0') {
+	if (*p == '_') {
+	    *s = '-';
+	} else {
+	    *s = *p;
+	}
+	p++;
+	s++;
+    }
+    *s = '\0';
+
+    return keyword_str;
+}
