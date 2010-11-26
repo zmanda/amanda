@@ -29,13 +29,13 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amdump</command>    
-    <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='opt'><option>--no-taper</option></arg>
+    &configoverride.synopsis;
+    <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='opt' rep='repeat'>
        <arg choice='plain'><replaceable>host</replaceable></arg>
        <arg choice='opt' rep='repeat'><replaceable>disk</replaceable></arg>
     </arg>
-    &configoverride.synopsis;
 </cmdsynopsis>
 </refsynopsisdiv>
 

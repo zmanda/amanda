@@ -31,8 +31,8 @@ use POSIX;
 
 sub Usage {
     print STDERR <<END;
-Usage: $0 [--config] CONFIG [--hostwidth width] [--diskwidth width]
-	  [--skipmissed] [--last] [--num0] [--togo0] [--verbose]
+Usage: $0 [--hostwidth width] [--diskwidth width] [--skipmissed]
+	  [--last] [--num0] [--togo0] [--verbose] [--config] <config>
 
 This script generates to standard output an overview of the filesystems
 dumped over time and the type of dump done on a particular day, such as

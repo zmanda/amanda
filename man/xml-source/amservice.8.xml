@@ -29,11 +29,11 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amservice</command>    
+    <arg choice='opt'><arg choice='plain'>-f</arg><arg choice='plain'><replaceable>input_file</replaceable></arg></arg>
+    &configoverride.synopsis;
     <arg choice='plain'><replaceable>hostname</replaceable></arg>
     <arg choice='plain'><replaceable>auth</replaceable></arg>
     <arg choice='plain'><replaceable>service</replaceable></arg>
-    <arg choice='opt'><arg choice='plain'>-f</arg><arg choice='plain'><replaceable>input_file</replaceable></arg></arg>
-    &configoverride.synopsis;
 </cmdsynopsis>
 </refsynopsisdiv>
 

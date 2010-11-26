@@ -31,9 +31,9 @@
     <arg choice='opt'><replaceable>-l|--list</replaceable></arg>
     <arg choice='opt'><replaceable>--client</replaceable></arg>
     <arg choice='opt'><replaceable>--execute-where client|server</replaceable></arg>
+    &configoverride.synopsis;
     <arg choice='opt'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>parameter</replaceable></arg>
-    &configoverride.synopsis;
 </cmdsynopsis>
 </refsynopsisdiv>
 

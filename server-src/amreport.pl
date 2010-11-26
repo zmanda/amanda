@@ -67,7 +67,7 @@ my (@outputs, @output_queue);
 sub usage
 {
     print <<EOF;
-Usage: amreport conf [--version] [--help] [-o configoption]
+Usage: amreport [--version] [--help] [-o configoption] <conf>
   command-line mode options:
     [--log=logfile] [--ps=filename] [--text=filename] [--xml=filename]
     [--print=printer] [--mail-text=recipient]

@@ -246,7 +246,7 @@ usage(void)
 {
     int i;
 
-    g_fprintf(stderr, _("\nUsage: %s <conf> <command> {<args>} [-o configoption]* ...\n"),
+    g_fprintf(stderr, _("\nUsage: %s [-o configoption]* <conf> <command> {<args>} ...\n"),
 	    get_pname());
     g_fprintf(stderr, _("    Valid <command>s are:\n"));
     for (i = 0; i < NCMDS; i++)

@@ -28,11 +28,11 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amreport</command>    
-    <arg choice='opt'><replaceable>config</replaceable></arg>
     &configoverride.synopsis;
     <group>
 	<synopfragmentref linkend="cmdline">command-line options</synopfragmentref> | <synopfragmentref linkend="script">script options</synopfragmentref>
     </group>
+    <arg choice='opt'><replaceable>config</replaceable></arg>
   <synopfragment id="cmdline">
     <arg choice='opt'>--log=<replaceable>logfile</replaceable></arg>
     <arg choice='opt'>--ps=<replaceable>filename</replaceable></arg>

@@ -42,8 +42,8 @@ my $exit_status = 0;
 my %subcommands;
 
 sub usage {
-    print STDERR "Usage: amlabel <conf> [<label>] [slot <slot-number>] [--barcode <barcode>]\n"
-	       . "               [--meta <meta>] [--assign] [-f] [--version] [-o configoption]*\n";
+    print STDERR "Usage: amlabel [--barcode <barcode>] [--meta <meta>] [--assign] [--version]\n"
+	       . "               [-f] [-o configoption]* <conf> [<label>] [slot <slot-number>]\n";
     exit(1);
 }
 
