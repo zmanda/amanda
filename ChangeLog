@@ -1,3 +1,6 @@
+2010-11-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amlabel.8.xml: Typo.
+
 2010-11-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/amreport.pl: Fix for previous patch.
 
