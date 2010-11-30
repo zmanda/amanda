@@ -90,6 +90,8 @@ void run_server_dle_scripts(execute_on_t  execute_on,
 void run_server_host_scripts(execute_on_t  execute_on,
 			     char         *config,
 			     am_host_t    *hostp);
+void run_server_global_scripts(execute_on_t  execute_on,
+			       char         *config);
 
 void run_amcleanup(char *config_name);
 char *get_master_process(char *logfile);

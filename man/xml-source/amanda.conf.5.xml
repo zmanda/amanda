@@ -2681,6 +2681,12 @@ A comment string describing this script.</para>
     <!-- .RS -->
     <variablelist remap='TP'>
       <varlistentry>
+      <term><amkeyword>pre-amcheck</amkeyword></term>
+      <listitem>
+<para>Execute before the amcheck command for all dle. Can only be run on server.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
       <term><amkeyword>pre-dle-amcheck</amkeyword></term>
       <listitem>
 <para>Execute before the amcheck command for the dle.</para>
@@ -2690,6 +2696,12 @@ A comment string describing this script.</para>
       <term><amkeyword>pre-host-amcheck</amkeyword></term>
       <listitem>
 <para>Execute before the amcheck command for all dle for the client.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><amkeyword>post-amcheck</amkeyword></term>
+      <listitem>
+<para>Execute after the amcheck command for all dle. Can only be run on server.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
@@ -2705,6 +2717,12 @@ A comment string describing this script.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
+      <term><amkeyword>pre-estimate</amkeyword></term>
+      <listitem>
+<para>Execute before the estimate command for all dle. Can only be run on server.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
       <term><amkeyword>pre-dle-estimate</amkeyword></term>
       <listitem>
 <para>Execute before the estimate command for the dle.</para>
@@ -2714,6 +2732,12 @@ A comment string describing this script.</para>
       <term><amkeyword>pre-host-estimate</amkeyword></term>
       <listitem>
 <para>Execute before the estimate command for all dle for the client.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><amkeyword>post-estimate</amkeyword></term>
+      <listitem>
+<para>Execute after the estimate command for all dle. Can only be run on server.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
@@ -2729,6 +2753,12 @@ A comment string describing this script.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
+      <term><amkeyword>pre-backup</amkeyword></term>
+      <listitem>
+<para>Execute before the backup command for all dle. Can only be run on server.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
       <term><amkeyword>pre-dle-backup</amkeyword></term>
       <listitem>
 <para>Execute before the backup command for the dle.</para>
@@ -2738,6 +2768,12 @@ A comment string describing this script.</para>
       <term><amkeyword>pre-host-backup</amkeyword></term>
       <listitem>
 <para>Execute before the backup command for all dle for the client. It can't be run on client, it must be run on server</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><amkeyword>post-backup</amkeyword></term>
+      <listitem>
+<para>Execute after the backup command for all dle. Can only be run on server.</para>
       </listitem>
       </varlistentry>
       <varlistentry>

@@ -93,10 +93,13 @@ typedef enum {
     CONF_TAPER_PARALLEL_WRITE,
 
     /* execute on */
+    CONF_PRE_AMCHECK,          CONF_POST_AMCHECK,
     CONF_PRE_DLE_AMCHECK,      CONF_PRE_HOST_AMCHECK,
     CONF_POST_DLE_AMCHECK,     CONF_POST_HOST_AMCHECK,
+    CONF_PRE_ESTIMATE,         CONF_POST_ESTIMATE,
     CONF_PRE_DLE_ESTIMATE,     CONF_PRE_HOST_ESTIMATE,
     CONF_POST_DLE_ESTIMATE,    CONF_POST_HOST_ESTIMATE,
+    CONF_PRE_BACKUP,           CONF_POST_BACKUP,
     CONF_PRE_DLE_BACKUP,       CONF_PRE_HOST_BACKUP,
     CONF_POST_DLE_BACKUP,      CONF_POST_HOST_BACKUP,
     CONF_PRE_RECOVER,	       CONF_POST_RECOVER,
@@ -791,16 +794,22 @@ keytab_t client_keytab[] = {
     { "SCRIPT", CONF_SCRIPT },
     { "SCRIPT_TOOL", CONF_SCRIPT_TOOL },
     { "PLUGIN", CONF_PLUGIN },
+    { "PRE_AMCHECK", CONF_PRE_AMCHECK },
     { "PRE_DLE_AMCHECK", CONF_PRE_DLE_AMCHECK },
     { "PRE_HOST_AMCHECK", CONF_PRE_HOST_AMCHECK },
+    { "POST_AMCHECK", CONF_POST_AMCHECK },
     { "POST_DLE_AMCHECK", CONF_POST_DLE_AMCHECK },
     { "POST_HOST_AMCHECK", CONF_POST_HOST_AMCHECK },
+    { "PRE_ESTIMATE", CONF_PRE_ESTIMATE },
     { "PRE_DLE_ESTIMATE", CONF_PRE_DLE_ESTIMATE },
     { "PRE_HOST_ESTIMATE", CONF_PRE_HOST_ESTIMATE },
+    { "POST_ESTIMATE", CONF_POST_ESTIMATE },
     { "POST_DLE_ESTIMATE", CONF_POST_DLE_ESTIMATE },
     { "POST_HOST_ESTIMATE", CONF_POST_HOST_ESTIMATE },
+    { "POST_BACKUP", CONF_POST_BACKUP },
     { "POST_DLE_BACKUP", CONF_POST_DLE_BACKUP },
     { "POST_HOST_BACKUP", CONF_POST_HOST_BACKUP },
+    { "PRE_BACKUP", CONF_PRE_BACKUP },
     { "PRE_DLE_BACKUP", CONF_PRE_DLE_BACKUP },
     { "PRE_HOST_BACKUP", CONF_PRE_HOST_BACKUP },
     { "PRE_RECOVER", CONF_PRE_RECOVER },
@@ -954,16 +963,22 @@ keytab_t server_keytab[] = {
     { "PART_CACHE_TYPE", CONF_PART_CACHE_TYPE },
     { "PART_SIZE", CONF_PART_SIZE },
     { "PLUGIN", CONF_PLUGIN },
+    { "PRE_AMCHECK", CONF_PRE_AMCHECK },
     { "PRE_DLE_AMCHECK", CONF_PRE_DLE_AMCHECK },
     { "PRE_HOST_AMCHECK", CONF_PRE_HOST_AMCHECK },
+    { "POST_AMCHECK", CONF_POST_AMCHECK },
     { "POST_DLE_AMCHECK", CONF_POST_DLE_AMCHECK },
     { "POST_HOST_AMCHECK", CONF_POST_HOST_AMCHECK },
+    { "PRE_ESTIMATE", CONF_PRE_ESTIMATE },
     { "PRE_DLE_ESTIMATE", CONF_PRE_DLE_ESTIMATE },
     { "PRE_HOST_ESTIMATE", CONF_PRE_HOST_ESTIMATE },
+    { "POST_ESTIMATE", CONF_POST_ESTIMATE },
     { "POST_DLE_ESTIMATE", CONF_POST_DLE_ESTIMATE },
     { "POST_HOST_ESTIMATE", CONF_POST_HOST_ESTIMATE },
+    { "POST_BACKUP", CONF_POST_BACKUP },
     { "POST_DLE_BACKUP", CONF_POST_DLE_BACKUP },
     { "POST_HOST_BACKUP", CONF_POST_HOST_BACKUP },
+    { "PRE_BACKUP", CONF_PRE_BACKUP },
     { "PRE_DLE_BACKUP", CONF_PRE_DLE_BACKUP },
     { "PRE_HOST_BACKUP", CONF_PRE_HOST_BACKUP },
     { "PRE_RECOVER", CONF_PRE_RECOVER },
@@ -3665,16 +3680,22 @@ read_execute_on(
     val->v.i = 0;
     do {
 	switch(tok) {
+	case CONF_PRE_AMCHECK:         val->v.i |= EXECUTE_ON_PRE_AMCHECK;          break;
 	case CONF_PRE_DLE_AMCHECK:     val->v.i |= EXECUTE_ON_PRE_DLE_AMCHECK;     break;
 	case CONF_PRE_HOST_AMCHECK:    val->v.i |= EXECUTE_ON_PRE_HOST_AMCHECK;    break;
 	case CONF_POST_DLE_AMCHECK:    val->v.i |= EXECUTE_ON_POST_DLE_AMCHECK;    break;
 	case CONF_POST_HOST_AMCHECK:   val->v.i |= EXECUTE_ON_POST_HOST_AMCHECK;   break;
+	case CONF_POST_AMCHECK:        val->v.i |= EXECUTE_ON_POST_AMCHECK;          break;
+	case CONF_PRE_ESTIMATE:        val->v.i |= EXECUTE_ON_PRE_ESTIMATE;          break;
 	case CONF_PRE_DLE_ESTIMATE:    val->v.i |= EXECUTE_ON_PRE_DLE_ESTIMATE;    break;
 	case CONF_PRE_HOST_ESTIMATE:   val->v.i |= EXECUTE_ON_PRE_HOST_ESTIMATE;   break;
 	case CONF_POST_DLE_ESTIMATE:   val->v.i |= EXECUTE_ON_POST_DLE_ESTIMATE;   break;
 	case CONF_POST_HOST_ESTIMATE:  val->v.i |= EXECUTE_ON_POST_HOST_ESTIMATE;  break;
+	case CONF_POST_ESTIMATE:       val->v.i |= EXECUTE_ON_POST_ESTIMATE;          break;
+	case CONF_PRE_BACKUP:          val->v.i |= EXECUTE_ON_PRE_BACKUP;          break;
 	case CONF_PRE_DLE_BACKUP:      val->v.i |= EXECUTE_ON_PRE_DLE_BACKUP;      break;
 	case CONF_PRE_HOST_BACKUP:     val->v.i |= EXECUTE_ON_PRE_HOST_BACKUP;     break;
+	case CONF_POST_BACKUP:         val->v.i |= EXECUTE_ON_POST_BACKUP;         break;
 	case CONF_POST_DLE_BACKUP:     val->v.i |= EXECUTE_ON_POST_DLE_BACKUP;     break;
 	case CONF_POST_HOST_BACKUP:    val->v.i |= EXECUTE_ON_POST_HOST_BACKUP;    break;
 	case CONF_PRE_RECOVER:         val->v.i |= EXECUTE_ON_PRE_RECOVER;         break;
@@ -7324,6 +7345,10 @@ val_t_display_strs(
 	buf[0] = stralloc("");
 	if (val->v.i != 0) {
 	    char *sep = "";
+	    if (val->v.i & EXECUTE_ON_PRE_AMCHECK) {
+		buf[0] = vstrextend(&buf[0], sep, "PRE-AMCHECK", NULL);
+		sep = ", ";
+	    }
 	    if (val->v.i & EXECUTE_ON_PRE_DLE_AMCHECK) {
 		buf[0] = vstrextend(&buf[0], sep, "PRE-DLE-AMCHECK", NULL);
 		sep = ", ";
@@ -7338,6 +7363,14 @@ val_t_display_strs(
 	    }
 	    if (val->v.i & EXECUTE_ON_POST_HOST_AMCHECK) {
 		buf[0] = vstrextend(&buf[0], sep, "POST-HOST-AMCHECK", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_POST_AMCHECK) {
+		buf[0] = vstrextend(&buf[0], sep, "POST-AMCHECK", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_PRE_ESTIMATE) {
+		buf[0] = vstrextend(&buf[0], sep, "PRE-ESTIMATE", NULL);
 		sep = ", ";
 	    }
 	    if (val->v.i & EXECUTE_ON_PRE_DLE_ESTIMATE) {
@@ -7356,12 +7389,24 @@ val_t_display_strs(
 		buf[0] = vstrextend(&buf[0], sep, "POST-HOST-ESTIMATE", NULL);
 		sep = ", ";
 	    }
+	    if (val->v.i & EXECUTE_ON_POST_ESTIMATE) {
+		buf[0] = vstrextend(&buf[0], sep, "POST-ESTIMATE", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_PRE_BACKUP) {
+		buf[0] = vstrextend(&buf[0], sep, "PRE-BACKUP", NULL);
+		sep = ", ";
+	    }
 	    if (val->v.i & EXECUTE_ON_PRE_DLE_BACKUP) {
 		buf[0] = vstrextend(&buf[0], sep, "PRE-DLE-BACKUP", NULL);
 		sep = ", ";
 	    }
 	    if (val->v.i & EXECUTE_ON_PRE_HOST_BACKUP) {
 		buf[0] = vstrextend(&buf[0], sep, "PRE-HOST-BACKUP", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_POST_BACKUP) {
+		buf[0] = vstrextend(&buf[0], sep, "POST-BACKUP", NULL);
 		sep = ", ";
 	    }
 	    if (val->v.i & EXECUTE_ON_POST_DLE_BACKUP) {

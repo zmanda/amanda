@@ -1,4 +1,21 @@
 2010-11-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add pre-amcheck, post-amcheck, pre-estimate,
+	  post-estimate, pre-backup and post-backup to execute-on of script.
+	* common-src/conffile.h: Add EXECUTE_ON_* constants.
+	* application-src/amlog-script.pl: Add new execute-on.
+	* common-src/amxml.c: Parse new execute-on.
+	* man/xml-source/amanda.conf.5.xml: Document them.
+	* perl/Amanda/Config.swg: Add new EXECUTE_ON_* constants.
+	* perl/Amanda/Script.pm: Add new execute-on.
+	* server-src/amcheck.c: Call run_server_global_scripts.
+	* server-src/diskfile.c (get_hostlist): Return the host list.
+	* server-src/diskfile.h (get_hostlist): Add prototype.
+	* server-src/driver.c: Call run_server_global_scripts.
+	* server-src/planner.c: Call run_server_global_scripts.
+	* server-src/server_util.c (run_server_global_scripts): New function.
+	* server-src/server_util.h (run_server_global_scripts): Prototype.
+
+2010-11-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/server_util.c: Search scripts in APPLICATION_DIR,
 	  CONFIG_DIR/<conf>/application and CONFIG_DIR/application.
 

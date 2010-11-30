@@ -86,6 +86,13 @@ sub command_support {
 
 #define a execute_on_* function for every execute_on you want the script to do
 #something
+sub command_pre_amcheck {
+   my $self = shift;
+
+   $self->setup();
+   $self->log_data("pre-amcheck");
+}
+
 sub command_pre_dle_amcheck {
    my $self = shift;
 
@@ -98,6 +105,13 @@ sub command_pre_host_amcheck {
 
    $self->setup();
    $self->log_data("pre-host-amcheck");
+}
+
+sub command_post_amcheck {
+   my $self = shift;
+
+   $self->setup();
+   $self->log_data("post-amcheck");
 }
 
 sub command_post_dle_amcheck {
@@ -114,6 +128,13 @@ sub command_post_host_amcheck {
    $self->log_data("post-host-amcheck");
 }
 
+sub command_pre_estimate {
+   my $self = shift;
+
+   $self->setup();
+   $self->log_data("pre-estimate");
+}
+
 sub command_pre_dle_estimate {
    my $self = shift;
 
@@ -126,6 +147,13 @@ sub command_pre_host_estimate {
 
    $self->setup();
    $self->log_data("pre-host-estimate");
+}
+
+sub command_post_estimate {
+   my $self = shift;
+
+   $self->setup();
+   $self->log_data("post-estimate");
 }
 
 sub command_post_dle_estimate {
@@ -142,6 +170,13 @@ sub command_post_host_estimate {
    $self->log_data("post-host-estimate");
 }
 
+sub command_pre_backup {
+   my $self = shift;
+
+   $self->setup();
+   $self->log_data("pre-backup");
+}
+
 sub command_pre_dle_backup {
    my $self = shift;
 
@@ -154,6 +189,13 @@ sub command_pre_host_backup {
 
    $self->setup();
    $self->log_data("pre-host-backup");
+}
+
+sub command_post_backup {
+   my $self = shift;
+
+   $self->setup();
+   $self->log_data("post-backup");
 }
 
 sub command_post_dle_backup {

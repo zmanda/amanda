@@ -136,6 +136,7 @@ typedef struct disklist_s {
  * value just as you would the return of config_init() */
 cfgerr_level_t read_diskfile(const char *, disklist_t *);
 
+am_host_t *get_hostlist(void);
 am_host_t *lookup_host(const char *hostname);
 disk_t *lookup_disk(const char *hostname, const char *diskname);
 

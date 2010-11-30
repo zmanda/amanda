@@ -499,6 +499,8 @@ main(
 	headqueue_disk(&directq, diskp);
     }
 
+    run_server_global_scripts(EXECUTE_ON_POST_BACKUP, get_config_name());
+
     /* log error for any remaining dumps */
     while(!empty(directq)) {
 	diskp = dequeue_disk(&directq);
@@ -3122,6 +3124,7 @@ read_schedule(
 	log_add(L_WARNING, _("WARNING: got empty schedule from planner"));
     if(need_degraded==1) start_degraded_mode(&runq);
     schedule_done = 1;
+    run_server_global_scripts(EXECUTE_ON_PRE_BACKUP, get_config_name());
     if (empty(runq)) force_flush = 1;
     start_some_dumps(&runq);
     startaflush();

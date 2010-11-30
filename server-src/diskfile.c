@@ -90,6 +90,12 @@ end:
 }
 
 am_host_t *
+get_hostlist(void)
+{
+    return hostlist;
+}
+
+am_host_t *
 lookup_host(
     const char *hostname)
 {
@@ -1648,7 +1654,7 @@ xml_scripts(
 
 	execute_on = pp_script_get_execute_on(pp_script);
 	sep = "";
-	eo_str = NULL;
+	eo_str = stralloc("");
 	if (execute_on & EXECUTE_ON_PRE_DLE_AMCHECK) {
 	    eo_str = vstrextend(&eo_str, sep, "PRE-DLE-AMCHECK", NULL);
 	    sep = ",";

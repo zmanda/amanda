@@ -267,6 +267,8 @@ main(
     }
 
 
+    run_server_global_scripts(EXECUTE_ON_PRE_ESTIMATE, get_config_name());
+
     /*
      * 1. Networking Setup
      *
@@ -552,6 +554,8 @@ main(
     schedq.head = schedq.tail = NULL;
     while(!empty(estq)) analyze_estimate(dequeue_disk(&estq));
     while(!empty(failq)) handle_failed(dequeue_disk(&failq));
+
+    run_server_global_scripts(EXECUTE_ON_POST_ESTIMATE, get_config_name());
 
     /*
      * At this point, all the disks are on schedq sorted by priority.

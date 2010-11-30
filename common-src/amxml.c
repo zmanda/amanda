@@ -879,26 +879,38 @@ amtext(
 	    sep = strchr(tt1,',');
 	    if (sep)
 		*sep = '\0';
-	    if (strcmp(tt1,"PRE-DLE-AMCHECK") == 0)
+	    if (strcmp(tt1,"PRE-AMCHECK") == 0)
+		data_user->script->execute_on |= EXECUTE_ON_PRE_AMCHECK;
+	    else if (strcmp(tt1,"PRE-DLE-AMCHECK") == 0)
 		data_user->script->execute_on |= EXECUTE_ON_PRE_DLE_AMCHECK;
 	    else if (strcmp(tt1,"PRE-HOST-AMCHECK") == 0)
 		data_user->script->execute_on |= EXECUTE_ON_PRE_HOST_AMCHECK;
+	    else if (strcmp(tt1,"POST-AMCHECK") == 0)
+		data_user->script->execute_on |= EXECUTE_ON_POST_AMCHECK;
 	    else if (strcmp(tt1,"POST-DLE-AMCHECK") == 0)
 		data_user->script->execute_on |= EXECUTE_ON_POST_DLE_AMCHECK;
 	    else if (strcmp(tt1,"POST-HOST-AMCHECK") == 0)
 		data_user->script->execute_on |= EXECUTE_ON_POST_HOST_AMCHECK;
+	    else if (strcmp(tt1,"PRE-ESTIMATE") == 0)
+		data_user->script->execute_on |= EXECUTE_ON_PRE_ESTIMATE;
 	    else if (strcmp(tt1,"PRE-DLE-ESTIMATE") == 0)
 		data_user->script->execute_on |= EXECUTE_ON_PRE_DLE_ESTIMATE;
 	    else if (strcmp(tt1,"PRE-HOST-ESTIMATE") == 0)
 		data_user->script->execute_on |= EXECUTE_ON_PRE_HOST_ESTIMATE;
+	    else if (strcmp(tt1,"POST-ESTIMATE") == 0)
+		data_user->script->execute_on |= EXECUTE_ON_POST_ESTIMATE;
 	    else if (strcmp(tt1,"POST-DLE-ESTIMATE") == 0)
 		data_user->script->execute_on |= EXECUTE_ON_POST_DLE_ESTIMATE;
 	    else if (strcmp(tt1,"POST-HOST-ESTIMATE") == 0)
 		data_user->script->execute_on |= EXECUTE_ON_POST_HOST_ESTIMATE;
+	    else if (strcmp(tt1,"PRE-BACKUP") == 0)
+		data_user->script->execute_on |= EXECUTE_ON_PRE_BACKUP;
 	    else if (strcmp(tt1,"PRE-DLE-BACKUP") == 0)
 		data_user->script->execute_on |= EXECUTE_ON_PRE_DLE_BACKUP;
 	    else if (strcmp(tt1,"PRE-HOST-BACKUP") == 0)
 		data_user->script->execute_on |= EXECUTE_ON_PRE_HOST_BACKUP;
+	    else if (strcmp(tt1,"POST-BACKUP") == 0)
+		data_user->script->execute_on |= EXECUTE_ON_POST_BACKUP;
 	    else if (strcmp(tt1,"POST-DLE-BACKUP") == 0)
 		data_user->script->execute_on |= EXECUTE_ON_POST_DLE_BACKUP;
 	    else if (strcmp(tt1,"POST-HOST-BACKUP") == 0)

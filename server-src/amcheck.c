@@ -2035,6 +2035,7 @@ start_client_checks(
     g_fprintf(outf, _("\nAmanda Backup Client Hosts Check\n"));
     g_fprintf(outf,   "--------------------------------\n");
 
+    run_server_global_scripts(EXECUTE_ON_PRE_AMCHECK, get_config_name());
     protocol_init();
 
     hostcount = remote_errors = 0;
@@ -2055,6 +2056,7 @@ start_client_checks(
     }
 
     protocol_run();
+    run_server_global_scripts(EXECUTE_ON_POST_AMCHECK, get_config_name());
 
     g_fprintf(outf, plural(_("Client check: %d host checked in %s seconds."), 
 			 _("Client check: %d hosts checked in %s seconds."),
