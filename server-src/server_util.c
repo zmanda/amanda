@@ -244,6 +244,8 @@ run_server_script(
     char      *line;
     char      *plugin;
     char       level_number[NUM_STR_SIZE];
+    struct stat cmd_stat;
+    int         result;
 
     if ((pp_script_get_execute_on(pp_script) & execute_on) == 0)
 	return;
@@ -251,7 +253,27 @@ run_server_script(
 	return;
 
     plugin = pp_script_get_plugin(pp_script);
+
     cmd = vstralloc(APPLICATION_DIR, "/", plugin, NULL);
+    result = stat(cmd, &cmd_stat);
+    if (result == -1) {
+	dbprintf("Can't stat script '%s': %s\n", cmd, strerror(errno));
+	amfree(cmd);
+	cmd = vstralloc(get_config_dir(), "/application/", plugin, NULL);
+	result = stat(cmd, &cmd_stat);
+	if (result == -1) {
+	    dbprintf("Can't stat script '%s': %s\n", cmd, strerror(errno));
+	    amfree(cmd);
+	    cmd = vstralloc(CONFIG_DIR, "/application/", plugin, NULL);
+	    result = stat(cmd, &cmd_stat);
+	    if (result == -1) {
+		dbprintf("Can't stat script '%s': %s\n", cmd, strerror(errno));
+		amfree(cmd);
+		cmd = vstralloc(APPLICATION_DIR, "/", plugin, NULL);
+	    }
+	}
+    }
+
     g_ptr_array_add(argv_ptr, stralloc(plugin));
 
     switch (execute_on) {

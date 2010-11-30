@@ -1,4 +1,8 @@
 2010-11-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/server_util.c: Search scripts in APPLICATION_DIR,
+	  CONFIG_DIR/<conf>/application and CONFIG_DIR/application.
+
+2010-11-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Add SINGLE-EXECUTION in scripts.
 	* common-src/conffile.h: Add pp_script_get_single_execution.
 	* installcheck/pp-scripts.pl: Test single-execution.
