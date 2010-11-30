@@ -1289,13 +1289,11 @@ start_some_dumps(
 		diskp->dataport_list = stralloc(result_argv[2]);
 
 		if (diskp->host->pre_script == 0) {
-		    for (dp=diskp->host->disks; dp != NULL; dp = dp->hostnext) {
-			run_server_scripts(EXECUTE_ON_PRE_HOST_BACKUP,
-					   get_config_name(), dp, -1);
-		    }
+		    run_server_host_scripts(EXECUTE_ON_PRE_HOST_BACKUP,
+					    get_config_name(), diskp->host);
 		    diskp->host->pre_script = 1;
 		}
-		run_server_scripts(EXECUTE_ON_PRE_DLE_BACKUP,
+		run_server_dle_scripts(EXECUTE_ON_PRE_DLE_BACKUP,
 				   get_config_name(), diskp,
 				   sched(diskp)->level);
 		dumper_cmd(dumper, PORT_DUMP, diskp, NULL);
@@ -1511,7 +1509,7 @@ static void
 handle_taper_result(
 	void *cookie G_GNUC_UNUSED)
 {
-    disk_t *dp = NULL, *dp1;
+    disk_t *dp = NULL;
     dumper_t *dumper;
     cmd_t cmd;
     int result_argc;
@@ -1842,13 +1840,11 @@ handle_taper_result(
 	    taper->state |= TAPER_STATE_DUMP_TO_TAPE;
 
 	    if (dp->host->pre_script == 0) {
-		for (dp1=dp->host->disks; dp1 != NULL; dp1 = dp1->hostnext) {
-		    run_server_scripts(EXECUTE_ON_PRE_HOST_BACKUP,
-				       get_config_name(), dp1, -1);
-		}
+		run_server_host_scripts(EXECUTE_ON_PRE_HOST_BACKUP,
+					get_config_name(), dp->host);
 		dp->host->pre_script = 1;
 	    }
-	    run_server_scripts(EXECUTE_ON_PRE_DLE_BACKUP,
+	    run_server_dle_scripts(EXECUTE_ON_PRE_DLE_BACKUP,
 			       get_config_name(), dp,
 			       sched(dp)->level);
 	    /* tell the dumper to dump to a port */
@@ -2364,7 +2360,7 @@ handle_dumper_result(
 	    int last_dump = 1;
 	    dumper_t *dumper;
 
-	    run_server_scripts(EXECUTE_ON_POST_DLE_BACKUP,
+	    run_server_dle_scripts(EXECUTE_ON_POST_DLE_BACKUP,
 			       get_config_name(), dp, sched(dp)->level);
 	    /* check dump not yet started */
 	    for (dp1=runq.head; dp1 != NULL; dp1 = dp1->next) {
@@ -2384,10 +2380,8 @@ handle_dumper_result(
 	    }
 	    if (last_dump && dp->host->post_script == 0) {
 		if (dp->host->post_script == 0) {
-		    for (dp1=dp->host->disks; dp1 != NULL; dp1 = dp1->hostnext) {
-			run_server_scripts(EXECUTE_ON_POST_HOST_BACKUP,
-					   get_config_name(), dp1, -1);
-		    }
+		    run_server_host_scripts(EXECUTE_ON_POST_HOST_BACKUP,
+					    get_config_name(), dp->host);
 		    dp->host->post_script = 1;
 		}
 	    }

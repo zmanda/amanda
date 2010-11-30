@@ -2042,12 +2042,10 @@ start_client_checks(
     for(dp = origq.head; dp != NULL; dp = dp->next) {
 	hostp = dp->host;
 	if(hostp->up == HOST_READY && dp->todo == 1) {
+	    run_server_host_scripts(EXECUTE_ON_PRE_HOST_AMCHECK,
+				    get_config_name(), hostp);
 	    for(dp1 = hostp->disks; dp1 != NULL; dp1 = dp1->hostnext) {
-		run_server_scripts(EXECUTE_ON_PRE_HOST_AMCHECK,
-				   get_config_name(), dp1, -1);
-	    }
-	    for(dp1 = hostp->disks; dp1 != NULL; dp1 = dp1->hostnext) {
-		run_server_scripts(EXECUTE_ON_PRE_DLE_AMCHECK,
+		run_server_dle_scripts(EXECUTE_ON_PRE_DLE_AMCHECK,
 				   get_config_name(), dp1, -1);
 	    }
 	    start_host(hostp);
@@ -2182,13 +2180,11 @@ handle_result(
     if(hostp->up == HOST_DONE) {
 	security_close_connection(sech, hostp->hostname);
 	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
-	    run_server_scripts(EXECUTE_ON_POST_DLE_AMCHECK,
+	    run_server_dle_scripts(EXECUTE_ON_POST_DLE_AMCHECK,
 			       get_config_name(), dp, -1);
 	}
-	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
-	    run_server_scripts(EXECUTE_ON_POST_HOST_AMCHECK,
-			       get_config_name(), dp, -1);
-	}
+	run_server_host_scripts(EXECUTE_ON_POST_HOST_AMCHECK,
+				get_config_name(), hostp);
     }
     /* try to clean up any defunct processes, since Amanda doesn't wait() for
        them explicitly */

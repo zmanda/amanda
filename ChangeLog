@@ -1,3 +1,15 @@
+2010-11-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add SINGLE-EXECUTION in scripts.
+	* common-src/conffile.h: Add pp_script_get_single_execution.
+	* installcheck/pp-scripts.pl: Test single-execution.
+	* man/xml-source/amanda.conf.5.xml: Document single-execution.
+	* perl/Amanda/Config.swg: Add PP_SCRIPT_SINGLE_EXECUTION.
+	* server-src/server_util.c: Add run_server_host_scripts,
+	  rename run_server_scripts to run_server_dle_scripts.
+	* server-src/server_util.h: New prototype.
+	* server-src/amcheck.c, server-src/driver.c,
+	  server-src/planner.c: Call new functions.
+
 2010-11-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/amreport.pl: Fix for previous patch.
 

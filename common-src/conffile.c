@@ -88,7 +88,7 @@ typedef enum {
     CONF_APPLICATION,          CONF_APPLICATION_TOOL,
     CONF_SCRIPT,               CONF_SCRIPT_TOOL,
     CONF_EXECUTE_ON,           CONF_EXECUTE_WHERE,	CONF_SEND_AMREPORT_ON,
-    CONF_DEVICE,               CONF_ORDER,
+    CONF_DEVICE,               CONF_ORDER,		CONF_SINGLE_EXECUTION,
     CONF_DATA_PATH,            CONF_AMANDA,		CONF_DIRECTTCP,
     CONF_TAPER_PARALLEL_WRITE,
 
@@ -997,6 +997,7 @@ keytab_t server_keytab[] = {
     { "SKIP", CONF_SKIP },
     { "SKIP_FULL", CONF_SKIP_FULL },
     { "SKIP_INCR", CONF_SKIP_INCR },
+    { "SINGLE_EXECUTION", CONF_SINGLE_EXECUTION },
     { "SMALLEST", CONF_SMALLEST },
     { "SPEED", CONF_SPEED },
     { "SPLIT_DISKBUFFER", CONF_SPLIT_DISKBUFFER },
@@ -1330,6 +1331,7 @@ conf_var_t pp_script_var [] = {
    { CONF_EXECUTE_ON   , CONFTYPE_EXECUTE_ON  , read_execute_on  , PP_SCRIPT_EXECUTE_ON   , NULL },
    { CONF_EXECUTE_WHERE, CONFTYPE_EXECUTE_WHERE  , read_execute_where  , PP_SCRIPT_EXECUTE_WHERE, NULL },
    { CONF_ORDER        , CONFTYPE_INT     , read_int     , PP_SCRIPT_ORDER        , NULL },
+   { CONF_SINGLE_EXECUTION, CONFTYPE_BOOLEAN, read_bool    , PP_SCRIPT_SINGLE_EXECUTION, NULL },
    { CONF_UNKNOWN      , CONFTYPE_INT     , NULL         , PP_SCRIPT_PP_SCRIPT    , NULL }
 };
 
@@ -2737,6 +2739,7 @@ init_pp_script_defaults(
     conf_init_execute_on(&pscur.value[PP_SCRIPT_EXECUTE_ON], 0);
     conf_init_execute_where(&pscur.value[PP_SCRIPT_EXECUTE_WHERE], ES_CLIENT);
     conf_init_int(&pscur.value[PP_SCRIPT_ORDER], 5000);
+    conf_init_bool(&pscur.value[PP_SCRIPT_SINGLE_EXECUTION], 0);
 }
 
 static void

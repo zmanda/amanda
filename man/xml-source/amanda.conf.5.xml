@@ -2663,6 +2663,12 @@ A comment string describing this script.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><amkeyword>single-execution</amkeyword> <amtype>boolean</amtype></term>
+  <listitem>
+<para>Default: <amdefault>no</amdefault>. The script is executed for each dle. If <amdefault>yes</amdefault>, the script is executed one time only.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><amkeyword>execute-where</amkeyword> [ <amkeyword>client</amkeyword> | <amkeyword>server</amkeyword> ]</term>
   <listitem>
 <para>Default: <amkeyword>client</amkeyword>. Where the script must be executed, on the client or server.</para>

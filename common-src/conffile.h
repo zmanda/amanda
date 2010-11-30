@@ -972,6 +972,7 @@ typedef enum pp_script_e  {
     PP_SCRIPT_EXECUTE_ON,
     PP_SCRIPT_EXECUTE_WHERE,
     PP_SCRIPT_ORDER,
+    PP_SCRIPT_SINGLE_EXECUTION,
     PP_SCRIPT_PP_SCRIPT
 } pp_script_key;
 
@@ -1023,6 +1024,7 @@ char *pp_script_name(pp_script_t *pps);
 #define pp_script_get_execute_on(pp_script)   (val_t_to_execute_on(pp_script_getconf((pp_script), PP_SCRIPT_EXECUTE_ON)))
 #define pp_script_get_execute_where(pp_script)   (val_t_to_execute_where(pp_script_getconf((pp_script), PP_SCRIPT_EXECUTE_WHERE)))
 #define pp_script_get_order(pp_script)   (val_t_to_int(pp_script_getconf((pp_script), PP_SCRIPT_ORDER)))
+#define pp_script_get_single_execution(pp_script)   (val_t_to_boolean(pp_script_getconf((pp_script), PP_SCRIPT_SINGLE_EXECUTION)))
 
 pp_script_t *read_pp_script(char *name, FILE *from, char *fname, int *linenum);
 pp_script_t *lookup_pp_script(char *identifier);

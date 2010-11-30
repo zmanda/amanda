@@ -1322,15 +1322,11 @@ static void get_estimates(void)
 	    hostp = dp->host;
 	    if(hostp->up == HOST_READY) {
 		something_started = 1;
+		run_server_host_scripts(EXECUTE_ON_PRE_HOST_ESTIMATE,
+					get_config_name(), hostp);
 		for(dp1 = hostp->disks; dp1 != NULL; dp1 = dp1->hostnext) {
 		    if (dp1->todo)
-			run_server_scripts(EXECUTE_ON_PRE_HOST_ESTIMATE,
-					   get_config_name(), dp1,
-					   est(dp1)->estimate[0].level);
-		}
-		for(dp1 = hostp->disks; dp1 != NULL; dp1 = dp1->hostnext) {
-		    if (dp1->todo)
-			run_server_scripts(EXECUTE_ON_PRE_DLE_ESTIMATE,
+			run_server_dle_scripts(EXECUTE_ON_PRE_DLE_ESTIMATE,
 					   get_config_name(), dp1,
 					   est(dp1)->estimate[0].level);
 		}
@@ -2065,7 +2061,7 @@ static void handle_result(
                est(dp)->estimate[1].nsize > (gint64)0) &&
 	      (est(dp)->estimate[2].level == -1 ||
                est(dp)->estimate[2].nsize > (gint64)0)))) {
-	    run_server_scripts(EXECUTE_ON_POST_DLE_ESTIMATE,
+	    run_server_dle_scripts(EXECUTE_ON_POST_DLE_ESTIMATE,
 			       get_config_name(), dp,
                                est(dp)->estimate[0].level);
 	    est(dp)->post_dle = 1;
@@ -2074,13 +2070,9 @@ static void handle_result(
     }
 
     if(hostp->up == HOST_DONE) {
-	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
-	    if (dp->todo)
-		if (pkt->type == P_REP) {
-		    run_server_scripts(EXECUTE_ON_POST_HOST_ESTIMATE,
-				       get_config_name(), dp,
-                                       est(dp)->estimate[0].level);
-	    }
+	if (pkt->type == P_REP) {
+	    run_server_host_scripts(EXECUTE_ON_POST_HOST_ESTIMATE,
+				    get_config_name(), hostp);
 	}
     }
 

@@ -83,10 +83,13 @@ void run_server_script(pp_script_t  *pp_script,
 		       char         *config,
 		       disk_t       *dp,
 		       int           level);
-void run_server_scripts(execute_on_t  execute_on,
-			char         *config,
-			disk_t       *dp,
-		        int           level);
+void run_server_dle_scripts(execute_on_t  execute_on,
+			    char         *config,
+			    disk_t       *dp,
+		            int           level);
+void run_server_host_scripts(execute_on_t  execute_on,
+			     char         *config,
+			     am_host_t    *hostp);
 
 void run_amcleanup(char *config_name);
 char *get_master_process(char *logfile);

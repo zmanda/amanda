@@ -352,7 +352,7 @@ run_server_script(
 
 
 void
-run_server_scripts(
+run_server_dle_scripts(
     execute_on_t  execute_on,
     char         *config,
     disk_t	 *dp,
@@ -366,6 +366,44 @@ run_server_scripts(
 	g_assert(pp_script != NULL);
 	run_server_script(pp_script, execute_on, config, dp, level);
     }
+}
+
+void
+run_server_host_scripts(
+    execute_on_t  execute_on,
+    char         *config,
+    am_host_t	 *hostp)
+{
+    identlist_t pp_scriptlist;
+    disk_t *dp;
+
+    GHashTable* executed = g_hash_table_new_full(g_str_hash, g_str_equal,
+						 NULL, NULL);
+    for (dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
+	if (dp->todo) {
+	    for (pp_scriptlist = dp->pp_scriptlist; pp_scriptlist != NULL;
+		 pp_scriptlist = pp_scriptlist->next) {
+		int todo = 1;
+		pp_script_t *pp_script = lookup_pp_script((char *)pp_scriptlist->data);
+		g_assert(pp_script != NULL);
+		if (pp_script_get_single_execution(pp_script)) {
+		    todo = g_hash_table_lookup(executed,
+					       pp_script_get_plugin(pp_script))
+			   == NULL;
+		}
+		if (todo) {
+		    run_server_script(pp_script, execute_on, config, dp, -1);
+		    if (pp_script_get_single_execution(pp_script)) {
+			g_hash_table_insert(executed,
+					    pp_script_get_plugin(pp_script),
+					    GINT_TO_POINTER(1));
+		    }
+		}
+	    }
+	}
+    }
+
+    g_hash_table_destroy(executed);
 }
 
 void
