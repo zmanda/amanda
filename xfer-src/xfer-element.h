@@ -28,6 +28,7 @@
 #include <glib.h>
 #include <glib-object.h>
 #include "xfer.h"
+#include "amanda.h"
 #include "directtcp.h"
 
 typedef enum {

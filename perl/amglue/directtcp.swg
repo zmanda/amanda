@@ -31,18 +31,12 @@
 
     i = 0;
     av = newAV();
-    while (iter && iter->ipv4) {
-	struct in_addr in;
-	char *addr;
-	AV *tuple;
+    while (iter && SU_GET_FAMILY(iter) != 0) {
+	char *addr = str_sockaddr_no_port(iter);
+	AV *tuple = newAV();
 
-	in.s_addr = htonl(iter->ipv4);
-	addr = inet_ntoa(in);
-
-	tuple = newAV();
-	g_assert(NULL != av_store(tuple, 0,
-		newSVpv(addr, 0)));
-	g_assert(NULL != av_store(tuple, 1, newSViv(iter->port)));
+	g_assert(NULL != av_store(tuple, 0, newSVpv(addr, 0)));
+	g_assert(NULL != av_store(tuple, 1, newSViv(SU_GET_PORT(iter))));
 	g_assert(NULL != av_store(av, i++, newRV_noinc((SV *)tuple)));
 	iter++;
     }
@@ -62,16 +56,12 @@
 	AV *av = newAV();
 	int i = 0;
 
-	while (iter && iter->ipv4) {
-	    struct in_addr in;
-	    char *addr;
+	while (iter && SU_GET_FAMILY(iter) != 0) {
+	    char *addr = str_sockaddr_no_port(iter);
 	    AV *tuple = newAV();
 
-	    in.s_addr = htonl(iter->ipv4);
-	    addr = inet_ntoa(in);
-	    g_assert(NULL != av_store(tuple, 0,
-		    newSVpv(addr, 0)));
-	    g_assert(NULL != av_store(tuple, 1, newSViv(iter->port)));
+	    g_assert(NULL != av_store(tuple, 0, newSVpv(addr, 0)));
+	    g_assert(NULL != av_store(tuple, 1, newSViv(SU_GET_PORT(iter))));
 	    g_assert(NULL != av_store(av, i++, newRV_noinc((SV *)tuple)));
 	    iter++;
 	}
@@ -96,7 +86,7 @@
     for (i = 0; i < num_addrs; i++) {
         SV **svp = av_fetch(addrs_av, i, 0);
         AV *addr_av;
-        struct in_addr addr;
+        sockaddr_union addr;
         IV port;
 
         if (!svp || !SvROK(*svp) || SvTYPE(SvRV(*svp)) != SVt_PVAV
@@ -108,16 +98,17 @@
 
         /* get address */
         svp = av_fetch(addr_av, 0, 0);
-        if (!svp || !SvPOK(*svp) || !inet_aton(SvPV_nolen(*svp), &addr)) {
+        if (!svp || !SvPOK(*svp) || !str_to_sockaddr(SvPV_nolen(*svp), &addr)) {
             SWIG_exception_fail(SWIG_TypeError, "invalid IPv4 addr in address");
         }
-        $1[i].ipv4 = ntohl(addr.s_addr);
 
         /* get port */
         svp = av_fetch(addr_av, 1, 0);
         if (!svp || !SvIOK(*svp) || (port = SvIV(*svp)) <= 0 || port >= 65536) {
             SWIG_exception_fail(SWIG_TypeError, "invalid port in address");
         }
-        $1[i].port = (guint16)port;
+	SU_SET_PORT(&addr, port);
+
+	copy_sockaddr($1, &addr);
     }
 }

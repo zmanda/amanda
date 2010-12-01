@@ -482,28 +482,24 @@ source_listen_thread(
     XferSourceListen *self = XFER_SOURCE_LISTEN(data);
     XferElement *elt = XFER_ELEMENT(self);
     DirectTCPAddr *addrs;
-    sockaddr_union addr;
     int sock;
     char *buf;
     int i;
 
     /* set up the sockaddr -- IPv4 only */
-    SU_INIT(&addr, AF_INET);
     addrs = elt->downstream->input_listen_addrs;
     g_assert(addrs != NULL);
-    SU_SET_PORT(&addr, addrs->port);
-    ((struct sockaddr_in *)&addr)->sin_addr.s_addr = htonl(addrs->ipv4);
 
-    tu_dbg("making data connection to %s\n", str_sockaddr(&addr));
-    sock = socket(AF_INET, SOCK_STREAM, 0);
+    tu_dbg("making data connection to %s\n", str_sockaddr(addrs));
+    sock = socket(SU_GET_FAMILY(addrs), SOCK_STREAM, 0);
     if (sock < 0) {
 	error("socket(): %s", strerror(errno));
     }
-    if (connect(sock, (struct sockaddr *)&addr, SS_LEN(&addr)) < 0) {
+    if (connect(sock, (struct sockaddr *)addrs, SS_LEN(addrs)) < 0) {
 	error("connect(): %s", strerror(errno));
     }
 
-    tu_dbg("connected to %s\n", str_sockaddr(&addr));
+    tu_dbg("connected to %s\n", str_sockaddr(addrs));
 
     buf = g_malloc(TEST_BLOCK_SIZE);
     for (i = 0; i < TEST_BLOCK_COUNT; i++) {
@@ -674,8 +670,7 @@ source_connect_setup_impl(
     g_assert(SU_GET_FAMILY(&addr) == AF_INET);
 
     addrs = g_new0(DirectTCPAddr, 2);
-    addrs[0].ipv4 = ntohl(inet_addr("127.0.0.1"));
-    addrs[0].port = SU_GET_PORT(&addr);
+    copy_sockaddr(&addrs[0], &addr);
     elt->output_listen_addrs = addrs;
 
     return TRUE;
@@ -1248,8 +1243,7 @@ dest_listen_setup_impl(
     g_assert(SU_GET_FAMILY(&addr) == AF_INET);
 
     addrs = g_new0(DirectTCPAddr, 2);
-    addrs[0].ipv4 = ntohl(inet_addr("127.0.0.1"));
-    addrs[0].port = SU_GET_PORT(&addr);
+    copy_sockaddr(&addrs[0], &addr);
     elt->input_listen_addrs = addrs;
 
     return TRUE;
@@ -1347,11 +1341,10 @@ dest_connect_thread(
     SU_INIT(&addr, AF_INET);
     addrs = elt->upstream->output_listen_addrs;
     g_assert(addrs != NULL);
-    SU_SET_PORT(&addr, addrs->port);
-    ((struct sockaddr_in *)&addr)->sin_addr.s_addr = htonl(addrs->ipv4);
+    copy_sockaddr(&addr, addrs);
 
     tu_dbg("making data connection to %s\n", str_sockaddr(&addr));
-    sock = socket(AF_INET, SOCK_STREAM, 0);
+    sock = socket(SU_GET_FAMILY(&addr), SOCK_STREAM, 0);
     if (sock < 0) {
 	error("socket(): %s", strerror(errno));
     }

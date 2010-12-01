@@ -19,6 +19,7 @@
  */
 
 #include "amanda.h"
+#include "sockaddr-util.h"
 #include "ndmpconnobj.h"
 
 /*
@@ -480,8 +481,9 @@ ndmp_connection_mover_listen(
 	    *addrs = g_new0(DirectTCPAddr, naddrs+1);
 	    for (i = 0; i < naddrs; i++) {
 		ndmp4_tcp_addr *na = &reply->connect_addr.ndmp4_addr_u.tcp_addr.tcp_addr_val[i];
-		(*addrs)[i].ipv4 = na->ip_addr;
-		(*addrs)[i].port = na->port;
+		(*addrs)[i].sin.sin_family = AF_INET;
+		(*addrs)[i].sin.sin_addr.s_addr = htonl(na->ip_addr);
+		SU_SET_PORT(addrs[i], na->port);
 	    }
 	}
 	NDMP_FREE();
@@ -501,13 +503,13 @@ ndmp_connection_mover_connect(
 
     /* count addrs */
     g_assert(addrs);
-    for (naddrs = 0; addrs[naddrs].ipv4; naddrs++) ;
+    for (naddrs = 0; SU_GET_FAMILY(&addrs[naddrs]) != 0; naddrs++) ;
 
     /* convert addrs to an ndmp4_tcp_addr */
     na = g_new0(ndmp4_tcp_addr, naddrs);
     for (i = 0; i < naddrs; i++) {
-	na[i].ip_addr = addrs[i].ipv4;
-	na[i].port = addrs[i].port;
+	na[i].ip_addr = ntohl(addrs[i].sin.sin_addr.s_addr);
+	na[i].port = SU_GET_PORT(&addrs[i]);
     }
 
 

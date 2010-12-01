@@ -21,6 +21,7 @@
 
 #include "amanda.h"
 #include "amxfer.h"
+#include "sockaddr-util.h"
 
 /*
  * Class declaration
@@ -68,7 +69,7 @@ setup_impl(
 {
     XferSourceDirectTCPConnect *self = (XferSourceDirectTCPConnect *)elt;
 
-    g_assert(self->addrs && self->addrs->ipv4);
+    g_assert(self->addrs && SU_GET_FAMILY(self->addrs) != 0);
     elt->output_listen_addrs = self->addrs;
 
     return TRUE;
@@ -151,7 +152,7 @@ xfer_source_directtcp_connect(DirectTCPAddr *addrs)
 
     g_assert(addrs != NULL);
 
-    for (i = 0; addrs[i].port; i++) ;
+    for (i = 0; SU_GET_FAMILY(&addrs[i]) != 0; i++);
     self->addrs = g_memdup(addrs, (i+1) * sizeof(*addrs));
 
     return elt;

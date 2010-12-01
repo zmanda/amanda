@@ -20,6 +20,7 @@
  */
 
 #include "amanda.h"
+#include "sockaddr-util.h"
 #include "amxfer.h"
 
 /*

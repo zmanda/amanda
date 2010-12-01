@@ -29,6 +29,8 @@
 %{
 #include "glib-util.h"
 #include "amxfer.h"
+#include "amanda.h"
+#include "sockaddr-util.h"
 %}
 
 /* The SWIGging of the transfer architecture.

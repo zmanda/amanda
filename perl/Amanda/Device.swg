@@ -31,6 +31,8 @@
 #include "fileheader.h"
 #include "glib-util.h"
 #include "simpleprng.h"
+#include "amanda.h"
+#include "sockaddr-util.h"
 %}
 
 %init %{

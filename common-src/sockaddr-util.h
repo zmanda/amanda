@@ -42,6 +42,7 @@ void	dump_sockaddr(sockaddr_union *	sa);
  * @returns: pointer to statically allocated string
  */
 char *  str_sockaddr(sockaddr_union *sa);
+char *  str_sockaddr_no_port(sockaddr_union *sa);
 
 /* Compare two sockaddr_union objects, optionally comparing
  * only the address (and thus ignoring port, flow info, etc.).

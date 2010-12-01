@@ -69,7 +69,7 @@ setup_impl(
 {
     XferDestDirectTCPConnect *self = (XferDestDirectTCPConnect *)elt;
 
-    g_assert(self->addrs && self->addrs->ipv4);
+    g_assert(self->addrs && SU_GET_FAMILY(self->addrs) != 0);
     elt->input_listen_addrs = self->addrs;
 
     return TRUE;
@@ -146,7 +146,7 @@ xfer_dest_directtcp_connect(
 
     g_assert(addrs != NULL);
 
-    for (i = 0; addrs[i].port; i++) ;
+    for (i = 0; SU_GET_FAMILY(&addrs[i]) != 0; i++);
     self->addrs = g_memdup(addrs, (i+1) * sizeof(*addrs));
 
     return elt;

@@ -42,6 +42,7 @@ package Amanda::Taper::Worker;
 use POSIX qw( :errno_h );
 use Amanda::Changer;
 use Amanda::Config qw( :getconf config_dir_relative );
+use Amanda::Debug;
 use Amanda::Header;
 use Amanda::Holding;
 use Amanda::MainLoop qw( :GIOCondition );
@@ -508,9 +509,6 @@ sub send_port_and_get_header {
 	$header_xfer->start($steps->{'header_xfer_xmsg_cb'});
 
 	my $header_addrs = $xsrc->get_addrs();
-	$header_addrs = [ grep { $_->[0] eq '127.0.0.1' } @$header_addrs ];
-	die "Source::DirectTCPListen did not return a localhost address"
-	    unless @$header_addrs;
 	my $header_port = $header_addrs->[0][1];
 
 	# and tell the driver which ports we're listening on

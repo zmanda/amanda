@@ -23,14 +23,10 @@
 #define DIRECTTCP_H
 
 #include <glib.h>
+#include <amanda.h>
 
-/* A combination of IP address (expressed as an integer in host byte
- * order) and port.  These are commonly seen in arrays terminated by
- * a {0,0}.  Note that, right now, only IPv4 addresses are supported
- * (since this is all that NDMP supports). */
-typedef struct DirectTCPAddr_ {
-    guint32 ipv4;
-    guint16 port;
-} DirectTCPAddr;
+/* The address to connect to. These are commonly seen in arrays
+ * terminated by a family of 0. */
+#define DirectTCPAddr sockaddr_union
 
 #endif /* DIRECTTCP_H */

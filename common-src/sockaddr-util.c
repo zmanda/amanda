@@ -85,7 +85,31 @@ str_sockaddr(
     {
 	inet_ntop(AF_INET, &sa->sin.sin_addr.s_addr, ipstr, sizeof(ipstr));
     }
-    g_snprintf(mystr_sockaddr,sizeof(mystr_sockaddr),"%s.%d", ipstr, port);
+    g_snprintf(mystr_sockaddr,sizeof(mystr_sockaddr),"%s:%d", ipstr, port);
+    mystr_sockaddr[sizeof(mystr_sockaddr)-1] = '\0';
+
+    return mystr_sockaddr;
+}
+
+char *
+str_sockaddr_no_port(
+    sockaddr_union *sa)
+{
+#ifdef WORKING_IPV6
+    char ipstr[INET6_ADDRSTRLEN];
+#else
+    char ipstr[INET_ADDRSTRLEN];
+#endif
+
+#ifdef WORKING_IPV6
+    if ( SU_GET_FAMILY(sa) == AF_INET6) {
+	inet_ntop(AF_INET6, &sa->sin6.sin6_addr, ipstr, sizeof(ipstr));
+    } else
+#endif
+    {
+	inet_ntop(AF_INET, &sa->sin.sin_addr.s_addr, ipstr, sizeof(ipstr));
+    }
+    g_snprintf(mystr_sockaddr,sizeof(mystr_sockaddr),"%s", ipstr);
     mystr_sockaddr[sizeof(mystr_sockaddr)-1] = '\0';
 
     return mystr_sockaddr;

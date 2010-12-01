@@ -1460,7 +1460,11 @@ read_mesgfd(
 	/* Use the first in the dataport_list */
 	in_port_t data_port;
 	char *data_host = dataport_list;
-	char *s= strchr(dataport_list, ':');
+	char *s;
+
+	s = strchr(dataport_list, ',');
+	if (s) *s = '\0';  /* use first data_port */
+	s = strrchr(dataport_list, ':');
 	*s = '\0';
 	s++;
 	data_port = atoi(s);

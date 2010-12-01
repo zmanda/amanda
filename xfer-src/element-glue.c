@@ -25,6 +25,7 @@
 #include "directtcp.h"
 #include "util.h"
 #include "sockaddr-util.h"
+#include "debug.h"
 
 /*
  * Instance definition
@@ -114,10 +115,23 @@ do_directtcp_listen(
     sockaddr_union addr;
     DirectTCPAddr *addrs;
     socklen_t len;
+    struct addrinfo *res;
 
-    sock = *sockp = socket(AF_INET, SOCK_STREAM, 0);
+    if (resolve_hostname("localhost", 0, &res, NULL) != 0) {
+	xfer_cancel_with_error(elt, "resolve_hostname(): %s", strerror(errno));
+	return FALSE;
+    }
+
+    sock = *sockp = socket(SU_GET_FAMILY((sockaddr_union *)res->ai_addr), SOCK_STREAM, 0);
     if (sock < 0) {
 	xfer_cancel_with_error(elt, "socket(): %s", strerror(errno));
+	return FALSE;
+    }
+
+    len = sizeof(sockaddr_union);
+    if (bind(sock, (struct sockaddr *)res->ai_addr, len) != 0) {
+	xfer_cancel_with_error(elt, "bind(): %s", strerror(errno));
+	freeaddrinfo(res);
 	return FALSE;
     }
 
@@ -130,11 +144,9 @@ do_directtcp_listen(
     len = sizeof(addr);
     if (getsockname(sock, (struct sockaddr *)&addr, &len) < 0)
 	error("getsockname(): %s", strerror(errno));
-    g_assert(SU_GET_FAMILY(&addr) == AF_INET);
 
     addrs = g_new0(DirectTCPAddr, 2);
-    addrs[0].ipv4 = ntohl(inet_addr("127.0.0.1")); /* TODO: be smarter! */
-    addrs[0].port = SU_GET_PORT(&addr);
+    copy_sockaddr(&addrs[0], &addr);
     *addrsp = addrs;
 
     return TRUE;
@@ -195,12 +207,10 @@ do_directtcp_connect(
     }
 
     /* set up the sockaddr -- IPv4 only */
-    SU_INIT(&addr, AF_INET);
-    SU_SET_PORT(&addr, addrs->port);
-    ((struct sockaddr_in *)&addr)->sin_addr.s_addr = htonl(addrs->ipv4);
+    copy_sockaddr(&addr, addrs);
 
     g_debug("making data connection to %s", str_sockaddr(&addr));
-    sock = socket(AF_INET, SOCK_STREAM, 0);
+    sock = socket(SU_GET_FAMILY(&addr), SOCK_STREAM, 0);
     if (sock < 0) {
 	xfer_cancel_with_error(elt,
 	    "socket(): %s", strerror(errno));

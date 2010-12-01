@@ -43,6 +43,7 @@
 #include "util.h"
 #include "holding.h"
 #include "timestamp.h"
+#include "sockaddr-util.h"
 
 #ifndef SEEK_SET
 #define SEEK_SET 0
@@ -440,6 +441,7 @@ startup_chunker(
     int header_socket, data_socket;
     int result;
     struct addrinfo *res;
+    sockaddr_union  addr;
 
     header_port = 0;
     data_port = 0;
@@ -452,6 +454,10 @@ startup_chunker(
 				STREAM_BUFSIZE, 0);
     data_socket = stream_server(res->ai_family, &data_port, 0,
 				STREAM_BUFSIZE, 0);
+    copy_sockaddr(&addr, (sockaddr_union *)res->ai_addr);
+
+    SU_SET_PORT(&addr, data_port);
+
     if (res) freeaddrinfo(res);
 
     if (header_socket < 0) {
@@ -466,7 +472,7 @@ startup_chunker(
 	return -1;
     }
 
-    putresult(PORT, "%d 127.0.0.1:%d\n", header_port, data_port);
+    putresult(PORT, "%d %s\n", header_port, str_sockaddr(&addr));
 
     header_fd = stream_accept(header_socket, CONNECT_TIMEOUT, 0,
 			      STREAM_BUFSIZE);

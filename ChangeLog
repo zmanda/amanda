@@ -1,3 +1,16 @@
+2010-12-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/directtcp.h: DirectTCPAddr is a sockaddr_union.
+	* common-src/sockaddr-util.c (str_sockaddr_no_port): new function.
+	* common-src/sockaddr-util.h (str_sockaddr_no_port): New prototype.
+	* perl/amglue/directtcp.swg: Swig new DirectTCPAddr.
+	* server-src/dumper.c: Parse IPV6 in dataport_list.
+	* ndmp-src/ndmpconnobj.c, perl/Amanda/Device.swg,
+	  perl/Amanda/Taper/Worker.pm, perl/Amanda/Xfer.swg,
+	  server-src/chunker.c, xfer-src/dest-directtcp-connect.c,
+	  xfer-src/element-glue.c, xfer-src/source-directtcp-connect.c,
+	  xfer-src/source-directtcp-listen.c, xfer-src/xfer-element.h,
+	  xfer-src/xfer-test.c: Use new DirectTCPAddr.
+
 2010-11-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Add pre-amcheck, post-amcheck, pre-estimate,
 	  post-estimate, pre-backup and post-backup to execute-on of script.
