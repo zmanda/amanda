@@ -441,7 +441,9 @@ startup_chunker(
     int header_socket, data_socket;
     int result;
     struct addrinfo *res;
-    sockaddr_union  addr;
+    struct addrinfo *res_addr;
+    sockaddr_union  *addr = NULL;
+    sockaddr_union   data_addr;
 
     header_port = 0;
     data_port = 0;
@@ -450,13 +452,25 @@ startup_chunker(
 			       gai_strerror(result));
 	return -1;
     }
-    header_socket = stream_server(res->ai_family, &header_port, 0,
-				STREAM_BUFSIZE, 0);
-    data_socket = stream_server(res->ai_family, &data_port, 0,
-				STREAM_BUFSIZE, 0);
-    copy_sockaddr(&addr, (sockaddr_union *)res->ai_addr);
+    for (res_addr = res; res_addr != NULL; res_addr = res_addr->ai_next) {
+	g_debug("ra: %s\n", str_sockaddr((sockaddr_union*)res_addr->ai_addr));
+	if (res_addr->ai_family == AF_INET) {
+	    addr = (sockaddr_union *)res_addr->ai_addr;
+	    break;
+	}
+    }
+    if (!addr) {
+	addr = (sockaddr_union *)res->ai_addr;
+	g_debug("addr: %s\n", str_sockaddr(addr));
+    }
 
-    SU_SET_PORT(&addr, data_port);
+    header_socket = stream_server(SU_GET_FAMILY(addr), &header_port, 0,
+				STREAM_BUFSIZE, 0);
+    data_socket = stream_server(SU_GET_FAMILY(addr), &data_port, 0,
+				STREAM_BUFSIZE, 0);
+    copy_sockaddr(&data_addr, addr);
+
+    SU_SET_PORT(&data_addr, data_port);
 
     if (res) freeaddrinfo(res);
 
@@ -472,7 +486,7 @@ startup_chunker(
 	return -1;
     }
 
-    putresult(PORT, "%d %s\n", header_port, str_sockaddr(&addr));
+    putresult(PORT, "%d %s\n", header_port, str_sockaddr(&data_addr));
 
     header_fd = stream_accept(header_socket, CONNECT_TIMEOUT, 0,
 			      STREAM_BUFSIZE);

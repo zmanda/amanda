@@ -112,24 +112,35 @@ do_directtcp_listen(
     DirectTCPAddr **addrsp)
 {
     int sock;
-    sockaddr_union addr;
+    sockaddr_union data_addr;
     DirectTCPAddr *addrs;
     socklen_t len;
     struct addrinfo *res;
+    struct addrinfo *res_addr;
+    sockaddr_union *addr = NULL;
 
     if (resolve_hostname("localhost", 0, &res, NULL) != 0) {
 	xfer_cancel_with_error(elt, "resolve_hostname(): %s", strerror(errno));
 	return FALSE;
     }
+    for (res_addr = res; res_addr != NULL; res_addr = res_addr->ai_next) {
+	if (res_addr->ai_family == AF_INET) {
+            addr = (sockaddr_union *)res_addr->ai_addr;
+            break;
+        }
+    }
+    if (!addr) {
+        addr = (sockaddr_union *)res->ai_addr;
+    }
 
-    sock = *sockp = socket(SU_GET_FAMILY((sockaddr_union *)res->ai_addr), SOCK_STREAM, 0);
+    sock = *sockp = socket(SU_GET_FAMILY(addr), SOCK_STREAM, 0);
     if (sock < 0) {
 	xfer_cancel_with_error(elt, "socket(): %s", strerror(errno));
 	return FALSE;
     }
 
-    len = sizeof(sockaddr_union);
-    if (bind(sock, (struct sockaddr *)res->ai_addr, len) != 0) {
+    len = SS_LEN(addr);
+    if (bind(sock, (struct sockaddr *)addr, len) != 0) {
 	xfer_cancel_with_error(elt, "bind(): %s", strerror(errno));
 	freeaddrinfo(res);
 	return FALSE;
@@ -141,12 +152,12 @@ do_directtcp_listen(
     }
 
     /* TODO: which addresses should this display? all ifaces? localhost? */
-    len = sizeof(addr);
-    if (getsockname(sock, (struct sockaddr *)&addr, &len) < 0)
+    len = sizeof(data_addr);
+    if (getsockname(sock, (struct sockaddr *)&data_addr, &len) < 0)
 	error("getsockname(): %s", strerror(errno));
 
     addrs = g_new0(DirectTCPAddr, 2);
-    copy_sockaddr(&addrs[0], &addr);
+    copy_sockaddr(&addrs[0], &data_addr);
     *addrsp = addrs;
 
     return TRUE;

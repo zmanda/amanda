@@ -1,4 +1,7 @@
 2010-12-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/chunker.c, xfer-src/element-glue.c: Prefer IPV4 over IPV6.
+
+2010-12-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/directtcp.h: DirectTCPAddr is a sockaddr_union.
 	* common-src/sockaddr-util.c (str_sockaddr_no_port): new function.
 	* common-src/sockaddr-util.h (str_sockaddr_no_port): New prototype.
