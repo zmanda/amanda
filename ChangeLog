@@ -1,5 +1,8 @@
+2010-12-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Put them in AMANDA_DBGDIR/log.error
+
 2010-12-03  Jean-Louis Martineau <martineau@zmanda.com>
-	* server-src/dumper.c: Put extar error message in separate files to
+	* server-src/dumper.c: Put error message in separate files to
 	  reduce the size of the log file.
 
 2010-12-01  Jean-Louis Martineau <martineau@zmanda.com>

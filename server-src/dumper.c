@@ -1169,7 +1169,7 @@ do_dump(
     char *indexfile_tmp = NULL;
     char *indexfile_real = NULL;
     char level_str[NUM_STR_SIZE];
-    char time_str[NUM_STR_SIZE];
+    char *time_str;
     char *fn;
     char *q;
     times_t runtime;
@@ -1187,18 +1187,23 @@ do_dump(
     fh_init(&file);
 
     g_snprintf(level_str, SIZEOF(level_str), "%d", level);
-    g_snprintf(time_str, SIZEOF(time_str), "%d", (int)time(NULL));
+    time_str = get_timestamp_from_time(0);
     fn = sanitise_filename(diskname);
     errf_lines = 0;
     errfname = newvstralloc(errfname,
-			    AMANDA_TMPDIR,
-			    "/", hostname,
+			    AMANDA_DBGDIR,
+			    "/log.error", NULL);
+    mkdir(errfname, 0700);
+    errfname = newvstralloc(errfname,
+			    AMANDA_DBGDIR,
+			    "/log.error/", hostname,
 			    ".", fn,
 			    ".", level_str,
 			    ".", time_str,
 			    ".errout",
 			    NULL);
     amfree(fn);
+    amfree(time_str);
     if((errf = fopen(errfname, "w+")) == NULL) {
 	errstr = newvstrallocf(errstr, "errfile open \"%s\": %s",
 			      errfname, strerror(errno));
