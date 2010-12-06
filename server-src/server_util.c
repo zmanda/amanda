@@ -514,8 +514,10 @@ internal_server_estimate(
 	    size = (gint64)10000;
 	    if (size > tapetype_get_length(tape)/2)
 		size = tapetype_get_length(tape)/2;
-	    if (size > level0_size/2)
-		size = level0_size/2;
+	    if (level0_size > 0 && dp->strategy != DS_NOFULL) {
+		if (size > level0_size/2)
+		    size = level0_size/2;
+	    }
 	    *stats = 0;
 	}
     }
@@ -548,10 +550,18 @@ internal_server_estimate(
 	    size = (gint64)100000;
 	    if (size > tapetype_get_length(tape)/2)
 		size = tapetype_get_length(tape)/2;
-	    if (size > level0_size/2)
-		size = level0_size/2;
+	    if (level0_size > 0 && dp->strategy != DS_NOFULL) {
+		if (size > level0_size/2)
+		    size = level0_size/2;
+	    }
 	    *stats = 0;
 	}
+    } else {
+	char *conf_tapetype = getconf_str(CNF_TAPETYPE);
+	tapetype_t *tape = lookup_tapetype(conf_tapetype);
+	size = (gint64)100000;
+	if (size > tapetype_get_length(tape)/2)
+	    size = tapetype_get_length(tape)/2;
     }
 
     return size;
