@@ -1104,7 +1104,7 @@ int copy_file(
     return 0;
 }
 
-#ifndef HAVE_READLINE
+#ifndef HAVE_LIBREADLINE
 /*
  * simple readline() replacements, used when we don't have readline
  * support from the system.

@@ -1,4 +1,8 @@
 2010-12-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c: s/HAVE_READLINE/HAVE_LIBREADLINE/
+	* config/amanda/readline.m4: s/HAVE_READLINE/HAVE_LIBREADLINE/
+
+2010-12-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/readline.m4: Merge with latest AX_LIB_READLINE.
 	* common-src/util.h: Fix for latest AX_LIB_READLINE.
 
