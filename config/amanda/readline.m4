@@ -4,7 +4,7 @@
 #
 # OVERVIEW
 #
-#   Check for readline support.  Defines HAVE_READLINE if readline
+#   Check for readline support.  Defines HAVE_LIBREADLINE if readline
 #   is available, and also checks for a number of readline headers and
 #   adds readline libraries to READLINE_LIBS.
 #
