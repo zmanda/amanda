@@ -337,26 +337,34 @@ pcontext_t get_pcontext(void);
  * or prototypes some simple stub functions that are used instead.
  */
 
-#ifdef HAVE_READLINE
-#  ifdef HAVE_READLINE_READLINE_H
+#ifdef HAVE_LIBREADLINE
+#  if defined(HAVE_READLINE_READLINE_H)
 #    include <readline/readline.h>
-#    ifdef HAVE_READLINE_HISTORY_H
-#      include <readline/history.h>
-#    endif
-#  else
-#    ifdef HAVE_READLINE_H
-#      include <readline.h>
-#      ifdef HAVE_HISTORY_H
-#        include <history.h>
-#      endif
-#    endif
-#  endif
-#else
+#  elif defined(HAVE_READLINE_H)
+#    include <readline.h>
+#  else /* !defined(HAVE_READLINE_H) */
+extern char *readline ();
+#  endif /* !defined(HAVE_READLINE_H) */
+   /* char *cmdline = NULL; */
+#else /* !defined(HAVE_LIBREADLINE) */
+  /* use our own readline */
+char * readline(const char *prompt);
+#endif /* HAVE_LIBREADLINE */
 
-char *	readline(const char *prompt);
-void	add_history(const char *line);
-
-#endif
+#ifdef HAVE_READLINE_HISTORY
+#  if defined(HAVE_READLINE_HISTORY_H)
+#    include <readline/history.h>
+#  elif defined(HAVE_HISTORY_H)
+#    include <history.h>
+#  else /* !defined(HAVE_HISTORY_H) */
+extern void add_history ();
+extern int write_history ();
+extern int read_history ();
+#  endif /* defined(HAVE_READLINE_HISTORY_H) */
+#else /* !defined(HAVE_READLINE_HISTORY) */
+  /* use our own add_history */
+void   add_history(const char *line);
+#endif /* HAVE_READLINE_HISTORY */
 
 char *base64_decode_alloc_string(char *);
 
