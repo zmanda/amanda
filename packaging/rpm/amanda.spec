@@ -42,30 +42,35 @@
         %define disttag fc
         %define distver 3
 	%define requires_libtermcap Requires: libtermcap.so.2
+	%define curl curl
     %endif
     %if %(awk '$1 == "Fedora" && $4 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 4
 	%define requires_libtermcap Requires: libtermcap.so.2
+	%define curl curl
     %endif
     %if %(awk '$1 == "Fedora" && $4 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 5
 	%define requires_libtermcap Requires: libtermcap.so.2
+	%define curl curl
     %endif
     %if %(awk '$1 == "Fedora" && $4 ~ /6.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 6
 	%define requires_libtermcap Requires: libtermcap.so.2
+	%define curl curl
     %endif
     %if %(awk '$1 == "Fedora" && $3 ~ /7.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 7
 	%define requires_libtermcap Requires: libtermcap.so.2
+	%define curl curl
     %endif
     # if macro cannot have an empty test and we're just testing the existance
     %if %{?fedora:yes}%{!?fedora:no} == yes
@@ -74,6 +79,10 @@
         %define distver %{fedora}
 	%if %{distver} <= 8
 	    %define requires_libtermcap Requires: libtermcap.so.2
+	    %define curl curl
+	%endif
+	%if %{distver} >= 9
+	    %define curl libcurl
 	%endif
         %if %{_host_cpu} == x86_64 && %{_target_cpu} == i686
                 # Do nothing if PKG_CONFIG_PATH was set by the user above.
@@ -86,6 +95,7 @@
         %define distver 3
         %define tarver 1.14
 	%define requires_libtermcap Requires: libtermcap.so.2
+	%define curl curl
 	%define without_ipv6 --without-ipv6
     %endif
     %if %(awk '$1 == "Red" && $7 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
@@ -94,6 +104,7 @@
         %define distver 4
         %define tarver 1.14
 	%define requires_libtermcap Requires: libtermcap.so.2
+	%define curl curl
     %endif
     %if %(awk '$1 == "CentOS" && $3 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
 	%define dist redhat
@@ -101,21 +112,25 @@
 	%define distver 4
 	%define tarver 1.14
 	%define requires_libtermcap Requires: libtermcap.so.2
+	%define curl curl
     %endif
     %if %(awk '$1 == "Red" && $7 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
         %define disttag rhel
         %define distver 5
+	%define curl curl
     %endif
     %if %(awk '$1 == "CentOS" && $3 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
         %define disttag rhel
         %define distver 5
+	%define curl curl
     %endif
     %if %(awk '$1 == "Red" && $7 ~ /6.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
         %define disttag rhel
         %define distver 6
+	%define curl libcurl
     %endif
     
     # If dist is undefined, we didn't detect.
@@ -126,6 +141,7 @@
     %define dist SuSE
     %define disttag %(awk '$1=="SUSE" {$3=="Enterprise" ? TAG="sles" : TAG="suse" ; print TAG}' /etc/SuSE-release)
     %define distver %(awk '$1=="SUSE" {$3=="Enterprise" ? VER=$5 : VER=$3 ; print VER}' /etc/SuSE-release)
+    %define curl curl
 %endif
 
 # Set options per distribution
@@ -186,8 +202,8 @@ BuildRequires: readline
 # Note: newer distros have changed most *-devel to lib*-devel, and added a
 # provides tag for backwards compat.
 BuildRequires: readline-devel
-BuildRequires: curl >= 7.10.0
-BuildRequires: curl-devel >= 7.10.0
+BuildRequires: %{curl} >= 7.10.0
+BuildRequires: %{curl}-devel >= 7.10.0
 BuildRequires: openssl
 BuildRequires: openssl-devel
 BuildRequires: perl(ExtUtils::Embed)
@@ -201,10 +217,7 @@ Requires: /usr/sbin/usermod
 Requires: fileutils
 Requires: grep
 Requires: gnuplot
-Requires: libc.so.6
-Requires: libm.so.6
-Requires: libnsl.so.1
-Requires: curl >= 7.10.0
+Requires: %{curl} >= 7.10.0
 Requires: openssl
 Requires: xinetd
 Requires: perl >= 5.6.0
@@ -222,9 +235,6 @@ Requires: grep
 %{?requires_libtermcap}
 %{?requires_initscripts}
 Requires: xinetd
-Requires: libc.so.6
-Requires: libm.so.6
-Requires: libnsl.so.1
 Requires: perl >= 5.6.0
 Requires: tar >= %{tarver}
 Requires: readline
@@ -241,9 +251,6 @@ Group: %{rpm_group}
 Requires: /bin/awk
 Requires: fileutils
 Requires: grep
-Requires: libc.so.6
-Requires: libm.so.6
-Requires: libnsl.so.1
 %{?requires_libtermcap}
 %{?requires_initscripts}
 Requires: xinetd
