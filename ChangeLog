@@ -1,3 +1,7 @@
+2010-12-07 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/rpm/amanda.spec.src: remove manual library requires and
+	   set curl vs libcurl based on distro.
+
 2010-12-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c: s/HAVE_READLINE/HAVE_LIBREADLINE/
 	* config/amanda/readline.m4: s/HAVE_READLINE/HAVE_LIBREADLINE/
