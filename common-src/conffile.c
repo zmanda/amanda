@@ -4672,7 +4672,7 @@ config_uninit(void)
 	   free_val_t(&hd->value[i]);
 	}
     }
-    g_slist_free_full(holdinglist);
+    slist_free_full(holdinglist, g_free);
     holdinglist = NULL;
 
     for(dp=dumplist; dp != NULL; dp = dpnext) {
@@ -4758,7 +4758,7 @@ config_uninit(void)
     amfree(config_dir);
     amfree(config_filename);
 
-    g_slist_free_full(seen_filenames);
+    slist_free_full(seen_filenames, g_free);
     seen_filenames = NULL;
 
     config_client = FALSE;
@@ -5387,7 +5387,7 @@ free_property_t(
     gpointer p)
 {
     property_t *propery = (property_t *)p;
-    g_slist_free_full(propery->values);
+    slist_free_full(propery->values, g_free);
     amfree(propery);
 }
 
@@ -6512,11 +6512,11 @@ free_val_t(
 	    break;
 
 	case CONFTYPE_IDENTLIST:
-	    g_slist_free_full(val->v.identlist);
+	    slist_free_full(val->v.identlist, g_free);
 	    break;
 
 	case CONFTYPE_RECOVERY_LIMIT:
-	    g_slist_free_full(val->v.recovery_limit.match_pats);
+	    slist_free_full(val->v.recovery_limit.match_pats, g_free);
 	    break;
 
 	case CONFTYPE_TIME:
@@ -7741,7 +7741,7 @@ config_errors(GSList **errstr)
 void
 config_clear_errors(void)
 {
-    g_slist_free_full(cfgerr_errors);
+    slist_free_full(cfgerr_errors, g_free);
 
     cfgerr_errors = NULL;
     cfgerr_level = CFGERR_OK;

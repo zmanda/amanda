@@ -66,6 +66,13 @@ fixup_relative(
     return newname;
 }
 
+/* GDestroyFunc for a hash table whose values are GSLists contianing malloc'd
+ * strings */
+static void
+destroy_slist_free_full(gpointer list) {
+    slist_free_full((GSList *)list, g_free);
+}
+
 
 static char *
 get_name(
@@ -1009,7 +1016,7 @@ run_client_script(
     script->result = g_new0(client_script_result_t, 1);
     script->result->proplist =
 		  g_hash_table_new_full(g_str_hash, g_str_equal,
-					&g_free, &g_slist_free_full_gpointer);
+					&g_free, &destroy_slist_free_full);
     script->result->output = g_ptr_array_new();
     script->result->err = g_ptr_array_new();
 
