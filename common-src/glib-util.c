@@ -106,33 +106,19 @@ GValue* g_value_unset_copy(const GValue * from, GValue * to) {
     return to;
 }
 
-void g_list_free_full(GList * list) {
-    GList * cur = list;
-
-    while (cur != NULL) {
-        gpointer data = cur->data;
-        amfree(data);
-        cur = g_list_next(cur);
-    }
-
-    g_list_free(list);
-}
-
-void g_slist_free_full(GSList * list) {
+#if (GLIB_MAJOR_VERSION < 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 28))
+void slist_free_full(GSList * list, GDestroyNotify free_fn) {
     GSList * cur = list;
 
     while (cur != NULL) {
         gpointer data = cur->data;
-        amfree(data);
+        free_fn(data);
         cur = g_slist_next(cur);
     }
 
     g_slist_free(list);
 }
-
-void g_slist_free_full_gpointer(gpointer list) {
-    g_slist_free_full((GSList *)list);
-}
+#endif
 
 void g_queue_free_full(GQueue * queue) {
     while (!g_queue_is_empty(queue)) {

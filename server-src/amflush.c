@@ -245,7 +245,7 @@ main(
 		    stralloc((char *)datestamp->data),
 		    g_compare_strings);
 	}
-	g_slist_free_full(all_datestamps);
+	slist_free_full(all_datestamps, g_free);
     }
     else {
 	/* otherwise, in batch mode, use all datestamps */
@@ -405,9 +405,9 @@ main(
 	}
     }
 
-    g_slist_free_full(datestamp_list);
+    slist_free_full(datestamp_list, g_free);
     datestamp_list = NULL;
-    g_slist_free_full(holding_list);
+    slist_free_full(holding_list, g_free);
     holding_list = NULL;
 
     if(redirect) { /* rename errfile */
@@ -599,7 +599,7 @@ pick_datestamp(void)
 		}
 		chupper = (char)toupper(ch);
 		if (chupper < 'A' || chupper > max_char) {
-		    g_slist_free_full(r_datestamp_list);
+		    slist_free_full(r_datestamp_list, g_free);
 		    r_datestamp_list = NULL;
 		    break;
 		}
@@ -607,7 +607,7 @@ pick_datestamp(void)
 					   stralloc(datestamps[chupper - 'A']));
 	    } while ((ch = *a++) != '\0');
 	    if (r_datestamp_list && ch == '\0') {
-		g_slist_free_full(datestamp_list);
+		slist_free_full(datestamp_list, g_free);
 		datestamp_list = r_datestamp_list;
 		break;
 	    }

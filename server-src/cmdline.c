@@ -247,7 +247,7 @@ cmdline_match_holding(
 	dumpfile_free_data(&file);
     }
 
-    g_slist_free_full(holding_files);
+    slist_free_full(holding_files, g_free);
 
     return matching_files;
 }

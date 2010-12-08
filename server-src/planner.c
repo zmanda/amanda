@@ -465,7 +465,7 @@ main(
 	    amfree(qhname);
 	    dumpfile_free_data(&file);
 	}
-	g_slist_free_full(holding_list);
+	slist_free_full(holding_list, g_free);
 	holding_list = NULL;
     }
     g_fprintf(stderr, _("ENDFLUSH\n"));

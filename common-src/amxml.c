@@ -86,7 +86,7 @@ free_dle(
     amfree(dle->device);
     amfree(dle->program);
     g_slist_free(dle->estimatelist);
-    g_slist_free_full(dle->levellist);
+    slist_free_full(dle->levellist, g_free);
     amfree(dle->dumpdate);
     amfree(dle->compprog);
     amfree(dle->srv_encrypt);
@@ -104,8 +104,8 @@ free_dle(
 				      scriptlist = scriptlist->next) {
 	free_script_data((script_t *)scriptlist->data);
     }
-    g_slist_free_full(dle->scriptlist);
-    g_slist_free_full(dle->directtcp_list);
+    slist_free_full(dle->scriptlist, g_free);
+    slist_free_full(dle->directtcp_list, g_free);
     amfree(dle);
 }
 
