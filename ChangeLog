@@ -1,3 +1,7 @@
+2010-12-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Check if taper is flushing something before
+	  moving a dle to directq.
+
 2010-12-07 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/rpm/amanda.spec.src: remove manual library requires and
 	   set curl vs libcurl based on distro.

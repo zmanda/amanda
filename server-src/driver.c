@@ -978,7 +978,7 @@ start_some_dumps(
 	    } else if ((holdp =
 		find_diskspace(sched(diskp)->est_size, &cur_idle, NULL)) == NULL) {
 		cur_idle = max(cur_idle, IDLE_NO_DISKSPACE);
-		if (empty(tapeq) && busy_dumpers == 0) {
+		if (empty(tapeq) && busy_dumpers == 0 && !taper_busy) {
 		    remove_disk(rq, diskp);
 		    enqueue_disk(&directq, diskp);
 		}
