@@ -1,4 +1,8 @@
 2010-12-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Check if taper is flushing something before
+	  moving a dle to directq.
+
+2010-12-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/xfer-dest-taper-cacher.c: Print why the malloc failed.
 
 2010-12-08  Dustin J. Mitchell <dustin@zmanda.com>
