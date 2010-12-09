@@ -1012,7 +1012,7 @@ allow_dump_dle(
     } else if (!taper && (holdp =
 	find_diskspace(sched(diskp)->est_size, cur_idle, NULL)) == NULL) {
 	*cur_idle = max(*cur_idle, IDLE_NO_DISKSPACE);
-	if (empty(tapeq) && dumper_to_holding == 0 && rq != &directq) {
+	if (empty(tapeq) && dumper_to_holding == 0 && rq != &directq && all_taper_idle()) {
 	    remove_disk(rq, diskp);
 	    if (diskp->to_holdingdisk != HOLD_REQUIRED) {
 		enqueue_disk(&directq, diskp);
