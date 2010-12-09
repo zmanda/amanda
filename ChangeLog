@@ -1,3 +1,6 @@
+2010-12-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/xfer-dest-taper-cacher.c: Print why the malloc failed.
+
 2010-12-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/glib-util.c common-src/glib-util.h: do not define
 	  symbol g_slist_free_full, as it exists in glib-2.27 and higher;

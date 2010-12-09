@@ -327,9 +327,9 @@ alloc_slab(
 	rv->refcount = 1;
 	rv->base = g_try_malloc(self->slab_size);
 	if (!rv->base) {
-	    g_free(rv);
 	    xfer_cancel_with_error(XFER_ELEMENT(self),
-		_("Could not allocate %zu bytes of memory"), self->slab_size);
+		_("Could not allocate %zu bytes of memory: %s"), self->slab_size, strerror(errno));
+	    g_free(rv);
 	    return NULL;
 	}
     }
