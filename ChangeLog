@@ -1,3 +1,6 @@
+2010-12-10  David Bogen <bogen@wisc.edu>
+	* server-src/amoverview.pl: fix amoverview's argument parsing
+
 2010-12-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck-device.pl: Fix possible hang if
 	  Amanda::MainLoop::quit is called before Amanda::MainLoop::run.

@@ -66,10 +66,12 @@ GetOptions('config=s'		=> \$opt_config,
 	   'verbose'		=> \$opt_verbose)
 or Usage();
 
-if(@ARGV == 1) {
-  $opt_config = $ARGV[0];
-} else {
-  Usage();
+unless(defined($opt_config)) {
+    if (@ARGV == 1) {
+	$opt_config = $ARGV[0];
+    } else {
+	Usage();
+    }
 }
 
 #Initialize configuration
