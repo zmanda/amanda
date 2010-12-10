@@ -1,3 +1,6 @@
+2010-12-10 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/deb/control: move gnuplot to Suggests: and swap the order
+
 2010-12-10  David Bogen <bogen@wisc.edu>
 	* server-src/amoverview.pl: fix amoverview's argument parsing
 
