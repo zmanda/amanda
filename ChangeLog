@@ -13,7 +13,7 @@
 2010-12-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/xfer-dest-taper-cacher.c: Print why the malloc failed.
 
-2010-12-08  Dustin J. Mitchell <dustin@zmanda.com>
+2010-12-08  Dustin J. Mitchell <dustin@mozilla.com>
 	* common-src/glib-util.c common-src/glib-util.h: do not define
 	  symbol g_slist_free_full, as it exists in glib-2.27 and higher;
 	  use slist_free_full, and alias that to g_slist_free_full when
@@ -331,7 +331,7 @@
 	* server-src/amtape.pl: Remove call to set_label.
 	* server-src/amcheck-device.pl: Remove call to set_label.
  
-2010-10-29  Dustin J. Mitchell <dustin@zmanda.com>
+2010-10-29  Dustin J. Mitchell <dustin@mozilla.com>
 	* man/xml-source/amanda-changers.7.xml: improve chg-disk properties
 	  documentation
 
