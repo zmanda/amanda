@@ -859,6 +859,10 @@ sub _new_from_uri { # (note: this sub is patched by the installcheck)
     die "$pkgname->new did not return an Amanda::Changer object or an Amanda::Changer::Error"
 	unless ($rv->isa("Amanda::Changer") or $rv->isa("Amanda::Changer::Error"));
 
+    if ($rv->isa("Amanda::Changer::Error")) {
+	return $rv;
+    }
+
     if ($rv->isa("Amanda::Changer")) {
 	# add an instance variable or two
 	$rv->{'fatal_error'} = undef;

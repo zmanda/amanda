@@ -225,7 +225,8 @@ sub do_check {
 	$finished_cb->();
     };
 }
-do_check(\&Amanda::MainLoop::quit);
+
+Amanda::MainLoop::call_later(\&do_check, \&Amanda::MainLoop::quit);
 Amanda::MainLoop::run();
 Amanda::Util::finish_application();
 exit($exit_status);
