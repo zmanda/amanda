@@ -1,3 +1,8 @@
+2010-12-11  Daniel Néri <dne@mayonnaise.net>
+	* application-src/ampgsql.pl: Use diskname, not devicename, as prefix
+	  when checking for properties. Now works as documented in the ampgsql
+	  man page.
+
 2010-12-10 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/deb/control: move gnuplot to Suggests: and swap the order
 
