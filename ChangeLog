@@ -1,3 +1,8 @@
+2010-12-12  Daniel Néri <dne@mayonnaise.net>
+	* application-src/ampgsql.pl: Use diskname, not devicename, as prefix
+	  when checking for properties. Now works as documented in the ampgsql
+	  man page.
+
 2010-12-10  David Bogen <bogen@wisc.edu>
 	* server-src/amoverview.pl: fix amoverview's argument parsing
 
