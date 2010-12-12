@@ -89,10 +89,10 @@ sub new {
             $self->{'props'}->{$pname} = $conf_props->{$pname}->{'values'}->[0];
         }
     }
-    # check for properties like 'foo-pg-host' where the device is 'foo'
-    if ($self->{'args'}->{'device'}) {
+    # check for properties like 'foo-pg-host' where the diskname is 'foo'
+    if ($self->{'args'}->{'disk'}) {
         foreach my $pname (@PROP_NAMES) {
-            my $tmp = "$self->{'args'}->{'device'}-$pname";
+            my $tmp = "$self->{'args'}->{'disk'}-$pname";
             if ($conf_props->{$tmp}) {
                 debug("More than one value for $tmp. Using the first.")
                     if scalar(@{$conf_props->{$tmp}->{'values'}}) > 1;
