@@ -392,15 +392,15 @@ Amanda::MainLoop::run();
 
 	    is_deeply($inv, [
 	      { slot => 1, state => Amanda::Changer::SLOT_FULL,
-		device_status => $DEVICE_STATUS_SUCCESS,
+		device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
 		f_type => $Amanda::Header::F_EMPTY, label => undef,
 		reserved => 0,  current => 1},
 	      { slot => 2, state => Amanda::Changer::SLOT_FULL,
-		device_status => $DEVICE_STATUS_SUCCESS,
+		device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
 		f_type => $Amanda::Header::F_EMPTY, label => undef,
 		reserved => 0 },
 	      { slot => 3, state => Amanda::Changer::SLOT_FULL,
-		device_status => $DEVICE_STATUS_SUCCESS,
+		device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
 		f_type => $Amanda::Header::F_EMPTY, label => undef,
 		reserved => 0 },
 	      { slot => 4, state => Amanda::Changer::SLOT_FULL,
@@ -408,7 +408,7 @@ Amanda::MainLoop::run();
 		f_type => $Amanda::Header::F_TAPESTART, label => "FOO?BAR",
 		reserved => 0 },
 	      { slot => 5, state => Amanda::Changer::SLOT_FULL,
-		device_status => $DEVICE_STATUS_SUCCESS,
+		device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
 		f_type => $Amanda::Header::F_EMPTY, label => undef,
 		reserved => 0 },
 		], "inventory finds the labeled tape");

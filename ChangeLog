@@ -1,3 +1,10 @@
+2010-12-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/disk.pm: inventory must return the same as
+				       read_label.
+	* server-src/amtape.pl: Fix for new inventory.
+	* installcheck/Amanda_Changer_disk.pl: Fix for new inventory.
+	* installcheck/Amanda_Changer_rait.pl: Fix for new inventory.
+
 2010-12-11  Daniel Néri <dne@mayonnaise.net>
 	* application-src/ampgsql.pl: Don't assume that gtar is configured to
 	  use stdin/stdout as default archive.

@@ -263,6 +263,8 @@ sub {
 	    } else {
 		if (defined $sl->{label}) {
 		    $line .= " label $sl->{label}";
+		} elsif ($sl->{'device_status'} == $DEVICE_STATUS_VOLUME_UNLABELED) {
+		    $line .= " blank";
 		} elsif ($sl->{'device_status'} != $DEVICE_STATUS_SUCCESS) {
 		    $line .= "device error";
 		} elsif ($sl->{'f_type'} != $Amanda::Header::F_TAPESTART) {

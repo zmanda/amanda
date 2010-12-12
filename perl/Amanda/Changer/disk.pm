@@ -189,11 +189,12 @@ sub inventory {
 	    if ($label) {
 		$s->{'label'} = $self->_get_slot_label($slot);
 		$s->{'f_type'} = "".$Amanda::Header::F_TAPESTART;
+		$s->{'device_status'} = "".$DEVICE_STATUS_SUCCESS;
 	    } else {
 		$s->{'label'} = undef;
 		$s->{'f_type'} = "".$Amanda::Header::F_EMPTY;
+		$s->{'device_status'} = "".$DEVICE_STATUS_VOLUME_UNLABELED;
 	    }
-	    $s->{'device_status'} = "".$DEVICE_STATUS_SUCCESS;
 	    $s->{'current'} = 1 if $slot eq $current;
 	    push @inventory, $s;
 	}

@@ -268,19 +268,19 @@ sub test_threeway {
 	die $err if $err;
 
 	is_deeply($inv,  [
-          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS,
+          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
 	    f_type => $Amanda::Header::F_EMPTY, label => undef, # undef because labels don't match
 	    reserved => 0,
 	    slot => '{1,1,1}', import_export => undef },
-          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS,
+          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
 	    f_type => $Amanda::Header::F_EMPTY, label => undef, # all blank
 	    reserved => 0,
 	    slot => '{2,2,2}', import_export => undef },
-          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS,
+          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
 	    f_type => $Amanda::Header::F_EMPTY, label => undef, # mismatched labels
 	    reserved => 0,
 	    slot => '{3,3,3}', import_export => undef },
-          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS,
+          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
 	    f_type => $Amanda::Header::F_EMPTY, label => undef, # mismatched labels
 	    reserved => 0,
 	    slot => '{4,4,4}', import_export => undef } ,
@@ -416,9 +416,9 @@ sub test_normal_inventory {
 	    slot => '{1,1,1}', import_export => undef },
           { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS, f_type => $Amanda::Header::F_TAPESTART, label => 'mytape-2', reserved => 0,
 	    slot => '{2,2,2}', import_export => undef },
-          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS, f_type => $Amanda::Header::F_EMPTY, label => undef, reserved => 0,
+          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_VOLUME_UNLABELED, f_type => $Amanda::Header::F_EMPTY, label => undef, reserved => 0,
 	    slot => '{3,3,3}', import_export => undef },
-          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_SUCCESS, f_type => $Amanda::Header::F_EMPTY, label => undef, reserved => 0,
+          { state => Amanda::Changer::SLOT_FULL, device_status => $DEVICE_STATUS_VOLUME_UNLABELED, f_type => $Amanda::Header::F_EMPTY, label => undef, reserved => 0,
 	    slot => '{4,4,4}', import_export => undef } ,
         ], "second inventory is correct");
 
