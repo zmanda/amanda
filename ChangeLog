@@ -1,3 +1,7 @@
+2010-12-11  Daniel Néri <dne@mayonnaise.net>
+	* application-src/ampgsql.pl: Don't assume that gtar is configured to
+	  use stdin/stdout as default archive.
+
 2010-12-12  Daniel Néri <dne@mayonnaise.net>
 	* application-src/ampgsql.pl: Use diskname, not devicename, as prefix
 	  when checking for properties. Now works as documented in the ampgsql
