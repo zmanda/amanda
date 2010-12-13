@@ -30,7 +30,7 @@ Amanda::Interactive -- Parent class for user interactivity modules
 					 inter_conf => $inter_conf);
     $inter->user_request(
 	message => "Insert Volume labelled 'MY_LABEL-001'",
-	finished_cb => sub {
+	request_cb => sub {
 	    my ($err, $reply) = @_;
 	    if ($err) {
 		# error from the script
@@ -70,23 +70,23 @@ Where C<$interactive_name> is the name of the desired interactivity module
   $inter->user_request(message     => $message,
                        label       => $label,
                        err         => $err,
-                       finished_cb => $finished_cb);
+                       request_cb  => $request_cb);
 
 This method return immediately.  It sends C<message> to the user and waits for a
 reply.  The C<label> and C<err> parameters .. well, what do they do? (TODO)
 
-The C<user_request> method's C<finished_cb> as parameter is similar to the
-callback of the same name in L<Amanda::Changer>.  In the even of an error, it
-is called with an C<Amanda::Changer::Error> object as first argument.  If the
-request is answered, then the second argument is the user's response.  If the
-request is aborted (see C<abort>, below), then both arguments are C<undef>.
+The C<request_cb> callback take one or two arguments.  In the even of an
+error, it is called with an C<Amanda::Changer::Error> object as first argument.
+If the request is answered, then the first argument is C<undef> and the second
+argument is the user's response.  If the request is aborted (see C<abort>,
+below), then both arguments are C<undef>.
 
 =head3 abort
 
   $inter->abort()
 
 This method will abort all pending C<user_request> invocations, invoking their
-C<finished_cb> with C<(undef, undef)>.
+C<request_cb> with C<(undef, undef)>.
 
 =cut
 

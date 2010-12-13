@@ -59,7 +59,7 @@ sub user_request {
     my $buffer = "";
 
     my $steps = define_steps
-	cb_ref => \$params{'finished_cb'};
+	cb_ref => \$params{'request_cb'};
 
     step send_message => sub {
 	if ($params{'err'}) {
@@ -73,7 +73,7 @@ sub user_request {
 	# note that fe_amrecover_FEEDME implies fe_amrecover_splits
 	if (!$self->{'clientservice'}->{'their_features'}->has(
 				    $Amanda::Feature::fe_amrecover_FEEDME)) {
-	    return $params{'finished_cb'}->("remote cannot prompt for volumes", undef);
+	    return $params{'request_cb'}->("remote cannot prompt for volumes", undef);
 	}
 	$steps->{'send_feedme'}->();
     };
@@ -84,7 +84,7 @@ sub user_request {
 
     step read_response => sub {
 	my ($err, $written) = @_;
-	return $params{'finished_cb'}->($err, undef) if $err;
+	return $params{'request_cb'}->($err, undef) if $err;
 
 	$self->{'clientservice'}->getline_async(
 		$self->{'clientservice'}->{'ctl_stream'}, $steps->{'got_response'});
@@ -92,18 +92,18 @@ sub user_request {
 
     step got_response => sub {
 	my ($err, $line) = @_;
-	return $params{'finished_cb'}->($err, undef) if $err;
+	return $params{'request_cb'}->($err, undef) if $err;
 
 	if ($line eq "OK\r\n") {
-	    return $params{'finished_cb'}->(undef, undef); # carry on as you were
+	    return $params{'request_cb'}->(undef, undef); # carry on as you were
 	} elsif ($line =~ /^TAPE (.*)\r\n$/) {
 	    my $tape = $1;
 	    if ($tape eq getconf($CNF_AMRECOVER_CHANGER)) {
 		$tape = $Amanda::Recovery::Scan::DEFAULT_CHANGER;
 	    }
-	    return $params{'finished_cb'}->(undef, $tape); # use this device
+	    return $params{'request_cb'}->(undef, $tape); # use this device
 	} else {
-	    return $params{'finished_cb'}->("got invalid response from remote", undef);
+	    return $params{'request_cb'}->("got invalid response from remote", undef);
 	}
     };
 };

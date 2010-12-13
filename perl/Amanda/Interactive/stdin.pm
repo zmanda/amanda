@@ -75,12 +75,12 @@ sub user_request {
 	if (!defined $n_read) {
 	    return if ($! == EINTR);
 	    $self->abort();
-	    return $params{'finished_cb'}->(
+	    return $params{'request_cb'}->(
 			Amanda::Changer::Error->new('fatal',
 				message => "Fail to read from stdin"));
 	} elsif ($n_read == 0) {
 	    $self->abort();
-	    return $params{'finished_cb'}->(
+	    return $params{'request_cb'}->(
 			Amanda::Changer::Error->new('fatal',
 				message => "Aborted by user"));
 	} else {
@@ -90,7 +90,7 @@ sub user_request {
 		chomp $line;
 		$buffer = "";
 		$self->abort();
-		return $params{'finished_cb'}->(undef, $line);
+		return $params{'request_cb'}->(undef, $line);
 	    }
 	}
     };

@@ -580,7 +580,7 @@ sub find_volume {
 				label       => $label,
 				err         => "$err_message",
 				chg_name    => $self->{'chg'}->{'chg_name'},
-				finished_cb => $steps->{'scan_interactive_cb'});
+				request_cb  => $steps->{'scan_interactive_cb'});
 	}
 	return;
     };

@@ -58,7 +58,7 @@ sub user_request {
     my %params = @_;
 
     Amanda::Debug::debug("Change changer to multi-changer");
-    $params{'finished_cb'}->(undef, "multi-changer");
+    $params{'request_cb'}->(undef, "multi-changer");
 };
 
 # --------
