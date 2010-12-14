@@ -1,4 +1,7 @@
 2010-12-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* VERSION: 3.2.1
+
+2010-12-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/ssh-security.c: Use client_port.
 
 2010-12-14  Daniel Néri <dne@mayonnaise.net>
