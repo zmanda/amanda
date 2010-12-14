@@ -3,6 +3,7 @@
 * barcode are added to the tapelist file.
 * Faster 'amadmin find', improve speed on many programs.
 * device-output-buffer-size default to a minimum of 4*block_size.
+* ssh auth use the client-port
 * Bug fixed
    o "Can't opendata output stream: Connection refused" bug.
    o Better handling of dump to tape.

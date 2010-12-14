@@ -1,3 +1,6 @@
+2010-12-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ssh-security.c: Use client_port.
+
 2010-12-14  Daniel Néri <dne@mayonnaise.net>
 	* application-src/ampgsql.pl: Don't assume that gtar is configured to
 	  use stdin/stdout as default archive.
