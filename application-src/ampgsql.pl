@@ -808,6 +808,7 @@ sub command_restore {
    if ($self->{'args'}->{'level'} > 0) {
        debug("extracting incremental backup to $cur_dir/$_ARCHIVE_DIR_RESTORE");
        $status = system($self->{'args'}->{'gnutar-path'}, '--extract',
+	   '--file', '-',
 	   '--ignore-zeros',
 	   '--exclude', 'empty-incremental',
            '--directory', $_ARCHIVE_DIR_RESTORE) >> 8;
@@ -817,7 +818,7 @@ sub command_restore {
        if (!-d $_DATA_DIR_RESTORE) {
            mkdir($_DATA_DIR_RESTORE) or die("could not create archive WAL directory: $!");
        }
-       $status = system($self->{'args'}->{'gnutar-path'}, '--extract') >> 8;
+       $status = system($self->{'args'}->{'gnutar-path'}, '--extract', '--file', '-',) >> 8;
        (0 == $status) or die("Failed to extract base backup (exit status: $status)");
 
        debug("extracting archive dir to $cur_dir/$_ARCHIVE_DIR_RESTORE");
