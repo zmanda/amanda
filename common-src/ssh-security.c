@@ -96,7 +96,8 @@ static int newhandle = 1;
 /*
  * Local functions
  */
-static int runssh(struct tcp_conn *, const char *, const char *, const char *);
+static int runssh(struct tcp_conn *, const char *, const char *, const char *,
+		  const char *);
 
 /*
  * ssh version of a security handle allocator.  Logically sets
@@ -113,6 +114,7 @@ ssh_connect(
     int result;
     struct sec_handle *rh;
     char *amandad_path=NULL, *client_username=NULL, *ssh_keys=NULL;
+    char *client_port = "22";
 
     assert(fn != NULL);
     assert(hostname != NULL);
@@ -152,12 +154,18 @@ ssh_connect(
      * XXX need to eventually limit number of outgoing connections here.
      */
     if(conf_fn) {
+	char *port_str;
 	amandad_path    = conf_fn("amandad_path", datap);
 	client_username = conf_fn("client_username", datap);
 	ssh_keys        = conf_fn("ssh_keys", datap);
+	port_str        = conf_fn("client_port", datap);
+	if (port_str && strlen(port_str) >= 1) {
+	    client_port = port_str;
+	}
     }
     if(rh->rc->read == -1) {
-	if (runssh(rh->rs->rc, amandad_path, client_username, ssh_keys) < 0) {
+	if (runssh(rh->rs->rc, amandad_path, client_username, ssh_keys,
+		   client_port) < 0) {
 	    security_seterror(&rh->sech, _("can't connect to %s: %s"),
 			      hostname, rh->rs->rc->errmsg);
 	    goto error;
@@ -288,18 +296,40 @@ runssh(
     struct tcp_conn *	rc,
     const char *	amandad_path,
     const char *	client_username,
-    const char *	ssh_keys)
+    const char *	ssh_keys,
+    const char *        client_port)
 {
     int rpipe[2], wpipe[2];
     char *xamandad_path = (char *)amandad_path;
     char *xclient_username = (char *)client_username;
     char *xssh_keys = (char *)ssh_keys;
+    char *xclient_port = (char *)client_port;
 
     memset(rpipe, -1, SIZEOF(rpipe));
     memset(wpipe, -1, SIZEOF(wpipe));
     if (pipe(rpipe) < 0 || pipe(wpipe) < 0) {
 	rc->errmsg = newvstrallocf(rc->errmsg, _("pipe: %s"), strerror(errno));
 	return (-1);
+    }
+
+    if(!xamandad_path || strlen(xamandad_path) <= 1) 
+	xamandad_path = vstralloc(amlibexecdir, "/", "amandad", NULL);
+    if(!xclient_username || strlen(xclient_username) <= 1)
+	xclient_username = CLIENT_LOGIN;
+    if(!xclient_port || strlen(xclient_port) <= 1)
+	xclient_port = "22";
+
+    if(!ssh_keys || strlen(ssh_keys) <= 1) {
+	g_debug("exec: %s %s %s %s %s %s %s %s %s %s %s %s",
+		SSH, "SSH_OPTIONS", "-l", xclient_username, "-p", client_port,
+	        rc->hostname, xamandad_path, "-auth=ssh", "amdump", "amindexd",
+	        "amidxtaped");
+    }
+    else {
+	g_debug("exec: %s %s %s %s %s %s %s %s %s %s %s %s %s %s",
+		SSH, "SSH_OPTIONS", "-l", xclient_username, "-p", client_port,
+	        "-i", xssh_keys, rc->hostname, xamandad_path, "-auth=ssh",
+		"amdump", "amindexd", "amidxtaped");
     }
 
     switch (rc->pid = fork()) {
@@ -327,17 +357,13 @@ runssh(
 
     safe_fd(-1, 0);
 
-    if(!xamandad_path || strlen(xamandad_path) <= 1) 
-	xamandad_path = vstralloc(amlibexecdir, "/", "amandad", NULL);
-    if(!xclient_username || strlen(xclient_username) <= 1)
-	xclient_username = CLIENT_LOGIN;
     if(!ssh_keys || strlen(ssh_keys) <= 1) {
-	execlp(SSH, SSH, SSH_OPTIONS, "-l", xclient_username,
+	execlp(SSH, SSH, SSH_OPTIONS, "-l", xclient_username, "-p", client_port,
 	       rc->hostname, xamandad_path, "-auth=ssh", "amdump", "amindexd",
 	       "amidxtaped", (char *)NULL);
     }
     else {
-	execlp(SSH, SSH, SSH_OPTIONS, "-l", xclient_username,
+	execlp(SSH, SSH, SSH_OPTIONS, "-l", xclient_username, "-p", client_port,
 	       "-i", xssh_keys, rc->hostname, xamandad_path, "-auth=ssh",
 	       "amdump", "amindexd", "amidxtaped", (char *)NULL);
     }

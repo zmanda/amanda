@@ -1,3 +1,18 @@
+		Release Notes for amanda-3.2.1
+
+* barcode are added to the tapelist file.
+* Faster 'amadmin find', improve speed on many programs.
+* device-output-buffer-size default to a minimum of 4*block_size.
+* ssh auth use the client-port
+* Bug fixed
+   o "Can't opendata output stream: Connection refused" bug.
+   o Better handling of dump to tape.
+   o Corrupted 'amdump' log file, amstatus not showing correct state.
+   o Execute subprocess with the config overwrite.
+   o tape-device allow to set LEOM.
+   o Crash in robot changer.
+   o Script output property are not sent to application.
+
 		Release Notes for amanda-3.2.0
 
 * Support for multiple simultaneous writes to storage devices
