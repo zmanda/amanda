@@ -429,7 +429,7 @@ sub plan_cb {
     my $peer = $ENV{'AMANDA_AUTHENTICATED_PEER'};
     if (defined $recovery_limit) { # undef -> no recovery limit
 	if (!$peer) {
-	    warning("a recovery limit is specified for this DLE, but no authenticted ".
+	    warning("a recovery limit is specified for this DLE, but no authenticated ".
 		    "peer name is available; rejecting request.");
 	    $self->sendmessage("No matching dumps found");
 	    return $self->quit();
@@ -442,12 +442,12 @@ sub plan_cb {
 		    $matched = 1;
 		    last;
 		}
-	    }
-
-	    # otherwise use match_host to allow match expressions
-	    if (match_host($rl, $peer)) {
-		$matched = 1;
-		last;
+	    } else {
+		# otherwise use match_host to allow match expressions
+		if (match_host($rl, $peer)) {
+		    $matched = 1;
+		    last;
+		}
 	    }
 	}
 	if (!$matched) {
