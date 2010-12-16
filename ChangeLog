@@ -1,3 +1,6 @@
+2010-12-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* amar-src/amar.c: Don't fail on trailing NUL bytes.
+
 2010-12-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* VERSION: 3.2.1
 
