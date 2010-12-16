@@ -902,6 +902,22 @@ amar_read(
 		}
 
 		if (!datasize) {
+		    unsigned int i, nul_padding = 1;
+		    char *bb;
+		    /* try to detect NULL padding bytes */
+		    if (!buf_atleast(archive, &hp, 512 - RECORD_SIZE)) {
+			/* close to end of file */
+			break;
+		    }
+		    bb = buf_ptr(&hp);
+		    /* check all byte == 0 */
+		    for (i=0; i<512 - RECORD_SIZE; i++) {
+			if (*bb++ != 0)
+			    nul_padding = 0;
+		    }
+		    if (nul_padding) {
+			break;
+		    }
 		    g_set_error(error, amar_error_quark(), EINVAL,
 				"Archive file %d has an empty filename",
 				(int)filenum);
