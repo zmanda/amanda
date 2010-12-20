@@ -728,7 +728,13 @@ sub get_parts_and_dumps {
 	    ($diskname, $str) = Amanda::Util::skip_quoted_string($str);
 	    ($dump_timestamp, $str) = Amanda::Util::skip_quoted_string($str);
 	    if ($status ne 'FAIL' and $type != $L_SUCCESS) { # nparts is not in SUCCESS lines
-		($nparts, $str) = Amanda::Util::skip_quoted_string($str);
+		($nparts, my $str1) = Amanda::Util::skip_quoted_string($str);
+		if (substr($str1, 0,1) ne '[') {
+		    $str = $str1;
+		} else { # nparts is not in all PARTIAL lines
+		    $nparts = 0;
+		}
+		
 	    } else {
 		$nparts = 0;
 	    }
