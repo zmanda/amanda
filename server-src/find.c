@@ -858,26 +858,37 @@ search_logfile(
 		level = atoi(date);
 		date = stralloc(datestamp);
 		partnum = 1;
-		totalparts =1;
+		totalparts = 1;
 	    } else {
 		if (curprog == P_TAPER &&
 			(curlog == L_CHUNK || curlog == L_PART ||
 			 curlog == L_PARTPARTIAL || curlog == L_PARTIAL ||
 			 curlog == L_DONE)) {
+		    char *s1, ch1;
 		    skip_whitespace(s, ch);
 		    number = s - 1;
 		    skip_non_whitespace(s, ch);
-		    s[-1] = '\0';
-		    sscanf(number, "%d/%d", &partnum, &totalparts);
-		    if (partnum > maxparts)
-			maxparts = partnum;
-		    if (totalparts > maxparts)
-			maxparts = totalparts;
+		    s1 = &s[-1];
+		    ch1 = *s1;
+		    skip_whitespace(s, ch);
+		    if (*(s-1) != '[') {
+			*s1 = ch1;
+			sscanf(number, "%d/%d", &partnum, &totalparts);
+			if (partnum > maxparts)
+			    maxparts = partnum;
+			if (totalparts > maxparts)
+			    maxparts = totalparts;
+		    } else { /* nparts is not in all PARTIAL lines */
+			partnum = 1;
+			totalparts = 1;
+			s = number + 1;
+		    }
+		} else {
+		    skip_whitespace(s, ch);
 		}
-		skip_whitespace(s, ch);
 		if(ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
-		    g_printf(_("strange log line in %s \"%s\"\n"),
-		    logfile, curstr);
+		    g_printf(_("Fstrange log line in %s \"%s\"\n"),
+		    logfile, s-1);
 		    continue;
 		}
 		skip_integer(s, ch);
