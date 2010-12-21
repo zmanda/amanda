@@ -1356,7 +1356,7 @@ sub get_splitting_args_from_config {
 	my $fsusage = Amanda::Util::get_fs_usage($dirname);
 	confess "$dirname" if (!$fsusage);
 
-	my $avail = $fsusage->{'blocks'} * $fsusage->{'bavail'};
+	my $avail = $fsusage->{'blocksize'} * $fsusage->{'bavail'};
 	if ($avail < $part_size) {
 	    Amanda::Debug::debug("disk cache has $avail bytes available on $dirname, but " .
 				 "needs $part_size");
