@@ -585,10 +585,10 @@ sub get_splitting_config {
             $need_fallback = "'$get_xfer_dest_args{disk_cache_dirname}' not found or not a directory";
         } else {
             my $fsusage = Amanda::Util::get_fs_usage($get_xfer_dest_args{'disk_cache_dirname'});
-            my $avail = $fsusage->{'blocks'} * $fsusage->{'bavail'};
+            my $avail = $fsusage->{'blocksize'} * $fsusage->{'bavail'};
             my $dir = $get_xfer_dest_args{'disk_cache_dirname'};
             Amanda::Debug::debug("disk cache has $avail bytes available on $dir, but need $get_xfer_dest_args{part_size}");
-            if ($fsusage->{'blocks'} * $fsusage->{'bavail'} < $get_xfer_dest_args{'part_size'}) {
+            if ($fsusage->{'blocksize'} * $fsusage->{'bavail'} < $get_xfer_dest_args{'part_size'}) {
                 $need_fallback = "insufficient space in disk cache directory";
             }
         }

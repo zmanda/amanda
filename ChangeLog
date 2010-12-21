@@ -1,3 +1,6 @@
+2010-12-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper.pl: Use 'blocksize' to compute the available space.
+
 2010-12-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.c: Don't fail on trailing NUL bytes.
 
