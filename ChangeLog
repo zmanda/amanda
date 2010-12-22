@@ -1,3 +1,7 @@
+2010-12-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper.pl: don't produce negative durations
+	* perl/Amanda/DB/Catalog.pm: but handle them when they occur.
+
 2010-12-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.pl: Use 'blocksize' to compute the available space.
 
