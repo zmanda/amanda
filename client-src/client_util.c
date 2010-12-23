@@ -440,9 +440,9 @@ build_include(
 	
     if (nb_exp == 0) {
 	quoted = quote_string(dle->disk);
-	dbprintf(_("No include for %s\n"), quoted);
+	dbprintf(_("Nothing found to include for disk %s\n"), quoted);
 	if (verbose && dle->include_optional == 0) {
-	    g_printf(_("ERROR [No include for %s]\n"), quoted);
+	    g_printf(_("ERROR [Nothing found to include for disk %s]\n"), quoted);
 	}
 	amfree(quoted);
     }
