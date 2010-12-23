@@ -117,7 +117,7 @@ sub print_to_server {
     } elsif ($self->{action} eq "backup") {
 	if ($status == $Amanda::Script_App::GOOD) {
             print {$self->{mesgout}} "| $msg\n";
-	if ($status == $Amanda::Script_App::ERROR) {
+	} elsif ($status == $Amanda::Script_App::ERROR) {
             print {$self->{mesgout}} "? $msg\n";
 	} else {
             print {$self->{mesgout}} "sendbackup: error $msg\n";
