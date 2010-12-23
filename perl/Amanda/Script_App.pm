@@ -23,6 +23,7 @@ no warnings;
 no strict;
 $GOOD  = 0;
 $ERROR = 1;
+$FAILURE = 2;
 
 use strict;
 use warnings;
@@ -116,8 +117,10 @@ sub print_to_server {
     } elsif ($self->{action} eq "backup") {
 	if ($status == $Amanda::Script_App::GOOD) {
             print {$self->{mesgout}} "| $msg\n";
-	} else {
+	if ($status == $Amanda::Script_App::ERROR) {
             print {$self->{mesgout}} "? $msg\n";
+	} else {
+            print {$self->{mesgout}} "sendbackup: error $msg\n";
 	}
     } elsif ($self->{action} eq "restore") {
         print STDERR "$msg\n";
