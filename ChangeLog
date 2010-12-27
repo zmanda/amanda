@@ -1,3 +1,8 @@
+2010-12-27 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/deb/rules, packaging/rpm/amanda.spec.src: add missing
+	   amservice entry to set perms at install time. Thanks to vpatton for
+	   finding this.
+
 2010-12-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Script_App.pm: Add FAILURE.
 

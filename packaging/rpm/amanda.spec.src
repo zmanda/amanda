@@ -1595,6 +1595,7 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{AMLIBEXECDIR}/dumper
 %{AMLIBEXECDIR}/planner
 %{SBINDIR}/amcheck
+%{SBINDIR}/amservice
 %defattr(0750,%{amanda_user},%{amanda_group},0750)
 %{LOGDIR}
 %{SYSCONFDIR}/amanda

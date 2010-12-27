@@ -158,7 +158,8 @@ binary-arch: build
 		$(server)/$(AMLIBEXECDIR)/calcsize \
 		$(server)/$(AMLIBEXECDIR)/dumper \
 		$(server)/$(AMLIBEXECDIR)/planner \
-		$(server)/usr/sbin/amcheck
+		$(server)/usr/sbin/amcheck \
+		$(server)/usr/sbin/amservice
 	chmod u=srwx,g=rx,o=r \
  		$(client)/$(AMLIBEXECDIR)/application/amgtar \
  		$(client)/$(AMLIBEXECDIR)/application/amstar \
@@ -174,7 +175,8 @@ binary-arch: build
 		$(server)$(AMLIBEXECDIR)/calcsize \
 		$(server)$(AMLIBEXECDIR)/dumper \
 		$(server)$(AMLIBEXECDIR)/planner \
-		$(server)/usr/sbin/amcheck
+		$(server)/usr/sbin/amcheck \
+		$(server)/usr/sbin/amservice
 	echo "Amanda version $(AMVER)" >  $(server)/$(AMANDAHOMEDIR)/amanda-release 
 	echo "Amanda version $(AMVER)" >  $(client)/$(AMANDAHOMEDIR)/amanda-release 
 	install -o root -g root -m 0644 debian/amanda-backup-client.lintian \
