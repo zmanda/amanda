@@ -423,6 +423,27 @@ full_writev(
 
 
 /*
+ * Check whether a string should be quoted.
+ */
+
+static gboolean must_be_quoted(const char *const str)
+{
+    const char *p;
+
+    for (p = str; *p; p++) {
+        char c = *p;
+        if (c <= ' ')
+            return TRUE;
+        switch (c) {
+            case ':': case '\'': case '\\': case '\"': case 0x7f:
+                return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+/*
  * For backward compatibility we are trying for minimal quoting.  Unless ALWAYS
  * is true, we only quote a string if it contains whitespace or is misquoted...
  */
@@ -438,13 +459,7 @@ quote_string_maybe(
     if ((str == NULL) || (*str == '\0')) {
 	ret = g_strdup("\"\"");
     } else {
-	const char *r;
-	for (r = str; *r; r++) {
-	    if (*r == ':' || *r == '\'' || *r == '\\' || *r == '\"' ||
-		*r <= ' ' || *r == 0x7F )
-		always = 1;
-	}
-	if (!always) {
+	if (!(always || must_be_quoted(str))) {
 	    /*
 	     * String does not need to be quoted since it contains
 	     * neither whitespace, control or quote characters.
@@ -507,13 +522,7 @@ len_quote_string_maybe(
     if ((str == NULL) || (*str == '\0')) {
 	ret = 0;
     } else {
-	const char *r;
-	for (r = str; *r; r++) {
-	    if (*r == ':' || *r == '\'' || *r == '\\' || *r == '\"' ||
-		*r <= ' ' || *r == 0x7F )
-		always = 1;
-	}
-	if (!always) {
+	if (!(always || must_be_quoted(str))) {
 	    /*
 	     * String does not need to be quoted since it contains
 	     * neither whitespace, control or quote characters.
