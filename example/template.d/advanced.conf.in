@@ -1,4 +1,3 @@
-dumpuser "@CLIENT_LOGIN@"	# the user to run dumps under
 inparallel 4		# maximum dumpers that will run in parallel (max 63)
 			# this maximum can be increased at compile-time,
 			# modifying MAX_DUMPERS in server-src/driverio.h

@@ -1,3 +1,9 @@
+2011-01-03  Jean-Louis Martineau <martineau@zmanda.com>
+        * example/template.d/advanced.conf.in: Remove dumpuser.
+        * server-src/amaddclient.pl: mkdir -p
+        * server-src/amserverconfig.pl: Print the authorized_keys file
+	  location based on $amhomedir
+
 2010-12-27 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/deb/rules, packaging/rpm/amanda.spec.src: add missing
 	   amservice entry to set perms at install time. Thanks to vpatton for

@@ -409,7 +409,7 @@ sub build_amanda_ssh_key{
     }
       close NEWAUTH;
       close PUB;
-      &mprint("$amandahomedir/.ssh/client_authorized_keys created. Please append to /var/lib/amanda/.ssh/authorized_keys file on Amanda clients\n");
+      &mprint("$amandahomedir/.ssh/client_authorized_keys created. Please append to $amandahomedir/.ssh/authorized_keys file on Amanda clients\n");
       }
   }
 }
