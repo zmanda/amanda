@@ -341,7 +341,7 @@ unless ( defined $dumptype ) {
     my $scp_opt2="-o ConnectTimeout=15";   #timeout after 15 seconds
     my $ssh="ssh";
     my $ssh_opt="-x"; # -x as a placeholder, otherwise ssh complains
-    my $mkdir="mkdir";
+    my $mkdir="mkdir -p";
     my $client_conf_dir="$confdir/$config";
     my $amanda_client_conf="$client_conf_dir/amanda-client.conf";
     my $file="$amandahomedir/.amandahosts";

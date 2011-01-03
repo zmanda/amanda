@@ -351,6 +351,7 @@ sub create_customconf{
 	    &log_and_die ("ERROR: Cannot set amanda.conf file access permission: $!\n", 1);
 
 	print CONF "org \"$config\"\t\t# your organization name for reports\n";
+	print CONF "dumpuser \"$dumpuser\"\t# the user to run dumps under\n";
 	print CONF "mailto \"$mailto\"\t# space separated list of operators at your site\n";
 	print CONF "dumpcycle $dumpcycle\t\t# the number of days in the normal dump cycle\n";
         print CONF "runspercycle $runspercycle\t\t# the number of amdump runs in dumpcycle days\n";
@@ -409,7 +410,7 @@ sub build_amanda_ssh_key{
     }
       close NEWAUTH;
       close PUB;
-      &mprint("$amandahomedir/.ssh/client_authorized_keys created. Please append to /var/lib/amanda/.ssh/authorized_keys file on Amanda clients\n");
+      &mprint("$amandahomedir/.ssh/client_authorized_keys created. Please append to $amandahomedir/.ssh/authorized_keys file on Amanda clients\n");
       }
   }
 }
