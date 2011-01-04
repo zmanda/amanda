@@ -158,8 +158,10 @@ char *xfer_repr(Xfer *xfer);
  * correctly).
  *
  * @param xfer: the Xfer object
+ * @param offset: the offset to start the transfer from (must be 0)
+ * @param size: the Xfer object: the number of bytes to transfer.
  */
-void xfer_start(Xfer *xfer);
+void xfer_start(Xfer *xfer, gint64 offset, gint64 size);
 
 /* Abort a running transfer.  This essentially tells the source to stop
  * producing data and allows the remainder of the transfer to "drain".  Thus

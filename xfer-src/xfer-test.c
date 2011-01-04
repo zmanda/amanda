@@ -1486,7 +1486,7 @@ test_xfer_simple(void)
 	elements[i] = NULL;
     }
 
-    xfer_start(xfer);
+    xfer_start(xfer, 0, 0);
 
     g_main_loop_run(default_main_loop());
     g_assert(xfer->status == XFER_DONE);
@@ -1541,7 +1541,7 @@ test_xfer_files(gboolean add_filters)
 	elements[i] = NULL;
     }
 
-    xfer_start(xfer);
+    xfer_start(xfer, 0, 0);
 
     g_main_loop_run(default_main_loop());
     g_assert(xfer->status == XFER_DONE);
@@ -1590,7 +1590,7 @@ test_glue_combo(
 	elements[i] = NULL;
     }
 
-    xfer_start(xfer);
+    xfer_start(xfer, 0, 0);
 
     g_main_loop_run(default_main_loop());
     g_assert(xfer->status == XFER_DONE);

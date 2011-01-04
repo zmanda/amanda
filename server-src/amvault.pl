@@ -461,7 +461,9 @@ sub xfer_dumps {
 
 	# create and start the transfer
 	$xfer = Amanda::Xfer->new([ $xfer_src, $xfer_dst ]);
-	$xfer->start($steps->{'handle_xmsg'});
+	my $size = 0;
+	$size = $current->{'dump'}->{'bytes'} if exists $current->{'dump'}->{'bytes'};
+	$xfer->start($steps->{'handle_xmsg'}, 0, $size);
 
 	# count the "threads" running here (clerk and scribe)
 	$n_threads = 2;

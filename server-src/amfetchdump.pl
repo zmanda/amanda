@@ -437,7 +437,7 @@ sub main {
 	}
 
 	my $xfer = Amanda::Xfer->new([ $xfer_src, @filters, $xfer_dest ]);
-	$xfer->start($steps->{'handle_xmsg'});
+	$xfer->start($steps->{'handle_xmsg'}, 0, $current_dump->{'bytes'});
 	$clerk->start_recovery(
 	    xfer => $xfer,
 	    recovery_cb => $steps->{'recovery_cb'});

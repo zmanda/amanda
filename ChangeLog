@@ -1,4 +1,18 @@
 2011-01-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/xfer-source-recovery.c: Never send more than the number
+	  of bytes requested.
+	* perl/Amanda/Xfer.swg (xfer_start): New offset and size arguments.
+	* xfer-src/xfer-element.c: Add set_size method.
+	* xfer-src/xfer-element.h (XferElement): Add size field.
+	* xfer-src/xfer-test.c: Add offset=0 and size=0 to xfer_start call.
+	* xfer-src/xfer.c (xfer_start): Add offset and size arguments. Call
+	  xfer_element_set_size for the first element if size is set.
+	* xfer-src/xfer.h (xfer_start): New prototype.
+	* server-src/amfetchdump.pl, server-src/amidxtaped.pl,
+	  server-src/amvault.pl: Call xfer->start() with offset and size
+	  arguments.
+
+2011-01-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Logfile.swg: Print size in bytes for taper log.
 	* server-src/find.h (find_result_t): Add bytes.
 	* server-src/find.c: Parse 'bytes' in 'log' file.

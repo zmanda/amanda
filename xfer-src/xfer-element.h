@@ -139,6 +139,9 @@ typedef struct XferElement {
 
     /* cache for repr() */
     char *repr;
+
+    /* maximum size to transfer */
+    gint64 size;
 } XferElement;
 
 /*
@@ -181,6 +184,13 @@ typedef struct {
      * @return: false on failure, true on success
      */
     gboolean (*setup)(XferElement *elt);
+
+    /* set the size of data to transfer, to skip NUL padding bytes
+     * @param elt: the XferElement
+     * @param size: the size of data to transfer
+     * @return: TRUE
+     */
+    gboolean (*set_size)(XferElement *elt, gint64 size);
 
     /* Start transferring data.  The element downstream of this one will
      * already be started, while the upstream element will not, so data will
@@ -287,6 +297,7 @@ void xfer_element_unref(XferElement *elt);
 gboolean xfer_element_link_to(XferElement *elt, XferElement *successor);
 char *xfer_element_repr(XferElement *elt);
 gboolean xfer_element_setup(XferElement *elt);
+gboolean xfer_element_set_size(XferElement *elt, gint64 size);
 gboolean xfer_element_start(XferElement *elt);
 void xfer_element_push_buffer(XferElement *elt, gpointer buf, size_t size);
 gpointer xfer_element_pull_buffer(XferElement *elt, size_t *size);

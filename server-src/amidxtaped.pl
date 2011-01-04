@@ -468,8 +468,9 @@ sub plan_cb {
     }
 
     # now set up the transfer
+    $self->{'dump'} = $plan->{'dumps'}[0];
     $self->{'clerk'}->get_xfer_src(
-	dump => $plan->{'dumps'}[0],
+	dump => $self->{'dump'},
 	xfer_src_cb => sub { $self->xfer_src_cb(@_); });
 }
 
@@ -633,7 +634,9 @@ sub start_xfer {
 	@{$self->{'xfer_filters'}},
 	$xfer_dest,
     ]);
-    $self->{'xfer'}->start(sub { $self->handle_xmsg(@_); });
+    my $size = 0;
+    $size = $self->{'dump'}->{'bytes'} if exists $self->{'dump'}->{'bytes'};
+    $self->{'xfer'}->start(sub { $self->handle_xmsg(@_); }, 0, $size);
     debug("started xfer; datapath=$self->{datapath}");
 
     # send the data-path response, if we have a datapath
