@@ -82,6 +82,8 @@ typedef struct XferSourceRecovery {
 
     /* timer for the duration; NULL while paused or cancelled */
     GTimer *part_timer;
+
+    gint64   size;
 } XferSourceRecovery;
 
 /*
@@ -437,6 +439,26 @@ pull_buffer_impl(
     }
 
     g_mutex_unlock(self->start_part_mutex);
+
+    if (elt->size > 0) {
+	/* initialize on first pass */
+	if (self->size == 0)
+	    self->size = elt->size;
+	
+	if (self->size == -1) {
+	    *size = 0;
+	    amfree(buf);
+	    return NULL;
+	}
+
+	if (*size > (guint64)self->size) {
+	    /* return only self->size bytes */
+	    *size = self->size;
+	    self->size = -1;
+	} else {
+	    self->size -= *size;
+	}
+    }
 
     return buf;
 error:

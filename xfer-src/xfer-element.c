@@ -51,6 +51,16 @@ xfer_element_setup_impl(
 }
 
 static gboolean
+xfer_element_set_size_impl(
+    XferElement *elt G_GNUC_UNUSED,
+    gint64       size G_GNUC_UNUSED)
+{
+    elt->size = size;
+
+    return TRUE; /* success */
+}
+
+static gboolean
 xfer_element_start_impl(
     XferElement *elt G_GNUC_UNUSED)
 {
@@ -134,6 +144,7 @@ xfer_element_class_init(
 
     klass->repr = xfer_element_repr_impl;
     klass->setup = xfer_element_setup_impl;
+    klass->set_size = xfer_element_set_size_impl;
     klass->start = xfer_element_start_impl;
     klass->cancel = xfer_element_cancel_impl;
     klass->pull_buffer = xfer_element_pull_buffer_impl;
@@ -197,6 +208,14 @@ xfer_element_setup(
     XferElement *elt)
 {
     return XFER_ELEMENT_GET_CLASS(elt)->setup(elt);
+}
+
+gboolean
+xfer_element_set_size(
+    XferElement *elt,
+    gint64       size)
+{
+    return XFER_ELEMENT_GET_CLASS(elt)->set_size(elt, size);
 }
 
 gboolean

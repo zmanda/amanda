@@ -178,7 +178,9 @@ xfer_repr(
 
 void
 xfer_start(
-    Xfer *xfer)
+    Xfer *xfer,
+    gint64 offset G_GNUC_UNUSED,
+    gint64 size)
 {
     unsigned int len;
     unsigned int i;
@@ -187,6 +189,7 @@ xfer_start(
     g_assert(xfer != NULL);
     g_assert(xfer->status == XFER_INIT);
     g_assert(xfer->elements->len >= 2);
+    g_assert(offset == 0);
 
     g_debug("Starting %s", xfer_repr(xfer));
     /* set the status to XFER_START and add a reference to our count, so that
@@ -226,6 +229,12 @@ xfer_start(
 		elt->upstream = g_ptr_array_index(xfer->elements, i-1);
 	    if (i < len-1)
 		elt->downstream = g_ptr_array_index(xfer->elements, i+1);
+	}
+
+	/* Set size for first element */
+	if (size) {
+	    XferElement *xe = (XferElement *)g_ptr_array_index(xfer->elements, 0);
+	    xfer_element_set_size(xe, size);
 	}
 
 	/* now tell them all to start, in order from destination to source */
