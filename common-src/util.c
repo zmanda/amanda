@@ -444,6 +444,106 @@ static gboolean must_be_quoted(const char *const str)
 }
 
 /*
+ * Quoting characters in strings
+ *
+ * Quoting always amounts to the same thing: replace a given character with a
+ * backslash followed by another character (or possibly the same).
+ *
+ * Since strings are considered sequences of chars, do this a very simple way:
+ * statically allocate an array with all possible chars (guaranteed to be
+ * zeroed upon initialization), and in the actual quoting functions, initialise
+ * the array (only once). Protect initialization with a static mutex.
+ *
+ * This function pretty much assumes an ASCII input. When streamlined end-to-end
+ * UTF-8 dialogs will be the norm, this function will hopefully go away
+ * entirely...
+ */
+
+static GStaticMutex quote_mutex = G_STATIC_MUTEX_INIT;
+static gboolean quote_table_initialized = FALSE;
+static char quote_table[256];
+
+static void initialize_quote_table(void)
+{
+    g_static_mutex_lock(&quote_mutex);
+
+    if (quote_table_initialized)
+        goto out;
+
+    quote_table['\t'] = 't';
+    quote_table['\r'] = 'r';
+    quote_table['\n'] = 'n';
+    quote_table['\f'] = 'f';
+    quote_table['\\'] = '\\';
+    quote_table['"'] = '"';
+
+    quote_table_initialized = TRUE;
+
+out:
+    g_static_mutex_unlock(&quote_mutex);
+}
+
+#define LOOKUP_KEY(c) quote_table[(int) (c)]
+
+/*
+ * The actual substitution functions.
+ */
+
+/*
+ * do_len_quote_string(): calculate the length of a quoted string from an
+ * unquoted string. The calculated length will NOT include the final 0, as for
+ * strlen().
+ */
+
+static int do_len_quote_string(const char *const str)
+{
+    const char *src;
+    /* 2 for the quotes */
+    int ret = 2;
+
+    initialize_quote_table();
+
+    for (src = str; *src; src++) {
+        ret++;
+        if (LOOKUP_KEY(*src))
+            ret++;
+    }
+    return ret;
+}
+
+/*
+ * do_quote_string(): return a quoted string from an unquoted one.
+ */
+
+static char *do_quote_string(const char *const str)
+{
+    char *result, *dst;
+    const char *src;
+
+    initialize_quote_table();
+
+    /* Account for the final 0... */
+    result = g_malloc(2 * strlen(str) + 3);
+    dst = result;
+
+    *dst++ = '"';
+
+    for (src = str; *src; src++) {
+        char c = LOOKUP_KEY(*src);
+
+        if (c) {
+            *dst++ = '\\';
+            *dst++ = c;
+        } else
+            *dst++ = *src;
+    }
+
+    *dst++ = '"';
+    *dst = '\0';
+    return result;
+}
+
+/*
  * For backward compatibility we are trying for minimal quoting.  Unless ALWAYS
  * is true, we only quote a string if it contains whitespace or is misquoted...
  */
@@ -453,62 +553,13 @@ quote_string_maybe(
     const char *str,
     gboolean always)
 {
-    char *  s;
-    char *  ret;
+    if ((str == NULL) || (*str == '\0'))
+        return g_strdup("\"\"");
 
-    if ((str == NULL) || (*str == '\0')) {
-	ret = g_strdup("\"\"");
-    } else {
-	if (!(always || must_be_quoted(str))) {
-	    /*
-	     * String does not need to be quoted since it contains
-	     * neither whitespace, control or quote characters.
-	     */
-	    ret = g_strdup(str);
-	} else {
-	    /*
-	     * Allocate maximum possible string length.
-	     * (a string of all quotes plus room for leading ", trailing " and
-	     *  NULL)
-	     */
-	    ret = s = g_malloc((strlen(str) * 2) + 2 + 1);
-	    *(s++) = '"';
-	    while (*str != '\0') {
-                if (*str == '\t') {
-                    *(s++) = '\\';
-                    *(s++) = 't';
-		    str++;
-		    continue;
-	        } else if (*str == '\n') {
-                    *(s++) = '\\';
-                    *(s++) = 'n';
-		    str++;
-		    continue;
-	        } else if (*str == '\r') {
-                    *(s++) = '\\';
-                    *(s++) = 'r';
-		    str++;
-		    continue;
-	        } else if (*str == '\f') {
-                    *(s++) = '\\';
-                    *(s++) = 'f';
-		    str++;
-		    continue;
-	        } else if (*str == '\\') {
-                    *(s++) = '\\';
-                    *(s++) = '\\';
-		    str++;
-		    continue;
-	        }
-                if (*str == '"')
-                    *(s++) = '\\';
-                *(s++) = *(str++);
-            }
-            *(s++) = '"';
-            *s = '\0';
-        }
-    }
-    return (ret);
+    if (!always)
+        always = must_be_quoted(str);
+
+    return (always) ? do_quote_string(str) : g_strdup(str);
 }
 
 
@@ -517,60 +568,13 @@ len_quote_string_maybe(
     const char *str,
     gboolean always)
 {
-    int   ret;
+    if ((str == NULL) || (*str == '\0'))
+        return 2;
 
-    if ((str == NULL) || (*str == '\0')) {
-	ret = 0;
-    } else {
-	if (!(always || must_be_quoted(str))) {
-	    /*
-	     * String does not need to be quoted since it contains
-	     * neither whitespace, control or quote characters.
-	     */
-	    ret = strlen(str);
-	} else {
-	    /*
-	     * Allocate maximum possible string length.
-	     * (a string of all quotes plus room for leading ", trailing " and
-	     *  NULL)
-	     */
-	    ret = 1;
-	        while (*str != '\0') {
-                if (*str == '\t') {
-                    ret++;
-                    ret++;
-		    str++;
-		    continue;
-	        } else if (*str == '\n') {
-                    ret++;
-                    ret++;
-		    str++;
-		    continue;
-	        } else if (*str == '\r') {
-                    ret++;
-                    ret++;
-		    str++;
-		    continue;
-	        } else if (*str == '\f') {
-                    ret++;
-                    ret++;
-		    str++;
-		    continue;
-	        } else if (*str == '\\') {
-                    ret++;
-                    ret++;
-		    str++;
-		    continue;
-	        }
-                if (*str == '"')
-		    ret++;
-	        ret++;
-                str++;
-            }
-	    ret++;
-	}
-    }
-    return (ret);
+    if (!always)
+        always = must_be_quoted(str);
+
+    return (always) ? do_len_quote_string(str) : (int) strlen(str);
 }
 
 
