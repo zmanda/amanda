@@ -281,6 +281,8 @@ search_holding_disk(
 	    }
 	    new_output_find->message=stralloc("");
 	    new_output_find->kb = holding_file_size(holding_file, 1);
+	    new_output_find->bytes = 0;
+	    
 	    new_output_find->orig_kb = file.orig_size;
 
 	    *output_find=new_output_find;
@@ -718,6 +720,7 @@ search_logfile(
     gboolean found_something = FALSE;
     double sec;
     off_t kb;
+    off_t bytes;
     off_t orig_kb;
     int   taper_part = 0;
 
@@ -918,7 +921,8 @@ search_logfile(
 		skip_non_whitespace(s, ch);
 		rest_undo = s - 1;
 		*rest_undo = '\0';
-		if (strcmp(rest, "kb") != 0) {
+		if (strcmp(rest, "kb") != 0 &&
+		    strcmp(rest, "bytes") != 0) {
 		    g_printf(_("Bstrange log line in %s \"%s\"\n"),
 			     logfile, curstr);
 		    continue;
@@ -930,7 +934,13 @@ search_logfile(
 			      logfile, curstr);
 		     continue;
 		}
-		kb = atof(s - 1);
+		if (strcmp(rest, "kb") == 0) {
+		    kb = atof(s - 1);
+		    bytes = 0;
+		} else {
+		    bytes = atof(s - 1);
+		    kb = bytes / 1024;
+		}
 		skip_non_whitespace(s, ch);
 		skip_whitespace(s, ch);
 		rest = s - 1;
@@ -971,6 +981,7 @@ search_logfile(
 	    } else {
 		sec = 0;
 		kb = 0;
+		bytes = 0;
 		orig_kb = 0;
 		*rest_undo = ' ';
 	    }
@@ -1007,6 +1018,7 @@ search_logfile(
 		    new_output_find->filenum=filenum;
 		    new_output_find->sec=sec;
 		    new_output_find->kb=kb;
+		    new_output_find->bytes=bytes;
 		    new_output_find->orig_kb=orig_kb;
 		    new_output_find->next=NULL;
 		    if (curlog == L_SUCCESS) {
@@ -1128,7 +1140,8 @@ search_logfile(
 		    new_output_find->filenum=0;
 		    new_output_find->sec=sec;
 		    new_output_find->kb=kb;
-		    new_output_find->kb=orig_kb;
+		    new_output_find->bytes=bytes;
+		    new_output_find->orig_kb=orig_kb;
 		    new_output_find->status=vstralloc(
 			 "FAILED (",
 			 program_str[(int)curprog],
@@ -1199,6 +1212,7 @@ dumps_match(
 	    curmatch->filenum = cur_result->filenum;
 	    curmatch->sec = cur_result->sec;
 	    curmatch->kb = cur_result->kb;
+	    curmatch->bytes = cur_result->bytes;
 	    curmatch->orig_kb = cur_result->orig_kb;
 	    curmatch->status = stralloc(cur_result->status);
 	    curmatch->dump_status = stralloc(cur_result->dump_status);
