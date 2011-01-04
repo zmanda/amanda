@@ -145,6 +145,7 @@ sub sortparts {
     map {
 	# convert bigints to strings and on to integers so is_deeply doesn't get confused
 	$_->{'dump'}->{'level'} = "$_->{dump}->{level}" + 0;
+	$_->{'dump'}->{'bytes'} = "$_->{dump}->{bytes}" + 0;
 	$_->{'dump'}->{'kb'} = "$_->{dump}->{kb}" + 0;
 	$_->{'dump'}->{'orig_kb'} = "$_->{dump}->{orig_kb}" + 0;
 	if (!defined $_->{filenum}) {
@@ -238,6 +239,7 @@ sub sortdumps {
     map {
 	# convert bigints to strings and on to integers so is_deeply doesn't get confused
 	$_->{'level'} = "$_->{level}" + 0;
+	$_->{'bytes'} = "$_->{bytes}" + 0;
 	$_->{'kb'} = "$_->{kb}" + 0;
 	$_->{'orig_kb'} = "$_->{orig_kb}" + 0;
 	$_->{'nparts'} = "$_->{nparts}" + 0;

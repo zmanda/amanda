@@ -153,6 +153,7 @@ typedef struct {
     int partnum;
     int totalparts;
     double sec;
+    off_t bytes;
     off_t kb;
     off_t orig_kb;
     %mutable;
@@ -365,9 +366,9 @@ sub make_stats {
     my $kps = "$kb.0"/$duration; # Perlish cast from BigInt to float
 
     if (defined $orig_kb) {
-	return sprintf("[sec %f kb %d kps %f orig-kb %d]", $duration, $kb, $kps, $orig_kb);
+	return sprintf("[sec %f bytes %d kps %f orig-kb %d]", $duration, $size, $kps, $orig_kb);
     } else {
-	return sprintf("[sec %f kb %d kps %f]", $duration, $kb, $kps);
+	return sprintf("[sec %f bytes %d kps %f]", $duration, $size, $kps);
     }
 }
 

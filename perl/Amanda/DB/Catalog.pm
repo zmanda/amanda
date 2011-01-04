@@ -101,6 +101,10 @@ have an associated dump row.
 
 (integer) -- number of successful parts in this dump
 
+=item bytes
+
+(integer) -- size (in bytes) of the dump on disk, 0 if the size is not known.
+
 =item kb
 
 (integer) -- size (in kb) of the dump on disk
@@ -646,9 +650,10 @@ sub get_parts_and_dumps {
 		    # the rest of these params are unknown until we see a taper
 		    # DONE, PARTIAL, or FAIL line, although we count nparts
 		    # manually instead of relying on the logfile
-		    nparts => 0,
-		    kb => -1,
-		    sec => -1,
+		    nparts => 0, # $find_result->{'totalparts'}
+		    bytes => -1, # $find_result->{'bytes'}
+		    kb => -1,    # $find_result->{'kb'}
+		    sec => -1,   # $find_result->{'sec'}
 		};
 	    }
 
@@ -679,6 +684,7 @@ sub get_parts_and_dumps {
 		);
 		# and fix up the dump, too
 		$dump->{'status'} = $find_result->{'status'} || 'FAILED';
+		$dump->{'bytes'} = $find_result->{'bytes'};
 		$dump->{'kb'} = $find_result->{'kb'};
 		$dump->{'sec'} = $find_result->{'sec'};
 	    }
@@ -723,7 +729,7 @@ sub get_parts_and_dumps {
 
 	    # now extract the appropriate info; luckily these log lines have the same
 	    # format, more or less
-	    my ($hostname, $diskname, $dump_timestamp, $nparts, $level, $secs, $kb, $message);
+	    my ($hostname, $diskname, $dump_timestamp, $nparts, $level, $secs, $kb, $bytes, $message);
 	    ($hostname, $str) = Amanda::Util::skip_quoted_string($str);
 	    ($diskname, $str) = Amanda::Util::skip_quoted_string($str);
 	    ($dump_timestamp, $str) = Amanda::Util::skip_quoted_string($str);
@@ -741,8 +747,15 @@ sub get_parts_and_dumps {
 	    ($level, $str) = Amanda::Util::skip_quoted_string($str);
 	    if ($status ne 'FAIL') {
 		my $s = $str;
-		($secs, $kb, $str) = ($str =~ /^\[sec ([-0-9.]+) kb (\d+).*\] ?(.*)$/)
+		my $b_unit;
+		($secs, $b_unit, $kb, $str) = ($str =~ /^\[sec ([-0-9.]+) (kb|bytes) (\d+).*\] ?(.*)$/)
 		    or die("'$s'");
+		if ($b_unit eq 'bytes') {
+		    $bytes = $kb;
+		    $kb /= 1024;
+		} else {
+		    $bytes = 0;
+		}
 		$secs = 0.1 if ($secs <= 0);
 	    }
 	    if ($status ne 'OK') {
@@ -818,9 +831,11 @@ sub get_parts_and_dumps {
 
 	    $dump->{'message'} = $message;
 	    if ($status eq 'FAIL') {
+		$dump->{'bytes'} = 0;
 		$dump->{'kb'} = 0;
 		$dump->{'sec'} = 0.0;
 	    } else {
+		$dump->{'bytes'} = $bytes+0;
 		$dump->{'kb'} = $kb+0;
 		$dump->{'sec'} = $secs+0.0;
 	    }

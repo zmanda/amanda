@@ -576,8 +576,12 @@ while($lineX = <AMDUMP>) {
 					$label=$line[8];
 					$status_taper = "Idle";
 					$hostpart=$serial{$serial};
-					$line[10] =~ /sec (\S+) kb (\d+) kps/;
-					$size=$2 / $unitdivisor;
+					$line[10] =~ /sec (\S+) (kb|bytes) (\d+) kps/;
+					if ($2 eq 'kb') {
+						$size=$3 / $unitdivisor;
+				   } else {
+						$size=$3 / ( $unitdivisor * 1024);
+					}
 					$taper_finished{$hostpart}=1;
 					$busy_time{"taper"}+=($current_time-$taper_time{$hostpart});
 					$taper_time{$hostpart}=$current_time;
