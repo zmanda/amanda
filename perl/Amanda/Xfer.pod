@@ -42,7 +42,7 @@ Amanda::Xfer - the transfer architecture
       if ($msg->{'type'} == $XMSG_DONE) {
 	  Amanda::MainLoop::quit();
       }
-  });
+  }, 0, 0);
   Amanda::MainLoop::run();
 
 See L<http://wiki.zmanda.com/index.php/XFA> for background on the
@@ -58,9 +58,12 @@ The resulting object has the following methods:
 
 =over
 
-=item start($cb)
+=item start($cb, $offset, $size)
 
-Start this transfer.  Processing takes place asynchronously, and messages will
+Start this transfer.  It transfer $size bytes starting from offset $offset.
+$offset must be 0. $size is only supported by Amanda::Xfer::Source::Recovery.
+A size of 0 transfer everything to EOF.
+Processing takes place asynchronously, and messages will
 begin queueing up immediately.  If C<$cb> is given, then it is installed as the
 callback for messages from this transfer.  The callback receives three
 arguments: the event source, the message, and a reference to the controlling
