@@ -287,6 +287,7 @@ sub xfer_set_callback {
 void xfer_element_unref(XferElement *elt); /* (wrap the macro, above) */
 /* xfer_element_link_to -- private */
 char *xfer_element_repr(XferElement *elt);
+/* xfer_element_set_size -- private */
 /* xfer_element_start -- private */
 /* xfer_element_cancel -- private */
 
