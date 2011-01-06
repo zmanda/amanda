@@ -23,6 +23,12 @@
 
 gboolean tu_debugging_enabled = FALSE;
 
+static gboolean run_all = TRUE;
+static gboolean ignore_timeouts = FALSE;
+static gboolean skip_fork = FALSE;
+static gboolean only_one = FALSE;
+static gboolean loop_forever = FALSE;
+
 static void
 alarm_hdlr(int sig G_GNUC_UNUSED)
 {
@@ -34,7 +40,7 @@ alarm_hdlr(int sig G_GNUC_UNUSED)
  * test failure, but allow the other tests to proceed.
  */
 static gboolean
-callinfork(TestUtilsTest *test, int ignore_timeouts, gboolean skip_fork)
+callinfork(TestUtilsTest *test)
 {
     pid_t pid;
     amwait_t status;
@@ -112,12 +118,7 @@ testutils_run_tests(
     TestUtilsTest *tests)
 {
     TestUtilsTest *t;
-    gboolean run_all = TRUE;
     gboolean success;
-    gboolean ignore_timeouts = FALSE;
-    gboolean skip_fork = FALSE;
-    gboolean only_one = FALSE;
-    gboolean loop_forever = FALSE;
 
     /* first_parse the command line */
     while (argc > 1) {
@@ -188,7 +189,7 @@ testutils_run_tests(
     for (t = tests; t->fn; t++) {
         if (t->selected) {
 	    do {
-		success = callinfork(t, ignore_timeouts, skip_fork) && success;
+		success = callinfork(t) && success;
 	    } while (loop_forever);
         }
     }
