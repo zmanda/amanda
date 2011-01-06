@@ -21,7 +21,7 @@
 #include "amanda.h"
 #include "testutils.h"
 
-int tu_debugging_enabled = FALSE;
+gboolean tu_debugging_enabled = FALSE;
 
 static void
 alarm_hdlr(int sig G_GNUC_UNUSED)
@@ -112,9 +112,9 @@ testutils_run_tests(
     TestUtilsTest *tests)
 {
     TestUtilsTest *t;
-    int run_all = 1;
+    gboolean run_all = TRUE;
     int success;
-    int ignore_timeouts = 0;
+    gboolean ignore_timeouts = FALSE;
     gboolean skip_fork = FALSE;
     gboolean only_one = FALSE;
     gboolean loop_forever = FALSE;
@@ -150,7 +150,7 @@ testutils_run_tests(
 		return 1;
 	    }
 
-	    run_all = 0;
+	    run_all = FALSE;
 	}
 
 	argc--; argv++;
