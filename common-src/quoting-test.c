@@ -78,7 +78,7 @@ char * quotable_strings[] = {
  * Round-trip testing of quoting functions
  */
 
-static int
+static gboolean
 test_round_trip(void)
 {
     char **strp;
@@ -161,7 +161,7 @@ compare_strv(
     return TRUE;
 }
 
-static int
+static gboolean
 test_split_quoted_strings(void)
 {
     char **iter1, **iter2, **iter3;
@@ -215,7 +215,7 @@ struct trial {
     const char *expected[5];
 };
 
-static int
+static gboolean
 test_split_quoted_strings_edge(void)
 {
     gboolean success = TRUE;
@@ -250,7 +250,7 @@ test_split_quoted_strings_edge(void)
 /****
  * Test unquoting of some pathological strings
  */
-static int
+static gboolean
 test_unquote_string(void)
 {
     gboolean success = TRUE;
@@ -333,7 +333,7 @@ test_unquote_string(void)
 /****
  * Test the strquotedstr function
  */
-static int
+static gboolean
 test_strquotedstr_skipping(void)
 {
     char **iter1, **iter2;
@@ -394,7 +394,7 @@ next:
     return success;
 }
 
-static int
+static gboolean
 test_strquotedstr_edge_invalid(void)
 {
     gboolean success = TRUE;
@@ -430,7 +430,7 @@ test_strquotedstr_edge_invalid(void)
     return success;
 }
 
-static int
+static gboolean
 test_strquotedstr_edge_valid(void)
 {
     gboolean success = TRUE;

@@ -1,4 +1,17 @@
 2011-01-06  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/amflock-test.c common-src/event-test.c
+	  common-src/fileheader-test.c common-src/hexencode-test.c
+	  common-src/ipc-binary-test.c common-src/match-test.c
+	  common-src/quoting-test.c: Ensure all tests return gbooleans.  Most,
+	  if not all, tests returned ints, and quite a few of them returned TRUE
+	  or FALSE. While the effect is basically the same as a gboolean, make
+	  all tests return a gboolean for coherency, since this is what
+	  callinfork() expects anyway.
+	* common-src/testutils.c: Also enforce that callinfork() return that
+	  type, which, in turn, allows the "success" local variable in
+	  testutil_run_tests() to also be converted.
+
+2011-01-06  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/testutils.c: convert ints to gbooleans where appropriate;
 	  run_all, tu_debugging_enabled and ignore_timeouts are all used as
 	  gbooleans in the code even though they are declared as ints. Convert

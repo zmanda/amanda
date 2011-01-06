@@ -58,7 +58,7 @@ test_decrement_cb(void *up G_GNUC_UNUSED)
 /****
  * Test that EV_TIME events fire, repeatedly.
  */
-static int
+static gboolean
 test_ev_time(void)
 {
     global = 2;
@@ -74,7 +74,7 @@ test_ev_time(void)
 /****
  * Test that nonblocking waits don't block.
  */
-static int
+static gboolean
 test_nonblock(void)
 {
     global = 1; /* the callback should not be triggered, so this should stay 1 */
@@ -90,24 +90,24 @@ test_nonblock(void)
  * another iteration of the event loop.  Security API depends on callbacks occuring
  * immediately.
  */
-static int
+static gboolean
 test_ev_wait(void)
 {
     global = 2;
     hdl[0] = event_register(4422, EV_WAIT, test_decrement_cb, NULL);
 
-    if (global != 2) return 0;
+    if (global != 2) return FALSE;
     event_wakeup(4422);
-    if (global != 1) return 0;
+    if (global != 1) return FALSE;
     event_wakeup(4422);
-    if (global != 0) return 0;
+    if (global != 0) return FALSE;
     event_wakeup(4422); /* the handler has been removed, but this is not an error */
-    if (global != 0) return 0;
+    if (global != 0) return FALSE;
 
     /* queue should now be empty, so this won't block */
     event_loop(0);
 
-    return 1;
+    return TRUE;
 }
 
 /****
@@ -131,22 +131,22 @@ test_ev_wait_2_cb(void *up G_GNUC_UNUSED)
     }
 }
 
-static int
+static gboolean
 test_ev_wait_2(void)
 {
     global = 2;
     hdl[0] = event_register(84, EV_WAIT, test_ev_wait_2_cb, NULL);
 
     /* Each wakeup should only invoke the callback *once* */
-    if (global != 2) return 0;
+    if (global != 2) return FALSE;
     event_wakeup(84);
-    if (global != 1) return 0;
+    if (global != 1) return FALSE;
     event_wakeup(84);
-    if (global != 0) return 0;
+    if (global != 0) return FALSE;
     event_wakeup(84); /* the handler has been removed, but this is not an error */
-    if (global != 0) return 0;
+    if (global != 0) return FALSE;
 
-    return 1;
+    return TRUE;
 }
 
 /****
@@ -163,7 +163,7 @@ test_event_wait_cb(void *up G_GNUC_UNUSED)
     event_release(hdl[1]);
 }
 
-static int
+static gboolean
 test_event_wait(void)
 {
     int cb_fired = 0;
@@ -183,16 +183,16 @@ test_event_wait(void)
      * three times */
     if (global == 0) {
 	tu_dbg("global is already zero!\n");
-	return 0;
+	return FALSE;
     }
 
     /* and our own callback should have fired */
     if (!cb_fired) {
 	tu_dbg("test_event_wait_cb didn't fire\n");
-	return 0;
+	return FALSE;
     }
 
-    return 1;
+    return TRUE;
 }
 
 /****
@@ -220,7 +220,7 @@ test_event_wait_2_wakeup_cb(void *up G_GNUC_UNUSED)
     event_wakeup(9876);
 }
 
-static int
+static gboolean
 test_event_wait_2(void)
 {
     int wakeups_remaining = 2;
@@ -243,16 +243,16 @@ test_event_wait_2(void)
      * three times */
     if (global == 0) {
 	tu_dbg("global is already zero!\n");
-	return 0;
+	return FALSE;
     }
 
     /* and our own callback should have fired twice, not just once */
     if (wakeups_remaining != 0) {
 	tu_dbg("test_event_wait_2_cb didn't fire twice\n");
-	return 0;
+	return FALSE;
     }
 
-    return 1;
+    return TRUE;
 }
 
 /****
@@ -308,7 +308,7 @@ test_ev_readfd_writer(int fd, size_t count)
 
 #define TEST_EV_READFD_SIZE (1024*1024)
 
-static int
+static gboolean
 test_ev_readfd(void)
 {
     int writer_pid;
@@ -329,7 +329,7 @@ test_ev_readfd(void)
 
 	case -1: /* error */
 	    perror("fork");
-	    return 0;
+	    return FALSE;
 
 	default: /* parent */
 	    break;
@@ -350,10 +350,10 @@ test_ev_readfd(void)
 
     if (global != 0) {
 	tu_dbg("%d bytes remain unread..\n", global);
-	return 0;
+	return FALSE;
     }
 
-    return 1;
+    return TRUE;
 }
 
 /****
@@ -385,7 +385,7 @@ test_read_timeout_cb(void *up G_GNUC_UNUSED)
     event_release(hdl[1]);
 }
 
-static int
+static gboolean
 test_read_timeout(void)
 {
     int writer_pid;
@@ -406,7 +406,7 @@ test_read_timeout(void)
 
 	case -1: /* error */
 	    perror("fork");
-	    return 0;
+	    return FALSE;
 
 	default: /* parent */
 	    break;
@@ -427,9 +427,9 @@ test_read_timeout(void)
 
     /* see if we got the sentinel indicating the timeout fired */
     if (global != 1234)
-	return 0;
+	return FALSE;
 
-    return 1;
+    return TRUE;
 }
 
 /****
@@ -492,7 +492,7 @@ test_ev_writefd_consumer(int fd, size_t count)
 
 #define TEST_EV_WRITEFD_SIZE (1024*1024)
 
-static int
+static gboolean
 test_ev_writefd(void)
 {
     int reader_pid;
@@ -513,7 +513,7 @@ test_ev_writefd(void)
 
 	case -1: /* error */
 	    perror("fork");
-	    return 0;
+	    return FALSE;
 
 	default: /* parent */
 	    break;
@@ -535,10 +535,10 @@ test_ev_writefd(void)
     /* and see what we got */
     if (global != 0) {
 	tu_dbg("writes did not complete\n");
-	return 0;
+	return FALSE;
     }
 
-    return 1;
+    return TRUE;
 }
 
 /****
@@ -569,7 +569,7 @@ test_child_watch_callback(
 	g_main_loop_quit(test_child_watch_main_loop);
 }
 
-static int
+static gboolean
 test_child_watch_source(void)
 {
     int pid, pid2;
@@ -583,7 +583,7 @@ test_child_watch_source(void)
 
 	case -1: /* error */
 	    perror("fork");
-	    return 0;
+	    return FALSE;
 
 	default: /* parent */
 	    break;
@@ -603,7 +603,7 @@ test_child_watch_source(void)
 
 	case -1: /* error */
 	    perror("fork");
-	    return 0;
+	    return FALSE;
 
 	default: /* parent */
 	    break;

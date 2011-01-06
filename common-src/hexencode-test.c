@@ -23,13 +23,13 @@
 #include "testutils.h"
 #include "simpleprng.h"
 
-static int test_encode(void);
-static int test_decode(void);
-static int test_roundtrip(void);
-static int test_roundtrip_rand(void);
+static gboolean test_encode(void);
+static gboolean test_decode(void);
+static gboolean test_roundtrip(void);
+static gboolean test_roundtrip_rand(void);
 
 typedef struct {char *in; char *out;} enc_vec;
-static int
+static gboolean
 test_encode(void)
 {
     static const enc_vec test_strs[] = {
@@ -41,7 +41,8 @@ test_encode(void)
         {"\nhi\n", "%0ahi%0a"}
     };
     static const int num = sizeof(test_strs)/sizeof(enc_vec);
-    int i, ret;
+    int i;
+    gboolean ret;
     char *tmp;
     
     ret = TRUE;
@@ -60,7 +61,7 @@ test_encode(void)
 }
 
 typedef struct {char *in; char *out; gboolean expect_err; } dec_vec;
-static int
+static gboolean
 test_decode(void)
 {
     static const dec_vec test_strs[] = {
@@ -80,7 +81,8 @@ test_decode(void)
         {"%00", "", TRUE}
     };
     static const int num = sizeof(test_strs)/sizeof(dec_vec);
-    int i, ret;
+    int i;
+    gboolean ret;
     char *tmp;
     GError *err = NULL;
     
@@ -104,7 +106,7 @@ test_decode(void)
 }
 
 typedef char* round_vec;
-static int
+static gboolean
 test_roundtrip(void)
 {
     static const round_vec test_strs[] = {
@@ -117,7 +119,8 @@ test_roundtrip(void)
         "h%"
     };
     static const int num = sizeof(test_strs)/sizeof(round_vec);
-    int i, ret;
+    int i;
+    gboolean ret;
     char *tmp_enc = NULL, *tmp_dec = NULL;
     GError *err = NULL;
     
@@ -140,10 +143,11 @@ test_roundtrip(void)
     return ret;
 }
 
-static int
+static gboolean
 test_roundtrip_rand(void)
 {
-    int i, ret;
+    int i;
+    gboolean ret;
     simpleprng_state_t state;
     char *in, *tmp_enc = NULL, *tmp_dec = NULL;
     size_t size;

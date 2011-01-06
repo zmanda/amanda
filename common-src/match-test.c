@@ -26,7 +26,7 @@
  * Tests
  */
 
-static int
+static gboolean
 test_validate_regexp(void)
 {
     gboolean ok = TRUE;
@@ -59,7 +59,7 @@ test_validate_regexp(void)
     return ok;
 }
 
-static int
+static gboolean
 test_match(void)
 {
     gboolean ok = TRUE;
@@ -184,7 +184,7 @@ test_match(void)
     return ok;
 }
 
-static int
+static gboolean
 test_validate_glob(void)
 {
     gboolean ok = TRUE;
@@ -224,7 +224,7 @@ test_validate_glob(void)
     return ok;
 }
 
-static int
+static gboolean
 test_glob_to_regex(void)
 {
     gboolean ok = TRUE;
@@ -253,7 +253,7 @@ test_glob_to_regex(void)
     return ok;
 }
 
-static int
+static gboolean
 test_match_glob(void)
 {
     gboolean ok = TRUE;
@@ -325,7 +325,7 @@ test_match_glob(void)
     return ok;
 }
 
-static int
+static gboolean
 test_match_tar(void)
 {
     gboolean ok = TRUE;
@@ -442,7 +442,7 @@ test_match_tar(void)
     return ok;
 }
 
-static int
+static gboolean
 test_make_exact_host_expression(void)
 {
     gboolean ok = TRUE;
@@ -493,7 +493,7 @@ test_make_exact_host_expression(void)
     return ok;
 }
 
-static int
+static gboolean
 test_match_host(void)
 {
     gboolean ok = TRUE;
@@ -605,7 +605,7 @@ test_match_host(void)
     return ok;
 }
 
-static int
+static gboolean
 test_make_exact_disk_expression(void)
 {
     gboolean ok = TRUE;
@@ -649,7 +649,7 @@ test_make_exact_disk_expression(void)
     return ok;
 }
 
-static int
+static gboolean
 test_match_disk(void)
 {
     gboolean ok = TRUE;
@@ -762,7 +762,7 @@ test_match_disk(void)
     return ok;
 }
 
-static int
+static gboolean
 test_match_datestamp(void)
 {
     gboolean ok = TRUE;
@@ -846,7 +846,7 @@ test_match_datestamp(void)
     return ok;
 }
 
-static int
+static gboolean
 test_match_level(void)
 {
     gboolean ok = TRUE;

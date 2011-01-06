@@ -33,7 +33,7 @@ alarm_hdlr(int sig G_GNUC_UNUSED)
 /* Call testfn in a forked process, such that any failures will trigger a
  * test failure, but allow the other tests to proceed.
  */
-static int
+static gboolean
 callinfork(TestUtilsTest *test, int ignore_timeouts, gboolean skip_fork)
 {
     pid_t pid;
@@ -113,7 +113,7 @@ testutils_run_tests(
 {
     TestUtilsTest *t;
     gboolean run_all = TRUE;
-    int success;
+    gboolean success;
     gboolean ignore_timeouts = FALSE;
     gboolean skip_fork = FALSE;
     gboolean only_one = FALSE;
@@ -184,7 +184,7 @@ testutils_run_tests(
     }
 
     /* Now actually run the tests */
-    success = 1;
+    success = TRUE;
     for (t = tests; t->fn; t++) {
         if (t->selected) {
 	    do {
@@ -193,5 +193,5 @@ testutils_run_tests(
         }
     }
 
-    return success? 0:1;
+    return success ? 0 : 1;
 }

@@ -375,7 +375,7 @@ rt_type(dumpfile_t *hdr)
 }
 
 /* one function for each field; each fn calls the one above */
-static int
+static gboolean
 test_roundtrip(void)
 {
     int rv;
@@ -388,7 +388,7 @@ test_roundtrip(void)
 
     rv = PREV_RT(&hdr);
     tu_dbg("%d round-trips run\n", n_round_trips);
-    return rv;
+    return (rv) ? TRUE : FALSE;
 }
 
 /* doc

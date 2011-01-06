@@ -36,7 +36,7 @@ extern amflock_impl_t *amflock_impls[];
 /* Test all amflock implementations available for basic 
  * functionality
  */
-static int
+static gboolean
 test_old_impls(void)
 {
     amflock_impl_t **imp = amflock_impls;
@@ -54,29 +54,29 @@ test_old_impls(void)
 	for (lock_ro = 0; lock_ro < 2; lock_ro++) { /* false (0) or true (1) */
 	    if (unlink(TEST_FILENAME) == -1 && errno != ENOENT) {
 		perror("unlink");
-		return 0;
+		return FALSE;
 	    }
 
 	    if ((fd = open(TEST_FILENAME, O_RDWR | O_CREAT | O_EXCL, 0600)) == -1) {
 		perror("open");
-		return 0;
+		return FALSE;
 	    }
 
 	    if (lock_ro) {
 		if ((*imp)->amroflock_impl(fd, resource) != 0) {
 		    perror("amroflock");
-		    return 0;
+		    return FALSE;
 		}
 	    } else {
 		if ((*imp)->amflock_impl(fd, resource) != 0) {
 		    perror("amflock");
-		    return 0;
+		    return FALSE;
 		}
 	    }
 
 	    if ((*imp)->amfunlock_impl(fd, resource) != 0) {
 		perror("amfunlock");
-		return 0;
+		return FALSE;
 	    }
 
 	    close(fd); /* ignore error */
@@ -88,7 +88,7 @@ test_old_impls(void)
 	imp++;
     }
 
-    return 1;
+    return TRUE;
 }
 
 /*
@@ -290,7 +290,7 @@ test_intra_proc_locking_thd(gpointer *fdptr)
     return NULL;
 }
 
-static int
+static gboolean
 test_intra_proc_locking(void)
 {
     GThread *thd;
@@ -320,7 +320,7 @@ test_intra_proc_locking(void)
     return rv;
 }
 
-static int
+static gboolean
 test_inter_proc_locking(void)
 {
     int outpipe[2], inpipe[2];

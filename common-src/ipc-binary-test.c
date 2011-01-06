@@ -158,7 +158,7 @@ test_sync_parent(ipc_binary_proto_t *proto, int fd)
     return 1;
 }
 
-static int
+static gboolean
 test_sync(void)
 {
     int rv;
@@ -170,7 +170,7 @@ test_sync(void)
 
     if (pipe(p) == -1) {
 	perror("pipe");
-	return 0;
+	return FALSE;
     }
 
     proto = ipc_binary_proto_new(0xE10E);
@@ -187,7 +187,7 @@ test_sync(void)
 
     /* run the parent and collect the results */
     rv = test_sync_parent(proto, p[0]) && GPOINTER_TO_INT(g_thread_join(child));
-    return rv;
+    return (rv) ? TRUE : FALSE;
 }
 
 int
