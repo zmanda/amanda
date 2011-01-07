@@ -317,6 +317,7 @@ bsd_accept(
     void	(*fn)(security_handle_t *, pkt_t *),
     void       *datap)
 {
+    struct stat sbuf;
 
     assert(in >= 0 && out >= 0);
     assert(fn != NULL);
@@ -343,7 +344,13 @@ bsd_accept(
     netfd4.prefix_packet = &bsd_prefix_packet;
     netfd4.driver = &bsd_security_driver;
 
-    udp_addref(&netfd4, &udp_netfd_read_callback);
+    /* check if in is a socket */
+    fstat(in, &sbuf);
+    if (S_ISSOCK(sbuf.st_mode)) {
+	udp_addref(&netfd4, &udp_netfd_read_callback);
+    } else {
+	g_warning("input file descriptor is not a socket; cannot use BSD auth");
+    }
 }
 
 /*
