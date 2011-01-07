@@ -1,3 +1,6 @@
+2011-01-07  Dustin J. Mitchell <dustin@mozilla.com>
+	* common-src/testutils.c: use %ju instead of %lu to print big numbers
+
 2011-01-07  Francis Galiegue <fgaliegue@gmail.com>
 	* testutils.c: report time of execution for each test
 

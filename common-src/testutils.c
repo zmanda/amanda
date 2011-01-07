@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2011 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -89,8 +89,8 @@ static gboolean run_one_test(TestUtilsTest *test)
         }
         g_fprintf(stderr, ")\n");
     } else
-        g_fprintf(stderr, " FAIL %s (run %lu of %lu, after %.06f secs)\n",
-            test_name, count, occurrences, total);
+        g_fprintf(stderr, " FAIL %s (run %ju of %ju, after %.06f secs)\n",
+            test_name, (uintmax_t)count, (uintmax_t)occurrences, total);
 
 out:
     return ret;
