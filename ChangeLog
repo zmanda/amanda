@@ -1,4 +1,7 @@
 2011-01-07  Francis Galiegue <fgaliegue@gmail.com>
+	* testutils.c: report time of execution for each test
+
+2011-01-07  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/testutils.c: add -c <count> option to run tests more than
 	  once
 

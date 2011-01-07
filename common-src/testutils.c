@@ -39,24 +39,60 @@ alarm_hdlr(int sig G_GNUC_UNUSED)
 
 /*
  * Run a single test, accouting for the timeout (if timeouts are not ignored)
+ * and output runtime information (in milliseconds) at the end of the run.
+ * Output avg/min/max only if the number of runs is strictly greater than one.
  */
 
 static gboolean run_one_test(TestUtilsTest *test)
 {
     guint64 count = 0;
     gboolean ret = TRUE;
+    const char *test_name = test->name;
+    GTimer *timer;
+
+    gdouble total = 0.0, thisrun, mintime = G_MAXDOUBLE, maxtime = G_MINDOUBLE;
 
     signal(SIGALRM, alarm_hdlr);
+
+    timer = g_timer_new();
 
     while (count++ < occurrences) {
         if (!ignore_timeouts)
             alarm(test->timeout);
 
+        g_timer_start(timer);
         ret = test->fn();
+        g_timer_stop(timer);
+
+        thisrun = g_timer_elapsed(timer, NULL);
+        total += thisrun;
+        if (mintime > thisrun)
+            mintime = thisrun;
+        if (maxtime < thisrun)
+            maxtime = thisrun;
+
         if (!ret)
             break;
     }
 
+    g_timer_destroy(timer);
+
+    if (loop_forever)
+        goto out;
+
+    if (ret) {
+        g_fprintf(stderr, " PASS %s (total: %.06f", test_name, total);
+        if (occurrences > 1) {
+            total /= (gdouble) occurrences;
+            g_fprintf(stderr, ", avg/min/max: %.06f/%.06f/%.06f",
+                total, mintime, maxtime);
+        }
+        g_fprintf(stderr, ")\n");
+    } else
+        g_fprintf(stderr, " FAIL %s (run %lu of %lu, after %.06f secs)\n",
+            test_name, count, occurrences, total);
+
+out:
     return ret;
 }
 
@@ -90,12 +126,6 @@ callinfork(TestUtilsTest *test)
 		result = status == 0;
 		break;
 	}
-    }
-
-    if (result) {
-	g_fprintf(stderr, " PASS %s\n", test->name);
-    } else {
-	g_fprintf(stderr, " FAIL %s\n", test->name);
     }
 
     return result;
