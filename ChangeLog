@@ -1,4 +1,8 @@
 2011-01-07  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/testutils.c: add -c <count> option to run tests more than
+	  once
+
+2011-01-07  Francis Galiegue <fgaliegue@gmail.com>
 	* testutils.c: create a run_one_test() function The way to run a test
 	  is the same, whether we fork() or not. Make that a function.
 

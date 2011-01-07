@@ -28,6 +28,7 @@ static gboolean ignore_timeouts = FALSE;
 static gboolean skip_fork = FALSE;
 static gboolean only_one = FALSE;
 static gboolean loop_forever = FALSE;
+static guint64 occurrences = 1;
 
 static void
 alarm_hdlr(int sig G_GNUC_UNUSED)
@@ -42,12 +43,21 @@ alarm_hdlr(int sig G_GNUC_UNUSED)
 
 static gboolean run_one_test(TestUtilsTest *test)
 {
+    guint64 count = 0;
+    gboolean ret = TRUE;
+
     signal(SIGALRM, alarm_hdlr);
 
-    if (!ignore_timeouts)
-        alarm(test->timeout);
+    while (count++ < occurrences) {
+        if (!ignore_timeouts)
+            alarm(test->timeout);
 
-    return test->fn();
+        ret = test->fn();
+        if (!ret)
+            break;
+    }
+
+    return ret;
 }
 
 /*
@@ -95,12 +105,15 @@ static void
 usage(
     TestUtilsTest *tests)
 {
-    printf("USAGE: <test-script> [-d] [-h] [testname [testname [..]]]\n"
+    printf("USAGE: <test-script> [options] [testname [testname [..]]]\n"
 	"\n"
+        "Options can be one of:\n"
+        "\n"
 	"\t-h: this message\n"
 	"\t-d: print debugging messages\n"
 	"\t-t: ignore timeouts\n"
         "\t-n: do not fork\n"
+        "\t-c <count>: run each test <count> times instead of only once\n"
         "\t-l: loop the same test repeatedly (use with -n for leak checks)\n"
 	"\n"
 	"If no test names are specified, all tests are run.  Available tests:\n"
@@ -141,6 +154,23 @@ testutils_run_tests(
 	} else if (strcmp(argv[1], "-l") == 0) {
 	    loop_forever = TRUE;
 	    only_one = TRUE;
+	} else if (strcmp(argv[1], "-c") == 0) {
+            char *p;
+            argv++, argc--;
+            occurrences = g_ascii_strtoull(argv[1], &p, 10);
+            if (errno == ERANGE) {
+                g_fprintf(stderr, "%s is out of range\n", argv[1]);
+                exit(1);
+            }
+            if (*p) {
+                g_fprintf(stderr, "The -c option expects a positive integer "
+                    "as an argument, but \"%s\" isn't\n", argv[1]);
+                exit(1);
+            }
+            if (occurrences == 0) {
+                g_fprintf(stderr, "Sorry, I will not run tests 0 times\n");
+                exit(1);
+            }
 	} else if (strcmp(argv[1], "-h") == 0) {
 	    usage(tests);
 	    return 1;
@@ -164,6 +194,15 @@ testutils_run_tests(
 	}
 
 	argc--; argv++;
+    }
+
+    /*
+     * Check whether the -c option has been given. In this case, -l must not be
+     * specified at the same time.
+     */
+    if (occurrences > 1 && loop_forever) {
+        g_fprintf(stderr, "-c and -l are incompatible\n");
+        exit(1);
     }
 
     if (run_all) {
