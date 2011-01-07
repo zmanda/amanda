@@ -1,3 +1,7 @@
+2011-01-07  Francis Galiegue <fgaliegue@gmail.com>
+	* testutils.c: create a run_one_test() function The way to run a test
+	  is the same, whether we fork() or not. Make that a function.
+
 2011-01-06  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/testutils.c: testutils.c: externalize test behaviour
 	  variables

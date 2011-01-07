@@ -36,9 +36,27 @@ alarm_hdlr(int sig G_GNUC_UNUSED)
     exit(1);
 }
 
-/* Call testfn in a forked process, such that any failures will trigger a
- * test failure, but allow the other tests to proceed.
+/*
+ * Run a single test, accouting for the timeout (if timeouts are not ignored)
  */
+
+static gboolean run_one_test(TestUtilsTest *test)
+{
+    signal(SIGALRM, alarm_hdlr);
+
+    if (!ignore_timeouts)
+        alarm(test->timeout);
+
+    return test->fn();
+}
+
+/*
+ * Call testfn in a forked process, such that any failures will trigger a
+ * test failure, but allow the other tests to proceed. The only exception is if
+ * -n is supplied at the command line, but in this case only one test is allowed
+ * to run.
+ */
+
 static gboolean
 callinfork(TestUtilsTest *test)
 {
@@ -46,21 +64,12 @@ callinfork(TestUtilsTest *test)
     amwait_t status;
     gboolean result;
 
-    if (skip_fork) {
-	/* kill the test after a bit */
-	signal(SIGALRM, alarm_hdlr);
-	if (!ignore_timeouts) alarm(test->timeout);
-
-	result = test->fn();
-    } else {
+    if (skip_fork)
+        result = run_one_test(test);
+    else {
 	switch (pid = fork()) {
 	    case 0:	/* child */
-		/* kill the test after a bit */
-		signal(SIGALRM, alarm_hdlr);
-		if (!ignore_timeouts) alarm(test->timeout);
-
-		result = test->fn();
-		exit(result? 0:1);
+		exit(run_one_test(test) ? 0 : 1);
 
 	    case -1:
 		perror("fork");
