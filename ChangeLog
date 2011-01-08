@@ -1,4 +1,8 @@
 2011-01-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c, application-src/amstar.c: Do not call
+	  amname_to_dirname.
+
+2011-01-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/bsd-security.c: Check input fd is a socket.
 
 2011-01-07  Dustin J. Mitchell <dustin@mozilla.com>

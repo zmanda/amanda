@@ -498,9 +498,9 @@ amstar_estimate(
 	char *dirname;
 
 	if (star_directory) {
-	    dirname = amname_to_dirname(star_directory);
+	    dirname = star_directory;
 	} else {
-	    dirname = amname_to_dirname(argument->dle.device);
+	    dirname = argument->dle.device;
 	}
 	run_calcsize(argument->config, "STAR", argument->dle.disk, dirname,
 		     argument->level, NULL, NULL);
@@ -916,9 +916,9 @@ static GPtrArray *amstar_build_argv(
     GSList    *copt;
 
     if (star_directory) {
-	dirname = amname_to_dirname(star_directory);
+	dirname = star_directory;
     } else {
-	dirname = amname_to_dirname(argument->dle.device);
+	dirname = argument->dle.device;
     }
     fsname = vstralloc("fs-name=", dirname, NULL);
     for (s = fsname; *s != '\0'; s++) {

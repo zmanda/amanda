@@ -720,7 +720,7 @@ amgtar_estimate(
 	if (gnutar_directory) {
 	    dirname = gnutar_directory;
 	} else {
-	    dirname = amname_to_dirname(argument->dle.device);
+	    dirname = argument->dle.device;
 	}
 	amgtar_build_exinclude(&argument->dle, 1,
 			       &nb_exclude, &file_exclude,
@@ -1440,7 +1440,7 @@ GPtrArray *amgtar_build_argv(
     if (gnutar_directory) {
 	dirname = gnutar_directory;
     } else {
-	dirname = amname_to_dirname(argument->dle.device);
+	dirname = argument->dle.device;
     }
 
     g_ptr_array_add(argv_ptr, stralloc(gnutar_path));

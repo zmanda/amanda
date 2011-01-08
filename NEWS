@@ -19,6 +19,8 @@ Changes in release 3.3.0alpha
        o new --meta option
        o new --barcode option
        o new --assign option
+   * amgtar, amstar: The path must be specified, it will not works with a
+     device.
 
 Changes in release 3.2.1
 
