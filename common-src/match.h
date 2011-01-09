@@ -50,10 +50,18 @@ int do_match(const char *regex, const char *str, gboolean match_newline);
 #define match(regex, str) do_match(regex, str, TRUE)
 #define match_no_newline(regex, str) do_match(regex, str, FALSE)
 
-/* quote any non-alphanumeric characters in str, so that the result will only
- * match the original string.  If anchor is true, then add ^ and $ to make sure
- * that substrings will not match.  */
-char *	clean_regex(const char *str, gboolean anchor);
+/*
+ * Cleanup a regular expression by escaping all non alphanumeric characters, and
+ * append beginning/end anchors if need be. Returns a dynamically allocated
+ * string. It is the caller's responsibility to g_free() that string.
+ *
+ * @param str: the regular expression string
+ * @param anchor: if true, the regex will be anchored at the beginning/end
+ * (resp. with ^ and $)
+ * @returns: the resulting regex
+ */
+
+char *clean_regex(const char *str, gboolean anchor);
 
 /*
  * Globs
