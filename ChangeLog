@@ -1,4 +1,8 @@
 2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/match.c: match.c: factorize regex construction from
+	  expression
+
+2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: match.c: factorize character escaping in
 	  make_exact_*_expression()
 

@@ -165,49 +165,46 @@ static gboolean should_be_escaped_except(char c, char not_this_one)
     return FALSE;
 }
 
+/*
+ * Take a user-supplied argument and turn it into a full-blown regex (with start
+ * and end anchors) following rules in amanda-match(7). The not_this_one
+ * argument represents a character which is NOT meant to be special in this
+ * case: '/' for disks and '.' for hosts.
+ */
+
+static char *full_regex_from_expression(const char *str, char not_this_one)
+{
+    const char *src;
+    char *result, *dst;
+
+    result = alloc(2 * strlen(str) + 3);
+    dst = result;
+
+    *(dst++) = '^';
+
+    for (src = str; *src; src++) {
+        if (should_be_escaped_except(*src, not_this_one))
+            *(dst++) = '\\';
+        *(dst++) = *src;
+    }
+
+    *(dst++) = '$';
+    *dst = '\0';
+    return result;
+}
+
 char *
 make_exact_host_expression(
     const char *	host)
 {
-    char *result;
-    int j;
-    size_t i;
-    result = alloc(2*strlen(host)+3);
-
-    j = 0;
-    result[j++] = '^';
-    for(i=0;i<strlen(host);i++) {
-	/* quote host expression metcharacters *except* '.'.  Note that
-	 * most of these are invalid in a DNS hostname anyway. */
-        if (should_be_escaped_except(host[i], '.'))
-            result[j++] = '\\';
-        result[j++] = host[i];
-    }
-    result[j++] = '$';
-    result[j] = '\0';
-    return result;
+    return full_regex_from_expression(host, '.');
 }
 
 char *
 make_exact_disk_expression(
     const char *	disk)
 {
-    char *result;
-    int j;
-    size_t i;
-    result = alloc(2*strlen(disk)+3);
-
-    j = 0;
-    result[j++] = '^';
-    for(i=0;i<strlen(disk);i++) {
-	/* quote disk expression metcharacters *except* '/' */
-        if (should_be_escaped_except(disk[i], '/'))
-            result[j++] = '\\';
-        result[j++] = disk[i];
-    }
-    result[j++] = '$';
-    result[j] = '\0';
-    return result;
+    return full_regex_from_expression(disk, '/');
 }
 
 int do_match(const char *regex, const char *str, gboolean match_newline)
