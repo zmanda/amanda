@@ -462,7 +462,7 @@ match_word(
     const char		separator)
 {
     char *regex;
-    char *r;
+    char *dst;
     size_t  len;
     int  ch;
     int  last_ch;
@@ -470,8 +470,8 @@ match_word(
     size_t  lenword;
     char  *mword, *nword;
     char  *mglob, *nglob;
-    char *g; 
-    const char *w;
+    char *g;
+    const char *src;
     int  i;
 
     lenword = strlen(word);
@@ -480,51 +480,51 @@ match_word(
     if (separator == '/' && lenword > 2 && word[0] == '\\' && word[1] == '\\' && !strchr(word, '/')) {
 	/* Convert all "\" to '/' */
 	mword = (char *)alloc(lenword + 1);
-	r = mword;
-	w = word;
-	while (*w != '\0') {
-	    if (*w == '\\') {
-		*r++ = '/';
-		w += 1;
+	dst = mword;
+	src = word;
+	while (*src != '\0') {
+	    if (*src == '\\') {
+		*dst++ = '/';
+		src += 1;
 	    } else {
-		*r++ = *w++;
+		*dst++ = *src++;
 	    }
 	}
-	*r++ = '\0';
+	*dst++ = '\0';
 
 	/* Convert all "\\" to '/' */
 	mglob = (char *)alloc(strlen(glob) + 1);
-	r = mglob;
-	w = glob;
-	while (*w != '\0') {
-	    if (*w == '\\' && *(w+1) == '\\') {
-		*r++ = '/';
-		w += 2;
+	dst = mglob;
+	src = glob;
+	while (*src != '\0') {
+	    if (*src == '\\' && *(src+1) == '\\') {
+		*dst++ = '/';
+		src += 2;
 	    } else {
-		*r++ = *w++;
+		*dst++ = *src++;
 	    }
 	}
-	*r++ = '\0';
+	*dst++ = '\0';
     } else {
 	mword = stralloc(word);
 	mglob = stralloc(glob);
     }
 
-    r = nword;
-    w = mword;
-    if(lenword == 1 && *w == separator) {
-	*r++ = separator;
-	*r++ = separator;
+    dst = nword;
+    src = mword;
+    if(lenword == 1 && *src == separator) {
+	*dst++ = separator;
+	*dst++ = separator;
     }
     else {
-	if(*w != separator)
-	    *r++ = separator;
-	while(*w != '\0')
-	    *r++ = *w++;
-	if(*(r-1) != separator)
-	    *r++ = separator;    
+	if(*src != separator)
+	    *dst++ = separator;
+	while(*src != '\0')
+	    *dst++ = *src++;
+	if(*(dst-1) != separator)
+	    *dst++ = separator;
     }
-    *r = '\0';
+    *dst = '\0';
 
     /*
      * Allocate an area to convert into.  The worst case is a six to
@@ -532,7 +532,7 @@ match_word(
      */
     len = strlen(mglob);
     regex = (char *)alloc(1 + len * 6 + 1 + 1 + 2 + 2);
-    r = regex;
+    dst = regex;
     nglob = stralloc(mglob);
     g = nglob;
 
@@ -541,12 +541,12 @@ match_word(
        (len == 2 && nglob[0] == separator && nglob[1] == '$') ||
        (len == 3 && nglob[0] == '^' && nglob[1] == separator &&
         nglob[2] == '$')) {
-	*r++ = '^';
-	*r++ = '\\';
-	*r++ = separator;
-	*r++ = '\\';
-	*r++ = separator;
-	*r++ = '$';
+	*dst++ = '^';
+	*dst++ = '\\';
+	*dst++ = separator;
+	*dst++ = '\\';
+	*dst++ = separator;
+	*dst++ = '$';
     }
     else {
 	/*
@@ -568,47 +568,47 @@ match_word(
 	 */
 
 	if(*g == '^') {
-	    *r++ = '^';
-	    *r++ = '\\';	/* escape the separator */
-	    *r++ = separator;
+	    *dst++ = '^';
+	    *dst++ = '\\';	/* escape the separator */
+	    *dst++ = separator;
 	    g++;
 	    if(*g == separator) g++;
 	}
 	else if(*g != separator) {
-	    *r++ = '\\';	/* add a leading \separator */
-	    *r++ = separator;
+	    *dst++ = '\\';	/* add a leading \separator */
+	    *dst++ = separator;
 	}
 	last_ch = '\0';
 	for (ch = *g++; ch != '\0'; last_ch = ch, ch = *g++) {
 	    next_ch = *g;
 	    if (last_ch == '\\') {
-		*r++ = (char)ch;
+		*dst++ = (char)ch;
 		ch = '\0';		/* so last_ch != '\\' next time */
 	    } else if (last_ch == '[' && ch == '!') {
-		*r++ = '^';
+		*dst++ = '^';
 	    } else if (ch == '\\') {
-		*r++ = (char)ch;
+		*dst++ = (char)ch;
 	    } else if (ch == '*' || ch == '?') {
 		if(ch == '*' && next_ch == '*') {
-		    *r++ = '.';
+		    *dst++ = '.';
 		    g++;
 		}
 		else {
-		    *r++ = '[';
-		    *r++ = '^';
-		    *r++ = '\\';
-		    *r++ = separator;
-		    *r++ = ']';
+		    *dst++ = '[';
+		    *dst++ = '^';
+		    *dst++ = '\\';
+		    *dst++ = separator;
+		    *dst++ = ']';
 		}
 		if (ch == '*') {
-		    *r++ = '*';
+		    *dst++ = '*';
 		}
 	    } else if (ch == '$' && next_ch == '\0') {
 		if(last_ch != separator) {
-		    *r++ = '\\';
-		    *r++ = separator;
+		    *dst++ = '\\';
+		    *dst++ = separator;
 		}
-		*r++ = (char)ch;
+		*dst++ = (char)ch;
 	    } else if (   ch == '('
 		       || ch == ')'
 		       || ch == '{'
@@ -618,20 +618,20 @@ match_word(
 		       || ch == '^'
 		       || ch == '$'
 		       || ch == '|') {
-		*r++ = '\\';
-		*r++ = (char)ch;
+		*dst++ = '\\';
+		*dst++ = (char)ch;
 	    } else {
-		*r++ = (char)ch;
+		*dst++ = (char)ch;
 	    }
 	}
 	if(last_ch != '\\') {
 	    if(last_ch != separator && last_ch != '$') {
-		*r++ = '\\';
-		*r++ = separator;		/* add a trailing \separator */
+		*dst++ = '\\';
+		*dst++ = separator;		/* add a trailing \separator */
 	    }
 	}
     }
-    *r = '\0';
+    *dst = '\0';
 
     i = match(regex,nword);
 
