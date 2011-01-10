@@ -1,4 +1,8 @@
 2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/match.c: match.c: fix '*' and '?' expansion in
+	  match_word()
+
+2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: match.c: define a macro to recognize regex
 	  metacharacters
 

@@ -279,7 +279,7 @@ glob_to_regex(
     int last_ch;
 
     /*
-     * Allocate an area to convert into.  The worst case is a five to
+     * Allocate an area to convert into. The worst case is a five to
      * one expansion.
      */
     len = strlen(glob);
@@ -379,7 +379,7 @@ tar_to_regex(
     int last_ch;
 
     /*
-     * Allocate an area to convert into.  The worst case is a five to
+     * Allocate an area to convert into. The worst case is a five to
      * one expansion.
      */
     len = strlen(glob);
@@ -520,11 +520,11 @@ match_word(
     *dst = '\0';
 
     /*
-     * Allocate an area to convert into.  The worst case is a six to
-     * one expansion.
+     * Allocate an area to convert into. The worst case is a five to one
+     * expansion.
      */
     len = strlen(mglob);
-    regex = (char *)alloc(1 + len * 6 + 1 + 1 + 2 + 2);
+    regex = (char *)alloc(1 + len * 5 + 1 + 1 + 2 + 2);
     dst = regex;
     nglob = stralloc(mglob);
     g = nglob;
@@ -545,8 +545,8 @@ match_word(
 	/*
 	 * Do the conversion:
 	 *
-	 *  ?      -> [^\separator]
-	 *  *      -> [^\separator]*
+	 *  ?      -> [^<separator>]
+	 *  *      -> [^<separator>]*
 	 *  [!...] -> [^...]
 	 *  **     -> .*
 	 *
@@ -589,7 +589,6 @@ match_word(
 		else {
 		    *dst++ = '[';
 		    *dst++ = '^';
-		    *dst++ = '\\';
 		    *dst++ = separator;
 		    *dst++ = ']';
 		}
