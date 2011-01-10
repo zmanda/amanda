@@ -472,7 +472,7 @@ match_word(
     char  *mglob, *nglob;
     char *g;
     const char *src;
-    int  i;
+    int ret;
 
     lenword = strlen(word);
     nword = (char *)alloc(lenword + 3);
@@ -633,14 +633,15 @@ match_word(
     }
     *dst = '\0';
 
-    i = match(regex,nword);
+    ret = match(regex,nword);
 
     amfree(mword);
     amfree(mglob);
     amfree(nword);
     amfree(nglob);
     amfree(regex);
-    return i;
+
+    return ret;
 }
 
 

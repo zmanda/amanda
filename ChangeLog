@@ -1,4 +1,8 @@
 2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/match.c: match.c: match_word(): rename "i" local variable
+	  to "ret"
+
+2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: match.c: match_word(): rename two local
 	  variables. Rename r to dst, and w to src, in order to clarify their
 	  roles.
