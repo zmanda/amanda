@@ -635,27 +635,17 @@ match_host(
     const char *	host)
 {
     char *lglob, *lhost;
-    char *c;
-    const char *d;
-    int i;
+    int ret;
 
     
-    lglob = (char *)alloc(strlen(glob)+1);
-    c = lglob, d=glob;
-    while( *d != '\0')
-	*c++ = (char)tolower(*d++);
-    *c = *d;
+    lglob = g_ascii_strdown(glob, -1);
+    lhost = g_ascii_strdown(host, -1);
 
-    lhost = (char *)alloc(strlen(host)+1);
-    c = lhost, d=host;
-    while( *d != '\0')
-	*c++ = (char)tolower(*d++);
-    *c = *d;
+    ret = match_word(lglob, lhost, '.');
 
-    i = match_word(lglob, lhost, '.');
     amfree(lglob);
     amfree(lhost);
-    return i;
+    return ret;
 }
 
 

@@ -1,4 +1,8 @@
 2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/match.c: match.c: match_host(): use g_ascii_strdown() to
+	  convert to lowercase
+
+2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: match.c: fix '*' and '?' expansion in
 	  match_word()
 
