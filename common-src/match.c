@@ -98,6 +98,26 @@ static struct subst_table tar_subst_stable = {
 };
 
 /*
+ * Substitution data for match_word(): dot
+ */
+
+static struct subst_table mword_dot_subst_table = {
+    "[^.]", /* question_mark */
+    "[^.]*", /* star */
+    ".*" /* double_star */
+};
+
+/*
+ * Substitution data for match_word(): slash
+ */
+
+static struct subst_table mword_slash_subst_table = {
+    "[^/]", /* question_mark */
+    "[^/]*", /* star */
+    ".*" /* double_star */
+};
+
+/*
  * REGEX FUNCTIONS
  */
 
@@ -660,25 +680,18 @@ static int match_word(const char *glob, const char *word, const char separator)
         *dst = '\0';
     } else {
         /*
-         * Unlike what happens for tar and disk expressions, here the
-         * substitution table needs to be dynamically allocated. When we enter
-         * here, we know what the expansions will be for the question mark, the
-         * star and the double star, and also the worst case expansion. We
-         * calculate the begin and end expansions below.
+         * Unlike what happens for tar and disk expressions, we need to
+         * calculate the beginning and end of our regex before calling
+         * amglob_to_regex().
          */
 
-#define MATCHWORD_STAR_EXPANSION(c) (const char []) { \
-    '[', '^', (c), ']', '*', 0 \
-}
-#define MATCHWORD_QUESTIONMARK_EXPANSION(c) (const char []) { \
-    '[', '^', (c), ']', 0 \
-}
-#define MATCHWORD_DOUBLESTAR_EXPANSION ".*"
-
-        struct subst_table table;
+        struct subst_table *table;
         const char *begin, *end;
         char *glob_copy = g_strdup(glob);
         char *p, *g = glob_copy;
+
+        table = (separator == '/') ? &mword_slash_subst_table
+            : &mword_dot_subst_table;
 
         /*
          * Calculate the beginning of the regex:
@@ -735,15 +748,7 @@ static int match_word(const char *glob, const char *word, const char separator)
                 end = REGEX_END_FULL(separator);
         }
 
-        /*
-         * Fill in our substitution table and generate the regex
-         */
-
-        table.question_mark = MATCHWORD_QUESTIONMARK_EXPANSION(separator);
-        table.star = MATCHWORD_STAR_EXPANSION(separator);
-        table.double_star = MATCHWORD_DOUBLESTAR_EXPANSION;
-
-        regex = amglob_to_regex(g, begin, end, &table);
+        regex = amglob_to_regex(g, begin, end, table);
         g_free(glob_copy);
     }
 
