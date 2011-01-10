@@ -175,14 +175,15 @@ char *clean_regex(const char *str, gboolean anchor)
 }
 
 /*
- * Validate one regular expression. If the regex is invalid, copy the error
- * message into the supplied regex_errbuf pointer. Also, we want to know whether
- * flags should include REG_NEWLINE (See regcomp(3) for details). Since this is
- * the more frequent case, add REG_NEWLINE to the default flags, and remove it
- * only if match_newline is set to FALSE.
+ * Compile one regular expression. Return TRUE if the regex has been compiled
+ * successfully. Otherwise, return FALSE and copy the error message into the
+ * supplied regex_errbuf pointer. Also, we want to know whether flags should
+ * include REG_NEWLINE (See regcomp(3) for details). Since this is the more
+ * frequent case, add REG_NEWLINE to the default flags, and remove it only if
+ * match_newline is set to FALSE.
  */
 
-static gboolean do_validate_regex(const char *str, regex_t *regex,
+static gboolean do_regex_compile(const char *str, regex_t *regex,
     regex_errbuf *errbuf, gboolean match_newline)
 {
     int flags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
@@ -201,8 +202,8 @@ static gboolean do_validate_regex(const char *str, regex_t *regex,
 }
 
 /*
- * Validate one regular expression using do_validate_regex() above, and return
- * NULL if the regex is valid, or the error message otherwise.
+ * Validate one regular expression using do_regex_compile(), and return NULL if
+ * the regex is valid, or the error message otherwise.
  */
 
 char *validate_regexp(const char *regex)
@@ -211,17 +212,17 @@ char *validate_regexp(const char *regex)
     static regex_errbuf errmsg;
     gboolean valid;
 
-    valid = do_validate_regex(regex, &regc, &errmsg, TRUE);
+    valid = do_regex_compile(regex, &regc, &errmsg, TRUE);
 
     regfree(&regc);
     return (valid) ? NULL : errmsg;
 }
 
 /*
- * See if a string matches a regular expression. Return one of MATCH_* defined
- * above. If, for some reason, regexec() returns something other than not 0 or
- * REG_NOMATCH, return MATCH_ERROR and print the error message in the supplied
- * regex_errbuf.
+ * See if a string matches a compiled regular expression. Return one of MATCH_*
+ * defined above. If, for some reason, regexec() returns something other than
+ * not 0 or REG_NOMATCH, return MATCH_ERROR and print the error message in the
+ * supplied regex_errbuf.
  */
 
 static int try_match(regex_t *regex, const char *str,
@@ -243,7 +244,7 @@ static int try_match(regex_t *regex, const char *str,
 
 /*
  * Try and match a string against a regular expression, using
- * do_validate_regex() and try_match(). Exit early if the regex didn't compile
+ * do_regex_compile() and try_match(). Exit early if the regex didn't compile
  * or there was an error during matching.
  */
 
@@ -254,7 +255,7 @@ int do_match(const char *regex, const char *str, gboolean match_newline)
     regex_errbuf errmsg;
     gboolean ok;
 
-    ok = do_validate_regex(regex, &regc, &errmsg, match_newline);
+    ok = do_regex_compile(regex, &regc, &errmsg, match_newline);
 
     if (!ok)
         error("regex \"%s\": %s", regex, errmsg);
@@ -523,7 +524,7 @@ int match_glob(const char *glob, const char *str)
     gboolean ok;
 
     regex = glob_to_regex(glob);
-    ok = do_validate_regex(regex, &regc, &errmsg, TRUE);
+    ok = do_regex_compile(regex, &regc, &errmsg, TRUE);
 
     if (!ok)
         error("glob \"%s\" -> regex \"%s\": %s", glob, regex, errmsg);
@@ -549,7 +550,7 @@ char *validate_glob(const char *glob)
 
     regex = glob_to_regex(glob);
 
-    if (!do_validate_regex(regex, &regc, &errmsg, TRUE))
+    if (!do_regex_compile(regex, &regc, &errmsg, TRUE))
         ret = errmsg;
 
     regfree(&regc);
@@ -575,7 +576,7 @@ int match_tar(const char *glob, const char *str)
     gboolean ok;
 
     regex = tar_to_regex(glob);
-    ok = do_validate_regex(regex, &regc, &errmsg, TRUE);
+    ok = do_regex_compile(regex, &regc, &errmsg, TRUE);
 
     if (!ok)
         error("glob \"%s\" -> regex \"%s\": %s", glob, regex, errmsg);
