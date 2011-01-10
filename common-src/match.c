@@ -511,6 +511,29 @@ static char *convert_winglob_to_unix(const char *glob)
     return result;
 }
 
+
+/*
+ * Check whether a glob passed as an argument to match_word() only looks for the
+ * separator
+ */
+
+static gboolean glob_is_separator_only(const char *glob, char sep) {
+    size_t len = strlen(glob);
+    const char len2_1[] = { '^', sep , 0 }, len2_2[] = { sep, '$', 0 },
+        len3[] = { '^', sep, '$', 0 };
+
+    switch (len) {
+        case 1:
+            return (*glob == sep);
+        case 2:
+            return !(strcmp(glob, len2_1) && strcmp(glob, len2_2));
+        case 3:
+            return !strcmp(glob, len3);
+        default:
+            return FALSE;
+    }
+}
+
 static int
 match_word(
     const char *	glob,
@@ -525,15 +548,13 @@ match_word(
     int  next_ch;
     size_t  lenword;
     char *nword;
-    char  *mglob, *nglob;
+    char *nglob;
     char *g;
     const char *src;
     int ret;
 
     lenword = strlen(word);
     nword = (char *)alloc(lenword + 3);
-
-    mglob = stralloc(glob);
 
     dst = nword;
     src = word;
@@ -555,17 +576,12 @@ match_word(
      * Allocate an area to convert into. The worst case is a five to one
      * expansion.
      */
-    len = strlen(mglob);
-    regex = (char *)alloc(1 + len * 5 + 1 + 1 + 2 + 2);
-    dst = regex;
-    nglob = stralloc(mglob);
-    g = nglob;
+    len = strlen(glob);
+    nglob = stralloc(glob);
 
-    if((len == 1 && nglob[0] == separator) ||
-       (len == 2 && nglob[0] == '^' && nglob[1] == separator) ||
-       (len == 2 && nglob[0] == separator && nglob[1] == '$') ||
-       (len == 3 && nglob[0] == '^' && nglob[1] == separator &&
-        nglob[2] == '$')) {
+    if(glob_is_separator_only(nglob, separator)) {
+        regex = alloc(7); /* Length of what is written below plus '\0' */
+        dst = regex;
 	*dst++ = '^';
 	*dst++ = '\\';
 	*dst++ = separator;
@@ -574,6 +590,9 @@ match_word(
 	*dst++ = '$';
     }
     else {
+        regex = alloc(1 + len * 5 + 1 + 1 + 2 + 2);
+        dst = regex;
+        g = nglob;
 	/*
 	 * Do the conversion:
 	 *
@@ -651,7 +670,6 @@ match_word(
 
     ret = do_match(regex, nword, TRUE);
 
-    amfree(mglob);
     amfree(nword);
     amfree(nglob);
     amfree(regex);
