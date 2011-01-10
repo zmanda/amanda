@@ -1,3 +1,6 @@
+2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/match.c: match.c: match_word(): remove unused assignment
+
 2011-01-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c, application-src/amstar.c: Do not call
 	  amname_to_dirname.

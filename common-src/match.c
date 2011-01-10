@@ -491,7 +491,6 @@ match_word(
 	    }
 	}
 	*r++ = '\0';
-	lenword = strlen(word);
 
 	/* Convert all "\\" to '/' */
 	mglob = (char *)alloc(strlen(glob) + 1);
