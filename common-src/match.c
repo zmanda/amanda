@@ -693,10 +693,19 @@ out:
 static int match_word(const char *glob, const char *word, const char separator)
 {
     char *wrapped_word = wrap_word(word, separator);
-    struct mword_regexes *regexes;
+    struct mword_regexes *regexes = &mword_slash_regexes;
+    struct subst_table *table = &mword_slash_subst_table;
+    gboolean not_slash = (separator != '/');
     int ret;
 
-    regexes = (separator == '/') ? &mword_slash_regexes : &mword_dot_regexes;
+    /*
+     * We only expect two separators: '/' or '.'. If it's not '/', it has to be
+     * the other one...
+     */
+    if (not_slash) {
+        regexes = &mword_dot_regexes;
+        table = &mword_dot_subst_table;
+    }
 
     if(glob_is_separator_only(glob, separator)) {
         ret = do_match(regexes->re_double_sep, wrapped_word, TRUE);
@@ -708,14 +717,10 @@ static int match_word(const char *glob, const char *word, const char separator)
          * amglob_to_regex().
          */
 
-        struct subst_table *table;
         const char *begin, *end;
         char *glob_copy = g_strdup(glob);
         char *p, *g = glob_copy;
         char *regex;
-
-        table = (separator == '/') ? &mword_slash_subst_table
-            : &mword_dot_subst_table;
 
         /*
          * Calculate the beginning of the regex:
