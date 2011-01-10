@@ -258,6 +258,16 @@ match_glob(
     return result == 0;
 }
 
+/*
+ * Macro to tell whether a character is a regex metacharacter. Note that '*'
+ * and '?' are NOT included: they are themselves special in globs.
+ */
+
+#define IS_REGEX_META(c) ( \
+    (c) == '.' || (c) == '(' || (c) == ')' || (c) == '{' || (c) == '}' || \
+    (c) == '+' || (c) == '^' || (c) == '$' || (c) == '|' \
+)
+
 char *
 glob_to_regex(
     const char *	glob)
@@ -312,15 +322,7 @@ glob_to_regex(
 	    if (ch == '*') {
 		*r++ = '*';
 	    }
-	} else if (ch == '('
-		   || ch == ')'
-		   || ch == '{'
-		   || ch == '}'
-		   || ch == '+'
-		   || ch == '.'
-		   || ch == '^'
-		   || ch == '$'
-		   || ch == '|') {
+	} else if (IS_REGEX_META(ch)) {
 	    *r++ = '\\';
 	    *r++ = (char)ch;
 	} else {
@@ -334,7 +336,6 @@ glob_to_regex(
 
     return regex;
 }
-
 
 int
 match_tar(
@@ -427,15 +428,7 @@ tar_to_regex(
 	    *r++ = '^';
 	    *r++ = '/';
 	    *r++ = ']';
-	} else if (ch == '('
-		   || ch == ')'
-		   || ch == '{'
-		   || ch == '}'
-		   || ch == '+'
-		   || ch == '.'
-		   || ch == '^'
-		   || ch == '$'
-		   || ch == '|') {
+	} else if (IS_REGEX_META(ch)) {
 	    *r++ = '\\';
 	    *r++ = (char)ch;
 	} else {
@@ -609,15 +602,7 @@ match_word(
 		    *dst++ = separator;
 		}
 		*dst++ = (char)ch;
-	    } else if (   ch == '('
-		       || ch == ')'
-		       || ch == '{'
-		       || ch == '}'
-		       || ch == '+'
-		       || ch == '.'
-		       || ch == '^'
-		       || ch == '$'
-		       || ch == '|') {
+	    } else if (IS_REGEX_META(ch)) {
 		*dst++ = '\\';
 		*dst++ = (char)ch;
 	    } else {
