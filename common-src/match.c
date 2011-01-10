@@ -139,6 +139,32 @@ clean_regex(
     return result;
 }
 
+/*
+ * Check whether a given character should be escaped (that is, prepended with a
+ * backslash), EXCEPT for one character.
+ */
+
+static gboolean should_be_escaped_except(char c, char not_this_one)
+{
+    if (c == not_this_one)
+        return FALSE;
+
+    switch (c) {
+        case '\\':
+        case '^':
+        case '$':
+        case '?':
+        case '*':
+        case '[':
+        case ']':
+        case '.':
+        case '/':
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
 char *
 make_exact_host_expression(
     const char *	host)
@@ -153,21 +179,9 @@ make_exact_host_expression(
     for(i=0;i<strlen(host);i++) {
 	/* quote host expression metcharacters *except* '.'.  Note that
 	 * most of these are invalid in a DNS hostname anyway. */
-	switch (host[i]) {
-	    case '\\':
-	    case '/':
-	    case '^':
-	    case '$':
-	    case '?':
-	    case '*':
-	    case '[':
-	    case ']':
-	    result[j++]='\\';
-	    /* fall through */
-
-	    default:
-	    result[j++]=host[i];
-	}
+        if (should_be_escaped_except(host[i], '.'))
+            result[j++] = '\\';
+        result[j++] = host[i];
     }
     result[j++] = '$';
     result[j] = '\0';
@@ -187,21 +201,9 @@ make_exact_disk_expression(
     result[j++] = '^';
     for(i=0;i<strlen(disk);i++) {
 	/* quote disk expression metcharacters *except* '/' */
-	switch (disk[i]) {
-	    case '\\':
-	    case '.':
-	    case '^':
-	    case '$':
-	    case '?':
-	    case '*':
-	    case '[':
-	    case ']':
-	    result[j++]='\\';
-	    /* fall through */
-
-	    default:
-	    result[j++]=disk[i];
-	}
+        if (should_be_escaped_except(disk[i], '/'))
+            result[j++] = '\\';
+        result[j++] = disk[i];
     }
     result[j++] = '$';
     result[j] = '\0';
