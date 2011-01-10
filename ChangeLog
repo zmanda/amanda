@@ -1,4 +1,7 @@
 2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/match.c: match.c: match_host(): remove unneeded cast
+
+2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: match.c: match_word(): rename "i" local variable
 	  to "ret"
 

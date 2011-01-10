@@ -668,7 +668,7 @@ match_host(
 	*c++ = (char)tolower(*d++);
     *c = *d;
 
-    i = match_word(lglob, lhost, (int)'.');
+    i = match_word(lglob, lhost, '.');
     amfree(lglob);
     amfree(lhost);
     return i;
