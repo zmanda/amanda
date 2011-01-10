@@ -147,7 +147,40 @@ static struct mword_regexes mword_slash_regexes = {
 };
 
 /*
+ * Regular expression caches, and a static mutex to protect initialization and
+ * access. This may be unnecessarily coarse, but it is unknown at this time
+ * whether GHashTable accesses are thread-safe, and get_regex_from_cache() may
+ * be called from within threads, so play it safe.
+ */
+
+static GStaticMutex re_cache_mutex = G_STATIC_MUTEX_INIT;
+static GHashTable *regex_cache = NULL, *regex_cache_newline = NULL;
+
+/*
  * REGEX FUNCTIONS
+ */
+
+/*
+ * Initialize regex caches. NOTE: this function MUST be called with
+ * re_cache_mutex LOCKED, see get_regex_from_cache()
+ */
+
+static void init_regex_caches(void)
+{
+    static gboolean initialized = FALSE;
+
+    if (initialized)
+        return;
+
+    regex_cache = g_hash_table_new(g_str_hash, g_str_equal);
+    regex_cache_newline = g_hash_table_new(g_str_hash, g_str_equal);
+
+    initialized = TRUE;
+}
+
+/*
+ * Cleanup a regular expression by escaping all non alphanumeric characters, and
+ * append beginning/end anchors if need be
  */
 
 char *clean_regex(const char *str, gboolean anchor)
@@ -202,6 +235,45 @@ static gboolean do_regex_compile(const char *str, regex_t *regex,
 }
 
 /*
+ * Get an already compiled buffer from the regex cache. If the regex is not in
+ * the cache, allocate a new one and compile it using do_regex_compile(). If the
+ * compile fails, call regfree() on the object and return NULL to the caller. If
+ * it does succeed, put the regex buffer in cache and return a pointer to it.
+ */
+
+static regex_t *get_regex_from_cache(const char *re_str, regex_errbuf *errbuf,
+    gboolean match_newline)
+{
+    regex_t *ret;
+    GHashTable *cache;
+
+    g_static_mutex_lock(&re_cache_mutex);
+
+    init_regex_caches();
+
+    cache = (match_newline) ? regex_cache_newline: regex_cache;
+    ret = g_hash_table_lookup(cache, re_str);
+
+    if (ret)
+        goto out;
+
+    ret = g_new(regex_t, 1);
+
+    if (do_regex_compile(re_str, ret, errbuf, match_newline)) {
+        g_hash_table_insert(cache, g_strdup(re_str), ret);
+        goto out;
+    }
+
+    regfree(ret);
+    g_free(ret);
+    ret = NULL;
+
+out:
+    g_static_mutex_unlock(&re_cache_mutex);
+    return ret;
+}
+
+/*
  * Validate one regular expression using do_regex_compile(), and return NULL if
  * the regex is valid, or the error message otherwise.
  */
@@ -250,24 +322,21 @@ static int try_match(regex_t *regex, const char *str,
 
 int do_match(const char *regex, const char *str, gboolean match_newline)
 {
-    regex_t regc;
+    regex_t *re;
     int result;
     regex_errbuf errmsg;
-    gboolean ok;
 
-    ok = do_regex_compile(regex, &regc, &errmsg, match_newline);
+    re = get_regex_from_cache(regex, &errmsg, match_newline);
 
-    if (!ok)
+    if (!re)
         error("regex \"%s\": %s", regex, errmsg);
         /*NOTREACHED*/
 
-    result = try_match(&regc, str, &errmsg);
+    result = try_match(re, str, &errmsg);
 
     if (result == MATCH_ERROR)
         error("regex \"%s\": %s", regex, errmsg);
         /*NOTREACHED*/
-
-    regfree(&regc);
 
     return result;
 }
@@ -518,25 +587,23 @@ char *glob_to_regex(const char *glob)
 int match_glob(const char *glob, const char *str)
 {
     char *regex;
-    regex_t regc;
+    regex_t *re;
     int result;
     regex_errbuf errmsg;
-    gboolean ok;
 
     regex = glob_to_regex(glob);
-    ok = do_regex_compile(regex, &regc, &errmsg, TRUE);
+    re = get_regex_from_cache(regex, &errmsg, TRUE);
 
-    if (!ok)
+    if (!re)
         error("glob \"%s\" -> regex \"%s\": %s", glob, regex, errmsg);
         /*NOTREACHED*/
 
-    result = try_match(&regc, str, &errmsg);
+    result = try_match(re, str, &errmsg);
 
     if (result == MATCH_ERROR)
         error("glob \"%s\" -> regex \"%s\": %s", glob, regex, errmsg);
         /*NOTREACHED*/
 
-    regfree(&regc);
     g_free(regex);
 
     return result;
@@ -570,25 +637,23 @@ static char *tar_to_regex(const char *glob)
 int match_tar(const char *glob, const char *str)
 {
     char *regex;
-    regex_t regc;
+    regex_t *re;
     int result;
     regex_errbuf errmsg;
-    gboolean ok;
 
     regex = tar_to_regex(glob);
-    ok = do_regex_compile(regex, &regc, &errmsg, TRUE);
+    re = get_regex_from_cache(regex, &errmsg, TRUE);
 
-    if (!ok)
+    if (!re)
         error("glob \"%s\" -> regex \"%s\": %s", glob, regex, errmsg);
         /*NOTREACHED*/
 
-    result = try_match(&regc, str, &errmsg);
+    result = try_match(re, str, &errmsg);
 
     if (result == MATCH_ERROR)
         error("glob \"%s\" -> regex \"%s\": %s", glob, regex, errmsg);
         /*NOTREACHED*/
 
-    regfree(&regc);
     g_free(regex);
 
     return result;
