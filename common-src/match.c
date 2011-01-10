@@ -590,11 +590,75 @@ match_word(
 	*dst++ = '$';
     }
     else {
+        const char *begin, *end;
+        char *p;
+
         regex = alloc(1 + len * 5 + 1 + 1 + 2 + 2);
-        dst = regex;
         g = nglob;
-	/*
-	 * Do the conversion:
+
+        /*
+         * Calculate the beginning of the regex:
+         * - by default, it is an unanchored separator;
+         * - if the glob begins with a caret, make that an anchored separator,
+         *   and increment g appropriately;
+         * - if it begins with a separator, make it the empty string.
+         */
+
+        p = nglob;
+
+#define REGEX_BEGIN_FULL(c) (const char[]) { '^', '\\', (c), 0 }
+#define REGEX_BEGIN_NOANCHOR(c) (const char[]) { '\\', (c), 0 }
+#define REGEX_BEGIN_ANCHORONLY "^" /* Unused, but defined for consistency */
+#define REGEX_BEGIN_EMPTY ""
+
+        begin = REGEX_BEGIN_NOANCHOR(separator);
+
+        if (*p == '^') {
+            begin = REGEX_BEGIN_FULL(separator);
+            p++, g++;
+            if (*p == separator)
+                g++;
+        } else if (*p == separator)
+            begin = REGEX_BEGIN_EMPTY;
+
+        /*
+         * Calculate the end of the regex:
+         * - an unanchored separator by default;
+         * - if the last character is a backslash or the separator itself, it
+         *   should be the empty string;
+         * - if it is a dollar sign, overwrite it with 0 and look at the
+         *   character before it: if it is the separator, only anchor at the
+         *   end, otherwise, add a separator before the anchor.
+         */
+
+        p = &(nglob[strlen(nglob) - 1]);
+
+#define REGEX_END_FULL(c) (const char[]) { '\\', (c), '$', 0 }
+#define REGEX_END_NOANCHOR(c) REGEX_BEGIN_NOANCHOR(c)
+#define REGEX_END_ANCHORONLY "$"
+#define REGEX_END_EMPTY REGEX_BEGIN_EMPTY
+
+        end = REGEX_END_NOANCHOR(separator);
+
+        if (*p == '\\' || *p == separator)
+            end = REGEX_END_EMPTY;
+        else if (*p == '$') {
+            char prev = *(p - 1);
+            *p = '\0';
+            if (prev == separator)
+                end = REGEX_END_ANCHORONLY;
+            else
+                end = REGEX_END_FULL(separator);
+        }
+
+        /*
+         * Now go. Sart with the beginning...
+         */
+
+        dst = g_stpcpy(regex, begin);
+
+        /*
+         * Now enter the meat of the conversion:
 	 *
 	 *  ?      -> [^<separator>]
 	 *  *      -> [^<separator>]*
@@ -611,17 +675,6 @@ match_word(
 	 * error when the regex is compiled.
 	 */
 
-	if(*g == '^') {
-	    *dst++ = '^';
-	    *dst++ = '\\';	/* escape the separator */
-	    *dst++ = separator;
-	    g++;
-	    if(*g == separator) g++;
-	}
-	else if(*g != separator) {
-	    *dst++ = '\\';	/* add a leading \separator */
-	    *dst++ = separator;
-	}
 	last_ch = '\0';
 	for (ch = *g++; ch != '\0'; last_ch = ch, ch = *g++) {
 	    next_ch = *g;
@@ -646,12 +699,6 @@ match_word(
 		if (ch == '*') {
 		    *dst++ = '*';
 		}
-	    } else if (ch == '$' && next_ch == '\0') {
-		if(last_ch != separator) {
-		    *dst++ = '\\';
-		    *dst++ = separator;
-		}
-		*dst++ = (char)ch;
 	    } else if (IS_REGEX_META(ch)) {
 		*dst++ = '\\';
 		*dst++ = (char)ch;
@@ -659,13 +706,17 @@ match_word(
 		*dst++ = (char)ch;
 	    }
 	}
-	if(last_ch != '\\') {
-	    if(last_ch != separator && last_ch != '$') {
-		*dst++ = '\\';
-		*dst++ = separator;		/* add a trailing \separator */
-	    }
-	}
+
+        /*
+         * Finally, copy the end string.
+         */
+        dst = g_stpcpy(dst, end);
     }
+
+    /*
+     * The final 0.
+     */
+
     *dst = '\0';
 
     ret = do_match(regex, nword, TRUE);

@@ -1,4 +1,8 @@
 2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/match.c: match.c: match_word(): change the way regex
+	  begin and end are calculated/copied
+
+2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: match.c: better handling of "separator only"
 	  globs in match_word()
 
