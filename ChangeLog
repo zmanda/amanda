@@ -1,4 +1,8 @@
 2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/match.c: match.c: move glob/disk backslash substitution
+	  out of match_word()
+
+2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: match.c: factorize regex construction from
 	  expression
 

@@ -467,6 +467,49 @@ tar_to_regex(
     return regex;
 }
 
+/*
+ * Two utility functions used by match_disk() below: they are used to convert a
+ * disk and glob from Windows expressed paths (backslashes) into Unix paths
+ * (slashes).
+ *
+ * Note: the resulting string is dynamically allocated, it is up to the caller
+ * to free it.
+ *
+ * Note 2: UNC in convert_unc_to_unix stands for Uniform Naming Convention.
+ */
+
+static char *convert_unc_to_unix(const char *unc)
+{
+    const char *src;
+    char *result, *dst;
+    result = alloc(strlen(unc) + 1);
+    dst = result;
+
+    for (src = unc; *src; src++)
+        *(dst++) = (*src == '\\') ? '/' : *src;
+
+    *dst = '\0';
+    return result;
+}
+
+static char *convert_winglob_to_unix(const char *glob)
+{
+    const char *src;
+    char *result, *dst;
+    result = alloc(strlen(glob) + 1);
+    dst = result;
+
+    for (src = glob; *src; src++) {
+        if (*src == '\\' && *(src + 1) == '\\') {
+            *(dst++) = '/';
+            src++;
+            continue;
+        }
+        *(dst++) = *src;
+    }
+    *dst = '\0';
+    return result;
+}
 
 static int
 match_word(
@@ -481,7 +524,7 @@ match_word(
     int  last_ch;
     int  next_ch;
     size_t  lenword;
-    char  *mword, *nword;
+    char *nword;
     char  *mglob, *nglob;
     char *g;
     const char *src;
@@ -490,41 +533,10 @@ match_word(
     lenword = strlen(word);
     nword = (char *)alloc(lenword + 3);
 
-    if (separator == '/' && lenword > 2 && word[0] == '\\' && word[1] == '\\' && !strchr(word, '/')) {
-	/* Convert all "\" to '/' */
-	mword = (char *)alloc(lenword + 1);
-	dst = mword;
-	src = word;
-	while (*src != '\0') {
-	    if (*src == '\\') {
-		*dst++ = '/';
-		src += 1;
-	    } else {
-		*dst++ = *src++;
-	    }
-	}
-	*dst++ = '\0';
-
-	/* Convert all "\\" to '/' */
-	mglob = (char *)alloc(strlen(glob) + 1);
-	dst = mglob;
-	src = glob;
-	while (*src != '\0') {
-	    if (*src == '\\' && *(src+1) == '\\') {
-		*dst++ = '/';
-		src += 2;
-	    } else {
-		*dst++ = *src++;
-	    }
-	}
-	*dst++ = '\0';
-    } else {
-	mword = stralloc(word);
-	mglob = stralloc(glob);
-    }
+    mglob = stralloc(glob);
 
     dst = nword;
-    src = mword;
+    src = word;
     if(lenword == 1 && *src == separator) {
 	*dst++ = separator;
 	*dst++ = separator;
@@ -639,7 +651,6 @@ match_word(
 
     ret = do_match(regex, nword, TRUE);
 
-    amfree(mword);
     amfree(mglob);
     amfree(nword);
     amfree(nglob);
@@ -674,7 +685,35 @@ match_disk(
     const char *	glob,
     const char *	disk)
 {
-    return match_word(glob, disk, '/');
+    char *glob2 = NULL, *disk2 = NULL;
+    const char *g = glob, *d = disk;
+    int result;
+
+    /*
+     * Check whether our disk potentially refers to a Windows share (the first
+     * two characters are '\' and there is no / in the word at all): if yes,
+     * convert all double backslashes to slashes in the glob, and simple
+     * backslashes into slashes in the disk, and pass these new strings as
+     * arguments instead of the originals.
+     */
+    gboolean windows_share = !(strncmp(disk, "\\\\", 2) || strchr(disk, '/'));
+
+    if (windows_share) {
+        glob2 = convert_winglob_to_unix(glob);
+        disk2 = convert_unc_to_unix(disk);
+        g = (const char *) glob2;
+        d = (const char *) disk2;
+    }
+
+    result = match_word(g, d, '/');
+
+    /*
+     * We can amfree(NULL), so this is "safe"
+     */
+    amfree(glob2);
+    amfree(disk2);
+
+    return result;
 }
 
 static int
