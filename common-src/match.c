@@ -289,73 +289,190 @@ match_glob(
     (c) == '+' || (c) == '^' || (c) == '$' || (c) == '|' \
 )
 
+/*
+ * EXPANDING A MATCH TO A REGEX (as per amanda-match(7))
+ *
+ * The function at the code of this operation is ammatch_to_regex(). It
+ * takes three arguments: the string to convert, a substitution table and a
+ * worst-case expansion.
+ *
+ * The substitution table, defined right below, is used to replace particular
+ * string positions and/or characters. Its fields are:
+ * - begin: what the beginnin of the string should be replaced with;
+ * - end: what the end of the string should be replaced with;
+ * - question_mark: what the question mark ('?') should be replaced with;
+ * - star: what the star ('*') should be replaced with;
+ * - double_star: what two consecutive stars should be replaced with.
+ *
+ * Note that apart from double_star, ALL OTHER FIELDS MUST NOT BE NULL
+ */
+
+struct subst_table {
+    const char *begin;
+    const char *end;
+    const char *question_mark;
+    const char *star;
+    const char *double_star;
+};
+
+static char *ammatch_to_regex(const char *str, struct subst_table *table,
+    size_t worst_case)
+{
+    const char *src;
+    char *result, *dst;
+    char c;
+
+    /*
+     * There are two particular cases when building a regex out of a glob:
+     * character classes (anything inside [...] or [!...] and quotes (anything
+     * preceded by a backslash). We start with none being true.
+     */
+
+    gboolean in_character_class = FALSE, in_quote = FALSE;
+
+    /*
+     * Allocate enough space for our string. At worst, the allocated space is
+     * the length of the following:
+     * - beginning of regex;
+     * - size of original string multiplied by worst-case expansion;
+     * - end of regex;
+     * - final 0.
+     */
+
+    result = alloc(strlen(table->begin) + strlen(str) * worst_case
+        + strlen(table->end) + 1);
+
+    /*
+     * Start by copying the beginning of the regex...
+     */
+
+    dst = g_stpcpy(result, table->begin);
+
+    /*
+     * ... Now to the meat of it.
+     */
+
+    for (src = str; *src; src++) {
+        c = *src;
+
+        /*
+         * First, check that we're in a character class: each and every
+         * character can be copied as is. We only need to be careful is the
+         * character is a closing bracket: it will end the character class IF
+         * AND ONLY IF it is not preceded by a backslash.
+         */
+
+        if (in_character_class) {
+            in_character_class = ((c != ']') || (*(src - 1) == '\\'));
+            goto straight_copy;
+        }
+
+        /*
+         * Are we in a quote? If yes, it is really simple: copy the current
+         * character, close the quote, the end.
+         */
+
+        if (in_quote) {
+            in_quote = FALSE;
+            goto straight_copy;
+        }
+
+        /*
+         * The only thing left to handle now is the "normal" case: we are not in
+         * a character class nor in a quote.
+         */
+
+        if (c == '\\') {
+            /*
+             * Backslash: append it, and open a new quote.
+             */
+            in_quote = TRUE;
+            goto straight_copy;
+        } else if (c == '[') {
+            /*
+             * Opening bracket: the beginning of a character class.
+             *
+             * Look ahead the next character: if it's an exclamation mark, then
+             * this is a complemented character class; append a caret to make
+             * the result string regex-friendly, and forward one character in
+             * advance.
+             */
+            *dst++ = c;
+            in_character_class = TRUE;
+            if (*(src + 1) == '!') {
+                *dst++ = '^';
+                src++;
+            }
+        } else if (IS_REGEX_META(c)) {
+            /*
+             * Regex metacharacter (except for ? and *, see below): append a
+             * backslash, and then the character itself.
+             */
+            *dst++ = '\\';
+            goto straight_copy;
+        } else if (c == '?')
+            /*
+             * Question mark: take the subsitution string out of our subst_table
+             * and append it to the string.
+             */
+            dst = g_stpcpy(dst, table->question_mark);
+        else if (c == '*') {
+            /*
+             * Star: append the subsitution string found in our subst_table.
+             * However, look forward the next character: if it's yet another
+             * star, then see if there is a substitution string for the double
+             * star and append this one instead.
+             *
+             * FIXME: this means that two consecutive stars in a glob string
+             * where there is no substition for double_star can lead to
+             * exponential regex execution time: consider [^/]*[^/]*.
+             */
+            const char *p = table->star;
+            if (*(src + 1) == '*' && table->double_star) {
+                src++;
+                p = table->double_star;
+            }
+            dst = g_stpcpy(dst, p);
+        } else {
+            /*
+             * Any other character: append each time.
+             */
+straight_copy:
+            *dst++ = c;
+        }
+    }
+
+    /*
+     * Done, now append the end, ONLY if we are not in a quote - a lone
+     * backslash at the end of a glob is illegal, just leave it as it, it will
+     * make the regex compile fail.
+     */
+
+    if (!in_quote)
+        dst = g_stpcpy(dst, table->end);
+    /*
+     * Finalize, return.
+     */
+
+    *dst = '\0';
+    return result;
+}
+
+static struct subst_table glob_subst_stable = {
+    "^", /* begin */
+    "$", /* end */
+    "[^/]", /* question_mark */
+    "[^/]*", /* star */
+    NULL /* double_star */
+};
+
+static size_t glob_worst_case = 5; /* star */
+
 char *
 glob_to_regex(
     const char *	glob)
 {
-    char *regex;
-    char *r;
-    size_t len;
-    int ch;
-    int last_ch;
-
-    /*
-     * Allocate an area to convert into. The worst case is a five to
-     * one expansion.
-     */
-    len = strlen(glob);
-    regex = alloc(1 + len * 5 + 1 + 1);
-
-    /*
-     * Do the conversion:
-     *
-     *  ?      -> [^/]
-     *  *      -> [^/]*
-     *  [...] ->  [...]
-     *  [!...] -> [^...]
-     *
-     * The following are given a leading backslash to protect them
-     * unless they already have a backslash:
-     *
-     *   ( ) { } + . ^ $ |
-     *
-     * Put a leading ^ and trailing $ around the result.  If the last
-     * non-escaped character is \ leave the $ off to cause a syntax
-     * error when the regex is compiled.
-     */
-
-    r = regex;
-    *r++ = '^';
-    last_ch = '\0';
-    for (ch = *glob++; ch != '\0'; last_ch = ch, ch = *glob++) {
-	if (last_ch == '\\') {
-	    *r++ = (char)ch;
-	    ch = '\0';			/* so last_ch != '\\' next time */
-	} else if (last_ch == '[' && ch == '!') {
-	    *r++ = '^';
-	} else if (ch == '\\') {
-	    *r++ = (char)ch;
-	} else if (ch == '*' || ch == '?') {
-	    *r++ = '[';
-	    *r++ = '^';
-	    *r++ = '/';
-	    *r++ = ']';
-	    if (ch == '*') {
-		*r++ = '*';
-	    }
-	} else if (IS_REGEX_META(ch)) {
-	    *r++ = '\\';
-	    *r++ = (char)ch;
-	} else {
-	    *r++ = (char)ch;
-	}
-    }
-    if (last_ch != '\\') {
-	*r++ = '$';
-    }
-    *r = '\0';
-
-    return regex;
+    return ammatch_to_regex(glob, &glob_subst_stable, glob_worst_case);
 }
 
 int
@@ -388,83 +505,21 @@ match_tar(
     return result;
 }
 
+static struct subst_table tar_subst_stable = {
+    "(^|/)", /* begin */
+    "($|/)", /* end */
+    "[^/]", /* question_mark */
+    ".*", /* star */
+    NULL /* double_star */
+};
+
+static size_t tar_worst_case = 5; /* begin or end */
+
 static char *
 tar_to_regex(
     const char *	glob)
 {
-    char *regex;
-    char *r;
-    size_t len;
-    int ch;
-    int last_ch;
-
-    /*
-     * Allocate an area to convert into. The worst case is a five to
-     * one expansion.
-     */
-    len = strlen(glob);
-    regex = alloc(1 + len * 5 + 5 + 5);
-
-    /*
-     * Do the conversion:
-     *
-     *  ?      -> [^/]
-     *  *      -> .*
-     *  [...]  -> [...]
-     *  [!...] -> [^...]
-     *
-     * The following are given a leading backslash to protect them
-     * unless they already have a backslash:
-     *
-     *   ( ) { } + . ^ $ |
-     *
-     * The expression must begin and end either at the beginning/end of the string or
-     * at at a pathname separator.
-     *
-     * If the last non-escaped character is \ leave the $ off to cause a syntax
-     * error when the regex is compiled.
-     */
-
-    r = regex;
-    *r++ = '(';
-    *r++ = '^';
-    *r++ = '|';
-    *r++ = '/';
-    *r++ = ')';
-    last_ch = '\0';
-    for (ch = *glob++; ch != '\0'; last_ch = ch, ch = *glob++) {
-	if (last_ch == '\\') {
-	    *r++ = (char)ch;
-	    ch = '\0';			/* so last_ch != '\\' next time */
-	} else if (last_ch == '[' && ch == '!') {
-	    *r++ = '^';
-	} else if (ch == '\\') {
-	    *r++ = (char)ch;
-	} else if (ch == '*') {
-	    *r++ = '.';
-	    *r++ = '*';
-	} else if (ch == '?') {
-	    *r++ = '[';
-	    *r++ = '^';
-	    *r++ = '/';
-	    *r++ = ']';
-	} else if (IS_REGEX_META(ch)) {
-	    *r++ = '\\';
-	    *r++ = (char)ch;
-	} else {
-	    *r++ = (char)ch;
-	}
-    }
-    if (last_ch != '\\') {
-	*r++ = '(';
-	*r++ = '$';
-	*r++ = '|';
-	*r++ = '/';
-	*r++ = ')';
-    }
-    *r = '\0';
-
-    return regex;
+    return ammatch_to_regex(glob, &tar_subst_stable, tar_worst_case);
 }
 
 /*
@@ -511,7 +566,6 @@ static char *convert_winglob_to_unix(const char *glob)
     return result;
 }
 
-
 /*
  * Check whether a glob passed as an argument to match_word() only looks for the
  * separator
@@ -543,13 +597,9 @@ match_word(
     char *regex;
     char *dst;
     size_t  len;
-    int  ch;
-    int  last_ch;
-    int  next_ch;
     size_t  lenword;
     char *nword;
     char *nglob;
-    char *g;
     const char *src;
     int ret;
 
@@ -572,10 +622,6 @@ match_word(
     }
     *dst = '\0';
 
-    /*
-     * Allocate an area to convert into. The worst case is a five to one
-     * expansion.
-     */
     len = strlen(glob);
     nglob = stralloc(glob);
 
@@ -588,13 +634,28 @@ match_word(
 	*dst++ = '\\';
 	*dst++ = separator;
 	*dst++ = '$';
-    }
-    else {
-        const char *begin, *end;
-        char *p;
+        *dst = '\0';
+    } else {
+        /*
+         * Unlike what happens for tar and disk expressions, here the
+         * substitution table needs to be dynamically allocated. When we enter
+         * here, we know what the expansions will be for the question mark, the
+         * star and the double star, and also the worst case expansion. We
+         * calculate the begin and end expansions below.
+         */
 
-        regex = alloc(1 + len * 5 + 1 + 1 + 2 + 2);
-        g = nglob;
+#define MATCHWORD_STAR_EXPANSION(c) (const char []) { \
+    '[', '^', (c), ']', '*', 0 \
+}
+#define MATCHWORD_QUESTIONMARK_EXPANSION(c) (const char []) { \
+    '[', '^', (c), ']', 0 \
+}
+#define MATCHWORD_DOUBLESTAR_EXPANSION ".*"
+
+        struct subst_table table;
+        size_t worst_case = 5;
+        const char *begin, *end;
+        char *p, *g = nglob;
 
         /*
          * Calculate the beginning of the regex:
@@ -652,72 +713,17 @@ match_word(
         }
 
         /*
-         * Now go. Sart with the beginning...
+         * Fill in our substitution table and generate the regex
          */
 
-        dst = g_stpcpy(regex, begin);
+        table.begin = begin;
+        table.end = end;
+        table.question_mark = MATCHWORD_QUESTIONMARK_EXPANSION(separator);
+        table.star = MATCHWORD_STAR_EXPANSION(separator);
+        table.double_star = MATCHWORD_DOUBLESTAR_EXPANSION;
 
-        /*
-         * Now enter the meat of the conversion:
-	 *
-	 *  ?      -> [^<separator>]
-	 *  *      -> [^<separator>]*
-	 *  [!...] -> [^...]
-	 *  **     -> .*
-	 *
-	 * The following are given a leading backslash to protect them
-	 * unless they already have a backslash:
-	 *
-	 *   ( ) { } + . ^ $ |
-	 *
-	 * If the last
-	 * non-escaped character is \ leave it to cause a syntax
-	 * error when the regex is compiled.
-	 */
-
-	last_ch = '\0';
-	for (ch = *g++; ch != '\0'; last_ch = ch, ch = *g++) {
-	    next_ch = *g;
-	    if (last_ch == '\\') {
-		*dst++ = (char)ch;
-		ch = '\0';		/* so last_ch != '\\' next time */
-	    } else if (last_ch == '[' && ch == '!') {
-		*dst++ = '^';
-	    } else if (ch == '\\') {
-		*dst++ = (char)ch;
-	    } else if (ch == '*' || ch == '?') {
-		if(ch == '*' && next_ch == '*') {
-		    *dst++ = '.';
-		    g++;
-		}
-		else {
-		    *dst++ = '[';
-		    *dst++ = '^';
-		    *dst++ = separator;
-		    *dst++ = ']';
-		}
-		if (ch == '*') {
-		    *dst++ = '*';
-		}
-	    } else if (IS_REGEX_META(ch)) {
-		*dst++ = '\\';
-		*dst++ = (char)ch;
-	    } else {
-		*dst++ = (char)ch;
-	    }
-	}
-
-        /*
-         * Finally, copy the end string.
-         */
-        dst = g_stpcpy(dst, end);
+        regex = ammatch_to_regex(g, &table, worst_case);
     }
-
-    /*
-     * The final 0.
-     */
-
-    *dst = '\0';
 
     ret = do_match(regex, nword, TRUE);
 

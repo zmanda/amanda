@@ -1,4 +1,7 @@
 2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/match.c: match.c: rework regex generation from globs
+
+2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: match.c: match_word(): change the way regex
 	  begin and end are calculated/copied
 
