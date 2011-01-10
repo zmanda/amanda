@@ -1,4 +1,7 @@
 2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/match.c: match.c: factorize regex compile
+
+2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: match.c: match_host(): use g_ascii_strdown() to
 	  convert to lowercase
 

@@ -36,23 +36,55 @@
 static int match_word(const char *glob, const char *word, const char separator);
 static char *tar_to_regex(const char *glob);
 
+/*
+ * REGEX MATCHING FUNCTIONS
+ */
+
+/*
+ * Define a specific type to hold error messages in case regex compile/matching
+ * fails
+ */
+
+typedef char regex_errbuf[STR_SIZE];
+
+/*
+ * Validate one regular expression. If the regex is invalid, copy the error
+ * message into the supplied regex_errbuf pointer. Also, we want to know whether
+ * flags should include REG_NEWLINE (See regcomp(3) for details). Since this is
+ * the more frequent case, add REG_NEWLINE to the default flags, and remove it
+ * only if match_newline is set to FALSE.
+ */
+
+static gboolean do_validate_regex(const char *str, regex_t *regex,
+	regex_errbuf *errbuf, gboolean match_newline)
+{
+	int flags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
+	int result;
+
+	if (!match_newline)
+		CLR(flags, REG_NEWLINE);
+
+	result = regcomp(regex, str, flags);
+
+	if (!result)
+		return TRUE;
+
+	regerror(result, regex, *errbuf, SIZEOF(*errbuf));
+	return FALSE;
+}
+
 char *
 validate_regexp(
     const char *	regex)
 {
     regex_t regc;
-    int result;
-    static char errmsg[STR_SIZE];
+    static regex_errbuf errmsg;
+    gboolean valid;
 
-    if ((result = regcomp(&regc, regex,
-			  REG_EXTENDED|REG_NOSUB|REG_NEWLINE)) != 0) {
-      regerror(result, &regc, errmsg, SIZEOF(errmsg));
-      return errmsg;
-    }
+    valid = do_validate_regex(regex, &regc, &errmsg, TRUE);
 
     regfree(&regc);
-
-    return NULL;
+    return (valid) ? NULL : errmsg;
 }
 
 char *
@@ -155,14 +187,14 @@ match(
 {
     regex_t regc;
     int result;
-    char errmsg[STR_SIZE];
+    regex_errbuf errmsg;
+    gboolean ok;
 
-    if((result = regcomp(&regc, regex,
-			 REG_EXTENDED|REG_NOSUB|REG_NEWLINE)) != 0) {
-        regerror(result, &regc, errmsg, SIZEOF(errmsg));
-	error(_("regex \"%s\": %s"), regex, errmsg);
-	/*NOTREACHED*/
-    }
+    ok = do_validate_regex(regex, &regc, &errmsg, TRUE);
+
+    if (!ok)
+        error(_("regex \"%s\": %s"), regex, errmsg);
+        /*NOTREACHED*/
 
     if((result = regexec(&regc, str, 0, 0, 0)) != 0
        && result != REG_NOMATCH) {
@@ -183,14 +215,14 @@ match_no_newline(
 {
     regex_t regc;
     int result;
-    char errmsg[STR_SIZE];
+    regex_errbuf errmsg;
+    gboolean ok;
 
-    if((result = regcomp(&regc, regex,
-			 REG_EXTENDED|REG_NOSUB)) != 0) {
-        regerror(result, &regc, errmsg, SIZEOF(errmsg));
-	error(_("regex \"%s\": %s"), regex, errmsg);
-	/*NOTREACHED*/
-    }
+    ok = do_validate_regex(regex, &regc, &errmsg, FALSE);
+
+    if (!ok)
+        error(_("regex \"%s\": %s"), regex, errmsg);
+        /*NOTREACHED*/
 
     if((result = regexec(&regc, str, 0, 0, 0)) != 0
        && result != REG_NOMATCH) {
@@ -208,23 +240,18 @@ char *
 validate_glob(
     const char *	glob)
 {
-    char *regex;
+    char *regex, *ret = NULL;
     regex_t regc;
-    int result;
-    static char errmsg[STR_SIZE];
+    static regex_errbuf errmsg;
 
     regex = glob_to_regex(glob);
-    if ((result = regcomp(&regc, regex,
-			  REG_EXTENDED|REG_NOSUB|REG_NEWLINE)) != 0) {
-      regerror(result, &regc, errmsg, SIZEOF(errmsg));
-      amfree(regex);
-      return errmsg;
-    }
+
+    if (!do_validate_regex(regex, &regc, &errmsg, TRUE))
+        ret = errmsg;
 
     regfree(&regc);
     amfree(regex);
-
-    return NULL;
+    return ret;
 }
 
 int
@@ -235,15 +262,15 @@ match_glob(
     char *regex;
     regex_t regc;
     int result;
-    char errmsg[STR_SIZE];
+    regex_errbuf errmsg;
+    gboolean ok;
 
     regex = glob_to_regex(glob);
-    if((result = regcomp(&regc, regex,
-			 REG_EXTENDED|REG_NOSUB|REG_NEWLINE)) != 0) {
-        regerror(result, &regc, errmsg, SIZEOF(errmsg));
-	error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
-	/*NOTREACHED*/
-    }
+    ok = do_validate_regex(regex, &regc, &errmsg, TRUE);
+
+    if (!ok)
+        error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
+        /*NOTREACHED*/
 
     if((result = regexec(&regc, str, 0, 0, 0)) != 0
        && result != REG_NOMATCH) {
@@ -345,15 +372,15 @@ match_tar(
     char *regex;
     regex_t regc;
     int result;
-    char errmsg[STR_SIZE];
+    regex_errbuf errmsg;
+    gboolean ok;
 
     regex = tar_to_regex(glob);
-    if((result = regcomp(&regc, regex,
-			 REG_EXTENDED|REG_NOSUB|REG_NEWLINE)) != 0) {
-        regerror(result, &regc, errmsg, SIZEOF(errmsg));
-	error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
-	/*NOTREACHED*/
-    }
+    ok = do_validate_regex(regex, &regc, &errmsg, TRUE);
+
+    if (!ok)
+        error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
+        /*NOTREACHED*/
 
     if((result = regexec(&regc, str, 0, 0, 0)) != 0
        && result != REG_NOMATCH) {
