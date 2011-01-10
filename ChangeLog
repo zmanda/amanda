@@ -1,4 +1,9 @@
 2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/match.c: match.c: factorize regex matching
+	* common-src/match.h: make match and match_no_newline into
+	  macros calling do_match
+
+2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: match.c: factorize regex compile
 
 2011-01-10  Francis Galiegue <fgaliegue@gmail.com>

@@ -73,6 +73,34 @@ static gboolean do_validate_regex(const char *str, regex_t *regex,
 	return FALSE;
 }
 
+/*
+ * See if a string matches a regular expression. Return one of MATCH_* defined
+ * below. If, for some reason, regexec() returns something other than not 0 or
+ * REG_NOMATCH, return MATCH_ERROR and print the error message in the supplied
+ * regex_errbuf.
+ */
+
+#define MATCH_OK (1)
+#define MATCH_NONE (0)
+#define MATCH_ERROR (-1)
+
+static int try_match(regex_t *regex, const char *str,
+    regex_errbuf *errbuf)
+{
+    int result = regexec(regex, str, 0, 0, 0);
+
+    switch(result) {
+        case 0:
+            return MATCH_OK;
+        case REG_NOMATCH:
+            return MATCH_NONE;
+        /* Fall through: something went really wrong */
+    }
+
+    regerror(result, regex, *errbuf, SIZEOF(*errbuf));
+    return MATCH_ERROR;
+}
+
 char *
 validate_regexp(
     const char *	regex)
@@ -180,60 +208,28 @@ make_exact_disk_expression(
     return result;
 }
 
-int
-match(
-    const char *	regex,
-    const char *	str)
+int do_match(const char *regex, const char *str, gboolean match_newline)
 {
     regex_t regc;
     int result;
     regex_errbuf errmsg;
     gboolean ok;
 
-    ok = do_validate_regex(regex, &regc, &errmsg, TRUE);
+    ok = do_validate_regex(regex, &regc, &errmsg, match_newline);
 
     if (!ok)
         error(_("regex \"%s\": %s"), regex, errmsg);
         /*NOTREACHED*/
 
-    if((result = regexec(&regc, str, 0, 0, 0)) != 0
-       && result != REG_NOMATCH) {
-        regerror(result, &regc, errmsg, SIZEOF(errmsg));
-	error(_("regex \"%s\": %s"), regex, errmsg);
-	/*NOTREACHED*/
-    }
+    result = try_match(&regc, str, &errmsg);
 
-    regfree(&regc);
-
-    return result == 0;
-}
-
-int
-match_no_newline(
-    const char *	regex,
-    const char *	str)
-{
-    regex_t regc;
-    int result;
-    regex_errbuf errmsg;
-    gboolean ok;
-
-    ok = do_validate_regex(regex, &regc, &errmsg, FALSE);
-
-    if (!ok)
+    if (result == MATCH_ERROR)
         error(_("regex \"%s\": %s"), regex, errmsg);
         /*NOTREACHED*/
 
-    if((result = regexec(&regc, str, 0, 0, 0)) != 0
-       && result != REG_NOMATCH) {
-        regerror(result, &regc, errmsg, SIZEOF(errmsg));
-	error(_("regex \"%s\": %s"), regex, errmsg);
-	/*NOTREACHED*/
-    }
-
     regfree(&regc);
 
-    return result == 0;
+    return result;
 }
 
 char *
@@ -272,17 +268,16 @@ match_glob(
         error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
         /*NOTREACHED*/
 
-    if((result = regexec(&regc, str, 0, 0, 0)) != 0
-       && result != REG_NOMATCH) {
-        regerror(result, &regc, errmsg, SIZEOF(errmsg));
-	error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
-	/*NOTREACHED*/
-    }
+    result = try_match(&regc, str, &errmsg);
+
+    if (result == MATCH_ERROR)
+        error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
+        /*NOTREACHED*/
 
     regfree(&regc);
     amfree(regex);
 
-    return result == 0;
+    return result;
 }
 
 /*
@@ -382,17 +377,16 @@ match_tar(
         error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
         /*NOTREACHED*/
 
-    if((result = regexec(&regc, str, 0, 0, 0)) != 0
-       && result != REG_NOMATCH) {
-        regerror(result, &regc, errmsg, SIZEOF(errmsg));
-	error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
-	/*NOTREACHED*/
-    }
+    result = try_match(&regc, str, &errmsg);
+
+    if (result == MATCH_ERROR)
+        error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
+        /*NOTREACHED*/
 
     regfree(&regc);
     amfree(regex);
 
-    return result == 0;
+    return result;
 }
 
 static char *
@@ -644,7 +638,7 @@ match_word(
     }
     *dst = '\0';
 
-    ret = match(regex,nword);
+    ret = do_match(regex, nword, TRUE);
 
     amfree(mword);
     amfree(mglob);

@@ -35,14 +35,20 @@
  * Returns a statically allocated error message on failure or NULL on success. */
 char *	validate_regexp(const char *regex);
 
-/* Match STR against POSIX regular expression REGEX by calling regexec.  This uses
- * the REG_NEWLINE flag, meaning that . does not match a newline and $ and ^ are
- * relative to lines as well as the beginning and end of STR. */
-int	match(const char *regex, const char *str);
+/*
+ * Match the string "str" against POSIX regex "regex" with regexec(), with
+ * REG_NEWLINE set (match_newline == TRUE) or not.
+ *
+ * REG_NEWLINE means two things:
+ * - the dot won't match a newline;
+ * - ^ and $ will match around \n in the input string (as well as the beginning
+ *   and end of the input).
+ */
 
-/* Like match(), but without REG_NEWLINE, so a newline is treated like any other
- * character */
-int	match_no_newline(const char *regex, const char *str);
+int do_match(const char *regex, const char *str, gboolean match_newline);
+
+#define match(regex, str) do_match(regex, str, TRUE)
+#define match_no_newline(regex, str) do_match(regex, str, FALSE)
 
 /* quote any non-alphanumeric characters in str, so that the result will only
  * match the original string.  If anchor is true, then add ^ and $ to make sure
