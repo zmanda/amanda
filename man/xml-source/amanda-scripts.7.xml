@@ -56,6 +56,15 @@ insensitive to case, and <literal>-</literal> (dash) and
 
 </refsect1>
 
+<refsect1><title>SCRIPTS OUTPUT PROPERTY</title>
+
+<para>A pre-dle-amcheck, pre-dle-estimate or pre-dle-backup executed on the
+client can output property on stdout that are sent to the application.
+If the output line matches "PROPERTY str1 str2", Amanda sets a property called
+"str1" by the value of "str2", that property is sent to the application.</para>
+
+</refsect1>
+
 <seealso>
 <manref name="amanda.conf" vol="5"/>
 </seealso>

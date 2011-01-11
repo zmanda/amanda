@@ -1,3 +1,6 @@
+2011-01-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda-scripts.7.xml: Document script output property.
+
 2011-01-10  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: match.c: rework regex generation from globs
 
