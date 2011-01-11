@@ -1809,8 +1809,12 @@ static void handle_result(
     hostp->up = HOST_READY;
 
     if (pkt == NULL) {
-	errbuf = vstrallocf(_("Request to %s failed: %s"),
+	if (strcmp(security_geterror(sech), "timeout waiting for REP") == 0) {
+	    errbuf = vstrallocf("Some estimate timeout on %s, using server estimate if possible", hostp->hostname);
+	} else {
+	    errbuf = vstrallocf(_("Request to %s failed: %s"),
 			hostp->hostname, security_geterror(sech));
+	}
 	goto error_return;
     }
     if (pkt->type == P_NAK) {

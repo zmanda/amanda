@@ -1,3 +1,7 @@
+2011-01-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Change message of "timeout waiting for REP" to
+	  "Some estimate timeout on %s, using server estimate if possible".
+
 2011-01-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Xfer.pod: new offset and size arguments of xfer->start.
 	* perl/Amanda/Xfer.swg: Add xfer_element_set_size.
