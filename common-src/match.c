@@ -166,13 +166,13 @@ static gboolean should_be_escaped_except(char c, char not_this_one)
 }
 
 /*
- * Take a user-supplied argument and turn it into a full-blown regex (with start
- * and end anchors) following rules in amanda-match(7). The not_this_one
+ * Take a disk/host expression and turn it into a full-blown amglob (with
+ * start and end anchors) following rules in amanda-match(7). The not_this_one
  * argument represents a character which is NOT meant to be special in this
  * case: '/' for disks and '.' for hosts.
  */
 
-static char *full_regex_from_expression(const char *str, char not_this_one)
+static char *full_amglob_from_expression(const char *str, char not_this_one)
 {
     const char *src;
     char *result, *dst;
@@ -197,14 +197,14 @@ char *
 make_exact_host_expression(
     const char *	host)
 {
-    return full_regex_from_expression(host, '.');
+    return full_amglob_from_expression(host, '.');
 }
 
 char *
 make_exact_disk_expression(
     const char *	disk)
 {
-    return full_regex_from_expression(disk, '/');
+    return full_amglob_from_expression(disk, '/');
 }
 
 int do_match(const char *regex, const char *str, gboolean match_newline)
