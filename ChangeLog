@@ -1,4 +1,8 @@
 2011-01-11  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/match.c: match.c: rename ammtch_to_regex() into
+	  amglob_to_regex()
+
+2011-01-11  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: match.c: rename full_regex_from_expression() to
 	  full_amglob_from_expression()
 

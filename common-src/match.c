@@ -292,7 +292,7 @@ match_glob(
 /*
  * EXPANDING A MATCH TO A REGEX (as per amanda-match(7))
  *
- * The function at the code of this operation is ammatch_to_regex(). It
+ * The function at the code of this operation is amglob_to_regex(). It
  * takes three arguments: the string to convert, a substitution table and a
  * worst-case expansion.
  *
@@ -315,7 +315,7 @@ struct subst_table {
     const char *double_star;
 };
 
-static char *ammatch_to_regex(const char *str, struct subst_table *table,
+static char *amglob_to_regex(const char *str, struct subst_table *table,
     size_t worst_case)
 {
     const char *src;
@@ -472,7 +472,7 @@ char *
 glob_to_regex(
     const char *	glob)
 {
-    return ammatch_to_regex(glob, &glob_subst_stable, glob_worst_case);
+    return amglob_to_regex(glob, &glob_subst_stable, glob_worst_case);
 }
 
 int
@@ -519,7 +519,7 @@ static char *
 tar_to_regex(
     const char *	glob)
 {
-    return ammatch_to_regex(glob, &tar_subst_stable, tar_worst_case);
+    return amglob_to_regex(glob, &tar_subst_stable, tar_worst_case);
 }
 
 /*
@@ -722,7 +722,7 @@ match_word(
         table.star = MATCHWORD_STAR_EXPANSION(separator);
         table.double_star = MATCHWORD_DOUBLESTAR_EXPANSION;
 
-        regex = ammatch_to_regex(g, &table, worst_case);
+        regex = amglob_to_regex(g, &table, worst_case);
     }
 
     ret = do_match(regex, nword, TRUE);
