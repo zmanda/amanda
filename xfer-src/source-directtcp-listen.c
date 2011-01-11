@@ -85,8 +85,8 @@ class_init(
 {
     XferElementClass *klass = XFER_ELEMENT_CLASS(selfc);
     static xfer_element_mech_pair_t mech_pairs[] = {
-	{ XFER_MECH_NONE, XFER_MECH_DIRECTTCP_LISTEN, 1, 0},
-	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
+	{ XFER_MECH_NONE, XFER_MECH_DIRECTTCP_LISTEN, XFER_NROPS(1), XFER_NTHREADS(0) },
+	{ XFER_MECH_NONE, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0) },
     };
 
     klass->start = start_impl;

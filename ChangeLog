@@ -1,4 +1,15 @@
 2011-01-11  Francis Galiegue <fgaliegue@gmail.com>
+	* xfer-src/xfer-element.h: xfer: define XFER_NROPS() and
+	  XFER_NTHREADS() macros
+	* xfer-src/dest-buffer.c xfer-src/dest-directtcp-connect.c
+	  xfer-src/dest-directtcp-listen.c xfer-src/dest-fd.c
+	  xfer-src/dest-null.c xfer-src/element-glue.c xfer-src/filter-process.c
+	  xfer-src/filter-xor.c xfer-src/source-directtcp-connect.c
+	  xfer-src/source-directtcp-listen.c xfer-src/source-fd.c
+	  xfer-src/source-pattern.c xfer-src/source-random.c
+	  xfer-src/xfer-test.c: use them
+
+2011-01-11  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: match.c: rename ammtch_to_regex() into
 	  amglob_to_regex()
 

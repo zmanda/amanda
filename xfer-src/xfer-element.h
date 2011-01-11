@@ -68,11 +68,19 @@ typedef enum {
     XFER_MECH_MAX,
 } xfer_mech;
 
-/* Description of a pair (input, output) of xfer mechanisms that an
+/*
+ * Description of a pair (input, output) of xfer mechanisms that an
  * element can support, along with the associated costs.  An array of these
  * pairs is stored in the class-level variable 'mech_pairs', describing
  * all of the mechanisms that an element supports.
+ *
+ * Use the XFER_NROPS() and XFER_NTHREADS() macros below in declarations in
+ * order to make declarations more understandable.
  */
+
+#define XFER_NROPS(x) (x)
+#define XFER_NTHREADS(x) (x)
+
 typedef struct {
     xfer_mech input_mech;
     xfer_mech output_mech;
