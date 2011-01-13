@@ -958,7 +958,7 @@ pull_buffer_impl(
 
 	case PULL_FROM_FD: {
 	    int fd = get_read_fd(self);
-	    char *buf = g_malloc(GLUE_BUFFER_SIZE);
+	    char *buf;
 	    ssize_t len;
 
 	    /* if the fd is already closed, it's possible upstream bailed out
@@ -974,6 +974,8 @@ pull_buffer_impl(
 		*size = 0;
 		return NULL;
 	    }
+
+	    buf = g_malloc(GLUE_BUFFER_SIZE);
 
 	    /* read from upstream */
 	    len = full_read(fd, buf, GLUE_BUFFER_SIZE);
