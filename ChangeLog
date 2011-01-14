@@ -1,4 +1,8 @@
 2011-01-13  Francis Galiegue <fgaliegue@gmail.com>
+	* xfer-src/source-pattern.c: xfer-src/source-pattern.c: externalize
+	  pattern copying
+
+2011-01-13  Francis Galiegue <fgaliegue@gmail.com>
 	* xfer-src/element-glue.c: xfer-src/element-glue.c: fix memory leak in
 	  pull_buffer_impl()
 

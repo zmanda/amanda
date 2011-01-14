@@ -1,6 +1,6 @@
 /*
  * Amanda, The Advanced Maryland Automatic Network Disk Archiver
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2011 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -66,6 +66,41 @@ typedef struct {
  * Implementation
  */
 
+/*
+ * Utility function to fill a buffer buf of size len with the pattern defined
+ * for this instance. We start each copying from the offset where we left the
+ * previous one.
+ *
+ * Note that performance is important: amtapetype uses this very source and
+ * source-random.c to determine whether a tape device uses compression, and
+ * expects the two to run about the same speed.  This is why this is a byte
+ * loop and does not use mempcy() and friends: the random source is also byte
+ * per byte.
+ */
+
+static void fill_buffer_with_pattern(XferSourcePattern *self, char *buf,
+    size_t len)
+{
+    char *src = self->pattern, *dst = buf;
+    size_t plen = self->pattern_buffer_length, offset = self->current_offset;
+    size_t pos = 0;
+
+    src += offset;
+
+    while (pos < len) {
+        *dst++ = *src++;
+        pos++, offset++;
+
+        if (G_LIKELY(offset < plen))
+            continue;
+
+        offset = 0;
+        src = self->pattern;
+    }
+
+    self->current_offset = offset;
+}
+
 static gpointer
 pull_buffer_impl(
     XferElement *elt,
@@ -73,9 +108,6 @@ pull_buffer_impl(
 {
     XferSourcePattern *self = (XferSourcePattern *)elt;
     char *rval;
-    char *s, *d;
-    size_t l;
-    size_t offset;
 
     /* indicate EOF on an cancel */
     if (elt->cancelled || (self->limited_length && self->length == 0)) {
@@ -97,17 +129,7 @@ pull_buffer_impl(
 
     rval = malloc(*size);
 
-    /* fill the buffer "manually", instead of using fancy memcpy techniques, so
-     * that this runs at about the same speed as the random source */
-    l = *size;
-    s = self->pattern;
-    offset = self->current_offset;
-    d = rval;
-    while (l--) {
-	*(d++) = *(s + offset++);
-	if (offset >= self->pattern_buffer_length) offset = 0;
-    }
-    self->current_offset = offset;
+    fill_buffer_with_pattern(self, rval, *size);
 
     return rval;
 }
