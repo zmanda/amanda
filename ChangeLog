@@ -1,3 +1,6 @@
+2011-01-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/xfer-dest-taper-splitter.c: Do not close disk buffer.
+
 2010-12-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.pl: don't produce negative durations
 	* perl/Amanda/DB/Catalog.pm: but handle them when they occur.

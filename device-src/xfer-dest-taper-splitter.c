@@ -892,7 +892,7 @@ slab_source_free(
     XferDestTaperSplitter *self,
     slab_source_state *state)
 {
-    if (state->slice_fd != -1)
+    if (state->slice_fd != -1 && state->slice->filename)
 	close(state->slice_fd);
 
     if (state->tmp_slab) {
