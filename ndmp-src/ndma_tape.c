@@ -468,8 +468,8 @@ ndmta_write_quantum (struct ndm_session *sess)
 	ndmp9_error		error;
 
   again:
-	n_read = n_avail = ndmchan_n_avail (ch);
-	if (n_avail == 0) {
+	n_read = n_avail = ndmchan_n_avail_record (ch, count);
+	if (n_avail < count) {
 		/* allow to drain */
 		return did_something;
 	}
@@ -487,7 +487,7 @@ ndmta_write_quantum (struct ndm_session *sess)
 	if (n_read > ta->mover_state.bytes_left_to_read)
 		n_read = ta->mover_state.bytes_left_to_read;
 
-	if (n_read == 0) {
+	if (n_read < count) {
 		/* Active, but paused awaiting MOVER_READ request */
 		return did_something;	/* mover blocked */
 	}
@@ -587,6 +587,10 @@ ndmta_write_quantum (struct ndm_session *sess)
 	n_avail = ta->mover_state.record_size - record_off;
 	if (n_read > n_avail)
 		n_read = n_avail;
+	if (n_read != done_count) {
+		dbprintf("lost %lu bytes %lu %u\n", done_count - n_read, done_count, n_read);
+		n_read = done_count;
+	}
 
 	data = &ta->tape_buffer[record_off];
 
