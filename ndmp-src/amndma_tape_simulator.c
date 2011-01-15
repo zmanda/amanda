@@ -447,7 +447,7 @@ ndmos_tape_read (struct ndm_session *sess,
 
 	nb = count;
 
-	rc = read (ta->tape_fd, buf, nb);
+	rc = full_read (ta->tape_fd, buf, nb);
 	if (rc < 0) {
 		return NDMP9_IO_ERR;
 	}

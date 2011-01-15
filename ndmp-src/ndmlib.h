@@ -196,6 +196,7 @@ extern int	ndmchan_pre_poll (struct ndmchan *chtab[], unsigned n_chtab);
 extern int	ndmchan_post_poll (struct ndmchan *chtab[], unsigned n_chtab);
 extern void	ndmchan_compress (struct ndmchan *ch);
 extern int	ndmchan_n_avail (struct ndmchan *ch);
+extern int	ndmchan_n_avail_record (struct ndmchan *ch, unsigned long size);
 extern int	ndmchan_n_avail_total (struct ndmchan *ch);
 extern int	ndmchan_n_ready (struct ndmchan *ch);
 extern enum ndmchan_read_interpretation

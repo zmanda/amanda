@@ -1,4 +1,11 @@
 2011-01-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/amndma_tape_simulator.c: Use full_read.
+	* ndmp-src/ndma_tape.c: Use ndmchan_n_avail_record to guarantee space
+	  for a record.
+	* ndmp-src/ndml_chan.c (ndmchan_n_avail_record): New function.
+	* ndmp-src/ndmlib.h  (ndmchan_n_avail_record): New prototype.
+
+2011-01-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/xfer-dest-taper-splitter.c: Do not close disk buffer.
 
 2010-12-22  Jean-Louis Martineau <martineau@zmanda.com>
