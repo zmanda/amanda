@@ -271,7 +271,7 @@ xfer_element_get_mech_pairs(
  */
 
 void
-xfer_element_drain_by_pulling(
+xfer_element_drain_buffers(
     XferElement *upstream)
 {
     gpointer buf;
@@ -283,7 +283,7 @@ xfer_element_drain_by_pulling(
 }
 
 void
-xfer_element_drain_by_reading(
+xfer_element_drain_fd(
     int fd)
 {
     size_t len;

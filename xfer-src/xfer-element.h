@@ -224,10 +224,9 @@ typedef struct {
      * If expect_eof is TRUE, then this element should expect an EOF from its
      * upstream element, and should drain any remaining data until that EOF
      * arrives and generate an EOF to the downstream element.  The utility
-     * functions xfer_element_drain_by_reading and
-     * xfer_element_drain_by_pulling may be useful for this purpose. This
-     * draining is important in order to avoid hung threads or unexpected
-     * SIGPIPEs.
+     * functions xfer_element_drain_fd and xfer_element_drain_buffers may be
+     * useful for this purpose. This draining is important in order to avoid
+     * hung threads or unexpected SIGPIPEs.
      *
      * If expect_eof is FALSE, then the upstream elements are unable to
      * generate an early EOF, so this element should *not* attempt to drain any
@@ -323,14 +322,14 @@ xfer_element_mech_pair_t *xfer_element_get_mech_pairs(XferElement *elt);
  *
  * @param upstream: the element to drain
  */
-void xfer_element_drain_by_pulling(XferElement *upstream);
+void xfer_element_drain_buffers(XferElement *upstream);
 
 /* Drain UPSTREAM by reading until EOF.  This does not close
  * the file descriptor.
  *
  * @param fd: the file descriptor to drain
  */
-void xfer_element_drain_by_reading(int fd);
+void xfer_element_drain_fd(int fd);
 
 /* Atomically swap a value into elt->_input_fd and _output_fd, respectively.
  * Always use these methods to access the field.

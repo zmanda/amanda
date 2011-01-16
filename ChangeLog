@@ -1,3 +1,10 @@
+2011-01-16  Francis Galiegue <fgaliegue@gmail.com>
+	* xfer-src/element-glue.c xfer-src/filter-xor.c
+	  xfer-src/xfer-element.c xfer-src/xfer-element.h: xfer: rename
+	  xfer_element_drain* utility functions - Both functions are used to
+	  pulling data from an upstream element, either buffers or reading a
+	  file descriptor, until it is "empty". 
+
 2011-01-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/amndma_tape_simulator.c: Use full_read.
 	* ndmp-src/ndma_tape.c: Use ndmchan_n_avail_record to guarantee space

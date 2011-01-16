@@ -344,7 +344,7 @@ pull_and_write(XferElementGlue *self)
     }
 
     if (elt->cancelled && elt->expect_eof)
-	xfer_element_drain_by_pulling(elt->upstream);
+	xfer_element_drain_buffers(elt->upstream);
 
     /* close the fd we've been writing, as an EOF signal to downstream, and
      * set it to -1 to avoid accidental re-use */
@@ -391,7 +391,7 @@ read_and_write(XferElementGlue *self)
     }
 
     if (elt->cancelled && elt->expect_eof)
-	xfer_element_drain_by_reading(rfd);
+	xfer_element_drain_fd(rfd);
 
     /* close the read fd.  If it's not at EOF, then upstream will get EPIPE, which will hopefully
      * kill it and complete the cancellation */
@@ -437,7 +437,7 @@ read_and_push(
     }
 
     if (elt->cancelled && elt->expect_eof)
-	xfer_element_drain_by_reading(fd);
+	xfer_element_drain_fd(fd);
 
     /* send an EOF indication downstream */
     xfer_element_push_buffer(elt->downstream, NULL, 0);
@@ -469,7 +469,7 @@ pull_and_push(XferElementGlue *self)
     }
 
     if (elt->cancelled && elt->expect_eof)
-	xfer_element_drain_by_pulling(elt->upstream);
+	xfer_element_drain_buffers(elt->upstream);
 
     if (!eof_sent)
 	xfer_element_push_buffer(elt->downstream, NULL, 0);
@@ -966,7 +966,7 @@ pull_buffer_impl(
 	    if (elt->cancelled || fd == -1) {
 		if (fd != -1) {
 		    if (elt->expect_eof)
-			xfer_element_drain_by_reading(fd);
+			xfer_element_drain_fd(fd);
 
 		    close_read_fd(self);
 		}
@@ -993,7 +993,7 @@ pull_buffer_impl(
 
 		    /* and finish off the upstream */
 		    if (elt->expect_eof) {
-			xfer_element_drain_by_reading(fd);
+			xfer_element_drain_fd(fd);
 		    }
 		    close_read_fd(self);
 		} else if (len == 0) {

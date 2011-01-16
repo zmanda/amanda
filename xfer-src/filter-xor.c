@@ -91,7 +91,7 @@ pull_buffer_impl(
     if (elt->cancelled) {
 	/* drain our upstream only if we're expecting an EOF */
 	if (elt->expect_eof) {
-	    xfer_element_drain_by_pulling(XFER_ELEMENT(self)->upstream);
+	    xfer_element_drain_buffers(XFER_ELEMENT(self)->upstream);
 	}
 
 	/* return an EOF */
