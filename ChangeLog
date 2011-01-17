@@ -1,3 +1,6 @@
+2011-01-17  Francis Galiegue <fgaliegue@gmail.com>
+	* xfer-src/element-glue.c: fix memory leak in read_and_push()
+
 2011-01-16  Francis Galiegue <fgaliegue@gmail.com>
 	* xfer-src/element-glue.c xfer-src/filter-xor.c
 	  xfer-src/xfer-element.c xfer-src/xfer-element.h: xfer: rename

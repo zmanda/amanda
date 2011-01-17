@@ -426,6 +426,7 @@ read_and_push(
 			    fd, strerror(saved_errno));
 		    wait_until_xfer_cancelled(elt->xfer);
 		}
+                amfree(buf);
 		break;
 	    } else if (len == 0) { /* we only count a zero-length read as EOF */
 		amfree(buf);
