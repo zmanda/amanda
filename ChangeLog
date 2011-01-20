@@ -1,4 +1,9 @@
 2011-01-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c: Do not report error if a dle is listed twice
+	  in argument list.
+	* installcheck/amadmin.pl: Test it.
+
+2011-01-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amservice.c: Add -s option.
 	* man/xml-source/amservice.8.xml: Document -s option.
 

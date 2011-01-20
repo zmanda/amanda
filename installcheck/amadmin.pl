@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathilda Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 16;
+use Test::More tests => 17;
 use strict;
 use warnings;
 
@@ -117,3 +117,6 @@ like(run_get('amadmin TESTCONF force localhost share-\*'),
 amadmin: localhost:\\\\windows\\share-b is set to a forced level 0 at next run.$/,
    "shell 12");
 
+like(run_get('amadmin TESTCONF force localhost share-a share-a'),
+   qr/^amadmin: localhost:\\\\windows\\share-a is set to a forced level 0 at next run.$/,
+   "shell 13");
