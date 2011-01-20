@@ -33,13 +33,13 @@ use Amanda::Device qw( :constants );
 use Amanda::Debug qw( debug );
 use Amanda::Changer;
 use Amanda::MainLoop;
-use Amanda::Interactive;
+use Amanda::Interactivity;
 
-use constant SCAN_ASK  => 1;     # call Amanda::Interactive module
+use constant SCAN_ASK  => 1;     # call Amanda::Interactivity module
 use constant SCAN_POLL => 2;     # wait 'poll_delay' and retry the scan.
 use constant SCAN_FAIL => 3;     # abort
 use constant SCAN_CONTINUE => 4; # continue to the next step
-use constant SCAN_ASK_POLL => 5; # call Amanda::Interactive module and
+use constant SCAN_ASK_POLL => 5; # call Amanda::Interactivity module and
 				 # poll at the same time.
 
 =head1 NAME
@@ -52,9 +52,9 @@ Amanda::Recovery::Scan -- interface to scan algorithm
 
     # scan the default changer with no interactivity
     my $scan = Amanda::Recovery::Scan->new();
-    # ..or scan the changer $chg, using $interactive for interactivity
+    # ..or scan the changer $chg, using $interactivity for interactivity
     $scan = Amanda::Recovery::Scan->new(chg => $chg,
-                                        interactive => $interactive);
+                                        interactivity => $interactivity);
 
     $scan->find_volume(
 	label => "TAPE-012",
@@ -88,14 +88,14 @@ requires that the caller use L<Amanda::MainLoop> to poll for events.
 
 A new Scan object is created with the C<new> function as follows:
 
-  my $scan = Amanda::Recovery::Scan->new(scan_conf   => $scan_conf,
-                                         chg         => $chg,
-                                         interactive => $interactive);
+  my $scan = Amanda::Recovery::Scan->new(scan_conf     => $scan_conf,
+                                         chg           => $chg,
+                                         interactivity => $interactivity);
 
 C<scan_conf> is the configuration for the scan, which at this point should be
 omitted, as configuration is not yet supported.  The C<chg> parameter specifies
 the changer to start the scan with. The default changer is used if C<chg> is
-omitted. The C<interactive> parameter gives an C<Amanda::Interactive> object.
+omitted. The C<interactivity> parameter gives an C<Amanda::Interactivity> object.
 
 =head2 CALLBACKS
 
@@ -158,17 +158,17 @@ sub new {
     my %params = @_;
     my $scan_conf = $params{'scan_conf'};
     my $chg = $params{'chg'};
-    my $interactive = $params{'interactive'};
+    my $interactivity = $params{'interactivity'};
 
     #until we have a config for it.
     $scan_conf = Amanda::Recovery::Scan::Config->new();
     $chg = Amanda::Changer->new() if !defined $chg;
 
     my $self = {
-	initial_chg => $chg,
-	chg         => $chg,
-	scan_conf   => $scan_conf,
-        interactive => $interactive,
+	initial_chg   => $chg,
+	chg           => $chg,
+	scan_conf     => $scan_conf,
+        interactivity => $interactivity,
     };
     return bless ($self, $class);
 }
@@ -203,7 +203,7 @@ sub find_volume {
     my $new_slot;
     my $poll_src;
     my $scan_running = 0;
-    my $interactive_running = 0;
+    my $interactivity_running = 0;
     my $restart_scan = 0;
     my $abort_scan = undef;
     my $last_err = undef; # keep the last meaningful error, the one reported
@@ -307,7 +307,7 @@ sub find_volume {
 	}
 
 	# Remove from seen all slot that have state == SLOT_UNKNOWN
-	# It is done when as scan is restarted from interactive object.
+	# It is done when as scan is restarted from interactivity object.
 	if ($remove_undef_state) {
 	    for my $i (0..(scalar(@$inventory)-1)) {
 		my $slot = $inventory->[$i]->{slot};
@@ -534,23 +534,23 @@ sub find_volume {
 	    }
 	}
 
-	if ($scan_method == SCAN_ASK && !defined $self->{'interactive'}) {
+	if ($scan_method == SCAN_ASK && !defined $self->{'interactivity'}) {
 	    $scan_method = SCAN_FAIL;
 	}
 
-	if ($scan_method == SCAN_ASK_POLL && !defined $self->{'interactive'}) {
+	if ($scan_method == SCAN_ASK_POLL && !defined $self->{'interactivity'}) {
 	    $scan_method = SCAN_FAIL;
 	}
 
 	if ($scan_method == SCAN_ASK) {
-	    return $steps->{'scan_interactive'}->("$message");
+	    return $steps->{'scan_interactivity'}->("$message");
 	} elsif ($scan_method == SCAN_POLL) {
 	    $poll_src = Amanda::MainLoop::call_after(
 				$self->{'scan_conf'}->{'poll_delay'},
 				$steps->{'after_poll'});
 	    return;
 	} elsif ($scan_method == SCAN_ASK_POLL) {
-	    $steps->{'scan_interactive'}->("$message\n");
+	    $steps->{'scan_interactivity'}->("$message\n");
 	    $poll_src = Amanda::MainLoop::call_after(
 				$self->{'scan_conf'}->{'poll_delay'},
 				$steps->{'after_poll'});
@@ -570,24 +570,24 @@ sub find_volume {
 	return $steps->{'restart_scan'}->();
     };
 
-    step scan_interactive => sub {
+    step scan_interactivity => sub {
 	my ($err_message) = @_;
-	if (!$interactive_running) {
-	    $interactive_running = 1;
+	if (!$interactivity_running) {
+	    $interactivity_running = 1;
 	    my $message = "$err_message\nInsert volume labeled '$label' in changer and type <enter>\nor type \"^D\" to abort\n";
-	    $self->{'interactive'}->user_request(
+	    $self->{'interactivity'}->user_request(
 				message     => $message,
 				label       => $label,
 				err         => "$err_message",
 				chg_name    => $self->{'chg'}->{'chg_name'},
-				request_cb  => $steps->{'scan_interactive_cb'});
+				request_cb  => $steps->{'scan_interactivity_cb'});
 	}
 	return;
     };
 
-    step scan_interactive_cb => sub {
+    step scan_interactivity_cb => sub {
 	my ($err, $message) = @_;
-	$interactive_running = 0;
+	$interactivity_running = 0;
 	$poll_src->remove() if defined $poll_src;
 	$poll_src = undef;
 	$last_err = undef;
@@ -610,7 +610,7 @@ sub find_volume {
 		$new_chg = Amanda::Changer->new($message);
 	    }
 	    if ($new_chg->isa("Amanda::Changer::Error")) {
-		return $steps->{'scan_interactive'}->("$new_chg");
+		return $steps->{'scan_interactivity'}->("$new_chg");
 	    }
 	    $self->{'chg'}->quit();
 	    $self->{'chg'} = $new_chg;
@@ -640,8 +640,8 @@ sub find_volume {
 	$abort_scan = undef;
 	$poll_src->remove() if defined $poll_src;
 	$poll_src = undef;
-	$interactive_running = 0;
-	$self->{'interactive'}->abort() if defined $self->{'interactive'};
+	$interactivity_running = 0;
+	$self->{'interactivity'}->abort() if defined $self->{'interactivity'};
 	$params{'res_cb'}->($err, $res);
     };
 }
@@ -720,14 +720,8 @@ sub new {
 
     $self->{'scan_drive'} = 0;
     $self->{'scan_unknown_slot'} = 1;
-    $self->{'scan_interactivity'} = undef;
-    $self->{'poll'} = 0;
-    $self->{'wait'} = 1;
-    $self->{'poll_unknown_slot'} = 0;
-    $self->{'poll_drive'} = 0;
     $self->{'poll_delay'} = 10000; #10 seconds
-    $self->{'user_unknown_slot'} = 1;
-    $self->{'user_drive'} = 0;
+
     $self->{'fatal'} = Amanda::Recovery::Scan::SCAN_CONTINUE;
     $self->{'driveinuse'} = Amanda::Recovery::Scan::SCAN_ASK_POLL;
     $self->{'volinuse'} = Amanda::Recovery::Scan::SCAN_ASK_POLL;

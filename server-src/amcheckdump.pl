@@ -95,12 +95,12 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
-# Interactive package
-package Amanda::Interactive::amcheckdump;
+# Interactivity package
+package Amanda::Interactivity::amcheckdump;
 use POSIX qw( :errno_h );
 use Amanda::MainLoop qw( :GIOCondition );
 use vars qw( @ISA );
-@ISA = qw( Amanda::Interactive );
+@ISA = qw( Amanda::Interactivity );
 
 sub new {
     my $class = shift;
@@ -249,7 +249,7 @@ sub main {
 
     my $tapelist;
     my $chg;
-    my $interactive;
+    my $interactivity;
     my $scan;
     my $clerk;
     my $plan;
@@ -273,7 +273,7 @@ sub main {
 	    unless defined $opt_timestamp;
 
 	# make an interactivity plugin
-	$interactive = Amanda::Interactive::amcheckdump->new();
+	$interactivity = Amanda::Interactivity::amcheckdump->new();
 
 	# make a changer
 	$chg = Amanda::Changer->new(undef, tapelist => $tapelist);
@@ -283,7 +283,7 @@ sub main {
 	# make a scan
 	$scan = Amanda::Recovery::Scan->new(
 			    chg => $chg,
-			    interactive => $interactive);
+			    interactivity => $interactivity);
 	return $steps->{'quit'}->($scan)
 	    if $scan->isa("Amanda::Changer::Error");
 

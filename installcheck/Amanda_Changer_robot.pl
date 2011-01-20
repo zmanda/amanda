@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 321;
+use Test::More tests => 324;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -116,6 +116,7 @@ sub test_interface {
 
 	$chg = Amanda::Changer->new("robo");
 	die "$chg" if $chg->isa("Amanda::Changer::Error");
+	is($chg->have_inventory(), '1', "changer have inventory");
 	$interface = $chg->{'interface'};
 
 	$interface->inquiry($steps->{'inquiry_cb'});
@@ -336,6 +337,7 @@ Amanda::MainLoop::run();
 
     my $chg = Amanda::Changer->new("delays");
     die "$chg" if $chg->isa("Amanda::Changer::Error");
+    is($chg->have_inventory(), '1', "changer have inventory");
     is($chg->{'status_interval'}, 60, "status-interval parsed");
     is($chg->{'eject_delay'}, 1, "eject-delay parsed");
     is($chg->{'unload_delay'}, 120, "unload-delay parsed");
@@ -352,6 +354,7 @@ Amanda::MainLoop::run();
     # test no-fast-search
     $chg = Amanda::Changer->new("no-fast-search");
     die "$chg" if $chg->isa("Amanda::Changer::Error");
+    is($chg->have_inventory(), '1', "changer have inventory");
     $chg->info(
 	    info => ['fast_search'],
 	    info_cb => make_cb(info_cb => sub {

@@ -140,7 +140,9 @@ APPLY(CNF_UNRESERVED_TCP_PORT)\
 APPLY(CNF_HOLDINGDISK)\
 APPLY(CNF_SEND_AMREPORT_ON)\
 APPLY(CNF_TAPER_PARALLEL_WRITE)\
-APPLY(CNF_RECOVERY_LIMIT)
+APPLY(CNF_RECOVERY_LIMIT) \
+APPLY(CNF_INTERACTIVITY) \
+APPLY(CNF_TAPERSCAN)
 
 amglue_add_enum_tag_fns(confparm_key);
 amglue_add_constants(FOR_ALL_CONFPARM_KEY, confparm_key);
@@ -284,6 +286,26 @@ amglue_add_enum_tag_fns(changer_config_key);
 amglue_add_constants(FOR_ALL_CHANGER_CONFIG_KEY, changer_config_key);
 amglue_copy_to_tag(changer_config_key, getconf);
 constant_pod(Pre/Post-Script Parameters, FOR_ALL_CHANGER_CONFIG_KEY)
+
+#define FOR_ALL_INTERACTIVITY_KEY(APPLY)\
+APPLY(INTERACTIVITY_COMMENT)\
+APPLY(INTERACTIVITY_PLUGIN)\
+APPLY(INTERACTIVITY_PROPERTY)
+
+amglue_add_enum_tag_fns(interactivity_key);
+amglue_add_constants(FOR_ALL_INTERACTIVITY_KEY, interactivity_key);
+amglue_copy_to_tag(interactivity_key, getconf);
+constant_pod(Interactivity Parameters, FOR_ALL_INTERACTIVITY_KEY)
+
+#define FOR_ALL_TAPERSCAN_KEY(APPLY)\
+APPLY(TAPERSCAN_COMMENT)\
+APPLY(TAPERSCAN_PLUGIN)\
+APPLY(TAPERSCAN_PROPERTY)
+
+amglue_add_enum_tag_fns(taperscan_key);
+amglue_add_constants(FOR_ALL_TAPERSCAN_KEY, taperscan_key);
+amglue_copy_to_tag(taperscan_key, getconf);
+constant_pod(Taperscan Parameters, FOR_ALL_TAPERSCAN_KEY)
 
 /*
  * Various enumerated conftypes
@@ -738,6 +760,24 @@ gboolean changer_config_seen(changer_config_t *app, changer_config_key key);
 amglue_export_tag(getconf,
     lookup_changer_config changer_config_getconf changer_config_name
     changer_config_seen changer_config_seen
+);
+
+interactivity_t *lookup_interactivity(char *identifier);
+val_t *interactivity_getconf(interactivity_t *app, interactivity_key key);
+char *interactivity_name(interactivity_t *app);
+gboolean interactivity_seen(interactivity_t *app, interactivity_key key);
+amglue_export_tag(getconf,
+    lookup_interactivity interactivity_getconf interactivity_name
+    interactivity_seen interactivity_seen
+);
+
+taperscan_t *lookup_taperscan(char *identifier);
+val_t *taperscan_getconf(taperscan_t *app, taperscan_key key);
+char *taperscan_name(taperscan_t *app);
+gboolean taperscan_seen(taperscan_t *app, taperscan_key key);
+amglue_export_tag(getconf,
+    lookup_taperscan taperscan_getconf taperscan_name
+    taperscan_seen taperscan_seen
 );
 
 %perlcode %{

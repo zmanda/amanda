@@ -34,7 +34,7 @@ use Amanda::Constants;
 use Amanda::MainLoop;
 use Amanda::Taper::Scan;
 use Amanda::Recovery::Scan;
-use Amanda::Interactive;
+use Amanda::Interactivity;
 use Amanda::Tapelist;
 
 my $exit_status = 0;
@@ -395,7 +395,7 @@ sub {
 subcommand("label", "label <label>", "load the volume with label <label>",
 sub {
     my ($finished_cb, @args) = @_;
-    my $inter;
+    my $interactivity;
     my $scan;
     my $chg;
 
@@ -430,10 +430,10 @@ sub {
 	    }
 	};
 
-	$inter = Amanda::Interactive->new(name => 'stdin');
+	$interactivity = Amanda::Interactivity->new(name => 'stdin');
 	$chg = load_changer($finished_cb) or return;
 	$scan = Amanda::Recovery::Scan->new(chg => $chg,
-					    interactive => $inter);
+					    interactivity => $interactivity);
 	return failure("$scan", $finished_cb)
 	    if ($scan->isa("Amanda::Changer::Error"));
 
@@ -525,12 +525,18 @@ sub {
     my $label = shift @args;
 
     my $chg = load_changer($finished_cb) or return;
-    my $taperscan = Amanda::Taper::Scan->new(changer => $chg,
+    my $interactivity = Amanda::Interactivity->new(name => 'tty');
+    my $scan_name = getconf($CNF_TAPERSCAN);
+    my $taperscan = Amanda::Taper::Scan->new(algorithm => $scan_name,
+					     changer => $chg,
 					     tapelist => $tl);
 
     my $result_cb = make_cb(result_cb => sub {
 	my ($err, $res, $label, $mode) = @_;
-	return failure($err, $finished_cb) if $err;
+	if ($err) {
+	    $taperscan->quit() if defined $taperscan;
+	    return failure($err, $finished_cb);
+	}
 
 	my $modestr = ($mode == $ACCESS_APPEND)? "append" : "write";
 	my $slot = $res->{'this_slot'};

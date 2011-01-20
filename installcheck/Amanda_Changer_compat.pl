@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 30;
+use Test::More tests => 31;
 use File::Path;
 use strict;
 use warnings;
@@ -196,6 +196,8 @@ if ($cfg_result != $CFGERR_OK) {
 
 my $chg = Amanda::Changer->new();
 die($chg) if $chg->isa("Amanda::Changer::Error");
+
+is($chg->have_inventory(), '', "changer have inventory");
 
 try_run_changer(
     sub { $chg->load(label => 'TAPE-01', res_cb => $check_res_cb); },

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 204;
+use Test::More tests => 216;
 use strict;
 use warnings;
 use Data::Dumper;
@@ -227,6 +227,17 @@ $testconf->add_changer('my_changer', [
   'changerfile' => '"chg.state"',
   'property' => '"testprop" "testval"',
   'device_property' => '"testdprop" "testdval"',
+]);
+$testconf->add_interactivity('my_interactivity', [
+  'comment' => '"my interactivity is mine, not yours"',
+  'plugin'  => '"MY-interactivity"',
+  'property' => '"testprop" "testval"',
+]);
+
+$testconf->add_taperscan('my_taperscan', [
+  'comment' => '"my taperscan is mine, not yours"',
+  'plugin'  => '"MY-taperscan"',
+  'property' => '"testprop" "testval"',
 ]);
 
 $testconf->write();
@@ -514,6 +525,47 @@ is_deeply(changer_config_getconf($dc, $CHANGER_CONFIG_DEVICE_PROPERTY),
 is_deeply([ sort(+getconf_list("changer")) ],
 	  [ sort("my_changer") ],
     "getconf_list lists all changers");
+
+$dc = lookup_interactivity("my_interactivity");
+ok($dc, "found my_interactivity");
+is(interactivity_name($dc), "my_interactivity",
+    "my_interactivity knows its name");
+is(interactivity_getconf($dc, $INTERACTIVITY_COMMENT), 'my interactivity is mine, not yours',
+    "interactivity comment");
+is(interactivity_getconf($dc, $INTERACTIVITY_PLUGIN), 'MY-interactivity',
+    "interactivity plugin");
+is_deeply(interactivity_getconf($dc, $INTERACTIVITY_PROPERTY),
+    { 'testprop' => {
+	    'priority' => 0,
+	    'values' => [ 'testval' ],
+	    'append' => 0,
+	}
+    }, "interactivity properties represented correctly");
+
+is_deeply([ sort(+getconf_list("interactivity")) ],
+	  [ sort("my_interactivity") ],
+    "getconf_list lists all interactivity");
+
+$dc = lookup_taperscan("my_taperscan");
+ok($dc, "found my_taperscan");
+is(taperscan_name($dc), "my_taperscan",
+    "my_taperscan knows its name");
+is(taperscan_getconf($dc, $TAPERSCAN_COMMENT), 'my taperscan is mine, not yours',
+    "taperscan comment");
+is(taperscan_getconf($dc, $TAPERSCAN_PLUGIN), 'MY-taperscan',
+    "taperscan plugin");
+is_deeply(taperscan_getconf($dc, $TAPERSCAN_PROPERTY),
+    { 'testprop' => {
+	    'priority' => 0,
+	    'values' => [ 'testval' ],
+	    'append' => 0,
+	}
+    }, "taperscan properties represented correctly");
+
+is_deeply([ sort(+getconf_list("taperscan")) ],
+	  [ sort("my_taperscan") ],
+    "getconf_list lists all taperscan");
+
 
 ##
 # Test config overwrites (using the config from above)

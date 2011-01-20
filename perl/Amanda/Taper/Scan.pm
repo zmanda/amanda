@@ -193,6 +193,7 @@ use strict;
 use warnings;
 use Amanda::Config qw( :getconf );
 use Amanda::Tapelist;
+use Amanda::Debug;
 
 sub new {
     my $class = shift;
@@ -200,10 +201,9 @@ sub new {
 
     die "No changer given to Amanda::Taper::Scan->new"
 	unless exists $params{'changer'};
-
     # fill in the optional parameters
-    $params{'algorithm'} = "traditional" # TODO: get from a configuration variable
-	unless exists $params{'algorithm'};
+    $params{'algorithm'} = "traditional"
+	unless exists $params{'algorithm'} and $params{'algorithm'} ne '';
     $params{'tapecycle'} = getconf($CNF_TAPECYCLE)
 	unless exists $params{'tapecycle'};
     $params{'labelstr'} = getconf($CNF_LABELSTR)
@@ -213,8 +213,21 @@ sub new {
     $params{'meta_autolabel'} = getconf($CNF_META_AUTOLABEL)
 	unless exists $params{'meta_autolabel'};
 
+    my $plugin;
+    if (!defined $params{'algorithm'} or $params{'algorithm'} eq '') {
+	$params{'algorithm'} = "traditional";
+	$plugin = "traditional";
+    } else {
+	my $taperscan = Amanda::Config::lookup_taperscan($params{'algorithm'});
+	if ($taperscan) {
+	    $plugin = Amanda::Config::taperscan_getconf($taperscan, $TAPERSCAN_PLUGIN);
+	    $params{'properties'} = Amanda::Config::taperscan_getconf($taperscan, $TAPERSCAN_PROPERTY);
+	} else {
+	    $plugin = $params{'algorithm'};
+	}
+    }
     # load the package
-    my $pkgname = "Amanda::Taper::Scan::" . $params{'algorithm'};
+    my $pkgname = "Amanda::Taper::Scan::" . $plugin;
     my $filename = $pkgname;
     $filename =~ s|::|/|g;
     $filename .= '.pm';
@@ -223,16 +236,21 @@ sub new {
 	if ($@) {
 	    # handle compile errors
 	    die($@) if (exists $INC{$filename});
-	    die("No such taperscan algorithm '$params{algorithm}'");
+	    die("No such taperscan algorithm '$plugin'");
 	}
     }
 
     # instantiate it
-    my $self = $pkgname->new(%params);
+    my $self = eval {$pkgname->new(%params);};
+    if ($@ || !defined $self) {
+	debug("Can't instantiate $pkgname");
+	die("Can't instantiate $pkgname");
+    }
 
     # and set the keys from the parameters
     $self->{'changer'} = $params{'changer'};
     $self->{'algorithm'} = $params{'algorithm'};
+    $self->{'plugin'} = $params{'plugin'};
     $self->{'tapecycle'} = $params{'tapecycle'};
     $self->{'labelstr'} = $params{'labelstr'};
     $self->{'autolabel'} = $params{'autolabel'};
@@ -251,6 +269,9 @@ sub DESTROY {
 sub quit {
     my $self = shift;
 
+    if (defined $self->{'chg'} && $self->{'chg'} != $self->{'initial_chg'}) {
+	$self->{'chg'}->quit();
+    }
     $self->{'changer'}->quit() if defined $self->{'changer'};
     foreach (keys %$self) {
         delete $self->{$_};
@@ -261,7 +282,7 @@ sub scan {
     my $self = shift;
     my %params = @_;
 
-    $params{'result_cb'}->("not implemented");
+    $params{'result_cb'}->("scan not implemented");
 }
 
 sub read_tapelist {
@@ -307,7 +328,6 @@ sub is_reusable_volume {
     for my $tle (@reusable) {
         return 1 if $tle eq $vol_tle;
     }
-
 
     return 0;
 }

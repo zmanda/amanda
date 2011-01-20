@@ -21,11 +21,11 @@ use lib '@amperldir@';
 use strict;
 use warnings;
 
-package main::Interactive;
+package main::Interactivity;
 use POSIX qw( :errno_h );
 use Amanda::MainLoop qw( :GIOCondition );
 use vars qw( @ISA );
-@ISA = qw( Amanda::Interactive );
+@ISA = qw( Amanda::Interactivity );
 
 sub new {
     my $class = shift;
@@ -178,7 +178,7 @@ sub setup_src {
     my $src = $self->{'src'} = {};
 
     # put together a clerk, which of course requires a changer, scan,
-    # interactive, and feedback
+    # interactivity, and feedback
     my $chg = Amanda::Changer->new();
     return $self->failure("Error opening source changer: $chg")
 	if $chg->isa('Amanda::Changer::Error');
@@ -186,11 +186,11 @@ sub setup_src {
 
     $src->{'seen_labels'} = {};
 
-    $src->{'interactive'} = main::Interactive->new();
+    $src->{'interactivity'} = main::Interactivity->new();
 
     $src->{'scan'} = Amanda::Recovery::Scan->new(
 	    chg => $src->{'chg'},
-	    interactive => $src->{'interactive'});
+	    interactivity => $src->{'interactivity'});
 
     $src->{'clerk'} = Amanda::Recovery::Clerk->new(
 	    changer => $src->{'chg'},
@@ -355,8 +355,13 @@ sub setup_dst {
 	if $chg->isa('Amanda::Changer::Error');
     $dst->{'chg'} = $chg;
 
+    my $interactivity = Amanda::Interactivity->new(
+					name => getconf($CNF_INTERACTIVITY));
+    my $scan_name = getconf($CNF_TAPERSCAN);
     $dst->{'scan'} = Amanda::Taper::Scan->new(
+	algorithm => $scan_name,
 	changer => $dst->{'chg'},
+	interactivity => $interactivity,
 	tapelist => $tl,
 	labelstr => getconf($CNF_LABELSTR),
 	autolabel => $self->{'dst_autolabel'});

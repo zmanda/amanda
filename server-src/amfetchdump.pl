@@ -38,12 +38,12 @@ use Amanda::Recovery::Planner;
 use Amanda::Recovery::Clerk;
 use Amanda::Recovery::Scan;
 
-# Interactive package
-package Amanda::Interactive::amfetchdump;
+# Interactivity package
+package Amanda::Interactivity::amfetchdump;
 use POSIX qw( :errno_h );
 use Amanda::MainLoop qw( :GIOCondition );
 use vars qw( @ISA );
-@ISA = qw( Amanda::Interactive );
+@ISA = qw( Amanda::Interactivity );
 
 sub new {
     my $class = shift;
@@ -248,7 +248,7 @@ sub main {
 	    return failure("Cannot chdir to $destdir: $!", $finished_cb);
 	}
 
-	my $interactive = Amanda::Interactive::amfetchdump->new();
+	my $interactivity = Amanda::Interactivity::amfetchdump->new();
 	# if we have an explicit device, then the clerk doesn't get a changer --
 	# we operate the changer via Amanda::Recovery::Scan
 	if (defined $opt_device) {
@@ -256,14 +256,14 @@ sub main {
 	    return failure($chg, $finished_cb) if $chg->isa("Amanda::Changer::Error");
 	    my $scan = Amanda::Recovery::Scan->new(
 				chg => $chg,
-				interactive => $interactive);
+				interactivity => $interactivity);
 	    return failure($scan, $finished_cb) if $scan->isa("Amanda::Changer::Error");
 	    $clerk = Amanda::Recovery::Clerk->new(
 		feedback => main::Feedback->new($chg, $opt_device),
 		scan     => $scan);
 	} else {
 	    my $scan = Amanda::Recovery::Scan->new(
-				interactive => $interactive);
+				interactivity => $interactivity);
 	    return failure($scan, $finished_cb) if $scan->isa("Amanda::Changer::Error");
 
 	    $clerk = Amanda::Recovery::Clerk->new(

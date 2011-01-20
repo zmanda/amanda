@@ -51,6 +51,7 @@ use Amanda::MainLoop;
 use Amanda::Taper::Protocol;
 use Amanda::Taper::Scan;
 use Amanda::Taper::Worker;
+use Amanda::Interactivity;
 use Amanda::Logfile qw( :logtype_t log_add );
 use Amanda::Xfer qw( :constants );
 use Amanda::Util qw( quote_string );
@@ -136,7 +137,12 @@ sub start {
 	return;
     }
 
-    $self->{'taperscan'} = Amanda::Taper::Scan->new(changer => $changer,
+    my $interactivity = Amanda::Interactivity->new(
+					name => getconf($CNF_INTERACTIVITY));
+    my $scan_name = getconf($CNF_TAPERSCAN);
+    $self->{'taperscan'} = Amanda::Taper::Scan->new(algorithm => $scan_name,
+					    changer => $changer,
+					    interactivity => $interactivity,
 					    tapelist => $self->{'tapelist'});
 }
 

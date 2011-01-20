@@ -1,3 +1,58 @@
+2011-01-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add interactivity and taperscan section.
+	* common-src/conffile.h: Add interactivity and taperscan section.
+	* perl/Amanda/Config.swg: Add interactivity and taperscan.
+	* example/amanda.conf.in: Add interactivity and taperscan example.
+	* man/Makefile.am: Add new amanda-interactivity.7
+	* man/xml-source/amanda-interactivity.7.xml: Document interactivity.
+	* man/xml-source/amanda-taperscan.7.xml: Document new taperscan.
+	* man/xml-source/amanda.8.xml: Add link to amanda-interactivity man
+				       page.
+	* man/xml-source/amanda.conf.5.xml: Document interactivity and
+					    taperscan section.
+	* perl/Amanda/Changer.pm (new): Take tapelist, labelstr, autolabel and
+	  meta_autolabel arguments.
+	* perl/Amanda/Changer.pm (volume_is_labelable, make_new_meta_label, 
+	  make_new_tape_label, have_inventory: New method.
+	* perl/Amanda/Interactive.pm: Renamed
+	* perl/Amanda/Interactive/stdin.pm: Renamed
+	* perl/Amanda/Interactivity.pm: Copy of Interactive.pm:
+	* perl/Amanda/Interactivity/stdin.pm: Copy of Interactive/stdin.pm.
+	* perl/Amanda/Interactivity/email.pm: New interactivity module.
+	* perl/Amanda/Interactivity/tty.pm: New interactivity module.
+	* perl/Amanda/Interactivity/tty_email.pm: New interactivity module.
+	* perl/Amanda/Recovery/Scan.pm: s/Interactive/Interactivity/.
+	* perl/Amanda/ScanInventory.pm: Base class for scan algorithm.
+	* perl/Amanda/Tapelist.swg (add_tapelabel): Do the add in order.
+	* perl/Amanda/Taper/Controller.pm: Use interactivity and taperscan.
+	* perl/Amanda/Taper/Scan.pm: Allow plugable module.
+	* perl/Amanda/Taper/Scan/lexical.pm: new scan algorithm.
+	* perl/Amanda/Taper/Scan/oldest.pm: new scan algorithm.
+	* perl/Makefile.am: Add new files.
+	* server-src/amcheck-device.pl: Use interactivity and taperscan.
+	* server-src/amcheckdump.pl: Use interactivity and taperscan.
+	* server-src/amfetchdump.pl: Use interactivity and taperscan.
+	* server-src/amidxtaped.pl: Use interactivity and taperscan.
+	* server-src/amtape.pl: Use interactivity and taperscan.
+	* server-src/amvault.pl: Use interactivity and taperscan.
+	* installcheck/Amanda_Changer.pl: Test new methods.
+	* installcheck/Amanda_Changer_compat.pl: Test have_inventory.
+	* installcheck/Amanda_Changer_disk.pl: Test have_inventory.
+	* installcheck/Amanda_Changer_multi.pl: Test have_inventory.
+	* installcheck/Amanda_Changer_ndmp.pl: Test have_inventory.
+	* installcheck/Amanda_Changer_null.pl: Test have_inventory.
+	* installcheck/Amanda_Changer_rait.pl: Test have_inventory.
+	* installcheck/Amanda_Changer_robot.pl: Test have_inventory.
+	* installcheck/Amanda_Config.pl: Test new interactivity and taperscan
+	  section.
+	* installcheck/Amanda_Recovery_Scan.pl: s/Interactive/Interactivity/
+	* installcheck/Amanda_Tapelist.pl: test new add_tapelabel behavior.
+	* installcheck/Amanda_Taper_Scan_lexical.pl: Test new module.
+	* installcheck/Amanda_Taper_Scan_oldest.pl: Test new module.
+	* installcheck/Installcheck/Config.pm (add_interactivity,
+	  add_taperscan): New methods.
+	* installcheck/Makefile.am: Add new files.
+
 2011-01-17  Francis Galiegue <fgaliegue@gmail.com>
 	* xfer-src/element-glue.c: fix memory leak in read_and_push()
 

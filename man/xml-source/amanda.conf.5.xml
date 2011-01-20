@@ -617,6 +617,24 @@ configuring changers.</para>
   </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>interactivity</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: not set.  The interactivity module amanda use to ask the user if it can't
+find a tape to write to.  See <manref name="amanda-interactivity" vol="7" /> for a list of
+module.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>taperscan</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: traditional.  The taperscan module amanda use to find a tape
+to write to. See <manref name="amanda-taperscan" vol="7" /> for a list of
+module.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>changerdev</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
@@ -2901,6 +2919,106 @@ device. The remaining parameters are specific to the changer type selected.
 
 </refsect1>
 
+<refsect1><title>INTERACTIVITY SECTION</title>
+<para>The
+<emphasis remap='B'>amanda.conf</emphasis>
+file may define multiple types of interactivities.
+The information is entered in a <amkeyword>interactivity</amkeyword>
+section, which looks like this:</para>
+
+<programlisting>
+define interactivity <emphasis remap='I'>name</emphasis> {
+    <emphasis remap='I'>interactivity-option</emphasis> <emphasis remap='I'>interactivity-value</emphasis>
+    <literal>...</literal>
+}
+</programlisting>
+
+<para>The { must appear at the end of a line, and the } on its own line.</para>
+<para><emphasis remap='I'>name</emphasis> is the user-specified name of this
+interactivity. The remaining parameters are specific to the interactivity type
+selected.
+</para>
+
+<para>The interactivity options and values are:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: not set.
+A comment string describing this interactivity.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><amkeyword>plugin</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>No default. Must be set to the name of the interactivity module. This perl module (&lt;plugin&gt;.pm) must be in the <emphasis remap='I'>$amperldir/Amanda/Interactivity</emphasis> directory.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><amkeyword>property</amkeyword> [<amkeyword>append</amkeyword>] <amtype>string</amtype> <amtype>string</amtype>+</term>
+  <listitem>
+<para>No default. You can set property for the interactivity, each interactivity have a different set of property. Both strings are quoted; the first string contains the name of
+the property to set, and the others contains its values.
+<amkeyword>append</amkeyword> keyword append the values to the list of values for that property.
+</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>See <manref name="amanda-interactivity" vol="7" /> for more information on configuring interactivity.</para>
+
+</refsect1>
+
+<refsect1><title>TAPERSCAN SECTION</title>
+<para>The
+<emphasis remap='B'>amanda.conf</emphasis>
+file may define multiple types of taperscan.
+The information is entered in a <amkeyword>taperscan</amkeyword>
+section, which looks like this:</para>
+
+<programlisting>
+define taperscan <emphasis remap='I'>name</emphasis> {
+    <emphasis remap='I'>taperscan-option</emphasis> <emphasis remap='I'>taperscan-value</emphasis>
+    <literal>...</literal>
+}
+</programlisting>
+
+<para>The { must appear at the end of a line, and the } on its own line.</para>
+<para><emphasis remap='I'>name</emphasis> is the user-specified name of this
+taperscan. The remaining parameters are specific to the taperscan type
+selected.
+</para>
+
+<para>The taperscan options and values are:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: not set.
+A comment string describing this taperscan.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><amkeyword>plugin</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>No default. Must be set to the name of the taperscan module. This perl module (&lt;plugin&gt;.pm) must be in the <emphasis remap='I'>$amperldir/Amanda/Taper/Scan</emphasis> directory.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><amkeyword>property</amkeyword> [<amkeyword>append</amkeyword>] <amtype>string</amtype> <amtype>string</amtype>+</term>
+  <listitem>
+<para>No default. You can set property for the taperscan, each taperscan have a different set of property. Both strings are quoted; the first string contains the name of
+the property to set, and the others contains its values.
+<amkeyword>append</amkeyword> keyword append the values to the list of values for that property.
+</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>See <manref name="amanda-taperscan" vol="7" /> for more information on configuring taperscan.</para>
+
+</refsect1>
+
 <refsect1><title>Dump Splitting Configuration</title>
 
     <para>Amanda can "split" dumps into parts while writing them to storage
@@ -2961,7 +3079,9 @@ device. The remaining parameters are specific to the changer type selected.
 <manref name="amanda-auth" vol="7"/>,
 <manref name="amanda-changers" vol="7"/>,
 <manref name="amanda-devices" vol="7"/>,
+<manref name="amanda-interactivity" vol="7"/>,
 <manref name="amanda-scripts" vol="7"/>
+<manref name="amanda-taperscan" vol="7"/>
 </seealso>
 
 

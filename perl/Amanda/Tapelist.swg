@@ -128,14 +128,32 @@ sub add_tapelabel {
     $reuse = 1 if !defined $reuse;
 
     # prepend this (presumably new) volume to the beginning of the list
-    unshift @{$self->{'tles'}}, {
-	'datestamp' => $datestamp,
-	'label'     => $label,
-	'reuse'     => $reuse,
-	'barcode'   => $barcode,
-	'meta'      => $meta,
-	'comment'   => $comment,
+    my $tle = {
+        'datestamp' => $datestamp,
+        'label'     => $label,
+        'reuse'     => $reuse,
+        'barcode'   => $barcode,
+        'meta'      => $meta,
+        'comment'   => $comment,
     };
+    my $tles = $self->{'tles'};
+    if (!defined $tles->[0] ||
+	$tles->[0]->{'datestamp'} le $datestamp) {
+	unshift @{$tles}, $tle;
+    } elsif (defined $tles->[0] &&
+	$tles->[@$tles-1]->{'datestamp'} gt $datestamp) {
+	push @{$tles}, $tle;
+    } else {
+	my $added = 0;
+	for my $i (0..(@$tles-1)) {
+	    if ($tles->[$i]->{'datestamp'} le $datestamp) {
+		splice @{$tles}, $i, 0, $tle;
+		$added = 1;
+		last;
+	    }
+	}
+	push @{$tles}, $tle if !$added;
+    }
     $self->_update_positions();
 }
 

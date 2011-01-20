@@ -744,6 +744,39 @@ define script-tool sc-email {
 #your dumptype must include: script "sc-email"
 #to use the script
 
+define interactivity inter_tty {
+    plugin "tty"
+}
+define interactivity inter_email {
+    plugin "email"
+    property "mailto" "admin1" "admin2"
+    property "resend-delay" "10"
+    property "check-file" "/tmp/email_input"
+    property "check-file-delay" "10"
+}
+define interactivity inter_tty_email {
+    plugin "tty_email"
+    property "mailto" "admin1" "admin2"
+    property "resend-delay" "10"
+    property "check-file" "/tmp/email_input"
+    property "check-file-delay" "10"
+}
+interactivity "inter_tty_email"
+
+define taperscan taper_traditional {
+    comment "traditional"
+    plugin "traditional"
+}
+define taperscan taper_oldest {
+    comment "oldest"
+    plugin "oldest"
+}
+define taperscan taper_lexical {
+    comment "lexical"
+    plugin "lexical"
+}
+taperscan "taper_lexical"
+
 # You may include other amanda configuration files, so you can share
 # dumptypes, tapetypes and interface definitions among several
 # configurations.

@@ -43,6 +43,32 @@ remap='B'>taperscan</emphasis> parameter, which has a default value of
 
 </refsect1>
 
+<refsect1><title>DEFINING TAPERSCAN</title>
+
+<para>An taperscan is defined in &amconf; as follows:
+
+<programlisting>
+define taperscan $taperscan_name {
+   comment "$comment"
+   plugin "$pluginname"
+   property "$PROPERTY_NAME" "$PROPERTY_VALUE"
+   ...
+}
+</programlisting>
+and then referenced in the global section as
+<programlisting>
+  taperscan "$taperscan_name"
+</programlisting></para>
+
+<para>taperscan properties, like Amanda configuration parameters, are
+insensitive to case, and <literal>-</literal> (dash) and
+<literal>_</literal> (underscore) may be used interchangeably.</para>
+
+<para>See the individual plugin documentation for properties applicable to each
+plugin.</para>
+
+</refsect1>
+
 <refsect1><title>TAPERSCAN ALGORITHMS</title>
 
 <para>In general, these volumes will only select reusable volumes.  These are
@@ -91,6 +117,35 @@ algorithm are used and new tapes may be unexpectedly excluded.  If this causes
 an undesirable change in behavior, consider one of the other taperscan
 algorithms.</note>
 
+</refsect2>
+
+<refsect2><title>oldest</title>
+
+<para>This algorithm works with the new changer-api, it use the inventory
+returned by the changer to locate the oldest reusable volume loaded. It scan
+the unknown slot only if no usable volume is known by the inventory.</para>
+<para>An unknown slot is slot the changer doesn't know what is loaded.</para>
+<para>A usable volume is a reusable volume, a new labeled volume or an
+unlabeled volume that can be labeled according to
+<amkeyword>autolabel</amkeyword>.</para>
+<para>Use 'amtape CONF inventory' to find what is in the inventory. Use
+'amtape CONF update' to update the inventory with what's in the slot.
+Some changer always keep the inventory uptodate, some don't.</para>
+</refsect2>
+
+<refsect2><title>lexical</title>
+
+<para>This algorithm works with the new changer-api, it use the inventory
+returned by the changer to locate the next reusable volume loaded in
+lexical order after latest use volume. It scan the unknown slot only if
+no usable volume is known by the inventory.</para>
+<para>An unknown slot is a slot the changer doesn't know what is loaded.</para>
+<para>A usable volume is a reusable volume, a new labeled volume or an
+unlabeled volume that can be labeled according to
+<amkeyword>autolabel</amkeyword>.</para>
+<para>Use 'amtape CONF inventory' to find what is in the inventory. Use
+'amtape CONF update' to update the inventory with what's in the slot.
+Some changer always keep the inventory uptodate, some don't.</para>
 </refsect2>
 
 </refsect1>

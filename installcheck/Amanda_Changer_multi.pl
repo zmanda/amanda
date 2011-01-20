@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 18;
+use Test::More tests => 19;
 use File::Path;
 use strict;
 use warnings;
@@ -71,6 +71,7 @@ reset_taperoot(5);
 
 my $chg = Amanda::Changer->new("chg-multi:file:$taperoot/slot{0,1,2,3,4}");
 die($chg) if $chg->isa("Amanda::Changer::Error");
+is($chg->have_inventory(), '1', "changer have inventory");
 {
     my @slots = ();
     my @reservations = ();

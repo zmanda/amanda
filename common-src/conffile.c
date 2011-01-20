@@ -90,7 +90,7 @@ typedef enum {
     CONF_EXECUTE_ON,           CONF_EXECUTE_WHERE,	CONF_SEND_AMREPORT_ON,
     CONF_DEVICE,               CONF_ORDER,		CONF_SINGLE_EXECUTION,
     CONF_DATA_PATH,            CONF_AMANDA,		CONF_DIRECTTCP,
-    CONF_TAPER_PARALLEL_WRITE,
+    CONF_TAPER_PARALLEL_WRITE, CONF_INTERACTIVITY,	CONF_TAPERSCAN,
 
     /* execute on */
     CONF_PRE_AMCHECK,          CONF_POST_AMCHECK,
@@ -359,6 +359,22 @@ struct changer_config_s {
     val_t value[CHANGER_CONFIG_CHANGER_CONFIG];
 };
 
+struct interactivity_s {
+    struct interactivity_s *next;
+    seen_t seen;
+    char *name;
+
+    val_t value[INTERACTIVITY_INTERACTIVITY];
+};
+
+struct taperscan_s {
+    struct taperscan_s *next;
+    seen_t seen;
+    char *name;
+
+    val_t value[TAPERSCAN_TAPERSCAN];
+};
+
 /* The current parser table */
 static conf_var_t *parsetable = NULL;
 
@@ -477,6 +493,18 @@ static void init_changer_config_defaults(void);
 static void save_changer_config(void);
 static void copy_changer_config(void);
 
+static interactivity_t ivcur;
+static void get_interactivity(void);
+static void init_interactivity_defaults(void);
+static void save_interactivity(void);
+static void copy_interactivity(void);
+
+static taperscan_t tscur;
+static void get_taperscan(void);
+static void init_taperscan_defaults(void);
+static void save_taperscan(void);
+static void copy_taperscan(void);
+
 /* read_functions -- these fit into the read_function slot in a parser
  * table entry, and are responsible for calling getconf_token as necessary
  * to consume their arguments, and setting their second argument with the
@@ -505,6 +533,8 @@ static void read_rate(conf_var_t *, val_t *);
 static void read_exinclude(conf_var_t *, val_t *);
 static void read_intrange(conf_var_t *, val_t *);
 static void read_dapplication(conf_var_t *, val_t *);
+static void read_dinteractivity(conf_var_t *, val_t *);
+static void read_dtaperscan(conf_var_t *, val_t *);
 static void read_dpp_script(conf_var_t *, val_t *);
 static void read_property(conf_var_t *, val_t *);
 static void read_execute_on(conf_var_t *, val_t *);
@@ -515,6 +545,18 @@ static void read_autolabel(conf_var_t *, val_t *);
 static void read_part_cache_type(conf_var_t *, val_t *);
 static void read_recovery_limit(conf_var_t *, val_t *);
 
+static application_t *read_application(char *name, FILE *from, char *fname,
+				       int *linenum);
+static pp_script_t *read_pp_script(char *name, FILE *from, char *fname,
+				   int *linenum);
+static device_config_t *read_device_config(char *name, FILE *from, char *fname,
+					   int *linenum);
+static changer_config_t *read_changer_config(char *name, FILE *from,
+					     char *fname, int *linenum);
+static interactivity_t *read_interactivity(char *name, FILE *from,
+					   char *fname, int *linenum);
+static taperscan_t *read_taperscan(char *name, FILE *from, char *fname,
+				   int *linenum);
 /* Functions to get various types of values.  These are called by
  * read_functions to take care of any variations in the way that these
  * values can be written: integers can have units, boolean values can be
@@ -599,6 +641,8 @@ static application_t *application_list = NULL;
 static pp_script_t *pp_script_list = NULL;
 static device_config_t *device_config_list = NULL;
 static changer_config_t *changer_config_list = NULL;
+static interactivity_t *interactivity_list = NULL;
+static taperscan_t *taperscan_list = NULL;
 
 /* storage for derived values */
 static long int unit_divisor = 1;
@@ -925,6 +969,7 @@ keytab_t server_keytab[] = {
     { "INDEXDIR", CONF_INDEXDIR },
     { "INFOFILE", CONF_INFOFILE },
     { "INPARALLEL", CONF_INPARALLEL },
+    { "INTERACTIVITY", CONF_INTERACTIVITY },
     { "INTERFACE", CONF_INTERFACE },
     { "KENCRYPT", CONF_KENCRYPT },
     { "KRB5KEYTAB", CONF_KRB5KEYTAB },
@@ -1026,6 +1071,7 @@ keytab_t server_keytab[] = {
     { "TAPEDEV", CONF_TAPEDEV },
     { "TAPELIST", CONF_TAPELIST },
     { "TAPERALGO", CONF_TAPERALGO },
+    { "TAPERSCAN", CONF_TAPERSCAN },
     { "TAPER_PARALLEL_WRITE", CONF_TAPER_PARALLEL_WRITE },
     { "FLUSH_THRESHOLD_DUMPED", CONF_FLUSH_THRESHOLD_DUMPED },
     { "FLUSH_THRESHOLD_SCHEDULED", CONF_FLUSH_THRESHOLD_SCHEDULED },
@@ -1250,6 +1296,8 @@ conf_var_t server_var [] = {
    { CONF_RESERVED_TCP_PORT    , CONFTYPE_INTRANGE , read_intrange    , CNF_RESERVED_TCP_PORT    , validate_reserved_port_range },
    { CONF_UNRESERVED_TCP_PORT  , CONFTYPE_INTRANGE , read_intrange    , CNF_UNRESERVED_TCP_PORT  , validate_unreserved_port_range },
    { CONF_RECOVERY_LIMIT       , CONFTYPE_RECOVERY_LIMIT, read_recovery_limit, CNF_RECOVERY_LIMIT, NULL },
+   { CONF_INTERACTIVITY        , CONFTYPE_STR      , read_dinteractivity, CNF_INTERACTIVITY      , NULL },
+   { CONF_TAPERSCAN            , CONFTYPE_STR      , read_dtaperscan  , CNF_TAPERSCAN            , NULL },
    { CONF_UNKNOWN              , CONFTYPE_INT      , NULL             , CNF_CNF                  , NULL }
 };
 
@@ -1366,6 +1414,20 @@ conf_var_t changer_config_var [] = {
    { CONF_PROPERTY        , CONFTYPE_PROPLIST , read_property , CHANGER_CONFIG_PROPERTY       , NULL },
    { CONF_DEVICE_PROPERTY , CONFTYPE_PROPLIST , read_property , CHANGER_CONFIG_DEVICE_PROPERTY, NULL },
    { CONF_UNKNOWN         , CONFTYPE_INT      , NULL          , CHANGER_CONFIG_CHANGER_CONFIG , NULL }
+};
+
+conf_var_t interactivity_var [] = {
+   { CONF_COMMENT         , CONFTYPE_STR      , read_str      , INTERACTIVITY_COMMENT        , NULL },
+   { CONF_PLUGIN          , CONFTYPE_STR      , read_str      , INTERACTIVITY_PLUGIN         , NULL },
+   { CONF_PROPERTY        , CONFTYPE_PROPLIST , read_property , INTERACTIVITY_PROPERTY       , NULL },
+   { CONF_UNKNOWN         , CONFTYPE_INT      , NULL          , INTERACTIVITY_INTERACTIVITY  , NULL }
+};
+
+conf_var_t taperscan_var [] = {
+   { CONF_COMMENT         , CONFTYPE_STR      , read_str      , TAPERSCAN_COMMENT        , NULL },
+   { CONF_PLUGIN          , CONFTYPE_STR      , read_str      , TAPERSCAN_PLUGIN         , NULL },
+   { CONF_PROPERTY        , CONFTYPE_PROPLIST , read_property , TAPERSCAN_PROPERTY       , NULL },
+   { CONF_UNKNOWN         , CONFTYPE_INT      , NULL          , TAPERSCAN_TAPERSCAN      , NULL }
 };
 
 /*
@@ -1817,7 +1879,9 @@ read_confline(
 	    else if(tok == CONF_DEVICE) get_device_config();
 	    else if(tok == CONF_CHANGER) get_changer_config();
 	    else if(tok == CONF_HOLDING) get_holdingdisk(1);
-	    else conf_parserror(_("DUMPTYPE, INTERFACE, TAPETYPE, HOLDINGDISK, APPLICATION-TOOL, SCRIPT-TOOL, DEVICE, or CHANGER expected"));
+	    else if(tok == CONF_INTERACTIVITY) get_interactivity();
+	    else if(tok == CONF_TAPERSCAN) get_taperscan();
+	    else conf_parserror(_("DUMPTYPE, INTERFACE, TAPETYPE, HOLDINGDISK, APPLICATION, SCRIPT, DEVICE, CHANGER, INTERACTIVITY or TAPERSCAN expected"));
 	}
 	break;
 
@@ -2550,7 +2614,7 @@ copy_interface(void)
 }
 
 
-application_t *
+static application_t *
 read_application(
     char *name,
     FILE *from,
@@ -2676,7 +2740,259 @@ copy_application(void)
     }
 }
 
-pp_script_t *
+static interactivity_t *
+read_interactivity(
+    char *name,
+    FILE *from,
+    char *fname,
+    int *linenum)
+{
+    int save_overwrites;
+    FILE *saved_conf = NULL;
+    char *saved_fname = NULL;
+
+    if (from) {
+	saved_conf = current_file;
+	current_file = from;
+    }
+
+    if (fname) {
+	saved_fname = current_filename;
+	current_filename = get_seen_filename(fname);
+    }
+
+    if (linenum)
+	current_line_num = *linenum;
+
+    save_overwrites = allow_overwrites;
+    allow_overwrites = 1;
+
+    init_interactivity_defaults();
+    if (name) {
+	ivcur.name = name;
+    } else {
+	get_conftoken(CONF_IDENT);
+	ivcur.name = stralloc(tokenval.v.s);
+    }
+    ivcur.seen.filename = current_filename;
+    ivcur.seen.linenum = current_line_num;
+
+    read_block(interactivity_var, ivcur.value,
+	       _("interactivity parameter expected"),
+	       (name == NULL), *copy_interactivity,
+	       "INTERACTIVITY", ivcur.name);
+    if(!name)
+	get_conftoken(CONF_NL);
+
+    save_interactivity();
+
+    allow_overwrites = save_overwrites;
+
+    if (linenum)
+	*linenum = current_line_num;
+
+    if (fname)
+	current_filename = saved_fname;
+
+    if (from)
+	current_file = saved_conf;
+
+    return lookup_interactivity(ivcur.name);
+}
+
+static void
+get_interactivity(
+    void)
+{
+    read_interactivity(NULL, NULL, NULL, NULL);
+}
+
+static void
+init_interactivity_defaults(
+    void)
+{
+    ivcur.name = NULL;
+    conf_init_str(&ivcur.value[INTERACTIVITY_COMMENT] , "");
+    conf_init_str(&ivcur.value[INTERACTIVITY_PLUGIN]  , "");
+    conf_init_proplist(&ivcur.value[INTERACTIVITY_PROPERTY]);
+}
+
+static void
+save_interactivity(
+    void)
+{
+    interactivity_t *iv, *iv1;
+
+    iv = lookup_interactivity(ivcur.name);
+
+    if (iv != (interactivity_t *)0) {
+	conf_parserror(_("interactivity %s already defined at %s:%d"),
+		       iv->name, iv->seen.filename, iv->seen.linenum);
+	return;
+    }
+
+    iv = alloc(sizeof(interactivity_t));
+    *iv = ivcur;
+    iv->next = NULL;
+    /* add at end of list */
+    if (!interactivity_list)
+	interactivity_list = iv;
+    else {
+	iv1 = interactivity_list;
+	while (iv1->next != NULL) {
+	    iv1 = iv1->next;
+	}
+	iv1->next = iv;
+    }
+}
+
+static void
+copy_interactivity(void)
+{
+    interactivity_t *iv;
+    int i;
+
+    iv = lookup_interactivity(tokenval.v.s);
+
+    if (iv == NULL) {
+	conf_parserror(_("interactivity parameter expected"));
+	return;
+    }
+
+    for (i=0; i < INTERACTIVITY_INTERACTIVITY; i++) {
+	if(iv->value[i].seen.linenum) {
+	    merge_val_t(&ivcur.value[i], &iv->value[i]);
+	}
+    }
+}
+
+static taperscan_t *
+read_taperscan(
+    char *name,
+    FILE *from,
+    char *fname,
+    int *linenum)
+{
+    int save_overwrites;
+    FILE *saved_conf = NULL;
+    char *saved_fname = NULL;
+
+    if (from) {
+	saved_conf = current_file;
+	current_file = from;
+    }
+
+    if (fname) {
+	saved_fname = current_filename;
+	current_filename = get_seen_filename(fname);
+    }
+
+    if (linenum)
+	current_line_num = *linenum;
+
+    save_overwrites = allow_overwrites;
+    allow_overwrites = 1;
+
+    init_taperscan_defaults();
+    if (name) {
+	tscur.name = name;
+    } else {
+	get_conftoken(CONF_IDENT);
+	tscur.name = stralloc(tokenval.v.s);
+    }
+    tscur.seen.filename = current_filename;
+    tscur.seen.linenum = current_line_num;
+
+    read_block(taperscan_var, tscur.value,
+	       _("taperscan parameter expected"),
+	       (name == NULL), *copy_taperscan,
+	       "TAPERSCAN", tscur.name);
+    if(!name)
+	get_conftoken(CONF_NL);
+
+    save_taperscan();
+
+    allow_overwrites = save_overwrites;
+
+    if (linenum)
+	*linenum = current_line_num;
+
+    if (fname)
+	current_filename = saved_fname;
+
+    if (from)
+	current_file = saved_conf;
+
+    return lookup_taperscan(tscur.name);
+}
+
+static void
+get_taperscan(
+    void)
+{
+    read_taperscan(NULL, NULL, NULL, NULL);
+}
+
+static void
+init_taperscan_defaults(
+    void)
+{
+    tscur.name = NULL;
+    conf_init_str(&tscur.value[TAPERSCAN_COMMENT] , "");
+    conf_init_str(&tscur.value[TAPERSCAN_PLUGIN]  , "");
+    conf_init_proplist(&tscur.value[TAPERSCAN_PROPERTY]);
+}
+
+static void
+save_taperscan(
+    void)
+{
+    taperscan_t *ts, *ts1;
+
+    ts = lookup_taperscan(tscur.name);
+
+    if (ts != (taperscan_t *)0) {
+	conf_parserror(_("taperscan %s already defined at %s:%d"),
+		       ts->name, ts->seen.filename, ts->seen.linenum);
+	return;
+    }
+
+    ts = alloc(sizeof(taperscan_t));
+    *ts = tscur;
+    ts->next = NULL;
+    /* add at end of list */
+    if (!taperscan_list)
+	taperscan_list = ts;
+    else {
+	ts1 = taperscan_list;
+	while (ts1->next != NULL) {
+	    ts1 = ts1->next;
+	}
+	ts1->next = ts;
+    }
+}
+
+static void
+copy_taperscan(void)
+{
+    taperscan_t *ts;
+    int i;
+
+    ts = lookup_taperscan(tokenval.v.s);
+
+    if (ts == NULL) {
+	conf_parserror(_("taperscan parameter expected"));
+	return;
+    }
+
+    for (i=0; i < TAPERSCAN_TAPERSCAN; i++) {
+	if(ts->value[i].seen.linenum) {
+	    merge_val_t(&tscur.value[i], &ts->value[i]);
+	}
+    }
+}
+
+static pp_script_t *
 read_pp_script(
     char *name,
     FILE *from,
@@ -2806,7 +3122,7 @@ copy_pp_script(void)
     }
 }
 
-device_config_t *
+static device_config_t *
 read_device_config(
     char *name,
     FILE *from,
@@ -2932,7 +3248,7 @@ copy_device_config(void)
     }
 }
 
-changer_config_t *
+static changer_config_t *
 read_changer_config(
     char *name,
     FILE *from,
@@ -3633,6 +3949,64 @@ read_dapplication(
     }
     amfree(val->v.s);
     val->v.s = stralloc(application->name);
+    ckseen(&val->seen);
+}
+
+static void
+read_dinteractivity(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t      *val)
+{
+    interactivity_t *interactivity;
+
+    get_conftoken(CONF_ANY);
+    if (tok == CONF_LBRACE) {
+	current_line_num -= 1;
+	interactivity = read_interactivity(vstralloc("custom(iv)", ".",
+						     anonymous_value(),NULL),
+				       NULL, NULL, NULL);
+	current_line_num -= 1;
+    } else if (tok == CONF_STRING) {
+	interactivity = lookup_interactivity(tokenval.v.s);
+	if (interactivity == NULL) {
+	    conf_parserror(_("Unknown interactivity named: %s"), tokenval.v.s);
+	    return;
+	}
+    } else {
+	conf_parserror(_("interactivity name expected: %d %d"), tok, CONF_STRING);
+	return;
+    }
+    amfree(val->v.s);
+    val->v.s = stralloc(interactivity->name);
+    ckseen(&val->seen);
+}
+
+static void
+read_dtaperscan(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t      *val)
+{
+    taperscan_t *taperscan;
+
+    get_conftoken(CONF_ANY);
+    if (tok == CONF_LBRACE) {
+	current_line_num -= 1;
+	taperscan = read_taperscan(vstralloc("custom(ts)", ".",
+				   anonymous_value(),NULL),
+				   NULL, NULL, NULL);
+	current_line_num -= 1;
+    } else if (tok == CONF_STRING) {
+	taperscan = lookup_taperscan(tokenval.v.s);
+	if (taperscan == NULL) {
+	    conf_parserror(_("Unknown taperscan named: %s"), tokenval.v.s);
+	    return;
+	}
+    } else {
+	conf_parserror(_("taperscan name expected: %d %d"), tok, CONF_STRING);
+	return;
+    }
+    amfree(val->v.s);
+    val->v.s = stralloc(taperscan->name);
     ckseen(&val->seen);
 }
 
@@ -4769,6 +5143,8 @@ config_uninit(void)
     pp_script_t   *pp, *ppnext;
     device_config_t *dc, *dcnext;
     changer_config_t *cc, *ccnext;
+    interactivity_t  *iv, *ivnext;
+    taperscan_t      *ts, *tsnext;
     int               i;
 
     if (!config_initialized) return;
@@ -4851,8 +5227,27 @@ config_uninit(void)
 	ccnext = cc->next;
 	amfree(cc);
     }
-
     changer_config_list = NULL;
+
+    for(iv=interactivity_list; iv != NULL; iv = ivnext) {
+	amfree(iv->name);
+	for(i=0; i<INTERACTIVITY_INTERACTIVITY; i++) {
+	   free_val_t(&iv->value[i]);
+	}
+	ivnext = iv->next;
+	amfree(iv);
+    }
+    interactivity_list = NULL;
+
+    for(ts=taperscan_list; ts != NULL; ts = tsnext) {
+	amfree(ts->name);
+	for(i=0; i<TAPERSCAN_TAPERSCAN; i++) {
+	   free_val_t(&ts->value[i]);
+	}
+	tsnext = ts->next;
+	amfree(ts);
+    }
+    taperscan_list = NULL;
 
     for(i=0; i<CNF_CNF; i++)
 	free_val_t(&conf_data[i]);
@@ -4984,6 +5379,8 @@ init_defaults(
     conf_init_autolabel(&conf_data[CNF_AUTOLABEL]);
     conf_init_str(&conf_data[CNF_META_AUTOLABEL], NULL);
     conf_init_recovery_limit(&conf_data[CNF_RECOVERY_LIMIT]);
+    conf_init_str(&conf_data[CNF_INTERACTIVITY], NULL);
+    conf_init_str(&conf_data[CNF_TAPERSCAN], NULL);
 
     /* reset internal variables */
     config_clear_errors();
@@ -5588,6 +5985,8 @@ getconf_list(
     pp_script_t   *pp;
     device_config_t *dc;
     changer_config_t *cc;
+    interactivity_t  *iv;
+    taperscan_t      *ts;
     GSList *rv = NULL;
 
     if (strcasecmp(listname,"tapetype") == 0) {
@@ -5626,6 +6025,14 @@ getconf_list(
     } else if (strcasecmp(listname,"changer") == 0) {
 	for(cc = changer_config_list; cc != NULL; cc=cc->next) {
 	    rv = g_slist_append(rv, cc->name);
+	}
+    } else if (strcasecmp(listname,"interactivity") == 0) {
+	for(iv = interactivity_list; iv != NULL; iv=iv->next) {
+	    rv = g_slist_append(rv, iv->name);
+	}
+    } else if (strcasecmp(listname,"taperscan") == 0) {
+	for(ts = taperscan_list; ts != NULL; ts=ts->next) {
+	    rv = g_slist_append(rv, ts->name);
 	}
     }
     return rv;
@@ -5812,6 +6219,66 @@ application_name(
 {
     assert(ap != NULL);
     return ap->name;
+}
+
+interactivity_t *
+lookup_interactivity(
+    char *str)
+{
+    interactivity_t *p;
+
+    for(p = interactivity_list; p != NULL; p = p->next) {
+	if(strcasecmp(p->name, str) == 0) return p;
+    }
+    return NULL;
+}
+
+val_t *
+interactivity_getconf(
+    interactivity_t *iv,
+    interactivity_key key)
+{
+    assert(iv != NULL);
+    assert(key < INTERACTIVITY_INTERACTIVITY);
+    return &iv->value[key];
+}
+
+char *
+interactivity_name(
+    interactivity_t *iv)
+{
+    assert(iv != NULL);
+    return iv->name;
+}
+
+taperscan_t *
+lookup_taperscan(
+    char *str)
+{
+    taperscan_t *p;
+
+    for(p = taperscan_list; p != NULL; p = p->next) {
+	if(strcasecmp(p->name, str) == 0) return p;
+    }
+    return NULL;
+}
+
+val_t *
+taperscan_getconf(
+    taperscan_t *ts,
+    taperscan_key key)
+{
+    assert(ts != NULL);
+    assert(key < TAPERSCAN_TAPERSCAN);
+    return &ts->value[key];
+}
+
+char *
+taperscan_name(
+    taperscan_t *ts)
+{
+    assert(ts != NULL);
+    return ts->name;
 }
 
 pp_script_t *
@@ -6750,6 +7217,8 @@ dump_configuration(void)
     pp_script_t *ps;
     device_config_t *dc;
     changer_config_t *cc;
+    interactivity_t  *iv;
+    taperscan_t      *ts;
     int i;
     conf_var_t *np;
     keytab_t *kt;
@@ -6944,6 +7413,44 @@ dump_configuration(void)
 		error(_("changer bad token"));
 
 	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &cc->value[i]);
+	}
+	g_printf("%s}\n",prefix);
+    }
+
+    for(iv = interactivity_list; iv != NULL; iv = iv->next) {
+	prefix = "";
+	g_printf("\n%sDEFINE INTERACTIVITY %s {\n", prefix, iv->name);
+	for(i=0; i < INTERACTIVITY_INTERACTIVITY; i++) {
+	    for(np=interactivity_var; np->token != CONF_UNKNOWN; np++)
+		if(np->parm == i) break;
+	    if(np->token == CONF_UNKNOWN)
+		error(_("interactivity bad value"));
+
+	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
+		if(kt->token == np->token) break;
+	    if(kt->token == CONF_UNKNOWN)
+		error(_("interactivity bad token"));
+
+	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &iv->value[i]);
+	}
+	g_printf("%s}\n",prefix);
+    }
+
+    for(ts = taperscan_list; ts != NULL; ts = ts->next) {
+	prefix = "";
+	g_printf("\n%sDEFINE TAPERSCAN %s {\n", prefix, ts->name);
+	for(i=0; i < TAPERSCAN_TAPERSCAN; i++) {
+	    for(np=taperscan_var; np->token != CONF_UNKNOWN; np++)
+		if(np->parm == i) break;
+	    if(np->token == CONF_UNKNOWN)
+		error(_("taperscan bad value"));
+
+	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
+		if(kt->token == np->token) break;
+	    if(kt->token == CONF_UNKNOWN)
+		error(_("taperscan bad token"));
+
+	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &ts->value[i]);
 	}
 	g_printf("%s}\n",prefix);
     }

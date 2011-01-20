@@ -22,10 +22,10 @@ use strict;
 use warnings;
 
 ##
-# Interactive class
+# Interactivity class
 
-package main::Interactive;
-use base 'Amanda::Interactive';
+package main::Interactivity;
+use base 'Amanda::Interactivity';
 use Amanda::Util qw( weaken_ref );
 use Amanda::MainLoop;
 use Amanda::Feature;
@@ -349,11 +349,11 @@ sub make_plan {
     }
     $self->{'chg'} = $chg;
 
-    my $inter = main::Interactive->new(clientservice => $self);
+    my $interactivity = main::Interactivity->new(clientservice => $self);
 
     my $scan = Amanda::Recovery::Scan->new(
 			chg => $chg,
-			interactive => $inter);
+			interactivity => $interactivity);
     $self->{'scan'} = $scan;
 
     # XXX temporary

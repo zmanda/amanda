@@ -31,6 +31,7 @@ SERVER_MAN_PAGES =  \
     amanda-devices.7 \
     amanda-compatibility.7 \
     amanda-changers.7 \
+    amanda-interactivity.7 \
     amanda-taperscan.7 \
     amaddclient.8    \
     amadmin.8 \

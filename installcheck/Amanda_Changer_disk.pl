@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 18;
+use Test::More tests => 19;
 use File::Path;
 use strict;
 use warnings;
@@ -84,6 +84,7 @@ chg_err_like($chg,
 
 $chg = Amanda::Changer->new("chg-disk:$taperoot");
 die($chg) if $chg->isa("Amanda::Changer::Error");
+is($chg->have_inventory(), '1', "changer have inventory");
 
 sub test_reserved {
     my ($finished_cb, @slots) = @_;

@@ -41,11 +41,11 @@ Installcheck::log_test_output();
 Amanda::Debug::disable_die_override();
 
 # --------
-# Interactive package
+# Interactivity package
 
-package Amanda::Interactive::Installcheck;
+package Amanda::Interactivity::Installcheck;
 use vars qw( @ISA );
-@ISA = qw( Amanda::Interactive );
+@ISA = qw( Amanda::Interactivity );
 
 sub new {
     my $class = shift;
@@ -447,9 +447,9 @@ sub test_scan_ask_poll {
 	finalize => sub { $scan->quit() };
 
     step start => sub {
-	my $interactive = Amanda::Interactive::Installcheck->new();
+	my $interactivity = Amanda::Interactivity::Installcheck->new();
 	$scan = Amanda::Recovery::Scan->new(chg =>         $chg,
-					    interactive => $interactive);
+					    interactivity => $interactivity);
 	$scan->{'scan_conf'}->{'poll_delay'} = 10; # 10 ms
 
 	$steps->{'find_05'}->();
@@ -464,7 +464,7 @@ sub test_scan_ask_poll {
 	(my $err, $res05) = @_;
 
 	ok(!$err, "found TESTCONF05 on changer multi");
-	ok($res05, "TESTCONF05 give a reservation after interactive");
+	ok($res05, "TESTCONF05 give a reservation after interactivity");
 	is($res05->{'chg'}->{'chg_name'}, $chg_name,
 	   "found TESTCONF05 on correct changer: $chg_name");
 

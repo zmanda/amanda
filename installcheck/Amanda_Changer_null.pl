@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 4;
+use Test::More tests => 5;
 use File::Path;
 use strict;
 use warnings;
@@ -48,6 +48,7 @@ if ($cfg_result != $CFGERR_OK) {
 }
 
 my $chg = Amanda::Changer->new("chg-null:");
+is($chg->have_inventory(), '', "changer have inventory");
 {
     my ($get_info, $check_info, $do_load, $got_res);
 

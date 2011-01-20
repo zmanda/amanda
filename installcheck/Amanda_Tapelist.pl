@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 24;
+use Test::More tests => 26;
 use strict;
 use warnings;
 
@@ -25,6 +25,7 @@ use Installcheck::Config;
 use Amanda::Tapelist;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use POSIX ":sys_wait_h";
+use Data::Dumper;
 
 # put the debug messages somewhere
 Amanda::Debug::dbopen("installcheck");
@@ -173,6 +174,21 @@ SKIP: {
 
     is_deeply($tl->lookup_tapedate("20071109010002"), undef,
 	".. lookup_tapedate no longer finds it");
+
+    # insert in the middle of the list.
+    $tl->add_tapelabel("20071109010204", "TESTCONF009", "nine", 1);
+
+    is_deeply($tl->lookup_tapepos(4),
+	{ 'datestamp' => '20071109010204', 'label' => 'TESTCONF009',
+	  'reuse' => '1', 'position' => 4,
+	  'barcode' => undef, 'meta' => undef, 'comment' => 'nine' },
+	".. tape positions are adjusted correctly");
+
+    is_deeply($tl->lookup_tapelabel('TESTCONF009'),
+	{ 'datestamp' => '20071109010204', 'label' => 'TESTCONF009',
+	  'reuse' => '1', 'position' => 4,
+	  'barcode' => undef, 'meta' => undef, 'comment' => 'nine' },
+	".. tape positions are adjusted correctly");
 
     ## set tapecycle to 0 to perform the next couple tests
     config_uninit();

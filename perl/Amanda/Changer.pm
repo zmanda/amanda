@@ -72,12 +72,20 @@ continue.
 
 A new object is created with the C<new> function as follows:
 
-  my $chg = Amanda::Changer->new($changer_name);
+  my $chg = Amanda::Changer->new($changer_name,
+				 tapelist       => $tapelist,
+				 labelstr       => $labelstr,
+				 autolabel      => $autolabel,
+				 meta_autolabel => $meta_autolabel);
 
 to create a named changer (a name provided by the user, either specifying a
 changer directly or specifying a changer definition), or
 
-  my $chg = Amanda::Changer->new();
+  my $chg = Amanda::Changer->new(undef,
+				 tapelist       => $tapelist,
+				 labelstr       => $labelstr,
+				 autolabel      => $autolabel,
+				 meta_autolabel => $meta_autolabel);
 
 to run the default changer.  This function handles the many ways a user can
 configure a changer.
@@ -91,6 +99,13 @@ creating a new changer is
     die("Error creating changer $changer_name: $chg");
   }
 
+C<tapelist> must be an Amanda::Tapelist object. It is required if you want to
+use $chg->volume_is_labelable(), $chg->make_new_tape_label(),
+$chg->make_new_meta_label(), $res->make_new_tape_label() or
+$res->make_new_meta_label().
+C<labelstr> must be like getconf($CNF_LABELSTR), that value is used if C<labelstr> is not set.
+C<autolabel> must be like getconf($CNF_AUTOLABEL), that value is used if C<autolabel> is not set.
+C<meta_autolabel> must be like getconf($CNF_META_AUTOLABEL), that value is used if C<meta_autolabel> is not set.
 =head2 MEMBER VARIABLES
 
 Note that these variables are not set until after the subclass constructor is
@@ -365,6 +380,33 @@ ordered list of information about the slots in the changer. The order never
 change, but some entries can be added or removed.
 
 Each slot is represented by a hash with the following keys:
+
+=head3 make_new_tape_label
+
+  $chg->make_new_tape_label(barcode => $barcode,
+			    meta    => $meta);
+
+To devise a new name for a volume using the C<barcode> and C<meta> arguments.
+This will return C<undef> if no label could be created.
+
+=head3 make_new_meta_label
+
+  $chg->make_new_meta_label();
+
+To devise a new meta name for a meta volume.
+This will return C<undef> if no label could be created.
+
+=head3 have_inventory
+
+  $chg->have_inventory() 
+
+Return True if the changer have the inventory method.
+
+=head3 volume_is_labelable
+
+  $chg->volume_is_labelable($device_status, $f_type, $label);
+
+Return 1 if the volume is labelable acording to the autolabel setting.
 
 =over 4
 
@@ -758,7 +800,7 @@ sub new {
 sub DESTROY {
     my $self = shift;
 
-    die("Changer '$self->{'chg_name'}' not quit") if defined $self->{'chg_name'};
+    debug("Changer '$self->{'chg_name'}' not quit") if defined $self->{'chg_name'};
 }
 
 # do nothing in quit
@@ -887,7 +929,8 @@ sub _new_from_uri { # (note: this sub is patched by the installcheck)
 	die $@;
     }
 
-    my $rv = $pkgname->new(Amanda::Changer::Config->new($cc), $uri);
+    my $rv = eval {$pkgname->new(Amanda::Changer::Config->new($cc), $uri);};
+    die "$pkgname->new return undef" if $@;
     die "$pkgname->new did not return an Amanda::Changer object or an Amanda::Changer::Error"
 	unless ($rv->isa("Amanda::Changer") or $rv->isa("Amanda::Changer::Error"));
 
@@ -936,6 +979,12 @@ sub inventory { _stubop("inventory", "inventory_cb", @_); }
 sub move { _stubop("move", "finished_cb", @_); }
 sub set_meta_label { _stubop("set_meta_label", "finished_cb", @_); }
 sub get_meta_label { _stubop("get_meta_label", "finished_cb", @_); }
+
+sub have_inventory {
+    my $self = shift;
+
+    return $self->can("inventory") ne \&Amanda::Changer::inventory;
+}
 
 # info calls out to info_setup and info_key; see POD above
 sub info {
@@ -1196,6 +1245,161 @@ sub validate_params {
     }
 }
 
+sub make_new_tape_label {
+    my $self = shift;
+    my %params = @_;
+
+    my $tl = $self->{'tapelist'};
+    die ("make_new_tape_label: no tapelist") if !$tl;
+    return undef if !defined $self->{'autolabel'}->{'template'};
+    return undef if !defined $self->{'labelstr'};
+    my $template = $self->{'autolabel'}->{'template'};
+    my $labelstr = $self->{'labelstr'};
+
+    $template =~ s/\$\$/SUBSTITUTE_DOLLAR/g;
+    $template =~ s/\$b/SUBSTITUTE_BARCODE/g;
+    $template =~ s/\$m/SUBSTITUTE_META/g;
+    $template =~ s/\$o/SUBSTITUTE_ORG/g;
+    $template =~ s/\$c/SUBSTITUTE_CONFIG/g;
+
+    my $org = getconf($CNF_ORG);
+    my $config = Amanda::Config::get_config_name();
+    my $barcode = $params{'barcode'};
+    $barcode = '' if !defined $barcode;
+    my $meta = $params{'meta'};
+    $meta = $self->make_new_meta_label(%params) if !defined $meta;
+    $meta = '' if !defined $meta;
+
+    $template =~ s/SUBSTITUTE_DOLLAR/\$/g;
+    $template =~ s/SUBSTITUTE_ORG/$org/g;
+    $template =~ s/SUBSTITUTE_CONFIG/$config/g;
+    $template =~ s/SUBSTITUTE_META/$meta/g;
+    # Do not susbtitute the barcode now
+
+    (my $npercents =
+	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
+    my $nlabels = 10 ** $npercents;
+
+    my $label;
+    if ($npercents == 0) {
+	if ($template =~ /SUBSTITUTE_BARCODE/ && defined $barcode) {
+            $label = $template;
+            $label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
+            if ($tl->lookup_tapelabel($label)) {
+		return (undef, "Label '$label' already exists");
+            }
+	} elsif ($template =~ /SUBSTITUTE_BARCODE/ && !defined $barcode) {
+	    return (undef, "Can't generate new label because volume have no barcode");
+	} else {
+	    return (undef, "autolabel require at least one '%'");
+	}
+    } else {
+	# make up a sprintf pattern
+	(my $sprintf_pat =
+	    $template) =~ s/(%+)/"%0" . length($1) . "d"/e;
+
+	my %existing_labels;
+	for my $tle (@{$tl->{'tles'}}) {
+	    my $tle_label = $tle->{'label'};
+	    my $tle_barcode = $tle->{'barcode'};
+	    if (defined $tle_barcode) {
+		$tle_label =~ s/$tle_barcode/SUBSTITUTE_BARCODE/g;
+	    }
+	    $existing_labels{$tle_label} = 1;
+	}
+
+	my ($i);
+	for ($i = 1; $i < $nlabels; $i++) {
+	    $label = sprintf($sprintf_pat, $i);
+	    last unless (exists $existing_labels{$label});
+	}
+	# susbtitute the barcode
+
+	$label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
+
+	# bail out if we didn't find an unused label
+	return (undef, "Can't label unlabeled volume: All label used")
+		if ($i >= $nlabels);
+    }
+
+    # verify $label matches $labelstr
+    if ($label !~ /$labelstr/) {
+        return (undef, "Newly-generated label '$label' does not match labelstr '$labelstr'");
+    }
+
+    return $label;
+}
+
+sub make_new_meta_label {
+    my $self = shift;
+    my %params = @_;
+
+    my $tl = $self->{'tapelist'};
+    die ("make_new_meta_label: no tapelist") if !$tl;
+    return undef if !defined $self->{'meta_autolabel'};
+    my $template = $self->{'meta_autolabel'};
+    return if !defined $template;
+
+    $template =~ s/\$\$/SUBSTITUTE_DOLLAR/g;
+    $template =~ s/\$o/SUBSTITUTE_ORG/g;
+    $template =~ s/\$c/SUBSTITUTE_CONFIG/g;
+
+    my $org = getconf($CNF_ORG);
+    my $config = Amanda::Config::get_config_name();
+
+    $template =~ s/SUBSTITUTE_DOLLAR/\$/g;
+    $template =~ s/SUBSTITUTE_ORG/$org/g;
+    $template =~ s/SUBSTITUTE_CONFIG/$config/g;
+
+    (my $npercents =
+	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
+    my $nlabels = 10 ** $npercents;
+
+    # make up a sprintf pattern
+    (my $sprintf_pat = $template) =~ s/(%+)/"%0" . length($1) . "d"/e;
+
+    my %existing_meta_labels =
+	map { $_->{'meta'} => 1 } @{$tl->{'tles'}};
+
+    my ($i, $meta);
+    for ($i = 1; $i < $nlabels; $i++) {
+	$meta = sprintf($sprintf_pat, $i);
+	last unless (exists $existing_meta_labels{$meta});
+    }
+
+    # bail out if we didn't find an unused label
+    return (undef, "Can't label unlabeled meta volume: All meta label used")
+		if ($i >= $nlabels);
+
+    return $meta;
+}
+
+sub volume_is_labelable {
+    my $self = shift;
+    my $dev_status  = shift;
+    my $f_type = shift;
+    my $label = shift;
+    my $autolabel = $self->{'autolabel'};
+
+    if ($dev_status & $DEVICE_STATUS_VOLUME_UNLABELED and
+	$f_type == $Amanda::Header::F_EMPTY) {
+	return 0 if (!$autolabel->{'empty'});
+    } elsif ($dev_status & $DEVICE_STATUS_VOLUME_UNLABELED and
+	     $f_type == $Amanda::Header::F_WEIRD) {
+	return 0 if (!$autolabel->{'non_amanda'});
+    } elsif ($dev_status & $DEVICE_STATUS_VOLUME_ERROR) {
+	return 0 if (!$autolabel->{'volume_error'});
+    } elsif ($dev_status != $DEVICE_STATUS_SUCCESS) {
+	return 0;
+    } elsif ($dev_status & $DEVICE_STATUS_SUCCESS and
+	     $f_type == $Amanda::Header::F_TAPESTART and
+	     $label !~ /$self->{'labelstr'}/) {
+	return 0 if (!$autolabel->{'other_config'});
+    }
+
+    return 1;
+}
+
 package Amanda::Changer::Error;
 use Amanda::Debug qw( :logging );
 use Carp qw( cluck );
@@ -1353,84 +1557,9 @@ sub make_new_tape_label {
     my $self = shift;
     my %params = @_;
 
-    my $tl = $self->{'chg'}->{'tapelist'};
-    die ("make_new_meta_label: no tapelist") if !$tl;
-    my $template = $self->{'chg'}->{'autolabel'}->{'template'};
-    my $labelstr = $self->{'chg'}->{'labelstr'};
-
-    $template =~ s/\$\$/SUBSTITUTE_DOLLAR/g;
-    $template =~ s/\$b/SUBSTITUTE_BARCODE/g;
-    $template =~ s/\$m/SUBSTITUTE_META/g;
-    $template =~ s/\$o/SUBSTITUTE_ORG/g;
-    $template =~ s/\$c/SUBSTITUTE_CONFIG/g;
-
-    my $org = getconf($CNF_ORG);
-    my $config = Amanda::Config::get_config_name();
-    my $barcode = $params{'barcode'};
-    $barcode = $self->{'barcode'} if !defined $barcode;
-    $barcode = '' if !defined $barcode;
-    my $meta = $params{'meta'};
-    $meta = $self->{'meta'} if !defined $meta;
-    $meta = '' if !defined $meta;
-
-    $template =~ s/SUBSTITUTE_DOLLAR/\$/g;
-    $template =~ s/SUBSTITUTE_ORG/$org/g;
-    $template =~ s/SUBSTITUTE_CONFIG/$config/g;
-    $template =~ s/SUBSTITUTE_META/$meta/g;
-    # Do not susbtitute the barcode now
-
-    (my $npercents =
-	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
-    my $nlabels = 10 ** $npercents;
-
-    my $label;
-    if ($npercents == 0) {
-	if ($template =~ /SUBSTITUTE_BARCODE/ && defined $barcode) {
-            $label = $template;
-            $label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
-            if ($tl->lookup_tapelabel($label)) {
-		return (undef, "Label '$label' already exists");
-            }
-	} elsif ($template =~ /SUBSTITUTE_BARCODE/ && !defined $barcode) {
-	    return (undef, "Can't generate new label because volume have no barcode");
-	} else {
-	    return (undef, "autolabel require at least one '%'");
-	}
-    } else {
-	# make up a sprintf pattern
-	(my $sprintf_pat =
-	    $template) =~ s/(%+)/"%0" . length($1) . "d"/e;
-
-	my %existing_labels;
-	for my $tle (@{$tl->{'tles'}}) {
-	    my $tle_label = $tle->{'label'};
-	    my $tle_barcode = $tle->{'barcode'};
-	    if (defined $tle_barcode) {
-		$tle_label =~ s/$tle_barcode/SUBSTITUTE_BARCODE/g;
-	    }
-	    $existing_labels{$tle_label} = 1;
-	}
-
-	my ($i);
-	for ($i = 1; $i < $nlabels; $i++) {
-	    $label = sprintf($sprintf_pat, $i);
-	    last unless (exists $existing_labels{$label});
-	}
-	# susbtitute the barcode
-
-	$label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
-
-	# bail out if we didn't find an unused label
-	return (undef, "Can't label unlabeled volume: All label used")
-		if ($i >= $nlabels);
-    }
-
-    # verify $label matches $labelstr
-    if ($label !~ /$labelstr/) {
-        return (undef, "Newly-generated label '$label' does not match labelstr '$labelstr'");
-    }
-
-    return $label;
+    $params{'barcode'} = $self->{'barcode'} if !defined $params{'barcode'};
+    $params{'meta'} = $self->{'meta'} if !defined $params{'meta'};
+    return $self->{'chg'}->make_new_tape_label(%params);
 }
 
 
@@ -1438,43 +1567,7 @@ sub make_new_meta_label {
     my $self = shift;
     my %params = @_;
 
-    my $tl = $self->{'chg'}->{'tapelist'};
-    die ("make_new_meta_label: no tapelist") if !$tl;
-    my $template = $self->{'chg'}->{'meta_autolabel'};
-    return if !defined $template;
-
-    $template =~ s/\$\$/SUBSTITUTE_DOLLAR/g;
-    $template =~ s/\$o/SUBSTITUTE_ORG/g;
-    $template =~ s/\$c/SUBSTITUTE_CONFIG/g;
-
-    my $org = getconf($CNF_ORG);
-    my $config = Amanda::Config::get_config_name();
-
-    $template =~ s/SUBSTITUTE_DOLLAR/\$/g;
-    $template =~ s/SUBSTITUTE_ORG/$org/g;
-    $template =~ s/SUBSTITUTE_CONFIG/$config/g;
-
-    (my $npercents =
-	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
-    my $nlabels = 10 ** $npercents;
-
-    # make up a sprintf pattern
-    (my $sprintf_pat = $template) =~ s/(%+)/"%0" . length($1) . "d"/e;
-
-    my %existing_meta_labels =
-	map { $_->{'meta'} => 1 } @{$tl->{'tles'}};
-
-    my ($i, $meta);
-    for ($i = 1; $i < $nlabels; $i++) {
-	$meta = sprintf($sprintf_pat, $i);
-	last unless (exists $existing_meta_labels{$meta});
-    }
-
-    # bail out if we didn't find an unused label
-    return (undef, "Can't label unlabeled meta volume: All meta label used")
-		if ($i >= $nlabels);
-
-    return $meta;
+    return $self->{'chg'}->make_new_meta_label(%params);
 }
 
 package Amanda::Changer::Config;

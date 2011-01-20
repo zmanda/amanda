@@ -29,6 +29,7 @@ use Amanda::Device qw( :constants );
 use Amanda::MainLoop;
 use Amanda::Changer;
 use Amanda::Taper::Scan;
+use Amanda::Interactivity;
 use Getopt::Long;
 
 Amanda::Util::setup_application("amcheck-device", "server", $CONTEXT_CMDLINE);
@@ -145,7 +146,12 @@ sub do_check {
     my $tl = Amanda::Tapelist->new($tlf);
     my $chg = Amanda::Changer->new(undef, tapelist => $tl);
     return failure($chg, $finished_cb) if ($chg->isa("Amanda::Changer::Error"));
-    my $taperscan = Amanda::Taper::Scan->new(changer => $chg,
+    my $interactivity = Amanda::Interactivity->new(
+					name => getconf($CNF_INTERACTIVITY));
+    my $scan_name = getconf($CNF_TAPERSCAN);
+    my $taperscan = Amanda::Taper::Scan->new(algorithm => $scan_name,
+					     changer => $chg,
+					     interactivity => $interactivity,
 					     tapelist => $tl);
 
     my $steps = define_steps

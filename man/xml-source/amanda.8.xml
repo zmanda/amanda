@@ -205,6 +205,9 @@ configuration files for quick reference.</para>
 <manref name="amanda-devices" vol="7"/>,
 </listitem>
 <listitem>
+<manref name="amanda-interactivity" vol="7"/>,
+</listitem>
+<listitem>
 <manref name="amanda-match" vol="7"/>,
 </listitem>
 <listitem>

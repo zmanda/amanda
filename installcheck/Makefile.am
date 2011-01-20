@@ -49,6 +49,8 @@ server_tests = \
 	Amanda_Report \
 	Amanda_Tapelist \
 	Amanda_Taper_Scan \
+	Amanda_Taper_Scan_lexical \
+	Amanda_Taper_Scan_oldest \
 	Amanda_Taper_Scan_traditional \
 	Amanda_Taper_Scribe \
 	bigint \

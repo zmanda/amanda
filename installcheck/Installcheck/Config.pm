@@ -203,6 +203,8 @@ sub remove_param {
 =item C<add_script($name, $values_arrayref)>
 =item C<add_device($name, $values_arrayref)>
 =item C<add_changer($name, $values_arrayref)>
+=item C<add_interactivity($name, $values_arrayref)>
+=item C<add_taperscan($name, $values_arrayref)>
 
 Add the given subsection to the configuration file, including all values in the
 arrayref.  The values should be specified as alternating key/value pairs.
@@ -276,6 +278,18 @@ sub add_changer {
     my $self = shift;
     my ($name, $values) = @_;
     $self->_add_subsec("changers", $name, 1, $values);
+}
+
+sub add_interactivity {
+    my $self = shift;
+    my ($name, $values) = @_;
+    $self->_add_subsec("interactivities", $name, 1, $values);
+}
+
+sub add_taperscan {
+    my $self = shift;
+    my ($name, $values) = @_;
+    $self->_add_subsec("taperscans", $name, 1, $values);
 }
 
 =item C<add_text($text)>
@@ -392,6 +406,8 @@ sub _write_amanda_conf {
     $self->_write_amanda_conf_subsection($amanda_conf, "holdingdisk", $self->{"holdingdisks"});
     $self->_write_amanda_conf_subsection($amanda_conf, "device", $self->{"devices"});
     $self->_write_amanda_conf_subsection($amanda_conf, "changer", $self->{"changers"});
+    $self->_write_amanda_conf_subsection($amanda_conf, "interactivity", $self->{"interactivities"});
+    $self->_write_amanda_conf_subsection($amanda_conf, "taperscan", $self->{"taperscans"});
     print $amanda_conf "\n", $self->{'text'}, "\n";
 
     close($amanda_conf);
