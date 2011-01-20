@@ -1793,10 +1793,13 @@ match_disklist(
 			dp->todo = 1;
 			match_a_disk = 1;
 			prev_match = 0;
-		    } else { /* dp->todo == 0 */
+		    } else if (dp->todo == 0) {
 			match_a_disk = 1;
 			prev_match = 0;
 			dp_skip = dp;
+		    } else { /* dp->todo == 1 */
+			match_a_disk = 1;
+			prev_match = 0;
 		    }
 		}
 	    }
