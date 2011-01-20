@@ -113,6 +113,7 @@ sub run_scan {
     my $result_cb = make_cb(result_cb => sub {
 	($error, $res, $label, $mode) = @_;
 
+	$error = "$error" if defined $error;
 	if ($res) {
 	    $res->release(finished_cb => sub {
 		Amanda::MainLoop::quit();

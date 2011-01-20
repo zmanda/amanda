@@ -1,4 +1,8 @@
 2011-01-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Taper_Scan_lexical.pl,
+	  installcheck/Amanda_Taper_Scan_oldest.pl: Fix for perl-5.6.
+
+2011-01-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Add interactivity and taperscan section.
 	* common-src/conffile.h: Add interactivity and taperscan section.
 	* perl/Amanda/Config.swg: Add interactivity and taperscan.
