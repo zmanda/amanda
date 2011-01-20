@@ -35,22 +35,31 @@
 #include "protocol.h"
 #include "server_util.h"
 #include "amfeatures.h"
+#include "event.h"
 
+static int copy_stream = 0;
 static time_t conf_ctimeout;
 static am_feature_t *our_features = NULL;
 static char *our_feature_string = NULL;
 static int remote_errors = 0;
+static event_handle_t *event_in;
+static security_stream_t *fd;
 
 /* local functions */
 
 void usage(void);
-void client_protocol(char *hostname, char *auth, char *service, FILE *input_file);
+void client_protocol(char *hostname, char *auth, char *service,
+		     FILE *input_file);
+void client_first_stream(security_handle_t *sech, int port_num);
 int main(int argc, char **argv);
+static void read_in(void *cookie);
+void aaa(void);
+static void read_server(void *cookie, void *buf, ssize_t size);
 
 void
 usage(void)
 {
-    error(_("Usage: amservice [-o configoption]* [-f input_file] host auth service"));
+    error(_("Usage: amservice [-o configoption]* [-f input_file [-s]] host auth service"));
     /*NOTREACHED*/
 }
 
@@ -67,6 +76,8 @@ main(
     extern int optind;
     extern char *optarg;
     FILE *input_file;
+    int use_connect = 0;
+    int got_input_file = 0;
 
     /*
      * Configure program for internationalization:
@@ -100,11 +111,12 @@ main(
 
     cfg_ovr = new_config_overrides(argc/2);
     input_file = stdin;
-    while((opt = getopt(argc, argv, "o:f:")) != EOF) {
+    while((opt = getopt(argc, argv, "o:f:s")) != EOF) {
 	switch(opt) {
 	case 'o':	add_config_override_opt(cfg_ovr, optarg);
 			break;
-	case 'f':	if (*optarg == '/') {
+	case 'f':	got_input_file = 1;
+			if (*optarg == '/') {
 			    input_file = fopen(optarg, "r");
 			} else {
 			    char *name = vstralloc(get_original_cwd(), "/",
@@ -116,7 +128,13 @@ main(
 			    g_critical("Cannot open output file '%s': %s",
 				optarg, strerror(errno));
 			break;
+	case 's':	use_connect = 1;
+			break;
 	}
+    }
+
+    if (use_connect && !got_input_file) {
+	g_critical("The -s option require -f");
     }
 
     argc -= optind, argv += optind;
@@ -142,6 +160,7 @@ main(
 
     /* start client side checks */
 
+    copy_stream = use_connect && got_input_file;
     client_protocol(hostname, auth, service, input_file);
 
     amfree(our_feature_string);
@@ -159,9 +178,9 @@ void start_host(char *hostname, char *auth, char *req);
 
 void
 start_host(
-    char *hostname,
-    char *auth,
-    char *req)
+    char        *hostname,
+    char        *auth,
+    char        *req)
 {
     const security_driver_t *secdrv;
     secdrv = security_getdriver(auth);
@@ -176,10 +195,10 @@ start_host(
 
 void
 client_protocol(
-    char *hostname,
-    char *auth,
-    char *service,
-    FILE *input_file)
+    char        *hostname,
+    char        *auth,
+    char        *service,
+    FILE        *input_file)
 {
     char *req, *req1;
 
@@ -204,13 +223,15 @@ client_protocol(
 
 static void
 handle_result(
-    G_GNUC_UNUSED void *datap,
-    pkt_t *		pkt,
-    security_handle_t *	sech)
+    void              *datap G_GNUC_UNUSED,
+    pkt_t             *pkt,
+    security_handle_t *sech)
 {
     char *line;
     char *s;
     int ch;
+    int port_num = 0;
+    int has_error = 0;
 
     if (pkt == NULL) {
 	g_fprintf(stdout,
@@ -228,7 +249,98 @@ handle_result(
 	    s[-2] = '\0';
 	}
 
-	fprintf(stdout, "%s\n", line);
+	if (copy_stream) {
+	    g_debug("REP: %s\n", line);
+	} else {
+	    fprintf(stdout, "%s\n", line);
+	}
+	if (strncmp(line, "CONNECT ", 8) == 0) {
+	    char *port = strchr(line, ' ');
+	    if (port) {
+		port = strchr(port+1, ' ');
+		if (port) {
+		    port_num = atoi(port+1);
+		}
+	    }
+	} else if (strncmp(line, "ERROR ", 6) == 0) {
+	    if (copy_stream) {
+		fprintf(stdout, "%s\n", line);
+	    }
+	    has_error++;
+	}
     }
-    fprintf(stdout, "\n");
+
+    if (has_error)
+	return;
+
+    if (copy_stream) {
+	client_first_stream(sech, port_num);
+    } else {
+	fprintf(stdout, "\n");
+    }
+
+}
+
+void
+client_first_stream(
+    security_handle_t *sech,
+    int port_num)
+{
+
+    if (port_num == 0) {
+	g_critical("The service did not ask to open stream, do not use '-s' with that service");
+    }
+
+    fd = security_stream_client(sech, port_num);
+    if (!fd) {
+	g_critical("Could not connect to stream: %s\n", security_stream_geterror(fd));
+    }
+    if (security_stream_auth(fd) < 0) {
+	g_critical("could not authenticate stream: %s\n", security_stream_geterror(fd));
+    }
+
+    printf("Connected\n");
+    /* read from stdin */
+    event_in = event_register((event_id_t)0, EV_READFD, read_in, NULL);
+
+    /* read from connected stream */
+    security_stream_read(fd, read_server, NULL);
+}
+
+
+static void
+read_in(
+    void *cookie G_GNUC_UNUSED)
+{
+    size_t nread;
+    char   buf[1024];
+
+    event_release(event_in);
+    nread = read(0, buf, 1024);
+    if (nread == 0) {
+	security_stream_close(fd);
+	return;
+    }
+
+    buf[nread] = '\0';
+    security_stream_write(fd, buf, nread);
+    event_in = event_register((event_id_t)0, EV_READFD, read_in, NULL);
+}
+
+static void
+read_server(
+    void *      cookie G_GNUC_UNUSED,
+    void *      buf,
+    ssize_t     size)
+{
+    switch (size) {
+    case -1:
+    case  0: security_stream_close(fd);
+	     event_release(event_in);
+	     break;
+    default:
+	write(1, buf, size);
+	security_stream_read(fd, read_server, NULL);
+	break;
+    }
 }

@@ -1,4 +1,8 @@
 2011-01-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amservice.c: Add -s option.
+	* man/xml-source/amservice.8.xml: Document -s option.
+
+2011-01-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Taper_Scan_lexical.pl,
 	  installcheck/Amanda_Taper_Scan_oldest.pl: Fix for perl-5.6.
 

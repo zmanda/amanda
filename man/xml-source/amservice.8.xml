@@ -29,7 +29,7 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amservice</command>    
-    <arg choice='opt'><arg choice='plain'>-f</arg><arg choice='plain'><replaceable>input_file</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-f</arg><arg choice='plain'><replaceable>input_file</replaceable></arg><arg choice='opt'>-s</arg></arg>
     &configoverride.synopsis;
     <arg choice='plain'><replaceable>hostname</replaceable></arg>
     <arg choice='plain'><replaceable>auth</replaceable></arg>
@@ -74,6 +74,13 @@ The client must be configured with this auth.</para>
   <term><option>-f input_file</option></term>
   <listitem>
 <para>Use the file input_file instead of stdin to read the REQ packet from.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>-s</option></term>
+  <listitem>
+<para>Redirect the first connected stream to stdin/stdout. The -f argument is required for the REQ packet, the REP packet is not printed on stdout.</para>
   </listitem>
   </varlistentry>
 
