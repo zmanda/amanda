@@ -339,7 +339,10 @@ read_server(
 	     event_release(event_in);
 	     break;
     default:
-	write(1, buf, size);
+	full_write(1, buf, size);
+	if (errno > 0) {
+	    g_debug("failed to write to stdout: %s", strerror(errno));
+	}
 	security_stream_read(fd, read_server, NULL);
 	break;
     }
