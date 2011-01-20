@@ -85,7 +85,8 @@ The client must be configured with this auth.</para>
 <refsect1><title>EXAMPLE</title>
 
 <para>The noop service is easy to execute because it does not require a REQ packet:</para>
-<programlisting>amservice hostname bsdtcp noop &lt; /dev/null</programlisting>
+<programlisting>amservice hostname bsdtcp noop &lt; /dev/null
+</programlisting>
 <para>The example executes the noop service on the client using bsdtcp auth.
 This is useful for debugging connection problems.
 It print an OPTIONS line upon success.</para>

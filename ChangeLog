@@ -1,4 +1,8 @@
 2011-01-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amservice.8.xml: typo, </programlisting> must be at
+  the beginning of a line.
+
+2011-01-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/diskfile.c: Do not report error if a dle is listed twice
 	  in argument list.
 	* installcheck/amadmin.pl: Test it.
