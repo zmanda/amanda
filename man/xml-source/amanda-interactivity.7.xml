@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amanda-interactivity.7'>
+
+<refmeta>
+<refentrytitle>amanda-interactivity</refentrytitle>
+<manvolnum>7</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.7;
+</refmeta>
+<refnamediv>
+<refname>amanda-interactivity</refname>
+<refpurpose>Configuring Interactivity with Amanda Amanda</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jlm;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Amanda uses interactivity to ask user to load specific volumes when
+they are needed.  This manual page describes the interactivity modules
+included with Amanda.</para>
+
+<para>This is a <emphasis>user-level</emphasis> description of the API, and
+does not address details that are only of concern to developers.  For that
+purpose, consult the Amanda source code, perldoc 'Amanda::Interactivity'
+and http://wiki.zmanda.com.</para>
+
+</refsect1>
+
+<refsect1><title>DEFINING INTERACTIVITY</title>
+
+<para>An interactivity is defined in &amconf; as follows:
+
+<programlisting>
+define interactivity $interactivity_name {
+   comment "$comment"
+   plugin "$pluginname"
+   property "$PROPERTY_NAME" "$PROPERTY_VALUE"
+   ...
+}
+</programlisting>
+and then referenced in the global section as
+<programlisting>
+  interactivity "$interactivity_name"
+</programlisting></para>
+
+<para>Interactivity properties, like Amanda configuration parameters, are
+insensitive to case, and <literal>-</literal> (dash) and
+<literal>_</literal> (underscore) may be used interchangeably.</para>
+
+<para>See the individual plugin documentation for properties applicable to each
+plugin.</para>
+
+</refsect1>
+
+<refsect1><title>INTERACTIVITY MODULES</title>
+
+<para>Amanda provides three interactivity modules, <emphasis>tty</emphasis>,
+<emphasis>email</emphasis> and <emphasis>tty_email</emphasis>.</para>
+
+<refsect2><title>TTY</title>
+
+<para>The <emphasis>tty</emphasis> interactivity module use the tty to
+communicate with the user, it works only if a tty is available, which is
+the case if amanda is executed from a command line.</para>
+
+<para>When promted for a volume, the user must put the requested volume
+in the changer and type &lt;enter&gt;. User can type the name of another
+changer if the volume is available in that changer. Typing 'abort' will
+abort the operation.</para>
+
+</refsect2>
+
+<refsect2><title>EMAIL</title>
+
+<para>The <emphasis>email</emphasis> interactivity module use the email to send request to the user and read reply from the filesystem.</para>
+
+<para>The <emphasis>email</emphasis> module have many properties:</para>
+
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>check-file</term><listitem>
+If set, amanda check this file for user input.  User can touch the
+file to tell amanda that the volume was inserted in the changer, user can
+write the name of a changer in the file to tell amanda to use a different
+changer or the word 'abort' to abort the scan.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>check-file-delay</term><listitem>
+Default: 10. This integer property indicates the time in seconds amanda wait before each check of the check-file.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>mailto</term><listitem>
+The email addresses where to send the email.
+The default is the globally configured <amkeyword>mailto</amkeyword>.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>resend-delay</term><listitem>
+Default 0.: The time in seconds amanda wait before resending the email.
+</listitem></varlistentry>
+</variablelist>
+
+</refsect2>
+
+<refsect2><title>TTY_EMAIL</title>
+
+<para>The <emphasis>tty_email</emphasis> interactivity module use the <emphasis>tty</emphasis> module if a tty is available and use the <emphasis>email</emphasis> module if a tty is not available. Looks at the description of these two modules.</para>
+
+</refsect2>
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+
+<para><programlisting>
+  define interactivity "by-tty-or-email" {
+    comment "by-tty-or-email"
+    plugin "tty_email"
+    property "mailto" "admin1" "admin2" "me@home"
+    property "resend-delay" "1800"               #every 30 minutes
+    property "check-file" "/tmp/email_input"
+    property "check-file-delay" "10"             #every 10 seconds
+  }
+</programlisting></para>
+
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+</seealso>
+
+</refentry>

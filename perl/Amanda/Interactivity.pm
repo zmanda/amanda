@@ -16,20 +16,23 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
-package Amanda::Interactive;
+package Amanda::Interactivity;
 
 =head1 NAME
 
-Amanda::Interactive -- Parent class for user interactivity modules
+Amanda::Interactivity -- Parent class for user interactivity modules
 
 =head1 SYNOPSIS
 
-    use Amanda::Interactive;
+    use Amanda::Interactivity;
 
-    my $inter = Amanda::Interactive->new(name => 'stdin',
-					 inter_conf => $inter_conf);
+    my $inter = Amanda::Interactivity->new(name => 'stdin');
     $inter->user_request(
-	message => "Insert Volume labelled 'MY_LABEL-001'",
+	message => "Insert Volume labelled 'MY_LABEL-001' in changer DLT",
+	label => 'MY_LABEL-001',
+	new_volume => 0,
+	chg_name => 'DLT',
+	err => "Not found in the library",
 	request_cb => sub {
 	    my ($err, $reply) = @_;
 	    if ($err) {
@@ -43,7 +46,7 @@ Amanda::Interactive -- Parent class for user interactivity modules
 
 =head1 SUMMARY
 
-This package provides a way for Amanda programs to communicate interactively
+This package provides a way for Amanda programs to communicate interactivityly
 with the user.  The program can send a message to the user and await a textual
 response.  The package operates asynchronously (see L<Amanda::MainLoop>), so
 the program may continue with other activities while waiting for an answer from
@@ -56,24 +59,31 @@ selected by the user.
 
 A new object is create with the C<new> function as follows:
 
-    my $inter = Amanda::Interactive->new(
-	name => $interactive_name,
-	inter_conf => $inter_conf);
+    my $inter = Amanda::Interactivity->new(
+	name => $interactivity_name);
 
-Where C<$interactive_name> is the name of the desired interactivity module
-(e.g., C<'stdin'>).
+Where C<$interactivity_name> is the name of the desired interactivity defined
+in the config file.
 
-=head2 INTERACTIVE OBJECTS
+=head2 INTERACTIVITY OBJECTS
 
 =head3 user_request
 
   $inter->user_request(message     => $message,
                        label       => $label,
+                       new_volume  => 0|1,
                        err         => $err,
+                       chg_name    => $chg_name,
                        request_cb  => $request_cb);
 
-This method return immediately.  It sends C<message> to the user and waits for a
-reply.  The C<label> and C<err> parameters .. well, what do they do? (TODO)
+This method return immediately.  It sends a message to the user and waits for a
+reply.
+C<err> is the reason why the volume is needed.
+C<message> describe the volume needed.
+C<label>, C<new_volume> and C<chg_name> describe the volume needed
+
+A module can print only C<message> or build something prettier with the values
+of the other parameters.
 
 The C<request_cb> callback take one or two arguments.  In the even of an
 error, it is called with an C<Amanda::Changer::Error> object as first argument.
@@ -90,15 +100,29 @@ C<request_cb> with C<(undef, undef)>.
 
 =cut
 
+use Amanda::Config qw( :getconf );
+
 sub new {
-    shift eq 'Amanda::Interactive'
+    shift eq 'Amanda::Interactivity'
 	or return;
     my %params = @_;
-    my $name = $params{'name'};
+    my $interactivity_name = $params{'name'};
 
-    die("No name for Amanda::Interactive->(new)") if !defined $name;
+    return undef if !defined $interactivity_name or $interactivity_name eq '';
 
-    my $pkgname = "Amanda::Interactive::$name";
+    my $interactivity = Amanda::Config::lookup_interactivity($interactivity_name);
+    my $plugin;
+    my $property;
+    if ($interactivity) {
+	$plugin = Amanda::Config::interactivity_getconf($interactivity, $INTERACTIVITY_PLUGIN);
+	$property = Amanda::Config::interactivity_getconf($interactivity, $INTERACTIVITY_PROPERTY);
+    } else {
+	$plugin = $interactivity_name;
+    }
+
+    die("No name for Amanda::Interactivity->(new)") if !defined $plugin;
+
+    my $pkgname = "Amanda::Interactivity::$plugin";
     my $filename = $pkgname;
     $filename =~ s|::|/|g;
     $filename .= '.pm';
@@ -111,9 +135,14 @@ sub new {
 	}
     }
 
-    my $inter = $pkgname->new(%params);
+    my $self = eval {$pkgname->new($property);};
+    if ($@ || !defined $self) {
+	print STDERR "Can't instantiate $pkgname\n";
+	debug("Can't instantiate $pkgname");
+	die("Can't instantiate $pkgname");
+    }
 
-    return $inter;
+    return $self;
 }
 
 1;
