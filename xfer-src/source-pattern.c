@@ -110,7 +110,7 @@ pull_buffer_impl(
     char *rval;
 
     /* indicate EOF on an cancel */
-    if (elt->cancelled || (self->limited_length && self->length == 0)) {
+    if (elt->cancelled) {
 	*size = 0;
 	return NULL;
     }

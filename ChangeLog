@@ -1,3 +1,6 @@
+2011-01-20  Francis Galiegue <fgaliegue@gmail.com>
+	* xfer-src/source-pattern.c: remove duplicate test
+
 2011-01-20  Dustin J. Mitchell <dustin@mozilla.com>
 	* man/xml-source/amanda-interactivity.7.xml
 	  man/xml-source/amanda-taperscan.7.xml
