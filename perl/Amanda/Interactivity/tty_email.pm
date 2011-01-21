@@ -1,4 +1,4 @@
-# Copyright (c) 2010 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2010, 2011 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -38,8 +38,7 @@ Amanda::Interactivity::tty_email -- Interactivity class to read user request fro
 
 =head1 SYNOPSIS
 
-Amanda::Interactivity class to write user request on /dev/tty and read reply
-from /dev/tty.
+Amanda::Interactivity class combining tty (when it is available) and email (otherwise).
 
 =cut
 

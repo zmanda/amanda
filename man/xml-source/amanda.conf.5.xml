@@ -619,18 +619,18 @@ configuring changers.</para>
   <varlistentry>
   <term><amkeyword>interactivity</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>Default: not set.  The interactivity module amanda use to ask the user if it can't
-find a tape to write to.  See <manref name="amanda-interactivity" vol="7" /> for a list of
-module.</para>
+<para>Default: not set.  The interactivity module Amanda should use to interact with
+the user.  See <manref name="amanda-interactivity" vol="7" /> for a list of
+modules.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
   <term><amkeyword>taperscan</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>Default: traditional.  The taperscan module amanda use to find a tape
+<para>Default: traditional.  The taperscan module amanda should use to find a tape
 to write to. See <manref name="amanda-taperscan" vol="7" /> for a list of
-module.</para>
+modules.</para>
   </listitem>
   </varlistentry>
 
@@ -2922,7 +2922,8 @@ device. The remaining parameters are specific to the changer type selected.
 <refsect1><title>INTERACTIVITY SECTION</title>
 <para>The
 <emphasis remap='B'>amanda.conf</emphasis>
-file may define multiple types of interactivities.
+file may define multiple interactivyt methods, although only one will be used - that specified
+by the <amkeyword>interactivity</amkeyword> parameter.
 The information is entered in a <amkeyword>interactivity</amkeyword>
 section, which looks like this:</para>
 
@@ -2951,28 +2952,29 @@ A comment string describing this interactivity.</para>
   <varlistentry>
   <term><amkeyword>plugin</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>No default. Must be set to the name of the interactivity module. This perl module (&lt;plugin&gt;.pm) must be in the <emphasis remap='I'>$amperldir/Amanda/Interactivity</emphasis> directory.</para>
+<para>No default. Must be set to the name of the interactivity module, as described in <manref name="amanda-interactivity" vol="7" />.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
   <term><amkeyword>property</amkeyword> [<amkeyword>append</amkeyword>] <amtype>string</amtype> <amtype>string</amtype>+</term>
   <listitem>
-<para>No default. You can set property for the interactivity, each interactivity have a different set of property. Both strings are quoted; the first string contains the name of
-the property to set, and the others contains its values.
-<amkeyword>append</amkeyword> keyword append the values to the list of values for that property.
+<para>No default. You can set arbitrary properties for the interactivity.  Each interactivity module has a different set of properties. The first string contains the name of
+the property to set, and the others contains its values.  All strings should be quoted.
+The <amkeyword>append</amkeyword> keyword appends the given values to an existing list of values for that property.
 </para>
   </listitem>
   </varlistentry>
 </variablelist>
 
-<para>See <manref name="amanda-interactivity" vol="7" /> for more information on configuring interactivity.</para>
+<para>See <manref name="amanda-interactivity" vol="7" /> for more information on configuring interactivity methods.</para>
 
 </refsect1>
 
 <refsect1><title>TAPERSCAN SECTION</title>
 <para>The
 <emphasis remap='B'>amanda.conf</emphasis>
-file may define multiple types of taperscan.
+file may define multiple taperscan methods, although only one will be used - that specified
+by the <amkeyword>taperscan</amkeyword> parameter.
 The information is entered in a <amkeyword>taperscan</amkeyword>
 section, which looks like this:</para>
 
@@ -3001,16 +3003,13 @@ A comment string describing this taperscan.</para>
   <varlistentry>
   <term><amkeyword>plugin</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>No default. Must be set to the name of the taperscan module. This perl module (&lt;plugin&gt;.pm) must be in the <emphasis remap='I'>$amperldir/Amanda/Taper/Scan</emphasis> directory.</para>
+<para>No default. Must be set to the name of the taperscan module.  See <man name="amanda-taperscan" vol="7" /> for a list of defined taperscan modules.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
   <term><amkeyword>property</amkeyword> [<amkeyword>append</amkeyword>] <amtype>string</amtype> <amtype>string</amtype>+</term>
   <listitem>
-<para>No default. You can set property for the taperscan, each taperscan have a different set of property. Both strings are quoted; the first string contains the name of
-the property to set, and the others contains its values.
-<amkeyword>append</amkeyword> keyword append the values to the list of values for that property.
-</para>
+<para>No default.  Operates just like properties for interactivity methods, above.</para>
   </listitem>
   </varlistentry>
 </variablelist>
