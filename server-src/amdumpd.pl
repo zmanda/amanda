@@ -37,6 +37,7 @@ use Amanda::Util qw( :constants );
 use Amanda::Feature;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Cmdline;
+use Amanda::Paths;
 use Amanda::Disklist;
 use Amanda::Logfile qw( match_disk match_host );
 
@@ -172,7 +173,7 @@ sub cmd_dump {
     }
 
     $self->sendctlline("DUMPING");
-    my @command = ("amdump", "--no-taper", "--from-client", $self->{'config'}, $self->{'host'}->{'hostname'});
+    my @command = ("$sbindir/amdump", "--no-taper", "--from-client", $self->{'config'}, $self->{'host'}->{'hostname'});
     if (defined $self->{'disk'}) {
 	@command = (@command, @{$self->{'disk'}});
     }

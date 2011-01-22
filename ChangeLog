@@ -1,4 +1,7 @@
 2011-01-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amdumpd.pl: Execute "$sbindir/amdump"
+
+2011-01-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Config.pl: Check recovery-limit, dump-limit,
 	  amdump-server, index-server, tape-server.
 	* installcheck/Makefile.am: Add amdump_client.
