@@ -199,6 +199,7 @@ main(
     find_result_t *holding_files;
     disklist_t holding_disklist = { NULL, NULL };
     int no_taper = FALSE;
+    int from_client = FALSE;
 
     /*
      * Configure program for internationalization:
@@ -262,6 +263,14 @@ main(
     if (argc > 2) {
 	if (strcmp(argv[2], "--no-taper") == 0) {
 	    no_taper = TRUE;
+	    argv++;
+	    argc--;
+	}
+    }
+
+    if (argc > 2) {
+	if (strcmp(argv[2], "--from-client") == 0) {
+	    from_client = TRUE;
 	    argv++;
 	    argc--;
 	}

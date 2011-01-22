@@ -191,6 +191,7 @@ main(
     int    planner_setuid;
     int exit_status = EXIT_SUCCESS;
     gboolean no_taper = FALSE;
+    gboolean from_client = FALSE;
 
     /*
      * Configure program for internationalization:
@@ -263,6 +264,10 @@ main(
     }
     if (argc - diskarg_offset > 0 && strcmp(argv[diskarg_offset], "--no-taper") == 0) {
 	no_taper = TRUE;
+	diskarg_offset += 1;
+    }
+    if (argc - diskarg_offset > 0 && strcmp(argv[diskarg_offset], "--from-client") == 0) {
+	from_client = TRUE;
 	diskarg_offset += 1;
     }
 
@@ -343,6 +348,19 @@ main(
 	g_fprintf(stderr,"%s",errstr);
         exit_status = EXIT_FAILURE;
     }
+
+    for (dp = origq.head; dp != NULL; dp = dp->next) {
+	if (dp->todo) {
+	    if (from_client) {
+		if (!dp->dump_limit || !dp->dump_limit->same_host)
+		    dp->todo = 0;
+	    } else {
+		if (dp->dump_limit && !dp->dump_limit->server)
+		    dp->todo = 0;
+	    }
+	}
+    }
+
     nb_disk = 0;
     for (dp = origq.head; dp != NULL; dp = dp->next) {
 	if (dp->todo) {

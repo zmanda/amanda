@@ -1,4 +1,22 @@
 2011-01-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Add SERVICE_AMDUMPD, All service are active
+	  by default for rsh, ssh and local auth.
+	* common-src/conffile.c: Add dump-limit dumptype option.
+	* common-src/conffile.h: Add dump-limit dumptype option.
+	* man/xml-source/amanda.conf.5.xml: Document new dump-limit option.
+	* common-src/local-security.c, common-src/rsh-security.c,
+	  common-src/ssh-security.c: Do not add the service on the command line
+	* perl/Amanda/Config.swg: swig dump-limt
+	* server-src/Makefile.am: Add amdumpd perl script.
+	* server-src/amadmin.c (disklist_one): Print dump-limit.
+	* server-src/amdumpd.pl: New deamon script.
+	* server-src/amdump.pl: New --from-client option.
+	* server-src/diskfile.h: Add dump_limit in disk_t.
+	* server-src/diskfile.c: Set dump_limit.
+	* server-src/driver.c: New --from-client option.
+	* server-src/planner.c: New --from-client option.
+
+2011-01-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Rename *recovery_limit* *host_limit*,
 	  add 'server' in a host-limit.
 	* common-src/conffile.h: Rename.

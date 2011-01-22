@@ -240,8 +240,7 @@ runrsh(
 	xclient_username = CLIENT_LOGIN;
 
     execlp(RSH_PATH, RSH_PATH, "-l", xclient_username,
-	   rc->hostname, xamandad_path, "-auth=rsh", "amdump", "amindexd",
-	   "amidxtaped", (char *)NULL);
+	   rc->hostname, xamandad_path, "-auth=rsh", (char *)NULL);
     error(_("error: couldn't exec %s: %s"), RSH_PATH, strerror(errno));
 
     /* should never go here, shut up compiler warning */

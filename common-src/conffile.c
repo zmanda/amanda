@@ -169,8 +169,8 @@ typedef enum {
     CONF_PART_SIZE,		CONF_PART_CACHE_TYPE,	CONF_PART_CACHE_DIR,
     CONF_PART_CACHE_MAX_SIZE,	CONF_DISK,		CONF_MEMORY,
 
-    /* recovery-limit */
-    CONF_RECOVERY_LIMIT,	CONF_SAME_HOST,
+    /* host-limit */
+    CONF_RECOVERY_LIMIT,	CONF_SAME_HOST,		CONF_DUMP_LIMIT,
 
     /* holdingdisk */
     CONF_NEVER,			CONF_AUTO,		CONF_REQUIRED,
@@ -598,6 +598,7 @@ static void validate_port_range(val_t *, int, int);
 static void validate_reserved_port_range(conf_var_t *, val_t *);
 static void validate_unreserved_port_range(conf_var_t *, val_t *);
 static void validate_program(conf_var_t *, val_t *);
+static void validate_dump_limit(conf_var_t *, val_t *);
 gint compare_pp_script_order(gconstpointer a, gconstpointer b);
 
 /*
@@ -715,6 +716,7 @@ static void conf_init_application(val_t *val);
 static void conf_init_autolabel(val_t *val);
 static void conf_init_part_cache_type(val_t *val, part_cache_type_t i);
 static void conf_init_host_limit(val_t *val);
+static void conf_init_host_limit_server(val_t *val);
 
 /*
  * Command-line Handling
@@ -942,6 +944,7 @@ keytab_t server_keytab[] = {
     { "DUMPORDER", CONF_DUMPORDER },
     { "DUMPTYPE", CONF_DUMPTYPE },
     { "DUMPUSER", CONF_DUMPUSER },
+    { "DUMP_LIMIT", CONF_DUMP_LIMIT },
     { "EMPTY", CONF_EMPTY },
     { "ENCRYPT", CONF_ENCRYPT },
     { "ERROR", CONF_ERROR },
@@ -1360,8 +1363,9 @@ conf_var_t dumptype_var [] = {
    { CONF_APPLICATION       , CONFTYPE_STR      , read_dapplication, DUMPTYPE_APPLICATION    , NULL },
    { CONF_SCRIPT            , CONFTYPE_STR      , read_dpp_script, DUMPTYPE_SCRIPTLIST       , NULL },
    { CONF_DATA_PATH         , CONFTYPE_DATA_PATH, read_data_path, DUMPTYPE_DATA_PATH         , NULL },
-   { CONF_ALLOW_SPLIT       , CONFTYPE_BOOLEAN  , read_bool    , DUMPTYPE_ALLOW_SPLIT       , NULL },
-   { CONF_RECOVERY_LIMIT    , CONFTYPE_HOST_LIMIT, read_host_limit, DUMPTYPE_RECOVERY_LIMIT, NULL },
+   { CONF_ALLOW_SPLIT       , CONFTYPE_BOOLEAN  , read_bool    , DUMPTYPE_ALLOW_SPLIT        , NULL },
+   { CONF_RECOVERY_LIMIT    , CONFTYPE_HOST_LIMIT, read_host_limit, DUMPTYPE_RECOVERY_LIMIT  , NULL },
+   { CONF_DUMP_LIMIT        , CONFTYPE_HOST_LIMIT, read_host_limit, DUMPTYPE_DUMP_LIMIT      , validate_dump_limit },
    { CONF_UNKNOWN           , CONFTYPE_INT      , NULL          , DUMPTYPE_DUMPTYPE          , NULL }
 };
 
@@ -2379,6 +2383,7 @@ init_dumptype_defaults(void)
     conf_init_proplist(&dpcur.value[DUMPTYPE_PROPERTY]);
     conf_init_bool     (&dpcur.value[DUMPTYPE_ALLOW_SPLIT]       , 1);
     conf_init_host_limit(&dpcur.value[DUMPTYPE_RECOVERY_LIMIT]);
+    conf_init_host_limit_server(&dpcur.value[DUMPTYPE_DUMP_LIMIT]);
 }
 
 static void
@@ -4219,6 +4224,10 @@ read_host_limit(
     host_limit_t *rl = &val_t__host_limit(val);
     ckseen(&val->seen);
 
+    rl->match_pats = NULL;
+    rl->same_host  = FALSE;
+    rl->server     = FALSE;
+
     while (1) {
 	get_conftoken(CONF_ANY);
 	switch(tok) {
@@ -5784,8 +5793,16 @@ conf_init_host_limit(
     val->seen.filename = NULL;
     val->type = CONFTYPE_HOST_LIMIT;
     val_t__host_limit(val).match_pats = NULL;
-    val_t__host_limit(val).same_host = FALSE;
-    val_t__host_limit(val).server    = FALSE;
+    val_t__host_limit(val).same_host  = FALSE;
+    val_t__host_limit(val).server     = FALSE;
+}
+
+static void
+conf_init_host_limit_server(
+    val_t *val)
+{
+    conf_init_host_limit(val);
+    val_t__host_limit(val).server = TRUE;
 }
 
 static void
@@ -6087,6 +6104,16 @@ validate_program(
     	strcmp(val->v.s, "STAR") != 0 &&
     	strcmp(val->v.s, "APPLICATION") != 0)
        conf_parserror("program must be \"DUMP\", \"GNUTAR\", \"STAR\" or \"APPLICATION\"");
+}
+
+static void
+validate_dump_limit(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t        *val)
+{
+    if (val->v.host_limit.match_pats) {
+	conf_parserror("dump-limit can't specify hostname");
+    }
 }
 
 char *

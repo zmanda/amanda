@@ -81,7 +81,8 @@ typedef enum {
     SERVICE_SENDBACKUP,
     SERVICE_SELFCHECK,
     SERVICE_AMINDEXD,
-    SERVICE_AMIDXTAPED
+    SERVICE_AMIDXTAPED,
+    SERVICE_AMDUMPD
 } service_t;
 
 static struct services {
@@ -94,7 +95,8 @@ static struct services {
    { "sendbackup", 1, SERVICE_SENDBACKUP },
    { "selfcheck", 1, SERVICE_SELFCHECK },
    { "amindexd", 0, SERVICE_AMINDEXD },
-   { "amidxtaped", 0, SERVICE_AMIDXTAPED }
+   { "amidxtaped", 0, SERVICE_AMIDXTAPED },
+   { "amdumpd", 0, SERVICE_AMDUMPD }
 };
 #define	NSERVICES	(int)(sizeof(services) / sizeof(services[0]))
 
@@ -284,6 +286,14 @@ main(
 	    if (secdrv == NULL) {
 		error(_("no driver for security type '%s'\n"), argv[i]);
                 /*NOTREACHED*/
+	    }
+	    if (strcmp(auth, "local") == 0 ||
+		strcmp(auth, "rsh") == 0 ||
+		strcmp(auth, "ssh") == 0) {
+		int i;
+		for (i=0; i < NSERVICES; i++) {
+		    services[i].active = 1;
+		}
 	    }
 	    continue;
 	}

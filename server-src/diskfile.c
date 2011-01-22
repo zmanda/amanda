@@ -709,6 +709,7 @@ parse_diskline(
     disk->comprate[0]	     = dumptype_get_comprate(dtype)[0];
     disk->comprate[1]	     = dumptype_get_comprate(dtype)[1];
     disk->data_path	     = dumptype_get_data_path(dtype);
+    disk->dump_limit	     = dumptype_get_dump_limit(dtype);
 
     /*
      * Boolean parameters with no value (Appears here as value 2) defaults

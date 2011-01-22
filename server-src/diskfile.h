@@ -123,6 +123,7 @@ typedef struct disk_s {
     int		todo;
     char       *application;
     identlist_t pp_scriptlist;
+    host_limit_t *dump_limit;
     void	*up;			/* generic user pointer */
 } disk_t;
 

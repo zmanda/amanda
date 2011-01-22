@@ -2292,6 +2292,20 @@ The default unit is Kbytes if it is not specified.</para>
 
   </listitem>
   </varlistentry>
+
+  <varlistentry>
+      <term><amkeyword>dump-limit</amkeyword>
+	    [ <amkeyword>server</amkeyword> | <amkeyword>same-host</amkeyword> ]*</term>
+  <listitem>
+
+<para>Default: <amkeyword>server</amkeyword>. Specify which host can initiate
+ a backup of the dle.  With <amkeyword>server</amkeyword>, the server
+ can initiate a backup with the <command>amdump</command> command.
+ With <amkeyword>same-host</amkeyword>, the client can initiate a backup with
+ the <command>amdump_client</command> command.</para>
+
+  </listitem>
+  </varlistentry>
 </variablelist>
 
 <para>The following <amkeyword>dumptype</amkeyword> entries are predefined by Amanda:</para>

@@ -259,7 +259,7 @@ runlocal(
 #endif
 
     execlp(xamandad_path, xamandad_path,
-	   "-auth=local", "amdump", "amindexd", "amidxtaped", (char *)NULL);
+	   "-auth=local", (char *)NULL);
     error(_("error: couldn't exec %s: %s"), xamandad_path, strerror(errno));
 
     /* should never go here, shut up compiler warning */

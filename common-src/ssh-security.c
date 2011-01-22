@@ -320,16 +320,14 @@ runssh(
 	xclient_port = "22";
 
     if(!ssh_keys || strlen(ssh_keys) <= 1) {
-	g_debug("exec: %s %s %s %s %s %s %s %s %s %s %s %s",
+	g_debug("exec: %s %s %s %s %s %s %s %s %s",
 		SSH, "SSH_OPTIONS", "-l", xclient_username, "-p", client_port,
-	        rc->hostname, xamandad_path, "-auth=ssh", "amdump", "amindexd",
-	        "amidxtaped");
+	        rc->hostname, xamandad_path, "-auth=ssh");
     }
     else {
-	g_debug("exec: %s %s %s %s %s %s %s %s %s %s %s %s %s %s",
+	g_debug("exec: %s %s %s %s %s %s %s %s %s %s %s",
 		SSH, "SSH_OPTIONS", "-l", xclient_username, "-p", client_port,
-	        "-i", xssh_keys, rc->hostname, xamandad_path, "-auth=ssh",
-		"amdump", "amindexd", "amidxtaped");
+	        "-i", xssh_keys, rc->hostname, xamandad_path, "-auth=ssh");
     }
 
     switch (rc->pid = fork()) {
@@ -359,13 +357,12 @@ runssh(
 
     if(!ssh_keys || strlen(ssh_keys) <= 1) {
 	execlp(SSH, SSH, SSH_OPTIONS, "-l", xclient_username, "-p", client_port,
-	       rc->hostname, xamandad_path, "-auth=ssh", "amdump", "amindexd",
-	       "amidxtaped", (char *)NULL);
+	       rc->hostname, xamandad_path, "-auth=ssh", (char *)NULL);
     }
     else {
 	execlp(SSH, SSH, SSH_OPTIONS, "-l", xclient_username, "-p", client_port,
 	       "-i", xssh_keys, rc->hostname, xamandad_path, "-auth=ssh",
-	       "amdump", "amindexd", "amidxtaped", (char *)NULL);
+	       (char *)NULL);
     }
     error("error: couldn't exec %s: %s", SSH, strerror(errno));
 

@@ -711,6 +711,7 @@ typedef enum {
     DUMPTYPE_DATA_PATH,
     DUMPTYPE_ALLOW_SPLIT,
     DUMPTYPE_RECOVERY_LIMIT,
+    DUMPTYPE_DUMP_LIMIT,
     DUMPTYPE_DUMPTYPE /* sentinel */
 } dumptype_key;
 
@@ -801,6 +802,7 @@ char *dumptype_name(dumptype_t *dtyp);
 #define dumptype_get_data_path(dtyp)           (val_t_to_data_path(dumptype_getconf((dtyp), DUMPTYPE_DATA_PATH)))
 #define dumptype_get_allow_split(dtyp)         (val_t_to_boolean(dumptype_getconf((dtyp), DUMPTYPE_ALLOW_SPLIT)))
 #define dumptype_get_recovery_limit(dtyp)      (val_t_to_host_limit(dumptype_getconf((dtyp), DUMPTYPE_RECOVERY_LIMIT)))
+#define dumptype_get_dump_limit(dtyp)          (val_t_to_host_limit(dumptype_getconf((dtyp), DUMPTYPE_DUMP_LIMIT)))
 
 /*
  * Interface parameter access

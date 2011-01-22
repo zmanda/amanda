@@ -31,6 +31,7 @@ amlibexec_PROGRAMS =	amindexd	amtrmidx	\
 
 amlibexec_SCRIPTS_PERL = \
 	    amlogroll \
+	    amdumpd \
 	    taper \
 	    amcheck-device
 
