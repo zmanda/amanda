@@ -543,7 +543,7 @@ static void read_holdingdisk(conf_var_t *, val_t *);
 static void read_int_or_str(conf_var_t *, val_t *);
 static void read_autolabel(conf_var_t *, val_t *);
 static void read_part_cache_type(conf_var_t *, val_t *);
-static void read_recovery_limit(conf_var_t *, val_t *);
+static void read_host_limit(conf_var_t *, val_t *);
 
 static application_t *read_application(char *name, FILE *from, char *fname,
 				       int *linenum);
@@ -714,7 +714,7 @@ static void conf_init_proplist(val_t *val); /* to empty list */
 static void conf_init_application(val_t *val);
 static void conf_init_autolabel(val_t *val);
 static void conf_init_part_cache_type(val_t *val, part_cache_type_t i);
-static void conf_init_recovery_limit(val_t *val);
+static void conf_init_host_limit(val_t *val);
 
 /*
  * Command-line Handling
@@ -1295,7 +1295,7 @@ conf_var_t server_var [] = {
    { CONF_RESERVED_UDP_PORT    , CONFTYPE_INTRANGE , read_intrange    , CNF_RESERVED_UDP_PORT    , validate_reserved_port_range },
    { CONF_RESERVED_TCP_PORT    , CONFTYPE_INTRANGE , read_intrange    , CNF_RESERVED_TCP_PORT    , validate_reserved_port_range },
    { CONF_UNRESERVED_TCP_PORT  , CONFTYPE_INTRANGE , read_intrange    , CNF_UNRESERVED_TCP_PORT  , validate_unreserved_port_range },
-   { CONF_RECOVERY_LIMIT       , CONFTYPE_RECOVERY_LIMIT, read_recovery_limit, CNF_RECOVERY_LIMIT, NULL },
+   { CONF_RECOVERY_LIMIT       , CONFTYPE_HOST_LIMIT, read_host_limit , CNF_RECOVERY_LIMIT       , NULL },
    { CONF_INTERACTIVITY        , CONFTYPE_STR      , read_dinteractivity, CNF_INTERACTIVITY      , NULL },
    { CONF_TAPERSCAN            , CONFTYPE_STR      , read_dtaperscan  , CNF_TAPERSCAN            , NULL },
    { CONF_UNKNOWN              , CONFTYPE_INT      , NULL             , CNF_CNF                  , NULL }
@@ -1361,7 +1361,7 @@ conf_var_t dumptype_var [] = {
    { CONF_SCRIPT            , CONFTYPE_STR      , read_dpp_script, DUMPTYPE_SCRIPTLIST       , NULL },
    { CONF_DATA_PATH         , CONFTYPE_DATA_PATH, read_data_path, DUMPTYPE_DATA_PATH         , NULL },
    { CONF_ALLOW_SPLIT       , CONFTYPE_BOOLEAN  , read_bool    , DUMPTYPE_ALLOW_SPLIT       , NULL },
-   { CONF_RECOVERY_LIMIT    , CONFTYPE_RECOVERY_LIMIT, read_recovery_limit, DUMPTYPE_RECOVERY_LIMIT, NULL },
+   { CONF_RECOVERY_LIMIT    , CONFTYPE_HOST_LIMIT, read_host_limit, DUMPTYPE_RECOVERY_LIMIT, NULL },
    { CONF_UNKNOWN           , CONFTYPE_INT      , NULL          , DUMPTYPE_DUMPTYPE          , NULL }
 };
 
@@ -2378,7 +2378,7 @@ init_dumptype_defaults(void)
     conf_init_identlist(&dpcur.value[DUMPTYPE_SCRIPTLIST], NULL);
     conf_init_proplist(&dpcur.value[DUMPTYPE_PROPERTY]);
     conf_init_bool     (&dpcur.value[DUMPTYPE_ALLOW_SPLIT]       , 1);
-    conf_init_recovery_limit(&dpcur.value[DUMPTYPE_RECOVERY_LIMIT]);
+    conf_init_host_limit(&dpcur.value[DUMPTYPE_RECOVERY_LIMIT]);
 }
 
 static void
@@ -4212,11 +4212,11 @@ read_part_cache_type(
 }
 
 static void
-read_recovery_limit(
+read_host_limit(
     conf_var_t *np G_GNUC_UNUSED,
     val_t *val)
 {
-    recovery_limit_t *rl = &val_t__recovery_limit(val);
+    host_limit_t *rl = &val_t__host_limit(val);
     ckseen(&val->seen);
 
     while (1) {
@@ -4227,6 +4227,10 @@ read_recovery_limit(
 	    break;
 	case CONF_SAME_HOST:
 	    rl->same_host = TRUE;
+	    break;
+
+	case CONF_SERVER:
+	    rl->server = TRUE;
 	    break;
 
 	case CONF_NL:
@@ -5378,7 +5382,7 @@ init_defaults(
     conf_init_send_amreport (&conf_data[CNF_SEND_AMREPORT_ON], SEND_AMREPORT_ALL);
     conf_init_autolabel(&conf_data[CNF_AUTOLABEL]);
     conf_init_str(&conf_data[CNF_META_AUTOLABEL], NULL);
-    conf_init_recovery_limit(&conf_data[CNF_RECOVERY_LIMIT]);
+    conf_init_host_limit(&conf_data[CNF_RECOVERY_LIMIT]);
     conf_init_str(&conf_data[CNF_INTERACTIVITY], NULL);
     conf_init_str(&conf_data[CNF_TAPERSCAN], NULL);
 
@@ -5773,14 +5777,15 @@ conf_init_part_cache_type(
 }
 
 static void
-conf_init_recovery_limit(
+conf_init_host_limit(
     val_t *val)
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
-    val->type = CONFTYPE_RECOVERY_LIMIT;
-    val_t__recovery_limit(val).match_pats = NULL;
-    val_t__recovery_limit(val).same_host = FALSE;
+    val->type = CONFTYPE_HOST_LIMIT;
+    val_t__host_limit(val).match_pats = NULL;
+    val_t__host_limit(val).same_host = FALSE;
+    val_t__host_limit(val).server    = FALSE;
 }
 
 static void
@@ -6714,16 +6719,16 @@ val_t_to_part_cache_type(
     return val_t__part_cache_type(val);
 }
 
-recovery_limit_t *
-val_t_to_recovery_limit(
+host_limit_t *
+val_t_to_host_limit(
     val_t *val)
 {
     assert(config_initialized);
-    if (val->type != CONFTYPE_RECOVERY_LIMIT) {
-	error(_("val_t_to_recovery_limit: val.type is not CONFTYPE_RECOVERY_LIMIT"));
+    if (val->type != CONFTYPE_HOST_LIMIT) {
+	error(_("val_t_to_host_limit: val.type is not CONFTYPE_HOST_LIMIT"));
 	/*NOTREACHED*/
     }
-    return &val_t__recovery_limit(val);
+    return &val_t__host_limit(val);
 }
 
 dump_holdingdisk_t
@@ -6964,12 +6969,12 @@ copy_val_t(
 	    }
 	    break;
 
-	case CONFTYPE_RECOVERY_LIMIT:
-	    valdst->v.recovery_limit = valsrc->v.recovery_limit;
-	    valdst->v.recovery_limit.match_pats = NULL;
-	    for (ia = valsrc->v.recovery_limit.match_pats; ia != NULL; ia = ia->next) {
-		valdst->v.recovery_limit.match_pats =
-		    g_slist_append(valdst->v.recovery_limit.match_pats, g_strdup(ia->data));
+	case CONFTYPE_HOST_LIMIT:
+	    valdst->v.host_limit = valsrc->v.host_limit;
+	    valdst->v.host_limit.match_pats = NULL;
+	    for (ia = valsrc->v.host_limit.match_pats; ia != NULL; ia = ia->next) {
+		valdst->v.host_limit.match_pats =
+		    g_slist_append(valdst->v.host_limit.match_pats, g_strdup(ia->data));
 	    }
 	    break;
 
@@ -7116,8 +7121,8 @@ free_val_t(
 	    slist_free_full(val->v.identlist, g_free);
 	    break;
 
-	case CONFTYPE_RECOVERY_LIMIT:
-	    slist_free_full(val->v.recovery_limit.match_pats, g_free);
+	case CONFTYPE_HOST_LIMIT:
+	    slist_free_full(val->v.host_limit.match_pats, g_free);
 	    break;
 
 	case CONFTYPE_TIME:
@@ -7772,13 +7777,16 @@ val_t_display_strs(
 	}
 	break;
 
-     case CONFTYPE_RECOVERY_LIMIT: {
-	GSList *iter = val_t__recovery_limit(val).match_pats;
+     case CONFTYPE_HOST_LIMIT: {
+	GSList *iter = val_t__host_limit(val).match_pats;
 
-	if(val_t__recovery_limit(val).same_host)
+	if (val_t__host_limit(val).same_host)
 	    buf[0] = stralloc("SAME-HOST ");
 	else
 	    buf[0] = stralloc("");
+
+	if (val_t__host_limit(val).server)
+	    strappend(buf[0], "SERVER ");
 
 	while (iter) {
 	    strappend(buf[0], quote_string_always((char *)iter->data));

@@ -1405,16 +1405,20 @@ Range is inclusive.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>recovery-limit</amkeyword> [ <amtype>string</amtype> | <amkeyword>same-host</amkeyword> ]</term>
+  <term><amkeyword>recovery-limit</amkeyword> [ <amtype>string</amtype> | <amkeyword>same-host</amkeyword> | <amkeyword>server</amkeyword>]</term>
   <listitem>
 <para>Default: none (no limitations).  This parameter limits the hosts
-    that may do remote recoveries.  Hosts are identified by their authenticated
+    that may do recoveries.  Hosts are identified by their authenticated
     peer name, as described in <manref name="amanda-auth" vol="7"/>; if this is
     not available and the recovery-limit parameter is present, recovery will be
     denied.  The arguments to the parameter are strings giving host match
     expressions (see <manref name="amanda-match" vol="7"/>) or the special
-    keyword same-host, which requires an exact match to the hostname of the
-    DLE being recovered.  Specifying no arguments at all will disable all
+    keywords <amkeyword>same-host</amkeyword> or <amkeyword>server</amkeyword>.
+    The <amkeyword>same-host</amkeyword> keyword requires an exact
+    match to the hostname of the DLE being recovered.
+    The <amkeyword>server</amkeyword> keyword require the connection come from
+    the fqdn of the server.
+    Specifying no arguments at all will disable all
     recoveries from any host.</para>
 
 <para>Note that match expressions can be constructed to be
@@ -2279,7 +2283,7 @@ The default unit is Kbytes if it is not specified.</para>
 
   <varlistentry>
       <term><amkeyword>recovery-limit</amkeyword>
-	    [ <amkeyword>same-host</amkeyword> | <amtype>string</amtype> ]*</term>
+	    [ <amkeyword>server</amkeyword> | <amkeyword>same-host</amkeyword> | <amtype>string</amtype> ]*</term>
   <listitem>
 
 <para>Default: global value.  This parameter overrides the global

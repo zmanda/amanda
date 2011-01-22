@@ -1,5 +1,24 @@
 2011-01-22  Jean-Louis Martineau <martineau@zmanda.com>
-	* server-src/driver.c: Fix driver doing nothing if taper crahs early.
+	* common-src/conffile.c: Rename *recovery_limit* *host_limit*,
+	  add 'server' in a host-limit.
+	* common-src/conffile.h: Rename.
+	* common-src/local-security.c: Use
+	  sec_get_authenticated_peer_name_gethostname.
+	* common-src/security-util.c:
+	  New sec_get_authenticated_peer_name_gethostname function to return
+	  gethostname.
+	* common-src/security-util.h: New prototype.
+	* man/xml-source/amanda.conf.5.xml: Document 'server' for
+	  recovery-limit.
+	* perl/Amanda/Config.swg: Return $Amanda::Config::LIMIT_SAMEHOST
+	  same-host, return $Amanda::Config::LIMIT_SERVER for server.
+	* server-src/amidxtaped.pl: Use $Amanda::Config::LIMIT_SAMEHOST and
+	  $Amanda::Config::LIMIT_SERVER.
+	* server-src/amindexd.c: Use 'server' value.
+	* installcheck/Amanda_Config.pl: Fix for change.
+
+2011-01-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Fix driver doing nothing if taper crash early.
 
 2011-01-20  Francis Galiegue <fgaliegue@gmail.com>
 	* xfer-src/source-pattern.c: remove duplicate test

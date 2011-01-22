@@ -114,6 +114,8 @@ sub user_request {
 package main::ClientService;
 use base 'Amanda::ClientService';
 
+use Sys::Hostname;
+
 use Amanda::Debug qw( debug info warning );
 use Amanda::Util qw( :constants );
 use Amanda::Feature;
@@ -442,9 +444,17 @@ sub plan_cb {
 	}
 	my $matched = 0;
 	for my $rl (@$recovery_limit) {
-	    if (!defined $rl) {
+	    if ($rl eq $Amanda::Config::LIMIT_SAMEHOST) {
 		# handle same-host with a case-insensitive string compare, not match_host
 		if (lc($peer) eq lc($dump->{'hostname'})) {
+		    $matched = 1;
+		    last;
+		}
+	    } elsif ($rl eq $Amanda::Config::LIMIT_SERVER) {
+		# handle server with a case-insensitive string compare, not match_host
+		my $myhostname = hostname;
+		debug("myhostname: $myhostname");
+		if (lc($peer) eq lc($myhostname)) {
 		    $matched = 1;
 		    last;
 		}

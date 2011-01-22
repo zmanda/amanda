@@ -426,9 +426,16 @@ amglue_copy_to_tag(part_cache_type_t, getconf);
  *    and 'optional' (int)
  *  - CONFTYPE_PROPLIST -> hashref of hashref with keys 'append' (IV), 'priority' (IV),
  *							'values' (listref)
- *  - CONFTYPE_RECOVERY_LIMIT -> listref of match expressions; undef in list is taken
- *		    to mean 'same-host'
+ *  - CONFTYPE_HOST_LIMIT -> listref of match expressions;
+ *           "SAMEHOST-SAMEHOST-SAMEHOST" in list is taken to mean 'same-host'
+ *           "SERVER-SERVER-SERVER" in list is taken to mean 'server'
  */
+
+%perlcode %{
+$LIMIT_SAMEHOST="SAMEHOST-SAMEHOST-SAMEHOST";
+$LIMIT_SERVER="SERVER-SERVER-SERVER";
+%}
+
 %{
 static int
 val_t_to_sv(val_t *val, SV **results) {
@@ -564,14 +571,16 @@ val_t_to_sv(val_t *val, SV **results) {
 		return 1;
 	    }
 
-	    case CONFTYPE_RECOVERY_LIMIT: {
+	    case CONFTYPE_HOST_LIMIT: {
 		AV *av;
 		GSList *iter;
-		recovery_limit_t *rl = &val_t__recovery_limit(val);
+		host_limit_t *rl = &val_t__host_limit(val);
 
 		av = newAV();
 		if (rl->same_host)
-		    av_push(av, &PL_sv_undef);
+		    av_push(av, newSVpv("SAMEHOST-SAMEHOST-SAMEHOST", 0));
+		if (rl->server)
+		    av_push(av, newSVpv("SERVER-SERVER-SERVER", 0));
 		for (iter=rl->match_pats; iter != NULL; iter = iter->next) {
 		    av_push(av, newSVpv((char *)iter->data, 0));
 		}

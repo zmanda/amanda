@@ -2661,9 +2661,16 @@ find_port_for_service(
 }
 
 char *
-sec_get_authenticated_peer_name_localhost(
+sec_get_authenticated_peer_name_gethostname(
     security_handle_t *hdl G_GNUC_UNUSED)
 {
+    char *server_hostname;
+    server_hostname = malloc(1024);
+    if (gethostname(server_hostname, 1024) == 0) {
+	server_hostname[1023] = '\0';
+	return server_hostname;
+    }
+    amfree(server_hostname);
     return "localhost";
 }
 

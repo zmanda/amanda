@@ -746,7 +746,7 @@ SKIP: {
 
     $dtyp = lookup_dumptype("rl1");
     is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_RECOVERY_LIMIT),
-	[ undef ],
+	[ "SAMEHOST-SAMEHOST-SAMEHOST" ],
 	"same-host => undef in list");
 
     $dtyp = lookup_dumptype("rl2");
@@ -756,12 +756,12 @@ SKIP: {
 
     $dtyp = lookup_dumptype("rl3");
     is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_RECOVERY_LIMIT),
-	[ undef, "somehost" ],
+	[ "SAMEHOST-SAMEHOST-SAMEHOST", "somehost" ],
 	"hostname and same-host parsed correctly");
 
     $dtyp = lookup_dumptype("rl4");
     is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_RECOVERY_LIMIT),
-	[ undef, "foohost" ], # note that the order is an implementation detail
+	[ "SAMEHOST-SAMEHOST-SAMEHOST", "foohost" ], # note that the order is an implementation detail
 	".. even if same-host comes last");
 }
 

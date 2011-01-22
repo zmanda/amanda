@@ -640,7 +640,7 @@ is_disk_allowed(
     disk_t *disk)
 {
     dumptype_t *dt = disk->config;
-    recovery_limit_t *rl = NULL;
+    host_limit_t *rl = NULL;
     char *peer;
     char *dle_hostname;
     GSList *iter;
@@ -676,6 +676,19 @@ is_disk_allowed(
 	if (0 == g_ascii_strcasecmp(peer, dle_hostname)) {
 	    g_debug("peer matched same-host ('%s')", dle_hostname);
 	    return TRUE;
+	}
+    }
+
+    /* check server */
+    if (rl->server) {
+	char myhostname[MAX_HOSTNAME_LENGTH+1];
+	if (gethostname(myhostname, MAX_HOSTNAME_LENGTH) == 0) {
+	    myhostname[MAX_HOSTNAME_LENGTH] = '\0';
+	    g_debug("server hostname: %s", myhostname);
+	    if (0 == g_ascii_strcasecmp(peer, myhostname)) {
+		g_debug("peer matched server ('%s')", myhostname);
+		return TRUE;
+	    }
 	}
     }
 
