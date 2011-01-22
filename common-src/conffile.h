@@ -391,6 +391,7 @@ typedef enum {
     CNF_CONF,
     CNF_INDEX_SERVER,
     CNF_TAPE_SERVER,
+    CNF_AMDUMP_SERVER,
     CNF_AUTH,
     CNF_SSH_KEYS,
     CNF_AMANDAD_PATH,

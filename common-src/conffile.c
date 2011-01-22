@@ -136,6 +136,7 @@ typedef enum {
     /* client conf */
     CONF_CONF,			CONF_INDEX_SERVER,	CONF_TAPE_SERVER,
     CONF_SSH_KEYS,		CONF_GNUTAR_LIST_DIR,	CONF_AMANDATES,
+    CONF_AMDUMP_SERVER,
 
     /* protocol config */
     CONF_REP_TRIES,		CONF_CONNECT_TRIES,	CONF_REQ_TRIES,
@@ -793,6 +794,7 @@ static void    conf_parswarn(const char *format, ...)
 /* First, the keyword tables for client and server */
 keytab_t client_keytab[] = {
     { "CONF", CONF_CONF },
+    { "AMDUMP_SERVER", CONF_AMDUMP_SERVER },
     { "INDEX_SERVER", CONF_INDEX_SERVER },
     { "TAPE_SERVER", CONF_TAPE_SERVER },
     { "TAPEDEV", CONF_TAPEDEV },
@@ -1175,6 +1177,7 @@ keytab_t no_yes_all_keytable[] = {
  * each of the server subsections */
 conf_var_t client_var [] = {
    { CONF_CONF               , CONFTYPE_STR     , read_str     , CNF_CONF               , NULL },
+   { CONF_AMDUMP_SERVER      , CONFTYPE_STR     , read_str     , CNF_AMDUMP_SERVER      , NULL },
    { CONF_INDEX_SERVER       , CONFTYPE_STR     , read_str     , CNF_INDEX_SERVER       , NULL },
    { CONF_TAPE_SERVER        , CONFTYPE_STR     , read_str     , CNF_TAPE_SERVER        , NULL },
    { CONF_TAPEDEV            , CONFTYPE_STR     , read_str     , CNF_TAPEDEV            , NULL },
@@ -5292,6 +5295,7 @@ init_defaults(
     /* defaults for exported variables */
     conf_init_str(&conf_data[CNF_ORG], DEFAULT_CONFIG);
     conf_init_str(&conf_data[CNF_CONF], DEFAULT_CONFIG);
+    conf_init_str(&conf_data[CNF_AMDUMP_SERVER], DEFAULT_SERVER);
     conf_init_str(&conf_data[CNF_INDEX_SERVER], DEFAULT_SERVER);
     conf_init_str(&conf_data[CNF_TAPE_SERVER], DEFAULT_TAPE_SERVER);
     conf_init_str(&conf_data[CNF_AUTH], "bsd");
@@ -7209,6 +7213,8 @@ generic_client_get_security_conf(
 
 	if(strcmp(string, "conf")==0) {
 		return(getconf_str(CNF_CONF));
+	} else if(strcmp(string, "amdump_server")==0) {
+		return(getconf_str(CNF_AMDUMP_SERVER));
 	} else if(strcmp(string, "index_server")==0) {
 		return(getconf_str(CNF_INDEX_SERVER));
 	} else if(strcmp(string, "tape_server")==0) {

@@ -1,4 +1,13 @@
 2011-01-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/Makefile.am: Add amdump_client.
+	* client-src/amdump_client.pl: New client program.
+	* common-src/conffile.c: Add amdump-server in client config file.
+	* common-src/conffile.h: Add CNF_AMDUMP_SERVER
+	* perl/Amanda/Config.swg: Add CNF_AMDUMP_SERVER
+	* man/Makefile.am: Add amdump_client.8.
+	* man/xml-source/amdump_client.8.xml: New man page for amdump_client.
+
+2011-01-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Add SERVICE_AMDUMPD, All service are active
 	  by default for rsh, ssh and local auth.
 	* common-src/conffile.c: Add dump-limit dumptype option.

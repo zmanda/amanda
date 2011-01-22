@@ -18,6 +18,7 @@ COMMON_MAN_PAGES =  amanda.8 \
 
 CLIENT_MAN_PAGES = \
     amanda-applications.7 \
+    amdump_client.8 \
     amgtar.8 \
     ampgsql.8 \
     amraw.8 \
