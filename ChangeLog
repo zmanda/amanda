@@ -1,3 +1,7 @@
+2011-01-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report.pm: fix reporting partial dump if only the
+	  taper is partial.
+
 2011-01-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/amndma_tape_simulator.c: Use full_read.
 	* ndmp-src/ndma_tape.c: Use ndmchan_n_avail_record to guarantee space
