@@ -70,6 +70,7 @@ full_tests = \
 	amcheckdump \
 	amdevcheck \
 	amdump \
+	amdump_client \
 	amflush \
 	amoverview \
 	amreport \

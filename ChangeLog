@@ -1,4 +1,10 @@
 2011-01-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Config.pl: Check recovery-limit, dump-limit,
+	  amdump-server, index-server, tape-server.
+	* installcheck/Makefile.am: Add amdump_client.
+	* installcheck/amdump_client.pl: Test new amdump_client program.
+
+2011-01-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/Makefile.am: Add amdump_client.
 	* client-src/amdump_client.pl: New client program.
 	* common-src/conffile.c: Add amdump-server in client config file.
