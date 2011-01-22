@@ -1872,6 +1872,7 @@ handle_taper_result(
              * checks. If there are dumps waiting for diskspace to be freed,
              * cancel one.
              */
+	    taper_started = 1;
             if(!nodump) {
                 log_add(L_WARNING,
                         _("going into degraded mode because of taper component error."));
@@ -1927,6 +1928,7 @@ handle_taper_result(
 	}
 
     } while(areads_dataready(taper_fd));
+    start_some_dumps(&runq);
     startaflush();
 }
 
