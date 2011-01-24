@@ -458,7 +458,8 @@ sub main {
 	if ($err) {
 	    $exit_code = 1;
 	    print STDERR $err, "\n";
-	    return $clerk->quit(finished_cb => $finished_cb);
+	    return $clerk->quit(finished_cb => $finished_cb) if defined $clerk;;
+	    return $finished_cb->();
 	}
 
 	if ($all_success) {
