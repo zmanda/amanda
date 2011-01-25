@@ -914,6 +914,24 @@ startaflush_tape(
 		if(dp) remove_disk(&tapeq, dp);
 		break;
 	}
+	if (!dp) {
+	    if (!(result_tape_action & TAPE_ACTION_START_A_FLUSH_FIT)) {
+		if(conf_taperalgo != ALGO_SMALLEST)  {
+		    g_fprintf(stderr,
+			_("driver: startaflush: Using SMALLEST because nothing fit\n"));
+		}
+		
+		fit = dp = tapeq.head;
+		while (fit != NULL) {
+		    if (sched(fit)->act_size < sched(dp)->act_size &&
+			strcmp(sched(fit)->datestamp, datestamp) <= 0) {
+			dp = fit;
+		    }
+	            fit = fit->next;
+		}
+		if(dp) remove_disk(&tapeq, dp);
+	    }
+	}
 	if (dp) {
 	    taper->disk = dp;
 	    taper->dumper = NULL;

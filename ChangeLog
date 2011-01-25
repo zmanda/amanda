@@ -1,4 +1,7 @@
 2011-01-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Fix taperalog *FIT no going to second volume.
+
+2011-01-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Logfile.swg: print 'bytes' with 64 bits type.
 
 2011-01-25  Jean-Louis Martineau <martineau@zmanda.com>
