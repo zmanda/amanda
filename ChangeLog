@@ -1,4 +1,7 @@
 2011-01-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Logfile.swg: print 'bytes' with 64 bits type.
+
+2011-01-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Logfile.swg: kb must be integer.
 
 2011-01-24  Jean-Louis Martineau <martineau@zmanda.com>
