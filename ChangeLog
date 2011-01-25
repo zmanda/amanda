@@ -1,3 +1,6 @@
+2011-01-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Logfile.swg: kb must be integer.
+
 2011-01-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheckdump.pl: Do not quit the clerk if it is not defined
 

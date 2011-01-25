@@ -790,7 +790,7 @@ sub _handle_dumper_line
         my @info = Amanda::Util::split_quoted_strings($str);
         my ( $hostname, $disk, $level ) = @info[ 0 .. 2 ];
         my ( $sec, $kb, $kps, $orig_kb ) = @info[ 4, 6, 8, 10 ];
-	$kb /= 1024 if $info[4] eq 'bytes';
+	$kb = int($kb/1024) if $info[4] eq 'bytes';
         $orig_kb =~ s{\]$}{};
 
         my $dle    = $disklist->{$hostname}->{$disk};
@@ -818,7 +818,7 @@ sub _handle_dumper_line
         my @info = Amanda::Util::split_quoted_strings($str);
         my ( $hostname, $disk, $timestamp, $level ) = @info[ 0 .. 3 ];
         my ( $sec, $kb, $kps, $orig_kb ) = @info[ 5, 7, 9, 11 ];
-	$kb /= 1024 if $info[6] eq 'bytes';
+	$kb = int($kb/1024) if $info[6] eq 'bytes';
         $orig_kb =~ s{\]$}{};
 
         my $dle    = $disklist->{$hostname}->{$disk};
@@ -866,7 +866,7 @@ sub _handle_chunker_line
         my @info = Amanda::Util::split_quoted_strings($str);
         my ( $hostname, $disk, $timestamp, $level ) = @info[ 0 .. 3 ];
         my ( $sec, $kb, $kps ) = @info[ 5, 7, 9 ];
-	$kb /= 1024 if $info[6] eq 'bytes';
+	$kb = int($kb/1024) if $info[6] eq 'bytes';
         $kps =~ s{\]$}{};
 
         my $dle     = $disklist->{$hostname}->{$disk};
@@ -933,7 +933,7 @@ sub _handle_taper_line
         my ( $currpart, $predparts ) = ( $1, $2 );
 
         my ($level, $sec, $kb, $kps, $orig_kb) = @info[ 6, 8, 10, 12, 14 ];
-	$kb /= 1024 if $info[9] eq 'bytes';
+	$kb = int($kb/1024) if $info[9] eq 'bytes';
         $kps =~ s{\]$}{};
         $orig_kb =~ s{\]$}{} if defined($orig_kb);
 
@@ -971,7 +971,7 @@ sub _handle_taper_line
         my @info = Amanda::Util::split_quoted_strings($str);
         my ( $hostname, $disk, $timestamp, $part_ct, $level ) = @info[ 0 .. 4 ];
         my ( $sec, $kb, $kps, $orig_kb ) = @info[ 6, 8, 10, 12 ];
-	$kb /= 1024 if $info[7] eq 'bytes';
+	$kb = int($kb/1024) if $info[7] eq 'bytes';
 	my $error;
 	if ($type == $L_PARTIAL) {
 	    if ($kps =~ /\]$/) {
