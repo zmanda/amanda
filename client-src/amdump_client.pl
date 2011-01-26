@@ -42,7 +42,7 @@ GetOptions(
 ) or usage();
 
 if (@ARGV < 1) {
-    die "USAGE: amdump_client [--config <config>] <config-overwrites> [list|dump] <diskname>";
+    die "USAGE: amdump_client [--config <config>] <config-overwrites> [list|dump|check] <diskname>";
 }
 
 my $cmd = $ARGV[0];
@@ -85,14 +85,14 @@ if ($cmd eq 'list') {
     get_list(1);
 } elsif ($cmd eq 'dump') {
     # check if diskname on the command line
-    if ($ARGV[2]) {
+    if ($ARGV[1]) {
 	# get the list of dle
 	debug ("send: LIST");
 	print {$amservice_in} "LIST\n";
 	get_list(0);
 
         #find the diskname that match
-	for (my $i=2; $i <= $#ARGV; $i++) {
+	for (my $i=1; $i <= $#ARGV; $i++) {
 	    for my $diskname (@disks) {
 		if (Amanda::Logfile::match_disk($ARGV[$i], $diskname)) {
 		    debug("send: DISK " . Amanda::Util::quote_string($diskname));
@@ -106,6 +106,31 @@ if ($cmd eq 'list') {
     debug("send: DUMP");
     print {$amservice_in} "DUMP\n";
     get_server_data();
+} elsif ($cmd eq 'check') {
+    # check if diskname on the command line
+    if ($ARGV[1]) {
+	# get the list of dle
+	debug ("send: LIST");
+	print {$amservice_in} "LIST\n";
+	get_list(0);
+
+        #find the diskname that match
+	for (my $i=1; $i <= $#ARGV; $i++) {
+	    for my $diskname (@disks) {
+		if (Amanda::Logfile::match_disk($ARGV[$i], $diskname)) {
+		    debug("send: DISK " . Amanda::Util::quote_string($diskname));
+		    print {$amservice_in} "DISK " . Amanda::Util::quote_string($diskname) . "\n";
+		    my $a = <$amservice_out>;
+		    print if ($a != /^DISK /)
+		}
+	    }
+	}
+    }
+    debug("send: CHECK");
+    print {$amservice_in} "CHECK\n";
+    get_server_data();
+} else {
+    usage();
 }
 debug("send: END");
 print {$amservice_in} "END\n";
@@ -128,10 +153,18 @@ sub get_server_data {
 	    print "The backup is finished\n";
 	    return;
 	}
+	if (/^ENDCHECK/) {
+	    print "The check is finished\n";
+	    return;
+	}
 	print;
 	return if /^CONFIG/;
 	return if /^BUSY/;
     }
+}
+
+sub usage {
+    print STDERR "USAGE: amdump_client [--config <config>] <config-overwrites> [list|dump|check] <diskname>";
 }
 
 Amanda::Util::finish_application();

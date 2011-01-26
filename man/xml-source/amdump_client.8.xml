@@ -27,7 +27,7 @@
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
-  <command>amdump</command>
+  <command>amdump_client</command>
     &configoverride.synopsis;
     <arg choice='opt'><option>--config</option> <replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>CMD</replaceable></arg>
@@ -44,10 +44,17 @@
   <listitem><para>list all diskname that can be dumped.</para>
   </listitem>
   </varlistentry>
+
+  <varlistentry><term><amkeyword>check</amkeyword></term>
+  <listitem><para>Check the configuration of the client and disk.</para>
+  </listitem>
+  </varlistentry>
+
   <varlistentry><term><amkeyword>dump</amkeyword></term>
   <listitem><para>Start a backup of the specified diskname, or all diskname if none are specified.</para>
   </listitem>
   </varlistentry>
+
 </variablelist>
 </refsect1>
 

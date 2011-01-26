@@ -1,4 +1,9 @@
 2011-01-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amdumpd.pl: Add CHECK command.
+	* client-src/amdump_client.pl: Add check command.
+	* man/xml-source/amdump_client.8.xml: Document check command.
+
+2011-01-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Parse 'bytes' in reply.
 
 2011-01-25  Jean-Louis Martineau <martineau@zmanda.com>

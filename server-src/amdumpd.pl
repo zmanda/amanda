@@ -190,6 +190,38 @@ sub cmd_dump {
     $self->sendctlline("ENDDUMP");
 }
 
+sub cmd_check {
+    my $self = shift;
+
+    if (!defined $self->{'config'}) {
+	$self->sendctlline("CONFIG must be set before doing a backup");
+	return;
+    }
+
+    my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
+    if (-f "$logdir/log" || -f "$logdir/amdump" || -f "$logdir/amflush") {
+	$self->sendctlline("BUSY Amanda is busy, retry later");
+	return;
+    }
+
+    $self->sendctlline("CHECKING");
+    my @command = ("$sbindir/amcheck", "-c", $self->{'config'}, $self->{'host'}->{'hostname'});
+    if (defined $self->{'disk'}) {
+	@command = (@command, @{$self->{'disk'}});
+    }
+
+    debug("command: @command");
+    my $amcheck_out;
+    my $amcheck_in;
+    my $pid = open3($amcheck_in, $amcheck_out, $amcheck_out, @command);
+    close($amcheck_in);
+    while (<$amcheck_out>) {
+	chomp;
+	$self->sendctlline($_);
+    }
+    $self->sendctlline("ENDCHECK");
+}
+
 sub read_command {
     my $self = shift;
     my $ctl_stream = $self->{'ctl_stream'};
@@ -211,6 +243,8 @@ sub read_command {
 	    $self->cmd_list();
 	} elsif (/^DISK (.*)$/) {
 	    $self->cmd_disk($1);
+	} elsif (/^CHECK$/) {
+	    $self->cmd_check();
 	} elsif (/^DUMP$/) {
 	    $self->cmd_dump();
 	} elsif (/^END$/) {
