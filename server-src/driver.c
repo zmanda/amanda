@@ -1692,6 +1692,12 @@ handle_taper_result(
 	    if (s) {
 		s += 4;
 		sched(dp)->dumpsize = atol(s);
+	    } else {
+		s = strstr(result_argv[4], " bytes ");
+		if (s) {
+		    s += 7;
+		    sched(dp)->dumpsize = atol(s)/1024;
+		}
 	    }
 
 	    taper->result = cmd;
@@ -1722,6 +1728,12 @@ handle_taper_result(
 	    if (s) {
 		s += 4;
 		partsize = atol(s);
+	    } else {
+		s = strstr(result_argv[5], " bytes ");
+		if (s) {
+		    s += 7;
+		    partsize = atol(s)/1024;
+		}
 	    }
 	    taper->left -= partsize;
 
