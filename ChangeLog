@@ -1,3 +1,8 @@
+2011-01-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/find.c: parse old SUCCESS lines properly
+	* perl/Amanda/DB/Catalog.pm: same
+	* installcheck/Amanda_DB_Catalog.pl: test old SUCCESS lines
+
 2011-01-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report.pm: fix reporting partial dump if only the
 	  taper is partial.

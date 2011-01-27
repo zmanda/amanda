@@ -208,10 +208,12 @@ Amanda::DB::Catalog::_clear_cache();
 # Test the timestamps
 
 is_deeply([ Amanda::DB::Catalog::get_write_timestamps(), ],
-    [ '20080111000000', '20080222222222', '20080313133333', '20080414144444', '20080515155555', '20080616166666' ],
+    [ '20080111000000', '20080222222222', '20080313133333',
+      '20080414144444', '20080515155555', '20080616166666',
+      '20100722000000' ],
     "get_write_timestamps returns all logfile datestamps in proper order, with zero-padding");
 
-is(Amanda::DB::Catalog::get_latest_write_timestamp(), '20080616166666',
+is(Amanda::DB::Catalog::get_latest_write_timestamp(), '20100722000000',
     "get_latest_write_timestamp correctly returns the latest write timestamp");
 
 ##
@@ -1033,3 +1035,17 @@ START taper datestamp 20080616166666 label Conf-008 tape 1
 #:part somebox_lib_20080616166666 somebox_lib_20080616166666 Conf-008 1 1 OK 0.000370 20 20
 PART taper Conf-008 1 somebox /lib 20080616166666 2/2 1 [sec 0.000370 kb 20 kps 54054.054054 orig-kb 20]
 DONE taper somebox /lib 20080616166666 1 1 [sec 0.000370 kb 20 kps 54054.054054 orig-kb 20]
+
+# an old-school logfile
+::: log.20100722.0
+:timestamp 20100722000000
+:tapelist 20100722 Conf-009
+DISK planner lovelace /home/ada
+START taper datestamp 20100722 label Conf-009 tape 0
+SUCCESS dumper lovelace /home/ada 20100722 3 [sec 19.271 kb 166951 kps 8663.1 orig-kb 208420]
+SUCCESS chunker lovelace /home/ada 20100722 3 [sec 19.298 kb 166951 kps 8652.7]
+STATS driver estimate lovelace /home/ada 20100722 3 [sec 30 nkb 208422 ckb 32640 kps 1081]
+:dump lovelace_home_ada_20100722 20100722000000 lovelace /home/ada 3 OK "" 1 0.883 166976 0
+:part lovelace_home_ada_20100722 lovelace_home_ada_20100722 Conf-009 1 1 OK 0.883 166976 0
+SUCCESS taper lovelace /home/ada 20100722 3 [sec 0.883 kb 166976 kps 188922.8 {wr: writers 5219 rdwait 0.001 wrwait 0.710 filemark 0.000}]
+INFO taper tape Conf-009 kb 166976 fm 1 [OK]

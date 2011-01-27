@@ -1002,6 +1002,7 @@ search_logfile(
 			new_output_find->status = stralloc("OK");
 			new_output_find->dump_status = stralloc("OK");
 			new_output_find->next = *output_find;
+			new_output_find->partnum = 1; /* L_SUCCESS is pre-splitting */
 			*output_find = new_output_find;
                         found_something = TRUE;
 		    } else if (curlog == L_CHUNKSUCCESS || curlog == L_DONE ||

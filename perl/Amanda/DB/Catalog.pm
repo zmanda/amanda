@@ -656,6 +656,8 @@ sub get_parts_and_dumps {
 		$status = 'PARTIAL';
 	    } elsif ($type == $L_FAIL) {
 		$status = 'FAIL';
+	    } elsif ($type == $L_SUCCESS) {
+		$status = "OK";
 	    } else {
 		next;
 	    }
@@ -666,7 +668,7 @@ sub get_parts_and_dumps {
 	    ($hostname, $str) = Amanda::Util::skip_quoted_string($str);
 	    ($diskname, $str) = Amanda::Util::skip_quoted_string($str);
 	    ($dump_timestamp, $str) = Amanda::Util::skip_quoted_string($str);
-	    if ($status ne 'FAIL') {
+	    if ($status ne 'FAIL' and $type != $L_SUCCESS) { # nparts is not in SUCCESS lines
 		($nparts, $str) = Amanda::Util::skip_quoted_string($str);
 	    } else {
 		$nparts = 0;
@@ -674,7 +676,7 @@ sub get_parts_and_dumps {
 	    ($level, $str) = Amanda::Util::skip_quoted_string($str);
 	    if ($status ne 'FAIL') {
 		my $s = $str;
-		($secs, $kb, $str) = ($str =~ /^\[sec ([-0-9.]+) kb (\d+) .*\] ?(.*)$/)
+		($secs, $kb, $str) = ($str =~ /^\[sec ([-0-9.]+) kb (\d+).*\] ?(.*)$/)
 		    or die("'$s'");
 		$secs = 0.1 if ($secs <= 0);
 	    }
