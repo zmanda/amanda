@@ -1,4 +1,7 @@
 2011-01-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Logfile.swg: "%lld" do not works with perl-5.6.
+
+2011-01-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Parse 'bytes' in reply.
 
 2011-01-25  Jean-Louis Martineau <martineau@zmanda.com>
