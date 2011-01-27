@@ -1,4 +1,7 @@
 2011-01-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Logfile.swg: "%lld" do not works with perl-5.6.
+
+2011-01-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amdumpd.pl: Add CHECK command.
 	* client-src/amdump_client.pl: Add check command.
 	* man/xml-source/amdump_client.8.xml: Document check command.
