@@ -1,3 +1,7 @@
+2011-01-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/amndmjob_main.c: Remove remove exit on eof thread.
+	* ndmp-src/ndma_comm_session.c: add a g_debug message.
+
 2011-01-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c: parse old SUCCESS lines properly
 	* perl/Amanda/DB/Catalog.pm: same

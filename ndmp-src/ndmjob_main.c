@@ -84,6 +84,7 @@ main (int ac, char *av[])
 			dump_settings();
 			return 0;
 		}
+
 		ndma_daemon_session (&the_session, p_ndmp_port, the_mode == NDM_JOB_OP_TEST_DAEMON);
 		return 0;
 	}
