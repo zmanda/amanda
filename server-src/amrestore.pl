@@ -372,13 +372,14 @@ sub main {
 	my ($err) = @_;
 	return failure($err, $finished_cb) if $err;
 
-	$steps->{'next_file'}->();
+	$steps->{'next_file'}->('extracted');
     };
 
     step next_file => sub {
-	# amrestore does not loop over multiple files when reading from
-	# holding or when outputting to a pipe
-	if ($opt_holding or $opt_pipe) {
+	my ($extracted) = @_;
+	# amrestore does not loop over multiple files when reading from holding
+	# when outputting to a pipe amrestore extracts only the first file
+	if ($opt_holding or ($opt_pipe and $extracted)) {
 	    return $steps->{'finished'}->();
 	}
 

@@ -1,3 +1,7 @@
+2011-02-01  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by Jan Görig
+	* server-src/amrestore.pl: Allow to go to next file with -p.
+
 2011-01-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Logfile.swg: "%lld" do not works with perl-5.6.
 
