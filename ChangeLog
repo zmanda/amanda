@@ -1,3 +1,7 @@
+2011-02-01  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by Jan Görig
+	* server-src/amrestore.pl: Allow to go to next file with -p.
+
 2011-01-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/amndmjob_main.c: Remove remove exit on eof thread.
 	* ndmp-src/ndma_comm_session.c: add a g_debug message.
