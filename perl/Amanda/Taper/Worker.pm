@@ -42,7 +42,7 @@ package Amanda::Taper::Worker;
 use POSIX qw( :errno_h );
 use Amanda::Changer;
 use Amanda::Config qw( :getconf config_dir_relative );
-use Amanda::Debug;
+use Amanda::Debug qw( :logging );
 use Amanda::Header;
 use Amanda::Holding;
 use Amanda::MainLoop qw( :GIOCondition );
@@ -615,7 +615,7 @@ sub setup_and_start_dump {
 		$get_xfer_dest_args{'max_memory'} = $block_size4;
 	    }
 	}
-	$get_xfer_dest_args{'can_cache_inform'} = ($msgtype eq Amanda::Taper::Protocol::FILE_WRITE);
+	$get_xfer_dest_args{'can_cache_inform'} = ($msgtype eq Amanda::Taper::Protocol::FILE_WRITE and $get_xfer_dest_args{'allow_split'});
 
 	# if we're unable to fulfill the user's splitting needs, we can still give
 	# the dump a shot - but we'll warn them about the problem
