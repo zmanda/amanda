@@ -1,3 +1,13 @@
+2011-02-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: get_splitting_args_from_config() always
+	  return 'allow_split', get_xfer_dest() take a allow_split param,
+	  set $self->{'allow_split'}, Abort a dump on EOM if splitting is
+	  not allowed.
+	* perl/Amanda/Taper/Worker.pm: Do not set can_cache_inform if splitting
+	  is not allowed.
+	* installcheck/Amanda_Taper_Scribe.pl: Fix for previous change.
+	* installcheck/taper.pl: Test that dump are aborted on EOM.
+
 2011-02-01  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Jan Görig
 	* server-src/amrestore.pl: Allow to go to next file with -p.

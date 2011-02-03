@@ -34,6 +34,7 @@ Amanda::Taper::Scribe
   step start_xfer => sub {
     my ($err) = @_;
     my $xfer_dest = $scribe->get_xfer_dest(
+	allow_split => 1,
 	max_memory => 64 * 1024,
 	can_cache_inform => 0,
 	part_size => 150 * 1024**2,
@@ -160,6 +161,7 @@ Call C<get_xfer_dest> to get the transfer element, supplying information on how
 the dump should be split:
 
   $xdest = $scribe->get_xfer_dest(
+	allow_split => $allow_split,
         max_memory => $max_memory,
         # .. splitting parameters
         );
@@ -172,6 +174,10 @@ this purpose.
 The splitting parameters to C<get_xfer_dest> are:
 
 =over 4
+
+=item C<allow_split>
+
+this dle is allowed or not to split
 
 =item C<part_size>
 
@@ -213,6 +219,7 @@ should know about.
   use Amanda::Taper::Scribe qw( get_splitting_args_from_config );
   my %splitting_args = get_splitting_args_from_config(
     # Amanda dumptype configuration parameters,
+    dle_allow_split => ..,
     dle_tape_splitsize => ..,
     dle_split_diskbuffer => ..,
     dle_fallback_splitsize => ..,
@@ -463,6 +470,7 @@ sub new {
 	# information for the current dumpfile
 	dump_header => undef,
 	retry_part_on_peom => undef,
+	allow_split => undef,
 	xfer => undef,
 	xdt => undef,
 	xdt_ready => undef,
@@ -633,6 +641,7 @@ sub get_xfer_dest {
     # set the callback
     $self->{'dump_cb'} = undef;
     $self->{'retry_part_on_peom'} = 1;
+    $self->{'allow_split'} = 0;
     $self->{'start_part_on_xdt_ready'} = 0;
 
     # start getting parameters together to determine what kind of splitting
@@ -641,6 +650,7 @@ sub get_xfer_dest {
     my ($use_mem_cache, $disk_cache_dirname) = (0, undef);
     my $can_cache_inform = $params{'can_cache_inform'};
     my $part_cache_type = $params{'part_cache_type'} || 'none';
+    my $allow_split = $params{'allow_split'};
 
     my $xdt_first_dev = $self->get_device();
     if (!defined $xdt_first_dev) {
@@ -687,6 +697,18 @@ sub get_xfer_dest {
 	# no directtcp, no caching, no cache_inform, and no LEOM, so a PEOM will be fatal
 	$self->{'retry_part_on_peom'} = 0;
     }
+
+    if ($allow_split &&
+	($can_cache_inform ||
+	 !defined($part_cache_type) ||
+	 $part_cache_type eq 'disk' ||
+	 $part_cache_type eq 'memory')) {
+	$self->{'allow_split'} = 1;
+    } else {
+	$self->{'allow_split'} = 0;
+    }
+
+    $self->{'retry_part_on_peom'} = 0 if !$self->{'allow_split'};
 
     debug("Amanda::Taper::Scribe preparing to write, part size $part_size, "
 	. "$dest_text ($dest_type) "
@@ -890,7 +912,7 @@ sub _xmsg_part_done {
 	    }
 
 	    # if the part failed..
-	    if (!$msg->{'successful'}) {
+	    if (!$msg->{'successful'} || !$self->{'allow_split'}) {
 		# if no caching was going on, then the dump has failed
 		if (!$self->{'retry_part_on_peom'}) {
 		    # mark this device as at EOM, since we are not going to look
@@ -1133,6 +1155,7 @@ sub _volume_cb  {
 	$new_scribe->{'dump_cb'} = $self->{'dump_cb'};
 	$new_scribe->{'dump_header'} = $self->{'dump_header'};
 	$new_scribe->{'retry_part_on_peom'} = $self->{'retry_part_on_peom'};
+	$new_scribe->{'allow_split'} = $self->{'allow_split'};
 	$new_scribe->{'split_method'} = $self->{'split_method'};
 	$new_scribe->{'xfer'} = $self->{'xfer'};
 	$new_scribe->{'xdt'} = $self->{'xdt'};
@@ -1343,9 +1366,10 @@ sub get_splitting_args_from_config {
     use Data::Dumper;
     my %splitting_args;
 
+    $splitting_args{'allow_split'} = 0;
     # if dle_splitting is false, then we don't split - easy.
     if (defined $params{'dle_allow_split'} and !$params{'dle_allow_split'}) {
-	return ();
+	return %splitting_args;
     }
 
     # utility for below
@@ -1395,6 +1419,7 @@ sub get_splitting_args_from_config {
 
 	# part cache type is memory unless we have a split_diskbuffer that fits the bill
 	if ($params{'part_size'}) {
+	    $splitting_args{'allow_split'} = 1;
 	    $params{'part_cache_type'} = 'memory';
 	    if (defined $params{'dle_split_diskbuffer'}
 		    and -d $params{'dle_split_diskbuffer'}) {
@@ -1418,6 +1443,7 @@ sub get_splitting_args_from_config {
 	my $ps = $params{'part_size'};
 	my $pcms = $params{'part_cache_max_size'};
 	$ps = $pcms if (!defined $ps or (defined $pcms and $pcms < $ps));
+	$splitting_args{'allow_split'} = 1 if defined $ps and $ps > 0;
 
 	# fail back from 'disk' to 'none' if the disk isn't set up correctly
 	if (defined $params{'part_cache_type'} and

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 201;
+use Test::More tests => 214;
 use strict;
 use warnings;
 
@@ -1151,5 +1151,63 @@ SKIP : {
 
     $ndmp->cleanup();
 } # end of ndmp SKIP
+
+##
+# A run without LEOM and without allow-split
+$handle = "77-11111";
+$datestamp = "20090302020000";
+run_taper(1024, "without LEOM and without allow-split", new_vtapes => 1);
+make_holding_file(1024*1024, "localhost", "/usr");
+like(taper_reply, qr/^TAPER-OK worker0$/,
+	"got TAPER-OK") or die;
+taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /usr 0 $datestamp 262144 \"\" \"\" \"0\" \"\" \"\" \"\" \"\" 1612");
+like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
+	"got REQUEST-NEW-TAPE worker0 $handle") or die;
+taper_cmd("START-SCAN worker0 $handle");
+taper_cmd("NEW-TAPE worker0 $handle");
+like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0 $handle") or die;
+like(taper_reply, qr/^PARTIAL $handle INPUT-GOOD TAPE-ERROR "\[sec [\d.]+ bytes \d* kps [\d.]+ orig-kb 1612\]" "" "No space left on device"$/,
+	"got PARTIAL for filenum 1") or die;
+taper_cmd("QUIT");
+wait_for_exit();
+
+check_logs([
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^PARTPARTIAL taper TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 983040 kps [\d.]+ orig-kb 1612\] \"No space left on device\"$),
+    qr(^PARTIAL taper localhost /usr $datestamp 1 0 \[sec [\d.]+ bytes 0 kps [\d.]+ orig-kb 1612\] "No space left on device"$),
+    qr(^INFO taper tape TESTCONF01 kb 0 fm 1 \[OK\]$),
+], "without LEOM and without allow-split logged correctly");
+cleanup_log();
+
+##
+# A run with LEOM and without allow-split
+$handle = "77-11112";
+$datestamp = "20090303020000";
+run_taper(1024, "with LEOM and without allow-split", new_vtapes => 1, leom => 1);
+make_holding_file(1024*1024, "localhost", "/usr");
+like(taper_reply, qr/^TAPER-OK worker0$/,
+	"got TAPER-OK") or die;
+taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /usr 0 $datestamp 262144 \"\" \"\" \"0\" \"\" \"\" \"\" \"\" 1612");
+like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
+	"got REQUEST-NEW-TAPE worker0 $handle") or die;
+taper_cmd("START-SCAN worker0 $handle");
+taper_cmd("NEW-TAPE worker0 $handle");
+like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0 $handle") or die;
+like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 864 "\[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\]"$/,
+	"got PARTDONE for filenum 1") or die;
+like(taper_reply, qr/^PARTIAL $handle INPUT-GOOD TAPE-ERROR "\[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\]" "" "No space left on device"$/,
+	"got PARTIAL") or die;
+taper_cmd("QUIT");
+wait_for_exit();
+
+check_logs([
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^PART taper TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\]$),
+    qr(^PARTIAL taper localhost /usr $datestamp 1 0 \[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\] "No space left on device"$),
+    qr(^INFO taper tape TESTCONF01 kb 864 fm 1 \[OK\]$),
+], "with LEOM and without allow-split logged correctly");
+cleanup_log();
 
 cleanup_taper();

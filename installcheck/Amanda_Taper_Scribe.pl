@@ -404,6 +404,7 @@ sub run_scribe_xfer_async {
 
 	# set up a transfer
 	my $xdt = $scribe->get_xfer_dest(
+	    allow_split => 1,
 	    max_memory => 1024 * 64,
 	    part_size => (defined $params{'part_size'})? $params{'part_size'} : (1024 * 128),
             part_cache_type => $params{'part_cache_type'} || 'memory',
@@ -577,7 +578,7 @@ is_deeply([ @events ], [
 
       [ 'dump_cb', 'DONE', [], undef, bi(655360) ],
       [ 'scribe_notif_tape_done', 'FAKELABEL', bi(3), bi(262144) ],
-    ], "correct event sequence for a multipart scribe of more than a whole volume, without LEOM")
+    ], "correct event sequence for a multipart scribe of more than a whole volume, without LEOM" . Data::Dumper::Dumper(@events))
     or print (Dumper([@events]));
 
 # same test, but with LEOM support
@@ -772,8 +773,8 @@ my $maxint64 = Math::BigInt->new("9223372036854775808");
 is_deeply(
     { get_splitting_args_from_config(
     ) },
-    { },
-    "default is no params");
+    { allow_split => 0 },
+    "default is only allow_split set to 0");
 
 is_deeply(
     { get_splitting_args_from_config(
@@ -781,7 +782,7 @@ is_deeply(
 	dle_split_diskbuffer => $Installcheck::TMP,
 	dle_fallback_splitsize => 100,
     ) },
-    { part_size => 0, part_cache_type => 'none' },
+    { allow_split => 0, part_size => 0, part_cache_type => 'none' },
     "tape_splitsize = 0 indicates no splitting");
 
 is_deeply(
@@ -790,7 +791,7 @@ is_deeply(
 	part_size => 100,
 	part_cache_dir => "/tmp",
     ) },
-    { },
+    { allow_split => 0 },
     "default if dle_allow_split is false, no splitting");
 
 is_deeply(
@@ -798,14 +799,14 @@ is_deeply(
 	dle_tape_splitsize => 200,
 	dle_fallback_splitsize => 150,
     ) },
-    { part_cache_type => 'memory', part_size => 200, part_cache_max_size => 150 },
+    { allow_split => 1,part_cache_type => 'memory', part_size => 200, part_cache_max_size => 150 },
     "when cache_inform is available, tape_splitsize is used, not fallback");
 
 is_deeply(
     { get_splitting_args_from_config(
 	dle_tape_splitsize => 200,
     ) },
-    { part_size => 200, part_cache_type => 'memory', part_cache_max_size => 1024*1024*10, },
+    { allow_split => 1, part_size => 200, part_cache_type => 'memory', part_cache_max_size => 1024*1024*10, },
     "no split_diskbuffer and no fallback_splitsize, fall back to default (10M)");
 
 is_deeply(
@@ -814,7 +815,7 @@ is_deeply(
 	dle_split_diskbuffer => "$Installcheck::TMP/does!not!exist!",
 	dle_fallback_splitsize => 150,
     ) },
-    { part_size => 200, part_cache_type => 'memory', part_cache_max_size => 150 },
+    { allow_split => 1, part_size => 200, part_cache_type => 'memory', part_cache_max_size => 150 },
     "invalid split_diskbuffer => fall back (silently)");
 
 is_deeply(
@@ -822,7 +823,7 @@ is_deeply(
 	dle_tape_splitsize => 200,
 	dle_split_diskbuffer => "$Installcheck::TMP/does!not!exist!",
     ) },
-    { part_size => 200, part_cache_type => 'memory', part_cache_max_size => 1024*1024*10 },
+    { allow_split => 1, part_size => 200, part_cache_type => 'memory', part_cache_max_size => 1024*1024*10 },
     ".. even to the default fallback (10M)");
 
 is_deeply(
@@ -831,7 +832,7 @@ is_deeply(
 	dle_split_diskbuffer => "$Installcheck::TMP",
 	dle_fallback_splitsize => 250,
     ) },
-    { part_size => $maxint64, part_cache_type => 'memory', part_cache_max_size => 250,
+    { allow_split => 1, part_size => $maxint64, part_cache_type => 'memory', part_cache_max_size => 250,
       warning => "falling back to memory buffer for splitting: " .
 		 "insufficient space in disk cache directory" },
     "not enough space in split_diskbuffer => fall back (with warning)");
@@ -843,7 +844,7 @@ is_deeply(
 	dle_split_diskbuffer => "$Installcheck::TMP",
 	dle_fallback_splitsize => 150,
     ) },
-    { part_size => 200, part_cache_type => 'disk', part_cache_dir => "$Installcheck::TMP" },
+    { allow_split => 1, part_size => 200, part_cache_type => 'disk', part_cache_dir => "$Installcheck::TMP" },
     "if split_diskbuffer exists and splitsize is nonzero, use it");
 
 is_deeply(
@@ -852,7 +853,7 @@ is_deeply(
 	dle_split_diskbuffer => "$Installcheck::TMP",
 	dle_fallback_splitsize => 250,
     ) },
-    { part_size => 0, part_cache_type => 'none' },
+    { allow_split => 0, part_size => 0, part_cache_type => 'none' },
     ".. but if splitsize is zero, no splitting");
 
 is_deeply(
@@ -860,7 +861,7 @@ is_deeply(
 	dle_split_diskbuffer => "$Installcheck::TMP",
 	dle_fallback_splitsize => 250,
     ) },
-    { part_size => 0, part_cache_type => 'none' },
+    { allow_split => 0, part_size => 0, part_cache_type => 'none' },
     ".. and if splitsize is missing, no splitting");
 
 is_deeply(
@@ -868,7 +869,7 @@ is_deeply(
 	part_size => 300,
 	part_cache_type => 'none',
     ) },
-    { part_size => 300, part_cache_type => 'none' },
+    { allow_split => 1, part_size => 300, part_cache_type => 'none' },
     "part_* parameters handled correctly when missing");
 
 is_deeply(
@@ -878,7 +879,7 @@ is_deeply(
 	part_cache_dir => $Installcheck::TMP,
 	part_cache_max_size => 250,
     ) },
-    { part_size => 300, part_cache_type => 'disk',
+    { allow_split => 1, part_size => 300, part_cache_type => 'disk',
       part_cache_dir => $Installcheck::TMP, part_cache_max_size => 250, },
     "part_* parameters handled correctly when specified");
 
@@ -889,7 +890,7 @@ is_deeply(
 	part_cache_dir => "$Installcheck::TMP/does!not!exist!",
 	part_cache_max_size => 250,
     ) },
-    { part_size => 300, part_cache_type => 'none',
+    { allow_split => 1, part_size => 300, part_cache_type => 'none',
       part_cache_max_size => 250,
       warning => "part-cache-dir '$Installcheck::TMP/does!not!exist! does not exist; "
 	       . "using part cache type 'none'"},
