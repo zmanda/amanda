@@ -3697,11 +3697,10 @@ tape_action(
     off_t sched_size;
     off_t dump_to_disk_size;
     int   dump_to_disk_terminated;
-    off_t my_flush_threshold_dumped;
-    off_t my_flush_threshold_scheduled;
-    off_t my_taperflush;
     int   nb_taper_active = nb_sent_new_tape;
     int   nb_taper_flushing = 0;
+    off_t data_next_tape = 0;
+    off_t data_lost = 0;
 
     dumpers_size = 0;
     for(dumper = dmptable; dumper < (dmptable+inparallel); dumper++) {
@@ -3742,11 +3741,19 @@ tape_action(
 	    tapeq_size -= taper1->left;
 	}
 	if (taper1->disk) {
+	    off_t data_to_go;
 	    if (taper1->dumper) {
-		tapeq_size += sched(taper1->disk)->est_size - taper1->written;
+		data_to_go = sched(taper1->disk)->est_size - taper1->written;
 	    } else {
-		tapeq_size += sched(taper1->disk)->act_size - taper1->written;
+		data_to_go = sched(taper1->disk)->act_size - taper1->written;
 	    }
+	    data_next_tape += data_to_go - taper1->left;
+	    if (data_to_go > taper1->left) {
+		data_lost += taper1->written - taper1->left;
+	    } else {
+		data_lost += data_to_go - taper1->left;
+	    }
+	    tapeq_size += data_to_go;
 	}
     }
     driver_debug(1, _("tapeq_size: %lld\n"), (long long)tapeq_size);
@@ -3765,19 +3772,6 @@ tape_action(
 	    nb_taper_active++;
 	}
     }
-    if (nb_taper_active >= 1) {
-    my_flush_threshold_dumped = flush_threshold_dumped +
-				(nb_taper_active-nb_taper_active) * tape_length;
-    my_flush_threshold_scheduled = flush_threshold_scheduled +
-				   (nb_taper_active-nb_taper_active) * tape_length;
-    my_taperflush = taperflush + (nb_taper_active-nb_taper_active) * tape_length;
-    } else {
-    my_flush_threshold_dumped = flush_threshold_dumped +
-				nb_taper_active * tape_length;
-    my_flush_threshold_scheduled = flush_threshold_scheduled +
-				   nb_taper_active * tape_length;
-    my_taperflush = taperflush + nb_taper_active * tape_length;
-    }
 
     // Changing conditionals can produce a driver hang, take care.
     // 
@@ -3790,8 +3784,9 @@ tape_action(
 	    result |= TAPE_ACTION_NO_NEW_TAPE;
 	} else if (current_tape < conf_runtapes &&
 		   taper_nb_scan_volume == 0 &&
-		   ((my_flush_threshold_dumped < tapeq_size &&
-		     my_flush_threshold_scheduled < sched_size) ||
+		   ((flush_threshold_dumped < tapeq_size &&
+		     flush_threshold_scheduled < sched_size) ||
+		    (data_lost > data_next_tape) ||
 		    nb_taper_active == 0) &&
 		   (last_started_taper == NULL ||
 		    last_started_taper == taper)) {
@@ -3804,16 +3799,17 @@ tape_action(
 	 !empty(directq) ||				// if a dle is waiting for a dump to tape
          !empty(roomq) ||				// holding disk constraint
          idle_reason == IDLE_NO_DISKSPACE ||		// holding disk constraint
-         (my_flush_threshold_dumped < tapeq_size &&	// flush-threshold-dumped &&
-	  my_flush_threshold_scheduled < sched_size) ||	//  flush-threshold-scheduled
-	 (my_taperflush < tapeq_size &&			// taperflush
+         (flush_threshold_dumped < tapeq_size &&	// flush-threshold-dumped &&
+	  flush_threshold_scheduled < sched_size) ||	//  flush-threshold-scheduled
+	 (data_lost > data_next_tape) ||
+	 (taperflush < tapeq_size &&			// taperflush
 	  (force_flush == 1 ||				//  if force_flush
 	   dump_to_disk_terminated))			//  or all dump to disk terminated
 	)) {
 	result |= TAPE_ACTION_NEW_TAPE;
     // when to stop using new tape
     } else if ((taper->state & TAPER_STATE_WAIT_FOR_TAPE) &&
-	       (my_taperflush >= tapeq_size &&		// taperflush criteria
+	       (taperflush >= tapeq_size &&		// taperflush criteria
 	       (force_flush == 1 ||			//  if force_flush
 	        dump_to_disk_terminated))		//  or all dump to disk
 	      ) {
@@ -3834,9 +3830,9 @@ tape_action(
 	    (taper->state & TAPER_STATE_TAPE_STARTED ||		// tape already started 
              !empty(roomq) ||					// holding disk constraint
              idle_reason == IDLE_NO_DISKSPACE ||		// holding disk constraint
-             (my_flush_threshold_dumped < tapeq_size &&		// flush-threshold-dumped &&
-	      my_flush_threshold_scheduled < sched_size) ||	//  flush-threshold-scheduled
-             (force_flush == 1 && my_taperflush < tapeq_size))) {	// taperflush if force_flush
+             (flush_threshold_dumped < tapeq_size &&		// flush-threshold-dumped &&
+	      flush_threshold_scheduled < sched_size) ||	//  flush-threshold-scheduled
+             (force_flush == 1 && taperflush < tapeq_size))) {	// taperflush if force_flush
 
 	    if (nb_taper_flushing == 0) {
 		result |= TAPE_ACTION_START_A_FLUSH;
