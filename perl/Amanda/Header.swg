@@ -166,10 +166,6 @@ sub matches_dumpspecs {
 package Amanda::Header;
 %}
 
-%module "Amanda::Header::XML"
-%include "amglue/amglue.swg"
-%include "exception.i"
-
 %{
 #include "amxml.h"
 %}

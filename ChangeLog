@@ -1,4 +1,7 @@
 2011-03-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Header.swg: Remove bogus %module.
+
+2011-03-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amfeatures.c: Add fe_amrecover_receive_unfiltered.
 	* common-src/amfeatures.h: Add fe_amrecover_receive_unfiltered.
 	* perl/Amanda/Feature.pod: Add fe_amrecover_receive_unfiltered.
