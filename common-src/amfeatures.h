@@ -189,6 +189,8 @@ typedef enum {
     fe_amrecover_correct_disk_quoting,
     fe_amindexd_quote_label,
 
+    fe_amrecover_receive_unfiltered,
+
     /*
      * All new features must be inserted immediately *before* this entry.
      */

@@ -148,6 +148,12 @@ sub from_string {
     return C_from_string(@_);
 }
 
+sub get_dle {
+    my $self = shift;
+
+    return Amanda::Header::HeaderXML->new($self->{'dle_str'});
+}
+
 package Amanda::Header::Header;
 
 # point $hdr->matches_dumpspecs() to Amanda::Cmdline::header_matches_dumpspecs.  When
@@ -159,3 +165,64 @@ sub matches_dumpspecs {
 
 package Amanda::Header;
 %}
+
+%module "Amanda::Header::XML"
+%include "amglue/amglue.swg"
+%include "exception.i"
+
+%{
+#include "amxml.h"
+%}
+
+%rename(HeaderXML) dle_t;
+typedef struct {
+    char   *disk;
+    char   *device;
+    int     program_is_application_api;
+    char   *program;
+    estimatelist_t estimatelist;
+    int     spindle;
+    int     compress;
+    int     encrypt;
+    int     kencrypt;
+    levellist_t levellist;
+    int     nb_level;
+    char   *dumpdate;
+    char   *compprog;
+    char   *srv_encrypt;
+    char   *clnt_encrypt;
+    char   *srv_decrypt_opt;
+    char   *clnt_decrypt_opt;
+    int     record;
+    int     create_index;
+    char   *auth;
+    sl_t   *exclude_file;
+    sl_t   *exclude_list;
+    sl_t   *include_file;
+    sl_t   *include_list;
+    int     exclude_optional;
+    int     include_optional;
+    proplist_t application_property;
+    scriptlist_t scriptlist;
+    data_path_t  data_path;
+    GSList      *directtcp_list;
+    struct a_dle_s *next;
+
+    %extend {
+	/* constructor */
+	dle_t(char *dle_str) {
+	    char  *errmsg = NULL;
+	    dle_t *dle;
+	    dle = amxml_parse_node_CHAR(dle_str, &errmsg);
+	    amfree(errmsg);
+	    
+	    return dle;
+	}
+
+	/* destructor */
+	~dle_t(void) {
+	    amfree(self);
+	}
+    }
+} dle_t;
+

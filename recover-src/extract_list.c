@@ -45,6 +45,7 @@
 #include "event.h"
 #include "client_util.h"
 #include "security.h"
+#include "pipespawn.h"
 
 typedef struct EXTRACT_LIST_ITEM {
     char *path;
@@ -2841,6 +2842,43 @@ start_processing_data(
 	error(_("extract_list - error setting up pipe to extractor: %s\n"),
 	      strerror(errno));
 	/*NOTREACHED*/
+    }
+
+    /* decrypt */
+    if (ctl_data->file.encrypted) {
+	char *argv[3];
+	int  crypt_out;
+	int  errfd = fileno(stderr);
+
+	g_debug("image is encrypted %s %s", ctl_data->file.clnt_encrypt, ctl_data->file.clnt_decrypt_opt);
+	argv[0] = ctl_data->file.clnt_encrypt;
+	argv[1] = ctl_data->file.clnt_decrypt_opt;
+	argv[2] = NULL;
+	pipespawnv(ctl_data->file.clnt_encrypt, STDOUT_PIPE, 0, &ctl_data->child_pipe[0], &crypt_out, &errfd, argv);
+	ctl_data->child_pipe[0] = crypt_out;
+    }
+
+    /* decompress */
+    if (ctl_data->file.compressed) {
+	char *argv[3];
+	int  comp_out;
+	int  errfd = fileno(stderr);
+	char *comp_prog;
+	char *comp_arg;
+
+	g_debug("image is compressed %s", ctl_data->file.clntcompprog);
+	if (strlen(ctl_data->file.clntcompprog) > 0) {
+	    comp_prog = ctl_data->file.clntcompprog;
+	    comp_arg = "-d";
+	} else {
+	    comp_prog = UNCOMPRESS_PATH;
+	    comp_arg = UNCOMPRESS_OPT;
+	}
+	argv[0] = comp_prog;
+	argv[1] = comp_arg;
+	argv[2] = NULL;
+	pipespawnv(comp_prog, STDOUT_PIPE, 0, &ctl_data->child_pipe[0], &comp_out, &errfd, argv);
+	ctl_data->child_pipe[0] = comp_out;
     }
 
     /* okay, ready to extract. fork a child to do the actual work */

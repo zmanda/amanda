@@ -21,6 +21,8 @@ Changes in release 3.3.0alpha
        o new --assign option
    * amgtar, amstar: The path must be specified, it will not works with a
      device.
+   * amrecover: decompression and decryption are now done on the client if
+		compression/encryption was done on the client.
 
 Changes in release 3.2.1
 

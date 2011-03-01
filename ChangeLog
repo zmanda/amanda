@@ -1,3 +1,12 @@
+2011-03-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amfeatures.c: Add fe_amrecover_receive_unfiltered.
+	* common-src/amfeatures.h: Add fe_amrecover_receive_unfiltered.
+	* perl/Amanda/Feature.pod: Add fe_amrecover_receive_unfiltered.
+	* perl/Amanda/Header.swg: Add get_dle method, handle dle_t.
+	* recover-src/extract_list.c: Pipe decompression or decyption.
+	* server-src/amidxtaped.pl: Do not decompress/decrypt if amrecover
+				    can do it.
+
 2011-02-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: flush even if flush threshold are not met if
 	  it save tape space.

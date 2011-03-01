@@ -234,6 +234,13 @@ those DISK lines should be ignored.
 
 If set, amindexd quote the label (holdingdisk filename)
 
+=item fe_amrecover_receive_unfiltered
+
+ PROTOCOL: amidxtaped
+ FEATURE OF: client
+
+If set, amidxtaped do not decompress/decrypt client compressed/decrypted stream.
+
 =back
 
 =cut
