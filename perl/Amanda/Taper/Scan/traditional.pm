@@ -75,6 +75,7 @@ sub scan {
 sub _user_msg {
     my $self = shift;
     my %params = @_;
+
     $self->{'user_msg_fn'}->(%params);
 }
 
@@ -240,6 +241,7 @@ sub try_volume {
 				 does_not_match_labelstr => 1,
 				 labelstr                => $labelstr,
 				 slot                    => $slot,
+				 label                   => $label,
 				 res                     => $res);
 		return 0;
 	    }
@@ -250,6 +252,7 @@ sub try_volume {
 		$self->_user_msg(slot_result     => 1,
 				 not_in_tapelist => 1,
 				 slot            => $slot,
+				 label           => $label,
 				 res             => $res);
 		return 0;
 	    }
@@ -259,11 +262,13 @@ sub try_volume {
 		$self->_user_msg(slot_result => 1,
 				 active      => 1,
 				 slot        => $slot,
+				 label       => $label,
 				 res         => $res);
 		return 0;
 	    }
 	    $self->_user_msg(slot_result => 1,
 			     slot        => $slot,
+			     label       => $label,
 			     res         => $res);
 	    $self->scan_result(res => $res, label => $label,
 		    mode => $ACCESS_WRITE, is_new => 0, result_cb => $result_cb);
@@ -273,9 +278,10 @@ sub try_volume {
 
     if (!defined $autolabel->{'template'} ||
 	$autolabel->{'template'} eq "") {
-	$self->_user_msg(slot_result => 1,
-			 slot        => $slot,
-			 res         => $res);
+	$self->_user_msg(slot_result  => 1,
+			 not_autolabel => 1,
+			 slot         => $slot,
+			 res          => $res);
 	return 0;
     }
 
@@ -284,14 +290,38 @@ sub try_volume {
     if ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
 	$dev->volume_header and
 	$dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY) {
-	return 0 if (!$autolabel->{'empty'});
+	if (!$autolabel->{'empty'}) {
+	    $self->_user_msg(slot_result  => 1,
+			     empty        => 1,
+			     slot         => $slot,
+			     res          => $res);
+	    return 0;
+	}
     } elsif ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
 	$dev->volume_header and
 	$dev->volume_header->{'type'} == $Amanda::Header::F_WEIRD) {
-	return 0 if (!$autolabel->{'non_amanda'});
+	if (!$autolabel->{'non_amanda'}) {
+	    $self->_user_msg(slot_result  => 1,
+			     non_amanda   => 1,
+			     slot         => $slot,
+			     res          => $res);
+	    return 0;
+	}
     } elsif ($status & $DEVICE_STATUS_VOLUME_ERROR) {
-	return 0 if (!$autolabel->{'volume_error'});
+	if (!$autolabel->{'volume_error'}) {
+	    $self->_user_msg(slot_result  => 1,
+			     volume_error => 1,
+			     err          => $dev->error_or_status(),
+			     slot         => $slot,
+			     res          => $res);
+	    return 0;
+	}
     } elsif ($status != $DEVICE_STATUS_SUCCESS) {
+	$self->_user_msg(slot_result  => 1,
+			 not_success  => 1,
+			 err          => $dev->error_or_status(),
+			 slot         => $slot,
+			 res          => $res);
 	return 0;
     }
 
@@ -371,6 +401,7 @@ sub stage_2 {
 	my $loaded_current = $load_current;
 	$load_current = 0; # don't load current a second time
 
+	$self->_user_msg(search_result => 1, res => $res, err => $err);
 	# bail out immediately if the scan is complete
 	if ($err and $err->failed and $err->notfound) {
 	    # no error, no reservation -> end of the scan

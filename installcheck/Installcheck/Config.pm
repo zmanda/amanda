@@ -385,9 +385,14 @@ sub _write_amanda_conf {
     # write key/value pairs
     my @params = @{$self->{'params'}};
     my $saw_tapetype = 0;
+    my $taperscan;
     while (@params) {
 	$param = shift @params;
 	$value = shift @params;
+	if ($param eq 'taperscan') {
+	    $taperscan = $value;
+	    next;
+	}
 	print $amanda_conf "$param $value\n";
 	$saw_tapetype = 1 if ($param eq "tapetype");
     }
@@ -409,6 +414,7 @@ sub _write_amanda_conf {
     $self->_write_amanda_conf_subsection($amanda_conf, "interactivity", $self->{"interactivities"});
     $self->_write_amanda_conf_subsection($amanda_conf, "taperscan", $self->{"taperscans"});
     print $amanda_conf "\n", $self->{'text'}, "\n";
+    print $amanda_conf "taperscan $taperscan\n" if $taperscan;
 
     close($amanda_conf);
 }

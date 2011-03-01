@@ -180,6 +180,43 @@ The result if the read label can't be used because it is active:
                    slot        => $slot,
                    res         => $res);
 
+The result if the volume can't be labeled because autolabel is not set:
+
+  user_msg_fn(slot_result => 1,
+                   not_autolabel => 1,
+                   slot          => $slot,
+                   res           => $res);
+
+The result if the volume is empty and can't be labeled because autolabel setting:
+
+  user_msg_fn(slot_result => 1,
+                   empty         => 1,
+                   slot          => $slot,
+                   res           => $res);
+
+The result if the volume is a non-amanda volume and can't be labeled because autolabel setting:
+
+  user_msg_fn(slot_result => 1,
+                   non_amanda    => 1,
+                   slot          => $slot,
+                   res           => $res);
+
+The result if the volume is in error and can't be labeled because autolabel setting:
+
+  user_msg_fn(slot_result => 1,
+                   volume_error  => 1,
+		   err           => $err,
+                   slot          => $slot,
+                   res           => $res);
+
+The result if the volume is in error and can't be labeled because autolabel setting:
+
+  user_msg_fn(slot_result => 1,
+                   not_success   => 1,
+		   err           => $err,
+                   slot          => $slot,
+                   res           => $res);
+
 The scan has failed, possibly with some additional information as to what the
 scan was looking for.
 
@@ -203,7 +240,7 @@ sub new {
 	unless exists $params{'changer'};
     # fill in the optional parameters
     $params{'algorithm'} = "traditional"
-	unless exists $params{'algorithm'} and $params{'algorithm'} ne '';
+	unless defined $params{'algorithm'} and $params{'algorithm'} ne '';
     $params{'tapecycle'} = getconf($CNF_TAPECYCLE)
 	unless exists $params{'tapecycle'};
     $params{'labelstr'} = getconf($CNF_LABELSTR)

@@ -1,4 +1,16 @@
 2011-03-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm (make_new_tape_label): Fix if $tle is undef.
+	* perl/Amanda/ScanInventory.pm: Call _user_msg with label argument.
+	* perl/Amanda/Taper/Scan.pm: Document new user_msg_fn argument.
+	* perl/Amanda/Taper/Scan/traditional.pm: Call _user_msg on various
+	  tape error.
+	* perl/Amanda/Taper/Scribe.pm (_user_msg_fn): Call
+	  scribe_notif_log_info with error message.
+	* perl/Amanda/Taper/Worker.pm: Log error in scribe_notif_new_tape.
+	* installcheck/Installcheck/Config.pm: Add taperscan definition.
+	* installcheck/taper.pl: Test new log.
+
+2011-03-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Header.swg: Remove bogus %module.
 
 2011-03-01  Jean-Louis Martineau <martineau@zmanda.com>

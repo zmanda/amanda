@@ -374,6 +374,8 @@ sub scribe_notif_new_tape {
 
     # TODO: if $params{error} is set, report it back to the driver
     # (this will be a change to the protocol)
+    log_add($L_INFO, $params{'error'}) if defined $params{'error'};
+
     if ($params{'volume_label'}) {
 	$self->{'label'} = $params{'volume_label'};
 

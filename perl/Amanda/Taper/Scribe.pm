@@ -1410,7 +1410,6 @@ sub dbg {
 sub get_splitting_args_from_config {
     my %params = @_;
 
-    use Data::Dumper;
     my %splitting_args;
 
     $splitting_args{'allow_split'} = 0;
@@ -1703,7 +1702,57 @@ sub _start_scanning {
 
     $self->{'scan_running'} = 1;
 
-    $self->{'taperscan'}->scan(result_cb => sub {
+    my $_user_msg_fn = sub {
+	my %params = @_;
+	if (exists($params{'slot_result'})) {
+	    if ($params{'does_not_match_labelstr'}) {
+		$self->{'feedback'}->scribe_notif_log_info(
+		    message => "Slot $params{'slot'} with label $params{'label'} do not match labelstr");
+	    } elsif ($params{'not_in_tapelist'}) {
+		$self->{'feedback'}->scribe_notif_log_info(
+		    message => "Slot $params{'slot'} with label $params{'label'} is not in the tapelist");
+	    } elsif ($params{'active'}) {
+		$self->{'feedback'}->scribe_notif_log_info(
+		    message => "Slot $params{'slot'} with label $params{'label'} is not reusable");
+	    } elsif ($params{'not_autolabel'}) {
+		if ($params{'label'}) {
+		    $self->{'feedback'}->scribe_notif_log_info(
+			message => "Slot $params{'slot'} with label $params{'label'} is not labelable ");
+		} else {
+		    $self->{'feedback'}->scribe_notif_log_info(
+			message => "Slot $params{'slot'} without label is not labelable ");
+		}
+	    } elsif ($params{'empty'}) {
+		$self->{'feedback'}->scribe_notif_log_info(
+		    message => "Slot $params{'slot'} is empty");
+	    } elsif ($params{'non_amanda'}) {
+		$self->{'feedback'}->scribe_notif_log_info(
+		    message => "Slot $params{'slot'} is a non-amanda volume");
+	    } elsif ($params{'volume_error'}) {
+		$self->{'feedback'}->scribe_notif_log_info(
+		    message => "Slot $params{'slot'} is a volume in error: $params{'err'}");
+	    } elsif ($params{'not_success'}) {
+		$self->{'feedback'}->scribe_notif_log_info(
+		    message => "Slot $params{'slot'} is a device in error: $params{'err'}");
+	    } elsif ($params{'err'}) {
+		$self->{'feedback'}->scribe_notif_log_info(
+		    message => "$params{'err'}");
+	    } elsif ($params{'not_labelable'}) {
+		$self->{'feedback'}->scribe_notif_log_info(
+		    message => "Slot $params{'slot'} without label can't be labeled");
+	    } elsif (!defined $params{'label'}) {
+		$self->{'feedback'}->scribe_notif_log_info(
+		    message => "Slot $params{'slot'} without label can be labeled");
+	    } else {
+		$self->{'feedback'}->scribe_notif_log_info(
+		    message => "Slot $params{'slot'} with label $params{'label'} is usable");
+	    }
+	}
+    };
+
+    $self->{'taperscan'}->scan(
+      user_msg_fn => $_user_msg_fn,
+      result_cb => sub {
 	my ($error, $reservation, $volume_label, $access_mode, $is_new) = @_;
 
 	$self->{'scan_running'} = 0;

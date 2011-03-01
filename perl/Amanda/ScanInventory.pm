@@ -257,8 +257,14 @@ sub _scan {
 	# we don't responsd to abort_scan or restart_scan here, since we
 	# have an open reservation that we should deal with.
 
+	my $label;
+	if ($res && defined $res->{device} &&
+	    $res->{device}->status == $DEVICE_STATUS_SUCCESS) {
+	    $label = $res->{device}->volume_label;
+	}
 	$self->_user_msg(slot_result => 1,
 			 slot => $slot_scanned,
+			 label => $label,
 			 err  => $err,
 			 res  => $res);
 	if ($res) {

@@ -1300,12 +1300,14 @@ sub make_new_tape_label {
 
 	my %existing_labels;
 	for my $tle (@{$tl->{'tles'}}) {
-	    my $tle_label = $tle->{'label'};
-	    my $tle_barcode = $tle->{'barcode'};
-	    if (defined $tle_barcode) {
-		$tle_label =~ s/$tle_barcode/SUBSTITUTE_BARCODE/g;
+	    if (defined $tle && defined $tle->{'label'}) {
+		my $tle_label = $tle->{'label'};
+		my $tle_barcode = $tle->{'barcode'};
+		if (defined $tle_barcode) {
+		    $tle_label =~ s/$tle_barcode/SUBSTITUTE_BARCODE/g;
+		}
+		$existing_labels{$tle_label} = 1 if defined $tle_label;
 	    }
-	    $existing_labels{$tle_label} = 1;
 	}
 
 	my ($i);
@@ -1381,7 +1383,9 @@ sub volume_is_labelable {
     my $label = shift;
     my $autolabel = $self->{'autolabel'};
 
-    if ($dev_status & $DEVICE_STATUS_VOLUME_UNLABELED and
+    if (!defined $dev_status) {
+	return 0;
+    } elsif ($dev_status & $DEVICE_STATUS_VOLUME_UNLABELED and
 	$f_type == $Amanda::Header::F_EMPTY) {
 	return 0 if (!$autolabel->{'empty'});
     } elsif ($dev_status & $DEVICE_STATUS_VOLUME_UNLABELED and
