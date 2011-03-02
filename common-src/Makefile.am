@@ -12,6 +12,8 @@ AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
 
 amlib_LTLIBRARIES =	libamanda.la
 
+sbin_PROGRAMS = amservice
+
 LINT=$(AMLINT)
 LINTFLAGS=$(AMLINTFLAGS)
 
@@ -46,6 +48,12 @@ libamanda_la_SOURCES =		\
 	util.c
 # version.c is generated; see below
 nodist_libamanda_la_SOURCES = version.c
+
+INSTALLPERMS_exec = \
+	dest=$(sbindir) chown=root:setuid chmod=04750 \
+		amservice
+
+LDADD = libamanda.la
 
 libamanda_la_LIBADD =		\
 	../gnulib/libgnu.la

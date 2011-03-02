@@ -33,7 +33,6 @@
 #include "conffile.h"
 #include "packet.h"
 #include "protocol.h"
-#include "server_util.h"
 #include "amfeatures.h"
 #include "event.h"
 
@@ -187,7 +186,7 @@ start_host(
     if (secdrv == NULL) {
 	fprintf(stderr, _("Could not find security driver \"%s\".\n"), auth);
     } else {
-	protocol_sendreq(hostname, secdrv, amhost_get_security_conf, 
+	protocol_sendreq(hostname, secdrv, generic_client_get_security_conf,
 			 req, conf_ctimeout, handle_result, NULL);
     }
 

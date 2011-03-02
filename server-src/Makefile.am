@@ -21,8 +21,7 @@ LINTFLAGS=$(AMLINTFLAGS)
 amlib_LTLIBRARIES = 	libamserver.la
 
 sbin_PROGRAMS =		amadmin		amcheck		\
-			amflush		\
-			amservice
+			amflush
 
 amlibexec_PROGRAMS =	amindexd	amtrmidx	\
 			amtrmlog	driver		dumper		\
@@ -68,7 +67,7 @@ amlibexec_SCRIPTS = $(amlibexec_SCRIPTS_PERL) $(amlibexec_SCRIPTS_SHELL)
 
 INSTALLPERMS_exec = \
 	dest=$(sbindir) chown=root:setuid chmod=04750 \
-		amcheck amservice \
+		amcheck \
 	dest=$(amlibexecdir) \
 		dumper planner
 

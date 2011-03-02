@@ -14,6 +14,7 @@ COMMON_MAN_PAGES =  amanda.8 \
 		    amanda-auth.7 \
 		    amanda-match.7 \
 		    amarchiver.8 \
+		    amservice.8 \
 		    script-email.8
 
 CLIENT_MAN_PAGES = \
@@ -55,7 +56,6 @@ SERVER_MAN_PAGES =  \
     amreport.8 \
     amrmtape.8 \
     amserverconfig.8 \
-    amservice.8 \
     amstatus.8 \
     amtape.8 \
     amtapetype.8 \

@@ -1,3 +1,10 @@
+2011-03-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amservice.c; Moved from server-src/amservice.c
+	* server-src/amservice.c: Moved to server-src/amservice.c
+	* common-src/Makefile.am: Add amservice
+	* man/Makefile.am: Install amservice man page on client.
+	* server-src/Makefile.am: Remove amservice
+
 2011-03-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm (make_new_tape_label): Fix if $tle is undef.
 	* perl/Amanda/ScanInventory.pm: Call _user_msg with label argument.
