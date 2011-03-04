@@ -682,6 +682,10 @@ start_server_check(
     
     startclock();
 
+    /* server does not need root privileges, and the access() calls below use the real userid,
+     * so totally drop privileges at this point (making the userid equal to the dumpuser) */
+    set_root_privs(-1);
+
     if((outf = fdopen(fd, "w")) == NULL) {
 	error(_("fdopen %d: %s"), fd, strerror(errno));
 	/*NOTREACHED*/

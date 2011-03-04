@@ -1,3 +1,7 @@
+2011-03-04  Dustin J. Mitchell <dustin@zmanda.com>
+        * server-src/amcheck.c: drop root privs during the server check, so
+          that access() will test the dumpuser's perms, not root's perms
+
 2011-02-01  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Jan Görig
 	* server-src/amrestore.pl: Allow to go to next file with -p.
