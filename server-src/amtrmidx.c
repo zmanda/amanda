@@ -171,6 +171,8 @@ main(
 		    strcmp(disk, dp_disk) == 0) {
 		    matching_dp = g_slist_append(matching_dp, dp);
 		}
+		amfree(dp_host);
+		amfree(dp_disk);
 	    }
 
 	    dbprintf("%s %s -> %s\n", diskp->host->hostname,
@@ -182,6 +184,7 @@ main(
 		dbprintf(_("could not open index directory %s\n"), qindexdir);
 		amfree(indexdir);
 	        amfree(qindexdir);
+		g_slist_free(matching_dp);
 		continue;
 	    }
 	    name_length = 100;
@@ -287,6 +290,7 @@ main(
 		amfree(datestamp);
 		amfree(names[i]);
 	    }
+	    g_slist_free(matching_dp);
 	    amfree(names);
 	    amfree(indexdir);
 	    amfree(qindexdir);

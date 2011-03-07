@@ -1,3 +1,6 @@
+2011-03-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amtrmidx.c: Fix memory leak.
+
 2011-03-04  Dustin J. Mitchell <dustin@zmanda.com>
         * server-src/amcheck.c: drop root privs during the server check, so
           that access() will test the dumpuser's perms, not root's perms
