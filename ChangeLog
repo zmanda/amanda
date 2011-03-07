@@ -1,3 +1,6 @@
+2011-03-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amtrmidx.c: Fix memory leak.
+
 2011-02-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: flush even if flush threshold are not met if
 	  it save tape space.
