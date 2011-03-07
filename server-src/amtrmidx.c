@@ -184,6 +184,7 @@ main(
 		dbprintf(_("could not open index directory %s\n"), qindexdir);
 		amfree(indexdir);
 	        amfree(qindexdir);
+		g_slist_free(matching_dp);
 		continue;
 	    }
 	    name_length = 100;
@@ -289,6 +290,7 @@ main(
 		amfree(datestamp);
 		amfree(names[i]);
 	    }
+	    g_slist_free(matching_dp);
 	    amfree(names);
 	    amfree(indexdir);
 	    amfree(qindexdir);
