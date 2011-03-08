@@ -102,6 +102,7 @@ sub new {
 #on exit:
 #  $self->{exclude}
 #  $self->{include}
+#  $self->{include_filename}
 sub validate_inexclude {
     my $self = shift;
 
@@ -128,22 +129,66 @@ sub validate_inexclude {
 	}
 	close(FF);
     }
-    if ($#{$self->{include_file}} >= 0) {
-	$self->{include} = [ @{$self->{include_file}} ];
-    }
-    foreach my $file (@{$self->{include_list}}) {
-	if (!open(FF, $file)) {
-	    if ($self->{action} eq 'check' && !$self->{include_optional}) {
-		$self->print_to_server("Open of '$file' failed: $!",
-				       $Amanda::Script_App::ERROR);
+
+    if ($self->{action} eq "restore" and defined $self->{'include_list'}) {
+	# put all include in a single file $self->{'include_filename'}
+	$self->{'include_filename'} = "$AMANDA_TMPDIR/amsamba.$$.include";
+	open INC_FILE, ">$self->{'include_filename'}";
+	if ($#{$self->{include_file}} >= 0) {
+	    print INC_FILE "$self->{include_file}\n";
+	}
+	foreach my $file (@{$self->{include_list}}) {
+	    if (!open(FF, $file)) {
+		if ($self->{action} eq 'check' && !$self->{include_optional}) {
+		    $self->print_to_server("Open of '$file' failed: $!",
+					   $Amanda::Script_App::ERROR);
+		}
+		next;
 	    }
-	    next;
+	    while (<FF>) {
+		print INC_FILE;
+	    }
+	    close(FF);
 	}
-	while (<FF>) {
-	    chomp;
-	    push @{$self->{include}}, $_;
+
+	# add command line include for amrestore
+	for(my $i=1;defined $ARGV[$i]; $i++) {
+	    my $param = $ARGV[$i];
+	    $param =~ /^(.*)$/;
+	    print INC_FILE "$1\n";
 	}
-	close(FF);
+
+	close INC_FILE;
+    } else {
+	# put all include in $self->{'include'} they will be added on
+	# command line.
+	if ($#{$self->{include_file}} >= 0) {
+	    $self->{include} = [ @{$self->{include_file}} ];
+	}
+
+	foreach my $file (@{$self->{include_list}}) {
+	    if (!open(FF, $file)) {
+		if ($self->{action} eq 'check' && !$self->{include_optional}) {
+		    $self->print_to_server("Open of '$file' failed: $!",
+					   $Amanda::Script_App::ERROR);
+		}
+		next;
+	    }
+	    while (<FF>) {
+		chomp;
+		push @{$self->{include}}, $_;
+	    }
+	    close(FF);
+	}
+
+	# add command line include for amrestore
+	if ($self->{action} eq "restore") {
+		for(my $i=1;defined $ARGV[$i]; $i++) {
+		my $param = $ARGV[$i];
+		$param =~ /^(.*)$/;
+		push @{$self->{include}}, $1;
+	    }
+	}
     }
 }
 
@@ -234,7 +279,7 @@ sub findpass {
 	     $diskname eq $self->{share} ||
 	     $diskname eq $self->{sambashare})) {
 	    if (defined $userpasswd && $userpasswd ne "") {
-	        $self->{domain} = $domain if ($domain ne "");
+	        $self->{domain} = $domain if defined $domain && $domain ne "";
 	        my ($username, $password) = split('%', $userpasswd, 2);
 	        $self->{username} = $username;
 	        $self->{password} = $password;
@@ -692,14 +737,18 @@ sub command_restore {
 	if (defined $self->{domain}) {
 	    push @cmd, "-W", $self->{domain};
 	}
-	push @cmd, "-Tx", "-";
-	if ($#{$self->{include}} >= 0) {
-	    push @cmd, @{$self->{include}};
-        }
-	for(my $i=1;defined $ARGV[$i]; $i++) {
-	    my $param = $ARGV[$i];
-	    $param =~ /^(.*)$/;
-	    push @cmd, $1;
+	if (defined $self->{'include_filename'}) {
+	    push @cmd, "-TFx", "-", "$self->{'include_filename'}";
+	} else {
+	    push @cmd, "-Tx", "-";
+	    if ($#{$self->{include}} >= 0) {
+		push @cmd, @{$self->{include}};
+            }
+	    for(my $i=1;defined $ARGV[$i]; $i++) {
+		my $param = $ARGV[$i];
+		$param =~ /^(.*)$/;
+		push @cmd, $1;
+	    }
 	}
 	my ($parent_rdr, $child_wtr);
 	if (defined $self->{password}) {
