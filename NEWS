@@ -1,7 +1,7 @@
 Changes in release 3.3.0alpha
-   * chg-aggregate: new changer taht use other changer sequentially.
+   * chg-aggregate: new changer that use other changer sequentially.
    * meta-volume
-   * Add barcode and meta label in tapelist file
+   * Add meta label in tapelist file
    * chg-disk:
        o new NUM-SLOT property
        o new AUTO-CREATE-SLOT property
@@ -23,6 +23,19 @@ Changes in release 3.3.0alpha
      device.
    * amrecover: decompression and decryption are now done on the client if
 		compression/encryption was done on the client.
+   * amtape: inventory print the current slot
+   * amanda.conf:
+       o autoflush have value "no|yes|all"
+
+Changes in release 3.2.2
+
+   * Do not restore the NUL padding bytes, some program fail with them.
+   * Fix driver doing nothing if taper crash early.
+   * Fix taperalog *FIT no going to second volume.
+   * Fix amrestore '-p' not going to next file.
+   * flush even if flush threshold are not met if it save tape space.
+   * fix crash in amtrmidx due to memory leak.
+   * amsamba use 'Use smbclient -TF' for restore.
 
 Changes in release 3.2.1
 
