@@ -1,3 +1,13 @@
+Changes in release 3.2.2
+
+   * Do not restore the NUL padding bytes, some program fail with them.
+   * Fix driver doing nothing if taper crash early.
+   * Fix taperalog *FIT no going to second volume.
+   * Fix amrestore '-p' not going to next file.
+   * flush even if flush threshold are not met if it save tape space.
+   * fix crash in amtrmidx due to memory leak.
+   * amsamba use 'Use smbclient -TF' for restore.
+
 Changes in release 3.2.1
 
    * barcode are added to the tapelist file.

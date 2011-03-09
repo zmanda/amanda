@@ -1,3 +1,6 @@
+2010-03-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* ReleaseNotes, NEWS: Add changes for 3.2.2
+
 2011-03-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsamba.pl: Use smbclient -TF for restore.
 
