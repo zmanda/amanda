@@ -26,6 +26,22 @@ Changes in release 3.3.0alpha
    * amtape: inventory print the current slot
    * amanda.conf:
        o autoflush have value "no|yes|all"
+       o script have single-execution setting.
+       o Add pre-amcheck, post-amcheck, pre-estimate, post-estimate, pre-backup
+         and post-backup to execute-on of script.
+       o Add taperscan and interactivity section.
+       o add 'server' value in recovery-limit.
+       o add dump-limit in a dumptype.
+   * amanda-client.conf
+       o add amdump-server setting.
+   * script are searched in $APPLICATION_DIR, $CONFIG_DIR/<conf>/application
+     and $CONFIG_DIR/application
+   * amservice
+       o add -s argument
+       o is also installed on client
+   * new amdumpd server service, if enable, it allow client to start a backup
+     of itself.
+   * new amdump_client program, it is use on client to start a backup of itself
 
 Changes in release 3.2.2
 
