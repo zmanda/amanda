@@ -1,4 +1,7 @@
-2011-03-09  Jean-Louis Martineau <martineau@zmanda.com>
+2011-03-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/disk.pm: Use -l to check symlink existance.
+
+2011-03-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin.c: export quote host and disk name, import parse
 	  quoted host and disk name.
 

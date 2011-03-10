@@ -486,7 +486,7 @@ sub _set_current {
     my ($self, $slot) = @_;
     my $curlink = $self->{'dir'} . "/data";
 
-    if (-e $curlink) {
+    if (-l $curlink or -e $curlink) {
         unlink($curlink)
             or warn("Could not unlink '$curlink'");
     }
