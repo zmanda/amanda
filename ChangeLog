@@ -1,4 +1,8 @@
 2011-03-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amadmin.c: export quote host and disk name, import parse
+	  quoted host and disk name.
+
+2011-03-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* VERSION: 3.2.2
 
 2011-03-09  Jean-Louis Martineau <martineau@zmanda.com>
