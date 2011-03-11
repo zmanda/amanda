@@ -1,3 +1,11 @@
+2011-03-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: If leom is supported by device,
+	  then the dle can be split.
+	* perl/Amanda/Taper/Worker.pm: Send leom setting to
+	  get_splitting_args_from_config.
+	* server-src/planner.c: dle can use more than one tape if allow-split
+	  is set, this is to handle leom device where splitsize can be 0.
+
 2011-03-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/disk.pm: Use -l to check symlink existance.
 
