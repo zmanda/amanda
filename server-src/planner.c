@@ -2468,7 +2468,7 @@ static void delay_dumps(void)
 
     for(dp = schedq.head; dp != NULL; dp = ndp) {
 	int avail_tapes = 1;
-	if (dp->splitsize > (gint64)0)
+	if (dp->splitsize > (gint64)0 || dp->allow_split)
 	    avail_tapes = conf_runtapes;
 
 	ndp = dp->next; /* remove_disk zaps this */

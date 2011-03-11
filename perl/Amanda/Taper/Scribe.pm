@@ -702,7 +702,8 @@ sub get_xfer_dest {
 	($can_cache_inform ||
 	 !defined($part_cache_type) ||
 	 $part_cache_type eq 'disk' ||
-	 $part_cache_type eq 'memory')) {
+	 $part_cache_type eq 'memory' ||
+	 $leom_supported)) {
 	$self->{'allow_split'} = 1;
     } else {
 	$self->{'allow_split'} = 0;
@@ -1443,7 +1444,8 @@ sub get_splitting_args_from_config {
 	my $ps = $params{'part_size'};
 	my $pcms = $params{'part_cache_max_size'};
 	$ps = $pcms if (!defined $ps or (defined $pcms and $pcms < $ps));
-	$splitting_args{'allow_split'} = 1 if defined $ps and $ps > 0;
+	$splitting_args{'allow_split'} = 1 if ((defined $ps and $ps > 0) or
+					       $params{'leom_supported'});
 
 	# fail back from 'disk' to 'none' if the disk isn't set up correctly
 	if (defined $params{'part_cache_type'} and

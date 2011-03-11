@@ -606,17 +606,22 @@ sub setup_and_start_dump {
 		if (exists $splitting_args{$_});
 	}
 
+	my $device = $self->{'scribe'}->get_device();
+	if (!defined $device) {
+	    die "no device is available to create an xfer_dest";
+	}
+	$splitting_args{'leom_supported'} = $device->property_get("leom");
 	# and convert those to get_xfer_dest args
         %get_xfer_dest_args = get_splitting_args_from_config(
 		%splitting_args);
 	$get_xfer_dest_args{'max_memory'} = getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE);
 	if (!getconf_seen($CNF_DEVICE_OUTPUT_BUFFER_SIZE)) {
-	    my $device = $self->{'scribe'}->get_device();
 	    my $block_size4 = $device->block_size * 4;
 	    if ($block_size4 > $get_xfer_dest_args{'max_memory'}) {
 		$get_xfer_dest_args{'max_memory'} = $block_size4;
 	    }
 	}
+	$device = undef;
 	$get_xfer_dest_args{'can_cache_inform'} = ($msgtype eq Amanda::Taper::Protocol::FILE_WRITE and $get_xfer_dest_args{'allow_split'});
 
 	# if we're unable to fulfill the user's splitting needs, we can still give
