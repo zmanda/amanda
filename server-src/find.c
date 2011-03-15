@@ -1004,6 +1004,17 @@ search_logfile(
 					host, disk, date, level);
 		    find_result_t *new_output_find = g_new0(find_result_t, 1);
 		    part_find = g_hash_table_lookup(part_by_dle, key);
+		    maxparts = partnum;
+		    if (maxparts < totalparts)
+			maxparts = totalparts;
+		    for (a_part_find = part_find;
+			 a_part_find;
+			 a_part_find = a_part_find->next) {
+			if (maxparts < a_part_find->partnum)
+			    maxparts = a_part_find->partnum;
+			if (maxparts < a_part_find->totalparts)
+			    maxparts = a_part_find->totalparts;
+		    }
 		    new_output_find->timestamp = stralloc(date);
 		    new_output_find->write_timestamp = stralloc(datestamp);
 		    new_output_find->hostname=stralloc(host);
