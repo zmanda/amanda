@@ -1,3 +1,6 @@
+2011-03-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/find.c: Compute maxparts from the list of part.
+
 2011-03-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: If leom is supported by device,
 	  then the dle can be split.
