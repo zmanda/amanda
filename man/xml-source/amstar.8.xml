@@ -42,6 +42,10 @@ for information on application properties and how they are configured.</para>
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 <variablelist>
  <!-- ==== -->
+ <varlistentry><term>ACL</term><listitem>
+If "YES" (the default), amstar will store files acl by passing the <emphasis>-acl</emphasis> argument to star. If "NO", then the <emphasis>-acl</emphasis> option is not given to star, and it will not try to backup the acl.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>COMMAND-OPTIONS</term><listitem>
 <para>If set, theses options are passed asis to star. Each option must be a different value of the property. Some option can break how amanda do backup, use it with care.</para>
 Use:
