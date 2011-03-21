@@ -74,6 +74,11 @@ sizes greater than 8GB can be archived. The default is YES.
 </listitem></varlistentry>
 
  <!-- ==== -->
+ <varlistentry><term>SUNTAR-PATH</term><listitem>
+The path to the suntar binary. The default is set when Amanda is built.
+</listitem></varlistentry>
+
+ <!-- ==== -->
  <varlistentry><term>LANG</term><listitem>
 Default LANG is "C". suntar require an UTF-8 LANG if you have UTF-8 filename and it is configured for extended headers. A good value can be "en_US.UTF-8" if that locale is installed on your machine.
 </listitem></varlistentry>
