@@ -137,6 +137,55 @@ AC_DEFUN([AMANDA_PROG_STAR],
 
 # SYNOPSIS
 #
+#   AMANDA_PROG_SUNTAR
+#
+# OVERVIEW
+#
+#   Use the value given with the option --with-suntar= or the value of the.
+#   precious variable SUNTAR to define the location of Sun's version of tar.
+#   Otherwise set the value to /usr/sbin/tar.  Value is not checked.
+#
+#   Also handle --with-suntar
+#
+AC_DEFUN([AMANDA_PROG_SUNTAR],
+[
+    AC_REQUIRE([AMANDA_INIT_PROGS])
+
+    # call with
+    AC_ARG_WITH(suntar,
+	AS_HELP_STRING([--with-suntar=PROG],
+		       [use PROG as 'suntar']),
+	[
+	    # check withval
+	    case "$withval" in
+		/*) SUNTAR="$withval";;
+		y|ye|yes) :;;
+		n|no) SUNTAR=no ;;
+		*)  AC_MSG_ERROR([*** You must supply a full pathname to --with-suntar]);;
+	    esac
+	    # done
+	],
+	[
+	    if test "x$SUNTAR" == "x"; then
+		SUNTAR="/usr/sbin/tar"
+	    fi
+	]
+    )
+
+    if test "x$SUNTAR" = "xno"; then
+	SUNTAR=
+    fi
+
+    if test "x$SUNTAR" != "x"; then
+	# define unquoted
+	AC_DEFINE_UNQUOTED(SUNTAR, "$SUNTAR", [Location of the 'suntar' binary])
+    fi
+    AC_ARG_VAR(SUNTAR, [Location of the 'suntar' binary])
+    AC_SUBST(SUNTAR)
+])
+
+# SYNOPSIS
+#
 #   AMANDA_PROG_SAMBA_CLIENT
 #
 # OVERVIEW

@@ -38,10 +38,13 @@ use Amanda::Util qw( :constants );
 
 sub new {
     my $class = shift;
-    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $exclude_list, $exclude_optional,  $include_list, $include_optional, $bsize, $ext_attrib, $ext_header, $ignore, $normal, $strange, $error_exp, $directory) = @_;
+    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $exclude_list, $exclude_optional,  $include_list, $include_optional, $bsize, $ext_attrib, $ext_header, $ignore, $normal, $strange, $error_exp, $directory, $suntar_path) = @_;
     my $self = $class->SUPER::new($config);
 
-    $self->{suntar}            = "/usr/sbin/tar";
+    $self->{suntar}            = $Amanda::Constants::SUNTAR;
+    if (defined $suntar_path) {
+	$self->{suntar}        = $suntar_path;
+    }
     $self->{pfexec}            = "/usr/bin/pfexec";
     $self->{gnutar}            = $Amanda::Constants::GNUTAR;
     $self->{teecount}          = $Amanda::Paths::amlibexecdir."/teecount";
@@ -580,6 +583,7 @@ my @opt_strange;
 my @opt_error;
 my $opt_lang;
 my $opt_directory;
+my $opt_suntar_path;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
@@ -605,12 +609,13 @@ GetOptions(
     'error=s'                => \@opt_error,
     'lang=s'                 => \$opt_lang,
     'directory=s'            => \$opt_directory,
+    'suntar-path=s'          => \$opt_suntar_path,
 ) or usage();
 
 if (defined $opt_lang) {
     $ENV{LANG} = $opt_lang;
 }
 
-my $application = Amanda::Application::Amsuntar->new($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_list, $opt_include_optional,$opt_bsize,$opt_ext_attrib,$opt_ext_head, \@opt_ignore, \@opt_normal, \@opt_strange, \@opt_error, $opt_directory);
+my $application = Amanda::Application::Amsuntar->new($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_list, $opt_include_optional,$opt_bsize,$opt_ext_attrib,$opt_ext_head, \@opt_ignore, \@opt_normal, \@opt_strange, \@opt_error, $opt_directory, $opt_suntar_path);
 
 $application->do($ARGV[0]);
