@@ -132,6 +132,7 @@ static char *star_tardumps;
 static int   star_dle_tardumps;
 static int   star_onefilesystem;
 static int   star_sparse;
+static int   star_acl;
 static char *star_directory;
 static GSList *normal_message = NULL;
 static GSList *ignore_message = NULL;
@@ -161,6 +162,7 @@ static struct option long_options[] = {
     {"directory"       , 1, NULL, 21},
     {"command-options" , 1, NULL, 22},
     {"exclude-file"    , 1, NULL, 23},
+    {"acl"             , 1, NULL, 24},
     { NULL, 0, NULL, 0}
 };
 
@@ -183,6 +185,7 @@ main(
     star_dle_tardumps = 0;
     star_onefilesystem = 1;
     star_sparse = 1;
+    star_acl = 1;
     star_directory = NULL;
 
     /* initialize */
@@ -325,6 +328,13 @@ main(
 	case 23: if (optarg)
 		     argument.dle.exclude_file =
 			 append_sl(argument.dle.exclude_file, optarg);
+		 break;
+	case 24: if (optarg && strcasecmp(optarg, "NO") == 0)
+		     star_acl = 0;
+		 else if (optarg && strcasecmp(optarg, "YES") == 0)
+		     star_acl = 1;
+		 else if (strcasecmp(command, "selfcheck") == 0)
+		     printf(_("ERROR [%s: bad ACL property value (%s)]\n"), get_pname(), optarg);
 		 break;
 	case ':':
 	case '?':
@@ -966,7 +976,8 @@ static GPtrArray *amstar_build_argv(
 	g_ptr_array_add(argv_ptr, stralloc("-wtardumps"));
 
     g_ptr_array_add(argv_ptr, stralloc("-xattr"));
-    g_ptr_array_add(argv_ptr, stralloc("-acl"));
+    if (star_acl)
+	g_ptr_array_add(argv_ptr, stralloc("-acl"));
     g_ptr_array_add(argv_ptr, stralloc("H=exustar"));
     g_ptr_array_add(argv_ptr, stralloc("errctl=WARN|SAMEFILE|DIFF|GROW|SHRINK|SPECIALFILE|GETXATTR|BADACL *"));
     if (star_sparse)
@@ -1034,7 +1045,6 @@ static GPtrArray *amstar_build_argv(
 
     amfree(tardumpfile);
     amfree(fsname);
-    amfree(dirname);
 
     return(argv_ptr);
 }

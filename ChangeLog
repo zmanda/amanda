@@ -1,4 +1,8 @@
 2011-03-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amstar.c: Add ACL property.
+	* man/xml-source/amstar.8.xml: Document ACL property.
+
+2011-03-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/dumpers.m4: Add AMANDA_PROG_SUNTAR, --with-suntar=??
 	* configure.in: Use AMANDA_PROG_SUNTAR.
 	* perl/Amanda/Constants.pm.in: Define $Amanda::Constants::SUNTAR
