@@ -855,12 +855,23 @@ amstar_restore(
 
     if (argument->dle.include_list &&
 	argument->dle.include_list->nb_element == 1) {
-	g_ptr_array_add(argv_ptr,
-			stralloc2("list=",
-				  argument->dle.include_list->first->name));
+	FILE *include_list = fopen(argument->dle.include_list->first->name, "r");
+	char  line[2*PATH_MAX+2];
+	while (fgets(line, 2*PATH_MAX, include_list)) {
+	    line[strlen(line)-1] = '\0'; /* remove '\n' */
+	    if (strncmp(line, "./", 2) == 0)
+		g_ptr_array_add(argv_ptr, stralloc(line+2)); /* remove ./ */
+	    else if (strcmp(line, ".") != 0)
+		g_ptr_array_add(argv_ptr, stralloc(line));
+	}
+	fclose(include_list);
     }
-    for (j=1; j< argument->argc; j++)
-	g_ptr_array_add(argv_ptr, stralloc(argument->argv[j]+2));/*remove ./ */
+    for (j=1; j< argument->argc; j++) {
+	if (strncmp(argument->argv[j], "./", 2) == 0)
+	    g_ptr_array_add(argv_ptr, stralloc(argument->argv[j]+2));/*remove ./ */
+	else if (strcmp(argument->argv[j], ".") != 0)
+	    g_ptr_array_add(argv_ptr, stralloc(argument->argv[j]));
+    }
     g_ptr_array_add(argv_ptr, NULL);
 
     debug_executing(argv_ptr);

@@ -1,4 +1,8 @@
 2011-03-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amstar.c: read include_list and pass each line as
+	  argument for restore operation.
+
+2011-03-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Cast with off_t.
 	* application-src/amstar.c: Cast with off_t.
 
