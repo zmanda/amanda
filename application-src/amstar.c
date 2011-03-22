@@ -750,7 +750,7 @@ amstar_backup(
 	    }
 	}
 	if (rp->typ == DMP_SIZE) {
-	    dump_size = (long)((the_num(line, rp->field)* rp->scale+1023.0)/1024.0);
+	    dump_size = (off_t)((the_num(line, rp->field)* rp->scale+1023.0)/1024.0);
 	}
 	switch (rp->typ) {
 	    case DMP_IGNORE:

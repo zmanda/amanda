@@ -1,3 +1,7 @@
+2011-03-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Cast with off_t.
+	* application-src/amstar.c: Cast with off_t.
+
 2011-03-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amstar.c: Add ACL property.
 	* man/xml-source/amstar.8.xml: Document ACL property.
