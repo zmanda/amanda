@@ -82,7 +82,10 @@ AC_DEFUN([AMANDA_KRB5_SECURITY],
                 AMANDA_ADD_CPPFLAGS([-I$KRB5_DIR_FOUND/include])
             fi
                 AC_CHECK_LIB(krb5support,main)
-            AMANDA_ADD_LDFLAGS([-L$KRB5_LIBDIR_FOUND])
+
+            if test "$KRB5_LIBDIR_FOUND" != "$libdir" ; then
+                AMANDA_ADD_LDFLAGS([-L$KRB5_LIBDIR_FOUND])
+            fi
 
             AC_DEFINE(KRB5_SECURITY,1,
                 [Define if Kerberos 5 security is to be enabled. ])

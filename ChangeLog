@@ -1,3 +1,7 @@
+2011-03-25  Jan Görig <jgorig@redhat.com>
+	* config/amanda/krb5-security.m4: fix linking against wrong libraries
+	  on systems where krb5 directory is libdir and amanda is installed
+
 2011-03-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Fix iteration over a list it modify.
 
