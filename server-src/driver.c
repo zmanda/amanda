@@ -1087,7 +1087,7 @@ start_some_dumps(
 {
     const time_t now = time(NULL);
     int cur_idle;
-    disk_t *diskp, *delayed_diskp, *diskp_accept;
+    disk_t *diskp, *delayed_diskp, *diskp_accept, *diskp_next;
     disk_t *dp;
     assignedhd_t **holdp=NULL, **holdp_accept;
     cmd_t cmd;
@@ -1194,7 +1194,8 @@ start_some_dumps(
 		    }
 
 		    for (diskp = directq.head; diskp != NULL;
-					       diskp = diskp->next) {
+					       diskp = diskp_next) {
+			diskp_next = diskp->next;
 		        allow_dump_dle(diskp, taper, dumptype, &directq, now,
 				       dumper_to_holding, &cur_idle,
 				       &delayed_diskp, &diskp_accept,
@@ -1213,7 +1214,8 @@ start_some_dumps(
 	}
 
 	if (diskp == NULL) {
-	    for(diskp = rq->head; diskp != NULL; diskp = diskp->next) {
+	    for(diskp = rq->head; diskp != NULL; diskp = diskp_next) {
+		diskp_next = diskp->next;
 		assert(diskp->host != NULL && sched(diskp) != NULL);
 
 		allow_dump_dle(diskp, NULL, dumptype, rq, now,
