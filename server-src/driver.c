@@ -879,7 +879,7 @@ start_some_dumps(
     disklist_t *	rq)
 {
     int cur_idle;
-    disk_t *diskp, *delayed_diskp, *diskp_accept;
+    disk_t *diskp, *delayed_diskp, *diskp_accept, *diskp_next;
     disk_t *dp;
     assignedhd_t **holdp=NULL, **holdp_accept;
     const time_t now = time(NULL);
@@ -953,8 +953,9 @@ start_some_dumps(
 		dumptype = 'T';
 	}
 
-	for(diskp = rq->head; diskp != NULL; diskp = diskp->next) {
+	for(diskp = rq->head; diskp != NULL; diskp = diskp_next) {
 	    assert(diskp->host != NULL && sched(diskp) != NULL);
+	    diskp_next = diskp->next;
 
 	    if (diskp->host->start_t > now) {
 		cur_idle = max(cur_idle, IDLE_START_WAIT);
