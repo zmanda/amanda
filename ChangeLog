@@ -1,3 +1,8 @@
+2011-03-26  Dustin J. Mitchell <dustin@mozilla.com>
+	* perl/Amanda/Util.swg: include fsusage.h early in the generated C
+	  to avoid problems with SWIG #undefine-ing 'bool' on Mac OS X with
+	  the system-installed Perl
+
 2011-03-25  Jan Görig <jgorig@redhat.com>
 	* config/amanda/krb5-security.m4: fix linking against wrong libraries
 	  on systems where krb5 directory is libdir and amanda is installed
