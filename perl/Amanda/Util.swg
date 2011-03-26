@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -30,12 +30,17 @@
 #include "debug.h"
 #include "full-read.h"
 #include "full-write.h"
-#include "fsusage.h"
 #include "stream.h"
 /* use a relative path here to avoid conflicting with Perl's util.h. */
 #include "../common-src/util.h"
 #include "file.h"
 #include "sockaddr-util.h"
+%}
+
+%begin %{
+/* this needs to be included early in the generated C file, before the SWIG-generated
+ * code #undefine's bool */
+#include "fsusage.h"
 %}
 
 %perlcode %{
