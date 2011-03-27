@@ -1547,4 +1547,4 @@ mostlyclean-local: mostlyclean-generic
 	:
 
 # Make sure regenerate/* are in the distribution tarball
-EXTRA_DIST += regenerate/no-error.patch regenerate/regenerate
+EXTRA_DIST += regenerate/fsusage-no-bool.patch regenerate/no-error.patch regenerate/regenerate

@@ -66,6 +66,10 @@ PATCH_DIR="`pwd`/gnulib/regenerate"
 patch -p0 < "${PATCH_DIR}/no-error.patch" || exit 1
 rm -f gnulib/Makefile.am.orig
 
+# Patch fsusage.h to not use 'bool', as it doesn't play nicely with
+# Perl on Mac OS X
+patch -p1 < "${PATCH_DIR}/fsusage-no-bool.patch" || exit 1
+
 # Add info to the makefile to ensure all this stuff gets put in
 # the distribution tarball
 (   echo ""
