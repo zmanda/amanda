@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -1369,8 +1369,8 @@ static gboolean
 vfs_device_erase (Device * dself) {
     VfsDevice *self = VFS_DEVICE(dself);
 
-    if (!open_lock(self, 0, true))
-        return false;
+    if (!open_lock(self, 0, TRUE))
+        return FALSE;
 
     delete_vfs_files(self);
 
