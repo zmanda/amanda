@@ -231,15 +231,18 @@ C<$addrs> and reads the transfer data from the connection.
 
 =head3 Amanda::Xfer::Filter:Process
 
-  Amanda::Xfer::Filter::Process->new([@args], $need_root, $log_stderr);
+  $xfp = Amanda::Xfer::Filter::Process->new([@args], $need_root);
 
 This filter will pipe data through the standard file descriptors of the
 subprocess specified by C<@args>.  If C<$need_root> is true, it will attempt to
-change to uid 0 before executing the process.  Standard output from the process
-is redirected to the debug log.  Note that the process is invoked directly, not
-via a shell, so shell metacharcters (e.g., C<< 2>&1 >>) will not function as
-expected.  If C<$log_stderr> is set, then the filter's standard error is sent
-to the debug log; otherwise, it is sent to the parent process's stderr.
+change to uid 0 before executing the process.  Note that the process is
+invoked directly, not via a shell, so shell metacharcters (e.g., C<< 2>&1 >>)
+will not function as expected. This method create a pipe for the process
+stderr and the caller must read it or a hang may occur.
+
+  $xfp->get_stderr_fd()
+
+Return the file descriptor of the stderr pipe to read from.
 
 =head3 Amanda::Xfer::Filter:Xor
 

@@ -426,13 +426,10 @@ XferElement * xfer_source_directtcp_connect(DirectTCPAddr *addrs);
  *
  * @param argv: NULL-terminated command-line arguments
  * @param need_root: become root before exec'ing the subprocess
- * @param log_stderr: if true, send stderr to the debug log; otherwise, send it
- * to the stderr of the current process
  * @return: new element
  */
 XferElement *xfer_filter_process(gchar **argv,
-    gboolean need_root,
-    gboolean log_stderr);
+    gboolean need_root);
 
 /* A transfer filter that just applies a bytewise XOR transformation to the data
  * that passes through it.

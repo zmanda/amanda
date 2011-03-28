@@ -1,3 +1,19 @@
+2011-03-28  Jean-Louis Martineau <martineau@zmanda.com>
+	Change the Amanda:Xfer::Filter::Process api, it always create a pipe
+	for the process stderr, the callers must read from it. Callers can send
+	it to debug file, stderr or to amrecover.
+	* installcheck/Amanda_Xfer.pl: Change for new AXF::Process API.
+	* perl/Amanda/Xfer.pod: Document new AXF::Process API.
+	* perl/Amanda/Xfer.swg: Change for new AXF::Process API.
+	* server-src/amcheckdump.pl, server-src/amfetchdump.pl,
+	  server-src/amrestore.pl: Use new AXF::Process API, send it to stderr
+	  and debug file.
+	* server-src/amidxtaped.pl: Use new AXF::Process API, send it to debug
+	  file and amrecover.
+	* xfer-src/filter-process.c: Remove log_stderr argument of
+	  xfer_filter_process, add new get_err_fd method.
+	* xfer-src/xfer-element.h: Change xfer_filter_process prototype.
+
 2011-03-27  Dustin J. Mitchell <dustin@mozilla.com>
 	* perl/Amanda/Util.swg: revert previous patch
 	* gnulib/Makefile.am gnulib/fsusage.h

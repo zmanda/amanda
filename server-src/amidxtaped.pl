@@ -117,6 +117,7 @@ use base 'Amanda::ClientService';
 use Sys::Hostname;
 
 use Amanda::Debug qw( debug info warning );
+use Amanda::MainLoop qw( :GIOCondition );
 use Amanda::Util qw( :constants );
 use Amanda::Feature;
 use Amanda::Config qw( :init :getconf );
@@ -140,6 +141,7 @@ sub run {
 
     $self->{'my_features'} = Amanda::Feature::Set->mine();
     $self->{'their_features'} = Amanda::Feature::Set->old();
+    $self->{'all_filter'} = {};
 
     $self->setup_streams();
 }
@@ -513,7 +515,7 @@ sub xfer_src_cb {
 	if ($header->{'srv_encrypt'}) {
 	    push @filters,
 		Amanda::Xfer::Filter::Process->new(
-		    [ $header->{'srv_encrypt'}, $header->{'srv_decrypt_opt'} ], 0, 1);
+		    [ $header->{'srv_encrypt'}, $header->{'srv_decrypt_opt'} ], 0);
 	    $header->{'encrypted'} = 0;
 	    $header->{'srv_encrypt'} = '';
 	    $header->{'srv_decrypt_opt'} = '';
@@ -525,7 +527,7 @@ sub xfer_src_cb {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
 		        [ $header->{'clnt_encrypt'},
-			  $header->{'clnt_decrypt_opt'} ], 0, 1);
+			  $header->{'clnt_decrypt_opt'} ], 0);
 		$header->{'encrypted'} = 0;
 		$header->{'srv_encrypt'} = '';
 		$header->{'srv_decrypt_opt'} = '';
@@ -551,7 +553,7 @@ sub xfer_src_cb {
 	    # TODO: this assumes that srvcompprog takes "-d" to decrypt
 	    push @filters,
 		Amanda::Xfer::Filter::Process->new(
-		    [ $header->{'srvcompprog'}, "-d" ], 0, 1);
+		    [ $header->{'srvcompprog'}, "-d" ], 0);
 	    # adjust the header
 	    $header->{'compressed'} = 0;
 	    $header->{'uncompress_cmd'} = '';
@@ -561,7 +563,7 @@ sub xfer_src_cb {
 		# TODO: this assumes that clntcompprog takes "-d" to decrypt
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $header->{'clntcompprog'}, "-d" ], 0, 1);
+			[ $header->{'clntcompprog'}, "-d" ], 0);
 		# adjust the header
 		$header->{'compressed'} = 0;
 		$header->{'uncompress_cmd'} = '';
@@ -573,7 +575,7 @@ sub xfer_src_cb {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
 			[ $Amanda::Constants::UNCOMPRESS_PATH,
-			  $Amanda::Constants::UNCOMPRESS_OPT ], 0, 1);
+			  $Amanda::Constants::UNCOMPRESS_OPT ], 0);
 		# adjust the header
 		$header->{'compressed'} = 0;
 		$header->{'uncompress_cmd'} = '';
@@ -669,6 +671,41 @@ sub start_xfer {
 	}
     }
 
+    # start reading all filter stderr
+    foreach my $filter (@{$self->{'xfer_filters'}}) {
+	my $fd = $filter->get_stderr_fd();
+	$fd.="";
+	$fd+=0;
+	my $src = Amanda::MainLoop::fd_source($fd,
+					      $G_IO_IN|$G_IO_HUP|$G_IO_ERR);
+	my $buffer = "";
+	$self->{'all_filter'}{$src} = 1;
+	$src->set_callback( sub {
+	    my $b;
+	    my $n_read = POSIX::read($filter->get_stderr_fd(), $b, 1);
+	    if (!defined $n_read) {
+		return;
+	    } elsif ($n_read == 0) {
+		delete $self->{'all_filter'}->{$src};
+		$src->remove();
+		POSIX::close($filter->get_stderr_fd());
+		if (!%{$self->{'all_filter'}} and $self->{'fetch_done'}) {
+		    Amanda::MainLoop::quit();
+		}
+	    } else {
+		$buffer .= $b;
+		if ($b eq "\n") {
+		    my $line = $buffer;
+		    #print STDERR "filter stderr: $line";
+		    chomp $line;
+		    $self->sendmessage("filter stderr: $line");
+		    debug("filter stderr: $line");
+		    $buffer = "";
+		}
+	    }
+	});
+    }
+
     # create and start the transfer
     $self->{'xfer'} = Amanda::Xfer->new([
 	$self->{'xfer_src'},
@@ -751,11 +788,21 @@ sub quit {
 		# it's *way* too late to report this to amrecover now!
 		warning("while quitting clerk: $err");
 	    }
-	    Amanda::MainLoop::quit();
+	    $self->quit1();
 	});
     } else {
 	$self->{'scan'}->quit() if defined $self->{'scan'};
 	$self->{'chg'}->quit() if defined $self->{'chg'};
+	$self->quit1();
+    }
+
+}
+
+sub quit1 {
+    my $self = shift;
+
+    $self->{'fetch_done'} = 1;
+    if (!%{$self->{'all_filter'}}) {
 	Amanda::MainLoop::quit();
     }
 }

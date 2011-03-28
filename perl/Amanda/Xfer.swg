@@ -382,8 +382,9 @@ XferElement *xfer_filter_xor(
 %newobject xfer_filter_process;
 XferElement *xfer_filter_process(
     gchar **argv,
-    gboolean need_root,
-    gboolean log_stderr);
+    gboolean need_root);
+int get_err_fd(
+    XferElement *elt);
 
 %newobject xfer_dest_null;
 XferElement *xfer_dest_null(
@@ -618,6 +619,7 @@ DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_filter_xor)
 PACKAGE(Amanda::Xfer::Filter::Process)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_filter_process)
+DECLARE_METHOD(get_stderr_fd, Amanda::Xfer::get_err_fd)
 
 /* ---- */
 

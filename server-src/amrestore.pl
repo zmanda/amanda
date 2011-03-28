@@ -30,6 +30,7 @@ use Amanda::Util qw( :constants );
 use Amanda::Changer;
 use Amanda::Constants;
 use Amanda::MainLoop;
+use Amanda::MainLoop qw( :GIOCondition );
 use Amanda::Header;
 use Amanda::Holding;
 use Amanda::Cmdline;
@@ -137,6 +138,8 @@ sub main {
     my $filenum = $opt_filenum;
     $filenum = 1 if (!$filenum);
     $filenum = 0 + "$filenum"; # convert to integer
+    my %all_filter;
+    my $restore_done;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb,
@@ -286,11 +289,11 @@ sub main {
 	    if ($hdr->{'srv_encrypt'}) {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'srv_encrypt'}, $hdr->{'srv_decrypt_opt'} ], 0, 0);
+			[ $hdr->{'srv_encrypt'}, $hdr->{'srv_decrypt_opt'} ], 0);
 	    } elsif ($hdr->{'clnt_encrypt'}) {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'clnt_encrypt'}, $hdr->{'clnt_decrypt_opt'} ], 0, 0);
+			[ $hdr->{'clnt_encrypt'}, $hdr->{'clnt_decrypt_opt'} ], 0);
 	    } else {
 		return failure("could not decrypt encrypted dump: no program specified",
 			    $finished_cb);
@@ -310,17 +313,17 @@ sub main {
 		# TODO: this assumes that srvcompprog takes "-d" to decompress
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'srvcompprog'}, "-d" ], 0, 0);
+			[ $hdr->{'srvcompprog'}, "-d" ], 0);
 	    } elsif ($hdr->{'clntcompprog'}) {
 		# TODO: this assumes that clntcompprog takes "-d" to decompress
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'clntcompprog'}, "-d" ], 0, 0);
+			[ $hdr->{'clntcompprog'}, "-d" ], 0);
 	    } else {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
 			[ $Amanda::Constants::UNCOMPRESS_PATH,
-			  $Amanda::Constants::UNCOMPRESS_OPT ], 0, 0);
+			  $Amanda::Constants::UNCOMPRESS_OPT ], 0);
 	    }
 	    
 	    # adjust the header
@@ -335,7 +338,7 @@ sub main {
 	    @filters = (
 		Amanda::Xfer::Filter::Process->new(
 		    [ $Amanda::Constants::COMPRESS_PATH,
-		      $compress_opt ], 0, 0),
+		      $compress_opt ], 0),
 	    );
 	    
 	    # adjust the header
@@ -349,6 +352,40 @@ sub main {
 	if ($opt_header) {
 	    $hdr->{'blocksize'} = Amanda::Holding::DISK_BLOCK_BYTES;
 	    $dest_fh->syswrite($hdr->to_string(32768, 32768));
+	}
+
+	# start reading all filter stderr
+	foreach my $filter (@filters) {
+	    my $fd = $filter->get_stderr_fd();
+	    $fd.="";
+	    $fd+=0;
+	    my $src = Amanda::MainLoop::fd_source($fd,
+						  $G_IO_IN|$G_IO_HUP|$G_IO_ERR);
+	    my $buffer = "";
+	    $all_filter{$src} = 1;
+	    $src->set_callback( sub {
+		my $b;
+		my $n_read = POSIX::read($filter->get_stderr_fd(), $b, 1);
+		if (!defined $n_read) {
+		    return;
+		} elsif ($n_read == 0) {
+		    delete $all_filter{$src};
+		    $src->remove();
+		    POSIX::close($filter->get_stderr_fd());
+		    if (!%all_filter and $restore_done) {
+			$finished_cb->();
+		    }
+		} else {
+		    $buffer .= $b;
+		    if ($b eq "\n") {
+			my $line = $buffer;
+			print STDERR "filter stderr: $line";
+			chomp $line;
+			debug("filter stderr: $line");
+			$buffer = "";
+		    }
+		}
+	    });
 	}
 	
 	my $xfer = Amanda::Xfer->new([ $src, @filters, $dest ]);
@@ -398,10 +435,12 @@ sub main {
     step quit => sub {
 	my ($err) = @_;
 	$res = undef;
-
+	$restore_done = 1;
 	return failure($err, $finished_cb) if $err;
 
-	$finished_cb->();
+	if (!%all_filter) {
+	    $finished_cb->();
+	}
     };
 }
 main(\&Amanda::MainLoop::quit);

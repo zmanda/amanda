@@ -50,7 +50,7 @@ typedef struct XferFilterProcess {
 
     gchar **argv;
     gboolean need_root;
-    gboolean log_stderr;
+    int pipe_err[2];
 
     pid_t child_pid;
     GSource *child_watch;
@@ -63,8 +63,9 @@ typedef struct XferFilterProcess {
 
 typedef struct {
     XferElementClass __parent__;
-} XferFilterProcessClass;
+    int (*get_err_fd)(XferFilterProcess *elt);
 
+} XferFilterProcessClass;
 
 /*
  * Implementation
@@ -113,6 +114,13 @@ child_watch_callback(
     xfer_queue_message(XFER_ELEMENT(self)->xfer, xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0));
 }
 
+static int
+get_err_fd_impl(
+    XferFilterProcess *xfp)
+{
+    return xfp->pipe_err[0];
+}
+
 static gboolean
 start_impl(
     XferElement *elt)
@@ -154,8 +162,7 @@ start_impl(
 	     * on those fd's */
 	    dup2(rfd, STDIN_FILENO);
 	    dup2(wfd, STDOUT_FILENO);
-	    if (!self->log_stderr)
-		debug_dup_stderr_to_debug();
+	    dup2(self->pipe_err[1], STDERR_FILENO);
 
 	    /* and close everything else */
 	    safe_fd(-1, 0);
@@ -180,6 +187,7 @@ start_impl(
     /* close the pipe fd's */
     close(rfd);
     close(wfd);
+    close(self->pipe_err[1]);
 
     /* watch for child death */
     self->child_watch = new_child_watch_source(self->child_pid);
@@ -273,6 +281,7 @@ class_init(
 
     klass->perl_class = "Amanda::Xfer::Filter::Process";
     klass->mech_pairs = mech_pairs;
+    selfc->get_err_fd = get_err_fd_impl;
 
     goc->finalize = finalize_impl;
 
@@ -308,8 +317,7 @@ xfer_filter_process_get_type (void)
 XferElement *
 xfer_filter_process(
     gchar **argv,
-    gboolean need_root,
-    gboolean log_stderr)
+    gboolean need_root)
 {
     XferFilterProcess *xfp = (XferFilterProcess *)g_object_new(XFER_FILTER_PROCESS_TYPE, NULL);
     XferElement *elt = XFER_ELEMENT(xfp);
@@ -319,7 +327,20 @@ xfer_filter_process(
 
     xfp->argv = argv;
     xfp->need_root = need_root;
-    xfp->log_stderr = log_stderr;
-
+    pipe(xfp->pipe_err);
     return elt;
+}
+
+int get_err_fd(XferElement *elt);
+int get_err_fd(
+    XferElement *elt)
+{
+    XferFilterProcessClass *klass;
+    g_assert(IS_XFER_FILTER_PROCESS(elt));
+
+    klass = XFER_FILTER_PROCESS_GET_CLASS(elt);
+    if (klass->get_err_fd)
+	return klass->get_err_fd(XFER_FILTER_PROCESS(elt));
+    else
+        return 0;
 }
