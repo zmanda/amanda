@@ -1,4 +1,7 @@
 2011-03-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* xfer-src/filter-process.c: Call g_critical if pipe() fail.
+
+2011-03-28  Jean-Louis Martineau <martineau@zmanda.com>
 	Change the Amanda:Xfer::Filter::Process api, it always create a pipe
 	for the process stderr, the callers must read from it. Callers can send
 	it to debug file, stderr or to amrecover.
