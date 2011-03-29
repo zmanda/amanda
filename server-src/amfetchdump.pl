@@ -443,20 +443,20 @@ sub main {
 	foreach my $filter (@filters) {
 	    my $fd = $filter->get_stderr_fd();
 	    $fd.="";
-	    $fd+=0;
+	    $fd = int($fd);
 	    my $src = Amanda::MainLoop::fd_source($fd,
 						 $G_IO_IN|$G_IO_HUP|$G_IO_ERR);
 	    my $buffer = "";
 	    $all_filter{$src} = 1;
 	    $src->set_callback( sub {
 		my $b;
-		my $n_read = POSIX::read($filter->get_stderr_fd(), $b, 1);
+		my $n_read = POSIX::read($fd, $b, 1);
 		if (!defined $n_read) {
 		    return;
 		} elsif ($n_read == 0) {
 		    delete $all_filter{$src};
 		    $src->remove();
-		    POSIX::close($filter->get_stderr_fd());
+		    POSIX::close($fd);
 		    if (!%all_filter and $fetch_done) {
 			$finished_cb->();
 		    }
