@@ -1,3 +1,6 @@
+2011-03-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/fileheader.c: Remove the hexdump function.
+
 2011-03-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Fix iteration over a list it modify.
 
