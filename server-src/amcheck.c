@@ -1928,6 +1928,13 @@ start_host(
 			    g_fprintf(outf,
 			      _("ERROR: application '%s' not found.\n"), dp->application);
 			} else {
+		    	    char *client_name = application_get_client_name(application);
+			    if (client_name && strlen(client_name) > 0 &&
+				!am_has_feature(hostp->features, fe_application_client_name)) {
+				g_fprintf(outf,
+			      _("WARNING: %s:%s does not support client-name in application.\n"),
+			      hostp->hostname, qname);
+			    }
 			    xml_app = xml_application(dp, application, hostp->features);
 			    vstrextend(&l, xml_app, NULL);
 			    amfree(xml_app);
@@ -1938,6 +1945,19 @@ start_host(
 			    g_fprintf(outf,
 			      _("ERROR: %s:%s does not support SCRIPT-API.\n"),
 			      hostp->hostname, qname);
+			} else {
+			    identlist_t pp_scriptlist;
+			    for (pp_scriptlist = dp->pp_scriptlist; pp_scriptlist != NULL;
+				pp_scriptlist = pp_scriptlist->next) {
+				pp_script_t *pp_script = lookup_pp_script((char *)pp_scriptlist->data);
+				char *client_name = pp_script_get_client_name(pp_script);;
+				if (client_name && strlen(client_name) > 0 &&
+				    !am_has_feature(hostp->features, fe_script_client_name)) {
+				    g_fprintf(outf,
+					_("WARNING: %s:%s does not support client-name in script.\n"),
+					hostp->hostname, dp->name);
+				}
+			    }
 			}
 		    }
 		    es = xml_estimate(dp->estimatelist, hostp->features);

@@ -40,6 +40,7 @@ typedef struct script_s {
     execute_on_t                   execute_on;
     int                            execute_where;
     proplist_t                     property;
+    char                          *client_name;
     struct client_script_result_s *result;
 } script_t;
 
@@ -79,6 +80,7 @@ typedef struct a_dle_s {
     int     exclude_optional;
     int     include_optional;
     proplist_t application_property;
+    char        *application_client_name;
     scriptlist_t scriptlist;
     data_path_t  data_path;
     GSList      *directtcp_list;

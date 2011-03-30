@@ -1957,7 +1957,8 @@ extract_files_child(
 	    GSList   *scriptlist;
 	    script_t *script;
 
-	    merge_properties(dump_dle->application_property, proplist);
+	    merge_properties(dump_dle, NULL, dump_dle->application_property,
+			     proplist, 0);
 	    application_property_add_to_argv(argv_ptr, dump_dle, NULL,
 					     tapesrv_features);
 	    for (scriptlist = dump_dle->scriptlist; scriptlist != NULL;

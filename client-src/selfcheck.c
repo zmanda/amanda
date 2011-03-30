@@ -313,6 +313,9 @@ main(
 	    err_extra = errmsg;
 	    goto err;
 	}
+	if (merge_dles_properties(dles, 1) == 0) {
+	    goto checkoverall;
+	}
 	for (dle = dles; dle != NULL; dle = dle->next) {
 	    run_client_scripts(EXECUTE_ON_PRE_HOST_AMCHECK, g_options, dle,
 			       stdout);
@@ -335,6 +338,7 @@ main(
 	}
     }
 
+checkoverall:
     check_overall();
 
     amfree(line);

@@ -926,6 +926,7 @@ typedef enum application_e  {
     APPLICATION_COMMENT,
     APPLICATION_PLUGIN,
     APPLICATION_PROPERTY,
+    APPLICATION_CLIENT_NAME,
     APPLICATION_APPLICATION
 } application_key;
 
@@ -973,6 +974,7 @@ char *application_name(application_t *app);
 #define application_get_comment(application)  (val_t_to_str(application_getconf((application), APPLICATION_COMMENT))
 #define application_get_plugin(application)   (val_t_to_str(application_getconf((application), APPLICATION_PLUGIN)))
 #define application_get_property(application) (val_t_to_proplist(application_getconf((application), APPLICATION_PROPERTY)))
+#define application_get_client_name(application) (val_t_to_str(application_getconf((application), APPLICATION_CLIENT_NAME)))
 
 /* A pp-script-tool interface */
 typedef enum pp_script_e  {
@@ -983,6 +985,7 @@ typedef enum pp_script_e  {
     PP_SCRIPT_EXECUTE_WHERE,
     PP_SCRIPT_ORDER,
     PP_SCRIPT_SINGLE_EXECUTION,
+    PP_SCRIPT_CLIENT_NAME,
     PP_SCRIPT_PP_SCRIPT
 } pp_script_key;
 
@@ -1035,6 +1038,7 @@ char *pp_script_name(pp_script_t *pps);
 #define pp_script_get_execute_where(pp_script)   (val_t_to_execute_where(pp_script_getconf((pp_script), PP_SCRIPT_EXECUTE_WHERE)))
 #define pp_script_get_order(pp_script)   (val_t_to_int(pp_script_getconf((pp_script), PP_SCRIPT_ORDER)))
 #define pp_script_get_single_execution(pp_script)   (val_t_to_boolean(pp_script_getconf((pp_script), PP_SCRIPT_SINGLE_EXECUTION)))
+#define pp_script_get_client_name(pp_script)   (val_t_to_str(pp_script_getconf((pp_script), PP_SCRIPT_CLIENT_NAME)))
 
 pp_script_t *lookup_pp_script(char *identifier);
 

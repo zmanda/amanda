@@ -1600,6 +1600,7 @@ Specifies the port to connect to on the client.  It can be a service name or a n
   </listitem>
   </varlistentry>
 
+
 <!-- bumping parameters yanked from the global section above -->
 
   <varlistentry>
@@ -2633,6 +2634,21 @@ is the name of this type of application. It is referenced from the
 <para>The application options and values are:</para>
 <variablelist remap='TP'>
   <varlistentry>
+  <term><amkeyword>client-name</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>No default,
+specifies an application name that is in the amanda-client.conf on the client.
+The setting from that application will be merged with the current application.
+If <amkeyword>client-name</amkeyword> is set then it is an error
+if that application is not defined on the client.</para>
+<para>If <amkeyword>client-name</amkeyword> is not set then the
+merge is done with the application that have the name equal to the plugin.
+eg. if the plugin is 'amgtar', then the setting from the application 'amgtar'
+is used if it is defined.
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default: not set.
@@ -2679,6 +2695,20 @@ is the name of this type of script. It is referenced from the
 
 <para>The script options and values are:</para>
 <variablelist remap='TP'>
+  <varlistentry>
+  <term><amkeyword>client-name</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>No default,
+specifies a script name that is in the amanda-client.conf on the client.
+The setting from that script will be merged with the currect script.
+If <amkeyword>client-name</amkeyword> is set then it is an error if that script is not defined on the client.</para>
+<para>If <amkeyword>client-name</amkeyword> is not set then the
+merge is done with the script that have the name equal to the plugin.
+eg. if the plugin is 'amlog-script', then the setting from the script
+'amlog-script' is used.
+</para>
+  </listitem>
+  </varlistentry>
   <varlistentry>
   <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
   <listitem>

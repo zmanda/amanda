@@ -322,7 +322,7 @@ Unreserved tcp port that will be used (bsd, bsdudp)</para>
 
 <refsect1><title>APPLICATION SECTION</title>
 <para>The
-<emphasis remap='B'>amanda.conf</emphasis>
+<emphasis remap='B'>amanda-client.conf</emphasis>
 file may define multiple types of application.
 The information is entered in a <amkeyword>application</amkeyword>
 section, which looks like this:</para>
@@ -335,11 +335,22 @@ define application "<amtype>name</amtype>" {
 </programlisting>
 
 <para><amtype>name</amtype>
-is the name of this type of application. It is referenced from the
-<amkeyword>dumptype</amkeyword></para>
+is the name of this type of application.</para>
+<para>
+The setting from an application is merged with the dle setting
+  if the <amtype>name</amtype> is the same as the <amkeyword>client-application-name</amkeyword> from the dle
+  or if the <amkeyword>client-application-name</amkeyword> from the dle is not set and the <amtype>name</amtype> is the same as the <amkeyword>plugin</amkeyword> from the dle.</para>
 
 <para>The application options and values are:</para>
 <variablelist remap='TP'>
+  <varlistentry>
+  <term><amkeyword>client-application-name</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default:
+<amdefault>none</amdefault>.
+Not use on the client.</para>
+  </listitem>
+  </varlistentry>
   <varlistentry>
   <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
   <listitem>
@@ -353,7 +364,7 @@ A comment string describing this application.</para>
   <listitem>
 <para>No default. Must be set to the name of the program. This program must be
 in the <emphasis remap='I'>$libexecdir/amanda/application</emphasis> directory
-on the client.</para>
+on the client. If set, it must be the same as the dle <amkeyword>plugin</amkeyword>.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -371,7 +382,7 @@ the property to set, and the others contains its values.
 
 <refsect1><title>SCRIPT SECTION</title>
 <para>The
-<emphasis remap='B'>amanda.conf</emphasis>
+<emphasis remap='B'>amanda-client.conf</emphasis>
 file may define multiple types of script.
 The information is entered in a <emphasis remap='B'>script</emphasis>
 section, which looks like this:</para>
@@ -384,11 +395,22 @@ define script "<amtype>name</amtype>" {
 </programlisting>
 
 <para><amtype>name</amtype>
-is the name of this type of script. It is referenced from the
-<amkeyword>dumptype</amkeyword></para>
+is the name of this type of script.</para>
+<para>
+The setting from a script is merged with the dle setting
+  if the <amtype>name</amtype> is the same as the <amkeyword>client-script-name</amkeyword> from the dle
+  or if the <amkeyword>client-script-name</amkeyword> from the dle is not set and the <amtype>name</amtype> is the same as the <amkeyword>plugin</amkeyword> from the dle.</para>
 
 <para>The script options and values are:</para>
 <variablelist remap='TP'>
+  <varlistentry>
+  <term><amkeyword>client-script-name</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default:
+<amdefault>none</amdefault>.
+Not used on the client.</para>
+  </listitem>
+  </varlistentry>
   <varlistentry>
   <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
   <listitem>
@@ -400,13 +422,14 @@ A comment string describing this script.</para>
   <varlistentry>
   <term><amkeyword>plugin</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>No default. Must be set to the name of the program. This program must be in the <emphasis remap='I'>$libdir/amanda/application</emphasis> directory on the client and/or server.</para>
+<para>No default. Must be set to the name of the program. This program must be in the <emphasis remap='I'>$libdir/amanda/application</emphasis> directory on the client. If set, it must be the same as the dle <amkeyword>plugin</amkeyword>.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><amkeyword>execute-where</amkeyword> [ <amkeyword>client</amkeyword> | <amkeyword>server</amkeyword> ]</term>
+  <term><amkeyword>execute-where</amkeyword> <amkeyword>client</amkeyword></term>
   <listitem>
-<para>Default: <amkeyword>client</amkeyword>. Where the script must be executed, on the client or server. Only <amkeyword>client</amkeyword> is valid.</para>
+<para>Default: <amkeyword>client</amkeyword>.
+Value can't be changed.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -470,21 +493,9 @@ A comment string describing this script.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
-      <term><amkeyword>pre-host-backup</amkeyword></term>
-      <listitem>
-<para>Execute before the backup command for all dle for the client.</para>
-      </listitem>
-      </varlistentry>
-      <varlistentry>
       <term><amkeyword>post-dle-backup</amkeyword></term>
       <listitem>
 <para>Execute after the backup command for the dle.</para>
-      </listitem>
-      </varlistentry>
-      <varlistentry>
-      <term><amkeyword>post-host-backup</amkeyword></term>
-      <listitem>
-<para>Execute after the backup command for all dle for the client.</para>
       </listitem>
       </varlistentry>
       <varlistentry>

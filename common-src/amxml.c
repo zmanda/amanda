@@ -94,6 +94,7 @@ free_dle(
     amfree(dle->srv_decrypt_opt);
     amfree(dle->clnt_decrypt_opt);
     amfree(dle->auth);
+    amfree(dle->application_client_name);
     free_sl(dle->exclude_file);
     free_sl(dle->exclude_list);
     free_sl(dle->include_file);
@@ -114,6 +115,7 @@ free_script_data(
     script_t *script)
 {
     amfree(script->plugin);
+    amfree(script->client_name);
     if (script->property)
 	g_hash_table_destroy(script->property);
 }
@@ -151,6 +153,7 @@ init_dle(
     dle->scriptlist = NULL;
     dle->data_path = DATA_PATH_AMANDA;
     dle->directtcp_list = NULL;
+    dle->application_client_name = NULL;
     dle->next = NULL;
 }
 
@@ -428,6 +431,7 @@ amstart_element(
 	data_user->script->execute_on = 0;
 	data_user->script->execute_where = ES_CLIENT;
 	data_user->script->property = NULL;
+	data_user->script->client_name = NULL;
 	data_user->script->result = NULL;
 	data_user->has_plugin = 0;
     } else if (strcmp(element_name, "execute_on") == 0) {
@@ -438,6 +442,7 @@ amstart_element(
 			"XML: Invalid %s element", element_name);
 	    return;
 	}
+    } else if (strcmp(element_name, "client_name") == 0) {
     } else {
 	g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 		    "XML: Invalid %s element", element_name);
@@ -950,6 +955,21 @@ amtext(
 	amfree(tt);
     } else if(strcmp(last_element_name, "directtcp") == 0) {
 	dle->directtcp_list = g_slist_append(dle->directtcp_list, tt);
+    } else if(strcmp(last_element_name, "client_name") == 0) {
+	last_element2 = g_slist_nth(data_user->element_names, 1);
+	if (!last_element2) {
+	    error("Invalid client_name text");
+	}
+	last_element2_name = last_element2->data;
+	if (strcmp(last_element2_name, "backup-program") == 0) {
+	    dle->application_client_name = tt;
+g_debug("set dle->application_client_name: %s", dle->application_client_name);
+	} else if (strcmp(last_element2_name, "script") == 0) {
+	    data_user->script->client_name = tt;
+g_debug("set data_user->script->client_name: %s", data_user->script->client_name);
+	} else {
+	    error("client_name outside of script or backup-program");
+	}
     } else {
 	g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 		    "XML: amtext not defined for '%s'", last_element_name);

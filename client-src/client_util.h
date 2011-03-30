@@ -116,6 +116,14 @@ void application_property_add_to_argv(GPtrArray *argv_ptr,
 				      backup_support_option_t *bsu,
 				      am_feature_t *amfeatures);
 
+/* Merge properties from amanda-client.conf files to dles (application and scripts)
+ *
+ * @param dle: the dle list.
+ * @returns: Return 1 on success
+ *           Return 0 on failure
+ */
+int merge_dles_properties(dle_t *dles, int verbose);
+
 char *fixup_relative(char *name, char *device);
 backup_support_option_t *backup_support_option(char *program,
 					       g_option_t *g_options,
@@ -164,9 +172,14 @@ void add_type_table(dmpline_t typ,
 void add_list_table(dmpline_t typ, amregex_t **re_table,
                     GSList *message);
 
-/* Merge properties from proplist2 to proplist1)
+/* Merge properties from conf_proplist to dle_proplist
+   If verbose is 1, then dle->disk and name are used in output.
+ * @returns: Return 1 on success
+ *           Return 0 on failure
  */
-void merge_properties(proplist_t proplist1, proplist_t proplist2);
+int
+merge_properties(dle_t *dle, char *name, proplist_t dle_proplist,
+		 proplist_t conf_proplist, int verbose);
 
 #endif
 

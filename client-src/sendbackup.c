@@ -467,6 +467,10 @@ main(
       }
     }
 
+    if (merge_dles_properties(dle, 1) == 0) {
+	g_debug("merge_dles_properties failed");
+	exit(1);
+    }
     mesgstream = fdopen(mesgfd,"w");
     run_client_scripts(EXECUTE_ON_PRE_DLE_BACKUP, g_options, dle, mesgstream);
     fflush(mesgstream);

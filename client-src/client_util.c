@@ -717,6 +717,174 @@ application_property_add_to_argv(
     return;
 }
 
+typedef struct {
+    dle_t *dle;
+    char *name;
+    proplist_t dle_proplist;
+    int verbose;
+    int good;
+} merge_property_t;
+
+static void
+merge_property(
+    gpointer key_p,
+    gpointer value_p,
+    gpointer user_data_p)
+{
+    char *property_s = key_p;
+    property_t *conf_property = value_p;
+    merge_property_t *merge_p = user_data_p;
+    property_t *dle_property = g_hash_table_lookup(merge_p->dle_proplist,
+						   property_s);
+    GSList *value;
+    char *qdisk = quote_string(merge_p->dle->disk);
+
+    if (dle_property) {
+	if (dle_property->priority && conf_property->priority) {
+	    if (merge_p->verbose) {
+		g_fprintf(stdout,
+			 _("ERROR %s (%s) Both server client have priority for property '%s'.\n"),
+			 qdisk, merge_p->name, property_s);
+	    }
+	    g_debug("ERROR %s (%s) Both server client have priority for property '%s'.", qdisk, merge_p->name, property_s);
+	    merge_p->good = 0;
+	    /* Use client property */
+	    g_hash_table_remove(merge_p->dle_proplist, key_p);
+            g_hash_table_insert(merge_p->dle_proplist, key_p, conf_property);
+	} else if (dle_property->priority) {
+	    if (merge_p->verbose) {
+		g_fprintf(stdout,
+			 _("ERROR %s (%s) Server set priority for property '%s' but client set the property.\n"),
+			 qdisk, merge_p->name, property_s);
+	    }
+	    g_debug("%s (%s) Server set priority for property '%s' but client set the property.", qdisk, merge_p->name, property_s);
+	    /* use server property */
+	} else if (conf_property->priority) {
+	    if (merge_p->verbose) {
+		g_fprintf(stdout,
+			 _("ERROR %s (%s) Client set priority for property '%s' but server set the property.\n"),
+			 qdisk, merge_p->name, property_s);
+	    }
+	    g_debug("%s (%s) Client set priority for property '%s' but server set the property.", qdisk, merge_p->name, property_s);
+	    /* Use client property */
+	    g_hash_table_remove(merge_p->dle_proplist, key_p);
+            g_hash_table_insert(merge_p->dle_proplist, key_p, conf_property);
+	} else if (!conf_property->append) {
+	    if (merge_p->verbose) {
+		g_fprintf(stdout,
+			 _("ERROR %s (%s) Both server and client set property '%s', using client value.\n"),
+			 qdisk, merge_p->name, property_s);
+	    }
+	    g_debug("%s (%s) Both server and client set property '%s', using client value.", qdisk, merge_p->name, property_s);
+	    /* Use client property */
+	    g_hash_table_remove(merge_p->dle_proplist, key_p);
+            g_hash_table_insert(merge_p->dle_proplist, key_p, conf_property);
+	} else { /* merge */
+	    for (value = conf_property->values; value != NULL;
+		 value = value->next) {
+		dle_property->values = g_slist_append(dle_property->values,
+						      value->data);
+	    }
+	}
+    } else { /* take value from conf */
+        g_hash_table_insert(merge_p->dle_proplist, key_p, conf_property);
+    }
+}
+
+int
+merge_properties(
+    dle_t      *dle,
+    char       *name,
+    proplist_t  dle_proplist,
+    proplist_t  conf_proplist,
+    int         verbose)
+{
+    merge_property_t merge_p = {dle, name, dle_proplist, verbose, 1};
+
+    if (conf_proplist != NULL) {
+	g_hash_table_foreach(conf_proplist,
+                             &merge_property,
+                             &merge_p);
+    }
+
+    return merge_p.good;
+}
+
+int
+merge_dles_properties(
+    dle_t *dles,
+    int verbose)
+{
+    dle_t         *dle;
+    application_t *app;
+    GSList        *scriptlist;
+    pp_script_t   *pp_script;
+    int            good = 1;
+
+    for (dle=dles; dle != NULL; dle=dle->next) {
+        if (dle->program_is_application_api) {
+	    app = NULL;
+	    if (dle->application_client_name &&
+		strlen(dle->application_client_name) > 0) {
+		app = lookup_application(dle->application_client_name);
+		if (!app) {
+		    char *qamname = quote_string(dle->disk);
+		    char *errmsg = vstrallocf("Application '%s' not found on client",
+					      dle->application_client_name);
+		    char *qerrmsg = quote_string(errmsg);
+		    good = 0;
+		    if (verbose) {
+			g_fprintf(stdout, _("ERROR %s %s\n"), qamname, qerrmsg);
+		    }
+		    g_debug("%s: %s", qamname, qerrmsg);
+		    amfree(qamname);
+		    amfree(errmsg);
+		    amfree(qerrmsg);
+		}
+	    } else {
+		app = lookup_application(dle->program);
+	    }
+            if (app) {
+                merge_properties(dle, dle->program,
+				 dle->application_property,
+				 application_get_property(app),
+				 verbose);
+            }
+        }
+        for (scriptlist = dle->scriptlist; scriptlist != NULL;
+             scriptlist = scriptlist->next) {
+            script_t *script =  scriptlist->data;
+	    pp_script = NULL;
+	    if (script->client_name && strlen(script->client_name) > 0) {
+		pp_script = lookup_pp_script(script->client_name);
+		if (!pp_script) {
+		    char *qamname = quote_string(dle->disk);
+		    char *errmsg = vstrallocf("Script '%s' not found on client",
+					      script->client_name);
+		    char *qerrmsg = quote_string(errmsg);
+		    good = 0;
+		    if (verbose) {
+			g_fprintf(stderr, _("ERROR %s %s\n"), qamname, qerrmsg);
+		    }
+		    g_debug("%s: %s", qamname, qerrmsg);
+		    amfree(qamname);
+		    amfree(errmsg);
+		    amfree(qerrmsg);
+		}
+	    } else {
+		pp_script = lookup_pp_script(script->plugin);
+	    }
+            if (pp_script) {
+		merge_properties(dle, script->plugin,
+				 script->property,
+				 pp_script_get_property(pp_script),
+				 verbose);
+	    }
+        }
+    }
+    return good;
+}
+
 backup_support_option_t *
 backup_support_option(
     char       *program,
@@ -1678,41 +1846,5 @@ build_re_table(
     re_table->typ = DMP_STRANGE;
 
     return new_re_table;
-}
-
-typedef struct {
-    proplist_t result;
-} merge_property_t;
-
-static void
-merge_property(
-    gpointer key_p,
-    gpointer value_p,
-    gpointer user_data_p)
-{
-    char *property_s = key_p;
-    GSList *value_s = value_p;
-    merge_property_t *merge_p = user_data_p;
-    GSList *value = g_hash_table_lookup(merge_p->result, property_s);
-
-    if (value) { /* remove old value */
-	g_hash_table_remove(merge_p->result, key_p);
-    }
-    g_hash_table_insert(merge_p->result, key_p, value_s);
-}
-
-void
-merge_properties(
-    proplist_t proplist1,
-    proplist_t proplist2)
-{
-    merge_property_t merge_p = {proplist1};
-
-    if (proplist2 == NULL) {
-	return;
-    }
-    g_hash_table_foreach(proplist2,
-                         &merge_property,
-                         &merge_p);
 }
 

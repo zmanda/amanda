@@ -122,6 +122,7 @@ main(
     disk_estimates_t *est;
     disk_estimates_t *est1;
     disk_estimates_t *est_prev;
+    disk_estimates_t *est_next;
     char *line = NULL;
     char *s, *fp;
     int ch;
@@ -413,6 +414,20 @@ main(
 	amandates_started = FALSE;
     }
 
+    est_prev = NULL;
+    for(est = est_list; est != NULL; est = est_next) {
+	int good = merge_dles_properties(est->dle, 0);
+	est_next = est->next;
+	if (!good) {
+	    if (est == est_list) {
+		est_list = est_next;
+	    } else {
+		est_prev->next = est_next;
+	    }
+	} else {
+	    est_prev = est;
+	}
+    }
     for(est = est_list; est != NULL; est = est->next) {
 	run_client_scripts(EXECUTE_ON_PRE_HOST_ESTIMATE, g_options, est->dle,
 			   stdout);

@@ -1591,6 +1591,7 @@ xml_application(
 {
     char       *plugin;
     char       *b64plugin;
+    char       *client_name;
     xml_app_t   xml_app;
     proplist_t  proplist;
 
@@ -1603,6 +1604,13 @@ xml_application(
 			NULL);
     proplist = application_get_property(application);
     g_hash_table_foreach(proplist, xml_property, &xml_app);
+
+    client_name = application_get_client_name(application);
+    if (client_name && strlen(client_name) > 0 &&
+	am_has_feature(their_features, fe_application_client_name)) {
+	char *b64client_name = amxml_format_tag("client_name", client_name);
+	vstrextend(&xml_app.result, "    ", b64client_name, "\n", NULL);
+    }
 
     vstrextend(&xml_app.result, "  </backup-program>\n", NULL);
 
@@ -1619,6 +1627,7 @@ xml_scripts(
 {
     char       *plugin;
     char       *b64plugin;
+    char       *client_name;
     char       *xml_scr;
     char       *xml_scr1;
     char       *str = "";
@@ -1732,6 +1741,15 @@ xml_scripts(
 	proplist = pp_script_get_property(pp_script);
 	xml_app.result   = stralloc("");
 	g_hash_table_foreach(proplist, xml_property, &xml_app);
+
+	client_name = pp_script_get_client_name(pp_script);
+	if (client_name && strlen(client_name) > 0 &&
+	    am_has_feature(their_features, fe_script_client_name)) {
+	    char *b64client_name = amxml_format_tag("client_name",
+						    client_name);
+	    vstrextend(&xml_app.result, "    ", b64client_name, "\n", NULL);
+	}
+
 	xml_scr = vstrextend(&xml_scr, xml_scr1, xml_app.result, "  </script>\n", NULL);
 	amfree(b64plugin);
 	amfree(xml_app.result);

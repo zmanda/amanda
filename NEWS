@@ -13,6 +13,9 @@ Changes in release 3.3.0alpha
    * Change in amanda.conf
        o new meta-autolabel option
        o autolabel can include org, config, barcode, meta in the label
+       o new client-name option in appication and script.
+   * application and script in amanda-client.conf can be used to set default
+     properties for application or script.
    * amlabel
        o The label argument is no longer required, an autolabel can be
 	 generated

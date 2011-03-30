@@ -196,7 +196,9 @@ typedef enum {
     CONF_MULT1T,
 
     /* boolean */
-    CONF_ATRUE,			CONF_AFALSE
+    CONF_ATRUE,			CONF_AFALSE,
+
+    CONF_CLIENT_NAME,
 } tok_t;
 
 /* A keyword table entry, mapping the given keyword to the given token.
@@ -801,6 +803,7 @@ keytab_t client_keytab[] = {
     { "AUTH", CONF_AUTH },
     { "SSH_KEYS", CONF_SSH_KEYS },
     { "AMANDAD_PATH", CONF_AMANDAD_PATH },
+    { "CLIENT_NAME", CONF_CLIENT_NAME },
     { "CLIENT_USERNAME", CONF_CLIENT_USERNAME },
     { "CLIENT_PORT", CONF_CLIENT_PORT },
     { "GNUTAR_LIST_DIR", CONF_GNUTAR_LIST_DIR },
@@ -906,6 +909,7 @@ keytab_t server_keytab[] = {
     { "CLIENT_CUSTOM_COMPRESS", CONF_CLNTCOMPPROG },
     { "CLIENT_DECRYPT_OPTION", CONF_CLNT_DECRYPT_OPT },
     { "CLIENT_ENCRYPT", CONF_CLNT_ENCRYPT },
+    { "CLIENT_NAME", CONF_CLIENT_NAME },
     { "CLIENT_USERNAME", CONF_CLIENT_USERNAME },
     { "COLUMNSPEC", CONF_COLUMNSPEC },
     { "COMMENT", CONF_COMMENT },
@@ -1391,6 +1395,7 @@ conf_var_t application_var [] = {
    { CONF_COMMENT  , CONFTYPE_STR     , read_str     , APPLICATION_COMMENT    , NULL },
    { CONF_PLUGIN   , CONFTYPE_STR     , read_str     , APPLICATION_PLUGIN     , NULL },
    { CONF_PROPERTY , CONFTYPE_PROPLIST, read_property, APPLICATION_PROPERTY   , NULL },
+   { CONF_CLIENT_NAME, CONFTYPE_STR   , read_str     , APPLICATION_CLIENT_NAME, NULL },
    { CONF_UNKNOWN  , CONFTYPE_INT     , NULL         , APPLICATION_APPLICATION, NULL }
 };
 
@@ -1402,6 +1407,7 @@ conf_var_t pp_script_var [] = {
    { CONF_EXECUTE_WHERE, CONFTYPE_EXECUTE_WHERE  , read_execute_where  , PP_SCRIPT_EXECUTE_WHERE, NULL },
    { CONF_ORDER        , CONFTYPE_INT     , read_int     , PP_SCRIPT_ORDER        , NULL },
    { CONF_SINGLE_EXECUTION, CONFTYPE_BOOLEAN, read_bool    , PP_SCRIPT_SINGLE_EXECUTION, NULL },
+   { CONF_CLIENT_NAME  , CONFTYPE_STR     , read_str     , PP_SCRIPT_CLIENT_NAME  , NULL },
    { CONF_UNKNOWN      , CONFTYPE_INT     , NULL         , PP_SCRIPT_PP_SCRIPT    , NULL }
 };
 
@@ -2697,6 +2703,7 @@ init_application_defaults(
     conf_init_str(&apcur.value[APPLICATION_COMMENT] , "");
     conf_init_str(&apcur.value[APPLICATION_PLUGIN]  , "");
     conf_init_proplist(&apcur.value[APPLICATION_PROPERTY]);
+    conf_init_str(&apcur.value[APPLICATION_CLIENT_NAME] , "");
 }
 
 static void
@@ -3079,6 +3086,7 @@ init_pp_script_defaults(
     conf_init_execute_where(&pscur.value[PP_SCRIPT_EXECUTE_WHERE], ES_CLIENT);
     conf_init_int(&pscur.value[PP_SCRIPT_ORDER], 5000);
     conf_init_bool(&pscur.value[PP_SCRIPT_SINGLE_EXECUTION], 0);
+    conf_init_str(&pscur.value[PP_SCRIPT_CLIENT_NAME], "");
 }
 
 static void

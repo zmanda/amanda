@@ -1,4 +1,31 @@
 2011-03-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add client-name option to application and
+				 script
+	* common-src/conffile.h: Add client-name option to application and
+				 script
+	* perl/Amanda/Config.swg: Add APPLICATION_CLIENT_NAME and
+				  PP_SCRIPT_CLIENT_NAME.
+	* common-src/amfeatures.c: Add fe_application_client_name and
+				   fe_script_client_name.
+	* common-src/amfeatures.h: Add fe_application_client_name and
+				   fe_script_client_name.
+	* common-src/amxml.c: Pares client_name
+	* common-src/amxml.h: Add application_client_nake in dle_t and
+			      client_name in script_t.
+	* server-src/diskfile.c: Put client-name in xml output.
+	* server-src/amcheck.c: Check client-name and fe_*_client_name.
+	* client-src/client_util.c (merge_properties, merge_dles_properties):
+				    new function.
+	* client-src/client_util.h (merge_properties, merge_dles_properties):
+				    new prototype.
+	* client-src/selfcheck.c, client-src/sendbackup.c,
+	  client-src/sendsize.c: Call merge_dles_properties to merge properties
+	* man/xml-source/amanda-client.conf.5.xml,
+	  man/xml-source/amanda.conf.5.xml: Document client-name.
+	* recover-src/extract_list.c: merge properties.
+	* NEWS: Add new features.
+
+2011-03-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amlog-script.pl: Remove warning of unused variable.
 
 2011-03-28  Jean-Louis Martineau <martineau@zmanda.com>
