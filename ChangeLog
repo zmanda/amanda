@@ -1,4 +1,7 @@
-2011-03-28  Jean-Louis Martineau <martineau@zmanda.com>
+2011-03-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS, ReleaseNotes: Update for 3.3.0
+
+2011-03-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Add client-name option to application and
 				 script
 	* common-src/conffile.h: Add client-name option to application and

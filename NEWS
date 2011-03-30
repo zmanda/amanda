@@ -1,4 +1,4 @@
-Changes in release 3.3.0alpha
+Changes in release 3.3.0
    * chg-aggregate: new changer that use other changer sequentially.
    * meta-volume
    * Add meta label in tapelist file
