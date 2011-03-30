@@ -1,4 +1,7 @@
 2011-03-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/vfs-device.c: LEOM property default to TRUE.
+
+2011-03-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: Log 'splitting not enabled' on write
 	  failure.
 
