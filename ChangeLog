@@ -1,4 +1,7 @@
 2011-03-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/taper.pl: Fix installcheck for 'splitting not enabled'.
+
+2011-03-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* VERSION: 4.0.0alpha
 
 2011-03-30  Jean-Louis Martineau <martineau@zmanda.com>

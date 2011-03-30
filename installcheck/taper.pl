@@ -643,7 +643,7 @@ taper_cmd("START-SCAN worker0 $handle");
 taper_cmd("NEW-TAPE worker0 $handle");
 like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
 	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTIAL $handle INPUT-GOOD TAPE-ERROR "\[sec [\d.]+ bytes 0 kps [\d.]+\]" "" "No space left on device"$/,
+like(taper_reply, qr/^PARTIAL $handle INPUT-GOOD TAPE-ERROR "\[sec [\d.]+ bytes 0 kps [\d.]+\]" "" "No space left on device, splitting not enabled"$/,
 	"got PARTIAL") or die;
 # retry on the next tape
 $handle = "11-88899";
@@ -671,7 +671,7 @@ check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
     qr(^PARTPARTIAL taper TESTCONF01 1 localhost /var/log $datestamp 1/-1 0 \[sec [\d.]+ bytes 983040 kps [\d.]+\] "No space left on device"$),
-    qr(^PARTIAL taper localhost /var/log $datestamp 1 0 \[sec [\d.]+ bytes 0 kps [\d.]+\] "No space left on device"$),
+    qr(^PARTIAL taper localhost /var/log $datestamp 1 0 \[sec [\d.]+ bytes 0 kps [\d.]+\] "No space left on device, splitting not enabled"$),
     qr(^INFO taper tape TESTCONF01 kb 0 fm 1 \[OK\]$),
     qr(^INFO taper Slot 2 without label can be labeled$),
     qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
@@ -1201,7 +1201,7 @@ taper_cmd("START-SCAN worker0 $handle");
 taper_cmd("NEW-TAPE worker0 $handle");
 like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
 	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTIAL $handle INPUT-GOOD TAPE-ERROR "\[sec [\d.]+ bytes \d* kps [\d.]+ orig-kb 1612\]" "" "No space left on device"$/,
+like(taper_reply, qr/^PARTIAL $handle INPUT-GOOD TAPE-ERROR "\[sec [\d.]+ bytes \d* kps [\d.]+ orig-kb 1612\]" "" "No space left on device, splitting not enabled"$/,
 	"got PARTIAL for filenum 1") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -1210,7 +1210,7 @@ check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
     qr(^PARTPARTIAL taper TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 983040 kps [\d.]+ orig-kb 1612\] \"No space left on device\"$),
-    qr(^PARTIAL taper localhost /usr $datestamp 1 0 \[sec [\d.]+ bytes 0 kps [\d.]+ orig-kb 1612\] "No space left on device"$),
+    qr(^PARTIAL taper localhost /usr $datestamp 1 0 \[sec [\d.]+ bytes 0 kps [\d.]+ orig-kb 1612\] "No space left on device, splitting not enabled"$),
     qr(^INFO taper tape TESTCONF01 kb 0 fm 1 \[OK\]$),
 ], "without LEOM and without allow-split logged correctly");
 cleanup_log();
@@ -1232,7 +1232,7 @@ like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
 	"got proper NEW-TAPE worker0 $handle") or die;
 like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 864 "\[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\]"$/,
 	"got PARTDONE for filenum 1") or die;
-like(taper_reply, qr/^PARTIAL $handle INPUT-GOOD TAPE-ERROR "\[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\]" "" "No space left on device"$/,
+like(taper_reply, qr/^PARTIAL $handle INPUT-GOOD TAPE-ERROR "\[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\]" "" "No space left on device, splitting not enabled"$/,
 	"got PARTIAL") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -1241,7 +1241,7 @@ check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
     qr(^PART taper TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\]$),
-    qr(^PARTIAL taper localhost /usr $datestamp 1 0 \[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\] "No space left on device"$),
+    qr(^PARTIAL taper localhost /usr $datestamp 1 0 \[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\] "No space left on device, splitting not enabled"$),
     qr(^INFO taper tape TESTCONF01 kb 864 fm 1 \[OK\]$),
 ], "with LEOM and without allow-split logged correctly");
 cleanup_log();
