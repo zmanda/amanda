@@ -252,11 +252,12 @@ sub log_data {
    my($function) = shift;
    my $log;
 
+   my $text = $self->{'text'} || "";
    open($log, ">>$self->{logfile}") ||
 	$self->print_to_server_and_die(
 			"Can't open logfile '$self->{logfile}' for append: $!",
 			$Amanda::Script_App::ERROR);
-   print $log "$self->{action} $self->{config} $function $self->{execute_where} $self->{host} $self->{disk} $self->{device} ", join (" ", @{$self->{level}}), " $self->{text}\n";
+   print $log "$self->{action} $self->{config} $function $self->{execute_where} $self->{host} $self->{disk} $self->{device} ", join (" ", @{$self->{level}}), " $text\n";
    close $log;
 }
 

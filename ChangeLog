@@ -1,4 +1,7 @@
 2011-03-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amlog-script.pl: Remove warning of unused variable.
+
+2011-03-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheckdump.pl, server-src/amfetchdump.pl,
 	  server-src/amidxtaped.pl, server-src/amrestore.pl: Use int().
 
