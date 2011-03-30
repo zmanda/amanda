@@ -924,7 +924,7 @@ sub _xmsg_part_done {
 		    if ($self->{'device'}->status() != $DEVICE_STATUS_SUCCESS) {
 			$msg = $self->{'device'}->error_or_status();
 		    }
-		    $self->_operation_failed(device_error => $msg);
+		    $self->_operation_failed(device_error => "$msg, splitting not enabled");
 		    return;
 		}
 
