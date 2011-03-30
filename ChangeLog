@@ -1,3 +1,7 @@
+2011-03-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: Log 'splitting not enabled' on write
+	  failure.
+
 2011-03-27  Dustin J. Mitchell <dustin@mozilla.com>
 	* perl/Amanda/Util.swg: revert previous patch
 	* gnulib/Makefile.am gnulib/fsusage.h
