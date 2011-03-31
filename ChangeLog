@@ -1,4 +1,7 @@
 2011-03-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Config_FoldingHash.pl: Add files.
+
+2011-03-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c: Use property_add_to_argv.
 	* client-src/client_util.h (application_property_argv_size):
 	  Remove prototype.
