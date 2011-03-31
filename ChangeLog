@@ -1,4 +1,7 @@
 2011-03-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Config.pl: Remove spurious diag.
+
+2011-03-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Config_FoldingHash.pl: Add files.
 
 2011-03-30  Jean-Louis Martineau <martineau@zmanda.com>

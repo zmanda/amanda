@@ -483,8 +483,6 @@ SKIP: { # device
     is(device_config_getconf($dc, $DEVICE_CONFIG_TAPEDEV), 'tape:/dev/nst0',
 	"device tapedev");
     # TODO do we really need all of this equipment for device properties?
-use Data::Dumper;
-diag Dumper(device_config_getconf($dc, $DEVICE_CONFIG_DEVICE_PROPERTY));
     is_deeply(device_config_getconf($dc, $DEVICE_CONFIG_DEVICE_PROPERTY),
           { "block-size" => { 'priority' => 0, 'values' => ["128k"]    , 'append' => 0 },
 	    "comment"    => { 'priority' => 0, 'values' => ["what up?"], 'append' => 0 } },
