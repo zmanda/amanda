@@ -1375,23 +1375,15 @@ base64_decode_alloc_string(
 }
 
 
-/* A GHFunc (callback for g_hash_table_foreach) */
-void count_proplist(
-    gpointer key_p G_GNUC_UNUSED,
-    gpointer value_p,
-    gpointer user_data_p)
-{
-    property_t *value_s = value_p;
-    int    *nb = user_data_p;
-    GSList  *value;
-
-    for(value=value_s->values; value != NULL; value = value->next) {
-	(*nb)++;
-    }
-}
-
-/* A GHFunc (callback for g_hash_table_foreach) */
-void proplist_add_to_argv(
+/* A GHFunc (callback for g_hash_table_foreach),
+ * Store a property and it's value in an ARGV.
+ *
+ * @param key_p: (char *) property name.
+ * @param value_p: (GSList *) property values list.
+ * @param user_data_p: (char ***) pointer to ARGV.
+ */
+static void
+proplist_add_to_argv(
     gpointer key_p,
     gpointer value_p,
     gpointer user_data_p)
@@ -1416,6 +1408,14 @@ void proplist_add_to_argv(
 	g_ptr_array_add(argv_ptr, stralloc((char *)value->data));
     }
     amfree(qprop);
+}
+
+void
+property_add_to_argv(
+    GPtrArray  *argv_ptr,
+    GHashTable *proplist)
+{
+    g_hash_table_foreach(proplist, &proplist_add_to_argv, argv_ptr);
 }
 
 

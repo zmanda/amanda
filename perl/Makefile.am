@@ -408,6 +408,11 @@ Amanda_DATA += Amanda/Config.pm
 EXTRA_DIST += Amanda/Config.swg Amanda/Config.pm Amanda/Config.pod
 MAINTAINERCLEANFILES += Amanda/Config.c Amanda/Config.pm
 
+# PACKAGE: Amanda::Config::*
+AmandaConfigdir = $(amperldir)/Amanda/Config
+AmandaConfig_DATA = Amanda/Config/FoldingHash.pm
+EXTRA_DIST += $(AmandaConfig_DATA)
+
 # PACKAGE: Amanda::Util
 libUtildir = $(amperldir)/auto/Amanda/Util
 libUtil_LTLIBRARIES = libUtil.la

@@ -360,29 +360,6 @@ void	add_history(const char *line);
 
 char *base64_decode_alloc_string(char *);
 
-/* A GHFunc (callback for g_hash_table_foreach),
- * Count the number of properties.
- *
- * @param key_p: (char *) property name.
- * @param value_p: (GSList *) property values list.
- * @param user_data_p: (int *) count are added to that value.
- */
-void count_proplist(gpointer key_p,
-		    gpointer value_p,
-		    gpointer user_data_p);
-
-/* A GHFunc (callback for g_hash_table_foreach),
- * Store a property and it's value in an ARGV.
- *
- * @param key_p: (char *) property name.
- * @param value_p: (GSList *) property values list.
- * @param user_data_p: (char ***) pointer to ARGV.
- */
-void proplist_add_to_argv(gpointer key_p,
-			  gpointer value_p,
-			  gpointer user_data_p);
-
-
 /* Inform the OpenBSD pthread library about the high-numbered file descriptors
  * that an amandad service inherits.  This won't be necessary once the new
  * threading library is availble (OpenBSD 5.0?), but won't hurt anyway.  See the
@@ -392,6 +369,13 @@ void openbsd_fd_inform(void);
 #else
 #define openbsd_fd_inform()
 #endif
+
+/* Add all properties to an ARGV
+ *
+ * @param argvchild: Pointer to the ARGV.
+ * @param proplist: The property list
+ */
+void property_add_to_argv(GPtrArray *argv_ptr, GHashTable *proplist);
 
 /* Print the argv_ptr with g_debug()
  *

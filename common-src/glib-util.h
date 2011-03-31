@@ -121,7 +121,7 @@ void g_ptr_array_foreach (GPtrArray *array,
 #endif
 
 /* functions for g_hash_table_new to hash and compare case-insensitive strings */
-guint g_str_case_hash(gconstpointer v);
-gboolean g_str_case_equal(gconstpointer v1, gconstpointer v2);
+guint g_str_amanda_hash(gconstpointer v);
+gboolean g_str_amanda_equal(gconstpointer v1, gconstpointer v2);
 
 #endif

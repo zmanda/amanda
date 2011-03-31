@@ -1388,13 +1388,6 @@ gint64 find_multiplier(char * casestr);
  */
 int string_to_boolean(const char *str);
 
-/* Add all properties to an ARGV
- *
- * @param argvchild: Pointer to the ARGV.
- * @param proplist: The property list
- */
-void property_add_to_argv(GPtrArray *argv_ptr, proplist_t proplist);
-
 /* Return a pointer to a static string for the data_path */
 char *data_path_to_string(data_path_t data_path);
 

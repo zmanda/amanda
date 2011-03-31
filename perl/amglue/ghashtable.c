@@ -21,6 +21,11 @@
 #include "amglue.h"
 #include "conffile.h"
 
+/* PERL_MAGIC_tied is not defined in perl 5.6 */
+#if !defined PERL_MAGIC_tied
+#define PERL_MAGIC_tied 'P'
+#endif
+
 static void 
 foreach_fn(gpointer key_p, gpointer value_p, gpointer user_data_p)
 {
@@ -75,6 +80,7 @@ foreach_fn_property(gpointer key_p, gpointer value_p, gpointer user_data_p)
     HV         *hv = user_data_p;
     AV         *list = newAV();
     HV         *property_hv = newHV();
+    SV         *val;
 
     hv_store(property_hv, "append", strlen("append"), newSViv(property->append), 0);
     hv_store(property_hv, "priority", strlen("priority"), newSViv(property->priority), 0);
@@ -83,14 +89,26 @@ foreach_fn_property(gpointer key_p, gpointer value_p, gpointer user_data_p)
     }
     hv_store(property_hv, "values", strlen("values"), newRV_noinc((SV*)list), 0);
 
-    hv_store(hv, key, strlen(key), newRV_noinc((SV*)property_hv), 0);
+    val = newRV_noinc((SV*)property_hv);
+    hv_store(hv, key, strlen(key), val, 0);
+    mg_set(val);
+    SvREFCNT_dec(val);
 }
 
 SV *
 g_hash_table_to_hashref_property(GHashTable *hash)
 {
-    HV *hv = (HV *)sv_2mortal((SV *)newHV());
+    HV *hv;
+    HV *stash;
+    SV *tie;
 
+    hv = newHV();
+    tie = newRV_noinc((SV*)newHV());
+    stash = gv_stashpv("Amanda::Config::FoldingHash", GV_ADD);
+    sv_bless(tie, stash);
+    hv_magic(hv, (GV*)tie, PERL_MAGIC_tied);
+
+    hv = (HV *)sv_2mortal((SV *)hv);
     g_hash_table_foreach(hash, foreach_fn_property, hv);
 
     return newRV((SV *)hv);

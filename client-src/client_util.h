@@ -104,14 +104,6 @@ void parse_options(char *str,
 		   am_feature_t *features,
 		   int verbose);
 
-/* Count the size of an ARGV to store all properties of an application for
- * a dle. include/exclude options are converted to properties.
- *
- * @param dle: the dle
- * @returns: size of an ARGV needed.
- */
-int application_property_argv_size(dle_t *dle);
-
 /* Add all properties of an application for a dle to an ARGV.
  * include/exclude options are converted to properties.
  *

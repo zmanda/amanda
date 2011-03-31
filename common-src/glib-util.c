@@ -497,25 +497,36 @@ g_ptr_array_foreach (GPtrArray *array,
 #endif
 
 guint
-g_str_case_hash(
+g_str_amanda_hash(
 	gconstpointer key)
 {
     /* modified version of glib's hash function, copyright
      * GLib Team and others 1997-2000. */
-    const char *p = key;
-    guint h = g_ascii_toupper(*p);
+    const char *p;
+    guint h = 0;
 
-    if (h)
-	for (p += 1; *p != '\0'; p++)
-	    h = (h << 5) - h + g_ascii_toupper(*p);
+    for (p = key; *p != '\0'; p++)
+        h = (h << 5) - h + (('_' == *p) ? '-' : g_ascii_tolower(*p));
 
     return h;
 }
 
 gboolean
-g_str_case_equal(
+g_str_amanda_equal(
 	gconstpointer v1,
 	gconstpointer v2)
 {
-    return (0 == g_ascii_strcasecmp((char *)v1, (char *)v2));
+    const gchar *p1 = v1, *p2 = v2;
+    while (*p1) {
+        /* letting '-' == '_' */
+        if (!('-' == *p1 || '_' == *p1) || !('-' == *p2 || '_' == *p2))
+            if (g_ascii_tolower(*p1) != g_ascii_tolower(*p2))
+                return FALSE;
+
+        p1++;
+        p2++;
+    }
+
+    /* p1 is at '\0' is p2 too? */
+    return *p2? FALSE : TRUE;
 }

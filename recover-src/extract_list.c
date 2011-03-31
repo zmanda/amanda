@@ -1964,7 +1964,7 @@ extract_files_child(
 	    }
 
 	} else if (proplist) {
-	    g_hash_table_foreach(proplist, &proplist_add_to_argv, argv_ptr);
+	    property_add_to_argv(argv_ptr, proplist);
 	}
 	break;
     }

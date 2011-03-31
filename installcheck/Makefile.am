@@ -5,6 +5,7 @@ all_tests =
 common_tests = \
 	Amanda_Archive \
 	Amanda_Config \
+	Amanda_Config_FoldingHash \
 	Amanda_ClientService \
 	Amanda_Debug \
 	Amanda_Feature \

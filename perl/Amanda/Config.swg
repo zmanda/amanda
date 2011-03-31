@@ -28,6 +28,10 @@
 #include "conffile.h"
 %}
 
+%perlcode %{
+use Amanda::Config::FoldingHash;
+%}
+
 /*
  * Parameter access
 */
@@ -781,3 +785,6 @@ sub string_to_boolean {
 %}
 
 amglue_export_ok(string_to_boolean);
+
+gchar * amandaify_property_name(const gchar *name);
+amglue_export_ok(amandaify_property_name);

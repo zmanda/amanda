@@ -16,14 +16,14 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 176;
+use Test::More tests => 191;
 use strict;
 
 use lib "@amperldir@";
 use Installcheck::Config;
 use Amanda::Paths;
 use Amanda::Tests;
-use Amanda::Config qw( :init :getconf string_to_boolean );
+use Amanda::Config qw( :init :getconf string_to_boolean amandaify_property_name );
 use Amanda::Debug;
 
 my $testconf;
@@ -97,6 +97,8 @@ $testconf = Installcheck::Config->new();
 $testconf->add_client_param('property', '"client-prop" "yep"');
 $testconf->add_client_param('property', 'priority "clIent-prop1" "foo"');
 $testconf->add_client_param('property', 'append "clieNt-prop" "bar"');
+$testconf->add_client_param('property', '"ANotHer_prOp" "baz"');
+$testconf->add_client_param('property', 'append "ANOTHER-prop" "boo"');
 $testconf->write();
 
 my $cfg_result = config_init($CONFIG_INIT_CLIENT, undef);
@@ -109,7 +111,10 @@ is_deeply(getconf($CNF_PROPERTY), { "client-prop1" => { priority => 1,
 							values => [ "foo" ]},
 				    "client-prop" => { priority => 0,
 						       append   => 1,
-						       values => [ "yep", "bar" ] }},
+						       values => [ "yep", "bar" ] },
+				    "another-prop" => { priority => 0,
+						        append   => 1,
+						        values => [ "baz", "boo" ] }},
     "Client PROPERTY parameter parsed correctly");
 
 ##
@@ -204,6 +209,7 @@ $testconf->add_device('my_device', [
   'comment' => '"my device is mine, not yours"',
   'tapedev' => '"tape:/dev/nst0"',
   'device_property' => '"BLOCK_SIZE" "128k"',
+  'device_property' => '"CoMmENT" "what up?"',
 ]);
 $testconf->add_changer('my_changer', [
   'comment' => '"my changer is mine, not yours"',
@@ -477,8 +483,11 @@ SKIP: { # device
     is(device_config_getconf($dc, $DEVICE_CONFIG_TAPEDEV), 'tape:/dev/nst0',
 	"device tapedev");
     # TODO do we really need all of this equipment for device properties?
+use Data::Dumper;
+diag Dumper(device_config_getconf($dc, $DEVICE_CONFIG_DEVICE_PROPERTY));
     is_deeply(device_config_getconf($dc, $DEVICE_CONFIG_DEVICE_PROPERTY),
-          { "block_size" => { 'priority' => 0, 'values' => ["128k"], 'append' => 0 }, },
+          { "block-size" => { 'priority' => 0, 'values' => ["128k"]    , 'append' => 0 },
+	    "comment"    => { 'priority' => 0, 'values' => ["what up?"], 'append' => 0 } },
         "device config proplist");
 
     is_deeply([ sort(+getconf_list("device")) ],
@@ -949,3 +958,40 @@ for my $bv (@boolean_vals) {
     is(string_to_boolean($bv->{'val'}), $bv->{'expected'},
         "string_to_boolean('$bv->{'val'}') is right");
 }
+
+my @prop_names = (
+    {'val' => '', 'expected' => ''},
+    {'val' => 'prop-name', 'expected' => 'prop-name'},
+    {'val' => 'PRoP-NaME', 'expected' => 'prop-name'},
+    {'val' => 'prop_name', 'expected' => 'prop-name'},
+    {'val' => 'FaNCy_ProP', 'expected' => 'fancy-prop'},
+    {'val' => '_under_', 'expected' => '-under-'},
+    {'val' => '-dash-', 'expected' => '-dash-'},
+    {'val' => '-', 'expected' => '-'},
+    {'val' => '_', 'expected' => '-'},
+    );
+
+for my $pn (@prop_names) {
+    is(amandaify_property_name($pn->{'val'}), $pn->{'expected'},
+       "amandaify_property_name('$pn->{'val'}') is right");
+}
+
+$testconf = Installcheck::Config->new();
+$testconf->add_param('property', '"PrOP_nAme" "VALUE"');
+$testconf->write();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my $properties = getconf($CNF_PROPERTY);
+
+@prop_names = (
+    {'val' => 'prop-name'},
+    {'val' => 'PRoP-NaME'},
+    {'val' => 'prop_name'},
+    {'val' => 'PROP_NAME'},
+    {'val' => 'PRoP-NaME'},
+    {'val' => 'prop_name'},
+    );
+
+for my $pn (@prop_names) {
+    is_deeply($properties->{$pn->{'val'}}->{values}, [ "VALUE" ]);
+}
+

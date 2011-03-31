@@ -1,3 +1,32 @@
+2011-03-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c: Use property_add_to_argv.
+	* client-src/client_util.h (application_property_argv_size):
+	  Remove prototype.
+	* common-src/conffile.c: Use g_str_amanda_hash and g_str_amanda_equal
+	  for property hash.
+	* common-src/conffile.c (property_add_to_argv): Remove function
+	* common-src/conffile.h (property_add_to_argv): Remove prototype.
+	* common-src/glib-util.c (g_str_amanda_hash, g_str_amanda_equal):
+	  Add function
+	* common-src/glib-util.h (g_str_amanda_hash, g_str_amanda_equal):
+	  Add prototype.
+	* common-src/util.c (proplist_add_to_argv, property_add_to_argv):
+	  Add function.
+	* common-src/util.h (proplist_add_to_argv, property_add_to_argv):
+	  Add prototype.
+	* perl/Amanda/Config.pod: Document amandaify_property_name.
+	* perl/Amanda/Config.swg: Add amandaify_property_name.
+	* perl/Amanda/Config/FoldingHash.pm: New class.
+	* perl/Makefile.am: Add perl/Amanda/Config/FoldingHash.pm
+	* perl/amglue/ghashtable.c: Use A::C::FoldingHash.pm for property hash,
+	  Define PERL_MAGIC_tied.
+	* recover-src/extract_list.c: Use property_add_to_argv
+	* installcheck/Amanda_Config.pl: Check property case matching.
+	* installcheck/Amanda_Config_FoldingHash.pl:
+	  Check Amanda::Config::FoldingHash.
+	* installcheck/Makefile.am:
+	  Add installcheck/Amanda_Config_FoldingHash.pl
+
 2011-03-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/fileheader.c: Remove the hexdump function.
 
