@@ -102,7 +102,7 @@ BEGIN{
 			  level[$6]=$14;
 			}
 			else if( $7 == "FILE-WRITE") file_write++;
-			else if( $7 == "START-TAPER") fil = $8;
+			else if( $7 == "START-TAPER") fil = $9;
 		}
 		else if( $2=="finished-cmd") cmd_fin++;
 		else if( $2=="started")      forked++;
@@ -132,7 +132,7 @@ BEGIN{
 	            print fil, "INFO#", $0;
 	}
 	else if( $1 == "taper:") {
-		if($3 != "label" && $3 != "end" && $2 != "DONE" && $2 != "pid" && $2 != "slot" && $2 != "reader-side:" && $2 != "page" && $2 != "buffer" && $3 != "at" && $3 != "switching" && $2 != "slot:")
+		if($3 != "label" && $3 != "end" && $2 != "DONE" && $2 != "pid" && $2 != "slot" && $2 != "reader-side:" && $2 != "page" && $2 != "buffer" && $3 != "at" && $3 != "switching" && $2 != "slot:" && $2 != "status")
 		    print fil, "INFO#", $0;
 	}
 	else if( $1 == "FLUSH") {
@@ -363,6 +363,10 @@ function do_result(){		# process lines driver: result
 		}
 		else if ($7=="TAPER-OK") tape_err=0;
 		else if ($7=="PORT")    tape_err=0;
+		else if ($7=="REQUEST-NEW-TAPE")    tape_err=0;
+		else if ($7=="NEW-TAPE")    tape_err=0;
+		else if ($7=="PARTDONE")    tape_err=0;
+		else if ($7=="DUMPER-STATUS")    tape_err=0;
 		else print fil, "UNKNOWN STATUS# "$0 ;
 	}
 	else { 					# something bad from dumper 
@@ -439,44 +443,46 @@ function print_t(){		# printing out the labels for the graph
 	printf "set yrange[0:%d]\n",maxy >"title";
 	if( maxtime < tim && extend !=0) {
 		printf "set xrange[0:%d]\n", tim+30 >>"title";
-		second_col = tim*0.45;
-		key_col = tim + 10;
-		third_col = tim +13;
+		first_col = 10;
+		second_col = (tim+30) * 0.45;
+		key_col = (tim+30) * 1.042;
+		third_col = (tim+30) * 1.0125;
 	}
 	else {
 		printf "set xrange[0:%d]\n", maxtime >>"title";
-		second_col = (maxtime-10) * 0.45;
+		first_col = maxtime * 0.042
+		second_col = maxtime * 0.45
 		key_col = maxtime;
-		third_col = maxtime +3;
+		third_col = maxtime*1.0125;
 	}
 	label_shift = (7 + int(no_disks/100));
 	lab = label_start = maxy+(6*label_shift) ;  # showing 6 labels
-	printf "set key %d, %d\n", key_col, lab+4 >>"title";
-	printf "set label %d \"Amanda Dump %s\" at 10,%d\n", ++label,fil, 
-		lab >"title";
+	printf "set key at %d, %d\n", key_col, lab+4 >>"title";
+	printf "set label %d \"Amanda Dump %s\" at %d,%d\n", ++label,fil, 
+		first_col,lab >"title";
 	lab -= label_shift;
-	printf "set label %d \"Bandwidth = %d\" at 10,%d\n",++label,bandw,
-		lab >>"title";
+	printf "set label %d \"Bandwidth = %d\" at %d,%d\n",++label,bandw,
+		first_col,lab >>"title";
 
 	lab -= label_shift;
-	printf "set label %d \"Holding disk = %d\" at 10,%d\n",++label,size,
-		lab >>"title";
+	printf "set label %d \"Holding disk = %d\" at %d,%d\n",++label,size,
+		first_col,lab >>"title";
 
 	lab -= label_shift;
-	printf "set label %d \"Tape Policy = %s\" at 10,%d\n",++label,policy,
-		lab >>"title";
+	printf "set label %d \"Tape Policy = %s\" at %d,%d\n",++label,policy,
+		first_col,lab >>"title";
 
 	lab -= label_shift;
-	printf "set label %d \"Dumpers= %d\" at 10,%d\n",++label,dumpers,
-		lab >>"title";
+	printf "set label %d \"Dumpers= %d\" at %d,%d\n",++label,dumpers,
+		first_col,lab >>"title";
 
 	lab -= label_shift;
 	if( alg =="drain-ends") 
-		printf "set label %d \"Driver alg = %s At big end %d\" at 10,%d\n",
-			++label,alg, big,lab >>"title";
+		printf "set label %d \"Driver alg = %s At big end %d\" at %d,%d\n",
+			++label,alg, big,first_col,lab >>"title";
 	else #if( alg =="InOrder")  # other special cases
-		printf "set label %d \"Driver alg = %s\" at 10,%d\n",
-			++label,alg, lab >>"title";
+		printf "set label %d \"Driver alg = %s\" at %d,%d\n",
+			++label,alg,first_col, lab >>"title";
 
 	lab = label_start;
 	printf "set label %d \"Elapsed Time = %s\" at %d,%d\n",
