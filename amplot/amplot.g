@@ -32,7 +32,7 @@
 #	Input: the files specified below on the  plot line
 #	Output: a postscript file 
 #
-set data style lines
+set style data lines
 set xrange [0:210]
 set yrange [0:420]
 set xlabel "Minutes"
@@ -59,11 +59,11 @@ set ytics ("0" 0, "20" 15, "40" 30, "60" 45, "80" 60, "100" 75,\
 #set size 0.9,0.9; set term postscript landscape "Times-Roman" 12
 # file title has the parameters that this program needs
 load 'title'
-plot 	"run_queue" title "Run Queue" with line 3,\
-	"tape_queue" title "Tape Queue" with line 2,\
-	"finished"  title "Dumps Finished" with line 4,\
-	"bandw_free" title "Bandwidth Allocated" with line 8, \
-	"disk_alloc" title "%Disk Allocated" with line 1, \
-	"tape_wait" title "%Tape Wait" with line 5,\
-	"tape_idle" title "Taper Idle" with line 1,\
-	"dump_idle" title "Dumpers Idle" with line 4
+plot 	"run_queue" title "Run Queue" with lines,\
+	"tape_queue" title "Tape Queue" with lines,\
+	"finished"  title "Dumps Finished" with lines,\
+	"bandw_free" title "Bandwidth Allocated" with lines, \
+	"disk_alloc" title "%Disk Allocated" with lines, \
+	"tape_wait" title "%Tape Wait" with lines,\
+	"tape_idle" title "Taper Idle" with lines,\
+	"dump_idle" title "Dumpers Idle" with lines
