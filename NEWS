@@ -3,6 +3,7 @@ Changes in release 3.3.0
    * meta-volume
    * Add meta label in tapelist file
    * chg-disk:
+       o support for removable disk
        o new NUM-SLOT property
        o new AUTO-CREATE-SLOT property
        o new REMOVABLE property
@@ -10,6 +11,11 @@ Changes in release 3.3.0
        o new UMOUNT property
        o new UMOUNT-LOCKFILE property
        o new UMOUNT-IDLE property
+   * new taperscan algorithm:
+       o oldest: this algorithm try to run through the volumes in the oldest
+	 order
+       o lexical: this algorithm try to run through the volumes in the natural
+	 order
    * Change in amanda.conf
        o new meta-autolabel option
        o autolabel can include org, config, barcode, meta in the label

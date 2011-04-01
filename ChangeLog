@@ -1,4 +1,7 @@
 2011-04-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS, ReleaseNotes: Update for 3.3.0beta1.
+
+2011-04-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* amplot/amplot.awk: Fix for new log format, fix small -t display,
 	  fix 'set key' syntax.
 	* amplot/amplot.g: Fix 'set data' and 'plot' syntax.
