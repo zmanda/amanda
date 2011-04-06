@@ -1,3 +1,7 @@
+2011-04-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Fix Computation of data_lost on current and
+	  next tape.
+
 2011-04-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* amplot/amplot.awk: Fix for new log format, fix small -t display,
 	  fix 'set key' syntax.

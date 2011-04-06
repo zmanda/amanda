@@ -3702,7 +3702,9 @@ tape_action(
     int   nb_taper_active = nb_sent_new_tape;
     int   nb_taper_flushing = 0;
     off_t data_next_tape = 0;
+    off_t data_free = 0;
     off_t data_lost = 0;
+    off_t data_lost_next_tape = 0;
 
     dumpers_size = 0;
     for(dumper = dmptable; dumper < (dmptable+inparallel); dumper++) {
@@ -3749,15 +3751,21 @@ tape_action(
 	    } else {
 		data_to_go = sched(taper1->disk)->act_size - taper1->written;
 	    }
-	    data_next_tape += data_to_go - taper1->left;
 	    if (data_to_go > taper1->left) {
-		data_lost += taper1->written - taper1->left;
+		data_next_tape += data_to_go - taper1->left;
+		data_lost += taper1->written + taper1->left;
 	    } else {
-		data_lost += data_to_go - taper1->left;
+		data_free += taper1->left - data_to_go;
 	    }
 	    tapeq_size += data_to_go;
 	}
     }
+    data_lost_next_tape = tape_length + data_free - data_next_tape - runq_size - directq_size - tapeq_size;
+    driver_debug(1, _("data_lost: %lld\n"), (long long)data_lost);
+    driver_debug(1, _("data_free: %lld\n"), (long long)data_free);
+    driver_debug(1, _("data_next_tape: %lld\n"), (long long)data_next_tape);
+    driver_debug(1, _("data_lost_next_tape: %lld\n"), (long long)data_lost_next_tape);
+;
     driver_debug(1, _("tapeq_size: %lld\n"), (long long)tapeq_size);
 
     sched_size = runq_size + directq_size + tapeq_size + dumpers_size;
@@ -3788,7 +3796,7 @@ tape_action(
 		   taper_nb_scan_volume == 0 &&
 		   ((flush_threshold_dumped < tapeq_size &&
 		     flush_threshold_scheduled < sched_size) ||
-		    (data_lost > data_next_tape) ||
+		    (data_lost > data_lost_next_tape) ||
 		    nb_taper_active == 0) &&
 		   (last_started_taper == NULL ||
 		    last_started_taper == taper)) {
@@ -3803,7 +3811,7 @@ tape_action(
          idle_reason == IDLE_NO_DISKSPACE ||		// holding disk constraint
          (flush_threshold_dumped < tapeq_size &&	// flush-threshold-dumped &&
 	  flush_threshold_scheduled < sched_size) ||	//  flush-threshold-scheduled
-	 (data_lost > data_next_tape) ||
+	 (data_lost > data_lost_next_tape) ||
 	 (taperflush < tapeq_size &&			// taperflush
 	  (force_flush == 1 ||				//  if force_flush
 	   dump_to_disk_terminated))			//  or all dump to disk terminated
