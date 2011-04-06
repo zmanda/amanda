@@ -1,4 +1,7 @@
 2011-04-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Interactivity.pm: Add documentation.
+
+2011-04-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Fix Computation of data_lost on current and
 	  next tape.
 
