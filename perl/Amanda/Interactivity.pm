@@ -78,9 +78,12 @@ in the config file.
 
 This method return immediately.  It sends a message to the user and waits for a
 reply.
-C<err> is the reason why the volume is needed.
-C<message> describe the volume needed.
-C<label>, C<new_volume> and C<chg_name> describe the volume needed
+ C<err> is the reason why the volume is needed.
+ C<message> is a sentence describing the requested volume.
+ The volume can be describe with many parameters:
+  C<label> is the requested label or the most prefered label.
+  C<new_volume> if a new volume is acceptable.
+  C<chg_name> the name of the changer where amanda expect the volume.
 
 A module can print only C<message> or build something prettier with the values
 of the other parameters.
