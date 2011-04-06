@@ -375,7 +375,7 @@ as properties.</para>
 
 <para>The S3 device driver stores each block in a distinct S3 object.  Due to
 high HTTP overhead for each request, use of larger than normal block
-  sizes (&gt; 1 megabyte) is reccomended with the S3 device.</para>
+  sizes (&gt; 1 megabyte) is recommended with the S3 device.</para>
 
 <para>
 Amanda automatically creates a bucket when writing, if the bucket doesn't
