@@ -1,4 +1,7 @@
 2011-04-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda-devices.7.xml: Typo.
+
+2011-04-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Interactivity.pm: Add documentation.
 
 2011-04-06  Jean-Louis Martineau <martineau@zmanda.com>
