@@ -491,9 +491,9 @@ sub make_stats {
     my $kps = "$kb.0"/$duration; # Perlish cast from BigInt to float
 
     if (defined $orig_kb) {
-	return sprintf("[sec %f kb %d kps %f orig-kb %d]", $duration, $kb, $kps, $orig_kb);
+	return sprintf("[sec %f kb %s kps %f orig-kb %s]", $duration, $kb, $kps, $orig_kb);
     } else {
-	return sprintf("[sec %f kb %d kps %f]", $duration, $kb, $kps);
+	return sprintf("[sec %f kb %s kps %f]", $duration, $kb, $kps);
     }
 }
 

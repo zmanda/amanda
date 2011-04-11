@@ -1,3 +1,7 @@
+2011-04-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/DB/Catalog.pm: Parse negative kb and orig-kb.
+	* server-src/taper.pl: Do not write negative kb and orig-kb.
+
 2011-03-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Config.pl: Remove spurious diag.
 

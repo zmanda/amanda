@@ -676,7 +676,7 @@ sub get_parts_and_dumps {
 	    ($level, $str) = Amanda::Util::skip_quoted_string($str);
 	    if ($status ne 'FAIL') {
 		my $s = $str;
-		($secs, $kb, $str) = ($str =~ /^\[sec ([-0-9.]+) kb (\d+).*\] ?(.*)$/)
+		($secs, $kb, $str) = ($str =~ /^\[sec ([-0-9.]+) kb ([-0-9]+).*\] ?(.*)$/)
 		    or die("'$s'");
 		$secs = 0.1 if ($secs <= 0);
 	    }
