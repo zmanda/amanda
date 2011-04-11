@@ -1,3 +1,7 @@
+2011-04-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/DB/Catalog.pm: Parse negative kb and orig-kb.
+	* perl/Amanda/Logfile.swg: Do not write negative orig-kb.
+
 2011-04-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Fix Computation of data_lost on current and
 	  next tape.
