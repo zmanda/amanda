@@ -748,7 +748,7 @@ sub get_parts_and_dumps {
 	    if ($status ne 'FAIL') {
 		my $s = $str;
 		my $b_unit;
-		($secs, $b_unit, $kb, $str) = ($str =~ /^\[sec ([-0-9.]+) (kb|bytes) (\d+).*\] ?(.*)$/)
+		($secs, $b_unit, $kb, $str) = ($str =~ /^\[sec ([-0-9.]+) (kb|bytes) ([-0-9]+).*\] ?(.*)$/)
 		    or die("'$s'");
 		if ($b_unit eq 'bytes') {
 		    $bytes = $kb;
