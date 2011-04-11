@@ -1,4 +1,7 @@
 2011-04-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Call device_set_error only from main thread.
+
+2011-04-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Add S3 "THREADS" property, use multiple
 	  threads to write to the s3 device.
 	* man/xml-source/amanda-devices.7.xml: Document "THREADS" property for

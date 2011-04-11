@@ -68,12 +68,14 @@ typedef struct _S3MetadataFile S3MetadataFile;
 
 typedef struct _S3_by_thread S3_by_thread;
 struct _S3_by_thread {
-    S3Handle   *s3;
-    char       *buffer;
-    guint       buffer_size;
-    CurlBuffer  to_write;
-    int         idle;
-    char       *filename;
+    S3Handle                   *s3;
+    char volatile * volatile    buffer;
+    guint                       buffer_size;
+    CurlBuffer volatile         to_write;
+    int volatile                idle;
+    char volatile * volatile    filename;
+    DeviceStatusFlags volatile  errflags;	/* device_status */
+    char volatile * volatile    errmsg;		/* device error message */
 };
 
 typedef struct _S3Device S3Device;
@@ -1335,6 +1337,8 @@ static gboolean setup_handle(S3Device * self) {
 	    self->s3t[thread].idle = 1;
 	    self->s3t[thread].buffer = NULL;
 	    self->s3t[thread].buffer_size = 0;
+	    self->s3t[thread].errflags = DEVICE_STATUS_SUCCESS;
+	    self->s3t[thread].errmsg = NULL;
             self->s3t[thread].s3 = s3_open(self->access_key, self->secret_key, self->user_token,
                 self->bucket_location, self->storage_class, self->ca_info);
             if (self->s3t[thread].s3 == NULL) {
@@ -1621,6 +1625,7 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
     S3Device * self = S3_DEVICE(pself);
     int idle_thread = 0;
     int thread = -1;
+    int first_idle = -1;
 
 
     g_assert (self != NULL);
@@ -1645,25 +1650,37 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
 	idle_thread = 0;
 	for (thread = 0; thread < self->nb_threads; thread++)  {
 	    if (self->s3t[thread].idle == 1) {
-		idle_thread = 1;
-		break;
+		idle_thread++;
+		if (first_idle == -1)
+		    first_idle = thread;
+		/* Check if the thread is in error */
+		if (self->s3t[thread].errflags != DEVICE_STATUS_SUCCESS) {
+		    device_set_error(pself, (char *)self->s3t[thread].errmsg,
+				     self->s3t[thread].errflags);
+		    self->s3t[thread].errflags = DEVICE_STATUS_SUCCESS;
+		    self->s3t[thread].errmsg = NULL;
+		    g_mutex_unlock(self->thread_idle_mutex);
+		    return FALSE;
+		}
 	    }
 	}
 	if (!idle_thread) {
 	    g_cond_wait(self->thread_idle_cond, self->thread_idle_mutex);
 	}
     }
+    thread = first_idle;
+
     self->s3t[thread].idle = 0;
     if (self->s3t[thread].buffer && self->s3t[thread].buffer_size < size) {
-	g_free(self->s3t[thread].buffer);
+	g_free((char *)self->s3t[thread].buffer);
 	self->s3t[thread].buffer = NULL;
     }
     if (self->s3t[thread].buffer == NULL) {
 	self->s3t[thread].buffer = g_malloc(size);
 	self->s3t[thread].buffer_size = size;
     }
-    memcpy(self->s3t[thread].buffer, data, size);
-    self->s3t[thread].to_write.buffer = self->s3t[thread].buffer;
+    memcpy((char *)self->s3t[thread].buffer, data, size);
+    self->s3t[thread].to_write.buffer = (char *)self->s3t[thread].buffer;
     self->s3t[thread].to_write.buffer_len = size;
     self->s3t[thread].to_write.buffer_pos = 0;
     self->s3t[thread].to_write.max_buffer_size = 0;
@@ -1686,13 +1703,13 @@ s3_thread_write_block(
     S3Device *self = S3_DEVICE(pself);
     gboolean result;
 
-    result = s3_upload(s3t->s3, self->bucket, s3t->filename,
-		       S3_BUFFER_READ_FUNCS, &s3t->to_write, NULL, NULL);
-    amfree(s3t->filename);
+    result = s3_upload(s3t->s3, self->bucket, (char *)s3t->filename,
+		       S3_BUFFER_READ_FUNCS, (CurlBuffer *)&s3t->to_write, NULL, NULL);
+    g_free((void *)s3t->filename);
+    s3t->filename = NULL;
     if (!result) {
-	device_set_error(pself,
-	    vstrallocf(_("While writing data block to S3: %s"), s3_strerror(self->s3t[0].s3)),
-	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
+	s3t->errflags = DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR;
+	s3t->errmsg = g_strdup_printf(_("While writing data block to S3: %s"), s3_strerror(s3t->s3));
     }
     g_mutex_lock(self->thread_idle_mutex);
     s3t->idle = 1;
@@ -1704,25 +1721,30 @@ static gboolean
 s3_device_finish_file (Device * pself) {
     S3Device *self = S3_DEVICE(pself);
 
-    if (self->nb_threads > 1) {
-	/* Check all threads are done */
-	int idle_thread = 0;
-	int thread;
+    /* Check all threads are done */
+    int idle_thread = 0;
+    int thread;
 
-	g_mutex_lock(self->thread_idle_mutex);
-	while (idle_thread != self->nb_threads) {
-	    idle_thread = 0;
-	    for (thread = 0; thread < self->nb_threads; thread++)  {
-		if (self->s3t[thread].idle == 1) {
-		    idle_thread++;
-		}
+    g_mutex_lock(self->thread_idle_mutex);
+    while (idle_thread != self->nb_threads) {
+	idle_thread = 0;
+	for (thread = 0; thread < self->nb_threads; thread++)  {
+	    if (self->s3t[thread].idle == 1) {
+		idle_thread++;
 	    }
-	    if (idle_thread != self->nb_threads) {
-		g_cond_wait(self->thread_idle_cond, self->thread_idle_mutex);
+	    /* check thread status */
+	    if (self->s3t[thread].errflags != DEVICE_STATUS_SUCCESS) {
+		device_set_error(pself, (char *)self->s3t[thread].errmsg,
+				 self->s3t[thread].errflags);
+		self->s3t[thread].errflags = DEVICE_STATUS_SUCCESS;
+		self->s3t[thread].errmsg = NULL;
 	    }
 	}
-	g_mutex_unlock(self->thread_idle_mutex);
+	if (idle_thread != self->nb_threads) {
+	    g_cond_wait(self->thread_idle_cond, self->thread_idle_mutex);
+	}
     }
+    g_mutex_unlock(self->thread_idle_mutex);
 
     if (device_in_error(pself)) return FALSE;
 
@@ -2040,7 +2062,8 @@ static gboolean
 check_at_leom(S3Device *self, guint64 size)
 {
     guint64 block_size = DEVICE(self)->block_size;
-    guint64 eom_warning_buffer = EOM_EARLY_WARNING_ZONE_BLOCKS * block_size;
+    guint64 eom_warning_buffer = block_size *
+		(EOM_EARLY_WARNING_ZONE_BLOCKS + self->nb_threads);
 
     if(!self->leom)
         return FALSE;
