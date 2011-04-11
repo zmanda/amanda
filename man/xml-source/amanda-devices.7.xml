@@ -477,6 +477,10 @@ for the most up-to-date list.
  (read-write) This property specifies the user token for Amanda Enterprise Edition customers.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>THREADS</term><listitem>
+ (read-write) The number of thread that send data to the s3 device, higher value can provide more throutput.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>VERBOSE</term><listitem>
  (read-write) If true, verbose data about each HTTP transaction is sent to the debug log.
 </listitem></varlistentry>
