@@ -11,7 +11,7 @@ INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/gnulib
 
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
-AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
+AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS) $(AS_NEEDED_FLAGS)
 
 LINT=$(AMLINT)
 LINTFLAGS=$(AMLINTFLAGS)
@@ -35,7 +35,7 @@ if WANT_SAMBA
 libamclient_la_SOURCES += findpass.c
 endif
 
-libamclient_la_LDFLAGS = -release $(VERSION)
+libamclient_la_LDFLAGS = -release $(VERSION) $(AS_NEEDED_FLAGS)
 libamclient_la_LIBADD  = ../common-src/libamanda.la
 
 ###

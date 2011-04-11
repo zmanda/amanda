@@ -15,7 +15,7 @@ if GCC_COMPILER
 # ndmp-device.c includes files with old-skool prototypes, so:
 AM_CFLAGS += -Wno-strict-prototypes
 endif
-AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
+AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS) $(AS_NEEDED_FLAGS)
 
 sbin_PROGRAMS =
 
@@ -27,7 +27,7 @@ sbin_SCRIPTS = $(SCRIPTS_PERL)
 ## libamdevice.la
 
 amlib_LTLIBRARIES = 	libamdevice.la
-libamdevice_la_LDFLAGS = -release $(VERSION) 
+libamdevice_la_LDFLAGS = -release $(VERSION) $(AS_NEEDED_FLAGS)
 libamdevice_la_SOURCES = \
 	property.c \
 	device.c \

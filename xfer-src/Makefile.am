@@ -9,7 +9,7 @@ INCLUDES =      -I$(top_srcdir)/gnulib \
 		-I$(top_srcdir)/common-src
 
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
-AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
+AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS) $(AS_NEEDED_FLAGS)
 
 amlib_LTLIBRARIES =	libamxfer.la
 
@@ -34,7 +34,7 @@ libamxfer_la_SOURCES = \
 	xfer.c \
 	xmsg.c
 
-libamxfer_la_LDFLAGS = -release $(VERSION)
+libamxfer_la_LDFLAGS = -release $(VERSION) $(AS_NEEDED_FLAGS)
 libamxfer_la_LIBADD = \
 	../common-src/libamanda.la
 

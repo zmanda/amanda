@@ -13,7 +13,7 @@ INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/gnulib
 
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
-AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
+AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS) $(AS_NEEDED_FLAGS)
 
 LINT=$(AMLINT)
 LINTFLAGS=$(AMLINTFLAGS)
@@ -89,7 +89,7 @@ libamserver_la_SOURCES=	amindex.c	\
 			tapefile.c	find.c		server_util.c   \
                         xfer-source-holding.c
 
-libamserver_la_LDFLAGS= -release $(VERSION)
+libamserver_la_LDFLAGS= -release $(VERSION) $(AS_NEEDED_FLAGS)
 libamserver_la_LIBADD= ../device-src/libamdevice.la \
 		       ../common-src/libamanda.la
 

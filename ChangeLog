@@ -1,4 +1,13 @@
 2011-04-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* configure.in: Use AMANDA_AS_NEEDED.
+	* config/amanda/as_needed.m4: Add --as-needed, set AS_NEEDED_FLAGS.
+	* client-src/Makefile.am, amandad-src/Makefile.am,
+	  ndmp-src/Makefile.am, device-src/Makefile.am,
+	  application-src/Makefile.am, xfer-src/Makefile.am,
+	  server-src/Makefile.am, amar-src/Makefile.am,
+	  common-src/Makefile.am: Add AS_NEEDED_FLAGS to many *_LDFLAGS.
+
+2011-04-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Call device_set_error only from main thread.
 
 2011-04-11  Jean-Louis Martineau <martineau@zmanda.com>

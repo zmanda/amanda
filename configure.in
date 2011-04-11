@@ -34,6 +34,7 @@ AC_OBJEXT
 AC_EXEEXT
 AMANDA_INIT_FLAGS
 AMANDA_ADD_CPPFLAGS([-D_GNU_SOURCE])
+AMANDA_AS_NEEDED
 
 dnl -------------------------------------------------------------------------
 

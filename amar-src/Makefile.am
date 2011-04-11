@@ -9,7 +9,7 @@ INCLUDES =      -I$(top_builddir)/common-src \
                 -I$(top_srcdir)/gnulib
 
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
-AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
+AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS) $(AS_NEEDED_FLAGS)
 
 LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
@@ -17,7 +17,7 @@ LINTFLAGS=@AMLINTFLAGS@
 amlib_LTLIBRARIES =     libamar.la
 
 libamar_la_SOURCES = amar.c
-libamar_la_LDFLAGS =  -release $(VERSION)
+libamar_la_LDFLAGS =  -release $(VERSION) $(AS_NEEDED_FLAGS)
 libamar_la_LIBADD = ../common-src/libamanda.la
 
 noinst_HEADERS = \
