@@ -8,7 +8,7 @@ include $(top_srcdir)/config/automake/precompile.am
 INCLUDES =      -I$(top_srcdir)/gnulib   
 
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
-AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
+AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS) $(AS_NEEDED_FLAGS)
 
 amlib_LTLIBRARIES =	libamanda.la
 
@@ -96,7 +96,7 @@ endif
 
 libamanda_la_SOURCES += local-security.c
 
-libamanda_la_LDFLAGS =  -release $(VERSION)
+libamanda_la_LDFLAGS =  -release $(VERSION) $(AS_NEEDED_FLAGS)
 
 noinst_HEADERS =		\
 	amanda.h		\
