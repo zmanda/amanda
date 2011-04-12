@@ -1183,14 +1183,6 @@ find(
 		afind->next = new_output_find;
 		new_output_find = afind;
 	    } else {
-		amfree(afind->timestamp);
-		amfree(afind->write_timestamp);
-		amfree(afind->hostname);
-		amfree(afind->diskname);
-		amfree(afind->label);
-		amfree(afind->status);
-		amfree(afind->dump_status);
-		amfree(afind->message);
 		amfree(afind);
 	    }
 	}

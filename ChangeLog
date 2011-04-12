@@ -1,3 +1,7 @@
+2011-04-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amadmin.c: Do not free find result string.
+	* server-src/find.c: Use GStringChunk to store all find_dump string.
+
 2011-04-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in: Use AMANDA_AS_NEEDED.
 	* config/amanda/as_needed.m4: Add --as-needed, set AS_NEEDED_FLAGS.

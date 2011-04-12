@@ -48,6 +48,7 @@ static gboolean logfile_has_tape(char * label, char * datestamp,
                                  char * logfile);
 
 static char *find_sort_order = NULL;
+static GStringChunk *string_chunk = NULL;
 
 find_result_t * find_dump(disklist_t* diskqp) {
     char *conf_logdir, *logfile = NULL;
@@ -57,6 +58,9 @@ find_result_t * find_dump(disklist_t* diskqp) {
     find_result_t *output_find = NULL;
     gboolean *tape_seen = NULL;
 
+    if (string_chunk == NULL) {
+	string_chunk = g_string_chunk_new(32768);
+    }
     conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     maxtape = lookup_nb_tape();
     tape_seen = g_new0(gboolean, maxtape+1);
@@ -225,6 +229,10 @@ search_holding_disk(
 
     holding_file_list = holding_get_files(NULL, 1);
 
+    if (string_chunk == NULL) {
+	string_chunk = g_string_chunk_new(32768);
+    }
+
     for(e = holding_file_list; e != NULL; e = e->next) {
 	dumpfile_t file;
 
@@ -263,26 +271,26 @@ search_holding_disk(
 	if(find_match(file.name,file.disk)) {
 	    find_result_t *new_output_find = g_new0(find_result_t, 1);
 	    new_output_find->next=*output_find;
-	    new_output_find->timestamp = stralloc(file.datestamp);
-	    new_output_find->write_timestamp = stralloc("00000000000000");
-	    new_output_find->hostname = stralloc(file.name);
-	    new_output_find->diskname = stralloc(file.disk);
+	    new_output_find->timestamp = g_string_chunk_insert_const(string_chunk, file.datestamp);
+	    new_output_find->write_timestamp = g_string_chunk_insert_const(string_chunk, "00000000000000");
+	    new_output_find->hostname = g_string_chunk_insert_const(string_chunk, file.name);
+	    new_output_find->diskname = g_string_chunk_insert_const(string_chunk, file.disk);
 	    new_output_find->level=file.dumplevel;
-	    new_output_find->label=stralloc(holding_file);
+	    new_output_find->label=g_string_chunk_insert_const(string_chunk, holding_file);
 	    new_output_find->partnum = -1;
 	    new_output_find->totalparts = -1;
 	    new_output_find->filenum=0;
 	    if (file.is_partial) {
-		new_output_find->status=stralloc("PARTIAL");
-		new_output_find->dump_status=stralloc("PARTIAL");
+		new_output_find->status="PARTIAL";
+		new_output_find->dump_status="PARTIAL";
 	    } else {
-		new_output_find->status=stralloc("OK");
-		new_output_find->dump_status=stralloc("OK");
+		new_output_find->status="OK";
+		new_output_find->dump_status="OK";
 	    }
-	    new_output_find->message=stralloc("");
+	    new_output_find->message="";
 	    new_output_find->kb = holding_file_size(holding_file, 1);
 	    new_output_find->bytes = 0;
-	    
+
 	    new_output_find->orig_kb = file.orig_size;
 
 	    *output_find=new_output_find;
@@ -515,14 +523,6 @@ free_find_result(
 	    output_find_result;
 	    output_find_result=output_find_result->next) {
 	amfree(prev);
-	amfree(output_find_result->timestamp);
-	amfree(output_find_result->write_timestamp);
-	amfree(output_find_result->hostname);
-	amfree(output_find_result->diskname);
-	amfree(output_find_result->label);
-	amfree(output_find_result->status);
-	amfree(output_find_result->dump_status);
-	amfree(output_find_result->message);
 	prev = output_find_result;
     }
     amfree(prev);
@@ -730,6 +730,9 @@ search_logfile(
     g_return_val_if_fail(output_find != NULL, 0);
     g_return_val_if_fail(logfile != NULL, 0);
 
+    if (string_chunk == NULL) {
+	string_chunk = g_string_chunk_new(32768);
+    }
     valid_label = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     part_by_dle = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     datestamp = g_strdup(passed_datestamp);
@@ -1023,17 +1026,17 @@ search_logfile(
 			if (maxparts < a_part_find->totalparts)
 			    maxparts = a_part_find->totalparts;
 		    }
-		    new_output_find->timestamp = stralloc(date);
-		    new_output_find->write_timestamp = stralloc(datestamp);
-		    new_output_find->hostname=stralloc(host);
-		    new_output_find->diskname=stralloc(disk);
+		    new_output_find->timestamp = g_string_chunk_insert_const(string_chunk, date);
+		    new_output_find->write_timestamp = g_string_chunk_insert_const(string_chunk, datestamp);
+		    new_output_find->hostname=g_string_chunk_insert_const(string_chunk, host);
+		    new_output_find->diskname=g_string_chunk_insert_const(string_chunk, disk);
 		    new_output_find->level=level;
 		    new_output_find->partnum = partnum;
 		    new_output_find->totalparts = totalparts;
-                    new_output_find->label=stralloc(current_label);
+		    new_output_find->label=g_string_chunk_insert_const(string_chunk, current_label);
 		    new_output_find->status=NULL;
 		    new_output_find->dump_status=NULL;
-		    new_output_find->message=stralloc("");
+		    new_output_find->message="";
 		    new_output_find->filenum=filenum;
 		    new_output_find->sec=sec;
 		    new_output_find->kb=kb;
@@ -1041,8 +1044,8 @@ search_logfile(
 		    new_output_find->orig_kb=orig_kb;
 		    new_output_find->next=NULL;
 		    if (curlog == L_SUCCESS) {
-			new_output_find->status = stralloc("OK");
-			new_output_find->dump_status = stralloc("OK");
+			new_output_find->status = "OK";
+			new_output_find->dump_status = "OK";
 			new_output_find->next = *output_find;
 			new_output_find->partnum = 1; /* L_SUCCESS is pre-splitting */
 			*output_find = new_output_find;
@@ -1055,13 +1058,11 @@ search_logfile(
 			    for (a_part_find = part_find;
 				 a_part_find;
 				 a_part_find = a_part_find->next) {
-				amfree(a_part_find->dump_status);
 				if (curlog == L_PARTIAL)
-				    a_part_find->dump_status = stralloc("PARTIAL");
+				    a_part_find->dump_status = "PARTIAL";
 				else {
-				    a_part_find->dump_status = stralloc("FAIL");
-				    amfree(a_part_find->message);
-				    a_part_find->message = stralloc(rest);
+				    a_part_find->dump_status = "FAIL";
+				    a_part_find->message = g_string_chunk_insert_const(string_chunk, rest);
 				}
 			    }
 			} else {
@@ -1079,16 +1080,12 @@ search_logfile(
 				for (a_part_find = part_find;
 				     a_part_find;
 				     a_part_find = a_part_find->next) {
-				    amfree(a_part_find->dump_status);
 				    if (num_part == 0) {
-					a_part_find->dump_status =
-						stralloc("OK");
+					a_part_find->dump_status = "OK";
 				    } else {
-					a_part_find->dump_status =
-						stralloc("FAIL");
-					amfree(a_part_find->message);
+					a_part_find->dump_status = "FAIL";
 					a_part_find->message =
-						stralloc("Missing part");
+						g_string_chunk_insert_const(string_chunk, "Missing part");
 				    }
 				}
 			    }
@@ -1121,11 +1118,11 @@ search_logfile(
 			free_find_result(&new_output_find);
 		    } else { /* part line */
 			if (curlog == L_PART || curlog == L_CHUNK) {
-			    new_output_find->status=stralloc("OK");
-			    new_output_find->dump_status=stralloc("OK");
+			    new_output_find->status = "OK";
+			    new_output_find->dump_status = "OK";
 			} else { /* PARTPARTIAL */
-			    new_output_find->status=stralloc("PARTIAL");
-			    new_output_find->dump_status=stralloc("PARTIAL");
+			    new_output_find->status = "PARTIAL";
+			    new_output_find->dump_status = "PARTIAL";
 			}
 			/* Add to part_find list */
 			if (part_find) {
@@ -1142,16 +1139,17 @@ search_logfile(
 		    amfree(key);
 		}
 		else if(curlog == L_FAIL) {
+		    char *status_failed;
 		    /* print other failures too -- this is a hack to ensure that failures which
 		     * did not make it to tape are also listed in the output of 'amadmin x find';
 		     * users that do not want this information (e.g., Amanda::DB::Catalog) should
 		     * filter dumps with a NULL label. */
 		    find_result_t *new_output_find = g_new0(find_result_t, 1);
 		    new_output_find->next = *output_find;
-		    new_output_find->timestamp = stralloc(date);
+		    new_output_find->timestamp = g_string_chunk_insert_const(string_chunk, date);
 		    new_output_find->write_timestamp = g_strdup("00000000000000"); /* dump was not written.. */
-		    new_output_find->hostname=stralloc(host);
-		    new_output_find->diskname=stralloc(disk);
+		    new_output_find->hostname=g_string_chunk_insert_const(string_chunk, host);
+		    new_output_find->diskname=g_string_chunk_insert_const(string_chunk, disk);
 		    new_output_find->level=level;
 		    new_output_find->label=NULL;
 		    new_output_find->partnum=partnum;
@@ -1161,14 +1159,16 @@ search_logfile(
 		    new_output_find->kb=kb;
 		    new_output_find->bytes=bytes;
 		    new_output_find->orig_kb=orig_kb;
-		    new_output_find->status=vstralloc(
+		    status_failed = vstralloc(
 			 "FAILED (",
 			 program_str[(int)curprog],
 			 ") ",
 			 rest,
 			 NULL);
-		    new_output_find->dump_status=stralloc("");
-		    new_output_find->message=stralloc("");
+		    new_output_find->status = g_string_chunk_insert_const(string_chunk, status_failed);
+		    amfree(status_failed);
+		    new_output_find->dump_status="";
+		    new_output_find->message="";
 		    *output_find=new_output_find;
                     found_something = TRUE;
 		    maxparts = -1;
@@ -1222,20 +1222,20 @@ dumps_match(
 	    find_result_t *curmatch = g_new0(find_result_t, 1);
 	    memcpy(curmatch, cur_result, SIZEOF(find_result_t));
 
-	    curmatch->timestamp = stralloc(cur_result->timestamp);
-	    curmatch->write_timestamp = stralloc(cur_result->write_timestamp);
-	    curmatch->hostname = stralloc(cur_result->hostname);
-	    curmatch->diskname = stralloc(cur_result->diskname);
+	    curmatch->timestamp = cur_result->timestamp;
+	    curmatch->write_timestamp = cur_result->write_timestamp;
+	    curmatch->hostname = cur_result->hostname;
+	    curmatch->diskname = cur_result->diskname;
 	    curmatch->level = cur_result->level;
-	    curmatch->label = cur_result->label? stralloc(cur_result->label) : NULL;
+	    curmatch->label = cur_result->label? cur_result->label : NULL;
 	    curmatch->filenum = cur_result->filenum;
 	    curmatch->sec = cur_result->sec;
 	    curmatch->kb = cur_result->kb;
 	    curmatch->bytes = cur_result->bytes;
 	    curmatch->orig_kb = cur_result->orig_kb;
-	    curmatch->status = stralloc(cur_result->status);
-	    curmatch->dump_status = stralloc(cur_result->dump_status);
-	    curmatch->message = stralloc(cur_result->message);
+	    curmatch->status = cur_result->status;
+	    curmatch->dump_status = cur_result->dump_status;
+	    curmatch->message = cur_result->message;
 	    curmatch->partnum = cur_result->partnum;
 	    curmatch->totalparts = cur_result->totalparts;
 	    curmatch->next = matches;
@@ -1301,16 +1301,16 @@ dumps_match_dumpspecs(
 		find_result_t *curmatch = alloc(SIZEOF(find_result_t));
 		memcpy(curmatch, cur_result, SIZEOF(find_result_t));
 
-		curmatch->timestamp = stralloc(cur_result->timestamp);
-		curmatch->write_timestamp = stralloc(cur_result->write_timestamp);
-		curmatch->hostname = stralloc(cur_result->hostname);
-		curmatch->diskname = stralloc(cur_result->diskname);
+		curmatch->timestamp = cur_result->timestamp;
+		curmatch->write_timestamp = cur_result->write_timestamp;
+		curmatch->hostname = cur_result->hostname;
+		curmatch->diskname = cur_result->diskname;
 		curmatch->level = cur_result->level;
-		curmatch->label = cur_result->label? stralloc(cur_result->label) : NULL;
+		curmatch->label = cur_result->label? cur_result->label : NULL;
 		curmatch->filenum = cur_result->filenum;
-		curmatch->status = stralloc(cur_result->status);
-		curmatch->dump_status = stralloc(cur_result->dump_status);
-		curmatch->message = stralloc(cur_result->message);
+		curmatch->status = cur_result->status;
+		curmatch->dump_status =  cur_result->dump_status;
+		curmatch->message = cur_result->message;
 		curmatch->partnum = cur_result->partnum;
 		curmatch->totalparts = cur_result->totalparts;
 
