@@ -1,4 +1,8 @@
 2011-04-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Check NULL before freeing self->thread_pool,
+	  free self->thread_idle_mutex and self->thread_idle_cond.
+
+2011-04-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in: Use AMANDA_AS_NEEDED.
 	* config/amanda/as_needed.m4: Add --as-needed, set AS_NEEDED_FLAGS.
 	* client-src/Makefile.am, amandad-src/Makefile.am,

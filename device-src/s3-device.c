@@ -1286,7 +1286,18 @@ static void s3_device_finalize(GObject * obj_self) {
     if(G_OBJECT_CLASS(parent_class)->finalize)
         (* G_OBJECT_CLASS(parent_class)->finalize)(obj_self);
 
-    g_thread_pool_free(self->thread_pool, 1, 1);
+    if (self->thread_pool) {
+	g_thread_pool_free(self->thread_pool, 1, 1);
+	self->thread_pool = NULL;
+    }
+    if (self->thread_idle_mutex) {
+	g_mutex_free(self->thread_idle_mutex);
+	self->thread_idle_mutex = NULL;
+    }
+    if (self->thread_idle_cond) {
+	g_cond_free(self->thread_idle_cond);
+	self->thread_idle_cond = NULL;
+    }
     if (self->s3t) {
 	for (thread = 0; thread < self->nb_threads; thread++) {
             if(self->s3t[thread].s3) s3_free(self->s3t[thread].s3);
