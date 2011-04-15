@@ -1,3 +1,6 @@
+2011-04-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Use multiple threads to do read ahead.
+
 2011-04-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin.c: Do not free find result string.
 	* server-src/find.c: Use GStringChunk to store all find_dump string.
