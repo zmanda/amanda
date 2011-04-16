@@ -68,7 +68,7 @@ typedef struct _S3MetadataFile S3MetadataFile;
 
 typedef struct _S3_by_thread S3_by_thread;
 struct _S3_by_thread {
-    S3Handle volatile * volatile s3;
+    S3Handle * volatile          s3;
     CurlBuffer volatile          curl_buffer;
     guint volatile               buffer_len;
     int volatile                 idle;
