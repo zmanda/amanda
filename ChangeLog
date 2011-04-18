@@ -1,3 +1,7 @@
+2011-04-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amlabel.8.xml: Improve doc.
+	* server-src/amlabel.pl: Remove spurious print.
+
 2011-04-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin.c: Do not free find result string.
 	* server-src/find.c: Use GStringChunk to store all find_dump string.

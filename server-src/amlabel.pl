@@ -177,13 +177,10 @@ sub main {
     step inventory => sub {
 	my ($err, $inv) = @_;
 
-print "barcode: $opt_barcode\n";
 	return failure($err, $finished_cb) if $err;
 
 	for my $sl (@$inv) {
 	    if ($sl->{'barcode'} eq $opt_barcode) {
-print "sl_barcode: $sl->{'barcode'}\n";
-print "slot: $sl->{'slot'}\n";
 		return $chg->load(slot => $sl->{'slot'}, mode => "write",
 				  res_cb => $steps->{'loaded'});
 	    }
