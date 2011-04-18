@@ -1,4 +1,7 @@
 2011-04-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: Check generated label and meta-label.
+
+2011-04-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amlabel.8.xml: Improve doc.
 	* server-src/amlabel.pl: Remove spurious print.
 

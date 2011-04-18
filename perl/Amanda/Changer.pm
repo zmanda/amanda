@@ -1256,6 +1256,9 @@ sub make_new_tape_label {
     my $template = $self->{'autolabel'}->{'template'};
     my $labelstr = $self->{'labelstr'};
 
+    if (!$template) {
+	return (undef, "template is not set, you must set autolabel");
+    }
     $template =~ s/\$\$/SUBSTITUTE_DOLLAR/g;
     $template =~ s/\$b/SUBSTITUTE_BARCODE/g;
     $template =~ s/\$m/SUBSTITUTE_META/g;
@@ -1329,6 +1332,10 @@ sub make_new_tape_label {
         return (undef, "Newly-generated label '$label' does not match labelstr '$labelstr'");
     }
 
+    if (!$label) {
+	return (undef, "Generated label is empty");
+    }
+
     return $label;
 }
 
@@ -1342,6 +1349,9 @@ sub make_new_meta_label {
     my $template = $self->{'meta_autolabel'};
     return if !defined $template;
 
+    if (!$template) {
+	return (undef, "template is not set, you must set meta-autolabel");
+    }
     $template =~ s/\$\$/SUBSTITUTE_DOLLAR/g;
     $template =~ s/\$o/SUBSTITUTE_ORG/g;
     $template =~ s/\$c/SUBSTITUTE_CONFIG/g;
@@ -1372,6 +1382,10 @@ sub make_new_meta_label {
     # bail out if we didn't find an unused label
     return (undef, "Can't label unlabeled meta volume: All meta label used")
 		if ($i >= $nlabels);
+
+    if (!$meta) {
+	return (undef, "Generated meta-label is empty");
+    }
 
     return $meta;
 }
