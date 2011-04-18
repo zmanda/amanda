@@ -59,7 +59,8 @@ default changer.  If a slot is given, it labels the volume in that slot. If a ba
 whitespace and that matches the <emphasis remap='B'>labelstr</emphasis> (see
 <manref name="amanda.conf" vol="5" />).</para>
 
-<para>If <arg choice="opt"><replaceable>label</replaceable></arg> is not given, an autolabel is generated.</para>
+<para>If <arg choice="opt"><replaceable>label</replaceable></arg> is not given, an autolabel is
+generated, see <emphasis remap='B'>autolabel</emphasis> in <manref name="amanda.conf" vol="5"/>.</para>
 
 <para>If <arg><option>--assign</option></arg> is given, the barcode and meta-label are assigned to the label without labeling the volume. The label must already be in the tapelist file.</para>
 <para>This command also appends the new volume to the &tapelist; file, so that

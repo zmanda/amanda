@@ -1,3 +1,7 @@
+2011-04-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amlabel.8.xml: Improve doc.
+	* server-src/amlabel.pl: Remove spurious print.
+
 2011-04-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Remove volative for s3.
 
