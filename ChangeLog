@@ -1,4 +1,9 @@
 2011-04-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: new changer error: empty.
+	* perl/Amanda/Changer/robot.pm: return empty slot.
+	* perl/Amanda/Taper/Scan/traditional.pm: Handle empty slot.
+
+2011-04-19  Jean-Louis Martineau <martineau@zmanda.com>
 	Make s3 works with Eucalyptus.
 	* device-src/s3-device.c: Add S3_HOST, S3_SERVICE_PATH and
 	  S3_SUBDOMAIN properties. Handle NoSuchEntity and
