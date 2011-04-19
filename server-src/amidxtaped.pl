@@ -570,7 +570,8 @@ sub xfer_src_cb {
 		$header->{'clntcompprog'} = '';
 	    }
 	} else {
-	    if ($dle->{'compress'} == $Amanda::Config::COMP_SERVER_FAST ||
+	    if (!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_receive_unfiltered) ||
+		$dle->{'compress'} == $Amanda::Config::COMP_SERVER_FAST ||
 		$dle->{'compress'} == $Amanda::Config::COMP_SERVER_BEST) {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(

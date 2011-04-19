@@ -1,4 +1,7 @@
 2011-04-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amidxtaped.pl: Do the uncompress if client can't do it.
+
+2011-04-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: new changer error: empty.
 	* perl/Amanda/Changer/robot.pm: return empty slot.
 	* perl/Amanda/Taper/Scan/traditional.pm: Handle empty slot.
