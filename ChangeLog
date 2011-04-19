@@ -1,3 +1,13 @@
+2011-04-19  Jean-Louis Martineau <martineau@zmanda.com>
+	Make s3 works with Eucalyptus.
+	* device-src/s3-device.c: Add S3_HOST, S3_SERVICE_PATH and
+	  S3_SUBDOMAIN properties. Handle NoSuchEntity and
+	  BucketAlreadyOwnedByYou error.
+	* device-src/s3.c: Build url from new properties.
+	* device-src/s3.h: New s3_open prototype.
+	* man/xml-source/amanda-devices.7.xml: Document S3_HOST,
+	  S3_SERVICE_PATH and S3_SUBDOMAIN properties.
+
 2011-04-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Check generated label and meta-label.
 

@@ -138,7 +138,9 @@ struct S3Handle {
     /* attributes for new objects */
     char *bucket_location;
     char *storage_class;
-
+    char *host;
+    char *service_path;
+    gboolean use_subdomain;
     char *ca_info;
 
     CURL *curl;
@@ -284,13 +286,23 @@ static gboolean is_non_empty_string(const char *str);
  *
  * @param hdl: the S3Handle object
  * @param verb: capitalized verb for this request ('PUT', 'GET', etc.)
+ * @param host: the host name to connect to, 's3.amazonaws.com'
+ * @param service_path: A path to add in the URL, or NULL for none.
  * @param bucket: the bucket being accessed, or NULL for none
  * @param key: the key being accessed, or NULL for none
  * @param subresource: the sub-resource being accessed (e.g. "acl"), or NULL for none
- * @param use_subdomain: if TRUE, a subdomain of s3.amazonaws.com will be used
+ * @param use_subdomain: if TRUE, a subdomain of 'host' will be used
+ * @param use_ssl: if TRUE, use 'https'
+ *
+ * !use_subdomain: http://host/service_path/bucket/key
+ * use_subdomain : http://bucket.host/service_path/key
+ *
  */
 static char *
-build_url(const char *bucket,
+build_url(
+      const char *host,
+      const char *service_path,
+      const char *bucket,
       const char *key,
       const char *subresource,
       const char *query,
@@ -312,7 +324,6 @@ build_url(const char *bucket,
  * @param key: the key being accessed, or NULL for none
  * @param subresource: the sub-resource being accessed (e.g. "acl"), or NULL for none
  * @param md5_hash: the MD5 hash of the request body, or NULL for none
- * @param use_subdomain: if TRUE, a subdomain of s3.amazonaws.com will be used
  */
 static struct curl_slist *
 authenticate_request(S3Handle *hdl,
@@ -320,8 +331,7 @@ authenticate_request(S3Handle *hdl,
                      const char *bucket,
                      const char *key,
                      const char *subresource,
-                     const char *md5_hash,
-                     gboolean use_subdomain);
+                     const char *md5_hash);
 
 
 
@@ -513,7 +523,10 @@ is_non_empty_string(const char *str)
 }
 
 static char *
-build_url(const char *bucket,
+build_url(
+      const char *host,
+      const char *service_path,
+      const char *bucket,
       const char *key,
       const char *subresource,
       const char *query,
@@ -532,14 +545,20 @@ build_url(const char *bucket,
 
     /* domain */
     if (use_subdomain && bucket)
-        g_string_append_printf(url, "%s.s3.amazonaws.com/", bucket);
+        g_string_append_printf(url, "%s.%s", bucket, host);
     else
-        g_string_append(url, "s3.amazonaws.com/");
+        g_string_append_printf(url, "%s", host);
+
+    if (service_path) {
+        g_string_append_printf(url, "%s/", service_path);
+    } else {
+	g_string_append(url, "/");
+    }
 
     /* path */
     if (!use_subdomain && bucket) {
         esc_bucket = curl_escape(bucket, 0);
-    if (!esc_bucket) goto cleanup;
+        if (!esc_bucket) goto cleanup;
         g_string_append_printf(url, "%s", esc_bucket);
         if (key)
             g_string_append(url, "/");
@@ -547,7 +566,7 @@ build_url(const char *bucket,
 
     if (key) {
         esc_key = curl_escape(key, 0);
-    if (!esc_key) goto cleanup;
+        if (!esc_key) goto cleanup;
         g_string_append_printf(url, "%s", esc_key);
     }
 
@@ -577,8 +596,7 @@ authenticate_request(S3Handle *hdl,
                      const char *bucket,
                      const char *key,
                      const char *subresource,
-                     const char *md5_hash,
-                     gboolean use_subdomain)
+                     const char *md5_hash)
 {
     time_t t;
     struct tm tmp;
@@ -653,9 +671,12 @@ authenticate_request(S3Handle *hdl,
     }
 
     /* CanonicalizedResource */
+    if (hdl->service_path) {
+	g_string_append(auth_string, hdl->service_path);
+    }
     g_string_append(auth_string, "/");
     if (bucket) {
-        if (use_subdomain)
+        if (hdl->use_subdomain)
             g_string_append(auth_string, bucket);
         else {
             esc_bucket = curl_escape(bucket, 0);
@@ -664,7 +685,7 @@ authenticate_request(S3Handle *hdl,
         }
     }
 
-    if (bucket && (use_subdomain || key))
+    if (bucket && (hdl->use_subdomain || key))
         g_string_append(auth_string, "/");
 
     if (key) {
@@ -686,7 +707,6 @@ authenticate_request(S3Handle *hdl,
     HMAC_Final(&ctx, md->data, &md->len);
     HMAC_CTX_cleanup(&ctx);
     auth_base64 = s3_base64_encode(md);
-
     /* append the new headers */
     if (is_non_empty_string(hdl->user_token)) {
         /* Devpay headers are included in hash. */
@@ -1062,7 +1082,6 @@ perform_request(S3Handle *hdl,
                 gpointer progress_data,
                 const result_handling_t *result_handling)
 {
-    gboolean use_subdomain;
     char *url = NULL;
     s3_result_t result = S3_RESULT_FAIL; /* assume the worst.. */
     CURLcode curl_code = CURLE_OK;
@@ -1086,8 +1105,8 @@ perform_request(S3Handle *hdl,
 
     s3_reset(hdl);
 
-    use_subdomain = is_non_empty_string(hdl->bucket_location);
-    url = build_url(bucket, key, subresource, query, use_subdomain, hdl->use_ssl);
+    url = build_url(hdl->host, hdl->service_path, bucket, key, subresource,
+                    query, hdl->use_subdomain, hdl->use_ssl);
     if (!url) goto cleanup;
 
     /* libcurl may behave strangely if these are not set correctly */
@@ -1145,7 +1164,7 @@ perform_request(S3Handle *hdl,
 
         /* set up the request */
         headers = authenticate_request(hdl, verb, bucket, key, subresource,
-            md5_hash_b64, is_non_empty_string(hdl->bucket_location));
+            md5_hash_b64);
 
         if (hdl->use_ssl && hdl->ca_info) {
             if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_CAINFO, hdl->ca_info)))
@@ -1474,11 +1493,15 @@ s3_bucket_location_compat(const char *bucket)
 S3Handle *
 s3_open(const char *access_key,
         const char *secret_key,
+        const char *host,
+        const char *service_path,
+        const gboolean use_subdomain,
         const char *user_token,
         const char *bucket_location,
         const char *storage_class,
         const char *ca_info
-        ) {
+        )
+{
     S3Handle *hdl;
 
     hdl = g_new0(S3Handle, 1);
@@ -1503,6 +1526,21 @@ s3_open(const char *access_key,
     /* NULL is okay */
     hdl->ca_info = g_strdup(ca_info);
 
+    if (!is_non_empty_string(host))
+	host = "s3.amazonaws.com";
+    hdl->host = g_strdup(host);
+    hdl->use_subdomain = use_subdomain ||
+			 (strcmp(host, "s3.amazonaws.com") == 0 &&
+			  is_non_empty_string(hdl->bucket_location));
+    if (service_path) {
+	if (service_path[0] != '/')
+	    hdl->service_path = g_strdup_printf("/%s", service_path);
+	else
+	    hdl->service_path = g_strdup(service_path);
+    } else {
+	hdl->service_path = NULL;
+    }
+
     hdl->curl = curl_easy_init();
     if (!hdl->curl) goto error;
 
@@ -1524,6 +1562,8 @@ s3_free(S3Handle *hdl)
         if (hdl->user_token) g_free(hdl->user_token);
         if (hdl->bucket_location) g_free(hdl->bucket_location);
         if (hdl->storage_class) g_free(hdl->storage_class);
+        if (hdl->host) g_free(hdl->host);
+        if (hdl->service_path) g_free(hdl->service_path);
         if (hdl->curl) curl_easy_cleanup(hdl->curl);
 
         g_free(hdl);

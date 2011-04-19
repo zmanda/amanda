@@ -97,6 +97,8 @@ struct _S3Device {
 
     char *bucket_location;
     char *storage_class;
+    char *host;
+    char *service_path;
 
     char *ca_info;
 
@@ -122,6 +124,7 @@ struct _S3Device {
     guint64 volume_bytes;
     guint64 volume_limit;
     gboolean enforce_volume_limit;
+    gboolean use_subdomain;
 
     int          nb_threads;
     GThreadPool *thread_pool_write;
@@ -173,6 +176,12 @@ static DevicePropertyBase device_property_s3_secret_key;
 #define PROPERTY_S3_SECRET_KEY (device_property_s3_secret_key.ID)
 #define PROPERTY_S3_ACCESS_KEY (device_property_s3_access_key.ID)
 
+/* Host and path */
+static DevicePropertyBase device_property_s3_host;
+static DevicePropertyBase device_property_s3_service_path;
+#define PROPERTY_S3_HOST (device_property_s3_host.ID)
+#define PROPERTY_S3_SERVICE_PATH (device_property_s3_service_path.ID)
+
 /* Same, but for S3 with DevPay. */
 static DevicePropertyBase device_property_s3_user_token;
 #define PROPERTY_S3_USER_TOKEN (device_property_s3_user_token.ID)
@@ -199,6 +208,11 @@ static DevicePropertyBase device_property_max_recv_speed;
 #define PROPERTY_MAX_SEND_SPEED (device_property_max_send_speed.ID)
 #define PROPERTY_MAX_RECV_SPEED (device_property_max_recv_speed.ID)
 
+/* Whether to use subdomain */
+static DevicePropertyBase device_property_s3_subdomain;
+#define PROPERTY_S3_SUBDOMAIN (device_property_s3_subdomain.ID)
+
+/* Number of threads to use */
 static DevicePropertyBase device_property_threads;
 #define PROPERTY_THREADS (device_property_threads.ID)
 
@@ -360,6 +374,18 @@ static gboolean property_set_leom_fn(Device *p_self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_enforce_max_volume_usage_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_use_subdomain_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_host_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_service_path_fn(Device *p_self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -736,6 +762,12 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_s3_access_key,
                                       G_TYPE_STRING, "s3_access_key",
        "Access key ID to authenticate with Amazon S3");
+    device_property_fill_and_register(&device_property_s3_host,
+                                      G_TYPE_STRING, "s3_host",
+       "hostname:port of the server");
+    device_property_fill_and_register(&device_property_s3_service_path,
+                                      G_TYPE_STRING, "s3_service_path",
+       "path to add in the url");
     device_property_fill_and_register(&device_property_s3_user_token,
                                       G_TYPE_STRING, "s3_user_token",
        "User token for authentication Amazon devpay requests");
@@ -751,6 +783,9 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_s3_ssl,
                                       G_TYPE_BOOLEAN, "s3_ssl",
        "Whether to use SSL with Amazon S3");
+    device_property_fill_and_register(&device_property_s3_subdomain,
+                                      G_TYPE_BOOLEAN, "s3_subdomain",
+       "Whether to use subdomain");
     device_property_fill_and_register(&device_property_max_send_speed,
                                       G_TYPE_UINT64, "max_send_speed",
        "Maximum average upload speed (bytes/sec)");
@@ -801,6 +836,7 @@ s3_device_init(S3Device * self)
     self->volume_limit = 0;
     self->leom = TRUE;
     self->enforce_volume_limit = FALSE;
+    self->use_subdomain = FALSE;
     self->nb_threads = 1;
     self->thread_pool_write = NULL;
     self->thread_pool_read = NULL;
@@ -856,6 +892,12 @@ s3_device_init(S3Device * self)
 
     g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, FALSE);
+    device_set_simple_property(dself, PROPERTY_S3_SUBDOMAIN,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
+    g_value_unset(&response);
+
+    g_value_init(&response, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&response, FALSE);
     device_set_simple_property(dself, PROPERTY_COMPRESSION,
 	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
@@ -903,6 +945,16 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
 	    s3_device_set_secret_key_fn);
+
+    device_class_register_property(device_class, PROPERTY_S3_HOST,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_host_fn);
+
+    device_class_register_property(device_class, PROPERTY_S3_SERVICE_PATH,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_service_path_fn);
 
     device_class_register_property(device_class, PROPERTY_S3_USER_TOKEN,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
@@ -970,6 +1022,12 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
                 (~ PROPERTY_ACCESS_SET_INSIDE_FILE_WRITE),
             device_simple_property_get_fn,
             s3_device_set_enforce_max_volume_usage_fn);
+
+    device_class_register_property(device_class, PROPERTY_S3_SUBDOMAIN,
+            (PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK) &
+                (~ PROPERTY_ACCESS_SET_INSIDE_FILE_WRITE),
+            device_simple_property_get_fn,
+            s3_device_set_use_subdomain_fn);
 }
 
 static gboolean
@@ -993,6 +1051,34 @@ s3_device_set_secret_key_fn(Device *p_self, DevicePropertyBase *base,
 
     amfree(self->secret_key);
     self->secret_key = g_value_dup_string(val);
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_host_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->host);
+    self->host = g_value_dup_string(val);
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_service_path_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->service_path);
+    self->service_path = g_value_dup_string(val);
     device_clear_volume_details(p_self);
 
     return device_simple_property_set_fn(p_self, base, val, surety, source);
@@ -1211,6 +1297,18 @@ s3_device_set_enforce_max_volume_usage_fn(Device *p_self,
 }
 
 static gboolean
+s3_device_set_use_subdomain_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    self->use_subdomain = g_value_get_boolean(val);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
 property_set_leom_fn(Device *p_self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source)
@@ -1321,6 +1419,8 @@ static void s3_device_finalize(GObject * obj_self) {
     if(self->prefix) g_free(self->prefix);
     if(self->access_key) g_free(self->access_key);
     if(self->secret_key) g_free(self->secret_key);
+    if(self->host) g_free(self->host);
+    if(self->service_path) g_free(self->service_path);
     if(self->user_token) g_free(self->user_token);
     if(self->bucket_location) g_free(self->bucket_location);
     if(self->storage_class) g_free(self->storage_class);
@@ -1367,6 +1467,8 @@ static gboolean setup_handle(S3Device * self) {
 	    self->s3t[thread].curl_buffer.buffer = NULL;
 	    self->s3t[thread].curl_buffer.buffer_len = 0;
             self->s3t[thread].s3 = s3_open(self->access_key, self->secret_key,
+					   self->host, self->service_path,
+					   self->use_subdomain,
 					   self->user_token, self->bucket_location,
 					   self->storage_class, self->ca_info);
             if (self->s3t[thread].s3 == NULL) {
@@ -1448,7 +1550,9 @@ s3_device_read_label(Device *pself) {
 
         /* if it's an expected error (not found), just return FALSE */
         if (response_code == 404 &&
-             (s3_error_code == S3_ERROR_NoSuchKey || s3_error_code == S3_ERROR_NoSuchBucket)) {
+             (s3_error_code == S3_ERROR_NoSuchKey ||
+	      s3_error_code == S3_ERROR_NoSuchEntity ||
+	      s3_error_code == S3_ERROR_NoSuchBucket)) {
             g_debug(_("Amanda header not found while reading tapestart header (this is expected for empty tapes)"));
 	    device_set_error(pself,
 		stralloc(_("Amanda header not found -- unlabeled volume?")),
@@ -1521,7 +1625,8 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
         /* if it isn't an expected error (bucket already exists),
          * return FALSE */
         if (response_code != 409 ||
-            s3_error_code != S3_ERROR_BucketAlreadyExists) {
+            (s3_error_code != S3_ERROR_BucketAlreadyExists &&
+	     s3_error_code != S3_ERROR_BucketAlreadyOwnedByYou)) {
 	    device_set_error(pself,
 		vstrallocf(_("While creating new S3 bucket: %s"), s3_strerror(self->s3t[0].s3)),
 		DEVICE_STATUS_DEVICE_ERROR);
@@ -1895,7 +2000,9 @@ s3_device_seek_file(Device *pself, guint file) {
         s3_error(self->s3t[0].s3, &errmsg, &response_code, &s3_error_code, NULL, NULL, NULL);
 
         /* if it's an expected error (not found), check what to do. */
-        if (response_code == 404 && s3_error_code == S3_ERROR_NoSuchKey) {
+        if (response_code == 404 &&
+	    (s3_error_code == S3_ERROR_NoSuchKey ||
+	     s3_error_code == S3_ERROR_NoSuchEntity)) {
             int next_file;
             next_file = find_next_file(self, pself->file);
             if (next_file > 0) {
@@ -2104,7 +2211,9 @@ s3_thread_read_block(
 	s3_error(s3t->s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
 
 	/* if it's an expected error (not found), just return -1 */
-	if (response_code == 404 && s3_error_code == S3_ERROR_NoSuchKey) {
+	if (response_code == 404 &&
+	    (s3_error_code == S3_ERROR_NoSuchKey ||
+	     s3_error_code == S3_ERROR_NoSuchEntity)) {
 	    s3t->eof = TRUE;
 	} else {
 
