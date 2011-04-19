@@ -396,6 +396,7 @@ sub stage_2 {
 	    # or if we loaded the 'current' slot and it was invalid (this happens if
 	    # the user changes 'use-slots', for example
 	    $ignore_error = 1 if ($loaded_current && $err->invalid);
+	    $ignore_error = 1 if ($err->empty);
 
 	    if ($ignore_error) {
 		$self->_user_msg(slot_result => 1, err => $err);

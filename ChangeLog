@@ -1,3 +1,8 @@
+2011-04-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: new changer error: empty.
+	* perl/Amanda/Changer/robot.pm: return empty slot.
+	* perl/Amanda/Taper/Scan/traditional.pm: Handle empty slot.
+
 2011-04-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/DB/Catalog.pm: Parse negative kb and orig-kb.
 	* perl/Amanda/Logfile.swg: Do not write negative orig-kb.

@@ -416,7 +416,7 @@ sub load_unlocked {
 
 	if ($state->{'slots'}->{$slot}->{'state'} eq Amanda::Changer::SLOT_EMPTY) {
 	    return $self->make_error("failed", $params{'res_cb'},
-		    reason => "notfound",
+		    reason => "empty",
 		    message => "slot $slot is empty");
 	}
 
