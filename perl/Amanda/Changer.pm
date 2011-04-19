@@ -185,6 +185,7 @@ has one of the following values:
   volinuse          The requested volume or slot is already in use
   driveinuse        All drives are in use
   unknown           Unknown reason
+  empty             The slot is empty
 
 Like types, checks for particular reasons should use the methods, to avoid
 undetected typos:
@@ -1427,7 +1428,7 @@ use overload
     'cmp' => sub { $_[0]->{'message'} cmp $_[1]; };
 
 my %known_err_types = map { ($_, 1) } qw( fatal failed );
-my %known_err_reasons = map { ($_, 1) } qw( notfound invalid notimpl driveinuse volinuse unknown device );
+my %known_err_reasons = map { ($_, 1) } qw( notfound invalid notimpl driveinuse volinuse unknown device empty );
 
 sub new {
     my $class = shift; # ignore class
@@ -1482,6 +1483,7 @@ sub notimpl { $_[0]->failed && $_[0]->{'reason'} eq 'notimpl'; }
 sub driveinuse { $_[0]->failed && $_[0]->{'reason'} eq 'driveinuse'; }
 sub volinuse { $_[0]->failed && $_[0]->{'reason'} eq 'volinuse'; }
 sub unknown { $_[0]->failed && $_[0]->{'reason'} eq 'unknown'; }
+sub empty { $_[0]->failed && $_[0]->{'reason'} eq 'empty'; }
 
 # slot accessor
 sub slot { $_[0]->{'slot'}; }

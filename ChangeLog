@@ -1,3 +1,8 @@
+2011-04-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: new changer error: empty.
+	* perl/Amanda/Changer/robot.pm: return empty slot.
+	* perl/Amanda/Taper/Scan/traditional.pm: Handle empty slot.
+
 2011-04-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Check generated label and meta-label.
 
