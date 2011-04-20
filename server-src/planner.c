@@ -2267,7 +2267,15 @@ static void analyze_estimate(
 	lev0size = est_tape_size(dp, 0);
 	if(lev0size == (gint64)-1) lev0size = ep->last_lev0size;
 
-	balanced_size += (double)(lev0size / (gint64)runs_per_cycle);
+	if (dp->strategy == DS_NOINC) {
+	    balanced_size += (double)lev0size;
+	} else if (dp->dumpcycle == 0)
+	    balanced_size += (double)(lev0size * conf_dumpcycle / (gint64)runs_per_cycle);
+	} else if (dp->dumpcycle != conf_dumpcycle) {
+	    balanced_size += (double)(lev0size * (conf_dumpcycle / dp->dumpcycle) / (gint64)runs_per_cycle);
+	} else {
+	    balanced_size += (double)(lev0size / (gint64)runs_per_cycle);
+	}
     }
 
     g_fprintf(stderr,_("total size %lld total_lev0 %1.0lf balanced-lev0size %1.0lf\n"),
