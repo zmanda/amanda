@@ -1,3 +1,7 @@
+2011-04-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Improve balancing if some dle have strategy
+	  noinc or a smaller dumpcycle.
+
 2011-04-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/DB/Catalog.pm: Parse negative kb and orig-kb.
 	* server-src/taper.pl: Do not write negative kb and orig-kb.
