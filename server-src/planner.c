@@ -2247,7 +2247,7 @@ static void analyze_estimate(
 
 	if (dp->strategy == DS_NOINC) {
 	    balanced_size += (double)lev0size;
-	} else if (dp->dumpcycle == 0)
+	} else if (dp->dumpcycle == 0) {
 	    balanced_size += (double)(lev0size * conf_dumpcycle / (gint64)runs_per_cycle);
 	} else if (dp->dumpcycle != conf_dumpcycle) {
 	    balanced_size += (double)(lev0size * (conf_dumpcycle / dp->dumpcycle) / (gint64)runs_per_cycle);
