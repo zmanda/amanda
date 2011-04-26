@@ -255,13 +255,17 @@ main(
 	    break;
 
 	switch (c) {
-	case 1: argument.config = stralloc(optarg);
+	case 1: amfree(argument.config);
+		argument.config = stralloc(optarg);
 		break;
-	case 2: argument.host = stralloc(optarg);
+	case 2: amfree(argument.host);
+		argument.host = stralloc(optarg);
 		break;
-	case 3: argument.dle.disk = stralloc(optarg);
+	case 3: amfree(argument.dle.disk);
+		argument.dle.disk = stralloc(optarg);
 		break;
-	case 4: argument.dle.device = stralloc(optarg);
+	case 4: amfree(argument.dle.device);
+		argument.dle.device = stralloc(optarg);
 		break;
 	case 5: argument.level = g_slist_append(argument.level,
 						GINT_TO_POINTER(atoi(optarg)));
@@ -274,9 +278,11 @@ main(
 		break;
 	case 9: argument.dle.record = 1;
 		break;
-	case 10: star_path = stralloc(optarg);
+	case 10: amfree(star_path);
+		 star_path = stralloc(optarg);
 		 break;
-	case 11: star_tardumps = stralloc(optarg);
+	case 11: amfree(star_tardumps);
+		 star_tardumps = stralloc(optarg);
 		 break;
 	case 12: if (optarg && strcasecmp(optarg, "NO") == 0)
 		     star_dle_tardumps = 0;
@@ -320,6 +326,7 @@ main(
 			 append_sl(argument.dle.exclude_list, optarg);
 		 break;
 	case 21: if (optarg)
+		     amfree(star_directory);
 		     star_directory = stralloc(optarg);
 		 break;
 	case 22: argument.command_options =
@@ -503,7 +510,6 @@ amstar_estimate(
 	return;
     }
 
-    qdisk = quote_string(argument->dle.disk);
     if (argument->calcsize) {
 	char *dirname;
 
@@ -517,6 +523,7 @@ amstar_estimate(
 	return;
     }
 
+    qdisk = quote_string(argument->dle.disk);
     if (!star_path) {
 	errmsg = vstrallocf(_("STAR-PATH not defined"));
 	goto common_error;
@@ -547,8 +554,10 @@ amstar_estimate(
 
 	size = (off_t)-1;
 	while (size < 0 && (fgets(line, sizeof(line), dumpout)) != NULL) {
-	    if (line[strlen(line)-1] == '\n') /* remove trailling \n */
+	    if (strlen(line) > 0 && line[strlen(line)-1] == '\n') {
+		/* remove trailling \n */
 		line[strlen(line)-1] = '\0';
+	    }
 	    if (line[0] == '\0')
 		continue;
 	    dbprintf("%s\n", line);
@@ -577,6 +586,7 @@ amstar_estimate(
 		 level,
 		 walltime_str(timessub(curclock(), start_time)));
 	if(size == (off_t)-1) {
+	    amfree(errmsg);
 	    errmsg = vstrallocf(_("no size line match in %s output"),
 				cmd);
 	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
@@ -596,16 +606,19 @@ amstar_estimate(
 	dbprintf(_("waiting for %s \"%s\" child\n"), cmd, qdisk);
 	waitpid(starpid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
+	    amfree(errmsg);
 	    errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
 				cmd, WTERMSIG(wait_status), dbfn());
 	} else if (WIFEXITED(wait_status)) {
 	    if (WEXITSTATUS(wait_status) != 0) {
+		amfree(errmsg);
 		errmsg = vstrallocf(_("%s exited with status %d: see %s"),
 				    cmd, WEXITSTATUS(wait_status), dbfn());
 	    } else {
 		/* Normal exit */
 	    }
 	} else {
+	    amfree(errmsg);
 	    errmsg = vstrallocf(_("%s got bad exit: see %s"), cmd, dbfn());
 	}
 	dbprintf(_("after %s %s wait\n"), cmd, qdisk);
@@ -720,8 +733,10 @@ amstar_backup(
     while ((fgets(line, sizeof(line), outstream)) != NULL) {
 	regmatch_t regmatch[3];
 
-	if (line[strlen(line)-1] == '\n') /* remove trailling \n */
+	if (strlen(line) > 0 && line[strlen(line)-1] == '\n') {
+	    /* remove trailling \n */
 	    line[strlen(line)-1] = '\0';
+	}
 
 	if (regexec(&regex_root, line, 1, regmatch, 0) == 0) {
 	    if (argument->dle.create_index)
@@ -783,6 +798,7 @@ amstar_backup(
 	dbprintf("%3d: %7s(%c): %s\n", rp->srcline, type, startchr, line);
 	fprintf(mesgstream,"%c %s\n", startchr, line);
     }
+    fclose(outstream);
 
     regfree(&regex_root);
     regfree(&regex_dir);
@@ -860,15 +876,17 @@ amstar_restore(
     if (argument->dle.include_list &&
 	argument->dle.include_list->nb_element == 1) {
 	FILE *include_list = fopen(argument->dle.include_list->first->name, "r");
-	char  line[2*PATH_MAX+2];
-	while (fgets(line, 2*PATH_MAX, include_list)) {
-	    line[strlen(line)-1] = '\0'; /* remove '\n' */
-	    if (strncmp(line, "./", 2) == 0)
-		g_ptr_array_add(argv_ptr, stralloc(line+2)); /* remove ./ */
-	    else if (strcmp(line, ".") != 0)
-		g_ptr_array_add(argv_ptr, stralloc(line));
+	if (include_list) {
+	    char  line[2*PATH_MAX+2];
+	    while (fgets(line, 2*PATH_MAX, include_list)) {
+		line[strlen(line)-1] = '\0'; /* remove '\n' */
+		if (strncmp(line, "./", 2) == 0)
+		    g_ptr_array_add(argv_ptr, stralloc(line+2)); /* remove ./ */
+		else if (strcmp(line, ".") != 0)
+		    g_ptr_array_add(argv_ptr, stralloc(line));
+	    }
+	    fclose(include_list);
 	}
-	fclose(include_list);
     }
     for (j=1; j< argument->argc; j++) {
 	if (strncmp(argument->argv[j], "./", 2) == 0)
@@ -917,6 +935,7 @@ amstar_validate(
     e = strerror(errno);
     dbprintf("failed to execute %s: %s; Piping to /dev/null\n", cmd, e);
     fprintf(stderr,"failed to execute %s: %s; Piping to /dev/null\n", cmd, e);
+    amfree(cmd);
 pipe_to_null:
     while (read(0, buf, 32768) > 0) {
     }

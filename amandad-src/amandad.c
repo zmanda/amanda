@@ -1311,6 +1311,7 @@ errfd_recv(
 	as->repbufsize += n;
 
 	dbprintf("%s", s);
+	amfree(s);
 
 	/* remove first line from buffer */
 	r++;

@@ -205,14 +205,13 @@ stream_sendpkt(
     if (rh->rc->prefix_packet)
 	s = rh->rc->prefix_packet(rh, pkt);
     else
-	s = "";
+	s  = stralloc("");
     len = strlen(pkt->body) + strlen(s) + 2;
     buf = alloc(len);
     buf[0] = (char)pkt->type;
     strncpy(&buf[1], s, len - 1);
     strncpy(&buf[1 + strlen(s)], pkt->body, (len - strlen(s) - 1));
-    if (strlen(s) > 0)
-	amfree(s);
+    amfree(s);
 
     auth_debug(1,
      _("sec: stream_sendpkt: %s (%d) pkt_t (len %zu) contains:\n\n\"%s\"\n\n"),
@@ -733,6 +732,7 @@ tcpma_stream_server(
      */
     if (rs->rc->read < 0) {
 	sec_tcp_conn_put(rs->rc);
+	amfree(rs->secstr.error);
 	amfree(rs);
 	security_seterror(&rh->sech, _("lost connection to %s"), rh->hostname);
 	return (NULL);
@@ -803,6 +803,7 @@ tcp1_stream_server(
 	if (rs->socket < 0) {
 	    security_seterror(&rh->sech,
 			    _("can't create server stream: %s"), strerror(errno));
+	    amfree(rs->secstr.error);
 	    amfree(rs);
 	    return (NULL);
 	}
@@ -876,6 +877,7 @@ tcp1_stream_client(
 	    security_seterror(&rh->sech,
 			      _("can't connect stream to %s port %d: %s"),
 			       rh->hostname, id, strerror(errno));
+	    amfree(rs->secstr.error);
 	    amfree(rs);
 	    return (NULL);
         }
@@ -898,7 +900,7 @@ tcp_stream_write(
     assert(rs != NULL);
 
     logtime = time(NULL);
-    if (rs && rs->rc && logtime > rs->rc->logstamp + 10) {
+    if (rs->rc && logtime > rs->rc->logstamp + 10) {
 	g_debug("tcp_stream_write: data is still flowing");
 	rs->rc->logstamp = logtime;
     }
@@ -1034,6 +1036,7 @@ bsd_recv_security_ok(
 	    security_seterror(&rh->sech,
 		_("no bsd SECURITY for P_REQ"));
 	    amfree(service);
+	    amfree(security_line);
 	    return (-1);
 	}
 
@@ -1711,9 +1714,10 @@ stream_read_callback(
     time_t             logtime;
 
     assert(rs != NULL);
+    assert(rs->rc != NULL);
 
     logtime = time(NULL);
-    if (rs && rs->rc && logtime > rs->rc->logstamp + 10) {
+    if (logtime > rs->rc->logstamp + 10) {
 	g_debug("stream_read_callback: data is still flowing");
 	rs->rc->logstamp = logtime;
     }
@@ -2118,7 +2122,7 @@ check_user_ruserok(
 	strappend(result, es);
 	amfree(es);
     }
-    close(fd[0]);
+    fclose(fError);
 
     pid = wait(&exitcode);
     while (pid != ruserok_pid) {

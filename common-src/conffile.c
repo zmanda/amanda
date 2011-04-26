@@ -3896,6 +3896,7 @@ read_property(
 	get_conftoken(CONF_ANY);
     }
     if (tok != CONF_STRING) {
+	amfree(property);
 	conf_parserror(_("key expected"));
 	return;
     }
@@ -3905,9 +3906,11 @@ read_property(
     if (tok == CONF_NL ||  tok == CONF_END) {
 	g_hash_table_remove(val->v.proplist, key);
 	unget_conftoken();
+	amfree(property);
 	return;
     }
     if (tok != CONF_STRING) {
+	amfree(property);
 	conf_parserror(_("value expected"));
 	return;
     }
@@ -7830,8 +7833,10 @@ val_t_display_strs(
 	    strappend(buf[0], "SERVER ");
 
 	while (iter) {
-	    strappend(buf[0], quote_string_always((char *)iter->data));
+	    char *qbuf = quote_string_always((char *)iter->data);
+	    strappend(buf[0], qbuf);
 	    strappend(buf[0], " ");
+	    amfree(qbuf);
 	    iter = iter->next;
 	}
 	break;

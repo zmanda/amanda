@@ -241,6 +241,7 @@ suck_dir_list_from_server(void)
 	    skip_whitespace(s, ch);
 	    if(ch == '\0' || sscanf(s - 1, "%lld", &fileno_) != 1) {
 		err = _("bad reply: cannot parse fileno field");
+		amfree(tape);
 		continue;
 	    }
 	    fileno = (off_t)fileno_;
@@ -253,6 +254,7 @@ suck_dir_list_from_server(void)
 	skip_whitespace(s, ch);
 	if(ch == '\0') {
 	    err = _("bad reply: missing directory field");
+	    amfree(tape);
 	    continue;
 	}
 	qdir = s - 1;

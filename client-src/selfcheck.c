@@ -91,7 +91,7 @@ main(
     char *err_extra = NULL;
     char *s, *fp;
     int ch;
-    dle_t *dle;
+    dle_t *dle = NULL;
     int level;
     GSList *errlist;
     level_t *alevel;
@@ -143,6 +143,11 @@ main(
 	    continue;
 
 	if(strncmp_const(line, "OPTIONS ") == 0) {
+	    if (g_options) {
+		g_printf(_("ERROR [Multiple OPTIONS line in selfcheck input]\n"));
+		error(_("Multiple OPTIONS line in selfcheck input\n"));
+		/*NOTREACHED*/
+	    }
 	    g_options = parse_g_options(line+8, 1);
 	    if(!g_options->hostname) {
 		g_options->hostname = alloc(MAX_HOSTNAME_LENGTH+1);
@@ -172,6 +177,8 @@ main(
 	    if (config_errors(&errlist) >= CFGERR_ERRORS) {
 		char *errstr = config_errors_to_error_string(errlist);
 		g_printf("%s\n", errstr);
+		amfree(errstr);
+		amfree(line);
 		dbclose();
 		return 1;
 	    }
@@ -247,6 +254,7 @@ main(
 	    dle->device = stralloc(dle->disk);
 	    qamdevice = stralloc(qdisk);
 	}
+	amfree(qamdevice);
 
 						/* find level number */
 	if (ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
@@ -296,7 +304,7 @@ main(
 	} else {
 	    goto err;				/* bad syntax */
 	}
-	amfree(qamdevice);
+	free_dle(dle);
     }
     if (g_options == NULL) {
 	g_printf(_("ERROR [Missing OPTIONS line in selfcheck input]\n"));
@@ -358,6 +366,9 @@ checkoverall:
 	g_printf(_("ERROR [FORMAT ERROR IN REQUEST PACKET]\n"));
 	dbprintf(_("REQ packet is bogus\n"));
     }
+    amfree(err_extra);
+    amfree(line);
+    free_dle(dle);
     dbclose();
     return 1;
 }

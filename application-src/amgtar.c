@@ -292,7 +292,7 @@ main(
     int i;
 
 #ifdef GNUTAR
-    gnutar_path = GNUTAR;
+    gnutar_path = stralloc(GNUTAR);
 #else
     gnutar_path = NULL;
 #endif
@@ -377,13 +377,17 @@ main(
 	    break;
 	}
 	switch (c) {
-	case 1: argument.config = stralloc(optarg);
+	case 1: amfree(argument.config);
+		argument.config = stralloc(optarg);
 		break;
-	case 2: argument.host = stralloc(optarg);
+	case 2: amfree(argument.host);
+		argument.host = stralloc(optarg);
 		break;
-	case 3: argument.dle.disk = stralloc(optarg);
+	case 3: amfree(argument.dle.disk);
+		argument.dle.disk = stralloc(optarg);
 		break;
-	case 4: argument.dle.device = stralloc(optarg);
+	case 4: amfree(argument.dle.device);
+		argument.dle.device = stralloc(optarg);
 		break;
 	case 5: argument.level = g_slist_append(argument.level,
 					        GINT_TO_POINTER(atoi(optarg)));
@@ -396,9 +400,11 @@ main(
 		break;
 	case 9: argument.dle.record = 1;
 		break;
-	case 10: gnutar_path = stralloc(optarg);
+	case 10: amfree(gnutar_path);
+		 gnutar_path = stralloc(optarg);
 		 break;
-	case 11: gnutar_listdir = stralloc(optarg);
+	case 11: amfree(gnutar_listdir);
+		 gnutar_listdir = stralloc(optarg);
 		 break;
 	case 12: if (optarg && strcasecmp(optarg, "NO") == 0)
 		     gnutar_onefilesystem = 0;
@@ -448,7 +454,8 @@ main(
 		 break;
 	case 21: argument.dle.exclude_optional = 1;
 		 break;
-	case 22: gnutar_directory = stralloc(optarg);
+	case 22: amfree(gnutar_directory);
+		 gnutar_directory = stralloc(optarg);
 		 break;
 	case 23: if (optarg)
 		     normal_message = 
@@ -462,12 +469,15 @@ main(
 		     strange_message = 
 			 g_slist_append(strange_message, optarg);
 		 break;
-	case 26: if (optarg)
+	case 26: if (optarg) {
+		     amfree(exit_handling);
 		     exit_handling = stralloc(optarg);
+		 }
 		 break;
 	case 27: argument.calcsize = 1;
 		 break;
-	case 28: argument.tar_blocksize = stralloc(optarg);
+	case 28: amfree(argument.tar_blocksize);
+		 argument.tar_blocksize = stralloc(optarg);
 		 break;
 	case 29: if (optarg && strcasecmp(optarg, "NO") == 0)
 		     gnutar_no_unquote = 0;
@@ -546,7 +556,7 @@ main(
 	}
     }
 
-    gnutar_listdir = getconf_str(CNF_GNUTAR_LIST_DIR);
+    gnutar_listdir = stralloc(getconf_str(CNF_GNUTAR_LIST_DIR));
     if (strlen(gnutar_listdir) == 0)
 	gnutar_listdir = NULL;
 
@@ -735,6 +745,9 @@ amgtar_estimate(
 	    if (file_include)
 		unlink(file_include);
         }
+	amfree(file_exclude);
+	amfree(file_include);
+	amfree(qdisk);
 	return;
     }
 
@@ -775,8 +788,10 @@ amgtar_estimate(
 
 	size = (off_t)-1;
 	while (size < 0 && (fgets(line, sizeof(line), dumpout) != NULL)) {
-	    if (line[strlen(line)-1] == '\n') /* remove trailling \n */
+	    if (strlen(line) > 0 && line[strlen(line)-1] == '\n') {
+		/* remove trailling \n */
 		line[strlen(line)-1] = '\0';
+	    }
 	    if (line[0] == '\0')
 		continue;
 	    dbprintf("%s\n", line);
@@ -842,6 +857,7 @@ common_exit:
 	if (errmsg) {
 	    dbprintf("%s", errmsg);
 	    fprintf(stdout, "ERROR %s\n", errmsg);
+	    amfree(errmsg);
 	}
 
 	if (incrname) {
@@ -857,6 +873,7 @@ common_exit:
 
 	g_ptr_array_free_full(argv_ptr);
 	amfree(cmd);
+	amfree(incrname);
 
 	aclose(nullfd);
 	afclose(dumpout);
@@ -955,8 +972,10 @@ amgtar_backup(
     }
 
     while (fgets(line, sizeof(line), outstream) != NULL) {
-	if (line[strlen(line)-1] == '\n') /* remove trailling \n */
+	if (strlen(line) > 0 && line[strlen(line)-1] == '\n') {
+	    /* remove trailling \n */
 	    line[strlen(line)-1] = '\0';
+	}
 	if (*line == '.' && *(line+1) == '/') { /* filename */
 	    if (argument->dle.create_index) {
 		fprintf(indexstream, "%s\n", &line[1]); /* remove . */
@@ -998,6 +1017,7 @@ amgtar_backup(
 	    fprintf(mesgstream,"%c %s\n", startchr, line);
         }
     }
+    fclose(outstream);
 
     waitpid(tarpid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
@@ -1054,6 +1074,7 @@ amgtar_backup(
     amfree(incrname);
     amfree(qdisk);
     amfree(cmd);
+    amfree(errmsg);
     g_ptr_array_free_full(argv_ptr);
 }
 
@@ -1140,6 +1161,7 @@ amgtar_restore(
 	    }
 	}
 	fclose(exclude);
+	fclose(exclude_list);
 	g_ptr_array_add(argv_ptr, stralloc("--exclude-from"));
 	g_ptr_array_add(argv_ptr, exclude_filename);
     }
@@ -1180,6 +1202,7 @@ amgtar_restore(
 		    amfree(escaped);
 		}
 	    }
+	    fclose(include_list);
 	}
 
 	for (j=1; j< argument->argc; j++) {
@@ -1232,13 +1255,16 @@ amgtar_restore(
 	if (include_filename)
 	    unlink(include_filename);
     }
+    amfree(cmd);
+    amfree(include_filename);
+    amfree(exclude_filename);
 }
 
 static void
 amgtar_validate(
     application_argument_t *argument G_GNUC_UNUSED)
 {
-    char       *cmd;
+    char       *cmd = NULL;
     GPtrArray  *argv_ptr = g_ptr_array_new();
     char      **env;
     char       *e;
@@ -1267,6 +1293,7 @@ amgtar_validate(
 pipe_to_null:
     while (read(0, buf, 32768) > 0) {
     }
+    amfree(cmd);
 }
 
 static void
@@ -1389,7 +1416,17 @@ amgtar_get_incrname(
 		errmsg = vstrallocf(_("writing to %s: %s"),
 				     incrname, strerror(errno));
 		dbprintf("%s\n", errmsg);
-		return NULL;
+		amfree(incrname);
+		amfree(inputname);
+		amfree(basename);
+		amfree(errmsg);
+		dbprintf("%s\n", errmsg);
+		if (command == CMD_ESTIMATE) {
+		    fprintf(mesgstream, "ERROR %s\n", errmsg);
+		} else {
+		    fprintf(mesgstream, "? %s\n", errmsg);
+		}
+		exit(1);
 	    }
 	}
 
@@ -1397,20 +1434,50 @@ amgtar_get_incrname(
 	    errmsg = vstrallocf(_("reading from %s: %s"),
 			         inputname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
-	    return NULL;
+	    amfree(incrname);
+	    amfree(inputname);
+	    amfree(basename);
+	    amfree(errmsg);
+	    dbprintf("%s\n", errmsg);
+	    if (command == CMD_ESTIMATE) {
+		fprintf(mesgstream, "ERROR %s\n", errmsg);
+	    } else {
+		fprintf(mesgstream, "? %s\n", errmsg);
+	    }
+	    exit(1);
 	}
 
 	if (close(infd) != 0) {
 	    errmsg = vstrallocf(_("closing %s: %s"),
 			         inputname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
-	    return NULL;
+	    amfree(incrname);
+	    amfree(inputname);
+	    amfree(basename);
+	    amfree(errmsg);
+	    dbprintf("%s\n", errmsg);
+	    if (command == CMD_ESTIMATE) {
+		fprintf(mesgstream, "ERROR %s\n", errmsg);
+	    } else {
+		fprintf(mesgstream, "? %s\n", errmsg);
+	    }
+	    exit(1);
 	}
 	if (close(outfd) != 0) {
 	    errmsg = vstrallocf(_("closing %s: %s"),
 			         incrname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
-	    return NULL;
+	    amfree(incrname);
+	    amfree(inputname);
+	    amfree(basename);
+	    amfree(errmsg);
+	    dbprintf("%s\n", errmsg);
+	    if (command == CMD_ESTIMATE) {
+		fprintf(mesgstream, "ERROR %s\n", errmsg);
+	    } else {
+		fprintf(mesgstream, "? %s\n", errmsg);
+	    }
+	    exit(1);
 	}
 
 	amfree(inputname);

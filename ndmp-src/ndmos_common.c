@@ -65,7 +65,7 @@ ndmos_sync_config_info (struct ndm_session *sess)
 	static struct utsname	unam;
 	static char		osbuf[100];
 	static char		idbuf[30];
-	static char		revbuf[50];
+	static char		revbuf[100];
 	char			obuf[5];
 
 	if (sess->config_info.hostname) {

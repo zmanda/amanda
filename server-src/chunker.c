@@ -123,6 +123,7 @@ main(
     config_overrides_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
     char *m;
+    char *env;
     int header_socket;
     int data_socket;
 
@@ -194,8 +195,8 @@ main(
 
     /* set up a fake ENOSPC for testing purposes.  Note that this counts
      * headers as well as data written to disk. */
-    if (getenv("CHUNKER_FAKE_ENOSPC_AT")) {
-	char *env = getenv("CHUNKER_FAKE_ENOSPC_AT");
+    env = getenv("CHUNKER_FAKE_ENOSPC_AT");
+    if (env) {
 	fake_enospc_at_byte = (off_t)atoi(env); /* these values are never > MAXINT */
 	db_full_write = full_write_with_fake_enospc;
 	g_debug("will trigger fake ENOSPC at byte %d", (int)fake_enospc_at_byte);
@@ -514,6 +515,7 @@ startup_chunker(
 	amfree(m);
 	amfree(tmp_filename);
 	aclose(header_fd);
+	aclose(header_socket);
 	aclose(data_socket);
 	if(save_errno == ENOSPC) {
 	    putresult(NO_ROOM, "%s %lld\n",

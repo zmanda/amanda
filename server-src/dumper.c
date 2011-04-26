@@ -567,6 +567,13 @@ main(
 		putresult(FAILED, "%s %s\n", handle, q);
 		log_add(L_FAIL, "%s %s %s %d [%s]", hostname, qdiskname,
 			dumper_timestamp, level, errstr);
+		amfree(amandad_path);
+		amfree(client_username);
+		amfree(client_port);
+		amfree(device);
+		amfree(b64device);
+		amfree(qdiskname);
+		amfree(b64disk);
 		amfree(q);
 		break;
 	    }
@@ -1496,6 +1503,12 @@ read_mesgfd(
 	s = strchr(dataport_list, ',');
 	if (s) *s = '\0';  /* use first data_port */
 	s = strrchr(dataport_list, ':');
+	if (!s) {
+	    errstr = newvstrallocf(errstr, _("write_tapeheader: no dataport_list"));
+	    dump_result = 2;
+	    stop_dump();
+	    return;
+	}
 	*s = '\0';
 	s++;
 	data_port = atoi(s);
@@ -1504,7 +1517,7 @@ read_mesgfd(
 	/* time to do the header */
 	finish_tapeheader(&file);
 	if (write_tapeheader(db->fd, &file)) {
-	    errstr = newvstrallocf(errstr, _("write_tapeheader: %s"), 
+	    errstr = newvstrallocf(errstr, _("write_tapeheader: %s"),
 				  strerror(errno));
 	    dump_result = 2;
 	    stop_dump();
@@ -1533,6 +1546,7 @@ read_mesgfd(
 	if (srvencrypt == ENCRYPT_SERV_CUST) {
 	    if (runencrypt(db->fd, &db->encryptpid, srvencrypt) < 0) {
 		dump_result = 2;
+		aclose(db->fd);
 		stop_dump();
 		return;
 	    }
@@ -1544,6 +1558,7 @@ read_mesgfd(
 	if ((srvcompress != COMP_NONE) && (srvcompress != COMP_CUST)) {
 	    if (runcompress(db->fd, &db->compresspid, srvcompress, "data compress") < 0) {
 		dump_result = 2;
+		aclose(db->fd);
 		stop_dump();
 		return;
 	    }

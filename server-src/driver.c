@@ -1844,15 +1844,14 @@ handle_taper_result(
 		taper_nb_scan_volume = 0;
 	    } else {
 		taper = taper_from_name(result_argv[1]);
+		assert(taper);
 		taper->state = TAPER_STATE_DONE;
 		fflush(stdout);
 		q = quote_string(result_argv[2]);
 		log_add(L_WARNING, _("Taper error: %s"), q);
 		amfree(q);
-		if (taper) {
-		    taper->tape_error = newstralloc(taper->tape_error,
-						    result_argv[2]);
-		}
+		taper->tape_error = newstralloc(taper->tape_error,
+						result_argv[2]);
 
 		taper_nb_wait_reply--;
 		taper_nb_scan_volume--;
@@ -2636,6 +2635,9 @@ handle_chunker_result(
 
 	    chunker->result = cmd;
 
+	    g_strfreev(result_argv);
+	    return;
+
 	    break;
 
 	default:
@@ -2836,7 +2838,11 @@ read_flush(
 	sp->taper_attempted = 0;
 	sp->act_size = holding_file_size(destname, 0);
 	sp->holdp = build_diskspace(destname);
-	if(sp->holdp == NULL) continue;
+	if (sp->holdp == NULL) {
+	    g_free(sp->datestamp);
+	    g_free(sp);
+	    continue;
+	}
 	sp->dumper = NULL;
 	sp->taper = NULL;
 	sp->timestamp = (time_t)0;
@@ -2865,7 +2871,7 @@ read_schedule(
     sched_t *sp;
     disk_t *dp;
     int level, line, priority;
-    char *dumpdate, *degr_dumpdate, *degr_mesg;
+    char *dumpdate, *degr_dumpdate, *degr_mesg = NULL;
     int degr_level;
     time_t time, degr_time;
     time_t *time_p = &time;
@@ -3078,6 +3084,7 @@ read_schedule(
 		    _("schedule line %d: %s:'%s' not in disklist, ignored"),
 		    line, hostname, qname);
 	    amfree(diskname);
+	    amfree(degr_mesg);
 	    continue;
 	}
 
@@ -3105,10 +3112,12 @@ read_schedule(
 	    sp->degr_time = degr_time;
 	    sp->degr_kps = degr_kps;
 	    sp->degr_mesg = NULL;
+	    amfree(degr_mesg);
 	} else {
 	    sp->degr_level = -1;
 	    sp->degr_dumpdate = NULL;
 	    sp->degr_mesg = degr_mesg;
+	    degr_mesg = NULL;
 	}
 	/*@end@*/
 

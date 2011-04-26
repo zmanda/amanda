@@ -716,6 +716,8 @@ execute_command(DvdRwDevice *self, gchar **argv, gint *result)
 	    device_set_error(dself, error_message, DEVICE_STATUS_DEVICE_ERROR);
 	}
 
+	g_free(error_message);
+
 	if (std_output) {
 	    g_free(std_output);
 	}

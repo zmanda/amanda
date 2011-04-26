@@ -258,8 +258,9 @@ bsd_connect(
 	security_seterror(&bh->sech,
 	        _("Can't bind a socket to connect to %s\n"), hostname);
 	(*fn)(arg, &bh->sech, S_ERROR);
-       amfree(canonname);
-       return;
+	amfree(canonname);
+	freeaddrinfo(res);
+	return;
     }
 
 #ifdef WORKING_IPV6
@@ -283,6 +284,7 @@ bsd_connect(
         security_seterror(&bh->sech, _("%s/udp unknown protocol"), service);
 	(*fn)(arg, &bh->sech, S_ERROR);
         amfree(canonname);
+	freeaddrinfo(res);
 	return;
     }
 
@@ -414,6 +416,7 @@ bsd_stream_server(
     if (bs->socket < 0) {
 	security_seterror(&bh->sech,
 	    _("can't create server stream: %s"), strerror(errno));
+	amfree(bs->secstr.error);
 	amfree(bs);
 	return (NULL);
     }
@@ -469,6 +472,7 @@ bsd_stream_client(
 	security_seterror(&bh->sech,
 	    _("can't connect stream to %s port %d: %s"), bh->hostname,
 	    id, strerror(errno));
+	amfree(bs->secstr.error);
 	amfree(bs);
 	return (NULL);
     }

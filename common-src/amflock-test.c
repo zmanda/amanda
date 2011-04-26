@@ -65,17 +65,20 @@ test_old_impls(void)
 	    if (lock_ro) {
 		if ((*imp)->amroflock_impl(fd, resource) != 0) {
 		    perror("amroflock");
+		    close(fd);
 		    return FALSE;
 		}
 	    } else {
 		if ((*imp)->amflock_impl(fd, resource) != 0) {
 		    perror("amflock");
+		    close(fd);
 		    return FALSE;
 		}
 	    }
 
 	    if ((*imp)->amfunlock_impl(fd, resource) != 0) {
 		perror("amfunlock");
+		close(fd);
 		return FALSE;
 	    }
 

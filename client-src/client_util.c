@@ -476,6 +476,7 @@ parse_options(
 		    g_printf(_("ERROR [multiple auth option %s]\n"), quoted);
 		}
 		amfree(quoted);
+		amfree(dle->auth);
 	    }
 	    dle->auth = stralloc(&tok[5]);
 	}
@@ -486,6 +487,7 @@ parse_options(
 		if (verbose) {
 		    g_printf(_("ERROR [multiple auth option]\n"));
 		}
+		amfree(dle->auth);
 	    }
 	    dle->auth = stralloc("bsd");
 	}
@@ -532,6 +534,7 @@ parse_options(
 		    g_printf(_("ERROR [multiple compress option]\n"));
 		}
 	    }
+	    amfree(dle->compprog);
 	    dle->compprog = stralloc(tok + SIZEOF("srvcomp-cust=") -1);
 	    dle->compress = COMP_SERVER_CUST;
 	}
@@ -542,6 +545,7 @@ parse_options(
 		    g_printf(_("ERROR [multiple compress option]\n"));
 		}
 	    }
+	    amfree(dle->compprog);
 	    dle->compprog = stralloc(tok + SIZEOF("comp-cust=") -1);
 	    dle->compress = COMP_CUST;
 	    /* parse encryption options */
@@ -553,6 +557,7 @@ parse_options(
 		    g_printf(_("ERROR [multiple encrypt option]\n"));
 		}
 	    }
+	    amfree(dle->srv_encrypt);
 	    dle->srv_encrypt = stralloc(tok + SIZEOF("encrypt-serv-cust=") -1);
 	    dle->encrypt = ENCRYPT_SERV_CUST;
 	} 
@@ -563,13 +568,16 @@ parse_options(
 		    g_printf(_("ERROR [multiple encrypt option]\n"));
 		}
 	    }
+	    amfree(dle->clnt_encrypt);
 	    dle->clnt_encrypt= stralloc(tok + SIZEOF("encrypt-cust=") -1);
 	    dle->encrypt = ENCRYPT_CUST;
 	} 
 	else if (BSTRNCMP(tok, "server-decrypt-option=") == 0) {
+	  amfree(dle->srv_decrypt_opt);
 	  dle->srv_decrypt_opt = stralloc(tok + SIZEOF("server-decrypt-option=") -1);
 	}
 	else if (BSTRNCMP(tok, "client-decrypt-option=") == 0) {
+	  amfree(dle->clnt_decrypt_opt);
 	  dle->clnt_decrypt_opt = stralloc(tok + SIZEOF("client-decrypt-option=") -1);
 	}
 	else if (BSTRNCMP(tok, "no-record") == 0) {
@@ -789,6 +797,7 @@ merge_property(
     } else { /* take value from conf */
         g_hash_table_insert(merge_p->dle_proplist, key_p, conf_property);
     }
+    amfree(qdisk);
 }
 
 int
@@ -1043,6 +1052,7 @@ backup_support_option(
 	    dbprintf("Application '%s': %s\n", program, line);
 	}
 	amfree(bsu);
+	amfree(line);
     }
     fclose(streamerr);
 
@@ -1085,9 +1095,6 @@ run_client_script(
 	return;
     if (script->execute_where != ES_CLIENT)
 	return;
-
-    cmd = vstralloc(APPLICATION_DIR, "/", script->plugin, NULL);
-    g_ptr_array_add(argv_ptr, stralloc(script->plugin));
 
     switch (execute_on) {
     case EXECUTE_ON_PRE_DLE_AMCHECK:
@@ -1141,7 +1148,19 @@ run_client_script(
     case EXECUTE_ON_INTER_LEVEL_RECOVER:
 	command = "INTER-LEVEL-RECOVER";
 	break;
+    default:
+	{
+	    char *msg = g_strdup_printf("ERROR %s: Bad EXECUTE-ON property",
+					script->plugin);
+	    g_ptr_array_add(script->result->output, msg);
+	    return;
+	    break;
+	}
     }
+
+    cmd = vstralloc(APPLICATION_DIR, "/", script->plugin, NULL);
+    g_ptr_array_add(argv_ptr, stralloc(script->plugin));
+
     g_ptr_array_add(argv_ptr, stralloc(command));
     g_ptr_array_add(argv_ptr, stralloc("--execute-where"));
     g_ptr_array_add(argv_ptr, stralloc("client"));
@@ -1205,11 +1224,11 @@ run_client_script(
 		    property_t *property;
 
 		    *property_value++ = '\0';
-		    property_name = stralloc(property_name);
 		    property_value = stralloc(property_value);
 		    property = g_hash_table_lookup(script->result->proplist,
 						   property_name);
 		    if (!property) {
+			property_name = stralloc(property_name);
 			property = g_new0(property_t, 1);
 			g_hash_table_insert(script->result->proplist,
 					    property_name, property);
@@ -1222,8 +1241,8 @@ run_client_script(
                 g_ptr_array_add(script->result->output, line);
             }
         }
+	fclose(streamout);
     }
-    fclose(streamout);
 
     streamerr = fdopen(scripterr, "r");
     if (streamerr) {
@@ -1233,6 +1252,7 @@ run_client_script(
 					    script->plugin, command, line));
 	    amfree(line);
 	}
+	fclose(streamerr);
     }
 
     waitpid(scriptpid, &wait_status, 0);
@@ -1534,11 +1554,13 @@ run_calcsize(
 	}
 	size = (off_t)size_;
     }
+    fclose(dumpout);
     amfree(match_expr);
 
     dbprintf(_("waiting for %s %s child (pid=%d)\n"),
 	     command, qdisk, (int)calcpid);
     waitpid(calcpid, &wait_status, 0);
+    close(nullfd);
     if (WIFSIGNALED(wait_status)) {
 	errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
 			    "calcsize", WTERMSIG(wait_status),

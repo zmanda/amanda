@@ -203,6 +203,7 @@ amar_new(
     GError **error)
 {
     amar_t *archive = malloc(SIZEOF(amar_t));
+    assert(archive != NULL);
 
     /* make some sanity checks first */
     g_assert(fd >= 0);
@@ -312,6 +313,8 @@ amar_new_file(
     } while (0);
 
     file = g_new0(amar_file_t, 1);
+    if (!file)
+	goto error_exit;
     file->archive = archive;
     file->filenum = archive->maxfilenum;
     file->attributes = g_hash_table_new_full(g_int_hash, g_int_equal, NULL, g_free);
@@ -402,6 +405,7 @@ amar_new_attr(
     g_assert(g_hash_table_lookup(file->attributes, &attrid_gint) == NULL);
 
     attribute = malloc(SIZEOF(amar_attr_t));
+    assert(attribute != NULL);
     attribute->file = file;
     attribute->attrid = attrid;
     attribute->wrote_eoa = FALSE;
@@ -878,8 +882,8 @@ amar_read(
 		    return FALSE;
 		}
 		if (fs) {
-		    success = finish_file(&hp, fs, FALSE);
 		    hp.file_states = g_slist_remove(hp.file_states, fs);
+		    success = finish_file(&hp, fs, FALSE);
 		    as = NULL;
 		    fs = NULL;
 		    if (!success)
@@ -893,8 +897,8 @@ amar_read(
 
 		if (fs) {
 		    /* TODO: warn - previous file did not end correctly */
-		    success = finish_file(&hp, fs, TRUE);
 		    hp.file_states = g_slist_remove(hp.file_states, fs);
+		    success = finish_file(&hp, fs, TRUE);
 		    as = NULL;
 		    fs = NULL;
 		    if (!success)

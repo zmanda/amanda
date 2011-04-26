@@ -817,7 +817,7 @@ match_datestamp(
     if(strlen(dateexp) >= 100 || strlen(dateexp) < 1) {
 	goto illegal;
     }
-   
+
     /* strip and ignore an initial "^" */
     if(dateexp[0] == '^') {
 	strncpy(mydateexp, dateexp+1, sizeof(mydateexp)-1);
@@ -826,6 +826,10 @@ match_datestamp(
     else {
 	strncpy(mydateexp, dateexp, sizeof(mydateexp)-1);
 	mydateexp[sizeof(mydateexp)-1] = '\0';
+    }
+
+    if(strlen(dateexp) < 1) {
+	goto illegal;
     }
 
     if(mydateexp[strlen(mydateexp)-1] == '$') {
@@ -846,6 +850,9 @@ match_datestamp(
 	len = (size_t)(dash - mydateexp);   /* length of XXXYYYY */
 	len_suffix = strlen(dash) - 1;	/* length of ZZZZ */
 	if (len_suffix > len) goto illegal;
+	if (len < len_suffix) {
+	    goto illegal;
+	}
 	len_prefix = len - len_suffix; /* length of XXX */
 
 	dash++;
@@ -892,10 +899,14 @@ match_level(
 	error(_("Illegal level expression %s"),levelexp);
 	/*NOTREACHED*/
     }
-   
+
     if(levelexp[0] == '^') {
-	strncpy(mylevelexp, levelexp+1, strlen(levelexp)-1); 
+	strncpy(mylevelexp, levelexp+1, strlen(levelexp)-1);
 	mylevelexp[strlen(levelexp)-1] = '\0';
+	if (strlen(levelexp) == 0) {
+	    error(_("Illegal level expression %s"),levelexp);
+	    /*NOTREACHED*/
+	}
     }
     else {
 	strncpy(mylevelexp, levelexp, strlen(levelexp));

@@ -74,6 +74,7 @@ parse_g_options(
 		if(verbose) {
 		    g_printf(_("ERROR [multiple features option]\n"));
 		}
+		amfree(g_options->features);
 	    }
 	    if((g_options->features = am_string_to_feature(t)) == NULL) {
 		dbprintf(_("bad features value \"%s\"\n"), t);
@@ -90,6 +91,7 @@ parse_g_options(
 		if(verbose) {
 		    g_printf(_("ERROR [multiple hostname option]\n"));
 		}
+		amfree(g_options->hostname);
 	    }
 	    g_options->hostname = stralloc(tok+9);
 	}
@@ -99,6 +101,7 @@ parse_g_options(
 		if(verbose) {
 		    g_printf(_("ERROR [multiple auth option]\n"));
 		}
+		amfree(g_options->auth);
 	    }
 	    g_options->auth = stralloc(tok+5);
 	}
@@ -138,6 +141,7 @@ parse_g_options(
 		if(verbose) {
 		    g_printf(_("ERROR [multiple config option]\n"));
 		}
+		amfree(g_options->config);
 	    }
 	    g_options->config = stralloc(tok+7);
 	    if (strchr(g_options->config, '/')) {

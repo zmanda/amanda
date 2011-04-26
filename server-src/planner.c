@@ -1821,7 +1821,7 @@ static void handle_result(
     int ch;
     int tch;
     char *qname;
-    char *disk;
+    char *disk = NULL;
     long long size_;
 
     hostp = (am_host_t *)datap;
@@ -1925,6 +1925,7 @@ static void handle_result(
 	skip_whitespace(t, tch);
 
 	if (sscanf(t - 1, "%d", &level) != 1) {
+	    amfree(disk);
 	    goto bad_msg;
 	}
 
@@ -1935,12 +1936,14 @@ static void handle_result(
 	if(dp == NULL) {
 	    log_add(L_ERROR, _("%s: invalid reply from sendsize: `%s'\n"),
 		    hostp->hostname, line);
+	    amfree(disk);
 	    goto bad_msg;
 	}
 
 	size = (gint64)-1;
 	if (strncmp_const(t-1,"SIZE ") == 0) {
 	    if (sscanf(t - 1, "SIZE %lld", &size_) != 1) {
+		amfree(disk);
 		goto bad_msg;
 	    }
 	    size = (gint64)size_;
@@ -1957,6 +1960,7 @@ static void handle_result(
 	    }
 	    t[-1] = msg_undo;
 	} else {
+	    amfree(disk);
 	    goto bad_msg;
 	}
 

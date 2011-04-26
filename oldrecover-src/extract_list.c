@@ -674,6 +674,9 @@ void add_file(
 		    amfree(ditem_path);
 		    amfree(path_on_disk);
 		    amfree(path_on_disk_slash);
+		    amfree(lditem.path);
+		    amfree(lditem.date);
+		    amfree(lditem.tape);
 		    l = reply_line();
 		    g_printf(_("%s\n"), l);
 		    return;
@@ -827,6 +830,9 @@ void add_file(
     amfree(ditem_path);
     amfree(path_on_disk);
     amfree(path_on_disk_slash);
+    amfree(lditem.path);
+    amfree(lditem.date);
+    amfree(lditem.tape);
 
     if(! found_one) {
 	quoted = quote_string(path);
@@ -990,6 +996,9 @@ delete_file(
 		    amfree(ditem_path);
 		    amfree(path_on_disk);
 		    amfree(path_on_disk_slash);
+		    amfree(lditem.path);
+		    amfree(lditem.date);
+		    amfree(lditem.tape);
 		    l = reply_line();
 		    g_printf("%s\n", l);
 		    return;
@@ -1136,6 +1145,9 @@ delete_file(
     amfree(ditem_path);
     amfree(path_on_disk);
     amfree(path_on_disk_slash);
+    amfree(lditem.path);
+    amfree(lditem.date);
+    amfree(lditem.tape);
 
     if(! found_one) {
 	g_printf(_("File %s doesn't exist in directory\n"), path);
@@ -1932,12 +1944,14 @@ writer_intermediary(
                         fflush(stdout);
 
                         input = agets(stdin); /* strips \n */
-                        if (strcasecmp("", input) == 0||
-                            strcasecmp("y", input) == 0||
-                            strcasecmp("yes", input) == 0) {
+                        if (input &&
+			    (strcasecmp("", input) == 0 ||
+                             strcasecmp("y", input) == 0 ||
+                             strcasecmp("yes", input) == 0)) {
                             send_to_tape_server(tape_control_sock, "OK");
                             done = 1;
-                        } else if (strcasecmp("n", input) == 0||
+                        } else if (!input ||
+				   strcasecmp("n", input) == 0 ||
                                    strcasecmp("no", input) == 0) {
                             send_to_tape_server(tape_control_sock, "ERROR");
                             /* Abort!
@@ -2137,6 +2151,7 @@ extract_files(void)
 		   tape_device_name, tape_server_name);
 	    tlist = unmarshal_tapelist_str(elist->tape);
 	    g_printf(_("Load tape %s now\n"), tlist->label);
+	    amfree(tlist->label);
 	    amfree(tlist);
 	    otc = okay_to_continue(1,1,0);
 	    if (otc == 0)

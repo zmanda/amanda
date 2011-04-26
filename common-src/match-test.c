@@ -487,6 +487,7 @@ test_make_exact_host_expression(void)
 			    expr, test_strs[i], test_strs[j]);
 		}
 	    }
+	    amfree(expr);
 	}
     }
 
@@ -643,6 +644,7 @@ test_make_exact_disk_expression(void)
 			    expr, test_strs[i], test_strs[j]);
 		}
 	    }
+	    amfree(expr);
 	}
     }
 

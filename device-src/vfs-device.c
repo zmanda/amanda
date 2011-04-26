@@ -688,6 +688,7 @@ static gboolean clear_and_prepare_label(VfsDevice * self, char * label,
     if (!write_amanda_header(self, label_header)) {
 	/* write_amanda_header sets error status if necessary */
         dumpfile_free(label_header);
+	aclose(self->open_file_fd);
         return FALSE;
     }
     dumpfile_free(d_self->volume_header);

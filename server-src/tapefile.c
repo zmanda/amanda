@@ -68,9 +68,11 @@ read_tapelist(
 	}
 	tp = parse_tapeline(&status, line);
 	amfree(line);
-	if(tp == NULL && status != 0)
+	if (tp == NULL && status != 0) {
+	    afclose(tapef);
 	    return 1;
-	if(tp != NULL)
+	}
+	if (tp != NULL)
 	    tape_list = insert(tape_list, tp);
     }
     afclose(tapef);

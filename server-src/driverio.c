@@ -93,6 +93,10 @@ startup_tape_process(
 
     /* always allocate the tapetable */
     tapetable = calloc(sizeof(taper_t), taper_parallel_write+1);
+    if (!tapetable) {
+	error(_("could not alloc tapetable"));
+	/*NOTREACHED*/
+    }
 
     for (taper = tapetable, i = 0; i < taper_parallel_write; taper++, i++) {
 	taper->name = g_strdup_printf("worker%d", i);

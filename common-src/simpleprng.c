@@ -104,6 +104,7 @@ gboolean simpleprng_verify_buffer(
 		    "random value mismatch at offset %ju: got %s, expected %s\n",
 		    (uintmax_t)count, gotstr, expstr);
 	    g_free(gotstr);
+	    g_free(expstr);
 	    return FALSE;
 	}
 	p++;

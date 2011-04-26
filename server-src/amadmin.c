@@ -2290,8 +2290,9 @@ disklist_one(
 				DUMPTYPE_RECOVERY_LIMIT), 1);
 	for(r1 = rl; *r1 != NULL; r1++) {
 	    g_printf("        recovery-limit %s\n", *r1);
-	free(*r1);
+	    free(*r1);
 	}
+	amfree(rl);
     }
     if (dumptype_seen(dtype, DUMPTYPE_DUMP_LIMIT)) {
 	char **rl, **r1;
@@ -2299,8 +2300,9 @@ disklist_one(
 				DUMPTYPE_DUMP_LIMIT), 1);
 	for(r1 = rl; *r1 != NULL; r1++) {
 	    g_printf("        dump-limit %s\n", *r1);
-	free(*r1);
+	    free(*r1);
 	}
+	amfree(rl);
     }
     g_printf("        spindle %d\n", dp->spindle);
     pp_scriptlist = dp->pp_scriptlist;

@@ -917,6 +917,9 @@ add_file(
 		if(i==0) {		/* assume something wrong */
 		    amfree(ditem_path);
 		    amfree(path_on_disk);
+		    amfree(lditem.path);
+		    amfree(lditem.date);
+		    amfree(lditem.tape);
 		    l = reply_line();
 		    g_printf("%s\n", l);
 		    return;
@@ -1279,6 +1282,7 @@ delete_file(
 		{
 		    amfree(ditem_path);
 		    amfree(path_on_disk);
+		    amfree(lditem.path);
 		    l = reply_line();
 		    g_printf("%s\n", l);
 		    return;
@@ -1423,6 +1427,7 @@ delete_file(
     amfree(cmd);
     amfree(ditem_path);
     amfree(path_on_disk);
+    amfree(lditem.path);
 
     if(! found_one) {
 	g_printf(_("File %s doesn't exist in directory\n"), path);

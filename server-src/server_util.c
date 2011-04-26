@@ -169,9 +169,9 @@ int check_infofile(
     char       **errmsg)
 {
     disk_t      *dp, *diskp;
-    char        *hostinfodir, *old_hostinfodir, *Xhostinfodir;
-    char        *diskdir,     *old_diskdir,     *Xdiskdir;
-    char        *infofile,    *old_infofile,    *Xinfofile;
+    char        *hostinfodir, *old_hostinfodir;
+    char        *diskdir,     *old_diskdir;
+    char        *infofile,    *old_infofile;
     struct stat  statbuf;
     int other_dle_match;
 
@@ -193,9 +193,9 @@ int check_infofile(
 		other_dle_match = 0;
 		diskp = dl->head;
 		while (diskp != NULL) {
-		    Xhostinfodir = sanitise_filename(diskp->host->hostname);
-		    Xdiskdir     = sanitise_filename(diskp->name);
-		    Xinfofile = vstralloc(infodir, "/", Xhostinfodir, "/",
+		    char *Xhostinfodir = sanitise_filename(diskp->host->hostname);
+		    char *Xdiskdir     = sanitise_filename(diskp->name);
+		    char *Xinfofile = vstralloc(infodir, "/", Xhostinfodir, "/",
 					  Xdiskdir, "/info", NULL);
 		    if (strcmp(old_infofile, Xinfofile) == 0) {
 			other_dle_match = 1;
@@ -204,16 +204,32 @@ int check_infofile(
 		    else {
 			diskp = diskp->next;
 		    }
+		    amfree(Xhostinfodir);
+		    amfree(Xdiskdir);
+		    amfree(Xinfofile);
 		}
 		if (other_dle_match == 0) {
 		    if(mkpdir(infofile, (mode_t)0755, (uid_t)-1,
 			      (gid_t)-1) == -1) {
 			*errmsg = vstralloc("Can't create directory for ",
 					    infofile, NULL);
+			amfree(hostinfodir);
+			amfree(diskdir);
+			amfree(infofile);
+			amfree(old_hostinfodir);
+			amfree(old_diskdir);
+			amfree(old_infofile);
 			return -1;
 		    }
-		    if(copy_file(infofile, old_infofile, errmsg) == -1) 
+		    if(copy_file(infofile, old_infofile, errmsg) == -1) {
+			amfree(hostinfodir);
+			amfree(diskdir);
+			amfree(infofile);
+			amfree(old_hostinfodir);
+			amfree(old_diskdir);
+			amfree(old_infofile);
 			return -1;
+		    }
 		}
 	    }
 	    amfree(old_hostinfodir);
@@ -338,8 +354,12 @@ run_server_script(
     case EXECUTE_ON_INTER_LEVEL_RECOVER:
 	{
 	     // ERROR these script can't be executed on server.
+	     amfree(cmd);
 	     return;
 	}
+    default:
+	amfree(cmd);
+	return;
     }
 
     g_ptr_array_add(argv_ptr, stralloc(command));
@@ -383,8 +403,8 @@ run_server_script(
 	    dbprintf("script: %s\n", line);
 	    amfree(line);
 	}
+	fclose(streamout);
     }
-    fclose(streamout);
     waitpid(scriptpid, NULL, 0);
     g_ptr_array_free_full(argv_ptr);
     amfree(cmd);

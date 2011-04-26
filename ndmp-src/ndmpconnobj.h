@@ -74,14 +74,14 @@ typedef struct NDMPConnectionClass_ {
 
 /* Error handling */
 
-/* Get the last NDMP error on this connection; returns NDMP4_NO_ERR (0)
+/* Get the last NDMP error on this connection; returns NDMP9_NO_ERR (0)
  * if no error occurred, or if there was a communications error.  This
  * will also detect errors from the constructor.
  *
  * @param self: object
  * @returns: error code
  */
-ndmp4_error ndmp_connection_err_code(
+ndmp9_error ndmp_connection_err_code(
     NDMPConnection *self);
 
 /* Get the error message describing the most recent error on this object.

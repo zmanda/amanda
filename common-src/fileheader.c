@@ -165,6 +165,7 @@ parse_file_header(
 	    goto out;
 	}
 	strncpy(file->datestamp, tok, SIZEOF(file->datestamp) - 1);
+	file->datestamp[SIZEOF(file->datestamp) - 1] = '\0';
 
 	tok = strtok_r(NULL, " ", &saveptr);
 	if ((tok == NULL) || (strcmp(tok, "TAPE") != 0)) {
@@ -178,6 +179,7 @@ parse_file_header(
 	    goto out;
 	}
 	strncpy(file->name, tok, SIZEOF(file->name) - 1);
+	file->name[SIZEOF(file->name) - 1] = '\0';
 	break;
 
     case F_DUMPFILE:
@@ -189,6 +191,7 @@ parse_file_header(
 	    goto out;
 	}
 	strncpy(file->datestamp, tok, SIZEOF(file->datestamp) - 1);
+	file->datestamp[SIZEOF(file->datestamp) - 1] = '\0';
 
 	tok = strtok_r(NULL, " ", &saveptr);
 	if (tok == NULL) {
@@ -196,6 +199,7 @@ parse_file_header(
 	    goto out;
 	}
 	strncpy(file->name, tok, SIZEOF(file->name) - 1);
+	file->name[SIZEOF(file->name) - 1] = '\0';
 
 	tok = strquotedstr(&saveptr);
 	if (tok == NULL) {
@@ -204,6 +208,7 @@ parse_file_header(
 	}
 	uqname = unquote_string(tok);
 	strncpy(file->disk, uqname, SIZEOF(file->disk) - 1);
+	file->disk[SIZEOF(file->disk) - 1] = '\0';
  	amfree(uqname);
 	
 	if(file->type == F_SPLIT_DUMPFILE) {
@@ -269,6 +274,7 @@ parse_file_header(
 	} else {
 	    strcpy(file->comp_suffix, "");
 	}
+	file->comp_suffix[SIZEOF(file->comp_suffix) - 1] = '\0';
 
 	tok = strtok_r(NULL, " ", &saveptr);
         /* "program" is optional */
@@ -282,6 +288,7 @@ parse_file_header(
 	    goto out;
 	}
         strncpy(file->program, tok, SIZEOF(file->program) - 1);
+	file->program[SIZEOF(file->program) - 1] = '\0';
 
 	if ((tok = strtok_r(NULL, " ", &saveptr)) == NULL)
              break;          /* reached the end of the buffer */
@@ -295,6 +302,7 @@ parse_file_header(
 	    }
 	    strncpy(file->encrypt_suffix, tok,
 		    SIZEOF(file->encrypt_suffix) - 1);
+	    file->encrypt_suffix[SIZEOF(file->encrypt_suffix) - 1] = '\0';
 	    file->encrypted = 1;
 
 	    /* for compatibility with who-knows-what, allow "comp N" to be
@@ -317,6 +325,7 @@ parse_file_header(
 		goto out;
 	    }
 	    strncpy(file->srvcompprog, tok, SIZEOF(file->srvcompprog) - 1);
+	    file->srvcompprog[SIZEOF(file->srvcompprog) - 1] = '\0';
 	    if ((tok = strtok_r(NULL, " ", &saveptr)) == NULL)
 		break;      
 	}
@@ -330,6 +339,7 @@ parse_file_header(
 		goto out;
 	    }
 	    strncpy(file->clntcompprog, tok, SIZEOF(file->clntcompprog) - 1);
+	    file->clntcompprog[SIZEOF(file->clntcompprog) - 1] = '\0';
 	    if ((tok = strtok_r(NULL, " ", &saveptr)) == NULL)
 		break;
 	}
@@ -343,6 +353,7 @@ parse_file_header(
 		goto out;
 	    }
 	    strncpy(file->srv_encrypt, tok, SIZEOF(file->srv_encrypt) - 1);
+	    file->srv_encrypt[SIZEOF(file->srv_encrypt) - 1] = '\0';
 	    if ((tok = strtok_r(NULL, " ", &saveptr)) == NULL) 
 		break;
 	}
@@ -356,6 +367,7 @@ parse_file_header(
 		goto out;
 	    }
 	    strncpy(file->clnt_encrypt, tok, SIZEOF(file->clnt_encrypt) - 1);
+	    file->clnt_encrypt[SIZEOF(file->clnt_encrypt) - 1] = '\0';
 	    if ((tok = strtok_r(NULL, " ", &saveptr)) == NULL) 
 		break;
 	}
@@ -370,6 +382,7 @@ parse_file_header(
 	    }
 	    strncpy(file->srv_decrypt_opt, tok,
 		    SIZEOF(file->srv_decrypt_opt) - 1);
+	    file->srv_decrypt_opt[SIZEOF(file->srv_decrypt_opt) - 1] = '\0';
 	    if ((tok = strtok_r(NULL, " ", &saveptr)) == NULL) 
 		break;
 	}
@@ -384,6 +397,7 @@ parse_file_header(
 	    }
 	    strncpy(file->clnt_decrypt_opt, tok,
 		    SIZEOF(file->clnt_decrypt_opt) - 1);
+	    file->clnt_decrypt_opt[SIZEOF(file->clnt_decrypt_opt) - 1] = '\0';
 	    if ((tok = strtok_r(NULL, " ", &saveptr)) == NULL) 
 		break;
 	}
@@ -398,8 +412,10 @@ parse_file_header(
 		tok = strtok_r(NULL, " ", &saveptr);
 		if(tok == NULL)
 		    file->datestamp[0] = '\0';
-		else
+		else {
 		    strncpy(file->datestamp, tok, SIZEOF(file->datestamp) - 1);
+		    file->datestamp[SIZEOF(file->datestamp) - 1] = '\0';
+		}
 	    } else {
 		strange_header(file, buffer, buflen, _("<DATE>"), tok);
 	   }
@@ -426,6 +442,7 @@ parse_file_header(
 	    line += SIZEOF(SC) - 1;
 	    strncpy(file->cont_filename, line,
 		    SIZEOF(file->cont_filename) - 1);
+	    file->cont_filename[SIZEOF(file->cont_filename) - 1] = '\0';
 	    continue;
 	}
 #undef SC
@@ -442,6 +459,7 @@ parse_file_header(
 	    line += SIZEOF(SC) - 1;
 	    strncpy(file->application, line,
 		    SIZEOF(file->application) - 1);
+	    file->application[SIZEOF(file->application) - 1] = '\0';
 	    continue;
 	}
 #undef SC
@@ -456,6 +474,7 @@ parse_file_header(
 #define SC "DLE="
 	if (strncmp(line, SC, SIZEOF(SC) - 1) == 0) {
 	    line += SIZEOF(SC) - 1;
+	    amfree(file->dle_str);
 	    file->dle_str = parse_heredoc(line, &saveptr);
 	}
 #undef SC
@@ -472,7 +491,7 @@ parse_file_header(
 	    /* skip over dd command */
 	    if ((cmd1 = strchr(line, '|')) == NULL) {
 
-	        strncpy(file->recover_cmd, "BUG",
+	        strncpy(file->recover_cmd, "BUG\0",
 		        SIZEOF(file->recover_cmd) - 1);
 	        continue;
 	    }
@@ -484,7 +503,7 @@ parse_file_header(
 	      if ((cmd3 = strchr(cmd2, '|')) != NULL)
 		*cmd3++ = '\0';
 	    }
-	   
+
 	    /* clean up some extra spaces in various fields */
 	    chomp(cmd1);
 	    chomp(cmd2);
@@ -517,6 +536,8 @@ parse_file_header(
 	      strncpy(file->recover_cmd, cmd3,
 		      SIZEOF(file->recover_cmd) - 1);
 	    }
+	    file->recover_cmd[SIZEOF(file->recover_cmd) - 1] = '\0';
+	    file->uncompress_cmd[SIZEOF(file->uncompress_cmd) - 1] = '\0';
 	    continue;
 	}
 #undef SC

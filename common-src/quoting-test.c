@@ -372,6 +372,7 @@ test_strquotedstr_skipping(void)
 		    g_fprintf(stderr, "while parsing '%s', call %d to strquotedstr returned '%s' "
 			      "but '%s' was expected.\n",
 			      combined, i, safe, expected);
+		    amfree(safe);
 		    success = FALSE;
 		    goto next;
 		}

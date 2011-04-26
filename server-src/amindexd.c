@@ -317,7 +317,7 @@ uncompress_file(
 	uncompress_err_stream = fdopen(uncompress_errfd, "r");
 	uncompress_err = g_ptr_array_new();
 	while (fgets(line, sizeof(line), uncompress_err_stream) != NULL) {
-	    if (line[strlen(line)-1] == '\n')
+	    if (strlen(line) > 0 && line[strlen(line)-1] == '\n')
 		line[strlen(line)-1] = '\0';
 	    g_ptr_array_add(uncompress_err, vstrallocf("  %s", line));
 	    dbprintf("Uncompress: %s\n", line);
@@ -327,7 +327,7 @@ uncompress_file(
 	sort_err_stream = fdopen(sort_errfd, "r");
 	sort_err = g_ptr_array_new();
 	while (fgets(line, sizeof(line), sort_err_stream) != NULL) {
-	    if (line[strlen(line)-1] == '\n')
+	    if (strlen(line) > 0 && line[strlen(line)-1] == '\n')
 		line[strlen(line)-1] = '\0';
 	    g_ptr_array_add(sort_err, vstrallocf("  %s", line));
 	    dbprintf("Sort: %s\n", line);
@@ -417,6 +417,7 @@ process_ls_dump(
     if (filename_gz == NULL) {
 	g_ptr_array_add(*emsg, stralloc(_("index file not found")));
 	amfree(filename_gz);
+	amfree(dir_slash);
 	return -1;
     }
     filename = uncompress_file(filename_gz, emsg);
@@ -438,7 +439,7 @@ process_ls_dump(
 
     while (fgets(line, STR_SIZE, fp) != NULL) {
 	if (line[0] != '\0') {
-	    if(line[strlen(line)-1] == '\n')
+	    if(strlen(line) > 0 && line[strlen(line)-1] == '\n')
 		line[strlen(line)-1] = '\0';
 	    if(strncmp(dir_slash, line, len_dir_slash) == 0) {
 		if(!recursive) {
@@ -1010,7 +1011,7 @@ is_dir_valid_opaque(
 	while (fgets(line, STR_SIZE, fp) != NULL) {
 	    if (line[0] == '\0')
 		continue;
-	    if(line[strlen(line)-1] == '\n')
+	    if(strlen(line) > 0 && line[strlen(line)-1] == '\n')
 		line[strlen(line)-1] = '\0';
 	    if (strncmp(line, ldir, ldir_len) != 0) {
 		continue;			/* not found yet */
@@ -1489,6 +1490,7 @@ main(
 		}
 		amfree(line);
 		amfree(part);
+		amfree(arg);
 		uncompress_remove = remove_files(uncompress_remove);
 		dbclose();
 		return 1;		/* they hung up? */
@@ -1553,8 +1555,9 @@ main(
 	}
 	if (!user_validated) {  /* don't tell client the reason, just log it to debug log */
 	    reply(500, _("Access not allowed"));
-	    if (errstr) {   
+	    if (errstr) {
 		dbprintf("%s\n", errstr);
+		amfree(errstr);
 	    }
 	    break;
 	}
@@ -1610,6 +1613,7 @@ main(
 	    s[-1] = '\0';
 	    if (is_disk_valid(arg) != -1) {
 		disk_name = newstralloc(disk_name, arg);
+		amfree(qdisk_name);
 		qdisk_name = quote_string(disk_name);
 		if (build_disk_table() != -1) {
 		    reply(200, _("Disk set to %s."), qdisk_name);
@@ -1622,6 +1626,9 @@ main(
 	    char *b64disk;
 	    char *l, *ql;
 
+	    if (!dump_hostname || !disk_name) {
+		reply(200, "NODLE");
+	    } else {
 	    dp = lookup_disk(dump_hostname, disk_name);
 	    if (dp->line == 0) {
 		reply(200, "NODLE");
@@ -1668,8 +1675,9 @@ main(
 		    amfree(optionstr);
 		    amfree(l);
 		    amfree(ql);
-		    amfree(b64disk);
 		}
+		amfree(b64disk);
+	    }
 	    }
 	} else if (strcmp(cmd, "LISTDISK") == 0) {
 	    char *qname;
@@ -1776,7 +1784,8 @@ main(
 	amfree(line);
     }
     amfree(arg);
-    
+    amfree(line);
+
     uncompress_remove = remove_files(uncompress_remove);
     free_find_result(&output_find);
     reply(200, _("Good bye."));
@@ -1952,6 +1961,7 @@ get_index_name(
 	    amfree(lower_hostname);
 	    return fn;
 	}
+	amfree(fn);
     }
     amfree(lower_hostname);
     return NULL;

@@ -59,14 +59,17 @@ mkpdir(
     /* Remove last member of file, put the result in dir */
     dir = stralloc(file); /* make a copy we can play with */
     p = strrchr(dir, '/');
-    *p = '\0';
+    if (p)
+	*p = '\0';
 
     rc = mkdir(dir, mode);
     if (rc != 0) {
 	if (errno == ENOENT) { /* create parent directory */
 	    rc = mkpdir(dir, mode, uid, gid);
-	    if (rc != 0)
+	    if (rc != 0) {
+		amfree(dir);
 		return rc;
+	    }
 	    rc = mkdir(dir, mode);
 	}
 	if (rc != 0 && errno == EEXIST) {

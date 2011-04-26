@@ -225,33 +225,33 @@ main(
 	}
 	exit(1);
     }
-    if(mailout && !mailto && 
+    if(mailout && !mailto &&
        (getconf_seen(CNF_MAILTO)==0 || strlen(getconf_str(CNF_MAILTO)) == 0)) {
 	g_printf(_("\nWARNING:No mail address configured in  amanda.conf.\n"));
 	g_printf(_("To receive dump results by email configure the "
 		 "\"mailto\" parameter in amanda.conf\n"));
-        if(alwaysmail)        
- 		g_printf(_("When using -a option please specify -Maddress also\n\n")); 
+        if(alwaysmail)
+ 		g_printf(_("When using -a option please specify -Maddress also\n\n"));
 	else
  		g_printf(_("Use -Maddress instead of -m\n\n")); 
 	exit(1);
     }
     if(mailout && !mailto)
-    { 
-       if(getconf_seen(CNF_MAILTO) && 
+    {
+       if(getconf_seen(CNF_MAILTO) &&
           strlen(getconf_str(CNF_MAILTO)) > 0) {
           if(!validate_mailto(getconf_str(CNF_MAILTO))){
-		g_printf(_("\nMail address in amanda.conf has invalid characters")); 
-		g_printf(_("\nNo email will be sent\n")); 
+		g_printf(_("\nMail address in amanda.conf has invalid characters"));
+		g_printf(_("\nNo email will be sent\n"));
                 mailout = 0;
           }
        }
        else {
 	  g_printf(_("\nNo mail address configured in  amanda.conf\n"));
-          if(alwaysmail)        
- 		g_printf(_("When using -a option please specify -Maddress also\n\n")); 
+          if(alwaysmail)
+ 		g_printf(_("When using -a option please specify -Maddress also\n\n"));
 	  else
- 		g_printf(_("Use -Maddress instead of -m\n\n")); 
+ 		g_printf(_("Use -Maddress instead of -m\n\n"));
 	  exit(1);
       }
     }
@@ -412,6 +412,7 @@ main(
 	char *extra_info = NULL;
 	char *line = NULL;
 	int rc;
+	int valid_mailto = 0;
 
 	fflush(stdout);
 	if(lseek(mainfd, (off_t)0, SEEK_SET) == (off_t)-1) {
@@ -434,6 +435,10 @@ main(
 	    /* (note that validate_mailto doesn't allow any quotes, so this
 	     * is really just splitting regular old strings) */
 	    a = split_quoted_strings(getconf_str(CNF_MAILTO));
+	    if (!a) {
+ 		g_printf(_("Invalid mailto address '%s'\n\n"), getconf_str(CNF_MAILTO));
+		exit(1);
+	    }
 	}
 	if((nullfd = open("/dev/null", O_RDWR)) < 0) {
 	    error("nullfd: /dev/null: %s", strerror(errno));
@@ -445,9 +450,17 @@ main(
 	g_ptr_array_add(pipeargs, mailer);
 	g_ptr_array_add(pipeargs, "-s");
 	g_ptr_array_add(pipeargs, subject);
-	for (b = a; *b; b++)
-	    g_ptr_array_add(pipeargs, *b);
+	for (b = a; *b; b++) {
+	    if (strlen(*b) > 0) {
+	        g_ptr_array_add(pipeargs, *b);
+		valid_mailto++;
+	    }
+	}
 	g_ptr_array_add(pipeargs, NULL);
+	if (!valid_mailto) {
+ 	    g_printf(_("Invalid mailto address '%s'\n\n"), getconf_str(CNF_MAILTO));
+	    exit(1);
+	}
 
 	pipespawnv(mailer, STDIN_PIPE | STDERR_PIPE, 0,
 		   &mailfd, &nullfd, &errfd,
@@ -510,6 +523,8 @@ main(
 	    }
 	    error(_("error running mailer %s: %s"), mailer, err?err:"(unknown)");
 	    /*NOTREACHED*/
+	} else {
+	    amfree(extra_info);
 	}
     }
 
@@ -1762,10 +1777,10 @@ start_host(
 	    }
 
 	    b64disk = amxml_format_tag("disk", dp->name);
-	    qdevice = quote_string(dp->device); 
+	    qdevice = quote_string(dp->device);
 	    if (dp->device)
 		b64device = amxml_format_tag("diskdevice", dp->device);
-	    if ((dp->name && qname[0] == '"') || 
+	    if ((qname[0] == '"') ||
 		(dp->device && qdevice[0] == '"')) {
 		if(!am_has_feature(hostp->features, fe_interface_quoted_text)) {
 		    g_fprintf(outf,

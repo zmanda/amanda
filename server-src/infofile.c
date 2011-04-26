@@ -242,17 +242,20 @@ read_txinfofile(
 
 	/* from here on, we had better be parsing a 'stats' line */
 	if(strncmp_const_skip(line, "stats:", s, ch) != 0) {
+	    amfree(line);
 	    return -1;
 	}
 
 	skip_whitespace(s, ch);
 	if(ch == '\0' || sscanf((s - 1), "%d", &level) != 1) {
+	    amfree(line);
 	    return -1;
 	}
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
 	if(ch == '\0' || sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
+	    amfree(line);
 	    return -1;
 	}
 	onestat.size = (off_t)off_t_tmp;
@@ -260,6 +263,7 @@ read_txinfofile(
 
 	skip_whitespace(s, ch);
 	if(ch == '\0' || sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
+	    amfree(line);
 	    return -1;
 	}
 	onestat.csize = (off_t)off_t_tmp;
@@ -268,6 +272,7 @@ read_txinfofile(
 	/* assume that the time fits in a long long */
 	skip_whitespace(s, ch);
 	if(ch == '\0' || sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
+	    amfree(line);
 	    return -1;
 	}
         onestat.secs = (time_t)off_t_tmp;
@@ -275,6 +280,7 @@ read_txinfofile(
 
 	skip_whitespace(s, ch);
 	if(ch == '\0' || sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
+	    amfree(line);
 	    return -1;
 	}
 	onestat.date = (time_t)off_t_tmp;
@@ -283,6 +289,7 @@ read_txinfofile(
 	skip_whitespace(s, ch);
 	if(ch != '\0') {
 	    if(sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
+		amfree(line);
 		return -1;
 	    }
 	    onestat.filenum = (off_t)off_t_tmp;
@@ -290,18 +297,21 @@ read_txinfofile(
 
 	    skip_whitespace(s, ch);
 	    if(ch == '\0') {
+		amfree(line);
 		return -1;
 	    }
 	    strncpy(onestat.label, s-1, SIZEOF(onestat.label)-1);
 	    onestat.label[SIZEOF(onestat.label)-1] = '\0';
 	}
 
-	if(level < 0 || level > DUMP_LEVELS-1)
+	if (level < 0 || level > DUMP_LEVELS-1) {
+	    amfree(line);
 	    return -1;
+	}
 
 	info->inf[level] = onestat;
     }
-   
+
     if(line == NULL) return -1;
 
     rc = sscanf(line, "last_level: %d %d", 

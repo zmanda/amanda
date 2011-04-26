@@ -208,8 +208,10 @@ amstart_element(
 	    *at_names != NULL && at_values != NULL;
 	    at_names++, at_values++) {
 	    if (strcmp(*at_names, "encoding") == 0) {
+		amfree(data_user->encoding);
 		data_user->encoding = stralloc(*at_values);
 	    } else if (strcmp(*at_names, "raw") == 0) {
+		amfree(data_user->raw);
 		data_user->raw = base64_decode_alloc_string((char *)*at_values);
 	    } else {
 		g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
@@ -272,7 +274,7 @@ amstart_element(
 	      strcmp(element_name, "datapath"      ) == 0 ||
 	      strcmp(element_name, "exclude"       ) == 0 ||
 	      strcmp(element_name, "include"       ) == 0) {
-	if (strcmp(last_element_name, "dle") != 0) {
+	if (!last_element_name || strcmp(last_element_name, "dle") != 0) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
@@ -314,13 +316,13 @@ amstart_element(
 	    data_user->alevel = g_new0(level_t, 1);
 	}
     } else if (strcmp(element_name, "server") == 0) {
-	if (strcmp(last_element_name, "level") != 0) {
+	if (!last_element_name || strcmp(last_element_name, "level") != 0) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
 	}
     } else if(strcmp(element_name, "custom-compress-program") == 0) {
-	if (strcmp(last_element_name, "compress") != 0) {
+	if (!last_element_name || strcmp(last_element_name, "compress") != 0) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
@@ -332,7 +334,7 @@ amstart_element(
 	}
     } else if (strcmp(element_name, "custom-encrypt-program") == 0 ||
 	       strcmp(element_name, "decrypt-option") == 0) {
-	if (strcmp(last_element_name, "encrypt") != 0) {
+	if (!last_element_name || strcmp(last_element_name, "encrypt") != 0) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
@@ -350,8 +352,9 @@ amstart_element(
 	    return;
 	}
     } else if(strcmp(element_name, "plugin") == 0) {
-	if (strcmp(last_element_name, "backup-program") != 0 &&
-	    strcmp(last_element_name, "script") != 0) {
+	if (!last_element_name ||
+	    (strcmp(last_element_name, "backup-program") != 0 &&
+	     strcmp(last_element_name, "script") != 0)) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
@@ -363,8 +366,9 @@ amstart_element(
 	    return;
 	}
     } else if(strcmp(element_name, "property") == 0) {
-	if (strcmp(last_element_name, "backup-program") != 0 &&
-	    strcmp(last_element_name, "script") != 0) {
+	if (!last_element_name ||
+	    (strcmp(last_element_name, "backup-program") != 0 &&
+	     strcmp(last_element_name, "script") != 0)) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
@@ -374,7 +378,7 @@ amstart_element(
 	data_user->property_data->priority = 0;
 	data_user->property_data->values = NULL;
     } else if(strcmp(element_name, "name") == 0) {
-	if (strcmp(last_element_name, "property") != 0) {
+	if (!last_element_name || strcmp(last_element_name, "property") != 0) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
@@ -386,13 +390,13 @@ amstart_element(
 	    return;
 	}
     } else if(strcmp(element_name, "priority") == 0) {
-	if (strcmp(last_element_name, "property") != 0) {
+	if (!last_element_name || strcmp(last_element_name, "property") != 0) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
 	}
     } else if(strcmp(element_name, "value") == 0) {
-	if (strcmp(last_element_name, "property") != 0) {
+	if (!last_element_name || strcmp(last_element_name, "property") != 0) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
@@ -400,8 +404,9 @@ amstart_element(
     } else if(strcmp(element_name, "file") == 0 ||
 	      strcmp(element_name, "list") == 0 ||
 	      strcmp(element_name, "optional") == 0) {
-	if (strcmp(last_element_name, "exclude") != 0 &&
-	    strcmp(last_element_name, "include") != 0) {
+	if (!last_element_name ||
+	    (strcmp(last_element_name, "exclude") != 0 &&
+	     strcmp(last_element_name, "include") != 0)) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
@@ -437,7 +442,7 @@ amstart_element(
     } else if (strcmp(element_name, "execute_on") == 0) {
     } else if (strcmp(element_name, "execute_where") == 0) {
     } else if (strcmp(element_name, "directtcp") == 0) {
-	if (strcmp(last_element_name, "datapath") != 0) {
+	if (!last_element_name || strcmp(last_element_name, "datapath") != 0) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
@@ -1028,6 +1033,7 @@ amxml_parse_node_FILE(
 	g_markup_parse_context_parse(context, line, strlen(line), &gerror);
 	amfree(line);
     }
+    amfree(line);
     if (!gerror)
 	g_markup_parse_context_end_parse(context, &gerror);
     g_markup_parse_context_free(context);

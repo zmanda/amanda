@@ -699,14 +699,14 @@ search_logfile(
 {
     FILE *logf;
     char *host, *host_undo;
-    char *disk, *qdisk, *disk_undo;
+    char *disk = NULL, *qdisk, *disk_undo;
     char *date, *date_undo;
     int  partnum;
     int  totalparts;
     int  maxparts = -1;
     char *number;
     int fileno;
-    char *current_label = stralloc("");
+    char *current_label;
     char *rest, *rest_undo;
     char *ck_label=NULL;
     int level = 0;
@@ -730,6 +730,7 @@ search_logfile(
     g_return_val_if_fail(output_find != NULL, 0);
     g_return_val_if_fail(logfile != NULL, 0);
 
+    current_label = stralloc("");
     if (string_chunk == NULL) {
 	string_chunk = g_string_chunk_new(32768);
     }
@@ -861,6 +862,7 @@ search_logfile(
 	    if(ch == '\0') {
 		g_printf(_("strange log line in %s \"%s\"\n"),
                          logfile, curstr);
+		amfree(disk);
 		continue;
 	    }
 	    date = s - 1;
@@ -870,7 +872,7 @@ search_logfile(
 
 	    if(strlen(date) < 3) { /* old log didn't have datestamp */
 		level = atoi(date);
-		date = stralloc(datestamp);
+		date = datestamp;
 		partnum = 1;
 		totalparts = 1;
 	    } else {
@@ -903,6 +905,7 @@ search_logfile(
 		if(ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
 		    g_printf(_("Fstrange log line in %s \"%s\"\n"),
 		    logfile, s-1);
+		    amfree(disk);
 		    continue;
 		}
 		skip_integer(s, ch);
@@ -912,6 +915,7 @@ search_logfile(
 	    if(ch == '\0') {
 		g_printf(_("strange log line in %s \"%s\"\n"),
 		    logfile, curstr);
+		amfree(disk);
 		continue;
 	    }
 	    rest = s - 1;
@@ -923,6 +927,7 @@ search_logfile(
 		if(ch == '\0') {
 		    g_printf(_("strange log line in %s \"%s\"\n"),
 			     logfile, curstr);
+		    amfree(disk);
 		    continue;
 		}
 		sec = atof(s - 1);
@@ -936,6 +941,7 @@ search_logfile(
 		    strcmp(rest, "bytes") != 0) {
 		    g_printf(_("Bstrange log line in %s \"%s\"\n"),
 			     logfile, curstr);
+		    amfree(disk);
 		    continue;
 		}
 
@@ -943,6 +949,7 @@ search_logfile(
 		if (ch == '\0') {
 		     g_printf(_("strange log line in %s \"%s\"\n"),
 			      logfile, curstr);
+		     amfree(disk);
 		     continue;
 		}
 		if (strcmp(rest, "kb") == 0) {
@@ -961,6 +968,7 @@ search_logfile(
 		if (strcmp(rest, "kps") != 0) {
 		    g_printf(_("Cstrange log line in %s \"%s\"\n"),
 			     logfile, curstr);
+		    amfree(disk);
 		    continue;
 		}
 
@@ -968,6 +976,7 @@ search_logfile(
 		if (ch == '\0') {
 		    g_printf(_("strange log line in %s \"%s\"\n"),
 			     logfile, curstr);
+		    amfree(disk);
 		    continue;
 		}
 		/* kps = atof(s - 1); */
@@ -985,6 +994,7 @@ search_logfile(
 		    if(ch == '\0') {
 			g_printf(_("strange log line in %s \"%s\"\n"),
 				 logfile, curstr);
+			amfree(disk);
 			continue;
 		    }
 		    orig_kb = atof(s - 1);
@@ -1003,6 +1013,7 @@ search_logfile(
 	    dp = lookup_disk(host,disk);
 	    if ( dp == NULL ) {
 		if (dynamic_disklist == NULL) {
+		    amfree(disk);
 		    continue;
 		}
 		dp = add_disk(dynamic_disklist, host, disk);
@@ -1182,6 +1193,7 @@ search_logfile(
     afclose(logf);
     amfree(datestamp);
     amfree(current_label);
+    amfree(disk);
 
     return found_something;
 }

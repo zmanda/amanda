@@ -285,6 +285,8 @@ set_disk(
 	    dle_str = unquote_string(dle_str+4);
 	    dump_dle = amxml_parse_node_CHAR(dle_str, &errmsg);
 	    amfree(dle_str);
+	    /* Should print the error */
+	    amfree(errmsg);
 	}
     }
 }

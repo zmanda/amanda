@@ -114,7 +114,10 @@ main(
 	switch(opt) {
 	case 'o':	add_config_override_opt(cfg_ovr, optarg);
 			break;
-	case 'f':	got_input_file = 1;
+	case 'f':	if (got_input_file == 1) {
+			    g_critical("Invalid two -f argument");
+			}
+			got_input_file = 1;
 			if (*optarg == '/') {
 			    input_file = fopen(optarg, "r");
 			} else {
@@ -165,6 +168,8 @@ main(
     amfree(our_feature_string);
     am_release_feature_set(our_features);
     our_features = NULL;
+    if (got_input_file)
+	fclose(input_file);
 
     dbclose();
     return(remote_errors != 0);
@@ -207,6 +212,7 @@ client_protocol(
     while(fgets(req1, 1024, input_file) != NULL) {
 	vstrextend(&req, req1, NULL);
     }
+    amfree(req1);
     protocol_init();
 
     start_host(hostname, auth, req);

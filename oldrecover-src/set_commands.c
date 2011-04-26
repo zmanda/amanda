@@ -83,7 +83,7 @@ set_host(
     struct hostent *hp;
     char **hostp;
     int found_host = 0;
-    char *uqhost = unquote_string(host);
+    char *uqhost;
 
     if (is_extract_list_nonempty())
     {
@@ -91,6 +91,7 @@ set_host(
 	return;
     }
 
+    uqhost = unquote_string(host);
     cmd = stralloc2("HOST ", uqhost);
     if (converse(cmd) == -1)
 	exit(1);
@@ -187,8 +188,10 @@ set_disk(
 	exit(1);
     amfree(cmd);
 
-    if (!server_happy())
+    if (!server_happy()) {
+	amfree(uqmtpt);
 	return;
+    }
 
     disk_name = newstralloc(disk_name, uqdsk);
     if (mtpt == NULL)
@@ -291,6 +294,7 @@ cd_glob(
         g_printf(_("\"%s\" is not a valid shell wildcard pattern: "), glob);
         puts(s);
 	amfree(regex);
+	amfree(uqglob);
         return;
     }
     /*
@@ -587,7 +591,7 @@ set_tape(
 	}
     } else
 	tapedev = uqtape;
-    
+
     if (tapedev[0])
     {
 	if (strcmp(tapedev, "default") == 0)
@@ -606,6 +610,7 @@ set_tape(
     else
 	g_printf (_(".\nTape server unspecified, assumed to be %s.\n"),
 		server_name);
+    amfree(uqtape);
 }
 
 void

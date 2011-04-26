@@ -133,7 +133,7 @@ main(
     char *qdisk = NULL;
     char *qlist = NULL;
     char *qamdevice = NULL;
-    dle_t *dle;
+    dle_t *dle = NULL;
     GSList *errlist;
     level_t *alevel;
 
@@ -180,6 +180,11 @@ main(
 	if (line[0] == '\0')
 	    continue;
 	if(strncmp_const(line, "OPTIONS ") == 0) {
+	    if (g_options) {
+		g_printf(_("ERROR [Multiple OPTIONS line in sendsize input]\n"));
+		error(_("Multiple OPTIONS line in sendsize input\n"));
+		/*NOTREACHED*/
+	    }
 	    g_options = parse_g_options(line+8, 1);
 	    if(!g_options->hostname) {
 		g_options->hostname = alloc(MAX_HOSTNAME_LENGTH+1);
@@ -213,6 +218,8 @@ main(
 		char *errstr = config_errors_to_error_string(errlist);
 		g_printf("%s\n", errstr);
 		dbclose();
+		amfree(errstr);
+		amfree(line);
 		return 1;
 	    }
 
@@ -280,8 +287,8 @@ main(
 	    goto err;				/* no disk name */
 	}
 
-	if (qdisk != NULL)
-	    amfree(qdisk);
+	amfree(qdisk);
+	amfree(qamdevice);
 
 	fp = s - 1;
 	skip_quoted_string(s, ch);
@@ -306,6 +313,8 @@ main(
 	    dle->device = stralloc(dle->disk);
 	    qamdevice = stralloc(qdisk);
 	}
+	amfree(qamdevice);
+	amfree(qdisk);
 
 						/* find the level number */
 	if(ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
@@ -386,6 +395,7 @@ main(
 	/*@ignore@*/
 	dle_add_diskest(dle);
 	/*@end@*/
+	dle = NULL;
     }
     if (g_options == NULL) {
 	g_printf(_("ERROR [Missing OPTIONS line in sendsize input]\n"));
@@ -572,6 +582,7 @@ main(
     }
 
     free_g_options(g_options);
+    free_dle(dle);
 
     dbclose();
     return 1;
@@ -874,6 +885,7 @@ application_api_calc_estimate(
 	    est->est[level].needestimate = 0;
 	}
 	g_ptr_array_free(errarray, TRUE);
+	return;
     }
 
     if (est->dle->data_path == DATA_PATH_AMANDA &&
@@ -1046,11 +1058,13 @@ generic_calc_estimates(
     if(file_exclude) {
 	g_ptr_array_add(argv_ptr, stralloc("-X"));
 	g_ptr_array_add(argv_ptr, stralloc(file_exclude));
+	amfree(file_exclude);
     }
 
     if(file_include) {
 	g_ptr_array_add(argv_ptr, stralloc("-I"));
 	g_ptr_array_add(argv_ptr, stralloc(file_include));
+	amfree(file_include);
     }
     start_time = curclock();
 
@@ -1089,6 +1103,7 @@ generic_calc_estimates(
     calcpid = pipespawnv(cmd, STDERR_PIPE, 0,
 			 &nullfd, &nullfd, &pipefd, (char **)argv_ptr->pdata);
     amfree(cmd);
+    close(nullfd);
 
     dumpout = fdopen(pipefd,"r");
     if (!dumpout) {
@@ -1112,6 +1127,7 @@ generic_calc_estimates(
 	}
 	size = (off_t)size_;
     }
+    fclose(dumpout);
     amfree(match_expr);
 
     dbprintf(_("waiting for %s %s child (pid=%d)\n"),
@@ -1356,7 +1372,7 @@ getsize_dump(
     char level_str[NUM_STR_SIZE];
     int s;
     times_t start_time;
-    char *qdisk = quote_string(dle->disk);
+    char *qdisk;
     char *qdevice;
     char *config;
     amwait_t wait_status;
@@ -1369,6 +1385,7 @@ getsize_dump(
 
     g_snprintf(level_str, SIZEOF(level_str), "%d", level);
 
+    qdisk = quote_string(dle->disk);
     device = amname_to_devname(dle->device);
     qdevice = quote_string(device);
     fstype = amname_to_fstype(dle->device);
@@ -1405,6 +1422,7 @@ getsize_dump(
 	amfree(device);
 	amfree(qdevice);
 	amfree(qdisk);
+	close(nullfd);
 	return(-1);
     }
 
@@ -1531,6 +1549,7 @@ getsize_dump(
 	amfree(qdisk);
 	amfree(name);
 	amfree(fstype);
+	close(nullfd);
 	return -1;
     default:
 	break; 
@@ -1803,14 +1822,14 @@ getsize_smbtar(
     char *pw_fd_env;
     times_t start_time;
     char *error_pn = NULL;
-    char *qdisk = quote_string(dle->disk);
+    char *qdisk;
     amwait_t wait_status;
-
-    error_pn = stralloc2(get_pname(), "-smbclient");
 
     if (level > 1)
 	return -2; /* planner will not even consider this level */
 
+    error_pn = stralloc2(get_pname(), "-smbclient");
+    qdisk = quote_string(dle->disk);
     parsesharename(dle->device, &share, &subdir);
     if (!share) {
 	amfree(share);
@@ -1992,10 +2011,12 @@ getsize_smbtar(
     dbprintf(_("waiting for %s \"%s\" child\n"), SAMBA_CLIENT, qdisk);
     waitpid(dumppid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
+	amfree(*errmsg);
 	*errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
 			     SAMBA_CLIENT, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
+	    amfree(*errmsg);
 	    *errmsg = vstrallocf(_("%s exited with status %d: see %s"),
 				 SAMBA_CLIENT, WEXITSTATUS(wait_status),
 				 dbfn());
@@ -2003,6 +2024,7 @@ getsize_smbtar(
 	    /* Normal exit */
 	}
     } else {
+	amfree(*errmsg);
 	*errmsg = vstrallocf(_("%s got bad exit: see %s"),
 			     SAMBA_CLIENT, dbfn());
     }
@@ -2047,10 +2069,10 @@ getsize_gnutar(
     char *file_exclude = NULL;
     char *file_include = NULL;
     times_t start_time;
-    int infd, outfd;
+    int infd = -1, outfd = -1;
     ssize_t nb;
     char buf[32768];
-    char *qdisk = quote_string(dle->disk);
+    char *qdisk;
     char *gnutar_list_dir;
     amwait_t wait_status;
     char tmppath[PATH_MAX];
@@ -2058,6 +2080,7 @@ getsize_gnutar(
     if (level > 9)
 	return -2; /* planner will not even consider this level */
 
+    qdisk = quote_string(dle->disk);
     if(dle->exclude_file) nb_exclude += dle->exclude_file->nb_element;
     if(dle->exclude_list) nb_exclude += dle->exclude_list->nb_element;
     if(dle->include_file) nb_include += dle->include_file->nb_element;
@@ -2286,16 +2309,19 @@ getsize_gnutar(
 	     command, qdisk);
     waitpid(dumppid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
+	amfree(*errmsg);
 	*errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
 			     cmd, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
+	    amfree(*errmsg);
 	    *errmsg = vstrallocf(_("%s exited with status %d: see %s"),
 			         cmd, WEXITSTATUS(wait_status), dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
+	amfree(*errmsg);
 	*errmsg = vstrallocf(_("%s got bad exit: see %s"),
 			     cmd, dbfn());
     }
@@ -2306,6 +2332,8 @@ common_exit:
     if (incrname) {
 	unlink(incrname);
     }
+    aclose(infd);
+    aclose(outfd);
     amfree(incrname);
     amfree(basename);
     amfree(dirname);
@@ -2483,6 +2511,7 @@ getsize_application_api(
 	    dbprintf(_("errmsg is %s\n"), errmsg);
 	    g_printf(_("%s %d ERROR %s\n"), est->qamname, levels[0], qerrmsg);
 	    amfree(qerrmsg);
+	    amfree(errmsg);
 	    continue;
 	}
 	i = sscanf(line, "%d %lld %lld", &level, &size1_, &size2_);

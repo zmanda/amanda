@@ -1,4 +1,8 @@
-2011-04-20  Jean-Louis Martineau <martineau@zmanda.com>
+2011-04-26  Jean-Louis Martineau <martineau@zmanda.com>
+	Fix many errors/warnings found by klocwork
+	* Many files.
+
+2011-04-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Split the threads property in
 	  nb_threads_backup and nb_treads_recovery.
 	* man/xml-source/amanda-devices.7.xml: Document it.

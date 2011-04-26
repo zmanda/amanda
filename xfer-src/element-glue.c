@@ -136,6 +136,7 @@ do_directtcp_listen(
     sock = *sockp = socket(SU_GET_FAMILY(addr), SOCK_STREAM, 0);
     if (sock < 0) {
 	xfer_cancel_with_error(elt, "socket(): %s", strerror(errno));
+	freeaddrinfo(res);
 	return FALSE;
     }
 
@@ -143,11 +144,16 @@ do_directtcp_listen(
     if (bind(sock, (struct sockaddr *)addr, len) != 0) {
 	xfer_cancel_with_error(elt, "bind(): %s", strerror(errno));
 	freeaddrinfo(res);
+	close(sock);
+	*sockp = -1;
 	return FALSE;
     }
 
     if (listen(sock, 1) < 0) {
 	xfer_cancel_with_error(elt, "listen(): %s", strerror(errno));
+	freeaddrinfo(res);
+	close(sock);
+	*sockp = -1;
 	return FALSE;
     }
 
@@ -159,6 +165,7 @@ do_directtcp_listen(
     addrs = g_new0(DirectTCPAddr, 2);
     copy_sockaddr(&addrs[0], &data_addr);
     *addrsp = addrs;
+    freeaddrinfo(res);
 
     return TRUE;
 }
@@ -230,6 +237,7 @@ do_directtcp_connect(
     if (connect(sock, (struct sockaddr *)&addr, SS_LEN(&addr)) < 0) {
 	xfer_cancel_with_error(elt,
 	    "connect(): %s", strerror(errno));
+	close(sock);
 	goto cancel_wait;
     }
 
@@ -909,10 +917,8 @@ pull_buffer_impl(
 
 	/* read from this new socket */
 	self->read_fdp = &self->input_data_socket;
-    }
-
-    /* or connect first, if required */
-    if (self->on_pull & PULL_CONNECT_FIRST) {
+    } else if (self->on_pull & PULL_CONNECT_FIRST) {
+	/* or connect first, if required */
 	/* don't connect the next time around */
 	self->on_pull &= ~PULL_CONNECT_FIRST;
 

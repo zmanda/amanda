@@ -871,6 +871,7 @@ holding_set_origsize(
     buflen = full_read(fd, buffer, SIZEOF(buffer));
     if (buflen <= 0) {
 	dbprintf(_("holding_set_origsize: %s: empty file?\n"), holding_file);
+	close(fd);
 	return;
     }
     parse_file_header(buffer, &file, (size_t)buflen);

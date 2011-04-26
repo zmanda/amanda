@@ -263,8 +263,7 @@ ssh_accept(
     }
 
 done:
-    if (ssh_connection)
-	g_free(ssh_connection);
+    g_free(ssh_connection);
 
     rc->read = in;
     rc->write = out;

@@ -110,7 +110,7 @@ finalize_impl(GObject *goself)
  * Error handling
  */
 
-ndmp4_error
+ndmp9_error
 ndmp_connection_err_code(
     NDMPConnection *self)
 {
