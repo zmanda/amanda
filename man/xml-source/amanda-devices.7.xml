@@ -436,6 +436,14 @@ data to S3.  If the average speed exceeds this value, the device will stop
 writing long enough to bring the average below this value.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>NB_THREADS_BACKUP</term><listitem>
+(read-write) The number of thread that send data to the s3 device, higher value can provide more throutput.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>NB_THREADS_RECOVERY</term><listitem>
+(read-write) The number of thread that read data from the s3 device, higher value can provide more throutput.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>S3_ACCESS_KEY</term><listitem>
  (read-write) This property gives the Amazon S3 access key used to access the service.
 </listitem></varlistentry>
@@ -487,10 +495,6 @@ for the most up-to-date list.
  <!-- ==== -->
  <varlistentry><term>S3_USER_TOKEN</term><listitem>
 (read-write) This property specifies the user token for Amanda Enterprise Edition customers.
-</listitem></varlistentry>
- <!-- ==== -->
- <varlistentry><term>THREADS</term><listitem>
-(read-write) The number of thread that send data to the s3 device, higher value can provide more throutput.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>VERBOSE</term><listitem>

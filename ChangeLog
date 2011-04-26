@@ -1,4 +1,9 @@
 2011-04-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Split the threads property in
+	  nb_threads_backup and nb_treads_recovery.
+	* man/xml-source/amanda-devices.7.xml: Document it.
+
+2011-04-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Improve balancing if some dle have strategy
 	  noinc or a smaller dumpcycle.
 

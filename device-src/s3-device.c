@@ -127,11 +127,12 @@ struct _S3Device {
     gboolean use_subdomain;
 
     int          nb_threads;
+    int          nb_threads_backup;
+    int          nb_threads_recovery;
     GThreadPool *thread_pool_write;
     GThreadPool *thread_pool_read;
     GCond       *thread_idle_cond;
     GMutex      *thread_idle_mutex;
-    int          nb_idle_threads;
     int          next_block_to_read;
 };
 
@@ -213,8 +214,10 @@ static DevicePropertyBase device_property_s3_subdomain;
 #define PROPERTY_S3_SUBDOMAIN (device_property_s3_subdomain.ID)
 
 /* Number of threads to use */
-static DevicePropertyBase device_property_threads;
-#define PROPERTY_THREADS (device_property_threads.ID)
+static DevicePropertyBase device_property_nb_threads_backup;
+#define PROPERTY_NB_THREADS_BACKUP (device_property_nb_threads_backup.ID)
+static DevicePropertyBase device_property_nb_threads_recovery;
+#define PROPERTY_NB_THREADS_RECOVERY (device_property_nb_threads_recovery.ID)
 
 /*
  * prototypes
@@ -361,7 +364,11 @@ static gboolean s3_device_set_max_recv_speed_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
-static gboolean s3_device_set_threads(Device *self,
+static gboolean s3_device_set_nb_threads_backup(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_nb_threads_recovery(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -792,9 +799,12 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_max_recv_speed,
                                       G_TYPE_UINT64, "max_recv_speed",
        "Maximum average download speed (bytes/sec)");
-    device_property_fill_and_register(&device_property_threads,
-                                      G_TYPE_UINT64, "threads",
+    device_property_fill_and_register(&device_property_nb_threads_backup,
+                                      G_TYPE_UINT64, "nb_threads_backup",
        "Number of writer thread");
+    device_property_fill_and_register(&device_property_nb_threads_recovery,
+                                      G_TYPE_UINT64, "nb_threads_recovery",
+       "Number of reader thread");
 
     /* register the device itself */
     register_device(s3_device_factory, device_prefix_list);
@@ -838,6 +848,8 @@ s3_device_init(S3Device * self)
     self->enforce_volume_limit = FALSE;
     self->use_subdomain = FALSE;
     self->nb_threads = 1;
+    self->nb_threads_backup = 1;
+    self->nb_threads_recovery = 1;
     self->thread_pool_write = NULL;
     self->thread_pool_read = NULL;
     self->thread_idle_cond = NULL;
@@ -996,10 +1008,15 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    device_simple_property_get_fn,
 	    s3_device_set_max_recv_speed_fn);
 
-    device_class_register_property(device_class, PROPERTY_THREADS,
+    device_class_register_property(device_class, PROPERTY_NB_THREADS_BACKUP,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
-	    s3_device_set_threads);
+	    s3_device_set_nb_threads_backup);
+
+    device_class_register_property(device_class, PROPERTY_NB_THREADS_RECOVERY,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_nb_threads_recovery);
 
     device_class_register_property(device_class, PROPERTY_COMPRESSION,
 	    PROPERTY_ACCESS_GET_MASK,
@@ -1257,7 +1274,7 @@ s3_device_set_max_recv_speed_fn(Device *p_self,
 }
 
 static gboolean
-s3_device_set_threads(Device *p_self,
+s3_device_set_nb_threads_backup(Device *p_self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source)
 {
@@ -1265,7 +1282,27 @@ s3_device_set_threads(Device *p_self,
     guint64 new_val;
 
     new_val = g_value_get_uint64(val);
-    self->nb_threads = new_val;
+    self->nb_threads_backup = new_val;
+    if (self->nb_threads_backup > self->nb_threads) {
+	self->nb_threads = self->nb_threads_backup;
+    }
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_nb_threads_recovery(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+    guint64 new_val;
+
+    new_val = g_value_get_uint64(val);
+    self->nb_threads_recovery = new_val;
+    if (self->nb_threads_recovery > self->nb_threads) {
+	self->nb_threads = self->nb_threads_recovery;
+    }
 
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
@@ -1486,7 +1523,6 @@ static gboolean setup_handle(S3Device * self) {
 					      self->nb_threads, 0, NULL);
 	self->thread_idle_cond = g_cond_new();
 	self->thread_idle_mutex = g_mutex_new();
-	self->nb_idle_threads = self->nb_threads;
     }
 
     for (thread = 0; thread < self->nb_threads; thread++) {
@@ -1796,7 +1832,7 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
     g_mutex_lock(self->thread_idle_mutex);
     while (!idle_thread) {
 	idle_thread = 0;
-	for (thread = 0; thread < self->nb_threads; thread++)  {
+	for (thread = 0; thread < self->nb_threads_backup; thread++)  {
 	    if (self->s3t[thread].idle == 1) {
 		idle_thread++;
 		if (first_idle == -1)
@@ -2085,7 +2121,7 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
 
     g_mutex_lock(self->thread_idle_mutex);
     /* start a read ahead for each thread */
-    for (thread = 0; thread < self->nb_threads; thread++) {
+    for (thread = 0; thread < self->nb_threads_recovery; thread++) {
 	S3_by_thread *s3t = &self->s3t[thread];
 	if (s3t->idle) {
 	    key = file_and_block_to_key(self, pself->file, self->next_block_to_read);
@@ -2118,13 +2154,13 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
     g_assert(key != NULL);
     while (!done) {
 	/* find which thread read the key */
-	for (thread = 0; thread < self->nb_threads; thread++) {
+	for (thread = 0; thread < self->nb_threads_recovery; thread++) {
 	    S3_by_thread *s3t;
 	    s3t = &self->s3t[thread];
 	    if (!s3t->idle &&
 		s3t->done &&
 		strcmp(key, (char *)s3t->filename) == 0) {
-		if (s3t->eof) {	
+		if (s3t->eof) {
 		    /* return eof */
 		    g_free(key);
 		    pself->is_eof = TRUE;
@@ -2167,7 +2203,7 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
     }
 
     /* start a read ahead for the thread */
-    for (thread = 0; thread < self->nb_threads; thread++) {
+    for (thread = 0; thread < self->nb_threads_recovery; thread++) {
 	S3_by_thread *s3t = &self->s3t[thread];
 	if (s3t->idle) {
 	    key = file_and_block_to_key(self, pself->file, self->next_block_to_read);
