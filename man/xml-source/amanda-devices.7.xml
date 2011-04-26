@@ -436,6 +436,14 @@ data to S3.  If the average speed exceeds this value, the device will stop
 writing long enough to bring the average below this value.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>NB_THREADS_BACKUP</term><listitem>
+(read-write) The number of thread that send data to the s3 device, higher value can provide more throutput.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>NB_THREADS_RECOVERY</term><listitem>
+(read-write) The number of thread that read data from the s3 device, higher value can provide more throutput.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>S3_ACCESS_KEY</term><listitem>
  (read-write) This property gives the Amazon S3 access key used to access the service.
 </listitem></varlistentry>
@@ -458,8 +466,16 @@ If NSS is being used, then it is the directory that the database resides in.
 The value is passed to curl_easy_setopt(3) as CURLOPT_CAINFO.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>S3_HOST</term><listitem>
+(read-write) The host name to connect, in the form "hostname:port" or "ip:port", default is "s3.amazonaws.com"
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>S3_SECRET_KEY</term><listitem>
- (read-write) This property gives the Amazon S3 secret key used to access the service.
+(read-write) This property gives the Amazon S3 secret key used to access the service.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>S3_SERVICE_PATH</term><listitem>
+(read-write) A path to add at the beginning of the URL.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>S3_STORAGE_CLASS</term><listitem>
@@ -470,19 +486,29 @@ for the most up-to-date list.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>S3_SSL</term><listitem>
- (read-write) Whether or not to use SSL/TLS to secure communications with Amazon S3.
+(read-write) Whether or not to use SSL/TLS to secure communications with Amazon S3.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>S3_SUBDOMAIN</term><listitem>
+ (read-write) Whether or not to use subdomain hostname.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>S3_USER_TOKEN</term><listitem>
- (read-write) This property specifies the user token for Amanda Enterprise Edition customers.
+(read-write) This property specifies the user token for Amanda Enterprise Edition customers.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>VERBOSE</term><listitem>
- (read-write) If true, verbose data about each HTTP transaction is sent to the debug log.
+(read-write) If true, verbose data about each HTTP transaction is sent to the debug log.
 </listitem></varlistentry>
  <!-- ==== -->
 </variablelist>
 
+</refsect3>
+<refsect3><title>S3 URL</title>
+     SSL &amp;&amp;  SUBDOMAIN:   https://bucket.host/service_path/file
+     SSL &amp;&amp; !SUBDOMAIN:   https://host/service_path/bucket/file
+    !SSL &amp;&amp;  SUBDOMAIN:   http://bucket.host/service_path/file
+    !SSL &amp;&amp; !SUBDOMAIN:   http://host/service_path/bucket/file
 </refsect3>
 
 </refsect2>

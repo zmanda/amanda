@@ -153,6 +153,7 @@ typedef curl_progress_callback s3_progress_func;
     S3_ERROR(MissingSecurityHeader), \
     S3_ERROR(NoLoggingStatusForKey), \
     S3_ERROR(NoSuchBucket), \
+    S3_ERROR(NoSuchEntity), \
     S3_ERROR(NoSuchKey), \
     S3_ERROR(NotImplemented), \
     S3_ERROR(NotSignedUp), \
@@ -232,7 +233,9 @@ s3_init(void);
  * @returns: the new S3Handle
  */
 S3Handle *
-s3_open(const char * access_key, const char *secret_key, const char * user_token,
+s3_open(const char * access_key, const char *secret_key, const char *host,
+        const char *service_path, gboolean use_subdomain,
+        const char * user_token,
         const char * bucket_location, const char * storage_class, const char * ca_info);
 
 /* Deallocate an S3Handle

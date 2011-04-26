@@ -1,4 +1,12 @@
 Changes in release 3.3.0
+   * s3 device
+       o use multiple threads to speedup the transfer
+       o can connect to eucalytus.
+       o new NB_THREADS_BACKUP property
+       o new NB_THREADS_RECOVERY property
+       o new S3_HOST property
+       o new S3_SERVICE_PATH property
+       o new S3_SUBDOMAIN property
    * chg-aggregate: new changer that use other changer sequentially.
    * meta-volume
    * Add meta label in tapelist file
