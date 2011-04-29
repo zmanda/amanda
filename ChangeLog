@@ -1,4 +1,7 @@
 2011-04-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Do not get "location" if bucket_location is not set.
+
+2011-04-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Reply immediately a NO_NEW_TAPE if taper ask
 	  REQUEST_NEW_TAPE after it is in TAPER_STATE_DONE.
 
