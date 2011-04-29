@@ -1,3 +1,7 @@
+2011-04-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Reply immediately a NO_NEW_TAPE if taper ask
+	  REQUEST_NEW_TAPE after it is in TAPER_STATE_DONE.
+
 2011-04-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Device.swg: Do not crash if an unknown device-property
 	  is set.
