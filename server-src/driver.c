@@ -1750,11 +1750,15 @@ handle_taper_result(
 
 	    dp = serial2disk(result_argv[1]);
 	    taper = sched(dp)->taper;
-	    taper->state &= ~TAPER_STATE_TAPE_STARTED;
-	    taper->state |= TAPER_STATE_TAPE_REQUESTED;
+	    if (taper->state & TAPER_STATE_DONE) {
+		taper_cmd(NO_NEW_TAPE, taper->disk, "taper found no tape", 0, NULL);
+	    } else {
+		taper->state &= ~TAPER_STATE_TAPE_STARTED;
+		taper->state |= TAPER_STATE_TAPE_REQUESTED;
 
-	    start_some_dumps(&runq);
-	    startaflush();
+		start_some_dumps(&runq);
+		startaflush();
+	    }
 	    break;
 
 	case NEW_TAPE: /* NEW-TAPE <handle> <label> */
