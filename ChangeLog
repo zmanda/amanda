@@ -1,3 +1,7 @@
+2011-05-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: remove check for a directory that
+	  should not be readable to the amanda user
+
 2011-04-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Improve balancing if some dle have strategy
 	  noinc or a smaller dumpcycle.

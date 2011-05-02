@@ -248,13 +248,9 @@ sub command_selfcheck {
            sub {$_[0] && -d $_[0] && -r $_[0] && -w $_[0] && -x $_[0]},
            $self->{'args'}->{'tmpdir'});
 
-    if (_check("PG-DATADIR property", "is set", "is NOT set",
-	   sub { $_[0] }, $self->{'props'}->{'pg-datadir'})) {
-	_check("PG-DATADIR '$self->{'props'}->{'pg-datadir'}'",
-	       "is a readable directory", "is NOT a readable directory",
-	       sub {$_[0] && -d $_[0] && -r $_[0] && -x $_[0]},
-	       $self->{'props'}->{'pg-datadir'});
-    }
+    _check("PG-DATADIR property", "is set", "is NOT set",
+	   sub { $_[0] }, $self->{'props'}->{'pg-datadir'});
+       # note that the backup user need not be able ot read this dir
 
     _check("STATEDIR '$self->{'args'}->{'statedir'}'",
            "is an acessible directory", "is NOT an acessible directory",
