@@ -1048,7 +1048,7 @@ backup_support_option(
     }
     while((line = agets(streamerr)) != NULL) {
 	if (strlen(line) > 0) {
-	    g_ptr_array_add(*errarray, line);
+	    g_ptr_array_add(*errarray, stralloc(line));
 	    dbprintf("Application '%s': %s\n", program, line);
 	}
 	amfree(bsu);

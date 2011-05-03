@@ -102,7 +102,7 @@ static gboolean amandates_started = FALSE;
 
 /* local functions */
 int main(int argc, char **argv);
-void dle_add_diskest(dle_t *dle);
+gboolean dle_add_diskest(dle_t *dle);
 void calc_estimates(disk_estimates_t *est);
 void free_estimates(disk_estimates_t *est);
 void dump_calc_estimates(disk_estimates_t *);
@@ -393,7 +393,9 @@ main(
 	}
 
 	/*@ignore@*/
-	dle_add_diskest(dle);
+	if (!dle_add_diskest(dle)) {
+	    free_dle(dle);
+	}
 	/*@end@*/
 	dle = NULL;
     }
@@ -406,15 +408,18 @@ main(
 
     if (am_has_feature(g_options->features, fe_req_xml)) {
 	char    *errmsg = NULL;
-	dle_t   *dles, *dle;
+	dle_t   *dles, *dle, *dle_next;
 
 	dles = amxml_parse_node_FILE(stdin, &errmsg);
 	if (errmsg) {
 	    err_extra = errmsg;
 	    goto err;
 	}
-	for (dle = dles; dle != NULL; dle = dle->next) {
-	    dle_add_diskest(dle);
+	for (dle = dles; dle != NULL; dle = dle_next) {
+	    dle_next = dle->next;
+	    if (!dle_add_diskest(dle)) {
+		free_dle(dle);
+	    }
 	}
     }
 
@@ -582,14 +587,17 @@ main(
     }
 
     free_g_options(g_options);
-    free_dle(dle);
+    if (dle)
+	free_dle(dle);
+    amfree(line);
+    amfree(qdisk);
 
     dbclose();
     return 1;
 }
 
 
-void
+gboolean
 dle_add_diskest(
     dle_t    *dle)
 {
@@ -604,7 +612,7 @@ dle_add_diskest(
 
     if (dle->levellist == NULL) {
 	g_printf(_("ERROR Missing level in request\n"));
-	return;
+	return FALSE;
     }
 
     /* should we use amandates for this? */
@@ -635,7 +643,7 @@ dle_add_diskest(
 		amfree(qamname);
 		amfree(errmsg);
 		amfree(qerrmsg);
-		return;
+		return FALSE;
 	    }
 	    amandates_started = TRUE;
 	}
@@ -663,7 +671,7 @@ dle_add_diskest(
 		levellist = g_slist_next(levellist);
 	    }
 
-	    return;
+	    return FALSE;
 	}
     }
 
@@ -708,6 +716,8 @@ dle_add_diskest(
 	    newp->est[dumplev].dumpsince = 0;
 	}
     }
+
+    return TRUE;
 }
 
 
@@ -2526,6 +2536,7 @@ getsize_application_api(
 		dbprintf(_("errmsg is %s\n"), errmsg);
 		g_printf(_("%s %d ERROR %s\n"), est->qamname, levels[0], qerrmsg);
 		amfree(qerrmsg);
+		amfree(errmsg);
 		continue;
 	    }
 	}

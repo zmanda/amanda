@@ -305,6 +305,7 @@ main(
 	    goto err;				/* bad syntax */
 	}
 	free_dle(dle);
+	dle = NULL;
     }
     if (g_options == NULL) {
 	g_printf(_("ERROR [Missing OPTIONS line in selfcheck input]\n"));
@@ -368,7 +369,8 @@ checkoverall:
     }
     amfree(err_extra);
     amfree(line);
-    free_dle(dle);
+    if (dle)
+	free_dle(dle);
     dbclose();
     return 1;
 }
@@ -638,8 +640,8 @@ check_disk(
 		aclose(passwdfd);
 		ferr = fdopen(checkerr, "r");
 		if (!ferr) {
-		    g_printf(_("ERROR [Can't fdopen: %s]\n"), strerror(errno));
-		    error(_("Can't fdopen: %s"), strerror(errno));
+		    g_printf(_("ERROR [Can't fdopen ferr: %s]\n"), strerror(errno));
+		    error(_("Can't fdopen ferr: %s"), strerror(errno));
 		    /*NOTREACHED*/
 		}
 		sep = "";
@@ -886,6 +888,12 @@ check_disk(
 
 		aclose(app_err[1]);
 		app_stderr = fdopen(app_err[0], "r");
+		if (!app_stderr) {
+		    g_printf(_("ERROR [Can't fdopen app_stderr: %s]\n"),
+			     strerror(errno));
+		    error(_("Can't fdopen app_stderr: %s"), strerror(errno));
+		    /*NOTREACHED*/
+		}
 		while((line = agets(app_stderr)) != NULL) {
 		    if (strlen(line) > 0) {
 			fprintf(stdout, "ERROR Application '%s': %s\n",

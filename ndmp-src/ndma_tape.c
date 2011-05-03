@@ -464,7 +464,7 @@ ndmta_write_quantum (struct ndm_session *sess)
 	unsigned long		cur_blockno;
 	unsigned		n_avail, n_read, record_off;
 	char *			data;
-	unsigned long		done_count;
+	unsigned long		done_count = 0;
 	ndmp9_error		error;
 
   again:

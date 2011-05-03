@@ -296,6 +296,7 @@ main(
 #else
     gnutar_path = NULL;
 #endif
+    gnutar_listdir = NULL;
     gnutar_directory = NULL;
     gnutar_onefilesystem = 1;
     gnutar_atimepreserve = 1;
@@ -357,6 +358,7 @@ main(
     /* parse argument */
     command = argv[1];
 
+    gnutar_listdir = stralloc(getconf_str(CNF_GNUTAR_LIST_DIR));
     argument.config     = NULL;
     argument.host       = NULL;
     argument.message    = 0;
@@ -499,11 +501,15 @@ main(
 			g_slist_append(argument.command_options,
 				       stralloc(optarg));
 		 break;
-	case 34: if (optarg)
+	case 34: if (optarg) {
+		     amfree(argument.include_list_glob);
 		     argument.include_list_glob = stralloc(optarg);
+		 }
 		 break;
-	case 35: if (optarg)
+	case 35: if (optarg) {
+		     amfree(argument.exclude_list_glob);
 		     argument.exclude_list_glob = stralloc(optarg);
+		 }
 		 break;
 	case 36: if (optarg  && strcasecmp(optarg, "YES") == 0)
 		     argument.verbose = 1;
@@ -556,7 +562,6 @@ main(
 	}
     }
 
-    gnutar_listdir = stralloc(getconf_str(CNF_GNUTAR_LIST_DIR));
     if (strlen(gnutar_listdir) == 0)
 	gnutar_listdir = NULL;
 
@@ -838,12 +843,16 @@ amgtar_estimate(
 	dbprintf(_("waiting for %s \"%s\" child\n"), cmd, qdisk);
 	waitpid(tarpid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
-	    errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
-				cmd, WTERMSIG(wait_status), dbfn());
+	    char *err = vstrallocf(_("%s terminated with signal %d: see %s"),
+				   cmd, WTERMSIG(wait_status), dbfn());
+	    vstrextend(&errmsg, err, NULL);
+	    amfree(err);
 	} else if (WIFEXITED(wait_status)) {
 	    if (exit_value[WEXITSTATUS(wait_status)] == 1) {
-		errmsg = vstrallocf(_("%s exited with status %d: see %s"),
-				    cmd, WEXITSTATUS(wait_status), dbfn());
+		char *err = vstrallocf(_("%s exited with status %d: see %s"),
+				       cmd, WEXITSTATUS(wait_status), dbfn());
+		vstrextend(&errmsg, err, NULL);
+		amfree(err);
 	    } else {
 		/* Normal exit */
 	    }
@@ -860,9 +869,7 @@ common_exit:
 	    amfree(errmsg);
 	}
 
-	if (incrname) {
-	    unlink(incrname);
-	}
+	unlink(incrname);
 
 	if (argument->verbose == 0) {
 	    if (file_exclude)
@@ -1041,7 +1048,7 @@ amgtar_backup(
 	g_fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
     }
 
-    if (!errmsg && incrname && strlen(incrname) > 4) {
+    if (!errmsg && strlen(incrname) > 4) {
 	char *nodotnew;
 	nodotnew = stralloc(incrname);
 	nodotnew[strlen(nodotnew)-4] = '\0';
@@ -1145,8 +1152,22 @@ amgtar_restore(
 	}
 	exclude_filename= vstralloc(AMANDA_TMPDIR, "/", "exclude-", sdisk,  NULL);
 	exclude_list = fopen(argument->dle.exclude_list->first->name, "r");
-
+	if (!exclude_list) {
+	    fprintf(stderr, "Cannot open exclude file '%s': %s\n",
+		    argument->dle.exclude_list->first->name, strerror(errno));
+	    error("Cannot open exclude file '%s': %s\n",
+		  argument->dle.exclude_list->first->name, strerror(errno));
+	    /*NOTREACHED*/
+	}
 	exclude = fopen(exclude_filename, "w");
+	if (!exclude) {
+	    fprintf(stderr, "Cannot open exclude file '%s': %s\n",
+		    exclude_filename, strerror(errno));
+	    fclose(exclude_list);
+	    error("Cannot open exclude file '%s': %s\n",
+		  exclude_filename, strerror(errno));
+	    /*NOTREACHED*/
+	}
 	while (fgets(line, 2*PATH_MAX, exclude_list)) {
 	    char *escaped;
 	    line[strlen(line)-1] = '\0'; /* remove '\n' */
@@ -1186,10 +1207,27 @@ amgtar_restore(
 	}
 	include_filename = vstralloc(AMANDA_TMPDIR, "/", "include-", sdisk,  NULL);
 	include = fopen(include_filename, "w");
+	if (!include) {
+	    fprintf(stderr, "Cannot open include file '%s': %s\n",
+		    include_filename, strerror(errno));
+	    error("Cannot open include file '%s': %s\n",
+		  include_filename, strerror(errno));
+	    /*NOTREACHED*/
+	}
 	if (argument->dle.include_list &&
 	    argument->dle.include_list->nb_element == 1) {
 	    char line[2*PATH_MAX];
 	    FILE *include_list = fopen(argument->dle.include_list->first->name, "r");
+	    if (!include_list) {
+		fclose(include);
+		fprintf(stderr, "Cannot open include file '%s': %s\n",
+			argument->dle.include_list->first->name,
+			strerror(errno));
+		error("Cannot open include file '%s': %s\n",
+		      argument->dle.include_list->first->name,
+		      strerror(errno));
+		/*NOTREACHED*/
+	    }
 	    while (fgets(line, 2*PATH_MAX, include_list)) {
 		char *escaped;
 		line[strlen(line)-1] = '\0'; /* remove '\n' */
@@ -1482,6 +1520,15 @@ amgtar_get_incrname(
 
 	amfree(inputname);
 	amfree(basename);
+    } else {
+	errmsg =  _("GNUTAR-LISTDIR is not defined");
+	dbprintf("%s\n", errmsg);
+	if (command == CMD_ESTIMATE) {
+		fprintf(mesgstream, "ERROR %s\n", errmsg);
+	} else {
+		fprintf(mesgstream, "? %s\n", errmsg);
+	}
+	exit(1);
     }
     return incrname;
 }

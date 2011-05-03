@@ -1876,7 +1876,7 @@ list_fetch(S3Handle *hdl,
                              S3_BUFFER_WRITE_FUNCS, buf, NULL, NULL,
                              result_handling);
 
-    if (query) g_string_free(query, TRUE);
+    g_string_free(query, TRUE);
 
     return result;
 }
@@ -2112,6 +2112,8 @@ s3_make_bucket(S3Handle *hdl,
                         "does not match the constraint currently on the bucket"));
                 else
                     result = S3_RESULT_OK;
+		g_free(loc_end_open);
+		g_free(loc_content);
             } else {
                 hdl->last_message = g_strdup(_("Unexpected location response from Amazon S3"));
             }

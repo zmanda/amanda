@@ -390,6 +390,7 @@ jndex_doit (void)
 
 	jndex_merge_media ();
 
+	fclose(fp);
 	return 0;
 }
 
@@ -577,6 +578,9 @@ jndex_fetch_post_backup_data_env (FILE *fp)
 
 		p = NDMOS_API_STRDUP (p);
 		q = strchr (p, '=');
+		if (!q) {
+			goto malformed;
+		}
 		*q++ = 0;
 
 		ji_environment[n_ji_environment].name = p;

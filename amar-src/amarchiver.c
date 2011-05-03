@@ -355,5 +355,6 @@ int main(
     else if (opt_list > 0)
 	do_list(opt_file, opt_verbose);
 
+    amfree(opt_file);
     return 0;
 }

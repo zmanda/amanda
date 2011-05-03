@@ -1905,10 +1905,8 @@ directtcp_connection_ndmp_close(DirectTCPConnection *dself)
     }
 
 error:
-    if (self->ndmp) {
-	g_object_unref(self->ndmp);
-	self->ndmp = NULL;
-    }
+    g_object_unref(self->ndmp);
+    self->ndmp = NULL;
 
     return rv;
 }

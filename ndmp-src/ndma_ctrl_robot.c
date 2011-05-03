@@ -342,7 +342,7 @@ ndmca_robot_query (struct ndm_session *sess)
 	struct smc_ctrl_block *	smc = &sess->control_acb.smc_cb;
 	int			rc;
 	unsigned int		i;
-	char			buf[110];
+	char			buf[111];
 	char			lnbuf[30];
 	int			lineno, nline = 1;
 

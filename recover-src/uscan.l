@@ -147,6 +147,7 @@ mode		{ BEGIN(needstring); return MODE; }
 
 <quotedstring>{LINEFEED} {
     fprintf(stderr,"Unterminated quoted string\n");
+    amfree(string_buf);
     string_buf = NULL;
     BEGIN(INITIAL);
     return NL;

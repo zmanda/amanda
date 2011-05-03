@@ -316,23 +316,35 @@ uncompress_file(
 
 	uncompress_err_stream = fdopen(uncompress_errfd, "r");
 	uncompress_err = g_ptr_array_new();
-	while (fgets(line, sizeof(line), uncompress_err_stream) != NULL) {
-	    if (strlen(line) > 0 && line[strlen(line)-1] == '\n')
-		line[strlen(line)-1] = '\0';
-	    g_ptr_array_add(uncompress_err, vstrallocf("  %s", line));
-	    dbprintf("Uncompress: %s\n", line);
+	if (!uncompress_err_stream) {
+	    g_ptr_array_add(uncompress_err,
+		    g_strdup_printf("Can't fdopen uncompress_err_stream: %s\n",
+				    strerror(errno)));
+	} else {
+	    while (fgets(line, sizeof(line), uncompress_err_stream) != NULL) {
+		if (strlen(line) > 0 && line[strlen(line)-1] == '\n')
+		    line[strlen(line)-1] = '\0';
+		g_ptr_array_add(uncompress_err, vstrallocf("  %s", line));
+		dbprintf("Uncompress: %s\n", line);
+	    }
+	    fclose(uncompress_err_stream);
 	}
-	fclose(uncompress_err_stream);
 
 	sort_err_stream = fdopen(sort_errfd, "r");
 	sort_err = g_ptr_array_new();
-	while (fgets(line, sizeof(line), sort_err_stream) != NULL) {
-	    if (strlen(line) > 0 && line[strlen(line)-1] == '\n')
-		line[strlen(line)-1] = '\0';
-	    g_ptr_array_add(sort_err, vstrallocf("  %s", line));
-	    dbprintf("Sort: %s\n", line);
+	if (!sort_err_stream) {
+	    g_ptr_array_add(sort_err,
+		    g_strdup_printf("Can't fdopen sort_err_stream: %s\n",
+				    strerror(errno)));
+	} else {
+	    while (fgets(line, sizeof(line), sort_err_stream) != NULL) {
+		if (strlen(line) > 0 && line[strlen(line)-1] == '\n')
+		    line[strlen(line)-1] = '\0';
+		g_ptr_array_add(sort_err, vstrallocf("  %s", line));
+		dbprintf("Sort: %s\n", line);
+	    }
+	    fclose(sort_err_stream);
 	}
-	fclose(sort_err_stream);
 
 	status = get_pid_status(pid_gzip, UNCOMPRESS_PATH, emsg);
 	if (status == 0 && filename) {

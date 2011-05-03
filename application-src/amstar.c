@@ -177,11 +177,11 @@ main(
     application_argument_t argument;
 
 #ifdef STAR
-    star_path = STAR;
+    star_path = stralloc(STAR);
 #else
     star_path = NULL;
 #endif
-    star_tardumps = "/etc/tardumps";
+    star_tardumps = stralloc("/etc/tardumps");
     star_dle_tardumps = 0;
     star_onefilesystem = 1;
     star_sparse = 1;
@@ -255,20 +255,30 @@ main(
 	    break;
 
 	switch (c) {
-	case 1: amfree(argument.config);
-		argument.config = stralloc(optarg);
+	case 1: if (optarg) {
+		    amfree(argument.config);
+		    argument.config = stralloc(optarg);
+		}
 		break;
-	case 2: amfree(argument.host);
-		argument.host = stralloc(optarg);
+	case 2: if (optarg) {
+		    amfree(argument.host);
+		    argument.host = stralloc(optarg);
+		}
 		break;
-	case 3: amfree(argument.dle.disk);
-		argument.dle.disk = stralloc(optarg);
+	case 3: if (optarg) {
+		    amfree(argument.dle.disk);
+		    argument.dle.disk = stralloc(optarg);
+		}
 		break;
-	case 4: amfree(argument.dle.device);
-		argument.dle.device = stralloc(optarg);
+	case 4: if (optarg) {
+		    amfree(argument.dle.device);
+		    argument.dle.device = stralloc(optarg);
+		}
 		break;
-	case 5: argument.level = g_slist_append(argument.level,
+	case 5: if (optarg) {
+		    argument.level = g_slist_append(argument.level,
 						GINT_TO_POINTER(atoi(optarg)));
+		}
 		break;
 	case 6: argument.dle.create_index = 1;
 		break;
@@ -278,11 +288,15 @@ main(
 		break;
 	case 9: argument.dle.record = 1;
 		break;
-	case 10: amfree(star_path);
-		 star_path = stralloc(optarg);
+	case 10: if (optarg) {
+		     amfree(star_path);
+		     star_path = stralloc(optarg);
+		 }
 		 break;
-	case 11: amfree(star_tardumps);
-		 star_tardumps = stralloc(optarg);
+	case 11: if (optarg) {
+		     amfree(star_tardumps);
+		     star_tardumps = stralloc(optarg);
+		 }
 		 break;
 	case 12: if (optarg && strcasecmp(optarg, "NO") == 0)
 		     star_dle_tardumps = 0;
@@ -325,9 +339,10 @@ main(
 		     argument.dle.exclude_list =
 			 append_sl(argument.dle.exclude_list, optarg);
 		 break;
-	case 21: if (optarg)
+	case 21: if (optarg) {
 		     amfree(star_directory);
 		     star_directory = stralloc(optarg);
+		 }
 		 break;
 	case 22: argument.command_options =
 			g_slist_append(argument.command_options,
@@ -549,6 +564,7 @@ amstar_estimate(
 	dumpout = fdopen(pipefd,"r");
 	if (!dumpout) {
 	    errmsg = vstrallocf(_("Can't fdopen: %s"), strerror(errno));
+	    aclose(nullfd);
 	    goto common_error;
 	}
 
@@ -586,11 +602,14 @@ amstar_estimate(
 		 level,
 		 walltime_str(timessub(curclock(), start_time)));
 	if(size == (off_t)-1) {
-	    amfree(errmsg);
 	    errmsg = vstrallocf(_("no size line match in %s output"),
 				cmd);
 	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
 	    dbprintf(".....\n");
+	    qerrmsg = quote_string(errmsg);
+	    fprintf(stdout, "ERROR %s\n", qerrmsg);
+	    amfree(errmsg);
+	    amfree(qerrmsg);
 	} else if(size == (off_t)0 && argument->level == 0) {
 	    dbprintf(_("possible %s problem -- is \"%s\" really empty?\n"),
 		     cmd, argument->dle.disk);
@@ -609,17 +628,35 @@ amstar_estimate(
 	    amfree(errmsg);
 	    errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
 				cmd, WTERMSIG(wait_status), dbfn());
+	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
+	    dbprintf(".....\n");
+	    qerrmsg = quote_string(errmsg);
+	    fprintf(stdout, "ERROR %s\n", qerrmsg);
+	    amfree(errmsg);
+	    amfree(qerrmsg);
 	} else if (WIFEXITED(wait_status)) {
 	    if (WEXITSTATUS(wait_status) != 0) {
 		amfree(errmsg);
 		errmsg = vstrallocf(_("%s exited with status %d: see %s"),
 				    cmd, WEXITSTATUS(wait_status), dbfn());
+		dbprintf(_("%s for %s\n"), errmsg, qdisk);
+		dbprintf(".....\n");
+		qerrmsg = quote_string(errmsg);
+		fprintf(stdout, "ERROR %s\n", qerrmsg);
+		amfree(errmsg);
+		amfree(qerrmsg);
 	    } else {
 		/* Normal exit */
 	    }
 	} else {
 	    amfree(errmsg);
 	    errmsg = vstrallocf(_("%s got bad exit: see %s"), cmd, dbfn());
+	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
+	    dbprintf(".....\n");
+	    qerrmsg = quote_string(errmsg);
+	    fprintf(stdout, "ERROR %s\n", qerrmsg);
+	    amfree(errmsg);
+	    amfree(qerrmsg);
 	}
 	dbprintf(_("after %s %s wait\n"), cmd, qdisk);
 

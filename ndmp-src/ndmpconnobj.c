@@ -592,21 +592,21 @@ ndmconn_handle_notify(
 
     if (nmb->header.message_type == NDMP0_MESSAGE_REQUEST) {
 	switch (nmb->header.message) {
-	    case NDMP4_NOTIFY_DATA_HALTED: {
+	    case NDMP9_NOTIFY_DATA_HALTED: {
 		ndmp4_notify_data_halted_post *post =
 		    &nmb->body.ndmp4_notify_data_halted_post_body;
 		self->data_halt_reason = post->reason;
 		break;
 	    }
 
-	    case NDMP4_NOTIFY_MOVER_HALTED: {
+	    case NDMP9_NOTIFY_MOVER_HALTED: {
 		ndmp4_notify_mover_halted_post *post =
 		    &nmb->body.ndmp4_notify_mover_halted_post_body;
 		self->mover_halt_reason = post->reason;
 		break;
 	    }
 
-	    case NDMP4_NOTIFY_MOVER_PAUSED: {
+	    case NDMP9_NOTIFY_MOVER_PAUSED: {
 		ndmp4_notify_mover_paused_post *post =
 		    &nmb->body.ndmp4_notify_mover_paused_post_body;
 		self->mover_pause_reason = post->reason;
@@ -614,12 +614,12 @@ ndmconn_handle_notify(
 		break;
 	    }
 
-            case NDMP4_LOG_FILE:
-            case NDMP4_LOG_MESSAGE:
-            case NDMP4_LOG_NORMAL:
-            case NDMP4_LOG_DEBUG:
-            case NDMP4_LOG_ERROR:
-            case NDMP4_LOG_WARNING: {
+            case NDMP9_LOG_FILE:
+            case NDMP9_LOG_MESSAGE:
+            case NDMP9_LOG_NORMAL:
+            case NDMP9_LOG_DEBUG:
+            case NDMP9_LOG_ERROR:
+            case NDMP9_LOG_WARNING: {
                 ndmp4_log_message_post *post =
                     &nmb->body.ndmp4_log_message_post_body;
                 g_debug("%s", post->entry);
@@ -823,6 +823,7 @@ ndmp_connection_new(
 	rc = ndmconn_auth_text(conn, username, password);
     } else {
 	errmsg = "invalid auth type";
+	ndmconn_destruct(conn);
 	goto out;
     }
 
@@ -846,15 +847,15 @@ ndmp_connection_new(
     g_static_mutex_unlock(&next_connid_mutex);
     conn->context = (void *)self;
     g_debug("opening new NDMPConnection #%d: to %s:%d", self->connid, hostname, port);
+    return self;
 
 out:
     /* make a "fake" error connection if we have an error message.  Note that
-     * this object is not added to the instances hash */
-    if (errmsg) {
-	self = NDMP_CONNECTION(g_object_new(TYPE_NDMP_CONNECTION, NULL));
-	self->startup_err = errmsg;
-	errmsg = NULL;
-    }
+     * this object is not added to the instances hash
+     */
+    self = NDMP_CONNECTION(g_object_new(TYPE_NDMP_CONNECTION, NULL));
+    self->startup_err = errmsg;
+    errmsg = NULL;
 
     return self;
 }

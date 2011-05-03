@@ -200,8 +200,8 @@ amstart_element(
     if (last_element)
 	last_element_name = last_element->data;
 
-    data_user->raw = NULL;
-    data_user->encoding = NULL;
+    amfree(data_user->raw);
+    amfree(data_user->encoding);
 
     if (attribute_names) {
 	for(at_names = attribute_names, at_values = attribute_values;
@@ -255,8 +255,8 @@ amstart_element(
 	data_user->property = NULL;
 	data_user->script = NULL;
 	data_user->alevel = NULL;
-	data_user->encoding = NULL;
-	data_user->raw = NULL;
+	amfree(data_user->encoding);
+	amfree(data_user->raw);
     } else if(strcmp(element_name, "disk"          ) == 0 ||
 	      strcmp(element_name, "diskdevice"    ) == 0 ||
 	      strcmp(element_name, "calcsize"      ) == 0 ||

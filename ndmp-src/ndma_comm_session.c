@@ -175,11 +175,13 @@ ndma_daemon_session (struct ndm_session *sess, int port, int is_test_daemon)
 
 	if (bind (listen_sock, &sa, sizeof sa) < 0) {
 		perror ("bind");
+		close(listen_sock);
 		return 2;
 	}
 
 	if (listen (listen_sock, 1) < 0) {
 		perror ("listen");
+		close(listen_sock);
 		return 3;
 	}
 
@@ -199,12 +201,15 @@ ndma_daemon_session (struct ndm_session *sess, int port, int is_test_daemon)
 		conn_sock = accept (listen_sock, &sa, &len);
 		if (conn_sock < 0) {
 			perror ("accept");
+			close(listen_sock);
 			return 4;
 		}
 
 		rc = fork();
 		if (rc < 0) {
 			perror ("fork");
+			close(listen_sock);
+			close(conn_sock);
 			return 5;
 		}
 

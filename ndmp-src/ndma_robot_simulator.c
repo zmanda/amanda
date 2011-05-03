@@ -206,6 +206,7 @@ robot_state_load(struct ndm_session *sess, struct robot_state *rs)
 	}
 	if (read(fd, (void *)rs, sizeof(*rs)) < sizeof(*rs)) {
 		robot_state_init(rs);
+		close(fd);
 		return;
 	}
 
@@ -225,8 +226,10 @@ robot_state_save(struct ndm_session *sess, struct robot_state *rs)
 	fd = open(filename, O_WRONLY|O_TRUNC|O_CREAT, 0666);
 	if (fd < 0)
 		return -1;
-	if (write(fd, (void *)rs, sizeof(*rs)) < sizeof(*rs))
+	if (write(fd, (void *)rs, sizeof(*rs)) < sizeof(*rs)) {
+		close(fd);
 		return -1;
+	}
 	close(fd);
 
 	return 0;

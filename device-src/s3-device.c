@@ -522,6 +522,7 @@ write_amanda_header(S3Device *self,
         device_set_error(d_self,
             stralloc(_("No space left on device")),
             DEVICE_STATUS_DEVICE_ERROR);
+	dumpfile_free(dumpinfo);
         g_free(amanda_header.buffer);
         return FALSE;
     }
@@ -1982,7 +1983,7 @@ s3_device_erase(Device *pself) {
         return FALSE;
 
     if (!s3_delete_bucket(self->s3t[0].s3, self->bucket)) {
-        s3_error(self->s3t[0].s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
+        s3_error(self->s3t[0].s3, &errmsg, &response_code, &s3_error_code, NULL, NULL, NULL);
 
         /*
          * ignore the error if the bucket isn't empty (there may be data from elsewhere)

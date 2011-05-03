@@ -430,7 +430,7 @@ tcpm_send_token(
     assert(SIZEOF(netlength) == 4);
 
     logtime = time(NULL);
-    if (rc && logtime > rc->logstamp + 10) {
+    if (logtime > rc->logstamp + 10) {
 	g_debug("tcpm_send_token: data is still flowing");
         rc->logstamp = logtime;
     }

@@ -110,6 +110,9 @@ ndmca_data_connect (struct ndm_session *sess)
 
 		host = ca->job.tape_tcp;
 		port = strchr(ca->job.tape_tcp, ':');
+		if (!port) {
+		    return 1;
+		}
 		*port++ = '\0';
 		rc = ndmhost_lookup(host, &sin);
 		addr.addr_type = NDMP9_ADDR_TCP;
