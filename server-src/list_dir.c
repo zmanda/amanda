@@ -89,8 +89,10 @@ add_dir_list_item(
 	return 0; /* added */
     }
 
-    if(strcmp(path,dir_last->path) == 0)
+    if (strcmp(path,dir_last->path) == 0 &&
+	dir_last->dump == dump) {
 	return 0; /* found */
+    }
 
     /* add at head of list */
     if(strcmp(path,dir_list->path) < 0)

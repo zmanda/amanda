@@ -90,7 +90,7 @@ sub command_support {
    print "HOST YES\n";
    print "DISK YES\n";
    print "MAX-LEVEL 9\n";
-   print "INDEX-LINE NO\n";
+   print "INDEX-LINE YES\n";
    print "INDEX-XML NO\n";
    print "MESSAGE-LINE YES\n";
    print "MESSAGE-XML NO\n";
@@ -191,7 +191,7 @@ sub command_backup {
       my $refsnapshotname = $self->zfs_find_snapshot_level($level-1);
       debug "Referenced snapshot name: $refsnapshotname|";
       if ($refsnapshotname ne "") {
-        $cmd = "$self->{pfexec_cmd} $self->{zfs_path} send -i $refsnapshotname $self->{filesystem}\@$self->{snapshot} | $Amanda::Paths::amlibexecdir/teecount";
+        $cmd = "$self->{pfexec_cmd} $self->{zfs_path} send -i $self->{filesystem}\@$refsnapshotname $self->{filesystem}\@$self->{snapshot} | $Amanda::Paths::amlibexecdir/teecount";
       } else {
         $self->print_to_server_and_die("cannot backup snapshot '$self->{filesystem}\@$self->{snapshot}': reference snapshot doesn't exists for level $level", $Amanda::Script_App::ERROR);
       }
@@ -203,6 +203,16 @@ sub command_backup {
     $err = Symbol::gensym;
     $pid = open3($wtr, '>&STDOUT', $err, $cmd);
     close $wtr;
+
+    if (defined($self->{index})) {
+	my $indexout;
+	open($indexout, '>&=4') ||
+	$self->print_to_server_and_die("Can't open indexout: $!",
+				       $Amanda::Script_App::ERROR);
+	print $indexout "/\n";
+	close($indexout);
+    }
+
     $errmsg = <$err>;
     waitpid $pid, 0;
     close $err;
@@ -321,11 +331,40 @@ sub command_index_from_output {
 sub command_index_from_image {
 }
 
-#sub command_restore {
-#    my $self = shift;
-#
-#TODO
-#}
+sub command_restore {
+    my $self = shift;
+
+    my $level = $self->{level}[0];
+    my $device = $self->{device};
+    $device = $self->{directory} if defined $self->{directory};
+    $device =~ s,^/,,;
+    my $current_snapshot = $self->zfs_build_snapshotname($device);
+    $self->{'snapshot'} = $self->zfs_build_snapshotname($device, $level);
+
+    my @cmd = ();
+
+    if ($self->{pfexec_cmd}) {
+	push @cmd, $self->{pfexec_cmd};
+    }
+    push @cmd, $self->{zfs_path};
+    push @cmd, "recv";
+    push @cmd, $device;
+
+    debug("cmd:" . join(" ", @cmd));
+    system @cmd;
+
+    @cmd = ();
+    if ($self->{pfexec_cmd}) {
+	push @cmd, $self->{pfexec_cmd};
+    }
+    push @cmd, $self->{zfs_path};
+    push @cmd, "rename";
+    push @cmd, "$device\@$current_snapshot";
+    push @cmd, "$device\@$self->{'snapshot'}";
+
+    debug("cmd:" . join(" ", @cmd));
+    system @cmd;
+}
 
 sub command_print_command {
 }
