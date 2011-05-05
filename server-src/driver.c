@@ -140,7 +140,7 @@ static void start_degraded_mode(disklist_t *queuep);
 static void start_some_dumps(disklist_t *rq);
 static void continue_port_dumps(void);
 static void update_failed_dump(disk_t *);
-static int all_taper_idle(void);
+static int no_taper_flushing(void);
 
 typedef enum {
     TAPE_ACTION_NO_ACTION         = 0,
@@ -1030,7 +1030,7 @@ allow_dump_dle(
     } else if (!taper && (holdp =
 	find_diskspace(sched(diskp)->est_size, cur_idle, NULL)) == NULL) {
 	*cur_idle = max(*cur_idle, IDLE_NO_DISKSPACE);
-	if (empty(tapeq) && dumper_to_holding == 0 && rq != &directq && all_taper_idle()) {
+	if (empty(tapeq) && dumper_to_holding == 0 && rq != &directq && no_taper_flushing()) {
 	    remove_disk(rq, diskp);
 	    if (diskp->to_holdingdisk != HOLD_REQUIRED) {
 		enqueue_disk(&directq, diskp);
@@ -1505,15 +1505,17 @@ continue_port_dumps(void)
 	if( dumper->busy ) {
 	    busy_dumpers++;
 	    if( !find_disk(&roomq, dumper->dp) ) {
-		active_dumpers++;
-	    } else if( !dp || 
+		if (dumper->chunker) {
+		    active_dumpers++;
+		}
+	    } else if( !dp ||
 		       sched(dp)->est_size > sched(dumper->dp)->est_size ) {
 		dp = dumper->dp;
 	    }
 	}
     }
-    if((dp != NULL) && (active_dumpers == 0) && (busy_dumpers > 0) && 
-        ((all_taper_idle() && empty(tapeq)) || degraded_mode) &&
+    if((dp != NULL) && (active_dumpers == 0) && (busy_dumpers > 0) &&
+        ((no_taper_flushing() && empty(tapeq)) || degraded_mode) &&
 	pending_aborts == 0 ) { /* case b */
 	sched(dp)->no_space = 1;
 	/* At this time, dp points to the dump with the smallest est_size.
@@ -3859,14 +3861,13 @@ tape_action(
 }
 
 static int
-all_taper_idle(void)
+no_taper_flushing(void)
 {
     taper_t *taper;
 
     for (taper = tapetable; taper < tapetable + conf_taper_parallel_write;
 	 taper++) {
-	if (taper->state & TAPER_STATE_DUMP_TO_TAPE ||
-	    taper->state & TAPER_STATE_FILE_TO_TAPE)
+	if (taper->state & TAPER_STATE_FILE_TO_TAPE)
 	    return 0;
     }
     return 1;
