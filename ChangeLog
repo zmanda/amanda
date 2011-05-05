@@ -1,4 +1,7 @@
 2011-05-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/local-security.c: Call initgroups before executing amandad
+
+2011-05-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Do not count dup to tape when checking space
 	  on holdingdisk.
 
