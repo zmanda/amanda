@@ -1510,8 +1510,11 @@ negative_number: /* look for goto negative_number below sign is set there */
 	    *buf++ = (char)ch;
 	    while (inquote && ((ch = conftoken_getc()) != EOF)) {
 		if (ch == '\n') {
-		    if (!escape)
+		    if (!escape) {
+			conf_parserror(_("string not terminated"));
+			conftoken_ungetc(ch);
 			break;
+		    }
 		    escape = 0;
 		    buf--; /* Consume escape in buffer */
 		} else if (ch == '\\' && !escape) {
