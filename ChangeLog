@@ -1,4 +1,7 @@
 2011-05-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Do not crash on unterminated quoted string.
+
+2011-05-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amzfs-sendrecv.pl: Implement restore.
 	  Generate index with only '/'.
 	* perl/Amanda/Application/Zfs.pm: Add $self->{filesystem} on some
