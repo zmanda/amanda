@@ -197,11 +197,7 @@ sub zfs_set_value {
 
     }
 
-    if ($self->{action} eq 'check') {
-      $self->{snapshot} = $self->zfs_build_snapshotname($device, -1);
-    } else {
-      $self->{snapshot} = $self->zfs_build_snapshotname($device);
-    }
+    $self->{snapshot} = $self->zfs_build_snapshotname($device);
     if (defined $self->{mountpoint}) {
 	if ($device =~ /^$self->{mountpoint}/) {
             $self->{dir} = $device;
@@ -310,7 +306,7 @@ sub zfs_rename_snapshot {
     my $device = $self->{device};
     $device = $self->{directory} if defined $self->{directory};
     my $newsnapshotname = $self->zfs_build_snapshotname($device, $level);
-    my $cmd = "$self->{pfexec_cmd} $self->{zfs_path} rename $self->{filesystem}\@$self->{snapshot} $newsnapshotname";
+    my $cmd = "$self->{pfexec_cmd} $self->{zfs_path} rename $self->{filesystem}\@$self->{snapshot} $self->{filesystem}\@$newsnapshotname";
     debug "running: $cmd|";
     my($wtr, $rdr, $err, $pid);
     my($msg, $errmsg);
@@ -380,15 +376,13 @@ sub zfs_build_snapshotname {
 
     my $snapshotname = "";
 
-    if (!defined $level) {
-      $snapshotname = "amanda-" . Amanda::Util::sanitise_filename($self->{disk}) . "-current";
-    } else {
-      if ($level < 0) {
+    if ($self->{action} eq 'check') {
 	$snapshotname = "amanda-" . Amanda::Util::sanitise_filename($self->{disk}) . "-check";
-      } else {
-        $snapshotname = "amanda-" . Amanda::Util::sanitise_filename($self->{disk}) . "-" . $level;
-      }
-    } 
+    } elsif (!defined $level) {
+	$snapshotname = "amanda-" . Amanda::Util::sanitise_filename($self->{disk}) . "-current";
+    } else {
+	$snapshotname = "amanda-" . Amanda::Util::sanitise_filename($self->{disk}) . "-" . $level;
+    }
 
     return $snapshotname;
 }

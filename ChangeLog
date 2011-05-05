@@ -1,4 +1,11 @@
 2011-05-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amzfs-sendrecv.pl: Implement restore.
+	  Generate index with only '/'.
+	* perl/Amanda/Application/Zfs.pm: Add $self->{filesystem} on some
+	  command, improve zfs_build_snapshotname.
+	* server-src/list_dir.c (add_dir_list_item): Check if same dump.
+
+2011-05-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/local-security.c: Call initgroups before executing amandad
 
 2011-05-05  Jean-Louis Martineau <martineau@zmanda.com>
