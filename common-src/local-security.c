@@ -246,17 +246,22 @@ runlocal(
     /* drop root privs for good */
     set_root_privs(-1);
 
-    safe_fd(-1, 0);
-
     if(!xamandad_path || strlen(xamandad_path) <= 1) 
 	xamandad_path = vstralloc(amlibexecdir, "/", "amandad", NULL);
 
 #ifndef SINGLE_USERID
+    if (client_username && *client_username != '\0') {
+	initgroups(client_username, gid);
+    } else {
+	initgroups(CLIENT_LOGIN, gid);
+    }
+    if (gid != 0)
+	setregid(uid, gid);
     if (uid != 0)
 	setreuid(uid, uid);
-    if (gid != 0)
-	setregid(gid, gid);
 #endif
+
+    safe_fd(-1, 0);
 
     execlp(xamandad_path, xamandad_path,
 	   "-auth=local", "amdump", "amindexd", "amidxtaped", (char *)NULL);
