@@ -923,13 +923,13 @@ bsd_prefix_packet(
     char *buf;
 
     if (pkt->type != P_REQ)
-	return "";
+	return stralloc("");
 
     if ((pwd = getpwuid(geteuid())) == NULL) {
 	security_seterror(&rh->sech,
 			  _("can't get login name for my uid %ld"),
 			  (long)geteuid());
-	return "";
+	return stralloc("");
     }
     buf = alloc(16+strlen(pwd->pw_name));
     strncpy(buf, "SECURITY USER ", (16 + strlen(pwd->pw_name)));
