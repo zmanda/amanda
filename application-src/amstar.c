@@ -344,9 +344,11 @@ main(
 		     star_directory = stralloc(optarg);
 		 }
 		 break;
-	case 22: argument.command_options =
+	case 22: if (optarg)
+		     argument.command_options =
 			g_slist_append(argument.command_options,
 				       stralloc(optarg));
+		 break;
 	case 23: if (optarg)
 		     argument.dle.exclude_file =
 			 append_sl(argument.dle.exclude_file, optarg);

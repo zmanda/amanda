@@ -1,4 +1,8 @@
 2011-05-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Fix errors/warnings found by klocwork
+	* application-src/amstar.c: Fix errors/warnings found by klocwork
+
+2011-05-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Fix klocwork bug.
 
 2011-05-05  Jean-Louis Martineau <martineau@zmanda.com>

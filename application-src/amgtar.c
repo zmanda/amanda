@@ -563,7 +563,7 @@ main(
     }
 
     if (strlen(gnutar_listdir) == 0)
-	gnutar_listdir = NULL;
+	amfree(gnutar_listdir);
 
     if (gnutar_path) {
 	dbprintf("GNUTAR-PATH %s\n", gnutar_path);
