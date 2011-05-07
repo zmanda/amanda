@@ -1,3 +1,6 @@
+2011-05-07  Francis Galiegue <fgaliegue@gmail.com>
+	* device-src/ndmp-device.c: fix gcc 4.5.x warnings with enums
+
 2011-05-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Fix errors/warnings found by klocwork
 	* application-src/amstar.c: Fix errors/warnings found by klocwork
