@@ -1,3 +1,7 @@
+2011-05-08  Francis Galiegue <fgaliegue@gmail.com>
+	* device-src/device.c: add missing regfree() in case or regex compile
+	  failure
+
 2011-05-07  Francis Galiegue <fgaliegue@gmail.com>
 	* device-src/ndmp-device.c: fix gcc 4.5.x warnings with enums
 
