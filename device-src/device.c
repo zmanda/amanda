@@ -409,6 +409,7 @@ handle_device_regex(const char * user_name, char ** driver_name,
         char * message = regex_message(reg_result, &regex);
 	*errmsg = newvstrallocf(*errmsg, "Error compiling regular expression \"%s\": %s\n",
 			      regex_string, message);
+	regfree(&regex);
 	amfree(message);
         return FALSE;
     }
