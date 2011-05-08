@@ -382,66 +382,62 @@ static void simple_property_free(SimpleProperty * resp) {
     amfree(resp);
 }
 
-static char *
-regex_message(int result, regex_t *regex) {
-    char * rval;
-    size_t size;
-
-    size = regerror(result, regex, NULL, 0);
-    rval = malloc(size);
-    regerror(result, regex, rval, size);
-
-    return rval;
-}
+/*
+ * A full device name (the user_name argument here) must match (case
+ * insensitive) ^([a-z0-9]+):(.*), with the device driver being $1 and device
+ * name being $2. However, for legacy reasons, ^[^:](.*) is also accepted, in
+ * which case the device driver is "tape" and the device name is $1.
+ *
+ * As this is pretty much a split over a single colon, we use g_strsplit() to
+ * split the string against ":", with a maximum of two tokens. This function
+ * returns a dynamicaly allocated gchar **. Given r0 the first array member and
+ * r1 the second, the results are as such, according to the input string:
+ *
+ * INPUT: "x:y"; OUTPUT: r0 -> "x", r1 -> "y"
+ * INPUT: "x"; OUTPUT: r0 -> "x", r1 -> NULL
+ * INPUT: "x:"; OUTPUT: r0 -> "x", r1 -> ""
+ * INPUT: ":y"; OUTPUT: r0 -> "", r1 -> "y"
+ * INPUT: ":"; OUTPUT: r0 -> "", r1 -> ""
+ *
+ * This leads to the following validation algorithm (note that r0 can never be
+ * NULL):
+ *
+ * - if r0 is the empty string, device name is invalid;
+ * - if r1 is NULL, the device name is invalid if we don't WANT_TAPE_DEVICE,
+ *   otherwise it is "tape" as the driver and r0 as the device;
+ * - otherwise, r0 is the device type and r1 the device name.
+ */
 
 static gboolean
-handle_device_regex(const char * user_name, char ** driver_name,
+validate_device_name(const char * user_name, char ** driver_name,
                     char ** device, char **errmsg) {
-    regex_t regex;
-    int reg_result;
-    regmatch_t pmatch[3];
-    static const char * regex_string = "^([a-z0-9]+):(.*)$";
+    gboolean ret = FALSE;
+    gchar **split_result = g_strsplit(user_name, ":", 2);
+    gchar *split_driver_name = split_result[0], *split_device = split_result[1];
 
-    bzero(&regex, sizeof(regex));
+    if (!*split_driver_name)
+        goto out;
 
-    reg_result = regcomp(&regex, regex_string, REG_EXTENDED | REG_ICASE);
-    if (reg_result != 0) {
-        char * message = regex_message(reg_result, &regex);
-	*errmsg = newvstrallocf(*errmsg, "Error compiling regular expression \"%s\": %s\n",
-			      regex_string, message);
-	regfree(&regex);
-	amfree(message);
-        return FALSE;
-    }
-
-    reg_result = regexec(&regex, user_name, 3, pmatch, 0);
-    if (reg_result != 0 && reg_result != REG_NOMATCH) {
-        char * message = regex_message(reg_result, &regex);
-	*errmsg = newvstrallocf(*errmsg,
-			"Error applying regular expression \"%s\" to string \"%s\": %s\n",
-			user_name, regex_string, message);
-	amfree(message);
-        regfree(&regex);
-        return FALSE;
-    } else if (reg_result == REG_NOMATCH) {
+    if (!split_device) {
 #ifdef WANT_TAPE_DEVICE
-	g_warning(
-		"\"%s\" uses deprecated device naming convention; \n"
-                "using \"tape:%s\" instead.\n",
-                user_name, user_name);
-        *driver_name = stralloc("tape");
-        *device = stralloc(user_name);
-#else /* !WANT_TAPE_DEVICE */
-	*errmsg = newvstrallocf(*errmsg, "\"%s\" is not a valid device name.\n", user_name);
-	regfree(&regex);
-	return FALSE;
+        *driver_name = g_strdup("tape");
+        *device = g_strdup(split_driver_name);
+        g_warning("\"%s\" uses deprecated device naming convention; \n"
+            "using \"tape:%s\" instead.\n", user_name, user_name);
+        ret = TRUE;
 #endif /* WANT_TAPE_DEVICE */
-    } else {
-        *driver_name = find_regex_substring(user_name, pmatch[1]);
-        *device = find_regex_substring(user_name, pmatch[2]);
+        goto out;
     }
-    regfree(&regex);
-    return TRUE;
+
+    *driver_name = g_strdup(split_driver_name);
+    *device = g_strdup(split_device);
+    ret = TRUE;
+
+out:
+    if (!ret)
+        *errmsg = newvstralloc(*errmsg, "\"%s\" is not a valid device name.\n", user_name);
+    g_strfreev(split_result);
+    return ret;
 }
 
 /* helper function for device_open */
@@ -507,7 +503,7 @@ device_open (char * device_name)
 		DEVICE_STATUS_DEVICE_ERROR);
     }
 
-    if (!handle_device_regex(unaliased_name, &device_type, &device_node,
+    if (!validate_device_name(unaliased_name, &device_type, &device_node,
 			     &errmsg)) {
 	amfree(device_type);
 	amfree(device_node);
