@@ -1,3 +1,13 @@
+Changes in release 3.2.3
+   * fix split arguments and LEOM handling.
+   * amsuntar: Add SUNTAR-PATH property.
+   * amstar: Add ACL property.
+   * amzfs-sendrecv: Implement restore.
+   * vfs-device (vtapes): LEOM property default to TRUE.
+   * fix amplot.
+   * amrecover take correct group when foring amandad with local auth.
+   * many others small fix.
+
 Changes in release 3.2.2
 
    * Do not restore the NUL padding bytes, some program fail with them.
