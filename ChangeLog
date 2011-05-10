@@ -1,3 +1,7 @@
+2011-05-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: Call $device->finish() before
+	  $device->read_label(), A device must be in ACCESS_NULL for read_label.
+
 2011-05-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Do not crash on unterminated quoted string.
 
