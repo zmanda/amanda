@@ -1253,6 +1253,7 @@ sub _volume_cb  {
 		    last CHECK_READ_LABEL;
 		}
 
+		$device->finish();
 		$device->read_label();
 
 		# does the device think something is broken now?
