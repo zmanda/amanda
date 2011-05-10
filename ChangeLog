@@ -1,3 +1,7 @@
+2011-05-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: Call $device->finish() before
+	  $device->read_label(), A device must be in ACCESS_NULL for read_label.
+
 2011-05-09  Francis Galiegue <fgaliegue@gmail.com>
 	* device-src/device.c: rework full device name validation
 
