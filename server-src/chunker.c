@@ -600,8 +600,8 @@ do_chunk(
      * We've written the file header.  Now, just write data until the
      * end.
      */
-    while ((nread = full_read(data_fd, db->buf,
-			     (size_t)(db->datalimit - db->datain))) > 0) {
+    while ((nread = read_fully(data_fd, db->buf,
+			     (size_t)(db->datalimit - db->datain), NULL)) > 0) {
 	db->datain += nread;
 	while(db->dataout < db->datain) {
 	    if(!databuf_flush(db)) {

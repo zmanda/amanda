@@ -290,7 +290,7 @@ xfer_element_drain_fd(
     char buf[1024];
 
     while (1) {
-	len = full_read(fd, buf, sizeof(buf));
+	len = read_fully(fd, buf, sizeof(buf), NULL);
 	if (len < sizeof(buf))
 	    return;
     }

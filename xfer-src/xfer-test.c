@@ -1205,7 +1205,7 @@ dest_listen_thread(
     /* read from the socket until EOF or all of the data is read.  We try to
      * read one extra byte - if we get it, then upstream sent too much data */
     buf = g_malloc(TEST_XFER_SIZE+1);
-    bytes = full_read(sock, buf, TEST_XFER_SIZE+1);
+    bytes = read_fully(sock, buf, TEST_XFER_SIZE+1, NULL);
     g_assert(bytes == TEST_XFER_SIZE);
     close(sock);
 
@@ -1357,7 +1357,7 @@ dest_connect_thread(
     /* read from the socket until EOF or all of the data is read.  We try to
      * read one extra byte - if we get it, then upstream sent too much data */
     buf = g_malloc(TEST_XFER_SIZE+1);
-    bytes = full_read(sock, buf, TEST_XFER_SIZE+1);
+    bytes = read_fully(sock, buf, TEST_XFER_SIZE+1, NULL);
     g_assert(bytes == TEST_XFER_SIZE);
     close(sock);
 

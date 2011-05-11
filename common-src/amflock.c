@@ -133,7 +133,7 @@ file_lock_lock(
     if (stat_buf.st_size) {
 	lock->data = g_malloc(stat_buf.st_size);
 	lock->len = stat_buf.st_size;
-	if (full_read(fd, lock->data, lock->len) < lock->len) {
+	if (read_fully(fd, lock->data, lock->len, NULL) < lock->len) {
 	    rv = -1;
 	    goto done;
 	}

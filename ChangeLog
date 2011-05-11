@@ -1,4 +1,13 @@
 2011-05-11  Francis Galiegue <fgaliegue@gmail.com>
+	* amar-src/amar.c, common-src/amflock.c,
+	  device-src/xfer-dest-taper-cacher.c, server-src/amcheck.c,
+	  server-src/chunker.c, server-src/driver.c, server-src/holding.c,
+	  server-src/xfer-source-holding.c, xfer-src/element-glue.c,
+	  xfer-src/xfer-element.c, xfer-src/xfer-test.c: straight replacement of
+	  full_read(...) with read_fully(..., NULL) since in these usages error
+	  checking was not done
+
+2011-05-11  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/file.[ch]: new read_fully() function, designed to replace
 	  usages of full_read() which, even though it shares its prototype with
 	  read(2), behaves very differently and leads (and has led) to
