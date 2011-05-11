@@ -1,4 +1,10 @@
 2011-05-11  Francis Galiegue <fgaliegue@gmail.com>
+	* xfer-src/element-glue.c: use read_fully(), and modify error reporting.
+	  Since the read operation output can be captured straight on by
+	  read_fully(), use that opportunity here instead of grabbing a saved
+	  errno
+
+2011-05-11  Francis Galiegue <fgaliegue@gmail.com>
 	* amar-src/amar.c, common-src/amflock.c,
 	  device-src/xfer-dest-taper-cacher.c, server-src/amcheck.c,
 	  server-src/chunker.c, server-src/driver.c, server-src/holding.c,
