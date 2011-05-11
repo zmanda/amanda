@@ -281,7 +281,7 @@ iterator_get_block(
 
     while (bytes_needed > 0) {
 	gsize read_size;
-	int bytes_read;
+	gsize bytes_read;
 
 	if (iter->cur_fd < 0) {
 	    guint64 offset;
@@ -309,14 +309,13 @@ iterator_get_block(
 	}
 
 	read_size = MIN(iter->slice_remaining, bytes_needed);
-	bytes_read = full_read(iter->cur_fd,
-			       buf + buf_offset,
-			       read_size);
-	if (bytes_read < 0 || (gsize)bytes_read < read_size) {
-	    xfer_cancel_with_error(elt,
-		_("Error reading '%s': %s"),
+	bytes_read = read_fully(iter->cur_fd, buf + buf_offset, read_size,
+	    NULL);
+
+	if (bytes_read < read_size) {
+	    xfer_cancel_with_error(elt, _("Error reading '%s': %s"),
 		iter->slice->filename,
-		errno? strerror(errno) : _("Unexpected EOF"));
+		errno ? strerror(errno) : _("Unexpected EOF"));
 	    return NULL;
 	}
 
