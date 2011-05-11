@@ -1,4 +1,10 @@
 2011-05-11  Francis Galiegue <fgaliegue@gmail.com>
+	* amar-src/amar.c: fix "full_read() vs read(2)" behavior confusion,
+	  full_read does NOT return -1 on error. Rework the function as to
+	  avoid goto. Comment on the fact that we want to read as much as
+	  possible even if an error occurs.
+
+2011-05-11  Francis Galiegue <fgaliegue@gmail.com>
 	* xfer-src/element-glue.c: use read_fully(), and modify error reporting.
 	  Since the read operation output can be captured straight on by
 	  read_fully(), use that opportunity here instead of grabbing a saved

@@ -485,40 +485,55 @@ amar_attr_add_data_fd(
     gboolean eoa,
     GError **error)
 {
-    amar_file_t   *file    = attribute->file;
-    amar_t        *archive = file->archive;
-    gssize size;
+    amar_file_t *file = attribute->file;
+    amar_t *archive = file->archive;
+    gsize size;
+    int read_error;
+    gboolean short_read;
     off_t filesize = 0;
     gpointer buf = g_malloc(MAX_RECORD_DATA_SIZE);
 
     g_assert(!attribute->wrote_eoa);
 
     /* read and write until reaching EOF */
-    while ((size = full_read(fd, buf, MAX_RECORD_DATA_SIZE)) >= 0) {
+    while (1) {
+	/*
+	 * NOTE: we want to write everything we read, even if the last read
+	 * returned an error. We check read_error only outside of the loop for
+	 * this reason, and exit early only on EOF (read_fully() returns 0).
+	 */
+
+	size = read_fully(fd, buf, MAX_RECORD_DATA_SIZE, &read_error);
+
+	if (size == 0)
+	    break;
+
+	short_read = (size < MAX_RECORD_DATA_SIZE);
+
 	if (!write_record(archive, file->filenum, attribute->attrid,
-			    eoa && (size < MAX_RECORD_DATA_SIZE), buf, size, error))
-	    goto error_exit;
+	    eoa && short_read, buf, size, error)) {
+	    filesize = -1;
+	    break;
+	}
 
 	filesize += size;
 
-	if (size < MAX_RECORD_DATA_SIZE)
+	if (short_read)
 	    break;
     }
 
-    if (size < 0) {
-	g_set_error(error, amar_error_quark(), errno,
-		    "Error reading from fd %d: %s", fd, strerror(errno));
-	goto error_exit;
-    }
     g_free(buf);
 
-    attribute->wrote_eoa = eoa;
+    if (read_error) {
+	g_set_error(error, amar_error_quark(), read_error,
+	    "Error reading from fd %d: %s", fd, strerror(read_error));
+	filesize = -1;
+    }
+
+    if (filesize != -1)
+	attribute->wrote_eoa = eoa;
 
     return filesize;
-
-error_exit:
-    g_free(buf);
-    return -1;
 }
 
 /*
