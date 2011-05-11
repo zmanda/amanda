@@ -420,18 +420,18 @@ read_and_push(
 
     while (!elt->cancelled) {
 	char *buf = g_malloc(GLUE_BUFFER_SIZE);
-	size_t len;
+	gsize len;
+	int read_error;
 
 	/* read a buffer from upstream */
-	len = full_read(fd, buf, GLUE_BUFFER_SIZE);
+	len = read_fully(fd, buf, GLUE_BUFFER_SIZE, &read_error);
 	if (len < GLUE_BUFFER_SIZE) {
-	    if (errno) {
+	    if (read_error) {
 		if (!elt->cancelled) {
-		    int saved_errno = errno;
 		    xfer_cancel_with_error(elt,
-			_("Error reading from fd %d: %s"), fd, strerror(saved_errno));
+			_("Error reading from fd %d: %s"), fd, strerror(read_error));
 		    g_debug("element-glue: error reading from fd %d: %s",
-			    fd, strerror(saved_errno));
+                         fd, strerror(read_error));
 		    wait_until_xfer_cancelled(elt->xfer);
 		}
                 amfree(buf);
