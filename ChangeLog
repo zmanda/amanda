@@ -1,4 +1,8 @@
 2011-05-11  Francis Galiegue <fgaliegue@gmail.com>
+	* device-src/xfer-dest-taper-splitter.c: "full_read() vs read(2)"
+	  behavior confusion fix; ignore error checking
+
+2011-05-11  Francis Galiegue <fgaliegue@gmail.com>
 	* amar-src/amar.c: fix "full_read() vs read(2)" behavior confusion,
 	  full_read does NOT return -1 on error. Rework the function as to
 	  avoid goto. Comment on the fact that we want to read as much as
