@@ -187,13 +187,13 @@ sub command_backup {
     my $size = 0;
     my $s;
     my $buffer;
-    my $out = 1;
+    my $out = fileno(STDOUT);
     while (($s = POSIX::read($fd, $buffer, 32768)) > 0) {
 	Amanda::Util::full_write($out, $buffer, $s);
 	$size += $s;
     }
     POSIX::close($fd);
-    close($out);
+    POSIX::close($out);
     if (defined($self->{index})) {
 	$self->{'index_out'}->print("/\n");
 	$self->{'index_out'}->close;
@@ -206,8 +206,6 @@ sub command_backup {
 	print {$self->{mesgout}} "sendbackup: size $ksize\n";
 	print {$self->{mesgout}} "sendbackup: end\n";
     }
-
-    exit 0;
 }
 
 sub command_restore {
@@ -233,14 +231,13 @@ sub command_restore {
     my $size = 0;
     my $s;
     my $buffer;
-    my $in = 0;
+    my $in = fileno(STDIN);
     while (($s = POSIX::read($in, $buffer, 32768)) > 0) {
 	Amanda::Util::full_write($fd, $buffer, $s);
 	$size += $s;
     }
     POSIX::close($fd);
-    close($in);
-    exit(0);
+    POSIX::close($in);
 }
 
 sub command_validate {
@@ -299,3 +296,4 @@ if (defined $opt_version) {
 my $application = Amanda::Application::Amraw->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize, \@opt_include_list, \@opt_exclude_list, $opt_directory);
 
 $application->do($ARGV[0]);
+# NOTREACHED

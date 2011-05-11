@@ -862,7 +862,6 @@ sub command_validate {
        $self->print_to_server_and_die("$self->{gnutar} returned error",
 				      $Amanda::Application::ERROR);
    }
-   exit($self->{error_status});
 }
 
 package main;
@@ -900,3 +899,4 @@ GetOptions(
 my $application = Amanda::Application::ampgsql->new($opts);
 
 $application->do($ARGV[0]);
+# NOTREACHED

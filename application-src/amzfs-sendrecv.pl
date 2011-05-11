@@ -148,8 +148,6 @@ sub command_estimate() {
     }
 
     $self->zfs_destroy_snapshot();
-
-    exit 0;
 }
 
 sub output_size {
@@ -240,8 +238,6 @@ sub command_backup {
     } else {
 	$self->zfs_destroy_snapshot();
     }
-
-    exit 0;
 }
 
 sub estimate_snapshot
@@ -378,6 +374,7 @@ EOF
     exit(1);
 }
 
+my $opt_version;
 my $opt_config;
 my $opt_host;
 my $opt_disk;
@@ -398,6 +395,7 @@ my $opt_directory;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
+    'version'	      => \$opt_version,
     'config=s'        => \$opt_config,
     'host=s'          => \$opt_host,
     'disk=s'          => \$opt_disk,
@@ -417,7 +415,12 @@ GetOptions(
     'directory=s'     => \$opt_directory,
 ) or usage();
 
+if (defined $opt_version) {
+    print "amzfs-sendrecv-" . $Amanda::Constants::VERSION , "\n";
+    exit(0);
+}
+
 my $application = Amanda::Application::Amzfs_sendrecv->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $df_path, $zfs_path, $pfexec_path, $pfexec, $opt_keep_snapshot, \@opt_exclude_list, \@opt_include_list, $opt_directory);
 
 $application->do($ARGV[0]);
-
+# NOTREACHED

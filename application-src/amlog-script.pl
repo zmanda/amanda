@@ -270,6 +270,7 @@ EOF
     exit(1);
 }
 
+my $opt_version;
 my $opt_execute_where;
 my $opt_config;
 my $opt_host;
@@ -285,6 +286,7 @@ my $opt_text;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
+    'version'         => \$opt_version,
     'execute-where=s' => \$opt_execute_where,
     'config=s'        => \$opt_config,
     'host=s'          => \$opt_host,
@@ -299,7 +301,12 @@ GetOptions(
     'text=s'          => \$opt_text
 ) or usage();
 
+if (defined $opt_version) {
+    print "amlog_script-" . $Amanda::Constants::VERSION , "\n";
+    exit(0);
+}
+
 my $script = Amanda::Script::amlog_script->new($opt_execute_where, $opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_logfile, $opt_text);
 
 $script->do($ARGV[0]);
-
+# NOTREACHED

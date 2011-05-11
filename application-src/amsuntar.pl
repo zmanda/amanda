@@ -208,7 +208,6 @@ sub command_estimate() {
         }
     }
     output_size($level, $msgsize);
-    exit 0;
 }
 
 
@@ -283,8 +282,6 @@ sub command_backup {
    print {$self->{mesgout}} "sendbackup: size $ksize\n";
    print {$self->{mesgout}} "sendbackup: end\n";
    debug("sendbackup: size $ksize "); 
-
-   exit 0;
 }
 
 sub parse_backup {
@@ -401,7 +398,6 @@ sub validate_inexclude {
 
 sub command_index_from_output {
    index_from_output(0, 1);
-   exit 0;
 }
 
 sub index_from_output {
@@ -498,7 +494,6 @@ sub command_validate {
 	$self->print_to_server_and_die("$program returned error",
 				       $Amanda::Script_App::ERROR);
    }
-   exit(0);
 }
 
 sub build_command {
@@ -558,6 +553,7 @@ EOF
     exit(1);
 }
 
+my $opt_version;
 my $opt_config;
 my $opt_host;
 my $opt_disk;
@@ -584,6 +580,7 @@ my $opt_suntar_path;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
+    'version'		  => \$opt_version,
     'config=s'     	  => \$opt_config,
     'host=s'       	  => \$opt_host,
     'disk=s'       	  => \$opt_disk,
@@ -609,6 +606,11 @@ GetOptions(
     'suntar-path=s'          => \$opt_suntar_path,
 ) or usage();
 
+if (defined $opt_version) {
+    print "amsuntar-" . $Amanda::Constants::VERSION , "\n";
+    exit(0);
+}
+
 if (defined $opt_lang) {
     $ENV{LANG} = $opt_lang;
 }
@@ -616,3 +618,4 @@ if (defined $opt_lang) {
 my $application = Amanda::Application::Amsuntar->new($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_list, $opt_include_optional,$opt_bsize,$opt_ext_attrib,$opt_ext_head, \@opt_ignore, \@opt_normal, \@opt_strange, \@opt_error, $opt_directory, $opt_suntar_path);
 
 $application->do($ARGV[0]);
+# NOTREACHED
