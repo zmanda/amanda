@@ -672,7 +672,6 @@ sub command_backup {
 	$self->print_to_server_and_die("smbclient returned error",
 				       $Amanda::Script_App::ERROR);
     }
-    exit 0;
 }
 
 sub parse_backup {
@@ -696,7 +695,6 @@ sub parse_backup {
 
 sub command_index_from_output {
    index_from_output(0, 1);
-   exit 0;
 }
 
 sub index_from_output {
@@ -822,7 +820,6 @@ sub command_validate {
 	$self->print_to_server_and_die("$self->{gnutar} returned error",
 				       $Amanda::Script_App::ERROR);
    }
-   exit(0);
 }
 
 sub command_print_command {
@@ -896,3 +893,4 @@ if (defined $opt_version) {
 my $application = Amanda::Application::Amsamba->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize, $opt_gnutar_path, $opt_smbclient_path, $opt_amandapass, \@opt_exclude_file, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_file, \@opt_include_list, $opt_include_optional, $opt_recover_mode, $opt_allow_anonymous, $opt_directory);
 
 $application->do($ARGV[0]);
+# NOTREACHED

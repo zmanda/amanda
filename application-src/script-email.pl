@@ -195,6 +195,7 @@ EOF
     exit(1);
 }
 
+my $opt_version,
 my $opt_execute_where;
 my $opt_config;
 my $opt_host;
@@ -209,6 +210,7 @@ my @opt_mailto;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
+    'version'	      => \$opt_version,
     'execute-where=s' => \$opt_execute_where,
     'config=s'        => \$opt_config,
     'host=s'          => \$opt_host,
@@ -222,7 +224,12 @@ GetOptions(
     'mailto=s'        => \@opt_mailto
 ) or usage();
 
+if (defined $opt_version) {
+    print "script-email-" . $Amanda::Constants::VERSION , "\n";
+    exit(0);
+}
+
 my $script = Amanda::Script::Script_email->new($opt_execute_where, $opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, \@opt_mailto);
 
 $script->do($ARGV[0]);
-
+# NOTREACHED

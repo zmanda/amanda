@@ -88,7 +88,7 @@ sub new {
     $self->{type} = $type;
     $self->{known_commands} = {};
 
-    debug("$type: $name\n");
+    debug("$type: $name");
 
     return $self;
 }
@@ -141,6 +141,7 @@ sub print_to_server_and_die {
 	$self->{die} = 1;
 	$self->check_for_backup_failure();
     }
+    Amanda::Util::finish_application();
     exit 1;
 }
 
@@ -160,6 +161,7 @@ sub do {
     # first make sure this is a valid command.
     if (!exists($self->{known_commands}->{$command})) {
 	print STDERR "Unknown command `$command'.\n";
+	Amanda::Util::finish_application();
 	exit 1;
     }
 
@@ -204,6 +206,9 @@ sub do {
 
     # it exists -- call it
     $self->$function_name();
+
+    Amanda::Util::finish_application();
+    exit($self->{'error_status'});
 }
 
 1;

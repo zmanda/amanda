@@ -1,3 +1,13 @@
+2011-05-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Script_App.pm: Call finish_application before exit,
+	  exit as last statement of the do method.
+	* application-src/amlog-script.pl, application-src/ampgsql.pl,
+	  application-src/amraw.pl, application-src/amsamba.pl,
+	  application-src/amsuntar.pl, application-src/amzfs-sendrecv.pl,
+	  application-src/amzfs-snapshot.pl,
+	  application-src/script-email.pl: Add --version option, do not exit
+	  at end of command_* method.
+
 2011-05-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: Call $device->finish() before
 	  $device->read_label(), A device must be in ACCESS_NULL for read_label.
