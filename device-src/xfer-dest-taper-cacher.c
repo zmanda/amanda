@@ -745,13 +745,13 @@ slab_source_get_from_disk(
     /* NOTE: slab_mutex is held, but we don't need it here, so release it for the moment */
     g_mutex_unlock(self->slab_mutex);
 
-    bytes_read = full_read(self->disk_cache_read_fd,
-			   state->tmp_slab->base,
-			   self->slab_size);
-    if ((gsize)bytes_read < self->slab_size) {
+    bytes_read = read_fully(self->disk_cache_read_fd, state->tmp_slab->base,
+        self->slab_size, NULL);
+
+    if (bytes_read < self->slab_size) {
 	xfer_cancel_with_error(XFER_ELEMENT(xdt),
 	    _("Error reading disk cache: %s"),
-	    errno? strerror(errno) : _("Unexpected EOF"));
+	    errno ? strerror(errno) : _("Unexpected EOF"));
 	goto fatal_error;
     }
 

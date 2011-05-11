@@ -3594,7 +3594,7 @@ build_diskspace(
 	    amfree(result);
 	    return NULL;
 	}
-	if ((buflen = full_read(fd, buffer, SIZEOF(buffer))) > 0) {;
+	if ((buflen = read_fully(fd, buffer, SIZEOF(buffer), NULL)) > 0) {
 		parse_file_header(buffer, &file, buflen);
 	}
 	close(fd);

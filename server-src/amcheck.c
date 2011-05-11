@@ -372,7 +372,7 @@ main(
 	    /*NOTREACHED*/
 	}
 
-	while((size = full_read(tempfd, buffer, SIZEOF(buffer))) > 0) {
+	while((size = read_fully(tempfd, buffer, SIZEOF(buffer), NULL)) > 0) {
 	    if (full_write(mainfd, buffer, size) < size) {
 		error(_("write main file: %s"), strerror(errno));
 		/*NOTREACHED*/
@@ -478,7 +478,7 @@ main(
 	 * cases, the pipe will break and we will exit out of the loop.
 	 */
 	signal(SIGPIPE, SIG_IGN);
-	while((r = full_read(mainfd, buffer, SIZEOF(buffer))) > 0) {
+	while((r = read_fully(mainfd, buffer, SIZEOF(buffer), NULL)) > 0) {
 	    if((w = full_write(mailfd, buffer, r)) != r) {
 		if(errno == EPIPE) {
 		    strappend(extra_info, _("EPIPE writing to mail process\n"));

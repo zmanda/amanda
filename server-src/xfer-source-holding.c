@@ -135,7 +135,7 @@ start_new_chunk(
 
     /* read the header from the file and determine the filename of the next chunk */
     hdrbuf = g_malloc(DISK_BLOCK_BYTES);
-    bytes_read = full_read(self->fd, hdrbuf, DISK_BLOCK_BYTES);
+    bytes_read = read_fully(self->fd, hdrbuf, DISK_BLOCK_BYTES, NULL);
     if (bytes_read < DISK_BLOCK_BYTES) {
 	g_free(hdrbuf);
 	xfer_cancel_with_error(XFER_ELEMENT(self),
@@ -192,7 +192,7 @@ pull_buffer_impl(
     buf = g_malloc(HOLDING_BLOCK_SIZE);
 
     while (1) {
-	bytes_read = full_read(self->fd, buf, HOLDING_BLOCK_SIZE);
+	bytes_read = read_fully(self->fd, buf, HOLDING_BLOCK_SIZE, NULL);
 	if (bytes_read > 0) {
 	    *size = bytes_read;
 	    return buf;

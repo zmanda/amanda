@@ -373,7 +373,7 @@ read_and_write(XferElementGlue *self)
 	size_t len;
 
 	/* read from upstream */
-	len = full_read(rfd, buf, GLUE_BUFFER_SIZE);
+	len = read_fully(rfd, buf, GLUE_BUFFER_SIZE, NULL);
 	if (len < GLUE_BUFFER_SIZE) {
 	    if (errno) {
 		if (!elt->cancelled) {
@@ -985,7 +985,7 @@ pull_buffer_impl(
 	    buf = g_malloc(GLUE_BUFFER_SIZE);
 
 	    /* read from upstream */
-	    len = full_read(fd, buf, GLUE_BUFFER_SIZE);
+	    len = read_fully(fd, buf, GLUE_BUFFER_SIZE, NULL);
 	    if (len < GLUE_BUFFER_SIZE) {
 		if (errno) {
 		    if (!elt->cancelled) {

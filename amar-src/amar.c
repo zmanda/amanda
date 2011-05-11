@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008,2009 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008,2009,2011 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -21,6 +21,7 @@
 #include "amanda.h"
 #include "util.h"
 #include "amar.h"
+#include "file.h"
 
 /* Each block in an archive is made up of one or more records, where each
  * record is either a header record or a data record.  The two are
@@ -614,9 +615,9 @@ buf_atleast_(
     else
 	to_read = hp->buf_size - hp->buf_offset - hp->buf_len;
 
-    bytes_read = full_read(archive->fd,
+    bytes_read = read_fully(archive->fd,
 			   hp->buf+hp->buf_offset+hp->buf_len,
-			   to_read);
+			   to_read, NULL);
     if (bytes_read < to_read)
 	hp->got_eof = TRUE;
     hp->just_lseeked = FALSE;
@@ -661,7 +662,7 @@ retry:
     } else {
 	while (skipbytes) {
 	    gsize toread = MIN(skipbytes, hp->buf_size);
-	    gsize bytes_read = full_read(archive->fd, hp->buf, toread);
+	    gsize bytes_read = read_fully(archive->fd, hp->buf, toread, NULL);
 
 	    if (bytes_read < toread) {
 		hp->got_eof = TRUE;
