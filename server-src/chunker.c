@@ -541,7 +541,7 @@ do_chunk(
     int                 data_socket)
 {
     size_t nread;
-    int    data_fd;
+    int data_fd, read_error;
     char header_buf[DISK_BLOCK_BYTES];
 
     startclock();
@@ -555,12 +555,12 @@ do_chunk(
      * need to save into "file", as well as write out.  Later, the
      * chunk code will rewrite it.
      */
-    nread = full_read(header_fd, header_buf, SIZEOF(header_buf));
+    nread = read_fully(header_fd, header_buf, sizeof(header_buf), &read_error);
     aclose(header_fd);
     aclose(header_socket);
     if (nread != sizeof(header_buf)) {
-	if(errno != 0) {
-	    errstr = vstrallocf(_("cannot read header: %s"), strerror(errno));
+	if(read_error) {
+	    errstr = vstrallocf(_("cannot read header: %s"), strerror(read_error));
 	} else {
 	    errstr = vstrallocf(_("cannot read header: got %zd bytes instead of %zd"),
 				nread, sizeof(header_buf));
