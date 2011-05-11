@@ -426,8 +426,8 @@ ndmos_tape_read (struct ndm_session *sess,
   char *buf, u_long count, u_long *done_count)
 {
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
-	int			rc;
-	unsigned	nb;
+	gsize rc, nb;
+	int read_error;
 
 	if (ta->tape_fd < 0) {
 		return NDMP9_DEV_NOT_OPEN_ERR;
@@ -447,8 +447,8 @@ ndmos_tape_read (struct ndm_session *sess,
 
 	nb = count;
 
-	rc = full_read (ta->tape_fd, buf, nb);
-	if (rc < 0) {
+	rc = read_fully(ta->tape_fd, buf, nb, &read_error);
+	if (read_error) {
 		return NDMP9_IO_ERR;
 	}
 	ta->tape_state.blockno.value++;

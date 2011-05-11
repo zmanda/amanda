@@ -1,4 +1,8 @@
 2011-05-11  Francis Galiegue <fgaliegue@gmail.com>
+	* ndmp-src/amndma_tape_simulator.c: "full_read() vs read(2)" behavior
+	  confusion fix; check only for errors
+
+2011-05-11  Francis Galiegue <fgaliegue@gmail.com>
 	* device-src/xfer-dest-taper-splitter.c: "full_read() vs read(2)"
 	  behavior confusion fix; ignore error checking
 
