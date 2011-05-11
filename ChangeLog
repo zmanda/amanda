@@ -1,3 +1,9 @@
+2011-05-11  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/file.[ch]: new read_fully() function, designed to replace
+	  usages of full_read() which, even though it shares its prototype with
+	  read(2), behaves very differently and leads (and has led) to
+	  convoluted codes in some places, and bugs in other places
+
 2011-05-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Script_App.pm: Call finish_application before exit,
 	  exit as last statement of the do method.

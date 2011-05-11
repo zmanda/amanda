@@ -1,6 +1,7 @@
 /*
  * Amanda, The Advanced Maryland Automatic Network Disk Archiver
  * Copyright (c) 1997-1998 University of Maryland at College Park
+ * Copyright (c) 2011 Zmanda, Inc
  * All Rights Reserved.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -793,6 +794,37 @@ get_original_cwd(void)
     }
 
     return original_cwd;
+}
+
+/**
+ * Read up to "count" bytes from a file descriptor, optionally collecting the
+ * read operation status (0 on success, not 0 otherwise).
+ *
+ * This function exists to overcome the confusing behavior of full_read():
+ *
+ * - unlike read(2), full_read() does not return -1 on failure;
+ * - errno needs to be explicitly checked for each time the number of bytes
+ *   actually read is less than the "count" argument.
+ *
+ * With this function, a full read becomes a one time process. Error collecting
+ * is optional.
+ *
+ * @param fd: the file descriptor to read from
+ * @param buf: the buffer to write data into
+ * @param count: the number of bytes to write into the buffer
+ * @param err (output): 0 if "count" bytes have been read; errno (as set by
+ *                      full_read()) otherwise
+ * @returns: the number of bytes read from the file descriptor
+ */
+
+gsize read_fully(int fd, void *buf, gsize count, int *err)
+{
+    gsize ret = full_read(fd, buf, count);
+
+    if (err)
+        *err = (ret == count) ? 0 : errno;
+
+    return ret;
 }
 
 #ifdef TEST
