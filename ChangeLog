@@ -1,4 +1,10 @@
 2011-05-11  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/chunker.c: in do_chunk(): full_read() error checking was
+	  done only after two calls to amclose(), which potentially sets errno;
+	  fix by using read_fully(), capture a possible read error, and check it
+	  at the correct place instead
+
+2011-05-11  Francis Galiegue <fgaliegue@gmail.com>
 	* ndmp-src/amndma_tape_simulator.c: "full_read() vs read(2)" behavior
 	  confusion fix; check only for errors
 
