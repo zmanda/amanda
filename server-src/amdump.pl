@@ -308,6 +308,13 @@ wait_for_hold();
 # bail out
 do_amcleanup();
 
+my $crtl_c = 0;
+$SIG{INT} = \&interrupt;
+
+sub interrupt {
+    $crtl_c = 1;
+}
+
 # start up the log file
 start_logfiles();
 
@@ -319,6 +326,14 @@ amdump_log("starttime-locale-independent $starttime_locale_independent");
 
 # run the planner and driver, the one piped to the other
 planner_driver_pipeline();
+
+if ($crtl_c == 1) {
+    print "Catched a ctrl-c\n";
+    log_add($L_FATAL, "amdump killed by ctrl-c");
+    debug("Catched a ctrl-c");
+    $exit_code = 1;
+}
+$SIG{INT} = 'DEFAULT';
 
 my $end_longdate = strftime "%a %b %e %H:%M:%S %Z %Y", localtime;
 amdump_log("end at $end_longdate");

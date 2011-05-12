@@ -1,3 +1,7 @@
+2011-05-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amdump.pl: Trap ctrl-c while backup is running, resume by
+	  sending email and log rotation.
+
 2011-05-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: Call $device->finish() before
 	  $device->read_label(), A device must be in ACCESS_NULL for read_label.
