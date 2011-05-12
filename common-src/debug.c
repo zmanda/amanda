@@ -190,7 +190,7 @@ debug_logging_handler(const gchar *log_domain G_GNUC_UNUSED,
 	if (!do_suppress_error_traceback && db_fd != -1) {
 	    void *stack[32];
 	    int naddrs;
-	    naddrs = backtrace(stack, sizeof(stack)/sizeof(*stack));
+	    naddrs = backtrace(stack, G_N_ELEMENTS(stack));
 	    backtrace_symbols_fd(stack, naddrs, db_fd);
 	}
 #endif

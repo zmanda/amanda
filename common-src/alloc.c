@@ -339,8 +339,7 @@ safe_env_full(char **add)
      * safe_env_list so our result is always a valid, although possibly
      * empty, environment list.
      */
-#define SAFE_ENV_CNT	(size_t)(sizeof(safe_env_list) / sizeof(*safe_env_list))
-    char **envp = safe_env_list + SAFE_ENV_CNT - 1;
+    char **envp = safe_env_list + G_N_ELEMENTS(safe_env_list) - 1;
 
     char **p;
     char **q;

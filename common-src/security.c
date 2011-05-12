@@ -75,7 +75,6 @@ static const security_driver_t *drivers[] = {
 #endif
     &local_security_driver,
 };
-#define	NDRIVERS	(size_t)(sizeof(drivers) / sizeof(drivers[0]))
 
 /*
  * Given a name of a security type, returns the driver structure
@@ -88,7 +87,7 @@ security_getdriver(
 
     assert(name != NULL);
 
-    for (i = 0; i < NDRIVERS; i++) {
+    for (i = 0; i < G_N_ELEMENTS(drivers); i++) {
 	if (strcasecmp(name, drivers[i]->name) == 0) {
 	    dbprintf(_("security_getdriver(name=%s) returns %p\n"),
 		      name, drivers[i]);

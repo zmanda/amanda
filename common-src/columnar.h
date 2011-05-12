@@ -52,7 +52,6 @@ typedef struct {
 
 extern ColumnInfo ColumnData[];
 
-int ColumnDataCount(void);
 int StringToColumn(char *s);
 char LastChar(char *s);
 int SetColumnDataFromString(ColumnInfo* ci, char *s, char **errstr); /* (sic) */

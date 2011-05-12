@@ -188,8 +188,7 @@ process_args (int argc, char *argv[])
 	*op++ = ':';
 	*op = 0;
 
-	ac = copy_args_expanding_macros (argc, argv,
-					 av, sizeof(av)/sizeof(av[0]));
+	ac = copy_args_expanding_macros (argc, argv, av, G_N_ELEMENTS(av));
 
 	while ((c = getopt (ac, av, options)) != EOF) {
 	    switch (c) {

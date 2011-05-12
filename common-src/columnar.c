@@ -47,12 +47,6 @@ ColumnInfo ColumnData[] = {
 };
 
 
-int
-ColumnDataCount(void )
-{
-    return (int)(sizeof(ColumnData) / sizeof(ColumnData[0]));
-}
-
 /* conversion from string to table index
  */
 int

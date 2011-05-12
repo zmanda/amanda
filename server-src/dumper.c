@@ -138,7 +138,7 @@ static struct {
 #define	INDEXFD	2
     { "INDEX", NULL },
 };
-#define	NSTREAMS	(int)(sizeof(streams) / sizeof(streams[0]))
+#define NSTREAMS G_N_ELEMENTS(streams)
 
 static am_feature_t *our_features = NULL;
 static char *our_feature_string = NULL;
@@ -1814,7 +1814,7 @@ timeout_callback(
 static void
 stop_dump(void)
 {
-    int             i;
+    guint i;
     struct cmdargs *cmdargs = NULL;
 
     /* Check if I have a pending ABORT command */
@@ -2032,7 +2032,8 @@ sendbackup_response(
     pkt_t *		pkt,
     security_handle_t *	sech)
 {
-    int ports[NSTREAMS], *response_error = datap, i;
+    int ports[NSTREAMS], *response_error = datap;
+    guint i;
     char *p;
     char *tok;
     char *extra;

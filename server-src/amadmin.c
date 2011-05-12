@@ -141,14 +141,14 @@ static const struct {
     { "import", import_db,
 	T_("\t\t\t\t # Import curinfo database from stdin.") },
 };
-#define	NCMDS	(int)(sizeof(cmdtab) / sizeof(cmdtab[0]))
+#define NCMDS G_N_ELEMENTS(cmdtab)
 
 int
 main(
     int		argc,
     char **	argv)
 {
-    int i;
+    guint i;
     char *conf_diskfile;
     char *conf_infofile;
     config_overrides_t *cfg_ovr = NULL;
@@ -244,7 +244,7 @@ done:
 void
 usage(void)
 {
-    int i;
+    guint i;
 
     g_fprintf(stderr, _("\nUsage: %s [-o configoption]* <conf> <command> {<args>} ...\n"),
 	    get_pname());

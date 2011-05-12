@@ -45,7 +45,7 @@ static const struct {
     { "ACK", P_ACK },
     { "NAK", P_NAK }
 };
-#define	NPKTYPES	(int)(sizeof(pktypes) / sizeof(pktypes[0]))
+#define NPKTYPES G_N_ELEMENTS(pktypes)
 
 /*
  * Initialize a packet
@@ -129,11 +129,11 @@ pktype_t
 pkt_str2type(
     const char *typestr)
 {
-    int i;
+    guint i;
 
     assert(typestr != NULL);
 
-    for (i = 0; i < (int)NPKTYPES; i++)
+    for (i = 0; i < NPKTYPES; i++)
 	if (strcmp(typestr, pktypes[i].name) == 0)
 	    return (pktypes[i].type);
     return ((pktype_t)-1);
@@ -146,9 +146,9 @@ const char *
 pkt_type2str(
     pktype_t	type)
 {
-    int i;
+    guint i;
 
-    for (i = 0; i < (int)NPKTYPES; i++)
+    for (i = 0; i < NPKTYPES; i++)
 	if (pktypes[i].type == type)
 	    return (pktypes[i].name);
     return ("BOGUS");

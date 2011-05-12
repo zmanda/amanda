@@ -40,7 +40,7 @@ test_encode(void)
         {"\n", "%0a"},
         {"\nhi\n", "%0ahi%0a"}
     };
-    static const int num = sizeof(test_strs)/sizeof(enc_vec);
+    static const int num = G_N_ELEMENTS(test_strs);
     int i;
     gboolean ret;
     char *tmp;
@@ -80,7 +80,7 @@ test_decode(void)
         {"%h0", "", TRUE},
         {"%00", "", TRUE}
     };
-    static const int num = sizeof(test_strs)/sizeof(dec_vec);
+    static const int num = G_N_ELEMENTS(test_strs);
     int i;
     gboolean ret;
     char *tmp;
@@ -118,7 +118,7 @@ test_roundtrip(void)
         "\n",
         "h%"
     };
-    static const int num = sizeof(test_strs)/sizeof(round_vec);
+    static const int num = G_N_ELEMENTS(test_strs);
     int i;
     gboolean ret;
     char *tmp_enc = NULL, *tmp_dec = NULL;

@@ -88,8 +88,8 @@ static struct {
 #define DATAFD  1
     { "DATA", NULL },
 };
-#define NSTREAMS  (int)(sizeof(amidxtaped_streams) / sizeof(amidxtaped_streams[0]))
 
+#define NSTREAMS G_N_ELEMENTS(amidxtaped_streams)
 
 static void amidxtaped_response(void *, pkt_t *, security_handle_t *);
 static void stop_amidxtaped(void);
@@ -2404,7 +2404,8 @@ amidxtaped_response(
     pkt_t *		pkt,
     security_handle_t *	sech)
 {
-    int ports[NSTREAMS], *response_error = datap, i;
+    int ports[NSTREAMS], *response_error = datap;
+    guint i;
     char *p;
     char *tok;
     char *extra = NULL;
@@ -2609,7 +2610,7 @@ connect_error:
 static void
 stop_amidxtaped(void)
 {
-    int i;
+    guint i;
 
     for (i = 0; i < NSTREAMS; i++) {
         if (amidxtaped_streams[i].fd != NULL) {
