@@ -1,3 +1,8 @@
+2011-05-11  Francis Galiegue <fgaliegue@gmail.com>
+	* device-src/device.c: further simplify device name validation; the
+	  errmsg argument to validate_device_name() was not necessary anymore,
+	  remove and adapt device_open() accordingly
+
 2011-05-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amdump.pl: Trap ctrl-c while backup is running, resume by
 	  sending email and log rotation.

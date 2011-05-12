@@ -409,8 +409,8 @@ static void simple_property_free(SimpleProperty * resp) {
  */
 
 static gboolean
-validate_device_name(const char * user_name, char ** driver_name,
-                    char ** device, char **errmsg) {
+validate_device_name(const char *user_name, char **driver_name, char **device)
+{
     gboolean ret = FALSE;
     gchar **split_result = g_strsplit(user_name, ":", 2);
     gchar *split_driver_name = split_result[0], *split_device = split_result[1];
@@ -434,8 +434,6 @@ validate_device_name(const char * user_name, char ** driver_name,
     ret = TRUE;
 
 out:
-    if (!ret)
-        *errmsg = newvstralloc(*errmsg, "\"%s\" is not a valid device name.\n", user_name);
     g_strfreev(split_result);
     return ret;
 }
@@ -481,7 +479,6 @@ device_open (char * device_name)
 {
     char *device_type = NULL;
     char *device_node = NULL;
-    char *errmsg = NULL;
     char *unaliased_name = NULL;
     DeviceFactory factory;
     Device *device;
@@ -494,27 +491,29 @@ device_open (char * device_name)
     }
 
     if (device_name == NULL)
-	return make_null_error(stralloc(_("No device name specified")), DEVICE_STATUS_DEVICE_ERROR);
+	return make_null_error(stralloc("No device name specified"), DEVICE_STATUS_DEVICE_ERROR);
 
     unaliased_name = device_unaliased_name(device_name);
     if (!unaliased_name) {
 	return make_null_error(
-		vstrallocf(_("Device '%s' has no tapedev"), device_name),
+		vstrallocf("Device \"%s\" has no tapedev", device_name),
 		DEVICE_STATUS_DEVICE_ERROR);
     }
 
-    if (!validate_device_name(unaliased_name, &device_type, &device_node,
-			     &errmsg)) {
+    if (!validate_device_name(unaliased_name, &device_type, &device_node)) {
 	amfree(device_type);
 	amfree(device_node);
-	return make_null_error(errmsg, DEVICE_STATUS_DEVICE_ERROR);
+	return make_null_error(
+	    vstrallocf("\"%s\" is not a valid device name", unaliased_name),
+	    DEVICE_STATUS_DEVICE_ERROR);
     }
 
     factory = lookup_device_factory(device_type);
 
     if (factory == NULL) {
-	Device *nulldev = make_null_error(vstrallocf(_("Device type %s is not known."),
-	    device_type), DEVICE_STATUS_DEVICE_ERROR);
+	Device *nulldev = make_null_error(
+	    vstrallocf("Device type \"%s\" is not known", device_type),
+	    DEVICE_STATUS_DEVICE_ERROR);
 	amfree(device_type);
 	amfree(device_node);
 	return nulldev;
