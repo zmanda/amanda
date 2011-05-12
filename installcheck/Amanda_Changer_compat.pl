@@ -239,7 +239,7 @@ $chg->{'fatal_error'} = undef; # reset the fatal error
 
 try_run_changer(
     sub { $chg->load(slot => '4', res_cb => $check_res_cb); },
-    { message => "opening 'bogus:dev': Device type bogus is not known.",
+    { message => "opening 'bogus:dev': Device type \"bogus\" is not known",
       type => 'failed',
       reason => 'device' },
     undef,
