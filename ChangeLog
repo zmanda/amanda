@@ -1,4 +1,7 @@
 2011-05-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amdump.pl: s/Catched/Caught/
+
+2011-05-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amdump.pl: Trap ctrl-c while backup is running, resume by
 	  sending email and log rotation.
 
