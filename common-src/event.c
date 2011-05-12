@@ -391,7 +391,7 @@ event_type2str(
     };
     size_t i;
 
-    for (i = 0; i < (size_t)(sizeof(event_types) / sizeof(event_types[0])); i++)
+    for (i = 0; i < G_N_ELEMENTS(event_types); i++)
 	if (type == event_types[i].type)
 	    return (event_types[i].name);
     return (_("BOGUS EVENT TYPE"));

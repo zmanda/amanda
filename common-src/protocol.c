@@ -94,9 +94,6 @@ typedef struct proto {
 /* if no reply in an hour, just forget it */
 #define	DROP_DEAD_TIME(t)	(CURTIME - (t) > (60 * 60))
 
-/* get the size of an array */
-#define	ASIZE(arr)	(int)(sizeof(arr) / sizeof((arr)[0]))
-
 /*
  * Initialization time
  */
@@ -662,9 +659,10 @@ pstate2str(
 	X(s_repwait),
 #undef X
     };
-    int i;
 
-    for (i = 0; i < ASIZE(pstates); i++)
+    guint i;
+
+    for (i = 0; i < G_N_ELEMENTS(pstates); i++)
 	if (pstate == pstates[i].type)
 	    return (pstates[i].name);
     return (_("BOGUS PSTATE"));
@@ -693,9 +691,10 @@ action2str(
 	X(PA_ABORT),
 #undef X
     };
-    int i;
 
-    for (i = 0; i < ASIZE(actions); i++)
+    guint i;
+
+    for (i = 0; i < G_N_ELEMENTS(actions); i++)
 	if (action == actions[i].type)
 	    return (actions[i].name);
     return (_("BOGUS ACTION"));

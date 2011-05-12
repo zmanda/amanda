@@ -475,11 +475,6 @@ time_t	unctime(char *timestr);
 } while(0)
 
 /*
- * Return the number of elements in an array.
- */
-#define am_countof(a)	(int)(sizeof(a) / sizeof((a)[0]))
-
-/*
  * min/max.  Don't do something like
  *
  *    x = min(y++, z);

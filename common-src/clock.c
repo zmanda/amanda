@@ -89,7 +89,7 @@ walltime_str(
 	     (unsigned long)t.tv_sec,
 	     (unsigned long)t.tv_usec/1000);
     s = str[n++];
-    n %= am_countof(str);
+    n %= G_N_ELEMENTS(str);
     return s;
 }
 

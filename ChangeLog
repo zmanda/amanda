@@ -1,4 +1,9 @@
 2011-05-11  Francis Galiegue <fgaliegue@gmail.com>
+	* Many files (19): get rid of custom array size calculations, use
+	  GLib's G_N_ELEMENTS() instead; some minor cleanups along the way.
+	  NOTE: gnulib's sources UNTOUCHED
+
+2011-05-11  Francis Galiegue <fgaliegue@gmail.com>
 	* Many files (63): get rid of the SIZEOF() macro, replace with sizeof()
 	  everywhere
 

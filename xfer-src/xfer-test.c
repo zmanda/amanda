@@ -1466,14 +1466,14 @@ test_xfer_simple(void)
 	xfer_dest_null(RANDOM_SEED),
     };
 
-    Xfer *xfer = xfer_new(elements, sizeof(elements)/sizeof(*elements));
+    Xfer *xfer = xfer_new(elements, G_N_ELEMENTS(elements));
     src = xfer_get_source(xfer);
     g_source_set_callback(src, (GSourceFunc)test_xfer_generic_callback, NULL, NULL);
     g_source_attach(src, NULL);
     tu_dbg("Transfer: %s\n", xfer_repr(xfer));
 
     /* unreference the elements */
-    for (i = 0; i < sizeof(elements)/sizeof(*elements); i++) {
+    for (i = 0; i < G_N_ELEMENTS(elements); i++) {
 	g_object_unref(elements[i]);
 	g_assert(G_OBJECT(elements[i])->ref_count == 1);
 	elements[i] = NULL;
@@ -1571,13 +1571,13 @@ test_glue_combo(
     GSource *src;
     XferElement *elements[] = { source, dest };
 
-    Xfer *xfer = xfer_new(elements, sizeof(elements)/sizeof(*elements));
+    Xfer *xfer = xfer_new(elements, G_N_ELEMENTS(elements));
     src = xfer_get_source(xfer);
     g_source_set_callback(src, (GSourceFunc)test_xfer_generic_callback, NULL, NULL);
     g_source_attach(src, NULL);
 
     /* unreference the elements */
-    for (i = 0; i < sizeof(elements)/sizeof(*elements); i++) {
+    for (i = 0; i < G_N_ELEMENTS(elements); i++) {
 	g_object_unref(elements[i]);
 	g_assert(G_OBJECT(elements[i])->ref_count == 1);
 	elements[i] = NULL;

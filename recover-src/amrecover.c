@@ -86,7 +86,7 @@ static struct {
 #define MESGFD  0
     { "MESG", NULL },
 };
-#define NSTREAMS        (int)(sizeof(streams) / sizeof(streams[0]))
+#define NSTREAMS G_N_ELEMENTS(streams)
 
 static void amindexd_response(void *, pkt_t *, security_handle_t *);
 void stop_amindexd(void);
@@ -626,7 +626,8 @@ amindexd_response(
     pkt_t *pkt,
     security_handle_t *sech)
 {
-    int ports[NSTREAMS], *response_error = datap, i;
+    int ports[NSTREAMS], *response_error = datap;
+    guint i;
     char *p;
     char *tok;
     char *extra = NULL;
@@ -821,7 +822,7 @@ connect_error:
 void
 stop_amindexd(void)
 {
-    int i;
+    guint i;
 
     amindexd_alive = 0;
     for (i = 0; i < NSTREAMS; i++) {

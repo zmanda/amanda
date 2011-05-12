@@ -98,7 +98,7 @@ static struct services {
    { "amidxtaped", 0, SERVICE_AMIDXTAPED },
    { "amdumpd", 0, SERVICE_AMDUMPD }
 };
-#define	NSERVICES	(int)(sizeof(services) / sizeof(services[0]))
+#define NSERVICES G_N_ELEMENTS(services)
 
 /*
  * This structure describes an active running service.
@@ -191,7 +191,8 @@ main(
     int		argc,
     char **	argv)
 {
-    int i, j;
+    int i;
+    guint j;
     int have_services;
     int in, out;
     const security_driver_t *secdrv;
@@ -290,7 +291,7 @@ main(
 	    if (strcmp(auth, "local") == 0 ||
 		strcmp(auth, "rsh") == 0 ||
 		strcmp(auth, "ssh") == 0) {
-		int i;
+		guint i;
 		for (i=0; i < NSERVICES; i++) {
 		    services[i].active = 1;
 		}
@@ -406,7 +407,7 @@ main(
 	else {
 	    /* clear all services */
 	    if(!have_services) {
-		for (j = 0; j < (int)NSERVICES; j++)
+		for (j = 0; j < NSERVICES; j++)
 		    services[j].active = 0;
 	    }
 	    have_services = 1;
@@ -418,10 +419,10 @@ main(
 		services[3].active = 1;
 	    }
 	    else {
-		for (j = 0; j < (int)NSERVICES; j++)
+		for (j = 0; j < NSERVICES; j++)
 		    if (strcmp(services[j].name, argv[i]) == 0)
 			break;
-		if (j == (int)NSERVICES) {
+		if (j == NSERVICES) {
 		    dbprintf(_("%s: invalid service\n"), argv[i]);
 		    exit(1);
 		}
@@ -558,7 +559,7 @@ protocol_accept(
     char *pktbody, *tok, *service, *arguments;
     char *service_path = NULL;
     GSList *errlist = NULL;
-    int i;
+    guint i;
 
     pkt_out.body = NULL;
 
@@ -649,10 +650,10 @@ protocol_accept(
     arguments = stralloc(tok);
 
     /* see if it's one we allow */
-    for (i = 0; i < (int)NSERVICES; i++)
+    for (i = 0; i < NSERVICES; i++)
 	if (services[i].active == 1 && strcmp(services[i].name, service) == 0)
 	    break;
-    if (i == (int)NSERVICES) {
+    if (i == NSERVICES) {
 	dbprintf(_("%s: invalid service\n"), service);
 	pkt_init(&pkt_out, P_NAK, _("ERROR %s: invalid service, add '%s' as argument to amandad\n"), service, service);
 	goto send_pkt_out;

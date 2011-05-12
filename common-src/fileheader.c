@@ -979,15 +979,15 @@ static const struct {
     { F_SPLIT_DUMPFILE, "SPLIT_FILE" },
     { F_NOOP, "NOOP" }
 };
-#define	NFILETYPES	(size_t)(sizeof(filetypetab) / sizeof(filetypetab[0]))
+#define NFILETYPES G_N_ELEMENTS(filetypetab)
 
 static const char *
 filetype2str(
     filetype_t	type)
 {
-    int i;
+    guint i;
 
-    for (i = 0; i < (int)NFILETYPES; i++)
+    for (i = 0; i < NFILETYPES; i++)
 	if (filetypetab[i].type == type)
 	    return (filetypetab[i].str);
     return ("UNKNOWN");
@@ -997,9 +997,9 @@ static filetype_t
 str2filetype(
     const char *str)
 {
-    int i;
+    guint i;
 
-    for (i = 0; i < (int)NFILETYPES; i++)
+    for (i = 0; i < NFILETYPES; i++)
 	if (strcmp(filetypetab[i].str, str) == 0)
 	    return (filetypetab[i].type);
     return (F_UNKNOWN);
