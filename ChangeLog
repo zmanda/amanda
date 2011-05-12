@@ -1,3 +1,7 @@
+2011-05-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amdump.pl: Trap ctrl-c while backup is running, resume by
+	  sending email and log rotation.
+
 2011-05-11  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/chunker.c: in do_chunk(): full_read() error checking was
 	  done only after two calls to amclose(), which potentially sets errno;
