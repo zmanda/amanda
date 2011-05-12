@@ -328,9 +328,9 @@ amdump_log("starttime-locale-independent $starttime_locale_independent");
 planner_driver_pipeline();
 
 if ($crtl_c == 1) {
-    print "Catched a ctrl-c\n";
+    print "Caught a ctrl-c\n";
     log_add($L_FATAL, "amdump killed by ctrl-c");
-    debug("Catched a ctrl-c");
+    debug("Caught a ctrl-c");
     $exit_code = 1;
 }
 $SIG{INT} = 'DEFAULT';
