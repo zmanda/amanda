@@ -82,7 +82,7 @@ make_socket(
 
 #ifdef SO_KEEPALIVE
     r = setsockopt(s, SOL_SOCKET, SO_KEEPALIVE,
-		   (void *)&on, SIZEOF(on));
+		   (void *)&on, sizeof(on));
     if (r == -1) {
 	save_errno = errno;
 	dbprintf(_("make_socket: setsockopt() failed: %s\n"),
@@ -339,7 +339,7 @@ interruptible_accept(
 	return EBADF;
     }
 
-    memset(&readset, 0, SIZEOF(readset));
+    memset(&readset, 0, sizeof(readset));
 
     while (1) {
 	if (!prolong(prolong_data)) {
@@ -351,7 +351,7 @@ interruptible_accept(
 	FD_SET(sock, &readset);
 
 	/* try accepting for 1s */
-	memset(&tv, 0, SIZEOF(tv));
+	memset(&tv, 0, sizeof(tv));
     	tv.tv_sec = 1;
 
 	nfound = select(sock+1, &readset, NULL, NULL, &tv);
@@ -1075,7 +1075,7 @@ int copy_file(
 	return -1;
     }
 
-    while((nb=read(infd, &buf, SIZEOF(buf))) > 0) {
+    while((nb=read(infd, &buf, sizeof(buf))) > 0) {
 	if(full_write(outfd,&buf,nb) < nb) {
 	    save_errno = errno;
 	    quoted = quote_string(dst);

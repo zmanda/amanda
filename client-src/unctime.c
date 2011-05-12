@@ -63,8 +63,8 @@ unctime(
 	struct tm then;
 	char dbuf[26];
 
-	(void) strncpy(dbuf, str, SIZEOF(dbuf) - 1);
-	dbuf[SIZEOF(dbuf) - 1] = '\0';
+	(void) strncpy(dbuf, str, sizeof(dbuf) - 1);
+	dbuf[sizeof(dbuf) - 1] = '\0';
 	dbuf[E_MONTH+3] = '\0';
 	if ((then.tm_mon = lookup(&dbuf[E_MONTH])) < 0)
 		return -1;

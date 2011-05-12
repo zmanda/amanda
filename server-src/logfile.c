@@ -120,7 +120,7 @@ static void log_add_full_v(logtype_t typ, char *pname, char *format, va_list arg
     }
 
     /* use sizeof(linebuf)-2 to save space for a trailing newline */
-    g_vsnprintf(linebuf, SIZEOF(linebuf)-2, xlated_fmt, argp);
+    g_vsnprintf(linebuf, sizeof(linebuf)-2, xlated_fmt, argp);
 						/* -1 to allow for '\n' */
 
     /* avoid recursive call from error() */
@@ -208,7 +208,7 @@ log_rename(
     logfile = vstralloc(conf_logdir, "/log", NULL);
 
     for(seq = 0; 1; seq++) {	/* if you've got MAXINT files in your dir... */
-	g_snprintf(seq_str, SIZEOF(seq_str), "%u", seq);
+	g_snprintf(seq_str, sizeof(seq_str), "%u", seq);
 	fname = newvstralloc(fname,
 			     logfile,
 			     ".", datestamp,

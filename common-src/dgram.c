@@ -342,7 +342,7 @@ printf_arglist_function1(int dgram_cat, dgram_t *, dgram, const char *, fmt)
     assert(fmt != NULL);
 
     assert(dgram->len == (size_t)(dgram->cur - dgram->data));
-    assert(dgram->len < SIZEOF(dgram->data));
+    assert(dgram->len < sizeof(dgram->data));
 
     bufsize = (ssize_t)(sizeof(dgram->data) - dgram->len);
     if (bufsize <= 0)

@@ -105,7 +105,7 @@ get_debug_name(
     if(n == 0) {
 	number[0] = '\0';
     } else {
-	g_snprintf(number, SIZEOF(number), "%03d", n - 1);
+	g_snprintf(number, sizeof(number), "%03d", n - 1);
     }
     result = vstralloc(get_pname(), ".", ts, number, ".debug", NULL);
     amfree(ts);
@@ -337,7 +337,7 @@ debug_unlink_old(void)
 
     assert(dbgdir != NULL);
 
-    memset(&sbuf, 0, SIZEOF(sbuf));
+    memset(&sbuf, 0, sizeof(sbuf));
 
     pname = get_pname();
     pname_len = strlen(pname);

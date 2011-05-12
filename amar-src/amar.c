@@ -37,14 +37,14 @@ typedef struct header_s {
     /* magic is HEADER_MAGIC + ' ' + decimal version, NUL padded */
     char     magic[28];
 } header_t;
-#define HEADER_SIZE (SIZEOF(header_t))
+#define HEADER_SIZE (sizeof(header_t))
 
 typedef struct record_s {
     uint16_t filenum;
     uint16_t attrid;
     uint32_t size;
 } record_t;
-#define RECORD_SIZE (SIZEOF(record_t))
+#define RECORD_SIZE (sizeof(record_t))
 #define MAX_RECORD_DATA_SIZE (4*1024*1024)
 
 #define MKRECORD(ptr, f, a, s, eoa) do { \
@@ -203,7 +203,7 @@ amar_new(
     mode_t mode,
     GError **error)
 {
-    amar_t *archive = malloc(SIZEOF(amar_t));
+    amar_t *archive = malloc(sizeof(amar_t));
     assert(archive != NULL);
 
     /* make some sanity checks first */
@@ -405,7 +405,7 @@ amar_new_attr(
     g_assert(attrid >= AMAR_ATTR_APP_START);
     g_assert(g_hash_table_lookup(file->attributes, &attrid_gint) == NULL);
 
-    attribute = malloc(SIZEOF(amar_attr_t));
+    attribute = malloc(sizeof(amar_attr_t));
     assert(attribute != NULL);
     attribute->file = file;
     attribute->attrid = attrid;

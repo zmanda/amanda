@@ -1278,7 +1278,7 @@ start_index(
     size_t just_written;
 
     do {
-	bytes_read = read(0, buffer, SIZEOF(buffer));
+	bytes_read = read(0, buffer, sizeof(buffer));
     } while ((bytes_read < 0) && ((errno == EINTR) || (errno == EAGAIN)));
 
     if (bytes_read < 0) {

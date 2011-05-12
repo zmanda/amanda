@@ -739,7 +739,7 @@ bad_nak:
 	    while((p = strchr(tok, ';')) != NULL) {
 		*p++ = '\0';
 		if(strncmp_const(tok, "features=") == 0) {
-		    tok += SIZEOF("features=") - 1;
+		    tok += sizeof("features=") - 1;
 		    am_release_feature_set(their_features);
 		    if((their_features = am_string_to_feature(tok)) == NULL) {
 			errstr = newvstrallocf(errstr,

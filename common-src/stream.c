@@ -164,7 +164,7 @@ out:
 
     /* find out what port was actually used */
 
-    len = SIZEOF(server);
+    len = sizeof(server);
     if(getsockname(server_socket, (struct sockaddr *)&server, &len) == -1) {
 	save_errno = errno;
 	g_debug(_("stream_server: getsockname() failed: %s"),

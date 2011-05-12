@@ -123,7 +123,7 @@ local_connect(
 	(*fn)(arg, &rh->sech, S_ERROR);
 	return;
     }
-    myhostname[SIZEOF(myhostname)-1] = '\0';
+    myhostname[sizeof(myhostname)-1] = '\0';
 
     if (strcmp(hostname, myhostname) != 0 &&
 	match("^localhost(\\.localdomain)?$", hostname) == 0) {
@@ -216,8 +216,8 @@ runlocal(
     }
 #endif
 
-    memset(rpipe, -1, SIZEOF(rpipe));
-    memset(wpipe, -1, SIZEOF(wpipe));
+    memset(rpipe, -1, sizeof(rpipe));
+    memset(wpipe, -1, sizeof(wpipe));
     if (pipe(rpipe) < 0 || pipe(wpipe) < 0) {
 	rc->errmsg = newvstrallocf(rc->errmsg, _("pipe: %s"), strerror(errno));
 	return (-1);

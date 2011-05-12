@@ -41,7 +41,7 @@ pipespawn(
      * Create the argument vector.
      */
     arglist_start(ap, stderrfd);
-    argv = (char **)alloc((argc + 1) * SIZEOF(*argv));
+    argv = (char **)alloc((argc + 1) * sizeof(*argv));
     i = 0;
     while((argv[i] = arglist_val(ap, char *)) != NULL) {
         if (argv[i] != skip_argument) {
@@ -101,10 +101,10 @@ pipespawnv_passwd(
 	passwdvar = *my_argv++;
 	passwdfd  = (int *)*my_argv++;
     }
-    memset(inpipe, -1, SIZEOF(inpipe));
-    memset(outpipe, -1, SIZEOF(outpipe));
-    memset(errpipe, -1, SIZEOF(errpipe));
-    memset(passwdpipe, -1, SIZEOF(passwdpipe));
+    memset(inpipe, -1, sizeof(inpipe));
+    memset(outpipe, -1, sizeof(outpipe));
+    memset(errpipe, -1, sizeof(errpipe));
+    memset(passwdpipe, -1, sizeof(passwdpipe));
     argc = 0;
 
     cmdline = stralloc(prog);
@@ -221,8 +221,8 @@ pipespawnv_passwd(
 	if ((pipedef & PASSWD_PIPE) != 0) {
 	    for (i = 0; env[i] != NULL; i++)
 		(void)i; /* make lint happy and do nothing */	
-	    newenv = (char **)alloc((i + 1 + 1) * SIZEOF(*newenv));
-	    g_snprintf(number, SIZEOF(number), "%d", passwdpipe[0]);
+	    newenv = (char **)alloc((i + 1 + 1) * sizeof(*newenv));
+	    g_snprintf(number, sizeof(number), "%d", passwdpipe[0]);
 	    newenv[0] = vstralloc(passwdvar, "=", number, NULL);
 	    for(i = 0; env[i] != NULL; i++)
 	    	newenv[i + 1] = env[i];

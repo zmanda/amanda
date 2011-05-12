@@ -427,7 +427,7 @@ tcpm_send_token(
     int			save_errno;
     time_t		logtime;
 
-    assert(SIZEOF(netlength) == 4);
+    assert(sizeof(netlength) == 4);
 
     logtime = time(NULL);
     if (logtime > rc->logstamp + 10) {
@@ -445,11 +445,11 @@ tcpm_send_token(
      */
     netlength = htonl(len);
     iov[0].iov_base = (void *)&netlength;
-    iov[0].iov_len = SIZEOF(netlength);
+    iov[0].iov_len = sizeof(netlength);
 
     nethandle = htonl((guint32)handle);
     iov[1].iov_base = (void *)&nethandle;
-    iov[1].iov_len = SIZEOF(nethandle);
+    iov[1].iov_len = sizeof(nethandle);
 
     encbuf = (char *)buf;
     encsize = len;
@@ -505,10 +505,10 @@ tcpm_recv_token(
 {
     ssize_t     rval;
 
-    assert(SIZEOF(rc->netint) == 8);
-    if (rc->size_header_read < (ssize_t)SIZEOF(rc->netint)) {
+    assert(sizeof(rc->netint) == 8);
+    if (rc->size_header_read < (ssize_t)sizeof(rc->netint)) {
 	rval = read(fd, ((char *)&rc->netint) + rc->size_header_read,
-		        SIZEOF(rc->netint) - rc->size_header_read);
+		        sizeof(rc->netint) - rc->size_header_read);
 	if (rval == -1) {
 	    if (errmsg)
 		*errmsg = newvstrallocf(*errmsg, _("recv error: %s"),
@@ -521,7 +521,7 @@ tcpm_recv_token(
 	    *errmsg = newvstrallocf(*errmsg, _("SOCKET_EOF"));
 	    auth_debug(1, _("tcpm_recv_token: A return(0)\n"));
 	    return(0);
-	} else if (rval < (ssize_t)SIZEOF(rc->netint) - rc->size_header_read) {
+	} else if (rval < (ssize_t)sizeof(rc->netint) - rc->size_header_read) {
 	    rc->size_header_read += rval;
 	    return(-2);
 	}
@@ -1505,8 +1505,8 @@ sec_tcp_conn_get(
     rc->ev_read = NULL;
     rc->toclose = 0;
     rc->donotclose = 0;
-    strncpy(rc->hostname, hostname, SIZEOF(rc->hostname) - 1);
-    rc->hostname[SIZEOF(rc->hostname) - 1] = '\0';
+    strncpy(rc->hostname, hostname, sizeof(rc->hostname) - 1);
+    rc->hostname[sizeof(rc->hostname) - 1] = '\0';
     rc->errmsg = NULL;
     rc->refcnt = 1;
     rc->handle = -1;
@@ -1894,7 +1894,7 @@ pkthdr2str(
     assert(rh != NULL);
     assert(pkt != NULL);
 
-    g_snprintf(retbuf, SIZEOF(retbuf), _("Amanda %d.%d %s HANDLE %s SEQ %d\n"),
+    g_snprintf(retbuf, sizeof(retbuf), _("Amanda %d.%d %s HANDLE %s SEQ %d\n"),
 	VERSION_MAJOR, VERSION_MINOR, pkt_type2str(pkt->type),
 	rh->proto_handle, rh->sequence);
 

@@ -85,7 +85,7 @@ walltime_str(
     char *s;
 
     /* tv_sec/tv_usec are longs on some systems */
-    g_snprintf(str[n], SIZEOF(str[n]), "%lu.%03lu",
+    g_snprintf(str[n], sizeof(str[n]), "%lu.%03lu",
 	     (unsigned long)t.tv_sec,
 	     (unsigned long)t.tv_usec/1000);
     s = str[n++];

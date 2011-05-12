@@ -304,8 +304,8 @@ runssh(
     char *xssh_keys = (char *)ssh_keys;
     char *xclient_port = (char *)client_port;
 
-    memset(rpipe, -1, SIZEOF(rpipe));
-    memset(wpipe, -1, SIZEOF(wpipe));
+    memset(rpipe, -1, sizeof(rpipe));
+    memset(wpipe, -1, sizeof(wpipe));
     if (pipe(rpipe) < 0 || pipe(wpipe) < 0) {
 	rc->errmsg = newvstrallocf(rc->errmsg, _("pipe: %s"), strerror(errno));
 	return (-1);

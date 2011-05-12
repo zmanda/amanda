@@ -314,18 +314,11 @@ extern int errno;
 #endif
 
 /*
- * Some compilers have int for type of sizeof() some use size_t.
- * size_t is the one we want...
- */
-#define	SIZEOF(x)	(size_t)sizeof(x)
-
-
-/*
  * Some older BSD systems don't have these FD_ macros, so if not, provide them.
  */
 #if !defined(FD_SET) || defined(LINT) || defined(__lint)
 #  undef FD_SETSIZE
-#  define FD_SETSIZE      (int)(SIZEOF(fd_set) * CHAR_BIT)
+#  define FD_SETSIZE      (int)(sizeof(fd_set) * CHAR_BIT)
 
 #  undef FD_SET
 #  define FD_SET(n, p)    (((fd_set *)(p))->fds_bits[(n)/WORD_BIT] |= (int)((1 << ((n) % WORD_BIT))))
@@ -337,11 +330,11 @@ extern int errno;
 #  define FD_ISSET(n, p)  (((fd_set *)(p))->fds_bits[(n)/WORD_BIT] & (1 << ((n) % WORD_BIT)))
 
 #  undef FD_ZERO
-#  define FD_ZERO(p)      memset((p), 0, SIZEOF(*(p)))
+#  define FD_ZERO(p)      memset((p), 0, sizeof(*(p)))
 #endif
 
 #ifndef FD_COPY
-#  define FD_COPY(p, q)   memcpy((q), (p), SIZEOF(*(p)))
+#  define FD_COPY(p, q)   memcpy((q), (p), sizeof(*(p)))
 #endif
 
 
@@ -484,7 +477,7 @@ time_t	unctime(char *timestr);
 /*
  * Return the number of elements in an array.
  */
-#define am_countof(a)	(int)(SIZEOF(a) / SIZEOF((a)[0]))
+#define am_countof(a)	(int)(sizeof(a) / sizeof((a)[0]))
 
 /*
  * min/max.  Don't do something like

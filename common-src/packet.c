@@ -45,7 +45,7 @@ static const struct {
     { "ACK", P_ACK },
     { "NAK", P_NAK }
 };
-#define	NPKTYPES	(int)(SIZEOF(pktypes) / SIZEOF(pktypes[0]))
+#define	NPKTYPES	(int)(sizeof(pktypes) / sizeof(pktypes[0]))
 
 /*
  * Initialize a packet

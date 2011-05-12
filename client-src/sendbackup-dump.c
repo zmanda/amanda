@@ -146,7 +146,7 @@ start_backup(
     level_t *alevel = (level_t *)dle->levellist->data;
     int      level  = alevel->level;
 
-    g_snprintf(level_str, SIZEOF(level_str), "%d", level);
+    g_snprintf(level_str, sizeof(level_str), "%d", level);
 
     qdisk = quote_string(dle->disk);
     dbprintf(_("start: %s:%s lev %d\n"), host, qdisk, level);

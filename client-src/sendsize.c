@@ -675,8 +675,8 @@ dle_add_diskest(
 	}
     }
 
-    newp = (disk_estimates_t *) alloc(SIZEOF(disk_estimates_t));
-    memset(newp, 0, SIZEOF(*newp));
+    newp = (disk_estimates_t *) alloc(sizeof(disk_estimates_t));
+    memset(newp, 0, sizeof(*newp));
     newp->next = est_list;
     est_list = newp;
     newp->qamname = quote_string(dle->disk);
@@ -1089,10 +1089,10 @@ generic_calc_estimates(
 
     for(level = 0; level < DUMP_LEVELS; level++) {
 	if(est->est[level].needestimate) {
-	    g_snprintf(number, SIZEOF(number), "%d", level);
+	    g_snprintf(number, sizeof(number), "%d", level);
 	    g_ptr_array_add(argv_ptr, stralloc(number));
 	    dbprintf(" %s", number);
-	    g_snprintf(number, SIZEOF(number),
+	    g_snprintf(number, sizeof(number),
 			"%ld", (long)est->est[level].dumpsince);
 	    g_ptr_array_add(argv_ptr, stralloc(number));
 	    dbprintf(" %s", number);
@@ -1393,7 +1393,7 @@ getsize_dump(
     if (level > 9)
 	return -2; /* planner will not even consider this level */
 
-    g_snprintf(level_str, SIZEOF(level_str), "%d", level);
+    g_snprintf(level_str, sizeof(level_str), "%d", level);
 
     qdisk = quote_string(dle->disk);
     device = amname_to_devname(dle->device);
@@ -2114,7 +2114,7 @@ getsize_gnutar(
 			     NULL);
 	amfree(sdisk);
 
-	g_snprintf(number, SIZEOF(number), "%d", level);
+	g_snprintf(number, sizeof(number), "%d", level);
 	incrname = vstralloc(basename, "_", number, ".new", NULL);
 	unlink(incrname);
 
@@ -2127,7 +2127,7 @@ getsize_gnutar(
 	infd = -1;
 	while (infd == -1) {
 	    if (--baselevel >= 0) {
-		g_snprintf(number, SIZEOF(number), "%d", baselevel);
+		g_snprintf(number, sizeof(number), "%d", baselevel);
 		inputname = newvstralloc(inputname,
 					 basename, "_", number, NULL);
 	    } else {
@@ -2155,7 +2155,7 @@ getsize_gnutar(
 	    goto common_exit;
 	}
 
-	while ((nb = read(infd, &buf, SIZEOF(buf))) > 0) {
+	while ((nb = read(infd, &buf, sizeof(buf))) > 0) {
 	    if (full_write(outfd, &buf, (size_t)nb) < (size_t)nb) {
 		*errmsg = vstrallocf(_("writing to %s: %s"),
 				     incrname, strerror(errno));
@@ -2189,7 +2189,7 @@ getsize_gnutar(
     }
 
     gmtm = gmtime(&dumpsince);
-    g_snprintf(dumptimestr, SIZEOF(dumptimestr),
+    g_snprintf(dumptimestr, sizeof(dumptimestr),
 		"%04d-%02d-%02d %2d:%02d:%02d GMT",
 		gmtm->tm_year + 1900, gmtm->tm_mon+1, gmtm->tm_mday,
 		gmtm->tm_hour, gmtm->tm_min, gmtm->tm_sec);
@@ -2419,7 +2419,7 @@ getsize_application_api(
     }
     for (j=0; j < nb_level; j++) {
 	g_ptr_array_add(argv_ptr, stralloc("--level"));
-	g_snprintf(levelstr,SIZEOF(levelstr),"%d", levels[j]);
+	g_snprintf(levelstr, sizeof(levelstr), "%d", levels[j]);
 	g_ptr_array_add(argv_ptr, stralloc(levelstr));
     }
     /* find the first in ES_CLIENT and ES_CALCSIZE */

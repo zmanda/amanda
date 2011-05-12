@@ -89,7 +89,7 @@ get_name(
     if(n == 0)
 	number[0] = '\0';
     else
-	g_snprintf(number, SIZEOF(number), "%03d", n - 1);
+	g_snprintf(number, sizeof(number), "%03d", n - 1);
 	
     filename = vstralloc(get_pname(), ".", diskname, ".", ts, number, ".",
 			 exin, NULL);
@@ -535,7 +535,7 @@ parse_options(
 		}
 	    }
 	    amfree(dle->compprog);
-	    dle->compprog = stralloc(tok + SIZEOF("srvcomp-cust=") -1);
+	    dle->compprog = stralloc(tok + sizeof("srvcomp-cust=") -1);
 	    dle->compress = COMP_SERVER_CUST;
 	}
 	else if (BSTRNCMP(tok, "comp-cust=") == 0) {
@@ -546,7 +546,7 @@ parse_options(
 		}
 	    }
 	    amfree(dle->compprog);
-	    dle->compprog = stralloc(tok + SIZEOF("comp-cust=") -1);
+	    dle->compprog = stralloc(tok + sizeof("comp-cust=") -1);
 	    dle->compress = COMP_CUST;
 	    /* parse encryption options */
 	} 
@@ -558,7 +558,7 @@ parse_options(
 		}
 	    }
 	    amfree(dle->srv_encrypt);
-	    dle->srv_encrypt = stralloc(tok + SIZEOF("encrypt-serv-cust=") -1);
+	    dle->srv_encrypt = stralloc(tok + sizeof("encrypt-serv-cust=") -1);
 	    dle->encrypt = ENCRYPT_SERV_CUST;
 	} 
 	else if (BSTRNCMP(tok, "encrypt-cust=") == 0) {
@@ -569,16 +569,16 @@ parse_options(
 		}
 	    }
 	    amfree(dle->clnt_encrypt);
-	    dle->clnt_encrypt= stralloc(tok + SIZEOF("encrypt-cust=") -1);
+	    dle->clnt_encrypt= stralloc(tok + sizeof("encrypt-cust=") -1);
 	    dle->encrypt = ENCRYPT_CUST;
 	} 
 	else if (BSTRNCMP(tok, "server-decrypt-option=") == 0) {
 	  amfree(dle->srv_decrypt_opt);
-	  dle->srv_decrypt_opt = stralloc(tok + SIZEOF("server-decrypt-option=") -1);
+	  dle->srv_decrypt_opt = stralloc(tok + sizeof("server-decrypt-option=") -1);
 	}
 	else if (BSTRNCMP(tok, "client-decrypt-option=") == 0) {
 	  amfree(dle->clnt_decrypt_opt);
-	  dle->clnt_decrypt_opt = stralloc(tok + SIZEOF("client-decrypt-option=") -1);
+	  dle->clnt_decrypt_opt = stralloc(tok + sizeof("client-decrypt-option=") -1);
 	}
 	else if (BSTRNCMP(tok, "no-record") == 0) {
 	    if (dle->record != 1) {
@@ -1187,7 +1187,7 @@ run_client_script(
 	for (levellist=dle->levellist; levellist; levellist=levellist->next) {
 	    level_t *alevel = (level_t *)levellist->data;
 	    g_ptr_array_add(argv_ptr, stralloc("--level"));
-	    g_snprintf(number, SIZEOF(number), "%d", alevel->level);
+	    g_snprintf(number, sizeof(number), "%d", alevel->level);
 	    g_ptr_array_add(argv_ptr, stralloc(number));
 	}
     }
@@ -1503,9 +1503,9 @@ run_calcsize(
 	    if (dumpsince < amdp->dates[i])
 		dumpsince = amdp->dates[i];
 	}
-	g_snprintf(number, SIZEOF(number), "%d", level);
+	g_snprintf(number, sizeof(number), "%d", level);
 	g_ptr_array_add(argv_ptr, stralloc(number));
-	g_snprintf(number, SIZEOF(number), "%d", dumpsince);
+	g_snprintf(number, sizeof(number), "%d", dumpsince);
 	g_ptr_array_add(argv_ptr, stralloc(number));
     }
 

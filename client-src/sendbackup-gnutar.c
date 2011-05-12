@@ -236,7 +236,7 @@ start_backup(
 			     NULL);
 	amfree(sdisk);
 
-	g_snprintf(number, SIZEOF(number), "%d", level);
+	g_snprintf(number, sizeof(number), "%d", level);
 	incrname = vstralloc(basename, "_", number, ".new", NULL);
 	unlink(incrname);
 
@@ -249,7 +249,7 @@ start_backup(
 	infd = -1;
 	while (infd == -1) {
 	    if (--baselevel >= 0) {
-		g_snprintf(number, SIZEOF(number), "%d", baselevel);
+		g_snprintf(number, sizeof(number), "%d", baselevel);
 		inputname = newvstralloc(inputname,
 					 basename, "_", number, NULL);
 	    } else {
@@ -278,7 +278,7 @@ start_backup(
 	    /*NOTREACHED*/
 	}
 
-	while ((nb = read(infd, &buf, SIZEOF(buf))) > 0) {
+	while ((nb = read(infd, &buf, sizeof(buf))) > 0) {
 	    if (full_write(outfd, &buf, (size_t)nb) < (size_t)nb) {
 		error(_("error [writing to '%s': %s]"), incrname,
 		       strerror(errno));
@@ -335,7 +335,7 @@ start_backup(
 	free_amandates();
 
 	gmtm = gmtime(&prev_dumptime);
-	g_snprintf(dumptimestr, SIZEOF(dumptimestr),
+	g_snprintf(dumptimestr, sizeof(dumptimestr),
 		    "%04d-%02d-%02d %2d:%02d:%02d GMT",
 		    gmtm->tm_year + 1900, gmtm->tm_mon+1, gmtm->tm_mday,
 		    gmtm->tm_hour, gmtm->tm_min, gmtm->tm_sec);

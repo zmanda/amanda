@@ -91,7 +91,7 @@ find_result_t * find_dump(disklist_t* diskqp) {
 	for(seq = 0; 1; seq++) {
 	    char seq_str[NUM_STR_SIZE];
 
-	    g_snprintf(seq_str, SIZEOF(seq_str), "%u", seq);
+	    g_snprintf(seq_str, sizeof(seq_str), "%u", seq);
 	    logfile = newvstralloc(logfile,
 			conf_logdir, "/log.", tp->datestamp, ".", seq_str, NULL);
 	    if(access(logfile, R_OK) != 0) break;
@@ -146,7 +146,7 @@ find_log(void)
     conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     maxtape = lookup_nb_tape();
 
-    output_find_log = alloc((maxtape*5+10) * SIZEOF(char *));
+    output_find_log = alloc((maxtape*5+10) * sizeof(char *));
     current_log = output_find_log;
 
     for(tape = 1; tape <= maxtape; tape++) {
@@ -163,7 +163,7 @@ find_log(void)
 	for(seq = 0; 1; seq++) {
 	    char seq_str[NUM_STR_SIZE];
 
-	    g_snprintf(seq_str, SIZEOF(seq_str), "%u", seq);
+	    g_snprintf(seq_str, sizeof(seq_str), "%u", seq);
 	    logfile = newvstralloc(logfile, "log.", tp->datestamp, ".", seq_str, NULL);
 	    pathlogfile = newvstralloc(pathlogfile, conf_logdir, "/", logfile, NULL);
 	    if (access(pathlogfile, R_OK) != 0) break;
@@ -374,7 +374,7 @@ sort_find_result(
     }
 
     /* put the list in an array */
-    array_find_result=alloc(nb_result * SIZEOF(find_result_t *));
+    array_find_result=alloc(nb_result * sizeof(find_result_t *));
     for(output_find_result=*output_find,no_result=0;
 	output_find_result;
 	output_find_result=output_find_result->next,no_result++) {
@@ -382,7 +382,7 @@ sort_find_result(
     }
 
     /* sort the array */
-    qsort(array_find_result,nb_result,SIZEOF(find_result_t *),
+    qsort(array_find_result,nb_result,sizeof(find_result_t *),
 	  find_compare);
 
     /* put the sorted result in the list */
@@ -556,7 +556,7 @@ find_nicedate(
     day   = numdate % 100;
 
     if(strlen(datestamp) <= 8) {
-	g_snprintf(nice, SIZEOF(nice), "%4d-%02d-%02d",
+	g_snprintf(nice, sizeof(nice), "%4d-%02d-%02d",
 		year, month, day);
     }
     else {
@@ -567,7 +567,7 @@ find_nicedate(
 	minutes = (numtime / 100) % 100;
 	seconds = numtime % 100;
 
-	g_snprintf(nice, SIZEOF(nice), "%4d-%02d-%02d %02d:%02d:%02d",
+	g_snprintf(nice, sizeof(nice), "%4d-%02d-%02d %02d:%02d:%02d",
 		year, month, day, hours, minutes, seconds);
     }
 
@@ -1223,7 +1223,7 @@ dumps_match(
 	cur_result;
 	cur_result=cur_result->next) {
 	char level_str[NUM_STR_SIZE];
-	g_snprintf(level_str, SIZEOF(level_str), "%d", cur_result->level);
+	g_snprintf(level_str, sizeof(level_str), "%d", cur_result->level);
 	if((!hostname || *hostname == '\0' || match_host(hostname, cur_result->hostname)) &&
 	   (!diskname || *diskname == '\0' || match_disk(diskname, cur_result->diskname)) &&
 	   (!datestamp || *datestamp== '\0' || match_datestamp(datestamp, cur_result->timestamp)) &&
@@ -1232,7 +1232,7 @@ dumps_match(
 	   (!ok || !strcmp(cur_result->dump_status, "OK"))){
 
 	    find_result_t *curmatch = g_new0(find_result_t, 1);
-	    memcpy(curmatch, cur_result, SIZEOF(find_result_t));
+	    memcpy(curmatch, cur_result, sizeof(find_result_t));
 
 	    curmatch->timestamp = cur_result->timestamp;
 	    curmatch->write_timestamp = cur_result->write_timestamp;
@@ -1282,7 +1282,7 @@ dumps_match_dumpspecs(
 	char level_str[NUM_STR_SIZE];
 	char *zeropad_ts = NULL;
 	char *zeropad_w_ts = NULL;
-	g_snprintf(level_str, SIZEOF(level_str), "%d", cur_result->level);
+	g_snprintf(level_str, sizeof(level_str), "%d", cur_result->level);
 
 	/* get the timestamp padded to full width */
 	if (strlen(cur_result->timestamp) < 14) {
@@ -1310,8 +1310,8 @@ dumps_match_dumpspecs(
 	       (!ok || !strcmp(cur_result->status, "OK")) &&
 	       (!ok || !strcmp(cur_result->dump_status, "OK"))) {
 
-		find_result_t *curmatch = alloc(SIZEOF(find_result_t));
-		memcpy(curmatch, cur_result, SIZEOF(find_result_t));
+		find_result_t *curmatch = alloc(sizeof(find_result_t));
+		memcpy(curmatch, cur_result, sizeof(find_result_t));
 
 		curmatch->timestamp = cur_result->timestamp;
 		curmatch->write_timestamp = cur_result->write_timestamp;

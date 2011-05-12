@@ -552,7 +552,7 @@ char *check_security_fd(int fd, char *userstr)
     char *errstr;
 
     /* get the remote address */
-    i = SIZEOF(addr);
+    i = sizeof(addr);
     if (getpeername(fd, (struct sockaddr *)&addr, &i) == -1) {
 	return g_strdup_printf("getpeername: %s", strerror(errno));
     }

@@ -135,7 +135,7 @@ main(
 
     memset(buffer, 0, sizeof(buffer));
 
-    g_snprintf(pid_str, SIZEOF(pid_str), "%ld", (long)getpid());
+    g_snprintf(pid_str, sizeof(pid_str), "%ld", (long)getpid());
 
     add_amanda_log_handler(amanda_log_stderr);
 
@@ -372,7 +372,7 @@ main(
 	    /*NOTREACHED*/
 	}
 
-	while((size = read_fully(tempfd, buffer, SIZEOF(buffer), NULL)) > 0) {
+	while((size = read_fully(tempfd, buffer, sizeof(buffer), NULL)) > 0) {
 	    if (full_write(mainfd, buffer, size) < size) {
 		error(_("write main file: %s"), strerror(errno));
 		/*NOTREACHED*/
@@ -478,7 +478,7 @@ main(
 	 * cases, the pipe will break and we will exit out of the loop.
 	 */
 	signal(SIGPIPE, SIG_IGN);
-	while((r = read_fully(mainfd, buffer, SIZEOF(buffer), NULL)) > 0) {
+	while((r = read_fully(mainfd, buffer, sizeof(buffer), NULL)) > 0) {
 	    if((w = full_write(mailfd, buffer, r)) != r) {
 		if(errno == EPIPE) {
 		    strappend(extra_info, _("EPIPE writing to mail process\n"));
@@ -1722,7 +1722,7 @@ start_host(
 	    g_fprintf(outf, _("Client might be of a very old version\n"));
 	}
 
-	g_snprintf(number, SIZEOF(number), "%d", hostp->maxdumps);
+	g_snprintf(number, sizeof(number), "%d", hostp->maxdumps);
 	req = vstralloc("SERVICE ", "selfcheck", "\n",
 			"OPTIONS ",
 			has_features ? "features=" : "",
@@ -2154,7 +2154,7 @@ handle_result(
 		char *u = strchr(t, ';');
 		if (u)
 		   *u = '\0';
-		t += SIZEOF("features=")-1;
+		t += sizeof("features=")-1;
 		am_release_feature_set(hostp->features);
 		if((hostp->features = am_string_to_feature(t)) == NULL) {
 		    g_fprintf(outf, _("ERROR: %s: bad features value: '%s'\n"),

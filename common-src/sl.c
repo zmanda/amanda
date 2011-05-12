@@ -47,7 +47,7 @@ sl_t *
 new_sl(void)
 {
     sl_t *sl;
-    sl = alloc(SIZEOF(sl_t));
+    sl = alloc(sizeof(sl_t));
     init_sl(sl);
     return(sl);
 }
@@ -63,7 +63,7 @@ insert_sl(
     if(!sl) {
 	sl = new_sl();
     }
-    a = alloc(SIZEOF(sle_t));
+    a = alloc(sizeof(sle_t));
     a->name = stralloc(name);
     a->next = sl->first;
     a->prev = NULL;
@@ -87,7 +87,7 @@ append_sl(
     if(!sl) {
 	sl = new_sl();
     }
-    a = alloc(SIZEOF(sle_t));
+    a = alloc(sizeof(sle_t));
     a->name = stralloc(name);
     a->prev = sl->last;
     a->next = NULL;
@@ -121,7 +121,7 @@ insert_sort_sl(
     if(b == sl->first) return insert_sl(sl, name);
     if(b == NULL)      return append_sl(sl, name);
 
-    a = alloc(SIZEOF(sle_t));
+    a = alloc(sizeof(sle_t));
     a->name = stralloc(name);
 
     /* insert before b */

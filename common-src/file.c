@@ -528,11 +528,11 @@ areads_getbuf(
 
     assert(fd >= 0);
     if(fd >= areads_bufcount) {
-	size = (size_t)(fd + 1) * SIZEOF(*areads_buffer);
+	size = (size_t)(fd + 1) * sizeof(*areads_buffer);
 	new = (struct areads_buffer *) debug_alloc(s, l, size);
 	memset((char *)new, 0, size);
 	if(areads_buffer) {
-	    size = areads_bufcount * SIZEOF(*areads_buffer);
+	    size = areads_bufcount * sizeof(*areads_buffer);
 	    memcpy(new, areads_buffer, size);
 	}
 	amfree(areads_buffer);

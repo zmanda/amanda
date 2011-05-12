@@ -125,7 +125,7 @@ rsh_connect(
 
     auth_debug(1, _("rsh: rsh_connect: %s\n"), hostname);
 
-    rh = alloc(SIZEOF(*rh));
+    rh = alloc(sizeof(*rh));
     security_handleinit(&rh->sech, &rsh_security_driver);
     rh->hostname = NULL;
     rh->rs = NULL;
@@ -202,8 +202,8 @@ runrsh(
     char *xamandad_path = (char *)amandad_path;
     char *xclient_username = (char *)client_username;
 
-    memset(rpipe, -1, SIZEOF(rpipe));
-    memset(wpipe, -1, SIZEOF(wpipe));
+    memset(rpipe, -1, sizeof(rpipe));
+    memset(wpipe, -1, sizeof(wpipe));
     if (pipe(rpipe) < 0 || pipe(wpipe) < 0) {
 	rc->errmsg = newvstrallocf(rc->errmsg, _("pipe: %s"), strerror(errno));
 	return (-1);

@@ -147,7 +147,7 @@ protocol_sendreq(
 {
     proto_t *p;
 
-    p = alloc(SIZEOF(proto_t));
+    p = alloc(sizeof(proto_t));
     p->state = s_sendreq;
     p->hostname = stralloc(hostname);
     p->security_driver = security_driver;

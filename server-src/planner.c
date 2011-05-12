@@ -803,7 +803,7 @@ setup_estimate(
 
     /* setup working data struct for disk */
 
-    ep = alloc(SIZEOF(est_t));
+    ep = alloc(sizeof(est_t));
     dp->up = (void *) ep;
     ep->state = DISK_READY;
     ep->dump_priority = dp->priority;
@@ -1445,7 +1445,7 @@ static void getsize(
 	int has_config   = am_has_feature(hostp->features,
 					  fe_req_options_config);
 
-	g_snprintf(number, SIZEOF(number), "%d", hostp->maxdumps);
+	g_snprintf(number, sizeof(number), "%d", hostp->maxdumps);
 	req = vstralloc("SERVICE ", "sendsize", "\n",
 			"OPTIONS ",
 			has_features ? "features=" : "",
@@ -1563,7 +1563,7 @@ static void getsize(
 			char *server;
 			int lev = est(dp)->estimate[i].level;
 			if (lev == -1) break;
-			g_snprintf(level, SIZEOF(level), "%d", lev);
+			g_snprintf(level, sizeof(level), "%d", lev);
 			if (am_has_feature(hostp->features, fe_xml_level_server) &&
 			    server_can_do_estimate(dp, &info, lev)) {
 			    server = "<server>YES</server>";
@@ -1574,7 +1574,7 @@ static void getsize(
 				   level, server,
 				   "</level>\n", NULL);
 		    }
-		    g_snprintf(spindle, SIZEOF(spindle), "%d", dp->spindle);
+		    g_snprintf(spindle, sizeof(spindle), "%d", dp->spindle);
 		    spindlestr = vstralloc("  <spindle>",
 					   spindle,
 					   "</spindle>\n", NULL);
@@ -1635,8 +1635,8 @@ static void getsize(
 
 			if(lev == -1) break;
 
-			g_snprintf(level, SIZEOF(level), "%d", lev);
-			g_snprintf(spindle, SIZEOF(spindle), "%d", dp->spindle);
+			g_snprintf(level, sizeof(level), "%d", lev);
+			g_snprintf(spindle, sizeof(spindle), "%d", dp->spindle);
 			if (am_has_feature(hostp->features,
 					   fe_sendsize_req_options)){
 			    exclude1 = " OPTIONS |";
@@ -1870,7 +1870,7 @@ static void handle_result(
 		char *u = strchr(t, ';');
 		if (u)
 		   *u = '\0';
-		t += SIZEOF("features=")-1;
+		t += sizeof("features=")-1;
 		am_release_feature_set(hostp->features);
 		if((hostp->features = am_string_to_feature(t)) == NULL) {
 		    errbuf = vstrallocf(hostp->hostname,
@@ -2786,7 +2786,7 @@ arglist_function1(
 	total_lev0 -= (double) est(dp)->dump_est->csize;
     }
 
-    bi = alloc(SIZEOF(bi_t));
+    bi = alloc(sizeof(bi_t));
     bi->next = NULL;
     bi->prev = biq.tail;
     if(biq.tail == NULL)
@@ -2801,7 +2801,7 @@ arglist_function1(
     bi->nsize = est(dp)->dump_est->nsize;
     bi->csize = est(dp)->dump_est->csize;
 
-    g_snprintf(level_str, SIZEOF(level_str), "%d", est(dp)->dump_est->level);
+    g_snprintf(level_str, sizeof(level_str), "%d", est(dp)->dump_est->level);
     bi->errstr = vstralloc(dp->host->hostname,
 			   " ", qname,
 			   " ", planner_timestamp ? planner_timestamp : "?",
@@ -2975,7 +2975,7 @@ static int promote_hills(void)
     if(my_dumpcycle > 10000) my_dumpcycle = 10000;
 
     sp = (struct balance_stats *)
-	alloc(SIZEOF(struct balance_stats) * my_dumpcycle);
+	alloc(sizeof(struct balance_stats) * my_dumpcycle);
 
     for(days = 0; days < my_dumpcycle; days++) {
 	sp[days].disks = 0;
@@ -3139,9 +3139,9 @@ static void output_scheduleline(
 	degr_str = vstralloc(" ", degr_mesg, NULL);
 	amfree(degr_mesg);
     }
-    g_snprintf(dump_priority_str, SIZEOF(dump_priority_str),
+    g_snprintf(dump_priority_str, sizeof(dump_priority_str),
 		"%d", ep->dump_priority);
-    g_snprintf(dump_level_str, SIZEOF(dump_level_str),
+    g_snprintf(dump_level_str, sizeof(dump_level_str),
 		"%d", ep->dump_est->level);
     g_snprintf(dump_nsize_str, sizeof(dump_nsize_str),
 		"%lld", (long long)ep->dump_est->nsize);
