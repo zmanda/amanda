@@ -1,3 +1,6 @@
+2011-05-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amdump.pl: s/Catched/Caught/
+
 2011-05-11  Francis Galiegue <fgaliegue@gmail.com>
 	* Many files (19): get rid of custom array size calculations, use
 	  GLib's G_N_ELEMENTS() instead; some minor cleanups along the way.
