@@ -383,7 +383,7 @@ run_server_script(
 	g_ptr_array_add(argv_ptr, stralloc(dp->device));
     }
     if (level >= 0) {
-	g_snprintf(level_number, SIZEOF(level_number), "%d", level);
+	g_snprintf(level_number, sizeof(level_number), "%d", level);
 	g_ptr_array_add(argv_ptr, stralloc("--level"));
 	g_ptr_array_add(argv_ptr, stralloc(level_number));
     }

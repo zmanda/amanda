@@ -323,9 +323,9 @@ main(
 
 		runtime = stopclock();
                 rt = g_timeval_to_double(runtime);
-		g_snprintf(kb_str, SIZEOF(kb_str), "%lld",
+		g_snprintf(kb_str, sizeof(kb_str), "%lld",
 			 (long long)(dumpsize - (off_t)headersize));
-		g_snprintf(kps_str, SIZEOF(kps_str), "%3.1lf",
+		g_snprintf(kps_str, sizeof(kps_str), "%3.1lf",
 				isnormal(rt) ? (double)dumpsize / rt : 0.0);
 		errstr = newvstrallocf(errstr, "sec %s kb %s kps %s",
 				walltime_str(runtime), kb_str, kps_str);
@@ -645,7 +645,7 @@ databuf_init(
     db->split_size = (db->chunk_size > use) ? use : db->chunk_size;
     db->use = (use > db->split_size) ? use - db->split_size : (off_t)0;
     db->datain = db->dataout = db->buf;
-    db->datalimit = db->buf + SIZEOF(db->buf);
+    db->datalimit = db->buf + sizeof(db->buf);
 }
 
 
@@ -779,7 +779,7 @@ databuf_flush(
 	 * First, open the new chunk file, and give it a new header
 	 * that has no cont_filename pointer.
 	 */
-	g_snprintf(sequence, SIZEOF(sequence), "%d", db->filename_seq);
+	g_snprintf(sequence, sizeof(sequence), "%d", db->filename_seq);
 	new_filename = newvstralloc(new_filename,
 				    db->filename,
 				    ".",
@@ -859,8 +859,8 @@ databuf_flush(
 	}
 
 	file.type = save_type;
-	strncpy(file.cont_filename, new_filename, SIZEOF(file.cont_filename));
-	file.cont_filename[SIZEOF(file.cont_filename)-1] = '\0';
+	strncpy(file.cont_filename, new_filename, sizeof(file.cont_filename));
+	file.cont_filename[sizeof(file.cont_filename)-1] = '\0';
 	if(write_tapeheader(db->fd, &file)) {
 	    char * m = vstrallocf(_("write_tapeheader file \"%s\": %s"),
 			     db->filename,

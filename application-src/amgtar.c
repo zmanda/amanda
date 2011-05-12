@@ -1398,7 +1398,7 @@ amgtar_get_incrname(
 			     NULL);
 	amfree(sdisk);
 
-	snprintf(number, SIZEOF(number), "%d", level);
+	snprintf(number, sizeof(number), "%d", level);
 	incrname = vstralloc(basename, "_", number, ".new", NULL);
 	unlink(incrname);
 
@@ -1411,7 +1411,7 @@ amgtar_get_incrname(
 	infd = -1;
 	while (infd == -1) {
 	    if (--baselevel >= 0) {
-		snprintf(number, SIZEOF(number), "%d", baselevel);
+		snprintf(number, sizeof(number), "%d", baselevel);
 		inputname = newvstralloc(inputname,
 					 basename, "_", number, NULL);
 	    } else {
@@ -1449,7 +1449,7 @@ amgtar_get_incrname(
 	    exit(1);
 	}
 
-	while ((nb = read(infd, &buf, SIZEOF(buf))) > 0) {
+	while ((nb = read(infd, &buf, sizeof(buf))) > 0) {
 	    if (full_write(outfd, &buf, (size_t)nb) < (size_t)nb) {
 		errmsg = vstrallocf(_("writing to %s: %s"),
 				     incrname, strerror(errno));

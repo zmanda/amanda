@@ -82,9 +82,9 @@ prvar(
     size_t new_len;
 
     new_len = strlen(var)
-	      + SIZEOF("=\\\"")
+	      + sizeof("=\\\"")
 	      + strlen(val)
-	      + SIZEOF("\\\"")
+	      + sizeof("\\\"")
 	      + 1;
     if(new_len > buf_len) {
 	free(buf);
@@ -108,7 +108,7 @@ prundefvar(
     size_t new_len;
 
     new_len = strlen(var)
-	      + SIZEOF("=UNDEF")
+	      + sizeof("=UNDEF")
 	      + 1;
     if(new_len > buf_len) {
 	free(buf);
@@ -133,9 +133,9 @@ prnum(
     static char number[NUM_STR_SIZE];
     size_t new_len;
 
-    g_snprintf(number, SIZEOF(number), "%ld", val);
+    g_snprintf(number, sizeof(number), "%ld", val);
     new_len = strlen(var)
-	      + SIZEOF("=")
+	      + sizeof("=")
 	      + strlen(number)
 	      + 1;
     if(new_len > buf_len) {
@@ -178,7 +178,7 @@ main(
 
     startline("build:");
     v = VERSION;
-    v_len = SIZEOF("Amanda-") + strlen(v) + 1;
+    v_len = sizeof("Amanda-") + strlen(v) + 1;
     verstr = malloc(v_len);
     if (!verstr) {
 	g_fprintf(stderr, _("genversion: Not enough memory"));

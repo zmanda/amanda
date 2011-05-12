@@ -211,7 +211,7 @@ ln_lock(
 
 	/* lock the resource */
 
-	g_snprintf(pid_str, SIZEOF(pid_str), "%ld", mypid);
+	g_snprintf(pid_str, sizeof(pid_str), "%ld", mypid);
 	tlockfile = vstralloc(_lnlock_dir, "/am", res, ".", pid_str, NULL);
 
 	(void)create_lock(tlockfile, mypid);

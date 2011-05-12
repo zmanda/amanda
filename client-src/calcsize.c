@@ -505,7 +505,7 @@ push_name(
 {
     Name *newp;
 
-    newp = alloc(SIZEOF(*newp));
+    newp = alloc(sizeof(*newp));
     newp->str = stralloc(str);
 
     newp->next = name_stack;

@@ -52,7 +52,7 @@ getindexfname(
   if (date != NULL) {
     dc = date;
     pc = datebuf;
-    while (pc < datebuf + SIZEOF(datebuf)) {
+    while (pc < datebuf + sizeof(datebuf)) {
       ch = *dc++;
       *pc++ = (char)ch;
       if (ch == '\0') {
@@ -61,10 +61,10 @@ getindexfname(
         pc--;
       }
     }
-    datebuf[SIZEOF(datebuf)-1] = '\0';
+    datebuf[sizeof(datebuf)-1] = '\0';
     dc = datebuf;
 
-    g_snprintf(level_str, SIZEOF(level_str), "%d", level);
+    g_snprintf(level_str, sizeof(level_str), "%d", level);
   }
 
   host = sanitise_filename(host);
@@ -109,7 +109,7 @@ getoldindexfname(
   if (date != NULL) {
     dc = date;
     pc = datebuf;
-    while (pc < datebuf + SIZEOF(datebuf)) {
+    while (pc < datebuf + sizeof(datebuf)) {
       ch = *dc++;
       *pc++ = (char)ch;
       if (ch == '\0') {
@@ -118,10 +118,10 @@ getoldindexfname(
         pc--;
       }
     }
-    datebuf[SIZEOF(datebuf)-1] = '\0';
+    datebuf[sizeof(datebuf)-1] = '\0';
     dc = datebuf;
 
-    g_snprintf(level_str, SIZEOF(level_str), "%d", level);
+    g_snprintf(level_str, sizeof(level_str), "%d", level);
   }
 
   host = old_sanitise_filename(host);

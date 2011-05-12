@@ -5508,7 +5508,7 @@ get_config_options(
     if (config_overrides)
 	n_config_overrides = config_overrides->n_used;
 
-    config_options = alloc((first+n_config_overrides+1)*SIZEOF(char *));
+    config_options = alloc((first+n_config_overrides+1)*sizeof(char *));
     config_option = config_options + first;
 
     for (i = 0; i < n_config_overrides; i++) {
@@ -7550,7 +7550,7 @@ val_t_display_strs(
     int    str_need_quote)
 {
     char **buf;
-    buf = malloc(3*SIZEOF(char *));
+    buf = malloc(3*sizeof(char *));
     buf[0] = NULL;
     buf[1] = NULL;
     buf[2] = NULL;
@@ -7887,7 +7887,7 @@ val_t_display_strs(
 
 	nb_property = g_hash_table_size(val_t__proplist(val));
 	amfree(buf);
-	buf = malloc((nb_property+1)*SIZEOF(char*));
+	buf = malloc((nb_property+1)*sizeof(char*));
 	buf[nb_property] = NULL;
 	mybuf = buf;
 	g_hash_table_foreach(val_t__proplist(val),

@@ -188,7 +188,7 @@ main(
 		continue;
 	    }
 	    name_length = 100;
-	    names = (char **)alloc(name_length * SIZEOF(char *));
+	    names = (char **)alloc(name_length * sizeof(char *));
 	    name_count = 0;
 	    while ((f = readdir(d)) != NULL) {
 		size_t l;
@@ -196,7 +196,7 @@ main(
 		if(is_dot_or_dotdot(f->d_name)) {
 		    continue;
 		}
-		for(i = 0; i < SIZEOF("YYYYMMDDHHMMSS")-1; i++) {
+		for(i = 0; i < sizeof("YYYYMMDDHHMMSS")-1; i++) {
 		    if(! isdigit((int)(f->d_name[i]))) {
 			break;
 		    }
@@ -212,7 +212,7 @@ main(
 		/*
 		 * Clear out old index temp files.
 		 */
-		l = strlen(f->d_name) - (SIZEOF(".tmp")-1);
+		l = strlen(f->d_name) - (sizeof(".tmp")-1);
 		if ((l > (len_date + 1))
 			&& (strcmp(f->d_name + l, ".tmp")==0)) {
 		    struct stat sbuf;
@@ -236,8 +236,8 @@ main(
 		if(name_count >= name_length) {
 		    char **new_names;
 
-		    new_names = alloc((name_length * 2) * SIZEOF(char *));
-		    memcpy(new_names, names, name_length * SIZEOF(char *));
+		    new_names = alloc((name_length * 2) * sizeof(char *));
+		    memcpy(new_names, names, name_length * sizeof(char *));
 		    amfree(names);
 		    names = new_names;
 		    name_length *= 2;
@@ -245,7 +245,7 @@ main(
 		names[name_count++] = stralloc(f->d_name);
 	    }
 	    closedir(d);
-	    qsort(names, name_count, SIZEOF(char *), sort_by_name_reversed);
+	    qsort(names, name_count, sizeof(char *), sort_by_name_reversed);
 
 	    /*
 	     * Search for the first full dump past the minimum number
@@ -258,7 +258,7 @@ main(
 		int matching = 0;
 		GSList *mdp;
 
-		for(len_date = 0; len_date < SIZEOF("YYYYMMDDHHMMSS")-1; len_date++) {
+		for(len_date = 0; len_date < sizeof("YYYYMMDDHHMMSS")-1; len_date++) {
                     if(! isdigit((int)(names[i][len_date]))) {
                         break;
                     }

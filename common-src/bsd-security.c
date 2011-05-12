@@ -459,7 +459,7 @@ bsd_stream_client(
     struct sec_stream *bs = NULL;
     struct sec_handle *bh = h;
 #ifdef DUMPER_SOCKET_BUFFERING
-    int rcvbuf = SIZEOF(bs->databuf) * 2;
+    int rcvbuf = sizeof(bs->databuf) * 2;
 #endif
 
     assert(bh != NULL);
@@ -479,7 +479,7 @@ bsd_stream_client(
     bs->socket = -1;	/* we're a client */
     bs->ev_read = NULL;
 #ifdef DUMPER_SOCKET_BUFFERING
-    setsockopt(bs->fd, SOL_SOCKET, SO_RCVBUF, (void *)&rcvbuf, SIZEOF(rcvbuf));
+    setsockopt(bs->fd, SOL_SOCKET, SO_RCVBUF, (void *)&rcvbuf, sizeof(rcvbuf));
 #endif
     return (bs);
 }
@@ -647,7 +647,7 @@ stream_read_callback(
      */
     bsd_stream_read_cancel(bs);
     do {
-	n = read(bs->fd, bs->databuf, SIZEOF(bs->databuf));
+	n = read(bs->fd, bs->databuf, sizeof(bs->databuf));
     } while ((n < 0) && ((errno == EINTR) || (errno == EAGAIN)));
 
     if (n < 0)

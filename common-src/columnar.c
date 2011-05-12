@@ -50,7 +50,7 @@ ColumnInfo ColumnData[] = {
 int
 ColumnDataCount(void )
 {
-    return (int)(SIZEOF(ColumnData) / SIZEOF(ColumnData[0]));
+    return (int)(sizeof(ColumnData) / sizeof(ColumnData[0]));
 }
 
 /* conversion from string to table index

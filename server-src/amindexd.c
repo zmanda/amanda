@@ -380,7 +380,7 @@ uncompress_file(
 
 	/* add at beginning */
 	if (filename) {
-	    remove_file = (REMOVE_ITEM *)alloc(SIZEOF(REMOVE_ITEM));
+	    remove_file = (REMOVE_ITEM *)alloc(sizeof(REMOVE_ITEM));
 	    remove_file->filename = stralloc(filename);
 	    remove_file->next = uncompress_remove;
 	    uncompress_remove = remove_file;
@@ -1381,11 +1381,11 @@ main(
 	argv++;
     }
 
-    if(gethostname(local_hostname, SIZEOF(local_hostname)-1) == -1) {
+    if(gethostname(local_hostname, sizeof(local_hostname)-1) == -1) {
 	error(_("gethostname: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
-    local_hostname[SIZEOF(local_hostname)-1] = '\0';
+    local_hostname[sizeof(local_hostname)-1] = '\0';
 
     /* now trim domain off name */
     s = local_hostname;
@@ -1823,7 +1823,7 @@ amindexd_nicedate(
     day   = numdate % 100;
 
     if(strlen(datestamp) <= 8) {
-	g_snprintf(nice, SIZEOF(nice), "%4d-%02d-%02d",
+	g_snprintf(nice, sizeof(nice), "%4d-%02d-%02d",
 		year, month, day);
     }
     else {
@@ -1834,7 +1834,7 @@ amindexd_nicedate(
 	minutes = (numtime / 100) % 100;
 	seconds = numtime % 100;
 
-	g_snprintf(nice, SIZEOF(nice), "%4d-%02d-%02d-%02d-%02d-%02d",
+	g_snprintf(nice, sizeof(nice), "%4d-%02d-%02d-%02d-%02d-%02d",
 		year, month, day, hours, minutes, seconds);
     }
 

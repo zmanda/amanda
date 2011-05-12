@@ -304,7 +304,7 @@ main(
     amfree(line);
     log_add(L_START,_("date %s"), driver_timestamp);
 
-    gethostname(hostname, SIZEOF(hostname));
+    gethostname(hostname, sizeof(hostname));
     log_add(L_STATS,_("hostname %s"), hostname);
 
     /* check that we don't do many dump in a day and usetimestamps is off */
@@ -366,7 +366,7 @@ main(
 	 il != NULL;
 	 il = il->next, dsk++) {
 	hdp = lookup_holdingdisk(il->data);
-	ha = alloc(SIZEOF(holdalloc_t));
+	ha = alloc(sizeof(holdalloc_t));
 	num_holdalloc++;
 
 	/* link the list in the same order as getconf_holdingdisks's results */
@@ -2811,13 +2811,13 @@ read_flush(
 	    continue;
 	}
 
-	dp1 = (disk_t *)alloc(SIZEOF(disk_t));
+	dp1 = (disk_t *)alloc(sizeof(disk_t));
 	*dp1 = *dp;
 	dp1->next = dp1->prev = NULL;
 
 	/* add it to the flushhost list */
 	if(!flushhost) {
-	    flushhost = alloc(SIZEOF(am_host_t));
+	    flushhost = alloc(sizeof(am_host_t));
 	    flushhost->next = NULL;
 	    flushhost->hostname = stralloc("FLUSHHOST");
 	    flushhost->up = NULL;
@@ -2826,7 +2826,7 @@ read_flush(
 	dp1->hostnext = flushhost->disks;
 	flushhost->disks = dp1;
 
-	sp = (sched_t *) alloc(SIZEOF(sched_t));
+	sp = (sched_t *) alloc(sizeof(sched_t));
 	sp->destname = destname;
 	sp->level = file.dumplevel;
 	sp->dumpdate = NULL;
@@ -3094,7 +3094,7 @@ read_schedule(
 	    continue;
 	}
 
-	sp = (sched_t *) alloc(SIZEOF(sched_t));
+	sp = (sched_t *) alloc(sizeof(sched_t));
 	/*@ignore@*/
 	sp->level = level;
 	sp->dumpdate = stralloc(dumpdate);
@@ -3297,9 +3297,9 @@ find_diskspace(
     hold_debug(1, _("find_diskspace: want %lld K\n"),
 		   (long long)size);
 
-    used = alloc(SIZEOF(*used) * num_holdalloc);/*disks used during this run*/
+    used = alloc(sizeof(*used) * num_holdalloc);/*disks used during this run*/
     memset( used, 0, (size_t)num_holdalloc );
-    result = alloc(SIZEOF(assignedhd_t *) * (num_holdalloc + 1));
+    result = alloc(sizeof(assignedhd_t *) * (num_holdalloc + 1));
     result[0] = NULL;
 
     while( i < num_holdalloc && size > (off_t)0 ) {
@@ -3348,7 +3348,7 @@ find_diskspace(
 		       (long long)dalloc,
 		       (long long)halloc);
 	size -= dalloc;
-	result[i] = alloc(SIZEOF(assignedhd_t));
+	result[i] = alloc(sizeof(assignedhd_t));
 	result[i]->disk = minp;
 	result[i]->reserved = halloc;
 	result[i]->used = (off_t)0;
@@ -3391,7 +3391,7 @@ assign_holdingdisk(
     assignedhd_t **new_holdp;
     char *qname;
 
-    g_snprintf( lvl, SIZEOF(lvl), "%d", sched(diskp)->level );
+    g_snprintf( lvl, sizeof(lvl), "%d", sched(diskp)->level );
 
     size = am_round(sched(diskp)->est_size - sched(diskp)->act_size,
 		    (off_t)DISK_BLOCK_KB);
@@ -3402,9 +3402,9 @@ assign_holdingdisk(
     /* allocate memory for sched(diskp)->holdp */
     for(j = 0; sched(diskp)->holdp && sched(diskp)->holdp[j]; j++)
 	(void)j;	/* Quiet lint */
-    new_holdp = (assignedhd_t **)alloc(SIZEOF(assignedhd_t*)*(j+c+1));
+    new_holdp = (assignedhd_t **)alloc(sizeof(assignedhd_t*)*(j+c+1));
     if (sched(diskp)->holdp) {
-	memcpy(new_holdp, sched(diskp)->holdp, j * SIZEOF(*new_holdp));
+	memcpy(new_holdp, sched(diskp)->holdp, j * sizeof(*new_holdp));
 	amfree(sched(diskp)->holdp);
     }
     sched(diskp)->holdp = new_holdp;
@@ -3552,10 +3552,10 @@ build_diskspace(
     char *filename = destname;
 
     memset(buffer, 0, sizeof(buffer));
-    used = alloc(SIZEOF(off_t) * num_holdalloc);
+    used = alloc(sizeof(off_t) * num_holdalloc);
     for(i=0;i<num_holdalloc;i++)
 	used[i] = (off_t)0;
-    result = alloc(SIZEOF(assignedhd_t *) * (num_holdalloc + 1));
+    result = alloc(sizeof(assignedhd_t *) * (num_holdalloc + 1));
     result[0] = NULL;
     while(filename != NULL && filename[0] != '\0') {
 	strncpy(dirname, filename, 999);
@@ -3594,7 +3594,7 @@ build_diskspace(
 	    amfree(result);
 	    return NULL;
 	}
-	if ((buflen = read_fully(fd, buffer, SIZEOF(buffer), NULL)) > 0) {
+	if ((buflen = read_fully(fd, buffer, sizeof(buffer), NULL)) > 0) {
 		parse_file_header(buffer, &file, buflen);
 	}
 	close(fd);
@@ -3603,7 +3603,7 @@ build_diskspace(
 
     for(j = 0, i=0, ha = holdalloc; ha != NULL; ha = ha->next, j++ ) {
 	if(used[j] != (off_t)0) {
-	    result[i] = alloc(SIZEOF(assignedhd_t));
+	    result[i] = alloc(sizeof(assignedhd_t));
 	    result[i]->disk = ha;
 	    result[i]->reserved = used[j];
 	    result[i]->used = used[j];

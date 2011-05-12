@@ -359,7 +359,7 @@ safe_env_full(char **add)
 	env_cnt = 1;
 	for (env = environ; *env != NULL; env++)
 	    env_cnt++;
-	if ((q = (char **)malloc((nadd+env_cnt)*SIZEOF(char *))) != NULL) {
+	if ((q = (char **)malloc((nadd+env_cnt)*sizeof(char *))) != NULL) {
 	    envp = q;
 	    p = envp;
 	    /* copy in ADD */
@@ -379,7 +379,7 @@ safe_env_full(char **add)
 	return envp;
     }
 
-    if ((q = (char **)malloc(nadd*sizeof(char *) + SIZEOF(safe_env_list))) != NULL) {
+    if ((q = (char **)malloc(nadd*sizeof(char *) + sizeof(safe_env_list))) != NULL) {
 	envp = q;
 	/* copy in ADD */
 	for (p = add; p && *p; p++) {

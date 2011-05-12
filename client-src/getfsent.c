@@ -128,7 +128,7 @@ get_fstab_nextentry(
 {
     struct vfstab sys_fsent;
 
-    memset(&sys_fsent, 0, SIZEOF(sys_fsent));
+    memset(&sys_fsent, 0, sizeof(sys_fsent));
     if(getvfsent(fstabf, &sys_fsent) != 0)
 	return 0;
 
@@ -370,14 +370,14 @@ get_fstab_nextentry(
     static struct mnttab mnt;
     char *dp, *ep;
 
-    if(!fread (&mnt, SIZEOF(mnt), 1, fstabf))
+    if(!fread (&mnt, sizeof(mnt), 1, fstabf))
       return 0;
 
     fsent->fsname  = mnt.mt_dev;
     fsent->mntdir  = mnt.mt_filsys;
     fsent->fstype = "";
 
-    if (statfs (fsent->mntdir, &fsd, SIZEOF(fsd), 0) != -1
+    if (statfs (fsent->mntdir, &fsd, sizeof(fsd), 0) != -1
         && sysfs (GETFSTYP, fsd.f_fstyp, typebuf) != -1) {
        dp = typebuf;
        ep = fsent->fstype = malloc(strlen(typebuf)+2);
@@ -508,7 +508,7 @@ search_fstab(
   if (!name)
     return 0;
 
-  memset(stats, 0, SIZEOF(stats));
+  memset(stats, 0, sizeof(stats));
   stats[0].st_dev = stats[1].st_dev = stats[2].st_dev = (dev_t)-1;
 
   if (stat(name, &stats[0]) == -1)

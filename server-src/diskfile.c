@@ -201,8 +201,8 @@ add_disk(
     disk_t *disk;
     am_host_t *host;
 
-    disk = alloc(SIZEOF(disk_t));
-    bzero(disk, SIZEOF(disk_t));
+    disk = alloc(sizeof(disk_t));
+    bzero(disk, sizeof(disk_t));
     disk->line = 0;
     disk->allow_split = 0;
     disk->splitsize = (off_t)0;
@@ -228,7 +228,7 @@ add_disk(
 
     host = lookup_host(hostname);
     if(host == NULL) {
-	host = alloc(SIZEOF(am_host_t));
+	host = alloc(sizeof(am_host_t));
 	host->next = hostlist;
 	hostlist = host;
 
@@ -539,7 +539,7 @@ parse_diskline(
 	}
     }
     if (!disk) {
-	disk = alloc(SIZEOF(disk_t));
+	disk = alloc(sizeof(disk_t));
 	disk->line = line_num;
 	disk->hostname = hostname;
 	disk->name = diskname;
@@ -830,7 +830,7 @@ parse_diskline(
     /* success, add disk to lists */
 
     if(host == NULL) {			/* new host */
-	host = alloc(SIZEOF(am_host_t));
+	host = alloc(sizeof(am_host_t));
 	host->next = hostlist;
 	hostlist = host;
 

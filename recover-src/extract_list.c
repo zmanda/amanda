@@ -455,7 +455,7 @@ add_to_unlink_list(
     t_unlink_list *ul;
 
     if (!unlink_list) {
-	unlink_list = alloc(SIZEOF(*unlink_list));
+	unlink_list = alloc(sizeof(*unlink_list));
 	unlink_list->path = stralloc(path);
 	unlink_list->next = NULL;
     } else {
@@ -463,7 +463,7 @@ add_to_unlink_list(
 	    if (strcmp(ul->path, path) == 0)
 		return 0;
 	}
-	ul = alloc(SIZEOF(*ul));
+	ul = alloc(sizeof(*ul));
 	ul->path = stralloc(path);
 	ul->next = unlink_list;
 	unlink_list = ul;
@@ -2411,7 +2411,7 @@ amidxtaped_response(
 
     assert(response_error != NULL);
     assert(sech != NULL);
-    memset(ports, -1, SIZEOF(ports));
+    memset(ports, -1, sizeof(ports));
 
     if (pkt == NULL) {
 	errstr = newvstrallocf(errstr, _("[request failed: %s]"), security_geterror(sech));

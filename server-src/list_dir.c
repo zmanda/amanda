@@ -80,7 +80,7 @@ add_dir_list_item(
 
     if (dir_list == NULL)
     {
-	dir_list = (DIR_ITEM *)alloc(SIZEOF(DIR_ITEM));
+	dir_list = (DIR_ITEM *)alloc(sizeof(DIR_ITEM));
 	dir_list->next = NULL;
 	dir_list->dump = dump;
 	dir_list->path = stralloc(path);
@@ -97,7 +97,7 @@ add_dir_list_item(
     /* add at head of list */
     if(strcmp(path,dir_list->path) < 0)
     {
-	cur_list = (DIR_ITEM *)alloc(SIZEOF(DIR_ITEM));
+	cur_list = (DIR_ITEM *)alloc(sizeof(DIR_ITEM));
 	cur_list->next = dir_list;
 	cur_list->dump = dump;
 	cur_list->path = stralloc(path);
@@ -130,7 +130,7 @@ add_dir_list_item(
 	}
 
 	/* add at cur_list */
-	cur = (DIR_ITEM *)alloc(SIZEOF(DIR_ITEM));
+	cur = (DIR_ITEM *)alloc(sizeof(DIR_ITEM));
 	cur->next = cur_list->next;
 	cur->dump = dump;
 	cur->path = stralloc(path);
@@ -140,7 +140,7 @@ add_dir_list_item(
     }
     else /* add at end of list */
     {
-	dir_last->next = (DIR_ITEM *)alloc(SIZEOF(DIR_ITEM));
+	dir_last->next = (DIR_ITEM *)alloc(sizeof(DIR_ITEM));
 	dir_last=dir_last->next;
 	dir_last->next = NULL;
 	dir_last->dump = dump;

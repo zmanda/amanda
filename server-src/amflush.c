@@ -133,7 +133,7 @@ main(
 	case 'o': add_config_override_opt(cfg_ovr, optarg);
 		  break;
 	case 'D': if (datearg == NULL)
-		      datearg = alloc(21*SIZEOF(char *));
+		      datearg = alloc(21*sizeof(char *));
 		  if(nb_datearg == 20) {
 		      g_fprintf(stderr,_("maximum of 20 -D arguments.\n"));
 		      exit(1);
@@ -560,7 +560,7 @@ pick_datestamp(void)
     if(g_slist_length(datestamp_list) < 2) {
 	return datestamp_list;
     } else {
-	datestamps = alloc(g_slist_length(datestamp_list) * SIZEOF(char *));
+	datestamps = alloc(g_slist_length(datestamp_list) * sizeof(char *));
 	for(ds = datestamp_list, i=0; ds != NULL; ds = ds->next,i++) {
 	    datestamps[i] = (char *)ds->data; /* borrowing reference */
 	}

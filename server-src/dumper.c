@@ -789,16 +789,16 @@ parse_info_line(
 	char *value;
 	size_t len;
     } fields[] = {
-	{ "BACKUP", file.program, SIZEOF(file.program) },
-	{ "APPLICATION", file.application, SIZEOF(file.application) },
-	{ "RECOVER_CMD", file.recover_cmd, SIZEOF(file.recover_cmd) },
-	{ "COMPRESS_SUFFIX", file.comp_suffix, SIZEOF(file.comp_suffix) },
-	{ "SERVER_CUSTOM_COMPRESS", file.srvcompprog, SIZEOF(file.srvcompprog) },
-	{ "CLIENT_CUSTOM_COMPRESS", file.clntcompprog, SIZEOF(file.clntcompprog) },
-	{ "SERVER_ENCRYPT", file.srv_encrypt, SIZEOF(file.srv_encrypt) },
-	{ "CLIENT_ENCRYPT", file.clnt_encrypt, SIZEOF(file.clnt_encrypt) },
-	{ "SERVER_DECRYPT_OPTION", file.srv_decrypt_opt, SIZEOF(file.srv_decrypt_opt) },
-	{ "CLIENT_DECRYPT_OPTION", file.clnt_decrypt_opt, SIZEOF(file.clnt_decrypt_opt) }
+	{ "BACKUP", file.program, sizeof(file.program) },
+	{ "APPLICATION", file.application, sizeof(file.application) },
+	{ "RECOVER_CMD", file.recover_cmd, sizeof(file.recover_cmd) },
+	{ "COMPRESS_SUFFIX", file.comp_suffix, sizeof(file.comp_suffix) },
+	{ "SERVER_CUSTOM_COMPRESS", file.srvcompprog, sizeof(file.srvcompprog) },
+	{ "CLIENT_CUSTOM_COMPRESS", file.clntcompprog, sizeof(file.clntcompprog) },
+	{ "SERVER_ENCRYPT", file.srv_encrypt, sizeof(file.srv_encrypt) },
+	{ "CLIENT_ENCRYPT", file.clnt_encrypt, sizeof(file.clnt_encrypt) },
+	{ "SERVER_DECRYPT_OPTION", file.srv_decrypt_opt, sizeof(file.srv_decrypt_opt) },
+	{ "CLIENT_DECRYPT_OPTION", file.clnt_decrypt_opt, sizeof(file.clnt_decrypt_opt) }
     };
     char *name, *value;
     size_t i;
@@ -815,7 +815,7 @@ parse_info_line(
     if (value == NULL)
 	return;
 
-    for (i = 0; i < SIZEOF(fields) / SIZEOF(fields[0]); i++) {
+    for (i = 0; i < sizeof(fields) / sizeof(fields[0]); i++) {
 	if (strcmp(name, fields[i].name) == 0) {
 	    strncpy(fields[i].value, value, fields[i].len - 1);
 	    fields[i].value[fields[i].len - 1] = '\0';
@@ -1045,8 +1045,8 @@ finish_tapeheader(
 
     file->type = F_DUMPFILE;
     strncpy(file->datestamp, dumper_timestamp, sizeof(file->datestamp) - 1);
-    strncpy(file->name, hostname, SIZEOF(file->name) - 1);
-    strncpy(file->disk, diskname, SIZEOF(file->disk) - 1);
+    strncpy(file->name, hostname, sizeof(file->name) - 1);
+    strncpy(file->disk, diskname, sizeof(file->disk) - 1);
     file->dumplevel = level;
     file->blocksize = DISK_BLOCK_BYTES;
 
@@ -1060,31 +1060,31 @@ finish_tapeheader(
 #define	UNCOMPRESS_OPT	""
 #endif
 	if (srvcompress == COMP_SERVER_CUST) {
-	    g_snprintf(file->uncompress_cmd, SIZEOF(file->uncompress_cmd),
+	    g_snprintf(file->uncompress_cmd, sizeof(file->uncompress_cmd),
 		     " %s %s |", srvcompprog, "-d");
-	    strncpy(file->comp_suffix, "cust", SIZEOF(file->comp_suffix) - 1);
-	    file->comp_suffix[SIZEOF(file->comp_suffix) - 1] = '\0';
-	    strncpy(file->srvcompprog, srvcompprog, SIZEOF(file->srvcompprog) - 1);
-	    file->srvcompprog[SIZEOF(file->srvcompprog) - 1] = '\0';
+	    strncpy(file->comp_suffix, "cust", sizeof(file->comp_suffix) - 1);
+	    file->comp_suffix[sizeof(file->comp_suffix) - 1] = '\0';
+	    strncpy(file->srvcompprog, srvcompprog, sizeof(file->srvcompprog) - 1);
+	    file->srvcompprog[sizeof(file->srvcompprog) - 1] = '\0';
 	} else if ( srvcompress == COMP_CUST ) {
-	    g_snprintf(file->uncompress_cmd, SIZEOF(file->uncompress_cmd),
+	    g_snprintf(file->uncompress_cmd, sizeof(file->uncompress_cmd),
 		     " %s %s |", clntcompprog, "-d");
-	    strncpy(file->comp_suffix, "cust", SIZEOF(file->comp_suffix) - 1);
-	    file->comp_suffix[SIZEOF(file->comp_suffix) - 1] = '\0';
-	    strncpy(file->clntcompprog, clntcompprog, SIZEOF(file->clntcompprog));
-	    file->clntcompprog[SIZEOF(file->clntcompprog) - 1] = '\0';
+	    strncpy(file->comp_suffix, "cust", sizeof(file->comp_suffix) - 1);
+	    file->comp_suffix[sizeof(file->comp_suffix) - 1] = '\0';
+	    strncpy(file->clntcompprog, clntcompprog, sizeof(file->clntcompprog));
+	    file->clntcompprog[sizeof(file->clntcompprog) - 1] = '\0';
 	} else {
-	    g_snprintf(file->uncompress_cmd, SIZEOF(file->uncompress_cmd),
+	    g_snprintf(file->uncompress_cmd, sizeof(file->uncompress_cmd),
 		" %s %s |", UNCOMPRESS_PATH, UNCOMPRESS_OPT);
-	    strncpy(file->comp_suffix, COMPRESS_SUFFIX,SIZEOF(file->comp_suffix) - 1);
-	    file->comp_suffix[SIZEOF(file->comp_suffix) - 1] = '\0';
+	    strncpy(file->comp_suffix, COMPRESS_SUFFIX,sizeof(file->comp_suffix) - 1);
+	    file->comp_suffix[sizeof(file->comp_suffix) - 1] = '\0';
 	}
     } else {
 	if (file->comp_suffix[0] == '\0') {
 	    file->compressed = 0;
-	    assert(SIZEOF(file->comp_suffix) >= 2);
-	    strncpy(file->comp_suffix, "N", SIZEOF(file->comp_suffix) - 1);
-	    file->comp_suffix[SIZEOF(file->comp_suffix) - 1] = '\0';
+	    assert(sizeof(file->comp_suffix) >= 2);
+	    strncpy(file->comp_suffix, "N", sizeof(file->comp_suffix) - 1);
+	    file->comp_suffix[sizeof(file->comp_suffix) - 1] = '\0';
 	} else {
 	    file->compressed = 1;
 	}
@@ -1094,44 +1094,44 @@ finish_tapeheader(
       file->encrypted= 1;
       if (srvencrypt == ENCRYPT_SERV_CUST) {
 	if (srv_decrypt_opt) {
-	  g_snprintf(file->decrypt_cmd, SIZEOF(file->decrypt_cmd),
+	  g_snprintf(file->decrypt_cmd, sizeof(file->decrypt_cmd),
 		   " %s %s |", srv_encrypt, srv_decrypt_opt); 
-	  strncpy(file->srv_decrypt_opt, srv_decrypt_opt, SIZEOF(file->srv_decrypt_opt) - 1);
-	  file->srv_decrypt_opt[SIZEOF(file->srv_decrypt_opt) - 1] = '\0';
+	  strncpy(file->srv_decrypt_opt, srv_decrypt_opt, sizeof(file->srv_decrypt_opt) - 1);
+	  file->srv_decrypt_opt[sizeof(file->srv_decrypt_opt) - 1] = '\0';
 	} else {
-	  g_snprintf(file->decrypt_cmd, SIZEOF(file->decrypt_cmd),
+	  g_snprintf(file->decrypt_cmd, sizeof(file->decrypt_cmd),
 		   " %s |", srv_encrypt); 
 	  file->srv_decrypt_opt[0] = '\0';
 	}
-	strncpy(file->encrypt_suffix, "enc", SIZEOF(file->encrypt_suffix) - 1);
-	file->encrypt_suffix[SIZEOF(file->encrypt_suffix) - 1] = '\0';
-	strncpy(file->srv_encrypt, srv_encrypt, SIZEOF(file->srv_encrypt) - 1);
-	file->srv_encrypt[SIZEOF(file->srv_encrypt) - 1] = '\0';
+	strncpy(file->encrypt_suffix, "enc", sizeof(file->encrypt_suffix) - 1);
+	file->encrypt_suffix[sizeof(file->encrypt_suffix) - 1] = '\0';
+	strncpy(file->srv_encrypt, srv_encrypt, sizeof(file->srv_encrypt) - 1);
+	file->srv_encrypt[sizeof(file->srv_encrypt) - 1] = '\0';
       } else if ( srvencrypt == ENCRYPT_CUST ) {
 	if (clnt_decrypt_opt) {
-	  g_snprintf(file->decrypt_cmd, SIZEOF(file->decrypt_cmd),
+	  g_snprintf(file->decrypt_cmd, sizeof(file->decrypt_cmd),
 		   " %s %s |", clnt_encrypt, clnt_decrypt_opt);
 	  strncpy(file->clnt_decrypt_opt, clnt_decrypt_opt,
-		  SIZEOF(file->clnt_decrypt_opt));
-	  file->clnt_decrypt_opt[SIZEOF(file->clnt_decrypt_opt) - 1] = '\0';
+		  sizeof(file->clnt_decrypt_opt));
+	  file->clnt_decrypt_opt[sizeof(file->clnt_decrypt_opt) - 1] = '\0';
 	} else {
-	  g_snprintf(file->decrypt_cmd, SIZEOF(file->decrypt_cmd),
+	  g_snprintf(file->decrypt_cmd, sizeof(file->decrypt_cmd),
 		   " %s |", clnt_encrypt);
 	  file->clnt_decrypt_opt[0] = '\0';
  	}
-	g_snprintf(file->decrypt_cmd, SIZEOF(file->decrypt_cmd),
+	g_snprintf(file->decrypt_cmd, sizeof(file->decrypt_cmd),
 		 " %s %s |", clnt_encrypt, clnt_decrypt_opt);
-	strncpy(file->encrypt_suffix, "enc", SIZEOF(file->encrypt_suffix) - 1);
-	file->encrypt_suffix[SIZEOF(file->encrypt_suffix) - 1] = '\0';
-	strncpy(file->clnt_encrypt, clnt_encrypt, SIZEOF(file->clnt_encrypt) - 1);
-	file->clnt_encrypt[SIZEOF(file->clnt_encrypt) - 1] = '\0';
+	strncpy(file->encrypt_suffix, "enc", sizeof(file->encrypt_suffix) - 1);
+	file->encrypt_suffix[sizeof(file->encrypt_suffix) - 1] = '\0';
+	strncpy(file->clnt_encrypt, clnt_encrypt, sizeof(file->clnt_encrypt) - 1);
+	file->clnt_encrypt[sizeof(file->clnt_encrypt) - 1] = '\0';
       }
     } else {
       if (file->encrypt_suffix[0] == '\0') {
 	file->encrypted = 0;
-	assert(SIZEOF(file->encrypt_suffix) >= 2);
-	strncpy(file->encrypt_suffix, "N", SIZEOF(file->encrypt_suffix) - 1);
-	file->encrypt_suffix[SIZEOF(file->encrypt_suffix) - 1] = '\0';
+	assert(sizeof(file->encrypt_suffix) >= 2);
+	strncpy(file->encrypt_suffix, "N", sizeof(file->encrypt_suffix) - 1);
+	file->encrypt_suffix[sizeof(file->encrypt_suffix) - 1] = '\0';
       } else {
 	file->encrypted= 1;
       }
@@ -1193,7 +1193,7 @@ do_dump(
     dumpbytes = dumpsize = headersize = origsize = (off_t)0;
     fh_init(&file);
 
-    g_snprintf(level_str, SIZEOF(level_str), "%d", level);
+    g_snprintf(level_str, sizeof(level_str), "%d", level);
     time_str = get_timestamp_from_time(0);
     fn = sanitise_filename(diskname);
     errf_lines = 0;
@@ -2050,7 +2050,7 @@ sendbackup_response(
     }
 
     extra = NULL;
-    memset(ports, 0, SIZEOF(ports));
+    memset(ports, 0, sizeof(ports));
     if (pkt->type == P_NAK) {
 #if defined(PACKET_DEBUG)
 	g_fprintf(stderr, _("got nak response:\n----\n%s\n----\n\n"), pkt->body);
@@ -2304,7 +2304,7 @@ startup_dump(
      * much earlier, and then flattened out again before transmission.
      */
 
-    g_snprintf(level_string, SIZEOF(level_string), "%d", level);
+    g_snprintf(level_string, sizeof(level_string), "%d", level);
     if(strcmp(progname, "DUMP") == 0
        || strcmp(progname, "GNUTAR") == 0) {
 	application_api = "";

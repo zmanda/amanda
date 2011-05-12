@@ -99,9 +99,9 @@ append_to_tapelist(
 	    int   *newpartnum;
 
 	    if(file >= (off_t)0) {
-		newfiles = alloc(SIZEOF(*newfiles) *
+		newfiles = alloc(sizeof(*newfiles) *
 				 (cur_tape->numfiles + 1));
-		newpartnum = alloc(SIZEOF(*newpartnum) *
+		newpartnum = alloc(sizeof(*newpartnum) *
 				 (cur_tape->numfiles + 1));
 		for(c = 0; c < cur_tape->numfiles ; c++) {
 		    if(cur_tape->files[c] > file && c == d_idx) {
@@ -127,13 +127,13 @@ append_to_tapelist(
 	}
     }
 
-    new_tape = alloc(SIZEOF(tapelist_t));
-    memset(new_tape, 0, SIZEOF(tapelist_t));
+    new_tape = alloc(sizeof(tapelist_t));
+    memset(new_tape, 0, sizeof(tapelist_t));
     new_tape->label = stralloc(label);
     if(file >= (off_t)0){
-	new_tape->files = alloc(SIZEOF(*(new_tape->files)));
+	new_tape->files = alloc(sizeof(*(new_tape->files)));
 	new_tape->files[0] = file;
-	new_tape->partnum = alloc(SIZEOF(*(new_tape->partnum)));
+	new_tape->partnum = alloc(sizeof(*(new_tape->partnum)));
 	new_tape->partnum[0] = partnum;
 	new_tape->numfiles = 1;
 	new_tape->isafile = isafile;
@@ -239,7 +239,7 @@ marshal_tapelist(
 
 	for(c = 0; c < cur_tape->numfiles ; c++){
 	    char num_str[NUM_STR_SIZE];
-	    g_snprintf(num_str, SIZEOF(num_str), "%lld",
+	    g_snprintf(num_str, sizeof(num_str), "%lld",
 			(long long)cur_tape->files[c]);
 	    if (!files_str)
 		files_str = stralloc(num_str);

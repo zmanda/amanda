@@ -90,12 +90,12 @@ add_dump(
 	return;
     }
 
-    new = (DUMP_ITEM *)alloc(SIZEOF(DUMP_ITEM));
-    strncpy(new->date, date, SIZEOF(new->date)-1);
-    new->date[SIZEOF(new->date)-1] = '\0';
+    new = (DUMP_ITEM *)alloc(sizeof(DUMP_ITEM));
+    strncpy(new->date, date, sizeof(new->date)-1);
+    new->date[sizeof(new->date)-1] = '\0';
     new->level = level;
-    strncpy(new->tape, tape, SIZEOF(new->tape)-1);
-    new->tape[SIZEOF(new->tape)-1] = '\0';
+    strncpy(new->tape, tape, sizeof(new->tape)-1);
+    new->tape[sizeof(new->tape)-1] = '\0';
     new->file = file;
     new->maxpart = maxpart;
     if(partnum == -1)

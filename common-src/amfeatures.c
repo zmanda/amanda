@@ -233,8 +233,8 @@ am_allocate_feature_set(void)
     size_t			nbytes;
     am_feature_t		*result;
 
-    result = (am_feature_t *)alloc(SIZEOF(*result));
-    memset(result, 0, SIZEOF(*result));
+    result = (am_feature_t *)alloc(sizeof(*result));
+    memset(result, 0, sizeof(*result));
     nbytes = (((size_t)last_feature) + 8) >> 3;
     result->size = nbytes;
     result->bytes = (unsigned char *)alloc(nbytes);

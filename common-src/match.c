@@ -69,7 +69,7 @@ static gboolean do_validate_regex(const char *str, regex_t *regex,
 	if (!result)
 		return TRUE;
 
-	regerror(result, regex, *errbuf, SIZEOF(*errbuf));
+	regerror(result, regex, *errbuf, sizeof(*errbuf));
 	return FALSE;
 }
 
@@ -97,7 +97,7 @@ static int try_match(regex_t *regex, const char *str,
         /* Fall through: something went really wrong */
     }
 
-    regerror(result, regex, *errbuf, SIZEOF(*errbuf));
+    regerror(result, regex, *errbuf, sizeof(*errbuf));
     return MATCH_ERROR;
 }
 

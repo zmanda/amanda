@@ -235,7 +235,7 @@ read_txinfofile(
 	else if (strncmp_const(line,"history:") == 0) {
 	    break;				/* normal */
 	}
-	memset(&onestat, 0, SIZEOF(onestat));
+	memset(&onestat, 0, sizeof(onestat));
 
 	s = line;
 	ch = *s++;
@@ -300,8 +300,8 @@ read_txinfofile(
 		amfree(line);
 		return -1;
 	    }
-	    strncpy(onestat.label, s-1, SIZEOF(onestat.label)-1);
-	    onestat.label[SIZEOF(onestat.label)-1] = '\0';
+	    strncpy(onestat.label, s-1, sizeof(onestat.label)-1);
+	    onestat.label[sizeof(onestat.label)-1] = '\0';
 	}
 
 	if (level < 0 || level > DUMP_LEVELS-1) {
@@ -339,7 +339,7 @@ read_txinfofile(
 	    return 0;				/* normal end of record */
 	}
 
-	memset(&onehistory, 0, SIZEOF(onehistory));
+	memset(&onehistory, 0, sizeof(onehistory));
 
 	s = line;
 	ch = *s++;
@@ -545,7 +545,7 @@ get_dumpdate(
     }
 
     t = gmtime(&last);
-    g_snprintf(stamp, SIZEOF(stamp), "%d:%d:%d:%d:%d:%d",
+    g_snprintf(stamp, sizeof(stamp), "%d:%d:%d:%d:%d:%d",
 		t->tm_year+1900, t->tm_mon+1, t->tm_mday,
 		t->tm_hour, t->tm_min, t->tm_sec);
 
@@ -586,7 +586,7 @@ zero_info(
 {
     int i;
 
-    memset(info, '\0', SIZEOF(info_t));
+    memset(info, '\0', sizeof(info_t));
 
     for(i = 0; i < AVG_COUNT; i++) {
 	info->full.comp[i] = info->incr.comp[i] = -1.0;

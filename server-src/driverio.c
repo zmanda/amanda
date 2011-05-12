@@ -75,7 +75,7 @@ childstr(
 	if (dumper->chunker && dumper->chunker->fd == fd)
 	    return (dumper->chunker->name);
     }
-    g_snprintf(buf, SIZEOF(buf), _("unknown child (fd %d)"), fd);
+    g_snprintf(buf, sizeof(buf), _("unknown child (fd %d)"), fd);
     return (buf);
 }
 
@@ -216,7 +216,7 @@ startup_dump_processes(
     char number[NUM_STR_SIZE];
 
     for(dumper = dmptable, i = 0; i < inparallel; dumper++, i++) {
-	g_snprintf(number, SIZEOF(number), "%d", i);
+	g_snprintf(number, sizeof(number), "%d", i);
 	dumper->name = stralloc2("dumper", number);
 	dumper->chunker = &chktable[i];
 	chktable[i].name = stralloc2("chunker", number);
@@ -436,12 +436,12 @@ taper_cmd(
 	dp = (disk_t *) ptr;
         qname = quote_string(dp->name);
 	qdest = quote_string(destname);
-	g_snprintf(number, SIZEOF(number), "%d", level);
+	g_snprintf(number, sizeof(number), "%d", level);
 	if (sched(dp)->origsize >= 0)
 	    origsize = sched(dp)->origsize;
 	else
 	    origsize = 0;
-	g_snprintf(orig_kb, SIZEOF(orig_kb), "%ju", origsize);
+	g_snprintf(orig_kb, sizeof(orig_kb), "%ju", origsize);
 	splitargs = taper_splitting_args(dp);
 	cmdline = vstralloc(cmdstr[cmd],
 			    " ", sched(dp)->taper->name,
@@ -462,7 +462,7 @@ taper_cmd(
     case PORT_WRITE:
 	dp = (disk_t *) ptr;
         qname = quote_string(dp->name);
-	g_snprintf(number, SIZEOF(number), "%d", level);
+	g_snprintf(number, sizeof(number), "%d", level);
 	data_path = data_path_to_string(dp->data_path);
 
 	/*
@@ -490,7 +490,7 @@ taper_cmd(
 	    origsize = sched(dp)->origsize;
 	else
 	    origsize = 0;
-	g_snprintf(number, SIZEOF(number), "%ju", origsize);
+	g_snprintf(number, sizeof(number), "%ju", origsize);
 	cmdline = vstralloc(cmdstr[cmd],
 			    " ", sched(dp)->taper->name,
 			    " ", disk2serial(dp),
@@ -606,8 +606,8 @@ dumper_cmd(
 
 	    device = quote_string((dp->device) ? dp->device : "NODEVICE");
 	    qname = quote_string(dp->name);
-	    g_snprintf(number, SIZEOF(number), "%d", sched(dp)->level);
-	    g_snprintf(numberport, SIZEOF(numberport), "%d", dumper->output_port);
+	    g_snprintf(number, sizeof(number), "%d", sched(dp)->level);
+	    g_snprintf(numberport, sizeof(numberport), "%d", dumper->output_port);
 	    features = am_feature_to_string(dp->host->features);
 	    if (am_has_feature(dp->host->features, fe_req_xml)) {
 		o = xml_optionstr(dp, 1);
@@ -737,10 +737,10 @@ chunker_cmd(
 	    qname = quote_string(dp->name);
 	    qdest = quote_string(sched(dp)->destname);
 	    h[activehd]->disk->allocated_dumpers++;
-	    g_snprintf(number, SIZEOF(number), "%d", sched(dp)->level);
-	    g_snprintf(chunksize, SIZEOF(chunksize), "%lld",
+	    g_snprintf(number, sizeof(number), "%d", sched(dp)->level);
+	    g_snprintf(chunksize, sizeof(chunksize), "%lld",
 		    (long long)holdingdisk_get_chunksize(h[0]->disk->hdisk));
-	    g_snprintf(use, SIZEOF(use), "%lld",
+	    g_snprintf(use, sizeof(use), "%lld",
 		    (long long)h[0]->reserved);
 	    features = am_feature_to_string(dp->host->features);
 	    o = optionstr(dp);
@@ -777,9 +777,9 @@ chunker_cmd(
 	    qname = quote_string(dp->name);
 	    qdest = quote_string(h[activehd]->destname);
 	    h[activehd]->disk->allocated_dumpers++;
-	    g_snprintf(chunksize, SIZEOF(chunksize), "%lld", 
+	    g_snprintf(chunksize, sizeof(chunksize), "%lld", 
 		     (long long)holdingdisk_get_chunksize(h[activehd]->disk->hdisk));
-	    g_snprintf(use, SIZEOF(use), "%lld", 
+	    g_snprintf(use, sizeof(use), "%lld", 
 		     (long long)(h[activehd]->reserved - h[activehd]->used));
 	    cmdline = vstralloc(cmdstr[cmd],
 				" ", disk2serial(dp),
@@ -928,7 +928,7 @@ char *disk2serial(
 
     for(s = 0; s < MAX_SERIAL; s++) {
 	if(stable[s].dp == dp) {
-	    g_snprintf(str, SIZEOF(str), "%02d-%05ld", s, stable[s].gen);
+	    g_snprintf(str, sizeof(str), "%02d-%05ld", s, stable[s].gen);
 	    return str;
 	}
     }
@@ -946,7 +946,7 @@ char *disk2serial(
     stable[s].gen = generation++;
     stable[s].dp = dp;
 
-    g_snprintf(str, SIZEOF(str), "%02d-%05ld", s, stable[s].gen);
+    g_snprintf(str, sizeof(str), "%02d-%05ld", s, stable[s].gen);
     return str;
 }
 
@@ -1067,8 +1067,8 @@ update_info_taper(
 
     infp = &info.inf[level];
     /* XXX - should we record these two if no-record? */
-    strncpy(infp->label, label, SIZEOF(infp->label)-1);
-    infp->label[SIZEOF(infp->label)-1] = '\0';
+    strncpy(infp->label, label, sizeof(infp->label)-1);
+    infp->label[sizeof(infp->label)-1] = '\0';
     infp->filenum = filenum;
 
     info.command = NO_COMMAND;

@@ -1004,7 +1004,7 @@ static GPtrArray *amstar_build_argv(
 	if (iscntrl((int)*s))
 	    *s = '-';
     }
-    snprintf(levelstr, SIZEOF(levelstr), "-level=%d", level);
+    snprintf(levelstr, sizeof(levelstr), "-level=%d", level);
 
     if (star_dle_tardumps) {
 	char *sdisk = sanitise_filename(argument->dle.disk);

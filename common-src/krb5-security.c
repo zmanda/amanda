@@ -569,7 +569,7 @@ gss_server(
      * gss_accept_context() thanks to the replay cache code.
      */
     if (!set_root_privs(0)) {
-	g_snprintf(errbuf, SIZEOF(errbuf),
+	g_snprintf(errbuf, sizeof(errbuf),
 	    _("can't take root privileges to read krb5 host key: %s"), strerror(errno));
 	goto out;
     }
@@ -585,7 +585,7 @@ gss_server(
 	&gss_name);
     if (maj_stat != (OM_uint32)GSS_S_COMPLETE) {
 	set_root_privs(0);
-	g_snprintf(errbuf, SIZEOF(errbuf),
+	g_snprintf(errbuf, sizeof(errbuf),
 	    _("can't import name %s: %s"), (char *)send_tok.value,
 	    gss_error(maj_stat, min_stat));
 	amfree(send_tok.value);
@@ -598,7 +598,7 @@ gss_server(
     maj_stat = gss_acquire_cred(&min_stat, gss_name, 0,
 	GSS_C_NULL_OID_SET, GSS_C_ACCEPT, &gss_creds, NULL, NULL);
     if (maj_stat != (OM_uint32)GSS_S_COMPLETE) {
-	g_snprintf(errbuf, SIZEOF(errbuf),
+	g_snprintf(errbuf, sizeof(errbuf),
 	    _("can't acquire creds for host key host/%s: %s"), myhostname,
 	    gss_error(maj_stat, min_stat));
 	gss_release_name(&min_stat, &gss_name);
@@ -616,11 +616,11 @@ gss_server(
 				 (ssize_t *)&recv_tok.length, 60);
 	if (rvalue <= 0) {
 	    if (rvalue < 0) {
-		g_snprintf(errbuf, SIZEOF(errbuf),
+		g_snprintf(errbuf, sizeof(errbuf),
 		    _("recv error in gss loop: %s"), rc->errmsg);
 		amfree(rc->errmsg);
 	    } else
-		g_snprintf(errbuf, SIZEOF(errbuf), _("EOF in gss loop"));
+		g_snprintf(errbuf, sizeof(errbuf), _("EOF in gss loop"));
 	    goto out;
 	}
 
@@ -630,7 +630,7 @@ gss_server(
 
 	if (maj_stat != (OM_uint32)GSS_S_COMPLETE &&
 	    maj_stat != (OM_uint32)GSS_S_CONTINUE_NEEDED) {
-	    g_snprintf(errbuf, SIZEOF(errbuf),
+	    g_snprintf(errbuf, sizeof(errbuf),
 		_("error accepting context: %s"), gss_error(maj_stat, min_stat));
 	    amfree(recv_tok.value);
 	    goto out;
@@ -638,8 +638,8 @@ gss_server(
 	amfree(recv_tok.value);
 
 	if (send_tok.length != 0 && tcpm_send_token(rc, rc->write, 0, &errmsg, send_tok.value, send_tok.length) < 0) {
-	    strncpy(errbuf, rc->errmsg, SIZEOF(errbuf) - 1);
-	    errbuf[SIZEOF(errbuf) - 1] = '\0';
+	    strncpy(errbuf, rc->errmsg, sizeof(errbuf) - 1);
+	    errbuf[sizeof(errbuf) - 1] = '\0';
 	    amfree(rc->errmsg);
 	    gss_release_buffer(&min_stat, &send_tok);
 	    goto out;
@@ -657,7 +657,7 @@ gss_server(
 
     maj_stat = gss_display_name(&min_stat, gss_name, &send_tok, &doid);
     if (maj_stat != (OM_uint32)GSS_S_COMPLETE) {
-	g_snprintf(errbuf, SIZEOF(errbuf),
+	g_snprintf(errbuf, sizeof(errbuf),
 	    _("can't display gss name: %s"), gss_error(maj_stat, min_stat));
 	gss_release_name(&min_stat, &gss_name);
 	goto out;
@@ -666,7 +666,7 @@ gss_server(
 
     /* get rid of the realm */
     if ((p = strchr(send_tok.value, '@')) == NULL) {
-	g_snprintf(errbuf, SIZEOF(errbuf),
+	g_snprintf(errbuf, sizeof(errbuf),
 	    _("malformed gss name: %s"), (char *)send_tok.value);
 	amfree(send_tok.value);
 	goto out;
@@ -678,7 +678,7 @@ gss_server(
      * If the principal doesn't match, complain
      */
     if ((msg = krb5_checkuser(rc->hostname, send_tok.value, realm)) != NULL) {
-	g_snprintf(errbuf, SIZEOF(errbuf),
+	g_snprintf(errbuf, sizeof(errbuf),
 	    _("access not allowed from %s: %s"), (char *)send_tok.value, msg);
 	amfree(send_tok.value);
 	goto out;
@@ -726,15 +726,15 @@ krb5_init(void)
     {
 	char *ccache;
 	ccache = malloc(128);
-	g_snprintf(ccache, SIZEOF(ccache),
+	g_snprintf(ccache, sizeof(ccache),
 		 "KRB5_ENV_CCNAME=FILE:/tmp/amanda_ccache.%ld.%ld",
 		 (long)geteuid(), (long)getpid());
 	putenv(ccache);
     }
 #endif
 
-    gethostname(myhostname, SIZEOF(myhostname) - 1);
-    myhostname[SIZEOF(myhostname) - 1] = '\0';
+    gethostname(myhostname, sizeof(myhostname) - 1);
+    myhostname[sizeof(myhostname) - 1] = '\0';
 
     /*
      * In case it isn't fully qualified, do a DNS lookup.  Ignore
@@ -742,8 +742,8 @@ krb5_init(void)
      */
     if (resolve_hostname(myhostname, SOCK_STREAM, NULL, &myfqhostname) == 0
 	&& myfqhostname != NULL) {
-	strncpy(myhostname, myfqhostname, SIZEOF(myhostname)-1);
-	myhostname[SIZEOF(myhostname)-1] = '\0';
+	strncpy(myhostname, myfqhostname, sizeof(myhostname)-1);
+	myhostname[sizeof(myhostname)-1] = '\0';
 	amfree(myfqhostname);
     }
 
@@ -763,7 +763,7 @@ cleanup(void)
 {
 #ifdef KDESTROY_VIA_UNLINK
     char ccache[64];
-    g_snprintf(ccache, SIZEOF(ccache), "/tmp/amanda_ccache.%ld.%ld",
+    g_snprintf(ccache, sizeof(ccache), "/tmp/amanda_ccache.%ld.%ld",
         (long)geteuid(), (long)getpid());
     unlink(ccache);
 #else
@@ -865,7 +865,7 @@ get_tgt(
 	return (error);
     }
 
-    memset(&creds, 0, SIZEOF(creds));
+    memset(&creds, 0, sizeof(creds));
     creds.times.starttime = 0;
     creds.times.endtime = now + AMANDA_TKT_LIFETIME;
 
@@ -1213,9 +1213,9 @@ krb5_tcpm_recv_token(
 {
     unsigned int netint[2];
 
-    assert(SIZEOF(netint) == 8);
+    assert(sizeof(netint) == 8);
 
-    switch (net_read(fd, &netint, SIZEOF(netint), timeout)) {
+    switch (net_read(fd, &netint, sizeof(netint), timeout)) {
     case -1:
 	if (errmsg)
 	    *errmsg = newvstrallocf(*errmsg, _("recv error: %s"), strerror(errno));

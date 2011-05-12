@@ -1237,7 +1237,7 @@ process_errfd(
 	struct timeval  tv;
 	int             nfound;
 
-	memset(&tv, 0, SIZEOF(tv));
+	memset(&tv, 0, sizeof(tv));
 	FD_ZERO(&readset);
 	FD_SET(as->errfd, &readset);
 	nfound = select(as->errfd+1, &readset, NULL, NULL, &tv);
@@ -1382,7 +1382,7 @@ process_readnetfd(
     nak.body = NULL;
 
     do {
-	n = read(dh->fd_read, as->databuf, SIZEOF(as->databuf));
+	n = read(dh->fd_read, as->databuf, sizeof(as->databuf));
     } while ((n < 0) && ((errno == EINTR) || (errno == EAGAIN)));
 
     /*

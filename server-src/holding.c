@@ -667,13 +667,13 @@ holding_file_get_dumpfile(
     if((fd = robust_open(fname, O_RDONLY, 0)) == -1)
         return 0;
 
-    if(read_fully(fd, buffer, SIZEOF(buffer), NULL) != sizeof(buffer)) {
+    if(read_fully(fd, buffer, sizeof(buffer), NULL) != sizeof(buffer)) {
         aclose(fd);
         return 0;
     }
     aclose(fd);
 
-    parse_file_header(buffer, file, SIZEOF(buffer));
+    parse_file_header(buffer, file, sizeof(buffer));
     return 1;
 }
 
@@ -868,7 +868,7 @@ holding_set_origsize(
 	return;
     }
 
-    buflen = read_fully(fd, buffer, SIZEOF(buffer), NULL);
+    buflen = read_fully(fd, buffer, sizeof(buffer), NULL);
     if (buflen <= 0) {
 	dbprintf(_("holding_set_origsize: %s: empty file?\n"), holding_file);
 	close(fd);
@@ -906,7 +906,7 @@ rename_tmp_holding(
 	    amfree(filename_tmp);
 	    return 0;
 	}
-	buflen = read_fully(fd, buffer, SIZEOF(buffer), NULL);
+	buflen = read_fully(fd, buffer, sizeof(buffer), NULL);
 	close(fd);
 
 	if(rename(filename_tmp, filename) != 0) {
