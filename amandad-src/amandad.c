@@ -1263,11 +1263,11 @@ errfd_recv(
     assert(as != NULL);
     assert(as->ev_errfd != NULL);
 
-    n = read(as->errfd, &buf, 32768);
+    n = read(as->errfd, buf, 32768);
     /* merge buffer */
     if (n > 0) {
 	/* Terminate it with '\0' */
-	buf[n+1] = '\0';
+	buf[n] = '\0';
 
 	if (as->errbuf) {
 	    as->errbuf = vstrextend(&as->errbuf, buf, NULL);
