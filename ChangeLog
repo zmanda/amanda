@@ -1,4 +1,9 @@
 2011-05-13  Francis Galiegue <fgaliegue@gmail.com>
+	* amandad-src/amandad.c: in recv_errfd(): fix 'buf' local variable
+	  handling (you should write to buf, not &buf, and when n bytes have
+	  been read, you should zero byte[n], not byte[n+1])
+
+2011-05-13  Francis Galiegue <fgaliegue@gmail.com>
 	* amandad-src/amandad.c: use the NETWORK_BLOCK_BYTES constant to declare
 	  the size of local variable 'buf' in recv_errfd()
 
