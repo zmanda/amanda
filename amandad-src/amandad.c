@@ -1256,7 +1256,7 @@ errfd_recv(
     void *	cookie)
 {
     struct active_service *as = cookie;
-    char  buf[32769];
+    char  buf[NETWORK_BLOCK_BYTES + 1];
     int   n;
     char *r;
 
