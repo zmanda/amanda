@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 60;
+use Test::More tests => 71;
 
 use warnings;
 use strict;
@@ -303,7 +303,7 @@ sub write_to_port {
     my ($port_cmd, $size, $hostname, $disk, $expect_error) = @_;
 
     my ($header_port, $data_addr) =
-	($last_chunker_reply =~ /^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+)/);
+	($last_chunker_reply =~ /^PORT \d\d-\d\d\d\d\d (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+)/);
 
     # just run this in the child
     $writer_pid = fork();
@@ -338,13 +338,16 @@ $datestamp = "20070102030405";
 run_chunker("simple");
 # note that features (ffff here) and options (ops) are ignored by the chunker
 chunker_cmd("PORT-WRITE $handle \"$test_hfile\" ghost ffff /boot 0 $datestamp 512 INSTALLCHECK 10240 ops");
-like(chunker_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+like(chunker_reply, qr/^PORT $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_chunker_reply, 700*1024, "ghost", "/boot", 0);
 wait_for_writer();
+like(chunker_reply, qr/^DUMPER-STATUS $handle$/,
+	"got DUMPER-STATUS") or die;
 chunker_cmd("DONE $handle");
 like(chunker_reply, qr/^DONE $handle 700 "\[sec [\d.]+ kb 700 kps [\d.]+\]"$/,
 	"got DONE") or die;
+chunker_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
@@ -360,13 +363,16 @@ $handle = "22-11111";
 $datestamp = "20080808080808";
 run_chunker("partial");
 chunker_cmd("PORT-WRITE $handle \"$test_hfile\" ghost ffff /root 0 $datestamp 512 INSTALLCHECK 10240 ops");
-like(chunker_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+like(chunker_reply, qr/^PORT $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_chunker_reply, 768*1024, "ghost", "/root", 0);
 wait_for_writer();
+like(chunker_reply, qr/^DUMPER-STATUS $handle$/,
+	"got DUMPER-STATUS") or die;
 chunker_cmd("FAILED $handle");
 like(chunker_reply, qr/^PARTIAL $handle 768 "\[sec [\d.]+ kb 768 kps [\d.]+\]"$/,
 	"got PARTIAL") or die;
+chunker_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
@@ -383,13 +389,16 @@ $handle = "33-11111";
 $datestamp = "20070202020202";
 run_chunker("failed");
 chunker_cmd("PORT-WRITE $handle \"$test_hfile\" ghost ffff /usr 0 $datestamp 512 INSTALLCHECK 10240 ops");
-like(chunker_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+like(chunker_reply, qr/^PORT $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_chunker_reply, 0, "ghost", "/usr", 0);
 wait_for_writer();
+like(chunker_reply, qr/^DUMPER-STATUS $handle$/,
+	"got DUMPER-STATUS") or die;
 chunker_cmd("FAILED $handle");
 like(chunker_reply, qr/^FAILED $handle "\[dumper returned FAILED\]"$/,
 	"got FAILED") or die;
+chunker_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
@@ -408,16 +417,19 @@ $handle = "44-11111";
 $datestamp = "20040404040404";
 run_chunker("more-than-use");
 chunker_cmd("PORT-WRITE $handle \"$test_hfile\" ghost ffff /var 0 $datestamp 10240 INSTALLCHECK 512 ops");
-like(chunker_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+like(chunker_reply, qr/^PORT $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_chunker_reply, 700*1024, "ghost", "/var", 1);
 like(chunker_reply, qr/^RQ-MORE-DISK $handle$/,
 	"got RQ-MORE-DISK") or die;
 chunker_cmd("CONTINUE $handle $test_hfile-u2 10240 512");
 wait_for_writer();
+like(chunker_reply, qr/^DUMPER-STATUS $handle$/,
+	"got DUMPER-STATUS") or die;
 chunker_cmd("DONE $handle");
 like(chunker_reply, qr/^DONE $handle 700 "\[sec [\d.]+ kb 700 kps [\d.]+\]"$/,
 	"got DONE") or die;
+chunker_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
@@ -434,16 +446,19 @@ $handle = "55-11111";
 $datestamp = "20050505050505";
 run_chunker("more-than-use-and-chunks");
 chunker_cmd("PORT-WRITE $handle \"$test_hfile\" ghost ffff /var 0 $datestamp 96 INSTALLCHECK 160 ops");
-like(chunker_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+like(chunker_reply, qr/^PORT $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_chunker_reply, 400*1024, "ghost", "/var", 1);
 like(chunker_reply, qr/^RQ-MORE-DISK $handle$/,
 	"got RQ-MORE-DISK") or die;
 chunker_cmd("CONTINUE $handle $test_hfile-u2 128 10240");
 wait_for_writer();
+like(chunker_reply, qr/^DUMPER-STATUS $handle$/,
+	"got DUMPER-STATUS") or die;
 chunker_cmd("DONE $handle");
 like(chunker_reply, qr/^DONE $handle 400 "\[sec [\d.]+ kb 400 kps [\d.]+\]"$/,
 	"got DONE") or die;
+chunker_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
@@ -463,16 +478,19 @@ $handle = "55-22222";
 $datestamp = "20050505050505";
 run_chunker("use, continue on same file");
 chunker_cmd("PORT-WRITE $handle \"$test_hfile\" ghost ffff /var/lib 0 $datestamp 10240 INSTALLCHECK 64 ops");
-like(chunker_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+like(chunker_reply, qr/^PORT $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_chunker_reply, 70*1024, "ghost", "/var/lib", 1);
 like(chunker_reply, qr/^RQ-MORE-DISK $handle$/,
 	"got RQ-MORE-DISK") or die;
 chunker_cmd("CONTINUE $handle $test_hfile 10240 10240");
 wait_for_writer();
+like(chunker_reply, qr/^DUMPER-STATUS $handle$/,
+	"got DUMPER-STATUS") or die;
 chunker_cmd("DONE $handle");
 like(chunker_reply, qr/^DONE $handle 70 "\[sec [\d.]+ kb 70 kps [\d.]+\]"$/,
 	"got DONE") or die;
+chunker_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
@@ -492,16 +510,19 @@ $handle = "66-11111";
 $datestamp = "20060606060606";
 run_chunker("out-of-use-during-header");
 chunker_cmd("PORT-WRITE $handle \"$test_hfile\" ghost ffff /u01 0 $datestamp 96 INSTALLCHECK 120 ops");
-like(chunker_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+like(chunker_reply, qr/^PORT $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_chunker_reply, 400*1024, "ghost", "/u01", 1);
 like(chunker_reply, qr/^RQ-MORE-DISK $handle$/,
 	"got RQ-MORE-DISK") or die;
 chunker_cmd("CONTINUE $handle $test_hfile-u2 128 10240");
 wait_for_writer();
+like(chunker_reply, qr/^DUMPER-STATUS $handle$/,
+	"got DUMPER-STATUS") or die;
 chunker_cmd("DONE $handle");
 like(chunker_reply, qr/^DONE $handle 400 "\[sec [\d.]+ kb 400 kps [\d.]+\]"$/,
 	"got DONE") or die;
+chunker_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
@@ -512,33 +533,6 @@ check_holding_chunks($test_hfile, [ 64, 96, 96, 96, 48 ],
     "ghost", "/u01", $datestamp, 0);
 
 ##
-# A two-disk PORT-WRITE, but with the DONE sent before the first byte of data
-# arrives, to test the ability of the chunker to defer the DONE until it gets
-# an EOF
-
-$handle = "77-11111";
-$datestamp = "20070707070707";
-run_chunker("early-DONE");
-chunker_cmd("PORT-WRITE $handle \"$test_hfile\" roast ffff /boot 0 $datestamp 10240 INSTALLCHECK 128 ops");
-like(chunker_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
-	"got PORT with data address");
-chunker_cmd("DONE $handle");
-write_to_port($last_chunker_reply, 180*1024, "roast", "/boot", 0);
-like(chunker_reply, qr/^RQ-MORE-DISK $handle$/,
-	"got RQ-MORE-DISK") or die;
-chunker_cmd("CONTINUE $handle $test_hfile-u2 10240 10240");
-wait_for_writer();
-like(chunker_reply, qr/^DONE $handle 180 "\[sec [\d.]+ kb 180 kps [\d.]+\]"$/,
-	"got DONE") or die;
-wait_for_exit();
-
-check_logs([
-    qr(^SUCCESS chunker roast /boot $datestamp 0 \[sec [\d.]+ kb 180 kps [\d.]+\]$),
-], "logs for simple PORT-WRITE");
-
-check_holding_chunks($test_hfile, [ 96, 84 ], "roast", "/boot", $datestamp, 0);
-
-##
 # A two-disk PORT-WRITE, where the first disk runs out of space before it hits
 # the USE limit.
 
@@ -546,25 +540,28 @@ $handle = "88-11111";
 $datestamp = "20080808080808";
 run_chunker("ENOSPC-1", ENOSPC_at => 90*1024);
 chunker_cmd("PORT-WRITE $handle \"$test_hfile\" roast ffff /boot 0 $datestamp 10240 INSTALLCHECK 10240 ops");
-like(chunker_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+like(chunker_reply, qr/^PORT $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_chunker_reply, 100*1024, "roast", "/boot", 0);
-like(chunker_reply, qr/^NO-ROOM $handle 10150$/, # == 10240-90
+like(chunker_reply, qr/^NO-ROOM $handle 10176$/, # == 10240-90
 	"got NO-ROOM") or die;
 like(chunker_reply, qr/^RQ-MORE-DISK $handle$/,
 	"got RQ-MORE-DISK") or die;
 chunker_cmd("CONTINUE $handle $test_hfile-u2 10240 10240");
 wait_for_writer();
+like(chunker_reply, qr/^DUMPER-STATUS $handle$/,
+	"got DUMPER-STATUS") or die;
 chunker_cmd("DONE $handle");
 like(chunker_reply, qr/^DONE $handle 100 "\[sec [\d.]+ kb 100 kps [\d.]+\]"$/,
 	"got DONE") or die;
+chunker_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
     qr(^SUCCESS chunker roast /boot $datestamp 0 \[sec [\d.]+ kb 100 kps [\d.]+\]$),
 ], "logs for simple PORT-WRITE");
 
-check_holding_chunks($test_hfile, [ 58, 42 ], "roast", "/boot", $datestamp, 0);
+check_holding_chunks($test_hfile, [ 32, 68 ], "roast", "/boot", $datestamp, 0);
 
 ##
 # A two-chunk PORT-WRITE, where the second chunk gets ENOSPC in the header.  This
@@ -575,7 +572,7 @@ $handle = "88-22222";
 $datestamp = "20080808080808";
 run_chunker("ENOSPC-2", ENOSPC_at => 130*1024);
 chunker_cmd("PORT-WRITE $handle \"$test_hfile\" roast ffff /boot 0 $datestamp 128 INSTALLCHECK 1000 ops");
-like(chunker_reply, qr/^PORT (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+like(chunker_reply, qr/^PORT $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_chunker_reply, 128*1024, "roast", "/boot", 0);
 like(chunker_reply, qr/^NO-ROOM $handle 864$/, # == am_floor(1000)-128
@@ -584,9 +581,12 @@ like(chunker_reply, qr/^RQ-MORE-DISK $handle$/,
 	"got RQ-MORE-DISK") or die;
 chunker_cmd("CONTINUE $handle $test_hfile-u2 300 128");
 wait_for_writer();
+like(chunker_reply, qr/^DUMPER-STATUS $handle$/,
+	"got DUMPER-STATUS") or die;
 chunker_cmd("DONE $handle");
 like(chunker_reply, qr/^DONE $handle 128 "\[sec [\d.]+ kb 128 kps [\d.]+\]"$/,
 	"got DONE") or die;
+chunker_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
@@ -594,6 +594,37 @@ check_logs([
 ], "logs for simple PORT-WRITE");
 
 check_holding_chunks($test_hfile, [ 96, 32 ], "roast", "/boot", $datestamp, 0);
+ok(!-f "$test_hfile.1.tmp",
+    "half-written header is deleted");
+
+##
+# an aborted job
+#
+
+$handle = "88-33333";
+$datestamp = "20080808080809";
+run_chunker("ENOSPC-2", ENOSPC_at => 130*1024);
+chunker_cmd("PORT-WRITE $handle \"$test_hfile\" roast ffff /boot 0 $datestamp 128 INSTALLCHECK 1000 ops");
+like(chunker_reply, qr/^PORT $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+	"got PORT with data address");
+write_to_port($last_chunker_reply, 128*1024, "roast", "/boot", 0);
+like(chunker_reply, qr/^NO-ROOM $handle 864$/, # == am_floor(1000)-128
+	"got NO-ROOM") or die;
+like(chunker_reply, qr/^RQ-MORE-DISK $handle$/,
+	"got RQ-MORE-DISK") or die;
+chunker_cmd("ABORT $handle");
+like(chunker_reply, qr/^ABORT-FINISHED $handle$/,
+        "got ABORT-FINISHED") or die;
+wait_for_writer();
+chunker_cmd("QUIT");
+wait_for_exit();
+
+check_logs([
+    qr(^FAIL chunker roast /boot $datestamp 0 \[Failed to write header to '$test_hfile.1.tmp': No space left on device]$),
+], "logs for simple PORT-WRITE");
+
+
+check_holding_chunks($test_hfile, [ 96 ], "roast", "/boot", $datestamp, 0);
 ok(!-f "$test_hfile.1.tmp",
     "half-written header is deleted");
 

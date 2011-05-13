@@ -66,6 +66,7 @@ typedef struct chunker_s {
     int down;			/* state */
     int fd;			/* read/write */
     int result;
+    int sendresult;
     event_handle_t *ev_read;	/* read event handle */
     struct dumper_s *dumper;
 } chunker_t;

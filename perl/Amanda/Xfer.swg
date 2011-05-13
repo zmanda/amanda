@@ -87,6 +87,7 @@ amglue_add_constant(XMSG_DONE, xmsg_type);
 amglue_add_constant(XMSG_CANCEL, xmsg_type);
 amglue_add_constant(XMSG_PART_DONE, xmsg_type);
 amglue_add_constant(XMSG_READY, xmsg_type);
+amglue_add_constant(XMSG_CHUNK_DONE, xmsg_type);
 amglue_copy_to_tag(xmsg_type, constants);
 
 /*
@@ -157,6 +158,15 @@ new_sv_for_xmsg(
 
     /* fileno */
     hv_store(hash, "fileno", 6, amglue_newSVu64(msg->fileno), 0);
+
+    /* header_size */
+    hv_store(hash, "header_size", 11, amglue_newSVu64(msg->header_size), 0);
+
+    /* no_room */
+    hv_store(hash, "data_size", 9, amglue_newSVu64(msg->data_size), 0);
+
+    /* no_room */
+    hv_store(hash, "no_room", 7, amglue_newSVu64(msg->no_room), 0);
 
     return rv;
 }

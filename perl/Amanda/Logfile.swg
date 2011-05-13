@@ -308,6 +308,7 @@ amglue_export_ok(
     find_all_logs find_latest_log
     get_current_log_timestamp
     make_stats
+    make_chunker_stats
 );
 
 %perlcode %{
@@ -370,6 +371,17 @@ sub make_stats {
     } else {
 	return sprintf("[sec %f bytes %s kps %f]", $duration, $size, $kps);
     }
+}
+
+sub make_chunker_stats {
+    my ($size, $duration) = @_;
+
+Amanda::Debug::debug("make_chunker_stats($size, $duration)");
+    $duration = 0.1 if $duration <= 0;  # prevent division by zero
+    my $kb = $size/1024;
+    my $kps = "$kb.0"/$duration; # Perlish cast from BigInt to float
+
+    return sprintf("[sec %f kb %s kps %f]", $duration, $kb, $kps);
 }
 
 %}
