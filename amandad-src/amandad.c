@@ -1263,7 +1263,7 @@ errfd_recv(
     assert(as != NULL);
     assert(as->ev_errfd != NULL);
 
-    n = read(as->errfd, buf, 32768);
+    n = read(as->errfd, buf, NETWORK_BLOCK_BYTES);
     /* merge buffer */
     if (n > 0) {
 	/* Terminate it with '\0' */
@@ -1280,7 +1280,7 @@ errfd_recv(
     } else { /* n < 0 */
 	event_release(as->ev_errfd);
 	as->ev_errfd = NULL;
-	g_snprintf(buf, 32768,
+	g_snprintf(buf, NETWORK_BLOCK_BYTES + 1,
 		   "error reading stderr or service: %s\n", strerror(errno));
     }
 
