@@ -1,4 +1,9 @@
 2011-05-13  Francis Galiegue <fgaliegue@gmail.com>
+	* amandad-src/amandad.c: in recv_errfd(): two more NETWORK_BLOCK_BYTES
+	  usages and a fix: g_snprintf() conforms to C99 and the C99 standard
+	  states that the result string will always be nul terminated
+
+2011-05-13  Francis Galiegue <fgaliegue@gmail.com>
 	* amandad-src/amandad.c: in recv_errfd(): fix 'buf' local variable
 	  handling (you should write to buf, not &buf, and when n bytes have
 	  been read, you should zero byte[n], not byte[n+1])
