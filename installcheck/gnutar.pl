@@ -93,12 +93,14 @@ my %version_classes = (
     '>=1.16' => $numeric_version >= 11591,
     '>=1.16-no-wc' => $numeric_version >= 11591 && !$wc_default_changed, # normal
     '>=1.16-wc' => $numeric_version >= 11591 && $wc_default_changed, # stupid distros screw things up!
+    '1.16..<1.25' => $numeric_version >= 11591 && $numeric_version < 12500,
 
     '<1.23' => $numeric_version < 12300,
     '>=1.23' => $numeric_version >= 12300,
     '*' => 1,
     '1.23' => ($numeric_version >= 12290 and $numeric_version <= 12300),
-    '!1.23' => ($numeric_version < 12290 || $numeric_version > 12300),
+    '!1.23' => ($numeric_version < 12290 || ($numeric_version > 12300 && $numeric_version < 12500)),
+    '>=1.25' => $numeric_version >= 12500.
 );
 
 # include and exclude all use the same set of patterns and filenames
@@ -131,28 +133,30 @@ my $named_expectations = [
 	    'gamma',
 	       'delta',
 	          'epsilon',
-		     'empty', ],
-    #  al be ga de ep empty
-    [  1, 1, 1, 1, 1, 1,     ], # './A*A' =>	'A*A',
-    [  1, 1, 1, 1, 0, 0,     ], # './A*A' =>	'AxA',
-    [  1, 1, 1, 1, 1, 1,     ], # './B?B' =>	'B?B',
-    [  1, 1, 1, 1, 0, 0,     ], # './B?B' =>	'BxB',
-    [  0, 0, 0, 0, 1, 1,     ], # './C[C' =>	'C[C',
-    [  1, 1, 1, 1, 1, 1,     ], # './D]D' =>	'D]D',
-    [  1, 0, 0, 1, 1, 1,     ], # './E\\E' =>	'E\\E',
-    [  1, 1, 1, 1, 1, 1,     ], # './F\'F' =>	'F\'F',
-    [  1, 1, 1, 1, 1, 1,     ], # './G"G' =>	'G"G',
-    [  1, 1, 1, 1, 1, 1,     ], # './H H' =>	'H H',
-    [  1, 1, 1, 0, 0, 0,     ], # './A\\*A' =>	'A*A',
-    [  0, 0, 0, 0, 0, 0,     ], # './A\\*A' =>	'AxA',
-    [  0, 0, 1, 0, 0, 0,     ], # './B\\?B' =>	'B?B',
-    [  0, 0, 0, 0, 0, 0,     ], # './B\\?B' =>	'BxB',
-    [  1, 1, 1, 0, 0, 0,     ], # './C\\[C' =>	'C[C',
-    [  0, 1, 1, 0, 0, 0,     ], # './D\\]D' =>	'D]D',
-    [  1, 0, 1, 0, 1, 0,     ], # './E\\\\E' =>	'E\\E',
-    [  0, 1, 1, 0, 0, 0,     ], # './F\\\'F' =>	'F\'F',
-    [  0, 1, 1, 0, 0, 0,     ], # './G\\"G' =>	'G"G',
-    [  0, 1, 1, 0, 0, 0,     ], # './H\\ H' =>	'H H',
+		     'zeta',
+		        'eta',
+		           'empty', ],
+    #  al be ga de ep ze et empty
+    [  1, 1, 1, 1, 1, 1, 1, 1,     ], # './A*A' =>	'A*A',
+    [  1, 1, 1, 1, 0, 1, 1, 0,     ], # './A*A' =>	'AxA',
+    [  1, 1, 1, 1, 1, 1, 1, 1,     ], # './B?B' =>	'B?B',
+    [  1, 1, 1, 1, 0, 1, 1, 0,     ], # './B?B' =>	'BxB',
+    [  0, 0, 0, 0, 1, 1, 1, 1,     ], # './C[C' =>	'C[C',
+    [  1, 1, 1, 1, 1, 1, 1, 1,     ], # './D]D' =>	'D]D',
+    [  1, 0, 0, 1, 1, 0, 0, 1,     ], # './E\\E' =>	'E\\E',
+    [  1, 1, 1, 1, 1, 1, 1, 1,     ], # './F\'F' =>	'F\'F',
+    [  1, 1, 1, 1, 1, 1, 1, 1,     ], # './G"G' =>	'G"G',
+    [  1, 1, 1, 1, 1, 1, 1, 1,     ], # './H H' =>	'H H',
+    [  1, 1, 1, 0, 0, 1, 1, 0,     ], # './A\\*A' =>	'A*A',
+    [  0, 0, 0, 0, 0, 0, 0, 0,     ], # './A\\*A' =>	'AxA',
+    [  0, 0, 1, 0, 0, 0, 1, 0,     ], # './B\\?B' =>	'B?B',
+    [  0, 0, 0, 0, 0, 0, 0, 0,     ], # './B\\?B' =>	'BxB',
+    [  1, 1, 1, 0, 0, 1, 1, 0,     ], # './C\\[C' =>	'C[C',
+    [  0, 1, 1, 0, 0, 1, 1, 0,     ], # './D\\]D' =>	'D]D',
+    [  1, 0, 1, 0, 1, 0, 1, 0,     ], # './E\\\\E' =>	'E\\E',
+    [  0, 1, 1, 0, 0, 1, 1, 0,     ], # './F\\\'F' =>	'F\'F',
+    [  0, 1, 1, 0, 0, 1, 1, 0,     ], # './G\\"G' =>	'G"G',
+    [  0, 1, 1, 0, 0, 1, 1, 0,     ], # './H\\ H' =>	'H H',
 ];
 
 sub get_expectation {
@@ -345,7 +349,8 @@ test_gnutar_inclusion(
     extra_args => [ '--wildcards' ],
     expectations => {
 	'<1.16' => 'alpha',
-	'>=1.16' => 'beta',
+	'1.16..<1.25' => 'beta',
+	'>=1.25' => 'zeta',
     },
 );
 
@@ -353,7 +358,8 @@ test_gnutar_inclusion(
     extra_args => [ '--wildcards', '--no-unquote' ],
     expectations => {
 	'<1.16' => undef,
-	'>=1.16' => 'gamma',
+	'1.16..<1.25' => 'gamma',
+	'>=1.25' => 'eta',
     },
 );
 
@@ -464,6 +470,7 @@ test_gnutar_exclusion(
     expectations => {
 	'!1.23' => 'gamma',
 	'1.23' => 'delta',
+	'>=1.25' => 'eta',
     },
 );
 
