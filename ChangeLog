@@ -1,4 +1,7 @@
 2011-05-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndmpconnobj.c: ndmp_connection_err_code return a ndmp9_error
+
+2011-05-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndmpconnobj.h: s/ndmp4_/ndmp9_/g
 
 2011-05-17  Jean-Louis Martineau <martineau@zmanda.com>
