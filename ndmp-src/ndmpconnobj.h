@@ -81,7 +81,7 @@ typedef struct NDMPConnectionClass_ {
  * @param self: object
  * @returns: error code
  */
-ndmp4_error ndmp_connection_err_code(
+ndmp9_error ndmp_connection_err_code(
     NDMPConnection *self);
 
 /* Get the error message describing the most recent error on this object.
