@@ -1498,7 +1498,7 @@ holding(
                 amfree(dumpstr);
 		dumpfile_free_data(&file);
             }
-            g_slist_free_full(file_list);
+            slist_free_full(file_list, g_free);
             break;
 
         case HOLDING_DELETE:
@@ -1516,7 +1516,7 @@ holding(
                     error(_("Could not delete '%s'"), (char *)li->data);
                 }
             }
-            g_slist_free_full(file_list);
+            slist_free_full(file_list, g_free);
             break;
     }
 }

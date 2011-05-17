@@ -155,7 +155,7 @@ cmdline_format_dumpspec_components(
  * the dumpspec list contains a dumpspec with all blank
  * entries, all holding files are returned.
  *
- * Free the resulting list with g_slist_free_full()
+ * Free the resulting list with slist_free_full()
  *
  * @param dumpspec_list: a list of dumpspecs
  * @returns: a list of holding disk filenames.

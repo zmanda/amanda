@@ -300,7 +300,7 @@ search_holding_disk(
 	dumpfile_free_data(&file);
     }
 
-    g_slist_free_full(holding_file_list);
+    slist_free_full(holding_file_list, g_free);
 }
 
 static char *

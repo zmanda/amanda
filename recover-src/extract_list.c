@@ -2286,7 +2286,7 @@ extract_files(void)
 	all_level = g_slist_append(all_level, level);
     }
     if (dump_dle) {
-	g_slist_free_full(dump_dle->levellist);
+	slist_free_full(dump_dle->levellist, g_free);
 	dump_dle->levellist = all_level;
 	run_client_scripts(EXECUTE_ON_PRE_RECOVER, &g_options, dump_dle,
 			   stderr);
@@ -2334,7 +2334,7 @@ extract_files(void)
 	    dump_dle->levellist = g_slist_append(dump_dle->levellist, level);
 	    run_client_scripts(EXECUTE_ON_INTER_LEVEL_RECOVER, &g_options,
 			       dump_dle, stderr);
-	    g_slist_free_full(dump_dle->levellist);
+	    slist_free_full(dump_dle->levellist, g_free);
 	    dump_dle->levellist = NULL;
 	}
 
@@ -2370,7 +2370,7 @@ extract_files(void)
 	if (dump_dle) {
 	    run_client_scripts(EXECUTE_ON_POST_LEVEL_RECOVER, &g_options,
 			       dump_dle, stderr);
-	    g_slist_free_full(dump_dle->levellist);
+	    slist_free_full(dump_dle->levellist, g_free);
 	    dump_dle->levellist = NULL;
 	}
     }
@@ -2378,7 +2378,7 @@ extract_files(void)
 	dump_dle->levellist = all_level;
 	run_client_scripts(EXECUTE_ON_POST_RECOVER, &g_options, dump_dle,
 			   stderr);
-	g_slist_free_full(dump_dle->levellist);
+	slist_free_full(dump_dle->levellist, g_free);
 	all_level = NULL;
 	dump_dle->levellist = NULL;
     }

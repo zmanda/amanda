@@ -567,7 +567,7 @@ holding_get_files_for_flush(
 	dumpfile_free_data(&file);
     }
 
-    if (file_list) g_slist_free_full(file_list);
+    if (file_list) slist_free_full(file_list, g_free);
 
     return result_list;
 }
@@ -593,7 +593,7 @@ holding_get_all_datestamps(void)
 	dumpfile_free_data(&dfile);
     }
 
-    g_slist_free_full(all_files);
+    slist_free_full(all_files, g_free);
 
     return datestamps;
 }

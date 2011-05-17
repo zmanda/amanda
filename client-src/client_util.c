@@ -66,7 +66,6 @@ fixup_relative(
     return newname;
 }
 
-
 static char *
 get_name(
     char *	diskname,
