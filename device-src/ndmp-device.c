@@ -1072,8 +1072,8 @@ listen_impl(
 
     /* then tell it to start listening */
     if (!ndmp_connection_mover_listen(self->ndmp,
-		for_writing? NDMP4_MOVER_MODE_READ : NDMP4_MOVER_MODE_WRITE,
-		NDMP4_ADDR_TCP,
+		for_writing? NDMP9_MOVER_MODE_READ : NDMP9_MOVER_MODE_WRITE,
+		NDMP9_ADDR_TCP,
 		addrs)) {
 	set_error_from_ndmp(self);
 	return FALSE;
@@ -1120,7 +1120,7 @@ accept_impl(
 		return FALSE;
 	    }
 
-	    if (state != NDMP4_MOVER_STATE_LISTEN)
+	    if (state != NDMP9_MOVER_STATE_LISTEN)
 		break;
 
 	    /* back off a little bit to give the other side time to breathe,
@@ -1132,7 +1132,7 @@ accept_impl(
 	}
 
 	/* double-check state */
-	if (state != NDMP4_MOVER_STATE_ACTIVE) {
+	if (state != NDMP9_MOVER_STATE_ACTIVE) {
 	    device_set_error(DEVICE(self),
 		g_strdup("mover did not enter the ACTIVE state as expected"),
 		DEVICE_STATUS_DEVICE_ERROR);
@@ -1193,9 +1193,9 @@ accept_impl(
     }
 
     if (self->for_writing)
-	mode = NDMP4_MOVER_MODE_WRITE;
+	mode = NDMP9_MOVER_MODE_WRITE;
     else
-	mode = NDMP4_MOVER_MODE_READ;
+	mode = NDMP9_MOVER_MODE_READ;
 
     /* set up the new directtcp connection */
     if (self->directtcp_conn)
@@ -1235,8 +1235,8 @@ indirecttcp_start_writing(
     /* tell mover to start listening */
     g_assert(self->for_writing);
     if (!ndmp_connection_mover_listen(self->ndmp,
-		NDMP4_MOVER_MODE_READ,
-		NDMP4_ADDR_TCP,
+		NDMP9_MOVER_MODE_READ,
+		NDMP9_ADDR_TCP,
 		&real_addrs)) {
 	set_error_from_ndmp(self);
 	return FALSE;
@@ -1316,10 +1316,10 @@ write_from_connection_impl(
     if (self->indirecttcp_sock != -1) {
 	/* If we're doing IndirectTCP, then we've deferred the whole mover_set_window
 	 * / mover_listen process.. until now.  So the mover should be IDLE. */
-	g_assert(mover_state == NDMP4_MOVER_STATE_IDLE);
+	g_assert(mover_state == NDMP9_MOVER_STATE_IDLE);
     } else {
 	/* the mover had best be PAUSED right now */
-	g_assert(mover_state == NDMP4_MOVER_STATE_PAUSED);
+	g_assert(mover_state == NDMP9_MOVER_STATE_PAUSED);
     }
 
     /* we want to set the window regardless of whether this is directtcp or
@@ -1458,7 +1458,7 @@ read_to_connection_impl(
     }
 
     /* the mover had best be PAUSED right now */
-    g_assert(mover_state == NDMP4_MOVER_STATE_PAUSED);
+    g_assert(mover_state == NDMP9_MOVER_STATE_PAUSED);
 
     if (!ndmp_connection_mover_set_window(self->ndmp,
 		nconn->offset,
