@@ -1,3 +1,6 @@
+2011-05-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amrecover.8.xml: Add an AUTH section.
+
 2011-05-13  Francis Galiegue <fgaliegue@gmail.com>
 	* amandad-src/amandad.c: in recv_errfd(): two more NETWORK_BLOCK_BYTES
 	  usages and a fix: g_snprintf() conforms to C99 and the C99 standard
