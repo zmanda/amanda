@@ -1,3 +1,6 @@
+2011-05-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amrecover.8.xml: Add an AUTH section.
+
 2011-05-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: Call $device->finish() before
 	  $device->read_label(), A device must be in ACCESS_NULL for read_label.
