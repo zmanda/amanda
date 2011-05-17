@@ -1027,8 +1027,8 @@ listen_impl(
 
     /* then tell it to start listening */
     if (!ndmp_connection_mover_listen(self->ndmp,
-		for_writing? NDMP4_MOVER_MODE_READ : NDMP4_MOVER_MODE_WRITE,
-		NDMP4_ADDR_TCP,
+		for_writing? NDMP9_MOVER_MODE_READ : NDMP9_MOVER_MODE_WRITE,
+		NDMP9_ADDR_TCP,
 		addrs)) {
 	set_error_from_ndmp(self);
 	return FALSE;
@@ -1076,7 +1076,7 @@ accept_impl(
 		return FALSE;
 	    }
 
-	    if (state != NDMP4_MOVER_STATE_LISTEN)
+	    if (state != NDMP9_MOVER_STATE_LISTEN)
 		break;
 
 	    /* back off a little bit to give the other side time to breathe,
@@ -1088,7 +1088,7 @@ accept_impl(
 	}
 
 	/* double-check state */
-	if (state != NDMP4_MOVER_STATE_ACTIVE) {
+	if (state != NDMP9_MOVER_STATE_ACTIVE) {
 	    device_set_error(DEVICE(self),
 		g_strdup("mover did not enter the ACTIVE state as expected"),
 		DEVICE_STATUS_DEVICE_ERROR);
@@ -1136,9 +1136,9 @@ accept_impl(
     self->listen_addrs = NULL;
 
     if (self->for_writing)
-	mode = NDMP4_MOVER_MODE_READ;
+	mode = NDMP9_MOVER_MODE_READ;
     else
-	mode = NDMP4_MOVER_MODE_WRITE;
+	mode = NDMP9_MOVER_MODE_WRITE;
 
     /* set up the new directtcp connection */
     if (self->directtcp_conn)
@@ -1197,9 +1197,9 @@ connect_impl(
     }
 
     if (self->for_writing)
-	mode = NDMP4_MOVER_MODE_READ;
+	mode = NDMP9_MOVER_MODE_READ;
     else
-	mode = NDMP4_MOVER_MODE_WRITE;
+	mode = NDMP9_MOVER_MODE_WRITE;
 
     if (!ndmp_connection_mover_connect(self->ndmp, mode, addrs)) {
 	set_error_from_ndmp(self);
@@ -1283,7 +1283,7 @@ write_from_connection_impl(
     /* if this is false, then the caller did not use use_connection correctly */
     g_assert(self->directtcp_conn != NULL);
     g_assert(self->ndmp == nconn->ndmp);
-    g_assert(nconn->mode == NDMP4_MOVER_MODE_READ);
+    g_assert(nconn->mode == NDMP9_MOVER_MODE_READ);
 
     if (!ndmp_connection_mover_get_state(self->ndmp,
 		&mover_state, &bytes_moved_before, NULL, NULL)) {
@@ -1292,7 +1292,7 @@ write_from_connection_impl(
     }
 
     /* the mover had best be PAUSED right now */
-    g_assert(mover_state == NDMP4_MOVER_STATE_PAUSED);
+    g_assert(mover_state == NDMP9_MOVER_STATE_PAUSED);
 
     if (!ndmp_connection_mover_set_window(self->ndmp,
 		nconn->offset,
@@ -1410,7 +1410,7 @@ read_to_connection_impl(
     /* if this is false, then the caller did not use use_connection correctly */
     g_assert(nconn != NULL);
     g_assert(self->ndmp == nconn->ndmp);
-    g_assert(nconn->mode == NDMP4_MOVER_MODE_WRITE);
+    g_assert(nconn->mode == NDMP9_MOVER_MODE_WRITE);
 
     if (!ndmp_connection_mover_get_state(self->ndmp,
 		&mover_state, &bytes_moved_before, NULL, NULL)) {
@@ -1419,7 +1419,7 @@ read_to_connection_impl(
     }
 
     /* the mover had best be PAUSED right now */
-    g_assert(mover_state == NDMP4_MOVER_STATE_PAUSED);
+    g_assert(mover_state == NDMP9_MOVER_STATE_PAUSED);
 
     if (!ndmp_connection_mover_set_window(self->ndmp,
 		nconn->offset,
