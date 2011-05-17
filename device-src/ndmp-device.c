@@ -1027,8 +1027,8 @@ listen_impl(
 
     /* then tell it to start listening */
     if (!ndmp_connection_mover_listen(self->ndmp,
-		for_writing? NDMP4_MOVER_MODE_READ : NDMP4_MOVER_MODE_WRITE,
-		NDMP4_ADDR_TCP,
+		for_writing? NDMP9_MOVER_MODE_READ : NDMP9_MOVER_MODE_WRITE,
+		NDMP9_ADDR_TCP,
 		addrs)) {
 	set_error_from_ndmp(self);
 	return FALSE;
@@ -1136,9 +1136,9 @@ accept_impl(
     self->listen_addrs = NULL;
 
     if (self->for_writing)
-	mode = NDMP4_MOVER_MODE_READ;
+	mode = NDMP9_MOVER_MODE_READ;
     else
-	mode = NDMP4_MOVER_MODE_WRITE;
+	mode = NDMP9_MOVER_MODE_WRITE;
 
     /* set up the new directtcp connection */
     if (self->directtcp_conn)
@@ -1197,9 +1197,9 @@ connect_impl(
     }
 
     if (self->for_writing)
-	mode = NDMP4_MOVER_MODE_READ;
+	mode = NDMP9_MOVER_MODE_READ;
     else
-	mode = NDMP4_MOVER_MODE_WRITE;
+	mode = NDMP9_MOVER_MODE_WRITE;
 
     if (!ndmp_connection_mover_connect(self->ndmp, mode, addrs)) {
 	set_error_from_ndmp(self);
