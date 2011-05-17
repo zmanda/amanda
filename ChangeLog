@@ -1,4 +1,7 @@
 2011-05-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/ndmp-device.c: s/NDMP4_/NDMP9_/g
+
+2011-05-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amrecover.8.xml: Add an AUTH section.
 
 2011-05-10  Jean-Louis Martineau <martineau@zmanda.com>
