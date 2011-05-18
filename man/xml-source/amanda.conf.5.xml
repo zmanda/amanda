@@ -1565,7 +1565,7 @@ are defined.</para>
   <term><amkeyword>auth</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<amdefault>&quot;bsd&quot;</amdefault>.
+<amdefault>&quot;bsdtcp&quot;</amdefault>.
 Type of authorization to perform between tape server and backup client hosts.  See <manref name="amanda-auth" vol="7"/> for more detail.</para>
   </listitem>
   </varlistentry>
@@ -2325,7 +2325,10 @@ define dumptype "srvcompress" {
     compress server fast
 }
 define dumptype "bsd-auth" {
-    auth bsd
+    auth "bsd"
+}
+define dumptype "bsdtcp-auth" {
+    auth "bsdtcp"
 }
 define dumptype "no-record" {
     record no

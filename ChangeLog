@@ -1,3 +1,14 @@
+2011-05-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c,
+	  common-src/conffile.c: Change default auth to bsdtcp.
+	* NEWS, ReleaseNotes: Change default auth to bsdtcp.
+	* example/amanda-client.conf.in,
+	  example/amanda.conf.in: Change default auth to bsdtcp.
+	* man/xml-source/amanda-auth.7.xml,
+	  man/xml-source/amanda-client.conf.5.xml,
+	  man/xml-source/amanda.conf.5.xml,
+	  man/xml-source/amrecover.8.xml: Change default auth to bsdtcp.
+
 2011-05-18  Dustin J. Mitchell <dustin@mozilla.com>
 	* common-src/event.c common-src/event.h: add event_loop_run and
 	  event_loop_quit to mirror g_main_loop_run/quit

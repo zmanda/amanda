@@ -432,13 +432,13 @@ main(
     }
 
     /*
-     * If no security type specified, use BSD
+     * If no security type specified, use BSDTCP
      */
     if (secdrv == NULL) {
-	secdrv = security_getdriver("BSD");
-	auth = "bsd";
+	secdrv = security_getdriver("BSDTCP");
+	auth = "bsdtcp";
 	if (secdrv == NULL) {
-	    error(_("no driver for default security type 'BSD'\n"));
+	    error(_("no driver for default security type 'BSDTCP'\n"));
 	    /*NOTREACHED*/
 	}
     }

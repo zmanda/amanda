@@ -359,7 +359,7 @@ define tapetype SEAGATE-ULTRIUM-LTO {
 #   auth	- authentication scheme to use between server and client.
 #		  Valid values are "bsd", "bsdudp", "bsdtcp", "krb5", "local",
 #		  "rsh" and "ssh".  
-#		  Default: [auth "bsd"]
+#		  Default: [auth "bsdtcp"]
 #   comment	- just a comment string
 #   comprate	- set default compression rate.  Should be followed by one or
 #		  two numbers, optionally separated by a comma.  The 1st is
@@ -504,8 +504,7 @@ define dumptype global {
     # indexing, recording, etc.  Some examples:
     # index yes
     # record no
-    # split_diskbuffer "/raid/amanda"
-    # fallback_splitsize 64m
+    # auth "bsdtcp"
 }
 
 define dumptype always-full {

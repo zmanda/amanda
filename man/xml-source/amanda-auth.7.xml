@@ -33,7 +33,7 @@
 </refsect1>
 
 <refsect1><title>COMPILATION AND GENERAL INFORMATION</title>
-  <para>The communication method and thus type of authentication that will be used by the Amanda server is specified by the <emphasis remap='I'>auth</emphasis> parameter in the dumptype for each disklist entry (DLE).  The <emphasis remap='I'>auth</emphasis> parameter thus may be easily and globally specified in the "global" dumptype.  If <emphasis remap='I'>auth</emphasis> is not specified, the <emphasis remap='B'>bsd</emphasis> communication method is used.  See &amconf; for more information on Amanda configuration and dumptypes, and &disklist; for more information on disklists.</para>
+  <para>The communication method and thus type of authentication that will be used by the Amanda server is specified by the <emphasis remap='I'>auth</emphasis> parameter in the dumptype for each disklist entry (DLE).  The <emphasis remap='I'>auth</emphasis> parameter thus may be easily and globally specified in the "global" dumptype.  If <emphasis remap='I'>auth</emphasis> is not specified, the <emphasis remap='B'>bsdtcp</emphasis> communication method is used.  See &amconf; for more information on Amanda configuration and dumptypes, and &disklist; for more information on disklists.</para>
 
 <para>On the client side, the Amanda daemon &amandad; validates the connection depending on the value of the <emphasis remap='B'>auth</emphasis> argument passed to it (see Amanda(8)).  Also, when it comes to recovery, the <emphasis remap='B'>auth</emphasis> parameter can be specified in the &amclientconf; file to specify the communication method to be used by the client to the server.</para>
 

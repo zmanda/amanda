@@ -1,5 +1,5 @@
 #
-# amanda.conf - sample Amanda client configuration file.
+# amanda-client.conf - sample Amanda client configuration file.
 #
 # This file normally goes in @CONFIG_DIR@/amanda-client.conf.
 #
