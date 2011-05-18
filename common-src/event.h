@@ -113,6 +113,19 @@ void event_wait(event_handle_t *evt);
 void event_loop(int nonblock);
 
 /*
+ * Process events, not even stopping when there are no more event API events
+ * left (there may be other GMainLoop events pending); similar to
+ * g_main_loop_run, but compatible with the event API.
+ */
+void event_loop_run(void);
+
+/*
+ * Stop an event_loop_run invocation; similar to g_main_loop_quit, but
+ * compatible with the event API
+ */
+void event_loop_quit(void);
+
+/*
  * Get the default GMainLoop object.  Applications which use the Glib
  * main loop directly should use this object for calls to e.g.,
  * g_main_loop_run(loop).
