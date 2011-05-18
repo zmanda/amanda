@@ -1,4 +1,8 @@
 2011-05-18  Francis Galiegue <fgaliegue@gmail.com>
+	* amandad-src/amandad.c: use switch instead of if ... else if ... to
+	  handle error buffer appends
+
+2011-05-18  Francis Galiegue <fgaliegue@gmail.com>
 	* amandad-src/amandad.c: append to errbuf when a read error occurs on
 	  errfd - the message was created but never used
 
