@@ -1,4 +1,8 @@
 2011-05-18  Francis Galiegue <fgaliegue@gmail.com>
+	* amandad-src/amandad.c: factorize reply buffer offset handling, it is
+	  the same for n >= 0
+
+2011-05-18  Francis Galiegue <fgaliegue@gmail.com>
 	* amandad-src/amandad.c: handle reply buffer extension in only one place
 
 2011-05-18  Francis Galiegue <fgaliegue@gmail.com>
