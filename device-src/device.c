@@ -496,7 +496,7 @@ device_open (char * device_name)
     unaliased_name = device_unaliased_name(device_name);
     if (!unaliased_name) {
 	return make_null_error(
-		vstrallocf("Device \"%s\" has no tapedev", device_name),
+		g_strdup_printf("Device \"%s\" has no tapedev", device_name),
 		DEVICE_STATUS_DEVICE_ERROR);
     }
 
@@ -504,7 +504,7 @@ device_open (char * device_name)
 	amfree(device_type);
 	amfree(device_node);
 	return make_null_error(
-	    vstrallocf("\"%s\" is not a valid device name", unaliased_name),
+	    g_strdup_printf("\"%s\" is not a valid device name", unaliased_name),
 	    DEVICE_STATUS_DEVICE_ERROR);
     }
 
@@ -512,7 +512,7 @@ device_open (char * device_name)
 
     if (factory == NULL) {
 	Device *nulldev = make_null_error(
-	    vstrallocf("Device type \"%s\" is not known", device_type),
+	    g_strdup_printf("Device type \"%s\" is not known", device_type),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	amfree(device_type);
 	amfree(device_node);
@@ -677,7 +677,7 @@ try_set_blocksize(Device * device, guint blocksize) {
 
     if (!success) {
 	device_set_error(device,
-	    vstrallocf(_("Setting BLOCK_SIZE to %u "
+	    g_strdup_printf(_("Setting BLOCK_SIZE to %u "
 		    "not supported for device %s.\n"),
 		    blocksize, device->device_name),
 	    DEVICE_STATUS_DEVICE_ERROR);
@@ -708,13 +708,13 @@ static void set_device_property(gpointer key_p, gpointer value_p,
     if (property_base == NULL) {
         /* Nonexistant property name. */
 	device_set_error(device,
-	    vstrallocf(_("unknown device property name '%s'"), property_s),
+	    g_strdup_printf(_("unknown device property name '%s'"), property_s),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return;
     }
     if (g_slist_length(property->values) > 1) {
 	device_set_error(device,
-	    vstrallocf(_("multiple values for device property '%s'"), property_s),
+	    g_strdup_printf(_("multiple values for device property '%s'"), property_s),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return;
     }
@@ -725,7 +725,7 @@ static void set_device_property(gpointer key_p, gpointer value_p,
     if (!g_value_set_from_string(&property_value, value)) {
         /* Value type could not be interpreted. */
 	device_set_error(device,
-	    vstrallocf(_("Could not parse property value '%s' for property '%s' (property type %s)"),
+	    g_strdup_printf(_("Could not parse property value '%s' for property '%s' (property type %s)"),
                         value, property_base->name, g_type_name(property_base->type)),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return;
@@ -737,7 +737,7 @@ static void set_device_property(gpointer key_p, gpointer value_p,
         /* Device rejects property. */
         if (!device_in_error(device)) {
 	    device_set_error(device,
-		vstrallocf(_("Could not set property '%s' to '%s' on %s"),
+		g_strdup_printf(_("Could not set property '%s' to '%s' on %s"),
 			property_base->name, value, device->device_name),
 		DEVICE_STATUS_DEVICE_ERROR);
 	}

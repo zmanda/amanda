@@ -1,4 +1,10 @@
 2011-05-18  Francis Galiegue <fgaliegue@gmail.com>
+	* Many files (31): GLib: change vstrallocf() for g_strdup_printf();
+	  change to a simple g_strup() when possible
+	* common-src/alloc.c, common-src/amanda.h: remove prototypes/macros of
+	  vstrallocf()
+
+2011-05-18  Francis Galiegue <fgaliegue@gmail.com>
 	* Many files (54): GLib: change alloc() for g_malloc()
 	* common-src/alloc.c, common-src/amanda.h: remove prototypes/macros of
 	  alloc()

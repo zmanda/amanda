@@ -709,7 +709,7 @@ execute_command(DvdRwDevice *self, gchar **argv, gint *result)
     }
 
     if (!success) {
-	gchar *error_message = vstrallocf(_("DVDRW device cannot execute '%s': %s (status: %d) (stderr: %s)"),
+	gchar *error_message = g_strdup_printf(_("DVDRW device cannot execute '%s': %s (status: %d) (stderr: %s)"),
 	    argv[0], error ? error->message : _("Unknown error"), errnum, std_error ? std_error: "No stderr");
 
 	if (dself != NULL) {

@@ -2487,14 +2487,14 @@ bad_nak:
 	    for (i = 0; i < NSTREAMS; i++) {
 		tok = strtok(NULL, " ");
 		if (tok == NULL || strcmp(tok, amidxtaped_streams[i].name) != 0) {
-		    extra = vstrallocf(_("CONNECT token is \"%s\": expected \"%s\""),
+		    extra = g_strdup_printf(_("CONNECT token is \"%s\": expected \"%s\""),
 				      tok ? tok : "(null)",
 				      amidxtaped_streams[i].name);
 		    goto parse_error;
 		}
 		tok = strtok(NULL, " \n");
 		if (tok == NULL || sscanf(tok, "%d", &ports[i]) != 1) {
-		    extra = vstrallocf(_("CONNECT %s token is \"%s\": expected a port number"),
+		    extra = g_strdup_printf(_("CONNECT %s token is \"%s\": expected a port number"),
 				      amidxtaped_streams[i].name,
 				      tok ? tok : "(null)");
 		    goto parse_error;
@@ -2532,7 +2532,7 @@ bad_nak:
 	    continue;
 	}
 /*
-	extra = vstrallocf("next token is \"%s\": expected \"CONNECT\", \"ERROR\" or \"OPTIONS\""),
+	extra = g_strdup_printf("next token is \"%s\": expected \"CONNECT\", \"ERROR\" or \"OPTIONS\""),
 			  tok ? tok : _("(null)"));
 	goto parse_error;
 */

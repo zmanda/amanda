@@ -729,7 +729,7 @@ databuf_flush(
     }
     if (written == 0) {
 	int save_errno = errno;
-	m = vstrallocf(_("data write: %s"), strerror(save_errno));
+	m = g_strdup_printf(_("data write: %s"), strerror(save_errno));
 	amfree(errstr);
 	errstr = quote_string(m);
 	amfree(m);
@@ -1306,7 +1306,7 @@ do_dump(
 	(long long)dumpsize,
 	(isnormal(dumptime) ? ((double)dumpsize / (double)dumptime) : 0.0),
 	(long long)origsize);
-    m = vstrallocf("[%s]", errstr);
+    m = g_strdup_printf("[%s]", errstr);
     q = quote_string(m);
     amfree(m);
     putresult(DONE, _("%s %lld %lld %lu %s\n"), handle,
@@ -1370,7 +1370,7 @@ do_dump(
     return 1;
 
 failed:
-    m = vstrallocf("[%s]", errstr);
+    m = g_strdup_printf("[%s]", errstr);
     q = quote_string(m);
     putresult(FAILED, "%s %s\n", handle, q);
     amfree(q);
@@ -2115,7 +2115,7 @@ bad_nak:
 	    for (i = 0; i < NSTREAMS; i++) {
 		tok = strtok(NULL, " ");
 		if (tok == NULL || strcmp(tok, streams[i].name) != 0) {
-		    extra = vstrallocf(
+		    extra = g_strdup_printf(
 				_("CONNECT token is \"%s\": expected \"%s\""),
 				tok ? tok : "(null)",
 				streams[i].name);
@@ -2123,7 +2123,7 @@ bad_nak:
 		}
 		tok = strtok(NULL, " \n");
 		if (tok == NULL || sscanf(tok, "%d", &ports[i]) != 1) {
-		    extra = vstrallocf(
+		    extra = g_strdup_printf(
 			_("CONNECT %s token is \"%s\": expected a port number"),
 			streams[i].name, tok ? tok : "(null)");
 		    goto parse_error;
@@ -2138,7 +2138,7 @@ bad_nak:
 	if (strcmp(tok, "OPTIONS") == 0) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL) {
-		extra = vstrallocf(_("OPTIONS token is missing"));
+		extra = g_strdup(_("OPTIONS token is missing"));
 		goto parse_error;
 	    }
 
@@ -2164,7 +2164,7 @@ bad_nak:
 	    continue;
 	}
 
-	extra = vstrallocf(_("next token is \"%s\": expected \"CONNECT\", \"ERROR\" or \"OPTIONS\""),
+	extra = g_strdup_printf(_("next token is \"%s\": expected \"CONNECT\", \"ERROR\" or \"OPTIONS\""),
 			  tok ? tok : "(null)");
 	goto parse_error;
     }

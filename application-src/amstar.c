@@ -542,7 +542,7 @@ amstar_estimate(
 
     qdisk = quote_string(argument->dle.disk);
     if (!star_path) {
-	errmsg = vstrallocf(_("STAR-PATH not defined"));
+	errmsg = g_strdup(_("STAR-PATH not defined"));
 	goto common_error;
     }
     cmd = g_strdup(star_path);
@@ -554,7 +554,7 @@ amstar_estimate(
 	argv_ptr = amstar_build_argv(argument, level, CMD_ESTIMATE);
 
 	if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	    errmsg = vstrallocf(_("Cannot access /dev/null : %s"),
+	    errmsg = g_strdup_printf(_("Cannot access /dev/null : %s"),
 				strerror(errno));
 	    goto common_error;
 	}
@@ -565,7 +565,7 @@ amstar_estimate(
 
 	dumpout = fdopen(pipefd,"r");
 	if (!dumpout) {
-	    errmsg = vstrallocf(_("Can't fdopen: %s"), strerror(errno));
+	    errmsg = g_strdup_printf(_("Can't fdopen: %s"), strerror(errno));
 	    aclose(nullfd);
 	    goto common_error;
 	}
@@ -604,7 +604,7 @@ amstar_estimate(
 		 level,
 		 walltime_str(timessub(curclock(), start_time)));
 	if(size == (off_t)-1) {
-	    errmsg = vstrallocf(_("no size line match in %s output"),
+	    errmsg = g_strdup_printf(_("no size line match in %s output"),
 				cmd);
 	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
 	    dbprintf(".....\n");
@@ -628,7 +628,7 @@ amstar_estimate(
 	waitpid(starpid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
 	    amfree(errmsg);
-	    errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
+	    errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
 				cmd, WTERMSIG(wait_status), dbfn());
 	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
 	    dbprintf(".....\n");
@@ -639,7 +639,7 @@ amstar_estimate(
 	} else if (WIFEXITED(wait_status)) {
 	    if (WEXITSTATUS(wait_status) != 0) {
 		amfree(errmsg);
-		errmsg = vstrallocf(_("%s exited with status %d: see %s"),
+		errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
 				    cmd, WEXITSTATUS(wait_status), dbfn());
 		dbprintf(_("%s for %s\n"), errmsg, qdisk);
 		dbprintf(".....\n");
@@ -652,7 +652,7 @@ amstar_estimate(
 	    }
 	} else {
 	    amfree(errmsg);
-	    errmsg = vstrallocf(_("%s got bad exit: see %s"), cmd, dbfn());
+	    errmsg = g_strdup_printf(_("%s got bad exit: see %s"), cmd, dbfn());
 	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
 	    dbprintf(".....\n");
 	    qerrmsg = quote_string(errmsg);

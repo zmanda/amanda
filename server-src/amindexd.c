@@ -139,7 +139,7 @@ get_pid_status(
 
     status = waitpid(pid, &wait_status, 0);
     if (status < 0) {
-	msg = vstrallocf(
+	msg = g_strdup_printf(
 		_("%s (%d) returned negative value: %s"),
 		program, pid, strerror(errno));
 	dbprintf("%s\n", msg);
@@ -147,14 +147,14 @@ get_pid_status(
 	result = 0;
     } else {
 	if (!WIFEXITED(wait_status)) {
-	    msg = vstrallocf(
+	    msg = g_strdup_printf(
 			_("%s exited with signal %d"),
 			program, WTERMSIG(wait_status));
 	    dbprintf("%s\n", msg);
 	    g_ptr_array_add(*emsg, msg);
 	    result = 0;
 	} else if (WEXITSTATUS(wait_status) != 0) {
-	    msg = vstrallocf(
+	    msg = g_strdup_printf(
 			_("%s exited with status %d"),
 			program, WEXITSTATUS(wait_status));
 	    dbprintf("%s\n", msg);
@@ -230,7 +230,7 @@ uncompress_file(
 	 * Check that compressed file exists manually.
 	 */
 	if (stat(filename_gz, &statbuf) < 0) {
-	    msg = vstrallocf(_("Compressed file '%s' is inaccessable: %s"),
+	    msg = g_strdup_printf(_("Compressed file '%s' is inaccessable: %s"),
 			     filename_gz, strerror(errno));
 	    dbprintf("%s\n", msg);
 	    g_ptr_array_add(*emsg, msg);
@@ -248,7 +248,7 @@ uncompress_file(
 
 	indexfd = open(filename,O_WRONLY|O_CREAT, 0600);
 	if (indexfd == -1) {
-	    msg = vstrallocf(_("Can't open '%s' for writting: %s"),
+	    msg = g_strdup_printf(_("Can't open '%s' for writting: %s"),
 			      filename, strerror(errno));
 	    dbprintf("%s\n", msg);
 	    g_ptr_array_add(*emsg, msg);
@@ -271,7 +271,7 @@ uncompress_file(
 
 	pipe_stream = fdopen(pipe_from_gzip,"r");
 	if(pipe_stream == NULL) {
-	    msg = vstrallocf(_("Can't fdopen pipe from gzip: %s"),
+	    msg = g_strdup_printf(_("Can't fdopen pipe from gzip: %s"),
 			     strerror(errno));
 	    dbprintf("%s\n", msg);
 	    g_ptr_array_add(*emsg, msg);
@@ -292,7 +292,7 @@ uncompress_file(
 	pid_index = fork();
 	switch (pid_index) {
 	case -1:
-	    msg = vstrallocf(
+	    msg = g_strdup_printf(
 			_("fork error: %s"),
 			strerror(errno));
 	    dbprintf("%s\n", msg);
@@ -324,7 +324,7 @@ uncompress_file(
 	    while (fgets(line, sizeof(line), uncompress_err_stream) != NULL) {
 		if (strlen(line) > 0 && line[strlen(line)-1] == '\n')
 		    line[strlen(line)-1] = '\0';
-		g_ptr_array_add(uncompress_err, vstrallocf("  %s", line));
+		g_ptr_array_add(uncompress_err, g_strdup_printf("  %s", line));
 		dbprintf("Uncompress: %s\n", line);
 	    }
 	    fclose(uncompress_err_stream);
@@ -340,7 +340,7 @@ uncompress_file(
 	    while (fgets(line, sizeof(line), sort_err_stream) != NULL) {
 		if (strlen(line) > 0 && line[strlen(line)-1] == '\n')
 		    line[strlen(line)-1] = '\0';
-		g_ptr_array_add(sort_err, vstrallocf("  %s", line));
+		g_ptr_array_add(sort_err, g_strdup_printf("  %s", line));
 		dbprintf("Sort: %s\n", line);
 	    }
 	    fclose(sort_err_stream);
@@ -387,7 +387,7 @@ uncompress_file(
 	}
 
     } else if(!S_ISREG((stat_filename.st_mode))) {
-	    msg = vstrallocf(_("\"%s\" is not a regular file"), filename);
+	    msg = g_strdup_printf(_("\"%s\" is not a regular file"), filename);
 	    dbprintf("%s\n", msg);
 	    g_ptr_array_add(*emsg, msg);
 	    errno = -1;
@@ -441,7 +441,7 @@ process_ls_dump(
     amfree(filename_gz);
 
     if((fp = fopen(filename,"r"))==0) {
-	g_ptr_array_add(*emsg, vstrallocf("%s", strerror(errno)));
+	g_ptr_array_add(*emsg, g_strdup_printf("%s", strerror(errno)));
 	amfree(dir_slash);
         amfree(filename);
 	return -1;

@@ -1726,7 +1726,7 @@ static void getsize(
 		    remove_disk(&startq, dp);
 		    est(dp)->state = DISK_DONE;
 		    if (est(dp)->errstr == NULL) {
-			est(dp)->errstr = vstrallocf(
+			est(dp)->errstr = g_strdup(
 	                                        _("Can't request estimate"));
 		    }
 		    enqueue_disk(&failq, dp);
@@ -1829,9 +1829,9 @@ static void handle_result(
 
     if (pkt == NULL) {
 	if (strcmp(security_geterror(sech), "timeout waiting for REP") == 0) {
-	    errbuf = vstrallocf("Some estimate timeout on %s, using server estimate if possible", hostp->hostname);
+	    errbuf = g_strdup_printf("Some estimate timeout on %s, using server estimate if possible", hostp->hostname);
 	} else {
-	    errbuf = vstrallocf(_("Request to %s failed: %s"),
+	    errbuf = g_strdup_printf(_("Request to %s failed: %s"),
 			hostp->hostname, security_geterror(sech));
 	}
 	goto error_return;
@@ -1873,7 +1873,7 @@ static void handle_result(
 		t += sizeof("features=")-1;
 		am_release_feature_set(hostp->features);
 		if((hostp->features = am_string_to_feature(t)) == NULL) {
-		    errbuf = vstrallocf(hostp->hostname,
+		    errbuf = g_strdup_printf(hostp->hostname,
 				       _(": bad features value: %s\n"), line);
 		    goto error_return;
 		}
@@ -2068,7 +2068,7 @@ static void handle_result(
 	    else {
 		enqueue_disk(&failq, dp);
 		if(est(dp)->got_estimate && !est(dp)->errstr) {
-		    est(dp)->errstr = vstrallocf("disk %s, all estimate failed",
+		    est(dp)->errstr = g_strdup_printf("disk %s, all estimate failed",
 						 qname);
 		}
 		else {
@@ -2076,7 +2076,7 @@ static void handle_result(
 			 _("error result for host %s disk %s: missing estimate\n"),
 		   	 dp->host->hostname, qname);
 		    if (est(dp)->errstr == NULL) {
-			est(dp)->errstr = vstrallocf(_("missing result for %s in %s response"),
+			est(dp)->errstr = g_strdup_printf(_("missing result for %s in %s response"),
 						    qname, dp->host->hostname);
 		    }
 		}
@@ -2114,7 +2114,7 @@ static void handle_result(
 
  NAK_parse_failed:
 
-    errbuf = vstrallocf(_("%s NAK: [NAK parse failed]"), hostp->hostname);
+    errbuf = g_strdup_printf(_("%s NAK: [NAK parse failed]"), hostp->hostname);
     g_fprintf(stderr, _("got strange nak from %s:\n----\n%s----\n\n"),
 	    hostp->hostname, pkt->body);
     goto error_return;

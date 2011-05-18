@@ -412,8 +412,6 @@ char *debug_newstralloc(const char *file, int line,
 char *debug_vstralloc(const char *file, int line, const char *str, ...);
 char *debug_newvstralloc(const char *file, int line,
 		char *oldstr, const char *str, ...);
-char *debug_vstrallocf(const char *file, int line, const char *fmt,
-		...) G_GNUC_PRINTF(3, 4);
 char *debug_newvstrallocf(const char *file, int line, char *oldstr,
 		const char *fmt, ...) G_GNUC_PRINTF(4, 5);
 
@@ -425,14 +423,11 @@ char *debug_vstrextend(const char *file, int line, char **oldstr, ...);
 #define	newstralloc(p,s)	debug_newstralloc(__FILE__, __LINE__, (p), (s))
 #define vstralloc(...)		debug_vstralloc(__FILE__,__LINE__,__VA_ARGS__)
 #define newvstralloc(...)	debug_newvstralloc(__FILE__,__LINE__,__VA_ARGS__)
-#define vstrallocf(...)		debug_vstrallocf(__FILE__,__LINE__,__VA_ARGS__)
 #define newvstrallocf(...)	debug_newvstrallocf(__FILE__,__LINE__,__VA_ARGS__)
 #define vstrextend(...)		debug_vstrextend(__FILE__,__LINE__,__VA_ARGS__)
 
 #define	stralloc2(s1,s2)	vstralloc((s1),(s2),NULL)
 #define	newstralloc2(p,s1,s2)	newvstralloc((p),(s1),(s2),NULL)
-
-#define vstrallocf(...)         debug_vstrallocf(__FILE__,__LINE__,__VA_ARGS__)
 
 /*@only@*/ /*@null@*/ char *debug_agets(const char *file, int line, FILE *f);
 /*@only@*/ /*@null@*/ char *debug_areads(const char *file, int line, int fd);

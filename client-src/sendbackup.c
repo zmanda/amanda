@@ -555,7 +555,7 @@ main(
 		amfree(qerrmsg);
 	    }
 	    if (i == 0) { /* no errarray */
-		errmsg = vstrallocf(_("Can't execute application '%s'"),
+		errmsg = g_strdup_printf(_("Can't execute application '%s'"),
 				    dle->program);
 		qerrmsg = quote_string(errmsg);
 		fdprintf(mesgfd, _("sendbackup: error [%s]\n"), errmsg);
@@ -569,7 +569,7 @@ main(
 	if (pipe(errfd) < 0) {
 	    char  *errmsg;
 	    char  *qerrmsg;
-	    errmsg = vstrallocf(_("Application '%s': can't create pipe"),
+	    errmsg = g_strdup_printf(_("Application '%s': can't create pipe"),
 				    dle->program);
 	    qerrmsg = quote_string(errmsg);
 	    fdprintf(mesgfd, _("sendbackup: error [%s]\n"), errmsg);
@@ -873,10 +873,10 @@ check_status(
     }
 
     if(ret == 0) {
-	thiserr = vstrallocf(_("%s (%d) %s got signal %d"), strX, (int)pid, str,
+	thiserr = g_strdup_printf(_("%s (%d) %s got signal %d"), strX, (int)pid, str,
 			     sig);
     } else {
-	thiserr = vstrallocf(_("%s (%d) %s returned %d"), strX, (int)pid, str, ret);
+	thiserr = g_strdup_printf(_("%s (%d) %s returned %d"), strX, (int)pid, str, ret);
     }
 
     fdprintf(mesgfd, "? %s\n", thiserr);

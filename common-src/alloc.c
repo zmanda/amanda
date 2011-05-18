@@ -182,43 +182,7 @@ debug_newvstralloc(
 
 
 /*
- * vstrallocf - copies printf formatted string into newly allocated memory.
- */
-char *
-debug_vstrallocf(
-    const char *file G_GNUC_UNUSED,
-    int		line G_GNUC_UNUSED,
-    const char *fmt,
-    ...)
-{
-    char *	result;
-    size_t	size;
-    va_list	argp;
-
-
-    result = g_malloc(MIN_ALLOC);
-    if (result != NULL) {
-
-	arglist_start(argp, fmt);
-	size = g_vsnprintf(result, MIN_ALLOC, fmt, argp);
-	arglist_end(argp);
-
-	if (size >= (size_t)MIN_ALLOC) {
-	    amfree(result);
-	    result = g_malloc(size + 1);
-
-	    arglist_start(argp, fmt);
-	    (void)g_vsnprintf(result, size + 1, fmt, argp);
-	    arglist_end(argp);
-	}
-    }
-
-    return result;
-}
-
-
-/*
- * newvstrallocf - free existing string and then vstrallocf a new one.
+ * newvstrallocf - free existing string and then g_strdup_printf a new one.
  */
 char *
 debug_newvstrallocf(

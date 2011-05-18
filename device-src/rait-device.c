@@ -681,7 +681,7 @@ set_block_size_on_children(RaitDevice *self, gsize child_block_size)
 	    if (source != PROPERTY_SOURCE_DEFAULT
 		    && from_child != child_block_size) {
 		device_set_error((Device *)self,
-		    vstrallocf(_("Child device %s already has its block size set to %zd, not %zd"),
+		    g_strdup_printf(_("Child device %s already has its block size set to %zd, not %zd"),
 				child->device_name, from_child, child_block_size),
 		    DEVICE_STATUS_DEVICE_ERROR);
 		return FALSE;
@@ -694,7 +694,7 @@ set_block_size_on_children(RaitDevice *self, gsize child_block_size)
 
 	if (!device_property_set(child, PROPERTY_BLOCK_SIZE, &val)) {
 	    device_set_error((Device *)self,
-		vstrallocf(_("Error setting block size on %s"), child->device_name),
+		g_strdup_printf(_("Error setting block size on %s"), child->device_name),
 		DEVICE_STATUS_DEVICE_ERROR);
 	    return FALSE;
 	}
@@ -908,7 +908,7 @@ open_child_devices (Device * dself, char * device_name,
 
     if (device_names == NULL) {
 	device_set_error(dself,
-	    vstrallocf(_("Invalid RAIT device name '%s'"), device_name),
+	    g_strdup_printf(_("Invalid RAIT device name '%s'"), device_name),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }
@@ -1101,7 +1101,7 @@ static DeviceStatusFlags rait_device_read_label(Device * dself) {
                 first_success = op->child;
             } else if (!compare_volume_results(first_success, op->child)) {
                 /* Doesn't match. :-( */
-		failed_errmsg = vstrallocf("Inconsistent volume labels/datestamps: "
+		failed_errmsg = g_strdup_printf("Inconsistent volume labels/datestamps: "
                         "Got %s/%s on %s against %s/%s on %s.",
                         first_success->volume_label,
                         first_success->volume_time,
@@ -2121,7 +2121,7 @@ property_set_block_size_fn(Device *dself,
     find_simple_params(self, NULL, &data_children);
     if ((my_block_size % data_children) != 0) {
 	device_set_error(dself,
-	    vstrallocf(_("Block size must be a multiple of %d"), data_children),
+	    g_strdup_printf(_("Block size must be a multiple of %d"), data_children),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }

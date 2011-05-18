@@ -508,7 +508,7 @@ main(
     /* We assume that amindexd support fe_amindexd_options_features */
     /*                             and fe_amindexd_options_auth     */
     /* We should send a noop to really know                         */
-    req = vstrallocf("SERVICE amindexd\n"
+    req = g_strdup_printf("SERVICE amindexd\n"
 		    "OPTIONS features=%s;auth=%s;\n",
 		    our_features_string, authopt);
 
@@ -550,7 +550,7 @@ main(
 
 	indexsrv_features = NULL;
 
-	line = vstrallocf("FEATURES %s", our_features_string);
+	line = g_strdup_printf("FEATURES %s", our_features_string);
 	if(exchange(line) == 0) {
 	    their_feature_string = g_strdup(server_line+13);
 	    indexsrv_features = am_string_to_feature(their_feature_string);
@@ -573,14 +573,14 @@ main(
 	error(_("BAD DATE"));
 
     g_printf(_("Setting restore date to today (%s)\n"), dump_date);
-    line = vstrallocf("DATE %s", dump_date);
+    line = g_strdup_printf("DATE %s", dump_date);
     if (converse(line) == -1) {
         aclose(server_socket);
 	exit(1);
     }
     amfree(line);
 
-    line = vstrallocf("SCNF %s", get_config_name());
+    line = g_strdup_printf("SCNF %s", get_config_name());
     if (converse(line) == -1) {
         aclose(server_socket);
 	exit(1);
@@ -710,14 +710,14 @@ bad_nak:
 	    for (i = 0; i < NSTREAMS; i++) {
 		tok = strtok(NULL, " ");
 		if (tok == NULL || strcmp(tok, streams[i].name) != 0) {
-		    extra = vstrallocf(
+		    extra = g_strdup_printf(
 			   _("CONNECT token is \"%s\": expected \"%s\""),
 			   tok ? tok : _("(null)"), streams[i].name);
 		    goto parse_error;
 		}
 		tok = strtok(NULL, " \n");
 		if (tok == NULL || sscanf(tok, "%d", &ports[i]) != 1) {
-		    extra = vstrallocf(
+		    extra = g_strdup_printf(
 			   _("CONNECT %s token is \"%s\" expected a port number"),
 			   streams[i].name, tok ? tok : _("(null)"));
 		    goto parse_error;
@@ -732,7 +732,7 @@ bad_nak:
 	if (strcmp(tok, "OPTIONS") == 0) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL) {
-		extra = vstrallocf(_("OPTIONS token is missing"));
+		extra = g_strdup(_("OPTIONS token is missing"));
 		goto parse_error;
 	    }
 #if 0
@@ -755,7 +755,7 @@ bad_nak:
 	    continue;
 	}
 #if 0
-	extra = vstrallocf(_("next token is \"%s\": expected \"CONNECT\", \"ERROR\" or \"OPTIONS\""), tok ? tok : _("(null)"));
+	extra = g_strdup_printf(_("next token is \"%s\": expected \"CONNECT\", \"ERROR\" or \"OPTIONS\""), tok ? tok : _("(null)"));
 	goto parse_error;
 #endif
     }

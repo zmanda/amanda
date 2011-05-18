@@ -757,12 +757,12 @@ amgtar_estimate(
     }
 
     if (!gnutar_path) {
-	errmsg = vstrallocf(_("GNUTAR-PATH not defined"));
+	errmsg = g_strdup(_("GNUTAR-PATH not defined"));
 	goto common_error;
     }
 
     if (!gnutar_listdir) {
-	errmsg = vstrallocf(_("GNUTAR-LISTDIR not defined"));
+	errmsg = g_strdup(_("GNUTAR-LISTDIR not defined"));
 	goto common_error;
     }
 
@@ -776,7 +776,7 @@ amgtar_estimate(
 	start_time = curclock();
 
 	if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	    errmsg = vstrallocf(_("Cannot access /dev/null : %s"),
+	    errmsg = g_strdup_printf(_("Cannot access /dev/null : %s"),
 				strerror(errno));
 	    goto common_exit;
 	}
@@ -825,7 +825,7 @@ amgtar_estimate(
 		 level,
 		 walltime_str(timessub(curclock(), start_time)));
 	if(size == (off_t)-1) {
-	    errmsg = vstrallocf(_("no size line match in %s output"), cmd);
+	    errmsg = g_strdup_printf(_("no size line match in %s output"), cmd);
 	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
 	    dbprintf(".....\n");
 	} else if(size == (off_t)0 && argument->level == 0) {
@@ -843,13 +843,13 @@ amgtar_estimate(
 	dbprintf(_("waiting for %s \"%s\" child\n"), cmd, qdisk);
 	waitpid(tarpid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
-	    char *err = vstrallocf(_("%s terminated with signal %d: see %s"),
+	    char *err = g_strdup_printf(_("%s terminated with signal %d: see %s"),
 				   cmd, WTERMSIG(wait_status), dbfn());
 	    vstrextend(&errmsg, err, NULL);
 	    amfree(err);
 	} else if (WIFEXITED(wait_status)) {
 	    if (exit_value[WEXITSTATUS(wait_status)] == 1) {
-		char *err = vstrallocf(_("%s exited with status %d: see %s"),
+		char *err = g_strdup_printf(_("%s exited with status %d: see %s"),
 				       cmd, WEXITSTATUS(wait_status), dbfn());
 		vstrextend(&errmsg, err, NULL);
 		amfree(err);
@@ -857,7 +857,7 @@ amgtar_estimate(
 		/* Normal exit */
 	    }
 	} else {
-	    errmsg = vstrallocf(_("%s got bad exit: see %s"),
+	    errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
 				cmd, dbfn());
 	}
 	dbprintf(_("after %s %s wait\n"), cmd, qdisk);
@@ -1028,17 +1028,17 @@ amgtar_backup(
 
     waitpid(tarpid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
-	errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
+	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
 			    cmd, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (exit_value[WEXITSTATUS(wait_status)] == 1) {
-	    errmsg = vstrallocf(_("%s exited with status %d: see %s"),
+	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
 				cmd, WEXITSTATUS(wait_status), dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
-	errmsg = vstrallocf(_("%s got bad exit: see %s"),
+	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
 			    cmd, dbfn());
     }
     dbprintf(_("after %s %s wait\n"), cmd, qdisk);
@@ -1419,7 +1419,7 @@ amgtar_get_incrname(
 	    }
 	    if ((infd = open(inputname, O_RDONLY)) == -1) {
 
-		errmsg = vstrallocf(_("amgtar: error opening %s: %s"),
+		errmsg = g_strdup_printf(_("amgtar: error opening %s: %s"),
 				     inputname, strerror(errno));
 		dbprintf("%s\n", errmsg);
 		if (baselevel < 0) {
@@ -1438,7 +1438,7 @@ amgtar_get_incrname(
 	 * Copy the previous listed incremental file to the new one.
 	 */
 	if ((outfd = open(incrname, O_WRONLY|O_CREAT, 0600)) == -1) {
-	    errmsg = vstrallocf(_("error opening %s: %s"),
+	    errmsg = g_strdup_printf(_("error opening %s: %s"),
 			         incrname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
 	    if (command == CMD_ESTIMATE) {
@@ -1451,7 +1451,7 @@ amgtar_get_incrname(
 
 	while ((nb = read(infd, &buf, sizeof(buf))) > 0) {
 	    if (full_write(outfd, &buf, (size_t)nb) < (size_t)nb) {
-		errmsg = vstrallocf(_("writing to %s: %s"),
+		errmsg = g_strdup_printf(_("writing to %s: %s"),
 				     incrname, strerror(errno));
 		dbprintf("%s\n", errmsg);
 		amfree(incrname);
@@ -1469,7 +1469,7 @@ amgtar_get_incrname(
 	}
 
 	if (nb < 0) {
-	    errmsg = vstrallocf(_("reading from %s: %s"),
+	    errmsg = g_strdup_printf(_("reading from %s: %s"),
 			         inputname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
 	    amfree(incrname);
@@ -1486,7 +1486,7 @@ amgtar_get_incrname(
 	}
 
 	if (close(infd) != 0) {
-	    errmsg = vstrallocf(_("closing %s: %s"),
+	    errmsg = g_strdup_printf(_("closing %s: %s"),
 			         inputname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
 	    amfree(incrname);
@@ -1502,7 +1502,7 @@ amgtar_get_incrname(
 	    exit(1);
 	}
 	if (close(outfd) != 0) {
-	    errmsg = vstrallocf(_("closing %s: %s"),
+	    errmsg = g_strdup_printf(_("closing %s: %s"),
 			         incrname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
 	    amfree(incrname);
