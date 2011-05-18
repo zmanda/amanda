@@ -109,7 +109,7 @@ security_handleinit(
     dbprintf(_("security_handleinit(handle=%p, driver=%p (%s))\n"),
 	      handle, driver, driver->name);
     handle->driver = driver;
-    handle->error = stralloc(_("unknown protocol error"));
+    handle->error = g_strdup(_("unknown protocol error"));
 }
 
 printf_arglist_function1(void security_seterror, security_handle_t *, handle,
@@ -150,7 +150,7 @@ security_streaminit(
     dbprintf(_("security_streaminit(stream=%p, driver=%p (%s))\n"),
 	      stream, driver, driver->name);
     stream->driver = driver;
-    stream->error = stralloc(_("unknown stream error"));
+    stream->error = g_strdup(_("unknown stream error"));
 }
 
 printf_arglist_function1(void security_stream_seterror,

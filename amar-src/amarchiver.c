@@ -322,7 +322,7 @@ int main(
 	case 4: opt_verbose += 1;
 		break;
 	case 5: amfree(opt_file);
-		opt_file = stralloc(optarg);
+		opt_file = g_strdup(optarg);
 		break;
 	case 6: printf("amarchiver %s\n", VERSION);
 		exit(0);

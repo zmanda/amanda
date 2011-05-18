@@ -129,7 +129,7 @@ append_to_tapelist(
 
     new_tape = alloc(sizeof(tapelist_t));
     memset(new_tape, 0, sizeof(tapelist_t));
-    new_tape->label = stralloc(label);
+    new_tape->label = g_strdup(label);
     if(file >= (off_t)0){
 	new_tape->files = alloc(sizeof(*(new_tape->files)));
 	new_tape->files[0] = file;
@@ -179,7 +179,7 @@ escape_label(
     } while(label[s_idx] != '\0');
     temp_str[d_idx] = '\0';
 
-    cooked_str = stralloc(temp_str);
+    cooked_str = g_strdup(temp_str);
     amfree(temp_str);
     
     return(cooked_str);
@@ -212,7 +212,7 @@ unescape_label(
     } while(label[s_idx] != '\0');
     temp_str[d_idx] = '\0';
 
-    cooked_str = stralloc(temp_str);
+    cooked_str = g_strdup(temp_str);
     amfree(temp_str);
     
     return(cooked_str);
@@ -235,14 +235,14 @@ marshal_tapelist(
 	int c;
 
 	if(do_escape) esc_label = escape_label(cur_tape->label);
-	else esc_label = stralloc(cur_tape->label);
+	else esc_label = g_strdup(cur_tape->label);
 
 	for(c = 0; c < cur_tape->numfiles ; c++){
 	    char num_str[NUM_STR_SIZE];
 	    g_snprintf(num_str, sizeof(num_str), "%lld",
 			(long long)cur_tape->files[c]);
 	    if (!files_str)
-		files_str = stralloc(num_str);
+		files_str = g_strdup(num_str);
 	    else
 		vstrextend(&files_str, ",", num_str, NULL);
 	}

@@ -107,7 +107,7 @@ pipespawnv_passwd(
     memset(passwdpipe, -1, sizeof(passwdpipe));
     argc = 0;
 
-    cmdline = stralloc(prog);
+    cmdline = g_strdup(prog);
     for(arg = my_argv; *arg != NULL; arg++) {
 	if (*arg != skip_argument) {
 	    argc++;

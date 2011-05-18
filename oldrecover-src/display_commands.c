@@ -103,11 +103,11 @@ add_dir_list_item(
     next = (DIR_ITEM *)alloc(sizeof(DIR_ITEM));
     memset(next, 0, sizeof(DIR_ITEM));
 
-    next->date = stralloc(date);
+    next->date = g_strdup(date);
     next->level = level;
-    next->tape = stralloc(tape);
+    next->tape = g_strdup(tape);
     next->fileno = fileno;
-    next->path = stralloc(path);
+    next->path = g_strdup(path);
 
     next->next = dir_list;
     dir_list = next;
@@ -145,7 +145,7 @@ suck_dir_list_from_server(void)
 	g_printf(_("Directory must be set before getting listing\n"));
 	return;
     } else if(strcmp(disk_path, "/") == 0) {
-	disk_path_slash = stralloc(disk_path);
+	disk_path_slash = g_strdup(disk_path);
     } else {
 	disk_path_slash = stralloc2(disk_path, "/");
     }
@@ -187,7 +187,7 @@ suck_dir_list_from_server(void)
 	    if(cmd == NULL) {
 		if(tape_undo) *tape_undo = tape_undo_ch;
 		tape_undo = NULL;
-		cmd = stralloc(l);	/* save for the error report */
+		cmd = g_strdup(l);	/* save for the error report */
 	    }
 	    continue;			/* throw the rest of the lines away */
 	}
@@ -256,7 +256,7 @@ suck_dir_list_from_server(void)
 	/* add a '.' if it a the entry for the current directory */
 	if((strcmp(disk_path,dir)==0) || (strcmp(disk_path_slash,dir)==0)) {
 	    amfree(dir);
-	    dir = stralloc(disk_path_slash_dot);
+	    dir = g_strdup(disk_path_slash_dot);
 	}
 	add_dir_list_item(date, level, tape, fileno, dir);
 	amfree(dir);

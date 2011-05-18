@@ -392,7 +392,7 @@ main(
 	    if(cmdargs->argc >= 1) {
 		q = quote_string(cmdargs->argv[0]);
 	    } else {
-		q = stralloc(_("(no input?)"));
+		q = g_strdup(_("(no input?)"));
 	    }
 	    putresult(BAD_COMMAND, "%s\n", q);
 	    amfree(q);
@@ -639,7 +639,7 @@ databuf_init(
     off_t		chunk_size)
 {
     db->fd = fd;
-    db->filename = stralloc(filename);
+    db->filename = g_strdup(filename);
     db->filename_seq = (off_t)0;
     db->chunk_size = chunk_size;
     db->split_size = (db->chunk_size > use) ? use : db->chunk_size;
@@ -764,7 +764,7 @@ databuf_flush(
 		if(cmdargs->argc >= 1) {
 		    q = quote_string(cmdargs->argv[0]);
 		} else {
-		    q = stralloc(_("(no input?)"));
+		    q = g_strdup(_("(no input?)"));
 		}
 		error(_("error [bad command after RQ-MORE-DISK: \"%s\"]"), q);
 		/*NOTREACHED*/

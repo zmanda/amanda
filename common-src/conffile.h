@@ -1517,7 +1517,7 @@ dumptype_t *read_dumptype(char *name, FILE *from, char *fname, int *linenum);
 char *anonymous_value(void);
 
 /* Extend a relative filename with the current config_dir; if filename is already
- * absolute, this is equivalent to stralloc.
+ * absolute, this is equivalent to g_strdup.
  *
  * @param filename: filename to extend
  * @returns: newly allocated filename

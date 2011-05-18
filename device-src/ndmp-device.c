@@ -537,7 +537,7 @@ read_err:
     /* handle a "weird" label */
     if (header->type != F_TAPESTART) {
 	device_set_error(dself,
-		stralloc(_("No tapestart header -- unlabeled device?")),
+		g_strdup(_("No tapestart header -- unlabeled device?")),
 			 DEVICE_STATUS_VOLUME_UNLABELED);
 	return dself->status;
     }
@@ -607,7 +607,7 @@ ndmp_device_start(
 	header_buf = device_build_amanda_header(dself, header, NULL);
 	if (header_buf == NULL) {
 	    device_set_error(dself,
-		stralloc(_("Tapestart header won't fit in a single block!")),
+		g_strdup(_("Tapestart header won't fit in a single block!")),
 		DEVICE_STATUS_DEVICE_ERROR);
 	    dumpfile_free(header);
 	    return FALSE;
@@ -624,7 +624,7 @@ ndmp_device_start(
 		/* this would be an odd error to see writing the tape label, but
 		 * oh well */
 		device_set_error(dself,
-		    stralloc(_("No space left on device")),
+		    g_strdup(_("No space left on device")),
 		    DEVICE_STATUS_VOLUME_ERROR);
 		dself->is_eom = TRUE;
 		/* fall through */
@@ -721,7 +721,7 @@ ndmp_device_start_file(
     header_buf = device_build_amanda_header(dself, header, NULL);
     if (header_buf == NULL) {
 	device_set_error(dself,
-	    stralloc(_("Amanda file header won't fit in a single block!")),
+	    g_strdup(_("Amanda file header won't fit in a single block!")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -738,7 +738,7 @@ ndmp_device_start_file(
 	    /* this would be an odd error to see writing the tape label, but
 	     * oh well */
 	    device_set_error(dself,
-		stralloc(_("No space left on device")),
+		g_strdup(_("No space left on device")),
 		DEVICE_STATUS_VOLUME_ERROR);
 	    dself->is_eom = TRUE;
 	    /* fall through */
@@ -797,7 +797,7 @@ ndmp_device_write_block(
 	    /* this would be an odd error to see writing the tape label, but
 	     * oh well */
 	    device_set_error(dself,
-		stralloc(_("No space left on device")),
+		g_strdup(_("No space left on device")),
 		DEVICE_STATUS_VOLUME_ERROR);
 	    dself->is_eom = TRUE;
 	    /* fall through */

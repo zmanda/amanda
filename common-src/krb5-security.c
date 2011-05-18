@@ -264,7 +264,7 @@ krb5_connect(
 	goto error;
 
     amfree(rh->hostname);
-    rh->hostname = stralloc(rh->rs->rc->hostname);
+    rh->hostname = g_strdup(rh->rs->rc->hostname);
 
 #ifdef AMANDA_KEYTAB
     keytab_name = AMANDA_KEYTAB;
@@ -689,7 +689,7 @@ gss_server(
 out:
     set_root_privs(0);
     if (rval != 0) {
-	rc->errmsg = stralloc(errbuf);
+	rc->errmsg = g_strdup(errbuf);
     } else {
 	rc->auth = 1;
     }
@@ -712,7 +712,7 @@ krb5_init(void)
     beenhere = 1;
 
 #ifndef BROKEN_MEMORY_CCACHE
-    putenv(stralloc("KRB5_ENV_CCNAME=MEMORY:amanda_ccache"));
+    putenv(g_strdup("KRB5_ENV_CCNAME=MEMORY:amanda_ccache"));
 #else
     /*
      * MEMORY ccaches seem buggy and cause a lot of internal heap

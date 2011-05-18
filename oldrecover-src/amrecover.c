@@ -353,7 +353,7 @@ guess_disk (
     amfree(disk_try);
     if (server_happy())
     {
-	*dn_guess = stralloc(*mpt_guess);		/* logical is okay */
+	*dn_guess = g_strdup(*mpt_guess);		/* logical is okay */
 	amfree(fsname);
 	return 1;
     }
@@ -364,7 +364,7 @@ guess_disk (
     amfree(disk_try);
     if (server_happy())
     {
-	*dn_guess = stralloc(fsname);			/* dev name is okay */
+	*dn_guess = g_strdup(fsname);			/* dev name is okay */
 	amfree(fsname);
 	return 1;
     }
@@ -443,12 +443,12 @@ main(
     amfree(server_name);
     server_name = getenv("AMANDA_SERVER");
     if(!server_name) server_name = DEFAULT_SERVER;
-    server_name = stralloc(server_name);
+    server_name = g_strdup(server_name);
 
     amfree(tape_server_name);
     tape_server_name = getenv("AMANDA_TAPESERVER");
     if(!tape_server_name) tape_server_name = DEFAULT_TAPE_SERVER;
-    tape_server_name = stralloc(tape_server_name);
+    tape_server_name = g_strdup(tape_server_name);
 
     config_init(CONFIG_INIT_CLIENT, NULL);
 
@@ -587,7 +587,7 @@ main(
 	our_feature_string = am_feature_to_string(our_features);
 	line = stralloc2("FEATURES ", our_feature_string);
 	if(exchange(line) == 0) {
-	    their_feature_string = stralloc(server_line+13);
+	    their_feature_string = g_strdup(server_line+13);
 	    indexsrv_features = am_string_to_feature(their_feature_string);
 	}
 	else {

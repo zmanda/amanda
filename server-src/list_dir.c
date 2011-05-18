@@ -83,7 +83,7 @@ add_dir_list_item(
 	dir_list = (DIR_ITEM *)alloc(sizeof(DIR_ITEM));
 	dir_list->next = NULL;
 	dir_list->dump = dump;
-	dir_list->path = stralloc(path);
+	dir_list->path = g_strdup(path);
 	dir_last=dir_list;
 	cur_list=dir_list;
 	return 0; /* added */
@@ -100,7 +100,7 @@ add_dir_list_item(
 	cur_list = (DIR_ITEM *)alloc(sizeof(DIR_ITEM));
 	cur_list->next = dir_list;
 	cur_list->dump = dump;
-	cur_list->path = stralloc(path);
+	cur_list->path = g_strdup(path);
 	dir_list = cur_list;
 	return 0; /* added */
     }
@@ -133,7 +133,7 @@ add_dir_list_item(
 	cur = (DIR_ITEM *)alloc(sizeof(DIR_ITEM));
 	cur->next = cur_list->next;
 	cur->dump = dump;
-	cur->path = stralloc(path);
+	cur->path = g_strdup(path);
 	cur_list->next=cur;
 	cur_list=cur;
 	return 0; /* added */
@@ -144,7 +144,7 @@ add_dir_list_item(
 	dir_last=dir_last->next;
 	dir_last->next = NULL;
 	dir_last->dump = dump;
-	dir_last->path = stralloc(path);
+	dir_last->path = g_strdup(path);
 	return 0; /* added */
     }
 }

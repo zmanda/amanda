@@ -70,7 +70,7 @@ getcmd(void)
         line = agets(stdin);
     }
     if (line == NULL) {
-	line = stralloc("QUIT");
+	line = g_strdup("QUIT");
     }
 
     dbprintf(_("getcmd: %s\n"), line);
@@ -290,7 +290,7 @@ run_server_script(
 	}
     }
 
-    g_ptr_array_add(argv_ptr, stralloc(plugin));
+    g_ptr_array_add(argv_ptr, g_strdup(plugin));
 
     switch (execute_on) {
     case EXECUTE_ON_PRE_AMCHECK:
@@ -362,30 +362,30 @@ run_server_script(
 	return;
     }
 
-    g_ptr_array_add(argv_ptr, stralloc(command));
-    g_ptr_array_add(argv_ptr, stralloc("--execute-where"));
-    g_ptr_array_add(argv_ptr, stralloc("server"));
+    g_ptr_array_add(argv_ptr, g_strdup(command));
+    g_ptr_array_add(argv_ptr, g_strdup("--execute-where"));
+    g_ptr_array_add(argv_ptr, g_strdup("server"));
 
     if (config) {
-	g_ptr_array_add(argv_ptr, stralloc("--config"));
-	g_ptr_array_add(argv_ptr, stralloc(config));
+	g_ptr_array_add(argv_ptr, g_strdup("--config"));
+	g_ptr_array_add(argv_ptr, g_strdup(config));
     }
     if (dp->host->hostname) {
-	g_ptr_array_add(argv_ptr, stralloc("--host"));
-	g_ptr_array_add(argv_ptr, stralloc(dp->host->hostname));
+	g_ptr_array_add(argv_ptr, g_strdup("--host"));
+	g_ptr_array_add(argv_ptr, g_strdup(dp->host->hostname));
     }
     if (dp->name) {
-	g_ptr_array_add(argv_ptr, stralloc("--disk"));
-	g_ptr_array_add(argv_ptr, stralloc(dp->name));
+	g_ptr_array_add(argv_ptr, g_strdup("--disk"));
+	g_ptr_array_add(argv_ptr, g_strdup(dp->name));
     }
     if (dp->device) {
-	g_ptr_array_add(argv_ptr, stralloc("--device"));
-	g_ptr_array_add(argv_ptr, stralloc(dp->device));
+	g_ptr_array_add(argv_ptr, g_strdup("--device"));
+	g_ptr_array_add(argv_ptr, g_strdup(dp->device));
     }
     if (level >= 0) {
 	g_snprintf(level_number, sizeof(level_number), "%d", level);
-	g_ptr_array_add(argv_ptr, stralloc("--level"));
-	g_ptr_array_add(argv_ptr, stralloc(level_number));
+	g_ptr_array_add(argv_ptr, g_strdup("--level"));
+	g_ptr_array_add(argv_ptr, g_strdup(level_number));
     }
 
     property_add_to_argv(argv_ptr, pp_script_get_property(pp_script));
@@ -544,7 +544,7 @@ get_master_process(
 
     log = fopen(logfile, "r");
     if (!log)
-	return stralloc("UNKNOWN");
+	return g_strdup("UNKNOWN");
 
     while(fgets(line, 1024, log)) {
 	if (strncmp_const(line, "INFO ") == 0) {
@@ -558,14 +558,14 @@ get_master_process(
 	    s[-1] = '\0';
 	    skip_whitespace(s, ch);
 	    if (strncmp_const(s-1, "pid ") == 0) {
-		process_name = stralloc(process_name);
+		process_name = g_strdup(process_name);
 		fclose(log);
 		return process_name;
 	    }
 	}
     }
     fclose(log);
-    return stralloc("UNKNOWN");
+    return g_strdup("UNKNOWN");
 }
 
 

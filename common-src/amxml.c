@@ -209,7 +209,7 @@ amstart_element(
 	    at_names++, at_values++) {
 	    if (strcmp(*at_names, "encoding") == 0) {
 		amfree(data_user->encoding);
-		data_user->encoding = stralloc(*at_values);
+		data_user->encoding = g_strdup(*at_values);
 	    } else if (strcmp(*at_names, "raw") == 0) {
 		amfree(data_user->raw);
 		data_user->raw = base64_decode_alloc_string((char *)*at_values);
@@ -454,7 +454,7 @@ amstart_element(
 	return;
     }
     data_user->element_names = g_slist_prepend(data_user->element_names,
-					       stralloc(element_name));
+					       g_strdup(element_name));
 }
 
 /* Called for close tags </foo> */
@@ -496,7 +496,7 @@ amend_element(
 	    return;
 	}
 	if (dle->device == NULL && dle->disk)
-	    dle->device = stralloc(dle->disk);
+	    dle->device = g_strdup(dle->disk);
 	if (dle->estimatelist == NULL)
 	    dle->estimatelist = g_slist_append(dle->estimatelist, ES_CLIENT);
 /* Add check of required field */
@@ -566,7 +566,7 @@ amtext(
 
     if (data_user->raw) {
 	amfree(tt);
-	tt = stralloc(data_user->raw);
+	tt = g_strdup(data_user->raw);
     } else if (strlen(tt) > 0) {
 	/* remove trailing space */
 	char *ttt = tt + strlen(tt) - 1;
@@ -1005,7 +1005,7 @@ amxml_parse_node_CHAR(
     g_markup_parse_context_free(context);
     if (gerror) {
 	if (errmsg)
-	    *errmsg = stralloc(gerror->message);
+	    *errmsg = g_strdup(gerror->message);
 	g_error_free(gerror);
     }
     return amgxml.dles;
@@ -1039,7 +1039,7 @@ amxml_parse_node_FILE(
     g_markup_parse_context_free(context);
     if (gerror) {
 	if (errmsg)
-	    *errmsg = stralloc(gerror->message);
+	    *errmsg = g_strdup(gerror->message);
 	g_error_free(gerror);
     }
     return amgxml.dles;

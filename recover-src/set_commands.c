@@ -176,7 +176,7 @@ list_host(void)
 {
     char *cmd = NULL;
 
-    cmd = stralloc("LISTHOST");
+    cmd = g_strdup("LISTHOST");
     if (converse(cmd) == -1)
         exit(1);
     amfree(cmd);
@@ -270,7 +270,7 @@ set_disk(
 	char *dle_str;
 	char *errmsg = NULL;
 
-	cmd = stralloc("DLE");
+	cmd = g_strdup("DLE");
 	if (exchange(cmd) == -1)
 	    exit(1);
 	amfree(cmd);
@@ -309,7 +309,7 @@ list_disk(
 	amfree(cmd);
     }
     else {
-	cmd = stralloc("LISTDISK");
+	cmd = g_strdup("LISTDISK");
 	if (converse(cmd) == -1)
 	    exit(1);
 	amfree(cmd);
@@ -342,7 +342,7 @@ set_property_name(
 	prop->append = 0;
 	prop->priority = 1;
 	prop->values = NULL;
-	g_hash_table_insert(proplist, stralloc(property_name), prop);
+	g_hash_table_insert(proplist, g_strdup(property_name), prop);
     }
 
     /* add prop_values to prop->values */
@@ -448,7 +448,7 @@ cd_glob(
      * in add_file, so strip that off.  Also, it anchors the end with
      * $, but we need to match a trailing /, add it if it is not there
      */
-    regex_path = stralloc(regex + 1);
+    regex_path = g_strdup(regex + 1);
     amfree(regex);
     if(regex_path[strlen(regex_path) - 2] != '/' ) {
 	regex_path[strlen(regex_path) - 1] = '\0';
@@ -492,7 +492,7 @@ cd_regex(
     }
 
     uq_orig_regex = unquote_string(regex);
-    uqregex = stralloc(uq_orig_regex);
+    uqregex = g_strdup(uq_orig_regex);
 
     /* Add a terminating '/' if it is not there, maybe before a '$' */
     len_uqregex = strlen(uqregex);
@@ -570,7 +570,7 @@ cd_dir(
 		dir1 = strrchr(dir,'/');
 		if (dir1) {
 		    dir1++;
-		    dir2 = stralloc(dir1);
+		    dir2 = g_strdup(dir1);
 		    amfree(dir);
 		    dir = dir2;
 		}
@@ -617,7 +617,7 @@ set_directory(
 	/*NOTREACHED*/
     }
 
-    ldir = stralloc(dir);
+    ldir = g_strdup(dir);
     clean_pathname(ldir);
 
     /* convert directory into absolute path relative to disk mount point */
@@ -626,7 +626,7 @@ set_directory(
 	/* absolute path specified, must start with mount point */
 	if (strcmp(mount_point, "/") == 0)
 	{
-	    new_dir = stralloc(ldir);
+	    new_dir = g_strdup(ldir);
 	}
 	else
 	{
@@ -638,7 +638,7 @@ set_directory(
 		return 0;
 		/*NOTREACHED*/
 	    }
-	    new_dir = stralloc(ldir+strlen(mount_point));
+	    new_dir = g_strdup(ldir+strlen(mount_point));
 	    if (strlen(new_dir) == 0) {
 		new_dir = newstralloc(new_dir, "/");
 					/* i.e. ldir == mount_point */
@@ -647,7 +647,7 @@ set_directory(
     }
     else
     {
-	new_dir = stralloc(disk_path);
+	new_dir = g_strdup(disk_path);
 	dp = ldir;
 	/* strip any leading ..s */
 	while (strncmp(dp, "../", 3) == 0)
@@ -772,7 +772,7 @@ set_tape(
 	    }
 	    else {
 		*tapedev = '\0';
-		host = stralloc(uqtape);
+		host = g_strdup(uqtape);
 		++tapedev;
 	    }
 	} else {

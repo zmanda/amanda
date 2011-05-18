@@ -76,7 +76,7 @@ start_amandates(
     readonly = !open_readwrite;
     amdf = NULL;
     amandates_list = NULL;
-    g_amandates_file = stralloc(amandates_file);
+    g_amandates_file = g_strdup(amandates_file);
     /* open the file */
 
     if (access(amandates_file,F_OK))
@@ -220,7 +220,7 @@ lookup(
     }
     if (!(amdp && (rc == 0))) {
 	amandates_t *newp = alloc(sizeof(amandates_t));
-	newp->name = stralloc(name);
+	newp->name = g_strdup(name);
 	for (level = 0; level < DUMP_LEVELS; level++)
 	    newp->dates[level] = EPOCH;
 	newp->next = amdp;

@@ -242,7 +242,7 @@ main(
 		    names = new_names;
 		    name_length *= 2;
 		}
-		names[name_count++] = stralloc(f->d_name);
+		names[name_count++] = g_strdup(f->d_name);
 	    }
 	    closedir(d);
 	    qsort(names, name_count, sizeof(char *), sort_by_name_reversed);
@@ -264,7 +264,7 @@ main(
                     }
                 }
 
-		datestamp = stralloc(names[i]);
+		datestamp = g_strdup(names[i]);
 		datestamp[len_date] = '\0';
 		if (sscanf(&names[i][len_date+1], "%d", &level) != 1)
 		    level = 0;

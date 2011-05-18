@@ -189,7 +189,7 @@ static void holding_walk_file(
     char *filename = NULL;
 
     /* Loop through all cont_filenames (subsequent chunks) */
-    filename = stralloc(hfile);
+    filename = g_strdup(hfile);
     while (filename != NULL && filename[0] != '\0') {
 	int is_cruft = 0;
 
@@ -208,7 +208,7 @@ static void holding_walk_file(
 
         /* and go on to the next chunk if this wasn't cruft */
 	if (!is_cruft)
-	    filename = stralloc(file.cont_filename);
+	    filename = g_strdup(file.cont_filename);
 	dumpfile_free_data(&file);
     }
 
@@ -450,11 +450,11 @@ holding_get_walk_fn(
 
     if (data->fullpaths)
 	data->result = g_slist_insert_sorted(data->result,
-		stralloc(fqpath), 
+		g_strdup(fqpath), 
 		g_compare_strings);
     else
 	data->result = g_slist_insert_sorted(data->result, 
-		stralloc(element), 
+		g_strdup(element), 
 		g_compare_strings);
 
     /* don't proceed any deeper */
@@ -553,7 +553,7 @@ holding_get_files_for_flush(
 
         /* passed all tests -- we'll flush this file */
         result_list = g_slist_insert_sorted(result_list, 
-	    stralloc(file_elt->data), 
+	    g_strdup(file_elt->data), 
 	    g_compare_strings);
 	dumpfile_free_data(&file);
     }
@@ -578,7 +578,7 @@ holding_get_all_datestamps(void)
 	if (!g_slist_find_custom(datestamps, dfile.datestamp,
 				 g_compare_strings)) {
 	    datestamps = g_slist_insert_sorted(datestamps, 
-					       stralloc(dfile.datestamp), 
+					       g_strdup(dfile.datestamp), 
 					       g_compare_strings);
 	}
 	dumpfile_free_data(&dfile);
@@ -603,7 +603,7 @@ holding_file_size(
      * entail opening each file twice) */
 
     /* Loop through all cont_filenames (subsequent chunks) */
-    filename = stralloc(hfile);
+    filename = g_strdup(hfile);
     while (filename != NULL && filename[0] != '\0') {
         /* stat the file for its size */
         if (stat(filename, &finfo) == -1) {
@@ -804,7 +804,7 @@ holding_cleanup_file(
 	char *destname;
 
 	/* generate a name without '.tmp' */
-	destname = stralloc(fqpath);
+	destname = g_strdup(fqpath);
 	destname[strlen(destname) - 4] = '\0';
 
 	/* OK, it passes muster -- rename it to salvage some data,
@@ -897,7 +897,7 @@ rename_tmp_holding(
     char *filename_tmp = NULL;
 
     memset(buffer, 0, sizeof(buffer));
-    filename = stralloc(holding_file);
+    filename = g_strdup(holding_file);
     while(filename != NULL && filename[0] != '\0') {
 	filename_tmp = newvstralloc(filename_tmp, filename, ".tmp", NULL);
 	if((fd = robust_open(filename_tmp,O_RDONLY, 0)) == -1) {

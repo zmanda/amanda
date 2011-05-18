@@ -134,7 +134,7 @@ main(
     argc--;
     argv++;
 
-    cmdline = stralloc(GNUTAR);
+    cmdline = g_strdup(GNUTAR);
     for (i = 1; argv[i]; i++) {
 	char *quoted;
 
@@ -147,7 +147,7 @@ main(
 
     dbf = dbfn();
     if (dbf) {
-	dbf = stralloc(dbf);
+	dbf = g_strdup(dbf);
     }
     dbclose();
 

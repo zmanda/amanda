@@ -456,7 +456,7 @@ add_to_unlink_list(
 
     if (!unlink_list) {
 	unlink_list = alloc(sizeof(*unlink_list));
-	unlink_list->path = stralloc(path);
+	unlink_list->path = g_strdup(path);
 	unlink_list->next = NULL;
     } else {
 	for (ul = unlink_list; ul != NULL; ul = ul->next) {
@@ -464,7 +464,7 @@ add_to_unlink_list(
 		return 0;
 	}
 	ul = alloc(sizeof(*ul));
-	ul->path = stralloc(path);
+	ul->path = g_strdup(path);
 	ul->next = unlink_list;
 	unlink_list = ul;
     }
@@ -585,7 +585,7 @@ add_extract_item(
     EXTRACT_LIST_ITEM *that, *curr;
     char *ditem_path = NULL;
 
-    ditem_path = stralloc(ditem->path);
+    ditem_path = g_strdup(ditem->path);
     clean_pathname(ditem_path);
 
     for (this = extract_list; this != NULL; this = this->next)
@@ -604,7 +604,7 @@ add_extract_item(
 		curr=curr->next;
 	    }
 	    that = (EXTRACT_LIST_ITEM *)alloc(sizeof(EXTRACT_LIST_ITEM));
-            that->path = stralloc(ditem_path);
+            that->path = g_strdup(ditem_path);
 	    that->next = this->files;
 	    this->files = that;		/* add at front since easiest */
 	    amfree(ditem_path);
@@ -614,12 +614,12 @@ add_extract_item(
 
     /* so this is the first time we have seen this tape */
     this = (EXTRACT_LIST *)alloc(sizeof(EXTRACT_LIST));
-    this->tape = stralloc(ditem->tape);
+    this->tape = g_strdup(ditem->tape);
     this->level = ditem->level;
     this->fileno = ditem->fileno;
-    this->date = stralloc(ditem->date);
+    this->date = g_strdup(ditem->date);
     that = (EXTRACT_LIST_ITEM *)alloc(sizeof(EXTRACT_LIST_ITEM));
-    that->path = stralloc(ditem_path);
+    that->path = g_strdup(ditem_path);
     that->next = NULL;
     this->files = that;
 
@@ -663,7 +663,7 @@ delete_extract_item(
     EXTRACT_LIST_ITEM *that, *prev;
     char *ditem_path = NULL;
 
-    ditem_path = stralloc(ditem->path);
+    ditem_path = g_strdup(ditem->path);
     clean_pathname(ditem_path);
 
     for (this = extract_list; this != NULL; this = this->next)
@@ -764,7 +764,7 @@ add_glob(
              * $, but we need to match an optional trailing /, so tack that on
              * the end.
              */
-            regex_path = stralloc(regex + 1);
+            regex_path = g_strdup(regex + 1);
             regex_path[strlen(regex_path) - 1] = '\0';
             strappend(regex_path, "[/]*$");
             add_file(uqglob, regex_path);
@@ -865,7 +865,7 @@ add_file(
     if (strcmp(disk_path, "/") == 0) {
         if (*regex == '/') {
 	    /* No mods needed if already starts with '/' */
-	    path_on_disk = stralloc(regex);
+	    path_on_disk = g_strdup(regex);
 	} else {
 	    /* Prepend '/' */
 	    path_on_disk = stralloc2("/", regex);
@@ -939,7 +939,7 @@ add_file(
 			if(cmd == NULL) {
 			    if(dir_undo) *dir_undo = dir_undo_ch;
 			    dir_undo = NULL;
-			    cmd = stralloc(l);	/* save for error report */
+			    cmd = g_strdup(l);	/* save for error report */
 			}
 			continue;	/* throw the rest of the lines away */
 		    }
@@ -1126,7 +1126,7 @@ delete_glob(
              * $, but we need to match an optional trailing /, so tack that on
              * the end.
              */
-            regex_path = stralloc(regex + 1);
+            regex_path = g_strdup(regex + 1);
             regex_path[strlen(regex_path) - 1] = '\0';
             strappend(regex_path, "[/]*$");
             delete_file(uqglob, regex_path);
@@ -1229,10 +1229,10 @@ delete_file(
         if (*regex == '/') {
 	    if (strcmp(regex, "/[/]*$") == 0) {
 		/* We want "/" to match the directory itself: "/." */
-		path_on_disk = stralloc("/\\.[/]*$");
+		path_on_disk = g_strdup("/\\.[/]*$");
 	    } else {
 		/* No mods needed if already starts with '/' */
-		path_on_disk = stralloc(regex);
+		path_on_disk = g_strdup(regex);
 	    }
 	} else {
 	    /* Prepend '/' */
@@ -1304,7 +1304,7 @@ delete_file(
 			    if(tape_undo) *tape_undo = tape_undo_ch;
 			    if(dir_undo) *dir_undo = dir_undo_ch;
 			    tape_undo = dir_undo = NULL;
-			    cmd = stralloc(l);	/* save for the error report */
+			    cmd = g_strdup(l);	/* save for the error report */
 			}
 			continue;	/* throw the rest of the lines away */
 		    }
@@ -1589,7 +1589,7 @@ okay_to_continue(
 		putchar('\n');
 	    }
 	} else if (get_device) {
-	    char *tmp = stralloc(tape_server_name);
+	    char *tmp = g_strdup(tape_server_name);
 
 	    if (strncmp_const(s - 1, "default") == 0) {
 		set_device(tmp, NULL); /* default device, existing host */
@@ -1678,7 +1678,7 @@ extract_files_setup(
     disk_regex = make_exact_disk_expression(disk_name);
     host_regex = make_exact_host_expression(dump_hostname);
 
-    clean_datestamp = stralloc(dump_datestamp);
+    clean_datestamp = g_strdup(dump_datestamp);
     for(ch=ch1=clean_datestamp;*ch1 != '\0';ch1++) {
 	if(*ch1 != '-') {
 	    *ch = *ch1;
@@ -1877,86 +1877,86 @@ extract_files_child(
     switch(dumptype) {
     case IS_SAMBA:
 #ifdef SAMBA_CLIENT
-	g_ptr_array_add(argv_ptr, stralloc("smbclient"));
+	g_ptr_array_add(argv_ptr, g_strdup("smbclient"));
 	smbpass = findpass(ctl_data->file.disk, &domain);
 	if (smbpass) {
-	    g_ptr_array_add(argv_ptr, stralloc(ctl_data->file.disk));
-	    g_ptr_array_add(argv_ptr, stralloc("-U"));
+	    g_ptr_array_add(argv_ptr, g_strdup(ctl_data->file.disk));
+	    g_ptr_array_add(argv_ptr, g_strdup("-U"));
 	    passwd_field = argv_ptr->len;
-	    g_ptr_array_add(argv_ptr, stralloc(smbpass));
+	    g_ptr_array_add(argv_ptr, g_strdup(smbpass));
 	    if (domain) {
-		g_ptr_array_add(argv_ptr, stralloc("-W"));
-		g_ptr_array_add(argv_ptr, stralloc(domain));
+		g_ptr_array_add(argv_ptr, g_strdup("-W"));
+		g_ptr_array_add(argv_ptr, g_strdup(domain));
 	    }
 	}
-	g_ptr_array_add(argv_ptr, stralloc("-d0"));
-	g_ptr_array_add(argv_ptr, stralloc("-Tx"));
-	g_ptr_array_add(argv_ptr, stralloc("-"));	/* data on stdin */
+	g_ptr_array_add(argv_ptr, g_strdup("-d0"));
+	g_ptr_array_add(argv_ptr, g_strdup("-Tx"));
+	g_ptr_array_add(argv_ptr, g_strdup("-"));	/* data on stdin */
 	break;
 #endif
     case IS_TAR:
     case IS_GNUTAR:
-	g_ptr_array_add(argv_ptr, stralloc("tar"));
+	g_ptr_array_add(argv_ptr, g_strdup("tar"));
 	/* ignore trailing zero blocks on input (this was the default until tar-1.21) */
-	g_ptr_array_add(argv_ptr, stralloc("--ignore-zeros"));
-	g_ptr_array_add(argv_ptr, stralloc("--numeric-owner"));
-	g_ptr_array_add(argv_ptr, stralloc("-xpGvf"));
-	g_ptr_array_add(argv_ptr, stralloc("-"));	/* data on stdin */
+	g_ptr_array_add(argv_ptr, g_strdup("--ignore-zeros"));
+	g_ptr_array_add(argv_ptr, g_strdup("--numeric-owner"));
+	g_ptr_array_add(argv_ptr, g_strdup("-xpGvf"));
+	g_ptr_array_add(argv_ptr, g_strdup("-"));	/* data on stdin */
 	break;
     case IS_SAMBA_TAR:
-	g_ptr_array_add(argv_ptr, stralloc("tar"));
-	g_ptr_array_add(argv_ptr, stralloc("-xpvf"));
-	g_ptr_array_add(argv_ptr, stralloc("-"));	/* data on stdin */
+	g_ptr_array_add(argv_ptr, g_strdup("tar"));
+	g_ptr_array_add(argv_ptr, g_strdup("-xpvf"));
+	g_ptr_array_add(argv_ptr, g_strdup("-"));	/* data on stdin */
 	break;
     case IS_UNKNOWN:
     case IS_DUMP:
-	g_ptr_array_add(argv_ptr, stralloc("restore"));
+	g_ptr_array_add(argv_ptr, g_strdup("restore"));
 #ifdef AIX_BACKUP
-        restore_args[j++] = stralloc("-xB");
-	g_ptr_array_add(argv_ptr, stralloc("-xB"));
+        restore_args[j++] = g_strdup("-xB");
+	g_ptr_array_add(argv_ptr, g_strdup("-xB"));
 #else
 #if defined(XFSDUMP)
 	if (strcmp(ctl_data->file.program, XFSDUMP) == 0) {
-	    g_ptr_array_add(argv_ptr, stralloc("-v"));
-	    g_ptr_array_add(argv_ptr, stralloc("silent"));
+	    g_ptr_array_add(argv_ptr, g_strdup("-v"));
+	    g_ptr_array_add(argv_ptr, g_strdup("silent"));
 	} else
 #endif
 #if defined(VDUMP)
 	if (strcmp(ctl_data->file.program, VDUMP) == 0) {
-	    g_ptr_array_add(argv_ptr, stralloc("xf"));
-	    g_ptr_array_add(argv_ptr, stralloc("-"));	/* data on stdin */
+	    g_ptr_array_add(argv_ptr, g_strdup("xf"));
+	    g_ptr_array_add(argv_ptr, g_strdup("-"));	/* data on stdin */
 	} else
 #endif
 	{
-	g_ptr_array_add(argv_ptr, stralloc("xbf"));
-	g_ptr_array_add(argv_ptr, stralloc("2")); /* read in units of 1K */
-	g_ptr_array_add(argv_ptr, stralloc("-"));	/* data on stdin */
+	g_ptr_array_add(argv_ptr, g_strdup("xbf"));
+	g_ptr_array_add(argv_ptr, g_strdup("2")); /* read in units of 1K */
+	g_ptr_array_add(argv_ptr, g_strdup("-"));	/* data on stdin */
 	}
 #endif
 	break;
     case IS_APPLICATION_API:
-	g_ptr_array_add(argv_ptr, stralloc(ctl_data->file.application));
-	g_ptr_array_add(argv_ptr, stralloc("restore"));
-	g_ptr_array_add(argv_ptr, stralloc("--config"));
-	g_ptr_array_add(argv_ptr, stralloc(get_config_name()));
-	g_ptr_array_add(argv_ptr, stralloc("--disk"));
-	g_ptr_array_add(argv_ptr, stralloc(ctl_data->file.disk));
+	g_ptr_array_add(argv_ptr, g_strdup(ctl_data->file.application));
+	g_ptr_array_add(argv_ptr, g_strdup("restore"));
+	g_ptr_array_add(argv_ptr, g_strdup("--config"));
+	g_ptr_array_add(argv_ptr, g_strdup(get_config_name()));
+	g_ptr_array_add(argv_ptr, g_strdup("--disk"));
+	g_ptr_array_add(argv_ptr, g_strdup(ctl_data->file.disk));
 	if (dump_dle && dump_dle->device) {
-	    g_ptr_array_add(argv_ptr, stralloc("--device"));
-	    g_ptr_array_add(argv_ptr, stralloc(dump_dle->device));
+	    g_ptr_array_add(argv_ptr, g_strdup("--device"));
+	    g_ptr_array_add(argv_ptr, g_strdup(dump_dle->device));
 	}
 	if (ctl_data->data_path == DATA_PATH_DIRECTTCP) {
-	    g_ptr_array_add(argv_ptr, stralloc("--data-path"));
-	    g_ptr_array_add(argv_ptr, stralloc("DIRECTTCP"));
-	    g_ptr_array_add(argv_ptr, stralloc("--direct-tcp"));
-	    g_ptr_array_add(argv_ptr, stralloc(ctl_data->addrs));
+	    g_ptr_array_add(argv_ptr, g_strdup("--data-path"));
+	    g_ptr_array_add(argv_ptr, g_strdup("DIRECTTCP"));
+	    g_ptr_array_add(argv_ptr, g_strdup("--direct-tcp"));
+	    g_ptr_array_add(argv_ptr, g_strdup(ctl_data->addrs));
 	}
 	if (ctl_data->bsu && ctl_data->bsu->smb_recover_mode &&
 	    samba_extract_method == SAMBA_SMBCLIENT){
-	    g_ptr_array_add(argv_ptr, stralloc("--recover-mode"));
-	    g_ptr_array_add(argv_ptr, stralloc("smb"));
+	    g_ptr_array_add(argv_ptr, g_strdup("--recover-mode"));
+	    g_ptr_array_add(argv_ptr, g_strdup("smb"));
 	}
-	g_ptr_array_add(argv_ptr, stralloc("--level"));
+	g_ptr_array_add(argv_ptr, g_strdup("--level"));
 	g_ptr_array_add(argv_ptr, g_strdup_printf("%d", ctl_data->elist->level));
 	if (dump_dle) {
 	    GSList   *scriptlist;
@@ -1990,7 +1990,7 @@ extract_files_child(
     	case IS_SAMBA_TAR:
     	case IS_SAMBA:
 	    if (strcmp(fn->path, "/") == 0)
-		g_ptr_array_add(argv_ptr, stralloc("."));
+		g_ptr_array_add(argv_ptr, g_strdup("."));
 	    else
 		g_ptr_array_add(argv_ptr, stralloc2(".", fn->path));
 	    break;
@@ -2002,20 +2002,20 @@ extract_files_child(
 		 * xfsrestore needs a -s option before each file to be
 		 * restored, and also wants them to be relative paths.
 		 */
-		g_ptr_array_add(argv_ptr, stralloc("-s"));
-		g_ptr_array_add(argv_ptr, stralloc(fn->path + 1));
+		g_ptr_array_add(argv_ptr, g_strdup("-s"));
+		g_ptr_array_add(argv_ptr, g_strdup(fn->path + 1));
 	    } else
 #endif
 	    {
-	    g_ptr_array_add(argv_ptr, stralloc(fn->path));
+	    g_ptr_array_add(argv_ptr, g_strdup(fn->path));
 	    }
 	    break;
   	}
     }
 #if defined(XFSDUMP)
     if (strcmp(ctl_data->file.program, XFSDUMP) == 0) {
-	g_ptr_array_add(argv_ptr, stralloc("-"));
-	g_ptr_array_add(argv_ptr, stralloc("."));
+	g_ptr_array_add(argv_ptr, g_strdup("-"));
+	g_ptr_array_add(argv_ptr, g_strdup("."));
     }
 #endif
     g_ptr_array_add(argv_ptr, NULL);
@@ -2023,7 +2023,7 @@ extract_files_child(
     switch (dumptype) {
     case IS_SAMBA:
 #ifdef SAMBA_CLIENT
-    	cmd = stralloc(SAMBA_CLIENT);
+    	cmd = g_strdup(SAMBA_CLIENT);
     	break;
 #else
 	/* fall through to ... */
@@ -2033,9 +2033,9 @@ extract_files_child(
     case IS_SAMBA_TAR:
 #ifndef GNUTAR
 	g_fprintf(stderr, _("warning: GNUTAR program not available.\n"));
-	cmd = stralloc("tar");
+	cmd = g_strdup("tar");
 #else
-  	cmd = stralloc(GNUTAR);
+  	cmd = g_strdup(GNUTAR);
 #endif
     	break;
     case IS_UNKNOWN:
@@ -2043,28 +2043,28 @@ extract_files_child(
 	cmd = NULL;
 #if defined(DUMP)
 	if (strcmp(ctl_data->file.program, DUMP) == 0) {
-    	    cmd = stralloc(RESTORE);
+    	    cmd = g_strdup(RESTORE);
 	}
 #endif
 #if defined(VDUMP)
 	if (strcmp(ctl_data->file.program, VDUMP) == 0) {
-    	    cmd = stralloc(VRESTORE);
+    	    cmd = g_strdup(VRESTORE);
 	}
 #endif
 #if defined(VXDUMP)
 	if (strcmp(ctl_data->file.program, VXDUMP) == 0) {
-    	    cmd = stralloc(VXRESTORE);
+    	    cmd = g_strdup(VXRESTORE);
 	}
 #endif
 #if defined(XFSDUMP)
 	if (strcmp(ctl_data->file.program, XFSDUMP) == 0) {
-    	    cmd = stralloc(XFSRESTORE);
+    	    cmd = g_strdup(XFSRESTORE);
 	}
 #endif
 	if (cmd == NULL) {
 	    g_fprintf(stderr, _("warning: restore program for %s not available.\n"),
 		    ctl_data->file.program);
-	    cmd = stralloc("restore");
+	    cmd = g_strdup("restore");
 	}
 	break;
     case IS_APPLICATION_API:
@@ -2151,7 +2151,7 @@ writer_intermediary(
 		g_debug("Using AMANDA data-path");
 	    } else if (strncmp_const(amidxtaped_line+13, "DIRECT-TCP") == 0) {
 		ctl_data.data_path = DATA_PATH_DIRECTTCP;
-		ctl_data.addrs = stralloc(amidxtaped_line+24);
+		ctl_data.addrs = g_strdup(amidxtaped_line+24);
 		g_debug("Using DIRECT-TCP data-path with %s", ctl_data.addrs);
 	    }
 	    start_processing_data(&ctl_data);
@@ -2509,7 +2509,7 @@ bad_nak:
 	if (strcmp(tok, "OPTIONS") == 0) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL) {
-		extra = stralloc(_("OPTIONS token is missing"));
+		extra = g_strdup(_("OPTIONS token is missing"));
 		goto parse_error;
 	    }
 /*
@@ -2634,7 +2634,7 @@ get_amidxtaped_line(void)
 
     amfree(amidxtaped_line);
     if (!ctl_buffer)
-	ctl_buffer = stralloc("");
+	ctl_buffer = g_strdup("");
 
     while (!strstr(ctl_buffer,"\r\n")) {
 	if (amidxtaped_streams[CTLFD].fd == NULL)
@@ -2658,8 +2658,8 @@ get_amidxtaped_line(void)
 
     s = strstr(ctl_buffer,"\r\n");
     *s = '\0';
-    newbuf = stralloc(s+2);
-    amidxtaped_line = stralloc(ctl_buffer);
+    newbuf = g_strdup(s+2);
+    amidxtaped_line = g_strdup(ctl_buffer);
     amfree(ctl_buffer);
     ctl_buffer = newbuf;
     return 0;
@@ -2760,7 +2760,7 @@ read_amidxtaped_data(
 	if (am_has_feature(tapesrv_features, fe_amidxtaped_datapath)) {
  	    char       *msg;
 	    /* send DATA-PATH request */
-	    msg = stralloc("AVAIL-DATAPATH");
+	    msg = g_strdup("AVAIL-DATAPATH");
 	    if (data_path_set & DATA_PATH_AMANDA)
 		vstrextend(&msg, " AMANDA", NULL);
 	    if (data_path_set & DATA_PATH_DIRECTTCP)

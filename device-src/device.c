@@ -491,7 +491,7 @@ device_open (char * device_name)
     }
 
     if (device_name == NULL)
-	return make_null_error(stralloc("No device name specified"), DEVICE_STATUS_DEVICE_ERROR);
+	return make_null_error(g_strdup("No device name specified"), DEVICE_STATUS_DEVICE_ERROR);
 
     unaliased_name = device_unaliased_name(device_name);
     if (!unaliased_name) {
@@ -559,7 +559,7 @@ device_status_error(Device * self)
     status_strv = g_flags_nick_to_strv(self->status, DEVICE_STATUS_FLAGS_TYPE);
     g_assert(g_strv_length(status_strv) > 0);
     if (g_strv_length(status_strv) == 1) {
-	statusmsg = stralloc(*status_strv);
+	statusmsg = g_strdup(*status_strv);
     } else {
 	char * status_list = g_english_strjoinv(status_strv, "or");
 	statusmsg = g_strdup_printf("one of %s", status_list);
@@ -841,7 +841,7 @@ void device_clear_volume_details(Device * device) {
 static void default_device_open_device(Device * self, char * device_name,
 		    char * device_type G_GNUC_UNUSED, char * device_node G_GNUC_UNUSED) {
     /* Set the device_name property */
-    self->device_name = stralloc(device_name);
+    self->device_name = g_strdup(device_name);
 }
 
 static gboolean
@@ -1121,7 +1121,7 @@ device_configure (Device * self, gboolean use_global_config)
 	return (klass->configure)(self, use_global_config);
     } else {
 	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
+	    g_strdup(_("Unimplemented method")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1322,7 +1322,7 @@ device_erase (Device * self)
 	return (klass->erase)(self);
     } else {
 	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
+	    g_strdup(_("Unimplemented method")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1358,7 +1358,7 @@ device_listen(
 	return (klass->listen)(self, for_writing, addrs);
     } else {
 	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
+	    g_strdup(_("Unimplemented method")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1378,7 +1378,7 @@ device_accept(
 	return (klass->accept)(self, conn, prolong, prolong_data);
     } else {
 	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
+	    g_strdup(_("Unimplemented method")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1400,7 +1400,7 @@ device_connect(
 	return (klass->connect)(self, for_writing, addrs, conn, prolong, prolong_data);
     } else {
 	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
+	    g_strdup(_("Unimplemented method")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1423,7 +1423,7 @@ device_write_from_connection(
 	return (klass->write_from_connection)(self, size, actual_size);
     } else {
 	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
+	    g_strdup(_("Unimplemented method")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1445,7 +1445,7 @@ device_read_to_connection(
 	return (klass->read_to_connection)(self, size, actual_size);
     } else {
 	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
+	    g_strdup(_("Unimplemented method")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1465,7 +1465,7 @@ device_use_connection(
 	return (klass->use_connection)(self, conn);
     } else {
 	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
+	    g_strdup(_("Unimplemented method")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }

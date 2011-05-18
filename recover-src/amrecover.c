@@ -104,7 +104,7 @@ get_line(void)
     void *buf;
 
     if (!mesg_buffer)
-	mesg_buffer = stralloc("");
+	mesg_buffer = g_strdup("");
  
     while (!strstr(mesg_buffer,"\r\n")) {
 	buf = NULL;
@@ -133,7 +133,7 @@ get_line(void)
 
     s = strstr(mesg_buffer,"\r\n");
     *s = '\0';
-    newbuf = stralloc(s+2);
+    newbuf = g_strdup(s+2);
     server_line = newstralloc(server_line, mesg_buffer);
     amfree(mesg_buffer);
     mesg_buffer = newbuf;
@@ -445,7 +445,7 @@ main(
 	error(_("No index server set"));
 	/*NOTREACHED*/
     }
-    server_name = stralloc(server_name);
+    server_name = g_strdup(server_name);
 
     tape_server_name = NULL;
     if (getconf_seen(CNF_TAPE_SERVER) == -2) { /* command line argument */
@@ -469,7 +469,7 @@ main(
 	error(_("No tape server set"));
 	/*NOTREACHED*/
     }
-    tape_server_name = stralloc(tape_server_name);
+    tape_server_name = g_strdup(tape_server_name);
 
     amfree(tape_device_name);
     tape_device_name = getconf_str(CNF_TAPEDEV);
@@ -478,10 +478,10 @@ main(
 	!getconf_seen(CNF_TAPEDEV)) {
 	tape_device_name = NULL;
     } else {
-	tape_device_name = stralloc(tape_device_name);
+	tape_device_name = g_strdup(tape_device_name);
     }
 
-    authopt = stralloc(getconf_str(CNF_AUTH));
+    authopt = g_strdup(getconf_str(CNF_AUTH));
 
 
     amfree(disk_name);
@@ -552,7 +552,7 @@ main(
 
 	line = vstrallocf("FEATURES %s", our_features_string);
 	if(exchange(line) == 0) {
-	    their_feature_string = stralloc(server_line+13);
+	    their_feature_string = g_strdup(server_line+13);
 	    indexsrv_features = am_string_to_feature(their_feature_string);
 	    if (!indexsrv_features)
 		g_printf(_("Bad feature string from server: %s"), their_feature_string);

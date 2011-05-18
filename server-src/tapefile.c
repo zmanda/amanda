@@ -291,11 +291,11 @@ add_tapelabel(
 
     new = (tape_t *) alloc(sizeof(tape_t));
 
-    new->datestamp = stralloc(datestamp);
+    new->datestamp = g_strdup(datestamp);
     new->position = 0;
     new->reuse = 1;
-    new->label = stralloc(label);
-    new->comment = comment? stralloc(comment) : NULL;
+    new->label = g_strdup(label);
+    new->comment = comment? g_strdup(comment) : NULL;
 
     new->prev  = NULL;
     if(tape_list != NULL) tape_list->prev = new;
@@ -378,13 +378,13 @@ parse_tapeline(
     s1 = s - 1;
     skip_non_whitespace(s, ch);
     s[-1] = '\0';
-    tp->datestamp = stralloc(s1);
+    tp->datestamp = g_strdup(s1);
 
     skip_whitespace(s, ch);
     s1 = s - 1;
     skip_non_whitespace(s, ch);
     s[-1] = '\0';
-    tp->label = stralloc(s1);
+    tp->label = g_strdup(s1);
 
     skip_whitespace(s, ch);
     tp->reuse = 1;
@@ -408,7 +408,7 @@ parse_tapeline(
 	skip_non_whitespace(s, ch);
 	s[-1] = '\0';
 	skip_whitespace(s, ch);
-	tp->barcode = stralloc(s1);
+	tp->barcode = g_strdup(s1);
     } else {
 	tp->barcode = NULL;
     }
@@ -418,13 +418,13 @@ parse_tapeline(
 	skip_non_whitespace(s, ch);
 	s[-1] = '\0';
 	skip_whitespace(s, ch);
-	tp->meta = stralloc(s1);
+	tp->meta = g_strdup(s1);
     } else {
 	tp->meta = NULL;
     }
 
     if (*(s - 1) == '#') {
-	tp->comment = stralloc(s); /* skip leading '#' */
+	tp->comment = g_strdup(s); /* skip leading '#' */
     } else {
 	tp->comment = NULL;
     }

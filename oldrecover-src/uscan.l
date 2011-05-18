@@ -141,7 +141,7 @@ mode    { return MODE; }
 %}
 
 [^[:space:][:cntrl:]"]+		{
-    yylval.strval = stralloc(yytext);
+    yylval.strval = g_strdup(yytext);
     return PATH;
 }
 

@@ -408,7 +408,6 @@ typedef union sockaddr_union {
 
 void *debug_alloc(const char *file, int line, size_t size);
 void *debug_newalloc(const char *file, int line, void *old, size_t size);
-char *debug_stralloc(const char *file, int line, const char *str);
 char *debug_newstralloc(const char *file, int line,
 		char *oldstr, const char *newstr);
 char *debug_vstralloc(const char *file, int line, const char *str, ...);
@@ -425,7 +424,6 @@ char *debug_vstrextend(const char *file, int line, char **oldstr, ...);
 
 #define	alloc(s)		debug_alloc(__FILE__, __LINE__, (s))
 #define	newalloc(p,s)		debug_newalloc(__FILE__, __LINE__, (p), (s))
-#define	stralloc(s)		debug_stralloc(__FILE__, __LINE__, (s))
 #define	newstralloc(p,s)	debug_newstralloc(__FILE__, __LINE__, (p), (s))
 #define vstralloc(...)		debug_vstralloc(__FILE__,__LINE__,__VA_ARGS__)
 #define newvstralloc(...)	debug_newvstralloc(__FILE__,__LINE__,__VA_ARGS__)
@@ -469,7 +467,7 @@ time_t	unctime(char *timestr);
 } while (0)
 
 #define strappend(s1,s2) do {						\
-    char *t_t_t = (s1) ? stralloc2((s1),(s2)) : stralloc((s2));		\
+    char *t_t_t = (s1) ? stralloc2((s1),(s2)) : g_strdup((s2));		\
     amfree((s1));							\
     (s1) = t_t_t;							\
 } while(0)
@@ -517,7 +515,7 @@ time_t	unctime(char *timestr);
  *  fp = s-1;			## save the start
  *  skip_nonwhitespace(s, ch);	## find the end
  *  p[-1] = '\0';		## temporary terminate
- *  field = stralloc(fp);	## make a copy
+ *  field = g_strdup(fp);	## make a copy
  *  p[-1] = ch;			## restore the input
  *
  * The scanning macros are:

@@ -152,7 +152,7 @@ bsdtcp_connect(
 	goto error;
 
     amfree(rh->hostname);
-    rh->hostname = stralloc(rh->rs->rc->hostname);
+    rh->hostname = g_strdup(rh->rs->rc->hostname);
 
     if (conf_fn) {
 	service = conf_fn("client_port", datap);

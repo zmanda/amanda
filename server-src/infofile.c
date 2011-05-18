@@ -513,7 +513,7 @@ open_infofile(
 {
     assert(infodir == NULL);
 
-    infodir = stralloc(filename);
+    infodir = g_strdup(filename);
 
     return 0; /* success! */
 }

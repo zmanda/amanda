@@ -132,14 +132,14 @@ local_connect(
 	(*fn)(arg, &rh->sech, S_ERROR);
 	return;
     }
-    rh->hostname = stralloc(hostname);
+    rh->hostname = g_strdup(hostname);
     rh->rs = tcpma_stream_client(rh, newhandle++);
 
     if (rh->rs == NULL)
 	goto error;
 
     amfree(rh->hostname);
-    rh->hostname = stralloc(rh->rs->rc->hostname);
+    rh->hostname = g_strdup(rh->rs->rc->hostname);
 
     /*
      * We need to open a new connection.

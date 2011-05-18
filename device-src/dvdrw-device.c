@@ -416,7 +416,7 @@ dvdrw_device_open_device(Device *dself, char *device_name, char *device_type, ch
     colon = index(device_node, ':');
     if (!colon) {
 	device_set_error(dself,
-	    stralloc(_("DVDRW device requires cache directory and DVD-RW device separated by a colon (:) in tapedev")),
+	    g_strdup(_("DVDRW device requires cache directory and DVD-RW device separated by a colon (:) in tapedev")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return;
     }
@@ -598,7 +598,7 @@ check_access_mode(DvdRwDevice *self, DeviceAccessMode mode)
     }
 
     device_set_error(dself,
-	stralloc(_("DVDRW device can only be opened in READ or WRITE mode")),
+	g_strdup(_("DVDRW device can only be opened in READ or WRITE mode")),
 	DEVICE_STATUS_DEVICE_ERROR);
 
     return FALSE;
@@ -613,7 +613,7 @@ check_readable(DvdRwDevice *self)
 
     if (! device_get_simple_property(dself, PROPERTY_DVDRW_MOUNT_POINT, &value, NULL, NULL)) {
 	device_set_error(dself,
-	    stralloc(_("DVDRW device requires DVDRW_MOUNT_POINT to open device for reading")),
+	    g_strdup(_("DVDRW device requires DVDRW_MOUNT_POINT to open device for reading")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 
 	return FALSE;

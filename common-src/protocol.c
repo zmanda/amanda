@@ -146,7 +146,7 @@ protocol_sendreq(
 
     p = alloc(sizeof(proto_t));
     p->state = s_sendreq;
-    p->hostname = stralloc(hostname);
+    p->hostname = g_strdup(hostname);
     p->security_driver = security_driver;
     /* p->security_handle set in connect_callback */
     p->repwait = repwait;

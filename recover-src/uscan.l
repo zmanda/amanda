@@ -158,7 +158,7 @@ mode		{ BEGIN(needstring); return MODE; }
 %}
 
 <INITIAL,needdevice,needmode,needstring,astring,propertyappend,propertypriority>[^[:space:][:cntrl:]"]+		{
-    yylval.strval = stralloc(yytext);
+    yylval.strval = g_strdup(yytext);
     BEGIN(needstring);
     return STRING;
 }

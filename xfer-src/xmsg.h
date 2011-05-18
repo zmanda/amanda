@@ -131,7 +131,7 @@ typedef struct XMsg {
      * message type.
      *
      * Note that any pointer-based attributes (strings, etc.) become owned
-     * by the XMsg object, and will be freed in xmsg_free.  The use of stralloc()
+     * by the XMsg object, and will be freed in xmsg_free.  The use of g_strdup()
      * is advised for strings.
      *
      * NOTE TO IMPLEMENTERS:

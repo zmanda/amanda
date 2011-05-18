@@ -507,7 +507,7 @@ write_amanda_header(S3Device *self,
         &header_size);
     if (amanda_header.buffer == NULL) {
 	device_set_error(d_self,
-	    stralloc(_("Amanda tapestart header won't fit in a single block!")),
+	    g_strdup(_("Amanda tapestart header won't fit in a single block!")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	dumpfile_free(dumpinfo);
 	g_free(amanda_header.buffer);
@@ -520,7 +520,7 @@ write_amanda_header(S3Device *self,
     if(check_at_peom(self, header_size)) {
         d_self->is_eom = TRUE;
         device_set_error(d_self,
-            stralloc(_("No space left on device")),
+            g_strdup(_("No space left on device")),
             DEVICE_STATUS_DEVICE_ERROR);
 	dumpfile_free(dumpinfo);
         g_free(amanda_header.buffer);
@@ -1123,7 +1123,7 @@ s3_device_set_bucket_location_fn(Device *p_self, DevicePropertyBase *base,
     char *str_val = g_value_dup_string(val);
 
     if (str_val[0] && self->use_ssl && !s3_curl_location_compat()) {
-	device_set_error(p_self, stralloc(_(
+	device_set_error(p_self, g_strdup(_(
 		"Location constraint given for Amazon S3 bucket, "
 		"but libcurl is too old support wildcard certificates.")),
 	    DEVICE_STATUS_DEVICE_ERROR);
@@ -1473,20 +1473,20 @@ static gboolean setup_handle(S3Device * self) {
 	self->s3t = g_new(S3_by_thread, self->nb_threads);
 	if (self->s3t == NULL) {
 	    device_set_error(d_self,
-		stralloc(_("Can't allocate S3Handle array")),
+		g_strdup(_("Can't allocate S3Handle array")),
 		DEVICE_STATUS_DEVICE_ERROR);
             return FALSE;
 	}
         if (self->access_key == NULL || self->access_key[0] == '\0') {
 	    device_set_error(d_self,
-		stralloc(_("No Amazon access key specified")),
+		g_strdup(_("No Amazon access key specified")),
 		DEVICE_STATUS_DEVICE_ERROR);
             return FALSE;
 	}
 
 	if (self->secret_key == NULL || self->secret_key[0] == '\0') {
 	    device_set_error(d_self,
-		stralloc(_("No Amazon secret key specified")),
+		g_strdup(_("No Amazon secret key specified")),
 		DEVICE_STATUS_DEVICE_ERROR);
             return FALSE;
 	}
@@ -1511,7 +1511,7 @@ static gboolean setup_handle(S3Device * self) {
 					   self->storage_class, self->ca_info);
             if (self->s3t[thread].s3 == NULL) {
 	        device_set_error(d_self,
-		    stralloc(_("Internal error creating S3 handle")),
+		    g_strdup(_("Internal error creating S3 handle")),
 		    DEVICE_STATUS_DEVICE_ERROR);
                 return FALSE;
             }
@@ -1592,7 +1592,7 @@ s3_device_read_label(Device *pself) {
 	      s3_error_code == S3_ERROR_NoSuchBucket)) {
             g_debug(_("Amanda header not found while reading tapestart header (this is expected for empty tapes)"));
 	    device_set_error(pself,
-		stralloc(_("Amanda header not found -- unlabeled volume?")),
+		g_strdup(_("Amanda header not found -- unlabeled volume?")),
 		  DEVICE_STATUS_DEVICE_ERROR
 		| DEVICE_STATUS_VOLUME_ERROR
 		| DEVICE_STATUS_VOLUME_UNLABELED);
@@ -1608,7 +1608,7 @@ s3_device_read_label(Device *pself) {
 
     /* handle an empty file gracefully */
     if (buf.buffer_len == 0) {
-	device_set_error(pself, stralloc(_("Empty header file")), DEVICE_STATUS_VOLUME_ERROR);
+	device_set_error(pself, g_strdup(_("Empty header file")), DEVICE_STATUS_VOLUME_ERROR);
         return pself->status;
     }
 
@@ -1619,7 +1619,7 @@ s3_device_read_label(Device *pself) {
     g_free(buf.buffer);
 
     if (amanda_header->type != F_TAPESTART) {
-	device_set_error(pself, stralloc(_("Invalid amanda header")), DEVICE_STATUS_VOLUME_ERROR);
+	device_set_error(pself, g_strdup(_("Invalid amanda header")), DEVICE_STATUS_VOLUME_ERROR);
         return pself->status;
     }
 
@@ -1763,7 +1763,7 @@ s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
         &header_size);
     if (amanda_header.buffer == NULL) {
 	device_set_error(pself,
-	    stralloc(_("Amanda file header won't fit in a single block!")),
+	    g_strdup(_("Amanda file header won't fit in a single block!")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1775,7 +1775,7 @@ s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
     if(check_at_peom(self, header_size)) {
         pself->is_eom = TRUE;
         device_set_error(pself,
-            stralloc(_("No space left on device")),
+            g_strdup(_("No space left on device")),
             DEVICE_STATUS_DEVICE_ERROR);
         g_free(amanda_header.buffer);
         return FALSE;
@@ -1823,7 +1823,7 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
     if(check_at_peom(self, size)) {
         pself->is_eom = TRUE;
         device_set_error(pself,
-            stralloc(_("No space left on device")),
+            g_strdup(_("No space left on device")),
             DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }
@@ -1973,7 +1973,7 @@ s3_device_erase(Device *pself) {
     if (!s3_delete(self->s3t[0].s3, self->bucket, key)) {
         s3_error(self->s3t[0].s3, &errmsg, NULL, NULL, NULL, NULL, NULL);
 	device_set_error(pself,
-	    stralloc(errmsg),
+	    g_strdup(errmsg),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }
@@ -1994,7 +1994,7 @@ s3_device_erase(Device *pself) {
                 (response_code == 404 && s3_error_code == S3_ERROR_NoSuchBucket))) {
 
             device_set_error(pself,
-	        stralloc(errmsg),
+	        g_strdup(errmsg),
 	        DEVICE_STATUS_DEVICE_ERROR);
             return FALSE;
         }
@@ -2056,7 +2056,7 @@ s3_device_seek_file(Device *pself, guint file) {
                     return make_tapeend_header();
                 } else {
 		    device_set_error(pself,
-			stralloc(_("Attempt to read past tape-end file")),
+			g_strdup(_("Attempt to read past tape-end file")),
 			DEVICE_STATUS_SUCCESS);
                     return NULL;
                 }
@@ -2064,7 +2064,7 @@ s3_device_seek_file(Device *pself, guint file) {
         } else {
             /* An unexpected error occured finding out if we are the last file. */
 	    device_set_error(pself,
-		stralloc(errmsg),
+		g_strdup(errmsg),
 		DEVICE_STATUS_DEVICE_ERROR);
             return NULL;
         }
@@ -2085,7 +2085,7 @@ s3_device_seek_file(Device *pself, guint file) {
 
         default:
 	    device_set_error(pself,
-		stralloc(_("Invalid amanda header while reading file header")),
+		g_strdup(_("Invalid amanda header while reading file header")),
 		DEVICE_STATUS_VOLUME_ERROR);
             g_free(amanda_header);
             return NULL;
@@ -2166,7 +2166,7 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
 		    g_free(key);
 		    pself->is_eof = TRUE;
 		    pself->in_file = FALSE;
-		    device_set_error(pself, stralloc(_("EOF")),
+		    device_set_error(pself, g_strdup(_("EOF")),
 				     DEVICE_STATUS_SUCCESS);
 		    g_mutex_unlock(self->thread_idle_mutex);
 		    return -1;

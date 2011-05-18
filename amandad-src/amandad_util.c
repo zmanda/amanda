@@ -58,9 +58,9 @@ parse_g_options(
 
     g_options = alloc(sizeof(g_option_t));
     init_g_options(g_options);
-    g_options->str = stralloc(str);
+    g_options->str = g_strdup(str);
 
-    p = stralloc(str);
+    p = g_strdup(str);
     tok = strtok(p,";");
 
     while (tok != NULL) {
@@ -93,7 +93,7 @@ parse_g_options(
 		}
 		amfree(g_options->hostname);
 	    }
-	    g_options->hostname = stralloc(tok+9);
+	    g_options->hostname = g_strdup(tok+9);
 	}
 	else if(strncmp(tok,"auth=", 5) == 0) {
 	    if(g_options->auth != NULL) {
@@ -103,7 +103,7 @@ parse_g_options(
 		}
 		amfree(g_options->auth);
 	    }
-	    g_options->auth = stralloc(tok+5);
+	    g_options->auth = g_strdup(tok+5);
 	}
 	else if(strncmp(tok,"maxdumps=", 9) == 0) {
 	    if(g_options->maxdumps != 0) {
@@ -143,7 +143,7 @@ parse_g_options(
 		}
 		amfree(g_options->config);
 	    }
-	    g_options->config = stralloc(tok+7);
+	    g_options->config = g_strdup(tok+7);
 	    if (strchr(g_options->config, '/')) {
 		amfree(g_options->config);
 		dbprintf(_("invalid character in config option\n"));

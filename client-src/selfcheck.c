@@ -123,7 +123,7 @@ main(
     dbprintf(_("version %s\n"), VERSION);
 
     if(argc > 2 && strcmp(argv[1], "amandad") == 0) {
-	amandad_auth = stralloc(argv[2]);
+	amandad_auth = g_strdup(argv[2]);
     }
 
     config_init(CONFIG_INIT_CLIENT, NULL);
@@ -246,13 +246,13 @@ main(
 	    fp = s - 1;
 	    skip_quoted_string(s, ch);
 	     s[-1] = '\0';			/* terminate the device */
-	    qamdevice = stralloc(fp);
+	    qamdevice = g_strdup(fp);
 	    dle->device = unquote_string(qamdevice);
 	    skip_whitespace(s, ch);		/* find level number */
 	}
 	else {
-	    dle->device = stralloc(dle->disk);
-	    qamdevice = stralloc(qdisk);
+	    dle->device = g_strdup(dle->disk);
+	    qamdevice = g_strdup(qdisk);
 	}
 	amfree(qamdevice);
 
@@ -536,7 +536,7 @@ check_disk(
 	need_global_check=1;
 	qdisk = quote_string(dle->disk);
 	qamdevice = quote_string(dle->device);
-	device = stralloc("nodevice");
+	device = g_strdup("nodevice");
 	dbprintf(_("checking disk %s\n"), qdisk);
 	if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE) {
 	    if (dle->device[0] == '/' && dle->device[1] == '/') {
@@ -815,40 +815,40 @@ check_disk(
 		aclose(app_err[0]);
 		dup2(app_err[1], 2);
 
-		g_ptr_array_add(argv_ptr, stralloc(dle->program));
-		g_ptr_array_add(argv_ptr, stralloc("selfcheck"));
+		g_ptr_array_add(argv_ptr, g_strdup(dle->program));
+		g_ptr_array_add(argv_ptr, g_strdup("selfcheck"));
 		if (bsu->message_line == 1) {
-		    g_ptr_array_add(argv_ptr, stralloc("--message"));
-		    g_ptr_array_add(argv_ptr, stralloc("line"));
+		    g_ptr_array_add(argv_ptr, g_strdup("--message"));
+		    g_ptr_array_add(argv_ptr, g_strdup("line"));
 		}
 		if (g_options->config != NULL && bsu->config == 1) {
-		    g_ptr_array_add(argv_ptr, stralloc("--config"));
-		    g_ptr_array_add(argv_ptr, stralloc(g_options->config));
+		    g_ptr_array_add(argv_ptr, g_strdup("--config"));
+		    g_ptr_array_add(argv_ptr, g_strdup(g_options->config));
 		}
 		if (g_options->hostname != NULL && bsu->host == 1) {
-		    g_ptr_array_add(argv_ptr, stralloc("--host"));
-		    g_ptr_array_add(argv_ptr, stralloc(g_options->hostname));
+		    g_ptr_array_add(argv_ptr, g_strdup("--host"));
+		    g_ptr_array_add(argv_ptr, g_strdup(g_options->hostname));
 		}
 		if (dle->disk != NULL && bsu->disk == 1) {
-		    g_ptr_array_add(argv_ptr, stralloc("--disk"));
-		    g_ptr_array_add(argv_ptr, stralloc(dle->disk));
+		    g_ptr_array_add(argv_ptr, g_strdup("--disk"));
+		    g_ptr_array_add(argv_ptr, g_strdup(dle->disk));
 		}
 		if (dle->device) {
-		    g_ptr_array_add(argv_ptr, stralloc("--device"));
-		    g_ptr_array_add(argv_ptr, stralloc(dle->device));
+		    g_ptr_array_add(argv_ptr, g_strdup("--device"));
+		    g_ptr_array_add(argv_ptr, g_strdup(dle->device));
 		}
 		if (dle->create_index && bsu->index_line == 1) {
-		    g_ptr_array_add(argv_ptr, stralloc("--index"));
-		    g_ptr_array_add(argv_ptr, stralloc("line"));
+		    g_ptr_array_add(argv_ptr, g_strdup("--index"));
+		    g_ptr_array_add(argv_ptr, g_strdup("line"));
 		}
 		if (dle->record && bsu->record == 1) {
-		    g_ptr_array_add(argv_ptr, stralloc("--record"));
+		    g_ptr_array_add(argv_ptr, g_strdup("--record"));
 		}
 		
 		for (el = dle->estimatelist; el != NULL; el=el->next) {
 		    estimate_t estimate = (estimate_t)GPOINTER_TO_INT(el->data);
 		    if (estimate == ES_CALCSIZE && bsu->calcsize == 1) {
-			g_ptr_array_add(argv_ptr, stralloc("--calcsize"));
+			g_ptr_array_add(argv_ptr, g_strdup("--calcsize"));
 		    }
 		}
 		application_property_add_to_argv(argv_ptr, dle, bsu,
@@ -865,7 +865,7 @@ check_disk(
 
 		g_ptr_array_add(argv_ptr, NULL);
 
-		cmdline = stralloc(cmd);
+		cmdline = g_strdup(cmd);
 		for (i = 0; i < argv_ptr->len-1; i++) {
 		    char *quoted = quote_string(
 					(char *)g_ptr_array_index(argv_ptr,i));

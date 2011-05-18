@@ -622,14 +622,14 @@ calculate_block_size_from_children(RaitDevice * self, gsize *rait_size)
 
     if (!found_one) {
 	device_set_error((Device*)self,
-	    stralloc(_("Could not find any child devices' block size ranges")),
+	    g_strdup(_("Could not find any child devices' block size ranges")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return 0;
     }
 
     if (min > max) {
 	device_set_error((Device*)self,
-	    stralloc(_("No block size is acceptable to all child devices")),
+	    g_strdup(_("No block size is acceptable to all child devices")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return 0;
     }
@@ -1391,7 +1391,7 @@ rait_device_start_file (Device * dself, dumpfile_t * info) {
 
     if (!success) {
         if (!device_in_error(dself)) {
-            device_set_error(dself, stralloc("One or more devices "
+            device_set_error(dself, g_strdup("One or more devices "
                                              "failed to start_file"),
                              DEVICE_STATUS_DEVICE_ERROR);
         }
@@ -1571,7 +1571,7 @@ rait_device_write_block (Device * dself, guint size, gpointer data) {
 	 * status. What's more fun is when one device fails and must be isolated at
 	 * the same time another hits EOF. */
 	device_set_error(dself,
-	    stralloc("One or more devices failed to write_block"),
+	    g_strdup("One or more devices failed to write_block"),
 	    DEVICE_STATUS_DEVICE_ERROR);
         /* this is EOM or an error, so call it EOM */
         dself->is_eom = TRUE;
@@ -1766,7 +1766,7 @@ rait_device_seek_block (Device * dself, guint64 block) {
     if (!success) {
 	/* TODO: be more specific here */
 	device_set_error(dself,
-	    stralloc("One or more devices failed to seek_block"),
+	    g_strdup("One or more devices failed to seek_block"),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }
@@ -1877,7 +1877,7 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
             if (0 != memcmp(parity_block, constructed_parity,
                             child_blocksize)) {
                 device_set_error(DEVICE(self),
-		    stralloc(_("RAIT is inconsistent: Parity block did not match data blocks.")),
+		    g_strdup(_("RAIT is inconsistent: Parity block did not match data blocks.")),
 		    DEVICE_STATUS_DEVICE_ERROR);
 		/* TODO: can't we just isolate the device in this case? */
                 success = FALSE;
@@ -1967,7 +1967,7 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
                                      extract_boolean_read_block_op_data)) {
 	    /* TODO: be more specific */
 	    device_set_error(dself,
-		stralloc(_("Error occurred combining blocks from child devices")),
+		g_strdup(_("Error occurred combining blocks from child devices")),
 		DEVICE_STATUS_DEVICE_ERROR);
 	    success = FALSE;
 	} else {
@@ -1981,13 +1981,13 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
                                      ops,
                                      extract_boolean_read_block_op_eof)) {
 	    device_set_error(dself,
-		stralloc(_("EOF")),
+		g_strdup(_("EOF")),
 		DEVICE_STATUS_SUCCESS);
             dself->is_eof = TRUE;
 	    dself->in_file = FALSE;
         } else {
 	    device_set_error(dself,
-		stralloc(_("All child devices failed to read, but not all are at eof")),
+		g_strdup(_("All child devices failed to read, but not all are at eof")),
 		DEVICE_STATUS_DEVICE_ERROR);
 	}
     }
@@ -2547,7 +2547,7 @@ rait_device_recycle_file (Device * dself, guint filenum) {
     if (!success) {
 	/* TODO: be more specific here */
 	device_set_error(dself,
-	    stralloc(_("One or more devices failed to recycle_file")),
+	    g_strdup(_("One or more devices failed to recycle_file")),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }

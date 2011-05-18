@@ -582,7 +582,7 @@ debug_reopen(
      * Reopen the file.
      */
     if (*dbfilename == '/') {
-	s = stralloc(dbfilename);
+	s = g_strdup(dbfilename);
     } else {
 	s = newvstralloc(s, dbgdir, dbfilename, NULL);
     }

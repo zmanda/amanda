@@ -324,7 +324,7 @@ main(
 	hd_driver_timestamp = get_timestamp_from_time(0);
     }
     else {
-	hd_driver_timestamp = stralloc(driver_timestamp);
+	hd_driver_timestamp = g_strdup(driver_timestamp);
     }
 
     taper_program = vstralloc(amlibexecdir, "/", "taper", NULL);
@@ -619,22 +619,22 @@ wait_children(int count)
 		for (dumper = dmptable; dumper < dmptable + inparallel;
 		     dumper++) {
 		    if (pid == dumper->pid) {
-			who = stralloc(dumper->name);
+			who = g_strdup(dumper->name);
 			dumper->pid = -1;
 			break;
 		    }
 		    if (dumper->chunker && pid == dumper->chunker->pid) {
-			who = stralloc(dumper->chunker->name);
+			who = g_strdup(dumper->chunker->name);
 			dumper->chunker->pid = -1;
 			break;
 		    }
 		}
 		if (who == NULL && pid == taper_pid) {
-		    who = stralloc("taper");
+		    who = g_strdup("taper");
 		    taper_pid = -1;
 		}
 		if(what != NULL && who == NULL) {
-		    who = stralloc("unknown");
+		    who = g_strdup("unknown");
 		}
 		if(who && what) {
 		    log_add(L_WARNING, _("%s pid %u exited with %s %d\n"), who, 
@@ -1317,7 +1317,7 @@ start_some_dumps(
 						   handle_chunker_result, chunker);
 		dumper->output_port = atoi(result_argv[1]);
 		amfree(diskp->dataport_list);
-		diskp->dataport_list = stralloc(result_argv[2]);
+		diskp->dataport_list = g_strdup(result_argv[2]);
 
 		if (diskp->host->pre_script == 0) {
 		    run_server_host_scripts(EXECUTE_ON_PRE_HOST_BACKUP,
@@ -1729,7 +1729,7 @@ handle_taper_result(
             }
 	    if (!taper->first_label) {
 		amfree(taper->first_label);
-		taper->first_label = stralloc(result_argv[2]);
+		taper->first_label = g_strdup(result_argv[2]);
 		taper->first_fileno = OFF_T_ATOI(result_argv[3]);
 	    }
 	    taper->written += OFF_T_ATOI(result_argv[4]);
@@ -1879,7 +1879,7 @@ handle_taper_result(
 	    dumper = sched(dp)->dumper;
 	    dumper->output_port = atoi(result_argv[3]);
 	    amfree(dp->dataport_list);
-	    dp->dataport_list = stralloc(result_argv[4]);
+	    dp->dataport_list = g_strdup(result_argv[4]);
 
 	    amfree(taper->input_error);
 	    amfree(taper->tape_error);
@@ -2819,7 +2819,7 @@ read_flush(
 	if(!flushhost) {
 	    flushhost = alloc(sizeof(am_host_t));
 	    flushhost->next = NULL;
-	    flushhost->hostname = stralloc("FLUSHHOST");
+	    flushhost->hostname = g_strdup("FLUSHHOST");
 	    flushhost->up = NULL;
 	    flushhost->features = NULL;
 	}
@@ -2832,7 +2832,7 @@ read_flush(
 	sp->dumpdate = NULL;
 	sp->degr_dumpdate = NULL;
 	sp->degr_mesg = NULL;
-	sp->datestamp = stralloc(file.datestamp);
+	sp->datestamp = g_strdup(file.datestamp);
 	sp->est_nsize = (off_t)0;
 	sp->est_csize = (off_t)0;
 	sp->est_time = 0;
@@ -3097,7 +3097,7 @@ read_schedule(
 	sp = (sched_t *) alloc(sizeof(sched_t));
 	/*@ignore@*/
 	sp->level = level;
-	sp->dumpdate = stralloc(dumpdate);
+	sp->dumpdate = g_strdup(dumpdate);
 	sp->est_nsize = DISK_BLOCK_KB + nsize; /* include header */
 	sp->est_csize = DISK_BLOCK_KB + csize; /* include header */
 	/* round estimate to next multiple of DISK_BLOCK_KB */
@@ -3106,11 +3106,11 @@ read_schedule(
 	sp->est_time = time;
 	sp->est_kps = kps;
 	sp->priority = priority;
-	sp->datestamp = stralloc(datestamp);
+	sp->datestamp = g_strdup(datestamp);
 
 	if(degr_dumpdate) {
 	    sp->degr_level = degr_level;
-	    sp->degr_dumpdate = stralloc(degr_dumpdate);
+	    sp->degr_dumpdate = g_strdup(degr_dumpdate);
 	    sp->degr_nsize = DISK_BLOCK_KB + degr_nsize;
 	    sp->degr_csize = DISK_BLOCK_KB + degr_csize;
 	    /* round estimate to next multiple of DISK_BLOCK_KB */
@@ -3607,7 +3607,7 @@ build_diskspace(
 	    result[i]->disk = ha;
 	    result[i]->reserved = used[j];
 	    result[i]->used = used[j];
-	    result[i]->destname = stralloc(destname);
+	    result[i]->destname = g_strdup(destname);
 	    result[i+1] = NULL;
 	    i++;
 	}

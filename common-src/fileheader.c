@@ -718,7 +718,7 @@ build_header(const dumpfile_t * file, size_t *size, size_t max_size)
 	validate_datestamp(file->datestamp);
 	validate_encrypt_suffix(file->encrypted, file->encrypt_suffix);
 	qname = quote_string(file->disk);
-	program = stralloc(file->program);
+	program = g_strdup(file->program);
 	if (match("^.*[.][Ee][Xx][Ee]$", program)) {
 		/* Trim ".exe" from program name */
 		program[strlen(program) - strlen(".exe")] = '\0';
@@ -1046,7 +1046,7 @@ gboolean headers_are_equal(dumpfile_t * a, dumpfile_t * b) {
 dumpfile_t * dumpfile_copy(dumpfile_t* source) {
     dumpfile_t* rval = malloc(sizeof(dumpfile_t));
     memcpy(rval, source, sizeof(dumpfile_t));
-    if (rval->dle_str) rval->dle_str = stralloc(rval->dle_str);
+    if (rval->dle_str) rval->dle_str = g_strdup(rval->dle_str);
     return rval;
 }
 
@@ -1056,7 +1056,7 @@ dumpfile_copy_in_place(
     dumpfile_t* source)
 {
     memcpy(dest, source, sizeof(dumpfile_t));
-    if (dest->dle_str) dest->dle_str = stralloc(dest->dle_str);
+    if (dest->dle_str) dest->dle_str = g_strdup(dest->dle_str);
 }
 
 void dumpfile_free_data(dumpfile_t* info) {
@@ -1074,7 +1074,7 @@ static char *quote_heredoc(
     char  *text,
     char  *delimiter_prefix)
 {
-    char *delimiter = stralloc(delimiter_prefix);
+    char *delimiter = g_strdup(delimiter_prefix);
     int delimiter_n = 0;
     int delimiter_len = strlen(delimiter);
     char *quoted;
@@ -1132,7 +1132,7 @@ static char *parse_heredoc(
 	else if (strlen(result) > 0)
 	    result[strlen(result)-1] = '\0';
     } else {
-	result = stralloc(line);
+	result = g_strdup(line);
     }
     return result;
 }

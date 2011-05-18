@@ -42,11 +42,11 @@ dumpspec_new(
     dumpspec_t *rv;
 
     rv = g_new0(dumpspec_t, 1);
-    if (host) rv->host = stralloc(host);
-    if (disk) rv->disk = stralloc(disk);
-    if (datestamp) rv->datestamp = stralloc(datestamp);
-    if (level) rv->level = stralloc(level);
-    if (write_timestamp) rv->write_timestamp = stralloc(write_timestamp);
+    if (host) rv->host = g_strdup(host);
+    if (disk) rv->disk = g_strdup(disk);
+    if (datestamp) rv->datestamp = g_strdup(datestamp);
+    if (level) rv->level = g_strdup(level);
+    if (write_timestamp) rv->write_timestamp = g_strdup(write_timestamp);
 
     return rv;
 }
@@ -99,13 +99,13 @@ cmdline_parse_dumpspecs(
 
             case ARG_GET_DISK:
                 arg_state = ARG_GET_DATESTAMP;
-                dumpspec->disk = stralloc(name);
+                dumpspec->disk = g_strdup(name);
                 break;
 
             case ARG_GET_DATESTAMP:
                 arg_state = ARG_GET_LEVEL;
 		if (!(flags & CMDLINE_PARSE_DATESTAMP)) continue;
-                dumpspec->datestamp = stralloc(name);
+                dumpspec->datestamp = g_strdup(name);
                 break;
 
             case ARG_GET_LEVEL:
@@ -115,7 +115,7 @@ cmdline_parse_dumpspecs(
                     && (errstr=validate_regexp(name)) != NULL) {
                     error(_("bad level regex \"%s\": %s\n"), name, errstr);
                 }
-                dumpspec->level = stralloc(name);
+                dumpspec->level = g_strdup(name);
                 break;
         }
 
@@ -160,7 +160,7 @@ quote_dumpspec_string(char *str)
     int need_single_quotes = 0;
 
     if (!str[0])
-	return stralloc("''"); /* special-case the empty string */
+	return g_strdup("''"); /* special-case the empty string */
 
     for (p = str; *p; p++) {
         if (!isalnum((int)*p) && *p != '.' && *p != '/') need_single_quotes=1;

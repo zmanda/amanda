@@ -103,7 +103,7 @@ add_dump(
     else
         new->is_split = 1;
     new->tapes = NULL;
-    new->hostname = stralloc(hostname);
+    new->hostname = g_strdup(hostname);
 
     new->tapes = append_to_tapelist(new->tapes, tape, file, partnum, isafile);
 

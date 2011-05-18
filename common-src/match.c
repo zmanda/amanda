@@ -623,7 +623,7 @@ match_word(
     *dst = '\0';
 
     len = strlen(glob);
-    nglob = stralloc(glob);
+    nglob = g_strdup(glob);
 
     if(glob_is_separator_only(nglob, separator)) {
         regex = alloc(7); /* Length of what is written below plus '\0' */

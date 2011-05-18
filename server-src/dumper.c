@@ -204,7 +204,7 @@ check_options(
 	if (compend ) {
 	    srvcompress = COMP_SERVER_CUST;
 	    *compend = '\0';
-	    srvcompprog = stralloc(compmode + strlen("srvcomp-cust="));
+	    srvcompprog = g_strdup(compmode + strlen("srvcomp-cust="));
 	    *compend = ';';
 	}
     } else if ((compmode = strstr(options, "comp-cust=")) != NULL) {
@@ -212,7 +212,7 @@ check_options(
 	if (compend) {
 	    srvcompress = COMP_CUST;
 	    *compend = '\0';
-	    clntcompprog = stralloc(compmode + strlen("comp-cust="));
+	    clntcompprog = g_strdup(compmode + strlen("comp-cust="));
 	    *compend = ';';
 	}
     }
@@ -227,7 +227,7 @@ check_options(
       if (encryptend) {
 	    srvencrypt = ENCRYPT_SERV_CUST;
 	    *encryptend = '\0';
-	    srv_encrypt = stralloc(encryptmode + strlen("encrypt-serv-cust="));
+	    srv_encrypt = g_strdup(encryptmode + strlen("encrypt-serv-cust="));
 	    *encryptend = ';';
       }
     } else if ((encryptmode = strstr(options, "encrypt-cust=")) != NULL) {
@@ -235,7 +235,7 @@ check_options(
       if (encryptend) {
 	    srvencrypt = ENCRYPT_CUST;
 	    *encryptend = '\0';
-	    clnt_encrypt = stralloc(encryptmode + strlen("encrypt-cust="));
+	    clnt_encrypt = g_strdup(encryptmode + strlen("encrypt-cust="));
 	    *encryptend = ';';
       }
     } else {
@@ -246,14 +246,14 @@ check_options(
       decryptend = strchr(decryptmode, ';');
       if (decryptend) {
 	*decryptend = '\0';
-	srv_decrypt_opt = stralloc(decryptmode + strlen("server-decrypt-option="));
+	srv_decrypt_opt = g_strdup(decryptmode + strlen("server-decrypt-option="));
 	*decryptend = ';';
       }
     } else if ((decryptmode = strstr(options, "client-decrypt-option=")) != NULL) {
       decryptend = strchr(decryptmode, ';');
       if (decryptend) {
 	*decryptend = '\0';
-	clnt_decrypt_opt = stralloc(decryptmode + strlen("client-decrypt-option="));
+	clnt_decrypt_opt = g_strdup(decryptmode + strlen("client-decrypt-option="));
 	*decryptend = ';';
       }
     }
@@ -625,7 +625,7 @@ main(
 	    if(cmdargs->argc >= 1) {
 		q = quote_string(cmdargs->argv[0]);
 	    } else {
-		q = stralloc(_("(no input?)"));
+		q = g_strdup(_("(no input?)"));
 	    }
 	    putresult(BAD_COMMAND, "%s\n", q);
 	    amfree(q);
@@ -759,7 +759,7 @@ process_dumpeof(void)
 		_("? %s: strange [missing size line from sendbackup]\n"),
 		get_pname());
 	if(errstr == NULL) {
-	    errstr = stralloc(_("missing size line from sendbackup"));
+	    errstr = g_strdup(_("missing size line from sendbackup"));
 	}
 	dump_result = max(dump_result, 2);
     }
@@ -769,7 +769,7 @@ process_dumpeof(void)
 		_("? %s: strange [missing end line from sendbackup]\n"),
 		get_pname());
 	if(errstr == NULL) {
-	    errstr = stralloc(_("missing end line from sendbackup"));
+	    errstr = g_strdup(_("missing end line from sendbackup"));
 	}
 	dump_result = max(dump_result, 2);
     }
@@ -830,7 +830,7 @@ process_dumpline(
 {
     char *buf, *tok;
 
-    buf = stralloc(str);
+    buf = g_strdup(str);
 
     switch (*buf) {
     case '|':
@@ -1137,7 +1137,7 @@ finish_tapeheader(
       }
     }
     if (dle_str)
-	file->dle_str = stralloc(dle_str);
+	file->dle_str = g_strdup(dle_str);
     else
 	file->dle_str = NULL;
 }
@@ -1269,14 +1269,14 @@ do_dump(
 
     if (!ISSET(status, HEADER_DONE)) {
 	dump_result = max(dump_result, 2);
-	if (!errstr) errstr = stralloc(_("got no header information"));
+	if (!errstr) errstr = g_strdup(_("got no header information"));
     }
 
     dumpsize -= headersize;		/* don't count the header */
     if (dumpsize <= (off_t)0 && data_path == DATA_PATH_AMANDA) {
 	dumpsize = (off_t)0;
 	dump_result = max(dump_result, 2);
-	if (!errstr) errstr = stralloc(_("got no data"));
+	if (!errstr) errstr = g_strdup(_("got no data"));
     }
 
     if (data_path == DATA_PATH_DIRECTTCP) {
@@ -1285,12 +1285,12 @@ do_dump(
 
     if (!ISSET(status, HEADER_DONE)) {
 	dump_result = max(dump_result, 2);
-	if (!errstr) errstr = stralloc(_("got no header information"));
+	if (!errstr) errstr = g_strdup(_("got no header information"));
     }
 
     if (dumpsize == 0 && data_path == DATA_PATH_AMANDA) {
 	dump_result = max(dump_result, 2);
-	if (!errstr) errstr = stralloc(_("got no data"));
+	if (!errstr) errstr = g_strdup(_("got no data"));
     }
 
     if (dump_result > 1)
@@ -1749,7 +1749,7 @@ handle_filter_stderr(
 	*p = '\0';
 	g_fprintf(errf, _("? %s: %s\n"), filter->name, b);
 	if (errstr == NULL) {
-	    errstr = stralloc(b);
+	    errstr = g_strdup(b);
 	}
 	len = p - b + 1;
 	filter->first += len;
@@ -1824,7 +1824,7 @@ stop_dump(void)
 	    error(_("beurk %d"), cmdargs->cmd);
 	}
 	amfree(errstr);
-	errstr = stralloc(cmdargs->argv[1]);
+	errstr = g_strdup(cmdargs->argv[1]);
 	free_cmdargs(cmdargs);
     }
 
@@ -1912,7 +1912,7 @@ g_debug("event register %s %d", name, filter->fd);
 	    /*NOTREACHED*/
 	}
 	if (comptype != COMP_SERVER_CUST) {
-	    char *base = stralloc(COMPRESS_PATH);
+	    char *base = g_strdup(COMPRESS_PATH);
 	    log_add(L_INFO, "%s pid %ld", basename(base), (long)getpid());
 	    amfree(base);
 	    safe_fd(-1, 0);
@@ -1922,7 +1922,7 @@ g_debug("event register %s %d", name, filter->fd);
 	    error(_("error: couldn't exec %s: %s"), COMPRESS_PATH, strerror(errno));
 	    /*NOTREACHED*/
 	} else if (*srvcompprog) {
-	    char *base = stralloc(srvcompprog);
+	    char *base = g_strdup(srvcompprog);
 	    log_add(L_INFO, "%s pid %ld", basename(base), (long)getpid());
 	    amfree(base);
 	    safe_fd(-1, 0);
@@ -2007,7 +2007,7 @@ g_debug("event register %s %d", "encrypt data", filter->fd);
 	    /*NOTREACHED*/
 	}
 	close(errpipe[0]);
-	base = stralloc(srv_encrypt);
+	base = g_strdup(srv_encrypt);
 	log_add(L_INFO, "%s pid %ld", basename(base), (long)getpid());
 	amfree(base);
 	safe_fd(-1, 0);

@@ -205,7 +205,7 @@ stream_sendpkt(
     if (rh->rc->prefix_packet)
 	s = rh->rc->prefix_packet(rh, pkt);
     else
-	s  = stralloc("");
+	s  = g_strdup("");
     len = strlen(pkt->body) + strlen(s) + 2;
     buf = alloc(len);
     buf[0] = (char)pkt->type;
@@ -923,13 +923,13 @@ bsd_prefix_packet(
     char *buf;
 
     if (pkt->type != P_REQ)
-	return stralloc("");
+	return g_strdup("");
 
     if ((pwd = getpwuid(geteuid())) == NULL) {
 	security_seterror(&rh->sech,
 			  _("can't get login name for my uid %ld"),
 			  (long)geteuid());
-	return stralloc("");
+	return g_strdup("");
     }
     buf = alloc(16+strlen(pwd->pw_name));
     strncpy(buf, "SECURITY USER ", (16 + strlen(pwd->pw_name)));
@@ -971,7 +971,7 @@ bsd_recv_security_ok(
 	if(*security == '\n') {
 	    body = security+1;
 	    *security = '\0';
-	    security_line = stralloc(pkt->body);
+	    security_line = g_strdup(pkt->body);
 	    security = pkt->body + strlen("SECURITY ");
 	} else {
 	    body = pkt->body;
@@ -990,10 +990,10 @@ bsd_recv_security_ok(
      */
     s = body;
     if (strncmp_const_skip(s, "SERVICE ", s, ch) == 0) {
-	serviceX = stralloc(s);
+	serviceX = g_strdup(s);
 	serviceY = strtok(serviceX, "\n");
 	if (serviceY)
-	    service  = stralloc(serviceY);
+	    service  = g_strdup(serviceY);
 	amfree(serviceX);
     }
 
@@ -1331,7 +1331,7 @@ udp_inithandle(
 		   (unsigned int)ntohs(port), handle, sequence);
     assert(addr != NULL);
 
-    rh->hostname = stralloc(hostname);
+    rh->hostname = g_strdup(hostname);
     copy_sockaddr(&rh->peer, addr);
     SU_SET_PORT(&rh->peer, port);
 
@@ -1349,7 +1349,7 @@ udp_inithandle(
     rh->sequence = sequence;
     rh->event_id = (event_id_t)newevent++;
     amfree(rh->proto_handle);
-    rh->proto_handle = stralloc(handle);
+    rh->proto_handle = g_strdup(handle);
     rh->fn.connect = NULL;
     rh->arg = NULL;
     rh->ev_read = NULL;
@@ -1837,7 +1837,7 @@ sec_tcp_conn_read_callback(
 
     rh = g_new0(struct sec_handle, 1);
     security_handleinit(&rh->sech, rc->driver);
-    rh->hostname = stralloc(rc->hostname);
+    rh->hostname = g_strdup(rc->hostname);
     rh->ev_timeout = NULL;
     rh->rc = rc;
     rh->peer = rc->peer;
@@ -1921,7 +1921,7 @@ str2pkthdr(
     pkt = &udp->pkt;
 
     assert(udp->dgram.cur != NULL);
-    str = stralloc(udp->dgram.cur);
+    str = g_strdup(udp->dgram.cur);
 
     /* "Amanda %d.%d <ACK,NAK,...> HANDLE %s SEQ %d\n" */
 
@@ -1949,7 +1949,7 @@ str2pkthdr(
     if ((tok = strtok(NULL, " ")) == NULL)
 	goto parse_error;
     amfree(udp->handle);
-    udp->handle = stralloc(tok);
+    udp->handle = g_strdup(tok);
 
     /* Read in "SEQ" */
     if ((tok = strtok(NULL, " ")) == NULL || strcmp(tok, "SEQ") != 0)   
@@ -1996,7 +1996,7 @@ check_user(
      * Make a copy of the user name in case getpw* is called by
      * any of the lower level routines.
      */
-    localuser = stralloc(pwd->pw_name);
+    localuser = g_strdup(pwd->pw_name);
 
 #ifndef USE_AMANDAHOSTS
     r = check_user_ruserok(rh->hostname, pwd, remoteuser);
@@ -2070,7 +2070,7 @@ check_user_ruserok(
 	}
 
 	if (debug_auth >= 9) {
-	    char *dir = stralloc(pwd->pw_dir);
+	    char *dir = g_strdup(pwd->pw_dir);
 
 	    auth_debug(9, _("bsd: calling ruserok(%s, %d, %s, %s)\n"), host,
 			   ((myuid == 0) ? 1 : 0), remoteuser, pwd->pw_name);
@@ -2115,7 +2115,7 @@ check_user_ruserok(
 	    continue;
 	}
 	if (result == NULL) {
-	    result = stralloc("");
+	    result = g_strdup("");
 	} else {
 	    strappend(result, ": ");
 	}
@@ -2367,7 +2367,7 @@ check_security(
 			    "]", NULL);
 	return 0;
     }
-    remotehost = stralloc(hostname);
+    remotehost = g_strdup(hostname);
     if( check_name_give_sockaddr(hostname,
 				 (struct sockaddr *)addr, errstr) < 0) {
 	amfree(remotehost);
@@ -2408,7 +2408,7 @@ check_security(
     fp = s - 1;
     skip_non_whitespace(s, ch);
     s[-1] = '\0';
-    remoteuser = stralloc(fp);
+    remoteuser = g_strdup(fp);
     s[-1] = (char)ch;
     amfree(bad_bsd);
 
@@ -2552,7 +2552,7 @@ show_stat_info(
 #ifdef HAVE_GETPWUID_R
     if (getpwuid_r(sbuf.st_uid, &pw, buf, buflen, &pwptr) == 0 &&
 	pwptr != NULL) {
-	owner = stralloc(pwptr->pw_name);
+	owner = g_strdup(pwptr->pw_name);
     } else
 #endif
     {
@@ -2562,7 +2562,7 @@ show_stat_info(
 #ifdef HAVE_GETGRGID_R
     if (getgrgid_r(sbuf.st_gid, &gr, buf, buflen, &grptr) == 0 &&
 	grptr != NULL) {
-	group = stralloc(grptr->gr_name);
+	group = g_strdup(grptr->gr_name);
     } else
 #endif
     {
