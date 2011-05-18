@@ -345,25 +345,8 @@ char *
 sanitise_filename(
     char *	inp)
 {
-    char *buf;
-    size_t buf_size;
-    char *s, *d;
-    int ch;
-
-    buf_size = strlen(inp) + 1;		/* worst case */
-    buf = g_malloc(buf_size);
-    d = buf;
-    s = inp;
-    while((ch = *s++) != '\0') {
-	if((ch == '/') || (ch == ':') || (ch == '\\')) {
-	    ch = '_';	/* convert "bad" to "_" */
-	}
-	*d++ = (char)ch;
-    }
-    assert(d < buf + buf_size);
-    *d = '\0';
-
-    return buf;
+    char *ret = g_strdup(inp);
+    return g_strdelimit(ret, "/:\\", '_');
 }
 
 /* duplicate '_' */
