@@ -64,7 +64,7 @@ insert_sl(
 	sl = new_sl();
     }
     a = alloc(sizeof(sle_t));
-    a->name = stralloc(name);
+    a->name = g_strdup(name);
     a->next = sl->first;
     a->prev = NULL;
     if(a->next)
@@ -88,7 +88,7 @@ append_sl(
 	sl = new_sl();
     }
     a = alloc(sizeof(sle_t));
-    a->name = stralloc(name);
+    a->name = g_strdup(name);
     a->prev = sl->last;
     a->next = NULL;
     if(a->prev)
@@ -122,7 +122,7 @@ insert_sort_sl(
     if(b == NULL)      return append_sl(sl, name);
 
     a = alloc(sizeof(sle_t));
-    a->name = stralloc(name);
+    a->name = g_strdup(name);
 
     /* insert before b */
     a->next = b;

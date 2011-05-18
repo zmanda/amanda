@@ -438,13 +438,13 @@ dev2rdev(
     /*
      * If the input is already a character device, just return it.
      */
-    return stralloc(name);
+    return g_strdup(name);
   }
 
   s = name;
   ch = *s++;
 
-  if(ch == '\0' || ch != '/') return stralloc(name);
+  if(ch == '\0' || ch != '/') return g_strdup(name);
 
   ch = *s++;					/* start after first '/' */
   /*
@@ -464,7 +464,7 @@ dev2rdev(
     ch = *s++;
   }
   amfree(fname);
-  return stralloc(name);			/* no match */
+  return g_strdup(name);			/* no match */
 }
 
 #ifndef IGNORE_FSTAB
@@ -611,7 +611,7 @@ amname_to_dirname(
     else if(search_fstab(str, &fsent, 0) && fsent.mntdir != NULL)
 	str = fsent.mntdir;
 
-    return stralloc(str);
+    return g_strdup(str);
 }
 
 char *amname_to_fstype(
@@ -620,9 +620,9 @@ char *amname_to_fstype(
     generic_fsent_t fsent;
 
     if (!search_fstab(str, &fsent, 1) && !search_fstab(str, &fsent, 0))
-      return stralloc("");
+      return g_strdup("");
 
-    return stralloc(fsent.fstype);
+    return g_strdup(fsent.fstype);
 }
 
 #ifdef TEST

@@ -212,7 +212,7 @@ uncompress_file(
     FILE      *uncompress_err_stream;
     FILE      *sort_err_stream;
 
-    filename = stralloc(filename_gz);
+    filename = g_strdup(filename_gz);
     len = strlen(filename);
     if(len > 3 && strcmp(&(filename[len-3]),".gz")==0) {
 	filename[len-3]='\0';
@@ -262,7 +262,7 @@ uncompress_file(
 	 * if debugging is disabled */
 
 	/* start the uncompress process */
-	putenv(stralloc("LC_ALL=C"));
+	putenv(g_strdup("LC_ALL=C"));
 	pid_gzip = pipespawn(UNCOMPRESS_PATH, STDOUT_PIPE|STDERR_PIPE, 0,
 			     &nullfd, &pipe_from_gzip, &uncompress_errfd,
 			     UNCOMPRESS_PATH, PARAM_UNCOMPRESS_OPT,
@@ -281,7 +281,7 @@ uncompress_file(
 	}
 
 	/* start the sort process */
-	putenv(stralloc("LC_ALL=C"));
+	putenv(g_strdup("LC_ALL=C"));
 	pid_sort = pipespawn(SORT_PATH, STDIN_PIPE|STDERR_PIPE, 0,
 			     &pipe_to_sort, &indexfd, &sort_errfd,
 			     SORT_PATH, NULL);
@@ -381,7 +381,7 @@ uncompress_file(
 	/* add at beginning */
 	if (filename) {
 	    remove_file = (REMOVE_ITEM *)alloc(sizeof(REMOVE_ITEM));
-	    remove_file->filename = stralloc(filename);
+	    remove_file->filename = g_strdup(filename);
 	    remove_file->next = uncompress_remove;
 	    uncompress_remove = remove_file;
 	}
@@ -419,7 +419,7 @@ process_ls_dump(
 
     old_line[0] = '\0';
     if (strcmp(dir, "/") == 0) {
-	dir_slash = stralloc(dir);
+	dir_slash = g_strdup(dir);
     } else {
 	dir_slash = stralloc2(dir, "/");
     }
@@ -427,7 +427,7 @@ process_ls_dump(
     filename_gz = get_index_name(dump_hostname, dump_item->hostname, disk_name,
 				 dump_item->date, dump_item->level);
     if (filename_gz == NULL) {
-	g_ptr_array_add(*emsg, stralloc(_("index file not found")));
+	g_ptr_array_add(*emsg, g_strdup(_("index file not found")));
 	amfree(filename_gz);
 	amfree(dir_slash);
 	return -1;
@@ -986,7 +986,7 @@ is_dir_valid_opaque(
     }
 
     if(strcmp(dir, "/") == 0) {
-	ldir = stralloc(dir);
+	ldir = g_strdup(dir);
     } else {
 	ldir = stralloc2(dir, "/");
     }
@@ -1165,7 +1165,7 @@ void opaque_ls_one(
     if (am_has_feature(their_features, fe_amindexd_quote_label)) {
 	qtapelist_str = quote_string(tapelist_str);
     } else {
-	qtapelist_str = stralloc(tapelist_str);
+	qtapelist_str = g_strdup(tapelist_str);
     }
     strncpy(date, dir_item->dump->date, 20);
     date[19] = '\0';
@@ -1860,7 +1860,7 @@ get_index_dir(
     char        *s;
     char        *lower_hostname;
 
-    lower_hostname = stralloc(dump_hostname);
+    lower_hostname = g_strdup(dump_hostname);
     for(s=lower_hostname; *s != '\0'; s++)
 	*s = tolower(*s);
 
@@ -1929,7 +1929,7 @@ get_index_name(
     char        *s;
     char        *lower_hostname;
 
-    lower_hostname = stralloc(dump_hostname);
+    lower_hostname = g_strdup(dump_hostname);
     for(s=lower_hostname; *s != '\0'; s++)
 	*s = tolower(*s);
 

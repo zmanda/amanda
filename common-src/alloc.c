@@ -79,23 +79,6 @@ debug_newalloc(
 
 
 /*
- * stralloc - copies the given string into newly allocated memory.
- *            Just like strdup()!
- */
-char *
-debug_stralloc(
-    const char *file,
-    int		line,
-    const char *str)
-{
-    char *addr;
-
-    addr = debug_alloc(file, line, strlen(str) + 1);
-    strcpy(addr, str);
-    return (addr);
-}
-
-/*
  * internal_vstralloc - copies up to MAX_STR_ARGS strings into newly
  * allocated memory.
  *
@@ -182,18 +165,18 @@ debug_vstralloc(
 
 
 /*
- * newstralloc - free existing string and then stralloc a new one.
+ * newstralloc - free existing string and then g_strdup a new one.
  */
 char *
 debug_newstralloc(
-    const char *file,
-    int		line,
+    const char *file G_GNUC_UNUSED,
+    int		line G_GNUC_UNUSED,
     char *	oldstr,
     const char *newstr)
 {
     char *addr;
 
-    addr = debug_stralloc(file, line, newstr);
+    addr = g_strdup(newstr);
     amfree(oldstr);
     return (addr);
 }
@@ -369,7 +352,7 @@ safe_env_full(char **add)
 	    for (env = environ; *env != NULL; env++) {
 		if (strncmp("LANG=", *env, 5) != 0 &&
 		    strncmp("LC_", *env, 3) != 0) {
-		    *p = stralloc(*env);
+		    *p = g_strdup(*env);
 		    p++;
 		}
 	    }

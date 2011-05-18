@@ -58,7 +58,7 @@ mkpdir(
     rc = 0;
 
     /* Remove last member of file, put the result in dir */
-    dir = stralloc(file); /* make a copy we can play with */
+    dir = g_strdup(file); /* make a copy we can play with */
     p = strrchr(dir, '/');
     if (p)
 	*p = '\0';
@@ -129,7 +129,7 @@ rmpdir(
 
     if(rc != 0) return -1; /* unexpected error */
 
-    dir = stralloc(file);
+    dir = g_strdup(file);
 
     p = strrchr(dir, '/');
     if (p == NULL || p == dir) {
@@ -662,7 +662,7 @@ debug_areads (
 	buflen -= r;
     }
     *nl++ = '\0';
-    line = stralloc(buffer);
+    line = g_strdup(buffer);
     size = (size_t)(endptr - nl);	/* data still left in buffer */
     memmove(buffer, nl, size);
     areads_buffer[fd].endptr = buffer + size;

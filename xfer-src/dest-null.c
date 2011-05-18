@@ -92,7 +92,7 @@ push_buffer_impl(
 	/* send a superfluous message (this is a testing XferElement,
 	 * after all) */
 	XMsg *msg = xmsg_new((XferElement *)self, XMSG_INFO, 0);
-	msg->message = stralloc("Is this thing on?");
+	msg->message = g_strdup("Is this thing on?");
 	xfer_queue_message(XFER_ELEMENT(self)->xfer, msg);
 	self->sent_info = TRUE;
     }

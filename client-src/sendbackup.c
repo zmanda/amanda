@@ -164,7 +164,7 @@ main(
     dbprintf(_("Version %s\n"), VERSION);
 
     if(argc > 2 && strcmp(argv[1], "amandad") == 0) {
-	amandad_auth = stralloc(argv[2]);
+	amandad_auth = g_strdup(argv[2]);
     }
 
     our_features = am_init_feature_set();
@@ -257,7 +257,7 @@ main(
             skip_non_whitespace(s, ch);
             s[-1] = '\0';
         }
-	dle->program = stralloc(dle->program);
+	dle->program = g_strdup(dle->program);
 
 	skip_whitespace(s, ch);			/* find the disk name */
 	if(ch == '\0') {
@@ -270,7 +270,7 @@ main(
 	ch = *qdisk;
 	skip_quoted_string(s, ch);
 	s[-1] = '\0';
-	qdisk = stralloc(qdisk);
+	qdisk = g_strdup(qdisk);
 	dle->disk = unquote_string(qdisk);
 
 	skip_whitespace(s, ch);			/* find the device or level */
@@ -285,13 +285,13 @@ main(
 	    ch = *qamdevice;
 	    skip_quoted_string(s, ch);
 	    s[-1] = '\0';
-	    qamdevice = stralloc(qamdevice);
+	    qamdevice = g_strdup(qamdevice);
 	    dle->device = unquote_string(qamdevice);
 	    skip_whitespace(s, ch);		/* find level number */
 	}
 	else {
-	    dle->device = stralloc(dle->disk);
-	    qamdevice = stralloc(qdisk);
+	    dle->device = g_strdup(dle->disk);
+	    qamdevice = g_strdup(qdisk);
 	}
 						/* find the level number */
 	if(ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
@@ -312,7 +312,7 @@ main(
 	dumpdate = s - 1;
 	skip_non_whitespace(s, ch);
 	s[-1] = '\0';
-	dumpdate = stralloc(dumpdate);
+	dumpdate = g_strdup(dumpdate);
 
 	skip_whitespace(s, ch);			/* find the options keyword */
 	if(ch == '\0') {
@@ -329,7 +329,7 @@ main(
 	    goto err;				/* no options */
 	}
 	amfree(stroptions);
-	stroptions = stralloc(s - 1);
+	stroptions = g_strdup(s - 1);
     }
     amfree(line);
     if (g_options == NULL) {
@@ -356,10 +356,10 @@ main(
 
 	qdisk = quote_string(dle->disk);
 	if (dle->device == NULL)
-	    dle->device = stralloc(dle->disk);
+	    dle->device = g_strdup(dle->disk);
 	qamdevice = quote_string(dle->device);
-	dumpdate = stralloc("NODATE");
-	stroptions = stralloc("");
+	dumpdate = g_strdup("NODATE");
+	stroptions = g_strdup("");
     } else {
 	parse_options(stroptions, dle, g_options->features, 0);
     }
@@ -583,37 +583,37 @@ main(
 	case 0:
 	    argv_ptr = g_ptr_array_new();
 	    cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
-	    g_ptr_array_add(argv_ptr, stralloc(dle->program));
-	    g_ptr_array_add(argv_ptr, stralloc("backup"));
+	    g_ptr_array_add(argv_ptr, g_strdup(dle->program));
+	    g_ptr_array_add(argv_ptr, g_strdup("backup"));
 	    if (bsu->message_line == 1) {
-		g_ptr_array_add(argv_ptr, stralloc("--message"));
-		g_ptr_array_add(argv_ptr, stralloc("line"));
+		g_ptr_array_add(argv_ptr, g_strdup("--message"));
+		g_ptr_array_add(argv_ptr, g_strdup("line"));
 	    }
 	    if (g_options->config && bsu->config == 1) {
-		g_ptr_array_add(argv_ptr, stralloc("--config"));
-		g_ptr_array_add(argv_ptr, stralloc(g_options->config));
+		g_ptr_array_add(argv_ptr, g_strdup("--config"));
+		g_ptr_array_add(argv_ptr, g_strdup(g_options->config));
 	    }
 	    if (g_options->hostname && bsu->host == 1) {
-		g_ptr_array_add(argv_ptr, stralloc("--host"));
-		g_ptr_array_add(argv_ptr, stralloc(g_options->hostname));
+		g_ptr_array_add(argv_ptr, g_strdup("--host"));
+		g_ptr_array_add(argv_ptr, g_strdup(g_options->hostname));
 	    }
 	    if (dle->disk && bsu->disk == 1) {
-		g_ptr_array_add(argv_ptr, stralloc("--disk"));
-		g_ptr_array_add(argv_ptr, stralloc(dle->disk));
+		g_ptr_array_add(argv_ptr, g_strdup("--disk"));
+		g_ptr_array_add(argv_ptr, g_strdup(dle->disk));
 	    }
-	    g_ptr_array_add(argv_ptr, stralloc("--device"));
-	    g_ptr_array_add(argv_ptr, stralloc(dle->device));
+	    g_ptr_array_add(argv_ptr, g_strdup("--device"));
+	    g_ptr_array_add(argv_ptr, g_strdup(dle->device));
 	    if (level <= bsu->max_level) {
-		g_ptr_array_add(argv_ptr, stralloc("--level"));
+		g_ptr_array_add(argv_ptr, g_strdup("--level"));
 		g_snprintf(levelstr,19,"%d",level);
-		g_ptr_array_add(argv_ptr, stralloc(levelstr));
+		g_ptr_array_add(argv_ptr, g_strdup(levelstr));
 	    }
 	    if (indexfd != -1 && bsu->index_line == 1) {
-		g_ptr_array_add(argv_ptr, stralloc("--index"));
-		g_ptr_array_add(argv_ptr, stralloc("line"));
+		g_ptr_array_add(argv_ptr, g_strdup("--index"));
+		g_ptr_array_add(argv_ptr, g_strdup("line"));
 	    }
 	    if (dle->record && bsu->record == 1) {
-		g_ptr_array_add(argv_ptr, stralloc("--record"));
+		g_ptr_array_add(argv_ptr, g_strdup("--record"));
 	    }
 	    application_property_add_to_argv(argv_ptr, dle, bsu,
 					     g_options->features);

@@ -259,7 +259,7 @@ main(
 
     diskarg_offset = 2;
     if (argc - diskarg_offset > 1 && strcmp(argv[diskarg_offset], "--starttime") == 0) {
-	planner_timestamp = stralloc(argv[diskarg_offset+1]);
+	planner_timestamp = g_strdup(argv[diskarg_offset+1]);
 	diskarg_offset += 2;
     }
     if (argc - diskarg_offset > 0 && strcmp(argv[diskarg_offset], "--no-taper") == 0) {
@@ -737,7 +737,7 @@ static void askfor(
 
     ep->estimate[seq].level = lev;
 
-    ep->estimate[seq].dumpdate = stralloc(get_dumpdate(info,lev));
+    ep->estimate[seq].dumpdate = g_strdup(get_dumpdate(info,lev));
 
     ep->estimate[seq].nsize = (gint64)-3;
     ep->estimate[seq].csize = (gint64)-3;
@@ -2137,7 +2137,7 @@ static void handle_result(
 		enqueue_disk(&failq, dp);
 		i++;
 
-		est(dp)->errstr = stralloc(errbuf);
+		est(dp)->errstr = g_strdup(errbuf);
 		g_fprintf(stderr, _("error result for host %s disk %s: %s\n"),
 			  dp->host->hostname, qname, errbuf);
 		amfree(qname);

@@ -160,7 +160,7 @@ main(
 # endif
 #endif
 
-    cmdline = stralloc(dump_program);
+    cmdline = g_strdup(dump_program);
     for (i = 1; argv[i]; i++) {
 	char *quoted;
 

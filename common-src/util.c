@@ -437,7 +437,7 @@ quote_string_maybe(
     char *  ret;
 
     if ((str == NULL) || (*str == '\0')) {
-	ret = stralloc("\"\"");
+	ret = g_strdup("\"\"");
     } else {
 	const char *r;
 	for (r = str; *r; r++) {
@@ -450,7 +450,7 @@ quote_string_maybe(
 	     * String does not need to be quoted since it contains
 	     * neither whitespace, control or quote characters.
 	     */
-	    ret = stralloc(str);
+	    ret = g_strdup(str);
 	} else {
 	    /*
 	     * Allocate maximum possible string length.
@@ -573,12 +573,12 @@ unquote_string(
     char * ret;
 
     if ((str == NULL) || (*str == '\0')) {
-	ret = stralloc("");
+	ret = g_strdup("");
     } else {
 	char * in;
 	char * out;
 
-	ret = in = out = stralloc(str);
+	ret = in = out = g_strdup(str);
 	while (*in != '\0') {
 	    if (*in == '"') {
 	        in++;
@@ -718,9 +718,9 @@ sanitize_string(
     char * ret;
 
     if ((str == NULL) || (*str == '\0')) {
-	ret = stralloc("");
+	ret = g_strdup("");
     } else {
-	ret = stralloc(str);
+	ret = g_strdup(str);
 	for (s = ret; *s != '\0'; s++) {
 	    if (iscntrl((int)*s))
 		*s = '?';
@@ -1267,7 +1267,7 @@ resolve_hostname(const char *hostname,
     }
 
     if (canonname && myres && myres->ai_canonname) {
-	*canonname = stralloc(myres->ai_canonname);
+	*canonname = g_strdup(myres->ai_canonname);
     }
 
     if (res) {
@@ -1335,7 +1335,7 @@ check_running_as(running_as_flags who)
         error(_("current userid %ld not found in password database"), (long)uid_me);
 	/* NOTREACHED */
     }
-    uname_me = stralloc(pw->pw_name);
+    uname_me = g_strdup(pw->pw_name);
 
 #ifndef SINGLE_USERID
     if (!(who & RUNNING_AS_UID_ONLY) && uid_me != geteuid()) {
@@ -1505,7 +1505,7 @@ proplist_add_to_argv(
     GSList       *value;
     char         *q, *w, *qprop;
 
-    q = stralloc(property_s);
+    q = g_strdup(property_s);
     /* convert to lower case */
     for (w=q; *w != '\0'; w++) {
 	*w = tolower(*w);
@@ -1515,8 +1515,8 @@ proplist_add_to_argv(
     qprop = stralloc2("--", q);
     amfree(q);
     for(value=value_s->values; value != NULL; value = value->next) {
-	g_ptr_array_add(argv_ptr, stralloc(qprop));
-	g_ptr_array_add(argv_ptr, stralloc((char *)value->data));
+	g_ptr_array_add(argv_ptr, g_strdup(qprop));
+	g_ptr_array_add(argv_ptr, g_strdup((char *)value->data));
     }
     amfree(qprop);
 }
@@ -1547,7 +1547,7 @@ set_pname(char *p)
 char *
 get_pname(void)
 {
-    if (!pname) pname = stralloc("unknown");
+    if (!pname) pname = g_strdup("unknown");
     return pname;
 }
 
@@ -1560,7 +1560,7 @@ set_ptype(char *p)
 char *
 get_ptype(void)
 {
-    if (!ptype) ptype = stralloc("unknown");
+    if (!ptype) ptype = g_strdup("unknown");
     return ptype;
 }
 
@@ -1594,7 +1594,7 @@ debug_executing(
     GPtrArray *argv_ptr)
 {
     guint i;
-    char *cmdline = stralloc((char *)g_ptr_array_index(argv_ptr, 0));
+    char *cmdline = g_strdup((char *)g_ptr_array_index(argv_ptr, 0));
 
     for (i = 1; i < argv_ptr->len-1; i++) {
 	char *arg = g_shell_quote((char *)g_ptr_array_index(argv_ptr, i));

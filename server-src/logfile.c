@@ -114,7 +114,7 @@ static void log_add_full_v(logtype_t typ, char *pname, char *format, va_list arg
     if((int)typ <= (int)L_BOGUS || (int)typ > (int)L_MARKER) typ = L_BOGUS;
 
     if(multiline > 0) {
-	leader = stralloc("  ");		/* continuation line */
+	leader = g_strdup("  ");		/* continuation line */
     } else {
 	leader = vstralloc(logtype_str[(int)typ], " ", pname, " ", NULL);
     }

@@ -169,7 +169,7 @@ find_log(void)
 	    if (access(pathlogfile, R_OK) != 0) break;
 	    if (logfile_has_tape(tp->label, tp->datestamp, pathlogfile)) {
 		if (current_log == output_find_log || strcmp(*(current_log-1), logfile)) {
-		    *current_log = stralloc(logfile);
+		    *current_log = g_strdup(logfile);
 		    current_log++;
 		}
 		logs++;
@@ -184,7 +184,7 @@ find_log(void)
 	if (access(pathlogfile, R_OK) == 0) {
 	    if (logfile_has_tape(tp->label, tp->datestamp, pathlogfile)) {
 		if (current_log == output_find_log || strcmp(*(current_log-1), logfile)) {
-		    *current_log = stralloc(logfile);
+		    *current_log = g_strdup(logfile);
 		    current_log++;
 		}
 		logs++;
@@ -198,7 +198,7 @@ find_log(void)
 	if (access(pathlogfile, R_OK) == 0) {
 	    if (logfile_has_tape(tp->label, tp->datestamp, pathlogfile)) {
 		if (current_log == output_find_log || strcmp(*(current_log-1), logfile)) {
-		    *current_log = stralloc(logfile);
+		    *current_log = g_strdup(logfile);
 		    current_log++;
 		}
 		logs++;
@@ -474,7 +474,7 @@ print_find_result(
 
 	    qdiskname = quote_string(output_find_result->diskname);
             if (output_find_result->label == NULL)
-                formatted_label = stralloc("");
+                formatted_label = g_strdup("");
 	    else
 		formatted_label = quote_string(output_find_result->label);
 
@@ -483,7 +483,7 @@ print_find_result(
 		status = vstralloc(output_find_result->status, " ",
 				   output_find_result->dump_status, NULL);
 	    } else {
-		status = stralloc(output_find_result->status);
+		status = g_strdup(output_find_result->status);
 	    }
 
 	    /*@ignore@*/
@@ -730,7 +730,7 @@ search_logfile(
     g_return_val_if_fail(output_find != NULL, 0);
     g_return_val_if_fail(logfile != NULL, 0);
 
-    current_label = stralloc("");
+    current_label = g_strdup("");
     if (string_chunk == NULL) {
 	string_chunk = g_string_chunk_new(32768);
     }

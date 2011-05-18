@@ -348,7 +348,7 @@ start_backup(
 
     cur_dumptime = time(0);
     cur_level = level;
-    cur_disk = stralloc(dle->disk);
+    cur_disk = g_strdup(dle->disk);
 #ifdef GNUTAR
 #  define PROGRAM_GNUTAR GNUTAR
 #else
@@ -429,7 +429,7 @@ start_backup(
 	    /*NOTREACHED*/
 	}
 
-	taropt = stralloc("-T");
+	taropt = g_strdup("-T");
 	if(dle->exclude_file && dle->exclude_file->nb_element == 1) {
 	    strappend(taropt, "X");
 	}
@@ -450,7 +450,7 @@ start_backup(
 	}
 
 	program->backup_name = program->restore_name = SAMBA_CLIENT;
-	cmd = stralloc(program->backup_name);
+	cmd = g_strdup(program->backup_name);
 	info_tapeheader(dle);
 
 	start_index(dle->create_index, dumpout, mesgf, indexf, indexcmd);
@@ -525,30 +525,30 @@ start_backup(
 
 	start_index(dle->create_index, dumpout, mesgf, indexf, indexcmd);
 
-	g_ptr_array_add(argv_ptr, stralloc("runtar"));
+	g_ptr_array_add(argv_ptr, g_strdup("runtar"));
 	if (g_options->config)
-	    g_ptr_array_add(argv_ptr, stralloc(g_options->config));
+	    g_ptr_array_add(argv_ptr, g_strdup(g_options->config));
 	else
-	    g_ptr_array_add(argv_ptr, stralloc("NOCONFIG"));
+	    g_ptr_array_add(argv_ptr, g_strdup("NOCONFIG"));
 #ifdef GNUTAR
-	g_ptr_array_add(argv_ptr, stralloc(GNUTAR));
+	g_ptr_array_add(argv_ptr, g_strdup(GNUTAR));
 #else
-	g_ptr_array_add(argv_ptr, stralloc("tar"));
+	g_ptr_array_add(argv_ptr, g_strdup("tar"));
 #endif
-	g_ptr_array_add(argv_ptr, stralloc("--create"));
-	g_ptr_array_add(argv_ptr, stralloc("--file"));
-	g_ptr_array_add(argv_ptr, stralloc("-"));
-	g_ptr_array_add(argv_ptr, stralloc("--directory"));
+	g_ptr_array_add(argv_ptr, g_strdup("--create"));
+	g_ptr_array_add(argv_ptr, g_strdup("--file"));
+	g_ptr_array_add(argv_ptr, g_strdup("-"));
+	g_ptr_array_add(argv_ptr, g_strdup("--directory"));
 	canonicalize_pathname(dirname, tmppath);
-	g_ptr_array_add(argv_ptr, stralloc(tmppath));
-	g_ptr_array_add(argv_ptr, stralloc("--one-file-system"));
+	g_ptr_array_add(argv_ptr, g_strdup(tmppath));
+	g_ptr_array_add(argv_ptr, g_strdup("--one-file-system"));
 	if (gnutar_list_dir && incrname) {
-	    g_ptr_array_add(argv_ptr, stralloc("--listed-incremental"));
-	    g_ptr_array_add(argv_ptr, stralloc(incrname));
+	    g_ptr_array_add(argv_ptr, g_strdup("--listed-incremental"));
+	    g_ptr_array_add(argv_ptr, g_strdup(incrname));
 	} else {
-	    g_ptr_array_add(argv_ptr, stralloc("--incremental"));
-	    g_ptr_array_add(argv_ptr, stralloc("--newer"));
-	    g_ptr_array_add(argv_ptr, stralloc(dumptimestr));
+	    g_ptr_array_add(argv_ptr, g_strdup("--incremental"));
+	    g_ptr_array_add(argv_ptr, g_strdup("--newer"));
+	    g_ptr_array_add(argv_ptr, g_strdup(dumptimestr));
 	}
 #ifdef ENABLE_GNUTAR_ATIME_PRESERVE
 	/* --atime-preserve causes gnutar to call
@@ -556,23 +556,23 @@ start_backup(
 	 * adjust their atime.  However, utime()
 	 * updates the file's ctime, so incremental
 	 * dumps will think the file has changed. */
-	g_ptr_array_add(argv_ptr, stralloc("--atime-preserve"));
+	g_ptr_array_add(argv_ptr, g_strdup("--atime-preserve"));
 #endif
-	g_ptr_array_add(argv_ptr, stralloc("--sparse"));
-	g_ptr_array_add(argv_ptr, stralloc("--ignore-failed-read"));
-	g_ptr_array_add(argv_ptr, stralloc("--totals"));
+	g_ptr_array_add(argv_ptr, g_strdup("--sparse"));
+	g_ptr_array_add(argv_ptr, g_strdup("--ignore-failed-read"));
+	g_ptr_array_add(argv_ptr, g_strdup("--totals"));
 
 	if(file_exclude) {
-	    g_ptr_array_add(argv_ptr, stralloc("--exclude-from"));
-	    g_ptr_array_add(argv_ptr, stralloc(file_exclude));
+	    g_ptr_array_add(argv_ptr, g_strdup("--exclude-from"));
+	    g_ptr_array_add(argv_ptr, g_strdup(file_exclude));
 	}
 
 	if(file_include) {
-	    g_ptr_array_add(argv_ptr, stralloc("--files-from"));
-	    g_ptr_array_add(argv_ptr, stralloc(file_include));
+	    g_ptr_array_add(argv_ptr, g_strdup("--files-from"));
+	    g_ptr_array_add(argv_ptr, g_strdup(file_include));
 	}
 	else {
-	    g_ptr_array_add(argv_ptr, stralloc("."));
+	    g_ptr_array_add(argv_ptr, g_strdup("."));
 	}
 	    g_ptr_array_add(argv_ptr, NULL);
 	dumppid = pipespawnv(cmd, STDIN_PIPE, 0,
@@ -613,7 +613,7 @@ end_backup(
 	if (incrname != NULL && strlen(incrname) > 4) {
 	    char *nodotnew;
 	
-	    nodotnew = stralloc(incrname);
+	    nodotnew = g_strdup(incrname);
 	    nodotnew[strlen(nodotnew)-4] = '\0';
 	    if (rename(incrname, nodotnew)) {
 		g_fprintf(stderr, _("%s: warning [renaming %s to %s: %s]\n"), 

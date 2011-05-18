@@ -402,7 +402,7 @@ add_extract_item(
     EXTRACT_LIST_ITEM *that, *curr;
     char *ditem_path = NULL;
 
-    ditem_path = stralloc(ditem->path);
+    ditem_path = g_strdup(ditem->path);
     clean_pathname(ditem_path);
 
     for (this = extract_list; this != NULL; this = this->next)
@@ -421,7 +421,7 @@ add_extract_item(
 		curr=curr->next;
 	    }
 	    that = (EXTRACT_LIST_ITEM *)alloc(sizeof(EXTRACT_LIST_ITEM));
-            that->path = stralloc(ditem_path);
+            that->path = g_strdup(ditem_path);
 	    that->next = this->files;
 	    this->files = that;		/* add at front since easiest */
 	    amfree(ditem_path);
@@ -431,12 +431,12 @@ add_extract_item(
 
     /* so this is the first time we have seen this tape */
     this = (EXTRACT_LIST *)alloc(sizeof(EXTRACT_LIST));
-    this->tape = stralloc(ditem->tape);
+    this->tape = g_strdup(ditem->tape);
     this->level = ditem->level;
     this->fileno = ditem->fileno;
-    this->date = stralloc(ditem->date);
+    this->date = g_strdup(ditem->date);
     that = (EXTRACT_LIST_ITEM *)alloc(sizeof(EXTRACT_LIST_ITEM));
-    that->path = stralloc(ditem_path);
+    that->path = g_strdup(ditem_path);
     that->next = NULL;
     this->files = that;
 
@@ -480,7 +480,7 @@ delete_extract_item(
     EXTRACT_LIST_ITEM *that, *prev;
     char *ditem_path = NULL;
 
-    ditem_path = stralloc(ditem->path);
+    ditem_path = g_strdup(ditem->path);
     clean_pathname(ditem_path);
 
     for (this = extract_list; this != NULL; this = this->next)
@@ -548,7 +548,7 @@ add_glob(
          * $, but we need to match an optional trailing /, so tack that on
          * the end.
          */
-        regex_path = stralloc(regex + 1);
+        regex_path = g_strdup(regex + 1);
         regex_path[strlen(regex_path) - 1] = '\0';
         strappend(regex_path, "[/]*$");
         add_file(uqglob, regex_path);
@@ -618,7 +618,7 @@ void add_file(
     if (strcmp(disk_path, "/") == 0) {
         if (*regex == '/') {
 	    /* No mods needed if already starts with '/' */
-	    path_on_disk = stralloc(regex);
+	    path_on_disk = g_strdup(regex);
 	} else {
 	    /* Prepend '/' */
 	    path_on_disk = stralloc2("/", regex);
@@ -697,7 +697,7 @@ void add_file(
 			if(cmd == NULL) {
 			    if(dir_undo) *dir_undo = dir_undo_ch;
 			    dir_undo = NULL;
-			    cmd = stralloc(l);	/* save for error report */
+			    cmd = g_strdup(l);	/* save for error report */
 			}
 			continue;	/* throw the rest of the lines away */
 		    }
@@ -866,7 +866,7 @@ delete_glob(
          * $, but we need to match an optional trailing /, so tack that on
          * the end.
          */
-        regex_path = stralloc(regex + 1);
+        regex_path = g_strdup(regex + 1);
         regex_path[strlen(regex_path) - 1] = '\0';
         strappend(regex_path, "[/]*$");
         delete_file(uqglob, regex_path);
@@ -939,10 +939,10 @@ delete_file(
         if (*regex == '/') {
 	    if (strcmp(regex, "/[/]*$") == 0) {
 		/* We want "/" to match the directory itself: "/." */
-		path_on_disk = stralloc("/\\.[/]*$");
+		path_on_disk = g_strdup("/\\.[/]*$");
 	    } else {
 		/* No mods needed if already starts with '/' */
-		path_on_disk = stralloc(regex);
+		path_on_disk = g_strdup(regex);
 	    }
 	} else {
 	    /* Prepend '/' */
@@ -1021,7 +1021,7 @@ delete_file(
 			    if(tape_undo) *tape_undo = tape_undo_ch;
 			    if(dir_undo) *dir_undo = dir_undo_ch;
 			    tape_undo = dir_undo = NULL;
-			    cmd = stralloc(l);	/* save for the error report */
+			    cmd = g_strdup(l);	/* save for the error report */
 			}
 			continue;	/* throw the rest of the lines away */
 		    }
@@ -1426,7 +1426,7 @@ extract_files_setup(
 
     *ch1 = '\0';
 
-    clean_datestamp = stralloc(dump_datestamp);
+    clean_datestamp = g_strdup(dump_datestamp);
     for(ch=ch1=clean_datestamp;*ch1 != '\0';ch1++) {
 	if(*ch1 != '-') {
 	    *ch = *ch1;
@@ -1674,57 +1674,57 @@ extract_files_child(
     switch(dumptype) {
     case IS_SAMBA:
 #ifdef SAMBA_CLIENT
-	g_ptr_array_add(argv_ptr, stralloc("smbclient"));
+	g_ptr_array_add(argv_ptr, g_strdup("smbclient"));
 	smbpass = findpass(file.disk, &domain);
 	if (smbpass) {
-	    g_ptr_array_add(argv_ptr, stralloc(file.disk));
-	    g_ptr_array_add(argv_ptr, stralloc("-U"));
+	    g_ptr_array_add(argv_ptr, g_strdup(file.disk));
+	    g_ptr_array_add(argv_ptr, g_strdup("-U"));
 	    passwd_field = argv_ptr->len;
-	    g_ptr_array_add(argv_ptr, stralloc(smbpass));
+	    g_ptr_array_add(argv_ptr, g_strdup(smbpass));
 	    if (domain) {
-		g_ptr_array_add(argv_ptr, stralloc("-W"));
-		g_ptr_array_add(argv_ptr, stralloc(domain));
+		g_ptr_array_add(argv_ptr, g_strdup("-W"));
+		g_ptr_array_add(argv_ptr, g_strdup(domain));
 	    }
 	}
-	g_ptr_array_add(argv_ptr, stralloc("-d0"));
-	g_ptr_array_add(argv_ptr, stralloc("-Tx"));
-	g_ptr_array_add(argv_ptr, stralloc("-"));	/* data on stdin */
+	g_ptr_array_add(argv_ptr, g_strdup("-d0"));
+	g_ptr_array_add(argv_ptr, g_strdup("-Tx"));
+	g_ptr_array_add(argv_ptr, g_strdup("-"));	/* data on stdin */
 	break;
 #endif
     case IS_TAR:
     case IS_GNUTAR:
-	g_ptr_array_add(argv_ptr, stralloc("tar"));
-	g_ptr_array_add(argv_ptr, stralloc("--numeric-owner"));
-	g_ptr_array_add(argv_ptr, stralloc("-xpGvf"));
-	g_ptr_array_add(argv_ptr, stralloc("-"));	/* data on stdin */
+	g_ptr_array_add(argv_ptr, g_strdup("tar"));
+	g_ptr_array_add(argv_ptr, g_strdup("--numeric-owner"));
+	g_ptr_array_add(argv_ptr, g_strdup("-xpGvf"));
+	g_ptr_array_add(argv_ptr, g_strdup("-"));	/* data on stdin */
 	break;
     case IS_SAMBA_TAR:
-	g_ptr_array_add(argv_ptr, stralloc("tar"));
-	g_ptr_array_add(argv_ptr, stralloc("-xpvf"));
-	g_ptr_array_add(argv_ptr, stralloc("-"));	/* data on stdin */
+	g_ptr_array_add(argv_ptr, g_strdup("tar"));
+	g_ptr_array_add(argv_ptr, g_strdup("-xpvf"));
+	g_ptr_array_add(argv_ptr, g_strdup("-"));	/* data on stdin */
 	break;
     case IS_UNKNOWN:
     case IS_DUMP:
-	g_ptr_array_add(argv_ptr, stralloc("restore"));
+	g_ptr_array_add(argv_ptr, g_strdup("restore"));
 #ifdef AIX_BACKUP
-	g_ptr_array_add(argv_ptr, stralloc("-xB"));
+	g_ptr_array_add(argv_ptr, g_strdup("-xB"));
 #else
 #if defined(XFSDUMP)
 	if (strcmp(file.program, XFSDUMP) == 0) {
-	    g_ptr_array_add(argv_ptr, stralloc("-v"));
-	    g_ptr_array_add(argv_ptr, stralloc("silent"));
+	    g_ptr_array_add(argv_ptr, g_strdup("-v"));
+	    g_ptr_array_add(argv_ptr, g_strdup("silent"));
 	} else
 #endif
 #if defined(VDUMP)
 	if (strcmp(file.program, VDUMP) == 0) {
-	    g_ptr_array_add(argv_ptr, stralloc("xf"));
-	    g_ptr_array_add(argv_ptr, stralloc("-"));	/* data on stdin */
+	    g_ptr_array_add(argv_ptr, g_strdup("xf"));
+	    g_ptr_array_add(argv_ptr, g_strdup("-"));	/* data on stdin */
 	} else
 #endif
 	{
-	g_ptr_array_add(argv_ptr, stralloc("xbf"));
-	g_ptr_array_add(argv_ptr, stralloc("2")); /* read in units of 1K */
-	g_ptr_array_add(argv_ptr, stralloc("-")); /* data on stdin */
+	g_ptr_array_add(argv_ptr, g_strdup("xbf"));
+	g_ptr_array_add(argv_ptr, g_strdup("2")); /* read in units of 1K */
+	g_ptr_array_add(argv_ptr, g_strdup("-")); /* data on stdin */
 	}
 #endif
     }
@@ -1737,7 +1737,7 @@ extract_files_child(
 	case IS_SAMBA_TAR:
 	case IS_SAMBA:
 	    if (strcmp(fn->path, "/") == 0)
-		g_ptr_array_add(argv_ptr, stralloc("."));
+		g_ptr_array_add(argv_ptr, g_strdup("."));
 	    else
 		g_ptr_array_add(argv_ptr, stralloc2(".", fn->path));
 	    break;
@@ -1749,19 +1749,19 @@ extract_files_child(
 		 * xfsrestore needs a -s option before each file to be
 		 * restored, and also wants them to be relative paths.
 		 */
-		g_ptr_array_add(argv_ptr, stralloc("-s"));
-		g_ptr_array_add(argv_ptr, stralloc(fn->path + 1));
+		g_ptr_array_add(argv_ptr, g_strdup("-s"));
+		g_ptr_array_add(argv_ptr, g_strdup(fn->path + 1));
 	    } else
 #endif
 	    {
-		g_ptr_array_add(argv_ptr, stralloc(fn->path));
+		g_ptr_array_add(argv_ptr, g_strdup(fn->path));
 	    }
 	}
     }
 #if defined(XFSDUMP)
     if (strcmp(file.program, XFSDUMP) == 0) {
-	g_ptr_array_add(argv_ptr, stralloc("-"));
-	g_ptr_array_add(argv_ptr, stralloc("."));
+	g_ptr_array_add(argv_ptr, g_strdup("-"));
+	g_ptr_array_add(argv_ptr, g_strdup("."));
     }
 #endif
     g_ptr_array_add(argv_ptr, NULL);
@@ -1769,7 +1769,7 @@ extract_files_child(
     switch (dumptype) {
     case IS_SAMBA:
 #ifdef SAMBA_CLIENT
-	cmd = stralloc(SAMBA_CLIENT);
+	cmd = g_strdup(SAMBA_CLIENT);
 	break;
 #else
 	/* fall through to ... */
@@ -1779,9 +1779,9 @@ extract_files_child(
     case IS_SAMBA_TAR:
 #ifndef GNUTAR
 	g_fprintf(stderr, _("warning: GNUTAR program not available.\n"));
-	cmd = stralloc("tar");
+	cmd = g_strdup("tar");
 #else
-  	cmd = stralloc(GNUTAR);
+  	cmd = g_strdup(GNUTAR);
 #endif
 	break;
     case IS_UNKNOWN:
@@ -1789,28 +1789,28 @@ extract_files_child(
 	cmd = NULL;
 #if defined(DUMP)
 	if (strcmp(file.program, DUMP) == 0) {
-	    cmd = stralloc(RESTORE);
+	    cmd = g_strdup(RESTORE);
 	}
 #endif
 #if defined(VDUMP)
 	if (strcmp(file.program, VDUMP) == 0) {
-	    cmd = stralloc(VRESTORE);
+	    cmd = g_strdup(VRESTORE);
 	}
 #endif
 #if defined(VXDUMP)
 	if (strcmp(file.program, VXDUMP) == 0) {
-	    cmd = stralloc(VXRESTORE);
+	    cmd = g_strdup(VXRESTORE);
 	}
 #endif
 #if defined(XFSDUMP)
 	if (strcmp(file.program, XFSDUMP) == 0) {
-	    cmd = stralloc(XFSRESTORE);
+	    cmd = g_strdup(XFSRESTORE);
 	}
 #endif
 	if (cmd == NULL) {
 	    g_fprintf(stderr, _("warning: restore program for %s not available.\n"),
 		    file.program);
-	    cmd = stralloc("restore");
+	    cmd = g_strdup("restore");
 	}
     }
     if (cmd) {

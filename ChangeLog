@@ -1,3 +1,8 @@
+2011-05-18  Francis Galiegue <fgaliegue@gmail.com>
+	* Many files (79): GLib: change stralloc() for g_strdup()
+	* common-src/alloc.c, common-src/amanda.h: remove prototypes/macros of
+	  stralloc()
+
 2011-05-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/gnutar.pl: Fix gnutar pattern matching for gtar 1.25.
 

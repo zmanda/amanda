@@ -138,7 +138,7 @@ main(
 		      g_fprintf(stderr,_("maximum of 20 -D arguments.\n"));
 		      exit(1);
 		  }
-		  datearg[nb_datearg++] = stralloc(optarg);
+		  datearg[nb_datearg++] = g_strdup(optarg);
 		  datearg[nb_datearg] = NULL;
 		  break;
 	}
@@ -198,7 +198,7 @@ main(
 
     amflush_datestamp = get_datestamp_from_time(0);
     if(conf_usetimestamps == 0) {
-	amflush_timestamp = stralloc(amflush_datestamp);
+	amflush_timestamp = g_strdup(amflush_datestamp);
     }
     else {
 	amflush_timestamp = get_timestamp_from_time(0);
@@ -242,7 +242,7 @@ main(
 	    }
 	    if (ok)
 		datestamp_list = g_slist_insert_sorted(datestamp_list,
-		    stralloc((char *)datestamp->data),
+		    g_strdup((char *)datestamp->data),
 		    g_compare_strings);
 	}
 	slist_free_full(all_datestamps, g_free);
@@ -604,7 +604,7 @@ pick_datestamp(void)
 		    break;
 		}
 		r_datestamp_list = g_slist_append(r_datestamp_list,
-					   stralloc(datestamps[chupper - 'A']));
+					   g_strdup(datestamps[chupper - 'A']));
 	    } while ((ch = *a++) != '\0');
 	    if (r_datestamp_list && ch == '\0') {
 		slist_free_full(datestamp_list, g_free);

@@ -209,9 +209,9 @@ add_disk(
     disk->tape_splitsize = (off_t)0;
     disk->split_diskbuffer = NULL;
     disk->fallback_splitsize = (off_t)0;
-    disk->hostname = stralloc(hostname);
-    disk->name = stralloc(diskname);
-    disk->device = stralloc(diskname);
+    disk->hostname = g_strdup(hostname);
+    disk->name = g_strdup(diskname);
+    disk->device = g_strdup(diskname);
     disk->spindle = -1;
     disk->up = NULL;
     disk->compress = COMP_NONE;
@@ -232,7 +232,7 @@ add_disk(
 	host->next = hostlist;
 	hostlist = host;
 
-	host->hostname = stralloc(hostname);
+	host->hostname = g_strdup(hostname);
 	host->disks = NULL;
 	host->inprogress = 0;
 	host->maxdumps = 1;
@@ -425,9 +425,9 @@ parse_diskline(
     s[-1] = '\0';
     host = lookup_host(fp);
     if (host == NULL) {
-	hostname = stralloc(fp);
+	hostname = g_strdup(fp);
     } else {
-	hostname = stralloc(host->hostname);
+	hostname = g_strdup(host->hostname);
 	if (strcmp(host->hostname, fp) != 0) {
 	    disk_parserror(filename, line_num, _("Same host with different case: \"%s\" and \"%s\"."), host->hostname, fp);
 	    return -1;
@@ -616,7 +616,7 @@ parse_diskline(
 	line_num = *line_num_p; /* no incr, read_dumptype did it already */
 
 	if (line == NULL)
-	    *line_p = line = stralloc("");
+	    *line_p = line = g_strdup("");
 	s = line;
 	ch = *s++;
     } else {
@@ -834,7 +834,7 @@ parse_diskline(
 	host->next = hostlist;
 	hostlist = host;
 
-	host->hostname = stralloc(hostname);
+	host->hostname = g_strdup(hostname);
 	hostname = NULL;
 	host->disks = NULL;
 	host->inprogress = 0;
@@ -1069,8 +1069,8 @@ optionstr(
     char *auth_opt = NULL;
     char *kencrypt_opt = "";
     char *compress_opt = "";
-    char *encrypt_opt = stralloc("");
-    char *decrypt_opt = stralloc("");
+    char *encrypt_opt = g_strdup("");
+    char *decrypt_opt = g_strdup("");
     char *record_opt = "";
     char *index_opt = "";
     char *exclude_file = NULL;
@@ -1094,7 +1094,7 @@ optionstr(
 	auth_opt = vstralloc("auth=", dp->auth, ";", NULL);
     } else if(strcasecmp(dp->auth, "bsd") == 0) {
 	if(am_has_feature(their_features, fe_options_bsd_auth))
-	    auth_opt = stralloc("bsd-auth;");
+	    auth_opt = g_strdup("bsd-auth;");
     }
 
     switch(dp->compress) {
@@ -1149,7 +1149,7 @@ optionstr(
 	kencrypt_opt = "kencrypt;";
     }
 
-    exclude_file = stralloc("");
+    exclude_file = g_strdup("");
     if (dp->exclude_file != NULL && dp->exclude_file->nb_element > 0) {
 	for(excl = dp->exclude_file->first; excl != NULL;
 					    excl = excl->next) {
@@ -1159,7 +1159,7 @@ optionstr(
 	    amfree(qname);
 	}
     }
-    exclude_list = stralloc("");
+    exclude_list = g_strdup("");
     if (dp->exclude_list != NULL && dp->exclude_list->nb_element > 0) {
 	for(excl = dp->exclude_list->first; excl != NULL;
 					    excl = excl->next) {
@@ -1170,7 +1170,7 @@ optionstr(
 	}
     }
 
-    include_file = stralloc("");
+    include_file = g_strdup("");
     if (dp->include_file != NULL && dp->include_file->nb_element > 0) {
 	for(excl = dp->include_file->first; excl != NULL;
 					    excl = excl->next) {
@@ -1180,7 +1180,7 @@ optionstr(
 	    amfree(qname);
 	}
     }
-    include_list = stralloc("");
+    include_list = g_strdup("");
     if (dp->include_list != NULL && dp->include_list->nb_element > 0) {
 	for(excl = dp->include_list->first; excl != NULL;
 					    excl = excl->next) {
@@ -1236,15 +1236,15 @@ xml_optionstr(
     char *auth_opt;
     char *kencrypt_opt;
     char *compress_opt;
-    char *encrypt_opt = stralloc("");
-    char *decrypt_opt = stralloc("");
+    char *encrypt_opt = g_strdup("");
+    char *decrypt_opt = g_strdup("");
     char *record_opt;
     char *index_opt;
-    char *data_path_opt = stralloc("");
-    char *exclude = stralloc("");
+    char *data_path_opt = g_strdup("");
+    char *exclude = g_strdup("");
     char *exclude_file = NULL;
     char *exclude_list = NULL;
-    char *include = stralloc("");
+    char *include = g_strdup("");
     char *include_file = NULL;
     char *include_list = NULL;
     char *excl_opt = "";
@@ -1264,15 +1264,15 @@ xml_optionstr(
     if (am_has_feature(their_features, fe_options_auth)) {
 	auth_opt = vstralloc("  <auth>", dp->auth, "</auth>\n", NULL);
     } else {
-	auth_opt = stralloc("");
+	auth_opt = g_strdup("");
     }
 
     switch(dp->compress) {
     case COMP_FAST:
-	compress_opt = stralloc("  <compress>FAST</compress>\n");
+	compress_opt = g_strdup("  <compress>FAST</compress>\n");
 	break;
     case COMP_BEST:
-	compress_opt = stralloc("  <compress>BEST</compress>\n");
+	compress_opt = g_strdup("  <compress>BEST</compress>\n");
 	break;
     case COMP_CUST:
 	compress_opt = vstralloc("  <compress>CUSTOM"
@@ -1282,10 +1282,10 @@ xml_optionstr(
 				 "  </compress>\n", NULL);
 	break;
     case COMP_SERVER_FAST:
-	compress_opt = stralloc("  <compress>SERVER-FAST</compress>\n");
+	compress_opt = g_strdup("  <compress>SERVER-FAST</compress>\n");
 	break;
     case COMP_SERVER_BEST:
-	compress_opt = stralloc("  <compress>SERVER-BEST</compress>\n");
+	compress_opt = g_strdup("  <compress>SERVER-BEST</compress>\n");
 	break;
     case COMP_SERVER_CUST:
 	compress_opt = vstralloc("  <compress>SERVER-CUSTOM"
@@ -1295,7 +1295,7 @@ xml_optionstr(
 				 "  </compress>\n", NULL);
 	break;
     default:
-	compress_opt = stralloc("");
+	compress_opt = g_strdup("");
     }
 
     switch(dp->encrypt) {
@@ -1355,7 +1355,7 @@ xml_optionstr(
 	switch(dp->data_path) {
 	case DATA_PATH_AMANDA:
 	    amfree(data_path_opt);
-	    data_path_opt = stralloc("  <datapath>AMANDA</datapath>\n");
+	    data_path_opt = g_strdup("  <datapath>AMANDA</datapath>\n");
 	    break;
 	case DATA_PATH_DIRECTTCP:
 	  { /* dp->dataport_list is not set for selfcheck/sendsize */
@@ -1364,9 +1364,9 @@ xml_optionstr(
 		char *value, *b64value;
 
 		amfree(data_path_opt);
-		data_path_opt = stralloc("  <datapath>DIRECTTCP");
+		data_path_opt = g_strdup("  <datapath>DIRECTTCP");
 		if (dp->dataport_list) {
-		    s = sc = stralloc(dp->dataport_list);
+		    s = sc = g_strdup(dp->dataport_list);
 		    do {
 			value = s;
 			s = strchr(s, ';');
@@ -1388,7 +1388,7 @@ xml_optionstr(
 	}
     }
 
-    exclude_file = stralloc("");
+    exclude_file = g_strdup("");
     if (dp->exclude_file != NULL && dp->exclude_file->nb_element > 0) {
 	for(excl = dp->exclude_file->first; excl != NULL;
 					    excl = excl->next) {
@@ -1398,7 +1398,7 @@ xml_optionstr(
 	    amfree(q64name);
 	}
     }
-    exclude_list = stralloc("");
+    exclude_list = g_strdup("");
     if (dp->exclude_list != NULL && dp->exclude_list->nb_element > 0) {
 	for(excl = dp->exclude_list->first; excl != NULL;
 					    excl = excl->next) {
@@ -1409,7 +1409,7 @@ xml_optionstr(
 	}
     }
 
-    include_file = stralloc("");
+    include_file = g_strdup("");
     if (dp->include_file != NULL && dp->include_file->nb_element > 0) {
 	for(excl = dp->include_file->first; excl != NULL;
 					    excl = excl->next) {
@@ -1419,7 +1419,7 @@ xml_optionstr(
 	    amfree(q64name);
 	}
     }
-    include_list = stralloc("");
+    include_list = g_strdup("");
     if (dp->include_list != NULL && dp->include_list->nb_element > 0) {
 	for(excl = dp->include_list->first; excl != NULL;
 					    excl = excl->next) {
@@ -1529,7 +1529,7 @@ clean_dle_str_for_client(
     if (!dle_str)
 	return NULL;
 
-    rval_dle_str = stralloc(dle_str);
+    rval_dle_str = g_strdup(dle_str);
 
     /* Remove everything between "  <encrypt>SERVER-CUSTOM" and "</encrypt>\n"
      */
@@ -1642,7 +1642,7 @@ xml_scripts(
 
     xml_app.features = their_features;
 
-    xml_scr = stralloc("");
+    xml_scr = g_strdup("");
     for (pp_iter = pp_scriptlist; pp_iter != NULL;
 	 pp_iter = pp_iter->next) {
 	char *pp_script_name = pp_iter->data;
@@ -1664,7 +1664,7 @@ xml_scripts(
 
 	execute_on = pp_script_get_execute_on(pp_script);
 	sep = "";
-	eo_str = stralloc("");
+	eo_str = g_strdup("");
 	if (execute_on & EXECUTE_ON_PRE_DLE_AMCHECK) {
 	    eo_str = vstrextend(&eo_str, sep, "PRE-DLE-AMCHECK", NULL);
 	    sep = ",";
@@ -1739,7 +1739,7 @@ xml_scripts(
 				  "</execute_on>\n", NULL);
 	amfree(eo_str);
 	proplist = pp_script_get_property(pp_script);
-	xml_app.result   = stralloc("");
+	xml_app.result   = g_strdup("");
 	g_hash_table_foreach(proplist, xml_property, &xml_app);
 
 	client_name = pp_script_get_client_name(pp_script);

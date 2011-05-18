@@ -216,7 +216,7 @@ start_backup(
     else
 	config = "NOCONFIG";
 #else
-    cmd = stralloc(DUMP);
+    cmd = g_strdup(DUMP);
     cmdX = skip_argument;
     config = skip_argument;
 #endif
@@ -253,7 +253,7 @@ start_backup(
 
 	start_index(dle->create_index, dumpout, mesgf, indexf, indexcmd);
 
-	dumpkeys = stralloc(level_str);
+	dumpkeys = g_strdup(level_str);
 	dumppid = pipespawn(progname, STDIN_PIPE, 0,
 			    &dumpin, &dumpout, &mesgf,
 			    cmdX, config,

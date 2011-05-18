@@ -147,7 +147,7 @@ rsh_connect(
 	goto error;
 
     amfree(rh->hostname);
-    rh->hostname = stralloc(rh->rs->rc->hostname);
+    rh->hostname = g_strdup(rh->rs->rc->hostname);
 
     /*
      * We need to open a new connection.

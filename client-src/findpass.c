@@ -73,13 +73,13 @@ findpass(
 	    pw = s - 1;				/* start of password */
 	    skip_non_whitespace_cs(s, ch);
 	    s[-1] = '\0';			/* terminate password */
-	    pw = stralloc(pw);
+	    pw = g_strdup(pw);
 	    skip_whitespace(s, ch);		/* find start of domain */
 	    if (ch && ch != '#') {
 	      *domain = s - 1;			/* start of domain */
 	      skip_non_whitespace_cs(s, ch);
 	      s[-1] = '\0';			/* terminate domain */
-	      *domain = stralloc(*domain);
+	      *domain = g_strdup(*domain);
 	    }
 	  }
 	  amfree(d);
@@ -150,14 +150,14 @@ parsesharename(
     if (!disk) {
 	return;
     }
-    *share = stralloc(disk);
+    *share = g_strdup(disk);
     ch = *share;
     *subdir = NULL;
     while (*ch != '\0') {
 	if (*ch == '/') {slashcnt++;}
 	if (slashcnt == 4) {
 	    *ch = '\0';
-	    *subdir = stralloc(++ch);
+	    *subdir = g_strdup(++ch);
 	    return;
 	}
 	ch++;

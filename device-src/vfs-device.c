@@ -644,7 +644,7 @@ static gboolean write_amanda_header(VfsDevice * self,
     if (!label_buffer) {
         amfree(label_buffer);
 	device_set_error(d_self,
-	    stralloc(_("Amanda file header won't fit in a single block!")),
+	    g_strdup(_("Amanda file header won't fit in a single block!")),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }
@@ -752,7 +752,7 @@ static DeviceStatusFlags vfs_device_read_label(Device * dself) {
         /* This means an error occured getting locks or opening the header
          * file. */
 	device_set_error(dself,
-		stralloc("Error loading device header -- unlabeled volume?"),
+		g_strdup("Error loading device header -- unlabeled volume?"),
 		  DEVICE_STATUS_DEVICE_ERROR
 		| DEVICE_STATUS_VOLUME_ERROR
 		| DEVICE_STATUS_VOLUME_UNLABELED);
@@ -766,7 +766,7 @@ static DeviceStatusFlags vfs_device_read_label(Device * dself) {
 	amanda_header->type != F_EMPTY) {
         /* This is an error, and should not happen. */
 	device_set_error(dself,
-		stralloc(_("Got a bad volume label")),
+		g_strdup(_("Got a bad volume label")),
 		DEVICE_STATUS_VOLUME_ERROR);
         amfree(amanda_header);
         return dself->status;
@@ -799,7 +799,7 @@ static gboolean vfs_device_write_block(Device * pself, guint size, gpointer data
     if (check_at_peom(self, size)) {
 	pself->is_eom = TRUE;
 	device_set_error(pself,
-	    stralloc(_("No space left on device")),
+	    g_strdup(_("No space left on device")),
 	    DEVICE_STATUS_VOLUME_ERROR);
 	return FALSE;
     }
@@ -845,7 +845,7 @@ vfs_device_read_block(Device * pself, gpointer data, int * size_req) {
         pself->is_eof = TRUE;
         pself->in_file = FALSE;
 	device_set_error(pself,
-	    stralloc(_("EOF")),
+	    g_strdup(_("EOF")),
 	    DEVICE_STATUS_SUCCESS);
         return -1;
     default:
@@ -953,7 +953,7 @@ get_last_file_number(VfsDevice * self) {
     if (count <= 0) {
         /* Somebody deleted something important while we weren't looking. */
 	device_set_error(d_self,
-	    stralloc(_("Error identifying VFS device contents!")),
+	    g_strdup(_("Error identifying VFS device contents!")),
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
         return -1;
     } else {
@@ -1005,7 +1005,7 @@ get_next_file_number(VfsDevice * self, guint request) {
     if (count <= 0) {
         /* Somebody deleted something important while we weren't looking. */
 	device_set_error(d_self,
-	    stralloc(_("Error identifying VFS device contents!")),
+	    g_strdup(_("Error identifying VFS device contents!")),
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
         return -1;
     }
@@ -1063,7 +1063,7 @@ vfs_device_start_file (Device * dself, dumpfile_t * ji) {
     if (check_at_peom(self, VFS_DEVICE_LABEL_SIZE)) {
 	dself->is_eom = TRUE;
 	device_set_error(dself,
-		stralloc(_("No space left on device")),
+		g_strdup(_("No space left on device")),
 		DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1078,7 +1078,7 @@ vfs_device_start_file (Device * dself, dumpfile_t * ji) {
     self->file_name = make_new_file_name(self, ji);
     if (self->file_name == NULL) {
 	device_set_error(dself,
-		stralloc(_("Could not create header filename")),
+		g_strdup(_("Could not create header filename")),
 		DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }
@@ -1161,7 +1161,7 @@ vfs_device_seek_file (Device * dself, guint requested_file) {
             return make_tapeend_header();
         } else {
 	    device_set_error(dself,
-		stralloc(_("Attempt to read past tape-end file")),
+		g_strdup(_("Attempt to read past tape-end file")),
 		DEVICE_STATUS_SUCCESS);
             return NULL;
         }
@@ -1169,7 +1169,7 @@ vfs_device_seek_file (Device * dself, guint requested_file) {
 
     if (!open_lock(self, file, FALSE)) {
 	device_set_error(dself,
-	    stralloc(_("could not acquire lock")),
+	    g_strdup(_("could not acquire lock")),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return NULL;
     }
@@ -1223,7 +1223,7 @@ vfs_device_seek_file (Device * dself, guint requested_file) {
 
         default:
 	    device_set_error(dself,
-		stralloc(_("Invalid amanda header while reading file header")),
+		g_strdup(_("Invalid amanda header while reading file header")),
 		DEVICE_STATUS_VOLUME_ERROR);
             amfree(rval);
             release_file(self);
@@ -1367,7 +1367,7 @@ vfs_device_recycle_file (Device * dself, guint filenum) {
 
     if (!open_lock(self, filenum, FALSE)) {
 	device_set_error(dself,
-	    stralloc(_("could not acquire lock")),
+	    g_strdup(_("could not acquire lock")),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }

@@ -1471,7 +1471,7 @@ lookup_keyword(
     char *	str)
 {
     keytab_t *kwp;
-    char *str1 = stralloc(str);
+    char *str1 = g_strdup(str);
     char *p = str1;
 
     /* Fold '-' to '_' in the token.  Note that this modifies str1
@@ -2022,7 +2022,7 @@ get_seen_filename(
 	    return istr;
     }
 
-    istr = stralloc(filename);
+    istr = g_strdup(filename);
     seen_filenames = g_slist_prepend(seen_filenames, istr);
     return istr;
 }
@@ -2128,7 +2128,7 @@ read_block(
 	if (np->type == CONFTYPE_STR) {
 	    current_line = quote_string_always(value);
 	} else {
-	    current_line = stralloc(value);
+	    current_line = g_strdup(value);
 	}
 
 	current_char = current_line;
@@ -2169,7 +2169,7 @@ get_holdingdisk(
     init_holdingdisk_defaults();
 
     get_conftoken(CONF_IDENT);
-    hdcur.name = stralloc(tokenval.v.s);
+    hdcur.name = g_strdup(tokenval.v.s);
     hdcur.seen.filename = current_filename;
     hdcur.seen.linenum = current_line_num;
 
@@ -2190,7 +2190,7 @@ get_holdingdisk(
 	    if (!is_define) {
 		conf_data[CNF_HOLDINGDISK].v.identlist = g_slist_append(
 				conf_data[CNF_HOLDINGDISK].v.identlist,
-				stralloc(hdcur.name));
+				g_strdup(hdcur.name));
 	    }
 	}
     } else { /* use the already defined holding disk */
@@ -2213,12 +2213,12 @@ get_holdingdisk(
 	    } else {
 		conf_data[CNF_HOLDINGDISK].v.identlist = g_slist_append(
 				conf_data[CNF_HOLDINGDISK].v.identlist,
-				stralloc(hdcur.name));
+				g_strdup(hdcur.name));
 	    }
 	    amfree(hdcur.name);
 	    get_conftoken(CONF_ANY);
 	    if (tok == CONF_IDENT || tok == CONF_STRING) {
-		hdcur.name = stralloc(tokenval.v.s);
+		hdcur.name = g_strdup(tokenval.v.s);
 	    } else if (tok != CONF_NL) {
 		conf_parserror(_("IDENT or NL expected"));
 	    }
@@ -2308,7 +2308,7 @@ read_dumptype(
 	dpcur.name = name;
     } else {
 	get_conftoken(CONF_IDENT);
-	dpcur.name = stralloc(tokenval.v.s);
+	dpcur.name = g_strdup(tokenval.v.s);
     }
     dpcur.seen.filename = current_filename;
     dpcur.seen.linenum = current_line_num;
@@ -2465,7 +2465,7 @@ get_tapetype(void)
     init_tapetype_defaults();
 
     get_conftoken(CONF_IDENT);
-    tpcur.name = stralloc(tokenval.v.s);
+    tpcur.name = g_strdup(tokenval.v.s);
     tpcur.seen.filename = current_filename;
     tpcur.seen.linenum = current_line_num;
 
@@ -2560,7 +2560,7 @@ get_interface(void)
     init_interface_defaults();
 
     get_conftoken(CONF_IDENT);
-    ifcur.name = stralloc(tokenval.v.s);
+    ifcur.name = g_strdup(tokenval.v.s);
     ifcur.seen.filename = current_filename;
     ifcur.seen.linenum = current_line_num;
 
@@ -2663,7 +2663,7 @@ read_application(
 	apcur.name = name;
     } else {
 	get_conftoken(CONF_IDENT);
-	apcur.name = stralloc(tokenval.v.s);
+	apcur.name = g_strdup(tokenval.v.s);
     }
     apcur.seen.filename = current_filename;
     apcur.seen.linenum = current_line_num;
@@ -2790,7 +2790,7 @@ read_interactivity(
 	ivcur.name = name;
     } else {
 	get_conftoken(CONF_IDENT);
-	ivcur.name = stralloc(tokenval.v.s);
+	ivcur.name = g_strdup(tokenval.v.s);
     }
     ivcur.seen.filename = current_filename;
     ivcur.seen.linenum = current_line_num;
@@ -2916,7 +2916,7 @@ read_taperscan(
 	tscur.name = name;
     } else {
 	get_conftoken(CONF_IDENT);
-	tscur.name = stralloc(tokenval.v.s);
+	tscur.name = g_strdup(tokenval.v.s);
     }
     tscur.seen.filename = current_filename;
     tscur.seen.linenum = current_line_num;
@@ -3042,7 +3042,7 @@ read_pp_script(
 	pscur.name = name;
     } else {
 	get_conftoken(CONF_IDENT);
-	pscur.name = stralloc(tokenval.v.s);
+	pscur.name = g_strdup(tokenval.v.s);
     }
     pscur.seen.filename = current_filename;
     pscur.seen.linenum = current_line_num;
@@ -3173,7 +3173,7 @@ read_device_config(
 	dccur.name = name;
     } else {
 	get_conftoken(CONF_IDENT);
-	dccur.name = stralloc(tokenval.v.s);
+	dccur.name = g_strdup(tokenval.v.s);
     }
     dccur.seen.filename = current_filename;
     dccur.seen.linenum = current_line_num;
@@ -3299,7 +3299,7 @@ read_changer_config(
 	cccur.name = name;
     } else {
 	get_conftoken(CONF_IDENT);
-	cccur.name = stralloc(tokenval.v.s);
+	cccur.name = g_strdup(tokenval.v.s);
     }
     cccur.seen = current_line_num;
 
@@ -3970,7 +3970,7 @@ read_dapplication(
 	return;
     }
     amfree(val->v.s);
-    val->v.s = stralloc(application->name);
+    val->v.s = g_strdup(application->name);
     ckseen(&val->seen);
 }
 
@@ -3999,7 +3999,7 @@ read_dinteractivity(
 	return;
     }
     amfree(val->v.s);
-    val->v.s = stralloc(interactivity->name);
+    val->v.s = g_strdup(interactivity->name);
     ckseen(&val->seen);
 }
 
@@ -4028,7 +4028,7 @@ read_dtaperscan(
 	return;
     }
     amfree(val->v.s);
-    val->v.s = stralloc(taperscan->name);
+    val->v.s = g_strdup(taperscan->name);
     ckseen(&val->seen);
 }
 
@@ -4046,7 +4046,7 @@ read_dpp_script(
 				   NULL, NULL, NULL);
 	current_line_num -= 1;
 	val->v.identlist = g_slist_insert_sorted(val->v.identlist,
-			stralloc(pp_script->name), &compare_pp_script_order);
+			g_strdup(pp_script->name), &compare_pp_script_order);
     } else if (tok == CONF_STRING || tok == CONF_IDENT) {
 	while (tok == CONF_STRING || tok == CONF_IDENT) {
 	    pp_script = lookup_pp_script(tokenval.v.s);
@@ -4055,7 +4055,7 @@ read_dpp_script(
 		return;
 	    }
     	    val->v.identlist = g_slist_insert_sorted(val->v.identlist,
-			 stralloc(pp_script->name), &compare_pp_script_order);
+			 g_strdup(pp_script->name), &compare_pp_script_order);
 	    get_conftoken(CONF_ANY);
 	}
 	unget_conftoken();
@@ -5096,7 +5096,7 @@ config_init(
 
 	config_dir = stralloc2(cwd, "/");
 	if ((config_name = strrchr(cwd, '/')) != NULL) {
-	    config_name = stralloc(config_name + 1);
+	    config_name = g_strdup(config_name + 1);
 	}
 
         amfree(cwd);
@@ -5421,7 +5421,7 @@ init_defaults(
 
     /* create some predefined dumptypes for backwards compatability */
     init_dumptype_defaults();
-    dpcur.name = stralloc("NO-COMPRESS");
+    dpcur.name = g_strdup("NO-COMPRESS");
     dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_COMPRESS]);
     val_t__compress(&dpcur.value[DUMPTYPE_COMPRESS]) = COMP_NONE;
@@ -5429,7 +5429,7 @@ init_defaults(
     save_dumptype();
 
     init_dumptype_defaults();
-    dpcur.name = stralloc("COMPRESS-FAST");
+    dpcur.name = g_strdup("COMPRESS-FAST");
     dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_COMPRESS]);
     val_t__compress(&dpcur.value[DUMPTYPE_COMPRESS]) = COMP_FAST;
@@ -5437,7 +5437,7 @@ init_defaults(
     save_dumptype();
 
     init_dumptype_defaults();
-    dpcur.name = stralloc("COMPRESS-BEST");
+    dpcur.name = g_strdup("COMPRESS-BEST");
     dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_COMPRESS]);
     val_t__compress(&dpcur.value[DUMPTYPE_COMPRESS]) = COMP_BEST;
@@ -5445,7 +5445,7 @@ init_defaults(
     save_dumptype();
 
     init_dumptype_defaults();
-    dpcur.name = stralloc("COMPRESS-CUST");
+    dpcur.name = g_strdup("COMPRESS-CUST");
     dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_COMPRESS]);
     val_t__compress(&dpcur.value[DUMPTYPE_COMPRESS]) = COMP_CUST;
@@ -5453,7 +5453,7 @@ init_defaults(
     save_dumptype();
 
     init_dumptype_defaults();
-    dpcur.name = stralloc("SRVCOMPRESS");
+    dpcur.name = g_strdup("SRVCOMPRESS");
     dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_COMPRESS]);
     val_t__compress(&dpcur.value[DUMPTYPE_COMPRESS]) = COMP_SERVER_FAST;
@@ -5461,15 +5461,15 @@ init_defaults(
     save_dumptype();
 
     init_dumptype_defaults();
-    dpcur.name = stralloc("BSD-AUTH");
+    dpcur.name = g_strdup("BSD-AUTH");
     dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_AUTH]);
-    val_t__str(&dpcur.value[DUMPTYPE_AUTH]) = stralloc("BSD");
+    val_t__str(&dpcur.value[DUMPTYPE_AUTH]) = g_strdup("BSD");
     val_t__seen(&dpcur.value[DUMPTYPE_AUTH]).linenum = -1;
     save_dumptype();
 
     init_dumptype_defaults();
-    dpcur.name = stralloc("NO-RECORD");
+    dpcur.name = g_strdup("NO-RECORD");
     dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_RECORD]);
     val_t__int(&dpcur.value[DUMPTYPE_RECORD]) = 0;
@@ -5477,7 +5477,7 @@ init_defaults(
     save_dumptype();
 
     init_dumptype_defaults();
-    dpcur.name = stralloc("NO-HOLD");
+    dpcur.name = g_strdup("NO-HOLD");
     dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_HOLDINGDISK]);
     val_t__holding(&dpcur.value[DUMPTYPE_HOLDINGDISK]) = HOLD_NEVER;
@@ -5485,7 +5485,7 @@ init_defaults(
     save_dumptype();
 
     init_dumptype_defaults();
-    dpcur.name = stralloc("NO-FULL");
+    dpcur.name = g_strdup("NO-FULL");
     dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_STRATEGY]);
     val_t__strategy(&dpcur.value[DUMPTYPE_STRATEGY]) = DS_NOFULL;
@@ -5535,7 +5535,7 @@ update_derived_values(
 	/* Add a 'default' interface if one doesn't already exist */
 	if (!(ip = lookup_interface("default"))) {
 	    init_interface_defaults();
-	    ifcur.name = stralloc("default");
+	    ifcur.name = g_strdup("default");
 	    ifcur.seen = val_t__seen(getconf(CNF_NETUSAGE));
 	    save_interface();
 
@@ -5548,7 +5548,7 @@ update_derived_values(
 
 	    v = interface_getconf(ip, INTER_COMMENT);
 	    free_val_t(v);
-	    val_t__str(v) = stralloc(_("implicit from NETUSAGE"));
+	    val_t__str(v) = g_strdup(_("implicit from NETUSAGE"));
 	    val_t__seen(v) = val_t__seen(getconf(CNF_NETUSAGE));
 
 	    v = interface_getconf(ip, INTER_MAXUSAGE);
@@ -5565,7 +5565,7 @@ update_derived_values(
 		strcmp(getconf_str(CNF_TAPETYPE), "DEFAULT_TAPE") == 0 &&
 		!lookup_tapetype("DEFAULT_TAPE")) {
 		init_tapetype_defaults();
-		tpcur.name = stralloc("DEFAULT_TAPE");
+		tpcur.name = g_strdup("DEFAULT_TAPE");
 		tpcur.seen = val_t__seen(getconf(CNF_TAPETYPE));
 		save_tapetype();
 	    } else {
@@ -5694,7 +5694,7 @@ conf_init_str(
     val->seen.filename = NULL;
     val->type = CONFTYPE_STR;
     if(s)
-	val->v.s = stralloc(s);
+	val->v.s = g_strdup(s);
     else
 	val->v.s = NULL;
 }
@@ -5708,7 +5708,7 @@ conf_init_ident(
     val->seen.filename = NULL;
     val->type = CONFTYPE_IDENT;
     if(s)
-	val->v.s = stralloc(s);
+	val->v.s = g_strdup(s);
     else
 	val->v.s = NULL;
 }
@@ -5723,7 +5723,7 @@ conf_init_identlist(
     val->type = CONFTYPE_IDENTLIST;
     val->v.identlist = NULL;
     if (s)
-	val->v.identlist = g_slist_append(val->v.identlist, stralloc(s));
+	val->v.identlist = g_slist_append(val->v.identlist, g_strdup(s));
 }
 
 static void
@@ -6478,8 +6478,8 @@ void add_config_override(
 	}
     }
 
-    co->ovr[co->n_used].key = stralloc(key);
-    co->ovr[co->n_used].value = stralloc(value);
+    co->ovr[co->n_used].key = g_strdup(key);
+    co->ovr[co->n_used].value = g_strdup(value);
     co->n_used++;
 }
 
@@ -6582,7 +6582,7 @@ apply_config_overrides(
 	if (key_parm->type == CONFTYPE_STR) {
 	    current_line = quote_string_always(value);
 	} else {
-	    current_line = stralloc(value);
+	    current_line = g_strdup(value);
 	}
 
 	current_char = current_line;
@@ -6947,7 +6947,7 @@ merge_val_t(
 	    identlist_t il;
 	    for (il = valsrc->v.identlist; il != NULL; il = il->next) {
 		 valdst->v.identlist = g_slist_append(valdst->v.identlist,
-						   stralloc((char *)il->data));
+						   g_strdup((char *)il->data));
 	    }
 	}
     } else {
@@ -7003,14 +7003,14 @@ copy_val_t(
 
 	case CONFTYPE_IDENT:
 	case CONFTYPE_STR:
-	    valdst->v.s = stralloc(valsrc->v.s);
+	    valdst->v.s = g_strdup(valsrc->v.s);
 	    break;
 
 	case CONFTYPE_IDENTLIST:
 	    valdst->v.identlist = NULL;
 	    for (ia = valsrc->v.identlist; ia != NULL; ia = ia->next) {
 		valdst->v.identlist = g_slist_append(valdst->v.identlist,
-						     stralloc(ia->data));
+						     g_strdup(ia->data));
 	    }
 	    break;
 
@@ -7065,11 +7065,11 @@ copy_val_t(
 	    break;
 
 	case CONFTYPE_APPLICATION:
-	    valdst->v.s = stralloc(valsrc->v.s);
+	    valdst->v.s = g_strdup(valsrc->v.s);
 	    break;
 
 	case CONFTYPE_AUTOLABEL:
-	    valdst->v.autolabel.template = stralloc(valsrc->v.autolabel.template);
+	    valdst->v.autolabel.template = g_strdup(valsrc->v.autolabel.template);
 	    valdst->v.autolabel.autolabel = valsrc->v.autolabel.autolabel;
 	    break;
 	}
@@ -7102,10 +7102,10 @@ merge_proplist_foreach_fn(
 
     for(elem = property->values;elem != NULL; elem=elem->next) {
 	new_property->values = g_slist_append(new_property->values,
-					      stralloc(elem->data));
+					      g_strdup(elem->data));
     }
     if (new_prop)
-	g_hash_table_insert(proplist, stralloc(property_s), new_property);
+	g_hash_table_insert(proplist, g_strdup(property_s), new_property);
 }
 
 static void
@@ -7125,9 +7125,9 @@ copy_proplist_foreach_fn(
 
     for(elem = property->values;elem != NULL; elem=elem->next) {
 	new_property->values = g_slist_append(new_property->values,
-					      stralloc(elem->data));
+					      g_strdup(elem->data));
     }
-    g_hash_table_insert(proplist, stralloc(property_s), new_property);
+    g_hash_table_insert(proplist, g_strdup(property_s), new_property);
 }
 
 static void
@@ -7582,9 +7582,9 @@ val_t_display_strs(
 
     case CONFTYPE_IDENT:
 	if(val->v.s) {
-	    buf[0] = stralloc(val->v.s);
+	    buf[0] = g_strdup(val->v.s);
         } else {
-	    buf[0] = stralloc("");
+	    buf[0] = g_strdup("");
 	}
 	break;
 
@@ -7596,7 +7596,7 @@ val_t_display_strs(
 	    buf[0] = NULL;
 	    for (ia = val->v.identlist; ia != NULL; ia = ia->next) {
 		if (first) {
-		    buf[0] = stralloc(ia->data);
+		    buf[0] = g_strdup(ia->data);
 		    first = 0;
 		} else {
 		    strappend(buf[0], " ");
@@ -7611,13 +7611,13 @@ val_t_display_strs(
             if(val->v.s) {
 		buf[0] = quote_string_always(val->v.s);
             } else {
-		buf[0] = stralloc("\"\"");
+		buf[0] = g_strdup("\"\"");
             }
 	} else {
 	    if(val->v.s) {
-		buf[0] = stralloc(val->v.s);
+		buf[0] = g_strdup(val->v.s);
             } else {
-		buf[0] = stralloc("");
+		buf[0] = g_strdup("");
             }
 	}
 	break;
@@ -7653,21 +7653,21 @@ val_t_display_strs(
 
     case CONFTYPE_BOOLEAN:
 	if(val_t__boolean(val))
-	    buf[0] = stralloc("yes");
+	    buf[0] = g_strdup("yes");
 	else
-	    buf[0] = stralloc("no");
+	    buf[0] = g_strdup("no");
 	break;
 
     case CONFTYPE_NO_YES_ALL:
 	switch(val_t__no_yes_all(val)) {
 	case 0:
-	    buf[0] = stralloc("no");
+	    buf[0] = g_strdup("no");
 	    break;
 	case 1:
-	    buf[0] = stralloc("yes");
+	    buf[0] = g_strdup("yes");
 	    break;
 	case 2:
-	    buf[0] = stralloc("all");
+	    buf[0] = g_strdup("all");
 	    break;
 	}
 	break;
@@ -7734,7 +7734,7 @@ val_t_display_strs(
 
     case CONFTYPE_ESTIMATELIST: {
 	estimatelist_t es = val_t__estimatelist(val);
-	buf[0] = stralloc("");
+	buf[0] = g_strdup("");
 	while (es) {
 	    switch((estimate_t)GPOINTER_TO_INT(es->data)) {
 	    case ES_CLIENT:
@@ -7828,9 +7828,9 @@ val_t_display_strs(
 	GSList *iter = val_t__host_limit(val).match_pats;
 
 	if (val_t__host_limit(val).same_host)
-	    buf[0] = stralloc("SAME-HOST ");
+	    buf[0] = g_strdup("SAME-HOST ");
 	else
-	    buf[0] = stralloc("");
+	    buf[0] = g_strdup("");
 
 	if (val_t__host_limit(val).server)
 	    strappend(buf[0], "SERVER ");
@@ -7900,13 +7900,13 @@ val_t_display_strs(
 	if (val->v.s) {
 	    buf[0] = quote_string_always(val->v.s);
 	} else {
-	    buf[0] = stralloc("");
+	    buf[0] = g_strdup("");
 	}
 	break;
     }
 
     case CONFTYPE_EXECUTE_ON:
-	buf[0] = stralloc("");
+	buf[0] = g_strdup("");
 	if (val->v.i != 0) {
 	    char *sep = "";
 	    if (val->v.i & EXECUTE_ON_PRE_AMCHECK) {
@@ -8080,7 +8080,7 @@ exinclude_display_str(
 
     assert(val->type == CONFTYPE_EXINCLUDE);
 
-    rval = stralloc("");
+    rval = g_strdup("");
 
     if (file == 0) {
 	sl = val_t__exinclude(val).sl_list;
@@ -8123,7 +8123,7 @@ config_dir_relative(
     char *filename)
 {
     if (*filename == '/' || config_dir == NULL) {
-	return stralloc(filename);
+	return g_strdup(filename);
     } else {
 	if (config_dir[strlen(config_dir)-1] == '/') {
 	    return vstralloc(config_dir, filename, NULL);
@@ -8161,7 +8161,7 @@ parm_key_info(
     assert(parsetable != NULL);
 
     /* make a copy we can stomp on */
-    key = stralloc(key);
+    key = g_strdup(key);
 
     /* uppercase the key */
     for (s = key; (ch = *s) != 0; s++) {

@@ -265,7 +265,7 @@ main(
 	  /*NOTREACHED*/
 	}
 	
-	filename = stralloc(*argv);
+	filename = g_strdup(*argv);
 	qfilename = quote_string(filename);
 	if (access(filename, R_OK) != 0) {
 	    g_fprintf(stderr,"Cannot open exclude file %s\n", qfilename);
@@ -289,7 +289,7 @@ main(
     if ((argc > 1) && strcmp(*argv,"-I") == 0) {
 	argv++;
 	
-	filename = stralloc(*argv);
+	filename = g_strdup(*argv);
 	qfilename = quote_string(filename);
 	if (access(filename, R_OK) != 0) {
 	    g_fprintf(stderr,"Cannot open include file %s\n", qfilename);
@@ -506,7 +506,7 @@ push_name(
     Name *newp;
 
     newp = alloc(sizeof(*newp));
-    newp->str = stralloc(str);
+    newp->str = g_strdup(str);
 
     newp->next = name_stack;
     name_stack = newp;

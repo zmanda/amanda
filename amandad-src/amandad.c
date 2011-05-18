@@ -630,7 +630,7 @@ protocol_accept(
      * Parse out the service and arguments
      */
 
-    pktbody = stralloc(pkt->body);
+    pktbody = g_strdup(pkt->body);
 
     tok = strtok(pktbody, " ");
     if (tok == NULL)
@@ -641,13 +641,13 @@ protocol_accept(
     tok = strtok(NULL, " \n");
     if (tok == NULL)
 	goto badreq;
-    service = stralloc(tok);
+    service = g_strdup(tok);
 
     /* we call everything else 'arguments' */
     tok = strtok(NULL, "");
     if (tok == NULL)
 	goto badreq;
-    arguments = stralloc(tok);
+    arguments = g_strdup(tok);
 
     /* see if it's one we allow */
     for (i = 0; i < NSERVICES; i++)
@@ -1032,9 +1032,9 @@ s_processrep(
      */
     if (strncmp_const(as->repbuf,"KENCRYPT\n") == 0) {
         amandad_kencrypt = KENCRYPT_WILL_DO;
-	repbuf = stralloc(as->repbuf + 9);
+	repbuf = g_strdup(as->repbuf + 9);
     } else {
-	repbuf = stralloc(as->repbuf);
+	repbuf = g_strdup(as->repbuf);
     }
     amfree(as->rep_pkt.body);
     pkt_init_empty(&as->rep_pkt, P_REP);
@@ -1272,7 +1272,7 @@ errfd_recv(
 	if (as->errbuf) {
 	    as->errbuf = vstrextend(&as->errbuf, buf, NULL);
 	} else {
-	    as->errbuf = stralloc(buf);
+	    as->errbuf = g_strdup(buf);
 	}
     } else if (n == 0) {
 	event_release(as->ev_errfd);
@@ -1316,7 +1316,7 @@ errfd_recv(
 
 	/* remove first line from buffer */
 	r++;
-	s = stralloc(r);
+	s = g_strdup(r);
 	amfree(as->errbuf);
 	as->errbuf = s;
     }
@@ -1584,8 +1584,8 @@ service_new(
 	 * The parent.  Close the far ends of our pipes and return.
 	 */
 	as = g_new0(struct active_service, 1);
-	as->cmd = stralloc(cmd);
-	as->arguments = stralloc(arguments);
+	as->cmd = g_strdup(cmd);
+	as->arguments = g_strdup(arguments);
 	as->security_handle = security_handle;
 	as->state = NULL;
 	as->service = service;
@@ -1598,7 +1598,7 @@ service_new(
 	    g_option_t *g_options;
 	    char *option_str, *p;
 
-	    option_str = stralloc(as->arguments+8);
+	    option_str = g_strdup(as->arguments+8);
 	    p = strchr(option_str,'\n');
 	    if(p) *p = '\0';
 

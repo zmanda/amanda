@@ -787,7 +787,7 @@ tape_device_open_device (Device * dself, char * device_name,
     self = TAPE_DEVICE(dself);
 
     self->fd = -1;
-    self->private->device_filename = stralloc(device_node);
+    self->private->device_filename = g_strdup(device_node);
 
     /* Set tape drive/OS info */
     bzero(&val, sizeof(val));
@@ -887,7 +887,7 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
         /* I/O error. */
 	switch (result) {
 	case RESULT_NO_DATA:
-	    msg = stralloc(_("no data"));
+	    msg = g_strdup(_("no data"));
             new_status = (DEVICE_STATUS_VOLUME_ERROR |
 	                  DEVICE_STATUS_VOLUME_UNLABELED);
 	    header = dself->volume_header = g_new(dumpfile_t, 1);
@@ -895,7 +895,7 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
 	    break;
 
 	case RESULT_SMALL_BUFFER:
-	    msg = stralloc(_("block size too small"));
+	    msg = g_strdup(_("block size too small"));
             new_status = (DEVICE_STATUS_DEVICE_ERROR |
 	                  DEVICE_STATUS_VOLUME_ERROR);
 	    header = dself->volume_header = g_new(dumpfile_t, 1);
@@ -904,7 +904,7 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
 	    break;
 
 	default:
-	    msg = stralloc(_("unknown error"));
+	    msg = g_strdup(_("unknown error"));
 	case RESULT_ERROR:
             new_status = (DEVICE_STATUS_DEVICE_ERROR |
 	                  DEVICE_STATUS_VOLUME_ERROR |
@@ -926,7 +926,7 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
     amfree(header_buffer);
     if (header->type != F_TAPESTART) {
 	device_set_error(dself,
-		stralloc(_("No tapestart header -- unlabeled device?")),
+		g_strdup(_("No tapestart header -- unlabeled device?")),
 		DEVICE_STATUS_VOLUME_UNLABELED);
         return dself->status;
     }
@@ -972,13 +972,13 @@ tape_device_write_block(Device * pself, guint size, gpointer data) {
 
 	case RESULT_NO_SPACE:
 	    device_set_error(pself,
-		stralloc(_("No space left on device")),
+		g_strdup(_("No space left on device")),
 		DEVICE_STATUS_VOLUME_ERROR);
 	    pself->is_eom = TRUE;
 	    return FALSE;
 
 	default:
-	    msg = stralloc(_("unknown error"));
+	    msg = g_strdup(_("unknown error"));
 	case RESULT_ERROR:
 	    device_set_error(pself,
 		g_strdup_printf(_("Error writing block: %s"), msg),
@@ -1054,12 +1054,12 @@ static int tape_device_read_block (Device * pself, gpointer buf,
         pself->is_eof = TRUE;
 	pself->in_file = FALSE;
 	device_set_error(pself,
-	    stralloc(_("EOF")),
+	    g_strdup(_("EOF")),
 	    DEVICE_STATUS_SUCCESS);
         return -1;
 
     default:
-	msg = stralloc(_("unknown error"));
+	msg = g_strdup(_("unknown error"));
     case RESULT_ERROR:
 	device_set_error(pself,
 	    vstrallocf(_("Error reading from tape device: %s"), msg),
@@ -1087,7 +1087,7 @@ static gboolean write_tapestart_header(TapeDevice * self, char * label,
      header_buf = device_build_amanda_header(d_self, header, NULL);
      if (header_buf == NULL) {
 	 device_set_error(d_self,
-	    stralloc(_("Tapestart header won't fit in a single block!")),
+	    g_strdup(_("Tapestart header won't fit in a single block!")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	 dumpfile_free(header);
          return FALSE;
@@ -1242,7 +1242,7 @@ static gboolean tape_device_start_file(Device * d_self,
     amanda_header = device_build_amanda_header(d_self, info, NULL);
     if (amanda_header == NULL) {
 	device_set_error(d_self,
-	    stralloc(_("Amanda file header won't fit in a single block!")),
+	    g_strdup(_("Amanda file header won't fit in a single block!")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1402,11 +1402,11 @@ reseek:
             return make_tapeend_header();
 
 	case RESULT_SMALL_BUFFER:
-	    msg = stralloc(_("block size too small"));
+	    msg = g_strdup(_("block size too small"));
 	    break;
 
 	default:
-	    msg = stralloc(_("unknown error"));
+	    msg = g_strdup(_("unknown error"));
 	case RESULT_ERROR:
 	    break;
         }
@@ -1438,7 +1438,7 @@ reseek:
     default:
         tape_rewind(self->fd);
 	device_set_error(d_self,
-	    stralloc(_("Invalid amanda header while reading file header")),
+	    g_strdup(_("Invalid amanda header while reading file header")),
 	    DEVICE_STATUS_VOLUME_ERROR);
         amfree(rval);
         return NULL;
@@ -1560,7 +1560,7 @@ tape_device_finish (Device * d_self) {
 	header = device_build_amanda_header(d_self, &file, NULL);
 	if (!header) {
 	    device_set_error(d_self,
-		stralloc(_("Amanda file header won't fit in a single block!")),
+		g_strdup(_("Amanda file header won't fit in a single block!")),
 		DEVICE_STATUS_DEVICE_ERROR);
 	    goto finish_error;
 	}

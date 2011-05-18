@@ -493,7 +493,7 @@ link_elements(
 
     /* debug-log the xfer's linkage */
     len = xfer->elements->len;
-    linkage_str = stralloc("Final linkage: ");
+    linkage_str = g_strdup("Final linkage: ");
     for (i = 0; i < len; i++) {
 	XferElement *elt = g_ptr_array_index(xfer->elements, i);
 

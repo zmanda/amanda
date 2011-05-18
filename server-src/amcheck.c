@@ -158,7 +158,7 @@ main(
 			    g_printf(_("Multiple -M options\n"));
 			    exit(1);
 			}
-			mailto=stralloc(optarg);
+			mailto=g_strdup(optarg);
 			if(!validate_mailto(mailto)){
 			   g_printf(_("Invalid characters in mail address\n"));
 			   exit(1);
@@ -429,7 +429,7 @@ main(
 	}
 	if(mailto) {
 	    a = (char **) g_new0(char *, 2);
-	    a[1] = stralloc(mailto);
+	    a[1] = g_strdup(mailto);
 	    a[2] = NULL;
 	} else {
 	    /* (note that validate_mailto doesn't allow any quotes, so this
@@ -859,7 +859,7 @@ start_server_check(
 	/*
 	 * XXX There Really Ought to be some error-checking here... dhw
 	 */
-	tape_dir = stralloc(tapefile);
+	tape_dir = g_strdup(tapefile);
 	if ((lastslash = strrchr((const char *)tape_dir, '/')) != NULL) {
 	    *lastslash = '\0';
 	/*
@@ -1930,7 +1930,7 @@ start_host(
 		    g_fprintf(outf, _("Dumptype configuration is not GNUTAR or DUMP."
 				    " It is case sensitive\n"));
 		    remote_errors++;
-		    l = stralloc("");
+		    l = g_strdup("");
 		} else {
 		    l = vstralloc("<dle>\n"
 				  "  <program>APPLICATION</program>\n", NULL);

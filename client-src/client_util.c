@@ -61,7 +61,7 @@ fixup_relative(
 	amfree(dirname);
     }
     else {
-	newname = stralloc(name);
+	newname = g_strdup(name);
     }
     return newname;
 }
@@ -463,7 +463,7 @@ parse_options(
     char *p, *tok;
     char *quoted;
 
-    p = stralloc(str);
+    p = g_strdup(str);
     tok = strtok(p,";");
 
     while (tok != NULL) {
@@ -478,7 +478,7 @@ parse_options(
 		amfree(quoted);
 		amfree(dle->auth);
 	    }
-	    dle->auth = stralloc(&tok[5]);
+	    dle->auth = g_strdup(&tok[5]);
 	}
 	else if(am_has_feature(fs, fe_options_bsd_auth)
 	   && BSTRNCMP(tok, "bsd-auth") == 0) {
@@ -489,7 +489,7 @@ parse_options(
 		}
 		amfree(dle->auth);
 	    }
-	    dle->auth = stralloc("bsd");
+	    dle->auth = g_strdup("bsd");
 	}
 	else if (BSTRNCMP(tok, "compress-fast") == 0) {
 	    if (dle->compress != COMP_NONE) {
@@ -535,7 +535,7 @@ parse_options(
 		}
 	    }
 	    amfree(dle->compprog);
-	    dle->compprog = stralloc(tok + sizeof("srvcomp-cust=") -1);
+	    dle->compprog = g_strdup(tok + sizeof("srvcomp-cust=") -1);
 	    dle->compress = COMP_SERVER_CUST;
 	}
 	else if (BSTRNCMP(tok, "comp-cust=") == 0) {
@@ -546,7 +546,7 @@ parse_options(
 		}
 	    }
 	    amfree(dle->compprog);
-	    dle->compprog = stralloc(tok + sizeof("comp-cust=") -1);
+	    dle->compprog = g_strdup(tok + sizeof("comp-cust=") -1);
 	    dle->compress = COMP_CUST;
 	    /* parse encryption options */
 	} 
@@ -558,7 +558,7 @@ parse_options(
 		}
 	    }
 	    amfree(dle->srv_encrypt);
-	    dle->srv_encrypt = stralloc(tok + sizeof("encrypt-serv-cust=") -1);
+	    dle->srv_encrypt = g_strdup(tok + sizeof("encrypt-serv-cust=") -1);
 	    dle->encrypt = ENCRYPT_SERV_CUST;
 	} 
 	else if (BSTRNCMP(tok, "encrypt-cust=") == 0) {
@@ -569,16 +569,16 @@ parse_options(
 		}
 	    }
 	    amfree(dle->clnt_encrypt);
-	    dle->clnt_encrypt= stralloc(tok + sizeof("encrypt-cust=") -1);
+	    dle->clnt_encrypt= g_strdup(tok + sizeof("encrypt-cust=") -1);
 	    dle->encrypt = ENCRYPT_CUST;
 	} 
 	else if (BSTRNCMP(tok, "server-decrypt-option=") == 0) {
 	  amfree(dle->srv_decrypt_opt);
-	  dle->srv_decrypt_opt = stralloc(tok + sizeof("server-decrypt-option=") -1);
+	  dle->srv_decrypt_opt = g_strdup(tok + sizeof("server-decrypt-option=") -1);
 	}
 	else if (BSTRNCMP(tok, "client-decrypt-option=") == 0) {
 	  amfree(dle->clnt_decrypt_opt);
-	  dle->clnt_decrypt_opt = stralloc(tok + sizeof("client-decrypt-option=") -1);
+	  dle->clnt_decrypt_opt = g_strdup(tok + sizeof("client-decrypt-option=") -1);
 	}
 	else if (BSTRNCMP(tok, "no-record") == 0) {
 	    if (dle->record != 1) {
@@ -665,44 +665,44 @@ application_property_add_to_argv(
 	if (bsu->include_file && dle->include_file) {
 	    for (incl = dle->include_file->first; incl != NULL;
 		 incl = incl->next) {
-		g_ptr_array_add(argv_ptr, stralloc("--include-file"));
-		g_ptr_array_add(argv_ptr, stralloc(incl->name));
+		g_ptr_array_add(argv_ptr, g_strdup("--include-file"));
+		g_ptr_array_add(argv_ptr, g_strdup(incl->name));
 	    }
 	}
 	if (bsu->include_list && dle->include_list) {
 	    for (incl = dle->include_list->first; incl != NULL;
 		 incl = incl->next) {
-		g_ptr_array_add(argv_ptr, stralloc("--include-list"));
-		g_ptr_array_add(argv_ptr, stralloc(incl->name));
+		g_ptr_array_add(argv_ptr, g_strdup("--include-list"));
+		g_ptr_array_add(argv_ptr, g_strdup(incl->name));
 	    }
 	}
 	if (bsu->include_optional && dle->include_optional) {
-	    g_ptr_array_add(argv_ptr, stralloc("--include-optional"));
-	    g_ptr_array_add(argv_ptr, stralloc("yes"));
+	    g_ptr_array_add(argv_ptr, g_strdup("--include-optional"));
+	    g_ptr_array_add(argv_ptr, g_strdup("yes"));
 	}
 
 	if (bsu->exclude_file && dle->exclude_file) {
 	    for (excl = dle->exclude_file->first; excl != NULL;
 	 	 excl = excl->next) {
-		g_ptr_array_add(argv_ptr, stralloc("--exclude-file"));
-		g_ptr_array_add(argv_ptr, stralloc(excl->name));
+		g_ptr_array_add(argv_ptr, g_strdup("--exclude-file"));
+		g_ptr_array_add(argv_ptr, g_strdup(excl->name));
 	    }
 	}
 	if (bsu->exclude_list && dle->exclude_list) {
 	    for (excl = dle->exclude_list->first; excl != NULL;
 		excl = excl->next) {
-		g_ptr_array_add(argv_ptr, stralloc("--exclude-list"));
-		g_ptr_array_add(argv_ptr, stralloc(excl->name));
+		g_ptr_array_add(argv_ptr, g_strdup("--exclude-list"));
+		g_ptr_array_add(argv_ptr, g_strdup(excl->name));
 	    }
 	}
 	if (bsu->exclude_optional && dle->exclude_optional) {
-	    g_ptr_array_add(argv_ptr, stralloc("--exclude-optional"));
-	    g_ptr_array_add(argv_ptr, stralloc("yes"));
+	    g_ptr_array_add(argv_ptr, g_strdup("--exclude-optional"));
+	    g_ptr_array_add(argv_ptr, g_strdup("yes"));
 	}
 
 	if (bsu->features && amfeatures) {
 	    char *feature_string = am_feature_to_string(amfeatures);
-	    g_ptr_array_add(argv_ptr, stralloc("--amfeatures"));
+	    g_ptr_array_add(argv_ptr, g_strdup("--amfeatures"));
 	    g_ptr_array_add(argv_ptr, feature_string);
 	}
 
@@ -710,12 +710,12 @@ application_property_add_to_argv(
 	    bsu->data_path_set & DATA_PATH_DIRECTTCP) {
 	    GSList *directtcp;
 
-	    g_ptr_array_add(argv_ptr, stralloc("--data-path"));
-	    g_ptr_array_add(argv_ptr, stralloc("directtcp"));
+	    g_ptr_array_add(argv_ptr, g_strdup("--data-path"));
+	    g_ptr_array_add(argv_ptr, g_strdup("directtcp"));
 	    for (directtcp = dle->directtcp_list; directtcp != NULL;
 						  directtcp = directtcp->next) {
-		g_ptr_array_add(argv_ptr, stralloc("--direct-tcp"));
-		g_ptr_array_add(argv_ptr, stralloc(directtcp->data));
+		g_ptr_array_add(argv_ptr, g_strdup("--direct-tcp"));
+		g_ptr_array_add(argv_ptr, g_strdup(directtcp->data));
 		break; /* XXX temporary; apps only support one ip:port pair */
 	    }
 	}
@@ -915,23 +915,23 @@ backup_support_option(
 
     *errarray = g_ptr_array_new();
     cmd = vstralloc(APPLICATION_DIR, "/", program, NULL);
-    g_ptr_array_add(argv_ptr, stralloc(program));
-    g_ptr_array_add(argv_ptr, stralloc("support"));
+    g_ptr_array_add(argv_ptr, g_strdup(program));
+    g_ptr_array_add(argv_ptr, g_strdup("support"));
     if (g_options->config) {
-	g_ptr_array_add(argv_ptr, stralloc("--config"));
-	g_ptr_array_add(argv_ptr, stralloc(g_options->config));
+	g_ptr_array_add(argv_ptr, g_strdup("--config"));
+	g_ptr_array_add(argv_ptr, g_strdup(g_options->config));
     }
     if (g_options->hostname) {
-	g_ptr_array_add(argv_ptr, stralloc("--host"));
-	g_ptr_array_add(argv_ptr, stralloc(g_options->hostname));
+	g_ptr_array_add(argv_ptr, g_strdup("--host"));
+	g_ptr_array_add(argv_ptr, g_strdup(g_options->hostname));
     }
     if (disk) {
-	g_ptr_array_add(argv_ptr, stralloc("--disk"));
-	g_ptr_array_add(argv_ptr, stralloc(disk));
+	g_ptr_array_add(argv_ptr, g_strdup("--disk"));
+	g_ptr_array_add(argv_ptr, g_strdup(disk));
     }
     if (amdevice) {
-	g_ptr_array_add(argv_ptr, stralloc("--device"));
-	g_ptr_array_add(argv_ptr, stralloc(amdevice));
+	g_ptr_array_add(argv_ptr, g_strdup("--device"));
+	g_ptr_array_add(argv_ptr, g_strdup(amdevice));
     }
     g_ptr_array_add(argv_ptr, NULL);
 
@@ -1048,7 +1048,7 @@ backup_support_option(
     }
     while((line = agets(streamerr)) != NULL) {
 	if (strlen(line) > 0) {
-	    g_ptr_array_add(*errarray, stralloc(line));
+	    g_ptr_array_add(*errarray, g_strdup(line));
 	    dbprintf("Application '%s': %s\n", program, line);
 	}
 	amfree(bsu);
@@ -1159,36 +1159,36 @@ run_client_script(
     }
 
     cmd = vstralloc(APPLICATION_DIR, "/", script->plugin, NULL);
-    g_ptr_array_add(argv_ptr, stralloc(script->plugin));
+    g_ptr_array_add(argv_ptr, g_strdup(script->plugin));
 
-    g_ptr_array_add(argv_ptr, stralloc(command));
-    g_ptr_array_add(argv_ptr, stralloc("--execute-where"));
-    g_ptr_array_add(argv_ptr, stralloc("client"));
+    g_ptr_array_add(argv_ptr, g_strdup(command));
+    g_ptr_array_add(argv_ptr, g_strdup("--execute-where"));
+    g_ptr_array_add(argv_ptr, g_strdup("client"));
 
     if (g_options->config) {
-	g_ptr_array_add(argv_ptr, stralloc("--config"));
-	g_ptr_array_add(argv_ptr, stralloc(g_options->config));
+	g_ptr_array_add(argv_ptr, g_strdup("--config"));
+	g_ptr_array_add(argv_ptr, g_strdup(g_options->config));
     }
     if (g_options->hostname) {
-	g_ptr_array_add(argv_ptr, stralloc("--host"));
-	g_ptr_array_add(argv_ptr, stralloc(g_options->hostname));
+	g_ptr_array_add(argv_ptr, g_strdup("--host"));
+	g_ptr_array_add(argv_ptr, g_strdup(g_options->hostname));
     }
     if (dle->disk) {
-	g_ptr_array_add(argv_ptr, stralloc("--disk"));
-	g_ptr_array_add(argv_ptr, stralloc(dle->disk));
+	g_ptr_array_add(argv_ptr, g_strdup("--disk"));
+	g_ptr_array_add(argv_ptr, g_strdup(dle->disk));
     }
     if (dle->device) {
-	g_ptr_array_add(argv_ptr, stralloc("--device"));
-	g_ptr_array_add(argv_ptr, stralloc(dle->device));
+	g_ptr_array_add(argv_ptr, g_strdup("--device"));
+	g_ptr_array_add(argv_ptr, g_strdup(dle->device));
     }
     if (dle->levellist) {
 	levellist_t levellist;
 	char number[NUM_STR_SIZE];
 	for (levellist=dle->levellist; levellist; levellist=levellist->next) {
 	    level_t *alevel = (level_t *)levellist->data;
-	    g_ptr_array_add(argv_ptr, stralloc("--level"));
+	    g_ptr_array_add(argv_ptr, g_strdup("--level"));
 	    g_snprintf(number, sizeof(number), "%d", alevel->level);
-	    g_ptr_array_add(argv_ptr, stralloc(number));
+	    g_ptr_array_add(argv_ptr, g_strdup(number));
 	}
     }
     property_add_to_argv(argv_ptr, script->property);
@@ -1224,11 +1224,11 @@ run_client_script(
 		    property_t *property;
 
 		    *property_value++ = '\0';
-		    property_value = stralloc(property_value);
+		    property_value = g_strdup(property_value);
 		    property = g_hash_table_lookup(script->result->proplist,
 						   property_name);
 		    if (!property) {
-			property_name = stralloc(property_name);
+			property_name = g_strdup(property_name);
 			property = g_new0(property_t, 1);
 			g_hash_table_insert(script->result->proplist,
 					    property_name, property);
@@ -1471,27 +1471,27 @@ run_calcsize(
     cmd = vstralloc(amlibexecdir, "/", "calcsize", NULL);
 
 
-    g_ptr_array_add(argv_ptr, stralloc("calcsize"));
+    g_ptr_array_add(argv_ptr, g_strdup("calcsize"));
     if (config)
-	g_ptr_array_add(argv_ptr, stralloc(config));
+	g_ptr_array_add(argv_ptr, g_strdup(config));
     else
-	g_ptr_array_add(argv_ptr, stralloc("NOCONFIG"));
+	g_ptr_array_add(argv_ptr, g_strdup("NOCONFIG"));
 
-    g_ptr_array_add(argv_ptr, stralloc(program));
+    g_ptr_array_add(argv_ptr, g_strdup(program));
 
     canonicalize_pathname(disk, tmppath);
-    g_ptr_array_add(argv_ptr, stralloc(tmppath));
+    g_ptr_array_add(argv_ptr, g_strdup(tmppath));
     canonicalize_pathname(dirname, tmppath);
-    g_ptr_array_add(argv_ptr, stralloc(tmppath));
+    g_ptr_array_add(argv_ptr, g_strdup(tmppath));
 
     if (file_exclude) {
-	g_ptr_array_add(argv_ptr, stralloc("-X"));
-	g_ptr_array_add(argv_ptr, stralloc(file_exclude));
+	g_ptr_array_add(argv_ptr, g_strdup("-X"));
+	g_ptr_array_add(argv_ptr, g_strdup(file_exclude));
     }
 
     if (file_include) {
-	g_ptr_array_add(argv_ptr, stralloc("-I"));
-	g_ptr_array_add(argv_ptr, stralloc(file_include));
+	g_ptr_array_add(argv_ptr, g_strdup("-I"));
+	g_ptr_array_add(argv_ptr, g_strdup(file_include));
     }
 
     for (alevel = levels; alevel != NULL; alevel = alevel->next) {
@@ -1504,14 +1504,14 @@ run_calcsize(
 		dumpsince = amdp->dates[i];
 	}
 	g_snprintf(number, sizeof(number), "%d", level);
-	g_ptr_array_add(argv_ptr, stralloc(number));
+	g_ptr_array_add(argv_ptr, g_strdup(number));
 	g_snprintf(number, sizeof(number), "%d", dumpsince);
-	g_ptr_array_add(argv_ptr, stralloc(number));
+	g_ptr_array_add(argv_ptr, g_strdup(number));
     }
 
     g_ptr_array_add(argv_ptr, NULL);
     command = (char *)g_ptr_array_index(argv_ptr, 0);
-    cmdline = stralloc(command);
+    cmdline = g_strdup(command);
     for(i = 1; i < argv_ptr->len - 1; i++)
 	cmdline = vstrextend(&cmdline, " ",
 			     (char *)g_ptr_array_index(argv_ptr,i), NULL);

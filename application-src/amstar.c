@@ -177,11 +177,11 @@ main(
     application_argument_t argument;
 
 #ifdef STAR
-    star_path = stralloc(STAR);
+    star_path = g_strdup(STAR);
 #else
     star_path = NULL;
 #endif
-    star_tardumps = stralloc("/etc/tardumps");
+    star_tardumps = g_strdup("/etc/tardumps");
     star_dle_tardumps = 0;
     star_onefilesystem = 1;
     star_sparse = 1;
@@ -257,22 +257,22 @@ main(
 	switch (c) {
 	case 1: if (optarg) {
 		    amfree(argument.config);
-		    argument.config = stralloc(optarg);
+		    argument.config = g_strdup(optarg);
 		}
 		break;
 	case 2: if (optarg) {
 		    amfree(argument.host);
-		    argument.host = stralloc(optarg);
+		    argument.host = g_strdup(optarg);
 		}
 		break;
 	case 3: if (optarg) {
 		    amfree(argument.dle.disk);
-		    argument.dle.disk = stralloc(optarg);
+		    argument.dle.disk = g_strdup(optarg);
 		}
 		break;
 	case 4: if (optarg) {
 		    amfree(argument.dle.device);
-		    argument.dle.device = stralloc(optarg);
+		    argument.dle.device = g_strdup(optarg);
 		}
 		break;
 	case 5: if (optarg) {
@@ -290,12 +290,12 @@ main(
 		break;
 	case 10: if (optarg) {
 		     amfree(star_path);
-		     star_path = stralloc(optarg);
+		     star_path = g_strdup(optarg);
 		 }
 		 break;
 	case 11: if (optarg) {
 		     amfree(star_tardumps);
-		     star_tardumps = stralloc(optarg);
+		     star_tardumps = g_strdup(optarg);
 		 }
 		 break;
 	case 12: if (optarg && strcasecmp(optarg, "NO") == 0)
@@ -341,13 +341,13 @@ main(
 		 break;
 	case 21: if (optarg) {
 		     amfree(star_directory);
-		     star_directory = stralloc(optarg);
+		     star_directory = g_strdup(optarg);
 		 }
 		 break;
 	case 22: if (optarg)
 		     argument.command_options =
 			g_slist_append(argument.command_options,
-				       stralloc(optarg));
+				       g_strdup(optarg));
 		 break;
 	case 23: if (optarg)
 		     argument.dle.exclude_file =
@@ -367,9 +367,9 @@ main(
     }
 
     if (!argument.dle.disk && argument.dle.device)
-	argument.dle.disk = stralloc(argument.dle.device);
+	argument.dle.disk = g_strdup(argument.dle.device);
     if (!argument.dle.device && argument.dle.disk)
-	argument.dle.device = stralloc(argument.dle.disk);
+	argument.dle.device = g_strdup(argument.dle.disk);
 
     argument.argc = argc - optind;
     argument.argv = argv + optind;
@@ -545,7 +545,7 @@ amstar_estimate(
 	errmsg = vstrallocf(_("STAR-PATH not defined"));
 	goto common_error;
     }
-    cmd = stralloc(star_path);
+    cmd = g_strdup(star_path);
 
     start_time = curclock();
 
@@ -742,7 +742,7 @@ amstar_backup(
 
     argv_ptr = amstar_build_argv(argument, level, CMD_BACKUP);
 
-    cmd = stralloc(star_path);
+    cmd = g_strdup(star_path);
 
     starpid = pipespawnv(cmd, STDIN_PIPE|STDERR_PIPE, 1,
 			 &dumpin, &dataf, &outf, (char **)argv_ptr->pdata);
@@ -875,9 +875,9 @@ amstar_restore(
 	error(_("STAR-PATH not defined"));
     }
 
-    cmd = stralloc(star_path);
+    cmd = g_strdup(star_path);
 
-    g_ptr_array_add(argv_ptr, stralloc(star_path));
+    g_ptr_array_add(argv_ptr, g_strdup(star_path));
     if (star_directory) {
 	struct stat stat_buf;
 	if(stat(star_directory, &stat_buf) != 0) {
@@ -893,23 +893,23 @@ amstar_restore(
 	    exit(1);
 	}
 
-	g_ptr_array_add(argv_ptr, stralloc("-C"));
-	g_ptr_array_add(argv_ptr, stralloc(star_directory));
+	g_ptr_array_add(argv_ptr, g_strdup("-C"));
+	g_ptr_array_add(argv_ptr, g_strdup(star_directory));
     }
-    g_ptr_array_add(argv_ptr, stralloc("-x"));
-    g_ptr_array_add(argv_ptr, stralloc("-v"));
-    g_ptr_array_add(argv_ptr, stralloc("-xattr"));
-    g_ptr_array_add(argv_ptr, stralloc("-acl"));
-    g_ptr_array_add(argv_ptr, stralloc("errctl=WARN|SAMEFILE|SETTIME|DIFF|SETACL|SETXATTR|SETMODE|BADACL *"));
-    g_ptr_array_add(argv_ptr, stralloc("-no-fifo"));
-    g_ptr_array_add(argv_ptr, stralloc("-f"));
-    g_ptr_array_add(argv_ptr, stralloc("-"));
+    g_ptr_array_add(argv_ptr, g_strdup("-x"));
+    g_ptr_array_add(argv_ptr, g_strdup("-v"));
+    g_ptr_array_add(argv_ptr, g_strdup("-xattr"));
+    g_ptr_array_add(argv_ptr, g_strdup("-acl"));
+    g_ptr_array_add(argv_ptr, g_strdup("errctl=WARN|SAMEFILE|SETTIME|DIFF|SETACL|SETXATTR|SETMODE|BADACL *"));
+    g_ptr_array_add(argv_ptr, g_strdup("-no-fifo"));
+    g_ptr_array_add(argv_ptr, g_strdup("-f"));
+    g_ptr_array_add(argv_ptr, g_strdup("-"));
 
     if (argument->dle.exclude_list &&
 	argument->dle.exclude_list->nb_element == 1) {
-	g_ptr_array_add(argv_ptr, stralloc("-exclude-from"));
+	g_ptr_array_add(argv_ptr, g_strdup("-exclude-from"));
 	g_ptr_array_add(argv_ptr,
-			stralloc(argument->dle.exclude_list->first->name));
+			g_strdup(argument->dle.exclude_list->first->name));
     }
 
     if (argument->dle.include_list &&
@@ -920,18 +920,18 @@ amstar_restore(
 	    while (fgets(line, 2*PATH_MAX, include_list)) {
 		line[strlen(line)-1] = '\0'; /* remove '\n' */
 		if (strncmp(line, "./", 2) == 0)
-		    g_ptr_array_add(argv_ptr, stralloc(line+2)); /* remove ./ */
+		    g_ptr_array_add(argv_ptr, g_strdup(line+2)); /* remove ./ */
 		else if (strcmp(line, ".") != 0)
-		    g_ptr_array_add(argv_ptr, stralloc(line));
+		    g_ptr_array_add(argv_ptr, g_strdup(line));
 	    }
 	    fclose(include_list);
 	}
     }
     for (j=1; j< argument->argc; j++) {
 	if (strncmp(argument->argv[j], "./", 2) == 0)
-	    g_ptr_array_add(argv_ptr, stralloc(argument->argv[j]+2));/*remove ./ */
+	    g_ptr_array_add(argv_ptr, g_strdup(argument->argv[j]+2));/*remove ./ */
 	else if (strcmp(argument->argv[j], ".") != 0)
-	    g_ptr_array_add(argv_ptr, stralloc(argument->argv[j]));
+	    g_ptr_array_add(argv_ptr, g_strdup(argument->argv[j]));
     }
     g_ptr_array_add(argv_ptr, NULL);
 
@@ -960,12 +960,12 @@ amstar_validate(
 	goto pipe_to_null;
     }
 
-    cmd = stralloc(star_path);
+    cmd = g_strdup(star_path);
 
-    g_ptr_array_add(argv_ptr, stralloc(star_path));
-    g_ptr_array_add(argv_ptr, stralloc("-t"));
-    g_ptr_array_add(argv_ptr, stralloc("-f"));
-    g_ptr_array_add(argv_ptr, stralloc("-"));
+    g_ptr_array_add(argv_ptr, g_strdup(star_path));
+    g_ptr_array_add(argv_ptr, g_strdup("-t"));
+    g_ptr_array_add(argv_ptr, g_strdup("-f"));
+    g_ptr_array_add(argv_ptr, g_strdup("-"));
     g_ptr_array_add(argv_ptr, NULL);
 
     debug_executing(argv_ptr);
@@ -1011,61 +1011,61 @@ static GPtrArray *amstar_build_argv(
 	tardumpfile = vstralloc(star_tardumps, sdisk, NULL);
 	amfree(sdisk);
     } else {
-	tardumpfile = stralloc(star_tardumps);
+	tardumpfile = g_strdup(star_tardumps);
     }
 
-    g_ptr_array_add(argv_ptr, stralloc(star_path));
+    g_ptr_array_add(argv_ptr, g_strdup(star_path));
 
-    g_ptr_array_add(argv_ptr, stralloc("-c"));
-    g_ptr_array_add(argv_ptr, stralloc("-f"));
+    g_ptr_array_add(argv_ptr, g_strdup("-c"));
+    g_ptr_array_add(argv_ptr, g_strdup("-f"));
     if (command == CMD_ESTIMATE) {
-	g_ptr_array_add(argv_ptr, stralloc("/dev/null"));
+	g_ptr_array_add(argv_ptr, g_strdup("/dev/null"));
     } else {
-	g_ptr_array_add(argv_ptr, stralloc("-"));
+	g_ptr_array_add(argv_ptr, g_strdup("-"));
     }
-    g_ptr_array_add(argv_ptr, stralloc("-C"));
+    g_ptr_array_add(argv_ptr, g_strdup("-C"));
 
 #if defined(__CYGWIN__)
     {
 	char tmppath[PATH_MAX];
 
 	cygwin_conv_to_full_posix_path(dirname, tmppath);
-	g_ptr_array_add(argv_ptr, stralloc(tmppath));
+	g_ptr_array_add(argv_ptr, g_strdup(tmppath));
     }
 #else
-    g_ptr_array_add(argv_ptr, stralloc(dirname));
+    g_ptr_array_add(argv_ptr, g_strdup(dirname));
 #endif
-    g_ptr_array_add(argv_ptr, stralloc(fsname));
+    g_ptr_array_add(argv_ptr, g_strdup(fsname));
     if (star_onefilesystem)
-	g_ptr_array_add(argv_ptr, stralloc("-xdev"));
-    g_ptr_array_add(argv_ptr, stralloc("-link-dirs"));
-    g_ptr_array_add(argv_ptr, stralloc(levelstr));
+	g_ptr_array_add(argv_ptr, g_strdup("-xdev"));
+    g_ptr_array_add(argv_ptr, g_strdup("-link-dirs"));
+    g_ptr_array_add(argv_ptr, g_strdup(levelstr));
     g_ptr_array_add(argv_ptr, stralloc2("tardumps=", tardumpfile));
     if (command == CMD_BACKUP)
-	g_ptr_array_add(argv_ptr, stralloc("-wtardumps"));
+	g_ptr_array_add(argv_ptr, g_strdup("-wtardumps"));
 
-    g_ptr_array_add(argv_ptr, stralloc("-xattr"));
+    g_ptr_array_add(argv_ptr, g_strdup("-xattr"));
     if (star_acl)
-	g_ptr_array_add(argv_ptr, stralloc("-acl"));
-    g_ptr_array_add(argv_ptr, stralloc("H=exustar"));
-    g_ptr_array_add(argv_ptr, stralloc("errctl=WARN|SAMEFILE|DIFF|GROW|SHRINK|SPECIALFILE|GETXATTR|BADACL *"));
+	g_ptr_array_add(argv_ptr, g_strdup("-acl"));
+    g_ptr_array_add(argv_ptr, g_strdup("H=exustar"));
+    g_ptr_array_add(argv_ptr, g_strdup("errctl=WARN|SAMEFILE|DIFF|GROW|SHRINK|SPECIALFILE|GETXATTR|BADACL *"));
     if (star_sparse)
-	g_ptr_array_add(argv_ptr, stralloc("-sparse"));
-    g_ptr_array_add(argv_ptr, stralloc("-dodesc"));
+	g_ptr_array_add(argv_ptr, g_strdup("-sparse"));
+    g_ptr_array_add(argv_ptr, g_strdup("-dodesc"));
 
     for (copt = argument->command_options; copt != NULL; copt = copt->next) {
-	g_ptr_array_add(argv_ptr, stralloc((char *)copt->data));
+	g_ptr_array_add(argv_ptr, g_strdup((char *)copt->data));
     }
 
     if (command == CMD_BACKUP && argument->dle.create_index)
-	g_ptr_array_add(argv_ptr, stralloc("-v"));
+	g_ptr_array_add(argv_ptr, g_strdup("-v"));
 
     if ((argument->dle.exclude_file &&
 	 argument->dle.exclude_file->nb_element >= 1) ||
 	(argument->dle.exclude_list &&
 	 argument->dle.exclude_list->nb_element >= 1)) {
-	g_ptr_array_add(argv_ptr, stralloc("-match-tree"));
-	g_ptr_array_add(argv_ptr, stralloc("-not"));
+	g_ptr_array_add(argv_ptr, g_strdup("-match-tree"));
+	g_ptr_array_add(argv_ptr, g_strdup("-not"));
     }
     if (argument->dle.exclude_file &&
 	argument->dle.exclude_file->nb_element >= 1) {
@@ -1108,7 +1108,7 @@ static GPtrArray *amstar_build_argv(
 	}
     }
 
-    g_ptr_array_add(argv_ptr, stralloc("."));
+    g_ptr_array_add(argv_ptr, g_strdup("."));
 
     g_ptr_array_add(argv_ptr, NULL);
 
