@@ -1661,7 +1661,7 @@ main(
 		    reply(200, "NODLE");
 		} else {
 		    optionstr = xml_optionstr(dp, 0);
-		    l = vstralloc("<dle>\n",
+		    l = g_strjoin(NULL, "<dle>\n",
 			      "  <program>", dp->program, "</program>\n", NULL);
 		    if (dp->application) {
 			application_t *application;

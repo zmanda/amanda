@@ -402,7 +402,7 @@ traverse_dirs(
 	return;
 
     has_exclude = !is_empty_sl(exclude_sl) && (use_gtar_excl || use_star_excl);
-    aparent = vstralloc(parent_dir, "/", include, NULL);
+    aparent = g_strjoin(NULL, parent_dir, "/", include, NULL);
 
     /* We (may) need root privs for the *stat() calls here. */
     set_root_privs(1);

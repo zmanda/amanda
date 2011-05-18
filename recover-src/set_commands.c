@@ -460,7 +460,7 @@ cd_glob(
         path_on_disk = stralloc2("/", regex_path);
     else {
         char *clean_disk_path = clean_regex(disk_path, 0);
-        path_on_disk = vstralloc(clean_disk_path, "/", regex_path, NULL);
+        path_on_disk = g_strjoin(NULL, clean_disk_path, "/", regex_path, NULL);
         amfree(clean_disk_path);
     }
 
@@ -518,7 +518,7 @@ cd_regex(
         path_on_disk = stralloc2("/", uqregex);
     else {
         char *clean_disk_path = clean_regex(disk_path, 0);
-        path_on_disk = vstralloc(clean_disk_path, "/", regex, NULL);
+        path_on_disk = g_strjoin(NULL, clean_disk_path, "/", regex, NULL);
         amfree(clean_disk_path);
     }
 

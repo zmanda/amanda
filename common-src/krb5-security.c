@@ -448,7 +448,7 @@ gss_client(
 
     auth_debug(1, "gss_client\n");
 
-    send_tok.value = vstralloc("host/", rs->rc->hostname, NULL);
+    send_tok.value = g_strjoin(NULL, "host/", rs->rc->hostname, NULL);
     send_tok.length = strlen(send_tok.value) + 1;
     maj_stat = gss_import_name(&min_stat, &send_tok, GSS_C_NULL_OID,
 	&gss_name);
@@ -575,7 +575,7 @@ gss_server(
     }
 
     rc->gss_context = GSS_C_NO_CONTEXT;
-    send_tok.value = vstralloc("host/", myhostname, NULL);
+    send_tok.value = g_strjoin(NULL, "host/", myhostname, NULL);
     send_tok.length = strlen(send_tok.value) + 1;
     for (p = send_tok.value; *p != '\0'; p++) {
 	if (isupper((int)*p))

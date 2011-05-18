@@ -311,9 +311,9 @@ main(
     if(strlen(driver_timestamp) == 8) {
 	if (!nodump) {
 	    char *conf_logdir = getconf_str(CNF_LOGDIR);
-	    char *logfile    = vstralloc(conf_logdir, "/log.",
+	    char *logfile    = g_strjoin(NULL, conf_logdir, "/log.",
 					 driver_timestamp, ".0", NULL);
-	    char *oldlogfile = vstralloc(conf_logdir, "/oldlog/log.",
+	    char *oldlogfile = g_strjoin(NULL, conf_logdir, "/oldlog/log.",
 					 driver_timestamp, ".0", NULL);
 	    if(access(logfile, F_OK) == 0 || access(oldlogfile, F_OK) == 0) {
 		log_add(L_WARNING, _("WARNING: This is not the first amdump run today. Enable the usetimestamps option in the configuration file if you want to run amdump more than once per calendar day."));
@@ -327,9 +327,9 @@ main(
 	hd_driver_timestamp = g_strdup(driver_timestamp);
     }
 
-    taper_program = vstralloc(amlibexecdir, "/", "taper", NULL);
-    dumper_program = vstralloc(amlibexecdir, "/", "dumper", NULL);
-    chunker_program = vstralloc(amlibexecdir, "/", "chunker", NULL);
+    taper_program = g_strjoin(NULL, amlibexecdir, "/", "taper", NULL);
+    dumper_program = g_strjoin(NULL, amlibexecdir, "/", "dumper", NULL);
+    chunker_program = g_strjoin(NULL, amlibexecdir, "/", "chunker", NULL);
 
     conf_taperalgo = getconf_taperalgo(CNF_TAPERALGO);
     conf_taper_parallel_write = getconf_int(CNF_TAPER_PARALLEL_WRITE);

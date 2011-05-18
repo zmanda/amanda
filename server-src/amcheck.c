@@ -302,7 +302,7 @@ main(
      */
     if(do_clientchk && (do_localchk || do_tapechk)) {
 	/* we need the temp file */
-	tempfname = vstralloc(AMANDA_TMPDIR, "/amcheck.temp.", pid_str, NULL);
+	tempfname = g_strjoin(NULL, AMANDA_TMPDIR, "/amcheck.temp.", pid_str, NULL);
 	if((tempfd = open(tempfname, O_RDWR|O_CREAT|O_TRUNC, 0600)) == -1) {
 	    error(_("could not open temporary amcheck output file %s: %s. Check permissions"), tempfname, strerror(errno));
 	    /*NOTREACHED*/
@@ -313,7 +313,7 @@ main(
 
     if(mailout) {
 	/* the main fd is a file too */
-	mainfname = vstralloc(AMANDA_TMPDIR, "/amcheck.main.", pid_str, NULL);
+	mainfname = g_strjoin(NULL, AMANDA_TMPDIR, "/amcheck.main.", pid_str, NULL);
 	if((mainfd = open(mainfname, O_RDWR|O_CREAT|O_TRUNC, 0600)) == -1) {
 	    error(_("could not open amcheck server output file %s: %s. Check permissions"), mainfname, strerror(errno));
 	    /*NOTREACHED*/
@@ -579,7 +579,7 @@ test_server_pgm(
     int pgmbad = 0;
     char *quoted;
 
-    pgm = vstralloc(dir, "/", pgm, NULL);
+    pgm = g_strjoin(NULL, dir, "/", pgm, NULL);
     quoted = quote_string(pgm);
     if(stat(pgm, &statbuf) == -1) {
 	g_fprintf(outf, _("ERROR: program %s: does not exist\n"),
@@ -629,7 +629,7 @@ static gboolean test_tape_status(FILE * outf) {
     fflush(outf);
     outfd = fileno(outf);
 
-    amcheck_device = vstralloc(amlibexecdir, "/", "amcheck-device", NULL);
+    amcheck_device = g_strjoin(NULL, amlibexecdir, "/", "amcheck-device", NULL);
     args = get_config_options(overwrite? 3 : 2);
     args[0] = amcheck_device; /* steal the reference */
     args[1] = g_strdup(get_config_name());
@@ -1146,7 +1146,7 @@ start_server_check(
 	struct stat statbuf;
 
 	conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
-	logfile = vstralloc(conf_logdir, "/log", NULL);
+	logfile = g_strjoin(NULL, conf_logdir, "/log", NULL);
 
 	quoted = quote_string(conf_logdir);
 	if(stat(conf_logdir, &statbuf) == -1) {
@@ -1170,7 +1170,7 @@ start_server_check(
 	    }
 	}
 
-	olddir = vstralloc(conf_logdir, "/oldlog", NULL);
+	olddir = g_strjoin(NULL, conf_logdir, "/oldlog", NULL);
 	quoted = quote_string(olddir);
 	if (logbad == 0 && stat(olddir,&stat_old) == 0) { /* oldlog exist */
 	    if(!(S_ISDIR(stat_old.st_mode))) {
@@ -1328,7 +1328,7 @@ start_server_check(
 		    char *quotedif;
 
 		    diskdir = newstralloc2(diskdir, hostinfodir, disk);
-		    infofile = vstralloc(diskdir, "/", "info", NULL);
+		    infofile = g_strjoin(NULL, diskdir, "/", "info", NULL);
 		    quoted = quote_string(diskdir);
 		    quotedif = quote_string(infofile);
 		    if(stat(diskdir, &statbuf) == -1) {
@@ -1723,7 +1723,7 @@ start_host(
 	}
 
 	g_snprintf(number, sizeof(number), "%d", hostp->maxdumps);
-	req = vstralloc("SERVICE ", "selfcheck", "\n",
+	req = g_strjoin(NULL, "SERVICE ", "selfcheck", "\n",
 			"OPTIONS ",
 			has_features ? "features=" : "",
 			has_features ? our_feature_string : "",
@@ -1891,7 +1891,7 @@ start_host(
 		  } 
 		}
 		if (am_has_feature(hostp->features, fe_req_xml)) {
-		    l = vstralloc("<dle>\n"
+		    l = g_strjoin(NULL, "<dle>\n"
 				  "  <program>",
 				  dp->program,
 				  "</program>\n", NULL);
@@ -1904,7 +1904,7 @@ start_host(
 		    vstrextend(&l, o, "</dle>\n", NULL);
 		} else {
 		    if (dp->device) {
-			l = vstralloc(calcsize,
+			l = g_strjoin(NULL, calcsize,
 				      dp->program, " ",
 				      qname, " ",
 				      qdevice,
@@ -1913,7 +1913,7 @@ start_host(
 				      "\n",
 				      NULL);
 		    } else {
-			l = vstralloc(calcsize,
+			l = g_strjoin(NULL, calcsize,
 				      dp->program, " ",
 				      qname,
 				      " 0 OPTIONS |",
@@ -1932,7 +1932,7 @@ start_host(
 		    remote_errors++;
 		    l = g_strdup("");
 		} else {
-		    l = vstralloc("<dle>\n"
+		    l = g_strjoin(NULL, "<dle>\n"
 				  "  <program>APPLICATION</program>\n", NULL);
 		    if (dp->application) {
 			application_t *application;
@@ -1999,7 +1999,7 @@ start_host(
 	}
     }
     else { /* noop service */
-	req = vstralloc("SERVICE ", "noop", "\n",
+	req = g_strjoin(NULL, "SERVICE ", "noop", "\n",
 			"OPTIONS ",
 			"features=", our_feature_string, ";",
 			"\n",

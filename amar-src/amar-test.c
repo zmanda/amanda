@@ -1113,7 +1113,7 @@ main(int argc, char **argv)
 	TU_END()
     };
 
-    temp_filename = vstralloc(cwd, "/amar-test.tmp", NULL);
+    temp_filename = g_strjoin(NULL, cwd, "/amar-test.tmp", NULL);
 
     rv = testutils_run_tests(argc, argv, tests);
     unlink(temp_filename);

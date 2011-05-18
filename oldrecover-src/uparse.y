@@ -73,7 +73,7 @@ ucommand:
   |	help_command
   |     extract_command
   |     {
-	    char * errstr = vstralloc("Invalid command: ", yytext, NULL);
+	    char * errstr = g_strjoin(NULL, "Invalid command: ", yytext, NULL);
 	    yyerror(errstr);
 	    amfree(errstr);
 	    YYERROR;

@@ -719,7 +719,7 @@ merge_path(
     if (path1[len-1] == '/' && path2[0] == '/') {
 	result = stralloc2(path1, path2+1);
     } else if (path1[len-1] != '/' && path2[0] != '/') {
-	result = vstralloc(path1, "/", path2, NULL);
+	result = g_strjoin(NULL, path1, "/", path2, NULL);
     } else {
 	result = stralloc2(path1, path2);
     }
@@ -872,7 +872,7 @@ add_file(
 	}
     } else {
 	char *clean_disk_path = clean_regex(disk_path, 0);
-	path_on_disk = vstralloc(clean_disk_path, "/", regex, NULL);
+	path_on_disk = g_strjoin(NULL, clean_disk_path, "/", regex, NULL);
 	amfree(clean_disk_path);
     }
 
@@ -1240,7 +1240,7 @@ delete_file(
 	}
     } else {
 	char *clean_disk_path = clean_regex(disk_path, 0);
-	path_on_disk = vstralloc(clean_disk_path, "/", regex, NULL);
+	path_on_disk = g_strjoin(NULL, clean_disk_path, "/", regex, NULL);
 	amfree(clean_disk_path);
     }
 
@@ -1662,7 +1662,7 @@ extract_files_setup(
     /* We assume that amidxtaped support fe_amidxtaped_options_features */
     /*                               and fe_amidxtaped_options_auth     */
     /* We should send a noop to really know                             */
-    req = vstralloc("SERVICE amidxtaped\n",
+    req = g_strjoin(NULL, "SERVICE amidxtaped\n",
 		    "OPTIONS ", "features=", our_features_string, ";",
 				"auth=", authopt, ";",
 		    "\n", NULL);
@@ -2068,7 +2068,7 @@ extract_files_child(
 	}
 	break;
     case IS_APPLICATION_API:
-	cmd = vstralloc(APPLICATION_DIR, "/", ctl_data->file.application, NULL);
+	cmd = g_strjoin(NULL, APPLICATION_DIR, "/", ctl_data->file.application, NULL);
 	break;
     }
     if (cmd) {

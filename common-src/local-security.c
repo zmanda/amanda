@@ -247,7 +247,7 @@ runlocal(
     set_root_privs(-1);
 
     if(!xamandad_path || strlen(xamandad_path) <= 1) 
-	xamandad_path = vstralloc(amlibexecdir, "/", "amandad", NULL);
+	xamandad_path = g_strjoin(NULL, amlibexecdir, "/", "amandad", NULL);
 
 #ifndef SINGLE_USERID
     if (client_username && *client_username != '\0') {

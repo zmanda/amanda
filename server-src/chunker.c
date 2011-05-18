@@ -499,7 +499,7 @@ startup_chunker(
 	return -1;
     }
 
-    tmp_filename = vstralloc(filename, ".tmp", NULL);
+    tmp_filename = g_strjoin(NULL, filename, ".tmp", NULL);
     pc = strrchr(tmp_filename, '/');
     g_assert(pc != NULL);
     *pc = '\0';

@@ -229,7 +229,7 @@ start_backup(
 	int baselevel;
 	char *sdisk = sanitise_filename(dle->disk);
 
-	basename = vstralloc(gnutar_list_dir,
+	basename = g_strjoin(NULL, gnutar_list_dir,
 			     "/",
 			     host,
 			     sdisk,
@@ -237,7 +237,7 @@ start_backup(
 	amfree(sdisk);
 
 	g_snprintf(number, sizeof(number), "%d", level);
-	incrname = vstralloc(basename, "_", number, ".new", NULL);
+	incrname = g_strjoin(NULL, basename, "_", number, ".new", NULL);
 	unlink(incrname);
 
 	/*
@@ -354,7 +354,7 @@ start_backup(
 #else
 #  define PROGRAM_GNUTAR "tar"
 #endif
-    indexcmd = vstralloc(
+    indexcmd = g_strjoin(NULL, 
 			 PROGRAM_GNUTAR,
 			 " -tf", " -",
 			 " 2>/dev/null",
@@ -520,7 +520,7 @@ start_backup(
 	if (nb_exclude > 0) file_exclude = build_exclude(dle, 0);
 	if (nb_include > 0) file_include = build_include(dle, 0);
 
-	cmd = vstralloc(amlibexecdir, "/", "runtar", NULL);
+	cmd = g_strjoin(NULL, amlibexecdir, "/", "runtar", NULL);
 	info_tapeheader(dle);
 
 	start_index(dle->create_index, dumpout, mesgf, indexf, indexcmd);

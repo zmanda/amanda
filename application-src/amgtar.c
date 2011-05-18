@@ -680,7 +680,7 @@ amgtar_selfcheck(
 	check_dir(argument->dle.device, R_OK);
     }
     if (argument->calcsize) {
-	char *calcsize = vstralloc(amlibexecdir, "/", "calcsize", NULL);
+	char *calcsize = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
 	check_file(calcsize, X_OK);
 	check_suid(calcsize);
 	amfree(calcsize);
@@ -1150,7 +1150,7 @@ amgtar_restore(
 	} else {
 	    sdisk = g_strdup_printf("no_dle-%d", getpid());
 	}
-	exclude_filename= vstralloc(AMANDA_TMPDIR, "/", "exclude-", sdisk,  NULL);
+	exclude_filename= g_strjoin(NULL, AMANDA_TMPDIR, "/", "exclude-", sdisk,  NULL);
 	exclude_list = fopen(argument->dle.exclude_list->first->name, "r");
 	if (!exclude_list) {
 	    fprintf(stderr, "Cannot open exclude file '%s': %s\n",
@@ -1205,7 +1205,7 @@ amgtar_restore(
 	} else {
 	    sdisk = g_strdup_printf("no_dle-%d", getpid());
 	}
-	include_filename = vstralloc(AMANDA_TMPDIR, "/", "include-", sdisk,  NULL);
+	include_filename = g_strjoin(NULL, AMANDA_TMPDIR, "/", "include-", sdisk,  NULL);
 	include = fopen(include_filename, "w");
 	if (!include) {
 	    fprintf(stderr, "Cannot open include file '%s': %s\n",
@@ -1391,7 +1391,7 @@ amgtar_get_incrname(
 	int baselevel;
 	char *sdisk = sanitise_filename(argument->dle.disk);
 
-	basename = vstralloc(gnutar_listdir,
+	basename = g_strjoin(NULL, gnutar_listdir,
 			     "/",
 			     argument->host,
 			     sdisk,
@@ -1399,7 +1399,7 @@ amgtar_get_incrname(
 	amfree(sdisk);
 
 	snprintf(number, sizeof(number), "%d", level);
-	incrname = vstralloc(basename, "_", number, ".new", NULL);
+	incrname = g_strjoin(NULL, basename, "_", number, ".new", NULL);
 	unlink(incrname);
 
 	/*

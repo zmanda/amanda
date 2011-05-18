@@ -256,7 +256,7 @@ extract_command:
 
 invalid_command:
         STRING bogus_string {
-	    char * errstr = vstralloc("Invalid command: ", $1, NULL);
+	    char * errstr = g_strjoin(NULL, "Invalid command: ", $1, NULL);
 	    yyerror(errstr);
 	    amfree(errstr);
 	    YYERROR;

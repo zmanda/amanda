@@ -2362,7 +2362,7 @@ check_security(
 			      hostname, NI_MAXHOST, NULL, 0, 0)) != 0) {
 	dbprintf(_("getnameinfo failed: %s\n"),
 		  gai_strerror(result));
-	*errstr = vstralloc("[", "addr ", str_sockaddr(addr), ": ",
+	*errstr = g_strjoin(NULL, "[", "addr ", str_sockaddr(addr), ": ",
 			    "getnameinfo failed: ", gai_strerror(result),
 			    "]", NULL);
 	return 0;
@@ -2523,7 +2523,7 @@ show_stat_info(
     char *	a,
     char *	b)
 {
-    char *name = vstralloc(a, b, NULL);
+    char *name = g_strjoin(NULL, a, b, NULL);
     struct stat sbuf;
     struct passwd *pwptr G_GNUC_UNUSED;
     struct passwd pw G_GNUC_UNUSED;

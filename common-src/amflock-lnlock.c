@@ -198,7 +198,7 @@ ln_lock(
 
 	mypid = (long)getpid();
 
-	lockfile = vstralloc(_lnlock_dir, "/am", res, ".lock", NULL);
+	lockfile = g_strjoin(NULL, _lnlock_dir, "/am", res, ".lock", NULL);
 
 	if (!op) {
 		/* unlock the resource */
@@ -212,7 +212,7 @@ ln_lock(
 	/* lock the resource */
 
 	g_snprintf(pid_str, sizeof(pid_str), "%ld", mypid);
-	tlockfile = vstralloc(_lnlock_dir, "/am", res, ".", pid_str, NULL);
+	tlockfile = g_strjoin(NULL, _lnlock_dir, "/am", res, ".", pid_str, NULL);
 
 	(void)create_lock(tlockfile, mypid);
 

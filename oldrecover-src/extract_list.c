@@ -625,7 +625,7 @@ void add_file(
 	}
     } else {
 	char *clean_disk_path = clean_regex(disk_path, 0);
-	path_on_disk = vstralloc(clean_disk_path, "/", regex, NULL);
+	path_on_disk = g_strjoin(NULL, clean_disk_path, "/", regex, NULL);
 	amfree(clean_disk_path);
     }
 
@@ -950,7 +950,7 @@ delete_file(
 	}
     } else {
 	char *clean_disk_path = clean_regex(disk_path, 0);
-	path_on_disk = vstralloc(clean_disk_path, "/", regex, NULL);
+	path_on_disk = g_strjoin(NULL, clean_disk_path, "/", regex, NULL);
 	amfree(clean_disk_path);
     }
 

@@ -274,7 +274,7 @@ xml_check_options(
     char *errmsg = NULL;
     dle_t *dle;
 
-    o = oo = vstralloc("<dle>", strchr(optionstr,'<'), "</dle>", NULL);
+    o = oo = g_strjoin(NULL, "<dle>", strchr(optionstr,'<'), "</dle>", NULL);
 
     dle = amxml_parse_node_CHAR(o, &errmsg);
     if (dle == NULL) {
@@ -2312,7 +2312,7 @@ startup_dump(
     } else {
 	application_api = "BACKUP ";
     }
-    req = vstralloc("SERVICE sendbackup\n",
+    req = g_strjoin(NULL, "SERVICE sendbackup\n",
 		    "OPTIONS ",
 		    has_features ? "features=" : "",
 		    has_features ? our_feature_string : "",

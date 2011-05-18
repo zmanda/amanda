@@ -122,26 +122,6 @@ internal_vstralloc(
 
 
 /*
- * vstralloc - copies multiple strings into newly allocated memory.
- */
-char *
-debug_vstralloc(
-    const char *file,
-    int		line,
-    const char *str,
-    ...)
-{
-    va_list argp;
-    char *result;
-
-    arglist_start(argp, str);
-    result = internal_vstralloc(file, line, str, argp);
-    arglist_end(argp);
-    return result;
-}
-
-
-/*
  * newstralloc - free existing string and then g_strdup a new one.
  */
 char *

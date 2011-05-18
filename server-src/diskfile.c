@@ -592,7 +592,7 @@ parse_diskline(
 	    }
 	    return (-1);
 	}
-	dtype = read_dumptype(vstralloc("custom(", hostname,
+	dtype = read_dumptype(g_strjoin(NULL, "custom(", hostname,
 					":", disk->name, ")",
 					".", anonymous_value(), NULL),
 			      diskf, (char*)filename, line_num_p);
@@ -1091,7 +1091,7 @@ optionstr(
 
     qdpname = quote_string(dp->name);
     if (am_has_feature(their_features, fe_options_auth)) {
-	auth_opt = vstralloc("auth=", dp->auth, ";", NULL);
+	auth_opt = g_strjoin(NULL, "auth=", dp->auth, ";", NULL);
     } else if(strcasecmp(dp->auth, "bsd") == 0) {
 	if(am_has_feature(their_features, fe_options_bsd_auth))
 	    auth_opt = g_strdup("bsd-auth;");
@@ -1105,7 +1105,7 @@ optionstr(
 	compress_opt = "compress-best;";
 	break;
     case COMP_CUST:
-	compress_opt = vstralloc("comp-cust=", dp->clntcompprog, ";", NULL);
+	compress_opt = g_strjoin(NULL, "comp-cust=", dp->clntcompprog, ";", NULL);
 	break;
     case COMP_SERVER_FAST:
 	compress_opt = "srvcomp-fast;";
@@ -1114,7 +1114,7 @@ optionstr(
         compress_opt = "srvcomp-best;";
 	break;
     case COMP_SERVER_CUST:
-	compress_opt = vstralloc("srvcomp-cust=", dp->srvcompprog, ";", NULL);
+	compress_opt = g_strjoin(NULL, "srvcomp-cust=", dp->srvcompprog, ";", NULL);
 	break;
     }
 
@@ -1198,7 +1198,7 @@ optionstr(
 	incl_opt = "include-optional;";
     }
 
-    result = vstralloc(";",
+    result = g_strjoin(NULL, ";",
 		       auth_opt,
 		       kencrypt_opt,
 		       compress_opt,
@@ -1262,7 +1262,7 @@ xml_optionstr(
 
     qdpname = quote_string(dp->name);
     if (am_has_feature(their_features, fe_options_auth)) {
-	auth_opt = vstralloc("  <auth>", dp->auth, "</auth>\n", NULL);
+	auth_opt = g_strjoin(NULL, "  <auth>", dp->auth, "</auth>\n", NULL);
     } else {
 	auth_opt = g_strdup("");
     }
@@ -1275,7 +1275,7 @@ xml_optionstr(
 	compress_opt = g_strdup("  <compress>BEST</compress>\n");
 	break;
     case COMP_CUST:
-	compress_opt = vstralloc("  <compress>CUSTOM"
+	compress_opt = g_strjoin(NULL, "  <compress>CUSTOM"
 				 "<custom-compress-program>",
 				 dp->clntcompprog,
 				 "</custom-compress-program>\n"
@@ -1288,7 +1288,7 @@ xml_optionstr(
 	compress_opt = g_strdup("  <compress>SERVER-BEST</compress>\n");
 	break;
     case COMP_SERVER_CUST:
-	compress_opt = vstralloc("  <compress>SERVER-CUSTOM"
+	compress_opt = g_strjoin(NULL, "  <compress>SERVER-CUSTOM"
 				 "<custom-compress-program>",
 				 dp->srvcompprog,
 				 "</custom-compress-program>\n"
@@ -1452,7 +1452,7 @@ xml_optionstr(
 			       incl_opt,
 			       "  </include>\n", NULL);
     script_opt = xml_scripts(dp->pp_scriptlist, their_features);
-    result = vstralloc(auth_opt,
+    result = g_strjoin(NULL, auth_opt,
 		       kencrypt_opt,
 		       compress_opt,
 		       encrypt_opt,
@@ -1599,7 +1599,7 @@ xml_application(
     xml_app.result   = NULL;
     plugin = application_get_plugin(application);
     b64plugin = amxml_format_tag("plugin", plugin);
-    xml_app.result = vstralloc("  <backup-program>\n",
+    xml_app.result = g_strjoin(NULL, "  <backup-program>\n",
 		        "    ", b64plugin, "\n",
 			NULL);
     proplist = application_get_property(application);
@@ -1650,7 +1650,7 @@ xml_scripts(
 	g_assert(pp_script != NULL);
 	plugin = pp_script_get_plugin(pp_script);
 	b64plugin = amxml_format_tag("plugin", plugin);
-	xml_scr1 = vstralloc("  <script>\n",
+	xml_scr1 = g_strjoin(NULL, "  <script>\n",
                              "    ", b64plugin, "\n",
 			     NULL);
 

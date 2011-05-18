@@ -1037,7 +1037,7 @@ generic_calc_estimates(
     char tmppath[PATH_MAX];
     int len;
 
-    cmd = vstralloc(amlibexecdir, "/", "calcsize", NULL);
+    cmd = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
 
     g_ptr_array_add(argv_ptr, g_strdup("calcsize"));
     if (g_options->config)
@@ -1120,7 +1120,7 @@ generic_calc_estimates(
 	error(_("Can't fdopen: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
-    match_expr = vstralloc(" %d SIZE %lld", NULL);
+    match_expr = g_strjoin(NULL, " %d SIZE %lld", NULL);
     len = strlen(est->qamname);
     for(size = (off_t)-1; (line = agets(dumpout)) != NULL; free(line)) {
 	long long size_ = (long long)0;
@@ -1403,7 +1403,7 @@ getsize_dump(
     dbprintf(_("calculating for device %s with %s\n"),
 	      qdevice, fstype);
 
-    cmd = vstralloc(amlibexecdir, "/rundump", NULL);
+    cmd = g_strjoin(NULL, amlibexecdir, "/rundump", NULL);
     rundump_cmd = g_strdup(cmd);
     if (g_options->config)
         config = g_options->config;
@@ -1464,7 +1464,7 @@ getsize_dump(
 	config = skip_argument;
 	is_rundump = 0;
 #endif
-	dumpkeys = vstralloc(level_str, "s", "f", NULL);
+	dumpkeys = g_strjoin(NULL, level_str, "s", "f", NULL);
 	dbprintf(_("running \"%s%s %s 1048576 - %s\"\n"),
 		  cmd, name, dumpkeys, qdevice);
     }
@@ -1478,7 +1478,7 @@ getsize_dump(
 #endif							/* } */
     {
 	name = g_strdup(" (vdump)");
-	dumpkeys = vstralloc(level_str, "b", "f", NULL);
+	dumpkeys = g_strjoin(NULL, level_str, "b", "f", NULL);
 	dbprintf(_("running \"%s%s %s 60 - %s\"\n"),
 		  cmd, name, dumpkeys, qdevice);
     }
@@ -1490,7 +1490,7 @@ getsize_dump(
 #  ifdef AIX_BACKUP					/* { */
 	name = g_strdup(" (backup)");
 #  else							/* } { */
-	name = vstralloc(" (", DUMP, ")", NULL);
+	name = g_strjoin(NULL, " (", DUMP, ")", NULL);
 #  endif						/* } */
 # else							/* } { */
 	name = g_strdup("");
@@ -1500,7 +1500,7 @@ getsize_dump(
 # endif							/* } */
 
 # ifdef AIX_BACKUP					/* { */
-	dumpkeys = vstralloc("-", level_str, "f", NULL);
+	dumpkeys = g_strjoin(NULL, "-", level_str, "f", NULL);
 	dbprintf(_("running \"%s%s %s - %s\"\n"),
 		  cmd, name, dumpkeys, qdevice);
 # else							/* } { */
@@ -1514,7 +1514,7 @@ getsize_dump(
 #  else
 #    define PARAM_HONOR_NODUMP ""
 #  endif
-	dumpkeys = vstralloc(level_str,
+	dumpkeys = g_strjoin(NULL, level_str,
 			     PARAM_DUMP_ESTIMATE,
 			     PARAM_HONOR_NODUMP,
 			     "s", "f", NULL);
@@ -1577,7 +1577,7 @@ getsize_dump(
 	    default:
 	    {
 		char *config;
-		char *killpgrp_cmd = vstralloc(amlibexecdir, "/killpgrp", NULL);
+		char *killpgrp_cmd = g_strjoin(NULL, amlibexecdir, "/killpgrp", NULL);
 		dbprintf(_("running %s\n"), killpgrp_cmd);
 		dup2(killctl[0], 0);
 		dup2(nullfd, 1);
@@ -2107,7 +2107,7 @@ getsize_gnutar(
 	int baselevel;
 	char *sdisk = sanitise_filename(dle->disk);
 
-	basename = vstralloc(gnutar_list_dir,
+	basename = g_strjoin(NULL, gnutar_list_dir,
 			     "/",
 			     g_options->hostname,
 			     sdisk,
@@ -2115,7 +2115,7 @@ getsize_gnutar(
 	amfree(sdisk);
 
 	g_snprintf(number, sizeof(number), "%d", level);
-	incrname = vstralloc(basename, "_", number, ".new", NULL);
+	incrname = g_strjoin(NULL, basename, "_", number, ".new", NULL);
 	unlink(incrname);
 
 	/*
@@ -2196,7 +2196,7 @@ getsize_gnutar(
 
     dirname = amname_to_dirname(dle->device);
 
-    cmd = vstralloc(amlibexecdir, "/", "runtar", NULL);
+    cmd = g_strjoin(NULL, amlibexecdir, "/", "runtar", NULL);
     g_ptr_array_add(argv_ptr, g_strdup("runtar"));
     if (g_options->config)
 	g_ptr_array_add(argv_ptr, g_strdup(g_options->config));
@@ -2395,7 +2395,7 @@ getsize_application_api(
     estimate_t     estimate;
     estimatelist_t el;
 
-    cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
+    cmd = g_strjoin(NULL, APPLICATION_DIR, "/", dle->program, NULL);
 
     g_ptr_array_add(argv_ptr, g_strdup(dle->program));
     g_ptr_array_add(argv_ptr, g_strdup("estimate"));

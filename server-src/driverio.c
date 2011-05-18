@@ -427,7 +427,7 @@ taper_cmd(
 
     switch(cmd) {
     case START_TAPER:
-	cmdline = vstralloc(cmdstr[cmd],
+	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", destname,
 			    " ", datestamp,
 			    "\n", NULL);
@@ -443,7 +443,7 @@ taper_cmd(
 	    origsize = 0;
 	g_snprintf(orig_kb, sizeof(orig_kb), "%ju", origsize);
 	splitargs = taper_splitting_args(dp);
-	cmdline = vstralloc(cmdstr[cmd],
+	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", sched(dp)->taper->name,
 			    " ", disk2serial(dp),
 			    " ", qdest,
@@ -471,7 +471,7 @@ taper_cmd(
           won't get confused
 	*/
 	splitargs = taper_splitting_args(dp);
-	cmdline = vstralloc(cmdstr[cmd],
+	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", sched(dp)->taper->name,
 			    " ", disk2serial(dp),
 			    " ", dp->host->hostname,
@@ -491,7 +491,7 @@ taper_cmd(
 	else
 	    origsize = 0;
 	g_snprintf(number, sizeof(number), "%ju", origsize);
-	cmdline = vstralloc(cmdstr[cmd],
+	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", sched(dp)->taper->name,
 			    " ", disk2serial(dp),
 			    " ", number,
@@ -499,7 +499,7 @@ taper_cmd(
 	break;
     case FAILED: /* handle */
 	dp = (disk_t *) ptr;
-	cmdline = vstralloc(cmdstr[cmd],
+	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", sched(dp)->taper->name,
 			    " ", disk2serial(dp),
 			    "\n", NULL);
@@ -507,7 +507,7 @@ taper_cmd(
     case NO_NEW_TAPE:
 	dp = (disk_t *) ptr;
 	q = quote_string(destname);	/* reason why no new tape */
-	cmdline = vstralloc(cmdstr[cmd],
+	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", sched(dp)->taper->name,
 			    " ", disk2serial(dp),
 			    " ", q,
@@ -516,21 +516,21 @@ taper_cmd(
 	break;
     case NEW_TAPE:
 	dp = (disk_t *) ptr;
-	cmdline = vstralloc(cmdstr[cmd],
+	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", sched(dp)->taper->name,
 			    " ", disk2serial(dp),
 			    "\n", NULL);
 	break;
     case START_SCAN:
 	dp = (disk_t *) ptr;
-	cmdline = vstralloc(cmdstr[cmd],
+	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", sched(dp)->taper->name,
 			    " ", disk2serial(dp),
 			    "\n", NULL);
 	break;
     case TAKE_SCRIBE_FROM:
 	dp = (disk_t *) ptr;
-	cmdline = vstralloc(cmdstr[cmd],
+	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", sched(dp)->taper->name,
 			    " ", disk2serial(dp),
 			    " ", destname,  /* name of worker */
@@ -580,7 +580,7 @@ dumper_cmd(
 
     switch(cmd) {
     case START:
-	cmdline = vstralloc(cmdstr[cmd], " ", mesg, "\n", NULL);
+	cmdline = g_strjoin(NULL, cmdstr[cmd], " ", mesg, "\n", NULL);
 	break;
     case PORT_DUMP:
 	if(dp && dp->device) {
@@ -639,7 +639,7 @@ dumper_cmd(
 	    qssh_keys = quote_string(dp->ssh_keys);
 	    dbprintf("security_driver %s\n", dp->auth);
 
-	    cmdline = vstralloc(cmdstr[cmd],
+	    cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", disk2serial(dp),
 			    " ", numberport,
 			    " ", dp->host->hostname,
@@ -675,7 +675,7 @@ dumper_cmd(
     case QUIT:
     case ABORT:
 	qmesg = quote_string(mesg);
-	cmdline = vstralloc(cmdstr[cmd], " ", qmesg, "\n", NULL );
+	cmdline = g_strjoin(NULL, cmdstr[cmd], " ", qmesg, "\n", NULL );
 	amfree(qmesg);
 	break;
     default:
@@ -725,7 +725,7 @@ chunker_cmd(
 
     switch(cmd) {
     case START:
-	cmdline = vstralloc(cmdstr[cmd], " ", mesg, "\n", NULL);
+	cmdline = g_strjoin(NULL, cmdstr[cmd], " ", mesg, "\n", NULL);
 	break;
     case PORT_WRITE:
 	if(dp && sched(dp) && sched(dp)->holdp) {
@@ -744,7 +744,7 @@ chunker_cmd(
 		    (long long)h[0]->reserved);
 	    features = am_feature_to_string(dp->host->features);
 	    o = optionstr(dp);
-	    cmdline = vstralloc(cmdstr[cmd],
+	    cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", disk2serial(dp),
 			    " ", qdest,
 			    " ", dp->host->hostname,
@@ -781,7 +781,7 @@ chunker_cmd(
 		     (long long)holdingdisk_get_chunksize(h[activehd]->disk->hdisk));
 	    g_snprintf(use, sizeof(use), "%lld", 
 		     (long long)(h[activehd]->reserved - h[activehd]->used));
-	    cmdline = vstralloc(cmdstr[cmd],
+	    cmdline = g_strjoin(NULL, cmdstr[cmd],
 				" ", disk2serial(dp),
 				" ", qdest,
 				" ", chunksize,
@@ -797,18 +797,18 @@ chunker_cmd(
     case ABORT:
 	{
 	    char *q = quote_string(mesg);
-	    cmdline = vstralloc(cmdstr[cmd], " ", q, "\n", NULL);
+	    cmdline = g_strjoin(NULL, cmdstr[cmd], " ", q, "\n", NULL);
 	    amfree(q);
 	}
 	break;
     case DONE:
     case FAILED:
 	if( dp ) {
-	    cmdline = vstralloc(cmdstr[cmd],
+	    cmdline = g_strjoin(NULL, cmdstr[cmd],
 				" ", disk2serial(dp),
 				"\n",  NULL);
 	} else {
-	    cmdline = vstralloc(cmdstr[cmd], "\n");
+	    cmdline = g_strjoin(NULL, cmdstr[cmd], "\n", NULL);
 	}
 	break;
     default:

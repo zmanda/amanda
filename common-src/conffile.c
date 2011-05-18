@@ -2092,7 +2092,7 @@ read_block(
     if (!config_overrides)
 	return;
 
-    key_ovr = vstralloc(type, ":", name, NULL);
+    key_ovr = g_strjoin(NULL, type, ":", name, NULL);
     for (i = 0; i < config_overrides->n_used; i++) {
 	config_override_t *co = &config_overrides->ovr[i];
 	char              *key = co->key;
@@ -3954,7 +3954,7 @@ read_dapplication(
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
 	current_line_num -= 1;
-	application = read_application(vstralloc("custom(DUMPTYPE:",
+	application = read_application(g_strjoin(NULL, "custom(DUMPTYPE:",
 						 dpcur.name, ")", ".",
 						 anonymous_value(),NULL),
 				       NULL, NULL, NULL);
@@ -3984,7 +3984,7 @@ read_dinteractivity(
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
 	current_line_num -= 1;
-	interactivity = read_interactivity(vstralloc("custom(iv)", ".",
+	interactivity = read_interactivity(g_strjoin(NULL, "custom(iv)", ".",
 						     anonymous_value(),NULL),
 				       NULL, NULL, NULL);
 	current_line_num -= 1;
@@ -4013,7 +4013,7 @@ read_dtaperscan(
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
 	current_line_num -= 1;
-	taperscan = read_taperscan(vstralloc("custom(ts)", ".",
+	taperscan = read_taperscan(g_strjoin(NULL, "custom(ts)", ".",
 				   anonymous_value(),NULL),
 				   NULL, NULL, NULL);
 	current_line_num -= 1;
@@ -4041,7 +4041,7 @@ read_dpp_script(
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
 	current_line_num -= 1;
-	pp_script = read_pp_script(vstralloc("custom(DUMPTYPE:", dpcur.name,
+	pp_script = read_pp_script(g_strjoin(NULL, "custom(DUMPTYPE:", dpcur.name,
 					     ")", ".", anonymous_value(),NULL),
 				   NULL, NULL, NULL);
 	current_line_num -= 1;
@@ -5514,7 +5514,7 @@ get_config_options(
     for (i = 0; i < n_config_overrides; i++) {
 	char *key = config_overrides->ovr[i].key;
 	char *value = config_overrides->ovr[i].value;
-	*config_option = vstralloc("-o", key, "=", value, NULL);
+	*config_option = g_strjoin(NULL, "-o", key, "=", value, NULL);
 	config_option++;
     }
 
@@ -8055,7 +8055,7 @@ proplist_display_str_foreach_fn(
 
     /* What to do with property->append? it should be printed only on client */
     if (property->priority) {
-	**msg = vstralloc("priority ", property_s, NULL);
+	**msg = g_strjoin(NULL, "priority ", property_s, NULL);
 	amfree(property_s);
     } else {
 	**msg = property_s;
@@ -8126,9 +8126,9 @@ config_dir_relative(
 	return g_strdup(filename);
     } else {
 	if (config_dir[strlen(config_dir)-1] == '/') {
-	    return vstralloc(config_dir, filename, NULL);
+	    return g_strjoin(NULL, config_dir, filename, NULL);
 	} else {
-	    return vstralloc(config_dir, "/", filename, NULL);
+	    return g_strjoin(NULL, config_dir, "/", filename, NULL);
 	}
     }
 }
