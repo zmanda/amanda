@@ -2245,7 +2245,7 @@ save_holdingdisk(
 {
     holdingdisk_t *hp;
 
-    hp = alloc(sizeof(holdingdisk_t));
+    hp = g_malloc(sizeof(holdingdisk_t));
     *hp = hdcur;
     holdinglist = g_slist_append(holdinglist, hp);
 }
@@ -2415,7 +2415,7 @@ save_dumptype(void)
 	return;
     }
 
-    dp = alloc(sizeof(dumptype_t));
+    dp = g_malloc(sizeof(dumptype_t));
     *dp = dpcur;
     dp->next = NULL;
     /* add at end of list */
@@ -2514,7 +2514,7 @@ save_tapetype(void)
 	return;
     }
 
-    tp = alloc(sizeof(tapetype_t));
+    tp = g_malloc(sizeof(tapetype_t));
     *tp = tpcur;
 
     /* add at end of list */
@@ -2596,7 +2596,7 @@ save_interface(void)
 	return;
     }
 
-    ip = alloc(sizeof(interface_t));
+    ip = g_malloc(sizeof(interface_t));
     *ip = ifcur;
     /* add at end of list */
     if(!interface_list) {
@@ -2723,7 +2723,7 @@ save_application(
 	return;
     }
 
-    ap = alloc(sizeof(application_t));
+    ap = g_malloc(sizeof(application_t));
     *ap = apcur;
     ap->next = NULL;
     /* add at end of list */
@@ -2849,7 +2849,7 @@ save_interactivity(
 	return;
     }
 
-    iv = alloc(sizeof(interactivity_t));
+    iv = g_malloc(sizeof(interactivity_t));
     *iv = ivcur;
     iv->next = NULL;
     /* add at end of list */
@@ -2975,7 +2975,7 @@ save_taperscan(
 	return;
     }
 
-    ts = alloc(sizeof(taperscan_t));
+    ts = g_malloc(sizeof(taperscan_t));
     *ts = tscur;
     ts->next = NULL;
     /* add at end of list */
@@ -3106,7 +3106,7 @@ save_pp_script(
 	return;
     }
 
-    ps = alloc(sizeof(pp_script_t));
+    ps = g_malloc(sizeof(pp_script_t));
     *ps = pscur;
     ps->next = NULL;
     /* add at end of list */
@@ -3232,7 +3232,7 @@ save_device_config(
 	return;
     }
 
-    dc = alloc(sizeof(device_config_t));
+    dc = g_malloc(sizeof(device_config_t));
     *dc = dccur;
     dc->next = NULL;
     /* add at end of list */
@@ -3361,7 +3361,7 @@ save_changer_config(
 	return;
     }
 
-    dc = alloc(sizeof(changer_config_t));
+    dc = g_malloc(sizeof(changer_config_t));
     *dc = cccur;
     dc->next = NULL;
     /* add at end of list */
@@ -5508,7 +5508,7 @@ get_config_options(
     if (config_overrides)
 	n_config_overrides = config_overrides->n_used;
 
-    config_options = alloc((first+n_config_overrides+1)*sizeof(char *));
+    config_options = g_malloc((first+n_config_overrides+1)*sizeof(char *));
     config_option = config_options + first;
 
     for (i = 0; i < n_config_overrides; i++) {
@@ -6440,8 +6440,8 @@ new_config_overrides(
     if (size_estimate <= 0)
 	size_estimate = 10;
 
-    co = alloc(sizeof(*co));
-    co->ovr = alloc(sizeof(*co->ovr) * size_estimate);
+    co = g_malloc(sizeof(*co));
+    co->ovr = g_malloc(sizeof(*co->ovr) * size_estimate);
     co->n_allocated = size_estimate;
     co->n_used = 0;
 

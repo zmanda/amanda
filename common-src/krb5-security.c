@@ -229,7 +229,7 @@ krb5_connect(
 
     krb5_init();
 
-    rh = alloc(sizeof(*rh));
+    rh = g_malloc(sizeof(*rh));
     security_handleinit(&rh->sech, &krb5_security_driver);
     rh->hostname = NULL;
     rh->rs = NULL;
@@ -1274,7 +1274,7 @@ krb5_tcpm_recv_token(
 	return -1;
     }
     amfree(*buf);
-    *buf = alloc((size_t)*size);
+    *buf = g_malloc((size_t)*size);
 
     if(*size == 0) {
 	auth_debug(1, _("krb5_tcpm_recv_token: read EOF from %d\n"), *handle);

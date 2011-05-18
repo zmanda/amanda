@@ -351,7 +351,7 @@ sanitise_filename(
     int ch;
 
     buf_size = strlen(inp) + 1;		/* worst case */
-    buf = alloc(buf_size);
+    buf = g_malloc(buf_size);
     d = buf;
     s = inp;
     while((ch = *s++) != '\0') {
@@ -377,7 +377,7 @@ old_sanitise_filename(
     int ch;
 
     buf_size = 2*strlen(inp) + 1;		/* worst case */
-    buf = alloc(buf_size);
+    buf = g_malloc(buf_size);
     d = buf;
     s = inp;
     while((ch = *s++) != '\0') {
@@ -413,7 +413,7 @@ canonicalize_pathname(char *pathname, char *result_buf)
  * char *agets (FILE *stream)
  *
  * entry:	stream  -  stream to read
- * exit:	returns a pointer to an alloc'd string or NULL
+ * exit:	returns a pointer to an g_malloc'd string or NULL
  *		at EOF or error.  The functions ferror(stream) and
  *		feof(stream) should be checked by caller to determine
  *		stream status.
@@ -434,7 +434,7 @@ debug_agets(
     FILE *	stream)
 {
     int	ch;
-    char *line = alloc(AGETS_LINE_INCR);
+    char *line = g_malloc(AGETS_LINE_INCR);
     size_t line_size = 0;
     size_t loffset = 0;
     int	inquote = 0;
@@ -471,9 +471,9 @@ debug_agets(
 
 	    /*
 	     * Reallocate input line.
-	     * alloc() never return NULL pointer.
+	     * g_malloc() never return NULL pointer.
 	     */
-	    tmpline = alloc(line_size + AGETS_LINE_INCR);
+	    tmpline = g_malloc(line_size + AGETS_LINE_INCR);
 	    memcpy(tmpline, line, line_size);
 	    amfree(line);
 	    line = tmpline;
@@ -519,8 +519,8 @@ static size_t areads_bufsize = BUFSIZ;		/* for the test program */
 
 static void
 areads_getbuf(
-    const char *s,
-    int		l,
+    const char *s G_GNUC_UNUSED,
+    int		l G_GNUC_UNUSED,
     int		fd)
 {
     struct areads_buffer *new;
@@ -529,7 +529,7 @@ areads_getbuf(
     assert(fd >= 0);
     if(fd >= areads_bufcount) {
 	size = (size_t)(fd + 1) * sizeof(*areads_buffer);
-	new = (struct areads_buffer *) debug_alloc(s, l, size);
+	new = (struct areads_buffer *) g_malloc(size);
 	memset((char *)new, 0, size);
 	if(areads_buffer) {
 	    size = areads_bufcount * sizeof(*areads_buffer);
@@ -541,8 +541,7 @@ areads_getbuf(
     }
     if(areads_buffer[fd].buffer == NULL) {
 	areads_buffer[fd].bufsize = areads_bufsize;
-	areads_buffer[fd].buffer = debug_alloc(s, l,
-					       areads_buffer[fd].bufsize + 1);
+	areads_buffer[fd].buffer = g_malloc(areads_buffer[fd].bufsize + 1);
 	areads_buffer[fd].buffer[0] = '\0';
 	areads_buffer[fd].endptr = areads_buffer[fd].buffer;
     }
@@ -600,7 +599,7 @@ areads_relbuf(
  * char *areads (int fd)
  *
  * entry:	fd = file descriptor to read
- * exit:	returns a pointer to an alloc'd string or NULL at EOF
+ * exit:	returns a pointer to an g_malloc'd string or NULL at EOF
  *		or error (errno will be zero on EOF).
  *
  * Notes:	the newline, if read, is removed from the string
@@ -641,7 +640,7 @@ debug_areads (
 	    } else {
 		size += 256 * areads_bufsize;
 	    }
-	    newbuf = debug_alloc(s, l, size + 1);
+	    newbuf = g_malloc(size + 1);
 	    memcpy (newbuf, buffer, areads_buffer[fd].bufsize + 1);
 	    amfree(areads_buffer[fd].buffer);
 	    areads_buffer[fd].buffer = newbuf;

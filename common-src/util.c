@@ -457,7 +457,7 @@ quote_string_maybe(
 	     * (a string of all quotes plus room for leading ", trailing " and
 	     *  NULL)
 	     */
-	    ret = s = alloc((strlen(str) * 2) + 2 + 1);
+	    ret = s = g_malloc((strlen(str) * 2) + 2 + 1);
 	    *(s++) = '"';
 	    while (*str != '\0') {
                 if (*str == '\t') {

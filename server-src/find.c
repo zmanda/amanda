@@ -146,7 +146,7 @@ find_log(void)
     conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     maxtape = lookup_nb_tape();
 
-    output_find_log = alloc((maxtape*5+10) * sizeof(char *));
+    output_find_log = g_malloc((maxtape*5+10) * sizeof(char *));
     current_log = output_find_log;
 
     for(tape = 1; tape <= maxtape; tape++) {
@@ -374,7 +374,7 @@ sort_find_result(
     }
 
     /* put the list in an array */
-    array_find_result=alloc(nb_result * sizeof(find_result_t *));
+    array_find_result=g_malloc(nb_result * sizeof(find_result_t *));
     for(output_find_result=*output_find,no_result=0;
 	output_find_result;
 	output_find_result=output_find_result->next,no_result++) {
@@ -1310,7 +1310,7 @@ dumps_match_dumpspecs(
 	       (!ok || !strcmp(cur_result->status, "OK")) &&
 	       (!ok || !strcmp(cur_result->dump_status, "OK"))) {
 
-		find_result_t *curmatch = alloc(sizeof(find_result_t));
+		find_result_t *curmatch = g_malloc(sizeof(find_result_t));
 		memcpy(curmatch, cur_result, sizeof(find_result_t));
 
 		curmatch->timestamp = cur_result->timestamp;

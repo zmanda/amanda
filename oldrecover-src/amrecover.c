@@ -427,7 +427,7 @@ main(
 
     dbopen(DBG_SUBDIR_CLIENT);
 
-    localhost = alloc(MAX_HOSTNAME_LENGTH+1);
+    localhost = g_malloc(MAX_HOSTNAME_LENGTH+1);
     if (gethostname(localhost, MAX_HOSTNAME_LENGTH) != 0) {
 	error(_("cannot determine local host name\n"));
 	/*NOTREACHED*/
@@ -468,7 +468,7 @@ main(
 	 */
 	char **new_argv;
 
-	new_argv = (char **) alloc((size_t)((argc + 1 + 1) * sizeof(*new_argv)));
+	new_argv = (char **) g_malloc((size_t)((argc + 1 + 1) * sizeof(*new_argv)));
 	new_argv[0] = argv[0];
 	new_argv[1] = "-C";
 	for (i = 1; i < argc; i++)

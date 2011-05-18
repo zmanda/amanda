@@ -147,8 +147,8 @@ typedef struct NDMPConnection {
 	/* handle cdb */
 	%typemap(in) (gpointer cdb, gsize cdb_len) {
 	    /* cdb */
-	    int alloc = SWIG_OLDOBJ;
-	    SWIG_AsCharPtrAndSize($input, (char **)&$1, &$2, &alloc);
+	    int g_malloc = SWIG_OLDOBJ;
+	    SWIG_AsCharPtrAndSize($input, (char **)&$1, &$2, &g_malloc);
 	    if ($2) $2--; /* strip trailing NUL byte */
 	}
 
@@ -159,8 +159,8 @@ typedef struct NDMPConnection {
 	    /* dataout */
 
 	    /* handle the actual input here */
-	    int alloc = SWIG_OLDOBJ;
-	    SWIG_AsCharPtrAndSize($input, (char **)&$1, &$2, &alloc);
+	    int g_malloc = SWIG_OLDOBJ;
+	    SWIG_AsCharPtrAndSize($input, (char **)&$1, &$2, &g_malloc);
 	    if ($2) $2--; /* strip trailing NUL byte */
 	    /* set up for argout typemap, below */
 	    dataout_len = 0;
@@ -299,9 +299,9 @@ typedef struct NDMPConnection {
 	}
 
 	%typemap(in) (gpointer buf, guint64 len) {
-	    int alloc = SWIG_OLDOBJ;
+	    int g_malloc = SWIG_OLDOBJ;
 	    size_t len_tmp; /* use a temporary with the right type */
-	    SWIG_AsCharPtrAndSize($input, (char **)&$1, &len_tmp, &alloc);
+	    SWIG_AsCharPtrAndSize($input, (char **)&$1, &len_tmp, &g_malloc);
 	    if (len_tmp) len_tmp--; /* strip trailing NUL byte */
 	    $2 = len_tmp;
 	}

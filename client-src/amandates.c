@@ -219,7 +219,7 @@ lookup(
 	amdp = amdp->next;
     }
     if (!(amdp && (rc == 0))) {
-	amandates_t *newp = alloc(sizeof(amandates_t));
+	amandates_t *newp = g_malloc(sizeof(amandates_t));
 	newp->name = g_strdup(name);
 	for (level = 0; level < DUMP_LEVELS; level++)
 	    newp->dates[level] = EPOCH;

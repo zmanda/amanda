@@ -1391,14 +1391,14 @@ push_fail_stack (struct re_fail_stack_t *fs, Idx str_idx, Idx dest_node,
 {
   reg_errcode_t err;
   Idx num = fs->num++;
-  if (fs->num == fs->alloc)
+  if (fs->num == fs->g_malloc)
     {
       struct re_fail_stack_ent_t *new_array;
       new_array = realloc (fs->stack, (sizeof (struct re_fail_stack_ent_t)
-				       * fs->alloc * 2));
+				       * fs->g_malloc * 2));
       if (new_array == NULL)
 	return REG_ESPACE;
-      fs->alloc *= 2;
+      fs->g_malloc *= 2;
       fs->stack = new_array;
     }
   fs->stack[num].idx = str_idx;
@@ -1451,7 +1451,7 @@ set_regs (const regex_t *preg, const re_match_context_t *mctx, size_t nmatch,
   if (fl_backtrack)
     {
       fs = &fs_body;
-      fs->stack = re_malloc (struct re_fail_stack_ent_t, fs->alloc);
+      fs->stack = re_malloc (struct re_fail_stack_ent_t, fs->g_malloc);
       if (fs->stack == NULL)
 	return REG_ESPACE;
     }
@@ -1859,7 +1859,7 @@ add_epsilon_src_nodes (const re_dfa_t *dfa, re_node_set *dest_nodes,
   if (BE (err != REG_NOERROR, 0))
     return err;
 
-  if (!state->inveclosure.alloc)
+  if (!state->inveclosure.g_malloc)
     {
       err = re_node_set_alloc (&state->inveclosure, dest_nodes->nelem);
       if (BE (err != REG_NOERROR, 0))
@@ -2933,10 +2933,10 @@ check_arrival (re_match_context_t *mctx, state_array_t *path, Idx top_node,
 
   subexp_num = dfa->nodes[top_node].opr.idx;
   /* Extend the buffer if we need.  */
-  if (BE (path->alloc < last_str + mctx->max_mb_elem_len + 1, 0))
+  if (BE (path->g_malloc < last_str + mctx->max_mb_elem_len + 1, 0))
     {
       re_dfastate_t **new_array;
-      Idx old_alloc = path->alloc;
+      Idx old_alloc = path->g_malloc;
       Idx new_alloc = old_alloc + last_str + mctx->max_mb_elem_len + 1;
       if (BE (new_alloc < old_alloc, 0)
 	  || BE (SIZE_MAX / sizeof (re_dfastate_t *) < new_alloc, 0))
@@ -2945,9 +2945,9 @@ check_arrival (re_match_context_t *mctx, state_array_t *path, Idx top_node,
       if (BE (new_array == NULL, 0))
 	return REG_ESPACE;
       path->array = new_array;
-      path->alloc = new_alloc;
+      path->g_malloc = new_alloc;
       memset (new_array + old_alloc, '\0',
-	      sizeof (re_dfastate_t *) * (path->alloc - old_alloc));
+	      sizeof (re_dfastate_t *) * (path->g_malloc - old_alloc));
     }
 
   str_idx = path->next_idx ? path->next_idx : top_str;

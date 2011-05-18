@@ -420,7 +420,7 @@ get_fstab_nextentry(
  *
  * The input must be an absolute path.
  *
- * The exit string area is always an alloc-d area that the caller is
+ * The exit string area is always an g_malloc-d area that the caller is
  * responsible for releasing.
  *=====================================================================
  */

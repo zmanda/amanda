@@ -56,7 +56,7 @@ parse_g_options(
     char *p, *tok;
     int new_maxdumps;
 
-    g_options = alloc(sizeof(g_option_t));
+    g_options = g_malloc(sizeof(g_option_t));
     init_g_options(g_options);
     g_options->str = g_strdup(str);
 

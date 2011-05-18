@@ -99,9 +99,9 @@ append_to_tapelist(
 	    int   *newpartnum;
 
 	    if(file >= (off_t)0) {
-		newfiles = alloc(sizeof(*newfiles) *
+		newfiles = g_malloc(sizeof(*newfiles) *
 				 (cur_tape->numfiles + 1));
-		newpartnum = alloc(sizeof(*newpartnum) *
+		newpartnum = g_malloc(sizeof(*newpartnum) *
 				 (cur_tape->numfiles + 1));
 		for(c = 0; c < cur_tape->numfiles ; c++) {
 		    if(cur_tape->files[c] > file && c == d_idx) {
@@ -127,13 +127,13 @@ append_to_tapelist(
 	}
     }
 
-    new_tape = alloc(sizeof(tapelist_t));
+    new_tape = g_malloc(sizeof(tapelist_t));
     memset(new_tape, 0, sizeof(tapelist_t));
     new_tape->label = g_strdup(label);
     if(file >= (off_t)0){
-	new_tape->files = alloc(sizeof(*(new_tape->files)));
+	new_tape->files = g_malloc(sizeof(*(new_tape->files)));
 	new_tape->files[0] = file;
-	new_tape->partnum = alloc(sizeof(*(new_tape->partnum)));
+	new_tape->partnum = g_malloc(sizeof(*(new_tape->partnum)));
 	new_tape->partnum[0] = partnum;
 	new_tape->numfiles = 1;
 	new_tape->isafile = isafile;
@@ -165,7 +165,7 @@ escape_label(
 
     if(!label) return(NULL);
 
-    temp_str = alloc(strlen(label) * 2);
+    temp_str = g_malloc(strlen(label) * 2);
 
     do{
 	if(label[s_idx] == ',' || label[s_idx] == '\\' ||
@@ -197,7 +197,7 @@ unescape_label(
     
     if(!label) return(NULL);
 
-    temp_str = alloc(strlen(label));
+    temp_str = g_malloc(strlen(label));
 
     do{
 	if(label[s_idx] == '\\' && !prev_esc){
@@ -276,8 +276,8 @@ unmarshal_tapelist_str(
 
     input_length = strlen(tapelist_str);
 
-    temp_label = alloc(input_length+1);
-    temp_filenum = alloc(input_length+1);
+    temp_label = g_malloc(input_length+1);
+    temp_filenum = g_malloc(input_length+1);
 
     do{
 	/* first, read the label part */

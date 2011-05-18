@@ -269,7 +269,7 @@ bsdudp_connect(
 
     amanda_gettimeofday(&sequence_time);
     sequence = (int)sequence_time.tv_sec ^ (int)sequence_time.tv_usec;
-    handle=alloc(15);
+    handle=g_malloc(15);
     g_snprintf(handle,14,"000-%08x", newhandle++);
     if (udp_inithandle(bh->udp, bh, canonname,
 		       (sockaddr_union *)res_addr->ai_addr, port,

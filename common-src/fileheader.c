@@ -105,7 +105,7 @@ parse_file_header(
     char *saveptr = NULL;
 
     /* put the buffer into a writable chunk of memory and nul-term it */
-    buf = alloc(buflen + 1);
+    buf = g_malloc(buflen + 1);
     memcpy(buf, buffer, buflen);
     buf[buflen] = '\0';
     fh_init(file); 
@@ -125,7 +125,7 @@ parse_file_header(
 	lsize++;
     }
     *line = '\0';
-    line1 = alloc(lsize + 1);
+    line1 = g_malloc(lsize + 1);
     strncpy(line1, buf, lsize);
     line1[lsize] = '\0';
     *line = '\n';

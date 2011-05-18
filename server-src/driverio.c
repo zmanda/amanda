@@ -94,7 +94,7 @@ startup_tape_process(
     /* always allocate the tapetable */
     tapetable = calloc(sizeof(taper_t), taper_parallel_write+1);
     if (!tapetable) {
-	error(_("could not alloc tapetable"));
+	error(_("could not g_malloc tapetable"));
 	/*NOTREACHED*/
     }
 

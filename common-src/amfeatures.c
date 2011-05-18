@@ -233,11 +233,11 @@ am_allocate_feature_set(void)
     size_t			nbytes;
     am_feature_t		*result;
 
-    result = (am_feature_t *)alloc(sizeof(*result));
+    result = (am_feature_t *)g_malloc(sizeof(*result));
     memset(result, 0, sizeof(*result));
     nbytes = (((size_t)last_feature) + 8) >> 3;
     result->size = nbytes;
-    result->bytes = (unsigned char *)alloc(nbytes);
+    result->bytes = (unsigned char *)g_malloc(nbytes);
     memset(result->bytes, 0, nbytes);
     return result;
 }
@@ -382,7 +382,7 @@ am_feature_to_string(
     if (f == NULL) {
 	result = g_strdup(_("UNKNOWNFEATURE"));
     } else {
-	result = alloc((f->size * 2) + 1);
+	result = g_malloc((f->size * 2) + 1);
 	for (i = 0; i < f->size; i++) {
 	    g_snprintf(result + (i * 2), 2 + 1, "%02x", f->bytes[i]);
 	}

@@ -41,7 +41,7 @@ pipespawn(
      * Create the argument vector.
      */
     arglist_start(ap, stderrfd);
-    argv = (char **)alloc((argc + 1) * sizeof(*argv));
+    argv = (char **)g_malloc((argc + 1) * sizeof(*argv));
     i = 0;
     while((argv[i] = arglist_val(ap, char *)) != NULL) {
         if (argv[i] != skip_argument) {
@@ -221,7 +221,7 @@ pipespawnv_passwd(
 	if ((pipedef & PASSWD_PIPE) != 0) {
 	    for (i = 0; env[i] != NULL; i++)
 		(void)i; /* make lint happy and do nothing */	
-	    newenv = (char **)alloc((i + 1 + 1) * sizeof(*newenv));
+	    newenv = (char **)g_malloc((i + 1 + 1) * sizeof(*newenv));
 	    g_snprintf(number, sizeof(number), "%d", passwdpipe[0]);
 	    newenv[0] = vstralloc(passwdvar, "=", number, NULL);
 	    for(i = 0; env[i] != NULL; i++)

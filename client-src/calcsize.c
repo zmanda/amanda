@@ -505,7 +505,7 @@ push_name(
 {
     Name *newp;
 
-    newp = alloc(sizeof(*newp));
+    newp = g_malloc(sizeof(*newp));
     newp->str = g_strdup(str);
 
     newp->next = name_stack;

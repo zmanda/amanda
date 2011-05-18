@@ -803,7 +803,7 @@ setup_estimate(
 
     /* setup working data struct for disk */
 
-    ep = alloc(sizeof(est_t));
+    ep = g_malloc(sizeof(est_t));
     dp->up = (void *) ep;
     ep->state = DISK_READY;
     ep->dump_priority = dp->priority;
@@ -2786,7 +2786,7 @@ arglist_function1(
 	total_lev0 -= (double) est(dp)->dump_est->csize;
     }
 
-    bi = alloc(sizeof(bi_t));
+    bi = g_malloc(sizeof(bi_t));
     bi->next = NULL;
     bi->prev = biq.tail;
     if(biq.tail == NULL)
@@ -2975,7 +2975,7 @@ static int promote_hills(void)
     if(my_dumpcycle > 10000) my_dumpcycle = 10000;
 
     sp = (struct balance_stats *)
-	alloc(sizeof(struct balance_stats) * my_dumpcycle);
+	g_malloc(sizeof(struct balance_stats) * my_dumpcycle);
 
     for(days = 0; days < my_dumpcycle; days++) {
 	sp[days].disks = 0;

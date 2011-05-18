@@ -957,7 +957,7 @@ add_msg_data(
 #define	ROUND(x, y)	(((x) + (y) - 1) & ~((y) - 1))
 
 	newsize = ROUND(buflen + (ssize_t)len + 1, 256);
-	newbuf = alloc(newsize);
+	newbuf = g_malloc(newsize);
 
 	if (msg.buf != NULL) {
 	    strncpy(newbuf, msg.buf, newsize);
@@ -1300,7 +1300,7 @@ do_dump(
     dumptime = g_timeval_to_double(runtime);
 
     amfree(errstr);
-    errstr = alloc(128);
+    errstr = g_malloc(128);
     g_snprintf(errstr, 128, _("sec %s kb %lld kps %3.1lf orig-kb %lld"),
 	walltime_str(runtime),
 	(long long)dumpsize,

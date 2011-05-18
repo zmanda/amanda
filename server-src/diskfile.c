@@ -201,7 +201,7 @@ add_disk(
     disk_t *disk;
     am_host_t *host;
 
-    disk = alloc(sizeof(disk_t));
+    disk = g_malloc(sizeof(disk_t));
     bzero(disk, sizeof(disk_t));
     disk->line = 0;
     disk->allow_split = 0;
@@ -228,7 +228,7 @@ add_disk(
 
     host = lookup_host(hostname);
     if(host == NULL) {
-	host = alloc(sizeof(am_host_t));
+	host = g_malloc(sizeof(am_host_t));
 	host->next = hostlist;
 	hostlist = host;
 
@@ -539,7 +539,7 @@ parse_diskline(
 	}
     }
     if (!disk) {
-	disk = alloc(sizeof(disk_t));
+	disk = g_malloc(sizeof(disk_t));
 	disk->line = line_num;
 	disk->hostname = hostname;
 	disk->name = diskname;
@@ -775,7 +775,7 @@ parse_diskline(
 
     /* nope; make up a new one */
     if (!netif) {
-	netif = alloc(sizeof(*netif));
+	netif = g_malloc(sizeof(*netif));
 	netif->next = all_netifs;
 	all_netifs = netif;
 	netif->config = cfg_if;
@@ -830,7 +830,7 @@ parse_diskline(
     /* success, add disk to lists */
 
     if(host == NULL) {			/* new host */
-	host = alloc(sizeof(am_host_t));
+	host = g_malloc(sizeof(am_host_t));
 	host->next = hostlist;
 	hostlist = host;
 

@@ -380,7 +380,7 @@ uncompress_file(
 
 	/* add at beginning */
 	if (filename) {
-	    remove_file = (REMOVE_ITEM *)alloc(sizeof(REMOVE_ITEM));
+	    remove_file = (REMOVE_ITEM *)g_malloc(sizeof(REMOVE_ITEM));
 	    remove_file->filename = g_strdup(filename);
 	    remove_file->next = uncompress_remove;
 	    uncompress_remove = remove_file;
@@ -502,7 +502,7 @@ printf_arglist_function1(static void reply, int, n, char *, fmt)
     int len;
 
     if(!reply_buffer)
-	reply_buffer = alloc(reply_buffer_size);
+	reply_buffer = g_malloc(reply_buffer_size);
 
     while(1) {
 	arglist_start(args, fmt);
@@ -514,7 +514,7 @@ printf_arglist_function1(static void reply, int, n, char *, fmt)
 
 	reply_buffer_size *= 2;
 	amfree(reply_buffer);
-	reply_buffer = alloc(reply_buffer_size);
+	reply_buffer = g_malloc(reply_buffer_size);
     }
 
     if (g_fprintf(cmdout,"%03d %s\r\n", n, reply_buffer) < 0)
@@ -539,7 +539,7 @@ printf_arglist_function1(static void lreply, int, n, char *, fmt)
     int len;
 
     if(!reply_buffer)
-	reply_buffer = alloc(reply_buffer_size);
+	reply_buffer = g_malloc(reply_buffer_size);
 
     while(1) {
 	arglist_start(args, fmt);
@@ -551,7 +551,7 @@ printf_arglist_function1(static void lreply, int, n, char *, fmt)
 
 	reply_buffer_size *= 2;
 	amfree(reply_buffer);
-	reply_buffer = alloc(reply_buffer_size);
+	reply_buffer = g_malloc(reply_buffer_size);
     }
 
     if (g_fprintf(cmdout,"%03d-%s\r\n", n, reply_buffer) < 0)
@@ -580,7 +580,7 @@ printf_arglist_function1(static void fast_lreply, int, n, char *, fmt)
     int len;
 
     if(!reply_buffer)
-	reply_buffer = alloc(reply_buffer_size);
+	reply_buffer = g_malloc(reply_buffer_size);
 
     while(1) {
 	arglist_start(args, fmt);
@@ -592,7 +592,7 @@ printf_arglist_function1(static void fast_lreply, int, n, char *, fmt)
 
 	reply_buffer_size *= 2;
 	amfree(reply_buffer);
-	reply_buffer = alloc(reply_buffer_size);
+	reply_buffer = g_malloc(reply_buffer_size);
     }
 
     if (g_fprintf(cmdout,"%03d-%s\r\n", n, reply_buffer) < 0)
@@ -1427,7 +1427,7 @@ main(
                 }
 		g_options = parse_g_options(line+8, 1);
 		if(!g_options->hostname) {
-		    g_options->hostname = alloc(MAX_HOSTNAME_LENGTH+1);
+		    g_options->hostname = g_malloc(MAX_HOSTNAME_LENGTH+1);
 		    gethostname(g_options->hostname, MAX_HOSTNAME_LENGTH);
 		    g_options->hostname[MAX_HOSTNAME_LENGTH] = '\0';
 		}

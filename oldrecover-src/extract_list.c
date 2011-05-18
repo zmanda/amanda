@@ -420,7 +420,7 @@ add_extract_item(
 		}
 		curr=curr->next;
 	    }
-	    that = (EXTRACT_LIST_ITEM *)alloc(sizeof(EXTRACT_LIST_ITEM));
+	    that = (EXTRACT_LIST_ITEM *)g_malloc(sizeof(EXTRACT_LIST_ITEM));
             that->path = g_strdup(ditem_path);
 	    that->next = this->files;
 	    this->files = that;		/* add at front since easiest */
@@ -430,12 +430,12 @@ add_extract_item(
     }
 
     /* so this is the first time we have seen this tape */
-    this = (EXTRACT_LIST *)alloc(sizeof(EXTRACT_LIST));
+    this = (EXTRACT_LIST *)g_malloc(sizeof(EXTRACT_LIST));
     this->tape = g_strdup(ditem->tape);
     this->level = ditem->level;
     this->fileno = ditem->fileno;
     this->date = g_strdup(ditem->date);
-    that = (EXTRACT_LIST_ITEM *)alloc(sizeof(EXTRACT_LIST_ITEM));
+    that = (EXTRACT_LIST_ITEM *)g_malloc(sizeof(EXTRACT_LIST_ITEM));
     that->path = g_strdup(ditem_path);
     that->next = NULL;
     this->files = that;
@@ -1378,7 +1378,7 @@ extract_files_setup(
     memset(line, '\0', strlen(line));
     amfree(line);
 
-    disk_regex = alloc(strlen(disk_name) * 2 + 3);
+    disk_regex = g_malloc(strlen(disk_name) * 2 + 3);
 
     ch = disk_name;
     ch1 = disk_regex;
@@ -1402,7 +1402,7 @@ extract_files_setup(
 
     *ch1 = '\0';
 
-    host_regex = alloc(strlen(dump_hostname) * 2 + 3);
+    host_regex = g_malloc(strlen(dump_hostname) * 2 + 3);
 
     ch = dump_hostname;
     ch1 = host_regex;

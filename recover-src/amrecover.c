@@ -122,7 +122,7 @@ get_line(void)
 	    return -1;
 	}
         amrecover_debug(1, "amrecover: get_line size = %zd\n", size);
-	newbuf = alloc(strlen(mesg_buffer)+size+1);
+	newbuf = g_malloc(strlen(mesg_buffer)+size+1);
 	strncpy(newbuf, mesg_buffer, (size_t)(strlen(mesg_buffer) + size));
 	memcpy(newbuf+strlen(mesg_buffer), buf, (size_t)size);
 	newbuf[strlen(mesg_buffer)+size] = '\0';
@@ -209,7 +209,7 @@ send_command(
      */
     char *buffer;
 
-    buffer = alloc(strlen(cmd)+3);
+    buffer = g_malloc(strlen(cmd)+3);
     strncpy(buffer, cmd, strlen(cmd));
     buffer[strlen(cmd)] = '\r';
     buffer[strlen(cmd)+1] = '\n';
@@ -420,7 +420,7 @@ main(
     our_features_string = am_feature_to_string(our_features);
 
     if (!starting_hostname) {
-	starting_hostname = alloc(MAX_HOSTNAME_LENGTH+1);
+	starting_hostname = g_malloc(MAX_HOSTNAME_LENGTH+1);
 	if (gethostname(starting_hostname, MAX_HOSTNAME_LENGTH) != 0) {
 	    error(_("cannot determine local host name\n"));
 	    /*NOTREACHED*/

@@ -298,7 +298,7 @@ main(
       error(_("Did not get DATE line from planner"));
       /*NOTREACHED*/
     }
-    driver_timestamp = alloc(15);
+    driver_timestamp = g_malloc(15);
     strncpy(driver_timestamp, &line[5], 14);
     driver_timestamp[14] = '\0';
     amfree(line);
@@ -366,7 +366,7 @@ main(
 	 il != NULL;
 	 il = il->next, dsk++) {
 	hdp = lookup_holdingdisk(il->data);
-	ha = alloc(sizeof(holdalloc_t));
+	ha = g_malloc(sizeof(holdalloc_t));
 	num_holdalloc++;
 
 	/* link the list in the same order as getconf_holdingdisks's results */
@@ -2811,13 +2811,13 @@ read_flush(
 	    continue;
 	}
 
-	dp1 = (disk_t *)alloc(sizeof(disk_t));
+	dp1 = (disk_t *)g_malloc(sizeof(disk_t));
 	*dp1 = *dp;
 	dp1->next = dp1->prev = NULL;
 
 	/* add it to the flushhost list */
 	if(!flushhost) {
-	    flushhost = alloc(sizeof(am_host_t));
+	    flushhost = g_malloc(sizeof(am_host_t));
 	    flushhost->next = NULL;
 	    flushhost->hostname = g_strdup("FLUSHHOST");
 	    flushhost->up = NULL;
@@ -2826,7 +2826,7 @@ read_flush(
 	dp1->hostnext = flushhost->disks;
 	flushhost->disks = dp1;
 
-	sp = (sched_t *) alloc(sizeof(sched_t));
+	sp = (sched_t *) g_malloc(sizeof(sched_t));
 	sp->destname = destname;
 	sp->level = file.dumplevel;
 	sp->dumpdate = NULL;
@@ -3094,7 +3094,7 @@ read_schedule(
 	    continue;
 	}
 
-	sp = (sched_t *) alloc(sizeof(sched_t));
+	sp = (sched_t *) g_malloc(sizeof(sched_t));
 	/*@ignore@*/
 	sp->level = level;
 	sp->dumpdate = g_strdup(dumpdate);
@@ -3297,9 +3297,9 @@ find_diskspace(
     hold_debug(1, _("find_diskspace: want %lld K\n"),
 		   (long long)size);
 
-    used = alloc(sizeof(*used) * num_holdalloc);/*disks used during this run*/
+    used = g_malloc(sizeof(*used) * num_holdalloc);/*disks used during this run*/
     memset( used, 0, (size_t)num_holdalloc );
-    result = alloc(sizeof(assignedhd_t *) * (num_holdalloc + 1));
+    result = g_malloc(sizeof(assignedhd_t *) * (num_holdalloc + 1));
     result[0] = NULL;
 
     while( i < num_holdalloc && size > (off_t)0 ) {
@@ -3348,7 +3348,7 @@ find_diskspace(
 		       (long long)dalloc,
 		       (long long)halloc);
 	size -= dalloc;
-	result[i] = alloc(sizeof(assignedhd_t));
+	result[i] = g_malloc(sizeof(assignedhd_t));
 	result[i]->disk = minp;
 	result[i]->reserved = halloc;
 	result[i]->used = (off_t)0;
@@ -3402,7 +3402,7 @@ assign_holdingdisk(
     /* allocate memory for sched(diskp)->holdp */
     for(j = 0; sched(diskp)->holdp && sched(diskp)->holdp[j]; j++)
 	(void)j;	/* Quiet lint */
-    new_holdp = (assignedhd_t **)alloc(sizeof(assignedhd_t*)*(j+c+1));
+    new_holdp = (assignedhd_t **)g_malloc(sizeof(assignedhd_t*)*(j+c+1));
     if (sched(diskp)->holdp) {
 	memcpy(new_holdp, sched(diskp)->holdp, j * sizeof(*new_holdp));
 	amfree(sched(diskp)->holdp);
@@ -3488,7 +3488,7 @@ adjust_diskspace(
 	total += holdp[i]->used;
 	holdp[i]->disk->allocated_space += diff;
 	hqname = quote_string(holdingdisk_name(holdp[i]->disk->hdisk));
-	hold_debug(1, _("adjust_diskspace: hdisk %s done, reserved %lld used %lld diff %lld alloc %lld dumpers %d\n"),
+	hold_debug(1, _("adjust_diskspace: hdisk %s done, reserved %lld used %lld diff %lld g_malloc %lld dumpers %d\n"),
 		       holdingdisk_name(holdp[i]->disk->hdisk),
 		       (long long)holdp[i]->reserved,
 		       (long long)holdp[i]->used,
@@ -3552,10 +3552,10 @@ build_diskspace(
     char *filename = destname;
 
     memset(buffer, 0, sizeof(buffer));
-    used = alloc(sizeof(off_t) * num_holdalloc);
+    used = g_malloc(sizeof(off_t) * num_holdalloc);
     for(i=0;i<num_holdalloc;i++)
 	used[i] = (off_t)0;
-    result = alloc(sizeof(assignedhd_t *) * (num_holdalloc + 1));
+    result = g_malloc(sizeof(assignedhd_t *) * (num_holdalloc + 1));
     result[0] = NULL;
     while(filename != NULL && filename[0] != '\0') {
 	strncpy(dirname, filename, 999);
@@ -3603,7 +3603,7 @@ build_diskspace(
 
     for(j = 0, i=0, ha = holdalloc; ha != NULL; ha = ha->next, j++ ) {
 	if(used[j] != (off_t)0) {
-	    result[i] = alloc(sizeof(assignedhd_t));
+	    result[i] = g_malloc(sizeof(assignedhd_t));
 	    result[i]->disk = ha;
 	    result[i]->reserved = used[j];
 	    result[i]->used = used[j];

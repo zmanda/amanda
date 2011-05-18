@@ -59,7 +59,7 @@ void pkt_init_empty(
 
     pkt->type = type;
     pkt->packet_size = 1000;
-    pkt->body = alloc(pkt->packet_size);
+    pkt->body = g_malloc(pkt->packet_size);
     pkt->body[0] = '\0';
     pkt->size = strlen(pkt->body);
 }
@@ -77,7 +77,7 @@ printf_arglist_function2(void pkt_init, pkt_t *, pkt, pktype_t, type,
 
     pkt->type = type;
     pkt->packet_size = 1000;
-    pkt->body = alloc(pkt->packet_size);
+    pkt->body = g_malloc(pkt->packet_size);
     while(1) {
 	arglist_start(argp, fmt);
 	len = g_vsnprintf(pkt->body, pkt->packet_size, fmt, argp);
@@ -86,7 +86,7 @@ printf_arglist_function2(void pkt_init, pkt_t *, pkt, pktype_t, type,
 	    break;
 	pkt->packet_size *= 2;
 	amfree(pkt->body);
-	pkt->body = alloc(pkt->packet_size);
+	pkt->body = g_malloc(pkt->packet_size);
     }
     pkt->size = strlen(pkt->body);
 }
@@ -113,7 +113,7 @@ printf_arglist_function1(void pkt_cat, pkt_t *, pkt, const char *, fmt)
 	if (lenX > -1 && lenX < (int)(pkt->packet_size - len - 1))
 	    break;
 	pkt->packet_size *= 2;
-	pktbody = alloc(pkt->packet_size);
+	pktbody = g_malloc(pkt->packet_size);
 	strncpy(pktbody, pkt->body, len);
 	pktbody[len] = '\0';
 	amfree(pkt->body);

@@ -672,7 +672,7 @@ typedef struct
         {
           HANDLE *array; /* array of waiting threads, each represented by an event */
           unsigned int count; /* number of waiting threads */
-          unsigned int alloc; /* length of allocated array */
+          unsigned int g_malloc; /* length of allocated array */
           unsigned int offset; /* index of first waiting thread in array */
         }
         gl_carray_waitqueue_t;
