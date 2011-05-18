@@ -538,7 +538,7 @@ write_amanda_header(S3Device *self,
 
     if (!result) {
 	device_set_error(d_self,
-	    vstrallocf(_("While writing amanda header: %s"), s3_strerror(self->s3t[0].s3)),
+	    g_strdup_printf(_("While writing amanda header: %s"), s3_strerror(self->s3t[0].s3)),
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
 	dumpfile_free(dumpinfo);
     } else {
@@ -622,7 +622,7 @@ find_last_file(S3Device *self) {
     result = s3_list_keys(self->s3t[0].s3, self->bucket, self->prefix, "-", &keys, NULL);
     if (!result) {
 	device_set_error(d_self,
-	    vstrallocf(_("While listing S3 keys: %s"), s3_strerror(self->s3t[0].s3)),
+	    g_strdup_printf(_("While listing S3 keys: %s"), s3_strerror(self->s3t[0].s3)),
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
         return -1;
     }
@@ -654,7 +654,7 @@ find_next_file(S3Device *self, int last_file) {
 			  &keys, NULL);
     if (!result) {
 	device_set_error(d_self,
-	    vstrallocf(_("While listing S3 keys: %s"), s3_strerror(self->s3t[0].s3)),
+	    g_strdup_printf(_("While listing S3 keys: %s"), s3_strerror(self->s3t[0].s3)),
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
         return -1;
     }
@@ -693,7 +693,7 @@ delete_file(S3Device *self,
 			  &total_size);
     if (!result) {
 	device_set_error(d_self,
-	    vstrallocf(_("While listing S3 keys: %s"), s3_strerror(self->s3t[0].s3)),
+	    g_strdup_printf(_("While listing S3 keys: %s"), s3_strerror(self->s3t[0].s3)),
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
         return FALSE;
     }
@@ -703,7 +703,7 @@ delete_file(S3Device *self,
         if (self->verbose) g_debug(_("Deleting %s"), (char*)keys->data);
         if (!s3_delete(self->s3t[0].s3, self->bucket, keys->data)) {
 	    device_set_error(d_self,
-		vstrallocf(_("While deleting key '%s': %s"),
+		g_strdup_printf(_("While deleting key '%s': %s"),
 			    (char*)keys->data, s3_strerror(self->s3t[0].s3)),
 		DEVICE_STATUS_DEVICE_ERROR);
             g_slist_free(keys);
@@ -1399,7 +1399,7 @@ s3_device_open_device(Device *pself, char *device_name,
 
     if (self->bucket == NULL || self->bucket[0] == '\0') {
 	device_set_error(pself,
-	    vstrallocf(_("Empty bucket name in device %s"), device_name),
+	    g_strdup_printf(_("Empty bucket name in device %s"), device_name),
 	    DEVICE_STATUS_DEVICE_ERROR);
         amfree(self->bucket);
         amfree(self->prefix);
@@ -1601,7 +1601,7 @@ s3_device_read_label(Device *pself) {
 
         /* otherwise, log it and return */
 	device_set_error(pself,
-	    vstrallocf(_("While trying to read tapestart header: %s"), s3_strerror(self->s3t[0].s3)),
+	    g_strdup_printf(_("While trying to read tapestart header: %s"), s3_strerror(self->s3t[0].s3)),
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
         return pself->status;
     }
@@ -1665,7 +1665,7 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
             (s3_error_code != S3_ERROR_BucketAlreadyExists &&
 	     s3_error_code != S3_ERROR_BucketAlreadyOwnedByYou)) {
 	    device_set_error(pself,
-		vstrallocf(_("While creating new S3 bucket: %s"), s3_strerror(self->s3t[0].s3)),
+		g_strdup_printf(_("While creating new S3 bucket: %s"), s3_strerror(self->s3t[0].s3)),
 		DEVICE_STATUS_DEVICE_ERROR);
             return FALSE;
         }
@@ -1703,7 +1703,7 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
                 result = s3_list_keys(self->s3t[0].s3, self->bucket, NULL, NULL, &keys, &total_size);
                 if(!result) {
                     device_set_error(pself,
-                                 vstrallocf(_("While listing S3 keys: %s"), s3_strerror(self->s3t[0].s3)),
+                                 g_strdup_printf(_("While listing S3 keys: %s"), s3_strerror(self->s3t[0].s3)),
                                  DEVICE_STATUS_DEVICE_ERROR|DEVICE_STATUS_VOLUME_ERROR);
                     return FALSE;
                 } else {
@@ -1792,7 +1792,7 @@ s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
     g_free(key);
     if (!result) {
 	device_set_error(pself,
-	    vstrallocf(_("While writing filestart header: %s"), s3_strerror(self->s3t[0].s3)),
+	    g_strdup_printf(_("While writing filestart header: %s"), s3_strerror(self->s3t[0].s3)),
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
         return FALSE;
     }

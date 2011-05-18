@@ -7557,27 +7557,27 @@ val_t_display_strs(
 
     switch(val->type) {
     case CONFTYPE_INT:
-	buf[0] = vstrallocf("%d", val_t__int(val));
+	buf[0] = g_strdup_printf("%d", val_t__int(val));
 	break;
 
     case CONFTYPE_SIZE:
-	buf[0] = vstrallocf("%zd", (ssize_t)val_t__size(val));
+	buf[0] = g_strdup_printf("%zd", (ssize_t)val_t__size(val));
 	break;
 
     case CONFTYPE_INT64:
-	buf[0] = vstrallocf("%lld", (long long)val_t__int64(val));
+	buf[0] = g_strdup_printf("%lld", (long long)val_t__int64(val));
 	break;
 
     case CONFTYPE_REAL:
-	buf[0] = vstrallocf("%0.5f", val_t__real(val));
+	buf[0] = g_strdup_printf("%0.5f", val_t__real(val));
 	break;
 
     case CONFTYPE_RATE:
-	buf[0] = vstrallocf("%0.5f %0.5f", val_t__rate(val)[0], val_t__rate(val)[1]);
+	buf[0] = g_strdup_printf("%0.5f %0.5f", val_t__rate(val)[0], val_t__rate(val)[1]);
 	break;
 
     case CONFTYPE_INTRANGE:
-	buf[0] = vstrallocf("%d,%d", val_t__intrange(val)[0], val_t__intrange(val)[1]);
+	buf[0] = g_strdup_printf("%d,%d", val_t__intrange(val)[0], val_t__intrange(val)[1]);
 	break;
 
     case CONFTYPE_IDENT:
@@ -7641,7 +7641,7 @@ val_t_display_strs(
 	break;
 
     case CONFTYPE_TIME:
-	buf[0] = vstrallocf("%2d%02d",
+	buf[0] = g_strdup_printf("%2d%02d",
 			 (int)val_t__time(val)/100, (int)val_t__time(val) % 100);
 	break;
 
@@ -7675,27 +7675,27 @@ val_t_display_strs(
     case CONFTYPE_STRATEGY:
 	switch(val_t__strategy(val)) {
 	case DS_SKIP:
-	    buf[0] = vstrallocf("SKIP");
+	    buf[0] = g_strdup("SKIP");
 	    break;
 
 	case DS_STANDARD:
-	    buf[0] = vstrallocf("STANDARD");
+	    buf[0] = g_strdup("STANDARD");
 	    break;
 
 	case DS_NOFULL:
-	    buf[0] = vstrallocf("NOFULL");
+	    buf[0] = g_strdup("NOFULL");
 	    break;
 
 	case DS_NOINC:
-	    buf[0] = vstrallocf("NOINC");
+	    buf[0] = g_strdup("NOINC");
 	    break;
 
 	case DS_HANOI:
-	    buf[0] = vstrallocf("HANOI");
+	    buf[0] = g_strdup("HANOI");
 	    break;
 
 	case DS_INCRONLY:
-	    buf[0] = vstrallocf("INCRONLY");
+	    buf[0] = g_strdup("INCRONLY");
 	    break;
 	}
 	break;
@@ -7703,31 +7703,31 @@ val_t_display_strs(
     case CONFTYPE_COMPRESS:
 	switch(val_t__compress(val)) {
 	case COMP_NONE:
-	    buf[0] = vstrallocf("NONE");
+	    buf[0] = g_strdup("NONE");
 	    break;
 
 	case COMP_FAST:
-	    buf[0] = vstrallocf("CLIENT FAST");
+	    buf[0] = g_strdup("CLIENT FAST");
 	    break;
 
 	case COMP_BEST:
-	    buf[0] = vstrallocf("CLIENT BEST");
+	    buf[0] = g_strdup("CLIENT BEST");
 	    break;
 
 	case COMP_CUST:
-	    buf[0] = vstrallocf("CLIENT CUSTOM");
+	    buf[0] = g_strdup("CLIENT CUSTOM");
 	    break;
 
 	case COMP_SERVER_FAST:
-	    buf[0] = vstrallocf("SERVER FAST");
+	    buf[0] = g_strdup("SERVER FAST");
 	    break;
 
 	case COMP_SERVER_BEST:
-	    buf[0] = vstrallocf("SERVER BEST");
+	    buf[0] = g_strdup("SERVER BEST");
 	    break;
 
 	case COMP_SERVER_CUST:
-	    buf[0] = vstrallocf("SERVER CUSTOM");
+	    buf[0] = g_strdup("SERVER CUSTOM");
 	    break;
 	}
 	break;
@@ -7762,11 +7762,11 @@ val_t_display_strs(
     case CONFTYPE_EXECUTE_WHERE:
 	switch(val->v.i) {
 	case ES_CLIENT:
-	    buf[0] = vstrallocf("CLIENT");
+	    buf[0] = g_strdup("CLIENT");
 	    break;
 
 	case ES_SERVER:
-	    buf[0] = vstrallocf("SERVER");
+	    buf[0] = g_strdup("SERVER");
 	    break;
 	}
 	break;
@@ -7774,16 +7774,16 @@ val_t_display_strs(
     case CONFTYPE_SEND_AMREPORT_ON:
 	switch(val->v.i) {
 	case SEND_AMREPORT_ALL:
-	    buf[0] = vstrallocf("ALL");
+	    buf[0] = g_strdup("ALL");
 	    break;
 	case SEND_AMREPORT_STRANGE:
-	    buf[0] = vstrallocf("STRANGE");
+	    buf[0] = g_strdup("STRANGE");
 	    break;
 	case SEND_AMREPORT_ERROR:
-	    buf[0] = vstrallocf("ERROR");
+	    buf[0] = g_strdup("ERROR");
 	    break;
 	case SEND_AMREPORT_NEVER:
-	    buf[0] = vstrallocf("NEVER");
+	    buf[0] = g_strdup("NEVER");
 	    break;
 	}
 	break;
@@ -7795,15 +7795,15 @@ val_t_display_strs(
      case CONFTYPE_ENCRYPT:
 	switch(val_t__encrypt(val)) {
 	case ENCRYPT_NONE:
-	    buf[0] = vstrallocf("NONE");
+	    buf[0] = g_strdup("NONE");
 	    break;
 
 	case ENCRYPT_CUST:
-	    buf[0] = vstrallocf("CLIENT");
+	    buf[0] = g_strdup("CLIENT");
 	    break;
 
 	case ENCRYPT_SERV_CUST:
-	    buf[0] = vstrallocf("SERVER");
+	    buf[0] = g_strdup("SERVER");
 	    break;
 	}
 	break;
@@ -7811,15 +7811,15 @@ val_t_display_strs(
      case CONFTYPE_PART_CACHE_TYPE:
 	switch(val_t__part_cache_type(val)) {
 	case PART_CACHE_TYPE_NONE:
-	    buf[0] = vstrallocf("NONE");
+	    buf[0] = g_strdup("NONE");
 	    break;
 
 	case PART_CACHE_TYPE_DISK:
-	    buf[0] = vstrallocf("DISK");
+	    buf[0] = g_strdup("DISK");
 	    break;
 
 	case PART_CACHE_TYPE_MEMORY:
-	    buf[0] = vstrallocf("MEMORY");
+	    buf[0] = g_strdup("MEMORY");
 	    break;
 	}
 	break;
@@ -7848,35 +7848,35 @@ val_t_display_strs(
      case CONFTYPE_HOLDING:
 	switch(val_t__holding(val)) {
 	case HOLD_NEVER:
-	    buf[0] = vstrallocf("NEVER");
+	    buf[0] = g_strdup("NEVER");
 	    break;
 
 	case HOLD_AUTO:
-	    buf[0] = vstrallocf("AUTO");
+	    buf[0] = g_strdup("AUTO");
 	    break;
 
 	case HOLD_REQUIRED:
-	    buf[0] = vstrallocf("REQUIRED");
+	    buf[0] = g_strdup("REQUIRED");
 	    break;
 	}
 	break;
 
      case CONFTYPE_TAPERALGO:
-	buf[0] = vstrallocf("%s", taperalgo2str(val_t__taperalgo(val)));
+	buf[0] = g_strdup_printf("%s", taperalgo2str(val_t__taperalgo(val)));
 	break;
 
      case CONFTYPE_PRIORITY:
 	switch(val_t__priority(val)) {
 	case 0:
-	    buf[0] = vstrallocf("LOW");
+	    buf[0] = g_strdup("LOW");
 	    break;
 
 	case 1:
-	    buf[0] = vstrallocf("MEDIUM");
+	    buf[0] = g_strdup("MEDIUM");
 	    break;
 
 	case 2:
-	    buf[0] = vstrallocf("HIGH");
+	    buf[0] = g_strdup("HIGH");
 	    break;
 	}
 	break;

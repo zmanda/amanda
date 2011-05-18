@@ -425,12 +425,12 @@ static gboolean check_is_dir(VfsDevice * self, const char * name) {
         }
 #endif /* EINTR */
 	device_set_error(dself,
-	    vstrallocf(_("Error checking directory %s: %s"), name, strerror(errno)),
+	    g_strdup_printf(_("Error checking directory %s: %s"), name, strerror(errno)),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     } else if (!S_ISDIR(dir_status.st_mode)) {
 	device_set_error(dself,
-		    vstrallocf(_("VFS Device path %s is not a directory"), name),
+		    g_strdup_printf(_("VFS Device path %s is not a directory"), name),
 		    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     } else {
@@ -679,7 +679,7 @@ static gboolean clear_and_prepare_label(VfsDevice * self, char * label,
                                      VFS_DEVICE_CREAT_MODE);
     if (self->open_file_fd < 0) {
 	device_set_error(d_self,
-	    vstrallocf(_("Can't open file %s: %s"), self->file_name, strerror(errno)),
+	    g_strdup_printf(_("Can't open file %s: %s"), self->file_name, strerror(errno)),
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
         return FALSE;
     }
@@ -712,7 +712,7 @@ search_vfs_directory(
     dir_handle = opendir(self->dir_name);
     if (dir_handle == NULL) {
 	device_set_error(dself,
-		vstrallocf(_("Couldn't open device %s (directory %s) for reading: %s"),
+		g_strdup_printf(_("Couldn't open device %s (directory %s) for reading: %s"),
 			dself->device_name, self->dir_name, strerror(errno)),
 		DEVICE_STATUS_DEVICE_ERROR);
         goto error;
@@ -850,7 +850,7 @@ vfs_device_read_block(Device * pself, gpointer data, int * size_req) {
         return -1;
     default:
 	device_set_error(pself,
-	    vstrallocf(_("Error reading from data file: %s"), strerror(errno)),
+	    g_strdup_printf(_("Error reading from data file: %s"), strerror(errno)),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return -1;
     }
@@ -1088,7 +1088,7 @@ vfs_device_start_file (Device * dself, dumpfile_t * ji) {
                                      VFS_DEVICE_CREAT_MODE);
     if (self->open_file_fd < 0) {
 	device_set_error(dself,
-		vstrallocf(_("Can't create file %s: %s"), self->file_name, strerror(errno)),
+		g_strdup_printf(_("Can't create file %s: %s"), self->file_name, strerror(errno)),
 		DEVICE_STATUS_DEVICE_ERROR);
         release_file(self);
         return FALSE;
@@ -1177,7 +1177,7 @@ vfs_device_seek_file (Device * dself, guint requested_file) {
     self->file_name = file_number_to_file_name(self, file);
     if (self->file_name == NULL) {
 	device_set_error(dself,
-	    vstrallocf(_("File %d not found"), file),
+	    g_strdup_printf(_("File %d not found"), file),
 	    file == 0 ? DEVICE_STATUS_VOLUME_UNLABELED
 		      : DEVICE_STATUS_VOLUME_ERROR);
         release_file(self);
@@ -1189,7 +1189,7 @@ vfs_device_seek_file (Device * dself, guint requested_file) {
     self->open_file_fd = robust_open(self->file_name, O_RDONLY, 0);
     if (self->open_file_fd < 0) {
 	device_set_error(dself,
-	    vstrallocf(_("Couldn't open file %s: %s"), self->file_name, strerror(errno)),
+	    g_strdup_printf(_("Couldn't open file %s: %s"), self->file_name, strerror(errno)),
 	    DEVICE_STATUS_DEVICE_ERROR);
         amfree(self->file_name);
         release_file(self);
@@ -1200,7 +1200,7 @@ vfs_device_seek_file (Device * dself, guint requested_file) {
                                     &header_buffer_size);
     if (result != RESULT_SUCCESS) {
 	device_set_error(dself,
-	    vstrallocf(_("Problem reading Amanda header: %s"), device_error(dself)),
+	    g_strdup_printf(_("Problem reading Amanda header: %s"), device_error(dself)),
 	    DEVICE_STATUS_VOLUME_ERROR);
         release_file(self);
         return NULL;
@@ -1257,7 +1257,7 @@ vfs_device_seek_block (Device * pself, guint64 block) {
 
     if (result == (off_t)(-1)) {
 	device_set_error(pself,
-	    vstrallocf(_("Error seeking within file: %s"), strerror(errno)),
+	    g_strdup_printf(_("Error seeking within file: %s"), strerror(errno)),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1360,7 +1360,7 @@ vfs_device_recycle_file (Device * dself, guint filenum) {
     self->file_name = file_number_to_file_name(self, filenum);
     if (self->file_name == NULL) {
 	device_set_error(dself,
-	    vstrallocf(_("File %d not found"), filenum),
+	    g_strdup_printf(_("File %d not found"), filenum),
 	    DEVICE_STATUS_VOLUME_ERROR);
         return FALSE;
     }
@@ -1374,7 +1374,7 @@ vfs_device_recycle_file (Device * dself, guint filenum) {
 
     if (0 != stat(self->file_name, &file_status)) {
 	device_set_error(dself,
-	    vstrallocf(_("Cannot stat file %s (%s), so not removing"),
+	    g_strdup_printf(_("Cannot stat file %s (%s), so not removing"),
 				    self->file_name, strerror(errno)),
 	    DEVICE_STATUS_VOLUME_ERROR);
         return FALSE;
@@ -1383,7 +1383,7 @@ vfs_device_recycle_file (Device * dself, guint filenum) {
 
     if (!try_unlink(self->file_name)) {
 	device_set_error(dself,
-	    vstrallocf(_("Unlink of %s failed: %s"), self->file_name, strerror(errno)),
+	    g_strdup_printf(_("Unlink of %s failed: %s"), self->file_name, strerror(errno)),
 	    DEVICE_STATUS_VOLUME_ERROR);
         release_file(self);
         return FALSE;
@@ -1443,7 +1443,7 @@ static IoResult vfs_device_robust_read(VfsDevice * self, char *buf,
         } else {
             /* Error occured. */
 	    device_set_error(d_self,
-		vstrallocf(_("Error reading fd %d: %s"), fd, strerror(errno)),
+		g_strdup_printf(_("Error reading fd %d: %s"), fd, strerror(errno)),
 		DEVICE_STATUS_VOLUME_ERROR);
             *count = got;
             return RESULT_ERROR;
@@ -1489,13 +1489,13 @@ vfs_device_robust_write(VfsDevice * self,  char *buf, int count) {
                    ) {
             /* We are definitely out of space. */
 	    device_set_error(d_self,
-		    vstrallocf(_("No space left on device: %s"), strerror(errno)),
+		    g_strdup_printf(_("No space left on device: %s"), strerror(errno)),
 		    DEVICE_STATUS_VOLUME_ERROR);
             return RESULT_NO_SPACE;
         } else {
             /* Error occured. Note that here we handle EIO as an error. */
 	    device_set_error(d_self,
-		    vstrallocf(_("Error writing device fd %d: %s"), fd, strerror(errno)),
+		    g_strdup_printf(_("Error writing device fd %d: %s"), fd, strerror(errno)),
 		    DEVICE_STATUS_VOLUME_ERROR);
             return RESULT_ERROR;
         }

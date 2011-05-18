@@ -311,7 +311,7 @@ main(
 
 	    if ((header_fd = startup_chunker(filename, use, chunksize, &db,
 					     &header_socket, &data_socket)) < 0) {
-		q = quote_string(vstrallocf(_("[chunker startup failed: %s]"), errstr));
+		q = quote_string(g_strdup_printf(_("[chunker startup failed: %s]"), errstr));
 		putresult(TRYAGAIN, "%s %s\n", handle, q);
 		error("startup_chunker failed: %s", errstr);
 	    }
@@ -329,7 +329,7 @@ main(
 				isnormal(rt) ? (double)dumpsize / rt : 0.0);
 		errstr = newvstrallocf(errstr, "sec %s kb %s kps %s",
 				walltime_str(runtime), kb_str, kps_str);
-		m = vstrallocf("[%s]", errstr);
+		m = g_strdup_printf("[%s]", errstr);
 		q = quote_string(m);
 		amfree(m);
 		free_cmdargs(cmdargs);
@@ -361,7 +361,7 @@ main(
 			errstr = newvstrallocf(errstr,
 					_("dumper returned %s"), cmdstr[cmdargs->cmd]);
 			amfree(q);
-			m = vstrallocf("[%s]",errstr);
+			m = g_strdup_printf("[%s]",errstr);
 			q = quote_string(m);
 			amfree(m);
 			putresult(FAILED, "%s %s\n", handle, q);
@@ -373,7 +373,7 @@ main(
 		amfree(q);
 	    } else if (header_fd != -2) {
 		if(q == NULL) {
-		    m = vstrallocf("[%s]", errstr);
+		    m = g_strdup_printf("[%s]", errstr);
 		    q = quote_string(m);
 		    amfree(m);
 		}
@@ -476,13 +476,13 @@ startup_chunker(
     if (res) freeaddrinfo(res);
 
     if (header_socket < 0) {
-	errstr = vstrallocf(_("error creating header stream server: %s"), strerror(errno));
+	errstr = g_strdup_printf(_("error creating header stream server: %s"), strerror(errno));
 	aclose(data_socket);
 	return -1;
     }
 
     if (data_socket < 0) {
-	errstr = vstrallocf(_("error creating data stream server: %s"), strerror(errno));
+	errstr = g_strdup_printf(_("error creating data stream server: %s"), strerror(errno));
 	aclose(header_socket);
 	return -1;
     }
@@ -492,7 +492,7 @@ startup_chunker(
     header_fd = stream_accept(header_socket, CONNECT_TIMEOUT, 0,
 			      STREAM_BUFSIZE);
     if (header_fd == -1) {
-	errstr = vstrallocf(_("error accepting header stream: %s"),
+	errstr = g_strdup_printf(_("error accepting header stream: %s"),
 			    strerror(errno));
 	aclose(header_socket);
 	aclose(data_socket);
@@ -507,7 +507,7 @@ startup_chunker(
     *pc = '/';
     if ((outfd = open(tmp_filename, O_RDWR|O_CREAT|O_TRUNC, 0600)) < 0) {
 	int save_errno = errno;
-	char *m = vstrallocf(_("holding file \"%s\": %s"),
+	char *m = g_strdup_printf(_("holding file \"%s\": %s"),
 			 tmp_filename,
 			 strerror(errno));
 
@@ -560,9 +560,9 @@ do_chunk(
     aclose(header_socket);
     if (nread != sizeof(header_buf)) {
 	if(read_error) {
-	    errstr = vstrallocf(_("cannot read header: %s"), strerror(read_error));
+	    errstr = g_strdup_printf(_("cannot read header: %s"), strerror(read_error));
 	} else {
-	    errstr = vstrallocf(_("cannot read header: got %zd bytes instead of %zd"),
+	    errstr = g_strdup_printf(_("cannot read header: got %zd bytes instead of %zd"),
 				nread, sizeof(header_buf));
 	}
 	aclose(data_socket);
@@ -571,7 +571,7 @@ do_chunk(
     parse_file_header(header_buf, &file, (size_t)nread);
     if(write_tapeheader(db->fd, &file)) {
 	int save_errno = errno;
-	char *m = vstrallocf(_("write_tapeheader file %s: %s"),
+	char *m = g_strdup_printf(_("write_tapeheader file %s: %s"),
 			 db->filename, strerror(errno));
 	errstr = quote_string(m);
 	amfree(m);
@@ -590,7 +590,7 @@ do_chunk(
     data_fd = stream_accept(data_socket, CONNECT_TIMEOUT, 0, STREAM_BUFSIZE);
 
     if (data_fd == -1) {
-	errstr = vstrallocf(_("error accepting data stream: %s"),
+	errstr = g_strdup_printf(_("error accepting data stream: %s"),
 			    strerror(errno));
 	aclose(data_socket);
 	return 0;
@@ -806,7 +806,7 @@ databuf_flush(
 		db->split_size = dumpsize;
 		continue;
 	    }
-	    m = vstrallocf(_("creating chunk holding file \"%s\": %s"),
+	    m = g_strdup_printf(_("creating chunk holding file \"%s\": %s"),
 			     tmp_filename,
 			     strerror(errno));
 	    errstr = quote_string(m);
@@ -834,7 +834,7 @@ databuf_flush(
 		file.type = save_type;
 		continue;
 	    }
-	    m = vstrallocf(_("write_tapeheader file %s: %s"),
+	    m = g_strdup_printf(_("write_tapeheader file %s: %s"),
 			     tmp_filename,
 			     strerror(errno));
 	    errstr = quote_string(m);
@@ -848,7 +848,7 @@ databuf_flush(
 	 * to the next chunk, and then close it.
 	 */
 	if (lseek(db->fd, (off_t)0, SEEK_SET) < (off_t)0) {
-	    char *m = vstrallocf(_("lseek holding file %s: %s"),
+	    char *m = g_strdup_printf(_("lseek holding file %s: %s"),
 			     db->filename,
 			     strerror(errno));
 	    errstr = quote_string(m);
@@ -862,7 +862,7 @@ databuf_flush(
 	strncpy(file.cont_filename, new_filename, sizeof(file.cont_filename));
 	file.cont_filename[sizeof(file.cont_filename)-1] = '\0';
 	if(write_tapeheader(db->fd, &file)) {
-	    char * m = vstrallocf(_("write_tapeheader file \"%s\": %s"),
+	    char * m = g_strdup_printf(_("write_tapeheader file \"%s\": %s"),
 			     db->filename,
 			     strerror(errno));
 	    errstr = quote_string(m);
@@ -922,7 +922,7 @@ databuf_flush(
     dumpbytes %= 1024;
     if (written < size_to_write) {
 	if (errno != ENOSPC) {
-	    char *m = vstrallocf(_("data write: %s"), strerror(errno));
+	    char *m = g_strdup_printf(_("data write: %s"), strerror(errno));
 	    errstr = quote_string(m);
 	    amfree(m);
 	    rc = 0;

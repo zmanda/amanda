@@ -799,7 +799,7 @@ get_tgt(
 	error = NULL;
     }
     if ((ret = krb5_init_context(&context)) != 0) {
-	error = vstrallocf(_("error initializing krb5 context: %s"),
+	error = g_strdup_printf(_("error initializing krb5 context: %s"),
 	    error_message(ret));
 	return (error);
     }
@@ -807,12 +807,12 @@ get_tgt(
     /*krb5_init_ets(context);*/
 
     if(!keytab_name) {
-        error = vstrallocf(_("error  -- no krb5 keytab defined"));
+        error = g_strdup(_("error  -- no krb5 keytab defined"));
         return(error);
     }
 
     if(!principal_name) {
-        error = vstrallocf(_("error  -- no krb5 principal defined"));
+        error = g_strdup(_("error  -- no krb5 principal defined"));
         return(error);
     }
 
@@ -820,7 +820,7 @@ get_tgt(
      * Resolve keytab file into a keytab object
      */
     if ((ret = krb5_kt_resolve(context, keytab_name, &keytab)) != 0) {
-	error = vstrallocf(_("error resolving keytab %s: %s"), keytab_name, 
+	error = g_strdup_printf(_("error resolving keytab %s: %s"), keytab_name,
 	    error_message(ret));
 	return (error);
     }
@@ -831,7 +831,7 @@ get_tgt(
      */
     ret = krb5_parse_name(context, principal_name, &client);
     if (ret != 0) {
-	error = vstrallocf(_("error parsing %s: %s"), principal_name,
+	error = g_strdup_printf(_("error parsing %s: %s"), principal_name,
 	    error_message(ret));
 	return (error);
     }
@@ -854,14 +854,14 @@ get_tgt(
 	0);
 #endif
     if (ret != 0) {
-	error = vstrallocf(_("error while building server name: %s"),
+	error = g_strdup_printf(_("error while building server name: %s"),
 	    error_message(ret));
 	return (error);
     }
 
     ret = krb5_timeofday(context, &now);
     if (ret != 0) {
-	error = vstrallocf(_("error getting time of day: %s"), error_message(ret));
+	error = g_strdup_printf(_("error getting time of day: %s"), error_message(ret));
 	return (error);
     }
 
@@ -879,21 +879,21 @@ get_tgt(
 	keytab, 0, &creds, 0);
 
     if (ret != 0) {
-	error = vstrallocf(_("error getting ticket for %s: %s"),
+	error = g_strdup_printf(_("error getting ticket for %s: %s"),
 	    principal_name, error_message(ret));
 	goto cleanup2;
     }
 
     if ((ret = krb5_cc_default(context, &ccache)) != 0) {
-	error = vstrallocf(_("error initializing ccache: %s"), error_message(ret));
+	error = g_strdup_printf(_("error initializing ccache: %s"), error_message(ret));
 	goto cleanup;
     }
     if ((ret = krb5_cc_initialize(context, ccache, client)) != 0) {
-	error = vstrallocf(_("error initializing ccache: %s"), error_message(ret));
+	error = g_strdup_printf(_("error initializing ccache: %s"), error_message(ret));
 	goto cleanup;
     }
     if ((ret = krb5_cc_store_cred(context, ccache, &creds)) != 0) {
-	error = vstrallocf(_("error storing creds in ccache: %s"), 
+	error = g_strdup_printf(_("error storing creds in ccache: %s"), 
 	    error_message(ret));
 	/* FALLTHROUGH */
     }
@@ -1062,7 +1062,7 @@ krb5_checkuser( char *	host,
     if(strcmp(name, AMANDA_PRINCIPAL) == 0) {
 	return(NULL);
     } else {
-	return(vstrallocf(_("does not match compiled in default")));
+	return(g_strdup(_("does not match compiled in default")));
     }
 #else
     struct passwd *pwd;
@@ -1078,7 +1078,7 @@ krb5_checkuser( char *	host,
     assert( name != NULL);
 
     if((pwd = getpwnam(CLIENT_LOGIN)) == NULL) {
-	result = vstrallocf(_("can not find user %s"), CLIENT_LOGIN);
+	result = g_strdup_printf(_("can not find user %s"), CLIENT_LOGIN);
     }
     localuid = pwd->pw_uid;
 
@@ -1089,7 +1089,7 @@ krb5_checkuser( char *	host,
 #endif
 
     if(!ptmp) {
-	result = vstrallocf(_("could not find home directory for %s"), CLIENT_LOGIN);
+	result = g_strdup_printf(_("could not find home directory for %s"), CLIENT_LOGIN);
 	goto common_exit;
    }
 
@@ -1102,7 +1102,7 @@ krb5_checkuser( char *	host,
 	 * the destination user mimicing the .k5login functionality.
 	 */
 	 if(strcmp(name, CLIENT_LOGIN) != 0) {
-		result = vstrallocf(_("%s does not match %s"),
+		result = g_strdup_printf(_("%s does not match %s"),
 			name, CLIENT_LOGIN);
 		return result;
 	}
@@ -1112,23 +1112,23 @@ krb5_checkuser( char *	host,
 
     auth_debug(1, _("opening ptmp: %s\n"), (ptmp)?ptmp: "NULL!");
     if((fp = fopen(ptmp, "r")) == NULL) {
-	result = vstrallocf(_("can not open %s"), ptmp);
+	result = g_strdup_printf(_("can not open %s"), ptmp);
 	return result;
     }
     auth_debug(1, _("opened ptmp\n"));
 
     if (fstat(fileno(fp), &sbuf) != 0) {
-	result = vstrallocf(_("cannot fstat %s: %s"), ptmp, strerror(errno));
+	result = g_strdup_printf(_("cannot fstat %s: %s"), ptmp, strerror(errno));
 	goto common_exit;
     }
 
     if (sbuf.st_uid != localuid) {
-	result = vstrallocf(_("%s is owned by %ld, should be %ld"),
+	result = g_strdup_printf(_("%s is owned by %ld, should be %ld"),
 		ptmp, (long)sbuf.st_uid, (long)localuid);
 	goto common_exit;
     }
     if ((sbuf.st_mode & 077) != 0) {
-	result = vstrallocf(
+	result = g_strdup_printf(
 	    _("%s: incorrect permissions; file must be accessible only by its owner"), ptmp);
 	goto common_exit;
     }
@@ -1186,7 +1186,7 @@ krb5_checkuser( char *	host,
 	}
 	amfree(line);
     }
-    result = vstrallocf(_("no match in %s"), ptmp);
+    result = g_strdup_printf(_("no match in %s"), ptmp);
 
 common_exit:
     afclose(fp);

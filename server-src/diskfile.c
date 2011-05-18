@@ -68,7 +68,7 @@ read_diskfile(
 
     if ((diskf = fopen(filename, "r")) == NULL) {
 	config_add_error(CFGERR_ERRORS,
-	    vstrallocf(_("Could not open '%s': %s"), filename, strerror(errno)));
+	    g_strdup_printf(_("Could not open '%s': %s"), filename, strerror(errno)));
 	goto end;
         /*NOTREACHED*/
     }
@@ -1841,7 +1841,7 @@ match_disklist(
 		    }
 		    if (!match_a_disk) {
 			char *errstr1;
-			errstr1 = vstrallocf(_("All disks on host '%s' are ignored or have strategy \"skip\".\n"), prevhost);
+			errstr1 = g_strdup_printf(_("All disks on host '%s' are ignored or have strategy \"skip\".\n"), prevhost);
 			vstrextend(&errstr, errstr1, NULL);
 			amfree(errstr1);
 		    }
@@ -1852,9 +1852,9 @@ match_disklist(
 	    else {
 		char *errstr1;
 		if (strchr(sargv[i], (int)'\\')) {
-		    errstr1 = vstrallocf(_("Argument '%s' matches neither a host nor a disk; quoting may not be correct.\n"), sargv[i]);
+		    errstr1 = g_strdup_printf(_("Argument '%s' matches neither a host nor a disk; quoting may not be correct.\n"), sargv[i]);
 		} else {
-		    errstr1 = vstrallocf(_("Argument '%s' matches neither a host nor a disk.\n"), sargv[i]);
+		    errstr1 = g_strdup_printf(_("Argument '%s' matches neither a host nor a disk.\n"), sargv[i]);
 		}
 		vstrextend(&errstr, errstr1, NULL);
 		amfree(errstr1);
@@ -1863,9 +1863,9 @@ match_disklist(
 	} else if (dp_skip) {
 		char *errstr1;
 		if (dp_skip->strategy == DS_SKIP) {
-		    errstr1 = vstrallocf(_("Argument '%s' matches a disk with strategy \"skip\".\n"), sargv[i]);
+		    errstr1 = g_strdup_printf(_("Argument '%s' matches a disk with strategy \"skip\".\n"), sargv[i]);
 		} else {
-		    errstr1 = vstrallocf(_("Argument '%s' matches a disk marked \"ignore\".\n"), sargv[i]);
+		    errstr1 = g_strdup_printf(_("Argument '%s' matches a disk marked \"ignore\".\n"), sargv[i]);
 		}
 		vstrextend(&errstr, errstr1, NULL);
 		amfree(errstr1);
@@ -1884,7 +1884,7 @@ match_disklist(
 	}
 	if (!match_a_disk) {
 	    char *errstr1;
-	    errstr1 = vstrallocf(_("All disks on host '%s' are ignored or have strategy \"skip\".\n"), prevhost);
+	    errstr1 = g_strdup_printf(_("All disks on host '%s' are ignored or have strategy \"skip\".\n"), prevhost);
 	    vstrextend(&errstr, errstr1, NULL);
 	    amfree(errstr1);
 	}

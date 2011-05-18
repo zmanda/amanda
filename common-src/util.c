@@ -1059,7 +1059,7 @@ int copy_file(
     if ((infd = open(src, O_RDONLY)) == -1) {
 	save_errno = errno;
 	quoted = quote_string(src);
-	*errmsg = vstrallocf(_("Can't open file '%s' for reading: %s"),
+	*errmsg = g_strdup_printf(_("Can't open file '%s' for reading: %s"),
 			    quoted, strerror(save_errno));
 	amfree(quoted);
 	return -1;
@@ -1068,7 +1068,7 @@ int copy_file(
     if ((outfd = open(dst, O_WRONLY|O_CREAT, 0600)) == -1) {
 	save_errno = errno;
 	quoted = quote_string(dst);
-	*errmsg = vstrallocf(_("Can't open file '%s' for writting: %s"),
+	*errmsg = g_strdup_printf(_("Can't open file '%s' for writting: %s"),
 			    quoted, strerror(save_errno));
 	amfree(quoted);
 	close(infd);
@@ -1079,7 +1079,7 @@ int copy_file(
 	if(full_write(outfd,&buf,nb) < nb) {
 	    save_errno = errno;
 	    quoted = quote_string(dst);
-	    *errmsg = vstrallocf(_("Error writing to '%s': %s"),
+	    *errmsg = g_strdup_printf(_("Error writing to '%s': %s"),
 				quoted, strerror(save_errno));
 	    amfree(quoted);
 	    close(infd);
@@ -1091,7 +1091,7 @@ int copy_file(
     if (errno != 0) {
 	save_errno = errno;
 	quoted = quote_string(src);
-	*errmsg = vstrallocf(_("Error reading from '%s': %s"),
+	*errmsg = g_strdup_printf(_("Error reading from '%s': %s"),
 			    quoted, strerror(save_errno));
 	amfree(quoted);
 	close(infd);
@@ -1287,36 +1287,36 @@ _str_exit_status(
     if (WIFEXITED(status)) {
 	int exitstatus = WEXITSTATUS(status);
 	if (exitstatus == 0)
-	    return vstrallocf(_("%s exited normally"), subject);
+	    return g_strdup_printf(_("%s exited normally"), subject);
 	else
-	    return vstrallocf(_("%s exited with status %d"), subject, exitstatus);
+	    return g_strdup_printf(_("%s exited with status %d"), subject, exitstatus);
     }
 
     if (WIFSIGNALED(status)) {
 	int signal = WTERMSIG(status);
 #ifdef WCOREDUMP
 	if (WCOREDUMP(status))
-	    return vstrallocf(_("%s exited after receiving signal %d (core dumped)"),
+	    return g_strdup_printf(_("%s exited after receiving signal %d (core dumped)"),
 		subject, signal);
 	else
 #endif
-	    return vstrallocf(_("%s exited after receiving signal %d"),
+	    return g_strdup_printf(_("%s exited after receiving signal %d"),
 		subject, signal);
     }
 
     if (WIFSTOPPED(status)) {
 	int signal = WSTOPSIG(status);
-	return vstrallocf(_("%s stopped temporarily after receiving signal %d"),
+	return g_strdup_printf(_("%s stopped temporarily after receiving signal %d"),
 	    subject, signal);
     }
 
 #ifdef WIFCONTINUED
     if (WIFCONTINUED(status)) {
-	return vstrallocf(_("%s was resumed"), subject);
+	return g_strdup_printf(_("%s was resumed"), subject);
     }
 #endif
 
-    return vstrallocf(_("%s exited in unknown circumstances"), subject);
+    return g_strdup_printf(_("%s exited in unknown circumstances"), subject);
 }
 
 void

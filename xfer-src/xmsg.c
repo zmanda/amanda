@@ -79,7 +79,7 @@ xmsg_repr(
 	    default: typ = "**UNKNOWN**"; break;
 	}
 
-	msg->repr = vstrallocf("<XMsg@%p type=XMSG_%s elt=%s version=%d>",
+	msg->repr = g_strdup_printf("<XMsg@%p type=XMSG_%s elt=%s version=%d>",
 	    msg, typ, xfer_element_repr(msg->elt), msg->version);
     }
 

@@ -904,7 +904,7 @@ incomplete_bsf:
 	/* if we didn't seek all the way there, then we're past the tapeend */
 	if (resid > 0) {
 	    device_set_error(dself,
-		vstrallocf(_("Could not seek forward to file %d"), file),
+		g_strdup_printf(_("Could not seek forward to file %d"), file),
 		DEVICE_STATUS_VOLUME_ERROR);
 	    return NULL;
 	}

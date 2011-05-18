@@ -940,7 +940,7 @@ s_repwait(
 			 (as->cmd)?as->cmd:_("??UNKONWN??"),
 			 (unsigned)as->pid,
 			 what, code);
-		msg = vstrallocf(
+		msg = g_strdup_printf(
 		     _("ERROR service %s failed: pid %u exited with %s %d\n"),
 		     (as->cmd)?as->cmd:_("??UNKONWN??"), (unsigned)as->pid,
 		     what, code);
@@ -1289,7 +1289,7 @@ errfd_recv(
 	char *s;
 
 	*r = '\0';
-	s = vstrallocf("ERROR service %s: %s\n",
+	s = g_strdup_printf("ERROR service %s: %s\n",
 		       services[as->service].name, as->errbuf);
 
 	/* Add to repbuf, error message will be in the REP packet if it

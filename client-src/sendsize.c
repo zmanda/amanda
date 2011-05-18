@@ -381,7 +381,7 @@ main(
 				append_sl(dle->include_list, qlist);
 			    amfree(qlist);
 			} else {
-			    err_extra = vstrallocf(_("Invalid parameter (%s)"), s-1);
+			    err_extra = g_strdup_printf(_("Invalid parameter (%s)"), s-1);
 			    goto err;		/* should have gotten to end */
 			}
 			skip_quoted_string(s, ch);
@@ -471,7 +471,7 @@ main(
 	    }
 
 	    if (!WIFEXITED(child_status) || WEXITSTATUS(child_status) != 0) {
-		char *child_name = vstrallocf(_("child %ld"), (long)child_pid);
+		char *child_name = g_strdup_printf(_("child %ld"), (long)child_pid);
 		char *child_status_str = str_exit_status(child_name, child_status);
 		dbprintf("%s\n", child_status_str);
 		amfree(child_status_str);
@@ -637,7 +637,7 @@ dle_add_diskest(
 	    if(!start_amandates(amandates_file, 0)) {
 		char *errstr = strerror(errno);
 		char *qamname = quote_string(dle->disk);
-		char *errmsg = vstrallocf(_("could not open %s: %s"), amandates_file, errstr);
+		char *errmsg = g_strdup_printf(_("could not open %s: %s"), amandates_file, errstr);
 		char *qerrmsg = quote_string(errmsg);
 		g_printf(_("%s %d ERROR %s\n"), qamname, 0, qerrmsg);
 		amfree(qamname);
@@ -949,16 +949,16 @@ application_api_calc_estimate(
 		    char *errmsg, *qerrmsg;
 		    if (has_client && !bsu->client_estimate &&
 			has_calcsize && !bsu->calcsize) {
-			errmsg = vstrallocf(_("Application '%s' can't do CLIENT or CALCSIZE estimate"),
+			errmsg = g_strdup_printf(_("Application '%s' can't do CLIENT or CALCSIZE estimate"),
 					    est->dle->program);
 		    } else if (has_client && !bsu->client_estimate) {
-			errmsg = vstrallocf(_("Application '%s' can't do CLIENT estimate"),
+			errmsg = g_strdup_printf(_("Application '%s' can't do CLIENT estimate"),
 					    est->dle->program);
 		    } else if (has_calcsize && !bsu->calcsize) {
-			errmsg = vstrallocf(_("Application '%s' can't do CALCSIZE estimate"),
+			errmsg = g_strdup_printf(_("Application '%s' can't do CALCSIZE estimate"),
 					    est->dle->program);
 		    } else {
-			errmsg = vstrallocf(_("Application '%s' can't do estimate"),
+			errmsg = g_strdup_printf(_("Application '%s' can't do estimate"),
 					    est->dle->program);
 		    }
 		    qerrmsg = quote_string(errmsg);
@@ -1104,7 +1104,7 @@ generic_calc_estimates(
     fflush(stderr); fflush(stdout);
 
     if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	errmsg = vstrallocf(_("Cannot access /dev/null : %s"),
+	errmsg = g_strdup_printf(_("Cannot access /dev/null : %s"),
 			    strerror(errno));
 	dbprintf("%s\n", errmsg);
 	goto common_exit;
@@ -1144,19 +1144,19 @@ generic_calc_estimates(
 	     command, est->qamdevice, (int)calcpid);
     waitpid(calcpid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
-	errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
+	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
 			    "calcsize", WTERMSIG(wait_status),
 			    dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
-	    errmsg = vstrallocf(_("%s exited with status %d: see %s"),
+	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
 			        "calcsize", WEXITSTATUS(wait_status),
 				dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
-	errmsg = vstrallocf(_("%s got bad exit: see %s"),
+	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
 			     "calcsize", dbfn());
     }
     dbprintf(_("after %s %s wait: child pid=%d status=%d\n"),
@@ -1410,7 +1410,7 @@ getsize_dump(
     else
         config = "NOCONFIG";
     if ((stdoutfd = nullfd = open("/dev/null", O_RDWR)) == -1) {
-	*errmsg = vstrallocf(_("getsize_dump could not open /dev/null: %s"),
+	*errmsg = g_strdup_printf(_("getsize_dump could not open /dev/null: %s"),
 			     strerror(errno));
 	dbprintf("%s\n", *errmsg);
 	amfree(cmd);
@@ -1423,7 +1423,7 @@ getsize_dump(
     }
     pipefd[0] = pipefd[1] = killctl[0] = killctl[1] = -1;
     if (pipe(pipefd) < 0) {
-	*errmsg = vstrallocf(_("getsize_dump could create data pipes: %s"),
+	*errmsg = g_strdup_printf(_("getsize_dump could create data pipes: %s"),
 			     strerror(errno));
 	dbprintf("%s\n", *errmsg);
 	amfree(cmd);
@@ -1548,7 +1548,7 @@ getsize_dump(
     start_time = curclock();
     switch(dumppid = fork()) {
     case -1:
-	*errmsg = vstrallocf(_("cannot fork for killpgrp: %s"),
+	*errmsg = g_strdup_printf(_("cannot fork for killpgrp: %s"),
 			     strerror(errno));
 	dbprintf("%s\n", *errmsg);
 	amfree(dumpkeys);
@@ -1724,7 +1724,7 @@ getsize_dump(
 	      level,
 	      walltime_str(timessub(curclock(), start_time)));
     if(size == (off_t)-1) {
-	*errmsg = vstrallocf(_("no size line match in %s%s output"),
+	*errmsg = g_strdup_printf(_("no size line match in %s%s output"),
 			     cmd, name);
 	dbprintf(_("%s for %s\n"),
 		  *errmsg, qdisk);
@@ -1781,17 +1781,17 @@ getsize_dump(
     dbprintf(_("waiting for %s%s \"%s\" child\n"), cmd, name, qdisk);
     waitpid(dumppid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
-	*errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
+	*errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
 			     cmd, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
-	    *errmsg = vstrallocf(_("%s exited with status %d: see %s"),
+	    *errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
 			         cmd, WEXITSTATUS(wait_status), dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
-	*errmsg = vstrallocf(_("%s got bad exit: see %s"),
+	*errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
 			     cmd, dbfn());
     }
     dbprintf(_("after %s%s %s wait\n"), cmd, name, qdisk);
@@ -2001,7 +2001,7 @@ getsize_smbtar(
 	      level,
 	      walltime_str(timessub(curclock(), start_time)));
     if(size == (off_t)-1) {
-	*errmsg = vstrallocf(_("no size line match in %s output"),
+	*errmsg = g_strdup_printf(_("no size line match in %s output"),
 			     SAMBA_CLIENT);
 	dbprintf(_("%s for %s\n"),
 		  *errmsg, qdisk);
@@ -2022,12 +2022,12 @@ getsize_smbtar(
     waitpid(dumppid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
 	amfree(*errmsg);
-	*errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
+	*errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
 			     SAMBA_CLIENT, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
 	    amfree(*errmsg);
-	    *errmsg = vstrallocf(_("%s exited with status %d: see %s"),
+	    *errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
 				 SAMBA_CLIENT, WEXITSTATUS(wait_status),
 				 dbfn());
 	} else {
@@ -2035,7 +2035,7 @@ getsize_smbtar(
 	}
     } else {
 	amfree(*errmsg);
-	*errmsg = vstrallocf(_("%s got bad exit: see %s"),
+	*errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
 			     SAMBA_CLIENT, dbfn());
     }
     dbprintf(_("after %s %s wait\n"), SAMBA_CLIENT, qdisk);
@@ -2135,7 +2135,7 @@ getsize_gnutar(
 	    }
 	    if ((infd = open(inputname, O_RDONLY)) == -1) {
 
-		*errmsg = vstrallocf(_("gnutar: error opening %s: %s"),
+		*errmsg = g_strdup_printf(_("gnutar: error opening %s: %s"),
 				     inputname, strerror(errno));
 		dbprintf("%s\n", *errmsg);
 		if (baselevel < 0) {
@@ -2149,7 +2149,7 @@ getsize_gnutar(
 	 * Copy the previous listed incremental file to the new one.
 	 */
 	if ((outfd = open(incrname, O_WRONLY|O_CREAT, 0600)) == -1) {
-	    *errmsg = vstrallocf(_("opening %s: %s"),
+	    *errmsg = g_strdup_printf(_("opening %s: %s"),
 			         incrname, strerror(errno));
 	    dbprintf("%s\n", *errmsg);
 	    goto common_exit;
@@ -2157,7 +2157,7 @@ getsize_gnutar(
 
 	while ((nb = read(infd, &buf, sizeof(buf))) > 0) {
 	    if (full_write(outfd, &buf, (size_t)nb) < (size_t)nb) {
-		*errmsg = vstrallocf(_("writing to %s: %s"),
+		*errmsg = g_strdup_printf(_("writing to %s: %s"),
 				     incrname, strerror(errno));
 		dbprintf("%s\n", *errmsg);
 		goto common_exit;
@@ -2165,20 +2165,20 @@ getsize_gnutar(
 	}
 
 	if (nb < 0) {
-	    *errmsg = vstrallocf(_("reading from %s: %s"),
+	    *errmsg = g_strdup_printf(_("reading from %s: %s"),
 			         inputname, strerror(errno));
 	    dbprintf("%s\n", *errmsg);
 	    goto common_exit;
 	}
 
 	if (close(infd) != 0) {
-	    *errmsg = vstrallocf(_("closing %s: %s"),
+	    *errmsg = g_strdup_printf(_("closing %s: %s"),
 			         inputname, strerror(errno));
 	    dbprintf("%s\n", *errmsg);
 	    goto common_exit;
 	}
 	if (close(outfd) != 0) {
-	    *errmsg = vstrallocf(_("closing %s: %s"),
+	    *errmsg = g_strdup_printf(_("closing %s: %s"),
 			         incrname, strerror(errno));
 	    dbprintf("%s\n", *errmsg);
 	    goto common_exit;
@@ -2255,7 +2255,7 @@ getsize_gnutar(
     start_time = curclock();
 
     if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	*errmsg = vstrallocf(_("Cannot access /dev/null : %s"),
+	*errmsg = g_strdup_printf(_("Cannot access /dev/null : %s"),
 			     strerror(errno));
 	dbprintf("%s\n", *errmsg);
 	goto common_exit;
@@ -2299,7 +2299,7 @@ getsize_gnutar(
 	      level,
 	      walltime_str(timessub(curclock(), start_time)));
     if(size == (off_t)-1) {
-	*errmsg = vstrallocf(_("no size line match in %s output"),
+	*errmsg = g_strdup_printf(_("no size line match in %s output"),
 			     command);
 	dbprintf(_("%s for %s\n"), *errmsg, qdisk);
 	dbprintf(".....\n");
@@ -2320,19 +2320,19 @@ getsize_gnutar(
     waitpid(dumppid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
 	amfree(*errmsg);
-	*errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
+	*errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
 			     cmd, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
 	    amfree(*errmsg);
-	    *errmsg = vstrallocf(_("%s exited with status %d: see %s"),
+	    *errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
 			         cmd, WEXITSTATUS(wait_status), dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
 	amfree(*errmsg);
-	*errmsg = vstrallocf(_("%s got bad exit: see %s"),
+	*errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
 			     cmd, dbfn());
     }
     dbprintf(_("after %s %s wait\n"), command, qdisk);
@@ -2455,19 +2455,19 @@ getsize_application_api(
     amfree(cmdline);
 
     if (pipe(pipeerrfd) < 0) {
-	errmsg = vstrallocf(_("getsize_application_api could not create data pipes: %s"),
+	errmsg = g_strdup_printf(_("getsize_application_api could not create data pipes: %s"),
 			    strerror(errno));
 	goto common_exit;
     }
 
     if (pipe(pipeinfd) < 0) {
-	errmsg = vstrallocf(_("getsize_application_api could not create data pipes: %s"),
+	errmsg = g_strdup_printf(_("getsize_application_api could not create data pipes: %s"),
 			    strerror(errno));
 	goto common_exit;
     }
 
     if (pipe(pipeoutfd) < 0) {
-	errmsg = vstrallocf(_("getsize_application_api could not create data pipes: %s"),
+	errmsg = g_strdup_printf(_("getsize_application_api could not create data pipes: %s"),
 			    strerror(errno));
 	goto common_exit;
     }
@@ -2531,7 +2531,7 @@ getsize_application_api(
 	    if (i != 2) {
 		char *errmsg, *qerrmsg;
 
-		errmsg = vstrallocf(_("bad line %s"), line);
+		errmsg = g_strdup_printf(_("bad line %s"), line);
 		qerrmsg = quote_string(errmsg);
 		dbprintf(_("errmsg is %s\n"), errmsg);
 		g_printf(_("%s %d ERROR %s\n"), est->qamname, levels[0], qerrmsg);
@@ -2590,17 +2590,17 @@ getsize_application_api(
     dbprintf(_("waiting for %s \"%s\" child\n"), cmd, qdisk);
     waitpid(dumppid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
-	errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
+	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
 			    cmd, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
-	    errmsg = vstrallocf(_("%s exited with status %d: see %s"), cmd,
+	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"), cmd,
 				WEXITSTATUS(wait_status), dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
-	errmsg = vstrallocf(_("%s got bad exit: see %s"),
+	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
 			    cmd, dbfn());
     }
     dbprintf(_("after %s %s wait\n"), cmd, qdisk);

@@ -1106,7 +1106,7 @@ static char *quote_heredoc(
     }
 
     /* we have a delimiter .. now use it */
-    quoted = vstrallocf("<<%s\n%s\n%s", delimiter, text, delimiter);
+    quoted = g_strdup_printf("<<%s\n%s\n%s", delimiter, text, delimiter);
     amfree(delimiter);
     return quoted;
 }

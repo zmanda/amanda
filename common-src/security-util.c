@@ -1989,7 +1989,7 @@ check_user(
 
     /* lookup our local user name */
     if ((pwd = getpwnam(CLIENT_LOGIN)) == NULL) {
-	return vstrallocf(_("getpwnam(%s) failed."), CLIENT_LOGIN);
+	return g_strdup_printf(_("getpwnam(%s) failed."), CLIENT_LOGIN);
     }
 
     /*
@@ -2004,7 +2004,7 @@ check_user(
     r = check_user_amandahosts(rh->hostname, &rh->peer, pwd, remoteuser, service);
 #endif
     if (r != NULL) {
-	result = vstrallocf(
+	result = g_strdup_printf(
 		_("user %s from %s is not allowed to execute the service %s: %s"),
 		remoteuser, rh->hostname, service, r);
 	amfree(r);
@@ -2128,7 +2128,7 @@ check_user_ruserok(
     while (pid != ruserok_pid) {
 	if ((pid == (pid_t) -1) && (errno != EINTR)) {
 	    amfree(result);
-	    return vstrallocf(_("ruserok wait failed: %s"), strerror(errno));
+	    return g_strdup_printf(_("ruserok wait failed: %s"), strerror(errno));
 	}
 	pid = wait(&exitcode);
     }
@@ -2180,7 +2180,7 @@ check_user_amandahosts(
 	show_stat_info(ptmp, "");;
     }
     if ((fp = fopen(ptmp, "r")) == NULL) {
-	result = vstrallocf(_("cannot open %s: %s"), ptmp, strerror(errno));
+	result = g_strdup_printf(_("cannot open %s: %s"), ptmp, strerror(errno));
 	amfree(ptmp);
 	return result;
     }
@@ -2190,16 +2190,16 @@ check_user_amandahosts(
      * have any group/other access allowed.
      */
     if (fstat(fileno(fp), &sbuf) != 0) {
-	result = vstrallocf(_("cannot fstat %s: %s"), ptmp, strerror(errno));
+	result = g_strdup_printf(_("cannot fstat %s: %s"), ptmp, strerror(errno));
 	goto common_exit;
     }
     if (sbuf.st_uid != pwd->pw_uid) {
-	result = vstrallocf(_("%s: owned by id %ld, should be %ld"),
+	result = g_strdup_printf(_("%s: owned by id %ld, should be %ld"),
 			ptmp, (long)sbuf.st_uid, (long)pwd->pw_uid);
 	goto common_exit;
     }
     if ((sbuf.st_mode & 077) != 0) {
-	result = vstrallocf(_("%s: incorrect permissions; file must be accessible only by its owner"), ptmp);
+	result = g_strdup_printf(_("%s: incorrect permissions; file must be accessible only by its owner"), ptmp);
 	goto common_exit;
     }
 
@@ -2309,15 +2309,15 @@ check_user_amandahosts(
     if (! found) {
 	if (strcmp(service, "amindexd") == 0 ||
 	    strcmp(service, "amidxtaped") == 0) {
-	    result = vstrallocf(_("Please add the line \"%s %s amindexd amidxtaped\" to %s on the server"), host, remoteuser, ptmp);
+	    result = g_strdup_printf(_("Please add the line \"%s %s amindexd amidxtaped\" to %s on the server"), host, remoteuser, ptmp);
 	} else if (strcmp(service, "amdump") == 0 ||
 		   strcmp(service, "noop") == 0 ||
 		   strcmp(service, "selfcheck") == 0 ||
 		   strcmp(service, "sendsize") == 0 ||
 		   strcmp(service, "sendbackup") == 0) {
-	    result = vstrallocf(_("Please add the line \"%s %s amdump\" to %s on the client"), host, remoteuser, ptmp);
+	    result = g_strdup_printf(_("Please add the line \"%s %s amdump\" to %s on the client"), host, remoteuser, ptmp);
 	} else {
-	    result = vstrallocf(_("%s: invalid service %s"), ptmp, service);
+	    result = g_strdup_printf(_("%s: invalid service %s"), ptmp, service);
 	}
     }
 
@@ -2378,7 +2378,7 @@ check_security(
     /* next, make sure the remote port is a "reserved" one */
     port = SU_GET_PORT(addr);
     if (port >= IPPORT_RESERVED) {
-	*errstr = vstrallocf(_("[host %s: port %u not secure]"),
+	*errstr = g_strdup_printf(_("[host %s: port %u not secure]"),
 			remotehost, (unsigned int)port);
 	amfree(remotehost);
 	return 0;
@@ -2389,7 +2389,7 @@ check_security(
     s = str;
     ch = *s++;
 
-    bad_bsd = vstrallocf(_("[host %s: bad bsd security line]"), remotehost);
+    bad_bsd = g_strdup_printf(_("[host %s: bad bsd security line]"), remotehost);
 
     if (strncmp_const_skip(s - 1, "USER ", s, ch) != 0) {
 	*errstr = bad_bsd;
@@ -2428,7 +2428,7 @@ check_security(
 #endif
 
     if (s != NULL) {
-	*errstr = vstrallocf(_("[access as %s not allowed from %s@%s: %s]"),
+	*errstr = g_strdup_printf(_("[access as %s not allowed from %s@%s: %s]"),
 			    pwptr->pw_name, remoteuser, remotehost, s);
     }
     amfree(s);

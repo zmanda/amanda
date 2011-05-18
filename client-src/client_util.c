@@ -838,7 +838,7 @@ merge_dles_properties(
 		app = lookup_application(dle->application_client_name);
 		if (!app) {
 		    char *qamname = quote_string(dle->disk);
-		    char *errmsg = vstrallocf("Application '%s' not found on client",
+		    char *errmsg = g_strdup_printf("Application '%s' not found on client",
 					      dle->application_client_name);
 		    char *qerrmsg = quote_string(errmsg);
 		    good = 0;
@@ -868,7 +868,7 @@ merge_dles_properties(
 		pp_script = lookup_pp_script(script->client_name);
 		if (!pp_script) {
 		    char *qamname = quote_string(dle->disk);
-		    char *errmsg = vstrallocf("Script '%s' not found on client",
+		    char *errmsg = g_strdup_printf("Script '%s' not found on client",
 					      script->client_name);
 		    char *qerrmsg = quote_string(errmsg);
 		    good = 0;
@@ -1057,11 +1057,11 @@ backup_support_option(
     fclose(streamerr);
 
     if (waitpid(supportpid, &status, 0) < 0) {
-	err = vstrallocf(_("waitpid failed: %s"), strerror(errno));
+	err = g_strdup_printf(_("waitpid failed: %s"), strerror(errno));
     } else if (!WIFEXITED(status)) {
-	err = vstrallocf(_("exited with signal %d"), WTERMSIG(status));
+	err = g_strdup_printf(_("exited with signal %d"), WTERMSIG(status));
     } else if (WEXITSTATUS(status) != 0) {
-	err = vstrallocf(_("exited with status %d"), WEXITSTATUS(status));
+	err = g_strdup_printf(_("exited with status %d"), WEXITSTATUS(status));
     }
 
     if (err) {
@@ -1458,7 +1458,7 @@ run_calcsize(
     amandates_file = getconf_str(CNF_AMANDATES);
     if(!start_amandates(amandates_file, 0)) {
 	char *errstr = strerror(errno);
-	char *errmsg = vstrallocf(_("could not open %s: %s"), amandates_file, errstr);
+	char *errmsg = g_strdup_printf(_("could not open %s: %s"), amandates_file, errstr);
 	char *qerrmsg = quote_string(errmsg);
 	g_printf(_("ERROR %s\n"), qerrmsg);
 	amfree(qdisk);
@@ -1523,7 +1523,7 @@ run_calcsize(
     fflush(stderr); fflush(stdout);
 
     if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	errmsg = vstrallocf(_("Cannot access /dev/null : %s"),
+	errmsg = g_strdup_printf(_("Cannot access /dev/null : %s"),
 			    strerror(errno));
 	dbprintf("%s\n", errmsg);
 	goto common_exit;
@@ -1562,19 +1562,19 @@ run_calcsize(
     waitpid(calcpid, &wait_status, 0);
     close(nullfd);
     if (WIFSIGNALED(wait_status)) {
-	errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
+	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
 			    "calcsize", WTERMSIG(wait_status),
 			    dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
-	    errmsg = vstrallocf(_("%s exited with status %d: see %s"),
+	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
 				"calcsize", WEXITSTATUS(wait_status),
 				dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
-	errmsg = vstrallocf(_("%s got bad exit: see %s"),
+	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
 			    "calcsize", dbfn());
     }
 
@@ -1750,7 +1750,7 @@ config_errors_to_error_string(
 	errmsg = _("(no error message)");
     }
 
-    return vstrallocf("ERROR %s%s", errmsg,
+    return g_strdup_printf("ERROR %s%s", errmsg,
 	multiple_errors? _(" (additional errors not displayed)"):"");
 }
 

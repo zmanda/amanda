@@ -355,7 +355,7 @@ main(
 	} else {
 	    char *wait_msg = NULL;
 
-	    wait_msg = vstrallocf(_("parent: reaped bogus pid %ld\n"), (long)pid);
+	    wait_msg = g_strdup_printf(_("parent: reaped bogus pid %ld\n"), (long)pid);
 	    if (full_write(mainfd, wait_msg, strlen(wait_msg)) < strlen(wait_msg)) {
 		error(_("write main file: %s"), strerror(errno));
 		/*NOTREACHED*/
@@ -385,7 +385,7 @@ main(
 	aclose(tempfd);
     }
 
-    version_string = vstrallocf(_("\n(brought to you by Amanda %s)\n"), VERSION);
+    version_string = g_strdup_printf(_("\n(brought to you by Amanda %s)\n"), VERSION);
     if (full_write(mainfd, version_string, strlen(version_string)) < strlen(version_string)) {
 	error(_("write main file: %s"), strerror(errno));
 	/*NOTREACHED*/
@@ -420,10 +420,10 @@ main(
 	    /*NOTREACHED*/
 	}
 	if(alwaysmail && !(server_probs || client_probs)) {
-	    subject = vstrallocf(_("%s AMCHECK REPORT: NO PROBLEMS FOUND"),
+	    subject = g_strdup_printf(_("%s AMCHECK REPORT: NO PROBLEMS FOUND"),
 			getconf_str(CNF_ORG));
 	} else {
-	    subject = vstrallocf(
+	    subject = g_strdup_printf(
 			_("%s AMANDA PROBLEM: FIX BEFORE RUN, IF POSSIBLE"),
 			getconf_str(CNF_ORG));
 	}

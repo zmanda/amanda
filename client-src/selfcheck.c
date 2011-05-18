@@ -540,7 +540,7 @@ check_disk(
 	dbprintf(_("checking disk %s\n"), qdisk);
 	if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE) {
 	    if (dle->device[0] == '/' && dle->device[1] == '/') {
-		err = vstrallocf(
+		err = g_strdup_printf(
 		    _("Can't use CALCSIZE for samba estimate, use CLIENT: %s"),
 		    dle->device);
 		goto common_exit;
@@ -566,24 +566,24 @@ check_disk(
 
 		parsesharename(dle->device, &share, &subdir);
 		if (!share) {
-		    err = vstrallocf(
+		    err = g_strdup_printf(
 			      _("cannot parse for share/subdir disk entry %s"),
 			      dle->device);
 		    goto common_exit;
 		}
 		if ((subdir) && (SAMBA_VERSION < 2)) {
-		    err = vstrallocf(_("subdirectory specified for share '%s' but, samba is not v2 or better"),
+		    err = g_strdup_printf(_("subdirectory specified for share '%s' but, samba is not v2 or better"),
 				     dle->device);
 		    goto common_exit;
 		}
 		if ((user_and_password = findpass(share, &domain)) == NULL) {
-		    err = vstrallocf(_("cannot find password for %s"),
+		    err = g_strdup_printf(_("cannot find password for %s"),
 				     dle->device);
 		    goto common_exit;
 		}
 		lpass = strlen(user_and_password);
 		if ((pwtext = strchr(user_and_password, '%')) == NULL) {
-		    err = vstrallocf(
+		    err = g_strdup_printf(
 				_("password field not \'user%%pass\' for %s"),
 				dle->device);
 		    goto common_exit;
@@ -592,12 +592,12 @@ check_disk(
 		pwtext_len = (size_t)strlen(pwtext);
 		amfree(device);
 		if ((device = makesharename(share, 0)) == NULL) {
-		    err = vstrallocf(_("cannot make share name of %s"), share);
+		    err = g_strdup_printf(_("cannot make share name of %s"), share);
 		    goto common_exit;
 		}
 
 		if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	            err = vstrallocf(_("Cannot access /dev/null : %s"),
+	            err = g_strdup_printf(_("Cannot access /dev/null : %s"),
 				     strerror(errno));
 		    goto common_exit;
 		}
@@ -629,7 +629,7 @@ check_disk(
 		/*@ignore@*/
 		if ((pwtext_len > 0) &&
 		    full_write(passwdfd, pwtext, pwtext_len) < pwtext_len) {
-		    err = vstrallocf(_("password write failed: %s: %s"),
+		    err = g_strdup_printf(_("password write failed: %s: %s"),
 				     dle->device, strerror(errno));
 		    aclose(passwdfd);
 		    goto common_exit;
@@ -684,7 +684,7 @@ check_disk(
 		    }
 		}
 #else
-		err = vstrallocf(
+		err = g_strdup_printf(
 			      _("This client is not configured for samba: %s"),
 			      qdisk);
 #endif
@@ -695,7 +695,7 @@ check_disk(
 	    device = amname_to_dirname(dle->device);
 	} else if (strcmp(dle->program, "DUMP") == 0) {
 	    if(dle->device[0] == '/' && dle->device[1] == '/') {
-		err = vstrallocf(
+		err = g_strdup_printf(
 		  _("The DUMP program cannot handle samba shares, use GNUTAR: %s"),
 		  qdisk);
 		goto common_exit;
@@ -741,7 +741,7 @@ check_disk(
 			dle->program, line);
 		amfree(line);
 	    }
-	    err = vstrallocf(_("Application '%s': can't run support command"),
+	    err = g_strdup_printf(_("Application '%s': can't run support command"),
 			     dle->program);
 	    goto common_exit;
 	}
@@ -792,14 +792,14 @@ check_disk(
 	fflush(stdout);fflush(stderr);
 
 	if (pipe(app_err) < 0) {
-	    err = vstrallocf(_("Application '%s': can't create pipe"),
+	    err = g_strdup_printf(_("Application '%s': can't create pipe"),
 			     dle->program);
 	    goto common_exit;
 	}
 
 	switch (application_api_pid = fork()) {
 	case -1:
-	    err = vstrallocf(_("fork failed: %s"), strerror(errno));
+	    err = g_strdup_printf(_("fork failed: %s"), strerror(errno));
 	    goto common_exit;
 
 	case 0: /* child */
@@ -904,15 +904,15 @@ check_disk(
 		}
 		fclose(app_stderr);
 		if (waitpid(application_api_pid, &status, 0) < 0) {
-		    err = vstrallocf(_("waitpid failed: %s"),
+		    err = g_strdup_printf(_("waitpid failed: %s"),
 					 strerror(errno));
 		    goto common_exit;
 		} else if (!WIFEXITED(status)) {
-		    err = vstrallocf(_("Application '%s': exited with signal %d"),
+		    err = g_strdup_printf(_("Application '%s': exited with signal %d"),
 				     dle->program, WTERMSIG(status));
 		    goto common_exit;
 		} else if (WEXITSTATUS(status) != 0) {
-		    err = vstrallocf(_("Application '%s': exited with status %d"),
+		    err = g_strdup_printf(_("Application '%s': exited with status %d"),
 				     dle->program, WEXITSTATUS(status));
 		    goto common_exit;
 		}
@@ -940,7 +940,7 @@ check_disk(
 	    access_type = "access";
 #endif
 	    if(access_result == -1) {
-		err = vstrallocf(_("Could not access %s (%s): %s"),
+		err = g_strdup_printf(_("Could not access %s (%s): %s"),
 				 qdevice, qdisk, strerror(errno));
 	    }
 #ifdef CHECK_FOR_ACCESS_WITH_OPEN
