@@ -838,6 +838,43 @@ s_sendack(
     return (A_PENDING);
 }
 
+/**
+ * Ensure enough space in a reply buffer, account for the final '\0'. The base
+ * size of a buffer will be NETWORK_BLOCK_BYTES. If not enough place is
+ * available, we double the buffer size, always. This function RELIES on the
+ * 'repbufsize' and 'bufsize' members being correct. For added safety, we
+ * require that if the buffer is declared to be empty according to its declared
+ * size, its offset is 0 and its data pointer is NULL.
+ *
+ * @param as: the active_service
+ * @param size: the size we need to write (without the final '\0')
+ * @returns: TRUE if the buffer had to be expanded, FALSE otherwise
+ */
+
+static gboolean expand_reply_buffer(struct active_service *as, gsize size)
+{
+    gsize newsize = as->bufsize;
+    gsize requested = as->repbufsize + size + 1;
+    char *newbuf;
+
+    if (newsize >= requested)
+        return FALSE;
+
+    if (!newsize) {
+        g_assert(as->repbufsize == 0);
+        g_assert(as->repbuf == NULL);
+        newsize = NETWORK_BLOCK_BYTES;
+    }
+
+    while (newsize < requested)
+        newsize *= 2;
+
+    newbuf = g_realloc(as->repbuf, newsize);
+    as->repbuf = newbuf;
+    as->bufsize = newsize;
+    return TRUE;
+}
+
 /*
  * This is the repwait state.  We have responded to the initial REQ with
  * an ACK, and we are now waiting for the process we spawned to pass us 
@@ -944,13 +981,7 @@ s_repwait(
 		     _("ERROR service %s failed: pid %u exited with %s %d\n"),
 		     (as->cmd)?as->cmd:_("??UNKONWN??"), (unsigned)as->pid,
 		     what, code);
-		if (as->repbufsize + strlen(msg) >= (as->bufsize - 1)) {
-			as->bufsize *= 2;
-			repbuf_temp = g_malloc(as->bufsize);
-			memcpy(repbuf_temp, as->repbuf, as->repbufsize + 1);
-			amfree(as->repbuf);
-			as->repbuf = repbuf_temp;
-		}
+		expand_reply_buffer(as, strlen(msg));
 		strcpy(as->repbuf + as->repbufsize, msg);
 		as->repbufsize += strlen(msg);
                 amfree(msg);
@@ -1296,18 +1327,8 @@ errfd_recv(
 	 * is not already sent
 	 */
 	n = strlen(s);
-	if (as->bufsize == 0) {
-	    as->bufsize = NETWORK_BLOCK_BYTES;
-	    as->repbuf = g_malloc(as->bufsize);
-	}
-	while (as->bufsize < as->repbufsize + n) {
-	    char *repbuf_temp;
-	    as->bufsize *= 2;
-	    repbuf_temp = g_malloc(as->bufsize);
-	    memcpy(repbuf_temp, as->repbuf, as->repbufsize + 1);
-	    amfree(as->repbuf);
-	    as->repbuf = repbuf_temp;
-	}
+	expand_reply_buffer(as, n);
+
 	memcpy(as->repbuf + as->repbufsize, s, n);
 	as->repbufsize += n;
 
@@ -1846,6 +1867,7 @@ service_delete(
     amfree(as->cmd);
     amfree(as->arguments);
     amfree(as->repbuf);
+    as->bufsize = as->repbufsize = 0;
     amfree(as->rep_pkt.body);
     amfree(as);
 
