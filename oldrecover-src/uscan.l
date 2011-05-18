@@ -241,11 +241,11 @@ ll_parse_date(
     } else if(s < 0 || s > 59) {
 	yyerror("invalid second");
     } else if(type < 4) {
-	yylval.strval = alloc(DATE_ALLOC_SIZE);
+	yylval.strval = g_malloc(DATE_ALLOC_SIZE);
 	g_snprintf(yylval.strval, DATE_ALLOC_SIZE, "%04d-%02d-%02d", y, m, d);
 	ret = DATE;
     } else {
-	yylval.strval = alloc(DATE_ALLOC_SIZE);
+	yylval.strval = g_malloc(DATE_ALLOC_SIZE);
 	g_snprintf(yylval.strval, DATE_ALLOC_SIZE, "%04d-%02d-%02d-%02d-%02d-%02d", y, m, d, h, mi, s);
 	ret = DATE;
     }

@@ -221,7 +221,7 @@ typedef enum
 
 typedef struct
 {
-  Idx alloc;
+  Idx g_malloc;
   Idx nelem;
   Idx *elems;
 } re_node_set;
@@ -557,7 +557,7 @@ typedef struct re_dfastate_t re_dfastate_t;
 struct re_state_table_entry
 {
   Idx num;
-  Idx alloc;
+  Idx g_malloc;
   re_dfastate_t **array;
 };
 
@@ -566,7 +566,7 @@ struct re_state_table_entry
 typedef struct
 {
   Idx next_idx;
-  Idx alloc;
+  Idx g_malloc;
   re_dfastate_t **array;
 } state_array_t;
 
@@ -651,7 +651,7 @@ struct re_fail_stack_ent_t
 struct re_fail_stack_t
 {
   Idx num;
-  Idx alloc;
+  Idx g_malloc;
   struct re_fail_stack_ent_t *stack;
 };
 

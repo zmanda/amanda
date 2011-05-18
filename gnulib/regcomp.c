@@ -3014,7 +3014,7 @@ parse_bracket_exp (re_string_t *regexp, re_dfa_t *dfa, re_token_t *token,
 	      /* +1 in case of mbcset->ncoll_syms is 0.  */
 	      Idx new_coll_sym_alloc = 2 * mbcset->ncoll_syms + 1;
 	      /* Use realloc since mbcset->coll_syms is NULL
-		 if *alloc == 0.  */
+		 if *g_malloc == 0.  */
 	      int32_t *new_coll_syms = re_realloc (mbcset->coll_syms, int32_t,
 						   new_coll_sym_alloc);
 	      if (BE (new_coll_syms == NULL, 0))
@@ -3202,7 +3202,7 @@ parse_bracket_exp (re_string_t *regexp, re_dfa_t *dfa, re_token_t *token,
 		  /* Not enough, realloc it.  */
 		  /* +1 in case of mbcset->nmbchars is 0.  */
 		  mbchar_alloc = 2 * mbcset->nmbchars + 1;
-		  /* Use realloc since array is NULL if *alloc == 0.  */
+		  /* Use realloc since array is NULL if *g_malloc == 0.  */
 		  new_mbchars = re_realloc (mbcset->mbchars, wchar_t,
 					    mbchar_alloc);
 		  if (BE (new_mbchars == NULL, 0))
@@ -3485,7 +3485,7 @@ build_equiv_class (bitset_t sbcset, const unsigned char *name)
 	  /* Not enough, realloc it.  */
 	  /* +1 in case of mbcset->nequiv_classes is 0.  */
 	  Idx new_equiv_class_alloc = 2 * mbcset->nequiv_classes + 1;
-	  /* Use realloc since the array is NULL if *alloc == 0.  */
+	  /* Use realloc since the array is NULL if *g_malloc == 0.  */
 	  int32_t *new_equiv_classes = re_realloc (mbcset->equiv_classes,
 						   int32_t,
 						   new_equiv_class_alloc);
@@ -3538,7 +3538,7 @@ build_charclass (RE_TRANSLATE_TYPE trans, bitset_t sbcset,
       /* Not enough, realloc it.  */
       /* +1 in case of mbcset->nchar_classes is 0.  */
       Idx new_char_class_alloc = 2 * mbcset->nchar_classes + 1;
-      /* Use realloc since array is NULL if *alloc == 0.  */
+      /* Use realloc since array is NULL if *g_malloc == 0.  */
       wctype_t *new_char_classes = re_realloc (mbcset->char_classes, wctype_t,
 					       new_char_class_alloc);
       if (BE (new_char_classes == NULL, 0))
@@ -3604,7 +3604,7 @@ build_charclass_op (re_dfa_t *dfa, RE_TRANSLATE_TYPE trans,
   re_bitset_ptr_t sbcset;
 #ifdef RE_ENABLE_I18N
   re_charset_t *mbcset;
-  Idx alloc = 0;
+  Idx g_malloc = 0;
 #endif /* not RE_ENABLE_I18N */
   reg_errcode_t ret;
   re_token_t br_token;
@@ -3635,7 +3635,7 @@ build_charclass_op (re_dfa_t *dfa, RE_TRANSLATE_TYPE trans,
   /* We don't care the syntax in this case.  */
   ret = build_charclass (trans, sbcset,
 #ifdef RE_ENABLE_I18N
-			 mbcset, &alloc,
+			 mbcset, &g_malloc,
 #endif /* RE_ENABLE_I18N */
 			 class_name, 0);
 

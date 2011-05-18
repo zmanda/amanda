@@ -200,7 +200,7 @@ main(
 	if(strncmp_const(line, "OPTIONS ") == 0) {
 	    g_options = parse_g_options(line+8, 1);
 	    if(!g_options->hostname) {
-		g_options->hostname = alloc(MAX_HOSTNAME_LENGTH+1);
+		g_options->hostname = g_malloc(MAX_HOSTNAME_LENGTH+1);
 		gethostname(g_options->hostname, MAX_HOSTNAME_LENGTH);
 		g_options->hostname[MAX_HOSTNAME_LENGTH] = '\0';
 	    }

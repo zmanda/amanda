@@ -123,7 +123,7 @@ clean_regex(
     char *result;
     int j;
     size_t i;
-    result = alloc(2*strlen(str)+3);
+    result = g_malloc(2*strlen(str)+3);
 
     j = 0;
     if (anchor)
@@ -177,7 +177,7 @@ static char *full_amglob_from_expression(const char *str, char not_this_one)
     const char *src;
     char *result, *dst;
 
-    result = alloc(2 * strlen(str) + 3);
+    result = g_malloc(2 * strlen(str) + 3);
     dst = result;
 
     *(dst++) = '^';
@@ -339,7 +339,7 @@ static char *amglob_to_regex(const char *str, struct subst_table *table,
      * - final 0.
      */
 
-    result = alloc(strlen(table->begin) + strlen(str) * worst_case
+    result = g_malloc(strlen(table->begin) + strlen(str) * worst_case
         + strlen(table->end) + 1);
 
     /*
@@ -537,7 +537,7 @@ static char *convert_unc_to_unix(const char *unc)
 {
     const char *src;
     char *result, *dst;
-    result = alloc(strlen(unc) + 1);
+    result = g_malloc(strlen(unc) + 1);
     dst = result;
 
     for (src = unc; *src; src++)
@@ -551,7 +551,7 @@ static char *convert_winglob_to_unix(const char *glob)
 {
     const char *src;
     char *result, *dst;
-    result = alloc(strlen(glob) + 1);
+    result = g_malloc(strlen(glob) + 1);
     dst = result;
 
     for (src = glob; *src; src++) {
@@ -604,7 +604,7 @@ match_word(
     int ret;
 
     lenword = strlen(word);
-    nword = (char *)alloc(lenword + 3);
+    nword = (char *)g_malloc(lenword + 3);
 
     dst = nword;
     src = word;
@@ -626,7 +626,7 @@ match_word(
     nglob = g_strdup(glob);
 
     if(glob_is_separator_only(nglob, separator)) {
-        regex = alloc(7); /* Length of what is written below plus '\0' */
+        regex = g_malloc(7); /* Length of what is written below plus '\0' */
         dst = regex;
 	*dst++ = '^';
 	*dst++ = '\\';

@@ -102,7 +102,7 @@ add_dir_list_item(
     dbprintf(_("add_dir_list_item: Adding \"%s\" \"%d\" \"%s\" \"%lld\" \"%s\"\n"),
 	      date, level, tape, (long long)fileno, path);
 
-    next = (DIR_ITEM *)alloc(sizeof(DIR_ITEM));
+    next = (DIR_ITEM *)g_malloc(sizeof(DIR_ITEM));
     memset(next, 0, sizeof(DIR_ITEM));
 
     next->date = g_strdup(date);

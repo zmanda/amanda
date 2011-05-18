@@ -35,7 +35,7 @@
 
 /*
  * Find the Samba password and optional domain for a given disk.
- * Returns pointers into an alloc-ed area.  The caller should clear them
+ * Returns pointers into an g_malloc-ed area.  The caller should clear them
  * as soon as reasonable.
  */
 
@@ -96,7 +96,7 @@ findpass(
 /* 
  * Convert an amanda disk-name into a Samba sharename,
  * optionally for a shell execution (\'s are escaped).
- * Returns a new name alloc-d that the caller is responsible
+ * Returns a new name g_malloc-d that the caller is responsible
  * for free-ing.
  */
 char *
@@ -110,7 +110,7 @@ makesharename(
   int ch;
   
   buffer_size = 2 * strlen(disk) + 1;		/* worst case */
-  buffer = alloc(buffer_size);
+  buffer = g_malloc(buffer_size);
 
   s = buffer;
   while ((ch = *disk++) != '\0') {

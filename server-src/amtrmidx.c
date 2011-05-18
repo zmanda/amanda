@@ -188,7 +188,7 @@ main(
 		continue;
 	    }
 	    name_length = 100;
-	    names = (char **)alloc(name_length * sizeof(char *));
+	    names = (char **)g_malloc(name_length * sizeof(char *));
 	    name_count = 0;
 	    while ((f = readdir(d)) != NULL) {
 		size_t l;
@@ -236,7 +236,7 @@ main(
 		if(name_count >= name_length) {
 		    char **new_names;
 
-		    new_names = alloc((name_length * 2) * sizeof(char *));
+		    new_names = g_malloc((name_length * 2) * sizeof(char *));
 		    memcpy(new_names, names, name_length * sizeof(char *));
 		    amfree(names);
 		    names = new_names;

@@ -890,7 +890,7 @@ s_repwait(
     assert(action == A_RECVREP);
     if(as->bufsize == 0) {
 	as->bufsize = NETWORK_BLOCK_BYTES;
-	as->repbuf = alloc(as->bufsize);
+	as->repbuf = g_malloc(as->bufsize);
     }
 
     do {
@@ -946,7 +946,7 @@ s_repwait(
 		     what, code);
 		if (as->repbufsize + strlen(msg) >= (as->bufsize - 1)) {
 			as->bufsize *= 2;
-			repbuf_temp = alloc(as->bufsize);
+			repbuf_temp = g_malloc(as->bufsize);
 			memcpy(repbuf_temp, as->repbuf, as->repbufsize + 1);
 			amfree(as->repbuf);
 			as->repbuf = repbuf_temp;
@@ -967,7 +967,7 @@ s_repwait(
 	as->repbufsize += n;
 	if(as->repbufsize >= (as->bufsize - 1)) {
 	    as->bufsize *= 2;
-	    repbuf_temp = alloc(as->bufsize);
+	    repbuf_temp = g_malloc(as->bufsize);
 	    memcpy(repbuf_temp, as->repbuf, as->repbufsize + 1);
 	    amfree(as->repbuf);
 	    as->repbuf = repbuf_temp;
@@ -1298,12 +1298,12 @@ errfd_recv(
 	n = strlen(s);
 	if (as->bufsize == 0) {
 	    as->bufsize = NETWORK_BLOCK_BYTES;
-	    as->repbuf = alloc(as->bufsize);
+	    as->repbuf = g_malloc(as->bufsize);
 	}
 	while (as->bufsize < as->repbufsize + n) {
 	    char *repbuf_temp;
 	    as->bufsize *= 2;
-	    repbuf_temp = alloc(as->bufsize);
+	    repbuf_temp = g_malloc(as->bufsize);
 	    memcpy(repbuf_temp, as->repbuf, as->repbufsize + 1);
 	    amfree(as->repbuf);
 	    as->repbuf = repbuf_temp;

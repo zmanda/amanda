@@ -969,7 +969,7 @@ static reg_errcode_t
 internal_function __attribute_warn_unused_result__
 re_node_set_alloc (re_node_set *set, Idx size)
 {
-  set->alloc = size;
+  set->g_malloc = size;
   set->nelem = 0;
   set->elems = re_malloc (Idx, size);
   if (BE (set->elems == NULL, 0))
@@ -981,12 +981,12 @@ static reg_errcode_t
 internal_function __attribute_warn_unused_result__
 re_node_set_init_1 (re_node_set *set, Idx elem)
 {
-  set->alloc = 1;
+  set->g_malloc = 1;
   set->nelem = 1;
   set->elems = re_malloc (Idx, 1);
   if (BE (set->elems == NULL, 0))
     {
-      set->alloc = set->nelem = 0;
+      set->g_malloc = set->nelem = 0;
       return REG_ESPACE;
     }
   set->elems[0] = elem;
@@ -997,7 +997,7 @@ static reg_errcode_t
 internal_function __attribute_warn_unused_result__
 re_node_set_init_2 (re_node_set *set, Idx elem1, Idx elem2)
 {
-  set->alloc = 2;
+  set->g_malloc = 2;
   set->elems = re_malloc (Idx, 2);
   if (BE (set->elems == NULL, 0))
     return REG_ESPACE;
@@ -1030,11 +1030,11 @@ re_node_set_init_copy (re_node_set *dest, const re_node_set *src)
   dest->nelem = src->nelem;
   if (src->nelem > 0)
     {
-      dest->alloc = dest->nelem;
-      dest->elems = re_malloc (Idx, dest->alloc);
+      dest->g_malloc = dest->nelem;
+      dest->elems = re_malloc (Idx, dest->g_malloc);
       if (BE (dest->elems == NULL, 0))
 	{
-	  dest->alloc = dest->nelem = 0;
+	  dest->g_malloc = dest->nelem = 0;
 	  return REG_ESPACE;
 	}
       memcpy (dest->elems, src->elems, src->nelem * sizeof (Idx));
@@ -1046,7 +1046,7 @@ re_node_set_init_copy (re_node_set *dest, const re_node_set *src)
 
 /* Calculate the intersection of the sets SRC1 and SRC2. And merge it to
    DEST. Return value indicate the error code or REG_NOERROR if succeeded.
-   Note: We assume dest->elems is NULL, when dest->alloc is 0.  */
+   Note: We assume dest->elems is NULL, when dest->g_malloc is 0.  */
 
 static reg_errcode_t
 internal_function __attribute_warn_unused_result__
@@ -1059,14 +1059,14 @@ re_node_set_add_intersect (re_node_set *dest, const re_node_set *src1,
 
   /* We need dest->nelem + 2 * elems_in_intersection; this is a
      conservative estimate.  */
-  if (src1->nelem + src2->nelem + dest->nelem > dest->alloc)
+  if (src1->nelem + src2->nelem + dest->nelem > dest->g_malloc)
     {
-      Idx new_alloc = src1->nelem + src2->nelem + dest->alloc;
+      Idx new_alloc = src1->nelem + src2->nelem + dest->g_malloc;
       Idx *new_elems = re_realloc (dest->elems, Idx, new_alloc);
       if (BE (new_elems == NULL, 0))
 	return REG_ESPACE;
       dest->elems = new_elems;
-      dest->alloc = new_alloc;
+      dest->g_malloc = new_alloc;
     }
 
   /* Find the items in the intersection of SRC1 and SRC2, and copy
@@ -1147,8 +1147,8 @@ re_node_set_init_union (re_node_set *dest, const re_node_set *src1,
   Idx i1, i2, id;
   if (src1 != NULL && src1->nelem > 0 && src2 != NULL && src2->nelem > 0)
     {
-      dest->alloc = src1->nelem + src2->nelem;
-      dest->elems = re_malloc (Idx, dest->alloc);
+      dest->g_malloc = src1->nelem + src2->nelem;
+      dest->elems = re_malloc (Idx, dest->g_malloc);
       if (BE (dest->elems == NULL, 0))
 	return REG_ESPACE;
     }
@@ -1199,14 +1199,14 @@ re_node_set_merge (re_node_set *dest, const re_node_set *src)
   Idx is, id, sbase, delta;
   if (src == NULL || src->nelem == 0)
     return REG_NOERROR;
-  if (dest->alloc < 2 * src->nelem + dest->nelem)
+  if (dest->g_malloc < 2 * src->nelem + dest->nelem)
     {
-      Idx new_alloc = 2 * (src->nelem + dest->alloc);
+      Idx new_alloc = 2 * (src->nelem + dest->g_malloc);
       Idx *new_buffer = re_realloc (dest->elems, Idx, new_alloc);
       if (BE (new_buffer == NULL, 0))
 	return REG_ESPACE;
       dest->elems = new_buffer;
-      dest->alloc = new_alloc;
+      dest->g_malloc = new_alloc;
     }
 
   if (BE (dest->nelem == 0, 0))
@@ -1282,23 +1282,23 @@ re_node_set_insert (re_node_set *set, Idx elem)
 {
   Idx idx;
   /* In case the set is empty.  */
-  if (set->alloc == 0)
+  if (set->g_malloc == 0)
     return BE (re_node_set_init_1 (set, elem) == REG_NOERROR, 1);
 
   if (BE (set->nelem, 0) == 0)
     {
-      /* We already guaranteed above that set->alloc != 0.  */
+      /* We already guaranteed above that set->g_malloc != 0.  */
       set->elems[0] = elem;
       ++set->nelem;
       return true;
     }
 
   /* Realloc if we need.  */
-  if (set->alloc == set->nelem)
+  if (set->g_malloc == set->nelem)
     {
       Idx *new_elems;
-      set->alloc = set->alloc * 2;
-      new_elems = re_realloc (set->elems, Idx, set->alloc);
+      set->g_malloc = set->g_malloc * 2;
+      new_elems = re_realloc (set->elems, Idx, set->g_malloc);
       if (BE (new_elems == NULL, 0))
 	return false;
       set->elems = new_elems;
@@ -1333,11 +1333,11 @@ internal_function __attribute_warn_unused_result__
 re_node_set_insert_last (re_node_set *set, Idx elem)
 {
   /* Realloc if we need.  */
-  if (set->alloc == set->nelem)
+  if (set->g_malloc == set->nelem)
     {
       Idx *new_elems;
-      set->alloc = (set->alloc + 1) * 2;
-      new_elems = re_realloc (set->elems, Idx, set->alloc);
+      set->g_malloc = (set->g_malloc + 1) * 2;
+      new_elems = re_realloc (set->elems, Idx, set->g_malloc);
       if (BE (new_elems == NULL, 0))
 	return false;
       set->elems = new_elems;
@@ -1585,7 +1585,7 @@ register_state (const re_dfa_t *dfa, re_dfastate_t *newstate,
     }
 
   spot = dfa->state_table + (hash & dfa->state_hash_mask);
-  if (BE (spot->alloc <= spot->num, 0))
+  if (BE (spot->g_malloc <= spot->num, 0))
     {
       Idx new_alloc = 2 * spot->num + 2;
       re_dfastate_t **new_array = re_realloc (spot->array, re_dfastate_t *,
@@ -1593,7 +1593,7 @@ register_state (const re_dfa_t *dfa, re_dfastate_t *newstate,
       if (BE (new_array == NULL, 0))
 	return REG_ESPACE;
       spot->array = new_array;
-      spot->alloc = new_alloc;
+      spot->g_malloc = new_alloc;
     }
   spot->array[spot->num++] = newstate;
   return REG_NOERROR;

@@ -214,7 +214,7 @@ lookup_last_reusable_tape(
      * caller.  If skip is zero, the oldest is returned, if it is
      * one, the next oldest, two, the next to next oldest and so on.
      */
-    tpsave = alloc((skip + 1) * sizeof(*tpsave));
+    tpsave = g_malloc((skip + 1) * sizeof(*tpsave));
     for(s = 0; s <= skip; s++) {
 	tpsave[s] = NULL;
     }
@@ -289,7 +289,7 @@ add_tapelabel(
 
     /* insert a new record to the front of the list */
 
-    new = (tape_t *) alloc(sizeof(tape_t));
+    new = (tape_t *) g_malloc(sizeof(tape_t));
 
     new->datestamp = g_strdup(datestamp);
     new->position = 0;
@@ -362,7 +362,7 @@ parse_tapeline(
     int ch;
 
     *status = 0;
-    tp = (tape_t *) alloc(sizeof(tape_t));
+    tp = (tape_t *) g_malloc(sizeof(tape_t));
 
     tp->prev = NULL;
     tp->next = NULL;
@@ -489,7 +489,7 @@ stamp2time(
     tm = localtime(&now);	/* initialize sec/min/hour & gmtoff */
 
     if (!tm) {
-	tm = alloc(sizeof(struct tm));
+	tm = g_malloc(sizeof(struct tm));
 	tm->tm_sec   = 0;
 	tm->tm_min   = 0;
 	tm->tm_hour  = 0;

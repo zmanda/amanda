@@ -187,7 +187,7 @@ main(
 	    }
 	    g_options = parse_g_options(line+8, 1);
 	    if(!g_options->hostname) {
-		g_options->hostname = alloc(MAX_HOSTNAME_LENGTH+1);
+		g_options->hostname = g_malloc(MAX_HOSTNAME_LENGTH+1);
 		gethostname(g_options->hostname, MAX_HOSTNAME_LENGTH);
 		g_options->hostname[MAX_HOSTNAME_LENGTH] = '\0';
 	    }
@@ -675,7 +675,7 @@ dle_add_diskest(
 	}
     }
 
-    newp = (disk_estimates_t *) alloc(sizeof(disk_estimates_t));
+    newp = (disk_estimates_t *) g_malloc(sizeof(disk_estimates_t));
     memset(newp, 0, sizeof(*newp));
     newp->next = est_list;
     est_list = newp;

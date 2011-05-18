@@ -943,7 +943,7 @@ balance(
     distinct = later + 3;
 
     sp = (struct balance_stats *)
-	alloc(sizeof(struct balance_stats) * (distinct+1));
+	g_malloc(sizeof(struct balance_stats) * (distinct+1));
 
     for(seq=0; seq <= distinct; seq++) {
 	sp[seq].disks = 0;

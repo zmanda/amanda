@@ -90,7 +90,7 @@ add_dump(
 	return;
     }
 
-    new = (DUMP_ITEM *)alloc(sizeof(DUMP_ITEM));
+    new = (DUMP_ITEM *)g_malloc(sizeof(DUMP_ITEM));
     strncpy(new->date, date, sizeof(new->date)-1);
     new->date[sizeof(new->date)-1] = '\0';
     new->level = level;

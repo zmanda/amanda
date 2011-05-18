@@ -207,7 +207,7 @@ stream_sendpkt(
     else
 	s  = g_strdup("");
     len = strlen(pkt->body) + strlen(s) + 2;
-    buf = alloc(len);
+    buf = g_malloc(len);
     buf[0] = (char)pkt->type;
     strncpy(&buf[1], s, len - 1);
     strncpy(&buf[1 + strlen(s)], pkt->body, (len - strlen(s) - 1));
@@ -577,7 +577,7 @@ tcpm_recv_token(
 	    *size = -1;
 	    return -1;
 	}
-        rc->buffer = alloc((size_t)*size);
+        rc->buffer = g_malloc((size_t)*size);
 
 	if (*size == 0) {
 	    auth_debug(1, _("tcpm_recv_token: read EOF from %d\n"), *handle);
@@ -931,7 +931,7 @@ bsd_prefix_packet(
 			  (long)geteuid());
 	return g_strdup("");
     }
-    buf = alloc(16+strlen(pwd->pw_name));
+    buf = g_malloc(16+strlen(pwd->pw_name));
     strncpy(buf, "SECURITY USER ", (16 + strlen(pwd->pw_name)));
     strncpy(&buf[14], pwd->pw_name, (16 + strlen(pwd->pw_name) - 14));
     buf[14 + strlen(pwd->pw_name)] = '\n';
@@ -1868,7 +1868,7 @@ parse_pkt(
     bufsize--;
 
     pkt->packet_size = bufsize+1;
-    pkt->body = alloc(pkt->packet_size);
+    pkt->body = g_malloc(pkt->packet_size);
     if (bufsize == 0) {
 	pkt->body[0] = '\0';
     } else {
@@ -2556,7 +2556,7 @@ show_stat_info(
     } else
 #endif
     {
-	owner = alloc(NUM_STR_SIZE + 1);
+	owner = g_malloc(NUM_STR_SIZE + 1);
 	g_snprintf(owner, NUM_STR_SIZE, "%ld", (long)sbuf.st_uid);
     }
 #ifdef HAVE_GETGRGID_R
@@ -2566,7 +2566,7 @@ show_stat_info(
     } else
 #endif
     {
-	group = alloc(NUM_STR_SIZE + 1);
+	group = g_malloc(NUM_STR_SIZE + 1);
 	g_snprintf(group, NUM_STR_SIZE, "%ld", (long)sbuf.st_gid);
     }
 

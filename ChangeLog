@@ -1,4 +1,9 @@
 2011-05-18  Francis Galiegue <fgaliegue@gmail.com>
+	* Many files (54): GLib: change alloc() for g_malloc()
+	* common-src/alloc.c, common-src/amanda.h: remove prototypes/macros of
+	  alloc()
+
+2011-05-18  Francis Galiegue <fgaliegue@gmail.com>
 	* Many files (79): GLib: change stralloc() for g_strdup()
 	* common-src/alloc.c, common-src/amanda.h: remove prototypes/macros of
 	  stralloc()

@@ -47,7 +47,7 @@ sl_t *
 new_sl(void)
 {
     sl_t *sl;
-    sl = alloc(sizeof(sl_t));
+    sl = g_malloc(sizeof(sl_t));
     init_sl(sl);
     return(sl);
 }
@@ -63,7 +63,7 @@ insert_sl(
     if(!sl) {
 	sl = new_sl();
     }
-    a = alloc(sizeof(sle_t));
+    a = g_malloc(sizeof(sle_t));
     a->name = g_strdup(name);
     a->next = sl->first;
     a->prev = NULL;
@@ -87,7 +87,7 @@ append_sl(
     if(!sl) {
 	sl = new_sl();
     }
-    a = alloc(sizeof(sle_t));
+    a = g_malloc(sizeof(sle_t));
     a->name = g_strdup(name);
     a->prev = sl->last;
     a->next = NULL;
@@ -121,7 +121,7 @@ insert_sort_sl(
     if(b == sl->first) return insert_sl(sl, name);
     if(b == NULL)      return append_sl(sl, name);
 
-    a = alloc(sizeof(sle_t));
+    a = g_malloc(sizeof(sle_t));
     a->name = g_strdup(name);
 
     /* insert before b */

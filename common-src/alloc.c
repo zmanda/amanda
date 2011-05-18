@@ -24,7 +24,7 @@
  * file named AUTHORS, in the root directory of this distribution.
  */
 /*
- * $Id: alloc.c 5280 2007-02-13 15:58:56Z martineau $
+ * $Id: g_malloc.c 5280 2007-02-13 15:58:56Z martineau $
  *
  * Memory allocators with error handling.  If the allocation fails,
  * errordump() is called, relieving the caller from checking the return
@@ -38,41 +38,18 @@
 static char *internal_vstralloc(const char *, int, const char *, va_list);
 
 /*
- * alloc - a wrapper for malloc.
- */
-void *
-debug_alloc(
-    const char *file,
-    int		line,
-    size_t	size)
-{
-    void *addr;
-
-    addr = (void *)malloc(max(size, 1));
-    if (addr == NULL) {
-	errordump(_("%s@%d: memory allocation failed (%zu bytes requested)"),
-		  file ? file : _("(unknown)"),
-		  file ? line : -1,
-		  size);
-	/*NOTREACHED*/
-    }
-    return addr;
-}
-
-
-/*
- * newalloc - free existing buffer and then alloc a new one.
+ * newalloc - free existing buffer and then g_malloc a new one.
  */
 void *
 debug_newalloc(
-    const char *file,
-    int		line,
+    const char *file G_GNUC_UNUSED,
+    int		line G_GNUC_UNUSED,
     void *	old,
     size_t	size)
 {
     char *addr;
 
-    addr = debug_alloc(file, line, size);
+    addr = g_malloc(size);
     amfree(old);
     return addr;
 }
@@ -131,7 +108,7 @@ internal_vstralloc(
 	a++;
     }
 
-    result = debug_alloc(file, line, total_len+1);
+    result = g_malloc(total_len+1);
 
     next = result;
     for (b = 0; b < a; b++) {
@@ -209,8 +186,8 @@ debug_newvstralloc(
  */
 char *
 debug_vstrallocf(
-    const char *file,
-    int		line,
+    const char *file G_GNUC_UNUSED,
+    int		line G_GNUC_UNUSED,
     const char *fmt,
     ...)
 {
@@ -219,7 +196,7 @@ debug_vstrallocf(
     va_list	argp;
 
 
-    result = debug_alloc(file, line, MIN_ALLOC);
+    result = g_malloc(MIN_ALLOC);
     if (result != NULL) {
 
 	arglist_start(argp, fmt);
@@ -228,7 +205,7 @@ debug_vstrallocf(
 
 	if (size >= (size_t)MIN_ALLOC) {
 	    amfree(result);
-	    result = debug_alloc(file, line, size + 1);
+	    result = g_malloc(size + 1);
 
 	    arglist_start(argp, fmt);
 	    (void)g_vsnprintf(result, size + 1, fmt, argp);
@@ -245,8 +222,8 @@ debug_vstrallocf(
  */
 char *
 debug_newvstrallocf(
-    const char *file,
-    int		line,
+    const char *file G_GNUC_UNUSED,
+    int		line G_GNUC_UNUSED,
     char *	oldstr,
     const char *fmt,
     ...)
@@ -255,7 +232,7 @@ debug_newvstrallocf(
     char *	result;
     va_list	argp;
 
-    result = debug_alloc(file, line, MIN_ALLOC);
+    result = g_malloc(MIN_ALLOC);
     if (result != NULL) {
 
 	arglist_start(argp, fmt);
@@ -264,7 +241,7 @@ debug_newvstrallocf(
 
 	if (size >= MIN_ALLOC) {
 	    amfree(result);
-	    result = debug_alloc(file, line, size + 1);
+	    result = g_malloc(size + 1);
 
 	    arglist_start(argp, fmt);
 	    (void)g_vsnprintf(result, size + 1, fmt, argp);

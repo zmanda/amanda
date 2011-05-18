@@ -125,7 +125,7 @@ rsh_connect(
 
     auth_debug(1, _("rsh: rsh_connect: %s\n"), hostname);
 
-    rh = alloc(sizeof(*rh));
+    rh = g_malloc(sizeof(*rh));
     security_handleinit(&rh->sech, &rsh_security_driver);
     rh->hostname = NULL;
     rh->rs = NULL;

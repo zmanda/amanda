@@ -455,7 +455,7 @@ add_to_unlink_list(
     t_unlink_list *ul;
 
     if (!unlink_list) {
-	unlink_list = alloc(sizeof(*unlink_list));
+	unlink_list = g_malloc(sizeof(*unlink_list));
 	unlink_list->path = g_strdup(path);
 	unlink_list->next = NULL;
     } else {
@@ -463,7 +463,7 @@ add_to_unlink_list(
 	    if (strcmp(ul->path, path) == 0)
 		return 0;
 	}
-	ul = alloc(sizeof(*ul));
+	ul = g_malloc(sizeof(*ul));
 	ul->path = g_strdup(path);
 	ul->next = unlink_list;
 	unlink_list = ul;
@@ -603,7 +603,7 @@ add_extract_item(
 		}
 		curr=curr->next;
 	    }
-	    that = (EXTRACT_LIST_ITEM *)alloc(sizeof(EXTRACT_LIST_ITEM));
+	    that = (EXTRACT_LIST_ITEM *)g_malloc(sizeof(EXTRACT_LIST_ITEM));
             that->path = g_strdup(ditem_path);
 	    that->next = this->files;
 	    this->files = that;		/* add at front since easiest */
@@ -613,12 +613,12 @@ add_extract_item(
     }
 
     /* so this is the first time we have seen this tape */
-    this = (EXTRACT_LIST *)alloc(sizeof(EXTRACT_LIST));
+    this = (EXTRACT_LIST *)g_malloc(sizeof(EXTRACT_LIST));
     this->tape = g_strdup(ditem->tape);
     this->level = ditem->level;
     this->fileno = ditem->fileno;
     this->date = g_strdup(ditem->date);
-    that = (EXTRACT_LIST_ITEM *)alloc(sizeof(EXTRACT_LIST_ITEM));
+    that = (EXTRACT_LIST_ITEM *)g_malloc(sizeof(EXTRACT_LIST_ITEM));
     that->path = g_strdup(ditem_path);
     that->next = NULL;
     this->files = that;
@@ -2647,7 +2647,7 @@ get_amidxtaped_line(void)
         else if(size == 0) {
             return -1;
         }
-        newbuf = alloc(strlen(ctl_buffer)+size+1);
+        newbuf = g_malloc(strlen(ctl_buffer)+size+1);
         strncpy(newbuf, ctl_buffer, (size_t)(strlen(ctl_buffer) + size + 1));
         memcpy(newbuf+strlen(ctl_buffer), buf, (size_t)size);
         newbuf[strlen(ctl_buffer)+size] = '\0';
