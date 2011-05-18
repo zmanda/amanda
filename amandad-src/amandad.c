@@ -887,12 +887,12 @@ s_repwait(
     pkt_t *			pkt)
 {
     ssize_t   n;
-    char     *repbuf_temp;
     char     *what;
     char     *msg;
     int       code = 0;
     int       pid;
     amwait_t  retstat;
+    gboolean expanded;
 
     /*
      * We normally shouldn't receive any packets while waiting
@@ -925,10 +925,11 @@ s_repwait(
     }
 
     assert(action == A_RECVREP);
-    if(as->bufsize == 0) {
-	as->bufsize = NETWORK_BLOCK_BYTES;
-	as->repbuf = g_malloc(as->bufsize);
-    }
+
+    /*
+     * Ensure we have at least NETWORK_BLOCK_BYTES available in the reply buffer
+     */
+    expanded = expand_reply_buffer(as, NETWORK_BLOCK_BYTES);
 
     do {
 	n = read(as->repfd, as->repbuf + as->repbufsize,
@@ -1003,14 +1004,7 @@ s_repwait(
      */
 
     if (n > 0) {
-	if(as->repbufsize >= (as->bufsize - 1)) {
-	    as->bufsize *= 2;
-	    repbuf_temp = g_malloc(as->bufsize);
-	    memcpy(repbuf_temp, as->repbuf, as->repbufsize + 1);
-	    amfree(as->repbuf);
-	    as->repbuf = repbuf_temp;
-	}
-	else if(as->send_partial_reply) {
+	if (!expanded && as->send_partial_reply) {
 	    amfree(as->rep_pkt.body);
 	    pkt_init(&as->rep_pkt, P_PREP, "%s", as->repbuf);
 	    do_sendpkt(as->security_handle, &as->rep_pkt);
