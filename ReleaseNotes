@@ -1,5 +1,11 @@
 		Release Notes for amanda-3.3.0
 
+* The default auth is changed to "bsdtcp", if you are using the default bsd
+  then you must add it to your configuration.
+    o in amanda.conf
+    o in amanda-client.conf
+    o in dumptype/disklist
+    o in xinetd (if no '-auth' argument to amandad)
 * s3 device
     o use multiple threads to speedup the transfer
     o can connect to eucalytus.

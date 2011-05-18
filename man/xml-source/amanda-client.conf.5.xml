@@ -103,7 +103,7 @@ The tapedev amrecover will use.</para>
   <term><amkeyword>auth</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<amkeyword>"bsd"</amkeyword>.
+<amkeyword>"bsdtcp"</amkeyword>.
 Type of authorization to perform between tape server and backup client hosts.</para>
 <para><amkeyword>"bsd"</amkeyword>, bsd authorization with udp initial
 connection and one tcp connection by data stream.</para>

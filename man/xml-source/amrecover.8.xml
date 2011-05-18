@@ -109,9 +109,9 @@ client-custom-compressed tapes.</para>
 </refsect1>
 
 <refsect1><title>AUTH</title>
-<para>The default <emphasis remap='B'>auth</emphasis> is 'BSD', you can set
+<para>The default <emphasis remap='B'>auth</emphasis> is 'BSDTCP', you can set
 a different auth in the <emphasis remap='B'>amanda-client.conf</emphasis> file
-or by specifying the '-oauth=bsdtcp' command line argument.</para>
+or by specifying the '-oauth=bsd' command line argument.</para>
 </refsect1>
 
 <refsect1><title>COMMANDS</title>

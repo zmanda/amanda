@@ -2360,7 +2360,7 @@ init_dumptype_defaults(void)
     conf_init_str   (&dpcur.value[DUMPTYPE_CLIENT_USERNAME]   , "");
     conf_init_str   (&dpcur.value[DUMPTYPE_CLIENT_PORT]       , "");
     conf_init_str   (&dpcur.value[DUMPTYPE_SSH_KEYS]          , "");
-    conf_init_str   (&dpcur.value[DUMPTYPE_AUTH]   , "BSD");
+    conf_init_str   (&dpcur.value[DUMPTYPE_AUTH]   , "BSDTCP");
     conf_init_exinclude(&dpcur.value[DUMPTYPE_EXCLUDE]);
     conf_init_exinclude(&dpcur.value[DUMPTYPE_INCLUDE]);
     conf_init_priority (&dpcur.value[DUMPTYPE_PRIORITY]          , 1);
@@ -5309,7 +5309,7 @@ init_defaults(
     conf_init_str(&conf_data[CNF_AMDUMP_SERVER], DEFAULT_SERVER);
     conf_init_str(&conf_data[CNF_INDEX_SERVER], DEFAULT_SERVER);
     conf_init_str(&conf_data[CNF_TAPE_SERVER], DEFAULT_TAPE_SERVER);
-    conf_init_str(&conf_data[CNF_AUTH], "bsd");
+    conf_init_str(&conf_data[CNF_AUTH], "bsdtcp");
     conf_init_str(&conf_data[CNF_SSH_KEYS], "");
     conf_init_str(&conf_data[CNF_AMANDAD_PATH], "");
     conf_init_str(&conf_data[CNF_CLIENT_USERNAME], "");
@@ -5462,6 +5462,14 @@ init_defaults(
     dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_AUTH]);
     val_t__str(&dpcur.value[DUMPTYPE_AUTH]) = stralloc("BSD");
+    val_t__seen(&dpcur.value[DUMPTYPE_AUTH]).linenum = -1;
+    save_dumptype();
+
+    init_dumptype_defaults();
+    dpcur.name = stralloc("BSDTCP-AUTH");
+    dpcur.seen.linenum = -1;
+    free_val_t(&dpcur.value[DUMPTYPE_AUTH]);
+    val_t__str(&dpcur.value[DUMPTYPE_AUTH]) = stralloc("BSDTCP");
     val_t__seen(&dpcur.value[DUMPTYPE_AUTH]).linenum = -1;
     save_dumptype();
 
