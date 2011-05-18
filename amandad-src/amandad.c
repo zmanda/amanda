@@ -944,6 +944,15 @@ s_repwait(
 	return (A_FINISH);
     }
 
+    /*
+     * At this point, we know that n >= 0. The two operations below are
+     * therefore pretty safe even if n is 0, in which case the current reply
+     * buffer won't be changed at all.
+     */
+
+    as->repbufsize += n;
+    as->repbuf[as->repbufsize] = '\0';
+
     /* If end of service, wait for process status */
     if (n == 0) {
 	pid = waitpid(as->pid, &retstat, WNOHANG);
@@ -990,12 +999,10 @@ s_repwait(
     }
 
     /*
-     * If we got some data, go back and wait for more, or EOF.  Nul terminate
-     * the buffer first.
+     * If we got some data, go back and wait for more, or EOF.
      */
-    as->repbuf[n + as->repbufsize] = '\0';
+
     if (n > 0) {
-	as->repbufsize += n;
 	if(as->repbufsize >= (as->bufsize - 1)) {
 	    as->bufsize *= 2;
 	    repbuf_temp = g_malloc(as->bufsize);
