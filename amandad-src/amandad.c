@@ -1314,6 +1314,11 @@ errfd_recv(
 	as->ev_errfd = NULL;
 	g_snprintf(buf, NETWORK_BLOCK_BYTES + 1,
 		   "error reading stderr or service: %s\n", strerror(errno));
+	if (as->errbuf) {
+	    as->errbuf = vstrextend(&as->errbuf, buf, NULL);
+	} else {
+	    as->errbuf = stralloc(buf);
+	}
     }
 
     /* for each line terminate by '\n' */
