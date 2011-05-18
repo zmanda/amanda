@@ -312,7 +312,7 @@ runssh(
     }
 
     if(!xamandad_path || strlen(xamandad_path) <= 1) 
-	xamandad_path = vstralloc(amlibexecdir, "/", "amandad", NULL);
+	xamandad_path = g_strjoin(NULL, amlibexecdir, "/", "amandad", NULL);
     if(!xclient_username || strlen(xclient_username) <= 1)
 	xclient_username = CLIENT_LOGIN;
     if(!xclient_port || strlen(xclient_port) <= 1)

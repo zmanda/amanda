@@ -209,7 +209,7 @@ start_backup(
     dbprintf(_("dumping device '%s' with '%s'\n"), device, fstype);
 
 #if defined(USE_RUNDUMP) || !defined(DUMP)
-    cmd = vstralloc(amlibexecdir, "/", "rundump", NULL);
+    cmd = g_strjoin(NULL, amlibexecdir, "/", "rundump", NULL);
     cmdX = cmd;
     if (g_options->config)
 	config = g_options->config;
@@ -241,7 +241,7 @@ start_backup(
 	program->backup_name  = XFSDUMP;
 	program->restore_name = XFSRESTORE;
 
-	indexcmd = vstralloc(XFSRESTORE,
+	indexcmd = g_strjoin(NULL, XFSRESTORE,
 			     " -t",
 			     " -v", " silent",
 			     " -",
@@ -290,13 +290,13 @@ start_backup(
 	program->backup_name  = VXDUMP;
 	program->restore_name = VXRESTORE;
 
-	dumpkeys = vstralloc(level_str,
+	dumpkeys = g_strjoin(NULL, level_str,
 			     !dle->record ? "" : "u",
 			     "s",
 			     "f",
 			     NULL);
 
-	indexcmd = vstralloc(VXRESTORE,
+	indexcmd = g_strjoin(NULL, VXRESTORE,
 			     " -tvf", " -",
 			     " 2>/dev/null",
 			     " | ",
@@ -336,13 +336,13 @@ start_backup(
 	program->backup_name  = VDUMP;
 	program->restore_name = VRESTORE;
 
-	dumpkeys = vstralloc(level_str,
+	dumpkeys = g_strjoin(NULL, level_str,
 			     !dle->record ? "" : "u",
 			     "b",
 			     "f",
 			     NULL);
 
-	indexcmd = vstralloc(VRESTORE,
+	indexcmd = g_strjoin(NULL, VRESTORE,
 			     " -tvf", " -",
 			     " 2>/dev/null",
 			     " | ",
@@ -386,7 +386,7 @@ start_backup(
 # define FREEBSD_EXTRA_KEYS ""
 #endif
 
-	dumpkeys = vstralloc(level_str,
+	dumpkeys = g_strjoin(NULL, level_str,
 			     !dle->record ? "" : "u",
 			     FREEBSD_EXTRA_KEYS,
 			     "s",
@@ -394,7 +394,7 @@ start_backup(
 			     "f",
 			     NULL);
 
-	indexcmd = vstralloc(RESTORE,
+	indexcmd = g_strjoin(NULL, RESTORE,
 			     " -tvf", " -",
 			     " 2>&1",
 			     /* not to /dev/null because of DU's dump */
@@ -423,13 +423,13 @@ start_backup(
     }
 #else							/* } { */
     /* AIX backup program */
-    dumpkeys = vstralloc("-",
+    dumpkeys = g_strjoin(NULL, "-",
 			 level_str,
 			 !dle->record ? "" : "u",
 			 "f",
 			 NULL);
 
-    indexcmd = vstralloc(RESTORE,
+    indexcmd = g_strjoin(NULL, RESTORE,
 			 " -B",
 			 " -tvf", " -",
 			 " 2>/dev/null",

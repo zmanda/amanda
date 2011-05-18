@@ -1396,7 +1396,7 @@ static void get_estimates(void)
 	    enqueue_disk(&estq, dp);
 	}
 	else {
-	   est(dp)->errstr = vstralloc("disk ", qname,
+	   est(dp)->errstr = g_strjoin(NULL, "disk ", qname,
 				       _(", all estimate timed out"), NULL);
 	   enqueue_disk(&failq, dp);
 	}
@@ -1446,7 +1446,7 @@ static void getsize(
 					  fe_req_options_config);
 
 	g_snprintf(number, sizeof(number), "%d", hostp->maxdumps);
-	req = vstralloc("SERVICE ", "sendsize", "\n",
+	req = g_strjoin(NULL, "SERVICE ", "sendsize", "\n",
 			"OPTIONS ",
 			has_features ? "features=" : "",
 			has_features ? our_feature_string : "",
@@ -1575,19 +1575,19 @@ static void getsize(
 				   "</level>\n", NULL);
 		    }
 		    g_snprintf(spindle, sizeof(spindle), "%d", dp->spindle);
-		    spindlestr = vstralloc("  <spindle>",
+		    spindlestr = g_strjoin(NULL, "  <spindle>",
 					   spindle,
 					   "</spindle>\n", NULL);
 		    o = xml_optionstr(dp, 0);
 		    
 		    if (strcmp(dp->program,"DUMP") == 0 ||
 			strcmp(dp->program,"GNUTAR") == 0) {
-			l = vstralloc("<dle>\n",
+			l = g_strjoin(NULL, "<dle>\n",
 				      "  <program>",
 				      dp->program,
 				      "</program>\n", NULL);
 		    } else {
-			l = vstralloc("<dle>\n",
+			l = g_strjoin(NULL, "<dle>\n",
 				      "  <program>APPLICATION</program>\n",
 				      NULL);
 			if (dp->application) {
@@ -1690,7 +1690,7 @@ static void getsize(
 			else
 			    calcsize = "CALCSIZE ";
 
-			l = vstralloc(calcsize,
+			l = g_strjoin(NULL, calcsize,
 				      dp->program,
 				      " ", qname,
 				      " ", dp->device ? qdevice : "",
@@ -1750,7 +1750,7 @@ static void getsize(
 	    timeout = estimates * conf_etimeout;
 	}
     } else { /* noop service */
-	req = vstralloc("SERVICE ", "noop", "\n",
+	req = g_strjoin(NULL, "SERVICE ", "noop", "\n",
 			"OPTIONS ",
 			"features=", our_feature_string, ";",
 			"\n",
@@ -1852,7 +1852,7 @@ static void handle_result(
 	}
 	if (strcmp(remoterr, "unknown service: noop") != 0
 		&& strcmp(remoterr, "noop: invalid service") != 0) {
-	    errbuf = vstralloc(hostp->hostname, " NAK: ", remoterr, NULL);
+	    errbuf = g_strjoin(NULL, hostp->hostname, " NAK: ", remoterr, NULL);
 	    if(s) *s = '\n';
 	    goto error_return;
 	}
@@ -1908,7 +1908,7 @@ static void handle_result(
 	    t = strchr(t,'\n');
 	    if (t) /* truncate after the first line */
 		 *t = '\0';
-	    errbuf = vstralloc(hostp->hostname,
+	    errbuf = g_strjoin(NULL, hostp->hostname,
 				   (pkt->type == P_NAK) ? "NAK " : "",
 				   ": ",
 				   fp,
@@ -2327,7 +2327,7 @@ static void handle_failed(
     char *qname = quote_string(dp->name);
 
     errstr = est(dp)->errstr? est(dp)->errstr : _("hmm, no error indicator!");
-    errstr1 = vstralloc("[",errstr,"]", NULL);
+    errstr1 = g_strjoin(NULL, "[",errstr,"]", NULL);
     qerrstr = quote_string(errstr1);
     amfree(errstr1);
 
@@ -2802,7 +2802,7 @@ arglist_function1(
     bi->csize = est(dp)->dump_est->csize;
 
     g_snprintf(level_str, sizeof(level_str), "%d", est(dp)->dump_est->level);
-    bi->errstr = vstralloc(dp->host->hostname,
+    bi->errstr = g_strjoin(NULL, dp->host->hostname,
 			   " ", qname,
 			   " ", planner_timestamp ? planner_timestamp : "?",
 			   " ", level_str,
@@ -3122,7 +3122,7 @@ static void output_scheduleline(
 		    "%lld", (long long)degr_time);
 	g_snprintf(degr_kps_str, sizeof(degr_kps_str),
 		    "%.0lf", degr_kps);
-	degr_str = vstralloc(" ", degr_level_str,
+	degr_str = g_strjoin(NULL, " ", degr_level_str,
 			     " ", degr_date,
 			     " ", degr_nsize_str,
 			     " ", degr_csize_str,
@@ -3136,7 +3136,7 @@ static void output_scheduleline(
 	} else {
 	    degr_mesg = quote_string(_("Skipping: cannot dump in degraded mode for unknown reason"));
 	}
-	degr_str = vstralloc(" ", degr_mesg, NULL);
+	degr_str = g_strjoin(NULL, " ", degr_mesg, NULL);
 	amfree(degr_mesg);
     }
     g_snprintf(dump_priority_str, sizeof(dump_priority_str),
@@ -3152,7 +3152,7 @@ static void output_scheduleline(
     g_snprintf(dump_kps_str, sizeof(dump_kps_str),
 		"%.0lf", dump_kps);
     features = am_feature_to_string(dp->host->features);
-    schedline = vstralloc("DUMP ",dp->host->hostname,
+    schedline = g_strjoin(NULL, "DUMP ",dp->host->hostname,
 			  " ", features,
 			  " ", qname,
 			  " ", planner_timestamp,

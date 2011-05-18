@@ -75,7 +75,7 @@ main(
     } while ((n > 0) || ((n < 0) && ((errno == EINTR) || (errno == EAGAIN))));
     our_features = am_init_feature_set();
     our_feature_string = am_feature_to_string(our_features);
-    options = vstralloc("OPTIONS features=",
+    options = g_strjoin(NULL, "OPTIONS features=",
 			our_feature_string,
 			";\n",
 			NULL);

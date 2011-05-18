@@ -480,7 +480,7 @@ print_find_result(
 
 	    if (strcmp(output_find_result->status, "OK") != 0 ||
 		strcmp(output_find_result->dump_status, "OK") != 0) {
-		status = vstralloc(output_find_result->status, " ",
+		status = g_strjoin(NULL, output_find_result->status, " ",
 				   output_find_result->dump_status, NULL);
 	    } else {
 		status = g_strdup(output_find_result->status);
@@ -1170,7 +1170,7 @@ search_logfile(
 		    new_output_find->kb=kb;
 		    new_output_find->bytes=bytes;
 		    new_output_find->orig_kb=orig_kb;
-		    status_failed = vstralloc(
+		    status_failed = g_strjoin(NULL, 
 			 "FAILED (",
 			 program_str[(int)curprog],
 			 ") ",

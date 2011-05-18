@@ -155,7 +155,7 @@ main(
 	    host = sanitise_filename(diskp->host->hostname);
 	    disk = sanitise_filename(diskp->name);
 	    qdisk = quote_string(diskp->name);
-	    indexdir = vstralloc(conf_indexdir, "/",
+	    indexdir = g_strjoin(NULL, conf_indexdir, "/",
 				 host, "/",
 				 disk, "/",
 				 NULL);

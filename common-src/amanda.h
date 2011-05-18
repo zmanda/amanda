@@ -409,7 +409,6 @@ typedef union sockaddr_union {
 void *debug_newalloc(const char *file, int line, void *old, size_t size);
 char *debug_newstralloc(const char *file, int line,
 		char *oldstr, const char *newstr);
-char *debug_vstralloc(const char *file, int line, const char *str, ...);
 char *debug_newvstralloc(const char *file, int line,
 		char *oldstr, const char *str, ...);
 char *debug_newvstrallocf(const char *file, int line, char *oldstr,
@@ -421,12 +420,11 @@ char *debug_vstrextend(const char *file, int line, char **oldstr, ...);
 
 #define	newalloc(p,s)		debug_newalloc(__FILE__, __LINE__, (p), (s))
 #define	newstralloc(p,s)	debug_newstralloc(__FILE__, __LINE__, (p), (s))
-#define vstralloc(...)		debug_vstralloc(__FILE__,__LINE__,__VA_ARGS__)
 #define newvstralloc(...)	debug_newvstralloc(__FILE__,__LINE__,__VA_ARGS__)
 #define newvstrallocf(...)	debug_newvstrallocf(__FILE__,__LINE__,__VA_ARGS__)
 #define vstrextend(...)		debug_vstrextend(__FILE__,__LINE__,__VA_ARGS__)
 
-#define	stralloc2(s1,s2)	vstralloc((s1),(s2),NULL)
+#define	stralloc2(s1,s2)	g_strjoin(NULL, (s1),(s2),NULL)
 #define	newstralloc2(p,s1,s2)	newvstralloc((p),(s1),(s2),NULL)
 
 /*@only@*/ /*@null@*/ char *debug_agets(const char *file, int line, FILE *f);

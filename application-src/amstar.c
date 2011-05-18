@@ -465,7 +465,7 @@ amstar_selfcheck(
     }
 
     if (argument->calcsize) {
-	char *calcsize = vstralloc(amlibexecdir, "/", "calcsize", NULL);
+	char *calcsize = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
 	check_file(calcsize, X_OK);
 	check_suid(calcsize);
 	amfree(calcsize);
@@ -999,7 +999,7 @@ static GPtrArray *amstar_build_argv(
     } else {
 	dirname = argument->dle.device;
     }
-    fsname = vstralloc("fs-name=", dirname, NULL);
+    fsname = g_strjoin(NULL, "fs-name=", dirname, NULL);
     for (s = fsname; *s != '\0'; s++) {
 	if (iscntrl((int)*s))
 	    *s = '-';
@@ -1008,7 +1008,7 @@ static GPtrArray *amstar_build_argv(
 
     if (star_dle_tardumps) {
 	char *sdisk = sanitise_filename(argument->dle.disk);
-	tardumpfile = vstralloc(star_tardumps, sdisk, NULL);
+	tardumpfile = g_strjoin(NULL, star_tardumps, sdisk, NULL);
 	amfree(sdisk);
     } else {
 	tardumpfile = g_strdup(star_tardumps);

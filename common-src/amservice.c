@@ -121,7 +121,7 @@ main(
 			if (*optarg == '/') {
 			    input_file = fopen(optarg, "r");
 			} else {
-			    char *name = vstralloc(get_original_cwd(), "/",
+			    char *name = g_strjoin(NULL, get_original_cwd(), "/",
 						   optarg, NULL);
 			    input_file = fopen(name, "r");
 			    amfree(name);

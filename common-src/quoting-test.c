@@ -186,7 +186,7 @@ test_split_quoted_strings(void)
 		char *q2 = quote_string(*iter2);
 		char *q3 = quote_string(*iter3);
 		const char *expected[4] = { *iter1, *iter2, *iter3, NULL };
-		char *combined = vstralloc(q1, " ", q2, " ", q3, NULL);
+		char *combined = g_strjoin(NULL, q1, " ", q2, " ", q3, NULL);
 		char **tokens;
 
 		tokens = split_quoted_strings(combined);
@@ -349,7 +349,7 @@ test_strquotedstr_skipping(void)
 	for (iter2 = quotable_strings; *iter2; iter2++) {
 	    char *q1 = quote_string(*iter1);
 	    char *q2 = quote_string(*iter2);
-	    char *combined = vstralloc("START ", q1, " ", q2, NULL);
+	    char *combined = g_strjoin(NULL, "START ", q1, " ", q2, NULL);
 	    char *copy = g_strdup(combined);
 	    char *saveptr = NULL;
 	    char *tok;

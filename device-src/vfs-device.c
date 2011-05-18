@@ -451,7 +451,7 @@ static gboolean file_number_to_file_name_functor(const char * filename,
     struct stat file_status;
     fnfn_data *data = (fnfn_data*)datap;
 
-    result_tmp = vstralloc(data->self->dir_name, "/", filename, NULL);
+    result_tmp = g_strjoin(NULL, data->self->dir_name, "/", filename, NULL);
 
     /* Just to be thorough, let's check that it's a real
        file. */
@@ -540,7 +540,7 @@ static gboolean update_volume_size_functor(const char * filename,
     struct stat stat_buf;
     VfsDevice * self = VFS_DEVICE(user_data);
 
-    full_filename = vstralloc(self->dir_name, "/", filename, NULL);
+    full_filename = g_strjoin(NULL, self->dir_name, "/", filename, NULL);
 
     if (stat(full_filename, &stat_buf) < 0) {
         /* Log it and keep going. */
@@ -595,7 +595,7 @@ static gboolean delete_vfs_files_functor(const char * filename,
     if (strcmp(filename, VOLUME_LOCKFILE_NAME) == 0)
         return TRUE;
 
-    path_name = vstralloc(self->dir_name, "/", filename, NULL);
+    path_name = g_strjoin(NULL, self->dir_name, "/", filename, NULL);
     if (unlink(path_name) != 0) {
 	g_warning(_("Error unlinking %s: %s"), path_name, strerror(errno));
     }
@@ -623,7 +623,7 @@ static gboolean check_dir_empty_functor(const char * filename,
     if (strcmp(filename, VOLUME_LOCKFILE_NAME) == 0)
         return TRUE;
 
-    path_name = vstralloc(self->dir_name, "/", filename, NULL);
+    path_name = g_strjoin(NULL, self->dir_name, "/", filename, NULL);
 
     g_warning(_("Found spurious storage file %s"), path_name);
 

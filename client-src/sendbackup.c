@@ -582,7 +582,7 @@ main(
 	switch(application_api_pid=fork()) {
 	case 0:
 	    argv_ptr = g_ptr_array_new();
-	    cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
+	    cmd = g_strjoin(NULL, APPLICATION_DIR, "/", dle->program, NULL);
 	    g_ptr_array_add(argv_ptr, g_strdup(dle->program));
 	    g_ptr_array_add(argv_ptr, g_strdup("backup"));
 	    if (bsu->message_line == 1) {

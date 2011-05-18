@@ -806,7 +806,7 @@ check_disk(
 	    {
 		GPtrArray *argv_ptr = g_ptr_array_new();
 		guint i;
-		char *cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
+		char *cmd = g_strjoin(NULL, APPLICATION_DIR, "/", dle->program, NULL);
 		GSList   *scriptlist;
 		script_t *script;
 		estimatelist_t el;
@@ -1003,7 +1003,7 @@ check_overall(void)
 
     if( need_runtar )
     {
-	cmd = vstralloc(amlibexecdir, "/", "runtar", NULL);
+	cmd = g_strjoin(NULL, amlibexecdir, "/", "runtar", NULL);
 	check_file(cmd,X_OK);
 	check_suid(cmd);
 	amfree(cmd);
@@ -1011,7 +1011,7 @@ check_overall(void)
 
     if( need_rundump )
     {
-	cmd = vstralloc(amlibexecdir, "/", "rundump", NULL);
+	cmd = g_strjoin(NULL, amlibexecdir, "/", "rundump", NULL);
 	check_file(cmd,X_OK);
 	check_suid(cmd);
 	amfree(cmd);
@@ -1102,7 +1102,7 @@ check_overall(void)
     if( need_calcsize ) {
 	char *cmd;
 
-	cmd = vstralloc(amlibexecdir, "/", "calcsize", NULL);
+	cmd = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
 
 	check_file(cmd, X_OK);
 

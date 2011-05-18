@@ -107,7 +107,7 @@ get_debug_name(
     } else {
 	g_snprintf(number, sizeof(number), "%03d", n - 1);
     }
-    result = vstralloc(get_pname(), ".", ts, number, ".debug", NULL);
+    result = g_strjoin(NULL, get_pname(), ".", ts, number, ".debug", NULL);
     amfree(ts);
     return result;
 }
@@ -294,12 +294,12 @@ debug_setup_1(char *config, char *subdir)
     if (config)
 	sane_config = sanitise_filename(config);
     if (sane_config && subdir)
-	dbgdir = vstralloc(AMANDA_DBGDIR, "/", subdir, "/", sane_config,
+	dbgdir = g_strjoin(NULL, AMANDA_DBGDIR, "/", subdir, "/", sane_config,
 			   "/", NULL);
     else if (sane_config)
-	dbgdir = vstralloc(AMANDA_DBGDIR, "/", sane_config, "/", NULL);
+	dbgdir = g_strjoin(NULL, AMANDA_DBGDIR, "/", sane_config, "/", NULL);
     else if (subdir)
-	dbgdir = vstralloc(AMANDA_DBGDIR, "/", subdir, "/", NULL);
+	dbgdir = g_strjoin(NULL, AMANDA_DBGDIR, "/", subdir, "/", NULL);
     else
 	dbgdir = stralloc2(AMANDA_DBGDIR, "/");
     if(mkpdir(dbgdir, 0700, get_client_uid(), get_client_gid()) == -1) {

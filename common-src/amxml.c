@@ -1084,14 +1084,14 @@ amxml_format_tag(
 
     if (need_raw) {
 	base64_encode_alloc(value, strlen(value), &b64value);
-	result = vstralloc("<", tag,
+	result = g_strjoin(NULL, "<", tag,
 			   " encoding=\"raw\" raw=\"", b64value, "\">",
 			   quoted_value,
 			   "</", tag, ">",
 			   NULL);
 	amfree(b64value);
     } else {
-	result = vstralloc("<", tag, ">",
+	result = g_strjoin(NULL, "<", tag, ">",
 			   value,
 			   "</", tag, ">",
 			   NULL);

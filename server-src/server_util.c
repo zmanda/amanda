@@ -182,12 +182,12 @@ int check_infofile(
     for (dp = dl->head; dp != NULL; dp = dp->next) {
 	hostinfodir = sanitise_filename(dp->host->hostname);
 	diskdir     = sanitise_filename(dp->name);
-	infofile = vstralloc(infodir, "/", hostinfodir, "/", diskdir,
+	infofile = g_strjoin(NULL, infodir, "/", hostinfodir, "/", diskdir,
 			     "/info", NULL);
 	if (stat(infofile, &statbuf) == -1 && errno == ENOENT) {
 	    old_hostinfodir = old_sanitise_filename(dp->host->hostname);
 	    old_diskdir     = old_sanitise_filename(dp->name);
-	    old_infofile    = vstralloc(infodir, old_hostinfodir, "/",
+	    old_infofile    = g_strjoin(NULL, infodir, old_hostinfodir, "/",
 					old_diskdir, "/info", NULL);
 	    if (stat(old_infofile, &statbuf) == 0) {
 		other_dle_match = 0;
@@ -195,7 +195,7 @@ int check_infofile(
 		while (diskp != NULL) {
 		    char *Xhostinfodir = sanitise_filename(diskp->host->hostname);
 		    char *Xdiskdir     = sanitise_filename(diskp->name);
-		    char *Xinfofile = vstralloc(infodir, "/", Xhostinfodir, "/",
+		    char *Xinfofile = g_strjoin(NULL, infodir, "/", Xhostinfodir, "/",
 					  Xdiskdir, "/info", NULL);
 		    if (strcmp(old_infofile, Xinfofile) == 0) {
 			other_dle_match = 1;
@@ -211,7 +211,7 @@ int check_infofile(
 		if (other_dle_match == 0) {
 		    if(mkpdir(infofile, (mode_t)0755, (uid_t)-1,
 			      (gid_t)-1) == -1) {
-			*errmsg = vstralloc("Can't create directory for ",
+			*errmsg = g_strjoin(NULL, "Can't create directory for ",
 					    infofile, NULL);
 			amfree(hostinfodir);
 			amfree(diskdir);
@@ -270,22 +270,22 @@ run_server_script(
 
     plugin = pp_script_get_plugin(pp_script);
 
-    cmd = vstralloc(APPLICATION_DIR, "/", plugin, NULL);
+    cmd = g_strjoin(NULL, APPLICATION_DIR, "/", plugin, NULL);
     result = stat(cmd, &cmd_stat);
     if (result == -1) {
 	dbprintf("Can't stat script '%s': %s\n", cmd, strerror(errno));
 	amfree(cmd);
-	cmd = vstralloc(get_config_dir(), "/application/", plugin, NULL);
+	cmd = g_strjoin(NULL, get_config_dir(), "/application/", plugin, NULL);
 	result = stat(cmd, &cmd_stat);
 	if (result == -1) {
 	    dbprintf("Can't stat script '%s': %s\n", cmd, strerror(errno));
 	    amfree(cmd);
-	    cmd = vstralloc(CONFIG_DIR, "/application/", plugin, NULL);
+	    cmd = g_strjoin(NULL, CONFIG_DIR, "/application/", plugin, NULL);
 	    result = stat(cmd, &cmd_stat);
 	    if (result == -1) {
 		dbprintf("Can't stat script '%s': %s\n", cmd, strerror(errno));
 		amfree(cmd);
-		cmd = vstralloc(APPLICATION_DIR, "/", plugin, NULL);
+		cmd = g_strjoin(NULL, APPLICATION_DIR, "/", plugin, NULL);
 	    }
 	}
     }
@@ -519,7 +519,7 @@ run_amcleanup(
 	    return;
 	    break;
 	case  0: /* child process */
-	    amcleanup_program = vstralloc(sbindir, "/", "amcleanup", NULL);
+	    amcleanup_program = g_strjoin(NULL, sbindir, "/", "amcleanup", NULL);
 	    amcleanup_options[0] = amcleanup_program;
 	    amcleanup_options[1] = "-p";
 	    amcleanup_options[2] = config_name;

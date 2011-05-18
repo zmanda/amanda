@@ -74,10 +74,10 @@ getindexfname(
 
   conf_indexdir = config_dir_relative(getconf_str(CNF_INDEXDIR));
   /*
-   * Note: vstralloc() will stop at the first NULL, which might be
+   * Note: g_strjoin(NULL, ) will stop at the first NULL, which might be
    * "disk" or "dc" (datebuf) rather than the full file name.
    */
-  buf = vstralloc(conf_indexdir, "/",
+  buf = g_strjoin(NULL, conf_indexdir, "/",
 		  host, "/",
 		  disk, "/",
 		  dc, "_",
@@ -131,10 +131,10 @@ getoldindexfname(
 
   conf_indexdir = config_dir_relative(getconf_str(CNF_INDEXDIR));
   /*
-   * Note: vstralloc() will stop at the first NULL, which might be
+   * Note: g_strjoin(NULL, ) will stop at the first NULL, which might be
    * "disk" or "dc" (datebuf) rather than the full file name.
    */
-  buf = vstralloc(conf_indexdir, "/",
+  buf = g_strjoin(NULL, conf_indexdir, "/",
 		  host, "/",
 		  disk, "/",
 		  dc, "_",

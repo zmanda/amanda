@@ -223,7 +223,7 @@ pipespawnv_passwd(
 		(void)i; /* make lint happy and do nothing */	
 	    newenv = (char **)g_malloc((i + 1 + 1) * sizeof(*newenv));
 	    g_snprintf(number, sizeof(number), "%d", passwdpipe[0]);
-	    newenv[0] = vstralloc(passwdvar, "=", number, NULL);
+	    newenv[0] = g_strjoin(NULL, passwdvar, "=", number, NULL);
 	    for(i = 0; env[i] != NULL; i++)
 	    	newenv[i + 1] = env[i];
 	    newenv[i + 1] = NULL;

@@ -248,7 +248,7 @@ marshal_tapelist(
 	}
 
 	if (!str)
-	    str = vstralloc(esc_label, ":", files_str, NULL);
+	    str = g_strjoin(NULL, esc_label, ":", files_str, NULL);
 	else
 	    vstrextend(&str, ";", esc_label, ":", files_str, NULL);
 

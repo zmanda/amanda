@@ -116,7 +116,7 @@ static void log_add_full_v(logtype_t typ, char *pname, char *format, va_list arg
     if(multiline > 0) {
 	leader = g_strdup("  ");		/* continuation line */
     } else {
-	leader = vstralloc(logtype_str[(int)typ], " ", pname, " ", NULL);
+	leader = g_strjoin(NULL, logtype_str[(int)typ], " ", pname, " ", NULL);
     }
 
     /* use sizeof(linebuf)-2 to save space for a trailing newline */
@@ -205,7 +205,7 @@ log_rename(
     if(datestamp == NULL) datestamp = "error";
 
     conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
-    logfile = vstralloc(conf_logdir, "/log", NULL);
+    logfile = g_strjoin(NULL, conf_logdir, "/log", NULL);
 
     for(seq = 0; 1; seq++) {	/* if you've got MAXINT files in your dir... */
 	g_snprintf(seq_str, sizeof(seq_str), "%u", seq);
@@ -235,7 +235,7 @@ open_log(void)
     char *conf_logdir;
 
     conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
-    logfile = vstralloc(conf_logdir, "/log", NULL);
+    logfile = g_strjoin(NULL, conf_logdir, "/log", NULL);
     amfree(conf_logdir);
 
     logfd = open(logfile, O_WRONLY|O_CREAT|O_APPEND, 0600);

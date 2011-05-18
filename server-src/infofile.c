@@ -64,7 +64,7 @@ open_txinfofile(
     myhost = sanitise_filename(host);
     mydisk = sanitise_filename(disk);
 
-    infofile = vstralloc(infodir,
+    infofile = g_strjoin(NULL, infodir,
 			 "/", myhost,
 			 "/", mydisk,
 			 "/info",
@@ -488,7 +488,7 @@ delete_txinfofile(
 
     myhost = sanitise_filename(host);
     mydisk = sanitise_filename(disk);
-    fn = vstralloc(infodir,
+    fn = g_strjoin(NULL, infodir,
 		   "/", myhost,
 		   "/", mydisk,
 		   "/info",

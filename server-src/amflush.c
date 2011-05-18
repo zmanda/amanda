@@ -205,7 +205,7 @@ main(
     }
 
     conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
-    conf_logfile = vstralloc(conf_logdir, "/log", NULL);
+    conf_logfile = g_strjoin(NULL, conf_logdir, "/log", NULL);
     if (access(conf_logfile, F_OK) == 0) {
 	run_amcleanup(get_config_name());
     }
@@ -215,9 +215,9 @@ main(
 	/*NOTREACHED*/
     }
 
-    driver_program = vstralloc(amlibexecdir, "/", "driver", NULL);
-    reporter_program = vstralloc(sbindir, "/", "amreport", NULL);
-    logroll_program = vstralloc(amlibexecdir, "/", "amlogroll", NULL);
+    driver_program = g_strjoin(NULL, amlibexecdir, "/", "driver", NULL);
+    reporter_program = g_strjoin(NULL, sbindir, "/", "amreport", NULL);
+    logroll_program = g_strjoin(NULL, amlibexecdir, "/", "amlogroll", NULL);
 
     tapedev = getconf_str(CNF_TAPEDEV);
     tpchanger = getconf_str(CNF_TPCHANGER);
@@ -417,7 +417,7 @@ main(
 		
 	struct stat stat_buf;
 
-	errfile = vstralloc(conf_logdir, "/amflush", NULL);
+	errfile = g_strjoin(NULL, conf_logdir, "/amflush", NULL);
 	errfilex = NULL;
 	nerrfilex = NULL;
 	tapecycle = getconf_int(CNF_TAPECYCLE);
@@ -441,7 +441,7 @@ main(
 	    nerrfilex = errfilex;
 	    days--;
 	    g_snprintf(number,100,"%d",days);
-	    errfilex = vstralloc(errfile, ".", number, NULL);
+	    errfilex = g_strjoin(NULL, errfile, ".", number, NULL);
 	    if (rename(errfilex, nerrfilex) != 0) {
 		error(_("cannot rename \"%s\" to \"%s\": %s"),
 		      errfilex, nerrfilex, strerror(errno));
@@ -680,7 +680,7 @@ redirect_stderr(void)
     char *errfile;
 
     fflush(stdout); fflush(stderr);
-    errfile = vstralloc(conf_logdir, "/amflush", NULL);
+    errfile = g_strjoin(NULL, conf_logdir, "/amflush", NULL);
     if((fderr = open(errfile, O_WRONLY| O_APPEND | O_CREAT | O_TRUNC, 0600)) == -1) {
 	error(_("could not open %s: %s"), errfile, strerror(errno));
 	/*NOTREACHED*/

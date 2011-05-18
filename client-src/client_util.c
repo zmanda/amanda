@@ -57,7 +57,7 @@ fixup_relative(
     char *newname;
     if(*name != '/') {
 	char *dirname = amname_to_dirname(device);
-	newname = vstralloc(dirname, "/", name , NULL);
+	newname = g_strjoin(NULL, dirname, "/", name , NULL);
 	amfree(dirname);
     }
     else {
@@ -91,7 +91,7 @@ get_name(
     else
 	g_snprintf(number, sizeof(number), "%03d", n - 1);
 	
-    filename = vstralloc(get_pname(), ".", diskname, ".", ts, number, ".",
+    filename = g_strjoin(NULL, get_pname(), ".", diskname, ".", ts, number, ".",
 			 exin, NULL);
     amfree(ts);
     return filename;
@@ -914,7 +914,7 @@ backup_support_option(
     backup_support_option_t *bsu;
 
     *errarray = g_ptr_array_new();
-    cmd = vstralloc(APPLICATION_DIR, "/", program, NULL);
+    cmd = g_strjoin(NULL, APPLICATION_DIR, "/", program, NULL);
     g_ptr_array_add(argv_ptr, g_strdup(program));
     g_ptr_array_add(argv_ptr, g_strdup("support"));
     if (g_options->config) {
@@ -1158,7 +1158,7 @@ run_client_script(
 	}
     }
 
-    cmd = vstralloc(APPLICATION_DIR, "/", script->plugin, NULL);
+    cmd = g_strjoin(NULL, APPLICATION_DIR, "/", script->plugin, NULL);
     g_ptr_array_add(argv_ptr, g_strdup(script->plugin));
 
     g_ptr_array_add(argv_ptr, g_strdup(command));
@@ -1468,7 +1468,7 @@ run_calcsize(
     }
 
     startclock();
-    cmd = vstralloc(amlibexecdir, "/", "calcsize", NULL);
+    cmd = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
 
 
     g_ptr_array_add(argv_ptr, g_strdup("calcsize"));
@@ -1539,7 +1539,7 @@ run_calcsize(
 	/*NOTREACHED*/
     }
 
-    match_expr = vstralloc(" %d SIZE %lld", NULL);
+    match_expr = g_strjoin(NULL, " %d SIZE %lld", NULL);
     len = strlen(qdisk);
     for(size = (off_t)-1; (line = agets(dumpout)) != NULL; free(line)) {
 	long long size_ = (long long)0;

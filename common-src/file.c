@@ -309,7 +309,7 @@ save_core(void)
 	ts = get_datestamp_from_time(sbuf.st_mtime);
         suffix[0] = 'z';
         suffix[1] = '\0';
-        old = vstralloc("core", ts, suffix, NULL);
+        old = g_strjoin(NULL, "core", ts, suffix, NULL);
         new = NULL;
         while(ts[0] != '\0') {
             amfree(new);
@@ -321,7 +321,7 @@ save_core(void)
             } else {
                 suffix[0]--;
             }
-            old = vstralloc("core", ts, suffix, NULL);
+            old = g_strjoin(NULL, "core", ts, suffix, NULL);
             (void)rename(old, new);         /* it either works ... */
         }
 	amfree(ts);
