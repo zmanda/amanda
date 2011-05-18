@@ -2419,7 +2419,6 @@ amidxtaped_response(
 	*response_error = 1;
 	return;
     }
-    security_close_connection(sech, dump_hostname);
 
     if (pkt->type == P_NAK) {
 #if defined(PACKET_DEBUG)
