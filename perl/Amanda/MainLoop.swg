@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2009, 2010, 2011 Zmanda, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -330,11 +330,11 @@ push @EXPORT_OK, "synchronized";
 
 %inline %{
 void run_c(void) {
-    g_main_loop_run(default_main_loop());
+    event_loop_run();
 }
 
 void quit(void) {
-    g_main_loop_quit(default_main_loop());
+    event_loop_quit();
 }
 %}
 

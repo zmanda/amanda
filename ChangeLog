@@ -1,3 +1,8 @@
+2011-05-18  Dustin J. Mitchell <dustin@mozilla.com>
+	* common-src/event.c common-src/event.h: add event_loop_run and
+	  event_loop_quit to mirror g_main_loop_run/quit
+	* perl/Amanda/MainLoop.swg: use them from Amanda::MainLoop
+
 2011-05-18  Francis Galiegue <fgaliegue@gmail.com>
 	* amandad-src/amandad.c: remove a stralloc() leftover :(
 
