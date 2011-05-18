@@ -1324,7 +1324,7 @@ errfd_recv(
 	if (as->errbuf) {
 	    as->errbuf = vstrextend(&as->errbuf, buf, NULL);
 	} else {
-	    as->errbuf = stralloc(buf);
+	    as->errbuf = g_strdup(buf);
 	}
     }
 
