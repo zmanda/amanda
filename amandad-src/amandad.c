@@ -1290,30 +1290,37 @@ errfd_recv(
     struct active_service *as = cookie;
     char  buf[NETWORK_BLOCK_BYTES + 1];
     int   n;
+    gsize buflen = 0;
     char *r;
 
     assert(as != NULL);
     assert(as->ev_errfd != NULL);
 
     n = read(as->errfd, buf, NETWORK_BLOCK_BYTES);
-    /* merge buffer */
-    if (n > 0) {
-	/* Terminate it with '\0' */
-	buf[n] = '\0';
 
-	if (as->errbuf) {
-	    as->errbuf = vstrextend(&as->errbuf, buf, NULL);
-	} else {
-	    as->errbuf = g_strdup(buf);
-	}
-    } else if (n == 0) {
-	event_release(as->ev_errfd);
-	as->ev_errfd = NULL;
-    } else { /* n < 0 */
-	event_release(as->ev_errfd);
-	as->ev_errfd = NULL;
-	g_snprintf(buf, NETWORK_BLOCK_BYTES + 1,
-		   "error reading stderr or service: %s\n", strerror(errno));
+    /*
+     * Append whatever was read from the error file descriptor into the error
+     * buffer - or the read error message if there is one.
+     *
+     * In case when no data is read, or a read error, we release the event.
+     */
+
+    switch (n) {
+        case -1:
+            g_snprintf(buf, NETWORK_BLOCK_BYTES + 1,
+                "error reading stderr or service: %s\n", strerror(errno));
+            buflen = strlen(buf) + 1;
+            /* Fall through */
+        case 0:
+            event_release(as->ev_errfd);
+            as->ev_errfd = NULL;
+            break;
+        default:
+            buf[n] = '\0';
+            buflen = n;
+    }
+
+    if (buflen) {
 	if (as->errbuf) {
 	    as->errbuf = vstrextend(&as->errbuf, buf, NULL);
 	} else {
