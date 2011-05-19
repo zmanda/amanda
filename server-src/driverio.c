@@ -804,7 +804,7 @@ chunker_cmd(
 				" ", disk2serial(dp),
 				"\n",  NULL);
 	} else {
-	    cmdline = vstralloc(cmdstr[cmd], "\n");
+	    cmdline = vstralloc(cmdstr[cmd], "\n", NULL);
 	}
 	break;
     default:

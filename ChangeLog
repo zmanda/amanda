@@ -1,3 +1,7 @@
+2011-01-20  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/driverio.c: fix non-NULL terminated argument list in
+	  vstralloc()
+
 2011-05-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/ndmp-device.c: s/NDMP4_/NDMP9_/g
 
