@@ -1040,7 +1040,7 @@ static GPtrArray *amstar_build_argv(
 	g_ptr_array_add(argv_ptr, g_strdup("-xdev"));
     g_ptr_array_add(argv_ptr, g_strdup("-link-dirs"));
     g_ptr_array_add(argv_ptr, g_strdup(levelstr));
-    g_ptr_array_add(argv_ptr, stralloc2("tardumps=", tardumpfile));
+    g_ptr_array_add(argv_ptr, g_strdup_printf("tardumps=%s", tardumpfile));
     if (command == CMD_BACKUP)
 	g_ptr_array_add(argv_ptr, g_strdup("-wtardumps"));
 

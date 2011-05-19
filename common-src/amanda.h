@@ -464,7 +464,7 @@ time_t	unctime(char *timestr);
 } while (0)
 
 #define strappend(s1,s2) do {						\
-    char *t_t_t = (s1) ? stralloc2((s1),(s2)) : g_strdup((s2));		\
+    char *t_t_t = (s1) ? g_strjoin(NULL, (s1), (s2), NULL) : g_strdup((s2));		\
     amfree((s1));							\
     (s1) = t_t_t;							\
 } while(0)

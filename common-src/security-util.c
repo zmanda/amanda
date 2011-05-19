@@ -2057,10 +2057,10 @@ check_user_ruserok(
      * problem and is expected.  Thanks a lot.  Not.
      */
     if (pipe(fd) != 0) {
-	return stralloc2("pipe() fails: ", strerror(errno));
+	return g_strdup_printf("pipe() fails: %s", strerror(errno));
     }
     if ((ruserok_pid = fork()) < 0) {
-	return stralloc2("fork() fails: ", strerror(errno));
+	return g_strdup_printf("fork() fails: %s", strerror(errno));
     } else if (ruserok_pid == 0) {
 	int ec;
 
@@ -2183,7 +2183,7 @@ check_user_amandahosts(
     auth_debug(1, "check_user_amandahosts(host=%s, pwd=%p, ""remoteuser=%s, service=%s)\n",
 		   host, pwd, remoteuser, service);
 
-    ptmp = stralloc2(pwd->pw_dir, "/.amandahosts");
+    ptmp = g_strdup_printf("%s/.amandahosts", pwd->pw_dir);
     if (debug_auth >= 9) {
 	show_stat_info(ptmp, "");;
     }

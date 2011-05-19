@@ -532,11 +532,11 @@ search_fstab(
   if (stat(name, &stats[0]) == -1)
     stats[0].st_dev = (dev_t)-1;
   if (name[0] != '/') {
-    fullname = stralloc2(DEV_PREFIX, name);
+    fullname = g_strjoin(NULL, DEV_PREFIX, name, NULL);
     if (stat(fullname, &stats[1]) == -1)
       stats[1].st_dev = (dev_t)-1;
     g_free(fullname);
-    fullname = stralloc2(RDEV_PREFIX, name);
+    fullname = g_strjoin(NULL, RDEV_PREFIX, name, NULL);
     if (stat(fullname, &stats[2]) == -1)
       stats[2].st_dev = (dev_t)-1;
     amfree(fullname);

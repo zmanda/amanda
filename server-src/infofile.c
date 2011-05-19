@@ -81,7 +81,7 @@ open_txinfofile(
 	}
     }
 
-    newinfofile = stralloc2(infofile, ".new");
+    newinfofile = g_strdup_printf("%s.new", infofile);
 
     if(writing) {
 	infof = fopen(newinfofile, mode);
@@ -493,7 +493,7 @@ delete_txinfofile(
 		   "/", mydisk,
 		   "/info",
 		   NULL);
-    fn_new = stralloc2(fn, ".new");
+    fn_new = g_strdup_printf("%s.new", fn);
 
     amfree(myhost);
     amfree(mydisk);

@@ -147,12 +147,12 @@ suck_dir_list_from_server(void)
     } else if(strcmp(disk_path, "/") == 0) {
 	disk_path_slash = g_strdup(disk_path);
     } else {
-	disk_path_slash = stralloc2(disk_path, "/");
+	disk_path_slash = g_strdup_printf("%s/", disk_path);
     }
 
     clear_dir_list();
 
-    cmd = stralloc2("OLSD ", disk_path);
+    cmd = g_strdup_printf("OLSD %s", disk_path);
     if (send_command(cmd) == -1) {
 	amfree(cmd);
 	amfree(disk_path_slash);
@@ -171,7 +171,7 @@ suck_dir_list_from_server(void)
 	g_printf("%s\n", l);
 	return;
     }
-    disk_path_slash_dot = stralloc2(disk_path_slash, ".");
+    disk_path_slash_dot = g_strdup_printf("%s.", disk_path_slash);
     amfree(cmd);
     amfree(err);
     tape_undo = NULL;
@@ -300,7 +300,7 @@ list_directory(void)
      * Set up the pager command so if the pager is terminated, we do
      * not get a SIGPIPE back.
      */
-    pager_command = stralloc2(pager, " ; /bin/cat > /dev/null");
+    pager_command = g_strdup_printf("%s ; /bin/cat > /dev/null", pager);
     if ((fp = popen(pager_command, "w")) == NULL)
     {
 	g_printf("Warning - can't pipe through %s\n", pager);

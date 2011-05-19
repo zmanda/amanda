@@ -886,19 +886,19 @@ start_server_check(
 		tapebad = 1;
 		amfree(quoted);
 	    }
-	    newtapefile = stralloc2(tapefile, ".new");
+	    newtapefile = g_strdup_printf("%s.new", tapefile);
 	    tapebad |= check_tapefile(outf, newtapefile);
 	    amfree(newtapefile);
-	    newtapefile = stralloc2(tapefile, ".amlabel");
+	    newtapefile = g_strdup_printf("%s.amlabel", tapefile);
 	    tapebad |= check_tapefile(outf, newtapefile);
 	    amfree(newtapefile);
-	    newtapefile = stralloc2(tapefile, ".amlabel.new");
+	    newtapefile = g_strdup_printf("%s.amlabel.new", tapefile);
 	    tapebad |= check_tapefile(outf, newtapefile);
 	    amfree(newtapefile);
-	    newtapefile = stralloc2(tapefile, ".yesterday");
+	    newtapefile = g_strdup_printf("%s.yesterday", tapefile);
 	    tapebad |= check_tapefile(outf, newtapefile);
 	    amfree(newtapefile);
-	    newtapefile = stralloc2(tapefile, ".yesterday.new");
+	    newtapefile = g_strdup_printf("%s.yesterday.new", tapefile);
 	    tapebad |= check_tapefile(outf, newtapefile);
 	    amfree(newtapefile);
 	}
@@ -1283,7 +1283,7 @@ start_server_check(
 	    host = sanitise_filename(hostp->hostname);
 	    if(conf_infofile) {
 		g_free(hostinfodir);
-		hostinfodir = stralloc2(conf_infofile, host);
+		hostinfodir = g_strjoin(NULL, conf_infofile, host, NULL);
 		quoted = quote_string(hostinfodir);
 		if(stat(hostinfodir, &statbuf) == -1) {
 		    if (errno == ENOENT) {
@@ -1319,7 +1319,7 @@ start_server_check(
 		    char *quotedif;
 
 		    g_free(diskdir);
-		    diskdir = stralloc2(hostinfodir, disk);
+		    diskdir = g_strjoin(NULL, hostinfodir, disk, NULL);
 		    infofile = g_strjoin(NULL, diskdir, "/", "info", NULL);
 		    quoted = quote_string(diskdir);
 		    quotedif = quote_string(infofile);
@@ -1401,7 +1401,8 @@ start_server_check(
 		    }
 		    if(conf_indexdir) {
 			if(! hostindexdir_checked) {
-			    hostindexdir = stralloc2(conf_indexdir, host);
+			    hostindexdir = g_strjoin(NULL, conf_indexdir,
+                                                     host, NULL);
 			    quoted = quote_string(hostindexdir);
 			    if(stat(hostindexdir, &statbuf) == -1) {
 				if (errno == ENOENT) {
@@ -1433,7 +1434,8 @@ start_server_check(
 			}
 			if(hostindexdir) {
 			    g_free(diskdir);
-			    diskdir = stralloc2(hostindexdir, disk);
+			    diskdir = g_strjoin(NULL, hostindexdir, disk,
+                                                NULL);
 			    quoted = quote_string(diskdir);
 			    if(stat(diskdir, &statbuf) == -1) {
 				if (errno == ENOENT) {

@@ -351,7 +351,7 @@ guess_disk (
     /* disk name may be specified by mount point (logical name) or
        device name, have to determine */
     g_printf("Trying disk %s ...\n", *mpt_guess);
-    disk_try = stralloc2("DISK ", *mpt_guess);		/* try logical name */
+    disk_try = g_strdup_printf("DISK %s", *mpt_guess);		/* try logical name */
     if (exchange(disk_try) == -1)
 	exit(1);
     amfree(disk_try);
@@ -362,7 +362,7 @@ guess_disk (
 	return 1;
     }
     g_printf("Trying disk %s ...\n", fsname);
-    disk_try = stralloc2("DISK ", fsname);		/* try device name */
+    disk_try = g_strdup_printf("DISK %s", fsname);		/* try device name */
     if (exchange(disk_try) == -1)
 	exit(1);
     amfree(disk_try);
@@ -537,7 +537,7 @@ main(
 	/*NOTREACHED*/
     }
 
-    service_name = stralloc2("amandaidx", SERVICE_SUFFIX);
+    service_name = g_strdup_printf("amandaidx%s", SERVICE_SUFFIX);
 
     g_printf("AMRECOVER Version %s. Contacting server on %s ...\n",
 	   VERSION, server_name);  
@@ -594,7 +594,7 @@ main(
 
 	our_features = am_init_feature_set();
 	our_feature_string = am_feature_to_string(our_features);
-	line = stralloc2("FEATURES ", our_feature_string);
+	line = g_strdup_printf("FEATURES %s", our_feature_string);
 	if(exchange(line) == 0) {
 	    their_feature_string = g_strdup(server_line+13);
 	    indexsrv_features = am_string_to_feature(their_feature_string);
@@ -616,14 +616,14 @@ main(
 	error("BAD DATE");
 
     g_printf("Setting restore date to today (%s)\n", dump_date);
-    line = stralloc2("DATE ", dump_date);
+    line = g_strdup_printf("DATE %s", dump_date);
     if (converse(line) == -1) {
         aclose(server_socket);
 	exit(1);
     }
     amfree(line);
 
-    line = stralloc2("SCNF ", config);
+    line = g_strdup_printf("SCNF %s", config);
     if (converse(line) == -1) {
         aclose(server_socket);
 	exit(1);
@@ -703,5 +703,5 @@ get_security(void)
 	error("can't get login name for my uid %ld", (long)getuid());
 	/*NOTREACHED*/
     }
-    return stralloc2("SECURITY USER ", pwptr->pw_name);
+    return g_strdup_printf("SECURITY USER %s", pwptr->pw_name);
 }

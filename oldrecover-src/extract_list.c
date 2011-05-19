@@ -621,7 +621,7 @@ void add_file(
 	    path_on_disk = g_strdup(regex);
 	} else {
 	    /* Prepend '/' */
-	    path_on_disk = stralloc2("/", regex);
+	    path_on_disk = g_strdup_printf("/%s", regex);
 	}
     } else {
 	char *clean_disk_path = clean_regex(disk_path, 0);
@@ -629,7 +629,7 @@ void add_file(
 	amfree(clean_disk_path);
     }
 
-    path_on_disk_slash = stralloc2(path_on_disk, "/");
+    path_on_disk_slash = g_strdup_printf("%s/", path_on_disk);
 
     dbprintf("add_file: Converted path=\"%s\" to path_on_disk=\"%s\"\n",
 	      regex, path_on_disk);
@@ -655,7 +655,7 @@ void add_file(
 		clean_pathname(ditem_path);
 
 		g_free(cmd);
-		cmd = stralloc2("ORLD ", ditem_path);
+		cmd = g_strdup_printf("ORLD %s", ditem_path);
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
 		    amfree(ditem_path);
@@ -951,7 +951,7 @@ delete_file(
 	    }
 	} else {
 	    /* Prepend '/' */
-	    path_on_disk = stralloc2("/", regex);
+	    path_on_disk = g_strdup_printf("/%s", regex);
 	}
     } else {
 	char *clean_disk_path = clean_regex(disk_path, 0);
@@ -959,7 +959,7 @@ delete_file(
 	amfree(clean_disk_path);
     }
 
-    path_on_disk_slash = stralloc2(path_on_disk, "/");
+    path_on_disk_slash = g_strdup_printf("%s/", path_on_disk);
 
     dbprintf("delete_file: Converted path=\"%s\" to path_on_disk=\"%s\"\n",
 	      regex, path_on_disk);
@@ -982,7 +982,7 @@ delete_file(
 		clean_pathname(ditem_path);
 
 		g_free(cmd);
-		cmd = stralloc2("ORLD ", ditem_path);
+		cmd = g_strdup_printf("ORLD %s", ditem_path);
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
 		    amfree(ditem_path);
@@ -1189,7 +1189,7 @@ display_extract_list(
 	 * Set up the pager command so if the pager is terminated, we do
 	 * not get a SIGPIPE back.
 	 */
-	pager_command = stralloc2(pager, " ; /bin/cat > /dev/null");
+	pager_command = g_strdup_printf("%s ; /bin/cat > /dev/null", pager);
 	if ((fp = popen(pager_command, "w")) == NULL)
 	{
 	    g_printf("Warning - can't pipe through %s\n", pager);
@@ -1321,7 +1321,7 @@ send_to_tape_server(
     int		tss,
     char *	cmd)
 {
-    char *msg = stralloc2(cmd, "\r\n");
+    char *msg = g_strdup_printf("%s\r\n", cmd);
 
     if (full_write(tss, msg, strlen(msg)) < strlen(msg))
     {
@@ -1350,7 +1350,7 @@ extract_files_setup(
     char *our_feature_string = NULL;
     char *tt = NULL;
 
-    service_name = stralloc2("amidxtape", SERVICE_SUFFIX);
+    service_name = g_strdup_printf("amidxtape%s", SERVICE_SUFFIX);
 
     /* get tape server details */
     if ((sp = getservbyname(service_name, "tcp")) == NULL)
@@ -1452,7 +1452,7 @@ extract_files_setup(
 
 	our_feature_string = am_feature_to_string(our_features);
 	g_free(tt);
-	tt = stralloc2("FEATURES=", our_feature_string);
+	tt = g_strdup_printf("FEATURES=%s", our_feature_string);
 	send_to_tape_server(tape_control_sock, tt);
 	if (read(tape_control_sock, buffer, sizeof(buffer)) <= 0) {
 	    error("Could not read features from control socket\n");
@@ -1471,34 +1471,34 @@ extract_files_setup(
 
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_config)) {
 	    g_free(tt);
-	    tt = stralloc2("CONFIG=", config);
+	    tt = g_strdup_printf("CONFIG=%s", config);
 	    send_to_tape_server(tape_control_sock, tt);
 	}
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_label) &&
 	   label && label[0] != '/') {
 	    g_free(tt);
-	    tt = stralloc2("LABEL=", label);
+	    tt = g_strdup_printf("LABEL=%s", label);
 	    send_to_tape_server(tape_control_sock, tt);
 	}
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_fsf)) {
 	    char v_fsf[100];
 	    g_snprintf(v_fsf, 99, "%lld", (long long)fsf);
 	    g_free(tt);
-	    tt = stralloc2("FSF=", v_fsf);
+	    tt = g_strdup_printf("FSF=%s", v_fsf);
 	    send_to_tape_server(tape_control_sock, tt);
 	}
 	send_to_tape_server(tape_control_sock, "HEADER");
 	g_free(tt);
-	tt = stralloc2("DEVICE=", dump_device_name);
+	tt = g_strdup_printf("DEVICE=%s", dump_device_name);
 	send_to_tape_server(tape_control_sock, tt);
 	g_free(tt);
-	tt = stralloc2("HOST=", host_regex);
+	tt = g_strdup_printf("HOST=%s", host_regex);
 	send_to_tape_server(tape_control_sock, tt);
 	g_free(tt);
-	tt = stralloc2("DISK=", disk_regex);
+	tt = g_strdup_printf("DISK=%s", disk_regex);
 	send_to_tape_server(tape_control_sock, tt);
 	g_free(tt);
-	tt = stralloc2("DATESTAMP=", clean_datestamp);
+	tt = g_strdup_printf("DATESTAMP=%s", clean_datestamp);
 	send_to_tape_server(tape_control_sock, tt);
 	send_to_tape_server(tape_control_sock, "END");
 	amfree(tt);
@@ -1757,7 +1757,7 @@ extract_files_child(
 	    if (strcmp(fn->path, "/") == 0)
 		g_ptr_array_add(argv_ptr, g_strdup("."));
 	    else
-		g_ptr_array_add(argv_ptr, stralloc2(".", fn->path));
+		g_ptr_array_add(argv_ptr, g_strdup_printf(".%s", fn->path));
 	    break;
 	case IS_UNKNOWN:
 	case IS_DUMP:

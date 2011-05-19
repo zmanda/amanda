@@ -1237,7 +1237,7 @@ do_dump(
 
     if (streams[INDEXFD].fd != NULL) {
 	indexfile_real = getindexfname(hostname, diskname, dumper_timestamp, level);
-	indexfile_tmp = stralloc2(indexfile_real, ".tmp");
+	indexfile_tmp = g_strdup_printf("%s.tmp", indexfile_real);
 
 	if (mkpdir(indexfile_tmp, 0755, (uid_t)-1, (gid_t)-1) == -1) {
 	   g_free(errstr);

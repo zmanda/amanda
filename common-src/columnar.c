@@ -111,13 +111,13 @@ SetColumnDataFromString(
     	char *eon= strchr(s, '=');
 
 	if (eon == NULL) {
-	    *errstr = stralloc2("invalid columnspec: ", s);
+	    *errstr = g_strdup_printf("invalid columnspec: %s", s);
 	    return -1;
 	}
 	*eon= '\0';
 	cn=StringToColumn(s);
 	if (ColumnData[cn].Name == NULL) {
-	    *errstr = stralloc2("invalid column name: ", s);
+	    *errstr = g_strdup_printf("invalid column name: %s", s);
 	    return -1;
 	}
 	if (sscanf(eon+1, "%d:%d:%d", &Space, &Width, &Precision) == 3) {
@@ -146,7 +146,7 @@ SetColumnDataFromString(
 	} else if (sscanf(eon+1, "%d", &Space) == 1) {
 	    ColumnData[cn].PrefixSpace = Space;
 	} else {
-	    *errstr = stralloc2("invalid format: ", eon + 1);
+	    *errstr = g_strdup_printf("invalid format: %s", eon + 1);
 	    return -1;
 	}
 

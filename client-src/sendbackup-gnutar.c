@@ -159,7 +159,7 @@ start_backup(
     level_t *alevel = (level_t *)dle->levellist->data;
     int      level  = alevel->level;
 
-    error_pn = stralloc2(get_pname(), "-smbclient");
+    error_pn = g_strdup_printf("%s-smbclient", get_pname());
 
     qdisk = quote_string(dle->disk);
     dbprintf("start: %s:%s lev %d\n", host, qdisk, level);

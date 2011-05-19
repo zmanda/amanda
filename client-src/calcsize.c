@@ -425,7 +425,7 @@ traverse_dirs(
 	l = strlen(dirname);
 	if(l > 0 && dirname[l - 1] != '/') {
 	    g_free(newbase);
-	    newbase = stralloc2(dirname, "/");
+	    newbase = g_strdup_printf("%s/", dirname);
 	} else {
 	    g_free(newbase);
 	    newbase = g_strdup(dirname);
@@ -440,7 +440,7 @@ traverse_dirs(
 	    }
 
 	    g_free(newname);
-	    newname = stralloc2(newbase, f->d_name);
+	    newname = g_strjoin(NULL, newbase, f->d_name, NULL);
 	    if(lstat(newname, &finfo) == -1) {
 		g_fprintf(stderr, "%s/%s: %s\n",
 			dirname, f->d_name, strerror(errno));
@@ -579,7 +579,7 @@ final_size_dump(
 
     /* calculate the map sizes */
 
-    s = stralloc2(topdir, "/.");
+    s = g_strdup_printf("%s/.", topdir);
     if(get_fs_usage(s, NULL, &fsusage) == -1) {
 	error("statfs %s: %s", s, strerror(errno));
 	/*NOTREACHED*/

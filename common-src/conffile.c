@@ -5098,7 +5098,7 @@ config_init(
 	    /* NOTREACHED */
 	}
 
-	config_dir = stralloc2(cwd, "/");
+	config_dir = g_strdup_printf("%s/", cwd);
 	if ((config_name = strrchr(cwd, '/')) != NULL) {
 	    config_name = g_strdup(config_name + 1);
 	}

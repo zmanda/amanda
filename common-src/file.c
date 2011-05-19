@@ -185,11 +185,11 @@ safe_cd(void)
 
     if (client_uid != (uid_t) -1) {
 #if defined(AMANDA_DBGDIR)
-	d = stralloc2(AMANDA_DBGDIR, "/.");
+	d = g_strdup_printf("%s/.", AMANDA_DBGDIR);
 	(void) mkpdir(d, (mode_t)0700, client_uid, client_gid);
 	amfree(d);
 #endif
-	d = stralloc2(AMANDA_TMPDIR, "/.");
+	d = g_strdup_printf("%s/.", AMANDA_TMPDIR);
 	(void) mkpdir(d, (mode_t)0700, client_uid, client_gid);
 	amfree(d);
     }

@@ -518,7 +518,7 @@ check_file_overwrite(
 
 	    /* Check path component of fn->path */
 
-	    path = stralloc2(dir, fn->path);
+	    path = g_strjoin(NULL, dir, fn->path, NULL);
 	    if (path[strlen(path)-1] == '/') {
 		path[strlen(path)-1] = '\0';
 	    }
@@ -544,7 +544,7 @@ check_file_overwrite(
 
 	    /* Check fn->path */
 
-	    filename = stralloc2(dir, fn->path);
+	    filename = g_strjoin(NULL, dir, fn->path, NULL);
 	    if (filename[strlen(filename)-1] == '/') {
 		filename[strlen(filename)-1] = '\0';
 	    }
@@ -715,11 +715,11 @@ merge_path(
     char *result;
     int len = strlen(path1);
     if (path1[len-1] == '/' && path2[0] == '/') {
-	result = stralloc2(path1, path2+1);
+	result = g_strjoin(NULL, path1, path2 + 1, NULL);
     } else if (path1[len-1] != '/' && path2[0] != '/') {
 	result = g_strjoin(NULL, path1, "/", path2, NULL);
     } else {
-	result = stralloc2(path1, path2);
+	result = g_strjoin(NULL, path1, path2, NULL);
     }
     return result;
 }
@@ -866,7 +866,7 @@ add_file(
 	    path_on_disk = g_strdup(regex);
 	} else {
 	    /* Prepend '/' */
-	    path_on_disk = stralloc2("/", regex);
+	    path_on_disk = g_strdup_printf("/%s", regex);
 	}
     } else {
 	char *clean_disk_path = clean_regex(disk_path, 0);
@@ -898,7 +898,7 @@ add_file(
 
 		qditem_path = quote_string(ditem_path);
 		g_free(cmd);
-		cmd = stralloc2("ORLD ", qditem_path);
+		cmd = g_strdup_printf("ORLD %s", qditem_path);
 		amfree(qditem_path);
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
@@ -1238,7 +1238,7 @@ delete_file(
 	    }
 	} else {
 	    /* Prepend '/' */
-	    path_on_disk = stralloc2("/", regex);
+	    path_on_disk = g_strdup_printf("/%s", regex);
 	}
     } else {
 	char *clean_disk_path = clean_regex(disk_path, 0);
@@ -1267,7 +1267,7 @@ delete_file(
 
 		qditem_path = quote_string(ditem_path);
 		g_free(cmd);
-		cmd = stralloc2("ORLD ", qditem_path);
+		cmd = g_strdup_printf("ORLD %s", qditem_path);
 		amfree(qditem_path);
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
@@ -1466,7 +1466,7 @@ display_extract_list(
 	 * Set up the pager command so if the pager is terminated, we do
 	 * not get a SIGPIPE back.
 	 */
-	pager_command = stralloc2(pager, " ; /bin/cat > /dev/null");
+	pager_command = g_strdup_printf("%s ; /bin/cat > /dev/null", pager);
 	if ((fp = popen(pager_command, "w")) == NULL)
 	{
 	    g_printf("Warning - can't pipe through %s\n", pager);
@@ -1632,7 +1632,7 @@ send_to_tape_server(
     security_stream_t *	stream,
     char *		cmd)
 {
-    char *msg = stralloc2(cmd, "\r\n");
+    char *msg = g_strdup_printf("%s\r\n", cmd);
 
     g_debug("send_to_tape_server: %s\n", cmd);
     if (security_stream_write(stream, msg, strlen(msg)) < 0)
@@ -1698,7 +1698,7 @@ extract_files_setup(
 
     if(am_has_feature(indexsrv_features, fe_amidxtaped_exchange_features)){
 	g_free(tt);
-	tt = stralloc2("FEATURES=", our_features_string);
+	tt = g_strdup_printf("FEATURES=%s", our_features_string);
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	get_amidxtaped_line();
 	if(strncmp_const(amidxtaped_line,"FEATURES=") == 0) {
@@ -1724,34 +1724,34 @@ extract_files_setup(
 
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_config)) {
 	    g_free(tt);
-	    tt = stralloc2("CONFIG=", get_config_name());
+	    tt = g_strdup_printf("CONFIG=%s", get_config_name());
 	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	}
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_label) &&
 	   label && label[0] != '/') {
 	    g_free(tt);
-	    tt = stralloc2("LABEL=", label);
+	    tt = g_strdup_printf("LABEL=%s", label);
 	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	}
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_fsf)) {
 	    char v_fsf[100];
 	    g_snprintf(v_fsf, 99, "%lld", (long long)fsf);
 	    g_free(tt);
-	    tt = stralloc2("FSF=", v_fsf);
+	    tt = g_strdup_printf("FSF=%s", v_fsf);
 	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	}
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, "HEADER");
 	g_free(tt);
-	tt = stralloc2("DEVICE=", dump_device_name);
+	tt = g_strdup_printf("DEVICE=%s", dump_device_name);
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	g_free(tt);
-	tt = stralloc2("HOST=", host_regex);
+	tt = g_strdup_printf("HOST=%s", host_regex);
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	g_free(tt);
-	tt = stralloc2("DISK=", disk_regex);
+	tt = g_strdup_printf("DISK=%s", disk_regex);
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	g_free(tt);
-	tt = stralloc2("DATESTAMP=", clean_datestamp);
+	tt = g_strdup_printf("DATESTAMP=%s", clean_datestamp);
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, "END");
 	amfree(tt);
@@ -2007,7 +2007,7 @@ extract_files_child(
 	    if (strcmp(fn->path, "/") == 0)
 		g_ptr_array_add(argv_ptr, g_strdup("."));
 	    else
-		g_ptr_array_add(argv_ptr, stralloc2(".", fn->path));
+		g_ptr_array_add(argv_ptr, g_strdup_printf(".%s", fn->path));
 	    break;
 	case IS_UNKNOWN:
 	case IS_DUMP:
@@ -2150,7 +2150,7 @@ writer_intermediary(
 	    if (done == 1) {
 		if (am_has_feature(indexsrv_features,
 				   fe_amrecover_feedme_tape)) {
-		    char *reply = stralloc2("TAPE ", tape_device_name);
+		    char *reply = g_strdup_printf("TAPE %s", tape_device_name);
 		    send_to_tape_server(amidxtaped_streams[CTLFD].fd, reply);
 		    amfree(reply);
 		} else {
@@ -2704,8 +2704,8 @@ read_amidxtaped_data(
 
     if (size < 0) {
 	g_free(errstr);
-	errstr = stralloc2("amidxtaped read: ",
-                           security_stream_geterror(amidxtaped_streams[DATAFD].fd));
+	errstr = g_strdup_printf("amidxtaped read: %s",
+                                 security_stream_geterror(amidxtaped_streams[DATAFD].fd));
 	return;
     }
 

@@ -217,9 +217,9 @@ startup_dump_processes(
 
     for(dumper = dmptable, i = 0; i < inparallel; dumper++, i++) {
 	g_snprintf(number, sizeof(number), "%d", i);
-	dumper->name = stralloc2("dumper", number);
+	dumper->name = g_strdup_printf("dumper%s", number);
 	dumper->chunker = &chktable[i];
-	chktable[i].name = stralloc2("chunker", number);
+	chktable[i].name = g_strdup_printf("chunker%s", number);
 	chktable[i].dumper = dumper;
 	chktable[i].fd = -1;
 
@@ -537,7 +537,7 @@ taper_cmd(
 			    "\n", NULL);
 	break;
     case QUIT:
-	cmdline = stralloc2(cmdstr[cmd], "\n");
+	cmdline = g_strdup_printf("%s\n", cmdstr[cmd]);
 	break;
     default:
 	error("Don't know how to send %s command to taper", cmdstr[cmd]);
@@ -790,7 +790,7 @@ chunker_cmd(
 	    amfree(qdest);
 	    amfree(qname);
 	} else {
-	    cmdline = stralloc2(cmdstr[cmd], "\n");
+	    cmdline = g_strdup_printf("%s\n", cmdstr[cmd]);
 	}
 	break;
     case QUIT:
