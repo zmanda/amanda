@@ -374,7 +374,7 @@ is_deeply([ sort(+getconf_list("dumptype")) ],
 	  [ sort(qw(
 	    mydump-type second_dumptype third_dumptype
 	    NO-COMPRESS COMPRESS-FAST COMPRESS-BEST COMPRESS-CUST
-	    SRVCOMPRESS BSD-AUTH NO-RECORD NO-HOLD
+	    SRVCOMPRESS BSD-AUTH BSDTCP-AUTH NO-RECORD NO-HOLD
 	    NO-FULL
 	    )) ],
     "getconf_list lists all dumptypes (including defaults)");
