@@ -1,4 +1,7 @@
 2011-05-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* Fix for default BSDTCP auth.
+
+2011-05-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c,
 	  common-src/conffile.c: Change default auth to bsdtcp.
 	* NEWS, ReleaseNotes: Change default auth to bsdtcp.
