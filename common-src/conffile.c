@@ -581,7 +581,7 @@ static int     get_no_yes_all(void);
  */
 static void ckseen(seen_t *seen);
 
-/* validate_functions -- these fit into the validate_function solt in
+/* validate_functions -- these fit into the validate_function slot in
  * a parser table entry.  They call conf_parserror if the value in their
  * second argument is invalid.  */
 static void validate_nonnegative(conf_var_t *, val_t *);
@@ -602,6 +602,8 @@ static void validate_reserved_port_range(conf_var_t *, val_t *);
 static void validate_unreserved_port_range(conf_var_t *, val_t *);
 static void validate_program(conf_var_t *, val_t *);
 static void validate_dump_limit(conf_var_t *, val_t *);
+static void validate_columnspec(conf_var_t *, val_t *);
+
 gint compare_pp_script_order(gconstpointer a, gconstpointer b);
 
 /*
@@ -1261,7 +1263,7 @@ conf_var_t server_var [] = {
    { CONF_DTIMEOUT             , CONFTYPE_INT      , read_int         , CNF_DTIMEOUT             , validate_positive },
    { CONF_CTIMEOUT             , CONFTYPE_INT      , read_int         , CNF_CTIMEOUT             , validate_positive },
    { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE , read_size_byte   , CNF_DEVICE_OUTPUT_BUFFER_SIZE, validate_positive },
-   { CONF_COLUMNSPEC           , CONFTYPE_STR      , read_str         , CNF_COLUMNSPEC           , NULL },
+   { CONF_COLUMNSPEC           , CONFTYPE_STR      , read_str         , CNF_COLUMNSPEC           , validate_columnspec },
    { CONF_TAPERALGO            , CONFTYPE_TAPERALGO, read_taperalgo   , CNF_TAPERALGO            , NULL },
    { CONF_TAPER_PARALLEL_WRITE , CONFTYPE_INT      , read_int         , CNF_TAPER_PARALLEL_WRITE , NULL },
    { CONF_SEND_AMREPORT_ON     , CONFTYPE_SEND_AMREPORT_ON, read_send_amreport_on, CNF_SEND_AMREPORT_ON       , NULL },
@@ -5043,6 +5045,122 @@ validate_unreserved_port_range(
     val_t        *val)
 {
     validate_port_range(val, IPPORT_RESERVED, 65535);
+}
+
+/*
+ * Columnspec validation
+ */
+
+/*
+ * The list of lowercase string values valid for the first element of a
+ * columnspec.
+ */
+
+static const char *colspec_valid_names[] = {
+    "hostname",
+    "disk",
+    "level",
+    "origkb",
+    "outkb",
+    "compress",
+    "dumptime",
+    "dumprate",
+    "tapetime",
+    "taperate"
+};
+
+/*
+ * Validate one columnspec element. We do modify the string inline, but that's
+ * OK: the caller won't use it anyway.
+ *
+ * One element is of the form:
+ *
+ * xxxxx=int1:int2:int3
+ *
+ * where: xxxxx is a string which can only be (case insensitive) one of the values in
+ * the colspec_valid_names array above. Other numbers are ALL optionals, there
+ * may be none at all. Save for int2, they MUST be positive. See amanda.conf(5).
+ *
+ * Yeah, today, nobody ever uses that, but... Ahwell.
+ */
+
+static void validate_one_columnspec(const char *element)
+{
+    gchar *p, *token;
+    gchar **strings, **ptr;
+    guint i, nr_valid_names = G_N_ELEMENTS(colspec_valid_names);
+
+    p = strchr(element, '=');
+
+    if (!p) {
+        conf_parserror("invalid columnspec: %s", element);
+        return;
+    }
+
+    /*
+     * OK, at this point we at least have a first element. See if we know about
+     * it.
+     */
+
+    *p++ = '\0';
+    token = g_ascii_strdown(element, -1);
+
+    for (i = 0; i < nr_valid_names; i++)
+        if (!strcmp(colspec_valid_names[i], token)) /* We have a match */
+            break;
+
+    g_free(token);
+
+    if (i == nr_valid_names) { /* No match! Bye... */
+        conf_parserror("invalid column name: \"%s\"", element);
+        return;
+    }
+
+    /*
+     * Now we must check for numbers. As mentioned above, ALL are optional. If
+     * the second number is present, it is the only one which can be negative.
+     */
+
+    i = 0;
+
+    token = p;
+    strings = g_strsplit(p, ":", 3);
+
+    for (ptr = strings; *ptr; ptr++) {
+        p = *ptr;
+        /*
+         * Check for a potentially negative number - it is only valid in the
+         * second position.
+         */
+        if (++i == 2 && *p == '-')
+            p++;
+        for (; *p; p++)
+            if (!g_ascii_isdigit(*p)) {
+                conf_parserror("invalid format: %s", token);
+                goto out;
+            }
+    }
+
+out:
+    g_strfreev(strings);
+}
+
+/*
+ * Validate a columnspec input. We split the string against ',' and use
+ * validate_one_columnspec() above to validate each substring returned.
+ */
+
+static void validate_columnspec(conf_var_t *var G_GNUC_UNUSED, val_t *value)
+{
+    gchar *input = val_t_to_str(value);
+    gchar **elements, **ptr;
+
+    elements = g_strsplit(input, ",", 0);
+
+    for (ptr = elements; *ptr; ptr++)
+        validate_one_columnspec(*ptr);
+
+    g_strfreev(elements);
 }
 
 /*
