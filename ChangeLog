@@ -1,3 +1,7 @@
+2011-01-20  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/driverio.c: fix non-NULL terminated argument list in
+	  vstralloc()
+
 2011-05-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* Fix for default BSDTCP auth.
 
