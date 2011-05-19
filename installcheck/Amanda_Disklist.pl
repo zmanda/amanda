@@ -57,7 +57,7 @@ my ($x, $d, @list);
 
 $x = Amanda::Disklist::get_host("otherbox");
 ok($x, "get_host returns a host");
-is($x->{'auth'}, 'BSD', "..host has correct auth");
+is($x->{'auth'}, 'BSDTCP', "..host has correct auth");
 is_deeply([ sort @{$x->{'disks'}} ],
 	  [ sort "/disk1", "/disk2", "/home" ],
 	  "..and three disks");
