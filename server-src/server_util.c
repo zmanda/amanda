@@ -30,7 +30,6 @@
 
 #include "amanda.h"
 #include "server_util.h"
-#include "arglist.h"
 #include "logfile.h"
 #include "util.h"
 #include "conffile.h"
@@ -124,7 +123,7 @@ free_cmdargs(
     g_free(cmdargs);
 }
 
-printf_arglist_function1(void putresult, cmd_t, result, const char *, format)
+void putresult(cmd_t result, const char *format, ...)
 {
     va_list argp;
 

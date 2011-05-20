@@ -31,7 +31,6 @@
  */
 #include "amanda.h"
 #include "match.h"
-#include "arglist.h"
 #include "conffile.h"
 #include "diskfile.h"
 #include "util.h"
@@ -859,9 +858,9 @@ parse_diskline(
     return (0);
 }
 
-
-printf_arglist_function2(void disk_parserror, const char *, filename,
-    int, line_num, const char *, format)
+G_GNUC_PRINTF(3, 4)
+static void disk_parserror(const char *filename, int line_num,
+    const char *format, ...)
 {
     va_list argp;
     char * msg;

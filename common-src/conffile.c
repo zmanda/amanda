@@ -31,7 +31,6 @@
  */
 
 #include "amanda.h"
-#include "arglist.h"
 #include "util.h"
 #include "conffile.h"
 #include "clock.h"
@@ -8457,7 +8456,8 @@ static void conf_error_common(
     config_add_error(level, errstr);
 }
 
-printf_arglist_function(void conf_parserror, const char *, format)
+G_GNUC_PRINTF(1, 2)
+static void conf_parserror(const char *format, ...)
 {
     va_list argp;
     
@@ -8466,7 +8466,9 @@ printf_arglist_function(void conf_parserror, const char *, format)
     arglist_end(argp);
 }
 
-printf_arglist_function(void conf_parswarn, const char *, format) {
+G_GNUC_PRINTF(1, 2)
+static void conf_parswarn(const char *format, ...)
+{
     va_list argp;
     
     arglist_start(argp, format);
