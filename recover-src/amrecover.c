@@ -657,7 +657,7 @@ amindexd_response(
 	    *response_error = 1;
 	} else {
 bad_nak:
-	    errstr = newvstrallocf(errstr, "request NAK");
+	    errstr = newstralloc(errstr, "request NAK");
 	    *response_error = 2;
 	}
 	return;
@@ -690,7 +690,7 @@ bad_nak:
 	if (strcmp(tok, "ERROR") == 0) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL) {
-	        errstr = newvstrallocf(errstr, "[bogus error packet]");
+	        errstr = newstralloc(errstr, "[bogus error packet]");
 	    } else {
 		errstr = newvstrallocf(errstr, "%s", tok);
 	    }
@@ -793,7 +793,7 @@ bad_nak:
      * them, complain.
      */
     if (streams[MESGFD].fd == NULL) {
-        errstr = newvstrallocf(errstr, "[couldn't open MESG streams]");
+        errstr = newstralloc(errstr, "[couldn't open MESG streams]");
         goto connect_error;
     }
 

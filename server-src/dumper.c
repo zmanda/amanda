@@ -1503,7 +1503,7 @@ read_mesgfd(
 	if (s) *s = '\0';  /* use first data_port */
 	s = strrchr(dataport_list, ':');
 	if (!s) {
-	    errstr = newvstrallocf(errstr, "write_tapeheader: no dataport_list");
+	    errstr = newstralloc(errstr, "write_tapeheader: no dataport_list");
 	    dump_result = 2;
 	    stop_dump();
 	    return;
@@ -2066,7 +2066,7 @@ sendbackup_response(
 	    *response_error = 1;
 	} else {
 bad_nak:
-	    errstr = newvstrallocf(errstr, "request NAK");
+	    errstr = newstralloc(errstr, "request NAK");
 	    *response_error = 2;
 	}
 	return;
@@ -2207,7 +2207,7 @@ bad_nak:
      * them, complain.
      */
     if (streams[MESGFD].fd == NULL || streams[DATAFD].fd == NULL) {
-	errstr = newvstrallocf(errstr, "[couldn't open MESG or INDEX streams]");
+	errstr = newstralloc(errstr, "[couldn't open MESG or INDEX streams]");
 	goto connect_error;
     }
 
@@ -2347,8 +2347,7 @@ startup_dump(
 	amfree(pclean);
 	dle_str = p;
     } else if (*application_api != '\0') {
-	errstr = newvstrallocf(errstr,
-		"[does not support application-api]");
+	errstr = newstralloc(errstr, "[does not support application-api]");
 	amfree(req);
 	return 2;
     } else {

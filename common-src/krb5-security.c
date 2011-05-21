@@ -1224,7 +1224,7 @@ krb5_tcpm_recv_token(
     case 0:
 	*size = 0;
 	*handle = H_EOF;
-	*errmsg = newvstrallocf(*errmsg, "SOCKET_EOF");
+	*errmsg = newstralloc(*errmsg, "SOCKET_EOF");
 	auth_debug(1, "krb5_tcpm_recv_token: A return(0)\n");
 	return (0);
     default:
@@ -1267,7 +1267,8 @@ krb5_tcpm_recv_token(
 	    *errmsg = newvstrallocf(*errmsg, "krb5_tcpm_recv_token: invalid size: %s", s);
 	    dbprintf("krb5_tcpm_recv_token: invalid size %s\n", s);
 	} else {
-	    *errmsg = newvstrallocf(*errmsg, "krb5_tcpm_recv_token: invalid size");
+	    *errmsg = newstralloc(*errmsg,
+                                  "krb5_tcpm_recv_token: invalid size");
 	    dbprintf("krb5_tcpm_recv_token: invalid size %zd\n", *size);
 	}
 	*size = -1;
@@ -1278,7 +1279,7 @@ krb5_tcpm_recv_token(
 
     if(*size == 0) {
 	auth_debug(1, "krb5_tcpm_recv_token: read EOF from %d\n", *handle);
-	*errmsg = newvstrallocf(*errmsg, "EOF");
+	*errmsg = newstralloc(*errmsg, "EOF");
 	return 0;
     }
     switch (net_read(fd, *buf, (size_t)*size, timeout)) {
@@ -1289,7 +1290,7 @@ krb5_tcpm_recv_token(
 	return (-1);
     case 0:
 	*size = 0;
-	*errmsg = newvstrallocf(*errmsg, "SOCKET_EOF");
+	*errmsg = newstralloc(*errmsg, "SOCKET_EOF");
 	auth_debug(1, "krb5_tcpm_recv_token: B return(0)\n");
 	return (0);
     default:

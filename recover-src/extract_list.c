@@ -2572,11 +2572,11 @@ bad_nak:
      * them, complain.
      */
     if (amidxtaped_streams[CTLFD].fd == NULL) {
-        errstr = newvstrallocf(errstr, "[couldn't open CTL streams]");
+        errstr = newstralloc(errstr, "[couldn't open CTL streams]");
         goto connect_error;
     }
     if (amidxtaped_streams[DATAFD].fd == NULL) {
-        errstr = newvstrallocf(errstr, "[couldn't open DATA streams]");
+        errstr = newstralloc(errstr, "[couldn't open DATA streams]");
         goto connect_error;
     }
 
@@ -2589,8 +2589,8 @@ parse_error:
 	errstr = newvstrallocf(errstr,
 			  "[parse of reply message failed: %s]", extra);
     } else {
-	errstr = newvstrallocf(errstr,
-			  "[parse of reply message failed: (no additional information)");
+	errstr = newstralloc(errstr,
+                             "[parse of reply message failed: (no additional information)");
     }
     amfree(extra);
     *response_error = 2;
