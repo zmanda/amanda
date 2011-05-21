@@ -1137,7 +1137,7 @@ is the same as the <amkeyword>amrecover-changer</amkeyword> setting.</para>
 should use.
 <emphasis remap='I'>String</emphasis>
 is a comma (',') separated list of triples. Each triple consists
-of three parts which are separated by a equal sign ('=') and a colon (':') (see the example).
+of four parts which are separated by a equal sign ('=') and a colon (':') (see the example).
 These four parts specify:
 
   <orderedlist>
@@ -1171,6 +1171,8 @@ this column.</para>
 <para>the precision of the column, number of digit after the decimal point for number.</para>
   </listitem>
   </orderedlist></para>
+
+<para>Parts may be omitted, and will adopt a default value; trailing colons may also be omitted.</para>
 
 <para>Here is an example:
 <programlisting>
