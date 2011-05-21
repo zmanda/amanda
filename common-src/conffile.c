@@ -236,7 +236,6 @@ static char tkbuf[4096];
 /* Return a token formated for output */
 static char *str_keyword(keytab_t *kt);
 
-static char *str_keyword(keytab_t *kt);
 /* Look up the name of the given token in the current keytable */
 static char *get_token_name(tok_t);
 
