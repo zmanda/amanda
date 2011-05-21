@@ -21,7 +21,6 @@
 #include "amanda.h"
 #include "amxfer.h"
 #include "element-glue.h"
-#include "arglist.h"
 
 /* XMsgSource objects are GSource "subclasses" which manage
  * a queue of messages, delivering those messages via callback
@@ -164,13 +163,15 @@ xfer_repr(
     unsigned int i;
 
     if (!xfer->repr) {
-	xfer->repr = newvstrallocf(xfer->repr, "<Xfer@%p (", xfer);
+	g_free(xfer->repr);
+	xfer->repr = g_strdup_printf("<Xfer@%p (", xfer);
 	for (i = 0; i < xfer->elements->len; i++) {
 	    XferElement *elt = (XferElement *)g_ptr_array_index(xfer->elements, i);
-	    xfer->repr = newvstralloc(xfer->repr,
-		xfer->repr, (i==0)?"":" -> ", xfer_element_repr(elt), NULL);
+	    g_free(xfer->repr);
+	    xfer->repr = g_strjoin(NULL, xfer->repr, (i==0)?"":" -> ", xfer_element_repr(elt), NULL);
 	}
-	xfer->repr = newvstralloc(xfer->repr, xfer->repr, ")>", NULL);
+	g_free(xfer->repr);
+	xfer->repr = g_strjoin(NULL, xfer->repr, ")>", NULL);
     }
 
     return xfer->repr;
@@ -465,7 +466,7 @@ link_elements(
 
     /* check that we got *some* solution */
     if (st.best_cost == MAX_COST) {
-	error(_("Xfer %s cannot be linked."), xfer_repr(xfer));
+	error("Xfer %s cannot be linked.", xfer_repr(xfer));
     }
 
     /* Now create a new list of elements, containing any glue elements
@@ -497,11 +498,16 @@ link_elements(
     for (i = 0; i < len; i++) {
 	XferElement *elt = g_ptr_array_index(xfer->elements, i);
 
-	if (i == 0)
-	    linkage_str = newvstralloc(linkage_str, linkage_str, xfer_element_repr(elt), NULL);
+	if (i == 0) {
+	    g_free(linkage_str);
+	    linkage_str = g_strjoin(NULL, linkage_str, xfer_element_repr(elt), NULL);
+	}
 	else
-	    linkage_str = newvstrallocf(linkage_str, "%s -(%s)-> %s",
+	    {
+	        g_free(linkage_str);
+	        linkage_str = g_strdup_printf("%s -(%s)-> %s",
 		linkage_str, xfer_mech_name(elt->input_mech), xfer_element_repr(elt));
+	    }
     }
     g_debug("%s", linkage_str);
     amfree(linkage_str);

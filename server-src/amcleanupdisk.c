@@ -44,7 +44,7 @@ init_infofile(void)
 {
     char *conf_infofile = config_dir_relative(getconf_str(CNF_INFOFILE));
     if (open_infofile(conf_infofile) < 0) {
-	error(_("could not open info db \"%s\""), conf_infofile);
+	error("could not open info db \"%s\"", conf_infofile);
 	/*NOTREACHED*/
     }
     amfree(conf_infofile);
@@ -63,14 +63,14 @@ corrupt_dle(
 {
     info_t info;
 
-    dbprintf(_("Corrupted dump of DLE %s:%s found; setting force-no-bump.\n"),
+    dbprintf("Corrupted dump of DLE %s:%s found; setting force-no-bump.\n",
 	hostname, disk);
 
     get_info(hostname, disk, &info);
     CLR(info.command, FORCE_BUMP);
     SET(info.command, FORCE_NO_BUMP);
     if(put_info(hostname, disk, &info)) {
-	dbprintf(_("could not put info record for %s:%s: %s"),
+	dbprintf("could not put info record for %s:%s: %s",
 	      hostname, disk, strerror(errno));
     }
 }
@@ -102,7 +102,7 @@ main(
     dbopen(DBG_SUBDIR_SERVER);
 
     if(argc < 2) {
-	error(_("Usage: amcleanupdisk <config>"));
+	error("Usage: amcleanupdisk <config>");
 	/*NOTREACHED*/
     }
 
@@ -125,7 +125,7 @@ main(
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
 	config_print_errors();
 	if (config_errors(NULL) >= CFGERR_ERRORS) {
-	    g_critical(_("errors processing config file"));
+	    g_critical("errors processing config file");
 	}
     }
 

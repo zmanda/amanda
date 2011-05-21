@@ -75,7 +75,7 @@ childstr(
 	if (dumper->chunker && dumper->chunker->fd == fd)
 	    return (dumper->chunker->name);
     }
-    g_snprintf(buf, sizeof(buf), _("unknown child (fd %d)"), fd);
+    g_snprintf(buf, sizeof(buf), "unknown child (fd %d)", fd);
     return (buf);
 }
 
@@ -94,7 +94,7 @@ startup_tape_process(
     /* always allocate the tapetable */
     tapetable = calloc(sizeof(taper_t), taper_parallel_write+1);
     if (!tapetable) {
-	error(_("could not g_malloc tapetable"));
+	error("could not g_malloc tapetable");
 	/*NOTREACHED*/
     }
 
@@ -124,29 +124,29 @@ startup_tape_process(
 	return;
 
     if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd) == -1) {
-	error(_("taper pipe: %s"), strerror(errno));
+	error("taper pipe: %s", strerror(errno));
 	/*NOTREACHED*/
     }
     if(fd[0] < 0 || fd[0] >= (int)FD_SETSIZE) {
-	error(_("taper socketpair 0: descriptor %d out of range (0 .. %d)\n"),
+	error("taper socketpair 0: descriptor %d out of range (0 .. %d)\n",
 	      fd[0], (int)FD_SETSIZE-1);
         /*NOTREACHED*/
     }
     if(fd[1] < 0 || fd[1] >= (int)FD_SETSIZE) {
-	error(_("taper socketpair 1: descriptor %d out of range (0 .. %d)\n"),
+	error("taper socketpair 1: descriptor %d out of range (0 .. %d)\n",
 	      fd[1], (int)FD_SETSIZE-1);
         /*NOTREACHED*/
     }
 
     switch(taper_pid = fork()) {
     case -1:
-	error(_("fork taper: %s"), strerror(errno));
+	error("fork taper: %s", strerror(errno));
 	/*NOTREACHED*/
 
     case 0:	/* child process */
 	aclose(fd[0]);
 	if(dup2(fd[1], 0) == -1 || dup2(fd[1], 1) == -1)
-	    error(_("taper dup2: %s"), strerror(errno));
+	    error("taper dup2: %s", strerror(errno));
 	config_options = get_config_options(2);
 	config_options[0] = "taper";
 	config_options[1] = get_config_name();
@@ -171,25 +171,25 @@ startup_dump_process(
     char **config_options;
 
     if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd) == -1) {
-	error(_("%s pipe: %s"), dumper->name, strerror(errno));
+	error("%s pipe: %s", dumper->name, strerror(errno));
 	/*NOTREACHED*/
     }
 
     switch(dumper->pid = fork()) {
     case -1:
-	error(_("fork %s: %s"), dumper->name, strerror(errno));
+	error("fork %s: %s", dumper->name, strerror(errno));
 	/*NOTREACHED*/
 
     case 0:		/* child process */
 	aclose(fd[0]);
 	if(dup2(fd[1], 0) == -1 || dup2(fd[1], 1) == -1)
-	    error(_("%s dup2: %s"), dumper->name, strerror(errno));
+	    error("%s dup2: %s", dumper->name, strerror(errno));
 	config_options = get_config_options(2);
 	config_options[0] = dumper->name ? dumper->name : "dumper",
 	config_options[1] = get_config_name();
 	safe_fd(-1, 0);
 	execve(dumper_program, config_options, safe_env());
-	error(_("exec %s (%s): %s"), dumper_program,
+	error("exec %s (%s): %s", dumper_program,
 	      dumper->name, strerror(errno));
         /*NOTREACHED*/
 
@@ -199,7 +199,7 @@ startup_dump_process(
 	dumper->ev_read = NULL;
 	dumper->busy = dumper->down = 0;
 	dumper->dp = NULL;
-	g_fprintf(stderr,_("driver: started %s pid %u\n"),
+	g_fprintf(stderr,"driver: started %s pid %u\n",
 		dumper->name, (unsigned)dumper->pid);
 	fflush(stderr);
     }
@@ -217,9 +217,9 @@ startup_dump_processes(
 
     for(dumper = dmptable, i = 0; i < inparallel; dumper++, i++) {
 	g_snprintf(number, sizeof(number), "%d", i);
-	dumper->name = stralloc2("dumper", number);
+	dumper->name = g_strdup_printf("dumper%s", number);
 	dumper->chunker = &chktable[i];
-	chktable[i].name = stralloc2("chunker", number);
+	chktable[i].name = g_strdup_printf("chunker%s", number);
 	chktable[i].dumper = dumper;
 	chktable[i].fd = -1;
 
@@ -237,19 +237,19 @@ startup_chunk_process(
     char **config_options;
 
     if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd) == -1) {
-	error(_("%s pipe: %s"), chunker->name, strerror(errno));
+	error("%s pipe: %s", chunker->name, strerror(errno));
 	/*NOTREACHED*/
     }
 
     switch(chunker->pid = fork()) {
     case -1:
-	error(_("fork %s: %s"), chunker->name, strerror(errno));
+	error("fork %s: %s", chunker->name, strerror(errno));
 	/*NOTREACHED*/
 
     case 0:		/* child process */
 	aclose(fd[0]);
 	if(dup2(fd[1], 0) == -1 || dup2(fd[1], 1) == -1) {
-	    error(_("%s dup2: %s"), chunker->name, strerror(errno));
+	    error("%s dup2: %s", chunker->name, strerror(errno));
 	    /*NOTREACHED*/
 	}
 	config_options = get_config_options(2);
@@ -257,7 +257,7 @@ startup_chunk_process(
 	config_options[1] = get_config_name();
 	safe_fd(-1, 0);
 	execve(chunker_program, config_options, safe_env());
-	error(_("exec %s (%s): %s"), chunker_program,
+	error("exec %s (%s): %s", chunker_program,
 	      chunker->name, strerror(errno));
         /*NOTREACHED*/
 
@@ -266,7 +266,7 @@ startup_chunk_process(
 	chunker->down = 0;
 	chunker->fd = fd[0];
 	chunker->ev_read = NULL;
-	g_fprintf(stderr,_("driver: started %s pid %u\n"),
+	g_fprintf(stderr,"driver: started %s pid %u\n",
 		chunker->name, (unsigned)chunker->pid);
 	fflush(stderr);
     }
@@ -284,7 +284,7 @@ getresult(
 
     if((line = areads(fd)) == NULL) {
 	if(errno) {
-	    g_fprintf(stderr, _("reading result from %s: %s"), childstr(fd), strerror(errno));
+	    g_fprintf(stderr, "reading result from %s: %s", childstr(fd), strerror(errno));
 	}
 	*result_argv = NULL;
 	*result_argc = 0;				/* EOF */
@@ -294,7 +294,7 @@ getresult(
     }
 
     if(show) {
-	g_printf(_("driver: result time %s from %s:"),
+	g_printf("driver: result time %s from %s:",
 	       walltime_str(curclock()),
 	       childstr(fd));
 	if(line) {
@@ -537,21 +537,21 @@ taper_cmd(
 			    "\n", NULL);
 	break;
     case QUIT:
-	cmdline = stralloc2(cmdstr[cmd], "\n");
+	cmdline = g_strdup_printf("%s\n", cmdstr[cmd]);
 	break;
     default:
-	error(_("Don't know how to send %s command to taper"), cmdstr[cmd]);
+	error("Don't know how to send %s command to taper", cmdstr[cmd]);
 	/*NOTREACHED*/
     }
 
     /*
      * Note: cmdline already has a '\n'.
      */
-    g_printf(_("driver: send-cmd time %s to taper: %s"),
+    g_printf("driver: send-cmd time %s to taper: %s",
 	   walltime_str(curclock()), cmdline);
     fflush(stdout);
     if ((full_write(taper_fd, cmdline, strlen(cmdline))) < strlen(cmdline)) {
-	g_printf(_("writing taper command '%s' failed: %s\n"),
+	g_printf("writing taper command '%s' failed: %s\n",
 		cmdline, strerror(errno));
 	fflush(stdout);
 	amfree(cmdline);
@@ -668,7 +668,7 @@ dumper_cmd(
 	    amfree(qname);
 	    amfree(device);
 	} else {
-		error(_("PORT-DUMP without disk pointer\n"));
+		error("PORT-DUMP without disk pointer\n");
 		/*NOTREACHED*/
 	}
 	break;
@@ -679,7 +679,7 @@ dumper_cmd(
 	amfree(qmesg);
 	break;
     default:
-	error(_("Don't know how to send %s command to dumper"), cmdstr[cmd]);
+	error("Don't know how to send %s command to dumper", cmdstr[cmd]);
 	/*NOTREACHED*/
     }
 
@@ -687,14 +687,14 @@ dumper_cmd(
      * Note: cmdline already has a '\n'.
      */
     if(dumper->down) {
-	g_printf(_("driver: send-cmd time %s ignored to down dumper %s: %s"),
+	g_printf("driver: send-cmd time %s ignored to down dumper %s: %s",
 	       walltime_str(curclock()), dumper->name, cmdline);
     } else {
-	g_printf(_("driver: send-cmd time %s to %s: %s"),
+	g_printf("driver: send-cmd time %s to %s: %s",
 	       walltime_str(curclock()), dumper->name, cmdline);
 	fflush(stdout);
 	if (full_write(dumper->fd, cmdline, strlen(cmdline)) < strlen(cmdline)) {
-	    g_printf(_("writing %s command: %s\n"), dumper->name, strerror(errno));
+	    g_printf("writing %s command: %s\n", dumper->name, strerror(errno));
 	    fflush(stdout);
 	    amfree(cmdline);
 	    return 0;
@@ -762,7 +762,7 @@ chunker_cmd(
 	    amfree(qdest);
 	    amfree(qname);
 	} else {
-		error(_("%s command without disk and holding disk.\n"),
+		error("%s command without disk and holding disk.\n",
 		      cmdstr[cmd]);
 		/*NOTREACHED*/
 	}
@@ -790,7 +790,7 @@ chunker_cmd(
 	    amfree(qdest);
 	    amfree(qname);
 	} else {
-	    cmdline = stralloc2(cmdstr[cmd], "\n");
+	    cmdline = g_strdup_printf("%s\n", cmdstr[cmd]);
 	}
 	break;
     case QUIT:
@@ -812,18 +812,18 @@ chunker_cmd(
 	}
 	break;
     default:
-	error(_("Don't know how to send %s command to chunker"), cmdstr[cmd]);
+	error("Don't know how to send %s command to chunker", cmdstr[cmd]);
 	/*NOTREACHED*/
     }
 
     /*
      * Note: cmdline already has a '\n'.
      */
-    g_printf(_("driver: send-cmd time %s to %s: %s"),
+    g_printf("driver: send-cmd time %s to %s: %s",
 	   walltime_str(curclock()), chunker->name, cmdline);
     fflush(stdout);
     if (full_write(chunker->fd, cmdline, strlen(cmdline)) < strlen(cmdline)) {
-	g_printf(_("writing %s command: %s\n"), chunker->name, strerror(errno));
+	g_printf("writing %s command: %s\n", chunker->name, strerror(errno));
 	fflush(stdout);
 	amfree(cmdline);
 	return 0;
@@ -851,14 +851,14 @@ serial2disk(
 
     rc = sscanf(str, "%d-%ld", &s, &gen);
     if(rc != 2) {
-	error(_("error [serial2disk \"%s\" parse error]"), str);
+	error("error [serial2disk \"%s\" parse error]", str);
 	/*NOTREACHED*/
     } else if (s < 0 || s >= MAX_SERIAL) {
-	error(_("error [serial out of range 0..%d: %d]"), MAX_SERIAL, s);
+	error("error [serial out of range 0..%d: %d]", MAX_SERIAL, s);
 	/*NOTREACHED*/
     }
     if(gen != stable[s].gen)
-	g_printf(_("driver: serial2disk error time %s serial gen mismatch %s\n"),
+	g_printf("driver: serial2disk error time %s serial gen mismatch %s\n",
 	       walltime_str(curclock()), str);
     return stable[s].dp;
 }
@@ -870,17 +870,17 @@ free_serial(
     int rc, s;
     long gen;
 
-    rc = sscanf(str, _("%d-%ld"), &s, &gen);
+    rc = sscanf(str, "%d-%ld", &s, &gen);
     if(!(rc == 2 && s >= 0 && s < MAX_SERIAL)) {
 	/* nuke self to get core dump for Brett */
-	g_fprintf(stderr, _("driver: free_serial: str \"%s\" rc %d s %d\n"),
+	g_fprintf(stderr, "driver: free_serial: str \"%s\" rc %d s %d\n",
 		str, rc, s);
 	fflush(stderr);
 	abort();
     }
 
     if(gen != stable[s].gen)
-	g_printf(_("driver: free_serial error time %s serial gen mismatch %s\n"),
+	g_printf("driver: free_serial error time %s serial gen mismatch %s\n",
 	       walltime_str(curclock()),str);
     stable[s].gen = 0;
     stable[s].dp = NULL;
@@ -901,7 +901,7 @@ free_serial_dp(
 	}
     }
 
-    g_printf(_("driver: error time %s serial not found for disk %s\n"),
+    g_printf("driver: error time %s serial not found for disk %s\n",
 	   walltime_str(curclock()), dp->name);
 }
 
@@ -914,7 +914,7 @@ check_unfree_serial(void)
     /* find used serial number */
     for(s = 0; s < MAX_SERIAL; s++) {
 	if(stable[s].gen != 0 || stable[s].dp != NULL) {
-	    g_printf(_("driver: error time %s bug: serial in use: %02d-%05ld\n"),
+	    g_printf("driver: error time %s bug: serial in use: %02d-%05ld\n",
 		   walltime_str(curclock()), s, stable[s].gen);
 	}
     }
@@ -938,7 +938,7 @@ char *disk2serial(
 	if(stable[s].gen == 0 && stable[s].dp == NULL)
 	    break;
     if(s >= MAX_SERIAL) {
-	g_printf(_("driver: error time %s bug: out of serial numbers\n"),
+	g_printf("driver: error time %s bug: out of serial numbers\n",
 	       walltime_str(curclock()));
 	s = 0;
     }
@@ -967,7 +967,7 @@ update_info_dumper(
 
     conf_infofile = config_dir_relative(getconf_str(CNF_INFOFILE));
     if (open_infofile(conf_infofile)) {
-	error(_("could not open info db \"%s\""), conf_infofile);
+	error("could not open info db \"%s\"", conf_infofile);
 	/*NOTREACHED*/
     }
     amfree(conf_infofile);
@@ -1033,11 +1033,11 @@ update_info_dumper(
 
     if (put_info(dp->host->hostname, dp->name, &info)) {
 	int save_errno = errno;
-	g_fprintf(stderr, _("infofile update failed (%s,'%s'): %s\n"),
+	g_fprintf(stderr, "infofile update failed (%s,'%s'): %s\n",
 		  dp->host->hostname, dp->name, strerror(save_errno));
-	log_add(L_ERROR, _("infofile update failed (%s,'%s'): %s\n"),
+	log_add(L_ERROR, "infofile update failed (%s,'%s'): %s\n",
 		dp->host->hostname, dp->name, strerror(save_errno));
-	error(_("infofile update failed (%s,'%s'): %s\n"),
+	error("infofile update failed (%s,'%s'): %s\n",
 	      dp->host->hostname, dp->name, strerror(save_errno));
 	/*NOTREACHED*/
     }
@@ -1058,7 +1058,7 @@ update_info_taper(
 
     rc = open_infofile(getconf_str(CNF_INFOFILE));
     if(rc) {
-	error(_("could not open infofile %s: %s (%d)"), getconf_str(CNF_INFOFILE),
+	error("could not open infofile %s: %s (%d)", getconf_str(CNF_INFOFILE),
 	      strerror(errno), rc);
 	/*NOTREACHED*/
     }
@@ -1075,11 +1075,11 @@ update_info_taper(
 
     if (put_info(dp->host->hostname, dp->name, &info)) {
 	int save_errno = errno;
-	g_fprintf(stderr, _("infofile update failed (%s,'%s'): %s\n"),
+	g_fprintf(stderr, "infofile update failed (%s,'%s'): %s\n",
 		  dp->host->hostname, dp->name, strerror(save_errno));
-	log_add(L_ERROR, _("infofile update failed (%s,'%s'): %s\n"),
+	log_add(L_ERROR, "infofile update failed (%s,'%s'): %s\n",
 		dp->host->hostname, dp->name, strerror(save_errno));
-	error(_("infofile update failed (%s,'%s'): %s\n"),
+	error("infofile update failed (%s,'%s'): %s\n",
 	      dp->host->hostname, dp->name, strerror(save_errno));
 	/*NOTREACHED*/
     }

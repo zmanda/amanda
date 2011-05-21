@@ -113,7 +113,7 @@ cmdline_parse_dumpspecs(
 		if (!(flags & CMDLINE_PARSE_LEVEL)) continue;
                 if (name[0] != '\0'
                     && (errstr=validate_regexp(name)) != NULL) {
-                    error(_("bad level regex \"%s\": %s\n"), name, errstr);
+                    error("bad level regex \"%s\": %s\n", name, errstr);
                 }
                 dumpspec->level = g_strdup(name);
                 break;
@@ -199,11 +199,11 @@ cmdline_format_dumpspec_components(
         rv = host;
 	host = NULL;
         if (disk) {
-            rv = newvstralloc(rv, rv, " ", disk, NULL);
+            rv = vstrextend(&rv, " ", disk, NULL);
             if (datestamp) {
-                rv = newvstralloc(rv, rv, " ", datestamp, NULL);
+                rv = vstrextend(&rv, " ", datestamp, NULL);
 		if (level) {
-		    rv = newvstralloc(rv, rv, " ", level, NULL);
+		    rv = vstrextend(&rv, " ", level, NULL);
 		}
             }
         }

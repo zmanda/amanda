@@ -32,7 +32,6 @@
 
 #include "amanda.h"
 #include "util.h"
-#include "arglist.h"
 #include "clock.h"
 #include "timestamp.h"
 #include "conffile.h"
@@ -144,19 +143,19 @@ debug_logging_handler(const gchar *log_domain G_GNUC_UNUSED,
      * level */
     if (log_level & G_LOG_LEVEL_ERROR) {
 	maxlevel = G_LOG_LEVEL_ERROR;
-	levprefix = _("error (fatal): ");
+	levprefix = "error (fatal): ";
     } else if (log_level & G_LOG_LEVEL_CRITICAL) {
 	maxlevel = G_LOG_LEVEL_CRITICAL;
-	levprefix = _("critical (fatal): ");
+	levprefix = "critical (fatal): ";
     } else if (log_level & G_LOG_LEVEL_WARNING) {
 	maxlevel = G_LOG_LEVEL_WARNING;
-	levprefix = _("warning: ");
+	levprefix = "warning: ";
     } else if (log_level & G_LOG_LEVEL_MESSAGE) {
 	maxlevel = G_LOG_LEVEL_MESSAGE;
-	levprefix = _("message: ");
+	levprefix = "message: ";
     } else if (log_level & G_LOG_LEVEL_INFO) {
 	maxlevel = G_LOG_LEVEL_INFO;
-	levprefix = _("info: ");
+	levprefix = "info: ";
     } else {
 	maxlevel = G_LOG_LEVEL_DEBUG;
 	levprefix = ""; /* no level displayed for debugging */
@@ -301,9 +300,9 @@ debug_setup_1(char *config, char *subdir)
     else if (subdir)
 	dbgdir = g_strjoin(NULL, AMANDA_DBGDIR, "/", subdir, "/", NULL);
     else
-	dbgdir = stralloc2(AMANDA_DBGDIR, "/");
+	dbgdir = g_strdup_printf("%s/", AMANDA_DBGDIR);
     if(mkpdir(dbgdir, 0700, get_client_uid(), get_client_gid()) == -1) {
-	error(_("create debug directory \"%s\": %s"),
+	error("create debug directory \"%s\": %s",
 	      dbgdir, strerror(errno));
 	/*NOTREACHED*/
     }
@@ -343,7 +342,7 @@ debug_unlink_old(void)
     pname_len = strlen(pname);
 
     if((d = opendir(dbgdir)) == NULL) {
-	error(_("open debug directory \"%s\": %s"),
+	error("open debug directory \"%s\": %s",
 	      dbgdir, strerror(errno));
 	/*NOTREACHED*/
     }
@@ -360,7 +359,8 @@ debug_unlink_old(void)
 	   || strcmp(entry->d_name + d_name_len - 6, ".debug") != 0) {
 	    continue;				/* not one of our debug files */
 	}
-	e = newvstralloc(e, dbgdir, entry->d_name, NULL);
+	g_free(e);
+	e = g_strjoin(NULL, dbgdir, entry->d_name, NULL);
 	if(d_name_len < test_name_len) {
 	    /*
 	     * Create a "pretend" name based on the last modification
@@ -375,7 +375,8 @@ debug_unlink_old(void)
 	    dbfilename = get_debug_name((time_t)sbuf.st_mtime, 0);
 	    do_rename = 1;
 	} else {
-	    dbfilename = newstralloc(dbfilename, entry->d_name);
+	    g_free(dbfilename);
+	    dbfilename = g_strdup(entry->d_name);
 	    do_rename = 0;
 	}
 	if(strcmp(dbfilename, test_name) < 0) {
@@ -384,14 +385,15 @@ debug_unlink_old(void)
 	}
 	if(do_rename) {
 	    i = 0;
+            g_free(s);
+            s = g_strjoin(NULL, dbgdir, dbfilename, NULL);
 	    while(dbfilename != NULL
-		  && (s = newvstralloc(s, dbgdir, dbfilename, NULL)) != NULL
 		  && rename(e, s) != 0 && errno != ENOENT) {
 		amfree(dbfilename);
 		dbfilename = get_debug_name((time_t)sbuf.st_mtime, ++i);
 	    }
 	    if(dbfilename == NULL) {
-		error(_("cannot rename old debug file \"%s\""), entry->d_name);
+		error("cannot rename old debug file \"%s\"", entry->d_name);
 		/*NOTREACHED*/
 	    }
 	}
@@ -438,7 +440,7 @@ debug_setup_2(
      * this would either be redundant or an error. */
     if (geteuid() == 0) {
 	if (chown(db_filename, get_client_uid(), get_client_gid()) < 0) {
-	    dbprintf(_("chown(%s, %d, %d) failed: %s"),
+	    dbprintf("chown(%s, %d, %d) failed: %s",
 		     db_filename, (int)get_client_uid(), (int)get_client_gid(), strerror(errno));
 	}
     }
@@ -463,7 +465,7 @@ debug_setup_2(
 	/*
 	 * Make the first debug log file entry.
 	 */
-	debug_printf(_("pid %ld ruid %ld euid %ld version %s: %s at %s"),
+	debug_printf("pid %ld ruid %ld euid %ld version %s: %s at %s",
 		     (long)getpid(),
 		     (long)getuid(), (long)geteuid(),
 		     VERSION,
@@ -535,18 +537,16 @@ debug_open(char *subdir)
     for(i = 0; fd < 0; i++) {
 	amfree(db_name);
 	if ((db_name = get_debug_name(open_time, i)) == NULL) {
-	    error(_("Cannot create debug file name in %d tries."), i);
+	    error("Cannot create debug file name in %d tries.", i);
 	    /*NOTREACHED*/
 	}
 
-	if ((s = newvstralloc(s, dbgdir, db_name, NULL)) == NULL) {
-	    error(_("Cannot allocate debug file name memory"));
-	    /*NOTREACHED*/
-	}
+        g_free(s);
+        s = g_strjoin(NULL, dbgdir, db_name, NULL);
 
 	if ((fd = open(s, O_WRONLY|O_CREAT|O_EXCL|O_APPEND, 0640)) < 0) {
 	    if (errno != EEXIST) {
-	        error(_("Cannot create debug file \"%s\": %s"),
+	        error("Cannot create debug file \"%s\": %s",
 			s, strerror(errno));
 	        /*NOTREACHED*/
 	    }
@@ -584,10 +584,11 @@ debug_reopen(
     if (*dbfilename == '/') {
 	s = g_strdup(dbfilename);
     } else {
-	s = newvstralloc(s, dbgdir, dbfilename, NULL);
+	g_free(s);
+	s = g_strjoin(NULL, dbgdir, dbfilename, NULL);
     }
     if ((fd = open(s, O_RDWR|O_APPEND)) < 0) {
-	error(_("cannot reopen debug file %s"), dbfilename);
+	error("cannot reopen debug file %s", dbfilename);
 	/*NOTREACHED*/
     }
 
@@ -623,7 +624,8 @@ debug_rename(
     /* Remove old log from destination directory */
     debug_unlink_old();
 
-    s = newvstralloc(s, dbgdir, db_name, NULL);
+    g_free(s);
+    s = g_strjoin(NULL, dbgdir, db_name, NULL);
 
     if (strcmp(db_filename, s) == 0) {
 	amfree(s);
@@ -649,9 +651,10 @@ debug_rename(
 	     * existing then we have bigger issues at hand so we keep 
 	     * the existing file.
 	     */
-	    dbprintf(_("Cannot rename \"%s\" to \"%s\": %s\n"),
+	    dbprintf("Cannot rename \"%s\" to \"%s\": %s\n",
 		     db_filename, s, strerror(errno));
-	    s = newvstralloc(s, db_filename, NULL);
+	    g_free(s);
+	    s = g_strdup(db_filename);
 	    i = -1;
 	    break;
 	}
@@ -662,10 +665,11 @@ debug_rename(
 	 */
 	amfree(db_name);
 	if ((db_name = get_debug_name(open_time, i++)) == NULL) {
-	    dbprintf(_("Cannot create unique debug file name"));
+	    dbprintf("Cannot create unique debug file name");
 	    break;
 	}
-	s = newvstralloc(s, dbgdir, db_name, NULL);
+	g_free(s);
+	s = g_strjoin(NULL, dbgdir, db_name, NULL);
     }
     if (i >= 0) {
 	/*
@@ -688,14 +692,15 @@ debug_rename(
 	for(i = 0; fd < 0; i++) {
 	    amfree(db_name);
 	    if ((db_name = get_debug_name(open_time, i)) == NULL) {
-		dbprintf(_("Cannot create debug file"));
+		dbprintf("Cannot create debug file");
 		break;
 	    }
 
-	    s = newvstralloc(s, dbgdir, db_name, NULL);
+	    g_free(s);
+	    s = g_strjoin(NULL, dbgdir, db_name, NULL);
 	    if ((fd = open(s, O_WRONLY|O_CREAT|O_EXCL|O_APPEND, 0640)) < 0) {
 		if (errno != EEXIST) {
-		    dbprintf(_("Cannot create debug file: %s"),
+		    dbprintf("Cannot create debug file: %s",
 			      strerror(errno));
 		    break;
 		}
@@ -706,7 +711,7 @@ debug_rename(
     if (fd >= 0) {
 	close(fd);
 	if (rename(db_filename, s) == -1) {
-	    dbprintf(_("Cannot rename \"%s\" to \"%s\": %s\n"),
+	    dbprintf("Cannot rename \"%s\" to \"%s\": %s\n",
 		     db_filename, s, strerror(errno));
 	}
 	fd = -1;
@@ -734,13 +739,13 @@ debug_close(void)
     debug_unlink_old();
 
     time(&curtime);
-    debug_printf(_("pid %ld finish time %s"), (long)getpid(), ctime(&curtime));
+    debug_printf("pid %ld finish time %s", (long)getpid(), ctime(&curtime));
 
     if(db_file && fclose(db_file) == EOF) {
 	int save_errno = errno;
 
 	db_file = NULL;				/* prevent recursion */
-	g_fprintf(stderr, _("close debug file: %s"), strerror(save_errno));
+	g_fprintf(stderr, "close debug file: %s", strerror(save_errno));
 	/*NOTREACHED*/
     }
     db_fd = 2;
@@ -752,7 +757,7 @@ debug_close(void)
 /*
  * Format and write a debug message to the process debug file.
  */
-printf_arglist_function(void debug_printf, const char *, format)
+void debug_printf(const char *format, ...)
 {
     va_list argp;
     int save_errno;
@@ -814,7 +819,7 @@ debug_dup_stderr_to_debug(void)
     {
        if(dup2(db_fd, STDERR_FILENO) != STDERR_FILENO)
        {
-	   error(_("can't redirect stderr to the debug file: %d, %s"), db_fd, strerror(errno));
+	   error("can't redirect stderr to the debug file: %d, %s", db_fd, strerror(errno));
 	   g_assert_not_reached();
        }
     }

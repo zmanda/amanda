@@ -32,7 +32,6 @@
  */
 
 #include "amanda.h"
-#include "arglist.h"
 #include "conffile.h"
 #include "diskfile.h"
 #include "tapefile.h"
@@ -92,12 +91,12 @@ main(
     }
 
     if (argc < 2) {
-	g_fprintf(stderr, _("Usage: %s [-t] <config> [-o configoption]*\n"), argv[0]);
+	g_fprintf(stderr, "Usage: %s [-t] <config> [-o configoption]*\n", argv[0]);
 	return 1;
     }
 
     dbopen(DBG_SUBDIR_SERVER);
-    dbprintf(_("%s: version %s\n"), argv[0], VERSION);
+    dbprintf("%s: version %s\n", argv[0], VERSION);
 
     set_config_overrides(cfg_ovr);
     config_init(CONFIG_INIT_EXPLICIT_NAME, argv[1]);
@@ -109,7 +108,7 @@ main(
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
 	config_print_errors();
 	if (config_errors(NULL) >= CFGERR_ERRORS) {
-	    g_critical(_("errors processing config file"));
+	    g_critical("errors processing config file");
 	}
     }
 
@@ -119,7 +118,7 @@ main(
 
     conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     if (read_tapelist(conf_tapelist)) {
-	error(_("could not load tapelist \"%s\""), conf_tapelist);
+	error("could not load tapelist \"%s\"", conf_tapelist);
 	/*NOTREACHED*/
     }
     amfree(conf_tapelist);
@@ -134,33 +133,33 @@ main(
 
     /* determine how many log to keep */
     no_keep = getconf_int(CNF_TAPECYCLE) * 2;
-    dbprintf(plural(_("Keeping %d log file\n"),
-		    _("Keeping %d log files\n"), no_keep),
+    dbprintf(plural("Keeping %d log file\n",
+		    "Keeping %d log files\n", no_keep),
 	     no_keep);
 
     conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     olddir = g_strjoin(NULL, conf_logdir, "/oldlog", NULL);
     if (mkpdir(olddir, 0700, (uid_t)-1, (gid_t)-1) != 0) {
-	error(_("could not create parents of %s: %s"), olddir, strerror(errno));
+	error("could not create parents of %s: %s", olddir, strerror(errno));
 	/*NOTREACHED*/
     }
     if (mkdir(olddir, 0700) != 0 && errno != EEXIST) {
-	error(_("could not create %s: %s"), olddir, strerror(errno));
+	error("could not create %s: %s", olddir, strerror(errno));
 	/*NOTREACHED*/
     }
 
     if (stat(olddir,&stat_old) == -1) {
-	error(_("can't stat oldlog directory \"%s\": %s"), olddir, strerror(errno));
+	error("can't stat oldlog directory \"%s\": %s", olddir, strerror(errno));
 	/*NOTREACHED*/
     }
 
     if (!S_ISDIR(stat_old.st_mode)) {
-	error(_("Oldlog directory \"%s\" is not a directory"), olddir);
+	error("Oldlog directory \"%s\" is not a directory", olddir);
 	/*NOTREACHED*/
     }
 
     if ((dir = opendir(conf_logdir)) == NULL) {
-	error(_("could not open log directory \"%s\": %s"), conf_logdir,strerror(errno));
+	error("could not open log directory \"%s\": %s", conf_logdir,strerror(errno));
 	/*NOTREACHED*/
     }
     while ((adir=readdir(dir)) != NULL) {
@@ -176,20 +175,20 @@ main(
 		    break;
 		}
 	    }
-	    logname=newvstralloc(logname,
-				 conf_logdir, "/" ,adir->d_name, NULL);
+	    g_free(logname);
+	    logname= g_strjoin(NULL, conf_logdir, "/" ,adir->d_name, NULL);
 	    if(stat(logname,&stat_log)==0) {
 		if((time_t)stat_log.st_mtime > date_keep) {
 		    useful = 1;
 		}
 	    }
 	    if(useful == 0) {
-		oldfile = newvstralloc(oldfile,
-				       conf_logdir, "/", adir->d_name, NULL);
-		newfile = newvstralloc(newfile,
-				       olddir, "/", adir->d_name, NULL);
+		g_free(oldfile);
+		oldfile = g_strjoin(NULL, conf_logdir, "/", adir->d_name, NULL);
+		g_free(newfile);
+		newfile = g_strjoin(NULL, olddir, "/", adir->d_name, NULL);
 		if (rename(oldfile,newfile) != 0) {
-		    error(_("could not rename \"%s\" to \"%s\": %s"),
+		    error("could not rename \"%s\" to \"%s\": %s",
 			  oldfile, newfile, strerror(errno));
 		    /*NOTREACHED*/
 	    	}

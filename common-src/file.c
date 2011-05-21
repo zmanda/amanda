@@ -32,7 +32,6 @@
 #include "amanda.h"
 #include "util.h"
 #include "timestamp.h"
-#include "arglist.h"
 #include "file.h"
 
 static void areads_getbuf(const char *s, int l, int fd);
@@ -186,11 +185,11 @@ safe_cd(void)
 
     if (client_uid != (uid_t) -1) {
 #if defined(AMANDA_DBGDIR)
-	d = stralloc2(AMANDA_DBGDIR, "/.");
+	d = g_strdup_printf("%s/.", AMANDA_DBGDIR);
 	(void) mkpdir(d, (mode_t)0700, client_uid, client_gid);
 	amfree(d);
 #endif
-	d = stralloc2(AMANDA_TMPDIR, "/.");
+	d = g_strdup_printf("%s/.", AMANDA_TMPDIR);
 	(void) mkpdir(d, (mode_t)0700, client_uid, client_gid);
 	amfree(d);
     }
@@ -256,7 +255,7 @@ safe_fd(
 	     */
 	    if (fcntl(fd, F_GETFD) == -1) {
 		if (open("/dev/null", O_RDWR) == -1) {
-		   g_fprintf(stderr, _("/dev/null is inaccessable: %s\n"),
+		   g_fprintf(stderr, "/dev/null is inaccessable: %s\n",
 		           strerror(errno));
 		   exit(1);
 		}
@@ -854,25 +853,25 @@ main(
 		name = argv[3];
 	}
 
-	g_fprintf(stderr, _("Create parent directories of %s ..."), name);
+	g_fprintf(stderr, "Create parent directories of %s ...", name);
 	rc = mkpdir(name, (mode_t)02777, (uid_t)-1, (gid_t)-1);
 	if (rc == 0)
 		g_fprintf(stderr, " done\n");
 	else {
-		perror(_("failed"));
+		perror("failed");
 		return rc;
 	}
 
-	g_fprintf(stderr, _("Delete %s back to %s ..."), name, top);
+	g_fprintf(stderr, "Delete %s back to %s ...", name, top);
 	rc = rmpdir(name, top);
 	if (rc == 0)
-		g_fprintf(stderr, _(" done\n"));
+		g_fprintf(stderr, " done\n");
 	else {
-		perror(_("failed"));
+		perror("failed");
 		return rc;
 	}
 
-	g_fprintf(stderr, _("areads dump of %s ..."), file);
+	g_fprintf(stderr, "areads dump of %s ...", file);
 	if ((fd = open (file, 0)) < 0) {
 		perror(file);
 		return 1;
@@ -883,9 +882,9 @@ main(
 		amfree(line);
 	}
 	aclose(fd);
-	g_fprintf(stderr, _(" done.\n"));
+	g_fprintf(stderr, " done.\n");
 
-	g_fprintf(stderr, _("Finished.\n"));
+	g_fprintf(stderr, "Finished.\n");
 
 	dbclose();
 	return 0;

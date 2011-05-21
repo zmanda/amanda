@@ -210,7 +210,7 @@ null_device_read_label(Device * dself) {
     if (device_in_error(dself)) return FALSE;
 
     device_set_error(dself,
-	g_strdup(_("Can't open NULL device for reading or appending.")),
+	g_strdup("Can't open NULL device for reading or appending."),
 	DEVICE_STATUS_DEVICE_ERROR);
     return FALSE;
 }
@@ -240,12 +240,14 @@ null_device_start (Device * pself, DeviceAccessMode mode,
     pself->in_file = FALSE;
 
     if (mode == ACCESS_WRITE) {
-        pself->volume_label = newstralloc(pself->volume_label, label);
-        pself->volume_time = newstralloc(pself->volume_time, timestamp);
+        g_free(pself->volume_label);
+        pself->volume_label = g_strdup(label);
+        g_free(pself->volume_time);
+        pself->volume_time = g_strdup(timestamp);
 	return TRUE;
     } else {
 	device_set_error(pself,
-	    g_strdup(_("Can't open NULL device for reading or appending.")),
+	    g_strdup("Can't open NULL device for reading or appending."),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }

@@ -45,7 +45,7 @@ int grab_reply(int show);
 void sigint_handler(int signum);
 int main(int argc, char **argv);
 
-#define USAGE _("Usage: amoldrecover [[-C] <config>] [-s <index-server>] [-t <tape-server>] [-d <tape-device>]\n")
+#define USAGE "Usage: amoldrecover [[-C] <config>] [-s <index-server>] [-t <tape-server>] [-d <tape-device>]\n"
 
 char *config = NULL;
 char *server_name = NULL;
@@ -85,11 +85,11 @@ get_line(void)
 		fputc('\n', stderr);
 	    }
 	    if(save_errno != 0) {
-		g_fprintf(stderr, _("%s: Error reading line from server: %s\n"),
+		g_fprintf(stderr, "%s: Error reading line from server: %s\n",
 				get_pname(),
 				strerror(save_errno));
 	    } else {
-		g_fprintf(stderr, _("%s: Unexpected end of file, check amindexd*debug on server %s\n"),
+		g_fprintf(stderr, "%s: Unexpected end of file, check amindexd*debug on server %s\n",
 			get_pname(),
 			server_name);
 	    }
@@ -105,7 +105,8 @@ get_line(void)
 	}
 	if((len = strlen(line)) > 0 && line[len-1] == '\r') {
 	    line[len-1] = '\0';
-	    server_line = newstralloc(server_line, line);
+	    g_free(server_line);
+	    server_line = g_strdup(line);
 	    amfree(line);
 	    return 0;
 	}
@@ -294,7 +295,7 @@ guess_disk (
 	/*NOTREACHED*/
     }
     cwd_length = strlen(cwd);
-    dbprintf(_("guess_disk: %zu: \"%s\"\n"), cwd_length, cwd);
+    dbprintf("guess_disk: %zu: \"%s\"\n", cwd_length, cwd);
 
     if (open_fstab() == 0) {
 	return -1;
@@ -304,27 +305,30 @@ guess_disk (
     while (get_fstab_nextentry(&fsent))
     {
 	current_length = fsent.mntdir ? strlen(fsent.mntdir) : (size_t)0;
-	dbprintf(_("guess_disk: %zu: %zu: \"%s\": \"%s\"\n"),
+	dbprintf("guess_disk: %zu: %zu: \"%s\": \"%s\"\n",
 		  longest_match,
 		  current_length,
-		  fsent.mntdir ? fsent.mntdir : _("(mntdir null)"),
-		  fsent.fsname ? fsent.fsname : _("(fsname null)"));
+		  fsent.mntdir ? fsent.mntdir : "(mntdir null)",
+		  fsent.fsname ? fsent.fsname : "(fsname null)");
 	if ((current_length > longest_match)
 	    && (current_length <= cwd_length)
 	    && (strncmp(fsent.mntdir, cwd, current_length) == 0))
 	{
 	    longest_match = current_length;
-	    *mpt_guess = newstralloc(*mpt_guess, fsent.mntdir);
+	    g_free(*mpt_guess);
+	    *mpt_guess = g_strdup(fsent.mntdir);
 	    if(strncmp(fsent.fsname,DEV_PREFIX,(strlen(DEV_PREFIX))))
 	    {
-	        fsname = newstralloc(fsname, fsent.fsname);
+	        g_free(fsname);
+	        fsname = g_strdup(fsent.fsname);
             }
 	    else
 	    {
-	        fsname = newstralloc(fsname,fsent.fsname+strlen(DEV_PREFIX));
+	        g_free(fsname);
+	        fsname = g_strdup(fsent.fsname + strlen(DEV_PREFIX));
 	    }
 	    local_disk = is_local_fstype(&fsent);
-	    dbprintf(_("guess_disk: local_disk = %d, fsname = \"%s\"\n"),
+	    dbprintf("guess_disk: local_disk = %d, fsname = \"%s\"\n",
 		      local_disk,
 		      fsname);
 	}
@@ -346,8 +350,8 @@ guess_disk (
     /* have mount point now */
     /* disk name may be specified by mount point (logical name) or
        device name, have to determine */
-    g_printf(_("Trying disk %s ...\n"), *mpt_guess);
-    disk_try = stralloc2("DISK ", *mpt_guess);		/* try logical name */
+    g_printf("Trying disk %s ...\n", *mpt_guess);
+    disk_try = g_strdup_printf("DISK %s", *mpt_guess);		/* try logical name */
     if (exchange(disk_try) == -1)
 	exit(1);
     amfree(disk_try);
@@ -357,8 +361,8 @@ guess_disk (
 	amfree(fsname);
 	return 1;
     }
-    g_printf(_("Trying disk %s ...\n"), fsname);
-    disk_try = stralloc2("DISK ", fsname);		/* try device name */
+    g_printf("Trying disk %s ...\n", fsname);
+    disk_try = g_strdup_printf("DISK %s", fsname);		/* try device name */
     if (exchange(disk_try) == -1)
 	exit(1);
     amfree(disk_try);
@@ -429,12 +433,13 @@ main(
 
     localhost = g_malloc(MAX_HOSTNAME_LENGTH+1);
     if (gethostname(localhost, MAX_HOSTNAME_LENGTH) != 0) {
-	error(_("cannot determine local host name\n"));
+	error("cannot determine local host name\n");
 	/*NOTREACHED*/
     }
     localhost[MAX_HOSTNAME_LENGTH] = '\0';
 
-    config = newstralloc(config, DEFAULT_CONFIG);
+    g_free(config);
+    config = g_strdup(DEFAULT_CONFIG);
 
     dbrename(config, DBG_SUBDIR_CLIENT);
 
@@ -455,7 +460,7 @@ main(
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
 	config_print_errors();
 	if (config_errors(NULL) >= CFGERR_ERRORS) {
-	    g_critical(_("errors processing config file"));
+	    g_critical("errors processing config file");
 	}
     }
 
@@ -484,19 +489,23 @@ main(
 	switch (i)
 	{
 	    case 'C':
-		config = newstralloc(config, optarg);
+		g_free(config);
+		config = g_strdup(optarg);
 		break;
 
 	    case 's':
-		server_name = newstralloc(server_name, optarg);
+		g_free(server_name);
+		server_name = g_strdup(optarg);
 		break;
 
 	    case 't':
-		tape_server_name = newstralloc(tape_server_name, optarg);
+		g_free(tape_server_name);
+		tape_server_name = g_strdup(optarg);
 		break;
 
 	    case 'd':
-		tape_device_name = newstralloc(tape_device_name, optarg);
+		g_free(tape_device_name);
+		tape_device_name = g_strdup(optarg);
 		break;
 
 	    case 'U':
@@ -524,16 +533,16 @@ main(
     sigemptyset(&act.sa_mask);
     act.sa_flags = 0;
     if (sigaction(SIGINT, &act, &oact) != 0) {
-	error(_("error setting signal handler: %s"), strerror(errno));
+	error("error setting signal handler: %s", strerror(errno));
 	/*NOTREACHED*/
     }
 
-    service_name = stralloc2("amandaidx", SERVICE_SUFFIX);
+    service_name = g_strdup_printf("amandaidx%s", SERVICE_SUFFIX);
 
-    g_printf(_("AMRECOVER Version %s. Contacting server on %s ...\n"),
+    g_printf("AMRECOVER Version %s. Contacting server on %s ...\n",
 	   VERSION, server_name);  
     if ((sp = getservbyname(service_name, "tcp")) == NULL) {
-	error(_("%s/tcp unknown protocol"), service_name);
+	error("%s/tcp unknown protocol", service_name);
 	/*NOTREACHED*/
     }
     amfree(service_name);
@@ -544,12 +553,12 @@ main(
 					     &my_port,
 					     0);
     if (server_socket < 0) {
-	error(_("cannot connect to %s: %s"), server_name, strerror(errno));
+	error("cannot connect to %s: %s", server_name, strerror(errno));
 	/*NOTREACHED*/
     }
     if (my_port >= IPPORT_RESERVED) {
         aclose(server_socket);
-	error(_("did not get a reserved port: %d"), my_port);
+	error("did not get a reserved port: %d", my_port);
 	/*NOTREACHED*/
     }
 
@@ -585,7 +594,7 @@ main(
 
 	our_features = am_init_feature_set();
 	our_feature_string = am_feature_to_string(our_features);
-	line = stralloc2("FEATURES ", our_feature_string);
+	line = g_strdup_printf("FEATURES %s", our_feature_string);
 	if(exchange(line) == 0) {
 	    their_feature_string = g_strdup(server_line+13);
 	    indexsrv_features = am_string_to_feature(their_feature_string);
@@ -604,17 +613,17 @@ main(
     if (tm)
 	strftime(dump_date, sizeof(dump_date), "%Y-%m-%d", tm);
     else
-	error(_("BAD DATE"));
+	error("BAD DATE");
 
-    g_printf(_("Setting restore date to today (%s)\n"), dump_date);
-    line = stralloc2("DATE ", dump_date);
+    g_printf("Setting restore date to today (%s)\n", dump_date);
+    line = g_strdup_printf("DATE %s", dump_date);
     if (converse(line) == -1) {
         aclose(server_socket);
 	exit(1);
     }
     amfree(line);
 
-    line = stralloc2("SCNF ", config);
+    line = g_strdup_printf("SCNF %s", config);
     if (converse(line) == -1) {
         aclose(server_socket);
 	exit(1);
@@ -634,20 +643,20 @@ main(
 	    {
 		case 1:
 		    /* okay, got a guess. Set disk accordingly */
-		    g_printf(_("$CWD '%s' is on disk '%s' mounted at '%s'.\n"),
+		    g_printf("$CWD '%s' is on disk '%s' mounted at '%s'.\n",
 			   cwd, dn_guess, mpt_guess);
 		    set_disk(dn_guess, mpt_guess);
 		    set_directory(cwd);
 		    if (server_happy() && strcmp(cwd, mpt_guess) != 0)
-		        g_printf(_("WARNING: not on root of selected filesystem, check man-page!\n"));
+		        g_printf("WARNING: not on root of selected filesystem, check man-page!\n");
 		    amfree(dn_guess);
 		    amfree(mpt_guess);
 		    break;
 
 		case 0:
-		    g_printf(_("$CWD '%s' is on a network mounted disk\n"),
+		    g_printf("$CWD '%s' is on a network mounted disk\n",
 			   cwd);
-		    g_printf(_("so you must 'sethost' to the server\n"));
+		    g_printf("so you must 'sethost' to the server\n");
 		    /* fake an unhappy server */
 		    server_line[0] = '5';
 		    break;
@@ -655,7 +664,7 @@ main(
 		case 2:
 		case -1:
 		default:
-		    g_printf(_("Use the setdisk command to choose dump disk to recover\n"));
+		    g_printf("Use the setdisk command to choose dump disk to recover\n");
 		    /* fake an unhappy server */
 		    server_line[0] = '5';
 		    break;
@@ -691,8 +700,8 @@ get_security(void)
     struct passwd *pwptr;
 
     if((pwptr = getpwuid(getuid())) == NULL) {
-	error(_("can't get login name for my uid %ld"), (long)getuid());
+	error("can't get login name for my uid %ld", (long)getuid());
 	/*NOTREACHED*/
     }
-    return stralloc2("SECURITY USER ", pwptr->pw_name);
+    return g_strdup_printf("SECURITY USER %s", pwptr->pw_name);
 }

@@ -58,7 +58,7 @@ static void read_server(void *cookie, void *buf, ssize_t size);
 void
 usage(void)
 {
-    error(_("Usage: amservice [-o configoption]* [-f input_file [-s]] host auth service"));
+    error("Usage: amservice [-o configoption]* [-f input_file [-s]] host auth service");
     /*NOTREACHED*/
 }
 
@@ -93,7 +93,7 @@ main(
     set_pname("amservice");
     /* drop root privileges */
     if (!set_root_privs(0)) {
-	error(_("amservice must be run setuid root"));
+	error("amservice must be run setuid root");
     }
 
     /* Don't die when child closes pipe */
@@ -150,7 +150,7 @@ main(
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
 	config_print_errors();
 	if (config_errors(NULL) >= CFGERR_ERRORS) {
-	    g_critical(_("errors processing config file"));
+	    g_critical("errors processing config file");
 	}
     }
 
@@ -189,7 +189,7 @@ start_host(
     const security_driver_t *secdrv;
     secdrv = security_getdriver(auth);
     if (secdrv == NULL) {
-	fprintf(stderr, _("Could not find security driver \"%s\".\n"), auth);
+	fprintf(stderr, "Could not find security driver \"%s\".\n", auth);
     } else {
 	protocol_sendreq(hostname, secdrv, generic_client_get_security_conf,
 			 req, conf_ctimeout, handle_result, NULL);
@@ -240,7 +240,7 @@ handle_result(
 
     if (pkt == NULL) {
 	g_fprintf(stdout,
-		  _("Request failed: %s\n"), security_geterror(sech));
+		  "Request failed: %s\n", security_geterror(sech));
 	remote_errors++;
 	return;
     }

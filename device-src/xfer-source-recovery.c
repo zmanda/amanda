@@ -24,7 +24,6 @@
 #include "device.h"
 #include "property.h"
 #include "xfer-device.h"
-#include "arglist.h"
 #include "conffile.h"
 
 /*
@@ -163,7 +162,7 @@ directtcp_common_thread(
 	while (1) {
 	    DBG(2, "reading part from %s", self->device->device_name);
 	    if (!device_read_to_connection(self->device, G_MAXUINT64, &actual_size)) {
-		xfer_cancel_with_error(elt, _("error reading from device: %s"),
+		xfer_cancel_with_error(elt, "error reading from device: %s",
 		    device_error_or_status(self->device));
 		g_mutex_unlock(self->start_part_mutex);
 		goto close_conn_and_send_done;
@@ -204,7 +203,7 @@ close_conn_and_send_done:
 	g_object_unref(self->conn);
 	self->conn = NULL;
 	if (errmsg) {
-	    xfer_cancel_with_error(elt, _("error closing DirectTCP connection: %s"), errmsg);
+	    xfer_cancel_with_error(elt, "error closing DirectTCP connection: %s", errmsg);
 	    wait_until_xfer_cancelled(elt->xfer);
 	}
     }
@@ -240,7 +239,7 @@ directtcp_connect_thread(
     DBG(2, "accepting DirectTCP connection on device %s", self->device->device_name);
     if (!device_accept(self->device, &self->conn, NULL, NULL)) {
 	xfer_cancel_with_error(elt,
-	    _("error accepting DirectTCP connection: %s"),
+	    "error accepting DirectTCP connection: %s",
 	    device_error_or_status(self->device));
 	g_mutex_unlock(self->start_part_mutex);
 	wait_until_xfer_cancelled(elt->xfer);
@@ -281,7 +280,7 @@ directtcp_listen_thread(
     if (!device_connect(self->device, FALSE, elt->downstream->input_listen_addrs,
 			&self->conn, NULL, NULL)) {
 	xfer_cancel_with_error(elt,
-	    _("error making DirectTCP connection: %s"),
+	    "error making DirectTCP connection: %s",
 	    device_error_or_status(self->device));
 	g_mutex_unlock(self->start_part_mutex);
 	wait_until_xfer_cancelled(elt->xfer);
@@ -307,7 +306,7 @@ setup_impl(
 	DBG(2, "listening for DirectTCP connection on device %s", self->device->device_name);
 	if (!device_listen(self->device, FALSE, &elt->output_listen_addrs)) {
 	    xfer_cancel_with_error(elt,
-		_("error listening for DirectTCP connection: %s"),
+		"error listening for DirectTCP connection: %s",
 		device_error_or_status(self->device));
 	    return FALSE;
 	}
@@ -404,7 +403,7 @@ pull_buffer_impl(
 	    /* if we're not at EOF, it's an error */
 	    if (!self->device->is_eof) {
 		xfer_cancel_with_error(elt,
-		    _("error reading from %s: %s"),
+		    "error reading from %s: %s",
 		    self->device->device_name,
 		    device_error_or_status(self->device));
 		wait_until_xfer_cancelled(elt->xfer);
@@ -548,7 +547,7 @@ use_device_impl(
 	     * start_part will see this and fail silently */
 	    self->device_bad = TRUE;
 	    xfer_cancel_with_error(XFER_ELEMENT(self),
-		_("Cannot continue onto new volume: %s"),
+		"Cannot continue onto new volume: %s",
 		device_error_or_status(device));
 	    return;
 	}

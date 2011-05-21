@@ -99,7 +99,7 @@ add_dir_list_item(
 {
     DIR_ITEM *next;
 
-    dbprintf(_("add_dir_list_item: Adding \"%s\" \"%d\" \"%s\" \"%lld\" \"%s\"\n"),
+    dbprintf("add_dir_list_item: Adding \"%s\" \"%d\" \"%s\" \"%lld\" \"%s\"\n",
 	      date, level, tape, (long long)fileno, path);
 
     next = (DIR_ITEM *)g_malloc(sizeof(DIR_ITEM));
@@ -145,18 +145,18 @@ suck_dir_list_from_server(void)
     char *qdisk_path;
 
     if (disk_path == NULL) {
-	g_printf(_("Directory must be set before getting listing\n"));
+	g_printf("Directory must be set before getting listing\n");
 	return;
     } else if(strcmp(disk_path, "/") == 0) {
 	disk_path_slash = g_strdup(disk_path);
     } else {
-	disk_path_slash = stralloc2(disk_path, "/");
+	disk_path_slash = g_strdup_printf("%s/", disk_path);
     }
 
     clear_dir_list();
 
     qdisk_path = quote_string(disk_path);
-    cmd = stralloc2("OLSD ", qdisk_path);
+    cmd = g_strdup_printf("OLSD %s", qdisk_path);
     amfree(qdisk_path);
     if (send_command(cmd) == -1) {
 	amfree(cmd);
@@ -176,7 +176,7 @@ suck_dir_list_from_server(void)
 	g_printf("%s\n", l);
 	return;
     }
-    disk_path_slash_dot = stralloc2(disk_path_slash, ".");
+    disk_path_slash_dot = g_strdup_printf("%s.", disk_path_slash);
     amfree(cmd);
     amfree(err);
     tape_undo = NULL;
@@ -204,13 +204,13 @@ suck_dir_list_from_server(void)
 	}
 	s = l;
 	if (strncmp_const_skip(l, "201-", s, ch) != 0) {
-	    err = _("bad reply: not 201-");
+	    err = "bad reply: not 201-";
 	    continue;
 	}
 	ch = *s++;
 	skip_whitespace(s, ch);
 	if(ch == '\0') {
-	    err = _("bad reply: missing date field");
+	    err = "bad reply: missing date field";
 	    continue;
 	}
 	date = s - 1;
@@ -219,14 +219,14 @@ suck_dir_list_from_server(void)
 
 	skip_whitespace(s, ch);
 	if(ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
-	    err = _("bad reply: cannot parse level field");
+	    err = "bad reply: cannot parse level field";
 	    continue;
 	}
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
 	if(ch == '\0') {
-	    err = _("bad reply: missing tape field");
+	    err = "bad reply: missing tape field";
 	    continue;
 	}
 	tape = s - 1;
@@ -240,7 +240,7 @@ suck_dir_list_from_server(void)
 	    long long fileno_ = (long long)0;
 	    skip_whitespace(s, ch);
 	    if(ch == '\0' || sscanf(s - 1, "%lld", &fileno_) != 1) {
-		err = _("bad reply: cannot parse fileno field");
+		err = "bad reply: cannot parse fileno field";
 		amfree(tape);
 		continue;
 	    }
@@ -253,7 +253,7 @@ suck_dir_list_from_server(void)
 
 	skip_whitespace(s, ch);
 	if(ch == '\0') {
-	    err = _("bad reply: missing directory field");
+	    err = "bad reply: missing directory field";
 	    amfree(tape);
 	    continue;
 	}
@@ -296,7 +296,7 @@ list_directory(void)
     char *quoted;
 
     if (disk_path == NULL) {
-	g_printf(_("Must select a disk before listing files; use the setdisk command.\n"));
+	g_printf("Must select a disk before listing files; use the setdisk command.\n");
 	return;
     }
 
@@ -308,10 +308,10 @@ list_directory(void)
      * Set up the pager command so if the pager is terminated, we do
      * not get a SIGPIPE back.
      */
-    pager_command = stralloc2(pager, " ; /bin/cat > /dev/null");
+    pager_command = g_strdup_printf("%s ; /bin/cat > /dev/null", pager);
     if ((fp = popen(pager_command, "w")) == NULL)
     {
-	g_printf(_("Warning - can't pipe through %s\n"), pager);
+	g_printf("Warning - can't pipe through %s\n", pager);
 	fp = stdout;
     }
     amfree(pager_command);

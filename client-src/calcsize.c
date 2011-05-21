@@ -149,7 +149,7 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     if (argc < 2) {
-	g_fprintf(stderr,_("Usage: %s file[s]\n"),argv[0]);
+	g_fprintf(stderr,"Usage: %s file[s]\n",argv[0]);
 	return 1;
     }
     for(i=1; i<argc; i++) {
@@ -178,13 +178,13 @@ main(
 
     dbopen(DBG_SUBDIR_CLIENT);
     config_init(CONFIG_INIT_CLIENT, NULL);
-    dbprintf(_("version %s\n"), VERSION);
+    dbprintf("version %s\n", VERSION);
 
     /* drop root privileges; we'll regain them for the required operations */
 #ifdef WANT_SETUID_CLIENT
     check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_AS_UID_ONLY);
     if (!set_root_privs(0)) {
-	error(_("calcsize must be run setuid root"));
+	error("calcsize must be run setuid root");
     }
 #else
     check_running_as(RUNNING_AS_CLIENT_LOGIN);
@@ -195,12 +195,12 @@ main(
     /* need at least program, amname, and directory name */
 
     if(argc < 4) {
-	error(_("Usage: %s config [DUMP|STAR|GNUTAR] name dir [-X exclude-file] [-I include-file] [level date]*"),
+	error("Usage: %s config [DUMP|STAR|GNUTAR] name dir [-X exclude-file] [-I include-file] [level date]*",
 	      get_pname());
         /*NOTREACHED*/
     }
 
-    dbprintf(_("config: %s\n"), *argv);
+    dbprintf("config: %s\n", *argv);
     if (strcmp(*argv, "NOCONFIG") != 0) {
 	dbrename(*argv, DBG_SUBDIR_CLIENT);
     }
@@ -424,9 +424,11 @@ traverse_dirs(
 
 	l = strlen(dirname);
 	if(l > 0 && dirname[l - 1] != '/') {
-	    newbase = newstralloc2(newbase, dirname, "/");
+	    g_free(newbase);
+	    newbase = g_strdup_printf("%s/", dirname);
 	} else {
-	    newbase = newstralloc(newbase, dirname);
+	    g_free(newbase);
+	    newbase = g_strdup(dirname);
 	}
 
 	while((f = readdir(d)) != NULL) {
@@ -437,7 +439,8 @@ traverse_dirs(
 		continue;
 	    }
 
-	    newname = newstralloc2(newname, newbase, f->d_name);
+	    g_free(newname);
+	    newname = g_strjoin(NULL, newbase, f->d_name, NULL);
 	    if(lstat(newname, &finfo) == -1) {
 		g_fprintf(stderr, "%s/%s: %s\n",
 			dirname, f->d_name, strerror(errno));
@@ -576,7 +579,7 @@ final_size_dump(
 
     /* calculate the map sizes */
 
-    s = stralloc2(topdir, "/.");
+    s = g_strdup_printf("%s/.", topdir);
     if(get_fs_usage(s, NULL, &fsusage) == -1) {
 	error("statfs %s: %s", s, strerror(errno));
 	/*NOTREACHED*/

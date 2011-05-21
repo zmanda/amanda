@@ -1289,7 +1289,7 @@ perform_request(S3Handle *hdl,
     }
 
     if (result != S3_RESULT_OK) {
-        g_debug(_("%s %s failed with %d/%s"), verb, url,
+        g_debug("%s %s failed with %d/%s", verb, url,
                 hdl->last_response_code,
                 s3_error_name_from_code(hdl->last_s3_error_code));
     }
@@ -1413,7 +1413,7 @@ compile_regexes(void)
         reg_result = regcomp(regexes[i].regex, regexes[i].str, regexes[i].flags);
         if (reg_result != 0) {
             size = regerror(reg_result, regexes[i].regex, regmessage, sizeof(regmessage));
-            g_error(_("Regex error: %s"), regmessage);
+            g_error("Regex error: %s", regmessage);
             return FALSE;
         }
     }
@@ -1446,7 +1446,7 @@ compile_regexes(void)
   for (i = 0; regexes[i].str; i++) {
       *(regexes[i].regex) = g_regex_new(regexes[i].str, regexes[i].flags, 0, &err);
       if (err) {
-          g_error(_("Regex error: %s"), err->message);
+          g_error("Regex error: %s", err->message);
           g_error_free(err);
           return FALSE;
       }
@@ -2052,9 +2052,7 @@ s3_make_bucket(S3Handle *hdl,
             size_func = s3_buffer_size_func;
             md5_func = s3_buffer_md5_func;
         } else {
-            hdl->last_message = g_strdup_printf(_(
-                "Location constraint given for Amazon S3 bucket, "
-                "but the bucket name (%s) is not usable as a subdomain."), bucket);
+            hdl->last_message = g_strdup_printf("Location constraint given for Amazon S3 bucket, ""but the bucket name (%s) is not usable as a subdomain.", bucket);
             return FALSE;
         }
     }
@@ -2087,10 +2085,10 @@ s3_make_bucket(S3Handle *hdl,
             /* use strndup to get a null-terminated string */
             body = g_strndup(hdl->last_response_body, hdl->last_response_body_size);
             if (!body) {
-                hdl->last_message = g_strdup(_("No body received for location request"));
+                hdl->last_message = g_strdup("No body received for location request");
                 goto cleanup;
             } else if ('\0' == body[0]) {
-                hdl->last_message = g_strdup(_("Empty body received for location request"));
+                hdl->last_message = g_strdup("Empty body received for location request");
                 goto cleanup;
             }
 
@@ -2103,19 +2101,17 @@ s3_make_bucket(S3Handle *hdl,
                  */
                 if (0 == strcmp(AMAZON_WILDCARD_LOCATION, hdl->bucket_location) &&
                     '/' != loc_end_open[0])
-                    hdl->last_message = g_strdup(_("A wildcard location constraint is "
-                        "configured, but the bucket has a non-empty location constraint"));
+                    hdl->last_message = g_strdup("A wildcard location constraint is ""configured, but the bucket has a non-empty location constraint");
                 else if (strcmp(AMAZON_WILDCARD_LOCATION, hdl->bucket_location)?
                     strncmp(loc_content, hdl->bucket_location, strlen(hdl->bucket_location)) :
                     ('\0' != loc_content[0]))
-                    hdl->last_message = g_strdup(_("The location constraint configured "
-                        "does not match the constraint currently on the bucket"));
+                    hdl->last_message = g_strdup("The location constraint configured ""does not match the constraint currently on the bucket");
                 else
                     result = S3_RESULT_OK;
 		g_free(loc_end_open);
 		g_free(loc_content);
             } else {
-                hdl->last_message = g_strdup(_("Unexpected location response from Amazon S3"));
+                hdl->last_message = g_strdup("Unexpected location response from Amazon S3");
             }
         }
    }

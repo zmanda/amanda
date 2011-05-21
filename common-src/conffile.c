@@ -31,7 +31,6 @@
  */
 
 #include "amanda.h"
-#include "arglist.h"
 #include "util.h"
 #include "conffile.h"
 #include "clock.h"
@@ -1454,7 +1453,7 @@ get_token_name(
     keytab_t *kt;
 
     if (keytable == NULL) {
-	error(_("keytable == NULL"));
+	error("keytable == NULL");
 	/*NOTREACHED*/
     }
 
@@ -1548,7 +1547,7 @@ get_conftoken(
 		} else {
 		    *buf = '\0';
 		    if (!token_overflow) {
-			conf_parserror(_("token too long: %.20s..."), tkbuf);
+			conf_parserror("token too long: %.20s...", tkbuf);
 		    }
 		    token_overflow = 1;
 		}
@@ -1557,10 +1556,10 @@ get_conftoken(
 
 	    if (ch != EOF && conftoken_ungetc(ch) == EOF) {
 		if (ferror(current_file)) {
-		    conf_parserror(_("Pushback of '%c' failed: %s"),
+		    conf_parserror("Pushback of '%c' failed: %s",
 				   ch, strerror(ferror(current_file)));
 		} else {
-		    conf_parserror(_("Pushback of '%c' failed: EOF"), ch);
+		    conf_parserror("Pushback of '%c' failed: EOF", ch);
 		}
 	    }
 	    *buf = '\0';
@@ -1610,10 +1609,10 @@ negative_number: /* look for goto negative_number below sign is set there */
 
 	    if (ch != EOF &&  conftoken_ungetc(ch) == EOF) {
 		if (ferror(current_file)) {
-		    conf_parserror(_("Pushback of '%c' failed: %s"),
+		    conf_parserror("Pushback of '%c' failed: %s",
 				   ch, strerror(ferror(current_file)));
 		} else {
-		    conf_parserror(_("Pushback of '%c' failed: EOF"), ch);
+		    conf_parserror("Pushback of '%c' failed: EOF", ch);
 		}
 	    }
 	} else switch(ch) {
@@ -1625,7 +1624,7 @@ negative_number: /* look for goto negative_number below sign is set there */
 	    while (inquote && ((ch = conftoken_getc()) != EOF)) {
 		if (ch == '\n') {
 		    if (!escape) {
-			conf_parserror(_("string not terminated"));
+			conf_parserror("string not terminated");
 			conftoken_ungetc(ch);
 			break;
 		    }
@@ -1643,7 +1642,7 @@ negative_number: /* look for goto negative_number below sign is set there */
 
 		if(buf >= &tkbuf[sizeof(tkbuf) - 1]) {
 		    if (!token_overflow) {
-			conf_parserror(_("string too long: %.20s..."), tkbuf);
+			conf_parserror("string too long: %.20s...", tkbuf);
 		    }
 		    token_overflow = 1;
 		    break;
@@ -1674,10 +1673,10 @@ negative_number: /* look for goto negative_number below sign is set there */
 	    else {
 		if (ch != EOF && conftoken_ungetc(ch) == EOF) {
 		    if (ferror(current_file)) {
-			conf_parserror(_("Pushback of '%c' failed: %s"),
+			conf_parserror("Pushback of '%c' failed: %s",
 				       ch, strerror(ferror(current_file)));
 		    } else {
-			conf_parserror(_("Pushback of '%c' failed: EOF"), ch);
+			conf_parserror("Pushback of '%c' failed: EOF", ch);
 		    }
 		}
 		tok = CONF_UNKNOWN;
@@ -1728,27 +1727,27 @@ negative_number: /* look for goto negative_number below sign is set there */
 	    break;
 
 	case CONF_NL:
-	    str = _("end of line");
+	    str = "end of line";
 	    break;
 
 	case CONF_END:
-	    str = _("end of file");
+	    str = "end of file";
 	    break;
 
 	case CONF_INT:
-	    str = _("an integer");
+	    str = "an integer";
 	    break;
 
 	case CONF_REAL:
-	    str = _("a real number");
+	    str = "a real number";
 	    break;
 
 	case CONF_STRING:
-	    str = _("a quoted string");
+	    str = "a quoted string";
 	    break;
 
 	case CONF_IDENT:
-	    str = _("an identifier");
+	    str = "an identifier";
 	    break;
 
 	default:
@@ -1757,12 +1756,12 @@ negative_number: /* look for goto negative_number below sign is set there */
 		    break;
 	    }
 	    if (kwp->keyword == NULL)
-		str = _("token not");
+		str = "token not";
 	    else
 		str = str_keyword(kwp);
 	    break;
 	}
-	conf_parserror(_("%s is expected"), str);
+	conf_parserror("%s is expected", str);
 	tok = exp;
 	if (tok == CONF_INT)
 	    tokenval.v.i = 0;
@@ -1801,11 +1800,11 @@ conftoken_ungetc(
 	    return c;
 	current_char--;
 	if(*current_char != c) {
-	    error(_("*current_char != c   : %c %c"), *current_char, c);
+	    error("*current_char != c   : %c %c", *current_char, c);
 	    /* NOTREACHED */
 	}
     } else {
-	error(_("current_char == current_line"));
+	error("current_char == current_line");
 	/* NOTREACHED */
     }
     return c;
@@ -1840,7 +1839,7 @@ read_conffile(
 
     if ((current_file = fopen(current_filename, "r")) == NULL) {
 	if (!missing_ok)
-	    conf_parserror(_("could not open conf file \"%s\": %s"), 
+	    conf_parserror("could not open conf file \"%s\": %s", 
 		    current_filename, strerror(errno));
 	goto finish;
     }
@@ -1884,7 +1883,7 @@ read_confline(
 	    /* accept application-tool here, too, for backward compatibility */
 	    if(tok == CONF_APPLICATION_TOOL || tok == CONF_APPLICATION) get_application();
 	    else if(tok == CONF_SCRIPT_TOOL || tok == CONF_SCRIPT) get_pp_script();
-	    else conf_parserror(_("APPLICATION-TOOL or SCRIPT-TOOL expected"));
+	    else conf_parserror("APPLICATION-TOOL or SCRIPT-TOOL expected");
 	} else {
 	    get_conftoken(CONF_ANY);
 	    if(tok == CONF_DUMPTYPE) get_dumptype();
@@ -1897,7 +1896,7 @@ read_confline(
 	    else if(tok == CONF_HOLDING) get_holdingdisk(1);
 	    else if(tok == CONF_INTERACTIVITY) get_interactivity();
 	    else if(tok == CONF_TAPERSCAN) get_taperscan();
-	    else conf_parserror(_("DUMPTYPE, INTERFACE, TAPETYPE, HOLDINGDISK, APPLICATION, SCRIPT, DEVICE, CHANGER, INTERACTIVITY or TAPERSCAN expected"));
+	    else conf_parserror("DUMPTYPE, INTERFACE, TAPETYPE, HOLDINGDISK, APPLICATION, SCRIPT, DEVICE, CHANGER, INTERACTIVITY or TAPERSCAN expected");
 	}
 	break;
 
@@ -1957,7 +1956,7 @@ handle_deprecated_keyword(void)
     for (dep = warning_deprecated; dep->tok; dep++) {
 	if (tok == dep->tok) {
 	    if (!dep->warned)
-		conf_parswarn(_("warning: Keyword %s is deprecated."),
+		conf_parswarn("warning: Keyword %s is deprecated.",
 			       tokenval.v.s);
 	    dep->warned = 1;
 	    break;
@@ -1986,7 +1985,7 @@ handle_invalid_keyword(
 
     for (s = error_deprecated; *s != NULL; s ++) {
 	if (g_ascii_strcasecmp(*s, folded_token) == 0) {
-	    conf_parserror(_("error: Keyword %s is deprecated."),
+	    conf_parserror("error: Keyword %s is deprecated.",
 			   token);
 	    g_free(folded_token);
 	    return;
@@ -1995,7 +1994,7 @@ handle_invalid_keyword(
     g_free(folded_token);
 
     if (*s == NULL) {
-        conf_parserror(_("configuration keyword expected"));
+        conf_parserror("configuration keyword expected");
     }
 
     for (;;) {
@@ -2069,7 +2068,7 @@ read_block(
 	    if(copy_function) 
 		copy_function();
 	    else
-		conf_parserror(_("ident not expected"));
+		conf_parserror("ident not expected");
 	    break;
 	default:
 	    {
@@ -2178,12 +2177,12 @@ get_holdingdisk(
 	holdingdisk_t *hd;
 	hd = lookup_holdingdisk(hdcur.name);
 	if (hd) {
-	    conf_parserror(_("holding disk '%s' already defined"),
+	    conf_parserror("holding disk '%s' already defined",
 			       hdcur.name);
 	} else {
 	    unget_conftoken();
 	    read_block(holding_var, hdcur.value,
-		     _("holding disk parameter expected"), 1, copy_holdingdisk,
+		     "holding disk parameter expected", 1, copy_holdingdisk,
 		     "HOLDINGDISK", hdcur.name);
 	    get_conftoken(CONF_NL);
             save_holdingdisk();
@@ -2196,7 +2195,7 @@ get_holdingdisk(
     } else { /* use the already defined holding disk */
 	unget_conftoken();
 	if (is_define) {
-	    conf_parserror(_("holdingdisk definition must specify holdingdisk parameters"));
+	    conf_parserror("holdingdisk definition must specify holdingdisk parameters");
 	}
 	do {
 	    identlist_t il;
@@ -2208,7 +2207,7 @@ get_holdingdisk(
 		}
 	    }
 	    if (il) {
-		conf_parserror(_("holding disk '%s' already in use"),
+		conf_parserror("holding disk '%s' already in use",
 			       hdcur.name);
 	    } else {
 		conf_data[CNF_HOLDINGDISK].v.identlist = g_slist_append(
@@ -2220,7 +2219,7 @@ get_holdingdisk(
 	    if (tok == CONF_IDENT || tok == CONF_STRING) {
 		hdcur.name = g_strdup(tokenval.v.s);
 	    } else if (tok != CONF_NL) {
-		conf_parserror(_("IDENT or NL expected"));
+		conf_parserror("IDENT or NL expected");
 	    }
 	} while (tok == CONF_IDENT || tok == CONF_STRING);
     }
@@ -2260,7 +2259,7 @@ copy_holdingdisk(
     hp = lookup_holdingdisk(tokenval.v.s);
 
     if (hp == NULL) {
-        conf_parserror(_("holdingdisk parameter expected"));
+        conf_parserror("holdingdisk parameter expected");
         return;
     }
 
@@ -2314,7 +2313,7 @@ read_dumptype(
     dpcur.seen.linenum = current_line_num;
 
     read_block(dumptype_var, dpcur.value,
-	       _("dumptype parameter expected"),
+	       "dumptype parameter expected",
 	       (name == NULL), copy_dumptype,
 	       "DUMPTYPE", dpcur.name);
 
@@ -2407,9 +2406,9 @@ save_dumptype(void)
 
     if(dp != (dumptype_t *)0) {
 	if (dp->seen.linenum == -1) {
-	    conf_parserror(_("dumptype %s is defined by default and cannot be redefined"), dp->name);
+	    conf_parserror("dumptype %s is defined by default and cannot be redefined", dp->name);
 	} else {
-	    conf_parserror(_("dumptype %s already defined at %s:%d"), dp->name,
+	    conf_parserror("dumptype %s already defined at %s:%d", dp->name,
 			   dp->seen.filename, dp->seen.linenum);
 	}
 	return;
@@ -2439,7 +2438,7 @@ copy_dumptype(void)
     dt = lookup_dumptype(tokenval.v.s);
 
     if(dt == NULL) {
-	conf_parserror(_("dumptype parameter expected"));
+	conf_parserror("dumptype parameter expected");
 	return;
     }
 
@@ -2470,7 +2469,7 @@ get_tapetype(void)
     tpcur.seen.linenum = current_line_num;
 
     read_block(tapetype_var, tpcur.value,
-	       _("tapetype parameter expected"), 1, copy_tapetype,
+	       "tapetype parameter expected", 1, copy_tapetype,
 	       "TAPETYPE", tpcur.name);
     get_conftoken(CONF_NL);
 
@@ -2509,7 +2508,7 @@ save_tapetype(void)
 
     if(tp != (tapetype_t *)0) {
 	amfree(tpcur.name);
-	conf_parserror(_("tapetype %s already defined at %s:%d"),
+	conf_parserror("tapetype %s already defined at %s:%d",
 		tp->name, tp->seen.filename, tp->seen.linenum);
 	return;
     }
@@ -2538,7 +2537,7 @@ copy_tapetype(void)
     tp = lookup_tapetype(tokenval.v.s);
 
     if(tp == NULL) {
-	conf_parserror(_("tape type parameter expected"));
+	conf_parserror("tape type parameter expected");
 	return;
     }
 
@@ -2565,7 +2564,7 @@ get_interface(void)
     ifcur.seen.linenum = current_line_num;
 
     read_block(interface_var, ifcur.value,
-	       _("interface parameter expected"), 1, copy_interface,
+	       "interface parameter expected", 1, copy_interface,
 	       "INTERFACE", ifcur.name);
     get_conftoken(CONF_NL);
 
@@ -2591,7 +2590,7 @@ save_interface(void)
     ip = lookup_interface(ifcur.name);
 
     if(ip != (interface_t *)0) {
-	conf_parserror(_("interface %s already defined at %s:%d"),
+	conf_parserror("interface %s already defined at %s:%d",
 		ip->name, ip->seen.filename, ip->seen.linenum);
 	return;
     }
@@ -2619,7 +2618,7 @@ copy_interface(void)
     ip = lookup_interface(tokenval.v.s);
 
     if(ip == NULL) {
-	conf_parserror(_("interface parameter expected"));
+	conf_parserror("interface parameter expected");
 	return;
     }
 
@@ -2669,7 +2668,7 @@ read_application(
     apcur.seen.linenum = current_line_num;
 
     read_block(application_var, apcur.value,
-	       _("application parameter expected"),
+	       "application parameter expected",
 	       (name == NULL), *copy_application,
 	       "APPLICATION", apcur.name);
     if(!name)
@@ -2718,7 +2717,7 @@ save_application(
     ap = lookup_application(apcur.name);
 
     if(ap != (application_t *)0) {
-	conf_parserror(_("application %s already defined at %s:%d"),
+	conf_parserror("application %s already defined at %s:%d",
 		       ap->name, ap->seen.filename, ap->seen.linenum);
 	return;
     }
@@ -2747,7 +2746,7 @@ copy_application(void)
     ap = lookup_application(tokenval.v.s);
 
     if(ap == NULL) {
-	conf_parserror(_("application parameter expected"));
+	conf_parserror("application parameter expected");
 	return;
     }
 
@@ -2796,7 +2795,7 @@ read_interactivity(
     ivcur.seen.linenum = current_line_num;
 
     read_block(interactivity_var, ivcur.value,
-	       _("interactivity parameter expected"),
+	       "interactivity parameter expected",
 	       (name == NULL), *copy_interactivity,
 	       "INTERACTIVITY", ivcur.name);
     if(!name)
@@ -2844,7 +2843,7 @@ save_interactivity(
     iv = lookup_interactivity(ivcur.name);
 
     if (iv != (interactivity_t *)0) {
-	conf_parserror(_("interactivity %s already defined at %s:%d"),
+	conf_parserror("interactivity %s already defined at %s:%d",
 		       iv->name, iv->seen.filename, iv->seen.linenum);
 	return;
     }
@@ -2873,7 +2872,7 @@ copy_interactivity(void)
     iv = lookup_interactivity(tokenval.v.s);
 
     if (iv == NULL) {
-	conf_parserror(_("interactivity parameter expected"));
+	conf_parserror("interactivity parameter expected");
 	return;
     }
 
@@ -2922,7 +2921,7 @@ read_taperscan(
     tscur.seen.linenum = current_line_num;
 
     read_block(taperscan_var, tscur.value,
-	       _("taperscan parameter expected"),
+	       "taperscan parameter expected",
 	       (name == NULL), *copy_taperscan,
 	       "TAPERSCAN", tscur.name);
     if(!name)
@@ -2970,7 +2969,7 @@ save_taperscan(
     ts = lookup_taperscan(tscur.name);
 
     if (ts != (taperscan_t *)0) {
-	conf_parserror(_("taperscan %s already defined at %s:%d"),
+	conf_parserror("taperscan %s already defined at %s:%d",
 		       ts->name, ts->seen.filename, ts->seen.linenum);
 	return;
     }
@@ -2999,7 +2998,7 @@ copy_taperscan(void)
     ts = lookup_taperscan(tokenval.v.s);
 
     if (ts == NULL) {
-	conf_parserror(_("taperscan parameter expected"));
+	conf_parserror("taperscan parameter expected");
 	return;
     }
 
@@ -3048,7 +3047,7 @@ read_pp_script(
     pscur.seen.linenum = current_line_num;
 
     read_block(pp_script_var, pscur.value,
-	       _("script parameter expected"),
+	       "script parameter expected",
 	       (name == NULL), *copy_pp_script,
 	       "SCRIPT", pscur.name);
     if(!name)
@@ -3101,7 +3100,7 @@ save_pp_script(
     ps = lookup_pp_script(pscur.name);
 
     if(ps != (pp_script_t *)0) {
-	conf_parserror(_("script %s already defined at %s:%d"),
+	conf_parserror("script %s already defined at %s:%d",
 		       ps->name, ps->seen.filename, ps->seen.linenum);
 	return;
     }
@@ -3130,7 +3129,7 @@ copy_pp_script(void)
     ps = lookup_pp_script(tokenval.v.s);
 
     if(ps == NULL) {
-	conf_parserror(_("script parameter expected"));
+	conf_parserror("script parameter expected");
 	return;
     }
 
@@ -3179,7 +3178,7 @@ read_device_config(
     dccur.seen.linenum = current_line_num;
 
     read_block(device_config_var, dccur.value,
-	       _("device parameter expected"),
+	       "device parameter expected",
 	       (name == NULL), *copy_device_config,
 	       "DEVICE", dccur.name);
     if(!name)
@@ -3227,7 +3226,7 @@ save_device_config(
     dc = lookup_device_config(dccur.name);
 
     if(dc != (device_config_t *)0) {
-	conf_parserror(_("device %s already defined at %s:%d"),
+	conf_parserror("device %s already defined at %s:%d",
 		       dc->name, dc->seen.filename, dc->seen.linenum);
 	return;
     }
@@ -3256,7 +3255,7 @@ copy_device_config(void)
     dc = lookup_device_config(tokenval.v.s);
 
     if(dc == NULL) {
-	conf_parserror(_("device parameter expected"));
+	conf_parserror("device parameter expected");
 	return;
     }
 
@@ -3304,7 +3303,7 @@ read_changer_config(
     cccur.seen = current_line_num;
 
     read_block(changer_config_var, cccur.value,
-	       _("changer parameter expected"),
+	       "changer parameter expected",
 	       (name == NULL), *copy_changer_config,
 	       "CHANGER", cccur.name);
     if(!name)
@@ -3356,7 +3355,7 @@ save_changer_config(
     dc = lookup_changer_config(cccur.name);
 
     if(dc != (changer_config_t *)0) {
-	conf_parserror(_("changer %s already defined on line %d"),
+	conf_parserror("changer %s already defined on line %d",
 		       dc->name, dc->seen);
 	return;
     }
@@ -3385,7 +3384,7 @@ copy_changer_config(void)
     dc = lookup_changer_config(tokenval.v.s);
 
     if(dc == NULL) {
-	conf_parserror(_("changer parameter expected"));
+	conf_parserror("changer parameter expected");
 	return;
     }
 
@@ -3433,7 +3432,8 @@ read_str(
 {
     ckseen(&val->seen);
     get_conftoken(CONF_STRING);
-    val->v.s = newstralloc(val->v.s, tokenval.v.s);
+    g_free(val->v.s);
+    val->v.s = g_strdup(tokenval.v.s);
 }
 
 static void
@@ -3443,7 +3443,8 @@ read_ident(
 {
     ckseen(&val->seen);
     get_conftoken(CONF_IDENT);
-    val->v.s = newstralloc(val->v.s, tokenval.v.s);
+    g_free(val->v.s);
+    val->v.s = g_strdup(tokenval.v.s);
 }
 
 static void
@@ -3542,7 +3543,7 @@ read_compress(
     }
 
     if((int)comp == -1) {
-	conf_parserror(_("NONE, CLIENT FAST, CLIENT BEST, CLIENT CUSTOM, SERVER FAST, SERVER BEST or SERVER CUSTOM expected"));
+	conf_parserror("NONE, CLIENT FAST, CLIENT BEST, CLIENT CUSTOM, SERVER FAST, SERVER BEST or SERVER CUSTOM expected");
 	comp = COMP_NONE;
     }
 
@@ -3573,7 +3574,7 @@ read_encrypt(
      break;
 
    default:
-     conf_parserror(_("NONE, CLIENT or SERVER expected"));
+     conf_parserror("NONE, CLIENT or SERVER expected");
      encrypt = ENCRYPT_NONE;
      break;
    }
@@ -3612,7 +3613,7 @@ read_holding(
      else if (holding == 1 || holding == 2)
 	holding = HOLD_AUTO;
      else
-	conf_parserror(_("NEVER, AUTO or REQUIRED expected"));
+	conf_parserror("NEVER, AUTO or REQUIRED expected");
      break;
    }
 
@@ -3641,7 +3642,7 @@ read_estimatelist(
 	    estimates = g_slist_append(estimates, GINT_TO_POINTER(ES_CALCSIZE));
 	    break;
 	default:
-	    conf_parserror(_("CLIENT, SERVER or CALCSIZE expected"));
+	    conf_parserror("CLIENT, SERVER or CALCSIZE expected");
 	}
 	get_conftoken(CONF_ANY);
 	if (tok == CONF_NL)
@@ -3680,7 +3681,7 @@ read_strategy(
 	strat = DS_INCRONLY;
 	break;
     default:
-	conf_parserror(_("dump strategy expected"));
+	conf_parserror("dump strategy expected");
 	strat = DS_STANDARD;
     }
     val_t__strategy(val) = strat;
@@ -3702,7 +3703,7 @@ read_taperalgo(
     case CONF_SMALLEST:   val_t__taperalgo(val) = ALGO_SMALLEST;   break;
     case CONF_LAST:       val_t__taperalgo(val) = ALGO_LAST;       break;
     default:
-	conf_parserror(_("FIRST, FIRSTFIT, LARGEST, LARGESTFIT, SMALLEST or LAST expected"));
+	conf_parserror("FIRST, FIRSTFIT, LARGEST, LARGESTFIT, SMALLEST or LAST expected");
     }
 }
 
@@ -3720,7 +3721,7 @@ read_send_amreport_on(
     case CONF_ERROR:   val_t__send_amreport(val) = SEND_AMREPORT_ERROR;   break;
     case CONF_NEVER:   val_t__send_amreport(val) = SEND_AMREPORT_NEVER;   break;
     default:
-	conf_parserror(_("ALL, STRANGE, ERROR or NEVER expected"));
+	conf_parserror("ALL, STRANGE, ERROR or NEVER expected");
     }
 }
 
@@ -3736,7 +3737,7 @@ read_data_path(
     case CONF_AMANDA   : val_t__data_path(val) = DATA_PATH_AMANDA   ; break;
     case CONF_DIRECTTCP: val_t__data_path(val) = DATA_PATH_DIRECTTCP; break;
     default:
-	conf_parserror(_("AMANDA or DIRECTTCP expected"));
+	conf_parserror("AMANDA or DIRECTTCP expected");
     }
 }
 
@@ -3756,7 +3757,7 @@ read_priority(
     case CONF_HIGH: pri = 2; break;
     case CONF_INT: pri = tokenval.v.i; break;
     default:
-	conf_parserror(_("LOW, MEDIUM, HIGH or integer expected"));
+	conf_parserror("LOW, MEDIUM, HIGH or integer expected");
 	pri = 0;
     }
     val_t__priority(val) = pri;
@@ -3772,7 +3773,7 @@ read_rate(
     val_t__rate(val)[1] = tokenval.v.r;
     val->seen = tokenval.seen;
     if(tokenval.v.r < 0) {
-	conf_parserror(_("full compression rate must be >= 0"));
+	conf_parserror("full compression rate must be >= 0");
     }
 
     get_conftoken(CONF_ANY);
@@ -3793,7 +3794,7 @@ read_rate(
     get_conftoken(CONF_REAL);
     val_t__rate(val)[1] = tokenval.v.r;
     if(tokenval.v.r < 0) {
-	conf_parserror(_("incremental compression rate must be >= 0"));
+	conf_parserror("incremental compression rate must be >= 0");
     }
 }
 
@@ -3900,7 +3901,7 @@ read_property(
     }
     if (tok != CONF_STRING) {
 	amfree(property);
-	conf_parserror(_("key expected"));
+	conf_parserror("key expected");
 	return;
     }
     key = amandaify_property_name(tokenval.v.s);
@@ -3914,7 +3915,7 @@ read_property(
     }
     if (tok != CONF_STRING) {
 	amfree(property);
-	conf_parserror(_("value expected"));
+	conf_parserror("value expected");
 	return;
     }
 
@@ -3962,11 +3963,11 @@ read_dapplication(
     } else if (tok == CONF_STRING) {
 	application = lookup_application(tokenval.v.s);
 	if (application == NULL) {
-	    conf_parserror(_("Unknown application named: %s"), tokenval.v.s);
+	    conf_parserror("Unknown application named: %s", tokenval.v.s);
 	    return;
 	}
     } else {
-	conf_parserror(_("application name expected: %d %d"), tok, CONF_STRING);
+	conf_parserror("application name expected: %d %d", tok, CONF_STRING);
 	return;
     }
     amfree(val->v.s);
@@ -3991,11 +3992,11 @@ read_dinteractivity(
     } else if (tok == CONF_STRING) {
 	interactivity = lookup_interactivity(tokenval.v.s);
 	if (interactivity == NULL) {
-	    conf_parserror(_("Unknown interactivity named: %s"), tokenval.v.s);
+	    conf_parserror("Unknown interactivity named: %s", tokenval.v.s);
 	    return;
 	}
     } else {
-	conf_parserror(_("interactivity name expected: %d %d"), tok, CONF_STRING);
+	conf_parserror("interactivity name expected: %d %d", tok, CONF_STRING);
 	return;
     }
     amfree(val->v.s);
@@ -4020,11 +4021,11 @@ read_dtaperscan(
     } else if (tok == CONF_STRING) {
 	taperscan = lookup_taperscan(tokenval.v.s);
 	if (taperscan == NULL) {
-	    conf_parserror(_("Unknown taperscan named: %s"), tokenval.v.s);
+	    conf_parserror("Unknown taperscan named: %s", tokenval.v.s);
 	    return;
 	}
     } else {
-	conf_parserror(_("taperscan name expected: %d %d"), tok, CONF_STRING);
+	conf_parserror("taperscan name expected: %d %d", tok, CONF_STRING);
 	return;
     }
     amfree(val->v.s);
@@ -4051,7 +4052,7 @@ read_dpp_script(
 	while (tok == CONF_STRING || tok == CONF_IDENT) {
 	    pp_script = lookup_pp_script(tokenval.v.s);
 	    if (pp_script == NULL) {
-		conf_parserror(_("Unknown pp_script named: %s"), tokenval.v.s);
+		conf_parserror("Unknown pp_script named: %s", tokenval.v.s);
 		return;
 	    }
     	    val->v.identlist = g_slist_insert_sorted(val->v.identlist,
@@ -4060,7 +4061,7 @@ read_dpp_script(
 	}
 	unget_conftoken();
     } else {
-	conf_parserror(_("pp_script name expected: %d %d"), tok, CONF_STRING);
+	conf_parserror("pp_script name expected: %d %d", tok, CONF_STRING);
 	return;
     }
     ckseen(&val->seen);
@@ -4100,7 +4101,7 @@ read_execute_on(
 	case CONF_POST_LEVEL_RECOVER:  val->v.i |= EXECUTE_ON_POST_LEVEL_RECOVER;  break;
 	case CONF_INTER_LEVEL_RECOVER: val->v.i |= EXECUTE_ON_INTER_LEVEL_RECOVER; break;
 	default:
-	conf_parserror(_("Execute-on expected"));
+	conf_parserror("Execute-on expected");
 	}
 	get_conftoken(CONF_ANY);
 	if (tok != CONF_COMMA) {
@@ -4123,7 +4124,7 @@ read_execute_where(
     case CONF_CLIENT:      val->v.i = ES_CLIENT;   break;
     case CONF_SERVER:      val->v.i = ES_SERVER;   break;
     default:
-	conf_parserror(_("CLIENT or SERVER expected"));
+	conf_parserror("CLIENT or SERVER expected");
     }
 }
 
@@ -4152,10 +4153,11 @@ read_int_or_str(
 	break;
 
     case CONF_STRING:
-	val->v.s = newstralloc(val->v.s, tokenval.v.s);
+	g_free(val->v.s);
+	val->v.s = g_strdup(tokenval.v.s);
 	break;
     default:
-	conf_parserror(_("CLIENT or SERVER expected"));
+	conf_parserror("CLIENT or SERVER expected");
     }
 }
 
@@ -4170,8 +4172,8 @@ read_autolabel(
     get_conftoken(CONF_ANY);
     if (tok == CONF_STRING) {
 	data++;
-	val->v.autolabel.template = newstralloc(val->v.autolabel.template,
-						tokenval.v.s);
+	g_free(val->v.autolabel.template);
+	val->v.autolabel.template = g_strdup(tokenval.v.s);
 	get_conftoken(CONF_ANY);
     }
     val->v.autolabel.autolabel = 0;
@@ -4189,7 +4191,7 @@ read_autolabel(
 	else if (tok == CONF_EMPTY)
 	    val->v.autolabel.autolabel |= AL_EMPTY;
 	else {
-	    conf_parserror(_("ANY, NEW-VOLUME, OTHER-CONFIG, NON-AMANDA, VOLUME-ERROR or EMPTY is expected"));
+	    conf_parserror("ANY, NEW-VOLUME, OTHER-CONFIG, NON-AMANDA, VOLUME-ERROR or EMPTY is expected");
 	}
 	get_conftoken(CONF_ANY);
     }
@@ -4225,7 +4227,7 @@ read_part_cache_type(
      break;
 
    default:
-     conf_parserror(_("NONE, DISK or MEMORY expected"));
+     conf_parserror("NONE, DISK or MEMORY expected");
      part_cache_type = PART_CACHE_TYPE_NONE;
      break;
    }
@@ -4288,7 +4290,7 @@ get_time(void)
     case CONF_INT:
 #if SIZEOF_TIME_T < SIZEOF_INT
 	if ((gint64)tokenval.v.i >= (gint64)TIME_MAX)
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 #endif
 	hhmm = (time_t)tokenval.v.i;
 	break;
@@ -4296,7 +4298,7 @@ get_time(void)
     case CONF_SIZE:
 #if SIZEOF_TIME_T < SIZEOF_SSIZE_T
 	if ((gint64)tokenval.v.size >= (gint64)TIME_MAX)
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 #endif
 	hhmm = (time_t)tokenval.v.size;
 	break;
@@ -4304,7 +4306,7 @@ get_time(void)
     case CONF_INT64:
 #if SIZEOF_TIME_T < SIZEOF_GINT64
 	if ((gint64)tokenval.v.int64 >= (gint64)TIME_MAX)
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 #endif
 	hhmm = (time_t)tokenval.v.int64;
 	break;
@@ -4314,7 +4316,7 @@ get_time(void)
 	break;
 
     default:
-	conf_parserror(_("a time is expected"));
+	conf_parserror("a time is expected");
 	hhmm = 0;
 	break;
     }
@@ -4339,9 +4341,9 @@ get_int(void)
     case CONF_SIZE:
 #if SIZEOF_INT < SIZEOF_SSIZE_T
 	if ((gint64)tokenval.v.size > (gint64)INT_MAX)
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	if ((gint64)tokenval.v.size < (gint64)INT_MIN)
-	    conf_parserror(_("value too small"));
+	    conf_parserror("value too small");
 #endif
 	val = (int)tokenval.v.size;
 	break;
@@ -4349,9 +4351,9 @@ get_int(void)
     case CONF_INT64:
 #if SIZEOF_INT < SIZEOF_GINT64
 	if (tokenval.v.int64 > (gint64)INT_MAX)
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	if (tokenval.v.int64 < (gint64)INT_MIN)
-	    conf_parserror(_("value too small"));
+	    conf_parserror("value too small");
 #endif
 	val = (int)tokenval.v.int64;
 	break;
@@ -4361,7 +4363,7 @@ get_int(void)
 	break;
 
     default:
-	conf_parserror(_("an integer is expected"));
+	conf_parserror("an integer is expected");
 	val = 0;
 	break;
     }
@@ -4377,33 +4379,33 @@ get_int(void)
 
     case CONF_MULT7:
 	if (val > (INT_MAX / 7))
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	if (val < (INT_MIN / 7))
-	    conf_parserror(_("value too small"));
+	    conf_parserror("value too small");
 	val *= 7;
 	break;
 
     case CONF_MULT1M:
 	if (val > (INT_MAX / 1024))
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	if (val < (INT_MIN / 1024))
-	    conf_parserror(_("value too small"));
+	    conf_parserror("value too small");
 	val *= 1024;
 	break;
 
     case CONF_MULT1G:
 	if (val > (INT_MAX / (1024 * 1024)))
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	if (val < (INT_MIN / (1024 * 1024)))
-	    conf_parserror(_("value too small"));
+	    conf_parserror("value too small");
 	val *= 1024 * 1024;
 	break;
 
     case CONF_MULT1T:
 	if (val > (INT_MAX / (1024 * 1024 * 1024)))
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	if (val < (INT_MIN / (1024 * 1024 * 1024)))
-	    conf_parserror(_("value too small"));
+	    conf_parserror("value too small");
 	val *= 1024 * 1024 * 1024;
 	break;
 
@@ -4435,9 +4437,9 @@ get_size(void)
     case CONF_INT:
 #if SIZEOF_SIZE_T < SIZEOF_INT
 	if ((gint64)tokenval.v.i > (gint64)SSIZE_MAX)
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	if ((gint64)tokenval.v.i < (gint64)SSIZE_MIN)
-	    conf_parserror(_("value too small"));
+	    conf_parserror("value too small");
 #endif
 	val = (ssize_t)tokenval.v.i;
 	break;
@@ -4445,9 +4447,9 @@ get_size(void)
     case CONF_INT64:
 #if SIZEOF_SIZE_T < SIZEOF_GINT64
 	if (tokenval.v.int64 > (gint64)SSIZE_MAX)
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	if (tokenval.v.int64 < (gint64)SSIZE_MIN)
-	    conf_parserror(_("value too small"));
+	    conf_parserror("value too small");
 #endif
 	val = (ssize_t)tokenval.v.int64;
 	break;
@@ -4457,7 +4459,7 @@ get_size(void)
 	break;
 
     default:
-	conf_parserror(_("an integer is expected"));
+	conf_parserror("an integer is expected");
 	val = 0;
 	break;
     }
@@ -4473,33 +4475,33 @@ get_size(void)
 
     case CONF_MULT7:
 	if (val > (ssize_t)(SSIZE_MAX / 7))
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	if (val < (ssize_t)(SSIZE_MIN / 7))
-	    conf_parserror(_("value too small"));
+	    conf_parserror("value too small");
 	val *= (ssize_t)7;
 	break;
 
     case CONF_MULT1M:
 	if (val > (ssize_t)(SSIZE_MAX / (ssize_t)1024))
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	if (val < (ssize_t)(SSIZE_MIN / (ssize_t)1024))
-	    conf_parserror(_("value too small"));
+	    conf_parserror("value too small");
 	val *= (ssize_t)1024;
 	break;
 
     case CONF_MULT1G:
 	if (val > (ssize_t)(SSIZE_MAX / (1024 * 1024)))
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	if (val < (ssize_t)(SSIZE_MIN / (1024 * 1024)))
-	    conf_parserror(_("value too small"));
+	    conf_parserror("value too small");
 	val *= (ssize_t)(1024 * 1024);
 	break;
 
     case CONF_MULT1T:
 	if (val > (INT_MAX / (1024 * 1024 * 1024)))
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	if (val < (INT_MIN / (1024 * 1024 * 1024)))
-	    conf_parserror(_("value too small"));
+	    conf_parserror("value too small");
 	val *= 1024 * 1024 * 1024;
 	break;
 
@@ -4531,9 +4533,9 @@ get_size_byte(void)
     case CONF_INT:
 #if SIZEOF_SIZE_T < SIZEOF_INT
 	if ((gint64)tokenval.v.i > (gint64)SSIZE_MAX)
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	if ((gint64)tokenval.v.i < (gint64)SSIZE_MIN)
-	    conf_parserror(_("value too small"));
+	    conf_parserror("value too small");
 #endif
 	val = (ssize_t)tokenval.v.i;
 	break;
@@ -4541,9 +4543,9 @@ get_size_byte(void)
     case CONF_INT64:
 #if SIZEOF_SIZE_T < SIZEOF_GINT64
 	if (tokenval.v.int64 > (gint64)SSIZE_MAX)
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	if (tokenval.v.int64 < (gint64)SSIZE_MIN)
-	    conf_parserror(_("value too small"));
+	    conf_parserror("value too small");
 #endif
 	val = (ssize_t)tokenval.v.int64;
 	break;
@@ -4553,7 +4555,7 @@ get_size_byte(void)
 	break;
 
     default:
-	conf_parserror(_("an integer is expected"));
+	conf_parserror("an integer is expected");
 	val = 0;
 	break;
     }
@@ -4567,37 +4569,37 @@ get_size_byte(void)
 	break;
     case CONF_MULT1K:
 	if (val > (ssize_t)(SSIZE_MAX / (ssize_t)1024))
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	if (val < (ssize_t)(SSIZE_MIN / (ssize_t)1024))
-	    conf_parserror(_("value too small"));
+	    conf_parserror("value too small");
 	val *= (ssize_t)1024;
 
     case CONF_MULT7:
 	if (val > (ssize_t)(SSIZE_MAX / 7))
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	if (val < (ssize_t)(SSIZE_MIN / 7))
-	    conf_parserror(_("value too small"));
+	    conf_parserror("value too small");
 	val *= (ssize_t)7;
 	break;
 
     case CONF_MULT1M:
 	if (val > (ssize_t)(SSIZE_MAX / (ssize_t)1024 * 1024))
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	if (val < (ssize_t)(SSIZE_MIN / (ssize_t)1024 * 1024))
-	    conf_parserror(_("value too small"));
+	    conf_parserror("value too small");
 	val *= (ssize_t)(1024 * 1024);
 	break;
 
     case CONF_MULT1G:
 	if (val > (ssize_t)(SSIZE_MAX / (1024 * 1024 * 1024)))
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	if (val < (ssize_t)(SSIZE_MIN / (1024 * 1024 * 1024)))
-	    conf_parserror(_("value too small"));
+	    conf_parserror("value too small");
 	val *= (ssize_t)(1024 * 1024 * 1024);
 	break;
 
     case CONF_MULT1T:
-	conf_parserror(_("value too large"));
+	conf_parserror("value too large");
 	break;
 
     default:	/* it was not a multiplier */
@@ -4638,7 +4640,7 @@ get_int64(void)
 	break;
 
     default:
-	conf_parserror(_("an integer is expected"));
+	conf_parserror("an integer is expected");
 	val = 0;
 	break;
     }
@@ -4654,25 +4656,25 @@ get_int64(void)
 
     case CONF_MULT7:
 	if (val > G_MAXINT64/7 || val < ((gint64)G_MININT64)/7)
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	val *= 7;
 	break;
 
     case CONF_MULT1M:
 	if (val > G_MAXINT64/1024 || val < ((gint64)G_MININT64)/1024)
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	val *= 1024;
 	break;
 
     case CONF_MULT1G:
 	if (val > G_MAXINT64/(1024*1024) || val < ((gint64)G_MININT64)/(1024*1024))
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	val *= 1024*1024;
 	break;
 
     case CONF_MULT1T:
 	if (val > G_MAXINT64/(1024*1024*1024) || val < ((gint64)G_MININT64)/(1024*1024*1024))
-	    conf_parserror(_("value too large"));
+	    conf_parserror("value too large");
 	val *= 1024*1024*1024;
 	break;
 
@@ -4734,7 +4736,7 @@ get_bool(void)
     default:
 	unget_conftoken();
 	val = 3; /* a bad argument - most likely TRUE */
-	conf_parserror(_("YES, NO, TRUE, FALSE, ON, OFF, 0, 1 expected"));
+	conf_parserror("YES, NO, TRUE, FALSE, ON, OFF, 0, 1 expected");
 	break;
     }
 
@@ -4785,7 +4787,7 @@ get_no_yes_all(void)
     default:
 	unget_conftoken();
 	val = 3; /* a bad argument - most likely TRUE */
-	conf_parserror(_("%d: YES, NO, ALL, TRUE, FALSE, ON, OFF, 0, 1, 2 expected"), tok);
+	conf_parserror("%d: YES, NO, ALL, TRUE, FALSE, ON, OFF, 0, 1, 2 expected", tok);
 	break;
     }
 
@@ -4800,7 +4802,7 @@ ckseen(
     seen_t *seen)
 {
     if (seen->linenum && !allow_overwrites && current_line_num != -2) {
-	conf_parserror(_("duplicate parameter; previous definition %s:%d"),
+	conf_parserror("duplicate parameter; previous definition %s:%d",
 		seen->filename, seen->linenum);
     }
     seen->filename = current_filename;
@@ -4817,18 +4819,18 @@ validate_nonnegative(
     switch(val->type) {
     case CONFTYPE_INT:
 	if(val_t__int(val) < 0)
-	    conf_parserror(_("%s must be nonnegative"), get_token_name(np->token));
+	    conf_parserror("%s must be nonnegative", get_token_name(np->token));
 	break;
     case CONFTYPE_INT64:
 	if(val_t__int64(val) < 0)
-	    conf_parserror(_("%s must be nonnegative"), get_token_name(np->token));
+	    conf_parserror("%s must be nonnegative", get_token_name(np->token));
 	break;
     case CONFTYPE_SIZE:
 	if(val_t__size(val) < 0)
-	    conf_parserror(_("%s must be positive"), get_token_name(np->token));
+	    conf_parserror("%s must be positive", get_token_name(np->token));
 	break;
     default:
-	conf_parserror(_("validate_nonnegative invalid type %d\n"), val->type);
+	conf_parserror("validate_nonnegative invalid type %d\n", val->type);
     }
 }
 
@@ -4840,22 +4842,22 @@ validate_non_zero(
     switch(val->type) {
     case CONFTYPE_INT:
 	if(val_t__int(val) == 0)
-	    conf_parserror(_("%s must not be 0"), get_token_name(np->token));
+	    conf_parserror("%s must not be 0", get_token_name(np->token));
 	break;
     case CONFTYPE_INT64:
 	if(val_t__int64(val) == 0)
-	    conf_parserror(_("%s must not be 0"), get_token_name(np->token));
+	    conf_parserror("%s must not be 0", get_token_name(np->token));
 	break;
     case CONFTYPE_TIME:
 	if(val_t__time(val) == 0)
-	    conf_parserror(_("%s must not be 0"), get_token_name(np->token));
+	    conf_parserror("%s must not be 0", get_token_name(np->token));
 	break;
     case CONFTYPE_SIZE:
 	if(val_t__size(val) == 0)
-	    conf_parserror(_("%s must not be 0"), get_token_name(np->token));
+	    conf_parserror("%s must not be 0", get_token_name(np->token));
 	break;
     default:
-	conf_parserror(_("validate_non_zero invalid type %d\n"), val->type);
+	conf_parserror("validate_non_zero invalid type %d\n", val->type);
     }
 }
 
@@ -4867,22 +4869,22 @@ validate_positive(
     switch(val->type) {
     case CONFTYPE_INT:
 	if(val_t__int(val) < 1)
-	    conf_parserror(_("%s must be positive"), get_token_name(np->token));
+	    conf_parserror("%s must be positive", get_token_name(np->token));
 	break;
     case CONFTYPE_INT64:
 	if(val_t__int64(val) < 1)
-	    conf_parserror(_("%s must be positive"), get_token_name(np->token));
+	    conf_parserror("%s must be positive", get_token_name(np->token));
 	break;
     case CONFTYPE_TIME:
 	if(val_t__time(val) < 1)
-	    conf_parserror(_("%s must be positive"), get_token_name(np->token));
+	    conf_parserror("%s must be positive", get_token_name(np->token));
 	break;
     case CONFTYPE_SIZE:
 	if(val_t__size(val) < 1)
-	    conf_parserror(_("%s must be positive"), get_token_name(np->token));
+	    conf_parserror("%s must be positive", get_token_name(np->token));
 	break;
     default:
-	conf_parserror(_("validate_positive invalid type %d\n"), val->type);
+	conf_parserror("validate_positive invalid type %d\n", val->type);
     }
 }
 
@@ -4892,7 +4894,7 @@ validate_runspercycle(
     val_t        *val)
 {
     if(val_t__int(val) < -1)
-	conf_parserror(_("runspercycle must be >= -1"));
+	conf_parserror("runspercycle must be >= -1");
 }
 
 static void
@@ -4901,7 +4903,7 @@ validate_bumppercent(
     val_t        *val)
 {
     if(val_t__int(val) < 0 || val_t__int(val) > 100)
-	conf_parserror(_("bumppercent must be between 0 and 100"));
+	conf_parserror("bumppercent must be between 0 and 100");
 }
 
 static void
@@ -4910,7 +4912,7 @@ validate_inparallel(
     val_t        *val)
 {
     if(val_t__int(val) < 1 || val_t__int(val) >MAX_DUMPERS)
-	conf_parserror(_("inparallel must be between 1 and MAX_DUMPERS (%d)"),
+	conf_parserror("inparallel must be between 1 and MAX_DUMPERS (%d)",
 		       MAX_DUMPERS);
 }
 
@@ -4920,7 +4922,7 @@ validate_bumpmult(
     val_t        *val)
 {
     if(val_t__real(val) < 0.999) {
-	conf_parserror(_("bumpmult must one or more"));
+	conf_parserror("bumpmult must one or more");
     }
 }
 
@@ -4950,7 +4952,7 @@ validate_displayunit(
 		break;
 	}
     }
-    conf_parserror(_("displayunit must be k,m,g or t."));
+    conf_parserror("displayunit must be k,m,g or t.");
 }
 
 static void
@@ -4959,7 +4961,7 @@ validate_reserve(
     val_t        *val)
 {
     if(val_t__int(val) < 0 || val_t__int(val) > 100)
-	conf_parserror(_("reserve must be between 0 and 100"));
+	conf_parserror("reserve must be between 0 and 100");
 }
 
 static void
@@ -4980,7 +4982,7 @@ validate_chunksize(
 	val_t__int64(val) = ((G_MAXINT64 / 1024) - (2 * DISK_BLOCK_KB));
     }
     else if(val_t__int64(val) < 0) {
-	conf_parserror(_("Negative chunksize (%lld) is no longer supported"), (long long)val_t__int64(val));
+	conf_parserror("Negative chunksize (%lld) is no longer supported", (long long)val_t__int64(val));
     }
     val_t__int64(val) = am_floor(val_t__int64(val), (gint64)DISK_BLOCK_KB);
     if (val_t__int64(val) < 2*DISK_BLOCK_KB) {
@@ -4994,7 +4996,7 @@ validate_blocksize(
     val_t        *val)
 {
     if(val_t__size(val) < DISK_BLOCK_KB) {
-	conf_parserror(_("Tape blocksize must be at least %d KBytes"),
+	conf_parserror("Tape blocksize must be at least %d KBytes",
 		  DISK_BLOCK_KB);
     }
 }
@@ -5005,7 +5007,7 @@ validate_debug(
     val_t        *val)
 {
     if(val_t__int(val) < 0 || val_t__int(val) > 9) {
-	conf_parserror(_("Debug must be between 0 and 9"));
+	conf_parserror("Debug must be between 0 and 9");
     }
 }
 
@@ -5019,13 +5021,13 @@ validate_port_range(
     /* check both values are in range */
     for (i = 0; i < 2; i++) {
         if(val_t__intrange(val)[0] < smallest || val_t__intrange(val)[0] > largest) {
-	    conf_parserror(_("portrange must be in the range %d to %d, inclusive"), smallest, largest);
+	    conf_parserror("portrange must be in the range %d to %d, inclusive", smallest, largest);
 	}
      }
 
     /* and check they're in the right order and not equal */
     if (val_t__intrange(val)[0] > val_t__intrange(val)[1]) {
-	conf_parserror(_("portranges must be in order from low to high"));
+	conf_parserror("portranges must be in order from low to high");
     }
 }
 
@@ -5064,7 +5066,7 @@ config_init(
 	allow_overwrites = FALSE;
     } else {
 	if (!config_initialized) {
-	    error(_("Attempt to overlay configuration with no existing configuration"));
+	    error("Attempt to overlay configuration with no existing configuration");
 	    /* NOTREACHED */
 	}
 
@@ -5082,19 +5084,21 @@ config_init(
     }
 
     if ((flags & CONFIG_INIT_EXPLICIT_NAME) && arg_config_name) {
-	config_name = newstralloc(config_name, arg_config_name);
-	config_dir = newvstralloc(config_dir, CONFIG_DIR, "/", arg_config_name, NULL);
+	g_free(config_name);
+	config_name = g_strdup(arg_config_name);
+	g_free(config_dir);
+	config_dir = g_strjoin(NULL, CONFIG_DIR, "/", arg_config_name, NULL);
     } else if (flags & CONFIG_INIT_USE_CWD) {
         char * cwd;
         
         cwd = get_original_cwd();
 	if (!cwd) {
 	    /* (this isn't a config error, so it's always fatal) */
-	    error(_("Cannot determine current working directory"));
+	    error("Cannot determine current working directory");
 	    /* NOTREACHED */
 	}
 
-	config_dir = stralloc2(cwd, "/");
+	config_dir = g_strdup_printf("%s/", cwd);
 	if ((config_name = strrchr(cwd, '/')) != NULL) {
 	    config_name = g_strdup(config_name + 1);
 	}
@@ -5102,7 +5106,8 @@ config_init(
         amfree(cwd);
     } else if (flags & CONFIG_INIT_CLIENT) {
 	amfree(config_name);
-	config_dir = newstralloc(config_dir, CONFIG_DIR);
+	g_free(config_dir);
+	config_dir = g_strdup(CONFIG_DIR);
     } else {
 	/* ok, then, we won't read anything (for e.g., amrestore) */
 	amfree(config_name);
@@ -5131,9 +5136,11 @@ config_init(
     /* If we have a config_dir, we can try reading something */
     if (config_dir) {
 	if (flags & CONFIG_INIT_CLIENT) {
-	    config_filename = newvstralloc(config_filename, config_dir, "/amanda-client.conf", NULL);
+	    g_free(config_filename);
+	    config_filename = g_strjoin(NULL, config_dir, "/amanda-client.conf", NULL);
 	} else {
-	    config_filename = newvstralloc(config_filename, config_dir, "/amanda.conf", NULL);
+	    g_free(config_filename);
+	    config_filename = g_strjoin(NULL, config_dir, "/amanda.conf", NULL);
 	}
 
 	read_conffile(config_filename,
@@ -5150,7 +5157,7 @@ config_init(
 	int i;
 	for (i = 0; i < config_overrides->n_used; i++) {
 	    if (config_overrides->ovr[i].applied == FALSE) {
-		conf_parserror(_("unknown parameter '%s'"),
+		conf_parserror("unknown parameter '%s'",
 			       config_overrides->ovr[i].key);
 	    }
 	}
@@ -5556,7 +5563,7 @@ update_derived_values(
 
 	    v = interface_getconf(ip, INTER_COMMENT);
 	    free_val_t(v);
-	    val_t__str(v) = g_strdup(_("implicit from NETUSAGE"));
+	    val_t__str(v) = g_strdup("implicit from NETUSAGE");
 	    val_t__seen(v) = val_t__seen(getconf(CNF_NETUSAGE));
 
 	    v = interface_getconf(ip, INTER_MAXUSAGE);
@@ -5577,7 +5584,7 @@ update_derived_values(
 		tpcur.seen = val_t__seen(getconf(CNF_TAPETYPE));
 		save_tapetype();
 	    } else {
-		conf_parserror(_("tapetype %s is not defined"),
+		conf_parserror("tapetype %s is not defined",
 			       getconf_str(CNF_TAPETYPE));
 	    }
 	}
@@ -5587,7 +5594,7 @@ update_derived_values(
 		 il != NULL; il = il->next) {
 	    hd = lookup_holdingdisk(il->data);
 	    if (!hd) {
-		conf_parserror(_("holdingdisk %s is not defined"),
+		conf_parserror("holdingdisk %s is not defined",
 			       (char *)il->data);
 	    }
 	}
@@ -5596,7 +5603,7 @@ update_derived_values(
 	     getconf_seen(CNF_AUTOLABEL) > 0)  ||
 	    (getconf_seen(CNF_LABEL_NEW_TAPES) < 0 &&
 	     getconf_seen(CNF_AUTOLABEL) < 0)) {
-		conf_parserror(_("Can't specify both label-new-tapes and autolabel"));
+		conf_parserror("Can't specify both label-new-tapes and autolabel");
 	}
 	if ((getconf_seen(CNF_LABEL_NEW_TAPES) != 0 &&
 	     getconf_seen(CNF_AUTOLABEL) == 0) ||
@@ -5655,7 +5662,7 @@ update_derived_values(
 	    break;
 
 	default:
-	    error(_("Invalid displayunit missed by validate_displayunit"));
+	    error("Invalid displayunit missed by validate_displayunit");
 	    /* NOTREACHED */
     }
 }
@@ -6481,7 +6488,7 @@ void add_config_override(
 	co->n_allocated *= 2;
 	co->ovr = realloc(co->ovr, co->n_allocated * sizeof(*co->ovr));
 	if (!co->ovr) {
-	    error(_("Cannot realloc; out of memory"));
+	    error("Cannot realloc; out of memory");
 	    /* NOTREACHED */
 	}
     }
@@ -6501,7 +6508,7 @@ add_config_override_opt(
 
     value = strchr(optarg, '=');
     if (value == NULL) {
-	error(_("Must specify a value for %s."), optarg);
+	error("Must specify a value for %s.", optarg);
 	/* NOTREACHED */
     }
 
@@ -6526,7 +6533,7 @@ extract_commandline_config_overrides(
 		moveup = 1;
 	    }
 	    else {
-		if (i+1 >= *argc) error(_("expect something after -o"));
+		if (i+1 >= *argc) error("expect something after -o");
 		add_config_override_opt(co, (*argv)[i+1]);
 		moveup = 2;
 	    }
@@ -6620,7 +6627,7 @@ val_t_to_int(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_INT) {
-	error(_("val_t_to_int: val.type is not CONFTYPE_INT"));
+	error("val_t_to_int: val.type is not CONFTYPE_INT");
 	/*NOTREACHED*/
     }
     return val_t__int(val);
@@ -6632,7 +6639,7 @@ val_t_to_int64(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_INT64) {
-	error(_("val_t_to_int64: val.type is not CONFTYPE_INT64"));
+	error("val_t_to_int64: val.type is not CONFTYPE_INT64");
 	/*NOTREACHED*/
     }
     return val_t__int64(val);
@@ -6644,7 +6651,7 @@ val_t_to_real(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_REAL) {
-	error(_("val_t_to_real: val.type is not CONFTYPE_REAL"));
+	error("val_t_to_real: val.type is not CONFTYPE_REAL");
 	/*NOTREACHED*/
     }
     return val_t__real(val);
@@ -6657,7 +6664,7 @@ val_t_to_str(
     assert(config_initialized);
     /* support CONFTYPE_IDENT, too */
     if (val->type != CONFTYPE_STR && val->type != CONFTYPE_IDENT) {
-	error(_("val_t_to_str: val.type is not CONFTYPE_STR nor CONFTYPE_IDENT"));
+	error("val_t_to_str: val.type is not CONFTYPE_STR nor CONFTYPE_IDENT");
 	/*NOTREACHED*/
     }
     return val_t__str(val);
@@ -6670,7 +6677,7 @@ val_t_to_ident(
     assert(config_initialized);
     /* support CONFTYPE_STR, too */
     if (val->type != CONFTYPE_STR && val->type != CONFTYPE_IDENT) {
-	error(_("val_t_to_ident: val.type is not CONFTYPE_IDENT nor CONFTYPE_STR"));
+	error("val_t_to_ident: val.type is not CONFTYPE_IDENT nor CONFTYPE_STR");
 	/*NOTREACHED*/
     }
     return val_t__str(val);
@@ -6682,7 +6689,7 @@ val_t_to_identlist(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_IDENTLIST) {
-	error(_("val_t_to_ident: val.type is not CONFTYPE_IDENTLIST"));
+	error("val_t_to_ident: val.type is not CONFTYPE_IDENTLIST");
 	/*NOTREACHED*/
     }
     return val_t__identlist(val);
@@ -6694,7 +6701,7 @@ val_t_to_time(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_TIME) {
-	error(_("val_t_to_time: val.type is not CONFTYPE_TIME"));
+	error("val_t_to_time: val.type is not CONFTYPE_TIME");
 	/*NOTREACHED*/
     }
     return val_t__time(val);
@@ -6706,7 +6713,7 @@ val_t_to_size(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_SIZE) {
-	error(_("val_t_to_size: val.type is not CONFTYPE_SIZE"));
+	error("val_t_to_size: val.type is not CONFTYPE_SIZE");
 	/*NOTREACHED*/
     }
     return val_t__size(val);
@@ -6718,7 +6725,7 @@ val_t_to_boolean(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_BOOLEAN) {
-	error(_("val_t_to_bool: val.type is not CONFTYPE_BOOLEAN"));
+	error("val_t_to_bool: val.type is not CONFTYPE_BOOLEAN");
 	/*NOTREACHED*/
     }
     return val_t__boolean(val);
@@ -6730,7 +6737,7 @@ val_t_to_no_yes_all(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_NO_YES_ALL) {
-	error(_("val_t_to_no_yes_all: val.type is not CONFTYPE_NO_YES_ALL"));
+	error("val_t_to_no_yes_all: val.type is not CONFTYPE_NO_YES_ALL");
 	/*NOTREACHED*/
     }
     return val_t__no_yes_all(val);
@@ -6742,7 +6749,7 @@ val_t_to_compress(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_COMPRESS) {
-	error(_("val_t_to_compress: val.type is not CONFTYPE_COMPRESS"));
+	error("val_t_to_compress: val.type is not CONFTYPE_COMPRESS");
 	/*NOTREACHED*/
     }
     return val_t__compress(val);
@@ -6754,7 +6761,7 @@ val_t_to_encrypt(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_ENCRYPT) {
-	error(_("val_t_to_encrypt: val.type is not CONFTYPE_ENCRYPT"));
+	error("val_t_to_encrypt: val.type is not CONFTYPE_ENCRYPT");
 	/*NOTREACHED*/
     }
     return val_t__encrypt(val);
@@ -6766,7 +6773,7 @@ val_t_to_part_cache_type(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_PART_CACHE_TYPE) {
-	error(_("val_t_to_part_cache_type: val.type is not CONFTYPE_PART_CACHE_TYPE"));
+	error("val_t_to_part_cache_type: val.type is not CONFTYPE_PART_CACHE_TYPE");
 	/*NOTREACHED*/
     }
     return val_t__part_cache_type(val);
@@ -6778,7 +6785,7 @@ val_t_to_host_limit(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_HOST_LIMIT) {
-	error(_("val_t_to_host_limit: val.type is not CONFTYPE_HOST_LIMIT"));
+	error("val_t_to_host_limit: val.type is not CONFTYPE_HOST_LIMIT");
 	/*NOTREACHED*/
     }
     return &val_t__host_limit(val);
@@ -6790,7 +6797,7 @@ val_t_to_holding(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_HOLDING) {
-	error(_("val_t_to_hold: val.type is not CONFTYPE_HOLDING"));
+	error("val_t_to_hold: val.type is not CONFTYPE_HOLDING");
 	/*NOTREACHED*/
     }
     return val_t__holding(val);
@@ -6802,7 +6809,7 @@ val_t_to_estimatelist(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_ESTIMATELIST) {
-	error(_("val_t_to_estimatelist: val.type is not CONFTYPE_ESTIMATELIST"));
+	error("val_t_to_estimatelist: val.type is not CONFTYPE_ESTIMATELIST");
 	/*NOTREACHED*/
     }
     return val_t__estimatelist(val);
@@ -6814,7 +6821,7 @@ val_t_to_strategy(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_STRATEGY) {
-	error(_("val_t_to_strategy: val.type is not CONFTYPE_STRATEGY"));
+	error("val_t_to_strategy: val.type is not CONFTYPE_STRATEGY");
 	/*NOTREACHED*/
     }
     return val_t__strategy(val);
@@ -6826,7 +6833,7 @@ val_t_to_taperalgo(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_TAPERALGO) {
-	error(_("val_t_to_taperalgo: val.type is not CONFTYPE_TAPERALGO"));
+	error("val_t_to_taperalgo: val.type is not CONFTYPE_TAPERALGO");
 	/*NOTREACHED*/
     }
     return val_t__taperalgo(val);
@@ -6838,7 +6845,7 @@ val_t_to_send_amreport(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_SEND_AMREPORT_ON) {
-	error(_("val_t_to_send_amreport: val.type is not CONFTYPE_SEND_AMREPORT_ON"));
+	error("val_t_to_send_amreport: val.type is not CONFTYPE_SEND_AMREPORT_ON");
 	/*NOTREACHED*/
     }
     return val_t__send_amreport(val);
@@ -6850,7 +6857,7 @@ val_t_to_data_path(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_DATA_PATH) {
-	error(_("val_t_to_data_path: val.type is not CONFTYPE_DATA_PATH"));
+	error("val_t_to_data_path: val.type is not CONFTYPE_DATA_PATH");
 	/*NOTREACHED*/
     }
     return val_t__data_path(val);
@@ -6862,7 +6869,7 @@ val_t_to_priority(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_PRIORITY) {
-	error(_("val_t_to_priority: val.type is not CONFTYPE_PRIORITY"));
+	error("val_t_to_priority: val.type is not CONFTYPE_PRIORITY");
 	/*NOTREACHED*/
     }
     return val_t__priority(val);
@@ -6874,7 +6881,7 @@ val_t_to_rate(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_RATE) {
-	error(_("val_t_to_rate: val.type is not CONFTYPE_RATE"));
+	error("val_t_to_rate: val.type is not CONFTYPE_RATE");
 	/*NOTREACHED*/
     }
     return val_t__rate(val);
@@ -6886,7 +6893,7 @@ val_t_to_exinclude(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_EXINCLUDE) {
-	error(_("val_t_to_exinclude: val.type is not CONFTYPE_EXINCLUDE"));
+	error("val_t_to_exinclude: val.type is not CONFTYPE_EXINCLUDE");
 	/*NOTREACHED*/
     }
     return val_t__exinclude(val);
@@ -6899,7 +6906,7 @@ val_t_to_intrange(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_INTRANGE) {
-	error(_("val_t_to_intrange: val.type is not CONFTYPE_INTRANGE"));
+	error("val_t_to_intrange: val.type is not CONFTYPE_INTRANGE");
 	/*NOTREACHED*/
     }
     return val_t__intrange(val);
@@ -6911,7 +6918,7 @@ val_t_to_proplist(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_PROPLIST) {
-	error(_("val_t_to_proplist: val.type is not CONFTYPE_PROPLIST"));
+	error("val_t_to_proplist: val.type is not CONFTYPE_PROPLIST");
 	/*NOTREACHED*/
     }
     return val_t__proplist(val);
@@ -6923,7 +6930,7 @@ val_t_to_autolabel(
 {
     assert(config_initialized);
     if (val->type != CONFTYPE_AUTOLABEL) {
-	error(_("val_t_to_autolabel: val.type is not CONFTYPE_AUTOLABEL"));
+	error("val_t_to_autolabel: val.type is not CONFTYPE_AUTOLABEL");
 	/*NOTREACHED*/
     }
     return val_t__autolabel(val);
@@ -7285,18 +7292,18 @@ dump_configuration(void)
     char *prefix;
 
     if (config_client) {
-	error(_("Don't know how to dump client configurations."));
+	error("Don't know how to dump client configurations.");
 	/* NOTREACHED */
     }
 
-    g_printf(_("# AMANDA CONFIGURATION FROM FILE \"%s\":\n\n"), config_filename);
+    g_printf("# AMANDA CONFIGURATION FROM FILE \"%s\":\n\n", config_filename);
 
     for(np=server_var; np->token != CONF_UNKNOWN; np++) {
 	for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++) 
 	    if (np->token == kt->token) break;
 
 	if(kt->token == CONF_UNKNOWN)
-	    error(_("server bad token"));
+	    error("server bad token");
 
         val_t_print_token(stdout, NULL, "%-21s ", kt, &conf_data[np->parm]);
     }
@@ -7310,14 +7317,14 @@ dump_configuration(void)
 			break;
 	    }
 	    if(np->token == CONF_UNKNOWN)
-		error(_("holding bad value"));
+		error("holding bad value");
 
 	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++) {
 		if(kt->token == np->token)
 		    break;
 	    }
 	    if(kt->token == CONF_UNKNOWN)
-		error(_("holding bad token"));
+		error("holding bad token");
 
             val_t_print_token(stdout, NULL, "      %-9s ", kt, &hd->value[i]);
 	}
@@ -7334,12 +7341,12 @@ dump_configuration(void)
 	    for(np=tapetype_var; np->token != CONF_UNKNOWN; np++)
 		if(np->parm == i) break;
 	    if(np->token == CONF_UNKNOWN)
-		error(_("tapetype bad value"));
+		error("tapetype bad value");
 
 	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
 		if(kt->token == np->token) break;
 	    if(kt->token == CONF_UNKNOWN)
-		error(_("tapetype bad token"));
+		error("tapetype bad token");
 
             val_t_print_token(stdout, prefix, "      %-9s ", kt, &tp->value[i]);
 	}
@@ -7357,12 +7364,12 @@ dump_configuration(void)
 		for(np=dumptype_var; np->token != CONF_UNKNOWN; np++)
 		    if(np->parm == i) break;
 		if(np->token == CONF_UNKNOWN)
-		    error(_("dumptype bad value"));
+		    error("dumptype bad value");
 
 		for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
 		    if(kt->token == np->token) break;
 		if(kt->token == CONF_UNKNOWN)
-		    error(_("dumptype bad token"));
+		    error("dumptype bad token");
 
 		val_t_print_token(stdout, prefix, "      %-19s ", kt, &dp->value[i]);
 	    }
@@ -7383,12 +7390,12 @@ dump_configuration(void)
 	    for(np=interface_var; np->token != CONF_UNKNOWN; np++)
 		if(np->parm == i) break;
 	    if(np->token == CONF_UNKNOWN)
-		error(_("interface bad value"));
+		error("interface bad value");
 
 	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
 		if(kt->token == np->token) break;
 	    if(kt->token == CONF_UNKNOWN)
-		error(_("interface bad token"));
+		error("interface bad token");
 
 	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &ip->value[i]);
 	}
@@ -7405,12 +7412,12 @@ dump_configuration(void)
 	    for(np=application_var; np->token != CONF_UNKNOWN; np++)
 		if(np->parm == i) break;
 	    if(np->token == CONF_UNKNOWN)
-		error(_("application bad value"));
+		error("application bad value");
 
 	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
 		if(kt->token == np->token) break;
 	    if(kt->token == CONF_UNKNOWN)
-		error(_("application bad token"));
+		error("application bad token");
 
 	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &ap->value[i]);
 	}
@@ -7427,12 +7434,12 @@ dump_configuration(void)
 	    for(np=pp_script_var; np->token != CONF_UNKNOWN; np++)
 		if(np->parm == i) break;
 	    if(np->token == CONF_UNKNOWN)
-		error(_("script bad value"));
+		error("script bad value");
 
 	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
 		if(kt->token == np->token) break;
 	    if(kt->token == CONF_UNKNOWN)
-		error(_("script bad token"));
+		error("script bad token");
 
 	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &ps->value[i]);
 	}
@@ -7446,12 +7453,12 @@ dump_configuration(void)
 	    for(np=device_config_var; np->token != CONF_UNKNOWN; np++)
 		if(np->parm == i) break;
 	    if(np->token == CONF_UNKNOWN)
-		error(_("device bad value"));
+		error("device bad value");
 
 	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
 		if(kt->token == np->token) break;
 	    if(kt->token == CONF_UNKNOWN)
-		error(_("device bad token"));
+		error("device bad token");
 
 	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &dc->value[i]);
 	}
@@ -7465,12 +7472,12 @@ dump_configuration(void)
 	    for(np=changer_config_var; np->token != CONF_UNKNOWN; np++)
 		if(np->parm == i) break;
 	    if(np->token == CONF_UNKNOWN)
-		error(_("changer bad value"));
+		error("changer bad value");
 
 	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
 		if(kt->token == np->token) break;
 	    if(kt->token == CONF_UNKNOWN)
-		error(_("changer bad token"));
+		error("changer bad token");
 
 	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &cc->value[i]);
 	}
@@ -7484,12 +7491,12 @@ dump_configuration(void)
 	    for(np=interactivity_var; np->token != CONF_UNKNOWN; np++)
 		if(np->parm == i) break;
 	    if(np->token == CONF_UNKNOWN)
-		error(_("interactivity bad value"));
+		error("interactivity bad value");
 
 	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
 		if(kt->token == np->token) break;
 	    if(kt->token == CONF_UNKNOWN)
-		error(_("interactivity bad token"));
+		error("interactivity bad token");
 
 	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &iv->value[i]);
 	}
@@ -7503,12 +7510,12 @@ dump_configuration(void)
 	    for(np=taperscan_var; np->token != CONF_UNKNOWN; np++)
 		if(np->parm == i) break;
 	    if(np->token == CONF_UNKNOWN)
-		error(_("taperscan bad value"));
+		error("taperscan bad value");
 
 	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
 		if(kt->token == np->token) break;
 	    if(kt->token == CONF_UNKNOWN)
-		error(_("taperscan bad token"));
+		error("taperscan bad token");
 
 	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &ts->value[i]);
 	}
@@ -8021,7 +8028,7 @@ val_t_to_execute_on(
     val_t *val)
 {
     if (val->type != CONFTYPE_EXECUTE_ON) {
-	error(_("get_conftype_execute_on: val.type is not CONFTYPE_EXECUTE_ON"));
+	error("get_conftype_execute_on: val.type is not CONFTYPE_EXECUTE_ON");
 	/*NOTREACHED*/
     }
     return val_t__execute_on(val);
@@ -8032,7 +8039,7 @@ val_t_to_execute_where(
     val_t *val)
 {
     if (val->type != CONFTYPE_EXECUTE_WHERE) {
-	error(_("get_conftype_execute_where: val.type is not CONFTYPE_EXECUTE_WHERE"));
+	error("get_conftype_execute_where: val.type is not CONFTYPE_EXECUTE_WHERE");
 	/*NOTREACHED*/
     }
     return val->v.i;
@@ -8043,7 +8050,7 @@ val_t_to_application(
     val_t *val)
 {
     if (val->type != CONFTYPE_APPLICATION) {
-	error(_("get_conftype_applicaiton: val.type is not CONFTYPE_APPLICATION"));
+	error("get_conftype_applicaiton: val.type is not CONFTYPE_APPLICATION");
 	/*NOTREACHED*/
     }
     return val->v.s;
@@ -8445,19 +8452,20 @@ static void conf_error_common(
     char *errstr = NULL;
 
     if(current_line)
-	errstr = g_strdup_printf(_("argument \"%s\": %s"),
+	errstr = g_strdup_printf("argument \"%s\": %s",
 		    current_line, msg);
     else if (current_filename && current_line_num > 0)
-	errstr = g_strdup_printf(_("\"%s\", line %d: %s"),
+	errstr = g_strdup_printf("\"%s\", line %d: %s",
 		    current_filename, current_line_num, msg);
     else
-	errstr = g_strdup_printf(_("parse error: %s"), msg);
+	errstr = g_strdup_printf("parse error: %s", msg);
     amfree(msg);
 
     config_add_error(level, errstr);
 }
 
-printf_arglist_function(void conf_parserror, const char *, format)
+G_GNUC_PRINTF(1, 2)
+static void conf_parserror(const char *format, ...)
 {
     va_list argp;
     
@@ -8466,7 +8474,9 @@ printf_arglist_function(void conf_parserror, const char *, format)
     arglist_end(argp);
 }
 
-printf_arglist_function(void conf_parswarn, const char *, format) {
+G_GNUC_PRINTF(1, 2)
+static void conf_parswarn(const char *format, ...)
+{
     va_list argp;
     
     arglist_start(argp, format);
@@ -8546,7 +8556,7 @@ data_path_to_string(
 	case DATA_PATH_AMANDA   : return "AMANDA";
 	case DATA_PATH_DIRECTTCP: return "DIRECTTCP";
     }
-    error(_("datapath is not DATA_PATH_AMANDA or DATA_PATH_DIRECTTCP"));
+    error("datapath is not DATA_PATH_AMANDA or DATA_PATH_DIRECTTCP");
     /* NOTREACHED */
 }
 
@@ -8558,7 +8568,7 @@ data_path_from_string(
 	return DATA_PATH_AMANDA;
     if (strcmp(data, "DIRECTTCP") == 0)
 	return DATA_PATH_DIRECTTCP;
-    error(_("datapath is not AMANDA or DIRECTTCP :%s:"), data);
+    error("datapath is not AMANDA or DIRECTTCP :%s:", data);
     /* NOTREACHED */
 }
 

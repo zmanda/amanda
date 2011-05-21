@@ -43,7 +43,6 @@
 #include "amanda.h"
 #include "conffile.h"
 #include "diskfile.h"
-#include "arglist.h"
 #include "clock.h"
 #include "match.h"
 #include "amindex.h"
@@ -140,7 +139,7 @@ get_pid_status(
     status = waitpid(pid, &wait_status, 0);
     if (status < 0) {
 	msg = g_strdup_printf(
-		_("%s (%d) returned negative value: %s"),
+		"%s (%d) returned negative value: %s",
 		program, pid, strerror(errno));
 	dbprintf("%s\n", msg);
 	g_ptr_array_add(*emsg, msg);
@@ -148,14 +147,14 @@ get_pid_status(
     } else {
 	if (!WIFEXITED(wait_status)) {
 	    msg = g_strdup_printf(
-			_("%s exited with signal %d"),
+			"%s exited with signal %d",
 			program, WTERMSIG(wait_status));
 	    dbprintf("%s\n", msg);
 	    g_ptr_array_add(*emsg, msg);
 	    result = 0;
 	} else if (WEXITSTATUS(wait_status) != 0) {
 	    msg = g_strdup_printf(
-			_("%s exited with status %d"),
+			"%s exited with status %d",
 			program, WEXITSTATUS(wait_status));
 	    dbprintf("%s\n", msg);
 	    g_ptr_array_add(*emsg, msg);
@@ -172,7 +171,7 @@ remove_files(
     REMOVE_ITEM *prev;
 
     while(remove) {
-	dbprintf(_("removing index file: %s\n"), remove->filename);
+	dbprintf("removing index file: %s\n", remove->filename);
 	unlink(remove->filename);
 	amfree(remove->filename);
 	prev = remove;
@@ -230,7 +229,7 @@ uncompress_file(
 	 * Check that compressed file exists manually.
 	 */
 	if (stat(filename_gz, &statbuf) < 0) {
-	    msg = g_strdup_printf(_("Compressed file '%s' is inaccessable: %s"),
+	    msg = g_strdup_printf("Compressed file '%s' is inaccessable: %s",
 			     filename_gz, strerror(errno));
 	    dbprintf("%s\n", msg);
 	    g_ptr_array_add(*emsg, msg);
@@ -248,7 +247,7 @@ uncompress_file(
 
 	indexfd = open(filename,O_WRONLY|O_CREAT, 0600);
 	if (indexfd == -1) {
-	    msg = g_strdup_printf(_("Can't open '%s' for writting: %s"),
+	    msg = g_strdup_printf("Can't open '%s' for writting: %s",
 			      filename, strerror(errno));
 	    dbprintf("%s\n", msg);
 	    g_ptr_array_add(*emsg, msg);
@@ -271,7 +270,7 @@ uncompress_file(
 
 	pipe_stream = fdopen(pipe_from_gzip,"r");
 	if(pipe_stream == NULL) {
-	    msg = g_strdup_printf(_("Can't fdopen pipe from gzip: %s"),
+	    msg = g_strdup_printf("Can't fdopen pipe from gzip: %s",
 			     strerror(errno));
 	    dbprintf("%s\n", msg);
 	    g_ptr_array_add(*emsg, msg);
@@ -293,7 +292,7 @@ uncompress_file(
 	switch (pid_index) {
 	case -1:
 	    msg = g_strdup_printf(
-			_("fork error: %s"),
+			"fork error: %s",
 			strerror(errno));
 	    dbprintf("%s\n", msg);
 	    g_ptr_array_add(*emsg, msg);
@@ -387,7 +386,7 @@ uncompress_file(
 	}
 
     } else if(!S_ISREG((stat_filename.st_mode))) {
-	    msg = g_strdup_printf(_("\"%s\" is not a regular file"), filename);
+	    msg = g_strdup_printf("\"%s\" is not a regular file", filename);
 	    dbprintf("%s\n", msg);
 	    g_ptr_array_add(*emsg, msg);
 	    errno = -1;
@@ -421,13 +420,13 @@ process_ls_dump(
     if (strcmp(dir, "/") == 0) {
 	dir_slash = g_strdup(dir);
     } else {
-	dir_slash = stralloc2(dir, "/");
+	dir_slash = g_strdup_printf("%s/", dir);
     }
 
     filename_gz = get_index_name(dump_hostname, dump_item->hostname, disk_name,
 				 dump_item->date, dump_item->level);
     if (filename_gz == NULL) {
-	g_ptr_array_add(*emsg, g_strdup(_("index file not found")));
+	g_ptr_array_add(*emsg, g_strdup("index file not found"));
 	amfree(filename_gz);
 	amfree(dir_slash);
 	return -1;
@@ -496,7 +495,7 @@ reply_ptr_array(
 }
 
 /* send a 1 line reply to the client */
-printf_arglist_function1(static void reply, int, n, char *, fmt)
+static void reply(int n, char *fmt, ...)
 {
     va_list args;
     int len;
@@ -519,21 +518,21 @@ printf_arglist_function1(static void reply, int, n, char *, fmt)
 
     if (g_fprintf(cmdout,"%03d %s\r\n", n, reply_buffer) < 0)
     {
-	dbprintf(_("! error %d (%s) in printf\n"), errno, strerror(errno));
+	dbprintf("! error %d (%s) in printf\n", errno, strerror(errno));
 	uncompress_remove = remove_files(uncompress_remove);
 	exit(1);
     }
     if (fflush(cmdout) != 0)
     {
-	dbprintf(_("! error %d (%s) in fflush\n"), errno, strerror(errno));
+	dbprintf("! error %d (%s) in fflush\n", errno, strerror(errno));
 	uncompress_remove = remove_files(uncompress_remove);
 	exit(1);
     }
-    dbprintf(_("< %03d %s\n"), n, reply_buffer);
+    dbprintf("< %03d %s\n", n, reply_buffer);
 }
 
 /* send one line of a multi-line response */
-printf_arglist_function1(static void lreply, int, n, char *, fmt)
+static void lreply(int n, char *fmt, ...)
 {
     va_list args;
     int len;
@@ -556,14 +555,14 @@ printf_arglist_function1(static void lreply, int, n, char *, fmt)
 
     if (g_fprintf(cmdout,"%03d-%s\r\n", n, reply_buffer) < 0)
     {
-	dbprintf(_("! error %d (%s) in printf\n"),
+	dbprintf("! error %d (%s) in printf\n",
 		  errno, strerror(errno));
 	uncompress_remove = remove_files(uncompress_remove);
 	exit(1);
     }
     if (fflush(cmdout) != 0)
     {
-	dbprintf(_("! error %d (%s) in fflush\n"),
+	dbprintf("! error %d (%s) in fflush\n",
 		  errno, strerror(errno));
 	uncompress_remove = remove_files(uncompress_remove);
 	exit(1);
@@ -574,7 +573,7 @@ printf_arglist_function1(static void lreply, int, n, char *, fmt)
 }
 
 /* send one line of a multi-line response */
-printf_arglist_function1(static void fast_lreply, int, n, char *, fmt)
+static void fast_lreply(int n, char *fmt, ...)
 {
     va_list args;
     int len;
@@ -597,7 +596,7 @@ printf_arglist_function1(static void fast_lreply, int, n, char *, fmt)
 
     if (g_fprintf(cmdout,"%03d-%s\r\n", n, reply_buffer) < 0)
     {
-	dbprintf(_("! error %d (%s) in printf\n"),
+	dbprintf("! error %d (%s) in printf\n",
 		  errno, strerror(errno));
 	uncompress_remove = remove_files(uncompress_remove);
 	exit(1);
@@ -619,14 +618,14 @@ is_dump_host_valid(
     disk_t      *diskp;
 
     if (get_config_name() == NULL) {
-	reply(501, _("Must set config before setting host."));
+	reply(501, "Must set config before setting host.");
 	return NULL;
     }
 
     /* check that the config actually handles that host */
     ihost = lookup_host(host);
     if(ihost == NULL) {
-	reply(501, _("Host %s is not in your disklist."), host);
+	reply(501, "Host %s is not in your disklist.", host);
 	return NULL;
     }
 
@@ -642,7 +641,7 @@ is_dump_host_valid(
 	}
     }
 
-    reply(501, _("No index records for host: %s. Have you enabled indexing?"),
+    reply(501, "No index records for host: %s. Have you enabled indexing?",
 	  host);
     return NULL;
 }
@@ -726,11 +725,11 @@ is_disk_valid(
     char *qdisk;
 
     if (get_config_name() == NULL) {
-	reply(501, _("Must set config,host before setting disk."));
+	reply(501, "Must set config,host before setting disk.");
 	return -1;
     }
     else if (dump_hostname == NULL) {
-	reply(501, _("Must set host before setting disk."));
+	reply(501, "Must set host before setting disk.");
 	return -1;
     }
 
@@ -738,7 +737,7 @@ is_disk_valid(
     idisk = lookup_disk(dump_hostname, disk);
     if(idisk == NULL || !is_disk_allowed(idisk)) {
 	qdisk = quote_string(disk);
-	reply(501, _("Disk %s:%s is not in the server's disklist."), dump_hostname, qdisk);
+	reply(501, "Disk %s:%s is not in the server's disklist.", dump_hostname, qdisk);
 	amfree(qdisk);
 	return -1;
     }
@@ -746,7 +745,7 @@ is_disk_valid(
     /* assume an index dir already */
     if (get_index_dir(dump_hostname, idisk->hostname, disk) == 0) {
 	qdisk = quote_string(disk);
-	reply(501, _("No index records for disk: %s. Invalid?"), qdisk);
+	reply(501, "No index records for disk: %s. Invalid?", qdisk);
 	amfree(qdisk);
 	return -1;
     }
@@ -766,14 +765,14 @@ check_and_load_config(
 
     /* check that the config actually exists */
     if (config == NULL) {
-	reply(501, _("Must set config first."));
+	reply(501, "Must set config first.");
 	return -1;
     }
 
     /* (re-)initialize configuration with the new config name */
     config_init(CONFIG_INIT_EXPLICIT_NAME, config);
     if (config_errors(NULL) >= CFGERR_ERRORS) {
-	reply(501, _("Could not read config file for %s!"), config);
+	reply(501, "Could not read config file for %s!", config);
 	return -1;
     }
 
@@ -783,13 +782,13 @@ check_and_load_config(
     read_diskfile(conf_diskfile, &disk_list);
     amfree(conf_diskfile);
     if (config_errors(NULL) >= CFGERR_ERRORS) {
-	reply(501, _("Could not read disk file %s!"), conf_diskfile);
+	reply(501, "Could not read disk file %s!", conf_diskfile);
 	return -1;
     }
 
     conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     if(read_tapelist(conf_tapelist)) {
-	reply(501, _("Could not read tapelist file %s!"), conf_tapelist);
+	reply(501, "Could not read tapelist file %s!", conf_tapelist);
 	amfree(conf_tapelist);
 	return -1;
     }
@@ -805,7 +804,7 @@ check_and_load_config(
 
     conf_indexdir = config_dir_relative(getconf_str(CNF_INDEXDIR));
     if (stat (conf_indexdir, &dir_stat) != 0 || !S_ISDIR(dir_stat.st_mode)) {
-	reply(501, _("Index directory %s does not exist"), conf_indexdir);
+	reply(501, "Index directory %s does not exist", conf_indexdir);
 	amfree(conf_indexdir);
 	return -1;
     }
@@ -826,15 +825,15 @@ build_disk_table(void)
     find_result_t *find_output;
 
     if (get_config_name() == NULL) {
-	reply(590, _("Must set config,host,disk before building disk table"));
+	reply(590, "Must set config,host,disk before building disk table");
 	return -1;
     }
     else if (dump_hostname == NULL) {
-	reply(590, _("Must set host,disk before building disk table"));
+	reply(590, "Must set host,disk before building disk table");
 	return -1;
     }
     else if (disk_name == NULL) {
-	reply(590, _("Must set disk before building disk table"));
+	reply(590, "Must set disk before building disk table");
 	return -1;
     }
 
@@ -898,19 +897,19 @@ disk_history_list(void)
     char date[20];
 
     if (get_config_name() == NULL) {
-	reply(502, _("Must set config,host,disk before listing history"));
+	reply(502, "Must set config,host,disk before listing history");
 	return -1;
     }
     else if (dump_hostname == NULL) {
-	reply(502, _("Must set host,disk before listing history"));
+	reply(502, "Must set host,disk before listing history");
 	return -1;
     }
     else if (disk_name == NULL) {
-	reply(502, _("Must set disk before listing history"));
+	reply(502, "Must set disk before listing history");
 	return -1;
     }
 
-    lreply(200, _(" Dump history for config \"%s\" host \"%s\" disk %s"),
+    lreply(200, " Dump history for config \"%s\" host \"%s\" disk %s",
 	  get_config_name(), dump_hostname, qdisk_name);
 
     for (item=first_dump(); item!=NULL; item=next_dump(item)){
@@ -931,7 +930,7 @@ disk_history_list(void)
 	amfree(tapelist_str);
     }
 
-    reply(200, _("Dump history for config \"%s\" host \"%s\" disk %s"),
+    reply(200, "Dump history for config \"%s\" host \"%s\" disk %s",
 	  get_config_name(), dump_hostname, qdisk_name);
 
     return 0;
@@ -958,19 +957,19 @@ is_dir_valid_opaque(
     GPtrArray *emsg = NULL;
 
     if (get_config_name() == NULL || dump_hostname == NULL || disk_name == NULL) {
-	reply(502, _("Must set config,host,disk before asking about directories"));
+	reply(502, "Must set config,host,disk before asking about directories");
 	return -1;
     }
     else if (dump_hostname == NULL) {
-	reply(502, _("Must set host,disk before asking about directories"));
+	reply(502, "Must set host,disk before asking about directories");
 	return -1;
     }
     else if (disk_name == NULL) {
-	reply(502, _("Must set disk before asking about directories"));
+	reply(502, "Must set disk before asking about directories");
 	return -1;
     }
     else if (target_date == NULL) {
-	reply(502, _("Must set date before asking about directories"));
+	reply(502, "Must set date before asking about directories");
 	return -1;
     }
     /* scan through till we find first dump on or before date */
@@ -981,14 +980,14 @@ is_dir_valid_opaque(
     if (item == NULL)
     {
 	/* no dump for given date */
-	reply(500, _("No dumps available on or before date \"%s\""), target_date);
+	reply(500, "No dumps available on or before date \"%s\"", target_date);
 	return -1;
     }
 
     if(strcmp(dir, "/") == 0) {
 	ldir = g_strdup(dir);
     } else {
-	ldir = stralloc2(dir, "/");
+	ldir = g_strdup_printf("%s/", dir);
     }
     ldir_len = strlen(ldir);
 
@@ -1015,7 +1014,7 @@ is_dir_valid_opaque(
 	amfree(filename_gz);
 	dbprintf("f %s\n", filename);
 	if ((fp = fopen(filename, "r")) == NULL) {
-	    reply(599, _("System error: %s"), strerror(errno));
+	    reply(599, "System error: %s", strerror(errno));
 	    amfree(filename);
 	    amfree(ldir);
 	    return -1;
@@ -1044,7 +1043,7 @@ is_dir_valid_opaque(
 
     amfree(filename);
     amfree(ldir);
-    reply(500, _("\"%s\" is an invalid directory"), dir);
+    reply(500, "\"%s\" is an invalid directory", dir);
     return -1;
 }
 
@@ -1068,19 +1067,19 @@ opaque_ls(
     clear_dir_list();
 
     if (get_config_name() == NULL) {
-	reply(502, _("Must set config,host,disk before listing a directory"));
+	reply(502, "Must set config,host,disk before listing a directory");
 	return -1;
     }
     else if (dump_hostname == NULL) {
-	reply(502, _("Must set host,disk before listing a directory"));
+	reply(502, "Must set host,disk before listing a directory");
 	return -1;
     }
     else if (disk_name == NULL) {
-	reply(502, _("Must set disk before listing a directory"));
+	reply(502, "Must set disk before listing a directory");
 	return -1;
     }
     else if (target_date == NULL) {
-	reply(502, _("Must set date before listing a directory"));
+	reply(502, "Must set date before listing a directory");
 	return -1;
     }
 
@@ -1092,7 +1091,7 @@ opaque_ls(
     if (dump_item == NULL)
     {
 	/* no dump for given date */
-	reply(500, _("No dumps available on or before date \"%s\""), target_date);
+	reply(500, "No dumps available on or before date \"%s\"", target_date);
 	return -1;
     }
 
@@ -1121,7 +1120,7 @@ opaque_ls(
     g_ptr_array_free_full(emsg);
 
     /* return the information to the caller */
-    lreply(200, _(" Opaque list of %s"), dir);
+    lreply(200, " Opaque list of %s", dir);
     for(level=0; level < DUMP_LEVELS; level++) {
 	for (dir_item = get_dir_list(); dir_item != NULL; 
 	     dir_item = dir_item->next) {
@@ -1130,8 +1129,7 @@ opaque_ls(
 		if (!am_has_feature(their_features, marshall_feature) &&
 	            (num_entries(dir_item->dump->tapes) > 1 ||
 	            dir_item->dump->tapes->numfiles > 1)) {
-	            fast_lreply(501, _(" ERROR: Split dumps not supported"
-				" with old version of amrecover."));
+	            fast_lreply(501, " ERROR: Split dumps not supported"" with old version of amrecover.");
 		    break;
 		}
 		else {
@@ -1140,7 +1138,7 @@ opaque_ls(
 	    }
 	}
     }
-    reply(200, _(" Opaque list of %s"), dir);
+    reply(200, " Opaque list of %s", dir);
 
     clear_dir_list();
     return 0;
@@ -1209,35 +1207,35 @@ tapedev_is(void)
 
     /* check state okay to do this */
     if (get_config_name() == NULL) {
-	reply(501, _("Must set config before asking about tapedev."));
+	reply(501, "Must set config before asking about tapedev.");
 	return -1;
     }
 
     /* use amrecover_changer if possible */
     if ((result = getconf_str(CNF_AMRECOVER_CHANGER)) != NULL  &&
         *result != '\0') {
-	dbprintf(_("tapedev_is amrecover_changer: %s\n"), result);
+	dbprintf("tapedev_is amrecover_changer: %s\n", result);
 	reply(200, "%s", result);
 	return 0;
     }
 
     /* use changer if possible */
     if ((result = getconf_str(CNF_TPCHANGER)) != NULL  &&  *result != '\0') {
-	dbprintf(_("tapedev_is tpchanger: %s\n"), result);
+	dbprintf("tapedev_is tpchanger: %s\n", result);
 	reply(200, "%s", result);
 	return 0;
     }
 
     /* get tapedev value */
     if ((result = getconf_str(CNF_TAPEDEV)) != NULL  &&  *result != '\0') {
-	dbprintf(_("tapedev_is tapedev: %s\n"), result);
+	dbprintf("tapedev_is tapedev: %s\n", result);
 	reply(200, "%s", result);
 	return 0;
     }
 
-    dbprintf(_("No tapedev or tpchanger in config site.\n"));
+    dbprintf("No tapedev or tpchanger in config site.\n");
 
-    reply(501, _("Tapedev or tpchanger not set in config file."));
+    reply(501, "Tapedev or tpchanger not set in config file.");
     return -1;
 }
 
@@ -1250,15 +1248,15 @@ are_dumps_compressed(void)
 
     /* check state okay to do this */
     if (get_config_name() == NULL) {
-	reply(501, _("Must set config,host,disk name before asking about dumps."));
+	reply(501, "Must set config,host,disk name before asking about dumps.");
 	return -1;
     }
     else if (dump_hostname == NULL) {
-	reply(501, _("Must set host,disk name before asking about dumps."));
+	reply(501, "Must set host,disk name before asking about dumps.");
 	return -1;
     }
     else if (disk_name == NULL) {
-	reply(501, _("Must set disk name before asking about dumps."));
+	reply(501, "Must set disk name before asking about dumps.");
 	return -1;
     }
 
@@ -1271,7 +1269,7 @@ are_dumps_compressed(void)
     }
 
     if (diskp == NULL) {
-	reply(501, _("Couldn't find host/disk in disk file."));
+	reply(501, "Couldn't find host/disk in disk file.");
 	return -1;
     }
 
@@ -1337,14 +1335,14 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     dbopen(DBG_SUBDIR_SERVER);
-    dbprintf(_("version %s\n"), VERSION);
+    dbprintf("version %s\n", VERSION);
 
     if(argv == NULL) {
 	error("argv == NULL\n");
     }
 
     if (! (argc >= 1 && argv[0] != NULL)) {
-	dbprintf(_("WARNING: argv[0] not defined: check inetd.conf\n"));
+	dbprintf("WARNING: argv[0] not defined: check inetd.conf\n");
     }
 
     debug_dup_stderr_to_debug();
@@ -1382,7 +1380,7 @@ main(
     }
 
     if(gethostname(local_hostname, sizeof(local_hostname)-1) == -1) {
-	error(_("gethostname: %s"), strerror(errno));
+	error("gethostname: %s", strerror(errno));
 	/*NOTREACHED*/
     }
     local_hostname[sizeof(local_hostname)-1] = '\0';
@@ -1399,7 +1397,7 @@ main(
 	    /* who are we talking to? */
 	    socklen = sizeof (his_addr);
 	    if (getpeername(0, (struct sockaddr *)&his_addr, &socklen) == -1)
-		error(_("getpeername: %s"), strerror(errno));
+		error("getpeername: %s", strerror(errno));
 
 	    /* Try a reverse (IP->hostname) resolution, and fail if it does
 	     * not work -- this is a basic security check */
@@ -1407,7 +1405,7 @@ main(
 			    his_hostname, sizeof(his_hostname),
 			    NULL, 0,
 			    0)) {
-		error(_("getnameinfo(%s): hostname lookup failed"),
+		error("getnameinfo(%s): hostname lookup failed",
 		      str_sockaddr(&his_addr));
 		/*NOTREACHED*/
 	    }
@@ -1422,7 +1420,7 @@ main(
 	for(; (line = agets(stdin)) != NULL; free(line)) {
 	    if(strncmp_const(line, "OPTIONS ") == 0) {
                 if (g_options != NULL) {
-		    dbprintf(_("REQ packet specified multiple OPTIONS.\n"));
+		    dbprintf("REQ packet specified multiple OPTIONS.\n");
                     free_g_options(g_options);
                 }
 		g_options = parse_g_options(line+8, 1);
@@ -1437,9 +1435,9 @@ main(
 
 	if(amandad_auth && g_options->auth) {
 	    if(strcasecmp(amandad_auth, g_options->auth) != 0) {
-		g_printf(_("ERROR recover program ask for auth=%s while amindexd is configured for '%s'\n"),
+		g_printf("ERROR recover program ask for auth=%s while amindexd is configured for '%s'\n",
 		       g_options->auth, amandad_auth);
-		error(_("amindexd: ERROR recover program ask for auth=%s while amindexd is configured for '%s'"),
+		error("amindexd: ERROR recover program ask for auth=%s while amindexd is configured for '%s'",
 		      g_options->auth, amandad_auth);
 		/*NOTREACHED*/
 	    }
@@ -1454,13 +1452,13 @@ main(
 	
 	cmdout = fdopen(DATA_FD_OFFSET + 0, "a");
 	if (!cmdout) {
-	    error(_("amindexd: Can't fdopen(%d): %s"), DATA_FD_OFFSET + 0, strerror(errno));
+	    error("amindexd: Can't fdopen(%d): %s", DATA_FD_OFFSET + 0, strerror(errno));
 	    /*NOTREACHED*/
 	}
 
 	cmdin = fdopen(DATA_FD_OFFSET + 1, "r");
 	if (!cmdin) {
-	    error(_("amindexd: Can't fdopen(%d): %s"), DATA_FD_OFFSET + 1, strerror(errno));
+	    error("amindexd: Can't fdopen(%d): %s", DATA_FD_OFFSET + 1, strerror(errno));
 	    /*NOTREACHED*/
 	}
     }
@@ -1478,7 +1476,7 @@ main(
 	return 1;
     }
 
-    reply(220, _("%s AMANDA index server (%s) ready."), local_hostname,
+    reply(220, "%s AMANDA index server (%s) ready.", local_hostname,
 	  VERSION);
 
     user_validated = from_amandad;
@@ -1490,12 +1488,12 @@ main(
 	while(1) {
 	    if((part = agets(cmdin)) == NULL) {
 		if(errno != 0) {
-		    dbprintf(_("? read error: %s\n"), strerror(errno));
+		    dbprintf("? read error: %s\n", strerror(errno));
 		} else {
-		    dbprintf(_("? unexpected EOF\n"));
+		    dbprintf("? unexpected EOF\n");
 		}
 		if(line) {
-		    dbprintf(_("? unprocessed input:\n"));
+		    dbprintf("? unprocessed input:\n");
 		    dbprintf("-----\n");
 		    dbprintf("? %s\n", line);
 		    dbprintf("-----\n");
@@ -1534,7 +1532,7 @@ main(
 
 	skip_whitespace(s, ch);
 	if(ch == '\0') {
-	    reply(500, _("Command not recognised/incorrect: %s"), line);
+	    reply(500, "Command not recognised/incorrect: %s", line);
 	    amfree(line);
 	    continue;
 	}
@@ -1560,13 +1558,13 @@ main(
 					(sockaddr_union *)&his_addr,
 					arg, 0, &errstr);
 	    if(user_validated) {
-		reply(200, _("Access OK"));
+		reply(200, "Access OK");
 		amfree(line);
 		continue;
 	    }
 	}
 	if (!user_validated) {  /* don't tell client the reason, just log it to debug log */
-	    reply(500, _("Access not allowed"));
+	    reply(500, "Access not allowed");
 	    if (errstr) {
 		dbprintf("%s\n", errstr);
 		amfree(errstr);
@@ -1583,8 +1581,9 @@ main(
 	    s[-1] = '\0';
 	    if ((lhost = is_dump_host_valid(arg)) != NULL)
 	    {
-		dump_hostname = newstralloc(dump_hostname, lhost->hostname);
-		reply(200, _("Dump host set to %s."), dump_hostname);
+		g_free(dump_hostname);
+		dump_hostname = g_strdup(lhost->hostname);
+		reply(200, "Dump host set to %s.", dump_hostname);
 		amfree(qdisk_name);		/* invalidate any value */
 		amfree(disk_name);		/* invalidate any value */
 	    }
@@ -1596,10 +1595,10 @@ main(
                 found = 0;
 	    s[-1] = '\0';
 	    if (get_config_name() == NULL) {
-		reply(501, _("Must set config before listhost"));
+		reply(501, "Must set config before listhost");
 	    }
 	    else {
-		lreply(200, _(" List hosts for config %s"), get_config_name());
+		lreply(200, " List hosts for config %s", get_config_name());
 		for (disk = disk_list.head; disk!=NULL; disk = disk->next) {
                     found = 0;
 		    for (diskdup = disk_list.head; diskdup!=disk; diskdup = diskdup->next) {
@@ -1614,21 +1613,22 @@ main(
                     }
 		}
 		if(nbhost > 0) {
-		    reply(200, _(" List hosts for config %s"), get_config_name());
+		    reply(200, " List hosts for config %s", get_config_name());
 		}
 		else {
-		    reply(200, _("No hosts for config %s"), get_config_name());
+		    reply(200, "No hosts for config %s", get_config_name());
 		}
 	    }
 	    s[-1] = (char)ch;
 	} else if (strcmp(cmd, "DISK") == 0 && arg) {
 	    s[-1] = '\0';
 	    if (is_disk_valid(arg) != -1) {
-		disk_name = newstralloc(disk_name, arg);
+		g_free(disk_name);
+		disk_name = g_strdup(arg);
 		amfree(qdisk_name);
 		qdisk_name = quote_string(disk_name);
 		if (build_disk_table() != -1) {
-		    reply(200, _("Disk set to %s."), qdisk_name);
+		    reply(200, "Disk set to %s.", qdisk_name);
 		}
 	    }
 	    s[-1] = (char)ch;
@@ -1653,7 +1653,7 @@ main(
 		errarray = validate_optionstr(dp);
 		if (errarray->len > 0) {
 		    for (i=0; i < errarray->len; i++) {
-			g_debug(_("ERROR: %s:%s %s"),
+			g_debug("ERROR: %s:%s %s",
 				dump_hostname, disk_name,
 				(char *)g_ptr_array_index(errarray, i));
 		    }
@@ -1697,13 +1697,13 @@ main(
 	    int nbdisk = 0;
 	    s[-1] = '\0';
 	    if (get_config_name() == NULL) {
-		reply(501, _("Must set config, host before listdisk"));
+		reply(501, "Must set config, host before listdisk");
 	    }
 	    else if (dump_hostname == NULL) {
-		reply(501, _("Must set host before listdisk"));
+		reply(501, "Must set host before listdisk");
 	    }
 	    else if(arg) {
-		lreply(200, _(" List of disk for device %s on host %s"), arg,
+		lreply(200, " List of disk for device %s on host %s", arg,
 		       dump_hostname);
 		for (disk = disk_list.head; disk!=NULL; disk = disk->next) {
 
@@ -1717,16 +1717,16 @@ main(
 		    }
 		}
 		if(nbdisk > 0) {
-		    reply(200, _("List of disk for device %s on host %s"), arg,
+		    reply(200, "List of disk for device %s on host %s", arg,
 			  dump_hostname);
 		}
 		else {
-		    reply(200, _("No disk for device %s on host %s"), arg,
+		    reply(200, "No disk for device %s on host %s", arg,
 			  dump_hostname);
 		}
 	    }
 	    else {
-		lreply(200, _(" List of disk for host %s"), dump_hostname);
+		lreply(200, " List of disk for host %s", dump_hostname);
 		for (disk = disk_list.head; disk!=NULL; disk = disk->next) {
 		    if(strcasecmp(disk->host->hostname, dump_hostname) == 0) {
 			qname = quote_string(disk->name);
@@ -1736,10 +1736,10 @@ main(
 		    }
 		}
 		if(nbdisk > 0) {
-		    reply(200, _("List of disk for host %s"), dump_hostname);
+		    reply(200, "List of disk for host %s", dump_hostname);
 		}
 		else {
-		    reply(200, _("No disk for host %s"), dump_hostname);
+		    reply(200, "No disk for host %s", dump_hostname);
 		}
 	    }
 	    s[-1] = (char)ch;
@@ -1749,7 +1749,7 @@ main(
 		amfree(dump_hostname);		/* invalidate any value */
 		amfree(qdisk_name);		/* invalidate any value */
 		amfree(disk_name);		/* invalidate any value */
-		reply(200, _("Config set to %s."), get_config_name());
+		reply(200, "Config set to %s.", get_config_name());
 	    } /* check_and_load_config replies with any failure messages */
 	    s[-1] = (char)ch;
 	} else if (strcmp(cmd, "FEATURES") == 0 && arg) {
@@ -1760,7 +1760,8 @@ main(
 	    am_release_feature_set(their_features);
 	    our_features = am_init_feature_set();
 	    our_feature_string = am_feature_to_string(our_features);
-	    their_feature_string = newstralloc(their_feature_string, arg);
+	    g_free(their_feature_string);
+	    their_feature_string = g_strdup(arg);
 	    their_features = am_string_to_feature(their_feature_string);
 	    if (!their_features) {
 		g_warning("Invalid client feature set '%s'", their_feature_string);
@@ -1772,14 +1773,15 @@ main(
 	    s[-1] = (char)ch;
 	} else if (strcmp(cmd, "DATE") == 0 && arg) {
 	    s[-1] = '\0';
-	    target_date = newstralloc(target_date, arg);
-	    reply(200, _("Working date set to %s."), target_date);
+	    g_free(target_date);
+	    target_date = g_strdup(arg);
+	    reply(200, "Working date set to %s.", target_date);
 	    s[-1] = (char)ch;
 	} else if (strcmp(cmd, "DHST") == 0) {
 	    (void)disk_history_list();
 	} else if (strcmp(cmd, "OISD") == 0 && arg) {
 	    if (is_dir_valid_opaque(arg) != -1) {
-		reply(200, _("\"%s\" is a valid directory"), arg);
+		reply(200, "\"%s\" is a valid directory", arg);
 	    }
 	} else if (strcmp(cmd, "OLSD") == 0 && arg) {
 	    (void)opaque_ls(arg,0);
@@ -1791,7 +1793,7 @@ main(
 	    (void)are_dumps_compressed();
 	} else {
 	    *cmd_undo = cmd_undo_ch;	/* restore the command line */
-	    reply(500, _("Command not recognised/incorrect: %s"), cmd);
+	    reply(500, "Command not recognised/incorrect: %s", cmd);
 	}
 	amfree(line);
     }
@@ -1800,7 +1802,7 @@ main(
 
     uncompress_remove = remove_files(uncompress_remove);
     free_find_result(&output_find);
-    reply(200, _("Good bye."));
+    reply(200, "Good bye.");
     dbclose();
     return 0;
 }

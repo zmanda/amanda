@@ -53,7 +53,7 @@
 #ifdef HAVE_SETPGID
 #  define SETPGRP	setpgid(getpid(), getpid())
 #  define SETPGRP_FAILED() do {						\
-    dbprintf(_("setpgid(%ld,%ld) failed: %s\n"),				\
+    dbprintf("setpgid(%ld,%ld) failed: %s\n",				\
 	      (long)getpid(), (long)getpid(), strerror(errno));	\
 } while(0)
 
@@ -61,13 +61,13 @@
 #if defined(SETPGRP_VOID)
 #  define SETPGRP	setpgrp()
 #  define SETPGRP_FAILED() do {						\
-    dbprintf(_("setpgrp() failed: %s\n"), strerror(errno));		\
+    dbprintf("setpgrp() failed: %s\n", strerror(errno));		\
 } while(0)
 
 #else
 #  define SETPGRP	setpgrp(0, getpid())
 #  define SETPGRP_FAILED() do {						\
-    dbprintf(_("setpgrp(0,%ld) failed: %s\n"),				\
+    dbprintf("setpgrp(0,%ld) failed: %s\n",				\
 	      (long)getpid(), strerror(errno));			\
 } while(0)
 
@@ -164,7 +164,7 @@ main(
     add_amanda_log_handler(amanda_log_syslog);
     dbopen(DBG_SUBDIR_CLIENT);
     startclock();
-    dbprintf(_("version %s\n"), VERSION);
+    dbprintf("version %s\n", VERSION);
 
     our_features = am_init_feature_set();
     our_feature_string = am_feature_to_string(our_features);
@@ -181,8 +181,8 @@ main(
 	    continue;
 	if(strncmp_const(line, "OPTIONS ") == 0) {
 	    if (g_options) {
-		g_printf(_("ERROR [Multiple OPTIONS line in sendsize input]\n"));
-		error(_("Multiple OPTIONS line in sendsize input\n"));
+		g_printf("ERROR [Multiple OPTIONS line in sendsize input]\n");
+		error("Multiple OPTIONS line in sendsize input\n");
 		/*NOTREACHED*/
 	    }
 	    g_options = parse_g_options(line+8, 1);
@@ -235,7 +235,7 @@ main(
 
 	skip_whitespace(s, ch);			/* find the program name */
 	if(ch == '\0') {
-	    err_extra = g_strdup(_("no program name"));
+	    err_extra = g_strdup("no program name");
 	    goto err;				/* no program name */
 	}
 	dle->program = s - 1;
@@ -246,7 +246,7 @@ main(
 	if(strncmp_const(dle->program, "CALCSIZE") == 0) {
 	    skip_whitespace(s, ch);		/* find the program name */
 	    if(ch == '\0') {
-		err_extra = g_strdup(_("no program name"));
+		err_extra = g_strdup("no program name");
 		goto err;
 	    }
 	    dle->estimatelist = g_slist_append(dle->estimatelist,
@@ -283,7 +283,7 @@ main(
 
 	skip_whitespace(s, ch);			/* find the disk name */
 	if(ch == '\0') {
-	    err_extra = g_strdup(_("no disk name"));
+	    err_extra = g_strdup("no disk name");
 	    goto err;				/* no disk name */
 	}
 
@@ -298,7 +298,7 @@ main(
 
 	skip_whitespace(s, ch);			/* find the device or level */
 	if (ch == '\0') {
-	    err_extra = g_strdup(_("bad level"));
+	    err_extra = g_strdup("bad level");
 	    goto err;
 	}
 	if(!isdigit((int)s[-1])) {
@@ -318,11 +318,11 @@ main(
 
 						/* find the level number */
 	if(ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
-	    err_extra = g_strdup(_("bad level"));
+	    err_extra = g_strdup("bad level");
 	    goto err;				/* bad level */
 	}
 	if (level < 0 || level >= DUMP_LEVELS) {
-	    err_extra = g_strdup(_("bad level"));
+	    err_extra = g_strdup("bad level");
 	    goto err;
 	}
 	skip_integer(s, ch);
@@ -332,7 +332,7 @@ main(
 
 	skip_whitespace(s, ch);			/* find the dump date */
 	if(ch == '\0') {
-	    err_extra = g_strdup(_("no dumpdate"));
+	    err_extra = g_strdup("no dumpdate");
 	    goto err;				/* no dumpdate */
 	}
 	dumpdate = s - 1;
@@ -345,7 +345,7 @@ main(
 	skip_whitespace(s, ch);			/* find the spindle */
 	if(ch != '\0') {
 	    if(sscanf(s - 1, "%d", &dle->spindle) != 1) {
-		err_extra = g_strdup(_("bad spindle"));
+		err_extra = g_strdup("bad spindle");
 		goto err;			/* bad spindle */
 	    }
 	    skip_integer(s, ch);
@@ -381,7 +381,7 @@ main(
 				append_sl(dle->include_list, qlist);
 			    amfree(qlist);
 			} else {
-			    err_extra = g_strdup_printf(_("Invalid parameter (%s)"), s-1);
+			    err_extra = g_strdup_printf("Invalid parameter (%s)", s-1);
 			    goto err;		/* should have gotten to end */
 			}
 			skip_quoted_string(s, ch);
@@ -400,8 +400,8 @@ main(
 	dle = NULL;
     }
     if (g_options == NULL) {
-	g_printf(_("ERROR [Missing OPTIONS line in sendsize input]\n"));
-	error(_("Missing OPTIONS line in sendsize input\n"));
+	g_printf("ERROR [Missing OPTIONS line in sendsize input]\n");
+	error("Missing OPTIONS line in sendsize input\n");
 	/*NOTREACHED*/
     }
     amfree(line);
@@ -462,16 +462,16 @@ main(
 	    amwait_t child_status;
 
 	    need_wait = 0;
-	    dbprintf(_("waiting for any estimate child: %d running\n"),
+	    dbprintf("waiting for any estimate child: %d running\n",
 		      dumpsrunning);
 	    child_pid = wait(&child_status);
 	    if(child_pid == -1) {
-		error(_("wait failed: %s"), strerror(errno));
+		error("wait failed: %s", strerror(errno));
 		/*NOTREACHED*/
 	    }
 
 	    if (!WIFEXITED(child_status) || WEXITSTATUS(child_status) != 0) {
-		char *child_name = g_strdup_printf(_("child %ld"), (long)child_pid);
+		char *child_name = g_strdup_printf("child %ld", (long)child_pid);
 		char *child_status_str = str_exit_status(child_name, child_status);
 		dbprintf("%s\n", child_status_str);
 		amfree(child_status_str);
@@ -487,7 +487,7 @@ main(
 		}
 	    }
 	    if(est == NULL) {
-		dbprintf(_("unexpected child %ld\n"), (long)child_pid);
+		dbprintf("unexpected child %ld\n", (long)child_pid);
 	    } else {
 		est->done = 1;
 		est->child = 0;
@@ -550,7 +550,7 @@ main(
 		calc_estimates(est);		/* child does the estimate */
 		exit(0);
 	    } else if(est->child == -1) {
-		error(_("calc_estimates fork failed: %s"), strerror(errno));
+		error("calc_estimates fork failed: %s", strerror(errno));
 		/*NOTREACHED*/
 	    }
 	    dumpsrunning++;			/* parent */
@@ -578,12 +578,12 @@ main(
     return 0;
  err:
     if (err_extra) {
-	g_printf(_("ERROR FORMAT ERROR IN REQUEST PACKET '%s'\n"), err_extra);
-	dbprintf(_("REQ packet is bogus: %s\n"), err_extra);
+	g_printf("ERROR FORMAT ERROR IN REQUEST PACKET '%s'\n", err_extra);
+	dbprintf("REQ packet is bogus: %s\n", err_extra);
 	amfree(err_extra);
     } else {
-	g_printf(_("ERROR FORMAT ERROR IN REQUEST PACKET\n"));
-	dbprintf(_("REQ packet is bogus\n"));
+	g_printf("ERROR FORMAT ERROR IN REQUEST PACKET\n");
+	dbprintf("REQ packet is bogus\n");
     }
 
     free_g_options(g_options);
@@ -611,7 +611,7 @@ dle_add_diskest(
     estimatelist_t el;
 
     if (dle->levellist == NULL) {
-	g_printf(_("ERROR Missing level in request\n"));
+	g_printf("ERROR Missing level in request\n");
 	return FALSE;
     }
 
@@ -637,9 +637,9 @@ dle_add_diskest(
 	    if(!start_amandates(amandates_file, 0)) {
 		char *errstr = strerror(errno);
 		char *qamname = quote_string(dle->disk);
-		char *errmsg = g_strdup_printf(_("could not open %s: %s"), amandates_file, errstr);
+		char *errmsg = g_strdup_printf("could not open %s: %s", amandates_file, errstr);
 		char *qerrmsg = quote_string(errmsg);
-		g_printf(_("%s %d ERROR %s\n"), qamname, 0, qerrmsg);
+		g_printf("%s %d ERROR %s\n", qamname, 0, qerrmsg);
 		amfree(qamname);
 		amfree(errmsg);
 		amfree(qerrmsg);
@@ -743,7 +743,7 @@ void
 calc_estimates(
     disk_estimates_t *	est)
 {
-    dbprintf(_("calculating for amname %s, dirname %s, spindle %d %s\n"),
+    dbprintf("calculating for amname %s, dirname %s, spindle %d %s\n",
 	     est->qamname, est->qdirname, est->dle->spindle, est->dle->program);
 
     if(est->dle->program_is_application_api ==  1)
@@ -777,7 +777,7 @@ calc_estimates(
 	    for (level = 0; level < DUMP_LEVELS; level++) {
 		if (est->est[level].needestimate) {
 		    if (est->est[level].server || client_method == ES_ES) {
-			g_printf(_("%s %d SIZE -1\n"), est->qamname, level);
+			g_printf("%s %d SIZE -1\n", est->qamname, level);
 			est->est[level].needestimate = 0;
 		    }
 		}
@@ -785,8 +785,8 @@ calc_estimates(
 	}
 
 	if (client_method == ES_ES && estimate_method != ES_SERVER) {
-	    g_printf(_("%s %d SIZE -2\n"), est->qamname, 0);
-	    dbprintf(_("Can't use CALCSIZE for samba estimate: %s %s\n"),
+	    g_printf("%s %d SIZE -2\n", est->qamname, 0);
+	    dbprintf("Can't use CALCSIZE for samba estimate: %s %s\n",
 		     est->qamname, est->qdirname);
 	} else if (client_method == ES_CALCSIZE) {
 	    generic_calc_estimates(est);
@@ -807,12 +807,12 @@ calc_estimates(
 		gnutar_calc_estimates(est);
 	    else
 #endif
-		dbprintf(_("Invalid program: %s %s %s\n"),
+		dbprintf("Invalid program: %s %s %s\n",
 			 est->qamname, est->qdirname, est->dle->program);
 	}
     }
 
-    dbprintf(_("done with amname %s dirname %s spindle %d\n"),
+    dbprintf("done with amname %s dirname %s spindle %d\n",
 	      est->qamname, est->qdirname, est->dle->spindle);
 }
 
@@ -858,14 +858,14 @@ application_api_calc_estimate(
 	    line = g_ptr_array_index(errarray, i);
 	    if(am_has_feature(g_options->features,
 			      fe_rep_sendsize_quoted_error)) {
-		errmsg = g_strdup_printf(_("Application '%s': %s"),
+		errmsg = g_strdup_printf("Application '%s': %s",
 				     est->dle->program, line);
 		qerrmsg = quote_string(errmsg);
 		for (level = 0; level < DUMP_LEVELS; level++) {
 		    if (est->est[level].needestimate) {
-			g_printf(_("%s %d ERROR %s\n"),
+			g_printf("%s %d ERROR %s\n",
 				 est->dle->disk, level, qerrmsg);
-			dbprintf(_("%s %d ERROR %s\n"),
+			dbprintf("%s %d ERROR %s\n",
 				 est->qamname, level, qerrmsg);
 		    }
 		}
@@ -877,14 +877,14 @@ application_api_calc_estimate(
 	    char  *errmsg;
 	    char  *qerrmsg;
 	    errmsg = g_strdup_printf(
-		_("Application '%s': cannon execute support command"),
+		"Application '%s': cannon execute support command",
 		est->dle->program);
 	    qerrmsg = quote_string(errmsg);
 	    for (level = 0; level < DUMP_LEVELS; level++) {
 		if (est->est[level].needestimate) {
-		    g_printf(_("%s %d ERROR %s\n"),
+		    g_printf("%s %d ERROR %s\n",
 			     est->dle->disk, level, qerrmsg);
-		    dbprintf(_("%s %d ERROR %s\n"),
+		    dbprintf("%s %d ERROR %s\n",
 			     est->qamname, level, qerrmsg);
 		}
 	    }
@@ -938,7 +938,7 @@ application_api_calc_estimate(
 		g_printf("%s %d SIZE %lld\n", est->qamname, level,
 			 (long long)-2);
 		est->est[level].needestimate = 0;
-		dbprintf(_("Application '%s' can't estimate level %d\n"),
+		dbprintf("Application '%s' can't estimate level %d\n",
                          est->dle->program, level);
 	    } else if (estimate_method == ES_ES) {
 		g_printf("%s %d SIZE %lld\n", est->qamname, level,
@@ -949,20 +949,20 @@ application_api_calc_estimate(
 		    char *errmsg, *qerrmsg;
 		    if (has_client && !bsu->client_estimate &&
 			has_calcsize && !bsu->calcsize) {
-			errmsg = g_strdup_printf(_("Application '%s' can't do CLIENT or CALCSIZE estimate"),
+			errmsg = g_strdup_printf("Application '%s' can't do CLIENT or CALCSIZE estimate",
 					    est->dle->program);
 		    } else if (has_client && !bsu->client_estimate) {
-			errmsg = g_strdup_printf(_("Application '%s' can't do CLIENT estimate"),
+			errmsg = g_strdup_printf("Application '%s' can't do CLIENT estimate",
 					    est->dle->program);
 		    } else if (has_calcsize && !bsu->calcsize) {
-			errmsg = g_strdup_printf(_("Application '%s' can't do CALCSIZE estimate"),
+			errmsg = g_strdup_printf("Application '%s' can't do CALCSIZE estimate",
 					    est->dle->program);
 		    } else {
-			errmsg = g_strdup_printf(_("Application '%s' can't do estimate"),
+			errmsg = g_strdup_printf("Application '%s' can't do estimate",
 					    est->dle->program);
 		    }
 		    qerrmsg = quote_string(errmsg);
-		    dbprintf(_("errmsg is %s\n"), errmsg);
+		    dbprintf("errmsg is %s\n", errmsg);
 		    g_printf("%s %d ERROR %s\n",
 			     est->qamname, 0, qerrmsg);
 		    amfree(errmsg);
@@ -989,7 +989,7 @@ application_api_calc_estimate(
 
     if (bsu->multi_estimate) {
 	for (i=0;i<nb_level;i++) {
-	    dbprintf(_("getting size via application API for %s %s level %d\n"),
+	    dbprintf("getting size via application API for %s %s level %d\n",
 		     est->qamname, est->qamdevice, levels[i]);
 	}
 	getsize_application_api(est, nb_level, levels, bsu);
@@ -998,7 +998,7 @@ application_api_calc_estimate(
 	for(level = 0; level < DUMP_LEVELS; level++) {
 	    if (est->est[level].needestimate) {
 		dbprintf(
-		    _("getting size via application API for %s %s level %d\n"),
+		    "getting size via application API for %s %s level %d\n",
 		    est->qamname, est->qamdevice, level);
 		levels[0] = level;
 		getsize_application_api(est, 1, levels, bsu);
@@ -1084,7 +1084,7 @@ generic_calc_estimates(
 	cmdline = vstrextend(&cmdline, " ",
 			     (char *)g_ptr_array_index(argv_ptr, i), NULL);
     }
-    dbprintf(_("running: \"%s\"\n"), cmdline);
+    dbprintf("running: \"%s\"\n", cmdline);
     amfree(cmdline);
 
     for(level = 0; level < DUMP_LEVELS; level++) {
@@ -1104,7 +1104,7 @@ generic_calc_estimates(
     fflush(stderr); fflush(stdout);
 
     if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	errmsg = g_strdup_printf(_("Cannot access /dev/null : %s"),
+	errmsg = g_strdup_printf("Cannot access /dev/null : %s",
 			    strerror(errno));
 	dbprintf("%s\n", errmsg);
 	goto common_exit;
@@ -1117,7 +1117,7 @@ generic_calc_estimates(
 
     dumpout = fdopen(pipefd,"r");
     if (!dumpout) {
-	error(_("Can't fdopen: %s"), strerror(errno));
+	error("Can't fdopen: %s", strerror(errno));
 	/*NOTREACHED*/
     }
     match_expr = g_strjoin(NULL, " %d SIZE %lld", NULL);
@@ -1130,7 +1130,7 @@ generic_calc_estimates(
 	if (strncmp(line, est->qamname, len) == 0 &&
 	    sscanf(line+len, match_expr, &level, &size_) == 2) {
 	    g_printf("%s\n", line); /* write to amandad */
-	    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
+	    dbprintf("estimate size for %s level %d: %lld KB\n",
 		      est->qamname,
 		      level,
 		      size_);
@@ -1140,31 +1140,31 @@ generic_calc_estimates(
     fclose(dumpout);
     amfree(match_expr);
 
-    dbprintf(_("waiting for %s %s child (pid=%d)\n"),
+    dbprintf("waiting for %s %s child (pid=%d)\n",
 	     command, est->qamdevice, (int)calcpid);
     waitpid(calcpid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
-	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
+	errmsg = g_strdup_printf("%s terminated with signal %d: see %s",
 			    "calcsize", WTERMSIG(wait_status),
 			    dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
-	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
+	    errmsg = g_strdup_printf("%s exited with status %d: see %s",
 			        "calcsize", WEXITSTATUS(wait_status),
 				dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
-	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
+	errmsg = g_strdup_printf("%s got bad exit: see %s",
 			     "calcsize", dbfn());
     }
-    dbprintf(_("after %s %s wait: child pid=%d status=%d\n"),
+    dbprintf("after %s %s wait: child pid=%d status=%d\n",
 	     command, est->qamdevice,
 	      (int)calcpid, WEXITSTATUS(wait_status));
 
-    dbprintf(_(".....\n"));
-    dbprintf(_("estimate time for %s: %s\n"),
+    dbprintf(".....\n");
+    dbprintf("estimate time for %s: %s\n",
 	      est->qamname,
 	      walltime_str(timessub(curclock(), start_time)));
 
@@ -1172,7 +1172,7 @@ common_exit:
     if (errmsg && errmsg[0] != '\0') {
 	if(am_has_feature(g_options->features, fe_rep_sendsize_quoted_error)) {
 	    qerrmsg = quote_string(errmsg);
-	    dbprintf(_("errmsg is %s\n"), errmsg);
+	    dbprintf("errmsg is %s\n", errmsg);
 	    g_printf("%s %d ERROR %s\n",
 		    est->qamname, 0, qerrmsg);
 	    amfree(qerrmsg);
@@ -1194,19 +1194,19 @@ dump_calc_estimates(
 
     for(level = 0; level < DUMP_LEVELS; level++) {
 	if(est->est[level].needestimate) {
-	    dbprintf(_("getting size via dump for %s level %d\n"),
+	    dbprintf("getting size via dump for %s level %d\n",
 		      est->qamname, level);
 	    size = getsize_dump(est->dle, level, &errmsg);
 
 	    amflock(1, "size");
 
-	    g_printf(_("%s %d SIZE %lld\n"),
+	    g_printf("%s %d SIZE %lld\n",
 		   est->qamname, level, (long long)size);
 	    if (errmsg && errmsg[0] != '\0') {
 		if(am_has_feature(g_options->features,
 				  fe_rep_sendsize_quoted_error)) {
 		    qerrmsg = quote_string(errmsg);
-		    dbprintf(_("errmsg is %s\n"), errmsg);
+		    dbprintf("errmsg is %s\n", errmsg);
 		    g_printf("%s %d ERROR %s\n",
 			   est->qamname, level, qerrmsg);
 		    amfree(qerrmsg);
@@ -1231,19 +1231,19 @@ smbtar_calc_estimates(
 
     for(level = 0; level < DUMP_LEVELS; level++) {
 	if(est->est[level].needestimate) {
-	    dbprintf(_("getting size via smbclient for %s level %d\n"),
+	    dbprintf("getting size via smbclient for %s level %d\n",
 		      est->qamname, level);
 	    size = getsize_smbtar(est->dle, level, &errmsg);
 
 	    amflock(1, "size");
 
-	    g_printf(_("%s %d SIZE %lld\n"),
+	    g_printf("%s %d SIZE %lld\n",
 		   est->qamname, level, (long long)size);
 	    if (errmsg && errmsg[0] != '\0') {
 		if(am_has_feature(g_options->features,
 				  fe_rep_sendsize_quoted_error)) {
 		    qerrmsg = quote_string(errmsg);
-		    dbprintf(_("errmsg is %s\n"), errmsg);
+		    dbprintf("errmsg is %s\n", errmsg);
 		    g_printf("%s %d ERROR %s\n",
 			   est->qamname, level, qerrmsg);
 		    amfree(qerrmsg);
@@ -1269,7 +1269,7 @@ gnutar_calc_estimates(
 
     for(level = 0; level < DUMP_LEVELS; level++) {
 	if (est->est[level].needestimate) {
-	    dbprintf(_("getting size via gnutar for %s level %d\n"),
+	    dbprintf("getting size via gnutar for %s level %d\n",
 		      est->qamname, level);
 	    size = getsize_gnutar(est->dle, level,
 				  est->est[level].dumpsince,
@@ -1277,14 +1277,14 @@ gnutar_calc_estimates(
 
 	    amflock(1, "size");
 
-	    g_printf(_("%s %d SIZE %lld\n"),
+	    g_printf("%s %d SIZE %lld\n",
 		   est->qamname, level, (long long)size);
 	    if (errmsg && errmsg[0] != '\0') {
 		if(am_has_feature(g_options->features,
 				  fe_rep_sendsize_quoted_error)) {
 		    qerrmsg = quote_string(errmsg);
-		    dbprintf(_("errmsg is %s\n"), errmsg);
-		    g_printf(_("%s %d ERROR %s\n"),
+		    dbprintf("errmsg is %s\n", errmsg);
+		    g_printf("%s %d ERROR %s\n",
 			   est->qamname, level, qerrmsg);
 		    amfree(qerrmsg);
 		}
@@ -1400,7 +1400,7 @@ getsize_dump(
     qdevice = quote_string(device);
     fstype = amname_to_fstype(dle->device);
 
-    dbprintf(_("calculating for device %s with %s\n"),
+    dbprintf("calculating for device %s with %s\n",
 	      qdevice, fstype);
 
     cmd = g_strjoin(NULL, amlibexecdir, "/rundump", NULL);
@@ -1410,7 +1410,7 @@ getsize_dump(
     else
         config = "NOCONFIG";
     if ((stdoutfd = nullfd = open("/dev/null", O_RDWR)) == -1) {
-	*errmsg = g_strdup_printf(_("getsize_dump could not open /dev/null: %s"),
+	*errmsg = g_strdup_printf("getsize_dump could not open /dev/null: %s",
 			     strerror(errno));
 	dbprintf("%s\n", *errmsg);
 	amfree(cmd);
@@ -1423,7 +1423,7 @@ getsize_dump(
     }
     pipefd[0] = pipefd[1] = killctl[0] = killctl[1] = -1;
     if (pipe(pipefd) < 0) {
-	*errmsg = g_strdup_printf(_("getsize_dump could create data pipes: %s"),
+	*errmsg = g_strdup_printf("getsize_dump could create data pipes: %s",
 			     strerror(errno));
 	dbprintf("%s\n", *errmsg);
 	amfree(cmd);
@@ -1444,7 +1444,7 @@ getsize_dump(
 #endif							/* } */
     {
 	name = g_strdup(" (xfsdump)");
-	dbprintf(_("running \"%s%s -F -J -l %s - %s\"\n"),
+	dbprintf("running \"%s%s -F -J -l %s - %s\"\n",
 		  cmd, name, level_str, qdevice);
     }
     else
@@ -1460,12 +1460,13 @@ getsize_dump(
 	name = g_strdup(" (vxdump)");
 #else
 	name = g_strdup("");
-	cmd = newstralloc(cmd, VXDUMP);
+	g_free(cmd);
+	cmd = g_strdup(VXDUMP);
 	config = skip_argument;
 	is_rundump = 0;
 #endif
 	dumpkeys = g_strjoin(NULL, level_str, "s", "f", NULL);
-	dbprintf(_("running \"%s%s %s 1048576 - %s\"\n"),
+	dbprintf("running \"%s%s %s 1048576 - %s\"\n",
 		  cmd, name, dumpkeys, qdevice);
     }
     else
@@ -1479,7 +1480,7 @@ getsize_dump(
     {
 	name = g_strdup(" (vdump)");
 	dumpkeys = g_strjoin(NULL, level_str, "b", "f", NULL);
-	dbprintf(_("running \"%s%s %s 60 - %s\"\n"),
+	dbprintf("running \"%s%s %s 60 - %s\"\n",
 		  cmd, name, dumpkeys, qdevice);
     }
     else
@@ -1494,14 +1495,15 @@ getsize_dump(
 #  endif						/* } */
 # else							/* } { */
 	name = g_strdup("");
-	cmd = newstralloc(cmd, DUMP);
+	g_free(cmd);
+	cmd = g_strdup(DUMP);
         config = skip_argument;
 	is_rundump = 0;
 # endif							/* } */
 
 # ifdef AIX_BACKUP					/* { */
 	dumpkeys = g_strjoin(NULL, "-", level_str, "f", NULL);
-	dbprintf(_("running \"%s%s %s - %s\"\n"),
+	dbprintf("running \"%s%s %s - %s\"\n",
 		  cmd, name, dumpkeys, qdevice);
 # else							/* } { */
 #  ifdef HAVE_DUMP_ESTIMATE
@@ -1524,10 +1526,10 @@ getsize_dump(
 #  endif
 
 #  ifdef HAVE_HONOR_NODUMP				/* { */
-	dbprintf(_("running \"%s%s %s 0 1048576 - %s\"\n"),
+	dbprintf("running \"%s%s %s 0 1048576 - %s\"\n",
 		  cmd, name, dumpkeys, qdevice);
 #  else							/* } { */
-	dbprintf(_("running \"%s%s %s 1048576 - %s\"\n"),
+	dbprintf("running \"%s%s %s 1048576 - %s\"\n",
 		  cmd, name, dumpkeys, qdevice);
 #  endif						/* } */
 # endif							/* } */
@@ -1535,12 +1537,12 @@ getsize_dump(
     else
 #endif							/* } */
     {
-	error(_("no dump program available"));
+	error("no dump program available");
 	/*NOTREACHED*/
     }
 
     if (pipe(killctl) < 0) {
-	dbprintf(_("Could not create pipe: %s\n"), strerror(errno));
+	dbprintf("Could not create pipe: %s\n", strerror(errno));
 	/* Message will be printed later... */
 	killctl[0] = killctl[1] = -1;
     }
@@ -1548,7 +1550,7 @@ getsize_dump(
     start_time = curclock();
     switch(dumppid = fork()) {
     case -1:
-	*errmsg = g_strdup_printf(_("cannot fork for killpgrp: %s"),
+	*errmsg = g_strdup_printf("cannot fork for killpgrp: %s",
 			     strerror(errno));
 	dbprintf("%s\n", *errmsg);
 	amfree(dumpkeys);
@@ -1567,18 +1569,18 @@ getsize_dump(
 	if(SETPGRP == -1)
 	    SETPGRP_FAILED();
 	else if (killctl[0] == -1 || killctl[1] == -1)
-	    dbprintf(_("Trying without killpgrp\n"));
+	    dbprintf("Trying without killpgrp\n");
 	else {
 	    switch(fork()) {
 	    case -1:
-		dbprintf(_("fork failed, trying without killpgrp\n"));
+		dbprintf("fork failed, trying without killpgrp\n");
 		break;
 
 	    default:
 	    {
 		char *config;
 		char *killpgrp_cmd = g_strjoin(NULL, amlibexecdir, "/killpgrp", NULL);
-		dbprintf(_("running %s\n"), killpgrp_cmd);
+		dbprintf("running %s\n", killpgrp_cmd);
 		dup2(killctl[0], 0);
 		dup2(nullfd, 1);
 		dup2(nullfd, 2);
@@ -1593,7 +1595,7 @@ getsize_dump(
 		safe_fd(-1, 0);
 		execle(killpgrp_cmd, killpgrp_cmd, config, (char *)0,
 		       safe_env());
-		dbprintf(_("cannot execute %s: %s\n"),
+		dbprintf("cannot execute %s: %s\n",
 			  killpgrp_cmd, strerror(errno));
 		exit(-1);
 	    }
@@ -1680,7 +1682,7 @@ getsize_dump(
 # endif
 #endif
 	{
-	    error(_("exec %s failed or no dump program available: %s"),
+	    error("exec %s failed or no dump program available: %s",
 		  cmd, strerror(errno));
 	    /*NOTREACHED*/
 	}
@@ -1694,7 +1696,7 @@ getsize_dump(
 	aclose(killctl[0]);
     dumpout = fdopen(pipefd[0],"r");
     if (!dumpout) {
-	error(_("Can't fdopen: %s"), strerror(errno));
+	error("Can't fdopen: %s", strerror(errno));
 	/*NOTREACHED*/
     }
 
@@ -1719,32 +1721,32 @@ getsize_dump(
     amfree(line);
 
     dbprintf(".....\n");
-    dbprintf(_("estimate time for %s level %d: %s\n"),
+    dbprintf("estimate time for %s level %d: %s\n",
 	      qdisk,
 	      level,
 	      walltime_str(timessub(curclock(), start_time)));
     if(size == (off_t)-1) {
-	*errmsg = g_strdup_printf(_("no size line match in %s%s output"),
+	*errmsg = g_strdup_printf("no size line match in %s%s output",
 			     cmd, name);
-	dbprintf(_("%s for %s\n"),
+	dbprintf("%s for %s\n",
 		  *errmsg, qdisk);
 
 	dbprintf(".....\n");
-	dbprintf(_("Run %s%s manually to check for errors\n"),
+	dbprintf("Run %s%s manually to check for errors\n",
 		    cmd, name);
     } else if(size == (off_t)0 && level == 0) {
-	dbprintf(_("possible %s%s problem -- is \"%s\" really empty?\n"),
+	dbprintf("possible %s%s problem -- is \"%s\" really empty?\n",
 		  cmd, name, dle->disk);
 	dbprintf(".....\n");
     } else {
-	    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
+	    dbprintf("estimate size for %s level %d: %lld KB\n",
 	      qdisk,
 	      level,
 	      (long long)size);
     }
 
     if (killctl[1] != -1) {
-	dbprintf(_("asking killpgrp to terminate\n"));
+	dbprintf("asking killpgrp to terminate\n");
 	aclose(killctl[1]);
 	for(s = 5; s > 0; --s) {
 	    sleep(1);
@@ -1757,9 +1759,9 @@ getsize_dump(
      * First, try to kill the dump process nicely.  If it ignores us
      * for several seconds, hit it harder.
      */
-    dbprintf(_("sending SIGTERM to process group %ld\n"), (long)dumppid);
+    dbprintf("sending SIGTERM to process group %ld\n", (long)dumppid);
     if (kill(-dumppid, SIGTERM) == -1) {
-	dbprintf(_("kill failed: %s\n"), strerror(errno));
+	dbprintf("kill failed: %s\n", strerror(errno));
     }
     /* Now check whether it dies */
     for(s = 5; s > 0; --s) {
@@ -1768,9 +1770,9 @@ getsize_dump(
 	    goto terminated;
     }
 
-    dbprintf(_("sending SIGKILL to process group %ld\n"), (long)dumppid);
+    dbprintf("sending SIGKILL to process group %ld\n", (long)dumppid);
     if (kill(-dumppid, SIGKILL) == -1) {
-	dbprintf(_("kill failed: %s\n"), strerror(errno));
+	dbprintf("kill failed: %s\n", strerror(errno));
     }
     for(s = 5; s > 0; --s) {
 	sleep(1);
@@ -1778,23 +1780,23 @@ getsize_dump(
 	    goto terminated;
     }
 
-    dbprintf(_("waiting for %s%s \"%s\" child\n"), cmd, name, qdisk);
+    dbprintf("waiting for %s%s \"%s\" child\n", cmd, name, qdisk);
     waitpid(dumppid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
-	*errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
+	*errmsg = g_strdup_printf("%s terminated with signal %d: see %s",
 			     cmd, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
-	    *errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
+	    *errmsg = g_strdup_printf("%s exited with status %d: see %s",
 			         cmd, WEXITSTATUS(wait_status), dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
-	*errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
+	*errmsg = g_strdup_printf("%s got bad exit: see %s",
 			     cmd, dbfn());
     }
-    dbprintf(_("after %s%s %s wait\n"), cmd, name, qdisk);
+    dbprintf("after %s%s %s wait\n", cmd, name, qdisk);
 
  terminated:
 
@@ -1838,7 +1840,7 @@ getsize_smbtar(
     if (level > 1)
 	return -2; /* planner will not even consider this level */
 
-    error_pn = stralloc2(get_pname(), "-smbclient");
+    error_pn = g_strdup_printf("%s-smbclient", get_pname());
     qdisk = quote_string(dle->disk);
     parsesharename(dle->device, &share, &subdir);
     if (!share) {
@@ -1846,7 +1848,7 @@ getsize_smbtar(
 	amfree(subdir);
 	set_pname(error_pn);
 	amfree(error_pn);
-	error(_("cannot parse disk entry %s for share/subdir"), qdisk);
+	error("cannot parse disk entry %s for share/subdir", qdisk);
 	/*NOTREACHED*/
     }
     if ((subdir) && (SAMBA_VERSION < 2)) {
@@ -1854,7 +1856,7 @@ getsize_smbtar(
 	amfree(subdir);
 	set_pname(error_pn);
 	amfree(error_pn);
-	error(_("subdirectory specified for share %s but samba not v2 or better"), qdisk);
+	error("subdirectory specified for share %s but samba not v2 or better", qdisk);
 	/*NOTREACHED*/
     }
     if ((user_and_password = findpass(share, &domain)) == NULL) {
@@ -1865,7 +1867,7 @@ getsize_smbtar(
 	}
 	set_pname(error_pn);
 	amfree(error_pn);
-	error(_("cannot find password for %s"), dle->disk);
+	error("cannot find password for %s", dle->disk);
 	/*NOTREACHED*/
     }
     lpass = strlen(user_and_password);
@@ -1878,7 +1880,7 @@ getsize_smbtar(
 	}
 	set_pname(error_pn);
 	amfree(error_pn);
-	error(_("password field not \'user%%pass\' for %s"), dle->disk);
+	error("password field not \'user%%pass\' for %s", dle->disk);
 	/*NOTREACHED*/
     }
     *pwtext++ = '\0';
@@ -1892,7 +1894,7 @@ getsize_smbtar(
 	}
 	set_pname(error_pn);
 	amfree(error_pn);
-	error(_("cannot make share name of %s"), share);
+	error("cannot make share name of %s", share);
 	/*NOTREACHED*/
     }
     if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
@@ -1905,7 +1907,7 @@ getsize_smbtar(
 	set_pname(error_pn);
 	amfree(error_pn);
 	amfree(sharename);
-	error(_("could not open /dev/null: %s\n"),
+	error("could not open /dev/null: %s\n",
 	      strerror(errno));
 	/*NOTREACHED*/
     }
@@ -1959,7 +1961,7 @@ getsize_smbtar(
 	aclose(passwdfd);
 	set_pname(error_pn);
 	amfree(error_pn);
-	error(_("password write failed: %s"), strerror(save_errno));
+	error("password write failed: %s", strerror(save_errno));
 	/*NOTREACHED*/
     }
     memset(user_and_password, '\0', (size_t)lpass);
@@ -1971,7 +1973,7 @@ getsize_smbtar(
     amfree(error_pn);
     dumpout = fdopen(pipefd,"r");
     if (!dumpout) {
-	error(_("Can't fdopen: %s"), strerror(errno));
+	error("Can't fdopen: %s", strerror(errno));
 	/*NOTREACHED*/
     }
 
@@ -1996,38 +1998,38 @@ getsize_smbtar(
     amfree(line);
 
     dbprintf(".....\n");
-    dbprintf(_("estimate time for %s level %d: %s\n"),
+    dbprintf("estimate time for %s level %d: %s\n",
 	      qdisk,
 	      level,
 	      walltime_str(timessub(curclock(), start_time)));
     if(size == (off_t)-1) {
-	*errmsg = g_strdup_printf(_("no size line match in %s output"),
+	*errmsg = g_strdup_printf("no size line match in %s output",
 			     SAMBA_CLIENT);
-	dbprintf(_("%s for %s\n"),
+	dbprintf("%s for %s\n",
 		  *errmsg, qdisk);
 	dbprintf(".....\n");
     } else if(size == (off_t)0 && level == 0) {
-	dbprintf(_("possible %s problem -- is \"%s\" really empty?\n"),
+	dbprintf("possible %s problem -- is \"%s\" really empty?\n",
 		  SAMBA_CLIENT, dle->disk);
 	dbprintf(".....\n");
     }
-    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
+    dbprintf("estimate size for %s level %d: %lld KB\n",
 	      qdisk,
 	      level,
 	      (long long)size);
 
     kill(-dumppid, SIGTERM);
 
-    dbprintf(_("waiting for %s \"%s\" child\n"), SAMBA_CLIENT, qdisk);
+    dbprintf("waiting for %s \"%s\" child\n", SAMBA_CLIENT, qdisk);
     waitpid(dumppid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
 	amfree(*errmsg);
-	*errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
+	*errmsg = g_strdup_printf("%s terminated with signal %d: see %s",
 			     SAMBA_CLIENT, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
 	    amfree(*errmsg);
-	    *errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
+	    *errmsg = g_strdup_printf("%s exited with status %d: see %s",
 				 SAMBA_CLIENT, WEXITSTATUS(wait_status),
 				 dbfn());
 	} else {
@@ -2035,10 +2037,10 @@ getsize_smbtar(
 	}
     } else {
 	amfree(*errmsg);
-	*errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
+	*errmsg = g_strdup_printf("%s got bad exit: see %s",
 			     SAMBA_CLIENT, dbfn());
     }
-    dbprintf(_("after %s %s wait\n"), SAMBA_CLIENT, qdisk);
+    dbprintf("after %s %s wait\n", SAMBA_CLIENT, qdisk);
 
     afclose(dumpout);
     pipefd = -1;
@@ -2128,14 +2130,15 @@ getsize_gnutar(
 	while (infd == -1) {
 	    if (--baselevel >= 0) {
 		g_snprintf(number, sizeof(number), "%d", baselevel);
-		inputname = newvstralloc(inputname,
-					 basename, "_", number, NULL);
+		g_free(inputname);
+		inputname = g_strjoin(NULL, basename, "_", number, NULL);
 	    } else {
-		inputname = newstralloc(inputname, "/dev/null");
+		g_free(inputname);
+		inputname = g_strdup("/dev/null");
 	    }
 	    if ((infd = open(inputname, O_RDONLY)) == -1) {
 
-		*errmsg = g_strdup_printf(_("gnutar: error opening %s: %s"),
+		*errmsg = g_strdup_printf("gnutar: error opening %s: %s",
 				     inputname, strerror(errno));
 		dbprintf("%s\n", *errmsg);
 		if (baselevel < 0) {
@@ -2149,7 +2152,7 @@ getsize_gnutar(
 	 * Copy the previous listed incremental file to the new one.
 	 */
 	if ((outfd = open(incrname, O_WRONLY|O_CREAT, 0600)) == -1) {
-	    *errmsg = g_strdup_printf(_("opening %s: %s"),
+	    *errmsg = g_strdup_printf("opening %s: %s",
 			         incrname, strerror(errno));
 	    dbprintf("%s\n", *errmsg);
 	    goto common_exit;
@@ -2157,7 +2160,7 @@ getsize_gnutar(
 
 	while ((nb = read(infd, &buf, sizeof(buf))) > 0) {
 	    if (full_write(outfd, &buf, (size_t)nb) < (size_t)nb) {
-		*errmsg = g_strdup_printf(_("writing to %s: %s"),
+		*errmsg = g_strdup_printf("writing to %s: %s",
 				     incrname, strerror(errno));
 		dbprintf("%s\n", *errmsg);
 		goto common_exit;
@@ -2165,20 +2168,20 @@ getsize_gnutar(
 	}
 
 	if (nb < 0) {
-	    *errmsg = g_strdup_printf(_("reading from %s: %s"),
+	    *errmsg = g_strdup_printf("reading from %s: %s",
 			         inputname, strerror(errno));
 	    dbprintf("%s\n", *errmsg);
 	    goto common_exit;
 	}
 
 	if (close(infd) != 0) {
-	    *errmsg = g_strdup_printf(_("closing %s: %s"),
+	    *errmsg = g_strdup_printf("closing %s: %s",
 			         inputname, strerror(errno));
 	    dbprintf("%s\n", *errmsg);
 	    goto common_exit;
 	}
 	if (close(outfd) != 0) {
-	    *errmsg = g_strdup_printf(_("closing %s: %s"),
+	    *errmsg = g_strdup_printf("closing %s: %s",
 			         incrname, strerror(errno));
 	    dbprintf("%s\n", *errmsg);
 	    goto common_exit;
@@ -2255,7 +2258,7 @@ getsize_gnutar(
     start_time = curclock();
 
     if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	*errmsg = g_strdup_printf(_("Cannot access /dev/null : %s"),
+	*errmsg = g_strdup_printf("Cannot access /dev/null : %s",
 			     strerror(errno));
 	dbprintf("%s\n", *errmsg);
 	goto common_exit;
@@ -2267,7 +2270,7 @@ getsize_gnutar(
 
     dumpout = fdopen(pipefd,"r");
     if (!dumpout) {
-	error(_("Can't fdopen: %s"), strerror(errno));
+	error("Can't fdopen: %s", strerror(errno));
 	/*NOTREACHED*/
     }
 
@@ -2294,48 +2297,48 @@ getsize_gnutar(
     amfree(line);
 
     dbprintf(".....\n");
-    dbprintf(_("estimate time for %s level %d: %s\n"),
+    dbprintf("estimate time for %s level %d: %s\n",
 	      qdisk,
 	      level,
 	      walltime_str(timessub(curclock(), start_time)));
     if(size == (off_t)-1) {
-	*errmsg = g_strdup_printf(_("no size line match in %s output"),
+	*errmsg = g_strdup_printf("no size line match in %s output",
 			     command);
-	dbprintf(_("%s for %s\n"), *errmsg, qdisk);
+	dbprintf("%s for %s\n", *errmsg, qdisk);
 	dbprintf(".....\n");
     } else if(size == (off_t)0 && level == 0) {
-	dbprintf(_("possible %s problem -- is \"%s\" really empty?\n"),
+	dbprintf("possible %s problem -- is \"%s\" really empty?\n",
 		  command, dle->disk);
 	dbprintf(".....\n");
     }
-    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
+    dbprintf("estimate size for %s level %d: %lld KB\n",
 	      qdisk,
 	      level,
 	      (long long)size);
 
     kill(-dumppid, SIGTERM);
 
-    dbprintf(_("waiting for %s \"%s\" child\n"),
+    dbprintf("waiting for %s \"%s\" child\n",
 	     command, qdisk);
     waitpid(dumppid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
 	amfree(*errmsg);
-	*errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
+	*errmsg = g_strdup_printf("%s terminated with signal %d: see %s",
 			     cmd, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
 	    amfree(*errmsg);
-	    *errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
+	    *errmsg = g_strdup_printf("%s exited with status %d: see %s",
 			         cmd, WEXITSTATUS(wait_status), dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
 	amfree(*errmsg);
-	*errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
+	*errmsg = g_strdup_printf("%s got bad exit: see %s",
 			     cmd, dbfn());
     }
-    dbprintf(_("after %s %s wait\n"), command, qdisk);
+    dbprintf("after %s %s wait\n", command, qdisk);
 
 common_exit:
 
@@ -2455,19 +2458,19 @@ getsize_application_api(
     amfree(cmdline);
 
     if (pipe(pipeerrfd) < 0) {
-	errmsg = g_strdup_printf(_("getsize_application_api could not create data pipes: %s"),
+	errmsg = g_strdup_printf("getsize_application_api could not create data pipes: %s",
 			    strerror(errno));
 	goto common_exit;
     }
 
     if (pipe(pipeinfd) < 0) {
-	errmsg = g_strdup_printf(_("getsize_application_api could not create data pipes: %s"),
+	errmsg = g_strdup_printf("getsize_application_api could not create data pipes: %s",
 			    strerror(errno));
 	goto common_exit;
     }
 
     if (pipe(pipeoutfd) < 0) {
-	errmsg = g_strdup_printf(_("getsize_application_api could not create data pipes: %s"),
+	errmsg = g_strdup_printf("getsize_application_api could not create data pipes: %s",
 			    strerror(errno));
 	goto common_exit;
     }
@@ -2490,7 +2493,7 @@ getsize_application_api(
       safe_fd(-1, 0);
 
       execve(cmd, (char **)argv_ptr->pdata, safe_env());
-      error(_("exec %s failed: %s"), cmd, strerror(errno));
+      error("exec %s failed: %s", cmd, strerror(errno));
       /*NOTREACHED*/
     }
     amfree(newoptstr);
@@ -2502,7 +2505,7 @@ getsize_application_api(
 
     dumpout = fdopen(pipeoutfd[0],"r");
     if (!dumpout) {
-	error(_("Can't fdopen: %s"), strerror(errno));
+	error("Can't fdopen: %s", strerror(errno));
 	/*NOTREACHED*/
     }
 
@@ -2518,8 +2521,8 @@ getsize_application_api(
 
 	    errmsg = g_strdup(line+6);
 	    qerrmsg = quote_string(errmsg);
-	    dbprintf(_("errmsg is %s\n"), errmsg);
-	    g_printf(_("%s %d ERROR %s\n"), est->qamname, levels[0], qerrmsg);
+	    dbprintf("errmsg is %s\n", errmsg);
+	    g_printf("%s %d ERROR %s\n", est->qamname, levels[0], qerrmsg);
 	    amfree(qerrmsg);
 	    amfree(errmsg);
 	    continue;
@@ -2531,10 +2534,10 @@ getsize_application_api(
 	    if (i != 2) {
 		char *errmsg, *qerrmsg;
 
-		errmsg = g_strdup_printf(_("bad line %s"), line);
+		errmsg = g_strdup_printf("bad line %s", line);
 		qerrmsg = quote_string(errmsg);
-		dbprintf(_("errmsg is %s\n"), errmsg);
-		g_printf(_("%s %d ERROR %s\n"), est->qamname, levels[0], qerrmsg);
+		dbprintf("errmsg is %s\n", errmsg);
+		g_printf("%s %d ERROR %s\n", est->qamname, levels[0], qerrmsg);
 		amfree(qerrmsg);
 		amfree(errmsg);
 		continue;
@@ -2546,7 +2549,7 @@ getsize_application_api(
 	    size = -1;
 	else if (size1 * size2 > 0)
 	    size = size1 * size2;
-	dbprintf(_("estimate size for %s level %d: %lld KB\n"),
+	dbprintf("estimate size for %s level %d: %lld KB\n",
 		 qamdevice,
 		 level,
 		 (long long)size);
@@ -2556,13 +2559,13 @@ getsize_application_api(
 
     dumperr = fdopen(pipeerrfd[0],"r");
     if (!dumperr) {
-	error(_("Can't fdopen: %s"), strerror(errno));
+	error("Can't fdopen: %s", strerror(errno));
 	/*NOTREACHED*/
     }
 
     while ((line = agets(dumperr)) != NULL) {
 	    if (strlen(line) > 0) {
-	    char *err =  g_strdup_printf(_("Application '%s': %s"),
+	    char *err =  g_strdup_printf("Application '%s': %s",
 					 dle->program, line);
 	    char *qerr = quote_string(err);
 	    for (j=0; j < nb_level; j++) {
@@ -2578,32 +2581,32 @@ getsize_application_api(
 
     dbprintf(".....\n");
     if (nb_level == 1) {
-	dbprintf(_("estimate time for %s level %d: %s\n"), qamdevice,
+	dbprintf("estimate time for %s level %d: %s\n", qamdevice,
 		 levels[0], walltime_str(timessub(curclock(), start_time)));
     } else {
-	dbprintf(_("estimate time for %s all level: %s\n"), qamdevice,
+	dbprintf("estimate time for %s all level: %s\n", qamdevice,
 		 walltime_str(timessub(curclock(), start_time)));
     }
 
     kill(-dumppid, SIGTERM);
 
-    dbprintf(_("waiting for %s \"%s\" child\n"), cmd, qdisk);
+    dbprintf("waiting for %s \"%s\" child\n", cmd, qdisk);
     waitpid(dumppid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
-	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
+	errmsg = g_strdup_printf("%s terminated with signal %d: see %s",
 			    cmd, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
-	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"), cmd,
+	    errmsg = g_strdup_printf("%s exited with status %d: see %s", cmd,
 				WEXITSTATUS(wait_status), dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
-	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
+	errmsg = g_strdup_printf("%s got bad exit: see %s",
 			    cmd, dbfn());
     }
-    dbprintf(_("after %s %s wait\n"), cmd, qdisk);
+    dbprintf("after %s %s wait\n", cmd, qdisk);
 
     afclose(dumpout);
     afclose(dumperr);
@@ -2617,9 +2620,9 @@ common_exit:
     amfree(qamdevice);
     if (errmsg) {
 	char *qerrmsg = quote_string(errmsg);
-	dbprintf(_("errmsg is %s\n"), errmsg);
+	dbprintf("errmsg is %s\n", errmsg);
 	for (j=0; j < nb_level; j++) {
-	    g_printf(_("%s %d ERROR %s\n"), est->qamname, levels[j], qerrmsg);
+	    g_printf("%s %d ERROR %s\n", est->qamname, levels[j], qerrmsg);
 	}
 	amfree(errmsg);
 	amfree(qerrmsg);

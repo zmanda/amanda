@@ -105,7 +105,8 @@ xfer_element_repr_impl(
     XferElement *elt)
 {
     if (!elt->repr) {
-	elt->repr = newvstrallocf(elt->repr, "<%s@%p>",
+	g_free(elt->repr);
+	elt->repr = g_strdup_printf("<%s@%p>",
 		G_OBJECT_TYPE_NAME(G_OBJECT(elt)),
 		elt);
     }

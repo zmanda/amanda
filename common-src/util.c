@@ -31,7 +31,6 @@
 #include "util.h"
 #include "match.h"
 #include <regex.h>
-#include "arglist.h"
 #include "clock.h"
 #include "sockaddr-util.h"
 #include "conffile.h"
@@ -60,7 +59,7 @@ make_socket(
     s = socket(family, SOCK_STREAM, 0);
     if (s == -1) {
         save_errno = errno;
-        dbprintf(_("make_socket: socket() failed: %s\n"), strerror(save_errno));
+        dbprintf("make_socket: socket() failed: %s\n", strerror(save_errno));
         errno = save_errno;
         return -1;
     }
@@ -74,7 +73,7 @@ make_socket(
     r = setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
     if (r < 0) {
 	save_errno = errno;
-	dbprintf(_("make_socket: setsockopt(SO_REUSEADDR) failed: %s\n"),
+	dbprintf("make_socket: setsockopt(SO_REUSEADDR) failed: %s\n",
 		  strerror(errno));
 	errno = save_errno;
     }
@@ -85,7 +84,7 @@ make_socket(
 		   (void *)&on, sizeof(on));
     if (r == -1) {
 	save_errno = errno;
-	dbprintf(_("make_socket: setsockopt() failed: %s\n"),
+	dbprintf("make_socket: setsockopt() failed: %s\n",
                   strerror(save_errno));
 	aclose(s);
 	errno = save_errno;
@@ -148,7 +147,7 @@ connect_portrange(
 	    save_errno = errno;
     }
 
-    dbprintf(_("connect_portrange: All ports between %d and %d are busy.\n"),
+    dbprintf("connect_portrange: All ports between %d and %d are busy.\n",
 	      first_port,
 	      last_port);
     errno = save_errno;
@@ -176,7 +175,7 @@ connect_port(
 
     servPort = getservbyport((int)htons(port), proto);
     if (servPort != NULL && !strstr(servPort->s_name, "amanda")) {
-	dbprintf(_("connect_port: Skip port %d: owned by %s.\n"),
+	dbprintf("connect_port: Skip port %d: owned by %s.\n",
 		  port, servPort->s_name);
 	errno = EBUSY;
 	return -1;
@@ -190,10 +189,10 @@ connect_port(
 	save_errno = errno;
 	aclose(s);
 	if(servPort == NULL) {
-	    dbprintf(_("connect_port: Try  port %d: available - %s\n"),
+	    dbprintf("connect_port: Try  port %d: available - %s\n",
 		     port, strerror(errno));
 	} else {
-	    dbprintf(_("connect_port: Try  port %d: owned by %s - %s\n"),
+	    dbprintf("connect_port: Try  port %d: owned by %s - %s\n",
 		     port, servPort->s_name, strerror(errno));
 	}
 	if (save_errno != EADDRINUSE) {
@@ -205,9 +204,9 @@ connect_port(
 	return -1;
     }
     if(servPort == NULL) {
-	dbprintf(_("connect_port: Try  port %d: available - Success\n"), port);
+	dbprintf("connect_port: Try  port %d: available - Success\n", port);
     } else {
-	dbprintf(_("connect_port: Try  port %d: owned by %s - Success\n"),
+	dbprintf("connect_port: Try  port %d: owned by %s - Success\n",
 		  port, servPort->s_name);
     }
 
@@ -216,7 +215,7 @@ connect_port(
     len = sizeof(*addrp);
     if (getsockname(s, (struct sockaddr *)addrp, &len) == -1) {
 	save_errno = errno;
-	dbprintf(_("connect_port: getsockname() failed: %s\n"),
+	dbprintf("connect_port: getsockname() failed: %s\n",
 		  strerror(save_errno));
 	aclose(s);
 	errno = save_errno;
@@ -227,10 +226,10 @@ connect_port(
 	fcntl(s, F_SETFL, fcntl(s, F_GETFL, 0)|O_NONBLOCK);
     if (connect(s, (struct sockaddr *)svaddr, SS_LEN(svaddr)) == -1 && !nonblock) {
 	save_errno = errno;
-	dbprintf(_("connect_portrange: Connect from %s failed: %s\n"),
+	dbprintf("connect_portrange: Connect from %s failed: %s\n",
 		  str_sockaddr(addrp),
 		  strerror(save_errno));
-	dbprintf(_("connect_portrange: connect to %s failed: %s\n"),
+	dbprintf("connect_portrange: connect to %s failed: %s\n",
 		  str_sockaddr(svaddr),
 		  strerror(save_errno));
 	aclose(s);
@@ -244,9 +243,9 @@ connect_port(
 	return -1;
     }
 
-    dbprintf(_("connected to %s\n"),
+    dbprintf("connected to %s\n",
               str_sockaddr(svaddr));
-    dbprintf(_("our side is %s\n"),
+    dbprintf("our side is %s\n",
               str_sockaddr(addrp));
     return s;
 }
@@ -293,29 +292,29 @@ bind_portrange(
 	    socklen = SS_LEN(addrp);
 	    if (bind(s, (struct sockaddr *)addrp, socklen) >= 0) {
 		if (servPort == NULL) {
-		    g_debug(_("bind_portrange2: Try  port %d: Available - Success"), port);
+		    g_debug("bind_portrange2: Try  port %d: Available - Success", port);
 		} else {
-		    g_debug(_("bind_portrange2: Try  port %d: Owned by %s - Success."), port, servPort->s_name);
+		    g_debug("bind_portrange2: Try  port %d: Owned by %s - Success.", port, servPort->s_name);
 		}
 		return 0;
 	    }
 	    if (errno != EAGAIN && errno != EBUSY)
 		save_errno = errno;
 	    if (servPort == NULL) {
-		g_debug(_("bind_portrange2: Try  port %d: Available - %s"),
+		g_debug("bind_portrange2: Try  port %d: Available - %s",
 			port, strerror(errno));
 	    } else {
-		g_debug(_("bind_portrange2: Try  port %d: Owned by %s - %s"),
+		g_debug("bind_portrange2: Try  port %d: Owned by %s - %s",
 			port, servPort->s_name, strerror(errno));
 	    }
 	} else {
-	        g_debug(_("bind_portrange2: Skip port %d: Owned by %s."),
+	        g_debug("bind_portrange2: Skip port %d: Owned by %s.",
 		      port, servPort->s_name);
 	}
 	if (++port > last_port)
 	    port = first_port;
     }
-    g_debug(_("bind_portrange: all ports between %d and %d busy"),
+    g_debug("bind_portrange: all ports between %d and %d busy",
 		  first_port,
 		  last_port);
     errno = save_errno;
@@ -1059,7 +1058,7 @@ int copy_file(
     if ((infd = open(src, O_RDONLY)) == -1) {
 	save_errno = errno;
 	quoted = quote_string(src);
-	*errmsg = g_strdup_printf(_("Can't open file '%s' for reading: %s"),
+	*errmsg = g_strdup_printf("Can't open file '%s' for reading: %s",
 			    quoted, strerror(save_errno));
 	amfree(quoted);
 	return -1;
@@ -1068,7 +1067,7 @@ int copy_file(
     if ((outfd = open(dst, O_WRONLY|O_CREAT, 0600)) == -1) {
 	save_errno = errno;
 	quoted = quote_string(dst);
-	*errmsg = g_strdup_printf(_("Can't open file '%s' for writting: %s"),
+	*errmsg = g_strdup_printf("Can't open file '%s' for writting: %s",
 			    quoted, strerror(save_errno));
 	amfree(quoted);
 	close(infd);
@@ -1079,7 +1078,7 @@ int copy_file(
 	if(full_write(outfd,&buf,nb) < nb) {
 	    save_errno = errno;
 	    quoted = quote_string(dst);
-	    *errmsg = g_strdup_printf(_("Error writing to '%s': %s"),
+	    *errmsg = g_strdup_printf("Error writing to '%s': %s",
 				quoted, strerror(save_errno));
 	    amfree(quoted);
 	    close(infd);
@@ -1091,7 +1090,7 @@ int copy_file(
     if (errno != 0) {
 	save_errno = errno;
 	quoted = quote_string(src);
-	*errmsg = g_strdup_printf(_("Error reading from '%s': %s"),
+	*errmsg = g_strdup_printf("Error reading from '%s': %s",
 			    quoted, strerror(save_errno));
 	amfree(quoted);
 	close(infd);
@@ -1287,36 +1286,36 @@ _str_exit_status(
     if (WIFEXITED(status)) {
 	int exitstatus = WEXITSTATUS(status);
 	if (exitstatus == 0)
-	    return g_strdup_printf(_("%s exited normally"), subject);
+	    return g_strdup_printf("%s exited normally", subject);
 	else
-	    return g_strdup_printf(_("%s exited with status %d"), subject, exitstatus);
+	    return g_strdup_printf("%s exited with status %d", subject, exitstatus);
     }
 
     if (WIFSIGNALED(status)) {
 	int signal = WTERMSIG(status);
 #ifdef WCOREDUMP
 	if (WCOREDUMP(status))
-	    return g_strdup_printf(_("%s exited after receiving signal %d (core dumped)"),
+	    return g_strdup_printf("%s exited after receiving signal %d (core dumped)",
 		subject, signal);
 	else
 #endif
-	    return g_strdup_printf(_("%s exited after receiving signal %d"),
+	    return g_strdup_printf("%s exited after receiving signal %d",
 		subject, signal);
     }
 
     if (WIFSTOPPED(status)) {
 	int signal = WSTOPSIG(status);
-	return g_strdup_printf(_("%s stopped temporarily after receiving signal %d"),
+	return g_strdup_printf("%s stopped temporarily after receiving signal %d",
 	    subject, signal);
     }
 
 #ifdef WIFCONTINUED
     if (WIFCONTINUED(status)) {
-	return g_strdup_printf(_("%s was resumed"), subject);
+	return g_strdup_printf("%s was resumed", subject);
     }
 #endif
 
-    return g_strdup_printf(_("%s exited in unknown circumstances"), subject);
+    return g_strdup_printf("%s exited in unknown circumstances", subject);
 }
 
 void
@@ -1332,14 +1331,14 @@ check_running_as(running_as_flags who)
 
     uid_me = getuid();
     if ((pw = getpwuid(uid_me)) == NULL) {
-        error(_("current userid %ld not found in password database"), (long)uid_me);
+        error("current userid %ld not found in password database", (long)uid_me);
 	/* NOTREACHED */
     }
     uname_me = g_strdup(pw->pw_name);
 
 #ifndef SINGLE_USERID
     if (!(who & RUNNING_AS_UID_ONLY) && uid_me != geteuid()) {
-	error(_("euid (%lld) does not match uid (%lld); is this program setuid-root when it shouldn't be?"),
+	error("euid (%lld) does not match uid (%lld); is this program setuid-root when it shouldn't be?",
 		(long long int)geteuid(), (long long int)uid_me);
 	/* NOTREACHED */
     }
@@ -1364,9 +1363,7 @@ check_running_as(running_as_flags who)
 		if ((pw = getpwnam(CLIENT_LOGIN)) != NULL &&
 		    uid_me == pw->pw_uid) {
 		    /* uid == CLIENT_LOGIN: not ideal, but OK */
-		    dbprintf(_("NOTE: running as '%s', which is the client"
-			       " user, not the dumpuser ('%s'); forging"
-			       " on anyway\n"),
+		    dbprintf("NOTE: running as '%s', which is the client"" user, not the dumpuser ('%s'); forging"" on anyway\n",
 			     CLIENT_LOGIN, dumpuser);
 		    uid_target = uid_me; /* force success below */
 		   break;
@@ -1377,7 +1374,7 @@ check_running_as(running_as_flags who)
 	case RUNNING_AS_DUMPUSER:
 	    uname_target = getconf_str(CNF_DUMPUSER);
 	    if ((pw = getpwnam(uname_target)) == NULL) {
-		error(_("cannot look up dumpuser \"%s\""), uname_target);
+		error("cannot look up dumpuser \"%s\"", uname_target);
 		/*NOTREACHED*/
 	    }
 	    uid_target = pw->pw_uid;
@@ -1386,19 +1383,19 @@ check_running_as(running_as_flags who)
 	case RUNNING_AS_CLIENT_LOGIN:
 	    uname_target = CLIENT_LOGIN;
 	    if ((pw = getpwnam(uname_target)) == NULL) {
-		error(_("cannot look up client user \"%s\""), uname_target);
+		error("cannot look up client user \"%s\"", uname_target);
 		/*NOTREACHED*/
 	    }
 	    uid_target = pw->pw_uid;
 	    break;
 
 	default:
-	    error(_("Unknown check_running_as() call"));
+	    error("Unknown check_running_as() call");
 	    /* NOTREACHED */
     }
 
     if (uid_me != uid_target) {
-	error(_("running as user \"%s\" instead of \"%s\""), uname_me, uname_target);
+	error("running as user \"%s\" instead of \"%s\"", uname_me, uname_target);
 	/*NOTREACHED*/
     }
     amfree(uname_me);
@@ -1512,7 +1509,7 @@ proplist_add_to_argv(
 	if (*w == '_')
 	    *w = '-';
     }
-    qprop = stralloc2("--", q);
+    qprop = g_strdup_printf("--%s", q);
     amfree(q);
     for(value=value_s->values; value != NULL; value = value->next) {
 	g_ptr_array_add(argv_ptr, g_strdup(qprop));
@@ -1541,7 +1538,8 @@ static pcontext_t pcontext = CONTEXT_DEFAULT;
 void
 set_pname(char *p)
 {
-    pname = newstralloc(pname, p);
+    g_free(pname);
+    pname = g_strdup(p);
 }
 
 char *
@@ -1554,7 +1552,8 @@ get_pname(void)
 void
 set_ptype(char *p)
 {
-    ptype = newstralloc(ptype, p);
+    g_free(ptype);
+    ptype = g_strdup(p);
 }
 
 char *

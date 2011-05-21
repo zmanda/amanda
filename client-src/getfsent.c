@@ -77,20 +77,36 @@ get_fstab_nextentry(
 
     if(!sys_fsent)
 	return 0;
-    fsent->fsname  = xfsname  = newstralloc(xfsname,  sys_fsent->fs_spec);
-    fsent->mntdir  = xmntdir  = newstralloc(xmntdir,  sys_fsent->fs_file);
+    g_free(xfsname);
+    xfsname = g_strdup(sys_fsent->fs_spec);
+    g_free(xmntdir);
+    xmntdir = g_strdup(sys_fsent->fs_file);
+    fsent->fsname  = xfsname;
+    fsent->mntdir  = xmntdir;
     fsent->freq    = sys_fsent->fs_freq;
     fsent->passno  = sys_fsent->fs_passno;
 #ifdef STATFS_ULTRIX
-    fsent->fstype  = xfstype  = newstralloc(xfstype,  sys_fsent->fs_name);
-    fsent->mntopts = xmntopts = newstralloc(xmntopts, sys_fsent->fs_opts);
+    g_free(xfstype);
+    xfstype = g_strdup(sys_fsent->fs_name);
+    g_free(xmntopts);
+    xmntopts = g_strdup(sys_fsent->fs_opts);
+    fsent->fstype  = xfstype;
+    fsent->mntopts = xmntopts;
 #else
 #if defined(_AIX)
-    fsent->fstype  = xfstype  = newstralloc(xfstype,  _("unknown"));
-    fsent->mntopts = xmntopts = newstralloc(xmntopts, sys_fsent->fs_type);
+    g_free(xfstype);
+xfstype = g_strdup("unknown");
+    g_free(xmntopts);
+    xmntopts = g_strdup(sys_fsent->fs_type);
+    fsent->fstype  = xfstype;
+    fsent->mntopts = xmntopts;
 #else
-    fsent->fstype  = xfstype  = newstralloc(xfstype,  sys_fsent->fs_vfstype);
-    fsent->mntopts = xmntopts = newstralloc(xmntopts, sys_fsent->fs_mntops);
+    g_free(xfstype);
+xfstype = g_strdup(sys_fsent->fs_vfstype);
+    g_free(xmntopts);
+    xmntopts = g_strdup(sys_fsent->fs_mntops);
+    fsent->fstype  = xfstype;
+    fsent->mntopts = xmntopts;
 #endif
 #endif
     return 1;
@@ -307,7 +323,8 @@ get_fstab_nextentry(
 	strappend(fsent->mntopts, s);
     }
 
-    lfsnam = newstralloc(lfsnam, fsent->fstype);
+    g_free(lfsnam);
+    lfsnam = g_strdup(fsent->fstype);
     s = lfsnam;
     while((ch = *s++) != '\0') {
 	if(isupper(ch)) ch = tolower(ch);
@@ -457,7 +474,8 @@ dev2rdev(
   while(ch) {
     if (ch == '/') {
       s[-1] = '\0';
-      fname = newvstralloc(fname, name, "/r", s, NULL);
+      g_free(fname);
+      fname = g_strjoin(NULL, name, "/r", s, NULL);
       s[-1] = (char)ch;
       if(stat(fname, &st) == 0 && S_ISCHR(st.st_mode)) return fname;
     }
@@ -514,10 +532,11 @@ search_fstab(
   if (stat(name, &stats[0]) == -1)
     stats[0].st_dev = (dev_t)-1;
   if (name[0] != '/') {
-    fullname = stralloc2(DEV_PREFIX, name);
+    fullname = g_strjoin(NULL, DEV_PREFIX, name, NULL);
     if (stat(fullname, &stats[1]) == -1)
       stats[1].st_dev = (dev_t)-1;
-    fullname = newstralloc2(fullname, RDEV_PREFIX, name);
+    g_free(fullname);
+    fullname = g_strjoin(NULL, RDEV_PREFIX, name, NULL);
     if (stat(fullname, &stats[2]) == -1)
       stats[2].st_dev = (dev_t)-1;
     amfree(fullname);
@@ -667,7 +686,7 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     if(!open_fstab()) {
-	g_fprintf(stderr, _("getfsent_test: could not open fstab\n"));
+	g_fprintf(stderr, "getfsent_test: could not open fstab\n");
 	return 1;
     }
 
@@ -681,73 +700,82 @@ main(
 
     close_fstab();
 
-    name = newstralloc(name, "/usr");
+    g_free(name);
+    name = g_strdup("/usr");
     if(search_fstab(name, &fsent, 1) || search_fstab(name, &fsent, 0)) {
-	g_printf(_("Found %s mount for %s:\n"),
-	       is_local_fstype(&fsent)? _("local") : _("remote"), name);
+	g_printf("Found %s mount for %s:\n",
+	       is_local_fstype(&fsent)? "local" : "remote", name);
 	print_entry(&fsent);
     }
     else 
-	g_printf(_("Mount for %s not found\n"), name);
+	g_printf("Mount for %s not found\n", name);
 
-    name = newstralloc(name, "/");
+    g_free(name);
+    name = g_strdup("/");
     if(search_fstab(name, &fsent, 1) || search_fstab(name, &fsent, 0)) {
-	g_printf(_("Found %s mount for %s:\n"),
-	       is_local_fstype(&fsent)? _("local") : _("remote"), name);
+	g_printf("Found %s mount for %s:\n",
+	       is_local_fstype(&fsent)? "local" : "remote", name);
 	print_entry(&fsent);
     }
     else 
-	g_printf(_("Mount for %s not found\n"), name);
+	g_printf("Mount for %s not found\n", name);
 
-    name = newstralloc(name, "/");
+    g_free(name);
+    name = g_strdup("/");
     s = amname_to_fstype(name);
-    g_printf(_("fstype of `%s': %s\n"), name, s);
+    g_printf("fstype of `%s': %s\n", name, s);
     amfree(s);
-    name = newstralloc(name, "/dev/root");
+    g_free(name);
+    name = g_strdup("/dev/root");
     s = amname_to_fstype(name);
-    g_printf(_("fstype of `%s': %s\n"), name, s);
+    g_printf("fstype of `%s': %s\n", name, s);
     amfree(s);
-    name = newstralloc(name, "/usr");
+    g_free(name);
+    name = g_strdup("/usr");
     s = amname_to_fstype(name);
-    g_printf(_("fstype of `%s': %s\n"), name, s);
+    g_printf("fstype of `%s': %s\n", name, s);
     amfree(s);
-    name = newstralloc(name, "c0t3d0s0");
+    g_free(name);
+    name = g_strdup("c0t3d0s0");
     s = amname_to_fstype(name);
-    g_printf(_("fstype of `%s': %s\n"), name, s);
+    g_printf("fstype of `%s': %s\n", name, s);
     amfree(s);
 
-    name = newstralloc(name, "/tmp/foo");
+    g_free(name);
+    name = g_strdup("/tmp/foo");
     s = amname_to_devname(name);
-    g_printf(_("device of `%s': %s\n"), name, s);
+    g_printf("device of `%s': %s\n", name, s);
     amfree(s);
     s = amname_to_dirname(name);
-    g_printf(_("dirname of `%s': %s\n"), name, s);
+    g_printf("dirname of `%s': %s\n", name, s);
     amfree(s);
     s = amname_to_fstype(name);
-    g_printf(_("fstype of `%s': %s\n"), name, s);
+    g_printf("fstype of `%s': %s\n", name, s);
     amfree(s);
 
-    name = newstralloc(name, "./foo");
+    g_free(name);
+    name = g_strdup("./foo");
     s = amname_to_devname(name);
-    g_printf(_("device of `%s': %s\n"), name, s);
+    g_printf("device of `%s': %s\n", name, s);
     amfree(s);
     s = amname_to_dirname(name);
-    g_printf(_("dirname of `%s': %s\n"), name, s);
+    g_printf("dirname of `%s': %s\n", name, s);
     amfree(s);
     s = amname_to_fstype(name);
-    g_printf(_("fstype of `%s': %s\n"), name, s);
+    g_printf("fstype of `%s': %s\n", name, s);
     amfree(s);
 
     while (--argc > 0) {
-	name = newstralloc(name, *++argv);
+	g_free(name);
+	name = g_strdup(*++argv);
 	s = amname_to_devname(name);
-	g_printf(_("device of `%s': %s\n"), name, s);
+	g_printf("device of `%s': %s\n", name, s);
 	amfree(s);
 	s = amname_to_dirname(name);
-	g_printf(_("dirname of `%s': %s\n"), name, s);
+	g_printf("dirname of `%s': %s\n", name, s);
 	amfree(s);
 	s = amname_to_fstype(name);
-	g_printf(_("fstype of `%s': %s\n"), name, s);
+	g_printf("fstype of `%s': %s\n", name, s);
 	amfree(s);
     }
 

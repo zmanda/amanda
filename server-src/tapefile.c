@@ -93,7 +93,7 @@ write_tapelist(
     char *newtapefile;
     int rc;
 
-    newtapefile = stralloc2(tapefile, ".new");
+    newtapefile = g_strdup_printf("%s.new", tapefile);
 
     if((tapef = fopen(newtapefile,"w")) == NULL) {
 	amfree(newtapefile);
@@ -114,7 +114,7 @@ write_tapelist(
     }
 
     if (fclose(tapef) == EOF) {
-	g_fprintf(stderr,_("error [closing %s: %s]"), newtapefile, strerror(errno));
+	g_fprintf(stderr,"error [closing %s: %s]", newtapefile, strerror(errno));
 	amfree(newtapefile);
 	return 1;
     }
@@ -532,11 +532,11 @@ list_new_tapes(
 
 	if(c == 1) {
 	    result = g_strdup_printf(
-			_("The next new tape already labelled is: %s."),
+			"The next new tape already labelled is: %s.",
 			lasttp->label);
 	} else {
 	    result = g_strdup_printf(
-			_("The next %d new tapes already labelled are: %s"),
+			"The next %d new tapes already labelled are: %s",
 			c, lasttp->label);
 	    iter = lasttp->prev;
 	    c--;

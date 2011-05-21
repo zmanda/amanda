@@ -59,7 +59,7 @@ s3_regexec_wrap(regex_t *regex,
         /* this is programmer error (bad regexp), so just log
          * and abort().  There's no good way to signal a
          * permanaent error from interpret_response. */
-        g_critical(_("Regex error: %s"), message);
+        g_critical("Regex error: %s", message);
     }
 
     return reg_result;

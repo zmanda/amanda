@@ -55,7 +55,7 @@ ssize_t	dgram_recv(dgram_t *dgram, int timeout,
 		   sockaddr_union *fromaddr);
 void	dgram_zero(dgram_t *dgram);
 int	dgram_cat(dgram_t *dgram, const char *fmt, ...)
-     G_GNUC_PRINTF(2,3);
+    G_GNUC_PRINTF(2, 3);
 void dgram_eatline(dgram_t *dgram);
 
 #endif /* ! DGRAM_H */

@@ -145,24 +145,24 @@ bsd_connect(
 
     result = resolve_hostname(hostname, SOCK_DGRAM, &res, &canonname);
     if(result != 0) {
-	dbprintf(_("resolve_hostname(%s): %s\n"), hostname, gai_strerror(result));
-	security_seterror(&bh->sech, _("resolve_hostname(%s): %s\n"), hostname,
+	dbprintf("resolve_hostname(%s): %s\n", hostname, gai_strerror(result));
+	security_seterror(&bh->sech, "resolve_hostname(%s): %s\n", hostname,
 			  gai_strerror(result));
 	(*fn)(arg, &bh->sech, S_ERROR);
 	return;
     }
     if (canonname == NULL) {
-	dbprintf(_("resolve_hostname(%s) did not return a canonical name\n"), hostname);
+	dbprintf("resolve_hostname(%s) did not return a canonical name\n", hostname);
 	security_seterror(&bh->sech,
-	        _("resolve_hostname(%s) did not return a canonical name\n"), hostname);
+	        "resolve_hostname(%s) did not return a canonical name\n", hostname);
 	(*fn)(arg, &bh->sech, S_ERROR);
 	if (res) freeaddrinfo(res);
 	return;
     }
     if (res == NULL) {
-	dbprintf(_("resolve_hostname(%s): no results\n"), hostname);
+	dbprintf("resolve_hostname(%s): no results\n", hostname);
 	security_seterror(&bh->sech,
-	        _("resolve_hostname(%s): no results\n"), hostname);
+	        "resolve_hostname(%s): no results\n", hostname);
 	(*fn)(arg, &bh->sech, S_ERROR);
 	amfree(canonname);
 	return;
@@ -198,7 +198,7 @@ bsd_connect(
 	     */
 	    if (port >= IPPORT_RESERVED) {
 		security_seterror(&bh->sech,
-		    _("unable to bind to a reserved port (got port %u)"),
+		    "unable to bind to a reserved port (got port %u)",
 		    (unsigned int)port);
 		(*fn)(arg, &bh->sech, S_ERROR);
 		freeaddrinfo(res);
@@ -254,9 +254,9 @@ bsd_connect(
     }
 
     if (res_addr == NULL) {
-	dbprintf(_("Can't bind a socket to connect to %s\n"), hostname);
+	dbprintf("Can't bind a socket to connect to %s\n", hostname);
 	security_seterror(&bh->sech,
-	        _("Can't bind a socket to connect to %s\n"), hostname);
+	        "Can't bind a socket to connect to %s\n", hostname);
 	(*fn)(arg, &bh->sech, S_ERROR);
 	amfree(canonname);
 	freeaddrinfo(res);
@@ -270,7 +270,7 @@ bsd_connect(
 #endif
 	bh->udp = &netfd4;
 
-    auth_debug(1, _("Resolved hostname=%s\n"), canonname);
+    auth_debug(1, "Resolved hostname=%s\n", canonname);
 
     if (conf_fn) {
         service = conf_fn("client_port", datap);
@@ -281,7 +281,7 @@ bsd_connect(
     }
     port = find_port_for_service(service, "udp");
     if (port == 0) {
-        security_seterror(&bh->sech, _("%s/udp unknown protocol"), service);
+        security_seterror(&bh->sech, "%s/udp unknown protocol", service);
 	(*fn)(arg, &bh->sech, S_ERROR);
         amfree(canonname);
 	freeaddrinfo(res);
@@ -368,7 +368,7 @@ bsd_close(
 	return;
     }
 
-    auth_debug(1, _("bsd: close handle '%s'\n"), bh->proto_handle);
+    auth_debug(1, "bsd: close handle '%s'\n", bh->proto_handle);
 
     udp_recvpkt_cancel(bh);
     if(bh->next) {
@@ -415,7 +415,7 @@ bsd_stream_server(
 			       0);
     if (bs->socket < 0) {
 	security_seterror(&bh->sech,
-	    _("can't create server stream: %s"), strerror(errno));
+	    "can't create server stream: %s", strerror(errno));
 	amfree(bs->secstr.error);
 	amfree(bs);
 	return (NULL);
@@ -442,7 +442,7 @@ bsd_stream_accept(
     bs->fd = stream_accept(bs->socket, 30, STREAM_BUFSIZE, STREAM_BUFSIZE);
     if (bs->fd < 0) {
 	security_stream_seterror(&bs->secstr,
-	    _("can't accept new stream connection: %s"), strerror(errno));
+	    "can't accept new stream connection: %s", strerror(errno));
 	return (-1);
     }
     return (0);
@@ -470,7 +470,7 @@ bsd_stream_client(
 	STREAM_BUFSIZE, STREAM_BUFSIZE, &bs->port, 0);
     if (bs->fd < 0) {
 	security_seterror(&bh->sech,
-	    _("can't connect stream to %s port %d: %s"), bh->hostname,
+	    "can't connect stream to %s port %d: %s", bh->hostname,
 	    id, strerror(errno));
 	amfree(bs->secstr.error);
 	amfree(bs);
@@ -596,7 +596,7 @@ stream_read_sync_callback(
 
     assert(bs != NULL);
 
-    auth_debug(1, _("bsd: stream_read_callback_sync: fd %d\n"), bs->fd);
+    auth_debug(1, "bsd: stream_read_callback_sync: fd %d\n", bs->fd);
 
     /*
      * Remove the event first, in case they reschedule it in the callback.

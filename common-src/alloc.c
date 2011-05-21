@@ -31,29 +31,8 @@
  * code
  */
 #include "amanda.h"
-#include "arglist.h"
 
 #define	MIN_ALLOC	64
-
-static char *internal_vstralloc(const char *, int, const char *, va_list);
-
-/*
- * newalloc - free existing buffer and then g_malloc a new one.
- */
-void *
-debug_newalloc(
-    const char *file G_GNUC_UNUSED,
-    int		line G_GNUC_UNUSED,
-    void *	old,
-    size_t	size)
-{
-    char *addr;
-
-    addr = g_malloc(size);
-    amfree(old);
-    return addr;
-}
-
 
 /*
  * internal_vstralloc - copies up to MAX_STR_ARGS strings into newly
@@ -81,7 +60,7 @@ internal_vstralloc(
     size_t l;
 
     if (str == NULL) {
-	errordump(_("internal_vstralloc: str is NULL"));
+	errordump("internal_vstralloc: str is NULL");
 	/*NOTREACHED*/
     }
 
@@ -96,8 +75,8 @@ internal_vstralloc(
 	    continue;				/* minor optimisation */
 	}
 	if (a >= MAX_VSTRALLOC_ARGS) {
-	    errordump(_("%s@%d: more than %d args to vstralloc"),
-		      file ? file : _("(unknown)"),
+	    errordump("%s@%d: more than %d args to vstralloc",
+		      file ? file : "(unknown)",
 		      file ? line : -1,
 		      MAX_VSTRALLOC_ARGS);
 	    /*NOTREACHED*/
@@ -117,82 +96,6 @@ internal_vstralloc(
     }
     *next = '\0';
 
-    return result;
-}
-
-
-/*
- * newstralloc - free existing string and then g_strdup a new one.
- */
-char *
-debug_newstralloc(
-    const char *file G_GNUC_UNUSED,
-    int		line G_GNUC_UNUSED,
-    char *	oldstr,
-    const char *newstr)
-{
-    char *addr;
-
-    addr = g_strdup(newstr);
-    amfree(oldstr);
-    return (addr);
-}
-
-
-/*
- * newvstralloc - free existing string and then vstralloc a new one.
- */
-char *
-debug_newvstralloc(
-    const char *file,
-    int		line,
-    char *	oldstr,
-    const char *newstr,
-    ...)
-{
-    va_list argp;
-    char *result;
-
-    arglist_start(argp, newstr);
-    result = internal_vstralloc(file, line, newstr, argp);
-    arglist_end(argp);
-    amfree(oldstr);
-    return result;
-}
-
-
-/*
- * newvstrallocf - free existing string and then g_strdup_printf a new one.
- */
-char *
-debug_newvstrallocf(
-    const char *file G_GNUC_UNUSED,
-    int		line G_GNUC_UNUSED,
-    char *	oldstr,
-    const char *fmt,
-    ...)
-{
-    size_t	size;
-    char *	result;
-    va_list	argp;
-
-    result = g_malloc(MIN_ALLOC);
-    if (result != NULL) {
-
-	arglist_start(argp, fmt);
-	size = g_vsnprintf(result, MIN_ALLOC, fmt, argp);
-	arglist_end(argp);
-
-	if (size >= MIN_ALLOC) {
-	    amfree(result);
-	    result = g_malloc(size + 1);
-
-	    arglist_start(argp, fmt);
-	    (void)g_vsnprintf(result, size + 1, fmt, argp);
-	    arglist_end(argp);
-	}
-    }
-    amfree(oldstr);
     return result;
 }
 

@@ -103,7 +103,6 @@ noinst_HEADERS =		\
 	amfeatures.h		\
 	ipc-binary.h		\
 	amxml.h			\
-	arglist.h		\
 	clock.h			\
 	columnar.h		\
 	directtcp.h		\

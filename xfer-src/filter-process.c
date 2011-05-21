@@ -137,7 +137,8 @@ start_impl(
     cmd_str = g_shell_quote(*(argv++));
     while (*argv) {
 	char *qarg = g_shell_quote(*(argv++));
-	cmd_str = newvstralloc(cmd_str, cmd_str, " ", qarg, NULL);
+	g_free(cmd_str);
+	cmd_str = g_strjoin(NULL, cmd_str, " ", qarg, NULL);
 	g_free(qarg);
     }
     g_debug("%s spawning: %s", xfer_element_repr(elt), cmd_str);
@@ -328,7 +329,7 @@ xfer_filter_process(
     xfp->argv = argv;
     xfp->need_root = need_root;
     if (pipe(xfp->pipe_err) < 0) {
-	g_critical(_("Can't create pipe: %s"), strerror(errno));
+	g_critical("Can't create pipe: %s", strerror(errno));
     }
     return elt;
 }

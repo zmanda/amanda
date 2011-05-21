@@ -109,7 +109,7 @@ local_connect(
     assert(fn != NULL);
     assert(hostname != NULL);
 
-    auth_debug(1, _("local: local_connect: %s\n"), hostname);
+    auth_debug(1, "local: local_connect: %s\n", hostname);
 
     rh = g_new0(struct sec_handle, 1);
     security_handleinit(&rh->sech, &local_security_driver);
@@ -119,7 +119,7 @@ local_connect(
     rh->rc = NULL;
 
     if (gethostname(myhostname, MAX_HOSTNAME_LENGTH) == -1) {
-	security_seterror(&rh->sech, _("gethostname failed"));
+	security_seterror(&rh->sech, "gethostname failed");
 	(*fn)(arg, &rh->sech, S_ERROR);
 	return;
     }
@@ -128,7 +128,7 @@ local_connect(
     if (strcmp(hostname, myhostname) != 0 &&
 	match("^localhost(\\.localdomain)?$", hostname) == 0) {
 	security_seterror(&rh->sech,
-	    _("%s: is not local"), hostname);
+	    "%s: is not local", hostname);
 	(*fn)(arg, &rh->sech, S_ERROR);
 	return;
     }
@@ -152,7 +152,7 @@ local_connect(
     }
     if(rh->rc->read == -1) {
 	if (runlocal(rh->rs->rc, amandad_path, client_username) < 0) {
-	    security_seterror(&rh->sech, _("can't connect to %s: %s"),
+	    security_seterror(&rh->sech, "can't connect to %s: %s",
 			      hostname, rh->rs->rc->errmsg);
 	    goto error;
 	}
@@ -219,13 +219,15 @@ runlocal(
     memset(rpipe, -1, sizeof(rpipe));
     memset(wpipe, -1, sizeof(wpipe));
     if (pipe(rpipe) < 0 || pipe(wpipe) < 0) {
-	rc->errmsg = newvstrallocf(rc->errmsg, _("pipe: %s"), strerror(errno));
+	g_free(rc->errmsg);
+	rc->errmsg = g_strdup_printf("pipe: %s", strerror(errno));
 	return (-1);
     }
 
     switch (rc->pid = fork()) {
     case -1:
-	rc->errmsg = newvstrallocf(rc->errmsg, _("fork: %s"), strerror(errno));
+	g_free(rc->errmsg);
+	rc->errmsg = g_strdup_printf("fork: %s", strerror(errno));
 	aclose(rpipe[0]);
 	aclose(rpipe[1]);
 	aclose(wpipe[0]);
@@ -265,7 +267,7 @@ runlocal(
 
     execlp(xamandad_path, xamandad_path,
 	   "-auth=local", (char *)NULL);
-    error(_("error: couldn't exec %s: %s"), xamandad_path, strerror(errno));
+    error("error: couldn't exec %s: %s", xamandad_path, strerror(errno));
 
     /* should never go here, shut up compiler warning */
     return(-1);

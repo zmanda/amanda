@@ -244,7 +244,7 @@ static void holding_walk_dir(
 
     if ((dir = opendir(hdir)) == NULL) {
         if (errno != ENOENT)
-           dbprintf(_("Warning: could not open holding dir %s: %s\n"),
+           dbprintf("Warning: could not open holding dir %s: %s\n",
                   hdir, strerror(errno));
         return;
     }
@@ -255,8 +255,8 @@ static void holding_walk_dir(
         if (is_dot_or_dotdot(workdir->d_name))
             continue; /* expected cruft */
 
-        hfile = newvstralloc(hfile,
-                     hdir, "/", workdir->d_name,
+        g_free(hfile);
+        hfile = g_strjoin(NULL, hdir, "/", workdir->d_name,
                      NULL);
 
         /* filter out various undesirables */
@@ -326,7 +326,7 @@ holding_walk_disk(
 
     if ((dir = opendir(hdisk)) == NULL) {
         if (errno != ENOENT)
-           dbprintf(_("Warning: could not open holding disk %s: %s\n"),
+           dbprintf("Warning: could not open holding disk %s: %s\n",
                   hdisk, strerror(errno));
         return;
     }
@@ -337,8 +337,8 @@ holding_walk_disk(
         if (is_dot_or_dotdot(workdir->d_name))
             continue; /* expected cruft */
 
-        hdir = newvstralloc(hdir,
-                     hdisk, "/", workdir->d_name,
+        g_free(hdir);
+        hdir = g_strjoin(NULL, hdisk, "/", workdir->d_name,
                      NULL);
 
         /* detect cruft */
@@ -607,7 +607,7 @@ holding_file_size(
     while (filename != NULL && filename[0] != '\0') {
         /* stat the file for its size */
         if (stat(filename, &finfo) == -1) {
-	    dbprintf(_("stat %s: %s\n"), filename, strerror(errno));
+	    dbprintf("stat %s: %s\n", filename, strerror(errno));
             size = -1;
 	    break;
         }
@@ -617,13 +617,14 @@ holding_file_size(
 
         /* get the header to look for cont_filename */
         if (!holding_file_get_dumpfile(filename, &file)) {
-	    dbprintf(_("holding_file_size: open of %s failed.\n"), filename);
+	    dbprintf("holding_file_size: open of %s failed.\n", filename);
             size = -1;
 	    break;
         }
 
         /* on to the next chunk */
-        filename = newstralloc(filename, file.cont_filename);
+        g_free(filename);
+        filename = g_strdup(file.cont_filename);
 	dumpfile_free_data(&file);
     }
     amfree(filename);
@@ -644,7 +645,7 @@ holding_file_unlink(
 
     for (chunk = chunklist; chunk != NULL; chunk = chunk->next) {
         if (unlink((char *)chunk->data)<0) {
-	    dbprintf(_("holding_file_unlink: could not unlink %s: %s\n"),
+	    dbprintf("holding_file_unlink: could not unlink %s: %s\n",
                     (char *)chunk->data, strerror(errno));
             return 0;
         }
@@ -699,10 +700,10 @@ holding_cleanup_disk(
     if (data->verbose_output) {
 	if (is_cruft)
 	    g_fprintf(data->verbose_output, 
-		_("Invalid holding disk '%s'\n"), fqpath);
+		"Invalid holding disk '%s'\n", fqpath);
 	else
 	    g_fprintf(data->verbose_output, 
-		_("Cleaning up holding disk '%s'\n"), fqpath);
+		"Cleaning up holding disk '%s'\n", fqpath);
     }
 
     return 1;
@@ -721,7 +722,7 @@ holding_cleanup_dir(
     if (is_cruft) {
 	if (data->verbose_output)
 	    g_fprintf(data->verbose_output, 
-		_("Invalid holding directory '%s'\n"), fqpath);
+		"Invalid holding directory '%s'\n", fqpath);
 	return 0;
     }
 
@@ -730,13 +731,13 @@ holding_cleanup_dir(
 	/* success, so don't try to walk into it */
 	if (data->verbose_output)
 	    g_fprintf(data->verbose_output,
-		_(" ..removed empty directory '%s'\n"), element);
+		" ..removed empty directory '%s'\n", element);
 	return 0;
     }
 
     if (data->verbose_output)
 	g_fprintf(data->verbose_output, 
-	    _(" ..cleaning up holding directory '%s'\n"), element);
+	    " ..cleaning up holding directory '%s'\n", element);
 
     return 1;
 }
@@ -758,7 +759,7 @@ holding_cleanup_file(
     if (is_cruft) {
 	if (data->verbose_output)
 	    g_fprintf(data->verbose_output, 
-		_("Invalid holding file '%s'\n"), element);
+		"Invalid holding file '%s'\n", element);
 	return 0;
     }
 
@@ -768,7 +769,7 @@ holding_cleanup_file(
     if (!stat) {
 	if (data->verbose_output)
 	    g_fprintf(data->verbose_output, 
-		_("Could not read read header from '%s'\n"), element);
+		"Could not read read header from '%s'\n", element);
 	dumpfile_free_data(&file);
 	return 0;
     }
@@ -776,7 +777,7 @@ holding_cleanup_file(
     if (file.type != F_DUMPFILE && file.type != F_CONT_DUMPFILE) {
 	if (data->verbose_output)
 	    g_fprintf(data->verbose_output, 
-		_("File '%s' is not a dump file\n"), element);
+		"File '%s' is not a dump file\n", element);
 	dumpfile_free_data(&file);
 	return 0;
     }
@@ -784,7 +785,7 @@ holding_cleanup_file(
     if(file.dumplevel < 0 || file.dumplevel > 9) {
 	if (data->verbose_output)
 	    g_fprintf(data->verbose_output, 
-		_("File '%s' has invalid level %d\n"), element, file.dumplevel);
+		"File '%s' has invalid level %d\n", element, file.dumplevel);
 	dumpfile_free_data(&file);
 	return 0;
     }
@@ -794,7 +795,7 @@ holding_cleanup_file(
     if (dp == NULL) {
 	if (data->verbose_output)
 	    g_fprintf(data->verbose_output, 
-		_("File '%s' is for '%s:%s', which is not in the disklist\n"), 
+		"File '%s' is for '%s:%s', which is not in the disklist\n", 
 		    element, file.name, file.disk);
 	dumpfile_free_data(&file);
 	return 0;
@@ -811,16 +812,16 @@ holding_cleanup_file(
 	 * and mark the DLE as corrupted */
 	if (data->verbose_output)
 	    g_fprintf(data->verbose_output, 
-		_("Processing partial holding file '%s'\n"), element);
+		"Processing partial holding file '%s'\n", element);
 
 	if(rename_tmp_holding(destname, 0)) {
 	    if (data->corrupt_dle)
 		data->corrupt_dle(dp->host->hostname, dp->name);
 	} else {
-	    dbprintf(_("rename_tmp_holding(%s) failed\n"), destname);
+	    dbprintf("rename_tmp_holding(%s) failed\n", destname);
 	    if (data->verbose_output)
 		g_fprintf(data->verbose_output, 
-		    _("Rename of '%s' to '%s' failed.\n"), element, destname);
+		    "Rename of '%s' to '%s' failed.\n", element, destname);
 	}
 
 	amfree(destname);
@@ -863,14 +864,14 @@ holding_set_origsize(
     dumpfile_t  file;
 
     if((fd = robust_open(holding_file, O_RDWR, 0)) == -1) {
-	dbprintf(_("holding_set_origsize: open of %s failed: %s\n"),
+	dbprintf("holding_set_origsize: open of %s failed: %s\n",
 		 holding_file, strerror(errno));
 	return;
     }
 
     buflen = read_fully(fd, buffer, sizeof(buffer), NULL);
     if (buflen <= 0) {
-	dbprintf(_("holding_set_origsize: %s: empty file?\n"), holding_file);
+	dbprintf("holding_set_origsize: %s: empty file?\n", holding_file);
 	close(fd);
 	return;
     }
@@ -899,9 +900,10 @@ rename_tmp_holding(
     memset(buffer, 0, sizeof(buffer));
     filename = g_strdup(holding_file);
     while(filename != NULL && filename[0] != '\0') {
-	filename_tmp = newvstralloc(filename_tmp, filename, ".tmp", NULL);
+	g_free(filename_tmp);
+	filename_tmp = g_strjoin(NULL, filename, ".tmp", NULL);
 	if((fd = robust_open(filename_tmp,O_RDONLY, 0)) == -1) {
-	    dbprintf(_("rename_tmp_holding: open of %s failed: %s\n"),filename_tmp,strerror(errno));
+	    dbprintf("rename_tmp_holding: open of %s failed: %s\n",filename_tmp,strerror(errno));
 	    amfree(filename);
 	    amfree(filename_tmp);
 	    return 0;
@@ -910,12 +912,12 @@ rename_tmp_holding(
 	close(fd);
 
 	if(rename(filename_tmp, filename) != 0) {
-	    dbprintf(_("rename_tmp_holding: could not rename \"%s\" to \"%s\": %s"),
+	    dbprintf("rename_tmp_holding: could not rename \"%s\" to \"%s\": %s",
 		    filename_tmp, filename, strerror(errno));
 	}
 
 	if (buflen <= 0) {
-	    dbprintf(_("rename_tmp_holding: %s: empty file?\n"), filename);
+	    dbprintf("rename_tmp_holding: %s: empty file?\n", filename);
 	    amfree(filename);
 	    amfree(filename_tmp);
 	    return 0;
@@ -924,7 +926,7 @@ rename_tmp_holding(
 	if(complete == 0 ) {
             char * header;
 	    if((fd = robust_open(filename, O_RDWR, 0)) == -1) {
-		dbprintf(_("rename_tmp_holdingX: open of %s failed: %s\n"),
+		dbprintf("rename_tmp_holdingX: open of %s failed: %s\n",
 			filename, strerror(errno));
 		dumpfile_free_data(&file);
 		amfree(filename);
@@ -937,9 +939,9 @@ rename_tmp_holding(
 		dump_dumpfile_t(&file);
             header = build_header(&file, NULL, DISK_BLOCK_BYTES);
 	    if (!header) /* this shouldn't happen */
-		error(_("header does not fit in %zd bytes"), (size_t)DISK_BLOCK_BYTES);
+		error("header does not fit in %zd bytes", (size_t)DISK_BLOCK_BYTES);
 	    if (full_write(fd, header, DISK_BLOCK_BYTES) != DISK_BLOCK_BYTES) {
-		dbprintf(_("rename_tmp_holding: writing new header failed: %s"),
+		dbprintf("rename_tmp_holding: writing new header failed: %s",
 			strerror(errno));
 		dumpfile_free_data(&file);
 		amfree(filename);
@@ -951,7 +953,8 @@ rename_tmp_holding(
 	    free(header);
 	    close(fd);
 	}
-	filename = newstralloc(filename, file.cont_filename);
+	g_free(filename);
+	filename = g_strdup(file.cont_filename);
 	dumpfile_free_data(&file);
     }
     amfree(filename);
@@ -968,28 +971,28 @@ mkholdingdir(
     int success = 1;
 
     if (mkpdir(diskdir, 0770, (uid_t)-1, (gid_t)-1) != 0 && errno != EEXIST) {
-	log_add(L_WARNING, _("WARNING: could not create parents of %s: %s"),
+	log_add(L_WARNING, "WARNING: could not create parents of %s: %s",
 		diskdir, strerror(errno));
 	success = 0;
     }
     else if (mkdir(diskdir, 0770) != 0 && errno != EEXIST) {
-	log_add(L_WARNING, _("WARNING: could not create %s: %s"),
+	log_add(L_WARNING, "WARNING: could not create %s: %s",
 		diskdir, strerror(errno));
 	success = 0;
     }
     else if (stat(diskdir, &stat_hdp) == -1) {
-	log_add(L_WARNING, _("WARNING: could not stat %s: %s"),
+	log_add(L_WARNING, "WARNING: could not stat %s: %s",
 		diskdir, strerror(errno));
 	success = 0;
     }
     else {
 	if (!S_ISDIR((stat_hdp.st_mode))) {
-	    log_add(L_WARNING, _("WARNING: %s is not a directory"),
+	    log_add(L_WARNING, "WARNING: %s is not a directory",
 		    diskdir);
 	    success = 0;
 	}
 	else if (access(diskdir,W_OK) != 0) {
-	    log_add(L_WARNING, _("WARNING: directory %s is not writable"),
+	    log_add(L_WARNING, "WARNING: directory %s is not writable",
 		    diskdir);
 	    success = 0;
 	}

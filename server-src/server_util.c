@@ -30,7 +30,6 @@
 
 #include "amanda.h"
 #include "server_util.h"
-#include "arglist.h"
 #include "logfile.h"
 #include "util.h"
 #include "conffile.h"
@@ -73,7 +72,7 @@ getcmd(void)
 	line = g_strdup("QUIT");
     }
 
-    dbprintf(_("getcmd: %s\n"), line);
+    dbprintf("getcmd: %s\n", line);
 
     cmdargs->argv = split_quoted_strings(line);
     cmdargs->argc = g_strv_length(cmdargs->argv);
@@ -124,12 +123,12 @@ free_cmdargs(
     g_free(cmdargs);
 }
 
-printf_arglist_function1(void putresult, cmd_t, result, const char *, format)
+void putresult(cmd_t result, const char *format, ...)
 {
     va_list argp;
 
     arglist_start(argp, format);
-    dbprintf(_("putresult: %d %s\n"), result, cmdstr[result]);
+    dbprintf("putresult: %d %s\n", result, cmdstr[result]);
     g_printf("%s ", cmdstr[result]);
     g_vprintf(format, argp);
     fflush(stdout);

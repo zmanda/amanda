@@ -81,7 +81,7 @@ open_txinfofile(
 	}
     }
 
-    newinfofile = stralloc2(infofile, ".new");
+    newinfofile = g_strdup_printf("%s.new", infofile);
 
     if(writing) {
 	infof = fopen(newinfofile, mode);
@@ -149,7 +149,7 @@ read_txinfofile(
 	amfree(line);
     }
     if (line == NULL) return -1;
-    rc = sscanf(line, _("version: %d"), &version);
+    rc = sscanf(line, "version: %d", &version);
     amfree(line);
     if(rc != 1) return -2;
 
@@ -159,7 +159,7 @@ read_txinfofile(
 	amfree(line);
     }
     if (line == NULL) return -1;
-    rc = sscanf(line, _("command: %u"), &info->command);
+    rc = sscanf(line, "command: %u", &info->command);
     amfree(line);
     if(rc != 1) return -2;
 
@@ -416,9 +416,9 @@ write_txinfofile(
     perf_t *pp;
     int level;
 
-    g_fprintf(infof, _("version: %d\n"), 0);
+    g_fprintf(infof, "version: %d\n", 0);
 
-    g_fprintf(infof, _("command: %u\n"), info->command);
+    g_fprintf(infof, "command: %u\n", info->command);
 
     pp = &info->full;
 
@@ -461,10 +461,10 @@ write_txinfofile(
 	g_fprintf(infof, "\n");
     }
 
-    g_fprintf(infof, _("last_level: %d %d\n"), info->last_level, info->consecutive_runs);
+    g_fprintf(infof, "last_level: %d %d\n", info->last_level, info->consecutive_runs);
 
     for(i=0;info->history[i].level > -1;i++) {
-	g_fprintf(infof, _("history: %d %lld %lld %jd %jd\n"),
+	g_fprintf(infof, "history: %d %lld %lld %jd %jd\n",
 		info->history[i].level,
 		(long long)info->history[i].size,
 		(long long)info->history[i].csize,
@@ -493,7 +493,7 @@ delete_txinfofile(
 		   "/", mydisk,
 		   "/info",
 		   NULL);
-    fn_new = stralloc2(fn, ".new");
+    fn_new = g_strdup_printf("%s.new", fn);
 
     amfree(myhost);
     amfree(mydisk);
@@ -679,26 +679,26 @@ dump_rec(
     int i;
     stats_t *sp;
 
-    g_printf(_("command word: %d\n"), info->command);
-    g_printf(_("full dump rate (K/s) %5.1lf, %5.1lf, %5.1lf\n"),
+    g_printf("command word: %d\n", info->command);
+    g_printf("full dump rate (K/s) %5.1lf, %5.1lf, %5.1lf\n",
 	   info->full.rate[0],info->full.rate[1],info->full.rate[2]);
-    g_printf(_("full comp rate %5.1lf, %5.1lf, %5.1lf\n"),
+    g_printf("full comp rate %5.1lf, %5.1lf, %5.1lf\n",
 	   info->full.comp[0]*100,info->full.comp[1]*100,info->full.comp[2]*100);
-    g_printf(_("incr dump rate (K/s) %5.1lf, %5.1lf, %5.1lf\n"),
+    g_printf("incr dump rate (K/s) %5.1lf, %5.1lf, %5.1lf\n",
 	   info->incr.rate[0],info->incr.rate[1],info->incr.rate[2]);
-    g_printf(_("incr comp rate %5.1lf, %5.1lf, %5.1lf\n"),
+    g_printf("incr comp rate %5.1lf, %5.1lf, %5.1lf\n",
 	   info->incr.comp[0]*100,info->incr.comp[1]*100,info->incr.comp[2]*100);
     for(i = 0; i < DUMP_LEVELS; i++) {
 	sp = &info->inf[i];
 	if( sp->size != -1) {
 
-	    g_printf(_("lev %d date %ld tape %s filenum %lld size %ld csize %ld secs %ld\n"),
+	    g_printf("lev %d date %ld tape %s filenum %lld size %ld csize %ld secs %ld\n",
 	           i, (long)sp->date, sp->label, sp->filenum,
 	           sp->size, sp->csize, sp->secs);
 	}
     }
     putchar('\n');
-    g_printf(_("last_level: %d %d\n"), info->last_level, info->consecutive_runs);
+    g_printf("last_level: %d %d\n", info->last_level, info->consecutive_runs);
 }
 
 void dump_db( char *host, char *disk);
@@ -714,7 +714,7 @@ dump_db(
     if((rc = get_info(host, disk, &info)) == 0) {
 	dump_rec(&info);
     } else {
-	g_printf(_("cannot fetch information for %s:%s rc=%d\n"), host, disk, rc);
+	g_printf("cannot fetch information for %s:%s rc=%d\n", host, disk, rc);
     }
 }
 
@@ -742,7 +742,7 @@ main(
 
   for(i = 1; i < argc; ++i) {
     if(i+1 >= argc) {
-      g_fprintf(stderr,_("usage: %s host disk [host disk ...]\n"),argv[0]);
+      g_fprintf(stderr,"usage: %s host disk [host disk ...]\n",argv[0]);
       return 1;
     }
     open_infofile("curinfo");

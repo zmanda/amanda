@@ -104,7 +104,7 @@ start_amandates(
 	rc = amroflock(fileno(amdf), amandates_file);
 
     if(rc == -1) {
-	error(_("could not lock %s: %s"), amandates_file, strerror(errno));
+	error("could not lock %s: %s", amandates_file, strerror(errno));
 	/*NOTREACHED*/
     }
 
@@ -139,7 +139,7 @@ start_amandates(
     }
 
     if(ferror(amdf)) {
-	error(_("reading %s: %s"), amandates_file, strerror(errno));
+	error("reading %s: %s", amandates_file, strerror(errno));
 	/*NOTREACHED*/
     }
 
@@ -159,7 +159,7 @@ finish_amandates(void)
 
     if(updated) {
 	if(readonly) {
-	    error(_("updated amandates after opening readonly"));
+	    error("updated amandates after opening readonly");
 	    /*NOTREACHED*/
 	}
 
@@ -176,11 +176,11 @@ finish_amandates(void)
     }
 
     if(amfunlock(fileno(amdf), g_amandates_file) == -1) {
-	error(_("could not unlock %s: %s"), g_amandates_file, strerror(errno));
+	error("could not unlock %s: %s", g_amandates_file, strerror(errno));
 	/*NOTREACHED*/
     }
     if (fclose(amdf) == EOF) {
-	error(_("error [closing %s: %s]"), g_amandates_file, strerror(errno));
+	error("error [closing %s: %s]", g_amandates_file, strerror(errno));
 	/*NOTREACHED*/
     }
     amdf = NULL;
@@ -260,7 +260,7 @@ enter_record(
     if(level < 0 || level >= DUMP_LEVELS || dumpdate < amdp->dates[level]) {
 	qname = quote_string(name);
 	/* this is not allowed, but we can ignore it */
-        dbprintf(_("amandates botch: %s lev %d: new dumpdate %ld old %ld\n"),
+        dbprintf("amandates botch: %s lev %d: new dumpdate %ld old %ld\n",
 		  qname, level, (long) dumpdate, (long) amdp->dates[level]);
 	amfree(qname);
 	return;
@@ -286,7 +286,7 @@ amandates_updateone(
     if(level < 0 || level >= DUMP_LEVELS || dumpdate < amdp->dates[level]) {
 	/* this is not allowed, but we can ignore it */
 	qname = quote_string(name);
-	dbprintf(_("amandates updateone: %s lev %d: new dumpdate %ld old %ld"),
+	dbprintf("amandates updateone: %s lev %d: new dumpdate %ld old %ld",
 		  name, level, (long) dumpdate, (long) amdp->dates[level]);
 	amfree(qname);
 	return;

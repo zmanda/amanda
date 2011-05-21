@@ -167,7 +167,7 @@ protocol_sendreq(
     p->continuation = continuation;
     p->datap = datap;
 
-    proto_debug(1, _("protocol: security_connect: host %s -> p %p\n"), 
+    proto_debug(1, "protocol: security_connect: host %s -> p %p\n", 
 		    hostname, p);
 
     security_connect(p->security_driver, p->hostname, conf_fn, connect_callback,
@@ -193,7 +193,7 @@ connect_callback(
     assert(p != NULL);
     p->security_handle = security_handle;
 
-    proto_debug(1, _("protocol: connect_callback: p %p\n"), p);
+    proto_debug(1, "protocol: connect_callback: p %p\n", p);
 
     switch (status) {
     case S_OK:
@@ -201,7 +201,7 @@ connect_callback(
 	break;
 
     case S_TIMEOUT:
-	security_seterror(p->security_handle, _("timeout during connect"));
+	security_seterror(p->security_handle, "timeout during connect");
 	/* FALLTHROUGH */
 
     case S_ERROR:
@@ -213,7 +213,7 @@ connect_callback(
 	if (--p->connecttries == 0) {
 	    state_machine(p, PA_ABORT, NULL);
 	} else {
-	    proto_debug(1, _("protocol: connect_callback: p %p: retrying %s\n"),
+	    proto_debug(1, "protocol: connect_callback: p %p: retrying %s\n",
 			    p, p->hostname);
 	    security_close(p->security_handle);
 	    /* XXX overload p->security handle to hold the event handle */
@@ -297,7 +297,7 @@ state_machine(
     pstate_t curstate;
     p_action_t retaction;
 
-    proto_debug(1, _("protocol: state_machine: initial: p %p action %s pkt %p\n"),
+    proto_debug(1, "protocol: state_machine: initial: p %p action %s pkt %p\n",
 		    p, action2str(action), (void *)NULL);
 
     assert(p != NULL);
@@ -305,13 +305,13 @@ state_machine(
     assert(p->state != NULL);
 
     for (;;) {
-	proto_debug(1, _("protocol: state_machine: p %p state %s action %s\n"),
+	proto_debug(1, "protocol: state_machine: p %p state %s action %s\n",
 			p, pstate2str(p->state), action2str(action));
 	if (pkt != NULL) {
-	    proto_debug(1, _("protocol: pkt: %s (t %d) orig REQ (t %d cur %d)\n"),
+	    proto_debug(1, "protocol: pkt: %s (t %d) orig REQ (t %d cur %d)\n",
 			    pkt_type2str(pkt->type), (int)CURTIME,
 			    (int)p->origtime, (int)p->curtime);
-	    proto_debug(1, _("protocol: pkt contents:\n-----\n%s-----\n"),
+	    proto_debug(1, "protocol: pkt contents:\n-----\n%s-----\n",
 			    pkt->body);
 	}
 
@@ -338,7 +338,7 @@ state_machine(
 	     */
 	    retaction = (*curstate)(p, action, pkt);
 
-	proto_debug(1, _("protocol: state_machine: p %p state %s returned %s\n"),
+	proto_debug(1, "protocol: state_machine: p %p state %s returned %s\n",
 			p, pstate2str(p->state), action2str(retaction));
 
 	/*
@@ -357,7 +357,7 @@ state_machine(
 	    /* FALLTHROUGH */
 
 	case PA_PENDING:
-	    proto_debug(1, _("protocol: state_machine: p %p state %s: timeout %d\n"),
+	    proto_debug(1, "protocol: state_machine: p %p state %s: timeout %d\n",
 			    p, pstate2str(p->state), (int)p->timeout);
 	    /*
 	     * Get the security layer to register a receive event for this
@@ -374,7 +374,7 @@ state_machine(
 	 */
 	case PA_CONTINUE:
 	    assert(p->state != curstate);
-	    proto_debug(1, _("protocol: state_machine: p %p: moved from %s to %s\n"),
+	    proto_debug(1, "protocol: state_machine: p %p: moved from %s to %s\n",
 			    p, pstate2str(curstate),
 			    pstate2str(p->state));
 	    continue;
@@ -433,7 +433,7 @@ s_sendreq(
 
     if (security_sendpkt(p->security_handle, &p->req) < 0) {
 	/* XXX should retry */
-	security_seterror(p->security_handle, _("error sending REQ: %s"),
+	security_seterror(p->security_handle, "error sending REQ: %s",
 	    security_geterror(p->security_handle));
 	return (PA_ABORT);
     }
@@ -482,7 +482,7 @@ s_ackwait(
 	assert(pkt == NULL);
 
 	if (--p->reqtries == 0) {
-	    security_seterror(p->security_handle, _("timeout waiting for ACK"));
+	    security_seterror(p->security_handle, "timeout waiting for ACK");
 	    return (PA_ABORT);
 	}
 
@@ -558,7 +558,7 @@ s_repwait(
 	 * return.
 	 */
 	if (p->resettries == 0 || DROP_DEAD_TIME(p->origtime)) {
-	    security_seterror(p->security_handle, _("timeout waiting for REP"));
+	    security_seterror(p->security_handle, "timeout waiting for REP");
 	    return (PA_ABORT);
 	}
 
@@ -590,7 +590,7 @@ s_repwait(
 	if (security_sendpkt(p->security_handle, &ack) < 0) {
 	    /* XXX should retry */
 	    amfree(ack.body);
-	    security_seterror(p->security_handle, _("error sending ACK: %s"),
+	    security_seterror(p->security_handle, "error sending ACK: %s",
 		security_geterror(p->security_handle));
 	    return (PA_ABORT);
 	}
@@ -665,7 +665,7 @@ pstate2str(
     for (i = 0; i < G_N_ELEMENTS(pstates); i++)
 	if (pstate == pstates[i].type)
 	    return (pstates[i].name);
-    return (_("BOGUS PSTATE"));
+    return ("BOGUS PSTATE");
 }
 
 /*
@@ -697,5 +697,5 @@ action2str(
     for (i = 0; i < G_N_ELEMENTS(actions); i++)
 	if (action == actions[i].type)
 	    return (actions[i].name);
-    return (_("BOGUS ACTION"));
+    return ("BOGUS ACTION");
 }

@@ -117,7 +117,7 @@ bsdtcp_connect(
     (void)conf_fn;	/* Quiet unused parameter warning */
     (void)datap;	/* Quiet unused parameter warning */
 
-    auth_debug(1, _("bsdtcp: bsdtcp_connect: %s\n"), hostname);
+    auth_debug(1, "bsdtcp: bsdtcp_connect: %s\n", hostname);
 
     rh = g_new0(struct sec_handle, 1);
     security_handleinit(&rh->sech, &bsdtcp_security_driver);
@@ -128,16 +128,16 @@ bsdtcp_connect(
 
     result = resolve_hostname(hostname, 0, NULL, &canonname);
     if(result != 0) {
-	dbprintf(_("resolve_hostname(%s): %s\n"), hostname, gai_strerror(result));
-	security_seterror(&rh->sech, _("resolve_hostname(%s): %s\n"), hostname,
+	dbprintf("resolve_hostname(%s): %s\n", hostname, gai_strerror(result));
+	security_seterror(&rh->sech, "resolve_hostname(%s): %s\n", hostname,
 			  gai_strerror(result));
 	(*fn)(arg, &rh->sech, S_ERROR);
 	return;
     }
     if (canonname == NULL) {
-	dbprintf(_("resolve_hostname(%s) did not return a canonical name\n"), hostname);
+	dbprintf("resolve_hostname(%s) did not return a canonical name\n", hostname);
 	security_seterror(&rh->sech,
-	        _("resolve_hostname(%s) did not return a canonical name\n"), hostname);
+	        "resolve_hostname(%s) did not return a canonical name\n", hostname);
 	(*fn)(arg, &rh->sech, S_ERROR);
        return;
     }
@@ -163,7 +163,7 @@ bsdtcp_connect(
     }
     port = find_port_for_service(service, "tcp");
     if (port == 0) {
-	security_seterror(&rh->sech, _("%s/tcp unknown protocol"), service);
+	security_seterror(&rh->sech, "%s/tcp unknown protocol", service);
 	goto error;
     }
 
@@ -220,12 +220,12 @@ bsdtcp_accept(
 
     len = sizeof(sin);
     if (getpeername(in, (struct sockaddr *)&sin, &len) < 0) {
-	dbprintf(_("getpeername returned: %s\n"), strerror(errno));
+	dbprintf("getpeername returned: %s\n", strerror(errno));
 	return;
     }
     if ((result = getnameinfo((struct sockaddr *)&sin, len,
 			      hostname, NI_MAXHOST, NULL, 0, 0) != 0)) {
-	dbprintf(_("getnameinfo failed: %s\n"),
+	dbprintf("getnameinfo failed: %s\n",
 		  gai_strerror(result));
 	return;
     }
@@ -280,7 +280,7 @@ runbsdtcp(
 
     if(my_port >= IPPORT_RESERVED) {
 	security_seterror(&rh->sech,
-			  _("did not get a reserved port: %d"), my_port);
+			  "did not get a reserved port: %d", my_port);
     }
 
     rc->read = rc->write = server_socket;

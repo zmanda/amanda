@@ -22,7 +22,6 @@
 #include "amanda.h"
 #include "amxfer.h"
 #include "xfer-device.h"
-#include "arglist.h"
 #include "conffile.h"
 
 /* A transfer destination that writes an entire dumpfile to one or more files
@@ -328,7 +327,7 @@ alloc_slab(
 	rv->base = g_try_malloc(self->slab_size);
 	if (!rv->base) {
 	    xfer_cancel_with_error(XFER_ELEMENT(self),
-		_("Could not allocate %zu bytes of memory: %s"), self->slab_size, strerror(errno));
+		"Could not allocate %zu bytes of memory: %s", self->slab_size, strerror(errno));
 	    g_free(rv);
 	    return NULL;
 	}
@@ -425,7 +424,7 @@ open_disk_cache_fds(
     if (self->disk_cache_write_fd < 0) {
 	g_mutex_unlock(self->state_mutex);
 	xfer_cancel_with_error(XFER_ELEMENT(self),
-	    _("Error creating cache file in '%s': %s"), self->disk_cache_dirname,
+	    "Error creating cache file in '%s': %s", self->disk_cache_dirname,
 	    strerror(errno));
 	g_free(filename);
 	return FALSE;
@@ -436,7 +435,7 @@ open_disk_cache_fds(
     if (self->disk_cache_read_fd < 0) {
 	g_mutex_unlock(self->state_mutex);
 	xfer_cancel_with_error(XFER_ELEMENT(self),
-	    _("Error opening cache file in '%s': %s"), self->disk_cache_dirname,
+	    "Error opening cache file in '%s': %s", self->disk_cache_dirname,
 	    strerror(errno));
 	g_free(filename);
 	return FALSE;
@@ -476,7 +475,7 @@ disk_cache_thread(
 	/* rewind to the begining of the disk cache file */
 	if (lseek(self->disk_cache_write_fd, 0, SEEK_SET) == -1) {
 	    xfer_cancel_with_error(XFER_ELEMENT(self),
-		_("Error seeking disk cache file in '%s': %s"), self->disk_cache_dirname,
+		"Error seeking disk cache file in '%s': %s", self->disk_cache_dirname,
 		strerror(errno));
 	    return NULL;
 	}
@@ -534,7 +533,7 @@ disk_cache_thread(
 
 	    if (full_write(self->disk_cache_write_fd, slab->base, slab->size) < slab->size) {
 		xfer_cancel_with_error(XFER_ELEMENT(self),
-		    _("Error writing to disk cache file in '%s': %s"), self->disk_cache_dirname,
+		    "Error writing to disk cache file in '%s': %s", self->disk_cache_dirname,
 		    strerror(errno));
 		return NULL;
 	    }
@@ -703,7 +702,7 @@ slab_source_setup(
 	    /* rewind to the beginning */
 	    if (lseek(self->disk_cache_read_fd, 0, SEEK_SET) == -1) {
 		xfer_cancel_with_error(XFER_ELEMENT(self),
-		    _("Could not seek disk cache file for reading: %s"),
+		    "Could not seek disk cache file for reading: %s",
 		    strerror(errno));
 		self->last_part_successful = FALSE;
 		self->no_more_parts = TRUE;
@@ -750,8 +749,8 @@ slab_source_get_from_disk(
 
     if (bytes_read < self->slab_size) {
 	xfer_cancel_with_error(XFER_ELEMENT(xdt),
-	    _("Error reading disk cache: %s"),
-	    errno ? strerror(errno) : _("Unexpected EOF"));
+	    "Error reading disk cache: %s",
+	    errno ? strerror(errno) : "Unexpected EOF");
 	goto fatal_error;
     }
 
@@ -1008,8 +1007,8 @@ device_thread(
         GError *error = NULL;
 	self->disk_cache_thread = g_thread_create(disk_cache_thread, (gpointer)self, TRUE, &error);
         if (!self->disk_cache_thread) {
-            g_critical(_("Error creating new thread: %s (%s)"),
-                error->message, errno? strerror(errno) : _("no error code"));
+            g_critical("Error creating new thread: %s (%s)",
+                error->message, errno? strerror(errno) : "no error code");
         }
     }
 
@@ -1204,8 +1203,8 @@ start_impl(
 
     self->device_thread = g_thread_create(device_thread, (gpointer)self, FALSE, &error);
     if (!self->device_thread) {
-        g_critical(_("Error creating new thread: %s (%s)"),
-            error->message, errno? strerror(errno) : _("no error code"));
+        g_critical("Error creating new thread: %s (%s)",
+            error->message, errno? strerror(errno) : "no error code");
     }
 
     return TRUE;
@@ -1313,7 +1312,7 @@ use_device_impl(
     if (self->block_size != device->block_size) {
         g_mutex_unlock(self->state_mutex);
         xfer_cancel_with_error(XFER_ELEMENT(self),
-            _("All devices used by the taper must have the same block size"));
+            "All devices used by the taper must have the same block size");
         return;
     }
     g_mutex_unlock(self->state_mutex);

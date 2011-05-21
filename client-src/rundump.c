@@ -45,10 +45,10 @@ int main(int argc, char **argv);
 #endif
 
 #if !defined(USE_RUNDUMP)
-#  define ERRMSG _("rundump not enabled on this system.\n")
+#  define ERRMSG "rundump not enabled on this system.\n"
 #else
 #  if !defined(DUMP) && !defined(VXDUMP) && !defined(VDUMP) && !defined(XFSDUMP)
-#    define ERRMSG _("DUMP not available on this system.\n")
+#    define ERRMSG "DUMP not available on this system.\n"
 #  else
 #    undef ERRMSG
 #  endif
@@ -87,11 +87,11 @@ main(
     config_init(CONFIG_INIT_CLIENT, NULL);
 
     if (argc < 3) {
-	error(_("Need at least 3 arguments\n"));
+	error("Need at least 3 arguments\n");
 	/*NOTREACHED*/
     }
 
-    dbprintf(_("version %s\n"), VERSION);
+    dbprintf("version %s\n", VERSION);
 
 #ifdef ERRMSG							/* { */
 
@@ -105,7 +105,7 @@ main(
 #ifdef WANT_SETUID_CLIENT
     check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_AS_UID_ONLY);
     if (!become_root()) {
-	error(_("error [%s could not become root (is the setuid bit set?)]\n"), get_pname());
+	error("error [%s could not become root (is the setuid bit set?)]\n", get_pname());
 	/*NOTREACHED*/
     }
 #else
@@ -116,7 +116,7 @@ main(
     argc--;
     argv++;
 
-    dbprintf(_("config: %s\n"), argv[0]);
+    dbprintf("config: %s\n", argv[0]);
     if (strcmp(argv[0], "NOCONFIG") != 0)
 	dbrename(argv[0], DBG_SUBDIR_CLIENT);
     argc--;
@@ -168,16 +168,16 @@ main(
 	cmdline = vstrextend(&cmdline, " ", quoted, NULL);
 	amfree(quoted);
     }
-    dbprintf(_("running: %s\n"), cmdline);
+    dbprintf("running: %s\n", cmdline);
     amfree(cmdline);
 
     execve(dump_program, argv, safe_env());
 
     e = strerror(errno);
-    dbprintf(_("failed (%s)\n"), e);
+    dbprintf("failed (%s)\n", e);
     dbclose();
 
-    g_fprintf(stderr, _("rundump: could not exec %s: %s\n"), dump_program, e);
+    g_fprintf(stderr, "rundump: could not exec %s: %s\n", dump_program, e);
     return 1;
 #endif								/* } */
 }

@@ -217,13 +217,13 @@ int do_match(const char *regex, const char *str, gboolean match_newline)
     ok = do_validate_regex(regex, &regc, &errmsg, match_newline);
 
     if (!ok)
-        error(_("regex \"%s\": %s"), regex, errmsg);
+        error("regex \"%s\": %s", regex, errmsg);
         /*NOTREACHED*/
 
     result = try_match(&regc, str, &errmsg);
 
     if (result == MATCH_ERROR)
-        error(_("regex \"%s\": %s"), regex, errmsg);
+        error("regex \"%s\": %s", regex, errmsg);
         /*NOTREACHED*/
 
     regfree(&regc);
@@ -264,13 +264,13 @@ match_glob(
     ok = do_validate_regex(regex, &regc, &errmsg, TRUE);
 
     if (!ok)
-        error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
+        error("glob \"%s\" -> regex \"%s\": %s", glob, regex, errmsg);
         /*NOTREACHED*/
 
     result = try_match(&regc, str, &errmsg);
 
     if (result == MATCH_ERROR)
-        error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
+        error("glob \"%s\" -> regex \"%s\": %s", glob, regex, errmsg);
         /*NOTREACHED*/
 
     regfree(&regc);
@@ -490,13 +490,13 @@ match_tar(
     ok = do_validate_regex(regex, &regc, &errmsg, TRUE);
 
     if (!ok)
-        error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
+        error("glob \"%s\" -> regex \"%s\": %s", glob, regex, errmsg);
         /*NOTREACHED*/
 
     result = try_match(&regc, str, &errmsg);
 
     if (result == MATCH_ERROR)
-        error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
+        error("glob \"%s\" -> regex \"%s\": %s", glob, regex, errmsg);
         /*NOTREACHED*/
 
     regfree(&regc);
@@ -880,7 +880,7 @@ match_datestamp(
 	}
     }
 illegal:
-	error(_("Illegal datestamp expression %s"),dateexp);
+	error("Illegal datestamp expression %s",dateexp);
 	/*NOTREACHED*/
 }
 
@@ -896,7 +896,7 @@ match_level(
     int match_exact;
 
     if(strlen(levelexp) >= 100 || strlen(levelexp) < 1) {
-	error(_("Illegal level expression %s"),levelexp);
+	error("Illegal level expression %s",levelexp);
 	/*NOTREACHED*/
     }
 
@@ -904,7 +904,7 @@ match_level(
 	strncpy(mylevelexp, levelexp+1, strlen(levelexp)-1);
 	mylevelexp[strlen(levelexp)-1] = '\0';
 	if (strlen(levelexp) == 0) {
-	    error(_("Illegal level expression %s"),levelexp);
+	    error("Illegal level expression %s",levelexp);
 	    /*NOTREACHED*/
 	}
     }
@@ -948,6 +948,6 @@ match_level(
 	}
     }
 illegal:
-    error(_("Illegal level expression %s"),levelexp);
+    error("Illegal level expression %s",levelexp);
     /*NOTREACHED*/
 }

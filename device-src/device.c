@@ -677,8 +677,7 @@ try_set_blocksize(Device * device, guint blocksize) {
 
     if (!success) {
 	device_set_error(device,
-	    g_strdup_printf(_("Setting BLOCK_SIZE to %u "
-		    "not supported for device %s.\n"),
+	    g_strdup_printf("Setting BLOCK_SIZE to %u ""not supported for device %s.\n",
 		    blocksize, device->device_name),
 	    DEVICE_STATUS_DEVICE_ERROR);
     }
@@ -708,13 +707,13 @@ static void set_device_property(gpointer key_p, gpointer value_p,
     if (property_base == NULL) {
         /* Nonexistant property name. */
 	device_set_error(device,
-	    g_strdup_printf(_("unknown device property name '%s'"), property_s),
+	    g_strdup_printf("unknown device property name '%s'", property_s),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return;
     }
     if (g_slist_length(property->values) > 1) {
 	device_set_error(device,
-	    g_strdup_printf(_("multiple values for device property '%s'"), property_s),
+	    g_strdup_printf("multiple values for device property '%s'", property_s),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return;
     }
@@ -725,7 +724,7 @@ static void set_device_property(gpointer key_p, gpointer value_p,
     if (!g_value_set_from_string(&property_value, value)) {
         /* Value type could not be interpreted. */
 	device_set_error(device,
-	    g_strdup_printf(_("Could not parse property value '%s' for property '%s' (property type %s)"),
+	    g_strdup_printf("Could not parse property value '%s' for property '%s' (property type %s)",
                         value, property_base->name, g_type_name(property_base->type)),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return;
@@ -737,7 +736,7 @@ static void set_device_property(gpointer key_p, gpointer value_p,
         /* Device rejects property. */
         if (!device_in_error(device)) {
 	    device_set_error(device,
-		g_strdup_printf(_("Could not set property '%s' to '%s' on %s"),
+		g_strdup_printf("Could not set property '%s' to '%s' on %s",
 			property_base->name, value, device->device_name),
 		DEVICE_STATUS_DEVICE_ERROR);
 	}
@@ -1121,7 +1120,7 @@ device_configure (Device * self, gboolean use_global_config)
 	return (klass->configure)(self, use_global_config);
     } else {
 	device_set_error(self,
-	    g_strdup(_("Unimplemented method")),
+	    g_strdup("Unimplemented method"),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1322,7 +1321,7 @@ device_erase (Device * self)
 	return (klass->erase)(self);
     } else {
 	device_set_error(self,
-	    g_strdup(_("Unimplemented method")),
+	    g_strdup("Unimplemented method"),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1358,7 +1357,7 @@ device_listen(
 	return (klass->listen)(self, for_writing, addrs);
     } else {
 	device_set_error(self,
-	    g_strdup(_("Unimplemented method")),
+	    g_strdup("Unimplemented method"),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1378,7 +1377,7 @@ device_accept(
 	return (klass->accept)(self, conn, prolong, prolong_data);
     } else {
 	device_set_error(self,
-	    g_strdup(_("Unimplemented method")),
+	    g_strdup("Unimplemented method"),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1400,7 +1399,7 @@ device_connect(
 	return (klass->connect)(self, for_writing, addrs, conn, prolong, prolong_data);
     } else {
 	device_set_error(self,
-	    g_strdup(_("Unimplemented method")),
+	    g_strdup("Unimplemented method"),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1423,7 +1422,7 @@ device_write_from_connection(
 	return (klass->write_from_connection)(self, size, actual_size);
     } else {
 	device_set_error(self,
-	    g_strdup(_("Unimplemented method")),
+	    g_strdup("Unimplemented method"),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1445,7 +1444,7 @@ device_read_to_connection(
 	return (klass->read_to_connection)(self, size, actual_size);
     } else {
 	device_set_error(self,
-	    g_strdup(_("Unimplemented method")),
+	    g_strdup("Unimplemented method"),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1465,7 +1464,7 @@ device_use_connection(
 	return (klass->use_connection)(self, conn);
     } else {
 	device_set_error(self,
-	    g_strdup(_("Unimplemented method")),
+	    g_strdup("Unimplemented method"),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
