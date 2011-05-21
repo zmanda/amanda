@@ -41,7 +41,11 @@
 
 static size_t linelen;
 
-#define	startline(title)  g_printf("  \"%-*s", LMARGIN, title); linelen = 0
+#define	startline(title)  do { \
+    g_printf("  \"%-*s", LMARGIN, title); \
+    linelen = 0; \
+} while (0)
+
 #define	endline()	  g_printf("\\n\",\n")
 
 static void prstr(const char *);
