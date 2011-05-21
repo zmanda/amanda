@@ -115,32 +115,32 @@ pipespawnv_passwd(
 	    amfree(quoted);
 	}
     }
-    dbprintf(_("Spawning \"%s\" in pipeline\n"), cmdline);
+    dbprintf("Spawning \"%s\" in pipeline\n", cmdline);
 
     /*
      * Create the pipes
      */
     if ((pipedef & STDIN_PIPE) != 0) {
 	if(pipe(inpipe) == -1) {
-	    error(_("error [open pipe to %s: %s]"), prog, strerror(errno));
+	    error("error [open pipe to %s: %s]", prog, strerror(errno));
 	    /*NOTREACHED*/
 	}
     }
     if ((pipedef & STDOUT_PIPE) != 0) {
 	if(pipe(outpipe) == -1) {
-	    error(_("error [open pipe to %s: %s]"), prog, strerror(errno));
+	    error("error [open pipe to %s: %s]", prog, strerror(errno));
 	    /*NOTREACHED*/
 	}
     }
     if ((pipedef & STDERR_PIPE) != 0) {
 	if(pipe(errpipe) == -1) {
-	    error(_("error [open pipe to %s: %s]"), prog, strerror(errno));
+	    error("error [open pipe to %s: %s]", prog, strerror(errno));
 	    /*NOTREACHED*/
 	}
     }
     if ((pipedef & PASSWD_PIPE) != 0) {
 	if(pipe(passwdpipe) == -1) {
-	    error(_("error [open pipe to %s: %s]"), prog, strerror(errno));
+	    error("error [open pipe to %s: %s]", prog, strerror(errno));
 	    /*NOTREACHED*/
 	}
     }
@@ -151,7 +151,7 @@ pipespawnv_passwd(
     switch(pid = fork()) {
     case -1:
 	e = strerror(errno);
-	error(_("error [fork %s: %s]"), prog, e);
+	error("error [fork %s: %s]", prog, e);
 	/*NOTREACHED*/
 
     default:	/* parent process */
@@ -239,13 +239,13 @@ pipespawnv_passwd(
 	    /* if our real userid is zero, the child shouldn't inherit
 	     * that, so drop privs permanently */
 	    if (getuid() == 0 && !set_root_privs(-1)) {
-		error(_("could not drop root privileges"));
+		error("could not drop root privileges");
 	    }
 	}
 
 	execve(prog, my_argv, env);
 	e = strerror(errno);
-	error(_("error [exec %s: %s]"), prog, e);
+	error("error [exec %s: %s]", prog, e);
 	/*NOTREACHED*/
     }
     amfree(cmdline);

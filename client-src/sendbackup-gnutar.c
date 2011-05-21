@@ -162,9 +162,9 @@ start_backup(
     error_pn = stralloc2(get_pname(), "-smbclient");
 
     qdisk = quote_string(dle->disk);
-    dbprintf(_("start: %s:%s lev %d\n"), host, qdisk, level);
+    dbprintf("start: %s:%s lev %d\n", host, qdisk, level);
 
-    g_fprintf(stderr, _("%s: start [%s:%s level %d]\n"),
+    g_fprintf(stderr, "%s: start [%s:%s level %d]\n",
 	    get_pname(), host, qdisk, level);
 
      /*  apply client-side encryption here */
@@ -172,7 +172,7 @@ start_backup(
          encpid = pipespawn(dle->clnt_encrypt, STDIN_PIPE, 0, 
 			&compout, &dataf, &mesgf, 
 			dle->clnt_encrypt, encryptopt, NULL);
-         dbprintf(_("gnutar: pid %ld: %s\n"), (long)encpid, dle->clnt_encrypt);
+         dbprintf("gnutar: pid %ld: %s\n", (long)encpid, dle->clnt_encrypt);
     } else {
        compout = dataf;
        encpid = -1;
@@ -190,12 +190,12 @@ start_backup(
 	comppid = pipespawn(COMPRESS_PATH, STDIN_PIPE, 0,
 			    &dumpout, &compout, &mesgf,
 			    COMPRESS_PATH, compopt, NULL);
-	dbprintf(_("gnutar: pid %ld: %s"), (long)comppid, COMPRESS_PATH);
+	dbprintf("gnutar: pid %ld: %s", (long)comppid, COMPRESS_PATH);
 	if(compopt != skip_argument) {
-	    dbprintf(_("pid %ld: %s %s\n"),
+	    dbprintf("pid %ld: %s %s\n",
 			(long)comppid, COMPRESS_PATH, compopt);
 	} else {
-	    dbprintf(_("pid %ld: %s\n"), (long)comppid, COMPRESS_PATH);
+	    dbprintf("pid %ld: %s\n", (long)comppid, COMPRESS_PATH);
 	}
      } else if (dle->compress == COMP_CUST) {
         compopt = skip_argument;
@@ -203,10 +203,10 @@ start_backup(
 			    &dumpout, &compout, &mesgf,
 			    dle->compprog, compopt, NULL);
 	if(compopt != skip_argument) {
-	    dbprintf(_("pid %ld: %s %s\n"),
+	    dbprintf("pid %ld: %s %s\n",
 		     (long)comppid, dle->compprog, compopt);
 	} else {
-	    dbprintf(_("pid %ld: %s\n"), (long)comppid, dle->compprog);
+	    dbprintf("pid %ld: %s\n", (long)comppid, dle->compprog);
 	}
     } else {
 	dumpout = compout;
@@ -259,11 +259,11 @@ start_backup(
 		int save_errno = errno;
 		char *qname = quote_string(inputname);
 
-		dbprintf(_("gnutar: error opening '%s': %s\n"),
+		dbprintf("gnutar: error opening '%s': %s\n",
 			  qname,
 			  strerror(save_errno));
 		if (baselevel < 0) {
-		    error(_("error [opening '%s': %s]"), qname, strerror(save_errno));
+		    error("error [opening '%s': %s]", qname, strerror(save_errno));
 		    /*NOTREACHED*/
 		}
 		amfree(qname);
@@ -274,40 +274,40 @@ start_backup(
 	 * Copy the previous listed incremental file to the new one.
 	 */
 	if ((outfd = open(incrname, O_WRONLY|O_CREAT, 0600)) == -1) {
-	    error(_("error [opening '%s': %s]"), incrname, strerror(errno));
+	    error("error [opening '%s': %s]", incrname, strerror(errno));
 	    /*NOTREACHED*/
 	}
 
 	while ((nb = read(infd, &buf, sizeof(buf))) > 0) {
 	    if (full_write(outfd, &buf, (size_t)nb) < (size_t)nb) {
-		error(_("error [writing to '%s': %s]"), incrname,
+		error("error [writing to '%s': %s]", incrname,
 		       strerror(errno));
 		/*NOTREACHED*/
 	    }
 	}
 
 	if (nb < 0) {
-	    error(_("error [reading from '%s': %s]"), inputname, strerror(errno));
+	    error("error [reading from '%s': %s]", inputname, strerror(errno));
 	    /*NOTREACHED*/
 	}
 
 	if (close(infd) != 0) {
-	    error(_("error [closing '%s': %s]"), inputname, strerror(errno));
+	    error("error [closing '%s': %s]", inputname, strerror(errno));
 	    /*NOTREACHED*/
 	}
 	if (close(outfd) != 0) {
-	    error(_("error [closing '%s': %s]"), incrname, strerror(errno));
+	    error("error [closing '%s': %s]", incrname, strerror(errno));
 	    /*NOTREACHED*/
 	}
 
 	tquoted = quote_string(incrname);
 	if(baselevel >= 0) {
 	    fquoted = quote_string(inputname);
-	    dbprintf(_("doing level %d dump as listed-incremental from '%s' to '%s'\n"),
+	    dbprintf("doing level %d dump as listed-incremental from '%s' to '%s'\n",
 		     level, fquoted, tquoted);
 	    amfree(fquoted);
 	} else {
-	    dbprintf(_("doing level %d dump as listed-incremental to '%s'\n"),
+	    dbprintf("doing level %d dump as listed-incremental to '%s'\n",
 		     level, tquoted);
 	}
 	amfree(tquoted);
@@ -319,7 +319,7 @@ start_backup(
 	/* find previous dump time, failing completely if there's a problem */
 	amandates_file = getconf_str(CNF_AMANDATES);
 	if(!start_amandates(amandates_file, 0)) {
-	    error(_("error [opening %s: %s]"), amandates_file, strerror(errno));
+	    error("error [opening %s: %s]", amandates_file, strerror(errno));
 	    /*NOTREACHED*/
 	}
 
@@ -340,7 +340,7 @@ start_backup(
 		    gmtm->tm_year + 1900, gmtm->tm_mon+1, gmtm->tm_mday,
 		    gmtm->tm_hour, gmtm->tm_min, gmtm->tm_sec);
 
-	dbprintf(_("gnutar: doing level %d dump from amandates-derived date: %s\n"),
+	dbprintf("gnutar: doing level %d dump from amandates-derived date: %s\n",
 		  level, dumptimestr);
     }
 
@@ -380,7 +380,7 @@ start_backup(
 	    amfree(subdir);
 	    set_pname(error_pn);
 	    amfree(error_pn);
-	    error(_("cannot parse disk entry %s for share/subdir"), qdisk);
+	    error("cannot parse disk entry %s for share/subdir", qdisk);
 	    /*NOTREACHED*/
 	}
 	if ((subdir) && (SAMBA_VERSION < 2)) {
@@ -388,7 +388,7 @@ start_backup(
 	    amfree(subdir);
 	    set_pname(error_pn);
 	    amfree(error_pn);
-	    error(_("subdirectory specified for share %s but samba not v2 or better"), qdisk);
+	    error("subdirectory specified for share %s but samba not v2 or better", qdisk);
 	    /*NOTREACHED*/
 	}
 	if ((user_and_password = findpass(share, &domain)) == NULL) {
@@ -398,7 +398,7 @@ start_backup(
 	    }
 	    set_pname(error_pn);
 	    amfree(error_pn);
-	    error(_("error [invalid samba host or password not found?]"));
+	    error("error [invalid samba host or password not found?]");
 	    /*NOTREACHED*/
 	}
 	lpass = strlen(user_and_password);
@@ -411,7 +411,7 @@ start_backup(
 	    }
 	    set_pname(error_pn);
 	    amfree(error_pn);
-	    error(_("password field not \'user%%pass\' for %s"), qdisk);
+	    error("password field not \'user%%pass\' for %s", qdisk);
 	    /*NOTREACHED*/
 	}
 	*pwtext++ = '\0';
@@ -425,7 +425,7 @@ start_backup(
 	    }
 	    set_pname(error_pn);
 	    amfree(error_pn);
-	    error(_("error [can't make share name of %s]"), share);
+	    error("error [can't make share name of %s]", share);
 	    /*NOTREACHED*/
 	}
 
@@ -444,9 +444,9 @@ start_backup(
 	}
 
 	if (subdir) {
-	    dbprintf(_("gnutar: backup of %s/%s\n"), sharename, subdir);
+	    dbprintf("gnutar: backup of %s/%s\n", sharename, subdir);
 	} else {
-	    dbprintf(_("gnutar: backup of %s\n"), sharename);
+	    dbprintf("gnutar: backup of %s\n", sharename);
 	}
 
 	program->backup_name = program->restore_name = SAMBA_CLIENT;
@@ -491,7 +491,7 @@ start_backup(
 	    amfree(user_and_password);
 	    set_pname(error_pn);
 	    amfree(error_pn);
-	    error(_("error [password write failed: %s]"), strerror(save_errno));
+	    error("error [password write failed: %s]", strerror(save_errno));
 	    /*NOTREACHED*/
 	}
 	memset(user_and_password, '\0', lpass);
@@ -583,7 +583,7 @@ start_backup(
 	amfree(file_include);
 	g_ptr_array_free_full(argv_ptr);
     }
-    dbprintf(_("gnutar: %s: pid %ld\n"), cmd, (long)dumppid);
+    dbprintf("gnutar: %s: pid %ld\n", cmd, (long)dumppid);
 
     amfree(qdisk);
     amfree(dirname);
@@ -616,7 +616,7 @@ end_backup(
 	    nodotnew = g_strdup(incrname);
 	    nodotnew[strlen(nodotnew)-4] = '\0';
 	    if (rename(incrname, nodotnew)) {
-		g_fprintf(stderr, _("%s: warning [renaming %s to %s: %s]\n"), 
+		g_fprintf(stderr, "%s: warning [renaming %s to %s: %s]\n", 
 			get_pname(), incrname, nodotnew, strerror(errno));
 	    }
 	    amfree(nodotnew);
@@ -633,10 +633,10 @@ end_backup(
 	    /* failure is only fatal if we didn't get a gnutar-listdir */
 	    char *gnutar_list_dir = getconf_str(CNF_GNUTAR_LIST_DIR);
 	    if (!gnutar_list_dir || !*gnutar_list_dir) {
-		error(_("error [opening %s for writing: %s]"), amandates_file, strerror(errno));
+		error("error [opening %s for writing: %s]", amandates_file, strerror(errno));
 		/* NOTREACHED */
 	    } else {
-		g_debug(_("non-fatal error opening '%s' for writing: %s]"),
+		g_debug("non-fatal error opening '%s' for writing: %s]",
 			amandates_file, strerror(errno));
 	    }
 	}

@@ -127,12 +127,12 @@ event_register(
     if ((type == EV_READFD) || (type == EV_WRITEFD)) {
 	/* make sure we aren't given a high fd that will overflow a fd_set */
 	if (data >= (int)FD_SETSIZE) {
-	    error(_("event_register: Invalid file descriptor %jd"), data);
+	    error("event_register: Invalid file descriptor %jd", data);
 	    /*NOTREACHED*/
 	}
     } else if (type == EV_TIME) {
 	if (data <= 0) {
-	    error(_("event_register: interval for EV_TIME must be greater than 0; got %jd"), data);
+	    error("event_register: interval for EV_TIME must be greater than 0; got %jd", data);
 	}
     }
 
@@ -143,7 +143,7 @@ event_register(
     handle->data = data;
     handle->is_dead = FALSE;
 
-    event_debug(1, _("event: register: %p->data=%jd, type=%s\n"),
+    event_debug(1, "event: register: %p->data=%jd, type=%s\n",
 		    handle, handle->data, event_type2str(handle->type));
 
     /* add to the list of events */
@@ -192,7 +192,7 @@ event_register(
 	    break;
 
 	default:
-	    error(_("Unknown event type %s"), event_type2str(type));
+	    error("Unknown event type %s", event_type2str(type));
     }
 
     return handle;
@@ -209,7 +209,7 @@ event_release(
 {
     assert(handle != NULL);
 
-    event_debug(1, _("event: release (mark): %p data=%jd, type=%s\n"),
+    event_debug(1, "event: release (mark): %p data=%jd, type=%s\n",
 		    handle, handle->data,
 		    event_type2str(handle->type));
     assert(!handle->is_dead);
@@ -229,7 +229,7 @@ event_wakeup(
     GSList *tofire = NULL;
     int nwaken = 0;
 
-    event_debug(1, _("event: wakeup: enter (%jd)\n"), id);
+    event_debug(1, "event: wakeup: enter (%jd)\n", id);
 
     /* search for any and all matching events, and record them.  This way
      * we have determined the whole list of events we'll be firing *before*
@@ -245,7 +245,7 @@ event_wakeup(
     for (iter = tofire; iter != NULL; iter = g_slist_next(iter)) {
 	event_handle_t *eh = (event_handle_t *)iter->data;
 	if (eh->type == EV_WAIT && eh->data == id && !eh->is_dead) {
-	    event_debug(1, _("A: event: wakeup triggering: %p id=%jd\n"), eh, id);
+	    event_debug(1, "A: event: wakeup triggering: %p id=%jd\n", eh, id);
 	    fire(eh);
 	    nwaken++;
 	}
@@ -342,7 +342,7 @@ event_loop_wait(
     int nonblock,
     gboolean return_when_empty)
 {
-    event_debug(1, _("event: loop: enter: nonblockg=%d, eh=%p\n"), nonblock, wait_eh);
+    event_debug(1, "event: loop: enter: nonblockg=%d, eh=%p\n", nonblock, wait_eh);
 
     /* If we're waiting for a specific event, then reset its has_fired flag */
     if (wait_eh) {
@@ -417,7 +417,7 @@ event_type2str(
     for (i = 0; i < G_N_ELEMENTS(event_types); i++)
 	if (type == event_types[i].type)
 	    return (event_types[i].name);
-    return (_("BOGUS EVENT TYPE"));
+    return ("BOGUS EVENT TYPE");
 }
 
 /*

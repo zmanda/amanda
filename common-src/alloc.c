@@ -60,7 +60,7 @@ internal_vstralloc(
     size_t l;
 
     if (str == NULL) {
-	errordump(_("internal_vstralloc: str is NULL"));
+	errordump("internal_vstralloc: str is NULL");
 	/*NOTREACHED*/
     }
 
@@ -75,8 +75,8 @@ internal_vstralloc(
 	    continue;				/* minor optimisation */
 	}
 	if (a >= MAX_VSTRALLOC_ARGS) {
-	    errordump(_("%s@%d: more than %d args to vstralloc"),
-		      file ? file : _("(unknown)"),
+	    errordump("%s@%d: more than %d args to vstralloc",
+		      file ? file : "(unknown)",
 		      file ? line : -1,
 		      MAX_VSTRALLOC_ARGS);
 	    /*NOTREACHED*/

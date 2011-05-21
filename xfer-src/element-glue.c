@@ -94,7 +94,7 @@ make_pipe(
     XferElementGlue *self)
 {
     if (pipe(self->pipe) < 0)
-	g_critical(_("Could not create pipe: %s"), strerror(errno));
+	g_critical("Could not create pipe: %s", strerror(errno));
 }
 
 static void
@@ -193,7 +193,7 @@ do_directtcp_accept(
 	    return -1;
 
 	xfer_cancel_with_error(XFER_ELEMENT(self),
-	    _("Error accepting incoming connection: %s"), strerror(errno));
+	    "Error accepting incoming connection: %s", strerror(errno));
 	wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);
 	return -1;
     }
@@ -341,7 +341,7 @@ pull_and_write(XferElementGlue *self)
 	if (full_write(fd, buf, len) < len) {
 	    if (!elt->cancelled) {
 		xfer_cancel_with_error(elt,
-		    _("Error writing to fd %d: %s"), fd, strerror(errno));
+		    "Error writing to fd %d: %s", fd, strerror(errno));
 		wait_until_xfer_cancelled(elt->xfer);
 	    }
 	    amfree(buf);
@@ -378,7 +378,7 @@ read_and_write(XferElementGlue *self)
 	    if (errno) {
 		if (!elt->cancelled) {
 		    xfer_cancel_with_error(elt,
-			_("Error reading from fd %d: %s"), rfd, strerror(errno));
+			"Error reading from fd %d: %s", rfd, strerror(errno));
 		    wait_until_xfer_cancelled(elt->xfer);
 		}
 		break;
@@ -391,7 +391,7 @@ read_and_write(XferElementGlue *self)
 	if (full_write(wfd, buf, len) < len) {
 	    if (!elt->cancelled) {
 		xfer_cancel_with_error(elt,
-		    _("Could not write to fd %d: %s"), wfd, strerror(errno));
+		    "Could not write to fd %d: %s", wfd, strerror(errno));
 		wait_until_xfer_cancelled(elt->xfer);
 	    }
 	    break;
@@ -429,7 +429,7 @@ read_and_push(
 	    if (read_error) {
 		if (!elt->cancelled) {
 		    xfer_cancel_with_error(elt,
-			_("Error reading from fd %d: %s"), fd, strerror(read_error));
+			"Error reading from fd %d: %s", fd, strerror(read_error));
 		    g_debug("element-glue: error reading from fd %d: %s",
                          fd, strerror(read_error));
 		    wait_until_xfer_cancelled(elt->xfer);
@@ -990,7 +990,7 @@ pull_buffer_impl(
 		if (errno) {
 		    if (!elt->cancelled) {
 			xfer_cancel_with_error(elt,
-			    _("Error reading from fd %d: %s"), fd, strerror(errno));
+			    "Error reading from fd %d: %s", fd, strerror(errno));
 			wait_until_xfer_cancelled(elt->xfer);
 		    }
 
@@ -1123,7 +1123,7 @@ push_buffer_impl(
 		if (full_write(fd, buf, len) < len) {
 		    if (!elt->cancelled) {
 			xfer_cancel_with_error(elt,
-			    _("Error writing to fd %d: %s"), fd, strerror(errno));
+			    "Error writing to fd %d: %s", fd, strerror(errno));
 			wait_until_xfer_cancelled(elt->xfer);
 		    }
 		    /* nothing special to do to handle a cancellation */

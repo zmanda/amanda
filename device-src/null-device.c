@@ -210,7 +210,7 @@ null_device_read_label(Device * dself) {
     if (device_in_error(dself)) return FALSE;
 
     device_set_error(dself,
-	g_strdup(_("Can't open NULL device for reading or appending.")),
+	g_strdup("Can't open NULL device for reading or appending."),
 	DEVICE_STATUS_DEVICE_ERROR);
     return FALSE;
 }
@@ -245,7 +245,7 @@ null_device_start (Device * pself, DeviceAccessMode mode,
 	return TRUE;
     } else {
 	device_set_error(pself,
-	    g_strdup(_("Can't open NULL device for reading or appending.")),
+	    g_strdup("Can't open NULL device for reading or appending."),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }

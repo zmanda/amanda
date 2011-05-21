@@ -204,7 +204,7 @@ read_buffer(
         nfound = select(datafd+1, &readset, NULL, NULL, &timeout);
         if(nfound < 0 ) {
             /* Select returned an error. */
-	    g_fprintf(stderr,_("select error: %s\n"), strerror(errno));
+	    g_fprintf(stderr,"select error: %s\n", strerror(errno));
             size = -1;
 	    break;
         }
@@ -213,8 +213,8 @@ read_buffer(
             /* Select timed out. */
             if (timeout_s != 0)  {
                 /* Not polling: a real read timeout */
-                g_fprintf(stderr,_("timeout waiting for restore\n"));
-                g_fprintf(stderr,_("increase READ_TIMEOUT in recover-src/extract_list.c if your tape is slow\n"));
+                g_fprintf(stderr,"timeout waiting for restore\n");
+                g_fprintf(stderr,"increase READ_TIMEOUT in recover-src/extract_list.c if your tape is slow\n");
             }
             errno = ETIMEDOUT;
             size = -1;
@@ -231,7 +231,7 @@ read_buffer(
 		continue;
 	    }
 	    if (errno != EPIPE) {
-	        g_fprintf(stderr, _("read_buffer: read error - %s"),
+	        g_fprintf(stderr, "read_buffer: read error - %s",
 		    strerror(errno));
 	        break;
 	    }
@@ -380,7 +380,7 @@ clean_tape_list(
 	    }
 
 	    if (remove_fn2) {
-		dbprintf(_("removing path %s, it is included in %s\n"),
+		dbprintf("removing path %s, it is included in %s\n",
 			  fn2->path, fn1->path);
 		ofn2 = fn2;
 		fn2 = fn2->next;
@@ -395,7 +395,7 @@ clean_tape_list(
 
 	if(remove_fn1 != 0) {
 	    /* fn2->path is always valid */
-	    /*@i@*/ dbprintf(_("removing path %s, it is included in %s\n"),
+	    /*@i@*/ dbprintf("removing path %s, it is included in %s\n",
 	    /*@i@*/	      fn1->path, fn2->path);
 	    ofn1 = fn1;
 	    fn1 = fn1->next;
@@ -479,7 +479,7 @@ do_unlink_list(void)
 
     for (ul = unlink_list; ul != NULL; ul = ul->next) {
 	if (unlink(ul->path) < 0) {
-	    g_fprintf(stderr,_("Can't unlink %s: %s\n"), ul->path, strerror(errno));
+	    g_fprintf(stderr,"Can't unlink %s: %s\n", ul->path, strerror(errno));
 	    ret = 0;
 	}
     }
@@ -529,14 +529,13 @@ check_file_overwrite(
 		if (lstat(path, &stat_buf) == 0) {
 		    if(!S_ISDIR(stat_buf.st_mode)) {
 			if (add_to_unlink_list(path)) {
-			    g_printf(_("WARNING: %s is not a directory, "
-				   "it will be deleted.\n"),
+			    g_printf("WARNING: %s is not a directory, ""it will be deleted.\n",
 				   path);
 			}
 		    }
 		}
 		else if (errno != ENOENT) {
-		    g_printf(_("Can't stat %s: %s\n"), path, strerror(errno));
+		    g_printf("Can't stat %s: %s\n", path, strerror(errno));
 		}
 		*s = '/';
 		s++;
@@ -553,20 +552,19 @@ check_file_overwrite(
 	    if (lstat(filename, &stat_buf) == 0) {
 		if(S_ISDIR(stat_buf.st_mode)) {
 		    if(!is_empty_dir(filename)) {
-			g_printf(_("WARNING: All existing files in %s "
-			       "will be deleted.\n"), filename);
+			g_printf("WARNING: All existing files in %s ""will be deleted.\n", filename);
 		    }
 		} else if(S_ISREG(stat_buf.st_mode)) {
-		    g_printf(_("WARNING: Existing file %s will be overwritten\n"),
+		    g_printf("WARNING: Existing file %s will be overwritten\n",
 			   filename);
 		} else {
 		    if (add_to_unlink_list(filename)) {
-			g_printf(_("WARNING: Existing entry %s will be deleted\n"),
+			g_printf("WARNING: Existing entry %s will be deleted\n",
 			       filename);
 		    }
 		}
 	    } else if (errno != ENOENT) {
-		g_printf(_("Can't stat %s: %s\n"), filename, strerror(errno));
+		g_printf("Can't stat %s: %s\n", filename, strerror(errno));
 	    }
 	    amfree(filename);
 	}
@@ -739,7 +737,7 @@ add_glob(
     int   result = 1;
 
     if (disk_path == NULL) {
-	g_printf(_("Must select directory before adding files\n"));
+	g_printf("Must select directory before adding files\n");
 	return;
     }
 
@@ -752,9 +750,9 @@ add_glob(
     }
     if (result) {
 	regex = glob_to_regex(glob);
-	dbprintf(_("add_glob (%s) -> %s\n"), uqglob, regex);
+	dbprintf("add_glob (%s) -> %s\n", uqglob, regex);
 	if ((s = validate_regexp(regex)) != NULL) {
-	    g_printf(_("%s is not a valid shell wildcard pattern: "), glob);
+	    g_printf("%s is not a valid shell wildcard pattern: ", glob);
 	    puts(s);
 	} else {
             /*
@@ -792,7 +790,7 @@ add_regex(
     int   result = 1;
 
     if (disk_path == NULL) {
-	g_printf(_("Must select directory before adding files\n"));
+	g_printf("Must select directory before adding files\n");
 	return;
     }
 
@@ -806,7 +804,7 @@ add_regex(
 
     if (result) { 
 	if ((s = validate_regexp(newregex)) != NULL) {
-	    g_printf(_("\"%s\" is not a valid regular expression: "), newregex);
+	    g_printf("\"%s\" is not a valid regular expression: ", newregex);
 	    puts(s);
 	} else {
             add_file(uqregex, newregex);
@@ -842,12 +840,12 @@ add_file(
     int dir_entries;
 
     if (disk_path == NULL) {
-	g_printf(_("Must select directory before adding files\n"));
+	g_printf("Must select directory before adding files\n");
 	return;
     }
     memset(&lditem, 0, sizeof(lditem)); /* Prevent use of bogus data... */
 
-    dbprintf(_("add_file: Looking for \"%s\"\n"), regex);
+    dbprintf("add_file: Looking for \"%s\"\n", regex);
 
     if(strcmp(regex, "/[/]*$") == 0) {	/* "/" behave like "." */
 	regex = "\\.[/]*$";
@@ -876,7 +874,7 @@ add_file(
 	amfree(clean_disk_path);
     }
 
-    dbprintf(_("add_file: Converted path=\"%s\" to path_on_disk=\"%s\"\n"),
+    dbprintf("add_file: Converted path=\"%s\" to path_on_disk=\"%s\"\n",
 	      regex, path_on_disk);
 
     found_one = 0;
@@ -885,7 +883,7 @@ add_file(
     {
 	dir_entries++;
 	quoted = quote_string(ditem->path);
-	dbprintf(_("add_file: Pondering ditem->path=%s\n"), quoted);
+	dbprintf("add_file: Pondering ditem->path=%s\n", quoted);
 	amfree(quoted);
 	if (match(path_on_disk, ditem->path))
 	{
@@ -951,14 +949,14 @@ add_file(
 
 		    s = l;
 		    if(strncmp_const_skip(l, "201-", s, ch) != 0) {
-			err = _("bad reply: not 201-");
+			err = "bad reply: not 201-";
 			continue;
 		    }
 		    ch = *s++;
 
 		    skip_whitespace(s, ch);
 		    if(ch == '\0') {
-			err = _("bad reply: missing date field");
+			err = "bad reply: missing date field";
 			continue;
 		    }
                     fp = s-1;
@@ -969,14 +967,14 @@ add_file(
 
 		    skip_whitespace(s, ch);
 		    if(ch == '\0' || sscanf(s - 1, "%d", &lditem.level) != 1) {
-			err = _("bad reply: cannot parse level field");
+			err = "bad reply: cannot parse level field";
 			continue;
 		    }
 		    skip_integer(s, ch);
 
 		    skip_whitespace(s, ch);
 		    if(ch == '\0') {
-			err = _("bad reply: missing tape field");
+			err = "bad reply: missing tape field";
 			continue;
 		    }
                     fp = s-1;
@@ -991,7 +989,7 @@ add_file(
 			skip_whitespace(s, ch);
 			if(ch == '\0' ||
 			   sscanf(s - 1, "%lld", &fileno_) != 1) {
-			    err = _("bad reply: cannot parse fileno field");
+			    err = "bad reply: cannot parse fileno field";
 			    continue;
 			}
 			lditem.fileno = (off_t)fileno_;
@@ -1000,7 +998,7 @@ add_file(
 
 		    skip_whitespace(s, ch);
 		    if(ch == '\0') {
-			err = _("bad reply: missing directory field");
+			err = "bad reply: missing directory field";
 			continue;
 		    }
 		    dir = s - 1;
@@ -1011,15 +1009,15 @@ add_file(
 
 		    switch(add_extract_item(&lditem)) {
 		    case -1:
-			g_printf(_("System error\n"));
-			dbprintf(_("add_file: (Failed) System error\n"));
+			g_printf("System error\n");
+			dbprintf("add_file: (Failed) System error\n");
 			break;
 
 		    case  0:
 			quoted = quote_string(lditem.path);
-			g_printf(_("Added dir %s at date %s\n"),
+			g_printf("Added dir %s at date %s\n",
 			       quoted, lditem.date);
-			dbprintf(_("add_file: (Successful) Added dir %s at date %s\n"),
+			dbprintf("add_file: (Successful) Added dir %s at date %s\n",
 				  quoted, lditem.date);
 			amfree(quoted);
 			added=1;
@@ -1038,8 +1036,8 @@ add_file(
 			puts(cmd);
 		} else if(added == 0) {
 		    quoted = quote_string(ditem_path);
-		    g_printf(_("dir %s already added\n"), quoted);
-		    dbprintf(_("add_file: dir %s already added\n"), quoted);
+		    g_printf("dir %s already added\n", quoted);
+		    dbprintf("add_file: dir %s already added\n", quoted);
 		    amfree(quoted);
 		}
 	    }
@@ -1047,21 +1045,21 @@ add_file(
 	    {
 		switch(add_extract_item(ditem)) {
 		case -1:
-		    g_printf(_("System error\n"));
-		    dbprintf(_("add_file: (Failed) System error\n"));
+		    g_printf("System error\n");
+		    dbprintf("add_file: (Failed) System error\n");
 		    break;
 
 		case  0:
 		    quoted = quote_string(ditem->path);
-		    g_printf(_("Added file %s\n"), quoted);
-		    dbprintf(_("add_file: (Successful) Added %s\n"), quoted);
+		    g_printf("Added file %s\n", quoted);
+		    dbprintf("add_file: (Successful) Added %s\n", quoted);
 		    amfree(quoted);
 		    break;
 
 		case  1:
 		    quoted = quote_string(ditem->path);
-		    g_printf(_("File %s already added\n"), quoted);
-		    dbprintf(_("add_file: file %s already added\n"), quoted);
+		    g_printf("File %s already added\n", quoted);
+		    dbprintf("add_file: file %s already added\n", quoted);
 		    amfree(quoted);
 		}
 	    }
@@ -1078,8 +1076,8 @@ add_file(
 
     if(! found_one) {
 	quoted = quote_string(path);
-	g_printf(_("File %s doesn't exist in directory\n"), quoted);
-	dbprintf(_("add_file: (Failed) File %s doesn't exist in directory\n"),
+	g_printf("File %s doesn't exist in directory\n", quoted);
+	dbprintf("add_file: (Failed) File %s doesn't exist in directory\n",
 	          quoted);
 	amfree(quoted);
     }
@@ -1100,7 +1098,7 @@ delete_glob(
     int   result = 1;
 
     if (disk_path == NULL) {
-	g_printf(_("Must select directory before adding files\n"));
+	g_printf("Must select directory before adding files\n");
 	return;
     }
 
@@ -1113,9 +1111,9 @@ delete_glob(
     }
     if (result) {
 	regex = glob_to_regex(newglob);
-	dbprintf(_("delete_glob (%s) -> %s\n"), newglob, regex);
+	dbprintf("delete_glob (%s) -> %s\n", newglob, regex);
 	if ((s = validate_regexp(regex)) != NULL) {
-	    g_printf(_("\"%s\" is not a valid shell wildcard pattern: "),
+	    g_printf("\"%s\" is not a valid shell wildcard pattern: ",
 		     newglob);
 	    puts(s);
 } else {
@@ -1154,7 +1152,7 @@ delete_regex(
     int   result = 1;
 
     if (disk_path == NULL) {
-	g_printf(_("Must select directory before adding files\n"));
+	g_printf("Must select directory before adding files\n");
 	return;
     }
 
@@ -1168,7 +1166,7 @@ delete_regex(
 
     if (result == 1) {
 	if ((s = validate_regexp(newregex)) != NULL) {
-	    g_printf(_("\"%s\" is not a valid regular expression: "), newregex);
+	    g_printf("\"%s\" is not a valid regular expression: ", newregex);
 	    puts(s);
 	} else {
 	    delete_file(newregex, regex);
@@ -1208,12 +1206,12 @@ delete_file(
     char *quoted;
 
     if (disk_path == NULL) {
-	g_printf(_("Must select directory before deleting files\n"));
+	g_printf("Must select directory before deleting files\n");
 	return;
     }
     memset(&lditem, 0, sizeof(lditem)); /* Prevent use of bogus data... */
 
-    dbprintf(_("delete_file: Looking for \"%s\"\n"), path);
+    dbprintf("delete_file: Looking for \"%s\"\n", path);
 
     if (strcmp(regex, "[^/]*[/]*$") == 0) {
 	/* Looking for * find everything but single . */
@@ -1244,13 +1242,13 @@ delete_file(
 	amfree(clean_disk_path);
     }
 
-    dbprintf(_("delete_file: Converted path=\"%s\" to path_on_disk=\"%s\"\n"),
+    dbprintf("delete_file: Converted path=\"%s\" to path_on_disk=\"%s\"\n",
 	      regex, path_on_disk);
     found_one = 0;
     for (ditem=get_dir_list(); ditem!=NULL; ditem=get_next_dir_item(ditem))
     {
 	quoted = quote_string(ditem->path);
-	dbprintf(_("delete_file: Pondering ditem->path=%s\n"), quoted);
+	dbprintf("delete_file: Pondering ditem->path=%s\n", quoted);
 	amfree(quoted);
 	if (match(path_on_disk, ditem->path))
 	{
@@ -1316,14 +1314,14 @@ delete_file(
 
 		    s = l;
 		    if(strncmp_const_skip(l, "201-", s, ch) != 0) {
-			err = _("bad reply: not 201-");
+			err = "bad reply: not 201-";
 			continue;
 		    }
 		    ch = *s++;
 
 		    skip_whitespace(s, ch);
 		    if(ch == '\0') {
-			err = _("bad reply: missing date field");
+			err = "bad reply: missing date field";
 			continue;
 		    }
 		    date = s - 1;
@@ -1332,14 +1330,14 @@ delete_file(
 
 		    skip_whitespace(s, ch);
 		    if(ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
-			err = _("bad reply: cannot parse level field");
+			err = "bad reply: cannot parse level field";
 			continue;
 		    }
 		    skip_integer(s, ch);
 
 		    skip_whitespace(s, ch);
 		    if(ch == '\0') {
-			err = _("bad reply: missing tape field");
+			err = "bad reply: missing tape field";
 			continue;
 		    }
 		    tape = s - 1;
@@ -1353,7 +1351,7 @@ delete_file(
 			skip_whitespace(s, ch);
 			if(ch == '\0' ||
 			   sscanf(s - 1, "%lld", &fileno_) != 1) {
-			    err = _("bad reply: cannot parse fileno field");
+			    err = "bad reply: cannot parse fileno field";
 			    continue;
 			}
 			fileno = (off_t)fileno_;
@@ -1362,7 +1360,7 @@ delete_file(
 
 		    skip_whitespace(s, ch);
 		    if(ch == '\0') {
-			err = _("bad reply: missing directory field");
+			err = "bad reply: missing directory field";
 			continue;
 		    }
 		    skip_non_whitespace(s, ch);
@@ -1375,12 +1373,12 @@ delete_file(
                     lditem.tape = newstralloc(lditem.tape, tape);
 		    switch(delete_extract_item(&lditem)) {
 		    case -1:
-			g_printf(_("System error\n"));
-			dbprintf(_("delete_file: (Failed) System error\n"));
+			g_printf("System error\n");
+			dbprintf("delete_file: (Failed) System error\n");
 			break;
 		    case  0:
-			g_printf(_("Deleted dir %s at date %s\n"), ditem_path, date);
-			dbprintf(_("delete_file: (Successful) Deleted dir %s at date %s\n"),
+			g_printf("Deleted dir %s at date %s\n", ditem_path, date);
+			dbprintf("delete_file: (Successful) Deleted dir %s at date %s\n",
 				  ditem_path, date);
 			deleted=1;
 			break;
@@ -1396,9 +1394,9 @@ delete_file(
 		    if (cmd)
 			puts(cmd);
 		} else if(deleted == 0) {
-		    g_printf(_("Warning - dir '%s' not on tape list\n"),
+		    g_printf("Warning - dir '%s' not on tape list\n",
 			   ditem_path);
-		    dbprintf(_("delete_file: dir '%s' not on tape list\n"),
+		    dbprintf("delete_file: dir '%s' not on tape list\n",
 			      ditem_path);
 		}
 	    }
@@ -1406,18 +1404,18 @@ delete_file(
 	    {
 		switch(delete_extract_item(ditem)) {
 		case -1:
-		    g_printf(_("System error\n"));
-		    dbprintf(_("delete_file: (Failed) System error\n"));
+		    g_printf("System error\n");
+		    dbprintf("delete_file: (Failed) System error\n");
 		    break;
 		case  0:
-		    g_printf(_("Deleted %s\n"), ditem->path);
-		    dbprintf(_("delete_file: (Successful) Deleted %s\n"),
+		    g_printf("Deleted %s\n", ditem->path);
+		    dbprintf("delete_file: (Successful) Deleted %s\n",
 			      ditem->path);
 		    break;
 		case  1:
-		    g_printf(_("Warning - file '%s' not on tape list\n"),
+		    g_printf("Warning - file '%s' not on tape list\n",
 			   ditem->path);
-		    dbprintf(_("delete_file: file '%s' not on tape list\n"),
+		    dbprintf("delete_file: file '%s' not on tape list\n",
 			      ditem->path);
 		    break;
 		}
@@ -1430,8 +1428,8 @@ delete_file(
     amfree(lditem.path);
 
     if(! found_one) {
-	g_printf(_("File %s doesn't exist in directory\n"), path);
-	dbprintf(_("delete_file: (Failed) File %s doesn't exist in directory\n"),
+	g_printf("File %s doesn't exist in directory\n", path);
+	dbprintf("delete_file: (Failed) File %s doesn't exist in directory\n",
 	          path);
     }
 }
@@ -1462,7 +1460,7 @@ display_extract_list(
 	pager_command = stralloc2(pager, " ; /bin/cat > /dev/null");
 	if ((fp = popen(pager_command, "w")) == NULL)
 	{
-	    g_printf(_("Warning - can't pipe through %s\n"), pager);
+	    g_printf("Warning - can't pipe through %s\n", pager);
 	    fp = stdout;
 	}
 	amfree(pager_command);
@@ -1472,7 +1470,7 @@ display_extract_list(
 	uqfile = unquote_string(file);
 	if ((fp = fopen(uqfile, "w")) == NULL)
 	{
-	    g_printf(_("Can't open file %s to print extract list into\n"), file);
+	    g_printf("Can't open file %s to print extract list into\n", file);
 	    amfree(uqfile);
 	    return;
 	}
@@ -1481,7 +1479,7 @@ display_extract_list(
 
     for (this = extract_list; this != NULL; this = this->next)
     {
-	g_fprintf(fp, _("TAPE %s LEVEL %d DATE %s\n"),
+	g_fprintf(fp, "TAPE %s LEVEL %d DATE %s\n",
 		this->tape, this->level, this->date);
 	for (that = this->files; that != NULL; that = that->next)
 	    g_fprintf(fp, "\t%s\n", that->path);
@@ -1490,7 +1488,7 @@ display_extract_list(
     if (file == NULL) {
 	apclose(fp);
     } else {
-	g_printf(_("Extract list written to file %s\n"), file);
+	g_printf("Extract list written to file %s\n", file);
 	afclose(fp);
     }
 }
@@ -1543,15 +1541,15 @@ okay_to_continue(
     get_device = 0;
     while (ret < 0) {
 	if (get_device) {
-	    prompt = _("New device name [?]: ");
+	    prompt = "New device name [?]: ";
 	} else if (allow_tape && allow_skip) {
-	    prompt = _("Continue [?/Y/n/s/d]? ");
+	    prompt = "Continue [?/Y/n/s/d]? ";
 	} else if (allow_tape && !allow_skip) {
-	    prompt = _("Continue [?/Y/n/d]? ");
+	    prompt = "Continue [?/Y/n/d]? ";
 	} else if (allow_retry) {
-	    prompt = _("Continue [?/Y/n/r]? ");
+	    prompt = "Continue [?/Y/n/r]? ";
 	} else {
-	    prompt = _("Continue [?/Y/n]? ");
+	    prompt = "Continue [?/Y/n]? ";
 	}
 	fputs(prompt, stdout);
 	fflush(stdout); fflush(stderr);
@@ -1574,17 +1572,17 @@ okay_to_continue(
 	}
 	if (ch == '?') {
 	    if (get_device) {
-		g_printf(_("Enter a new device name or \"default\"\n"));
+		g_printf("Enter a new device name or \"default\"\n");
 	    } else {
-		g_printf(_("Enter \"y\"es to continue, \"n\"o to stop"));
+		g_printf("Enter \"y\"es to continue, \"n\"o to stop");
 		if(allow_skip) {
-		    g_printf(_(", \"s\"kip this tape"));
+		    g_printf(", \"s\"kip this tape");
 		}
 		if(allow_retry) {
-		    g_printf(_(" or \"r\"etry this tape"));
+		    g_printf(" or \"r\"etry this tape");
 		}
 		if (allow_tape) {
-		    g_printf(_(" or \"d\" to change to a new device"));
+		    g_printf(" or \"d\" to change to a new device");
 		}
 		putchar('\n');
 	    }
@@ -1596,7 +1594,7 @@ okay_to_continue(
 	    } else if (s[-1] != '\0') {
 		set_device(tmp, s - 1); /* specified device, existing host */
 	    } else {
-		g_printf(_("No change.\n"));
+		g_printf("No change.\n");
 	    }
 
 	    amfree(tmp);
@@ -1630,7 +1628,7 @@ send_to_tape_server(
     g_debug("send_to_tape_server: %s\n", cmd);
     if (security_stream_write(stream, msg, strlen(msg)) < 0)
     {
-	error(_("Error writing to tape server"));
+	error("Error writing to tape server");
 	exit(101);
 	/*NOTREACHED*/
     }
@@ -1655,7 +1653,7 @@ extract_files_setup(
 
     amidxtaped_secdrv = security_getdriver(authopt);
     if (amidxtaped_secdrv == NULL) {
-	error(_("no '%s' security driver available for host '%s'"),
+	error("no '%s' security driver available for host '%s'",
 	      authopt, tape_server_name);
     }
 
@@ -1696,7 +1694,7 @@ extract_files_setup(
 	if(strncmp_const(amidxtaped_line,"FEATURES=") == 0) {
 	    tapesrv_features = am_string_to_feature(amidxtaped_line+9);
 	} else {
-	    g_fprintf(stderr, _("amrecover - expecting FEATURES line from amidxtaped\n"));
+	    g_fprintf(stderr, "amrecover - expecting FEATURES line from amidxtaped\n");
 	    stop_amidxtaped();
 	    amfree(disk_regex);
 	    amfree(host_regex);
@@ -1759,7 +1757,7 @@ extract_files_setup(
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, disk_regex);
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, clean_datestamp);
 
-	dbprintf(_("Started amidxtaped with arguments \"6 -h -p %s %s %s %s\"\n"),
+	dbprintf("Started amidxtaped with arguments \"6 -h -p %s %s %s %s\"\n",
 		  dump_device_name, host_regex, disk_regex, clean_datestamp);
     }
 
@@ -1785,17 +1783,17 @@ read_file_header(
     ssize_t bytes_read;
     bytes_read = read_buffer(tapedev, buffer, buflen, READ_TIMEOUT);
     if(bytes_read < 0) {
-	error(_("error reading header (%s), check amidxtaped.*.debug on server"),
+	error("error reading header (%s), check amidxtaped.*.debug on server",
 	      strerror(errno));
 	/*NOTREACHED*/
     }
 
     if((size_t)bytes_read < buflen) {
-	g_fprintf(stderr, plural(_("%s: short block %d byte\n"),
-			       _("%s: short block %d bytes\n"), bytes_read),
+	g_fprintf(stderr, plural("%s: short block %d byte\n",
+			       "%s: short block %d bytes\n", bytes_read),
 		get_pname(), (int)bytes_read);
 	print_header(stdout, file);
-	error(_("Can't read file header"));
+	error("Can't read file header");
 	/*NOTREACHED*/
     }
 
@@ -1837,13 +1835,13 @@ extract_files_child(
     /* make in_fd be our stdin */
     if (dup2(ctl_data->child_pipe[0], STDIN_FILENO) == -1)
     {
-	error(_("dup2 failed in extract_files_child: %s"), strerror(errno));
+	error("dup2 failed in extract_files_child: %s", strerror(errno));
 	/*NOTREACHED*/
     }
 
     if(ctl_data->file.type != F_DUMPFILE) {
 	dump_dumpfile_t(&ctl_data->file);
-	error(_("bad header"));
+	error("bad header");
 	/*NOTREACHED*/
     }
 
@@ -2032,7 +2030,7 @@ extract_files_child(
     case IS_GNUTAR:
     case IS_SAMBA_TAR:
 #ifndef GNUTAR
-	g_fprintf(stderr, _("warning: GNUTAR program not available.\n"));
+	g_fprintf(stderr, "warning: GNUTAR program not available.\n");
 	cmd = g_strdup("tar");
 #else
   	cmd = g_strdup(GNUTAR);
@@ -2062,7 +2060,7 @@ extract_files_child(
 	}
 #endif
 	if (cmd == NULL) {
-	    g_fprintf(stderr, _("warning: restore program for %s not available.\n"),
+	    g_fprintf(stderr, "warning: restore program for %s not available.\n",
 		    ctl_data->file.program);
 	    cmd = g_strdup("restore");
 	}
@@ -2072,12 +2070,12 @@ extract_files_child(
 	break;
     }
     if (cmd) {
-        dbprintf(_("Exec'ing %s with arguments:\n"), cmd);
+        dbprintf("Exec'ing %s with arguments:\n", cmd);
 	for (j = 0; j < argv_ptr->len - 1; j++) {
 	    if (j == passwd_field)
 		dbprintf("\tXXXXX\n");
 	    else
-		dbprintf(_("\t%s\n"), (char *)g_ptr_array_index(argv_ptr, j));
+		dbprintf("\t%s\n", (char *)g_ptr_array_index(argv_ptr, j));
 	}
 	safe_fd(-1, 0);
         (void)execv(cmd, (char **)argv_ptr->pdata);
@@ -2085,8 +2083,8 @@ extract_files_child(
 	save_errno = errno;
 	g_ptr_array_free_full(argv_ptr);
 	errno = save_errno;
-        perror(_("amrecover couldn't exec"));
-        g_fprintf(stderr, _(" problem executing %s\n"), cmd);
+        perror("amrecover couldn't exec");
+        g_fprintf(stderr, " problem executing %s\n", cmd);
 	amfree(cmd);
     }
     exit(1);
@@ -2127,8 +2125,8 @@ writer_intermediary(
 	/* if prompted for a tape, relay said prompt to the user */
 	if(sscanf(amidxtaped_line, "FEEDME %132s\n", desired_tape) == 1) {
 	    int done;
-	    g_printf(_("Load tape %s now\n"), desired_tape);
-	    dbprintf(_("Requesting tape %s from user\n"), desired_tape);
+	    g_printf("Load tape %s now\n", desired_tape);
+	    dbprintf("Requesting tape %s from user\n", desired_tape);
 	    done = okay_to_continue(am_has_feature(indexsrv_features,
 						   fe_amrecover_feedme_tape),
 				    0, 0);
@@ -2158,7 +2156,7 @@ writer_intermediary(
 	} else if(strncmp_const(amidxtaped_line, "MESSAGE ") == 0) {
 	    g_printf("%s\n",&amidxtaped_line[8]);
 	} else {
-	    g_fprintf(stderr, _("Strange message from tape server: %s"),
+	    g_fprintf(stderr, "Strange message from tape server: %s",
 		    amidxtaped_line);
 	    break;
 	}
@@ -2173,7 +2171,7 @@ writer_intermediary(
 	aclose(ctl_data.child_pipe[1]);
 
     if (ctl_data.header_done == 0) {
-	g_printf(_("Got no header and data from server, check in amidxtaped.*.debug and amandad.*.debug files on server\n"));
+	g_printf("Got no header and data from server, check in amidxtaped.*.debug and amandad.*.debug files on server\n");
     }
 
     if (ctl_data.pid != -1) {
@@ -2181,7 +2179,7 @@ writer_intermediary(
 	if(WEXITSTATUS(extractor_status) != 0){
 	    int ret = WEXITSTATUS(extractor_status);
             if(ret == 255) ret = -1;
-	    g_printf(_("Extractor child exited with status %d\n"), ret);
+	    g_printf("Extractor child exited with status %d\n", ret);
 	    return -1;
 	}
     }
@@ -2222,7 +2220,7 @@ extract_files(void)
 
     if (!is_extract_list_nonempty())
     {
-	g_printf(_("Extract list empty - No files to extract!\n"));
+	g_printf("Extract list empty - No files to extract!\n");
 	return;
     }
 
@@ -2249,7 +2247,7 @@ extract_files(void)
 
     if (strcmp(tape_device_name, "/dev/null") == 0)
     {
-	g_printf(_("amrecover: warning: using %s as the tape device will not work\n"),
+	g_printf("amrecover: warning: using %s as the tape device will not work\n",
 	       tape_device_name);
     }
 
@@ -2257,9 +2255,9 @@ extract_files(void)
     for (elist = first_tape_list(); elist != NULL; elist = next_tape_list(elist)) {
 	if(elist->tape[0]!='/') {
 	    if(first) {
-		g_printf(_("\nExtracting files using tape drive %s on host %s.\n"),
+		g_printf("\nExtracting files using tape drive %s on host %s.\n",
 			tape_device_name, tape_server_name);
-		g_printf(_("The following tapes are needed:"));
+		g_printf("The following tapes are needed:");
 		first=0;
 	    }
 	    else
@@ -2275,9 +2273,9 @@ extract_files(void)
     for (elist = first_tape_list(); elist != NULL; elist = next_tape_list(elist)) {
 	if(elist->tape[0]=='/') {
 	    if(first) {
-		g_printf(_("\nExtracting files from holding disk on host %s.\n"),
+		g_printf("\nExtracting files from holding disk on host %s.\n",
 			tape_server_name);
-		g_printf(_("The following files are needed:"));
+		g_printf("The following files are needed:");
 		first=0;
 	    }
 	    else
@@ -2311,7 +2309,7 @@ extract_files(void)
     {
 	if(elist->tape[0]=='/') {
 	    dump_device_name = newstralloc(dump_device_name, elist->tape);
-	    g_printf(_("Extracting from file "));
+	    g_printf("Extracting from file ");
 	    tlist = unmarshal_tapelist_str(dump_device_name);
 	    for(a_tlist = tlist; a_tlist != NULL; a_tlist = a_tlist->next)
 		g_printf(" %s", a_tlist->label);
@@ -2319,11 +2317,11 @@ extract_files(void)
 	    free_tapelist(tlist);
 	}
 	else {
-	    g_printf(_("Extracting files using tape drive %s on host %s.\n"),
+	    g_printf("Extracting files using tape drive %s on host %s.\n",
 		   tape_device_name, tape_server_name);
 	    tlist = unmarshal_tapelist_str(elist->tape);
-	    g_printf(_("Load tape %s now\n"), tlist->label);
-	    dbprintf(_("Requesting tape %s from user\n"), tlist->label);
+	    g_printf("Load tape %s now\n", tlist->label);
+	    dbprintf("Requesting tape %s from user\n", tlist->label);
 	    free_tapelist(tlist);
 	    otc = okay_to_continue(1,1,0);
 	    if (otc == 0)
@@ -2355,7 +2353,7 @@ extract_files(void)
 	/* connect to the tape handler daemon on the tape drive server */
 	if ((extract_files_setup(elist->tape, elist->fileno)) == -1)
 	{
-	    g_fprintf(stderr, _("amrecover - can't talk to tape server: %s\n"),
+	    g_fprintf(stderr, "amrecover - can't talk to tape server: %s\n",
 		    errstr);
 	    return;
 	}
@@ -2415,7 +2413,7 @@ amidxtaped_response(
     memset(ports, -1, sizeof(ports));
 
     if (pkt == NULL) {
-	errstr = newvstrallocf(errstr, _("[request failed: %s]"), security_geterror(sech));
+	errstr = newvstrallocf(errstr, "[request failed: %s]", security_geterror(sech));
 	*response_error = 1;
 	return;
     }
@@ -2423,7 +2421,7 @@ amidxtaped_response(
 
     if (pkt->type == P_NAK) {
 #if defined(PACKET_DEBUG)
-	g_fprintf(stderr, _("got nak response:\n----\n%s\n----\n\n"), pkt->body);
+	g_fprintf(stderr, "got nak response:\n----\n%s\n----\n\n", pkt->body);
 #endif
 
 	tok = strtok(pkt->body, " ");
@@ -2443,14 +2441,14 @@ bad_nak:
     }
 
     if (pkt->type != P_REP) {
-	errstr = newvstrallocf(errstr, _("received strange packet type %s: %s"),
+	errstr = newvstrallocf(errstr, "received strange packet type %s: %s",
 			      pkt_type2str(pkt->type), pkt->body);
 	*response_error = 1;
 	return;
     }
 
 #if defined(PACKET_DEBUG)
-    g_fprintf(stderr, _("got response:\n----\n%s\n----\n\n"), pkt->body);
+    g_fprintf(stderr, "got response:\n----\n%s\n----\n\n", pkt->body);
 #endif
 
     for(i = 0; i < NSTREAMS; i++) {
@@ -2469,7 +2467,7 @@ bad_nak:
 	if (strcmp(tok, "ERROR") == 0) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL)
-		tok = _("[bogus error packet]");
+		tok = "[bogus error packet]";
 	    errstr = newstralloc(errstr, tok);
 	    *response_error = 2;
 	    return;
@@ -2487,14 +2485,14 @@ bad_nak:
 	    for (i = 0; i < NSTREAMS; i++) {
 		tok = strtok(NULL, " ");
 		if (tok == NULL || strcmp(tok, amidxtaped_streams[i].name) != 0) {
-		    extra = g_strdup_printf(_("CONNECT token is \"%s\": expected \"%s\""),
+		    extra = g_strdup_printf("CONNECT token is \"%s\": expected \"%s\"",
 				      tok ? tok : "(null)",
 				      amidxtaped_streams[i].name);
 		    goto parse_error;
 		}
 		tok = strtok(NULL, " \n");
 		if (tok == NULL || sscanf(tok, "%d", &ports[i]) != 1) {
-		    extra = g_strdup_printf(_("CONNECT %s token is \"%s\": expected a port number"),
+		    extra = g_strdup_printf("CONNECT %s token is \"%s\": expected a port number",
 				      amidxtaped_streams[i].name,
 				      tok ? tok : "(null)");
 		    goto parse_error;
@@ -2509,7 +2507,7 @@ bad_nak:
 	if (strcmp(tok, "OPTIONS") == 0) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL) {
-		extra = g_strdup(_("OPTIONS token is missing"));
+		extra = g_strdup("OPTIONS token is missing");
 		goto parse_error;
 	    }
 /*
@@ -2545,10 +2543,10 @@ bad_nak:
 	if (ports[i] == -1)
 	    continue;
 	amidxtaped_streams[i].fd = security_stream_client(sech, ports[i]);
-	dbprintf(_("amidxtaped_streams[%d].fd = %p\n"),i, amidxtaped_streams[i].fd);
+	dbprintf("amidxtaped_streams[%d].fd = %p\n",i, amidxtaped_streams[i].fd);
 	if (amidxtaped_streams[i].fd == NULL) {
 	    errstr = newvstrallocf(errstr,\
-			_("[could not connect %s stream: %s]"),
+			"[could not connect %s stream: %s]",
 			amidxtaped_streams[i].name,
 			security_geterror(sech));
 	    goto connect_error;
@@ -2562,7 +2560,7 @@ bad_nak:
 	    continue;
 	if (security_stream_auth(amidxtaped_streams[i].fd) < 0) {
 	    errstr = newvstrallocf(errstr,
-		_("[could not authenticate %s stream: %s]"),
+		"[could not authenticate %s stream: %s]",
 		amidxtaped_streams[i].name,
 		security_stream_geterror(amidxtaped_streams[i].fd));
 	    goto connect_error;
@@ -2574,11 +2572,11 @@ bad_nak:
      * them, complain.
      */
     if (amidxtaped_streams[CTLFD].fd == NULL) {
-        errstr = newvstrallocf(errstr, _("[couldn't open CTL streams]"));
+        errstr = newvstrallocf(errstr, "[couldn't open CTL streams]");
         goto connect_error;
     }
     if (amidxtaped_streams[DATAFD].fd == NULL) {
-        errstr = newvstrallocf(errstr, _("[couldn't open DATA streams]"));
+        errstr = newvstrallocf(errstr, "[couldn't open DATA streams]");
         goto connect_error;
     }
 
@@ -2589,10 +2587,10 @@ bad_nak:
 parse_error:
     if (extra) {
 	errstr = newvstrallocf(errstr,
-			  _("[parse of reply message failed: %s]"), extra);
+			  "[parse of reply message failed: %s]", extra);
     } else {
 	errstr = newvstrallocf(errstr,
-			  _("[parse of reply message failed: (no additional information)"));
+			  "[parse of reply message failed: (no additional information)");
     }
     amfree(extra);
     *response_error = 2;
@@ -2676,7 +2674,7 @@ read_amidxtaped_data(
     assert(cookie != NULL);
 
     if (size < 0) {
-	errstr = newstralloc2(errstr, _("amidxtaped read: "),
+	errstr = newstralloc2(errstr, "amidxtaped read: ",
 		 security_stream_geterror(amidxtaped_streams[DATAFD].fd));
 	return;
     }
@@ -2800,12 +2798,12 @@ ask_file_overwrite(
 	    if (!restore_dir) {
 		restore_dir = g_strdup(ctl_data->file.disk);
 	    }
-	    g_printf(_("Restoring files into target host %s\n"), restore_dir);
+	    g_printf("Restoring files into target host %s\n", restore_dir);
 	} else {
 	    if (!restore_dir) {
 		restore_dir = g_get_current_dir();
 	    }
-	    g_printf(_("Restoring files into directory %s\n"), restore_dir);
+	    g_printf("Restoring files into directory %s\n", restore_dir);
 	}
 
 	/* Collect files to delete befause of a bug in gnutar */
@@ -2814,7 +2812,7 @@ ask_file_overwrite(
 	     strcmp(ctl_data->file.application, "amgtar") == 0)) {
 	    check_file_overwrite(restore_dir);
 	} else {
-	    g_printf(_("All existing files in %s can be deleted\n"),
+	    g_printf("All existing files in %s can be deleted\n",
 		     restore_dir);
 	}
 
@@ -2828,7 +2826,7 @@ ask_file_overwrite(
 	/* delete the files for gnutar */
 	if (unlink_list) {
 	    if (!do_unlink_list()) {
-		g_fprintf(stderr, _("Can't recover because I can't cleanup the restore directory (%s)\n"),
+		g_fprintf(stderr, "Can't recover because I can't cleanup the restore directory (%s)\n",
 			  restore_dir);
 		free_unlink_list();
 		amfree(restore_dir);
@@ -2846,7 +2844,7 @@ start_processing_data(
     ctl_data_t *ctl_data)
 {
     if (pipe(ctl_data->child_pipe) == -1) {
-	error(_("extract_list - error setting up pipe to extractor: %s\n"),
+	error("extract_list - error setting up pipe to extractor: %s\n",
 	      strerror(errno));
 	/*NOTREACHED*/
     }
@@ -2898,8 +2896,8 @@ start_processing_data(
     }
 	
     if (ctl_data->pid == -1) {
-	errstr = newstralloc(errstr, _("writer_intermediary - error forking child"));
-	g_printf(_("writer_intermediary - error forking child"));
+	errstr = newstralloc(errstr, "writer_intermediary - error forking child");
+	g_printf("writer_intermediary - error forking child");
 	return;
     }
     aclose(ctl_data->child_pipe[0]);

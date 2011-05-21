@@ -54,7 +54,7 @@ glib_init(void) {
 						  GLIB_MINOR_VERSION,
 						  GLIB_MICRO_VERSION);
 	if (glib_err) {
-	    error(_("%s: Amanda was compiled with glib-%d.%d.%d"), glib_err,
+	    error("%s: Amanda was compiled with glib-%d.%d.%d", glib_err,
 		    GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION);
 	    exit(1); /* glib_init may be called before error handling is set up */
 	}
@@ -270,7 +270,7 @@ static gboolean g_value_set_flags_from_string(GValue * val, char * string) {
             flag_value = g_flags_get_value_by_nick(flags_class, token);
         }
         if (flag_value == NULL) {
-            g_fprintf(stderr, _("Invalid flag %s for type %s\n"), token,
+            g_fprintf(stderr, "Invalid flag %s for type %s\n", token,
                     g_type_name(G_VALUE_TYPE(val)));
             continue;
         }
@@ -281,7 +281,7 @@ static gboolean g_value_set_flags_from_string(GValue * val, char * string) {
     amfree(string_copy);
     
     if (value == 0) {
-        g_fprintf(stderr, _("No valid flags for type %s in string %s\n"),
+        g_fprintf(stderr, "No valid flags for type %s in string %s\n",
                 g_type_name(G_VALUE_TYPE(val)), string);
         return FALSE;
     }

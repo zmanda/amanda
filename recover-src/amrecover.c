@@ -54,7 +54,7 @@ int grab_reply(int show);
 void sigint_handler(int signum);
 int main(int argc, char **argv);
 
-#define USAGE _("Usage: amrecover [[-C] <config>] [-s <index-server>] [-t <tape-server>] [-d <tape-device>] [-o <clientconfigoption>]*\n")
+#define USAGE "Usage: amrecover [[-C] <config>] [-s <index-server>] [-t <tape-server>] [-d <tape-device>] [-o <clientconfigoption>]*\n"
 
 char *server_name = NULL;
 int server_socket;
@@ -404,7 +404,7 @@ main(
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
 	config_print_errors();
 	if (config_errors(NULL) >= CFGERR_ERRORS) {
-	    g_critical(_("errors processing config file"));
+	    g_critical("errors processing config file");
 	}
     }
 
@@ -422,7 +422,7 @@ main(
     if (!starting_hostname) {
 	starting_hostname = g_malloc(MAX_HOSTNAME_LENGTH+1);
 	if (gethostname(starting_hostname, MAX_HOSTNAME_LENGTH) != 0) {
-	    error(_("cannot determine local host name\n"));
+	    error("cannot determine local host name\n");
 	    /*NOTREACHED*/
 	}
 	starting_hostname[MAX_HOSTNAME_LENGTH] = '\0';
@@ -435,14 +435,14 @@ main(
     if (!server_name) {
 	server_name = getenv("AMANDA_SERVER");
 	if (server_name) {
-	    g_printf(_("Using index server from environment AMANDA_SERVER (%s)\n"), server_name);
+	    g_printf("Using index server from environment AMANDA_SERVER (%s)\n", server_name);
 	}
     }
     if (!server_name) {
 	server_name = getconf_str(CNF_INDEX_SERVER);
     }
     if (!server_name) {
-	error(_("No index server set"));
+	error("No index server set");
 	/*NOTREACHED*/
     }
     server_name = g_strdup(server_name);
@@ -456,17 +456,17 @@ main(
 	if (!tape_server_name) {
 	    tape_server_name = getenv("AMANDA_TAPESERVER");
 	    if (tape_server_name) {
-		g_printf(_("Using tape server from environment AMANDA_TAPESERVER (%s)\n"), tape_server_name);
+		g_printf("Using tape server from environment AMANDA_TAPESERVER (%s)\n", tape_server_name);
 	    }
 	} else {
-	    g_printf(_("Using tape server from environment AMANDA_TAPE_SERVER (%s)\n"), tape_server_name);
+	    g_printf("Using tape server from environment AMANDA_TAPE_SERVER (%s)\n", tape_server_name);
 	}
     }
     if (!tape_server_name) {
 	tape_server_name = getconf_str(CNF_TAPE_SERVER);
     }
     if (!tape_server_name) {
-	error(_("No tape server set"));
+	error("No tape server set");
 	/*NOTREACHED*/
     }
     tape_server_name = g_strdup(tape_server_name);
@@ -497,7 +497,7 @@ main(
     sigemptyset(&act.sa_mask);
     act.sa_flags = 0;
     if (sigaction(SIGINT, &act, &oact) != 0) {
-	error(_("error setting signal handler: %s"), strerror(errno));
+	error("error setting signal handler: %s", strerror(errno));
 	/*NOTREACHED*/
     }
 
@@ -514,7 +514,7 @@ main(
 
     secdrv = security_getdriver(authopt);
     if (secdrv == NULL) {
-	error(_("no '%s' security driver available for host '%s'"),
+	error("no '%s' security driver available for host '%s'",
 	    authopt, server_name);
 	/*NOTREACHED*/
     }
@@ -525,7 +525,7 @@ main(
     amfree(req);
     protocol_run();
 
-    g_printf(_("AMRECOVER Version %s. Contacting server on %s ...\n"),
+    g_printf("AMRECOVER Version %s. Contacting server on %s ...\n",
 	   VERSION, server_name);
 
     if(response_error != 0) {
@@ -555,7 +555,7 @@ main(
 	    their_feature_string = g_strdup(server_line+13);
 	    indexsrv_features = am_string_to_feature(their_feature_string);
 	    if (!indexsrv_features)
-		g_printf(_("Bad feature string from server: %s"), their_feature_string);
+		g_printf("Bad feature string from server: %s", their_feature_string);
 	}
 	if (!indexsrv_features)
 	    indexsrv_features = am_set_default_feature_set();
@@ -570,9 +570,9 @@ main(
     if (tm) 
 	strftime(dump_date, sizeof(dump_date), "%Y-%m-%d", tm);
     else
-	error(_("BAD DATE"));
+	error("BAD DATE");
 
-    g_printf(_("Setting restore date to today (%s)\n"), dump_date);
+    g_printf("Setting restore date to today (%s)\n", dump_date);
     line = g_strdup_printf("DATE %s", dump_date);
     if (converse(line) == -1) {
         aclose(server_socket);
@@ -592,9 +592,9 @@ main(
 	amfree(dump_hostname);
 	set_host(starting_hostname);
 	if (dump_hostname)
-	    g_printf(_("Use the setdisk command to choose dump disk to recover\n"));
+	    g_printf("Use the setdisk command to choose dump disk to recover\n");
 	else
-	    g_printf(_("Use the sethost command to choose a host to recover\n"));
+	    g_printf("Use the sethost command to choose a host to recover\n");
 
     }
 
@@ -608,7 +608,7 @@ main(
 	if (lineread[0] != '\0') 
 	{
 	    add_history(lineread);
-	    dbprintf(_("user command: '%s'\n"), lineread);
+	    dbprintf("user command: '%s'\n", lineread);
 	    process_line(lineread);	/* act on line's content */
 	}
 	amfree(lineread);
@@ -636,7 +636,7 @@ amindexd_response(
     assert(sech != NULL);
 
     if (pkt == NULL) {
-	errstr = newvstrallocf(errstr, _("[request failed: %s]"),
+	errstr = newvstrallocf(errstr, "[request failed: %s]",
 			     security_geterror(sech));
 	*response_error = 1;
 	return;
@@ -644,7 +644,7 @@ amindexd_response(
 
     if (pkt->type == P_NAK) {
 #if defined(PACKET_DEBUG)
-	dbprintf(_("got nak response:\n----\n%s\n----\n\n"), pkt->body);
+	dbprintf("got nak response:\n----\n%s\n----\n\n", pkt->body);
 #endif
 
 	tok = strtok(pkt->body, " ");
@@ -657,21 +657,21 @@ amindexd_response(
 	    *response_error = 1;
 	} else {
 bad_nak:
-	    errstr = newvstrallocf(errstr, _("request NAK"));
+	    errstr = newvstrallocf(errstr, "request NAK");
 	    *response_error = 2;
 	}
 	return;
     }
 
     if (pkt->type != P_REP) {
-	errstr = newvstrallocf(errstr, _("received strange packet type %s: %s"),
+	errstr = newvstrallocf(errstr, "received strange packet type %s: %s",
 			      pkt_type2str(pkt->type), pkt->body);
 	*response_error = 1;
 	return;
     }
 
 #if defined(PACKET_DEBUG)
-    g_fprintf(stderr, _("got response:\n----\n%s\n----\n\n"), pkt->body);
+    g_fprintf(stderr, "got response:\n----\n%s\n----\n\n", pkt->body);
 #endif
 
     for(i = 0; i < NSTREAMS; i++) {
@@ -690,7 +690,7 @@ bad_nak:
 	if (strcmp(tok, "ERROR") == 0) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL) {
-	        errstr = newvstrallocf(errstr, _("[bogus error packet]"));
+	        errstr = newvstrallocf(errstr, "[bogus error packet]");
 	    } else {
 		errstr = newvstrallocf(errstr, "%s", tok);
 	    }
@@ -711,15 +711,15 @@ bad_nak:
 		tok = strtok(NULL, " ");
 		if (tok == NULL || strcmp(tok, streams[i].name) != 0) {
 		    extra = g_strdup_printf(
-			   _("CONNECT token is \"%s\": expected \"%s\""),
-			   tok ? tok : _("(null)"), streams[i].name);
+			   "CONNECT token is \"%s\": expected \"%s\"",
+			   tok ? tok : "(null)", streams[i].name);
 		    goto parse_error;
 		}
 		tok = strtok(NULL, " \n");
 		if (tok == NULL || sscanf(tok, "%d", &ports[i]) != 1) {
 		    extra = g_strdup_printf(
-			   _("CONNECT %s token is \"%s\" expected a port number"),
-			   streams[i].name, tok ? tok : _("(null)"));
+			   "CONNECT %s token is \"%s\" expected a port number",
+			   streams[i].name, tok ? tok : "(null)");
 		    goto parse_error;
 		}
 	    }
@@ -732,7 +732,7 @@ bad_nak:
 	if (strcmp(tok, "OPTIONS") == 0) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL) {
-		extra = g_strdup(_("OPTIONS token is missing"));
+		extra = g_strdup("OPTIONS token is missing");
 		goto parse_error;
 	    }
 #if 0
@@ -769,7 +769,7 @@ bad_nak:
 	streams[i].fd = security_stream_client(sech, ports[i]);
 	if (streams[i].fd == NULL) {
 	    errstr = newvstrallocf(errstr,
-			_("[could not connect %s stream: %s]"),
+			"[could not connect %s stream: %s]",
 			streams[i].name, security_geterror(sech));
 	    goto connect_error;
 	}
@@ -782,7 +782,7 @@ bad_nak:
 	    continue;
 	if (security_stream_auth(streams[i].fd) < 0) {
 	    errstr = newvstrallocf(errstr,
-		_("[could not authenticate %s stream: %s]"),
+		"[could not authenticate %s stream: %s]",
 		streams[i].name, security_stream_geterror(streams[i].fd));
 	    goto connect_error;
 	}
@@ -793,7 +793,7 @@ bad_nak:
      * them, complain.
      */
     if (streams[MESGFD].fd == NULL) {
-        errstr = newvstrallocf(errstr, _("[couldn't open MESG streams]"));
+        errstr = newvstrallocf(errstr, "[couldn't open MESG streams]");
         goto connect_error;
     }
 
@@ -804,8 +804,8 @@ bad_nak:
 
 parse_error:
     errstr = newvstrallocf(errstr,
-			  _("[parse of reply message failed: %s]"),
-			  extra ? extra : _("(no additional information)"));
+			  "[parse of reply message failed: %s]",
+			  extra ? extra : "(no additional information)");
     amfree(extra);
     *response_error = 2;
     return;

@@ -120,7 +120,7 @@ main(
     add_amanda_log_handler(amanda_log_syslog);
     dbopen(DBG_SUBDIR_CLIENT);
     startclock();
-    dbprintf(_("version %s\n"), VERSION);
+    dbprintf("version %s\n", VERSION);
 
     if(argc > 2 && strcmp(argv[1], "amandad") == 0) {
 	amandad_auth = g_strdup(argv[2]);
@@ -144,8 +144,8 @@ main(
 
 	if(strncmp_const(line, "OPTIONS ") == 0) {
 	    if (g_options) {
-		g_printf(_("ERROR [Multiple OPTIONS line in selfcheck input]\n"));
-		error(_("Multiple OPTIONS line in selfcheck input\n"));
+		g_printf("ERROR [Multiple OPTIONS line in selfcheck input]\n");
+		error("Multiple OPTIONS line in selfcheck input\n");
 		/*NOTREACHED*/
 	    }
 	    g_options = parse_g_options(line+8, 1);
@@ -308,8 +308,8 @@ main(
 	dle = NULL;
     }
     if (g_options == NULL) {
-	g_printf(_("ERROR [Missing OPTIONS line in selfcheck input]\n"));
-	error(_("Missing OPTIONS line in selfcheck input\n"));
+	g_printf("ERROR [Missing OPTIONS line in selfcheck input]\n");
+	error("Missing OPTIONS line in selfcheck input\n");
 	/*NOTREACHED*/
     }
 
@@ -361,11 +361,11 @@ checkoverall:
 
  err:
     if (err_extra) {
-	g_printf(_("ERROR [FORMAT ERROR IN REQUEST PACKET %s]\n"), err_extra);
-	dbprintf(_("REQ packet is bogus: %s\n"), err_extra);
+	g_printf("ERROR [FORMAT ERROR IN REQUEST PACKET %s]\n", err_extra);
+	dbprintf("REQ packet is bogus: %s\n", err_extra);
     } else {
-	g_printf(_("ERROR [FORMAT ERROR IN REQUEST PACKET]\n"));
-	dbprintf(_("REQ packet is bogus\n"));
+	g_printf("ERROR [FORMAT ERROR IN REQUEST PACKET]\n");
+	dbprintf("REQ packet is bogus\n");
     }
     amfree(err_extra);
     amfree(line);
@@ -388,18 +388,18 @@ check_options(
 	need_gnutar=1;
         if(dle->device && dle->device[0] == '/' && dle->device[1] == '/') {
 	    if(dle->exclude_file && dle->exclude_file->nb_element > 1) {
-		g_printf(_("ERROR [samba support only one exclude file]\n"));
+		g_printf("ERROR [samba support only one exclude file]\n");
 	    }
 	    if (dle->exclude_list && dle->exclude_list->nb_element > 0 &&
 	        dle->exclude_optional==0) {
-		g_printf(_("ERROR [samba does not support exclude list]\n"));
+		g_printf("ERROR [samba does not support exclude list]\n");
 	    }
 	    if (dle->include_file && dle->include_file->nb_element > 0) {
-		g_printf(_("ERROR [samba does not support include file]\n"));
+		g_printf("ERROR [samba does not support include file]\n");
 	    }
 	    if (dle->include_list && dle->include_list->nb_element > 0 &&
 	        dle->include_optional==0) {
-		g_printf(_("ERROR [samba does not support include list]\n"));
+		g_printf("ERROR [samba does not support include list]\n");
 	    }
 	    need_samba=1;
 	} else {
@@ -425,16 +425,16 @@ check_options(
 
     if (strcmp(dle->program,"DUMP") == 0) {
 	if (dle->exclude_file && dle->exclude_file->nb_element > 0) {
-	    g_printf(_("ERROR [DUMP does not support exclude file]\n"));
+	    g_printf("ERROR [DUMP does not support exclude file]\n");
 	}
 	if (dle->exclude_list && dle->exclude_list->nb_element > 0) {
-	    g_printf(_("ERROR [DUMP does not support exclude list]\n"));
+	    g_printf("ERROR [DUMP does not support exclude list]\n");
 	}
 	if (dle->include_file && dle->include_file->nb_element > 0) {
-	    g_printf(_("ERROR [DUMP does not support include file]\n"));
+	    g_printf("ERROR [DUMP does not support include file]\n");
 	}
 	if (dle->include_list && dle->include_list->nb_element > 0) {
-	    g_printf(_("ERROR [DUMP does not support include list]\n"));
+	    g_printf("ERROR [DUMP does not support include list]\n");
 	}
 #ifdef USE_RUNDUMP
 	need_rundump=1;
@@ -499,16 +499,13 @@ check_options(
     }
     if (dle->auth && amandad_auth) {
 	if (strcasecmp(dle->auth, amandad_auth) != 0) {
-	    g_fprintf(stdout,_("ERROR [client configured for auth=%s while server requested '%s']\n"),
+	    g_fprintf(stdout,"ERROR [client configured for auth=%s while server requested '%s']\n",
 		    amandad_auth, dle->auth);
 	    if (strcmp(dle->auth, "ssh") == 0)  {	
-		g_fprintf(stderr, _("ERROR [The auth in ~/.ssh/authorized_keys "
-				  "should be \"--auth=ssh\", or use another auth "
-				  " for the DLE]\n"));
+		g_fprintf(stderr, "ERROR [The auth in ~/.ssh/authorized_keys ""should be \"--auth=ssh\", or use another auth "" for the DLE]\n");
 	    }
 	    else {
-		g_fprintf(stderr, _("ERROR [The auth in the inetd/xinetd configuration "
-				  " must be the same as the DLE]\n"));
+		g_fprintf(stderr, "ERROR [The auth in the inetd/xinetd configuration "" must be the same as the DLE]\n");
 	    }		
 	}
     }
@@ -537,11 +534,11 @@ check_disk(
 	qdisk = quote_string(dle->disk);
 	qamdevice = quote_string(dle->device);
 	device = g_strdup("nodevice");
-	dbprintf(_("checking disk %s\n"), qdisk);
+	dbprintf("checking disk %s\n", qdisk);
 	if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE) {
 	    if (dle->device[0] == '/' && dle->device[1] == '/') {
 		err = g_strdup_printf(
-		    _("Can't use CALCSIZE for samba estimate, use CLIENT: %s"),
+		    "Can't use CALCSIZE for samba estimate, use CLIENT: %s",
 		    dle->device);
 		goto common_exit;
 	    }
@@ -567,24 +564,24 @@ check_disk(
 		parsesharename(dle->device, &share, &subdir);
 		if (!share) {
 		    err = g_strdup_printf(
-			      _("cannot parse for share/subdir disk entry %s"),
+			      "cannot parse for share/subdir disk entry %s",
 			      dle->device);
 		    goto common_exit;
 		}
 		if ((subdir) && (SAMBA_VERSION < 2)) {
-		    err = g_strdup_printf(_("subdirectory specified for share '%s' but, samba is not v2 or better"),
+		    err = g_strdup_printf("subdirectory specified for share '%s' but, samba is not v2 or better",
 				     dle->device);
 		    goto common_exit;
 		}
 		if ((user_and_password = findpass(share, &domain)) == NULL) {
-		    err = g_strdup_printf(_("cannot find password for %s"),
+		    err = g_strdup_printf("cannot find password for %s",
 				     dle->device);
 		    goto common_exit;
 		}
 		lpass = strlen(user_and_password);
 		if ((pwtext = strchr(user_and_password, '%')) == NULL) {
 		    err = g_strdup_printf(
-				_("password field not \'user%%pass\' for %s"),
+				"password field not \'user%%pass\' for %s",
 				dle->device);
 		    goto common_exit;
 		}
@@ -592,12 +589,12 @@ check_disk(
 		pwtext_len = (size_t)strlen(pwtext);
 		amfree(device);
 		if ((device = makesharename(share, 0)) == NULL) {
-		    err = g_strdup_printf(_("cannot make share name of %s"), share);
+		    err = g_strdup_printf("cannot make share name of %s", share);
 		    goto common_exit;
 		}
 
 		if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	            err = g_strdup_printf(_("Cannot access /dev/null : %s"),
+	            err = g_strdup_printf("Cannot access /dev/null : %s",
 				     strerror(errno));
 		    goto common_exit;
 		}
@@ -629,7 +626,7 @@ check_disk(
 		/*@ignore@*/
 		if ((pwtext_len > 0) &&
 		    full_write(passwdfd, pwtext, pwtext_len) < pwtext_len) {
-		    err = g_strdup_printf(_("password write failed: %s: %s"),
+		    err = g_strdup_printf("password write failed: %s: %s",
 				     dle->device, strerror(errno));
 		    aclose(passwdfd);
 		    goto common_exit;
@@ -640,8 +637,8 @@ check_disk(
 		aclose(passwdfd);
 		ferr = fdopen(checkerr, "r");
 		if (!ferr) {
-		    g_printf(_("ERROR [Can't fdopen ferr: %s]\n"), strerror(errno));
-		    error(_("Can't fdopen ferr: %s"), strerror(errno));
+		    g_printf("ERROR [Can't fdopen ferr: %s]\n", strerror(errno));
+		    error("Can't fdopen ferr: %s", strerror(errno));
 		    /*NOTREACHED*/
 		}
 		sep = "";
@@ -674,18 +671,18 @@ check_disk(
 		if (errdos != 0 || rc != 0) {
 		    if (extra_info) {
 			err = newvstrallocf(err,
-					    _("samba access error: %s: %s %s"),
+					    "samba access error: %s: %s %s",
 					    dle->device, extra_info, err);
 			amfree(extra_info);
 		    } else {
 			err = newvstrallocf(err,
-					    _("samba access error: %s: %s"),
+					    "samba access error: %s: %s",
 					   dle->device, err);
 		    }
 		}
 #else
 		err = g_strdup_printf(
-			      _("This client is not configured for samba: %s"),
+			      "This client is not configured for samba: %s",
 			      qdisk);
 #endif
 		goto common_exit;
@@ -696,7 +693,7 @@ check_disk(
 	} else if (strcmp(dle->program, "DUMP") == 0) {
 	    if(dle->device[0] == '/' && dle->device[1] == '/') {
 		err = g_strdup_printf(
-		  _("The DUMP program cannot handle samba shares, use GNUTAR: %s"),
+		  "The DUMP program cannot handle samba shares, use GNUTAR: %s",
 		  qdisk);
 		goto common_exit;
 	    }
@@ -737,11 +734,11 @@ check_disk(
 	    guint  i;
 	    for (i=0; i < errarray->len; i++) {
 		line = g_ptr_array_index(errarray, i);
-		fprintf(stdout, _("ERROR Application '%s': %s\n"),
+		fprintf(stdout, "ERROR Application '%s': %s\n",
 			dle->program, line);
 		amfree(line);
 	    }
-	    err = g_strdup_printf(_("Application '%s': can't run support command"),
+	    err = g_strdup_printf("Application '%s': can't run support command",
 			     dle->program);
 	    goto common_exit;
 	}
@@ -792,14 +789,14 @@ check_disk(
 	fflush(stdout);fflush(stderr);
 
 	if (pipe(app_err) < 0) {
-	    err = g_strdup_printf(_("Application '%s': can't create pipe"),
+	    err = g_strdup_printf("Application '%s': can't create pipe",
 			     dle->program);
 	    goto common_exit;
 	}
 
 	switch (application_api_pid = fork()) {
 	case -1:
-	    err = g_strdup_printf(_("fork failed: %s"), strerror(errno));
+	    err = g_strdup_printf("fork failed: %s", strerror(errno));
 	    goto common_exit;
 
 	case 0: /* child */
@@ -872,12 +869,12 @@ check_disk(
 		    cmdline = vstrextend(&cmdline, " ", quoted, NULL);
 		    amfree(quoted);
 		}
-		dbprintf(_("Spawning \"%s\" in pipeline\n"), cmdline);
+		dbprintf("Spawning \"%s\" in pipeline\n", cmdline);
 		amfree(cmdline);
 
 		safe_fd(-1, 0);
 		execve(cmd, (char **)argv_ptr->pdata, safe_env());
-		g_printf(_("ERROR [Can't execute %s: %s]\n"), cmd, strerror(errno));
+		g_printf("ERROR [Can't execute %s: %s]\n", cmd, strerror(errno));
 		exit(127);
 	    }
 	default: /* parent */
@@ -889,9 +886,9 @@ check_disk(
 		aclose(app_err[1]);
 		app_stderr = fdopen(app_err[0], "r");
 		if (!app_stderr) {
-		    g_printf(_("ERROR [Can't fdopen app_stderr: %s]\n"),
+		    g_printf("ERROR [Can't fdopen app_stderr: %s]\n",
 			     strerror(errno));
-		    error(_("Can't fdopen app_stderr: %s"), strerror(errno));
+		    error("Can't fdopen app_stderr: %s", strerror(errno));
 		    /*NOTREACHED*/
 		}
 		while((line = agets(app_stderr)) != NULL) {
@@ -904,15 +901,15 @@ check_disk(
 		}
 		fclose(app_stderr);
 		if (waitpid(application_api_pid, &status, 0) < 0) {
-		    err = g_strdup_printf(_("waitpid failed: %s"),
+		    err = g_strdup_printf("waitpid failed: %s",
 					 strerror(errno));
 		    goto common_exit;
 		} else if (!WIFEXITED(status)) {
-		    err = g_strdup_printf(_("Application '%s': exited with signal %d"),
+		    err = g_strdup_printf("Application '%s': exited with signal %d",
 				     dle->program, WTERMSIG(status));
 		    goto common_exit;
 		} else if (WEXITSTATUS(status) != 0) {
-		    err = g_strdup_printf(_("Application '%s': exited with status %d"),
+		    err = g_strdup_printf("Application '%s': exited with status %d",
 				     dle->program, WEXITSTATUS(status));
 		    goto common_exit;
 		}
@@ -928,7 +925,7 @@ check_disk(
 
     if (device) {
 	qdevice = quote_string(device);
-	dbprintf(_("device %s\n"), qdevice);
+	dbprintf("device %s\n", qdevice);
 
 	/* skip accessability test if this is an AFS entry */
 	if(strncmp_const(device, "afs:") != 0) {
@@ -940,7 +937,7 @@ check_disk(
 	    access_type = "access";
 #endif
 	    if(access_result == -1) {
-		err = g_strdup_printf(_("Could not access %s (%s): %s"),
+		err = g_strdup_printf("Could not access %s (%s): %s",
 				 qdevice, qdisk, strerror(errno));
 	    }
 #ifdef CHECK_FOR_ACCESS_WITH_OPEN
@@ -963,25 +960,25 @@ common_exit:
     amfree(domain);
 
     if(err) {
-	g_printf(_("ERROR %s\n"), err);
-	dbprintf(_("%s\n"), err);
+	g_printf("ERROR %s\n", err);
+	dbprintf("%s\n", err);
 	amfree(err);
     } else {
 	if (dle->disk) {
 	    g_printf("OK %s\n", qdisk);
-	    dbprintf(_("disk %s OK\n"), qdisk);
+	    dbprintf("disk %s OK\n", qdisk);
 	}
 	if (dle->device) {
 	    g_printf("OK %s\n", qamdevice);
-	    dbprintf(_("amdevice %s OK\n"), qamdevice);
+	    dbprintf("amdevice %s OK\n", qamdevice);
 	}
 	if (device) {
 	    g_printf("OK %s\n", qdevice);
-	    dbprintf(_("device %s OK\n"), qdevice);
+	    dbprintf("device %s OK\n", qdevice);
 	}
     }
     if(extra_info) {
-	dbprintf(_("extra info: %s\n"), extra_info);
+	dbprintf("extra info: %s\n", extra_info);
 	amfree(extra_info);
     }
     amfree(qdisk);
@@ -1021,7 +1018,7 @@ check_overall(void)
 #ifdef DUMP
 	check_file(DUMP, X_OK);
 #else
-	g_printf(_("ERROR [DUMP program not available]\n"));
+	g_printf("ERROR [DUMP program not available]\n");
 #endif
     }
 
@@ -1029,7 +1026,7 @@ check_overall(void)
 #ifdef RESTORE
 	check_file(RESTORE, X_OK);
 #else
-	g_printf(_("ERROR [RESTORE program not available]\n"));
+	g_printf("ERROR [RESTORE program not available]\n");
 #endif
     }
 
@@ -1037,7 +1034,7 @@ check_overall(void)
 #ifdef VDUMP
 	check_file(VDUMP, X_OK);
 #else
-	g_printf(_("ERROR [VDUMP program not available]\n"));
+	g_printf("ERROR [VDUMP program not available]\n");
 #endif
     }
 
@@ -1045,7 +1042,7 @@ check_overall(void)
 #ifdef VRESTORE
 	check_file(VRESTORE, X_OK);
 #else
-	g_printf(_("ERROR [VRESTORE program not available]\n"));
+	g_printf("ERROR [VRESTORE program not available]\n");
 #endif
     }
 
@@ -1053,7 +1050,7 @@ check_overall(void)
 #ifdef XFSDUMP
 	check_file(XFSDUMP, F_OK);
 #else
-	g_printf(_("ERROR [XFSDUMP program not available]\n"));
+	g_printf("ERROR [XFSDUMP program not available]\n");
 #endif
     }
 
@@ -1061,7 +1058,7 @@ check_overall(void)
 #ifdef XFSRESTORE
 	check_file(XFSRESTORE, X_OK);
 #else
-	g_printf(_("ERROR [XFSRESTORE program not available]\n"));
+	g_printf("ERROR [XFSRESTORE program not available]\n");
 #endif
     }
 
@@ -1069,7 +1066,7 @@ check_overall(void)
 #ifdef VXDUMP
 	check_file(VXDUMP, X_OK);
 #else
-	g_printf(_("ERROR [VXDUMP program not available]\n"));
+	g_printf("ERROR [VXDUMP program not available]\n");
 #endif
     }
 
@@ -1077,7 +1074,7 @@ check_overall(void)
 #ifdef VXRESTORE
 	check_file(VXRESTORE, X_OK);
 #else
-	g_printf(_("ERROR [VXRESTORE program not available]\n"));
+	g_printf("ERROR [VXRESTORE program not available]\n");
 #endif
     }
 
@@ -1085,7 +1082,7 @@ check_overall(void)
 #ifdef GNUTAR
 	check_file(GNUTAR, X_OK);
 #else
-	g_printf(_("ERROR [GNUTAR program not available]\n"));
+	g_printf("ERROR [GNUTAR program not available]\n");
 #endif
 	gnutar_list_dir = getconf_str(CNF_GNUTAR_LIST_DIR);
 	if (strlen(gnutar_list_dir) == 0)
@@ -1122,23 +1119,23 @@ check_overall(void)
 #ifdef SAMBA_CLIENT
 	check_file(SAMBA_CLIENT, X_OK);
 #else
-	g_printf(_("ERROR [SMBCLIENT program not available]\n"));
+	g_printf("ERROR [SMBCLIENT program not available]\n");
 #endif
 	testfd = open("/etc/amandapass", R_OK);
 	if (testfd >= 0) {
 	    if(fstat(testfd, &buf) == 0) {
 		if ((buf.st_mode & 0x7) != 0) {
-		    g_printf(_("ERROR [/etc/amandapass is world readable!]\n"));
+		    g_printf("ERROR [/etc/amandapass is world readable!]\n");
 		} else {
-		    g_printf(_("OK [/etc/amandapass is readable, but not by all]\n"));
+		    g_printf("OK [/etc/amandapass is readable, but not by all]\n");
 		}
 	    } else {
-		g_printf(_("OK [unable to stat /etc/amandapass: %s]\n"),
+		g_printf("OK [unable to stat /etc/amandapass: %s]\n",
 		       strerror(errno));
 	    }
 	    aclose(testfd);
 	} else {
-	    g_printf(_("ERROR [unable to open /etc/amandapass: %s]\n"),
+	    g_printf("ERROR [unable to open /etc/amandapass: %s]\n",
 		   strerror(errno));
 	}
     }
@@ -1158,7 +1155,7 @@ check_overall(void)
 	} else {
 #ifndef USE_RUNDUMP
 	    if (access("/etc", R_OK|W_OK) == -1) {
-		g_printf(_("ERROR [dump will not be able to create the /etc/dumpdates file: %s]\n"), strerror(errno));
+		g_printf("ERROR [dump will not be able to create the /etc/dumpdates file: %s]\n", strerror(errno));
 	    }
 #endif
 	}
@@ -1192,7 +1189,7 @@ check_space(
     intmax_t kb_avail;
 
     if(get_fs_usage(dir, NULL, &fsusage) == -1) {
-	g_printf(_("ERROR [cannot get filesystem usage for %s: %s]\n"), quoted, strerror(errno));
+	g_printf("ERROR [cannot get filesystem usage for %s: %s]\n", quoted, strerror(errno));
 	amfree(quoted);
 	return;
     }
@@ -1201,14 +1198,14 @@ check_space(
     kb_avail = fsusage.fsu_bavail / 1024 * fsusage.fsu_blocksize;
 
     if (fsusage.fsu_bavail_top_bit_set || fsusage.fsu_bavail == 0) {
-	g_printf(_("ERROR [dir %s needs %lldKB, has nothing available.]\n"), quoted,
+	g_printf("ERROR [dir %s needs %lldKB, has nothing available.]\n", quoted,
 		(long long)kbytes);
     } else if (kb_avail < kbytes) {
-	g_printf(_("ERROR [dir %s needs %lldKB, only has %lldKB available.]\n"), quoted,
+	g_printf("ERROR [dir %s needs %lldKB, only has %lldKB available.]\n", quoted,
 		(long long)kbytes,
 		(long long)kb_avail);
     } else {
-	g_printf(_("OK %s has more than %lldKB available.\n"),
+	g_printf("OK %s has more than %lldKB available.\n",
 		quoted, (long long)kbytes);
     }
     amfree(quoted);

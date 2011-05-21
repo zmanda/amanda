@@ -425,12 +425,12 @@ static gboolean check_is_dir(VfsDevice * self, const char * name) {
         }
 #endif /* EINTR */
 	device_set_error(dself,
-	    g_strdup_printf(_("Error checking directory %s: %s"), name, strerror(errno)),
+	    g_strdup_printf("Error checking directory %s: %s", name, strerror(errno)),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     } else if (!S_ISDIR(dir_status.st_mode)) {
 	device_set_error(dself,
-		    g_strdup_printf(_("VFS Device path %s is not a directory"), name),
+		    g_strdup_printf("VFS Device path %s is not a directory", name),
 		    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     } else {
@@ -456,9 +456,9 @@ static gboolean file_number_to_file_name_functor(const char * filename,
     /* Just to be thorough, let's check that it's a real
        file. */
     if (0 != stat(result_tmp, &file_status)) {
-	g_warning(_("Cannot stat file %s (%s), ignoring it"), result_tmp, strerror(errno));
+	g_warning("Cannot stat file %s (%s), ignoring it", result_tmp, strerror(errno));
     } else if (!S_ISREG(file_status.st_mode)) {
-	g_warning(_("%s is not a regular file, ignoring it"), result_tmp);
+	g_warning("%s is not a regular file, ignoring it", result_tmp);
     } else {
         data->count ++;
         if (data->result == NULL) {
@@ -544,7 +544,7 @@ static gboolean update_volume_size_functor(const char * filename,
 
     if (stat(full_filename, &stat_buf) < 0) {
         /* Log it and keep going. */
-	g_warning(_("Couldn't stat file %s: %s"), full_filename, strerror(errno));
+	g_warning("Couldn't stat file %s: %s", full_filename, strerror(errno));
         amfree(full_filename);
         return TRUE;
     }
@@ -597,7 +597,7 @@ static gboolean delete_vfs_files_functor(const char * filename,
 
     path_name = g_strjoin(NULL, self->dir_name, "/", filename, NULL);
     if (unlink(path_name) != 0) {
-	g_warning(_("Error unlinking %s: %s"), path_name, strerror(errno));
+	g_warning("Error unlinking %s: %s", path_name, strerror(errno));
     }
     amfree(path_name);
     return TRUE;
@@ -625,7 +625,7 @@ static gboolean check_dir_empty_functor(const char * filename,
 
     path_name = g_strjoin(NULL, self->dir_name, "/", filename, NULL);
 
-    g_warning(_("Found spurious storage file %s"), path_name);
+    g_warning("Found spurious storage file %s", path_name);
 
     amfree(path_name);
     return TRUE;
@@ -644,7 +644,7 @@ static gboolean write_amanda_header(VfsDevice * self,
     if (!label_buffer) {
         amfree(label_buffer);
 	device_set_error(d_self,
-	    g_strdup(_("Amanda file header won't fit in a single block!")),
+	    g_strdup("Amanda file header won't fit in a single block!"),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }
@@ -679,7 +679,7 @@ static gboolean clear_and_prepare_label(VfsDevice * self, char * label,
                                      VFS_DEVICE_CREAT_MODE);
     if (self->open_file_fd < 0) {
 	device_set_error(d_self,
-	    g_strdup_printf(_("Can't open file %s: %s"), self->file_name, strerror(errno)),
+	    g_strdup_printf("Can't open file %s: %s", self->file_name, strerror(errno)),
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
         return FALSE;
     }
@@ -712,7 +712,7 @@ search_vfs_directory(
     dir_handle = opendir(self->dir_name);
     if (dir_handle == NULL) {
 	device_set_error(dself,
-		g_strdup_printf(_("Couldn't open device %s (directory %s) for reading: %s"),
+		g_strdup_printf("Couldn't open device %s (directory %s) for reading: %s",
 			dself->device_name, self->dir_name, strerror(errno)),
 		DEVICE_STATUS_DEVICE_ERROR);
         goto error;
@@ -766,7 +766,7 @@ static DeviceStatusFlags vfs_device_read_label(Device * dself) {
 	amanda_header->type != F_EMPTY) {
         /* This is an error, and should not happen. */
 	device_set_error(dself,
-		g_strdup(_("Got a bad volume label")),
+		g_strdup("Got a bad volume label"),
 		DEVICE_STATUS_VOLUME_ERROR);
         amfree(amanda_header);
         return dself->status;
@@ -799,7 +799,7 @@ static gboolean vfs_device_write_block(Device * pself, guint size, gpointer data
     if (check_at_peom(self, size)) {
 	pself->is_eom = TRUE;
 	device_set_error(pself,
-	    g_strdup(_("No space left on device")),
+	    g_strdup("No space left on device"),
 	    DEVICE_STATUS_VOLUME_ERROR);
 	return FALSE;
     }
@@ -845,12 +845,12 @@ vfs_device_read_block(Device * pself, gpointer data, int * size_req) {
         pself->is_eof = TRUE;
         pself->in_file = FALSE;
 	device_set_error(pself,
-	    g_strdup(_("EOF")),
+	    g_strdup("EOF"),
 	    DEVICE_STATUS_SUCCESS);
         return -1;
     default:
 	device_set_error(pself,
-	    g_strdup_printf(_("Error reading from data file: %s"), strerror(errno)),
+	    g_strdup_printf("Error reading from data file: %s", strerror(errno)),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return -1;
     }
@@ -929,7 +929,7 @@ static gboolean get_last_file_number_functor(const char * filename,
 
     file = g_ascii_strtoull(filename, NULL, 10); /* Guaranteed to work. */
     if (file > G_MAXINT) {
-	g_warning(_("Super-large device file %s found, ignoring"), filename);
+	g_warning("Super-large device file %s found, ignoring", filename);
         return TRUE;
     }
     /* This condition is needlessly complex due to sign issues. */
@@ -953,7 +953,7 @@ get_last_file_number(VfsDevice * self) {
     if (count <= 0) {
         /* Somebody deleted something important while we weren't looking. */
 	device_set_error(d_self,
-	    g_strdup(_("Error identifying VFS device contents!")),
+	    g_strdup("Error identifying VFS device contents!"),
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
         return -1;
     } else {
@@ -977,7 +977,7 @@ static gboolean get_next_file_number_functor(const char * filename,
 
     file = g_ascii_strtoull(filename, NULL, 10); /* Guaranteed to work. */
     if (file > G_MAXINT) {
-	g_warning(_("Super-large device file %s found, ignoring"), filename);
+	g_warning("Super-large device file %s found, ignoring", filename);
         return TRUE;
     }
     /* This condition is needlessly complex due to sign issues. */
@@ -1005,7 +1005,7 @@ get_next_file_number(VfsDevice * self, guint request) {
     if (count <= 0) {
         /* Somebody deleted something important while we weren't looking. */
 	device_set_error(d_self,
-	    g_strdup(_("Error identifying VFS device contents!")),
+	    g_strdup("Error identifying VFS device contents!"),
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
         return -1;
     }
@@ -1063,7 +1063,7 @@ vfs_device_start_file (Device * dself, dumpfile_t * ji) {
     if (check_at_peom(self, VFS_DEVICE_LABEL_SIZE)) {
 	dself->is_eom = TRUE;
 	device_set_error(dself,
-		g_strdup(_("No space left on device")),
+		g_strdup("No space left on device"),
 		DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1078,7 +1078,7 @@ vfs_device_start_file (Device * dself, dumpfile_t * ji) {
     self->file_name = make_new_file_name(self, ji);
     if (self->file_name == NULL) {
 	device_set_error(dself,
-		g_strdup(_("Could not create header filename")),
+		g_strdup("Could not create header filename"),
 		DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }
@@ -1088,7 +1088,7 @@ vfs_device_start_file (Device * dself, dumpfile_t * ji) {
                                      VFS_DEVICE_CREAT_MODE);
     if (self->open_file_fd < 0) {
 	device_set_error(dself,
-		g_strdup_printf(_("Can't create file %s: %s"), self->file_name, strerror(errno)),
+		g_strdup_printf("Can't create file %s: %s", self->file_name, strerror(errno)),
 		DEVICE_STATUS_DEVICE_ERROR);
         release_file(self);
         return FALSE;
@@ -1161,7 +1161,7 @@ vfs_device_seek_file (Device * dself, guint requested_file) {
             return make_tapeend_header();
         } else {
 	    device_set_error(dself,
-		g_strdup(_("Attempt to read past tape-end file")),
+		g_strdup("Attempt to read past tape-end file"),
 		DEVICE_STATUS_SUCCESS);
             return NULL;
         }
@@ -1169,7 +1169,7 @@ vfs_device_seek_file (Device * dself, guint requested_file) {
 
     if (!open_lock(self, file, FALSE)) {
 	device_set_error(dself,
-	    g_strdup(_("could not acquire lock")),
+	    g_strdup("could not acquire lock"),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return NULL;
     }
@@ -1177,7 +1177,7 @@ vfs_device_seek_file (Device * dself, guint requested_file) {
     self->file_name = file_number_to_file_name(self, file);
     if (self->file_name == NULL) {
 	device_set_error(dself,
-	    g_strdup_printf(_("File %d not found"), file),
+	    g_strdup_printf("File %d not found", file),
 	    file == 0 ? DEVICE_STATUS_VOLUME_UNLABELED
 		      : DEVICE_STATUS_VOLUME_ERROR);
         release_file(self);
@@ -1189,7 +1189,7 @@ vfs_device_seek_file (Device * dself, guint requested_file) {
     self->open_file_fd = robust_open(self->file_name, O_RDONLY, 0);
     if (self->open_file_fd < 0) {
 	device_set_error(dself,
-	    g_strdup_printf(_("Couldn't open file %s: %s"), self->file_name, strerror(errno)),
+	    g_strdup_printf("Couldn't open file %s: %s", self->file_name, strerror(errno)),
 	    DEVICE_STATUS_DEVICE_ERROR);
         amfree(self->file_name);
         release_file(self);
@@ -1200,7 +1200,7 @@ vfs_device_seek_file (Device * dself, guint requested_file) {
                                     &header_buffer_size);
     if (result != RESULT_SUCCESS) {
 	device_set_error(dself,
-	    g_strdup_printf(_("Problem reading Amanda header: %s"), device_error(dself)),
+	    g_strdup_printf("Problem reading Amanda header: %s", device_error(dself)),
 	    DEVICE_STATUS_VOLUME_ERROR);
         release_file(self);
         return NULL;
@@ -1223,7 +1223,7 @@ vfs_device_seek_file (Device * dself, guint requested_file) {
 
         default:
 	    device_set_error(dself,
-		g_strdup(_("Invalid amanda header while reading file header")),
+		g_strdup("Invalid amanda header while reading file header"),
 		DEVICE_STATUS_VOLUME_ERROR);
             amfree(rval);
             release_file(self);
@@ -1257,7 +1257,7 @@ vfs_device_seek_block (Device * pself, guint64 block) {
 
     if (result == (off_t)(-1)) {
 	device_set_error(pself,
-	    g_strdup_printf(_("Error seeking within file: %s"), strerror(errno)),
+	    g_strdup_printf("Error seeking within file: %s", strerror(errno)),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1360,21 +1360,21 @@ vfs_device_recycle_file (Device * dself, guint filenum) {
     self->file_name = file_number_to_file_name(self, filenum);
     if (self->file_name == NULL) {
 	device_set_error(dself,
-	    g_strdup_printf(_("File %d not found"), filenum),
+	    g_strdup_printf("File %d not found", filenum),
 	    DEVICE_STATUS_VOLUME_ERROR);
         return FALSE;
     }
 
     if (!open_lock(self, filenum, FALSE)) {
 	device_set_error(dself,
-	    g_strdup(_("could not acquire lock")),
+	    g_strdup("could not acquire lock"),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }
 
     if (0 != stat(self->file_name, &file_status)) {
 	device_set_error(dself,
-	    g_strdup_printf(_("Cannot stat file %s (%s), so not removing"),
+	    g_strdup_printf("Cannot stat file %s (%s), so not removing",
 				    self->file_name, strerror(errno)),
 	    DEVICE_STATUS_VOLUME_ERROR);
         return FALSE;
@@ -1383,7 +1383,7 @@ vfs_device_recycle_file (Device * dself, guint filenum) {
 
     if (!try_unlink(self->file_name)) {
 	device_set_error(dself,
-	    g_strdup_printf(_("Unlink of %s failed: %s"), self->file_name, strerror(errno)),
+	    g_strdup_printf("Unlink of %s failed: %s", self->file_name, strerror(errno)),
 	    DEVICE_STATUS_VOLUME_ERROR);
         release_file(self);
         return FALSE;
@@ -1443,7 +1443,7 @@ static IoResult vfs_device_robust_read(VfsDevice * self, char *buf,
         } else {
             /* Error occured. */
 	    device_set_error(d_self,
-		g_strdup_printf(_("Error reading fd %d: %s"), fd, strerror(errno)),
+		g_strdup_printf("Error reading fd %d: %s", fd, strerror(errno)),
 		DEVICE_STATUS_VOLUME_ERROR);
             *count = got;
             return RESULT_ERROR;
@@ -1489,13 +1489,13 @@ vfs_device_robust_write(VfsDevice * self,  char *buf, int count) {
                    ) {
             /* We are definitely out of space. */
 	    device_set_error(d_self,
-		    g_strdup_printf(_("No space left on device: %s"), strerror(errno)),
+		    g_strdup_printf("No space left on device: %s", strerror(errno)),
 		    DEVICE_STATUS_VOLUME_ERROR);
             return RESULT_NO_SPACE;
         } else {
             /* Error occured. Note that here we handle EIO as an error. */
 	    device_set_error(d_self,
-		    g_strdup_printf(_("Error writing device fd %d: %s"), fd, strerror(errno)),
+		    g_strdup_printf("Error writing device fd %d: %s", fd, strerror(errno)),
 		    DEVICE_STATUS_VOLUME_ERROR);
             return RESULT_ERROR;
         }

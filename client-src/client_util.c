@@ -123,7 +123,7 @@ build_name(
 
     dbgdir = stralloc2(AMANDA_TMPDIR, "/");
     if((d = opendir(AMANDA_TMPDIR)) == NULL) {
-	error(_("open debug directory \"%s\": %s"),
+	error("open debug directory \"%s\": %s",
 		AMANDA_TMPDIR, strerror(errno));
 	/*NOTREACHED*/
     }
@@ -167,9 +167,9 @@ build_name(
 	filename = get_name(diskname, exin, curtime, 0);
 	afilename = newvstralloc(afilename, dbgdir, filename, NULL);
 	quoted = quote_string(afilename);
-	dbprintf(_("Cannot create %s (%s)\n"), quoted, strerror(errno));
+	dbprintf("Cannot create %s (%s)\n", quoted, strerror(errno));
 	if(verbose) {
-	    g_printf(_("ERROR [cannot create %s (%s)]\n"),
+	    g_printf("ERROR [cannot create %s (%s)]\n",
 			quoted, strerror(errno));
 	}
 	amfree(quoted);
@@ -232,9 +232,9 @@ add_include(
     }
     if (strncmp(ainc, "./", 2) != 0) {
         quoted = quote_string(ainc);
-        dbprintf(_("include must start with './' (%s)\n"), quoted);
+        dbprintf("include must start with './' (%s)\n", quoted);
 	if(verbose) {
-	    g_printf(_("ERROR [include must start with './' (%s)]\n"), quoted);
+	    g_printf("ERROR [include must start with './' (%s)]\n", quoted);
 	}
 	amfree(quoted);
     }
@@ -263,11 +263,11 @@ add_include(
 
 	    cwd = g_get_current_dir();
 	    if (chdir(device) != 0) {
-		error(_("Failed to chdir(%s): %s\n"), device, strerror(errno));
+		error("Failed to chdir(%s): %s\n", device, strerror(errno));
 	    }
 	    glob(incname, 0, NULL, &globbuf);
 	    if (chdir(cwd) != 0) {
-		error(_("Failed to chdir(%s): %s\n"), cwd, strerror(errno));
+		error("Failed to chdir(%s): %s\n", cwd, strerror(errno));
 	    }
 	    if (set_root)
 		set_root_privs(0);
@@ -335,11 +335,11 @@ build_exclude(
 		    }
 		    else {
 			quoted = quote_string(exclname);
-			dbprintf(_("Can't open exclude file %s (%s)\n"),
+			dbprintf("Can't open exclude file %s (%s)\n",
 				  quoted, strerror(errno));
 			if(verbose && (dle->exclude_optional == 0 ||
 				       errno != ENOENT)) {
-			    g_printf(_("ERROR [Can't open exclude file %s (%s)]\n"),
+			    g_printf("ERROR [Can't open exclude file %s (%s)]\n",
 				   quoted, strerror(errno));
 			}
 			amfree(quoted);
@@ -350,10 +350,10 @@ build_exclude(
             fclose(file_exclude);
 	} else {
 	    quoted = quote_string(filename);
-	    dbprintf(_("Can't create exclude file %s (%s)\n"),
+	    dbprintf("Can't create exclude file %s (%s)\n",
 		      quoted, strerror(errno));
 	    if (verbose) {
-		g_printf(_("ERROR [Can't create exclude file %s (%s)]\n"),
+		g_printf("ERROR [Can't create exclude file %s (%s)]\n",
 			quoted, strerror(errno));
 	    }
 	    amfree(quoted);
@@ -413,11 +413,11 @@ build_include(
 		    }
 		    else {
 			quoted = quote_string(inclname);
-			dbprintf(_("Can't open include file %s (%s)\n"),
+			dbprintf("Can't open include file %s (%s)\n",
 				  quoted, strerror(errno));
 			if (verbose && (dle->include_optional == 0 ||
 				       errno != ENOENT)) {
-			    g_printf(_("ERROR [Can't open include file %s (%s)]\n"),
+			    g_printf("ERROR [Can't open include file %s (%s)]\n",
 				   quoted, strerror(errno));
 			}
 			amfree(quoted);
@@ -428,10 +428,10 @@ build_include(
             fclose(file_include);
 	} else {
 	    quoted = quote_string(filename);
-	    dbprintf(_("Can't create include file %s (%s)\n"),
+	    dbprintf("Can't create include file %s (%s)\n",
 		      quoted, strerror(errno));
 	    if (verbose) {
-		g_printf(_("ERROR [Can't create include file %s (%s)]\n"),
+		g_printf("ERROR [Can't create include file %s (%s)]\n",
 			quoted, strerror(errno));
 	    }
 	    amfree(quoted);
@@ -440,9 +440,9 @@ build_include(
 	
     if (nb_exp == 0) {
 	quoted = quote_string(dle->disk);
-	dbprintf(_("Nothing found to include for disk %s\n"), quoted);
+	dbprintf("Nothing found to include for disk %s\n", quoted);
 	if (verbose && dle->include_optional == 0) {
-	    g_printf(_("ERROR [Nothing found to include for disk %s]\n"), quoted);
+	    g_printf("ERROR [Nothing found to include for disk %s]\n", quoted);
 	}
 	amfree(quoted);
     }
@@ -471,9 +471,9 @@ parse_options(
 	   && BSTRNCMP(tok,"auth=") == 0) {
 	    if (dle->auth != NULL) {
 		quoted = quote_string(tok + 5);
-		dbprintf(_("multiple auth option %s\n"), quoted);
+		dbprintf("multiple auth option %s\n", quoted);
 		if(verbose) {
-		    g_printf(_("ERROR [multiple auth option %s]\n"), quoted);
+		    g_printf("ERROR [multiple auth option %s]\n", quoted);
 		}
 		amfree(quoted);
 		amfree(dle->auth);
@@ -483,9 +483,9 @@ parse_options(
 	else if(am_has_feature(fs, fe_options_bsd_auth)
 	   && BSTRNCMP(tok, "bsd-auth") == 0) {
 	    if (dle->auth != NULL) {
-		dbprintf(_("multiple auth option\n"));
+		dbprintf("multiple auth option\n");
 		if (verbose) {
-		    g_printf(_("ERROR [multiple auth option]\n"));
+		    g_printf("ERROR [multiple auth option]\n");
 		}
 		amfree(dle->auth);
 	    }
@@ -493,45 +493,45 @@ parse_options(
 	}
 	else if (BSTRNCMP(tok, "compress-fast") == 0) {
 	    if (dle->compress != COMP_NONE) {
-		dbprintf(_("multiple compress option\n"));
+		dbprintf("multiple compress option\n");
 		if (verbose) {
-		    g_printf(_("ERROR [multiple compress option]\n"));
+		    g_printf("ERROR [multiple compress option]\n");
 		}
 	    }
 	    dle->compress = COMP_FAST;
 	}
 	else if (BSTRNCMP(tok, "compress-best") == 0) {
 	    if (dle->compress != COMP_NONE) {
-		dbprintf(_("multiple compress option\n"));
+		dbprintf("multiple compress option\n");
 		if (verbose) {
-		    g_printf(_("ERROR [multiple compress option]\n"));
+		    g_printf("ERROR [multiple compress option]\n");
 		}
 	    }
 	    dle->compress = COMP_BEST;
 	}
 	else if (BSTRNCMP(tok, "srvcomp-fast") == 0) {
 	    if (dle->compress != COMP_NONE) {
-		dbprintf(_("multiple compress option\n"));
+		dbprintf("multiple compress option\n");
 		if (verbose) {
-		    g_printf(_("ERROR [multiple compress option]\n"));
+		    g_printf("ERROR [multiple compress option]\n");
 		}
 	    }
 	    dle->compress = COMP_SERVER_FAST;
 	}
 	else if (BSTRNCMP(tok, "srvcomp-best") == 0) {
 	    if (dle->compress != COMP_NONE) {
-		dbprintf(_("multiple compress option\n"));
+		dbprintf("multiple compress option\n");
 		if (verbose) {
-		    g_printf(_("ERROR [multiple compress option]\n"));
+		    g_printf("ERROR [multiple compress option]\n");
 		}
 	    }
 	    dle->compress = COMP_SERVER_BEST;
 	}
 	else if (BSTRNCMP(tok, "srvcomp-cust=") == 0) {
 	    if (dle->compress != COMP_NONE) {
-		dbprintf(_("multiple compress option\n"));
+		dbprintf("multiple compress option\n");
 		if (verbose) {
-		    g_printf(_("ERROR [multiple compress option]\n"));
+		    g_printf("ERROR [multiple compress option]\n");
 		}
 	    }
 	    amfree(dle->compprog);
@@ -540,9 +540,9 @@ parse_options(
 	}
 	else if (BSTRNCMP(tok, "comp-cust=") == 0) {
 	    if (dle->compress != COMP_NONE) {
-		dbprintf(_("multiple compress option\n"));
+		dbprintf("multiple compress option\n");
 		if (verbose) {
-		    g_printf(_("ERROR [multiple compress option]\n"));
+		    g_printf("ERROR [multiple compress option]\n");
 		}
 	    }
 	    amfree(dle->compprog);
@@ -552,9 +552,9 @@ parse_options(
 	} 
 	else if (BSTRNCMP(tok, "encrypt-serv-cust=") == 0) {
 	    if (dle->encrypt != ENCRYPT_NONE) {
-		dbprintf(_("multiple encrypt option\n"));
+		dbprintf("multiple encrypt option\n");
 		if (verbose) {
-		    g_printf(_("ERROR [multiple encrypt option]\n"));
+		    g_printf("ERROR [multiple encrypt option]\n");
 		}
 	    }
 	    amfree(dle->srv_encrypt);
@@ -563,9 +563,9 @@ parse_options(
 	} 
 	else if (BSTRNCMP(tok, "encrypt-cust=") == 0) {
 	    if (dle->encrypt != ENCRYPT_NONE) {
-		dbprintf(_("multiple encrypt option\n"));
+		dbprintf("multiple encrypt option\n");
 		if (verbose) {
-		    g_printf(_("ERROR [multiple encrypt option]\n"));
+		    g_printf("ERROR [multiple encrypt option]\n");
 		}
 	    }
 	    amfree(dle->clnt_encrypt);
@@ -582,36 +582,36 @@ parse_options(
 	}
 	else if (BSTRNCMP(tok, "no-record") == 0) {
 	    if (dle->record != 1) {
-		dbprintf(_("multiple no-record option\n"));
+		dbprintf("multiple no-record option\n");
 		if (verbose) {
-		    g_printf(_("ERROR [multiple no-record option]\n"));
+		    g_printf("ERROR [multiple no-record option]\n");
 		}
 	    }
 	    dle->record = 0;
 	}
 	else if (BSTRNCMP(tok, "index") == 0) {
 	    if (dle->create_index != 0) {
-		dbprintf(_("multiple index option\n"));
+		dbprintf("multiple index option\n");
 		if (verbose) {
-		    g_printf(_("ERROR [multiple index option]\n"));
+		    g_printf("ERROR [multiple index option]\n");
 		}
 	    }
 	    dle->create_index = 1;
 	}
 	else if (BSTRNCMP(tok, "exclude-optional") == 0) {
 	    if (dle->exclude_optional != 0) {
-		dbprintf(_("multiple exclude-optional option\n"));
+		dbprintf("multiple exclude-optional option\n");
 		if (verbose) {
-		    g_printf(_("ERROR [multiple exclude-optional option]\n"));
+		    g_printf("ERROR [multiple exclude-optional option]\n");
 		}
 	    }
 	    dle->exclude_optional = 1;
 	}
 	else if (strcmp(tok, "include-optional") == 0) {
 	    if (dle->include_optional != 0) {
-		dbprintf(_("multiple include-optional option\n"));
+		dbprintf("multiple include-optional option\n");
 		if (verbose) {
-		    g_printf(_("ERROR [multiple include-optional option]\n"));
+		    g_printf("ERROR [multiple include-optional option]\n");
 		}
 	    }
 	    dle->include_optional = 1;
@@ -641,9 +641,9 @@ parse_options(
 	}
 	else if (strcmp(tok,"|") != 0) {
 	    quoted = quote_string(tok);
-	    dbprintf(_("unknown option %s\n"), quoted);
+	    dbprintf("unknown option %s\n", quoted);
 	    if (verbose) {
-		g_printf(_("ERROR [unknown option: %s]\n"), quoted);
+		g_printf("ERROR [unknown option: %s]\n", quoted);
 	    }
 	    amfree(quoted);
 	}
@@ -751,7 +751,7 @@ merge_property(
 	if (dle_property->priority && conf_property->priority) {
 	    if (merge_p->verbose) {
 		g_fprintf(stdout,
-			 _("ERROR %s (%s) Both server client have priority for property '%s'.\n"),
+			 "ERROR %s (%s) Both server client have priority for property '%s'.\n",
 			 qdisk, merge_p->name, property_s);
 	    }
 	    g_debug("ERROR %s (%s) Both server client have priority for property '%s'.", qdisk, merge_p->name, property_s);
@@ -762,7 +762,7 @@ merge_property(
 	} else if (dle_property->priority) {
 	    if (merge_p->verbose) {
 		g_fprintf(stdout,
-			 _("ERROR %s (%s) Server set priority for property '%s' but client set the property.\n"),
+			 "ERROR %s (%s) Server set priority for property '%s' but client set the property.\n",
 			 qdisk, merge_p->name, property_s);
 	    }
 	    g_debug("%s (%s) Server set priority for property '%s' but client set the property.", qdisk, merge_p->name, property_s);
@@ -770,7 +770,7 @@ merge_property(
 	} else if (conf_property->priority) {
 	    if (merge_p->verbose) {
 		g_fprintf(stdout,
-			 _("ERROR %s (%s) Client set priority for property '%s' but server set the property.\n"),
+			 "ERROR %s (%s) Client set priority for property '%s' but server set the property.\n",
 			 qdisk, merge_p->name, property_s);
 	    }
 	    g_debug("%s (%s) Client set priority for property '%s' but server set the property.", qdisk, merge_p->name, property_s);
@@ -780,7 +780,7 @@ merge_property(
 	} else if (!conf_property->append) {
 	    if (merge_p->verbose) {
 		g_fprintf(stdout,
-			 _("ERROR %s (%s) Both server and client set property '%s', using client value.\n"),
+			 "ERROR %s (%s) Both server and client set property '%s', using client value.\n",
 			 qdisk, merge_p->name, property_s);
 	    }
 	    g_debug("%s (%s) Both server and client set property '%s', using client value.", qdisk, merge_p->name, property_s);
@@ -843,7 +843,7 @@ merge_dles_properties(
 		    char *qerrmsg = quote_string(errmsg);
 		    good = 0;
 		    if (verbose) {
-			g_fprintf(stdout, _("ERROR %s %s\n"), qamname, qerrmsg);
+			g_fprintf(stdout, "ERROR %s %s\n", qamname, qerrmsg);
 		    }
 		    g_debug("%s: %s", qamname, qerrmsg);
 		    amfree(qamname);
@@ -873,7 +873,7 @@ merge_dles_properties(
 		    char *qerrmsg = quote_string(errmsg);
 		    good = 0;
 		    if (verbose) {
-			g_fprintf(stderr, _("ERROR %s %s\n"), qamname, qerrmsg);
+			g_fprintf(stderr, "ERROR %s %s\n", qamname, qerrmsg);
 		    }
 		    g_debug("%s: %s", qamname, qerrmsg);
 		    amfree(qamname);
@@ -948,11 +948,11 @@ backup_support_option(
     bsu->disk = 1;
     streamout = fdopen(supportout, "r");
     if (!streamout) {
-	error(_("Error opening pipe to child: %s"), strerror(errno));
+	error("Error opening pipe to child: %s", strerror(errno));
 	/* NOTREACHED */
     }
     while((line = agets(streamout)) != NULL) {
-	dbprintf(_("support line: %s\n"), line);
+	dbprintf("support line: %s\n", line);
 	if (strncmp(line,"CONFIG ", 7) == 0) {
 	    if (strcmp(line+7, "YES") == 0)
 		bsu->config = 1;
@@ -1032,7 +1032,7 @@ backup_support_option(
 	    if (strcmp(line+11, "YES") == 0)
 		bsu->features = 1;
 	} else {
-	    dbprintf(_("Invalid support line: %s\n"), line);
+	    dbprintf("Invalid support line: %s\n", line);
 	}
 	amfree(line);
     }
@@ -1043,7 +1043,7 @@ backup_support_option(
 
     streamerr = fdopen(supporterr, "r");
     if (!streamerr) {
-	error(_("Error opening pipe to child: %s"), strerror(errno));
+	error("Error opening pipe to child: %s", strerror(errno));
 	/* NOTREACHED */
     }
     while((line = agets(streamerr)) != NULL) {
@@ -1057,11 +1057,11 @@ backup_support_option(
     fclose(streamerr);
 
     if (waitpid(supportpid, &status, 0) < 0) {
-	err = g_strdup_printf(_("waitpid failed: %s"), strerror(errno));
+	err = g_strdup_printf("waitpid failed: %s", strerror(errno));
     } else if (!WIFEXITED(status)) {
-	err = g_strdup_printf(_("exited with signal %d"), WTERMSIG(status));
+	err = g_strdup_printf("exited with signal %d", WTERMSIG(status));
     } else if (WEXITSTATUS(status) != 0) {
-	err = g_strdup_printf(_("exited with status %d"), WEXITSTATUS(status));
+	err = g_strdup_printf("exited with status %d", WEXITSTATUS(status));
     }
 
     if (err) {
@@ -1248,7 +1248,7 @@ run_client_script(
     if (streamerr) {
         while((line = agets(streamerr)) != NULL) {
 	    g_ptr_array_add(script->result->err,
-			    g_strdup_printf(_("Script '%s' command '%s': %s"),
+			    g_strdup_printf("Script '%s' command '%s': %s",
 					    script->plugin, command, line));
 	    amfree(line);
 	}
@@ -1258,14 +1258,14 @@ run_client_script(
     waitpid(scriptpid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
 	g_ptr_array_add(script->result->err,
-			g_strdup_printf(_("Script '%s' command '%s' terminated with signal %d: see %s"),
+			g_strdup_printf("Script '%s' command '%s' terminated with signal %d: see %s",
 					script->plugin, command,
 					WTERMSIG(wait_status),
 					dbfn()));
     } else if (WIFEXITED(wait_status)) {
         if (WEXITSTATUS(wait_status) != 0) {
 	    g_ptr_array_add(script->result->err,
-			    g_strdup_printf(_("Script '%s' command '%s' exited with status %d: see %s"),
+			    g_strdup_printf("Script '%s' command '%s' exited with status %d: see %s",
 					    script->plugin, command,
 					    WEXITSTATUS(wait_status),
 					    dbfn()));
@@ -1458,9 +1458,9 @@ run_calcsize(
     amandates_file = getconf_str(CNF_AMANDATES);
     if(!start_amandates(amandates_file, 0)) {
 	char *errstr = strerror(errno);
-	char *errmsg = g_strdup_printf(_("could not open %s: %s"), amandates_file, errstr);
+	char *errmsg = g_strdup_printf("could not open %s: %s", amandates_file, errstr);
 	char *qerrmsg = quote_string(errmsg);
-	g_printf(_("ERROR %s\n"), qerrmsg);
+	g_printf("ERROR %s\n", qerrmsg);
 	amfree(qdisk);
 	amfree(errmsg);
 	amfree(qerrmsg);
@@ -1515,7 +1515,7 @@ run_calcsize(
     for(i = 1; i < argv_ptr->len - 1; i++)
 	cmdline = vstrextend(&cmdline, " ",
 			     (char *)g_ptr_array_index(argv_ptr,i), NULL);
-    dbprintf(_("running: \"%s\"\n"), cmdline);
+    dbprintf("running: \"%s\"\n", cmdline);
     amfree(cmdline);
 
     start_time = curclock();
@@ -1523,7 +1523,7 @@ run_calcsize(
     fflush(stderr); fflush(stdout);
 
     if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	errmsg = g_strdup_printf(_("Cannot access /dev/null : %s"),
+	errmsg = g_strdup_printf("Cannot access /dev/null : %s",
 			    strerror(errno));
 	dbprintf("%s\n", errmsg);
 	goto common_exit;
@@ -1535,7 +1535,7 @@ run_calcsize(
 
     dumpout = fdopen(pipefd,"r");
     if (!dumpout) {
-	error(_("Can't fdopen: %s"), strerror(errno));
+	error("Can't fdopen: %s", strerror(errno));
 	/*NOTREACHED*/
     }
 
@@ -1549,7 +1549,7 @@ run_calcsize(
 	if (strncmp(line, qdisk, len) == 0 &&
 	    sscanf(line+len, match_expr, &level, &size_) == 2) {
 	    g_printf("%d %lld %d\n", level, size_, 1); /* write to sendsize */
-	    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
+	    dbprintf("estimate size for %s level %d: %lld KB\n",
 		     qdisk, level, size_);
 	}
 	size = (off_t)size_;
@@ -1557,40 +1557,40 @@ run_calcsize(
     fclose(dumpout);
     amfree(match_expr);
 
-    dbprintf(_("waiting for %s %s child (pid=%d)\n"),
+    dbprintf("waiting for %s %s child (pid=%d)\n",
 	     command, qdisk, (int)calcpid);
     waitpid(calcpid, &wait_status, 0);
     close(nullfd);
     if (WIFSIGNALED(wait_status)) {
-	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
+	errmsg = g_strdup_printf("%s terminated with signal %d: see %s",
 			    "calcsize", WTERMSIG(wait_status),
 			    dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
-	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
+	    errmsg = g_strdup_printf("%s exited with status %d: see %s",
 				"calcsize", WEXITSTATUS(wait_status),
 				dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
-	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
+	errmsg = g_strdup_printf("%s got bad exit: see %s",
 			    "calcsize", dbfn());
     }
 
-    dbprintf(_("after %s %s wait: child pid=%d status=%d\n"),
+    dbprintf("after %s %s wait: child pid=%d status=%d\n",
 	     command, qdisk,
 	     (int)calcpid, WEXITSTATUS(wait_status));
 
-    dbprintf(_(".....\n"));
-    dbprintf(_("estimate time for %s: %s\n"),
+    dbprintf(".....\n");
+    dbprintf("estimate time for %s: %s\n",
 	     qdisk,
 	     walltime_str(timessub(curclock(), start_time)));
 
 common_exit:
     if (errmsg && errmsg[0] != '\0') {
 	char *qerrmsg = quote_string(errmsg);
-	dbprintf(_("errmsg is %s\n"), errmsg);
+	dbprintf("errmsg is %s\n", errmsg);
 	g_printf("ERROR %s\n", qerrmsg);
 	amfree(qerrmsg);
     }
@@ -1620,9 +1620,9 @@ check_access(
 	noun = "access", adjective = "accessible";
 
     if(access(filename, mode) == -1)
-	g_printf(_("ERROR [can not %s %s: %s]\n"), noun, quoted, strerror(errno));
+	g_printf("ERROR [can not %s %s: %s]\n", noun, quoted, strerror(errno));
     else
-	g_printf(_("OK %s %s\n"), quoted, adjective);
+	g_printf("OK %s %s\n", quoted, adjective);
     amfree(quoted);
 }
 
@@ -1637,13 +1637,13 @@ check_file(
     if(!stat(filename, &stat_buf)) {
 	if(!S_ISREG(stat_buf.st_mode)) {
 	    quoted = quote_string(filename);
-	    g_printf(_("ERROR [%s is not a file]\n"), quoted);
+	    g_printf("ERROR [%s is not a file]\n", quoted);
 	    amfree(quoted);
 	}
     } else {
 	int save_errno = errno;
 	quoted = quote_string(filename);
-	g_printf(_("ERROR [can not stat %s: %s]\n"), quoted,
+	g_printf("ERROR [can not stat %s: %s]\n", quoted,
 		 strerror(save_errno));
 	amfree(quoted);
     }
@@ -1664,13 +1664,13 @@ check_dir(
     if(!stat(dirname, &stat_buf)) {
 	if(!S_ISDIR(stat_buf.st_mode)) {
 	    quoted = quote_string(dirname);
-	    g_printf(_("ERROR [%s is not a directory]\n"), quoted);
+	    g_printf("ERROR [%s is not a directory]\n", quoted);
 	    amfree(quoted);
 	}
     } else {
 	int save_errno = errno;
 	quoted = quote_string(dirname);
-	g_printf(_("ERROR [can not stat %s: %s]\n"), quoted,
+	g_printf("ERROR [can not stat %s: %s]\n", quoted,
 		 strerror(save_errno));
 	amfree(quoted);
     }
@@ -1691,14 +1691,14 @@ check_suid(
 
     if(!stat(filename, &stat_buf)) {
 	if(stat_buf.st_uid != 0 ) {
-	    g_printf(_("ERROR [%s is not owned by root]\n"), quoted);
+	    g_printf("ERROR [%s is not owned by root]\n", quoted);
 	}
 	if((stat_buf.st_mode & S_ISUID) != S_ISUID) {
-	    g_printf(_("ERROR [%s is not SUID root]\n"), quoted);
+	    g_printf("ERROR [%s is not SUID root]\n", quoted);
 	}
     }
     else {
-	g_printf(_("ERROR [can not stat %s: %s]\n"), quoted, strerror(errno));
+	g_printf("ERROR [can not stat %s: %s]\n", quoted, strerror(errno));
     }
     amfree(quoted);
 #else
@@ -1747,11 +1747,11 @@ config_errors_to_error_string(
 	if (errlist->next)
 	    multiple_errors = TRUE;
     } else {
-	errmsg = _("(no error message)");
+	errmsg = "(no error message)";
     }
 
     return g_strdup_printf("ERROR %s%s", errmsg,
-	multiple_errors? _(" (additional errors not displayed)"):"");
+	multiple_errors? " (additional errors not displayed)":"");
 }
 
 

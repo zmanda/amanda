@@ -82,7 +82,7 @@ lookup(
     char *	str)
 {
 	register char *cp, *cp2;
-	char *months = _("JanFebMarAprMayJunJulAugSepOctNovDec");
+	char *months = "JanFebMarAprMayJunJulAugSepOctNovDec";
 
 	for (cp = months, cp2 = str; *cp != '\0'; cp += 3)
 		if (strncmp(cp, cp2, 3) == 0)

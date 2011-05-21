@@ -291,7 +291,7 @@ iterator_get_block(
 	    iter->cur_fd = open(iter->slice->filename, O_RDONLY, 0);
 	    if (iter->cur_fd < 0) {
 		xfer_cancel_with_error(elt,
-		    _("Could not open '%s' for reading: %s"),
+		    "Could not open '%s' for reading: %s",
 		    iter->slice->filename, strerror(errno));
 		return NULL;
 	    }
@@ -301,7 +301,7 @@ iterator_get_block(
 
 	    if (lseek(iter->cur_fd, offset, SEEK_SET) == -1) {
 		xfer_cancel_with_error(elt,
-		    _("Could not seek '%s' for reading: %s"),
+		    "Could not seek '%s' for reading: %s",
 		    iter->slice->filename, strerror(errno));
 		return NULL;
 	    }
@@ -312,9 +312,9 @@ iterator_get_block(
 	    NULL);
 
 	if (bytes_read < read_size) {
-	    xfer_cancel_with_error(elt, _("Error reading '%s': %s"),
+	    xfer_cancel_with_error(elt, "Error reading '%s': %s",
 		iter->slice->filename,
-		errno ? strerror(errno) : _("Unexpected EOF"));
+		errno ? strerror(errno) : "Unexpected EOF");
 	    return NULL;
 	}
 
@@ -325,7 +325,7 @@ iterator_get_block(
 	if (iter->slice_remaining <= 0) {
 	    if (close(iter->cur_fd) < 0) {
 		xfer_cancel_with_error(elt,
-		    _("Could not close fd %d: %s"),
+		    "Could not close fd %d: %s",
 		    iter->cur_fd, strerror(errno));
 		return NULL;
 	    }
@@ -717,8 +717,8 @@ start_impl(
 
     self->device_thread = g_thread_create(device_thread, (gpointer)self, FALSE, &error);
     if (!self->device_thread) {
-        g_critical(_("Error creating new thread: %s (%s)"),
-            error->message, errno? strerror(errno) : _("no error code"));
+        g_critical("Error creating new thread: %s (%s)",
+            error->message, errno? strerror(errno) : "no error code");
     }
 
     return TRUE;
@@ -767,13 +767,13 @@ start_part_impl(
     if (retry_part) {
 	if (self->last_part_successful) {
 	    xfer_cancel_with_error(XFER_ELEMENT(self),
-		_("Previous part did not fail; cannot retry"));
+		"Previous part did not fail; cannot retry");
 	    return;
 	}
 
 	if (!self->expect_cache_inform) {
 	    xfer_cancel_with_error(XFER_ELEMENT(self),
-		_("No cache for previous failed part; cannot retry"));
+		"No cache for previous failed part; cannot retry");
 	    return;
 	}
 
@@ -836,7 +836,7 @@ use_device_impl(
     if (self->block_size != device->block_size) {
         g_mutex_unlock(self->state_mutex);
         xfer_cancel_with_error(XFER_ELEMENT(self),
-            _("All devices used by the taper must have the same block size"));
+            "All devices used by the taper must have the same block size");
         return;
     }
     g_mutex_unlock(self->state_mutex);

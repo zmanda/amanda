@@ -464,7 +464,7 @@ link_elements(
 
     /* check that we got *some* solution */
     if (st.best_cost == MAX_COST) {
-	error(_("Xfer %s cannot be linked."), xfer_repr(xfer));
+	error("Xfer %s cannot be linked.", xfer_repr(xfer));
     }
 
     /* Now create a new list of elements, containing any glue elements

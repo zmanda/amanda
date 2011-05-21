@@ -612,7 +612,7 @@ source_connect_thread(
 
     if ((sock = accept(self->listen_socket, NULL, NULL)) == -1) {
 	xfer_cancel_with_error(XFER_ELEMENT(self),
-	    _("Error accepting incoming connection: %s"), strerror(errno));
+	    "Error accepting incoming connection: %s", strerror(errno));
 	wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);
 	return NULL;
     }
@@ -1193,7 +1193,7 @@ dest_listen_thread(
 
     if ((sock = accept(self->listen_socket, NULL, NULL)) == -1) {
 	xfer_cancel_with_error(XFER_ELEMENT(self),
-	    _("Error accepting incoming connection: %s"), strerror(errno));
+	    "Error accepting incoming connection: %s", strerror(errno));
 	wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);
 	return NULL;
     }

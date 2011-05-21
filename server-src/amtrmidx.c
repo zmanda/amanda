@@ -87,7 +87,7 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     dbopen(DBG_SUBDIR_SERVER);
-    dbprintf(_("%s: version %s\n"), argv[0], VERSION);
+    dbprintf("%s: version %s\n", argv[0], VERSION);
 
     cfg_ovr = extract_commandline_config_overrides(&argc, &argv);
 
@@ -98,7 +98,7 @@ main(
     }
 
     if (argc < 2) {
-	g_fprintf(stderr, _("Usage: %s [-t] <config> [-o configoption]*\n"), argv[0]);
+	g_fprintf(stderr, "Usage: %s [-t] <config> [-o configoption]*\n", argv[0]);
 	return 1;
     }
 
@@ -112,7 +112,7 @@ main(
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
 	config_print_errors();
 	if (config_errors(NULL) >= CFGERR_ERRORS) {
-	    g_critical(_("errors processing config file"));
+	    g_critical("errors processing config file");
 	}
     }
 
@@ -122,7 +122,7 @@ main(
 
     conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     if(read_tapelist(conf_tapelist)) {
-	error(_("could not load tapelist \"%s\""), conf_tapelist);
+	error("could not load tapelist \"%s\"", conf_tapelist);
 	/*NOTREACHED*/
     }
     amfree(conf_tapelist);
@@ -180,7 +180,7 @@ main(
 	    amfree(qdisk);
 	    amfree(disk);
 	    if ((d = opendir(indexdir)) == NULL) {
-		dbprintf(_("could not open index directory %s\n"), qindexdir);
+		dbprintf("could not open index directory %s\n", qindexdir);
 		amfree(indexdir);
 	        amfree(qindexdir);
 		g_slist_free(matching_dp);
@@ -224,7 +224,7 @@ main(
 			&& ((time_t)sbuf.st_mtime < tmp_time)) {
 			dbprintf("rm %s\n", qpath);
 		        if(amtrmidx_debug == 0 && unlink(path) == -1) {
-			    dbprintf(_("Error removing %s: %s\n"),
+			    dbprintf("Error removing %s: %s\n",
 				      qpath, strerror(errno));
 		        }
 		    }
@@ -280,7 +280,7 @@ main(
 		    qpath = quote_string(path);
 		    dbprintf("rm %s\n", qpath);
 		    if(amtrmidx_debug == 0 && unlink(path) == -1) {
-			dbprintf(_("Error removing %s: %s\n"),
+			dbprintf("Error removing %s: %s\n",
 				  qpath, strerror(errno));
 		    }
 		    amfree(qpath);

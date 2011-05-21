@@ -304,8 +304,8 @@ start_impl(
     /* start up the thread */
     self->worker_thread = g_thread_create(worker_thread, (gpointer)self, TRUE, &error);
     if (!self->worker_thread) {
-	g_critical(_("Error creating new thread: %s (%s)"),
-	    error->message, errno? strerror(errno) : _("no error code"));
+	g_critical("Error creating new thread: %s (%s)",
+	    error->message, errno? strerror(errno) : "no error code");
     }
 
     return TRUE;
@@ -386,7 +386,7 @@ use_device_impl(
 	    /* queue up an error for later, and leave the device NULL.
 	     * start_part will see this and fail silently */
 	    xfer_cancel_with_error(XFER_ELEMENT(self),
-		_("Failed part was not cached; cannot retry"));
+		"Failed part was not cached; cannot retry");
 	    return;
 	}
     }

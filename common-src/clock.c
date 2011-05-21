@@ -68,7 +68,7 @@ curclock(void)
     GTimeVal end_time;
 
     if(!clock_running) {
-	g_fprintf(stderr,_("curclock botch\n"));
+	g_fprintf(stderr,"curclock botch\n");
 	exit(1);
     }
 

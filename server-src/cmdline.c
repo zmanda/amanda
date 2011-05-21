@@ -113,7 +113,7 @@ cmdline_parse_dumpspecs(
 		if (!(flags & CMDLINE_PARSE_LEVEL)) continue;
                 if (name[0] != '\0'
                     && (errstr=validate_regexp(name)) != NULL) {
-                    error(_("bad level regex \"%s\": %s\n"), name, errstr);
+                    error("bad level regex \"%s\": %s\n", name, errstr);
                 }
                 dumpspec->level = g_strdup(name);
                 break;

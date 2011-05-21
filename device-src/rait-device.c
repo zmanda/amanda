@@ -622,14 +622,14 @@ calculate_block_size_from_children(RaitDevice * self, gsize *rait_size)
 
     if (!found_one) {
 	device_set_error((Device*)self,
-	    g_strdup(_("Could not find any child devices' block size ranges")),
+	    g_strdup("Could not find any child devices' block size ranges"),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return 0;
     }
 
     if (min > max) {
 	device_set_error((Device*)self,
-	    g_strdup(_("No block size is acceptable to all child devices")),
+	    g_strdup("No block size is acceptable to all child devices"),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return 0;
     }
@@ -681,7 +681,7 @@ set_block_size_on_children(RaitDevice *self, gsize child_block_size)
 	    if (source != PROPERTY_SOURCE_DEFAULT
 		    && from_child != child_block_size) {
 		device_set_error((Device *)self,
-		    g_strdup_printf(_("Child device %s already has its block size set to %zd, not %zd"),
+		    g_strdup_printf("Child device %s already has its block size set to %zd, not %zd",
 				child->device_name, from_child, child_block_size),
 		    DEVICE_STATUS_DEVICE_ERROR);
 		return FALSE;
@@ -694,7 +694,7 @@ set_block_size_on_children(RaitDevice *self, gsize child_block_size)
 
 	if (!device_property_set(child, PROPERTY_BLOCK_SIZE, &val)) {
 	    device_set_error((Device *)self,
-		g_strdup_printf(_("Error setting block size on %s"), child->device_name),
+		g_strdup_printf("Error setting block size on %s", child->device_name),
 		DEVICE_STATUS_DEVICE_ERROR);
 	    return FALSE;
 	}
@@ -908,7 +908,7 @@ open_child_devices (Device * dself, char * device_name,
 
     if (device_names == NULL) {
 	device_set_error(dself,
-	    g_strdup_printf(_("Invalid RAIT device name '%s'"), device_name),
+	    g_strdup_printf("Invalid RAIT device name '%s'", device_name),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }
@@ -1041,7 +1041,7 @@ rait_device_open_from_children (GSList *child_devices) {
 	default:
 	    self->private->status = RAIT_STATUS_FAILED;
 	    device_set_error(dself,
-		    _("more than one child device is missing"),
+		    "more than one child device is missing",
 		    DEVICE_STATUS_DEVICE_ERROR);
 	    break;
     }
@@ -1209,8 +1209,7 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
     if (self->private->status != RAIT_STATUS_COMPLETE &&
         (mode == ACCESS_WRITE || mode == ACCESS_APPEND)) {
         device_set_error(dself,
-                         g_strdup_printf(_("RAIT device %s is read-only "
-                                           "because it is in degraded mode.\n"),
+                         g_strdup_printf("RAIT device %s is read-only ""because it is in degraded mode.\n",
                                          dself->device_name),
                          DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
@@ -1877,7 +1876,7 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
             if (0 != memcmp(parity_block, constructed_parity,
                             child_blocksize)) {
                 device_set_error(DEVICE(self),
-		    g_strdup(_("RAIT is inconsistent: Parity block did not match data blocks.")),
+		    g_strdup("RAIT is inconsistent: Parity block did not match data blocks."),
 		    DEVICE_STATUS_DEVICE_ERROR);
 		/* TODO: can't we just isolate the device in this case? */
                 success = FALSE;
@@ -1967,7 +1966,7 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
                                      extract_boolean_read_block_op_data)) {
 	    /* TODO: be more specific */
 	    device_set_error(dself,
-		g_strdup(_("Error occurred combining blocks from child devices")),
+		g_strdup("Error occurred combining blocks from child devices"),
 		DEVICE_STATUS_DEVICE_ERROR);
 	    success = FALSE;
 	} else {
@@ -1981,13 +1980,13 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
                                      ops,
                                      extract_boolean_read_block_op_eof)) {
 	    device_set_error(dself,
-		g_strdup(_("EOF")),
+		g_strdup("EOF"),
 		DEVICE_STATUS_SUCCESS);
             dself->is_eof = TRUE;
 	    dself->in_file = FALSE;
         } else {
 	    device_set_error(dself,
-		g_strdup(_("All child devices failed to read, but not all are at eof")),
+		g_strdup("All child devices failed to read, but not all are at eof"),
 		DEVICE_STATUS_DEVICE_ERROR);
 	}
     }
@@ -2121,7 +2120,7 @@ property_set_block_size_fn(Device *dself,
     find_simple_params(self, NULL, &data_children);
     if ((my_block_size % data_children) != 0) {
 	device_set_error(dself,
-	    g_strdup_printf(_("Block size must be a multiple of %d"), data_children),
+	    g_strdup_printf("Block size must be a multiple of %d", data_children),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -2547,7 +2546,7 @@ rait_device_recycle_file (Device * dself, guint filenum) {
     if (!success) {
 	/* TODO: be more specific here */
 	device_set_error(dself,
-	    g_strdup(_("One or more devices failed to recycle_file")),
+	    g_strdup("One or more devices failed to recycle_file"),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }

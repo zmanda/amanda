@@ -67,7 +67,7 @@ read_diskfile(
 
     if ((diskf = fopen(filename, "r")) == NULL) {
 	config_add_error(CFGERR_ERRORS,
-	    g_strdup_printf(_("Could not open '%s': %s"), filename, strerror(errno)));
+	    g_strdup_printf("Could not open '%s': %s", filename, strerror(errno)));
 	goto end;
         /*NOTREACHED*/
     }
@@ -428,7 +428,7 @@ parse_diskline(
     } else {
 	hostname = g_strdup(host->hostname);
 	if (strcmp(host->hostname, fp) != 0) {
-	    disk_parserror(filename, line_num, _("Same host with different case: \"%s\" and \"%s\"."), host->hostname, fp);
+	    disk_parserror(filename, line_num, "Same host with different case: \"%s\" and \"%s\".", host->hostname, fp);
 	    return -1;
 	}
     }
@@ -438,13 +438,13 @@ parse_diskline(
 	char *shostp = sanitise_filename(p->hostname);
 	if (strcmp(hostname, p->hostname) &&
 	    !strcmp(shost, shostp)) {
-	    disk_parserror(filename, line_num, _("Two hosts are mapping to the same name: \"%s\" and \"%s\""), p->hostname, hostname);
+	    disk_parserror(filename, line_num, "Two hosts are mapping to the same name: \"%s\" and \"%s\"", p->hostname, hostname);
 	    return(-1);
 	}
 	else if (strcasecmp(hostname, p->hostname) &&
 		 match_host(hostname, p->hostname) &&
 		 match_host(p->hostname, hostname)) {
-	    disk_parserror(filename, line_num, _("Duplicate host name: \"%s\" and \"%s\""), p->hostname, hostname);
+	    disk_parserror(filename, line_num, "Duplicate host name: \"%s\" and \"%s\"", p->hostname, hostname);
 	    return(-1);
 	}
 	amfree(shostp);
@@ -453,7 +453,7 @@ parse_diskline(
 
     skip_whitespace(s, ch);
     if(ch == '\0' || ch == '#') {
-	disk_parserror(filename, line_num, _("disk device name expected"));
+	disk_parserror(filename, line_num, "disk device name expected");
 	amfree(hostname);
 	return (-1);
     }
@@ -463,13 +463,13 @@ parse_diskline(
     s[-1] = '\0';
     diskname = unquote_string(fp);
     if (strlen(diskname) == 0) {
-	disk_parserror(filename, line_num, _("invalid empty diskname"));
+	disk_parserror(filename, line_num, "invalid empty diskname");
 	amfree(hostname);
 	return (-1);
     }
     skip_whitespace(s, ch);
     if(ch == '\0' || ch == '#') {
-	disk_parserror(filename, line_num, _("disk dumptype expected"));
+	disk_parserror(filename, line_num, "disk dumptype expected");
 	amfree(hostname);
 	amfree(diskname);
 	return (-1);
@@ -484,7 +484,7 @@ parse_diskline(
     if(fp[0] != '{') {
 	dumptype = unquote_string(fp);
 	if (strlen(dumptype) == 0) {
-	    disk_parserror(filename, line_num, _("invalid empty diskdevice"));
+	    disk_parserror(filename, line_num, "invalid empty diskdevice");
 	    amfree(hostname);
 	    return (-1);
 	}
@@ -493,7 +493,7 @@ parse_diskline(
 	    skip_whitespace(s, ch);
 	    if(ch == '\0' || ch == '#') {
 		disk_parserror(filename, line_num,
-			_("disk dumptype '%s' not found"), dumptype);
+			"disk dumptype '%s' not found", dumptype);
 		amfree(hostname);
 		amfree(diskdevice);
 		amfree(diskname);
@@ -533,7 +533,7 @@ parse_diskline(
 	}
 	if (dup == 1) {
 	    disk_parserror(filename, line_num,
-			   _("duplicate disk record, previous on line %d"),
+			   "duplicate disk record, previous on line %d",
 			   disk->line);
 	}
     }
@@ -558,7 +558,7 @@ parse_diskline(
 	    if (strcmp(diskname, dp->name) != 0 &&
 		 strcmp(sdisk, sdiskp) == 0) {
 		disk_parserror(filename, line_num,
-		 _("Two disks are mapping to the same name: \"%s\" and \"%s\"; you must use different diskname"),
+		 "Two disks are mapping to the same name: \"%s\" and \"%s\"; you must use different diskname",
 		 dp->name, diskname);
 	    return(-1);
 	    }
@@ -573,13 +573,13 @@ parse_diskline(
 	skip_whitespace(s, ch);
 	if (ch != '\0' && ch != '#') {
 	    disk_parserror(filename, line_num,
-		      _("expected line break after `{\', ignoring rest of line"));
+		      "expected line break after `{\', ignoring rest of line");
 	}
 
 	if (strchr(s-1, '}') &&
 	    (strchr(s-1, '#') == NULL ||
 	     strchr(s-1, '}') < strchr(s-1, '#'))) {
-	    disk_parserror(filename, line_num,_("'}' on same line than '{'"));
+	    disk_parserror(filename, line_num,"'}' on same line than '{'");
 	    amfree(hostname);
 	    if(!dup) {
 		amfree(disk->device);
@@ -597,7 +597,7 @@ parse_diskline(
 			      diskf, (char*)filename, line_num_p);
 	if (dtype == NULL || dup) {
 	    disk_parserror(filename, line_num,
-			   _("read of custom dumptype failed"));
+			   "read of custom dumptype failed");
 	    amfree(hostname);
 	    if(!dup) {
 		amfree(disk->device);
@@ -622,7 +622,7 @@ parse_diskline(
 	if((dtype = lookup_dumptype(dumptype)) == NULL) {
 	    char *qdt = quote_string(dumptype);
 
-	    disk_parserror(filename, line_num, _("undefined dumptype `%s'"), qdt);
+	    disk_parserror(filename, line_num, "undefined dumptype `%s'", qdt);
 	    amfree(qdt);
 	    amfree(hostname);
 	    if (!dup) {
@@ -739,7 +739,7 @@ parse_diskline(
 	    }
 	}
 	if(is_digit == 0) {
-	    disk_parserror(filename, line_num, _("non-integer spindle `%s'"), fp);
+	    disk_parserror(filename, line_num, "non-integer spindle `%s'", fp);
 	    amfree(hostname);
 	    amfree(disk->name);
 	    amfree(disk);
@@ -756,7 +756,7 @@ parse_diskline(
 	s[-1] = '\0';
 	if((cfg_if = lookup_interface(upcase(fp))) == NULL) {
 	    disk_parserror(filename, line_num,
-		_("undefined network interface `%s'"), fp);
+		"undefined network interface `%s'", fp);
 	    amfree(hostname);
 	    amfree(disk->name);
 	    amfree(disk);
@@ -783,19 +783,19 @@ parse_diskline(
 
     skip_whitespace(s, ch);
     if(ch && ch != '#') {		/* now we have garbage, ignore it */
-	disk_parserror(filename, line_num, _("end of line expected"));
+	disk_parserror(filename, line_num, "end of line expected");
     }
 
     if (disk->program && disk->application &&
 	strcmp(disk->program,"APPLICATION")) {
 	disk_parserror(filename, line_num,
-		       _("Both program and application set"));
+		       "Both program and application set");
     }
 
     if (disk->program && strcmp(disk->program,"APPLICATION")==0 &&
 	!disk->application) {
 	disk_parserror(filename, line_num,
-		       _("program set to APPLICATION but no application set"));
+		       "program set to APPLICATION but no application set");
     }
 
     if (disk->application) {
@@ -807,7 +807,7 @@ parse_diskline(
 	plugin = application_get_plugin(application);
 	if (!plugin || strlen(plugin) == 0) {
 	    disk_parserror(filename, line_num,
-			   _("plugin not set for application"));
+			   "plugin not set for application");
 	}
     }
 
@@ -822,7 +822,7 @@ parse_diskline(
 	g_assert(pp_script != NULL);
 	plugin = pp_script_get_plugin(pp_script);
 	if (!plugin || strlen(plugin) == 0) {
-	    disk_parserror(filename, line_num, _("plugin not set for script"));
+	    disk_parserror(filename, line_num, "plugin not set for script");
 	}
     }
 
@@ -890,10 +890,10 @@ dump_queue(
     char *qname;
 
     if(empty(q)) {
-	g_fprintf(f, _("%s QUEUE: empty\n"), st);
+	g_fprintf(f, "%s QUEUE: empty\n", st);
 	return;
     }
-    g_fprintf(f, _("%s QUEUE:\n"), st);
+    g_fprintf(f, "%s QUEUE:\n", st);
     for(pos = 0, d = q.head, p = NULL; d != NULL; p = d, d = d->next, pos++) {
 	qname = quote_string(d->name);
 	if(pos < npr) g_fprintf(f, "%3d: %-10s %-4s\n",
@@ -928,27 +928,27 @@ validate_optionstr(
     if (!am_has_feature(their_features, fe_options_auth)) {
 	if (strcasecmp(dp->auth, "bsd") == 0)
 	    if (!am_has_feature(their_features, fe_options_bsd_auth))
-		g_ptr_array_add(errarray, _("does not support auth"));
+		g_ptr_array_add(errarray, "does not support auth");
     }
 
     switch(dp->compress) {
     case COMP_FAST:
 	if (!am_has_feature(their_features, fe_options_compress_fast)) {
-	    g_ptr_array_add(errarray, _("does not support fast compression"));
+	    g_ptr_array_add(errarray, "does not support fast compression");
 	}
 	break;
     case COMP_BEST:
 	if (!am_has_feature(their_features, fe_options_compress_best)) {
-	    g_ptr_array_add(errarray, _("does not support best compression"));
+	    g_ptr_array_add(errarray, "does not support best compression");
 	}
 	break;
     case COMP_CUST:
         if (am_has_feature(their_features, fe_options_compress_cust)) {
 	    if (dp->clntcompprog == NULL || strlen(dp->clntcompprog) == 0) {
-		g_ptr_array_add(errarray, _("client custom compression with no compression program specified"));
+		g_ptr_array_add(errarray, "client custom compression with no compression program specified");
 	    }
 	} else {
-	    g_ptr_array_add(errarray, _("does not support client custom compression"));
+	    g_ptr_array_add(errarray, "does not support client custom compression");
 	}
 	break;
     case COMP_SERVER_FAST:
@@ -957,7 +957,7 @@ validate_optionstr(
 	break;
     case COMP_SERVER_CUST:
 	if (dp->srvcompprog == NULL || strlen(dp->srvcompprog) == 0) {
-	    g_ptr_array_add(errarray, _("server custom compression with no compression program specified"));
+	    g_ptr_array_add(errarray, "server custom compression with no compression program specified");
 	}
 	break;
     }
@@ -967,43 +967,43 @@ validate_optionstr(
 	if (am_has_feature(their_features, fe_options_encrypt_cust)) {
 	    if (dp->clnt_decrypt_opt) {
 		if (!am_has_feature(their_features, fe_options_client_decrypt_option)) {
-		    g_ptr_array_add(errarray, _("does not support client decrypt option"));
+		    g_ptr_array_add(errarray, "does not support client decrypt option");
 		}
 	    }
 	    if (dp->clnt_encrypt == NULL || strlen(dp->clnt_encrypt) == 0) {
-		g_ptr_array_add(errarray, _("encrypt client with no encryption program specified"));
+		g_ptr_array_add(errarray, "encrypt client with no encryption program specified");
 	    }
 	    if (dp->compress == COMP_SERVER_FAST ||
 		dp->compress == COMP_SERVER_BEST ||
 		dp->compress == COMP_SERVER_CUST ) {
-		g_ptr_array_add(errarray, _("Client encryption with server compression is not supported. See amanda.conf(5) for detail"));
+		g_ptr_array_add(errarray, "Client encryption with server compression is not supported. See amanda.conf(5) for detail");
 	    }
 	} else {
-	    g_ptr_array_add(errarray, _("does not support client data encryption"));
+	    g_ptr_array_add(errarray, "does not support client data encryption");
 	}
 	break;
     case ENCRYPT_SERV_CUST:
 	if (dp->srv_encrypt == NULL || strlen(dp->srv_encrypt) == 0) {
-	    g_ptr_array_add(errarray, _("No encryption program specified in dumptypes, Change the dumptype in the disklist or mention the encryption program to use in the dumptypes file"));
+	    g_ptr_array_add(errarray, "No encryption program specified in dumptypes, Change the dumptype in the disklist or mention the encryption program to use in the dumptypes file");
 	}
 	break;
     }
 
     if (!dp->record) {
 	if (!am_has_feature(their_features, fe_options_no_record)) {
-	    g_ptr_array_add(errarray, _("does not support no record"));
+	    g_ptr_array_add(errarray, "does not support no record");
 	}
     }
 
     if (dp->index) {
 	if (!am_has_feature(their_features, fe_options_index)) {
-	    g_ptr_array_add(errarray, _("does not support index"));
+	    g_ptr_array_add(errarray, "does not support index");
 	}
     }
 
     if (dp->kencrypt) {
 	if (!am_has_feature(their_features, fe_options_kencrypt)) {
-	    g_ptr_array_add(errarray, _("does not support kencrypt"));
+	    g_ptr_array_add(errarray, "does not support kencrypt");
 	}
     }
 
@@ -1011,20 +1011,20 @@ validate_optionstr(
     if (dp->exclude_file != NULL && dp->exclude_file->nb_element > 0) {
 	nb_exclude = dp->exclude_file->nb_element;
 	if (!am_has_feature(their_features, fe_options_exclude_file)) {
-	    g_ptr_array_add(errarray, _("does not support exclude file"));
+	    g_ptr_array_add(errarray, "does not support exclude file");
 	}
     }
 
     if (dp->exclude_list != NULL && dp->exclude_list->nb_element > 0) {
 	nb_exclude += dp->exclude_list->nb_element;
 	if (!am_has_feature(their_features, fe_options_exclude_list)) {
-	    g_ptr_array_add(errarray, _("does not support exclude list"));
+	    g_ptr_array_add(errarray, "does not support exclude list");
 	}
     }
 
     if (nb_exclude > 1 &&
 	!am_has_feature(their_features, fe_options_multiple_exclude)) {
-	g_ptr_array_add(errarray, _("does not support multiple exclude"));
+	g_ptr_array_add(errarray, "does not support multiple exclude");
     }
 
     nb_include = 0;
@@ -1038,23 +1038,23 @@ validate_optionstr(
     if (dp->include_list != NULL && dp->include_list->nb_element > 0) {
 	nb_include += dp->include_list->nb_element;
 	if (!am_has_feature(their_features, fe_options_include_list)) {
-	    g_ptr_array_add(errarray, _("does not support include list"));
+	    g_ptr_array_add(errarray, "does not support include list");
 	}
     }
 
     if (nb_include > 1 &&
 	!am_has_feature(their_features, fe_options_multiple_exclude)) {
-	g_ptr_array_add(errarray, _("does not support multiple include"));
+	g_ptr_array_add(errarray, "does not support multiple include");
     }
 
     if (dp->exclude_optional) {
 	if (!am_has_feature(their_features, fe_options_optional_exclude)) {
-	    g_ptr_array_add(errarray, _("does not support optional exclude"));
+	    g_ptr_array_add(errarray, "does not support optional exclude");
 	}
     }
     if (dp->include_optional) {
 	if (!am_has_feature(their_features, fe_options_optional_include)) {
-	    g_ptr_array_add(errarray, _("does not support optional include"));
+	    g_ptr_array_add(errarray, "does not support optional include");
 	}
     }
 
@@ -1809,7 +1809,7 @@ match_disklist(
 	       (match_disk(sargv[i], dp->name) ||
 		(dp->device && match_disk(sargv[i], dp->device)))) {
 		if(match_a_host) {
-		    error(_("Argument %s cannot be both a host and a disk"),sargv[i]);
+		    error("Argument %s cannot be both a host and a disk",sargv[i]);
 		    /*NOTREACHED*/
 		}
 		else {
@@ -1840,7 +1840,7 @@ match_disklist(
 		    }
 		    if (!match_a_disk) {
 			char *errstr1;
-			errstr1 = g_strdup_printf(_("All disks on host '%s' are ignored or have strategy \"skip\".\n"), prevhost);
+			errstr1 = g_strdup_printf("All disks on host '%s' are ignored or have strategy \"skip\".\n", prevhost);
 			vstrextend(&errstr, errstr1, NULL);
 			amfree(errstr1);
 		    }
@@ -1851,9 +1851,9 @@ match_disklist(
 	    else {
 		char *errstr1;
 		if (strchr(sargv[i], (int)'\\')) {
-		    errstr1 = g_strdup_printf(_("Argument '%s' matches neither a host nor a disk; quoting may not be correct.\n"), sargv[i]);
+		    errstr1 = g_strdup_printf("Argument '%s' matches neither a host nor a disk; quoting may not be correct.\n", sargv[i]);
 		} else {
-		    errstr1 = g_strdup_printf(_("Argument '%s' matches neither a host nor a disk.\n"), sargv[i]);
+		    errstr1 = g_strdup_printf("Argument '%s' matches neither a host nor a disk.\n", sargv[i]);
 		}
 		vstrextend(&errstr, errstr1, NULL);
 		amfree(errstr1);
@@ -1862,9 +1862,9 @@ match_disklist(
 	} else if (dp_skip) {
 		char *errstr1;
 		if (dp_skip->strategy == DS_SKIP) {
-		    errstr1 = g_strdup_printf(_("Argument '%s' matches a disk with strategy \"skip\".\n"), sargv[i]);
+		    errstr1 = g_strdup_printf("Argument '%s' matches a disk with strategy \"skip\".\n", sargv[i]);
 		} else {
-		    errstr1 = g_strdup_printf(_("Argument '%s' matches a disk marked \"ignore\".\n"), sargv[i]);
+		    errstr1 = g_strdup_printf("Argument '%s' matches a disk marked \"ignore\".\n", sargv[i]);
 		}
 		vstrextend(&errstr, errstr1, NULL);
 		amfree(errstr1);
@@ -1883,7 +1883,7 @@ match_disklist(
 	}
 	if (!match_a_disk) {
 	    char *errstr1;
-	    errstr1 = g_strdup_printf(_("All disks on host '%s' are ignored or have strategy \"skip\".\n"), prevhost);
+	    errstr1 = g_strdup_printf("All disks on host '%s' are ignored or have strategy \"skip\".\n", prevhost);
 	    vstrextend(&errstr, errstr1, NULL);
 	    amfree(errstr1);
 	}
@@ -1944,7 +1944,7 @@ static void
 dump_disk(
     const disk_t *	dp)
 {
-    g_printf(_("  DISK %s (HOST %s, LINE %d) TYPE %s NAME %s SPINDLE %d\n"),
+    g_printf("  DISK %s (HOST %s, LINE %d) TYPE %s NAME %s SPINDLE %d\n",
 	   dp->name, dp->host->hostname, dp->line, dp->dtype_name,
 	   dp->name == NULL? "(null)": dp->name,
 	   dp->spindle);
@@ -1958,34 +1958,34 @@ dump_disklist(
     const am_host_t *hp;
 
     if(hostlist == NULL) {
-	g_printf(_("DISKLIST not read in\n"));
+	g_printf("DISKLIST not read in\n");
 	return;
     }
 
-    g_printf(_("DISKLIST BY HOSTNAME:\n"));
+    g_printf("DISKLIST BY HOSTNAME:\n");
 
     for(hp = hostlist; hp != NULL; hp = hp->next) {
 	char *if_name = NULL;
 	if (hp->netif && hp->netif->config)
 	    if_name = interface_name(hp->netif->config);
 
-	g_printf(_("HOST %s INTERFACE %s\n"),
+	g_printf("HOST %s INTERFACE %s\n",
 	       hp->hostname,
-	       if_name ? _("(null)") : if_name);
+	       if_name ? "(null)" : if_name);
 	for(dp = hp->disks; dp != NULL; dp = dp->hostnext)
 	    dump_disk(dp);
 	putchar('\n');
     }
 
 
-    g_printf(_("DISKLIST IN FILE ORDER:\n"));
+    g_printf("DISKLIST IN FILE ORDER:\n");
 
     prev = NULL;
     for(dp = lst->head; dp != NULL; prev = dp, dp = dp->next) {
 	dump_disk(dp);
 	/* check pointers */
-	if(dp->prev != prev) g_printf(_("*** prev pointer mismatch!\n"));
-	if(dp->next == NULL && lst->tail != dp) g_printf(_("tail mismatch!\n"));
+	if(dp->prev != prev) g_printf("*** prev pointer mismatch!\n");
+	if(dp->next == NULL && lst->tail != dp) g_printf("tail mismatch!\n");
     }
 }
 
@@ -2026,7 +2026,7 @@ main(
   if (config_errors(NULL) >= CFGERR_WARNINGS) {
     config_print_errors();
     if (config_errors(NULL) >= CFGERR_ERRORS) {
-      g_critical(_("errors processing config file"));
+      g_critical("errors processing config file");
     }
   }
 

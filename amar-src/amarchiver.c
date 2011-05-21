@@ -151,7 +151,7 @@ extract_file_finish_cb(
 	gboolean truncated)
 {
     if (truncated)
-	g_fprintf(stderr, _("Data for '%s' may have been truncated\n"),
+	g_fprintf(stderr, "Data for '%s' may have been truncated\n",
 		(char *)*file_data);
 
     g_free(*file_data);
@@ -179,7 +179,7 @@ extract_frag_cb(
 	char *filename = g_strdup_printf("%s.%d", (char *)file_data, attrid);
 	fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC, 0660);
 	if (fd < 0) {
-	    g_fprintf(stderr, _("Could not open '%s' for writing: %s"),
+	    g_fprintf(stderr, "Could not open '%s' for writing: %s",
 		    filename, strerror(errno));
 	}
 	if (ud->verbose)
@@ -189,14 +189,14 @@ extract_frag_cb(
     }
 
     if (full_write(fd, data, datasize) != datasize) {
-	g_fprintf(stderr, _("while writing '%s.%d': %s"),
+	g_fprintf(stderr, "while writing '%s.%d': %s",
 		(char *)file_data, attrid, strerror(errno));
 	return FALSE;
     }
 
     if (eoa) {
 	if (truncated) {
-	    g_fprintf(stderr, _("'%s.%d' may be truncated\n"),
+	    g_fprintf(stderr, "'%s.%d' may be truncated\n",
 		    (char *)file_data, attrid);
 	}
 	close(fd);

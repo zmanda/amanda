@@ -201,7 +201,7 @@ main(
 
     if (argc < 2) {
 	printf("ERROR no command given to amstar\n");
-	error(_("No command given to amstar"));
+	error("No command given to amstar");
     }
 
     /* drop root privileges */
@@ -209,7 +209,7 @@ main(
 	if (strcmp(argv[1], "selfcheck") == 0) {
 	    printf("ERROR amstar must be run setuid root\n");
 	}
-	error(_("amstar must be run setuid root"));
+	error("amstar must be run setuid root");
     }
 
     safe_fd(3, 2);
@@ -227,7 +227,7 @@ main(
     add_amanda_log_handler(amanda_log_syslog);
     dbopen(DBG_SUBDIR_CLIENT);
     startclock();
-    dbprintf(_("version %s\n"), VERSION);
+    dbprintf("version %s\n", VERSION);
 
     config_init(CONFIG_INIT_CLIENT, NULL);
 
@@ -303,7 +303,7 @@ main(
 		 else if (optarg && strcasecmp(optarg, "YES") == 0)
 		     star_dle_tardumps = 1;
 		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad STAR-DLE-TARDUMP property value (%s)]\n"), get_pname(), optarg);
+		     printf("ERROR [%s: bad STAR-DLE-TARDUMP property value (%s)]\n", get_pname(), optarg);
 		 break;
 	case 13: if (optarg && strcasecmp(optarg, "YES") != 0) {
 		     /* This option is required to be YES */
@@ -315,7 +315,7 @@ main(
 		 else if (optarg && strcasecmp(optarg, "YES") == 0)
 		     star_sparse = 1;
 		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad SPARSE property value (%s)]\n"), get_pname(), optarg);
+		     printf("ERROR [%s: bad SPARSE property value (%s)]\n", get_pname(), optarg);
 		 break;
 	case 15: argument.calcsize = 1;
 		 break;
@@ -358,7 +358,7 @@ main(
 		 else if (optarg && strcasecmp(optarg, "YES") == 0)
 		     star_acl = 1;
 		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad ACL property value (%s)]\n"), get_pname(), optarg);
+		     printf("ERROR [%s: bad ACL property value (%s)]\n", get_pname(), optarg);
 		 break;
 	case ':':
 	case '?':
@@ -383,7 +383,7 @@ main(
     }
 
     if (config_errors(NULL) >= CFGERR_ERRORS) {
-	g_critical(_("errors processing config file"));
+	g_critical("errors processing config file");
     }
 
     re_table = build_re_table(init_re_table, normal_message, ignore_message,
@@ -507,15 +507,15 @@ amstar_estimate(
 
     if (!argument->level) {
 	fprintf(stderr, "ERROR No level argument\n");
-	error(_("No level argument"));
+	error("No level argument");
     }
     if (!argument->dle.disk) {
 	fprintf(stderr, "ERROR No disk argument\n");
-	error(_("No disk argument"));
+	error("No disk argument");
     }
     if (!argument->dle.device) {
 	fprintf(stderr, "ERROR No device argument\n");
-	error(_("No device argument"));
+	error("No device argument");
     }
 
     if (argument->dle.include_list &&
@@ -542,7 +542,7 @@ amstar_estimate(
 
     qdisk = quote_string(argument->dle.disk);
     if (!star_path) {
-	errmsg = g_strdup(_("STAR-PATH not defined"));
+	errmsg = g_strdup("STAR-PATH not defined");
 	goto common_error;
     }
     cmd = g_strdup(star_path);
@@ -554,7 +554,7 @@ amstar_estimate(
 	argv_ptr = amstar_build_argv(argument, level, CMD_ESTIMATE);
 
 	if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	    errmsg = g_strdup_printf(_("Cannot access /dev/null : %s"),
+	    errmsg = g_strdup_printf("Cannot access /dev/null : %s",
 				strerror(errno));
 	    goto common_error;
 	}
@@ -565,7 +565,7 @@ amstar_estimate(
 
 	dumpout = fdopen(pipefd,"r");
 	if (!dumpout) {
-	    errmsg = g_strdup_printf(_("Can't fdopen: %s"), strerror(errno));
+	    errmsg = g_strdup_printf("Can't fdopen: %s", strerror(errno));
 	    aclose(nullfd);
 	    goto common_error;
 	}
@@ -599,38 +599,38 @@ amstar_estimate(
 	}
 
 	dbprintf(".....\n");
-	dbprintf(_("estimate time for %s level %d: %s\n"),
+	dbprintf("estimate time for %s level %d: %s\n",
 		 qdisk,
 		 level,
 		 walltime_str(timessub(curclock(), start_time)));
 	if(size == (off_t)-1) {
-	    errmsg = g_strdup_printf(_("no size line match in %s output"),
+	    errmsg = g_strdup_printf("no size line match in %s output",
 				cmd);
-	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
+	    dbprintf("%s for %s\n", errmsg, qdisk);
 	    dbprintf(".....\n");
 	    qerrmsg = quote_string(errmsg);
 	    fprintf(stdout, "ERROR %s\n", qerrmsg);
 	    amfree(errmsg);
 	    amfree(qerrmsg);
 	} else if(size == (off_t)0 && argument->level == 0) {
-	    dbprintf(_("possible %s problem -- is \"%s\" really empty?\n"),
+	    dbprintf("possible %s problem -- is \"%s\" really empty?\n",
 		     cmd, argument->dle.disk);
 	    dbprintf(".....\n");
 	}
-	dbprintf(_("estimate size for %s level %d: %lld KB\n"),
+	dbprintf("estimate size for %s level %d: %lld KB\n",
 		 qdisk,
 		 level,
 		 (long long)size);
 
 	kill(-starpid, SIGTERM);
 
-	dbprintf(_("waiting for %s \"%s\" child\n"), cmd, qdisk);
+	dbprintf("waiting for %s \"%s\" child\n", cmd, qdisk);
 	waitpid(starpid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
 	    amfree(errmsg);
-	    errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
+	    errmsg = g_strdup_printf("%s terminated with signal %d: see %s",
 				cmd, WTERMSIG(wait_status), dbfn());
-	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
+	    dbprintf("%s for %s\n", errmsg, qdisk);
 	    dbprintf(".....\n");
 	    qerrmsg = quote_string(errmsg);
 	    fprintf(stdout, "ERROR %s\n", qerrmsg);
@@ -639,9 +639,9 @@ amstar_estimate(
 	} else if (WIFEXITED(wait_status)) {
 	    if (WEXITSTATUS(wait_status) != 0) {
 		amfree(errmsg);
-		errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
+		errmsg = g_strdup_printf("%s exited with status %d: see %s",
 				    cmd, WEXITSTATUS(wait_status), dbfn());
-		dbprintf(_("%s for %s\n"), errmsg, qdisk);
+		dbprintf("%s for %s\n", errmsg, qdisk);
 		dbprintf(".....\n");
 		qerrmsg = quote_string(errmsg);
 		fprintf(stdout, "ERROR %s\n", qerrmsg);
@@ -652,15 +652,15 @@ amstar_estimate(
 	    }
 	} else {
 	    amfree(errmsg);
-	    errmsg = g_strdup_printf(_("%s got bad exit: see %s"), cmd, dbfn());
-	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
+	    errmsg = g_strdup_printf("%s got bad exit: see %s", cmd, dbfn());
+	    dbprintf("%s for %s\n", errmsg, qdisk);
 	    dbprintf(".....\n");
 	    qerrmsg = quote_string(errmsg);
 	    fprintf(stdout, "ERROR %s\n", qerrmsg);
 	    amfree(errmsg);
 	    amfree(qerrmsg);
 	}
-	dbprintf(_("after %s %s wait\n"), cmd, qdisk);
+	dbprintf("after %s %s wait\n", cmd, qdisk);
 
 	g_ptr_array_free_full(argv_ptr);
 
@@ -715,20 +715,20 @@ amstar_backup(
 
     mesgstream = fdopen(mesgf, "w");
     if (!mesgstream) {
-	error(_("error mesgstream(%d): %s\n"), mesgf, strerror(errno));
+	error("error mesgstream(%d): %s\n", mesgf, strerror(errno));
     }
 
     if (!argument->level) {
 	fprintf(mesgstream, "? No level argument\n");
-	error(_("No level argument"));
+	error("No level argument");
     }
     if (!argument->dle.disk) {
 	fprintf(mesgstream, "? No disk argument\n");
-	error(_("No disk argument"));
+	error("No disk argument");
     }
     if (!argument->dle.device) {
 	fprintf(mesgstream, "? No device argument\n");
-	error(_("No device argument"));
+	error("No device argument");
     }
 
     if (argument->dle.include_list &&
@@ -754,12 +754,12 @@ amstar_backup(
     if (argument->dle.create_index) {
 	indexstream = fdopen(indexf, "w");
 	if (!indexstream) {
-	    error(_("error indexstream(%d): %s\n"), indexf, strerror(errno));
+	    error("error indexstream(%d): %s\n", indexf, strerror(errno));
 	}
     }
     outstream = fdopen(outf, "r");
     if (!outstream) {
-	error(_("error outstream(%d): %s\n"), outf, strerror(errno));
+	error("error outstream(%d): %s\n", outf, strerror(errno));
     }
 
     regcomp(&regex_root, "^a \\.\\/ directory$", REG_EXTENDED|REG_NEWLINE);
@@ -846,7 +846,7 @@ amstar_backup(
     regfree(&regex_symbolic);
     regfree(&regex_hard);
 
-    dbprintf(_("gnutar: %s: pid %ld\n"), cmd, (long)starpid);
+    dbprintf("gnutar: %s: pid %ld\n", cmd, (long)starpid);
 
     dbprintf("sendbackup: size %lld\n", (long long)dump_size);
     fprintf(mesgstream, "sendbackup: size %lld\n", (long long)dump_size);
@@ -872,7 +872,7 @@ amstar_restore(
     char       *e;
 
     if (!star_path) {
-	error(_("STAR-PATH not defined"));
+	error("STAR-PATH not defined");
     }
 
     cmd = g_strdup(star_path);
@@ -940,7 +940,7 @@ amstar_restore(
     become_root();
     execve(cmd, (char **)argv_ptr->pdata, env);
     e = strerror(errno);
-    error(_("error [exec %s: %s]"), cmd, e);
+    error("error [exec %s: %s]", cmd, e);
 
 }
 
@@ -1130,20 +1130,20 @@ check_device(
     if(!stat(argument->dle.device, &stat_buf)) { 
 	if (!S_ISDIR(stat_buf.st_mode)) {
 	    set_root_privs(0);
-	    g_fprintf(stderr, _("ERROR %s is not a directory\n"), qdevice);
+	    g_fprintf(stderr, "ERROR %s is not a directory\n", qdevice);
 	    amfree(qdevice);
 	    return 0;
 	}
     } else {
 	set_root_privs(0);
-	g_fprintf(stderr, _("ERROR can not stat %s: %s\n"), qdevice,
+	g_fprintf(stderr, "ERROR can not stat %s: %s\n", qdevice,
                   strerror(errno));
 	amfree(qdevice);
 	return 0;
     }
     if (access(argument->dle.device, R_OK|X_OK) == -1) {
 	set_root_privs(0);
-	g_fprintf(stderr, _("ERROR can not access %s: %s\n"),
+	g_fprintf(stderr, "ERROR can not access %s: %s\n",
 		  argument->dle.device, strerror(errno));
 	amfree(qdevice);
 	return 0;

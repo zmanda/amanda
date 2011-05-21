@@ -82,15 +82,15 @@ main(
 	error("Need at least 2 arguments\n");
 	/*NOTREACHED*/
     }
-    dbprintf(_("version %s\n"), VERSION);
-    dbprintf(_("config: %s\n"), argv[1]);
+    dbprintf("version %s\n", VERSION);
+    dbprintf("config: %s\n", argv[1]);
     if (strcmp(argv[1], "NOCONFIG") != 0)
 	dbrename(argv[1], DBG_SUBDIR_CLIENT);
 
 #ifdef WANT_SETUID_CLIENT
     check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_AS_UID_ONLY);
     if (!become_root()) {
-	error(_("error [%s could not become root (is the setuid bit set?)]\n"), get_pname());
+	error("error [%s could not become root (is the setuid bit set?)]\n", get_pname());
 	/*NOTREACHED*/
     }
 #else
@@ -98,7 +98,7 @@ main(
 #endif
 
     if (AM_GETPGRP() != getpid()) {
-	error(_("error [must be the process group leader]"));
+	error("error [must be the process group leader]");
 	/*NOTREACHED*/
     }
 
@@ -116,7 +116,7 @@ main(
 	if (wait(&status) != -1)
 	    break;
 	if (errno != EINTR) {
-	    error(_("error [wait() failed: %s]"), strerror(errno));
+	    error("error [wait() failed: %s]", strerror(errno));
 	    /*NOTREACHED*/
 	}
     }
@@ -144,10 +144,10 @@ static void term_kill_soft(
      * First, try to kill the dump process nicely.  If it ignores us
      * for three seconds, hit it harder.
      */
-    dbprintf(_("sending SIGTERM to process group %ld\n"), (long) dumppid);
+    dbprintf("sending SIGTERM to process group %ld\n", (long) dumppid);
     killerr = kill(-dumppid, SIGTERM);
     if (killerr == -1) {
-	dbprintf(_("kill failed: %s\n"), strerror(errno));
+	dbprintf("kill failed: %s\n", strerror(errno));
     }
 }
 
@@ -159,12 +159,12 @@ static void term_kill_hard(
 
     (void)sig;	/* Quiet unused parameter warning */
 
-    dbprintf(_("It won\'t die with SIGTERM, but SIGKILL should do.\n"));
-    dbprintf(_("Don't expect any further output, this will be suicide.\n"));
+    dbprintf("It won\'t die with SIGTERM, but SIGKILL should do.\n");
+    dbprintf("Don't expect any further output, this will be suicide.\n");
     killerr = kill(-dumppid, SIGKILL);
     /* should never reach this point, but so what? */
     if (killerr == -1) {
-	dbprintf(_("kill failed: %s\n"), strerror(errno));
-	dbprintf(_("waiting until child terminates\n"));
+	dbprintf("kill failed: %s\n", strerror(errno));
+	dbprintf("waiting until child terminates\n");
     }
 }

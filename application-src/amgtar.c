@@ -321,7 +321,7 @@ main(
 
     if (argc < 2) {
         printf("ERROR no command given to amgtar\n");
-        error(_("No command given to amgtar"));
+        error("No command given to amgtar");
     }
 
     /* drop root privileges */
@@ -329,7 +329,7 @@ main(
 	if (strcmp(argv[1], "selfcheck") == 0) {
 	    printf("ERROR amgtar must be run setuid root\n");
 	}
-	error(_("amgtar must be run setuid root"));
+	error("amgtar must be run setuid root");
     }
 
     safe_fd(3, 2);
@@ -347,7 +347,7 @@ main(
     add_amanda_log_handler(amanda_log_syslog);
     dbopen(DBG_SUBDIR_CLIENT);
     startclock();
-    dbprintf(_("version %s\n"), VERSION);
+    dbprintf("version %s\n", VERSION);
 
     config_init(CONFIG_INIT_CLIENT, NULL);
 
@@ -413,28 +413,28 @@ main(
 		 else if (optarg && strcasecmp(optarg, "YES") == 0)
 		     gnutar_onefilesystem = 1;
 		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad ONE-FILE-SYSTEM property value (%s)]\n"), get_pname(), optarg);
+		     printf("ERROR [%s: bad ONE-FILE-SYSTEM property value (%s)]\n", get_pname(), optarg);
 		 break;
 	case 13: if (optarg && strcasecmp(optarg, "NO") == 0)
 		     gnutar_sparse = 0;
 		 else if (optarg && strcasecmp(optarg, "YES") == 0)
 		     gnutar_sparse = 1;
 		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad SPARSE property value (%s)]\n"), get_pname(), optarg);
+		     printf("ERROR [%s: bad SPARSE property value (%s)]\n", get_pname(), optarg);
 		 break;
 	case 14: if (optarg && strcasecmp(optarg, "NO") == 0)
 		     gnutar_atimepreserve = 0;
 		 else if (optarg && strcasecmp(optarg, "YES") == 0)
 		     gnutar_atimepreserve = 1;
 		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad ATIME-PRESERVE property value (%s)]\n"), get_pname(), optarg);
+		     printf("ERROR [%s: bad ATIME-PRESERVE property value (%s)]\n", get_pname(), optarg);
 		 break;
 	case 15: if (optarg && strcasecmp(optarg, "NO") == 0)
 		     gnutar_checkdevice = 0;
 		 else if (optarg && strcasecmp(optarg, "YES") == 0)
 		     gnutar_checkdevice = 1;
 		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad CHECK-DEVICE property value (%s)]\n"), get_pname(), optarg);
+		     printf("ERROR [%s: bad CHECK-DEVICE property value (%s)]\n", get_pname(), optarg);
 		 break;
 	case 16: if (optarg)
 		     argument.dle.include_file =
@@ -486,7 +486,7 @@ main(
 		 else if (optarg && strcasecmp(optarg, "YES") == 0)
 		     gnutar_no_unquote = 1;
 		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad No_UNQUOTE property value (%s)]\n"), get_pname(), optarg);
+		     printf("ERROR [%s: bad No_UNQUOTE property value (%s)]\n", get_pname(), optarg);
 		 break;
         case 30: if (optarg && strcasecmp(optarg, "YES") == 0)
                    gnutar_acls = 1;
@@ -535,7 +535,7 @@ main(
     }
 
     if (config_errors(NULL) >= CFGERR_ERRORS) {
-	g_critical(_("errors processing config file"));
+	g_critical("errors processing config file");
     }
 
     re_table = build_re_table(init_re_table, normal_message, ignore_message,
@@ -657,7 +657,7 @@ amgtar_selfcheck(
     if (gnutar_path) {
 	check_file(gnutar_path, X_OK);
     } else {
-	printf(_("ERROR [GNUTAR program not available]\n"));
+	printf("ERROR [GNUTAR program not available]\n");
     }
 
     set_root_privs(1);
@@ -666,7 +666,7 @@ amgtar_selfcheck(
     if (gnutar_listdir) {
 	check_dir(gnutar_listdir, R_OK|W_OK);
     } else {
-	printf(_("ERROR [No GNUTAR-LISTDIR]\n"));
+	printf("ERROR [No GNUTAR-LISTDIR]\n");
     }
 
     if (argument->dle.disk) {
@@ -714,15 +714,15 @@ amgtar_estimate(
 
     if (!argument->level) {
         fprintf(stderr, "ERROR No level argument\n");
-        error(_("No level argument"));
+        error("No level argument");
     }
     if (!argument->dle.disk) {
         fprintf(stderr, "ERROR No disk argument\n");
-        error(_("No disk argument"));
+        error("No disk argument");
     }
     if (!argument->dle.device) {
         fprintf(stderr, "ERROR No device argument\n");
-        error(_("No device argument"));
+        error("No device argument");
     }
 
     qdisk = quote_string(argument->dle.disk);
@@ -757,12 +757,12 @@ amgtar_estimate(
     }
 
     if (!gnutar_path) {
-	errmsg = g_strdup(_("GNUTAR-PATH not defined"));
+	errmsg = g_strdup("GNUTAR-PATH not defined");
 	goto common_error;
     }
 
     if (!gnutar_listdir) {
-	errmsg = g_strdup(_("GNUTAR-LISTDIR not defined"));
+	errmsg = g_strdup("GNUTAR-LISTDIR not defined");
 	goto common_error;
     }
 
@@ -776,7 +776,7 @@ amgtar_estimate(
 	start_time = curclock();
 
 	if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	    errmsg = g_strdup_printf(_("Cannot access /dev/null : %s"),
+	    errmsg = g_strdup_printf("Cannot access /dev/null : %s",
 				strerror(errno));
 	    goto common_exit;
 	}
@@ -787,7 +787,7 @@ amgtar_estimate(
 
 	dumpout = fdopen(pipefd,"r");
 	if (!dumpout) {
-	    error(_("Can't fdopen: %s"), strerror(errno));
+	    error("Can't fdopen: %s", strerror(errno));
 	    /*NOTREACHED*/
 	}
 
@@ -820,36 +820,36 @@ amgtar_estimate(
 	}
 
 	dbprintf(".....\n");
-	dbprintf(_("estimate time for %s level %d: %s\n"),
+	dbprintf("estimate time for %s level %d: %s\n",
 		 qdisk,
 		 level,
 		 walltime_str(timessub(curclock(), start_time)));
 	if(size == (off_t)-1) {
-	    errmsg = g_strdup_printf(_("no size line match in %s output"), cmd);
-	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
+	    errmsg = g_strdup_printf("no size line match in %s output", cmd);
+	    dbprintf("%s for %s\n", errmsg, qdisk);
 	    dbprintf(".....\n");
 	} else if(size == (off_t)0 && argument->level == 0) {
-	    dbprintf(_("possible %s problem -- is \"%s\" really empty?\n"),
+	    dbprintf("possible %s problem -- is \"%s\" really empty?\n",
 		     cmd, argument->dle.disk);
 	    dbprintf(".....\n");
 	}
-	dbprintf(_("estimate size for %s level %d: %lld KB\n"),
+	dbprintf("estimate size for %s level %d: %lld KB\n",
 		 qdisk,
 		 level,
 		 (long long)size);
 
 	kill(-tarpid, SIGTERM);
 
-	dbprintf(_("waiting for %s \"%s\" child\n"), cmd, qdisk);
+	dbprintf("waiting for %s \"%s\" child\n", cmd, qdisk);
 	waitpid(tarpid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
-	    char *err = g_strdup_printf(_("%s terminated with signal %d: see %s"),
+	    char *err = g_strdup_printf("%s terminated with signal %d: see %s",
 				   cmd, WTERMSIG(wait_status), dbfn());
 	    vstrextend(&errmsg, err, NULL);
 	    amfree(err);
 	} else if (WIFEXITED(wait_status)) {
 	    if (exit_value[WEXITSTATUS(wait_status)] == 1) {
-		char *err = g_strdup_printf(_("%s exited with status %d: see %s"),
+		char *err = g_strdup_printf("%s exited with status %d: see %s",
 				       cmd, WEXITSTATUS(wait_status), dbfn());
 		vstrextend(&errmsg, err, NULL);
 		amfree(err);
@@ -857,10 +857,10 @@ amgtar_estimate(
 		/* Normal exit */
 	    }
 	} else {
-	    errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
+	    errmsg = g_strdup_printf("%s got bad exit: see %s",
 				cmd, dbfn());
 	}
-	dbprintf(_("after %s %s wait\n"), cmd, qdisk);
+	dbprintf("after %s %s wait\n", cmd, qdisk);
 
 common_exit:
 	if (errmsg) {
@@ -929,27 +929,27 @@ amgtar_backup(
 
     mesgstream = fdopen(mesgf, "w");
     if (!mesgstream) {
-	error(_("error mesgstream(%d): %s\n"), mesgf, strerror(errno));
+	error("error mesgstream(%d): %s\n", mesgf, strerror(errno));
     }
 
     if (!gnutar_path) {
-	error(_("GNUTAR-PATH not defined"));
+	error("GNUTAR-PATH not defined");
     }
     if (!gnutar_listdir) {
-	error(_("GNUTAR-LISTDIR not defined"));
+	error("GNUTAR-LISTDIR not defined");
     }
 
     if (!argument->level) {
         fprintf(mesgstream, "? No level argument\n");
-        error(_("No level argument"));
+        error("No level argument");
     }
     if (!argument->dle.disk) {
         fprintf(mesgstream, "? No disk argument\n");
-        error(_("No disk argument"));
+        error("No disk argument");
     }
     if (!argument->dle.device) {
         fprintf(mesgstream, "? No device argument\n");
-        error(_("No device argument"));
+        error("No device argument");
     }
 
     qdisk = quote_string(argument->dle.disk);
@@ -970,12 +970,12 @@ amgtar_backup(
     if (argument->dle.create_index) {
 	indexstream = fdopen(indexf, "w");
 	if (!indexstream) {
-	    error(_("error indexstream(%d): %s\n"), indexf, strerror(errno));
+	    error("error indexstream(%d): %s\n", indexf, strerror(errno));
 	}
     }
     outstream = fdopen(outf, "r");
     if (!outstream) {
-	error(_("error outstream(%d): %s\n"), outf, strerror(errno));
+	error("error outstream(%d): %s\n", outf, strerror(errno));
     }
 
     while (fgets(line, sizeof(line), outstream) != NULL) {
@@ -1028,21 +1028,21 @@ amgtar_backup(
 
     waitpid(tarpid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
-	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
+	errmsg = g_strdup_printf("%s terminated with signal %d: see %s",
 			    cmd, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (exit_value[WEXITSTATUS(wait_status)] == 1) {
-	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
+	    errmsg = g_strdup_printf("%s exited with status %d: see %s",
 				cmd, WEXITSTATUS(wait_status), dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
-	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
+	errmsg = g_strdup_printf("%s got bad exit: see %s",
 			    cmd, dbfn());
     }
-    dbprintf(_("after %s %s wait\n"), cmd, qdisk);
-    dbprintf(_("amgtar: %s: pid %ld\n"), cmd, (long)tarpid);
+    dbprintf("after %s %s wait\n", cmd, qdisk);
+    dbprintf("amgtar: %s: pid %ld\n", cmd, (long)tarpid);
     if (errmsg) {
 	dbprintf("%s", errmsg);
 	g_fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
@@ -1053,9 +1053,9 @@ amgtar_backup(
 	nodotnew = g_strdup(incrname);
 	nodotnew[strlen(nodotnew)-4] = '\0';
 	if (rename(incrname, nodotnew)) {
-	    dbprintf(_("%s: warning [renaming %s to %s: %s]\n"),
+	    dbprintf("%s: warning [renaming %s to %s: %s]\n",
 		     get_pname(), incrname, nodotnew, strerror(errno));
-	    g_fprintf(mesgstream, _("? warning [renaming %s to %s: %s]\n"),
+	    g_fprintf(mesgstream, "? warning [renaming %s to %s: %s]\n",
 		      incrname, nodotnew, strerror(errno));
 	}
 	amfree(nodotnew);
@@ -1099,7 +1099,7 @@ amgtar_restore(
     int         tarpid;
 
     if (!gnutar_path) {
-	error(_("GNUTAR-PATH not defined"));
+	error("GNUTAR-PATH not defined");
     }
 
     cmd = g_strdup(gnutar_path);
@@ -1275,13 +1275,13 @@ amgtar_restore(
 
     tarpid = fork();
     switch (tarpid) {
-    case -1: error(_("%s: fork returned: %s"), get_pname(), strerror(errno));
+    case -1: error("%s: fork returned: %s", get_pname(), strerror(errno));
     case 0:
 	env = safe_env();
 	become_root();
 	execve(cmd, (char **)argv_ptr->pdata, env);
 	e = strerror(errno);
-	error(_("error [exec %s: %s]"), cmd, e);
+	error("error [exec %s: %s]", cmd, e);
 	break;
     default: break;
     }
@@ -1419,7 +1419,7 @@ amgtar_get_incrname(
 	    }
 	    if ((infd = open(inputname, O_RDONLY)) == -1) {
 
-		errmsg = g_strdup_printf(_("amgtar: error opening %s: %s"),
+		errmsg = g_strdup_printf("amgtar: error opening %s: %s",
 				     inputname, strerror(errno));
 		dbprintf("%s\n", errmsg);
 		if (baselevel < 0) {
@@ -1438,7 +1438,7 @@ amgtar_get_incrname(
 	 * Copy the previous listed incremental file to the new one.
 	 */
 	if ((outfd = open(incrname, O_WRONLY|O_CREAT, 0600)) == -1) {
-	    errmsg = g_strdup_printf(_("error opening %s: %s"),
+	    errmsg = g_strdup_printf("error opening %s: %s",
 			         incrname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
 	    if (command == CMD_ESTIMATE) {
@@ -1451,7 +1451,7 @@ amgtar_get_incrname(
 
 	while ((nb = read(infd, &buf, sizeof(buf))) > 0) {
 	    if (full_write(outfd, &buf, (size_t)nb) < (size_t)nb) {
-		errmsg = g_strdup_printf(_("writing to %s: %s"),
+		errmsg = g_strdup_printf("writing to %s: %s",
 				     incrname, strerror(errno));
 		dbprintf("%s\n", errmsg);
 		amfree(incrname);
@@ -1469,7 +1469,7 @@ amgtar_get_incrname(
 	}
 
 	if (nb < 0) {
-	    errmsg = g_strdup_printf(_("reading from %s: %s"),
+	    errmsg = g_strdup_printf("reading from %s: %s",
 			         inputname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
 	    amfree(incrname);
@@ -1486,7 +1486,7 @@ amgtar_get_incrname(
 	}
 
 	if (close(infd) != 0) {
-	    errmsg = g_strdup_printf(_("closing %s: %s"),
+	    errmsg = g_strdup_printf("closing %s: %s",
 			         inputname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
 	    amfree(incrname);
@@ -1502,7 +1502,7 @@ amgtar_get_incrname(
 	    exit(1);
 	}
 	if (close(outfd) != 0) {
-	    errmsg = g_strdup_printf(_("closing %s: %s"),
+	    errmsg = g_strdup_printf("closing %s: %s",
 			         incrname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
 	    amfree(incrname);
@@ -1521,7 +1521,7 @@ amgtar_get_incrname(
 	amfree(inputname);
 	amfree(basename);
     } else {
-	errmsg =  _("GNUTAR-LISTDIR is not defined");
+	errmsg =  "GNUTAR-LISTDIR is not defined";
 	dbprintf("%s\n", errmsg);
 	if (command == CMD_ESTIMATE) {
 		fprintf(mesgstream, "ERROR %s\n", errmsg);

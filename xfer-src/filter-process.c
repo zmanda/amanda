@@ -328,7 +328,7 @@ xfer_filter_process(
     xfp->argv = argv;
     xfp->need_root = need_root;
     if (pipe(xfp->pipe_err) < 0) {
-	g_critical(_("Can't create pipe: %s"), strerror(errno));
+	g_critical("Can't create pipe: %s", strerror(errno));
     }
     return elt;
 }

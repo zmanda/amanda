@@ -348,19 +348,19 @@ set_error_from_ndmp(
     switch (ndmp_connection_err_code(self->ndmp)) {
 	case NDMP9_NO_TAPE_LOADED_ERR:
 	    device_set_error(DEVICE(self),
-		    g_strdup(_("no tape loaded")),
+		    g_strdup("no tape loaded"),
 			    DEVICE_STATUS_VOLUME_MISSING);
 	    break;
 
 	case NDMP9_DEVICE_BUSY_ERR:
 	    device_set_error(DEVICE(self),
-		    g_strdup(_("device busy")),
+		    g_strdup("device busy"),
 			    DEVICE_STATUS_DEVICE_BUSY);
 	    break;
 
 	case NDMP9_IO_ERR:
 	    device_set_error(DEVICE(self),
-		    g_strdup(_("IO error")),
+		    g_strdup("IO error"),
 			    DEVICE_STATUS_VOLUME_UNLABELED |
 			    DEVICE_STATUS_VOLUME_ERROR |
 			    DEVICE_STATUS_DEVICE_ERROR);
@@ -495,13 +495,13 @@ ndmp_device_read_label(
 	switch (ndmp_connection_err_code(self->ndmp)) {
 	    case NDMP9_NO_TAPE_LOADED_ERR:
 		device_set_error(dself,
-			g_strdup(_("no tape loaded")),
+			g_strdup("no tape loaded"),
 				DEVICE_STATUS_VOLUME_MISSING);
 		goto read_err;
 
 	    case NDMP9_IO_ERR:
 		device_set_error(dself,
-			g_strdup(_("IO error reading tape label")),
+			g_strdup("IO error reading tape label"),
 				DEVICE_STATUS_VOLUME_UNLABELED |
 				DEVICE_STATUS_VOLUME_ERROR |
 				DEVICE_STATUS_DEVICE_ERROR);
@@ -510,7 +510,7 @@ ndmp_device_read_label(
 	    case NDMP9_EOM_ERR:
 	    case NDMP9_EOF_ERR:
 		device_set_error(dself,
-			g_strdup(_("no tape label found")),
+			g_strdup("no tape label found"),
 				DEVICE_STATUS_VOLUME_UNLABELED);
 		header = dself->volume_header = g_new(dumpfile_t, 1);
 		fh_init(header);
@@ -537,7 +537,7 @@ read_err:
     /* handle a "weird" label */
     if (header->type != F_TAPESTART) {
 	device_set_error(dself,
-		g_strdup(_("No tapestart header -- unlabeled device?")),
+		g_strdup("No tapestart header -- unlabeled device?"),
 			 DEVICE_STATUS_VOLUME_UNLABELED);
 	return dself->status;
     }
@@ -607,7 +607,7 @@ ndmp_device_start(
 	header_buf = device_build_amanda_header(dself, header, NULL);
 	if (header_buf == NULL) {
 	    device_set_error(dself,
-		g_strdup(_("Tapestart header won't fit in a single block!")),
+		g_strdup("Tapestart header won't fit in a single block!"),
 		DEVICE_STATUS_DEVICE_ERROR);
 	    dumpfile_free(header);
 	    return FALSE;
@@ -624,7 +624,7 @@ ndmp_device_start(
 		/* this would be an odd error to see writing the tape label, but
 		 * oh well */
 		device_set_error(dself,
-		    g_strdup(_("No space left on device")),
+		    g_strdup("No space left on device"),
 		    DEVICE_STATUS_VOLUME_ERROR);
 		dself->is_eom = TRUE;
 		/* fall through */
@@ -721,7 +721,7 @@ ndmp_device_start_file(
     header_buf = device_build_amanda_header(dself, header, NULL);
     if (header_buf == NULL) {
 	device_set_error(dself,
-	    g_strdup(_("Amanda file header won't fit in a single block!")),
+	    g_strdup("Amanda file header won't fit in a single block!"),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -738,7 +738,7 @@ ndmp_device_start_file(
 	    /* this would be an odd error to see writing the tape label, but
 	     * oh well */
 	    device_set_error(dself,
-		g_strdup(_("No space left on device")),
+		g_strdup("No space left on device"),
 		DEVICE_STATUS_VOLUME_ERROR);
 	    dself->is_eom = TRUE;
 	    /* fall through */
@@ -797,7 +797,7 @@ ndmp_device_write_block(
 	    /* this would be an odd error to see writing the tape label, but
 	     * oh well */
 	    device_set_error(dself,
-		g_strdup(_("No space left on device")),
+		g_strdup("No space left on device"),
 		DEVICE_STATUS_VOLUME_ERROR);
 	    dself->is_eom = TRUE;
 	    /* fall through */
@@ -904,7 +904,7 @@ incomplete_bsf:
 	/* if we didn't seek all the way there, then we're past the tapeend */
 	if (resid > 0) {
 	    device_set_error(dself,
-		g_strdup_printf(_("Could not seek forward to file %d"), file),
+		g_strdup_printf("Could not seek forward to file %d", file),
 		DEVICE_STATUS_VOLUME_ERROR);
 	    return NULL;
 	}

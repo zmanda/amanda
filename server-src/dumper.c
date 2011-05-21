@@ -358,11 +358,11 @@ main(
     config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
 
     if (!dumper_setuid) {
-	error(_("dumper must be run setuid root"));
+	error("dumper must be run setuid root");
     }
 
     if (config_errors(NULL) >= CFGERR_ERRORS) {
-	g_critical(_("errors processing config file"));
+	g_critical("errors processing config file");
     }
 
     safe_cd(); /* do this *after* config_init() */
@@ -376,7 +376,7 @@ main(
 
     log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
     g_fprintf(stderr,
-	    _("%s: pid %ld executable %s version %s\n"),
+	    "%s: pid %ld executable %s version %s\n",
 	    get_pname(), (long) getpid(),
 	    argv[0], VERSION);
     fflush(stderr);
@@ -398,7 +398,7 @@ main(
 	switch(cmdargs->cmd) {
 	case START:
 	    if(cmdargs->argc <  2)
-		error(_("error [dumper START: not enough args: timestamp]"));
+		error("error [dumper START: not enough args: timestamp]");
 	    dumper_timestamp = newstralloc(dumper_timestamp, cmdargs->argv[1]);
 	    break;
 
@@ -432,32 +432,32 @@ main(
 	    a = 1; /* skip "PORT-DUMP" */
 
 	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: handle]"));
+		error("error [dumper PORT-DUMP: not enough args: handle]");
 		/*NOTREACHED*/
 	    }
 	    handle = newstralloc(handle, cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: port]"));
+		error("error [dumper PORT-DUMP: not enough args: port]");
 		/*NOTREACHED*/
 	    }
 	    header_port = (in_port_t)atoi(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: hostname]"));
+		error("error [dumper PORT-DUMP: not enough args: hostname]");
 		/*NOTREACHED*/
 	    }
 	    hostname = newstralloc(hostname, cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: features]"));
+		error("error [dumper PORT-DUMP: not enough args: features]");
 		/*NOTREACHED*/
 	    }
 	    am_release_feature_set(their_features);
 	    their_features = am_string_to_feature(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: diskname]"));
+		error("error [dumper PORT-DUMP: not enough args: diskname]");
 		/*NOTREACHED*/
 	    }
 	    diskname = newstralloc(diskname, cmdargs->argv[a++]);
@@ -467,7 +467,7 @@ main(
 	    b64disk = amxml_format_tag("disk", diskname);
 
 	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: device]"));
+		error("error [dumper PORT-DUMP: not enough args: device]");
 		/*NOTREACHED*/
 	    }
 	    device = newstralloc(device, cmdargs->argv[a++]);
@@ -476,66 +476,66 @@ main(
 		amfree(device);
 
 	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: level]"));
+		error("error [dumper PORT-DUMP: not enough args: level]");
 		/*NOTREACHED*/
 	    }
 	    level = atoi(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: dumpdate]"));
+		error("error [dumper PORT-DUMP: not enough args: dumpdate]");
 		/*NOTREACHED*/
 	    }
 	    dumpdate = newstralloc(dumpdate, cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: program]"));
+		error("error [dumper PORT-DUMP: not enough args: program]");
 		/*NOTREACHED*/
 	    }
 	    progname = newstralloc(progname, cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: amandad_path]"));
+		error("error [dumper PORT-DUMP: not enough args: amandad_path]");
 		/*NOTREACHED*/
 	    }
 	    amandad_path = newstralloc(amandad_path, cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: client_username]"));
+		error("error [dumper PORT-DUMP: not enough args: client_username]");
 	    }
 	    client_username = newstralloc(client_username, cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: client_port]"));
+		error("error [dumper PORT-DUMP: not enough args: client_port]");
 	    }
 	    client_port = newstralloc(client_port, cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: ssh_keys]"));
+		error("error [dumper PORT-DUMP: not enough args: ssh_keys]");
 	    }
 	    ssh_keys = newstralloc(ssh_keys, cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: auth]"));
+		error("error [dumper PORT-DUMP: not enough args: auth]");
 	    }
 	    auth = newstralloc(auth, cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: data_path]"));
+		error("error [dumper PORT-DUMP: not enough args: data_path]");
 	    }
 	    data_path = data_path_from_string(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: dataport_list]"));
+		error("error [dumper PORT-DUMP: not enough args: dataport_list]");
 	    }
 	    dataport_list = newstralloc(dataport_list, cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: options]"));
+		error("error [dumper PORT-DUMP: not enough args: options]");
 	    }
 	    options = newstralloc(options, cmdargs->argv[a++]);
 
 	    if(a != cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: too many args: %d != %d]"),
+		error("error [dumper PORT-DUMP: too many args: %d != %d]",
 		      cmdargs->argc, a);
 	        /*NOTREACHED*/
 	    }
@@ -543,7 +543,7 @@ main(
 	    /* Double-check that 'localhost' resolves properly */
 	    if ((res = resolve_hostname("localhost", 0, NULL, NULL) != 0)) {
 		errstr = newvstrallocf(errstr,
-				     _("could not resolve localhost: %s"),
+				     "could not resolve localhost: %s",
 				     gai_strerror(res));
 		q = quote_string(errstr);
 		putresult(FAILED, "%s %s\n", handle, q);
@@ -555,12 +555,12 @@ main(
 
 	    /* connect outf to chunker/taper port */
 
-	    g_debug(_("Sending header to localhost:%d\n"), header_port);
+	    g_debug("Sending header to localhost:%d\n", header_port);
 	    outfd = stream_client("localhost", header_port,
 				  STREAM_BUFSIZE, 0, NULL, 0);
 	    if (outfd == -1) {
 		
-		errstr = newvstrallocf(errstr, _("port open: %s"),
+		errstr = newvstrallocf(errstr, "port open: %s",
 				      strerror(errno));
 		q = quote_string(errstr);
 		putresult(FAILED, "%s %s\n", handle, q);
@@ -624,7 +624,7 @@ main(
 	    if(cmdargs->argc >= 1) {
 		q = quote_string(cmdargs->argv[0]);
 	    } else {
-		q = g_strdup(_("(no input?)"));
+		q = g_strdup("(no input?)");
 	    }
 	    putresult(BAD_COMMAND, "%s\n", q);
 	    amfree(q);
@@ -728,7 +728,7 @@ databuf_flush(
     }
     if (written == 0) {
 	int save_errno = errno;
-	m = g_strdup_printf(_("data write: %s"), strerror(save_errno));
+	m = g_strdup_printf("data write: %s", strerror(save_errno));
 	amfree(errstr);
 	errstr = quote_string(m);
 	amfree(m);
@@ -755,20 +755,20 @@ process_dumpeof(void)
     if(!ISSET(status, GOT_SIZELINE) && dump_result < 2) {
 	/* make a note if there isn't already a failure */
 	g_fprintf(errf,
-		_("? %s: strange [missing size line from sendbackup]\n"),
+		"? %s: strange [missing size line from sendbackup]\n",
 		get_pname());
 	if(errstr == NULL) {
-	    errstr = g_strdup(_("missing size line from sendbackup"));
+	    errstr = g_strdup("missing size line from sendbackup");
 	}
 	dump_result = max(dump_result, 2);
     }
 
     if(!ISSET(status, GOT_ENDLINE) && dump_result < 2) {
 	g_fprintf(errf,
-		_("? %s: strange [missing end line from sendbackup]\n"),
+		"? %s: strange [missing end line from sendbackup]\n",
 		get_pname());
 	if(errstr == NULL) {
-	    errstr = g_strdup(_("missing end line from sendbackup"));
+	    errstr = g_strdup("missing end line from sendbackup");
 	}
 	dump_result = max(dump_result, 2);
     }
@@ -884,7 +884,7 @@ process_dumpline(
 	    tok = strtok(NULL, "");
 	    if (!errstr) { /* report first error line */
 		if (tok == NULL || *tok != '[') {
-		    errstr = newvstrallocf(errstr, _("bad remote error: %s"),
+		    errstr = newvstrallocf(errstr, "bad remote error: %s",
 					   str);
 		} else {
 		    char *enderr;
@@ -937,9 +937,9 @@ add_msg_data(
     if (str == NULL) {
 	if (buflen == 0)
 	    return;
-	g_fprintf(errf,_("? %s: error [partial line in msgbuf: %zu bytes]\n"),
+	g_fprintf(errf,"? %s: error [partial line in msgbuf: %zu bytes]\n",
 	    get_pname(), buflen);
-	g_fprintf(errf,_("? %s: error [partial line in msgbuf: \"%s\"]\n"),
+	g_fprintf(errf,"? %s: error [partial line in msgbuf: \"%s\"]\n",
 	    get_pname(), msg.buf);
 	msg.buf[0] = '\0';
 	return;
@@ -1010,7 +1010,7 @@ log_msgout(
 
     fflush(errf);
     if (fseeko(errf, 0L, SEEK_SET) < 0) {
-	dbprintf(_("log_msgout: warning - seek failed: %s\n"), strerror(errno));
+	dbprintf("log_msgout: warning - seek failed: %s\n", strerror(errno));
     }
     while ((line = agets(errf)) != NULL) {
 	if (errf_lines >= 100 && count >= 20)
@@ -1156,7 +1156,7 @@ write_tapeheader(
 	dump_dumpfile_t(file);
     buffer = build_header(file, NULL, DISK_BLOCK_BYTES);
     if (!buffer) /* this shouldn't happen */
-	error(_("header does not fit in %zd bytes"), (size_t)DISK_BLOCK_BYTES);
+	error("header does not fit in %zd bytes", (size_t)DISK_BLOCK_BYTES);
 
     written = full_write(outfd, buffer, DISK_BLOCK_BYTES);
     amfree(buffer);
@@ -1223,7 +1223,7 @@ do_dump(
 
 	if (mkpdir(indexfile_tmp, 0755, (uid_t)-1, (gid_t)-1) == -1) {
 	   errstr = newvstrallocf(errstr,
-				 _("err create %s: %s"),
+				 "err create %s: %s",
 				 indexfile_tmp,
 				 strerror(errno));
 	   amfree(indexfile_real);
@@ -1232,7 +1232,7 @@ do_dump(
 	}
 	indexout = open(indexfile_tmp, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 	if (indexout == -1) {
-	    errstr = newvstrallocf(errstr, _("err open %s: %s"),
+	    errstr = newvstrallocf(errstr, "err open %s: %s",
 			indexfile_tmp, strerror(errno));
 	    goto failed;
 	} else {
@@ -1268,14 +1268,14 @@ do_dump(
 
     if (!ISSET(status, HEADER_DONE)) {
 	dump_result = max(dump_result, 2);
-	if (!errstr) errstr = g_strdup(_("got no header information"));
+	if (!errstr) errstr = g_strdup("got no header information");
     }
 
     dumpsize -= headersize;		/* don't count the header */
     if (dumpsize <= (off_t)0 && data_path == DATA_PATH_AMANDA) {
 	dumpsize = (off_t)0;
 	dump_result = max(dump_result, 2);
-	if (!errstr) errstr = g_strdup(_("got no data"));
+	if (!errstr) errstr = g_strdup("got no data");
     }
 
     if (data_path == DATA_PATH_DIRECTTCP) {
@@ -1284,12 +1284,12 @@ do_dump(
 
     if (!ISSET(status, HEADER_DONE)) {
 	dump_result = max(dump_result, 2);
-	if (!errstr) errstr = g_strdup(_("got no header information"));
+	if (!errstr) errstr = g_strdup("got no header information");
     }
 
     if (dumpsize == 0 && data_path == DATA_PATH_AMANDA) {
 	dump_result = max(dump_result, 2);
-	if (!errstr) errstr = g_strdup(_("got no data"));
+	if (!errstr) errstr = g_strdup("got no data");
     }
 
     if (dump_result > 1)
@@ -1300,7 +1300,7 @@ do_dump(
 
     amfree(errstr);
     errstr = g_malloc(128);
-    g_snprintf(errstr, 128, _("sec %s kb %lld kps %3.1lf orig-kb %lld"),
+    g_snprintf(errstr, 128, "sec %s kb %lld kps %3.1lf orig-kb %lld",
 	walltime_str(runtime),
 	(long long)dumpsize,
 	(isnormal(dumptime) ? ((double)dumpsize / (double)dumptime) : 0.0),
@@ -1308,7 +1308,7 @@ do_dump(
     m = g_strdup_printf("[%s]", errstr);
     q = quote_string(m);
     amfree(m);
-    putresult(DONE, _("%s %lld %lld %lu %s\n"), handle,
+    putresult(DONE, "%s %lld %lld %lu %s\n", handle,
 		(long long)origsize,
 		(long long)dumpsize,
 	        (unsigned long)((double)dumptime+0.5), q);
@@ -1347,7 +1347,7 @@ do_dump(
 	waitpid(indexpid,&index_status,0);
 	log_add(L_INFO, "pid-done %ld", (long)indexpid);
 	if (rename(indexfile_tmp, indexfile_real) != 0) {
-	    log_add(L_WARNING, _("could not rename \"%s\" to \"%s\": %s"),
+	    log_add(L_WARNING, "could not rename \"%s\" to \"%s\": %s",
 		    indexfile_tmp, indexfile_real, strerror(errno));
 	}
 	amfree(indexfile_tmp);
@@ -1378,10 +1378,10 @@ failed:
     aclose(db->fd);
     /* kill all child process */
     if (db->compresspid != -1) {
-	g_fprintf(stderr,_("%s: kill compress command\n"),get_pname());
+	g_fprintf(stderr,"%s: kill compress command\n",get_pname());
 	if (kill(db->compresspid, SIGTERM) < 0) {
 	    if (errno != ESRCH) {
-		g_fprintf(stderr,_("%s: can't kill compress command: %s\n"), 
+		g_fprintf(stderr,"%s: can't kill compress command: %s\n", 
 		    get_pname(), strerror(errno));
 	    } else {
 		log_add(L_INFO, "pid-done %ld", (long)db->compresspid);
@@ -1394,10 +1394,10 @@ failed:
     }
 
     if (db->encryptpid != -1) {
-	g_fprintf(stderr,_("%s: kill encrypt command\n"),get_pname());
+	g_fprintf(stderr,"%s: kill encrypt command\n",get_pname());
 	if (kill(db->encryptpid, SIGTERM) < 0) {
 	    if (errno != ESRCH) {
-		g_fprintf(stderr,_("%s: can't kill encrypt command: %s\n"), 
+		g_fprintf(stderr,"%s: can't kill encrypt command: %s\n", 
 		    get_pname(), strerror(errno));
 	    } else {
 		log_add(L_INFO, "pid-done %ld", (long)db->encryptpid);
@@ -1410,10 +1410,10 @@ failed:
     }
 
     if (indexpid != -1) {
-	g_fprintf(stderr,_("%s: kill index command\n"),get_pname());
+	g_fprintf(stderr,"%s: kill index command\n",get_pname());
 	if (kill(indexpid, SIGTERM) < 0) {
 	    if (errno != ESRCH) {
-		g_fprintf(stderr,_("%s: can't kill index command: %s\n"), 
+		g_fprintf(stderr,"%s: can't kill index command: %s\n", 
 		    get_pname(),strerror(errno));
 	    } else {
 		log_add(L_INFO, "pid-done %ld", (long)indexpid);
@@ -1426,7 +1426,7 @@ failed:
     }
 
     log_start_multiline();
-    log_add(L_FAIL, _("%s %s %s %d [%s]"), hostname, qdiskname, dumper_timestamp,
+    log_add(L_FAIL, "%s %s %s %d [%s]", hostname, qdiskname, dumper_timestamp,
 	    level, errstr);
     if (errf) {
 	to_unlink = log_msgout(L_FAIL);
@@ -1465,7 +1465,7 @@ read_mesgfd(
 
     switch (size) {
     case -1:
-	errstr = newvstrallocf(errstr, _("mesg read: %s"),
+	errstr = newvstrallocf(errstr, "mesg read: %s",
 	    security_stream_geterror(streams[MESGFD].fd));
 	dump_result = 2;
 	stop_dump();
@@ -1503,7 +1503,7 @@ read_mesgfd(
 	if (s) *s = '\0';  /* use first data_port */
 	s = strrchr(dataport_list, ':');
 	if (!s) {
-	    errstr = newvstrallocf(errstr, _("write_tapeheader: no dataport_list"));
+	    errstr = newvstrallocf(errstr, "write_tapeheader: no dataport_list");
 	    dump_result = 2;
 	    stop_dump();
 	    return;
@@ -1516,7 +1516,7 @@ read_mesgfd(
 	/* time to do the header */
 	finish_tapeheader(&file);
 	if (write_tapeheader(db->fd, &file)) {
-	    errstr = newvstrallocf(errstr, _("write_tapeheader: %s"),
+	    errstr = newvstrallocf(errstr, "write_tapeheader: %s",
 				  strerror(errno));
 	    dump_result = 2;
 	    stop_dump();
@@ -1526,12 +1526,12 @@ read_mesgfd(
 	dumpfile_free_data(&file);
 	aclose(db->fd);
 	if (data_path == DATA_PATH_AMANDA) {
-	    g_debug(_("Sending data to %s:%d\n"), data_host, data_port);
+	    g_debug("Sending data to %s:%d\n", data_host, data_port);
 	    db->fd = stream_client(data_host, data_port,
 				   STREAM_BUFSIZE, 0, NULL, 0);
 	    if (db->fd == -1) {
 		errstr = newvstrallocf(errstr,
-				       _("Can't open data output stream: %s"),
+				       "Can't open data output stream: %s",
 				       strerror(errno));
 		dump_result = 2;
 		stop_dump();
@@ -1589,7 +1589,7 @@ read_datafd(
      * The read failed.  Error out
      */
     if (size < 0) {
-	errstr = newvstrallocf(errstr, _("data read: %s"),
+	errstr = newvstrallocf(errstr, "data read: %s",
 	    security_stream_geterror(streams[DATAFD].fd));
 	dump_result = 2;
 	aclose(db->fd);
@@ -1626,7 +1626,7 @@ read_datafd(
     assert(buf != NULL);
     if (databuf_write(db, buf, (size_t)size) < 0) {
 	int save_errno = errno;
-	errstr = newvstrallocf(errstr, _("data write: %s"), strerror(save_errno));
+	errstr = newvstrallocf(errstr, "data write: %s", strerror(save_errno));
 	dump_result = 2;
 	stop_dump();
 	return;
@@ -1655,7 +1655,7 @@ read_indexfd(
     fd = *(int *)cookie;
 
     if (size < 0) {
-	errstr = newvstrallocf(errstr, _("index read: %s"),
+	errstr = newvstrallocf(errstr, "index read: %s",
 	    security_stream_geterror(streams[INDEXFD].fd));
 	dump_result = 2;
 	stop_dump();
@@ -1687,7 +1687,7 @@ read_indexfd(
 	/* Ignore error, but schedule another read. */
 	if(indexfderror == 0) {
 	    indexfderror = 1;
-	    log_add(L_INFO, _("Index corrupted for %s:%s"), hostname, qdiskname);
+	    log_add(L_INFO, "Index corrupted for %s:%s", hostname, qdiskname);
 	}
     }
     security_stream_read(streams[INDEXFD].fd, read_indexfd, cookie);
@@ -1746,7 +1746,7 @@ handle_filter_stderr(
     while (b < filter->buffer + filter->first + filter->size &&
 	   (p = strchr(b, '\n')) != NULL) {
 	*p = '\0';
-	g_fprintf(errf, _("? %s: %s\n"), filter->name, b);
+	g_fprintf(errf, "? %s: %s\n", filter->name, b);
 	if (errstr == NULL) {
 	    errstr = g_strdup(b);
 	}
@@ -1801,7 +1801,7 @@ timeout_callback(
     (void)unused;	/* Quiet unused parameter warning */
 
     assert(unused == NULL);
-    errstr = newstralloc(errstr, _("data timeout"));
+    errstr = newstralloc(errstr, "data timeout");
     dump_result = 2;
     stop_dump();
 }
@@ -1820,7 +1820,7 @@ stop_dump(void)
     cmdargs = get_pending_cmd();
     if (cmdargs) {
 	if (cmdargs->cmd != ABORT) {
-	    error(_("beurk %d"), cmdargs->cmd);
+	    error("beurk %d", cmdargs->cmd);
 	}
 	amfree(errstr);
 	errstr = g_strdup(cmdargs->argv[1]);
@@ -1860,19 +1860,19 @@ runcompress(
 
     /* outpipe[0] is pipe's stdin, outpipe[1] is stdout. */
     if (pipe(outpipe) < 0) {
-	errstr = newvstrallocf(errstr, _("pipe: %s"), strerror(errno));
+	errstr = newvstrallocf(errstr, "pipe: %s", strerror(errno));
 	return (-1);
     }
 
     /* errpipe[0] is pipe's output, outpipe[1] is input. */
     if (pipe(errpipe) < 0) {
-	errstr = newvstrallocf(errstr, _("pipe: %s"), strerror(errno));
+	errstr = newvstrallocf(errstr, "pipe: %s", strerror(errno));
 	return (-1);
     }
 
     switch (*pid = fork()) {
     case -1:
-	errstr = newvstrallocf(errstr, _("couldn't fork: %s"), strerror(errno));
+	errstr = newvstrallocf(errstr, "couldn't fork: %s", strerror(errno));
 	aclose(outpipe[0]);
 	aclose(outpipe[1]);
 	aclose(errpipe[0]);
@@ -1881,7 +1881,7 @@ runcompress(
     default:
 	rval = dup2(outpipe[1], outfd);
 	if (rval < 0)
-	    errstr = newvstrallocf(errstr, _("couldn't dup2: %s"), strerror(errno));
+	    errstr = newvstrallocf(errstr, "couldn't dup2: %s", strerror(errno));
 	aclose(outpipe[1]);
 	aclose(outpipe[0]);
 	aclose(errpipe[1]);
@@ -1899,15 +1899,15 @@ g_debug("event register %s %d", name, filter->fd);
 	close(outpipe[1]);
 	close(errpipe[0]);
 	if (dup2(outpipe[0], 0) < 0) {
-	    error(_("err dup2 in: %s"), strerror(errno));
+	    error("err dup2 in: %s", strerror(errno));
 	    /*NOTREACHED*/
 	}
 	if (dup2(outfd, 1) == -1) {
-	    error(_("err dup2 out: %s"), strerror(errno));
+	    error("err dup2 out: %s", strerror(errno));
 	    /*NOTREACHED*/
 	}
 	if (dup2(errpipe[1], 2) == -1) {
-	    error(_("err dup2 err: %s"), strerror(errno));
+	    error("err dup2 err: %s", strerror(errno));
 	    /*NOTREACHED*/
 	}
 	if (comptype != COMP_SERVER_CUST) {
@@ -1918,7 +1918,7 @@ g_debug("event register %s %d", name, filter->fd);
 	    set_root_privs(-1);
 	    execlp(COMPRESS_PATH, COMPRESS_PATH, (  comptype == COMP_BEST ?
 		COMPRESS_BEST_OPT : COMPRESS_FAST_OPT), (char *)NULL);
-	    error(_("error: couldn't exec %s: %s"), COMPRESS_PATH, strerror(errno));
+	    error("error: couldn't exec %s: %s", COMPRESS_PATH, strerror(errno));
 	    /*NOTREACHED*/
 	} else if (*srvcompprog) {
 	    char *base = g_strdup(srvcompprog);
@@ -1927,7 +1927,7 @@ g_debug("event register %s %d", name, filter->fd);
 	    safe_fd(-1, 0);
 	    set_root_privs(-1);
 	    execlp(srvcompprog, srvcompprog, (char *)0);
-	    error(_("error: couldn't exec server custom compression '%s'.\n"), srvcompprog);
+	    error("error: couldn't exec server custom compression '%s'.\n", srvcompprog);
 	    /*NOTREACHED*/
 	}
     }
@@ -1956,19 +1956,19 @@ runencrypt(
 
     /* outpipe[0] is pipe's stdin, outpipe[1] is stdout. */
     if (pipe(outpipe) < 0) {
-	errstr = newvstrallocf(errstr, _("pipe: %s"), strerror(errno));
+	errstr = newvstrallocf(errstr, "pipe: %s", strerror(errno));
 	return (-1);
     }
 
     /* errpipe[0] is pipe's output, outpipe[1] is input. */
     if (pipe(errpipe) < 0) {
-	errstr = newvstrallocf(errstr, _("pipe: %s"), strerror(errno));
+	errstr = newvstrallocf(errstr, "pipe: %s", strerror(errno));
 	return (-1);
     }
 
     switch (*pid = fork()) {
     case -1:
-	errstr = newvstrallocf(errstr, _("couldn't fork: %s"), strerror(errno));
+	errstr = newvstrallocf(errstr, "couldn't fork: %s", strerror(errno));
 	aclose(outpipe[0]);
 	aclose(outpipe[1]);
 	aclose(errpipe[0]);
@@ -1977,7 +1977,7 @@ runencrypt(
     default:
 	rval = dup2(outpipe[1], outfd);
 	if (rval < 0)
-	    errstr = newvstrallocf(errstr, _("couldn't dup2: %s"), strerror(errno));
+	    errstr = newvstrallocf(errstr, "couldn't dup2: %s", strerror(errno));
 	aclose(outpipe[1]);
 	aclose(outpipe[0]);
 	aclose(errpipe[1]);
@@ -1994,15 +1994,15 @@ g_debug("event register %s %d", "encrypt data", filter->fd);
     case 0: {
 	char *base;
 	if (dup2(outpipe[0], 0) < 0) {
-	    error(_("err dup2 in: %s"), strerror(errno));
+	    error("err dup2 in: %s", strerror(errno));
 	    /*NOTREACHED*/
 	}
 	if (dup2(outfd, 1) < 0 ) {
-	    error(_("err dup2 out: %s"), strerror(errno));
+	    error("err dup2 out: %s", strerror(errno));
 	    /*NOTREACHED*/
 	}
 	if (dup2(errpipe[1], 2) == -1) {
-	    error(_("err dup2 err: %s"), strerror(errno));
+	    error("err dup2 err: %s", strerror(errno));
 	    /*NOTREACHED*/
 	}
 	close(errpipe[0]);
@@ -2013,7 +2013,7 @@ g_debug("event register %s %d", "encrypt data", filter->fd);
 	if ((encrypttype == ENCRYPT_SERV_CUST) && *srv_encrypt) {
 	    set_root_privs(-1);
 	    execlp(srv_encrypt, srv_encrypt, (char *)0);
-	    error(_("error: couldn't exec server custom encryption '%s'.\n"), srv_encrypt);
+	    error("error: couldn't exec server custom encryption '%s'.\n", srv_encrypt);
 	    /*NOTREACHED*/
 	}
 	}
@@ -2043,7 +2043,7 @@ sendbackup_response(
     security_close_connection(sech, hostname);
 
     if (pkt == NULL) {
-	errstr = newvstrallocf(errstr, _("[request failed: %s]"),
+	errstr = newvstrallocf(errstr, "[request failed: %s]",
 	    security_geterror(sech));
 	*response_error = 1;
 	return;
@@ -2053,7 +2053,7 @@ sendbackup_response(
     memset(ports, 0, sizeof(ports));
     if (pkt->type == P_NAK) {
 #if defined(PACKET_DEBUG)
-	g_fprintf(stderr, _("got nak response:\n----\n%s\n----\n\n"), pkt->body);
+	g_fprintf(stderr, "got nak response:\n----\n%s\n----\n\n", pkt->body);
 #endif
 
 	tok = strtok(pkt->body, " ");
@@ -2073,13 +2073,13 @@ bad_nak:
     }
 
     if (pkt->type != P_REP) {
-	errstr = newvstrallocf(errstr, _("received strange packet type %s: %s"),
+	errstr = newvstrallocf(errstr, "received strange packet type %s: %s",
 	    pkt_type2str(pkt->type), pkt->body);
 	*response_error = 1;
 	return;
     }
 
-    dbprintf(_("got response:\n----\n%s\n----\n\n"), pkt->body);
+    dbprintf("got response:\n----\n%s\n----\n\n", pkt->body);
 
     for(i = 0; i < NSTREAMS; i++) {
 	ports[i] = -1;
@@ -2097,7 +2097,7 @@ bad_nak:
 	if (strcmp(tok, "ERROR") == 0) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL)
-		tok = _("[bogus error packet]");
+		tok = "[bogus error packet]";
 	    errstr = newvstrallocf(errstr, "%s", tok);
 	    *response_error = 2;
 	    return;
@@ -2115,7 +2115,7 @@ bad_nak:
 		tok = strtok(NULL, " ");
 		if (tok == NULL || strcmp(tok, streams[i].name) != 0) {
 		    extra = g_strdup_printf(
-				_("CONNECT token is \"%s\": expected \"%s\""),
+				"CONNECT token is \"%s\": expected \"%s\"",
 				tok ? tok : "(null)",
 				streams[i].name);
 		    goto parse_error;
@@ -2123,7 +2123,7 @@ bad_nak:
 		tok = strtok(NULL, " \n");
 		if (tok == NULL || sscanf(tok, "%d", &ports[i]) != 1) {
 		    extra = g_strdup_printf(
-			_("CONNECT %s token is \"%s\": expected a port number"),
+			"CONNECT %s token is \"%s\": expected a port number",
 			streams[i].name, tok ? tok : "(null)");
 		    goto parse_error;
 		}
@@ -2137,7 +2137,7 @@ bad_nak:
 	if (strcmp(tok, "OPTIONS") == 0) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL) {
-		extra = g_strdup(_("OPTIONS token is missing"));
+		extra = g_strdup("OPTIONS token is missing");
 		goto parse_error;
 	    }
 
@@ -2151,7 +2151,7 @@ bad_nak:
 		    am_release_feature_set(their_features);
 		    if((their_features = am_string_to_feature(tok)) == NULL) {
 			errstr = newvstrallocf(errstr,
-					      _("OPTIONS: bad features value: %s"),
+					      "OPTIONS: bad features value: %s",
 					      tok);
 			goto parse_error;
 		    }
@@ -2163,7 +2163,7 @@ bad_nak:
 	    continue;
 	}
 
-	extra = g_strdup_printf(_("next token is \"%s\": expected \"CONNECT\", \"ERROR\" or \"OPTIONS\""),
+	extra = g_strdup_printf("next token is \"%s\": expected \"CONNECT\", \"ERROR\" or \"OPTIONS\"",
 			  tok ? tok : "(null)");
 	goto parse_error;
     }
@@ -2180,7 +2180,7 @@ bad_nak:
 	streams[i].fd = security_stream_client(sech, ports[i]);
 	if (streams[i].fd == NULL) {
 	    errstr = newvstrallocf(errstr,
-		_("[could not connect %s stream: %s]"),
+		"[could not connect %s stream: %s]",
 		streams[i].name,
 		security_geterror(sech));
 	    goto connect_error;
@@ -2195,7 +2195,7 @@ bad_nak:
 	    continue;
 	if (security_stream_auth(streams[i].fd) < 0) {
 	    errstr = newvstrallocf(errstr,
-		_("[could not authenticate %s stream: %s]"),
+		"[could not authenticate %s stream: %s]",
 		streams[i].name, 
 		security_stream_geterror(streams[i].fd));
 	    goto connect_error;
@@ -2207,7 +2207,7 @@ bad_nak:
      * them, complain.
      */
     if (streams[MESGFD].fd == NULL || streams[DATAFD].fd == NULL) {
-	errstr = newvstrallocf(errstr, _("[couldn't open MESG or INDEX streams]"));
+	errstr = newvstrallocf(errstr, "[couldn't open MESG or INDEX streams]");
 	goto connect_error;
     }
 
@@ -2217,8 +2217,8 @@ bad_nak:
 
 parse_error:
     errstr = newvstrallocf(errstr,
-			  _("[parse of reply message failed: %s]"),
-			  extra ? extra : _("(no additional information)"));
+			  "[parse of reply message failed: %s]",
+			  extra ? extra : "(no additional information)");
     amfree(extra);
     *response_error = 2;
     return;
@@ -2348,7 +2348,7 @@ startup_dump(
 	dle_str = p;
     } else if (*application_api != '\0') {
 	errstr = newvstrallocf(errstr,
-		_("[does not support application-api]"));
+		"[does not support application-api]");
 	amfree(req);
 	return 2;
     } else {
@@ -2367,11 +2367,11 @@ startup_dump(
 		   NULL);
     }
 
-    dbprintf(_("send request:\n----\n%s\n----\n\n"), req);
+    dbprintf("send request:\n----\n%s\n----\n\n", req);
     secdrv = security_getdriver(auth);
     if (secdrv == NULL) {
 	errstr = newvstrallocf(errstr,
-		_("[could not find security driver '%s']"), auth);
+		"[could not find security driver '%s']", auth);
 	amfree(req);
 	return 2;
     }

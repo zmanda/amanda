@@ -149,9 +149,9 @@ start_backup(
     g_snprintf(level_str, sizeof(level_str), "%d", level);
 
     qdisk = quote_string(dle->disk);
-    dbprintf(_("start: %s:%s lev %d\n"), host, qdisk, level);
+    dbprintf("start: %s:%s lev %d\n", host, qdisk, level);
 
-    g_fprintf(stderr, _("%s: start [%s:%s level %d]\n"),
+    g_fprintf(stderr, "%s: start [%s:%s level %d]\n",
 	    get_pname(), host, qdisk, level);
     amfree(qdisk);
 
@@ -160,7 +160,7 @@ start_backup(
         encpid = pipespawn(dle->clnt_encrypt, STDIN_PIPE, 0,
 	                   &compout, &dataf, &mesgf,
 	                   dle->clnt_encrypt, encryptopt, NULL);
-        dbprintf(_("gnutar: pid %ld: %s\n"), (long)encpid, dle->clnt_encrypt);
+        dbprintf("gnutar: pid %ld: %s\n", (long)encpid, dle->clnt_encrypt);
     } else {
         compout = dataf;
         encpid = -1;
@@ -181,7 +181,7 @@ start_backup(
 	comppid = pipespawn(COMPRESS_PATH, STDIN_PIPE, 0,
 			    &dumpout, &compout, &mesgf,
 			    COMPRESS_PATH, compopt, NULL);
-	dbprintf(_("dump: pid %ld: %s"), (long)comppid, COMPRESS_PATH);
+	dbprintf("dump: pid %ld: %s", (long)comppid, COMPRESS_PATH);
 	if(compopt != skip_argument) {
 	    dbprintf(" %s", compopt);
 	}
@@ -191,7 +191,7 @@ start_backup(
 	comppid = pipespawn(dle->compprog, STDIN_PIPE, 0,
 			    &dumpout, &compout, &mesgf,
 			    dle->compprog, compopt, NULL);
-	dbprintf(_("gnutar-cust: pid %ld: %s"),
+	dbprintf("gnutar-cust: pid %ld: %s",
 		(long)comppid, dle->compprog);
 	if(compopt != skip_argument) {
 	    dbprintf(" %s", compopt);
@@ -206,7 +206,7 @@ start_backup(
     device = amname_to_devname(dle->device);
     fstype = amname_to_fstype(dle->device);
 
-    dbprintf(_("dumping device '%s' with '%s'\n"), device, fstype);
+    dbprintf("dumping device '%s' with '%s'\n", device, fstype);
 
 #if defined(USE_RUNDUMP) || !defined(DUMP)
     cmd = g_strjoin(NULL, amlibexecdir, "/", "rundump", NULL);

@@ -380,7 +380,7 @@ am_feature_to_string(
     size_t			i;
 
     if (f == NULL) {
-	result = g_strdup(_("UNKNOWNFEATURE"));
+	result = g_strdup("UNKNOWNFEATURE");
     } else {
 	result = g_malloc((f->size * 2) + 1);
 	for (i = 0; i < f->size; i++) {
