@@ -69,12 +69,15 @@ hexstr(guint8 *p, int len)
     int i;
 
     for (i = 0; i < len; i++) {
-	if (result)
-	    result = newvstrallocf(result, "%s %02x", result, (guint)(*(p++)));
+	if (result) {
+	    g_free(result);
+	    result = g_strdup_printf("%s %02x", result, (guint)(*(p++)));
+	}
 	else
 	    result = g_strdup_printf("[%02x", (guint)(*(p++)));
     }
-    result = newvstrallocf(result, "%s]", result);
+    g_free(result);
+    result = g_strdup_printf("%s]", result);
 
     return result;
 }

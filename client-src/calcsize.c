@@ -424,9 +424,11 @@ traverse_dirs(
 
 	l = strlen(dirname);
 	if(l > 0 && dirname[l - 1] != '/') {
-	    newbase = newstralloc2(newbase, dirname, "/");
+	    g_free(newbase);
+	    newbase = stralloc2(dirname, "/");
 	} else {
-	    newbase = newstralloc(newbase, dirname);
+	    g_free(newbase);
+	    newbase = g_strdup(dirname);
 	}
 
 	while((f = readdir(d)) != NULL) {
@@ -437,7 +439,8 @@ traverse_dirs(
 		continue;
 	    }
 
-	    newname = newstralloc2(newname, newbase, f->d_name);
+	    g_free(newname);
+	    newname = stralloc2(newbase, f->d_name);
 	    if(lstat(newname, &finfo) == -1) {
 		g_fprintf(stderr, "%s/%s: %s\n",
 			dirname, f->d_name, strerror(errno));

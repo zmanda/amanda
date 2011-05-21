@@ -219,13 +219,15 @@ runlocal(
     memset(rpipe, -1, sizeof(rpipe));
     memset(wpipe, -1, sizeof(wpipe));
     if (pipe(rpipe) < 0 || pipe(wpipe) < 0) {
-	rc->errmsg = newvstrallocf(rc->errmsg, "pipe: %s", strerror(errno));
+	g_free(rc->errmsg);
+	rc->errmsg = g_strdup_printf("pipe: %s", strerror(errno));
 	return (-1);
     }
 
     switch (rc->pid = fork()) {
     case -1:
-	rc->errmsg = newvstrallocf(rc->errmsg, "fork: %s", strerror(errno));
+	g_free(rc->errmsg);
+	rc->errmsg = g_strdup_printf("fork: %s", strerror(errno));
 	aclose(rpipe[0]);
 	aclose(rpipe[1]);
 	aclose(wpipe[0]);

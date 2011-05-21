@@ -3432,7 +3432,8 @@ read_str(
 {
     ckseen(&val->seen);
     get_conftoken(CONF_STRING);
-    val->v.s = newstralloc(val->v.s, tokenval.v.s);
+    g_free(val->v.s);
+    val->v.s = g_strdup(tokenval.v.s);
 }
 
 static void
@@ -3442,7 +3443,8 @@ read_ident(
 {
     ckseen(&val->seen);
     get_conftoken(CONF_IDENT);
-    val->v.s = newstralloc(val->v.s, tokenval.v.s);
+    g_free(val->v.s);
+    val->v.s = g_strdup(tokenval.v.s);
 }
 
 static void
@@ -4151,7 +4153,8 @@ read_int_or_str(
 	break;
 
     case CONF_STRING:
-	val->v.s = newstralloc(val->v.s, tokenval.v.s);
+	g_free(val->v.s);
+	val->v.s = g_strdup(tokenval.v.s);
 	break;
     default:
 	conf_parserror("CLIENT or SERVER expected");
@@ -4169,8 +4172,8 @@ read_autolabel(
     get_conftoken(CONF_ANY);
     if (tok == CONF_STRING) {
 	data++;
-	val->v.autolabel.template = newstralloc(val->v.autolabel.template,
-						tokenval.v.s);
+	g_free(val->v.autolabel.template);
+	val->v.autolabel.template = g_strdup(tokenval.v.s);
 	get_conftoken(CONF_ANY);
     }
     val->v.autolabel.autolabel = 0;
@@ -5081,8 +5084,10 @@ config_init(
     }
 
     if ((flags & CONFIG_INIT_EXPLICIT_NAME) && arg_config_name) {
-	config_name = newstralloc(config_name, arg_config_name);
-	config_dir = newvstralloc(config_dir, CONFIG_DIR, "/", arg_config_name, NULL);
+	g_free(config_name);
+	config_name = g_strdup(arg_config_name);
+	g_free(config_dir);
+	config_dir = g_strjoin(NULL, CONFIG_DIR, "/", arg_config_name, NULL);
     } else if (flags & CONFIG_INIT_USE_CWD) {
         char * cwd;
         
@@ -5101,7 +5106,8 @@ config_init(
         amfree(cwd);
     } else if (flags & CONFIG_INIT_CLIENT) {
 	amfree(config_name);
-	config_dir = newstralloc(config_dir, CONFIG_DIR);
+	g_free(config_dir);
+	config_dir = g_strdup(CONFIG_DIR);
     } else {
 	/* ok, then, we won't read anything (for e.g., amrestore) */
 	amfree(config_name);
@@ -5130,9 +5136,11 @@ config_init(
     /* If we have a config_dir, we can try reading something */
     if (config_dir) {
 	if (flags & CONFIG_INIT_CLIENT) {
-	    config_filename = newvstralloc(config_filename, config_dir, "/amanda-client.conf", NULL);
+	    g_free(config_filename);
+	    config_filename = g_strjoin(NULL, config_dir, "/amanda-client.conf", NULL);
 	} else {
-	    config_filename = newvstralloc(config_filename, config_dir, "/amanda.conf", NULL);
+	    g_free(config_filename);
+	    config_filename = g_strjoin(NULL, config_dir, "/amanda.conf", NULL);
 	}
 
 	read_conffile(config_filename,

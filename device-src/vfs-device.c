@@ -879,8 +879,10 @@ vfs_device_start(Device * dself,
             return FALSE;
         }
 
-        dself->volume_label = newstralloc(dself->volume_label, label);
-        dself->volume_time = newstralloc(dself->volume_time, timestamp);
+        g_free(dself->volume_label);
+        dself->volume_label = g_strdup(label);
+        g_free(dself->volume_time);
+        dself->volume_time = g_strdup(timestamp);
 
 	/* unset the VOLUME_UNLABELED flag, if it was set */
 	device_set_error(dself, NULL, DEVICE_STATUS_SUCCESS);

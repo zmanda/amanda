@@ -105,7 +105,8 @@ get_line(void)
 	}
 	if((len = strlen(line)) > 0 && line[len-1] == '\r') {
 	    line[len-1] = '\0';
-	    server_line = newstralloc(server_line, line);
+	    g_free(server_line);
+	    server_line = g_strdup(line);
 	    amfree(line);
 	    return 0;
 	}
@@ -314,14 +315,17 @@ guess_disk (
 	    && (strncmp(fsent.mntdir, cwd, current_length) == 0))
 	{
 	    longest_match = current_length;
-	    *mpt_guess = newstralloc(*mpt_guess, fsent.mntdir);
+	    g_free(*mpt_guess);
+	    *mpt_guess = g_strdup(fsent.mntdir);
 	    if(strncmp(fsent.fsname,DEV_PREFIX,(strlen(DEV_PREFIX))))
 	    {
-	        fsname = newstralloc(fsname, fsent.fsname);
+	        g_free(fsname);
+	        fsname = g_strdup(fsent.fsname);
             }
 	    else
 	    {
-	        fsname = newstralloc(fsname,fsent.fsname+strlen(DEV_PREFIX));
+	        g_free(fsname);
+	        fsname = g_strdup(fsent.fsname + strlen(DEV_PREFIX));
 	    }
 	    local_disk = is_local_fstype(&fsent);
 	    dbprintf("guess_disk: local_disk = %d, fsname = \"%s\"\n",
@@ -434,7 +438,8 @@ main(
     }
     localhost[MAX_HOSTNAME_LENGTH] = '\0';
 
-    config = newstralloc(config, DEFAULT_CONFIG);
+    g_free(config);
+    config = g_strdup(DEFAULT_CONFIG);
 
     dbrename(config, DBG_SUBDIR_CLIENT);
 
@@ -484,19 +489,23 @@ main(
 	switch (i)
 	{
 	    case 'C':
-		config = newstralloc(config, optarg);
+		g_free(config);
+		config = g_strdup(optarg);
 		break;
 
 	    case 's':
-		server_name = newstralloc(server_name, optarg);
+		g_free(server_name);
+		server_name = g_strdup(optarg);
 		break;
 
 	    case 't':
-		tape_server_name = newstralloc(tape_server_name, optarg);
+		g_free(tape_server_name);
+		tape_server_name = g_strdup(optarg);
 		break;
 
 	    case 'd':
-		tape_device_name = newstralloc(tape_device_name, optarg);
+		g_free(tape_device_name);
+		tape_device_name = g_strdup(optarg);
 		break;
 
 	    case 'U':

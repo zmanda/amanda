@@ -137,7 +137,8 @@ start_impl(
     cmd_str = g_shell_quote(*(argv++));
     while (*argv) {
 	char *qarg = g_shell_quote(*(argv++));
-	cmd_str = newvstralloc(cmd_str, cmd_str, " ", qarg, NULL);
+	g_free(cmd_str);
+	cmd_str = g_strjoin(NULL, cmd_str, " ", qarg, NULL);
 	g_free(qarg);
     }
     g_debug("%s spawning: %s", xfer_element_repr(elt), cmd_str);

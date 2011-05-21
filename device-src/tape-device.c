@@ -1205,8 +1205,10 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
             return FALSE;
         }
 
-        d_self->volume_label = newstralloc(d_self->volume_label, label);
-        d_self->volume_time = newstralloc(d_self->volume_time, timestamp);
+        g_free(d_self->volume_label);
+        d_self->volume_label = g_strdup(label);
+        g_free(d_self->volume_time);
+        d_self->volume_time = g_strdup(timestamp);
 
 	/* unset the VOLUME_UNLABELED flag, if it was set */
 	device_set_error(d_self, NULL, DEVICE_STATUS_SUCCESS);

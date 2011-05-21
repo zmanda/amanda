@@ -158,7 +158,7 @@ main(
 			    g_printf("Multiple -M options\n");
 			    exit(1);
 			}
-			mailto=g_strdup(optarg);
+			mailto= g_strdup(optarg);
 			if(!validate_mailto(mailto)){
 			   g_printf("Invalid characters in mail address\n");
 			   exit(1);
@@ -1183,7 +1183,8 @@ start_server_check(
 	amfree(quoted);
 
 	if (logbad == 0 && testtape) {
-	    logfile = newvstralloc(logfile, conf_logdir, "/amdump", NULL);
+	    g_free(logfile);
+	    logfile = g_strjoin(NULL, conf_logdir, "/amdump", NULL);
 	    if (access(logfile, F_OK) == 0) {
 		testtape = 0;
 		logbad = 2;
@@ -1281,7 +1282,8 @@ start_server_check(
 	    hostp = origq.head->host;
 	    host = sanitise_filename(hostp->hostname);
 	    if(conf_infofile) {
-		hostinfodir = newstralloc2(hostinfodir, conf_infofile, host);
+		g_free(hostinfodir);
+		hostinfodir = stralloc2(conf_infofile, host);
 		quoted = quote_string(hostinfodir);
 		if(stat(hostinfodir, &statbuf) == -1) {
 		    if (errno == ENOENT) {
@@ -1316,7 +1318,8 @@ start_server_check(
 		if(hostinfodir) {
 		    char *quotedif;
 
-		    diskdir = newstralloc2(diskdir, hostinfodir, disk);
+		    g_free(diskdir);
+		    diskdir = stralloc2(hostinfodir, disk);
 		    infofile = g_strjoin(NULL, diskdir, "/", "info", NULL);
 		    quoted = quote_string(diskdir);
 		    quotedif = quote_string(infofile);
@@ -1429,7 +1432,8 @@ start_server_check(
 			    amfree(quoted);
 			}
 			if(hostindexdir) {
-			    diskdir = newstralloc2(diskdir, hostindexdir, disk);
+			    g_free(diskdir);
+			    diskdir = stralloc2(hostindexdir, disk);
 			    quoted = quote_string(diskdir);
 			    if(stat(diskdir, &statbuf) == -1) {
 				if (errno == ENOENT) {

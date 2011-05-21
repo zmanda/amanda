@@ -250,10 +250,11 @@ start_backup(
 	while (infd == -1) {
 	    if (--baselevel >= 0) {
 		g_snprintf(number, sizeof(number), "%d", baselevel);
-		inputname = newvstralloc(inputname,
-					 basename, "_", number, NULL);
+		g_free(inputname);
+		inputname = g_strjoin(NULL, basename, "_", number, NULL);
 	    } else {
-		inputname = newstralloc(inputname, "/dev/null");
+		g_free(inputname);
+		inputname = g_strdup("/dev/null");
 	    }
 	    if ((infd = open(inputname, O_RDONLY)) == -1) {
 		int save_errno = errno;

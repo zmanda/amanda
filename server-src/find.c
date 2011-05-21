@@ -92,8 +92,8 @@ find_result_t * find_dump(disklist_t* diskqp) {
 	    char seq_str[NUM_STR_SIZE];
 
 	    g_snprintf(seq_str, sizeof(seq_str), "%u", seq);
-	    logfile = newvstralloc(logfile,
-			conf_logdir, "/log.", tp->datestamp, ".", seq_str, NULL);
+	    g_free(logfile);
+	    logfile = g_strjoin(NULL, conf_logdir, "/log.", tp->datestamp, ".", seq_str, NULL);
 	    if(access(logfile, R_OK) != 0) break;
 	    if (search_logfile(&output_find, NULL, tp->datestamp,
                                logfile, diskqp)) {
@@ -103,7 +103,8 @@ find_result_t * find_dump(disklist_t* diskqp) {
 
 	/* search old-style amflush log, if any */
 
-	logfile = newvstralloc(logfile, conf_logdir, "/log.",
+	g_free(logfile);
+	logfile = g_strjoin(NULL, conf_logdir, "/log.",
                                tp->datestamp, ".amflush", NULL);
 	if(access(logfile,R_OK) == 0) {
 	    if (search_logfile(&output_find, NULL, tp->datestamp,
@@ -114,7 +115,8 @@ find_result_t * find_dump(disklist_t* diskqp) {
         
 	/* search old-style main log, if any */
 
-	logfile = newvstralloc(logfile, conf_logdir, "/log.", tp->datestamp,
+	g_free(logfile);
+	logfile = g_strjoin(NULL, conf_logdir, "/log.", tp->datestamp,
                                NULL);
 	if(access(logfile,R_OK) == 0) {
 	    if (search_logfile(&output_find, NULL, tp->datestamp,
@@ -164,8 +166,10 @@ find_log(void)
 	    char seq_str[NUM_STR_SIZE];
 
 	    g_snprintf(seq_str, sizeof(seq_str), "%u", seq);
-	    logfile = newvstralloc(logfile, "log.", tp->datestamp, ".", seq_str, NULL);
-	    pathlogfile = newvstralloc(pathlogfile, conf_logdir, "/", logfile, NULL);
+	    g_free(logfile);
+	    logfile = g_strjoin(NULL, "log.", tp->datestamp, ".", seq_str, NULL);
+	    g_free(pathlogfile);
+	    pathlogfile = g_strjoin(NULL, conf_logdir, "/", logfile, NULL);
 	    if (access(pathlogfile, R_OK) != 0) break;
 	    if (logfile_has_tape(tp->label, tp->datestamp, pathlogfile)) {
 		if (current_log == output_find_log || strcmp(*(current_log-1), logfile)) {
@@ -179,8 +183,10 @@ find_log(void)
 
 	/* search old-style amflush log, if any */
 
-	logfile = newvstralloc(logfile, "log.", tp->datestamp, ".amflush", NULL);
-	pathlogfile = newvstralloc(pathlogfile, conf_logdir, "/", logfile, NULL);
+	g_free(logfile);
+	logfile = g_strjoin(NULL, "log.", tp->datestamp, ".amflush", NULL);
+	g_free(pathlogfile);
+	pathlogfile = g_strjoin(NULL, conf_logdir, "/", logfile, NULL);
 	if (access(pathlogfile, R_OK) == 0) {
 	    if (logfile_has_tape(tp->label, tp->datestamp, pathlogfile)) {
 		if (current_log == output_find_log || strcmp(*(current_log-1), logfile)) {
@@ -193,8 +199,10 @@ find_log(void)
 
 	/* search old-style main log, if any */
 
-	logfile = newvstralloc(logfile, "log.", tp->datestamp, NULL);
-	pathlogfile = newvstralloc(pathlogfile, conf_logdir, "/", logfile, NULL);
+	g_free(logfile);
+	logfile = g_strjoin(NULL, "log.", tp->datestamp, NULL);
+	g_free(pathlogfile);
+	pathlogfile = g_strjoin(NULL, conf_logdir, "/", logfile, NULL);
 	if (access(pathlogfile, R_OK) == 0) {
 	    if (logfile_has_tape(tp->label, tp->datestamp, pathlogfile)) {
 		if (current_log == output_find_log || strcmp(*(current_log-1), logfile)) {
@@ -276,7 +284,7 @@ search_holding_disk(
 	    new_output_find->hostname = g_string_chunk_insert_const(string_chunk, file.name);
 	    new_output_find->diskname = g_string_chunk_insert_const(string_chunk, file.disk);
 	    new_output_find->level=file.dumplevel;
-	    new_output_find->label=g_string_chunk_insert_const(string_chunk, holding_file);
+	    new_output_find->label= g_string_chunk_insert_const(string_chunk, holding_file);
 	    new_output_find->partnum = -1;
 	    new_output_find->totalparts = -1;
 	    new_output_find->filenum=0;
@@ -1039,12 +1047,12 @@ search_logfile(
 		    }
 		    new_output_find->timestamp = g_string_chunk_insert_const(string_chunk, date);
 		    new_output_find->write_timestamp = g_string_chunk_insert_const(string_chunk, datestamp);
-		    new_output_find->hostname=g_string_chunk_insert_const(string_chunk, host);
-		    new_output_find->diskname=g_string_chunk_insert_const(string_chunk, disk);
+		    new_output_find->hostname= g_string_chunk_insert_const(string_chunk, host);
+		    new_output_find->diskname= g_string_chunk_insert_const(string_chunk, disk);
 		    new_output_find->level=level;
 		    new_output_find->partnum = partnum;
 		    new_output_find->totalparts = totalparts;
-		    new_output_find->label=g_string_chunk_insert_const(string_chunk, current_label);
+		    new_output_find->label= g_string_chunk_insert_const(string_chunk, current_label);
 		    new_output_find->status=NULL;
 		    new_output_find->dump_status=NULL;
 		    new_output_find->message="";
@@ -1159,8 +1167,8 @@ search_logfile(
 		    new_output_find->next = *output_find;
 		    new_output_find->timestamp = g_string_chunk_insert_const(string_chunk, date);
 		    new_output_find->write_timestamp = g_strdup("00000000000000"); /* dump was not written.. */
-		    new_output_find->hostname=g_string_chunk_insert_const(string_chunk, host);
-		    new_output_find->diskname=g_string_chunk_insert_const(string_chunk, disk);
+		    new_output_find->hostname= g_string_chunk_insert_const(string_chunk, host);
+		    new_output_find->diskname= g_string_chunk_insert_const(string_chunk, disk);
 		    new_output_find->level=level;
 		    new_output_find->label=NULL;
 		    new_output_find->partnum=partnum;

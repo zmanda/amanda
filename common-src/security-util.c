@@ -478,9 +478,11 @@ tcpm_send_token(
     }
 
     if (rval < 0) {
-	if (errmsg)
-            *errmsg = newvstrallocf(*errmsg, "write error to: %s",
+	if (errmsg) {
+	    g_free(*errmsg);
+	    *errmsg = g_strdup_printf("write error to: %s",
 				   strerror(save_errno));
+	}
         return (-1);
     }
     return (0);
@@ -510,15 +512,18 @@ tcpm_recv_token(
 	rval = read(fd, ((char *)&rc->netint) + rc->size_header_read,
 		        sizeof(rc->netint) - rc->size_header_read);
 	if (rval == -1) {
-	    if (errmsg)
-		*errmsg = newvstrallocf(*errmsg, "recv error: %s",
+	    if (errmsg) {
+	        g_free(*errmsg);
+	        *errmsg = g_strdup_printf("recv error: %s",
 					strerror(errno));
+	    }
 	    auth_debug(1, "tcpm_recv_token: A return(-1)\n");
 	    return(-1);
 	} else if (rval == 0) {
 	    *size = 0;
 	    *handle = H_EOF;
-	    *errmsg = newstralloc(*errmsg, "SOCKET_EOF");
+	    g_free(*errmsg);
+	    *errmsg = g_strdup("SOCKET_EOF");
 	    auth_debug(1, "tcpm_recv_token: A return(0)\n");
 	    return(0);
 	} else if (rval < (ssize_t)sizeof(rc->netint) - rc->size_header_read) {
@@ -565,13 +570,13 @@ tcpm_recv_token(
 		}
 		s[i] = '\0';
 		s1 = quote_string(s);
-		*errmsg = newvstrallocf(*errmsg,
-				"tcpm_recv_token: invalid size: %s", s1);
+		g_free(*errmsg);
+		*errmsg = g_strdup_printf("tcpm_recv_token: invalid size: %s", s1);
 		dbprintf("tcpm_recv_token: invalid size %s\n", s1);
 		amfree(s1);
 	    } else {
-		*errmsg = newstralloc(*errmsg,
-                                      "tcpm_recv_token: invalid size");
+		g_free(*errmsg);
+		*errmsg = g_strdup("tcpm_recv_token: invalid size");
 		dbprintf("tcpm_recv_token: invalid size %zd\n", *size);
 	    }
 	    *size = -1;
@@ -581,7 +586,8 @@ tcpm_recv_token(
 
 	if (*size == 0) {
 	    auth_debug(1, "tcpm_recv_token: read EOF from %d\n", *handle);
-	    *errmsg = newstralloc(*errmsg, "EOF");
+	    g_free(*errmsg);
+	    *errmsg = g_strdup("EOF");
 	    rc->size_header_read = 0;
 	    return 0;
 	}
@@ -593,14 +599,17 @@ tcpm_recv_token(
     rval = read(fd, rc->buffer + rc->size_buffer_read,
 		    (size_t)*size - rc->size_buffer_read);
     if (rval == -1) {
-	if (errmsg)
-	    *errmsg = newvstrallocf(*errmsg, "recv error: %s",
+	if (errmsg) {
+	    g_free(*errmsg);
+	    *errmsg = g_strdup_printf("recv error: %s",
 				    strerror(errno));
+	}
 	auth_debug(1, "tcpm_recv_token: B return(-1)\n");
 	return (-1);
     } else if (rval == 0) {
 	*size = 0;
-	*errmsg = newstralloc(*errmsg, "SOCKET_EOF");
+	g_free(*errmsg);
+	*errmsg = g_strdup("SOCKET_EOF");
 	auth_debug(1, "tcpm_recv_token: B return(0)\n");
 	return (0);
     } else if (rval < (ssize_t)*size - rc->size_buffer_read) {
@@ -2592,15 +2601,15 @@ check_name_give_sockaddr(
     result = resolve_hostname(hostname, 0, &res, &canonname);
     if (result != 0) {
 	dbprintf("check_name_give_sockaddr: resolve_hostname('%s'): %s\n", hostname, gai_strerror(result));
-	*errstr = newvstrallocf(*errstr,
-			       "check_name_give_sockaddr: resolve_hostname('%s'): %s",
+	g_free(*errstr);
+	*errstr = g_strdup_printf("check_name_give_sockaddr: resolve_hostname('%s'): %s",
 			       hostname, gai_strerror(result));
 	goto error;
     }
     if (canonname == NULL) {
 	dbprintf("resolve_hostname('%s') did not return a canonical name\n", hostname);
-	*errstr = newvstrallocf(*errstr,
-		"check_name_give_sockaddr: resolve_hostname('%s') did not return a canonical name",
+	g_free(*errstr);
+	*errstr = g_strdup_printf("check_name_give_sockaddr: resolve_hostname('%s') did not return a canonical name",
 		hostname);
 	goto error;
     }
@@ -2608,8 +2617,8 @@ check_name_give_sockaddr(
     if (strncasecmp(hostname, canonname, strlen(hostname)) != 0) {
 	dbprintf("%s doesn't resolve to itself, it resolves to %s\n",
 		       hostname, canonname);
-	*errstr = newvstrallocf(*errstr,
-			       "%s doesn't resolve to itself, it resolves to %s",
+	g_free(*errstr);
+	*errstr = g_strdup_printf("%s doesn't resolve to itself, it resolves to %s",
 			       hostname, canonname);
 	goto error;
     }
@@ -2624,8 +2633,8 @@ check_name_give_sockaddr(
 
     g_debug("%s doesn't resolve to %s",
 	    hostname, str_sockaddr((sockaddr_union *)addr));
-    *errstr = newvstrallocf(*errstr,
-			   "%s doesn't resolve to %s",
+    g_free(*errstr);
+    *errstr = g_strdup_printf("%s doesn't resolve to %s",
 			   hostname, str_sockaddr((sockaddr_union *)addr));
 error:
     if (res) freeaddrinfo(res);

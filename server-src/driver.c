@@ -424,8 +424,8 @@ main(
 	       (long long)ha->disksize,
 	       (long long)(holdingdisk_get_chunksize(hdp)));
 
-	newdir = newvstralloc(newdir,
-			      holdingdisk_get_diskdir(hdp), "/", hd_driver_timestamp,
+	g_free(newdir);
+	newdir = g_strjoin(NULL, holdingdisk_get_diskdir(hdp), "/", hd_driver_timestamp,
 			      NULL);
 	if(!mkholdingdir(newdir)) {
 	    ha->disksize = (off_t)0;
@@ -1258,8 +1258,8 @@ start_some_dumps(
 	    allocate_bandwidth(diskp->host->netif, sched(diskp)->est_kps);
 	    sched(diskp)->activehd = assign_holdingdisk(holdp, diskp);
 	    amfree(holdp);
-	    sched(diskp)->destname = newstralloc(sched(diskp)->destname,
-						 sched(diskp)->holdp[0]->destname);
+	    g_free(sched(diskp)->destname);
+	    sched(diskp)->destname = g_strdup(sched(diskp)->holdp[0]->destname);
 	    diskp->host->inprogress++;	/* host is now busy */
 	    diskp->inprogress = 1;
 	    sched(diskp)->dumper = dumper;
@@ -1612,13 +1612,14 @@ handle_taper_result(
 	    fflush(stdout);
 
 	    if (strcmp(result_argv[2], "INPUT-ERROR") == 0) {
-		taper->input_error = newstralloc(taper->input_error, result_argv[4]);
+		g_free(taper->input_error);
+		taper->input_error = g_strdup(result_argv[4]);
 		taper->result = FAILED;
 		amfree(qname);
 		break;
 	    } else if (strcmp(result_argv[2], "INPUT-GOOD") != 0) {
-		taper->tape_error = newstralloc(taper->tape_error,
-					       "Taper protocol error");
+		g_free(taper->tape_error);
+		taper->tape_error = g_strdup("Taper protocol error");
 		taper->result = FAILED;
 		log_add(L_FAIL, "%s %s %s %d [%s]",
 		        dp->host->hostname, qname, sched(dp)->datestamp,
@@ -1628,14 +1629,15 @@ handle_taper_result(
 	    }
 	    if (strcmp(result_argv[3], "TAPE-ERROR") == 0) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
-		taper->tape_error = newstralloc(taper->tape_error, result_argv[5]);
+		g_free(taper->tape_error);
+		taper->tape_error = g_strdup(result_argv[5]);
 		taper->result = FAILED;
 		amfree(qname);
 		break;
 	    } else if (strcmp(result_argv[3], "TAPE-GOOD") != 0) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
-		taper->tape_error = newstralloc(taper->tape_error,
-					       "Taper protocol error");
+		g_free(taper->tape_error);
+		taper->tape_error = g_strdup("Taper protocol error");
 		taper->result = FAILED;
 		log_add(L_FAIL, "%s %s %s %d [%s]",
 		        dp->host->hostname, qname, sched(dp)->datestamp,
@@ -1668,13 +1670,14 @@ handle_taper_result(
 	    fflush(stdout);
 
 	    if (strcmp(result_argv[2], "INPUT-ERROR") == 0) {
-		taper->input_error = newstralloc(taper->input_error, result_argv[5]);
+		g_free(taper->input_error);
+		taper->input_error = g_strdup(result_argv[5]);
 		taper->result = FAILED;
 		amfree(qname);
 		break;
 	    } else if (strcmp(result_argv[2], "INPUT-GOOD") != 0) {
-		taper->tape_error = newstralloc(taper->tape_error,
-					       "Taper protocol error");
+		g_free(taper->tape_error);
+		taper->tape_error = g_strdup("Taper protocol error");
 		taper->result = FAILED;
 		log_add(L_FAIL, "%s %s %s %d [%s]",
 		        dp->host->hostname, qname, sched(dp)->datestamp,
@@ -1684,14 +1687,15 @@ handle_taper_result(
 	    }
 	    if (strcmp(result_argv[3], "TAPE-ERROR") == 0) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
-		taper->tape_error = newstralloc(taper->tape_error, result_argv[6]);
+		g_free(taper->tape_error);
+		taper->tape_error = g_strdup(result_argv[6]);
 		taper->result = FAILED;
 		amfree(qname);
 		break;
 	    } else if (strcmp(result_argv[3], "TAPE-GOOD") != 0) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
-		taper->tape_error = newstralloc(taper->tape_error,
-					       "Taper protocol error");
+		g_free(taper->tape_error);
+		taper->tape_error = g_strdup("Taper protocol error");
 		taper->result = FAILED;
 		log_add(L_FAIL, "%s %s %s %d [%s]",
 		        dp->host->hostname, qname, sched(dp)->datestamp,
@@ -1855,8 +1859,8 @@ handle_taper_result(
 		q = quote_string(result_argv[2]);
 		log_add(L_WARNING, "Taper error: %s", q);
 		amfree(q);
-		taper->tape_error = newstralloc(taper->tape_error,
-						result_argv[2]);
+		g_free(taper->tape_error);
+		taper->tape_error = g_strdup(result_argv[2]);
 
 		taper_nb_wait_reply--;
 		taper_nb_scan_volume--;
@@ -1925,7 +1929,8 @@ handle_taper_result(
 		 taper < tapetable + conf_taper_parallel_write;
                  taper++) {
 		if (taper && taper->disk && taper->result != LAST_TOK) {
-		    taper->tape_error = newstralloc(taper->tape_error,"BOGUS");
+		    g_free(taper->tape_error);
+		    taper->tape_error = g_strdup("BOGUS");
 		    taper->result = cmd;
 		    if (taper->dumper) {
 			if (taper->dumper->result != LAST_TOK) {
@@ -3434,8 +3439,8 @@ assign_holdingdisk(
 
     /* copy assignedhd_s to sched(diskp), adjust allocated_space */
     for( ; holdp[i]; i++ ) {
-	holdp[i]->destname = newvstralloc( holdp[i]->destname,
-					   holdingdisk_get_diskdir(holdp[i]->disk->hdisk), "/",
+	g_free(holdp[i]->destname);
+	holdp[i]->destname = g_strjoin(NULL, holdingdisk_get_diskdir(holdp[i]->disk->hdisk), "/",
 					   hd_driver_timestamp, "/",
 					   diskp->host->hostname, ".",
 					   sfn, ".",

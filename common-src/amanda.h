@@ -425,24 +425,13 @@ typedef union sockaddr_union {
 #include "debug.h"
 #include "file.h"
 
-char *debug_newstralloc(const char *file, int line,
-		char *oldstr, const char *newstr);
-char *debug_newvstralloc(const char *file, int line,
-		char *oldstr, const char *str, ...);
-char *debug_newvstrallocf(const char *file, int line, char *oldstr,
-		const char *fmt, ...) G_GNUC_PRINTF(4, 5);
-
 /* Usage: vstrextend(foo, "bar, "baz", NULL). Extends the existing 
  * string, or allocates a brand new one. */
 char *debug_vstrextend(const char *file, int line, char **oldstr, ...);
 
-#define	newstralloc(p,s)	debug_newstralloc(__FILE__, __LINE__, (p), (s))
-#define newvstralloc(...)	debug_newvstralloc(__FILE__,__LINE__,__VA_ARGS__)
-#define newvstrallocf(...)	debug_newvstrallocf(__FILE__,__LINE__,__VA_ARGS__)
 #define vstrextend(...)		debug_vstrextend(__FILE__,__LINE__,__VA_ARGS__)
 
 #define	stralloc2(s1,s2)	g_strjoin(NULL, (s1),(s2),NULL)
-#define	newstralloc2(p,s1,s2)	newvstralloc((p),(s1),(s2),NULL)
 
 /*@only@*/ /*@null@*/ char *debug_agets(const char *file, int line, FILE *f);
 /*@only@*/ /*@null@*/ char *debug_areads(const char *file, int line, int fd);

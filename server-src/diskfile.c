@@ -1119,18 +1119,22 @@ optionstr(
 
     switch(dp->encrypt) {
     case ENCRYPT_CUST:
-	encrypt_opt = newvstralloc(encrypt_opt, "encrypt-cust=",
+	g_free(encrypt_opt);
+	encrypt_opt = g_strjoin(NULL, "encrypt-cust=",
 				   dp->clnt_encrypt, ";", NULL);
 	if (dp->clnt_decrypt_opt) {
-	     decrypt_opt = newvstralloc(decrypt_opt, "client-decrypt-option=",
+	     g_free(decrypt_opt);
+	     decrypt_opt = g_strjoin(NULL, "client-decrypt-option=",
 					dp->clnt_decrypt_opt, ";", NULL);
 	}
 	break;
     case ENCRYPT_SERV_CUST:
-	encrypt_opt = newvstralloc(encrypt_opt, "encrypt-serv-cust=",
+	g_free(encrypt_opt);
+	encrypt_opt = g_strjoin(NULL, "encrypt-serv-cust=",
 				   dp->srv_encrypt, ";", NULL);
 	if (dp->srv_decrypt_opt) {
-	    decrypt_opt = newvstralloc(decrypt_opt, "server-decrypt-option=",
+	    g_free(decrypt_opt);
+	    decrypt_opt = g_strjoin(NULL, "server-decrypt-option=",
 				       dp->srv_decrypt_opt, ";", NULL);
          }
 	 break;
@@ -1153,7 +1157,8 @@ optionstr(
 	for(excl = dp->exclude_file->first; excl != NULL;
 					    excl = excl->next) {
 	    qname = quote_string(excl->name);
-	    exc = newvstralloc( exc, "exclude-file=", qname, ";", NULL);
+	    g_free(exc);
+	    exc = g_strjoin(NULL, "exclude-file=", qname, ";", NULL);
 	    strappend(exclude_file, exc);
 	    amfree(qname);
 	}
@@ -1163,7 +1168,8 @@ optionstr(
 	for(excl = dp->exclude_list->first; excl != NULL;
 					    excl = excl->next) {
 	    qname = quote_string(excl->name);
-	    exc = newvstralloc( exc, "exclude-list=", qname, ";", NULL);
+	    g_free(exc);
+	    exc = g_strjoin(NULL, "exclude-list=", qname, ";", NULL);
 	    strappend(exclude_list, exc);
 	    amfree(qname);
 	}
@@ -1174,7 +1180,8 @@ optionstr(
 	for(excl = dp->include_file->first; excl != NULL;
 					    excl = excl->next) {
 	    qname = quote_string(excl->name);
-	    exc = newvstralloc(exc, "include-file=", qname, ";", NULL);
+	    g_free(exc);
+	    exc = g_strjoin(NULL, "include-file=", qname, ";", NULL);
 	    strappend(include_file, exc);
 	    amfree(qname);
 	}
@@ -1184,7 +1191,8 @@ optionstr(
 	for(excl = dp->include_list->first; excl != NULL;
 					    excl = excl->next) {
 	    qname = quote_string(excl->name);
-	    exc = newvstralloc(exc, "include-list=", qname, ";", NULL);
+	    g_free(exc);
+	    exc = g_strjoin(NULL, "include-list=", qname, ";", NULL);
 	    strappend(include_list, exc);
 	    amfree(qname);
 	}
@@ -1300,15 +1308,14 @@ xml_optionstr(
     switch(dp->encrypt) {
     case ENCRYPT_CUST:
 	if (dp->clnt_decrypt_opt) {
-	    decrypt_opt = newvstralloc(decrypt_opt,
-				       "    <decrypt-option>",
+	    g_free(decrypt_opt);
+	    decrypt_opt = g_strjoin(NULL, "    <decrypt-option>",
 				       dp->clnt_decrypt_opt,
 				       "</decrypt-option>\n", NULL);
 	    }
 	if (decrypt_opt) {
-	     encrypt_opt = newvstralloc(encrypt_opt,
-					"  <encrypt>CUSTOM"
-					"<custom-encrypt-program>",
+	     g_free(encrypt_opt);
+	     encrypt_opt = g_strjoin(NULL, "  <encrypt>CUSTOM""<custom-encrypt-program>",
 					dp->clnt_encrypt,
 					"</custom-encrypt-program>\n",
 					decrypt_opt,
@@ -1317,13 +1324,12 @@ xml_optionstr(
 	break;
     case ENCRYPT_SERV_CUST:
 	if (to_server) {
-	    decrypt_opt =  newvstralloc(decrypt_opt,
-					"    <decrypt-option>",
+	    g_free(decrypt_opt);
+	    decrypt_opt = g_strjoin(NULL, "    <decrypt-option>",
 					dp->srv_decrypt_opt, 
 					"</decrypt-option>\n", NULL);
-	    encrypt_opt = newvstralloc(encrypt_opt,
-				       "  <encrypt>SERVER-CUSTOM"
-				       "<custom-encrypt-program>",
+	    g_free(encrypt_opt);
+	    encrypt_opt = g_strjoin(NULL, "  <encrypt>SERVER-CUSTOM""<custom-encrypt-program>",
 				       dp->srv_encrypt,
 				       "</custom-encrypt-program>\n",
 				       decrypt_opt,
@@ -1392,7 +1398,8 @@ xml_optionstr(
 	for(excl = dp->exclude_file->first; excl != NULL;
 					    excl = excl->next) {
 	    q64name = amxml_format_tag("file", excl->name);
-	    exc = newvstralloc( exc, "    ", q64name, "\n", NULL);
+	    g_free(exc);
+	    exc = g_strjoin(NULL, "    ", q64name, "\n", NULL);
 	    strappend(exclude_file, exc);
 	    amfree(q64name);
 	}
@@ -1402,7 +1409,8 @@ xml_optionstr(
 	for(excl = dp->exclude_list->first; excl != NULL;
 					    excl = excl->next) {
 	    q64name = amxml_format_tag("list", excl->name);
-	    exc = newvstralloc(exc, "    ", q64name, "\n", NULL);
+	    g_free(exc);
+	    exc = g_strjoin(NULL, "    ", q64name, "\n", NULL);
 	    strappend(exclude_list, exc);
 	    amfree(q64name);
 	}
@@ -1413,7 +1421,8 @@ xml_optionstr(
 	for(excl = dp->include_file->first; excl != NULL;
 					    excl = excl->next) {
 	    q64name = amxml_format_tag("file", excl->name);
-	    exc = newvstralloc( exc, "    ", q64name, "\n", NULL);
+	    g_free(exc);
+	    exc = g_strjoin(NULL, "    ", q64name, "\n", NULL);
 	    strappend(include_file, exc);
 	    amfree(q64name);
 	}
@@ -1423,7 +1432,8 @@ xml_optionstr(
 	for(excl = dp->include_list->first; excl != NULL;
 					    excl = excl->next) {
 	    q64name = amxml_format_tag("list", excl->name);
-	    exc = newvstralloc( exc, "    ", q64name, "\n", NULL);
+	    g_free(exc);
+	    exc = g_strjoin(NULL, "    ", q64name, "\n", NULL);
 	    strappend(include_list, exc);
 	    amfree(q64name);
 	}
@@ -1436,20 +1446,22 @@ xml_optionstr(
 	incl_opt = "    <optional>YES</optional>\n";
     }
 
-    if (dp->exclude_file || dp->exclude_list)
-	exclude = newvstralloc(exclude,
-			       "  <exclude>\n",
+    if (dp->exclude_file || dp->exclude_list) {
+        g_free(exclude);
+        exclude = g_strjoin(NULL, "  <exclude>\n",
 			       exclude_file,
 			       exclude_list,
 			       excl_opt,
 			       "  </exclude>\n", NULL);
-    if (dp->include_file || dp->include_list)
-	include = newvstralloc(include,
-			       "  <include>\n",
+			   }
+    if (dp->include_file || dp->include_list) {
+        g_free(include);
+        include = g_strjoin(NULL, "  <include>\n",
 			       include_file,
 			       include_list,
 			       incl_opt,
 			       "  </include>\n", NULL);
+			   }
     script_opt = xml_scripts(dp->pp_scriptlist, their_features);
     result = g_strjoin(NULL, auth_opt,
 		       kencrypt_opt,

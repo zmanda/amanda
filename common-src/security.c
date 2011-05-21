@@ -120,7 +120,8 @@ void security_seterror(security_handle_t *handle, const char *fmt, ...)
     arglist_start(argp, fmt);
     g_vsnprintf(buf, sizeof(buf), fmt, argp);
     arglist_end(argp);
-    handle->error = newstralloc(handle->error, buf);
+    g_free(handle->error);
+    handle->error = g_strdup(buf);
     dbprintf("security_seterror(handle=%p, driver=%p (%s) error=%s)\n",
 	      handle, handle->driver,
 	      handle->driver->name, handle->error);
@@ -159,7 +160,8 @@ void security_stream_seterror(security_stream_t *stream, const char *fmt, ...)
     arglist_start(argp, fmt);
     g_vsnprintf(buf, sizeof(buf), fmt, argp);
     arglist_end(argp);
-    stream->error = newstralloc(stream->error, buf);
+    g_free(stream->error);
+    stream->error = g_strdup(buf);
     dbprintf("security_stream_seterr(%p, %s)\n", stream, stream->error);
 }
 

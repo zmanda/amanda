@@ -1680,8 +1680,10 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
                 return FALSE;
             }
 
-	    pself->volume_label = newstralloc(pself->volume_label, label);
-	    pself->volume_time = newstralloc(pself->volume_time, timestamp);
+	    g_free(pself->volume_label);
+	    pself->volume_label = g_strdup(label);
+	    g_free(pself->volume_time);
+	    pself->volume_time = g_strdup(timestamp);
 
 	    /* unset the VOLUME_UNLABELED flag, if it was set */
 	    device_set_error(pself, NULL, DEVICE_STATUS_SUCCESS);

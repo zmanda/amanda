@@ -1538,7 +1538,8 @@ static pcontext_t pcontext = CONTEXT_DEFAULT;
 void
 set_pname(char *p)
 {
-    pname = newstralloc(pname, p);
+    g_free(pname);
+    pname = g_strdup(p);
 }
 
 char *
@@ -1551,7 +1552,8 @@ get_pname(void)
 void
 set_ptype(char *p)
 {
-    ptype = newstralloc(ptype, p);
+    g_free(ptype);
+    ptype = g_strdup(p);
 }
 
 char *

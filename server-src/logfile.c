@@ -208,8 +208,8 @@ log_rename(
 
     for(seq = 0; 1; seq++) {	/* if you've got MAXINT files in your dir... */
 	g_snprintf(seq_str, sizeof(seq_str), "%u", seq);
-	fname = newvstralloc(fname,
-			     logfile,
+	g_free(fname);
+	fname = g_strjoin(NULL, logfile,
 			     ".", datestamp,
 			     ".", seq_str,
 			     NULL);

@@ -1217,14 +1217,17 @@ krb5_tcpm_recv_token(
 
     switch (net_read(fd, &netint, sizeof(netint), timeout)) {
     case -1:
-	if (errmsg)
-	    *errmsg = newvstrallocf(*errmsg, "recv error: %s", strerror(errno));
+	if (errmsg) {
+	    g_free(*errmsg);
+	    *errmsg = g_strdup_printf("recv error: %s", strerror(errno));
+	}
 	auth_debug(1, "krb5_tcpm_recv_token: A return(-1)\n");
 	return (-1);
     case 0:
 	*size = 0;
 	*handle = H_EOF;
-	*errmsg = newstralloc(*errmsg, "SOCKET_EOF");
+	g_free(*errmsg);
+	*errmsg = g_strdup("SOCKET_EOF");
 	auth_debug(1, "krb5_tcpm_recv_token: A return(0)\n");
 	return (0);
     default:
@@ -1264,11 +1267,12 @@ krb5_tcpm_recv_token(
 		}
 	    }
 	    s[i] = '\0';
-	    *errmsg = newvstrallocf(*errmsg, "krb5_tcpm_recv_token: invalid size: %s", s);
+	    g_free(*errmsg);
+	    *errmsg = g_strdup_printf("krb5_tcpm_recv_token: invalid size: %s", s);
 	    dbprintf("krb5_tcpm_recv_token: invalid size %s\n", s);
 	} else {
-	    *errmsg = newstralloc(*errmsg,
-                                  "krb5_tcpm_recv_token: invalid size");
+	    g_free(*errmsg);
+	    *errmsg = g_strdup("krb5_tcpm_recv_token: invalid size");
 	    dbprintf("krb5_tcpm_recv_token: invalid size %zd\n", *size);
 	}
 	*size = -1;
@@ -1279,18 +1283,22 @@ krb5_tcpm_recv_token(
 
     if(*size == 0) {
 	auth_debug(1, "krb5_tcpm_recv_token: read EOF from %d\n", *handle);
-	*errmsg = newstralloc(*errmsg, "EOF");
+	g_free(*errmsg);
+	*errmsg = g_strdup("EOF");
 	return 0;
     }
     switch (net_read(fd, *buf, (size_t)*size, timeout)) {
     case -1:
-	if (errmsg)
-	    *errmsg = newvstrallocf(*errmsg, "recv error: %s", strerror(errno));
+	if (errmsg) {
+	    g_free(*errmsg);
+	    *errmsg = g_strdup_printf("recv error: %s", strerror(errno));
+	}
 	auth_debug(1, "krb5_tcpm_recv_token: B return(-1)\n");
 	return (-1);
     case 0:
 	*size = 0;
-	*errmsg = newstralloc(*errmsg, "SOCKET_EOF");
+	g_free(*errmsg);
+	*errmsg = g_strdup("SOCKET_EOF");
 	auth_debug(1, "krb5_tcpm_recv_token: B return(0)\n");
 	return (0);
     default:

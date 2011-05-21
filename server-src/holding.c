@@ -255,8 +255,8 @@ static void holding_walk_dir(
         if (is_dot_or_dotdot(workdir->d_name))
             continue; /* expected cruft */
 
-        hfile = newvstralloc(hfile,
-                     hdir, "/", workdir->d_name,
+        g_free(hfile);
+        hfile = g_strjoin(NULL, hdir, "/", workdir->d_name,
                      NULL);
 
         /* filter out various undesirables */
@@ -337,8 +337,8 @@ holding_walk_disk(
         if (is_dot_or_dotdot(workdir->d_name))
             continue; /* expected cruft */
 
-        hdir = newvstralloc(hdir,
-                     hdisk, "/", workdir->d_name,
+        g_free(hdir);
+        hdir = g_strjoin(NULL, hdisk, "/", workdir->d_name,
                      NULL);
 
         /* detect cruft */
@@ -623,7 +623,8 @@ holding_file_size(
         }
 
         /* on to the next chunk */
-        filename = newstralloc(filename, file.cont_filename);
+        g_free(filename);
+        filename = g_strdup(file.cont_filename);
 	dumpfile_free_data(&file);
     }
     amfree(filename);
@@ -899,7 +900,8 @@ rename_tmp_holding(
     memset(buffer, 0, sizeof(buffer));
     filename = g_strdup(holding_file);
     while(filename != NULL && filename[0] != '\0') {
-	filename_tmp = newvstralloc(filename_tmp, filename, ".tmp", NULL);
+	g_free(filename_tmp);
+	filename_tmp = g_strjoin(NULL, filename, ".tmp", NULL);
 	if((fd = robust_open(filename_tmp,O_RDONLY, 0)) == -1) {
 	    dbprintf("rename_tmp_holding: open of %s failed: %s\n",filename_tmp,strerror(errno));
 	    amfree(filename);
@@ -951,7 +953,8 @@ rename_tmp_holding(
 	    free(header);
 	    close(fd);
 	}
-	filename = newstralloc(filename, file.cont_filename);
+	g_free(filename);
+	filename = g_strdup(file.cont_filename);
 	dumpfile_free_data(&file);
     }
     amfree(filename);

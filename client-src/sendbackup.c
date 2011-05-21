@@ -881,7 +881,8 @@ check_status(
     fdprintf(mesgfd, "? %s\n", thiserr);
 
     if(errorstr) {
-	errorstr =  newvstrallocf(errorstr, "%s, %s", errorstr, thiserr);
+	g_free(errorstr);
+	errorstr =  g_strdup_printf("%s, %s", errorstr, thiserr);
 	amfree(thiserr);
     } else {
 	errorstr = thiserr;

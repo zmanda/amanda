@@ -175,18 +175,18 @@ main(
 		    break;
 		}
 	    }
-	    logname=newvstralloc(logname,
-				 conf_logdir, "/" ,adir->d_name, NULL);
+	    g_free(logname);
+	    logname= g_strjoin(NULL, conf_logdir, "/" ,adir->d_name, NULL);
 	    if(stat(logname,&stat_log)==0) {
 		if((time_t)stat_log.st_mtime > date_keep) {
 		    useful = 1;
 		}
 	    }
 	    if(useful == 0) {
-		oldfile = newvstralloc(oldfile,
-				       conf_logdir, "/", adir->d_name, NULL);
-		newfile = newvstralloc(newfile,
-				       olddir, "/", adir->d_name, NULL);
+		g_free(oldfile);
+		oldfile = g_strjoin(NULL, conf_logdir, "/", adir->d_name, NULL);
+		g_free(newfile);
+		newfile = g_strjoin(NULL, olddir, "/", adir->d_name, NULL);
 		if (rename(oldfile,newfile) != 0) {
 		    error("could not rename \"%s\" to \"%s\": %s",
 			  oldfile, newfile, strerror(errno));

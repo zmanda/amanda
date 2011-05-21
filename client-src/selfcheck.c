@@ -670,13 +670,13 @@ check_disk(
 		}
 		if (errdos != 0 || rc != 0) {
 		    if (extra_info) {
-			err = newvstrallocf(err,
-					    "samba access error: %s: %s %s",
+			g_free(err);
+			err = g_strdup_printf("samba access error: %s: %s %s",
 					    dle->device, extra_info, err);
 			amfree(extra_info);
 		    } else {
-			err = newvstrallocf(err,
-					    "samba access error: %s: %s",
+			g_free(err);
+			err = g_strdup_printf("samba access error: %s: %s",
 					   dle->device, err);
 		    }
 		}

@@ -427,14 +427,17 @@ main(
 	/* to avoid ``infinite'' loops if tapecycle is infinite */
 
 	g_snprintf(number,100,"%d",days);
-	errfilex = newvstralloc(errfilex, errfile, ".", number, NULL);
+	g_free(errfilex);
+	errfilex = g_strjoin(NULL, errfile, ".", number, NULL);
 	while ( days < maxdays && stat(errfilex,&stat_buf)==0) {
 	    days++;
 	    g_snprintf(number,100,"%d",days);
-	    errfilex = newvstralloc(errfilex, errfile, ".", number, NULL);
+	    g_free(errfilex);
+	    errfilex = g_strjoin(NULL, errfile, ".", number, NULL);
 	}
 	g_snprintf(number,100,"%d",days);
-	errfilex = newvstralloc(errfilex, errfile, ".", number, NULL);
+	g_free(errfilex);
+	errfilex = g_strjoin(NULL, errfile, ".", number, NULL);
 	nerrfilex = NULL;
 	while (days > 1) {
 	    amfree(nerrfilex);
@@ -448,7 +451,8 @@ main(
 	        /*NOTREACHED*/
 	    }
 	}
-	errfilex = newvstralloc(errfilex, errfile, ".1", NULL);
+	g_free(errfilex);
+	errfilex = g_strjoin(NULL, errfile, ".1", NULL);
 	if (rename(errfile,errfilex) != 0) {
 	    error("cannot rename \"%s\" to \"%s\": %s",
 		  errfilex, nerrfilex, strerror(errno));

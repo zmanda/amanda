@@ -1101,7 +1101,8 @@ static char *quote_heredoc(
 	if (!found_delimiter)
 	    break;
 
-	delimiter = newvstrallocf(delimiter, "%s%d", delimiter_prefix, ++delimiter_n);
+	g_free(delimiter);
+	delimiter = g_strdup_printf("%s%d", delimiter_prefix, ++delimiter_n);
 	delimiter_len = strlen(delimiter);
     }
 

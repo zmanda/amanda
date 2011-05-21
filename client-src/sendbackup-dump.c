@@ -230,8 +230,12 @@ start_backup(
     if (1)
 #endif							/* } */
     {
-        char *progname = cmd = newvstralloc(cmd, amlibexecdir, "/", "rundump",
-					    NULL);
+        char *progname;
+
+        g_free(cmd);
+        cmd = g_strjoin(NULL, amlibexecdir, "/", "rundump", NULL);
+        progname = cmd;
+
 	cmdX = cmd;
 	if (g_options->config)
 	    config = g_options->config;
@@ -274,16 +278,21 @@ start_backup(
     if (1)
 #endif
     {
+        char *progname;
 #ifdef USE_RUNDUMP
-        char *progname = cmd = newvstralloc(cmd, amlibexecdir, "/", "rundump",
-					    NULL);
+        g_free(cmd);
+        cmd = g_strjoin(NULL, amlibexecdir, "/", "rundump", NULL);
+        progname = cmd;
+
 	cmdX = cmd;
 	if (g_options->config)
 	    config = g_options->config;
 	else
 	    config = "NOCONFIG";
 #else
-	char *progname = cmd = newstralloc(cmd, VXDUMP);
+        g_free(cmd);
+cmd = g_strdup(VXDUMP);
+        progname = cmd;
 	cmdX = skip_argument;
 	config = skip_argument;
 #endif
@@ -326,13 +335,15 @@ start_backup(
     if (1)
 #endif
     {
-        cmd = newvstralloc(cmd, amlibexecdir, "/", "rundump", NULL);
+        g_free(cmd);
+        cmd = g_strjoin(NULL, amlibexecdir, "/", "rundump", NULL);
 	cmdX = cmd;
 	if (g_options->config)
 	    config = g_options->config;
 	else
 	    config = "NOCONFIG";
-	device = newstralloc(device, amname_to_dirname(dle->device));
+	g_free(device);
+	device = g_strdup(amname_to_dirname(dle->device));
 	program->backup_name  = VDUMP;
 	program->restore_name = VRESTORE;
 
