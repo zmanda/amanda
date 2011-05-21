@@ -199,11 +199,11 @@ cmdline_format_dumpspec_components(
         rv = host;
 	host = NULL;
         if (disk) {
-            rv = newvstralloc(rv, rv, " ", disk, NULL);
+            rv = vstrextend(&rv, " ", disk, NULL);
             if (datestamp) {
-                rv = newvstralloc(rv, rv, " ", datestamp, NULL);
+                rv = vstrextend(&rv, " ", datestamp, NULL);
 		if (level) {
-		    rv = newvstralloc(rv, rv, " ", level, NULL);
+		    rv = vstrextend(&rv, " ", level, NULL);
 		}
             }
         }
