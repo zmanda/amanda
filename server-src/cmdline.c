@@ -188,33 +188,43 @@ cmdline_format_dumpspec_components(
     char *datestamp,
     char *level)
 {
-    char *rv = NULL;
+    GPtrArray *array = g_ptr_array_new();
+    gchar **strings;
+    char *ret = NULL;
 
-    host = host? quote_dumpspec_string(host):NULL;
-    disk = disk? quote_dumpspec_string(disk):NULL;
-    datestamp = datestamp? quote_dumpspec_string(datestamp):NULL;
-    level = level? quote_dumpspec_string(level):NULL;
+    if (!host)
+        goto out;
 
-    if (host) {
-        rv = host;
-	host = NULL;
-        if (disk) {
-            rv = newvstralloc(rv, rv, " ", disk, NULL);
-            if (datestamp) {
-                rv = newvstralloc(rv, rv, " ", datestamp, NULL);
-		if (level) {
-		    rv = newvstralloc(rv, rv, " ", level, NULL);
-		}
-            }
-        }
+    g_ptr_array_add(array, quote_dumpspec_string(host));
+
+    if (!disk)
+        goto out;
+
+    g_ptr_array_add(array, quote_dumpspec_string(disk));
+
+    if (!datestamp)
+        goto out;
+
+    g_ptr_array_add(array, quote_dumpspec_string(datestamp));
+
+    if (level)
+        g_ptr_array_add(array, quote_dumpspec_string(level));
+
+out:
+    g_ptr_array_add(array, NULL);
+    strings = (gchar **) g_ptr_array_free(array, FALSE);
+
+    /*
+     * Note that if the only element of the GPtrArray is a NULL pointer, the
+     * returned pointer is NULL. We therefore need to make that check, since
+     * g_strjoinv() does not accept NULL as an argument.
+     */
+    if (strings) {
+        ret = g_strjoinv(" ", strings);
+        g_strfreev(strings);
     }
 
-    if (host) amfree(host);
-    if (disk) amfree(disk);
-    if (datestamp) amfree(datestamp);
-    if (level) amfree(level);
-
-    return rv;
+    return ret;
 }
 
 GSList *
