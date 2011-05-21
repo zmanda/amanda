@@ -648,7 +648,7 @@ debug_rename(
 	     */
 	    dbprintf(_("Cannot rename \"%s\" to \"%s\": %s\n"),
 		     db_filename, s, strerror(errno));
-	    s = newvstralloc(s, db_filename, NULL);
+	    s = newstralloc(s, db_filename);
 	    i = -1;
 	    break;
 	}
