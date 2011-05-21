@@ -406,7 +406,6 @@ typedef union sockaddr_union {
 #include "debug.h"
 #include "file.h"
 
-void *debug_newalloc(const char *file, int line, void *old, size_t size);
 char *debug_newstralloc(const char *file, int line,
 		char *oldstr, const char *newstr);
 char *debug_newvstralloc(const char *file, int line,
@@ -418,7 +417,6 @@ char *debug_newvstrallocf(const char *file, int line, char *oldstr,
  * string, or allocates a brand new one. */
 char *debug_vstrextend(const char *file, int line, char **oldstr, ...);
 
-#define	newalloc(p,s)		debug_newalloc(__FILE__, __LINE__, (p), (s))
 #define	newstralloc(p,s)	debug_newstralloc(__FILE__, __LINE__, (p), (s))
 #define newvstralloc(...)	debug_newvstralloc(__FILE__,__LINE__,__VA_ARGS__)
 #define newvstrallocf(...)	debug_newvstrallocf(__FILE__,__LINE__,__VA_ARGS__)

@@ -35,26 +35,6 @@
 
 #define	MIN_ALLOC	64
 
-static char *internal_vstralloc(const char *, int, const char *, va_list);
-
-/*
- * newalloc - free existing buffer and then g_malloc a new one.
- */
-void *
-debug_newalloc(
-    const char *file G_GNUC_UNUSED,
-    int		line G_GNUC_UNUSED,
-    void *	old,
-    size_t	size)
-{
-    char *addr;
-
-    addr = g_malloc(size);
-    amfree(old);
-    return addr;
-}
-
-
 /*
  * internal_vstralloc - copies up to MAX_STR_ARGS strings into newly
  * allocated memory.
