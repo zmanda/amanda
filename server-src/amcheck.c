@@ -31,7 +31,6 @@
 #include "amanda.h"
 #include "util.h"
 #include "conffile.h"
-#include "columnar.h"
 #include "fsusage.h"
 #include "diskfile.h"
 #include "tapefile.h"
@@ -722,16 +721,8 @@ start_server_check(
      * Check various server side config file settings.
      */
     if(do_localchk) {
-	char *ColumnSpec;
-	char *errstr = NULL;
 	char *lbl_templ;
 
-	ColumnSpec = getconf_str(CNF_COLUMNSPEC);
-	if(SetColumnDataFromString(ColumnData, ColumnSpec, &errstr) < 0) {
-	    g_fprintf(outf, _("ERROR: %s\n"), errstr);
-	    amfree(errstr);
-	    confbad = 1;
-	}
 	lbl_templ = tapetype_get_lbl_templ(tp);
 	if(strcmp(lbl_templ, "") != 0) {
 	    lbl_templ = config_dir_relative(lbl_templ);
