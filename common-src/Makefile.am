@@ -24,7 +24,6 @@ libamanda_la_SOURCES =		\
 	ipc-binary.c		\
 	amxml.c			\
 	clock.c			\
-	columnar.c		\
 	conffile.c		\
 	debug.c			\
 	dgram.c			\
@@ -105,7 +104,6 @@ noinst_HEADERS =		\
 	amxml.h			\
 	arglist.h		\
 	clock.h			\
-	columnar.h		\
 	directtcp.h		\
 	amflock.h		\
 	conffile.h		\

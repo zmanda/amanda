@@ -1,3 +1,9 @@
+2011-05-22  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/conffile.c: implement columnspec validation
+	* server-src/amcheck.c: remove columnspec validation in
+	  start_server_check()
+	* common-src/columnar.[ch]: remove; update Makefile.am accordingly
+
 2011-05-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* Fix for default BSDTCP auth.
 
