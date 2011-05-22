@@ -1,4 +1,4 @@
-# Copyright (c) 2007, 2008, 2009, 2010 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2007, 2008, 2009, 2010, 2011 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 224;
+use Test::More tests => 278;
 use strict;
 use warnings;
 use Data::Dumper;
@@ -1149,4 +1149,91 @@ my $index_server = getconf($CNF_INDEX_SERVER);
 is ($index_server, "index.localhost", "index-server is \"index.localhost\"");
 my $tape_server = getconf($CNF_TAPE_SERVER);
 is ($tape_server, "tape.localhost", "amdump is \"tape.localhost\"");
+
+##
+# Columnspec validation
+
+foreach my $exp_ok_columnspec (
+    # default
+    [1, "HostName=0:12:12,Disk=1:11:11,Level=1:1:1,OrigKB=1:-7:0,OutKB=1:-7:0," .
+	"Compress=1:-6:1,DumpTime=1:-7:7,Dumprate=1:-6:1,TapeTime=1:-6:6," .
+	"TapeRate=1:-6:1"],
+    # varying numeric params
+    [1, "Disk=1:18:19"],
+    [1, "Disk=1:18:"],
+    [1, "Disk=1:18"],
+    [1, "Disk=1::19"],
+    [1, "Disk=:18:19"],
+    [1, "Disk=1:"],
+    [1, "Disk=1"],
+    [1, "Disk=:18"],
+    [1, "Disk=:18:"],
+    [1, "Disk=::19"],
+    [1, "Disk="],
+    [1, "Disk=:"],
+    [1, "Disk=::"],
+
+    # same, with a second option
+    [1, "Disk=1:18:19,HostName=1:2:3"],
+    [1, "Disk=1:18:,HostName=1:2:3"],
+    [1, "Disk=1:18,HostName=1:2:3"],
+    [1, "Disk=1::19,HostName=1:2:3"],
+    [1, "Disk=:18:19,HostName=1:2:3"],
+    [1, "Disk=1:,HostName=1:2:3"],
+    [1, "Disk=1,HostName=1:2:3"],
+    [1, "Disk=:18,HostName=1:2:3"],
+    [1, "Disk=:18:,HostName=1:2:3"],
+    [1, "Disk=::19,HostName=1:2:3"],
+    [1, "Disk=,HostName=1:2:3"],
+    [1, "Disk=:,HostName=1:2:3"],
+    [1, "Disk=::,HostName=1:2:3"],
+
+    # negative values (only allowed in second integer column)
+    [0, "Disk=-1:1:1"],
+    [1, "Disk=1:-1:1"],
+    [0, "Disk=1:1:-1"],
+
+    # column names (case insensitive)
+    [1, "Compress=::2"],
+    [1, "cOMPRESS=::2"],
+    [1, "Disk=::2"],
+    [1, "dISK=::2"],
+    [1, "DumpRate=::2"],
+    [1, "dUMPrATE=::2"],
+    [1, "DumpTime=::2"],
+    [1, "dUMPtIME=::2"],
+    [1, "HostName=::2"],
+    [1, "hOSTnAME=::2"],
+    [1, "Level=::2"],
+    [1, "lEVEL=::2"],
+    [1, "OrigKB=::2"],
+    [1, "oRIGkb=::2"],
+    [1, "OutKB=::2"],
+    [1, "oUTkb=::2"],
+    [1, "TapeRate=::2"],
+    [1, "tAPErATE=::2"],
+    [1, "TapeTime=::2"],
+    [1, "tAPEtIME=::2"],
+
+    # invalid column names
+    [0, "Lev=::2"],
+    [0, "=::2"],
+    [0, "Bogus=::2"],
+
+    # example from amanda.conf[5]
+    [1, "Disk=1:18,OrigKB=::2,OutKB=1:7,HostName=1:2:3"],
+) {
+    my ($exp_ok, $columnspec) = @$exp_ok_columnspec;
+
+    $testconf = Installcheck::Config->new();
+    $testconf->add_param('columnspec', "\"$columnspec\"");
+    $testconf->write();
+
+    my $rv = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+    if ($exp_ok) {
+	is($rv, $CFGERR_OK, "'$columnspec' validated OK");
+    } else {
+	is($rv, $CFGERR_ERRORS, "'$columnspec' validated as error");
+    }
+}
 

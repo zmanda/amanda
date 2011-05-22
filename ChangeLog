@@ -1,3 +1,6 @@
+2011-05-22  Dustin J. Mitchell <dustin@mozilla.com>
+	* installchecks/Amanda_Config.pl: add columnspec validation tests
+
 2011-05-22  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/conffile.c: implement columnspec validation
 	* server-src/amcheck.c: remove columnspec validation in
