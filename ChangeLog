@@ -1,4 +1,8 @@
 2011-05-23  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/amanda.h, common-src/alloc.c: remove dead function and
+	  prototypes of newalloc()
+
+2011-05-23  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/arglist.h: remove
 	* common-src/amanda.h: define the arglist_{start,val,end} macros here
 	* various *.[ch]: redeclare header/static function prototypes using
