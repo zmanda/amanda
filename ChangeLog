@@ -1,4 +1,8 @@
 2011-05-23  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/conffile.c: the prototype for str_keyword() was defined
+	  twice, remove one definition
+
+2011-05-23  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/krb5-security.c: use cpp's #error to signal the lack of
 	  atexit()
 
