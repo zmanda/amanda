@@ -30,7 +30,6 @@
  */
 
 #include "amanda.h"
-#include "arglist.h"
 #include "packet.h"
 #include "security.h"
 
@@ -112,8 +111,7 @@ security_handleinit(
     handle->error = g_strdup(_("unknown protocol error"));
 }
 
-printf_arglist_function1(void security_seterror, security_handle_t *, handle,
-    const char *, fmt)
+void security_seterror(security_handle_t *handle, const char *fmt, ...)
 {
     static char buf[1024];
     va_list argp;
@@ -153,9 +151,7 @@ security_streaminit(
     stream->error = g_strdup(_("unknown stream error"));
 }
 
-printf_arglist_function1(void security_stream_seterror,
-    security_stream_t *, stream,
-    const char *, fmt)
+void security_stream_seterror(security_stream_t *stream, const char *fmt, ...)
 {
     static char buf[1024];
     va_list argp;

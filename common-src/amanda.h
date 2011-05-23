@@ -42,6 +42,25 @@
 #include "amflock.h"
 
 /*
+ * Varargs/ellipsis handling: some broken systems DO NOT declare STDC_HEADERS,
+ * which means va_start behaves differently :/ So, use our own
+ */
+#ifdef STDC_HEADERS
+
+#include <stdarg.h>
+#define arglist_start(arg,hook_name)	va_start(arg,hook_name)
+
+#else /* !STDC_HEADERS */
+
+#include <varargs.h>
+#define arglist_start(arg,hook_name)	va_start(arg)
+
+#endif /* STDC_HEADERS */
+
+#define arglist_val(arg,type)	va_arg(arg,type)
+#define arglist_end(arg)	va_end(arg)
+
+/*
  * Force large file source even if configure guesses wrong.
  */
 #ifndef _LARGEFILE64_SOURCE
@@ -932,12 +951,10 @@ extern int shmget(key_t key, size_t size, int shmflg);
 #endif
 
 #ifndef HAVE_SNPRINTF_DECL
-#include "arglist.h"
 int snprintf(char *buf, size_t len, const char *format,...)
      G_GNUC_PRINTF(3,4);
 #endif
 #ifndef HAVE_VSNPRINTF_DECL
-#include "arglist.h"
 int vsnprintf(char *buf, size_t len, const char *format, va_list ap);
 #endif
 
@@ -996,12 +1013,10 @@ extern int ungetc(int c, FILE *stream);
 #endif
 
 #ifndef HAVE_VFPRINTF_DECL
-#include "arglist.h"
 extern int vfprintf(FILE *stream, const char *format, va_list ap);
 #endif
 
 #ifndef HAVE_VPRINTF_DECL
-#include "arglist.h"
 extern int vprintf(const char *format, va_list ap);
 #endif
 

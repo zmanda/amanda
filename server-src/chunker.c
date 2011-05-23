@@ -28,7 +28,6 @@
  * requests remote amandad processes to dump filesystems
  */
 #include "amanda.h"
-#include "arglist.h"
 #include "clock.h"
 #include "conffile.h"
 #include "event.h"

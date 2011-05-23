@@ -32,7 +32,6 @@
 #include "amanda.h"
 #include "util.h"
 #include "timestamp.h"
-#include "arglist.h"
 #include "file.h"
 
 static void areads_getbuf(const char *s, int l, int fd);
