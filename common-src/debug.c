@@ -383,8 +383,8 @@ debug_unlink_old(void)
 	}
 	if(do_rename) {
 	    i = 0;
+            s = newvstralloc(s, dbgdir, dbfilename, NULL);
 	    while(dbfilename != NULL
-		  && (s = newvstralloc(s, dbgdir, dbfilename, NULL)) != NULL
 		  && rename(e, s) != 0 && errno != ENOENT) {
 		amfree(dbfilename);
 		dbfilename = get_debug_name((time_t)sbuf.st_mtime, ++i);
@@ -538,10 +538,7 @@ debug_open(char *subdir)
 	    /*NOTREACHED*/
 	}
 
-	if ((s = newvstralloc(s, dbgdir, db_name, NULL)) == NULL) {
-	    error(_("Cannot allocate debug file name memory"));
-	    /*NOTREACHED*/
-	}
+        s = newvstralloc(s, dbgdir, db_name, NULL);
 
 	if ((fd = open(s, O_WRONLY|O_CREAT|O_EXCL|O_APPEND, 0640)) < 0) {
 	    if (errno != EEXIST) {

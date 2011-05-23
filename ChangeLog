@@ -1,4 +1,8 @@
 2011-05-23  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/debug.c: remove tests for failled allocations and allocate
+	  directly, failed allocations would make the program abort anyway
+
+2011-05-23  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/amanda.h, common-src/alloc.c: remove dead function and
 	  prototypes of newalloc()
 
