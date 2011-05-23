@@ -1,4 +1,11 @@
 2011-05-23  Francis Galiegue <fgaliegue@gmail.com>
+	* client-src/sendbackup-dump.c, common-src/debug.c,
+	  common-src/krb5-security.c, common-src/security-util.c,
+	  recover-src/amrecover.c, recover-src/extract_list.c,
+	  server-src/dumper.c, server-src/planner.c: use newstralloc() where
+	  possible instead of /^newvstrallocf?/()
+
+2011-05-23  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/debug.c: remove tests for failled allocations and allocate
 	  directly, failed allocations would make the program abort anyway
 

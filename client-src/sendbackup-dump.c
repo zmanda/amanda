@@ -283,7 +283,7 @@ start_backup(
 	else
 	    config = "NOCONFIG";
 #else
-	char *progname = cmd = newvstralloc(cmd, VXDUMP, NULL);
+	char *progname = cmd = newstralloc(cmd, VXDUMP);
 	cmdX = skip_argument;
 	config = skip_argument;
 #endif
