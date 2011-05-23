@@ -1,4 +1,9 @@
 2011-05-23  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/cmdline.c: [GLib] rewrite
+	  cmdline_format_dumpspec_components() using a GPtrArray and
+	  g_strjoinv()
+
+2011-05-23  Francis Galiegue <fgaliegue@gmail.com>
 	* client-src/sendbackup-dump.c, common-src/debug.c,
 	  common-src/krb5-security.c, common-src/security-util.c,
 	  recover-src/amrecover.c, recover-src/extract_list.c,
