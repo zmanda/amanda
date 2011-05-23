@@ -1,4 +1,8 @@
 2011-05-23  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/krb5-security.c: use cpp's #error to signal the lack of
+	  atexit()
+
+2011-05-23  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/genversion.c: use do { ... } while(0) to #define
 	  the startline() macro
 

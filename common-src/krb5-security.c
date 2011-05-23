@@ -58,7 +58,7 @@
 #ifdef HAVE_ON_EXIT
 #define atexit(func)    on_exit(func, 0)
 #else
-#define atexit(func)    (you must to resolve lack of atexit)
+#error "You don't have atexit() or on_exit()"
 #endif  /* HAVE_ON_EXIT */
 #endif  /* ! HAVE_ATEXIT */
 #endif
