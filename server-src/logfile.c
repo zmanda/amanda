@@ -30,7 +30,6 @@
  * common log file writing routine
  */
 #include "amanda.h"
-#include "arglist.h"
 #include "util.h"
 #include "conffile.h"
 

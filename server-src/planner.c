@@ -29,7 +29,6 @@
  * backup schedule planner for the Amanda backup system.
  */
 #include "amanda.h"
-#include "arglist.h"
 #include "find.h"
 #include "conffile.h"
 #include "diskfile.h"
@@ -2766,10 +2765,7 @@ static void delay_dumps(void)
  * Remove a dump or modify it from full to incremental.
  * Keep track of it on the bi q in case we can add it back later.
  */
-arglist_function1(
-    static void delay_one_dump,
-    disk_t *, dp,
-    int, delete)
+static void delay_one_dump(disk_t *dp, int delete, ...)
 {
     bi_t *bi;
     va_list argp;

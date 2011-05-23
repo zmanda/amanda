@@ -30,7 +30,6 @@
  * library routines to marshall/send, recv/unmarshall UDP packets
  */
 #include "amanda.h"
-#include "arglist.h"
 #include "dgram.h"
 #include "util.h"
 #include "conffile.h"
@@ -332,7 +331,7 @@ dgram_zero(
     *(dgram->cur) = '\0';
 }
 
-printf_arglist_function1(int dgram_cat, dgram_t *, dgram, const char *, fmt)
+int dgram_cat(dgram_t *dgram, const char *fmt, ...)
 {
     ssize_t bufsize;
     va_list argp;

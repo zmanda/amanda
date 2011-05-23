@@ -29,7 +29,6 @@
  * Routines for modifying the amanda protocol packet type
  */
 #include "amanda.h"
-#include "arglist.h"
 #include "packet.h"
 
 /*
@@ -64,8 +63,7 @@ void pkt_init_empty(
     pkt->size = strlen(pkt->body);
 }
 
-printf_arglist_function2(void pkt_init, pkt_t *, pkt, pktype_t, type,
-    const char *, fmt)
+void pkt_init(pkt_t *pkt, pktype_t type, const char *fmt, ...)
 {
     va_list	argp;
     int         len;
@@ -94,7 +92,7 @@ printf_arglist_function2(void pkt_init, pkt_t *, pkt, pktype_t, type,
 /*
  * Append data to a packet
  */
-printf_arglist_function1(void pkt_cat, pkt_t *, pkt, const char *, fmt)
+void pkt_cat(pkt_t *pkt, const char *fmt, ...)
 {
     size_t	len;
     int         lenX;

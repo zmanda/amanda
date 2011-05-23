@@ -22,7 +22,6 @@
 #include "amanda.h"
 #include "amxfer.h"
 #include "xfer-device.h"
-#include "arglist.h"
 #include "conffile.h"
 
 /* A transfer destination that writes an entire dumpfile to one or more files
