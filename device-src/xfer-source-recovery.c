@@ -24,7 +24,6 @@
 #include "device.h"
 #include "property.h"
 #include "xfer-device.h"
-#include "arglist.h"
 #include "conffile.h"
 
 /*

@@ -43,7 +43,6 @@
 #include "amanda.h"
 #include "conffile.h"
 #include "diskfile.h"
-#include "arglist.h"
 #include "clock.h"
 #include "match.h"
 #include "amindex.h"
@@ -496,7 +495,7 @@ reply_ptr_array(
 }
 
 /* send a 1 line reply to the client */
-printf_arglist_function1(static void reply, int, n, char *, fmt)
+static void reply(int n, char *fmt, ...)
 {
     va_list args;
     int len;
@@ -533,7 +532,7 @@ printf_arglist_function1(static void reply, int, n, char *, fmt)
 }
 
 /* send one line of a multi-line response */
-printf_arglist_function1(static void lreply, int, n, char *, fmt)
+static void lreply(int n, char *fmt, ...)
 {
     va_list args;
     int len;
@@ -574,7 +573,7 @@ printf_arglist_function1(static void lreply, int, n, char *, fmt)
 }
 
 /* send one line of a multi-line response */
-printf_arglist_function1(static void fast_lreply, int, n, char *, fmt)
+static void fast_lreply(int n, char *fmt, ...)
 {
     va_list args;
     int len;

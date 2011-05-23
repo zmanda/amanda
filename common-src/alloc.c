@@ -31,7 +31,6 @@
  * code
  */
 #include "amanda.h"
-#include "arglist.h"
 
 #define	MIN_ALLOC	64
 

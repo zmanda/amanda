@@ -44,13 +44,13 @@ typedef struct {
  */
 void pkt_init_empty(pkt_t *pkt, pktype_t type);
 void pkt_init(pkt_t *, pktype_t, const char *, ...)
-     G_GNUC_PRINTF(3,4);
+    G_GNUC_PRINTF(3, 4);
 
 /*
  * Append data to a packet
  */
 void pkt_cat(pkt_t *, const char *, ...)
-     G_GNUC_PRINTF(2,3);
+    G_GNUC_PRINTF(2, 3);
 
 /*
  * Convert the packet type to and from a string

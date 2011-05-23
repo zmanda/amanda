@@ -21,7 +21,6 @@
 #include "amanda.h"
 #include "amxfer.h"
 #include "element-glue.h"
-#include "arglist.h"
 
 /* XMsgSource objects are GSource "subclasses" which manage
  * a queue of messages, delivering those messages via callback

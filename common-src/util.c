@@ -31,7 +31,6 @@
 #include "util.h"
 #include "match.h"
 #include <regex.h>
-#include "arglist.h"
 #include "clock.h"
 #include "sockaddr-util.h"
 #include "conffile.h"

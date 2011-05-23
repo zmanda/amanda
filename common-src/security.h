@@ -319,7 +319,7 @@ void security_close(security_handle_t *);
 /* Sets the string that security_geterror() returns.  For use by security
  * drivers. */
 void security_seterror(security_handle_t *, const char *, ...)
-     G_GNUC_PRINTF(2,3);
+    G_GNUC_PRINTF(2, 3);
 
 /* Initializes a security_handle_t. This is meant to be called only by security
  * drivers to initialize the common part of a newly allocated
@@ -352,7 +352,7 @@ void security_streaminit(security_stream_t *, const security_driver_t *);
 
 /* Sets the string that security_stream_geterror() returns. */
 void security_stream_seterror(security_stream_t *, const char *, ...)
-     G_GNUC_PRINTF(2,3);
+    G_GNUC_PRINTF(2, 3);
 
 /* security_stream_t *security_stream_server(security_handle_t *);
  *

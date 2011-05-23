@@ -32,7 +32,6 @@
 
 #include "amanda.h"
 #include "util.h"
-#include "arglist.h"
 #include "clock.h"
 #include "timestamp.h"
 #include "conffile.h"
@@ -752,7 +751,7 @@ debug_close(void)
 /*
  * Format and write a debug message to the process debug file.
  */
-printf_arglist_function(void debug_printf, const char *, format)
+void debug_printf(const char *format, ...)
 {
     va_list argp;
     int save_errno;

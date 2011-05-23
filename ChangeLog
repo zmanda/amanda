@@ -1,3 +1,9 @@
+2011-05-23  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/arglist.h: remove
+	* common-src/amanda.h: define the arglist_{start,val,end} macros here
+	* various *.[ch]: redeclare header/static function prototypes using
+	  G_GNUC_PRINTF()
+
 2011-05-22  Dustin J. Mitchell <dustin@mozilla.com>
 	* installchecks/Amanda_Config.pl: add columnspec validation tests
 
