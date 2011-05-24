@@ -1,3 +1,7 @@
+2011-05-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Parse and filter stdout/stderr of
+	  commands.
+
 2011-05-23  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/conffile.c: the prototype for str_keyword() was defined
 	  twice, remove one definition
