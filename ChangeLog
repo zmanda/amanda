@@ -1,3 +1,7 @@
+2011-05-23  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/debug.c: debug_unlink_old(): the realloc was meant to
+	  happen each time the loop was entered and dbfilename was not NULL, fix
+
 2011-05-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Parse and filter stdout/stderr of
 	  commands.

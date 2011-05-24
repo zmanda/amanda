@@ -383,12 +383,18 @@ debug_unlink_old(void)
 	}
 	if(do_rename) {
 	    i = 0;
-            s = newvstralloc(s, dbgdir, dbfilename, NULL);
-	    while(dbfilename != NULL
-		  && rename(e, s) != 0 && errno != ENOENT) {
-		amfree(dbfilename);
+            while (TRUE) {
+                if (dbfilename == NULL)
+                    break;
+                s = newvstralloc(s, dbgdir, dbfilename, NULL);
+                if (rename(e, s) == 0)
+                    break;
+                if (errno == ENOENT)
+                    break;
+                g_free(dbfilename);
 		dbfilename = get_debug_name((time_t)sbuf.st_mtime, ++i);
 	    }
+
 	    if(dbfilename == NULL) {
 		error(_("cannot rename old debug file \"%s\""), entry->d_name);
 		/*NOTREACHED*/
