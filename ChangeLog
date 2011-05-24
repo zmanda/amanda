@@ -1,3 +1,8 @@
+2011-05-24 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/deb/rules: use --enable-as-needed
+	*  packaging/rpm/amanda.spec.src: use --enable-as-needed except on
+	   sles9, where ld does not have the --as-needed flag.
+
 2011-05-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/gnutar.pl: Fix gnutar pattern matching for gtar 1.25.
 
