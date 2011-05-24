@@ -39,6 +39,7 @@ use Amanda::Config qw( :init :getconf  config_dir_relative string_to_boolean );
 use Amanda::Debug qw( :logging );
 use Amanda::Paths;
 use Amanda::Util qw( :constants :encoding );
+use Amanda::MainLoop qw( :GIOCondition );
 
 my $_DATA_DIR_TAR = "data_dir.tar";
 my $_ARCHIVE_DIR_TAR = "archive_dir.tar";
@@ -208,12 +209,62 @@ sub _run_psql_command {
 
     push @cmd, '--quiet', '--output', '/dev/null', '--command', $cmd, $self->{'props'}->{'pg-db'};
     debug("running " . join(" ", @cmd));
-    my $status = system(@cmd);
+
+    my ($wtr, $rdr);
+    my $err = Symbol::gensym;
+    my $pid = open3($wtr, $rdr, $err, @cmd);
+    close($wtr);
+
+    my $file_to_close = 2;
+    my $psql_stdout_src = Amanda::MainLoop::fd_source($rdr,
+						$G_IO_IN|$G_IO_HUP|$G_IO_ERR);
+    my $psql_stderr_src = Amanda::MainLoop::fd_source($err,
+						$G_IO_IN|$G_IO_HUP|$G_IO_ERR);
+    $psql_stdout_src->set_callback(sub {
+	my $line = <$rdr>;
+	if (!defined $line) {
+	    $file_to_close--;
+	    $psql_stdout_src->remove();
+	    Amanda::MainLoop::quit() if $file_to_close == 0;
+	    return;
+	}
+	chomp $line;
+	debug("psql stdout: $line");
+	if ($line =~ /NOTICE: pg_stop_backup complete, all required WAL segments have been archived/) {
+	} else {
+	    $self->print_to_server("psql stdout: $line",
+				   $Amanda::Script_App::GOOD);
+	}
+    });
+    $psql_stderr_src->set_callback(sub {
+	my $line = <$err>;
+	if (!defined $line) {
+	    $file_to_close--;
+	    $psql_stderr_src->remove();
+	    Amanda::MainLoop::quit() if $file_to_close == 0;
+	    return;
+	}
+	chomp $line;
+	debug("psql stderr: $line");
+	if ($line =~ /NOTICE: pg_stop_backup complete, all required WAL segments have been archived/) {
+	} else {
+	    $self->print_to_server("psql stderr: $line",
+				   $Amanda::Script_App::GOOD);
+	}
+    });
+
+    close($wtr);
+    Amanda::MainLoop::run();
+    close($rdr);
+    close($err);
+
+    waitpid $pid, 0;
+    my $status = $?;
 
     $ENV{'PGPASSWORD'} = $orig_pgpassword || '';
     $ENV{'PGPASSFILE'} = $orig_pgpassfile || '';
 
-    return 0 == ($status >>8)
+    return 0 == ($status >> 8)
 }
 
 sub command_selfcheck {
