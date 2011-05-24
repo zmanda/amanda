@@ -1,4 +1,7 @@
 2011-05-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/gnutar.pl: Fix gnutar pattern matching for gtar 1.25.
+
+2011-05-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Parse and filter stdout/stderr of
 	  commands.
 
