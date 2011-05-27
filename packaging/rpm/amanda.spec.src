@@ -33,7 +33,7 @@
 
 # LDFLAGS: newer gnu linkers can use "-Wl,--as-needed", while older ones,
 # like rhel3 and sles9 can't.
-%define enable-as-needed --enable-as-needed
+%define enable_as_needed --enable-as-needed
 
 # Define which Distribution we are building:
 # Try to detect the distribution we are building:
@@ -154,7 +154,7 @@
 	# as integers.
 	%define curl curl
 	%if "%{distver}" == "9"
-	    %undefine enable-as-needed
+	    %undefine enable_as_needed
 	%endif
     %endif
 %endif
@@ -374,7 +374,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
         %{?PKG_CONFIG_PATH: PKG_CONFIG_PATH=%PKG_CONFIG_PATH} \
         CFLAGS="%{optflags} -g -pipe" CXXFLAGS="%{optflags}" \
         %{?LDFLAGS:LDFLAGS="${LDFLAGS} %{?LDFLAGS:%LDFLAGS}"} \
-	%{?enable-as-needed:%{enable-as-needed}} \
+	%{?enable_as_needed:%{enable_as_needed}} \
         --quiet \
         --prefix=%{PREFIX} \
         --sysconfdir=%{SYSCONFDIR} \

@@ -1,3 +1,7 @@
+2011-05-27 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/rpm/amanda.spec.src: replace enable-as-needed rpm macro
+	   with enable_as_needed.
+
 2011-05-24 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/deb/rules: use --enable-as-needed
 	*  packaging/rpm/amanda.spec.src: use --enable-as-needed except on
