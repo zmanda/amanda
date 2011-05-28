@@ -33,7 +33,7 @@
 
 # LDFLAGS: newer gnu linkers can use "-Wl,--as-needed", while older ones,
 # like rhel3 and sles9 can't.
-%define LDFLAGS -Wl,--as-needed
+%define enable_as_needed --enable-as-needed
 
 # Define which Distribution we are building:
 # Try to detect the distribution we are building:
@@ -101,7 +101,6 @@
 	%define requires_libtermcap Requires: libtermcap.so.2
 	%define curl curl
 	%define without_ipv6 --without-ipv6
-	%undefine LDFLAGS
     %endif
     %if %(awk '$1 == "Red" && $7 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
@@ -155,7 +154,7 @@
 	# as integers.
 	%define curl curl
 	%if "%{distver}" == "9"
-	    %undefine LDFLAGS
+	    %undefine enable_as_needed
 	%endif
     %endif
 %endif
@@ -369,10 +368,13 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 # the platform detection bits.
 # without_ipv6 should only be defined on rhel3.
 # LDFLAGS macro is defined except on rhel3.
+# --enable-as-needed must be conditional until configure tests whether
+# ld can accept --as-needed.
 ./configure \
         %{?PKG_CONFIG_PATH: PKG_CONFIG_PATH=%PKG_CONFIG_PATH} \
         CFLAGS="%{optflags} -g -pipe" CXXFLAGS="%{optflags}" \
         %{?LDFLAGS:LDFLAGS="${LDFLAGS} %{?LDFLAGS:%LDFLAGS}"} \
+	%{?enable_as_needed:%{enable_as_needed}} \
         --quiet \
         --prefix=%{PREFIX} \
         --sysconfdir=%{SYSCONFDIR} \

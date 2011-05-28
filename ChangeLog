@@ -1,3 +1,12 @@
+2011-05-27 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/rpm/amanda.spec.src: replace enable-as-needed rpm macro
+	   with enable_as_needed.
+
+2011-05-24 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/deb/rules: use --enable-as-needed
+	*  packaging/rpm/amanda.spec.src: use --enable-as-needed except on
+	   sles9, where ld does not have the --as-needed flag.
+
 2011-05-23  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/debug.c: debug_unlink_old(): the realloc was meant to
 	  happen each time the loop was entered and dbfilename was not NULL, fix
