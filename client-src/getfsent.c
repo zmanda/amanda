@@ -77,20 +77,28 @@ get_fstab_nextentry(
 
     if(!sys_fsent)
 	return 0;
-    fsent->fsname  = xfsname  = newstralloc(xfsname,  sys_fsent->fs_spec);
-    fsent->mntdir  = xmntdir  = newstralloc(xmntdir,  sys_fsent->fs_file);
+    g_free(xfsname);
+    fsent->fsname = xfsname = g_strdup(sys_fsent->fs_spec);
+    g_free(xmntdir);
+    fsent->mntdir = xmntdir = g_strdup(sys_fsent->fs_file);
     fsent->freq    = sys_fsent->fs_freq;
     fsent->passno  = sys_fsent->fs_passno;
 #ifdef STATFS_ULTRIX
-    fsent->fstype  = xfstype  = newstralloc(xfstype,  sys_fsent->fs_name);
-    fsent->mntopts = xmntopts = newstralloc(xmntopts, sys_fsent->fs_opts);
+    g_free(xfstype);
+    fsent->fstype = xfstype = g_strdup(sys_fsent->fs_name);
+    g_free(xmntopts);
+    fsent->mntopts = xmntopts = g_strdup(sys_fsent->fs_opts);
 #else
 #if defined(_AIX)
-    fsent->fstype  = xfstype  = newstralloc(xfstype,  _("unknown"));
-    fsent->mntopts = xmntopts = newstralloc(xmntopts, sys_fsent->fs_type);
+    g_free(xfstype);
+    fsent->fstype = xfstype = g_strdup(_("unknown"));
+    g_free(xmntopts);
+    fsent->mntopts = xmntopts = g_strdup(sys_fsent->fs_type);
 #else
-    fsent->fstype  = xfstype  = newstralloc(xfstype,  sys_fsent->fs_vfstype);
-    fsent->mntopts = xmntopts = newstralloc(xmntopts, sys_fsent->fs_mntops);
+    g_free(xfstype);
+    fsent->fstype = xfstype = g_strdup(sys_fsent->fs_vfstype);
+    g_free(xmntopts);
+    fsent->mntopts = xmntopts = g_strdup(sys_fsent->fs_mntops);
 #endif
 #endif
     return 1;
@@ -307,7 +315,8 @@ get_fstab_nextentry(
 	strappend(fsent->mntopts, s);
     }
 
-    lfsnam = newstralloc(lfsnam, fsent->fstype);
+    g_free(lfsnam);
+    lfsnam = g_strdup(fsent->fstype);
     s = lfsnam;
     while((ch = *s++) != '\0') {
 	if(isupper(ch)) ch = tolower(ch);
@@ -681,7 +690,8 @@ main(
 
     close_fstab();
 
-    name = newstralloc(name, "/usr");
+    g_free(name);
+    name = g_strdup("/usr");
     if(search_fstab(name, &fsent, 1) || search_fstab(name, &fsent, 0)) {
 	g_printf(_("Found %s mount for %s:\n"),
 	       is_local_fstype(&fsent)? _("local") : _("remote"), name);
@@ -690,7 +700,8 @@ main(
     else 
 	g_printf(_("Mount for %s not found\n"), name);
 
-    name = newstralloc(name, "/");
+    g_free(name);
+    name = g_strdup("/");
     if(search_fstab(name, &fsent, 1) || search_fstab(name, &fsent, 0)) {
 	g_printf(_("Found %s mount for %s:\n"),
 	       is_local_fstype(&fsent)? _("local") : _("remote"), name);
@@ -699,24 +710,29 @@ main(
     else 
 	g_printf(_("Mount for %s not found\n"), name);
 
-    name = newstralloc(name, "/");
+    g_free(name);
+    name = g_strdup("/");
     s = amname_to_fstype(name);
     g_printf(_("fstype of `%s': %s\n"), name, s);
     amfree(s);
-    name = newstralloc(name, "/dev/root");
+    g_free(name);
+    name = g_strdup("/dev/root");
     s = amname_to_fstype(name);
     g_printf(_("fstype of `%s': %s\n"), name, s);
     amfree(s);
-    name = newstralloc(name, "/usr");
+    g_free(name);
+    name = g_strdup("/usr");
     s = amname_to_fstype(name);
     g_printf(_("fstype of `%s': %s\n"), name, s);
     amfree(s);
-    name = newstralloc(name, "c0t3d0s0");
+    g_free(name);
+    name = g_strdup("c0t3d0s0");
     s = amname_to_fstype(name);
     g_printf(_("fstype of `%s': %s\n"), name, s);
     amfree(s);
 
-    name = newstralloc(name, "/tmp/foo");
+    g_free(name);
+    name = g_strdup("/tmp/foo");
     s = amname_to_devname(name);
     g_printf(_("device of `%s': %s\n"), name, s);
     amfree(s);
@@ -727,7 +743,8 @@ main(
     g_printf(_("fstype of `%s': %s\n"), name, s);
     amfree(s);
 
-    name = newstralloc(name, "./foo");
+    g_free(name);
+    name = g_strdup("./foo");
     s = amname_to_devname(name);
     g_printf(_("device of `%s': %s\n"), name, s);
     amfree(s);
@@ -739,7 +756,8 @@ main(
     amfree(s);
 
     while (--argc > 0) {
-	name = newstralloc(name, *++argv);
+	g_free(name);
+	name = g_strdup(*++argv);
 	s = amname_to_devname(name);
 	g_printf(_("device of `%s': %s\n"), name, s);
 	amfree(s);

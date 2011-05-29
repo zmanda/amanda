@@ -68,7 +68,8 @@ set_date(
 	{
 	    g_printf(_("No index records for cwd on new date\n"));
 	    g_printf(_("Setting cwd to mount point\n"));
-	    disk_path = newstralloc(disk_path, "/");	/* fake it */
+	    g_free(disk_path);
+	    disk_path = g_strdup("/");	/* fake it */
 	    clear_dir_list();
 	}
     }
@@ -161,7 +162,8 @@ set_host(
     }
 
     if(found_host) {
-	dump_hostname = newstralloc(dump_hostname, host);
+	g_free(dump_hostname);
+	dump_hostname = g_strdup(host);
 	amfree(disk_name);
 	amfree(mount_point);
 	amfree(disk_path);
@@ -223,25 +225,29 @@ set_disk(
 	return;
     }
 
-    disk_name = newstralloc(disk_name, uqdsk);
+    g_free(disk_name);
+    disk_name = g_strdup(uqdsk);
     if (mtpt == NULL)
     {
 	/* mount point not specified */
 	if (*uqdsk == '/')
 	{
 	    /* disk specified by mount point, hence use it */
-	    mount_point = newstralloc(mount_point, uqdsk);
+	    g_free(mount_point);
+	    mount_point = g_strdup(uqdsk);
 	}
 	else
 	{
 	    /* device name given, use '/' because nothing better */
-	    mount_point = newstralloc(mount_point, "/");
+	    g_free(mount_point);
+	    mount_point = g_strdup("/");
 	}
     }
     else
     {
 	/* mount point specified */
-	mount_point = newstralloc(mount_point, uqmtpt);
+	g_free(mount_point);
+	mount_point = g_strdup(uqmtpt);
     }
 
     /* set the working directory to the mount point */
@@ -253,14 +259,16 @@ set_disk(
 	exit(1);
     if (server_happy())
     {
-	disk_path = newstralloc(disk_path, "/");
+	g_free(disk_path);
+	disk_path = g_strdup("/");
 	suck_dir_list_from_server();	/* get list of directory contents */
     }
     else
     {
 	g_printf(_("No index records for disk for specified date\n"));
 	g_printf(_("If date correct, notify system administrator\n"));
-	disk_path = newstralloc(disk_path, "/");	/* fake it */
+	g_free(disk_path);
+	disk_path = g_strdup("/");	/* fake it */
 	clear_dir_list();
     }
     amfree(uqmtpt);
@@ -563,7 +571,8 @@ cd_dir(
             {   /* It is a directory */
 		char *dir1, *dir2;
 		nb_found++;
-		dir = newstralloc(dir,ditem->path);
+		g_free(dir);
+		dir = g_strdup(ditem->path);
 		if(dir[strlen(dir)-1] == '/')
 		    dir[strlen(dir)-1] = '\0'; /* remove last / */
 		/* remove everything before the last / */
@@ -640,7 +649,8 @@ set_directory(
 	    }
 	    new_dir = g_strdup(ldir+strlen(mount_point));
 	    if (strlen(new_dir) == 0) {
-		new_dir = newstralloc(new_dir, "/");
+		g_free(new_dir);
+		new_dir = g_strdup("/");
 					/* i.e. ldir == mount_point */
 	    }
 	}
@@ -708,7 +718,8 @@ set_directory(
 
     if (server_happy())
     {
-	disk_path = newstralloc(disk_path, new_dir);
+	g_free(disk_path);
+	disk_path = g_strdup(new_dir);
 	suck_dir_list_from_server();	/* get list of directory contents */
 	if (verbose)
 	    show_directory();		/* say where we moved to */
@@ -800,14 +811,16 @@ set_device(
     char *	host,
     char *	device)
 {
-    if (host)
-	tape_server_name = newstralloc(tape_server_name, host);
-    else
+    if (host) {
+        g_free(tape_server_name);
+        tape_server_name = g_strdup(host);
+    } else
 	amfree(tape_server_name);
 
-    if (device)
-	tape_device_name = newstralloc(tape_device_name, device);
-    else
+    if (device) {
+        g_free(tape_device_name);
+        tape_device_name = g_strdup(device);
+    } else
 	amfree(tape_device_name);
 
     /* print the current status */

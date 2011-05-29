@@ -1415,7 +1415,8 @@ amgtar_get_incrname(
 		inputname = newvstralloc(inputname,
 					 basename, "_", number, NULL);
 	    } else {
-		inputname = newstralloc(inputname, "/dev/null");
+		g_free(inputname);
+		inputname = g_strdup("/dev/null");
 	    }
 	    if ((infd = open(inputname, O_RDONLY)) == -1) {
 

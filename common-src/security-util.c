@@ -518,7 +518,8 @@ tcpm_recv_token(
 	} else if (rval == 0) {
 	    *size = 0;
 	    *handle = H_EOF;
-	    *errmsg = newstralloc(*errmsg, "SOCKET_EOF");
+	    g_free(*errmsg);
+	    *errmsg = g_strdup("SOCKET_EOF");
 	    auth_debug(1, "tcpm_recv_token: A return(0)\n");
 	    return(0);
 	} else if (rval < (ssize_t)sizeof(rc->netint) - rc->size_header_read) {
@@ -570,8 +571,8 @@ tcpm_recv_token(
 		dbprintf(_("tcpm_recv_token: invalid size %s\n"), s1);
 		amfree(s1);
 	    } else {
-		*errmsg = newstralloc(*errmsg,
-                                      "tcpm_recv_token: invalid size");
+		g_free(*errmsg);
+		*errmsg = g_strdup("tcpm_recv_token: invalid size");
 		dbprintf("tcpm_recv_token: invalid size %zd\n", *size);
 	    }
 	    *size = -1;
@@ -581,7 +582,8 @@ tcpm_recv_token(
 
 	if (*size == 0) {
 	    auth_debug(1, "tcpm_recv_token: read EOF from %d\n", *handle);
-	    *errmsg = newstralloc(*errmsg, "EOF");
+	    g_free(*errmsg);
+	    *errmsg = g_strdup("EOF");
 	    rc->size_header_read = 0;
 	    return 0;
 	}
@@ -600,7 +602,8 @@ tcpm_recv_token(
 	return (-1);
     } else if (rval == 0) {
 	*size = 0;
-	*errmsg = newstralloc(*errmsg, "SOCKET_EOF");
+	g_free(*errmsg);
+	*errmsg = g_strdup("SOCKET_EOF");
 	auth_debug(1, "tcpm_recv_token: B return(0)\n");
 	return (0);
     } else if (rval < (ssize_t)*size - rc->size_buffer_read) {

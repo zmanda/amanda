@@ -1117,7 +1117,8 @@ find(
     }
 
 
-    sort_order = newstralloc(sort_order, DEFAULT_SORT_ORDER);
+    g_free(sort_order);
+    sort_order = g_strdup(DEFAULT_SORT_ORDER);
     if(argc > 4 && strcmp(argv[3],"--sort") == 0) {
 	size_t i, valid_sort=1;
 
@@ -1144,7 +1145,8 @@ find(
 	    }
 	}
 	if(valid_sort) {
-	    sort_order = newstralloc(sort_order, argv[4]);
+	    g_free(sort_order);
+	    sort_order = g_strdup(argv[4]);
 	} else {
 	    g_printf(_("Invalid sort order: %s\n"), argv[4]);
 	    g_printf(_("Use default sort order: %s\n"), sort_order);

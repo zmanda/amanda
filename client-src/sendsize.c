@@ -1460,7 +1460,8 @@ getsize_dump(
 	name = g_strdup(" (vxdump)");
 #else
 	name = g_strdup("");
-	cmd = newstralloc(cmd, VXDUMP);
+	g_free(cmd);
+	cmd = g_strdup(VXDUMP);
 	config = skip_argument;
 	is_rundump = 0;
 #endif
@@ -1494,7 +1495,8 @@ getsize_dump(
 #  endif						/* } */
 # else							/* } { */
 	name = g_strdup("");
-	cmd = newstralloc(cmd, DUMP);
+	g_free(cmd);
+	cmd = g_strdup(DUMP);
         config = skip_argument;
 	is_rundump = 0;
 # endif							/* } */
@@ -2131,7 +2133,8 @@ getsize_gnutar(
 		inputname = newvstralloc(inputname,
 					 basename, "_", number, NULL);
 	    } else {
-		inputname = newstralloc(inputname, "/dev/null");
+		g_free(inputname);
+		inputname = g_strdup("/dev/null");
 	    }
 	    if ((infd = open(inputname, O_RDONLY)) == -1) {
 
