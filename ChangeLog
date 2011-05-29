@@ -1,4 +1,8 @@
 2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/amcheck.c: start_host(): replace vstrextend() with a
+	  GString
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
 	* recover-src/extract_list.c: read_amidxtaped_data(): replace
 	  vstrextend() with g_strdup_printf()
 
