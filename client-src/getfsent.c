@@ -509,6 +509,7 @@ search_fstab(
   (void)check_dev;	/* Quiet unused parameter warning */
   return 0;
 #else
+  char *tmpbuf;
   struct stat stats[3];
   char *fullname = NULL;
   char *rdev = NULL;
@@ -526,7 +527,9 @@ search_fstab(
     fullname = g_strconcat(DEV_PREFIX, name, NULL);
     if (stat(fullname, &stats[1]) == -1)
       stats[1].st_dev = (dev_t)-1;
-    fullname = newstralloc2(fullname, RDEV_PREFIX, name);
+    tmpbuf = g_strconcat(RDEV_PREFIX, name, NULL);
+    g_free(fullname);
+    fullname = tmpbuf;
     if (stat(fullname, &stats[2]) == -1)
       stats[2].st_dev = (dev_t)-1;
     amfree(fullname);
