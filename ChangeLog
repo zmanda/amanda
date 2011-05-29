@@ -1,4 +1,8 @@
 2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/conffile.c: replace the third and final usage of vstrextend()
+	  in exinclude_display_str()
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/conffile.c: replace the second usage of vstrextend() in
 	  proplist_display_str_foreach_fn() using a GPtrArray
 
