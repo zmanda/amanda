@@ -1094,25 +1094,11 @@ gchar **validate_optionstr(disk_t *dp)
     return ret;
 }
 
-char *
-optionstr(
-    disk_t *	dp)
+char *optionstr(disk_t *dp)
 {
-    char *auth_opt = NULL;
-    char *kencrypt_opt = "";
-    char *compress_opt = "";
-    char *encrypt_opt = g_strdup("");
-    char *decrypt_opt = g_strdup("");
-    char *record_opt = "";
-    char *index_opt = "";
-    char *exclude_file = NULL;
-    char *exclude_list = NULL;
-    char *include_file = NULL;
-    char *include_list = NULL;
-    char *excl_opt = "";
-    char *incl_opt = "";
-    char *exc = NULL;
-    char *result = NULL;
+    GPtrArray *array = g_ptr_array_new();
+    gchar **strings;
+    char *result;
     sle_t *excl;
     char *qname;
     am_feature_t *their_features;
@@ -1122,146 +1108,111 @@ optionstr(
 
     their_features = dp->host->features;
 
-    if (am_has_feature(their_features, fe_options_auth)) {
-	auth_opt = g_strjoin(NULL, "auth=", dp->auth, ";", NULL);
-    } else if(strcasecmp(dp->auth, "bsd") == 0) {
+    if (am_has_feature(their_features, fe_options_auth))
+        g_ptr_array_add(array, g_strdup_printf("auth=%s", dp->auth));
+    else if(strcasecmp(dp->auth, "bsd") == 0)
 	if(am_has_feature(their_features, fe_options_bsd_auth))
-	    auth_opt = g_strdup("bsd-auth;");
-    }
+            g_ptr_array_add(array, g_strdup("bsd-auth"));
 
     switch(dp->compress) {
     case COMP_FAST:
-	compress_opt = "compress-fast;";
+        g_ptr_array_add(array, g_strdup("compress-fast"));
 	break;
     case COMP_BEST:
-	compress_opt = "compress-best;";
+        g_ptr_array_add(array, g_strdup("compress-best"));
 	break;
     case COMP_CUST:
-	compress_opt = g_strjoin(NULL, "comp-cust=", dp->clntcompprog, ";", NULL);
+        g_ptr_array_add(array, g_strdup_printf("comp-cust=%s",
+            dp->clntcompprog));
 	break;
     case COMP_SERVER_FAST:
-	compress_opt = "srvcomp-fast;";
+        g_ptr_array_add(array, g_strdup("srvcomp-fast"));
 	break;
     case COMP_SERVER_BEST:
-        compress_opt = "srvcomp-best;";
+        g_ptr_array_add(array, g_strdup("srvcomp-best"));
 	break;
     case COMP_SERVER_CUST:
-	compress_opt = g_strjoin(NULL, "srvcomp-cust=", dp->srvcompprog, ";", NULL);
+        g_ptr_array_add(array, g_strdup_printf("srvcomp-cust=%s",
+            dp->srvcompprog));
 	break;
     }
 
     switch(dp->encrypt) {
     case ENCRYPT_CUST:
-	g_free(encrypt_opt);
-	encrypt_opt = g_strconcat("encrypt-cust=", dp->clnt_encrypt, ";", NULL);
-	if (dp->clnt_decrypt_opt) {
-	     g_free(decrypt_opt);
-	     decrypt_opt = g_strconcat("client-decrypt-option=", dp->clnt_decrypt_opt, ";", NULL);
-	}
+        g_ptr_array_add(array, g_strdup_printf("encrypt-cust=%s",
+            dp->clnt_encrypt));
+	if (dp->clnt_decrypt_opt)
+             g_ptr_array_add(array, g_strdup_printf("client-decrypt-option=%s",
+                 dp->clnt_decrypt_opt));
 	break;
     case ENCRYPT_SERV_CUST:
-	g_free(encrypt_opt);
-	encrypt_opt = g_strconcat("encrypt-serv-cust=", dp->srv_encrypt, ";", NULL);
-	if (dp->srv_decrypt_opt) {
-	    g_free(decrypt_opt);
-	    decrypt_opt = g_strconcat("server-decrypt-option=", dp->srv_decrypt_opt, ";", NULL);
-         }
-	 break;
+        g_ptr_array_add(array, g_strdup_printf("encrypt-serv-cust=%s",
+            dp->srv_encrypt));
+	if (dp->srv_decrypt_opt)
+            g_ptr_array_add(array, g_strdup_printf("server-decrypt-option=%s",
+	        dp->srv_decrypt_opt));
+	break;
     }
 
-    if (!dp->record) {
-	record_opt = "no-record;";
-    }
+    if (!dp->record)
+        g_ptr_array_add(array, g_strdup("no-record"));
 
-    if (dp->index) {
-	index_opt = "index;";
-    }
+    if (dp->index)
+        g_ptr_array_add(array, g_strdup("index"));
 
-    if (dp->kencrypt) {
-	kencrypt_opt = "kencrypt;";
-    }
+    if (dp->kencrypt)
+        g_ptr_array_add(array, g_strdup("kencrypt"));
 
-    exclude_file = g_strdup("");
-    if (dp->exclude_file != NULL && dp->exclude_file->nb_element > 0) {
-	for(excl = dp->exclude_file->first; excl != NULL;
-					    excl = excl->next) {
+    if (dp->exclude_file && dp->exclude_file->nb_element > 0)
+	for(excl = dp->exclude_file->first; excl; excl = excl->next) {
 	    qname = quote_string(excl->name);
-	    g_free(exc);
-	    exc = g_strconcat("exclude-file=", qname, ";", NULL);
-	    strappend(exclude_file, exc);
-	    amfree(qname);
+            g_ptr_array_add(array, g_strdup_printf("exclude-file=%s", qname));
+	    g_free(qname);
 	}
-    }
-    exclude_list = g_strdup("");
-    if (dp->exclude_list != NULL && dp->exclude_list->nb_element > 0) {
-	for(excl = dp->exclude_list->first; excl != NULL;
-					    excl = excl->next) {
-	    qname = quote_string(excl->name);
-	    g_free(exc);
-	    exc = g_strconcat("exclude-list=", qname, ";", NULL);
-	    strappend(exclude_list, exc);
-	    amfree(qname);
-	}
-    }
 
-    include_file = g_strdup("");
-    if (dp->include_file != NULL && dp->include_file->nb_element > 0) {
-	for(excl = dp->include_file->first; excl != NULL;
-					    excl = excl->next) {
+    if (dp->exclude_list && dp->exclude_list->nb_element > 0)
+	for(excl = dp->exclude_list->first; excl; excl = excl->next) {
 	    qname = quote_string(excl->name);
-	    g_free(exc);
-	    exc = g_strconcat("include-file=", qname, ";", NULL);
-	    strappend(include_file, exc);
-	    amfree(qname);
+            g_ptr_array_add(array, g_strdup_printf("exclude-list=%s", qname));
+	    g_free(qname);
 	}
-    }
-    include_list = g_strdup("");
-    if (dp->include_list != NULL && dp->include_list->nb_element > 0) {
-	for(excl = dp->include_list->first; excl != NULL;
-					    excl = excl->next) {
+
+    if (dp->include_file && dp->include_file->nb_element > 0)
+	for(excl = dp->include_file->first; excl; excl = excl->next) {
 	    qname = quote_string(excl->name);
-	    g_free(exc);
-	    exc = g_strconcat("include-list=", qname, ";", NULL);
-	    strappend(include_list, exc);
-	    amfree(qname);
+            g_ptr_array_add(array, g_strdup_printf("include-file=%s", qname));
+	    g_free(qname);
 	}
-    }
 
-    if (dp->exclude_optional) {
-	excl_opt = "exclude-optional;";
-    }
-    if (dp->include_optional) {
-	incl_opt = "include-optional;";
-    }
+    if (dp->include_list && dp->include_list->nb_element > 0)
+	for(excl = dp->include_list->first; excl; excl = excl->next) {
+	    qname = quote_string(excl->name);
+            g_ptr_array_add(array, g_strdup_printf("include-list=%s", qname));
+	    g_free(qname);
+	}
 
-    result = g_strjoin(NULL, ";",
-		       auth_opt,
-		       kencrypt_opt,
-		       compress_opt,
-		       encrypt_opt,
-		       decrypt_opt,
-		       record_opt,
-		       index_opt,
-		       exclude_file,
-		       exclude_list,
-		       include_file,
-		       include_list,
-		       excl_opt,
-		       incl_opt,
-		       NULL);
-    amfree(auth_opt);
-    amfree(exclude_list);
-    amfree(exclude_file);
-    amfree(include_file);
-    amfree(include_list);
-    amfree(exc);
-    amfree(decrypt_opt);
-    amfree(encrypt_opt);
+    if (dp->exclude_optional)
+        g_ptr_array_add(array, g_strdup("exclude-optional"));
+
+    if (dp->include_optional)
+        g_ptr_array_add(array, g_strdup("include-optional"));
+
+    /*
+     * We always want a semicolon-terminated string, this will do the trick for
+     * g_strjoinv() to do what is needed. And, of course, don't forget the NULL
+     * pointer at the end.
+     */
+    g_ptr_array_add(array, g_strdup(""));
+    g_ptr_array_add(array, NULL);
+
+    strings = (gchar **)g_ptr_array_free(array, FALSE);
+
+    result = g_strjoinv(";", strings);
+    g_strfreev(strings);
 
     /* result contains at least 'auth=...' */
     return result;
 }
-
  
 char *
 xml_optionstr(

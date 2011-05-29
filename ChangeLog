@@ -1,4 +1,8 @@
 2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/diskfile.c: optionstr(): replace vstrextend() with a
+	  GPtrArray
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/amindexd.c: main(): replace vstrextend() with a GString
 
 2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
