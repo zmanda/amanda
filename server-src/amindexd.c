@@ -1634,63 +1634,72 @@ main(
 	    }
 	    s[-1] = (char)ch;
 	} else if (strcmp(cmd, "DLE") == 0) {
-	    disk_t *dp;
-	    char *optionstr;
-	    char *b64disk;
-	    char *l, *ql;
 
 	    if (!dump_hostname || !disk_name) {
 		reply(200, "NODLE");
 	    } else {
-	    dp = lookup_disk(dump_hostname, disk_name);
-	    if (dp->line == 0) {
-		reply(200, "NODLE");
-	    } else {
-		gchar **errors;
+                disk_t *dp = lookup_disk(dump_hostname, disk_name);
+                if (dp->line == 0) {
+                    reply(200, "NODLE");
+                } else {
+                    char *b64disk;
+                    gchar **errors;
 
-		b64disk = amxml_format_tag("disk", dp->name);
-		dp->host->features = their_features;
+                    b64disk = amxml_format_tag("disk", dp->name);
+                    dp->host->features = their_features;
 
-		errors = validate_optionstr(dp);
+                    errors = validate_optionstr(dp);
 
-                if (errors) {
-                    gchar **ptr;
-                    for (ptr = errors; *ptr; ptr++)
-                        g_debug("ERROR: %s:%s %s", dump_hostname, disk_name,
-                            *ptr);
-                    g_strfreev(errors);
-		    reply(200, "NODLE");
-		} else {
-		    optionstr = xml_optionstr(dp, 0);
-		    l = g_strjoin(NULL, "<dle>\n",
-			      "  <program>", dp->program, "</program>\n", NULL);
-		    if (dp->application) {
-			application_t *application;
-			char *xml_app;
+                    if (errors) {
+                        gchar **ptr;
+                        for (ptr = errors; *ptr; ptr++)
+                            g_debug("ERROR: %s:%s %s", dump_hostname, disk_name,
+                                *ptr);
+                        g_strfreev(errors);
+                        reply(200, "NODLE");
+                    } else {
+                        GString *strbuf = g_string_new("<dle>\n");
+                        char *l, *ql;
+                        char *optionstr;
 
-			application = lookup_application(dp->application);
-			g_assert(application != NULL);
-			xml_app = xml_application(dp, application,
-						  their_features);
-			vstrextend(&l, xml_app, NULL);
-			amfree(xml_app);
-		    }
-		    vstrextend(&l, "  ", b64disk, "\n", NULL);
-		    if (dp->device) {
-			char *b64device = amxml_format_tag("diskdevice",
-							   dp->device);
-			vstrextend(&l, "  ", b64device, "\n", NULL);
-			amfree(b64device);
-		    }
-		    vstrextend(&l, optionstr, "</dle>\n", NULL);
-		    ql = quote_string(l);
-		    reply(200, "%s", ql);
-		    amfree(optionstr);
-		    amfree(l);
-		    amfree(ql);
-		}
-		amfree(b64disk);
-	    }
+                        g_string_append_printf(strbuf,
+                            "  <program>%s</program>\n", dp->program);
+
+                        if (dp->application) {
+                            application_t *application;
+                            char *xml_app;
+
+                            application = lookup_application(dp->application);
+                            g_assert(application != NULL);
+                            xml_app = xml_application(dp, application,
+                                                      their_features);
+                            g_string_append(strbuf, xml_app);
+                            g_free(xml_app);
+                        }
+
+                        g_string_append_printf(strbuf, "  %s\n", b64disk);
+
+                        if (dp->device) {
+                            char *b64device = amxml_format_tag("diskdevice",
+                                                               dp->device);
+                            g_string_append_printf(strbuf, "  %s\n", b64device);
+                            g_free(b64device);
+                        }
+
+                        optionstr = xml_optionstr(dp, 0);
+                        g_string_append_printf(strbuf, "%s</dle>\n",
+                            optionstr);
+                        g_free(optionstr);
+
+                        l = g_string_free(strbuf, FALSE);
+                        ql = quote_string(l);
+                        g_free(l);
+
+                        reply(200, "%s", ql);
+                        g_free(ql);
+                    }
+                    g_free(b64disk);
+                }
 	    }
 	} else if (strcmp(cmd, "LISTDISK") == 0) {
 	    char *qname;
