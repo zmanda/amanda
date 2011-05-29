@@ -808,7 +808,8 @@ check_disk(
 	case 0: /* child */
 	    {
 		GPtrArray *argv_ptr = g_ptr_array_new();
-		guint i;
+                GPtrArray *argv_quoted = g_ptr_array_new();
+                gchar **args, **quoted_strings, **ptr;
 		char *cmd = g_strjoin(NULL, APPLICATION_DIR, "/", dle->program, NULL);
 		GSList   *scriptlist;
 		script_t *script;
@@ -867,19 +868,28 @@ check_disk(
 		}
 
 		g_ptr_array_add(argv_ptr, NULL);
+                args = (gchar **)g_ptr_array_free(argv_ptr, FALSE);
 
-		cmdline = g_strdup(cmd);
-		for (i = 0; i < argv_ptr->len-1; i++) {
-		    char *quoted = quote_string(
-					(char *)g_ptr_array_index(argv_ptr,i));
-		    cmdline = vstrextend(&cmdline, " ", quoted, NULL);
-		    amfree(quoted);
-		}
+                /*
+                 * Build the command line to display
+                 */
+                g_ptr_array_add(argv_quoted, g_strdup(cmd));
+
+                for (ptr = args; *ptr; ptr++)
+                    g_ptr_array_add(argv_quoted, quote_string(*ptr));
+
+                g_ptr_array_add(argv_quoted, NULL);
+
+                quoted_strings = (gchar **)g_ptr_array_free(argv_quoted, FALSE);
+
+                cmdline = g_strjoinv(" ", quoted_strings);
+                g_strfreev(quoted_strings);
+
 		dbprintf(_("Spawning \"%s\" in pipeline\n"), cmdline);
 		amfree(cmdline);
 
 		safe_fd(-1, 0);
-		execve(cmd, (char **)argv_ptr->pdata, safe_env());
+		execve(cmd, args, safe_env());
 		g_printf(_("ERROR [Can't execute %s: %s]\n"), cmd, strerror(errno));
 		exit(127);
 	    }

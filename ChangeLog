@@ -1,4 +1,8 @@
 2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
+	* client-src/selfcheck.c: build the command line using a GPtrArray
+	  instead of vstrextend(); don't peek into the original GPtrArray
+
+2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
 	* client-src/runtar.c: build the command line using a GPtrArray
 	  instead of vstrextend()
 
