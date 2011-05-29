@@ -99,41 +99,6 @@ internal_vstralloc(
     return result;
 }
 
-/*
- * newvstrallocf - free existing string and then g_strdup_printf a new one.
- */
-char *
-debug_newvstrallocf(
-    const char *file G_GNUC_UNUSED,
-    int		line G_GNUC_UNUSED,
-    char *	oldstr,
-    const char *fmt,
-    ...)
-{
-    size_t	size;
-    char *	result;
-    va_list	argp;
-
-    result = g_malloc(MIN_ALLOC);
-    if (result != NULL) {
-
-	arglist_start(argp, fmt);
-	size = g_vsnprintf(result, MIN_ALLOC, fmt, argp);
-	arglist_end(argp);
-
-	if (size >= MIN_ALLOC) {
-	    amfree(result);
-	    result = g_malloc(size + 1);
-
-	    arglist_start(argp, fmt);
-	    (void)g_vsnprintf(result, size + 1, fmt, argp);
-	    arglist_end(argp);
-	}
-    }
-    amfree(oldstr);
-    return result;
-}
-
 /* vstrextend -- Extends the existing string by appending the other 
  * arguments. */
 char *
