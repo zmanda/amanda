@@ -88,10 +88,11 @@ pipespawnv_passwd(
     char *e;
     char **env;
     char *cmdline;
-    char *quoted;
     char **newenv;
     char *passwdvar = NULL;
     int  *passwdfd = NULL;
+    GPtrArray *array = g_ptr_array_new();
+    gchar **strings;
 
     /*
      * Log the command line and count the args.
@@ -106,15 +107,20 @@ pipespawnv_passwd(
     memset(passwdpipe, -1, sizeof(passwdpipe));
     argc = 0;
 
-    cmdline = g_strdup(prog);
+    g_ptr_array_add(array, g_strdup(prog));
+
     for(arg = my_argv; *arg != NULL; arg++) {
-	if (*arg != skip_argument) {
-	    argc++;
-	    quoted = quote_string(*arg);
-	    cmdline = vstrextend(&cmdline, " ", quoted, NULL);
-	    amfree(quoted);
-	}
+        if (*arg == skip_argument)
+            continue;
+        g_ptr_array_add(array, quote_string(*arg));
     }
+
+    g_ptr_array_add(array, NULL);
+
+    strings = (gchar **)g_ptr_array_free(array, FALSE);
+    cmdline = g_strjoinv(" ", strings);
+    g_strfreev(strings);
+
     dbprintf(_("Spawning \"%s\" in pipeline\n"), cmdline);
 
     /*

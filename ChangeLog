@@ -1,4 +1,7 @@
 2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/pipespawn.c: remove usage of vstrextend() with a GPtrArray
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/fileheader.c: remove usage of vstrextend() with a GPtrArray
 
 2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
