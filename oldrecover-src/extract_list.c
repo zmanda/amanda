@@ -621,7 +621,7 @@ void add_file(
 	    path_on_disk = g_strdup(regex);
 	} else {
 	    /* Prepend '/' */
-	    path_on_disk = stralloc2("/", regex);
+	    path_on_disk = g_strconcat("/", regex, NULL);
 	}
     } else {
 	char *clean_disk_path = clean_regex(disk_path, 0);
@@ -629,7 +629,7 @@ void add_file(
 	amfree(clean_disk_path);
     }
 
-    path_on_disk_slash = stralloc2(path_on_disk, "/");
+    path_on_disk_slash = g_strconcat(path_on_disk, "/", NULL);
 
     dbprintf(_("add_file: Converted path=\"%s\" to path_on_disk=\"%s\"\n"),
 	      regex, path_on_disk);
@@ -950,7 +950,7 @@ delete_file(
 	    }
 	} else {
 	    /* Prepend '/' */
-	    path_on_disk = stralloc2("/", regex);
+	    path_on_disk = g_strconcat("/", regex, NULL);
 	}
     } else {
 	char *clean_disk_path = clean_regex(disk_path, 0);
@@ -958,7 +958,7 @@ delete_file(
 	amfree(clean_disk_path);
     }
 
-    path_on_disk_slash = stralloc2(path_on_disk, "/");
+    path_on_disk_slash = g_strconcat(path_on_disk, "/", NULL);
 
     dbprintf(_("delete_file: Converted path=\"%s\" to path_on_disk=\"%s\"\n"),
 	      regex, path_on_disk);
@@ -1187,7 +1187,7 @@ display_extract_list(
 	 * Set up the pager command so if the pager is terminated, we do
 	 * not get a SIGPIPE back.
 	 */
-	pager_command = stralloc2(pager, " ; /bin/cat > /dev/null");
+	pager_command = g_strconcat(pager, " ; /bin/cat > /dev/null", NULL);
 	if ((fp = popen(pager_command, "w")) == NULL)
 	{
 	    g_printf(_("Warning - can't pipe through %s\n"), pager);
@@ -1319,7 +1319,7 @@ send_to_tape_server(
     int		tss,
     char *	cmd)
 {
-    char *msg = stralloc2(cmd, "\r\n");
+    char *msg = g_strconcat(cmd, "\r\n", NULL);
 
     if (full_write(tss, msg, strlen(msg)) < strlen(msg))
     {
@@ -1348,7 +1348,7 @@ extract_files_setup(
     char *our_feature_string = NULL;
     char *tt = NULL;
 
-    service_name = stralloc2("amidxtape", SERVICE_SUFFIX);
+    service_name = g_strconcat("amidxtape", SERVICE_SUFFIX, NULL);
 
     /* get tape server details */
     if ((sp = getservbyname(service_name, "tcp")) == NULL)
@@ -1747,7 +1747,7 @@ extract_files_child(
 	    if (strcmp(fn->path, "/") == 0)
 		g_ptr_array_add(argv_ptr, g_strdup("."));
 	    else
-		g_ptr_array_add(argv_ptr, stralloc2(".", fn->path));
+		g_ptr_array_add(argv_ptr, g_strconcat(".", fn->path, NULL));
 	    break;
 	case IS_UNKNOWN:
 	case IS_DUMP:

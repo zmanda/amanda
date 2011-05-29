@@ -1083,9 +1083,9 @@ krb5_checkuser( char *	host,
     localuid = pwd->pw_uid;
 
 #ifdef USE_AMANDAHOSTS
-    ptmp = stralloc2(pwd->pw_dir, "/.k5amandahosts");
+    ptmp = g_strconcat(pwd->pw_dir, "/.k5amandahosts", NULL);
 #else
-    ptmp = stralloc2(pwd->pw_dir, "/.k5login");
+    ptmp = g_strconcat(pwd->pw_dir, "/.k5login", NULL);
 #endif
 
     if(!ptmp) {

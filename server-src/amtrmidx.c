@@ -217,7 +217,7 @@ main(
 		    struct stat sbuf;
 		    char *path, *qpath;
 
-		    path = stralloc2(indexdir, f->d_name);
+		    path = g_strconcat(indexdir, f->d_name, NULL);
 		    qpath = quote_string(path);
 		    if(lstat(path, &sbuf) != -1
 			&& ((sbuf.st_mode & S_IFMT) == S_IFREG)
@@ -276,7 +276,7 @@ main(
 		}
 		if (!matching) {
 		    char *path, *qpath;
-		    path = stralloc2(indexdir, names[i]);
+		    path = g_strconcat(indexdir, names[i], NULL);
 		    qpath = quote_string(path);
 		    dbprintf("rm %s\n", qpath);
 		    if(amtrmidx_debug == 0 && unlink(path) == -1) {

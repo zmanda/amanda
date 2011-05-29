@@ -1840,7 +1840,7 @@ getsize_smbtar(
     if (level > 1)
 	return -2; /* planner will not even consider this level */
 
-    error_pn = stralloc2(get_pname(), "-smbclient");
+    error_pn = g_strconcat(get_pname(), "-smbclient", NULL);
     qdisk = quote_string(dle->disk);
     parsesharename(dle->device, &share, &subdir);
     if (!share) {

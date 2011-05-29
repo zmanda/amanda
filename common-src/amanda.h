@@ -438,7 +438,6 @@ char *debug_vstrextend(const char *file, int line, char **oldstr, ...);
 #define newvstrallocf(...)	debug_newvstrallocf(__FILE__,__LINE__,__VA_ARGS__)
 #define vstrextend(...)		debug_vstrextend(__FILE__,__LINE__,__VA_ARGS__)
 
-#define	stralloc2(s1,s2)	g_strjoin(NULL, (s1),(s2),NULL)
 #define	newstralloc2(p,s1,s2)	newvstralloc((p),(s1),(s2),NULL)
 
 /*@only@*/ /*@null@*/ char *debug_agets(const char *file, int line, FILE *f);
@@ -472,7 +471,7 @@ time_t	unctime(char *timestr);
 } while (0)
 
 #define strappend(s1,s2) do {						\
-    char *t_t_t = (s1) ? stralloc2((s1),(s2)) : g_strdup((s2));		\
+    char *t_t_t = (s1) ? g_strconcat(s1, s2, NULL) : g_strdup((s2));	\
     amfree((s1));							\
     (s1) = t_t_t;							\
 } while(0)
