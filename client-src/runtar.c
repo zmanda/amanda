@@ -49,6 +49,8 @@ main(
     char *e;
     char *dbf;
     char *cmdline;
+    GPtrArray *array = g_ptr_array_new();
+    gchar **strings;
 #endif
 
     /*
@@ -134,14 +136,16 @@ main(
     argc--;
     argv++;
 
-    cmdline = g_strdup(GNUTAR);
-    for (i = 1; argv[i]; i++) {
-	char *quoted;
+    g_ptr_array_add(array, g_strdup(GNUTAR));
+    for (i = 1; argv[i]; i++)
+        g_ptr_array_add(array, quote_string(argv[i]));
 
-	quoted = quote_string(argv[i]);
-	cmdline = vstrextend(&cmdline, " ", quoted, NULL);
-	amfree(quoted);
-    }
+    g_ptr_array_add(array, NULL);
+    strings = (gchar **)g_ptr_array_free(array, FALSE);
+
+    cmdline = g_strjoinv(" ", strings);
+    g_strfreev(strings);
+
     dbprintf(_("running: %s\n"), cmdline);
     amfree(cmdline);
 
