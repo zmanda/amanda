@@ -104,6 +104,7 @@ build_name(
     char *	exin,
     int		verbose)
 {
+    char *tmpbuf;
     int n;
     int fd;
     char *filename = NULL;
@@ -141,7 +142,9 @@ build_name(
 	    continue;				/* not one of our files */
 	}
 	if(strcmp(entry->d_name, test_name) < 0) {
-	    e = newvstralloc(e, dbgdir, entry->d_name, NULL);
+	    tmpbuf = g_strconcat(dbgdir, entry->d_name, NULL);
+	    g_free(e);
+	    e = tmpbuf;
 	    (void) unlink(e);                   /* get rid of old file */
 	}
     }
@@ -152,7 +155,9 @@ build_name(
     n=0;
     do {
 	filename = get_name(diskname, exin, curtime, n);
-	afilename = newvstralloc(afilename, dbgdir, filename, NULL);
+	tmpbuf = g_strconcat(dbgdir, filename, NULL);
+	g_free(afilename);
+	afilename = tmpbuf;
 	if((fd=open(afilename, O_WRONLY|O_CREAT|O_APPEND, 0600)) < 0){
 	    amfree(afilename);
 	    n++;
@@ -165,7 +170,9 @@ build_name(
 
     if(afilename == NULL) {
 	filename = get_name(diskname, exin, curtime, 0);
-	afilename = newvstralloc(afilename, dbgdir, filename, NULL);
+	tmpbuf = g_strconcat(dbgdir, filename, NULL);
+	g_free(afilename);
+	afilename = tmpbuf;
 	quoted = quote_string(afilename);
 	dbprintf(_("Cannot create %s (%s)\n"), quoted, strerror(errno));
 	if(verbose) {

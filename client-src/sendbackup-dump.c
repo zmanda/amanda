@@ -230,8 +230,10 @@ start_backup(
     if (1)
 #endif							/* } */
     {
-        char *progname = cmd = newvstralloc(cmd, amlibexecdir, "/", "rundump",
-					    NULL);
+        char *progname;
+        tmpbuf = g_strconcat(amlibexecdir, "/", "rundump", NULL);
+        g_free(cmd);
+        progname = cmd = tmpbuf;
 	cmdX = cmd;
 	if (g_options->config)
 	    config = g_options->config;
@@ -241,14 +243,9 @@ start_backup(
 	program->backup_name  = XFSDUMP;
 	program->restore_name = XFSRESTORE;
 
-	indexcmd = g_strjoin(NULL, XFSRESTORE,
-			     " -t",
-			     " -v", " silent",
-			     " -",
-			     " 2>/dev/null",
-			     " | sed",
-			     " -e", " \'s/^/\\//\'",
-			     NULL);
+	indexcmd = g_strjoin(NULL, XFSRESTORE, " -t", " -v", " silent", " -",
+	    " 2>/dev/null", " | sed", " -e", " \'s/^/\\//\'", NULL);
+
 	info_tapeheader(dle);
 
 	start_index(dle->create_index, dumpout, mesgf, indexf, indexcmd);
@@ -274,9 +271,12 @@ start_backup(
     if (1)
 #endif
     {
+char *progname;
 #ifdef USE_RUNDUMP
-        char *progname = cmd = newvstralloc(cmd, amlibexecdir, "/", "rundump",
+        tmpbuf = g_strconcat(amlibexecdir, "/", "rundump",
 					    NULL);
+        g_free(cmd);
+        progname = cmd = tmpbuf;
 	cmdX = cmd;
 	if (g_options->config)
 	    config = g_options->config;
@@ -328,7 +328,9 @@ start_backup(
     if (1)
 #endif
     {
-        cmd = newvstralloc(cmd, amlibexecdir, "/", "rundump", NULL);
+        tmpbuf = g_strconcat(amlibexecdir, "/", "rundump", NULL);
+        g_free(cmd);
+        cmd = tmpbuf;
 	cmdX = cmd;
 	if (g_options->config)
 	    config = g_options->config;

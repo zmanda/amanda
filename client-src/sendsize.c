@@ -2060,6 +2060,7 @@ getsize_gnutar(
     time_t	dumpsince,
     char      **errmsg)
 {
+    char *tmpbuf;
     int pipefd = -1, nullfd = -1;
     pid_t dumppid;
     off_t size = (off_t)-1;
@@ -2130,8 +2131,9 @@ getsize_gnutar(
 	while (infd == -1) {
 	    if (--baselevel >= 0) {
 		g_snprintf(number, sizeof(number), "%d", baselevel);
-		inputname = newvstralloc(inputname,
-					 basename, "_", number, NULL);
+		tmpbuf = g_strconcat(basename, "_", number, NULL);
+		g_free(inputname);
+		inputname = tmpbuf;
 	    } else {
 		g_free(inputname);
 		inputname = g_strdup("/dev/null");

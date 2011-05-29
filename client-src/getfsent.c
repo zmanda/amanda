@@ -438,6 +438,7 @@ static char *
 dev2rdev(
     char *	name)
 {
+  char *tmpbuf;
   char *fname = NULL;
   struct stat st;
   char *s;
@@ -466,7 +467,9 @@ dev2rdev(
   while(ch) {
     if (ch == '/') {
       s[-1] = '\0';
-      fname = newvstralloc(fname, name, "/r", s, NULL);
+      tmpbuf = g_strconcat(name, "/r", s, NULL);
+      g_free(fname);
+      fname = tmpbuf;
       s[-1] = (char)ch;
       if(stat(fname, &st) == 0 && S_ISCHR(st.st_mode)) return fname;
     }
