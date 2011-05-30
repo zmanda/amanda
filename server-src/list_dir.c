@@ -89,8 +89,8 @@ add_dir_list_item(
 	return 0; /* added */
     }
 
-    if (strcmp(path,dir_last->path) == 0 &&
-	dir_last->dump == dump) {
+    if (strcmp(path, "/") != 0 &&
+	strcmp(path, dir_last->path) == 0) {
 	return 0; /* found */
     }
 
