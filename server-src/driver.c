@@ -2895,7 +2895,7 @@ read_schedule(
     long long csize_;
     long long degr_nsize_;
     long long degr_csize_;
-    GPtrArray *errarray;
+    gchar **errors;
 
     (void)cookie;	/* Quiet unused parameter warning */
 
@@ -3150,15 +3150,14 @@ read_schedule(
 	}
 	remove_disk(&waitq, dp);
 
-	errarray = validate_optionstr(dp);
-	if (errarray->len > 0) {
-	    guint i;
-	    for (i=0; i < errarray->len; i++) {
-		log_add(L_FAIL, _("%s %s %s 0 [%s]"),
-			dp->host->hostname, qname,
-			sp->datestamp,
-			(char *)g_ptr_array_index(errarray, i));
-	    }
+	errors = validate_optionstr(dp);
+
+        if (errors) {
+            gchar **ptr;
+            for (ptr = errors; *ptr; ptr++)
+                log_add(L_FAIL, "%s %s %s 0 [%s]", dp->host->hostname, qname,
+                    sp->datestamp, *ptr);
+            g_strfreev(errors);
 	    amfree(qname);
 	} else {
 

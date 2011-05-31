@@ -1,3 +1,12 @@
+2011-05-31  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/diskfile.[ch]: change method signature for
+	  validate_optionstr(), it now returns a gchar ** instead of a
+	  GPtrArray *, and the result is dynamicallu allocated
+	* server-src/amcheck.c, server-src/amindexd.c, server-src/driver.c,
+	  server-src/planner.c: adapt call sites; fix memory leak for the two
+	  latter, and wrong behaviour for all of them (you cannot
+	  g_ptr_array_free(..., TRUE) on statically allocated members)
+
 2011-05-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in: Move AMANDA_S3_DEVICE to do libcurl detection later.
 
