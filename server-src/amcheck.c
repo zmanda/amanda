@@ -1742,22 +1742,21 @@ start_host(
 	    char *calcsize;
 	    char *qname, *b64disk;
 	    char *qdevice, *b64device = NULL;
-	    GPtrArray *errarray;
-	    guint      i;
+	    gchar **errors;
 
 	    if(dp->up != DISK_READY || dp->todo != 1) {
 		continue;
 	    }
 	    qname = quote_string(dp->name);
 
-	    errarray = validate_optionstr(dp);
-	    if (errarray->len > 0) {
-		for (i=0; i < errarray->len; i++) {
-		    g_fprintf(outf, _("ERROR: %s:%s %s\n"),
-			      hostp->hostname, qname,
-			      (char *)g_ptr_array_index(errarray, i));
-		}
-		g_ptr_array_free(errarray, TRUE);
+	    errors = validate_optionstr(dp);
+
+            if (errors) {
+                gchar **ptr;
+                for (ptr = errors; *ptr; ptr++)
+                    g_fprintf(outf, "ERROR: %s:%s %s\n", hostp->hostname, qname,
+                        *ptr);
+                g_strfreev(errors);
 		amfree(qname);
 		remote_errors++;
 		continue;

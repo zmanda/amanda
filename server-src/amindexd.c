@@ -1644,19 +1644,19 @@ main(
 	    if (dp->line == 0) {
 		reply(200, "NODLE");
 	    } else {
-		GPtrArray *errarray;
-		guint      i;
+		gchar **errors;
 
 		b64disk = amxml_format_tag("disk", dp->name);
 		dp->host->features = their_features;
-		errarray = validate_optionstr(dp);
-		if (errarray->len > 0) {
-		    for (i=0; i < errarray->len; i++) {
-			g_debug(_("ERROR: %s:%s %s"),
-				dump_hostname, disk_name,
-				(char *)g_ptr_array_index(errarray, i));
-		    }
-		    g_ptr_array_free(errarray, TRUE);
+
+		errors = validate_optionstr(dp);
+
+                if (errors) {
+                    gchar **ptr;
+                    for (ptr = errors; *ptr; ptr++)
+                        g_debug("ERROR: %s:%s %s", dump_hostname, disk_name,
+                            *ptr);
+                    g_strfreev(errors);
 		    reply(200, "NODLE");
 		} else {
 		    optionstr = xml_optionstr(dp, 0);

@@ -160,7 +160,7 @@ char *optionstr(disk_t *dp);
  *           application, eg. driver to dumper.
  *           It must be set to 0 if the result is sent to the client.
  */
-GPtrArray *validate_optionstr(disk_t *dp);
+gchar **validate_optionstr(disk_t *dp);
 char *xml_optionstr(disk_t *dp, int to_server);
 char *xml_estimate(estimatelist_t estimatelist, am_feature_t *their_features);
 char *clean_dle_str_for_client(char *dle_str);

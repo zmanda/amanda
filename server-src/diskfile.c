@@ -911,13 +911,20 @@ dump_queue(
     }
 }
 
-GPtrArray *
-validate_optionstr(
-    disk_t       *dp)
+/**
+ * Validate an option string for a given DLE. Returns NULL if all is OK.
+ * Otherwise, return a string array to be freed by the caller using
+ * g_strfreev().
+ *
+ * @param dp: the DLE
+ * @returns: a gchar ** if any errors, or NULL
+ */
+
+gchar **validate_optionstr(disk_t *dp)
 {
     GPtrArray *errarray;
-    int        nb_exclude;
-    int        nb_include;
+    gchar **ret;
+    int nb_exclude, nb_include;
     am_feature_t *their_features = dp->host->features;
 
     assert(dp != NULL);
@@ -928,27 +935,31 @@ validate_optionstr(
     if (!am_has_feature(their_features, fe_options_auth)) {
 	if (strcasecmp(dp->auth, "bsd") == 0)
 	    if (!am_has_feature(their_features, fe_options_bsd_auth))
-		g_ptr_array_add(errarray, _("does not support auth"));
+		g_ptr_array_add(errarray, g_strdup("does not support auth"));
     }
 
     switch(dp->compress) {
     case COMP_FAST:
 	if (!am_has_feature(their_features, fe_options_compress_fast)) {
-	    g_ptr_array_add(errarray, _("does not support fast compression"));
+	    g_ptr_array_add(errarray,
+                            g_strdup("does not support fast compression"));
 	}
 	break;
     case COMP_BEST:
 	if (!am_has_feature(their_features, fe_options_compress_best)) {
-	    g_ptr_array_add(errarray, _("does not support best compression"));
+	    g_ptr_array_add(errarray,
+                            g_strdup("does not support best compression"));
 	}
 	break;
     case COMP_CUST:
         if (am_has_feature(their_features, fe_options_compress_cust)) {
 	    if (dp->clntcompprog == NULL || strlen(dp->clntcompprog) == 0) {
-		g_ptr_array_add(errarray, _("client custom compression with no compression program specified"));
+		g_ptr_array_add(errarray,
+                                g_strdup("client custom compression with no compression program specified"));
 	    }
 	} else {
-	    g_ptr_array_add(errarray, _("does not support client custom compression"));
+	    g_ptr_array_add(errarray,
+                            g_strdup("does not support client custom compression"));
 	}
 	break;
     case COMP_SERVER_FAST:
@@ -957,7 +968,8 @@ validate_optionstr(
 	break;
     case COMP_SERVER_CUST:
 	if (dp->srvcompprog == NULL || strlen(dp->srvcompprog) == 0) {
-	    g_ptr_array_add(errarray, _("server custom compression with no compression program specified"));
+	    g_ptr_array_add(errarray,
+                            g_strdup("server custom compression with no compression program specified"));
 	}
 	break;
     }
@@ -967,43 +979,48 @@ validate_optionstr(
 	if (am_has_feature(their_features, fe_options_encrypt_cust)) {
 	    if (dp->clnt_decrypt_opt) {
 		if (!am_has_feature(their_features, fe_options_client_decrypt_option)) {
-		    g_ptr_array_add(errarray, _("does not support client decrypt option"));
+		    g_ptr_array_add(errarray,
+                                    g_strdup("does not support client decrypt option"));
 		}
 	    }
 	    if (dp->clnt_encrypt == NULL || strlen(dp->clnt_encrypt) == 0) {
-		g_ptr_array_add(errarray, _("encrypt client with no encryption program specified"));
+		g_ptr_array_add(errarray,
+                                g_strdup("encrypt client with no encryption program specified"));
 	    }
 	    if (dp->compress == COMP_SERVER_FAST ||
 		dp->compress == COMP_SERVER_BEST ||
 		dp->compress == COMP_SERVER_CUST ) {
-		g_ptr_array_add(errarray, _("Client encryption with server compression is not supported. See amanda.conf(5) for detail"));
+		g_ptr_array_add(errarray,
+                                g_strdup("Client encryption with server compression is not supported. See amanda.conf(5) for detail"));
 	    }
 	} else {
-	    g_ptr_array_add(errarray, _("does not support client data encryption"));
+	    g_ptr_array_add(errarray,
+                            g_strdup("does not support client data encryption"));
 	}
 	break;
     case ENCRYPT_SERV_CUST:
 	if (dp->srv_encrypt == NULL || strlen(dp->srv_encrypt) == 0) {
-	    g_ptr_array_add(errarray, _("No encryption program specified in dumptypes, Change the dumptype in the disklist or mention the encryption program to use in the dumptypes file"));
+	    g_ptr_array_add(errarray,
+                            g_strdup("No encryption program specified in dumptypes, Change the dumptype in the disklist or mention the encryption program to use in the dumptypes file"));
 	}
 	break;
     }
 
     if (!dp->record) {
 	if (!am_has_feature(their_features, fe_options_no_record)) {
-	    g_ptr_array_add(errarray, _("does not support no record"));
+	    g_ptr_array_add(errarray, g_strdup("does not support no record"));
 	}
     }
 
     if (dp->index) {
 	if (!am_has_feature(their_features, fe_options_index)) {
-	    g_ptr_array_add(errarray, _("does not support index"));
+	    g_ptr_array_add(errarray, g_strdup("does not support index"));
 	}
     }
 
     if (dp->kencrypt) {
 	if (!am_has_feature(their_features, fe_options_kencrypt)) {
-	    g_ptr_array_add(errarray, _("does not support kencrypt"));
+	    g_ptr_array_add(errarray, g_strdup("does not support kencrypt"));
 	}
     }
 
@@ -1011,20 +1028,23 @@ validate_optionstr(
     if (dp->exclude_file != NULL && dp->exclude_file->nb_element > 0) {
 	nb_exclude = dp->exclude_file->nb_element;
 	if (!am_has_feature(their_features, fe_options_exclude_file)) {
-	    g_ptr_array_add(errarray, _("does not support exclude file"));
+	    g_ptr_array_add(errarray,
+                            g_strdup("does not support exclude file"));
 	}
     }
 
     if (dp->exclude_list != NULL && dp->exclude_list->nb_element > 0) {
 	nb_exclude += dp->exclude_list->nb_element;
 	if (!am_has_feature(their_features, fe_options_exclude_list)) {
-	    g_ptr_array_add(errarray, _("does not support exclude list"));
+	    g_ptr_array_add(errarray,
+                            g_strdup("does not support exclude list"));
 	}
     }
 
     if (nb_exclude > 1 &&
 	!am_has_feature(their_features, fe_options_multiple_exclude)) {
-	g_ptr_array_add(errarray, _("does not support multiple exclude"));
+	g_ptr_array_add(errarray,
+                        g_strdup("does not support multiple exclude"));
     }
 
     nb_include = 0;
@@ -1038,27 +1058,40 @@ validate_optionstr(
     if (dp->include_list != NULL && dp->include_list->nb_element > 0) {
 	nb_include += dp->include_list->nb_element;
 	if (!am_has_feature(their_features, fe_options_include_list)) {
-	    g_ptr_array_add(errarray, _("does not support include list"));
+	    g_ptr_array_add(errarray,
+                            g_strdup("does not support include list"));
 	}
     }
 
     if (nb_include > 1 &&
 	!am_has_feature(their_features, fe_options_multiple_exclude)) {
-	g_ptr_array_add(errarray, _("does not support multiple include"));
+	g_ptr_array_add(errarray,
+                        g_strdup("does not support multiple include"));
     }
 
     if (dp->exclude_optional) {
 	if (!am_has_feature(their_features, fe_options_optional_exclude)) {
-	    g_ptr_array_add(errarray, _("does not support optional exclude"));
+	    g_ptr_array_add(errarray,
+                            g_strdup("does not support optional exclude"));
 	}
     }
     if (dp->include_optional) {
 	if (!am_has_feature(their_features, fe_options_optional_include)) {
-	    g_ptr_array_add(errarray, _("does not support optional include"));
+	    g_ptr_array_add(errarray,
+                            g_strdup("does not support optional include"));
 	}
     }
 
-    return errarray;
+    g_ptr_array_add(errarray, NULL);
+
+    ret = (gchar **)g_ptr_array_free(errarray, FALSE);
+
+    if (!*ret) { /* No errors */
+        g_strfreev(ret);
+        ret = NULL;
+    }
+
+    return ret;
 }
 
 char *
