@@ -96,14 +96,6 @@ AM_GNU_GETTEXT_VERSION([0.15])
 AM_GNU_GETTEXT([external])
 
 #
-# Devices
-#
-AMANDA_S3_DEVICE
-AMANDA_TAPE_DEVICE
-AMANDA_DVDRW_DEVICE
-AMANDA_NDMP_DEVICE
-
-#
 # Security (authentication) mechansims
 #
 AMANDA_BSD_SECURITY
@@ -365,6 +357,14 @@ ICE_CHECK_DECL(vprintf,stdio.h stdlib.h)
 AC_CHECK_FUNC(wait4)
 ICE_CHECK_DECL(writev, unistd.h sys/uio.h)
 ICE_CHECK_DECL(strcasecmp,string.h strings.h)
+
+#
+# Devices
+#
+AMANDA_S3_DEVICE
+AMANDA_TAPE_DEVICE
+AMANDA_DVDRW_DEVICE
+AMANDA_NDMP_DEVICE
 
 dnl -------------------------------------------------------------------------
 
