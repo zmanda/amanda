@@ -1081,14 +1081,14 @@ optionstr(
     char *exc = NULL;
     char *result = NULL;
     sle_t *excl;
-    char *qdpname;
     char *qname;
-    am_feature_t *their_features = dp->host->features;
+    am_feature_t *their_features;
 
-    assert(dp != NULL);
-    assert(dp->host != NULL);
+    g_assert(dp != NULL);
+    g_assert(dp->host != NULL);
 
-    qdpname = quote_string(dp->name);
+    their_features = dp->host->features;
+
     if (am_has_feature(their_features, fe_options_auth)) {
 	auth_opt = g_strjoin(NULL, "auth=", dp->auth, ";", NULL);
     } else if(strcasecmp(dp->auth, "bsd") == 0) {
@@ -1212,7 +1212,6 @@ optionstr(
 		       excl_opt,
 		       incl_opt,
 		       NULL);
-    amfree(qdpname);
     amfree(auth_opt);
     amfree(exclude_list);
     amfree(exclude_file);
@@ -1252,14 +1251,14 @@ xml_optionstr(
     char *script_opt;
     char *result = NULL;
     sle_t *excl;
-    char *qdpname;
     char *q64name;
-    am_feature_t *their_features = dp->host->features;
+    am_feature_t *their_features;
 
-    assert(dp != NULL);
-    assert(dp->host != NULL);
+    g_assert(dp != NULL);
+    g_assert(dp->host != NULL);
 
-    qdpname = quote_string(dp->name);
+    their_features = dp->host->features;
+
     if (am_has_feature(their_features, fe_options_auth)) {
 	auth_opt = g_strjoin(NULL, "  <auth>", dp->auth, "</auth>\n", NULL);
     } else {
@@ -1461,7 +1460,6 @@ xml_optionstr(
 		       script_opt,
 		       NULL);
 
-    amfree(qdpname);
     amfree(auth_opt);
     amfree(data_path_opt);
     amfree(compress_opt);
