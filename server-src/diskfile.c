@@ -1304,16 +1304,14 @@ xml_optionstr(
 				       "    <decrypt-option>",
 				       dp->clnt_decrypt_opt,
 				       "</decrypt-option>\n", NULL);
-	    }
-	if (decrypt_opt) {
-	     encrypt_opt = newvstralloc(encrypt_opt,
+	}
+	encrypt_opt = newvstralloc(encrypt_opt,
 					"  <encrypt>CUSTOM"
 					"<custom-encrypt-program>",
 					dp->clnt_encrypt,
 					"</custom-encrypt-program>\n",
 					decrypt_opt,
 					"  </encrypt>\n", NULL);
-	}
 	break;
     case ENCRYPT_SERV_CUST:
 	if (to_server) {
