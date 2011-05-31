@@ -1468,7 +1468,7 @@ static void getsize(
 	    char *s = NULL;
 	    char *es;
 	    size_t s_len = 0;
-	    GPtrArray *errarray;
+	    gchar **errors;
 
 	    if(dp->todo == 0) continue;
 
@@ -1482,15 +1482,14 @@ static void getsize(
 
 	    qname = quote_string(dp->name);
 
-	    errarray = validate_optionstr(dp);
-	    if (errarray->len > 0) {
-		guint i;
-		for (i=0; i < errarray->len; i++) {
-		    log_add(L_FAIL, _("%s %s %s 0 [%s]"),
-			    dp->host->hostname, qname,
-			    planner_timestamp,
-			    (char *)g_ptr_array_index(errarray, i));
-		}
+	    errors = validate_optionstr(dp);
+
+            if (errors) {
+                gchar **ptr;
+                for (ptr = errors; *ptr; ptr++)
+                    log_add(L_FAIL, "%s %s %s 0 [%s]", dp->host->hostname,
+                        qname, planner_timestamp, *ptr);
+                g_strfreev(errors);
 		amfree(qname);
 		est(dp)->state = DISK_DONE;
 		continue;
