@@ -1,3 +1,7 @@
+2011-05-31  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/diskfile.c: remove unneeded if(var) test in
+	  xml_optionstr(), the variable tested was never NULL
+
 2011-05-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/list_dir.c: fix add_dir_list_item.
 
