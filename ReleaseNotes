@@ -6,6 +6,16 @@
     o in amanda-client.conf
     o in dumptype/disklist
     o in xinetd (if no '-auth' argument to amandad)
+* amdump trap crtl-c, it still send the report and do cleanup if you do
+  one crtl-c, do it more than once to abort the run.
+* s3 device
+    o use multiple threads to speedup the transfer
+    o can connect to eucalytus.
+    o new NB_THREADS_BACKUP property
+    o new NB_THREADS_RECOVERY property
+    o new S3_HOST property
+    o new S3_SERVICE_PATH property
+    o new S3_SUBDOMAIN property
 * chg-aggregate: new changer that use other changer sequentially.
 * meta-volume
 * Add meta label in tapelist file
@@ -52,6 +62,7 @@
 * new amdumpd server service, if enable, it allow client to start a backup
   of itself.
 * new amdump_client program, it is use on client to start a backup of itself
+* implement restore command amzfs-sendrecv, it can be use with amrecover.
 
 		Release Notes for amanda-3.2.2
 
