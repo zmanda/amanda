@@ -1,4 +1,7 @@
 2011-05-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* configure.in: Move AMANDA_S3_DEVICE to do libcurl detection later.
+
+2011-05-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS, ReleaseNotes: Update for 3.3.0 release.
 
 2011-05-30  Jean-Louis Martineau <martineau@zmanda.com>
