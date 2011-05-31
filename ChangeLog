@@ -1,3 +1,6 @@
+2011-05-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS, ReleaseNotes: Update for 3.3.0 release.
+
 2011-05-31  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/diskfile.c: fix unbalanced tag in xml_estimate()
 
