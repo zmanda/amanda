@@ -1,4 +1,7 @@
 2011-05-31  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/diskfile.c: fix unbalanced tag in xml_estimate()
+
+2011-05-31  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/diskfile.c: avoid potential SIGSEGV by trying to assign to
 	  local variables "their_features" too soon in optionstr() and
 	  xml_optionstr(); also remove an unneeded local variable in both

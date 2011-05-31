@@ -1504,8 +1504,8 @@ xml_estimate(
 	    case ES_SERVER  : vstrextend(&l, "SERVER", NULL); break;
 	    case ES_CALCSIZE: vstrextend(&l, "CALCSIZE", NULL); break;
 	    }
+            vstrextend(&l, "</estimate>", NULL);
 	}
-	vstrextend(&l, "</estimate>", NULL);
 	if (GPOINTER_TO_INT(estimatelist->data) == ES_CALCSIZE) {
 	    vstrextend(&l, "  <calcsize>YES</calcsize>", NULL);
 	}
