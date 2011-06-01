@@ -1,4 +1,7 @@
 2011-06-01  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/diskfile.c: fix a memory leak in xml_scripts()
+
+2011-06-01  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/diskfile.c: fix a memory leak in xml_application()
 
 2011-06-01  Francis Galiegue <fgaliegue@gmail.com>

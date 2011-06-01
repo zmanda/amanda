@@ -1777,6 +1777,7 @@ xml_scripts(
 	    char *b64client_name = amxml_format_tag("client_name",
 						    client_name);
 	    vstrextend(&xml_app.result, "    ", b64client_name, "\n", NULL);
+            g_free(b64client_name);
 	}
 
 	xml_scr = vstrextend(&xml_scr, xml_scr1, xml_app.result, "  </script>\n", NULL);
