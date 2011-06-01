@@ -1,3 +1,7 @@
+2011-06-01  Dustin J. Mitchell <dustin@mozilla.com>
+	* perl/Amanda/Holding.pm: fix _is_datestamp regexp to be anchored and
+	  handle errors better (logging and ignoring)
+
 2011-06-01  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/diskfile.c: fix a memory leak in xml_scripts()
 
