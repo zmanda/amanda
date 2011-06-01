@@ -216,13 +216,13 @@ out:
 
     /*
      * Note that if the only element of the GPtrArray is a NULL pointer, the
-     * returned pointer is NULL. We therefore need to make that check, since
-     * g_strjoinv() does not accept NULL as an argument.
+     * result will be an array with only a NULL pointer, in which case
+     * g_strjoinv() will return an empty string. But we want to return NULL to
+     * the caller in that case.
      */
-    if (strings) {
-        ret = g_strjoinv(" ", strings);
-        g_strfreev(strings);
-    }
+
+    ret = (*strings) ? g_strjoinv(" ", strings) : NULL;
+    g_strfreev(strings);
 
     return ret;
 }
