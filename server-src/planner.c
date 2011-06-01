@@ -1410,7 +1410,6 @@ static void getsize(
     disk_t *	dp;
     int		i;
     time_t	estimates, timeout;
-    size_t	req_len;
     const	security_driver_t *secdrv;
     char *	calcsize;
     char *	qname, *b64disk = NULL;
@@ -1461,13 +1460,10 @@ static void getsize(
 			has_config   ? ";" : "",
 			"\n",
 			NULL);
-	req_len = strlen(req);
-	req_len += 128;			/* room for SECURITY ... */
 	estimates = 0;
 	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 	    char *s = NULL;
 	    char *es;
-	    size_t s_len = 0;
 	    gchar **errors;
 
 	    if(dp->todo == 0) continue;
@@ -1609,7 +1605,6 @@ static void getsize(
 			vstrextend(&l, "  ", b64device, "\n", NULL);
 		    vstrextend(&l, levelstr, spindlestr, o, "</dle>\n", NULL);
 		    strappend(s, l);
-		    s_len += strlen(l);
 		    amfree(l);
 		    amfree(levelstr);
 		    amfree(spindlestr);
@@ -1701,7 +1696,6 @@ static void getsize(
 				      "\n",
 				      NULL);
 			strappend(s, l);
-			s_len += strlen(l);
 			amfree(l);
 			amfree(includefree);
 			amfree(excludefree);
@@ -1710,7 +1704,6 @@ static void getsize(
 		if (s != NULL) {
 		    estimates += i;
 		    strappend(req, s);
-		    req_len += s_len;
 		    amfree(s);
 		    if (est(dp)->state == DISK_DONE) {
 		        remove_disk(&estq, dp);
