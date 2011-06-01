@@ -1,4 +1,4 @@
-# Copyright (c) 2009 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2009, 2011 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 as published
@@ -28,7 +28,7 @@ use strict;
 use warnings;
 
 use Amanda::Config qw( :getconf );
-use Amanda::Debug qw( debug );
+use Amanda::Debug qw( debug warning );
 use Amanda::Header;
 use Amanda::Disklist;
 use Amanda::Util;
@@ -183,7 +183,7 @@ sub _is_datestr {
 
     return 0
 	unless (my ($year, $month, $day, $hour, $min, $sec) =
-	    ($str =~ /(\d{4})(\d{2})(\d{2})(?:(\d{2})(\d{2})(\d{2}))/));
+	    ($str =~ /^(\d{4})(\d{2})(\d{2})(?:(\d{2})(\d{2})(\d{2}))$/));
 
     return 0 if ($year < 1990 || $year > 2999);
     return 0 if ($month < 1 || $month > 12);
@@ -207,7 +207,15 @@ sub _walk {
 	while (defined(my $datestr = $diskh->read())) {
 	    next unless (_is_datestr($datestr));
 
-	    my $dirh = IO::Dir->new(File::Spec->catfile($disk, $datestr));
+	    my $dirfn = File::Spec->catfile($disk, $datestr);
+	    next unless (-d $dirfn);
+
+	    my $dirh = IO::Dir->new($dirfn);
+	    if (!defined($dirh)) {
+		warning("could not open '$dirfn': $!");
+		next;
+	    }
+
 	    while (defined(my $dirent = $dirh->read)) {
 		next if $dirent eq '.' or $dirent eq '..';
 
