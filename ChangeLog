@@ -1,6 +1,10 @@
 2011-06-01  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/diskfile.c: fix a memory leak in xml_application()
+
+2011-06-01  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/cmdline.c: fix braino with g_strjoinv() usage,
 	  g_strjoinv("xx", {   NULL, }) will return an empty string, not NULL
+
 2011-05-31  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/diskfile.[ch]: change method signature for
 	  validate_optionstr(), it now returns a gchar ** instead of a
