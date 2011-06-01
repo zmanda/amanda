@@ -1416,12 +1416,14 @@ static void getsize(
     char *	qdevice, *b64device = NULL;
     estimate_t     estimate;
     estimatelist_t el;
+    int nb_client = 0, nb_server = 0;
+    gboolean has_features, has_hostname, has_maxdumps, has_config;
+    am_feature_t *features;
 
-    assert(hostp->disks != NULL);
+    g_assert(hostp->disks != NULL);
 
-    if(hostp->up != HOST_READY) {
+    if (hostp->up != HOST_READY)
 	return;
-    }
 
     /*
      * The first time through here we send a "noop" request.  This will
@@ -1431,17 +1433,12 @@ static void getsize(
      * (and subsequent) pass(es).
      */
     if(hostp->features != NULL) { /* sendsize service */
-	int nb_client = 0;
-	int nb_server = 0;
+	features = hostp->features;
 
-	int has_features = am_has_feature(hostp->features,
-					  fe_req_options_features);
-	int has_hostname = am_has_feature(hostp->features,
-					  fe_req_options_hostname);
-	int has_maxdumps = am_has_feature(hostp->features,
-					  fe_req_options_maxdumps);
-	int has_config   = am_has_feature(hostp->features,
-					  fe_req_options_config);
+	has_features = am_has_feature(features, fe_req_options_features);
+	has_hostname = am_has_feature(features, fe_req_options_hostname);
+	has_maxdumps = am_has_feature(features, fe_req_options_maxdumps);
+	has_config   = am_has_feature(features, fe_req_options_config);
 
 	g_snprintf(number, sizeof(number), "%d", hostp->maxdumps);
 	req = g_strjoin(NULL, "SERVICE ", "sendsize", "\n",
@@ -1523,7 +1520,7 @@ static void getsize(
                           (long long)est(dp)->estimate[1].nsize,
 			  est(dp)->estimate[2].level,
                           (long long)est(dp)->estimate[2].nsize);
-		if (!am_has_feature(hostp->features, fe_xml_estimate)) {
+		if (!am_has_feature(features, fe_xml_estimate)) {
 		    est(dp)->state = DISK_DONE;
 		    remove_disk(&startq, dp);
 		    enqueue_disk(&estq, dp);
@@ -1538,12 +1535,12 @@ static void getsize(
 	    }
 	    if (estimate == ES_CLIENT ||
 	        estimate == ES_CALCSIZE ||
-		(am_has_feature(hostp->features, fe_req_xml) &&
-		 am_has_feature(hostp->features, fe_xml_estimate))) {
+		(am_has_feature(features, fe_req_xml) &&
+		 am_has_feature(features, fe_xml_estimate))) {
 		nb_client++;
 		i = 0;
 
-		if (am_has_feature(hostp->features, fe_req_xml)) {
+		if (am_has_feature(features, fe_req_xml)) {
 		    char *levelstr = NULL;
 		    char *spindlestr = NULL;
 		    char level[NUM_STR_SIZE];
@@ -1558,7 +1555,7 @@ static void getsize(
 			int lev = est(dp)->estimate[i].level;
 			if (lev == -1) break;
 			g_snprintf(level, sizeof(level), "%d", lev);
-			if (am_has_feature(hostp->features, fe_xml_level_server) &&
+			if (am_has_feature(features, fe_xml_level_server) &&
 			    server_can_do_estimate(dp, &info, lev)) {
 			    server = "<server>YES</server>";
 			} else {
@@ -1591,13 +1588,13 @@ static void getsize(
 			    application = lookup_application(dp->application);
 			    g_assert(application != NULL);
 			    xml_app = xml_application(dp, application,
-						      hostp->features);
+						      features);
 			    vstrextend(&l, xml_app, NULL);
 			    amfree(xml_app);
 			}
 		    }
 
-		    es = xml_estimate(dp->estimatelist, hostp->features);
+		    es = xml_estimate(dp->estimatelist, features);
 		    vstrextend(&l, es, "\n", NULL);
 		    amfree(es);
 		    vstrextend(&l, "  ", b64disk, "\n", NULL);
@@ -1630,7 +1627,7 @@ static void getsize(
 
 			g_snprintf(level, sizeof(level), "%d", lev);
 			g_snprintf(spindle, sizeof(spindle), "%d", dp->spindle);
-			if (am_has_feature(hostp->features,
+			if (am_has_feature(features,
 					   fe_sendsize_req_options)){
 			    exclude1 = " OPTIONS |";
 			    exclude2 = optionstr(dp);
@@ -1671,7 +1668,7 @@ static void getsize(
 			}
 
 			if (estimate == ES_CALCSIZE &&
-		   	    !am_has_feature(hostp->features,
+                            !am_has_feature(features,
 					    fe_calcsize_estimate)) {
 			    log_add(L_WARNING,
 				    _("%s:%s does not support CALCSIZE for estimate, using CLIENT.\n"),
