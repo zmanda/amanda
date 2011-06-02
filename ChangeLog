@@ -3,6 +3,10 @@
 	  val_t_display_strs()
 
 2011-06-02  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/conffile.c: use execute_on_to_string() in
+	  val_t_display_strs()
+
+2011-06-02  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/conffile.c: add execute_on_to_string() helper
 
 2011-06-02  Francis Galiegue <fgaliegue@gmail.com>
