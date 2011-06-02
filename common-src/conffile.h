@@ -1567,4 +1567,15 @@ void free_property_t(gpointer p);
  */
 gchar *amandaify_property_name(const gchar *name);
 
+/**
+ * Returns a string representation of a CONFTYPE_EXECUTE_ON property with a
+ * given separator. It is up to the caller to free that string if it so desires.
+ *
+ * @param flags: the CONFTYPE_EXECUTE_ON property.
+ * @param separator: the separator to use.
+ * @returns: the string representation.
+ */
+
+char *execute_on_to_string(int flags, char *separator);
+
 #endif /* ! CONFFILE_H */
