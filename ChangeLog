@@ -1,3 +1,6 @@
+2011-06-02  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/dumper.c: fix a missing switch of default auth to BSDTCP
+
 2011-06-01  Dustin J. Mitchell <dustin@mozilla.com>
 	* perl/Amanda/Holding.pm: fix _is_datestamp regexp to be anchored and
 	  handle errors better (logging and ignoring)

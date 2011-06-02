@@ -2353,7 +2353,7 @@ startup_dump(
     } else {
 	authopt = strstr(options, "auth=");
 	if (auth == NULL) {
-	    auth = "BSD";
+	    auth = "BSDTCP";
 	}
 	vstrextend(&req,
 		   progname,
