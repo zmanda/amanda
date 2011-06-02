@@ -1660,7 +1660,6 @@ xml_scripts(
     char       *xml_scr;
     char       *xml_scr1;
     char       *str = "";
-    char       *sep;
     char       *eo_str;
     execute_on_t execute_on;
     int          execute_where;
@@ -1692,76 +1691,7 @@ xml_scripts(
 			      str, "</execute_where>\n", NULL);
 
 	execute_on = pp_script_get_execute_on(pp_script);
-	sep = "";
-	eo_str = g_strdup("");
-	if (execute_on & EXECUTE_ON_PRE_DLE_AMCHECK) {
-	    eo_str = vstrextend(&eo_str, sep, "PRE-DLE-AMCHECK", NULL);
-	    sep = ",";
-	}
-	if (execute_on & EXECUTE_ON_PRE_HOST_AMCHECK) {
-	    eo_str = vstrextend(&eo_str, sep, "PRE-HOST-AMCHECK", NULL);
-	    sep = ",";
-	}
-	if (execute_on & EXECUTE_ON_POST_DLE_AMCHECK) {
-	    eo_str = vstrextend(&eo_str, sep, "POST-DLE-AMCHECK", NULL);
-	    sep = ",";
-	}
-	if (execute_on & EXECUTE_ON_POST_HOST_AMCHECK) {
-	    eo_str = vstrextend(&eo_str, sep, "POST-HOST-AMCHECK", NULL);
-	    sep = ",";
-	}
-	if (execute_on & EXECUTE_ON_PRE_DLE_ESTIMATE) {
-	    eo_str = vstrextend(&eo_str, sep, "PRE-DLE-ESTIMATE", NULL);
-	    sep = ",";
-	}
-	if (execute_on & EXECUTE_ON_PRE_HOST_ESTIMATE) {
-	    eo_str = vstrextend(&eo_str, sep, "PRE-HOST-ESTIMATE", NULL);
-	    sep = ",";
-	}
-	if (execute_on & EXECUTE_ON_POST_DLE_ESTIMATE) {
-	    eo_str = vstrextend(&eo_str, sep, "POST-DLE-ESTIMATE", NULL);
-	    sep = ",";
-	}
-	if (execute_on & EXECUTE_ON_POST_HOST_ESTIMATE) {
-	    eo_str = vstrextend(&eo_str, sep, "POST-HOST-ESTIMATE", NULL);
-	    sep = ",";
-	}
-	if (execute_on & EXECUTE_ON_PRE_DLE_BACKUP) {
-	    eo_str = vstrextend(&eo_str, sep, "PRE-DLE-BACKUP", NULL);
-	    sep = ",";
-	}
-	if (execute_on & EXECUTE_ON_PRE_HOST_BACKUP) {
-	    eo_str = vstrextend(&eo_str, sep, "PRE-HOST-BACKUP", NULL);
-	    sep = ",";
-	}
-	if (execute_on & EXECUTE_ON_POST_DLE_BACKUP) {
-	    eo_str = vstrextend(&eo_str, sep, "POST-DLE-BACKUP", NULL);
-	    sep = ",";
-	}
-	if (execute_on & EXECUTE_ON_POST_HOST_BACKUP) {
-	    eo_str = vstrextend(&eo_str, sep, "POST-HOST-BACKUP", NULL);
-	    sep = ",";
-	}
-	if (execute_on & EXECUTE_ON_PRE_RECOVER) {
-	    eo_str = vstrextend(&eo_str, sep, "PRE-RECOVER", NULL);
-	    sep = ",";
-	}
-	if (execute_on & EXECUTE_ON_POST_RECOVER) {
-	    eo_str = vstrextend(&eo_str, sep, "POST-RECOVER", NULL);
-	    sep = ",";
-	}
-	if (execute_on & EXECUTE_ON_PRE_LEVEL_RECOVER) {
-	    eo_str = vstrextend(&eo_str, sep, "PRE-LEVEL-RECOVER", NULL);
-	    sep = ",";
-	}
-	if (execute_on & EXECUTE_ON_POST_LEVEL_RECOVER) {
-	    eo_str = vstrextend(&eo_str, sep, "POST-LEVEL-RECOVER", NULL);
-	    sep = ",";
-	}
-	if (execute_on & EXECUTE_ON_INTER_LEVEL_RECOVER) {
-	    eo_str = vstrextend(&eo_str, sep, "INTER-LEVEL-RECOVER", NULL);
-	    sep = ",";
-	}
+        eo_str = execute_on_to_string(execute_on, ",");
 	if (execute_on != 0)
 	    xml_scr1 = vstrextend(&xml_scr1,
 				  "    <execute_on>", eo_str,
