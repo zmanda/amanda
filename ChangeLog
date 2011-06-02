@@ -1,4 +1,11 @@
 2011-06-02  Francis Galiegue <fgaliegue@gmail.com>
+	* client-src/getfsent.c: remove dev2rdev() and remnant artifacts in
+	  search_fstab() and samefile()
+	* common-src/genversion.c, installcheck/catalogs/chunker-partial.cat:
+	  remove RDEV_PREFIX references
+        * config/amanda/devprefix.m4: remove RDEV_PREFIX detection
+
+2011-06-02  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/conffile.c: use execute_on_to_string() in
 	  val_t_display_strs()
 
