@@ -1,4 +1,7 @@
 2011-06-02  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/conffile.c: add execute_on_to_string() helper
+
+2011-06-02  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/conffile.h: harden EXECUTE_ON_* macro definitions
 
 2011-06-02  Francis Galiegue <fgaliegue@gmail.com>
