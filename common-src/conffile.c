@@ -8725,3 +8725,63 @@ str_keyword(
 
     return keyword_str;
 }
+
+/*
+ * The CONFTYPE_EXECUTE_ON keywork has LOTS of flags in it, and two call sites
+ * need to build a string out of it.
+ *
+ * In order to avoid having to modify both call sites in case one flag is added,
+ * create a helper function which gives back a string to the caller. The array
+ * defined below MUST be kept in sync with conffile.h!
+ */
+
+static keytab_t execute_on_strings[] = {
+    { "PRE-AMCHECK", EXECUTE_ON_PRE_AMCHECK },
+    { "PRE-DLE-AMCHECK", EXECUTE_ON_PRE_DLE_AMCHECK },
+    { "PRE-HOST-AMCHECK", EXECUTE_ON_PRE_HOST_AMCHECK },
+    { "POST-DLE-AMCHECK", EXECUTE_ON_POST_DLE_AMCHECK },
+    { "POST-HOST-AMCHECK", EXECUTE_ON_POST_HOST_AMCHECK },
+    { "POST-AMCHECK", EXECUTE_ON_POST_AMCHECK },
+    { "PRE-ESTIMATE", EXECUTE_ON_PRE_ESTIMATE },
+    { "PRE-DLE-ESTIMATE", EXECUTE_ON_PRE_DLE_ESTIMATE },
+    { "PRE-HOST-ESTIMATE", EXECUTE_ON_PRE_HOST_ESTIMATE },
+    { "POST-DLE-ESTIMATE", EXECUTE_ON_POST_DLE_ESTIMATE },
+    { "POST-HOST-ESTIMATE", EXECUTE_ON_POST_HOST_ESTIMATE },
+    { "POST-ESTIMATE", EXECUTE_ON_POST_ESTIMATE },
+    { "PRE-BACKUP", EXECUTE_ON_PRE_BACKUP },
+    { "PRE-DLE-BACKUP", EXECUTE_ON_PRE_DLE_BACKUP },
+    { "PRE-HOST-BACKUP", EXECUTE_ON_PRE_HOST_BACKUP },
+    { "POST-BACKUP", EXECUTE_ON_POST_BACKUP },
+    { "POST-DLE-BACKUP", EXECUTE_ON_POST_DLE_BACKUP },
+    { "POST-HOST-BACKUP", EXECUTE_ON_POST_HOST_BACKUP },
+    { "PRE-RECOVER", EXECUTE_ON_PRE_RECOVER },
+    { "POST-RECOVER", EXECUTE_ON_POST_RECOVER },
+    { "PRE-LEVEL-RECOVER", EXECUTE_ON_PRE_LEVEL_RECOVER },
+    { "POST-LEVEL-RECOVER", EXECUTE_ON_POST_LEVEL_RECOVER },
+    { "INTER-LEVEL-RECOVER", EXECUTE_ON_INTER_LEVEL_RECOVER },
+    { NULL, 0 }
+};
+
+char *execute_on_to_string(int flags, char *separator)
+{
+    char *ret;
+    GPtrArray *array = g_ptr_array_new();
+    gchar **strings;
+    keytab_t *entry;
+
+    for (entry = execute_on_strings; entry->token; entry++)
+        if (flags & entry->token)
+            g_ptr_array_add(array, entry->keyword);
+
+    g_ptr_array_add(array, NULL);
+
+    strings = (gchar **)g_ptr_array_free(array, FALSE);
+    ret = g_strjoinv(separator, strings);
+
+    /*
+     * We MUST NOT free the strings in the array...
+     */
+    g_free(strings);
+
+    return ret;
+}
