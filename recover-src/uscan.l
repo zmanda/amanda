@@ -189,7 +189,7 @@ process_line(
     YY_BUFFER_STATE b;
     int result;
 
-    char *line1 = stralloc2(line, "\n");
+    char *line1 = g_strconcat(line, "\n", NULL);
     b = yy_scan_string(line1);		/* tell lex to scan lineread */
     result = yyparse();			/* parse lineread and act */
     yy_delete_buffer(b);

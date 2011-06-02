@@ -1098,6 +1098,7 @@ char *
 optionstr(
     disk_t *	dp)
 {
+    char *tmpbuf;
     char *auth_opt = NULL;
     char *kencrypt_opt = "";
     char *compress_opt = "";
@@ -1152,19 +1153,25 @@ optionstr(
 
     switch(dp->encrypt) {
     case ENCRYPT_CUST:
-	encrypt_opt = newvstralloc(encrypt_opt, "encrypt-cust=",
-				   dp->clnt_encrypt, ";", NULL);
+	tmpbuf = g_strconcat("encrypt-cust=", dp->clnt_encrypt, ";", NULL);
+	g_free(encrypt_opt);
+	encrypt_opt = tmpbuf;
 	if (dp->clnt_decrypt_opt) {
-	     decrypt_opt = newvstralloc(decrypt_opt, "client-decrypt-option=",
-					dp->clnt_decrypt_opt, ";", NULL);
+	     tmpbuf = g_strconcat("client-decrypt-option=",
+	         dp->clnt_decrypt_opt, ";", NULL);
+	     g_free(decrypt_opt);
+	     decrypt_opt = tmpbuf;
 	}
 	break;
     case ENCRYPT_SERV_CUST:
-	encrypt_opt = newvstralloc(encrypt_opt, "encrypt-serv-cust=",
-				   dp->srv_encrypt, ";", NULL);
+	tmpbuf = g_strconcat("encrypt-serv-cust=", dp->srv_encrypt, ";", NULL);
+	g_free(encrypt_opt);
+	encrypt_opt = tmpbuf;
 	if (dp->srv_decrypt_opt) {
-	    decrypt_opt = newvstralloc(decrypt_opt, "server-decrypt-option=",
-				       dp->srv_decrypt_opt, ";", NULL);
+	    tmpbuf = g_strconcat("server-decrypt-option=",
+	        dp->srv_decrypt_opt, ";", NULL);
+	    g_free(decrypt_opt);
+	    decrypt_opt = tmpbuf;
          }
 	 break;
     }
@@ -1186,7 +1193,9 @@ optionstr(
 	for(excl = dp->exclude_file->first; excl != NULL;
 					    excl = excl->next) {
 	    qname = quote_string(excl->name);
-	    exc = newvstralloc( exc, "exclude-file=", qname, ";", NULL);
+	    tmpbuf = g_strconcat("exclude-file=", qname, ";", NULL);
+	    g_free(exc);
+	    exc = tmpbuf;
 	    strappend(exclude_file, exc);
 	    amfree(qname);
 	}
@@ -1196,7 +1205,9 @@ optionstr(
 	for(excl = dp->exclude_list->first; excl != NULL;
 					    excl = excl->next) {
 	    qname = quote_string(excl->name);
-	    exc = newvstralloc( exc, "exclude-list=", qname, ";", NULL);
+	    tmpbuf = g_strconcat("exclude-list=", qname, ";", NULL);
+	    g_free(exc);
+	    exc = tmpbuf;
 	    strappend(exclude_list, exc);
 	    amfree(qname);
 	}
@@ -1207,7 +1218,9 @@ optionstr(
 	for(excl = dp->include_file->first; excl != NULL;
 					    excl = excl->next) {
 	    qname = quote_string(excl->name);
-	    exc = newvstralloc(exc, "include-file=", qname, ";", NULL);
+	    tmpbuf = g_strconcat("include-file=", qname, ";", NULL);
+	    g_free(exc);
+	    exc = tmpbuf;
 	    strappend(include_file, exc);
 	    amfree(qname);
 	}
@@ -1217,7 +1230,9 @@ optionstr(
 	for(excl = dp->include_list->first; excl != NULL;
 					    excl = excl->next) {
 	    qname = quote_string(excl->name);
-	    exc = newvstralloc(exc, "include-list=", qname, ";", NULL);
+	    tmpbuf = g_strconcat("include-list=", qname, ";", NULL);
+	    g_free(exc);
+	    exc = tmpbuf;
 	    strappend(include_list, exc);
 	    amfree(qname);
 	}
@@ -1264,6 +1279,7 @@ xml_optionstr(
     disk_t *		dp,
     int                 to_server)
 {
+    char *tmpbuf;
     char *auth_opt;
     char *kencrypt_opt;
     char *compress_opt;
@@ -1307,10 +1323,8 @@ xml_optionstr(
 	break;
     case COMP_CUST:
 	compress_opt = g_strjoin(NULL, "  <compress>CUSTOM"
-				 "<custom-compress-program>",
-				 dp->clntcompprog,
-				 "</custom-compress-program>\n"
-				 "  </compress>\n", NULL);
+	    "<custom-compress-program>", dp->clntcompprog,
+	    "</custom-compress-program>\n" "  </compress>\n", NULL);
 	break;
     case COMP_SERVER_FAST:
 	compress_opt = g_strdup("  <compress>SERVER-FAST</compress>\n");
@@ -1320,10 +1334,8 @@ xml_optionstr(
 	break;
     case COMP_SERVER_CUST:
 	compress_opt = g_strjoin(NULL, "  <compress>SERVER-CUSTOM"
-				 "<custom-compress-program>",
-				 dp->srvcompprog,
-				 "</custom-compress-program>\n"
-				 "  </compress>\n", NULL);
+	    "<custom-compress-program>", dp->srvcompprog,
+	    "</custom-compress-program>\n" "  </compress>\n", NULL);
 	break;
     default:
 	compress_opt = g_strdup("");
@@ -1332,32 +1344,29 @@ xml_optionstr(
     switch(dp->encrypt) {
     case ENCRYPT_CUST:
 	if (dp->clnt_decrypt_opt) {
-	    decrypt_opt = newvstralloc(decrypt_opt,
-				       "    <decrypt-option>",
-				       dp->clnt_decrypt_opt,
-				       "</decrypt-option>\n", NULL);
+	    tmpbuf = g_strconcat("    <decrypt-option>", dp->clnt_decrypt_opt,
+	        "</decrypt-option>\n", NULL);
+            g_free(decrypt_opt);
+            decrypt_opt = tmpbuf;
 	}
-	encrypt_opt = newvstralloc(encrypt_opt,
-					"  <encrypt>CUSTOM"
-					"<custom-encrypt-program>",
-					dp->clnt_encrypt,
-					"</custom-encrypt-program>\n",
-					decrypt_opt,
-					"  </encrypt>\n", NULL);
+        tmpbuf = g_strconcat("  <encrypt>CUSTOM""<custom-encrypt-program>",
+            dp->clnt_encrypt, "</custom-encrypt-program>\n", decrypt_opt,
+            "  </encrypt>\n", NULL);
+        g_free(encrypt_opt);
+        encrypt_opt = tmpbuf;
 	break;
     case ENCRYPT_SERV_CUST:
 	if (to_server) {
-	    decrypt_opt =  newvstralloc(decrypt_opt,
-					"    <decrypt-option>",
-					dp->srv_decrypt_opt, 
-					"</decrypt-option>\n", NULL);
-	    encrypt_opt = newvstralloc(encrypt_opt,
-				       "  <encrypt>SERVER-CUSTOM"
-				       "<custom-encrypt-program>",
-				       dp->srv_encrypt,
-				       "</custom-encrypt-program>\n",
-				       decrypt_opt,
-				       "  </encrypt>\n", NULL);
+            tmpbuf = g_strconcat("    <decrypt-option>", dp->srv_decrypt_opt,
+                "</decrypt-option>\n", NULL);
+            g_free(decrypt_opt);
+            decrypt_opt = tmpbuf;
+
+	    tmpbuf = g_strconcat("  <encrypt>SERVER-CUSTOM""<custom-encrypt-program>",
+                dp->srv_encrypt, "</custom-encrypt-program>\n", decrypt_opt,
+                "  </encrypt>\n", NULL);
+            g_free(encrypt_opt);
+            encrypt_opt = tmpbuf;
 	}
 	break;
     }
@@ -1422,7 +1431,9 @@ xml_optionstr(
 	for(excl = dp->exclude_file->first; excl != NULL;
 					    excl = excl->next) {
 	    q64name = amxml_format_tag("file", excl->name);
-	    exc = newvstralloc( exc, "    ", q64name, "\n", NULL);
+	    tmpbuf = g_strconcat("    ", q64name, "\n", NULL);
+	    g_free(exc);
+	    exc = tmpbuf;
 	    strappend(exclude_file, exc);
 	    amfree(q64name);
 	}
@@ -1432,7 +1443,9 @@ xml_optionstr(
 	for(excl = dp->exclude_list->first; excl != NULL;
 					    excl = excl->next) {
 	    q64name = amxml_format_tag("list", excl->name);
-	    exc = newvstralloc(exc, "    ", q64name, "\n", NULL);
+	    tmpbuf = g_strconcat("    ", q64name, "\n", NULL);
+	    g_free(exc);
+	    exc = tmpbuf;
 	    strappend(exclude_list, exc);
 	    amfree(q64name);
 	}
@@ -1443,7 +1456,9 @@ xml_optionstr(
 	for(excl = dp->include_file->first; excl != NULL;
 					    excl = excl->next) {
 	    q64name = amxml_format_tag("file", excl->name);
-	    exc = newvstralloc( exc, "    ", q64name, "\n", NULL);
+	    tmpbuf = g_strconcat("    ", q64name, "\n", NULL);
+	    g_free(exc);
+	    exc = tmpbuf;
 	    strappend(include_file, exc);
 	    amfree(q64name);
 	}
@@ -1453,7 +1468,9 @@ xml_optionstr(
 	for(excl = dp->include_list->first; excl != NULL;
 					    excl = excl->next) {
 	    q64name = amxml_format_tag("list", excl->name);
-	    exc = newvstralloc( exc, "    ", q64name, "\n", NULL);
+	    tmpbuf = g_strconcat("    ", q64name, "\n", NULL);
+	    g_free(exc);
+	    exc = tmpbuf;
 	    strappend(include_list, exc);
 	    amfree(q64name);
 	}
@@ -1466,20 +1483,19 @@ xml_optionstr(
 	incl_opt = "    <optional>YES</optional>\n";
     }
 
-    if (dp->exclude_file || dp->exclude_list)
-	exclude = newvstralloc(exclude,
-			       "  <exclude>\n",
-			       exclude_file,
-			       exclude_list,
-			       excl_opt,
-			       "  </exclude>\n", NULL);
-    if (dp->include_file || dp->include_list)
-	include = newvstralloc(include,
-			       "  <include>\n",
-			       include_file,
-			       include_list,
-			       incl_opt,
-			       "  </include>\n", NULL);
+    if (dp->exclude_file || dp->exclude_list) {
+        tmpbuf = g_strconcat("  <exclude>\n", exclude_file, exclude_list,
+            excl_opt, "  </exclude>\n", NULL);
+        g_free(exclude);
+        exclude = tmpbuf;
+    }
+
+    if (dp->include_file || dp->include_list) {
+        tmpbuf = g_strconcat("  <include>\n", include_file, include_list,
+            incl_opt, "  </include>\n", NULL);
+        g_free(include);
+        include = tmpbuf;
+    }
     script_opt = xml_scripts(dp->pp_scriptlist, their_features);
     result = g_strjoin(NULL, auth_opt,
 		       kencrypt_opt,

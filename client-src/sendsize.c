@@ -1460,7 +1460,8 @@ getsize_dump(
 	name = g_strdup(" (vxdump)");
 #else
 	name = g_strdup("");
-	cmd = newstralloc(cmd, VXDUMP);
+	g_free(cmd);
+	cmd = g_strdup(VXDUMP);
 	config = skip_argument;
 	is_rundump = 0;
 #endif
@@ -1494,7 +1495,8 @@ getsize_dump(
 #  endif						/* } */
 # else							/* } { */
 	name = g_strdup("");
-	cmd = newstralloc(cmd, DUMP);
+	g_free(cmd);
+	cmd = g_strdup(DUMP);
         config = skip_argument;
 	is_rundump = 0;
 # endif							/* } */
@@ -1838,7 +1840,7 @@ getsize_smbtar(
     if (level > 1)
 	return -2; /* planner will not even consider this level */
 
-    error_pn = stralloc2(get_pname(), "-smbclient");
+    error_pn = g_strconcat(get_pname(), "-smbclient", NULL);
     qdisk = quote_string(dle->disk);
     parsesharename(dle->device, &share, &subdir);
     if (!share) {
@@ -2058,6 +2060,7 @@ getsize_gnutar(
     time_t	dumpsince,
     char      **errmsg)
 {
+    char *tmpbuf;
     int pipefd = -1, nullfd = -1;
     pid_t dumppid;
     off_t size = (off_t)-1;
@@ -2128,10 +2131,12 @@ getsize_gnutar(
 	while (infd == -1) {
 	    if (--baselevel >= 0) {
 		g_snprintf(number, sizeof(number), "%d", baselevel);
-		inputname = newvstralloc(inputname,
-					 basename, "_", number, NULL);
+		tmpbuf = g_strconcat(basename, "_", number, NULL);
+		g_free(inputname);
+		inputname = tmpbuf;
 	    } else {
-		inputname = newstralloc(inputname, "/dev/null");
+		g_free(inputname);
+		inputname = g_strdup("/dev/null");
 	    }
 	    if ((infd = open(inputname, O_RDONLY)) == -1) {
 

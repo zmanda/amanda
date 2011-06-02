@@ -125,6 +125,7 @@ static gboolean
 start_impl(
     XferElement *elt)
 {
+    char *tmpbuf;
     XferFilterProcess *self = (XferFilterProcess *)elt;
     char *cmd_str;
     char **argv;
@@ -137,7 +138,9 @@ start_impl(
     cmd_str = g_shell_quote(*(argv++));
     while (*argv) {
 	char *qarg = g_shell_quote(*(argv++));
-	cmd_str = newvstralloc(cmd_str, cmd_str, " ", qarg, NULL);
+	tmpbuf = g_strconcat(cmd_str, " ", qarg, NULL);
+	g_free(cmd_str);
+	cmd_str = tmpbuf;
 	g_free(qarg);
     }
     g_debug("%s spawning: %s", xfer_element_repr(elt), cmd_str);

@@ -235,6 +235,7 @@ static void holding_walk_dir(
     holding_walk_fn per_file_fn,
     holding_walk_fn per_chunk_fn)
 {
+    char *tmpbuf;
     DIR *dir;
     struct dirent *workdir;
     char *hfile = NULL;
@@ -255,9 +256,9 @@ static void holding_walk_dir(
         if (is_dot_or_dotdot(workdir->d_name))
             continue; /* expected cruft */
 
-        hfile = newvstralloc(hfile,
-                     hdir, "/", workdir->d_name,
-                     NULL);
+        tmpbuf = g_strconcat(hdir, "/", workdir->d_name, NULL);
+        g_free(hfile);
+        hfile = tmpbuf;
 
         /* filter out various undesirables */
         if (is_emptyfile(hfile))
@@ -319,6 +320,7 @@ holding_walk_disk(
     holding_walk_fn per_file_fn,
     holding_walk_fn per_chunk_fn)
 {
+    char *tmpbuf;
     DIR *dir;
     struct dirent *workdir;
     char *hdir = NULL;
@@ -337,9 +339,9 @@ holding_walk_disk(
         if (is_dot_or_dotdot(workdir->d_name))
             continue; /* expected cruft */
 
-        hdir = newvstralloc(hdir,
-                     hdisk, "/", workdir->d_name,
-                     NULL);
+	tmpbuf = g_strconcat(hdisk, "/", workdir->d_name, NULL);
+        g_free(hdir);
+        hdir = tmpbuf;
 
         /* detect cruft */
         if (!is_dir(hdir)) {
@@ -623,7 +625,8 @@ holding_file_size(
         }
 
         /* on to the next chunk */
-        filename = newstralloc(filename, file.cont_filename);
+        g_free(filename);
+        filename = g_strdup(file.cont_filename);
 	dumpfile_free_data(&file);
     }
     amfree(filename);
@@ -889,6 +892,7 @@ rename_tmp_holding(
     char *	holding_file,
     int		complete)
 {
+    char *tmpbuf;
     int fd;
     size_t buflen;
     char buffer[DISK_BLOCK_BYTES];
@@ -899,7 +903,9 @@ rename_tmp_holding(
     memset(buffer, 0, sizeof(buffer));
     filename = g_strdup(holding_file);
     while(filename != NULL && filename[0] != '\0') {
-	filename_tmp = newvstralloc(filename_tmp, filename, ".tmp", NULL);
+	tmpbuf = g_strconcat(filename, ".tmp", NULL);
+	g_free(filename_tmp);
+	filename_tmp = tmpbuf;
 	if((fd = robust_open(filename_tmp,O_RDONLY, 0)) == -1) {
 	    dbprintf(_("rename_tmp_holding: open of %s failed: %s\n"),filename_tmp,strerror(errno));
 	    amfree(filename);
@@ -951,7 +957,8 @@ rename_tmp_holding(
 	    free(header);
 	    close(fd);
 	}
-	filename = newstralloc(filename, file.cont_filename);
+	g_free(filename);
+	filename = g_strdup(file.cont_filename);
 	dumpfile_free_data(&file);
     }
     amfree(filename);

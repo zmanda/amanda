@@ -386,6 +386,7 @@ traverse_dirs(
     char *	parent_dir,
     char *	include)
 {
+    char *tmpbuf;
     DIR *d;
     struct dirent *f;
     struct stat finfo;
@@ -424,9 +425,12 @@ traverse_dirs(
 
 	l = strlen(dirname);
 	if(l > 0 && dirname[l - 1] != '/') {
-	    newbase = newstralloc2(newbase, dirname, "/");
+	    tmpbuf = g_strconcat(dirname, "/", NULL);
+	    g_free(newbase);
+	    newbase = tmpbuf;
 	} else {
-	    newbase = newstralloc(newbase, dirname);
+	    g_free(newbase);
+	    newbase = g_strdup(dirname);
 	}
 
 	while((f = readdir(d)) != NULL) {
@@ -437,7 +441,9 @@ traverse_dirs(
 		continue;
 	    }
 
-	    newname = newstralloc2(newname, newbase, f->d_name);
+	    tmpbuf = g_strconcat(newbase, f->d_name, NULL);
+	    g_free(newname);
+	    newname = tmpbuf;
 	    if(lstat(newname, &finfo) == -1) {
 		g_fprintf(stderr, "%s/%s: %s\n",
 			dirname, f->d_name, strerror(errno));
@@ -576,7 +582,7 @@ final_size_dump(
 
     /* calculate the map sizes */
 
-    s = stralloc2(topdir, "/.");
+    s = g_strconcat(topdir, "/.", NULL);
     if(get_fs_usage(s, NULL, &fsusage) == -1) {
 	error("statfs %s: %s", s, strerror(errno));
 	/*NOTREACHED*/

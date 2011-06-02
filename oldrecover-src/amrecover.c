@@ -105,7 +105,8 @@ get_line(void)
 	}
 	if((len = strlen(line)) > 0 && line[len-1] == '\r') {
 	    line[len-1] = '\0';
-	    server_line = newstralloc(server_line, line);
+	    g_free(server_line);
+	    server_line = g_strdup(line);
 	    amfree(line);
 	    return 0;
 	}
@@ -314,14 +315,17 @@ guess_disk (
 	    && (strncmp(fsent.mntdir, cwd, current_length) == 0))
 	{
 	    longest_match = current_length;
-	    *mpt_guess = newstralloc(*mpt_guess, fsent.mntdir);
+	    g_free(*mpt_guess);
+	    *mpt_guess = g_strdup(fsent.mntdir);
 	    if(strncmp(fsent.fsname,DEV_PREFIX,(strlen(DEV_PREFIX))))
 	    {
-	        fsname = newstralloc(fsname, fsent.fsname);
+	        g_free(fsname);
+	        fsname = g_strdup(fsent.fsname);
             }
 	    else
 	    {
-	        fsname = newstralloc(fsname,fsent.fsname+strlen(DEV_PREFIX));
+	        g_free(fsname);
+	        fsname = g_strdup(fsent.fsname + strlen(DEV_PREFIX));
 	    }
 	    local_disk = is_local_fstype(&fsent);
 	    dbprintf(_("guess_disk: local_disk = %d, fsname = \"%s\"\n"),
@@ -347,7 +351,7 @@ guess_disk (
     /* disk name may be specified by mount point (logical name) or
        device name, have to determine */
     g_printf(_("Trying disk %s ...\n"), *mpt_guess);
-    disk_try = stralloc2("DISK ", *mpt_guess);		/* try logical name */
+    disk_try = g_strconcat("DISK ", *mpt_guess, NULL);		/* try logical name */
     if (exchange(disk_try) == -1)
 	exit(1);
     amfree(disk_try);
@@ -358,7 +362,7 @@ guess_disk (
 	return 1;
     }
     g_printf(_("Trying disk %s ...\n"), fsname);
-    disk_try = stralloc2("DISK ", fsname);		/* try device name */
+    disk_try = g_strconcat("DISK ", fsname, NULL);		/* try device name */
     if (exchange(disk_try) == -1)
 	exit(1);
     amfree(disk_try);
@@ -434,7 +438,8 @@ main(
     }
     localhost[MAX_HOSTNAME_LENGTH] = '\0';
 
-    config = newstralloc(config, DEFAULT_CONFIG);
+    g_free(config);
+    config = g_strdup(DEFAULT_CONFIG);
 
     dbrename(config, DBG_SUBDIR_CLIENT);
 
@@ -484,19 +489,23 @@ main(
 	switch (i)
 	{
 	    case 'C':
-		config = newstralloc(config, optarg);
+		g_free(config);
+		config = g_strdup(optarg);
 		break;
 
 	    case 's':
-		server_name = newstralloc(server_name, optarg);
+		g_free(server_name);
+		server_name = g_strdup(optarg);
 		break;
 
 	    case 't':
-		tape_server_name = newstralloc(tape_server_name, optarg);
+		g_free(tape_server_name);
+		tape_server_name = g_strdup(optarg);
 		break;
 
 	    case 'd':
-		tape_device_name = newstralloc(tape_device_name, optarg);
+		g_free(tape_device_name);
+		tape_device_name = g_strdup(optarg);
 		break;
 
 	    case 'U':
@@ -528,7 +537,7 @@ main(
 	/*NOTREACHED*/
     }
 
-    service_name = stralloc2("amandaidx", SERVICE_SUFFIX);
+    service_name = g_strconcat("amandaidx", SERVICE_SUFFIX, NULL);
 
     g_printf(_("AMRECOVER Version %s. Contacting server on %s ...\n"),
 	   VERSION, server_name);  
@@ -585,7 +594,7 @@ main(
 
 	our_features = am_init_feature_set();
 	our_feature_string = am_feature_to_string(our_features);
-	line = stralloc2("FEATURES ", our_feature_string);
+	line = g_strconcat("FEATURES ", our_feature_string, NULL);
 	if(exchange(line) == 0) {
 	    their_feature_string = g_strdup(server_line+13);
 	    indexsrv_features = am_string_to_feature(their_feature_string);
@@ -607,14 +616,14 @@ main(
 	error(_("BAD DATE"));
 
     g_printf(_("Setting restore date to today (%s)\n"), dump_date);
-    line = stralloc2("DATE ", dump_date);
+    line = g_strconcat("DATE ", dump_date, NULL);
     if (converse(line) == -1) {
         aclose(server_socket);
 	exit(1);
     }
     amfree(line);
 
-    line = stralloc2("SCNF ", config);
+    line = g_strconcat("SCNF ", config, NULL);
     if (converse(line) == -1) {
         aclose(server_socket);
 	exit(1);
@@ -694,5 +703,5 @@ get_security(void)
 	error(_("can't get login name for my uid %ld"), (long)getuid());
 	/*NOTREACHED*/
     }
-    return stralloc2("SECURITY USER ", pwptr->pw_name);
+    return g_strconcat("SECURITY USER ", pwptr->pw_name, NULL);
 }

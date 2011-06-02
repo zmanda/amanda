@@ -136,6 +136,7 @@ start_backup(
     int		mesgf,
     int		indexf)
 {
+    char *tmpbuf;
     char tmppath[PATH_MAX];
     int dumpin, dumpout, compout;
     char *cmd = NULL;
@@ -159,7 +160,7 @@ start_backup(
     level_t *alevel = (level_t *)dle->levellist->data;
     int      level  = alevel->level;
 
-    error_pn = stralloc2(get_pname(), "-smbclient");
+    error_pn = g_strconcat(get_pname(), "-smbclient", NULL);
 
     qdisk = quote_string(dle->disk);
     dbprintf(_("start: %s:%s lev %d\n"), host, qdisk, level);
@@ -250,10 +251,12 @@ start_backup(
 	while (infd == -1) {
 	    if (--baselevel >= 0) {
 		g_snprintf(number, sizeof(number), "%d", baselevel);
-		inputname = newvstralloc(inputname,
-					 basename, "_", number, NULL);
+		tmpbuf = g_strconcat(basename, "_", number, NULL);
+		g_free(inputname);
+		inputname = tmpbuf;
 	    } else {
-		inputname = newstralloc(inputname, "/dev/null");
+		g_free(inputname);
+		inputname = g_strdup("/dev/null");
 	    }
 	    if ((infd = open(inputname, O_RDONLY)) == -1) {
 		int save_errno = errno;

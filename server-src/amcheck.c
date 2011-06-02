@@ -665,6 +665,7 @@ start_server_check(
     int		do_localchk,
     int		do_tapechk)
 {
+    char *tmpbuf;
     struct fs_usage fsusage;
     FILE *outf = NULL;
     pid_t pid G_GNUC_UNUSED;
@@ -883,19 +884,19 @@ start_server_check(
 		tapebad = 1;
 		amfree(quoted);
 	    }
-	    newtapefile = stralloc2(tapefile, ".new");
+	    newtapefile = g_strconcat(tapefile, ".new", NULL);
 	    tapebad |= check_tapefile(outf, newtapefile);
 	    amfree(newtapefile);
-	    newtapefile = stralloc2(tapefile, ".amlabel");
+	    newtapefile = g_strconcat(tapefile, ".amlabel", NULL);
 	    tapebad |= check_tapefile(outf, newtapefile);
 	    amfree(newtapefile);
-	    newtapefile = stralloc2(tapefile, ".amlabel.new");
+	    newtapefile = g_strconcat(tapefile, ".amlabel.new", NULL);
 	    tapebad |= check_tapefile(outf, newtapefile);
 	    amfree(newtapefile);
-	    newtapefile = stralloc2(tapefile, ".yesterday");
+	    newtapefile = g_strconcat(tapefile, ".yesterday", NULL);
 	    tapebad |= check_tapefile(outf, newtapefile);
 	    amfree(newtapefile);
-	    newtapefile = stralloc2(tapefile, ".yesterday.new");
+	    newtapefile = g_strconcat(tapefile, ".yesterday.new", NULL);
 	    tapebad |= check_tapefile(outf, newtapefile);
 	    amfree(newtapefile);
 	}
@@ -1185,7 +1186,9 @@ start_server_check(
 	amfree(quoted);
 
 	if (logbad == 0 && testtape) {
-	    logfile = newvstralloc(logfile, conf_logdir, "/amdump", NULL);
+	    tmpbuf = g_strconcat(conf_logdir, "/amdump", NULL);
+	    g_free(logfile);
+	    logfile = tmpbuf;
 	    if (access(logfile, F_OK) == 0) {
 		testtape = 0;
 		logbad = 2;
@@ -1283,7 +1286,9 @@ start_server_check(
 	    hostp = origq.head->host;
 	    host = sanitise_filename(hostp->hostname);
 	    if(conf_infofile) {
-		hostinfodir = newstralloc2(hostinfodir, conf_infofile, host);
+		tmpbuf = g_strconcat(conf_infofile, host, NULL);
+		g_free(hostinfodir);
+		hostinfodir = tmpbuf;
 		quoted = quote_string(hostinfodir);
 		if(stat(hostinfodir, &statbuf) == -1) {
 		    if (errno == ENOENT) {
@@ -1318,7 +1323,9 @@ start_server_check(
 		if(hostinfodir) {
 		    char *quotedif;
 
-		    diskdir = newstralloc2(diskdir, hostinfodir, disk);
+		    tmpbuf = g_strconcat(hostinfodir, disk, NULL);
+		    g_free(diskdir);
+		    diskdir = tmpbuf;
 		    infofile = g_strjoin(NULL, diskdir, "/", "info", NULL);
 		    quoted = quote_string(diskdir);
 		    quotedif = quote_string(infofile);
@@ -1400,7 +1407,7 @@ start_server_check(
 		    }
 		    if(conf_indexdir) {
 			if(! hostindexdir_checked) {
-			    hostindexdir = stralloc2(conf_indexdir, host);
+			    hostindexdir = g_strconcat(conf_indexdir, host, NULL);
 			    quoted = quote_string(hostindexdir);
 			    if(stat(hostindexdir, &statbuf) == -1) {
 				if (errno == ENOENT) {
@@ -1431,7 +1438,9 @@ start_server_check(
 			    amfree(quoted);
 			}
 			if(hostindexdir) {
-			    diskdir = newstralloc2(diskdir, hostindexdir, disk);
+			    tmpbuf = g_strconcat(hostindexdir, disk, NULL);
+			    g_free(diskdir);
+			    diskdir = tmpbuf;
 			    quoted = quote_string(diskdir);
 			    if(stat(diskdir, &statbuf) == -1) {
 				if (errno == ENOENT) {

@@ -1378,6 +1378,7 @@ amgtar_get_incrname(
     FILE                   *mesgstream,
     int                     command)
 {
+    char *tmpbuf;
     char *basename = NULL;
     char *incrname = NULL;
     int   infd, outfd;
@@ -1412,10 +1413,12 @@ amgtar_get_incrname(
 	while (infd == -1) {
 	    if (--baselevel >= 0) {
 		snprintf(number, sizeof(number), "%d", baselevel);
-		inputname = newvstralloc(inputname,
-					 basename, "_", number, NULL);
+		tmpbuf = g_strconcat(basename, "_", number, NULL);
+		g_free(inputname);
+		inputname = tmpbuf;
 	    } else {
-		inputname = newstralloc(inputname, "/dev/null");
+		g_free(inputname);
+		inputname = g_strdup("/dev/null");
 	    }
 	    if ((infd = open(inputname, O_RDONLY)) == -1) {
 

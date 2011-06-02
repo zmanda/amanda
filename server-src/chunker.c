@@ -110,6 +110,7 @@ main(
     int		argc,
     char **	argv)
 {
+    char *tmpbuf;
     static struct databuf db;
     struct cmdargs *cmdargs;
     int header_fd;
@@ -184,7 +185,8 @@ main(
     if(cmdargs->cmd == START) {
 	if(cmdargs->argc <= 1)
 	    error(_("error [dumper START: not enough args: timestamp]"));
-	chunker_timestamp = newstralloc(chunker_timestamp, cmdargs->argv[1]);
+	g_free(chunker_timestamp);
+	chunker_timestamp = g_strdup(cmdargs->argv[1]);
     }
     else {
 	log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
@@ -231,19 +233,22 @@ main(
 		error(_("error [chunker PORT-WRITE: not enough args: handle]"));
 		/*NOTREACHED*/
 	    }
-	    handle = newstralloc(handle, cmdargs->argv[a++]);
+	    g_free(handle);
+	    handle = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: filename]"));
 		/*NOTREACHED*/
 	    }
-	    filename = newstralloc(filename, cmdargs->argv[a++]);
+	    g_free(filename);
+	    filename = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: hostname]"));
 		/*NOTREACHED*/
 	    }
-	    hostname = newstralloc(hostname, cmdargs->argv[a++]);
+	    g_free(hostname);
+	    hostname = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: features]"));
@@ -260,7 +265,8 @@ main(
 		error(_("error [chunker PORT-WRITE: not enough args: diskname]"));
 		/*NOTREACHED*/
 	    }
-	    diskname = newstralloc(diskname, cmdargs->argv[a++]);
+	    g_free(diskname);
+	    diskname = g_strdup(cmdargs->argv[a++]);
 	    if (qdiskname)
 		amfree(qdiskname);
 	    qdiskname = quote_string(diskname); /* qdiskname is a global */
@@ -275,7 +281,8 @@ main(
 		error(_("error [chunker PORT-WRITE: not enough args: dumpdate]"));
 		/*NOTREACHED*/
 	    }
-	    dumpdate = newstralloc(dumpdate, cmdargs->argv[a++]);
+	    g_free(dumpdate);
+	    dumpdate = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: chunksize]"));
@@ -288,7 +295,8 @@ main(
 		error(_("error [chunker PORT-WRITE: not enough args: progname]"));
 		/*NOTREACHED*/
 	    }
-	    progname = newstralloc(progname, cmdargs->argv[a++]);
+	    g_free(progname);
+	    progname = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: use]"));
@@ -300,7 +308,8 @@ main(
 		error(_("error [chunker PORT-WRITE: not enough args: options]"));
 		/*NOTREACHED*/
 	    }
-	    options = newstralloc(options, cmdargs->argv[a++]);
+	    g_free(options);
+	    options = g_strdup(cmdargs->argv[a++]);
 
 	    if(a != cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: too many args: %d != %d]"),
@@ -326,8 +335,10 @@ main(
 			 (long long)(dumpsize - (off_t)headersize));
 		g_snprintf(kps_str, sizeof(kps_str), "%3.1lf",
 				isnormal(rt) ? (double)dumpsize / rt : 0.0);
-		errstr = newvstrallocf(errstr, "sec %s kb %s kps %s",
+		tmpbuf = g_strdup_printf("sec %s kb %s kps %s",
 				walltime_str(runtime), kb_str, kps_str);
+		g_free(errstr);
+		errstr = tmpbuf;
 		m = g_strdup_printf("[%s]", errstr);
 		q = quote_string(m);
 		amfree(m);
@@ -357,8 +368,9 @@ main(
 				hostname, qdiskname, chunker_timestamp, level, errstr);
 		    }
 		    else {
-			errstr = newvstrallocf(errstr,
-					_("dumper returned %s"), cmdstr[cmdargs->cmd]);
+			tmpbuf = g_strdup_printf(_("dumper returned %s"), cmdstr[cmdargs->cmd]);
+			g_free(errstr);
+			errstr = tmpbuf;
 			amfree(q);
 			m = g_strdup_printf("[%s]",errstr);
 			q = quote_string(m);
@@ -435,6 +447,7 @@ startup_chunker(
     int                *headersocket,
     int                *datasocket)
 {
+    char *tmpbuf;
     int header_fd, outfd;
     char *tmp_filename, *pc;
     in_port_t header_port, data_port;
@@ -448,8 +461,10 @@ startup_chunker(
     header_port = 0;
     data_port = 0;
     if ((result = resolve_hostname("localhost", 0, &res, NULL) != 0)) {
-	errstr = newvstrallocf(errstr, _("could not resolve localhost: %s"),
+	tmpbuf = g_strdup_printf(_("could not resolve localhost: %s"),
 			       gai_strerror(result));
+	g_free(errstr);
+	errstr = tmpbuf;
 	return -1;
     }
     for (res_addr = res; res_addr != NULL; res_addr = res_addr->ai_next) {
@@ -655,6 +670,7 @@ static int
 databuf_flush(
     struct databuf *	db)
 {
+    char *tmpbuf;
     struct cmdargs *cmdargs = NULL;
     int rc = 1;
     size_t size_to_write;
@@ -706,7 +722,8 @@ databuf_flush(
 		    error(_("error [chunker CONTINUE: not enough args: filename]"));
 		    /*NOTREACHED*/
 		}
-		arg_filename = newstralloc(arg_filename, cmdargs->argv[a++]);
+		g_free(arg_filename);
+		arg_filename = g_strdup(cmdargs->argv[a++]);
 
 		if(a >= cmdargs->argc) {
 		    error(_("error [chunker CONTINUE: not enough args: chunksize]"));
@@ -751,11 +768,13 @@ databuf_flush(
 		    /*
 		     * Different disk, so use new file.
 		     */
-		    db->filename = newstralloc(db->filename, arg_filename);
+		    g_free(db->filename);
+		    db->filename = g_strdup(arg_filename);
 		}
 	    } else if(cmdargs->cmd == ABORT) {
 		abort_pending = 1;
-		errstr = newstralloc(errstr, cmdargs->argv[1]);
+		g_free(errstr);
+		errstr = g_strdup(cmdargs->argv[1]);
 		putresult(ABORT_FINISHED, "%s\n", handle);
 		rc = 0;
 		goto common_exit;
@@ -779,16 +798,16 @@ databuf_flush(
 	 * that has no cont_filename pointer.
 	 */
 	g_snprintf(sequence, sizeof(sequence), "%d", db->filename_seq);
-	new_filename = newvstralloc(new_filename,
-				    db->filename,
-				    ".",
-				    sequence,
-				    NULL);
-	tmp_filename = newvstralloc(tmp_filename,
-				    new_filename,
-				    ".tmp",
-				    NULL);
-	pc = strrchr(tmp_filename, '/');
+
+	tmpbuf = g_strconcat(db->filename, ".", sequence, NULL);
+        g_free(new_filename);
+        new_filename = tmpbuf;
+
+        tmpbuf = g_strconcat(new_filename, ".tmp", NULL);
+        g_free(tmp_filename);
+        tmp_filename = tmpbuf;
+
+        pc = strrchr(tmp_filename, '/');
         g_assert(pc != NULL); /* Only a problem if db->filename has no /. */
 	*pc = '\0';
 	mkholdingdir(tmp_filename);

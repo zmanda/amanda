@@ -425,24 +425,11 @@ typedef union sockaddr_union {
 #include "debug.h"
 #include "file.h"
 
-char *debug_newstralloc(const char *file, int line,
-		char *oldstr, const char *newstr);
-char *debug_newvstralloc(const char *file, int line,
-		char *oldstr, const char *str, ...);
-char *debug_newvstrallocf(const char *file, int line, char *oldstr,
-		const char *fmt, ...) G_GNUC_PRINTF(4, 5);
-
 /* Usage: vstrextend(foo, "bar, "baz", NULL). Extends the existing 
  * string, or allocates a brand new one. */
 char *debug_vstrextend(const char *file, int line, char **oldstr, ...);
 
-#define	newstralloc(p,s)	debug_newstralloc(__FILE__, __LINE__, (p), (s))
-#define newvstralloc(...)	debug_newvstralloc(__FILE__,__LINE__,__VA_ARGS__)
-#define newvstrallocf(...)	debug_newvstrallocf(__FILE__,__LINE__,__VA_ARGS__)
 #define vstrextend(...)		debug_vstrextend(__FILE__,__LINE__,__VA_ARGS__)
-
-#define	stralloc2(s1,s2)	g_strjoin(NULL, (s1),(s2),NULL)
-#define	newstralloc2(p,s1,s2)	newvstralloc((p),(s1),(s2),NULL)
 
 /*@only@*/ /*@null@*/ char *debug_agets(const char *file, int line, FILE *f);
 /*@only@*/ /*@null@*/ char *debug_areads(const char *file, int line, int fd);
@@ -475,7 +462,7 @@ time_t	unctime(char *timestr);
 } while (0)
 
 #define strappend(s1,s2) do {						\
-    char *t_t_t = (s1) ? stralloc2((s1),(s2)) : g_strdup((s2));		\
+    char *t_t_t = (s1) ? g_strconcat(s1, s2, NULL) : g_strdup((s2));	\
     amfree((s1));							\
     (s1) = t_t_t;							\
 } while(0)

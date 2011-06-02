@@ -578,6 +578,7 @@ void add_file(
     char *	path,
     char *	regex)
 {
+    char *tmpbuf;
     DIR_ITEM *ditem, lditem;
     char *path_on_disk = NULL;
     char *path_on_disk_slash = NULL;
@@ -621,7 +622,7 @@ void add_file(
 	    path_on_disk = g_strdup(regex);
 	} else {
 	    /* Prepend '/' */
-	    path_on_disk = stralloc2("/", regex);
+	    path_on_disk = g_strconcat("/", regex, NULL);
 	}
     } else {
 	char *clean_disk_path = clean_regex(disk_path, 0);
@@ -629,7 +630,7 @@ void add_file(
 	amfree(clean_disk_path);
     }
 
-    path_on_disk_slash = stralloc2(path_on_disk, "/");
+    path_on_disk_slash = g_strconcat(path_on_disk, "/", NULL);
 
     dbprintf(_("add_file: Converted path=\"%s\" to path_on_disk=\"%s\"\n"),
 	      regex, path_on_disk);
@@ -650,10 +651,13 @@ void add_file(
 	    if((j > 0 && ditem->path[j-1] == '/')
 	       || (j > 1 && ditem->path[j-2] == '/' && ditem->path[j-1] == '.'))
 	    {	/* It is a directory */
-		ditem_path = newstralloc(ditem_path, ditem->path);
+		g_free(ditem_path);
+		ditem_path = g_strdup(ditem->path);
 		clean_pathname(ditem_path);
 
-		cmd = newstralloc2(cmd, "ORLD ", ditem_path);
+		tmpbuf = g_strconcat("ORLD ", ditem_path, NULL);
+		g_free(cmd);
+		cmd = tmpbuf;
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
 		    amfree(ditem_path);
@@ -683,7 +687,8 @@ void add_file(
 		}
 		dir_undo = NULL;
 		added=0;
-                lditem.path = newstralloc(lditem.path, ditem->path);
+                g_free(lditem.path);
+                lditem.path = g_strdup(ditem->path);
 		/* skip the last line -- duplicate of the preamble */
 
 		while ((i = get_reply_line()) != 0) {
@@ -722,7 +727,8 @@ void add_file(
                     fp = s-1;
                     skip_non_whitespace(s, ch);
                     s[-1] = '\0';
-                    lditem.date = newstralloc(lditem.date, fp);
+                    g_free(lditem.date);
+                    lditem.date = g_strdup(fp);
                     s[-1] = (char)ch;
 
 		    skip_whitespace(s, ch);
@@ -740,7 +746,8 @@ void add_file(
                     fp = s-1;
                     skip_non_whitespace(s, ch);
                     s[-1] = '\0';
-                    lditem.tape = newstralloc(lditem.tape, fp);
+                    g_free(lditem.tape);
+                    lditem.tape = g_strdup(fp);
                     s[-1] = (char)ch;
 
 		    if(am_has_feature(indexsrv_features, fe_amindexd_fileno_in_ORLD)) {
@@ -897,6 +904,7 @@ delete_file(
     char *	path,
     char *	regex)
 {
+    char *tmpbuf;
     DIR_ITEM *ditem, lditem;
     char *path_on_disk = NULL;
     char *path_on_disk_slash = NULL;
@@ -946,7 +954,7 @@ delete_file(
 	    }
 	} else {
 	    /* Prepend '/' */
-	    path_on_disk = stralloc2("/", regex);
+	    path_on_disk = g_strconcat("/", regex, NULL);
 	}
     } else {
 	char *clean_disk_path = clean_regex(disk_path, 0);
@@ -954,7 +962,7 @@ delete_file(
 	amfree(clean_disk_path);
     }
 
-    path_on_disk_slash = stralloc2(path_on_disk, "/");
+    path_on_disk_slash = g_strconcat(path_on_disk, "/", NULL);
 
     dbprintf(_("delete_file: Converted path=\"%s\" to path_on_disk=\"%s\"\n"),
 	      regex, path_on_disk);
@@ -972,10 +980,13 @@ delete_file(
 	    if((j > 0 && ditem->path[j-1] == '/')
 	       || (j > 1 && ditem->path[j-2] == '/' && ditem->path[j-1] == '.'))
 	    {	/* It is a directory */
-		ditem_path = newstralloc(ditem_path, ditem->path);
+		g_free(ditem_path);
+		ditem_path = g_strdup(ditem->path);
 		clean_pathname(ditem_path);
 
-		cmd = newstralloc2(cmd, "ORLD ", ditem_path);
+		tmpbuf = g_strconcat("ORLD ", ditem_path, NULL);
+		g_free(cmd);
+		cmd = tmpbuf;
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
 		    amfree(ditem_path);
@@ -1004,7 +1015,8 @@ delete_file(
 		    return;
 		}
 		deleted=0;
-                lditem.path = newstralloc(lditem.path, ditem->path);
+                g_free(lditem.path);
+                lditem.path = g_strdup(ditem->path);
 		amfree(cmd);
 		tape_undo = dir_undo = NULL;
 		/* skip the last line -- duplicate of the preamble */
@@ -1087,9 +1099,11 @@ delete_file(
 		    dir_undo_ch = *dir_undo;
 		    *dir_undo = '\0';
 
-                    lditem.date = newstralloc(lditem.date, date);
+                    g_free(lditem.date);
+                    lditem.date = g_strdup(date);
 		    lditem.level=level;
-                    lditem.tape = newstralloc(lditem.tape, tape);
+                    g_free(lditem.tape);
+                    lditem.tape = g_strdup(tape);
 		    switch(delete_extract_item(&lditem)) {
 		    case -1:
 			g_printf(_("System error\n"));
@@ -1179,7 +1193,7 @@ display_extract_list(
 	 * Set up the pager command so if the pager is terminated, we do
 	 * not get a SIGPIPE back.
 	 */
-	pager_command = stralloc2(pager, " ; /bin/cat > /dev/null");
+	pager_command = g_strconcat(pager, " ; /bin/cat > /dev/null", NULL);
 	if ((fp = popen(pager_command, "w")) == NULL)
 	{
 	    g_printf(_("Warning - can't pipe through %s\n"), pager);
@@ -1311,7 +1325,7 @@ send_to_tape_server(
     int		tss,
     char *	cmd)
 {
-    char *msg = stralloc2(cmd, "\r\n");
+    char *msg = g_strconcat(cmd, "\r\n", NULL);
 
     if (full_write(tss, msg, strlen(msg)) < strlen(msg))
     {
@@ -1330,6 +1344,7 @@ extract_files_setup(
     char *	label,
     off_t	fsf)
 {
+    char *tmpbuf;
     struct servent *sp;
     in_port_t my_port, my_data_port;
     char *disk_regex = NULL;
@@ -1340,7 +1355,7 @@ extract_files_setup(
     char *our_feature_string = NULL;
     char *tt = NULL;
 
-    service_name = stralloc2("amidxtape", SERVICE_SUFFIX);
+    service_name = g_strconcat("amidxtape", SERVICE_SUFFIX, NULL);
 
     /* get tape server details */
     if ((sp = getservbyname(service_name, "tcp")) == NULL)
@@ -1441,7 +1456,9 @@ extract_files_setup(
 	char buffer[32768] = "\0";
 
 	our_feature_string = am_feature_to_string(our_features);
-	tt = newstralloc2(tt, "FEATURES=", our_feature_string);
+	tmpbuf = g_strconcat("FEATURES=", our_feature_string, NULL);
+	g_free(tt);
+	tt = tmpbuf;
 	send_to_tape_server(tape_control_sock, tt);
 	if (read(tape_control_sock, buffer, sizeof(buffer)) <= 0) {
 	    error(_("Could not read features from control socket\n"));
@@ -1459,28 +1476,42 @@ extract_files_setup(
        am_has_feature(indexsrv_features, fe_amidxtaped_datestamp)) {
 
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_config)) {
-	    tt = newstralloc2(tt, "CONFIG=", config);
+	    tmpbuf = g_strconcat("CONFIG=", config, NULL);
+	    g_free(tt);
+	    tt = tmpbuf;
 	    send_to_tape_server(tape_control_sock, tt);
 	}
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_label) &&
 	   label && label[0] != '/') {
-	    tt = newstralloc2(tt,"LABEL=",label);
+	    tmpbuf = g_strconcat("LABEL=", label, NULL);
+	    g_free(tt);
+	    tt = tmpbuf;
 	    send_to_tape_server(tape_control_sock, tt);
 	}
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_fsf)) {
 	    char v_fsf[100];
 	    g_snprintf(v_fsf, 99, "%lld", (long long)fsf);
-	    tt = newstralloc2(tt, "FSF=",v_fsf);
+	    tmpbuf = g_strconcat("FSF=", v_fsf, NULL);
+	    g_free(tt);
+	    tt = tmpbuf;
 	    send_to_tape_server(tape_control_sock, tt);
 	}
 	send_to_tape_server(tape_control_sock, "HEADER");
-	tt = newstralloc2(tt, "DEVICE=", dump_device_name);
+	tmpbuf = g_strconcat("DEVICE=", dump_device_name, NULL);
+	g_free(tt);
+	tt = tmpbuf;
 	send_to_tape_server(tape_control_sock, tt);
-	tt = newstralloc2(tt, "HOST=", host_regex);
+	tmpbuf = g_strconcat("HOST=", host_regex, NULL);
+	g_free(tt);
+	tt = tmpbuf;
 	send_to_tape_server(tape_control_sock, tt);
-	tt = newstralloc2(tt, "DISK=", disk_regex);
+	tmpbuf = g_strconcat("DISK=", disk_regex, NULL);
+	g_free(tt);
+	tt = tmpbuf;
 	send_to_tape_server(tape_control_sock, tt);
-	tt = newstralloc2(tt, "DATESTAMP=", clean_datestamp);
+	tmpbuf = g_strconcat("DATESTAMP=", clean_datestamp, NULL);
+	g_free(tt);
+	tt = tmpbuf;
 	send_to_tape_server(tape_control_sock, tt);
 	send_to_tape_server(tape_control_sock, "END");
 	amfree(tt);
@@ -1739,7 +1770,7 @@ extract_files_child(
 	    if (strcmp(fn->path, "/") == 0)
 		g_ptr_array_add(argv_ptr, g_strdup("."));
 	    else
-		g_ptr_array_add(argv_ptr, stralloc2(".", fn->path));
+		g_ptr_array_add(argv_ptr, g_strconcat(".", fn->path, NULL));
 	    break;
 	case IS_UNKNOWN:
 	case IS_DUMP:
@@ -2060,7 +2091,8 @@ extract_files(void)
 
     /* get tape device name from index server if none specified */
     if (tape_server_name == NULL) {
-	tape_server_name = newstralloc(tape_server_name, server_name);
+	g_free(tape_server_name);
+	tape_server_name = g_strdup(server_name);
     }
     if (tape_device_name == NULL) {
 	if (send_command("TAPE") == -1)
@@ -2074,7 +2106,8 @@ extract_files(void)
 	    exit(1);
 	}
 	/* skip reply number */
-	tape_device_name = newstralloc(tape_device_name, l+4);
+	g_free(tape_device_name);
+	tape_device_name = g_strdup(l + 4);
     }
 
     if (strcmp(tape_device_name, "/dev/null") == 0)
@@ -2138,7 +2171,8 @@ extract_files(void)
     while ((elist = first_tape_list()) != NULL)
     {
 	if(elist->tape[0]=='/') {
-	    dump_device_name = newstralloc(dump_device_name, elist->tape);
+	    g_free(dump_device_name);
+	    dump_device_name = g_strdup(elist->tape);
 	    g_printf(_("Extracting from file "));
 	    tlist = unmarshal_tapelist_str(dump_device_name);
 	    for( ; tlist != NULL; tlist = tlist->next)
@@ -2160,9 +2194,11 @@ extract_files(void)
 		delete_tape_list(elist); /* skip this tape */
 		continue;
 	    }
-	    dump_device_name = newstralloc(dump_device_name, tape_device_name);
+	    g_free(dump_device_name);
+	    dump_device_name = g_strdup(tape_device_name);
 	}
-	dump_datestamp = newstralloc(dump_datestamp, elist->date);
+	g_free(dump_datestamp);
+	dump_datestamp = g_strdup(elist->date);
 
 	/* connect to the tape handler daemon on the tape drive server */
 	if ((tape_control_sock = extract_files_setup(elist->tape, elist->fileno)) == -1)

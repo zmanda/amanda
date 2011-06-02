@@ -1083,9 +1083,9 @@ krb5_checkuser( char *	host,
     localuid = pwd->pw_uid;
 
 #ifdef USE_AMANDAHOSTS
-    ptmp = stralloc2(pwd->pw_dir, "/.k5amandahosts");
+    ptmp = g_strconcat(pwd->pw_dir, "/.k5amandahosts", NULL);
 #else
-    ptmp = stralloc2(pwd->pw_dir, "/.k5login");
+    ptmp = g_strconcat(pwd->pw_dir, "/.k5login", NULL);
 #endif
 
     if(!ptmp) {
@@ -1211,20 +1211,25 @@ krb5_tcpm_recv_token(
     ssize_t *	size,
     int		timeout)
 {
+    char *tmpbuf;
     unsigned int netint[2];
 
     assert(sizeof(netint) == 8);
 
     switch (net_read(fd, &netint, sizeof(netint), timeout)) {
     case -1:
-	if (errmsg)
-	    *errmsg = newvstrallocf(*errmsg, _("recv error: %s"), strerror(errno));
+	if (errmsg) {
+	    tmpbuf = g_strdup_printf(_("recv error: %s"), strerror(errno));
+	    g_free(*errmsg);
+	    *errmsg = tmpbuf;
+	}
 	auth_debug(1, _("krb5_tcpm_recv_token: A return(-1)\n"));
 	return (-1);
     case 0:
 	*size = 0;
 	*handle = H_EOF;
-	*errmsg = newstralloc(*errmsg, "SOCKET_EOF");
+	g_free(*errmsg);
+	*errmsg = g_strdup("SOCKET_EOF");
 	auth_debug(1, "krb5_tcpm_recv_token: A return(0)\n");
 	return (0);
     default:
@@ -1264,11 +1269,13 @@ krb5_tcpm_recv_token(
 		}
 	    }
 	    s[i] = '\0';
-	    *errmsg = newvstrallocf(*errmsg, _("krb5_tcpm_recv_token: invalid size: %s"), s);
+	    tmpbuf = g_strdup_printf(_("krb5_tcpm_recv_token: invalid size: %s"), s);
+	    g_free(*errmsg);
+	    *errmsg = tmpbuf;
 	    dbprintf(_("krb5_tcpm_recv_token: invalid size %s\n"), s);
 	} else {
-	    *errmsg = newstralloc(*errmsg,
-                                  "krb5_tcpm_recv_token: invalid size");
+	    g_free(*errmsg);
+	    *errmsg = g_strdup("krb5_tcpm_recv_token: invalid size");
 	    dbprintf("krb5_tcpm_recv_token: invalid size %zd\n", *size);
 	}
 	*size = -1;
@@ -1279,18 +1286,23 @@ krb5_tcpm_recv_token(
 
     if(*size == 0) {
 	auth_debug(1, "krb5_tcpm_recv_token: read EOF from %d\n", *handle);
-	*errmsg = newstralloc(*errmsg, "EOF");
+	g_free(*errmsg);
+	*errmsg = g_strdup("EOF");
 	return 0;
     }
     switch (net_read(fd, *buf, (size_t)*size, timeout)) {
     case -1:
-	if (errmsg)
-	    *errmsg = newvstrallocf(*errmsg, _("recv error: %s"), strerror(errno));
+	if (errmsg) {
+	    tmpbuf = g_strdup_printf(_("recv error: %s"), strerror(errno));
+	    g_free(*errmsg);
+	    *errmsg = tmpbuf;
+	}
 	auth_debug(1, _("krb5_tcpm_recv_token: B return(-1)\n"));
 	return (-1);
     case 0:
 	*size = 0;
-	*errmsg = newstralloc(*errmsg, "SOCKET_EOF");
+	g_free(*errmsg);
+	*errmsg = g_strdup("SOCKET_EOF");
 	auth_debug(1, "krb5_tcpm_recv_token: B return(0)\n");
 	return (0);
     default:

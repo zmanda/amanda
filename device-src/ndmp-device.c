@@ -644,8 +644,10 @@ ndmp_device_start(
 	    return FALSE;
 	}
 
-	dself->volume_label = newstralloc(dself->volume_label, label);
-	dself->volume_time = newstralloc(dself->volume_time, timestamp);
+	g_free(dself->volume_label);
+	dself->volume_label = g_strdup(label);
+	g_free(dself->volume_time);
+	dself->volume_time = g_strdup(timestamp);
 	dumpfile_free(dself->volume_header);
 	dself->volume_header = header;
 

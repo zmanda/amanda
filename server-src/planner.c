@@ -1616,8 +1616,8 @@ static void getsize(
 		    amfree(o);
 		} else if (strcmp(dp->program,"DUMP") != 0 &&
 			   strcmp(dp->program,"GNUTAR") != 0) {
-		    est(dp)->errstr = newstralloc(est(dp)->errstr,
-                                                  "does not support application-api");
+		    g_free(est(dp)->errstr);
+		    est(dp)->errstr = g_strdup("does not support application-api");
 		} else {
 		    for(i = 0; i < MAX_LEVELS; i++) {
 			char *l;
@@ -2121,7 +2121,8 @@ static void handle_result(
     g_fprintf(stderr,_("got a bad message, stopped at:\n"));
     /*@ignore@*/
     g_fprintf(stderr,_("----\n%s----\n\n"), line);
-    errbuf = stralloc2(_("badly formatted response from "), hostp->hostname);
+    errbuf = g_strconcat(_("badly formatted response from "),
+                         hostp->hostname, NULL);
     /*@end@*/
 
  error_return:

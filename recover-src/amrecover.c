@@ -134,7 +134,8 @@ get_line(void)
     s = strstr(mesg_buffer,"\r\n");
     *s = '\0';
     newbuf = g_strdup(s+2);
-    server_line = newstralloc(server_line, mesg_buffer);
+    g_free(server_line);
+    server_line = g_strdup(mesg_buffer);
     amfree(mesg_buffer);
     mesg_buffer = newbuf;
     amrecover_debug(1, "server_line: %s\n", server_line);
@@ -626,6 +627,7 @@ amindexd_response(
     pkt_t *pkt,
     security_handle_t *sech)
 {
+    char *tmpbuf;
     int ports[NSTREAMS], *response_error = datap;
     guint i;
     char *p;
@@ -636,8 +638,10 @@ amindexd_response(
     assert(sech != NULL);
 
     if (pkt == NULL) {
-	errstr = newvstrallocf(errstr, _("[request failed: %s]"),
+	tmpbuf = g_strdup_printf(_("[request failed: %s]"),
 			     security_geterror(sech));
+	g_free(errstr);
+	errstr = tmpbuf;
 	*response_error = 1;
 	return;
     }
@@ -653,19 +657,24 @@ amindexd_response(
 
 	tok = strtok(NULL, "\n");
 	if (tok != NULL) {
-	    errstr = newvstrallocf(errstr, "NAK: %s", tok);
+	    tmpbuf = g_strdup_printf("NAK: %s", tok);
+	    g_free(errstr);
+	    errstr = tmpbuf;
 	    *response_error = 1;
 	} else {
 bad_nak:
-	    errstr = newstralloc(errstr, "request NAK");
+	    g_free(errstr);
+	    errstr = g_strdup("request NAK");
 	    *response_error = 2;
 	}
 	return;
     }
 
     if (pkt->type != P_REP) {
-	errstr = newvstrallocf(errstr, _("received strange packet type %s: %s"),
+	tmpbuf = g_strdup_printf(_("received strange packet type %s: %s"),
 			      pkt_type2str(pkt->type), pkt->body);
+	g_free(errstr);
+	errstr = tmpbuf;
 	*response_error = 1;
 	return;
     }
@@ -690,9 +699,12 @@ bad_nak:
 	if (strcmp(tok, "ERROR") == 0) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL) {
-	        errstr = newstralloc(errstr, "[bogus error packet]");
+	        g_free(errstr);
+	        errstr = g_strdup("[bogus error packet]");
 	    } else {
-		errstr = newvstrallocf(errstr, "%s", tok);
+		tmpbuf = g_strdup_printf("%s", tok);
+		g_free(errstr);
+		errstr = tmpbuf;
 	    }
 	    *response_error = 2;
 	    return;
@@ -768,9 +780,10 @@ bad_nak:
 	    continue;
 	streams[i].fd = security_stream_client(sech, ports[i]);
 	if (streams[i].fd == NULL) {
-	    errstr = newvstrallocf(errstr,
-			_("[could not connect %s stream: %s]"),
-			streams[i].name, security_geterror(sech));
+	    tmpbuf = g_strdup_printf(_("[could not connect %s stream: %s]"),
+                streams[i].name, security_geterror(sech));
+            g_free(errstr);
+            errstr = tmpbuf;
 	    goto connect_error;
 	}
     }
@@ -781,9 +794,10 @@ bad_nak:
 	if (streams[i].fd == NULL)
 	    continue;
 	if (security_stream_auth(streams[i].fd) < 0) {
-	    errstr = newvstrallocf(errstr,
-		_("[could not authenticate %s stream: %s]"),
+	    tmpbuf = g_strdup_printf(_("[could not authenticate %s stream: %s]"),
 		streams[i].name, security_stream_geterror(streams[i].fd));
+            g_free(errstr);
+            errstr = tmpbuf;
 	    goto connect_error;
 	}
     }
@@ -793,7 +807,8 @@ bad_nak:
      * them, complain.
      */
     if (streams[MESGFD].fd == NULL) {
-        errstr = newstralloc(errstr, "[couldn't open MESG streams]");
+        g_free(errstr);
+        errstr = g_strdup("[couldn't open MESG streams]");
         goto connect_error;
     }
 
@@ -803,9 +818,10 @@ bad_nak:
     return;
 
 parse_error:
-    errstr = newvstrallocf(errstr,
-			  _("[parse of reply message failed: %s]"),
+    tmpbuf = g_strdup_printf(_("[parse of reply message failed: %s]"),
 			  extra ? extra : _("(no additional information)"));
+			  g_free(errstr);
+			  errstr = tmpbuf;
     amfree(extra);
     *response_error = 2;
     return;

@@ -1511,7 +1511,7 @@ proplist_add_to_argv(
 	if (*w == '_')
 	    *w = '-';
     }
-    qprop = stralloc2("--", q);
+    qprop = g_strconcat("--", q, NULL);
     amfree(q);
     for(value=value_s->values; value != NULL; value = value->next) {
 	g_ptr_array_add(argv_ptr, g_strdup(qprop));
@@ -1540,7 +1540,8 @@ static pcontext_t pcontext = CONTEXT_DEFAULT;
 void
 set_pname(char *p)
 {
-    pname = newstralloc(pname, p);
+    g_free(pname);
+    pname = g_strdup(p);
 }
 
 char *
@@ -1553,7 +1554,8 @@ get_pname(void)
 void
 set_ptype(char *p)
 {
-    ptype = newstralloc(ptype, p);
+    g_free(ptype);
+    ptype = g_strdup(p);
 }
 
 char *

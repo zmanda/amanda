@@ -43,11 +43,12 @@ int
 set_date(
     char *	date)
 {
+    char *tmpbuf;
     char *cmd = NULL;
 
     clear_dir_list();
 
-    cmd = stralloc2("DATE ", date);
+    cmd = g_strconcat("DATE ", date, NULL);
     if (converse(cmd) == -1)
 	exit(1);
 
@@ -55,7 +56,9 @@ set_date(
        is still valid at the new date, and if not set directory to
        mount_point */
     if (disk_path != NULL) {
-	cmd = newstralloc2(cmd, "OISD ", disk_path);
+	tmpbuf = g_strconcat("OISD ", disk_path, NULL);
+	g_free(cmd);
+	cmd = tmpbuf;
 	if (exchange(cmd) == -1)
 	    exit(1);
 	if (server_happy())
@@ -66,7 +69,8 @@ set_date(
 	{
 	    g_printf(_("No index records for cwd on new date\n"));
 	    g_printf(_("Setting cwd to mount point\n"));
-	    disk_path = newstralloc(disk_path, "/");	/* fake it */
+	    g_free(disk_path);
+	    disk_path = g_strdup("/");	/* fake it */
 	    clear_dir_list();
 	}
     }
@@ -79,6 +83,7 @@ void
 set_host(
     const char *	host)
 {
+    char *tmpbuf;
     char *cmd = NULL;
     struct hostent *hp;
     char **hostp;
@@ -92,7 +97,7 @@ set_host(
     }
 
     uqhost = unquote_string(host);
-    cmd = stralloc2("HOST ", uqhost);
+    cmd = g_strconcat("HOST ", uqhost, NULL);
     if (converse(cmd) == -1)
 	exit(1);
     if (server_happy())
@@ -108,7 +113,9 @@ set_host(
 	if ((hp = gethostbyname(uqhost)) != NULL) {
 	    host = hp->h_name;
 	    g_printf(_("Trying host %s ...\n"), host);
-	    cmd = newstralloc2(cmd, "HOST ", host);
+	    tmpbuf = g_strconcat("HOST ", host, NULL);
+	    g_free(cmd);
+	    cmd = tmpbuf;
 	    if (converse(cmd) == -1)
 		exit(1);
 	    if(server_happy())
@@ -120,7 +127,9 @@ set_host(
 	        for (hostp = hp->h_aliases; (host = *hostp) != NULL; hostp++)
 	        {
 		    g_printf(_("Trying host %s ...\n"), host);
-		    cmd = newstralloc2(cmd, "HOST ", host);
+		    tmpbuf = g_strconcat("HOST ", host, NULL);
+		    g_free(cmd);
+		    cmd = tmpbuf;
 		    if (converse(cmd) == -1)
 		        exit(1);
 		    if(server_happy())
@@ -134,7 +143,8 @@ set_host(
     }
     if(found_host)
     {
-	dump_hostname = newstralloc(dump_hostname, host);
+	g_free(dump_hostname);
+	dump_hostname = g_strdup(host);
 	amfree(disk_name);
 	amfree(mount_point);
 	amfree(disk_path);
@@ -183,7 +193,7 @@ set_disk(
 
     clear_dir_list();
     uqdsk = unquote_string(dsk);
-    cmd = stralloc2("DISK ", uqdsk);
+    cmd = g_strconcat("DISK ", uqdsk, NULL);
     if (converse(cmd) == -1)
 	exit(1);
     amfree(cmd);
@@ -193,25 +203,29 @@ set_disk(
 	return;
     }
 
-    disk_name = newstralloc(disk_name, uqdsk);
+    g_free(disk_name);
+    disk_name = g_strdup(uqdsk);
     if (mtpt == NULL)
     {
 	/* mount point not specified */
 	if (*uqdsk == '/')
 	{
 	    /* disk specified by mount point, hence use it */
-	    mount_point = newstralloc(mount_point, uqdsk);
+	    g_free(mount_point);
+	    mount_point = g_strdup(uqdsk);
 	}
 	else
 	{
 	    /* device name given, use '/' because nothing better */
-	    mount_point = newstralloc(mount_point, "/");
+	    g_free(mount_point);
+	    mount_point = g_strdup("/");
 	}
     }
     else
     {
 	/* mount point specified */
-	mount_point = newstralloc(mount_point, uqmtpt);
+	g_free(mount_point);
+	mount_point = g_strdup(uqmtpt);
     }
 
     /* set the working directory to the mount point */
@@ -223,14 +237,16 @@ set_disk(
 	exit(1);
     if (server_happy())
     {
-	disk_path = newstralloc(disk_path, "/");
+	g_free(disk_path);
+	disk_path = g_strdup("/");
 	suck_dir_list_from_server();	/* get list of directory contents */
     }
     else
     {
 	g_printf(_("No index records for disk for specified date\n"));
 	g_printf(_("If date correct, notify system administrator\n"));
-	disk_path = newstralloc(disk_path, "/");	/* fake it */
+	g_free(disk_path);
+	disk_path = g_strdup("/");	/* fake it */
 	clear_dir_list();
     }
     amfree(uqmtpt);
@@ -246,7 +262,7 @@ list_disk(
 
     if(amdevice) {
 	uqamdevice = unquote_string(amdevice);
-	cmd = stralloc2("LISTDISK ", uqamdevice);
+	cmd = g_strconcat("LISTDISK ", uqamdevice, NULL);
 	amfree(uqamdevice);
 	if (converse(cmd) == -1)
 	    exit(1);
@@ -312,7 +328,7 @@ cd_glob(
 
     /* convert path (assumed in cwd) to one on disk */
     if (strcmp(disk_path, "/") == 0)
-        path_on_disk = stralloc2("/", regex_path);
+        path_on_disk = g_strconcat("/", regex_path, NULL);
     else {
         char *clean_disk_path = clean_regex(disk_path, 0);
         path_on_disk = g_strjoin(NULL, clean_disk_path, "/", regex_path, NULL);
@@ -350,7 +366,7 @@ cd_regex(
 
     /* convert path (assumed in cwd) to one on disk */
     if (strcmp(disk_path, "/") == 0)
-        path_on_disk = stralloc2("/", regex);
+        path_on_disk = g_strconcat("/", regex, NULL);
     else {
         char *clean_disk_path = clean_regex(disk_path, 0);
         path_on_disk = g_strjoin(NULL, clean_disk_path, "/", regex, NULL);
@@ -376,7 +392,7 @@ cd_dir(
 
     DIR_ITEM *ditem;
 
-    path_on_disk_slash = stralloc2(path_on_disk, "/");
+    path_on_disk_slash = g_strconcat(path_on_disk, "/", NULL);
 
     nb_found = 0;
 
@@ -392,7 +408,8 @@ cd_dir(
             {   /* It is a directory */
 		char *dir1, *dir2;
 		nb_found++;
-		dir = newstralloc(dir,ditem->path);
+		g_free(dir);
+		dir = g_strdup(ditem->path);
 		if(dir[strlen(dir)-1] == '/')
 		    dir[strlen(dir)-1] = '\0'; /* remove last / */
 		/* remove everything before the last / */
@@ -465,7 +482,8 @@ set_directory(
 	    }
 	    new_dir = g_strdup(ldir+strlen(mount_point));
 	    if (strlen(new_dir) == 0) {
-		new_dir = newstralloc(new_dir, "/");
+		g_free(new_dir);
+		new_dir = g_strdup("/");
 					/* i.e. ldir == mount_point */
 	    }
 	}
@@ -522,7 +540,7 @@ set_directory(
 	}
     }
 
-    cmd = stralloc2("OISD ", new_dir);
+    cmd = g_strconcat("OISD ", new_dir, NULL);
     if (exchange(cmd) == -1) {
 	exit(1);
 	/*NOTREACHED*/
@@ -531,7 +549,8 @@ set_directory(
 
     if (server_happy())
     {
-	disk_path = newstralloc(disk_path, new_dir);
+	g_free(disk_path);
+	disk_path = g_strdup(new_dir);
 	suck_dir_list_from_server();	/* get list of directory contents */
 	show_directory();		/* say where we moved to */
     }
@@ -582,7 +601,8 @@ set_tape(
 	    }
 	    else {
 		*tapedev = '\0';
-		tape_server_name = newstralloc(tape_server_name, uqtape);
+		g_free(tape_server_name);
+		tape_server_name = g_strdup(uqtape);
 		++tapedev;
 	    }
 	} else { /* reset server_name if start with : */
@@ -596,8 +616,10 @@ set_tape(
     {
 	if (strcmp(tapedev, "default") == 0)
 	    amfree(tape_device_name);
-	else
-	    tape_device_name = newstralloc(tape_device_name, tapedev);
+	else {
+	        g_free(tape_device_name);
+	        tape_device_name = g_strdup(tapedev);
+	}
     }
 
     if (tape_device_name)

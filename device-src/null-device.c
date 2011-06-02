@@ -240,8 +240,10 @@ null_device_start (Device * pself, DeviceAccessMode mode,
     pself->in_file = FALSE;
 
     if (mode == ACCESS_WRITE) {
-        pself->volume_label = newstralloc(pself->volume_label, label);
-        pself->volume_time = newstralloc(pself->volume_time, timestamp);
+        g_free(pself->volume_label);
+        pself->volume_label = g_strdup(label);
+        g_free(pself->volume_time);
+        pself->volume_time = g_strdup(timestamp);
 	return TRUE;
     } else {
 	device_set_error(pself,
