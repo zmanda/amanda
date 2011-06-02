@@ -1,4 +1,7 @@
 2011-06-02  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/conffile.h: harden EXECUTE_ON_* macro definitions
+
+2011-06-02  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/dumper.c: fix a missing switch of default auth to BSDTCP
 
 2011-06-01  Dustin J. Mitchell <dustin@mozilla.com>

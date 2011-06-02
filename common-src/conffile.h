@@ -155,29 +155,29 @@ typedef enum {
 } taperalgo_t;
 
 /* execute_on types */
-#define EXECUTE_ON_PRE_AMCHECK         1<<0
-#define EXECUTE_ON_PRE_DLE_AMCHECK     1<<1
-#define EXECUTE_ON_PRE_HOST_AMCHECK    1<<2
-#define EXECUTE_ON_POST_AMCHECK        1<<3
-#define EXECUTE_ON_POST_DLE_AMCHECK    1<<4
-#define EXECUTE_ON_POST_HOST_AMCHECK   1<<5
-#define EXECUTE_ON_PRE_ESTIMATE        1<<6
-#define EXECUTE_ON_PRE_DLE_ESTIMATE    1<<7
-#define EXECUTE_ON_PRE_HOST_ESTIMATE   1<<8
-#define EXECUTE_ON_POST_ESTIMATE       1<<9
-#define EXECUTE_ON_POST_DLE_ESTIMATE   1<<10
-#define EXECUTE_ON_POST_HOST_ESTIMATE  1<<11
-#define EXECUTE_ON_PRE_BACKUP          1<<12
-#define EXECUTE_ON_PRE_DLE_BACKUP      1<<13
-#define EXECUTE_ON_PRE_HOST_BACKUP     1<<14
-#define EXECUTE_ON_POST_BACKUP         1<<15
-#define EXECUTE_ON_POST_DLE_BACKUP     1<<16
-#define EXECUTE_ON_POST_HOST_BACKUP    1<<17
-#define EXECUTE_ON_PRE_RECOVER         1<<18
-#define EXECUTE_ON_POST_RECOVER        1<<19
-#define EXECUTE_ON_PRE_LEVEL_RECOVER   1<<20
-#define EXECUTE_ON_POST_LEVEL_RECOVER  1<<21
-#define EXECUTE_ON_INTER_LEVEL_RECOVER 1<<22
+#define EXECUTE_ON_PRE_AMCHECK         (1 << 0)
+#define EXECUTE_ON_PRE_DLE_AMCHECK     (1 << 1)
+#define EXECUTE_ON_PRE_HOST_AMCHECK    (1 << 2)
+#define EXECUTE_ON_POST_AMCHECK        (1 << 3)
+#define EXECUTE_ON_POST_DLE_AMCHECK    (1 << 4)
+#define EXECUTE_ON_POST_HOST_AMCHECK   (1 << 5)
+#define EXECUTE_ON_PRE_ESTIMATE        (1 << 6)
+#define EXECUTE_ON_PRE_DLE_ESTIMATE    (1 << 7)
+#define EXECUTE_ON_PRE_HOST_ESTIMATE   (1 << 8)
+#define EXECUTE_ON_POST_ESTIMATE       (1 << 9)
+#define EXECUTE_ON_POST_DLE_ESTIMATE   (1 << 10)
+#define EXECUTE_ON_POST_HOST_ESTIMATE  (1 << 11)
+#define EXECUTE_ON_PRE_BACKUP          (1 << 12)
+#define EXECUTE_ON_PRE_DLE_BACKUP      (1 << 13)
+#define EXECUTE_ON_PRE_HOST_BACKUP     (1 << 14)
+#define EXECUTE_ON_POST_BACKUP         (1 << 15)
+#define EXECUTE_ON_POST_DLE_BACKUP     (1 << 16)
+#define EXECUTE_ON_POST_HOST_BACKUP    (1 << 17)
+#define EXECUTE_ON_PRE_RECOVER         (1 << 18)
+#define EXECUTE_ON_POST_RECOVER        (1 << 19)
+#define EXECUTE_ON_PRE_LEVEL_RECOVER   (1 << 20)
+#define EXECUTE_ON_POST_LEVEL_RECOVER  (1 << 21)
+#define EXECUTE_ON_INTER_LEVEL_RECOVER (1 << 22)
 typedef int execute_on_t;
 
 typedef int execute_where_t;
