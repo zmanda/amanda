@@ -39,8 +39,6 @@
 
 #include "getfsent.h"
 
-static char *dev2rdev(char *);
-
 /*
  * You are in a twisty maze of passages, all alike.
  * Geesh.
@@ -407,76 +405,16 @@ get_fstab_nextentry(
 #endif
 #endif /* } */
 
-/*
- *=====================================================================
- * Convert either a block or character device name to a character (raw)
- * device name.
- *
- * static char *dev2rdev(const char *name);
- *
- * entry:	name - device name to convert
- * exit:	matching character device name if found,
- *		otherwise returns the input
- *
- * The input must be an absolute path.
- *
- * The exit string area is always an g_malloc-d area that the caller is
- * responsible for releasing.
- *=====================================================================
- */
-
-static char *
-dev2rdev(
-    char *	name)
-{
-  char *fname = NULL;
-  struct stat st;
-  char *s;
-  int ch;
-
-  if(stat(name, &st) == 0 && !S_ISBLK(st.st_mode)) {
-    /*
-     * If the input is already a character device, just return it.
-     */
-    return g_strdup(name);
-  }
-
-  s = name;
-  ch = *s++;
-
-  if(ch == '\0' || ch != '/') return g_strdup(name);
-
-  ch = *s++;					/* start after first '/' */
-  /*
-   * Break the input path at each '/' and create a new name with an
-   * 'r' before the right part.  For instance:
-   *
-   *   /dev/sd0a -> /dev/rsd0a
-   *   /dev/dsk/c0t0d0s0 -> /dev/rdsk/c0t0d0s0 -> /dev/dsk/rc0t0d0s0
-   */
-  while(ch) {
-    if (ch == '/') {
-      s[-1] = '\0';
-      fname = newvstralloc(fname, name, "/r", s, NULL);
-      s[-1] = (char)ch;
-      if(stat(fname, &st) == 0 && S_ISCHR(st.st_mode)) return fname;
-    }
-    ch = *s++;
-  }
-  amfree(fname);
-  return g_strdup(name);			/* no match */
-}
-
 #ifndef IGNORE_FSTAB
 static int samefile(struct stat[3], struct stat *);
 
 static int
 samefile(
-    struct stat stats[3],
+    struct stat stats[2],
     struct stat *estat)
 {
   int i;
-  for(i = 0; i < 3; ++i) {
+  for(i = 0; i < 2; ++i) {
     if (stats[i].st_dev == estat->st_dev &&
 	stats[i].st_ino == estat->st_ino)
       return 1;
@@ -500,32 +438,28 @@ search_fstab(
   (void)check_dev;	/* Quiet unused parameter warning */
   return 0;
 #else
-  struct stat stats[3];
+  struct stat stats[2];
   char *fullname = NULL;
-  char *rdev = NULL;
   int rc;
 
   if (!name)
     return 0;
 
   memset(stats, 0, sizeof(stats));
-  stats[0].st_dev = stats[1].st_dev = stats[2].st_dev = (dev_t)-1;
+  stats[0].st_dev = stats[1].st_dev = (dev_t)-1;
 
   if (stat(name, &stats[0]) == -1)
     stats[0].st_dev = (dev_t)-1;
+
+  /*
+   * FIXME: who still uses non fully qualified device names today?
+   */
   if (name[0] != '/') {
     fullname = stralloc2(DEV_PREFIX, name);
     if (stat(fullname, &stats[1]) == -1)
       stats[1].st_dev = (dev_t)-1;
-    fullname = newstralloc2(fullname, RDEV_PREFIX, name);
-    if (stat(fullname, &stats[2]) == -1)
-      stats[2].st_dev = (dev_t)-1;
     amfree(fullname);
   }
-  else if (stat((rdev = dev2rdev(name)), &stats[1]) == -1)
-    stats[1].st_dev = (dev_t)-1;
-
-  amfree(rdev);
 
   if (!open_fstab())
     return 0;
@@ -534,18 +468,14 @@ search_fstab(
   while(get_fstab_nextentry(fsent)) {
     struct stat mntstat;
     struct stat fsstat;
-    struct stat fsrstat;
-    int smnt = -1, sfs = -1, sfsr = -1;
-
-    amfree(rdev);
+    int smnt = -1, sfs = -1;
 
     if(fsent->mntdir != NULL)
        smnt = stat(fsent->mntdir, &mntstat);
 
     if(fsent->fsname != NULL) {
       sfs = stat(fsent->fsname, &fsstat);
-      sfsr = stat((rdev = dev2rdev(fsent->fsname)), &fsrstat);
-      if(check_dev == 1 && sfs == -1 && sfsr == -1)
+      if(check_dev == 1 && sfs == -1)
 	continue;
     }
 
@@ -554,15 +484,11 @@ search_fstab(
         samefile(stats, &mntstat)) || 
        (fsent->fsname != NULL &&
 	sfs != -1 &&
-        samefile(stats, &fsstat)) ||
-       (fsent->fsname != NULL &&
-	sfsr != -1 &&
-        samefile(stats, &fsrstat))) {
+        samefile(stats, &fsstat))) {
       rc = 1;
       break;
     }
   }
-  amfree(rdev);
   close_fstab();
   return rc;
 #endif /* !IGNORE_FSTAB */
@@ -597,7 +523,7 @@ amname_to_devname(
     else if(search_fstab(str, &fsent, 0) && fsent.fsname != NULL)
 	str = fsent.fsname;
 
-    return dev2rdev(str);
+    return g_strdup(str);
 }
 
 char *

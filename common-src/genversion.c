@@ -246,12 +246,6 @@ main(
     prundefvar("DEV_PREFIX");
 #endif
 
-#ifdef RDEV_PREFIX
-    prvar("RDEV_PREFIX", RDEV_PREFIX);
-#else
-    prundefvar("RDEV_PREFIX");
-#endif
-
 #ifdef DUMP
     prvar("DUMP", DUMP);
     prvar("RESTORE", RESTORE);
