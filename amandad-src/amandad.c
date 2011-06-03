@@ -1321,11 +1321,10 @@ errfd_recv(
     }
 
     if (buflen) {
-	if (as->errbuf) {
-	    as->errbuf = vstrextend(&as->errbuf, buf, NULL);
-	} else {
-	    as->errbuf = g_strdup(buf);
-	}
+        GString *strbuf = g_string_new(as->errbuf);
+        g_string_append(strbuf, buf);
+        g_free(as->errbuf);
+        as->errbuf = g_string_free(strbuf, FALSE);
     }
 
     /* for each line terminate by '\n' */

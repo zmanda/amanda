@@ -1,4 +1,7 @@
 2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
+	* amandad-src/amandad.c: replace vstrextend() usage by using a GString
+
+2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/planner.c: variable renaming and type change: "time_t
 	  estimates" is now "int total_estimates"; new local variable
 	  "estimates_for_client" as placeholder for "i" when appropriate
