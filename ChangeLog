@@ -1,4 +1,8 @@
 2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: write the beginning of a request using a GString
+	  instead of using g_strjoin()
+
+2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/planner.c: deal with noop first, jump to a new label
 	  "send", and reindent - one less indentation level
 
