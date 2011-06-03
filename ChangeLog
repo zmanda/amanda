@@ -1,4 +1,8 @@
 2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: Define nb_client, nb_server and has_* earlier.
+	  This is a preparation for the next commit.
+
+2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/planner.c: remove two unused variables
 
 2011-06-02  Francis Galiegue <fgaliegue@gmail.com>
