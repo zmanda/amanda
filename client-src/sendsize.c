@@ -1019,8 +1019,8 @@ generic_calc_estimates(
     char *cmdline;
     char *command;
     GPtrArray *argv_ptr = g_ptr_array_new();
+    gchar **args, **ptr;
     char number[NUM_STR_SIZE];
-    unsigned int i;
     int level;
     pid_t calcpid;
     int nb_exclude = 0;
@@ -1078,14 +1078,28 @@ generic_calc_estimates(
     }
     start_time = curclock();
 
-    command = (char *)g_ptr_array_index(argv_ptr, 0);
-    cmdline = g_strdup(command);
-    for(i = 1; i < argv_ptr->len-1; i++) {
-	cmdline = vstrextend(&cmdline, " ",
-			     (char *)g_ptr_array_index(argv_ptr, i), NULL);
-    }
+    /*
+     * We need a first version of the command line to display at this point. So,
+     * append a NULL to the GPtrArray, free(..., FALSE) it, and reallocate it
+     * later, with the number of elements in the result - including the final
+     * NULL.
+     */
+    g_ptr_array_add(argv_ptr, NULL);
+    args = (gchar **)g_ptr_array_free(argv_ptr, FALSE);
+
+    command = args[0];
+    cmdline = g_strjoinv(" ", args);
+
     dbprintf(_("running: \"%s\"\n"), cmdline);
-    amfree(cmdline);
+    g_free(cmdline);
+
+    argv_ptr = g_ptr_array_sized_new(G_N_ELEMENTS(args));
+
+    for (ptr = args; *ptr; ptr++)
+        g_ptr_array_add(argv_ptr, *ptr);
+
+    /* We must free the pointer ONLY, not the strings it points to! */
+    g_free(args);
 
     for(level = 0; level < DUMP_LEVELS; level++) {
 	if(est->est[level].needestimate) {
@@ -1101,6 +1115,8 @@ generic_calc_estimates(
     g_ptr_array_add(argv_ptr, NULL);
     dbprintf("\n");
 
+    args = (gchar **)g_ptr_array_free(argv_ptr, FALSE);
+
     fflush(stderr); fflush(stdout);
 
     if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
@@ -1110,8 +1126,7 @@ generic_calc_estimates(
 	goto common_exit;
     }
 
-    calcpid = pipespawnv(cmd, STDERR_PIPE, 0,
-			 &nullfd, &nullfd, &pipefd, (char **)argv_ptr->pdata);
+    calcpid = pipespawnv(cmd, STDERR_PIPE, 0, &nullfd, &nullfd, &pipefd, args);
     amfree(cmd);
     close(nullfd);
 
@@ -1179,7 +1194,7 @@ common_exit:
 	}
     }
     amfree(errmsg);
-    g_ptr_array_free_full(argv_ptr);
+    g_strfreev(args);
     amfree(cmd);
 }
 
@@ -2382,9 +2397,11 @@ getsize_application_api(
     char *line = NULL;
     char *cmd = NULL;
     char *cmdline;
+    char *cmdargs;
     guint i;
     int   j;
     GPtrArray *argv_ptr = g_ptr_array_new();
+    gchar **args;
     char *newoptstr = NULL;
     off_t size1, size2;
     times_t start_time;
@@ -2449,11 +2466,17 @@ getsize_application_api(
     }
 
     g_ptr_array_add(argv_ptr, NULL);
+    args = (gchar **)g_ptr_array_free(argv_ptr, FALSE);
 
-    cmdline = g_strdup(cmd);
-    for(i = 1; i < argv_ptr->len-1; i++)
-	cmdline = vstrextend(&cmdline, " ",
-			     (char *)g_ptr_array_index(argv_ptr, i), NULL);
+    /*
+     * We need to operate a trick here: we want to display the full command
+     * path, but args contains the short command form...
+     */
+
+    cmdargs = g_strjoinv(" ", args + 1);
+    cmdline = g_strconcat(cmd, " ", cmdargs, NULL);
+    g_free(cmdargs);
+
     dbprintf("running: \"%s\"\n", cmdline);
     amfree(cmdline);
 
@@ -2492,7 +2515,7 @@ getsize_application_api(
       aclose(pipeerrfd[0]);
       safe_fd(-1, 0);
 
-      execve(cmd, (char **)argv_ptr->pdata, safe_env());
+      execve(cmd, args, safe_env());
       error(_("exec %s failed: %s"), cmd, strerror(errno));
       /*NOTREACHED*/
     }
@@ -2614,7 +2637,7 @@ getsize_application_api(
 common_exit:
 
     amfree(cmd);
-    g_ptr_array_free_full(argv_ptr);
+    g_strfreev(args);
     amfree(newoptstr);
     amfree(qdisk);
     amfree(qamdevice);

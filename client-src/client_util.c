@@ -1455,6 +1455,7 @@ run_calcsize(
     char        *qdisk;
     amandates_t *amdp;
     char        *amandates_file;
+    gchar      **args;
 
     qdisk = quote_string(disk);
 
@@ -1513,11 +1514,11 @@ run_calcsize(
     }
 
     g_ptr_array_add(argv_ptr, NULL);
-    command = (char *)g_ptr_array_index(argv_ptr, 0);
-    cmdline = g_strdup(command);
-    for(i = 1; i < argv_ptr->len - 1; i++)
-	cmdline = vstrextend(&cmdline, " ",
-			     (char *)g_ptr_array_index(argv_ptr,i), NULL);
+
+    args = (gchar **) g_ptr_array_free(argv_ptr, FALSE);
+    command = args[0];
+    cmdline = g_strjoinv(" ", args);
+
     dbprintf(_("running: \"%s\"\n"), cmdline);
     amfree(cmdline);
 
@@ -1532,8 +1533,7 @@ run_calcsize(
 	goto common_exit;
     }
 
-    calcpid = pipespawnv(cmd, STDERR_PIPE, 0,
-			 &nullfd, &nullfd, &pipefd, (char **)argv_ptr->pdata);
+    calcpid = pipespawnv(cmd, STDERR_PIPE, 0, &nullfd, &nullfd, &pipefd, args);
     amfree(cmd);
 
     dumpout = fdopen(pipefd,"r");
@@ -1599,7 +1599,7 @@ common_exit:
     }
     amfree(qdisk);
     amfree(errmsg);
-    g_ptr_array_free_full(argv_ptr);
+    g_strfreev(args);
     amfree(cmd);
 
 }

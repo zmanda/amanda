@@ -1,4 +1,38 @@
 2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
+	* client-src/sendsize.c: remove the second usage of vstrextend() by
+	  using g_ptr_array_free(..., FALSE) and g_strjoinv() on an existing
+	  GPtrArray; avoid accessing its ->ptr member: you shouldn't do that
+
+2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
+	* client-src/sendsize.c: remove one usage of vstrextend() by using
+	  g_ptr_array_free(..., FALSE) and g_strjoinv() on an existing GPtrArray;
+	  avoid accessing its ->ptr member: you shouldn't do that
+
+2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
+	* client-src/selfcheck.c: build the command line using a GPtrArray
+	  instead of vstrextend(); don't peek into the original GPtrArray
+
+2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
+	* client-src/runtar.c: build the command line using a GPtrArray
+	  instead of vstrextend()
+
+2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
+	* client-src/rundump.c: build the command line using a GPtrArray
+	  instead of vstrextend()
+
+2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
+	* client-src/client_util.c: don't peek into the GPtrArray directly, but
+	  use g_ptr_array_free(..., FALSE) and g_strjoinv() instead; this
+	  removes a usage of vstrextend()
+
+2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
+	* application-src/amgtar.c: use a GString to build the error buffer
+	  instead of vstrextend()
+
+2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
+	* amandad-src/amandad.c: replace vstrextend() usage by using a GString
+
+2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/planner.c: variable renaming and type change: "time_t
 	  estimates" is now "int total_estimates"; new local variable
 	  "estimates_for_client" as placeholder for "i" when appropriate
