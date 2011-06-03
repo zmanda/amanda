@@ -711,6 +711,7 @@ amgtar_estimate(
     GSList    *levels;
     char      *file_exclude;
     char      *file_include;
+    GString   *strbuf;
 
     if (!argument->level) {
         fprintf(stderr, "ERROR No level argument\n");
@@ -843,16 +844,18 @@ amgtar_estimate(
 	dbprintf(_("waiting for %s \"%s\" child\n"), cmd, qdisk);
 	waitpid(tarpid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
-	    char *err = g_strdup_printf(_("%s terminated with signal %d: see %s"),
-				   cmd, WTERMSIG(wait_status), dbfn());
-	    vstrextend(&errmsg, err, NULL);
-	    amfree(err);
+	    strbuf = g_string_new(errmsg);
+	    g_string_append_printf(strbuf, "%s terminated with signal %d: see %s",
+                cmd, WTERMSIG(wait_status), dbfn());
+	    g_free(errmsg);
+            errmsg = g_string_free(strbuf, FALSE);
 	} else if (WIFEXITED(wait_status)) {
 	    if (exit_value[WEXITSTATUS(wait_status)] == 1) {
-		char *err = g_strdup_printf(_("%s exited with status %d: see %s"),
-				       cmd, WEXITSTATUS(wait_status), dbfn());
-		vstrextend(&errmsg, err, NULL);
-		amfree(err);
+                strbuf = g_string_new(errmsg);
+                g_string_append_printf(strbuf, "%s exited with status %d: see %s",
+                    cmd, WEXITSTATUS(wait_status), dbfn());
+		g_free(errmsg);
+                errmsg = g_string_free(strbuf, FALSE);
 	    } else {
 		/* Normal exit */
 	    }
