@@ -104,12 +104,10 @@ static char *
 xfer_element_repr_impl(
     XferElement *elt)
 {
-    char *tmpbuf;
     if (!elt->repr) {
-	tmpbuf = g_strdup_printf("<%s@%p>", G_OBJECT_TYPE_NAME(G_OBJECT(elt)),
-            elt);
         g_free(elt->repr);
-        elt->repr = tmpbuf;
+        elt->repr = g_strdup_printf("<%s@%p>",
+                                    G_OBJECT_TYPE_NAME(G_OBJECT(elt)), elt);
     }
 
     return elt->repr;
