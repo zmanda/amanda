@@ -1074,7 +1074,6 @@ static char *quote_heredoc(
     char  *text,
     char  *delimiter_prefix)
 {
-    char *tmpbuf;
     char *delimiter = g_strdup(delimiter_prefix);
     int delimiter_n = 0;
     int delimiter_len = strlen(delimiter);
@@ -1102,9 +1101,8 @@ static char *quote_heredoc(
 	if (!found_delimiter)
 	    break;
 
-	tmpbuf = g_strdup_printf("%s%d", delimiter_prefix, ++delimiter_n);
 	g_free(delimiter);
-	delimiter = tmpbuf;
+	delimiter = g_strdup_printf("%s%d", delimiter_prefix, ++delimiter_n);
 	delimiter_len = strlen(delimiter);
     }
 

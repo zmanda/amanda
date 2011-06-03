@@ -417,7 +417,6 @@ tcpm_send_token(
     const void *buf,
     size_t	len)
 {
-    char *tmpbuf;
     guint32		nethandle;
     guint32		netlength;
     struct iovec	iov[3];
@@ -480,10 +479,9 @@ tcpm_send_token(
 
     if (rval < 0) {
 	if (errmsg) {
-	    tmpbuf = g_strdup_printf(_("write error to: %s"),
-	        strerror(save_errno));
             g_free(*errmsg);
-            *errmsg = tmpbuf;
+            *errmsg = g_strdup_printf(_("write error to: %s"),
+                                      strerror(save_errno));
         }
         return (-1);
     }
@@ -507,7 +505,6 @@ tcpm_recv_token(
     char **	buf,
     ssize_t *	size)
 {
-    char *tmpbuf;
     ssize_t     rval;
 
     assert(sizeof(rc->netint) == 8);
@@ -516,9 +513,9 @@ tcpm_recv_token(
 		        sizeof(rc->netint) - rc->size_header_read);
 	if (rval == -1) {
 	    if (errmsg) {
-		tmpbuf = g_strdup_printf(_("recv error: %s"), strerror(errno));
 		g_free(*errmsg);
-		*errmsg = tmpbuf;
+		*errmsg = g_strdup_printf(_("recv error: %s"),
+                                          strerror(errno));
             }
 	    auth_debug(1, _("tcpm_recv_token: A return(-1)\n"));
 	    return(-1);
@@ -573,9 +570,9 @@ tcpm_recv_token(
 		}
 		s[i] = '\0';
 		s1 = quote_string(s);
-		tmpbuf = g_strdup_printf(_("tcpm_recv_token: invalid size: %s"), s1);
 		g_free(*errmsg);
-		*errmsg = tmpbuf;
+		*errmsg = g_strdup_printf(_("tcpm_recv_token: invalid size: %s"),
+                                          s1);
 		dbprintf(_("tcpm_recv_token: invalid size %s\n"), s1);
 		amfree(s1);
 	    } else {
@@ -604,10 +601,8 @@ tcpm_recv_token(
 		    (size_t)*size - rc->size_buffer_read);
     if (rval == -1) {
 	if (errmsg) {
-	    tmpbuf = g_strdup_printf(_("recv error: %s"),
-                strerror(errno));
 	    g_free(*errmsg);
-	    *errmsg = tmpbuf;
+	    *errmsg = g_strdup_printf(_("recv error: %s"), strerror(errno));
 	}
 	auth_debug(1, _("tcpm_recv_token: B return(-1)\n"));
 	return (-1);
@@ -2600,7 +2595,6 @@ check_name_give_sockaddr(
     struct sockaddr *addr,
     char **errstr)
 {
-    char *tmpbuf;
     int result;
     struct addrinfo *res = NULL, *res1;
     char *canonname;
@@ -2608,28 +2602,25 @@ check_name_give_sockaddr(
     result = resolve_hostname(hostname, 0, &res, &canonname);
     if (result != 0) {
 	dbprintf(_("check_name_give_sockaddr: resolve_hostname('%s'): %s\n"), hostname, gai_strerror(result));
-	tmpbuf = g_strdup_printf(_("check_name_give_sockaddr: resolve_hostname('%s'): %s"),
-            hostname, gai_strerror(result));
         g_free(*errstr);
-        *errstr = tmpbuf;
+        *errstr = g_strdup_printf(_("check_name_give_sockaddr: resolve_hostname('%s'): %s"),
+                                  hostname, gai_strerror(result));
 	goto error;
     }
     if (canonname == NULL) {
 	dbprintf(_("resolve_hostname('%s') did not return a canonical name\n"), hostname);
-	tmpbuf = g_strdup_printf(_("check_name_give_sockaddr: resolve_hostname('%s') did not return a canonical name"),
-	    hostname);
         g_free(*errstr);
-        *errstr = tmpbuf;
+        *errstr = g_strdup_printf(_("check_name_give_sockaddr: resolve_hostname('%s') did not return a canonical name"),
+                                  hostname);
 	goto error;
     }
 
     if (strncasecmp(hostname, canonname, strlen(hostname)) != 0) {
 	dbprintf(_("%s doesn't resolve to itself, it resolves to %s\n"),
 		       hostname, canonname);
-	tmpbuf = g_strdup_printf(_("%s doesn't resolve to itself, it resolves to %s"),
-            hostname, canonname);
         g_free(*errstr);
-        *errstr = tmpbuf;
+        *errstr = g_strdup_printf(_("%s doesn't resolve to itself, it resolves to %s"),
+                                  hostname, canonname);
 	goto error;
     }
 
@@ -2643,10 +2634,9 @@ check_name_give_sockaddr(
 
     g_debug("%s doesn't resolve to %s",
 	    hostname, str_sockaddr((sockaddr_union *)addr));
-    tmpbuf = g_strdup_printf("%s doesn't resolve to %s",
-			   hostname, str_sockaddr((sockaddr_union *)addr));
 			   g_free(*errstr);
-			   *errstr = tmpbuf;
+			   *errstr = g_strdup_printf("%s doesn't resolve to %s",
+                                                     hostname, str_sockaddr((sockaddr_union *)addr));
 error:
     if (res) freeaddrinfo(res);
     amfree(canonname);

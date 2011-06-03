@@ -1211,7 +1211,6 @@ krb5_tcpm_recv_token(
     ssize_t *	size,
     int		timeout)
 {
-    char *tmpbuf;
     unsigned int netint[2];
 
     assert(sizeof(netint) == 8);
@@ -1219,9 +1218,8 @@ krb5_tcpm_recv_token(
     switch (net_read(fd, &netint, sizeof(netint), timeout)) {
     case -1:
 	if (errmsg) {
-	    tmpbuf = g_strdup_printf(_("recv error: %s"), strerror(errno));
 	    g_free(*errmsg);
-	    *errmsg = tmpbuf;
+	    *errmsg = g_strdup_printf(_("recv error: %s"), strerror(errno));
 	}
 	auth_debug(1, _("krb5_tcpm_recv_token: A return(-1)\n"));
 	return (-1);
@@ -1269,9 +1267,9 @@ krb5_tcpm_recv_token(
 		}
 	    }
 	    s[i] = '\0';
-	    tmpbuf = g_strdup_printf(_("krb5_tcpm_recv_token: invalid size: %s"), s);
 	    g_free(*errmsg);
-	    *errmsg = tmpbuf;
+	    *errmsg = g_strdup_printf(_("krb5_tcpm_recv_token: invalid size: %s"),
+                                      s);
 	    dbprintf(_("krb5_tcpm_recv_token: invalid size %s\n"), s);
 	} else {
 	    g_free(*errmsg);
@@ -1293,9 +1291,8 @@ krb5_tcpm_recv_token(
     switch (net_read(fd, *buf, (size_t)*size, timeout)) {
     case -1:
 	if (errmsg) {
-	    tmpbuf = g_strdup_printf(_("recv error: %s"), strerror(errno));
 	    g_free(*errmsg);
-	    *errmsg = tmpbuf;
+	    *errmsg = g_strdup_printf(_("recv error: %s"), strerror(errno));
 	}
 	auth_debug(1, _("krb5_tcpm_recv_token: B return(-1)\n"));
 	return (-1);
