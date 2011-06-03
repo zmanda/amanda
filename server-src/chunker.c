@@ -663,6 +663,7 @@ static int
 databuf_flush(
     struct databuf *	db)
 {
+    char *tmpbuf;
     struct cmdargs *cmdargs = NULL;
     int rc = 1;
     size_t size_to_write;
@@ -790,16 +791,16 @@ databuf_flush(
 	 * that has no cont_filename pointer.
 	 */
 	g_snprintf(sequence, sizeof(sequence), "%d", db->filename_seq);
-	new_filename = newvstralloc(new_filename,
-				    db->filename,
-				    ".",
-				    sequence,
-				    NULL);
-	tmp_filename = newvstralloc(tmp_filename,
-				    new_filename,
-				    ".tmp",
-				    NULL);
-	pc = strrchr(tmp_filename, '/');
+
+	tmpbuf = g_strconcat(db->filename, ".", sequence, NULL);
+        g_free(new_filename);
+        new_filename = tmpbuf;
+
+        tmpbuf = g_strconcat(new_filename, ".tmp", NULL);
+        g_free(tmp_filename);
+        tmp_filename = tmpbuf;
+
+        pc = strrchr(tmp_filename, '/');
         g_assert(pc != NULL); /* Only a problem if db->filename has no /. */
 	*pc = '\0';
 	mkholdingdir(tmp_filename);

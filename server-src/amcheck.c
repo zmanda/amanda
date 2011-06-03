@@ -1186,7 +1186,9 @@ start_server_check(
 	amfree(quoted);
 
 	if (logbad == 0 && testtape) {
-	    logfile = newvstralloc(logfile, conf_logdir, "/amdump", NULL);
+	    tmpbuf = g_strconcat(conf_logdir, "/amdump", NULL);
+	    g_free(logfile);
+	    logfile = tmpbuf;
 	    if (access(logfile, F_OK) == 0) {
 		testtape = 0;
 		logbad = 2;

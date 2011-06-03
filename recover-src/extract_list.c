@@ -2439,6 +2439,7 @@ amidxtaped_response(
     pkt_t *		pkt,
     security_handle_t *	sech)
 {
+    char *tmpbuf;
     int ports[NSTREAMS], *response_error = datap;
     guint i;
     char *p;
@@ -2467,7 +2468,9 @@ amidxtaped_response(
 
 	tok = strtok(NULL, "\n");
 	if (tok != NULL) {
-	    errstr = newvstralloc(errstr, "NAK: ", tok, NULL);
+	    tmpbuf = g_strconcat("NAK: ", tok, NULL);
+	    g_free(errstr);
+	    errstr = tmpbuf;
 	    *response_error = 1;
 	} else {
 bad_nak:

@@ -160,16 +160,20 @@ char *
 xfer_repr(
     Xfer *xfer)
 {
+    char *tmpbuf;
     unsigned int i;
 
     if (!xfer->repr) {
 	xfer->repr = newvstrallocf(xfer->repr, "<Xfer@%p (", xfer);
 	for (i = 0; i < xfer->elements->len; i++) {
 	    XferElement *elt = (XferElement *)g_ptr_array_index(xfer->elements, i);
-	    xfer->repr = newvstralloc(xfer->repr,
-		xfer->repr, (i==0)?"":" -> ", xfer_element_repr(elt), NULL);
+	    tmpbuf = g_strconcat(xfer->repr, (i==0)?"":" -> ", xfer_element_repr(elt), NULL);
+	    g_free(xfer->repr);
+	    xfer->repr = tmpbuf;
 	}
-	xfer->repr = newvstralloc(xfer->repr, xfer->repr, ")>", NULL);
+	tmpbuf = g_strconcat(xfer->repr, ")>", NULL);
+	g_free(xfer->repr);
+	xfer->repr = tmpbuf;
     }
 
     return xfer->repr;
@@ -429,6 +433,7 @@ static void
 link_elements(
     Xfer *xfer)
 {
+    char *tmpbuf;
     GPtrArray *new_elements;
     XferElement *elt;
     char *linkage_str;
@@ -496,8 +501,11 @@ link_elements(
     for (i = 0; i < len; i++) {
 	XferElement *elt = g_ptr_array_index(xfer->elements, i);
 
-	if (i == 0)
-	    linkage_str = newvstralloc(linkage_str, linkage_str, xfer_element_repr(elt), NULL);
+	if (i == 0) {
+	    tmpbuf = g_strconcat(linkage_str, xfer_element_repr(elt), NULL);
+	    g_free(linkage_str);
+	    linkage_str = tmpbuf;
+	}
 	else
 	    linkage_str = newvstrallocf(linkage_str, "%s -(%s)-> %s",
 		linkage_str, xfer_mech_name(elt->input_mech), xfer_element_repr(elt));
