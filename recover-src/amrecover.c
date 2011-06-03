@@ -627,6 +627,7 @@ amindexd_response(
     pkt_t *pkt,
     security_handle_t *sech)
 {
+    char *tmpbuf;
     int ports[NSTREAMS], *response_error = datap;
     guint i;
     char *p;
@@ -637,8 +638,10 @@ amindexd_response(
     assert(sech != NULL);
 
     if (pkt == NULL) {
-	errstr = newvstrallocf(errstr, _("[request failed: %s]"),
+	tmpbuf = g_strdup_printf(_("[request failed: %s]"),
 			     security_geterror(sech));
+	g_free(errstr);
+	errstr = tmpbuf;
 	*response_error = 1;
 	return;
     }
@@ -654,7 +657,9 @@ amindexd_response(
 
 	tok = strtok(NULL, "\n");
 	if (tok != NULL) {
-	    errstr = newvstrallocf(errstr, "NAK: %s", tok);
+	    tmpbuf = g_strdup_printf("NAK: %s", tok);
+	    g_free(errstr);
+	    errstr = tmpbuf;
 	    *response_error = 1;
 	} else {
 bad_nak:
@@ -666,8 +671,10 @@ bad_nak:
     }
 
     if (pkt->type != P_REP) {
-	errstr = newvstrallocf(errstr, _("received strange packet type %s: %s"),
+	tmpbuf = g_strdup_printf(_("received strange packet type %s: %s"),
 			      pkt_type2str(pkt->type), pkt->body);
+	g_free(errstr);
+	errstr = tmpbuf;
 	*response_error = 1;
 	return;
     }
@@ -695,7 +702,9 @@ bad_nak:
 	        g_free(errstr);
 	        errstr = g_strdup("[bogus error packet]");
 	    } else {
-		errstr = newvstrallocf(errstr, "%s", tok);
+		tmpbuf = g_strdup_printf("%s", tok);
+		g_free(errstr);
+		errstr = tmpbuf;
 	    }
 	    *response_error = 2;
 	    return;
@@ -771,9 +780,10 @@ bad_nak:
 	    continue;
 	streams[i].fd = security_stream_client(sech, ports[i]);
 	if (streams[i].fd == NULL) {
-	    errstr = newvstrallocf(errstr,
-			_("[could not connect %s stream: %s]"),
-			streams[i].name, security_geterror(sech));
+	    tmpbuf = g_strdup_printf(_("[could not connect %s stream: %s]"),
+                streams[i].name, security_geterror(sech));
+            g_free(errstr);
+            errstr = tmpbuf;
 	    goto connect_error;
 	}
     }
@@ -784,9 +794,10 @@ bad_nak:
 	if (streams[i].fd == NULL)
 	    continue;
 	if (security_stream_auth(streams[i].fd) < 0) {
-	    errstr = newvstrallocf(errstr,
-		_("[could not authenticate %s stream: %s]"),
+	    tmpbuf = g_strdup_printf(_("[could not authenticate %s stream: %s]"),
 		streams[i].name, security_stream_geterror(streams[i].fd));
+            g_free(errstr);
+            errstr = tmpbuf;
 	    goto connect_error;
 	}
     }
@@ -807,9 +818,10 @@ bad_nak:
     return;
 
 parse_error:
-    errstr = newvstrallocf(errstr,
-			  _("[parse of reply message failed: %s]"),
+    tmpbuf = g_strdup_printf(_("[parse of reply message failed: %s]"),
 			  extra ? extra : _("(no additional information)"));
+			  g_free(errstr);
+			  errstr = tmpbuf;
     amfree(extra);
     *response_error = 2;
     return;

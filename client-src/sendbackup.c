@@ -799,6 +799,7 @@ check_status(
     amwait_t	w,
     int		mesgfd)
 {
+    char *tmpbuf;
     char *thiserr = NULL;
     char *str, *strX;
     int ret, sig, rc;
@@ -881,7 +882,9 @@ check_status(
     fdprintf(mesgfd, "? %s\n", thiserr);
 
     if(errorstr) {
-	errorstr =  newvstrallocf(errorstr, "%s, %s", errorstr, thiserr);
+	tmpbuf = g_strdup_printf("%s, %s", errorstr, thiserr);
+	g_free(errorstr);
+	errorstr = tmpbuf;
 	amfree(thiserr);
     } else {
 	errorstr = thiserr;

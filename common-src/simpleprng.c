@@ -65,16 +65,22 @@ void simpleprng_fill_buffer(
 static char *
 hexstr(guint8 *p, int len)
 {
+    char *tmpbuf;
     char *result = NULL;
     int i;
 
     for (i = 0; i < len; i++) {
-	if (result)
-	    result = newvstrallocf(result, "%s %02x", result, (guint)(*(p++)));
+	if (result) {
+	    tmpbuf = g_strdup_printf("%s %02x", result, (guint)(*(p++)));
+	    g_free(result);
+	    result = tmpbuf;
+	}
 	else
 	    result = g_strdup_printf("[%02x", (guint)(*(p++)));
     }
-    result = newvstrallocf(result, "%s]", result);
+    tmpbuf = g_strdup_printf("%s]", result);
+    g_free(result);
+    result = tmpbuf;
 
     return result;
 }
