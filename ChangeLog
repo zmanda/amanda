@@ -1,4 +1,9 @@
 2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
+	* client-src/sendsize.c: remove the second usage of vstrextend() by
+	  using g_ptr_array_free(..., FALSE) and g_strjoinv() on an existing
+	  GPtrArray; avoid accessing its ->ptr member: you shouldn't do that
+
+2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
 	* client-src/sendsize.c: remove one usage of vstrextend() by using
 	  g_ptr_array_free(..., FALSE) and g_strjoinv() on an existing GPtrArray;
 	  avoid accessing its ->ptr member: you shouldn't do that
