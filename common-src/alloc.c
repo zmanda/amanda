@@ -99,25 +99,6 @@ internal_vstralloc(
     return result;
 }
 
-
-/*
- * newstralloc - free existing string and then g_strdup a new one.
- */
-char *
-debug_newstralloc(
-    const char *file G_GNUC_UNUSED,
-    int		line G_GNUC_UNUSED,
-    char *	oldstr,
-    const char *newstr)
-{
-    char *addr;
-
-    addr = g_strdup(newstr);
-    amfree(oldstr);
-    return (addr);
-}
-
-
 /*
  * newvstralloc - free existing string and then vstralloc a new one.
  */

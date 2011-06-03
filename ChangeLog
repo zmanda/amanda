@@ -1,4 +1,9 @@
 2011-06-02  Francis Galiegue <fgaliegue@gmail.com>
+	* Many files (30): Get rid of newstralloc()
+	* common-src/alloc.c, common-src/amanda.h: remove macros, prototypes,
+	  implementation
+
+2011-06-02  Francis Galiegue <fgaliegue@gmail.com>
 	* client-src/getfsent.c: remove dev2rdev() and remnant artifacts in
 	  search_fstab() and samefile()
 	* common-src/genversion.c, installcheck/catalogs/chunker-partial.cat:

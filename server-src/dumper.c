@@ -399,7 +399,8 @@ main(
 	case START:
 	    if(cmdargs->argc <  2)
 		error(_("error [dumper START: not enough args: timestamp]"));
-	    dumper_timestamp = newstralloc(dumper_timestamp, cmdargs->argv[1]);
+	    g_free(dumper_timestamp);
+	    dumper_timestamp = g_strdup(cmdargs->argv[1]);
 	    break;
 
 	case ABORT:
@@ -435,7 +436,8 @@ main(
 		error(_("error [dumper PORT-DUMP: not enough args: handle]"));
 		/*NOTREACHED*/
 	    }
-	    handle = newstralloc(handle, cmdargs->argv[a++]);
+	    g_free(handle);
+	    handle = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: port]"));
@@ -447,7 +449,8 @@ main(
 		error(_("error [dumper PORT-DUMP: not enough args: hostname]"));
 		/*NOTREACHED*/
 	    }
-	    hostname = newstralloc(hostname, cmdargs->argv[a++]);
+	    g_free(hostname);
+	    hostname = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: features]"));
@@ -460,7 +463,8 @@ main(
 		error(_("error [dumper PORT-DUMP: not enough args: diskname]"));
 		/*NOTREACHED*/
 	    }
-	    diskname = newstralloc(diskname, cmdargs->argv[a++]);
+	    g_free(diskname);
+	    diskname = g_strdup(cmdargs->argv[a++]);
 	    if (qdiskname != NULL)
 		amfree(qdiskname);
 	    qdiskname = quote_string(diskname);
@@ -470,7 +474,8 @@ main(
 		error(_("error [dumper PORT-DUMP: not enough args: device]"));
 		/*NOTREACHED*/
 	    }
-	    device = newstralloc(device, cmdargs->argv[a++]);
+	    g_free(device);
+	    device = g_strdup(cmdargs->argv[a++]);
 	    b64device = amxml_format_tag("diskdevice", device);
 	    if(strcmp(device,"NODEVICE") == 0)
 		amfree(device);
@@ -485,39 +490,46 @@ main(
 		error(_("error [dumper PORT-DUMP: not enough args: dumpdate]"));
 		/*NOTREACHED*/
 	    }
-	    dumpdate = newstralloc(dumpdate, cmdargs->argv[a++]);
+	    g_free(dumpdate);
+	    dumpdate = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: program]"));
 		/*NOTREACHED*/
 	    }
-	    progname = newstralloc(progname, cmdargs->argv[a++]);
+	    g_free(progname);
+	    progname = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: amandad_path]"));
 		/*NOTREACHED*/
 	    }
-	    amandad_path = newstralloc(amandad_path, cmdargs->argv[a++]);
+	    g_free(amandad_path);
+	    amandad_path = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: client_username]"));
 	    }
-	    client_username = newstralloc(client_username, cmdargs->argv[a++]);
+	    g_free(client_username);
+	    client_username = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: client_port]"));
 	    }
-	    client_port = newstralloc(client_port, cmdargs->argv[a++]);
+	    g_free(client_port);
+	    client_port = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: ssh_keys]"));
 	    }
-	    ssh_keys = newstralloc(ssh_keys, cmdargs->argv[a++]);
+	    g_free(ssh_keys);
+	    ssh_keys = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: auth]"));
 	    }
-	    auth = newstralloc(auth, cmdargs->argv[a++]);
+	    g_free(auth);
+	    auth = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: data_path]"));
@@ -527,12 +539,14 @@ main(
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: dataport_list]"));
 	    }
-	    dataport_list = newstralloc(dataport_list, cmdargs->argv[a++]);
+	    g_free(dataport_list);
+	    dataport_list = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: options]"));
 	    }
-	    options = newstralloc(options, cmdargs->argv[a++]);
+	    g_free(options);
+	    options = g_strdup(cmdargs->argv[a++]);
 
 	    if(a != cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: too many args: %d != %d]"),
@@ -892,7 +906,8 @@ process_dumpline(
 		    tok++;	/* skip over '[' */
 		    if ((enderr = strchr(tok, ']')) != NULL)
 			*enderr = '\0';
-		    errstr = newstralloc(errstr, tok);
+		    g_free(errstr);
+		    errstr = g_strdup(tok);
 		}
 	    }
 	    break;
@@ -1503,7 +1518,8 @@ read_mesgfd(
 	if (s) *s = '\0';  /* use first data_port */
 	s = strrchr(dataport_list, ':');
 	if (!s) {
-	    errstr = newstralloc(errstr, "write_tapeheader: no dataport_list");
+	    g_free(errstr);
+	    errstr = g_strdup("write_tapeheader: no dataport_list");
 	    dump_result = 2;
 	    stop_dump();
 	    return;
@@ -1801,7 +1817,8 @@ timeout_callback(
     (void)unused;	/* Quiet unused parameter warning */
 
     assert(unused == NULL);
-    errstr = newstralloc(errstr, _("data timeout"));
+    g_free(errstr);
+    errstr = g_strdup(_("data timeout"));
     dump_result = 2;
     stop_dump();
 }
@@ -2066,7 +2083,8 @@ sendbackup_response(
 	    *response_error = 1;
 	} else {
 bad_nak:
-	    errstr = newstralloc(errstr, "request NAK");
+	    g_free(errstr);
+	    errstr = g_strdup("request NAK");
 	    *response_error = 2;
 	}
 	return;
@@ -2207,7 +2225,8 @@ bad_nak:
      * them, complain.
      */
     if (streams[MESGFD].fd == NULL || streams[DATAFD].fd == NULL) {
-	errstr = newstralloc(errstr, "[couldn't open MESG or INDEX streams]");
+	g_free(errstr);
+	errstr = g_strdup("[couldn't open MESG or INDEX streams]");
 	goto connect_error;
     }
 
@@ -2347,7 +2366,8 @@ startup_dump(
 	amfree(pclean);
 	dle_str = p;
     } else if (*application_api != '\0') {
-	errstr = newstralloc(errstr, "[does not support application-api]");
+	g_free(errstr);
+	errstr = g_strdup("[does not support application-api]");
 	amfree(req);
 	return 2;
     } else {
