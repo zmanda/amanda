@@ -64,7 +64,6 @@ main(
     int		argc,
     char **	argv)
 {
-    char *tmpbuf;
     int foreground;
     int batch;
     int redirect;
@@ -428,20 +427,17 @@ main(
 	/* to avoid ``infinite'' loops if tapecycle is infinite */
 
 	g_snprintf(number,100,"%d",days);
-	tmpbuf = g_strconcat(errfile, ".", number, NULL);
 	g_free(errfilex);
-	errfilex = tmpbuf;
+	errfilex = g_strconcat(errfile, ".", number, NULL);
 	while ( days < maxdays && stat(errfilex,&stat_buf)==0) {
 	    days++;
 	    g_snprintf(number,100,"%d",days);
-	    tmpbuf = g_strconcat(errfile, ".", number, NULL);
 	    g_free(errfilex);
-	    errfilex = tmpbuf;
+	    errfilex = g_strconcat(errfile, ".", number, NULL);
 	}
 	g_snprintf(number,100,"%d",days);
-	tmpbuf = g_strconcat(errfile, ".", number, NULL);
 	g_free(errfilex);
-	errfilex = tmpbuf;
+	errfilex = g_strconcat(errfile, ".", number, NULL);
 	nerrfilex = NULL;
 	while (days > 1) {
 	    amfree(nerrfilex);

@@ -235,7 +235,6 @@ static void holding_walk_dir(
     holding_walk_fn per_file_fn,
     holding_walk_fn per_chunk_fn)
 {
-    char *tmpbuf;
     DIR *dir;
     struct dirent *workdir;
     char *hfile = NULL;
@@ -256,9 +255,8 @@ static void holding_walk_dir(
         if (is_dot_or_dotdot(workdir->d_name))
             continue; /* expected cruft */
 
-        tmpbuf = g_strconcat(hdir, "/", workdir->d_name, NULL);
         g_free(hfile);
-        hfile = tmpbuf;
+        hfile = g_strconcat(hdir, "/", workdir->d_name, NULL);
 
         /* filter out various undesirables */
         if (is_emptyfile(hfile))
@@ -320,7 +318,6 @@ holding_walk_disk(
     holding_walk_fn per_file_fn,
     holding_walk_fn per_chunk_fn)
 {
-    char *tmpbuf;
     DIR *dir;
     struct dirent *workdir;
     char *hdir = NULL;
@@ -339,9 +336,8 @@ holding_walk_disk(
         if (is_dot_or_dotdot(workdir->d_name))
             continue; /* expected cruft */
 
-	tmpbuf = g_strconcat(hdisk, "/", workdir->d_name, NULL);
         g_free(hdir);
-        hdir = tmpbuf;
+        hdir = g_strconcat(hdisk, "/", workdir->d_name, NULL);
 
         /* detect cruft */
         if (!is_dir(hdir)) {

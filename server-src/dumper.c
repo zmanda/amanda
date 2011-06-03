@@ -1224,10 +1224,9 @@ do_dump(
 
     mkdir(errfname, 0700);
 
-    tmpbuf = g_strconcat(AMANDA_DBGDIR, "/log.error/", hostname, ".", fn, ".",
-        level_str, ".", time_str, ".errout", NULL);
     g_free(errfname);
-    errfname = tmpbuf;
+    errfname = g_strconcat(AMANDA_DBGDIR, "/log.error/", hostname, ".", fn, ".",
+        level_str, ".", time_str, ".errout", NULL);
 
     amfree(fn);
     amfree(time_str);

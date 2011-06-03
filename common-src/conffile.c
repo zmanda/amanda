@@ -5173,7 +5173,6 @@ config_init(
     config_init_flags flags,
     char *arg_config_name)
 {
-    char *tmpbuf;
     if (!(flags & CONFIG_INIT_OVERLAY)) {
 	/* Clear out anything that's already in there */
 	config_uninit();
@@ -5204,9 +5203,8 @@ config_init(
     if ((flags & CONFIG_INIT_EXPLICIT_NAME) && arg_config_name) {
 	g_free(config_name);
 	config_name = g_strdup(arg_config_name);
-	tmpbuf = g_strconcat(CONFIG_DIR, "/", arg_config_name, NULL);
 	g_free(config_dir);
-	config_dir = tmpbuf;
+	config_dir = g_strconcat(CONFIG_DIR, "/", arg_config_name, NULL);
     } else if (flags & CONFIG_INIT_USE_CWD) {
         char * cwd;
         
