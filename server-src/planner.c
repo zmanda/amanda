@@ -1408,7 +1408,7 @@ static void getsize(
 {
     disk_t *	dp;
     int		i;
-    time_t	estimates, timeout;
+    time_t	timeout;
     const	security_driver_t *secdrv;
     char *	calcsize;
     char *	qname, *b64disk = NULL;
@@ -1420,6 +1420,7 @@ static void getsize(
     am_feature_t *features;
     GString *reqbuf;
     char *req;
+    int total_estimates = 0;
 
     g_assert(hostp->disks != NULL);
 
@@ -1469,7 +1470,6 @@ static void getsize(
 
     req = g_string_free(reqbuf, FALSE);
 
-    estimates = 0;
     for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
         char *s = NULL;
         char *es;
@@ -1549,8 +1549,13 @@ static void getsize(
             estimate == ES_CALCSIZE ||
             (am_has_feature(features, fe_req_xml) &&
              am_has_feature(features, fe_xml_estimate))) {
+            /*
+             * Record the number of estimates we have to do. We use i to go over
+             * all levels and record the result in estimates_for_client when
+             * we're done.
+             */
+            int estimates_for_client = 0;
             nb_client++;
-            i = 0;
 
             if (am_has_feature(features, fe_req_xml)) {
                 char *levelstr = NULL;
@@ -1576,6 +1581,7 @@ static void getsize(
                     vstrextend(&levelstr, this_level, NULL);
                     g_free(this_level);
                 }
+                estimates_for_client = i;
                 spindlestr = g_strdup_printf("   <spindle>%d</spindle>\n",
                     dp->spindle);
                 o = xml_optionstr(dp, 0);
@@ -1692,9 +1698,10 @@ static void getsize(
                     amfree(includefree);
                     amfree(excludefree);
                 }
+                estimates_for_client = i;
             }
             if (s != NULL) {
-                estimates += i;
+                total_estimates += estimates_for_client;
                 strappend(req, s);
                 amfree(s);
                 if (est(dp)->state == DISK_DONE) {
@@ -1721,7 +1728,7 @@ static void getsize(
         amfree(qdevice);
     }
 
-    if(estimates == 0) {
+    if(total_estimates == 0) {
         amfree(req);
         hostp->up = HOST_DONE;
         return;
@@ -1730,7 +1737,7 @@ static void getsize(
     if (conf_etimeout < 0) {
         timeout = - conf_etimeout;
     } else {
-        timeout = estimates * conf_etimeout;
+        timeout = total_estimates * conf_etimeout;
     }
 
 send:

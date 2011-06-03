@@ -1,4 +1,9 @@
 2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: variable renaming and type change: "time_t
+	  estimates" is now "int total_estimates"; new local variable
+	  "estimates_for_client" as placeholder for "i" when appropriate
+
+2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/planner.c: use g_strdup_printf() instead of g_strjoin() to
 	  build various strings; remove 4 local variables in the process
 
