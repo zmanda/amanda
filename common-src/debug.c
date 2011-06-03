@@ -320,7 +320,6 @@ debug_setup_1(char *config, char *subdir)
 static void
 debug_unlink_old(void)
 {
-    char *tmpbuf;
     char *pname;
     size_t pname_len;
     char *e = NULL;
@@ -360,9 +359,8 @@ debug_unlink_old(void)
 	   || strcmp(entry->d_name + d_name_len - 6, ".debug") != 0) {
 	    continue;				/* not one of our debug files */
 	}
-	tmpbuf = g_strconcat(dbgdir, entry->d_name, NULL);
 	g_free(e);
-	e = tmpbuf;
+	e = g_strconcat(dbgdir, entry->d_name, NULL);
 	if(d_name_len < test_name_len) {
 	    /*
 	     * Create a "pretend" name based on the last modification
@@ -390,9 +388,8 @@ debug_unlink_old(void)
             while (TRUE) {
                 if (dbfilename == NULL)
                     break;
-                tmpbuf = g_strconcat(dbgdir, dbfilename, NULL);
                 g_free(s);
-                s = tmpbuf;
+                s = g_strconcat(dbgdir, dbfilename, NULL);
                 if (rename(e, s) == 0)
                     break;
                 if (errno == ENOENT)
@@ -525,7 +522,6 @@ debug_init(void)
 void
 debug_open(char *subdir)
 {
-    char *tmpbuf;
     int fd = -1;
     int i;
     char *s = NULL;
@@ -551,9 +547,8 @@ debug_open(char *subdir)
 	    /*NOTREACHED*/
 	}
 
-        tmpbuf = g_strconcat(dbgdir, db_name, NULL);
         g_free(s);
-        s = tmpbuf;
+        s = g_strconcat(dbgdir, db_name, NULL);
 
 	if ((fd = open(s, O_WRONLY|O_CREAT|O_EXCL|O_APPEND, 0640)) < 0) {
 	    if (errno != EEXIST) {
@@ -579,7 +574,6 @@ debug_reopen(
     char *	dbfilename,
     char *	annotation)
 {
-    char *tmpbuf;
     char *s = NULL;
     int fd;
 
@@ -596,9 +590,8 @@ debug_reopen(
     if (*dbfilename == '/') {
 	s = g_strdup(dbfilename);
     } else {
-	tmpbuf = g_strconcat(dbgdir, dbfilename, NULL);
 	g_free(s);
-	s = tmpbuf;
+	s = g_strconcat(dbgdir, dbfilename, NULL);
     }
     if ((fd = open(s, O_RDWR|O_APPEND)) < 0) {
 	error(_("cannot reopen debug file %s"), dbfilename);
@@ -618,7 +611,6 @@ debug_rename(
     char *config,
     char *subdir)
 {
-    char *tmpbuf;
     int fd = -1;
     int i;
     char *s = NULL;
@@ -638,9 +630,8 @@ debug_rename(
     /* Remove old log from destination directory */
     debug_unlink_old();
 
-    tmpbuf = g_strconcat(dbgdir, db_name, NULL);
     g_free(s);
-    s = tmpbuf;
+    s = g_strconcat(dbgdir, db_name, NULL);
 
     if (strcmp(db_filename, s) == 0) {
 	amfree(s);
@@ -683,9 +674,8 @@ debug_rename(
 	    dbprintf(_("Cannot create unique debug file name"));
 	    break;
 	}
-	tmpbuf = g_strconcat(dbgdir, db_name, NULL);
 	g_free(s);
-	s = tmpbuf;
+	s = g_strconcat(dbgdir, db_name, NULL);
     }
     if (i >= 0) {
 	/*
@@ -712,9 +702,8 @@ debug_rename(
 		break;
 	    }
 
-	    tmpbuf = g_strconcat(dbgdir, db_name, NULL);
 	    g_free(s);
-	    s = tmpbuf;
+	    s = g_strconcat(dbgdir, db_name, NULL);
 	    if ((fd = open(s, O_WRONLY|O_CREAT|O_EXCL|O_APPEND, 0640)) < 0) {
 		if (errno != EEXIST) {
 		    dbprintf(_("Cannot create debug file: %s"),

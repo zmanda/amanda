@@ -803,9 +803,8 @@ databuf_flush(
         g_free(new_filename);
         new_filename = tmpbuf;
 
-        tmpbuf = g_strconcat(new_filename, ".tmp", NULL);
         g_free(tmp_filename);
-        tmp_filename = tmpbuf;
+        tmp_filename = g_strconcat(new_filename, ".tmp", NULL);
 
         pc = strrchr(tmp_filename, '/');
         g_assert(pc != NULL); /* Only a problem if db->filename has no /. */

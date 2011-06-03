@@ -665,7 +665,6 @@ start_server_check(
     int		do_localchk,
     int		do_tapechk)
 {
-    char *tmpbuf;
     struct fs_usage fsusage;
     FILE *outf = NULL;
     pid_t pid G_GNUC_UNUSED;
@@ -1186,9 +1185,8 @@ start_server_check(
 	amfree(quoted);
 
 	if (logbad == 0 && testtape) {
-	    tmpbuf = g_strconcat(conf_logdir, "/amdump", NULL);
 	    g_free(logfile);
-	    logfile = tmpbuf;
+	    logfile = g_strconcat(conf_logdir, "/amdump", NULL);
 	    if (access(logfile, F_OK) == 0) {
 		testtape = 0;
 		logbad = 2;
@@ -1286,9 +1284,8 @@ start_server_check(
 	    hostp = origq.head->host;
 	    host = sanitise_filename(hostp->hostname);
 	    if(conf_infofile) {
-		tmpbuf = g_strconcat(conf_infofile, host, NULL);
 		g_free(hostinfodir);
-		hostinfodir = tmpbuf;
+		hostinfodir = g_strconcat(conf_infofile, host, NULL);
 		quoted = quote_string(hostinfodir);
 		if(stat(hostinfodir, &statbuf) == -1) {
 		    if (errno == ENOENT) {
@@ -1323,9 +1320,8 @@ start_server_check(
 		if(hostinfodir) {
 		    char *quotedif;
 
-		    tmpbuf = g_strconcat(hostinfodir, disk, NULL);
 		    g_free(diskdir);
-		    diskdir = tmpbuf;
+		    diskdir = g_strconcat(hostinfodir, disk, NULL);
 		    infofile = g_strjoin(NULL, diskdir, "/", "info", NULL);
 		    quoted = quote_string(diskdir);
 		    quotedif = quote_string(infofile);
@@ -1438,9 +1434,8 @@ start_server_check(
 			    amfree(quoted);
 			}
 			if(hostindexdir) {
-			    tmpbuf = g_strconcat(hostindexdir, disk, NULL);
 			    g_free(diskdir);
-			    diskdir = tmpbuf;
+			    diskdir = g_strconcat(hostindexdir, disk, NULL);
 			    quoted = quote_string(diskdir);
 			    if(stat(diskdir, &statbuf) == -1) {
 				if (errno == ENOENT) {

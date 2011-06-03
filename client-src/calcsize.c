@@ -386,7 +386,6 @@ traverse_dirs(
     char *	parent_dir,
     char *	include)
 {
-    char *tmpbuf;
     DIR *d;
     struct dirent *f;
     struct stat finfo;
@@ -425,9 +424,8 @@ traverse_dirs(
 
 	l = strlen(dirname);
 	if(l > 0 && dirname[l - 1] != '/') {
-	    tmpbuf = g_strconcat(dirname, "/", NULL);
 	    g_free(newbase);
-	    newbase = tmpbuf;
+	    newbase = g_strconcat(dirname, "/", NULL);
 	} else {
 	    g_free(newbase);
 	    newbase = g_strdup(dirname);
@@ -441,9 +439,8 @@ traverse_dirs(
 		continue;
 	    }
 
-	    tmpbuf = g_strconcat(newbase, f->d_name, NULL);
 	    g_free(newname);
-	    newname = tmpbuf;
+	    newname = g_strconcat(newbase, f->d_name, NULL);
 	    if(lstat(newname, &finfo) == -1) {
 		g_fprintf(stderr, "%s/%s: %s\n",
 			dirname, f->d_name, strerror(errno));
