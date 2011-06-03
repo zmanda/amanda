@@ -1187,6 +1187,7 @@ static int
 do_dump(
     struct databuf *db)
 {
+    char *tmpbuf;
     char *indexfile_tmp = NULL;
     char *indexfile_real = NULL;
     char level_str[NUM_STR_SIZE];
@@ -1211,18 +1212,18 @@ do_dump(
     time_str = get_timestamp_from_time(0);
     fn = sanitise_filename(diskname);
     errf_lines = 0;
-    errfname = newvstralloc(errfname,
-			    AMANDA_DBGDIR,
-			    "/log.error", NULL);
+
+    tmpbuf = g_strconcat(AMANDA_DBGDIR, "/log.error", NULL);
+    g_free(errfname);
+    errfname = tmpbuf;
+
     mkdir(errfname, 0700);
-    errfname = newvstralloc(errfname,
-			    AMANDA_DBGDIR,
-			    "/log.error/", hostname,
-			    ".", fn,
-			    ".", level_str,
-			    ".", time_str,
-			    ".errout",
-			    NULL);
+
+    tmpbuf = g_strconcat(AMANDA_DBGDIR, "/log.error/", hostname, ".", fn, ".",
+        level_str, ".", time_str, ".errout", NULL);
+    g_free(errfname);
+    errfname = tmpbuf;
+
     amfree(fn);
     amfree(time_str);
     if((errf = fopen(errfname, "w+")) == NULL) {

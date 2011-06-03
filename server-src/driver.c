@@ -176,6 +176,7 @@ main(
     int		argc,
     char **	argv)
 {
+    char *tmpbuf;
     disklist_t origq;
     disk_t *diskp;
     int dsk;
@@ -425,9 +426,11 @@ main(
 	       (long long)ha->disksize,
 	       (long long)(holdingdisk_get_chunksize(hdp)));
 
-	newdir = newvstralloc(newdir,
-			      holdingdisk_get_diskdir(hdp), "/", hd_driver_timestamp,
-			      NULL);
+	tmpbuf = g_strconcat(holdingdisk_get_diskdir(hdp), "/", hd_driver_timestamp,
+            NULL);
+	g_free(newdir);
+	newdir = tmpbuf;
+
 	if(!mkholdingdir(newdir)) {
 	    ha->disksize = (off_t)0;
 	}
@@ -3388,6 +3391,7 @@ assign_holdingdisk(
     assignedhd_t **	holdp,
     disk_t *		diskp)
 {
+    char *tmpbuf;
     int i, j, c, l=0;
     off_t size;
     char *sfn = sanitise_filename(diskp->name);
@@ -3439,12 +3443,12 @@ assign_holdingdisk(
 
     /* copy assignedhd_s to sched(diskp), adjust allocated_space */
     for( ; holdp[i]; i++ ) {
-	holdp[i]->destname = newvstralloc( holdp[i]->destname,
-					   holdingdisk_get_diskdir(holdp[i]->disk->hdisk), "/",
-					   hd_driver_timestamp, "/",
-					   diskp->host->hostname, ".",
-					   sfn, ".",
-					   lvl, NULL );
+	tmpbuf = g_strconcat(holdingdisk_get_diskdir(holdp[i]->disk->hdisk),
+            "/", hd_driver_timestamp, "/", diskp->host->hostname, ".", sfn, ".",
+            lvl, NULL );
+        g_free(holdp[i]->destname);
+        holdp[i]->destname = tmpbuf;
+
 	sched(diskp)->holdp[j++] = holdp[i];
 	holdp[i]->disk->allocated_space += holdp[i]->reserved;
 	size = (holdp[i]->reserved > size) ? (off_t)0 :

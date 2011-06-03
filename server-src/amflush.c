@@ -64,6 +64,7 @@ main(
     int		argc,
     char **	argv)
 {
+    char *tmpbuf;
     int foreground;
     int batch;
     int redirect;
@@ -427,14 +428,20 @@ main(
 	/* to avoid ``infinite'' loops if tapecycle is infinite */
 
 	g_snprintf(number,100,"%d",days);
-	errfilex = newvstralloc(errfilex, errfile, ".", number, NULL);
+	tmpbuf = g_strconcat(errfile, ".", number, NULL);
+	g_free(errfilex);
+	errfilex = tmpbuf;
 	while ( days < maxdays && stat(errfilex,&stat_buf)==0) {
 	    days++;
 	    g_snprintf(number,100,"%d",days);
-	    errfilex = newvstralloc(errfilex, errfile, ".", number, NULL);
+	    tmpbuf = g_strconcat(errfile, ".", number, NULL);
+	    g_free(errfilex);
+	    errfilex = tmpbuf;
 	}
 	g_snprintf(number,100,"%d",days);
-	errfilex = newvstralloc(errfilex, errfile, ".", number, NULL);
+	tmpbuf = g_strconcat(errfile, ".", number, NULL);
+	g_free(errfilex);
+	errfilex = tmpbuf;
 	nerrfilex = NULL;
 	while (days > 1) {
 	    amfree(nerrfilex);
@@ -448,7 +455,9 @@ main(
 	        /*NOTREACHED*/
 	    }
 	}
-	errfilex = newvstralloc(errfilex, errfile, ".1", NULL);
+	tmpbuf = g_strconcat(errfile, ".1", NULL);
+	g_free(errfilex);
+	errfilex = tmpbuf;
 	if (rename(errfile,errfilex) != 0) {
 	    error(_("cannot rename \"%s\" to \"%s\": %s"),
 		  errfilex, nerrfilex, strerror(errno));
