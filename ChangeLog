@@ -1,4 +1,8 @@
 2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
+	* client-src/rundump.c: build the command line using a GPtrArray
+	  instead of vstrextend()
+
+2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
 	* client-src/client_util.c: don't peek into the GPtrArray directly, but
 	  use g_ptr_array_free(..., FALSE) and g_strjoinv() instead; this
 	  removes a usage of vstrextend()
