@@ -1555,44 +1555,37 @@ static void getsize(
             if (am_has_feature(features, fe_req_xml)) {
                 char *levelstr = NULL;
                 char *spindlestr = NULL;
-                char level[NUM_STR_SIZE];
-                char spindle[NUM_STR_SIZE];
                 char *o;
                 char *l;
                 info_t info;
 
                 get_info(dp->host->hostname, dp->name, &info);
                 for(i = 0; i < MAX_LEVELS; i++) {
-                    char *server;
-                    int lev = est(dp)->estimate[i].level;
-                    if (lev == -1) break;
-                    g_snprintf(level, sizeof(level), "%d", lev);
+                    char *server, *this_level;
+                    int level = est(dp)->estimate[i].level;
+                    if (level == -1)
+                        break;
                     if (am_has_feature(features, fe_xml_level_server) &&
-                        server_can_do_estimate(dp, &info, lev)) {
+                        server_can_do_estimate(dp, &info, level)) {
                         server = "<server>YES</server>";
                     } else {
                         server = "";
                     }
-                    vstrextend(&levelstr, "  <level>",
-                               level, server,
-                               "</level>\n", NULL);
+                    this_level = g_strdup_printf("  <level>%d%s</level>\n",
+                        level, server);
+                    vstrextend(&levelstr, this_level, NULL);
+                    g_free(this_level);
                 }
-                g_snprintf(spindle, sizeof(spindle), "%d", dp->spindle);
-                spindlestr = g_strjoin(NULL, "  <spindle>",
-                                       spindle,
-                                       "</spindle>\n", NULL);
+                spindlestr = g_strdup_printf("   <spindle>%d</spindle>\n",
+                    dp->spindle);
                 o = xml_optionstr(dp, 0);
 
-                if (strcmp(dp->program,"DUMP") == 0 ||
-                    strcmp(dp->program,"GNUTAR") == 0) {
-                    l = g_strjoin(NULL, "<dle>\n",
-                                  "  <program>",
-                                  dp->program,
-                                  "</program>\n", NULL);
-                } else {
-                    l = g_strjoin(NULL, "<dle>\n",
-                                  "  <program>APPLICATION</program>\n",
-                                  NULL);
+                if (strcmp(dp->program,"DUMP") == 0
+                    || strcmp(dp->program,"GNUTAR") == 0)
+                    l = g_strdup_printf("<dle>\n  <program>%s</program>\n",
+                        dp->program);
+                else {
+                    l = g_strdup("<dle>\n  <program>APPLICATION</program>\n");
                     if (dp->application) {
                         application_t *application;
                         char *xml_app;
@@ -1631,14 +1624,11 @@ static void getsize(
                     char *include1 = "";
                     char *include2 = "";
                     char *includefree = NULL;
-                    char spindle[NUM_STR_SIZE];
-                    char level[NUM_STR_SIZE];
-                    int lev = est(dp)->estimate[i].level;
+                    int level = est(dp)->estimate[i].level;
 
-                    if(lev == -1) break;
+                    if(level == -1)
+                        break;
 
-                    g_snprintf(level, sizeof(level), "%d", lev);
-                    g_snprintf(spindle, sizeof(spindle), "%d", dp->spindle);
                     if (am_has_feature(features,
                                        fe_sendsize_req_options)){
                         exclude1 = " OPTIONS |";
@@ -1692,18 +1682,11 @@ static void getsize(
                     else
                         calcsize = "CALCSIZE ";
 
-                    l = g_strjoin(NULL, calcsize,
-                                  dp->program,
-                                  " ", qname,
-                                  " ", dp->device ? qdevice : "",
-                                  " ", level,
-                                  " ", est(dp)->estimate[i].dumpdate,
-                                  " ", spindle,
-                                  " ", exclude1, exclude2,
-                                  ((includefree != NULL) ? " " : ""),
-                                    include1, include2,
-                                  "\n",
-                                  NULL);
+                    l = g_strdup_printf("%s%s %s %s %d %s %d %s%s%s%s%s\n",
+                        calcsize, dp->program, qname, (dp->device) ? qdevice : "",
+                        level, est(dp)->estimate[i].dumpdate, dp->spindle, exclude1,
+                        exclude2, (includefree) ? " " : "", include1, include2);
+
                     strappend(s, l);
                     amfree(l);
                     amfree(includefree);

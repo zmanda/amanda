@@ -1,4 +1,8 @@
 2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: use g_strdup_printf() instead of g_strjoin() to
+	  build various strings; remove 4 local variables in the process
+
+2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/planner.c: write the beginning of a request using a GString
 	  instead of using g_strjoin()
 
