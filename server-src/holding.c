@@ -892,7 +892,6 @@ rename_tmp_holding(
     char *	holding_file,
     int		complete)
 {
-    char *tmpbuf;
     int fd;
     size_t buflen;
     char buffer[DISK_BLOCK_BYTES];
@@ -903,9 +902,8 @@ rename_tmp_holding(
     memset(buffer, 0, sizeof(buffer));
     filename = g_strdup(holding_file);
     while(filename != NULL && filename[0] != '\0') {
-	tmpbuf = g_strconcat(filename, ".tmp", NULL);
 	g_free(filename_tmp);
-	filename_tmp = tmpbuf;
+	filename_tmp = g_strconcat(filename, ".tmp", NULL);
 	if((fd = robust_open(filename_tmp,O_RDONLY, 0)) == -1) {
 	    dbprintf(_("rename_tmp_holding: open of %s failed: %s\n"),filename_tmp,strerror(errno));
 	    amfree(filename);

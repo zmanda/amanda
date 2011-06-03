@@ -455,9 +455,8 @@ main(
 	        /*NOTREACHED*/
 	    }
 	}
-	tmpbuf = g_strconcat(errfile, ".1", NULL);
 	g_free(errfilex);
-	errfilex = tmpbuf;
+	errfilex = g_strconcat(errfile, ".1", NULL);
 	if (rename(errfile,errfilex) != 0) {
 	    error(_("cannot rename \"%s\" to \"%s\": %s"),
 		  errfilex, nerrfilex, strerror(errno));
