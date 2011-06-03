@@ -43,7 +43,6 @@ int
 set_date(
     char *	date)
 {
-    char *tmpbuf;
     char *cmd = NULL;
 
     clear_dir_list();
@@ -56,9 +55,8 @@ set_date(
        is still valid at the new date, and if not set directory to
        mount_point */
     if (disk_path != NULL) {
-	tmpbuf = g_strconcat("OISD ", disk_path, NULL);
 	g_free(cmd);
-	cmd = tmpbuf;
+	cmd = g_strconcat("OISD ", disk_path, NULL);
 	if (exchange(cmd) == -1)
 	    exit(1);
 	if (server_happy())
@@ -83,7 +81,6 @@ void
 set_host(
     const char *	host)
 {
-    char *tmpbuf;
     char *cmd = NULL;
     struct hostent *hp;
     char **hostp;
@@ -113,9 +110,8 @@ set_host(
 	if ((hp = gethostbyname(uqhost)) != NULL) {
 	    host = hp->h_name;
 	    g_printf(_("Trying host %s ...\n"), host);
-	    tmpbuf = g_strconcat("HOST ", host, NULL);
 	    g_free(cmd);
-	    cmd = tmpbuf;
+	    cmd = g_strconcat("HOST ", host, NULL);
 	    if (converse(cmd) == -1)
 		exit(1);
 	    if(server_happy())
@@ -127,9 +123,8 @@ set_host(
 	        for (hostp = hp->h_aliases; (host = *hostp) != NULL; hostp++)
 	        {
 		    g_printf(_("Trying host %s ...\n"), host);
-		    tmpbuf = g_strconcat("HOST ", host, NULL);
 		    g_free(cmd);
-		    cmd = tmpbuf;
+		    cmd = g_strconcat("HOST ", host, NULL);
 		    if (converse(cmd) == -1)
 		        exit(1);
 		    if(server_happy())

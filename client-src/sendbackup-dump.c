@@ -231,9 +231,8 @@ start_backup(
 #endif							/* } */
     {
         char *progname;
-        tmpbuf = g_strconcat(amlibexecdir, "/", "rundump", NULL);
         g_free(cmd);
-        progname = cmd = tmpbuf;
+        progname = cmd = g_strconcat(amlibexecdir, "/", "rundump", NULL);
 	cmdX = cmd;
 	if (g_options->config)
 	    config = g_options->config;
@@ -273,10 +272,8 @@ start_backup(
     {
 char *progname;
 #ifdef USE_RUNDUMP
-        tmpbuf = g_strconcat(amlibexecdir, "/", "rundump",
-					    NULL);
         g_free(cmd);
-        progname = cmd = tmpbuf;
+        progname = cmd = g_strconcat(amlibexecdir, "/", "rundump", NULL);
 	cmdX = cmd;
 	if (g_options->config)
 	    config = g_options->config;
@@ -328,9 +325,8 @@ char *progname;
     if (1)
 #endif
     {
-        tmpbuf = g_strconcat(amlibexecdir, "/", "rundump", NULL);
         g_free(cmd);
-        cmd = tmpbuf;
+        cmd = g_strconcat(amlibexecdir, "/", "rundump", NULL);
 	cmdX = cmd;
 	if (g_options->config)
 	    config = g_options->config;

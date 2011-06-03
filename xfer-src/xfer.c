@@ -164,9 +164,8 @@ xfer_repr(
     unsigned int i;
 
     if (!xfer->repr) {
-	tmpbuf = g_strdup_printf("<Xfer@%p (", xfer);
 	g_free(xfer->repr);
-	xfer->repr = tmpbuf;
+	xfer->repr = g_strdup_printf("<Xfer@%p (", xfer);
 	for (i = 0; i < xfer->elements->len; i++) {
 	    XferElement *elt = (XferElement *)g_ptr_array_index(xfer->elements, i);
 	    tmpbuf = g_strconcat(xfer->repr, (i==0)?"":" -> ", xfer_element_repr(elt), NULL);

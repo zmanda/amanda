@@ -5173,7 +5173,6 @@ config_init(
     config_init_flags flags,
     char *arg_config_name)
 {
-    char *tmpbuf;
     if (!(flags & CONFIG_INIT_OVERLAY)) {
 	/* Clear out anything that's already in there */
 	config_uninit();
@@ -5204,9 +5203,8 @@ config_init(
     if ((flags & CONFIG_INIT_EXPLICIT_NAME) && arg_config_name) {
 	g_free(config_name);
 	config_name = g_strdup(arg_config_name);
-	tmpbuf = g_strconcat(CONFIG_DIR, "/", arg_config_name, NULL);
 	g_free(config_dir);
-	config_dir = tmpbuf;
+	config_dir = g_strconcat(CONFIG_DIR, "/", arg_config_name, NULL);
     } else if (flags & CONFIG_INIT_USE_CWD) {
         char * cwd;
         
@@ -5255,13 +5253,12 @@ config_init(
     /* If we have a config_dir, we can try reading something */
     if (config_dir) {
 	if (flags & CONFIG_INIT_CLIENT) {
-	    tmpbuf = g_strconcat(config_dir, "/amanda-client.conf", NULL);
 	    g_free(config_filename);
-	    config_filename = tmpbuf;
+	    config_filename = g_strconcat(config_dir, "/amanda-client.conf",
+                                          NULL);
 	} else {
-	    tmpbuf = g_strconcat(config_dir, "/amanda.conf", NULL);
 	    g_free(config_filename);
-	    config_filename = tmpbuf;
+	    config_filename = g_strconcat(config_dir, "/amanda.conf", NULL);
 	}
 
 	read_conffile(config_filename,

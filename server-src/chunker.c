@@ -110,7 +110,6 @@ main(
     int		argc,
     char **	argv)
 {
-    char *tmpbuf;
     static struct databuf db;
     struct cmdargs *cmdargs;
     int header_fd;
@@ -335,10 +334,9 @@ main(
 			 (long long)(dumpsize - (off_t)headersize));
 		g_snprintf(kps_str, sizeof(kps_str), "%3.1lf",
 				isnormal(rt) ? (double)dumpsize / rt : 0.0);
-		tmpbuf = g_strdup_printf("sec %s kb %s kps %s",
-				walltime_str(runtime), kb_str, kps_str);
 		g_free(errstr);
-		errstr = tmpbuf;
+		errstr = g_strdup_printf("sec %s kb %s kps %s",
+                                         walltime_str(runtime), kb_str, kps_str);
 		m = g_strdup_printf("[%s]", errstr);
 		q = quote_string(m);
 		amfree(m);
@@ -368,9 +366,9 @@ main(
 				hostname, qdiskname, chunker_timestamp, level, errstr);
 		    }
 		    else {
-			tmpbuf = g_strdup_printf(_("dumper returned %s"), cmdstr[cmdargs->cmd]);
 			g_free(errstr);
-			errstr = tmpbuf;
+			errstr = g_strdup_printf(_("dumper returned %s"),
+                                                 cmdstr[cmdargs->cmd]);
 			amfree(q);
 			m = g_strdup_printf("[%s]",errstr);
 			q = quote_string(m);
@@ -447,7 +445,6 @@ startup_chunker(
     int                *headersocket,
     int                *datasocket)
 {
-    char *tmpbuf;
     int header_fd, outfd;
     char *tmp_filename, *pc;
     in_port_t header_port, data_port;
@@ -461,10 +458,9 @@ startup_chunker(
     header_port = 0;
     data_port = 0;
     if ((result = resolve_hostname("localhost", 0, &res, NULL) != 0)) {
-	tmpbuf = g_strdup_printf(_("could not resolve localhost: %s"),
-			       gai_strerror(result));
 	g_free(errstr);
-	errstr = tmpbuf;
+	errstr = g_strdup_printf(_("could not resolve localhost: %s"),
+                                 gai_strerror(result));
 	return -1;
     }
     for (res_addr = res; res_addr != NULL; res_addr = res_addr->ai_next) {
@@ -670,7 +666,6 @@ static int
 databuf_flush(
     struct databuf *	db)
 {
-    char *tmpbuf;
     struct cmdargs *cmdargs = NULL;
     int rc = 1;
     size_t size_to_write;
@@ -799,13 +794,11 @@ databuf_flush(
 	 */
 	g_snprintf(sequence, sizeof(sequence), "%d", db->filename_seq);
 
-	tmpbuf = g_strconcat(db->filename, ".", sequence, NULL);
         g_free(new_filename);
-        new_filename = tmpbuf;
+        new_filename = g_strconcat(db->filename, ".", sequence, NULL);
 
-        tmpbuf = g_strconcat(new_filename, ".tmp", NULL);
         g_free(tmp_filename);
-        tmp_filename = tmpbuf;
+        tmp_filename = g_strconcat(new_filename, ".tmp", NULL);
 
         pc = strrchr(tmp_filename, '/');
         g_assert(pc != NULL); /* Only a problem if db->filename has no /. */

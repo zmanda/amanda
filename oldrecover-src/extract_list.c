@@ -578,7 +578,6 @@ void add_file(
     char *	path,
     char *	regex)
 {
-    char *tmpbuf;
     DIR_ITEM *ditem, lditem;
     char *path_on_disk = NULL;
     char *path_on_disk_slash = NULL;
@@ -655,9 +654,8 @@ void add_file(
 		ditem_path = g_strdup(ditem->path);
 		clean_pathname(ditem_path);
 
-		tmpbuf = g_strconcat("ORLD ", ditem_path, NULL);
 		g_free(cmd);
-		cmd = tmpbuf;
+		cmd = g_strconcat("ORLD ", ditem_path, NULL);
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
 		    amfree(ditem_path);
@@ -904,7 +902,6 @@ delete_file(
     char *	path,
     char *	regex)
 {
-    char *tmpbuf;
     DIR_ITEM *ditem, lditem;
     char *path_on_disk = NULL;
     char *path_on_disk_slash = NULL;
@@ -984,9 +981,8 @@ delete_file(
 		ditem_path = g_strdup(ditem->path);
 		clean_pathname(ditem_path);
 
-		tmpbuf = g_strconcat("ORLD ", ditem_path, NULL);
 		g_free(cmd);
-		cmd = tmpbuf;
+		cmd = g_strconcat("ORLD ", ditem_path, NULL);
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
 		    amfree(ditem_path);
@@ -1344,7 +1340,6 @@ extract_files_setup(
     char *	label,
     off_t	fsf)
 {
-    char *tmpbuf;
     struct servent *sp;
     in_port_t my_port, my_data_port;
     char *disk_regex = NULL;
@@ -1456,9 +1451,8 @@ extract_files_setup(
 	char buffer[32768] = "\0";
 
 	our_feature_string = am_feature_to_string(our_features);
-	tmpbuf = g_strconcat("FEATURES=", our_feature_string, NULL);
 	g_free(tt);
-	tt = tmpbuf;
+	tt = g_strconcat("FEATURES=", our_feature_string, NULL);
 	send_to_tape_server(tape_control_sock, tt);
 	if (read(tape_control_sock, buffer, sizeof(buffer)) <= 0) {
 	    error(_("Could not read features from control socket\n"));
@@ -1476,42 +1470,35 @@ extract_files_setup(
        am_has_feature(indexsrv_features, fe_amidxtaped_datestamp)) {
 
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_config)) {
-	    tmpbuf = g_strconcat("CONFIG=", config, NULL);
 	    g_free(tt);
-	    tt = tmpbuf;
+	    tt = g_strconcat("CONFIG=", config, NULL);
 	    send_to_tape_server(tape_control_sock, tt);
 	}
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_label) &&
 	   label && label[0] != '/') {
-	    tmpbuf = g_strconcat("LABEL=", label, NULL);
 	    g_free(tt);
-	    tt = tmpbuf;
+	    tt = g_strconcat("LABEL=", label, NULL);
 	    send_to_tape_server(tape_control_sock, tt);
 	}
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_fsf)) {
 	    char v_fsf[100];
 	    g_snprintf(v_fsf, 99, "%lld", (long long)fsf);
-	    tmpbuf = g_strconcat("FSF=", v_fsf, NULL);
 	    g_free(tt);
-	    tt = tmpbuf;
+	    tt = g_strconcat("FSF=", v_fsf, NULL);
 	    send_to_tape_server(tape_control_sock, tt);
 	}
 	send_to_tape_server(tape_control_sock, "HEADER");
-	tmpbuf = g_strconcat("DEVICE=", dump_device_name, NULL);
 	g_free(tt);
-	tt = tmpbuf;
+	tt = g_strconcat("DEVICE=", dump_device_name, NULL);
 	send_to_tape_server(tape_control_sock, tt);
-	tmpbuf = g_strconcat("HOST=", host_regex, NULL);
 	g_free(tt);
-	tt = tmpbuf;
+	tt = g_strconcat("HOST=", host_regex, NULL);
 	send_to_tape_server(tape_control_sock, tt);
-	tmpbuf = g_strconcat("DISK=", disk_regex, NULL);
 	g_free(tt);
-	tt = tmpbuf;
+	tt = g_strconcat("DISK=", disk_regex, NULL);
 	send_to_tape_server(tape_control_sock, tt);
-	tmpbuf = g_strconcat("DATESTAMP=", clean_datestamp, NULL);
 	g_free(tt);
-	tt = tmpbuf;
+	tt = g_strconcat("DATESTAMP=", clean_datestamp, NULL);
 	send_to_tape_server(tape_control_sock, tt);
 	send_to_tape_server(tape_control_sock, "END");
 	amfree(tt);

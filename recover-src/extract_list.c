@@ -825,7 +825,6 @@ add_file(
     char *	path,
     char *	regex)
 {
-    char *tmpbuf;
     DIR_ITEM *ditem, lditem;
     char *path_on_disk = NULL;
     char *cmd = NULL;
@@ -900,9 +899,8 @@ add_file(
 		clean_pathname(ditem_path);
 
 		qditem_path = quote_string(ditem_path);
-		tmpbuf = g_strconcat("ORLD ", qditem_path, NULL);
 		g_free(cmd);
-		cmd = tmpbuf;
+		cmd = g_strconcat("ORLD ", qditem_path, NULL);
 		amfree(qditem_path);
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
@@ -1193,7 +1191,6 @@ delete_file(
     char *	path,
     char *	regex)
 {
-    char *tmpbuf;
     DIR_ITEM *ditem, lditem;
     char *path_on_disk = NULL;
     char *cmd = NULL;
@@ -1271,9 +1268,8 @@ delete_file(
 		clean_pathname(ditem_path);
 
 		qditem_path = quote_string(ditem_path);
-		tmpbuf = g_strconcat("ORLD ", qditem_path, NULL);
 		g_free(cmd);
-		cmd = tmpbuf;
+		cmd = g_strconcat("ORLD ", qditem_path, NULL);
 		amfree(qditem_path);
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
@@ -1659,7 +1655,6 @@ extract_files_setup(
     char *	label,
     off_t	fsf)
 {
-    char *tmpbuf;
     char *disk_regex = NULL;
     char *host_regex = NULL;
     char *clean_datestamp, *ch, *ch1;
@@ -1704,9 +1699,8 @@ extract_files_setup(
     /* XXX assumes that index server and tape server are equivalent, ew */
 
     if(am_has_feature(indexsrv_features, fe_amidxtaped_exchange_features)){
-	tmpbuf = g_strconcat("FEATURES=", our_features_string, NULL);
 	g_free(tt);
-	tt = tmpbuf;
+	tt = g_strconcat("FEATURES=", our_features_string, NULL);
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	get_amidxtaped_line();
 	if(strncmp_const(amidxtaped_line,"FEATURES=") == 0) {
@@ -1731,42 +1725,35 @@ extract_files_setup(
        am_has_feature(indexsrv_features, fe_amidxtaped_datestamp)) {
 
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_config)) {
-	    tmpbuf = g_strconcat("CONFIG=", get_config_name(), NULL);
 	    g_free(tt);
-	    tt = tmpbuf;
+	    tt = g_strconcat("CONFIG=", get_config_name(), NULL);
 	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	}
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_label) &&
 	   label && label[0] != '/') {
-	    tmpbuf = g_strconcat("LABEL=", label, NULL);
 	    g_free(tt);
-	    tt = tmpbuf;
+	    tt = g_strconcat("LABEL=", label, NULL);
 	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	}
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_fsf)) {
 	    char v_fsf[100];
 	    g_snprintf(v_fsf, 99, "%lld", (long long)fsf);
-	    tmpbuf = g_strconcat("FSF=", v_fsf, NULL);
 	    g_free(tt);
-	    tt = tmpbuf;
+	    tt = g_strconcat("FSF=", v_fsf, NULL);
 	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	}
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, "HEADER");
-	tmpbuf = g_strconcat("DEVICE=", dump_device_name, NULL);
 	g_free(tt);
-	tt = tmpbuf;
+	tt = g_strconcat("DEVICE=", dump_device_name, NULL);
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
-	tmpbuf = g_strconcat("HOST=", host_regex, NULL);
 	g_free(tt);
-	tt = tmpbuf;
+	tt = g_strconcat("HOST=", host_regex, NULL);
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
-	tmpbuf = g_strconcat("DISK=", disk_regex, NULL);
 	g_free(tt);
-	tt = tmpbuf;
+	tt = g_strconcat("DISK=", disk_regex, NULL);
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
-	tmpbuf = g_strconcat("DATESTAMP=", clean_datestamp, NULL);
 	g_free(tt);
-	tt = tmpbuf;
+	tt = g_strconcat("DATESTAMP=", clean_datestamp, NULL);
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, "END");
 	amfree(tt);
@@ -2439,7 +2426,6 @@ amidxtaped_response(
     pkt_t *		pkt,
     security_handle_t *	sech)
 {
-    char *tmpbuf;
     int ports[NSTREAMS], *response_error = datap;
     guint i;
     char *p;
@@ -2451,9 +2437,9 @@ amidxtaped_response(
     memset(ports, -1, sizeof(ports));
 
     if (pkt == NULL) {
-	tmpbuf = g_strdup_printf(_("[request failed: %s]"), security_geterror(sech));
 	g_free(errstr);
-	errstr = tmpbuf;
+	errstr = g_strdup_printf(_("[request failed: %s]"),
+                                 security_geterror(sech));
 	*response_error = 1;
 	return;
     }
@@ -2470,9 +2456,8 @@ amidxtaped_response(
 
 	tok = strtok(NULL, "\n");
 	if (tok != NULL) {
-	    tmpbuf = g_strconcat("NAK: ", tok, NULL);
 	    g_free(errstr);
-	    errstr = tmpbuf;
+	    errstr = g_strconcat("NAK: ", tok, NULL);
 	    *response_error = 1;
 	} else {
 bad_nak:
@@ -2484,10 +2469,9 @@ bad_nak:
     }
 
     if (pkt->type != P_REP) {
-	tmpbuf = g_strdup_printf(_("received strange packet type %s: %s"),
-			      pkt_type2str(pkt->type), pkt->body);
 	g_free(errstr);
-	errstr = tmpbuf;
+	errstr = g_strdup_printf(_("received strange packet type %s: %s"),
+                                 pkt_type2str(pkt->type), pkt->body);
 	*response_error = 1;
 	return;
     }
@@ -2591,10 +2575,9 @@ bad_nak:
 	amidxtaped_streams[i].fd = security_stream_client(sech, ports[i]);
 	dbprintf(_("amidxtaped_streams[%d].fd = %p\n"),i, amidxtaped_streams[i].fd);
 	if (amidxtaped_streams[i].fd == NULL) {
-	    tmpbuf = g_strdup_printf(_("[could not connect %s stream: %s]"),
-                amidxtaped_streams[i].name, security_geterror(sech));
             g_free(errstr);
-            errstr = tmpbuf;
+            errstr = g_strdup_printf(_("[could not connect %s stream: %s]"),
+                                     amidxtaped_streams[i].name, security_geterror(sech));
 	    goto connect_error;
 	}
     }
@@ -2605,11 +2588,9 @@ bad_nak:
 	if (amidxtaped_streams[i].fd == NULL)
 	    continue;
 	if (security_stream_auth(amidxtaped_streams[i].fd) < 0) {
-	    tmpbuf = g_strdup_printf(_("[could not authenticate %s stream: %s]"),
-		amidxtaped_streams[i].name,
-		security_stream_geterror(amidxtaped_streams[i].fd));
             g_free(errstr);
-            errstr = tmpbuf;
+            errstr = g_strdup_printf(_("[could not authenticate %s stream: %s]"),
+                                     amidxtaped_streams[i].name, security_stream_geterror(amidxtaped_streams[i].fd));
 	    goto connect_error;
 	}
     }
@@ -2635,9 +2616,9 @@ bad_nak:
 
 parse_error:
     if (extra) {
-	tmpbuf = g_strdup_printf(_("[parse of reply message failed: %s]"), extra);
 	g_free(errstr);
-	errstr = tmpbuf;
+	errstr = g_strdup_printf(_("[parse of reply message failed: %s]"),
+                                 extra);
     } else {
 	g_free(errstr);
 	errstr = g_strdup("[parse of reply message failed: (no additional information)");
@@ -2720,16 +2701,14 @@ read_amidxtaped_data(
     void *	buf,
     ssize_t	size)
 {
-    char *tmpbuf;
     ctl_data_t *ctl_data = (ctl_data_t *)cookie;
     assert(cookie != NULL);
 
     if (size < 0) {
-	tmpbuf = g_strconcat(_("amidxtaped read: "),
+	g_free(errstr);
+	errstr = g_strconcat(_("amidxtaped read: "),
                              security_stream_geterror(amidxtaped_streams[DATAFD].fd),
                              NULL);
-	g_free(errstr);
-	errstr = tmpbuf;
 	return;
     }
 

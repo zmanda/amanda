@@ -315,7 +315,6 @@ main(
     int		argc,
     char **	argv)
 {
-    char *tmpbuf;
     static struct databuf db;
     struct cmdargs *cmdargs = NULL;
     int outfd = -1;
@@ -557,10 +556,9 @@ main(
 
 	    /* Double-check that 'localhost' resolves properly */
 	    if ((res = resolve_hostname("localhost", 0, NULL, NULL) != 0)) {
-		tmpbuf = g_strdup_printf(_("could not resolve localhost: %s"),
-                    gai_strerror(res));
                 g_free(errstr);
-                errstr = tmpbuf;
+                errstr = g_strdup_printf(_("could not resolve localhost: %s"),
+                                         gai_strerror(res));
 		q = quote_string(errstr);
 		putresult(FAILED, "%s %s\n", handle, q);
 		log_add(L_FAIL, "%s %s %s %d [%s]", hostname, qdiskname,
@@ -576,9 +574,8 @@ main(
 				  STREAM_BUFSIZE, 0, NULL, 0);
 	    if (outfd == -1) {
 		
-		tmpbuf = g_strdup_printf(_("port open: %s"), strerror(errno));
 		g_free(errstr);
-		errstr = tmpbuf;
+		errstr = g_strdup_printf(_("port open: %s"), strerror(errno));
 		q = quote_string(errstr);
 		putresult(FAILED, "%s %s\n", handle, q);
 		log_add(L_FAIL, "%s %s %s %d [%s]", hostname, qdiskname,
@@ -844,7 +841,6 @@ static void
 process_dumpline(
     const char *	str)
 {
-    char *tmpbuf;
     char *buf, *tok;
 
     buf = g_strdup(str);
@@ -902,10 +898,8 @@ process_dumpline(
 	    tok = strtok(NULL, "");
 	    if (!errstr) { /* report first error line */
 		if (tok == NULL || *tok != '[') {
-		    tmpbuf = g_strdup_printf(_("bad remote error: %s"),
-					   str);
 		    g_free(errstr);
-		    errstr = tmpbuf;
+		    errstr = g_strdup_printf(_("bad remote error: %s"), str);
 		} else {
 		    char *enderr;
 
@@ -1193,7 +1187,6 @@ static int
 do_dump(
     struct databuf *db)
 {
-    char *tmpbuf;
     char *indexfile_tmp = NULL;
     char *indexfile_real = NULL;
     char level_str[NUM_STR_SIZE];
@@ -1219,24 +1212,21 @@ do_dump(
     fn = sanitise_filename(diskname);
     errf_lines = 0;
 
-    tmpbuf = g_strconcat(AMANDA_DBGDIR, "/log.error", NULL);
     g_free(errfname);
-    errfname = tmpbuf;
+    errfname = g_strconcat(AMANDA_DBGDIR, "/log.error", NULL);
 
     mkdir(errfname, 0700);
 
-    tmpbuf = g_strconcat(AMANDA_DBGDIR, "/log.error/", hostname, ".", fn, ".",
-        level_str, ".", time_str, ".errout", NULL);
     g_free(errfname);
-    errfname = tmpbuf;
+    errfname = g_strconcat(AMANDA_DBGDIR, "/log.error/", hostname, ".", fn, ".",
+        level_str, ".", time_str, ".errout", NULL);
 
     amfree(fn);
     amfree(time_str);
     if((errf = fopen(errfname, "w+")) == NULL) {
-	tmpbuf = g_strdup_printf("errfile open \"%s\": %s",
-			      errfname, strerror(errno));
 	g_free(errstr);
-	errstr = tmpbuf;
+	errstr = g_strdup_printf("errfile open \"%s\": %s",
+                                 errfname, strerror(errno));
 	amfree(errfname);
 	goto failed;
     }
@@ -1246,20 +1236,18 @@ do_dump(
 	indexfile_tmp = g_strconcat(indexfile_real, ".tmp", NULL);
 
 	if (mkpdir(indexfile_tmp, 0755, (uid_t)-1, (gid_t)-1) == -1) {
-            tmpbuf = g_strdup_printf(_("err create %s: %s"), indexfile_tmp,
-                strerror(errno));
             g_free(errstr);
-            errstr = tmpbuf;
+            errstr = g_strdup_printf(_("err create %s: %s"),
+                                     indexfile_tmp, strerror(errno));
             amfree(indexfile_real);
             amfree(indexfile_tmp);
             goto failed;
 	}
 	indexout = open(indexfile_tmp, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 	if (indexout == -1) {
-	    tmpbuf = g_strdup_printf(_("err open %s: %s"),
-			indexfile_tmp, strerror(errno));
 	    g_free(errstr);
-	    errstr = tmpbuf;
+	    errstr = g_strdup_printf(_("err open %s: %s"),
+                                     indexfile_tmp, strerror(errno));
 	    goto failed;
 	} else {
 	    if (runcompress(indexout, &indexpid, COMP_BEST, "index compress") < 0) {
@@ -1485,17 +1473,15 @@ read_mesgfd(
     void *	buf,
     ssize_t	size)
 {
-    char *tmpbuf;
     struct databuf *db = cookie;
 
     assert(db != NULL);
 
     switch (size) {
     case -1:
-	tmpbuf = g_strdup_printf(_("mesg read: %s"),
-	    security_stream_geterror(streams[MESGFD].fd));
 	g_free(errstr);
-	errstr = tmpbuf;
+	errstr = g_strdup_printf(_("mesg read: %s"),
+                                 security_stream_geterror(streams[MESGFD].fd));
 	dump_result = 2;
 	stop_dump();
 	return;
@@ -1546,10 +1532,9 @@ read_mesgfd(
 	/* time to do the header */
 	finish_tapeheader(&file);
 	if (write_tapeheader(db->fd, &file)) {
-	    tmpbuf = g_strdup_printf(_("write_tapeheader: %s"),
-				  strerror(errno));
 	    g_free(errstr);
-	    errstr = tmpbuf;
+	    errstr = g_strdup_printf(_("write_tapeheader: %s"),
+                                     strerror(errno));
 	    dump_result = 2;
 	    stop_dump();
 	    dumpfile_free_data(&file);
@@ -1562,10 +1547,9 @@ read_mesgfd(
 	    db->fd = stream_client(data_host, data_port,
 				   STREAM_BUFSIZE, 0, NULL, 0);
 	    if (db->fd == -1) {
-		tmpbuf = g_strdup_printf(_("Can't open data output stream: %s"),
-                    strerror(errno));
                 g_free(errstr);
-                errstr = tmpbuf;
+                errstr = g_strdup_printf(_("Can't open data output stream: %s"),
+                                         strerror(errno));
 		dump_result = 2;
 		stop_dump();
 		return;
@@ -1614,7 +1598,6 @@ read_datafd(
     void *	buf,
     ssize_t	size)
 {
-    char *tmpbuf;
     struct databuf *db = cookie;
 
     assert(db != NULL);
@@ -1623,10 +1606,9 @@ read_datafd(
      * The read failed.  Error out
      */
     if (size < 0) {
-	tmpbuf = g_strdup_printf(_("data read: %s"),
-	    security_stream_geterror(streams[DATAFD].fd));
 	g_free(errstr);
-	errstr = tmpbuf;
+	errstr = g_strdup_printf(_("data read: %s"),
+                                 security_stream_geterror(streams[DATAFD].fd));
 	dump_result = 2;
 	aclose(db->fd);
 	stop_dump();
@@ -1662,9 +1644,8 @@ read_datafd(
     assert(buf != NULL);
     if (databuf_write(db, buf, (size_t)size) < 0) {
 	int save_errno = errno;
-	tmpbuf = g_strdup_printf(_("data write: %s"), strerror(save_errno));
 	g_free(errstr);
-	errstr = tmpbuf;
+	errstr = g_strdup_printf(_("data write: %s"), strerror(save_errno));
 	dump_result = 2;
 	stop_dump();
 	return;
@@ -1687,17 +1668,15 @@ read_indexfd(
     void *	buf,
     ssize_t	size)
 {
-    char *tmpbuf;
     int fd;
 
     assert(cookie != NULL);
     fd = *(int *)cookie;
 
     if (size < 0) {
-	tmpbuf = g_strdup_printf(_("index read: %s"),
-	    security_stream_geterror(streams[INDEXFD].fd));
 	g_free(errstr);
-	errstr = tmpbuf;
+	errstr = g_strdup_printf(_("index read: %s"),
+                                 security_stream_geterror(streams[INDEXFD].fd));
 	dump_result = 2;
 	stop_dump();
 	return;
@@ -1893,7 +1872,6 @@ runcompress(
     comp_t	comptype,
     char       *name)
 {
-    char *tmpbuf;
     int outpipe[2], rval;
     int errpipe[2];
     filter_t *filter;
@@ -1903,25 +1881,22 @@ runcompress(
 
     /* outpipe[0] is pipe's stdin, outpipe[1] is stdout. */
     if (pipe(outpipe) < 0) {
-	tmpbuf = g_strdup_printf(_("pipe: %s"), strerror(errno));
 	g_free(errstr);
-	errstr = tmpbuf;
+	errstr = g_strdup_printf(_("pipe: %s"), strerror(errno));
 	return (-1);
     }
 
     /* errpipe[0] is pipe's output, outpipe[1] is input. */
     if (pipe(errpipe) < 0) {
-	tmpbuf = g_strdup_printf(_("pipe: %s"), strerror(errno));
 	g_free(errstr);
-	errstr = tmpbuf;
+	errstr = g_strdup_printf(_("pipe: %s"), strerror(errno));
 	return (-1);
     }
 
     switch (*pid = fork()) {
     case -1:
-	tmpbuf = g_strdup_printf(_("couldn't fork: %s"), strerror(errno));
 	g_free(errstr);
-	errstr = tmpbuf;
+	errstr = g_strdup_printf(_("couldn't fork: %s"), strerror(errno));
 	aclose(outpipe[0]);
 	aclose(outpipe[1]);
 	aclose(errpipe[0]);
@@ -1930,9 +1905,8 @@ runcompress(
     default:
 	rval = dup2(outpipe[1], outfd);
 	if (rval < 0) {
-	    tmpbuf = g_strdup_printf(_("couldn't dup2: %s"), strerror(errno));
 	    g_free(errstr);
-	    errstr = tmpbuf;
+	    errstr = g_strdup_printf(_("couldn't dup2: %s"), strerror(errno));
 	}
 	aclose(outpipe[1]);
 	aclose(outpipe[0]);
@@ -1999,7 +1973,6 @@ runencrypt(
     pid_t *	pid,
     encrypt_t	encrypttype)
 {
-    char *tmpbuf;
     int outpipe[2], rval;
     int errpipe[2];
     filter_t *filter;
@@ -2009,25 +1982,22 @@ runencrypt(
 
     /* outpipe[0] is pipe's stdin, outpipe[1] is stdout. */
     if (pipe(outpipe) < 0) {
-	tmpbuf = g_strdup_printf(_("pipe: %s"), strerror(errno));
 	g_free(errstr);
-	errstr = tmpbuf;
+	errstr = g_strdup_printf(_("pipe: %s"), strerror(errno));
 	return (-1);
     }
 
     /* errpipe[0] is pipe's output, outpipe[1] is input. */
     if (pipe(errpipe) < 0) {
-	tmpbuf = g_strdup_printf(_("pipe: %s"), strerror(errno));
 	g_free(errstr);
-	errstr = tmpbuf;
+	errstr = g_strdup_printf(_("pipe: %s"), strerror(errno));
 	return (-1);
     }
 
     switch (*pid = fork()) {
     case -1:
-	tmpbuf = g_strdup_printf(_("couldn't fork: %s"), strerror(errno));
 	g_free(errstr);
-	errstr = tmpbuf;
+	errstr = g_strdup_printf(_("couldn't fork: %s"), strerror(errno));
 	aclose(outpipe[0]);
 	aclose(outpipe[1]);
 	aclose(errpipe[0]);
@@ -2036,9 +2006,8 @@ runencrypt(
     default:
 	rval = dup2(outpipe[1], outfd);
 	if (rval < 0) {
-	    tmpbuf = g_strdup_printf(_("couldn't dup2: %s"), strerror(errno));
 	    g_free(errstr);
-	    errstr = tmpbuf;
+	    errstr = g_strdup_printf(_("couldn't dup2: %s"), strerror(errno));
 	}
 	aclose(outpipe[1]);
 	aclose(outpipe[0]);
@@ -2093,7 +2062,6 @@ sendbackup_response(
     pkt_t *		pkt,
     security_handle_t *	sech)
 {
-    char *tmpbuf;
     int ports[NSTREAMS], *response_error = datap;
     guint i;
     char *p;
@@ -2106,10 +2074,9 @@ sendbackup_response(
     security_close_connection(sech, hostname);
 
     if (pkt == NULL) {
-	tmpbuf = g_strdup_printf(_("[request failed: %s]"),
-	    security_geterror(sech));
 	g_free(errstr);
-	errstr = tmpbuf;
+	errstr = g_strdup_printf(_("[request failed: %s]"),
+                                 security_geterror(sech));
 	*response_error = 1;
 	return;
     }
@@ -2127,9 +2094,8 @@ sendbackup_response(
 
 	tok = strtok(NULL, "\n");
 	if (tok != NULL) {
-	    tmpbuf = g_strdup_printf("NAK: %s", tok);
 	    g_free(errstr);
-	    errstr = tmpbuf;
+	    errstr = g_strdup_printf("NAK: %s", tok);
 	    *response_error = 1;
 	} else {
 bad_nak:
@@ -2141,10 +2107,9 @@ bad_nak:
     }
 
     if (pkt->type != P_REP) {
-	tmpbuf = g_strdup_printf(_("received strange packet type %s: %s"),
-	    pkt_type2str(pkt->type), pkt->body);
 	g_free(errstr);
-	errstr = tmpbuf;
+	errstr = g_strdup_printf(_("received strange packet type %s: %s"),
+                                 pkt_type2str(pkt->type), pkt->body);
 	*response_error = 1;
 	return;
     }
@@ -2168,9 +2133,8 @@ bad_nak:
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL)
 		tok = _("[bogus error packet]");
-	    tmpbuf = g_strdup_printf("%s", tok);
 	    g_free(errstr);
-	    errstr = tmpbuf;
+	    errstr = g_strdup_printf("%s", tok);
 	    *response_error = 2;
 	    return;
 	}
@@ -2222,10 +2186,9 @@ bad_nak:
 		       *u = '\0';
 		    am_release_feature_set(their_features);
 		    if((their_features = am_string_to_feature(tok)) == NULL) {
-                        tmpbuf = g_strdup_printf(_("OPTIONS: bad features value: %s"),
-                            tok);
                         g_free(errstr);
-                        errstr = tmpbuf;
+                        errstr = g_strdup_printf(_("OPTIONS: bad features value: %s"),
+                                                 tok);
 			goto parse_error;
 		    }
 		    if (u)
@@ -2252,10 +2215,9 @@ bad_nak:
 	    continue;
 	streams[i].fd = security_stream_client(sech, ports[i]);
 	if (streams[i].fd == NULL) {
-	    tmpbuf = g_strdup_printf(_("[could not connect %s stream: %s]"),
-		streams[i].name, security_geterror(sech));
             g_free(errstr);
-            errstr = tmpbuf;
+            errstr = g_strdup_printf(_("[could not connect %s stream: %s]"),
+                                     streams[i].name, security_geterror(sech));
 	    goto connect_error;
 	}
     }
@@ -2267,10 +2229,9 @@ bad_nak:
 	if (streams[i].fd == NULL)
 	    continue;
 	if (security_stream_auth(streams[i].fd) < 0) {
-	    tmpbuf = g_strdup_printf(_("[could not authenticate %s stream: %s]"),
-		streams[i].name, security_stream_geterror(streams[i].fd));
             g_free(errstr);
-            errstr = tmpbuf;
+            errstr = g_strdup_printf(_("[could not authenticate %s stream: %s]"),
+                                     streams[i].name, security_stream_geterror(streams[i].fd));
 	    goto connect_error;
 	}
     }
@@ -2290,10 +2251,9 @@ bad_nak:
     return;
 
 parse_error:
-    tmpbuf = g_strdup_printf(_("[parse of reply message failed: %s]"),
-        extra ? extra : _("(no additional information)"));
     g_free(errstr);
-    errstr = tmpbuf;
+    errstr = g_strdup_printf(_("[parse of reply message failed: %s]"),
+                             extra ? extra : _("(no additional information)"));
     amfree(extra);
     *response_error = 2;
     return;
@@ -2349,7 +2309,6 @@ startup_dump(
     const char *auth,
     const char *options)
 {
-    char *tmpbuf;
     char level_string[NUM_STR_SIZE];
     char *req = NULL;
     char *authopt;
@@ -2446,9 +2405,9 @@ startup_dump(
     dbprintf(_("send request:\n----\n%s\n----\n\n"), req);
     secdrv = security_getdriver(auth);
     if (secdrv == NULL) {
-	tmpbuf = g_strdup_printf(_("[could not find security driver '%s']"), auth);
 	g_free(errstr);
-	errstr = tmpbuf;
+	errstr = g_strdup_printf(_("[could not find security driver '%s']"),
+                                 auth);
 	amfree(req);
 	return 2;
     }
