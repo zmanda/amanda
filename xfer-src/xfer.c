@@ -164,7 +164,9 @@ xfer_repr(
     unsigned int i;
 
     if (!xfer->repr) {
-	xfer->repr = newvstrallocf(xfer->repr, "<Xfer@%p (", xfer);
+	tmpbuf = g_strdup_printf("<Xfer@%p (", xfer);
+	g_free(xfer->repr);
+	xfer->repr = tmpbuf;
 	for (i = 0; i < xfer->elements->len; i++) {
 	    XferElement *elt = (XferElement *)g_ptr_array_index(xfer->elements, i);
 	    tmpbuf = g_strconcat(xfer->repr, (i==0)?"":" -> ", xfer_element_repr(elt), NULL);
@@ -506,9 +508,12 @@ link_elements(
 	    g_free(linkage_str);
 	    linkage_str = tmpbuf;
 	}
-	else
-	    linkage_str = newvstrallocf(linkage_str, "%s -(%s)-> %s",
+	else {
+	    tmpbuf = g_strdup_printf("%s -(%s)-> %s",
 		linkage_str, xfer_mech_name(elt->input_mech), xfer_element_repr(elt));
+	    g_free(linkage_str);
+	    linkage_str = tmpbuf;
+	}
     }
     g_debug("%s", linkage_str);
     amfree(linkage_str);

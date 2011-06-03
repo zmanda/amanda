@@ -298,6 +298,7 @@ runssh(
     const char *	ssh_keys,
     const char *        client_port)
 {
+    char *tmpbuf;
     int rpipe[2], wpipe[2];
     char *xamandad_path = (char *)amandad_path;
     char *xclient_username = (char *)client_username;
@@ -307,7 +308,9 @@ runssh(
     memset(rpipe, -1, sizeof(rpipe));
     memset(wpipe, -1, sizeof(wpipe));
     if (pipe(rpipe) < 0 || pipe(wpipe) < 0) {
-	rc->errmsg = newvstrallocf(rc->errmsg, _("pipe: %s"), strerror(errno));
+	tmpbuf = g_strdup_printf(_("pipe: %s"), strerror(errno));
+	g_free(rc->errmsg);
+	rc->errmsg = tmpbuf;
 	return (-1);
     }
 
@@ -331,7 +334,9 @@ runssh(
 
     switch (rc->pid = fork()) {
     case -1:
-	rc->errmsg = newvstrallocf(rc->errmsg, _("fork: %s"), strerror(errno));
+	tmpbuf = g_strdup_printf(_("fork: %s"), strerror(errno));
+	g_free(rc->errmsg);
+	rc->errmsg = tmpbuf;
 	aclose(rpipe[0]);
 	aclose(rpipe[1]);
 	aclose(wpipe[0]);

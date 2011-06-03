@@ -2451,7 +2451,9 @@ amidxtaped_response(
     memset(ports, -1, sizeof(ports));
 
     if (pkt == NULL) {
-	errstr = newvstrallocf(errstr, _("[request failed: %s]"), security_geterror(sech));
+	tmpbuf = g_strdup_printf(_("[request failed: %s]"), security_geterror(sech));
+	g_free(errstr);
+	errstr = tmpbuf;
 	*response_error = 1;
 	return;
     }
@@ -2482,8 +2484,10 @@ bad_nak:
     }
 
     if (pkt->type != P_REP) {
-	errstr = newvstrallocf(errstr, _("received strange packet type %s: %s"),
+	tmpbuf = g_strdup_printf(_("received strange packet type %s: %s"),
 			      pkt_type2str(pkt->type), pkt->body);
+	g_free(errstr);
+	errstr = tmpbuf;
 	*response_error = 1;
 	return;
     }
@@ -2587,10 +2591,10 @@ bad_nak:
 	amidxtaped_streams[i].fd = security_stream_client(sech, ports[i]);
 	dbprintf(_("amidxtaped_streams[%d].fd = %p\n"),i, amidxtaped_streams[i].fd);
 	if (amidxtaped_streams[i].fd == NULL) {
-	    errstr = newvstrallocf(errstr,\
-			_("[could not connect %s stream: %s]"),
-			amidxtaped_streams[i].name,
-			security_geterror(sech));
+	    tmpbuf = g_strdup_printf(_("[could not connect %s stream: %s]"),
+                amidxtaped_streams[i].name, security_geterror(sech));
+            g_free(errstr);
+            errstr = tmpbuf;
 	    goto connect_error;
 	}
     }
@@ -2601,10 +2605,11 @@ bad_nak:
 	if (amidxtaped_streams[i].fd == NULL)
 	    continue;
 	if (security_stream_auth(amidxtaped_streams[i].fd) < 0) {
-	    errstr = newvstrallocf(errstr,
-		_("[could not authenticate %s stream: %s]"),
+	    tmpbuf = g_strdup_printf(_("[could not authenticate %s stream: %s]"),
 		amidxtaped_streams[i].name,
 		security_stream_geterror(amidxtaped_streams[i].fd));
+            g_free(errstr);
+            errstr = tmpbuf;
 	    goto connect_error;
 	}
     }
@@ -2630,8 +2635,9 @@ bad_nak:
 
 parse_error:
     if (extra) {
-	errstr = newvstrallocf(errstr,
-			  _("[parse of reply message failed: %s]"), extra);
+	tmpbuf = g_strdup_printf(_("[parse of reply message failed: %s]"), extra);
+	g_free(errstr);
+	errstr = tmpbuf;
     } else {
 	g_free(errstr);
 	errstr = g_strdup("[parse of reply message failed: (no additional information)");
