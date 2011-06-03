@@ -1406,7 +1406,6 @@ static void get_estimates(void)
 static void getsize(
     am_host_t *hostp)
 {
-    char	number[NUM_STR_SIZE], *req;
     disk_t *	dp;
     int		i;
     time_t	estimates, timeout;
@@ -1417,8 +1416,10 @@ static void getsize(
     estimate_t     estimate;
     estimatelist_t el;
     int nb_client = 0, nb_server = 0;
-    gboolean has_features, has_hostname, has_maxdumps, has_config;
+    gboolean has_features, has_maxdumps, has_hostname, has_config;
     am_feature_t *features;
+    GString *reqbuf;
+    char *req;
 
     g_assert(hostp->disks != NULL);
 
@@ -1446,27 +1447,28 @@ static void getsize(
     features = hostp->features;
 
     has_features = am_has_feature(features, fe_req_options_features);
-    has_hostname = am_has_feature(features, fe_req_options_hostname);
     has_maxdumps = am_has_feature(features, fe_req_options_maxdumps);
+    has_hostname = am_has_feature(features, fe_req_options_hostname);
     has_config   = am_has_feature(features, fe_req_options_config);
 
-    g_snprintf(number, sizeof(number), "%d", hostp->maxdumps);
-    req = g_strjoin(NULL, "SERVICE ", "sendsize", "\n",
-                    "OPTIONS ",
-                    has_features ? "features=" : "",
-                    has_features ? our_feature_string : "",
-                    has_features ? ";" : "",
-                    has_maxdumps ? "maxdumps=" : "",
-                    has_maxdumps ? number : "",
-                    has_maxdumps ? ";" : "",
-                    has_hostname ? "hostname=" : "",
-                    has_hostname ? hostp->hostname : "",
-                    has_hostname ? ";" : "",
-                    has_config   ? "config=" : "",
-                    has_config   ? get_config_name() : "",
-                    has_config   ? ";" : "",
-                    "\n",
-                    NULL);
+    reqbuf = g_string_new("SERVICE sendsize\nOPTIONS ");
+
+    if (has_features)
+        g_string_append_printf(reqbuf, "features=%s;", our_feature_string);
+
+    if (has_maxdumps)
+        g_string_append_printf(reqbuf, "maxdumps=%d;", hostp->maxdumps);
+
+    if (has_hostname)
+        g_string_append_printf(reqbuf, "hostname=%s;", hostp->hostname);
+
+    if (has_config)
+        g_string_append_printf(reqbuf, "config=%s;", get_config_name());
+
+    g_string_append_c(reqbuf, '\n');
+
+    req = g_string_free(reqbuf, FALSE);
+
     estimates = 0;
     for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
         char *s = NULL;
