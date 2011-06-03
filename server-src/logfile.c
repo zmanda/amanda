@@ -194,7 +194,6 @@ void
 log_rename(
     char *	datestamp)
 {
-    char *tmpbuf;
     char *conf_logdir;
     char *logfile;
     char *fname = NULL;
@@ -209,9 +208,8 @@ log_rename(
 
     for(seq = 0; 1; seq++) {	/* if you've got MAXINT files in your dir... */
 	g_snprintf(seq_str, sizeof(seq_str), "%u", seq);
-	tmpbuf = g_strconcat(logfile, ".", datestamp, ".", seq_str, NULL);
         g_free(fname);
-        fname = tmpbuf;
+        fname = g_strconcat(logfile, ".", datestamp, ".", seq_str, NULL);
 	if(stat(fname, &statbuf) == -1 && errno == ENOENT) break;
     }
 

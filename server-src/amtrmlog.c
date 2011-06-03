@@ -46,7 +46,6 @@ main(
     int		argc,
     char **	argv)
 {
-    char *tmpbuf;
     disklist_t diskl;
     int no_keep;			/* files per system to keep */
     char **output_find_log;
@@ -176,21 +175,19 @@ main(
 		    break;
 		}
 	    }
-	    tmpbuf = g_strconcat(conf_logdir, "/" ,adir->d_name, NULL);
 	    g_free(logname);
-	    logname = tmpbuf;
+	    logname = g_strconcat(conf_logdir, "/", adir->d_name, NULL);
 	    if(stat(logname,&stat_log)==0) {
 		if((time_t)stat_log.st_mtime > date_keep) {
 		    useful = 1;
 		}
 	    }
 	    if(useful == 0) {
-		tmpbuf = g_strconcat(conf_logdir, "/", adir->d_name, NULL);
 		g_free(oldfile);
-		oldfile = tmpbuf;
-		tmpbuf = g_strconcat(olddir, "/", adir->d_name, NULL);
+		oldfile = g_strconcat(conf_logdir, "/", adir->d_name, NULL);
+
 		g_free(newfile);
-		newfile = tmpbuf;
+		newfile = g_strconcat(olddir, "/", adir->d_name, NULL);
 		if (rename(oldfile,newfile) != 0) {
 		    error(_("could not rename \"%s\" to \"%s\": %s"),
 			  oldfile, newfile, strerror(errno));

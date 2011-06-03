@@ -670,7 +670,6 @@ static int
 databuf_flush(
     struct databuf *	db)
 {
-    char *tmpbuf;
     struct cmdargs *cmdargs = NULL;
     int rc = 1;
     size_t size_to_write;
@@ -799,9 +798,8 @@ databuf_flush(
 	 */
 	g_snprintf(sequence, sizeof(sequence), "%d", db->filename_seq);
 
-	tmpbuf = g_strconcat(db->filename, ".", sequence, NULL);
         g_free(new_filename);
-        new_filename = tmpbuf;
+        new_filename = g_strconcat(db->filename, ".", sequence, NULL);
 
         g_free(tmp_filename);
         tmp_filename = g_strconcat(new_filename, ".tmp", NULL);

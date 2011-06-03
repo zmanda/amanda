@@ -328,9 +328,8 @@ char *progname;
     if (1)
 #endif
     {
-        tmpbuf = g_strconcat(amlibexecdir, "/", "rundump", NULL);
         g_free(cmd);
-        cmd = tmpbuf;
+        cmd = g_strconcat(amlibexecdir, "/", "rundump", NULL);
 	cmdX = cmd;
 	if (g_options->config)
 	    config = g_options->config;

@@ -51,7 +51,6 @@ static char *find_sort_order = NULL;
 static GStringChunk *string_chunk = NULL;
 
 find_result_t * find_dump(disklist_t* diskqp) {
-    char *tmpbuf;
     char *conf_logdir, *logfile = NULL;
     int tape, tape1, maxtape, logs;
     unsigned seq;
@@ -93,9 +92,9 @@ find_result_t * find_dump(disklist_t* diskqp) {
 	    char seq_str[NUM_STR_SIZE];
 
 	    g_snprintf(seq_str, sizeof(seq_str), "%u", seq);
-	    tmpbuf = g_strconcat(conf_logdir, "/log.", tp->datestamp, ".", seq_str, NULL);
 	    g_free(logfile);
-	    logfile = tmpbuf;
+	    logfile = g_strconcat(conf_logdir, "/log.", tp->datestamp, ".",
+	        seq_str, NULL);
 	    if(access(logfile, R_OK) != 0) break;
 	    if (search_logfile(&output_find, NULL, tp->datestamp,
                                logfile, diskqp)) {
@@ -105,10 +104,9 @@ find_result_t * find_dump(disklist_t* diskqp) {
 
 	/* search old-style amflush log, if any */
 
-	tmpbuf = g_strconcat(conf_logdir, "/log.",
-                               tp->datestamp, ".amflush", NULL);
 	g_free(logfile);
-	logfile = tmpbuf;
+	logfile = g_strconcat(conf_logdir, "/log.", tp->datestamp, ".amflush",
+	    NULL);
 	if(access(logfile,R_OK) == 0) {
 	    if (search_logfile(&output_find, NULL, tp->datestamp,
                                logfile, diskqp)) {
@@ -118,10 +116,8 @@ find_result_t * find_dump(disklist_t* diskqp) {
         
 	/* search old-style main log, if any */
 
-	tmpbuf = g_strconcat(conf_logdir, "/log.", tp->datestamp,
-                               NULL);
 	g_free(logfile);
-	logfile = tmpbuf;
+	logfile = g_strconcat(conf_logdir, "/log.", tp->datestamp, NULL);
 	if(access(logfile,R_OK) == 0) {
 	    if (search_logfile(&output_find, NULL, tp->datestamp,
                                logfile, diskqp)) {
@@ -141,7 +137,6 @@ find_result_t * find_dump(disklist_t* diskqp) {
 char **
 find_log(void)
 {
-    char *tmpbuf;
     char *conf_logdir, *logfile = NULL;
     char *pathlogfile = NULL;
     int tape, maxtape, logs;
@@ -171,12 +166,11 @@ find_log(void)
 	    char seq_str[NUM_STR_SIZE];
 
 	    g_snprintf(seq_str, sizeof(seq_str), "%u", seq);
-	    tmpbuf = g_strconcat("log.", tp->datestamp, ".", seq_str, NULL);
 	    g_free(logfile);
-	    logfile = tmpbuf;
-	    tmpbuf = g_strconcat(conf_logdir, "/", logfile, NULL);
+	    logfile = g_strconcat("log.", tp->datestamp, ".", seq_str, NULL);
+
 	    g_free(pathlogfile);
-	    pathlogfile = tmpbuf;
+	    pathlogfile = g_strconcat(conf_logdir, "/", logfile, NULL);
 	    if (access(pathlogfile, R_OK) != 0) break;
 	    if (logfile_has_tape(tp->label, tp->datestamp, pathlogfile)) {
 		if (current_log == output_find_log || strcmp(*(current_log-1), logfile)) {
@@ -190,12 +184,11 @@ find_log(void)
 
 	/* search old-style amflush log, if any */
 
-	tmpbuf = g_strconcat("log.", tp->datestamp, ".amflush", NULL);
 	g_free(logfile);
-	logfile = tmpbuf;
-	tmpbuf = g_strconcat(conf_logdir, "/", logfile, NULL);
+	logfile = g_strconcat("log.", tp->datestamp, ".amflush", NULL);
+
 	g_free(pathlogfile);
-	pathlogfile = tmpbuf;
+	pathlogfile = g_strconcat(conf_logdir, "/", logfile, NULL);
 	if (access(pathlogfile, R_OK) == 0) {
 	    if (logfile_has_tape(tp->label, tp->datestamp, pathlogfile)) {
 		if (current_log == output_find_log || strcmp(*(current_log-1), logfile)) {
@@ -210,9 +203,8 @@ find_log(void)
 
 	g_free(logfile);
 	logfile = g_strconcat("log.", tp->datestamp, NULL);
-	tmpbuf = g_strconcat(conf_logdir, "/", logfile, NULL);
 	g_free(pathlogfile);
-	pathlogfile = tmpbuf;
+	pathlogfile = g_strconcat(conf_logdir, "/", logfile, NULL);
 	if (access(pathlogfile, R_OK) == 0) {
 	    if (logfile_has_tape(tp->label, tp->datestamp, pathlogfile)) {
 		if (current_log == output_find_log || strcmp(*(current_log-1), logfile)) {
