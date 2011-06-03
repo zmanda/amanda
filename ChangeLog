@@ -1,4 +1,8 @@
 2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
+	* client-src/runtar.c: build the command line using a GPtrArray
+	  instead of vstrextend()
+
+2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
 	* client-src/rundump.c: build the command line using a GPtrArray
 	  instead of vstrextend()
 
