@@ -623,7 +623,8 @@ holding_file_size(
         }
 
         /* on to the next chunk */
-        filename = newstralloc(filename, file.cont_filename);
+        g_free(filename);
+        filename = g_strdup(file.cont_filename);
 	dumpfile_free_data(&file);
     }
     amfree(filename);
@@ -951,7 +952,8 @@ rename_tmp_holding(
 	    free(header);
 	    close(fd);
 	}
-	filename = newstralloc(filename, file.cont_filename);
+	g_free(filename);
+	filename = g_strdup(file.cont_filename);
 	dumpfile_free_data(&file);
     }
     amfree(filename);

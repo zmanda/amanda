@@ -374,7 +374,8 @@ debug_unlink_old(void)
 	    dbfilename = get_debug_name((time_t)sbuf.st_mtime, 0);
 	    do_rename = 1;
 	} else {
-	    dbfilename = newstralloc(dbfilename, entry->d_name);
+	    g_free(dbfilename);
+	    dbfilename = g_strdup(entry->d_name);
 	    do_rename = 0;
 	}
 	if(strcmp(dbfilename, test_name) < 0) {
@@ -653,7 +654,8 @@ debug_rename(
 	     */
 	    dbprintf(_("Cannot rename \"%s\" to \"%s\": %s\n"),
 		     db_filename, s, strerror(errno));
-	    s = newstralloc(s, db_filename);
+	    g_free(s);
+	    s = g_strdup(db_filename);
 	    i = -1;
 	    break;
 	}

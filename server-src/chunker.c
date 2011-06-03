@@ -184,7 +184,8 @@ main(
     if(cmdargs->cmd == START) {
 	if(cmdargs->argc <= 1)
 	    error(_("error [dumper START: not enough args: timestamp]"));
-	chunker_timestamp = newstralloc(chunker_timestamp, cmdargs->argv[1]);
+	g_free(chunker_timestamp);
+	chunker_timestamp = g_strdup(cmdargs->argv[1]);
     }
     else {
 	log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
@@ -231,19 +232,22 @@ main(
 		error(_("error [chunker PORT-WRITE: not enough args: handle]"));
 		/*NOTREACHED*/
 	    }
-	    handle = newstralloc(handle, cmdargs->argv[a++]);
+	    g_free(handle);
+	    handle = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: filename]"));
 		/*NOTREACHED*/
 	    }
-	    filename = newstralloc(filename, cmdargs->argv[a++]);
+	    g_free(filename);
+	    filename = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: hostname]"));
 		/*NOTREACHED*/
 	    }
-	    hostname = newstralloc(hostname, cmdargs->argv[a++]);
+	    g_free(hostname);
+	    hostname = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: features]"));
@@ -260,7 +264,8 @@ main(
 		error(_("error [chunker PORT-WRITE: not enough args: diskname]"));
 		/*NOTREACHED*/
 	    }
-	    diskname = newstralloc(diskname, cmdargs->argv[a++]);
+	    g_free(diskname);
+	    diskname = g_strdup(cmdargs->argv[a++]);
 	    if (qdiskname)
 		amfree(qdiskname);
 	    qdiskname = quote_string(diskname); /* qdiskname is a global */
@@ -275,7 +280,8 @@ main(
 		error(_("error [chunker PORT-WRITE: not enough args: dumpdate]"));
 		/*NOTREACHED*/
 	    }
-	    dumpdate = newstralloc(dumpdate, cmdargs->argv[a++]);
+	    g_free(dumpdate);
+	    dumpdate = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: chunksize]"));
@@ -288,7 +294,8 @@ main(
 		error(_("error [chunker PORT-WRITE: not enough args: progname]"));
 		/*NOTREACHED*/
 	    }
-	    progname = newstralloc(progname, cmdargs->argv[a++]);
+	    g_free(progname);
+	    progname = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: use]"));
@@ -300,7 +307,8 @@ main(
 		error(_("error [chunker PORT-WRITE: not enough args: options]"));
 		/*NOTREACHED*/
 	    }
-	    options = newstralloc(options, cmdargs->argv[a++]);
+	    g_free(options);
+	    options = g_strdup(cmdargs->argv[a++]);
 
 	    if(a != cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: too many args: %d != %d]"),
@@ -706,7 +714,8 @@ databuf_flush(
 		    error(_("error [chunker CONTINUE: not enough args: filename]"));
 		    /*NOTREACHED*/
 		}
-		arg_filename = newstralloc(arg_filename, cmdargs->argv[a++]);
+		g_free(arg_filename);
+		arg_filename = g_strdup(cmdargs->argv[a++]);
 
 		if(a >= cmdargs->argc) {
 		    error(_("error [chunker CONTINUE: not enough args: chunksize]"));
@@ -751,11 +760,13 @@ databuf_flush(
 		    /*
 		     * Different disk, so use new file.
 		     */
-		    db->filename = newstralloc(db->filename, arg_filename);
+		    g_free(db->filename);
+		    db->filename = g_strdup(arg_filename);
 		}
 	    } else if(cmdargs->cmd == ABORT) {
 		abort_pending = 1;
-		errstr = newstralloc(errstr, cmdargs->argv[1]);
+		g_free(errstr);
+		errstr = g_strdup(cmdargs->argv[1]);
 		putresult(ABORT_FINISHED, "%s\n", handle);
 		rc = 0;
 		goto common_exit;

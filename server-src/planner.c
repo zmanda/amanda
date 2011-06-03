@@ -1616,8 +1616,8 @@ static void getsize(
 		    amfree(o);
 		} else if (strcmp(dp->program,"DUMP") != 0 &&
 			   strcmp(dp->program,"GNUTAR") != 0) {
-		    est(dp)->errstr = newstralloc(est(dp)->errstr,
-                                                  "does not support application-api");
+		    g_free(est(dp)->errstr);
+		    est(dp)->errstr = g_strdup("does not support application-api");
 		} else {
 		    for(i = 0; i < MAX_LEVELS; i++) {
 			char *l;

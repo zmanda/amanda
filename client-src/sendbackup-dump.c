@@ -283,7 +283,9 @@ start_backup(
 	else
 	    config = "NOCONFIG";
 #else
-	char *progname = cmd = newstralloc(cmd, VXDUMP);
+	char *progname;
+        g_free(cmd);
+        progname = cmd = g_strdup(VXDUMP);
 	cmdX = skip_argument;
 	config = skip_argument;
 #endif
@@ -332,7 +334,8 @@ start_backup(
 	    config = g_options->config;
 	else
 	    config = "NOCONFIG";
-	device = newstralloc(device, amname_to_dirname(dle->device));
+	g_free(device);
+	device = g_strdup(amname_to_dirname(dle->device));
 	program->backup_name  = VDUMP;
 	program->restore_name = VRESTORE;
 

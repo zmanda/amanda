@@ -1582,7 +1582,8 @@ main(
 	    s[-1] = '\0';
 	    if ((lhost = is_dump_host_valid(arg)) != NULL)
 	    {
-		dump_hostname = newstralloc(dump_hostname, lhost->hostname);
+		g_free(dump_hostname);
+		dump_hostname = g_strdup(lhost->hostname);
 		reply(200, _("Dump host set to %s."), dump_hostname);
 		amfree(qdisk_name);		/* invalidate any value */
 		amfree(disk_name);		/* invalidate any value */
@@ -1623,7 +1624,8 @@ main(
 	} else if (strcmp(cmd, "DISK") == 0 && arg) {
 	    s[-1] = '\0';
 	    if (is_disk_valid(arg) != -1) {
-		disk_name = newstralloc(disk_name, arg);
+		g_free(disk_name);
+		disk_name = g_strdup(arg);
 		amfree(qdisk_name);
 		qdisk_name = quote_string(disk_name);
 		if (build_disk_table() != -1) {
@@ -1759,7 +1761,8 @@ main(
 	    am_release_feature_set(their_features);
 	    our_features = am_init_feature_set();
 	    our_feature_string = am_feature_to_string(our_features);
-	    their_feature_string = newstralloc(their_feature_string, arg);
+	    g_free(their_feature_string);
+	    their_feature_string = g_strdup(arg);
 	    their_features = am_string_to_feature(their_feature_string);
 	    if (!their_features) {
 		g_warning("Invalid client feature set '%s'", their_feature_string);
@@ -1771,7 +1774,8 @@ main(
 	    s[-1] = (char)ch;
 	} else if (strcmp(cmd, "DATE") == 0 && arg) {
 	    s[-1] = '\0';
-	    target_date = newstralloc(target_date, arg);
+	    g_free(target_date);
+	    target_date = g_strdup(arg);
 	    reply(200, _("Working date set to %s."), target_date);
 	    s[-1] = (char)ch;
 	} else if (strcmp(cmd, "DHST") == 0) {
