@@ -438,8 +438,6 @@ char *debug_vstrextend(const char *file, int line, char **oldstr, ...);
 #define newvstrallocf(...)	debug_newvstrallocf(__FILE__,__LINE__,__VA_ARGS__)
 #define vstrextend(...)		debug_vstrextend(__FILE__,__LINE__,__VA_ARGS__)
 
-#define	newstralloc2(p,s1,s2)	newvstralloc((p),(s1),(s2),NULL)
-
 /*@only@*/ /*@null@*/ char *debug_agets(const char *file, int line, FILE *f);
 /*@only@*/ /*@null@*/ char *debug_areads(const char *file, int line, int fd);
 #define agets(f)	      debug_agets(__FILE__,__LINE__,(f))

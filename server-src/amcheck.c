@@ -665,6 +665,7 @@ start_server_check(
     int		do_localchk,
     int		do_tapechk)
 {
+    char *tmpbuf;
     struct fs_usage fsusage;
     FILE *outf = NULL;
     pid_t pid G_GNUC_UNUSED;
@@ -1283,7 +1284,9 @@ start_server_check(
 	    hostp = origq.head->host;
 	    host = sanitise_filename(hostp->hostname);
 	    if(conf_infofile) {
-		hostinfodir = newstralloc2(hostinfodir, conf_infofile, host);
+		tmpbuf = g_strconcat(conf_infofile, host, NULL);
+		g_free(hostinfodir);
+		hostinfodir = tmpbuf;
 		quoted = quote_string(hostinfodir);
 		if(stat(hostinfodir, &statbuf) == -1) {
 		    if (errno == ENOENT) {
@@ -1318,7 +1321,9 @@ start_server_check(
 		if(hostinfodir) {
 		    char *quotedif;
 
-		    diskdir = newstralloc2(diskdir, hostinfodir, disk);
+		    tmpbuf = g_strconcat(hostinfodir, disk, NULL);
+		    g_free(diskdir);
+		    diskdir = tmpbuf;
 		    infofile = g_strjoin(NULL, diskdir, "/", "info", NULL);
 		    quoted = quote_string(diskdir);
 		    quotedif = quote_string(infofile);
@@ -1431,7 +1436,9 @@ start_server_check(
 			    amfree(quoted);
 			}
 			if(hostindexdir) {
-			    diskdir = newstralloc2(diskdir, hostindexdir, disk);
+			    tmpbuf = g_strconcat(hostindexdir, disk, NULL);
+			    g_free(diskdir);
+			    diskdir = tmpbuf;
 			    quoted = quote_string(diskdir);
 			    if(stat(diskdir, &statbuf) == -1) {
 				if (errno == ENOENT) {

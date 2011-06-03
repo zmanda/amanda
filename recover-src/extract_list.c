@@ -825,6 +825,7 @@ add_file(
     char *	path,
     char *	regex)
 {
+    char *tmpbuf;
     DIR_ITEM *ditem, lditem;
     char *path_on_disk = NULL;
     char *cmd = NULL;
@@ -899,7 +900,9 @@ add_file(
 		clean_pathname(ditem_path);
 
 		qditem_path = quote_string(ditem_path);
-		cmd = newstralloc2(cmd, "ORLD ", qditem_path);
+		tmpbuf = g_strconcat("ORLD ", qditem_path, NULL);
+		g_free(cmd);
+		cmd = tmpbuf;
 		amfree(qditem_path);
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
@@ -1190,6 +1193,7 @@ delete_file(
     char *	path,
     char *	regex)
 {
+    char *tmpbuf;
     DIR_ITEM *ditem, lditem;
     char *path_on_disk = NULL;
     char *cmd = NULL;
@@ -1267,7 +1271,9 @@ delete_file(
 		clean_pathname(ditem_path);
 
 		qditem_path = quote_string(ditem_path);
-		cmd = newstralloc2(cmd, "ORLD ", qditem_path);
+		tmpbuf = g_strconcat("ORLD ", qditem_path, NULL);
+		g_free(cmd);
+		cmd = tmpbuf;
 		amfree(qditem_path);
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
@@ -1653,6 +1659,7 @@ extract_files_setup(
     char *	label,
     off_t	fsf)
 {
+    char *tmpbuf;
     char *disk_regex = NULL;
     char *host_regex = NULL;
     char *clean_datestamp, *ch, *ch1;
@@ -1697,7 +1704,9 @@ extract_files_setup(
     /* XXX assumes that index server and tape server are equivalent, ew */
 
     if(am_has_feature(indexsrv_features, fe_amidxtaped_exchange_features)){
-	tt = newstralloc2(tt, "FEATURES=", our_features_string);
+	tmpbuf = g_strconcat("FEATURES=", our_features_string, NULL);
+	g_free(tt);
+	tt = tmpbuf;
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	get_amidxtaped_line();
 	if(strncmp_const(amidxtaped_line,"FEATURES=") == 0) {
@@ -1722,28 +1731,42 @@ extract_files_setup(
        am_has_feature(indexsrv_features, fe_amidxtaped_datestamp)) {
 
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_config)) {
-	    tt = newstralloc2(tt, "CONFIG=", get_config_name());
+	    tmpbuf = g_strconcat("CONFIG=", get_config_name(), NULL);
+	    g_free(tt);
+	    tt = tmpbuf;
 	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	}
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_label) &&
 	   label && label[0] != '/') {
-	    tt = newstralloc2(tt,"LABEL=",label);
+	    tmpbuf = g_strconcat("LABEL=", label, NULL);
+	    g_free(tt);
+	    tt = tmpbuf;
 	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	}
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_fsf)) {
 	    char v_fsf[100];
 	    g_snprintf(v_fsf, 99, "%lld", (long long)fsf);
-	    tt = newstralloc2(tt, "FSF=",v_fsf);
+	    tmpbuf = g_strconcat("FSF=", v_fsf, NULL);
+	    g_free(tt);
+	    tt = tmpbuf;
 	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	}
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, "HEADER");
-	tt = newstralloc2(tt, "DEVICE=", dump_device_name);
+	tmpbuf = g_strconcat("DEVICE=", dump_device_name, NULL);
+	g_free(tt);
+	tt = tmpbuf;
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
-	tt = newstralloc2(tt, "HOST=", host_regex);
+	tmpbuf = g_strconcat("HOST=", host_regex, NULL);
+	g_free(tt);
+	tt = tmpbuf;
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
-	tt = newstralloc2(tt, "DISK=", disk_regex);
+	tmpbuf = g_strconcat("DISK=", disk_regex, NULL);
+	g_free(tt);
+	tt = tmpbuf;
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
-	tt = newstralloc2(tt, "DATESTAMP=", clean_datestamp);
+	tmpbuf = g_strconcat("DATESTAMP=", clean_datestamp, NULL);
+	g_free(tt);
+	tt = tmpbuf;
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, "END");
 	amfree(tt);
@@ -2688,12 +2711,16 @@ read_amidxtaped_data(
     void *	buf,
     ssize_t	size)
 {
+    char *tmpbuf;
     ctl_data_t *ctl_data = (ctl_data_t *)cookie;
     assert(cookie != NULL);
 
     if (size < 0) {
-	errstr = newstralloc2(errstr, _("amidxtaped read: "),
-		 security_stream_geterror(amidxtaped_streams[DATAFD].fd));
+	tmpbuf = g_strconcat(_("amidxtaped read: "),
+                             security_stream_geterror(amidxtaped_streams[DATAFD].fd),
+                             NULL);
+	g_free(errstr);
+	errstr = tmpbuf;
 	return;
     }
 
