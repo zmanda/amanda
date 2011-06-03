@@ -883,19 +883,19 @@ start_server_check(
 		tapebad = 1;
 		amfree(quoted);
 	    }
-	    newtapefile = stralloc2(tapefile, ".new");
+	    newtapefile = g_strconcat(tapefile, ".new", NULL);
 	    tapebad |= check_tapefile(outf, newtapefile);
 	    amfree(newtapefile);
-	    newtapefile = stralloc2(tapefile, ".amlabel");
+	    newtapefile = g_strconcat(tapefile, ".amlabel", NULL);
 	    tapebad |= check_tapefile(outf, newtapefile);
 	    amfree(newtapefile);
-	    newtapefile = stralloc2(tapefile, ".amlabel.new");
+	    newtapefile = g_strconcat(tapefile, ".amlabel.new", NULL);
 	    tapebad |= check_tapefile(outf, newtapefile);
 	    amfree(newtapefile);
-	    newtapefile = stralloc2(tapefile, ".yesterday");
+	    newtapefile = g_strconcat(tapefile, ".yesterday", NULL);
 	    tapebad |= check_tapefile(outf, newtapefile);
 	    amfree(newtapefile);
-	    newtapefile = stralloc2(tapefile, ".yesterday.new");
+	    newtapefile = g_strconcat(tapefile, ".yesterday.new", NULL);
 	    tapebad |= check_tapefile(outf, newtapefile);
 	    amfree(newtapefile);
 	}
@@ -1400,7 +1400,7 @@ start_server_check(
 		    }
 		    if(conf_indexdir) {
 			if(! hostindexdir_checked) {
-			    hostindexdir = stralloc2(conf_indexdir, host);
+			    hostindexdir = g_strconcat(conf_indexdir, host, NULL);
 			    quoted = quote_string(hostindexdir);
 			    if(stat(hostindexdir, &statbuf) == -1) {
 				if (errno == ENOENT) {

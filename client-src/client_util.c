@@ -121,7 +121,7 @@ build_name(
     time(&curtime);
     diskname = sanitise_filename(disk);
 
-    dbgdir = stralloc2(AMANDA_TMPDIR, "/");
+    dbgdir = g_strconcat(AMANDA_TMPDIR, "/", NULL);
     if((d = opendir(AMANDA_TMPDIR)) == NULL) {
 	error(_("open debug directory \"%s\": %s"),
 		AMANDA_TMPDIR, strerror(errno));
@@ -273,7 +273,7 @@ add_include(
 		set_root_privs(0);
 	    nb_exp = globbuf.gl_pathc;
 	    for (nb=0; nb < nb_exp; nb++) {
-		file = stralloc2("./", globbuf.gl_pathv[nb]);
+		file = g_strconcat("./", globbuf.gl_pathv[nb], NULL);
 		quoted = quote_string(file);
 		if (*file == '"') {
 		    file[strlen(file) - 1] = '\0';
@@ -1675,7 +1675,7 @@ check_dir(
 	amfree(quoted);
     }
     if (getuid() == geteuid()) {
-	dir = stralloc2(dirname, "/.");
+	dir = g_strconcat(dirname, "/.", NULL);
 	check_access(dir, mode);
 	amfree(dir);
     }

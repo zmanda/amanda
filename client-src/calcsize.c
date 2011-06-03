@@ -577,7 +577,7 @@ final_size_dump(
 
     /* calculate the map sizes */
 
-    s = stralloc2(topdir, "/.");
+    s = g_strconcat(topdir, "/.", NULL);
     if(get_fs_usage(s, NULL, &fsusage) == -1) {
 	error("statfs %s: %s", s, strerror(errno));
 	/*NOTREACHED*/

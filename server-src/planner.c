@@ -2121,7 +2121,8 @@ static void handle_result(
     g_fprintf(stderr,_("got a bad message, stopped at:\n"));
     /*@ignore@*/
     g_fprintf(stderr,_("----\n%s----\n\n"), line);
-    errbuf = stralloc2(_("badly formatted response from "), hostp->hostname);
+    errbuf = g_strconcat(_("badly formatted response from "),
+                         hostp->hostname, NULL);
     /*@end@*/
 
  error_return:

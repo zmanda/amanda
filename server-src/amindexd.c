@@ -420,7 +420,7 @@ process_ls_dump(
     if (strcmp(dir, "/") == 0) {
 	dir_slash = g_strdup(dir);
     } else {
-	dir_slash = stralloc2(dir, "/");
+	dir_slash = g_strconcat(dir, "/", NULL);
     }
 
     filename_gz = get_index_name(dump_hostname, dump_item->hostname, disk_name,
@@ -987,7 +987,7 @@ is_dir_valid_opaque(
     if(strcmp(dir, "/") == 0) {
 	ldir = g_strdup(dir);
     } else {
-	ldir = stralloc2(dir, "/");
+	ldir = g_strconcat(dir, "/", NULL);
     }
     ldir_len = strlen(ldir);
 

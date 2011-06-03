@@ -1,4 +1,8 @@
 2011-06-02  Francis Galiegue <fgaliegue@gmail.com>
+	* Many files (28): Get rid of stralloc2()
+	* common-src/amanda.h: remove macro
+
+2011-06-02  Francis Galiegue <fgaliegue@gmail.com>
 	* Many files (30): Get rid of newstralloc()
 	* common-src/alloc.c, common-src/amanda.h: remove macros, prototypes,
 	  implementation

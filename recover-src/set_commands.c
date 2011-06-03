@@ -47,7 +47,7 @@ set_date(
 
     clear_dir_list();
 
-    cmd = stralloc2("DATE ", date);
+    cmd = g_strconcat("DATE ", date, NULL);
     if (converse(cmd) == -1)
 	exit(1);
 
@@ -101,7 +101,7 @@ set_host(
      * recognize.
      */
 
-    cmd = stralloc2("HOST ", uqhost);
+    cmd = g_strconcat("HOST ", uqhost, NULL);
     if (converse(cmd) == -1)
 	exit(1);
     if (server_happy())
@@ -213,7 +213,7 @@ set_disk(
     clear_dir_list();
     uqdsk = unquote_string(dsk);
     qdsk = quote_string(uqdsk);
-    cmd = stralloc2("DISK ", qdsk);
+    cmd = g_strconcat("DISK ", qdsk, NULL);
     amfree(qdsk);
     if (converse(cmd) == -1)
 	exit(1);
@@ -309,7 +309,7 @@ list_disk(
     if(amdevice) {
 	uqamdevice = unquote_string(amdevice);
 	qamdevice = quote_string(uqamdevice);
-	cmd = stralloc2("LISTDISK ", qamdevice);
+	cmd = g_strconcat("LISTDISK ", qamdevice, NULL);
 	amfree(uqamdevice);
 	amfree(qamdevice);
 	if (converse(cmd) == -1)
@@ -465,7 +465,7 @@ cd_glob(
 
     /* convert path (assumed in cwd) to one on disk */
     if (strcmp(disk_path, "/") == 0)
-        path_on_disk = stralloc2("/", regex_path);
+        path_on_disk = g_strconcat("/", regex_path, NULL);
     else {
         char *clean_disk_path = clean_regex(disk_path, 0);
         path_on_disk = g_strjoin(NULL, clean_disk_path, "/", regex_path, NULL);
@@ -523,7 +523,7 @@ cd_regex(
 
     /* convert path (assumed in cwd) to one on disk */
     if (strcmp(disk_path, "/") == 0)
-        path_on_disk = stralloc2("/", uqregex);
+        path_on_disk = g_strconcat("/", uqregex, NULL);
     else {
         char *clean_disk_path = clean_regex(disk_path, 0);
         path_on_disk = g_strjoin(NULL, clean_disk_path, "/", regex, NULL);
@@ -708,7 +708,7 @@ set_directory(
     }
 
     qnew_dir = quote_string(new_dir);
-    cmd = stralloc2("OISD ", qnew_dir);
+    cmd = g_strconcat("OISD ", qnew_dir, NULL);
     amfree(qnew_dir);
     if (exchange(cmd) == -1) {
 	exit(1);
