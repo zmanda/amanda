@@ -136,7 +136,6 @@ start_backup(
     int		mesgf,
     int		indexf)
 {
-    char *tmpbuf;
     char tmppath[PATH_MAX];
     int dumpin, dumpout, compout;
     char *cmd = NULL;
@@ -251,9 +250,8 @@ start_backup(
 	while (infd == -1) {
 	    if (--baselevel >= 0) {
 		g_snprintf(number, sizeof(number), "%d", baselevel);
-		tmpbuf = g_strconcat(basename, "_", number, NULL);
 		g_free(inputname);
-		inputname = tmpbuf;
+		inputname = g_strconcat(basename, "_", number, NULL);
 	    } else {
 		g_free(inputname);
 		inputname = g_strdup("/dev/null");
