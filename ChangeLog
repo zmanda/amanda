@@ -1,4 +1,8 @@
 2011-06-02  Francis Galiegue <fgaliegue@gmail.com>
+        * Many files (14): remove unndeeded uses of the temporary variable
+	  tmpbuf in the g_strconcat(e1, e2, NULL) case
+
+2011-06-02  Francis Galiegue <fgaliegue@gmail.com>
 	* Many files (14): Get rid of newvstrallocf()
 	* common-src/amanda.h, common-src/alloc.c: remove macro, prototypes,
 	  implementation

@@ -5255,13 +5255,12 @@ config_init(
     /* If we have a config_dir, we can try reading something */
     if (config_dir) {
 	if (flags & CONFIG_INIT_CLIENT) {
-	    tmpbuf = g_strconcat(config_dir, "/amanda-client.conf", NULL);
 	    g_free(config_filename);
-	    config_filename = tmpbuf;
+	    config_filename = g_strconcat(config_dir, "/amanda-client.conf",
+                                          NULL);
 	} else {
-	    tmpbuf = g_strconcat(config_dir, "/amanda.conf", NULL);
 	    g_free(config_filename);
-	    config_filename = tmpbuf;
+	    config_filename = g_strconcat(config_dir, "/amanda.conf", NULL);
 	}
 
 	read_conffile(config_filename,

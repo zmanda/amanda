@@ -208,9 +208,8 @@ find_log(void)
 
 	/* search old-style main log, if any */
 
-	tmpbuf = g_strconcat("log.", tp->datestamp, NULL);
 	g_free(logfile);
-	logfile = tmpbuf;
+	logfile = g_strconcat("log.", tp->datestamp, NULL);
 	tmpbuf = g_strconcat(conf_logdir, "/", logfile, NULL);
 	g_free(pathlogfile);
 	pathlogfile = tmpbuf;

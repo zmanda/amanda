@@ -1219,9 +1219,8 @@ do_dump(
     fn = sanitise_filename(diskname);
     errf_lines = 0;
 
-    tmpbuf = g_strconcat(AMANDA_DBGDIR, "/log.error", NULL);
     g_free(errfname);
-    errfname = tmpbuf;
+    errfname = g_strconcat(AMANDA_DBGDIR, "/log.error", NULL);
 
     mkdir(errfname, 0700);
 
