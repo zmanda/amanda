@@ -64,6 +64,8 @@ main(
     int i;
     char *e;
     char *cmdline;
+    GPtrArray *array = g_ptr_array_new();
+    gchar **strings;
 #endif /* ERRMSG */
 
     /*
@@ -160,14 +162,22 @@ main(
 # endif
 #endif
 
-    cmdline = g_strdup(dump_program);
-    for (i = 1; argv[i]; i++) {
-	char *quoted;
 
-	quoted = quote_string(argv[i]);
-	cmdline = vstrextend(&cmdline, " ", quoted, NULL);
-	amfree(quoted);
-    }
+    /*
+     * Build the array
+     */
+
+    g_ptr_array_add(array, g_strdup(dump_program));
+
+    for (i = 1; argv[i]; i++)
+        g_ptr_array_add(array, quote_string(argv[i]));
+
+    g_ptr_array_add(array, NULL);
+    strings = g_ptr_array_free(array, FALSE);
+
+    cmdline = g_strjoinv(" ", strings);
+    g_strfreev(strings);
+
     dbprintf(_("running: %s\n"), cmdline);
     amfree(cmdline);
 
