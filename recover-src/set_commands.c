@@ -42,6 +42,7 @@ int
 set_date(
     char *	date)
 {
+    char *tmpbuf;
     char *cmd = NULL;
     char *qdisk_path;
 
@@ -56,7 +57,9 @@ set_date(
        mount_point */
     if (disk_path != NULL) {
 	qdisk_path = quote_string(disk_path);
-	cmd = newstralloc2(cmd, "OISD ", qdisk_path);
+	tmpbuf = g_strconcat("OISD ", qdisk_path, NULL);
+	g_free(cmd);
+	cmd = tmpbuf;
 	amfree(qdisk_path);
 	if (exchange(cmd) == -1)
 	    exit(1);
@@ -82,6 +85,7 @@ void
 set_host(
     const char *host)
 {
+    char *tmpbuf;
     char *cmd = NULL;
     struct hostent *hp = NULL;
     char **hostp;
@@ -115,7 +119,9 @@ set_host(
 	if ((hp = gethostbyname(uqhost)) != NULL) {
 	    host = hp->h_name;
 	    g_printf(_("Trying host %s ...\n"), host);
-	    cmd = newstralloc2(cmd, "HOST ", host);
+	    tmpbuf = g_strconcat("HOST ", host, NULL);
+	    g_free(cmd);
+	    cmd = tmpbuf;
 	    if (converse(cmd) == -1)
 		exit(1);
 	    if(server_happy())
@@ -132,7 +138,9 @@ set_host(
 	    for (hostp = hp->h_aliases; (host = *hostp) != NULL; hostp++)
 	    {
 		g_printf(_("Trying host %s ...\n"), host);
-		cmd = newstralloc2(cmd, "HOST ", host);
+		tmpbuf = g_strconcat("HOST ", host, NULL);
+		g_free(cmd);
+		cmd = tmpbuf;
 		if (converse(cmd) == -1)
 		    exit(1);
 		if(server_happy())
@@ -153,7 +161,9 @@ set_host(
 	if (result == 0 && canonname) {
 	    host = canonname;
 	    g_printf(_("Trying host %s ...\n"), host);
-	    cmd = newstralloc2(cmd, "HOST ", host);
+	    tmpbuf = g_strconcat("HOST ", host, NULL);
+	    g_free(cmd);
+	    cmd = tmpbuf;
 	    if (converse(cmd) == -1)
 		exit(1);
 	    if(server_happy())
