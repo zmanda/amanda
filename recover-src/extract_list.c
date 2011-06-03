@@ -518,7 +518,7 @@ check_file_overwrite(
 
 	    /* Check path component of fn->path */
 
-	    path = stralloc2(dir, fn->path);
+	    path = g_strconcat(dir, fn->path, NULL);
 	    if (path[strlen(path)-1] == '/') {
 		path[strlen(path)-1] = '\0';
 	    }
@@ -545,7 +545,7 @@ check_file_overwrite(
 
 	    /* Check fn->path */
 
-	    filename = stralloc2(dir, fn->path);
+	    filename = g_strconcat(dir, fn->path, NULL);
 	    if (filename[strlen(filename)-1] == '/') {
 		filename[strlen(filename)-1] = '\0';
 	    }
@@ -717,11 +717,11 @@ merge_path(
     char *result;
     int len = strlen(path1);
     if (path1[len-1] == '/' && path2[0] == '/') {
-	result = stralloc2(path1, path2+1);
+	result = g_strconcat(path1, path2 + 1, NULL);
     } else if (path1[len-1] != '/' && path2[0] != '/') {
 	result = g_strjoin(NULL, path1, "/", path2, NULL);
     } else {
-	result = stralloc2(path1, path2);
+	result = g_strconcat(path1, path2, NULL);
     }
     return result;
 }
@@ -868,7 +868,7 @@ add_file(
 	    path_on_disk = g_strdup(regex);
 	} else {
 	    /* Prepend '/' */
-	    path_on_disk = stralloc2("/", regex);
+	    path_on_disk = g_strconcat("/", regex, NULL);
 	}
     } else {
 	char *clean_disk_path = clean_regex(disk_path, 0);
@@ -1239,7 +1239,7 @@ delete_file(
 	    }
 	} else {
 	    /* Prepend '/' */
-	    path_on_disk = stralloc2("/", regex);
+	    path_on_disk = g_strconcat("/", regex, NULL);
 	}
     } else {
 	char *clean_disk_path = clean_regex(disk_path, 0);
@@ -1466,7 +1466,7 @@ display_extract_list(
 	 * Set up the pager command so if the pager is terminated, we do
 	 * not get a SIGPIPE back.
 	 */
-	pager_command = stralloc2(pager, " ; /bin/cat > /dev/null");
+	pager_command = g_strconcat(pager, " ; /bin/cat > /dev/null", NULL);
 	if ((fp = popen(pager_command, "w")) == NULL)
 	{
 	    g_printf(_("Warning - can't pipe through %s\n"), pager);
@@ -1632,7 +1632,7 @@ send_to_tape_server(
     security_stream_t *	stream,
     char *		cmd)
 {
-    char *msg = stralloc2(cmd, "\r\n");
+    char *msg = g_strconcat(cmd, "\r\n", NULL);
 
     g_debug("send_to_tape_server: %s\n", cmd);
     if (security_stream_write(stream, msg, strlen(msg)) < 0)
@@ -1999,7 +1999,7 @@ extract_files_child(
 	    if (strcmp(fn->path, "/") == 0)
 		g_ptr_array_add(argv_ptr, g_strdup("."));
 	    else
-		g_ptr_array_add(argv_ptr, stralloc2(".", fn->path));
+		g_ptr_array_add(argv_ptr, g_strconcat(".", fn->path, NULL));
 	    break;
 	case IS_UNKNOWN:
 	case IS_DUMP:
@@ -2142,7 +2142,7 @@ writer_intermediary(
 	    if (done == 1) {
 		if (am_has_feature(indexsrv_features,
 				   fe_amrecover_feedme_tape)) {
-		    char *reply = stralloc2("TAPE ", tape_device_name);
+		    char *reply = g_strconcat("TAPE ", tape_device_name, NULL);
 		    send_to_tape_server(amidxtaped_streams[CTLFD].fd, reply);
 		    amfree(reply);
 		} else {

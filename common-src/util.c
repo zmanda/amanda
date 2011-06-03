@@ -1511,7 +1511,7 @@ proplist_add_to_argv(
 	if (*w == '_')
 	    *w = '-';
     }
-    qprop = stralloc2("--", q);
+    qprop = g_strconcat("--", q, NULL);
     amfree(q);
     for(value=value_s->values; value != NULL; value = value->next) {
 	g_ptr_array_add(argv_ptr, g_strdup(qprop));

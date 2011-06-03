@@ -93,7 +93,7 @@ write_tapelist(
     char *newtapefile;
     int rc;
 
-    newtapefile = stralloc2(tapefile, ".new");
+    newtapefile = g_strconcat(tapefile, ".new", NULL);
 
     if((tapef = fopen(newtapefile,"w")) == NULL) {
 	amfree(newtapefile);

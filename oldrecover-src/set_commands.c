@@ -47,7 +47,7 @@ set_date(
 
     clear_dir_list();
 
-    cmd = stralloc2("DATE ", date);
+    cmd = g_strconcat("DATE ", date, NULL);
     if (converse(cmd) == -1)
 	exit(1);
 
@@ -93,7 +93,7 @@ set_host(
     }
 
     uqhost = unquote_string(host);
-    cmd = stralloc2("HOST ", uqhost);
+    cmd = g_strconcat("HOST ", uqhost, NULL);
     if (converse(cmd) == -1)
 	exit(1);
     if (server_happy())
@@ -185,7 +185,7 @@ set_disk(
 
     clear_dir_list();
     uqdsk = unquote_string(dsk);
-    cmd = stralloc2("DISK ", uqdsk);
+    cmd = g_strconcat("DISK ", uqdsk, NULL);
     if (converse(cmd) == -1)
 	exit(1);
     amfree(cmd);
@@ -254,7 +254,7 @@ list_disk(
 
     if(amdevice) {
 	uqamdevice = unquote_string(amdevice);
-	cmd = stralloc2("LISTDISK ", uqamdevice);
+	cmd = g_strconcat("LISTDISK ", uqamdevice, NULL);
 	amfree(uqamdevice);
 	if (converse(cmd) == -1)
 	    exit(1);
@@ -320,7 +320,7 @@ cd_glob(
 
     /* convert path (assumed in cwd) to one on disk */
     if (strcmp(disk_path, "/") == 0)
-        path_on_disk = stralloc2("/", regex_path);
+        path_on_disk = g_strconcat("/", regex_path, NULL);
     else {
         char *clean_disk_path = clean_regex(disk_path, 0);
         path_on_disk = g_strjoin(NULL, clean_disk_path, "/", regex_path, NULL);
@@ -358,7 +358,7 @@ cd_regex(
 
     /* convert path (assumed in cwd) to one on disk */
     if (strcmp(disk_path, "/") == 0)
-        path_on_disk = stralloc2("/", regex);
+        path_on_disk = g_strconcat("/", regex, NULL);
     else {
         char *clean_disk_path = clean_regex(disk_path, 0);
         path_on_disk = g_strjoin(NULL, clean_disk_path, "/", regex, NULL);
@@ -384,7 +384,7 @@ cd_dir(
 
     DIR_ITEM *ditem;
 
-    path_on_disk_slash = stralloc2(path_on_disk, "/");
+    path_on_disk_slash = g_strconcat(path_on_disk, "/", NULL);
 
     nb_found = 0;
 
@@ -532,7 +532,7 @@ set_directory(
 	}
     }
 
-    cmd = stralloc2("OISD ", new_dir);
+    cmd = g_strconcat("OISD ", new_dir, NULL);
     if (exchange(cmd) == -1) {
 	exit(1);
 	/*NOTREACHED*/

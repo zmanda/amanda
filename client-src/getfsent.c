@@ -464,7 +464,7 @@ search_fstab(
    * FIXME: who still uses non fully qualified device names today?
    */
   if (name[0] != '/') {
-    fullname = stralloc2(DEV_PREFIX, name);
+    fullname = g_strconcat(DEV_PREFIX, name, NULL);
     if (stat(fullname, &stats[1]) == -1)
       stats[1].st_dev = (dev_t)-1;
     amfree(fullname);

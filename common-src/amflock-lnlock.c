@@ -216,7 +216,7 @@ ln_lock(
 
 	(void)create_lock(tlockfile, mypid);
 
-	mres = stralloc2(res, ".");
+	mres = g_strconcat(res, ".", NULL);
 
 	while(1) {
 		rc = link_lock(lockfile, tlockfile);
