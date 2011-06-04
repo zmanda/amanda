@@ -8089,24 +8089,29 @@ proplist_display_str_foreach_fn(
     gpointer value_p,
     gpointer user_data_p)
 {
-    char         *property_s = quote_string_always(key_p);
     property_t   *property   = value_p;
     GSList       *value;
     char       ***msg        = (char ***)user_data_p;
+    GPtrArray    *array      = g_ptr_array_new();
+    gchar       **strings;
 
     /* What to do with property->append? it should be printed only on client */
-    if (property->priority) {
-	**msg = g_strjoin(NULL, "priority ", property_s, NULL);
-	amfree(property_s);
-    } else {
-	**msg = property_s;
-	property_s = NULL;
-    }
-    for(value=property->values; value != NULL; value = value->next) {
-	char *qstr = quote_string_always((char *)value->data);
-	**msg = vstrextend(*msg, " ", qstr, NULL);
-	amfree(qstr);
-    }
+    if (property->priority)
+        g_ptr_array_add(array, g_strdup("priority"));
+
+    g_ptr_array_add(array, quote_string_always(key_p));
+
+    for (value = property->values; value; value = value->next)
+        g_ptr_array_add(array, quote_string_always((char *)value->data));
+
+    g_ptr_array_add(array, NULL);
+
+    strings = (gchar **)g_ptr_array_free(array, FALSE);
+
+    **msg = g_strjoinv(" ", strings);
+
+    g_strfreev(strings);
+
     (*msg)++;
 }
 
