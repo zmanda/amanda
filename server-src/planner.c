@@ -1496,7 +1496,7 @@ static char *client_estimate_as_xml(disk_t *dp, am_feature_t *features,
     g_string_append_printf(strbuf, "    <spindle>%d</spindle>\n", dp->spindle);
 
     tmp = xml_optionstr(dp, 0);
-    g_string_append_printf(strbuf, "%s</dle>\n", tmp);
+    g_string_append_printf(strbuf, "%s</dle>", tmp);
     g_free(tmp);
 
     return g_string_free(strbuf, FALSE);
@@ -1558,7 +1558,6 @@ static char *client_lvl_estimate_as_text(disk_t *dp, one_est_t *est,
        g_free(tmp);
     }
 out:
-    g_string_append_c(strbuf, '\n');
     return g_string_free(strbuf, FALSE);
 }
 
@@ -1629,9 +1628,11 @@ static void getsize(am_host_t *hostp)
     g_string_append_c(reqbuf, '\n');
 
     for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
-        char *s = NULL;
         char *tmp;
         gchar **errors;
+        GPtrArray *array = g_ptr_array_new();
+        gchar **strings;
+
         /*
          * Record the number of client-side estimates we have to do. We use i to
          * go over all levels and record the result in estimates_for_client when
@@ -1730,9 +1731,7 @@ static void getsize(am_host_t *hostp)
             }
             estimates_for_client = i;
 
-            tmp = client_estimate_as_xml(dp, features, estimates_for_client);
-            strappend(s, tmp);
-            g_free(tmp);
+            g_ptr_array_add(array, client_estimate_as_xml(dp, features, estimates_for_client));
         } else if (strcmp(dp->program,"DUMP") != 0 &&
                    strcmp(dp->program,"GNUTAR") != 0) {
             g_free(est(dp)->errstr);
@@ -1761,18 +1760,25 @@ static void getsize(am_host_t *hostp)
                     estimate = ES_CLIENT;
                 }
 
-                tmp = client_lvl_estimate_as_text(dp, est,
-                    (estimate == ES_CALCSIZE), option_string);
-                strappend(s, tmp);
-                g_free(tmp);
+                g_ptr_array_add(array, client_lvl_estimate_as_text(dp, est,
+                    (estimate == ES_CALCSIZE), option_string));
             }
             g_free(option_string);
             estimates_for_client = i;
         }
+        /*
+         * We want a separator-terminated string here.
+         */
+
+        g_ptr_array_add(array, g_strdup(""));
+        g_ptr_array_add(array, NULL);
+        strings = (gchar **)g_ptr_array_free(array, FALSE);
+
         if (estimates_for_client) {
+            tmp = g_strjoinv("\n", strings);
             total_estimates += estimates_for_client;
-            g_string_append(reqbuf, s);
-            amfree(s);
+            g_string_append(reqbuf, tmp);
+            g_free(tmp);
             if (est(dp)->state == DISK_DONE) {
                 remove_disk(&estq, dp);
                 est(dp)->state = DISK_PARTIALY_DONE;
@@ -1790,6 +1796,7 @@ static void getsize(am_host_t *hostp)
             }
             enqueue_disk(&failq, dp);
         }
+        g_strfreev(strings);
     }
 
     if(total_estimates == 0) {

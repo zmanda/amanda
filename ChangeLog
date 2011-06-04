@@ -1,4 +1,8 @@
 2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: use a GPtrArray to collect client estimate
+	  strings
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/planner.c: shortcut when no client estimates are to be done
 	  - one less indendation level
 
