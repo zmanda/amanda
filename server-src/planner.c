@@ -1501,6 +1501,75 @@ static char *client_estimate_as_xml(disk_t *dp, am_feature_t *features,
 
     return g_string_free(strbuf, FALSE);
 }
+/**
+ * Return the estimate string for one estimate level when the client does not
+ * support XML. It is up to the caller to free the resulting string.
+ *
+ * @dp: the DLE
+ * @est: the estimate object for this level
+ * @use_calcsize: does the client support calcsize?
+ * @option_string: the option string for the client
+ */
+
+static char *client_lvl_estimate_as_text(disk_t *dp, one_est_t *est,
+    gboolean use_calcsize, char *option_string)
+{
+    int level = est->level;
+    GString *strbuf;
+    char *tmp;
+
+    strbuf = g_string_new(use_calcsize ? "CALCSIZE" : NULL);
+
+    tmp = quote_string(dp->name);
+    g_string_append_printf(strbuf, "%s %s ", dp->program, tmp);
+    g_free(tmp);
+
+    if (dp->device) {
+        tmp = quote_string(dp->device);
+        g_string_append(strbuf, tmp);
+        g_free(tmp);
+    }
+
+    g_string_append_printf(strbuf, " %d %s %d ", level, est->dumpdate,
+        dp->spindle);
+
+    if (option_string) {
+        g_string_append_printf(strbuf, " OPTIONS |%s", option_string);
+        goto out;
+    }
+
+    if (dp->exclude_file && dp->exclude_file->nb_element == 1) {
+        tmp = quote_string(dp->exclude_file->first->name);
+        g_string_append_printf(strbuf, " exclude-file=%s", tmp);
+        g_free(tmp);
+    } else if (dp->exclude_list && dp->exclude_list->nb_element == 1) {
+       tmp = quote_string(dp->exclude_list->first->name);
+       g_string_append_printf(strbuf, " exclude-list=%s", tmp);
+       g_free(tmp);
+    }
+
+    /*
+     * FIXME: not sure the original code really meant this,
+     * but if an include file/list was specified, it was
+     * separated from the exclude file/list by two spaces.
+     * We reproduce that here...
+     */
+    if (dp->include_file && dp->include_file->nb_element == 1) {
+        tmp = quote_string(dp->include_file->first->name);
+        g_string_append_printf(strbuf, "  include-file=%s", tmp);
+        g_free(tmp);
+    } else if (dp->include_list && dp->include_list->nb_element == 1) {
+       tmp = quote_string(dp->include_list->first->name);
+       g_string_append_printf(strbuf, "  include-list=%s", tmp);
+       g_free(tmp);
+    }
+out:
+    g_string_append_c(strbuf, '\n');
+    return g_string_free(strbuf, FALSE);
+}
+
+
+
 
 static void getsize(am_host_t *hostp)
 {
@@ -1679,71 +1748,23 @@ static void getsize(am_host_t *hostp)
                             error("problem with option string, check the dumptype definition.\n");
 		}
 
-                for(i = 0; i < MAX_LEVELS; i++) {
-                    int level = est(dp)->estimate[i].level;
-                    GString *strbuf;
-                    char *tmp;
+                for (i = 0; i < MAX_LEVELS; i++) {
+                    one_est_t *est = &(est(dp)->estimate[i]);
+                    int level = est->level;
 
                     if(level == -1)
                         break;
 
-                    strbuf = g_string_new(NULL);
-                    tmp = quote_string(dp->name);
-
                     if (estimate == ES_CALCSIZE && !am_has_feature(features, fe_calcsize_estimate)) {
+                        tmp = quote_string(dp->name);
                         log_add(L_WARNING, "%s:%s does not support CALCSIZE for estimate, "
                             "using CLIENT.\n", hostp->hostname, tmp);
+                        g_free(tmp);
                         estimate = ES_CLIENT;
                     }
 
-                    if (estimate == ES_CALCSIZE)
-                        g_string_append(strbuf, "CALCSIZE");
-
-                    g_string_append_printf(strbuf, "%s %s ", dp->program, tmp);
-                    g_free(tmp);
-
-                    if (dp->device) {
-                        tmp = quote_string(dp->device);
-                        g_string_append(strbuf, tmp);
-                        g_free(tmp);
-                    }
-
-                    g_string_append_printf(strbuf, " %d %s %d ", level,
-                        est(dp)->estimate[i].dumpdate, dp->spindle);
-
-		    if (option_string)
-		        g_string_append_printf(strbuf, " OPTIONS |%s", option_string);
-                    else {
-                        if (dp->exclude_file && dp->exclude_file->nb_element == 1) {
-                            tmp = quote_string(dp->exclude_file->first->name);
-                            g_string_append_printf(strbuf, " exclude-file=%s", tmp);
-                            g_free(tmp);
-                        } else if (dp->exclude_list && dp->exclude_list->nb_element == 1) {
-                           tmp = quote_string(dp->exclude_list->first->name);
-                           g_string_append_printf(strbuf, " exclude-list=%s", tmp);
-                           g_free(tmp);
-                        }
-
-                        /*
-                         * FIXME: not sure the original code really meant this,
-                         * but if an include file/list was specified, it was
-                         * separated from the exclude file/list by two spaces.
-                         * We reproduce that here...
-                         */
-                        if (dp->include_file && dp->include_file->nb_element == 1) {
-                            tmp = quote_string(dp->include_file->first->name);
-                            g_string_append_printf(strbuf, "  include-file=%s", tmp);
-                            g_free(tmp);
-                        } else if (dp->include_list && dp->include_list->nb_element == 1) {
-                           tmp = quote_string(dp->include_list->first->name);
-                           g_string_append_printf(strbuf, "  include-list=%s", tmp);
-                           g_free(tmp);
-                        }
-                    }
-
-                    g_string_append_c(strbuf, '\n');
-
-                    tmp = g_string_free(strbuf, FALSE);
+                    tmp = client_lvl_estimate_as_text(dp, est,
+                        (estimate == ES_CALCSIZE), option_string);
                     strappend(s, tmp);
                     g_free(tmp);
                 }
