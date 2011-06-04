@@ -1567,7 +1567,7 @@ static void getsize(am_host_t *hostp)
 
     for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
         char *s = NULL;
-        char *qname, *qdevice;
+        char *tmp;
         gchar **errors;
 
         if(dp->todo == 0) continue;
@@ -1580,22 +1580,20 @@ static void getsize(am_host_t *hostp)
             continue;
         }
 
-        qname = quote_string(dp->name);
-
         errors = validate_optionstr(dp);
 
         if (errors) {
             gchar **ptr;
+            tmp = quote_string(dp->name);
             for (ptr = errors; *ptr; ptr++)
                 log_add(L_FAIL, "%s %s %s 0 [%s]", dp->host->hostname,
-                    qname, planner_timestamp, *ptr);
+                    tmp, planner_timestamp, *ptr);
             g_strfreev(errors);
-            amfree(qname);
+            g_free(tmp);
             est(dp)->state = DISK_DONE;
             continue;
         }
 
-        qdevice = quote_string(dp->device);
         estimate = (estimate_t)GPOINTER_TO_INT(dp->estimatelist->data);
 
         estimate = ES_CLIENT;
@@ -1606,17 +1604,22 @@ static void getsize(am_host_t *hostp)
         }
         if (estimate == ES_SERVER) {
             info_t info;
+            tmp = quote_string(dp->name);
+
             nb_server++;
             get_info(dp->host->hostname, dp->name, &info);
+
             for(i = 0; i < MAX_LEVELS; i++) {
                 int lev = est(dp)->estimate[i].level;
 
                 if(lev == -1) break;
                 server_estimate(dp, i, &info, lev);
             }
+
             g_fprintf(stderr,_("%s time %s: got result for host %s disk %s:"),
                     get_pname(), walltime_str(curclock()),
-                    dp->host->hostname, qname);
+                    dp->host->hostname, tmp);
+
             g_fprintf(stderr,_(" %d -> %lldK, %d -> %lldK, %d -> %lldK\n"),
                       est(dp)->estimate[0].level,
                       (long long)est(dp)->estimate[0].nsize,
@@ -1624,11 +1627,13 @@ static void getsize(am_host_t *hostp)
                       (long long)est(dp)->estimate[1].nsize,
                       est(dp)->estimate[2].level,
                       (long long)est(dp)->estimate[2].nsize);
+
             if (!am_has_feature(features, fe_xml_estimate)) {
                 est(dp)->state = DISK_DONE;
                 remove_disk(&startq, dp);
                 enqueue_disk(&estq, dp);
             }
+            g_free(tmp);
         }
 
         estimate = ES_SERVER;
@@ -1637,6 +1642,7 @@ static void getsize(am_host_t *hostp)
             if (estimate == ES_CLIENT || estimate == ES_CALCSIZE)
                 break;
         }
+
         if (estimate == ES_CLIENT ||
             estimate == ES_CALCSIZE ||
             (am_has_feature(features, fe_req_xml) &&
@@ -1650,8 +1656,6 @@ static void getsize(am_host_t *hostp)
             nb_client++;
 
             if (am_has_feature(features, fe_req_xml)) {
-                char *l;
-
                 for(i = 0; i < MAX_LEVELS; i++) {
                     int level = est(dp)->estimate[i].level;
                     if (level == -1)
@@ -1659,9 +1663,9 @@ static void getsize(am_host_t *hostp)
                 }
                 estimates_for_client = i;
 
-                l = client_estimate_as_xml(dp, features, estimates_for_client);
-                strappend(s, l);
-                g_free(l);
+                tmp = client_estimate_as_xml(dp, features, estimates_for_client);
+                strappend(s, tmp);
+                g_free(tmp);
             } else if (strcmp(dp->program,"DUMP") != 0 &&
                        strcmp(dp->program,"GNUTAR") != 0) {
                 g_free(est(dp)->errstr);
@@ -1684,20 +1688,25 @@ static void getsize(am_host_t *hostp)
                         break;
 
                     strbuf = g_string_new(NULL);
+                    tmp = quote_string(dp->name);
 
                     if (estimate == ES_CALCSIZE && !am_has_feature(features, fe_calcsize_estimate)) {
                         log_add(L_WARNING, "%s:%s does not support CALCSIZE for estimate, "
-                            "using CLIENT.\n", hostp->hostname, qname);
+                            "using CLIENT.\n", hostp->hostname, tmp);
                         estimate = ES_CLIENT;
                     }
 
                     if (estimate == ES_CALCSIZE)
                         g_string_append(strbuf, "CALCSIZE");
 
-                    g_string_append_printf(strbuf, "%s %s ", dp->program, qname);
+                    g_string_append_printf(strbuf, "%s %s ", dp->program, tmp);
+                    g_free(tmp);
 
-                    if (dp->device)
-                        g_string_append(strbuf, qdevice);
+                    if (dp->device) {
+                        tmp = quote_string(dp->device);
+                        g_string_append(strbuf, tmp);
+                        g_free(tmp);
+                    }
 
                     g_string_append_printf(strbuf, " %d %s %d ", level,
                         est(dp)->estimate[i].dumpdate, dp->spindle);
@@ -1763,8 +1772,6 @@ static void getsize(am_host_t *hostp)
                 enqueue_disk(&failq, dp);
             }
         }
-        amfree(qname);
-        amfree(qdevice);
     }
 
     if(total_estimates == 0) {
