@@ -1,3 +1,40 @@
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: use a GPtrArray to collect client estimate
+	  strings
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: shortcut when no client estimates are to be done
+	  - one less indendation level
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: get text-based estimate string generation out of
+	  getsize()
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: remove variables qname and qdevice
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: push down variables qname and qdevice
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: use the previously create GString all along to
+	  append to the request
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: check for the number of estimates available
+	  rather than the string concatenation of them
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: push up optionstr() check
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: rework DLE estimate string generation in the non
+	  XML case
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: extripate XML DLE estimate generation out of
+	  getsize() into a new helper function
+
 2011-06-03  Francis Galiegue <fgaliegue@gmail.com>
 	* client-src/sendsize.c: remove the second usage of vstrextend() by
 	  using g_ptr_array_free(..., FALSE) and g_strjoinv() on an existing

@@ -1403,16 +1403,179 @@ static void get_estimates(void)
     }
 }
 
-static void getsize(
-    am_host_t *hostp)
+/*
+ * Build an XML fragment representing a client estimate for a DLE. Return that
+ * fragment to the caller. It is up to the caller to free the returned string.
+ *
+ * @param dp: the DLE.
+ * @param features: advertised server features.
+ * @param nr_estimates: number of estimates the client has to do for this DLE.
+ * @returns: the XML fragment.
+ */
+
+static char *client_estimate_as_xml(disk_t *dp, am_feature_t *features,
+    int nr_estimates)
+{
+    info_t info;
+    int i;
+    char *tmp;
+    gboolean server_side_xml, legacy_api;
+    GString *strbuf = g_string_new("<dle>\n  <program>");
+    GPtrArray *array = g_ptr_array_new();
+    GString *tmpbuf;
+    gchar **strings;
+
+    /*
+     * Initialize our helper variables
+     */
+
+    tmp = dp->program;
+    legacy_api = (g_str_equal(tmp, "DUMP") || g_str_equal(tmp, "GNUTAR"));
+    server_side_xml = am_has_feature(features, fe_xml_level_server);
+    get_info(dp->host->hostname, dp->name, &info);
+
+    /*
+     * First, of all, build the estimate level XML fragments in an array.
+     * Joining its elements will be done when it's time to append to the string
+     * buffer.
+     */
+
+    for (i = 0; i < nr_estimates; i++) {
+        int level = est(dp)->estimate[i].level;
+
+        tmpbuf = g_string_new("  <level>");
+        g_string_append_printf(tmpbuf, "%d", level);
+
+        if (server_side_xml && server_can_do_estimate(dp, &info, level))
+            g_string_append(tmpbuf, "<server>YES</server>");
+
+        g_string_append(tmpbuf, "</level>");
+        g_ptr_array_add(array, g_string_free(tmpbuf, FALSE));
+    }
+
+    /*
+     * We want a separator (ie, \n) terminated string, we must therefore append
+     * an empty string to the array before NULL.
+     */
+    g_ptr_array_add(array, g_strdup(""));
+    g_ptr_array_add(array, NULL);
+
+    g_string_append_printf(strbuf, "%s</program>\n", (legacy_api) ? tmp
+        : "APPLICATION");
+
+    if (!legacy_api) {
+        application_t *application = lookup_application(dp->application);
+        g_assert(application != NULL);
+
+        tmp = xml_application(dp, application, features);
+        g_string_append(strbuf, tmp);
+        g_free(tmp);
+    }
+
+    tmp = xml_estimate(dp->estimatelist, features);
+    g_string_append_printf(strbuf, "%s\n", tmp);
+    g_free(tmp);
+
+    tmp = amxml_format_tag("disk", dp->name);
+    g_string_append_printf(strbuf, "  %s\n", tmp);
+    g_free(tmp);
+
+    if (dp->device) {
+       tmp = amxml_format_tag("diskdevice", dp->device);
+       g_string_append_printf(strbuf, "  %s\n", tmp);
+       g_free(tmp);
+    }
+
+    strings = (gchar **)g_ptr_array_free(array, FALSE);
+    tmp = g_strjoinv("\n", strings);
+    g_strfreev(strings);
+
+    g_string_append(strbuf, tmp);
+    g_free(tmp);
+
+    g_string_append_printf(strbuf, "    <spindle>%d</spindle>\n", dp->spindle);
+
+    tmp = xml_optionstr(dp, 0);
+    g_string_append_printf(strbuf, "%s</dle>", tmp);
+    g_free(tmp);
+
+    return g_string_free(strbuf, FALSE);
+}
+/**
+ * Return the estimate string for one estimate level when the client does not
+ * support XML. It is up to the caller to free the resulting string.
+ *
+ * @dp: the DLE
+ * @est: the estimate object for this level
+ * @use_calcsize: does the client support calcsize?
+ * @option_string: the option string for the client
+ */
+
+static char *client_lvl_estimate_as_text(disk_t *dp, one_est_t *est,
+    gboolean use_calcsize, char *option_string)
+{
+    int level = est->level;
+    GString *strbuf;
+    char *tmp;
+
+    strbuf = g_string_new(use_calcsize ? "CALCSIZE" : NULL);
+
+    tmp = quote_string(dp->name);
+    g_string_append_printf(strbuf, "%s %s ", dp->program, tmp);
+    g_free(tmp);
+
+    if (dp->device) {
+        tmp = quote_string(dp->device);
+        g_string_append(strbuf, tmp);
+        g_free(tmp);
+    }
+
+    g_string_append_printf(strbuf, " %d %s %d ", level, est->dumpdate,
+        dp->spindle);
+
+    if (option_string) {
+        g_string_append_printf(strbuf, " OPTIONS |%s", option_string);
+        goto out;
+    }
+
+    if (dp->exclude_file && dp->exclude_file->nb_element == 1) {
+        tmp = quote_string(dp->exclude_file->first->name);
+        g_string_append_printf(strbuf, " exclude-file=%s", tmp);
+        g_free(tmp);
+    } else if (dp->exclude_list && dp->exclude_list->nb_element == 1) {
+       tmp = quote_string(dp->exclude_list->first->name);
+       g_string_append_printf(strbuf, " exclude-list=%s", tmp);
+       g_free(tmp);
+    }
+
+    /*
+     * FIXME: not sure the original code really meant this,
+     * but if an include file/list was specified, it was
+     * separated from the exclude file/list by two spaces.
+     * We reproduce that here...
+     */
+    if (dp->include_file && dp->include_file->nb_element == 1) {
+        tmp = quote_string(dp->include_file->first->name);
+        g_string_append_printf(strbuf, "  include-file=%s", tmp);
+        g_free(tmp);
+    } else if (dp->include_list && dp->include_list->nb_element == 1) {
+       tmp = quote_string(dp->include_list->first->name);
+       g_string_append_printf(strbuf, "  include-list=%s", tmp);
+       g_free(tmp);
+    }
+out:
+    return g_string_free(strbuf, FALSE);
+}
+
+
+
+
+static void getsize(am_host_t *hostp)
 {
     disk_t *	dp;
     int		i;
     time_t	timeout;
     const	security_driver_t *secdrv;
-    char *	calcsize;
-    char *	qname, *b64disk = NULL;
-    char *	qdevice, *b64device = NULL;
     estimate_t     estimate;
     estimatelist_t el;
     int nb_client = 0, nb_server = 0;
@@ -1427,6 +1590,8 @@ static void getsize(
     if (hostp->up != HOST_READY)
 	return;
 
+    reqbuf = g_string_new(NULL);
+
     /*
      * The first time through here we send a "noop" request.  This will
      * return the feature list from the client if it supports that.
@@ -1435,7 +1600,7 @@ static void getsize(
      * (and subsequent) pass(es).
      */
     if (!hostp->features) { /* noop service */
-        req = g_strdup_printf("SERVICE noop\nOPTIONS features=%s;\n",
+        g_string_append_printf(reqbuf, "SERVICE noop\nOPTIONS features=%s;\n",
             our_feature_string);
 	/*
 	 * We use ctimeout for the "noop" request because it should be
@@ -1452,7 +1617,7 @@ static void getsize(
     has_hostname = am_has_feature(features, fe_req_options_hostname);
     has_config   = am_has_feature(features, fe_req_options_config);
 
-    reqbuf = g_string_new("SERVICE sendsize\nOPTIONS ");
+    g_string_append(reqbuf, "SERVICE sendsize\nOPTIONS ");
 
     if (has_features)
         g_string_append_printf(reqbuf, "features=%s;", our_feature_string);
@@ -1468,12 +1633,18 @@ static void getsize(
 
     g_string_append_c(reqbuf, '\n');
 
-    req = g_string_free(reqbuf, FALSE);
-
     for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
-        char *s = NULL;
-        char *es;
+        char *tmp;
         gchar **errors;
+        GPtrArray *array = g_ptr_array_new();
+        gchar **strings;
+
+        /*
+         * Record the number of client-side estimates we have to do. We use i to
+         * go over all levels and record the result in estimates_for_client when
+         * we're done.
+         */
+        int estimates_for_client = 0;
 
         if(dp->todo == 0) continue;
 
@@ -1485,26 +1656,21 @@ static void getsize(
             continue;
         }
 
-        qname = quote_string(dp->name);
-
         errors = validate_optionstr(dp);
 
         if (errors) {
             gchar **ptr;
+            tmp = quote_string(dp->name);
             for (ptr = errors; *ptr; ptr++)
                 log_add(L_FAIL, "%s %s %s 0 [%s]", dp->host->hostname,
-                    qname, planner_timestamp, *ptr);
+                    tmp, planner_timestamp, *ptr);
             g_strfreev(errors);
-            amfree(qname);
+            g_free(tmp);
             est(dp)->state = DISK_DONE;
             continue;
         }
 
-        b64disk = amxml_format_tag("disk", dp->name);
-        qdevice = quote_string(dp->device);
         estimate = (estimate_t)GPOINTER_TO_INT(dp->estimatelist->data);
-        if (dp->device)
-            b64device = amxml_format_tag("diskdevice", dp->device);
 
         estimate = ES_CLIENT;
         for (el = dp->estimatelist; el != NULL; el = el->next) {
@@ -1514,17 +1680,22 @@ static void getsize(
         }
         if (estimate == ES_SERVER) {
             info_t info;
+            tmp = quote_string(dp->name);
+
             nb_server++;
             get_info(dp->host->hostname, dp->name, &info);
+
             for(i = 0; i < MAX_LEVELS; i++) {
                 int lev = est(dp)->estimate[i].level;
 
                 if(lev == -1) break;
                 server_estimate(dp, i, &info, lev);
             }
+
             g_fprintf(stderr,_("%s time %s: got result for host %s disk %s:"),
                     get_pname(), walltime_str(curclock()),
-                    dp->host->hostname, qname);
+                    dp->host->hostname, tmp);
+
             g_fprintf(stderr,_(" %d -> %lldK, %d -> %lldK, %d -> %lldK\n"),
                       est(dp)->estimate[0].level,
                       (long long)est(dp)->estimate[0].nsize,
@@ -1532,11 +1703,13 @@ static void getsize(
                       (long long)est(dp)->estimate[1].nsize,
                       est(dp)->estimate[2].level,
                       (long long)est(dp)->estimate[2].nsize);
+
             if (!am_has_feature(features, fe_xml_estimate)) {
                 est(dp)->state = DISK_DONE;
                 remove_disk(&startq, dp);
                 enqueue_disk(&estq, dp);
             }
+            g_free(tmp);
         }
 
         estimate = ES_SERVER;
@@ -1545,191 +1718,95 @@ static void getsize(
             if (estimate == ES_CLIENT || estimate == ES_CALCSIZE)
                 break;
         }
-        if (estimate == ES_CLIENT ||
-            estimate == ES_CALCSIZE ||
-            (am_has_feature(features, fe_req_xml) &&
-             am_has_feature(features, fe_xml_estimate))) {
-            /*
-             * Record the number of estimates we have to do. We use i to go over
-             * all levels and record the result in estimates_for_client when
-             * we're done.
-             */
-            int estimates_for_client = 0;
-            nb_client++;
 
-            if (am_has_feature(features, fe_req_xml)) {
-                char *levelstr = NULL;
-                char *spindlestr = NULL;
-                char *o;
-                char *l;
-                info_t info;
+        if (estimate != ES_CLIENT && estimate != ES_CALCSIZE
+            && !(am_has_feature(features, fe_req_xml)
+                || am_has_feature(features, fe_xml_estimate)))
+        continue;
 
-                get_info(dp->host->hostname, dp->name, &info);
-                for(i = 0; i < MAX_LEVELS; i++) {
-                    char *server, *this_level;
-                    int level = est(dp)->estimate[i].level;
-                    if (level == -1)
-                        break;
-                    if (am_has_feature(features, fe_xml_level_server) &&
-                        server_can_do_estimate(dp, &info, level)) {
-                        server = "<server>YES</server>";
-                    } else {
-                        server = "";
-                    }
-                    this_level = g_strdup_printf("  <level>%d%s</level>\n",
-                        level, server);
-                    vstrextend(&levelstr, this_level, NULL);
-                    g_free(this_level);
-                }
-                estimates_for_client = i;
-                spindlestr = g_strdup_printf("   <spindle>%d</spindle>\n",
-                    dp->spindle);
-                o = xml_optionstr(dp, 0);
+        /*
+         * We have one client estimate to deal with
+         */
+        nb_client++;
 
-                if (strcmp(dp->program,"DUMP") == 0
-                    || strcmp(dp->program,"GNUTAR") == 0)
-                    l = g_strdup_printf("<dle>\n  <program>%s</program>\n",
-                        dp->program);
-                else {
-                    l = g_strdup("<dle>\n  <program>APPLICATION</program>\n");
-                    if (dp->application) {
-                        application_t *application;
-                        char *xml_app;
-
-                        application = lookup_application(dp->application);
-                        g_assert(application != NULL);
-                        xml_app = xml_application(dp, application,
-                                                  features);
-                        vstrextend(&l, xml_app, NULL);
-                        amfree(xml_app);
-                    }
-                }
-
-                es = xml_estimate(dp->estimatelist, features);
-                vstrextend(&l, es, "\n", NULL);
-                amfree(es);
-                vstrextend(&l, "  ", b64disk, "\n", NULL);
-                if (dp->device)
-                    vstrextend(&l, "  ", b64device, "\n", NULL);
-                vstrextend(&l, levelstr, spindlestr, o, "</dle>\n", NULL);
-                strappend(s, l);
-                amfree(l);
-                amfree(levelstr);
-                amfree(spindlestr);
-                amfree(o);
-            } else if (strcmp(dp->program,"DUMP") != 0 &&
-                       strcmp(dp->program,"GNUTAR") != 0) {
-                g_free(est(dp)->errstr);
-                est(dp)->errstr = g_strdup("does not support application-api");
-            } else {
-                for(i = 0; i < MAX_LEVELS; i++) {
-                    char *l;
-                    char *exclude1 = "";
-                    char *exclude2 = "";
-                    char *excludefree = NULL;
-                    char *include1 = "";
-                    char *include2 = "";
-                    char *includefree = NULL;
-                    int level = est(dp)->estimate[i].level;
-
-                    if(level == -1)
-                        break;
-
-                    if (am_has_feature(features,
-                                       fe_sendsize_req_options)){
-                        exclude1 = " OPTIONS |";
-                        exclude2 = optionstr(dp);
-                        if ( exclude2 == NULL ) {
-                            error(_("problem with option string, check the dumptype definition.\n"));
-                        }
-                        excludefree = exclude2;
-                        includefree = NULL;
-                    } else {
-                        if (dp->exclude_file &&
-                            dp->exclude_file->nb_element == 1) {
-                            exclude1 = " exclude-file=";
-                            exclude2 = quote_string(
-                                            dp->exclude_file->first->name);
-                            excludefree = exclude2;
-                        }
-                        else if (dp->exclude_list &&
-                                 dp->exclude_list->nb_element == 1) {
-                            exclude1 = " exclude-list=";
-                            exclude2 = quote_string(
-                                            dp->exclude_list->first->name);
-                            excludefree = exclude2;
-                        }
-                        if (dp->include_file &&
-                            dp->include_file->nb_element == 1) {
-                            include1 = " include-file=";
-                            include2 = quote_string(
-                                            dp->include_file->first->name);
-                            includefree = include2;
-                        }
-                        else if (dp->include_list &&
-                                 dp->include_list->nb_element == 1) {
-                            include1 = " include-list=";
-                            include2 = quote_string(
-                                            dp->include_list->first->name);
-                            includefree = include2;
-                        }
-                    }
-
-                    if (estimate == ES_CALCSIZE &&
-                        !am_has_feature(features,
-                                        fe_calcsize_estimate)) {
-                        log_add(L_WARNING,
-                                _("%s:%s does not support CALCSIZE for estimate, using CLIENT.\n"),
-                                hostp->hostname, qname);
-                        estimate = ES_CLIENT;
-                    }
-                    if(estimate == ES_CLIENT)
-                        calcsize = "";
-                    else
-                        calcsize = "CALCSIZE ";
-
-                    l = g_strdup_printf("%s%s %s %s %d %s %d %s%s%s%s%s\n",
-                        calcsize, dp->program, qname, (dp->device) ? qdevice : "",
-                        level, est(dp)->estimate[i].dumpdate, dp->spindle, exclude1,
-                        exclude2, (includefree) ? " " : "", include1, include2);
-
-                    strappend(s, l);
-                    amfree(l);
-                    amfree(includefree);
-                    amfree(excludefree);
-                }
-                estimates_for_client = i;
+        if (am_has_feature(features, fe_req_xml)) {
+            for(i = 0; i < MAX_LEVELS; i++) {
+                int level = est(dp)->estimate[i].level;
+                if (level == -1)
+                    break;
             }
-            if (s != NULL) {
-                total_estimates += estimates_for_client;
-                strappend(req, s);
-                amfree(s);
-                if (est(dp)->state == DISK_DONE) {
-                    remove_disk(&estq, dp);
-                    est(dp)->state = DISK_PARTIALY_DONE;
-                    enqueue_disk(&pestq, dp);
-                } else {
-                    remove_disk(&startq, dp);
-                    est(dp)->state = DISK_ACTIVE;
-                }
-            } else if (est(dp)->state != DISK_DONE) {
-                remove_disk(&startq, dp);
-                est(dp)->state = DISK_DONE;
-                if (est(dp)->errstr == NULL) {
-                    est(dp)->errstr = g_strdup(
-                                            _("Can't request estimate"));
-                }
-                enqueue_disk(&failq, dp);
+            estimates_for_client = i;
+
+            g_ptr_array_add(array, client_estimate_as_xml(dp, features, estimates_for_client));
+        } else if (strcmp(dp->program,"DUMP") != 0 &&
+                   strcmp(dp->program,"GNUTAR") != 0) {
+            g_free(est(dp)->errstr);
+            est(dp)->errstr = g_strdup("does not support application-api");
+        } else {
+            char *option_string = NULL;
+
+            if (am_has_feature(features, fe_sendsize_req_options)) {
+                option_string = optionstr(dp);
+                if (!option_string)
+                    error("problem with option string, check the dumptype definition.\n");
             }
+
+            for (i = 0; i < MAX_LEVELS; i++) {
+                one_est_t *est = &(est(dp)->estimate[i]);
+                int level = est->level;
+
+                if(level == -1)
+                    break;
+
+                if (estimate == ES_CALCSIZE && !am_has_feature(features, fe_calcsize_estimate)) {
+                    tmp = quote_string(dp->name);
+                    log_add(L_WARNING, "%s:%s does not support CALCSIZE for estimate, "
+                        "using CLIENT.\n", hostp->hostname, tmp);
+                    g_free(tmp);
+                    estimate = ES_CLIENT;
+                }
+
+                g_ptr_array_add(array, client_lvl_estimate_as_text(dp, est,
+                    (estimate == ES_CALCSIZE), option_string));
+            }
+            g_free(option_string);
+            estimates_for_client = i;
         }
-        amfree(b64disk);
-        amfree(b64device);
-        amfree(qname);
-        amfree(qdevice);
+        /*
+         * We want a separator-terminated string here.
+         */
+
+        g_ptr_array_add(array, g_strdup(""));
+        g_ptr_array_add(array, NULL);
+        strings = (gchar **)g_ptr_array_free(array, FALSE);
+
+        if (estimates_for_client) {
+            tmp = g_strjoinv("\n", strings);
+            total_estimates += estimates_for_client;
+            g_string_append(reqbuf, tmp);
+            g_free(tmp);
+            if (est(dp)->state == DISK_DONE) {
+                remove_disk(&estq, dp);
+                est(dp)->state = DISK_PARTIALY_DONE;
+                enqueue_disk(&pestq, dp);
+            } else {
+                remove_disk(&startq, dp);
+                est(dp)->state = DISK_ACTIVE;
+            }
+        } else if (est(dp)->state != DISK_DONE) {
+            remove_disk(&startq, dp);
+            est(dp)->state = DISK_DONE;
+            if (est(dp)->errstr == NULL) {
+                est(dp)->errstr = g_strdup(
+                                        _("Can't request estimate"));
+            }
+            enqueue_disk(&failq, dp);
+        }
+        g_strfreev(strings);
     }
 
     if(total_estimates == 0) {
-        amfree(req);
+        g_string_free(reqbuf, TRUE);
         hostp->up = HOST_DONE;
         return;
     }
@@ -1741,6 +1818,7 @@ static void getsize(
     }
 
 send:
+    req = g_string_free(reqbuf, FALSE);
     dbprintf(_("send request:\n----\n%s\n----\n\n"), req);
     secdrv = security_getdriver(hostp->disks->auth);
     if (secdrv == NULL) {
@@ -1748,7 +1826,7 @@ send:
 	log_add(L_ERROR,
 		_("Could not find security driver '%s' for host '%s'"),
 		hostp->disks->auth, hostp->hostname);
-	amfree(req);
+	g_free(req);
 	return;
     }
     hostp->up = HOST_ACTIVE;
@@ -1766,7 +1844,7 @@ send:
     protocol_sendreq(hostp->hostname, secdrv, amhost_get_security_conf, 
 	req, timeout, handle_result, hostp);
 
-    amfree(req);
+    g_free(req);
 }
 
 static disk_t *lookup_hostdisk(
