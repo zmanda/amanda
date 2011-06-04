@@ -1742,7 +1742,7 @@ static void getsize(am_host_t *hostp)
                 g_free(option_string);
                 estimates_for_client = i;
             }
-            if (s != NULL) {
+            if (estimates_for_client) {
                 total_estimates += estimates_for_client;
                 strappend(req, s);
                 amfree(s);
