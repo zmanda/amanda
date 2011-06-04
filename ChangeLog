@@ -1,4 +1,8 @@
 2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/conffile.c: replace one usage of vstrextend() in
+	  val_t_display_strs() with a GString
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/amservice.c: use a GString in replacement of vstrextend()
 
 2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
