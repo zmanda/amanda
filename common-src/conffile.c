@@ -7757,19 +7757,22 @@ val_t_display_strs(
 
     case CONFTYPE_AUTOLABEL:
 	{
-	    buf[0] = quote_string_always(val->v.autolabel.template);
-	    if (val->v.autolabel.autolabel & AL_OTHER_CONFIG) {
-		buf[0] = vstrextend(&buf[0], " OTHER-CONFIG", NULL);
-	    }
-	    if (val->v.autolabel.autolabel & AL_NON_AMANDA) {
-		buf[0] = vstrextend(&buf[0], " NON-AMANDA", NULL);
-	    }
-	    if (val->v.autolabel.autolabel & AL_VOLUME_ERROR) {
-		buf[0] = vstrextend(&buf[0], " VOLUME-ERROR", NULL);
-	    }
-	    if (val->v.autolabel.autolabel & AL_EMPTY) {
-		buf[0] = vstrextend(&buf[0], " EMPTY", NULL);
-	    }
+            autolabel_set_t autolabel = val->v.autolabel.autolabel;
+            char *template = quote_string_always(val->v.autolabel.template);
+            GString *strbuf = g_string_new(template);
+
+            g_free(template);
+
+            if (autolabel & AL_OTHER_CONFIG)
+                g_string_append(strbuf, " OTHER-CONFIG");
+            if (autolabel & AL_NON_AMANDA)
+                g_string_append(strbuf, " NON-AMANDA");
+            if (autolabel & AL_VOLUME_ERROR)
+                g_string_append(strbuf, " VOLUME-ERROR");
+            if (autolabel & AL_EMPTY)
+                g_string_append(strbuf, " EMPTY");
+
+            buf[0] = g_string_free(strbuf, FALSE);
 	}
 	break;
 
