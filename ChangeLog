@@ -1,4 +1,8 @@
 2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/tapelist.c: remove usages of vstrextend() with a
+	  GPtrArray/GString combination
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/pipespawn.c: remove usage of vstrextend() with a GPtrArray
 
 2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
