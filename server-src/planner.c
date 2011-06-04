@@ -1502,7 +1502,6 @@ static char *client_estimate_as_xml(disk_t *dp, am_feature_t *features,
     return g_string_free(strbuf, FALSE);
 }
 
-
 static void getsize(
     am_host_t *hostp)
 {
@@ -1510,7 +1509,6 @@ static void getsize(
     int		i;
     time_t	timeout;
     const	security_driver_t *secdrv;
-    char *	calcsize;
     char *	qname;
     char *	qdevice;
     estimate_t     estimate;
@@ -1672,80 +1670,71 @@ static void getsize(
                 est(dp)->errstr = g_strdup("does not support application-api");
             } else {
                 for(i = 0; i < MAX_LEVELS; i++) {
-                    char *l;
-                    char *exclude1 = "";
-                    char *exclude2 = "";
-                    char *excludefree = NULL;
-                    char *include1 = "";
-                    char *include2 = "";
-                    char *includefree = NULL;
                     int level = est(dp)->estimate[i].level;
+                    GString *strbuf;
+                    char *tmp;
 
                     if(level == -1)
                         break;
 
-                    if (am_has_feature(features,
-                                       fe_sendsize_req_options)){
-                        exclude1 = " OPTIONS |";
-                        exclude2 = optionstr(dp);
-                        if ( exclude2 == NULL ) {
-                            error(_("problem with option string, check the dumptype definition.\n"));
-                        }
-                        excludefree = exclude2;
-                        includefree = NULL;
-                    } else {
-                        if (dp->exclude_file &&
-                            dp->exclude_file->nb_element == 1) {
-                            exclude1 = " exclude-file=";
-                            exclude2 = quote_string(
-                                            dp->exclude_file->first->name);
-                            excludefree = exclude2;
-                        }
-                        else if (dp->exclude_list &&
-                                 dp->exclude_list->nb_element == 1) {
-                            exclude1 = " exclude-list=";
-                            exclude2 = quote_string(
-                                            dp->exclude_list->first->name);
-                            excludefree = exclude2;
-                        }
-                        if (dp->include_file &&
-                            dp->include_file->nb_element == 1) {
-                            include1 = " include-file=";
-                            include2 = quote_string(
-                                            dp->include_file->first->name);
-                            includefree = include2;
-                        }
-                        else if (dp->include_list &&
-                                 dp->include_list->nb_element == 1) {
-                            include1 = " include-list=";
-                            include2 = quote_string(
-                                            dp->include_list->first->name);
-                            includefree = include2;
-                        }
-                    }
+                    strbuf = g_string_new(NULL);
 
-                    if (estimate == ES_CALCSIZE &&
-                        !am_has_feature(features,
-                                        fe_calcsize_estimate)) {
-                        log_add(L_WARNING,
-                                _("%s:%s does not support CALCSIZE for estimate, using CLIENT.\n"),
-                                hostp->hostname, qname);
+                    if (estimate == ES_CALCSIZE && !am_has_feature(features, fe_calcsize_estimate)) {
+                        log_add(L_WARNING, "%s:%s does not support CALCSIZE for estimate, "
+                            "using CLIENT.\n", hostp->hostname, qname);
                         estimate = ES_CLIENT;
                     }
-                    if(estimate == ES_CLIENT)
-                        calcsize = "";
-                    else
-                        calcsize = "CALCSIZE ";
 
-                    l = g_strdup_printf("%s%s %s %s %d %s %d %s%s%s%s%s\n",
-                        calcsize, dp->program, qname, (dp->device) ? qdevice : "",
-                        level, est(dp)->estimate[i].dumpdate, dp->spindle, exclude1,
-                        exclude2, (includefree) ? " " : "", include1, include2);
+                    if (estimate == ES_CALCSIZE)
+                        g_string_append(strbuf, "CALCSIZE");
 
-                    strappend(s, l);
-                    amfree(l);
-                    amfree(includefree);
-                    amfree(excludefree);
+                    g_string_append_printf(strbuf, "%s %s ", dp->program, qname);
+
+                    if (dp->device)
+                        g_string_append(strbuf, qdevice);
+
+                    g_string_append_printf(strbuf, " %d %s %d ", level,
+                        est(dp)->estimate[i].dumpdate, dp->spindle);
+
+                    if (am_has_feature(features, fe_sendsize_req_options)) {
+                        tmp = optionstr(dp);
+                        if (!tmp)
+                            error("problem with option string, check the dumptype definition.\n");
+                        g_string_append_printf(strbuf, " OPTIONS |%s", tmp);
+                        g_free(tmp);
+                    } else {
+                        if (dp->exclude_file && dp->exclude_file->nb_element == 1) {
+                            tmp = quote_string(dp->exclude_file->first->name);
+                            g_string_append_printf(strbuf, " exclude-file=%s", tmp);
+                            g_free(tmp);
+                        } else if (dp->exclude_list && dp->exclude_list->nb_element == 1) {
+                           tmp = quote_string(dp->exclude_list->first->name);
+                           g_string_append_printf(strbuf, " exclude-list=%s", tmp);
+                           g_free(tmp);
+                        }
+
+                        /*
+                         * FIXME: not sure the original code really meant this,
+                         * but if an include file/list was specified, it was
+                         * separated from the exclude file/list by two spaces.
+                         * We reproduce that here...
+                         */
+                        if (dp->include_file && dp->include_file->nb_element == 1) {
+                            tmp = quote_string(dp->include_file->first->name);
+                            g_string_append_printf(strbuf, "  include-file=%s", tmp);
+                            g_free(tmp);
+                        } else if (dp->include_list && dp->include_list->nb_element == 1) {
+                           tmp = quote_string(dp->include_list->first->name);
+                           g_string_append_printf(strbuf, "  include-list=%s", tmp);
+                           g_free(tmp);
+                        }
+                    }
+
+                    g_string_append_c(strbuf, '\n');
+
+                    tmp = g_string_free(strbuf, FALSE);
+                    strappend(s, tmp);
+                    g_free(tmp);
                 }
                 estimates_for_client = i;
             }
