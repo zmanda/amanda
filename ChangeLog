@@ -1,4 +1,8 @@
 2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: rework DLE estimate string generation in the non
+	  XML case
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/planner.c: extripate XML DLE estimate generation out of
 	  getsize() into a new helper function
 
