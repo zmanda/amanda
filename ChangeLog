@@ -1,4 +1,7 @@
 2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: push up optionstr() check
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/planner.c: rework DLE estimate string generation in the non
 	  XML case
 
