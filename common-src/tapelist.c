@@ -227,36 +227,48 @@ marshal_tapelist(
     int		do_escape)
 {
     tapelist_t *cur_tape;
-    char *str = NULL;
+    char *str;
+    GPtrArray *strarray = g_ptr_array_new();
+    GString *strbuf;
+    gchar **strings;
 
-    for(cur_tape = tapelist; cur_tape; cur_tape = cur_tape->next){
-	char *esc_label;
-	char *files_str = NULL;
+    for (cur_tape = tapelist; cur_tape; cur_tape = cur_tape->next) {
+        GPtrArray *array = g_ptr_array_new();
+        char *p;
 	int c;
 
-	if(do_escape) esc_label = escape_label(cur_tape->label);
-	else esc_label = g_strdup(cur_tape->label);
+        p = (do_escape) ? escape_label(cur_tape->label)
+            : g_strdup(cur_tape->label);
 
-	for(c = 0; c < cur_tape->numfiles ; c++){
-	    char num_str[NUM_STR_SIZE];
-	    g_snprintf(num_str, sizeof(num_str), "%lld",
-			(long long)cur_tape->files[c]);
-	    if (!files_str)
-		files_str = g_strdup(num_str);
-	    else
-		vstrextend(&files_str, ",", num_str, NULL);
-	}
+        strbuf = g_string_new(p);
+        g_free(p);
 
-	if (!str)
-	    str = g_strjoin(NULL, esc_label, ":", files_str, NULL);
-	else
-	    vstrextend(&str, ";", esc_label, ":", files_str, NULL);
+        g_string_append_c(strbuf, ':');
 
-	amfree(esc_label);
-	amfree(files_str);
+        for (c = 0; c < cur_tape->numfiles; c++) {
+            p = g_strdup_printf("%lld", (long long)cur_tape->files[c]);
+            g_ptr_array_add(array, p);
+        }
+
+        g_ptr_array_add(array, NULL);
+
+        strings = (gchar **)g_ptr_array_free(array, FALSE);
+        p = g_strjoinv(",", strings);
+        g_strfreev(strings);
+
+        g_string_append(strbuf, p);
+        g_free(p);
+
+        g_ptr_array_add(strarray, g_string_free(strbuf, FALSE));
     }
 
-    return(str);
+    g_ptr_array_add(strarray, NULL);
+
+    strings = (gchar **)g_ptr_array_free(strarray, FALSE);
+    str = g_strjoinv(";", strings);
+    g_strfreev(strings);
+
+    return str;
 }
 
 /*
