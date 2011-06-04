@@ -204,16 +204,20 @@ client_protocol(
     char        *service,
     FILE        *input_file)
 {
+    GString *strbuf = g_string_new(NULL);
     char *req, *req1;
 
-    req = g_strdup_printf("SERVICE %s\nOPTIONS features=%s\n",
-			  service, our_feature_string);
-    req1 = malloc(1024);
-    while(fgets(req1, 1024, input_file) != NULL) {
-	vstrextend(&req, req1, NULL);
-    }
-    amfree(req1);
+    g_string_append_printf(strbuf, "SERVICE %s\nOPTIONS features=%s\n",
+        service, our_feature_string);
+
+    req1 = g_malloc(1024);
+    while(fgets(req1, 1024, input_file) != NULL)
+	g_string_append(strbuf, req1);
+
+    g_free(req1);
     protocol_init();
+
+    req = g_string_free(strbuf, FALSE);
 
     start_host(hostname, auth, req);
 

@@ -1,4 +1,7 @@
 2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/amservice.c: use a GString in replacement of vstrextend()
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/planner.c: use a GPtrArray to collect client estimate
 	  strings
 
