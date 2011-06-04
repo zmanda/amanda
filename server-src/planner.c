@@ -1502,8 +1502,7 @@ static char *client_estimate_as_xml(disk_t *dp, am_feature_t *features,
     return g_string_free(strbuf, FALSE);
 }
 
-static void getsize(
-    am_host_t *hostp)
+static void getsize(am_host_t *hostp)
 {
     disk_t *	dp;
     int		i;
@@ -1669,6 +1668,14 @@ static void getsize(
                 g_free(est(dp)->errstr);
                 est(dp)->errstr = g_strdup("does not support application-api");
             } else {
+	        char *option_string = NULL;
+
+		if (am_has_feature(features, fe_sendsize_req_options)) {
+                        option_string = optionstr(dp);
+                        if (!option_string)
+                            error("problem with option string, check the dumptype definition.\n");
+		}
+
                 for(i = 0; i < MAX_LEVELS; i++) {
                     int level = est(dp)->estimate[i].level;
                     GString *strbuf;
@@ -1696,13 +1703,9 @@ static void getsize(
                     g_string_append_printf(strbuf, " %d %s %d ", level,
                         est(dp)->estimate[i].dumpdate, dp->spindle);
 
-                    if (am_has_feature(features, fe_sendsize_req_options)) {
-                        tmp = optionstr(dp);
-                        if (!tmp)
-                            error("problem with option string, check the dumptype definition.\n");
-                        g_string_append_printf(strbuf, " OPTIONS |%s", tmp);
-                        g_free(tmp);
-                    } else {
+		    if (option_string)
+		        g_string_append_printf(strbuf, " OPTIONS |%s", option_string);
+                    else {
                         if (dp->exclude_file && dp->exclude_file->nb_element == 1) {
                             tmp = quote_string(dp->exclude_file->first->name);
                             g_string_append_printf(strbuf, " exclude-file=%s", tmp);
@@ -1736,6 +1739,7 @@ static void getsize(
                     strappend(s, tmp);
                     g_free(tmp);
                 }
+                g_free(option_string);
                 estimates_for_client = i;
             }
             if (s != NULL) {
