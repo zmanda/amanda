@@ -1508,8 +1508,6 @@ static void getsize(am_host_t *hostp)
     int		i;
     time_t	timeout;
     const	security_driver_t *secdrv;
-    char *	qname;
-    char *	qdevice;
     estimate_t     estimate;
     estimatelist_t el;
     int nb_client = 0, nb_server = 0;
@@ -1569,6 +1567,7 @@ static void getsize(am_host_t *hostp)
 
     for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
         char *s = NULL;
+        char *qname, *qdevice;
         gchar **errors;
 
         if(dp->todo == 0) continue;
