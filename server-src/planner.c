@@ -1632,6 +1632,12 @@ static void getsize(am_host_t *hostp)
         char *s = NULL;
         char *tmp;
         gchar **errors;
+        /*
+         * Record the number of client-side estimates we have to do. We use i to
+         * go over all levels and record the result in estimates_for_client when
+         * we're done.
+         */
+        int estimates_for_client = 0;
 
         if(dp->todo == 0) continue;
 
@@ -1706,86 +1712,83 @@ static void getsize(am_host_t *hostp)
                 break;
         }
 
-        if (estimate == ES_CLIENT ||
-            estimate == ES_CALCSIZE ||
-            (am_has_feature(features, fe_req_xml) &&
-             am_has_feature(features, fe_xml_estimate))) {
-            /*
-             * Record the number of estimates we have to do. We use i to go over
-             * all levels and record the result in estimates_for_client when
-             * we're done.
-             */
-            int estimates_for_client = 0;
-            nb_client++;
+        if (estimate != ES_CLIENT && estimate != ES_CALCSIZE
+            && !(am_has_feature(features, fe_req_xml)
+                || am_has_feature(features, fe_xml_estimate)))
+        continue;
 
-            if (am_has_feature(features, fe_req_xml)) {
-                for(i = 0; i < MAX_LEVELS; i++) {
-                    int level = est(dp)->estimate[i].level;
-                    if (level == -1)
-                        break;
+        /*
+         * We have one client estimate to deal with
+         */
+        nb_client++;
+
+        if (am_has_feature(features, fe_req_xml)) {
+            for(i = 0; i < MAX_LEVELS; i++) {
+                int level = est(dp)->estimate[i].level;
+                if (level == -1)
+                    break;
+            }
+            estimates_for_client = i;
+
+            tmp = client_estimate_as_xml(dp, features, estimates_for_client);
+            strappend(s, tmp);
+            g_free(tmp);
+        } else if (strcmp(dp->program,"DUMP") != 0 &&
+                   strcmp(dp->program,"GNUTAR") != 0) {
+            g_free(est(dp)->errstr);
+            est(dp)->errstr = g_strdup("does not support application-api");
+        } else {
+            char *option_string = NULL;
+
+            if (am_has_feature(features, fe_sendsize_req_options)) {
+                option_string = optionstr(dp);
+                if (!option_string)
+                    error("problem with option string, check the dumptype definition.\n");
+            }
+
+            for (i = 0; i < MAX_LEVELS; i++) {
+                one_est_t *est = &(est(dp)->estimate[i]);
+                int level = est->level;
+
+                if(level == -1)
+                    break;
+
+                if (estimate == ES_CALCSIZE && !am_has_feature(features, fe_calcsize_estimate)) {
+                    tmp = quote_string(dp->name);
+                    log_add(L_WARNING, "%s:%s does not support CALCSIZE for estimate, "
+                        "using CLIENT.\n", hostp->hostname, tmp);
+                    g_free(tmp);
+                    estimate = ES_CLIENT;
                 }
-                estimates_for_client = i;
 
-                tmp = client_estimate_as_xml(dp, features, estimates_for_client);
+                tmp = client_lvl_estimate_as_text(dp, est,
+                    (estimate == ES_CALCSIZE), option_string);
                 strappend(s, tmp);
                 g_free(tmp);
-            } else if (strcmp(dp->program,"DUMP") != 0 &&
-                       strcmp(dp->program,"GNUTAR") != 0) {
-                g_free(est(dp)->errstr);
-                est(dp)->errstr = g_strdup("does not support application-api");
+            }
+            g_free(option_string);
+            estimates_for_client = i;
+        }
+        if (estimates_for_client) {
+            total_estimates += estimates_for_client;
+            g_string_append(reqbuf, s);
+            amfree(s);
+            if (est(dp)->state == DISK_DONE) {
+                remove_disk(&estq, dp);
+                est(dp)->state = DISK_PARTIALY_DONE;
+                enqueue_disk(&pestq, dp);
             } else {
-	        char *option_string = NULL;
-
-		if (am_has_feature(features, fe_sendsize_req_options)) {
-                        option_string = optionstr(dp);
-                        if (!option_string)
-                            error("problem with option string, check the dumptype definition.\n");
-		}
-
-                for (i = 0; i < MAX_LEVELS; i++) {
-                    one_est_t *est = &(est(dp)->estimate[i]);
-                    int level = est->level;
-
-                    if(level == -1)
-                        break;
-
-                    if (estimate == ES_CALCSIZE && !am_has_feature(features, fe_calcsize_estimate)) {
-                        tmp = quote_string(dp->name);
-                        log_add(L_WARNING, "%s:%s does not support CALCSIZE for estimate, "
-                            "using CLIENT.\n", hostp->hostname, tmp);
-                        g_free(tmp);
-                        estimate = ES_CLIENT;
-                    }
-
-                    tmp = client_lvl_estimate_as_text(dp, est,
-                        (estimate == ES_CALCSIZE), option_string);
-                    strappend(s, tmp);
-                    g_free(tmp);
-                }
-                g_free(option_string);
-                estimates_for_client = i;
-            }
-            if (estimates_for_client) {
-                total_estimates += estimates_for_client;
-                g_string_append(reqbuf, s);
-                amfree(s);
-                if (est(dp)->state == DISK_DONE) {
-                    remove_disk(&estq, dp);
-                    est(dp)->state = DISK_PARTIALY_DONE;
-                    enqueue_disk(&pestq, dp);
-                } else {
-                    remove_disk(&startq, dp);
-                    est(dp)->state = DISK_ACTIVE;
-                }
-            } else if (est(dp)->state != DISK_DONE) {
                 remove_disk(&startq, dp);
-                est(dp)->state = DISK_DONE;
-                if (est(dp)->errstr == NULL) {
-                    est(dp)->errstr = g_strdup(
-                                            _("Can't request estimate"));
-                }
-                enqueue_disk(&failq, dp);
+                est(dp)->state = DISK_ACTIVE;
             }
+        } else if (est(dp)->state != DISK_DONE) {
+            remove_disk(&startq, dp);
+            est(dp)->state = DISK_DONE;
+            if (est(dp)->errstr == NULL) {
+                est(dp)->errstr = g_strdup(
+                                        _("Can't request estimate"));
+            }
+            enqueue_disk(&failq, dp);
         }
     }
 
