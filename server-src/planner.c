@@ -1524,6 +1524,8 @@ static void getsize(am_host_t *hostp)
     if (hostp->up != HOST_READY)
 	return;
 
+    reqbuf = g_string_new(NULL);
+
     /*
      * The first time through here we send a "noop" request.  This will
      * return the feature list from the client if it supports that.
@@ -1532,7 +1534,7 @@ static void getsize(am_host_t *hostp)
      * (and subsequent) pass(es).
      */
     if (!hostp->features) { /* noop service */
-        req = g_strdup_printf("SERVICE noop\nOPTIONS features=%s;\n",
+        g_string_append_printf(reqbuf, "SERVICE noop\nOPTIONS features=%s;\n",
             our_feature_string);
 	/*
 	 * We use ctimeout for the "noop" request because it should be
@@ -1549,7 +1551,7 @@ static void getsize(am_host_t *hostp)
     has_hostname = am_has_feature(features, fe_req_options_hostname);
     has_config   = am_has_feature(features, fe_req_options_config);
 
-    reqbuf = g_string_new("SERVICE sendsize\nOPTIONS ");
+    g_string_append(reqbuf, "SERVICE sendsize\nOPTIONS ");
 
     if (has_features)
         g_string_append_printf(reqbuf, "features=%s;", our_feature_string);
@@ -1564,8 +1566,6 @@ static void getsize(am_host_t *hostp)
         g_string_append_printf(reqbuf, "config=%s;", get_config_name());
 
     g_string_append_c(reqbuf, '\n');
-
-    req = g_string_free(reqbuf, FALSE);
 
     for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
         char *s = NULL;
@@ -1744,7 +1744,7 @@ static void getsize(am_host_t *hostp)
             }
             if (estimates_for_client) {
                 total_estimates += estimates_for_client;
-                strappend(req, s);
+                g_string_append(reqbuf, s);
                 amfree(s);
                 if (est(dp)->state == DISK_DONE) {
                     remove_disk(&estq, dp);
@@ -1769,7 +1769,7 @@ static void getsize(am_host_t *hostp)
     }
 
     if(total_estimates == 0) {
-        amfree(req);
+        g_string_free(reqbuf, TRUE);
         hostp->up = HOST_DONE;
         return;
     }
@@ -1781,6 +1781,7 @@ static void getsize(am_host_t *hostp)
     }
 
 send:
+    req = g_string_free(reqbuf, FALSE);
     dbprintf(_("send request:\n----\n%s\n----\n\n"), req);
     secdrv = security_getdriver(hostp->disks->auth);
     if (secdrv == NULL) {
@@ -1788,7 +1789,7 @@ send:
 	log_add(L_ERROR,
 		_("Could not find security driver '%s' for host '%s'"),
 		hostp->disks->auth, hostp->hostname);
-	amfree(req);
+	g_free(req);
 	return;
     }
     hostp->up = HOST_ACTIVE;
@@ -1806,7 +1807,7 @@ send:
     protocol_sendreq(hostp->hostname, secdrv, amhost_get_security_conf, 
 	req, timeout, handle_result, hostp);
 
-    amfree(req);
+    g_free(req);
 }
 
 static disk_t *lookup_hostdisk(
