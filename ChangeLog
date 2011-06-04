@@ -1,4 +1,8 @@
 2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/util.c: remove usage of vstrextend() by using a GString. No
+	  choice here, we have to peek into the GPtrArray.
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/tapelist.c: remove usages of vstrextend() with a
 	  GPtrArray/GString combination
 

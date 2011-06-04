@@ -1594,15 +1594,31 @@ void
 debug_executing(
     GPtrArray *argv_ptr)
 {
-    guint i;
-    char *cmdline = g_strdup((char *)g_ptr_array_index(argv_ptr, 0));
+    char *cmdline;
+    GString *strbuf;
+    gsize i, len = argv_ptr->len - 1;
 
-    for (i = 1; i < argv_ptr->len-1; i++) {
-	char *arg = g_shell_quote((char *)g_ptr_array_index(argv_ptr, i));
-	cmdline = vstrextend(&cmdline, " ", arg, NULL);
-	amfree(arg);
+    /*
+     * This is ugly, but we have no choice: we cannot count on the caller to
+     * supply a NULL-terminated GPtrArray (he'll have other problems than this
+     * function, anyway), so we have to display all but the last argument - and
+     * therefore need to peek into the array directly to knows its length.
+     *
+     * To make things even funnier, we have to quote all arguments _except_ the
+     * command name (ie, the first one).
+     */
+
+    strbuf = g_string_new((char *)g_ptr_array_index(argv_ptr, 0));
+
+    for (i = 1; i < len; i++) {
+        cmdline = g_shell_quote((char *)g_ptr_array_index(argv_ptr, i));
+        g_string_append_printf(strbuf, " %s", cmdline);
+        g_free(cmdline);
     }
+
+    cmdline = g_string_free(strbuf, FALSE);
+
     g_debug("Executing: %s\n", cmdline);
-    amfree(cmdline);
+    g_free(cmdline);
 }
 
