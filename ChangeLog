@@ -1,4 +1,7 @@
 2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: remove variables qname and qdevice
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/planner.c: push down variables qname and qdevice
 
 2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
