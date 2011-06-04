@@ -1,4 +1,8 @@
 2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/planner.c: shortcut when no client estimates are to be done
+	  - one less indendation level
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/planner.c: get text-based estimate string generation out of
 	  getsize()
 
