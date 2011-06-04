@@ -8123,30 +8123,31 @@ exinclude_display_str(
     sl_t  *sl;
     sle_t *excl;
     char *rval;
+    GPtrArray *array = g_ptr_array_new();
+    gchar **strings;
 
     assert(val->type == CONFTYPE_EXINCLUDE);
 
-    rval = g_strdup("");
-
     if (file == 0) {
 	sl = val_t__exinclude(val).sl_list;
-        strappend(rval, "LIST");
+        g_ptr_array_add(array, g_strdup("LIST"));
     } else {
 	sl = val_t__exinclude(val).sl_file;
-        strappend(rval, "FILE");
+        g_ptr_array_add(array, g_strdup("FILE"));
     }
 
-    if (val_t__exinclude(val).optional == 1) {
-        strappend(rval, " OPTIONAL");
-    }
+    if (val_t__exinclude(val).optional == 1)
+        g_ptr_array_add(array, g_strdup("OPTIONAL"));
 
-    if (sl != NULL) {
-	for(excl = sl->first; excl != NULL; excl = excl->next) {
-	    char *qstr = quote_string_always(excl->name);
-            vstrextend(&rval, " ", qstr, NULL);
-	    amfree(qstr);
-	}
-    }
+    if (sl != NULL)
+	for(excl = sl->first; excl; excl = excl->next)
+            g_ptr_array_add(array, quote_string_always(excl->name));
+
+    g_ptr_array_add(array, NULL);
+
+    strings = (gchar **)g_ptr_array_free(array, FALSE);
+    rval = g_strjoinv(" ", strings);
+    g_strfreev(strings);
 
     return rval;
 }
