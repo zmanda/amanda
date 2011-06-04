@@ -1,4 +1,33 @@
 2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/util.c: remove usage of vstrextend() by using a GString. No
+	  choice here, we have to peek into the GPtrArray.
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/tapelist.c: remove usages of vstrextend() with a
+	  GPtrArray/GString combination
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/pipespawn.c: remove usage of vstrextend() with a GPtrArray
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/fileheader.c: remove usage of vstrextend() with a GPtrArray
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/conffile.c: replace the third and final usage of vstrextend()
+	  in exinclude_display_str()
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/conffile.c: replace the second usage of vstrextend() in
+	  proplist_display_str_foreach_fn() using a GPtrArray
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/conffile.c: replace one usage of vstrextend() in
+	  val_t_display_strs() with a GString
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/amservice.c: use a GString in replacement of vstrextend()
+
+2011-06-04  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/planner.c: use a GPtrArray to collect client estimate
 	  strings
 

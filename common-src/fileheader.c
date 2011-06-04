@@ -1116,24 +1116,33 @@ static char *parse_heredoc(
     char  *line,
     char **saveptr)
 {
-    char *result = NULL;
+    char *result, *keyword, *new_line;
+    GPtrArray *array;
+    gchar **strings;
 
-    if (strncmp(line, "<<", 2) == 0) {
-	char *keyword = line+2;
-	char *new_line;
+    if (strncmp(line, "<<", 2) != 0)
+        return g_strdup(line);
 
-	while((new_line = strtok_r(NULL, "\n", saveptr)) != NULL &&
-	      strcmp(new_line, keyword) != 0) {
-	    result = vstrextend(&result, new_line, "\n", NULL);
-	}
-	/* make sure we have something */
-	if (!result)
-	    result = g_strdup("");
-	/* remove latest '\n' */
-	else if (strlen(result) > 0)
-	    result[strlen(result)-1] = '\0';
-    } else {
-	result = g_strdup(line);
+    array = g_ptr_array_new();
+
+    keyword = line + 2;
+
+    while ((new_line = strtok_r(NULL, "\n", saveptr)) != NULL) {
+        if (strcmp(new_line, keyword) == 0)
+            break;
+        g_ptr_array_add(array, g_strdup(new_line));
     }
+
+    g_ptr_array_add(array, NULL);
+
+    strings = (gchar **)g_ptr_array_free(array, FALSE);
+
+    /*
+     * This will return an empty string if the only element of the array is a
+     * NULL pointer - which is what we want
+     */
+    result = g_strjoinv("\n", strings);
+    g_strfreev(strings);
+
     return result;
 }

@@ -7757,19 +7757,22 @@ val_t_display_strs(
 
     case CONFTYPE_AUTOLABEL:
 	{
-	    buf[0] = quote_string_always(val->v.autolabel.template);
-	    if (val->v.autolabel.autolabel & AL_OTHER_CONFIG) {
-		buf[0] = vstrextend(&buf[0], " OTHER-CONFIG", NULL);
-	    }
-	    if (val->v.autolabel.autolabel & AL_NON_AMANDA) {
-		buf[0] = vstrextend(&buf[0], " NON-AMANDA", NULL);
-	    }
-	    if (val->v.autolabel.autolabel & AL_VOLUME_ERROR) {
-		buf[0] = vstrextend(&buf[0], " VOLUME-ERROR", NULL);
-	    }
-	    if (val->v.autolabel.autolabel & AL_EMPTY) {
-		buf[0] = vstrextend(&buf[0], " EMPTY", NULL);
-	    }
+            autolabel_set_t autolabel = val->v.autolabel.autolabel;
+            char *template = quote_string_always(val->v.autolabel.template);
+            GString *strbuf = g_string_new(template);
+
+            g_free(template);
+
+            if (autolabel & AL_OTHER_CONFIG)
+                g_string_append(strbuf, " OTHER-CONFIG");
+            if (autolabel & AL_NON_AMANDA)
+                g_string_append(strbuf, " NON-AMANDA");
+            if (autolabel & AL_VOLUME_ERROR)
+                g_string_append(strbuf, " VOLUME-ERROR");
+            if (autolabel & AL_EMPTY)
+                g_string_append(strbuf, " EMPTY");
+
+            buf[0] = g_string_free(strbuf, FALSE);
 	}
 	break;
 
@@ -8086,24 +8089,29 @@ proplist_display_str_foreach_fn(
     gpointer value_p,
     gpointer user_data_p)
 {
-    char         *property_s = quote_string_always(key_p);
     property_t   *property   = value_p;
     GSList       *value;
     char       ***msg        = (char ***)user_data_p;
+    GPtrArray    *array      = g_ptr_array_new();
+    gchar       **strings;
 
     /* What to do with property->append? it should be printed only on client */
-    if (property->priority) {
-	**msg = g_strjoin(NULL, "priority ", property_s, NULL);
-	amfree(property_s);
-    } else {
-	**msg = property_s;
-	property_s = NULL;
-    }
-    for(value=property->values; value != NULL; value = value->next) {
-	char *qstr = quote_string_always((char *)value->data);
-	**msg = vstrextend(*msg, " ", qstr, NULL);
-	amfree(qstr);
-    }
+    if (property->priority)
+        g_ptr_array_add(array, g_strdup("priority"));
+
+    g_ptr_array_add(array, quote_string_always(key_p));
+
+    for (value = property->values; value; value = value->next)
+        g_ptr_array_add(array, quote_string_always((char *)value->data));
+
+    g_ptr_array_add(array, NULL);
+
+    strings = (gchar **)g_ptr_array_free(array, FALSE);
+
+    **msg = g_strjoinv(" ", strings);
+
+    g_strfreev(strings);
+
     (*msg)++;
 }
 
@@ -8115,30 +8123,31 @@ exinclude_display_str(
     sl_t  *sl;
     sle_t *excl;
     char *rval;
+    GPtrArray *array = g_ptr_array_new();
+    gchar **strings;
 
     assert(val->type == CONFTYPE_EXINCLUDE);
 
-    rval = g_strdup("");
-
     if (file == 0) {
 	sl = val_t__exinclude(val).sl_list;
-        strappend(rval, "LIST");
+        g_ptr_array_add(array, g_strdup("LIST"));
     } else {
 	sl = val_t__exinclude(val).sl_file;
-        strappend(rval, "FILE");
+        g_ptr_array_add(array, g_strdup("FILE"));
     }
 
-    if (val_t__exinclude(val).optional == 1) {
-        strappend(rval, " OPTIONAL");
-    }
+    if (val_t__exinclude(val).optional == 1)
+        g_ptr_array_add(array, g_strdup("OPTIONAL"));
 
-    if (sl != NULL) {
-	for(excl = sl->first; excl != NULL; excl = excl->next) {
-	    char *qstr = quote_string_always(excl->name);
-            vstrextend(&rval, " ", qstr, NULL);
-	    amfree(qstr);
-	}
-    }
+    if (sl != NULL)
+	for(excl = sl->first; excl; excl = excl->next)
+            g_ptr_array_add(array, quote_string_always(excl->name));
+
+    g_ptr_array_add(array, NULL);
+
+    strings = (gchar **)g_ptr_array_free(array, FALSE);
+    rval = g_strjoinv(" ", strings);
+    g_strfreev(strings);
 
     return rval;
 }
