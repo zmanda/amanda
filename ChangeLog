@@ -1,4 +1,7 @@
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* oldrecover-src/uscan.l: replace a static char * with a static GString
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
 	* oldrecover-src/set_commands.c: set_directory(): replace strappend()
 	  usage with a GString
 

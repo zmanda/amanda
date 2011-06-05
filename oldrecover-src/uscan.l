@@ -59,7 +59,7 @@ int		process_line(char *line);
 %x quotedpath
 
 %{
-static char *string_buf = NULL;
+static GString *strbuf = NULL;
 %}
 
 %%
@@ -112,26 +112,28 @@ mode    { return MODE; }
 %}
 
 \"			{
-    if(string_buf != NULL) {
-	g_printf("ERROR:string_buf != NULL: %s\n",string_buf);
-    }
+    if(strbuf != NULL)
+	g_printf("ERROR:string buffer is not NULL: %s\n", strbuf->str);
+    else
+        strbuf = g_string_new(NULL);
+
     BEGIN(quotedpath);
-    strappend(string_buf, yytext);
+    g_string_append(strbuf, yytext);
 }
 
 <quotedpath>[^\\\"]+	{
-    strappend(string_buf, yytext);
+    g_string_append(strbuf, yytext);
 }
 
 <quotedpath>\\.	{
     /* escaped character (including quote) */
-    strappend(string_buf, yytext);
+    g_string_append(strbuf, yytext);
 }
 
 <quotedpath>\"	{ /* saw closing quote - all done */
-    strappend(string_buf, yytext);
-    yylval.strval = string_buf;
-    string_buf = NULL;
+    g_string_append(strbuf, yytext);
+    yylval.strval = g_string_free(strbuf, FALSE);
+    strbuf = NULL;
     BEGIN(INITIAL);
     return PATH;
 }
