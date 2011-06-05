@@ -1,3 +1,7 @@
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* recover-src/extract_list.c: read_amidxtaped_data(): replace
+	  vstrextend() with g_strdup_printf()
+
 2011-06-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Do not check optarg, we know it is not null
 	* common-src/conffile.c: Do not check key_ovr, we know it is not null
