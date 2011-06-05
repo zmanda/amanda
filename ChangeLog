@@ -1,4 +1,8 @@
 2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/dumper.c: delay_one_dump(): replace vstrextend() with a
+	  GPtrArray/GString combination; create one local variable
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/dumper.c: startup_dump(): replace vstrextend() with a
 	  GString; fix boolean usage
 

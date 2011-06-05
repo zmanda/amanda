@@ -2822,20 +2822,21 @@ static void delay_one_dump(disk_t *dp, int delete, ...)
 {
     bi_t *bi;
     va_list argp;
-    char level_str[NUM_STR_SIZE];
-    char *sep;
     char *next;
-    char *qname = quote_string(dp->name);
-    char *errstr, *qerrstr;
+    GString *errbuf = g_string_new(NULL);
+    GPtrArray *array = g_ptr_array_new();
+    gchar **strings;
+    char *tmp, *qtmp;
+    one_est_t *estimate = est(dp)->dump_est;
 
     arglist_start(argp, delete);
 
-    total_size -= (gint64)tt_blocksize_kb + est(dp)->dump_est->csize + (gint64)tape_mark;
-    if(est(dp)->dump_est->level == 0) {
-	total_lev0 -= (double) est(dp)->dump_est->csize;
-    }
+    total_size -= (gint64)tt_blocksize_kb + estimate->csize + (gint64)tape_mark;
 
-    bi = g_malloc(sizeof(bi_t));
+    if(estimate->level == 0)
+	total_lev0 -= (double) estimate->csize;
+
+    bi = g_new(bi_t, 1);
     bi->next = NULL;
     bi->prev = biq.tail;
     if(biq.tail == NULL)
@@ -2846,36 +2847,42 @@ static void delay_one_dump(disk_t *dp, int delete, ...)
 
     bi->deleted = delete;
     bi->dp = dp;
-    bi->level = est(dp)->dump_est->level;
-    bi->nsize = est(dp)->dump_est->nsize;
-    bi->csize = est(dp)->dump_est->csize;
+    bi->level = estimate->level;
+    bi->nsize = estimate->nsize;
+    bi->csize = estimate->csize;
 
-    g_snprintf(level_str, sizeof(level_str), "%d", est(dp)->dump_est->level);
-    bi->errstr = g_strjoin(NULL, dp->host->hostname,
-			   " ", qname,
-			   " ", planner_timestamp ? planner_timestamp : "?",
-			   " ", level_str,
-			   NULL);
-    errstr = NULL;
-    sep = "[";
-    while ((next = arglist_val(argp, char *)) != NULL) {
-	vstrextend(&errstr, sep, next, NULL);
-	sep = " ";
-    }
-    strappend(errstr, "]");
-    qerrstr = quote_string(errstr);
-    vstrextend(&bi->errstr, " ", qerrstr, NULL);
-    amfree(errstr);
-    amfree(qerrstr);
+    errbuf = g_string_new(NULL);
+
+    tmp = quote_string(dp->name);
+    g_string_append_printf(errbuf, "%s %s %s %d", dp->host->hostname, tmp,
+        (planner_timestamp) ? planner_timestamp : "?", estimate->level);
+    g_free(tmp);
+
+    while ((next = arglist_val(argp, char *)) != NULL)
+        g_ptr_array_add(array, next);
+
+    g_ptr_array_add(array, NULL);
+
+    strings = (gchar **)g_ptr_array_free(array, FALSE);
+    tmp = g_strjoinv(" ", strings);
+    g_free(strings); /* We must not free the arguments! */
+
+    qtmp = quote_string(tmp);
+    g_free(tmp);
+
+    g_string_append_printf(errbuf, "[%s]", qtmp);
+    g_free(qtmp);
+
+    bi->errstr = g_string_free(errbuf, FALSE);
+
     arglist_end(argp);
 
     if (delete) {
 	remove_disk(&schedq, dp);
     } else {
-	est(dp)->dump_est = est(dp)->degr_est;
-	total_size += (gint64)tt_blocksize_kb + est(dp)->dump_est->csize + (gint64)tape_mark;
+	estimate = est(dp)->degr_est;
+	total_size += (gint64)tt_blocksize_kb + estimate->csize + (gint64)tape_mark;
     }
-    amfree(qname);
     return;
 }
 
