@@ -1,4 +1,8 @@
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/conffile.c: val_t_display_strs(): replace several usages of
+	  strappend() with GPtrArrays
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
 	* client-src/selfcheck.c: check_disk(): replace strappend() usages with
 	  a GPtrArray
 
