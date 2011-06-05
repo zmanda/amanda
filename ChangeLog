@@ -1,4 +1,8 @@
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* client-src/selfcheck.c: check_disk(): replace strappend() usages with
+	  a GPtrArray
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
 	* client-src/sendbackup-gnutar.c: start_backup(): replace strappend()
 	  usage with a GString
 
