@@ -1,4 +1,8 @@
 2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/dumper.c: startup_dump(): replace vstrextend() with a
+	  GString; fix boolean usage
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/driverio.c: dumper_cmd(): replace vstrextend() usage with a
 	  GPtrArray, and replace some g_strjoin() usages with g_strdup_printf()
 
