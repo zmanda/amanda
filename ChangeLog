@@ -1,4 +1,8 @@
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* client-src/getfsent.c: get_fstab_nextentry(): replace strappend()
+	  usage with a temporary variable and g_strjoin()
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/alloc.c, common-src/amanda.h: goodbye vstrextend() and
 	  internal_vstralloc()
 
