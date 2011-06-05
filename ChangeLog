@@ -1,4 +1,8 @@
 2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/driverio.c: dumper_cmd(): replace vstrextend() usage with a
+	  GPtrArray, and replace some g_strjoin() usages with g_strdup_printf()
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/diskfile.c: match_disklist(): replace vstrextend() with a
 	  GString; fix spelling mistake
 	* installcheck/amadmin.pl: account for spelling mistake

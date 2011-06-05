@@ -569,117 +569,111 @@ dumper_cmd(
     disk_t *dp,
     char   *mesg)
 {
-    char *cmdline = NULL;
-    char number[NUM_STR_SIZE];
-    char numberport[NUM_STR_SIZE];
-    char *o, *oo;
-    char *device;
-    char *features;
-    char *qname;
+    char *cmdline;
     char *qmesg;
 
     switch(cmd) {
     case START:
-	cmdline = g_strjoin(NULL, cmdstr[cmd], " ", mesg, "\n", NULL);
+        cmdline = g_strdup_printf("%s %s\n", cmdstr[cmd], mesg);
 	break;
-    case PORT_DUMP:
-	if(dp && dp->device) {
-	    device = dp->device;
-	}
-	else {
-	    device = "NODEVICE";
-	}
+    case PORT_DUMP: {
+        application_t *application = NULL;
+        GPtrArray *array;
+        GString *strbuf;
+        gchar **args;
+        am_feature_t *features;
+        char *device, *plugin;
+        char *tmp;
 
-	if (dp != NULL) {
-	    application_t *application = NULL;
-	    char *plugin;
-	    char *qplugin;
-	    char *qamandad_path;
-	    char *qclient_username;
-	    char *qclient_port;
-	    char *qssh_keys;
+        if (!dp)
+            error("PORT-DUMP without disk pointer\n");
 
-	    if (dp->application != NULL) {
-		application = lookup_application(dp->application);
-		g_assert(application != NULL);
-	    }
+        array = g_ptr_array_new();
+        features = dp->host->features;
 
-	    device = quote_string((dp->device) ? dp->device : "NODEVICE");
-	    qname = quote_string(dp->name);
-	    g_snprintf(number, sizeof(number), "%d", sched(dp)->level);
-	    g_snprintf(numberport, sizeof(numberport), "%d", dumper->output_port);
-	    features = am_feature_to_string(dp->host->features);
-	    if (am_has_feature(dp->host->features, fe_req_xml)) {
-		o = xml_optionstr(dp, 1);
-		if (application) {
-		    char *xml_app;
-		    xml_app = xml_application(dp, application,
-					      dp->host->features);
-		    vstrextend(&o, xml_app, NULL);
-		    amfree(xml_app);
-		}
-		oo = quote_string(o);
-		amfree(o);
-		o = oo;
-	    } else {
-		o = optionstr(dp);
-	    }
+        device = (dp->device) ? dp->device : "NODEVICE";
 
-	    g_assert(dp->program);
-	    if (0 == strcmp(dp->program, "APPLICATION")) {
-		g_assert(application != NULL);
-		plugin = application_get_plugin(application);
-	    } else {
-		plugin = dp->program;
-	    }
-	    qplugin = quote_string(plugin);
-	    qamandad_path = quote_string(dp->amandad_path);
-	    qclient_username = quote_string(dp->client_username);
-	    qclient_port = quote_string(dp->client_port);
-	    qssh_keys = quote_string(dp->ssh_keys);
-	    dbprintf("security_driver %s\n", dp->auth);
+        if (dp->application != NULL) {
+            application = lookup_application(dp->application);
+            g_assert(application != NULL);
+        }
 
-	    cmdline = g_strjoin(NULL, cmdstr[cmd],
-			    " ", disk2serial(dp),
-			    " ", numberport,
-			    " ", dp->host->hostname,
-			    " ", features,
-			    " ", qname,
-			    " ", device,
-			    " ", number,
-			    " ", sched(dp)->dumpdate,
-			    " ", qplugin,
-			    " ", qamandad_path,
-			    " ", qclient_username,
-			    " ", qclient_port,
-			    " ", qssh_keys,
-			    " ", dp->auth,
-			    " ", data_path_to_string(dp->data_path),
-			    " ", dp->dataport_list,
-			    " |", o,
-			    "\n", NULL);
-	    amfree(qplugin);
-	    amfree(qamandad_path);
-	    amfree(qclient_username);
-	    amfree(qclient_port);
-	    amfree(qssh_keys);
-	    amfree(features);
-	    amfree(o);
-	    amfree(qname);
-	    amfree(device);
-	} else {
-		error(_("PORT-DUMP without disk pointer\n"));
-		/*NOTREACHED*/
-	}
+        g_ptr_array_add(array, g_strdup(cmdstr[cmd]));
+        g_ptr_array_add(array, g_strdup(disk2serial(dp)));
+        g_ptr_array_add(array, g_strdup_printf("%d", dumper->output_port));
+        g_ptr_array_add(array, g_strdup(dp->host->hostname));
+        g_ptr_array_add(array, am_feature_to_string(features));
+        g_ptr_array_add(array, quote_string(dp->name));
+        g_ptr_array_add(array, quote_string(device));
+        g_ptr_array_add(array, g_strdup_printf("%d", sched(dp)->level));
+        g_ptr_array_add(array, g_strdup(sched(dp)->dumpdate));
+
+
+        /*
+         * Build the last argument
+         */
+        strbuf = g_string_new("|");
+
+        if (am_has_feature(features, fe_req_xml)) {
+            char *qtmp;
+
+            tmp = xml_optionstr(dp, 1);
+            qtmp = quote_string(tmp);
+            g_free(tmp);
+
+            g_string_append(strbuf, qtmp);
+            g_free(qtmp);
+
+            if (application) {
+                tmp = xml_application(dp, application, features);
+                qtmp = quote_string(tmp);
+                g_free(tmp);
+
+                g_string_append(strbuf, qtmp);
+                g_free(qtmp);
+            }
+        } else {
+            tmp = optionstr(dp);
+            g_string_append(strbuf, tmp);
+            g_free(tmp);
+        }
+
+        g_string_append_c(strbuf, '\n');
+
+        g_assert(dp->program != NULL);
+
+        if (0 == strcmp(dp->program, "APPLICATION")) {
+            g_assert(application != NULL);
+            plugin = application_get_plugin(application);
+        } else {
+            plugin = dp->program;
+        }
+
+        g_ptr_array_add(array, quote_string(plugin));
+        g_ptr_array_add(array, quote_string(dp->amandad_path));
+        g_ptr_array_add(array, quote_string(dp->client_username));
+        g_ptr_array_add(array, quote_string(dp->client_port));
+        g_ptr_array_add(array, quote_string(dp->ssh_keys));
+        g_ptr_array_add(array, g_strdup(dp->auth));
+        g_ptr_array_add(array, g_strdup(data_path_to_string(dp->data_path)));
+        g_ptr_array_add(array, g_strdup(dp->dataport_list));
+        g_ptr_array_add(array, g_string_free(strbuf, FALSE));
+        g_ptr_array_add(array, NULL);
+
+        args = (gchar **)g_ptr_array_free(array, FALSE);
+        cmdline = g_strjoinv(" ", args);
+        g_strfreev(args);
+
 	break;
+    }
     case QUIT:
     case ABORT:
 	qmesg = quote_string(mesg);
-	cmdline = g_strjoin(NULL, cmdstr[cmd], " ", qmesg, "\n", NULL );
+        cmdline = g_strdup_printf("%s %s\n", cmdstr[cmd], qmesg);
 	amfree(qmesg);
 	break;
     default:
-	error(_("Don't know how to send %s command to dumper"), cmdstr[cmd]);
+	error("Don't know how to send %s command to dumper", cmdstr[cmd]);
 	/*NOTREACHED*/
     }
 
@@ -696,12 +690,12 @@ dumper_cmd(
 	if (full_write(dumper->fd, cmdline, strlen(cmdline)) < strlen(cmdline)) {
 	    g_printf(_("writing %s command: %s\n"), dumper->name, strerror(errno));
 	    fflush(stdout);
-	    amfree(cmdline);
+	    g_free(cmdline);
 	    return 0;
 	}
 	if (cmd == QUIT) aclose(dumper->fd);
     }
-    amfree(cmdline);
+    g_free(cmdline);
     return 1;
 }
 
