@@ -2044,6 +2044,8 @@ check_user_ruserok(
     char *result;
     int ok;
     uid_t myuid = getuid();
+    GPtrArray *array;
+    gchar **strings;
 
     /*
      * note that some versions of ruserok (eg SunOS 3.2) look in
@@ -2117,21 +2119,21 @@ check_user_ruserok(
 	/*NOTREACHED*/
     }
 
-    result = NULL;
+    array = g_ptr_array_new();
     while ((es = agets(fError)) != NULL) {
-	if (*es == 0) {
-	    amfree(es);
-	    continue;
-	}
-	if (result == NULL) {
-	    result = g_strdup("");
-	} else {
-	    strappend(result, ": ");
-	}
-	strappend(result, es);
-	amfree(es);
+        if (!*es) {
+            g_free(es);
+            continue;
+        }
+        g_ptr_array_add(array, es);
     }
+    g_ptr_array_add(array, NULL);
+
     fclose(fError);
+
+    strings = (gchar **)g_ptr_array_free(array, FALSE);
+    result = g_strjoinv(": ", strings);
+    g_strfreev(strings);
 
     pid = wait(&exitcode);
     while (pid != ruserok_pid) {

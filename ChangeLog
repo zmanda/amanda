@@ -1,4 +1,8 @@
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/security-util.c: cherck_user_ruserok(): replace strappend()
+	  usage with a GPtrArray
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/conffile.c: val_t_display_strs(): replace several usages of
 	  strappend() with GPtrArrays
 
