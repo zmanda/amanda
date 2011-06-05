@@ -1516,33 +1516,42 @@ xml_application(
     application_t *application,
     am_feature_t  *their_features)
 {
-    char       *plugin;
-    char       *b64plugin;
-    char       *client_name;
+    char       *tmp;
+    char       *p;
     xml_app_t   xml_app;
     proplist_t  proplist;
+    GString    *strbuf;
 
     xml_app.features = their_features;
-    xml_app.result   = NULL;
-    plugin = application_get_plugin(application);
-    b64plugin = amxml_format_tag("plugin", plugin);
-    xml_app.result = g_strjoin(NULL, "  <backup-program>\n",
-		        "    ", b64plugin, "\n",
-			NULL);
+
+    p = application_get_plugin(application);
+    tmp = amxml_format_tag("plugin", p);
+
+    xml_app.result = g_strdup_printf("  <backup-program>\n    %s\n", tmp);
+    g_free(tmp);
+
+    /*
+     * Unfortunately, the g_hash_table_foreach() below modifies xml_app.result
+     * :/ This is why we have to delay allocation of strbuf until after it
+     * completes.
+     */
     proplist = application_get_property(application);
     g_hash_table_foreach(proplist, xml_property, &xml_app);
 
-    client_name = application_get_client_name(application);
-    if (client_name && strlen(client_name) > 0 &&
+    strbuf = g_string_new(xml_app.result);
+    g_free(xml_app.result);
+
+    p = application_get_client_name(application);
+    if (p && strlen(p) > 0 &&
 	am_has_feature(their_features, fe_application_client_name)) {
-	char *b64client_name = amxml_format_tag("client_name", client_name);
-	vstrextend(&xml_app.result, "    ", b64client_name, "\n", NULL);
-	g_free(b64client_name);
+	tmp = amxml_format_tag("client_name", p);
+        g_string_append_printf(strbuf, "    %s\n", tmp);
+	g_free(tmp);
     }
 
-    vstrextend(&xml_app.result, "  </backup-program>\n", NULL);
+    g_string_append(strbuf, "    </backup-program>\n");
 
-    amfree(b64plugin);
+    xml_app.result = g_string_free(strbuf, FALSE);
 
     return xml_app.result;
 }
