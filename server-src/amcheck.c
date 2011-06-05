@@ -412,6 +412,8 @@ main(
 	char *line = NULL;
 	int rc;
 	int valid_mailto = 0;
+        GString *errbuf;
+        GString *xerrbuf;
 
 	fflush(stdout);
 	if(lseek(mainfd, (off_t)0, SEEK_SET) == (off_t)-1) {
@@ -461,6 +463,13 @@ main(
 	    exit(1);
 	}
 
+        /*
+         * OK, go. Initialize our error buffers.
+         */
+
+        errbuf = g_string_new(NULL);
+        xerrbuf = g_string_new(NULL);
+
 	pipespawnv(mailer, STDIN_PIPE | STDERR_PIPE, 0,
 		   &mailfd, &nullfd, &errfd,
 		   (char **)pipeargs->pdata);
@@ -478,19 +487,22 @@ main(
 	 */
 	signal(SIGPIPE, SIG_IGN);
 	while((r = read_fully(mainfd, buffer, sizeof(buffer), NULL)) > 0) {
-	    if((w = full_write(mailfd, buffer, r)) != r) {
-		if(errno == EPIPE) {
-		    strappend(extra_info, _("EPIPE writing to mail process\n"));
-		    break;
-		} else if(errno != 0) {
-		    error(_("mailfd write: %s"), strerror(errno));
-		    /*NOTREACHED*/
-		} else {
-		    error(_("mailfd write: wrote %zd instead of %zd"), w, r);
-		    /*NOTREACHED*/
-		}
-	    }
+            w = full_write(mailfd, buffer, r);
+
+            if (w == r)
+                continue;
+
+            if (errno == EPIPE) {
+                g_string_append(xerrbuf, "EPIPE writing to mail process\n");
+                break;
+            }
+
+            if (errno)
+                error("mailfd write: %s", strerror(errno));
+
+            error("mailfd write: wrote %zd instead of %zd", w, r);
 	}
+
 	aclose(mailfd);
 	ferr = fdopen(errfd, "r");
 	if (!ferr) {
@@ -500,31 +512,56 @@ main(
 	for(; (line = agets(ferr)) != NULL; free(line)) {
 	    if (line[0] == '\0')
 		continue;
-	    strappend(extra_info, line);
-	    strappend(extra_info, "\n");
+            g_string_append_printf(xerrbuf, "%s\n", line);
 	}
 	afclose(ferr);
 	errfd = -1;
 	rc = 0;
 	while (wait(&retstat) != -1) {
-	    if (!WIFEXITED(retstat) || WEXITSTATUS(retstat) != 0) {
-		char *mailer_error = str_exit_status("mailer", retstat);
-		strappend(err, mailer_error);
-		amfree(mailer_error);
+            char *mailer_error;
 
-		rc = 1;
-	    }
+            if (WIFEXITED(retstat))
+                continue;
+
+            if (!WEXITSTATUS(retstat))
+                continue;
+
+            mailer_error = str_exit_status("mailer", retstat);
+            g_string_append(errbuf, mailer_error);
+            g_free(mailer_error);
+
+            rc = 1;
 	}
+
+        err = g_string_free(errbuf, FALSE);
+
+        /*
+         * We want NULL instead of an empty string
+         */
+
+        if (!*err) {
+            g_free(err);
+            err = NULL;
+        }
+
+        extra_info = g_string_free(xerrbuf, FALSE);
+
+        /*
+         * Same here
+         */
+
+        if (!*extra_info) {
+            g_free(extra_info);
+            extra_info = NULL;
+        }
+
 	if (rc != 0) {
-	    if(extra_info) {
+	    if(extra_info)
 		fputs(extra_info, stderr);
-		amfree(extra_info);
-	    }
-	    error(_("error running mailer %s: %s"), mailer, err?err:"(unknown)");
+	    error("error running mailer %s: %s", mailer, err ? err : "(unknown)");
 	    /*NOTREACHED*/
-	} else {
-	    amfree(extra_info);
 	}
+        g_free(extra_info);
     }
 
     dbclose();
