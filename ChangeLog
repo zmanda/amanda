@@ -1,4 +1,8 @@
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* client-src/sendbackup-gnutar.c: start_backup(): replace strappend()
+	  usage with a GString
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
 	* client-src/getfsent.c: get_fstab_nextentry(): replace strappend()
 	  usage with a temporary variable and g_strjoin()
 
