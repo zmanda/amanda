@@ -1,4 +1,8 @@
 2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/alloc.c, common-src/amanda.h: goodbye vstrextend() and
+	  internal_vstralloc()
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/tapefile.c: list_new_tapes(): replace vstrextend() usage
 	  with a GString; rework exit paths
 
