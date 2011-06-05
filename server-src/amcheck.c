@@ -1257,6 +1257,7 @@ start_server_check(
      * the first time, these are just warnings, not errors.
      */
     if(do_localchk) {
+        char *tmp;
 	char *conf_infofile;
 	char *conf_indexdir;
 	char *hostinfodir = NULL;
@@ -1313,7 +1314,9 @@ start_server_check(
 		infobad = 1;
 		amfree(errmsg);
 	    }
-	    strappend(conf_infofile, "/");
+            tmp = g_strconcat(conf_infofile, "/", NULL);
+            g_free(conf_infofile);
+            conf_infofile = tmp;
 	}
 	amfree(quoted);
 
@@ -1348,7 +1351,9 @@ start_server_check(
 		    amfree(hostinfodir);
 		    infobad = 1;
 		} else {
-		    strappend(hostinfodir, "/");
+                    tmp = g_strconcat(hostinfodir, "/", NULL);
+                    g_free(hostinfodir);
+                    hostinfodir = tmp;
 		}
 		amfree(quoted);
 	    }
@@ -1433,7 +1438,9 @@ start_server_check(
 			    amfree(conf_indexdir);
 			    indexbad = 1;
 			} else {
-			    strappend(conf_indexdir, "/");
+                            tmp = g_strconcat(conf_indexdir, "/", NULL);
+                            g_free(conf_indexdir);
+                            conf_indexdir = tmp;
 			}
 			indexdir_checked = 1;
 			amfree(quoted);
@@ -1465,7 +1472,9 @@ start_server_check(
 			        amfree(hostindexdir);
 			        indexbad = 1;
 			    } else {
-				strappend(hostindexdir, "/");
+                                tmp = g_strconcat(hostindexdir, "/", NULL);
+                                g_free(hostindexdir);
+                                hostindexdir = tmp;
 			    }
 			    hostindexdir_checked = 1;
 			    amfree(quoted);

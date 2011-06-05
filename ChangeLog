@@ -1,4 +1,8 @@
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/amcheck.c: start_server_check(): replace strappend()
+	  usage with g_strconcat()/g_free()
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/amcheck.c: main(): replace strappend() usage with GString
 
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
