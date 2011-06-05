@@ -1,4 +1,8 @@
 2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/diskfile.c: xml_scripts(): replace vstrextend() with a
+	  GString
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/diskfile.c: xml_application(): replace vstrextend() with a
 	  GString
 
