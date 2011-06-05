@@ -1,4 +1,9 @@
 2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/diskfile.c: match_disklist(): replace vstrextend() with a
+	  GString; fix spelling mistake
+	* installcheck/amadmin.pl: account for spelling mistake
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/diskfile.c: xml_scripts(): replace vstrextend() with a
 	  GString
 
