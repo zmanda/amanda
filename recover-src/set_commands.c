@@ -709,12 +709,14 @@ set_directory(
 		*de = '\0';
  	    }
 	} else {
-	    /*@ignore@*/
-	    if (strcmp(new_dir, "/") != 0) {
-		strappend(new_dir, "/");
-	    }
-	    strappend(new_dir, ldir);
-	    /*@end@*/
+            GString *strbuf = g_string_new(new_dir);
+            if (!g_str_equal(new_dir, "/"))
+                g_string_append_c(strbuf, '/');
+
+            g_string_append(strbuf, ldir);
+
+            g_free(new_dir);
+            new_dir = g_string_free(strbuf, FALSE);
 	}
     }
 
