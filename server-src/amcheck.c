@@ -1693,13 +1693,10 @@ start_host(
     am_host_t *hostp)
 {
     disk_t *dp;
-    char *req = NULL;
-    size_t req_len = 0;
     int disk_count;
     const security_driver_t *secdrv;
-    char number[NUM_STR_SIZE];
     estimate_t estimate;
-    GString *strbuf;
+    GString *strbuf, *reqbuf;
 
     if(hostp->up != HOST_READY) {
 	return;
@@ -1713,6 +1710,8 @@ start_host(
      * (and subsequent) pass(es).
      */
     disk_count = 0;
+    reqbuf = g_string_new(NULL);
+
     if(hostp->features != NULL) { /* selfcheck service */
 	int has_features = am_has_feature(hostp->features,
 					  fe_req_options_features);
@@ -1722,6 +1721,22 @@ start_host(
 					  fe_req_options_maxdumps);
 	int has_config   = am_has_feature(hostp->features,
 					  fe_req_options_config);
+
+        g_string_append(reqbuf, "SERVICE selfcheck\nOPTIONS ");
+
+        if (has_features)
+            g_string_append_printf(reqbuf, "features=%s;", our_feature_string);
+
+        if (has_maxdumps)
+            g_string_append_printf(reqbuf, "maxdumps=%d;", hostp->maxdumps);
+
+        if (has_hostname)
+            g_string_append_printf(reqbuf, "hostname=%s;", hostp->hostname);
+
+        if (has_config)
+            g_string_append_printf(reqbuf, "config=%s;", get_config_name());
+
+        g_string_append_c(reqbuf, '\n');
 
 	if(!am_has_feature(hostp->features, fe_selfcheck_req) &&
 	   !am_has_feature(hostp->features, fe_selfcheck_req_device)) {
@@ -1764,31 +1779,9 @@ start_host(
 	    g_fprintf(outf, _("Client might be of a very old version\n"));
 	}
 
-	g_snprintf(number, sizeof(number), "%d", hostp->maxdumps);
-	req = g_strjoin(NULL, "SERVICE ", "selfcheck", "\n",
-			"OPTIONS ",
-			has_features ? "features=" : "",
-			has_features ? our_feature_string : "",
-			has_features ? ";" : "",
-			has_maxdumps ? "maxdumps=" : "",
-			has_maxdumps ? number : "",
-			has_maxdumps ? ";" : "",
-			has_hostname ? "hostname=" : "",
-			has_hostname ? hostp->hostname : "",
-			has_hostname ? ";" : "",
-			has_config   ? "config=" : "",
-			has_config   ? get_config_name() : "",
-			has_config   ? ";" : "",
-			"\n",
-			NULL);
-
-	req_len = strlen(req);
-	req_len += 128;                         /* room for SECURITY ... */
-	req_len += 256;                         /* room for non-disk answers */
 	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 	    char *l;
 	    char *es;
-	    size_t l_len;
 	    char *o = NULL;
 	    char *calcsize;
 	    char *qname, *b64disk;
@@ -2030,22 +2023,17 @@ start_host(
 	    amfree(qdevice);
 	    amfree(b64disk);
 	    amfree(b64device);
-	    l_len = strlen(l);
 	    amfree(o);
 
-	    strappend(req, l);
-	    req_len += l_len;
-	    amfree(l);
+            g_string_append(reqbuf, l);
+            g_free(l);
 	    dp->up = DISK_ACTIVE;
 	    disk_count++;
 	}
     }
     else { /* noop service */
-	req = g_strjoin(NULL, "SERVICE ", "noop", "\n",
-			"OPTIONS ",
-			"features=", our_feature_string, ";",
-			"\n",
-			NULL);
+        g_string_append_printf(reqbuf, "SERVICE noop\n OPTIONS features=%s;\n",
+            our_feature_string);
 	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 	    if(dp->up != DISK_READY || dp->todo != 1) {
 		continue;
@@ -2055,7 +2043,7 @@ start_host(
     }
 
     if(disk_count == 0) {
-	amfree(req);
+        g_string_free(reqbuf, TRUE);
 	hostp->up = HOST_DONE;
 	return;
     }
@@ -2065,11 +2053,11 @@ start_host(
 	fprintf(stderr, _("Could not find security driver \"%s\" for host \"%s\". auth for this dle is invalid\n"),
 	      hostp->disks->auth, hostp->hostname);
     } else {
+        char *req = g_string_free(reqbuf, FALSE);
 	protocol_sendreq(hostp->hostname, secdrv, amhost_get_security_conf, 
 			 req, conf_ctimeout, handle_result, hostp);
+        g_free(req);
     }
-
-    amfree(req);
 
     hostp->up = HOST_ACTIVE;
 }

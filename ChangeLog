@@ -1,4 +1,9 @@
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/amcheck.c: start_host(): replace strappend() usage with a
+	  GString; also, remove unneeded local variables and introduce another
+	  GString to build the request
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/amcheck.c: start_server_check(): replace strappend()
 	  usage with g_strconcat()/g_free()
 
