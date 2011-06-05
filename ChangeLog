@@ -1,4 +1,8 @@
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* oldrecover-src/set_commands.c: set_directory(): replace strappend()
+	  usage with a GString
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
 	* oldrecover-src/set_commands.c: cd_glob(): replace strappend() usage
 	  with g_strconcat(); use g_free()
 
