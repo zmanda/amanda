@@ -495,6 +495,7 @@ cd_regex(
     char *s;
     char *uq_orig_regex;
     char *uqregex;
+    char *tmp;
     int  len_uqregex;
     int  result;
 
@@ -513,16 +514,20 @@ cd_regex(
     if (uqregex[len_uqregex-1] == '$') {
 	if (uqregex[len_uqregex-2] != '/') {
 	    uqregex[len_uqregex-1] = '\0';
-	    strappend(uqregex, "/$");
+            tmp = g_strconcat(uqregex, "/$", NULL);
+            g_free(uqregex);
+            uqregex = tmp;
 	}
     } else if (uqregex[len_uqregex-1] != '/') {
 	//uqregex[len_uqregex-1] = '\0';
-	strappend(uqregex, "/");
+        tmp = g_strconcat(uqregex, "/", NULL);
+        g_free(uqregex);
+        uqregex = tmp;
     }
     if ((s = validate_regexp(uqregex)) != NULL) {
 	g_printf(_("\"%s\" is not a valid regular expression: "), uq_orig_regex);
-	amfree(uqregex);
-	amfree(uq_orig_regex);
+	g_free(uqregex);
+	g_free(uq_orig_regex);
 	puts(s);
 	return 0;
     }
@@ -531,16 +536,16 @@ cd_regex(
     if (strcmp(disk_path, "/") == 0)
         path_on_disk = g_strconcat("/", uqregex, NULL);
     else {
-        char *clean_disk_path = clean_regex(disk_path, 0);
-        path_on_disk = g_strjoin(NULL, clean_disk_path, "/", regex, NULL);
-        amfree(clean_disk_path);
+        tmp = clean_regex(disk_path, 0);
+        path_on_disk = g_strjoin("/", tmp, regex, NULL);
+        g_free(tmp);
     }
 
     result = cd_dir(path_on_disk, uq_orig_regex, verbose);
 
-    amfree(path_on_disk);
-    amfree(uqregex);
-    amfree(uq_orig_regex);
+    g_free(path_on_disk);
+    g_free(uqregex);
+    g_free(uq_orig_regex);
 
     return result;
 }

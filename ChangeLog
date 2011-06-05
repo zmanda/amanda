@@ -1,4 +1,8 @@
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* recover-src/set_commands.c: cd_regex(): replace strappend() usage with
+	  g_free()/g_strconcat(); improve g_strjoin() usage; use g_free()
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
 	* recover-src/set_commands.c: cd_glob(): replace strappend() usage with
 	  g_strconcat(); improve g_strjoin() usage; use g_free()
 
