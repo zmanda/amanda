@@ -455,12 +455,6 @@ time_t	unctime(char *timestr);
     }									\
 } while (0)
 
-#define strappend(s1,s2) do {						\
-    char *t_t_t = (s1) ? g_strconcat(s1, s2, NULL) : g_strdup((s2));	\
-    amfree((s1));							\
-    (s1) = t_t_t;							\
-} while(0)
-
 /*
  * min/max.  Don't do something like
  *

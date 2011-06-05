@@ -1,4 +1,7 @@
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/amanda.h: remove strappend() macro, it is not unused
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/amindexd.c: main(): replace strappend() usage with a
 	  temporary variable and g_free()/g_strconcat(); push down local
 	  variable "part"
