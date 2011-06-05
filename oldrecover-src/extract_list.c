@@ -870,14 +870,13 @@ delete_glob(
          * $, but we need to match an optional trailing /, so tack that on
          * the end.
          */
-        regex_path = g_strdup(regex + 1);
-        regex_path[strlen(regex_path) - 1] = '\0';
-        strappend(regex_path, "[/]*$");
+	regex[strlen(regex) - 1] = '\0';
+	regex_path = g_strconcat(regex + 1, "/?$", NULL);
         delete_file(uqglob, regex_path);
-        amfree(regex_path);
+        g_free(regex_path);
     }
-    amfree(regex);
-    amfree(uqglob);
+    g_free(regex);
+    g_free(uqglob);
 }
 
 void
