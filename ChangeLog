@@ -1,4 +1,8 @@
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* oldrecover-src/amrecover.c: get_line(): replace strappend() usage with
+	  a GString
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/security-util.c: cherck_user_ruserok(): replace strappend()
 	  usage with a GPtrArray
 
