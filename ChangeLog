@@ -1,4 +1,8 @@
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* recover-src/extract-list.c: add_glob(): replace strappend() usage with
+	  g_strconcat(); fix regex
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
 	* oldrecover-src/uscan.l: replace a static char * with a static GString
 
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>

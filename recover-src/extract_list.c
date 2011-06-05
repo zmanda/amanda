@@ -748,7 +748,7 @@ add_glob(
     if (dir) {
 	sdir = merge_path(mount_point, disk_path);
 	result = cd_glob(dir, 0);
-	amfree(dir);
+	g_free(dir);
     }
     if (result) {
 	regex = glob_to_regex(glob);
@@ -764,20 +764,19 @@ add_glob(
              * $, but we need to match an optional trailing /, so tack that on
              * the end.
              */
-            regex_path = g_strdup(regex + 1);
-            regex_path[strlen(regex_path) - 1] = '\0';
-            strappend(regex_path, "[/]*$");
+	    regex[strlen(regex) - 1] = '\0';
+	    regex_path = g_strconcat(regex + 1, "/?$", NULL);
             add_file(uqglob, regex_path);
-            amfree(regex_path);
+            g_free(regex_path);
 	}
 	if (sdir) {
 	    set_directory(sdir, 0);
 	}
-	amfree(regex);
+	g_free(regex);
     }
-    amfree(sdir);
-    amfree(uqglob);
-    amfree(glob);
+    g_free(sdir);
+    g_free(uqglob);
+    g_free(glob);
 }
 
 void
