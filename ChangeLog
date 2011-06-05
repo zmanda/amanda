@@ -1,4 +1,8 @@
 2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/tapefile.c: list_new_tapes(): replace vstrextend() usage
+	  with a GString; rework exit paths
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
 	* server-src/dumper.c: delay_one_dump(): replace vstrextend() with a
 	  GPtrArray/GString combination; create one local variable
 
