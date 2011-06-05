@@ -304,8 +304,8 @@ cd_glob(
     if ((s = validate_regexp(regex)) != NULL) {
         g_printf(_("\"%s\" is not a valid shell wildcard pattern: "), glob);
         puts(s);
-	amfree(regex);
-	amfree(uqglob);
+	g_free(regex);
+	g_free(uqglob);
         return;
     }
     /*
@@ -315,10 +315,12 @@ cd_glob(
      * $, but we need to match a trailing /, add it if it is not there
      */
     regex_path = g_strdup(regex + 1);
-    amfree(regex);
+    g_free(regex);
     if(regex_path[strlen(regex_path) - 2] != '/' ) {
 	regex_path[strlen(regex_path) - 1] = '\0';
-	strappend(regex_path, "/$");
+        regex = g_strconcat(regex_path, "/$", NULL);
+        g_free(regex_path);
+        regex_path = regex;
     }
 
     /* convert path (assumed in cwd) to one on disk */
@@ -326,15 +328,15 @@ cd_glob(
         path_on_disk = g_strconcat("/", regex_path, NULL);
     else {
         char *clean_disk_path = clean_regex(disk_path, 0);
-        path_on_disk = g_strjoin(NULL, clean_disk_path, "/", regex_path, NULL);
-        amfree(clean_disk_path);
+        path_on_disk = g_strjoin("/", clean_disk_path, regex_path, NULL);
+        g_free(clean_disk_path);
     }
 
     cd_dir(path_on_disk, uqglob);
 
-    amfree(regex_path);
-    amfree(path_on_disk);
-    amfree(uqglob);
+    g_free(regex_path);
+    g_free(path_on_disk);
+    g_free(uqglob);
 }
 
 void

@@ -1,4 +1,8 @@
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* oldrecover-src/set_commands.c: cd_glob(): replace strappend() usage
+	  with g_strconcat(); use g_free()
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
 	* oldrecover-src/extract_list.c: delete_glob(): replace strappend()
 	  usage with g_strconcat(); fix regex
 
