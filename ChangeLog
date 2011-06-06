@@ -1,3 +1,7 @@
+2011-06-06  Satya Ganga <gsat@zmanda.com>
+	* perl/Amanda/Application/Zfs.pm: Use correct device name, we have to
+	use user provided Disk device name.
+
 2011-05-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/list_dir.c: fix add_dir_list_item.
 

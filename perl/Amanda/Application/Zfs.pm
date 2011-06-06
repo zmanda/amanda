@@ -377,11 +377,11 @@ sub zfs_build_snapshotname {
     my $snapshotname = "";
 
     if ($self->{action} eq 'check') {
-	$snapshotname = "amanda-" . Amanda::Util::sanitise_filename($self->{disk}) . "-check";
+	$snapshotname = "amanda-" . Amanda::Util::sanitise_filename($device) . "-check";
     } elsif (!defined $level) {
-	$snapshotname = "amanda-" . Amanda::Util::sanitise_filename($self->{disk}) . "-current";
+	$snapshotname = "amanda-" . Amanda::Util::sanitise_filename($device) . "-current";
     } else {
-	$snapshotname = "amanda-" . Amanda::Util::sanitise_filename($self->{disk}) . "-" . $level;
+	$snapshotname = "amanda-" . Amanda::Util::sanitise_filename($device) . "-" . $level;
     }
 
     return $snapshotname;
