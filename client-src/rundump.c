@@ -173,7 +173,7 @@ main(
         g_ptr_array_add(array, quote_string(argv[i]));
 
     g_ptr_array_add(array, NULL);
-    strings = g_ptr_array_free(array, FALSE);
+    strings = (gchar **)g_ptr_array_free(array, FALSE);
 
     cmdline = g_strjoinv(" ", strings);
     g_strfreev(strings);
