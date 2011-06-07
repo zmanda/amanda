@@ -408,50 +408,46 @@ main(
 	case 11: amfree(gnutar_listdir);
 		 gnutar_listdir = g_strdup(optarg);
 		 break;
-	case 12: if (optarg && strcasecmp(optarg, "NO") == 0)
+	case 12: if (strcasecmp(optarg, "NO") == 0)
 		     gnutar_onefilesystem = 0;
-		 else if (optarg && strcasecmp(optarg, "YES") == 0)
+		 else if (strcasecmp(optarg, "YES") == 0)
 		     gnutar_onefilesystem = 1;
 		 else if (strcasecmp(command, "selfcheck") == 0)
 		     printf(_("ERROR [%s: bad ONE-FILE-SYSTEM property value (%s)]\n"), get_pname(), optarg);
 		 break;
-	case 13: if (optarg && strcasecmp(optarg, "NO") == 0)
+	case 13: if (strcasecmp(optarg, "NO") == 0)
 		     gnutar_sparse = 0;
-		 else if (optarg && strcasecmp(optarg, "YES") == 0)
+		 else if (strcasecmp(optarg, "YES") == 0)
 		     gnutar_sparse = 1;
 		 else if (strcasecmp(command, "selfcheck") == 0)
 		     printf(_("ERROR [%s: bad SPARSE property value (%s)]\n"), get_pname(), optarg);
 		 break;
-	case 14: if (optarg && strcasecmp(optarg, "NO") == 0)
+	case 14: if (strcasecmp(optarg, "NO") == 0)
 		     gnutar_atimepreserve = 0;
-		 else if (optarg && strcasecmp(optarg, "YES") == 0)
+		 else if (strcasecmp(optarg, "YES") == 0)
 		     gnutar_atimepreserve = 1;
 		 else if (strcasecmp(command, "selfcheck") == 0)
 		     printf(_("ERROR [%s: bad ATIME-PRESERVE property value (%s)]\n"), get_pname(), optarg);
 		 break;
-	case 15: if (optarg && strcasecmp(optarg, "NO") == 0)
+	case 15: if (strcasecmp(optarg, "NO") == 0)
 		     gnutar_checkdevice = 0;
-		 else if (optarg && strcasecmp(optarg, "YES") == 0)
+		 else if (strcasecmp(optarg, "YES") == 0)
 		     gnutar_checkdevice = 1;
 		 else if (strcasecmp(command, "selfcheck") == 0)
 		     printf(_("ERROR [%s: bad CHECK-DEVICE property value (%s)]\n"), get_pname(), optarg);
 		 break;
-	case 16: if (optarg)
-		     argument.dle.include_file =
+	case 16: argument.dle.include_file =
 			 append_sl(argument.dle.include_file, optarg);
 		 break;
-	case 17: if (optarg)
-		     argument.dle.include_list =
+	case 17: argument.dle.include_list =
 			 append_sl(argument.dle.include_list, optarg);
 		 break;
 	case 18: argument.dle.include_optional = 1;
 		 break;
-	case 19: if (optarg)
-		     argument.dle.exclude_file =
+	case 19: argument.dle.exclude_file =
 			 append_sl(argument.dle.exclude_file, optarg);
 		 break;
-	case 20: if (optarg)
-		     argument.dle.exclude_list =
+	case 20: argument.dle.exclude_list =
 			 append_sl(argument.dle.exclude_list, optarg);
 		 break;
 	case 21: argument.dle.exclude_optional = 1;
@@ -459,59 +455,50 @@ main(
 	case 22: amfree(gnutar_directory);
 		 gnutar_directory = g_strdup(optarg);
 		 break;
-	case 23: if (optarg)
-		     normal_message = 
+	case 23: normal_message =
 			 g_slist_append(normal_message, optarg);
 		 break;
-	case 24: if (optarg)
-		     ignore_message = 
+	case 24: ignore_message =
 			 g_slist_append(ignore_message, optarg);
 		 break;
-	case 25: if (optarg)
-		     strange_message = 
+	case 25: strange_message =
 			 g_slist_append(strange_message, optarg);
 		 break;
-	case 26: if (optarg) {
-		     amfree(exit_handling);
-		     exit_handling = g_strdup(optarg);
-		 }
+	case 26: amfree(exit_handling);
+		 exit_handling = g_strdup(optarg);
 		 break;
 	case 27: argument.calcsize = 1;
 		 break;
 	case 28: amfree(argument.tar_blocksize);
 		 argument.tar_blocksize = g_strdup(optarg);
 		 break;
-	case 29: if (optarg && strcasecmp(optarg, "NO") == 0)
+	case 29: if (strcasecmp(optarg, "NO") == 0)
 		     gnutar_no_unquote = 0;
-		 else if (optarg && strcasecmp(optarg, "YES") == 0)
+		 else if (strcasecmp(optarg, "YES") == 0)
 		     gnutar_no_unquote = 1;
 		 else if (strcasecmp(command, "selfcheck") == 0)
 		     printf(_("ERROR [%s: bad No_UNQUOTE property value (%s)]\n"), get_pname(), optarg);
 		 break;
-        case 30: if (optarg && strcasecmp(optarg, "YES") == 0)
+        case 30: if (strcasecmp(optarg, "YES") == 0)
                    gnutar_acls = 1;
                  break;
-        case 31: if (optarg && strcasecmp(optarg, "YES") == 0)
+        case 31: if (strcasecmp(optarg, "YES") == 0)
                    gnutar_selinux = 1;
                  break;
-        case 32: if (optarg && strcasecmp(optarg, "YES") == 0)
+        case 32: if (strcasecmp(optarg, "YES") == 0)
                    gnutar_xattrs = 1;
                  break;
 	case 33: argument.command_options =
 			g_slist_append(argument.command_options,
 				       g_strdup(optarg));
 		 break;
-	case 34: if (optarg) {
-		     amfree(argument.include_list_glob);
-		     argument.include_list_glob = g_strdup(optarg);
-		 }
+	case 34: amfree(argument.include_list_glob);
+		 argument.include_list_glob = g_strdup(optarg);
 		 break;
-	case 35: if (optarg) {
-		     amfree(argument.exclude_list_glob);
-		     argument.exclude_list_glob = g_strdup(optarg);
-		 }
+	case 35: amfree(argument.exclude_list_glob);
+		 argument.exclude_list_glob = g_strdup(optarg);
 		 break;
-	case 36: if (optarg  && strcasecmp(optarg, "YES") == 0)
+	case 36: if (strcasecmp(optarg, "YES") == 0)
 		     argument.verbose = 1;
 		 break;
 	case ':':

@@ -1,3 +1,7 @@
+2011-06-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Do not check optarg, we know it is not null
+	* common-src/conffile.c: Do not check key_ovr, we know it is not null
+
 2011-06-06  Satya Ganga <gsat@zmanda.com>
 	* perl/Amanda/Application/Zfs.pm: Use correct device name, we have to
 	use user provided Disk device name.
