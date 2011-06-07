@@ -102,22 +102,22 @@ ndmcfg_loadfp (FILE *fp, ndmp9_config_info *config_info)
 			continue;
 		}
 
-		if (strcmp (cb->sv[0], "butype") == 0 && cb->sc == 2) {
+		if (g_str_equal(cb->sv[0], "butype") && cb->sc == 2) {
 			cfg_butype (cb);
 			continue;
 		}
 
-		if (strcmp (cb->sv[0], "fs") == 0 && cb->sc == 2) {
+		if (g_str_equal(cb->sv[0], "fs") && cb->sc == 2) {
 			cfg_fs (cb);
 			continue;
 		}
 
-		if (strcmp (cb->sv[0], "tape") == 0 && cb->sc == 2) {
+		if (g_str_equal(cb->sv[0], "tape") && cb->sc == 2) {
 			cfg_tape (cb);
 			continue;
 		}
 
-		if (strcmp (cb->sv[0], "scsi") == 0 && cb->sc == 2) {
+		if (g_str_equal(cb->sv[0], "scsi") && cb->sc == 2) {
 			cfg_scsi (cb);
 			continue;
 		}
@@ -181,25 +181,25 @@ cfg_butype (struct cfg_cb *cb)
 			continue;
 		}
 
-		if (strcmp (cb->sv[0], "v2attr") == 0 && cb->sc == 2) {
+		if (g_str_equal(cb->sv[0], "v2attr") && cb->sc == 2) {
 			ent->v2attr.valid = NDMP9_VALIDITY_VALID;
 			ent->v2attr.value = strtol (cb->sv[1], 0, 0);
 			continue;
 		}
 
-		if (strcmp (cb->sv[0], "v3attr") == 0 && cb->sc == 2) {
+		if (g_str_equal(cb->sv[0], "v3attr") && cb->sc == 2) {
 			ent->v3attr.valid = NDMP9_VALIDITY_VALID;
 			ent->v3attr.value = strtol (cb->sv[1], 0, 0);
 			continue;
 		}
 
-		if (strcmp (cb->sv[0], "v4attr") == 0 && cb->sc == 2) {
+		if (g_str_equal(cb->sv[0], "v4attr") && cb->sc == 2) {
 			ent->v4attr.valid = NDMP9_VALIDITY_VALID;
 			ent->v4attr.value = strtol (cb->sv[1], 0, 0);
 			continue;
 		}
 
-		if (strcmp (cb->sv[0], "default_env") == 0 && cb->sc == 3) {
+		if (g_str_equal(cb->sv[0], "default_env") && cb->sc == 3) {
 			cfg_add_env (cb, &ent->default_env.default_env_len,
 				&ent->default_env.default_env_val,
 				cb->sv[1], cb->sv[2]);
@@ -265,23 +265,23 @@ cfg_fs (struct cfg_cb *cb)
 			continue;
 		}
 
-		if (strcmp (cb->sv[0], "fs_type") == 0 && cb->sc == 2) {
+		if (g_str_equal(cb->sv[0], "fs_type") && cb->sc == 2) {
 			ent->fs_type = NDMOS_API_STRDUP (cb->sv[1]);
 			continue;
 		}
 
-		if (strcmp (cb->sv[0], "fs_physical_device") == 0
+		if (g_str_equal(cb->sv[0], "fs_physical_device")
 		 && cb->sc == 2) {
 			ent->fs_physical_device = NDMOS_API_STRDUP (cb->sv[1]);
 			continue;
 		}
 
-		if (strcmp (cb->sv[0], "fs_status") == 0 && cb->sc == 2) {
+		if (g_str_equal(cb->sv[0], "fs_status") && cb->sc == 2) {
 			ent->fs_status = NDMOS_API_STRDUP (cb->sv[1]);
 			continue;
 		}
 
-		if (strcmp (cb->sv[0], "fs_env") == 0 && cb->sc == 3) {
+		if (g_str_equal(cb->sv[0], "fs_env") && cb->sc == 3) {
 			cfg_add_env (cb, &ent->fs_env.fs_env_len,
 				&ent->fs_env.fs_env_val,
 				cb->sv[1], cb->sv[2]);
@@ -335,7 +335,7 @@ cfg_device (struct cfg_cb *cb, u_int *n_device, ndmp9_device_info **pp)
 		n_ent = 0;
 
 	for (i = 0; i < n_ent; i++) {
-		if (strcmp(ent[i].model, (*pp)[i].model) == 0) {
+		if (g_str_equal(ent[i].model, (*pp)[i].model)) {
 			ent += i;
 			goto got_model;
 		}
@@ -390,24 +390,24 @@ cfg_device (struct cfg_cb *cb, u_int *n_device, ndmp9_device_info **pp)
 			continue;
 		}
 
-		if (strcmp (cb->sv[0], "device") == 0 && cb->sc == 2) {
+		if (g_str_equal(cb->sv[0], "device") && cb->sc == 2) {
 			dcap->device = NDMOS_API_STRDUP (cb->sv[1]);
 			continue;
 		}
 
-		if (strcmp (cb->sv[0], "v3attr") == 0 && cb->sc == 2) {
+		if (g_str_equal(cb->sv[0], "v3attr") && cb->sc == 2) {
 			dcap->v3attr.valid = NDMP9_VALIDITY_VALID;
 			dcap->v3attr.value = strtol (cb->sv[1], 0, 0);
 			continue;
 		}
 
-		if (strcmp (cb->sv[0], "v4attr") == 0 && cb->sc == 2) {
+		if (g_str_equal(cb->sv[0], "v4attr") && cb->sc == 2) {
 			dcap->v4attr.valid = NDMP9_VALIDITY_VALID;
 			dcap->v4attr.value = strtol (cb->sv[1], 0, 0);
 			continue;
 		}
 
-		if (strcmp (cb->sv[0], "capability") == 0 && cb->sc == 3) {
+		if (g_str_equal(cb->sv[0], "capability") && cb->sc == 3) {
 			cfg_add_env (cb, &dcap->capability.capability_len,
 				&dcap->capability.capability_val,
 				cb->sv[1], cb->sv[2]);

@@ -172,7 +172,7 @@ ndmagent_from_str (struct ndmagent *agent, char *str)
 		}
 	}
 
-	if (strcmp (agent->host, ".") == 0) {
+	if (g_str_equal(agent->host, ".")) {
 		agent->conn_type = NDMCONN_TYPE_RESIDENT;
 		strcpy (agent->host, "(resident)");
 	} else {

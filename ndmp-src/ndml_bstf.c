@@ -406,7 +406,7 @@ main (int ac, char *av[])
 	int		total_n_error = 0;
 
 	i = 1;
-	if (i < ac && strcmp (av[i], "-q") == 0) {
+	if (i < ac && g_str_equal(av[i], "-q")) {
 		i++;
 		verbose = 0;
 	}

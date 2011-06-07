@@ -137,7 +137,7 @@ parse_file_header(
 	goto out;
     }
 
-    if (strcmp(tok, "NETDUMP:") != 0 && strcmp(tok, "AMANDA:") != 0) {
+    if (!g_str_equal(tok, "NETDUMP:") && !g_str_equal(tok, "AMANDA:")) {
 	amfree(buf);
 	file->type = F_UNKNOWN;
 	amfree(line1);
@@ -154,7 +154,7 @@ parse_file_header(
     switch (file->type) {
     case F_TAPESTART:
 	tok = strtok_r(NULL, " ", &saveptr);
-	if ((tok == NULL) || (strcmp(tok, "DATE") != 0)) {
+	if ((tok == NULL) || (!g_str_equal(tok, "DATE"))) {
 	    strange_header(file, buffer, buflen, "DATE", tok);
 	    goto out;
 	}
@@ -168,7 +168,7 @@ parse_file_header(
 	file->datestamp[sizeof(file->datestamp) - 1] = '\0';
 
 	tok = strtok_r(NULL, " ", &saveptr);
-	if ((tok == NULL) || (strcmp(tok, "TAPE") != 0)) {
+	if ((tok == NULL) || (!g_str_equal(tok, "TAPE"))) {
 	    strange_header(file, buffer, buflen, "TAPE", tok);
 	    goto out;
 	}
@@ -213,7 +213,7 @@ parse_file_header(
 	
 	if(file->type == F_SPLIT_DUMPFILE) {
 	    tok = strtok_r(NULL, " ", &saveptr);
-	    if (tok == NULL || strcmp(tok, "part") != 0) {
+	    if (tok == NULL || !g_str_equal(tok, "part")) {
 		strange_header(file, buffer, buflen, "part", tok);
 		goto out;
 	    }
@@ -242,7 +242,7 @@ parse_file_header(
 	}
 
 	tok = strtok_r(NULL, " ", &saveptr);
-	if ((tok == NULL) || (strcmp(tok, "lev") != 0)) {
+	if ((tok == NULL) || (!g_str_equal(tok, "lev"))) {
 	    strange_header(file, buffer, buflen, "lev", tok);
 	    goto out;
 	}
@@ -254,7 +254,7 @@ parse_file_header(
 	}
 
 	tok = strtok_r(NULL, " ", &saveptr);
-	if ((tok == NULL) || (strcmp(tok, "comp") != 0)) {
+	if ((tok == NULL) || (!g_str_equal(tok, "comp"))) {
 	    strange_header(file, buffer, buflen, "comp", tok);
 	    goto out;
 	}
@@ -266,10 +266,10 @@ parse_file_header(
 	}
 	strncpy(file->comp_suffix, tok, sizeof(file->comp_suffix) - 1);
 
-	file->compressed = (0 != strcmp(file->comp_suffix, "N"));
+	file->compressed = (!g_str_equal(file->comp_suffix, "N"));
 	if (file->compressed) {
 	    /* compatibility with pre-2.2 amanda */
-	    if (strcmp(file->comp_suffix, "C") == 0)
+	    if (g_str_equal(file->comp_suffix, "C"))
 		strncpy(file->comp_suffix, ".Z", sizeof(file->comp_suffix) - 1);
 	} else {
 	    strcpy(file->comp_suffix, "");
@@ -278,7 +278,7 @@ parse_file_header(
 
 	tok = strtok_r(NULL, " ", &saveptr);
         /* "program" is optional */
-        if (tok == NULL || strcmp(tok, "program") != 0) {
+        if (tok == NULL || !g_str_equal(tok, "program")) {
 	    break;
 	}
 
@@ -408,7 +408,7 @@ parse_file_header(
 	tok = strtok_r(NULL, " ", &saveptr);
 	/* DATE is optional */
 	if (tok != NULL) {
-	    if (strcmp(tok, "DATE") == 0) {
+	    if (g_str_equal(tok, "DATE")) {
 		tok = strtok_r(NULL, " ", &saveptr);
 		if(tok == NULL)
 		    file->datestamp[0] = '\0';
@@ -438,7 +438,7 @@ parse_file_header(
     /* iterate through the rest of the lines */
     while ((line = strtok_r(NULL, "\n", &saveptr)) != NULL) {
 #define SC "CONT_FILENAME="
-	if (strncmp(line, SC, sizeof(SC) - 1) == 0) {
+	if (g_str_has_prefix(line, SC)) {
 	    line += sizeof(SC) - 1;
 	    strncpy(file->cont_filename, line,
 		    sizeof(file->cont_filename) - 1);
@@ -448,14 +448,14 @@ parse_file_header(
 #undef SC
 
 #define SC "PARTIAL="
-	if (strncmp(line, SC, sizeof(SC) - 1) == 0) {
+	if (g_str_has_prefix(line, SC)) {
 	    line += sizeof(SC) - 1;
 	    file->is_partial = !strcasecmp(line, "yes");
 	    continue;
 	}
 #undef SC
 #define SC "APPLICATION="
-	if (strncmp(line, SC, sizeof(SC) - 1) == 0) {
+	if (g_str_has_prefix(line, SC)) {
 	    line += sizeof(SC) - 1;
 	    strncpy(file->application, line,
 		    sizeof(file->application) - 1);
@@ -465,14 +465,14 @@ parse_file_header(
 #undef SC
 
 #define SC "ORIGSIZE="
-	if (strncmp(line, SC, sizeof(SC) - 1) == 0) {
+	if (g_str_has_prefix(line, SC)) {
 	    line += sizeof(SC) - 1;
 	    file->orig_size = OFF_T_ATOI(line);
 	}
 #undef SC
 
 #define SC "DLE="
-	if (strncmp(line, SC, sizeof(SC) - 1) == 0) {
+	if (g_str_has_prefix(line, SC)) {
 	    line += sizeof(SC) - 1;
 	    amfree(file->dle_str);
 	    file->dle_str = parse_heredoc(line, &saveptr);
@@ -480,12 +480,12 @@ parse_file_header(
 #undef SC
 
 #define SC _("To restore, position tape at start of file and run:")
-	if (strncmp(line, SC, sizeof(SC) - 1) == 0)
+	if (g_str_has_prefix(line, SC))
 	    continue;
 #undef SC
 
 #define SC "\tdd if=<tape> "
-	if (strncmp(line, SC, sizeof(SC) - 1) == 0) {
+	if (g_str_has_prefix(line, SC)) {
 	    char *cmd1, *cmd2, *cmd3=NULL;
 
 	    /* skip over dd command */
@@ -635,11 +635,11 @@ validate_encrypt_suffix(
 	const char *suff)
 {
     if (encrypted) {
-	if (!suff[0] || (0 == strcmp(suff, "N"))) {
+	if (!suff[0] || (g_str_equal(suff, "N"))) {
 	    error(_("Invalid encrypt_suffix '%s'\n"), suff);
 	}
     } else {
-	if (suff[0] && (0 != strcmp(suff, "N"))) {
+	if (suff[0] && (!g_str_equal(suff, "N"))) {
 	    error(_("Invalid header: encrypt_suffix '%s' specified but not encrypted\n"), suff);
 	}
     }
@@ -649,7 +649,7 @@ static void
 validate_datestamp(
     const char *datestamp)
 {
-	if (strcmp(datestamp, "X") == 0) {
+	if (g_str_equal(datestamp, "X")) {
 	    return;
 	}
 
@@ -929,7 +929,7 @@ summarize_header(
     add_suffixes:
 	if (*file->program)
 	    g_string_append_printf(summ, " program %s", file->program);
-	if (strcmp(file->encrypt_suffix, "enc") == 0)
+	if (g_str_equal(file->encrypt_suffix, "enc"))
 	    g_string_append_printf(summ, " crypt %s", file->encrypt_suffix);
 	if (*file->srvcompprog)
 	    g_string_append_printf(summ, " server_custom_compress %s", file->srvcompprog);
@@ -955,13 +955,13 @@ int
 known_compress_type(
     const dumpfile_t *	file)
 {
-    if(strcmp(file->comp_suffix, ".Z") == 0)
+    if(g_str_equal(file->comp_suffix, ".Z"))
 	return 1;
 #ifdef HAVE_GZIP
-    if(strcmp(file->comp_suffix, ".gz") == 0)
+    if(g_str_equal(file->comp_suffix, ".gz"))
 	return 1;
 #endif
-    if(strcmp(file->comp_suffix, "cust") == 0)
+    if(g_str_equal(file->comp_suffix, "cust"))
 	return 1;
     return 0;
 }
@@ -1000,7 +1000,7 @@ str2filetype(
     guint i;
 
     for (i = 0; i < NFILETYPES; i++)
-	if (strcmp(filetypetab[i].str, str) == 0)
+	if (g_str_equal(filetypetab[i].str, str))
 	    return (filetypetab[i].type);
     return (F_UNKNOWN);
 }
@@ -1013,28 +1013,28 @@ gboolean headers_are_equal(dumpfile_t * a, dumpfile_t * b) {
         return FALSE;
 
     if (a->type != b->type) return FALSE;
-    if (strcmp(a->datestamp, b->datestamp)) return FALSE;
+    if (!g_str_equal(a->datestamp, b->datestamp)) return FALSE;
     if (a->dumplevel != b->dumplevel) return FALSE;
     if (a->compressed != b->compressed) return FALSE;
     if (a->encrypted != b->encrypted) return FALSE;
-    if (strcmp(a->comp_suffix, b->comp_suffix)) return FALSE;
-    if (strcmp(a->encrypt_suffix, b->encrypt_suffix)) return FALSE;
-    if (strcmp(a->name, b->name)) return FALSE;
-    if (strcmp(a->disk, b->disk)) return FALSE;
-    if (strcmp(a->program, b->program)) return FALSE;
-    if (strcmp(a->application, b->application)) return FALSE;
-    if (strcmp(a->srvcompprog, b->srvcompprog)) return FALSE;
-    if (strcmp(a->clntcompprog, b->clntcompprog)) return FALSE;
-    if (strcmp(a->srv_encrypt, b->srv_encrypt)) return FALSE;
-    if (strcmp(a->clnt_encrypt, b->clnt_encrypt)) return FALSE;
-    if (strcmp(a->recover_cmd, b->recover_cmd)) return FALSE;
-    if (strcmp(a->uncompress_cmd, b->uncompress_cmd)) return FALSE;
-    if (strcmp(a->decrypt_cmd, b->decrypt_cmd)) return FALSE;
-    if (strcmp(a->srv_decrypt_opt, b->srv_decrypt_opt)) return FALSE;
-    if (strcmp(a->clnt_decrypt_opt, b->clnt_decrypt_opt)) return FALSE;
-    if (strcmp(a->cont_filename, b->cont_filename)) return FALSE;
+    if (!g_str_equal(a->comp_suffix, b->comp_suffix)) return FALSE;
+    if (!g_str_equal(a->encrypt_suffix, b->encrypt_suffix)) return FALSE;
+    if (!g_str_equal(a->name, b->name)) return FALSE;
+    if (!g_str_equal(a->disk, b->disk)) return FALSE;
+    if (!g_str_equal(a->program, b->program)) return FALSE;
+    if (!g_str_equal(a->application, b->application)) return FALSE;
+    if (!g_str_equal(a->srvcompprog, b->srvcompprog)) return FALSE;
+    if (!g_str_equal(a->clntcompprog, b->clntcompprog)) return FALSE;
+    if (!g_str_equal(a->srv_encrypt, b->srv_encrypt)) return FALSE;
+    if (!g_str_equal(a->clnt_encrypt, b->clnt_encrypt)) return FALSE;
+    if (!g_str_equal(a->recover_cmd, b->recover_cmd)) return FALSE;
+    if (!g_str_equal(a->uncompress_cmd, b->uncompress_cmd)) return FALSE;
+    if (!g_str_equal(a->decrypt_cmd, b->decrypt_cmd)) return FALSE;
+    if (!g_str_equal(a->srv_decrypt_opt, b->srv_decrypt_opt)) return FALSE;
+    if (!g_str_equal(a->clnt_decrypt_opt, b->clnt_decrypt_opt)) return FALSE;
+    if (!g_str_equal(a->cont_filename, b->cont_filename)) return FALSE;
     if (a->dle_str != b->dle_str && a->dle_str && b->dle_str
-	&& strcmp(a->dle_str, b->dle_str)) return FALSE;
+	&& !g_str_equal(a->dle_str, b->dle_str)) return FALSE;
     if (a->is_partial != b->is_partial) return FALSE;
     if (a->partnum != b->partnum) return FALSE;
     if (a->totalparts != b->totalparts) return FALSE;
@@ -1088,7 +1088,8 @@ static char *quote_heredoc(
 	while (1) {
 	    if (*c == '\n' || *c == '\0') {
 		int linelen = c - line;
-		if (linelen == delimiter_len && 0 == strncmp(line, delimiter, linelen)) {
+		if (linelen == delimiter_len && g_str_has_prefix(line,
+                                                                 delimiter)) {
 		    found_delimiter = TRUE;
 		    break;
 		}
@@ -1120,7 +1121,7 @@ static char *parse_heredoc(
     GPtrArray *array;
     gchar **strings;
 
-    if (strncmp(line, "<<", 2) != 0)
+    if (!g_str_has_prefix(line, "<<"))
         return g_strdup(line);
 
     array = g_ptr_array_new();
@@ -1128,7 +1129,7 @@ static char *parse_heredoc(
     keyword = line + 2;
 
     while ((new_line = strtok_r(NULL, "\n", saveptr)) != NULL) {
-        if (strcmp(new_line, keyword) == 0)
+        if (g_str_equal(new_line, keyword))
             break;
         g_ptr_array_add(array, g_strdup(new_line));
     }

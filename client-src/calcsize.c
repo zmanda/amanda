@@ -201,7 +201,7 @@ main(
     }
 
     dbprintf(_("config: %s\n"), *argv);
-    if (strcmp(*argv, "NOCONFIG") != 0) {
+    if (!g_str_equal(*argv, "NOCONFIG")) {
 	dbrename(*argv, DBG_SUBDIR_CLIENT);
     }
     argc--;
@@ -209,7 +209,7 @@ main(
 
     /* parse backup program name */
 
-    if(strcmp(*argv, "DUMP") == 0) {
+    if(g_str_equal(*argv, "DUMP")) {
 #if !defined(DUMP) && !defined(XFSDUMP)
 	error("dump not available on this system");
 	/*NOTREACHED*/
@@ -219,7 +219,7 @@ main(
 	final_size = final_size_dump;
 #endif
     }
-    else if(strcmp(*argv, "GNUTAR") == 0) {
+    else if(g_str_equal(*argv, "GNUTAR")) {
 #ifndef GNUTAR
 	error("gnutar not available on this system");
 	/*NOTREACHED*/
@@ -257,7 +257,7 @@ main(
 	/*NOTREACHED*/
     }
 
-    if ((argc > 1) && strcmp(*argv,"-X") == 0) {
+    if ((argc > 1) && g_str_equal(*argv, "-X")) {
 	argv++;
 
 	if (!(use_gtar_excl || use_star_excl)) {
@@ -286,7 +286,7 @@ main(
 	use_gtar_excl = use_star_excl = 0;
     }
 
-    if ((argc > 1) && strcmp(*argv,"-I") == 0) {
+    if ((argc > 1) && g_str_equal(*argv, "-I")) {
 	argv++;
 	
 	filename = g_strdup(*argv);

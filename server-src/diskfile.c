@@ -119,7 +119,7 @@ lookup_disk(
 	return (NULL);
 
     for (disk = host->disks; disk != NULL; disk = disk->hostnext) {
-	if (strcmp(disk->name, diskname) == 0)
+	if (g_str_equal(disk->name, diskname))
 	    return (disk);
     }
     return (NULL);
@@ -427,7 +427,7 @@ parse_diskline(
 	hostname = g_strdup(fp);
     } else {
 	hostname = g_strdup(host->hostname);
-	if (strcmp(host->hostname, fp) != 0) {
+	if (!g_str_equal(host->hostname, fp)) {
 	    disk_parserror(filename, line_num, _("Same host with different case: \"%s\" and \"%s\"."), host->hostname, fp);
 	    return -1;
 	}
@@ -436,8 +436,8 @@ parse_diskline(
     shost = sanitise_filename(hostname);
     for (p = hostlist; p != NULL; p = p->next) {
 	char *shostp = sanitise_filename(p->hostname);
-	if (strcmp(hostname, p->hostname) &&
-	    !strcmp(shost, shostp)) {
+	if (!g_str_equal(hostname, p->hostname) &&
+	    g_str_equal(shost, shostp)) {
 	    disk_parserror(filename, line_num, _("Two hosts are mapping to the same name: \"%s\" and \"%s\""), p->hostname, hostname);
 	    return(-1);
 	}
@@ -555,8 +555,8 @@ parse_diskline(
 	sdisk = sanitise_filename(diskname);
 	for (dp = host->disks; dp != NULL; dp = dp->hostnext) {
 	    char *sdiskp = sanitise_filename(dp->name);
-	    if (strcmp(diskname, dp->name) != 0 &&
-		 strcmp(sdisk, sdiskp) == 0) {
+	    if (!g_str_equal(diskname, dp->name) &&
+		 g_str_equal(sdisk, sdiskp)) {
 		disk_parserror(filename, line_num,
 		 _("Two disks are mapping to the same name: \"%s\" and \"%s\"; you must use different diskname"),
 		 dp->name, diskname);
@@ -787,12 +787,12 @@ parse_diskline(
     }
 
     if (disk->program && disk->application &&
-	strcmp(disk->program,"APPLICATION")) {
+	!g_str_equal(disk->program, "APPLICATION")) {
 	disk_parserror(filename, line_num,
 		       _("Both program and application set"));
     }
 
-    if (disk->program && strcmp(disk->program,"APPLICATION")==0 &&
+    if (disk->program && g_str_equal(disk->program, "APPLICATION") &&
 	!disk->application) {
 	disk_parserror(filename, line_num,
 		       _("program set to APPLICATION but no application set"));

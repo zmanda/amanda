@@ -578,7 +578,7 @@ static int key_to_file(guint prefix_len, const char * key) {
 
     key += prefix_len;
 
-    if (strncmp(key, SPECIAL_INFIX, strlen(SPECIAL_INFIX)) == 0) {
+    if (g_str_has_prefix(key, SPECIAL_INFIX)) {
         return 0;
     }
 
@@ -1362,7 +1362,7 @@ s3_device_factory(char * device_name, char * device_type, char * device_node)
 {
     Device *rval;
     S3Device * s3_rval;
-    g_assert(0 == strcmp(device_type, S3_DEVICE_NAME));
+    g_assert(g_str_equal(device_type, S3_DEVICE_NAME));
     rval = DEVICE(g_object_new(TYPE_S3_DEVICE, NULL));
     s3_rval = (S3Device*)rval;
 
@@ -2162,7 +2162,7 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
 	    s3t = &self->s3t[thread];
 	    if (!s3t->idle &&
 		s3t->done &&
-		strcmp(key, (char *)s3t->filename) == 0) {
+		g_str_equal(key, (char *)s3t->filename)) {
 		if (s3t->eof) {
 		    /* return eof */
 		    g_free(key);

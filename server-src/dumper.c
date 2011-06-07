@@ -477,7 +477,7 @@ main(
 	    g_free(device);
 	    device = g_strdup(cmdargs->argv[a++]);
 	    b64device = amxml_format_tag("diskdevice", device);
-	    if(strcmp(device,"NODEVICE") == 0)
+	    if(g_str_equal(device, "NODEVICE"))
 		amfree(device);
 
 	    if(a >= cmdargs->argc) {
@@ -816,7 +816,7 @@ parse_info_line(
     char *name, *value;
     size_t i;
 
-    if (strcmp(str, "end") == 0) {
+    if (g_str_equal(str, "end")) {
 	SET(status, GOT_INFO_ENDLINE);
 	return;
     }
@@ -829,7 +829,7 @@ parse_info_line(
 	return;
 
     for (i = 0; i < sizeof(fields) / sizeof(fields[0]); i++) {
-	if (strcmp(name, fields[i].name) == 0) {
+	if (g_str_equal(name, fields[i].name)) {
 	    strncpy(fields[i].value, value, fields[i].len - 1);
 	    fields[i].value[fields[i].len - 1] = '\0';
 	    break;
@@ -856,18 +856,18 @@ process_dumpline(
     case 's':
 	/* a sendbackup line, just check them all since there are only 5 */
 	tok = strtok(buf, " ");
-	if (tok == NULL || strcmp(tok, "sendbackup:") != 0)
+	if (tok == NULL || !g_str_equal(tok, "sendbackup:"))
 	    goto bad_line;
 
 	tok = strtok(NULL, " ");
 	if (tok == NULL)
 	    goto bad_line;
 
-	if (strcmp(tok, "start") == 0) {
+	if (g_str_equal(tok, "start")) {
 	    break;
 	}
 
-	if (strcmp(tok, "size") == 0) {
+	if (g_str_equal(tok, "size")) {
 	    tok = strtok(NULL, "");
 	    if (tok != NULL) {
 		origsize = OFF_T_ATOI(tok);
@@ -876,22 +876,22 @@ process_dumpline(
 	    break;
 	}
 
-	if (strcmp(tok, "no-op") == 0) {
+	if (g_str_equal(tok, "no-op")) {
 	    amfree(buf);
 	    return;
 	}
 
-	if (strcmp(tok, "end") == 0) {
+	if (g_str_equal(tok, "end")) {
 	    SET(status, GOT_ENDLINE);
 	    break;
 	}
 
-	if (strcmp(tok, "warning") == 0) {
+	if (g_str_equal(tok, "warning")) {
 	    dump_result = max(dump_result, 1);
 	    break;
 	}
 
-	if (strcmp(tok, "error") == 0) {
+	if (g_str_equal(tok, "error")) {
 	    SET(status, GOT_ENDLINE);
 	    dump_result = max(dump_result, 2);
 
@@ -913,7 +913,7 @@ process_dumpline(
 	    break;
 	}
 
-	if (strcmp(tok, "info") == 0) {
+	if (g_str_equal(tok, "info")) {
 	    tok = strtok(NULL, "");
 	    if (tok != NULL)
 		parse_info_line(tok);
@@ -2089,7 +2089,7 @@ sendbackup_response(
 #endif
 
 	tok = strtok(pkt->body, " ");
-	if (tok == NULL || strcmp(tok, "ERROR") != 0)
+	if (tok == NULL || !g_str_equal(tok, "ERROR"))
 	    goto bad_nak;
 
 	tok = strtok(NULL, "\n");
@@ -2129,7 +2129,7 @@ bad_nak:
 	 * Error response packets have "ERROR" followed by the error message
 	 * followed by a newline.
 	 */
-	if (strcmp(tok, "ERROR") == 0) {
+	if (g_str_equal(tok, "ERROR")) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL)
 		tok = _("[bogus error packet]");
@@ -2142,14 +2142,14 @@ bad_nak:
 	/*
 	 * Regular packets have CONNECT followed by three streams
 	 */
-	if (strcmp(tok, "CONNECT") == 0) {
+	if (g_str_equal(tok, "CONNECT")) {
 
 	    /*
 	     * Parse the three stream specifiers out of the packet.
 	     */
 	    for (i = 0; i < NSTREAMS; i++) {
 		tok = strtok(NULL, " ");
-		if (tok == NULL || strcmp(tok, streams[i].name) != 0) {
+		if (tok == NULL || !g_str_equal(tok, streams[i].name)) {
 		    extra = g_strdup_printf(
 				_("CONNECT token is \"%s\": expected \"%s\""),
 				tok ? tok : "(null)",
@@ -2170,7 +2170,7 @@ bad_nak:
 	/*
 	 * OPTIONS [options string] '\n'
 	 */
-	if (strcmp(tok, "OPTIONS") == 0) {
+	if (g_str_equal(tok, "OPTIONS")) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL) {
 		extra = g_strdup(_("OPTIONS token is missing"));
@@ -2273,19 +2273,19 @@ dumper_get_security_conf(
         if(!string || !*string)
                 return(NULL);
 
-        if(strcmp(string, "krb5principal")==0) {
+        if(g_str_equal(string, "krb5principal")) {
                 return(getconf_str(CNF_KRB5PRINCIPAL));
-        } else if(strcmp(string, "krb5keytab")==0) {
+        } else if(g_str_equal(string, "krb5keytab")) {
                 return(getconf_str(CNF_KRB5KEYTAB));
-        } else if(strcmp(string, "amandad_path")==0) {
+        } else if(g_str_equal(string, "amandad_path")) {
                 return (amandad_path);
-        } else if(strcmp(string, "client_username")==0) {
+        } else if(g_str_equal(string, "client_username")) {
                 return (client_username);
-        } else if(strcmp(string, "client_port")==0) {
+        } else if(g_str_equal(string, "client_port")) {
                 return (client_port);
-        } else if(strcmp(string, "ssh_keys")==0) {
+        } else if(g_str_equal(string, "ssh_keys")) {
                 return (ssh_keys);
-        } else if(strcmp(string, "kencrypt")==0) {
+        } else if(g_str_equal(string, "kencrypt")) {
 		if (dumper_kencrypt == KENCRYPT_YES)
                     return ("yes");
 		else
@@ -2340,8 +2340,8 @@ startup_dump(
      */
 
     g_snprintf(level_string, sizeof(level_string), "%d", level);
-    if(strcmp(progname, "DUMP") == 0
-       || strcmp(progname, "GNUTAR") == 0) {
+    if(g_str_equal(progname, "DUMP")
+       || g_str_equal(progname, "GNUTAR")) {
 	application_api = "";
     } else {
 	application_api = "BACKUP ";

@@ -2334,7 +2334,7 @@ ndmp_9to3_name (
 
 	/* see comment in ndmp_3to9_name() above */
 
-	if (!strcmp(name9->original_path,".")) {
+	if (g_str_equal(name9->original_path, ".")) {
 	    // special case
 	    name3->original_path = NDMOS_API_STRDUP(name9->original_path);
 	    name3->destination_dir = NDMOS_API_STRDUP(name9->destination_path);
@@ -2343,8 +2343,8 @@ ndmp_9to3_name (
 	    olen = strlen(name9->original_path);
 	    dlen = strlen(name9->destination_path);
 	    offset = dlen - olen;
-	    if ((olen < dlen) && (!strcmp(name9->original_path,
-					  &name9->destination_path[offset]))) {
+	    if ((olen < dlen) && (g_str_equal(name9->original_path,
+					      &name9->destination_path[offset]))) {
 		/* original path part of destination path */
 		name3->original_path = NDMOS_API_STRDUP(name9->original_path);
 		*buf = 0;

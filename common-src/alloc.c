@@ -174,8 +174,8 @@ safe_env_full(char **add)
 		p++;
 	    }
 	    for (env = environ; *env != NULL; env++) {
-		if (strncmp("LANG=", *env, 5) != 0 &&
-		    strncmp("LC_", *env, 3) != 0) {
+		if (!g_str_has_prefix("LANG=", *env) &&
+		    !g_str_has_prefix("LC_", *env)) {
 		    *p = g_strdup(*env);
 		    p++;
 		}

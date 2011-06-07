@@ -107,7 +107,7 @@ main(
     }
 
     /* parse options */
-    if (argc >= 2 && strcmp(argv[1], "-v") == 0) {
+    if (argc >= 2 && g_str_equal(argv[1], "-v")) {
 	verbose_output = stderr;
 	cfg_opt = argv[2];
     } else {

@@ -319,7 +319,7 @@ check_gerror_matches_(
     const char *fn)
 {
     if (!ok && error) {
-	if (0 != strcmp(matches, error->message)) {
+	if (!g_str_equal(matches, error->message)) {
 	    EXPECT_FAILURE(
 		    "%s produced error '%s' but expected '%s'\n",
 		    fn, error->message, matches);

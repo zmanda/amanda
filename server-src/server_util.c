@@ -85,7 +85,7 @@ getcmd(void)
     }
 
     for(cmd_i=BOGUS; cmdstr[cmd_i] != NULL; cmd_i++)
-	if(strcmp(cmdargs->argv[0], cmdstr[cmd_i]) == 0) {
+	if(g_str_equal(cmdargs->argv[0], cmdstr[cmd_i])) {
 	    cmdargs->cmd = cmd_i;
 	    return cmdargs;
 	}
@@ -143,20 +143,20 @@ amhost_get_security_conf(
     if(!string || !*string)
 	return(NULL);
 
-    if(strcmp(string, "krb5principal")==0)
+    if(g_str_equal(string, "krb5principal"))
 	return(getconf_str(CNF_KRB5PRINCIPAL));
-    else if(strcmp(string, "krb5keytab")==0)
+    else if(g_str_equal(string, "krb5keytab"))
 	return(getconf_str(CNF_KRB5KEYTAB));
 
     if(!arg || !((am_host_t *)arg)->disks) return(NULL);
 
-    if(strcmp(string, "amandad_path")==0)
+    if(g_str_equal(string, "amandad_path"))
 	return ((am_host_t *)arg)->disks->amandad_path;
-    else if(strcmp(string, "client_username")==0)
+    else if(g_str_equal(string, "client_username"))
 	return ((am_host_t *)arg)->disks->client_username;
-    else if(strcmp(string, "client_port")==0)
+    else if(g_str_equal(string, "client_port"))
 	return ((am_host_t *)arg)->disks->client_port;
-    else if(strcmp(string, "ssh_keys")==0)
+    else if(g_str_equal(string, "ssh_keys"))
 	return ((am_host_t *)arg)->disks->ssh_keys;
 
     return(NULL);
@@ -196,7 +196,7 @@ int check_infofile(
 		    char *Xdiskdir     = sanitise_filename(diskp->name);
 		    char *Xinfofile = g_strjoin(NULL, infodir, "/", Xhostinfodir, "/",
 					  Xdiskdir, "/info", NULL);
-		    if (strcmp(old_infofile, Xinfofile) == 0) {
+		    if (g_str_equal(old_infofile, Xinfofile)) {
 			other_dle_match = 1;
 			diskp = NULL;
 		    }

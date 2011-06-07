@@ -353,10 +353,10 @@ debug_unlink_old(void)
 	    continue;
 	}
 	d_name_len = strlen(entry->d_name);
-	if(strncmp(entry->d_name, pname, pname_len) != 0
+	if(!g_str_has_prefix(entry->d_name, pname)
 	   || entry->d_name[pname_len] != '.'
 	   || d_name_len < 6
-	   || strcmp(entry->d_name + d_name_len - 6, ".debug") != 0) {
+	   || !g_str_equal(entry->d_name + d_name_len - 6, ".debug")) {
 	    continue;				/* not one of our debug files */
 	}
 	g_free(e);
@@ -633,7 +633,7 @@ debug_rename(
     g_free(s);
     s = g_strconcat(dbgdir, db_name, NULL);
 
-    if (strcmp(db_filename, s) == 0) {
+    if (g_str_equal(db_filename, s)) {
 	amfree(s);
 	return;
     }

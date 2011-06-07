@@ -225,7 +225,7 @@ start_backup(
     /* normal dump */
 #ifdef XFSDUMP						/* { */
 #ifdef DUMP						/* { */
-    if (strcmp(amname_to_fstype(dle->device), "xfs") == 0)
+    if (g_str_equal(amname_to_fstype(dle->device), "xfs"))
 #else							/* } { */
     if (1)
 #endif							/* } */
@@ -265,7 +265,7 @@ start_backup(
 #endif							/* } */
 #ifdef VXDUMP						/* { */
 #ifdef DUMP
-    if (strcmp(amname_to_fstype(dle->device), "vxfs") == 0)
+    if (g_str_equal(amname_to_fstype(dle->device), "vxfs"))
 #else
     if (1)
 #endif
@@ -320,7 +320,7 @@ char *progname;
 
 #ifdef VDUMP						/* { */
 #ifdef DUMP
-    if (strcmp(amname_to_fstype(dle->device), "advfs") == 0)
+    if (g_str_equal(amname_to_fstype(dle->device), "advfs"))
 #else
     if (1)
 #endif

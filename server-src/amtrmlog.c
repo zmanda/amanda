@@ -84,7 +84,7 @@ main(
 
     cfg_ovr = extract_commandline_config_overrides(&argc, &argv);
 
-    if (argc > 1 && strcmp(argv[1], "-t") == 0) {
+    if (argc > 1 && g_str_equal(argv[1], "-t")) {
 	amtrmidx_debug = 1;
 	argc--;
 	argv++;
@@ -163,14 +163,14 @@ main(
 	/*NOTREACHED*/
     }
     while ((adir=readdir(dir)) != NULL) {
-	if(strncmp(adir->d_name,"log.",4)==0) {
+	if(g_str_has_prefix(adir->d_name, "log.")) {
 	    useful=0;
 	    for (name=output_find_log;*name !=NULL; name++) {
 		if((strlen(adir->d_name) >= 13 &&
 		    strlen(*name) >= 13 &&
 		    adir->d_name[12] == '.' && (*name)[12] == '.' &&
-		    strncmp(adir->d_name,*name,12)==0) ||
-		   strncmp(adir->d_name,*name,18)==0) {
+		    g_str_has_prefix(adir->d_name, *name)) ||
+		   g_str_has_prefix(adir->d_name, *name)) {
 		    useful=1;
 		    break;
 		}

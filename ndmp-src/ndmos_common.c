@@ -128,10 +128,10 @@ ndmos_sync_config_info (struct ndm_session *sess)
 int
 ndmos_ok_name_password (struct ndm_session *sess, char *name, char *pass)
 {
-	if (strcmp (name, "ndmp") != 0)
+	if (!g_str_equal(name, "ndmp"))
 		return 0;
 
-	if (strcmp (pass, "ndmp") != 0)
+	if (!g_str_equal(pass, "ndmp"))
 		return 0;
 
 	return 1;	/* OK */
@@ -160,7 +160,7 @@ int
 ndmos_ok_name_md5_digest (struct ndm_session *sess,
   char *name, char digest[16])
 {
-	if (strcmp (name, "ndmp") != 0)
+	if (!g_str_equal(name, "ndmp"))
 		return 0;
 
 	if (!ndmmd5_ok_digest (sess->md5_challenge, "ndmp", digest))

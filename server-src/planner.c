@@ -257,15 +257,18 @@ main(
 	g_fprintf(stderr, _("%s: %s"), get_pname(), version_info[i]);
 
     diskarg_offset = 2;
-    if (argc - diskarg_offset > 1 && strcmp(argv[diskarg_offset], "--starttime") == 0) {
+    if (argc - diskarg_offset > 1 && g_str_equal(argv[diskarg_offset],
+                                                 "--starttime")) {
 	planner_timestamp = g_strdup(argv[diskarg_offset+1]);
 	diskarg_offset += 2;
     }
-    if (argc - diskarg_offset > 0 && strcmp(argv[diskarg_offset], "--no-taper") == 0) {
+    if (argc - diskarg_offset > 0 && g_str_equal(argv[diskarg_offset],
+                                                 "--no-taper")) {
 	no_taper = TRUE;
 	diskarg_offset += 1;
     }
-    if (argc - diskarg_offset > 0 && strcmp(argv[diskarg_offset], "--from-client") == 0) {
+    if (argc - diskarg_offset > 0 && g_str_equal(argv[diskarg_offset],
+                                                 "--from-client")) {
 	from_client = TRUE;
 	diskarg_offset += 1;
     }
@@ -1732,8 +1735,8 @@ static void getsize(am_host_t *hostp)
             estimates_for_client = i;
 
             g_ptr_array_add(array, client_estimate_as_xml(dp, features, estimates_for_client));
-        } else if (strcmp(dp->program,"DUMP") != 0 &&
-                   strcmp(dp->program,"GNUTAR") != 0) {
+        } else if (!g_str_equal(dp->program, "DUMP") &&
+                   !g_str_equal(dp->program, "GNUTAR")) {
             g_free(est(dp)->errstr);
             est(dp)->errstr = g_strdup("does not support application-api");
         } else {
@@ -1848,7 +1851,7 @@ static disk_t *lookup_hostdisk(
     disk_t *dp;
 
     for(dp = hp->disks; dp != NULL; dp = dp->hostnext)
-	if(strcmp(str, dp->name) == 0) return dp;
+	if(g_str_equal(str, dp->name)) return dp;
 
     return NULL;
 }
@@ -1879,7 +1882,7 @@ static void handle_result(
     hostp->up = HOST_READY;
 
     if (pkt == NULL) {
-	if (strcmp(security_geterror(sech), "timeout waiting for REP") == 0) {
+	if (g_str_equal(security_geterror(sech), "timeout waiting for REP")) {
 	    errbuf = g_strdup_printf("Some estimate timeout on %s, using server estimate if possible", hostp->hostname);
 	} else {
 	    errbuf = g_strdup_printf(_("Request to %s failed: %s"),
@@ -1901,8 +1904,8 @@ static void handle_result(
 	    if(s == remoterr) goto NAK_parse_failed;
 		*s = '\0';
 	}
-	if (strcmp(remoterr, "unknown service: noop") != 0
-		&& strcmp(remoterr, "noop: invalid service") != 0) {
+	if (!g_str_equal(remoterr, "unknown service: noop")
+		&& !g_str_equal(remoterr, "noop: invalid service")) {
 	    errbuf = g_strjoin(NULL, hostp->hostname, " NAK: ", remoterr, NULL);
 	    if(s) *s = '\n';
 	    goto error_return;
@@ -1951,8 +1954,8 @@ static void handle_result(
 	     */
 	    if(hostp->features == NULL
 	       && pkt->type == P_NAK
-	       && (strcmp(t - 1, "unknown service: noop") == 0
-		   || strcmp(t - 1, "noop: invalid service") == 0)) {
+	       && (g_str_equal(t - 1, "unknown service: noop")
+		   || g_str_equal(t - 1, "noop: invalid service"))) {
 		skip_quoted_line(s, ch);
 		continue;
 	    }
@@ -2920,7 +2923,7 @@ static int promote_highest_priority_incremental(void)
 		nb_disk_today++;
 	    else if(est(dp1)->next_level0 == est(dp)->next_level0)
 		nb_disk_same_day++;
-	    if(strcmp(dp->host->hostname, dp1->host->hostname) == 0) {
+	    if(g_str_equal(dp->host->hostname, dp1->host->hostname)) {
 		if(est(dp1)->dump_est->level == 0)
 		    nb_today++;
 		else if(est(dp1)->next_level0 == est(dp)->next_level0)

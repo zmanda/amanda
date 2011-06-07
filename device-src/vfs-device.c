@@ -408,7 +408,7 @@ static void vfs_device_finalize(GObject * obj_self) {
 
 static Device * vfs_device_factory(char * device_name, char * device_type, char * device_node) {
     Device * rval;
-    g_assert(0 == strcmp(device_type, "file"));
+    g_assert(g_str_equal(device_type, "file"));
     rval = DEVICE(g_object_new(TYPE_VFS_DEVICE, NULL));
     device_open_device(rval, device_name, device_type, device_node);
     return rval;
@@ -592,7 +592,7 @@ static gboolean delete_vfs_files_functor(const char * filename,
     d_self = DEVICE(self);
 
     /* Skip the volume lock. */
-    if (strcmp(filename, VOLUME_LOCKFILE_NAME) == 0)
+    if (g_str_equal(filename, VOLUME_LOCKFILE_NAME))
         return TRUE;
 
     path_name = g_strjoin(NULL, self->dir_name, "/", filename, NULL);
@@ -620,7 +620,7 @@ static gboolean check_dir_empty_functor(const char * filename,
     VfsDevice * self = VFS_DEVICE(user_data);
     char * path_name;
 
-    if (strcmp(filename, VOLUME_LOCKFILE_NAME) == 0)
+    if (g_str_equal(filename, VOLUME_LOCKFILE_NAME))
         return TRUE;
 
     path_name = g_strjoin(NULL, self->dir_name, "/", filename, NULL);

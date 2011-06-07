@@ -326,7 +326,7 @@ main(
 
     /* drop root privileges */
     if (!set_root_privs(0)) {
-	if (strcmp(argv[1], "selfcheck") == 0) {
+	if (g_str_equal(argv[1], "selfcheck")) {
 	    printf("ERROR amgtar must be run setuid root\n");
 	}
 	error(_("amgtar must be run setuid root"));
@@ -586,17 +586,17 @@ main(
 	}
     }
 
-    if (strcmp(command, "support") == 0) {
+    if (g_str_equal(command, "support")) {
 	amgtar_support(&argument);
-    } else if (strcmp(command, "selfcheck") == 0) {
+    } else if (g_str_equal(command, "selfcheck")) {
 	amgtar_selfcheck(&argument);
-    } else if (strcmp(command, "estimate") == 0) {
+    } else if (g_str_equal(command, "estimate")) {
 	amgtar_estimate(&argument);
-    } else if (strcmp(command, "backup") == 0) {
+    } else if (g_str_equal(command, "backup")) {
 	amgtar_backup(&argument);
-    } else if (strcmp(command, "restore") == 0) {
+    } else if (g_str_equal(command, "restore")) {
 	amgtar_restore(&argument);
-    } else if (strcmp(command, "validate") == 0) {
+    } else if (g_str_equal(command, "validate")) {
 	amgtar_validate(&argument);
     } else {
 	dbprintf("Unknown command `%s'.\n", command);

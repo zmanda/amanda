@@ -719,7 +719,7 @@ ndmca_opq_show_device_info (struct ndm_session *sess,
 			dc = &info[i].caplist.caplist_val[j];
 
 			ndmalogqr (sess, "    device     %s", dc->device);
-			if (!strcmp(what, "tape")) {
+			if (g_str_equal(what, "tape")) {
 #ifndef NDMOS_OPTION_NO_NDMP3
 			    if (sess->plumb.tape->protocol_version == 3) {
 				attr = dc->v3attr.value;

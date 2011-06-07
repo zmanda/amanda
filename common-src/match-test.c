@@ -243,7 +243,7 @@ test_glob_to_regex(void)
 
     for (t = tests; t->glob; t++) {
 	char *regex = glob_to_regex(t->glob);
-	if (0 != strcmp(regex, t->regex)) {
+	if (!g_str_equal(regex, t->regex)) {
 	    ok = FALSE;
 	    g_fprintf(stderr, "glob_to_regex(\"%s\") returned \"%s\"; expected \"%s\"\n",
 		    t->glob, regex, t->regex);

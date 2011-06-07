@@ -93,7 +93,7 @@ append_to_tapelist(
 
     /* see if we have this tape already, and if so just add to its file list */
     for(cur_tape = tapelist; cur_tape; cur_tape = cur_tape->next) {
-	if(strcmp(label, cur_tape->label) == 0) {
+	if(g_str_equal(label, cur_tape->label)) {
 	    int d_idx = 0;
 	    off_t *newfiles;
 	    int   *newpartnum;
