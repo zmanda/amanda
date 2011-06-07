@@ -2100,7 +2100,7 @@ read_block(
 	char              *value;
 	keytab_t          *kt;
 
-	if (key_ovr && strncasecmp(key_ovr, key, strlen(key_ovr)) != 0)
+	if (strncasecmp(key_ovr, key, strlen(key_ovr)) != 0)
 	    continue;
 
 	if (strlen(key) <= strlen(key_ovr) + 1)
