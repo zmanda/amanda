@@ -53,12 +53,22 @@ round_function(n, x)
 }
 */
 
-#define ST_BLOCKS(s)							       \
-	    (((((off_t)(s).st_blocks * (off_t)512) <= (s).st_size)) ?	       \
-	      ((off_t)(s).st_blocks + (off_t)1) :			       \
-	      ((s).st_size / (off_t)512 +				       \
-		(off_t)((((s).st_size % (off_t)512) != (off_t)0) ?	       \
-		(off_t)1 : (off_t)0)))
+/*
+ * We suppose here that the dump command has a 1k block size and that all others
+ * (tar included) have a 512b block size.
+ */
+
+#define ROUNDED_BLOCK_SIZE(s, shift) (off_t)(((s).st_size + (1 << shift) - 1) >> shift)
+
+#define TAR_BLOCK_SIZE_SHIFT (9)
+#define TAR_ROUNDED_BLOCK_SIZE(s) ROUNDED_BLOCK_SIZE(s, TAR_BLOCK_SIZE_SHIFT)
+
+#define DUMP_BLOCK_SIZE_SHIFT (10)
+#define DUMP_ROUNDED_BLOCK_SIZE(s) ROUNDED_BLOCK_SIZE(s, DUMP_BLOCK_SIZE_SHIFT)
+
+#define DEFAULT_BLOCK_SIZE_SHIFT (9)
+#define DEFAULT_ROUNDED_BLOCK_SIZE(s) ROUNDED_BLOCK_SIZE(s, DEFAULT_BLOCK_SIZE_SHIFT)
+
 
 #define	FILETYPES	(S_IFREG|S_IFLNK|S_IFDIR)
 
@@ -158,9 +168,9 @@ main(
 	    continue;
 	}
 	g_printf("%s: st_size=%lu", argv[i],(unsigned long)finfo.st_size);
-	g_printf(": blocks=%llu\n", ST_BLOCKS(finfo));
-	dump_total += (ST_BLOCKS(finfo) + (off_t)1) / (off_t)2 + (off_t)1;
-	gtar_total += ROUND(4,(ST_BLOCKS(finfo) + (off_t)1));
+	g_printf(": blocks=%llu\n", DEFAULT_ROUNDED_BLOCK_SIZE(finfo));
+        dump_total += DUMP_ROUNDED_BLOCK_SIZE(finfo);
+	gtar_total += ROUND(4,(TAR_ROUNDED_BLOCK_SIZE(finfo) + (off_t)1));
     }
     g_printf("           gtar           dump\n");
     g_printf("total      %-9lu         %-9lu\n",gtar_total,dump_total);
@@ -564,8 +574,7 @@ add_file_dump(
 {
     /* keep the size in kbytes, rounded up, plus a 1k header block */
     if((sp->st_mode & S_IFMT) == S_IFREG || (sp->st_mode & S_IFMT) == S_IFDIR)
-    	dumpstats[level].total_size +=
-			(ST_BLOCKS(*sp) + (off_t)1) / (off_t)2 + (off_t)1;
+        dumpstats[level].total_size += DUMP_ROUNDED_BLOCK_SIZE(*sp);
 }
 
 off_t
@@ -622,7 +631,7 @@ add_file_gnutar(
     struct stat *	sp)
 {
     /* the header takes one additional block */
-    dumpstats[level].total_size += ST_BLOCKS(*sp);
+    dumpstats[level].total_size += TAR_ROUNDED_BLOCK_SIZE(*sp);
 }
 
 off_t
@@ -663,7 +672,7 @@ add_file_unknown(
 {
     /* just add up the block counts */
     if((sp->st_mode & S_IFMT) == S_IFREG || (sp->st_mode & S_IFMT) == S_IFDIR)
-    	dumpstats[level].total_size += ST_BLOCKS(*sp);
+        dumpstats[level].total_size += DEFAULT_ROUNDED_BLOCK_SIZE(*sp);
 }
 
 off_t
