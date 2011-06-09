@@ -1214,32 +1214,14 @@ char *optionstr(disk_t *dp)
     return result;
 }
  
-char *
-xml_optionstr(
-    disk_t *		dp,
-    int                 to_server)
+char * xml_optionstr(disk_t *dp, int to_server)
 {
-    char *auth_opt;
-    char *kencrypt_opt;
-    char *compress_opt;
-    char *encrypt_opt = g_strdup("");
-    char *decrypt_opt = g_strdup("");
-    char *record_opt;
-    char *index_opt;
-    char *data_path_opt = g_strdup("");
-    char *exclude = g_strdup("");
-    char *exclude_file = NULL;
-    char *exclude_list = NULL;
-    char *include = g_strdup("");
-    char *include_file = NULL;
-    char *include_list = NULL;
-    char *excl_opt = "";
-    char *incl_opt = "";
-    char *exc = NULL;
-    char *script_opt;
-    char *result = NULL;
+    GPtrArray *array = g_ptr_array_new();
+    gchar **strings;
+    GString *strbuf;
+    char *tmp;
+    char *result;
     sle_t *excl;
-    char *q64name;
     am_feature_t *their_features;
 
     g_assert(dp != NULL);
@@ -1247,214 +1229,162 @@ xml_optionstr(
 
     their_features = dp->host->features;
 
-    if (am_has_feature(their_features, fe_options_auth)) {
-	auth_opt = g_strjoin(NULL, "  <auth>", dp->auth, "</auth>\n", NULL);
-    } else {
-	auth_opt = g_strdup("");
-    }
+    if (am_has_feature(their_features, fe_options_auth))
+        g_ptr_array_add(array, g_strdup_printf("  <auth>%s</auth>", dp->auth));
 
     switch(dp->compress) {
     case COMP_FAST:
-	compress_opt = g_strdup("  <compress>FAST</compress>\n");
+        g_ptr_array_add(array, g_strdup("  <compress>FAST</compress>"));
 	break;
     case COMP_BEST:
-	compress_opt = g_strdup("  <compress>BEST</compress>\n");
+        g_ptr_array_add(array, g_strdup("  <compress>BEST</compress>"));
 	break;
     case COMP_CUST:
-	compress_opt = g_strjoin(NULL, "  <compress>CUSTOM"
-	    "<custom-compress-program>", dp->clntcompprog,
-	    "</custom-compress-program>\n" "  </compress>\n", NULL);
+        g_ptr_array_add(array, g_strdup_printf("  <compress>CUSTOM"
+            "<custom-compress-program>%s</custom-compress-program>\n"
+            "  </compress>", dp->clntcompprog));
 	break;
     case COMP_SERVER_FAST:
-	compress_opt = g_strdup("  <compress>SERVER-FAST</compress>\n");
+        g_ptr_array_add(array, g_strdup("  <compress>SERVER-FAST</compress>"));
 	break;
     case COMP_SERVER_BEST:
-	compress_opt = g_strdup("  <compress>SERVER-BEST</compress>\n");
+        g_ptr_array_add(array, g_strdup("  <compress>SERVER-BEST</compress>"));
 	break;
     case COMP_SERVER_CUST:
-	compress_opt = g_strjoin(NULL, "  <compress>SERVER-CUSTOM"
-	    "<custom-compress-program>", dp->srvcompprog,
-	    "</custom-compress-program>\n" "  </compress>\n", NULL);
+        g_ptr_array_add(array, g_strdup_printf("  <compress>SERVER-CUSTOM"
+            "<custom-compress-program>%s</custom-compress-program>\n"
+            "  </compress>", dp->srvcompprog));
 	break;
-    default:
-	compress_opt = g_strdup("");
     }
 
     switch(dp->encrypt) {
     case ENCRYPT_CUST:
-	if (dp->clnt_decrypt_opt) {
-            g_free(decrypt_opt);
-	    decrypt_opt = g_strconcat("    <decrypt-option>",
-	        dp->clnt_decrypt_opt, "</decrypt-option>\n", NULL);
-	}
-        g_free(encrypt_opt);
-	encrypt_opt = g_strconcat("  <encrypt>CUSTOM""<custom-encrypt-program>",
-	    dp->clnt_encrypt, "</custom-encrypt-program>\n", decrypt_opt,
-	    "  </encrypt>\n", NULL);
+        strbuf = g_string_new("  <encrypt>CUSTOM<custom-encrypt-program>");
+        g_string_append_printf(strbuf, "%s</custom-encrypt-program>\n",
+            dp->clnt_encrypt);
+	if (dp->clnt_decrypt_opt)
+            g_string_append_printf(strbuf, "    "
+                "<decrypt-option>%s</decrypt-option>\n", dp->clnt_decrypt_opt);
+
+        g_string_append(strbuf, "  </encrypt>");
+        tmp = g_string_free(strbuf, FALSE);
+        g_ptr_array_add(array, tmp);
 	break;
     case ENCRYPT_SERV_CUST:
 	if (to_server) {
-            g_free(decrypt_opt);
-            decrypt_opt = g_strconcat("    <decrypt-option>",
-	        dp->srv_decrypt_opt, "</decrypt-option>\n", NULL);
-
-
-            g_free(encrypt_opt);
-            encrypt_opt = g_strconcat(
-	        "  <encrypt>SERVER-CUSTOM<custom-encrypt-program>",
-	        dp->srv_encrypt, "</custom-encrypt-program>\n", decrypt_opt,
-	        "  </encrypt>\n", NULL);
+            tmp = g_strdup_printf(
+                "  <encrypt>SERVER-CUSTOM"
+                "<custom-encrypt-program>%s</custom-encrypt-program>\n"
+                "    <decrypt-option>%s</decrypt-option>\n"
+                "  </encrypt>", dp->srv_encrypt, dp->srv_decrypt_opt
+            );
+            g_ptr_array_add(array, tmp);
 	}
 	break;
     }
-    
-    if (!dp->record) {
-	record_opt = "  <record>NO</record>\n";
-    } else {
-	record_opt = "  <record>YES</record>\n";
-    }
 
-    if(dp->index) {
-	index_opt = "  <index>YES</index>\n";
-    } else {
-	index_opt = "";
-    }
+    g_ptr_array_add(array, g_strdup_printf("  <record>%s</record>",
+        (dp->record) ? "YES" : "NO"));
 
-    if (dp->kencrypt) {
-	kencrypt_opt = "  <kencrypt>YES</kencrypt>\n";
-    } else {
-	kencrypt_opt = "";
-    }
+    if(dp->index)
+        g_ptr_array_add(array, g_strdup("  <index>YES</index>"));
+
+    if (dp->kencrypt)
+        g_ptr_array_add(array, g_strdup("  <kencrypt>YES</kencrypt>"));
 
     if (am_has_feature(their_features, fe_xml_data_path)) {
 	switch(dp->data_path) {
 	case DATA_PATH_AMANDA:
-	    amfree(data_path_opt);
-	    data_path_opt = g_strdup("  <datapath>AMANDA</datapath>\n");
+            g_ptr_array_add(array, g_strdup("  <datapath>AMANDA</datapath>"));
 	    break;
 	case DATA_PATH_DIRECTTCP:
-	  { /* dp->dataport_list is not set for selfcheck/sendsize */
+	  /* dp->dataport_list is not set for selfcheck/sendsize */
 	    if (am_has_feature(their_features, fe_xml_directtcp_list)) {
 		char *s, *sc;
 		char *value, *b64value;
 
-		amfree(data_path_opt);
-		data_path_opt = g_strdup("  <datapath>DIRECTTCP");
+                strbuf = g_string_new("  <datapath>DIRECTTCP");
 		if (dp->dataport_list) {
 		    s = sc = g_strdup(dp->dataport_list);
 		    do {
 			value = s;
 			s = strchr(s, ';');
-			if (s) {
+			if (s)
 			    *s++ = '\0';
-			}
 
 			b64value = amxml_format_tag("directtcp", value);
-			vstrextend(&data_path_opt, "\n    ", b64value, NULL);
-			amfree(b64value);
+                        g_string_append_printf(strbuf, "\n    %s", b64value);
+			g_free(b64value);
 		    } while (s);
-		    amfree(sc);
-		    strappend(data_path_opt, "\n  ");
+		    g_free(sc);
+                    g_string_append(strbuf, "\n  ");
 		}
-		strappend(data_path_opt, "</datapath>\n");
+                g_string_append(strbuf, "</datapath>");
+                tmp = g_string_free(strbuf, FALSE);
+                g_ptr_array_add(array, tmp);
 	    }
-	  }
 	  break;
 	}
     }
 
-    exclude_file = g_strdup("");
-    if (dp->exclude_file != NULL && dp->exclude_file->nb_element > 0) {
-	for(excl = dp->exclude_file->first; excl != NULL;
-					    excl = excl->next) {
-	    q64name = amxml_format_tag("file", excl->name);
-	    g_free(exc);
-	    exc = g_strconcat("    ", q64name, "\n", NULL);
-	    strappend(exclude_file, exc);
-	    amfree(q64name);
-	}
-    }
-    exclude_list = g_strdup("");
-    if (dp->exclude_list != NULL && dp->exclude_list->nb_element > 0) {
-	for(excl = dp->exclude_list->first; excl != NULL;
-					    excl = excl->next) {
-	    q64name = amxml_format_tag("list", excl->name);
-	    g_free(exc);
-	    exc = g_strconcat("    ", q64name, "\n", NULL);
-	    strappend(exclude_list, exc);
-	    amfree(q64name);
-	}
-    }
-
-    include_file = g_strdup("");
-    if (dp->include_file != NULL && dp->include_file->nb_element > 0) {
-	for(excl = dp->include_file->first; excl != NULL;
-					    excl = excl->next) {
-	    q64name = amxml_format_tag("file", excl->name);
-	    g_free(exc);
-	    exc = g_strconcat("    ", q64name, "\n", NULL);
-	    strappend(include_file, exc);
-	    amfree(q64name);
-	}
-    }
-    include_list = g_strdup("");
-    if (dp->include_list != NULL && dp->include_list->nb_element > 0) {
-	for(excl = dp->include_list->first; excl != NULL;
-					    excl = excl->next) {
-	    q64name = amxml_format_tag("list", excl->name);
-	    g_free(exc);
-	    exc = g_strconcat("    ", q64name, "\n", NULL);
-	    strappend(include_list, exc);
-	    amfree(q64name);
-	}
-    }
-
-    if (dp->exclude_optional) {
-	excl_opt = "    <optional>YES</optional>\n";
-    }
-    if (dp->include_optional) {
-	incl_opt = "    <optional>YES</optional>\n";
-    }
-
     if (dp->exclude_file || dp->exclude_list) {
-        g_free(exclude);
-        exclude = g_strconcat("  <exclude>\n", exclude_file, exclude_list,
-	    excl_opt, "  </exclude>\n", NULL);
+        strbuf = g_string_new("  <exclude>\n");
+
+        if (dp->exclude_file && dp->exclude_file->nb_element > 0)
+            for (excl = dp->exclude_file->first; excl; excl = excl->next) {
+                tmp = amxml_format_tag("file", excl->name);
+                g_string_append_printf(strbuf, "    %s\n", tmp);
+                g_free(tmp);
+            }
+
+        if (dp->exclude_list && dp->exclude_list->nb_element > 0)
+            for (excl = dp->exclude_list->first; excl; excl = excl->next) {
+                tmp = amxml_format_tag("list", excl->name);
+                g_string_append_printf(strbuf, "    %s\n", tmp);
+                g_free(tmp);
+            }
+
+        if (dp->exclude_optional)
+            g_string_append(strbuf, "    <optional>YES</optional>\n");
+
+        g_string_append(strbuf, "  </exclude>");
+        tmp = g_string_free(strbuf, FALSE);
+        g_ptr_array_add(array, tmp);
     }
 
     if (dp->include_file || dp->include_list) {
-        g_free(include);
-        include = g_strconcat("  <include>\n", include_file, include_list,
-	    incl_opt, "  </include>\n", NULL);
+        strbuf = g_string_new("  <include>\n");
+
+        if (dp->include_file && dp->include_file->nb_element > 0)
+            for (excl = dp->include_file->first; excl; excl = excl->next) {
+                tmp = amxml_format_tag("file", excl->name);
+                g_string_append_printf(strbuf, "    %s\n", tmp);
+                g_free(tmp);
+            }
+
+        if (dp->include_list && dp->include_list->nb_element > 0)
+            for (excl = dp->include_list->first; excl; excl = excl->next) {
+                tmp = amxml_format_tag("list", excl->name);
+                g_string_append_printf(strbuf, "    %s\n", tmp);
+                g_free(tmp);
+            }
+
+        if (dp->include_optional)
+            g_string_append(strbuf, "    <optional>YES</optional>\n");
+
+        g_string_append(strbuf, "  </include>");
+        tmp = g_string_free(strbuf, FALSE);
+        g_ptr_array_add(array, tmp);
     }
-    script_opt = xml_scripts(dp->pp_scriptlist, their_features);
-    result = g_strjoin(NULL, auth_opt,
-		       kencrypt_opt,
-		       compress_opt,
-		       encrypt_opt,
-		       record_opt,
-		       index_opt,
-		       data_path_opt,
-		       exclude,
-		       include,
-		       script_opt,
-		       NULL);
 
-    amfree(auth_opt);
-    amfree(data_path_opt);
-    amfree(compress_opt);
-    amfree(exclude);
-    amfree(exclude_list);
-    amfree(exclude_file);
-    amfree(include);
-    amfree(include_file);
-    amfree(include_list);
-    amfree(exc);
-    amfree(decrypt_opt);
-    amfree(encrypt_opt);
-    amfree(script_opt);
 
-    /* result contains at least 'auth=...' */
+    g_ptr_array_add(array, xml_scripts(dp->pp_scriptlist, their_features));
+    g_ptr_array_add(array, NULL);
+
+    strings = (gchar **)g_ptr_array_free(array, FALSE);
+    result = g_strjoinv("\n", strings);
+    g_strfreev(strings);
+
     return result;
 }
 
