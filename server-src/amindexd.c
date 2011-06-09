@@ -452,7 +452,7 @@ process_ls_dump(
 	if (line[0] != '\0') {
 	    if(strlen(line) > 0 && line[strlen(line)-1] == '\n')
 		line[strlen(line)-1] = '\0';
-	    if(g_str_has_prefix(dir_slash, line)) {
+	    if (g_str_has_prefix(line, dir_slash )) {
 		if(!recursive) {
 		    s = line + len_dir_slash;
 		    ch = *s++;
