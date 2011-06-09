@@ -166,11 +166,11 @@ main(
 	if(g_str_has_prefix(adir->d_name, "log.")) {
 	    useful=0;
 	    for (name=output_find_log;*name !=NULL; name++) {
-		if((strlen(adir->d_name) >= 13 &&
-		    strlen(*name) >= 13 &&
-		    adir->d_name[12] == '.' && (*name)[12] == '.' &&
-		    g_str_has_prefix(adir->d_name, *name)) ||
-		   g_str_has_prefix(adir->d_name, *name)) {
+		if ((strlen(adir->d_name) >= 13 &&
+		     strlen(*name) >= 13 &&
+		     adir->d_name[12] == '.' && (*name)[12] == '.' &&
+		     strncmp(adir->d_name, *name, 12)) ||
+		    strncmp(adir->d_name, *name, 18)) {
 		    useful=1;
 		    break;
 		}
