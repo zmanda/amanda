@@ -1094,25 +1094,11 @@ gchar **validate_optionstr(disk_t *dp)
     return ret;
 }
 
-char *
-optionstr(
-    disk_t *	dp)
+char *optionstr(disk_t *dp)
 {
-    char *auth_opt = NULL;
-    char *kencrypt_opt = "";
-    char *compress_opt = "";
-    char *encrypt_opt = g_strdup("");
-    char *decrypt_opt = g_strdup("");
-    char *record_opt = "";
-    char *index_opt = "";
-    char *exclude_file = NULL;
-    char *exclude_list = NULL;
-    char *include_file = NULL;
-    char *include_list = NULL;
-    char *excl_opt = "";
-    char *incl_opt = "";
-    char *exc = NULL;
-    char *result = NULL;
+    GPtrArray *array = g_ptr_array_new();
+    gchar **strings;
+    char *result;
     sle_t *excl;
     char *qname;
     am_feature_t *their_features;
@@ -1122,173 +1108,120 @@ optionstr(
 
     their_features = dp->host->features;
 
-    if (am_has_feature(their_features, fe_options_auth)) {
-	auth_opt = g_strjoin(NULL, "auth=", dp->auth, ";", NULL);
-    } else if(strcasecmp(dp->auth, "bsd") == 0) {
+    if (am_has_feature(their_features, fe_options_auth))
+        g_ptr_array_add(array, g_strdup_printf("auth=%s", dp->auth));
+    else if(strcasecmp(dp->auth, "bsd") == 0)
 	if(am_has_feature(their_features, fe_options_bsd_auth))
-	    auth_opt = g_strdup("bsd-auth;");
-    }
+            g_ptr_array_add(array, g_strdup("bsd-auth"));
 
     switch(dp->compress) {
     case COMP_FAST:
-	compress_opt = "compress-fast;";
+        g_ptr_array_add(array, g_strdup("compress-fast"));
 	break;
     case COMP_BEST:
-	compress_opt = "compress-best;";
+        g_ptr_array_add(array, g_strdup("compress-best"));
 	break;
     case COMP_CUST:
-	compress_opt = g_strjoin(NULL, "comp-cust=", dp->clntcompprog, ";", NULL);
+        g_ptr_array_add(array, g_strdup_printf("comp-cust=%s",
+            dp->clntcompprog));
 	break;
     case COMP_SERVER_FAST:
-	compress_opt = "srvcomp-fast;";
+        g_ptr_array_add(array, g_strdup("srvcomp-fast"));
 	break;
     case COMP_SERVER_BEST:
-        compress_opt = "srvcomp-best;";
+        g_ptr_array_add(array, g_strdup("srvcomp-best"));
 	break;
     case COMP_SERVER_CUST:
-	compress_opt = g_strjoin(NULL, "srvcomp-cust=", dp->srvcompprog, ";", NULL);
+        g_ptr_array_add(array, g_strdup_printf("srvcomp-cust=%s",
+            dp->srvcompprog));
 	break;
     }
 
     switch(dp->encrypt) {
     case ENCRYPT_CUST:
-	g_free(encrypt_opt);
-	encrypt_opt = g_strconcat("encrypt-cust=", dp->clnt_encrypt, ";", NULL);
-	if (dp->clnt_decrypt_opt) {
-	     g_free(decrypt_opt);
-	     decrypt_opt = g_strconcat("client-decrypt-option=", dp->clnt_decrypt_opt, ";", NULL);
-	}
+        g_ptr_array_add(array, g_strdup_printf("encrypt-cust=%s",
+            dp->clnt_encrypt));
+	if (dp->clnt_decrypt_opt)
+             g_ptr_array_add(array, g_strdup_printf("client-decrypt-option=%s",
+                 dp->clnt_decrypt_opt));
 	break;
     case ENCRYPT_SERV_CUST:
-	g_free(encrypt_opt);
-	encrypt_opt = g_strconcat("encrypt-serv-cust=", dp->srv_encrypt, ";", NULL);
-	if (dp->srv_decrypt_opt) {
-	    g_free(decrypt_opt);
-	    decrypt_opt = g_strconcat("server-decrypt-option=", dp->srv_decrypt_opt, ";", NULL);
-         }
-	 break;
+        g_ptr_array_add(array, g_strdup_printf("encrypt-serv-cust=%s",
+            dp->srv_encrypt));
+	if (dp->srv_decrypt_opt)
+            g_ptr_array_add(array, g_strdup_printf("server-decrypt-option=%s",
+	        dp->srv_decrypt_opt));
+	break;
     }
 
-    if (!dp->record) {
-	record_opt = "no-record;";
-    }
+    if (!dp->record)
+        g_ptr_array_add(array, g_strdup("no-record"));
 
-    if (dp->index) {
-	index_opt = "index;";
-    }
+    if (dp->index)
+        g_ptr_array_add(array, g_strdup("index"));
 
-    if (dp->kencrypt) {
-	kencrypt_opt = "kencrypt;";
-    }
+    if (dp->kencrypt)
+        g_ptr_array_add(array, g_strdup("kencrypt"));
 
-    exclude_file = g_strdup("");
-    if (dp->exclude_file != NULL && dp->exclude_file->nb_element > 0) {
-	for(excl = dp->exclude_file->first; excl != NULL;
-					    excl = excl->next) {
+    if (dp->exclude_file && dp->exclude_file->nb_element > 0)
+	for(excl = dp->exclude_file->first; excl; excl = excl->next) {
 	    qname = quote_string(excl->name);
-	    g_free(exc);
-	    exc = g_strconcat("exclude-file=", qname, ";", NULL);
-	    strappend(exclude_file, exc);
-	    amfree(qname);
+            g_ptr_array_add(array, g_strdup_printf("exclude-file=%s", qname));
+	    g_free(qname);
 	}
-    }
-    exclude_list = g_strdup("");
-    if (dp->exclude_list != NULL && dp->exclude_list->nb_element > 0) {
-	for(excl = dp->exclude_list->first; excl != NULL;
-					    excl = excl->next) {
-	    qname = quote_string(excl->name);
-	    g_free(exc);
-	    exc = g_strconcat("exclude-list=", qname, ";", NULL);
-	    strappend(exclude_list, exc);
-	    amfree(qname);
-	}
-    }
 
-    include_file = g_strdup("");
-    if (dp->include_file != NULL && dp->include_file->nb_element > 0) {
-	for(excl = dp->include_file->first; excl != NULL;
-					    excl = excl->next) {
+    if (dp->exclude_list && dp->exclude_list->nb_element > 0)
+	for(excl = dp->exclude_list->first; excl; excl = excl->next) {
 	    qname = quote_string(excl->name);
-	    g_free(exc);
-	    exc = g_strconcat("include-file=", qname, ";", NULL);
-	    strappend(include_file, exc);
-	    amfree(qname);
+            g_ptr_array_add(array, g_strdup_printf("exclude-list=%s", qname));
+	    g_free(qname);
 	}
-    }
-    include_list = g_strdup("");
-    if (dp->include_list != NULL && dp->include_list->nb_element > 0) {
-	for(excl = dp->include_list->first; excl != NULL;
-					    excl = excl->next) {
+
+    if (dp->include_file && dp->include_file->nb_element > 0)
+	for(excl = dp->include_file->first; excl; excl = excl->next) {
 	    qname = quote_string(excl->name);
-	    g_free(exc);
-	    exc = g_strconcat("include-list=", qname, ";", NULL);
-	    strappend(include_list, exc);
-	    amfree(qname);
+            g_ptr_array_add(array, g_strdup_printf("include-file=%s", qname));
+	    g_free(qname);
 	}
-    }
 
-    if (dp->exclude_optional) {
-	excl_opt = "exclude-optional;";
-    }
-    if (dp->include_optional) {
-	incl_opt = "include-optional;";
-    }
+    if (dp->include_list && dp->include_list->nb_element > 0)
+	for(excl = dp->include_list->first; excl; excl = excl->next) {
+	    qname = quote_string(excl->name);
+            g_ptr_array_add(array, g_strdup_printf("include-list=%s", qname));
+	    g_free(qname);
+	}
 
-    result = g_strjoin(NULL, ";",
-		       auth_opt,
-		       kencrypt_opt,
-		       compress_opt,
-		       encrypt_opt,
-		       decrypt_opt,
-		       record_opt,
-		       index_opt,
-		       exclude_file,
-		       exclude_list,
-		       include_file,
-		       include_list,
-		       excl_opt,
-		       incl_opt,
-		       NULL);
-    amfree(auth_opt);
-    amfree(exclude_list);
-    amfree(exclude_file);
-    amfree(include_file);
-    amfree(include_list);
-    amfree(exc);
-    amfree(decrypt_opt);
-    amfree(encrypt_opt);
+    if (dp->exclude_optional)
+        g_ptr_array_add(array, g_strdup("exclude-optional"));
+
+    if (dp->include_optional)
+        g_ptr_array_add(array, g_strdup("include-optional"));
+
+    /*
+     * We always want a semicolon-terminated string, this will do the trick for
+     * g_strjoinv() to do what is needed. And, of course, don't forget the NULL
+     * pointer at the end.
+     */
+    g_ptr_array_add(array, g_strdup(""));
+    g_ptr_array_add(array, NULL);
+
+    strings = (gchar **)g_ptr_array_free(array, FALSE);
+
+    result = g_strjoinv(";", strings);
+    g_strfreev(strings);
 
     /* result contains at least 'auth=...' */
     return result;
 }
-
  
-char *
-xml_optionstr(
-    disk_t *		dp,
-    int                 to_server)
+char * xml_optionstr(disk_t *dp, int to_server)
 {
-    char *auth_opt;
-    char *kencrypt_opt;
-    char *compress_opt;
-    char *encrypt_opt = g_strdup("");
-    char *decrypt_opt = g_strdup("");
-    char *record_opt;
-    char *index_opt;
-    char *data_path_opt = g_strdup("");
-    char *exclude = g_strdup("");
-    char *exclude_file = NULL;
-    char *exclude_list = NULL;
-    char *include = g_strdup("");
-    char *include_file = NULL;
-    char *include_list = NULL;
-    char *excl_opt = "";
-    char *incl_opt = "";
-    char *exc = NULL;
-    char *script_opt;
-    char *result = NULL;
+    GPtrArray *array = g_ptr_array_new();
+    gchar **strings;
+    GString *strbuf;
+    char *tmp;
+    char *result;
     sle_t *excl;
-    char *q64name;
     am_feature_t *their_features;
 
     g_assert(dp != NULL);
@@ -1296,214 +1229,162 @@ xml_optionstr(
 
     their_features = dp->host->features;
 
-    if (am_has_feature(their_features, fe_options_auth)) {
-	auth_opt = g_strjoin(NULL, "  <auth>", dp->auth, "</auth>\n", NULL);
-    } else {
-	auth_opt = g_strdup("");
-    }
+    if (am_has_feature(their_features, fe_options_auth))
+        g_ptr_array_add(array, g_strdup_printf("  <auth>%s</auth>", dp->auth));
 
     switch(dp->compress) {
     case COMP_FAST:
-	compress_opt = g_strdup("  <compress>FAST</compress>\n");
+        g_ptr_array_add(array, g_strdup("  <compress>FAST</compress>"));
 	break;
     case COMP_BEST:
-	compress_opt = g_strdup("  <compress>BEST</compress>\n");
+        g_ptr_array_add(array, g_strdup("  <compress>BEST</compress>"));
 	break;
     case COMP_CUST:
-	compress_opt = g_strjoin(NULL, "  <compress>CUSTOM"
-	    "<custom-compress-program>", dp->clntcompprog,
-	    "</custom-compress-program>\n" "  </compress>\n", NULL);
+        g_ptr_array_add(array, g_strdup_printf("  <compress>CUSTOM"
+            "<custom-compress-program>%s</custom-compress-program>\n"
+            "  </compress>", dp->clntcompprog));
 	break;
     case COMP_SERVER_FAST:
-	compress_opt = g_strdup("  <compress>SERVER-FAST</compress>\n");
+        g_ptr_array_add(array, g_strdup("  <compress>SERVER-FAST</compress>"));
 	break;
     case COMP_SERVER_BEST:
-	compress_opt = g_strdup("  <compress>SERVER-BEST</compress>\n");
+        g_ptr_array_add(array, g_strdup("  <compress>SERVER-BEST</compress>"));
 	break;
     case COMP_SERVER_CUST:
-	compress_opt = g_strjoin(NULL, "  <compress>SERVER-CUSTOM"
-	    "<custom-compress-program>", dp->srvcompprog,
-	    "</custom-compress-program>\n" "  </compress>\n", NULL);
+        g_ptr_array_add(array, g_strdup_printf("  <compress>SERVER-CUSTOM"
+            "<custom-compress-program>%s</custom-compress-program>\n"
+            "  </compress>", dp->srvcompprog));
 	break;
-    default:
-	compress_opt = g_strdup("");
     }
 
     switch(dp->encrypt) {
     case ENCRYPT_CUST:
-	if (dp->clnt_decrypt_opt) {
-            g_free(decrypt_opt);
-	    decrypt_opt = g_strconcat("    <decrypt-option>",
-	        dp->clnt_decrypt_opt, "</decrypt-option>\n", NULL);
-	}
-        g_free(encrypt_opt);
-	encrypt_opt = g_strconcat("  <encrypt>CUSTOM""<custom-encrypt-program>",
-	    dp->clnt_encrypt, "</custom-encrypt-program>\n", decrypt_opt,
-	    "  </encrypt>\n", NULL);
+        strbuf = g_string_new("  <encrypt>CUSTOM<custom-encrypt-program>");
+        g_string_append_printf(strbuf, "%s</custom-encrypt-program>\n",
+            dp->clnt_encrypt);
+	if (dp->clnt_decrypt_opt)
+            g_string_append_printf(strbuf, "    "
+                "<decrypt-option>%s</decrypt-option>\n", dp->clnt_decrypt_opt);
+
+        g_string_append(strbuf, "  </encrypt>");
+        tmp = g_string_free(strbuf, FALSE);
+        g_ptr_array_add(array, tmp);
 	break;
     case ENCRYPT_SERV_CUST:
 	if (to_server) {
-            g_free(decrypt_opt);
-            decrypt_opt = g_strconcat("    <decrypt-option>",
-	        dp->srv_decrypt_opt, "</decrypt-option>\n", NULL);
-
-
-            g_free(encrypt_opt);
-            encrypt_opt = g_strconcat(
-	        "  <encrypt>SERVER-CUSTOM<custom-encrypt-program>",
-	        dp->srv_encrypt, "</custom-encrypt-program>\n", decrypt_opt,
-	        "  </encrypt>\n", NULL);
+            tmp = g_strdup_printf(
+                "  <encrypt>SERVER-CUSTOM"
+                "<custom-encrypt-program>%s</custom-encrypt-program>\n"
+                "    <decrypt-option>%s</decrypt-option>\n"
+                "  </encrypt>", dp->srv_encrypt, dp->srv_decrypt_opt
+            );
+            g_ptr_array_add(array, tmp);
 	}
 	break;
     }
-    
-    if (!dp->record) {
-	record_opt = "  <record>NO</record>\n";
-    } else {
-	record_opt = "  <record>YES</record>\n";
-    }
 
-    if(dp->index) {
-	index_opt = "  <index>YES</index>\n";
-    } else {
-	index_opt = "";
-    }
+    g_ptr_array_add(array, g_strdup_printf("  <record>%s</record>",
+        (dp->record) ? "YES" : "NO"));
 
-    if (dp->kencrypt) {
-	kencrypt_opt = "  <kencrypt>YES</kencrypt>\n";
-    } else {
-	kencrypt_opt = "";
-    }
+    if(dp->index)
+        g_ptr_array_add(array, g_strdup("  <index>YES</index>"));
+
+    if (dp->kencrypt)
+        g_ptr_array_add(array, g_strdup("  <kencrypt>YES</kencrypt>"));
 
     if (am_has_feature(their_features, fe_xml_data_path)) {
 	switch(dp->data_path) {
 	case DATA_PATH_AMANDA:
-	    amfree(data_path_opt);
-	    data_path_opt = g_strdup("  <datapath>AMANDA</datapath>\n");
+            g_ptr_array_add(array, g_strdup("  <datapath>AMANDA</datapath>"));
 	    break;
 	case DATA_PATH_DIRECTTCP:
-	  { /* dp->dataport_list is not set for selfcheck/sendsize */
+	  /* dp->dataport_list is not set for selfcheck/sendsize */
 	    if (am_has_feature(their_features, fe_xml_directtcp_list)) {
 		char *s, *sc;
 		char *value, *b64value;
 
-		amfree(data_path_opt);
-		data_path_opt = g_strdup("  <datapath>DIRECTTCP");
+                strbuf = g_string_new("  <datapath>DIRECTTCP");
 		if (dp->dataport_list) {
 		    s = sc = g_strdup(dp->dataport_list);
 		    do {
 			value = s;
 			s = strchr(s, ';');
-			if (s) {
+			if (s)
 			    *s++ = '\0';
-			}
 
 			b64value = amxml_format_tag("directtcp", value);
-			vstrextend(&data_path_opt, "\n    ", b64value, NULL);
-			amfree(b64value);
+                        g_string_append_printf(strbuf, "\n    %s", b64value);
+			g_free(b64value);
 		    } while (s);
-		    amfree(sc);
-		    strappend(data_path_opt, "\n  ");
+		    g_free(sc);
+                    g_string_append(strbuf, "\n  ");
 		}
-		strappend(data_path_opt, "</datapath>\n");
+                g_string_append(strbuf, "</datapath>");
+                tmp = g_string_free(strbuf, FALSE);
+                g_ptr_array_add(array, tmp);
 	    }
-	  }
 	  break;
 	}
     }
 
-    exclude_file = g_strdup("");
-    if (dp->exclude_file != NULL && dp->exclude_file->nb_element > 0) {
-	for(excl = dp->exclude_file->first; excl != NULL;
-					    excl = excl->next) {
-	    q64name = amxml_format_tag("file", excl->name);
-	    g_free(exc);
-	    exc = g_strconcat("    ", q64name, "\n", NULL);
-	    strappend(exclude_file, exc);
-	    amfree(q64name);
-	}
-    }
-    exclude_list = g_strdup("");
-    if (dp->exclude_list != NULL && dp->exclude_list->nb_element > 0) {
-	for(excl = dp->exclude_list->first; excl != NULL;
-					    excl = excl->next) {
-	    q64name = amxml_format_tag("list", excl->name);
-	    g_free(exc);
-	    exc = g_strconcat("    ", q64name, "\n", NULL);
-	    strappend(exclude_list, exc);
-	    amfree(q64name);
-	}
-    }
-
-    include_file = g_strdup("");
-    if (dp->include_file != NULL && dp->include_file->nb_element > 0) {
-	for(excl = dp->include_file->first; excl != NULL;
-					    excl = excl->next) {
-	    q64name = amxml_format_tag("file", excl->name);
-	    g_free(exc);
-	    exc = g_strconcat("    ", q64name, "\n", NULL);
-	    strappend(include_file, exc);
-	    amfree(q64name);
-	}
-    }
-    include_list = g_strdup("");
-    if (dp->include_list != NULL && dp->include_list->nb_element > 0) {
-	for(excl = dp->include_list->first; excl != NULL;
-					    excl = excl->next) {
-	    q64name = amxml_format_tag("list", excl->name);
-	    g_free(exc);
-	    exc = g_strconcat("    ", q64name, "\n", NULL);
-	    strappend(include_list, exc);
-	    amfree(q64name);
-	}
-    }
-
-    if (dp->exclude_optional) {
-	excl_opt = "    <optional>YES</optional>\n";
-    }
-    if (dp->include_optional) {
-	incl_opt = "    <optional>YES</optional>\n";
-    }
-
     if (dp->exclude_file || dp->exclude_list) {
-        g_free(exclude);
-        exclude = g_strconcat("  <exclude>\n", exclude_file, exclude_list,
-	    excl_opt, "  </exclude>\n", NULL);
+        strbuf = g_string_new("  <exclude>\n");
+
+        if (dp->exclude_file && dp->exclude_file->nb_element > 0)
+            for (excl = dp->exclude_file->first; excl; excl = excl->next) {
+                tmp = amxml_format_tag("file", excl->name);
+                g_string_append_printf(strbuf, "    %s\n", tmp);
+                g_free(tmp);
+            }
+
+        if (dp->exclude_list && dp->exclude_list->nb_element > 0)
+            for (excl = dp->exclude_list->first; excl; excl = excl->next) {
+                tmp = amxml_format_tag("list", excl->name);
+                g_string_append_printf(strbuf, "    %s\n", tmp);
+                g_free(tmp);
+            }
+
+        if (dp->exclude_optional)
+            g_string_append(strbuf, "    <optional>YES</optional>\n");
+
+        g_string_append(strbuf, "  </exclude>");
+        tmp = g_string_free(strbuf, FALSE);
+        g_ptr_array_add(array, tmp);
     }
 
     if (dp->include_file || dp->include_list) {
-        g_free(include);
-        include = g_strconcat("  <include>\n", include_file, include_list,
-	    incl_opt, "  </include>\n", NULL);
+        strbuf = g_string_new("  <include>\n");
+
+        if (dp->include_file && dp->include_file->nb_element > 0)
+            for (excl = dp->include_file->first; excl; excl = excl->next) {
+                tmp = amxml_format_tag("file", excl->name);
+                g_string_append_printf(strbuf, "    %s\n", tmp);
+                g_free(tmp);
+            }
+
+        if (dp->include_list && dp->include_list->nb_element > 0)
+            for (excl = dp->include_list->first; excl; excl = excl->next) {
+                tmp = amxml_format_tag("list", excl->name);
+                g_string_append_printf(strbuf, "    %s\n", tmp);
+                g_free(tmp);
+            }
+
+        if (dp->include_optional)
+            g_string_append(strbuf, "    <optional>YES</optional>\n");
+
+        g_string_append(strbuf, "  </include>");
+        tmp = g_string_free(strbuf, FALSE);
+        g_ptr_array_add(array, tmp);
     }
-    script_opt = xml_scripts(dp->pp_scriptlist, their_features);
-    result = g_strjoin(NULL, auth_opt,
-		       kencrypt_opt,
-		       compress_opt,
-		       encrypt_opt,
-		       record_opt,
-		       index_opt,
-		       data_path_opt,
-		       exclude,
-		       include,
-		       script_opt,
-		       NULL);
 
-    amfree(auth_opt);
-    amfree(data_path_opt);
-    amfree(compress_opt);
-    amfree(exclude);
-    amfree(exclude_list);
-    amfree(exclude_file);
-    amfree(include);
-    amfree(include_file);
-    amfree(include_list);
-    amfree(exc);
-    amfree(decrypt_opt);
-    amfree(encrypt_opt);
-    amfree(script_opt);
 
-    /* result contains at least 'auth=...' */
+    g_ptr_array_add(array, xml_scripts(dp->pp_scriptlist, their_features));
+    g_ptr_array_add(array, NULL);
+
+    strings = (gchar **)g_ptr_array_free(array, FALSE);
+    result = g_strjoinv("\n", strings);
+    g_strfreev(strings);
+
     return result;
 }
 
@@ -1513,34 +1394,53 @@ xml_estimate(
     am_feature_t *their_features)
 {
     estimatelist_t el;
-    char *l = NULL;
+    GString *strbuf = g_string_new(NULL);
+    char *p;
 
     if (am_has_feature(their_features, fe_xml_estimatelist)) {
-	vstrextend(&l, "  <estimate>", NULL);
+	g_string_append(strbuf, "  <estimate>");
 	for (el=estimatelist; el != NULL; el = el->next) {
+            p = NULL;
 	    switch (GPOINTER_TO_INT(el->data)) {
-	    case ES_CLIENT  : vstrextend(&l, "CLIENT ", NULL); break;
-	    case ES_SERVER  : vstrextend(&l, "SERVER ", NULL); break;
-	    case ES_CALCSIZE: vstrextend(&l, "CALCSIZE ", NULL); break;
+	    case ES_CLIENT:
+                p = "CLIENT ";
+                break;
+	    case ES_SERVER:
+                p = "SERVER ";
+                break;
+	    case ES_CALCSIZE:
+                p = "CALCSIZE ";
+                break;
 	    }
+            /* Can p ever be NULL at this point? */
+            if (p)
+                g_string_append(strbuf, p);
 	}
-	vstrextend(&l, "</estimate>", NULL);
+        g_string_append(strbuf, "</estimate>");
     } else { /* add the first estimate only */
 	if (am_has_feature(their_features, fe_xml_estimate)) {
-	    vstrextend(&l, "  <estimate>", NULL);
+            p = NULL;
+	    g_string_append(strbuf, "  <estimate>");
 	    switch (GPOINTER_TO_INT(estimatelist->data)) {
-	    case ES_CLIENT  : vstrextend(&l, "CLIENT", NULL); break;
-	    case ES_SERVER  : vstrextend(&l, "SERVER", NULL); break;
-	    case ES_CALCSIZE: vstrextend(&l, "CALCSIZE", NULL); break;
+	    case ES_CLIENT:
+                p = "CLIENT";
+                break;
+	    case ES_SERVER:
+                p = "SERVER";
+                break;
+	    case ES_CALCSIZE:
+                p = "CALCSIZE";
+                break;
 	    }
-            vstrextend(&l, "</estimate>", NULL);
+            /* Can p ever be NULL at this point? */
+            if (p)
+                g_string_append_printf(strbuf, "%s</estimate>", p);
 	}
-	if (GPOINTER_TO_INT(estimatelist->data) == ES_CALCSIZE) {
-	    vstrextend(&l, "  <calcsize>YES</calcsize>", NULL);
-	}
+	if (GPOINTER_TO_INT(estimatelist->data) == ES_CALCSIZE)
+            g_string_append(strbuf, "  <calcsize>YES</calcsize>");
     }
 
-    return l;
+    return g_string_free(strbuf, FALSE);
 }
 
 char *
@@ -1582,29 +1482,32 @@ static void xml_property(
     gpointer value_p,
     gpointer user_data_p)
 {
-    char       *property_s = key_p;
-    char       *b64property;
+    char       *tmp;
     property_t *property = value_p;
-    char       *b64value_data;
     xml_app_t  *xml_app = user_data_p;
     GSList     *value;
+    GString    *strbuf;
 
-    b64property = amxml_format_tag("name", property_s);
-    vstrextend(&xml_app->result, "    <property>\n",
-				"      ", b64property, "\n", NULL);
+    strbuf = g_string_new(xml_app->result);
+
+    tmp = amxml_format_tag("name", (char *)key_p);
+    g_string_append_printf(strbuf, "    <property>\n      %s\n", tmp);
+    g_free(tmp);
+
     // TODO if client have fe_xml_property_priority
-    if (property->priority &&
-	am_has_feature(xml_app->features, fe_xml_property_priority)) {
-	vstrextend(&xml_app->result, "      <priority>yes</priority>\n", NULL);
-    }
-    for(value = property->values; value != NULL; value = value->next) {
-	b64value_data = amxml_format_tag("value", value->data);
-	vstrextend(&xml_app->result, "      ", b64value_data, "\n", NULL);
-	amfree(b64value_data);
-    }
-    vstrextend(&xml_app->result, "    </property>\n", NULL);
+    if (property->priority
+        && am_has_feature(xml_app->features, fe_xml_property_priority))
+        g_string_append(strbuf, "      <priority>yes</priority>\n");
 
-    amfree(b64property);
+    for (value = property->values; value != NULL; value = value->next) {
+	tmp = amxml_format_tag("value", value->data);
+        g_string_append_printf(strbuf, "      %s", tmp);
+	g_free(tmp);
+    }
+    g_string_append_printf(strbuf, "    </property>\n");
+
+    g_free(xml_app->result);
+    xml_app->result = g_string_free(strbuf, FALSE);
 }
 
 char *
@@ -1613,33 +1516,42 @@ xml_application(
     application_t *application,
     am_feature_t  *their_features)
 {
-    char       *plugin;
-    char       *b64plugin;
-    char       *client_name;
+    char       *tmp;
+    char       *p;
     xml_app_t   xml_app;
     proplist_t  proplist;
+    GString    *strbuf;
 
     xml_app.features = their_features;
-    xml_app.result   = NULL;
-    plugin = application_get_plugin(application);
-    b64plugin = amxml_format_tag("plugin", plugin);
-    xml_app.result = g_strjoin(NULL, "  <backup-program>\n",
-		        "    ", b64plugin, "\n",
-			NULL);
+
+    p = application_get_plugin(application);
+    tmp = amxml_format_tag("plugin", p);
+
+    xml_app.result = g_strdup_printf("  <backup-program>\n    %s\n", tmp);
+    g_free(tmp);
+
+    /*
+     * Unfortunately, the g_hash_table_foreach() below modifies xml_app.result
+     * :/ This is why we have to delay allocation of strbuf until after it
+     * completes.
+     */
     proplist = application_get_property(application);
     g_hash_table_foreach(proplist, xml_property, &xml_app);
 
-    client_name = application_get_client_name(application);
-    if (client_name && strlen(client_name) > 0 &&
+    strbuf = g_string_new(xml_app.result);
+    g_free(xml_app.result);
+
+    p = application_get_client_name(application);
+    if (p && strlen(p) > 0 &&
 	am_has_feature(their_features, fe_application_client_name)) {
-	char *b64client_name = amxml_format_tag("client_name", client_name);
-	vstrextend(&xml_app.result, "    ", b64client_name, "\n", NULL);
-	g_free(b64client_name);
+	tmp = amxml_format_tag("client_name", p);
+        g_string_append_printf(strbuf, "    %s\n", tmp);
+	g_free(tmp);
     }
 
-    vstrextend(&xml_app.result, "  </backup-program>\n", NULL);
+    g_string_append(strbuf, "    </backup-program>\n");
 
-    amfree(b64plugin);
+    xml_app.result = g_string_free(strbuf, FALSE);
 
     return xml_app.result;
 }
@@ -1650,68 +1562,77 @@ xml_scripts(
     identlist_t pp_scriptlist,
     am_feature_t  *their_features)
 {
-    char       *plugin;
-    char       *b64plugin;
-    char       *client_name;
-    char       *xml_scr;
-    char       *xml_scr1;
-    char       *str = "";
-    char       *eo_str;
+    char        *client_name;
     execute_on_t execute_on;
     int          execute_where;
-    proplist_t  proplist;
-    identlist_t pp_iter;
+    proplist_t   proplist;
+    identlist_t  pp_iter;
     pp_script_t *pp_script;
-    xml_app_t   xml_app;
+    xml_app_t    xml_app;
+    GString     *strbuf = g_string_new(NULL);
+    GString     *tmpbuf;
+    char        *tmp;
 
     xml_app.features = their_features;
 
-    xml_scr = g_strdup("");
-    for (pp_iter = pp_scriptlist; pp_iter != NULL;
-	 pp_iter = pp_iter->next) {
+    for (pp_iter = pp_scriptlist; pp_iter; pp_iter = pp_iter->next) {
 	char *pp_script_name = pp_iter->data;
 	pp_script = lookup_pp_script(pp_script_name);
 	g_assert(pp_script != NULL);
-	plugin = pp_script_get_plugin(pp_script);
-	b64plugin = amxml_format_tag("plugin", plugin);
-	xml_scr1 = g_strjoin(NULL, "  <script>\n",
-                             "    ", b64plugin, "\n",
-			     NULL);
 
-	execute_where = pp_script_get_execute_where(pp_script);
+        execute_where = pp_script_get_execute_where(pp_script);
+        execute_on = pp_script_get_execute_on(pp_script);
+        proplist = pp_script_get_property(pp_script);
+        client_name = pp_script_get_client_name(pp_script);
+
+        g_string_append(strbuf, "  <script>\n");
+
+        tmp = amxml_format_tag("plugin", pp_script_get_plugin(pp_script));
+        g_string_append_printf(strbuf, "%s\n", tmp);
+        g_free(tmp);
+
+
+        g_string_append(strbuf, "    <execute_where>");
+
 	switch (execute_where) {
-	    case ES_CLIENT: str = "CLIENT"; break;
-	    case ES_SERVER: str = "SERVER"; break;
+            case ES_CLIENT:
+                g_string_append(strbuf, "CLIENT");
+                break;
+            case ES_SERVER:
+                g_string_append(strbuf, "SERVER");
+                break;
 	}
-	xml_scr1 = vstrextend(&xml_scr1, "    <execute_where>",
-			      str, "</execute_where>\n", NULL);
+        g_string_append(strbuf, "</execute_where>\n");
 
-	execute_on = pp_script_get_execute_on(pp_script);
-        eo_str = execute_on_to_string(execute_on, ",");
-	if (execute_on != 0)
-	    xml_scr1 = vstrextend(&xml_scr1,
-				  "    <execute_on>", eo_str,
-				  "</execute_on>\n", NULL);
-	amfree(eo_str);
-	proplist = pp_script_get_property(pp_script);
-	xml_app.result   = g_strdup("");
+        if (execute_on) {
+            tmp = execute_on_to_string(execute_on, ",");
+            g_string_append_printf(strbuf, "    <execute_on>%s</execute_on>\n",
+                tmp);
+            g_free(tmp);
+        }
+
+        /*
+         * Unfortunately, the g_hash_table_foreach() invocation _modifies_
+         * xmlapp.result :/ We have no choice but to do that.
+         */
+
+	xml_app.result = g_strdup("");
 	g_hash_table_foreach(proplist, xml_property, &xml_app);
+        tmpbuf = g_string_new(xml_app.result);
+        g_free(xml_app.result);
 
-	client_name = pp_script_get_client_name(pp_script);
-	if (client_name && strlen(client_name) > 0 &&
-	    am_has_feature(their_features, fe_script_client_name)) {
-	    char *b64client_name = amxml_format_tag("client_name",
-						    client_name);
-	    vstrextend(&xml_app.result, "    ", b64client_name, "\n", NULL);
-            g_free(b64client_name);
-	}
+        if (client_name && strlen(client_name) > 0
+            && am_has_feature(their_features, fe_script_client_name)) {
+            tmp = amxml_format_tag("client_name", client_name);
+            g_string_append_printf(tmpbuf, "    %s\n", tmp);
+            g_free(tmp);
+        }
 
-	xml_scr = vstrextend(&xml_scr, xml_scr1, xml_app.result, "  </script>\n", NULL);
-	amfree(b64plugin);
-	amfree(xml_app.result);
-	amfree(xml_scr1);
+        tmp = g_string_free(tmpbuf, FALSE);
+        g_string_append_printf(strbuf, "%s  </script>\n", tmp);
+        g_free(tmp);
     }
-    return xml_scr;
+    return g_string_free(strbuf, FALSE);
 }
 
 
@@ -1735,16 +1656,19 @@ match_disklist(
     char **	sargv)
 {
     char *prevhost = NULL;
-    char *errstr = NULL;
+    char *errstr;
     int i;
     int match_a_host;
     int match_a_disk;
     int prev_match;
     disk_t *dp_skip;
     disk_t *dp;
+    GString *errbuf;
 
     if(sargc <= 0)
 	return NULL;
+
+    errbuf = g_string_new(NULL);
 
     for(dp = origqp->head; dp != NULL; dp = dp->next) {
 	if(dp->todo == 1)
@@ -1752,25 +1676,25 @@ match_disklist(
     }
 
     prev_match = 0;
-    for(i=0;i<sargc;i++) {
+    for (i = 0; i < sargc; i++) {
 	match_a_host = 0;
-	for(dp = origqp->head; dp != NULL; dp = dp->next) {
-	    if(match_host(sargv[i], dp->host->hostname))
+	for (dp = origqp->head; dp != NULL; dp = dp->next) {
+	    if (match_host(sargv[i], dp->host->hostname))
 		match_a_host = 1;
 	}
 	match_a_disk = 0;
 	dp_skip = NULL;
-	for(dp = origqp->head; dp != NULL; dp = dp->next) {
-	    if(prevhost != NULL &&
-	       match_host(prevhost, dp->host->hostname) &&
-	       (match_disk(sargv[i], dp->name) ||
+	for (dp = origqp->head; dp != NULL; dp = dp->next) {
+	    if (prevhost != NULL &&
+	        match_host(prevhost, dp->host->hostname) &&
+	        (match_disk(sargv[i], dp->name) ||
 		(dp->device && match_disk(sargv[i], dp->device)))) {
-		if(match_a_host) {
-		    error(_("Argument %s cannot be both a host and a disk"),sargv[i]);
+		if (match_a_host) {
+		    error(_("Argument %s cannot be both a host and a disk"), sargv[i]);
 		    /*NOTREACHED*/
 		}
 		else {
-		    if(dp->todo == -1) {
+		    if (dp->todo == -1) {
 			dp->todo = 1;
 			match_a_disk = 1;
 			prev_match = 0;
@@ -1785,70 +1709,56 @@ match_disklist(
 		}
 	    }
 	}
-	if(!match_a_disk) {
-	    if(match_a_host == 1) {
-		if(prev_match == 1) { /* all disk of the previous host */
-		    for(dp = origqp->head; dp != NULL; dp = dp->next) {
-			if(match_host(prevhost,dp->host->hostname))
-			    if(dp->todo == -1) {
+	if (!match_a_disk) {
+	    if (match_a_host == 1) {
+		if (prev_match == 1) { /* all disk of the previous host */
+		    for (dp = origqp->head; dp != NULL; dp = dp->next) {
+			if (match_host(prevhost,dp->host->hostname))
+			    if (dp->todo == -1) {
 				dp->todo = 1;
 				match_a_disk = 1;
 			    }
 		    }
-		    if (!match_a_disk) {
-			char *errstr1;
-			errstr1 = g_strdup_printf(_("All disks on host '%s' are ignored or have strategy \"skip\".\n"), prevhost);
-			vstrextend(&errstr, errstr1, NULL);
-			amfree(errstr1);
-		    }
+		    if (!match_a_disk)
+                        g_string_append_printf(errbuf, "All disks on host '%s' are ignored or have strategy \"skip\".\n", prevhost);
 		}
 		prevhost = sargv[i];
 		prev_match = 1;
 	    }
 	    else {
-		char *errstr1;
-		if (strchr(sargv[i], (int)'\\')) {
-		    errstr1 = g_strdup_printf(_("Argument '%s' matches neither a host nor a disk; quoting may not be correct.\n"), sargv[i]);
-		} else {
-		    errstr1 = g_strdup_printf(_("Argument '%s' matches neither a host nor a disk.\n"), sargv[i]);
-		}
-		vstrextend(&errstr, errstr1, NULL);
-		amfree(errstr1);
+                g_string_append_printf(errbuf, "Argument '%s' matches neither a host nor a disk%s\n",
+                    sargv[i], (strchr(sargv[i], '\\')) ? "; quoting may be incorrect." : ".");
 		prev_match = 0;
 	    }
 	} else if (dp_skip) {
-		char *errstr1;
-		if (dp_skip->strategy == DS_SKIP) {
-		    errstr1 = g_strdup_printf(_("Argument '%s' matches a disk with strategy \"skip\".\n"), sargv[i]);
-		} else {
-		    errstr1 = g_strdup_printf(_("Argument '%s' matches a disk marked \"ignore\".\n"), sargv[i]);
-		}
-		vstrextend(&errstr, errstr1, NULL);
-		amfree(errstr1);
+                g_string_append_printf(errbuf, "Argument '%s' matches a disk %s.\n",
+                   sargv[i], (dp_skip->strategy == DS_SKIP) ? "with strategy \"skip\"" : "marked \"ignore\"");
 		prev_match = 0;
 	}
     }
 
-    if(prev_match == 1) { /* all disk of the previous host */
+    if (prev_match == 1) { /* all disk of the previous host */
 	match_a_disk = 0;
-	for(dp = origqp->head; dp != NULL; dp = dp->next) {
-	    if(match_host(prevhost,dp->host->hostname))
-		if(dp->todo == -1) {
+	for (dp = origqp->head; dp != NULL; dp = dp->next) {
+	    if (match_host(prevhost,dp->host->hostname))
+		if (dp->todo == -1) {
 		    dp->todo = 1;
 		    match_a_disk = 1;
 		}
 	}
-	if (!match_a_disk) {
-	    char *errstr1;
-	    errstr1 = g_strdup_printf(_("All disks on host '%s' are ignored or have strategy \"skip\".\n"), prevhost);
-	    vstrextend(&errstr, errstr1, NULL);
-	    amfree(errstr1);
-	}
+        if (!match_a_disk)
+            g_string_append_printf(errbuf, "All disks on host '%s' are ignored or have strategy \"skip\".\n", prevhost);
     }
 
-    for(dp = origqp->head; dp != NULL; dp = dp->next) {
-	if(dp->todo == -1)
+    for (dp = origqp->head; dp != NULL; dp = dp->next)
+	if (dp->todo == -1)
 	    dp->todo = 0;
+
+    errstr = g_string_free(errbuf, FALSE);
+
+    if (!*errstr) { /* We want to return NULL instead of an empty string */
+        g_free(errstr);
+        errstr = NULL;
     }
 
     return errstr;

@@ -2309,16 +2309,16 @@ startup_dump(
     const char *auth,
     const char *options)
 {
-    char level_string[NUM_STR_SIZE];
-    char *req = NULL;
+    char *req;
     char *authopt;
     int response_error;
     const security_driver_t *secdrv;
-    char *application_api;
     int has_features;
     int has_hostname;
     int has_device;
     int has_config;
+    GString *reqbuf;
+    gboolean legacy_api;
 
     (void)disk;			/* Quiet unused parameter warning */
     (void)amandad_path;		/* Quiet unused parameter warning */
@@ -2332,6 +2332,8 @@ startup_dump(
     has_config   = am_has_feature(their_features, fe_req_options_config);
     has_device   = am_has_feature(their_features, fe_sendbackup_req_device);
 
+    legacy_api = (g_str_equal(progname, "DUMP") || g_str_equal(progname, "GNUTAR"));
+
     /*
      * Default to bsd authentication if none specified.  This is gross.
      *
@@ -2339,84 +2341,73 @@ startup_dump(
      * much earlier, and then flattened out again before transmission.
      */
 
-    g_snprintf(level_string, sizeof(level_string), "%d", level);
-    if(strcmp(progname, "DUMP") == 0
-       || strcmp(progname, "GNUTAR") == 0) {
-	application_api = "";
-    } else {
-	application_api = "BACKUP ";
-    }
-    req = g_strjoin(NULL, "SERVICE sendbackup\n",
-		    "OPTIONS ",
-		    has_features ? "features=" : "",
-		    has_features ? our_feature_string : "",
-		    has_features ? ";" : "",
-		    has_hostname ? "hostname=" : "",
-		    has_hostname ? hostname : "",
-		    has_hostname ? ";" : "",
-		    has_config   ? "config=" : "",
-		    has_config   ? get_config_name() : "",
-		    has_config   ? ";" : "",
-		    "\n",
-		    NULL);
+
+    reqbuf = g_string_new("SERVICE sendbackup\nOPTIONS ");
+
+    if (has_features)
+        g_string_append_printf(reqbuf, "features=%s;", our_feature_string);
+
+    if (has_hostname)
+        g_string_append_printf(reqbuf, "hostname=%s;", hostname);
+
+    if (has_config)
+        g_string_append_printf(reqbuf, "config=%s;", get_config_name());
+
+    g_string_append_c(reqbuf, '\n');
 
     amfree(dle_str);
     if (am_has_feature(their_features, fe_req_xml)) {
-	char *p = NULL;
-	char *pclean;
-	vstrextend(&p, "<dle>\n", NULL);
-	if (*application_api != '\0') {
-	    vstrextend(&p, "  <program>APPLICATION</program>\n", NULL);
-	} else {
-	    vstrextend(&p, "  <program>", progname, "</program>\n", NULL);
-	}
-	vstrextend(&p, "  ", b64disk, "\n", NULL);
-	if (device && has_device) {
-	    vstrextend(&p, "  ", b64device, "\n",
-		       NULL);
-	}
-	vstrextend(&p, "  <level>", level_string, "</level>\n", NULL);
-	vstrextend(&p, options+1, "</dle>\n", NULL);
+        GString *strbuf = g_string_new("<dle>\n");
+	char *p, *pclean;
+
+        g_string_append_printf(strbuf, "  <program>%s</program>\n  %s\n",
+            (!legacy_api) ? "APPLICATION" : progname, b64disk);
+
+        if (device && has_device)
+            g_string_append_printf(strbuf, "  %s\n", b64device);
+
+        g_string_append_printf(strbuf, "  <level>%d</level>\n%s</dle>\n",
+            level, options + 1);
+
+        p = g_string_free(strbuf, FALSE);
 	pclean = clean_dle_str_for_client(p);
-	vstrextend(&req, pclean, NULL);
-	amfree(pclean);
+        g_string_append(reqbuf, pclean);
+	g_free(pclean);
 	dle_str = p;
-    } else if (*application_api != '\0') {
+    } else if (legacy_api) {
 	g_free(errstr);
 	errstr = g_strdup("[does not support application-api]");
-	amfree(req);
+        g_string_free(reqbuf, TRUE);
 	return 2;
     } else {
 	authopt = strstr(options, "auth=");
-	if (auth == NULL) {
+	if (auth == NULL)
 	    auth = "BSDTCP";
-	}
-	vstrextend(&req,
-		   progname,
-		   " ", qdiskname,
-		   " ", device && has_device ? device : "",
-		   " ", level_string,
-		   " ", dumpdate,
-		   " OPTIONS ", options,
-		   "\n",
-		   NULL);
+
+        g_string_append_printf(reqbuf, "%s %s %s %d %s OPTIONS %s\n", progname,
+            qdiskname, (device && has_device) ? device : "", level,
+            dumpdate, options);
+
     }
 
-    dbprintf(_("send request:\n----\n%s\n----\n\n"), req);
+    req = g_string_free(reqbuf, FALSE);
+
+    dbprintf("send request:\n----\n%s\n----\n\n", req);
+
     secdrv = security_getdriver(auth);
     if (secdrv == NULL) {
 	g_free(errstr);
 	errstr = g_strdup_printf(_("[could not find security driver '%s']"),
                                  auth);
-	amfree(req);
+        g_free(req);
 	return 2;
     }
 
     protocol_sendreq(hostname, secdrv, dumper_get_security_conf, req,
 	STARTUP_TIMEOUT, sendbackup_response, &response_error);
 
-    amfree(req);
+    g_free(req);
 
     protocol_run();
-    return (response_error);
+    return response_error;
 }

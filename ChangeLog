@@ -1,3 +1,63 @@
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/alloc.c, common-src/amanda.h: goodbye vstrextend() and
+	  internal_vstralloc()
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/tapefile.c: list_new_tapes(): replace vstrextend() usage
+	  with a GString; rework exit paths
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/dumper.c: delay_one_dump(): replace vstrextend() with a
+	  GPtrArray/GString combination; create one local variable
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/dumper.c: startup_dump(): replace vstrextend() with a
+	  GString; fix boolean usage
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/driverio.c: dumper_cmd(): replace vstrextend() usage with a
+	  GPtrArray, and replace some g_strjoin() usages with g_strdup_printf()
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/diskfile.c: match_disklist(): replace vstrextend() with a
+	  GString; fix spelling mistake
+	* installcheck/amadmin.pl: account for spelling mistake
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/diskfile.c: xml_scripts(): replace vstrextend() with a
+	  GString
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/diskfile.c: xml_application(): replace vstrextend() with a
+	  GString
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/diskfile.c: xml_property(): replace vstrextend() with a
+	  GString
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/diskfile.c: xml_estimate(): replace vstrextend() with a
+	  GString
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/diskfile.c: xml_optionstr(): replace vstrextend() with a
+	  GPtrArray and a GString
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/diskfile.c: optionstr(): replace vstrextend() with a
+	  GPtrArray
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/amindexd.c: main(): replace vstrextend() with a GString
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/amcheck.c: start_host(): replace vstrextend() with a
+	  GString
+
+2011-06-05  Francis Galiegue <fgaliegue@gmail.com>
+	* recover-src/extract_list.c: read_amidxtaped_data(): replace
+	  vstrextend() with g_strdup_printf()
+
 2011-06-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Do not check optarg, we know it is not null
 	* common-src/conffile.c: Do not check key_ovr, we know it is not null
