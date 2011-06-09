@@ -206,7 +206,7 @@ main(
 
     /* drop root privileges */
     if (!set_root_privs(0)) {
-	if (strcmp(argv[1], "selfcheck") == 0) {
+	if (g_str_equal(argv[1], "selfcheck")) {
 	    printf("ERROR amstar must be run setuid root\n");
 	}
 	error(_("amstar must be run setuid root"));
@@ -389,17 +389,17 @@ main(
     re_table = build_re_table(init_re_table, normal_message, ignore_message,
 			      strange_message);
 
-    if (strcmp(command, "support") == 0) {
+    if (g_str_equal(command, "support")) {
 	amstar_support(&argument);
-    } else if (strcmp(command, "selfcheck") == 0) {
+    } else if (g_str_equal(command, "selfcheck")) {
 	amstar_selfcheck(&argument);
-    } else if (strcmp(command, "estimate") == 0) {
+    } else if (g_str_equal(command, "estimate")) {
 	amstar_estimate(&argument);
-    } else if (strcmp(command, "backup") == 0) {
+    } else if (g_str_equal(command, "backup")) {
 	amstar_backup(&argument);
-    } else if (strcmp(command, "restore") == 0) {
+    } else if (g_str_equal(command, "restore")) {
 	amstar_restore(&argument);
-    } else if (strcmp(command, "validate") == 0) {
+    } else if (g_str_equal(command, "validate")) {
 	amstar_validate(&argument);
     } else {
 	fprintf(stderr, "Unknown command `%s'.\n", command);
@@ -919,18 +919,18 @@ amstar_restore(
 	    char  line[2*PATH_MAX+2];
 	    while (fgets(line, 2*PATH_MAX, include_list)) {
 		line[strlen(line)-1] = '\0'; /* remove '\n' */
-		if (strncmp(line, "./", 2) == 0)
+		if (g_str_has_prefix(line, "./"))
 		    g_ptr_array_add(argv_ptr, g_strdup(line+2)); /* remove ./ */
-		else if (strcmp(line, ".") != 0)
+		else if (!g_str_equal(line, "."))
 		    g_ptr_array_add(argv_ptr, g_strdup(line));
 	    }
 	    fclose(include_list);
 	}
     }
     for (j=1; j< argument->argc; j++) {
-	if (strncmp(argument->argv[j], "./", 2) == 0)
+	if (g_str_has_prefix(argument->argv[j], "./"))
 	    g_ptr_array_add(argv_ptr, g_strdup(argument->argv[j]+2));/*remove ./ */
-	else if (strcmp(argument->argv[j], ".") != 0)
+	else if (!g_str_equal(argument->argv[j], "."))
 	    g_ptr_array_add(argv_ptr, g_strdup(argument->argv[j]));
     }
     g_ptr_array_add(argv_ptr, NULL);
@@ -1073,7 +1073,7 @@ static GPtrArray *amstar_build_argv(
 	for (excl = argument->dle.exclude_file->first; excl != NULL;
 	     excl = excl->next) {
 	    char *ex;
-	    if (strcmp(excl->name, "./") == 0) {
+	    if (g_str_equal(excl->name, "./")) {
 		ex = g_strdup_printf("pat=%s", excl->name+2);
 	    } else {
 		ex = g_strdup_printf("pat=%s", excl->name);
@@ -1093,7 +1093,7 @@ static GPtrArray *amstar_build_argv(
 		while ((aexc = agets(exclude)) != NULL) {
 		    if (aexc[0] != '\0') {
 			char *ex;
-			if (strcmp(aexc, "./") == 0) {
+			if (g_str_equal(aexc, "./")) {
 			    ex = g_strdup_printf("pat=%s", aexc+2);
 			} else {
 			    ex = g_strdup_printf("pat=%s", aexc);

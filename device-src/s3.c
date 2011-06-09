@@ -1110,13 +1110,13 @@ perform_request(S3Handle *hdl,
     if (!url) goto cleanup;
 
     /* libcurl may behave strangely if these are not set correctly */
-    if (!strncmp(verb, "PUT", 4)) {
+    if (g_str_has_prefix(verb, "PUT")) {
         curlopt_upload = 1;
-    } else if (!strncmp(verb, "GET", 4)) {
+    } else if (g_str_has_prefix(verb, "GET")) {
         curlopt_httpget = 1;
-    } else if (!strncmp(verb, "POST", 5)) {
+    } else if (g_str_has_prefix(verb, "POST")) {
         curlopt_post = 1;
-    } else if (!strncmp(verb, "HEAD", 5)) {
+    } else if (g_str_has_prefix(verb, "HEAD")) {
         curlopt_nobody = 1;
     } else {
         curlopt_customrequest = verb;
@@ -1362,7 +1362,7 @@ s3_internal_header_func(void *ptr, size_t size, size_t nmemb, void * stream)
 
     if (!s3_regexec_wrap(&etag_regex, header, 2, pmatch, 0))
         data->etag = find_regex_substring(header, pmatch[1]);
-    if (!strcmp(final_header, header))
+    if (g_str_equal(final_header, header))
         data->headers_done = TRUE;
 
     /* If date header is found */
@@ -1530,7 +1530,7 @@ s3_open(const char *access_key,
 	host = "s3.amazonaws.com";
     hdl->host = g_strdup(host);
     hdl->use_subdomain = use_subdomain ||
-			 (strcmp(host, "s3.amazonaws.com") == 0 &&
+			 (g_str_equal(host, "s3.amazonaws.com") &&
 			  is_non_empty_string(hdl->bucket_location));
     if (service_path) {
 	if (service_path[0] != '/')
@@ -2040,7 +2040,7 @@ s3_make_bucket(S3Handle *hdl,
     g_assert(hdl != NULL);
 
     if (is_non_empty_string(hdl->bucket_location) &&
-        0 != strcmp(AMAZON_WILDCARD_LOCATION, hdl->bucket_location)) {
+        !g_str_equal(AMAZON_WILDCARD_LOCATION, hdl->bucket_location)) {
         if (s3_bucket_location_compat(bucket)) {
             ptr = &buf;
             buf.buffer = g_strdup_printf(AMAZON_BUCKET_CONF_TEMPLATE, hdl->bucket_location);
@@ -2101,11 +2101,13 @@ s3_make_bucket(S3Handle *hdl,
                 /* The case of an empty string is special because XML allows
                  * "self-closing" tags
                  */
-                if (0 == strcmp(AMAZON_WILDCARD_LOCATION, hdl->bucket_location) &&
+                if (g_str_equal(AMAZON_WILDCARD_LOCATION,
+                                hdl->bucket_location) &&
                     '/' != loc_end_open[0])
                     hdl->last_message = g_strdup(_("A wildcard location constraint is "
                         "configured, but the bucket has a non-empty location constraint"));
-                else if (strcmp(AMAZON_WILDCARD_LOCATION, hdl->bucket_location)?
+                else if (!g_str_equal(AMAZON_WILDCARD_LOCATION,
+                                      hdl->bucket_location)?
                     strncmp(loc_content, hdl->bucket_location, strlen(hdl->bucket_location)) :
                     ('\0' != loc_content[0]))
                     hdl->last_message = g_strdup(_("The location constraint configured "

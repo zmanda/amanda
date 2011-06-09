@@ -319,10 +319,10 @@ get_logline(
     /* lookup strings */
 
     for(curlog = L_MARKER; curlog != L_BOGUS; curlog--)
-	if(strcmp(logtype_str[curlog], logstr) == 0) break;
+	if(g_str_equal(logtype_str[curlog], logstr)) break;
 
     for(curprog = P_LAST; curprog != P_UNKNOWN; curprog--)
-	if(strcmp(program_str[curprog], progstr) == 0) break;
+	if(g_str_equal(program_str[curprog], progstr)) break;
 
     return 1;
 }

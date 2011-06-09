@@ -147,7 +147,7 @@ suck_dir_list_from_server(void)
     if (disk_path == NULL) {
 	g_printf(_("Directory must be set before getting listing\n"));
 	return;
-    } else if(strcmp(disk_path, "/") == 0) {
+    } else if(g_str_equal(disk_path, "/")) {
 	disk_path_slash = g_strdup(disk_path);
     } else {
 	disk_path_slash = g_strconcat(disk_path, "/", NULL);
@@ -261,7 +261,7 @@ suck_dir_list_from_server(void)
 	dir = unquote_string(qdir);
 
 	/* add a '.' if it a the entry for the current directory */
-	if((strcmp(disk_path,dir)==0) || (strcmp(disk_path_slash,dir)==0)) {
+	if((g_str_equal(disk_path, dir)) || (g_str_equal(disk_path_slash, dir))) {
 	    amfree(dir);
 	    dir = g_strdup(disk_path_slash_dot);
 	}

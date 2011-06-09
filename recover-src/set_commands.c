@@ -468,7 +468,7 @@ cd_glob(
     }
 
     /* convert path (assumed in cwd) to one on disk */
-    if (strcmp(disk_path, "/") == 0)
+    if (g_str_equal(disk_path, "/"))
         path_on_disk = g_strconcat("/", regex_path, NULL);
     else {
         char *clean_disk_path = clean_regex(disk_path, 0);
@@ -526,7 +526,7 @@ cd_regex(
     }
 
     /* convert path (assumed in cwd) to one on disk */
-    if (strcmp(disk_path, "/") == 0)
+    if (g_str_equal(disk_path, "/"))
         path_on_disk = g_strconcat("/", uqregex, NULL);
     else {
         char *clean_disk_path = clean_regex(disk_path, 0);
@@ -618,7 +618,7 @@ set_directory(
     int   result;
 
     /* do nothing if "." */
-    if(strcmp(dir,".")==0) {
+    if(g_str_equal(dir, ".")) {
 	show_directory();		/* say where we are */
 	return 1;
 	/*NOTREACHED*/
@@ -637,7 +637,7 @@ set_directory(
     if (ldir[0] == '/')
     {
 	/* absolute path specified, must start with mount point */
-	if (strcmp(mount_point, "/") == 0)
+	if (g_str_equal(mount_point, "/"))
 	{
 	    new_dir = g_strdup(ldir);
 	}
@@ -664,7 +664,7 @@ set_directory(
 	new_dir = g_strdup(disk_path);
 	dp = ldir;
 	/* strip any leading ..s */
-	while (strncmp(dp, "../", 3) == 0)
+	while (g_str_has_prefix(dp, "../"))
 	{
 	    de = strrchr(new_dir, '/');	/* always at least 1 */
 	    if (de == new_dir)
@@ -679,8 +679,8 @@ set_directory(
 		dp = dp + 3;
 	    }
 	}
-	if (strcmp(dp, "..") == 0) {
-	    if (strcmp(new_dir, "/") == 0) {
+	if (g_str_equal(dp, "..")) {
+	    if (g_str_equal(new_dir, "/")) {
 		/* at top of disk */
 		g_printf(_("Invalid directory - Can't cd outside mount point \"%s\"\n"),
 		       mount_point);
@@ -703,7 +703,7 @@ set_directory(
  	    }
 	} else {
 	    /*@ignore@*/
-	    if (strcmp(new_dir, "/") != 0) {
+	    if (!g_str_equal(new_dir, "/")) {
 		strappend(new_dir, "/");
 	    }
 	    strappend(new_dir, ldir);
@@ -750,9 +750,9 @@ show_directory(void)
 {
     if (mount_point == NULL || disk_path == NULL)
         g_printf(_("Must select disk first\n"));
-    else if (strcmp(mount_point, "/") == 0)
+    else if (g_str_equal(mount_point, "/"))
 	g_printf("%s\n", disk_path);
-    else if (strcmp(disk_path, "/") == 0)
+    else if (g_str_equal(disk_path, "/"))
 	g_printf("%s\n", mount_point);
     else
 	g_printf("%s%s\n", mount_point, disk_path);
@@ -798,7 +798,7 @@ set_tape(
     
     if (tapedev[0])
     {
-	if (strcmp(tapedev, "default") == 0)
+	if (g_str_equal(tapedev, "default"))
 	    tapedev = NULL;
     }
 

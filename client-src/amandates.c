@@ -345,7 +345,7 @@ import_dumpdates(
 	}
 	dumpdate = unctime(s-1);
 
-	if(strcmp(fname, devname) != 0 || level < 0 || level >= DUMP_LEVELS) {
+	if(!g_str_equal(fname, devname) || level < 0 || level >= DUMP_LEVELS) {
 	    continue;
 	}
 

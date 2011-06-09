@@ -85,7 +85,7 @@ lookup(
 	char *months = _("JanFebMarAprMayJunJulAugSepOctNovDec");
 
 	for (cp = months, cp2 = str; *cp != '\0'; cp += 3)
-		if (strncmp(cp, cp2, 3) == 0)
+		if (g_str_has_prefix(cp, cp2))
 			return ((int)(cp-months) / 3);
 	return -1;
 }

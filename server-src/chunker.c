@@ -739,7 +739,7 @@ databuf_flush(
 		    /*NOTREACHED*/
 		}
 
-		if(strcmp(db->filename, arg_filename) == 0) {
+		if(g_str_equal(db->filename, arg_filename)) {
 		    /*
 		     * Same disk, so use what room is left up to the
 		     * next chunk boundary or the amount we were given,

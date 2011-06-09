@@ -1059,7 +1059,7 @@ krb5_checkuser( char *	host,
     char *	realm)
 {
 #ifdef AMANDA_PRINCIPAL
-    if(strcmp(name, AMANDA_PRINCIPAL) == 0) {
+    if(g_str_equal(name, AMANDA_PRINCIPAL)) {
 	return(NULL);
     } else {
 	return(g_strdup(_("does not match compiled in default")));
@@ -1101,7 +1101,7 @@ krb5_checkuser( char *	host,
 	 * in this case we check to see if the principal matches
 	 * the destination user mimicing the .k5login functionality.
 	 */
-	 if(strcmp(name, CLIENT_LOGIN) != 0) {
+	 if(!g_str_equal(name, CLIENT_LOGIN)) {
 		result = g_strdup_printf(_("%s does not match %s"),
 			name, CLIENT_LOGIN);
 		return result;
@@ -1154,7 +1154,7 @@ krb5_checkuser( char *	host,
 	    filehost = NULL;
 	}
 
-	if(filehost && strcmp(filehost, host) != 0) {
+	if(filehost && !g_str_equal(filehost, host)) {
 	    amfree(line);
 	    continue;
 	} else {
@@ -1174,9 +1174,9 @@ krb5_checkuser( char *	host,
 	 * anyway...
 	 */
 	auth_debug(1, _("comparing %s %s\n"), fileuser, name);
-	if(strcmp(fileuser, name) == 0) {
+	if(g_str_equal(fileuser, name)) {
 		auth_debug(1, _("found a match!\n"));
-		if(realm && filerealm && (strcmp(realm, filerealm)!=0)) {
+		if(realm && filerealm && (!g_str_equal(realm, filerealm))) {
 			amfree(line);
 			continue;
 		}

@@ -155,7 +155,7 @@ gboolean g_value_compare(GValue * a, GValue * b) {
         gboolean rval;
         a_str = g_strdup_value_contents(a);
         b_str = g_strdup_value_contents(b);
-        rval = (0 == strcmp(a_str, b_str));
+        rval = (g_str_equal(a_str, b_str));
         amfree(a_str);
         amfree(b_str);
         return rval;

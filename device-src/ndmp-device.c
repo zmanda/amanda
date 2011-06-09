@@ -1819,7 +1819,7 @@ ndmp_device_factory(
 {
     Device *rval;
     NdmpDevice * ndmp_rval;
-    g_assert(0 == strcmp(device_type, NDMP_DEVICE_NAME));
+    g_assert(g_str_equal(device_type, NDMP_DEVICE_NAME));
     rval = DEVICE(g_object_new(TYPE_NDMP_DEVICE, NULL));
     ndmp_rval = (NdmpDevice *)rval;
 

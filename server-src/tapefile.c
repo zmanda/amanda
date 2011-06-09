@@ -145,7 +145,7 @@ lookup_tapelabel(
     tape_t *tp;
 
     for(tp = tape_list; tp != NULL; tp = tp->next) {
-	if(strcmp(label, tp->label) == 0) return tp;
+	if(g_str_equal(label, tp->label)) return tp;
     }
     return NULL;
 }
@@ -172,7 +172,7 @@ lookup_tapedate(
     tape_t *tp;
 
     for(tp = tape_list; tp != NULL; tp = tp->next) {
-	if(strcmp(tp->datestamp, datestamp) == 0) return tp;
+	if(g_str_equal(tp->datestamp, datestamp)) return tp;
     }
     return NULL;
 }
@@ -219,7 +219,7 @@ lookup_last_reusable_tape(
 	tpsave[s] = NULL;
     }
     for(tp = tape_list; tp != NULL; tp = tp->next) {
-	if(tp->reuse == 1 && strcmp(tp->datestamp,"0") != 0 && match (labelstr, tp->label)) {
+	if(tp->reuse == 1 && !g_str_equal(tp->datestamp, "0") && match (labelstr, tp->label)) {
 	    count++;
 	    for(s = skip; s > 0; s--) {
 	        tpsave[s] = tpsave[s - 1];
@@ -243,7 +243,7 @@ reusable_tape(
 
     if(tp == NULL) return 0;
     if(tp->reuse == 0) return 0;
-    if( strcmp(tp->datestamp,"0") == 0) return 1;
+    if( g_str_equal(tp->datestamp, "0")) return 1;
     while(tp != NULL) {
 	if(tp->reuse == 1) count++;
 	tp = tp->prev;
@@ -531,7 +531,7 @@ char *list_new_tapes(int nb)
     iter = last_tape;
     c = 0;
 
-    while(iter && nb > 0 && strcmp(iter->datestamp,"0") == 0) {
+    while(iter && nb > 0 && g_str_equal(iter->datestamp, "0")) {
         if (iter->reuse) {
             c++;
             nb--;

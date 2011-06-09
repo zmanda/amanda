@@ -213,9 +213,9 @@ uncompress_file(
 
     filename = g_strdup(filename_gz);
     len = strlen(filename);
-    if(len > 3 && strcmp(&(filename[len-3]),".gz")==0) {
+    if(len > 3 && g_str_equal(&(filename[len - 3]), ".gz")) {
 	filename[len-3]='\0';
-    } else if(len > 2 && strcmp(&(filename[len-2]),".Z")==0) {
+    } else if(len > 2 && g_str_equal(&(filename[len - 2]), ".Z")) {
 	filename[len-2]='\0';
     }
 
@@ -417,7 +417,7 @@ process_ls_dump(
     size_t len_dir_slash;
 
     old_line[0] = '\0';
-    if (strcmp(dir, "/") == 0) {
+    if (g_str_equal(dir, "/")) {
 	dir_slash = g_strdup(dir);
     } else {
 	dir_slash = g_strconcat(dir, "/", NULL);
@@ -452,7 +452,7 @@ process_ls_dump(
 	if (line[0] != '\0') {
 	    if(strlen(line) > 0 && line[strlen(line)-1] == '\n')
 		line[strlen(line)-1] = '\0';
-	    if(strncmp(dir_slash, line, len_dir_slash) == 0) {
+	    if(g_str_has_prefix(dir_slash, line)) {
 		if(!recursive) {
 		    s = line + len_dir_slash;
 		    ch = *s++;
@@ -463,7 +463,7 @@ process_ls_dump(
 		    }
 		    s[-1] = '\0';
 		}
-		if(strcmp(line, old_line) != 0) {
+		if(!g_str_equal(line, old_line)) {
 		    add_dir_list_item(dump_item, line);
 		    strcpy(old_line, line);
 		}
@@ -846,9 +846,9 @@ build_disk_table(void)
 	find_output != NULL; 
 	find_output = find_output->next) {
 	if(strcasecmp(dump_hostname, find_output->hostname) == 0 &&
-	   strcmp(disk_name    , find_output->diskname)     == 0 &&
-	   strcmp("OK"         , find_output->status)       == 0 &&
-	   strcmp("OK"         , find_output->dump_status)  == 0) {
+	   g_str_equal(disk_name, find_output->diskname) &&
+	   g_str_equal("OK", find_output->status) &&
+	   g_str_equal("OK", find_output->dump_status)) {
 	    /*
 	     * The sort order puts holding disk entries first.  We want to
 	     * use them if at all possible, so ignore any other entries
@@ -856,14 +856,14 @@ build_disk_table(void)
 	     * (as indicated by a filenum of zero).
 	     */
 	    if(last_timestamp &&
-	       strcmp(find_output->timestamp, last_timestamp) == 0 &&
+	       g_str_equal(find_output->timestamp, last_timestamp) &&
 	       find_output->level == last_level && 
 	       last_filenum == 0) {
 		continue;
 	    }
 	    /* ignore duplicate partnum */
 	    if(last_timestamp &&
-	       strcmp(find_output->timestamp, last_timestamp) == 0 &&
+	       g_str_equal(find_output->timestamp, last_timestamp) &&
 	       find_output->level == last_level && 
 	       find_output->partnum == last_partnum) {
 		continue;
@@ -984,7 +984,7 @@ is_dir_valid_opaque(
 	return -1;
     }
 
-    if(strcmp(dir, "/") == 0) {
+    if(g_str_equal(dir, "/")) {
 	ldir = g_strdup(dir);
     } else {
 	ldir = g_strconcat(dir, "/", NULL);
@@ -1264,7 +1264,7 @@ are_dumps_compressed(void)
     /* now go through the list of disks and find which have indexes */
     for (diskp = disk_list.head; diskp != NULL; diskp = diskp->next) {
 	if ((strcasecmp(diskp->host->hostname, dump_hostname) == 0)
-		&& (strcmp(diskp->name, disk_name) == 0)) {
+		&& (g_str_equal(diskp->name, disk_name))) {
 	    break;
 	}
     }
@@ -1353,13 +1353,13 @@ main(
     argc--;
     argv++;
 
-    if(argc > 0 && strcmp(*argv, "-t") == 0) {
+    if(argc > 0 && g_str_equal(*argv, "-t")) {
 	amindexd_debug = 1;
 	argc--;
 	argv++;
     }
 
-    if(argc > 0 && strcmp(*argv, "amandad") == 0) {
+    if(argc > 0 && g_str_equal(*argv, "amandad")) {
 	from_amandad = 1;
 	argc--;
 	argv++;
@@ -1553,7 +1553,7 @@ main(
 	}
 
 	amfree(errstr);
-	if (!user_validated && strcmp(cmd, "SECURITY") == 0 && arg) {
+	if (!user_validated && g_str_equal(cmd, "SECURITY") && arg) {
 	    user_validated = amindexd_debug ||
 				check_security(
 					(sockaddr_union *)&his_addr,
@@ -1573,10 +1573,10 @@ main(
 	    break;
 	}
 
-	if (strcmp(cmd, "QUIT") == 0) {
+	if (g_str_equal(cmd, "QUIT")) {
 	    amfree(line);
 	    break;
-	} else if (strcmp(cmd, "HOST") == 0 && arg) {
+	} else if (g_str_equal(cmd, "HOST") && arg) {
 	    am_host_t *lhost;
 	    /* set host we are restoring */
 	    s[-1] = '\0';
@@ -1589,7 +1589,7 @@ main(
 		amfree(disk_name);		/* invalidate any value */
 	    }
 	    s[-1] = (char)ch;
-	} else if (strcmp(cmd, "LISTHOST") == 0) {
+	} else if (g_str_equal(cmd, "LISTHOST")) {
 	    disk_t *disk, 
                    *diskdup;
 	    int nbhost = 0,
@@ -1603,7 +1603,8 @@ main(
 		for (disk = disk_list.head; disk!=NULL; disk = disk->next) {
                     found = 0;
 		    for (diskdup = disk_list.head; diskdup!=disk; diskdup = diskdup->next) {
-		        if(strcmp(diskdup->host->hostname, disk->host->hostname) == 0) {
+		        if(g_str_equal(diskdup->host->hostname,
+                                       disk->host->hostname)) {
                           found = 1;
                           break;
 		        }
@@ -1621,7 +1622,7 @@ main(
 		}
 	    }
 	    s[-1] = (char)ch;
-	} else if (strcmp(cmd, "DISK") == 0 && arg) {
+	} else if (g_str_equal(cmd, "DISK") && arg) {
 	    s[-1] = '\0';
 	    if (is_disk_valid(arg) != -1) {
 		g_free(disk_name);
@@ -1633,7 +1634,7 @@ main(
 		}
 	    }
 	    s[-1] = (char)ch;
-	} else if (strcmp(cmd, "DLE") == 0) {
+	} else if (g_str_equal(cmd, "DLE")) {
 
 	    if (!dump_hostname || !disk_name) {
 		reply(200, "NODLE");
@@ -1701,7 +1702,7 @@ main(
                     g_free(b64disk);
                 }
 	    }
-	} else if (strcmp(cmd, "LISTDISK") == 0) {
+	} else if (g_str_equal(cmd, "LISTDISK")) {
 	    char *qname;
 	    disk_t *disk;
 	    int nbdisk = 0;
@@ -1718,8 +1719,8 @@ main(
 		for (disk = disk_list.head; disk!=NULL; disk = disk->next) {
 
 		    if (strcasecmp(disk->host->hostname, dump_hostname) == 0 &&
-		      ((disk->device && strcmp(disk->device, arg) == 0) ||
-		      (!disk->device && strcmp(disk->name, arg) == 0))) {
+		      ((disk->device && g_str_equal(disk->device, arg)) ||
+		      (!disk->device && g_str_equal(disk->name, arg)))) {
 			qname = quote_string(disk->name);
 			fast_lreply(201, " %s", qname);
 			amfree(qname);
@@ -1753,7 +1754,7 @@ main(
 		}
 	    }
 	    s[-1] = (char)ch;
-	} else if (strcmp(cmd, "SCNF") == 0 && arg) {
+	} else if (g_str_equal(cmd, "SCNF") && arg) {
 	    s[-1] = '\0';
 	    if (check_and_load_config(arg) != -1) {    /* try to load the new config */
 		amfree(dump_hostname);		/* invalidate any value */
@@ -1762,7 +1763,7 @@ main(
 		reply(200, _("Config set to %s."), get_config_name());
 	    } /* check_and_load_config replies with any failure messages */
 	    s[-1] = (char)ch;
-	} else if (strcmp(cmd, "FEATURES") == 0 && arg) {
+	} else if (g_str_equal(cmd, "FEATURES") && arg) {
 	    char *our_feature_string = NULL;
 	    char *their_feature_string = NULL;
 	    s[-1] = '\0';
@@ -1781,25 +1782,25 @@ main(
 	    amfree(our_feature_string);
 	    amfree(their_feature_string);
 	    s[-1] = (char)ch;
-	} else if (strcmp(cmd, "DATE") == 0 && arg) {
+	} else if (g_str_equal(cmd, "DATE") && arg) {
 	    s[-1] = '\0';
 	    g_free(target_date);
 	    target_date = g_strdup(arg);
 	    reply(200, _("Working date set to %s."), target_date);
 	    s[-1] = (char)ch;
-	} else if (strcmp(cmd, "DHST") == 0) {
+	} else if (g_str_equal(cmd, "DHST")) {
 	    (void)disk_history_list();
-	} else if (strcmp(cmd, "OISD") == 0 && arg) {
+	} else if (g_str_equal(cmd, "OISD") && arg) {
 	    if (is_dir_valid_opaque(arg) != -1) {
 		reply(200, _("\"%s\" is a valid directory"), arg);
 	    }
-	} else if (strcmp(cmd, "OLSD") == 0 && arg) {
+	} else if (g_str_equal(cmd, "OLSD") && arg) {
 	    (void)opaque_ls(arg,0);
-	} else if (strcmp(cmd, "ORLD") == 0 && arg) {
+	} else if (g_str_equal(cmd, "ORLD") && arg) {
 	    (void)opaque_ls(arg, 1);
-	} else if (strcmp(cmd, "TAPE") == 0) {
+	} else if (g_str_equal(cmd, "TAPE")) {
 	    (void)tapedev_is();
-	} else if (strcmp(cmd, "DCMP") == 0) {
+	} else if (g_str_equal(cmd, "DCMP")) {
 	    (void)are_dumps_compressed();
 	} else {
 	    *cmd_undo = cmd_undo_ch;	/* restore the command line */

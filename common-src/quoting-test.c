@@ -91,7 +91,7 @@ test_round_trip(void)
 	unquoted = unquote_string(quoted);
 
 	/* if they're not the same, complain */
-	if (0 != strcmp(*strp, unquoted)) {
+	if (!g_str_equal(*strp, unquoted)) {
 	    char *safe_orig = safestr(*strp);
 	    char *safe_quoted = safestr(quoted);
 	    char *safe_unquoted = safestr(unquoted);
@@ -130,7 +130,7 @@ compare_strv(
     const char **a = exp;
     char **b = got;
     while (*a && *b) {
-	if (0 != strcmp(*a, *b))
+	if (!g_str_equal(*a, *b))
 	    break;
 	a++; b++;
     }
@@ -309,7 +309,7 @@ test_unquote_string(void)
 	char *unquoted = unquote_string(quoted);
 
 	/* if they're not the same, complain */
-	if (0 != strcmp(expected, unquoted)) {
+	if (!g_str_equal(expected, unquoted)) {
 	    char *safe_quoted = safestr(quoted);
 	    char *safe_unquoted = safestr(unquoted);
 	    char *safe_expected = safestr(expected);
@@ -366,7 +366,7 @@ test_strquotedstr_skipping(void)
 		    success = FALSE;
 		    goto next;
 		}
-		if (0 != strcmp(tok, expected)) {
+		if (!g_str_equal(tok, expected)) {
 		    char *safe = safestr(tok);
 
 		    g_fprintf(stderr, "while parsing '%s', call %d to strquotedstr returned '%s' "
@@ -458,7 +458,7 @@ test_strquotedstr_edge_valid(void)
 	    g_fprintf(stderr, "while parsing valid '%s', strquotedstr returned NULL\n",
 		      *iter);
 	    success = FALSE;
-	} else if (0 != strcmp(tok, expected)) {
+	} else if (!g_str_equal(tok, expected)) {
 	    g_fprintf(stderr, "while parsing valid '%s', strquotedstr returned '%s' while "
 		      "'%s' was expected\n",
 		      *iter, tok, expected);

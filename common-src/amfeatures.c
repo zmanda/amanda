@@ -420,7 +420,7 @@ am_string_to_feature(
     int				ch1, ch2;
     char *			orig = s;
 
-    if (s != NULL && strcmp(s,"UNKNOWNFEATURE") != 0) {
+    if (s != NULL && !g_str_equal(s, "UNKNOWNFEATURE")) {
 	f = am_allocate_feature_set();
 	for (i = 0; i < f->size && (ch1 = *s++) != '\0'; i++) {
 	    if (isdigit(ch1)) {

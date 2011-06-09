@@ -599,7 +599,7 @@ device_set_error(Device *self, char *errmsg, DeviceStatusFlags new_flags)
 
     device_name = self->device_name? self->device_name : "(unknown device)";
 
-    if (errmsg && (!selfp->errmsg || strcmp(errmsg, selfp->errmsg) != 0))
+    if (errmsg && (!selfp->errmsg || !g_str_equal(errmsg, selfp->errmsg)))
 	g_debug("Device %s error = '%s'", device_name, errmsg);
 
     amfree(selfp->errmsg);

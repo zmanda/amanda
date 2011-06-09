@@ -48,7 +48,7 @@ test_encode(void)
     ret = TRUE;
     for (i = 0; i < num; i++) {
         tmp = hexencode_string(test_strs[i].in);
-        if (!tmp || strcmp(test_strs[i].out, tmp)) {
+        if (!tmp || !g_str_equal(test_strs[i].out, tmp)) {
             ret = FALSE;
             tu_dbg("encode failure:\n")
             tu_dbg("input:    \"%s\"\n", test_strs[i].in);
@@ -89,7 +89,7 @@ test_decode(void)
     ret = TRUE;
     for (i = 0; i < num; i++) {
         tmp = hexdecode_string(test_strs[i].in, &err);
-        if (!tmp || strcmp(test_strs[i].out, tmp) ||
+        if (!tmp || !g_str_equal(test_strs[i].out, tmp) ||
             (!!err != test_strs[i].expect_err)) {
             ret = FALSE;
             tu_dbg("decode failure:\n")
@@ -128,7 +128,7 @@ test_roundtrip(void)
     for (i = 0; i < num; i++) {
         tmp_enc = hexencode_string(test_strs[i]);
         tmp_dec = tmp_enc? hexdecode_string(tmp_enc, &err) : NULL;
-        if (!tmp_enc || !tmp_dec || strcmp(test_strs[i], tmp_dec) || err) {
+        if (!tmp_enc || !tmp_dec || !g_str_equal(test_strs[i], tmp_dec) || err) {
             ret = FALSE;
             tu_dbg("roundtrip failure:\n")
             tu_dbg("input:      \"%s\"\n", test_strs[i]);
@@ -161,7 +161,7 @@ test_roundtrip_rand(void)
         simpleprng_fill_buffer(&state, in, size);
         tmp_enc = hexencode_string(in);
         tmp_dec = tmp_enc? hexdecode_string(tmp_enc, &err) : NULL;
-        if (!tmp_enc || !tmp_dec || strcmp(in, tmp_dec) || err) {
+        if (!tmp_enc || !tmp_dec || !g_str_equal(in, tmp_dec) || err) {
             ret = FALSE;
             tu_dbg("roundtrip failure:\n")
             tu_dbg("input:      \"%s\"\n", in);

@@ -344,7 +344,7 @@ holding_walk_disk(
 	    is_cruft = 1;
         } else if (!is_datestr(workdir->d_name)) {
             /* EXT2/3 leave these in the root of each volume */
-            if (strcmp(workdir->d_name, "lost+found") == 0)
+            if (g_str_equal(workdir->d_name, "lost+found"))
 		continue; /* expected cruft */
 	    else
 		is_cruft = 1; /* unexpected */
@@ -535,7 +535,7 @@ holding_get_files_for_flush(
 	    date_matches = 0;
 	    /* loop over date args, until we find a match */
 	    for (date = dateargs; date !=NULL; date = date->next) {
-		if (strcmp((char *)date->data, file.datestamp) == 0) {
+		if (g_str_equal((char *)date->data, file.datestamp)) {
 		    date_matches = 1;
 		    break;
 		}
@@ -799,7 +799,7 @@ holding_cleanup_file(
 	return 0;
     }
 
-    if ((l = strlen(element)) >= 7 && strncmp(&fqpath[l-4],".tmp",4) == 0) {
+    if ((l = strlen(element)) >= 7 && g_str_has_prefix(&fqpath[l - 4], ".tmp")) {
 	char *destname;
 
 	/* generate a name without '.tmp' */

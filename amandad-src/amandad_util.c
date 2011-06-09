@@ -64,7 +64,7 @@ parse_g_options(
     tok = strtok(p,";");
 
     while (tok != NULL) {
-	if(strncmp(tok,"features=", 9) == 0) {
+	if(g_str_has_prefix(tok, "features=")) {
 	    char *t = tok+9;
 	    char *u = strchr(t, ';');
 	    if (u)
@@ -85,7 +85,7 @@ parse_g_options(
 	    if (u)
 	       *u = ';';
 	}
-	else if(strncmp(tok,"hostname=", 9) == 0) {
+	else if(g_str_has_prefix(tok, "hostname=")) {
 	    if(g_options->hostname != NULL) {
 		dbprintf(_("multiple hostname option\n"));
 		if(verbose) {
@@ -95,7 +95,7 @@ parse_g_options(
 	    }
 	    g_options->hostname = g_strdup(tok+9);
 	}
-	else if(strncmp(tok,"auth=", 5) == 0) {
+	else if(g_str_has_prefix(tok, "auth=")) {
 	    if(g_options->auth != NULL) {
 		dbprintf(_("multiple auth option\n"));
 		if(verbose) {
@@ -105,7 +105,7 @@ parse_g_options(
 	    }
 	    g_options->auth = g_strdup(tok+5);
 	}
-	else if(strncmp(tok,"maxdumps=", 9) == 0) {
+	else if(g_str_has_prefix(tok, "maxdumps=")) {
 	    if(g_options->maxdumps != 0) {
 		dbprintf(_("multiple maxdumps option\n"));
 		if(verbose) {
@@ -135,7 +135,7 @@ parse_g_options(
 		}
 	    }
 	}
-	else if(strncmp(tok,"config=", 7) == 0) {
+	else if(g_str_has_prefix(tok, "config=")) {
 	    if(g_options->config != NULL) {
 		dbprintf(_("multiple config option\n"));
 		if(verbose) {
