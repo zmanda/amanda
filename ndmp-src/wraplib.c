@@ -120,7 +120,7 @@ wrap_main_start_image_file (struct wrap_ccb *wccb)
 	if (!filename)
 		filename = "-";
 
-	if (strcmp (filename, "-") == 0) {
+	if (g_str_equal(filename, "-")) {
 		if (wccb->op == WRAP_CCB_OP_BACKUP) {
 			fd = 1;
 		} else {
@@ -325,7 +325,7 @@ wrap_process_args (int argc, char *argv[], struct wrap_ccb *wccb)
 			return -1;
 		}
 
-		if (strcmp (p, "@-") == 0) {
+		if (g_str_equal(p, "@-")) {
 			wccb->file[wccb->n_file].fhinfo = WRAP_INVALID_FHINFO;
 		} else {
 			wccb->file[wccb->n_file].fhinfo =
@@ -401,7 +401,7 @@ wrap_find_env (struct wrap_ccb *wccb, char *name)
 	int		i;
 
 	for (i = 0; i < wccb->n_env; i++) {
-		if (strcmp (wccb->env[i].name, name) == 0)
+		if (g_str_equal(wccb->env[i].name, name))
 			return wccb->env[i].value;
 	}
 

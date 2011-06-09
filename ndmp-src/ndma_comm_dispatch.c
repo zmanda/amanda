@@ -1956,7 +1956,7 @@ data_ok_bu_type (struct ndm_session *sess,
 	for (i = 0; i < ci->butype_info.butype_info_len; i++) {
 		bu = &ci->butype_info.butype_info_val[i];
 
-		if (strcmp (bu_type, bu->butype_name) == 0) {
+		if (g_str_equal(bu_type, bu->butype_name)) {
 			return 0;
 		}
 	}

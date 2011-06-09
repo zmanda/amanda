@@ -280,7 +280,7 @@ main(
 	/*
 	 * Get a driver for a security type specified after -auth=
 	 */
-	if (strncmp(argv[i], "-auth=", strlen("-auth=")) == 0) {
+	if (g_str_has_prefix(argv[i], "-auth=")) {
 	    argv[i] += strlen("-auth=");
 	    secdrv = security_getdriver(argv[i]);
 	    auth = argv[i];
@@ -288,9 +288,9 @@ main(
 		error(_("no driver for security type '%s'\n"), argv[i]);
                 /*NOTREACHED*/
 	    }
-	    if (strcmp(auth, "local") == 0 ||
-		strcmp(auth, "rsh") == 0 ||
-		strcmp(auth, "ssh") == 0) {
+	    if (g_str_equal(auth, "local") ||
+		g_str_equal(auth, "rsh") ||
+		g_str_equal(auth, "ssh")) {
 		guint i;
 		for (i=0; i < NSERVICES; i++) {
 		    services[i].active = 1;
@@ -303,7 +303,7 @@ main(
 	 * If -no-exit is specified, always run even after requests have
 	 * been satisfied.
 	 */
-	else if (strcmp(argv[i], "-no-exit") == 0) {
+	else if (g_str_equal(argv[i], "-no-exit")) {
 	    no_exit = 1;
 	    continue;
 	}
@@ -312,7 +312,7 @@ main(
 	 * Allow us to directly bind to a udp port for debugging.
 	 * This may only apply to some security types.
 	 */
-	else if (strncmp(argv[i], "-udp=", strlen("-udp=")) == 0) {
+	else if (g_str_has_prefix(argv[i], "-udp=")) {
 #ifdef WORKING_IPV6
 	    struct sockaddr_in6 sin;
 #else
@@ -356,7 +356,7 @@ main(
 	/*
 	 * Ditto for tcp ports.
 	 */
-	else if (strncmp(argv[i], "-tcp=", strlen("-tcp=")) == 0) {
+	else if (g_str_has_prefix(argv[i], "-tcp=")) {
 #ifdef WORKING_IPV6
 	    struct sockaddr_in6 sin;
 #else
@@ -412,7 +412,7 @@ main(
 	    }
 	    have_services = 1;
 
-	    if(strcmp(argv[i],"amdump") == 0) {
+	    if(g_str_equal(argv[i], "amdump")) {
 		services[0].active = 1;
 		services[1].active = 1;
 		services[2].active = 1;
@@ -420,7 +420,7 @@ main(
 	    }
 	    else {
 		for (j = 0; j < NSERVICES; j++)
-		    if (strcmp(services[j].name, argv[i]) == 0)
+		    if (g_str_equal(services[j].name, argv[i]))
 			break;
 		if (j == NSERVICES) {
 		    dbprintf(_("%s: invalid service\n"), argv[i]);
@@ -635,7 +635,7 @@ protocol_accept(
     tok = strtok(pktbody, " ");
     if (tok == NULL)
 	goto badreq;
-    if (strcmp(tok, "SERVICE") != 0)
+    if (!g_str_equal(tok, "SERVICE"))
 	goto badreq;
 
     tok = strtok(NULL, " \n");
@@ -651,7 +651,7 @@ protocol_accept(
 
     /* see if it's one we allow */
     for (i = 0; i < NSERVICES; i++)
-	if (services[i].active == 1 && strcmp(services[i].name, service) == 0)
+	if (services[i].active == 1 && g_str_equal(services[i].name, service))
 	    break;
     if (i == NSERVICES) {
 	dbprintf(_("%s: invalid service\n"), service);
@@ -671,8 +671,8 @@ protocol_accept(
     /* see if its already running */
     for (iter = serviceq; iter != NULL; iter = g_slist_next(iter)) {
 	as = (struct active_service *)iter->data;
-	    if (strcmp(as->cmd, service_path) == 0 &&
-		strcmp(as->arguments, arguments) == 0) {
+	    if (g_str_equal(as->cmd, service_path) &&
+		g_str_equal(as->arguments, arguments)) {
 		    dbprintf(_("%s %s: already running, acking req\n"),
 			service, arguments);
 		    pkt_init_empty(&pkt_out, P_ACK);
@@ -1073,7 +1073,7 @@ s_processrep(
     tok = strtok(repbuf, " ");
     if (tok == NULL)
 	goto error;
-    if (strcmp(tok, "CONNECT") == 0) {
+    if (g_str_equal(tok, "CONNECT")) {
 	char *line, *nextbuf;
 
 	/* Save the entire line */
@@ -1999,7 +1999,7 @@ amandad_get_security_conf(
     if (!string || !*string)
 	return(NULL);
 
-    if (strcmp(string, "kencrypt")==0) {
+    if (g_str_equal(string, "kencrypt")) {
 	if (amandad_kencrypt == KENCRYPT_YES)
 	    return ("yes");
 	else

@@ -420,7 +420,7 @@ jndex_open (void)
 		/* no return */
 	}
 
-	if (strcmp (buf, "##ndmjob -I\n") != 0) {
+	if (!g_str_equal(buf, "##ndmjob -I\n")) {
 		fclose (fp);
 		error_byebye ("Bad 1st line in -J%s", J_index_file);
 		/* no return */
@@ -432,7 +432,7 @@ jndex_open (void)
 		/* no return */
 	}
 
-	if (strcmp (buf, "##ndmjob -J\n") != 0) {
+	if (!g_str_equal(buf, "##ndmjob -J\n")) {
 		fclose (fp);
 		error_byebye ("Bad 2nd line in -J%s", J_index_file);
 		/* no return */
@@ -495,7 +495,7 @@ jndex_merge_media (void)
 			if (! me->valid_label)
 				continue;	/* can't match it up */
 
-			if (strcmp (jme->label, me->label) != 0)
+			if (!g_str_equal(jme->label, me->label))
 				continue;
 
 			if (!jme->valid_slot &&  me->valid_slot) {

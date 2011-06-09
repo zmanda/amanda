@@ -148,7 +148,7 @@ main(
     /* Don't die when interrupt received */
     signal(SIGINT, SIG_IGN);
 
-    if(argc > 1 && strcmp(argv[1],"-t") == 0) {
+    if(argc > 1 && g_str_equal(argv[1], "-t")) {
 	interactive = 1;
 	argc--;
 	argv++;
@@ -162,7 +162,7 @@ main(
     startclock();
     dbprintf(_("Version %s\n"), VERSION);
 
-    if(argc > 2 && strcmp(argv[1], "amandad") == 0) {
+    if(argc > 2 && g_str_equal(argv[1], "amandad")) {
 	amandad_auth = g_strdup(argv[2]);
     }
 
@@ -246,7 +246,7 @@ main(
 	skip_non_whitespace(s, ch);
 	s[-1] = '\0';
 
-        if (strcmp(dle->program, "APPLICATION")==0) {
+        if (g_str_equal(dle->program, "APPLICATION")) {
             dle->program_is_application_api=1;
             skip_whitespace(s, ch);             /* find dumper name */
             if (ch == '\0') {
@@ -393,7 +393,7 @@ main(
 	/* check that the application_api exist */
     } else {
 	for(i = 0; programs[i]; i++) {
-	    if (strcmp(programs[i]->name, dle->program) == 0) {
+	    if (g_str_equal(programs[i]->name, dle->program)) {
 		break;
 	    }
 	}

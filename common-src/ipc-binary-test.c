@@ -99,7 +99,7 @@ test_sync_parent(ipc_binary_proto_t *proto, int fd)
 	tu_dbg("got NULL hostname\n");
 	return 0;
     }
-    if (0 != strcmp((gchar *)msg->args[MY_PROTO_HOSTNAME].data, "localhost")) {
+    if (!g_str_equal((gchar *)msg->args[MY_PROTO_HOSTNAME].data, "localhost")) {
 	tu_dbg("got bad hostname %s\n", (gchar *)msg->args[MY_PROTO_HOSTNAME].data);
 	return 0;
     }
@@ -119,7 +119,7 @@ test_sync_parent(ipc_binary_proto_t *proto, int fd)
 	tu_dbg("got NULL hostname\n");
 	return 0;
     }
-    if (0 != strcmp((gchar *)msg->args[MY_PROTO_HOSTNAME].data, "otherhost")) {
+    if (!g_str_equal((gchar *)msg->args[MY_PROTO_HOSTNAME].data, "otherhost")) {
 	tu_dbg("got bad hostname %s\n", (gchar *)msg->args[MY_PROTO_HOSTNAME].data);
 	return 0;
     }
@@ -127,7 +127,7 @@ test_sync_parent(ipc_binary_proto_t *proto, int fd)
 	tu_dbg("got NULL disk\n");
 	return 0;
     }
-    if (0 != strcmp((gchar *)msg->args[MY_PROTO_DISK].data, "/usr")) {
+    if (!g_str_equal((gchar *)msg->args[MY_PROTO_DISK].data, "/usr")) {
 	tu_dbg("got bad disk %s\n", (gchar *)msg->args[MY_PROTO_DISK].data);
 	return 0;
     }
@@ -149,7 +149,7 @@ test_sync_parent(ipc_binary_proto_t *proto, int fd)
 	tu_dbg("got data length %d, expected 9\n", (int)msg->args[MY_PROTO_DATA].len);
 	return 0;
     }
-    if (0 != strncmp((gchar *)msg->args[MY_PROTO_DATA].data, "some-data", 9)) {
+    if (!g_str_has_prefix((gchar *)msg->args[MY_PROTO_DATA].data, "some-data")) {
 	tu_dbg("got bad data\n");
 	return 0;
     }

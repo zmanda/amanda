@@ -181,7 +181,7 @@ main(
     set_config_overrides(cfg_ovr);
     config_init(CONFIG_INIT_EXPLICIT_NAME, argv[1]);
 
-    if(strcmp(argv[2],"version") == 0) {
+    if(g_str_equal(argv[2], "version")) {
 	show_version(argc, argv);
 	goto done;
     }
@@ -220,7 +220,7 @@ main(
     unitdivisor = getconf_unit_divisor();
 
     for (i = 0; i < NCMDS; i++)
-	if (strcmp(argv[2], cmdtab[i].name) == 0) {
+	if (g_str_equal(argv[2], cmdtab[i].name)) {
 	    (*cmdtab[i].fn)(argc, argv);
 	    break;
 	}
@@ -845,7 +845,7 @@ tape(
     int     skip;
     int     nb_new_tape;
 
-    if(argc > 4 && strcmp(argv[3],"--days") == 0) {
+    if(argc > 4 && g_str_equal(argv[3], "--days")) {
 	nb_days = atoi(argv[4]);
 	if(nb_days < 1) {
 	    g_printf(_("days must be an integer bigger than 0\n"));
@@ -921,7 +921,7 @@ balance(
     overdue = 0;
     max_overdue = 0;
 
-    if(argc > 4 && strcmp(argv[3],"--days") == 0) {
+    if(argc > 4 && g_str_equal(argv[3], "--days")) {
 	later = atoi(argv[4]);
 	if(later < 0) later = conf_dumpcycle;
     }
@@ -1119,7 +1119,7 @@ find(
 
     g_free(sort_order);
     sort_order = g_strdup(DEFAULT_SORT_ORDER);
-    if(argc > 4 && strcmp(argv[3],"--sort") == 0) {
+    if(argc > 4 && g_str_equal(argv[3], "--sort")) {
 	size_t i, valid_sort=1;
 
 	for(i = strlen(argv[4]); i > 0; i--) {
@@ -1442,9 +1442,9 @@ holding(
 
     if (argc < 4)
         action = HOLDING_USAGE;
-    else if (strcmp(argv[3], "list") == 0 && argc >= 4)
+    else if (g_str_equal(argv[3], "list") && argc >= 4)
         action = HOLDING_LIST;
-    else if (strcmp(argv[3], "delete") == 0 && argc > 4)
+    else if (g_str_equal(argv[3], "delete") && argc > 4)
         action = HOLDING_DELETE;
 
     switch (action) {
@@ -1771,7 +1771,7 @@ import_db(
 		get_pname(), vers_maj, vers_min, vers_patch);
     /*@end@*/
 
-    if(strcmp(org, getconf_str(CNF_ORG)) != 0) {
+    if(!g_str_equal(org, getconf_str(CNF_ORG))) {
 	g_fprintf(stderr, _("%s: WARNING: input is from different org: %s\n"),
 		get_pname(), org);
     }

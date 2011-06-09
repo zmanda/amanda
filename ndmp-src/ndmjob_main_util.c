@@ -40,7 +40,7 @@
 int
 start_index_file (void)
 {
-	if (I_index_file && strcmp (I_index_file, "-") != 0) {
+	if (I_index_file && !g_str_equal(I_index_file, "-")) {
 		FILE *		ifp;
 
 		if (atoi(I_index_file) != 0) {
@@ -65,7 +65,7 @@ start_index_file (void)
 int
 sort_index_file (void)
 {
-	if (I_index_file && strcmp (I_index_file, "-") != 0 &&
+	if (I_index_file && !g_str_equal(I_index_file, "-") &&
 	    atoi(I_index_file) == 0) {
 		char		cmd[512];
 

@@ -392,10 +392,10 @@ ndmca_media_read_label (struct ndm_session *sess, char labbuf[])
 
 	if (rc == 0) {
 		p = tape_read_buf;
-		if (strncmp (p, "##ndmjob -m ", 12) == 0) {
+		if (g_str_has_prefix(p, "##ndmjob -m ")) {
 			p += 12;
 			rc = 'm';
-		} else if (strncmp (p, "##ndmjob -V ", 12) == 0) {
+		} else if (g_str_has_prefix(p, "##ndmjob -V ")) {
 			p += 12;
 			rc = 'V';
 		} else {
@@ -458,7 +458,7 @@ ndmca_media_check_label (struct ndm_session *sess, int type, char labbuf[])
 		return -1;
 	}
 
-	if (rc != type || strcmp (labbuf, mylabbuf) != 0) {
+	if (rc != type || !g_str_equal(labbuf, mylabbuf)) {
 		ndmalogf (sess, 0, 0,
 			"Label mismatch, expected -%c'%s', got -%c'%s'",
 			type, labbuf, rc, mylabbuf);

@@ -37,7 +37,7 @@
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
 
 #define NDMJR_NONE_RECOGNIZE(RULES) \
-	(strcmp (RULES, "none") == 0)
+	(g_str_equal(RULES, "none"))
 
 #define NDMJR_NONE_HELP_LINE_NAME \
 	"none"

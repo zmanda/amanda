@@ -865,7 +865,7 @@ ndmda_find_env (struct ndm_session *sess, char *name)
 
 	for (i = 0; i < da->env_tab.n_env; i++) {
 		pv = &da->env_tab.env[i];
-		if (strcmp (pv->name, name) == 0)
+		if (g_str_equal(pv->name, name))
 			return pv;
 	}
 

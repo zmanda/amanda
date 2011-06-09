@@ -350,7 +350,7 @@ ndmca_monitor_backup_tape_tcp (struct ndm_session *sess)
 			  ca->data_state.bytes_processed/1024LL,
 			  estb ? estb : "");
 
-		if (strcmp(pname, "amndmjob") == 0) {
+		if (g_str_equal(pname, "amndmjob")) {
 			ndmlogf (ixlog, "DATA SIZE", 0, "%lldKB",
 				 ca->data_state.bytes_processed/1024LL);
 		}

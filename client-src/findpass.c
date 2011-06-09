@@ -67,7 +67,7 @@ findpass(
       if (ch && ch != '#') {
 	s[-1] = '\0';				/* terminate disk name */
 	d = unquote_string(qname);
-	if ((strcmp(d,"*") == 0) || (strcmp(disk, d) == 0)) {
+	if ((g_str_equal(d, "*")) || (g_str_equal(disk, d))) {
 	  skip_whitespace(s, ch);		/* find start of password */
 	  if (ch && ch != '#') {
 	    pw = s - 1;				/* start of password */

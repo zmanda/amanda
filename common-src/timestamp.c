@@ -122,7 +122,7 @@ time_t get_time_from_timestamp(char *timestamp)
 time_state_t get_timestamp_state(char * timestamp) {
     if (timestamp == NULL || *timestamp == '\0') {
         return TIME_STATE_REPLACE;
-    } else if (strcmp(timestamp, "X") == 0) {
+    } else if (g_str_equal(timestamp, "X")) {
         return TIME_STATE_UNDEF;
     } else {
         return TIME_STATE_SET;

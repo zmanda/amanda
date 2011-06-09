@@ -89,8 +89,8 @@ add_dir_list_item(
 	return 0; /* added */
     }
 
-    if (strcmp(path, "/") != 0 &&
-	strcmp(path, dir_last->path) == 0) {
+    if (!g_str_equal(path, "/") &&
+	g_str_equal(path, dir_last->path)) {
 	return 0; /* found */
     }
 
@@ -115,7 +115,7 @@ add_dir_list_item(
 	if(strcmp(path,cur_list->path) < 0)
 	    cur_list=dir_list;
 
-	if(strcmp(path,cur_list->path) == 0)
+	if(g_str_equal(path, cur_list->path))
 	    return 0; /* found */
 
 	while (cur_list->next!=NULL && (strcmp(path,cur_list->next->path) > 0))
@@ -123,7 +123,7 @@ add_dir_list_item(
 	    cur_list=cur_list->next;
 	}
 
-	if (cur_list->next && strcmp(path, cur_list->next->path) == 0)
+	if (cur_list->next && g_str_equal(path, cur_list->next->path))
 	{
 	    cur_list=cur_list->next;
 	    return 0; /* found */

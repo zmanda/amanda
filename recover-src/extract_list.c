@@ -364,14 +364,14 @@ clean_tape_list(
 	fn2 = fn1->next;
 	while (fn2 != NULL && remove_fn1 == 0) {
 	    remove_fn2 = 0;
-	    if(strcmp(fn1->path, fn2->path) == 0) {
+	    if(g_str_equal(fn1->path, fn2->path)) {
 		remove_fn2 = 1;
-	    } else if (strncmp(fn1->path, fn2->path, strlen(fn1->path)) == 0 &&
+	    } else if (g_str_has_prefix(fn1->path, fn2->path) &&
 		       ((strlen(fn2->path) > strlen(fn1->path) &&
 			 fn2->path[strlen(fn1->path)] == '/') ||
 		       (fn1->path[strlen(fn1->path)-1] == '/'))) {
 		remove_fn2 = 1;
-	    } else if (strncmp(fn2->path, fn1->path, strlen(fn2->path)) == 0 &&
+	    } else if (g_str_has_prefix(fn2->path, fn1->path) &&
 		       ((strlen(fn1->path) > strlen(fn2->path) &&
 			 fn1->path[strlen(fn2->path)] == '/')  ||
 		       (fn2->path[strlen(fn2->path)-1] == '/'))) {
@@ -422,7 +422,7 @@ file_of_path(
 {
     char *npath = g_path_get_basename(path);
     *dir = g_path_get_dirname(path);
-    if (strcmp(*dir, ".") == 0) {
+    if (g_str_equal(*dir, ".")) {
 	amfree(*dir);
     }
     return npath;
@@ -460,7 +460,7 @@ add_to_unlink_list(
 	unlink_list->next = NULL;
     } else {
 	for (ul = unlink_list; ul != NULL; ul = ul->next) {
-	    if (strcmp(ul->path, path) == 0)
+	    if (g_str_equal(ul->path, path))
 		return 0;
 	}
 	ul = g_malloc(sizeof(*ul));
@@ -591,13 +591,14 @@ add_extract_item(
     for (this = extract_list; this != NULL; this = this->next)
     {
 	/* see if this is the list for the tape */	
-	if (this->level == ditem->level && strcmp(this->tape, ditem->tape) == 0)
+	if (this->level == ditem->level && g_str_equal(this->tape,
+                                                       ditem->tape))
 	{
 	    /* yes, so add to list */
 	    curr=this->files;
 	    while(curr!=NULL)
 	    {
-		if (strcmp(curr->path,ditem_path) == 0) {
+		if (g_str_equal(curr->path, ditem_path)) {
 		    amfree(ditem_path);
 		    return 1;
 		}
@@ -669,11 +670,12 @@ delete_extract_item(
     for (this = extract_list; this != NULL; this = this->next)
     {
 	/* see if this is the list for the tape */	
-	if (this->level == ditem->level && strcmp(this->tape, ditem->tape) == 0)
+	if (this->level == ditem->level && g_str_equal(this->tape,
+                                                       ditem->tape))
 	{
 	    /* yes, so find file on list */
 	    that = this->files;
-	    if (strcmp(that->path, ditem_path) == 0)
+	    if (g_str_equal(that->path, ditem_path))
 	    {
 		/* first on list */
 		this->files = that->next;
@@ -689,7 +691,7 @@ delete_extract_item(
 	    that = that->next;
 	    while (that != NULL)
 	    {
-		if (strcmp(that->path, ditem_path) == 0)
+		if (g_str_equal(that->path, ditem_path))
 		{
 		    prev->next = that->next;
                     amfree(that->path);
@@ -849,10 +851,10 @@ add_file(
 
     dbprintf(_("add_file: Looking for \"%s\"\n"), regex);
 
-    if(strcmp(regex, "/[/]*$") == 0) {	/* "/" behave like "." */
+    if(g_str_equal(regex, "/[/]*$")) {	/* "/" behave like "." */
 	regex = "\\.[/]*$";
     }
-    else if(strcmp(regex, "[^/]*[/]*$") == 0) {		/* "*" */
+    else if(g_str_equal(regex, "[^/]*[/]*$")) {		/* "*" */
 	regex = "([^/.]|\\.[^/]+|[^/.][^/]*)[/]*$";
     } else {
 	/* remove "/" at end of path */
@@ -862,7 +864,7 @@ add_file(
     }
 
     /* convert path (assumed in cwd) to one on disk */
-    if (strcmp(disk_path, "/") == 0) {
+    if (g_str_equal(disk_path, "/")) {
         if (*regex == '/') {
 	    /* No mods needed if already starts with '/' */
 	    path_on_disk = g_strdup(regex);
@@ -1219,7 +1221,7 @@ delete_file(
 
     dbprintf(_("delete_file: Looking for \"%s\"\n"), path);
 
-    if (strcmp(regex, "[^/]*[/]*$") == 0) {
+    if (g_str_equal(regex, "[^/]*[/]*$")) {
 	/* Looking for * find everything but single . */
 	regex = "([^/.]|\\.[^/]+|[^/.][^/]*)[/]*$";
     } else {
@@ -1229,9 +1231,9 @@ delete_file(
     }
 
     /* convert path (assumed in cwd) to one on disk */
-    if (strcmp(disk_path, "/") == 0) {
+    if (g_str_equal(disk_path, "/")) {
         if (*regex == '/') {
-	    if (strcmp(regex, "/[/]*$") == 0) {
+	    if (g_str_equal(regex, "/[/]*$")) {
 		/* We want "/" to match the directory itself: "/." */
 		path_on_disk = g_strdup("/\\.[/]*$");
 	    } else {
@@ -1865,22 +1867,23 @@ extract_files_child(
     }
 
     if (ctl_data->file.program != NULL) {
-	if (strcmp(ctl_data->file.program, "APPLICATION") == 0)
+	if (g_str_equal(ctl_data->file.program, "APPLICATION"))
 	    dumptype = IS_APPLICATION_API;
 #ifdef GNUTAR
-	if (strcmp(ctl_data->file.program, GNUTAR) == 0)
+	if (g_str_equal(ctl_data->file.program, GNUTAR))
 	    dumptype = IS_GNUTAR;
 #endif
 
 	if (dumptype == IS_UNKNOWN) {
 	    len_program = strlen(ctl_data->file.program);
 	    if(len_program >= 3 &&
-	       strcmp(&ctl_data->file.program[len_program-3],"tar") == 0)
+	       g_str_equal(&ctl_data->file.program[len_program - 3], "tar"))
 		dumptype = IS_TAR;
 	}
 
 #ifdef SAMBA_CLIENT
-	if (dumptype == IS_UNKNOWN && strcmp(ctl_data->file.program, SAMBA_CLIENT) ==0) {
+	if (dumptype == IS_UNKNOWN && g_str_equal(ctl_data->file.program,
+                                                  SAMBA_CLIENT)) {
 	    if (samba_extract_method == SAMBA_TAR)
 	      dumptype = IS_SAMBA_TAR;
 	    else
@@ -1933,13 +1936,13 @@ extract_files_child(
 	g_ptr_array_add(argv_ptr, g_strdup("-xB"));
 #else
 #if defined(XFSDUMP)
-	if (strcmp(ctl_data->file.program, XFSDUMP) == 0) {
+	if (g_str_equal(ctl_data->file.program, XFSDUMP)) {
 	    g_ptr_array_add(argv_ptr, g_strdup("-v"));
 	    g_ptr_array_add(argv_ptr, g_strdup("silent"));
 	} else
 #endif
 #if defined(VDUMP)
-	if (strcmp(ctl_data->file.program, VDUMP) == 0) {
+	if (g_str_equal(ctl_data->file.program, VDUMP)) {
 	    g_ptr_array_add(argv_ptr, g_strdup("xf"));
 	    g_ptr_array_add(argv_ptr, g_strdup("-"));	/* data on stdin */
 	} else
@@ -2006,7 +2009,7 @@ extract_files_child(
     	case IS_GNUTAR:
     	case IS_SAMBA_TAR:
     	case IS_SAMBA:
-	    if (strcmp(fn->path, "/") == 0)
+	    if (g_str_equal(fn->path, "/"))
 		g_ptr_array_add(argv_ptr, g_strdup("."));
 	    else
 		g_ptr_array_add(argv_ptr, g_strconcat(".", fn->path, NULL));
@@ -2014,7 +2017,7 @@ extract_files_child(
 	case IS_UNKNOWN:
 	case IS_DUMP:
 #if defined(XFSDUMP)
-	    if (strcmp(ctl_data->file.program, XFSDUMP) == 0) {
+	    if (g_str_equal(ctl_data->file.program, XFSDUMP)) {
 		/*
 		 * xfsrestore needs a -s option before each file to be
 		 * restored, and also wants them to be relative paths.
@@ -2030,7 +2033,7 @@ extract_files_child(
   	}
     }
 #if defined(XFSDUMP)
-    if (strcmp(ctl_data->file.program, XFSDUMP) == 0) {
+    if (g_str_equal(ctl_data->file.program, XFSDUMP)) {
 	g_ptr_array_add(argv_ptr, g_strdup("-"));
 	g_ptr_array_add(argv_ptr, g_strdup("."));
     }
@@ -2059,22 +2062,22 @@ extract_files_child(
     case IS_DUMP:
 	cmd = NULL;
 #if defined(DUMP)
-	if (strcmp(ctl_data->file.program, DUMP) == 0) {
+	if (g_str_equal(ctl_data->file.program, DUMP)) {
     	    cmd = g_strdup(RESTORE);
 	}
 #endif
 #if defined(VDUMP)
-	if (strcmp(ctl_data->file.program, VDUMP) == 0) {
+	if (g_str_equal(ctl_data->file.program, VDUMP)) {
     	    cmd = g_strdup(VRESTORE);
 	}
 #endif
 #if defined(VXDUMP)
-	if (strcmp(ctl_data->file.program, VXDUMP) == 0) {
+	if (g_str_equal(ctl_data->file.program, VXDUMP)) {
     	    cmd = g_strdup(VXRESTORE);
 	}
 #endif
 #if defined(XFSDUMP)
-	if (strcmp(ctl_data->file.program, XFSDUMP) == 0) {
+	if (g_str_equal(ctl_data->file.program, XFSDUMP)) {
     	    cmd = g_strdup(XFSRESTORE);
 	}
 #endif
@@ -2266,7 +2269,7 @@ extract_files(void)
 	tape_device_name = g_strdup(l + 4);
     }
 
-    if (strcmp(tape_device_name, "/dev/null") == 0)
+    if (g_str_equal(tape_device_name, "/dev/null"))
     {
 	g_printf(_("amrecover: warning: using %s as the tape device will not work\n"),
 	       tape_device_name);
@@ -2451,7 +2454,7 @@ amidxtaped_response(
 #endif
 
 	tok = strtok(pkt->body, " ");
-	if (tok == NULL || strcmp(tok, "ERROR") != 0)
+	if (tok == NULL || !g_str_equal(tok, "ERROR"))
 	    goto bad_nak;
 
 	tok = strtok(NULL, "\n");
@@ -2493,7 +2496,7 @@ bad_nak:
 	 * Error response packets have "ERROR" followed by the error message
 	 * followed by a newline.
 	 */
-	if (strcmp(tok, "ERROR") == 0) {
+	if (g_str_equal(tok, "ERROR")) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL)
 		tok = _("[bogus error packet]");
@@ -2507,14 +2510,15 @@ bad_nak:
         /*
          * Regular packets have CONNECT followed by three streams
          */
-        if (strcmp(tok, "CONNECT") == 0) {
+        if (g_str_equal(tok, "CONNECT")) {
 
 	    /*
 	     * Parse the three stream specifiers out of the packet.
 	     */
 	    for (i = 0; i < NSTREAMS; i++) {
 		tok = strtok(NULL, " ");
-		if (tok == NULL || strcmp(tok, amidxtaped_streams[i].name) != 0) {
+		if (tok == NULL || !g_str_equal(tok,
+                                                amidxtaped_streams[i].name)) {
 		    extra = g_strdup_printf(_("CONNECT token is \"%s\": expected \"%s\""),
 				      tok ? tok : "(null)",
 				      amidxtaped_streams[i].name);
@@ -2534,7 +2538,7 @@ bad_nak:
 	/*
 	 * OPTIONS [options string] '\n'
 	 */
-	if (strcmp(tok, "OPTIONS") == 0) {
+	if (g_str_equal(tok, "OPTIONS")) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL) {
 		extra = g_strdup(_("OPTIONS token is missing"));
@@ -2752,7 +2756,7 @@ read_amidxtaped_data(
 	/* call backup_support_option */
 	g_options.config = get_config_name();
 	g_options.hostname = dump_hostname;
-	if (strcmp(ctl_data->file.program, "APPLICATION") == 0) {
+	if (g_str_equal(ctl_data->file.program, "APPLICATION")) {
 	    if (dump_dle) {
 	        ctl_data->bsu = backup_support_option(ctl_data->file.application,
 						      &g_options,
@@ -2840,9 +2844,9 @@ ask_file_overwrite(
 	}
 
 	/* Collect files to delete befause of a bug in gnutar */
-	if (strcmp(ctl_data->file.program, "GNUTAR") == 0 ||
-	    (strcmp(ctl_data->file.program, "APPLICATION") == 0 &&
-	     strcmp(ctl_data->file.application, "amgtar") == 0)) {
+	if (g_str_equal(ctl_data->file.program, "GNUTAR") ||
+	    (g_str_equal(ctl_data->file.program, "APPLICATION") &&
+	     g_str_equal(ctl_data->file.application, "amgtar"))) {
 	    check_file_overwrite(restore_dir);
 	} else {
 	    g_printf(_("All existing files in %s can be deleted\n"),

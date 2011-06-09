@@ -125,7 +125,7 @@ local_connect(
     }
     myhostname[sizeof(myhostname)-1] = '\0';
 
-    if (strcmp(hostname, myhostname) != 0 &&
+    if (!g_str_equal(hostname, myhostname) &&
 	match("^localhost(\\.localdomain)?$", hostname) == 0) {
 	security_seterror(&rh->sech,
 	    _("%s: is not local"), hostname);

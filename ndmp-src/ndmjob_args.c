@@ -154,12 +154,12 @@ process_args (int argc, char *argv[])
 
 	progname = argv[0];
 
-	if (argc == 2 && strcmp (argv[1], "-help") == 0) {
+	if (argc == 2 && g_str_equal(argv[1], "-help")) {
 		help();
 		exit(0);
 	}
 
-	if (argc == 2 && strcmp (argv[1], "-v") == 0) {
+	if (argc == 2 && g_str_equal(argv[1], "-v")) {
 		ndmjob_version_info ();
 		exit(0);
 	}
@@ -176,7 +176,7 @@ process_args (int argc, char *argv[])
 	for (pp = help_text; *pp; pp++) {
 		p = *pp;
 
-		if (strncmp (p, "  -", 3) != 0)
+		if (!g_str_has_prefix(p, "  -"))
 			continue;
 		if (p[3] == 'o')
 			continue;	/* don't include o: repeatedly */
@@ -616,50 +616,50 @@ handle_long_option (char *str)
 				break;
 			}
 		}
-	} else if (strcmp (name, "swap-connect") == 0) {
+	} else if (g_str_equal(name, "swap-connect")) {
 		/* value part ignored */
 		o_swap_connect++;
-	} else if (strcmp (name, "time-limit") == 0) {
+	} else if (g_str_equal(name, "time-limit")) {
 		if (!value) {
 			o_time_limit = 5*60;
 		} else {
 			o_time_limit = atoi(value);
 		}
-	} else if (strcmp (name, "use-eject") == 0) {
+	} else if (g_str_equal(name, "use-eject")) {
 		if (!value) {
 			o_use_eject = 1;
 		} else {
 			o_use_eject = atoi(value);
 		}
-	} else if (strcmp (name, "tape-addr") == 0 && value) {
+	} else if (g_str_equal(name, "tape-addr") && value) {
 		o_tape_addr = atoi(value);
-	} else if (strcmp (name, "from-addr") == 0 && value) {
+	} else if (g_str_equal(name, "from-addr") && value) {
 		o_from_addr = atoi(value);
-	} else if (strcmp (name, "to-addr") == 0 && value) {
+	} else if (g_str_equal(name, "to-addr") && value) {
 		o_to_addr = atoi(value);
-	} else if (strcmp (name, "tape-timeout") == 0 && value) {
+	} else if (g_str_equal(name, "tape-timeout") && value) {
 		o_tape_timeout = atoi(value);
-	} else if (strcmp (name, "robot-timeout") == 0 && value) {
+	} else if (g_str_equal(name, "robot-timeout") && value) {
 		o_robot_timeout = atoi(value);
-	} else if (strcmp (name, "tape-scsi") == 0 && value) {
+	} else if (g_str_equal(name, "tape-scsi") && value) {
 		if (ndmscsi_target_from_str (&o_tape_scsi, value)) {
 			error_byebye ("bad -otape-scsi argument");
 		}
-	} else if (strcmp (name, "rules") == 0 && value) {
+	} else if (g_str_equal(name, "rules") && value) {
 		if (!value)
 			error_byebye ("missing RULES in -o rules");
 		o_rules = value;
-	} else if (strcmp (name, "load-files") == 0 && value) {
+	} else if (g_str_equal(name, "load-files") && value) {
 		o_load_files_file = value;
 #endif /* !NDMOS_OPTION_NO_CONTROL_AGENT */
-	} else if (strcmp (name, "no-time-stamps") == 0) {
+	} else if (g_str_equal(name, "no-time-stamps")) {
 		/* value part ignored */
 		o_no_time_stamps++;
-	} else if (strcmp (name, "config-file") == 0 && value) {
+	} else if (g_str_equal(name, "config-file") && value) {
 		o_config_file = value;
-	} else if (strcmp (name, "tape-tcp") == 0 && value) {
+	} else if (g_str_equal(name, "tape-tcp") && value) {
 		o_tape_tcp = value;
-	} else if (strcmp (name, "tape-limit") == 0) {
+	} else if (g_str_equal(name, "tape-limit")) {
 		if (!value) {
 			error_byebye ("tape-limit argument is required");
 		} else {
@@ -830,7 +830,7 @@ dump_settings (void)
 
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
 	if (I_index_file) {
-		if (strcmp (I_index_file, "-") == 0) {
+		if (g_str_equal(I_index_file, "-")) {
 			printf ("Index to log, enable FILEHIST\n");
 		} else {
 			printf ("Index to file %s, enable FILEHIST\n",
@@ -880,7 +880,7 @@ copy_args_expanding_macros (int argc, char *argv[], char *av[], int max_ac)
 	for (i = 0; i < argc; i++) {
 		arg = argv[i];
 
-		if (strncmp (arg, "--", 2) != 0 || arg[2] == 0) {
+		if (!g_str_has_prefix(arg, "--") || arg[2] == 0) {
 			av[ac++] = arg;
 			continue;
 		}
@@ -923,7 +923,7 @@ lookup_and_snarf (char *av[], char *name)
 
 	while (ndmstz_getstanza (fp, buf, sizeof buf) >= 0) {
 		if (buf[0] == '-' && buf[1] == '-'
-		 && strcmp (buf+2, name) == 0) {
+		 && g_str_equal(buf + 2, name)) {
 			found = 1;
 			break;
 		}

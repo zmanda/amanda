@@ -195,7 +195,7 @@ main (int ac, char *av[])
 			rewind (fp);
 			found = 0;
 			while (ndmstz_getstanza (fp, buf, sizeof buf) >= 0) {
-				if (strcmp (av[i], buf) == 0) {
+				if (g_str_equal(av[i], buf)) {
 					found = 1;
 					break;
 				}

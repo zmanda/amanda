@@ -122,7 +122,7 @@ main(
     startclock();
     dbprintf(_("version %s\n"), VERSION);
 
-    if(argc > 2 && strcmp(argv[1], "amandad") == 0) {
+    if(argc > 2 && g_str_equal(argv[1], "amandad")) {
 	amandad_auth = g_strdup(argv[2]);
     }
 
@@ -202,7 +202,7 @@ main(
 	s[-1] = '\0';				/* terminate the program name */
 
 	dle->program_is_application_api = 0;
-	if(strcmp(dle->program,"APPLICATION")==0) {
+	if(g_str_equal(dle->program, "APPLICATION")) {
 	    dle->program_is_application_api = 1;
 	    skip_whitespace(s, ch);		/* find dumper name */
 	    if (ch == '\0') {
@@ -384,7 +384,7 @@ check_options(
 	need_calcsize=1;
     }
 
-    if (strcmp(dle->program,"GNUTAR") == 0) {
+    if (g_str_equal(dle->program, "GNUTAR")) {
 	need_gnutar=1;
         if(dle->device && dle->device[0] == '/' && dle->device[1] == '/') {
 	    if(dle->exclude_file && dle->exclude_file->nb_element > 1) {
@@ -423,7 +423,7 @@ check_options(
 	}
     }
 
-    if (strcmp(dle->program,"DUMP") == 0) {
+    if (g_str_equal(dle->program, "DUMP")) {
 	if (dle->exclude_file && dle->exclude_file->nb_element > 0) {
 	    g_printf(_("ERROR [DUMP does not support exclude file]\n"));
 	}
@@ -442,7 +442,7 @@ check_options(
 #ifndef AIX_BACKUP
 #ifdef VDUMP
 #ifdef DUMP
-	if (dle->device && strcmp(amname_to_fstype(dle->device), "advfs") == 0)
+	if (dle->device && g_str_equal(amname_to_fstype(dle->device), "advfs"))
 #else
 	if (1)
 #endif
@@ -456,7 +456,7 @@ check_options(
 #endif /* VDUMP */
 #ifdef XFSDUMP
 #ifdef DUMP
-	if (dle->device && strcmp(amname_to_fstype(dle->device), "xfs") == 0)
+	if (dle->device && g_str_equal(amname_to_fstype(dle->device), "xfs"))
 #else
 	if (1)
 #endif
@@ -470,7 +470,7 @@ check_options(
 #endif /* XFSDUMP */
 #ifdef VXDUMP
 #ifdef DUMP
-	if (dle->device && strcmp(amname_to_fstype(dle->device), "vxfs") == 0)
+	if (dle->device && g_str_equal(amname_to_fstype(dle->device), "vxfs"))
 #else
 	if (1)
 #endif
@@ -501,7 +501,7 @@ check_options(
 	if (strcasecmp(dle->auth, amandad_auth) != 0) {
 	    g_fprintf(stdout,_("ERROR [client configured for auth=%s while server requested '%s']\n"),
 		    amandad_auth, dle->auth);
-	    if (strcmp(dle->auth, "ssh") == 0)  {	
+	    if (g_str_equal(dle->auth, "ssh"))  {	
 		g_fprintf(stderr, _("ERROR [The auth in ~/.ssh/authorized_keys "
 				  "should be \"--auth=ssh\", or use another auth "
 				  " for the DLE]\n"));
@@ -548,7 +548,7 @@ check_disk(
 	    }
 	}
 
-	if (strcmp(dle->program, "GNUTAR")==0) {
+	if (g_str_equal(dle->program, "GNUTAR")) {
             if(dle->device[0] == '/' && dle->device[1] == '/') {
 		#ifdef SAMBA_CLIENT
 		int nullfd, checkerr;
@@ -696,7 +696,7 @@ check_disk(
 	    amode = F_OK;
 	    amfree(device);
 	    device = amname_to_dirname(dle->device);
-	} else if (strcmp(dle->program, "DUMP") == 0) {
+	} else if (g_str_equal(dle->program, "DUMP")) {
 	    if(dle->device[0] == '/' && dle->device[1] == '/') {
 		err = g_strdup_printf(
 		  _("The DUMP program cannot handle samba shares, use GNUTAR: %s"),
@@ -705,7 +705,7 @@ check_disk(
 	    }
 #ifdef VDUMP								/* { */
 #ifdef DUMP								/* { */
-            if (strcmp(amname_to_fstype(dle->device), "advfs") == 0)
+            if (g_str_equal(amname_to_fstype(dle->device), "advfs"))
 #else									/* }{*/
 	    if (1)
 #endif									/* } */

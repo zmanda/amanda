@@ -119,14 +119,14 @@ main(
     argv++;
 
     dbprintf(_("config: %s\n"), argv[0]);
-    if (strcmp(argv[0], "NOCONFIG") != 0)
+    if (!g_str_equal(argv[0], "NOCONFIG"))
 	dbrename(argv[0], DBG_SUBDIR_CLIENT);
     argc--;
     argv++;
 
 #ifdef XFSDUMP
 
-    if (strcmp(argv[0], "xfsdump") == 0)
+    if (g_str_equal(argv[0], "xfsdump"))
         dump_program = XFSDUMP;
     else /* strcmp(argv[0], "xfsdump") != 0 */
 
@@ -134,7 +134,7 @@ main(
 
 #ifdef VXDUMP
 
-    if (strcmp(argv[0], "vxdump") == 0)
+    if (g_str_equal(argv[0], "vxdump"))
         dump_program = VXDUMP;
     else /* strcmp(argv[0], "vxdump") != 0 */
 
@@ -142,7 +142,7 @@ main(
 
 #ifdef VDUMP
 
-    if (strcmp(argv[0], "vdump") == 0)
+    if (g_str_equal(argv[0], "vdump"))
 	dump_program = VDUMP;
     else /* strcmp(argv[0], "vdump") != 0 */
 

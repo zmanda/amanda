@@ -91,7 +91,7 @@ main(
 
     cfg_ovr = extract_commandline_config_overrides(&argc, &argv);
 
-    if (argc > 1 && strcmp(argv[1], "-t") == 0) {
+    if (argc > 1 && g_str_equal(argv[1], "-t")) {
 	amtrmidx_debug = 1;
 	argc--;
 	argv++;
@@ -166,8 +166,8 @@ main(
 
 		dp_host = sanitise_filename(dp->host->hostname);
 		dp_disk = sanitise_filename(dp->name);
-		if (strcmp(host, dp_host) == 0 &&
-		    strcmp(disk, dp_disk) == 0) {
+		if (g_str_equal(host, dp_host) &&
+		    g_str_equal(disk, dp_disk)) {
 		    matching_dp = g_slist_append(matching_dp, dp);
 		}
 		amfree(dp_host);
@@ -213,7 +213,7 @@ main(
 		 */
 		l = strlen(f->d_name) - (sizeof(".tmp")-1);
 		if ((l > (len_date + 1))
-			&& (strcmp(f->d_name + l, ".tmp")==0)) {
+			&& (g_str_equal(f->d_name + l, ".tmp"))) {
 		    struct stat sbuf;
 		    char *path, *qpath;
 

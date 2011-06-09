@@ -258,11 +258,11 @@ clean_pathname(
 	s[length-1]='\0';
 
     /* change "/." to "/" */
-    if(strcmp(s,"/.")==0)
+    if(g_str_equal(s, "/."))
 	s[1]='\0';
 
     /* remove "/." at end of path */
-    if(strcmp(&(s[length-2]),"/.")==0)
+    if(g_str_equal(&(s[length - 2]), "/."))
 	s[length-2]='\0';
 }
 
@@ -312,12 +312,12 @@ guess_disk (
 		  fsent.fsname ? fsent.fsname : _("(fsname null)"));
 	if ((current_length > longest_match)
 	    && (current_length <= cwd_length)
-	    && (strncmp(fsent.mntdir, cwd, current_length) == 0))
+	    && (g_str_has_prefix(fsent.mntdir, cwd)))
 	{
 	    longest_match = current_length;
 	    g_free(*mpt_guess);
 	    *mpt_guess = g_strdup(fsent.mntdir);
-	    if(strncmp(fsent.fsname,DEV_PREFIX,(strlen(DEV_PREFIX))))
+	    if(!g_str_has_prefix(fsent.fsname, DEV_PREFIX))
 	    {
 	        g_free(fsname);
 	        fsname = g_strdup(fsent.fsname);
@@ -647,7 +647,7 @@ main(
 			   cwd, dn_guess, mpt_guess);
 		    set_disk(dn_guess, mpt_guess);
 		    set_directory(cwd);
-		    if (server_happy() && strcmp(cwd, mpt_guess) != 0)
+		    if (server_happy() && !g_str_equal(cwd, mpt_guess))
 		        g_printf(_("WARNING: not on root of selected filesystem, check man-page!\n"));
 		    amfree(dn_guess);
 		    amfree(mpt_guess);

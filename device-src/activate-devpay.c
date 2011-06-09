@@ -133,10 +133,10 @@ static void parser_got_text(GMarkupParseContext * context,
         return;
     } else if (g_strrstr(current_tag, "Code")) {
         /* Is it a code we know? */
-        if (strncmp(text, "ExpiredActivationKey", text_len) == 0) {
+        if (g_str_has_prefix(text, "ExpiredActivationKey")) {
             g_set_error(error, G_MARKUP_ERROR, -1,
                         "Activation key has expired; get a new one.");
-        } else if (strncmp(text, "InvalidActivationKey", text_len) == 0) {
+        } else if (g_str_has_prefix(text, "InvalidActivationKey")) {
             g_set_error(error, G_MARKUP_ERROR, -1,
                         "Activation key is not valid; double-check.");
         } else {

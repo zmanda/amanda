@@ -860,9 +860,9 @@ static void device_open_do_op(gpointer data,
                               gpointer user_data G_GNUC_UNUSED) {
     OpenDeviceOp * op = data;
 
-    if (strcmp(op->device_name, "ERROR") == 0 ||
-        strcmp(op->device_name, "MISSING") == 0 ||
-        strcmp(op->device_name, "DEGRADED") == 0) {
+    if (g_str_equal(op->device_name, "ERROR") ||
+        g_str_equal(op->device_name, "MISSING") ||
+        g_str_equal(op->device_name, "DEGRADED")) {
         g_warning("RAIT device %s contains a missing element, attempting "
                   "degraded mode.\n", op->rait_name);
         op->result = NULL;
@@ -984,7 +984,7 @@ static void
 rait_device_open_device (Device * dself, char * device_name,
 	    char * device_type G_GNUC_UNUSED, char * device_node) {
 
-    if (0 != strcmp(device_node, DEFER_CHILDREN_SENTINEL)) {
+    if (!g_str_equal(device_node, DEFER_CHILDREN_SENTINEL)) {
 	if (!open_child_devices(dself, device_name, device_node))
 	    return;
 
@@ -1264,8 +1264,8 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
         } else {
 	    if (child->volume_label != NULL && child->volume_time != NULL) {
                 if (label_from_device) {
-                    if (strcmp(child->volume_label, dself->volume_label) != 0 ||
-                        strcmp(child->volume_time, dself->volume_time) != 0) {
+                    if (!g_str_equal(child->volume_label, dself->volume_label) ||
+                        !g_str_equal(child->volume_time, dself->volume_time)) {
                         /* Mismatch! (Two devices provided different labels) */
                         char * this_message =
                             g_strdup_printf("%s: Label (%s/%s) is different "
@@ -2586,7 +2586,7 @@ rait_device_finish (Device * self) {
 static Device *
 rait_device_factory (char * device_name, char * device_type, char * device_node) {
     Device * rval;
-    g_assert(0 == strcmp(device_type, "rait"));
+    g_assert(g_str_equal(device_type, "rait"));
     rval = DEVICE(g_object_new(TYPE_RAIT_DEVICE, NULL));
     device_open_device(rval, device_name, device_type, device_node);
     return rval;

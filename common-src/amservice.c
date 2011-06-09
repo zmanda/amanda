@@ -263,7 +263,7 @@ handle_result(
 	} else {
 	    fprintf(stdout, "%s\n", line);
 	}
-	if (strncmp(line, "CONNECT ", 8) == 0) {
+	if (g_str_has_prefix(line, "CONNECT ")) {
 	    char *port = strchr(line, ' ');
 	    if (port) {
 		port = strchr(port+1, ' ');
@@ -271,7 +271,7 @@ handle_result(
 		    port_num = atoi(port+1);
 		}
 	    }
-	} else if (strncmp(line, "ERROR ", 6) == 0) {
+	} else if (g_str_has_prefix(line, "ERROR ")) {
 	    if (copy_stream) {
 		fprintf(stdout, "%s\n", line);
 	    }

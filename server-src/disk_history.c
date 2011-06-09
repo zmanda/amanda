@@ -78,7 +78,7 @@ add_dump(
     if (partnum > 1) {
 	for(item = disk_hist, before = NULL; item;
 	    before = item, item = item->next) {
-	    if (!strcmp(item->date, date) &&
+	    if (g_str_equal(item->date, date) &&
 		    item->level == level && item->is_split) {
 		item->tapes = append_to_tapelist(item->tapes, tape, file,
 						 partnum, isafile);
