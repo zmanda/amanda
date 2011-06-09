@@ -1653,6 +1653,7 @@ start_host(
     const security_driver_t *secdrv;
     char number[NUM_STR_SIZE];
     estimate_t estimate;
+    GString *strbuf;
 
     if(hostp->up != HOST_READY) {
 	return;
@@ -1885,17 +1886,19 @@ start_host(
 		  } 
 		}
 		if (am_has_feature(hostp->features, fe_req_xml)) {
-		    l = g_strjoin(NULL, "<dle>\n"
-				  "  <program>",
-				  dp->program,
-				  "</program>\n", NULL);
-		    es = xml_estimate(dp->estimatelist, hostp->features);
-		    vstrextend(&l, es, "\n", NULL);
-		    amfree(es);
-		    vstrextend(&l, "  ", b64disk, "\n", NULL);
-		    if (dp->device)
-			vstrextend(&l, "  ", b64device, "\n", NULL);
-		    vstrextend(&l, o, "</dle>\n", NULL);
+                    strbuf = g_string_new("<dle>\n");
+                    es = xml_estimate(dp->estimatelist, hostp->features);
+                    g_string_append_printf(strbuf,
+                        "  <program>%s</program>\n"
+                        "%s\n"
+                        "  %s\n",
+                        dp->program, es, b64disk
+                    );
+                    g_free(es);
+                    if (dp->device)
+                        g_string_append_printf(strbuf, "  %s\n", b64device);
+                    g_string_append_printf(strbuf, "%s</dle>\n", o);
+                    l = g_string_free(strbuf, FALSE);
 		} else {
 		    if (dp->device) {
 			l = g_strjoin(NULL, calcsize,
@@ -1926,17 +1929,15 @@ start_host(
 		    remote_errors++;
 		    l = g_strdup("");
 		} else {
-		    l = g_strjoin(NULL, "<dle>\n"
-				  "  <program>APPLICATION</program>\n", NULL);
+                    strbuf = g_string_new("<dle>\n  <program>APPLICATION</program>\n");
 		    if (dp->application) {
-			application_t *application;
-			char          *xml_app;
+			application_t *application = lookup_application(dp->application);
 
-			application = lookup_application(dp->application);
 			if (!application) {
 			    g_fprintf(outf,
 			      _("ERROR: application '%s' not found.\n"), dp->application);
 			} else {
+			    char *xml_app = xml_application(dp, application, hostp->features);
 		    	    char *client_name = application_get_client_name(application);
 			    if (client_name && strlen(client_name) > 0 &&
 				!am_has_feature(hostp->features, fe_application_client_name)) {
@@ -1944,11 +1945,11 @@ start_host(
 			      _("WARNING: %s:%s does not support client-name in application.\n"),
 			      hostp->hostname, qname);
 			    }
-			    xml_app = xml_application(dp, application, hostp->features);
-			    vstrextend(&l, xml_app, NULL);
-			    amfree(xml_app);
+                            g_string_append(strbuf, xml_app);
+			    g_free(xml_app);
 			}
 		    }
+
 		    if (dp->pp_scriptlist) {
 			if (!am_has_feature(hostp->features, fe_pp_script)) {
 			    g_fprintf(outf,
@@ -1970,12 +1971,13 @@ start_host(
 			}
 		    }
 		    es = xml_estimate(dp->estimatelist, hostp->features);
-		    vstrextend(&l, es, "\n", NULL);
-		    amfree(es);
-		    vstrextend(&l, "  ", b64disk, "\n", NULL);
+                    g_string_append_printf(strbuf, "%s\n  %s\n", es, b64disk);
+		    g_free(es);
+
 		    if (dp->device)
-			vstrextend(&l, "  ", b64device, "\n", NULL);
-		    vstrextend(&l, o, "</dle>\n", NULL);
+			g_string_append_printf(strbuf, "  %s\n", b64device);
+                    g_string_append_printf(strbuf, "%s</dle>\n", o);
+                    l = g_string_free(strbuf, FALSE);
 		}
 	    }
 	    amfree(qname);
