@@ -1482,29 +1482,32 @@ static void xml_property(
     gpointer value_p,
     gpointer user_data_p)
 {
-    char       *property_s = key_p;
-    char       *b64property;
+    char       *tmp;
     property_t *property = value_p;
-    char       *b64value_data;
     xml_app_t  *xml_app = user_data_p;
     GSList     *value;
+    GString    *strbuf;
 
-    b64property = amxml_format_tag("name", property_s);
-    vstrextend(&xml_app->result, "    <property>\n",
-				"      ", b64property, "\n", NULL);
+    strbuf = g_string_new(xml_app->result);
+
+    tmp = amxml_format_tag("name", (char *)key_p);
+    g_string_append_printf(strbuf, "    <property>\n      %s\n", tmp);
+    g_free(tmp);
+
     // TODO if client have fe_xml_property_priority
-    if (property->priority &&
-	am_has_feature(xml_app->features, fe_xml_property_priority)) {
-	vstrextend(&xml_app->result, "      <priority>yes</priority>\n", NULL);
-    }
-    for(value = property->values; value != NULL; value = value->next) {
-	b64value_data = amxml_format_tag("value", value->data);
-	vstrextend(&xml_app->result, "      ", b64value_data, "\n", NULL);
-	amfree(b64value_data);
-    }
-    vstrextend(&xml_app->result, "    </property>\n", NULL);
+    if (property->priority
+        && am_has_feature(xml_app->features, fe_xml_property_priority))
+        g_string_append(strbuf, "      <priority>yes</priority>\n");
 
-    amfree(b64property);
+    for (value = property->values; value != NULL; value = value->next) {
+	tmp = amxml_format_tag("value", value->data);
+        g_string_append_printf(strbuf, "      %s", tmp);
+	g_free(tmp);
+    }
+    g_string_append_printf(strbuf, "    </property>\n");
+
+    g_free(xml_app->result);
+    xml_app->result = g_string_free(strbuf, FALSE);
 }
 
 char *
