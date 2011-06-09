@@ -688,7 +688,7 @@ gl_waitqueue_init (gl_waitqueue_t *wq)
 {
   wq->array = NULL;
   wq->count = 0;
-  wq->g_malloc = 0;
+  wq->alloc = 0;
   wq->offset = 0;
 }
 
@@ -700,9 +700,9 @@ gl_waitqueue_add (gl_waitqueue_t *wq)
   HANDLE event;
   unsigned int index;
 
-  if (wq->count == wq->g_malloc)
+  if (wq->count == wq->alloc)
     {
-      unsigned int new_alloc = 2 * wq->g_malloc + 1;
+      unsigned int new_alloc = 2 * wq->alloc + 1;
       HANDLE *new_array =
         (HANDLE *) realloc (wq->array, new_alloc * sizeof (HANDLE));
       if (new_array == NULL)
@@ -713,7 +713,7 @@ gl_waitqueue_add (gl_waitqueue_t *wq)
       if (wq->offset > 0)
         {
           unsigned int old_count = wq->count;
-          unsigned int old_alloc = wq->g_malloc;
+          unsigned int old_alloc = wq->alloc;
           unsigned int old_offset = wq->offset;
           unsigned int i;
           if (old_offset + old_count > old_alloc)
@@ -727,7 +727,7 @@ gl_waitqueue_add (gl_waitqueue_t *wq)
           wq->offset = 0;
         }
       wq->array = new_array;
-      wq->g_malloc = new_alloc;
+      wq->alloc = new_alloc;
     }
   /* Whether the created event is a manual-reset one or an auto-reset one,
      does not matter, since we will wait on it only once.  */
@@ -736,8 +736,8 @@ gl_waitqueue_add (gl_waitqueue_t *wq)
     /* No way to allocate an event.  */
     return INVALID_HANDLE_VALUE;
   index = wq->offset + wq->count;
-  if (index >= wq->g_malloc)
-    index -= wq->g_malloc;
+  if (index >= wq->alloc)
+    index -= wq->alloc;
   wq->array[index] = event;
   wq->count++;
   return event;
@@ -750,7 +750,7 @@ gl_waitqueue_notify_first (gl_waitqueue_t *wq)
   SetEvent (wq->array[wq->offset + 0]);
   wq->offset++;
   wq->count--;
-  if (wq->count == 0 || wq->offset == wq->g_malloc)
+  if (wq->count == 0 || wq->offset == wq->alloc)
     wq->offset = 0;
 }
 
@@ -763,8 +763,8 @@ gl_waitqueue_notify_all (gl_waitqueue_t *wq)
   for (i = 0; i < wq->count; i++)
     {
       unsigned int index = wq->offset + i;
-      if (index >= wq->g_malloc)
-        index -= wq->g_malloc;
+      if (index >= wq->alloc)
+        index -= wq->alloc;
       SetEvent (wq->array[index]);
     }
   wq->count = 0;
