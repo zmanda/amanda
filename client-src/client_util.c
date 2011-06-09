@@ -137,7 +137,7 @@ build_name(
 	d_name_len = strlen(entry->d_name);
 	if(strncmp(test_name, entry->d_name, match_len) != 0
 	   || d_name_len < match_len + 14 + 8
-	   || strcmp(entry->d_name+ d_name_len - 7, exin) != 0) {
+	   || !g_str_equal(entry->d_name + d_name_len - 7, exin)) {
 	    continue;				/* not one of our files */
 	}
 	if(strcmp(entry->d_name, test_name) < 0) {
@@ -610,7 +610,7 @@ parse_options(
 	    }
 	    dle->exclude_optional = 1;
 	}
-	else if (strcmp(tok, "include-optional") == 0) {
+	else if (g_str_equal(tok, "include-optional")) {
 	    if (dle->include_optional != 0) {
 		dbprintf(_("multiple include-optional option\n"));
 		if (verbose) {
@@ -642,7 +642,7 @@ parse_options(
 	else if (BSTRNCMP(tok,"kencrypt") == 0) {
 	    dle->kencrypt = 1;
 	}
-	else if (strcmp(tok,"|") != 0) {
+	else if (!g_str_equal(tok, "|")) {
 	    quoted = quote_string(tok);
 	    dbprintf(_("unknown option %s\n"), quoted);
 	    if (verbose) {
@@ -956,83 +956,83 @@ backup_support_option(
     }
     while((line = agets(streamout)) != NULL) {
 	dbprintf(_("support line: %s\n"), line);
-	if (strncmp(line,"CONFIG ", 7) == 0) {
-	    if (strcmp(line+7, "YES") == 0)
+	if (g_str_has_prefix(line, "CONFIG ")) {
+	    if (g_str_equal(line + 7, "YES"))
 		bsu->config = 1;
-	} else if (strncmp(line,"HOST ", 5) == 0) {
-	    if (strcmp(line+5, "YES") == 0)
+	} else if (g_str_has_prefix(line, "HOST ")) {
+	    if (g_str_equal(line + 5, "YES"))
 	    bsu->host = 1;
-	} else if (strncmp(line,"DISK ", 5) == 0) {
-	    if (strcmp(line+5, "YES") == 0)
+	} else if (g_str_has_prefix(line, "DISK ")) {
+	    if (g_str_equal(line + 5, "YES"))
 		bsu->disk = 1;
-	} else if (strncmp(line,"INDEX-LINE ", 11) == 0) {
-	    if (strcmp(line+11, "YES") == 0)
+	} else if (g_str_has_prefix(line, "INDEX-LINE ")) {
+	    if (g_str_equal(line + 11, "YES"))
 		bsu->index_line = 1;
-	} else if (strncmp(line,"INDEX-XML ", 10) == 0) {
-	    if (strcmp(line+10, "YES") == 0)
+	} else if (g_str_has_prefix(line, "INDEX-XML ")) {
+	    if (g_str_equal(line + 10, "YES"))
 		bsu->index_xml = 1;
-	} else if (strncmp(line,"MESSAGE-LINE ", 13) == 0) {
-	    if (strcmp(line+13, "YES") == 0)
+	} else if (g_str_has_prefix(line, "MESSAGE-LINE ")) {
+	    if (g_str_equal(line + 13, "YES"))
 		bsu->message_line = 1;
-	} else if (strncmp(line,"MESSAGE-XML ", 12) == 0) {
-	    if (strcmp(line+12, "YES") == 0)
+	} else if (g_str_has_prefix(line, "MESSAGE-XML ")) {
+	    if (g_str_equal(line + 12, "YES"))
 		bsu->message_xml = 1;
-	} else if (strncmp(line,"RECORD ", 7) == 0) {
-	    if (strcmp(line+7, "YES") == 0)
+	} else if (g_str_has_prefix(line, "RECORD ")) {
+	    if (g_str_equal(line + 7, "YES"))
 		bsu->record = 1;
-	} else if (strncmp(line,"INCLUDE-FILE ", 13) == 0) {
-	    if (strcmp(line+13, "YES") == 0)
+	} else if (g_str_has_prefix(line, "INCLUDE-FILE ")) {
+	    if (g_str_equal(line + 13, "YES"))
 		bsu->include_file = 1;
-	} else if (strncmp(line,"INCLUDE-LIST ", 13) == 0) {
-	    if (strcmp(line+13, "YES") == 0)
+	} else if (g_str_has_prefix(line, "INCLUDE-LIST ")) {
+	    if (g_str_equal(line + 13, "YES"))
 		bsu->include_list = 1;
-	} else if (strncmp(line,"INCLUDE-LIST-GLOB ", 17) == 0) {
-	    if (strcmp(line+17, "YES") == 0)
+	} else if (g_str_has_prefix(line, "INCLUDE-LIST-GLOB ")) {
+	    if (g_str_equal(line + 17, "YES"))
 		bsu->include_list_glob = 1;
-	} else if (strncmp(line,"INCLUDE-OPTIONAL ", 17) == 0) {
-	    if (strcmp(line+17, "YES") == 0)
+	} else if (g_str_has_prefix(line, "INCLUDE-OPTIONAL ")) {
+	    if (g_str_equal(line + 17, "YES"))
 		bsu->include_optional = 1;
-	} else if (strncmp(line,"EXCLUDE-FILE ", 13) == 0) {
-	    if (strcmp(line+13, "YES") == 0)
+	} else if (g_str_has_prefix(line, "EXCLUDE-FILE ")) {
+	    if (g_str_equal(line + 13, "YES"))
 		bsu->exclude_file = 1;
-	} else if (strncmp(line,"EXCLUDE-LIST ", 13) == 0) {
-	    if (strcmp(line+13, "YES") == 0)
+	} else if (g_str_has_prefix(line, "EXCLUDE-LIST ")) {
+	    if (g_str_equal(line + 13, "YES"))
 		bsu->exclude_list = 1;
-	} else if (strncmp(line,"EXCLUDE-LIST-GLOB ", 17) == 0) {
-	    if (strcmp(line+17, "YES") == 0)
+	} else if (g_str_has_prefix(line, "EXCLUDE-LIST-GLOB ")) {
+	    if (g_str_equal(line + 17, "YES"))
 		bsu->exclude_list_glob = 1;
-	} else if (strncmp(line,"EXCLUDE-OPTIONAL ", 17) == 0) {
-	    if (strcmp(line+17, "YES") == 0)
+	} else if (g_str_has_prefix(line, "EXCLUDE-OPTIONAL ")) {
+	    if (g_str_equal(line + 17, "YES"))
 		bsu->exclude_optional = 1;
-	} else if (strncmp(line,"COLLECTION ", 11) == 0) {
-	    if (strcmp(line+11, "YES") == 0)
+	} else if (g_str_has_prefix(line, "COLLECTION ")) {
+	    if (g_str_equal(line + 11, "YES"))
 		bsu->collection = 1;
-	} else if (strncmp(line,"CALCSIZE ", 9) == 0) {
-	    if (strcmp(line+9, "YES") == 0)
+	} else if (g_str_has_prefix(line, "CALCSIZE ")) {
+	    if (g_str_equal(line + 9, "YES"))
 		bsu->calcsize = 1;
-	} else if (strncmp(line,"CLIENT-ESTIMATE ", 16) == 0) {
-	    if (strcmp(line+16, "YES") == 0)
+	} else if (g_str_has_prefix(line, "CLIENT-ESTIMATE ")) {
+	    if (g_str_equal(line + 16, "YES"))
 		bsu->client_estimate = 1;
-	} else if (strncmp(line,"MULTI-ESTIMATE ", 15) == 0) {
-	    if (strcmp(line+15, "YES") == 0)
+	} else if (g_str_has_prefix(line, "MULTI-ESTIMATE ")) {
+	    if (g_str_equal(line + 15, "YES"))
 		bsu->multi_estimate = 1;
-	} else if (strncmp(line,"MAX-LEVEL ", 10) == 0) {
+	} else if (g_str_has_prefix(line, "MAX-LEVEL ")) {
 	    bsu->max_level  = atoi(line+10);
-	} else if (strncmp(line,"RECOVER-MODE ", 13) == 0) {
+	} else if (g_str_has_prefix(line, "RECOVER-MODE ")) {
 	    if (strcasecmp(line+13, "SMB") == 0)
 		bsu->smb_recover_mode = 1;
-	} else if (strncmp(line,"DATA-PATH ", 10) == 0) {
+	} else if (g_str_has_prefix(line, "DATA-PATH ")) {
 	    if (strcasecmp(line+10, "AMANDA") == 0)
 		bsu->data_path_set |= DATA_PATH_AMANDA;
 	    else if (strcasecmp(line+10, "DIRECTTCP") == 0)
 		bsu->data_path_set |= DATA_PATH_DIRECTTCP;
-	} else if (strncmp(line,"RECOVER-PATH ", 13) == 0) {
+	} else if (g_str_has_prefix(line, "RECOVER-PATH ")) {
 	    if (strcasecmp(line+13, "CWD") == 0)
 		bsu->recover_path = RECOVER_PATH_CWD;
 	    else if (strcasecmp(line+13, "REMOTE") == 0)
 		bsu->recover_path = RECOVER_PATH_REMOTE;
-	} else if (strncmp(line,"AMFEATURES ", 11) == 0) {
-	    if (strcmp(line+11, "YES") == 0)
+	} else if (g_str_has_prefix(line, "AMFEATURES ")) {
+	    if (g_str_equal(line + 11, "YES"))
 		bsu->features = 1;
 	} else {
 	    dbprintf(_("Invalid support line: %s\n"), line);
@@ -1549,7 +1549,7 @@ run_calcsize(
 	if (line[0] == '\0' || (int)strlen(line) <= len)
 	    continue;
 	/* Don't use sscanf for qdisk because it can have a '%'. */
-	if (strncmp(line, qdisk, len) == 0 &&
+	if (g_str_has_prefix(line, qdisk) &&
 	    sscanf(line+len, match_expr, &level, &size_) == 2) {
 	    g_printf("%d %lld %d\n", level, size_, 1); /* write to sendsize */
 	    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
@@ -1775,15 +1775,15 @@ add_type_table(
 	    GSList *mes;
 
 	    for (mes = normal_message; mes != NULL; mes = mes->next) {
-		if (strcmp(rp->regex, (char *)mes->data) == 0)
+		if (g_str_equal(rp->regex, (char *)mes->data))
 		    found = 1;
 	    }
 	    for (mes = ignore_message; mes != NULL; mes = mes->next) {
-		if (strcmp(rp->regex, (char *)mes->data) == 0)
+		if (g_str_equal(rp->regex, (char *)mes->data))
 		    found = 1;
 	    }
 	    for (mes = strange_message; mes != NULL; mes = mes->next) {
-		if (strcmp(rp->regex, (char *)mes->data) == 0)
+		if (g_str_equal(rp->regex, (char *)mes->data))
 		    found = 1;
 	    }
 	    if (found == 0) {

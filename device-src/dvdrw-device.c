@@ -233,7 +233,7 @@ dvdrw_device_factory(char *device_name, char *device_type, char *device_node)
 {
     Device *device;
 
-    g_assert(0 == strncmp(device_type, "dvdrw", strlen("dvdrw")));
+    g_assert(g_str_has_prefix(device_type, "dvdrw"));
 
     device = DEVICE(g_object_new(TYPE_DVDRW_DEVICE, NULL));
     device_open_device(device, device_name, device_type, device_node);

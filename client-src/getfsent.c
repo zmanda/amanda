@@ -303,7 +303,7 @@ get_fstab_nextentry(
 	fsent->mntopts = "rw";
     } else {
 	fsent->fstype = "";
-	if (strcmp(fsent->mntopts, "-r") == 0) {
+	if (g_str_equal(fsent->mntopts, "-r")) {
 	    fsent->mntopts = "ro";
 	}
     }
@@ -512,12 +512,12 @@ is_local_fstype(
 
     /* just eliminate fstypes known to be remote or unsavable */
 
-    return strcmp(fsent->fstype, "nfs") != 0 && /* NFS */
-	   strcmp(fsent->fstype, "afs") != 0 &&	/* Andrew Filesystem */
-	   strcmp(fsent->fstype, "swap") != 0 && /* Swap */
-	   strcmp(fsent->fstype, "iso9660") != 0 && /* CDROM */
-	   strcmp(fsent->fstype, "hs") != 0 && /* CDROM */
-	   strcmp(fsent->fstype, "piofs") != 0;	/* an AIX printer thing? */
+    return !g_str_equal(fsent->fstype, "nfs") && /* NFS */
+	   !g_str_equal(fsent->fstype, "afs") &&	/* Andrew Filesystem */
+	   !g_str_equal(fsent->fstype, "swap") && /* Swap */
+	   !g_str_equal(fsent->fstype, "iso9660") && /* CDROM */
+	   !g_str_equal(fsent->fstype, "hs") && /* CDROM */
+	   !g_str_equal(fsent->fstype, "piofs");	/* an AIX printer thing? */
 }
 
 

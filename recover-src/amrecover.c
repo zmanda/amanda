@@ -285,11 +285,11 @@ clean_pathname(
 	s[length-1]='\0';
 
     /* change "/." to "/" */
-    if(strcmp(s,"/.")==0)
+    if(g_str_equal(s, "/."))
 	s[1]='\0';
 
     /* remove "/." at end of path */
-    if(strcmp(&(s[length-2]),"/.")==0)
+    if(g_str_equal(&(s[length - 2]), "/."))
 	s[length-2]='\0';
 }
 
@@ -650,7 +650,7 @@ amindexd_response(
 #endif
 
 	tok = strtok(pkt->body, " ");
-	if (tok == NULL || strcmp(tok, "ERROR") != 0)
+	if (tok == NULL || !g_str_equal(tok, "ERROR"))
 	    goto bad_nak;
 
 	tok = strtok(NULL, "\n");
@@ -692,7 +692,7 @@ bad_nak:
 	 * Error response packets have "ERROR" followed by the error message
 	 * followed by a newline.
 	 */
-	if (strcmp(tok, "ERROR") == 0) {
+	if (g_str_equal(tok, "ERROR")) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL) {
 	        g_free(errstr);
@@ -709,14 +709,14 @@ bad_nak:
         /*
          * Regular packets have CONNECT followed by three streams
          */
-        if (strcmp(tok, "CONNECT") == 0) {
+        if (g_str_equal(tok, "CONNECT")) {
 
 	    /*
 	     * Parse the three stream specifiers out of the packet.
 	     */
 	    for (i = 0; i < NSTREAMS; i++) {
 		tok = strtok(NULL, " ");
-		if (tok == NULL || strcmp(tok, streams[i].name) != 0) {
+		if (tok == NULL || !g_str_equal(tok, streams[i].name)) {
 		    extra = g_strdup_printf(
 			   _("CONNECT token is \"%s\": expected \"%s\""),
 			   tok ? tok : _("(null)"), streams[i].name);
@@ -736,7 +736,7 @@ bad_nak:
 	/*
 	 * OPTIONS [options string] '\n'
 	 */
-	if (strcmp(tok, "OPTIONS") == 0) {
+	if (g_str_equal(tok, "OPTIONS")) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL) {
 		extra = g_strdup(_("OPTIONS token is missing"));

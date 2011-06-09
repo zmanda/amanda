@@ -84,7 +84,7 @@ main(
     }
     dbprintf(_("version %s\n"), VERSION);
     dbprintf(_("config: %s\n"), argv[1]);
-    if (strcmp(argv[1], "NOCONFIG") != 0)
+    if (!g_str_equal(argv[1], "NOCONFIG"))
 	dbrename(argv[1], DBG_SUBDIR_CLIENT);
 
 #ifdef WANT_SETUID_CLIENT

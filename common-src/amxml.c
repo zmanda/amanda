@@ -207,10 +207,10 @@ amstart_element(
 	for(at_names = attribute_names, at_values = attribute_values;
 	    *at_names != NULL && at_values != NULL;
 	    at_names++, at_values++) {
-	    if (strcmp(*at_names, "encoding") == 0) {
+	    if (g_str_equal(*at_names, "encoding")) {
 		amfree(data_user->encoding);
 		data_user->encoding = g_strdup(*at_values);
-	    } else if (strcmp(*at_names, "raw") == 0) {
+	    } else if (g_str_equal(*at_names, "raw")) {
 		amfree(data_user->raw);
 		data_user->raw = base64_decode_alloc_string((char *)*at_values);
 	    } else {
@@ -222,7 +222,7 @@ amstart_element(
 	}
     }
 
-    if (strcmp(element_name, "dle") == 0) {
+    if (g_str_equal(element_name, "dle")) {
 	if (last_element != NULL) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid dle element");
@@ -257,72 +257,73 @@ amstart_element(
 	data_user->alevel = NULL;
 	amfree(data_user->encoding);
 	amfree(data_user->raw);
-    } else if(strcmp(element_name, "disk"          ) == 0 ||
-	      strcmp(element_name, "diskdevice"    ) == 0 ||
-	      strcmp(element_name, "calcsize"      ) == 0 ||
-	      strcmp(element_name, "estimate"      ) == 0 ||
-	      strcmp(element_name, "program"       ) == 0 ||
-	      strcmp(element_name, "auth"          ) == 0 ||
-	      strcmp(element_name, "index"         ) == 0 ||
-	      strcmp(element_name, "dumpdate"      ) == 0 ||
-	      strcmp(element_name, "level"         ) == 0 ||
-	      strcmp(element_name, "record"        ) == 0 ||
-	      strcmp(element_name, "spindle"       ) == 0 ||
-	      strcmp(element_name, "compress"      ) == 0 ||
-	      strcmp(element_name, "encrypt"       ) == 0 ||
-	      strcmp(element_name, "kencrypt"      ) == 0 ||
-	      strcmp(element_name, "datapath"      ) == 0 ||
-	      strcmp(element_name, "exclude"       ) == 0 ||
-	      strcmp(element_name, "include"       ) == 0) {
-	if (!last_element_name || strcmp(last_element_name, "dle") != 0) {
+    } else if(g_str_equal(element_name, "disk") ||
+	      g_str_equal(element_name, "diskdevice") ||
+	      g_str_equal(element_name, "calcsize") ||
+	      g_str_equal(element_name, "estimate") ||
+	      g_str_equal(element_name, "program") ||
+	      g_str_equal(element_name, "auth") ||
+	      g_str_equal(element_name, "index") ||
+	      g_str_equal(element_name, "dumpdate") ||
+	      g_str_equal(element_name, "level") ||
+	      g_str_equal(element_name, "record") ||
+	      g_str_equal(element_name, "spindle") ||
+	      g_str_equal(element_name, "compress") ||
+	      g_str_equal(element_name, "encrypt") ||
+	      g_str_equal(element_name, "kencrypt") ||
+	      g_str_equal(element_name, "datapath") ||
+	      g_str_equal(element_name, "exclude") ||
+	      g_str_equal(element_name, "include")) {
+	if (!last_element_name || !g_str_equal(last_element_name, "dle")) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
 	}
-	if ((strcmp(element_name, "disk"          ) == 0 && dle->disk) ||
-	    (strcmp(element_name, "diskdevice"    ) == 0 && dle->device) ||
-	    (strcmp(element_name, "calcsize"      ) == 0 && data_user->has_calcsize) ||
-	    (strcmp(element_name, "estimate"      ) == 0 && data_user->has_estimate) ||
-	    (strcmp(element_name, "record"        ) == 0 && data_user->has_record) ||
-	    (strcmp(element_name, "spindle"       ) == 0 && data_user->has_spindle) ||
-	    (strcmp(element_name, "program"       ) == 0 && dle->program) ||
-	    (strcmp(element_name, "auth"          ) == 0 && dle->auth) ||
-	    (strcmp(element_name, "index"         ) == 0 && data_user->has_index) ||
-	    (strcmp(element_name, "dumpdate"      ) == 0 && dle->dumpdate) ||
-	    (strcmp(element_name, "compress"      ) == 0 && data_user->has_compress) ||
-	    (strcmp(element_name, "encrypt"       ) == 0 && data_user->has_encrypt) ||
-	    (strcmp(element_name, "kencrypt"      ) == 0 && data_user->has_kencrypt) ||
-	    (strcmp(element_name, "datapath"      ) == 0 && data_user->has_datapath) ||
-	    (strcmp(element_name, "exclude"       ) == 0 && data_user->has_exclude) ||
-	    (strcmp(element_name, "include"       ) == 0 && data_user->has_include)) {
+	if ((g_str_equal(element_name, "disk") && dle->disk) ||
+	    (g_str_equal(element_name, "diskdevice") && dle->device) ||
+	    (g_str_equal(element_name, "calcsize") && data_user->has_calcsize) ||
+	    (g_str_equal(element_name, "estimate") && data_user->has_estimate) ||
+	    (g_str_equal(element_name, "record") && data_user->has_record) ||
+	    (g_str_equal(element_name, "spindle") && data_user->has_spindle) ||
+	    (g_str_equal(element_name, "program") && dle->program) ||
+	    (g_str_equal(element_name, "auth") && dle->auth) ||
+	    (g_str_equal(element_name, "index") && data_user->has_index) ||
+	    (g_str_equal(element_name, "dumpdate") && dle->dumpdate) ||
+	    (g_str_equal(element_name, "compress") && data_user->has_compress) ||
+	    (g_str_equal(element_name, "encrypt") && data_user->has_encrypt) ||
+	    (g_str_equal(element_name, "kencrypt") && data_user->has_kencrypt) ||
+	    (g_str_equal(element_name, "datapath") && data_user->has_datapath) ||
+	    (g_str_equal(element_name, "exclude") && data_user->has_exclude) ||
+	    (g_str_equal(element_name, "include") && data_user->has_include)) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Duplicate %s element", element_name);
 	    return;
 	}
-	if (strcmp(element_name, "calcsize"      ) == 0) data_user->has_calcsize       = 1;
-	if (strcmp(element_name, "estimate"      ) == 0) data_user->has_estimate       = 1;
-	if (strcmp(element_name, "record"        ) == 0) data_user->has_record         = 1;
-	if (strcmp(element_name, "spindle"       ) == 0) data_user->has_spindle        = 1;
-	if (strcmp(element_name, "index"         ) == 0) data_user->has_index          = 1;
-	if (strcmp(element_name, "compress"      ) == 0) data_user->has_compress       = 1;
-	if (strcmp(element_name, "encrypt"       ) == 0) data_user->has_encrypt        = 1;
-	if (strcmp(element_name, "kencrypt"      ) == 0) data_user->has_kencrypt       = 1;
-	if (strcmp(element_name, "datapath"      ) == 0) data_user->has_datapath       = 1;
-	if (strcmp(element_name, "exclude"       ) == 0) data_user->has_exclude        = 1;
-	if (strcmp(element_name, "include"       ) == 0) data_user->has_include        = 1;
-	if (strcmp(element_name, "exclude") == 0 || strcmp(element_name, "include") == 0)
+	if (g_str_equal(element_name, "calcsize")) data_user->has_calcsize       = 1;
+	if (g_str_equal(element_name, "estimate")) data_user->has_estimate       = 1;
+	if (g_str_equal(element_name, "record")) data_user->has_record         = 1;
+	if (g_str_equal(element_name, "spindle")) data_user->has_spindle        = 1;
+	if (g_str_equal(element_name, "index")) data_user->has_index          = 1;
+	if (g_str_equal(element_name, "compress")) data_user->has_compress       = 1;
+	if (g_str_equal(element_name, "encrypt")) data_user->has_encrypt        = 1;
+	if (g_str_equal(element_name, "kencrypt")) data_user->has_kencrypt       = 1;
+	if (g_str_equal(element_name, "datapath")) data_user->has_datapath       = 1;
+	if (g_str_equal(element_name, "exclude")) data_user->has_exclude        = 1;
+	if (g_str_equal(element_name, "include")) data_user->has_include        = 1;
+	if (g_str_equal(element_name, "exclude") || g_str_equal(element_name,
+                                                                "include"))
 	   data_user->has_optional = 0;
-	if (strcmp(element_name, "level") == 0) {
+	if (g_str_equal(element_name, "level")) {
 	    data_user->alevel = g_new0(level_t, 1);
 	}
-    } else if (strcmp(element_name, "server") == 0) {
-	if (!last_element_name || strcmp(last_element_name, "level") != 0) {
+    } else if (g_str_equal(element_name, "server")) {
+	if (!last_element_name || !g_str_equal(last_element_name, "level")) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
 	}
-    } else if(strcmp(element_name, "custom-compress-program") == 0) {
-	if (!last_element_name || strcmp(last_element_name, "compress") != 0) {
+    } else if(g_str_equal(element_name, "custom-compress-program")) {
+	if (!last_element_name || !g_str_equal(last_element_name, "compress")) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
@@ -332,29 +333,29 @@ amstart_element(
 			"XML: Duplicate %s element", element_name);
 	    return;
 	}
-    } else if (strcmp(element_name, "custom-encrypt-program") == 0 ||
-	       strcmp(element_name, "decrypt-option") == 0) {
-	if (!last_element_name || strcmp(last_element_name, "encrypt") != 0) {
+    } else if (g_str_equal(element_name, "custom-encrypt-program") ||
+	       g_str_equal(element_name, "decrypt-option")) {
+	if (!last_element_name || !g_str_equal(last_element_name, "encrypt")) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
 	}
-	if (strcmp(element_name, "custom-encrypt-program") == 0 &&
+	if (g_str_equal(element_name, "custom-encrypt-program") &&
 		   dle->clnt_encrypt) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Duplicate %s element", element_name);
 	    return;
 	}
-	if (strcmp(element_name, "decrypt-option") == 0 &&
+	if (g_str_equal(element_name, "decrypt-option") &&
 		   dle->clnt_decrypt_opt) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Duplicate %s element", element_name);
 	    return;
 	}
-    } else if(strcmp(element_name, "plugin") == 0) {
+    } else if(g_str_equal(element_name, "plugin")) {
 	if (!last_element_name ||
-	    (strcmp(last_element_name, "backup-program") != 0 &&
-	     strcmp(last_element_name, "script") != 0)) {
+	    (!g_str_equal(last_element_name, "backup-program") &&
+	     !g_str_equal(last_element_name, "script"))) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
@@ -365,10 +366,10 @@ amstart_element(
 			last_element_name);
 	    return;
 	}
-    } else if(strcmp(element_name, "property") == 0) {
+    } else if(g_str_equal(element_name, "property")) {
 	if (!last_element_name ||
-	    (strcmp(last_element_name, "backup-program") != 0 &&
-	     strcmp(last_element_name, "script") != 0)) {
+	    (!g_str_equal(last_element_name, "backup-program") &&
+	     !g_str_equal(last_element_name, "script"))) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
@@ -377,8 +378,8 @@ amstart_element(
 	data_user->property_data->append = 0;
 	data_user->property_data->priority = 0;
 	data_user->property_data->values = NULL;
-    } else if(strcmp(element_name, "name") == 0) {
-	if (!last_element_name || strcmp(last_element_name, "property") != 0) {
+    } else if(g_str_equal(element_name, "name")) {
+	if (!last_element_name || !g_str_equal(last_element_name, "property")) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
@@ -389,35 +390,35 @@ amstart_element(
 			last_element_name);
 	    return;
 	}
-    } else if(strcmp(element_name, "priority") == 0) {
-	if (!last_element_name || strcmp(last_element_name, "property") != 0) {
+    } else if(g_str_equal(element_name, "priority")) {
+	if (!last_element_name || !g_str_equal(last_element_name, "property")) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
 	}
-    } else if(strcmp(element_name, "value") == 0) {
-	if (!last_element_name || strcmp(last_element_name, "property") != 0) {
+    } else if(g_str_equal(element_name, "value")) {
+	if (!last_element_name || !g_str_equal(last_element_name, "property")) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
 	}
-    } else if(strcmp(element_name, "file") == 0 ||
-	      strcmp(element_name, "list") == 0 ||
-	      strcmp(element_name, "optional") == 0) {
+    } else if(g_str_equal(element_name, "file") ||
+	      g_str_equal(element_name, "list") ||
+	      g_str_equal(element_name, "optional")) {
 	if (!last_element_name ||
-	    (strcmp(last_element_name, "exclude") != 0 &&
-	     strcmp(last_element_name, "include") != 0)) {
+	    (!g_str_equal(last_element_name, "exclude") &&
+	     !g_str_equal(last_element_name, "include"))) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
 	}
-	if (strcmp(element_name, "optional") == 0 && data_user->has_optional) {
+	if (g_str_equal(element_name, "optional") && data_user->has_optional) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Duplicate %s element", element_name);
 	    return;
 	}
-	if (strcmp(element_name, "optional") == 0) data_user->has_optional = 1;
-    } else if (strcmp(element_name, "backup-program") == 0) {
+	if (g_str_equal(element_name, "optional")) data_user->has_optional = 1;
+    } else if (g_str_equal(element_name, "backup-program")) {
 	if (data_user->has_backup_program) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Duplicate %s element", element_name);
@@ -428,7 +429,7 @@ amstart_element(
 	            g_hash_table_new_full(g_str_hash, g_str_equal, &g_free, &free_property_t);
 	    data_user->has_plugin = 0;
 	}
-    } else if (strcmp(element_name, "script") == 0) {
+    } else if (g_str_equal(element_name, "script")) {
 	data_user->property =
 	            g_hash_table_new_full(g_str_hash, g_str_equal, &g_free, &free_property_t);
 	data_user->script = malloc(sizeof(script_t));
@@ -439,15 +440,15 @@ amstart_element(
 	data_user->script->client_name = NULL;
 	data_user->script->result = NULL;
 	data_user->has_plugin = 0;
-    } else if (strcmp(element_name, "execute_on") == 0) {
-    } else if (strcmp(element_name, "execute_where") == 0) {
-    } else if (strcmp(element_name, "directtcp") == 0) {
-	if (!last_element_name || strcmp(last_element_name, "datapath") != 0) {
+    } else if (g_str_equal(element_name, "execute_on")) {
+    } else if (g_str_equal(element_name, "execute_where")) {
+    } else if (g_str_equal(element_name, "directtcp")) {
+	if (!last_element_name || !g_str_equal(last_element_name, "datapath")) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s element", element_name);
 	    return;
 	}
-    } else if (strcmp(element_name, "client_name") == 0) {
+    } else if (g_str_equal(element_name, "client_name")) {
     } else {
 	g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 		    "XML: Invalid %s element", element_name);
@@ -476,19 +477,19 @@ amend_element(
 	return;
     }
     last_element_name = last_element->data;
-    if (strcmp(last_element_name, element_name) != 0) {
+    if (!g_str_equal(last_element_name, element_name)) {
 	g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 		    "XML: Invalid closing tag '%s'", element_name);
 	return;
     }
 
-    if (strcmp(element_name, "property") == 0) {
+    if (g_str_equal(element_name, "property")) {
 	g_hash_table_insert(data_user->property,
 			    data_user->property_name,
 			    data_user->property_data);
 	data_user->property_name = NULL;
 	data_user->property_data = NULL;
-    } else if (strcmp(element_name, "dle") == 0) {
+    } else if (g_str_equal(element_name, "dle")) {
 	if (dle->program_is_application_api &&
 	    !dle->program) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
@@ -501,7 +502,7 @@ amend_element(
 	    dle->estimatelist = g_slist_append(dle->estimatelist, ES_CLIENT);
 /* Add check of required field */
 	data_user->dle = NULL;
-    } else if (strcmp(element_name, "backup-program") == 0) {
+    } else if (g_str_equal(element_name, "backup-program")) {
 	if (dle->program == NULL) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 		    "XML: No plugin set for application");
@@ -509,7 +510,7 @@ amend_element(
 	}
 	dle->application_property = data_user->property;
 	data_user->property = NULL;
-    } else if (strcmp(element_name, "script") == 0) {
+    } else if (g_str_equal(element_name, "script")) {
 	if (data_user->script->plugin == NULL) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 		    "XML: No plugin set for script");
@@ -519,7 +520,7 @@ amend_element(
 	data_user->property = NULL;
 	dle->scriptlist = g_slist_append(dle->scriptlist, data_user->script);
 	data_user->script = NULL;
-    } else if (strcmp(element_name, "level") == 0) {
+    } else if (g_str_equal(element_name, "level")) {
 	dle->levellist = g_slist_append(dle->levellist, data_user->alevel);
 	data_user->alevel = NULL;
     }
@@ -583,15 +584,15 @@ amtext(
 	return;
     }
 
-    if (strcmp(last_element_name, "dle") == 0 ||
-	strcmp(last_element_name, "backup-program") == 0 ||
-	strcmp(last_element_name, "exclude") == 0 ||
-	strcmp(last_element_name, "include") == 0) {
+    if (g_str_equal(last_element_name, "dle") ||
+	g_str_equal(last_element_name, "backup-program") ||
+	g_str_equal(last_element_name, "exclude") ||
+	g_str_equal(last_element_name, "include")) {
 	g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 		    "XML: %s doesn't have text '%s'", last_element_name, tt);
 	amfree(tt);
 	return;
-    } else if(strcmp(last_element_name, "disk") == 0) {
+    } else if(g_str_equal(last_element_name, "disk")) {
 	if (dle->disk != NULL) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: multiple text in %s", last_element_name);
@@ -599,7 +600,7 @@ amtext(
 	    return;
 	}
 	dle->disk = tt;
-    } else if(strcmp(last_element_name, "diskdevice") == 0) {
+    } else if(g_str_equal(last_element_name, "diskdevice")) {
 	if (dle->device != NULL) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: multiple text in %s", last_element_name);
@@ -607,13 +608,13 @@ amtext(
 	    return;
 	}
 	dle->device = tt;
-    } else if(strcmp(last_element_name, "calcsize") == 0) {
+    } else if(g_str_equal(last_element_name, "calcsize")) {
 	if (strcasecmp(tt,"yes") == 0) {
 	    dle->estimatelist = g_slist_append(dle->estimatelist,
 					       GINT_TO_POINTER(ES_CALCSIZE));
 	}
 	amfree(tt);
-    } else if(strcmp(last_element_name, "estimate") == 0) {
+    } else if(g_str_equal(last_element_name, "estimate")) {
 	char *ttt = tt;
 	while (strlen(ttt) > 0) {
 	    if (BSTRNCMP(ttt,"CLIENT") == 0) {
@@ -638,52 +639,52 @@ amtext(
 		ttt++;
 	}
 	amfree(tt);
-    } else if(strcmp(last_element_name, "program") == 0) {
+    } else if(g_str_equal(last_element_name, "program")) {
 	if (dle->program != NULL) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: multiple text in %s", last_element_name);
 	    amfree(tt);
 	    return;
 	}
-	if (strcmp(tt, "APPLICATION") == 0) {
+	if (g_str_equal(tt, "APPLICATION")) {
 	    dle->program_is_application_api = 1;
 	    dle->program = NULL;
 	    amfree(tt);
 	} else {
 	    dle->program = tt;
 	}
-    } else if(strcmp(last_element_name, "plugin") == 0) {
+    } else if(g_str_equal(last_element_name, "plugin")) {
 	last_element2 = g_slist_nth(data_user->element_names, 1);
 	if (!last_element2) {
 	    error("Invalid name text");
 	}
 	last_element2_name = last_element2->data;
-	if (strcmp(last_element2_name, "backup-program") == 0) {
+	if (g_str_equal(last_element2_name, "backup-program")) {
 	    dle->program = tt;
-	} else if (strcmp(last_element2_name, "script") == 0) {
+	} else if (g_str_equal(last_element2_name, "script")) {
 	    data_user->script->plugin = tt;
 	} else {
 	    error("plugin outside of backup-program");
 	}
 	data_user->has_plugin = 1;
-    } else if(strcmp(last_element_name, "name") == 0) {
+    } else if(g_str_equal(last_element_name, "name")) {
 	last_element2 = g_slist_nth(data_user->element_names, 1);
 	if (!last_element2) {
 	    error("Invalid name text");
 	}
 	last_element2_name = last_element2->data;
-	if (strcmp(last_element2_name, "property") == 0) {
+	if (g_str_equal(last_element2_name, "property")) {
 	    data_user->property_name = tt;
 	} else {
 	    error("name outside of property");
 	}
-    } else if(strcmp(last_element_name, "priority") == 0) {
+    } else if(g_str_equal(last_element_name, "priority")) {
 	last_element2 = g_slist_nth(data_user->element_names, 1);
 	if (!last_element2) {
 	    error("Invalid priority text");
 	}
 	last_element2_name = last_element2->data;
-	if (strcmp(last_element2_name, "property") == 0) {
+	if (g_str_equal(last_element2_name, "property")) {
 	    if (strcasecmp(tt,"yes") == 0) {
 		data_user->property_data->priority = 1;
 	    }
@@ -691,29 +692,29 @@ amtext(
 	    error("priority outside of property");
 	}
 	amfree(tt);
-    } else if(strcmp(last_element_name, "value") == 0) {
+    } else if(g_str_equal(last_element_name, "value")) {
 	last_element2 = g_slist_nth(data_user->element_names, 1);
 	if (!last_element2) {
 	    error("Invalid name text");
 	}
 	last_element2_name = last_element2->data;
-	if (strcmp(last_element2_name, "property") == 0) {
+	if (g_str_equal(last_element2_name, "property")) {
 	    data_user->property_data->values =
 			g_slist_append(data_user->property_data->values, tt);
 	} else {
 	    error("value outside of property");
 	}
-    } else if(strcmp(last_element_name, "auth") == 0) {
+    } else if(g_str_equal(last_element_name, "auth")) {
 	if (dle->auth != NULL) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: multiple text in %s", last_element_name);
 	    return;
 	}
 	dle->auth = tt;
-    } else if(strcmp(last_element_name, "level") == 0) {
+    } else if(g_str_equal(last_element_name, "level")) {
 	data_user->alevel->level = atoi(tt);
 	amfree(tt);
-    } else if (strcmp(last_element_name, "server") == 0) {
+    } else if (g_str_equal(last_element_name, "server")) {
 	if (strcasecmp(tt,"no") == 0) {
 	    data_user->alevel->server = 0;
 	} else if (strcasecmp(tt,"yes") == 0) {
@@ -725,7 +726,7 @@ amtext(
 	    return;
 	}
 	amfree(tt);
-    } else if(strcmp(last_element_name, "index") == 0) {
+    } else if(g_str_equal(last_element_name, "index")) {
 	if (strcasecmp(tt,"no") == 0) {
 	    dle->create_index = 0;
 	} else if (strcasecmp(tt,"yes") == 0) {
@@ -737,7 +738,7 @@ amtext(
 	    return;
 	}
 	amfree(tt);
-    } else if(strcmp(last_element_name, "dumpdate") == 0) {
+    } else if(g_str_equal(last_element_name, "dumpdate")) {
 	if (dle->dumpdate != NULL) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: multiple text in %s", last_element_name);
@@ -745,7 +746,7 @@ amtext(
 	    return;
 	}
 	dle->dumpdate = tt;
-    } else if(strcmp(last_element_name, "record") == 0) {
+    } else if(g_str_equal(last_element_name, "record")) {
 	if (strcasecmp(tt, "no") == 0) {
 	    dle->record = 0;
 	} else if (strcasecmp(tt, "yes") == 0) {
@@ -757,19 +758,19 @@ amtext(
 	    return;
 	}
 	amfree(tt);
-    } else if(strcmp(last_element_name, "spindle") == 0) {
+    } else if(g_str_equal(last_element_name, "spindle")) {
 	dle->spindle = atoi(tt);
 	amfree(tt);
-    } else if(strcmp(last_element_name, "compress") == 0) {
-	if (strcmp(tt, "FAST") == 0) {
+    } else if(g_str_equal(last_element_name, "compress")) {
+	if (g_str_equal(tt, "FAST")) {
 	    dle->compress = COMP_FAST;
-	} else if (strcmp(tt, "BEST") == 0) {
+	} else if (g_str_equal(tt, "BEST")) {
 	    dle->compress = COMP_BEST;
 	} else if (BSTRNCMP(tt, "CUSTOM") == 0) {
 	    dle->compress = COMP_CUST;
-	} else if (strcmp(tt, "SERVER-FAST") == 0) {
+	} else if (g_str_equal(tt, "SERVER-FAST")) {
 	    dle->compress = COMP_SERVER_FAST;
-	} else if (strcmp(tt, "SERVER-BEST") == 0) {
+	} else if (g_str_equal(tt, "SERVER-BEST")) {
 	    dle->compress = COMP_SERVER_BEST;
 	} else if (BSTRNCMP(tt, "SERVER-CUSTOM") == 0) {
 	    dle->compress = COMP_SERVER_CUST;
@@ -780,7 +781,7 @@ amtext(
 	    return;
 	}
 	amfree(tt);
-    } else if(strcmp(last_element_name, "custom-compress-program") == 0) {
+    } else if(g_str_equal(last_element_name, "custom-compress-program")) {
 	if (dle->compprog != NULL) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: multiple text in %s", last_element_name);
@@ -788,7 +789,7 @@ amtext(
 	    return;
 	}
 	dle->compprog = tt;
-    } else if(strcmp(last_element_name, "encrypt") == 0) {
+    } else if(g_str_equal(last_element_name, "encrypt")) {
 	if (BSTRNCMP(tt,"NO") == 0) {
 	    dle->encrypt = ENCRYPT_NONE;
 	} else if (BSTRNCMP(tt, "CUSTOM") == 0) {
@@ -802,7 +803,7 @@ amtext(
 	    return;
 	}
 	amfree(tt);
-    } else if(strcmp(last_element_name, "kencrypt") == 0) {
+    } else if(g_str_equal(last_element_name, "kencrypt")) {
 	if (strcasecmp(tt,"no") == 0) {
 	    dle->kencrypt = 0;
 	} else if (strcasecmp(tt,"yes") == 0) {
@@ -814,7 +815,7 @@ amtext(
 	    return;
 	}
 	amfree(tt);
-    } else if(strcmp(last_element_name, "custom-encrypt-program") == 0) {
+    } else if(g_str_equal(last_element_name, "custom-encrypt-program")) {
 	last_element2 = g_slist_nth(data_user->element_names, 1);
 	if (!last_element2) {
 	    error("XML: optional");
@@ -824,7 +825,7 @@ amtext(
 	    dle->srv_encrypt = tt;
 	else
 	    dle->clnt_encrypt = tt;
-    } else if(strcmp(last_element_name, "decrypt-option") == 0) {
+    } else if(g_str_equal(last_element_name, "decrypt-option")) {
 	last_element2 = g_slist_nth(data_user->element_names, 1);
 	if (!last_element2) {
 	    error("XML: optional");
@@ -834,106 +835,106 @@ amtext(
 	    dle->srv_decrypt_opt = tt;
 	else
 	    dle->clnt_decrypt_opt = tt;
-    } else if(strcmp(last_element_name, "exclude") == 0 ||
-	      strcmp(last_element_name, "include") == 0) {
+    } else if(g_str_equal(last_element_name, "exclude") ||
+	      g_str_equal(last_element_name, "include")) {
 	data_user->has_optional = 0;
 	amfree(tt);
-    } else if(strcmp(last_element_name, "file") == 0) {
+    } else if(g_str_equal(last_element_name, "file")) {
 	last_element2 = g_slist_nth(data_user->element_names, 1);
 	if (!last_element2) {
 	    error("XML: optional");
 	}
 	last_element2_name = last_element2->data;
-	if (strcmp(last_element2_name, "exclude") == 0) {
+	if (g_str_equal(last_element2_name, "exclude")) {
 	    dle->exclude_file = append_sl(dle->exclude_file, tt);
-	} else if (strcmp(last_element2_name, "include") == 0) {
+	} else if (g_str_equal(last_element2_name, "include")) {
 	    dle->include_file = append_sl(dle->include_file, tt);
 	} else {
 	    error("bad file");
 	}
-    } else if(strcmp(last_element_name, "list") == 0) {
+    } else if(g_str_equal(last_element_name, "list")) {
 	last_element2 = g_slist_nth(data_user->element_names, 1);
 	if (!last_element2) {
 	    error("XML: optional");
 	}
 	last_element2_name = last_element2->data;
-	if (strcmp(last_element2_name, "exclude") == 0) {
+	if (g_str_equal(last_element2_name, "exclude")) {
 	    dle->exclude_list = append_sl(dle->exclude_list, tt);
-	} else if (strcmp(last_element2_name, "include") == 0) {
+	} else if (g_str_equal(last_element2_name, "include")) {
 	    dle->include_list = append_sl(dle->include_list, tt);
 	} else {
 	    error("bad list");
 	}
-    } else if(strcmp(last_element_name, "optional") == 0) {
+    } else if(g_str_equal(last_element_name, "optional")) {
 	i = atoi(tt);
 	last_element2 = g_slist_nth(data_user->element_names, 1);
 	if (!last_element2) {
 	    error("XML: optional");
 	}
 	last_element2_name = last_element2->data;
-	if (strcmp(last_element2_name, "exclude") == 0) {
+	if (g_str_equal(last_element2_name, "exclude")) {
 	    dle->exclude_optional = 1;
-	} else if (strcmp(last_element2_name, "include") == 0) {
+	} else if (g_str_equal(last_element2_name, "include")) {
 	    dle->include_optional = 1;
 	} else {
 	    error("bad optional");
 	}
 	data_user->has_optional = 1;
 	amfree(tt);
-    } else if(strcmp(last_element_name, "script") == 0) {
+    } else if(g_str_equal(last_element_name, "script")) {
 	amfree(tt);
-    } else if(strcmp(last_element_name, "execute_on") == 0) {
+    } else if(g_str_equal(last_element_name, "execute_on")) {
 	char *sep;
 	char *tt1 = tt;
 	do {
 	    sep = strchr(tt1,',');
 	    if (sep)
 		*sep = '\0';
-	    if (strcmp(tt1,"PRE-AMCHECK") == 0)
+	    if (g_str_equal(tt1, "PRE-AMCHECK"))
 		data_user->script->execute_on |= EXECUTE_ON_PRE_AMCHECK;
-	    else if (strcmp(tt1,"PRE-DLE-AMCHECK") == 0)
+	    else if (g_str_equal(tt1, "PRE-DLE-AMCHECK"))
 		data_user->script->execute_on |= EXECUTE_ON_PRE_DLE_AMCHECK;
-	    else if (strcmp(tt1,"PRE-HOST-AMCHECK") == 0)
+	    else if (g_str_equal(tt1, "PRE-HOST-AMCHECK"))
 		data_user->script->execute_on |= EXECUTE_ON_PRE_HOST_AMCHECK;
-	    else if (strcmp(tt1,"POST-AMCHECK") == 0)
+	    else if (g_str_equal(tt1, "POST-AMCHECK"))
 		data_user->script->execute_on |= EXECUTE_ON_POST_AMCHECK;
-	    else if (strcmp(tt1,"POST-DLE-AMCHECK") == 0)
+	    else if (g_str_equal(tt1, "POST-DLE-AMCHECK"))
 		data_user->script->execute_on |= EXECUTE_ON_POST_DLE_AMCHECK;
-	    else if (strcmp(tt1,"POST-HOST-AMCHECK") == 0)
+	    else if (g_str_equal(tt1, "POST-HOST-AMCHECK"))
 		data_user->script->execute_on |= EXECUTE_ON_POST_HOST_AMCHECK;
-	    else if (strcmp(tt1,"PRE-ESTIMATE") == 0)
+	    else if (g_str_equal(tt1, "PRE-ESTIMATE"))
 		data_user->script->execute_on |= EXECUTE_ON_PRE_ESTIMATE;
-	    else if (strcmp(tt1,"PRE-DLE-ESTIMATE") == 0)
+	    else if (g_str_equal(tt1, "PRE-DLE-ESTIMATE"))
 		data_user->script->execute_on |= EXECUTE_ON_PRE_DLE_ESTIMATE;
-	    else if (strcmp(tt1,"PRE-HOST-ESTIMATE") == 0)
+	    else if (g_str_equal(tt1, "PRE-HOST-ESTIMATE"))
 		data_user->script->execute_on |= EXECUTE_ON_PRE_HOST_ESTIMATE;
-	    else if (strcmp(tt1,"POST-ESTIMATE") == 0)
+	    else if (g_str_equal(tt1, "POST-ESTIMATE"))
 		data_user->script->execute_on |= EXECUTE_ON_POST_ESTIMATE;
-	    else if (strcmp(tt1,"POST-DLE-ESTIMATE") == 0)
+	    else if (g_str_equal(tt1, "POST-DLE-ESTIMATE"))
 		data_user->script->execute_on |= EXECUTE_ON_POST_DLE_ESTIMATE;
-	    else if (strcmp(tt1,"POST-HOST-ESTIMATE") == 0)
+	    else if (g_str_equal(tt1, "POST-HOST-ESTIMATE"))
 		data_user->script->execute_on |= EXECUTE_ON_POST_HOST_ESTIMATE;
-	    else if (strcmp(tt1,"PRE-BACKUP") == 0)
+	    else if (g_str_equal(tt1, "PRE-BACKUP"))
 		data_user->script->execute_on |= EXECUTE_ON_PRE_BACKUP;
-	    else if (strcmp(tt1,"PRE-DLE-BACKUP") == 0)
+	    else if (g_str_equal(tt1, "PRE-DLE-BACKUP"))
 		data_user->script->execute_on |= EXECUTE_ON_PRE_DLE_BACKUP;
-	    else if (strcmp(tt1,"PRE-HOST-BACKUP") == 0)
+	    else if (g_str_equal(tt1, "PRE-HOST-BACKUP"))
 		data_user->script->execute_on |= EXECUTE_ON_PRE_HOST_BACKUP;
-	    else if (strcmp(tt1,"POST-BACKUP") == 0)
+	    else if (g_str_equal(tt1, "POST-BACKUP"))
 		data_user->script->execute_on |= EXECUTE_ON_POST_BACKUP;
-	    else if (strcmp(tt1,"POST-DLE-BACKUP") == 0)
+	    else if (g_str_equal(tt1, "POST-DLE-BACKUP"))
 		data_user->script->execute_on |= EXECUTE_ON_POST_DLE_BACKUP;
-	    else if (strcmp(tt1,"POST-HOST-BACKUP") == 0)
+	    else if (g_str_equal(tt1, "POST-HOST-BACKUP"))
 		data_user->script->execute_on |= EXECUTE_ON_POST_HOST_BACKUP;
-	    else if (strcmp(tt1,"PRE-RECOVER") == 0)
+	    else if (g_str_equal(tt1, "PRE-RECOVER"))
 		data_user->script->execute_on |= EXECUTE_ON_PRE_RECOVER;
-	    else if (strcmp(tt1,"POST-RECOVER") == 0)
+	    else if (g_str_equal(tt1, "POST-RECOVER"))
 		data_user->script->execute_on |= EXECUTE_ON_POST_RECOVER;
-	    else if (strcmp(tt1,"PRE-LEVEL-RECOVER") == 0)
+	    else if (g_str_equal(tt1, "PRE-LEVEL-RECOVER"))
 		data_user->script->execute_on |= EXECUTE_ON_PRE_LEVEL_RECOVER;
-	    else if (strcmp(tt1,"POST-LEVEL-RECOVER") == 0)
+	    else if (g_str_equal(tt1, "POST-LEVEL-RECOVER"))
 		data_user->script->execute_on |= EXECUTE_ON_POST_LEVEL_RECOVER;
-	    else if (strcmp(tt1,"INTER-LEVEL-RECOVER") == 0)
+	    else if (g_str_equal(tt1, "INTER-LEVEL-RECOVER"))
 		data_user->script->execute_on |= EXECUTE_ON_INTER_LEVEL_RECOVER;
 	    else 
 		dbprintf("BAD EXECUTE_ON: %s\n", tt1);
@@ -941,35 +942,35 @@ amtext(
 		tt1 = sep+1;
 	} while (sep);
 	amfree(tt);
-    } else if(strcmp(last_element_name, "execute_where") == 0) {
-	if (strcmp(tt, "CLIENT") == 0) {
+    } else if(g_str_equal(last_element_name, "execute_where")) {
+	if (g_str_equal(tt, "CLIENT")) {
 	    data_user->script->execute_where = ES_CLIENT;
 	} else {
 	    data_user->script->execute_where = ES_SERVER;
 	}
 	amfree(tt);
-    } else if(strcmp(last_element_name, "datapath") == 0) {
-	if (strcmp(tt, "AMANDA") == 0) {
+    } else if(g_str_equal(last_element_name, "datapath")) {
+	if (g_str_equal(tt, "AMANDA")) {
 	    dle->data_path = DATA_PATH_AMANDA;
-	} else if (strcmp(tt, "DIRECTTCP") == 0) {
+	} else if (g_str_equal(tt, "DIRECTTCP")) {
 	    dle->data_path = DATA_PATH_DIRECTTCP;
 	} else {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: bad datapath value '%s'", tt);
 	}
 	amfree(tt);
-    } else if(strcmp(last_element_name, "directtcp") == 0) {
+    } else if(g_str_equal(last_element_name, "directtcp")) {
 	dle->directtcp_list = g_slist_append(dle->directtcp_list, tt);
-    } else if(strcmp(last_element_name, "client_name") == 0) {
+    } else if(g_str_equal(last_element_name, "client_name")) {
 	last_element2 = g_slist_nth(data_user->element_names, 1);
 	if (!last_element2) {
 	    error("Invalid client_name text");
 	}
 	last_element2_name = last_element2->data;
-	if (strcmp(last_element2_name, "backup-program") == 0) {
+	if (g_str_equal(last_element2_name, "backup-program")) {
 	    dle->application_client_name = tt;
 g_debug("set dle->application_client_name: %s", dle->application_client_name);
-	} else if (strcmp(last_element2_name, "script") == 0) {
+	} else if (g_str_equal(last_element2_name, "script")) {
 	    data_user->script->client_name = tt;
 g_debug("set data_user->script->client_name: %s", data_user->script->client_name);
 	} else {

@@ -645,7 +645,7 @@ time_t	unctime(char *timestr);
 
 /* (have to roll this up in an expression, so it can be used in if()) */
 #define strncmp_const_skip(str, cnst, ptr, var)				\
-	((strncmp((str), (cnst), sizeof((cnst))-1) == 0)?		\
+	((g_str_has_prefix((str), (cnst)))?		\
 		 ((ptr)+=sizeof((cnst))-1, (var)=(ptr)[-1], 0)		\
 		:1)
 

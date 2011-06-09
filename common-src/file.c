@@ -107,7 +107,7 @@ rmpdir(
     int rc;
     char *p, *dir;
 
-    if(strcmp(file, topdir) == 0) return 0; /* all done */
+    if(g_str_equal(file, topdir)) return 0; /* all done */
 
     rc = rmdir(file);
     if (rc != 0) switch(errno) {

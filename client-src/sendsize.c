@@ -254,7 +254,7 @@ main(
 	    dle->program = s - 1;
 	    skip_non_whitespace(s, ch);
 	    s[-1] = '\0';
-	    if (strcmp(dle->program,"APPLICATION") == 0) {
+	    if (g_str_equal(dle->program, "APPLICATION")) {
 		dle->program_is_application_api=1;
 		skip_whitespace(s, ch);		/* find dumper name */
 		if (ch == '\0') {
@@ -268,7 +268,7 @@ main(
 	else {
 	    dle->estimatelist = g_slist_append(dle->estimatelist,
 					       GINT_TO_POINTER(ES_CLIENT));
-	    if (strcmp(dle->program,"APPLICATION") == 0) {
+	    if (g_str_equal(dle->program, "APPLICATION")) {
 		dle->program_is_application_api=1;
 		skip_whitespace(s, ch);		/* find dumper name */
 		if (ch == '\0') {
@@ -622,7 +622,7 @@ dle_add_diskest(
 	    need_amandates = TRUE;
     }
 
-    if (strcmp(dle->program, "GNUTAR") == 0) {
+    if (g_str_equal(dle->program, "GNUTAR")) {
 	/* GNUTAR only needs amandates if gnutar_list_dir is NULL */
 	char *gnutar_list_dir = getconf_str(CNF_GNUTAR_LIST_DIR);
 	if (!gnutar_list_dir || !*gnutar_list_dir)
@@ -660,7 +660,7 @@ dle_add_diskest(
     }
 
     for(curp = est_list; curp != NULL; curp = curp->next) {
-	if(strcmp(curp->dle->disk, dle->disk) == 0) {
+	if(g_str_equal(curp->dle->disk, dle->disk)) {
 	    /* already have disk info, just note the level request */
 	    levellist = dle->levellist;
 	    while (levellist != NULL) {
@@ -792,18 +792,18 @@ calc_estimates(
 	    generic_calc_estimates(est);
 	} else if (client_method == ES_CLIENT) {
 #ifndef USE_GENERIC_CALCSIZE
-	    if (strcmp(est->dle->program, "DUMP") == 0)
+	    if (g_str_equal(est->dle->program, "DUMP"))
 		dump_calc_estimates(est);
 	    else
 #endif
 #ifdef SAMBA_CLIENT
-	    if (strcmp(est->dle->program, "GNUTAR") == 0 &&
+	    if (g_str_equal(est->dle->program, "GNUTAR") &&
 		est->dle->device[0] == '/' && est->dle->device[1] == '/')
 		smbtar_calc_estimates(est);
 	    else
 #endif
 #ifdef GNUTAR
-	    if (strcmp(est->dle->program, "GNUTAR") == 0)
+	    if (g_str_equal(est->dle->program, "GNUTAR"))
 		gnutar_calc_estimates(est);
 	    else
 #endif
@@ -1142,7 +1142,7 @@ generic_calc_estimates(
 	if (line[0] == '\0' || (int)strlen(line) <= len)
 	    continue;
 	/* Don't use sscanf for est->qamname because it can have a '%'. */
-	if (strncmp(line, est->qamname, len) == 0 &&
+	if (g_str_has_prefix(line, est->qamname) &&
 	    sscanf(line+len, match_expr, &level, &size_) == 2) {
 	    g_printf("%s\n", line); /* write to amandad */
 	    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
@@ -1453,7 +1453,7 @@ getsize_dump(
 
 #ifdef XFSDUMP						/* { */
 #ifdef DUMP						/* { */
-    if (strcmp(fstype, "xfs") == 0)
+    if (g_str_equal(fstype, "xfs"))
 #else							/* } { */
     if (1)
 #endif							/* } */
@@ -1466,7 +1466,7 @@ getsize_dump(
 #endif							/* } */
 #ifdef VXDUMP						/* { */
 #ifdef DUMP						/* { */
-    if (strcmp(fstype, "vxfs") == 0)
+    if (g_str_equal(fstype, "vxfs"))
 #else							/* } { */
     if (1)
 #endif							/* } */
@@ -1488,7 +1488,7 @@ getsize_dump(
 #endif							/* } */
 #ifdef VDUMP						/* { */
 #ifdef DUMP						/* { */
-    if (strcmp(fstype, "advfs") == 0)
+    if (g_str_equal(fstype, "advfs"))
 #else							/* } { */
     if (1)
 #endif							/* } */
@@ -1632,7 +1632,7 @@ getsize_dump(
 
 #ifdef XFSDUMP
 #ifdef DUMP
-	if (strcmp(fstype, "xfs") == 0)
+	if (g_str_equal(fstype, "xfs"))
 #else
 	if (1)
 #endif
@@ -1646,7 +1646,7 @@ getsize_dump(
 #endif
 #ifdef VXDUMP
 #ifdef DUMP
-	if (strcmp(fstype, "vxfs") == 0)
+	if (g_str_equal(fstype, "vxfs"))
 #else
 	if (1)
 #endif
@@ -1660,7 +1660,7 @@ getsize_dump(
 #endif
 #ifdef VDUMP
 #ifdef DUMP
-	if (strcmp(fstype, "advfs") == 0)
+	if (g_str_equal(fstype, "advfs"))
 #else
 	if (1)
 #endif
@@ -2539,7 +2539,7 @@ getsize_application_api(
 	if (line[0] == '\0')
 	    continue;
 	dbprintf("%s\n", line);
-	if (strncmp(line,"ERROR ", 6) == 0) {
+	if (g_str_has_prefix(line, "ERROR ")) {
 	    char *errmsg, *qerrmsg;
 
 	    errmsg = g_strdup(line+6);

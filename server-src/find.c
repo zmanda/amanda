@@ -76,7 +76,7 @@ find_result_t * find_dump(disklist_t* diskqp) {
 	for (tape1 = tape; tape1 <= maxtape; tape1++) {
 	    tp1 = lookup_tapepos(tape1);
 	    if (tp1 == NULL) continue;
-	    if (strcmp(tp->datestamp, tp1->datestamp) != 0)
+	    if (!g_str_equal(tp->datestamp, tp1->datestamp))
 		continue;
 
 	    tape_seen[tape1] = 1;
@@ -173,7 +173,8 @@ find_log(void)
 	    pathlogfile = g_strconcat(conf_logdir, "/", logfile, NULL);
 	    if (access(pathlogfile, R_OK) != 0) break;
 	    if (logfile_has_tape(tp->label, tp->datestamp, pathlogfile)) {
-		if (current_log == output_find_log || strcmp(*(current_log-1), logfile)) {
+		if (current_log == output_find_log || !g_str_equal(*(current_log - 1),
+                                                                   logfile)) {
 		    *current_log = g_strdup(logfile);
 		    current_log++;
 		}
@@ -191,7 +192,8 @@ find_log(void)
 	pathlogfile = g_strconcat(conf_logdir, "/", logfile, NULL);
 	if (access(pathlogfile, R_OK) == 0) {
 	    if (logfile_has_tape(tp->label, tp->datestamp, pathlogfile)) {
-		if (current_log == output_find_log || strcmp(*(current_log-1), logfile)) {
+		if (current_log == output_find_log || !g_str_equal(*(current_log - 1),
+                                                                   logfile)) {
 		    *current_log = g_strdup(logfile);
 		    current_log++;
 		}
@@ -207,7 +209,8 @@ find_log(void)
 	pathlogfile = g_strconcat(conf_logdir, "/", logfile, NULL);
 	if (access(pathlogfile, R_OK) == 0) {
 	    if (logfile_has_tape(tp->label, tp->datestamp, pathlogfile)) {
-		if (current_log == output_find_log || strcmp(*(current_log-1), logfile)) {
+		if (current_log == output_find_log || !g_str_equal(*(current_log - 1),
+                                                                   logfile)) {
 		    *current_log = g_strdup(logfile);
 		    current_log++;
 		}
@@ -215,7 +218,7 @@ find_log(void)
 	    }
 	}
 
-	if(logs == 0 && strcmp(tp->datestamp,"0") != 0)
+	if(logs == 0 && !g_str_equal(tp->datestamp, "0"))
 	    g_fprintf(stderr, _("Warning: no log files found for tape %s written %s\n"),
 		   tp->label, find_nicedate(tp->datestamp));
     }
@@ -488,8 +491,8 @@ print_find_result(
 	    else
 		formatted_label = quote_string(output_find_result->label);
 
-	    if (strcmp(output_find_result->status, "OK") != 0 ||
-		strcmp(output_find_result->dump_status, "OK") != 0) {
+	    if (!g_str_equal(output_find_result->status, "OK") ||
+		!g_str_equal(output_find_result->dump_status, "OK")) {
 		status = g_strjoin(NULL, output_find_result->status, " ",
 				   output_find_result->dump_status, NULL);
 	    } else {
@@ -659,8 +662,8 @@ static gboolean logfile_has_tape(char * label, char * datestamp,
 					 &ck_datestamp, &ck_label) == 0) {
 		g_printf(_("strange log line \"start taper %s\" curstr='%s'\n"),
                          logfile, curstr);
-	    } else if(strcmp(ck_datestamp, datestamp) == 0
-		      && strcmp(ck_label, label) == 0) {
+	    } else if(g_str_equal(ck_datestamp, datestamp)
+		      && g_str_equal(ck_label, label)) {
 		amfree(ck_label);
                 afclose(logf);
                 return TRUE;
@@ -685,13 +688,13 @@ volume_matches(
 	return TRUE;
 
     if (label1)
-	return (strcmp(label1, label2) == 0);
+	return (g_str_equal(label1, label2));
 
     /* check in tapelist */
     if (!(tp = lookup_tapelabel(label2)))
 	return FALSE;
 
-    if (strcmp(tp->datestamp, datestamp) != 0)
+    if (!g_str_equal(tp->datestamp, datestamp))
 	return FALSE;
 
     return TRUE;
@@ -763,7 +766,7 @@ search_logfile(
                 continue;
 	    }
             if (datestamp != NULL) {
-                if (strcmp(datestamp, ck_datestamp) != 0) {
+                if (!g_str_equal(datestamp, ck_datestamp)) {
                     g_printf(_("Log file %s stamped %s, expecting %s!\n"),
                              logfile, ck_datestamp, datestamp);
 		    amfree(ck_label);
@@ -932,7 +935,7 @@ search_logfile(
 	    skip_non_whitespace(s, ch);
 	    rest_undo = s - 1;
 	    *rest_undo = '\0';
-	    if (strcmp(rest, "[sec") == 0) {
+	    if (g_str_equal(rest, "[sec")) {
 		skip_whitespace(s, ch);
 		if(ch == '\0') {
 		    g_printf(_("strange log line in %s \"%s\"\n"),
@@ -947,8 +950,8 @@ search_logfile(
 		skip_non_whitespace(s, ch);
 		rest_undo = s - 1;
 		*rest_undo = '\0';
-		if (strcmp(rest, "kb") != 0 &&
-		    strcmp(rest, "bytes") != 0) {
+		if (!g_str_equal(rest, "kb") &&
+		    !g_str_equal(rest, "bytes")) {
 		    g_printf(_("Bstrange log line in %s \"%s\"\n"),
 			     logfile, curstr);
 		    amfree(disk);
@@ -962,7 +965,7 @@ search_logfile(
 		     amfree(disk);
 		     continue;
 		}
-		if (strcmp(rest, "kb") == 0) {
+		if (g_str_equal(rest, "kb")) {
 		    kb = atof(s - 1);
 		    bytes = 0;
 		} else {
@@ -975,7 +978,7 @@ search_logfile(
 		skip_non_whitespace(s, ch);
 		rest_undo = s - 1;
 		*rest_undo = '\0';
-		if (strcmp(rest, "kps") != 0) {
+		if (!g_str_equal(rest, "kps")) {
 		    g_printf(_("Cstrange log line in %s \"%s\"\n"),
 			     logfile, curstr);
 		    amfree(disk);
@@ -996,7 +999,7 @@ search_logfile(
 		skip_non_whitespace(s, ch);
 		rest_undo = s - 1;
 		*rest_undo = '\0';
-		if (strcmp(rest, "orig-kb") != 0) {
+		if (!g_str_equal(rest, "orig-kb")) {
 		    orig_kb = 0;
 		} else {
 
@@ -1017,8 +1020,8 @@ search_logfile(
 		*rest_undo = ' ';
 	    }
 
-	    if (strncmp(rest, "error", 5) == 0) rest += 6;
-	    if (strncmp(rest, "config", 6) == 0) rest += 7;
+	    if (g_str_has_prefix(rest, "error")) rest += 6;
+	    if (g_str_has_prefix(rest, "config")) rest += 7;
 
 	    dp = lookup_disk(host,disk);
 	    if ( dp == NULL ) {
@@ -1094,7 +1097,7 @@ search_logfile(
 				     a_part_find;
 				     a_part_find = a_part_find->next) {
 				    if (a_part_find->partnum == num_part &&
-					strcmp(a_part_find->status, "OK") == 0)
+					g_str_equal(a_part_find->status, "OK"))
 					num_part--;
 			        }
 				/* set dump_status of each part */
@@ -1238,8 +1241,8 @@ dumps_match(
 	   (!diskname || *diskname == '\0' || match_disk(diskname, cur_result->diskname)) &&
 	   (!datestamp || *datestamp== '\0' || match_datestamp(datestamp, cur_result->timestamp)) &&
 	   (!level || *level== '\0' || match_level(level, level_str)) &&
-	   (!ok || !strcmp(cur_result->status, "OK")) &&
-	   (!ok || !strcmp(cur_result->dump_status, "OK"))){
+	   (!ok || g_str_equal(cur_result->status, "OK")) &&
+	   (!ok || g_str_equal(cur_result->dump_status, "OK"))){
 
 	    find_result_t *curmatch = g_new0(find_result_t, 1);
 	    memcpy(curmatch, cur_result, sizeof(find_result_t));
@@ -1317,8 +1320,8 @@ dumps_match_dumpspecs(
 			|| match_datestamp(ds->write_timestamp, cur_result->write_timestamp)
 			|| (zeropad_w_ts && match_datestamp(ds->write_timestamp, zeropad_w_ts))) &&
 	       (!ds->level || *ds->level== '\0' || match_level(ds->level, level_str)) &&
-	       (!ok || !strcmp(cur_result->status, "OK")) &&
-	       (!ok || !strcmp(cur_result->dump_status, "OK"))) {
+	       (!ok || g_str_equal(cur_result->status, "OK")) &&
+	       (!ok || g_str_equal(cur_result->dump_status, "OK"))) {
 
 		find_result_t *curmatch = g_malloc(sizeof(find_result_t));
 		memcpy(curmatch, cur_result, sizeof(find_result_t));
@@ -1361,9 +1364,9 @@ dump_exist(
     for(output_find_result=output_find;
 	output_find_result;
 	output_find_result=output_find_result->next) {
-	if( !strcmp(output_find_result->hostname, hostname) &&
-	    !strcmp(output_find_result->diskname, diskname) &&
-	    !strcmp(output_find_result->timestamp, datestamp) &&
+	if( g_str_equal(output_find_result->hostname, hostname) &&
+	    g_str_equal(output_find_result->diskname, diskname) &&
+	    g_str_equal(output_find_result->timestamp, datestamp) &&
 	    output_find_result->level == level) {
 
 	    return output_find_result;

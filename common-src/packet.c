@@ -54,7 +54,7 @@ void pkt_init_empty(
     pktype_t type)
 {
     assert(pkt != NULL);
-    assert(strcmp(pkt_type2str(type), "BOGUS") != 0);
+    assert(!g_str_equal(pkt_type2str(type), "BOGUS"));
 
     pkt->type = type;
     pkt->packet_size = 1000;
@@ -69,7 +69,7 @@ void pkt_init(pkt_t *pkt, pktype_t type, const char *fmt, ...)
     int         len;
 
     assert(pkt != NULL);
-    assert(strcmp(pkt_type2str(type), "BOGUS") != 0);
+    assert(!g_str_equal(pkt_type2str(type), "BOGUS"));
     if(fmt == NULL)
 	fmt = "";
 
@@ -132,7 +132,7 @@ pkt_str2type(
     assert(typestr != NULL);
 
     for (i = 0; i < NPKTYPES; i++)
-	if (strcmp(typestr, pktypes[i].name) == 0)
+	if (g_str_equal(typestr, pktypes[i].name))
 	    return (pktypes[i].type);
     return ((pktype_t)-1);
 }

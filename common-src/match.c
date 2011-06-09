@@ -580,9 +580,9 @@ static gboolean glob_is_separator_only(const char *glob, char sep) {
         case 1:
             return (*glob == sep);
         case 2:
-            return !(strcmp(glob, len2_1) && strcmp(glob, len2_2));
+            return !(!g_str_equal(glob, len2_1) && !g_str_equal(glob, len2_2));
         case 3:
-            return !strcmp(glob, len3);
+            return g_str_equal(glob, len3);
         default:
             return FALSE;
     }
@@ -873,10 +873,10 @@ match_datestamp(
 	if (!alldigits(mydateexp))
 	    goto illegal;
 	if(match_exact == 1) {
-	    return (strcmp(datestamp, mydateexp) == 0);
+	    return (g_str_equal(datestamp, mydateexp));
 	}
 	else {
-	    return (strncmp(datestamp, mydateexp, strlen(mydateexp)) == 0);
+	    return (g_str_has_prefix(datestamp, mydateexp));
 	}
     }
 illegal:
@@ -941,10 +941,10 @@ match_level(
     else {
 	if (!alldigits(mylevelexp)) goto illegal;
 	if(match_exact == 1) {
-	    return (strcmp(level, mylevelexp) == 0);
+	    return (g_str_equal(level, mylevelexp));
 	}
 	else {
-	    return (strncmp(level, mylevelexp, strlen(mylevelexp)) == 0);
+	    return (g_str_has_prefix(level, mylevelexp));
 	}
     }
 illegal:

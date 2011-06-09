@@ -1978,7 +1978,7 @@ tape_device_eod (TapeDevice * self) {
 static Device *
 tape_device_factory (char * device_name, char * device_type, char * device_node) {
     Device * rval;
-    g_assert(0 == strcmp(device_type, "tape"));
+    g_assert(g_str_equal(device_type, "tape"));
     rval = DEVICE(g_object_new(TYPE_TAPE_DEVICE, NULL));
     device_open_device(rval, device_name, device_type, device_node);
     return rval;

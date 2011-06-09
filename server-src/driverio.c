@@ -310,7 +310,7 @@ getresult(
     if(*result_argc < 1) return BOGUS;
 
     for(t = (cmd_t)(BOGUS+1); t < LAST_TOK; t++)
-	if(strcmp((*result_argv)[0], cmdstr[t]) == 0) return t;
+	if(g_str_equal((*result_argv)[0], cmdstr[t])) return t;
 
     return BOGUS;
 }
@@ -642,7 +642,7 @@ dumper_cmd(
 
         g_assert(dp->program != NULL);
 
-        if (0 == strcmp(dp->program, "APPLICATION")) {
+        if (g_str_equal(dp->program, "APPLICATION")) {
             g_assert(application != NULL);
             plugin = application_get_plugin(application);
         } else {

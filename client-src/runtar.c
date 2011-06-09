@@ -80,7 +80,7 @@ main(
 
     dbprintf(_("version %s\n"), VERSION);
 
-    if (strcmp(argv[3], "--create") != 0) {
+    if (!g_str_equal(argv[3], "--create")) {
 	error(_("Can only be used to create tar archives\n"));
 	/*NOTREACHED*/
     }
@@ -131,7 +131,7 @@ main(
     argv++;
 
     dbprintf(_("config: %s\n"), argv[0]);
-    if (strcmp(argv[0], "NOCONFIG") != 0)
+    if (!g_str_equal(argv[0], "NOCONFIG"))
 	dbrename(argv[0], DBG_SUBDIR_CLIENT);
     argc--;
     argv++;

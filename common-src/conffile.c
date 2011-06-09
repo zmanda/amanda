@@ -2018,7 +2018,7 @@ get_seen_filename(
 
     for (iter = seen_filenames; iter; iter = iter->next) {
 	istr = iter->data;
-	if (istr == filename || 0 == strcmp(istr, filename))
+	if (istr == filename || g_str_equal(istr, filename))
 	    return istr;
     }
 
@@ -2203,7 +2203,7 @@ get_holdingdisk(
 
 	    for (il = conf_data[CNF_HOLDINGDISK].v.identlist; il != NULL;
 							      il = il->next) {
-		if (strcmp((char *)il->data, hdcur.name) == 0) {
+		if (g_str_equal((char *)il->data, hdcur.name)) {
 		    break;
 		}
 	    }
@@ -5107,7 +5107,7 @@ static void validate_one_columnspec(const char *element)
     token = g_ascii_strdown(element, -1);
 
     for (i = 0; i < nr_valid_names; i++)
-        if (!strcmp(colspec_valid_names[i], token)) /* We have a match */
+        if (g_str_equal(colspec_valid_names[i], token)) /* We have a match */
             break;
 
     g_free(token);
@@ -5196,7 +5196,7 @@ config_init(
     /* if we're using an explicit name, but the name is '.', then we're using the
      * current directory */
     if ((flags & CONFIG_INIT_EXPLICIT_NAME) && arg_config_name) {
-	if (0 == strcmp(arg_config_name, "."))
+	if (g_str_equal(arg_config_name, "."))
 	    flags = (flags & (~CONFIG_INIT_EXPLICIT_NAME)) | CONFIG_INIT_USE_CWD;
     }
 
@@ -5695,7 +5695,7 @@ update_derived_values(
 	    /* Create a default tapetype so that other code has
 	     * something to refer to, but don't pretend it's real */
 	    if (!getconf_seen(CNF_TAPETYPE) &&
-		strcmp(getconf_str(CNF_TAPETYPE), "DEFAULT_TAPE") == 0 &&
+		g_str_equal(getconf_str(CNF_TAPETYPE), "DEFAULT_TAPE") &&
 		!lookup_tapetype("DEFAULT_TAPE")) {
 		init_tapetype_defaults();
 		tpcur.name = g_strdup("DEFAULT_TAPE");
@@ -6250,10 +6250,10 @@ validate_program(
     conf_var_t *np G_GNUC_UNUSED,
     val_t        *val)
 {
-    if (strcmp(val->v.s, "DUMP") != 0 &&
-    	strcmp(val->v.s, "GNUTAR") != 0 &&
-    	strcmp(val->v.s, "STAR") != 0 &&
-    	strcmp(val->v.s, "APPLICATION") != 0)
+    if (!g_str_equal(val->v.s, "DUMP") &&
+    	!g_str_equal(val->v.s, "GNUTAR") &&
+    	!g_str_equal(val->v.s, "STAR") &&
+    	!g_str_equal(val->v.s, "APPLICATION"))
        conf_parserror("program must be \"DUMP\", \"GNUTAR\", \"STAR\" or \"APPLICATION\"");
 }
 
@@ -6645,7 +6645,7 @@ extract_commandline_config_overrides(
 
     i = 0;
     while (i<*argc) {
-	if(strncmp((*argv)[i],"-o",2) == 0) {
+	if(g_str_has_prefix((*argv)[i], "-o")) {
 	    if(strlen((*argv)[i]) > 2) {
 		add_config_override_opt(co, (*argv)[i]+2);
 		moveup = 1;
@@ -7340,9 +7340,9 @@ generic_get_security_conf(
 	if(!string || !*string)
 		return(NULL);
 
-	if(strcmp(string, "krb5principal")==0) {
+	if(g_str_equal(string, "krb5principal")) {
 		return(getconf_str(CNF_KRB5PRINCIPAL));
-	} else if(strcmp(string, "krb5keytab")==0) {
+	} else if(g_str_equal(string, "krb5keytab")) {
 		return(getconf_str(CNF_KRB5KEYTAB));
 	}
 	return(NULL);
@@ -7358,33 +7358,33 @@ generic_client_get_security_conf(
 	if(!string || !*string)
 		return(NULL);
 
-	if(strcmp(string, "conf")==0) {
+	if(g_str_equal(string, "conf")) {
 		return(getconf_str(CNF_CONF));
-	} else if(strcmp(string, "amdump_server")==0) {
+	} else if(g_str_equal(string, "amdump_server")) {
 		return(getconf_str(CNF_AMDUMP_SERVER));
-	} else if(strcmp(string, "index_server")==0) {
+	} else if(g_str_equal(string, "index_server")) {
 		return(getconf_str(CNF_INDEX_SERVER));
-	} else if(strcmp(string, "tape_server")==0) {
+	} else if(g_str_equal(string, "tape_server")) {
 		return(getconf_str(CNF_TAPE_SERVER));
-	} else if(strcmp(string, "tapedev")==0) {
+	} else if(g_str_equal(string, "tapedev")) {
 		return(getconf_str(CNF_TAPEDEV));
-        } else if(strcmp(string, "auth")==0) {
+        } else if(g_str_equal(string, "auth")) {
 		return(getconf_str(CNF_AUTH));
-	} else if(strcmp(string, "ssh_keys")==0) {
+	} else if(g_str_equal(string, "ssh_keys")) {
 		return(getconf_str(CNF_SSH_KEYS));
-	} else if(strcmp(string, "amandad_path")==0) {
+	} else if(g_str_equal(string, "amandad_path")) {
 		return(getconf_str(CNF_AMANDAD_PATH));
-	} else if(strcmp(string, "client_username")==0) {
+	} else if(g_str_equal(string, "client_username")) {
 		return(getconf_str(CNF_CLIENT_USERNAME));
-	} else if(strcmp(string, "client_port")==0) {
+	} else if(g_str_equal(string, "client_port")) {
 		return(getconf_str(CNF_CLIENT_PORT));
-	} else if(strcmp(string, "gnutar_list_dir")==0) {
+	} else if(g_str_equal(string, "gnutar_list_dir")) {
 		return(getconf_str(CNF_GNUTAR_LIST_DIR));
-	} else if(strcmp(string, "amandates")==0) {
+	} else if(g_str_equal(string, "amandates")) {
 		return(getconf_str(CNF_AMANDATES));
-	} else if(strcmp(string, "krb5principal")==0) {
+	} else if(g_str_equal(string, "krb5principal")) {
 		return(getconf_str(CNF_KRB5PRINCIPAL));
-	} else if(strcmp(string, "krb5keytab")==0) {
+	} else if(g_str_equal(string, "krb5keytab")) {
 		return(getconf_str(CNF_KRB5KEYTAB));
 	}
 	return(NULL);
@@ -7499,7 +7499,7 @@ dump_configuration(void)
 	seen_t *netusage_seen = &val_t__seen(getconf(CNF_NETUSAGE));
 	if (ip->seen.linenum == netusage_seen->linenum &&
 	    ip->seen.filename && netusage_seen->filename &&
-	    0 == strcmp(ip->seen.filename, netusage_seen->filename))
+	    g_str_equal(ip->seen.filename, netusage_seen->filename))
 	    prefix = "#";
 	else
 	    prefix = "";
@@ -7521,7 +7521,7 @@ dump_configuration(void)
     }
 
     for(ap = application_list; ap != NULL; ap = ap->next) {
-	if(strcmp(ap->name,"default") == 0)
+	if(g_str_equal(ap->name, "default"))
 	    prefix = "#";
 	else
 	    prefix = "";
@@ -7543,7 +7543,7 @@ dump_configuration(void)
     }
 
     for(ps = pp_script_list; ps != NULL; ps = ps->next) {
-	if(strcmp(ps->name,"default") == 0)
+	if(g_str_equal(ps->name, "default"))
 	    prefix = "#";
 	else
 	    prefix = "";
@@ -8242,14 +8242,14 @@ parm_key_info(
 	/* If the keyword doesn't exist, there's no need to look up the
 	 * subsection -- we know it's invalid */
 	for(kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
-	    if(kt->keyword && strcmp(kt->keyword, subsec_key) == 0)
+	    if(kt->keyword && g_str_equal(kt->keyword, subsec_key))
 		break;
 	}
 	if(kt->token == CONF_UNKNOWN) goto out;
 
 	/* Otherwise, figure out which kind of subsection we're dealing with,
 	 * and parse against that. */
-	if (strcmp(subsec_type, "TAPETYPE") == 0) {
+	if (g_str_equal(subsec_type, "TAPETYPE")) {
 	    tp = lookup_tapetype(subsec_name);
 	    if (!tp) goto out;
 	    for(np = tapetype_var; np->token != CONF_UNKNOWN; np++) {
@@ -8261,7 +8261,7 @@ parm_key_info(
 	    if (val) *val = &tp->value[np->parm];
 	    if (parm) *parm = np;
 	    success = TRUE;
-	} else if (strcmp(subsec_type, "DUMPTYPE") == 0) {
+	} else if (g_str_equal(subsec_type, "DUMPTYPE")) {
 	    dp = lookup_dumptype(subsec_name);
 	    if (!dp) goto out;
 	    for(np = dumptype_var; np->token != CONF_UNKNOWN; np++) {
@@ -8273,7 +8273,7 @@ parm_key_info(
 	    if (val) *val = &dp->value[np->parm];
 	    if (parm) *parm = np;
 	    success = TRUE;
-	} else if (strcmp(subsec_type, "HOLDINGDISK") == 0) {
+	} else if (g_str_equal(subsec_type, "HOLDINGDISK")) {
 	    hp = lookup_holdingdisk(subsec_name);
 	    if (!hp) goto out;
 	    for(np = holding_var; np->token != CONF_UNKNOWN; np++) {
@@ -8285,7 +8285,7 @@ parm_key_info(
 	    if (val) *val = &hp->value[np->parm];
 	    if (parm) *parm = np;
 	    success = TRUE;
-	} else if (strcmp(subsec_type, "INTERFACE") == 0) {
+	} else if (g_str_equal(subsec_type, "INTERFACE")) {
 	    ip = lookup_interface(subsec_name);
 	    if (!ip) goto out;
 	    for(np = interface_var; np->token != CONF_UNKNOWN; np++) {
@@ -8298,8 +8298,8 @@ parm_key_info(
 	    if (parm) *parm = np;
 	    success = TRUE;
 	/* accept the old name here, too */
-	} else if (strcmp(subsec_type, "APPLICATION_TOOL") == 0
-		|| strcmp(subsec_type, "APPLICATION") == 0) {
+	} else if (g_str_equal(subsec_type, "APPLICATION_TOOL")
+		|| g_str_equal(subsec_type, "APPLICATION")) {
 	    ap = lookup_application(subsec_name);
 	    if (!ap) goto out;
 	    for(np = application_var; np->token != CONF_UNKNOWN; np++) {
@@ -8312,8 +8312,8 @@ parm_key_info(
 	    if (parm) *parm = np;
 	    success = TRUE;
 	/* accept the old name here, too */
-	} else if (strcmp(subsec_type, "SCRIPT_TOOL") == 0
-		|| strcmp(subsec_type, "SCRIPT") == 0) {
+	} else if (g_str_equal(subsec_type, "SCRIPT_TOOL")
+		|| g_str_equal(subsec_type, "SCRIPT")) {
 	    pp = lookup_pp_script(subsec_name);
 	    if (!pp) goto out;
 	    for(np = pp_script_var; np->token != CONF_UNKNOWN; np++) {
@@ -8325,7 +8325,7 @@ parm_key_info(
 	    if (val) *val = &pp->value[np->parm];
 	    if (parm) *parm = np;
 	    success = TRUE;
-	} else if (strcmp(subsec_type, "DEVICE") == 0) {
+	} else if (g_str_equal(subsec_type, "DEVICE")) {
 	    dc = lookup_device_config(subsec_name);
 	    if (!dc) goto out;
 	    for(np = device_config_var; np->token != CONF_UNKNOWN; np++) {
@@ -8337,7 +8337,7 @@ parm_key_info(
 	    if (val) *val = &dc->value[np->parm];
 	    if (parm) *parm = np;
 	    success = TRUE;
-	} else if (strcmp(subsec_type, "CHANGER") == 0) {
+	} else if (g_str_equal(subsec_type, "CHANGER")) {
 	    cc = lookup_changer_config(subsec_name);
 	    if (!cc) goto out;
 	    for(np = changer_config_var; np->token != CONF_UNKNOWN; np++) {
@@ -8360,7 +8360,7 @@ parm_key_info(
 
 	/* look up the keyword */
 	for(kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
-	    if(kt->keyword && strcmp(kt->keyword, key) == 0)
+	    if(kt->keyword && g_str_equal(kt->keyword, key))
 		break;
 	}
 	if(kt->token == CONF_UNKNOWN) goto out;
@@ -8439,9 +8439,9 @@ string_to_boolean(
     }
 
     /* 0 and 1 are not in the table, as they are parsed as ints */
-    if (0 == strcmp(str, "0"))
+    if (g_str_equal(str, "0"))
 	return 0;
-    if (0 == strcmp(str, "1"))
+    if (g_str_equal(str, "1"))
 	return 1;
 
     for (table_entry = bool_keytable; table_entry->keyword != NULL;
@@ -8596,9 +8596,9 @@ data_path_t
 data_path_from_string(
     char *data)
 {
-    if (strcmp(data, "AMANDA") == 0)
+    if (g_str_equal(data, "AMANDA"))
 	return DATA_PATH_AMANDA;
-    if (strcmp(data, "DIRECTTCP") == 0)
+    if (g_str_equal(data, "DIRECTTCP"))
 	return DATA_PATH_DIRECTTCP;
     error(_("datapath is not AMANDA or DIRECTTCP :%s:"), data);
     /* NOTREACHED */

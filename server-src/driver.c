@@ -253,7 +253,7 @@ main(
 	   get_pname(), (long) getpid(), argv[0], VERSION);
 
     if(argc > 2) {
-        if(strcmp(argv[2], "nodump") == 0) {
+        if(g_str_equal(argv[2], "nodump")) {
             nodump = 1;
 	    argv++;
 	    argc--;
@@ -261,7 +261,7 @@ main(
     }
 
     if (argc > 2) {
-	if (strcmp(argv[2], "--no-taper") == 0) {
+	if (g_str_equal(argv[2], "--no-taper")) {
 	    no_taper = TRUE;
 	    argv++;
 	    argc--;
@@ -269,7 +269,7 @@ main(
     }
 
     if (argc > 2) {
-	if (strcmp(argv[2], "--from-client") == 0) {
+	if (g_str_equal(argv[2], "--from-client")) {
 	    from_client = TRUE;
 	    argv++;
 	    argc--;
@@ -1575,7 +1575,7 @@ handle_taper_result(
 	    taper = NULL;
 	    taper_started = 1;
 	    for (i=0; i < conf_taper_parallel_write; i++) {
-		if (strcmp(tapetable[i].name, result_argv[1]) == 0) {
+		if (g_str_equal(tapetable[i].name, result_argv[1])) {
 		    taper= &tapetable[i];
 		}
 	    }
@@ -1613,13 +1613,13 @@ handle_taper_result(
 		   walltime_str(curclock()), dp->host->hostname, qname);
 	    fflush(stdout);
 
-	    if (strcmp(result_argv[2], "INPUT-ERROR") == 0) {
+	    if (g_str_equal(result_argv[2], "INPUT-ERROR")) {
 		g_free(taper->input_error);
 		taper->input_error = g_strdup(result_argv[4]);
 		taper->result = FAILED;
 		amfree(qname);
 		break;
-	    } else if (strcmp(result_argv[2], "INPUT-GOOD") != 0) {
+	    } else if (!g_str_equal(result_argv[2], "INPUT-GOOD")) {
 		g_free(taper->tape_error);
 		taper->tape_error = g_strdup(_("Taper protocol error"));
 		taper->result = FAILED;
@@ -1629,14 +1629,14 @@ handle_taper_result(
 		amfree(qname);
 		break;
 	    }
-	    if (strcmp(result_argv[3], "TAPE-ERROR") == 0) {
+	    if (g_str_equal(result_argv[3], "TAPE-ERROR")) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
 		g_free(taper->tape_error);
 		taper->tape_error = g_strdup(result_argv[5]);
 		taper->result = FAILED;
 		amfree(qname);
 		break;
-	    } else if (strcmp(result_argv[3], "TAPE-GOOD") != 0) {
+	    } else if (!g_str_equal(result_argv[3], "TAPE-GOOD")) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
 		g_free(taper->tape_error);
 		taper->tape_error = g_strdup(_("Taper protocol error"));
@@ -1671,13 +1671,13 @@ handle_taper_result(
 		   walltime_str(curclock()), dp->host->hostname, qname);
 	    fflush(stdout);
 
-	    if (strcmp(result_argv[2], "INPUT-ERROR") == 0) {
+	    if (g_str_equal(result_argv[2], "INPUT-ERROR")) {
 		g_free(taper->input_error);
 		taper->input_error = g_strdup(result_argv[5]);
 		taper->result = FAILED;
 		amfree(qname);
 		break;
-	    } else if (strcmp(result_argv[2], "INPUT-GOOD") != 0) {
+	    } else if (!g_str_equal(result_argv[2], "INPUT-GOOD")) {
 		g_free(taper->tape_error);
 		taper->tape_error = g_strdup(_("Taper protocol error"));
 		taper->result = FAILED;
@@ -1687,14 +1687,14 @@ handle_taper_result(
 		amfree(qname);
 		break;
 	    }
-	    if (strcmp(result_argv[3], "TAPE-ERROR") == 0) {
+	    if (g_str_equal(result_argv[3], "TAPE-ERROR")) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
 		g_free(taper->tape_error);
 		taper->tape_error = g_strdup(result_argv[6]);
 		taper->result = FAILED;
 		amfree(qname);
 		break;
-	    } else if (strcmp(result_argv[3], "TAPE-GOOD") != 0) {
+	    } else if (!g_str_equal(result_argv[3], "TAPE-GOOD")) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
 		g_free(taper->tape_error);
 		taper->tape_error = g_strdup(_("Taper protocol error"));
@@ -1850,7 +1850,7 @@ handle_taper_result(
 
         case TAPE_ERROR: /* TAPE-ERROR <name> <err mess> */
 	    taper_started = 1;
-	    if (strcmp(result_argv[1], "SETUP") == 0) {
+	    if (g_str_equal(result_argv[1], "SETUP")) {
 		taper_nb_wait_reply = 0;
 		taper_nb_scan_volume = 0;
 	    } else {
@@ -2001,7 +2001,7 @@ file_taper_result(
     if (taper->input_error) {
 	g_printf("driver: taper failed %s %s: %s\n",
 		   dp->host->hostname, qname, taper->input_error);
-	if (strcmp(sched(dp)->datestamp, driver_timestamp) == 0) {
+	if (g_str_equal(sched(dp)->datestamp, driver_timestamp)) {
 	    if(sched(dp)->taper_attempted >= 2) {
 		log_add(L_FAIL, _("%s %s %s %d [too many taper retries after holding disk error: %s]"),
 		    dp->host->hostname, qname, sched(dp)->datestamp,
@@ -2196,7 +2196,7 @@ taper_from_name(
 
     for (taper = tapetable; taper < tapetable+conf_taper_parallel_write;
 			    taper++)
-	if (strcmp(taper->name, name) == 0) return taper;
+	if (g_str_equal(taper->name, name)) return taper;
 
     return NULL;
 }
@@ -2715,11 +2715,11 @@ read_flush(
 	skip_non_whitespace(s, ch);
 	s[-1] = '\0';
 
-	if(strcmp(command,"ENDFLUSH") == 0) {
+	if(g_str_equal(command, "ENDFLUSH")) {
 	    break;
 	}
 
-	if(strcmp(command,"FLUSH") != 0) {
+	if(!g_str_equal(command, "FLUSH")) {
 	    error(_("flush line %d: syntax error (%s != FLUSH)"), line, command);
 	    /*NOTREACHED*/
 	}
@@ -2779,9 +2779,9 @@ read_flush(
 	    continue;
 	}
 
-	if(strcmp(hostname, file.name) != 0 ||
-	   strcmp(diskname, file.disk) != 0 ||
-	   strcmp(datestamp, file.datestamp) != 0) {
+	if(!g_str_equal(hostname, file.name) ||
+	   !g_str_equal(diskname, file.disk) ||
+	   !g_str_equal(datestamp, file.datestamp)) {
 	    log_add(L_INFO, _("disk %s:%s not consistent with file %s"),
 		    hostname, diskname, destname);
 	    amfree(diskname);
@@ -2927,7 +2927,7 @@ read_schedule(
 	skip_non_whitespace(s, ch);
 	s[-1] = '\0';
 
-	if(strcmp(command,"DUMP") != 0) {
+	if(!g_str_equal(command, "DUMP")) {
 	    error(_("schedule line %d: syntax error (%s != DUMP)"), line, command);
 	    /*NOTREACHED*/
 	}
@@ -3581,7 +3581,7 @@ build_diskspace(
 	}
 
 	for(j = 0, ha = holdalloc; ha != NULL; ha = ha->next, j++ ) {
-	    if(strcmp(dirname, holdingdisk_get_diskdir(ha->hdisk))==0) {
+	    if(g_str_equal(dirname, holdingdisk_get_diskdir(ha->hdisk))) {
 		break;
 	    }
 	}

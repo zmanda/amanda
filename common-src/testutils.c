@@ -174,17 +174,17 @@ testutils_run_tests(
 
     /* first_parse the command line */
     while (argc > 1) {
-	if (strcmp(argv[1], "-d") == 0) {
+	if (g_str_equal(argv[1], "-d")) {
 	    tu_debugging_enabled = TRUE;
-	} else if (strcmp(argv[1], "-t") == 0) {
+	} else if (g_str_equal(argv[1], "-t")) {
 	    ignore_timeouts = TRUE;
-	} else if (strcmp(argv[1], "-n") == 0) {
+	} else if (g_str_equal(argv[1], "-n")) {
 	    skip_fork = TRUE;
 	    only_one = TRUE;
-	} else if (strcmp(argv[1], "-l") == 0) {
+	} else if (g_str_equal(argv[1], "-l")) {
 	    loop_forever = TRUE;
 	    only_one = TRUE;
-	} else if (strcmp(argv[1], "-c") == 0) {
+	} else if (g_str_equal(argv[1], "-c")) {
             char *p;
             argv++, argc--;
             occurrences = g_ascii_strtoull(argv[1], &p, 10);
@@ -201,14 +201,14 @@ testutils_run_tests(
                 g_fprintf(stderr, "Sorry, I will not run tests 0 times\n");
                 exit(1);
             }
-	} else if (strcmp(argv[1], "-h") == 0) {
+	} else if (g_str_equal(argv[1], "-h")) {
 	    usage(tests);
 	    return 1;
 	} else {
 	    int found = 0;
 
 	    for (t = tests; t->fn; t++) {
-		if (strcmp(argv[1], t->name) == 0) {
+		if (g_str_equal(argv[1], t->name)) {
 		    found = 1;
 		    t->selected = 1;
 		    break;

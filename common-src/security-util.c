@@ -746,7 +746,7 @@ tcpma_stream_server(
 	security_seterror(&rh->sech, _("lost connection to %s"), rh->hostname);
 	return (NULL);
     }
-    assert(strcmp(rh->hostname, rs->rc->hostname) == 0);
+    assert(g_str_equal(rh->hostname, rs->rc->hostname));
     /*
      * so as not to conflict with the amanda server's handle numbers,
      * we start at 500000 and work down
@@ -1057,7 +1057,7 @@ bsd_recv_security_ok(
 	    amfree(security_line);
 	    return (-1);	/* default errmsg */
 	}
-	if (strcmp(tok, "USER") != 0) {
+	if (!g_str_equal(tok, "USER")) {
 	    security_seterror(&rh->sech,
 		_("REQ SECURITY line parse error, expecting USER, got %s"), tok);
 	    amfree(service);
@@ -1269,7 +1269,7 @@ udp_recvpkt_callback(
     assert(rh != NULL);
 
     /* if it doesn't correspond to this handle, something is wrong */
-    assert(strcmp(rh->proto_handle, rh->udp->handle) == 0);
+    assert(g_str_equal(rh->proto_handle, rh->udp->handle));
 
     /* if it didn't come from the same host/port, forget it */
     if (cmp_sockaddr(&rh->peer, &rh->udp->peer, 0) != 0) {
@@ -1409,7 +1409,7 @@ udp_netfd_read_callback(
      * If there are events waiting on this handle, we're done
      */
     rh = udp->bh_first;
-    while(rh != NULL && (strcmp(rh->proto_handle, udp->handle) != 0 ||
+    while(rh != NULL && (!g_str_equal(rh->proto_handle, udp->handle) ||
 			 rh->sequence != udp->sequence ||
 			 cmp_sockaddr(&rh->peer, &udp->peer, 0) != 0)) {
 	rh = rh->next;
@@ -1935,7 +1935,7 @@ str2pkthdr(
     /* "Amanda %d.%d <ACK,NAK,...> HANDLE %s SEQ %d\n" */
 
     /* Read in "Amanda" */
-    if ((tok = strtok(str, " ")) == NULL || strcmp(tok, "Amanda") != 0)
+    if ((tok = strtok(str, " ")) == NULL || !g_str_equal(tok, "Amanda"))
 	goto parse_error;
 
     /* nothing is done with the major/minor numbers currently */
@@ -1951,7 +1951,7 @@ str2pkthdr(
 	goto parse_error;
 
     /* Read in "HANDLE" */
-    if ((tok = strtok(NULL, " ")) == NULL || strcmp(tok, "HANDLE") != 0)
+    if ((tok = strtok(NULL, " ")) == NULL || !g_str_equal(tok, "HANDLE"))
 	goto parse_error;
 
     /* parse the handle */
@@ -1961,7 +1961,7 @@ str2pkthdr(
     udp->handle = g_strdup(tok);
 
     /* Read in "SEQ" */
-    if ((tok = strtok(NULL, " ")) == NULL || strcmp(tok, "SEQ") != 0)   
+    if ((tok = strtok(NULL, " ")) == NULL || !g_str_equal(tok, "SEQ"))   
 	goto parse_error;
 
     /* parse the sequence number */   
@@ -2248,8 +2248,8 @@ check_user_amandahosts(
 #endif
 		inet_ntop(AF_INET, &addr->sin.sin_addr,
 			  ipstr, sizeof(ipstr));
-	    if (strcmp(ipstr, "127.0.0.1") == 0 ||
-		strcmp(ipstr, "::1") == 0)
+	    if (g_str_equal(ipstr, "127.0.0.1") ||
+		g_str_equal(ipstr, "::1"))
 		hostmatch = 1;
 	}
 	usermatch = (strcasecmp(fileuser, remoteuser) == 0);
@@ -2277,10 +2277,10 @@ check_user_amandahosts(
          */
 	aservice = strtok(NULL, " \t,");
 	if (!aservice) {
-	    if (strcmp(service,"noop") == 0 ||
-	       strcmp(service,"selfcheck") == 0 ||
-	       strcmp(service,"sendsize") == 0 ||
-	       strcmp(service,"sendbackup") == 0) {
+	    if (g_str_equal(service, "noop") ||
+	       g_str_equal(service, "selfcheck") ||
+	       g_str_equal(service, "sendsize") ||
+	       g_str_equal(service, "sendbackup")) {
 		/* success */
 		found = 1;
 		amfree(line);
@@ -2293,21 +2293,21 @@ check_user_amandahosts(
 	}
 
 	do {
-	    if (strcmp(aservice,service) == 0) {
+	    if (g_str_equal(aservice, service)) {
 		found = 1;
 		break;
 	    }
-	    if (strcmp(aservice, "amdump") == 0 && 
-	       (strcmp(service, "noop") == 0 ||
-		strcmp(service, "selfcheck") == 0 ||
-		strcmp(service, "sendsize") == 0 ||
-		strcmp(service, "sendbackup") == 0)) {
+	    if (g_str_equal(aservice, "amdump") && 
+	       (g_str_equal(service, "noop") ||
+		g_str_equal(service, "selfcheck") ||
+		g_str_equal(service, "sendsize") ||
+		g_str_equal(service, "sendbackup"))) {
 		found = 1;
 		break;
 	    }
 	} while((aservice = strtok(NULL, " \t,")) != NULL);
 
-	if (aservice && strcmp(aservice, service) == 0) {
+	if (aservice && g_str_equal(aservice, service)) {
 	    /* success */
 	    found = 1;
 	    amfree(line);
@@ -2316,14 +2316,14 @@ check_user_amandahosts(
 	amfree(line);
     }
     if (! found) {
-	if (strcmp(service, "amindexd") == 0 ||
-	    strcmp(service, "amidxtaped") == 0) {
+	if (g_str_equal(service, "amindexd") ||
+	    g_str_equal(service, "amidxtaped")) {
 	    result = g_strdup_printf(_("Please add the line \"%s %s amindexd amidxtaped\" to %s on the server"), host, remoteuser, ptmp);
-	} else if (strcmp(service, "amdump") == 0 ||
-		   strcmp(service, "noop") == 0 ||
-		   strcmp(service, "selfcheck") == 0 ||
-		   strcmp(service, "sendsize") == 0 ||
-		   strcmp(service, "sendbackup") == 0) {
+	} else if (g_str_equal(service, "amdump") ||
+		   g_str_equal(service, "noop") ||
+		   g_str_equal(service, "selfcheck") ||
+		   g_str_equal(service, "sendsize") ||
+		   g_str_equal(service, "sendbackup")) {
 	    result = g_strdup_printf(_("Please add the line \"%s %s amdump\" to %s on the client"), host, remoteuser, ptmp);
 	} else {
 	    result = g_strdup_printf(_("%s: invalid service %s"), ptmp, service);

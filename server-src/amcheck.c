@@ -724,7 +724,7 @@ start_server_check(
 	char *lbl_templ;
 
 	lbl_templ = tapetype_get_lbl_templ(tp);
-	if(strcmp(lbl_templ, "") != 0) {
+	if(!g_str_equal(lbl_templ, "")) {
 	    lbl_templ = config_dir_relative(lbl_templ);
 	    if(access(lbl_templ, R_OK) == -1) {
 		g_fprintf(outf,
@@ -1826,16 +1826,16 @@ start_host(
 		}
 	    }
 	    if (dp->program &&
-	        (strcmp(dp->program,"DUMP") == 0 || 
-	         strcmp(dp->program,"GNUTAR") == 0)) {
-		if(strcmp(dp->program, "DUMP") == 0 &&
+	        (g_str_equal(dp->program, "DUMP") || 
+	         g_str_equal(dp->program, "GNUTAR"))) {
+		if(g_str_equal(dp->program, "DUMP") &&
 		   !am_has_feature(hostp->features, fe_program_dump)) {
 		    g_fprintf(outf, _("ERROR: %s:%s does not support DUMP.\n"),
 			    hostp->hostname, qname);
 		    g_fprintf(outf, _("You must upgrade amanda on the client to use DUMP "
 				    "or you can use another program.\n"));	
 		}
-		if(strcmp(dp->program, "GNUTAR") == 0 &&
+		if(g_str_equal(dp->program, "GNUTAR") &&
 		   !am_has_feature(hostp->features, fe_program_gnutar)) {
 		    g_fprintf(outf, _("ERROR: %s:%s does not support GNUTAR.\n"),
 			    hostp->hostname, qname);
@@ -2179,8 +2179,8 @@ handle_result(
 	     * We can ignore this.
 	     */
 	    if(!((hostp->features == NULL) && (pkt->type == P_NAK)
-	       && ((strcmp(t - 1, "unknown service: noop") == 0)
-		   || (strcmp(t - 1, "noop: invalid service") == 0)))) {
+	       && ((g_str_equal(t - 1, "unknown service: noop"))
+		   || (g_str_equal(t - 1, "noop: invalid service"))))) {
 		g_fprintf(outf, _("ERROR: %s%s: %s\n"),
 			(pkt->type == P_NAK) ? "NAK " : "",
 			hostp->hostname,

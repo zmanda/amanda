@@ -58,7 +58,7 @@ do_create(char *opt_file, int opt_verbose, int argc, char **argv)
     int i, fd_out, fd_in;
     off_t filesize = 0;
 
-    if (opt_file != NULL && strcmp(opt_file,"-") != 0) {
+    if (opt_file != NULL && !g_str_equal(opt_file, "-")) {
 	fd_out = open(opt_file, O_CREAT|O_WRONLY|O_TRUNC, 0660);
 	if (fd_out <= 0) {
 	    error("open of '%s' failed: %s\n", opt_file, strerror(errno));
@@ -135,7 +135,7 @@ extract_file_start_cb(
 	*ignore = TRUE;
 	for (i = 0; i < ud->argc; i++) {
 	    if (strlen(ud->argv[i]) == filename_len
-		&& 0 == strcmp(ud->argv[i], *file_data))
+		&& g_str_equal(ud->argv[i], *file_data))
 		*ignore = FALSE;
 	}
     }
@@ -224,7 +224,7 @@ do_extract(
     ud.argc = argc;
     ud.verbose = opt_verbose;
 
-    if (opt_file && strcmp(opt_file,"-") != 0) {
+    if (opt_file && !g_str_equal(opt_file, "-")) {
 	fd_in = open(opt_file, O_RDONLY);
 	if (fd_in <= 0) {
 	    error("open of '%s' failed: %s\n", opt_file, strerror(errno));
@@ -273,7 +273,7 @@ do_list(
 	{ 0, 0, NULL, NULL },
     };
 
-    if (opt_file && strcmp(opt_file,"-") != 0) {
+    if (opt_file && !g_str_equal(opt_file, "-")) {
 	fd_in = open(opt_file, O_RDONLY);
 	if (fd_in <= 0) {
 	    error("open of '%s' failed: %s\n", opt_file, strerror(errno));

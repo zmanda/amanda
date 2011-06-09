@@ -1,4 +1,9 @@
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* Many files (77): use g_str_equal() insteadl of strcmp(...) == 0 (and
+	  reverse),use g_str_has_prefix() instead of strncmp(...) == 0 (and
+	  reverse)
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/alloc.c, common-src/amanda.h: goodbye vstrextend() and
 	  internal_vstralloc()
 
