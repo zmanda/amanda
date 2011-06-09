@@ -518,7 +518,6 @@ static void
 check_disk(
     dle_t *dle)
 {
-    char *tmpbuf;
     char *device = NULL;
     char *err = NULL;
     char *user_and_password = NULL;
@@ -673,18 +672,17 @@ check_disk(
 		    }
 		}
 		if (errdos != 0 || rc != 0) {
+		    char *tmpbuf;
 		    if (extra_info) {
                         tmpbuf = g_strdup_printf( _("samba access error: %s: %s %s"),
                             dle->device, extra_info, err);
-                        g_free(err);
-                        err = tmpbuf;
 			amfree(extra_info);
 		    } else {
 			tmpbuf = g_strdup_printf(_("samba access error: %s: %s"),
                             dle->device, err);
-                        g_free(err);
-                        err = tmpbuf;
 		    }
+		    g_free(err);
+		    err = tmpbuf;
 		}
 #else
 		err = g_strdup_printf(
