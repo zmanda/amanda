@@ -63,7 +63,7 @@ int		process_line(char *line);
 
 LINEFEED	[[:space:]]*("\n"|"\r"|"\r\n")
 %{
-static char *string_buf = NULL;
+static GString *strbuf = NULL;
 %}
 
 %%
@@ -121,34 +121,36 @@ mode		{ BEGIN(needstring); return MODE; }
 }
 
 <needdevice,needmode,needstring,astring,propertyappend,propertypriority>\"			{
-    if(string_buf != NULL) {
-	g_printf("ERROR:string_buf != NULL: %s\n",string_buf);
-    }
+    if (strbuf)
+	g_printf("ERROR: string buffer != NULL: %s\n", strbuf->str);
+    else
+        strbuf = g_string_new(NULL);
+
     BEGIN(quotedstring);
-    strappend(string_buf, yytext);
+    g_string_append(strbuf, yytext);
 }
 
 <quotedstring>[^\\\"\n\r]+	{
-    strappend(string_buf, yytext);
+    g_string_append(strbuf, yytext);
 }
 
 <quotedstring>\\.	{
     /* escaped character (including quote) */
-    strappend(string_buf, yytext);
+    g_string_append(strbuf, yytext);
 }
 
 <quotedstring>\"	{ /* saw closing quote - all done */
-    strappend(string_buf, yytext);
-    yylval.strval = string_buf;
-    string_buf = NULL;
+    g_string_append(strbuf, yytext);
+    yylval.strval = g_string_free(strbuf, FALSE);
+    strbuf = NULL;
     BEGIN(needstring);
     return STRING;
 }
 
 <quotedstring>{LINEFEED} {
     fprintf(stderr,"Unterminated quoted string\n");
-    amfree(string_buf);
-    string_buf = NULL;
+    g_string_free(strbuf, TRUE);
+    strbuf = NULL;
     BEGIN(INITIAL);
     return NL;
 }

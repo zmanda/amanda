@@ -412,6 +412,8 @@ main(
 	char *line = NULL;
 	int rc;
 	int valid_mailto = 0;
+        GString *errbuf;
+        GString *xerrbuf;
 
 	fflush(stdout);
 	if(lseek(mainfd, (off_t)0, SEEK_SET) == (off_t)-1) {
@@ -461,6 +463,13 @@ main(
 	    exit(1);
 	}
 
+        /*
+         * OK, go. Initialize our error buffers.
+         */
+
+        errbuf = g_string_new(NULL);
+        xerrbuf = g_string_new(NULL);
+
 	pipespawnv(mailer, STDIN_PIPE | STDERR_PIPE, 0,
 		   &mailfd, &nullfd, &errfd,
 		   (char **)pipeargs->pdata);
@@ -478,19 +487,22 @@ main(
 	 */
 	signal(SIGPIPE, SIG_IGN);
 	while((r = read_fully(mainfd, buffer, sizeof(buffer), NULL)) > 0) {
-	    if((w = full_write(mailfd, buffer, r)) != r) {
-		if(errno == EPIPE) {
-		    strappend(extra_info, _("EPIPE writing to mail process\n"));
-		    break;
-		} else if(errno != 0) {
-		    error(_("mailfd write: %s"), strerror(errno));
-		    /*NOTREACHED*/
-		} else {
-		    error(_("mailfd write: wrote %zd instead of %zd"), w, r);
-		    /*NOTREACHED*/
-		}
-	    }
+            w = full_write(mailfd, buffer, r);
+
+            if (w == r)
+                continue;
+
+            if (errno == EPIPE) {
+                g_string_append(xerrbuf, "EPIPE writing to mail process\n");
+                break;
+            }
+
+            if (errno)
+                error("mailfd write: %s", strerror(errno));
+
+            error("mailfd write: wrote %zd instead of %zd", w, r);
 	}
+
 	aclose(mailfd);
 	ferr = fdopen(errfd, "r");
 	if (!ferr) {
@@ -500,31 +512,56 @@ main(
 	for(; (line = agets(ferr)) != NULL; free(line)) {
 	    if (line[0] == '\0')
 		continue;
-	    strappend(extra_info, line);
-	    strappend(extra_info, "\n");
+            g_string_append_printf(xerrbuf, "%s\n", line);
 	}
 	afclose(ferr);
 	errfd = -1;
 	rc = 0;
 	while (wait(&retstat) != -1) {
-	    if (!WIFEXITED(retstat) || WEXITSTATUS(retstat) != 0) {
-		char *mailer_error = str_exit_status("mailer", retstat);
-		strappend(err, mailer_error);
-		amfree(mailer_error);
+            char *mailer_error;
 
-		rc = 1;
-	    }
+            if (WIFEXITED(retstat))
+                continue;
+
+            if (!WEXITSTATUS(retstat))
+                continue;
+
+            mailer_error = str_exit_status("mailer", retstat);
+            g_string_append(errbuf, mailer_error);
+            g_free(mailer_error);
+
+            rc = 1;
 	}
+
+        err = g_string_free(errbuf, FALSE);
+
+        /*
+         * We want NULL instead of an empty string
+         */
+
+        if (!*err) {
+            g_free(err);
+            err = NULL;
+        }
+
+        extra_info = g_string_free(xerrbuf, FALSE);
+
+        /*
+         * Same here
+         */
+
+        if (!*extra_info) {
+            g_free(extra_info);
+            extra_info = NULL;
+        }
+
 	if (rc != 0) {
-	    if(extra_info) {
+	    if(extra_info)
 		fputs(extra_info, stderr);
-		amfree(extra_info);
-	    }
-	    error(_("error running mailer %s: %s"), mailer, err?err:"(unknown)");
+	    error("error running mailer %s: %s", mailer, err ? err : "(unknown)");
 	    /*NOTREACHED*/
-	} else {
-	    amfree(extra_info);
 	}
+        g_free(extra_info);
     }
 
     dbclose();
@@ -1220,6 +1257,7 @@ start_server_check(
      * the first time, these are just warnings, not errors.
      */
     if(do_localchk) {
+        char *tmp;
 	char *conf_infofile;
 	char *conf_indexdir;
 	char *hostinfodir = NULL;
@@ -1276,7 +1314,9 @@ start_server_check(
 		infobad = 1;
 		amfree(errmsg);
 	    }
-	    strappend(conf_infofile, "/");
+            tmp = g_strconcat(conf_infofile, "/", NULL);
+            g_free(conf_infofile);
+            conf_infofile = tmp;
 	}
 	amfree(quoted);
 
@@ -1311,7 +1351,9 @@ start_server_check(
 		    amfree(hostinfodir);
 		    infobad = 1;
 		} else {
-		    strappend(hostinfodir, "/");
+                    tmp = g_strconcat(hostinfodir, "/", NULL);
+                    g_free(hostinfodir);
+                    hostinfodir = tmp;
 		}
 		amfree(quoted);
 	    }
@@ -1396,7 +1438,9 @@ start_server_check(
 			    amfree(conf_indexdir);
 			    indexbad = 1;
 			} else {
-			    strappend(conf_indexdir, "/");
+                            tmp = g_strconcat(conf_indexdir, "/", NULL);
+                            g_free(conf_indexdir);
+                            conf_indexdir = tmp;
 			}
 			indexdir_checked = 1;
 			amfree(quoted);
@@ -1428,7 +1472,9 @@ start_server_check(
 			        amfree(hostindexdir);
 			        indexbad = 1;
 			    } else {
-				strappend(hostindexdir, "/");
+                                tmp = g_strconcat(hostindexdir, "/", NULL);
+                                g_free(hostindexdir);
+                                hostindexdir = tmp;
 			    }
 			    hostindexdir_checked = 1;
 			    amfree(quoted);
@@ -1647,13 +1693,10 @@ start_host(
     am_host_t *hostp)
 {
     disk_t *dp;
-    char *req = NULL;
-    size_t req_len = 0;
     int disk_count;
     const security_driver_t *secdrv;
-    char number[NUM_STR_SIZE];
     estimate_t estimate;
-    GString *strbuf;
+    GString *strbuf, *reqbuf;
 
     if(hostp->up != HOST_READY) {
 	return;
@@ -1667,6 +1710,8 @@ start_host(
      * (and subsequent) pass(es).
      */
     disk_count = 0;
+    reqbuf = g_string_new(NULL);
+
     if(hostp->features != NULL) { /* selfcheck service */
 	int has_features = am_has_feature(hostp->features,
 					  fe_req_options_features);
@@ -1676,6 +1721,22 @@ start_host(
 					  fe_req_options_maxdumps);
 	int has_config   = am_has_feature(hostp->features,
 					  fe_req_options_config);
+
+        g_string_append(reqbuf, "SERVICE selfcheck\nOPTIONS ");
+
+        if (has_features)
+            g_string_append_printf(reqbuf, "features=%s;", our_feature_string);
+
+        if (has_maxdumps)
+            g_string_append_printf(reqbuf, "maxdumps=%d;", hostp->maxdumps);
+
+        if (has_hostname)
+            g_string_append_printf(reqbuf, "hostname=%s;", hostp->hostname);
+
+        if (has_config)
+            g_string_append_printf(reqbuf, "config=%s;", get_config_name());
+
+        g_string_append_c(reqbuf, '\n');
 
 	if(!am_has_feature(hostp->features, fe_selfcheck_req) &&
 	   !am_has_feature(hostp->features, fe_selfcheck_req_device)) {
@@ -1718,31 +1779,9 @@ start_host(
 	    g_fprintf(outf, _("Client might be of a very old version\n"));
 	}
 
-	g_snprintf(number, sizeof(number), "%d", hostp->maxdumps);
-	req = g_strjoin(NULL, "SERVICE ", "selfcheck", "\n",
-			"OPTIONS ",
-			has_features ? "features=" : "",
-			has_features ? our_feature_string : "",
-			has_features ? ";" : "",
-			has_maxdumps ? "maxdumps=" : "",
-			has_maxdumps ? number : "",
-			has_maxdumps ? ";" : "",
-			has_hostname ? "hostname=" : "",
-			has_hostname ? hostp->hostname : "",
-			has_hostname ? ";" : "",
-			has_config   ? "config=" : "",
-			has_config   ? get_config_name() : "",
-			has_config   ? ";" : "",
-			"\n",
-			NULL);
-
-	req_len = strlen(req);
-	req_len += 128;                         /* room for SECURITY ... */
-	req_len += 256;                         /* room for non-disk answers */
 	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 	    char *l;
 	    char *es;
-	    size_t l_len;
 	    char *o = NULL;
 	    char *calcsize;
 	    char *qname, *b64disk;
@@ -1984,22 +2023,17 @@ start_host(
 	    amfree(qdevice);
 	    amfree(b64disk);
 	    amfree(b64device);
-	    l_len = strlen(l);
 	    amfree(o);
 
-	    strappend(req, l);
-	    req_len += l_len;
-	    amfree(l);
+            g_string_append(reqbuf, l);
+            g_free(l);
 	    dp->up = DISK_ACTIVE;
 	    disk_count++;
 	}
     }
     else { /* noop service */
-	req = g_strjoin(NULL, "SERVICE ", "noop", "\n",
-			"OPTIONS ",
-			"features=", our_feature_string, ";",
-			"\n",
-			NULL);
+        g_string_append_printf(reqbuf, "SERVICE noop\n OPTIONS features=%s;\n",
+            our_feature_string);
 	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 	    if(dp->up != DISK_READY || dp->todo != 1) {
 		continue;
@@ -2009,7 +2043,7 @@ start_host(
     }
 
     if(disk_count == 0) {
-	amfree(req);
+        g_string_free(reqbuf, TRUE);
 	hostp->up = HOST_DONE;
 	return;
     }
@@ -2019,11 +2053,11 @@ start_host(
 	fprintf(stderr, _("Could not find security driver \"%s\" for host \"%s\". auth for this dle is invalid\n"),
 	      hostp->disks->auth, hostp->hostname);
     } else {
+        char *req = g_string_free(reqbuf, FALSE);
 	protocol_sendreq(hostp->hostname, secdrv, amhost_get_security_conf, 
 			 req, conf_ctimeout, handle_result, hostp);
+        g_free(req);
     }
-
-    amfree(req);
 
     hostp->up = HOST_ACTIVE;
 }

@@ -7723,19 +7723,27 @@ val_t_display_strs(
 
     case CONFTYPE_IDENTLIST:
 	{
-	    GSList *ia;
-	    int     first = 1;
+            GSList *ia = val->v.identlist;
+            GPtrArray *array = g_ptr_array_new();
+            gchar **strings;
+            char *tmp;
 
-	    buf[0] = NULL;
-	    for (ia = val->v.identlist; ia != NULL; ia = ia->next) {
-		if (first) {
-		    buf[0] = g_strdup(ia->data);
-		    first = 0;
-		} else {
-		    strappend(buf[0], " ");
-		    strappend(buf[0],  ia->data);
-		}
-	    }
+            while (ia) {
+                g_ptr_array_add(array, g_strdup(ia->data));
+                ia = ia->next;
+            }
+            g_ptr_array_add(array, NULL);
+
+            strings = (gchar **)g_ptr_array_free(array, FALSE);
+            tmp = g_strjoinv(" ", strings);
+            g_strfreev(strings);
+
+            if (!*tmp) {
+                g_free(tmp);
+                tmp = NULL;
+            }
+
+            buf[0] = tmp;
 	}
 	break;
 
@@ -7868,30 +7876,34 @@ val_t_display_strs(
 	}
 	break;
 
-    case CONFTYPE_ESTIMATELIST: {
+    case CONFTYPE_ESTIMATELIST:
+    {
 	estimatelist_t es = val_t__estimatelist(val);
-	buf[0] = g_strdup("");
+        GPtrArray *array = g_ptr_array_new();
+        gchar **strings;
+
 	while (es) {
-	    switch((estimate_t)GPOINTER_TO_INT(es->data)) {
-	    case ES_CLIENT:
-		strappend(buf[0], "CLIENT");
-		break;
-
-	    case ES_SERVER:
-		strappend(buf[0], "SERVER");
-		break;
-
-	    case ES_CALCSIZE:
-		strappend(buf[0], "CALCSIZE");
-		break;
-
-	    case ES_ES:
-		break;
+            switch((estimate_t)GPOINTER_TO_INT(es->data)) {
+                case ES_CLIENT:
+                    g_ptr_array_add(array, "CLIENT");
+                    break;
+                case ES_SERVER:
+                    g_ptr_array_add(array, "SERVER");
+                    break;
+                case ES_CALCSIZE:
+                    g_ptr_array_add(array, "CALCSIZE");
+                case ES_ES:
+                    break;
 	    }
 	    es = es->next;
-	    if (es)
-		strappend(buf[0], " ");
 	}
+        g_ptr_array_add(array, NULL);
+
+        strings = (gchar **)g_ptr_array_free(array, FALSE);
+        buf[0] = g_strjoinv(" ", strings);
+
+        /* We must free the pointer only! */
+        g_free(strings);
 	break;
     }
 
@@ -7960,24 +7972,27 @@ val_t_display_strs(
 	}
 	break;
 
-     case CONFTYPE_HOST_LIMIT: {
+     case CONFTYPE_HOST_LIMIT:
+     {
 	GSList *iter = val_t__host_limit(val).match_pats;
+        GPtrArray *array = g_ptr_array_new();
+        gchar **strings;
 
 	if (val_t__host_limit(val).same_host)
-	    buf[0] = g_strdup("SAME-HOST ");
-	else
-	    buf[0] = g_strdup("");
+            g_ptr_array_add(array, g_strdup("SAME-HOST"));
 
 	if (val_t__host_limit(val).server)
-	    strappend(buf[0], "SERVER ");
+            g_ptr_array_add(array, g_strdup("SERVER"));
 
 	while (iter) {
-	    char *qbuf = quote_string_always((char *)iter->data);
-	    strappend(buf[0], qbuf);
-	    strappend(buf[0], " ");
-	    amfree(qbuf);
+            g_ptr_array_add(array, quote_string_always((char *)iter->data));
 	    iter = iter->next;
 	}
+        g_ptr_array_add(array, NULL);
+
+        strings = (gchar **)g_ptr_array_free(array, FALSE);
+        buf[0] = g_strjoinv(" ", strings);
+        g_strfreev(strings);
 	break;
      }
 

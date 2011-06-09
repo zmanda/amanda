@@ -308,9 +308,11 @@ get_fstab_nextentry(
 	}
     }
     if ((s = strchr(fsent->fstype, ',')) != NULL) {
+        char *tmp;
 	*s++ = '\0';
-	strappend(fsent->mntopts, ",");
-	strappend(fsent->mntopts, s);
+	tmp = g_strjoin(",", fsent->mntops, s, NULL);
+        g_free(fsent->mntopts);
+        fsent->mntopts = tmp;
     }
 
     g_free(lfsnam);

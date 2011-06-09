@@ -1,4 +1,90 @@
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/amanda.h: remove strappend() macro, it is not unused
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/amindexd.c: main(): replace strappend() usage with a
+	  temporary variable and g_free()/g_strconcat(); push down local
+	  variable "part"
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/amcheck.c: start_host(): replace strappend() usage with a
+	  GString; also, remove unneeded local variables and introduce another
+	  GString to build the request
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/amcheck.c: start_server_check(): replace strappend()
+	  usage with g_strconcat()/g_free()
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* server-src/amcheck.c: main(): replace strappend() usage with GString
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* recover-src/uscan.l: replace strappend() usage with a GString
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* recover-src/set_commands.c: set_directory(): replace strappend() usage
+	  with a GString
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* recover-src/set_commands.c: cd_regex(): replace strappend() usage with
+	  g_free()/g_strconcat(); improve g_strjoin() usage; use g_free()
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* recover-src/set_commands.c: cd_glob(): replace strappend() usage with
+	  g_strconcat(); improve g_strjoin() usage; use g_free()
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* recover-src/extract-list.c: delete_glob(): replace strappend() usage
+	  with g_strconcat(); fix regex
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* recover-src/extract-list.c: add_glob(): replace strappend() usage with
+	  g_strconcat(); fix regex
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* oldrecover-src/uscan.l: replace a static char * with a static GString
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* oldrecover-src/set_commands.c: set_directory(): replace strappend()
+	  usage with a GString
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* oldrecover-src/set_commands.c: cd_glob(): replace strappend() usage
+	  with g_strconcat(); use g_free()
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* oldrecover-src/extract_list.c: delete_glob(): replace strappend()
+	  usage with g_strconcat(); fix regex
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* oldrecover-src/extract_list.c: add_glob(): replace strappend() usage
+	  with g_strconcat(); fix regex
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* oldrecover-src/amrecover.c: get_line(): replace strappend() usage with
+	  a GString
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/security-util.c: cherck_user_ruserok(): replace strappend()
+	  usage with a GPtrArray
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/conffile.c: val_t_display_strs(): replace several usages of
+	  strappend() with GPtrArrays
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* client-src/selfcheck.c: check_disk(): replace strappend() usages with
+	  a GPtrArray
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* client-src/sendbackup-gnutar.c: start_backup(): replace strappend()
+	  usage with a GString
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* client-src/getfsent.c: get_fstab_nextentry(): replace strappend()
+	  usage with a temporary variable and g_strjoin()
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/alloc.c, common-src/amanda.h: goodbye vstrextend() and
 	  internal_vstralloc()
 

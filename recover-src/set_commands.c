@@ -450,8 +450,8 @@ cd_glob(
     if ((s = validate_regexp(regex)) != NULL) {
         g_printf(_("\"%s\" is not a valid shell wildcard pattern: "), glob);
         puts(s);
-	amfree(regex);
-	amfree(uqglob);
+	g_free(regex);
+	g_free(uqglob);
         return 0;
     }
     /*
@@ -461,10 +461,12 @@ cd_glob(
      * $, but we need to match a trailing /, add it if it is not there
      */
     regex_path = g_strdup(regex + 1);
-    amfree(regex);
+    g_free(regex);
     if(regex_path[strlen(regex_path) - 2] != '/' ) {
 	regex_path[strlen(regex_path) - 1] = '\0';
-	strappend(regex_path, "/$");
+        regex = g_strconcat(regex_path, "/$", NULL);
+        g_free(regex_path);
+        regex_path = regex;
     }
 
     /* convert path (assumed in cwd) to one on disk */
@@ -472,15 +474,15 @@ cd_glob(
         path_on_disk = g_strconcat("/", regex_path, NULL);
     else {
         char *clean_disk_path = clean_regex(disk_path, 0);
-        path_on_disk = g_strjoin(NULL, clean_disk_path, "/", regex_path, NULL);
-        amfree(clean_disk_path);
+        path_on_disk = g_strjoin("/", clean_disk_path, regex_path, NULL);
+        g_free(clean_disk_path);
     }
 
     result = cd_dir(path_on_disk, uqglob, verbose);
 
-    amfree(regex_path);
-    amfree(path_on_disk);
-    amfree(uqglob);
+    g_free(regex_path);
+    g_free(path_on_disk);
+    g_free(uqglob);
 
     return result;
 }
@@ -493,6 +495,7 @@ cd_regex(
     char *s;
     char *uq_orig_regex;
     char *uqregex;
+    char *tmp;
     int  len_uqregex;
     int  result;
 
@@ -511,16 +514,20 @@ cd_regex(
     if (uqregex[len_uqregex-1] == '$') {
 	if (uqregex[len_uqregex-2] != '/') {
 	    uqregex[len_uqregex-1] = '\0';
-	    strappend(uqregex, "/$");
+            tmp = g_strconcat(uqregex, "/$", NULL);
+            g_free(uqregex);
+            uqregex = tmp;
 	}
     } else if (uqregex[len_uqregex-1] != '/') {
 	//uqregex[len_uqregex-1] = '\0';
-	strappend(uqregex, "/");
+        tmp = g_strconcat(uqregex, "/", NULL);
+        g_free(uqregex);
+        uqregex = tmp;
     }
     if ((s = validate_regexp(uqregex)) != NULL) {
 	g_printf(_("\"%s\" is not a valid regular expression: "), uq_orig_regex);
-	amfree(uqregex);
-	amfree(uq_orig_regex);
+	g_free(uqregex);
+	g_free(uq_orig_regex);
 	puts(s);
 	return 0;
     }
@@ -529,16 +536,16 @@ cd_regex(
     if (strcmp(disk_path, "/") == 0)
         path_on_disk = g_strconcat("/", uqregex, NULL);
     else {
-        char *clean_disk_path = clean_regex(disk_path, 0);
-        path_on_disk = g_strjoin(NULL, clean_disk_path, "/", regex, NULL);
-        amfree(clean_disk_path);
+        tmp = clean_regex(disk_path, 0);
+        path_on_disk = g_strjoin("/", tmp, regex, NULL);
+        g_free(tmp);
     }
 
     result = cd_dir(path_on_disk, uq_orig_regex, verbose);
 
-    amfree(path_on_disk);
-    amfree(uqregex);
-    amfree(uq_orig_regex);
+    g_free(path_on_disk);
+    g_free(uqregex);
+    g_free(uq_orig_regex);
 
     return result;
 }
@@ -702,12 +709,14 @@ set_directory(
 		*de = '\0';
  	    }
 	} else {
-	    /*@ignore@*/
-	    if (strcmp(new_dir, "/") != 0) {
-		strappend(new_dir, "/");
-	    }
-	    strappend(new_dir, ldir);
-	    /*@end@*/
+            GString *strbuf = g_string_new(new_dir);
+            if (!g_str_equal(new_dir, "/"))
+                g_string_append_c(strbuf, '/');
+
+            g_string_append(strbuf, ldir);
+
+            g_free(new_dir);
+            new_dir = g_string_free(strbuf, FALSE);
 	}
     }
 

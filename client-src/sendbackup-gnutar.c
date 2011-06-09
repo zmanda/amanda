@@ -374,6 +374,7 @@ start_backup(
 	size_t lpass;
 	size_t pwtext_len;
 	char *pw_fd_env;
+        GString *strbuf;
 
 	parsesharename(dle->device, &share, &subdir);
 	if (!share) {
@@ -430,18 +431,19 @@ start_backup(
 	    /*NOTREACHED*/
 	}
 
-	taropt = g_strdup("-T");
-	if(dle->exclude_file && dle->exclude_file->nb_element == 1) {
-	    strappend(taropt, "X");
-	}
+        strbuf = g_string_new("-T");
+	if(dle->exclude_file && dle->exclude_file->nb_element == 1)
+            g_string_append_c(strbuf, 'X');
+
 #if SAMBA_VERSION >= 2
-	strappend(taropt, "q");
+        g_string_append_c(strbuf, 'q');
 #endif
-	strappend(taropt, "c");
+        g_string_append_c(strbuf, 'c');
+
 	if (level != 0) {
-	    strappend(taropt, "g");
+            g_string_append_c(strbuf, 'g');
 	} else if (dle->record) {
-	    strappend(taropt, "a");
+            g_string_append_c(strbuf, 'a');
 	}
 
 	if (subdir) {
@@ -461,6 +463,9 @@ start_backup(
 	} else {
 	    pw_fd_env = "dummy_PASSWD_FD";
 	}
+
+        taropt = g_string_free(strbuf, FALSE);
+
 	dumppid = pipespawn(cmd, STDIN_PIPE|PASSWD_PIPE, 0,
 			    &dumpin, &dumpout, &mesgf,
 			    pw_fd_env, &passwdf,

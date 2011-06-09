@@ -65,19 +65,27 @@ am_feature_t *our_features = NULL;
 am_feature_t *indexsrv_features = NULL;
 am_feature_t *tapesrv_features = NULL;
 
-/* gets a "line" from server and put in server_line */
-/* server_line is terminated with \0, \r\n is striped */
-/* returns -1 if error */
+/*
+ * Reads a line from the server and sets server_line to that line. The line is
+ * stripped off its final \r\n.
+ *
+ * In the event of a read error, server_line is freed and set to NULL. Returns 0
+ * on success, -1 on error.
+ */
 
 int
 get_line(void)
 {
     char *line = NULL;
-    char *part = NULL;
-    size_t len;
+    gsize len;
+    GString *strbuf = g_string_new(NULL);
 
     while(1) {
-	if((part = areads(server_socket)) == NULL) {
+	/*
+	 * Note that areads() will strip the final \n of what it reads, see
+	 * common-src/file.c.
+	 */
+	if((line = areads(server_socket)) == NULL) {
 	    int save_errno = errno;
 
 	    if(server_line) {
@@ -96,18 +104,24 @@ get_line(void)
 	    errno = save_errno;
 	    break;	/* exit while loop */
 	}
-	if(line) {
-	    strappend(line, part);
-	    amfree(part);
-	} else {
-	    line = part;
-	    part = NULL;
-	}
-	if((len = strlen(line)) > 0 && line[len-1] == '\r') {
-	    line[len-1] = '\0';
+
+        g_string_append(strbuf, line);
+
+        /*
+         * We have no choice, we need to peek into the GString...
+         */
+	line = strbuf->str;
+	len = strbuf->len;
+
+	if(len > 0 && line[len-1] == '\r') {
+            /*
+             * All operations on a GString (if not peeking into them
+             * directly...) are guaranteed to terminate the stored string with a
+             * final 0. We want to remove the final \r here.
+             */
+            g_string_truncate(strbuf, len - 1);
 	    g_free(server_line);
-	    server_line = g_strdup(line);
-	    amfree(line);
+	    server_line = g_string_free(strbuf, FALSE);
 	    return 0;
 	}
 	/*
@@ -115,10 +129,11 @@ get_line(void)
 	 * a '\n' (or EOF, etc), but there was not a '\r' before it.
 	 * Put a '\n' back in the buffer and loop for more.
 	 */
-	strappend(line, "\n");
+        g_string_append_c(strbuf, '\n');
     }
-    amfree(line);
-    amfree(server_line);
+    g_string_free(strbuf, TRUE);
+    g_free(server_line);
+    server_line = NULL;
     return -1;
 }
 

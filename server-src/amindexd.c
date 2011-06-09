@@ -1288,7 +1288,7 @@ main(
     int		argc,
     char **	argv)
 {
-    char *line = NULL, *part = NULL;
+    char *line = NULL;
     char *s;
     int ch;
     char *cmd_undo, cmd_undo_ch;
@@ -1487,6 +1487,7 @@ main(
     {
 	/* get a line from the client */
 	while(1) {
+	    char *part, *tmp;
 	    if((part = agets(cmdin)) == NULL) {
 		if(errno != 0) {
 		    dbprintf(_("? read error: %s\n"), strerror(errno));
@@ -1499,15 +1500,17 @@ main(
 		    dbprintf("? %s\n", line);
 		    dbprintf("-----\n");
 		}
-		amfree(line);
-		amfree(part);
-		amfree(arg);
+		g_free(line);
+		g_free(part);
+		g_free(arg);
 		uncompress_remove = remove_files(uncompress_remove);
 		dbclose();
 		return 1;		/* they hung up? */
 	    }
-	    strappend(line, part);	/* Macro: line can be null */
-	    amfree(part);
+	    tmp = g_strconcat(line, part, NULL);
+	    g_free(line);
+	    line = tmp;
+	    g_free(part);
 
 	    if(amindexd_debug) {
 		break;			/* we have a whole line */
@@ -1521,7 +1524,9 @@ main(
 	     * a '\n' (or EOF, etc), but there was not a '\r' before it.
 	     * Put a '\n' back in the buffer and loop for more.
 	     */
-	    strappend(line, "\n");
+	    tmp = g_strconcat(line, "\n", NULL);
+	    g_free(line);
+	    line = tmp;
 	}
 
 	dbprintf("> %s\n", line);

@@ -518,7 +518,6 @@ static void
 check_disk(
     dle_t *dle)
 {
-    char *tmpbuf;
     char *device = NULL;
     char *err = NULL;
     char *user_and_password = NULL;
@@ -532,6 +531,8 @@ check_disk(
     char *qdisk = NULL;
     char *qamdevice = NULL;
     char *qdevice = NULL;
+    GPtrArray *array;
+    gchar **strings;
 
     if (dle->disk) {
 	need_global_check=1;
@@ -560,7 +561,6 @@ check_disk(
 		pid_t wpid;
 		int rc;
 		char *line;
-		char *sep;
 		FILE *ferr;
 		char *pw_fd_env;
 		int errdos;
@@ -645,46 +645,77 @@ check_disk(
 		    error(_("Can't fdopen ferr: %s"), strerror(errno));
 		    /*NOTREACHED*/
 		}
-		sep = "";
-		errdos = 0;
-		for(sep = ""; (line = agets(ferr)) != NULL; free(line)) {
-		    if (line[0] == '\0')
+
+                errdos = 0;
+                array = g_ptr_array_new();
+
+                for (; (line = agets(ferr)) != NULL; g_free(line)) {
+		    if (!*line)
 			continue;
-		    strappend(extra_info, sep);
-		    strappend(extra_info, line);
-		    sep = ": ";
-		    if(strstr(line, "ERRDOS") != NULL) {
+
+                    g_ptr_array_add(array, line);
+		    if(strstr(line, "ERRDOS") != NULL)
 			errdos = 1;
-		    }
-		}
-		afclose(ferr);
+                }
+
+                afclose(ferr);
+
+                g_ptr_array_add(array, NULL);
+                strings = (gchar **)g_ptr_array_free(array, FALSE);
+                extra_info = g_strjoinv(": ", strings);
+                g_strfreev(strings);
+
+                /*
+                 * We want extra_info to be NULL rather than an empty string, so
+                 * check for that
+                 */
+                if (!*extra_info) {
+                    g_free(extra_info);
+                    extra_info = NULL;
+                }
+
 		checkerr = -1;
 		rc = 0;
-		sep = "";
-		while ((wpid = wait(&retstat)) != -1) {
-		    if (!WIFEXITED(retstat) || WEXITSTATUS(retstat) != 0) {
-			char *exitstr = str_exit_status("smbclient", retstat);
-			strappend(err, sep);
-			strappend(err, exitstr);
-			sep = "\n";
-			amfree(exitstr);
+                array = g_ptr_array_new();
 
-			rc = 1;
-		    }
+                while ((wpid = wait(&retstat)) != -1) {
+                    if (WIFEXITED(retstat))
+                        continue;
+
+                    if (!WEXITSTATUS(retstat))
+                        continue;
+
+                    g_ptr_array_add(array, str_exit_status("smbclient", retstat));
+
+                    rc = 1;
 		}
-		if (errdos != 0 || rc != 0) {
-		    if (extra_info) {
-                        tmpbuf = g_strdup_printf( _("samba access error: %s: %s %s"),
-                            dle->device, extra_info, err);
-                        g_free(err);
-                        err = tmpbuf;
-			amfree(extra_info);
-		    } else {
-			tmpbuf = g_strdup_printf(_("samba access error: %s: %s"),
-                            dle->device, err);
-                        g_free(err);
-                        err = tmpbuf;
-		    }
+
+                g_ptr_array_add(array, NULL);
+                strings = (gchar **)g_ptr_array_free(array, FALSE);
+                err = g_strjoinv("\n", strings);
+                g_strfreev(strings);
+
+                /*
+                 * Same here: we want NULL rather than an empty string
+                 */
+                if (!*err) {
+                    g_free(err);
+                    err = NULL;
+                }
+
+		if (errdos || rc) {
+                    GString *errbuf = g_string_new("samba access error: ");
+                    g_string_append_printf(errbuf, "%s: ", dle->device);
+
+                    if (extra_info) {
+                        g_string_append_printf(errbuf, "%s ", extra_info);
+                        g_free(extra_info);
+                        extra_info = NULL;
+                    }
+
+                    g_string_append(errbuf, err);
+                    g_free(err);
+                    err = g_string_free(errbuf, FALSE);
 		}
 #else
 		err = g_strdup_printf(
