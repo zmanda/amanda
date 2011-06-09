@@ -1,4 +1,9 @@
 2011-06-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* oldrecover-src/extract_list.c,
+	  recover-src/extract_list.c: Fix g_str_has_prefix.
+	* server-src/amtrmlog.c: Revert g_str_has_prefix. fix.
+
+2011-06-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amindexd.c: Fix g_str_has_prefix.
 
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>

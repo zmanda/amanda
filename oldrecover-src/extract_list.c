@@ -332,12 +332,12 @@ clean_tape_list(
 	    remove_fn2 = 0;
 	    if(g_str_equal(fn1->path, fn2->path)) {
 		remove_fn2 = 1;
-	    } else if (g_str_has_prefix(fn1->path, fn2->path) &&
+	    } else if (g_str_has_prefix(fn2->path, fn1->path) &&
 		       ((strlen(fn2->path) > strlen(fn1->path) &&
 			 fn2->path[strlen(fn1->path)] == '/') ||
 		       (fn1->path[strlen(fn1->path)-1] == '/'))) {
 		remove_fn2 = 1;
-	    } else if (g_str_has_prefix(fn2->path, fn1->path) &&
+	    } else if (g_str_has_prefix(fn1->path, fn2->path) &&
 		       ((strlen(fn1->path) > strlen(fn2->path) &&
 			 fn1->path[strlen(fn2->path)] == '/')  ||
 		       (fn2->path[strlen(fn2->path)-1] == '/'))) {
