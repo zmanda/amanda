@@ -1,4 +1,8 @@
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* gnulib/*: revert blind perl one-liner replacement of alloc to
+	  g_malloc, by doing the reverse transform exactly
+
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
 	* oldrecover-src/amrecover.c: fix one more wrong g_str_has_prefix()
 	  usage
 
