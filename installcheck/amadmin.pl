@@ -50,7 +50,7 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 
 #Check ARGV argument, extra quoting because of perl.
 like(run_get('amadmin', 'TESTCONF', 'force', 'localhost', '\\\\\\\\\\\\\\\windows\\\\\\\\share'),
-    qr/Argument '\\\\\\\\\\\\\\\\windows\\\\\\\\share' matches neither a host nor a disk; quoting may not be correct./,
+    qr/Argument '\\\\\\\\\\\\\\\\windows\\\\\\\\share' matches neither a host nor a disk; quoting may be incorrect./,
     "argv 1");
 
 like(run_get('amadmin', 'TESTCONF', 'force', 'localhost', '\\\\\\\\windows\\\\share'),
@@ -58,11 +58,11 @@ like(run_get('amadmin', 'TESTCONF', 'force', 'localhost', '\\\\\\\\windows\\\\sh
     "argv 2");
 
 like(run_get('amadmin', 'TESTCONF', 'force', 'localhost', '\\\\windows\\share'),
-    qr/Argument '\\\\windows\\share' matches neither a host nor a disk; quoting may not be correct./,
+    qr/Argument '\\\\windows\\share' matches neither a host nor a disk; quoting may be incorrect./,
     "argv 3");
 
 like(run_get('amadmin', 'TESTCONF', 'force', 'localhost', '\\windows\share'),
-    qr/Argument '\\windows\\share' matches neither a host nor a disk; quoting may not be correct./,
+    qr/Argument '\\windows\\share' matches neither a host nor a disk; quoting may be incorrect./,
     "argv 4");
 
 #Check sheel quoting, extra quoting because of perl
@@ -75,15 +75,15 @@ like(run_get('amadmin TESTCONF force localhost "\\\\\\\\\\\\\\\\windows\\\\\\\\s
    "shell 2");
 
 like(run_get('amadmin TESTCONF force localhost \'\\\\\\\\\\\\\\\\windows\\\\\\\\share\''),
-   qr/\\\\\\\\\\\\\\\windows\\\\\\\\share' matches neither a host nor a disk; quoting may not be correct./,
+   qr/\\\\\\\\\\\\\\\windows\\\\\\\\share' matches neither a host nor a disk; quoting may be incorrect./,
    "shell 3");
 
 like(run_get('amadmin TESTCONF force localhost \\\\\\\\windows\\\\share'),
-   qr/Argument '\\\\windows\\share' matches neither a host nor a disk; quoting may not be correct./,
+   qr/Argument '\\\\windows\\share' matches neither a host nor a disk; quoting may be incorrect./,
    "shell 4");
 
 like(run_get('amadmin TESTCONF force localhost "\\\\\\\\windows\\\\share"'),
-   qr/\\\\windows\\share' matches neither a host nor a disk; quoting may not be correct./,
+   qr/\\\\windows\\share' matches neither a host nor a disk; quoting may be incorrect./,
    "shell 5");
 
 like(run_get('amadmin TESTCONF force localhost \'\\\\\\\\windows\\\\share\''),
@@ -91,15 +91,15 @@ like(run_get('amadmin TESTCONF force localhost \'\\\\\\\\windows\\\\share\''),
    "shell 6");
 
 like(run_get('amadmin TESTCONF force localhost \\\\windows\\share'),
-   qr/Argument '\\windowsshare' matches neither a host nor a disk; quoting may not be correct./,
+   qr/Argument '\\windowsshare' matches neither a host nor a disk; quoting may be incorrect./,
    "shell 7");
 
 like(run_get('amadmin TESTCONF force localhost "\\\\windows\\share"'),
-   qr/Argument '\\windows\\share' matches neither a host nor a disk; quoting may not be correct./,
+   qr/Argument '\\windows\\share' matches neither a host nor a disk; quoting may be incorrect./,
    "shell 8");
 
 like(run_get('amadmin TESTCONF force localhost \'\\\\windows\\share\''),
-   qr/Argument '\\\\windows\\share' matches neither a host nor a disk; quoting may not be correct./,
+   qr/Argument '\\\\windows\\share' matches neither a host nor a disk; quoting may be incorrect./,
    "shell 9");
 
 like(run_get('amadmin TESTCONF force localhost share'),

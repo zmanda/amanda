@@ -1656,16 +1656,19 @@ match_disklist(
     char **	sargv)
 {
     char *prevhost = NULL;
-    char *errstr = NULL;
+    char *errstr;
     int i;
     int match_a_host;
     int match_a_disk;
     int prev_match;
     disk_t *dp_skip;
     disk_t *dp;
+    GString *errbuf;
 
     if(sargc <= 0)
 	return NULL;
+
+    errbuf = g_string_new(NULL);
 
     for(dp = origqp->head; dp != NULL; dp = dp->next) {
 	if(dp->todo == 1)
@@ -1673,25 +1676,25 @@ match_disklist(
     }
 
     prev_match = 0;
-    for(i=0;i<sargc;i++) {
+    for (i = 0; i < sargc; i++) {
 	match_a_host = 0;
-	for(dp = origqp->head; dp != NULL; dp = dp->next) {
-	    if(match_host(sargv[i], dp->host->hostname))
+	for (dp = origqp->head; dp != NULL; dp = dp->next) {
+	    if (match_host(sargv[i], dp->host->hostname))
 		match_a_host = 1;
 	}
 	match_a_disk = 0;
 	dp_skip = NULL;
-	for(dp = origqp->head; dp != NULL; dp = dp->next) {
-	    if(prevhost != NULL &&
-	       match_host(prevhost, dp->host->hostname) &&
-	       (match_disk(sargv[i], dp->name) ||
+	for (dp = origqp->head; dp != NULL; dp = dp->next) {
+	    if (prevhost != NULL &&
+	        match_host(prevhost, dp->host->hostname) &&
+	        (match_disk(sargv[i], dp->name) ||
 		(dp->device && match_disk(sargv[i], dp->device)))) {
-		if(match_a_host) {
-		    error(_("Argument %s cannot be both a host and a disk"),sargv[i]);
+		if (match_a_host) {
+		    error(_("Argument %s cannot be both a host and a disk"), sargv[i]);
 		    /*NOTREACHED*/
 		}
 		else {
-		    if(dp->todo == -1) {
+		    if (dp->todo == -1) {
 			dp->todo = 1;
 			match_a_disk = 1;
 			prev_match = 0;
@@ -1706,70 +1709,56 @@ match_disklist(
 		}
 	    }
 	}
-	if(!match_a_disk) {
-	    if(match_a_host == 1) {
-		if(prev_match == 1) { /* all disk of the previous host */
-		    for(dp = origqp->head; dp != NULL; dp = dp->next) {
-			if(match_host(prevhost,dp->host->hostname))
-			    if(dp->todo == -1) {
+	if (!match_a_disk) {
+	    if (match_a_host == 1) {
+		if (prev_match == 1) { /* all disk of the previous host */
+		    for (dp = origqp->head; dp != NULL; dp = dp->next) {
+			if (match_host(prevhost,dp->host->hostname))
+			    if (dp->todo == -1) {
 				dp->todo = 1;
 				match_a_disk = 1;
 			    }
 		    }
-		    if (!match_a_disk) {
-			char *errstr1;
-			errstr1 = g_strdup_printf(_("All disks on host '%s' are ignored or have strategy \"skip\".\n"), prevhost);
-			vstrextend(&errstr, errstr1, NULL);
-			amfree(errstr1);
-		    }
+		    if (!match_a_disk)
+                        g_string_append_printf(errbuf, "All disks on host '%s' are ignored or have strategy \"skip\".\n", prevhost);
 		}
 		prevhost = sargv[i];
 		prev_match = 1;
 	    }
 	    else {
-		char *errstr1;
-		if (strchr(sargv[i], (int)'\\')) {
-		    errstr1 = g_strdup_printf(_("Argument '%s' matches neither a host nor a disk; quoting may not be correct.\n"), sargv[i]);
-		} else {
-		    errstr1 = g_strdup_printf(_("Argument '%s' matches neither a host nor a disk.\n"), sargv[i]);
-		}
-		vstrextend(&errstr, errstr1, NULL);
-		amfree(errstr1);
+                g_string_append_printf(errbuf, "Argument '%s' matches neither a host nor a disk%s\n",
+                    sargv[i], (strchr(sargv[i], '\\')) ? "; quoting may be incorrect." : ".");
 		prev_match = 0;
 	    }
 	} else if (dp_skip) {
-		char *errstr1;
-		if (dp_skip->strategy == DS_SKIP) {
-		    errstr1 = g_strdup_printf(_("Argument '%s' matches a disk with strategy \"skip\".\n"), sargv[i]);
-		} else {
-		    errstr1 = g_strdup_printf(_("Argument '%s' matches a disk marked \"ignore\".\n"), sargv[i]);
-		}
-		vstrextend(&errstr, errstr1, NULL);
-		amfree(errstr1);
+                g_string_append_printf(errbuf, "Argument '%s' matches a disk %s.\n",
+                   sargv[i], (dp_skip->strategy == DS_SKIP) ? "with strategy \"skip\"" : "marked \"ignore\"");
 		prev_match = 0;
 	}
     }
 
-    if(prev_match == 1) { /* all disk of the previous host */
+    if (prev_match == 1) { /* all disk of the previous host */
 	match_a_disk = 0;
-	for(dp = origqp->head; dp != NULL; dp = dp->next) {
-	    if(match_host(prevhost,dp->host->hostname))
-		if(dp->todo == -1) {
+	for (dp = origqp->head; dp != NULL; dp = dp->next) {
+	    if (match_host(prevhost,dp->host->hostname))
+		if (dp->todo == -1) {
 		    dp->todo = 1;
 		    match_a_disk = 1;
 		}
 	}
-	if (!match_a_disk) {
-	    char *errstr1;
-	    errstr1 = g_strdup_printf(_("All disks on host '%s' are ignored or have strategy \"skip\".\n"), prevhost);
-	    vstrextend(&errstr, errstr1, NULL);
-	    amfree(errstr1);
-	}
+        if (!match_a_disk)
+            g_string_append_printf(errbuf, "All disks on host '%s' are ignored or have strategy \"skip\".\n", prevhost);
     }
 
-    for(dp = origqp->head; dp != NULL; dp = dp->next) {
-	if(dp->todo == -1)
+    for (dp = origqp->head; dp != NULL; dp = dp->next)
+	if (dp->todo == -1)
 	    dp->todo = 0;
+
+    errstr = g_string_free(errbuf, FALSE);
+
+    if (!*errstr) { /* We want to return NULL instead of an empty string */
+        g_free(errstr);
+        errstr = NULL;
     }
 
     return errstr;
