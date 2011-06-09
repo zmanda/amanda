@@ -1,3 +1,7 @@
+2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
+	* oldrecover-src/amrecover.c: fix one more wrong g_str_has_prefix()
+	  usage
+
 2011-06-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* oldrecover-src/extract_list.c,
 	  recover-src/extract_list.c: Fix g_str_has_prefix.
