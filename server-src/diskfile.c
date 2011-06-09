@@ -1562,68 +1562,77 @@ xml_scripts(
     identlist_t pp_scriptlist,
     am_feature_t  *their_features)
 {
-    char       *plugin;
-    char       *b64plugin;
-    char       *client_name;
-    char       *xml_scr;
-    char       *xml_scr1;
-    char       *str = "";
-    char       *eo_str;
+    char        *client_name;
     execute_on_t execute_on;
     int          execute_where;
-    proplist_t  proplist;
-    identlist_t pp_iter;
+    proplist_t   proplist;
+    identlist_t  pp_iter;
     pp_script_t *pp_script;
-    xml_app_t   xml_app;
+    xml_app_t    xml_app;
+    GString     *strbuf = g_string_new(NULL);
+    GString     *tmpbuf;
+    char        *tmp;
 
     xml_app.features = their_features;
 
-    xml_scr = g_strdup("");
-    for (pp_iter = pp_scriptlist; pp_iter != NULL;
-	 pp_iter = pp_iter->next) {
+    for (pp_iter = pp_scriptlist; pp_iter; pp_iter = pp_iter->next) {
 	char *pp_script_name = pp_iter->data;
 	pp_script = lookup_pp_script(pp_script_name);
 	g_assert(pp_script != NULL);
-	plugin = pp_script_get_plugin(pp_script);
-	b64plugin = amxml_format_tag("plugin", plugin);
-	xml_scr1 = g_strjoin(NULL, "  <script>\n",
-                             "    ", b64plugin, "\n",
-			     NULL);
 
-	execute_where = pp_script_get_execute_where(pp_script);
+        execute_where = pp_script_get_execute_where(pp_script);
+        execute_on = pp_script_get_execute_on(pp_script);
+        proplist = pp_script_get_property(pp_script);
+        client_name = pp_script_get_client_name(pp_script);
+
+        g_string_append(strbuf, "  <script>\n");
+
+        tmp = amxml_format_tag("plugin", pp_script_get_plugin(pp_script));
+        g_string_append_printf(strbuf, "%s\n", tmp);
+        g_free(tmp);
+
+
+        g_string_append(strbuf, "    <execute_where>");
+
 	switch (execute_where) {
-	    case ES_CLIENT: str = "CLIENT"; break;
-	    case ES_SERVER: str = "SERVER"; break;
+            case ES_CLIENT:
+                g_string_append(strbuf, "CLIENT");
+                break;
+            case ES_SERVER:
+                g_string_append(strbuf, "SERVER");
+                break;
 	}
-	xml_scr1 = vstrextend(&xml_scr1, "    <execute_where>",
-			      str, "</execute_where>\n", NULL);
+        g_string_append(strbuf, "</execute_where>\n");
 
-	execute_on = pp_script_get_execute_on(pp_script);
-        eo_str = execute_on_to_string(execute_on, ",");
-	if (execute_on != 0)
-	    xml_scr1 = vstrextend(&xml_scr1,
-				  "    <execute_on>", eo_str,
-				  "</execute_on>\n", NULL);
-	amfree(eo_str);
-	proplist = pp_script_get_property(pp_script);
-	xml_app.result   = g_strdup("");
+        if (execute_on) {
+            tmp = execute_on_to_string(execute_on, ",");
+            g_string_append_printf(strbuf, "    <execute_on>%s</execute_on>\n",
+                tmp);
+            g_free(tmp);
+        }
+
+        /*
+         * Unfortunately, the g_hash_table_foreach() invocation _modifies_
+         * xmlapp.result :/ We have no choice but to do that.
+         */
+
+	xml_app.result = g_strdup("");
 	g_hash_table_foreach(proplist, xml_property, &xml_app);
+        tmpbuf = g_string_new(xml_app.result);
+        g_free(xml_app.result);
 
-	client_name = pp_script_get_client_name(pp_script);
-	if (client_name && strlen(client_name) > 0 &&
-	    am_has_feature(their_features, fe_script_client_name)) {
-	    char *b64client_name = amxml_format_tag("client_name",
-						    client_name);
-	    vstrextend(&xml_app.result, "    ", b64client_name, "\n", NULL);
-            g_free(b64client_name);
-	}
+        if (client_name && strlen(client_name) > 0
+            && am_has_feature(their_features, fe_script_client_name)) {
+            tmp = amxml_format_tag("client_name", client_name);
+            g_string_append_printf(tmpbuf, "    %s\n", tmp);
+            g_free(tmp);
+        }
 
-	xml_scr = vstrextend(&xml_scr, xml_scr1, xml_app.result, "  </script>\n", NULL);
-	amfree(b64plugin);
-	amfree(xml_app.result);
-	amfree(xml_scr1);
+        tmp = g_string_free(tmpbuf, FALSE);
+        g_string_append_printf(strbuf, "%s  </script>\n", tmp);
+        g_free(tmp);
     }
-    return xml_scr;
+    return g_string_free(strbuf, FALSE);
 }
 
 
