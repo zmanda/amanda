@@ -312,7 +312,7 @@ guess_disk (
 		  fsent.fsname ? fsent.fsname : _("(fsname null)"));
 	if ((current_length > longest_match)
 	    && (current_length <= cwd_length)
-	    && (g_str_has_prefix(fsent.mntdir, cwd)))
+	    && (g_str_has_prefix(cwd, fsent.mntdir)))
 	{
 	    longest_match = current_length;
 	    g_free(*mpt_guess);
