@@ -1394,34 +1394,53 @@ xml_estimate(
     am_feature_t *their_features)
 {
     estimatelist_t el;
-    char *l = NULL;
+    GString *strbuf = g_string_new(NULL);
+    char *p;
 
     if (am_has_feature(their_features, fe_xml_estimatelist)) {
-	vstrextend(&l, "  <estimate>", NULL);
+	g_string_append(strbuf, "  <estimate>");
 	for (el=estimatelist; el != NULL; el = el->next) {
+            p = NULL;
 	    switch (GPOINTER_TO_INT(el->data)) {
-	    case ES_CLIENT  : vstrextend(&l, "CLIENT ", NULL); break;
-	    case ES_SERVER  : vstrextend(&l, "SERVER ", NULL); break;
-	    case ES_CALCSIZE: vstrextend(&l, "CALCSIZE ", NULL); break;
+	    case ES_CLIENT:
+                p = "CLIENT ";
+                break;
+	    case ES_SERVER:
+                p = "SERVER ";
+                break;
+	    case ES_CALCSIZE:
+                p = "CALCSIZE ";
+                break;
 	    }
+            /* Can p ever be NULL at this point? */
+            if (p)
+                g_string_append(strbuf, p);
 	}
-	vstrextend(&l, "</estimate>", NULL);
+        g_string_append(strbuf, "</estimate>");
     } else { /* add the first estimate only */
 	if (am_has_feature(their_features, fe_xml_estimate)) {
-	    vstrextend(&l, "  <estimate>", NULL);
+            p = NULL;
+	    g_string_append(strbuf, "  <estimate>");
 	    switch (GPOINTER_TO_INT(estimatelist->data)) {
-	    case ES_CLIENT  : vstrextend(&l, "CLIENT", NULL); break;
-	    case ES_SERVER  : vstrextend(&l, "SERVER", NULL); break;
-	    case ES_CALCSIZE: vstrextend(&l, "CALCSIZE", NULL); break;
+	    case ES_CLIENT:
+                p = "CLIENT";
+                break;
+	    case ES_SERVER:
+                p = "SERVER";
+                break;
+	    case ES_CALCSIZE:
+                p = "CALCSIZE";
+                break;
 	    }
-            vstrextend(&l, "</estimate>", NULL);
+            /* Can p ever be NULL at this point? */
+            if (p)
+                g_string_append_printf(strbuf, "%s</estimate>", p);
 	}
-	if (GPOINTER_TO_INT(estimatelist->data) == ES_CALCSIZE) {
-	    vstrextend(&l, "  <calcsize>YES</calcsize>", NULL);
-	}
+	if (GPOINTER_TO_INT(estimatelist->data) == ES_CALCSIZE)
+            g_string_append(strbuf, "  <calcsize>YES</calcsize>");
     }
 
-    return l;
+    return g_string_free(strbuf, FALSE);
 }
 
 char *
