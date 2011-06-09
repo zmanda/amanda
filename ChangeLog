@@ -1,3 +1,7 @@
+2011-06-09  Dustin J. Mitchell <dustin@mozilla.com>
+	* client-src/selfcheck.c: Push down tmpbuf and remove some duplicate
+	  code; fixes compiles with SAMBA_VERSION not defined
+
 2011-06-09  Francis Galiegue <fgaliegue@gmail.com>
 	* gnulib/*: revert blind perl one-liner replacement of alloc to
 	  g_malloc, by doing the reverse transform exactly
