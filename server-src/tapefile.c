@@ -506,50 +506,58 @@ stamp2time(
     return mktime(tm);
 }
 
-char *
-list_new_tapes(
-    int nb)
+char *list_new_tapes(int nb)
 {
-    tape_t *lasttp, *iter;
-    char *result = NULL;
+    tape_t *last_tape, *iter;
+    int c;
+    GString *strbuf;
+
+    if (nb <= 0)
+        return NULL;
 
     /* Find latest reusable new tape */
-    lasttp = lookup_tapepos(lookup_nb_tape());
-    while (lasttp && lasttp->reuse == 0)
-	lasttp = lasttp->prev;
+    last_tape = lookup_tapepos(lookup_nb_tape());
+    while (last_tape && last_tape->reuse == 0)
+	last_tape = last_tape->prev;
 
-    if(lasttp && nb > 0 && strcmp(lasttp->datestamp,"0") == 0) {
-	int c = 0;
-	iter = lasttp;
-	/* count the number of tapes we *actually* used */
-	while(iter && nb > 0 && strcmp(iter->datestamp,"0") == 0) {
-	    if (iter->reuse) {
-		c++;
-		nb--;
-	    }
-	    iter = iter->prev;
-	}
+    if (!last_tape)
+        return NULL;
 
-	if(c == 1) {
-	    result = g_strdup_printf(
-			_("The next new tape already labelled is: %s."),
-			lasttp->label);
-	} else {
-	    result = g_strdup_printf(
-			_("The next %d new tapes already labelled are: %s"),
-			c, lasttp->label);
-	    iter = lasttp->prev;
-	    c--;
-	    while(iter && c > 0 && strcmp(iter->datestamp,"0") == 0) {
-		if (iter->reuse) {
-		    result = vstrextend(&result, ", ", iter->label, NULL);
-		    c--;
-		}
-		iter = iter->prev;
-	    }
-	}
+    if (!g_str_equal(last_tape->datestamp, "0"))
+        return NULL;
+
+    /* count the number of tapes we *actually* used */
+
+    iter = last_tape;
+    c = 0;
+
+    while(iter && nb > 0 && strcmp(iter->datestamp,"0") == 0) {
+        if (iter->reuse) {
+            c++;
+            nb--;
+        }
+        iter = iter->prev;
     }
-    return result;
+
+    if (c == 1)
+        return g_strdup_printf("The next new tape already labelled is: %s.",
+            last_tape->label);
+
+    strbuf = g_string_new(NULL);
+    g_string_append_printf(strbuf,
+        "The next %d new tapes already labelled are: %s", c,
+        last_tape->label);
+
+    iter = last_tape->prev;
+    c--;
+    while (iter && c > 0 && g_str_equal(iter->datestamp,"0")) {
+        if (iter->reuse) {
+            g_string_append_printf(strbuf, ", %s", iter->label);
+            c--;
+        }
+        iter = iter->prev;
+    }
+    return g_string_free(strbuf, FALSE);
 }
 
 void
