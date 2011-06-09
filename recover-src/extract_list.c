@@ -2789,15 +2789,12 @@ read_amidxtaped_data(
 	}
 
 	if (am_has_feature(tapesrv_features, fe_amidxtaped_datapath)) {
- 	    char       *msg;
 	    /* send DATA-PATH request */
-	    msg = g_strdup("AVAIL-DATAPATH");
-	    if (data_path_set & DATA_PATH_AMANDA)
-		vstrextend(&msg, " AMANDA", NULL);
-	    if (data_path_set & DATA_PATH_DIRECTTCP)
-		vstrextend(&msg, " DIRECT-TCP", NULL);
+            char *msg = g_strdup_printf("AVAIL-DATAPATH%s%s",
+                (data_path_set & DATA_PATH_AMANDA) ? " AMANDA" : "",
+                (data_path_set & DATA_PATH_DIRECTTCP) ? " DIRECT-TCP" : "");
 	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, msg);
-	    amfree(msg);
+	    g_free(msg);
 	} else {
 	    start_processing_data(ctl_data);
 	}
