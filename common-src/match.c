@@ -645,15 +645,10 @@ static int match_word(const char *glob, const char *word, const char separator)
 {
     char *regex;
     char *dst;
-    size_t  len;
     char *wrapped_word = wrap_word(word, separator);
-    char *nglob;
     int ret;
 
-    len = strlen(glob);
-    nglob = g_strdup(glob);
-
-    if(glob_is_separator_only(nglob, separator)) {
+    if(glob_is_separator_only(glob, separator)) {
         regex = g_malloc(7); /* Length of what is written below plus '\0' */
         dst = regex;
 	*dst++ = '^';
@@ -682,7 +677,8 @@ static int match_word(const char *glob, const char *word, const char separator)
 
         struct subst_table table;
         const char *begin, *end;
-        char *p, *g = nglob;
+        char *glob_copy = g_strdup(glob);
+        char *p, *g = glob_copy;
 
         /*
          * Calculate the beginning of the regex:
@@ -692,7 +688,7 @@ static int match_word(const char *glob, const char *word, const char separator)
          * - if it begins with a separator, make it the empty string.
          */
 
-        p = nglob;
+        p = glob_copy;
 
 #define REGEX_BEGIN_FULL(c) (const char[]) { '^', '\\', (c), 0 }
 #define REGEX_BEGIN_NOANCHOR(c) (const char[]) { '\\', (c), 0 }
@@ -719,7 +715,7 @@ static int match_word(const char *glob, const char *word, const char separator)
          *   end, otherwise, add a separator before the anchor.
          */
 
-        p = &(nglob[strlen(nglob) - 1]);
+        p = &(glob_copy[strlen(glob_copy) - 1]);
 
 #define REGEX_END_FULL(c) (const char[]) { '\\', (c), '$', 0 }
 #define REGEX_END_NOANCHOR(c) REGEX_BEGIN_NOANCHOR(c)
@@ -748,12 +744,12 @@ static int match_word(const char *glob, const char *word, const char separator)
         table.double_star = MATCHWORD_DOUBLESTAR_EXPANSION;
 
         regex = amglob_to_regex(g, begin, end, &table);
+        g_free(glob_copy);
     }
 
     ret = do_match(regex, wrapped_word, TRUE);
 
     g_free(wrapped_word);
-    g_free(nglob);
     g_free(regex);
 
     return ret;
