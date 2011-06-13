@@ -1,4 +1,8 @@
 2011-06-13  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/match.c: implement regex caching with two mutex-protected
+	  GHashTables (one for REG_NEWLINE, one for !REG_NEWLINE)
+
+2011-06-13  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: rename do_validate_regex() to do_regex_compile()
 
 2011-06-13  Francis Galiegue <fgaliegue@gmail.com>
