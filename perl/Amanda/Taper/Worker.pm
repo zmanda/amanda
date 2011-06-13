@@ -525,7 +525,7 @@ sub send_port_and_get_header {
 	if ($xmsg->{'type'} == $XMSG_INFO) {
 	    info($xmsg->{'message'});
 	} elsif ($xmsg->{'type'} == $XMSG_ERROR) {
-	    $errmsg = $xmsg->{'messsage'};
+	    $errmsg = $xmsg->{'message'};
 	} elsif ($xmsg->{'type'} == $XMSG_DONE) {
 	    if ($errmsg) {
 		$finished_cb->($errmsg);
