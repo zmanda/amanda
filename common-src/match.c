@@ -118,6 +118,35 @@ static struct subst_table mword_slash_subst_table = {
 };
 
 /*
+ * match_word() specific data:
+ * - re_double_sep: anchored regex matching two separators;
+ * - re_separator: regex matching the separator;
+ * - re_begin_full: regex matching the separator, anchored at the beginning;
+ * - re_end_full: regex matching the separator, andchored at the end.
+ */
+
+struct mword_regexes {
+    const char *re_double_sep;
+    const char *re_begin_full;
+    const char *re_separator;
+    const char *re_end_full;
+};
+
+static struct mword_regexes mword_dot_regexes = {
+    "^\\.\\.$", /* re_double_sep */
+    "^\\.", /* re_begin_full */
+    "\\.", /* re_separator */
+    "\\.$" /* re_end_full */
+};
+
+static struct mword_regexes mword_slash_regexes = {
+    "^//$", /* re_double_sep */
+    "^/", /* re_begin_full */
+    "/", /* re_separator */
+    "/$" /* re_end_full */
+};
+
+/*
  * REGEX FUNCTIONS
  */
 
@@ -663,21 +692,15 @@ out:
 
 static int match_word(const char *glob, const char *word, const char separator)
 {
-    char *regex;
-    char *dst;
     char *wrapped_word = wrap_word(word, separator);
+    struct mword_regexes *regexes;
     int ret;
 
+    regexes = (separator == '/') ? &mword_slash_regexes : &mword_dot_regexes;
+
     if(glob_is_separator_only(glob, separator)) {
-        regex = g_malloc(7); /* Length of what is written below plus '\0' */
-        dst = regex;
-	*dst++ = '^';
-	*dst++ = '\\';
-	*dst++ = separator;
-	*dst++ = '\\';
-	*dst++ = separator;
-	*dst++ = '$';
-        *dst = '\0';
+        ret = do_match(regexes->re_double_sep, wrapped_word, TRUE);
+        goto out;
     } else {
         /*
          * Unlike what happens for tar and disk expressions, we need to
@@ -689,6 +712,7 @@ static int match_word(const char *glob, const char *word, const char separator)
         const char *begin, *end;
         char *glob_copy = g_strdup(glob);
         char *p, *g = glob_copy;
+        char *regex;
 
         table = (separator == '/') ? &mword_slash_subst_table
             : &mword_dot_subst_table;
@@ -702,21 +726,15 @@ static int match_word(const char *glob, const char *word, const char separator)
          */
 
         p = glob_copy;
-
-#define REGEX_BEGIN_FULL(c) (const char[]) { '^', '\\', (c), 0 }
-#define REGEX_BEGIN_NOANCHOR(c) (const char[]) { '\\', (c), 0 }
-#define REGEX_BEGIN_ANCHORONLY "^" /* Unused, but defined for consistency */
-#define REGEX_BEGIN_EMPTY ""
-
-        begin = REGEX_BEGIN_NOANCHOR(separator);
+        begin = regexes->re_separator;
 
         if (*p == '^') {
-            begin = REGEX_BEGIN_FULL(separator);
+            begin = regexes->re_begin_full;
             p++, g++;
             if (*p == separator)
                 g++;
         } else if (*p == separator)
-            begin = REGEX_BEGIN_EMPTY;
+            begin = "";
 
         /*
          * Calculate the end of the regex:
@@ -729,34 +747,25 @@ static int match_word(const char *glob, const char *word, const char separator)
          */
 
         p = &(glob_copy[strlen(glob_copy) - 1]);
-
-#define REGEX_END_FULL(c) (const char[]) { '\\', (c), '$', 0 }
-#define REGEX_END_NOANCHOR(c) REGEX_BEGIN_NOANCHOR(c)
-#define REGEX_END_ANCHORONLY "$"
-#define REGEX_END_EMPTY REGEX_BEGIN_EMPTY
-
-        end = REGEX_END_NOANCHOR(separator);
+        end = regexes->re_separator;
 
         if (*p == '\\' || *p == separator)
-            end = REGEX_END_EMPTY;
+            end = "";
         else if (*p == '$') {
             char prev = *(p - 1);
             *p = '\0';
-            if (prev == separator)
-                end = REGEX_END_ANCHORONLY;
-            else
-                end = REGEX_END_FULL(separator);
+            end = (prev == separator) ? "$" : regexes->re_end_full;
         }
 
         regex = amglob_to_regex(g, begin, end, table);
+        ret = do_match(regex, wrapped_word, TRUE);
+
         g_free(glob_copy);
+        g_free(regex);
     }
 
-    ret = do_match(regex, wrapped_word, TRUE);
-
+out:
     g_free(wrapped_word);
-    g_free(regex);
-
     return ret;
 }
 

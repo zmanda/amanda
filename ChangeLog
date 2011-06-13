@@ -1,5 +1,6 @@
 2011-06-13  Francis Galiegue <fgaliegue@gmail.com>
-	* common-src/match.c: static substitution tables for match_word()
+	* common-src/match.c: static corner case regex definitions for
+	  match_word()
 
 2011-06-13  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: match_word(): push down nglob variable, rename it
