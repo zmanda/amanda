@@ -414,94 +414,81 @@ get_fstab_nextentry(
 #endif
 #endif /* } */
 
-#ifndef IGNORE_FSTAB
-static int samefile(struct stat[3], struct stat *);
-
-static int
-samefile(
-    struct stat stats[2],
-    struct stat *estat)
-{
-  int i;
-  for(i = 0; i < 2; ++i) {
-    if (stats[i].st_dev == estat->st_dev &&
-	stats[i].st_ino == estat->st_ino)
-      return 1;
-  }
-  return 0;
-}
-#endif /* !IGNORE_FSTAB */
-
-int
-search_fstab(
-     char *		name,
-     generic_fsent_t *	fsent,
-     int		check_dev)
-{
 #ifdef IGNORE_FSTAB
-  /* There is no real mount table so this will always fail and
-   * we are using GNU tar so we can just return here.
-   */
-  (void)name;		/* Quiet unused parameter warning */
-  (void)fsent;		/* Quiet unused parameter warning */
-  (void)check_dev;	/* Quiet unused parameter warning */
-  return 0;
-#else
-  struct stat stats[2];
-  char *fullname = NULL;
-  int rc;
 
-  if (!name)
+int search_fstab(char *name G_GNUC_UNUSED, generic_fsent_t *fsent G_GNUC_UNUSED,
+    int check_dev G_GNUC_UNUSED)
+{
     return 0;
-
-  memset(stats, 0, sizeof(stats));
-  stats[0].st_dev = stats[1].st_dev = (dev_t)-1;
-
-  if (stat(name, &stats[0]) == -1)
-    stats[0].st_dev = (dev_t)-1;
-
-  /*
-   * FIXME: who still uses non fully qualified device names today?
-   */
-  if (name[0] != '/') {
-    fullname = g_strconcat(DEV_PREFIX, name, NULL);
-    if (stat(fullname, &stats[1]) == -1)
-      stats[1].st_dev = (dev_t)-1;
-    amfree(fullname);
-  }
-
-  if (!open_fstab())
-    return 0;
-
-  rc = 0;
-  while(get_fstab_nextentry(fsent)) {
-    struct stat mntstat;
-    struct stat fsstat;
-    int smnt = -1, sfs = -1;
-
-    if(fsent->mntdir != NULL)
-       smnt = stat(fsent->mntdir, &mntstat);
-
-    if(fsent->fsname != NULL) {
-      sfs = stat(fsent->fsname, &fsstat);
-      if(check_dev == 1 && sfs == -1)
-	continue;
-    }
-
-    if((fsent->mntdir != NULL &&
-	smnt != -1 &&
-        samefile(stats, &mntstat)) || 
-       (fsent->fsname != NULL &&
-	sfs != -1 &&
-        samefile(stats, &fsstat))) {
-      rc = 1;
-      break;
-    }
-  }
-  close_fstab();
-  return rc;
-#endif /* !IGNORE_FSTAB */
 }
+
+#else
+
+static int samefile(struct stat stats[2], struct stat *estat)
+{
+    int i;
+
+    for(i = 0; i < 2; ++i)
+        if (stats[i].st_dev == estat->st_dev && stats[i].st_ino == estat->st_ino)
+            return 1;
+
+    return 0;
+}
+
+int search_fstab(char *name, generic_fsent_t *fsent, int check_dev)
+{
+    struct stat stats[2];
+    char *fullname = NULL;
+    int rc;
+
+    if (!name)
+        return 0;
+
+    memset(stats, 0, sizeof(stats));
+    stats[0].st_dev = stats[1].st_dev = (dev_t)-1;
+
+    if (stat(name, &stats[0]) == -1)
+        stats[0].st_dev = (dev_t)-1;
+
+    /*
+     * FIXME: who still uses non fully qualified device names today?
+     */
+    if (name[0] != '/') {
+        fullname = g_strconcat(DEV_PREFIX, name, NULL);
+        if (stat(fullname, &stats[1]) == -1)
+            stats[1].st_dev = (dev_t)-1;
+        amfree(fullname);
+    }
+
+    if (!open_fstab())
+        return 0;
+
+    rc = 0;
+    while(get_fstab_nextentry(fsent)) {
+        struct stat mntstat;
+        struct stat fsstat;
+        int smnt = -1, sfs = -1;
+
+        if(fsent->mntdir != NULL)
+             smnt = stat(fsent->mntdir, &mntstat);
+
+        if(fsent->fsname != NULL) {
+            sfs = stat(fsent->fsname, &fsstat);
+            if(check_dev == 1 && sfs == -1)
+                continue;
+        }
+
+        if((fsent->mntdir != NULL && smnt != -1 && samefile(stats, &mntstat))
+	    || (fsent->fsname != NULL && sfs != -1 && samefile(stats, &fsstat))) {
+            rc = 1;
+            break;
+        }
+    }
+    close_fstab();
+    return rc;
+}
+
+#endif /* !IGNORE_FSTAB */
 
 int
 is_local_fstype(
