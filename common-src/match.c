@@ -23,22 +23,36 @@
  * Authors: the Amanda Development Team.  Its members are listed in a
  * file named AUTHORS, in the root directory of this distribution.
  */
+
 /*
- * $Id: match.c,v 1.23 2006/05/25 01:47:12 johnfranks Exp $
- *
- * functions for checking and matching regular expressions
+ * See match.h for function prototypes and further explanations.
  */
 
 #include "amanda.h"
 #include "match.h"
 #include <regex.h>
 
-static int match_word(const char *glob, const char *word, const char separator);
-static char *tar_to_regex(const char *glob);
+/*
+ * DATA STRUCTURES, MACROS, STATIC DATA
+ */
 
 /*
- * REGEX MATCHING FUNCTIONS
+ * Return codes used by try_match()
  */
+
+#define MATCH_OK (1)
+#define MATCH_NONE (0)
+#define MATCH_ERROR (-1)
+
+/*
+ * Macro to tell whether a character is a regex metacharacter. Note that '*'
+ * and '?' are NOT included: they are themselves special in globs.
+ */
+
+#define IS_REGEX_META(c) ( \
+    (c) == '.' || (c) == '(' || (c) == ')' || (c) == '{' || (c) == '}' || \
+    (c) == '+' || (c) == '^' || (c) == '$' || (c) == '|' \
+)
 
 /*
  * Define a specific type to hold error messages in case regex compile/matching
@@ -46,6 +60,84 @@ static char *tar_to_regex(const char *glob);
  */
 
 typedef char regex_errbuf[STR_SIZE];
+
+/*
+ * Structure used by amglob_to_regex() to replace particular string positions
+ * and/or characters. Its fields are:
+ * - begin: what the beginnin of the string should be replaced with;
+ * - end: what the end of the string should be replaced with;
+ * - question_mark: what the question mark ('?') should be replaced with;
+ * - star: what the star ('*') should be replaced with;
+ * - double_star: what two consecutive stars should be replaced with.
+ *
+ * An instance of this structure should be paired with the size of the worst
+ * case expansion. Also Note that apart from double_star, ALL OTHER FIELDS MUST
+ * NOT BE NULL.
+ */
+
+struct subst_table {
+    const char *begin;
+    const char *end;
+    const char *question_mark;
+    const char *star;
+    const char *double_star;
+};
+
+/*
+ * Susbtitution data for glob_to_regex()
+ */
+
+static struct subst_table glob_subst_stable = {
+    "^", /* begin */
+    "$", /* end */
+    "[^/]", /* question_mark */
+    "[^/]*", /* star */
+    NULL /* double_star */
+};
+
+static size_t glob_worst_case = 5; /* star */
+
+/*
+ * Substitution data for tar_to_regex()
+ */
+
+static struct subst_table tar_subst_stable = {
+    "(^|/)", /* begin */
+    "($|/)", /* end */
+    "[^/]", /* question_mark */
+    ".*", /* star */
+    NULL /* double_star */
+};
+
+static size_t tar_worst_case = 5; /* begin or end */
+
+/*
+ * REGEX FUNCTIONS
+ */
+
+char *clean_regex(const char *str, gboolean anchor)
+{
+    const char *src;
+    char *result, *dst;
+
+    result = g_malloc(2 * strlen(str) + 3);
+    dst = result;
+
+    if (anchor)
+        *dst++ = '^';
+
+    for (src = str; *src; src++) {
+        if (!g_ascii_isalnum((int) *src))
+            *dst++ = '\\';
+        *dst++ = *src;
+    }
+
+    if (anchor)
+        *dst++ = '$';
+
+    *dst = '\0';
+    return result;
+}
 
 /*
  * Validate one regular expression. If the regex is invalid, copy the error
@@ -56,33 +148,46 @@ typedef char regex_errbuf[STR_SIZE];
  */
 
 static gboolean do_validate_regex(const char *str, regex_t *regex,
-	regex_errbuf *errbuf, gboolean match_newline)
+    regex_errbuf *errbuf, gboolean match_newline)
 {
-	int flags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
-	int result;
+    int flags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
+    int result;
 
-	if (!match_newline)
-		CLR(flags, REG_NEWLINE);
+    if (!match_newline)
+	flags &= ~REG_NEWLINE;
 
-	result = regcomp(regex, str, flags);
+    result = regcomp(regex, str, flags);
 
-	if (!result)
-		return TRUE;
+    if (!result)
+        return TRUE;
 
-	regerror(result, regex, *errbuf, sizeof(*errbuf));
-	return FALSE;
+    regerror(result, regex, *errbuf, sizeof(*errbuf));
+    return FALSE;
+}
+
+/*
+ * Validate one regular expression using do_validate_regex() above, and return
+ * NULL if the regex is valid, or the error message otherwise.
+ */
+
+char *validate_regexp(const char *regex)
+{
+    regex_t regc;
+    static regex_errbuf errmsg;
+    gboolean valid;
+
+    valid = do_validate_regex(regex, &regc, &errmsg, TRUE);
+
+    regfree(&regc);
+    return (valid) ? NULL : errmsg;
 }
 
 /*
  * See if a string matches a regular expression. Return one of MATCH_* defined
- * below. If, for some reason, regexec() returns something other than not 0 or
+ * above. If, for some reason, regexec() returns something other than not 0 or
  * REG_NOMATCH, return MATCH_ERROR and print the error message in the supplied
  * regex_errbuf.
  */
-
-#define MATCH_OK (1)
-#define MATCH_NONE (0)
-#define MATCH_ERROR (-1)
 
 static int try_match(regex_t *regex, const char *str,
     regex_errbuf *errbuf)
@@ -101,43 +206,39 @@ static int try_match(regex_t *regex, const char *str,
     return MATCH_ERROR;
 }
 
-char *
-validate_regexp(
-    const char *	regex)
+/*
+ * Try and match a string against a regular expression, using
+ * do_validate_regex() and try_match(). Exit early if the regex didn't compile
+ * or there was an error during matching.
+ */
+
+int do_match(const char *regex, const char *str, gboolean match_newline)
 {
     regex_t regc;
-    static regex_errbuf errmsg;
-    gboolean valid;
+    int result;
+    regex_errbuf errmsg;
+    gboolean ok;
 
-    valid = do_validate_regex(regex, &regc, &errmsg, TRUE);
+    ok = do_validate_regex(regex, &regc, &errmsg, match_newline);
+
+    if (!ok)
+        error("regex \"%s\": %s", regex, errmsg);
+        /*NOTREACHED*/
+
+    result = try_match(&regc, str, &errmsg);
+
+    if (result == MATCH_ERROR)
+        error("regex \"%s\": %s", regex, errmsg);
+        /*NOTREACHED*/
 
     regfree(&regc);
-    return (valid) ? NULL : errmsg;
-}
 
-char *
-clean_regex(
-    const char *	str,
-    gboolean		anchor)
-{
-    char *result;
-    int j;
-    size_t i;
-    result = g_malloc(2*strlen(str)+3);
-
-    j = 0;
-    if (anchor)
-	result[j++] = '^';
-    for(i=0;i<strlen(str);i++) {
-	if(!isalnum((int)str[i]))
-	    result[j++]='\\';
-	result[j++]=str[i];
-    }
-    if (anchor)
-	result[j++] = '$';
-    result[j] = '\0';
     return result;
 }
+
+/*
+ * DISK/HOST EXPRESSION HANDLING
+ */
 
 /*
  * Check whether a given character should be escaped (that is, prepended with a
@@ -180,140 +281,40 @@ static char *full_amglob_from_expression(const char *str, char not_this_one)
     result = g_malloc(2 * strlen(str) + 3);
     dst = result;
 
-    *(dst++) = '^';
+    *dst++ = '^';
 
     for (src = str; *src; src++) {
         if (should_be_escaped_except(*src, not_this_one))
-            *(dst++) = '\\';
-        *(dst++) = *src;
+            *dst++ = '\\';
+        *dst++ = *src;
     }
 
-    *(dst++) = '$';
+    *dst++ = '$';
     *dst = '\0';
     return result;
 }
 
-char *
-make_exact_host_expression(
-    const char *	host)
-{
-    return full_amglob_from_expression(host, '.');
-}
+/*
+ * Turn a disk/host expression into a regex
+ */
 
-char *
-make_exact_disk_expression(
-    const char *	disk)
+char *make_exact_disk_expression(const char *disk)
 {
     return full_amglob_from_expression(disk, '/');
 }
 
-int do_match(const char *regex, const char *str, gboolean match_newline)
+char *make_exact_host_expression(const char *host)
 {
-    regex_t regc;
-    int result;
-    regex_errbuf errmsg;
-    gboolean ok;
-
-    ok = do_validate_regex(regex, &regc, &errmsg, match_newline);
-
-    if (!ok)
-        error(_("regex \"%s\": %s"), regex, errmsg);
-        /*NOTREACHED*/
-
-    result = try_match(&regc, str, &errmsg);
-
-    if (result == MATCH_ERROR)
-        error(_("regex \"%s\": %s"), regex, errmsg);
-        /*NOTREACHED*/
-
-    regfree(&regc);
-
-    return result;
-}
-
-char *
-validate_glob(
-    const char *	glob)
-{
-    char *regex, *ret = NULL;
-    regex_t regc;
-    static regex_errbuf errmsg;
-
-    regex = glob_to_regex(glob);
-
-    if (!do_validate_regex(regex, &regc, &errmsg, TRUE))
-        ret = errmsg;
-
-    regfree(&regc);
-    amfree(regex);
-    return ret;
-}
-
-int
-match_glob(
-    const char *	glob,
-    const char *	str)
-{
-    char *regex;
-    regex_t regc;
-    int result;
-    regex_errbuf errmsg;
-    gboolean ok;
-
-    regex = glob_to_regex(glob);
-    ok = do_validate_regex(regex, &regc, &errmsg, TRUE);
-
-    if (!ok)
-        error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
-        /*NOTREACHED*/
-
-    result = try_match(&regc, str, &errmsg);
-
-    if (result == MATCH_ERROR)
-        error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
-        /*NOTREACHED*/
-
-    regfree(&regc);
-    amfree(regex);
-
-    return result;
+    return full_amglob_from_expression(host, '.');
 }
 
 /*
- * Macro to tell whether a character is a regex metacharacter. Note that '*'
- * and '?' are NOT included: they are themselves special in globs.
+ * GLOB HANDLING, as per amanda-match(7)
  */
-
-#define IS_REGEX_META(c) ( \
-    (c) == '.' || (c) == '(' || (c) == ')' || (c) == '{' || (c) == '}' || \
-    (c) == '+' || (c) == '^' || (c) == '$' || (c) == '|' \
-)
 
 /*
- * EXPANDING A MATCH TO A REGEX (as per amanda-match(7))
- *
- * The function at the code of this operation is amglob_to_regex(). It
- * takes three arguments: the string to convert, a substitution table and a
- * worst-case expansion.
- *
- * The substitution table, defined right below, is used to replace particular
- * string positions and/or characters. Its fields are:
- * - begin: what the beginnin of the string should be replaced with;
- * - end: what the end of the string should be replaced with;
- * - question_mark: what the question mark ('?') should be replaced with;
- * - star: what the star ('*') should be replaced with;
- * - double_star: what two consecutive stars should be replaced with.
- *
- * Note that apart from double_star, ALL OTHER FIELDS MUST NOT BE NULL
+ * Turn a glob into a regex.
  */
-
-struct subst_table {
-    const char *begin;
-    const char *end;
-    const char *question_mark;
-    const char *star;
-    const char *double_star;
-};
 
 static char *amglob_to_regex(const char *str, struct subst_table *table,
     size_t worst_case)
@@ -458,27 +459,68 @@ straight_copy:
     return result;
 }
 
-static struct subst_table glob_subst_stable = {
-    "^", /* begin */
-    "$", /* end */
-    "[^/]", /* question_mark */
-    "[^/]*", /* star */
-    NULL /* double_star */
-};
+/*
+ * File globs
+ */
 
-static size_t glob_worst_case = 5; /* star */
-
-char *
-glob_to_regex(
-    const char *	glob)
+char *glob_to_regex(const char *glob)
 {
     return amglob_to_regex(glob, &glob_subst_stable, glob_worst_case);
 }
 
-int
-match_tar(
-    const char *	glob,
-    const char *	str)
+int match_glob(const char *glob, const char *str)
+{
+    char *regex;
+    regex_t regc;
+    int result;
+    regex_errbuf errmsg;
+    gboolean ok;
+
+    regex = glob_to_regex(glob);
+    ok = do_validate_regex(regex, &regc, &errmsg, TRUE);
+
+    if (!ok)
+        error("glob \"%s\" -> regex \"%s\": %s", glob, regex, errmsg);
+        /*NOTREACHED*/
+
+    result = try_match(&regc, str, &errmsg);
+
+    if (result == MATCH_ERROR)
+        error("glob \"%s\" -> regex \"%s\": %s", glob, regex, errmsg);
+        /*NOTREACHED*/
+
+    regfree(&regc);
+    g_free(regex);
+
+    return result;
+}
+
+char *validate_glob(const char *glob)
+{
+    char *regex, *ret = NULL;
+    regex_t regc;
+    static regex_errbuf errmsg;
+
+    regex = glob_to_regex(glob);
+
+    if (!do_validate_regex(regex, &regc, &errmsg, TRUE))
+        ret = errmsg;
+
+    regfree(&regc);
+    g_free(regex);
+    return ret;
+}
+
+/*
+ * Tar globs
+ */
+
+static char *tar_to_regex(const char *glob)
+{
+    return amglob_to_regex(glob, &tar_subst_stable, tar_worst_case);
+}
+
+int match_tar(const char *glob, const char *str)
 {
     char *regex;
     regex_t regc;
@@ -490,81 +532,27 @@ match_tar(
     ok = do_validate_regex(regex, &regc, &errmsg, TRUE);
 
     if (!ok)
-        error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
+        error("glob \"%s\" -> regex \"%s\": %s", glob, regex, errmsg);
         /*NOTREACHED*/
 
     result = try_match(&regc, str, &errmsg);
 
     if (result == MATCH_ERROR)
-        error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
+        error("glob \"%s\" -> regex \"%s\": %s", glob, regex, errmsg);
         /*NOTREACHED*/
 
     regfree(&regc);
-    amfree(regex);
+    g_free(regex);
 
     return result;
-}
-
-static struct subst_table tar_subst_stable = {
-    "(^|/)", /* begin */
-    "($|/)", /* end */
-    "[^/]", /* question_mark */
-    ".*", /* star */
-    NULL /* double_star */
-};
-
-static size_t tar_worst_case = 5; /* begin or end */
-
-static char *
-tar_to_regex(
-    const char *	glob)
-{
-    return amglob_to_regex(glob, &tar_subst_stable, tar_worst_case);
 }
 
 /*
- * Two utility functions used by match_disk() below: they are used to convert a
- * disk and glob from Windows expressed paths (backslashes) into Unix paths
- * (slashes).
+ * DISK/HOST MATCHING
  *
- * Note: the resulting string is dynamically allocated, it is up to the caller
- * to free it.
- *
- * Note 2: UNC in convert_unc_to_unix stands for Uniform Naming Convention.
+ * The functions below wrap input strings with separators and attempt to match
+ * the result. The core of the operation is the match_word() function.
  */
-
-static char *convert_unc_to_unix(const char *unc)
-{
-    const char *src;
-    char *result, *dst;
-    result = g_malloc(strlen(unc) + 1);
-    dst = result;
-
-    for (src = unc; *src; src++)
-        *(dst++) = (*src == '\\') ? '/' : *src;
-
-    *dst = '\0';
-    return result;
-}
-
-static char *convert_winglob_to_unix(const char *glob)
-{
-    const char *src;
-    char *result, *dst;
-    result = g_malloc(strlen(glob) + 1);
-    dst = result;
-
-    for (src = glob; *src; src++) {
-        if (*src == '\\' && *(src + 1) == '\\') {
-            *(dst++) = '/';
-            src++;
-            continue;
-        }
-        *(dst++) = *src;
-    }
-    *dst = '\0';
-    return result;
-}
 
 /*
  * Check whether a glob passed as an argument to match_word() only looks for the
@@ -588,11 +576,7 @@ static gboolean glob_is_separator_only(const char *glob, char sep) {
     }
 }
 
-static int
-match_word(
-    const char *	glob,
-    const char *	word,
-    const char		separator)
+static int match_word(const char *glob, const char *word, const char separator)
 {
     char *regex;
     char *dst;
@@ -611,8 +595,7 @@ match_word(
     if(lenword == 1 && *src == separator) {
 	*dst++ = separator;
 	*dst++ = separator;
-    }
-    else {
+    } else {
 	if(*src != separator)
 	    *dst++ = separator;
 	while(*src != '\0')
@@ -620,6 +603,7 @@ match_word(
 	if(*(dst-1) != separator)
 	    *dst++ = separator;
     }
+
     *dst = '\0';
 
     len = strlen(glob);
@@ -727,38 +711,77 @@ match_word(
 
     ret = do_match(regex, nword, TRUE);
 
-    amfree(nword);
-    amfree(nglob);
-    amfree(regex);
+    g_free(nword);
+    g_free(nglob);
+    g_free(regex);
 
     return ret;
 }
 
+/*
+ * Match a host expression
+ */
 
-int
-match_host(
-    const char *	glob,
-    const char *	host)
+int match_host(const char *glob, const char *host)
 {
     char *lglob, *lhost;
     int ret;
 
-    
     lglob = g_ascii_strdown(glob, -1);
     lhost = g_ascii_strdown(host, -1);
 
     ret = match_word(lglob, lhost, '.');
 
-    amfree(lglob);
-    amfree(lhost);
+    g_free(lglob);
+    g_free(lhost);
     return ret;
 }
 
+/*
+ * Match a disk expression. Not as straightforward, since Windows paths must be
+ * accounted for.
+ */
 
-int
-match_disk(
-    const char *	glob,
-    const char *	disk)
+/*
+ * Convert a disk and glob from Windows expressed paths (backslashes) into Unix
+ * paths (slashes).
+ *
+ * Note: the resulting string is dynamically allocated, it is up to the caller
+ * to free it.
+ *
+ * Note 2: UNC in convert_unc_to_unix stands for Uniform Naming Convention.
+ */
+
+static char *convert_unc_to_unix(const char *unc)
+{
+    char *result = g_strdup(unc);
+    return g_strdelimit(result, "\\", '/');
+}
+
+static char *convert_winglob_to_unix(const char *glob)
+{
+    const char *src;
+    char *result, *dst;
+    result = g_malloc(strlen(glob) + 1);
+    dst = result;
+
+    for (src = glob; *src; src++) {
+        if (*src == '\\' && *(src + 1) == '\\') {
+            *dst++ = '/';
+            src++;
+            continue;
+        }
+        *dst++ = *src;
+    }
+    *dst = '\0';
+    return result;
+}
+
+/*
+ * Match a disk expression
+ */
+
+int match_disk(const char *glob, const char *disk)
 {
     char *glob2 = NULL, *disk2 = NULL;
     const char *g = glob, *d = disk;
@@ -767,10 +790,9 @@ match_disk(
     /*
      * Check whether our disk potentially refers to a Windows share (the first
      * two characters are '\' and there is no / in the word at all): if yes,
-     * convert all double backslashes to slashes in the glob, and simple
-     * backslashes into slashes in the disk, and pass these new strings as
-     * arguments instead of the originals.
+     * build Unix paths instead and pass those as arguments to match_word()
      */
+
     gboolean windows_share = !(strncmp(disk, "\\\\", 2) || strchr(disk, '/'));
 
     if (windows_share) {
@@ -783,13 +805,17 @@ match_disk(
     result = match_word(g, d, '/');
 
     /*
-     * We can amfree(NULL), so this is "safe"
+     * We can g_free(NULL), so this is "safe"
      */
-    amfree(glob2);
-    amfree(disk2);
+    g_free(glob2);
+    g_free(disk2);
 
     return result;
 }
+
+/*
+ * TIMESTAMPS/LEVEL MATCHING
+ */
 
 static int
 alldigits(
@@ -880,7 +906,7 @@ match_datestamp(
 	}
     }
 illegal:
-	error(_("Illegal datestamp expression %s"),dateexp);
+	error("Illegal datestamp expression %s", dateexp);
 	/*NOTREACHED*/
 }
 
@@ -896,7 +922,7 @@ match_level(
     int match_exact;
 
     if(strlen(levelexp) >= 100 || strlen(levelexp) < 1) {
-	error(_("Illegal level expression %s"),levelexp);
+	error("Illegal level expression %s", levelexp);
 	/*NOTREACHED*/
     }
 
@@ -904,7 +930,7 @@ match_level(
 	strncpy(mylevelexp, levelexp+1, strlen(levelexp)-1);
 	mylevelexp[strlen(levelexp)-1] = '\0';
 	if (strlen(levelexp) == 0) {
-	    error(_("Illegal level expression %s"),levelexp);
+	    error("Illegal level expression %s", levelexp);
 	    /*NOTREACHED*/
 	}
     }
@@ -948,6 +974,6 @@ match_level(
 	}
     }
 illegal:
-    error(_("Illegal level expression %s"),levelexp);
+    error("Illegal level expression %s", levelexp);
     /*NOTREACHED*/
 }
