@@ -1,4 +1,7 @@
 2011-06-13  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/match.c: match_word(): earlier init of static data
+
+2011-06-13  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: static corner case regex definitions for
 	  match_word()
 
