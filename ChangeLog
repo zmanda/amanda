@@ -1,3 +1,6 @@
+2011-06-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Worker.pm: s/messsage/message/.
+
 2011-06-09  Dustin J. Mitchell <dustin@mozilla.com>
 	* client-src/selfcheck.c: Push down tmpbuf and remove some duplicate
 	  code; fixes compiles with SAMBA_VERSION not defined
