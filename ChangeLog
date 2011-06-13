@@ -1,4 +1,8 @@
 2011-06-13  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/match.c: move word wrapping out of match_word() into new
+	  helper wrap_word()
+
+2011-06-13  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: ambloc_to_regex(): calculate worst case expansion
 	  dynamically
 

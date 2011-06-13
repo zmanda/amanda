@@ -573,35 +573,82 @@ static gboolean glob_is_separator_only(const char *glob, char sep) {
     }
 }
 
+/*
+ * Given a word and a separator as an argument, wrap the word with separators -
+ * if need be. For instance, if '/' is the separator, the rules are:
+ *
+ * - "" -> "/"
+ * - "/" -> "//"
+ * - "//" -> left alone
+ * - "xxx" -> "/xxx/"
+ * - "/xxx" -> "/xxx/"
+ * - "xxx/" -> "/xxx/"
+ * - "/xxx/" -> left alone
+ *
+ * (note that xxx here may contain the separator as well)
+ *
+ * Note that the returned string is dynamically allocated: it is up to the
+ * caller to free it. Note also that the first argument MUST NOT BE NULL.
+ */
+
+static char *wrap_word(const char *word, const char separator)
+{
+    size_t len = strlen(word);
+    char *result, *p;
+
+    /*
+     * We allocate for the worst case, which is two bytes more than the input
+     * (have to prepend and append a separator).
+     */
+    result = g_malloc(len + 3);
+    p = result;
+
+    /*
+     * Zero-length: separator only
+     */
+
+    if (len == 0) {
+        *p++ = separator;
+        goto out;
+    }
+
+    /*
+     * Length is one: if the only character is the separator only, the result
+     * string is two separators
+     */
+
+    if (len == 1 && word[0] == separator) {
+        *p++ = separator;
+        *p++ = separator;
+        goto out;
+    }
+
+    /*
+     * Otherwise: prepend the separator if needed, append the separator if
+     * needed.
+     */
+
+    if (word[0] != separator)
+        *p++ = separator;
+
+    p = g_stpcpy(p, word);
+
+    if (word[len - 1] != separator)
+        *p++ = separator;
+
+out:
+    *p++ = '\0';
+    return result;
+}
+
 static int match_word(const char *glob, const char *word, const char separator)
 {
     char *regex;
     char *dst;
     size_t  len;
-    size_t  lenword;
-    char *nword;
+    char *wrapped_word = wrap_word(word, separator);
     char *nglob;
-    const char *src;
     int ret;
-
-    lenword = strlen(word);
-    nword = (char *)g_malloc(lenword + 3);
-
-    dst = nword;
-    src = word;
-    if(lenword == 1 && *src == separator) {
-	*dst++ = separator;
-	*dst++ = separator;
-    } else {
-	if(*src != separator)
-	    *dst++ = separator;
-	while(*src != '\0')
-	    *dst++ = *src++;
-	if(*(dst-1) != separator)
-	    *dst++ = separator;
-    }
-
-    *dst = '\0';
 
     len = strlen(glob);
     nglob = g_strdup(glob);
@@ -703,9 +750,9 @@ static int match_word(const char *glob, const char *word, const char separator)
         regex = amglob_to_regex(g, begin, end, &table);
     }
 
-    ret = do_match(regex, nword, TRUE);
+    ret = do_match(regex, wrapped_word, TRUE);
 
-    g_free(nword);
+    g_free(wrapped_word);
     g_free(nglob);
     g_free(regex);
 
