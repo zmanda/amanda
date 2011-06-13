@@ -240,12 +240,6 @@ main(
 #endif
     prvar("CONFIG_DIR", CONFIG_DIR);
 
-#ifdef DEV_PREFIX
-    prvar("DEV_PREFIX", DEV_PREFIX);
-#else
-    prundefvar("DEV_PREFIX");
-#endif
-
 #ifdef DUMP
     prvar("DUMP", DUMP);
     prvar("RESTORE", RESTORE);

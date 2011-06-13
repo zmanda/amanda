@@ -315,18 +315,13 @@ guess_disk (
 	    && (g_str_has_prefix(cwd, fsent.mntdir)))
 	{
 	    longest_match = current_length;
+
 	    g_free(*mpt_guess);
 	    *mpt_guess = g_strdup(fsent.mntdir);
-	    if(strncmp(fsent.fsname,DEV_PREFIX,(strlen(DEV_PREFIX))))
-	    {
-	        g_free(fsname);
-	        fsname = g_strdup(fsent.fsname);
-            }
-	    else
-	    {
-	        g_free(fsname);
-	        fsname = g_strdup(fsent.fsname + strlen(DEV_PREFIX));
-	    }
+
+	    g_free(fsname);
+	    fsname = g_strdup(fsent.fsname);
+
 	    local_disk = is_local_fstype(&fsent);
 	    dbprintf(_("guess_disk: local_disk = %d, fsname = \"%s\"\n"),
 		      local_disk,

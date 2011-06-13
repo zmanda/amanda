@@ -14,7 +14,6 @@ planner: paths: bindir="/usr/bin" sbindir="/usr/sbin"
 planner:        libexecdir="/usr/lib" amlibexecdir="/usr/lib/amanda"
 planner:        mandir="/usr/share/man" AMANDA_TMPDIR="/tmp/amanda"
 planner:        AMANDA_DBGDIR="/var/log/amanda" CONFIG_DIR="/etc/amanda"
-planner:        DEV_PREFIX="/dev/dsk/"
 planner:        DUMP="/usr/sbin/ufsdump" RESTORE="/usr/sbin/ufsrestore"
 planner:        VDUMP=UNDEF VRESTORE=UNDEF XFSDUMP=UNDEF XFSRESTORE=UNDEF
 planner:        VXDUMP=UNDEF VXRESTORE=UNDEF
