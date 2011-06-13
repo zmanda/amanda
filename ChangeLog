@@ -1,4 +1,8 @@
 2011-06-13  Francis Galiegue <fgaliegue@gmail.com>
+	* common-src/match.c: ambloc_to_regex(): calculate worst case expansion
+	  dynamically
+
+2011-06-13  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: ambloc_to_regex(): pass beginning and end of regex
 	  as arguments
 

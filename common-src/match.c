@@ -68,9 +68,7 @@ typedef char regex_errbuf[STR_SIZE];
  * - star: what the star ('*') should be replaced with;
  * - double_star: what two consecutive stars should be replaced with.
  *
- * An instance of this structure should be paired with the size of the worst
- * case expansion. Also Note that apart from double_star, ALL OTHER FIELDS MUST
- * NOT BE NULL.
+ * Note that apart from double_star, ALL OTHER FIELDS MUST NOT BE NULL.
  */
 
 struct subst_table {
@@ -89,8 +87,6 @@ static struct subst_table glob_subst_stable = {
     NULL /* double_star */
 };
 
-static size_t glob_worst_case = 5; /* star */
-
 /*
  * Substitution data for tar_to_regex()
  */
@@ -100,8 +96,6 @@ static struct subst_table tar_subst_stable = {
     ".*", /* star */
     NULL /* double_star */
 };
-
-static size_t tar_worst_case = 4; /* question_mark */
 
 /*
  * REGEX FUNCTIONS
@@ -309,11 +303,13 @@ char *make_exact_host_expression(const char *host)
  */
 
 static char *amglob_to_regex(const char *str, const char *begin,
-    const char *end, struct subst_table *table, size_t worst_case)
+    const char *end, struct subst_table *table)
 {
     const char *src;
     char *result, *dst;
     char c;
+    size_t worst_case;
+    gboolean double_star = (table->double_star != NULL);
 
     /*
      * There are two particular cases when building a regex out of a glob:
@@ -330,7 +326,17 @@ static char *amglob_to_regex(const char *str, const char *begin,
      * - size of original string multiplied by worst-case expansion;
      * - end of regex;
      * - final 0.
+     *
+     * Calculate the worst case expansion by walking our struct subst_table.
      */
+
+    worst_case = strlen(table->question_mark);
+
+    if (worst_case < strlen(table->star))
+        worst_case = strlen(table->star);
+
+    if (double_star && worst_case < strlen(table->double_star))
+        worst_case = strlen(table->double_star);
 
     result = g_malloc(strlen(begin) + strlen(str) * worst_case + strlen(end) + 1);
 
@@ -420,7 +426,7 @@ static char *amglob_to_regex(const char *str, const char *begin,
              * exponential regex execution time: consider [^/]*[^/]*.
              */
             const char *p = table->star;
-            if (*(src + 1) == '*' && table->double_star) {
+            if (double_star && *(src + 1) == '*') {
                 src++;
                 p = table->double_star;
             }
@@ -456,7 +462,7 @@ straight_copy:
 
 char *glob_to_regex(const char *glob)
 {
-    return amglob_to_regex(glob, "^", "$", &glob_subst_stable, glob_worst_case);
+    return amglob_to_regex(glob, "^", "$", &glob_subst_stable);
 }
 
 int match_glob(const char *glob, const char *str)
@@ -508,8 +514,7 @@ char *validate_glob(const char *glob)
 
 static char *tar_to_regex(const char *glob)
 {
-    return amglob_to_regex(glob, "(^|/)", "($|/)", &tar_subst_stable,
-        tar_worst_case);
+    return amglob_to_regex(glob, "(^|/)", "($|/)", &tar_subst_stable);
 }
 
 int match_tar(const char *glob, const char *str)
@@ -629,7 +634,6 @@ static int match_word(const char *glob, const char *word, const char separator)
 #define MATCHWORD_DOUBLESTAR_EXPANSION ".*"
 
         struct subst_table table;
-        size_t worst_case = 5;
         const char *begin, *end;
         char *p, *g = nglob;
 
@@ -696,7 +700,7 @@ static int match_word(const char *glob, const char *word, const char separator)
         table.star = MATCHWORD_STAR_EXPANSION(separator);
         table.double_star = MATCHWORD_DOUBLESTAR_EXPANSION;
 
-        regex = amglob_to_regex(g, begin, end, &table, worst_case);
+        regex = amglob_to_regex(g, begin, end, &table);
     }
 
     ret = do_match(regex, nword, TRUE);
