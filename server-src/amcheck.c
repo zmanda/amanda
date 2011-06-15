@@ -551,9 +551,9 @@ int check_tapefile(
 		    quoted);
 	    tapebad = 1;
 	    amfree(quoted);
-	} else if (access(tapefile, F_OK) != 0) {
+	} else if (access(tapefile, R_OK) != 0) {
 	    quoted = quote_string(tapefile);
-	    g_fprintf(outf, _("ERROR: can't access tapelist %s\n"), quoted);
+	    g_fprintf(outf, _("ERROR: tapelist %s: not readable\n"), quoted);
 	    tapebad = 1;
 	    amfree(quoted);
 	} else if (access(tapefile, W_OK) != 0) {
