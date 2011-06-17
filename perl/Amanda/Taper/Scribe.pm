@@ -442,7 +442,7 @@ sub new {
     my %params = @_;
 
     my $decide_debug = $Amanda::Config::debug_taper || $params{'debug'};
-    for my $rq_param qw(taperscan feedback) {
+    for my $rq_param (qw(taperscan feedback)) {
 	croak "required parameter '$rq_param' mising"
 	    unless exists $params{$rq_param};
     }
@@ -491,7 +491,7 @@ sub start {
     my $self = shift;
     my %params = @_;
 
-    for my $rq_param qw(write_timestamp finished_cb) {
+    for my $rq_param (qw(write_timestamp finished_cb)) {
 	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }
@@ -615,7 +615,7 @@ sub get_xfer_dest {
     my $self = shift;
     my %params = @_;
 
-    for my $rq_param qw(max_memory) {
+    for my $rq_param (qw(max_memory)) {
 	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }
@@ -1622,7 +1622,7 @@ sub quit {
     my $self = shift;
     my %params = @_;
 
-    for my $rq_param qw(finished_cb) {
+    for my $rq_param (qw(finished_cb)) {
 	croak "required parameter '$rq_param' mising"
 	    unless exists $params{$rq_param};
     }
