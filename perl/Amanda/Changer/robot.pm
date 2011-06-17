@@ -266,7 +266,7 @@ sub new {
     }
 
     # status-interval, eject-delay, unload-delay
-    for my $propname qw(status-interval eject-delay unload-delay) {
+    for my $propname (qw(status-interval eject-delay unload-delay)) {
 	next unless exists $config->{'properties'}->{$propname};
 	if (@{$config->{'properties'}->{$propname}->{'values'}} > 1) {
 	    return Amanda::Changer->make_error("fatal", undef,
