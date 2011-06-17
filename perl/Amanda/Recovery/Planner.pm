@@ -228,7 +228,7 @@ sub make_plan {
     my $self = shift;
     my %params = @_;
 
-    for my $rq_param qw(changer plan_cb dumpspecs) {
+    for my $rq_param (qw(changer plan_cb dumpspecs)) {
 	croak "required parameter '$rq_param' mising"
 	    unless exists $params{$rq_param};
     }
@@ -339,7 +339,7 @@ sub make_holding_plan {
     my $self = shift;
     my %params = @_;
 
-    for my $rq_param qw(holding_file plan_cb) {
+    for my $rq_param (qw(holding_file plan_cb)) {
 	croak "required parameter '$rq_param' mising"
 	    unless exists $params{$rq_param};
     }
@@ -390,7 +390,7 @@ sub make_plan_from_filelist {
     my $self = shift;
     my %params = @_;
 
-    for my $rq_param qw(filelist plan_cb) {
+    for my $rq_param (qw(filelist plan_cb)) {
 	croak "required parameter '$rq_param' mising"
 	    unless exists $params{$rq_param};
     }

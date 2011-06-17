@@ -1,3 +1,8 @@
+2011-06-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm, perl/Amanda/Recovery/Planner.pm,
+	  perl/Amanda/Recovery/Clerk.pm,
+	  perl/Amanda/Taper/Scribe.pm: Fix for qw syntax in perl 5.14.
+
 2011-06-13  Francis Galiegue <fgaliegue@gmail.com>
 	* common-src/match.c: implement regex caching with two mutex-protected
 	  GHashTables (one for REG_NEWLINE, one for !REG_NEWLINE)
