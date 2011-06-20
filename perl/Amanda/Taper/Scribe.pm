@@ -1352,17 +1352,19 @@ sub _device_start {
 	if ($is_new) {
 	    # generate the new label and write it to the tapelist file
 	    $tl->reload(1);
-	    ($new_label, my $err) = $reservation->make_new_tape_label();
-	    if (!defined $new_label) {
-		$tl->unlock();
-		return $finished_cb->($err);
-	    }
 	    if (!$meta) {
 		($meta, $err) = $reservation->make_new_meta_label();
 		if (defined $err) {
 		    $tl->unlock();
 		    return $finished_cb->($err);
 		}
+	    }
+	    ($new_label, my $err) = $reservation->make_new_tape_label(
+					meta => $meta,
+					barcode => $reservation->{'barcode'});
+	    if (!defined $new_label) {
+		$tl->unlock();
+		return $finished_cb->($err);
 	    }
 	    $tl->add_tapelabel('0', $new_label, undef, $meta, $reservation->{'barcode'});
 	    $tl->write();
