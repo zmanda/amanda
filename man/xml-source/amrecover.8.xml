@@ -285,6 +285,15 @@ they are extracted on the local machine the same way tar volumes are extracted.<
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><emphasis remap='B'>settranslate</emphasis> [<emphasis remap='B'>on</emphasis>|<emphasis remap='B'>off</emphasis>]</term>
+  <listitem>
+<para>Default: on. Translate escaped octal value ('\000') in
+the index file to their corespondig characters, it improve the interface
+if amrecover is run in the same charset as the filename. Set it to
+<emphasis remap='B'>off</emphasis> if the charset of some filename is not compatible with the amrecover charset.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><emphasis remap='B'>mode</emphasis></term>
   <listitem>
 <para>Displays the extracting mode for Samba shares.</para>
