@@ -33,6 +33,8 @@
 #include "amrecover.h"
 #include "util.h"
 
+gboolean translate_mode = TRUE;
+
 DIR_ITEM *get_dir_list(void);
 DIR_ITEM *get_next_dir_item(DIR_ITEM *this);
 
@@ -83,6 +85,7 @@ free_dir_item(
         amfree(item->date);
         amfree(item->tape);
         amfree(item->path);
+        amfree(item->tpath);
         amfree(item);
 	item = next;
     }
@@ -110,7 +113,7 @@ add_dir_list_item(
     next->tape = g_strdup(tape);
     next->fileno = fileno;
     next->path = g_strdup(path);
-
+    next->tpath = translate_octal(g_strdup(path));
     next->next = dir_list;
     dir_list = next;
 
@@ -315,11 +318,11 @@ list_directory(void)
 	fp = stdout;
     }
     amfree(pager_command);
-    i = strlen(disk_path);
+    i = strlen(disk_tpath);
     if (i != 1)
-	i++;				/* so disk_path != "/" */
+	i++;				/* so disk_tpath != "/" */
     for (item = get_dir_list(); item != NULL; item=get_next_dir_item(item)) {
-	quoted = quote_string(item->path + i);
+	quoted = quote_string(item->tpath + i);
 	g_fprintf(fp, "%s %s\n", item->date, quoted);
 	amfree(quoted);
     }

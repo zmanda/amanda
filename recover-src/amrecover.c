@@ -65,6 +65,7 @@ char *disk_name = NULL;			/* disk we are restoring */
 dle_t *dump_dle = NULL;
 char *mount_point = NULL;		/* where disk was mounted */
 char *disk_path = NULL;			/* path relative to mount point */
+char *disk_tpath = NULL;		/* translated path relative to mount point */
 char dump_date[STR_SIZE];		/* date on which we are restoring */
 int quit_prog;				/* set when time to exit parser */
 char *tape_server_name = NULL;
@@ -273,7 +274,7 @@ sigint_handler(
 }
 
 
-void
+char *
 clean_pathname(
     char *	s)
 {
@@ -291,6 +292,8 @@ clean_pathname(
     /* remove "/." at end of path */
     if(g_str_equal(&(s[length - 2]), "/."))
 	s[length-2]='\0';
+
+    return s;
 }
 
 
@@ -488,6 +491,7 @@ main(
     amfree(disk_name);
     amfree(mount_point);
     amfree(disk_path);
+    amfree(disk_tpath);
     dump_date[0] = '\0';
 
     /* Don't die when child closes pipe */
@@ -840,3 +844,40 @@ stop_amindexd(void)
         }
     }
 }
+
+
+char *
+translate_octal(
+    char *line)
+{
+    char *s = line, *s1, *s2;
+    char *p = line;
+    int i;
+
+    if (!translate_mode)
+	return strdup(line);
+
+    while(*s != '\0') {
+	if ((s == line || *(s-1) != '\\') && *s == '\\') {
+	    s++;
+	    s1 = s+1;
+	    s2 = s+2;
+	    if (g_ascii_isdigit(*s) && *s1 != '\0' &&
+		g_ascii_isdigit(*s1) &&
+		g_ascii_isdigit(*s2)) {
+		i = ((*s)-'0')*64 + ((*s1)-'0')*8 + ((*s2)-'0');
+		*p++ = i;
+		s += 3;
+	    } else {
+		*p++ = *s++;
+	    }
+
+	} else {
+	    *p++ = *s++;
+	}
+    }
+    *p = '\0';
+
+    return line;
+}
+

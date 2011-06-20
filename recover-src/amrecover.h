@@ -42,6 +42,7 @@ typedef struct DIR_ITEM
     int  level;
     char *tape;
     char *path;
+    char *tpath; /* translated path */
     off_t  fileno;
 
     struct DIR_ITEM *next;
@@ -56,6 +57,7 @@ extern char *disk_name;			/* disk we are restoring */
 extern dle_t *dump_dle;
 extern char *mount_point;		/* where disk was mounted */
 extern char *disk_path;			/* path relative to mount point */
+extern char *disk_tpath;		/* translated path relative to mount point */
 extern char dump_date[STR_SIZE];	/* date on which we are restoring */
 extern int quit_prog;			/* set when time to exit parser */
 extern char *tape_server_name;
@@ -67,6 +69,7 @@ extern am_feature_t *indexsrv_features;
 extern am_feature_t *tapesrv_features;
 extern pid_t extract_restore_child_pid;
 extern proplist_t proplist;
+extern gboolean translate_mode;
 
 extern void free_dir_item(DIR_ITEM *item);
 
@@ -93,6 +96,7 @@ extern int cd_regex(char *dir, int verbose);
 extern int cd_dir(char *dir, char *default_dir, int verbose);
 extern void set_tape(char *tape);
 extern void set_device(char *host, char *device);
+extern void set_translate(char *translate);
 extern void show_directory(void);
 extern void set_mode(int mode);
 extern void show_mode(void);
@@ -106,7 +110,7 @@ extern DIR_ITEM *get_dir_list(void);
 extern DIR_ITEM *get_next_dir_item(DIR_ITEM *this);
 extern void suck_dir_list_from_server(void);
 extern void clear_dir_list(void);
-extern void clean_pathname(char *s);
+extern char *clean_pathname(char *s);
 extern void display_extract_list(char *file);
 extern void clear_extract_list(void);
 extern int is_extract_list_nonempty(void);
@@ -124,3 +128,4 @@ extern void extract_files(void);
 
 extern char *get_security(void);
 extern void stop_amindexd(void);
+extern char *translate_octal(char *line);

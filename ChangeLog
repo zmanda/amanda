@@ -1,3 +1,15 @@
+2011-06-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amrecover.8.xml: Document new settranslate command.
+	* recover-src/amrecover.c: Add disk_tpath,
+	* recover-src/amrecover.c (translate_octal): New function.
+	* recover-src/amrecover.h: Add tpath to DIR_ITEM.
+	* recover-src/display_commands.c: Set and use tpath.
+	* recover-src/extract_list.c: Use tpath
+	* recover-src/help.c: Add settranslate command.
+	* recover-src/set_commands.c: Set and tpath.
+	* recover-src/uparse.y: Parse settranslate command.
+	* recover-src/uscan.l: Add SETTRANSLATE keyword.
+
 2011-06-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm, perl/Amanda/Recovery/Planner.pm,
 	  perl/Amanda/Recovery/Clerk.pm,

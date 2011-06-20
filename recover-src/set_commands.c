@@ -70,7 +70,9 @@ set_date(
 	    g_printf(_("No index records for cwd on new date\n"));
 	    g_printf(_("Setting cwd to mount point\n"));
 	    g_free(disk_path);
+	    g_free(disk_tpath);
 	    disk_path = g_strdup("/");	/* fake it */
+	    disk_tpath = g_strdup("/");	/* fake it */
 	    clear_dir_list();
 	}
     }
@@ -171,6 +173,7 @@ set_host(
 	amfree(disk_name);
 	amfree(mount_point);
 	amfree(disk_path);
+	amfree(disk_tpath);
 	clear_dir_list();
     }
     amfree(cmd);
@@ -264,7 +267,9 @@ set_disk(
     if (server_happy())
     {
 	g_free(disk_path);
+	g_free(disk_tpath);
 	disk_path = g_strdup("/");
+	disk_tpath = g_strdup("/");
 	suck_dir_list_from_server();	/* get list of directory contents */
     }
     else
@@ -272,7 +277,9 @@ set_disk(
 	g_printf(_("No index records for disk for specified date\n"));
 	g_printf(_("If date correct, notify system administrator\n"));
 	g_free(disk_path);
-	disk_path = g_strdup("/");	/* fake it */
+	g_free(disk_tpath);
+	disk_path = g_strdup("/");
+	disk_tpath = g_strdup("/");
 	clear_dir_list();
     }
     amfree(uqmtpt);
@@ -437,7 +444,7 @@ cd_glob(
     char *uqglob;
     int   result;
 
-    char *path_on_disk = NULL;
+    char *tpath_on_disk = NULL;
 
     if (disk_name == NULL) {
 	g_printf(_("Must select disk before changing directory\n"));
@@ -469,17 +476,17 @@ cd_glob(
 
     /* convert path (assumed in cwd) to one on disk */
     if (g_str_equal(disk_path, "/"))
-        path_on_disk = g_strconcat("/", regex_path, NULL);
+        tpath_on_disk = g_strconcat("/", regex_path, NULL);
     else {
-        char *clean_disk_path = clean_regex(disk_path, 0);
-        path_on_disk = g_strjoin(NULL, clean_disk_path, "/", regex_path, NULL);
-        amfree(clean_disk_path);
+        char *clean_disk_tpath = clean_regex(disk_tpath, 0);
+        tpath_on_disk = g_strjoin(NULL, clean_disk_tpath, "/", regex_path, NULL);
+        amfree(clean_disk_tpath);
     }
 
-    result = cd_dir(path_on_disk, uqglob, verbose);
+    result = cd_dir(tpath_on_disk, uqglob, verbose);
 
     amfree(regex_path);
-    amfree(path_on_disk);
+    amfree(tpath_on_disk);
     amfree(uqglob);
 
     return result;
@@ -496,7 +503,7 @@ cd_regex(
     int  len_uqregex;
     int  result;
 
-    char *path_on_disk = NULL;
+    char *tpath_on_disk = NULL;
 
     if (disk_name == NULL) {
 	g_printf(_("Must select disk before changing directory\n"));
@@ -527,16 +534,16 @@ cd_regex(
 
     /* convert path (assumed in cwd) to one on disk */
     if (g_str_equal(disk_path, "/"))
-        path_on_disk = g_strconcat("/", uqregex, NULL);
+        tpath_on_disk = g_strconcat("/", uqregex, NULL);
     else {
-        char *clean_disk_path = clean_regex(disk_path, 0);
-        path_on_disk = g_strjoin(NULL, clean_disk_path, "/", regex, NULL);
-        amfree(clean_disk_path);
+        char *clean_disk_tpath = clean_regex(disk_tpath, 0);
+        tpath_on_disk = g_strjoin(NULL, clean_disk_tpath, "/", regex, NULL);
+        amfree(clean_disk_tpath);
     }
 
-    result = cd_dir(path_on_disk, uq_orig_regex, verbose);
+    result = cd_dir(tpath_on_disk, uq_orig_regex, verbose);
 
-    amfree(path_on_disk);
+    amfree(tpath_on_disk);
     amfree(uqregex);
     amfree(uq_orig_regex);
 
@@ -545,9 +552,9 @@ cd_regex(
 
 int
 cd_dir(
-    char *	path_on_disk,
-    char *	default_dir,
-    int		verbose)
+    char *tpath_on_disk,
+    char *default_dir,
+    int	  verbose)
 {
     char *dir = NULL;
     char *s;
@@ -557,7 +564,7 @@ cd_dir(
 
     DIR_ITEM *ditem;
 
-    if ((s = validate_regexp(path_on_disk)) != NULL) {
+    if ((s = validate_regexp(tpath_on_disk)) != NULL) {
 	result = set_directory(default_dir, verbose);
 	return result;
     }
@@ -567,11 +574,11 @@ cd_dir(
     for (ditem=get_dir_list(); ditem!=NULL && nb_found <= 1; 
 			       ditem=get_next_dir_item(ditem))
     {
-	if (match(path_on_disk, ditem->path))
+	if (match(tpath_on_disk, ditem->tpath))
 	{
-	    i = strlen(ditem->path);
-	    if((i > 0 && ditem->path[i-1] == '/')
-               || (i > 1 && ditem->path[i-2] == '/' && ditem->path[i-1] == '.'))
+	    i = strlen(ditem->tpath);
+	    if((i > 0 && ditem->tpath[i-1] == '/')
+               || (i > 1 && ditem->tpath[i-2] == '/' && ditem->tpath[i-1] == '.'))
             {   /* It is a directory */
 		char *dir1, *dir2;
 		nb_found++;
@@ -605,6 +612,7 @@ cd_dir(
     return result;
 }
 
+/* dir is relative to dir_path or absolute with mount_point */
 int
 set_directory(
     char *	dir,
@@ -723,7 +731,9 @@ set_directory(
     if (server_happy())
     {
 	g_free(disk_path);
+	g_free(disk_tpath);
 	disk_path = g_strdup(new_dir);
+	disk_tpath = translate_octal(g_strdup(disk_path));
 	suck_dir_list_from_server();	/* get list of directory contents */
 	if (verbose)
 	    show_directory();		/* say where we moved to */
@@ -755,7 +765,7 @@ show_directory(void)
     else if (g_str_equal(disk_path, "/"))
 	g_printf("%s\n", mount_point);
     else
-	g_printf("%s%s\n", mount_point, disk_path);
+	g_printf("%s%s\n", mount_point, disk_tpath);
 }
 
 
@@ -838,6 +848,23 @@ set_device(
     else
 	g_printf (_(".\nTape server unspecified, assumed to be %s.\n"),
 		server_name);
+}
+
+void
+set_translate(
+    char *translate)
+{
+
+    if (translate == NULL) {
+	translate_mode = TRUE;
+    } else if (strcasecmp(translate, "yes") == 0 ||
+	       strcasecmp(translate, "true") == 0 ||
+	       strcasecmp(translate, "on") == 0) {
+	translate_mode = TRUE;
+    } else {
+	translate_mode = FALSE;
+    }
+    suck_dir_list_from_server();	/* get list of directory contents */
 }
 
 void

@@ -66,5 +66,6 @@ help_list(void)
     g_printf(_("setdevice [[-h host] device]       - select tape server and/or device\n"));
     g_printf(_("setproperty [append] [priority] name [value ...] - set a property\n"));
     g_printf(_("setmode smb|tar                    - select the method used to extract SMB shares\n"));
+    g_printf(_("settranslate [on|off]              - set/unset translation of non-ASCII characters\n"));
     g_printf("\n");
 }

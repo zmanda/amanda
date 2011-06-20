@@ -1,3 +1,7 @@
+Changes in release 3.3.1
+
+    * new 'settransalte' command in amrecover.
+
 Changes in release 3.3.0
 
    * The default auth is changed to "bsdtcp", if you are using the default bsd
