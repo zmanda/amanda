@@ -1,4 +1,7 @@
 2011-06-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: Correcly make label with meta and barcode
+
+2011-06-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amrecover.8.xml: Document new settranslate command.
 	* recover-src/amrecover.c: Add disk_tpath,
 	* recover-src/amrecover.c (translate_octal): New function.
