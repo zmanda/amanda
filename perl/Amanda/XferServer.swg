@@ -47,6 +47,19 @@ XferElement *xfer_dest_device(
 XferElement * xfer_source_holding(
     const char *filename);
 
+%newobject xfer_dest_holding;
+XferElement * xfer_dest_holding(
+    size_t max_memory);
+
+void xfer_dest_holding_start_chunk(
+    XferElement *self,
+    dumpfile_t *chunk_header,
+    char *filename,
+    guint64 use_bytes);
+
+void xfer_dest_holding_finish_chunk(
+    XferElement *self);
+
 %newobject xfer_dest_taper_splitter;
 XferElement *xfer_dest_taper_splitter(
     Device *first_device,
@@ -113,6 +126,14 @@ DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_dest_device)
 PACKAGE(Amanda::Xfer::Source::Holding)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_source_holding)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Dest::Holding)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_dest_holding)
+DECLARE_METHOD(start_chunk, Amanda::XferServer::xfer_dest_holding_start_chunk)
+DECLARE_METHOD(finish_chunk, Amanda::XferServer::xfer_dest_holding_finish_chunk)
 
 /* ---- */
 

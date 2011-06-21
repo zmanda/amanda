@@ -292,6 +292,17 @@ endif
 EXTRA_DIST += $(AmandaRecovery_DATA)
 
 if WANT_SERVER
+# PACKAGE: Amanda::Chunker::*
+AmandaChunkerdir = $(amperldir)/Amanda/Chunker
+AmandaChunker_DATA = \
+	Amanda/Chunker/Controller.pm \
+	Amanda/Chunker/Protocol.pm \
+	Amanda/Chunker/Scribe.pm
+PM_FILES += $(AmandaChunker_DATA)
+endif
+EXTRA_DIST += $(AmandaChunker_DATA)
+
+if WANT_SERVER
 # PACKAGE: Amanda::Taper::*
 AmandaTaperdir = $(amperldir)/Amanda/Taper
 AmandaTaper_DATA = \

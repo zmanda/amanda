@@ -745,7 +745,7 @@ chunker_cmd(
 			    " ", features,
 			    " ", qname,
 			    " ", number,
-			    " ", sched(dp)->dumpdate,
+			    " ", mesg,  /* datestamp */
 			    " ", chunksize,
 			    " ", dp->program,
 			    " ", use,
@@ -771,9 +771,9 @@ chunker_cmd(
 	    qname = quote_string(dp->name);
 	    qdest = quote_string(h[activehd]->destname);
 	    h[activehd]->disk->allocated_dumpers++;
-	    g_snprintf(chunksize, sizeof(chunksize), "%lld", 
+	    g_snprintf(chunksize, sizeof(chunksize), "%lld",
 		     (long long)holdingdisk_get_chunksize(h[activehd]->disk->hdisk));
-	    g_snprintf(use, sizeof(use), "%lld", 
+	    g_snprintf(use, sizeof(use), "%lld",
 		     (long long)(h[activehd]->reserved - h[activehd]->used));
 	    cmdline = g_strjoin(NULL, cmdstr[cmd],
 				" ", disk2serial(dp),
@@ -788,6 +788,8 @@ chunker_cmd(
 	}
 	break;
     case QUIT:
+	cmdline = g_strjoin(NULL, cmdstr[cmd], "\n", NULL);
+	break;
     case ABORT:
 	{
 	    char *q = quote_string(mesg);

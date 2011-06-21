@@ -25,12 +25,12 @@ sbin_PROGRAMS =		amadmin		amcheck		\
 
 amlibexec_PROGRAMS =	amindexd	amtrmidx	\
 			amtrmlog	driver		dumper		\
-			planner		amcleanupdisk	\
-			chunker
+			planner		amcleanupdisk
 
 amlibexec_SCRIPTS_PERL = \
 	    amlogroll \
 	    amdumpd \
+	    chunker \
 	    taper \
 	    amcheck-device
 
@@ -87,7 +87,7 @@ libamserver_la_SOURCES=	amindex.c	\
 			diskfile.c	driverio.c	cmdline.c  \
 			holding.c	infofile.c	logfile.c	\
 			tapefile.c	find.c		server_util.c   \
-                        xfer-source-holding.c
+                        xfer-dest-holding.c		xfer-source-holding.c
 
 libamserver_la_LDFLAGS= -release $(VERSION) $(AS_NEEDED_FLAGS)
 libamserver_la_LIBADD= ../device-src/libamdevice.la \
