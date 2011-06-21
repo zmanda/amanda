@@ -174,7 +174,7 @@ connect_port(
     int			s;
 
     servPort = getservbyport((int)htons(port), proto);
-    if (servPort != NULL && !strstr(servPort->s_name, "amanda")) {
+    if (servPort != NULL && !strstr(servPort->s_name, AMANDA_SERVICE_NAME)) {
 	dbprintf(_("connect_port: Skip port %d: owned by %s.\n"),
 		  port, servPort->s_name);
 	errno = EBUSY;
@@ -287,7 +287,7 @@ bind_portrange(
      */
     for (cnt = 0; cnt < num_ports; cnt++) {
 	servPort = getservbyport((int)htons(port), proto);
-	if ((servPort == NULL) || strstr(servPort->s_name, "amanda")) {
+	if ((servPort == NULL) || strstr(servPort->s_name, AMANDA_SERVICE_NAME)) {
 	    SU_SET_PORT(addrp, port);
 	    socklen = SS_LEN(addrp);
 	    if (bind(s, (struct sockaddr *)addrp, socklen) >= 0) {

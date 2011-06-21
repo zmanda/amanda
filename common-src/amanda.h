@@ -382,18 +382,6 @@ extern int errno;
 #ifndef AMANDA_SERVICE_NAME
 #define AMANDA_SERVICE_NAME "amanda"
 #endif
-#ifndef KAMANDA_SERVICE_NAME
-#define KAMANDA_SERVICE_NAME "kamanda"
-#endif
-#ifndef SERVICE_SUFFIX
-#define SERVICE_SUFFIX ""
-#endif
-#ifndef AMANDA_SERVICE_DEFAULT
-#define AMANDA_SERVICE_DEFAULT	((in_port_t)10080)
-#endif
-#ifndef KAMANDA_SERVICE_DEFAULT
-#define KAMANDA_SERVICE_DEFAULT	((in_port_t)10081)
-#endif
 
 #define am_round(v,u)	((((v) + (u) - 1) / (u)) * (u))
 #define am_floor(v,u)	(((v) / (u)) * (u))

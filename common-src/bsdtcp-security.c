@@ -157,9 +157,9 @@ bsdtcp_connect(
     if (conf_fn) {
 	service = conf_fn("client_port", datap);
 	if (!service || strlen(service) <= 1)
-	    service = "amanda";
+	    service = AMANDA_SERVICE_NAME;
     } else {
-	service = "amanda";
+	service = AMANDA_SERVICE_NAME;
     }
     port = find_port_for_service(service, "tcp");
     if (port == 0) {

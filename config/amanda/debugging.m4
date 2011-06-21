@@ -113,45 +113,6 @@ AC_DEFUN([AMANDA_WITH_DEBUG_DAYS],
 
 # SYNOPSIS
 #
-#   AMANDA_WITH_TESTING
-#
-# OVERVIEW
-#
-#   Handles the --with-testing flag.  Defines and substitutes SERVICE_SUFFIX, and
-#   defines AMANDA_SERVICE_NAME and KAMANDA_SERVICE_NAME.
-#
-AC_DEFUN([AMANDA_WITH_TESTING],
-[
-    AC_ARG_WITH(testing,
-        AS_HELP_STRING([--with-testing@<:@=SUFFIX@:>@],
-            [use alternate service names with suffix (default 'test')]),
-        [
-            TESTING="$withval"
-        ], [
-            TESTING="no"
-        ]
-    )
-    case "$TESTING" in
-        n | no) SERVICE_SUFFIX="";;
-        y |  ye | yes) SERVICE_SUFFIX="-test";;
-        *) SERVICE_SUFFIX="-$TESTING";;
-    esac
-
-    AMANDA_SERVICE_NAME="amanda$SERVICE_SUFFIX"
-    KAMANDA_SERVICE_NAME="kamanda$SERVICE_SUFFIX"
-
-    AC_SUBST(SERVICE_SUFFIX)
-    AC_DEFINE_UNQUOTED(SERVICE_SUFFIX, "$SERVICE_SUFFIX",
-        [A suffix that will be appended to service names.
-     * Useful for testing in parallel with a working version. ])
-    AC_DEFINE_UNQUOTED(AMANDA_SERVICE_NAME,  "$AMANDA_SERVICE_NAME", 
-        [The name for the Amanda service. ])
-    AC_DEFINE_UNQUOTED(KAMANDA_SERVICE_NAME, "$KAMANDA_SERVICE_NAME", 
-        [The name for the Kerberized Amanda service. ])
-])
-
-# SYNOPSIS
-#
 #   AMANDA_ENABLE_SYNTAX_CHECKS
 #
 # OVERVIEW

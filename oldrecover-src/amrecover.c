@@ -537,7 +537,7 @@ main(
 	/*NOTREACHED*/
     }
 
-    service_name = g_strconcat("amandaidx", SERVICE_SUFFIX, NULL);
+    service_name = "amandaidx";
 
     g_printf(_("AMRECOVER Version %s. Contacting server on %s ...\n"),
 	   VERSION, server_name);  
@@ -545,7 +545,6 @@ main(
 	error(_("%s/tcp unknown protocol"), service_name);
 	/*NOTREACHED*/
     }
-    amfree(service_name);
     server_socket = stream_client_privileged(server_name,
 					     (in_port_t)ntohs((in_port_t)sp->s_port),
 					     0,

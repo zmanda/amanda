@@ -1352,16 +1352,14 @@ extract_files_setup(
     char *our_feature_string = NULL;
     char *tt = NULL;
 
-    service_name = g_strconcat("amidxtape", SERVICE_SUFFIX, NULL);
+    service_name = "amidxtape";
 
     /* get tape server details */
     if ((sp = getservbyname(service_name, "tcp")) == NULL)
     {
 	g_printf(_("%s/tcp unknown protocol - config error?\n"), service_name);
-	amfree(service_name);
 	return -1;
     }
-    amfree(service_name);
     seteuid(0);					/* it either works ... */
     setegid(0);
     tape_control_sock = stream_client_privileged(tape_server_name,

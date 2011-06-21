@@ -1,4 +1,17 @@
 2011-06-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amanda.h: Remove KAMANDA_SERVICE_NAME, SERVICE_SUFFIX,
+	  AMANDA_SERVICE_DEFAULT and KAMANDA_SERVICE_DEFAULT.
+	* common-src/bsd-security.c: Use AMANDA_SERVICE_NAME.
+	* common-src/bsdtcp-security.c: Use AMANDA_SERVICE_NAME.
+	* common-src/bsdudp-security.c: Use AMANDA_SERVICE_NAME.
+	* common-src/util.c: Use AMANDA_SERVICE_NAME.
+	* config/amanda/debugging.m4: Remove AMANDA_WITH_TESTING
+	* configure.in: Remove AMANDA_WITH_TESTING.
+	* oldrecover-src/amrecover.c: Remove SERVICE_SUFFIX.
+	* oldrecover-src/extract_list.c: Remove SERVICE_SUFFIX.
+	* client-src/patch-system.sh: Set SERVICE_SUFFIX to "".
+
+2011-06-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/chunker.c: Remove file.
 	* server-src/chunker.pl: New perl chunker.
 	* perl/Amanda/Chunker/Controller.pm,

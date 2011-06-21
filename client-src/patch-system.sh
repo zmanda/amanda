@@ -9,8 +9,9 @@ exec_prefix="@exec_prefix@"
 sbindir="@sbindir@"
 amlibexecdir="@amlibexecdir@"
 . "${amlibexecdir}/amanda-sh-lib.sh"
+libexecdir=$amlibexecdir
 
-SERVICE_SUFFIX="@SERVICE_SUFFIX@"
+SERVICE_SUFFIX=""
 
 USER="@CLIENT_LOGIN@"
 
