@@ -23,6 +23,7 @@
 #define XFER_SERVER_H
 
 #include "amxfer.h"
+#include "fileheader.h"
 
 /* A transfer source that reads from a holding file, following CONT_FILENAME
  * from one chunk to the next.  If the downstream element is an XferDestTaper,
@@ -30,13 +31,33 @@
  *
  * Implemented in xfer-source-holding.c
  *
- * @param device: holding filename
- * @param send_cache_inform: TRUE if this element should call cache_inform on
- *	the xfer's destination element
+ * @param filename: holding filename
  * @return: new element
  */
 XferElement *xfer_source_holding(
     const char *filename);
 
+
+/* A transfer destination that writes to holding file.
+ *
+ * Implemented in xfer-dest-holding.c
+ *
+ * @param max_memory: total amount of memory to use for buffers, or zero
+ *		      for a reasonable default.
+ * @return: new element
+ */
+XferElement *xfer_dest_holding(
+    size_t max_memory);
+
+void
+xfer_dest_holding_start_chunk(
+    XferElement *elt,
+    dumpfile_t *chunk_header,
+    char *filename,
+    guint64 use_bytes);
+
+void
+xfer_dest_holding_finish_chunk(
+    XferElement *elt);
 
 #endif

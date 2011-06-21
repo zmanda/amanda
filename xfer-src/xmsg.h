@@ -105,6 +105,13 @@ typedef enum {
      *  (none)
      */
     XMSG_READY = 6,
+
+    /* XMSG_CHUNK_DONE:
+     *  - size (total number of bytes in the chunk)
+     *  - no_room (true if no more space in the holding disk)
+     */
+    XMSG_CHUNK_DONE = 7,
+
 } xmsg_type;
 
 /*
@@ -171,6 +178,15 @@ typedef struct XMsg {
 
     /* file number on a volume */
     guint64 fileno;
+
+    /* size of header written to holding disk */
+    guint64 header_size;
+
+    /* size of data written to holding disk */
+    guint64 data_size;
+
+    /* true if no more space on holding disk */
+    gboolean no_room;
 } XMsg;
 
 /*

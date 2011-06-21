@@ -305,6 +305,31 @@ This destination writes data to a file descriptor.  The file is not
 closed after the transfer is completed.  Be careful not to let Perl
 close the file for you!
 
+=head3 Amanda::Xfer::Dest::Holding (SERVER ONLY)
+
+  Amanda::Xfer::Dest::Holding->new($max_memory);
+
+This destination writes data in chunk to holding disk.
+
+To start writing to a chunk file:
+  $dest->start_chunk($header, $filename, $use_bytes);
+
+C<filename> is the full path of the holding disk filename (with the
+sequence number). C<use_bytes> is the number of bytes to write to the current
+chunk file.
+
+As part is completed, the element sends an C<$XMSG_CHUNK_DONE>
+C<Amanda::Xfer::Msg>, with the following keys:
+
+ header_size   size of written header
+ data_size     size of written data
+ no_room       true if it get ENOSPC on holding disk
+
+start_chunk call be called to write data to a new or on the same file.
+
+To finish the last chunk:
+  $dest->finish_chunk();
+
 =head3 Amanda::Xfer::Dest::Null
 
   Amanda::Xfer::Dest::Null->new($seed);
@@ -377,10 +402,9 @@ are allowed in the data stream described to C<cache_inform>.
 Furthermore, the location of each byte must be specified to this
 method I<before> it is sent through the transfer.
 
-  $dest->get_part_bytes_written();
+  $dest->get_chunk_bytes_written();
 
-This function returns the number of bytes written for the current part
-to the device.
+This function returns the number of bytes written for the current invocation of start_chunk.
 
 =head3 Amanda::Xfer::Dest::Taper::Splitter
 

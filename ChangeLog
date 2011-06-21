@@ -1,4 +1,26 @@
 2011-06-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/chunker.c: Remove file.
+	* server-src/chunker.pl: New perl chunker.
+	* perl/Amanda/Chunker/Controller.pm,
+	  perl/Amanda/Chunker/Protocol.pm,
+	  perl/Amanda/Chunker/Scribe.pm: Perl object for chunker.
+	* perl/Amanda/Logfile.swg (make_chunker_stats): New function.
+	* perl/Amanda/XferServer.swg: Add Amanda::Xfer::Dest::Holding.
+	* perl/Amanda/Xfer.pod: Document Amanda::Xfer::Dest::Holding.
+	* perl/Amanda/Xfer.swg: Add XMSG_CHUNK_DONE and new xmsg arguments.
+	* perl/Makefile.am: Add Amanda::Chunker::*
+	* server-src/Makefile.am (amlibexec_PROGRAMS): Remove chunker.
+	* server-src/Makefile.am (amlibexec_SCRIPTS_PERL): Add chunker.
+	* server-src/driver.c: Fix for new protocol with chunker.
+	* server-src/driverio.c: Fix for new protocol with chunker.
+	* server-src/driverio.h: Add sendresult in chunker_t.
+	* server-src/xfer-dest-holding.c: New xfer destination for holding disk
+	* server-src/xfer-server.h: Add function for xfer_dest_holding.
+	* xfer-src/xmsg.h: Add XMSG_CHUNK_DONE in xmsg_type.
+	  Add header_size, data_size and no_room in XMsg.
+	* installcheck/chunker.pl: Check new chunker protocol.
+
+2011-06-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda-client.conf.5.xml: Add amdump-server.
 	* man/xml-source/amdump_client.8.xml: Fix doc.
 

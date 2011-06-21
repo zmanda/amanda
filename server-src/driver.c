@@ -1278,11 +1278,12 @@ start_some_dumps(
 	    sched(diskp)->tapetime = (time_t)0;
 	    chunker = dumper->chunker = &chktable[dumper - dmptable];
 	    chunker->result = LAST_TOK;
+	    chunker->sendresult = 0;
 	    dumper->result = LAST_TOK;
 	    startup_chunk_process(chunker,chunker_program);
 	    chunker_cmd(chunker, START, NULL, driver_timestamp);
 	    chunker->dumper = dumper;
-	    chunker_cmd(chunker, PORT_WRITE, diskp, NULL);
+	    chunker_cmd(chunker, PORT_WRITE, diskp, sched(diskp)->datestamp);
 	    cmd = getresult(chunker->fd, 1, &result_argc, &result_argv);
 	    if(cmd != PORT) {
 		assignedhd_t **h=NULL;
@@ -1316,9 +1317,9 @@ start_some_dumps(
 						 handle_dumper_result, dumper);
 		chunker->ev_read = event_register((event_id_t)chunker->fd, EV_READFD,
 						   handle_chunker_result, chunker);
-		dumper->output_port = atoi(result_argv[1]);
+		dumper->output_port = atoi(result_argv[2]);
 		amfree(diskp->dataport_list);
-		diskp->dataport_list = g_strdup(result_argv[2]);
+		diskp->dataport_list = g_strdup(result_argv[3]);
 
 		if (diskp->host->pre_script == 0) {
 		    run_server_host_scripts(EXECUTE_ON_PRE_HOST_BACKUP,
@@ -2446,14 +2447,13 @@ handle_dumper_result(
 	taper = sched(dp)->taper;
 	/* send the dumper result to the chunker */
 	if (dumper->chunker) {
-	    if (dumper->chunker->down == 0 && dumper->chunker->fd != -1 &&
-		dumper->chunker->result == LAST_TOK) {
+	    if (dumper->chunker->sendresult) {
 		if (cmd == DONE) {
 		    chunker_cmd(dumper->chunker, DONE, dp, NULL);
-		}
-		else {
+		} else {
 		    chunker_cmd(dumper->chunker, FAILED, dp, NULL);
 		}
+		dumper->chunker->sendresult = 0;
 	    }
 	    if( dumper->result != LAST_TOK &&
 	 	dumper->chunker->result != LAST_TOK)
@@ -2542,6 +2542,7 @@ handle_chunker_result(
 
 	    chunker->result = cmd;
 
+	    chunker_cmd(chunker, QUIT, NULL, NULL);
 	    break;
 
 	case TRYAGAIN: /* TRY-AGAIN <handle> <errstr> */
@@ -2549,7 +2550,9 @@ handle_chunker_result(
 
 	    chunker->result = cmd;
 
+	    chunker_cmd(chunker, QUIT, NULL, NULL);
 	    break;
+
 	case FAILED: /* FAILED <handle> <errstr> */
 	    /*free_serial(result_argv[1]);*/
 
@@ -2557,6 +2560,19 @@ handle_chunker_result(
 
 	    chunker->result = cmd;
 
+	    chunker_cmd(chunker, QUIT, NULL, NULL);
+	    break;
+
+	case DUMPER_STATUS: /* NO-ROOM <handle> */
+	    if (chunker->dumper->result == LAST_TOK) {
+		chunker->sendresult = 1;
+	    } else {
+		if( chunker->dumper->result == DONE) {
+		    chunker_cmd(chunker, DONE, dp, NULL);
+		} else {
+		    chunker_cmd(chunker, FAILED, dp, NULL);
+		}
+	    }
 	    break;
 
 	case NO_ROOM: /* NO-ROOM <handle> <missing_size> */
