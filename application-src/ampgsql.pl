@@ -700,6 +700,7 @@ sub command_backup {
    $self->{'out_h'} or die("Could not open data fd");
    my $msg_fd = IO::Handle->new_from_fd(3, 'w');
    $msg_fd or die("Could not open message fd");
+   $self->{mesgout} = $msg_fd;
    $self->{'index_h'} = IO::Handle->new_from_fd(4, 'w');
    $self->{'index_h'} or die("Could not open index fd");
 
