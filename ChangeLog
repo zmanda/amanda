@@ -1,3 +1,7 @@
+2011-06-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/xfer-dest-holding.c: Check return value of ftruncate.
+	* perl/Amanda/Logfile.swg: Remove debugging statement.
+
 2011-06-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amanda.h: Remove KAMANDA_SERVICE_NAME, SERVICE_SUFFIX,
 	  AMANDA_SERVICE_DEFAULT and KAMANDA_SERVICE_DEFAULT.

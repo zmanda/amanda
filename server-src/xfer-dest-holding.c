@@ -233,7 +233,11 @@ holding_thread_write_chunk(
 
 	if (count != to_write) {
 	    if (count > 0) {
-		ftruncate(self->fd, self->chunk_offset);
+		if (ftruncate(self->fd, self->chunk_offset) != 0) {
+		    g_debug("ftruncate failed: %s", strerror(errno));
+		    g_mutex_unlock(self->ring_mutex);
+		    return FALSE;
+		}
 	    }
 	    self->chunk_status = CHUNK_NO_ROOM;
 	    break;

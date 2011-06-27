@@ -376,7 +376,6 @@ sub make_stats {
 sub make_chunker_stats {
     my ($size, $duration) = @_;
 
-Amanda::Debug::debug("make_chunker_stats($size, $duration)");
     $duration = 0.1 if $duration <= 0;  # prevent division by zero
     my $kb = $size/1024;
     my $kps = "$kb.0"/$duration; # Perlish cast from BigInt to float
