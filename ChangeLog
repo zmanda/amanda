@@ -1,4 +1,7 @@
 2011-06-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda-devices.7.xml: s/Witout/Without/
+
+2011-06-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/xfer-dest-holding.c: Check return value of ftruncate.
 	* perl/Amanda/Logfile.swg: Remove debugging statement.
 

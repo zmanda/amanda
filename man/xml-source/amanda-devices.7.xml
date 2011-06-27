@@ -585,7 +585,7 @@ operations can be emulated with the MTREW and read data operations.</para>
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>NONBLOCKING_OPEN</term><listitem>
- (read-write) Set this boolean property to "true" if O_NONBLOCK must be used on the open call. Default to "true" on Linux and "false" on all others machines. Witout it, Linux wait for a few seconds if no tape are loaded. Solaris have strange error it is set to "yes".
+ (read-write) Set this boolean property to "true" if O_NONBLOCK must be used on the open call. Default to "true" on Linux and "false" on all others machines. Without it, Linux wait for a few seconds if no tape are loaded. Solaris have strange error it is set to "yes".
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>READ_BLOCK_SIZE</term><listitem>
