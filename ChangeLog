@@ -1,3 +1,6 @@
+2011-06-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda-devices.7.xml: s/Witout/Without/
+
 2011-06-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda-client.conf.5.xml: Add amdump-server.
 	* man/xml-source/amdump_client.8.xml: Fix doc.
