@@ -3601,10 +3601,18 @@ build_diskspace(
 		break;
 	    }
 	}
-
+	if (!ha || j >= num_holdalloc) {
+	    fprintf(stderr,_("build_diskspace: holding disk file '%s' is not in a holding disk directory.\n"), filename);
+	    amfree(used);
+	    amfree(result);
+	    return NULL;
+	}
 	if(stat(filename, &finfo) == -1) {
-	    g_fprintf(stderr, _("stat %s: %s\n"), filename, strerror(errno));
-	    finfo.st_size = (off_t)0;
+	    g_fprintf(stderr, _("build_diskspace: can't stat %s: %s\n"),
+		      filename, strerror(errno));
+	    amfree(used);
+	    amfree(result);
+	    return NULL;
 	}
 	used[j] += ((off_t)finfo.st_size+(off_t)1023)/(off_t)1024;
 	if((fd = open(filename,O_RDONLY)) == -1) {
