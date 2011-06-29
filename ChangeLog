@@ -1,3 +1,16 @@
+2011-06-29  Jean-Louis Martineau <martineau@zmanda.com>
+	Replace semaphore by amsemaphore.
+	* common-src/Makefile.am: Remove semaphore.*, add amsemaphore.*
+	* common-src/amsemaphore-test.c: New copy of semaphore-test.c
+	* common-src/amsemaphore.c: New copy of semaphore.c
+	* common-src/amsemaphore.h: New copy of semaphore.h
+	* common-src/semaphore-test.c: Removed file.
+	* common-src/semaphore.c: Removed file.
+	* common-src/semaphore.h: Removed file.
+	* device-src/rait-device.c: s/semaphore_/amsemaphore_/g
+	* xfer-src/element-glue.c: s/semaphore_/amsemaphore_/g
+	* xfer-src/element-glue.h: s/semaphore_/amsemaphore_/g
+
 2011-06-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Check holding file is in a holding directory.
 

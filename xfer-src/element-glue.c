@@ -68,7 +68,7 @@ typedef struct XferElementGlue_ {
 
     /* a ring buffer of ptr/size pairs with semaphores */
     struct { gpointer buf; size_t size; } *ring;
-    semaphore_t *ring_used_sem, *ring_free_sem;
+    amsemaphore_t *ring_used_sem, *ring_free_sem;
     gint ring_head, ring_tail;
 
     GThread *thread;
@@ -859,8 +859,8 @@ setup_impl(
     /* set up ring if desired */
     if (need_ring) {
 	self->ring = g_malloc(sizeof(*self->ring) * GLUE_RING_BUFFER_SIZE);
-	self->ring_used_sem = semaphore_new_with_value(0);
-	self->ring_free_sem = semaphore_new_with_value(GLUE_RING_BUFFER_SIZE);
+	self->ring_used_sem = amsemaphore_new_with_value(0);
+	self->ring_free_sem = amsemaphore_new_with_value(GLUE_RING_BUFFER_SIZE);
     }
 
     if (need_listen_input) {
@@ -950,7 +950,7 @@ pull_buffer_impl(
 	    }
 
 	    /* make sure there's at least one element available */
-	    semaphore_down(self->ring_used_sem);
+	    amsemaphore_down(self->ring_used_sem);
 
 	    /* get it */
 	    buf = self->ring[self->ring_tail].buf;
@@ -958,7 +958,7 @@ pull_buffer_impl(
 	    self->ring_tail = (self->ring_tail + 1) % GLUE_RING_BUFFER_SIZE;
 
 	    /* and mark this element as free to be overwritten */
-	    semaphore_up(self->ring_free_sem);
+	    amsemaphore_up(self->ring_free_sem);
 
 	    return buf;
 	}
@@ -1083,7 +1083,7 @@ push_buffer_impl(
 	    }
 
 	    /* make sure there's at least one element free */
-	    semaphore_down(self->ring_free_sem);
+	    amsemaphore_down(self->ring_free_sem);
 
 	    /* set it */
 	    self->ring[self->ring_head].buf = buf;
@@ -1091,7 +1091,7 @@ push_buffer_impl(
 	    self->ring_head = (self->ring_head + 1) % GLUE_RING_BUFFER_SIZE;
 
 	    /* and mark this element as available for reading */
-	    semaphore_up(self->ring_used_sem);
+	    amsemaphore_up(self->ring_used_sem);
 
 	    return;
 
@@ -1187,8 +1187,8 @@ finalize_impl(
 	}
 
 	amfree(self->ring);
-	semaphore_free(self->ring_used_sem);
-	semaphore_free(self->ring_free_sem);
+	amsemaphore_free(self->ring_used_sem);
+	amsemaphore_free(self->ring_free_sem);
     }
 
     /* chain up */
