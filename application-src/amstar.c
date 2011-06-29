@@ -323,6 +323,7 @@ main(
 	case 22: argument.command_options =
 			g_slist_append(argument.command_options,
 				       stralloc(optarg));
+		 break;
 	case 24: if (optarg && strcasecmp(optarg, "NO") == 0)
 		     star_acl = 0;
 		 else if (optarg && strcasecmp(optarg, "YES") == 0)
