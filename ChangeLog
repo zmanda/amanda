@@ -1,4 +1,7 @@
 2011-06-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amstar.c: typo.
+
+2011-06-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Call short_dump_state on all state change.
 
 2011-06-29  Jean-Louis Martineau <martineau@zmanda.com>
