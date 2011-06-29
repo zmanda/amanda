@@ -1109,7 +1109,7 @@ static GPtrArray *amstar_build_argv(
      * See: http://cdrecord.berlios.de/private/man/star/star.1.html
      */
     for (copt = argument->command_options; copt != NULL; copt = copt->next) {
-	g_ptr_array_add(argv_ptr, stralloc((char *)copt->data));
+	g_ptr_array_add(argv_ptr, g_strdup((char *)copt->data));
     }
 
     g_ptr_array_add(argv_ptr, g_strdup("."));

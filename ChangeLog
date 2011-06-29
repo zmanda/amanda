@@ -1,4 +1,7 @@
 2011-06-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amstar.c: s/stralloc/g_strdup/
+
+2011-06-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amstar.c: typo.
 
 2011-06-29  Jean-Louis Martineau <martineau@zmanda.com>
