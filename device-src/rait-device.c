@@ -28,7 +28,7 @@
 #include "glib-util.h"
 #include "device.h"
 #include "fileheader.h"
-#include "semaphore.h"
+#include "amsemaphore.h"
 
 /* Just a note about the failure mode of different operations:
    - Recovers from a failure (enters degraded mode)
@@ -115,7 +115,7 @@ typedef struct RaitDevicePrivate_s {
 
     /* value of this semaphore is the number of threaded operations
      * in progress */
-    semaphore_t *threads_sem;
+    amsemaphore_t *threads_sem;
 #endif
 } RaitDevicePrivate;
 
@@ -286,7 +286,7 @@ rait_device_finalize(GObject *obj_self)
     }
 
     if (PRIVATE(self)->threads_sem)
-	semaphore_free(PRIVATE(self)->threads_sem);
+	amsemaphore_free(PRIVATE(self)->threads_sem);
 #endif
     amfree(self->private);
 }
@@ -426,7 +426,7 @@ static gpointer rait_thread_pool_func(gpointer data) {
 	    inf->data = NULL;
 
             /* indicate that we're finished; will not block */
-	    semaphore_down(inf->private->threads_sem);
+	    amsemaphore_down(inf->private->threads_sem);
 	}
     }
     g_mutex_unlock(inf->mutex);
@@ -437,7 +437,7 @@ static void do_thread_pool_op(RaitDevice *self, GFunc func, GPtrArray * ops) {
     guint i;
 
     if (PRIVATE(self)->threads_sem == NULL)
-	PRIVATE(self)->threads_sem = semaphore_new_with_value(0);
+	PRIVATE(self)->threads_sem = amsemaphore_new_with_value(0);
 
     if (PRIVATE(self)->threads == NULL)
 	PRIVATE(self)->threads = g_array_sized_new(FALSE, TRUE,
@@ -449,7 +449,7 @@ static void do_thread_pool_op(RaitDevice *self, GFunc func, GPtrArray * ops) {
 	g_array_set_size(PRIVATE(self)->threads, ops->len);
 
     /* the semaphore will hit zero when each thread has decremented it */
-    semaphore_force_set(PRIVATE(self)->threads_sem, ops->len);
+    amsemaphore_force_set(PRIVATE(self)->threads_sem, ops->len);
 
     for (i = 0; i < ops->len; i++) {
 	ThreadInfo *inf = &g_array_index(PRIVATE(self)->threads, ThreadInfo, i);
@@ -469,7 +469,7 @@ static void do_thread_pool_op(RaitDevice *self, GFunc func, GPtrArray * ops) {
     }
 
     /* wait until semaphore hits zero */
-    semaphore_wait_empty(PRIVATE(self)->threads_sem);
+    amsemaphore_wait_empty(PRIVATE(self)->threads_sem);
 }
 
 #else /* USE_INTERNAL_THREADPOOL */

@@ -25,7 +25,7 @@
 #include <glib.h>
 #include <glib-object.h>
 #include "xfer-element.h"
-#include "semaphore.h"
+#include "amsemaphore.h"
 
 /*
  * Class declaration
