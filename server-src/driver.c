@@ -721,46 +721,51 @@ wait_for_children(void)
 
 }
 
-static void startaflush_tape(taper_t *taper);
+static void startaflush_tape(taper_t *taper, gboolean *state_changed);
 
 static void
 startaflush(void)
 {
     taper_t *taper;
+    gboolean state_changed = FALSE;
 
     for(taper = tapetable; taper <= tapetable+conf_taper_parallel_write;
 	taper++) {
 	if (!(taper->state & TAPER_STATE_DONE) &&
 	    taper->state & TAPER_STATE_WAIT_FOR_TAPE) {
-	    startaflush_tape(taper);
+	    startaflush_tape(taper, &state_changed);
 	}
     }
     for(taper = tapetable; taper <= tapetable+conf_taper_parallel_write;
 	taper++) {
 	if (!(taper->state & TAPER_STATE_DONE) &&
 	    taper->state & TAPER_STATE_TAPE_REQUESTED) {
-	    startaflush_tape(taper);
+	    startaflush_tape(taper, &state_changed);
 	}
     }
     for(taper = tapetable; taper <= tapetable+conf_taper_parallel_write;
 	taper++) {
 	if (!(taper->state & TAPER_STATE_DONE) &&
 	    taper->state & TAPER_STATE_INIT) {
-	    startaflush_tape(taper);
+	    startaflush_tape(taper, &state_changed);
 	}
     }
     for(taper = tapetable; taper <= tapetable+conf_taper_parallel_write;
 	taper++) {
 	if (!(taper->state & TAPER_STATE_DONE) &&
 	    taper->state & TAPER_STATE_IDLE) {
-	    startaflush_tape(taper);
+	    startaflush_tape(taper, &state_changed);
 	}
+    }
+    if (state_changed) {
+	short_dump_state();
     }
 }
 
 static void
 startaflush_tape(
-    taper_t *taper)
+    taper_t  *taper,
+    gboolean *state_changed)
 {
     disk_t *dp = NULL;
     disk_t *fit = NULL;
@@ -789,6 +794,7 @@ startaflush_tape(
 	taper_cmd(NO_NEW_TAPE, taper->disk, why_no_new_tape, 0, NULL);
 	taper->state |= TAPER_STATE_DONE;
 	start_degraded_mode(&runq);
+	*state_changed = TRUE;
     } else if (result_tape_action & TAPE_ACTION_MOVE) {
 	taper_t *taper1 = idle_taper();
 	if (taper1) {
@@ -801,6 +807,7 @@ startaflush_tape(
 	    if (last_started_taper == taper1) {
 		last_started_taper = taper;
 	    }
+	    *state_changed = TRUE;
 	}
     }
 
@@ -970,8 +977,8 @@ startaflush_tape(
 		    (long long)sched(taper->disk)->act_size,
 		    (long long)taper->left);
 	    amfree(qname);
+	    *state_changed = TRUE;
 	}
-	short_dump_state();
     }
 }
 
@@ -1111,6 +1118,7 @@ start_some_dumps(
     char dumptype;
     char *dumporder;
     int  dumper_to_holding = 0;
+    gboolean state_changed = FALSE;
 
     /* don't start any actual dumps until the taper is started */
     if (!taper_started) return;
@@ -1376,8 +1384,11 @@ start_some_dumps(
 		      sched(diskp)->datestamp);
 	    diskp->host->start_t = now + 15;
 
-	    short_dump_state();
+	    state_changed = TRUE;
 	}
+    }
+    if (state_changed) {
+	short_dump_state();
     }
 }
 
