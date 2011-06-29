@@ -1000,12 +1000,15 @@ static GPtrArray *amstar_build_argv(
 	g_ptr_array_add(argv_ptr, stralloc("-sparse"));
     g_ptr_array_add(argv_ptr, stralloc("-dodesc"));
 
+    if (command == CMD_BACKUP && argument->dle.create_index)
+	g_ptr_array_add(argv_ptr, stralloc("-v"));
+	
+    # It is best to place command_options at the and of command line.
+    # For example '-find' option requires that it is the last option used.
+    # See: http://cdrecord.berlios.de/private/man/star/star.1.html
     for (copt = argument->command_options; copt != NULL; copt = copt->next) {
 	g_ptr_array_add(argv_ptr, stralloc((char *)copt->data));
     }
-
-    if (command == CMD_BACKUP && argument->dle.create_index)
-	g_ptr_array_add(argv_ptr, stralloc("-v"));
 
     g_ptr_array_add(argv_ptr, stralloc("."));
 

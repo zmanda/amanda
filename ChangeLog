@@ -1,4 +1,9 @@
 2011-06-29  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by p_michalczyk
+	* application-src/amstar.c: Place command_options at the and of
+	  command line.
+
+2011-06-29  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by p_michalczyk.
 	* application-src/amstar.c: Add missing break statement.
 
