@@ -1,4 +1,7 @@
 2011-06-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Call short_dump_state on all state change.
+
+2011-06-29  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by p_michalczyk
 	* application-src/amstar.c: Place command_options at the and of
 	  command line.
