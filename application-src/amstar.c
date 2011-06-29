@@ -325,6 +325,7 @@ main(
 	case 22: argument.command_options =
 			g_slist_append(argument.command_options,
 				       stralloc(optarg));
+		 break;
 	case 23: if (optarg)
 		     argument.dle.exclude_file =
 			 append_sl(argument.dle.exclude_file, optarg);

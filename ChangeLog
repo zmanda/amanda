@@ -1,4 +1,8 @@
 2011-06-29  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by p_michalczyk 
+	* application-src/amstar.c: Add missing break statement.
+
+2011-06-29  Jean-Louis Martineau <martineau@zmanda.com>
 	Replace semaphore by amsemaphore.
 	* common-src/Makefile.am: Remove semaphore.*, add amsemaphore.*
 	* common-src/amsemaphore-test.c: New copy of semaphore-test.c
