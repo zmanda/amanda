@@ -468,11 +468,15 @@ values:
     $b : barcode of the volume
     $m : meta label
 </programlisting></para>
-<para>The template should contain some number of contiguous '%'
-characters, which will be replaced with a generated number. Be sure to
-specify enough '%' characters that you do not run out of tape labels.
+<para>The template can contain some number of contiguous '%'
+characters, which will be replaced with a generated number (000-999),
+or some number of contiguous '!', which will be replaced with a generated
+letter sequence (AAA-ZZZ).
+Be sure to specify enough '%' or '!' characters that you do not run out of
+tape labels.
 Example:
 <markup>&quot;DailySet1-%%%&quot;</markup>,
+<markup>&quot;DailySet1-!!!&quot;</markup>,
 <markup>&quot;$c-%%%&quot;</markup>,
 <markup>&quot;$m-%%%&quot;</markup>,
 <markup>&quot;$m-$b&quot;</markup>
@@ -530,12 +534,18 @@ values:
     $c : config name
     $o : org configuration
 </programlisting></para>
-<para>The template should contain some number of contiguous '%'
-characters, which will be replaced with a generated number. Be sure to
-specify enough '%' characters that you do not run out of meta labels.
+<para>The template can contain some number of contiguous '%'
+characters, which will be replaced with a generated number (000-999),
+or some number of contiguous '!', which will be replaced with a generated
+letter sequence (AAA-ZZZ).
+Be sure to specify enough '%' characters that you do not run out of meta
+labels.
 Example:
 <markup>&quot;DailySet1-%%%&quot;</markup>,
+<markup>&quot;DailySet1-!!!&quot;</markup>,
 <markup>&quot;$o-%%%&quot;</markup>,
+<markup>&quot;$o-!!!&quot;</markup>,
+<markup>&quot;$c-!!!&quot;</markup>,
 </para>
   </listitem>
   </varlistentry>

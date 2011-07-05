@@ -1282,10 +1282,15 @@ sub make_new_tape_label {
 
     (my $npercents =
 	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
-    my $nlabels = 10 ** $npercents;
+    (my $nexclamations =
+	$template) =~ s/[^!]*(!+)[^!]*/length($1)/e;
 
     my $label;
-    if ($npercents == 0) {
+    if ($npercents > 0 and $nexclamations > 0) {
+	return (undef, "Can't generate label: '%' and '!' in autolabel")
+    }
+
+    if ($npercents == 0 and $nexclamations == 0) {
 	if ($template =~ /SUBSTITUTE_BARCODE/ && defined $barcode) {
             $label = $template;
             $label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
@@ -1298,10 +1303,6 @@ sub make_new_tape_label {
 	    return (undef, "autolabel require at least one '%'");
 	}
     } else {
-	# make up a sprintf pattern
-	(my $sprintf_pat =
-	    $template) =~ s/(%+)/"%0" . length($1) . "d"/e;
-
 	my %existing_labels;
 	for my $tle (@{$tl->{'tles'}}) {
 	    if (defined $tle && defined $tle->{'label'}) {
@@ -1314,13 +1315,43 @@ sub make_new_tape_label {
 	    }
 	}
 
-	my ($i);
-	for ($i = 1; $i < $nlabels; $i++) {
-	    $label = sprintf($sprintf_pat, $i);
-	    last unless (exists $existing_labels{$label});
-	}
-	# susbtitute the barcode
+	my $nlabels;
+        my $i;
+	if ($npercents > 0) {
+	    $nlabels = 10 ** $npercents;
+	    # make up a sprintf pattern
+	    (my $sprintf_pat = $template) =~ s/(%+)/"%0" . length($1) . "d"/e;
 
+	    for ($i = 1; $i < $nlabels; $i++) {
+		$label = sprintf($sprintf_pat, $i);
+		last unless (exists $existing_labels{$label});
+	    }
+	} else { # $nexclamations > 0
+	    $nlabels = 26 ** $nexclamations;
+	    # make up a sprintf pattern
+	    (my $sprintf_pat = $template) =~ s/\!/%s/g;
+	    my @i = ();
+	    my $j;
+	    for ($j = 0; $j < $nexclamations; $j++) {
+		push @i, 'A';
+	    }
+	    while (1) {
+		$j = $nexclamations-1;
+		$label = sprintf($sprintf_pat, @i);
+		last unless (exists $existing_labels{$label});
+		while ($j >= 0 and $i[$j] eq 'Z') {
+		    $i[$j] = 'A';
+		    $j--;
+		}
+		if ($j< 0) {
+		    $i = $nlabels;
+		    last;
+		}
+		$i[$j] = chr(ord($i[$j])+1);
+	    }
+	}
+
+	# susbtitute the barcode
 	$label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
 
 	# bail out if we didn't find an unused label
@@ -1366,23 +1397,59 @@ sub make_new_meta_label {
 
     (my $npercents =
 	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
-    my $nlabels = 10 ** $npercents;
+    (my $nexclamations =
+	$template) =~ s/[^!]*(!+)[^!]*/length($1)/e;
 
-    # make up a sprintf pattern
-    (my $sprintf_pat = $template) =~ s/(%+)/"%0" . length($1) . "d"/e;
-
-    my %existing_meta_labels =
-	map { $_->{'meta'} => 1 } @{$tl->{'tles'}};
-
-    my ($i, $meta);
-    for ($i = 1; $i < $nlabels; $i++) {
-	$meta = sprintf($sprintf_pat, $i);
-	last unless (exists $existing_meta_labels{$meta});
+    my $meta;
+    if ($npercents > 0 and $nexclamations > 0) {
+	return (undef, "Can't generate meta-label: '%' and '!' in meta-autolabel")
     }
+    if ($npercents == 0 and $nexclamations == 0) {
+	return (undef, "Can't generate meta-label: no '%' or '!' in meta-autolabel")
+    } else {
+	my %existing_meta_labels =
+	    map { $_->{'meta'} => 1 } @{$tl->{'tles'}};
 
-    # bail out if we didn't find an unused label
-    return (undef, "Can't label unlabeled meta volume: All meta label used")
+	my $nlabels;
+	my $i;
+	if ($npercents > 0) {
+	    $nlabels = 10 ** $npercents;
+	    # make up a sprintf pattern
+	    (my $sprintf_pat = $template) =~ s/(%+)/"%0" . length($1) . "d"/e;
+
+	    for ($i = 1; $i < $nlabels; $i++) {
+		$meta = sprintf($sprintf_pat, $i);
+		last unless (exists $existing_meta_labels{$meta});
+	    }
+	} else { # $nexclamations > 0
+	    $nlabels = 26 ** $nexclamations;
+	    # make up a sprintf pattern
+	    (my $sprintf_pat = $template) =~ s/\!/%s/g;
+	    my @i = ();
+	    my $j;
+	    for ($j = 0; $j < $nexclamations; $j++) {
+		push @i, 'A';
+	    }
+	    while (1) {
+		$j = $nexclamations-1;
+		$meta = sprintf($sprintf_pat, @i);
+		last unless (exists $existing_meta_labels{$meta});
+		while ($j >= 0 and $i[$j] eq 'Z') {
+		    $i[$j] = 'A';
+		    $j--;
+		}
+		if ($j< 0) {
+		    $i = $nlabels;
+		    last;
+		}
+		$i[$j] = chr(ord($i[$j])+1);
+	    }
+	}
+
+	# bail out if we didn't find an unused label
+	return (undef, "Can't label unlabeled meta volume: All meta label used")
 		if ($i >= $nlabels);
+    }
 
     if (!$meta) {
 	return (undef, "Generated meta-label is empty");

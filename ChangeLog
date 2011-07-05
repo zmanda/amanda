@@ -1,3 +1,8 @@
+2011-07-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: Add letter based sequence to autolabel
+	  and meta-autolabel.
+	* man/xml-source/amanda.conf.5.xml: Document them.
+
 2011-06-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amstar.c: s/stralloc/g_strdup/
 
