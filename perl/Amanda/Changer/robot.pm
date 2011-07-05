@@ -1876,14 +1876,28 @@ sub status {
 
     synchronized($self->{'lock'}, $status_cb, sub {
 	my ($status_cb) = @_;
+	my ($counter) = 120;
 
-	my $sys_cb = make_cb(sys_cb => sub {
+	my $sys_cb;
+	my $run_mtx = make_cb(run_mtx => sub {
+	    my @nobarcode = ('nobarcode') if $self->{'ignore_barcodes'};
+	    $self->_run_system_command($sys_cb,
+	            $self->{'mtx'}, "-f", $self->{'device_name'}, @nobarcode,
+		    'status');
+	});
+
+	$sys_cb = make_cb(sys_cb => sub {
 	    my ($exitstatus, $output) = @_;
 	    if ($exitstatus != 0) {
 		my $err = $output;
 		# if it's a regular SCSI error, just show the sense key
 		my ($sensekey) = ($err =~ /mtx: Request Sense: Sense Key=(.*)\n/);
 		$err = "SCSI error; Sense Key=$sensekey" if $sensekey;
+		$counter--;
+		if ($sensekey eq "Not Ready" and $counter > 0) {
+		    debug("$output");
+		    return Amanda::MainLoop::call_after(1000, $run_mtx);
+		}
 		return $status_cb->("error from mtx: " . $err, {});
 	    } else {
 		my %status;
@@ -1932,9 +1946,7 @@ sub status {
 	    }
 
 	});
-	my @nobarcode = ('nobarcode') if $self->{'ignore_barcodes'};
-	$self->_run_system_command($sys_cb,
-	    $self->{'mtx'}, "-f", $self->{'device_name'}, @nobarcode, 'status');
+	$run_mtx->();
     });
 }
 
