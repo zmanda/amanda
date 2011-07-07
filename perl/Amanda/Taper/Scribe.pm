@@ -1393,7 +1393,8 @@ sub _device_start {
 	$meta = $tle->{'meta'} if !$meta && $tle->{'meta'};
 	$tl->remove_tapelabel($new_label);
 	$tl->add_tapelabel($self->{'write_timestamp'}, $new_label,
-			   $tle? $tle->{'comment'} : undef, 1, $meta);
+			   $tle? $tle->{'comment'} : undef, 1, $meta,
+			   $reservation->{'barcode'});
 	$tl->write();
 
 	$reservation->set_meta_label(meta => $meta,
