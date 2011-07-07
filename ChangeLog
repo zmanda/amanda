@@ -1,4 +1,8 @@
 2011-07-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/libs.m4: Fix for newer aclocal
+	* config/libtool.m4: Upgrade for compatibility with newwe aclocal
+
+2011-07-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* Many *.c files: Fix for gcc-4.6.0 warning: variable ‘NAME’ set but
 	  not used.
 
