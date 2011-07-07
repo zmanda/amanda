@@ -1,3 +1,6 @@
+2011-07-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: Keep the barcode when relabeling a tape
+
 2011-07-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Retry up to 120 seconds if the sense
 	  key is 'Not Ready'
