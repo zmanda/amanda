@@ -710,10 +710,9 @@ server_can_do_estimate(
     info_t *info,
     int     level)
 {
-    gint64  size;
     int     stats;
 
-    size = internal_server_estimate(dp, info, level, &stats);
+    internal_server_estimate(dp, info, level, &stats);
     return stats;
 }
 

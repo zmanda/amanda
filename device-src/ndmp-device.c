@@ -1818,10 +1818,8 @@ ndmp_device_factory(
     char *device_node)
 {
     Device *rval;
-    NdmpDevice * ndmp_rval;
     g_assert(g_str_equal(device_type, NDMP_DEVICE_NAME));
     rval = DEVICE(g_object_new(TYPE_NDMP_DEVICE, NULL));
-    ndmp_rval = (NdmpDevice *)rval;
 
     device_open_device(rval, device_name, device_type, device_node);
     return rval;

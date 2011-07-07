@@ -999,6 +999,7 @@ bsd_recv_security_ok(
      */
     s = body;
     if (strncmp_const_skip(s, "SERVICE ", s, ch) == 0) {
+	ch = ch;
 	serviceX = g_strdup(s);
 	serviceY = strtok(serviceX, "\n");
 	if (serviceY)

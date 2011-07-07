@@ -585,11 +585,9 @@ vfs_device_open_device (Device * pself, char * device_name, char * device_type, 
 static gboolean delete_vfs_files_functor(const char * filename,
                                          gpointer user_data) {
     VfsDevice * self;
-    Device * d_self;
     char * path_name;
 
     self = VFS_DEVICE(user_data);
-    d_self = DEVICE(self);
 
     /* Skip the volume lock. */
     if (g_str_equal(filename, VOLUME_LOCKFILE_NAME))

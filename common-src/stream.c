@@ -205,13 +205,10 @@ stream_client_internal(
 {
     sockaddr_union svaddr, claddr;
     int save_errno = 0;
-    char *f;
     int client_socket = 0;
     int *portrange = NULL;
     int result;
     struct addrinfo *res, *res_addr;
-
-    f = priv ? "stream_client_privileged" : "stream_client";
 
     result = resolve_hostname(hostname, SOCK_STREAM, &res, NULL);
     if(result != 0) {

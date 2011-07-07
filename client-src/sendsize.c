@@ -1029,7 +1029,6 @@ generic_calc_estimates(
     char *file_include = NULL;
     times_t start_time;
     FILE *dumpout = NULL;
-    off_t size = (off_t)1;
     char *line = NULL;
     char *match_expr;
     amwait_t wait_status;
@@ -1137,7 +1136,7 @@ generic_calc_estimates(
     }
     match_expr = g_strjoin(NULL, " %d SIZE %lld", NULL);
     len = strlen(est->qamname);
-    for(size = (off_t)-1; (line = agets(dumpout)) != NULL; free(line)) {
+    for(; (line = agets(dumpout)) != NULL; free(line)) {
 	long long size_ = (long long)0;
 	if (line[0] == '\0' || (int)strlen(line) <= len)
 	    continue;
@@ -1150,7 +1149,6 @@ generic_calc_estimates(
 		      level,
 		      size_);
 	}
-	size = (off_t)size_;
     }
     fclose(dumpout);
     amfree(match_expr);

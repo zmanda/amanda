@@ -546,7 +546,6 @@ amtext(
     GSList   *last_element2;
     char     *last_element2_name;
     dle_t    *dle = data_user->dle;
-    int       i;
 
     if (!last_element) {
 	g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
@@ -866,7 +865,6 @@ amtext(
 	    error("bad list");
 	}
     } else if(g_str_equal(last_element_name, "optional")) {
-	i = atoi(tt);
 	last_element2 = g_slist_nth(data_user->element_names, 1);
 	if (!last_element2) {
 	    error("XML: optional");

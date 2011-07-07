@@ -2182,6 +2182,7 @@ bad_nak:
 		*p++ = '\0';
 		if(strncmp_const_skip(tok, "features=", tok, ch) == 0) {
 		    char *u = strchr(tok, ';');
+		    ch = ch;
 		    if (u)
 		       *u = '\0';
 		    am_release_feature_set(their_features);
@@ -2310,7 +2311,6 @@ startup_dump(
     const char *options)
 {
     char *req;
-    char *authopt;
     int response_error;
     const security_driver_t *secdrv;
     int has_features;
@@ -2380,7 +2380,6 @@ startup_dump(
         g_string_free(reqbuf, TRUE);
 	return 2;
     } else {
-	authopt = strstr(options, "auth=");
 	if (auth == NULL)
 	    auth = "BSDTCP";
 

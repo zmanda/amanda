@@ -1361,10 +1361,8 @@ static Device*
 s3_device_factory(char * device_name, char * device_type, char * device_node)
 {
     Device *rval;
-    S3Device * s3_rval;
     g_assert(g_str_equal(device_type, S3_DEVICE_NAME));
     rval = DEVICE(g_object_new(TYPE_S3_DEVICE, NULL));
-    s3_rval = (S3Device*)rval;
 
     device_open_device(rval, device_name, device_type, device_node);
     return rval;

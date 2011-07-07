@@ -160,10 +160,8 @@ bsdudp_connect(
 	 * Only init the IPv6 socket once
 	 */
 	if (res_addr->ai_addr->sa_family == AF_INET6 && not_init6 == 1) {
-	    uid_t euid;
 	    dgram_zero(&netfd6.dgram);
 
-	    euid = geteuid();
 	    set_root_privs(1);
 	    result_bind = dgram_bind(&netfd6.dgram,
 				     res_addr->ai_addr->sa_family, &port);
@@ -202,10 +200,8 @@ bsdudp_connect(
 	 * Only init the IPv4 socket once
 	 */
 	if (res_addr->ai_addr->sa_family == AF_INET && not_init4 == 1) {
-	    uid_t euid;
 	    dgram_zero(&netfd4.dgram);
 
-	    euid = geteuid();
 	    set_root_privs(1);
 	    result_bind = dgram_bind(&netfd4.dgram,
 				     res_addr->ai_addr->sa_family, &port);

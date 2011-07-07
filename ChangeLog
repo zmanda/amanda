@@ -1,4 +1,8 @@
 2011-07-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* Many *.c files: Fix for gcc-4.6.0 warning: variable ‘NAME’ set but
+	  not used.
+
+2011-07-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: Keep the barcode when relabeling a tape
 
 2011-07-05  Jean-Louis Martineau <martineau@zmanda.com>
