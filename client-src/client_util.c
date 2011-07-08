@@ -1248,7 +1248,6 @@ run_calcsize(
     FILE        *dumpout = NULL;
     int          dumpsince;
     char        *errmsg = NULL;
-    off_t        size = (off_t)1;
     char        *line = NULL;
     amwait_t     wait_status;
     int          len;
@@ -1344,7 +1343,7 @@ run_calcsize(
 
     match_expr = vstralloc(" %d SIZE %lld", NULL);
     len = strlen(qdisk);
-    for(size = (off_t)-1; (line = agets(dumpout)) != NULL; free(line)) {
+    for(; (line = agets(dumpout)) != NULL; free(line)) {
 	long long size_ = (long long)0;
 	if (line[0] == '\0' || (int)strlen(line) <= len)
 	    continue;
@@ -1355,7 +1354,6 @@ run_calcsize(
 	    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
 		     qdisk, level, size_);
 	}
-	size = (off_t)size_;
     }
     amfree(match_expr);
 
@@ -1399,7 +1397,6 @@ common_exit:
     amfree(errmsg);
     g_ptr_array_free_full(argv_ptr);
     amfree(cmd);
-
 }
 
 

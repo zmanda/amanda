@@ -1591,10 +1591,7 @@ static void check_resetofs(TapeDevice * self G_GNUC_UNUSED,
 /* *errmsg is only set on RESULT_ERROR */
 static IoResult
 tape_device_robust_write (TapeDevice * self, void * buf, int count, char **errmsg) {
-    Device * d_self;
     int result;
-
-    d_self = (Device*)self;
 
     check_resetofs(self, count);
 

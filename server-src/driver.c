@@ -1677,7 +1677,6 @@ dumper_taper_result(
     disk_t *dp)
 {
     dumper_t *dumper;
-    int is_partial;
     char *qname;
 
     dumper = sched(dp)->dumper;
@@ -1700,8 +1699,6 @@ dumper_taper_result(
     } else {
 	update_failed_dump(dp);
     }
-
-    is_partial = dumper->result != DONE || taper_result != DONE;
 
     sched(dp)->dump_attempted += 1;
     sched(dp)->taper_attempted += 1;

@@ -81,7 +81,6 @@ pipespawnv_passwd(
     int *	stderrfd,
     char **	my_argv)
 {
-    int argc;
     pid_t pid;
     int i, inpipe[2], outpipe[2], errpipe[2], passwdpipe[2];
     char number[NUM_STR_SIZE];
@@ -105,12 +104,10 @@ pipespawnv_passwd(
     memset(outpipe, -1, SIZEOF(outpipe));
     memset(errpipe, -1, SIZEOF(errpipe));
     memset(passwdpipe, -1, SIZEOF(passwdpipe));
-    argc = 0;
 
     cmdline = stralloc(prog);
     for(arg = my_argv; *arg != NULL; arg++) {
 	if (*arg != skip_argument) {
-	    argc++;
 	    quoted = quote_string(*arg);
 	    cmdline = vstrextend(&cmdline, " ", quoted, NULL);
 	    amfree(quoted);
