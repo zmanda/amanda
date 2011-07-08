@@ -1281,9 +1281,11 @@ sub make_new_tape_label {
     # Do not susbtitute the barcode now
 
     (my $npercents =
-	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
+	$template) =~ s/^[^%]*(%*)[^%]*$/length($1)/e;
+    $npercents = 0 if $npercents eq $template;
     (my $nexclamations =
-	$template) =~ s/[^!]*(!+)[^!]*/length($1)/e;
+	$template) =~ s/^[^!]*(!*)[^!]*$/length($1)/e;
+    $nexclamations = 0 if $nexclamations eq $template;
 
     my $label;
     if ($npercents > 0 and $nexclamations > 0) {
@@ -1396,9 +1398,11 @@ sub make_new_meta_label {
     $template =~ s/SUBSTITUTE_CONFIG/$config/g;
 
     (my $npercents =
-	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
+	$template) =~ s/^[^%]*(%*)[^%]*$/length($1)/e;
+    $npercents = 0 if $npercents eq $template;
     (my $nexclamations =
-	$template) =~ s/[^!]*(!+)[^!]*/length($1)/e;
+	$template) =~ s/^[^!]*(!*)[^!]*$/length($1)/e;
+    $nexclamations = 0 if $nexclamations eq $template;
 
     my $meta;
     if ($npercents > 0 and $nexclamations > 0) {
