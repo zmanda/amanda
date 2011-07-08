@@ -2088,7 +2088,6 @@ dumper_taper_result(
 {
     dumper_t *dumper;
     taper_t  *taper;
-    int is_partial;
     char *qname;
 
     dumper = sched(dp)->dumper;
@@ -2112,8 +2111,6 @@ dumper_taper_result(
     } else {
 	update_failed_dump(dp);
     }
-
-    is_partial = dumper->result != DONE || taper->result != DONE;
 
     sched(dp)->dump_attempted += 1;
     sched(dp)->taper_attempted += 1;
