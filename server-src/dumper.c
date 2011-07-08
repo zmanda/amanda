@@ -982,7 +982,7 @@ log_msgout(
     char *line;
 
     fflush(errf);
-    if (fseek(errf, 0L, SEEK_SET) < 0) {
+    if (fseeko(errf, 0L, SEEK_SET) < 0) {
 	dbprintf(_("log_msgout: warning - seek failed: %s\n"), strerror(errno));
     }
     while ((line = agets(errf)) != NULL) {

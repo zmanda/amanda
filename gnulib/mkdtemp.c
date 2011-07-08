@@ -1,4 +1,5 @@
-/* Copyright (C) 1999, 2001-2003, 2006-2007 Free Software Foundation, Inc.
+/* Copyright (C) 1999, 2001-2003, 2006-2007, 2009-2010 Free Software
+   Foundation, Inc.
    This file is part of the GNU C Library.
 
    This program is free software: you can redistribute it and/or modify
@@ -23,16 +24,16 @@
 
 #include "tempname.h"
 
-/* Generate a unique temporary directory from TEMPLATE.
-   The last six characters of TEMPLATE must be "XXXXXX";
+/* Generate a unique temporary directory from XTEMPLATE.
+   The last six characters of XTEMPLATE must be "XXXXXX";
    they are replaced with a string that makes the filename unique.
    The directory is created, mode 700, and its name is returned.
    (This function comes from OpenBSD.) */
 char *
-mkdtemp (char *template)
+mkdtemp (char *xtemplate)
 {
-  if (gen_tempname (template, GT_DIR))
+  if (gen_tempname (xtemplate, 0, 0, GT_DIR))
     return NULL;
   else
-    return template;
+    return xtemplate;
 }

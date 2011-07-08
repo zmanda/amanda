@@ -1,8 +1,6 @@
 /* tempname.c - generate the name of a temporary file.
 
-   Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2005, 2006, 2007 Free Software Foundation,
-   Inc.
+   Copyright (C) 1991-2003, 2005-2007, 2009-2010 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -40,10 +38,13 @@
 # define TMP_MAX 238328
 #endif
 #ifndef __GT_FILE
-# define __GT_FILE	0
-# define __GT_BIGFILE	1
-# define __GT_DIR	2
-# define __GT_NOCREATE	3
+# define __GT_FILE      0
+# define __GT_DIR       1
+# define __GT_NOCREATE  2
+#endif
+#if !_LIBC && (GT_FILE != __GT_FILE || GT_DIR != __GT_DIR       \
+               || GT_NOCREATE != __GT_NOCREATE)
+# error report this to bug-gnulib@gnu.org
 #endif
 
 #include <stddef.h>
@@ -59,16 +60,14 @@
 
 #if _LIBC
 # define struct_stat64 struct stat64
-# define small_open __open
-# define large_open __open64
 #else
 # define struct_stat64 struct stat
-# define small_open open
-# define large_open open
 # define __gen_tempname gen_tempname
 # define __getpid getpid
 # define __gettimeofday gettimeofday
 # define __mkdir mkdir
+# define __open open
+# define __open64 open
 # define __lxstat64(version, file, buf) lstat (file, buf)
 # define __xstat64(version, file, buf) stat (file, buf)
 #endif
@@ -81,17 +80,17 @@
 # include <hp-timing.h>
 # if HP_TIMING_AVAIL
 #  define RANDOM_BITS(Var) \
-  if (__builtin_expect (value == UINT64_C (0), 0))			      \
-    {									      \
-      /* If this is the first time this function is used initialize	      \
-	 the variable we accumulate the value in to some somewhat	      \
-	 random value.  If we'd not do this programs at startup time	      \
-	 might have a reduced set of possible names, at least on slow	      \
-	 machines.  */							      \
-      struct timeval tv;						      \
-      __gettimeofday (&tv, NULL);					      \
-      value = ((uint64_t) tv.tv_usec << 16) ^ tv.tv_sec;		      \
-    }									      \
+  if (__builtin_expect (value == UINT64_C (0), 0))                            \
+    {                                                                         \
+      /* If this is the first time this function is used initialize           \
+         the variable we accumulate the value in to some somewhat             \
+         random value.  If we'd not do this programs at startup time          \
+         might have a reduced set of possible names, at least on slow         \
+         machines.  */                                                        \
+      struct timeval tv;                                                      \
+      __gettimeofday (&tv, NULL);                                             \
+      value = ((uint64_t) tv.tv_usec << 16) ^ tv.tv_sec;                      \
+    }                                                                         \
   HP_TIMING_NOW (Var)
 # endif
 #endif
@@ -122,7 +121,7 @@ direxists (const char *dir)
    enough space in TMPL. */
 int
 __path_search (char *tmpl, size_t tmpl_len, const char *dir, const char *pfx,
-	       int try_tmpdir)
+               int try_tmpdir)
 {
   const char *d;
   size_t dlen, plen;
@@ -136,35 +135,35 @@ __path_search (char *tmpl, size_t tmpl_len, const char *dir, const char *pfx,
     {
       plen = strlen (pfx);
       if (plen > 5)
-	plen = 5;
+        plen = 5;
     }
 
   if (try_tmpdir)
     {
       d = __secure_getenv ("TMPDIR");
       if (d != NULL && direxists (d))
-	dir = d;
+        dir = d;
       else if (dir != NULL && direxists (dir))
-	/* nothing */ ;
+        /* nothing */ ;
       else
-	dir = NULL;
+        dir = NULL;
     }
   if (dir == NULL)
     {
       if (direxists (P_tmpdir))
-	dir = P_tmpdir;
+        dir = P_tmpdir;
       else if (strcmp (P_tmpdir, "/tmp") != 0 && direxists ("/tmp"))
-	dir = "/tmp";
+        dir = "/tmp";
       else
-	{
-	  __set_errno (ENOENT);
-	  return -1;
-	}
+        {
+          __set_errno (ENOENT);
+          return -1;
+        }
     }
 
   dlen = strlen (dir);
   while (dlen > 1 && dir[dlen - 1] == '/')
-    dlen--;			/* remove trailing slashes */
+    dlen--;                     /* remove trailing slashes */
 
   /* check we have room for "${dir}/${pfx}XXXXXX\0" */
   if (tmpl_len < dlen + 1 + plen + 6 + 1)
@@ -183,21 +182,20 @@ static const char letters[] =
 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 /* Generate a temporary file name based on TMPL.  TMPL must match the
-   rules for mk[s]temp (i.e. end in "XXXXXX").  The name constructed
-   does not exist at the time of the call to __gen_tempname.  TMPL is
-   overwritten with the result.
+   rules for mk[s]temp (i.e. end in "XXXXXX", possibly with a suffix).
+   The name constructed does not exist at the time of the call to
+   __gen_tempname.  TMPL is overwritten with the result.
 
    KIND may be one of:
-   __GT_NOCREATE:	simply verify that the name does not exist
-			at the time of the call.
-   __GT_FILE:		create the file using open(O_CREAT|O_EXCL)
-			and return a read-write fd.  The file is mode 0600.
-   __GT_BIGFILE:	same as __GT_FILE but use open64().
-   __GT_DIR:		create a directory, which will be mode 0700.
+   __GT_NOCREATE:       simply verify that the name does not exist
+                        at the time of the call.
+   __GT_FILE:           create the file using open(O_CREAT|O_EXCL)
+                        and return a read-write fd.  The file is mode 0600.
+   __GT_DIR:            create a directory, which will be mode 0700.
 
    We use a clever algorithm to get hard-to-predict names. */
 int
-__gen_tempname (char *tmpl, int kind)
+__gen_tempname (char *tmpl, int suffixlen, int flags, int kind)
 {
   int len;
   char *XXXXXX;
@@ -225,14 +223,14 @@ __gen_tempname (char *tmpl, int kind)
 #endif
 
   len = strlen (tmpl);
-  if (len < 6 || strcmp (&tmpl[len - 6], "XXXXXX"))
+  if (len < 6 + suffixlen || memcmp (&tmpl[len - 6 - suffixlen], "XXXXXX", 6))
     {
       __set_errno (EINVAL);
       return -1;
     }
 
   /* This is where the Xs start.  */
-  XXXXXX = &tmpl[len - 6];
+  XXXXXX = &tmpl[len - 6 - suffixlen];
 
   /* Get some more or less random data.  */
 #ifdef RANDOM_BITS
@@ -264,48 +262,47 @@ __gen_tempname (char *tmpl, int kind)
       XXXXXX[5] = letters[v % 62];
 
       switch (kind)
-	{
-	case __GT_FILE:
-	  fd = small_open (tmpl, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
-	  break;
+        {
+        case __GT_FILE:
+          fd = __open (tmpl,
+                       (flags & ~O_ACCMODE)
+                       | O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+          break;
 
-	case __GT_BIGFILE:
-	  fd = large_open (tmpl, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
-	  break;
+        case __GT_DIR:
+          fd = __mkdir (tmpl, S_IRUSR | S_IWUSR | S_IXUSR);
+          break;
 
-	case __GT_DIR:
-	  fd = __mkdir (tmpl, S_IRUSR | S_IWUSR | S_IXUSR);
-	  break;
+        case __GT_NOCREATE:
+          /* This case is backward from the other three.  __gen_tempname
+             succeeds if __xstat fails because the name does not exist.
+             Note the continue to bypass the common logic at the bottom
+             of the loop.  */
+          if (__lxstat64 (_STAT_VER, tmpl, &st) < 0)
+            {
+              if (errno == ENOENT)
+                {
+                  __set_errno (save_errno);
+                  return 0;
+                }
+              else
+                /* Give up now. */
+                return -1;
+            }
+          continue;
 
-	case __GT_NOCREATE:
-	  /* This case is backward from the other three.  __gen_tempname
-	     succeeds if __xstat fails because the name does not exist.
-	     Note the continue to bypass the common logic at the bottom
-	     of the loop.  */
-	  if (__lxstat64 (_STAT_VER, tmpl, &st) < 0)
-	    {
-	      if (errno == ENOENT)
-		{
-		  __set_errno (save_errno);
-		  return 0;
-		}
-	      else
-		/* Give up now. */
-		return -1;
-	    }
-	  continue;
-
-	default:
-	  assert (! "invalid KIND in __gen_tempname");
-	}
+        default:
+          assert (! "invalid KIND in __gen_tempname");
+          abort ();
+        }
 
       if (fd >= 0)
-	{
-	  __set_errno (save_errno);
-	  return fd;
-	}
+        {
+          __set_errno (save_errno);
+          return fd;
+        }
       else if (errno != EEXIST)
-	return -1;
+        return -1;
     }
 
   /* We got out of the loop because we ran out of combinations to try.  */

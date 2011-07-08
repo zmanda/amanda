@@ -644,7 +644,7 @@ MapBarCode(
   }
   DebugPrint(DEBUG_INFO,SECTION_MAP_BARCODE,_("MapBarCode : DB version %d\n"), version);
   
-  pos = ftell(fp);
+  pos = ftello(fp);
   if (version != LABEL_DB_VERSION)
     {
       ChgExit("MapBarCode", _("MapBarCode, DB Version does not match\n"), FATAL);
@@ -693,7 +693,7 @@ MapBarCode(
            */
         case RESET_VALID:
           plabelv2->valid = 0;
-          if (fseek(fp, pos, SEEK_SET) == -1) {
+          if (fseeko(fp, pos, SEEK_SET) == -1) {
 	    fclose(fp);
 	    amfree(plabelv2);
 	    return 0; /* Fail */
@@ -728,7 +728,7 @@ MapBarCode(
             {
 
               DebugPrint(DEBUG_INFO,SECTION_MAP_BARCODE,_("MapBarCode : update entry\n"));
-	      if (fseek(fp, pos, SEEK_SET) == -1) {
+	      if (fseeko(fp, pos, SEEK_SET) == -1) {
 		fclose(fp);
 		amfree(plabelv2);
 		return 0; /* Fail */
@@ -769,7 +769,7 @@ MapBarCode(
           if (strcmp(plabelv2->voltag, result->data.voltag) == 0)
             {
               DebugPrint(DEBUG_INFO,SECTION_MAP_BARCODE,_("MapBarCode UPDATE_SLOT : update entry\n"));
-	      if (fseek(fp, pos, SEEK_SET) == -1) {
+	      if (fseeko(fp, pos, SEEK_SET) == -1) {
 		fclose(fp);
 		amfree(plabelv2);
 		return 0; /* Fail */
@@ -828,7 +828,7 @@ MapBarCode(
           DebugPrint(DEBUG_INFO,SECTION_MAP_BARCODE,_("MapBarCode : unknown action\n"));
           break;
         }
-      pos = ftell(fp);
+      pos = ftello(fp);
       } else {
          DebugPrint(DEBUG_INFO,SECTION_MAP_BARCODE,_("MapBarCode : feof (%d)\n"), feof(fp));
          DebugPrint(DEBUG_INFO,SECTION_MAP_BARCODE,_("MapBarCode : error in read record expect %d, got %d\n"),SIZEOF(LabelV2_T), rsize);
@@ -851,7 +851,7 @@ MapBarCode(
       if (unusedpos != 0)
         {
           DebugPrint(DEBUG_INFO,SECTION_MAP_BARCODE,_("MapBarCode : reuse record %d\n"), unusedrec);
-          if (fseek(fp, unusedpos, SEEK_SET) == -1) {
+          if (fseeko(fp, unusedpos, SEEK_SET) == -1) {
 	    fclose(fp);
 	    amfree(plabelv2);
 	    return 0; /* Fail */

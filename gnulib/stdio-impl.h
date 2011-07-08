@@ -1,5 +1,5 @@
 /* Implementation details of FILE streams.
-   Copyright (C) 2007-2008 Free Software Foundation, Inc.
+   Copyright (C) 2007-2008, 2010 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,26 +21,31 @@
 
 /* BSD stdio derived implementations.  */
 
+#if defined __NetBSD__                         /* NetBSD */
+/* Get __NetBSD_Version__.  */
+# include <sys/param.h>
+#endif
+
 #if defined __sferror || defined __DragonFly__ /* FreeBSD, NetBSD, OpenBSD, DragonFly, MacOS X, Cygwin */
 
 # if defined __DragonFly__          /* DragonFly */
   /* See <http://www.dragonflybsd.org/cvsweb/src/lib/libc/stdio/priv_stdio.h?rev=HEAD&content-type=text/x-cvsweb-markup>.  */
 #  define fp_ ((struct { struct __FILE_public pub; \
-			 struct { unsigned char *_base; int _size; } _bf; \
-			 void *cookie; \
-			 void *_close; \
-			 void *_read; \
-			 void *_seek; \
-			 void *_write; \
-			 struct { unsigned char *_base; int _size; } _ub; \
-			 int _ur; \
-			 unsigned char _ubuf[3]; \
-			 unsigned char _nbuf[1]; \
-			 struct { unsigned char *_base; int _size; } _lb; \
-			 int _blksize; \
-			 fpos_t _offset; \
-			 /* More fields, not relevant here.  */ \
-		       } *) fp)
+                         struct { unsigned char *_base; int _size; } _bf; \
+                         void *cookie; \
+                         void *_close; \
+                         void *_read; \
+                         void *_seek; \
+                         void *_write; \
+                         struct { unsigned char *_base; int _size; } _ub; \
+                         int _ur; \
+                         unsigned char _ubuf[3]; \
+                         unsigned char _nbuf[1]; \
+                         struct { unsigned char *_base; int _size; } _lb; \
+                         int _blksize; \
+                         fpos_t _offset; \
+                         /* More fields, not relevant here.  */ \
+                       } *) fp)
   /* See <http://www.dragonflybsd.org/cvsweb/src/include/stdio.h?rev=HEAD&content-type=text/x-cvsweb-markup>.  */
 #  define _p pub._p
 #  define _flags pub._flags
@@ -50,7 +55,7 @@
 #  define fp_ fp
 # endif
 
-# if defined __NetBSD__ || defined __OpenBSD__ /* NetBSD, OpenBSD */
+# if (defined __NetBSD__ && __NetBSD_Version__ >= 105270000) || defined __OpenBSD__ /* NetBSD >= 1.5ZA, OpenBSD */
   /* See <http://cvsweb.netbsd.org/bsdweb.cgi/src/lib/libc/stdio/fileext.h?rev=HEAD&content-type=text/x-cvsweb-markup>
      and <http://www.openbsd.org/cgi-bin/cvsweb/src/lib/libc/stdio/fileext.h?rev=HEAD&content-type=text/x-cvsweb-markup> */
   struct __sfileext
@@ -59,7 +64,7 @@
       /* More fields, not relevant here.  */
     };
 #  define fp_ub ((struct __sfileext *) fp->_ext._base)->_ub
-# else                                         /* FreeBSD, DragonFly, MacOS X, Cygwin */
+# else                                         /* FreeBSD, NetBSD <= 1.5Z, DragonFly, MacOS X, Cygwin */
 #  define fp_ub fp_->_ub
 # endif
 
@@ -74,12 +79,12 @@
 
 # if defined __sun && defined _LP64 /* Solaris/{SPARC,AMD64} 64-bit */
 #  define fp_ ((struct { unsigned char *_ptr; \
-			 unsigned char *_base; \
-			 unsigned char *_end; \
-			 long _cnt; \
-			 int _file; \
-			 unsigned int _flag; \
-		       } *) fp)
+                         unsigned char *_base; \
+                         unsigned char *_end; \
+                         long _cnt; \
+                         int _file; \
+                         unsigned int _flag; \
+                       } *) fp)
 # else
 #  define fp_ fp
 # endif
