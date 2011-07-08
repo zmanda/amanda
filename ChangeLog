@@ -1,4 +1,8 @@
 2011-07-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/ltmain.sh, config/lt~obsolete.m4, config/ltoptions.m4,
+	  config/ltsugar.m4, config/ltversion.m4: Upgrade libtool to 2.4
+
+2011-07-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/libs.m4: Fix for newer aclocal
 	* config/libtool.m4: Upgrade for compatibility with newwe aclocal
 
