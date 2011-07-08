@@ -611,6 +611,7 @@ check_disk(
 #endif
 				     "-c", "quit",
 				     NULL);
+		checkpid = checkpid;
 		amfree(domain);
 		aclose(nullfd);
 		/*@ignore@*/
@@ -921,8 +922,8 @@ check_disk(
 	    access_type = "access";
 #endif
 	    if(access_result == -1) {
-		err = vstrallocf(_("Could not access %s (%s): %s"),
-				 qdevice, qdisk, strerror(errno));
+		err = vstrallocf(_("Could not %s %s (%s): %s"),
+				 access_type, qdevice, qdisk, strerror(errno));
 	    }
 #ifdef CHECK_FOR_ACCESS_WITH_OPEN
 	    aclose(access_result);

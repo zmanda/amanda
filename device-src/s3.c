@@ -1406,13 +1406,13 @@ compile_regexes(void)
         {NULL, 0, NULL}
     };
     char regmessage[1024];
-    int size, i;
+    int i;
     int reg_result;
 
     for (i = 0; regexes[i].str; i++) {
         reg_result = regcomp(regexes[i].regex, regexes[i].str, regexes[i].flags);
         if (reg_result != 0) {
-            size = regerror(reg_result, regexes[i].regex, regmessage, sizeof(regmessage));
+            regerror(reg_result, regexes[i].regex, regmessage, sizeof(regmessage));
             g_error(_("Regex error: %s"), regmessage);
             return FALSE;
         }

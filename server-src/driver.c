@@ -271,6 +271,7 @@ main(
     if (argc > 2) {
 	if (strcmp(argv[2], "--from-client") == 0) {
 	    from_client = TRUE;
+	    from_client = from_client;
 	    argv++;
 	    argc--;
 	}
@@ -2106,7 +2107,6 @@ dumper_taper_result(
 {
     dumper_t *dumper;
     taper_t  *taper;
-    int is_partial;
     char *qname;
 
     dumper = sched(dp)->dumper;
@@ -2130,8 +2130,6 @@ dumper_taper_result(
     } else {
 	update_failed_dump(dp);
     }
-
-    is_partial = dumper->result != DONE || taper->result != DONE;
 
     sched(dp)->dump_attempted += 1;
     sched(dp)->taper_attempted += 1;

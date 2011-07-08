@@ -596,7 +596,6 @@ match_word(
 {
     char *regex;
     char *dst;
-    size_t  len;
     size_t  lenword;
     char *nword;
     char *nglob;
@@ -622,7 +621,6 @@ match_word(
     }
     *dst = '\0';
 
-    len = strlen(glob);
     nglob = stralloc(glob);
 
     if(glob_is_separator_only(nglob, separator)) {

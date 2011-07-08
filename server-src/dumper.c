@@ -2131,6 +2131,7 @@ bad_nak:
 		*p++ = '\0';
 		if(strncmp_const_skip(tok, "features=", tok, ch) == 0) {
 		    char *u = strchr(tok, ';');
+		    ch = ch;
 		    if (u)
 		       *u = '\0';
 		    am_release_feature_set(their_features);
@@ -2261,7 +2262,6 @@ startup_dump(
 {
     char level_string[NUM_STR_SIZE];
     char *req = NULL;
-    char *authopt;
     int response_error;
     const security_driver_t *secdrv;
     char *application_api;
@@ -2337,7 +2337,6 @@ startup_dump(
 	amfree(req);
 	return 2;
     } else {
-	authopt = strstr(options, "auth=");
 	if (auth == NULL) {
 	    auth = "BSD";
 	}
