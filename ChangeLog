@@ -1,3 +1,10 @@
+2011-07-11  Jean-Louis Martineau <martineau@zmanda.com>
+        Add '$s' substitution to autolabel.
+	* perl/Amanda/Changer.pm (make_new_tape_label): Handle $s.
+	* perl/Amanda/Taper/Scan/lexical.pm, perl/Amanda/Taper/Scan/oldest.pm,
+	  perl/Amanda/Taper/Scribe.pm: Call make_new_tape_label with the slot.
+	* man/xml-source/amanda.conf.5.xml: Document $s substitution.
+					  
 2011-07-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Fix compuation of npercents and
 	  nexclamations.

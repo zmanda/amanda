@@ -466,6 +466,7 @@ values:
     $c : config name
     $o : org configuration
     $b : barcode of the volume
+    $s : slot number
     $m : meta label
 </programlisting></para>
 <para>The template can contain some number of contiguous '%'

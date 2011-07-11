@@ -4,7 +4,8 @@ Changes in release 4.0.0
 
 Changes in release 3.3.1
 
-    * new 'settransalte' command in amrecover.
+    * New 'settransalte' command in amrecover.
+    * New '$s' substitution in autolabel.
 
 Changes in release 3.3.0
 
