@@ -385,6 +385,7 @@ Each slot is represented by a hash with the following keys:
 =head3 make_new_tape_label
 
   $chg->make_new_tape_label(barcode => $barcode,
+			    slot    => $slot,
 			    meta    => $meta);
 
 To devise a new name for a volume using the C<barcode> and C<meta> arguments.
@@ -1265,12 +1266,15 @@ sub make_new_tape_label {
     $template =~ s/\$m/SUBSTITUTE_META/g;
     $template =~ s/\$o/SUBSTITUTE_ORG/g;
     $template =~ s/\$c/SUBSTITUTE_CONFIG/g;
+    $template =~ s/\$s/SUBSTITUTE_SLOT/g;
 
     my $org = getconf($CNF_ORG);
     my $config = Amanda::Config::get_config_name();
     my $barcode = $params{'barcode'};
     $barcode = '' if !defined $barcode;
     my $meta = $params{'meta'};
+    my $slot = $params{'slot'};
+    $slot = '' if !defined $slot;
     $meta = $self->make_new_meta_label(%params) if !defined $meta;
     $meta = '' if !defined $meta;
 
@@ -1278,7 +1282,7 @@ sub make_new_tape_label {
     $template =~ s/SUBSTITUTE_ORG/$org/g;
     $template =~ s/SUBSTITUTE_CONFIG/$config/g;
     $template =~ s/SUBSTITUTE_META/$meta/g;
-    # Do not susbtitute the barcode now
+    # Do not susbtitute the barcode and slot now
 
     (my $npercents =
 	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
@@ -1286,16 +1290,17 @@ sub make_new_tape_label {
 
     my $label;
     if ($npercents == 0) {
+        $label = $template;
+        $label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
+        $label =~ s/SUBSTITUTE_SLOT/$slot/g;
 	if ($template =~ /SUBSTITUTE_BARCODE/ && defined $barcode) {
-            $label = $template;
-            $label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
-            if ($tl->lookup_tapelabel($label)) {
-		return (undef, "Label '$label' already exists");
-            }
-	} elsif ($template =~ /SUBSTITUTE_BARCODE/ && !defined $barcode) {
-	    return (undef, "Can't generate new label because volume have no barcode");
-	} else {
+	    return (undef, "Can't generate new label because volume has no barcode");
+	} elsif ($template =~ /SUBSTITUTE_SLOT/ && !defined $slot) {
+	    return (undef, "Can't generate new label because volume has no slot");
+	} elsif ($label eq $template) {
 	    return (undef, "autolabel require at least one '%'");
+	} elsif ($tl->lookup_tapelabel($label)) {
+	    return (undef, "Label '$label' already exists");
 	}
     } else {
 	# make up a sprintf pattern
@@ -1319,9 +1324,10 @@ sub make_new_tape_label {
 	    $label = sprintf($sprintf_pat, $i);
 	    last unless (exists $existing_labels{$label});
 	}
-	# susbtitute the barcode
+	# susbtitute the barcode and slot
 
 	$label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
+	$label =~ s/SUBSTITUTE_SLOT/$slot/g;
 
 	# bail out if we didn't find an unused label
 	return (undef, "Can't label unlabeled volume: All label used")
@@ -1579,6 +1585,7 @@ sub make_new_tape_label {
 
     $params{'barcode'} = $self->{'barcode'} if !defined $params{'barcode'};
     $params{'meta'} = $self->{'meta'} if !defined $params{'meta'};
+    $params{'slot'} = $self->{'this_slot'} if !defined $params{'slot'};
     return $self->{'chg'}->make_new_tape_label(%params);
 }
 

@@ -184,6 +184,7 @@ sub analyze {
     for my $sl (@new_volume) {
 	$sl->{'label'} = $self->{'chg'}->make_new_tape_label(
 					barcode => $sl->{'barcode'},
+					slot => $sl->{'slot'},
 					meta => $sl->{'meta'});
 	$new_volume = $sl if defined $last_label and
 			     $new_volume->{'label'} ne $sl->{'label'} and

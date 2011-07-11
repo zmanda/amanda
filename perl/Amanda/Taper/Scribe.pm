@@ -1361,7 +1361,8 @@ sub _device_start {
 	    }
 	    ($new_label, my $err) = $reservation->make_new_tape_label(
 					meta => $meta,
-					barcode => $reservation->{'barcode'});
+					barcode => $reservation->{'barcode'},
+					slot => $reservation->{'slot'});
 	    if (!defined $new_label) {
 		$tl->unlock();
 		return $finished_cb->($err);
