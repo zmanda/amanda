@@ -601,7 +601,9 @@ match_word(
     char *nglob;
     const char *src;
     int ret;
+    size_t  len_glob;
 
+    len_glob = strlen(glob);
     lenword = strlen(word);
     nword = (char *)alloc(lenword + 3);
 
@@ -612,11 +614,11 @@ match_word(
 	*dst++ = separator;
     }
     else {
-	if(*src != separator)
+	if(*src != separator && glob[0] != '^')
 	    *dst++ = separator;
 	while(*src != '\0')
 	    *dst++ = *src++;
-	if(*(dst-1) != separator)
+	if(*(dst-1) != separator && glob[len_glob-1] != '$')
 	    *dst++ = separator;
     }
     *dst = '\0';
@@ -667,16 +669,18 @@ match_word(
 
 #define REGEX_BEGIN_FULL(c) (const char[]) { '^', '\\', (c), 0 }
 #define REGEX_BEGIN_NOANCHOR(c) (const char[]) { '\\', (c), 0 }
-#define REGEX_BEGIN_ANCHORONLY "^" /* Unused, but defined for consistency */
+#define REGEX_BEGIN_ANCHORONLY "^"
 #define REGEX_BEGIN_EMPTY ""
 
         begin = REGEX_BEGIN_NOANCHOR(separator);
 
         if (*p == '^') {
-            begin = REGEX_BEGIN_FULL(separator);
+	    begin = REGEX_BEGIN_ANCHORONLY;
             p++, g++;
-            if (*p == separator)
+            if (*p == separator) {
+		begin = REGEX_BEGIN_FULL(separator);
                 g++;
+	    }
         } else if (*p == separator)
             begin = REGEX_BEGIN_EMPTY;
 
@@ -699,15 +703,17 @@ match_word(
 
         end = REGEX_END_NOANCHOR(separator);
 
-        if (*p == '\\' || *p == separator)
-            end = REGEX_END_EMPTY;
-        else if (*p == '$') {
+        if (*p == '\\' || *p == separator) {
+	    end = REGEX_END_EMPTY;
+	} else if (*p == '$') {
             char prev = *(p - 1);
             *p = '\0';
-            if (prev == separator)
-                end = REGEX_END_ANCHORONLY;
-            else
+            if (prev == separator) {
+		*(p-1) = '\0';
                 end = REGEX_END_FULL(separator);
+            } else {
+                end = REGEX_END_ANCHORONLY;
+	    }
         }
 
         /*
