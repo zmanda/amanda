@@ -1,4 +1,7 @@
 2011-07-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/libs.m4: Fix use of AC_LINK_IFELSE.
+
+2011-07-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/match.c (match_word): better matching for anchored
 	  expression.
 	* common-src/match-test.c: Add new tests.
