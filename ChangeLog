@@ -1,4 +1,7 @@
 2011-07-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Fix gcc warning for s3_rval set but not used
+
+2011-07-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/libs.m4: Fix use of AC_LINK_IFELSE.
 
 2011-07-08  Jean-Louis Martineau <martineau@zmanda.com>
