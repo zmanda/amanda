@@ -706,9 +706,10 @@ static gboolean glob_is_separator_only(const char *glob, char sep) {
  * caller to free it. Note also that the first argument MUST NOT BE NULL.
  */
 
-static char *wrap_word(const char *word, const char separator)
+static char *wrap_word(const char *word, const char separator, const char *glob)
 {
     size_t len = strlen(word);
+    size_t len_glob = strlen(glob);
     char *result, *p;
 
     /*
@@ -743,12 +744,12 @@ static char *wrap_word(const char *word, const char separator)
      * needed.
      */
 
-    if (word[0] != separator)
+    if (word[0] != separator && glob[0] != '^')
         *p++ = separator;
 
     p = g_stpcpy(p, word);
 
-    if (word[len - 1] != separator)
+    if (word[len - 1] != separator && glob[len_glob-1] != '$')
         *p++ = separator;
 
 out:
@@ -758,7 +759,7 @@ out:
 
 static int match_word(const char *glob, const char *word, const char separator)
 {
-    char *wrapped_word = wrap_word(word, separator);
+    char *wrapped_word = wrap_word(word, separator, glob);
     struct mword_regexes *regexes = &mword_slash_regexes;
     struct subst_table *table = &mword_slash_subst_table;
     gboolean not_slash = (separator != '/');
@@ -800,10 +801,12 @@ static int match_word(const char *glob, const char *word, const char separator)
         begin = regexes->re_separator;
 
         if (*p == '^') {
-            begin = regexes->re_begin_full;
+            begin = "^";
             p++, g++;
-            if (*p == separator)
+            if (*p == separator) {
+		begin = regexes->re_begin_full;
                 g++;
+	    }
         } else if (*p == separator)
             begin = "";
 
@@ -819,13 +822,17 @@ static int match_word(const char *glob, const char *word, const char separator)
 
         p = &(glob_copy[strlen(glob_copy) - 1]);
         end = regexes->re_separator;
-
-        if (*p == '\\' || *p == separator)
+        if (*p == '\\' || *p == separator) {
             end = "";
-        else if (*p == '$') {
+        } else if (*p == '$') {
             char prev = *(p - 1);
             *p = '\0';
-            end = (prev == separator) ? "$" : regexes->re_end_full;
+	    if (prev == separator) {
+		*(p-1) = '\0';
+		end = regexes->re_end_full;
+	    } else {
+		end = "$";
+	    }
         }
 
         regex = amglob_to_regex(g, begin, end, table);

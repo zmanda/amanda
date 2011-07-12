@@ -1,3 +1,8 @@
+2011-07-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/match.c (match_word): better matching for anchored
+	  expression.
+	* common-src/match-test.c: Add new tests.
+
 2011-07-11  Jean-Louis Martineau <martineau@zmanda.com>
         Add '$s' substitution to autolabel.
 	* perl/Amanda/Changer.pm (make_new_tape_label): Handle $s.
