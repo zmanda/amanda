@@ -1,3 +1,20 @@
+2011-07-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add CONF_MAX_DLE_BY_VOLUME.
+	* common-src/conffile.h: Add CNF_MAX_DLE_BY_VOLUME.
+	* man/xml-source/amanda.conf.5.xml: Document max-dle-by-volume.
+	* perl/Amanda/Config.swg: Add CNF_MAX_DLE_BY_VOLUME.
+	* perl/Amanda/Taper/Controller.pm: Add msg_CLOSE_VOLUME method.
+	* perl/Amanda/Taper/Protocol.pm: Add CLOSE_VOLUME.
+	* perl/Amanda/Taper/Scribe.pm: Add close_volume method, call
+	  _get_new_volume() is close_volume was called.
+	* perl/Amanda/Taper/Worker.pm: Add CLOSE_VOLUME method.
+	* server-src/driver.c: Send CLOSE_VOLUME command to taper if the
+	  number of dle on a volume is larger than max-dle-by-volume
+	* server-src/driverio.c: Send CLOSE_VOLUME command.
+	* server-src/driverio.h: Add nb_dle to taper_t.
+	* server-src/server_util.c: Add "CLOSE-VOLUME" to cmdstr.
+	* server-src/server_util.h: Add CLOSE_VOLUME.
+
 2011-07-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/libs.m4: Fix use of AC_LINK_IFELSE.
 

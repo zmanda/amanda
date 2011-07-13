@@ -432,6 +432,12 @@ taper_cmd(
 			    " ", datestamp,
 			    "\n", NULL);
 	break;
+    case CLOSE_VOLUME:
+	dp = (disk_t *) ptr;
+	cmdline = g_strjoin(NULL, cmdstr[cmd],
+			    " ", sched(dp)->taper->name,
+			    "\n", NULL);
+	break;
     case FILE_WRITE:
 	dp = (disk_t *) ptr;
         qname = quote_string(dp->name);

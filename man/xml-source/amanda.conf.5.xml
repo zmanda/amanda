@@ -348,6 +348,16 @@ Specify which types of messages will trigger an email from amreport. amreport is
     </variablelist>
   </listitem>
   </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>max-dle-by-volume</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default:
+<amdefault>1000000000</amdefault>.
+The maximum number of dle written to a single volume.</para>
+  </listitem>
+  </varlistentry>
+
   <varlistentry>
   <term><amkeyword>dumpcycle</amkeyword> <amtype>int</amtype></term>
   <listitem>
@@ -387,6 +397,7 @@ days /
 <amkeyword>runtapes</amkeyword>.</para>
   </listitem>
   </varlistentry>
+
   <varlistentry>
   <term><amkeyword>tapecycle</amkeyword> <amtype>int</amtype></term>
   <listitem>

@@ -76,6 +76,7 @@ static int  inparallel;
 static int nodump = 0;
 static off_t tape_length = (off_t)0;
 static int current_tape = 0;
+static int conf_max_dle_by_volume;
 static int conf_taperalgo;
 static int conf_taper_parallel_write;
 static int conf_runtapes;
@@ -336,6 +337,7 @@ main(
     conf_taper_parallel_write = getconf_int(CNF_TAPER_PARALLEL_WRITE);
     conf_tapetype = getconf_str(CNF_TAPETYPE);
     conf_runtapes = getconf_int(CNF_RUNTAPES);
+    conf_max_dle_by_volume = getconf_int(CNF_MAX_DLE_BY_VOLUME);
     if (conf_taper_parallel_write > conf_runtapes) {
 	conf_taper_parallel_write = conf_runtapes;
     }
@@ -345,7 +347,6 @@ main(
     conf_flush_threshold_dumped = getconf_int(CNF_FLUSH_THRESHOLD_DUMPED);
     conf_flush_threshold_scheduled = getconf_int(CNF_FLUSH_THRESHOLD_SCHEDULED);
     conf_taperflush = getconf_int(CNF_TAPERFLUSH);
-
     flush_threshold_dumped = (conf_flush_threshold_dumped * tape_length) / 100;
     flush_threshold_scheduled = (conf_flush_threshold_scheduled * tape_length) / 100;
     taperflush = (conf_taperflush *tape_length) / 100;
@@ -1594,6 +1595,7 @@ handle_taper_result(
 	    }
 	    assert(taper != NULL);
 	    taper->left = 0;
+	    taper->nb_dle = 0;
 	    taper->state &= ~TAPER_STATE_INIT;
 	    taper->state |= TAPER_STATE_RESERVATION;
 	    taper->state |= TAPER_STATE_IDLE;
@@ -1803,6 +1805,7 @@ handle_taper_result(
 	    taper = sched(dp)->taper;
             /* Update our tape counter and reset taper->left */
 	    current_tape++;
+	    taper->nb_dle = 0;
 	    taper->left = tape_length;
 	    taper->state &= ~TAPER_STATE_WAIT_NEW_TAPE;
 	    taper->state |= TAPER_STATE_TAPE_STARTED;
@@ -1980,6 +1983,10 @@ handle_taper_result(
 	g_strfreev(result_argv);
 
 	if (taper && taper->disk && taper->result != LAST_TOK) {
+	    taper->nb_dle++;
+	    if (taper->nb_dle >= conf_max_dle_by_volume) {
+		taper_cmd(CLOSE_VOLUME, dp, NULL, 0, NULL);
+	    }
 	    if(taper->dumper) {
 		if (taper->dumper->result != LAST_TOK) {
 		    // Dumper already returned it's result

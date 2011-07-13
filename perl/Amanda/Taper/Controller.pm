@@ -265,6 +265,14 @@ sub msg_FAILED {
     $worker->FAILED(@_);
 }
 
+sub msg_CLOSE_VOLUME {
+    my $self = shift;
+    my ($msgtype, %params) = @_;
+
+    my $worker = $self->{'worker'}->{$params{'worker_name'}};
+    $worker->CLOSE_VOLUME(@_);
+}
+
 sub msg_TAKE_SCRIBE_FROM {
     my $self = shift;
     my ($msgtype, %params) = @_;

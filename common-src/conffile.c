@@ -90,6 +90,7 @@ typedef enum {
     CONF_DEVICE,               CONF_ORDER,		CONF_SINGLE_EXECUTION,
     CONF_DATA_PATH,            CONF_AMANDA,		CONF_DIRECTTCP,
     CONF_TAPER_PARALLEL_WRITE, CONF_INTERACTIVITY,	CONF_TAPERSCAN,
+    CONF_MAX_DLE_BY_VOLUME,
 
     /* execute on */
     CONF_PRE_AMCHECK,          CONF_POST_AMCHECK,
@@ -996,6 +997,7 @@ keytab_t server_keytab[] = {
     { "MAILER", CONF_MAILER },
     { "MAILTO", CONF_MAILTO },
     { "READBLOCKSIZE", CONF_READBLOCKSIZE },
+    { "MAX_DLE_BY_VOLUME", CONF_MAX_DLE_BY_VOLUME },
     { "MAXDUMPS", CONF_MAXDUMPS },
     { "MAXDUMPSIZE", CONF_MAXDUMPSIZE },
     { "MAXPROMOTEDAY", CONF_MAXPROMOTEDAY },
@@ -1257,6 +1259,7 @@ conf_var_t server_var [] = {
    { CONF_INPARALLEL           , CONFTYPE_INT      , read_int         , CNF_INPARALLEL           , validate_inparallel },
    { CONF_DUMPORDER            , CONFTYPE_STR      , read_str         , CNF_DUMPORDER            , NULL },
    { CONF_MAXDUMPS             , CONFTYPE_INT      , read_int         , CNF_MAXDUMPS             , validate_positive },
+   { CONF_MAX_DLE_BY_VOLUME    , CONFTYPE_INT      , read_int         , CNF_MAX_DLE_BY_VOLUME    , validate_positive },
    { CONF_ETIMEOUT             , CONFTYPE_INT      , read_int         , CNF_ETIMEOUT             , validate_non_zero },
    { CONF_DTIMEOUT             , CONFTYPE_INT      , read_int         , CNF_DTIMEOUT             , validate_positive },
    { CONF_CTIMEOUT             , CONFTYPE_INT      , read_int         , CNF_CTIMEOUT             , validate_positive },
@@ -5472,6 +5475,7 @@ init_defaults(
     conf_init_str   (&conf_data[CNF_TPCHANGER]            , "");
     conf_init_int      (&conf_data[CNF_RUNTAPES]             , 1);
     conf_init_int      (&conf_data[CNF_MAXDUMPS]             , 1);
+    conf_init_int      (&conf_data[CNF_MAX_DLE_BY_VOLUME]    , 1000000000);
     conf_init_int      (&conf_data[CNF_ETIMEOUT]             , 300);
     conf_init_int      (&conf_data[CNF_DTIMEOUT]             , 1800);
     conf_init_int      (&conf_data[CNF_CTIMEOUT]             , 30);
