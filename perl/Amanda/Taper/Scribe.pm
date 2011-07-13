@@ -463,6 +463,7 @@ sub new {
 	device => undef,
 	device_size => undef,
 	device_at_eom => undef, # device still exists, but is full
+	close_volume => undef,
 
         # callback passed to start_dump
 	dump_cb => undef,
@@ -790,6 +791,12 @@ sub cancel_dump {
     $self->{'xfer'} = undef;
 }
 
+sub close_volume {
+    my $self = shift;
+
+    $self->{'close_volume'} = 1;
+}
+
 sub get_bytes_written {
     my ($self) = @_;
 
@@ -811,6 +818,11 @@ sub _start_part {
 	$self->dbg("XDT not ready yet; waiting until it is");
 	$self->{'start_part_on_xdt_ready'} = 1;
 	return
+    }
+
+    if ($self->{'close_volume'}) {
+	$self->{'close_volume'} = undef;
+	return $self->_get_new_volume();
     }
 
     # we need an actual, permitted device at this point, so if we don't have

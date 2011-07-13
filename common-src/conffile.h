@@ -486,6 +486,7 @@ typedef enum {
     CNF_TAPER_PARALLEL_WRITE,
     CNF_RECOVERY_LIMIT,
     CNF_TAPERSCAN,
+    CNF_MAX_DLE_BY_VOLUME,
     CNF_CNF /* sentinel */
 } confparm_key;
 

@@ -240,6 +240,15 @@ sub FAILED {
     }
 }
 
+sub CLOSE_VOLUME {
+    my $self = shift;
+    my ($msgtype, %params) = @_;
+
+    $self->_assert_in_state("idle") or return;
+
+    $self->{'scribe'}->close_volume();
+}
+
 sub result_cb {
     my $self = shift;
     my %params = %{$self->{'dump_params'}};
