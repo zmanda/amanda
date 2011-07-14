@@ -1,3 +1,6 @@
+2011-07-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c:Increase S3_DEVICE_MAX_BLOCK_SIZE to 5TiB.
+
 2011-07-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Add CONF_MAX_DLE_BY_VOLUME.
 	* common-src/conffile.h: Add CNF_MAX_DLE_BY_VOLUME.

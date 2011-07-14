@@ -157,7 +157,7 @@ struct _S3DeviceClass {
 
 /* Note: for compatability, min can only be decreased and max increased */
 #define S3_DEVICE_MIN_BLOCK_SIZE 1024
-#define S3_DEVICE_MAX_BLOCK_SIZE (100*1024*1024)
+#define S3_DEVICE_MAX_BLOCK_SIZE (5*1024*1024*1024)
 #define S3_DEVICE_DEFAULT_BLOCK_SIZE (10*1024*1024)
 #define EOM_EARLY_WARNING_ZONE_BLOCKS 4
 
