@@ -1,3 +1,6 @@
+2011-07-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda-changers.7.xml: Add chg-single documentation.
+
 2011-07-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Fix gcc warning for s3_rval set but not used
 
