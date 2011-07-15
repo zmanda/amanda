@@ -1,3 +1,6 @@
+2011-07-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda-changers.7.xml: Add chg-single documentation.
+
 2011-07-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c:Increase S3_DEVICE_MAX_BLOCK_SIZE to 3GiB.
 
