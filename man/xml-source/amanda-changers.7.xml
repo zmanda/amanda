@@ -759,6 +759,17 @@ If true, enables the NDMJOB library's verbose (packet-level) debugging.
 
 </refsect2>
 
+<refsect2><title>chg-single:DEVICE</title>
+<programlisting>
+tpchanger "chg-single:tape:/dev/nst0"
+</programlisting>
+
+<para>This changer is for use with standalone drive, it can work with any
+device. The device (<command>tape:/dev/nst0</command>) must be set in the tpchanger definition.</para>
+<para>The <command>chg-single</command> changer has no property.</para>
+
+</refsect2>
+
 <refsect2><title>Unmaintained Changers</title>
 
 <para>Amanda has many other changer scripts and programs beyond those described
