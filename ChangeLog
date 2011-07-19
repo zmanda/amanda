@@ -1,3 +1,7 @@
+2011-07-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c (tape_action): consider number of dle on volume
+	  and max-dle-by-volume for allowing use of new volume.
+
 2011-07-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda-changers.7.xml: Add chg-single documentation.
 
