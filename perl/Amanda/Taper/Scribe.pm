@@ -451,6 +451,7 @@ sub new {
 	taperscan => $params{'taperscan'},
 	feedback => $params{'feedback'},
 	debug => $decide_debug,
+	eject_volume => $params{'eject_volume'},
 	write_timestamp => undef,
 	started => 0,
 
@@ -1075,11 +1076,13 @@ sub _release_reservation {
     my $self = shift;
     my %params = @_;
     my @errors;
+    my $do_eject = 0;
 
     my ($label, $fm, $kb);
 
     # if we've already written a volume, log it
     if ($self->{'device'} and defined $self->{'device'}->volume_label) {
+	$do_eject = 1 if $self->{'eject_volume'};
 	$label = $self->{'device'}->volume_label();
 	$fm = $self->{'device'}->file();
 	$kb = $self->{'device_size'} / 1024;
@@ -1100,7 +1103,7 @@ sub _release_reservation {
     $self->{'device'} = undef;
     $self->{'device_at_eom'} = 0;
 
-    $self->{'reservation'}->release(finished_cb => sub {
+    $self->{'reservation'}->release(eject => $do_eject, finished_cb => sub {
 	my ($err) = @_;
 	push @errors, "$err" if $err;
 

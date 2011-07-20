@@ -751,13 +751,23 @@ The algorithm used to choose which dump image to send to the taper.</para>
   </listitem>
   </varlistentry>
 <varlistentry>
-<term><amkeyword>taper-parallel-write</amkeyword> <amtype>int</amtype></term>
-<listitem>
-  </listitem>
-<para>Default: <amdefault>1</amdefault>.
+  <term><amkeyword>taper-parallel-write</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+    <para>Default: <amdefault>1</amdefault>.
 Amanda can write simultaneously up to that number of volume at any given
 time. The changer must have as many drives.</para>
-  </varlistentry>
+  </listitem>
+</varlistentry>
+
+<varlistentry>
+  <term><amkeyword>eject-volume</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+    <para>Default: <amdefault>no</amdefault>.
+Set to <amkeyword>yes</amkeyword> if you want the volume to be ejected
+after Amanda wrote data to it. It works only with some changer and device.</para>
+  </listitem>
+</varlistentry>
+
 <varlistentry>
 <term><amkeyword>labelstr</amkeyword> <amtype>string</amtype></term>
 <listitem>
