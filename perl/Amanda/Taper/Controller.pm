@@ -104,7 +104,7 @@ sub start {
 	} else {
 	    $msg = $params{'error'};
 	}
-	log_add($L_ERROR, $msg);
+	log_add($L_ERROR, "$msg");
 	print STDERR "$msg\n";
 	$self->{'proto'}->send(Amanda::Taper::Protocol::BAD_COMMAND,
 	    message => $msg);

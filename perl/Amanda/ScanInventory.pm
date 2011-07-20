@@ -146,7 +146,7 @@ sub _scan {
 	if ($err && $err->notimpl) {
 	    #inventory not implemented
 	    die("no inventory");
-	} elsif ($err) {
+	} elsif ($err and $err->fatal) {
 	    #inventory fail
 	    return $steps->{'call_result_cb'}->($err, undef);
 	}
