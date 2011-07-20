@@ -100,7 +100,8 @@ sub new {
     my $scribe = Amanda::Taper::Scribe->new(
 	taperscan => $controller->{'taperscan'},
 	feedback => $self,
-	debug => $Amanda::Config::debug_taper);
+	debug => $Amanda::Config::debug_taper,
+	eject_volume => getconf($CNF_EJECT_VOLUME));
 
     $self->{'scribe'} = $scribe;
     $self->{'scribe'}->start(write_timestamp => $write_timestamp,

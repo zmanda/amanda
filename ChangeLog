@@ -1,4 +1,17 @@
 2011-07-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.h: Add CONF_EJECT_VOLUME
+	* common-src/conffile.c: Add CNF_EJECT_VOLUME
+	* man/xml-source/amanda.conf.5.xml: Document eject-volume.
+	* perl/Amanda/Config.swg: Add CNF_EJECT_VOLUME.
+	* perl/Amanda/Changer/single.pm: Eject the device if the eject
+	  params is set in $res->release()
+	* perl/Amanda/Taper/Scribe.pm (new): Get eject_volume params.
+	* perl/Amanda/Taper/Scribe.pm (_release_reservation): Call
+	  $res->release with the eject params if needed.
+	* perl/Amanda/Taper/Worker.pm: Make the Scribe with the eject_volume
+	  params set to $CNF_EJECT_VOLUME
+
+2011-07-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm (make_error): callback is optional.
 	* perl/Amanda/Changer/disk.pm: Check if disk is mounted before locking.
 	* perl/Amanda/ScanInventory.pm (_scan): fail only on fatal error.

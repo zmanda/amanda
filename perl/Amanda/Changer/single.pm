@@ -166,10 +166,20 @@ sub do_release {
     my $self = shift;
     my %params = @_;
 
-    $self->{'chg'}->{'reserved'} = 0;
+    my $finished = sub {
+	my ($message) = @_;
 
-    # unref the device, for good measure
-    $self->{'device'} = undef;
+	$self->{'chg'}->{'reserved'} = 0;
 
-    $params{'finished_cb'}->(undef) if $params{'finished_cb'};
+	# unref the device, for good measure
+	$self->{'device'} = undef;
+
+	$params{'finished_cb'}->($message) if $params{'finished_cb'};
+    };
+
+    if (exists $params{'eject'} && $params{'eject'}) {
+	$self->{'chg'}->eject(finished_cb => $finished);
+    } else {
+	$finished->(undef);
+    }
 }
