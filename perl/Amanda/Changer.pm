@@ -1088,7 +1088,7 @@ sub make_error {
 	$self->{'fatal_error'} = $err
 	    if ($err->fatal);
 
-	$cb->($err);
+	$cb->($err) if $cb;
     }
 
     return $err;

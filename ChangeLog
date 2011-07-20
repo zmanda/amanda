@@ -1,3 +1,10 @@
+2011-07-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm (make_error): callback is optional.
+	* perl/Amanda/Changer/disk.pm: Check if disk is mounted before locking.
+	* perl/Amanda/ScanInventory.pm (_scan): fail only on fatal error.
+	* perl/Amanda/Taper/Controller.pm: Put error message in double quote.
+	* perl/Amanda/Taper/Worker.pm: Put message in double quote.
+
 2011-07-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c (tape_action): consider number of dle on volume
 	  and max-dle-by-volume for allowing use of new volume.
