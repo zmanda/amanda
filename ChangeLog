@@ -1,4 +1,8 @@
 2011-07-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/multi.pm (do_release): Support eject params.
+	* perl/Amanda/Changer/single.pm (do_release): Do the eject correctly.
+
+2011-07-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda-taperscan.7.xml: Typo.
 
 2011-07-20  Jean-Louis Martineau <martineau@zmanda.com>
