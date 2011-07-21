@@ -665,6 +665,10 @@ sub do_release {
     # then never mind
     return unless $self->{'chg'};
 
+    $self->{'device'}->eject() if (exists $self->{'device'} and
+				   exists $params{'eject'} and
+				   $params{'eject'});
+
     # unref the device, for good measure
     $self->{'device'} = undef;
 
