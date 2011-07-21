@@ -1,3 +1,6 @@
+2011-07-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda-taperscan.7.xml: Typo.
+
 2011-07-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.h: Add CONF_EJECT_VOLUME
 	* common-src/conffile.c: Add CNF_EJECT_VOLUME
