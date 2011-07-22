@@ -1304,8 +1304,10 @@ sub make_new_tape_label {
     if ($npercents == 0 and $nexclamations == 0) {
         $label = $template;
         $label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
-	my $slot_label = sprintf("%0*d", $slot_digit, $slot);
-        $label =~ s/SUBSTITUTE_SLOT/$slot_label/g;
+	if ($template =~ /SUBSTITUTE_SLOT/) {
+	    my $slot_label = sprintf("%0*d", $slot_digit, $slot);
+            $label =~ s/SUBSTITUTE_SLOT/$slot_label/g;
+	}
 	if ($template =~ /SUBSTITUTE_BARCODE/ && !defined $barcode) {
 	    return (undef, "Can't generate new label because volume has no barcode");
 	} elsif ($template =~ /SUBSTITUTE_SLOT/ && !defined $slot) {
@@ -1366,8 +1368,10 @@ sub make_new_tape_label {
 
 	# susbtitute the barcode and slot
 	$label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
-	my $slot_label = sprintf("%0*d", $slot_digit, $slot);
-        $label =~ s/SUBSTITUTE_SLOT/$slot_label/g;
+	if ($template =~ /SUBSTITUTE_SLOT/) {
+	    my $slot_label = sprintf("%0*d", $slot_digit, $slot);
+            $label =~ s/SUBSTITUTE_SLOT/$slot_label/g;
+	}
 
 	# bail out if we didn't find an unused label
 	return (undef, "Can't label unlabeled volume: All label used")
