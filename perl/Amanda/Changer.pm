@@ -1257,6 +1257,7 @@ sub make_new_tape_label {
     return undef if !defined $self->{'labelstr'};
     my $template = $self->{'autolabel'}->{'template'};
     my $labelstr = $self->{'labelstr'};
+    my $slot_digit = 1;
 
     if (!$template) {
 	return (undef, "template is not set, you must set autolabel");
@@ -1266,7 +1267,11 @@ sub make_new_tape_label {
     $template =~ s/\$m/SUBSTITUTE_META/g;
     $template =~ s/\$o/SUBSTITUTE_ORG/g;
     $template =~ s/\$c/SUBSTITUTE_CONFIG/g;
-    $template =~ s/\$s/SUBSTITUTE_SLOT/g;
+    if ($template =~ /\$([0-9]*)s/) {
+	$slot_digit = $1;
+	$slot_digit = 1 if $slot_digit < 1;
+	$template =~ s/\$[0-9]*s/SUBSTITUTE_SLOT/g;
+    }
 
     my $org = getconf($CNF_ORG);
     my $config = Amanda::Config::get_config_name();
@@ -1299,7 +1304,8 @@ sub make_new_tape_label {
     if ($npercents == 0 and $nexclamations == 0) {
         $label = $template;
         $label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
-        $label =~ s/SUBSTITUTE_SLOT/$slot/g;
+	my $slot_label = sprintf("%0*d", $slot_digit, $slot);
+        $label =~ s/SUBSTITUTE_SLOT/$slot_label/g;
 	if ($template =~ /SUBSTITUTE_BARCODE/ && !defined $barcode) {
 	    return (undef, "Can't generate new label because volume has no barcode");
 	} elsif ($template =~ /SUBSTITUTE_SLOT/ && !defined $slot) {
@@ -1360,7 +1366,8 @@ sub make_new_tape_label {
 
 	# susbtitute the barcode and slot
 	$label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
-	$label =~ s/SUBSTITUTE_SLOT/$slot/g;
+	my $slot_label = sprintf("%0*d", $slot_digit, $slot);
+        $label =~ s/SUBSTITUTE_SLOT/$slot_label/g;
 
 	# bail out if we didn't find an unused label
 	return (undef, "Can't label unlabeled volume: All label used")

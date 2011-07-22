@@ -1,3 +1,8 @@
+2011-07-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: Support minimun number of digit in $3s
+	  autolabel template.
+	* man/xml-source/amanda.conf.5.xml: Document it.
+  
 2011-07-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/multi.pm (do_release): Support eject params.
 	* perl/Amanda/Changer/single.pm (do_release): Do the eject correctly.
