@@ -477,10 +477,11 @@ values:
     $c : config name
     $o : org configuration
     $b : barcode of the volume
-    $s : slot number
+    $s : slot number, can specify a minimun number of digit:
+         $3s to get '001'
     $m : meta label
 </programlisting></para>
-<para>The template should contain some number of contiguous '%'
+<para>The template can contain some number of contiguous '%'
 characters, which will be replaced with a generated number. Be sure to
 specify enough '%' characters that you do not run out of tape labels.
 Example:
