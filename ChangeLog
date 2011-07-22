@@ -1,4 +1,7 @@
 2011-07-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: Fix warning if $s is not used.
+
+2011-07-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Support minimun number of digit in $3s
 	  autolabel template.
 	* man/xml-source/amanda.conf.5.xml: Document it.
