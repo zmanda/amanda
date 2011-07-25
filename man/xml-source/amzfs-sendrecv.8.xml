@@ -45,7 +45,8 @@ usermod -P "ZFS File System Management,ZFS Storage Management" AMANDA_USER
 </programlisting>
 This will require that your run zfs under pfexec, set the PFEXEC property to YES.</para>
 
-<para>The format of the DLE must be one of:
+<para>The format of the <emphasis remap='B'>diskdevice</emphasis> in the
+disklist (DLE) must be one of:
 <programlisting>
 Desciption              Example
 ----------              -------

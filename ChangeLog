@@ -1,4 +1,10 @@
 2011-07-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amgtar.8.xml, man/xml-source/amraw.8.xml,
+	  man/xml-source/amsamba.8.xml, man/xml-source/amstar.8.xml,
+	  man/xml-source/amsuntar.8.xml,
+	  man/xml-source/amzfs-sendrecv.8.xml: Document the diskdevice.
+
+2011-07-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: new '--client-verbose' option.
 	* man/xml-source/amcheck.8.xml: Document --client-verbos
 	* config/amanda/progs.m4 (AMANDA_PROG_UNAME): new macro to find uname
