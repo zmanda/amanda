@@ -1,4 +1,7 @@
 2011-07-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c: fix
+
+2011-07-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: new '--client-verbose' option.
 	* man/xml-source/amcheck.8.xml: Document --client-verbos
 	* config/amanda/progs.m4 (AMANDA_PROG_UNAME): new macro to find uname

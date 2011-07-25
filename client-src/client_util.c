@@ -1673,6 +1673,7 @@ check_dir(
 	g_printf("OK %s\n", quoted);
 	amfree(quoted);
     }
+    return TRUE;
 }
 
 gboolean
