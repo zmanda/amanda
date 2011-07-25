@@ -38,7 +38,7 @@ use Amanda::Constants;
 use Amanda::Config qw( :init :getconf  config_dir_relative string_to_boolean );
 use Amanda::Debug qw( :logging );
 use Amanda::Paths;
-use Amanda::Util qw( :constants :encoding );
+use Amanda::Util qw( :constants :encoding quote_string );
 use Amanda::MainLoop qw( :GIOCondition );
 
 my $_DATA_DIR_TAR = "data_dir.tar";
@@ -278,6 +278,11 @@ sub command_selfcheck {
        exit(1);
    };
 
+    $self->print_to_server("disk " . quote_string($self->{args}->{disk}));
+
+    $self->print_to_server("ampgsql version " . $Amanda::Constants::VERSION,
+			   $Amanda::Script_App::GOOD);
+
     for my $k (keys %{$self->{'args'}}) {
         print "OK application property: $k = $self->{'args'}->{$k}\n";
     }
@@ -376,6 +381,20 @@ sub command_selfcheck {
 	}
 
 	if ($try_connect) {
+	    my @pv = `$self->{'props'}->{'psql-path'} --version`;
+	    if ($? >> 8 == 0) {
+		$pv[0] =~ /^[^0-9]*([0-9.]*)[^0-9]*$/;
+		my $pv = $1;
+		$self->print_to_server("ampgsql psql-version $pv",
+				       $Amanda::Script_App::GOOD);
+	    } else {
+		$self->print_to_server(
+		"[Can't get " . $self->{'props'}->{'psql-path'} . " version]\n",
+		$Amanda::Script_App::ERROR);
+	    }
+	}
+
+	if ($try_connect) {
 	    $try_connect &&=
 		_check("Connecting to database server", "succeeded", "failed",
 		   \&_run_psql_command, $self, '');
@@ -391,6 +410,20 @@ sub command_selfcheck {
 
 		_check("Get info from .backup file", "succeeded", "failed",
 		       sub {my ($start, $end) = _get_backup_info($self, $label); $start and $end});
+	    }
+	}
+
+	{
+	    my @gv = `$self->{'args'}->{'gnutar-path'} --version`;
+	    if ($? >> 8 == 0) {
+		$gv[0] =~ /^[^0-9]*([0-9.]*)[^0-9]*$/;
+		my $gv = $1;
+		$self->print_to_server("ampgsql gtar-version $gv",
+				       $Amanda::Script_App::GOOD);
+	    } else {
+		$self->print_to_server(
+		"[Can't get " . $self->{'props'}->{'gnutar-path'} . " version]\n",
+		$Amanda::Script_App::ERROR);
 	    }
 	}
     }

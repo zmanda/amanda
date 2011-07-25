@@ -145,10 +145,10 @@ void run_calcsize(char *config, char *program, char *disk,
                   char *dirname, GSList *levels,
                   char *file_exclude, char *file_include);
 
-void check_access(char *filename, int mode);
-void check_file(char *filename, int mode);
-void check_dir(char *dirname, int mode);
-void check_suid(char *filename);
+gboolean check_access(char *filename, int mode);
+gboolean check_file(char *filename, int mode);
+gboolean check_dir(char *dirname, int mode);
+gboolean check_suid(char *filename);
 double the_num(char * str, int pos);
 
 /* Convert a GSList returned from config_errors into an "ERROR "

@@ -30,7 +30,7 @@ use Symbol;
 use IO::Handle;
 use Amanda::Constants;
 use Amanda::Debug qw( :logging );
-use Amanda::Util;
+use Amanda::Util qw( quote_string );
 
 sub new {
     my $class = shift;
@@ -83,8 +83,16 @@ sub command_support {
 sub command_selfcheck {
     my $self = shift;
 
-    print "OK " . $self->{disk} . "\n";
-    print "OK " . $self->{device} . "\n";
+    $self->print_to_server("disk " . quote_string($self->{disk}),
+			   $Amanda::Script_App::GOOD)
+		if defined $self->{disk};
+
+    $self->print_to_server("amraw version " . $Amanda::Constants::VERSION,
+			   $Amanda::Script_App::GOOD);
+
+    $self->print_to_server(quote_string($self->{device}),
+			   $Amanda::Script_App::GOOD)
+		if defined $self->{device};
 
     if (! -r $self->{device}) {
 	$self->print_to_server("$self->{device} can't be read",

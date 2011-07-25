@@ -33,7 +33,7 @@ use Amanda::Constants;
 use Amanda::Config qw( :init :getconf  config_dir_relative );
 use Amanda::Debug qw( :logging );
 use Amanda::Paths;
-use Amanda::Util qw( :constants );
+use Amanda::Util qw( :constants quote_string );
 
 sub new {
     my $class = shift;
@@ -102,6 +102,10 @@ sub command_support {
 sub command_selfcheck {
     my $self = shift;
 
+    $self->print_to_server("disk " . quote_string($self->{disk}));
+
+    $self->print_to_server("amzfs-sendrecv version " . $Amanda::Constants::VERSION,
+			   $Amanda::Script_App::GOOD);
     $self->zfs_set_value();
 
     if (!defined $self->{device}) {
@@ -111,7 +115,6 @@ sub command_selfcheck {
     if ($self->{error_status} == $Amanda::Script_App::GOOD) {
 	$self->zfs_create_snapshot();
 	$self->zfs_destroy_snapshot();
-	print "OK " . $self->{disk} . "\n";
 	print "OK " . $self->{device} . "\n";
     }
 

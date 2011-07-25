@@ -35,7 +35,7 @@ use Amanda::Constants;
 use Amanda::Config qw( :init :getconf  config_dir_relative );
 use Amanda::Debug qw( :logging );
 use Amanda::Paths;
-use Amanda::Util qw( :constants );
+use Amanda::Util qw( :constants quote_string );
 
 sub new {
     my $class = shift;
@@ -144,6 +144,11 @@ sub command_support {
 sub command_selfcheck {
    my $self = shift;
 
+   $self->print_to_server("disk " . quote_string($self->{disk}));
+
+   $self->print_to_server("amsuntar version " . $Amanda::Constants::VERSION,
+			  $Amanda::Script_App::GOOD);
+
    if (!-e $self->{suntar}) {
       $self->print_to_server_and_die(
 		       "application binary $self->{suntar} doesn't exist",
@@ -157,7 +162,6 @@ sub command_selfcheck {
    if (!defined $self->{disk} || !defined $self->{device}) {
       return;
    }
-   print "OK " . $self->{disk} . "\n";
    print "OK " . $self->{device} . "\n";
    print "OK " . $self->{directory} . "\n" if defined $self->{directory};
    $self->validate_inexclude();
