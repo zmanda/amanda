@@ -32,6 +32,9 @@ by users directly.  It uses dd to backup and restore data.</para>
 
 <para>Amraw can backup only one directory entry, it can be a single file, a raw device, anything that amanda can open and read.</para>
 
+<para>The <emphasis remap='B'>diskdevice</emphasis> in the disklist (DLE)
+must be the filename amraw open and read.</para>
+
 <para>Restore is done in place, an open is done and the data is written to it. A file owned by root and permission 0600 is create if the directory entry doesn't exist before the restore.</para>
 
 <para>Only full backup is allowed</para>

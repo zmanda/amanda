@@ -30,7 +30,8 @@
 <para>Amsamba is an Amanda Application API script.  It should not be run
 by users directly.  It uses smbclient to backup and restore data.</para>
 
-<para> The device name in the disklist must have the form
+<para> The  <emphasis remap='B'>diskdevice</emphasis> in the disklist (DLE)
+must have the form
 '//CIFSHOST/SHARE/SUBDIR' where CIFSHOST is the CIFS host containing the data
 to be backed up, SHARE is the share to connect, and subdir is the subdirectory
 to backup. '/subdir' can be ommited, in which case the complete share is

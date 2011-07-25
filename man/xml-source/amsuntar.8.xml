@@ -34,6 +34,9 @@ by users directly. It uses Solaris bundled tar utility to backup and
 restore data. Currenty ACLs from ZFS file system can only be backed up
 using the solaris supplied tar utility.</para>
 
+<para>The <emphasis remap='B'>diskdevice</emphasis> in the disklist (DLE)
+must be the directory to backup.</para>
+
 <para>Solaris 10 supports Role Based Access Control(RBAC) which is enabled
 by default. To run backup operations using  sun tar utility by under 
 privileged user like amandabackup, amandabackup user need to have proper 
