@@ -312,6 +312,14 @@ AC_DEFUN([AMANDA_PROG_UMOUNT],
     AC_ARG_VAR([UMOUNT], [Path to the 'umount' binary])
 ])
 
+AC_DEFUN([AMANDA_PROG_UNAME],
+[
+    AC_REQUIRE([AMANDA_INIT_PROGS])
+    AC_PATH_PROG(UNAME,uname,,$LOCSYSPATH)
+    AC_DEFINE_UNQUOTED(UNAME_PATH,"$UNAME",
+	    [Define the location of the uname program. ])
+])
+
 AC_DEFUN([AMANDA_PROG_PCAT],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])

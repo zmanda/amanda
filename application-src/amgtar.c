@@ -638,11 +638,37 @@ static void
 amgtar_selfcheck(
     application_argument_t *argument)
 {
+    if (argument->dle.disk) {
+	char *qdisk = quote_string(argument->dle.disk);
+	fprintf(stdout, "OK disk %s\n", qdisk);
+	amfree(qdisk);
+    }
+
+    printf("OK amgtar version %s\n", VERSION);
     amgtar_build_exinclude(&argument->dle, 1, NULL, NULL, NULL, NULL);
 
     printf("OK amgtar\n");
     if (gnutar_path) {
-	check_file(gnutar_path, X_OK);
+	if (check_file(gnutar_path, X_OK)) {
+	    char *gtar_version;
+	    GPtrArray *argv_ptr = g_ptr_array_new();
+
+	    g_ptr_array_add(argv_ptr, gnutar_path);
+	    g_ptr_array_add(argv_ptr, "--version");
+	    g_ptr_array_add(argv_ptr, NULL);
+
+	    gtar_version = get_first_line(argv_ptr);
+	    if (gtar_version) {
+		char *gv;
+		for (gv = gtar_version; *gv && !g_ascii_isdigit(*gv); gv++);
+		printf("OK amgtar gtar-version %s\n", gv);
+	    } else {
+		printf(_("ERROR [Can't get %s version]\n"), gnutar_path);
+	    }
+
+	    g_ptr_array_free(argv_ptr, TRUE);
+	    amfree(gtar_version);
+	}
     } else {
 	printf(_("ERROR [GNUTAR program not available]\n"));
     }
@@ -656,11 +682,6 @@ amgtar_selfcheck(
 	printf(_("ERROR [No GNUTAR-LISTDIR]\n"));
     }
 
-    if (argument->dle.disk) {
-	char *qdisk = quote_string(argument->dle.disk);
-	fprintf(stdout, "OK %s\n", qdisk);
-	amfree(qdisk);
-    }
     if (gnutar_directory) {
 	check_dir(gnutar_directory, R_OK);
     } else if (argument->dle.device) {

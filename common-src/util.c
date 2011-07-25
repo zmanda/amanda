@@ -1622,3 +1622,73 @@ debug_executing(
     g_free(cmdline);
 }
 
+char *
+get_first_line(
+    GPtrArray *argv_ptr)
+{
+    char *output_string = NULL;
+    int   inpipe[2], outpipe[2], errpipe[2];
+    int   pid;
+    FILE *out, *err;
+
+    assert(argv_ptr != NULL);
+    assert(argv_ptr->pdata != NULL);
+    assert(argv_ptr->len >= 1);
+
+    if (pipe(inpipe) == -1) {
+	error(_("error [open pipe: %s]"), strerror(errno));
+	/*NOTREACHED*/
+    }
+    if (pipe(outpipe) == -1) {
+	error(_("error [open pipe: %s]"), strerror(errno));
+	/*NOTREACHED*/
+    }
+    if (pipe(errpipe) == -1) {
+	error(_("error [open pipe: %s]"), strerror(errno));
+	/*NOTREACHED*/
+    }
+
+    fflush(stdout);
+    switch(pid = fork()) {
+    case -1:
+	error(_("error [fork: %s]"), strerror(errno));
+	/*NOTREACHED*/
+
+    default:	/* parent process */
+	aclose(inpipe[0]);
+	aclose(outpipe[1]);
+	aclose(errpipe[1]);
+	break;
+
+    case 0: /* child process */
+	aclose(inpipe[1]);
+	aclose(outpipe[0]);
+	aclose(errpipe[0]);
+
+	dup2(inpipe[0], 0);
+	dup2(outpipe[1], 1);
+	dup2(errpipe[1], 2);
+
+	debug_executing(argv_ptr);
+	g_fprintf(stdout, "unknown\n");
+	execv((char *)*argv_ptr->pdata, (char **)argv_ptr->pdata);
+	error(_("error [exec %s: %s]"), (char *)*argv_ptr->pdata, strerror(errno));
+    }
+
+    aclose(inpipe[1]);
+
+    out = fdopen(outpipe[0],"r");
+    err = fdopen(errpipe[0],"r");
+
+    output_string = agets(out);
+    if (!output_string)
+	output_string = agets(err);
+
+    fclose(out);
+    fclose(err);
+
+    waitpid(pid, NULL, 0);
+
+    return output_string;
+}
+

@@ -78,6 +78,7 @@ static void check_disk(dle_t *dle);
 static void check_overall(void);
 static int check_file_exist(char *filename);
 static void check_space(char *dir, off_t kbytes);
+static void print_platform(void);
 
 int
 main(
@@ -121,7 +122,9 @@ main(
     dbopen(DBG_SUBDIR_CLIENT);
     startclock();
     dbprintf(_("version %s\n"), VERSION);
+    g_printf("OK version %s\n", VERSION);
 
+    print_platform();
     if(argc > 2 && g_str_equal(argv[1], "amandad")) {
 	amandad_auth = g_strdup(argv[2]);
     }
@@ -1240,3 +1243,54 @@ check_file_exist(
     return 1;
 }
 
+static void
+print_platform(void)
+{
+    struct stat stat_buf;
+    char *uname;
+    GPtrArray *argv_ptr;
+    char **filename;
+    char *filenames[] = {"/etc/redhat-release",
+			 "/etc/debian_version",
+			 "/etc/lsb-release",
+			 "/etc/system-release",
+			 NULL};
+
+    for (filename = filenames; *filename != NULL; filename++) {
+	if (stat(*filename, &stat_buf) == 0) {
+	    break;
+	}
+    }
+    if (*filename) {
+	FILE *release;
+
+	release = fopen(*filename, "r");
+	if (release) {
+	    char line[1025];
+	    fgets(line, 1024, release);
+	    g_fprintf(stdout, "OK platform %s", line);
+	    fclose(release);
+	} else {
+	    g_fprintf(stdout, "OK platform unknown\n");
+	}
+	return;
+    }
+
+    argv_ptr = g_ptr_array_new();
+
+    g_ptr_array_add(argv_ptr, UNAME_PATH);
+    g_ptr_array_add(argv_ptr, "-s");
+    g_ptr_array_add(argv_ptr, NULL);
+    uname = get_first_line(argv_ptr);
+    if (uname) {
+	if (g_str_equal(uname, "SunOs")) {
+	    amfree(uname);
+	    uname = g_strdup("Solaris");
+	}
+	g_fprintf(stdout, "OK platform %s\n", uname);
+    } else {
+	g_fprintf(stdout, "OK platform unknown\n");
+    }
+    g_ptr_array_free(argv_ptr, TRUE);
+    amfree(uname);
+}

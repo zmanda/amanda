@@ -33,6 +33,7 @@
     <arg choice='opt'>-w</arg>
     <arg choice='opt'>-sclt</arg>
     <arg choice='opt'>-M <replaceable>address</replaceable></arg>
+    <arg choice='opt'>--client-verbose</arg>
     &configoverride.synopsis;
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='opt' rep='repeat'>
@@ -146,6 +147,13 @@ value from
 <emphasis remap='I'>amanda.conf</emphasis>.
 Implies
 <option>-m</option>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--client-verbose</option></term>
+  <listitem>
+<para>Print all client messages.</para>
   </listitem>
   </varlistentry>
 

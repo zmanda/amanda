@@ -1,3 +1,21 @@
+2011-07-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: new '--client-verbose' option.
+	* man/xml-source/amcheck.8.xml: Document --client-verbos
+	* config/amanda/progs.m4 (AMANDA_PROG_UNAME): new macro to find uname
+	  path.
+	* configure.in: call AMANDA_PROG_UNAME.
+	* client-src/client_util.c (check_access, check_file, check_dir,
+	  check_suid): return a gboolean.
+	* client-src/client_util.h: Change prototypes.
+	* client-src/selfcheck.c: Print the platform.
+	* common-src/util.c (get_first_line): new function to return the first
+	  output line of a command.
+	* common-src/util.h (get_first_line): add prototype.
+	* application-src/amgtar.c, application-src/ampgsql.pl,
+	  application-src/amraw.pl, application-src/amsamba.pl,
+	  application-src/amstar.c, application-src/amsuntar.pl,
+	  application-src/amzfs-sendrecv.pl: print version of program.
+
 2011-07-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Fix warning if $s is not used.
 

@@ -1602,7 +1602,7 @@ common_exit:
 }
 
 
-void
+gboolean
 check_access(
     char *	filename,
     int		mode)
@@ -1619,14 +1619,18 @@ check_access(
     else 
 	noun = "access", adjective = "accessible";
 
-    if(access(filename, mode) == -1)
+    if(access(filename, mode) == -1) {
 	g_printf(_("ERROR [can not %s %s: %s]\n"), noun, quoted, strerror(errno));
-    else
+	amfree(quoted);
+	return FALSE;
+    } else {
 	g_printf(_("OK %s %s\n"), quoted, adjective);
+    }
     amfree(quoted);
+    return TRUE;
 }
 
-void
+gboolean
 check_file(
     char *	filename,
     int		mode)
@@ -1639,6 +1643,7 @@ check_file(
 	    quoted = quote_string(filename);
 	    g_printf(_("ERROR [%s is not a file]\n"), quoted);
 	    amfree(quoted);
+	    return FALSE;
 	}
     } else {
 	int save_errno = errno;
@@ -1646,13 +1651,19 @@ check_file(
 	g_printf(_("ERROR [can not stat %s: %s]\n"), quoted,
 		 strerror(save_errno));
 	amfree(quoted);
+	return FALSE;
     }
     if (getuid() == geteuid()) {
-	check_access(filename, mode);
+	return check_access(filename, mode);
+    } else {
+	quoted = quote_string(filename);
+	g_printf("OK %s\n", quoted);
+	amfree(quoted);
     }
+    return TRUE;
 }
 
-void
+gboolean
 check_dir(
     char *	dirname,
     int		mode)
@@ -1666,6 +1677,7 @@ check_dir(
 	    quoted = quote_string(dirname);
 	    g_printf(_("ERROR [%s is not a directory]\n"), quoted);
 	    amfree(quoted);
+	    return FALSE;
 	}
     } else {
 	int save_errno = errno;
@@ -1673,15 +1685,23 @@ check_dir(
 	g_printf(_("ERROR [can not stat %s: %s]\n"), quoted,
 		 strerror(save_errno));
 	amfree(quoted);
+	return FALSE;
     }
     if (getuid() == geteuid()) {
+	gboolean  result;
 	dir = g_strconcat(dirname, "/.", NULL);
-	check_access(dir, mode);
+	result = check_access(dir, mode);
 	amfree(dir);
+	return result;
+    } else {
+	quoted = quote_string(dirname);
+	g_printf("OK %s\n", quoted);
+	amfree(quoted);
     }
+    return TRUE;
 }
 
-void
+gboolean
 check_suid(
     char *	filename)
 {
@@ -1692,18 +1712,25 @@ check_suid(
     if(!stat(filename, &stat_buf)) {
 	if(stat_buf.st_uid != 0 ) {
 	    g_printf(_("ERROR [%s is not owned by root]\n"), quoted);
+	    amfree(quoted);
+	    return FALSE;
 	}
 	if((stat_buf.st_mode & S_ISUID) != S_ISUID) {
 	    g_printf(_("ERROR [%s is not SUID root]\n"), quoted);
+	    amfree(quoted);
+	    return FALSE;
 	}
     }
     else {
 	g_printf(_("ERROR [can not stat %s: %s]\n"), quoted, strerror(errno));
+	amfree(quoted);
+	return FALSE;
     }
     amfree(quoted);
 #else
     (void)filename;	/* Quiet unused parameter warning */
 #endif
+    return TRUE;
 }
 
 /*

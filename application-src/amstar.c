@@ -436,12 +436,15 @@ static void
 amstar_selfcheck(
     application_argument_t *argument)
 {
-    fprintf(stdout, "OK amstar\n");
     if (argument->dle.disk) {
 	char *qdisk = quote_string(argument->dle.disk);
-	fprintf(stdout, "OK %s\n", qdisk);
+	fprintf(stdout, "OK disk %s\n", qdisk);
 	amfree(qdisk);
     }
+
+    fprintf(stdout, "OK amstar version %s\n", VERSION);
+    fprintf(stdout, "OK amstar\n");
+
     if (argument->dle.device) {
 	char *qdevice = quote_string(argument->dle.device);
 	fprintf(stdout, "OK %s\n", qdevice);
@@ -461,7 +464,29 @@ amstar_selfcheck(
     if (!star_path) {
 	fprintf(stdout, "ERROR STAR-PATH not defined\n");
     } else {
-	check_file(star_path, X_OK);
+	if (check_file(star_path, X_OK)) {
+	    char *star_version;
+	    GPtrArray *argv_ptr = g_ptr_array_new();
+
+	    g_ptr_array_add(argv_ptr, star_path);
+	    g_ptr_array_add(argv_ptr, "--version");
+	    g_ptr_array_add(argv_ptr, NULL);
+
+	    star_version = get_first_line(argv_ptr);
+
+	    if (star_version) {
+		char *sv, *sv1;
+		for (sv = star_version; *sv && !g_ascii_isdigit(*sv); sv++);
+		for (sv1 = sv; *sv1 && *sv1 != ' '; sv1++);
+		*sv1 = '\0';
+		printf("OK amstar star-version %s\n", sv);
+	    } else {
+		printf(_("ERROR [Can't get %s version]\n"), star_path);
+	    }
+	    g_ptr_array_free(argv_ptr, TRUE);
+	    amfree(star_version);
+
+	}
     }
 
     if (argument->calcsize) {

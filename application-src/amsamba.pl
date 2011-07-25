@@ -331,6 +331,10 @@ sub command_support {
 sub command_selfcheck {
     my $self = shift;
 
+    $self->print_to_server("disk " . quote_string($self->{disk}));
+
+    $self->print_to_server("amsamba version " . $Amanda::Constants::VERSION,
+			   $Amanda::Script_App::GOOD);
     #check binary
     if (!defined($self->{smbclient}) || $self->{smbclient} eq "") {
 	$self->print_to_server(
@@ -344,7 +348,20 @@ sub command_selfcheck {
     elsif (! -x $self->{smbclient}) {
 	$self->print_to_server("$self->{smbclient} is not executable",
 			       $Amanda::Script_App::ERROR);
+    } else {
+	my @sv = `$self->{smbclient} --version`;
+	if ($? >> 8 == 0) {
+	    $sv[0] =~ /^[^0-9]*(.*)$/;
+	    my $sv = $1;
+	    $self->print_to_server("amsamba smbclient-version $sv",
+				   $Amanda::Script_App::GOOD);
+	} else {
+	    $self->print_to_server(
+		"[Can't get " . $self->{smbclient} . " version]\n",
+		$Amanda::Script_App::ERROR);
+	}
     }
+
     $self->print_to_server("$self->{smbclient}",
 			   $Amanda::Script_App::GOOD);
     if (!defined $self->{disk} || !defined $self->{device}) {
@@ -355,7 +372,6 @@ sub command_selfcheck {
     $self->validate_inexclude();
 
     print "OK " . $self->{share} . "\n";
-    print "OK " . $self->{disk} . "\n";
     print "OK " . $self->{device} . "\n";
     print "OK " . $self->{directory} . "\n" if defined $self->{directory};
 

@@ -391,4 +391,6 @@ void property_add_to_argv(GPtrArray *argv_ptr, GHashTable *proplist);
  */
 void debug_executing(GPtrArray *argv_ptr);
 
+/* execute the program and get the first line from stdout ot stderr */
+char *get_first_line(GPtrArray *argv_ptr);
 #endif	/* UTIL_H */

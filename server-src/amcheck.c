@@ -47,6 +47,7 @@
 #include "timestamp.h"
 #include "amxml.h"
 #include "physmem.h"
+#include <getopt.h>
 
 #define BUFFER_SIZE	32768
 
@@ -69,7 +70,7 @@ int test_server_pgm(FILE *outf, char *dir, char *pgm, int suid, uid_t dumpuid);
 void
 usage(void)
 {
-    g_printf(_("Usage: amcheck [-am] [-w] [-sclt] [-M <address>] [-o configoption]* <conf> [host [disk]* ]*\n"));
+    g_printf(_("Usage: amcheck [-am] [-w] [-sclt] [-M <address>] [--client-verbose] [-o configoption]* <conf> [host [disk]* ]*\n"));
     exit(1);
     /*NOTREACHED*/
 }
@@ -78,6 +79,12 @@ static am_feature_t *our_features = NULL;
 static char *our_feature_string = NULL;
 static char *displayunit;
 static long int unitdivisor;
+
+static int client_verbose = FALSE;
+static struct option long_options[] = {
+    {"client-verbose", 0, NULL,  1},
+    {NULL, 0, NULL, 0}
+};
 
 int
 main(
@@ -91,7 +98,7 @@ main(
     int do_clientchk, client_probs;
     int do_localchk, do_tapechk, server_probs;
     pid_t clientchk_pid, serverchk_pid;
-    int opt, tempfd, mainfd;
+    int tempfd, mainfd;
     size_t size;
     amwait_t retstat;
     pid_t pid;
@@ -151,8 +158,17 @@ main(
     /* process arguments */
 
     cfg_ovr = new_config_overrides(argc/2);
-    while((opt = getopt(argc, argv, "M:mawsclto:")) != EOF) {
-	switch(opt) {
+    while (1) {
+	int option_index = 0;
+	int c;
+	c = getopt_long (argc, argv, "M:mawsclto:", long_options, &option_index);
+	if (c == -1) {
+	    break;
+	}
+
+	switch(c) {
+	case 1:		client_verbose = TRUE;
+			break;
 	case 'M':	if (mailto) {
 			    g_printf(_("Multiple -M options\n"));
 			    exit(1);
@@ -2116,6 +2132,7 @@ handle_result(
     char *t;
     int ch;
     int tch;
+    gboolean printed_hostname = FALSE;
 
     hostp = (am_host_t *)datap;
     hostp->up = HOST_READY;
@@ -2166,7 +2183,15 @@ handle_result(
 	    continue;
 	}
 
+	if (client_verbose && !printed_hostname) {
+	    g_fprintf(outf, "HOST %s\n", hostp->hostname);
+	    printed_hostname = TRUE;
+	}
+
 	if(strncmp_const(line, "OK ") == 0) {
+	    if (client_verbose) {
+		g_fprintf(outf, "%s\n", line);
+	    }
 	    continue;
 	}
 
