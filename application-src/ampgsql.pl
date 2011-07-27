@@ -975,9 +975,11 @@ EOF
 }
 
 my $opts = {};
+my $opt_version;
 
 GetOptions(
     $opts,
+    'version' => \$opt_version,
     'config=s',
     'host=s',
     'disk=s',
@@ -996,6 +998,11 @@ GetOptions(
     'tmpdir=s',
     'gnutar-path=s',
 ) or usage();
+
+if (defined $opt_version) {
+    print "ampgsql-" . $Amanda::Constants::VERSION , "\n";
+    exit(0);
+}
 
 my $application = Amanda::Application::ampgsql->new($opts);
 

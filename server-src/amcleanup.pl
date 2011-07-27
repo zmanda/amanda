@@ -44,6 +44,7 @@ my $config_overrides = new_config_overrides($#ARGV+1);
 
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
+    'version' => \&Amanda::Util::version_opt,
     'k' => \$kill_enable,
     'p' => \$process_alive,
     'v' => \$verbose,

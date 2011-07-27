@@ -1,4 +1,7 @@
 2011-07-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* many */*.pl: add --version option.
+
+2011-07-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: print to debug file and server if unlink
 	  fail.
 

@@ -72,6 +72,7 @@ my $config_overrides = new_config_overrides($#ARGV+1);
 
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
+    'version' => \&Amanda::Util::version_opt,
     'timestamp|t=s' => \$opt_timestamp,
     'verbose|v'     => \$opt_verbose,
     'help|usage|?'  => \&usage,

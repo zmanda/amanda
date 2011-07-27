@@ -37,6 +37,7 @@ my $config;
 my $config_overrides = new_config_overrides($#ARGV+1);
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
+    'version' => \&Amanda::Util::version_opt,
     'config=s' => sub { $config = $_[1]; },
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
 ) or usage();
