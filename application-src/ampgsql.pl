@@ -90,6 +90,7 @@ sub new {
             $self->{'props'}->{$pname} = $conf_props->{$pname}->{'values'}->[0];
         }
     }
+
     # check for properties like 'foo-pg-host' where the diskname is 'foo'
     if ($self->{'args'}->{'disk'}) {
         foreach my $pname (@PROP_NAMES) {
@@ -100,6 +101,16 @@ sub new {
                 $self->{'props'}->{$pname} = $conf_props->{$tmp}->{'values'}->[0];
             }
         }
+    }
+
+    # overwrite with dumptype properties if they are set.
+    foreach my $pname (@PROP_NAMES) {
+	my $pdumpname = $pname;
+	$pdumpname =~ s/^pg-//g;
+	$self->{'props'}->{$pname} = $self->{'args'}->{$pdumpname}
+				 if defined $self->{'args'}->{$pdumpname};
+debug("prop $pname set from dumpname $pdumpname: $self->{'args'}->{$pdumpname}")
+if defined $self->{'args'}->{$pdumpname};
     }
 
     unless ($self->{'props'}->{'psql-path'}) {
@@ -121,6 +132,7 @@ sub new {
     }
 
     foreach my $pname (keys %{$self->{'props'}}) {
+debug("aa");
         if (defined($self->{'props'}->{$pname})) {
             debug("client property: $pname $self->{'props'}->{$pname}");
         } else {
@@ -997,6 +1009,15 @@ GetOptions(
     'statedir=s',
     'tmpdir=s',
     'gnutar-path=s',
+    'cleanupwal=s',
+    'archivedir=s',
+    'db=s',
+    'host=s',
+    'max-wal-wait=s',
+    'passfile=s',
+    'port=s',
+    'user=s',
+    'psql-path=s'
 ) or usage();
 
 if (defined $opt_version) {
