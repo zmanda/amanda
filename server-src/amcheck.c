@@ -70,7 +70,7 @@ int test_server_pgm(FILE *outf, char *dir, char *pgm, int suid, uid_t dumpuid);
 void
 usage(void)
 {
-    g_printf(_("Usage: amcheck [-am] [-w] [-sclt] [-M <address>] [--client-verbose] [-o configoption]* <conf> [host [disk]* ]*\n"));
+    g_printf(_("Usage: amcheck [--version] [-am] [-w] [-sclt] [-M <address>] [--client-verbose] [-o configoption]* <conf> [host [disk]* ]*\n"));
     exit(1);
     /*NOTREACHED*/
 }
@@ -83,6 +83,7 @@ static long int unitdivisor;
 static int client_verbose = FALSE;
 static struct option long_options[] = {
     {"client-verbose", 0, NULL,  1},
+    {"version"       , 0, NULL,  2},
     {NULL, 0, NULL, 0}
 };
 
@@ -168,6 +169,9 @@ main(
 
 	switch(c) {
 	case 1:		client_verbose = TRUE;
+			break;
+	case 2:		printf("amcheck-%s\n", VERSION);
+			return(0);
 			break;
 	case 'M':	if (mailto) {
 			    g_printf(_("Multiple -M options\n"));

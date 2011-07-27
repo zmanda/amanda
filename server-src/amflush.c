@@ -41,6 +41,11 @@
 #include "server_util.h"
 #include "timestamp.h"
 
+static struct option long_options[] = {
+    {"version"         , 0, NULL,  1},
+    {NULL, 0, NULL, 0}
+};
+
 static char *conf_logdir;
 FILE *driver_stream;
 char *driver_program;
@@ -122,8 +127,12 @@ main(
     /* process arguments */
 
     cfg_ovr = new_config_overrides(argc/2);
-    while((opt = getopt(argc, argv, "bfso:D:")) != EOF) {
+    while((opt = getopt_long(argc, argv, "bfso:D:", long_options, NULL)) != EOF) {
 	switch(opt) {
+	case 1  : printf("amflush-%s\n", VERSION);
+		  return(0);
+		  break;
+
 	case 'b': batch = 1;
 		  break;
 	case 'f': foreground = 1;

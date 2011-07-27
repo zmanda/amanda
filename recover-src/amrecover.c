@@ -48,13 +48,18 @@
 	}				\
 } while (0)
 
+static struct option long_options[] = {
+    {"version"         , 0, NULL,  1},
+    {NULL, 0, NULL, 0}
+};
+
 extern int process_line(char *line);
 int get_line(void);
 int grab_reply(int show);
 void sigint_handler(int signum);
 int main(int argc, char **argv);
 
-#define USAGE _("Usage: amrecover [[-C] <config>] [-s <index-server>] [-t <tape-server>] [-d <tape-device>] [-o <clientconfigoption>]*\n")
+#define USAGE _("Usage: amrecover [--version] [[-C] <config>] [-s <index-server>] [-t <tape-server>] [-d <tape-device>] [-o <clientconfigoption>]*\n")
 
 char *server_name = NULL;
 int server_socket;
@@ -364,8 +369,12 @@ main(
     }
 
     /* now parse regular command-line '-' options */
-    while ((i = getopt(argc, argv, "o:C:s:t:d:Uh:")) != EOF) {
+    while ((i = getopt_long(argc, argv, "o:C:s:t:d:Uh:", long_options, NULL)) != EOF) {
 	switch (i) {
+	    case 1:
+		printf("amrecover-%s\n", VERSION);
+		return(0);
+		break;
 	    case 'C':
 		add_config_override(cfg_ovr, "conf", optarg);
 		break;
