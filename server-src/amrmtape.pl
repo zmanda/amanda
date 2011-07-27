@@ -108,6 +108,7 @@ Amanda::Util::setup_application("amrmtape", "server", $CONTEXT_CMDLINE);
 my $config_overrides = new_config_overrides( scalar(@ARGV) + 1 );
 
 my $opts_ok = GetOptions(
+    'version' => \&Amanda::Util::version_opt,
     "changer=s" => \$changer_name,
     "cleanup" => \$cleanup,
     "dryrun|n" => \$dry_run,

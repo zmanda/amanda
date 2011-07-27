@@ -95,6 +95,7 @@ my $print_label;
 
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
+    'version' => \&Amanda::Util::version_opt,
     'help|usage|?' => \&usage,
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
     'properties:s' => \$getproplist,

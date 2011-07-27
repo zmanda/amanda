@@ -248,6 +248,8 @@ sub conf_param {
     }
 }
 
+Amanda::Util::setup_application("amgetconf", "server", $CONTEXT_SCRIPTUTIL);
+
 ## Command-line parsing
 
 my $opt_list = '';
@@ -256,6 +258,7 @@ my $execute_where = undef;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
+    'version' => \&Amanda::Util::version_opt,
     'list|l' => \$opt_list,
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
     'execute-where=s' => sub {
@@ -290,8 +293,6 @@ if (@ARGV == 1) {
 }
 
 ## Now start looking at the parameter.
-
-Amanda::Util::setup_application("amgetconf", "server", $CONTEXT_SCRIPTUTIL);
 
 if ($parameter =~ /^build(?:\..*)?/) {
     config_init(0|$execute_where, undef);

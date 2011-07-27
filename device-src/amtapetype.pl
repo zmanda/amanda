@@ -673,6 +673,7 @@ my $config_overrides = new_config_overrides($#ARGV+1);
 
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
+    'version' => \&Amanda::Util::version_opt,
     'help|usage|?|h' => \&usage,
     'c' => \$opt_only_compression,
     'b=s' => sub {
