@@ -1,4 +1,15 @@
 2011-07-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c, client-src/calcsize.c,
+	  client-src/killpgrp.c, client-src/noop.c,
+	  client-src/rundump.c, client-src/runtar.c,
+	  client-src/selfcheck.c, client-src/sendbackup.c,
+	  client-src/sendsize.c, ndmp-src/amndmjob_main.c,
+	  server-src/amcleanupdisk.c, server-src/amindexd.c,
+	  server-src/amtrmidx.c, server-src/amtrmlog.c,
+	  server-src/driver.c, server-src/dumper.c,
+	  server-src/planner.c: Add a --version argument.
+
+2011-07-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amservice.c, recover-src/amrecover.c,
 	  server-src/amflush.c: #include "getopt.h"
 
