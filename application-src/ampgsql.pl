@@ -604,7 +604,12 @@ sub _get_backup_info {
 	   debug("$bfile named WALs $start_wal .. $end_wal");
 
            # try to cleanup a bit, although this may fail and that's ok
-           unlink("$self->{'props'}->{'pg-archivedir'}/$bfile");
+	   my $filename = "$self->{'props'}->{'pg-archivedir'}/$bfile";
+           if (unlink($filename) == 0) {
+               debug("Failed to unlink '$filename': $!");
+               $self->print_to_server("Failed to unlink '$filename': $!",
+				      $Amanda::Script_App::ERROR);
+	   }
            last;
        }
        sleep(1);
@@ -853,7 +858,11 @@ sub command_backup {
        $self->{'unlink_cb'} = sub {
            my $filename = shift @_;
 	   debug("unlinking WAL file $filename");
-           unlink($filename);
+           if (unlink($filename) == 0) {
+               debug("Failed to unlink '$filename': $!");
+               $self->print_to_server("Failed to unlink '$filename': $!",
+                                      $Amanda::Script_App::ERROR);
+           }
        };
    } else {
        $self->{'unlink_cb'} = sub {
@@ -910,13 +919,21 @@ sub command_restore {
 	  '--exclude', 'empty-incremental',
           '--file', $_ARCHIVE_DIR_TAR, '--directory', $_ARCHIVE_DIR_RESTORE) >> 8;
        (0 == $status) or die("Failed to extract archived WAL files from base backup (exit status: $status)");
-       unlink($_ARCHIVE_DIR_TAR);
+       if (unlink($_ARCHIVE_DIR_TAR) == 0) {
+           debug("Failed to unlink '$_ARCHIVE_DIR_TAR': $!");
+           $self->print_to_server("Failed to unlink '$_ARCHIVE_DIR_TAR': $!",
+				  $Amanda::Script_App::ERROR);
+       }
 
        debug("extracting data dir to $cur_dir/$_DATA_DIR_RESTORE");
        $status = system($self->{'args'}->{'gnutar-path'}, '--extract',
           '--file', $_DATA_DIR_TAR, '--directory', $_DATA_DIR_RESTORE) >> 8;
        (0 == $status) or die("Failed to extract data directory from base backup (exit status: $status)");
-       unlink($_DATA_DIR_TAR);
+       if (unlink($_DATA_DIR_TAR) == 0) {
+           debug("Failed to unlink '$_DATA_DIR_TAR': $!");
+           $self->print_to_server("Failed to unlink '$_DATA_DIR_TAR': $!",
+				  $Amanda::Script_App::ERROR);
+       }
    }
 }
 
