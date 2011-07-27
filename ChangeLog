@@ -1,4 +1,7 @@
 2011-07-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/selfcheck.c: Check return value of fgets.
+
+2011-07-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* many */*.pl: add --version option.
 
 2011-07-27  Jean-Louis Martineau <martineau@zmanda.com>

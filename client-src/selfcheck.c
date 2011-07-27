@@ -1267,8 +1267,13 @@ print_platform(void)
 	release = fopen(*filename, "r");
 	if (release) {
 	    char line[1025];
-	    fgets(line, 1024, release);
-	    g_fprintf(stdout, "OK platform %s", line);
+	    char *result;
+	    result = fgets(line, 1024, release);
+	    if (result) {
+		g_fprintf(stdout, "OK platform %s", line);
+	    } else {
+		g_fprintf(stdout, "OK platform unknown\n");
+	    }
 	    fclose(release);
 	} else {
 	    g_fprintf(stdout, "OK platform unknown\n");
