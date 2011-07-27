@@ -1,4 +1,8 @@
 2011-07-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amservice.c, recover-src/amrecover.c,
+	  server-src/amflush.c: #include "getopt.h"
+
+2011-07-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: add ARCHIVEDIR, CLEANUPWAL, DB,
 	  HOST, MAX-WAL-WAIT, PASSFILE, PORT, PSQL-PATH and USER
 	  properties.

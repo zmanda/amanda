@@ -40,6 +40,7 @@
 #include "holding.h"
 #include "server_util.h"
 #include "timestamp.h"
+#include "getopt.h"
 
 static struct option long_options[] = {
     {"version"         , 0, NULL,  1},

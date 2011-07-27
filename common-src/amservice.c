@@ -35,6 +35,7 @@
 #include "protocol.h"
 #include "amfeatures.h"
 #include "event.h"
+#include "getopt.h"
 
 static struct option long_options[] = {
     {"version"         , 0, NULL,  1},

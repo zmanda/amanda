@@ -41,6 +41,7 @@
 #include "event.h"
 #include "security.h"
 #include "conffile.h"
+#include "getopt.h"
 
 #define amrecover_debug(i, ...) do {	\
 	if ((i) <= debug_amrecover) {	\
