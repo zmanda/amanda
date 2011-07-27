@@ -192,6 +192,11 @@ main(
     gboolean no_taper = FALSE;
     gboolean from_client = FALSE;
 
+    if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
+	printf("planner-%s\n", VERSION);
+	return (0);
+    }
+
     /*
      * Configure program for internationalization:
      *   1) Only set the message locale for now.

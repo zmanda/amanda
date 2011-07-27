@@ -125,6 +125,11 @@ main(
     FILE   *mesgstream;
     level_t *alevel;
 
+    if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
+	printf("sendbackup-%s\n", VERSION);
+	return (0);
+    }
+
     /* initialize */
     /*
      * Configure program for internationalization:

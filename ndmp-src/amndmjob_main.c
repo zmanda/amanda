@@ -47,6 +47,11 @@ main (int ac, char *av[])
 {
 	int rc;
 
+	if (ac > 1 && av && av[1] && g_str_equal(av[1], "--version")) {
+		printf("amndmjob-%s\n", VERSION);
+		return (0);
+	}
+
 	set_pname("amndmjob");
 	dbopen(DBG_SUBDIR_CLIENT);
 	config_init(0, NULL);

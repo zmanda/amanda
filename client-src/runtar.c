@@ -53,6 +53,11 @@ main(
     gchar **strings;
 #endif
 
+    if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
+	printf("runtar-%s\n", VERSION);
+	return (0);
+    }
+
     /*
      * Configure program for internationalization:
      *   1) Only set the message locale for now.

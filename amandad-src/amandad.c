@@ -245,6 +245,11 @@ main(
 	/*NOTREACHED*/
     }
 
+    if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
+	printf("amandad-%s\n", VERSION);
+	return (0);
+    }
+
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
 
