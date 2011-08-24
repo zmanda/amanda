@@ -1,4 +1,7 @@
 2011-08-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda-devices.7.xml: Update S3 location url.
+
+2011-08-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/match.c: Fix for 'Trailing backslash' error
 	* common-src/match-test.c: Add test
 

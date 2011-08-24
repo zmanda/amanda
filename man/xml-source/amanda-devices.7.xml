@@ -453,7 +453,7 @@ writing long enough to bring the average below this value.
 As of this writing, it can be set to "*" (US Standard, i.e. lowest-latency
 choice of US East or West), "us-west-1" (US West, Northern California), "EU"
 (European Union), or "ap-southeast-1" (Asia Pacific).  See <ulink
-url="http://docs.amazonwebservices.com/AmazonS3/latest/index.html?LocationSelection.html"
+url="http://docs.amazonwebservices.com/general/latest/gr/index.html?rande.html"
 /> for the most up-to-date list.
 </listitem></varlistentry>
  <!-- ==== -->
