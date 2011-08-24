@@ -140,10 +140,10 @@ static struct mword_regexes mword_dot_regexes = {
 };
 
 static struct mword_regexes mword_slash_regexes = {
-    "^//$", /* re_double_sep */
-    "^/", /* re_begin_full */
-    "/", /* re_separator */
-    "/$" /* re_end_full */
+    "^\\/\\/$", /* re_double_sep */
+    "^\\/", /* re_begin_full */
+    "\\/", /* re_separator */
+    "\\/$" /* re_end_full */
 };
 
 /*
@@ -829,6 +829,12 @@ static int match_word(const char *glob, const char *word, const char separator)
             *p = '\0';
 	    if (prev == separator) {
 		*(p-1) = '\0';
+		if (p-2 >= glob_copy) {
+		    prev = *(p - 2);
+		    if (prev == '\\') {
+			*(p-2) = '\0';
+		    }
+		}
 		end = regexes->re_end_full;
 	    } else {
 		end = "$";
