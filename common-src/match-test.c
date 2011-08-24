@@ -743,6 +743,10 @@ test_match_disk(void)
 	{ "^/usr\\/bin$", "/usr/bin", TRUE },
 	{ "\\/usr\\/bin", "/usr/bin", FALSE },
 	{ "^\\/usr\\/bin$", "/usr/bin", TRUE },
+	{ "/usr\\/bin\\/", "/usr/bin/", TRUE },
+	{ "^/usr\\/bin\\/$", "/usr/bin/", TRUE },
+	{ "\\/usr\\/bin\\/", "/usr/bin/", FALSE },
+	{ "^\\/usr\\/bin\\/$", "/usr/bin/", TRUE },
 
 	{ "oracle", "oracle", TRUE },
 	{ "oracle", "/oracle", TRUE },

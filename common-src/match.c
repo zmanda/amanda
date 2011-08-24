@@ -619,6 +619,7 @@ match_word(
 	while(*src != '\0')
 	    *dst++ = *src++;
 	if(*(dst-1) != separator && glob[len_glob-1] != '$')
+	if(*(dst-1) != separator)
 	    *dst++ = separator;
     }
     *dst = '\0';
@@ -710,6 +711,12 @@ match_word(
             *p = '\0';
             if (prev == separator) {
 		*(p-1) = '\0';
+		if (p-2 >= nglob) {
+		    prev = *(p - 2);
+		    if (prev == '\\') {
+			*(p-2) = '\0';
+		    }
+		}
                 end = REGEX_END_FULL(separator);
             } else {
                 end = REGEX_END_ANCHORONLY;
