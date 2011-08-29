@@ -1331,7 +1331,7 @@ sub make_new_tape_label {
 	}
 
 	my $nlabels;
-        my $i;
+        my $i = 0;
 	if ($npercents > 0) {
 	    $nlabels = 10 ** $npercents;
 	    # make up a sprintf pattern
@@ -1432,7 +1432,7 @@ sub make_new_meta_label {
 	    map { $_->{'meta'} => 1 } @{$tl->{'tles'}};
 
 	my $nlabels;
-	my $i;
+	my $i = 0;
 	if ($npercents > 0) {
 	    $nlabels = 10 ** $npercents;
 	    # make up a sprintf pattern
@@ -1489,9 +1489,11 @@ sub volume_is_labelable {
     if (!defined $dev_status) {
 	return 0;
     } elsif ($dev_status & $DEVICE_STATUS_VOLUME_UNLABELED and
-	$f_type == $Amanda::Header::F_EMPTY) {
+	     defined $f_type and
+	     $f_type == $Amanda::Header::F_EMPTY) {
 	return 0 if (!$autolabel->{'empty'});
     } elsif ($dev_status & $DEVICE_STATUS_VOLUME_UNLABELED and
+	     defined $f_type and
 	     $f_type == $Amanda::Header::F_WEIRD) {
 	return 0 if (!$autolabel->{'non_amanda'});
     } elsif ($dev_status & $DEVICE_STATUS_VOLUME_ERROR) {
