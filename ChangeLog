@@ -1,3 +1,7 @@
+2011-08-29  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by Gunar Gunnarsson
+	* server-src/amvault.pl: Cast $dump->{'kb'} to int.
+
 2011-08-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda-devices.7.xml: Update S3 location url.
 
