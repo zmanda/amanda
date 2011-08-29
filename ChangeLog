@@ -1,4 +1,7 @@
 2011-08-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: return a reservation even on error.
+
+2011-08-29  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Gunar Gunnarsson
 	* server-src/amvault.pl: Cast $dump->{'kb'} to int.
 
