@@ -1,4 +1,13 @@
 2011-08-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/multi.pm: Keep the device_error in the state file.
+	* perl/Amanda/Changer/robot.pm: Keep the device_error in the state file.
+	* server-src/amtape.pl (inventory): Print inventory device error.
+	* installcheck/Amanda_Changer_multi.pl,
+	  installcheck/Amanda_Changer_ndmp.pl,
+	  installcheck/Amanda_Changer_robot.pl: Fix for device_error in
+	  state file.
+
+2011-08-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Fix warning.
 
 2011-08-29  Jean-Louis Martineau <martineau@zmanda.com>

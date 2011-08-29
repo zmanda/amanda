@@ -56,6 +56,7 @@ See the amanda-changers(7) manpage for usage information.
 #   pid           - the pid that reserved that slot.
 #   state         - SLOT_FULL/SLOT_EMPTY/SLOT_UNKNOWN
 #   device_status - the status of the device after the open or read_label
+#   device_error  - error message from the device
 #   f_type        - the F_TYPE of the fileheader.
 #   label         - the label, if known, of the volume in this slot
 
@@ -362,10 +363,14 @@ sub update {
 
 	my $slot = $res->{'this_slot'};
 	my $dev = $res->{device};
-	$dev->read_label();
-	my $label = $dev->volume_label;
 	$self->_update_slot_state(state => $state, dev => $dev, slot =>$slot);
-	$user_msg_fn->("recording volume '$label' in slot $slot");
+	if ($dev->status() == $DEVICE_STATUS_SUCCESS) {
+	    my $label = $dev->volume_label;
+	    $user_msg_fn->("recording volume '$label' in slot $slot");
+	} else {
+	    my $status = $dev->error_or_status;
+	    $user_msg_fn->("recording device error '" . $status . "' in slot $slot");
+	}
 	$res->release(
 	    finished_cb => $steps->{'released'},
 	    unlocked => 1,
@@ -407,10 +412,17 @@ sub inventory {
 	    if (defined $state->{slots}->{$unaliased}) {
 		$s->{'device_status'} =
 			      $state->{slots}->{$unaliased}->{device_status};
+		if ($s->{'device_status'} != $DEVICE_STATUS_SUCCESS) {
+		    $s->{'device_error'} =
+			      $state->{slots}->{$unaliased}->{device_error};
+		} else {
+		    $s->{'device_error'} = undef;
+		}
 		$s->{'f_type'} = $state->{slots}->{$unaliased}->{f_type};
 		$s->{'label'} = $state->{slots}->{$unaliased}->{label};
 	    } else {
 		$s->{'device_status'} = undef;
+		$s->{'device_error'} = undef;
 		$s->{'f_type'} = undef;
 		$s->{'label'} = undef;
 	    }
@@ -552,6 +564,11 @@ sub _update_slot_state {
     my $slot = $params{slot};
     my $unaliased = $self->{unaliased}->{$slot};
     $state->{slots}->{$unaliased}->{device_status} = "".scalar($dev->status);
+    if ($dev->status != $DEVICE_STATUS_SUCCESS) {
+	$state->{slots}->{$unaliased}->{device_error} = $dev->error;
+    } else {
+	$state->{slots}->{$unaliased}->{device_error} = undef;
+    }
     my $label = $dev->volume_label;
     $state->{slots}->{$unaliased}->{state} = Amanda::Changer::SLOT_FULL;
     $state->{slots}->{$unaliased}->{label} = $label;
@@ -651,6 +668,7 @@ sub set_label {
 	$state->{slots}->{$unaliased}->{label} =  $label;
 	$state->{slots}->{$unaliased}->{device_status} =
 				"".$DEVICE_STATUS_SUCCESS;
+	$state->{slots}->{$unaliased}->{device_error} = undef;
 	$state->{slots}->{$unaliased}->{f_type} =
 				"".scalar($Amanda::Header::F_TAPESTART);
 	$finished_cb->();
