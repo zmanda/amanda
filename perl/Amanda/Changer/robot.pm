@@ -617,9 +617,7 @@ sub load_unlocked {
 	} elsif ($device->status & $DEVICE_STATUS_VOLUME_UNLABELED) {
 	    $label = undef;
 	} else {
-	    return $self->make_error("fatal", $params{'res_cb'},
-		    message => "while waiting for '$device_name' to become ready: "
-			. $device->error_or_status());
+	    $label = undef;
 	}
 
 	# success!
@@ -687,7 +685,7 @@ sub load_unlocked {
 	$state->{'drives'}->{$drive}->{'label'} = $label;
 	$state->{'drives'}->{$drive}->{'state'} = Amanda::Changer::SLOT_FULL;
 	$state->{'drives'}->{$drive}->{'barcode'} = $state->{'slots'}->{$slot}->{'barcode'};
-	#$state->{'slots'}->{$slot}->{'device_status'} = 9;
+	$state->{'slots'}->{$slot}->{'device_status'} = $device->status;
 	if ($label and $state->{'slots'}->{$slot}->{'barcode'}) {
 	    $state->{'bc2lb'}->{$state->{'slots'}->{$slot}->{'barcode'}} = $label;
 	}
