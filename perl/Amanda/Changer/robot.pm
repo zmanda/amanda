@@ -68,6 +68,7 @@ See the amanda-changers(7) manpage for usage information.
 # as values.  Each slot's hash has keys
 #   state - SLOT_FULL/SLOT_EMPTY/SLOT_UNKNOWN
 #   device_status - the status of the device
+#   device_error - the error message of the device
 #   f_type - The f_type of the header
 #   label - volume label, if known
 #   barcode - volume barcode, if available
@@ -635,6 +636,7 @@ sub load_unlocked {
 	    # update metadata with this new information
 	    $state->{'slots'}->{$slot}->{'state'} = Amanda::Changer::SLOT_FULL;
 	    $state->{'slots'}->{$slot}->{'device_status'} = $device->status;
+	    $state->{'slots'}->{$slot}->{'device_error'} = $device->error;
 	    if (defined $device->{'volume_header'}) {
 		$state->{'slots'}->{$slot}->{'f_type'} = $device->{'volume_header'}->{type};
 	    } else {
@@ -657,6 +659,7 @@ sub load_unlocked {
 	    # update metadata with this new information
 	    $state->{'slots'}->{$slot}->{'state'} = Amanda::Changer::SLOT_FULL;
 	    $state->{'slots'}->{$slot}->{'device_status'} = $device->status;
+	    $state->{'slots'}->{$slot}->{'device_error'} = $device->error;
 	    if (defined $device->{'volume_header'}) {
 		$state->{'slots'}->{$slot}->{'f_type'} = $device->{'volume_header'}->{type};
 	    } else {
@@ -829,6 +832,11 @@ sub _set_label_unlocked {
 	delete $state->{'slots'}->{$slot}->{'unkknown_state'};
 	$state->{'slots'}->{$slot}->{'state'} = Amanda::Changer::SLOT_FULL;
 	$state->{'slots'}->{$slot}->{'device_status'} = "".$dev->status;
+	if ($dev->status != $DEVICE_STATUS_SUCCESS) {
+	    $state->{'slots'}->{$slot}->{'device_error'} = $dev->error;
+	} else {
+	    $state->{'slots'}->{$slot}->{'device_error'} = undef;
+	}
 	my $volume_header = $dev->volume_header;
 	if (defined $volume_header) {
 	    $state->{'slots'}->{$slot}->{'f_type'} = "".$volume_header->{type};
@@ -1088,6 +1096,7 @@ sub update_unlocked {
 	    while (my ($sl, $inf) = each %{$state->{'slots'}}) {
 		if ($inf->{'label'} and $inf->{'label'} eq $label) {
 		    delete $inf->{'device_status'};
+		    delete $inf->{'device_error'};
 		    delete $inf->{'f_type'};
 		    delete $inf->{'label'};
 		}
@@ -1150,6 +1159,7 @@ sub update_unlocked {
 	if (!defined $state->{'slots'}->{$slot}->{'barcode'}) {
 	    $state->{'slots'}->{$slot}->{'label'} = undef;
 	    $state->{'slots'}->{$slot}->{'device_status'} = undef;
+	    $state->{'slots'}->{$slot}->{'device_error'} = undef;
 	    $state->{'slots'}->{$slot}->{'f_type'} = undef;
 	    if (defined $state->{'slots'}->{$slot}->{'loaded_in'}) {
 		my $drive = $state->{'slots'}->{$slot}->{'loaded_in'};
@@ -1228,6 +1238,7 @@ sub inventory_unlocked {
 	$i->{'slot'} = $slot_name;
 	$i->{'state'} = $slot->{'state'};
 	$i->{'device_status'} = $slot->{'device_status'};
+	$i->{'device_error'} = $slot->{'device_error'};
 	$i->{'f_type'} = $slot->{'f_type'};
 	$i->{'label'} = $slot->{'label'};
 	$i->{'barcode'} = $slot->{'barcode'}
@@ -1524,6 +1535,7 @@ sub _with_updated_state {
                 $new_slots->{$slot} = {
                     state => Amanda::Changer::SLOT_EMPTY,
 		    device_status => undef,
+		    device_error => undef,
 		    f_type => undef,
                     label => undef,
                     barcode => undef,
@@ -1540,6 +1552,7 @@ sub _with_updated_state {
 		$new_slots->{$slot} = {
                     state => Amanda::Changer::SLOT_FULL,
 		    device_status => $state->{'slots'}->{$slot}->{device_status},
+		    device_error => $state->{'slots'}->{$slot}->{device_error},
 		    f_type => $state->{'slots'}->{$slot}->{f_type},
 		    label => $label,
 		    barcode => $info->{'barcode'},
@@ -1556,6 +1569,7 @@ sub _with_updated_state {
 		    $new_slots->{$slot} = {
 			state => Amanda::Changer::SLOT_FULL,
 			device_status => undef,
+			device_error => undef,
 			f_type => undef,
 			label => undef,
 			barcode => undef,
@@ -1651,6 +1665,7 @@ sub _with_updated_state {
 		$state->{'slots'}->{$info->{'orig_slot'}} = {
                     state => $info->{'state'},
                     device_status => $old_state->{'device_status'},
+                    device_error => $old_state->{'device_error'},
                     f_type => $old_state->{'f_type'},
 		    label => $info->{'label'},
                     barcode => $info->{'barcode'},
