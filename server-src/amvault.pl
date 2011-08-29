@@ -313,7 +313,7 @@ sub plan_cb {
 		      $dump->{'dump_timestamp'} . " " .
 		      $dump->{'level'} . "\n";
 	    }
-	    $total_kb += $dump->{'kb'};
+	    $total_kb += int $dump->{'kb'};
 	}
 
 	print STDOUT "Total Size: $total_kb KB\n";
