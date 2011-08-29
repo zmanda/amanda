@@ -1,4 +1,7 @@
 2011-08-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: Fix warning.
+
+2011-08-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Changer_ndmp.pl,
 	  installcheck/Amanda_Changer_robot.pl: Fix for previous patch.
 

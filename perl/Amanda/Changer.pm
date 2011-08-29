@@ -1418,9 +1418,11 @@ sub volume_is_labelable {
     if (!defined $dev_status) {
 	return 0;
     } elsif ($dev_status & $DEVICE_STATUS_VOLUME_UNLABELED and
-	$f_type == $Amanda::Header::F_EMPTY) {
+	     defined $f_type and
+	     $f_type == $Amanda::Header::F_EMPTY) {
 	return 0 if (!$autolabel->{'empty'});
     } elsif ($dev_status & $DEVICE_STATUS_VOLUME_UNLABELED and
+	     defined $f_type and
 	     $f_type == $Amanda::Header::F_WEIRD) {
 	return 0 if (!$autolabel->{'non_amanda'});
     } elsif ($dev_status & $DEVICE_STATUS_VOLUME_ERROR) {
