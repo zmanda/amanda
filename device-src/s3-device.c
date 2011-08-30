@@ -1652,7 +1652,9 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
     pself->in_file = FALSE;
 
     /* try creating the bucket, in case it doesn't exist */
-    if (mode != ACCESS_READ && !s3_make_bucket(self->s3t[0].s3, self->bucket)) {
+    if (mode != ACCESS_READ &&
+	!s3_is_bucket_exists(self->s3t[0].s3, self->bucket) &&
+	!s3_make_bucket(self->s3t[0].s3, self->bucket)) {
         guint response_code;
         s3_error_code_t s3_error_code;
         s3_error(self->s3t[0].s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);

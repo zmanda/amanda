@@ -2130,6 +2130,25 @@ cleanup:
 }
 
 gboolean
+s3_is_bucket_exists(S3Handle *hdl,
+                     const char *bucket)
+{
+    s3_result_t result = S3_RESULT_FAIL;
+    static result_handling_t result_handling[] = {
+        { 200,  0,                    0, S3_RESULT_OK },
+        { 404, S3_ERROR_NoSuchBucket, 0, S3_RESULT_RETRY },
+        RESULT_HANDLING_ALWAYS_RETRY,
+        { 0, 0,                       0, /* default: */ S3_RESULT_FAIL  }
+        };
+
+    result = perform_request(hdl, "GET", bucket, NULL, NULL, NULL,
+                             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                             NULL, NULL, result_handling);
+
+    return result == S3_RESULT_OK;
+}
+
+gboolean
 s3_delete_bucket(S3Handle *hdl,
                  const char *bucket)
 {
