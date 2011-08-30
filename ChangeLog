@@ -1,4 +1,8 @@
 2011-08-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c (s3_is_bucket_exists): Do not retry if bucket do
+	  not exists.
+
+2011-08-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c (s3_is_bucket_exists): New function to check if a
 	  bucket exists.
 	* device-src/s3.h (s3_is_bucket_exists): Prototype.

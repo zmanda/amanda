@@ -400,6 +400,8 @@ static void s3_thread_read_block(gpointer thread_data,
 				 gpointer data);
 static void s3_thread_write_block(gpointer thread_data,
 				  gpointer data);
+static gboolean make_bucket(Device * pself);
+
 
 /* Wait that all threads are done */
 static void reset_thread(S3Device *self);
@@ -1555,6 +1557,35 @@ static gboolean setup_handle(S3Device * self) {
     return TRUE;
 }
 
+static gboolean
+make_bucket(
+    Device * pself)
+{
+    S3Device *self = S3_DEVICE(pself);
+
+    if (s3_is_bucket_exists(self->s3t[0].s3, self->bucket)) {
+	return TRUE;
+    }
+
+    if (!s3_make_bucket(self->s3t[0].s3, self->bucket)) {
+        guint response_code;
+        s3_error_code_t s3_error_code;
+        s3_error(self->s3t[0].s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
+
+        /* if it isn't an expected error (bucket already exists),
+         * return FALSE */
+        if (response_code != 409 ||
+            (s3_error_code != S3_ERROR_BucketAlreadyExists &&
+	     s3_error_code != S3_ERROR_BucketAlreadyOwnedByYou)) {
+	    device_set_error(pself,
+		g_strdup_printf(_("While creating new S3 bucket: %s"), s3_strerror(self->s3t[0].s3)),
+		DEVICE_STATUS_DEVICE_ERROR);
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
 static DeviceStatusFlags
 s3_device_read_label(Device *pself) {
     S3Device *self = S3_DEVICE(pself);
@@ -1578,6 +1609,11 @@ s3_device_read_label(Device *pself) {
     reset_thread(self);
 
     key = special_file_to_key(self, "tapestart", -1);
+
+    if (!make_bucket(pself)) {
+	return pself->status;
+    }
+
     if (!s3_read(self->s3t[0].s3, self->bucket, key, S3_BUFFER_WRITE_FUNCS, &buf, NULL, NULL)) {
         guint response_code;
         s3_error_code_t s3_error_code;
@@ -1652,23 +1688,8 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
     pself->in_file = FALSE;
 
     /* try creating the bucket, in case it doesn't exist */
-    if (mode != ACCESS_READ &&
-	!s3_is_bucket_exists(self->s3t[0].s3, self->bucket) &&
-	!s3_make_bucket(self->s3t[0].s3, self->bucket)) {
-        guint response_code;
-        s3_error_code_t s3_error_code;
-        s3_error(self->s3t[0].s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
-
-        /* if it isn't an expected error (bucket already exists),
-         * return FALSE */
-        if (response_code != 409 ||
-            (s3_error_code != S3_ERROR_BucketAlreadyExists &&
-	     s3_error_code != S3_ERROR_BucketAlreadyOwnedByYou)) {
-	    device_set_error(pself,
-		g_strdup_printf(_("While creating new S3 bucket: %s"), s3_strerror(self->s3t[0].s3)),
-		DEVICE_STATUS_DEVICE_ERROR);
-            return FALSE;
-        }
+    if (!make_bucket(pself)) {
+	return FALSE;
     }
 
     /* take care of any dirty work for this mode */
