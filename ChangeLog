@@ -1,4 +1,7 @@
 2011-08-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Device.pl: Check invalid location on s3 device.
+
+2011-08-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c (s3_is_bucket_exists): Do not retry if bucket do
 	  not exists.
 
