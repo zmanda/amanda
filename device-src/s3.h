@@ -424,6 +424,16 @@ gboolean
 s3_make_bucket(S3Handle *hdl,
                const char *bucket);
 
+/* Check if a bucket exists.
+ *
+ * @param hdl: the S3Handle object
+ * @param bucket: the bucket to create
+ * @returns: FALSE if an error occur
+ */
+gboolean
+s3_is_bucket_exists(S3Handle *hdl,
+                    const char *bucket);
+
 /* Delete a bucket
  *
  * @note A bucket can not be deleted if it still contains keys

@@ -1,4 +1,11 @@
-2011-082011-08-29  Jean-Louis Martineau <martineau@zmanda.com>
+2011-08-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c (s3_is_bucket_exists): New function to check if a 
+	  bucket exists.
+	* device-src/s3.h (s3_is_bucket_exists): Prototype.
+	* device-src/s3-device.c: Call s3_is_bucket_exists before
+	  s3_make_bucket.
+
+2011-08-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/multi.pm: Keep the device_error in the state file.
 	* perl/Amanda/Changer/robot.pm: Keep the device_error in the state file.
 	* server-src/amtape.pl (inventory): Print inventory device error.
@@ -7,7 +14,7 @@
 	  installcheck/Amanda_Changer_robot.pl: Fix for device_error in
 	  state file.
 
--29  Jean-Louis Martineau <martineau@zmanda.com>
+2011-08-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Fix warning.
 
 2011-08-29  Jean-Louis Martineau <martineau@zmanda.com>
