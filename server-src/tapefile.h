@@ -42,6 +42,7 @@ typedef struct tape_s {
     char *label;
     char *barcode;
     char *meta;
+    guint64 blocksize;
     char *comment;
 } tape_t;
 

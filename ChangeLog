@@ -1,4 +1,13 @@
 2011-08-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/tapefile.h (struct tape_s): Add blocksize.
+	* server-src/tapefile.c: Print and parse blocksize in tapelist file.
+	* perl/Amanda/Tapelist.swg: Print and parse blocksize in tapelist file.
+	* perl/Amanda/Taper/Scribe.pm: Add blocksize argument to add_tapelabel.
+	* server-src/amlabel.pl: Add blocksize argument to add_tapelabel.
+	* installcheck/Amanda_Tapelist.pl: Fix for tapelist file format.
+	* installcheck/amlabel.pl: Fix for tapelist file format.
+
+2011-08-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.h (struct Device): Add header_block_size.
 	* device-src/null-device.c, device-src/rait-device.c,
 	  device-src/s3-device.c, device-src/tape-device.c,

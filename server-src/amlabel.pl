@@ -298,7 +298,7 @@ sub main {
 	    # update the tapelist
 	    $tl->reload(1);
 	    $tl->remove_tapelabel($label);
-	    $tl->add_tapelabel("0", $label, undef, 1, $meta, $res->{'barcode'});
+	    $tl->add_tapelabel("0", $label, undef, 1, $meta, $res->{'barcode'}, $dev->header_block_size/1024);
 	    $tl->write();
 
 	    print "Success!\n";
