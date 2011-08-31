@@ -243,6 +243,7 @@ main(
     argument.level      = NULL;
     argument.command_options = NULL;
     init_dle(&argument.dle);
+    argument.dle.record = 0;
 
     opterr = 0;
     while (1) {
