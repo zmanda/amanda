@@ -1,4 +1,9 @@
 2011-08-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: filter stderr make result strange,
+			       filter exit_code != 0 make it fail.
+
+
+2011-08-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Do not rename gnutar-list if record is not
 	  set.
 

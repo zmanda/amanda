@@ -1311,6 +1311,80 @@ do_dump(
 	if (!errstr) errstr = g_strdup(_("got no data"));
     }
 
+    if (indexfile_tmp) {
+	amwait_t index_status;
+
+	/*@i@*/ aclose(indexout);
+	waitpid(indexpid,&index_status,0);
+	log_add(L_INFO, "pid-done %ld", (long)indexpid);
+	if (rename(indexfile_tmp, indexfile_real) != 0) {
+	    log_add(L_WARNING, _("could not rename \"%s\" to \"%s\": %s"),
+		    indexfile_tmp, indexfile_real, strerror(errno));
+	}
+	amfree(indexfile_tmp);
+	amfree(indexfile_real);
+    }
+
+    if (db->compresspid != -1 && dump_result < 2) {
+	amwait_t  wait_status;
+	char *errmsg = NULL;
+
+	waitpid(db->compresspid, &wait_status, 0);
+	if (WIFSIGNALED(wait_status)) {
+	    errmsg = g_strdup_printf(_("%s terminated with signal %d"),
+				     "compress", WTERMSIG(wait_status));
+	} else if (WIFEXITED(wait_status)) {
+	    if (WEXITSTATUS(wait_status) != 0) {
+		errmsg = g_strdup_printf(_("%s exited with status %d"),
+					 "compress", WEXITSTATUS(wait_status));
+	    }
+	} else {
+	    errmsg = g_strdup_printf(_("%s got bad exit"),
+				     "compress");
+	}
+	if (errmsg) {
+	    g_fprintf(errf, _("? %s\n"), errmsg);
+	    g_debug("%s", errmsg);
+	    dump_result = max(dump_result, 2);
+	    if (!errstr)
+		errstr = errmsg;
+	    else
+		g_free(errmsg);
+	}
+	log_add(L_INFO, "pid-done %ld", (long)db->compresspid);
+	db->compresspid = -1;
+    }
+
+    if (db->encryptpid != -1 && dump_result < 2) {
+	amwait_t  wait_status;
+	char *errmsg = NULL;
+
+	waitpid(db->encryptpid, &wait_status, 0);
+	if (WIFSIGNALED(wait_status)) {
+	    errmsg = g_strdup_printf(_("%s terminated with signal %d"),
+				     "encrypt", WTERMSIG(wait_status));
+	} else if (WIFEXITED(wait_status)) {
+	    if (WEXITSTATUS(wait_status) != 0) {
+		errmsg = g_strdup_printf(_("%s exited with status %d"),
+					 "encrypt", WEXITSTATUS(wait_status));
+	    }
+	} else {
+	    errmsg = g_strdup_printf(_("%s got bad exit"),
+				     "encrypt");
+	}
+	if (errmsg) {
+	    g_fprintf(errf, _("? %s\n"), errmsg);
+	    g_debug("%s", errmsg);
+	    dump_result = max(dump_result, 2);
+	    if (!errstr)
+		errstr = errmsg;
+	    else
+		g_free(errmsg);
+	}
+	log_add(L_INFO, "pid-done %ld", (long)db->encryptpid);
+	db->encryptpid  = -1;
+    }
+
     if (dump_result > 1)
 	goto failed;
 
@@ -1358,29 +1432,6 @@ do_dump(
 
     if (data_path == DATA_PATH_AMANDA)
 	aclose(db->fd);
-
-    if (indexfile_tmp) {
-	amwait_t index_status;
-
-	/*@i@*/ aclose(indexout);
-	waitpid(indexpid,&index_status,0);
-	log_add(L_INFO, "pid-done %ld", (long)indexpid);
-	if (rename(indexfile_tmp, indexfile_real) != 0) {
-	    log_add(L_WARNING, _("could not rename \"%s\" to \"%s\": %s"),
-		    indexfile_tmp, indexfile_real, strerror(errno));
-	}
-	amfree(indexfile_tmp);
-	amfree(indexfile_real);
-    }
-
-    if(db->compresspid != -1) {
-	waitpid(db->compresspid,NULL,0);
-	log_add(L_INFO, "pid-done %ld", (long)db->compresspid);
-    }
-    if(db->encryptpid != -1) {
-	waitpid(db->encryptpid,NULL,0);
-	log_add(L_INFO, "pid-done %ld", (long)db->encryptpid);
-    }
 
     amfree(errstr);
     dumpfile_free_data(&file);
@@ -1750,10 +1801,6 @@ handle_filter_stderr(
     nread = read(filter->fd, filter->buffer + filter->first + filter->size,
 			     filter->allocated_size - filter->first - filter->size - 2);
 
-    if (nread != 0) {
-	dump_result = max(dump_result, 2);
-    }
-
     if (nread <= 0) {
 	aclose(filter->fd);
 	if (filter->size > 0 && filter->buffer[filter->first + filter->size - 1] != '\n') {
@@ -1779,6 +1826,7 @@ handle_filter_stderr(
 	filter->first += len;
 	filter->size -= len;
 	b = p + 1;
+	dump_result = max(dump_result, 1);
     }
 
     if (nread <= 0) {
@@ -2008,7 +2056,8 @@ runencrypt(
 	aclose(errpipe[0]);
 	aclose(errpipe[1]);
 	return (-1);
-    default:
+    default: {
+	char *base;
 	rval = dup2(outpipe[1], outfd);
 	if (rval < 0) {
 	    g_free(errstr);
@@ -2019,7 +2068,9 @@ runencrypt(
 	aclose(errpipe[1]);
 	filter = g_new0(filter_t, 1);
 	filter->fd = errpipe[0];
-	filter->name = "encrypt";
+	base = g_strdup(srv_encrypt);
+	filter->name = g_strdup(basename(base));
+	amfree(base);
 	filter->buffer = NULL;
 	filter->size = 0;
 	filter->allocated_size = 0;
@@ -2027,6 +2078,7 @@ runencrypt(
 				       handle_filter_stderr, filter);
 g_debug("event register %s %d", "encrypt data", filter->fd);
 	return (rval);
+	}
     case 0: {
 	char *base;
 	if (dup2(outpipe[0], 0) < 0) {
