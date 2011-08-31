@@ -371,6 +371,7 @@ main(
     argument.exclude_list_glob = NULL;
     argument.verbose = 0;
     init_dle(&argument.dle);
+    argument.dle.record = 0;
 
     while (1) {
 	int option_index = 0;
@@ -1060,16 +1061,25 @@ amgtar_backup(
     }
 
     if (!errmsg && strlen(incrname) > 4) {
-	char *nodotnew;
-	nodotnew = g_strdup(incrname);
-	nodotnew[strlen(nodotnew)-4] = '\0';
-	if (rename(incrname, nodotnew)) {
-	    dbprintf(_("%s: warning [renaming %s to %s: %s]\n"),
-		     get_pname(), incrname, nodotnew, strerror(errno));
-	    g_fprintf(mesgstream, _("? warning [renaming %s to %s: %s]\n"),
-		      incrname, nodotnew, strerror(errno));
+	if (argument->dle.record) {
+	    char *nodotnew;
+	    nodotnew = g_strdup(incrname);
+	    nodotnew[strlen(nodotnew)-4] = '\0';
+	    if (rename(incrname, nodotnew)) {
+		dbprintf(_("%s: warning [renaming %s to %s: %s]\n"),
+			 get_pname(), incrname, nodotnew, strerror(errno));
+		g_fprintf(mesgstream, _("? warning [renaming %s to %s: %s]\n"),
+			  incrname, nodotnew, strerror(errno));
+	    }
+	    amfree(nodotnew);
+	} else {
+	    if (unlink(incrname) == -1) {
+		dbprintf(_("%s: warning [unlink %s: %s]\n"),
+			 get_pname(), incrname, strerror(errno));
+		g_fprintf(mesgstream, _("? warning [unlink %s: %s]\n"),
+			  incrname, strerror(errno));
+	    }
 	}
-	amfree(nodotnew);
     }
 
     dbprintf("sendbackup: size %lld\n", (long long)dump_size);

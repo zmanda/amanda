@@ -1,4 +1,8 @@
 2011-08-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Do not rename gnutar-list if record is not
+	  set.
+
+2011-08-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/tapefile.h (struct tape_s): Add blocksize.
 	* server-src/tapefile.c: Print and parse blocksize in tapelist file.
 	* perl/Amanda/Tapelist.swg: Print and parse blocksize in tapelist file.
