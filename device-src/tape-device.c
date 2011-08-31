@@ -919,6 +919,7 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
 	return dself->status;
     }
 
+    dself->header_block_size = buffer_len;
     header = dself->volume_header = g_new(dumpfile_t, 1);
     fh_init(header);
 
@@ -1111,6 +1112,7 @@ static gboolean write_tapestart_header(TapeDevice * self, char * label,
 	return FALSE;
      }
 
+     d_self->header_block_size = d_self->block_size;
      amfree(header_buf);
 
      if (!tape_weof(self->fd, 1)) {

@@ -132,6 +132,7 @@ typedef struct Device {
     gsize min_block_size;
     gsize max_block_size;
     gsize block_size;
+    gsize header_block_size;
 
     /* surety and source for the block size; if you set block_size directly,
      * set these, too! */

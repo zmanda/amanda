@@ -1134,6 +1134,7 @@ static DeviceStatusFlags rait_device_read_label(Device * dself) {
         if (first_success->volume_header != NULL) {
             dself->volume_header = dumpfile_copy(first_success->volume_header);
         }
+	dself->header_block_size = first_success->header_block_size;
     }
 
     g_ptr_array_free_full(ops);
@@ -1300,6 +1301,12 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
 	}
     }
 
+    if (total_status == DEVICE_STATUS_SUCCESS) {
+	StartOp * op = g_ptr_array_index(ops, 0);
+	Device *child = op->base.child;
+	dself->header_block_size = child->header_block_size;
+    }
+
     amfree(label_from_device);
     g_ptr_array_free_full(ops);
 
@@ -1309,7 +1316,6 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
 	device_set_error(dself, failure_errmsgs, total_status);
         return FALSE;
     }
-
     amfree(failure_errmsgs);
     return TRUE;
 }
