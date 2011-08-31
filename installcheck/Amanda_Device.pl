@@ -732,7 +732,7 @@ my $base_name;
 
 SKIP: {
     skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
-            91 +
+            101 +
             1 * $verify_file_count +
             7 * $write_file_count +
             13 * $s3_make_device_count
