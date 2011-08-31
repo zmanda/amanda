@@ -1,4 +1,11 @@
 2011-08-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/device.h (struct Device): Add header_block_size.
+	* device-src/null-device.c, device-src/rait-device.c,
+	  device-src/s3-device.c, device-src/tape-device.c,
+	  device-src/vfs-device.c: Set header_block_size.
+	* perl/Amanda/Device.swg: Swig header_block_size.
+
+2011-08-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Device.pl: Fix number of skipped test for S3.
 
 2011-08-31  Jean-Louis Martineau <martineau@zmanda.com>

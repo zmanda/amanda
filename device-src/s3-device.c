@@ -548,7 +548,7 @@ write_amanda_header(S3Device *self,
 	d_self->volume_header = dumpinfo;
         self->volume_bytes += header_size;
     }
-
+    d_self->header_block_size = header_size;
     return result;
 }
 
@@ -1646,6 +1646,7 @@ s3_device_read_label(Device *pself) {
         return pself->status;
     }
 
+    pself->header_block_size = buf.buffer_len;
     g_assert(buf.buffer != NULL);
     amanda_header = g_new(dumpfile_t, 1);
     parse_file_header(buf.buffer, amanda_header, buf.buffer_pos);

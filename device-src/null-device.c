@@ -244,6 +244,7 @@ null_device_start (Device * pself, DeviceAccessMode mode,
         pself->volume_label = g_strdup(label);
         g_free(pself->volume_time);
         pself->volume_time = g_strdup(timestamp);
+	pself->header_block_size = 32768;
 	return TRUE;
     } else {
 	device_set_error(pself,

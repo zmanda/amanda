@@ -553,6 +553,7 @@ typedef struct Device {
 	gsize min_block_size(void) { return self->min_block_size; }
 	gsize max_block_size(void) { return self->max_block_size; }
 	gsize block_size(void) { return self->block_size; }
+	gsize header_block_size(void) { return self->header_block_size; }
 	dumpfile_t *volume_header(void) { return self->volume_header; }
     };
 

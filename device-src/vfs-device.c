@@ -690,6 +690,7 @@ static gboolean clear_and_prepare_label(VfsDevice * self, char * label,
         return FALSE;
     }
     dumpfile_free(d_self->volume_header);
+    d_self->header_block_size = VFS_DEVICE_LABEL_SIZE;
     d_self->volume_header = label_header;
     self->volume_bytes = VFS_DEVICE_LABEL_SIZE;
     return TRUE;
@@ -1231,6 +1232,9 @@ vfs_device_seek_file (Device * dself, guint requested_file) {
     }
 
     /* update our state */
+    if (requested_file == 0) {
+	dself->header_block_size = header_buffer_size;
+    }
     dself->in_file = TRUE;
     dself->file = file;
 
