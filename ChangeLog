@@ -1,3 +1,6 @@
+2011-08-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Print why a disk is skip if DS_NOINC.
+
 2011-08-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Device.pl: Check invalid location on s3 device.
 

@@ -1028,6 +1028,10 @@ setup_estimate(
 	case DS_STANDARD: 
 	case DS_NOINC:
 	    askfor(ep, i++, 0, &info);
+	    if (ep->last_level == -1)
+		ep->degr_mesg = _("Skipping: new disk can't be dumped in degraded mode");
+	    else
+		ep->degr_mesg = _("Skipping: strategy NOINC can't be dumped in degraded mode");
 	    if(dp->skip_full) {
 		log_add(L_INFO, _("Ignoring skip-full for %s:%s "
 			"because the strategy is NOINC."),
