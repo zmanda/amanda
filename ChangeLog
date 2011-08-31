@@ -1,4 +1,7 @@
 2011-08-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Device.pl: Fix number of skipped test for S3.
+
+2011-08-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Print why a disk is skip if DS_NOINC.
 
 2011-08-30  Jean-Louis Martineau <martineau@zmanda.com>
