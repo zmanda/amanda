@@ -180,7 +180,7 @@ _xdt_dbg(const char *fmt, ...)
     arglist_start(argp, fmt);
     g_vsnprintf(msg, sizeof(msg), fmt, argp);
     arglist_end(argp);
-    g_debug("XDT thd-%p: %s", g_thread_self(), msg);
+    g_debug("XDT: %s", msg);
 }
 
 /* "Fast forward" the slice list by the given length.  This will free any

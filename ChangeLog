@@ -1,4 +1,12 @@
 2011-08-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/debug.c (debug_printf): Print a thread id.
+	* device-src/xfer-dest-taper-cacher.c,
+	  device-src/xfer-dest-taper-directtcp.c,
+	  device-src/xfer-dest-taper-splitter.c,
+	  device-src/xfer-source-recovery.c,
+	  server-src/xfer-dest-holding.c: Remove printing of thread id.
+
+2011-08-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: filter stderr make result strange,
 			       filter exit_code != 0 make it fail.
 

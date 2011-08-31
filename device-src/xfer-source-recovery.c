@@ -114,7 +114,7 @@ _xsr_dbg(const char *fmt, ...)
     arglist_start(argp, fmt);
     g_vsnprintf(msg, sizeof(msg), fmt, argp);
     arglist_end(argp);
-    g_debug("XSR thd-%p: %s", g_thread_self(), msg);
+    g_debug("XSR: %s", msg);
 }
 
 /*

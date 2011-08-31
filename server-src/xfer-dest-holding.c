@@ -141,7 +141,7 @@ _xdh_dbg(const char *fmt, ...)
     arglist_start(argp, fmt);
     msg = g_strdup_vprintf(fmt, argp);
     arglist_end(argp);
-    g_debug("XDH thd-%p: %s", g_thread_self(), msg);
+    g_debug("XDH: %s", msg);
     g_free(msg);
 }
 
