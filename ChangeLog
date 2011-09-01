@@ -1,4 +1,7 @@
-2011-08-31  Jean-Louis Martineau <martineau@zmanda.com>
+2011-09-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amadmin.c (export) parse version without patch number.
+
+2011-09-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/ScanInventory.pm: Get the meta label before
 	  calling make_new_tape_label.
 	* perl/Amanda/Taper/Scan/traditional.pm: Get the meta label before
