@@ -538,13 +538,25 @@ sub {
     my $result_cb = make_cb(result_cb => sub {
 	my ($err, $res, $label, $mode) = @_;
 	if ($err) {
-	    $taperscan->quit() if defined $taperscan;
-	    return failure($err, $finished_cb);
+	    if ($res) {
+		$res->release(finished_cb => sub {
+		    $taperscan->quit() if defined $taperscan;
+		    return failure($err, $finished_cb);
+		});
+		return;
+	    } else {
+		$taperscan->quit() if defined $taperscan;
+		return failure($err, $finished_cb);
+	    }
 	}
 
 	my $modestr = ($mode == $ACCESS_APPEND)? "append" : "write";
 	my $slot = $res->{'this_slot'};
-	print STDERR "Will $modestr to volume $label in slot $slot.\n";
+	if (defined $res->{'device'} and defined $res->{'device'}->volume_label()) {
+	    print STDERR "Will $modestr to volume '$label' in slot $slot.\n";
+	} else {
+	    print STDERR "Will $modestr label '$label' to new volume in slot $slot.\n";
+	}
 	$res->release(finished_cb => sub {
 	    my ($err) = @_;
 	    die "$err" if $err;

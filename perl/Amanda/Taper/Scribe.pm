@@ -1375,9 +1375,7 @@ sub _device_start {
 		}
 	    }
 	    ($new_label, my $err) = $reservation->make_new_tape_label(
-					meta => $meta,
-					barcode => $reservation->{'barcode'},
-					slot => $reservation->{'slot'});
+					meta => $meta);
 	    if (!defined $new_label) {
 		$tl->unlock();
 		return $finished_cb->($err);
@@ -1579,6 +1577,7 @@ sub scribe_notif_tape_done {
 package Amanda::Taper::Scribe::DevHandling;
 use Amanda::MainLoop;
 use Carp;
+use Amanda::Debug qw( :logging );
 
 # This class handles scanning for volumes, requesting permission for those
 # volumes (the driver likes to feel like it's in control), and providing those
@@ -1781,15 +1780,12 @@ sub _start_scanning {
 	$self->{'scan_running'} = 0;
 	$self->{'scan_finished'} = 1;
 
-	if ($error) {
-	    $self->{'scan_error'} = $error;
-	} else {
-	    $self->{'reservation'} = $reservation;
-	    $self->{'device'} = $reservation->{'device'};
-	    $self->{'volume_label'} = $volume_label;
-	    $self->{'access_mode'} = $access_mode;
-	    $self->{'is_new'} = $is_new;
-	}
+	$self->{'scan_error'} = $error;
+	$self->{'reservation'} = $reservation;
+	$self->{'device'} = $reservation->{'device'} if $reservation;
+	$self->{'volume_label'} = $volume_label;
+	$self->{'access_mode'} = $access_mode;
+	$self->{'is_new'} = $is_new;
 
 	$self->_maybe_callback();
     });

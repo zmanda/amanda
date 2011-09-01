@@ -148,13 +148,13 @@ ok(run('amtape', 'TESTCONF', 'show'),
     "'amtape TESTCONF show'");
 like($Installcheck::Run::stderr,
     qr/slot +2:.*label MyTape\nslot +3/,
-    "..result correct");
+    "'amtape TESTCONF show' ..result correct");
 
 ok(run('amtape', 'TESTCONF', 'taper'),
     "'amtape TESTCONF taper'");
 like($Installcheck::Run::stderr,
-    qr/Will write to volume TESTCONF13 in slot 3/,
-    "..result correct");
+    qr/Will write to volume 'TESTCONF13' in slot 3/,
+    "'amtape TESTCONF taper' ..result correct");
 
 ###
 ## shift to using the new Amanda::Changer::disk
@@ -221,7 +221,7 @@ like($Installcheck::Run::stdout,
 ok(run('amtape', 'TESTCONF', 'taper'),
     "'amtape TESTCONF taper'");
 like($Installcheck::Run::stderr,
-    qr/Will write to volume TESTCONF13 in slot 3/,
-    "..result correct");
+    qr/Will write to volume 'TESTCONF13' in slot 3/,
+    "'amtape TESTCONF taper' ..result correct");
 
 Installcheck::Run::cleanup();

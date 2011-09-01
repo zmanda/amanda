@@ -1,4 +1,15 @@
 2011-08-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/ScanInventory.pm: Get the meta label before
+	  calling make_new_tape_label.
+	* perl/Amanda/Taper/Scan/traditional.pm: Get the meta label before
+	  calling make_new_tape_label.
+	* perl/Amanda/Taper/Scribe.pm: Return the reservation on error.
+	* server-src/amcheck-device.pl: Release the reservation on error.
+	* server-src/amtape.pl: Release the reservation on error,
+	  change 'amtape taper' output to be the same as amcheck.
+	* installcheck/amtape.pl: Fix for new amtape output.
+
+2011-08-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/debug.c (debug_printf): Print a thread id.
 	* device-src/xfer-dest-taper-cacher.c,
 	  device-src/xfer-dest-taper-directtcp.c,

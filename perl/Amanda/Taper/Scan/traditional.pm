@@ -221,122 +221,6 @@ sub stage_1 {
     };
 }
 
-sub try_volume {
-    my $self = shift;
-    my ($res, $result_cb) = @_;
-
-    my $slot = $res->{'this_slot'};
-    my $dev = $res->{'device'};
-    my $status = $dev->status;
-    my $labelstr = $res->{'chg'}->{'labelstr'};
-    my $label;
-    my $autolabel = $res->{'chg'}->{'autolabel'};
-
-    if ($status == $DEVICE_STATUS_SUCCESS) {
-        $label = $dev->volume_label;
-
-        if ($label !~ /$labelstr/) {
-	    if (!$autolabel->{'other_config'}) {
-		$self->_user_msg(slot_result             => 1,
-				 does_not_match_labelstr => 1,
-				 labelstr                => $labelstr,
-				 slot                    => $slot,
-				 label                   => $label,
-				 res                     => $res);
-		return 0;
-	    }
-        } else {
-	    # verify that the label is in the tapelist
-	    my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
-	    if (!$tle) {
-		$self->_user_msg(slot_result     => 1,
-				 not_in_tapelist => 1,
-				 slot            => $slot,
-				 label           => $label,
-				 res             => $res);
-		return 0;
-	    }
-
-	    # see if it's reusable
-	    if (!$self->is_reusable_volume(label => $label, new_label_ok => 1)) {
-		$self->_user_msg(slot_result => 1,
-				 active      => 1,
-				 slot        => $slot,
-				 label       => $label,
-				 res         => $res);
-		return 0;
-	    }
-	    $self->_user_msg(slot_result => 1,
-			     slot        => $slot,
-			     label       => $label,
-			     res         => $res);
-	    $self->scan_result(res => $res, label => $label,
-		    mode => $ACCESS_WRITE, is_new => 0, result_cb => $result_cb);
-	    return 1;
-	}
-    }
-
-    if (!defined $autolabel->{'template'} ||
-	$autolabel->{'template'} eq "") {
-	$self->_user_msg(slot_result  => 1,
-			 not_autolabel => 1,
-			 slot         => $slot,
-			 res          => $res);
-	return 0;
-    }
-
-    $self->_user_msg(slot_result => 1, slot => $slot, res => $res);
-
-    if ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
-	$dev->volume_header and
-	$dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY) {
-	if (!$autolabel->{'empty'}) {
-	    $self->_user_msg(slot_result  => 1,
-			     empty        => 1,
-			     slot         => $slot,
-			     res          => $res);
-	    return 0;
-	}
-    } elsif ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
-	$dev->volume_header and
-	$dev->volume_header->{'type'} == $Amanda::Header::F_WEIRD) {
-	if (!$autolabel->{'non_amanda'}) {
-	    $self->_user_msg(slot_result  => 1,
-			     non_amanda   => 1,
-			     slot         => $slot,
-			     res          => $res);
-	    return 0;
-	}
-    } elsif ($status & $DEVICE_STATUS_VOLUME_ERROR) {
-	if (!$autolabel->{'volume_error'}) {
-	    $self->_user_msg(slot_result  => 1,
-			     volume_error => 1,
-			     err          => $dev->error_or_status(),
-			     slot         => $slot,
-			     res          => $res);
-	    return 0;
-	}
-    } elsif ($status != $DEVICE_STATUS_SUCCESS) {
-	$self->_user_msg(slot_result  => 1,
-			 not_success  => 1,
-			 err          => $dev->error_or_status(),
-			 slot         => $slot,
-			 res          => $res);
-	return 0;
-    }
-
-    ($label, my $err) = $res->make_new_tape_label();
-    if (!defined $label) {
-        # make this fatal, rather than silently skipping new tapes
-        $self->scan_result(error => $err, res => $res, result_cb => $result_cb);
-        return 1;
-    }
-
-    $self->scan_result(res => $res, label => $label, mode => $ACCESS_WRITE,
-	    is_new => 1, result_cb => $result_cb);
-    return 1;
-}
-
 ##
 # stage 2: scan for any usable volume
 
@@ -362,6 +246,7 @@ sub stage_2 {
     my $load_current = ($self->{'scan_num'} == 1);
     my $steps = define_steps
 	cb_ref => \$result_cb;
+    my $res;
 
     step load => sub {
 	my ($err) = @_;
@@ -397,7 +282,7 @@ sub stage_2 {
     };
 
     step loaded => sub {
-        my ($err, $res) = @_;
+        (my $err, $res) = @_;
 	my $loaded_current = $load_current;
 	$load_current = 0; # don't load current a second time
 
@@ -447,9 +332,146 @@ sub stage_2 {
 
 	$self->{'seen'}->{$res->{'this_slot'}} = 1;
 
-        # we're done if try_volume calls result_cb (with success or an error)
-        return if ($self->try_volume($res, $result_cb));
+        $steps->{'try_volume'}->();
+    };
 
+    step try_volume => sub {
+	my $slot = $res->{'this_slot'};
+	my $dev = $res->{'device'};
+	my $status = $dev->status;
+	my $labelstr = $res->{'chg'}->{'labelstr'};
+	my $label;
+	my $autolabel = $res->{'chg'}->{'autolabel'};
+
+	if ($status == $DEVICE_STATUS_SUCCESS) {
+            $label = $dev->volume_label;
+
+            if ($label !~ /$labelstr/) {
+	        if (!$autolabel->{'other_config'}) {
+		    $self->_user_msg(slot_result             => 1,
+				     does_not_match_labelstr => 1,
+				     labelstr                => $labelstr,
+				     slot                    => $slot,
+				     label                   => $label,
+				     res                     => $res);
+		    return $steps->{'try_continue'}->();
+	        }
+            } else {
+	        # verify that the label is in the tapelist
+	        my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
+	        if (!$tle) {
+		    $self->_user_msg(slot_result     => 1,
+				     not_in_tapelist => 1,
+				     slot            => $slot,
+				     label           => $label,
+				     res             => $res);
+		    return $steps->{'try_continue'}->();
+	        }
+
+	        # see if it's reusable
+	        if (!$self->is_reusable_volume(label => $label, new_label_ok => 1)) {
+		    $self->_user_msg(slot_result => 1,
+				     active      => 1,
+				     slot        => $slot,
+				     label       => $label,
+				     res         => $res);
+		    return $steps->{'try_continue'}->();
+	        }
+	        $self->_user_msg(slot_result => 1,
+			         slot        => $slot,
+			         label       => $label,
+			         res         => $res);
+	        $self->scan_result(res => $res, label => $label,
+				   mode => $ACCESS_WRITE, is_new => 0,
+				   result_cb => $result_cb);
+	        return;
+	    }
+	}
+
+	if (!defined $autolabel->{'template'} ||
+	    $autolabel->{'template'} eq "") {
+	    $self->_user_msg(slot_result  => 1,
+			     not_autolabel => 1,
+			     slot         => $slot,
+			     res          => $res);
+	    return $steps->{'try_continue'}->();
+	}
+
+	$self->_user_msg(slot_result => 1, slot => $slot, res => $res);
+
+	if ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
+	    $dev->volume_header and
+	    $dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY) {
+	    if (!$autolabel->{'empty'}) {
+	        $self->_user_msg(slot_result  => 1,
+			         empty        => 1,
+			         slot         => $slot,
+			         res          => $res);
+	        return $steps->{'try_continue'}->();
+	    }
+	} elsif ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
+	    $dev->volume_header and
+	    $dev->volume_header->{'type'} == $Amanda::Header::F_WEIRD) {
+	    if (!$autolabel->{'non_amanda'}) {
+	        $self->_user_msg(slot_result  => 1,
+			         non_amanda   => 1,
+			         slot         => $slot,
+			         res          => $res);
+	        return $steps->{'try_continue'}->();
+	    }
+	} elsif ($status & $DEVICE_STATUS_VOLUME_ERROR) {
+	    if (!$autolabel->{'volume_error'}) {
+	        $self->_user_msg(slot_result  => 1,
+			         volume_error => 1,
+			         err          => $dev->error_or_status(),
+			         slot         => $slot,
+			         res          => $res);
+	        return $steps->{'try_continue'}->();
+	    }
+	} elsif ($status != $DEVICE_STATUS_SUCCESS) {
+	    $self->_user_msg(slot_result  => 1,
+			     not_success  => 1,
+			     err          => $dev->error_or_status(),
+			     slot         => $slot,
+			     res          => $res);
+	    return $steps->{'try_continue'}->();
+	}
+
+	$res->get_meta_label(finished_cb => $steps->{'got_meta_label'});
+	return;
+    };
+
+    step got_meta_label => sub {
+	my ($err, $meta) = @_;
+
+	if (defined $err) {
+	    $self->scan_result(error => $err, res => $res,
+			       result_cb => $result_cb);
+	    return;
+	}
+
+	($meta, $err) = $res->make_new_meta_label() if !defined $meta;
+	if (defined $err) {
+	    $self->scan_result(error => $err, res => $res,
+			       result_cb => $result_cb);
+	    return;
+	}
+
+	(my $label, $err) = $res->make_new_tape_label(meta => $meta);
+	
+
+	if (!defined $label) {
+            # make this fatal, rather than silently skipping new tapes
+            $self->scan_result(error => $err, res => $res, result_cb => $result_cb);
+            return;
+	}
+
+        $self->scan_result(res => $res, label => $label, mode => $ACCESS_WRITE,
+			   is_new => 1, result_cb => $result_cb);
+	return;
+    };
+
+    step try_continue => sub {
         # no luck -- release this reservation and get the next
         $last_slot = $res->{'this_slot'};
 
