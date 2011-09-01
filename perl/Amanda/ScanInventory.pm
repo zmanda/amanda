@@ -68,13 +68,14 @@ sub new {
 
     #until we have a config for it.
     $scan_conf = Amanda::ScanInventory::Config->new();
-    $chg = Amanda::Changer->new() if !defined $chg;
+    $chg = Amanda::Changer->new(undef, tapelist => $tapelist) if !defined $chg;
 
     my $self = {
 	initial_chg => $chg,
 	chg         => $chg,
 	scanning    => 0,
 	scan_conf   => $scan_conf,
+	tapelist    => $tapelist,
         interactivity => $interactivity,
 	seen        => {},
 	scan_num    => 0
@@ -115,6 +116,7 @@ sub _scan {
     my $action;
     my $action_slot;
     my $res;
+    my $label;
     my %seen = ();
     my $inventory;
     my $current;
@@ -447,10 +449,10 @@ sub _scan {
 	    # use a new changer
 	    my $new_chg;
 	    if (ref($message) eq 'HASH' and $message == $DEFAULT_CHANGER) {
-		$new_chg = Amanda::Changer->new();
-	    } else {
-		$new_chg = Amanda::Changer->new($message);
+		$message = undef;
 	    }
+	    $new_chg = Amanda::Changer->new($message,
+					    tapelist => $self->{'tapelist'});
 	    if ($new_chg->isa("Amanda::Changer::Error")) {
 		return $steps->{'scan_interactivity'}->("$new_chg");
 	    }
@@ -497,19 +499,28 @@ sub _scan {
 	    $self->{'scanning'} = 0;
 	    return $result_cb->($err, $res);
 	}
-	my $label = $res->{'device'}->volume_label;
+	$label = $res->{'device'}->volume_label;
 	if (!defined $label) {
-	    ($label, my $make_err) = $res->make_new_tape_label();
-	    if (!defined $label) {
-		# make this fatal, rather than silently skipping new tapes
-		$self->{'scanning'} = 0;
-		return $result_cb->($make_err, $res);
-	    }
-	    $self->{'scanning'} = 0;
-	    return $result_cb->(undef, $res, $label, $ACCESS_WRITE, 1);
+	    $res->get_meta_label(finished_cb => $steps->{'got_meta_label'});
+	    return;
 	}
 	$self->{'scanning'} = 0;
 	return $result_cb->(undef, $res, $label, $ACCESS_WRITE);
+    };
+
+    step got_meta_label => sub {
+	my ($err, $meta) = @_;
+	if (defined $err) {
+	    return $result_cb->($err, $res);
+	}
+	($label, my $make_err) = $res->make_new_tape_label(meta => $meta);
+	if (!defined $label) {
+	    # make this fatal, rather than silently skipping new tapes
+	    $self->{'scanning'} = 0;
+	    return $result_cb->($make_err, $res);
+	}
+	$self->{'scanning'} = 0;
+	return $result_cb->(undef, $res, $label, $ACCESS_WRITE, 1);
     };
 }
 
