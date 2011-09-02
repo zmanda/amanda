@@ -1253,54 +1253,77 @@ print_platform(void)
 {
     struct stat stat_buf;
     char *uname;
+    char *distro = NULL;
+    char *platform = NULL;
+    char  line[1025];
     GPtrArray *argv_ptr;
-    char **filename;
-    char *filenames[] = {"/etc/redhat-release",
-			 "/etc/debian_version",
-			 "/etc/lsb-release",
-			 "/etc/system-release",
-			 NULL};
 
-    for (filename = filenames; *filename != NULL; filename++) {
-	if (stat(*filename, &stat_buf) == 0) {
-	    break;
-	}
-    }
-    if (*filename) {
-	FILE *release;
-
-	release = fopen(*filename, "r");
+    if (stat("/etc/lsb-release", &stat_buf) == 0) {
+	FILE *release = fopen("/etc/lsb-release", "r");
+	distro = "Ubuntu";
 	if (release) {
-	    char line[1025];
+	    char *result;
+	    while ((result = fgets(line, 1024, release))) {
+		if (strstr(line, "DESCRIPTION")) {
+		    platform = strchr(line, '=');
+		    if (platform) platform++;
+		}
+	    }
+	    fclose(release);
+	}
+    } else if (stat("/etc/redhat-release", &stat_buf) == 0) {
+	FILE *release = fopen("/etc/redhat-release", "r");
+	distro = "RPM";
+	if (release) {
 	    char *result;
 	    result = fgets(line, 1024, release);
 	    if (result) {
-		g_fprintf(stdout, "OK platform %s", line);
-	    } else {
-		g_fprintf(stdout, "OK platform unknown\n");
+		platform = line;
 	    }
 	    fclose(release);
-	} else {
-	    g_fprintf(stdout, "OK platform unknown\n");
 	}
-	return;
-    }
-
-    argv_ptr = g_ptr_array_new();
-
-    g_ptr_array_add(argv_ptr, UNAME_PATH);
-    g_ptr_array_add(argv_ptr, "-s");
-    g_ptr_array_add(argv_ptr, NULL);
-    uname = get_first_line(argv_ptr);
-    if (uname) {
-	if (g_str_equal(uname, "SunOs")) {
-	    amfree(uname);
-	    uname = g_strdup("Solaris");
+    } else if (stat("/etc/debian_version", &stat_buf) == 0) {
+	FILE *release = fopen("/etc/debian_version", "r");
+	distro = "Debian";
+	if (release) {
+	    char *result;
+	    result = fgets(line, 1024, release);
+	    if (result) {
+		platform = line;
+	    }
+	    fclose(release);
 	}
-	g_fprintf(stdout, "OK platform %s\n", uname);
     } else {
-	g_fprintf(stdout, "OK platform unknown\n");
+	argv_ptr = g_ptr_array_new();
+
+	g_ptr_array_add(argv_ptr, UNAME_PATH);
+	g_ptr_array_add(argv_ptr, "-s");
+	g_ptr_array_add(argv_ptr, NULL);
+	uname = get_first_line(argv_ptr);
+	if (uname) {
+	    if (strncmp(uname, "SunOS", 5) == 0) {
+		FILE *release = fopen("/etc/release", "r");
+		distro = "Solaris";
+		if (release) {
+		    char *result;
+		    result = fgets(line, 1024, release);
+		    if (result) {
+			platform = line;
+		    }
+		}
+		fclose(release);
+	    }
+	    amfree(uname);
+	}
+	g_ptr_array_free(argv_ptr, TRUE);
     }
-    g_ptr_array_free(argv_ptr, TRUE);
-    amfree(uname);
+
+    if (!distro) {
+	distro = "Unknown";
+    }
+    if (!platform) {
+	platform = "Unknown";
+    }
+    g_fprintf(stdout, "OK distro %s\n", distro);
+    g_fprintf(stdout, "OK platform %s\n", platform);
 }
