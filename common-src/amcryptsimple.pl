@@ -55,7 +55,7 @@ $ENV{'GNUPGHOME'} = "$AMANDA_HOME/.gnupg";
 
 
 sub encrypt() {
-    system "gpg --batch --no-secmem-warning --disable-mdc --symmetric --cipher-algo AES256 --passphrase-fd 3  3<$AM_PASS";
+    system "gpg-agent --daemon -- gpg --batch --no-secmem-warning --disable-mdc --symmetric --cipher-algo AES256 --passphrase-fd 3  3<$AM_PASS";
     if ($? == -1) {
 	print STDERR "failed to execute gpg: $!\n";
 	exit (1);
@@ -69,7 +69,7 @@ sub encrypt() {
 }
 
 sub decrypt() {
-    system "gpg --batch --quiet --no-mdc-warning --decrypt --passphrase-fd 3  3<$AM_PASS";
+    system "gpg-agent --daemon -- gpg --batch --quiet --no-mdc-warning --decrypt --passphrase-fd 3  3<$AM_PASS";
     if ($? == -1) {
 	print STDERR "failed to execute gpg: $!\n";
 	exit (1);

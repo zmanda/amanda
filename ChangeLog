@@ -1,4 +1,7 @@
 2011-09-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amcryptsimple.pl: Use gpg-agent.
+
+2011-09-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/selfcheck.c (print_platform): Fix.
 
 2011-09-01  Jean-Louis Martineau <martineau@zmanda.com>
