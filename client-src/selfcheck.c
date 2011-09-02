@@ -1324,6 +1324,9 @@ print_platform(void)
     if (!platform) {
 	platform = "Unknown";
     }
+    if (platform[strlen(platform) -1] == '\n') {
+	platform[strlen(platform) -1] = '\0';
+    }
     g_fprintf(stdout, "OK distro %s\n", distro);
     g_fprintf(stdout, "OK platform %s\n", platform);
 }
