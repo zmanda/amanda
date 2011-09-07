@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 592;
+use Test::More tests => 593;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -249,6 +249,9 @@ ok($dev->property_set("comment", "32k"),
 
 ok($dev->property_set("block_size", 32768),
     "set an integer property to an integer");
+
+ok(!($dev->property_set("invalid-property-name", 32768)),
+    "set an invalid-property-name");
 
 $dev->read_label();
 ok($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED,
