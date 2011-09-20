@@ -197,22 +197,33 @@ sub _is_datestr {
 }
 
 sub _walk {
-    my ($file_fn) = @_;
+    my ($file_fn, $verbose) = @_;
 
     # walk disks, directories, and files with nested loops
     for my $disk (disks()) {
 	my $diskh = IO::Dir->new($disk);
-	next unless defined $diskh;
+	if (!defined $diskh) {
+	    print $verbose "could not open holding dir '$disk': $!\n" if $verbose;
+	    next;
+	}
 
 	while (defined(my $datestr = $diskh->read())) {
-	    next unless (_is_datestr($datestr));
+	    next if $datestr eq '.' or $datestr eq '..';
 
 	    my $dirfn = File::Spec->catfile($disk, $datestr);
-	    next unless (-d $dirfn);
+
+	    if (!_is_datestr($datestr)) {
+		print $verbose "holding dir '$dirfn' is not a datestamp\n" if $verbose;
+		next;
+	    }
+	    if (!-d $dirfn) {
+		print $verbose "holding dir '$dirfn' is not a directory\n" if $verbose;
+		next;
+	    }
 
 	    my $dirh = IO::Dir->new($dirfn);
 	    if (!defined($dirh)) {
-		warning("could not open '$dirfn': $!");
+		print $verbose "could not open '$dirfn': $!\n" if $verbose;
 		next;
 	    }
 
@@ -220,13 +231,13 @@ sub _walk {
 		next if $dirent eq '.' or $dirent eq '..';
 
 		my $filename = File::Spec->catfile($disk, $datestr, $dirent);
-		next unless -f $filename;
+		if (!-f $filename) {
+		    print $verbose "holding file '$filename' is not a file\n" if $verbose;
+		    next;
+		}
 
 		my $hdr = get_header($filename);
 		next unless defined($hdr);
-
-		# ignore chunks and anything bogus
-		next if ($hdr->{'type'} != $Amanda::Header::F_DUMPFILE);
 
 		$file_fn->($filename, $hdr);
 	    }
@@ -254,15 +265,76 @@ sub disks {
 }
 
 sub files {
+    my $verbose = shift;
     my @results;
 
     my $each_file_fn = sub {
 	my ($filename, $header) = @_;
+	return if $header->{'type'} != $Amanda::Header::F_DUMPFILE;
+
 	push @results, $filename;
     };
-    _walk($each_file_fn);
+    _walk($each_file_fn, $verbose);
 
     return @results;
+}
+
+sub all_files {
+    my $verbose = shift;
+    my @results;
+
+    my $each_file_fn = sub {
+	my ($filename, $header) = @_;
+	push @results, { filename => $filename, header => $header };
+    };
+    _walk($each_file_fn, $verbose);
+
+    return @results;
+}
+
+sub merge_all_files {
+    my @files = @_;
+    my %hfiles;
+    my @result;
+
+    for my $file (@files) {
+	$hfiles{$file->{'filename'}} = $file->{'header'};
+    }
+
+    foreach my $filename (keys %hfiles) {
+	next if !exists $hfiles{$filename};
+	if ($hfiles{$filename}->{'type'} == $Amanda::Header::F_DUMPFILE) {
+	    push @result, {filename => $filename, header => $hfiles{$filename}};
+	    my $is_tmp = ($filename =~ /\.tmp$/);
+	    my $cont_filename = $filename;
+	    my $cfilename = $hfiles{$cont_filename}->{'cont_filename'};
+	    my $cf = $cfilename;
+	    $cf .= ".tmp" if $is_tmp;
+	    while (defined $cfilename && $cfilename ne "" && -f $cf) {
+		delete $hfiles{$cont_filename};
+		$cont_filename = $cf;
+		$cfilename = $hfiles{$cont_filename}->{'cont_filename'};
+		$cf = $cfilename;
+		$cf .= ".tmp" if $is_tmp;
+	    }
+	    delete $hfiles{$cont_filename};
+	} elsif ($hfiles{$filename}->{'type'} != $Amanda::Header::F_CONT_DUMPFILE) {
+	    push @result, {filename => $filename, header => $hfiles{$filename}};
+	    delete $hfiles{$filename}
+        } else {
+	   # do nothing for F_CONTFILE
+        }
+    }
+
+    foreach my $filename (keys %hfiles) {
+	next if !exists $hfiles{$filename};
+	if ($hfiles{$filename}->{'type'} == $Amanda::Header::F_CONT_DUMPFILE) {
+	    push @result, {filename => $filename, header => $hfiles{$filename}};
+	} else {
+	    delete $hfiles{$filename}
+	}
+    }
+    return @result;
 }
 
 sub file_chunks {
@@ -287,6 +359,47 @@ sub file_chunks {
     return @results;
 }
 
+sub file_tmp_chunks {
+    my ($filename) = @_;
+    my @results;
+
+    while (1) {
+	last unless -f $filename;
+	my $hdr = get_header($filename);
+	last unless defined($hdr);
+
+	push @results, $filename;
+
+	if ($hdr->{'cont_filename'}) {
+	    $filename = $hdr->{'cont_filename'} . ".tmp";
+	} else {
+	    # no continuation -> we're done
+	    last;
+	}
+    }
+
+    return @results;
+}
+
+sub rename_tmp {
+    my ($filename) = shift;
+    my ($complete) = shift;
+
+    my @files = file_tmp_chunks($filename);
+    while (my $tmp_filename = pop @files) {
+	my $hdr = get_header($tmp_filename);
+	if ($hdr->{'is_partial'} == 0 and $complete == 0) {
+	    $hdr->{'is_partial'} = 1;
+	    write_header($tmp_filename, $hdr);
+	}
+	my $hfilename = $tmp_filename;
+	$hfilename =~ s/\.tmp$//;
+	rename $tmp_filename, $hfilename;
+    }
+
+    return
+}
+
 sub get_header {
     my ($filename) = @_;
     return unless -f $filename;
@@ -296,11 +409,29 @@ sub get_header {
 
     my $hdr_bytes = Amanda::Util::full_read($fd, DISK_BLOCK_BYTES);
     POSIX::close($fd);
-    if (length($hdr_bytes) < DISK_BLOCK_BYTES) {
-	return;
+    if (length($hdr_bytes) == 0) {
+	my $hdr = Amanda::Header->new();
+	$hdr->{'type'} = $Amanda::Header::F_EMPTY;
+	return $hdr;
+    } elsif (length($hdr_bytes) < DISK_BLOCK_BYTES) {
+	my $hdr = Amanda::Header->new();
+	$hdr->{'type'} = $Amanda::Header::F_UNKNOWN;
+	return $hdr;
     }
 
     return Amanda::Header->from_string($hdr_bytes);
+}
+
+sub write_header {
+    my $filename = shift;
+    my $hdr = shift;
+
+    return unless -f $filename;
+    my $fd = POSIX::open($filename, O_RDWR);
+    return unless $fd;
+    my $header = $hdr->to_string(DISK_BLOCK_BYTES, DISK_BLOCK_BYTES);
+    Amanda::Util::full_write($fd, $header, DISK_BLOCK_BYTES);
+    POSIX::close($fd);
 }
 
 sub file_unlink {
@@ -311,6 +442,33 @@ sub file_unlink {
     }
 
     return 1;
+}
+
+sub filetmp_unlink {
+    my ($filename) = @_;
+
+    for my $chunk (filetmp_chunks($filename)) {
+	unlink($chunk) or return 0;
+    }
+
+    return 1;
+}
+
+sub dir_unlink {
+    # walk disks, directories, and files with nested loops
+    for my $disk (disks()) {
+	my $diskh = IO::Dir->new($disk);
+	next unless defined $diskh;
+
+	while (defined(my $datestr = $diskh->read())) {
+	    next if $datestr eq '.' or $datestr eq '..';
+
+	    my $dirfn = File::Spec->catfile($disk, $datestr);
+	    next unless _is_datestr($datestr);
+	    next unless -d $dirfn;
+	    rmdir $dirfn;
+	}
+    }
 }
 
 sub file_size {
@@ -335,6 +493,8 @@ sub get_files_for_flush {
 
     my $each_file_fn = sub {
 	my ($filename, $header) = @_;
+	return if $header->{'type'} != $Amanda::Header::F_DUMPFILE;
+
 	if (@dateargs && !grep { $_ eq $header->{'datestamp'}; } @dateargs) {
 	    return;
 	}
@@ -345,7 +505,7 @@ sub get_files_for_flush {
 
 	push @results, $filename;
     };
-    _walk($each_file_fn);
+    _walk($each_file_fn, 0);
 
     return sort @results;
 }
@@ -355,9 +515,11 @@ sub get_all_datestamps {
 
     my $each_file_fn = sub {
 	my ($filename, $header) = @_;
+	return if $header->{'type'} != $Amanda::Header::F_DUMPFILE;
+
 	$datestamps{$header->{'datestamp'}} = 1;
     };
-    _walk($each_file_fn);
+    _walk($each_file_fn, 0);
 
     return sort keys %datestamps;
 }

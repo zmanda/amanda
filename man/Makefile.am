@@ -42,6 +42,7 @@ SERVER_MAN_PAGES =  \
     amcheckdb.8 \
     amcheckdump.8 \
     amcleanup.8 \
+    amcleanupdisk.8 \
     amcrypt-ossl-asym.8 \
     amcrypt-ossl.8   \
     amcrypt.8 \

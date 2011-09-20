@@ -777,7 +777,7 @@ holding_cleanup_file(
 	return 0;
     }
 
-    if(file.dumplevel < 0 || file.dumplevel > 9) {
+    if(file.dumplevel < 0 || file.dumplevel > 399) {
 	if (data->verbose_output)
 	    g_fprintf(data->verbose_output, 
 		_("File '%s' has invalid level %d\n"), element, file.dumplevel);
