@@ -430,7 +430,7 @@ slotinfofile=FILENAME       #### record slot information to this file, in
 <refsect2><title>chg-rait:{CHILD1,CHILD2,..}</title>
 <programlisting>
 define changer vtape {
-    tpcanger "chg-disk:/path/to/vtape"
+    tpchanger "chg-disk:/path/to/vtape"
 }
 define changer robot {
     tpchanger "chg-robot:/dev/sg0"
