@@ -210,7 +210,7 @@ sub _walk {
 	while (defined(my $datestr = $diskh->read())) {
 	    next if $datestr eq '.' or $datestr eq '..';
 
-	    my $dirh = IO::Dir->new(File::Spec->catfile($disk, $datestr));
+	    my $dirfn = File::Spec->catfile($disk, $datestr);
 
 	    if (!_is_datestr($datestr)) {
 		print $verbose "holding dir '$dirfn' is not a datestamp\n" if $verbose;
@@ -221,6 +221,7 @@ sub _walk {
 		next;
 	    }
 
+	    my $dirh = IO::Dir->new($dirfn);
 	    while (defined(my $dirent = $dirh->read)) {
 		next if $dirent eq '.' or $dirent eq '..';
 

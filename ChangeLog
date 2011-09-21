@@ -1,4 +1,7 @@
 2011-09-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Holding.pm: fix dirfn.
+
+2011-09-21  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Sam Stuck
 	* man/xml-source/amanda-changers.7.xml: Typo.
 
