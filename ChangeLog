@@ -1,3 +1,7 @@
+2011-09-21  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by Sam Stuck
+	* man/xml-source/amanda-changers.7.xml: Typo.
+
 2011-09-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/Makefile.am (SERVER_MAN_PAGES): Add amcleanupdisk.8
 	* man/xml-source/amcleanup.8.xml:Add -r option.
