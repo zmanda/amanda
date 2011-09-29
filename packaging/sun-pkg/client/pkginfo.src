@@ -1,0 +1,19 @@
+PKG="AMANamanda-client"
+ARCH="%%ARCH%%"
+VERSION="%%VERSION%%-%%PKG_REV%%"
+CATEGORY="system"
+VENDOR="Amanda project, http://www.amanda.org/"
+EMAIL="support@zmanda.com"
+BASEDIR="/"
+CLASSES="none"
+MAXINST=1
+INTONLY=1
+NAME="Amanda Community Backup Client"
+DESC="Amanda is the leading Open-Source Backup and Archiving software.
+
+This package contains the Amanda client.  The Amanda server package needs to be
+installed on every system that is being backed up.
+
+Documentation: http://wiki.zmanda.com/
+Mailing Lists: http://www.amanda.org/support/mailinglists.php
+Forums: http://forums.zmanda.com/

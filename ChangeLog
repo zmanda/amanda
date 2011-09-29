@@ -1,3 +1,20 @@
+2011-09-29 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/sun-pkg: sun package subdirectories
+	*  packaging/sun-pkg/buildpkg: sun package building script
+	*  packaging/common/mock_utils.sh: mocked utilities used by pre/post
+	   scripts
+	*  packaging/common/post_inst_functions.sh,
+	   packaging/common/post_rm_functions.sh,
+	   packaging/common/pre_inst_functions.sh,
+	   packaging/common/common_functions.sh: shared shell functions for
+	   pre/post scripts.
+	*  packaging/common/substitute.pl: update to handle sun packages and
+	   shell functions
+	*  packaging/common/test_sh_libs.sh: unit tests for shell functions
+	*  packaging/common/shunit2: unit test framework
+	*  packaging/Makefile.am: add sun package to dist tarball.
+	*  note: S3 device is not enabled; solaris compilation has me stumped.
+
 2011-09-21  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Sam Stuck
 	* man/xml-source/amanda-changers.7.xml: Typo.
