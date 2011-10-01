@@ -16,7 +16,7 @@ if [ ! -f configure ]; then
     exit 1
 fi
 
-# Until we get the package revisioning stuff in community.
+# Until we get package revisioning in community.
 [ -f "PKG_REV" ] || echo "1" > PKG_REV
 
 pkg_root=packaging/sun-pkg
