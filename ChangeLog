@@ -1,3 +1,9 @@
+2011-09-30 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/common/substitute.pl: fix PKG_REV missing message.
+	*  packaging/sun-pkg/buildpkg, packaging/deb/buildpkg,
+	   packaging/rpm/buildpkg: create PKG_REV file until the machinery to
+	   process svn tags for PKG_REV is in place
+
 2011-09-29 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/sun-pkg: sun package subdirectories
 	*  packaging/sun-pkg/buildpkg: sun package building script

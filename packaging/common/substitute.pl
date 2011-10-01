@@ -43,7 +43,7 @@ sub read_file {
 		close($f_handle);
 		
 	} else {
-		die "Could not find $file file. run set_zmanda_rev";
+		die "Could not find $file file. run config/set_full_version or ./autogen";
 	}
 	return $contents;
 }
