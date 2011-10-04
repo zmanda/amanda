@@ -1713,6 +1713,10 @@ list_end_element(GMarkupParseContext *context G_GNUC_UNUSED,
         thunk->text = NULL;
     } else if (g_strcasecmp(element_name, "prefix") == 0 && thunk->in_common_prefixes) {
         thunk->filename_list = g_slist_prepend(thunk->filename_list, thunk->text);
+	if (thunk->is_truncated) {
+	    if (thunk->next_marker) g_free(thunk->next_marker);
+	    thunk->next_marker = g_strdup(thunk->text);
+	}
         thunk->text = NULL;
     } else if (g_strcasecmp(element_name, "istruncated") == 0) {
         if (thunk->text && g_strncasecmp(thunk->text, "false", 5) != 0)
@@ -1837,6 +1841,8 @@ s3_list_keys(S3Handle *hdl,
         thunk.in_contents = FALSE;
         thunk.in_common_prefixes = FALSE;
         thunk.is_truncated = FALSE;
+        if (thunk.next_marker) g_free(thunk.next_marker);
+	thunk.next_marker = NULL;
         thunk.want_text = FALSE;
 
         ctxt = g_markup_parse_context_new(&parser, 0, (gpointer)&thunk, NULL);
