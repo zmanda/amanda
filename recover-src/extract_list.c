@@ -1716,7 +1716,14 @@ extract_files_setup(
 	tt = g_strconcat("FEATURES=", our_features_string, NULL);
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	get_amidxtaped_line();
-	if(strncmp_const(amidxtaped_line,"FEATURES=") == 0) {
+	if (!amidxtaped_line) {
+	    g_fprintf(stderr, _("amrecover - amidxtaped closed the connection\n"));
+	    stop_amidxtaped();
+	    amfree(disk_regex);
+	    amfree(host_regex);
+	    amfree(clean_datestamp);
+	    return -1;
+	} else if(strncmp_const(amidxtaped_line,"FEATURES=") == 0) {
 	    tapesrv_features = am_string_to_feature(amidxtaped_line+9);
 	} else {
 	    g_fprintf(stderr, _("amrecover - expecting FEATURES line from amidxtaped\n"));
