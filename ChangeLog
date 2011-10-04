@@ -1,3 +1,6 @@
+2011-10-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Correctly set thunk->next_marker.
+
 2011-09-30 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/common/substitute.pl: fix PKG_REV missing message.
 	*  packaging/sun-pkg/buildpkg, packaging/deb/buildpkg,
