@@ -1,4 +1,7 @@
 2011-10-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/gnutar.pl: Add support for fc14 and fc15.
+
+2011-10-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/extract_list.c: Do not crahs if amidxtaped close the
 	  connection.
 
