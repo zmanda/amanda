@@ -76,8 +76,19 @@ my ($v, $numeric_version);
     $numeric_version += $maj * 10000 if $maj;
     $numeric_version += $min * 100 if $min;
     $numeric_version += $mic if $mic;
+
 }
 
+my ($fc14, $fc15);
+{
+    my $uname = `uname -a`;
+    if ($uname =~ /\.fc14\./) {
+	$fc14 = 1;
+    }
+    if ($uname =~ /\.fc15\./) {
+	$fc15 = 1;
+    }
+}
 # see if the default for --wildcards during inclusion has been changed
 my $wc_default_changed = 0;
 {
@@ -99,8 +110,10 @@ my %version_classes = (
     '>=1.23' => $numeric_version >= 12300,
     '*' => 1,
     '1.23' => ($numeric_version >= 12290 and $numeric_version <= 12300),
+    '1.23fc14' => ($numeric_version == 12300 and $fc14),
     '!1.23' => ($numeric_version < 12290 || ($numeric_version > 12300 && $numeric_version < 12500)),
-    '>=1.25' => $numeric_version >= 12500.
+    '>=1.25' => $numeric_version >= 12500,
+    '1.26fc15' => ($numeric_version == 12600 and $fc15),
 );
 
 # include and exclude all use the same set of patterns and filenames
@@ -135,28 +148,29 @@ my $named_expectations = [
 	          'epsilon',
 		     'zeta',
 		        'eta',
-		           'empty', ],
-    #  al be ga de ep ze et empty
-    [  1, 1, 1, 1, 1, 1, 1, 1,     ], # './A*A' =>	'A*A',
-    [  1, 1, 1, 1, 0, 1, 1, 0,     ], # './A*A' =>	'AxA',
-    [  1, 1, 1, 1, 1, 1, 1, 1,     ], # './B?B' =>	'B?B',
-    [  1, 1, 1, 1, 0, 1, 1, 0,     ], # './B?B' =>	'BxB',
-    [  0, 0, 0, 0, 1, 1, 1, 1,     ], # './C[C' =>	'C[C',
-    [  1, 1, 1, 1, 1, 1, 1, 1,     ], # './D]D' =>	'D]D',
-    [  1, 0, 0, 1, 1, 0, 0, 1,     ], # './E\\E' =>	'E\\E',
-    [  1, 1, 1, 1, 1, 1, 1, 1,     ], # './F\'F' =>	'F\'F',
-    [  1, 1, 1, 1, 1, 1, 1, 1,     ], # './G"G' =>	'G"G',
-    [  1, 1, 1, 1, 1, 1, 1, 1,     ], # './H H' =>	'H H',
-    [  1, 1, 1, 0, 0, 1, 1, 0,     ], # './A\\*A' =>	'A*A',
-    [  0, 0, 0, 0, 0, 0, 0, 0,     ], # './A\\*A' =>	'AxA',
-    [  0, 0, 1, 0, 0, 0, 1, 0,     ], # './B\\?B' =>	'B?B',
-    [  0, 0, 0, 0, 0, 0, 0, 0,     ], # './B\\?B' =>	'BxB',
-    [  1, 1, 1, 0, 0, 1, 1, 0,     ], # './C\\[C' =>	'C[C',
-    [  0, 1, 1, 0, 0, 1, 1, 0,     ], # './D\\]D' =>	'D]D',
-    [  1, 0, 1, 0, 1, 0, 1, 0,     ], # './E\\\\E' =>	'E\\E',
-    [  0, 1, 1, 0, 0, 1, 1, 0,     ], # './F\\\'F' =>	'F\'F',
-    [  0, 1, 1, 0, 0, 1, 1, 0,     ], # './G\\"G' =>	'G"G',
-    [  0, 1, 1, 0, 0, 1, 1, 0,     ], # './H\\ H' =>	'H H',
+		           'iota',
+                              'empty', ],
+    #  al be ga de ep ze et io empty
+    [  1, 1, 1, 1, 1, 1, 1, 1, 1,     ], # './A*A' =>	'A*A',
+    [  1, 1, 1, 1, 0, 1, 1, 1, 0,     ], # './A*A' =>	'AxA',
+    [  1, 1, 1, 1, 1, 1, 1, 1, 1,     ], # './B?B' =>	'B?B',
+    [  1, 1, 1, 1, 0, 1, 1, 1, 0,     ], # './B?B' =>	'BxB',
+    [  0, 0, 0, 0, 1, 1, 1, 1, 1,     ], # './C[C' =>	'C[C',
+    [  1, 1, 1, 1, 1, 1, 1, 1, 1,     ], # './D]D' =>	'D]D',
+    [  1, 0, 0, 1, 1, 0, 0, 1, 1,     ], # './E\\E' =>	'E\\E',
+    [  1, 1, 1, 1, 1, 1, 1, 1, 1,     ], # './F\'F' =>	'F\'F',
+    [  1, 1, 1, 1, 1, 1, 1, 1, 1,     ], # './G"G' =>	'G"G',
+    [  1, 1, 1, 1, 1, 1, 1, 1, 1,     ], # './H H' =>	'H H',
+    [  1, 1, 1, 0, 0, 1, 1, 0, 0,     ], # './A\\*A' =>	'A*A',
+    [  0, 0, 0, 0, 0, 0, 0, 0, 0,     ], # './A\\*A' =>	'AxA',
+    [  0, 0, 1, 0, 0, 0, 1, 0, 0,     ], # './B\\?B' =>	'B?B',
+    [  0, 0, 0, 0, 0, 0, 0, 0, 0,     ], # './B\\?B' =>	'BxB',
+    [  1, 1, 1, 0, 0, 1, 1, 0, 0,     ], # './C\\[C' =>	'C[C',
+    [  0, 1, 1, 0, 0, 1, 1, 0, 0,     ], # './D\\]D' =>	'D]D',
+    [  1, 0, 1, 0, 1, 0, 1, 0, 0,     ], # './E\\\\E' =>	'E\\E',
+    [  0, 1, 1, 0, 0, 1, 1, 0, 0,     ], # './F\\\'F' =>	'F\'F',
+    [  0, 1, 1, 0, 0, 1, 1, 0, 0,     ], # './G\\"G' =>	'G"G',
+    [  0, 1, 1, 0, 0, 1, 1, 0, 0,     ], # './H\\ H' =>	'H H',
 ];
 
 sub get_expectation {
@@ -315,6 +329,8 @@ test_gnutar_inclusion(
     extra_args => [],
     expectations => {
 	'<1.16' => 'alpha',
+        '1.23fc14' => 'zeta',
+        '1.26fc15' => 'zeta',
 	'>=1.16-no-wc' => 'epsilon',
 	'>=1.16-wc' => 'beta', # acts like --wildcards
     },
@@ -332,6 +348,8 @@ test_gnutar_inclusion(
     extra_args => [ '--no-unquote' ],
     expectations => {
 	'<1.16' => undef,
+	'1.23fc14' => 'eta',
+	'1.26fc15' => 'eta',
 	'>=1.16-no-wc' => 'empty',
 	'>=1.16-wc' => 'gamma', # acts like --wildcards --no-unquote
     },
@@ -349,6 +367,7 @@ test_gnutar_inclusion(
     extra_args => [ '--wildcards' ],
     expectations => {
 	'<1.16' => 'alpha',
+        '1.23fc14' => 'zeta',
 	'1.16..<1.25' => 'beta',
 	'>=1.25' => 'zeta',
     },
@@ -358,6 +377,7 @@ test_gnutar_inclusion(
     extra_args => [ '--wildcards', '--no-unquote' ],
     expectations => {
 	'<1.16' => undef,
+	'1.23fc14' => 'eta',
 	'1.16..<1.25' => 'gamma',
 	'>=1.25' => 'eta',
     },
@@ -469,6 +489,7 @@ test_gnutar_exclusion(
     extra_args => [],
     expectations => {
 	'!1.23' => 'gamma',
+	'1.23fc14' => 'iota',
 	'1.23' => 'delta',
 	'>=1.25' => 'eta',
     },
