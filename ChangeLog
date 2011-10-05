@@ -1,3 +1,6 @@
+2011-10-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Retry in case of CURLE_SSL_CONNECT_ERROR error.
+
 2011-10-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/gnutar.pl: Add support for fc14 and fc15.
 

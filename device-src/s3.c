@@ -120,6 +120,7 @@
         { 0,    0,                           CURLE_COULDNT_RESOLVE_HOST, S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_PARTIAL_FILE,         S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_OPERATION_TIMEOUTED,  S3_RESULT_RETRY }, \
+        { 0,    0,                           CURLE_SSL_CONNECT_ERROR,    S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_SEND_ERROR,           S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_RECV_ERROR,           S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_GOT_NOTHING,          S3_RESULT_RETRY }
