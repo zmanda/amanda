@@ -237,6 +237,24 @@ sub conf_param {
 	for my $subsec (@list) {
 	    print "$subsec\n";
 	}
+    } elsif ($parameter =~ /^property:/i) {
+	my %properties = %{ getconf($CNF_PROPERTY)};
+	my $propname = $parameter;
+	$propname =~ s/^property://i;
+	$propname = lc($propname);
+	if (exists $properties{$propname}) {
+	    print $properties{$propname}->{'values'}[0], "\n";
+	}
+    } elsif ($parameter =~ /^device-property:/i ||
+	     $parameter =~ /^device_property:/i) {
+	my %properties = %{ getconf($CNF_DEVICE_PROPERTY) };
+	my $propname = $parameter;
+	$propname =~ s/^device-property://i;
+	$propname =~ s/^device_property://i;
+	$propname = lc($propname);
+	if (exists $properties{$propname}) {
+	    print $properties{$propname}->{'values'}[0], "\n";
+	}
     } else {
 	no_such_param($parameter)
 	    unless defined(getconf_byname($parameter));
@@ -310,7 +328,17 @@ if ($parameter =~ /^db(open|close)\./) {
 
 # finally, finish up the application startup procedure
 set_config_overrides($config_overrides);
-config_init($CONFIG_INIT_EXPLICIT_NAME | $CONFIG_INIT_USE_CWD | $execute_where, $config_name);
+if ($execute_where == $CONFIG_INIT_CLIENT &&
+    defined($config_name) && $config_name eq '.') {
+    config_init($CONFIG_INIT_USE_CWD | $execute_where, undef);
+} elsif ($execute_where == $CONFIG_INIT_CLIENT &&
+    defined($config_name) && $config_name ne '.') {
+    config_init($CONFIG_INIT_EXPLICIT_NAME | $execute_where, $config_name);
+} elsif ($execute_where == $CONFIG_INIT_CLIENT) {
+    config_init($execute_where, undef);
+} else {
+    config_init($CONFIG_INIT_EXPLICIT_NAME | $CONFIG_INIT_USE_CWD | $execute_where, $config_name);
+}
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();

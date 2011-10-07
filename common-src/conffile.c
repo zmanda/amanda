@@ -5225,7 +5225,6 @@ config_init(
 	    config_name = g_strdup(config_name + 1);
 	}
 
-        amfree(cwd);
     } else if (flags & CONFIG_INIT_CLIENT) {
 	amfree(config_name);
 	g_free(config_dir);

@@ -1,3 +1,8 @@
+2011-10-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Do not free cwd.
+	* common-src/amgetconf.pl: Allow to get one property.
+	* installcheck/amgetconf.pl: Test it.
+
 2011-10-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Retry in case of CURLE_SSL_CONNECT_ERROR error.
 
