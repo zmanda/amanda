@@ -1,4 +1,8 @@
 2011-10-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: If datadir is not set, use the disk
+	  argument.
+
+2011-10-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Do not free cwd.
 	* common-src/amgetconf.pl: Allow to get one property.
 	* installcheck/amgetconf.pl: Test it.

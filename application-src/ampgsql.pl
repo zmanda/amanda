@@ -140,6 +140,10 @@ debug("aa");
         }
     }
 
+    if (!exists $self->{'props'}->{'pg-datadir'}) {
+	$self->{'props'}->{'pg-datadir'} =  $self->{'args'}->{'device'};
+    }
+
     return $self;
 }
 
