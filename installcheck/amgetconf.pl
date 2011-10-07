@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 82;
+use Test::More tests => 86;
 use strict;
 use warnings;
 
@@ -335,5 +335,20 @@ is_deeply([sort(+split(qr/\n/, run_get('amgetconf', 'TESTCONF', 'dumptype:testdu
 is_deeply([sort(+split(qr/\n/, run_get('amgetconf', 'TESTCONF', 'dumptype:testdump:include')))],
 	  [sort('FILE OPTIONAL "ifo"',
 	        'LIST OPTIONAL "ilo"')],
-    "a final 'OPTIONAL' makes the whole include/exclude optional")
+    "a final 'OPTIONAL' makes the whole include/exclude optional");
+
+$testconf = Installcheck::Config->new();
+$testconf->add_param("property", '"prop1" "value1"');
+$testconf->add_param("property", '"prop2" "value2"');
+$testconf->add_param("property", '"prop3" "value3"');
+$testconf->write();
+
+is(run_get('amgetconf', 'TESTCONF', "property:prop1"), "value1", 
+    "correctly returns property prop1 from the file");
+is(run_get('amgetconf', 'TESTCONF', "property:prop2"), "value2", 
+    "correctly returns property prop2 from the file");
+is(run_get('amgetconf', 'TESTCONF', "property:prop3"), "value3", 
+    "correctly returns property prop3 from the file");
+is(run_get('amgetconf', 'TESTCONF', "property"), "\"prop1\" \"value1\"\n\"prop2\" \"value2\"\n\"prop3\" \"value3\"", 
+    "correctly returns all propertiss from the file");
 
