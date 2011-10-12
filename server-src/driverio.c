@@ -994,7 +994,11 @@ update_info_dumper(
     infp->size = origsize;
     infp->csize = dumpsize;
     infp->secs = dumptime;
-    infp->date = get_time_from_timestamp(sched(dp)->datestamp);
+    if (sched(dp)->timestamp == 0) {
+	infp->date = 0;
+    } else {
+	infp->date = get_time_from_timestamp(sched(dp)->datestamp);
+    }
 
     if(level == 0) perfp = &info.full;
     else perfp = &info.incr;
@@ -1029,7 +1033,11 @@ update_info_dumper(
 	info.history[0].level = level;
 	info.history[0].size  = origsize;
 	info.history[0].csize = dumpsize;
-	info.history[0].date  = get_time_from_timestamp(sched(dp)->datestamp);
+	if (sched(dp)->timestamp == 0) {
+	    info.history[0].date = 0;
+	} else {
+	    info.history[0].date = get_time_from_timestamp(sched(dp)->datestamp);
+	}
 	info.history[0].secs  = dumptime;
     }
 
