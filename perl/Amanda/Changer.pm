@@ -1617,7 +1617,10 @@ sub release {
     my $self = shift;
     my %params = @_;
 
-    return if $self->{'released'};
+    if ($self->{'released'}) {
+	$params{'finished_cb'}->(undef) if exists $params{'finished_cb'};
+	return;
+    }
 
     # always finish the device on release; it's illegal for anything
     # else to use the device after this point, anyway, so we want to

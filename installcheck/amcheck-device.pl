@@ -16,12 +16,12 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 use strict;
 use warnings;
 
 use lib "@amperldir@";
-use Installcheck::Run qw(run run_get);
+use Installcheck::Run qw(run run_get run_err);
 use Amanda::Config qw( :init :getconf );
 use Amanda::Paths;
 use Amanda::Debug;
@@ -45,3 +45,12 @@ ok(!run("$amlibexecdir/amcheck-device", "TESTCONF", "-o", "autolabel="),
 like(run_get("$amlibexecdir/amcheck-device", "TESTCONF", "-w"),
     qr/Volume 'TESTCONF01' is writeable/,
     "tests for writeability with -w");
+
+$testconf = Installcheck::Run::setup();
+$testconf->add_param("autolabel", "\"TESTCONF-\$4s\" empty volume_error");
+$testconf->write();
+
+like(run_err("$amlibexecdir/amcheck-device", "TESTCONF"),
+    qr/ERROR: Newly-generated label 'TESTCONF-0001' does not match labelstr 'TESTCONF\[0-9\]\[0-9\]'/m,
+    "a run with incompatible autolabel and labelstr");
+
