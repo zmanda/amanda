@@ -474,6 +474,14 @@ The value is passed to curl_easy_setopt(3) as CURLOPT_CAINFO.
 (read-write) This property gives the Amazon S3 secret key used to access the service.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>S3_SERVER_SIDE_ENCRYPTION</term><listitem>
+(read-write) Set to the server side encryption algorithm to use.
+There is actually only one algorithm, it is "AES256".  The encryption is done
+by Amazon on their server. See
+<ulink url="http://docs.amazonwebservices.com/AmazonS3/latest/API/index.html?RESTObjectPUT.html" />
+for the most up-to-date list.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>S3_SERVICE_PATH</term><listitem>
 (read-write) A path to add at the beginning of the URL.
 </listitem></varlistentry>

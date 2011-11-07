@@ -94,6 +94,8 @@
 
 #define AMAZON_STORAGE_CLASS_HEADER "x-amz-storage-class"
 
+#define AMAZON_SERVER_SIDE_ENCRYPTION_HEADER "x-amz-server-side-encryption"
+
 #define AMAZON_WILDCARD_LOCATION "*"
 
 /* parameters for exponential backoff in the face of retriable errors */
@@ -139,6 +141,7 @@ struct S3Handle {
     /* attributes for new objects */
     char *bucket_location;
     char *storage_class;
+    char *server_side_encryption;
     char *host;
     char *service_path;
     gboolean use_subdomain;
@@ -664,6 +667,14 @@ authenticate_request(S3Handle *hdl,
         g_string_append(auth_string, "\n");
     }
 
+    if (g_str_equal(verb,"PUT") &&
+	is_non_empty_string(hdl->server_side_encryption)) {
+        g_string_append(auth_string, AMAZON_SERVER_SIDE_ENCRYPTION_HEADER);
+        g_string_append(auth_string, ":");
+        g_string_append(auth_string, hdl->server_side_encryption);
+        g_string_append(auth_string, "\n");
+    }
+
     if (is_non_empty_string(hdl->storage_class)) {
         g_string_append(auth_string, AMAZON_STORAGE_CLASS_HEADER);
         g_string_append(auth_string, ":");
@@ -720,12 +731,18 @@ authenticate_request(S3Handle *hdl,
         g_free(buf);
     }
 
+    if (g_str_equal(verb,"PUT") &&
+	is_non_empty_string(hdl->server_side_encryption)) {
+	buf = g_strdup_printf(AMAZON_SERVER_SIDE_ENCRYPTION_HEADER ": %s", hdl->server_side_encryption);
+	headers = curl_slist_append(headers, buf);
+	g_free(buf);
+    }
+
     if (is_non_empty_string(hdl->storage_class)) {
 	buf = g_strdup_printf(AMAZON_STORAGE_CLASS_HEADER ": %s", hdl->storage_class);
 	headers = curl_slist_append(headers, buf);
 	g_free(buf);
     }
-
 
     buf = g_strdup_printf("Authorization: AWS %s:%s",
                           hdl->access_key, auth_base64);
@@ -1500,7 +1517,8 @@ s3_open(const char *access_key,
         const char *user_token,
         const char *bucket_location,
         const char *storage_class,
-        const char *ca_info
+        const char *ca_info,
+        const char *server_side_encryption
         )
 {
     S3Handle *hdl;
@@ -1523,6 +1541,9 @@ s3_open(const char *access_key,
 
     /* NULL is ok */
     hdl->storage_class = g_strdup(storage_class);
+
+    /* NULL is ok */
+    hdl->server_side_encryption = g_strdup(server_side_encryption);
 
     /* NULL is okay */
     hdl->ca_info = g_strdup(ca_info);
@@ -1563,6 +1584,7 @@ s3_free(S3Handle *hdl)
         if (hdl->user_token) g_free(hdl->user_token);
         if (hdl->bucket_location) g_free(hdl->bucket_location);
         if (hdl->storage_class) g_free(hdl->storage_class);
+        if (hdl->server_side_encryption) g_free(hdl->server_side_encryption);
         if (hdl->host) g_free(hdl->host);
         if (hdl->service_path) g_free(hdl->service_path);
         if (hdl->curl) curl_easy_cleanup(hdl->curl);
