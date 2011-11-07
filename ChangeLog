@@ -1,4 +1,11 @@
 2011-11-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Add S3_SERVER_SIDE_ENCRYPTION property.
+	* device-src/s3.c: Add server_side_encryption.
+ 	* device-src/s3.h: Add server_side_encryption.
+	* man/xml-source/amanda-devices.7.xml: Document
+	  S3_SERVER_SIDE_ENCRYPTION property
+
+2011-11-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm (release): Always call finished_cb.
 	* installcheck/amcheck-device.pl: Add a check.
 

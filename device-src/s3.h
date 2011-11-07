@@ -236,7 +236,8 @@ S3Handle *
 s3_open(const char * access_key, const char *secret_key, const char *host,
         const char *service_path, gboolean use_subdomain,
         const char * user_token,
-        const char * bucket_location, const char * storage_class, const char * ca_info);
+        const char * bucket_location, const char * storage_class,
+	const char * ca_info, const char * server_side_encryption);
 
 /* Deallocate an S3Handle
  *
