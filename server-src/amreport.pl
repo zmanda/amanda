@@ -347,8 +347,19 @@ sub open_printer_output
     debug("invoking printer: " . join(" ", @cmd));
 
     # redirect stdout/stderr to stderr, which is usually the amdump log
-    my $pid = open3( my $fh, ">&2", ">&2", @cmd)
-      or error("cannot start $cmd[0]: $!", 1);
+    my ($pid, $fh);
+    $pid = open3($fh, ">&2", ">&2", @cmd) or do {
+        ($pid, $fh) = (0, undef);
+        chomp $@;
+        my $errstr = "error: $@: $!";
+
+	print STDERR "$errstr\n";
+        if ($mode == MODE_SCRIPT) {
+            debug($errstr);
+        } else {
+            error($errstr, 1);
+        }
+    };
     return ($pid, $fh);
 }
 
@@ -399,9 +410,10 @@ sub open_mail_output
     eval { $pid = open3($fh, ">&2", ">&2", @cmd); 1; } or do {
 
         ($pid, $fh) = (0, undef);
-        my $errstr =
-          "error: could not run command: " . join(" ", @cmd) . ": $@";
+        chomp $@;
+        my $errstr = "error: $@: $!";
 
+	print STDERR "$errstr\n";
         if ($mode == MODE_SCRIPT) {
             debug($errstr);
         } else {
