@@ -1,3 +1,6 @@
+2011-11-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Print state filename to debug file.
+
 2011-11-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Add S3_SERVER_SIDE_ENCRYPTION property.
 	* device-src/s3.c: Add server_side_encryption.
