@@ -347,8 +347,19 @@ sub open_printer_output
     debug("invoking printer: " . join(" ", @cmd));
 
     # redirect stdout/stderr to stderr, which is usually the amdump log
-    my $pid = open3( my $fh, ">&2", ">&2", @cmd)
-      or error("cannot start $cmd[0]: $!", 1);
+    my ($pid, $fh);
+    $pid = open3($fh, ">&2", ">&2", @cmd) or do {
+        ($pid, $fh) = (0, undef);
+        chomp $@;
+        my $errstr = "error: $@: $!";
+
+	print STDERR "$errstr\n";
+        if ($mode == MODE_SCRIPT) {
+            debug($errstr);
+        } else {
+            error($errstr, 1);
+        }
+    };
     return ($pid, $fh);
 }
 
@@ -401,9 +412,10 @@ sub open_mail_output
     eval { $pid = open3($fh, ">&2", ">&2", @cmd); 1; } or do {
 
         ($pid, $fh) = (0, undef);
-        my $errstr =
-          "error: could not run command: " . join(" ", @cmd) . ": $@";
+        chomp $@;
+        my $errstr = "error: $@: $!";
 
+	print STDERR "$errstr\n";
         if ($mode == MODE_SCRIPT) {
             debug($errstr);
         } else {
@@ -431,21 +443,23 @@ sub run_output {
     # TODO: add some generic error handling here.  must be compatible
     # with legacy behavior.
 
-    # TODO: modularize these better
-    if ($reportspec->[0] eq 'xml') {
-        print $fh $report->xml_output("" . getconf($CNF_ORG), $config_name);
-    } elsif ($reportspec->[0] eq 'human') {
-	my $hr =
-	  Amanda::Report::human->new( $report, $fh, $config_name, $opt_logfname );
-	$hr->print_human_amreport();
-    } elsif ($reportspec->[0] eq 'postscript') {
-	use Amanda::Report::postscript;
-	my $rep =
-	  Amanda::Report::postscript->new( $report, $config_name, $opt_logfname );
-	$rep->write_report($fh);
-    }
+    if (defined $fh) {
+	# TODO: modularize these better
+	if ($reportspec->[0] eq 'xml') {
+	    print $fh $report->xml_output("" . getconf($CNF_ORG), $config_name);
+	} elsif ($reportspec->[0] eq 'human') {
+	    my $hr = Amanda::Report::human->new($report, $fh, $config_name,
+						$opt_logfname );
+	    $hr->print_human_amreport();
+	} elsif ($reportspec->[0] eq 'postscript') {
+	    use Amanda::Report::postscript;
+	    my $rep = Amanda::Report::postscript->new($report, $config_name,
+						      $opt_logfname );
+	    $rep->write_report($fh);
+	}
 
-    close $fh;
+	close $fh;
+    }
 
     # clean up any subprocess
     if (defined $pid) {

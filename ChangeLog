@@ -1,4 +1,8 @@
 2011-11-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amreport.pl: Fix for perl-5.14
+	* installcheck/amreport.pl: Add test.
+
+2011-11-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Installcheck/Changer.pm: Fix warnign for perl 5.14.
 
 2011-11-09  Jean-Louis Martineau <martineau@zmanda.com>
