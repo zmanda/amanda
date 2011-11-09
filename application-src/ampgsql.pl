@@ -132,7 +132,6 @@ if defined $self->{'args'}->{$pdumpname};
     }
 
     foreach my $pname (keys %{$self->{'props'}}) {
-debug("aa");
         if (defined($self->{'props'}->{$pname})) {
             debug("client property: $pname $self->{'props'}->{$pname}");
         } else {
@@ -449,7 +448,9 @@ sub _state_filename {
     my ($self, $level) = @_;
 
     my @parts = ("ampgsql", hexencode($self->{'args'}->{'host'}), hexencode($self->{'args'}->{'disk'}), $level);
-    $self->{'args'}->{'statedir'} . '/'  . join("-", @parts);
+    my $statefile = $self->{'args'}->{'statedir'} . '/'  . join("-", @parts);
+    debug("statefile: $statefile");
+    return $statefile;
 }
 
 sub _write_state_file {
