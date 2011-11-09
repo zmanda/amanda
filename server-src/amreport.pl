@@ -442,21 +442,23 @@ sub run_output {
     # TODO: add some generic error handling here.  must be compatible
     # with legacy behavior.
 
-    # TODO: modularize these better
-    if ($reportspec->[0] eq 'xml') {
-	print $fh $report->xml_output();
-    } elsif ($reportspec->[0] eq 'human') {
-	my $hr =
-	  Amanda::Report::human->new( $report, $fh, $config_name, $opt_logfname );
-	$hr->print_human_amreport();
-    } elsif ($reportspec->[0] eq 'postscript') {
-	use Amanda::Report::postscript;
-	my $rep =
-	  Amanda::Report::postscript->new( $report, $config_name, $opt_logfname );
-	$rep->write_report($fh);
-    }
+    if (defined $fh) {
+	# TODO: modularize these better
+	if ($reportspec->[0] eq 'xml') {
+	    print $fh $report->xml_output();
+	} elsif ($reportspec->[0] eq 'human') {
+	    my $hr = Amanda::Report::human->new($report, $fh, $config_name,
+					        $opt_logfname );
+	    $hr->print_human_amreport();
+	} elsif ($reportspec->[0] eq 'postscript') {
+	    use Amanda::Report::postscript;
+	    my $rep = Amanda::Report::postscript->new($report, $config_name,
+						      $opt_logfname );
+	    $rep->write_report($fh);
+	}
 
-    close $fh;
+	close $fh;
+    }
 
     # clean up any subprocess
     if (defined $pid) {

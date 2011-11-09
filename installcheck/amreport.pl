@@ -16,10 +16,11 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 160;
+use Test::More tests => 161;
 
 use strict;
 use warnings;
+use Errno;
 use Cwd qw(abs_path);
 use lib "@amperldir@";
 
