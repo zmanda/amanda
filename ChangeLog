@@ -1,3 +1,6 @@
+2011-11-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Installcheck/Changer.pm: Fix warnign for perl 5.14.
+
 2011-10-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driverio.c (update_info_dumper): Set date to 0 if 
 	  datestamp is 0.
