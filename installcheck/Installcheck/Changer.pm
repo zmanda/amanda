@@ -71,7 +71,7 @@ sub chg_err_like {
 	like($err->{'message'}, $expected, $msg);
     } else {
 	my $ok = 1;
-	for my $key qw( type reason message ) {
+	for my $key (qw( type reason message )) {
 	    if (exists $expected->{$key}) {
 		if (!exists $err->{$key}) {
 		    fail($msg) if ($ok);
