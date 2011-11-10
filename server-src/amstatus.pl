@@ -6,13 +6,13 @@ eval '(exit $?0)' && eval 'exec @PERL@ -S $0 ${1+"$@"}'
 	 & eval 'exec @PERL@ -S $0 $argv:q'
 		if 0;
 
-require "newgetopt.pl";
 use warnings;
 use lib '@amperldir@';
 use Time::Local;
 use Text::ParseWords;
 use Amanda::Util;
 use Amanda::Process;
+use Getopt::Long;
 
 delete @ENV{'IFS', 'CDPATH', 'ENV', 'BASH_ENV', 'PATH'};
 $ENV{'PATH'} = "/bin:/usr/bin:/usr/sbin:/sbin";       # force known path
@@ -33,25 +33,51 @@ $STATUS_MISSING =  8;
 $STATUS_TAPE    = 16;
 $exit_status    =  0;
 
-$result = &NGetOpt (	"summary",
-			"stats|statistics",
-			"dumping|d",
-			"waitdumping|wdumping",
-			"waittaper|wtaper",
-			"dumpingtape|dtape",
-			"writingtape|wtape",
-			"finished",
-			"failed|error",
-			"estimate",
-			"gestimate|gettingestimate",
-			"date",
-			"config|c:s",
-			"file:s",
-			"locale-independent-date-format",
-			);
-if($result !=1 ) {
-	&usage();
+my $opt_summary;
+my $opt_stats;
+my $opt_dumping;
+my $opt_waitdumping;
+my $opt_waittaper;
+my $opt_dumpingtape;
+my $opt_writingtape;
+my $opt_finished;
+my $opt_failed;
+my $opt_estimate;
+my $opt_gestimate;
+my $opt_date;
+my $opt_config;
+my $opt_file;
+my $opt_locale_independent_date_format;
+
+sub usage() {
+	print "amstatus [--file amdump_file]\n";
+	print "         [--summary] [--dumping] [--waitdumping] [--waittaper]\n";
+	print "         [--dumpingtape] [--writingtape] [--finished] [--failed]\n";
+	print "         [--estimate] [--gestimate] [--stats] [--date]\n";
+	print "         [--locale-independent-date-format]\n";
+	print "         [--config] <config>\n";
+	exit 0;
 }
+
+Getopt::Long::Configure(qw{ bundling });
+GetOptions(
+    'summary'                        => \$opt_summary,
+    'stats|statistics'               => \$opt_stats,
+    'dumping|d'                      => \$opt_dumping,
+    'waitdumping|wdumping'           => \$opt_waitdumping,
+    'waittaper|wtaper'               => \$opt_waittaper,
+    'dumpingtape|dtape'              => \$opt_dumpingtape,
+    'writingtape|wtape'              => \$opt_writingtape,
+    'finished'                       => \$opt_finished,
+    'failed|error'                   => \$opt_failed,
+    'estimate'                       => \$opt_estimate,
+    'gestimate|gettingestimate'      => \$opt_gestimate,
+    'date'                           => \$opt_date,
+    'config|c:s'                     => \$opt_config,
+    'file:s'                         => \$opt_file,
+    'locale-independent-date-format' => \$opt_locale_independent_date_format,
+    ) or usage();
+
 
 if( defined $opt_config ) {
 	$conf = $opt_config;
@@ -1566,12 +1592,3 @@ sub busytime() {
 	return $result;
 }
 
-sub usage() {
-	print "amstatus [--file amdump_file]\n";
-	print "         [--summary] [--dumping] [--waitdumping] [--waittaper]\n";
-	print "         [--dumpingtape] [--writingtape] [--finished] [--failed]\n";
-	print "         [--estimate] [--gestimate] [--stats] [--date]\n";
-	print "         [--locale-independent-date-format]\n";
-	print "         [--config] <config>\n";
-	exit 0;
-}

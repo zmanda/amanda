@@ -1,4 +1,7 @@
 2011-11-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Use Getopt::Long
+
+2011-11-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Use CURLOPT_MAX_RECV_SPEED_LARGE.
 
 2011-11-10  Jean-Louis Martineau <martineau@zmanda.com>
