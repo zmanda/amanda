@@ -1,4 +1,7 @@
 2011-11-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Use CURLOPT_MAX_RECV_SPEED_LARGE.
+
+2011-11-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Logfile.pod: Remove match_* functions
 	* perl/Amanda/Logfile.swg: Remove match_* functions
 	* perl/Amanda/Util.pod: Add match_* functions
