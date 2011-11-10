@@ -1,4 +1,7 @@
 2011-11-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/mock/mtx.pl: Fix qw.
+
+2011-11-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Use Getopt::Long
 
 2011-11-10  Jean-Louis Martineau <martineau@zmanda.com>
