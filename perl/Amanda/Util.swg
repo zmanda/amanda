@@ -633,6 +633,16 @@ sub unmarshal_tapespec {
 
 %}
 
+amglue_export_ok(
+    match_host match_disk match_datestamp match_level
+);
+
+gboolean match_host(char *pat, char *value);
+gboolean match_disk(char *pat, char *value);
+gboolean match_datestamp(char *pat, char *value);
+gboolean match_level(char *pat, char *value);
+
+
 /* -------------------------------------------------------------------------
  * Functions below this line are only meant to be called within this module;
  * do not call them externally. */

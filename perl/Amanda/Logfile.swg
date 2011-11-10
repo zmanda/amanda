@@ -251,7 +251,6 @@ typedef struct {
 
 amglue_export_ok(
     find_log search_logfile dumps_match log_rename
-    match_host match_disk match_datestamp match_level
 );
 
 char **find_log(void);
@@ -288,13 +287,6 @@ find_result_t *dumps_match(find_result_t *output_find, char *hostname,
 find_result_t *dumps_match_dumpspecs(find_result_t *output_find,
     amglue_dumpspec_list *dumpspecs,
     gboolean ok);
-
-/* these are actually available for clients as well, but they do not deserve
- * their own perl module, so they're stuck here */
-gboolean match_host(char *pat, char *value);
-gboolean match_disk(char *pat, char *value);
-gboolean match_datestamp(char *pat, char *value);
-gboolean match_level(char *pat, char *value);
 
 %immutable;
 amanda_log_handler_t *amanda_log_trace_log;

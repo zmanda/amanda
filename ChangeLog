@@ -1,4 +1,13 @@
 2011-11-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Logfile.pod: Remove match_* functions
+	* perl/Amanda/Logfile.swg: Remove match_* functions
+	* perl/Amanda/Util.pod: Add match_* functions
+	* perl/Amanda/Util.swg: Add match_* functions
+	* client-src/amdump_client.pl, perl/Amanda/DB/Catalog.pm,
+	  server-src/amdumpd.pl, server-src/amidxtaped.pl,
+	  server-src/amvault.pl: Use match_* functions for Amanda::Util
+
+2011-11-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report.pm: Always report the first 100 strange lines.
 	* installcheck/catalogs/longstrange.cat: Fix test.
 

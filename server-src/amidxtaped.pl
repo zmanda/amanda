@@ -118,7 +118,7 @@ use Sys::Hostname;
 
 use Amanda::Debug qw( debug info warning );
 use Amanda::MainLoop qw( :GIOCondition );
-use Amanda::Util qw( :constants );
+use Amanda::Util qw( :constants match_disk match_host );
 use Amanda::Feature;
 use Amanda::Config qw( :init :getconf );
 use Amanda::Changer;
@@ -130,7 +130,6 @@ use Amanda::Recovery::Planner;
 use Amanda::Recovery::Scan;
 use Amanda::DB::Catalog;
 use Amanda::Disklist;
-use Amanda::Logfile qw( match_disk match_host );
 
 # Note that this class performs its control IO synchronously.  This is adequate
 # for this service, as it never receives unsolicited input from the remote

@@ -39,7 +39,7 @@ use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Cmdline;
 use Amanda::Paths;
 use Amanda::Disklist;
-use Amanda::Logfile qw( match_disk match_host );
+use Amanda::Util qw( match_disk match_host );
 
 # Note that this class performs its control IO synchronously.  This is adequate
 # for this service, as it never receives unsolicited input from the remote
