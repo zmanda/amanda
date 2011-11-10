@@ -421,7 +421,17 @@ function always completely overwrites the file.
   burp $filename, $header;
 
 These functions can (and should) be exported to the main namespace
-  
+
+=head1 MATCHING
+
+The following functions are available to match strings against patterns using
+the rules described in amanda(8):
+
+  match_host($pat, $str);
+  match_disk($pat, $str);
+  match_datestamp($pat, $str);
+  match_level($pat, $str);
+
 =cut
 
 %}

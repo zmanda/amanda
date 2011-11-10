@@ -206,16 +206,6 @@ the same result, that result will be returned multiple times.
 
 All of these functions can be imported by name.
 
-=head1 MATCHING
-
-The following functions are available to match strings against patterns using
-the rules described in amanda(8):
-
-  match_host($pat, $str);
-  match_disk($pat, $str);
-  match_datestamp($pat, $str);
-  match_level($pat, $str);
-
 =head1 DEBUG LOGGING HANDLER
 
 This package provides C<$amanda_log_trace_log>, which sends C<die>
