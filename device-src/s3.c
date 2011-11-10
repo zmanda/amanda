@@ -1239,7 +1239,7 @@ perform_request(S3Handle *hdl,
 		    goto curl_error;
 
 	    if (hdl->max_recv_speed)
-		if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_MAX_SEND_SPEED_LARGE, (curl_off_t)hdl->max_recv_speed)))
+		if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t)hdl->max_recv_speed)))
 		    goto curl_error;
 	}
 #endif
