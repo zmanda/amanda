@@ -510,10 +510,22 @@ sub read_line
 
     if ( $type == $L_CONT ) {
 	${$self->{nbline_ref}}++;
-	push @{$self->{contline}}, $str if ${$self->{nbline_ref}} <= 100;
+	if ($str =~ /^\|/) {
+	    $self->{nb_strange}++;
+	    push @{$self->{contline}}, $str if $self->{nb_strange} + $self->{nb_error} <= 100;
+	} elsif ($str =~ /^\?/) {
+	    $self->{nb_error}++;
+	    push @{$self->{contline}}, $str if $self->{nb_error} <= 100;
+	} else {
+	    $self->{nb_normal}++;
+	    push @{$self->{contline}}, $str if ${$self->{nbline_ref}} <= 100;
+	}
 	return;
     }
     $self->{contline} = undef;
+    $self->{nb_normal} = 0;
+    $self->{nb_strange} = 0;
+    $self->{nb_error} = 0;
 
     if ( $prog == $P_PLANNER ) {
         return $self->_handle_planner_line( $type, $str );
@@ -806,6 +818,9 @@ sub _handle_dumper_line
 	$self->{contline} = $dumper->{stranges} ||= [];
 	$dumper->{nb_stranges} = 0;
 	$self->{nbline_ref} = \$dumper->{nb_stranges};
+	$self->{nb_normal} = 0;
+	$self->{nb_strange} = 0;
+	$self->{nb_error} = 0;
 
         return $self->{flags}{exit_status} |= STATUS_STRANGE
 
@@ -1153,6 +1168,9 @@ sub _handle_fail_line
         $self->{contline} = $program_d->{errors} ||= [];
 	$program_d->{nb_errors} = 0;
 	$self->{nbline_ref} = \$program_d->{nb_errors};
+	$self->{nb_normal} = 0;
+	$self->{nb_strange} = 0;
+	$self->{nb_error} = 0;
     }
 }
 
