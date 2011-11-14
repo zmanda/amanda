@@ -1,3 +1,6 @@
+2011-11-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/gnutar.pl: Fix for fc16.
+
 2011-11-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/mock/mtx.pl: Fix qw.
 
