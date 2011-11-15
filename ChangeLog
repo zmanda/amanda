@@ -1,4 +1,7 @@
 2011-11-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Use curl_easy_escape.
+
+2011-11-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/gnutar.pl: Fix for fc16.
 
 2011-11-10  Jean-Louis Martineau <martineau@zmanda.com>
