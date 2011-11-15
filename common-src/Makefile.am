@@ -159,8 +159,7 @@ BUILT_SOURCES += genversion.h version.c
 # these are used for testing only:
 TEST_PROGS = file bsdsecurity
 
-CLEANFILES += *.test.c
-DISTCLEANFILES += version.c genversion genversion.h
+DISTCLEANFILES += version.c genversion genversion.h config.log
 
 # used for testing only
 
@@ -265,6 +264,8 @@ SCRIPTS_SHELL = $(sbin_SCRIPTS_SHELL) $(amlibexec_SCRIPTS_SHELL)
 amlibexec_DATA = $(SCRIPTS_INCLUDE)
 amlibexec_SCRIPTS = $(amlibexec_SCRIPTS_PERL) $(amlibexec_SCRIPTS_SHELL)
 sbin_SCRIPTS = $(sbin_SCRIPTS_PERL) $(sbin_SCRIPTS_SHELL)
+
+CLEANFILES += *.test.c $(SCRIPTS_PERL) $(SCRIPTS_SHELL) $(SCRIPTS_INCLUDE)
 
 # installation
 

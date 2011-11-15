@@ -1,3 +1,15 @@
+2011-11-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* amplot/Makefile.am, application-src/Makefile.am,
+	  client-src/Makefile.am, common-src/Makefile.am,
+	  device-src/Makefile.am, server-src/Makefile.am: Add $(SCRIPTS_PERL)
+	  $(SCRIPTS_SHELL) and $(SCRIPTS_AWK) to CLEANFILES.
+	  Add config.log to DISTCLEANFILES.
+	* installcheck/Makefile.am: Add $(all_tests) $(mocks)
+	  $(noinst_SCRIPTS) to CLEANFILES. Add config.log to DISTCLEANFILES
+	  (installcheck-local): Remove $(CONFIG_DIR)/amanda-client.conf,
+	  $(CONFIG_DIR)/template.d/dumptypes and
+	  $(CONFIG_DIR)/template.d/tapetypes is they were not present.
+
 2011-11-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/gnutar.pl: Fix for fc16.
 

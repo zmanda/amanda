@@ -14,8 +14,8 @@ amplot_DATA =		$(SCRIPTS_AWK) amplot.awk amplot.g amplot.gp
 
 EXTRA_DIST +=		amplot.awk		amplot.g
 
-CLEANFILES += amplot.gp.new
-DISTCLEANFILES += amplot.gp
+CLEANFILES += amplot.gp.new $(SCRIPTS_SHELL) $(SCRIPTS_AWK)
+DISTCLEANFILES += amplot.gp config.log
 
 amplot.gp: amplot.g
 	cat $(srcdir)/amplot.g > amplot.gp.new

@@ -26,8 +26,6 @@ SCRIPTS_PERL = script-email \
 	     amsamba \
 	     amsuntar
 
-SCRIPTS_SHELL = $(amlibexec_SCRIPTS)
-
 amlibexec_PROGRAMS = teecount
 
 #We use two variables, applicationdir applicationexecdir, to segregate the
@@ -41,6 +39,9 @@ applicationexecdir = $(APPLICATION_DIR)
 applicationdir = $(APPLICATION_DIR)
 applicationexec_PROGRAMS = amgtar amstar
 applicationexec_SCRIPTS = $(SCRIPTS_PERL)
+
+CLEANFILES += $(SCRIPTS_PERL)
+DISTCLEANFILES = config.log
 
 LDADD = ../common-src/libamanda.la \
 	../client-src/libamclient.la \

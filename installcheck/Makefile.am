@@ -112,6 +112,8 @@ mocks = \
 test_data = \
 	data/aws-bundle.crt
 EXTRA_DIST += $(test_data)
+CLEANFILES += $(all_tests) $(mocks) $(noinst_SCRIPTS)
+DISTCLEANFILES = config.log
 
 tests =
 
@@ -233,10 +235,28 @@ installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL)
 	@if test -f "$(CONFIG_DIR)/amanda-client.conf" -a ! -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
 	    cp "$(CONFIG_DIR)/amanda-client.conf" "$(CONFIG_DIR)/amanda-client.conf.install-backup"; \
 	fi 
+	@if test -f "$(CONFIG_DIR)/template.d/dumptypes" -a ! -f "$(CONFIG_DIR)/template.d/dumptypes.install-backup"; then \
+	    cp "$(CONFIG_DIR)/template.d/dumptypes" "$(CONFIG_DIR)/template.d/dumptypes.install-backup"; \
+	fi 
+	@if test -f "$(CONFIG_DIR)/template.d/tapetypes" -a ! -f "$(CONFIG_DIR)/template.d/tapetypes.install-backup"; then \
+	    cp "$(CONFIG_DIR)/template.d/tapetypes" "$(CONFIG_DIR)/template.d/tapetypes.install-backup"; \
+	fi 
 	for f in $(tests); do chmod a-x $$f; done
 	srcdir="$(srcdir)" $(PERL) -I$(srcdir) -I. -e 'use Test::Harness qw(&runtests); runtests(sort @ARGV);' $(tests)
 	rm -rf "$(CONFIG_DIR)/TESTCONF"
 	@if test -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
 	    mv -f "$(CONFIG_DIR)/amanda-client.conf.install-backup" "$(CONFIG_DIR)/amanda-client.conf"; \
+	else \
+	    rm "$(CONFIG_DIR)/amanda-client.conf"; \
+	fi
+	@if test -f "$(CONFIG_DIR)/template.d/dumptypes.install-backup"; then \
+	    mv -f "$(CONFIG_DIR)/template.d/dumptypes.install-backup" "$(CONFIG_DIR)/template.d/dumptypes"; \
+	else \
+	    rm "$(CONFIG_DIR)/template.d/dumptypes"; \
+	fi
+	@if test -f "$(CONFIG_DIR)/template.d/tapetypes.install-backup"; then \
+	    mv -f "$(CONFIG_DIR)/template.d/tapetypes.install-backup" "$(CONFIG_DIR)/tapetypes.d/dumptypes"; \
+	else \
+	    rm "$(CONFIG_DIR)/template.d/tapetypes"; \
 	fi
 	rm -rf "$(AMANDA_TMPDIR)/installchecks"

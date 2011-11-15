@@ -102,7 +102,8 @@ TEST_PROGS = diskfile infofile
 
 EXTRA_PROGRAMS =	$(TEST_PROGS)
 
-CLEANFILES += *.test.c
+CLEANFILES += *.test.c $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
+DISTCLEANFILES = config.log
 
 amindexd_CSRC =		amindexd.c	disk_history.c	list_dir.c
 amindexd_SOURCES =	disk_history.h	list_dir.h	$(amindexd_CSRC)

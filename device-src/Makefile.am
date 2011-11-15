@@ -24,6 +24,8 @@ SCRIPTS_PERL = \
 	amtapetype
 sbin_SCRIPTS = $(SCRIPTS_PERL)
 
+CLEANFILES = $(SCRIPTS_PERL) config.log
+
 ## libamdevice.la
 
 amlib_LTLIBRARIES = 	libamdevice.la
