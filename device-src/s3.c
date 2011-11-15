@@ -304,6 +304,7 @@ static gboolean is_non_empty_string(const char *str);
  */
 static char *
 build_url(
+      CURL *curl,
       const char *host,
       const char *service_path,
       const char *bucket,
@@ -528,6 +529,7 @@ is_non_empty_string(const char *str)
 
 static char *
 build_url(
+      CURL *curl,
       const char *host,
       const char *service_path,
       const char *bucket,
@@ -561,17 +563,41 @@ build_url(
 
     /* path */
     if (!use_subdomain && bucket) {
-        esc_bucket = curl_escape(bucket, 0);
+	/* curl_easy_escape addeded in 7.15.4 */
+	#if LIBCURL_VERSION_NUM >= 0x070f04
+	    curl_version_info_data *info;
+	    /* check the runtime version too */
+	    info = curl_version_info(CURLVERSION_NOW);
+	    if (info->version_num >= 0x070f04)
+		esc_bucket = curl_easy_escape(curl, bucket, 0);
+	    else
+		esc_bucket = curl_escape(bucket, 0);
+	#else
+	    esc_bucket = curl_escape(bucket, 0);
+	#endif
         if (!esc_bucket) goto cleanup;
         g_string_append_printf(url, "%s", esc_bucket);
         if (key)
             g_string_append(url, "/");
+	curl_free(esc_bucket);
     }
 
     if (key) {
-        esc_key = curl_escape(key, 0);
+	/* curl_easy_escape addeded in 7.15.4 */
+	#if LIBCURL_VERSION_NUM >= 0x070f04
+	    curl_version_info_data *info;
+	    /* check the runtime version too */
+	    info = curl_version_info(CURLVERSION_NOW);
+	    if (info->version_num >= 0x070f04)
+		esc_key = curl_easy_escape(curl, key, 0);
+	    else
+		esc_key = curl_escape(key, 0);
+	#else
+	    esc_key = curl_escape(key, 0);
+	#endif
         if (!esc_key) goto cleanup;
         g_string_append_printf(url, "%s", esc_key);
+	curl_free(esc_key);
     }
 
     /* query string */
@@ -588,8 +614,6 @@ build_url(
         g_string_append(url, query);
 
 cleanup:
-    if (esc_bucket) curl_free(esc_bucket);
-    if (esc_key) curl_free(esc_key);
 
     return g_string_free(url, FALSE);
 }
@@ -1123,8 +1147,8 @@ perform_request(S3Handle *hdl,
 
     s3_reset(hdl);
 
-    url = build_url(hdl->host, hdl->service_path, bucket, key, subresource,
-                    query, hdl->use_subdomain, hdl->use_ssl);
+    url = build_url(hdl->curl, hdl->host, hdl->service_path, bucket, key,
+		    subresource, query, hdl->use_subdomain, hdl->use_ssl);
     if (!url) goto cleanup;
 
     /* libcurl may behave strangely if these are not set correctly */

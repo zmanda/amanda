@@ -1,4 +1,7 @@
 2011-11-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Use curl_easy_escape.
+
+2011-11-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* amplot/Makefile.am, application-src/Makefile.am,
 	  client-src/Makefile.am, common-src/Makefile.am,
 	  device-src/Makefile.am, server-src/Makefile.am: Add $(SCRIPTS_PERL)
