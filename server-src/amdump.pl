@@ -151,6 +151,7 @@ sub bail_already_running {
 	or die("cannot open a fake log to send an report - situation is dire");
     print $fakelog <<EOF;
 INFO amdump amdump pid $$
+START planner date $timestamp
 START driver date $timestamp
 ERROR amdump $msg
 EOF
