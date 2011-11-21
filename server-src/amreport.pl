@@ -348,18 +348,28 @@ sub open_printer_output
 
     # redirect stdout/stderr to stderr, which is usually the amdump log
     my ($pid, $fh);
-    $pid = open3($fh, ">&2", ">&2", @cmd) or do {
-        ($pid, $fh) = (0, undef);
-        chomp $@;
-        my $errstr = "error: $@: $!";
-
+    if (!-f $Amanda::Constants::LPR || !-x $Amanda::Constants::LPR) {
+	my $errstr = "error: the mailer '$Amanda::Constants::LPR' is not an executable program.";
 	print STDERR "$errstr\n";
         if ($mode == MODE_SCRIPT) {
             debug($errstr);
         } else {
             error($errstr, 1);
         }
-    };
+    } else {
+	eval { $pid = open3($fh, ">&2", ">&2", @cmd); } or do {
+            ($pid, $fh) = (0, undef);
+            chomp $@;
+            my $errstr = "error: $@: $!";
+
+	    print STDERR "$errstr\n";
+            if ($mode == MODE_SCRIPT) {
+		debug($errstr);
+            } else {
+		error($errstr, 1);
+            }
+        };
+    }
     return ($pid, $fh);
 }
 
@@ -409,19 +419,29 @@ sub open_mail_output
 
 
     my ($pid, $fh);
-    eval { $pid = open3($fh, ">&2", ">&2", @cmd); 1; } or do {
-
-        ($pid, $fh) = (0, undef);
-        chomp $@;
-        my $errstr = "error: $@: $!";
-
+    if (!-f $cfg_mailer || !-x $cfg_mailer) {
+	my $errstr = "error: the mailer '$cfg_mailer' is not an executable program.";
 	print STDERR "$errstr\n";
         if ($mode == MODE_SCRIPT) {
             debug($errstr);
         } else {
             error($errstr, 1);
         }
-    };
+	
+    } else {
+	eval { $pid = open3($fh, ">&2", ">&2", @cmd) } or do {
+            ($pid, $fh) = (0, undef);
+            chomp $@;
+            my $errstr = "error: $@: $!";
+
+	    print STDERR "$errstr\n";
+            if ($mode == MODE_SCRIPT) {
+		debug($errstr);
+            } else {
+		error($errstr, 1);
+            }
+	};
+    }
 
     return ($pid, $fh);
 }

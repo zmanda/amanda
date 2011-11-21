@@ -525,7 +525,8 @@ is($Installcheck::Run::stdout, "", "..produces no stdout output");
 $! = &Errno::ENOENT;
 my $enoent = $!;
 like($Installcheck::Run::stderr,
-     qr/^error: open3: exec of .*: $enoent$/, "..produces correct stderr output");
+     qr/^error: the mailer '.*' is not an executable program\.$/,
+     "..produces correct stderr output");
 results_match(
     $printer_output,
     $cat->get_text('postscript'),
