@@ -1579,10 +1579,20 @@ s3_open(const char *access_key,
 			 (g_str_equal(host, "s3.amazonaws.com") &&
 			  is_non_empty_string(hdl->bucket_location));
     if (service_path) {
-	if (service_path[0] != '/')
+	if (strlen(service_path) == 0 ||
+	    (strlen(service_path) == 1 && service_path[0] == '/')) {
+	    hdl->service_path = NULL;
+	} else if (service_path[0] != '/') {
 	    hdl->service_path = g_strdup_printf("/%s", service_path);
-	else
+	} else {
 	    hdl->service_path = g_strdup(service_path);
+	}
+	if (hdl->service_path) {
+	    /* remove trailling / */
+	    size_t len = strlen(hdl->service_path) - 1;
+	    if (hdl->service_path[len] == '/')
+		hdl->service_path[len] = '\0';
+	}
     } else {
 	hdl->service_path = NULL;
     }
