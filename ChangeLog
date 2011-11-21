@@ -1,4 +1,8 @@
 2011-11-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amreport.pl: Check if executable before open3().
+	* installcheck/amreport.pl: Fix for new message.
+
+2011-11-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Correctly check barcode is not defined.
 
 2011-11-21  Jean-Louis Martineau <martineau@zmanda.com>
