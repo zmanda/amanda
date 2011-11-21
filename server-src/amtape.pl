@@ -181,7 +181,7 @@ sub {
 	}
     }
 
-    my $use_slots = @slots > 1;
+    my $use_slots = @slots > 0;
 
     $chg = load_changer($finished_cb) or return;
 
