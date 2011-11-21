@@ -111,6 +111,7 @@ if test -f $errfile || test -f $logdir/log; then
 	process_name=`grep "^INFO .* .* pid " $logdir/log | head -n 1 | awk '{print $2}'`
 	echo `_ '%s: %s is already running, or you must run amcleanup' "$0" "${process_name}"` 1>&2
 	echo "INFO amdump amdump pid $$" > $logdir/log.$$
+	echo "START planner date $date_starttime" >> $logdir/log.$$
 	echo "START driver date $date_starttime" >> $logdir/log.$$
 	echo "ERROR amdump " `_ '%s is already running, or you must run amcleanup' "${process_name}"` >> $logdir/log.$$
 	$sbindir/amreport $conf --from-amdump -l $logdir/log.$$ "$@"
@@ -127,6 +128,7 @@ if [ -z "$me" ] ; then
 	process_name=`grep "^INFO .* .* pid " $logdir/log | head -n 1 | awk '{print $2}'`
 	echo `_ '%s: %s is already running, or you must run amcleanup' "$0" "${process_name}"` 1>&2
 	echo "INFO amdump amdump pid $$" > $logdir/log.$$
+	echo "START planner date $date_starttime" >> $logdir/log.$$
 	echo "START driver date $date_starttime" >> $logdir/log.$$
 	echo "ERROR amdump " `_ '%s is already running, or you must run amcleanup' "${process_name}"` >> $logdir/log.$$
 	$sbindir/amreport $conf --from-amdump -l $logdir/log.$$ "$@"
