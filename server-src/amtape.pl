@@ -148,16 +148,40 @@ sub {
 	});
 });
 
-subcommand("show", "show", "scan all slots in the changer, starting with the current slot",
+subcommand("show", "show [<slots>]", "scan all slots (or listed slots) in the changer, starting with the current slot",
 sub {
     my ($finished_cb, @args) = @_;
     my $last_slot;
     my %seen_slots;
     my $chg;
 
-    if (@args != 0) {
+    if (@args > 1) {
 	return usage($finished_cb);
     }
+
+    my $what = $args[0];
+    my @slots;
+
+    if (defined $what) {
+	my @what1 = split /,/, $what;
+	foreach my $what1 (@what1) {
+	    if ($what1 =~ /^(\d*)-(\d*)$/) {
+		my $begin = $1;
+		my $end = $2;
+		$end = $begin if $begin > $end;
+		while ($begin <= $end) {
+		    push @slots, $begin;
+		    $begin++;
+		}
+	    } elsif ($what1 =~ /^\d+$/) {
+		push @slots, $what1;
+	    } else {
+		print STDERR "Invalid slot range: $what1\n";
+	    }
+	}
+    }
+
+    my $use_slots = @slots > 1;
 
     $chg = load_changer($finished_cb) or return;
 
@@ -173,13 +197,19 @@ sub {
 	my ($err, %info) = @_;
 	return failure($err, $finished_cb) if $err;
 
-	print STDERR "amtape: scanning all $info{num_slots} slots in changer:\n";
+	if ($use_slots) {
+	   my $slot = shift @slots;
+	   $chg->load(slot => $slot,
+		      mode => "read",
+		      res_cb => $steps->{'loaded'});
 
-	$steps->{'load_current'}->();
-    };
+	} else {
+	    print STDERR "amtape: scanning all $info{num_slots} slots in changer:\n";
 
-    step load_current => sub {
-	$chg->load(relative_slot => 'current', mode => "read", res_cb => $steps->{'loaded'});
+	    $chg->load(relative_slot => 'current',
+		       mode => "read",
+		       res_cb => $steps->{'loaded'});
+	}
     };
 
     step loaded => sub {
@@ -224,8 +254,19 @@ sub {
     };
 
     step released => sub {
-	$chg->load(relative_slot => 'next', slot => $last_slot,
-		   except_slots => { %seen_slots }, res_cb => $steps->{'loaded'});
+	if ($use_slots) {
+	   return $finished_cb->() if @slots == 0;
+	   my $slot = shift @slots;
+	   $chg->load(slot => $slot,
+		      mode => "read",
+		      res_cb => $steps->{'loaded'});
+
+	} else {
+	    $chg->load(relative_slot => 'next',
+		       slot => $last_slot,
+		       except_slots => { %seen_slots },
+		       res_cb => $steps->{'loaded'});
+	}
     };
 });
 

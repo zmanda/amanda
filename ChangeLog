@@ -1,4 +1,8 @@
 2011-11-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amtape.pl: Add [slots] argument to amtape show.
+	* man/xml-source/amtape.8.xml: Document it.
+
+2011-11-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Disable the service_path if it is set to an empty
 	  string or '/', also remove trailing slash.
 
