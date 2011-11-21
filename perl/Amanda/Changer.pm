@@ -1291,7 +1291,7 @@ sub make_new_tape_label {
 
     (my $npercents =
 	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
-    my $nlabels = 10 ** $npercents;
+    $npercents = 0 if $npercents eq $template;
 
     my $label;
     if ($npercents == 0) {
@@ -1327,6 +1327,7 @@ sub make_new_tape_label {
 	    }
 	}
 
+	my $nlabels = 10 ** $npercents;
 	my ($i);
 	for ($i = 1; $i < $nlabels; $i++) {
 	    $label = sprintf($sprintf_pat, $i);
@@ -1383,6 +1384,7 @@ sub make_new_meta_label {
 
     (my $npercents =
 	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
+    $npercents = 0 if $npercents eq $template;
     my $nlabels = 10 ** $npercents;
 
     # make up a sprintf pattern
