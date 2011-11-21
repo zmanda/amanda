@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 42;
+use Test::More tests => 46;
 use strict;
 use warnings;
 
@@ -149,6 +149,19 @@ ok(run('amtape', 'TESTCONF', 'show'),
 like($Installcheck::Run::stderr,
     qr/slot +2:.*label MyTape\nslot +3/,
     "'amtape TESTCONF show' ..result correct");
+
+ok(run('amtape', 'TESTCONF', 'show', '2'),
+    "'amtape TESTCONF show'");
+like($Installcheck::Run::stderr,
+    qr/^slot +2:.*label MyTape$/,
+    "'amtape TESTCONF show 2' ..result correct");
+
+ok(run('amtape', 'TESTCONF', 'show', '1,3'),
+    "'amtape TESTCONF show'");
+like($Installcheck::Run::stderr,
+    qr/^slot +1: unlabeled volume\nslot +3: date \d{14} label TESTCONF13$/,
+#    qr/slot +1: unlabeled volume\nslot +3: date 20111121133419 label TESTCONF13/,
+    "'amtape TESTCONF show 1,3' ..result correct");
 
 ok(run('amtape', 'TESTCONF', 'taper'),
     "'amtape TESTCONF taper'");
