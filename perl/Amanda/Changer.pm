@@ -1301,7 +1301,7 @@ sub make_new_tape_label {
 	    my $slot_label = sprintf("%0*d", $slot_digit, $slot);
 	    $label =~ s/SUBSTITUTE_SLOT/$slot_label/g;
 	}
-	if ($template =~ /SUBSTITUTE_BARCODE/ && defined $barcode) {
+	if ($template =~ /SUBSTITUTE_BARCODE/ && !defined $barcode) {
 	    return (undef, "Can't generate new label because volume has no barcode");
 	} elsif ($template =~ /SUBSTITUTE_SLOT/ && !defined $slot) {
 	    return (undef, "Can't generate new label because volume has no slot");
