@@ -1,3 +1,6 @@
+2011-11-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c (build_url): curl is G_GNUC_UNUSED.
+
 2011-11-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amtape.pl: Fix 'amtape show' with one slot.
 	* installcheck/amtape.pl: Test it.

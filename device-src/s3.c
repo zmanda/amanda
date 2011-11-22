@@ -529,7 +529,7 @@ is_non_empty_string(const char *str)
 
 static char *
 build_url(
-      CURL *curl,
+      CURL *curl G_GNUC_UNUSED,
       const char *host,
       const char *service_path,
       const char *bucket,
