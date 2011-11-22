@@ -252,11 +252,11 @@ installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL)
 	@if test -f "$(CONFIG_DIR)/template.d/dumptypes.install-backup"; then \
 	    mv -f "$(CONFIG_DIR)/template.d/dumptypes.install-backup" "$(CONFIG_DIR)/template.d/dumptypes"; \
 	else \
-	    rm "$(CONFIG_DIR)/template.d/dumptypes"; \
+	    rm -f "$(CONFIG_DIR)/template.d/dumptypes"; \
 	fi
 	@if test -f "$(CONFIG_DIR)/template.d/tapetypes.install-backup"; then \
 	    mv -f "$(CONFIG_DIR)/template.d/tapetypes.install-backup" "$(CONFIG_DIR)/tapetypes.d/dumptypes"; \
 	else \
-	    rm "$(CONFIG_DIR)/template.d/tapetypes"; \
+	    rm -f "$(CONFIG_DIR)/template.d/tapetypes"; \
 	fi
 	rm -rf "$(AMANDA_TMPDIR)/installchecks"
