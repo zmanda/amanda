@@ -255,7 +255,7 @@ installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL)
 	    rm -f "$(CONFIG_DIR)/template.d/dumptypes"; \
 	fi
 	@if test -f "$(CONFIG_DIR)/template.d/tapetypes.install-backup"; then \
-	    mv -f "$(CONFIG_DIR)/template.d/tapetypes.install-backup" "$(CONFIG_DIR)/tapetypes.d/dumptypes"; \
+	    mv -f "$(CONFIG_DIR)/template.d/tapetypes.install-backup" "$(CONFIG_DIR)/template.d/tapetypes"; \
 	else \
 	    rm -f "$(CONFIG_DIR)/template.d/tapetypes"; \
 	fi
