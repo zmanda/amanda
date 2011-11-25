@@ -92,6 +92,7 @@ my ($fc14, $fc15);
 	$fc15 = 1;
     }
 }
+
 # see if the default for --wildcards during inclusion has been changed
 my $wc_default_changed = 0;
 {
@@ -116,7 +117,7 @@ my %version_classes = (
     '1.23fc14' => ($numeric_version == 12300 and $fc14),
     '!1.23' => ($numeric_version < 12290 || ($numeric_version > 12300 && $numeric_version < 12500)),
     '>=1.25' => $numeric_version >= 12500,
-    '1.26fc15' => ($numeric_version == 12600 and $fc15),
+    'fc15' => ($numeric_version >= 12500 and $fc15),
 );
 
 # include and exclude all use the same set of patterns and filenames
@@ -204,9 +205,11 @@ sub get_matching_type {
     my ($expectations) = @_;
 
     # find the type for the first matching version
-    for (keys %$expectations) {
-	if ($version_classes{$_}) {
-	    return $expectations->{$_};
+    foreach my $exp (@$expectations) {
+	foreach (keys %$exp) {
+	    if ($version_classes{$_}) {
+		return $exp->{$_};
+	    }
 	}
     }
     return undef;
@@ -330,60 +333,60 @@ sub test_gnutar_inclusion {
 
 test_gnutar_inclusion(
     extra_args => [],
-    expectations => {
-	'<1.16' => 'alpha',
-        '1.23fc14' => 'zeta',
-        '1.26fc15' => 'zeta',
-	'>=1.16-no-wc' => 'epsilon',
-	'>=1.16-wc' => 'beta', # acts like --wildcards
-    },
+    expectations => [
+	{'<1.16' => 'alpha'},
+        {'1.23fc14' => 'zeta'},
+        {'fc15' => 'zeta'},
+	{'>=1.16-no-wc' => 'epsilon'},
+	{'>=1.16-wc' => 'beta'}, # acts like --wildcards
+    ],
 );
 
 test_gnutar_inclusion(
     extra_args => [ '--no-wildcards' ],
-    expectations => {
-	'<1.16' => 'alpha',
-	'>=1.16' => 'epsilon',
-    },
+    expectations => [
+	{'<1.16' => 'alpha'},
+	{'>=1.16' => 'epsilon'},
+    ],
 );
 
 test_gnutar_inclusion(
     extra_args => [ '--no-unquote' ],
-    expectations => {
-	'<1.16' => undef,
-	'1.23fc14' => 'eta',
-	'1.26fc15' => 'eta',
-	'>=1.16-no-wc' => 'empty',
-	'>=1.16-wc' => 'gamma', # acts like --wildcards --no-unquote
-    },
+    expectations => [
+	{'<1.16' => undef},
+	{'1.23fc14' => 'eta'},
+	{'fc15' => 'eta'},
+	{'>=1.16-no-wc' => 'empty'},
+	{'>=1.16-wc' => 'gamma'}, # acts like --wildcards --no-unquote
+    ],
 );
 
 test_gnutar_inclusion(
     extra_args => [ '--no-wildcards', '--no-unquote' ],
-    expectations => {
-	'<1.16' => undef,
-	'>=1.16' => 'empty',
-    },
+    expectations => [
+	{'<1.16' => undef},
+	{'>=1.16' => 'empty'},
+    ],
 );
 
 test_gnutar_inclusion(
     extra_args => [ '--wildcards' ],
-    expectations => {
-	'<1.16' => 'alpha',
-        '1.23fc14' => 'zeta',
-	'1.16..<1.25' => 'beta',
-	'>=1.25' => 'zeta',
-    },
+    expectations => [
+	{'<1.16' => 'alpha'},
+        {'1.23fc14' => 'zeta'},
+	{'1.16..<1.25' => 'beta'},
+	{'>=1.25' => 'zeta'},
+    ],
 );
 
 test_gnutar_inclusion(
     extra_args => [ '--wildcards', '--no-unquote' ],
-    expectations => {
-	'<1.16' => undef,
-	'1.23fc14' => 'eta',
-	'1.16..<1.25' => 'gamma',
-	'>=1.25' => 'eta',
-    },
+    expectations => [
+	{'<1.16' => undef},
+	{'1.23fc14' => 'eta'},
+	{'1.16..<1.25' => 'gamma'},
+	{'>=1.25' => 'eta'},
+    ],
 );
 
 ## exclusion tests (using -t and filenames on the command line)
@@ -490,20 +493,20 @@ sub test_gnutar_exclusion {
 # --wildcards
 test_gnutar_exclusion(
     extra_args => [],
-    expectations => {
-	'!1.23' => 'gamma',
-	'1.23fc14' => 'iota',
-	'1.23' => 'delta',
-	'>=1.25' => 'eta',
-    },
+    expectations => [
+	{'!1.23' => 'gamma'},
+	{'1.23fc14' => 'iota'},
+	{'1.23' => 'delta'},
+	{'>=1.25' => 'eta'},
+    ],
 );
 
 # --no-wildcards
 test_gnutar_exclusion(
     extra_args => [ '--no-wildcards' ],
-    expectations => {
-	'*' => 'empty',
-    },
+    expectations => [
+	{'*' => 'empty'},
+    ],
 );
 
 ## list (-t)
