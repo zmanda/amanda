@@ -28,12 +28,14 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amfetchdump</command>
-    <arg choice='opt'>-phcClawns</arg>
-    <arg choice='opt'>-d <replaceable>device</replaceable></arg>
+    <arg choice='opt'>-c|-C|-L</arg>
+    <arg choice='opt'>-p|-n</arg>
+    <arg choice='opt'>-a</arg>
     <arg choice='opt'>-O <replaceable>directory</replaceable></arg>
-    <arg choice='opt'>-b <replaceable>blocksize</replaceable></arg>
-    <arg choice='opt'>--header-fd <replaceable>fd</replaceable></arg>
+    <arg choice='opt'>-d <replaceable>device</replaceable></arg>
+    <arg choice='opt'>-h</arg>
     <arg choice='opt'>--header-file <replaceable>filename</replaceable></arg>
+    <arg choice='opt'>--header-fd <replaceable>fd</replaceable></arg>
     &configoverride.synopsis;
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>hostname</replaceable></arg>
