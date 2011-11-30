@@ -407,8 +407,9 @@ pull_buffer_impl(
 		    _("error reading from %s: %s"),
 		    self->device->device_name,
 		    device_error_or_status(self->device));
+		g_mutex_unlock(self->start_part_mutex);
 		wait_until_xfer_cancelled(elt->xfer);
-                goto error;
+                goto error_unlocked;
 	    }
 
 	    /* the device has signalled EOF (really end-of-part), so clean up instance
@@ -463,6 +464,7 @@ pull_buffer_impl(
     return buf;
 error:
     g_mutex_unlock(self->start_part_mutex);
+error_unlocked:
     *size = 0;
     return NULL;
 }
