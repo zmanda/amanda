@@ -1,3 +1,7 @@
+2011-11-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/xfer-source-recovery.c (pull_buffer_impl): Release lock
+	  before calling wait_until_xfer_cancelled.
+
 2011-11-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amfetchdump.pl: Fix usage.
 	* man/xml-source/amfetchdump.8.xml: Fix synopsis.
