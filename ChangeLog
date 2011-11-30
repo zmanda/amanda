@@ -1,4 +1,10 @@
 2011-11-30  Jean-Louis Martineau <martineau@zmanda.com>
+        * device-src/xfer-dest-taper-splitter.c: Set the xmsg even if the xfer
+	  is cancelled.
+	* perl/Amanda/Taper/Scribe.pm: result is PARTIAL|FAILED if 
+	  !last_part_successful.
+
+2011-11-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/xfer-source-recovery.c (pull_buffer_impl): Release lock
 	  before calling wait_until_xfer_cancelled.
 

@@ -952,11 +952,12 @@ sub _xmsg_part_done {
 	    # if the part was unsuccessful, but the xfer dest has reason to believe
 	    # this is not due to EOM, then the dump is done
 	    if (!$msg->{'successful'}) {
-		my $msg = "unknown error while dumping";
 		if ($self->{'device'}->status() != $DEVICE_STATUS_SUCCESS) {
 		    $msg = $self->{'device'}->error_or_status();
+		    $self->_operation_failed(device_error => $msg);
+		} else {
+		    $self->_operation_failed();
 		}
-		$self->_operation_failed(device_error => $msg);
 		return;
 	    }
 
@@ -1003,7 +1004,8 @@ sub _dump_done {
 
     # determine the correct final status - DONE if we're done, PARTIAL
     # if we've started writing to the volume, otherwise FAILED
-    if (@{$self->{'device_errors'}} or $self->{'config_denial_message'}) {
+    if (@{$self->{'device_errors'}} or $self->{'config_denial_message'} or
+	!$self->{'last_part_successful'}) {
 	$result = $self->{'started_writing'}? 'PARTIAL' : 'FAILED';
     } else {
 	$result = 'DONE';
@@ -1044,7 +1046,7 @@ sub _operation_failed {
 
     my $error_message = $params{'device_error'}
 		     || $params{'config_denial_message'}
-		     || 'no reason';
+		     || 'input error';
     $self->dbg("operation failed: $error_message");
 
     # tuck the message away as desired

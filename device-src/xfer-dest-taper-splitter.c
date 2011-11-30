@@ -551,11 +551,6 @@ part_done:
 	    }
     }
 
-    if (elt->cancelled) {
-	g_timer_destroy(timer);
-	return NULL;
-    }
-
     g_timer_stop(timer);
 
     msg = xmsg_new(XFER_ELEMENT(self), XMSG_PART_DONE, 0);
@@ -564,7 +559,7 @@ part_done:
     msg->partnum = self->partnum;
     msg->fileno = fileno;
     msg->successful = self->last_part_successful = part_status != PART_FAILED;
-    msg->eom = self->last_part_eom = (part_status == PART_LEOM || !msg->successful);
+    msg->eom = self->last_part_eom = part_status == PART_LEOM || self->device->is_eom;
     msg->eof = self->last_part_eof = part_status == PART_EOF;
 
     /* time runs backward on some test boxes, so make sure this is positive */
