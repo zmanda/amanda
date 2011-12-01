@@ -130,11 +130,13 @@ struct _S3Device {
     int          nb_threads;
     int          nb_threads_backup;
     int          nb_threads_recovery;
+    GThreadPool *thread_pool_delete;
     GThreadPool *thread_pool_write;
     GThreadPool *thread_pool_read;
     GCond       *thread_idle_cond;
     GMutex      *thread_idle_mutex;
     int          next_block_to_read;
+    GSList      *keys;
 };
 
 /*
@@ -693,6 +695,8 @@ static gboolean
 delete_file(S3Device *self,
             int file)
 {
+    int thread = -1;
+
     gboolean result;
     GSList *keys;
     guint64 total_size = 0;
@@ -708,26 +712,131 @@ delete_file(S3Device *self,
         return FALSE;
     }
 
-    /* this will likely be a *lot* of keys */
-    for (; keys; keys = g_slist_remove(keys, keys->data)) {
-        if (self->verbose) g_debug(_("Deleting %s"), (char*)keys->data);
-        if (!s3_delete(self->s3t[0].s3, self->bucket, keys->data)) {
-	    device_set_error(d_self,
-		vstrallocf(_("While deleting key '%s': %s"),
-			    (char*)keys->data, s3_strerror(self->s3t[0].s3)),
-		DEVICE_STATUS_DEVICE_ERROR);
-            g_slist_free(keys);
-            return FALSE;
-        }
+    g_mutex_lock(self->thread_idle_mutex);
+    if (!self->keys) {
+	self->keys = keys;
+    } else {
+	self->keys = g_slist_concat(self->keys, keys);
     }
+
+    // start the threads
+    for (thread = 0; thread < self->nb_threads; thread++)  {
+	if (self->s3t[thread].idle == 1) {
+	    /* Check if the thread is in error */
+	    if (self->s3t[thread].errflags != DEVICE_STATUS_SUCCESS) {
+		device_set_error(d_self,
+				 (char *)self->s3t[thread].errmsg,
+				 self->s3t[thread].errflags);
+		self->s3t[thread].errflags = DEVICE_STATUS_SUCCESS;
+		self->s3t[thread].errmsg = NULL;
+		g_mutex_unlock(self->thread_idle_mutex);
+		return FALSE;
+	    }
+	    self->s3t[thread].idle = 0;
+	    self->s3t[thread].done = 0;
+	    g_thread_pool_push(self->thread_pool_delete, &self->s3t[thread],
+			       NULL);
+	}
+    }
+    g_cond_wait(self->thread_idle_cond, self->thread_idle_mutex);
+    g_mutex_unlock(self->thread_idle_mutex);
+
     self->volume_bytes = total_size;
 
     return TRUE;
 }
 
+static void
+s3_thread_delete_block(
+    gpointer thread_data,
+    gpointer data)
+{
+    static int count = 0;
+    S3_by_thread *s3t = (S3_by_thread *)thread_data;
+    Device *pself = (Device *)data;
+    S3Device *self = S3_DEVICE(pself);
+    gboolean result = 1;
+    char *filename;
+
+    g_mutex_lock(self->thread_idle_mutex);
+    while (result && self->keys) {
+	filename = self->keys->data;
+	self->keys = g_slist_remove(self->keys, self->keys->data);
+	count++;
+	if (count >= 1000) {
+	    g_debug("Deleting %s ...", filename);
+	    count = 0;
+	}
+	g_mutex_unlock(self->thread_idle_mutex);
+	result = s3_delete(s3t->s3, (const char *)self->bucket, (const char *)filename);
+	if (!result) {
+	    s3t->errflags = DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR;
+	    s3t->errmsg = g_strdup_printf(_("While deleting key '%s': %s"),
+					  filename, s3_strerror(s3t->s3));
+	}
+	g_free(filename);
+	g_mutex_lock(self->thread_idle_mutex);
+    }
+    s3t->idle = 1;
+    s3t->done = 1;
+    g_cond_broadcast(self->thread_idle_cond);
+    g_mutex_unlock(self->thread_idle_mutex);
+}
+
+static void
+s3_wait_thread_delete(S3Device *self)
+{
+    Device *d_self = (Device *)self;
+    int idle_thread = 0;
+    int thread;
+
+    g_mutex_lock(self->thread_idle_mutex);
+    while (idle_thread != self->nb_threads) {
+	idle_thread = 0;
+	for (thread = 0; thread < self->nb_threads; thread++)  {
+	    if (self->s3t[thread].idle == 1) {
+		idle_thread++;
+	    }
+	    /* Check if the thread is in error */
+	    if (self->s3t[thread].errflags != DEVICE_STATUS_SUCCESS) {
+		device_set_error(d_self, (char *)self->s3t[thread].errmsg,
+					     self->s3t[thread].errflags);
+		self->s3t[thread].errflags = DEVICE_STATUS_SUCCESS;
+		self->s3t[thread].errmsg = NULL;
+	    }
+	}
+	if (idle_thread != self->nb_threads) {
+	    g_cond_wait(self->thread_idle_cond, self->thread_idle_mutex);
+	}
+    }
+    g_mutex_unlock(self->thread_idle_mutex);
+}
+
+static void
+s3_wait_thread_delete_one(S3Device *self)
+{
+    int idle_thread = 0;
+    int thread;
+
+    g_mutex_lock(self->thread_idle_mutex);
+    while (idle_thread == 0) {
+	for (thread = 0; thread < self->nb_threads; thread++)  {
+	    if (self->s3t[thread].idle == 1) {
+		idle_thread++;
+		break;
+	    }
+	}
+	if (idle_thread == 0) {
+	    g_cond_wait(self->thread_idle_cond, self->thread_idle_mutex);
+	}
+    }
+    g_mutex_unlock(self->thread_idle_mutex);
+}
+
 static gboolean
 delete_all_files(S3Device *self)
 {
+    Device *pself = (Device *)self;
     int file, last_file;
 
     /*
@@ -741,7 +850,7 @@ delete_all_files(S3Device *self)
         s3_error(self->s3t[0].s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
 
         /*
-         * if the bucket doesn't exist, it doesn't conatin any files,
+         * if the bucket doesn't exist, it doesn't contain any files,
          * so the operation is a success
          */
         if ((response_code == 404 && s3_error_code == S3_ERROR_NoSuchBucket)) {
@@ -754,13 +863,21 @@ delete_all_files(S3Device *self)
         }
     }
 
+    if (pself->volume_label) {
+	g_debug("Deleting all files on volume '%s'", pself->volume_label);
+    } else {
+	g_debug("Deleting all files on unlabelled volume");
+    }
+    reset_thread(self);
     for (file = 1; file <= last_file; file++) {
         if (!delete_file(self, file))
             /* delete_file already set our error message */
-            return FALSE;
+	    break;
+	s3_wait_thread_delete_one(self);
     }
+    s3_wait_thread_delete(self);
 
-    return TRUE;
+    return !device_in_error(self);
 }
 
 /*
@@ -864,6 +981,7 @@ s3_device_init(S3Device * self)
     self->nb_threads = 1;
     self->nb_threads_backup = 1;
     self->nb_threads_recovery = 1;
+    self->thread_pool_delete = NULL;
     self->thread_pool_write = NULL;
     self->thread_pool_read = NULL;
     self->thread_idle_cond = NULL;
@@ -1461,6 +1579,10 @@ static void s3_device_finalize(GObject * obj_self) {
     if(G_OBJECT_CLASS(parent_class)->finalize)
         (* G_OBJECT_CLASS(parent_class)->finalize)(obj_self);
 
+    if (self->thread_pool_delete) {
+	g_thread_pool_free(self->thread_pool_delete, 1, 1);
+	self->thread_pool_delete = NULL;
+    }
     if (self->thread_pool_write) {
 	g_thread_pool_free(self->thread_pool_write, 1, 1);
 	self->thread_pool_write = NULL;
@@ -1550,6 +1672,9 @@ static gboolean setup_handle(S3Device * self) {
         }
 
 	g_debug("Create %d threads", self->nb_threads);
+	self->thread_pool_delete = g_thread_pool_new(s3_thread_delete_block,
+						     self, self->nb_threads, 0,
+						     NULL);
 	self->thread_pool_write = g_thread_pool_new(s3_thread_write_block, self,
 					      self->nb_threads, 0, NULL);
 	self->thread_pool_read = g_thread_pool_new(s3_thread_read_block, self,
@@ -1890,8 +2015,6 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
 	for (thread = 0; thread < self->nb_threads_backup; thread++)  {
 	    if (self->s3t[thread].idle == 1) {
 		idle_thread++;
-		if (first_idle == -1)
-		    first_idle = thread;
 		/* Check if the thread is in error */
 		if (self->s3t[thread].errflags != DEVICE_STATUS_SUCCESS) {
 		    device_set_error(pself, (char *)self->s3t[thread].errmsg,
@@ -1900,6 +2023,10 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
 		    self->s3t[thread].errmsg = NULL;
 		    g_mutex_unlock(self->thread_idle_mutex);
 		    return FALSE;
+		}
+		if (first_idle == -1) {
+		    first_idle = thread;
+		    break;
 		}
 	    }
 	}
@@ -2005,7 +2132,9 @@ s3_device_recycle_file(Device *pself, guint file) {
     if (device_in_error(self)) return FALSE;
 
     reset_thread(self);
-    return delete_file(self, file);
+    delete_file(self, file);
+    s3_wait_thread_delete(self);
+    return !device_in_error(self);
     /* delete_file already set our error message if necessary */
 }
 
