@@ -1,3 +1,6 @@
+2011-12-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c (delete_file): Use multiple threads.
+
 2011-11-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/xfer-dest-taper-splitter.c: Set the xmsg even if the xfer
 	  is cancelled.
