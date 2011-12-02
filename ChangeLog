@@ -1,4 +1,13 @@
 2011-12-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c, device-src/vfs-device.c (*_device_erase):
+	  set the device state to unlabeled.
+	* perl/Amanda/Changer/compat.pm, perl/Amanda/Changer/multi.pm
+	  (set_label):  works with undefined label.
+	* perl/Amanda/Changer/robot.pm: small cleanup.
+	* server-src/amrmtape.pl: Call reservation set_label method to remove
+	  the label from the state.
+
+2011-12-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml (autolabel): Document it must match
 	  labelstr.
 

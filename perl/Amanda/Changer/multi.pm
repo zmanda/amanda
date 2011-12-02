@@ -664,13 +664,23 @@ sub set_label {
 	my $label = $params{'label'};
 	my $slot = $self->{'this_slot'};
 	my $unaliased = $chg->{unaliased}->{$slot};
+	my $dev = $self->{'device'};
 
 	$state->{slots}->{$unaliased}->{label} =  $label;
 	$state->{slots}->{$unaliased}->{device_status} =
-				"".$DEVICE_STATUS_SUCCESS;
-	$state->{slots}->{$unaliased}->{device_error} = undef;
-	$state->{slots}->{$unaliased}->{f_type} =
-				"".scalar($Amanda::Header::F_TAPESTART);
+				"".$dev->status;
+	if ($dev->status != $DEVICE_STATUS_SUCCESS) {
+	    $state->{slots}->{$unaliased}->{device_error} = $dev->error;
+	} else {
+	    $state->{slots}->{$unaliased}->{device_error} = undef;
+	}
+	my $volume_header = $dev->volume_header;
+	if (defined $volume_header) {
+	    $state->{slots}->{$unaliased}->{f_type} =
+				"".$volume_header->{type};
+	} else {
+	    $state->{slots}->{$unaliased}->{f_type} = undef;
+	}
 	$finished_cb->();
     });
 }
