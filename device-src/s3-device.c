@@ -2162,8 +2162,14 @@ s3_device_erase(Device *pself) {
     }
     g_free(key);
 
+    dumpfile_free(pself->volume_header);
+    pself->volume_header = NULL;
+
     if (!delete_all_files(self))
         return FALSE;
+
+    device_set_error(pself, g_strdup("Unlabeled volume"),
+		     DEVICE_STATUS_VOLUME_UNLABELED);
 
     if (!s3_delete_bucket(self->s3t[0].s3, self->bucket)) {
         s3_error(self->s3t[0].s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);

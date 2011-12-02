@@ -1406,6 +1406,11 @@ vfs_device_erase (Device * dself) {
 
     release_file(self);
 
+    dumpfile_free(dself->volume_header);
+    dself->volume_header = NULL;
+    device_set_error(dself, g_strdup("Unlabeled volume"),
+		     DEVICE_STATUS_VOLUME_UNLABELED);
+
     return TRUE;
 }
 

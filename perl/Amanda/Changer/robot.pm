@@ -829,7 +829,6 @@ sub _set_label_unlocked {
 
     $state->{'drives'}->{$drive}->{'label'} = $label;
     if (defined $slot) {
-	delete $state->{'slots'}->{$slot}->{'unkknown_state'};
 	$state->{'slots'}->{$slot}->{'state'} = Amanda::Changer::SLOT_FULL;
 	$state->{'slots'}->{$slot}->{'device_status'} = "".$dev->status;
 	if ($dev->status != $DEVICE_STATUS_SUCCESS) {
