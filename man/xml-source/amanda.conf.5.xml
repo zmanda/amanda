@@ -490,6 +490,10 @@ Example:
 <markup>&quot;$m-%%%&quot;</markup>,
 <markup>&quot;$m-$b&quot;</markup>
 </para>
+<para>The generared label can be used only if it match the
+<amkeyword>labelstr</amkeyword> setting. The volume will not be used if the
+generated label doesn't match the <amkeyword>labelstr</amkeyword> setting.
+</para>
 <para>Note that many devices cannot distinguish an empty tape from an error
 condition, so it may is often necessary to include
 <amkeyword>volume-error</amkeyword> as an autolabel condition.</para>
