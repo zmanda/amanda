@@ -1,3 +1,7 @@
+2011-12-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml (autolabel): Document it must match
+	  labelstr.
+
 2011-12-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c (delete_file): Use multiple threads.
 
