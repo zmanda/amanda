@@ -942,6 +942,7 @@ sub add_autolabel {
     usage("unknown --autolabel value '$val'");
 }
 
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{ bundling });
 GetOptions(
     'o=s' => sub {

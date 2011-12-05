@@ -107,6 +107,8 @@ Amanda::Util::setup_application("amrmtape", "server", $CONTEXT_CMDLINE);
 
 my $config_overrides = new_config_overrides( scalar(@ARGV) + 1 );
 
+debug("Arguments: " . join(' ', @ARGV));
+Getopt::Long::Configure(qw{ bundling });
 my $opts_ok = GetOptions(
     'version' => \&Amanda::Util::version_opt,
     "changer=s" => \$changer_name,

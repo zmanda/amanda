@@ -49,6 +49,8 @@ my @config_overrides_opts;
 
 my $opt_no_taper = 0;
 my $opt_from_client = 0;
+
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
     'version' => \&Amanda::Util::version_opt,

@@ -582,6 +582,7 @@ my $opt_lang;
 my $opt_directory;
 my $opt_suntar_path;
 
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'version'		  => \$opt_version,

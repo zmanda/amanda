@@ -35,6 +35,8 @@ Amanda::Util::setup_application("amdump_client", "client", $CONTEXT_CMDLINE);
 
 my $config;
 my $config_overrides = new_config_overrides($#ARGV+1);
+
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'version' => \&Amanda::Util::version_opt,

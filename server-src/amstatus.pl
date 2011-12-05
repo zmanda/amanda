@@ -59,6 +59,7 @@ sub usage() {
 	exit 0;
 }
 
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{ bundling });
 GetOptions(
     'summary'                        => \$opt_summary,

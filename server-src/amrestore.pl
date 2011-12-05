@@ -58,6 +58,8 @@ my $config_overrides = new_config_overrides($#ARGV+1);
 
 my ($opt_config, $opt_blocksize, $opt_raw, $opt_compress, $opt_compress_best,
     $opt_pipe, $opt_header, $opt_filenum, $opt_label, $opt_holding, $opt_restore_src);
+
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
     'version' => \&Amanda::Util::version_opt,

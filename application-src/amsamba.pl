@@ -874,6 +874,7 @@ my $opt_recover_mode;
 my $opt_allow_anonymous;
 my $opt_directory;
 
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'version'            => \$opt_version,

@@ -57,6 +57,8 @@ $opt_force = 0;
 $opt_barcode = undef;
 $opt_meta = undef;
 $opt_assign = undef;
+
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
     'version' => \&Amanda::Util::version_opt,
