@@ -877,8 +877,12 @@ property_set_block_size_fn(
 
     g_assert(block_size >= 0); /* int -> gsize (unsigned) */
     if ((gsize)block_size < self->min_block_size
-       || (gsize)block_size > self->max_block_size)
+       || (gsize)block_size > self->max_block_size) {
+	device_set_error(self,
+	    g_strdup_printf("Error setting BLOCK-SIZE property to '%zu', it must be between %zu and %zu", (gsize)block_size, self->min_block_size, self->max_block_size),
+	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
+    }
 
     self->block_size = block_size;
     self->block_size_surety = surety;

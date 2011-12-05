@@ -1,3 +1,9 @@
+2011-12-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/device.c, device-src/ndmp-device.c,
+	  device-src/tape-device.c: Call device_set_error if setting a
+	  property fail.
+	* perl/Amanda/Changer.pm: Use device error message.
+
 2011-12-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c, device-src/vfs-device.c (*_device_erase):
 	  set the device state to unlabeled.
