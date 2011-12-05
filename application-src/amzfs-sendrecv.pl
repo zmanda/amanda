@@ -464,7 +464,6 @@ my @opt_exclude_list;
 my @opt_include_list;
 my $opt_directory;
 
-debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'config=s'        => \$opt_config,

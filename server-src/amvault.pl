@@ -93,7 +93,7 @@ sub user_request {
 package Amvault;
 
 use Amanda::Config qw( :getconf config_dir_relative );
-use Amanda::Debug qw( :logging );
+use Amanda::Debug qw( :logging debug );
 use Amanda::Xfer qw( :constants );
 use Amanda::Header qw( :constants );
 use Amanda::MainLoop;

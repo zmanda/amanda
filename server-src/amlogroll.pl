@@ -24,7 +24,7 @@ use warnings;
 use Amanda::Util qw( :constants );
 use Amanda::Config qw( :init );
 use Amanda::Logfile qw( log_rename get_current_log_timestamp $amanda_log_trace_log );
-use Amanda::Debug;
+use Amanda::Debug qw( debug );
 use Getopt::Long;
 
 Amanda::Util::setup_application("amlogroll", "server", $CONTEXT_CMDLINE);
