@@ -1617,7 +1617,7 @@ sub make_new_meta_label {
 
 package Amanda::Changer::Config;
 use Amanda::Config qw( :getconf string_to_boolean );
-use Amanda::Device;
+use Amanda::Device qw( :constants );
 
 sub new {
     my $class = shift;
@@ -1678,7 +1678,12 @@ sub configure_device {
     while (my ($propname, $propinfo) = each(%properties)) {
 	for my $value (@{$propinfo->{'values'}}) {
 	    if (!$device->property_set($propname, $value)) {
-		my $msg = "Error setting '$propname' on device '".$device->device_name."'";
+		my $msg;
+		    if ($device->status == $DEVICE_STATUS_SUCCESS) {
+			$msg = "Error setting '$propname' on device '".$device->device_name."'";
+		    } else {
+			$msg = $device->error() . " on device '".$device->device_name."'";
+		    }
 		if (exists $propinfo->{'optional'}) {
 		    if ($propinfo->{'optional'} eq 'warn') {
 			warn("$msg (ignored)");
