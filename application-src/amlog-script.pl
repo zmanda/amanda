@@ -283,6 +283,7 @@ my $opt_record;
 my $opt_logfile;
 my $opt_text;
 
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'execute-where=s' => \$opt_execute_where,

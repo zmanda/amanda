@@ -995,6 +995,7 @@ EOF
 my $opts = {};
 my $opt_version;
 
+debug("Arguments: " . join(' ', @ARGV));
 GetOptions(
     $opts,
     'version' => \$opt_version,

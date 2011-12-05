@@ -55,6 +55,7 @@ my $opt_num0		= 0;
 my $opt_togo0		= 0;
 my $opt_verbose		= 0;
 
+debug("Arguments: " . join(' ', @ARGV));
 GetOptions('version'            => \$opt_version,
 	   'config=s'		=> \$opt_config,
 	   'hostwidth=i'	=> \$opt_hostwidth,

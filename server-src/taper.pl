@@ -33,6 +33,8 @@ use Getopt::Long;
 Amanda::Util::setup_application("taper", "server", $CONTEXT_DAEMON);
 
 my $config_overrides = new_config_overrides($#ARGV+1);
+
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'version' => \&Amanda::Util::version_opt,

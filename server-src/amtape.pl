@@ -677,6 +677,7 @@ Amanda::Util::setup_application("amtape", "server", $CONTEXT_CMDLINE);
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
     'version' => \&Amanda::Util::version_opt,

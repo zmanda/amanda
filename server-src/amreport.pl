@@ -498,6 +498,7 @@ Amanda::Util::setup_application("amreport", "server", $CONTEXT_CMDLINE);
 
 my $config_overrides = new_config_overrides( scalar(@ARGV) + 1 );
 
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw/bundling/);
 GetOptions(
 

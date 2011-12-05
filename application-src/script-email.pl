@@ -207,6 +207,7 @@ my $opt_collection;
 my $opt_record;
 my @opt_mailto;
 
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'execute-where=s' => \$opt_execute_where,

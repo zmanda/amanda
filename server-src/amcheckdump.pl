@@ -70,6 +70,7 @@ my $opt_timestamp;
 my $opt_verbose = 0;
 my $config_overrides = new_config_overrides($#ARGV+1);
 
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
     'version' => \&Amanda::Util::version_opt,

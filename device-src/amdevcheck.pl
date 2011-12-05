@@ -93,6 +93,7 @@ my $getproplist;
 my $device_name;
 my $print_label;
 
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
     'version' => \&Amanda::Util::version_opt,

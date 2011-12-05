@@ -274,6 +274,7 @@ my $opt_list = '';
 my $config_overrides = new_config_overrides($#ARGV+1);
 my $execute_where = undef;
 
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'version' => \&Amanda::Util::version_opt,
