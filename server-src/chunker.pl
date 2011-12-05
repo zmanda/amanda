@@ -26,7 +26,7 @@ package main;
 use Amanda::Util qw( :constants );
 use Amanda::Config qw( :init :getconf );
 use Amanda::Logfile qw( :logtype_t log_add $amanda_log_trace_log );
-use Amanda::Debug;
+use Amanda::Debug qw( debug );
 use Amanda::Chunker::Controller;
 use Getopt::Long;
 

@@ -61,6 +61,7 @@ sub new {
 	$execute_where = "client";
     }
     Amanda::Util::setup_application($name, $execute_where, $CONTEXT_DAEMON);
+    debug("Arguments: " . join(' ', @ARGV));
 
     #initialize config client to get values from amanda-client.conf
     config_init($CONFIG_INIT_CLIENT, undef);

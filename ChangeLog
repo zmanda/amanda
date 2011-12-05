@@ -1,4 +1,19 @@
 2011-12-05  Jean-Louis Martineau <martineau@zmanda.com>
+	Fix for previous patch.
+	* application-src/amlog-script.pl, application-src/ampgsql.pl,
+	  application-src/amraw.pl, application-src/amsamba.pl,
+	  application-src/amsuntar.pl, application-src/amzfs-sendrecv.pl,
+	  application-src/amzfs-snapshot.pl,
+	  application-src/script-email.pl: Undo previous patch,
+	* perl/Amanda/Script_App.pm: Do it here instead.
+	  server-src/amlogroll.pl, server-src/amvault.pl
+	  server-src/chunker.pl,
+	  server-src/taper.pl: Import the debug method.
+	* server-src/amoverview.pl, server-src/amserverconfig.pl,
+	  server-src/amstatus.pl: Undo previous patch, they do not use the
+	  debug file.
+
+2011-12-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amlog-script.pl, application-src/ampgsql.pl,
 	  application-src/amraw.pl, application-src/amsamba.pl,
 	  application-src/amsuntar.pl, application-src/amzfs-sendrecv.pl,

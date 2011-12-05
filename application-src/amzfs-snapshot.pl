@@ -191,7 +191,6 @@ my $zfs_path = 'zfs';
 my $pfexec_path = 'pfexec';
 my $pfexec = "NO";
 
-debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'version'	       > \$opt_version,

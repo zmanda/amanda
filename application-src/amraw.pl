@@ -278,7 +278,6 @@ my @opt_include_list;
 my @opt_exclude_list;
 my $opt_directory;
 
-debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'version'            => \$opt_version,

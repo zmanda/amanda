@@ -427,7 +427,6 @@ sub copy_chg_manual_conf {
 #main
 my $ret=0;
 
-debug("Arguments: " . join(' ', @ARGV));
 $ret = GetOptions ("template=s"=>\$template,
 		   "no-vtape!"=>\$novtape,
 	      "tapetype=s"=>\$tapetype,
