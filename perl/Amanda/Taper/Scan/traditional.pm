@@ -397,8 +397,6 @@ sub stage_2 {
 	    return $steps->{'try_continue'}->();
 	}
 
-	$self->_user_msg(slot_result => 1, slot => $slot, res => $res);
-
 	if ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
 	    $dev->volume_header and
 	    $dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY) {
@@ -437,6 +435,7 @@ sub stage_2 {
 	    return $steps->{'try_continue'}->();
 	}
 
+	$self->_user_msg(slot_result => 1, slot => $slot, res => $res);
 	$res->get_meta_label(finished_cb => $steps->{'got_meta_label'});
 	return;
     };

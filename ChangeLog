@@ -1,4 +1,13 @@
 2011-12-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/ScanInventory.pm (volume_is_labelable): New method.
+	* perl/Amanda/Taper/Scan/lexical.pm, perl/Amanda/Taper/Scan/oldest.pm:
+	  Use volume_is_labelable from ScanInventory.
+	* perl/Amanda/Taper/Scan/traditional.pm: Fix bad logging.
+	* perl/Amanda/Taper/Scribe.pm: Print "autolabel disabled".
+	* perl/Amanda/Taper/Worker.pm: Add debugging.
+	* server-src/amvault.pl: Quit both changer, add debugging.
+
+2011-12-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcleanup.pl, server-src/amcleanupdisk.pl: use
 	Amanda::Debug.
 

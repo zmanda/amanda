@@ -630,6 +630,14 @@ sub quit {
     };
 
     step roll_log => sub {
+	if (defined $self->{'src'}->{'chg'}) {
+	    $self->{'src'}->{'chg'}->quit();
+	    $self->{'src'}->{'chg'} = undef;
+	}
+	if (defined $self->{'dst'}->{'chg'}) {
+	    $self->{'dst'}->{'chg'}->quit();
+	    $self->{'dst'}->{'chg'} = undef;
+	}
 	if ($self->{'cleanup'}{'roll_trace_log'}) {
 	    log_add_full($L_FINISH, "driver", "fake driver finish");
 	    log_add($L_INFO, "pid-done $$");
@@ -740,6 +748,7 @@ sub scribe_notif_log_info {
     my $self = shift;
     my %params = @_;
 
+    debug("$params{'message'}");
     log_add_full($L_INFO, "taper", $params{'message'});
 }
 

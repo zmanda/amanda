@@ -448,6 +448,7 @@ sub scribe_notif_log_info {
     my $self = shift;
     my %params = @_;
 
+    debug("$params{'message'}");
     log_add($L_INFO, "$params{'message'}");
 }
 
