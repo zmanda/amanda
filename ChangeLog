@@ -1,3 +1,7 @@
+2011-12-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcleanup.pl, server-src/amcleanupdisk.pl: use
+	Amanda::Debug.
+
 2011-12-05  Jean-Louis Martineau <martineau@zmanda.com>
 	Fix for previous patch.
 	* application-src/amlog-script.pl, application-src/ampgsql.pl,

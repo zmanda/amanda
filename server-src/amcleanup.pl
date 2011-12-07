@@ -29,7 +29,7 @@ use Amanda::Constants;
 use Amanda::Process;
 use Amanda::Logfile;
 use Amanda::Holding;
-
+use Amanda::Debug qw( debug );
 my $kill_enable=0;
 my $process_alive=0;
 my $verbose=0;
