@@ -153,17 +153,13 @@ sub analyze {
 		    if ($vol_tle->{'datestamp'} eq '0') {
 			push @new_labeled, $sl;
 		    }
-		} elsif ($self->{'chg'}->volume_is_labelable($sl->{'device_status'},
-							     $sl->{'f_type'},
-							     $sl->{'label'})) {
+		} elsif ($self->volume_is_labelable($sl)) {
 		    $first_new_volume = $sl if !$first_new_volume;
 		    $new_volume = $sl if $current && !$new_volume;
 		    push @new_volume, $sl;
 		}
 	    }
-	} elsif ($self->{'chg'}->volume_is_labelable($sl->{'device_status'},
-						     $sl->{'f_type'},
-						     $sl->{'label'})) {
+	} elsif ($self->volume_is_labelable($sl)) {
 	    $first_new_volume = $sl if !$first_new_volume;
 	    $new_volume = $sl if $current && !$new_volume;
 	    push @new_volume, $sl;

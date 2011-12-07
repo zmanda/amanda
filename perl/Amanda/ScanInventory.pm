@@ -524,6 +524,62 @@ sub _scan {
     };
 }
 
+sub volume_is_labelable {
+    my $self = shift;
+    my $sl = shift;
+    my $dev_status  = $sl->{'device_status'};
+    my $f_type = $sl->{'f_type'};
+    my $label = $sl->{'label'};
+    my $slot = $sl->{'slot'};
+    my $chg = $self->{'chg'};
+    my $autolabel = $chg->{'autolabel'};
+
+    if (!defined $dev_status) {
+	return 0;
+    } elsif ($dev_status & $DEVICE_STATUS_VOLUME_UNLABELED and
+	     defined $f_type and
+	     $f_type == $Amanda::Header::F_EMPTY) {
+	if (!$autolabel->{'empty'}) {
+	    $self->_user_msg(slot_result  => 1,
+			     empty        => 1,
+			     slot         => $slot);
+	    return 0;
+	}
+    } elsif ($dev_status & $DEVICE_STATUS_VOLUME_UNLABELED and
+	     defined $f_type and
+	     $f_type == $Amanda::Header::F_WEIRD) {
+	if (!$autolabel->{'non_amanda'}) {
+	    $self->_user_msg(slot_result  => 1,
+			     non_amanda   => 1,
+			     slot         => $slot);
+	    return 0;
+	}
+    } elsif ($dev_status & $DEVICE_STATUS_VOLUME_ERROR) {
+	if (!$autolabel->{'volume_error'}) {
+	    $self->_user_msg(slot_result  => 1,
+			     volume_error => 1,
+			     slot         => $slot);
+	    return 0;
+	}
+    } elsif ($dev_status != $DEVICE_STATUS_SUCCESS) {
+	    $self->_user_msg(slot_result  => 1,
+			     not_success  => 1,
+			     err          => $dev_status,
+			     slot         => $slot);
+	return 0;
+    } elsif ($dev_status & $DEVICE_STATUS_SUCCESS and
+	     $f_type == $Amanda::Header::F_TAPESTART and
+	     $label !~ /$self->{'labelstr'}/) {
+	if (!$autolabel->{'other_config'}) {
+	    $self->_user_msg(slot_result  => 1,
+			     other_config => 1,
+			     slot         => $slot);
+	    return 0;
+	}
+    }
+
+    return 1;
+}
 package Amanda::ScanInventory::Config;
 
 sub new {

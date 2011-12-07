@@ -1748,16 +1748,16 @@ sub _start_scanning {
 		}
 	    } elsif ($params{'empty'}) {
 		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} is empty");
+		    message => "Slot $params{'slot'} is empty, autolabel disabled");
 	    } elsif ($params{'non_amanda'}) {
 		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} is a non-amanda volume");
+		    message => "Slot $params{'slot'} is a non-amanda volume, autolabel disabled");
 	    } elsif ($params{'volume_error'}) {
 		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} is a volume in error: $params{'err'}");
+		    message => "Slot $params{'slot'} is a volume in error: $params{'err'}, autolabel disabled");
 	    } elsif ($params{'not_success'}) {
 		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} is a device in error: $params{'err'}");
+		    message => "Slot $params{'slot'} is a device in error: $params{'err'}, autolabel disabled");
 	    } elsif ($params{'err'}) {
 		$self->{'feedback'}->scribe_notif_log_info(
 		    message => "$params{'err'}");
