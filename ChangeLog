@@ -1,4 +1,11 @@
 2011-12-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* example/template.d/amanda-S3.conf.in,
+	  example/template.d/amanda-harddisk.conf.in,
+	  example/template.d/amanda-single-tape.conf.in,
+	  example/template.d/amanda-tape-changer.conf.in: Use new changer api.
+	* server-src/amserverconfig.pl: Use new changer api.
+
+2011-12-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amvault.8.xml: Improve.
 
 2011-12-07  Jean-Louis Martineau <martineau@zmanda.com>

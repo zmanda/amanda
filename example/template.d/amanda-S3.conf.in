@@ -10,8 +10,14 @@ tapecycle 10 tapes	# the number of tapes in rotation
 			# backups performed at the beginning of the previous
 			# cycle
 runtapes 1		# number of tapes to be used in a single run of amdump
-tpchanger "chg-multi"	# the tape-changer glue script
-changerfile "@CONFIG_DIR@/@DEFAULT_CONFIG@/changer.conf" 
+
+define changer my_s3 {
+    tpchanger "chg-multi:"
+    device-property "S3_ACCESS_KEY" ""
+    device-property "S3_SECRET_KEY" ""
+    device-property "NB_THREADS_BACKUP" "3"
+}
+tpchanger "my_s3"
 tapetype S3	# what kind of tape it is (see tapetypes below)
 
 holdingdisk hd2 {

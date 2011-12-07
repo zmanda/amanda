@@ -10,10 +10,13 @@ tapecycle 10 tapes             # the number of tapes in rotation
                                # backups performed at the beginning of the previous
                                # cycle
 runtapes 1                     # number of tapes to be used in a single run of amdump
-tpchanger "chg-disk"           # the tape-changer glue script
-tapedev "file://var/lib/amanda/vtapes/@DEFAULT_CONFIG@" # the no-rewind tape device to be used
-changerfile "@CONFIG_DIR@/@DEFAULT_CONFIG@/changer.conf"
-changerdev "/dev/null"
+
+define changer my_vtapes {
+    tpchanger "chg-disk://var/lib/amanda/vtapes/@DEFAULT_CONFIG@"
+    property "num-slot" "10"
+    property "auto-create-slot" "yes"
+}
+tpchanger "my_vtapes"
 tapetype HARDDISK               # what kind of tape it is 
 labelstr "^@DEFAULT_CONFIG@-[0-9][0-9]*$"    # label constraint regex: all tapes must match
 dtimeout 1800                          # number of idle seconds before a dump is aborted.
