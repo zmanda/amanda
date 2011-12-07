@@ -1,4 +1,7 @@
 2011-12-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amvault.8.xml: Improve.
+
+2011-12-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/ScanInventory.pm (volume_is_labelable): New method.
 	* perl/Amanda/Taper/Scan/lexical.pm, perl/Amanda/Taper/Scan/oldest.pm:
 	  Use volume_is_labelable from ScanInventory.
