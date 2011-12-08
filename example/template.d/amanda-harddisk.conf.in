@@ -12,7 +12,7 @@ tapecycle 10 tapes             # the number of tapes in rotation
 runtapes 1                     # number of tapes to be used in a single run of amdump
 
 define changer my_vtapes {
-    tpchanger "chg-disk://var/lib/amanda/vtapes/@DEFAULT_CONFIG@"
+    tpchanger "chg-disk:/@prefix@/var/lib/amanda/vtapes/@DEFAULT_CONFIG@"
     property "num-slot" "10"
     property "auto-create-slot" "yes"
 }
