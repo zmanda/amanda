@@ -1,4 +1,7 @@
 2011-12-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS, ReleaseNotes: Update for 3.3.1
+
+2011-12-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amindex.c (getheaderfname): New function.
 	* server-src/amindex.h (getheaderfname): New prototype.
 	* server-src/dumper.c: Wrtie header to a file in indexdir.
