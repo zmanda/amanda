@@ -1325,6 +1325,21 @@ do_dump(
 	amfree(indexfile_real);
     }
 
+    /* copy the header in a file on the index dir */
+    {
+	FILE *a;
+	char *s;
+	char *f = getheaderfname(hostname, diskname, dumper_timestamp, level);
+	a = fopen(f,"w");
+	if (a) {
+	    s = build_header(&file, NULL, DISK_BLOCK_BYTES);
+	    fprintf(a,"%s", s);
+	    g_free(s);
+	    fclose(a);
+	}
+	g_free(f);
+    }
+
     if (db->compresspid != -1 && dump_result < 2) {
 	amwait_t  wait_status;
 	char *errmsg = NULL;
@@ -1517,6 +1532,9 @@ failed:
 	amfree(indexfile_real);
     }
 
+    amfree(errstr);
+    dumpfile_free_data(&file);
+
     return 0;
 }
 
@@ -1593,10 +1611,8 @@ read_mesgfd(
                                      strerror(errno));
 	    dump_result = 2;
 	    stop_dump();
-	    dumpfile_free_data(&file);
 	    return;
 	}
-	dumpfile_free_data(&file);
 	aclose(db->fd);
 	if (data_path == DATA_PATH_AMANDA) {
 	    g_debug(_("Sending data to %s:%d\n"), data_host, data_port);
