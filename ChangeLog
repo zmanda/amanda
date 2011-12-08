@@ -1,4 +1,7 @@
 2011-12-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* example/template.d/amanda-harddisk.conf.in: fix for installcheck.
+
+2011-12-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS, ReleaseNotes: Update for 3.3.1
 
 2011-12-08  Jean-Louis Martineau <martineau@zmanda.com>
