@@ -1,3 +1,6 @@
+2011-12-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/config.guess config/config.sub: new updates from FSF.
+
 2011-12-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* example/template.d/amanda-harddisk.conf.in: fix for installcheck.
 
