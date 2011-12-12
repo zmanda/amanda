@@ -26,6 +26,7 @@ use Amanda::Device qw( :constants );
 use Amanda::Config qw( :getconf :init );
 use Amanda::Debug qw( :logging );
 use Amanda::Util qw( :constants );
+use Amanda::Changer;
 
 # try to open the device and read its label, returning the device_read_label
 # result (one or more of ReadLabelStatusFlags)
@@ -123,44 +124,64 @@ my $result;
 if (defined $getproplist && defined $print_label) {
     die("Can't set both --label and --properties");
 }
+
+my $chg;
+my $res;
+my $device;
 if ( $#ARGV == 1 ) {
     $device_name = $ARGV[1];
-} else {
+    $device = Amanda::Device->new($device_name);
+} elsif (getconf_seen($CNF_TAPEDEV)) {
     $device_name = getconf($CNF_TAPEDEV);
+    $device = Amanda::Device->new($device_name);
+} else {
+    $chg = Amanda::Changer->new();
+    $chg->load(relative_slot => "current",
+	res_cb => sub {
+	    (my $err, $res) = @_;
+	    $device = $res->{'device'};
+	    $device_name = $device->device_name();
+	    Amanda::MainLoop::quit();
+    });
+    Amanda::MainLoop::run();
 }
 
-my $device = Amanda::Device->new($device_name);
 if ( !$device ) {
     die("Error creating $device_name");
 }
 
 $result = $device->status();
-if ($result == $DEVICE_STATUS_SUCCESS) {
+my $exit_status = 0;
+if ($result == $DEVICE_STATUS_SUCCESS ||
+    $result == $DEVICE_STATUS_VOLUME_UNLABELED) {
     $device->configure(1);
     if (defined $getproplist) {
         list_device_property($device,$getproplist);
-        exit 0;
-    }
-    $result = try_read_label($device);
-    if (defined $print_label) {
-        if ($result == $DEVICE_STATUS_SUCCESS) {
-            print $device->volume_label(), "\n";
-            exit 0;
-        } else {
-            exit 1;
-	}
     } else {
-        print_result($result, $device->error());
-	exit 0;
+	$result = try_read_label($device);
+	if (defined $print_label) {
+            if ($result == $DEVICE_STATUS_SUCCESS) {
+		print $device->volume_label(), "\n";
+            } else {
+		$exit_status = 1;
+	    }
+	} else {
+            print_result($result, $device->error());
+	}
     }
 } else {
     if (!defined $getproplist && !defined $print_label) {
         print_result($result, $device->error());
-        exit 0;
     } else {
-        exit 1;
+        $exit_status = 1;
     }
 }
 
+if ($res) {
+    $res->release(finished_cb => sub { Amanda::MainLoop::quit() });
+    Amanda::MainLoop::run();
+}
+$chg->quit() if $chg;
+
 Amanda::Util::finish_application();
-exit 0;
+exit $exit_status;
