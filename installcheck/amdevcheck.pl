@@ -79,14 +79,14 @@ is_deeply([ sort split "\n", $Installcheck::Run::stdout],
 ok(run('amdevcheck', 'TESTCONF', "--properties", "CANONICAL_NAME"),
     "check canonical_name property value");
 is_deeply([ sort split "\n", $Installcheck::Run::stdout],
-	  [ sort "CANONICAL_NAME=file:" . Installcheck::Run::vtape_dir() ],
+	  [ sort "CANONICAL_NAME=file:" . Installcheck::Run::vtape_dir() . "/drive0" ],
     ".. and confirm it is set to default value");
 
 ok(run('amdevcheck', 'TESTCONF', "--properties", "BLOCK_SIZE,CANONICAL_NAME"),
     "check a list of properties");
 is_deeply([ sort split "\n", $Installcheck::Run::stdout],
 	  [ sort "BLOCK_SIZE=32768",
-	  	 "CANONICAL_NAME=file:" . Installcheck::Run::vtape_dir() ],
+	  	 "CANONICAL_NAME=file:" . Installcheck::Run::vtape_dir() . "/drive0" ],
     ".. with correct results");
 
 ok(run('amdevcheck', 'TESTCONF', 'null:null'),

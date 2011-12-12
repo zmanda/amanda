@@ -1,4 +1,26 @@
 2011-12-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* Makefile.am (SERVER_SUBDIRS): Remove changer-src.
+	* changer-src: Remove subdirectoy.
+	* configure.in (AC_CONFIG_FILES): Remove changer-src/Makefile.
+	* man/xml-source/amanda-changers.7.xml: Remove all older changer api.
+	* perl/Amanda/Changer.pm: Remove check for older changer api.
+	* perl/Amanda/Changer/compat.pm: Remove file.
+	* perl/Makefile.am (AmandaChanger_DATA): Remove Amanda/Changer/compat.pm
+	* installcheck/Amanda_Changer.pl: Remove test of older changer api.
+	* installcheck/Amanda_Changer_compat.pl: Remove file.
+	* installcheck/Amanda_DB_Catalog.pl: Fix typo.
+	* installcheck/Amanda_Recovery_Planner.pl: Fix typo.
+	* installcheck/Amanda_Recovery_Scan.pl: Use new changer api.
+	* installcheck/Amanda_Xfer.pl: Use new changer api.
+	* installcheck/Installcheck/Run.pm: Remove code to create older vtapes.
+	* installcheck/Makefile.am (server_tests): Remove Amanda_Changer_compat.
+	* installcheck/amdevcheck.pl: Use new changer api.
+	* installcheck/amlabel.pl: Use new changer api.
+	* installcheck/amtape.pl: Use new changer api.
+	* installcheck/amtapetype.pl: Use new changer api.
+	* installcheck/taper.pl: Use new changer api.
+
+2011-12-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/amdevcheck.pl: Use current slot.
 
 2011-12-12  Jean-Louis Martineau <martineau@zmanda.com>

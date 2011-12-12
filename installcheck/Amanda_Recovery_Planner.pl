@@ -42,7 +42,7 @@ Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
 
 my $testconf;
-$testconf = Installcheck::Run->setup();
+$testconf = Installcheck::Run::setup();
 $testconf->write();
 
 # install the 'bigdb' catalog to test against

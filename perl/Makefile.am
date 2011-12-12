@@ -250,7 +250,6 @@ if WANT_SERVER
 AmandaChangerdir = $(amperldir)/Amanda/Changer
 AmandaChanger_DATA = \
 	Amanda/Changer/aggregate.pm \
-	Amanda/Changer/compat.pm \
 	Amanda/Changer/disk.pm \
 	Amanda/Changer/multi.pm \
 	Amanda/Changer/null.pm \

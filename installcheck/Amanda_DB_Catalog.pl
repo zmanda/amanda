@@ -36,7 +36,7 @@ Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
 
 # set up and load a simple config
-my $testconf = Installcheck::Run->setup();
+my $testconf = Installcheck::Run::setup();
 $testconf->write();
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF') == $CFGERR_OK
     or die("Could not load test config");

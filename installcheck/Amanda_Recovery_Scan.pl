@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 95;
+use Test::More tests => 73;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -107,37 +107,6 @@ my $taperoot_multi = "$Installcheck::TMP/Amanda_Recovery_Scan_Multi";
     $testconf->add_changer("multi-changer", [
 	'tpchanger' => "\"$chg_name\"",
 	'changerfile' => "\"$Installcheck::TMP/Amanda_Recovery_Scan_Multi_status\"",
-    ]);
-}
-
-my $taperoot_compat = "$Installcheck::TMP/Amanda_Recovery_Scan_Compat";
-my $changerfile = "$Installcheck::TMP/scan-changerfile";
-
-#create a compat changer
-{
-    if (-d $taperoot_compat) {
-        rmtree($taperoot_compat);
-    }
-    mkpath($taperoot_compat);
-
-    my @names;
-    for my $slot (1 .. 3) {
-        mkdir("$taperoot_compat/slot$slot")
-            or die("Could not mkdir: $!");
-        #mkdir("$taperoot_compat/slot$slot/data")
-        #    or die("Could not mkdir: $!");
-	push @names, $slot;
-    }
-
-    open (CONF, ">$changerfile");
-    print CONF "firstslot=1\n";
-    print CONF "lastslot=3\n";
-    close CONF;
-
-    $testconf->add_changer("compat-changer", [
-	'tpchanger' => '"chg-disk"',
-	'tapedev'   => "\"file:$taperoot_compat\"",
-	'changerfile' => "\"$changerfile\"",
     ]);
 }
 
@@ -248,8 +217,7 @@ sub test_searching {
 	my ($err, $res) = @_;
 
 	ok(!$res, "$chg_name doesn't reserve an already reserved slot");
-	if ($chg_name eq "compat-changer" ||
-	    $chg_name eq "single-changer") {
+	if ($chg_name eq "single-changer") {
 	    ok($err->driveinuse, "$chg_name: TESTCONF02 is driveinuse") ||
 		    diag("$chg_name:".Dumper($err));
 	} else {
@@ -264,8 +232,7 @@ sub test_searching {
     step res_cb_03 => sub {
 	(my $err, $res03) = @_;
 
-	if ($chg_name eq "compat-changer" ||
-	    $chg_name eq "single-changer") {
+	if ($chg_name eq "single-changer") {
 	    ok($err, "$chg_name doesn't found TESTCONF03");
 	    ok($err->driveinuse, "$chg_name TESTCONF03 is driveinuse") ||
 		diag($err."\n");
@@ -281,8 +248,7 @@ sub test_searching {
     step res_cb_01 => sub {
 	(my $err, $res01) = @_;
 
-	if ($chg_name eq "compat-changer" ||
-	    $chg_name eq "single-changer") {
+	if ($chg_name eq "single-changer") {
 	    ok($err, "$chg_name doesn't found TESTCONF01");
 	    ok($err->driveinuse, "$chg_name TESTCONF01 is driveinuse") ||
 		diag($err."\n");
@@ -298,8 +264,7 @@ sub test_searching {
     step res_cb_05 => sub {
 	my ($err, $res) = @_;
 
-	if ($chg_name eq "compat-changer" ||
-	    $chg_name eq "single-changer") {
+	if ($chg_name eq "single-changer") {
 	    ok($err, "$chg_name doesn't found TESTCONF05");
 	    ok($err->driveinuse, "$chg_name TESTCONF05 is driveinuse") ||
 		diag($err."\n");
@@ -316,8 +281,7 @@ sub test_searching {
 	my ($err, $res) = @_;
 
 	ok($err, "$chg_name doesn't found TESTCONF01");
-	if ($chg_name eq "compat-changer" ||
-	    $chg_name eq "single-changer") {
+	if ($chg_name eq "single-changer") {
 	    ok($err->driveinuse, "$chg_name TESTCONF01 is driveinuse") ||
 		diag($err."\n");
 	} else {
@@ -354,8 +318,7 @@ sub test_searching {
     };
 }
 
-foreach my $chg_name ("disk-changer", "multi-changer", "compat-changer",
-		      "single-changer") {
+foreach my $chg_name ("disk-changer", "multi-changer", "single-changer") {
     # amlabel has to be done outside of Amanda::MainLoop
     my $chg = Amanda::Changer->new($chg_name);
     if ($chg_name eq "single-changer") {
@@ -481,6 +444,4 @@ Amanda::MainLoop::run();
 
 rmtree($taperoot_disk);
 rmtree($taperoot_multi);
-rmtree($taperoot_compat);
 rmtree($taperoot_single);
-unlink($changerfile);

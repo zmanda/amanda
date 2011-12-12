@@ -377,7 +377,6 @@ AC_CONFIG_FILES([
     amandad-src/Makefile
     amar-src/Makefile
     amplot/Makefile
-    changer-src/Makefile
     client-src/Makefile
     common-src/Makefile
     config/Makefile

@@ -28,7 +28,6 @@ all_tests += $(client_tests)
 
 server_tests = \
 	Amanda_Changer \
-	Amanda_Changer_compat \
 	Amanda_Changer_disk \
 	Amanda_Changer_multi \
 	Amanda_Changer_null \

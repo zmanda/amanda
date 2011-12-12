@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 46;
+use Test::More tests => 42;
 use strict;
 use warnings;
 
@@ -28,6 +28,8 @@ use Amanda::Config qw( :init :getconf );
 use Amanda::Paths;
 use Amanda::Debug;
 use Amanda::Tapelist;
+use Amanda::Changer;
+use Amanda::MainLoop;
 
 my $testconf;
 
@@ -47,29 +49,53 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 # label slot 2 with "MyTape", slot 3 with "TESTCONF13", and add
 # the latter to the tapelist
 sub setup_vtapes {
-    my ($devdir, $dev);
+    my ($chg, $dev);
 
-    $devdir = load_vtape(2);
-    $dev = Amanda::Device->new("file:$devdir");
-    ($dev && $dev->status == $DEVICE_STATUS_SUCCESS)
-        or BAIL_OUT("device error");
+    $chg = Amanda::Changer->new();
+    $chg->load(slot => 2,
+	res_cb => sub {
+	    my ($err, $reservation) = @_;
+	    if ($err) {
+		BAIL_OUT("device error 1");
+	    }
+	    $dev = $reservation->{'device'};
 
-    $dev->start($ACCESS_WRITE, "MyTape", undef)
-        or BAIL_OUT("device error");
-    $dev->finish()
-        or BAIL_OUT("device error");
+	    ($dev && ($dev->status == $DEVICE_STATUS_SUCCESS ||
+		      $dev->status == $DEVICE_STATUS_VOLUME_UNLABELED))
+	        or BAIL_OUT("device error 2");
 
+	    $dev->start($ACCESS_WRITE, "MyTape", undef)
+	        or BAIL_OUT("device error 3");
+	    $dev->finish()
+	        or BAIL_OUT("device error 4");
+	    $reservation->release(
+		finished_cb => sub {
+		    $chg->load(slot => 3,
+			res_cb => sub {
+			    my ($err, $reservation) = @_;
+			    if ($err) {
+				BAIL_OUT("device error 5");
+			    }
+			    $dev = $reservation->{'device'};
+		
+			    ($dev && ($dev->status == $DEVICE_STATUS_SUCCESS ||
+				      $dev->status == $DEVICE_STATUS_VOLUME_UNLABELED))
+			        or BAIL_OUT("device error 6");
+		
+			    $dev->start($ACCESS_WRITE, "TESTCONF13", undef)
+			        or BAIL_OUT("device error 7");
+			    $dev->finish()
+			        or BAIL_OUT("device error 8");
+			    $reservation->release(finished_cb => sub {
+				    Amanda::MainLoop::quit();
+				});
+		        });
+		});
+        });
 
-    $devdir = load_vtape(3);
-    $dev = Amanda::Device->new("file:$devdir");
-    ($dev && $dev->status == $DEVICE_STATUS_SUCCESS)
-        or BAIL_OUT("device error");
+    Amanda::MainLoop::run();
 
-    $dev->start($ACCESS_WRITE, "TESTCONF13", undef)
-        or BAIL_OUT("device error");
-    $dev->finish()
-        or BAIL_OUT("device error");
-
+    $chg->quit();
     my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
     my $tl = Amanda::Tapelist->new($tlf, 1);
     $tl->add_tapelabel("0", "TESTCONF13", "test tape");
@@ -94,11 +120,12 @@ like($Installcheck::Run::stderr,
     qr/changer is reset/,
     "..result correct");
 
-ok(run('amtape', 'TESTCONF', 'eject'),
-    "'amtape TESTCONF eject'");
-like($Installcheck::Run::stderr,
-    qr/drive ejected/,
-    "..result correct");
+# TODO: chg-disk doesn't support "eject"
+#ok(run('amtape', 'TESTCONF', 'eject'),
+#    "'amtape TESTCONF eject'");
+#like($Installcheck::Run::stderr,
+#    qr/drive ejected/,
+#    "..result correct");
 
 # TODO: chg-disk doesn't support "clean"
 
@@ -138,11 +165,12 @@ like($Installcheck::Run::stderr,
     qr/slot +2:.*label MyTape/,
     "..result correct");
 
-ok(run('amtape', 'TESTCONF', 'update'),
-    "'amtape TESTCONF update'");
-like($Installcheck::Run::stderr,
-    qr/update complete/,
-    "..result correct");
+# TODO: chg-disk doesn't support "update"
+#ok(run('amtape', 'TESTCONF', 'update'),
+#    "'amtape TESTCONF update'");
+#like($Installcheck::Run::stderr,
+#    qr/update complete/,
+#    "..result correct");
 
 ok(run('amtape', 'TESTCONF', 'show'),
     "'amtape TESTCONF show'");

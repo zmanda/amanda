@@ -10,7 +10,7 @@ if WANT_CLIENT
 CLIENT_SUBDIRS = client-src application-src
 endif
 if WANT_SERVER
-SERVER_SUBDIRS = device-src server-src changer-src
+SERVER_SUBDIRS = device-src server-src
 endif
 if WANT_RECOVER
 RECOVER_SUBDIRS = recover-src oldrecover-src
@@ -96,7 +96,6 @@ SNAPSHOT:
 
 lint:
 	(cd amandad-src; make lint)
-	(cd changer-src; make lint)
 	(cd client-src; make lint)
 	(cd common-src; make lint)
 	(cd oldrecover-src; make lint)

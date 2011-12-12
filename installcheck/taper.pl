@@ -66,11 +66,7 @@ sub run_taper {
 
     unless ($params{'keep_config'}) {
 	my $testconf;
-	if ($params{'new_vtapes'}) {
-	    $testconf = Installcheck::Run::setup(1);
-	} else {
-	    $testconf = Installcheck::Run::setup();
-	}
+	$testconf = Installcheck::Run::setup();
 	$testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
 	if ($params{'notapedev'}) {
 	    $testconf->remove_param('tapedev');
@@ -874,12 +870,12 @@ check_logs([
     qr(^PARTPARTIAL taper TESTCONF03 5 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 0 kps [\d.]+ orig-kb 1712\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF03 kb 804 fm 5 \[OK\]$),
-    qr(^INFO taper Slot 1 with label TESTCONF01 is usable$),
+#    qr(^INFO taper Slot 1 with label TESTCONF01 is usable$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 2$),
     qr(^PART taper TESTCONF01 1 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]$),
     qr(^DONE taper localhost /u02 $datestamp 3 0 \[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]$),
     qr(^INFO taper tape TESTCONF01 kb 88 fm 1 \[OK\]$),
-], "second taper invocation in sequence logged correctly");
+], "second taper invocation in sequence logged correctly 1");
 cleanup_log();
 
 ##
@@ -931,7 +927,7 @@ wait_for_exit();
 my $handle0 = "66-00000";
 my $handle1 = "66-11111";
 $datestamp = "20090202020000";
-run_taper(1024, "with 2 workers", new_vtapes => 1);
+run_taper(1024, "with 2 workers");
 like(taper_reply, qr/^TAPER-OK worker0$/,
 	"got TAPER-OK") or die;
 taper_cmd("START-TAPER worker1 $datestamp");
@@ -991,7 +987,7 @@ cleanup_log();
 # A run with 2 workers and a take_scribe
 $handle = "66-22222";
 $datestamp = "20090202020000";
-run_taper(1024, "with 2 workers and a take_scribe", new_vtapes => 1);
+run_taper(1024, "with 2 workers and a take_scribe");
 like(taper_reply, qr/^TAPER-OK worker0$/,
 	"got TAPER-OK") or die;
 taper_cmd("START-TAPER worker1 $datestamp");
@@ -1190,7 +1186,7 @@ SKIP : {
 # A run without LEOM and without allow-split
 $handle = "77-11111";
 $datestamp = "20090302020000";
-run_taper(1024, "without LEOM and without allow-split", new_vtapes => 1);
+run_taper(1024, "without LEOM and without allow-split");
 make_holding_file(1024*1024, "localhost", "/usr");
 like(taper_reply, qr/^TAPER-OK worker0$/,
 	"got TAPER-OK") or die;
@@ -1219,7 +1215,7 @@ cleanup_log();
 # A run with LEOM and without allow-split
 $handle = "77-11112";
 $datestamp = "20090303020000";
-run_taper(1024, "with LEOM and without allow-split", new_vtapes => 1, leom => 1);
+run_taper(1024, "with LEOM and without allow-split", leom => 1);
 make_holding_file(1024*1024, "localhost", "/usr");
 like(taper_reply, qr/^TAPER-OK worker0$/,
 	"got TAPER-OK") or die;
@@ -1252,7 +1248,7 @@ cleanup_log();
 # A simple, one-part FILE-WRITE
 $handle = "11-11111";
 $datestamp = "20070102030405";
-run_taper(4096, "single-part and multipart FILE-WRITE", taperscan => "lexical", new_vtapes => 1);
+run_taper(4096, "single-part and multipart FILE-WRITE", taperscan => "lexical");
 like(taper_reply, qr/^TAPER-OK worker0$/,
 	"got TAPER-OK") or die;
 make_holding_file(1024*1024, "localhost", "/home");
@@ -1300,7 +1296,7 @@ check_logs([
 
 $handle = "33-11111";
 $datestamp = "20090101010000";
-run_taper(1024, "first in a sequence", taperscan => "lexical", new_vtapes => 1);
+run_taper(1024, "first in a sequence", taperscan => "lexical");
 like(taper_reply, qr/^TAPER-OK worker0$/,
 	"got TAPER-OK") or die;
 make_holding_file(500000, "localhost", "/u01");
@@ -1411,14 +1407,14 @@ check_logs([
     qr(^PART taper TESTCONF01 1 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]$),
     qr(^DONE taper localhost /u02 $datestamp 3 0 \[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]$),
     qr(^INFO taper tape TESTCONF01 kb 88 fm 1 \[OK\]$),
-], "second taper invocation in sequence logged correctly");
+], "second taper invocation in sequence logged correctly 2");
 cleanup_log();
 
 ##
 # A run with a bogus tapedev/tpchanger
 $handle = "44-11111";
 $datestamp = "20070102030405";
-run_taper(4096, "no tapedev", notapedev => 1, taperscan => "lexical", new_vtapes => 1);
+run_taper(4096, "no tapedev", notapedev => 1, taperscan => "lexical");
 like(taper_reply, qr/^TAPE-ERROR SETUP "You must specify one of 'tapedev' or 'tpchanger'"$/,
 	"got TAPE-ERROR") or die;
 wait_for_exit();
@@ -1428,7 +1424,7 @@ wait_for_exit();
 $handle0 = "66-00000";
 $handle1 = "66-11111";
 $datestamp = "20090202020000";
-run_taper(1024, "with 2 workers", new_vtapes => 1, taperscan => "lexical", new_vtapes => 1);
+run_taper(1024, "with 2 workers", taperscan => "lexical");
 like(taper_reply, qr/^TAPER-OK worker0$/,
 	"got TAPER-OK") or die;
 taper_cmd("START-TAPER worker1 $datestamp");

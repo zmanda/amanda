@@ -23,6 +23,8 @@ use warnings;
 use lib "@amperldir@";
 use Installcheck::Run qw(run run_get run_err vtape_dir);
 
+use File::Path qw(rmtree);
+
 ##
 # First, check that the script runs -- this is essentially a syntax/strict
 # check of the script.
@@ -37,10 +39,12 @@ like($Installcheck::Run::stderr, qr(\AUsage: )i,
 
 my $testconf = Installcheck::Run::setup();
 $testconf->add_device("smallvtape", [
-    "tapedev" => '"file:' . vtape_dir() . '"',
+    "tapedev" => '"file:' . vtape_dir() . '/drive0"',
     "device_property" => '"MAX_VOLUME_USAGE" "2m"', # need at least 1M
 ]);
 $testconf->write();
+mkdir vtape_dir() . '/drive0';
+symlink "../slot1",  vtape_dir() . '/drive0/data';
 
 like(run_get('amtapetype', 'TESTCONF', 'smallvtape'),
     qr/define tapetype unknown-tapetype.*blocksize 32 kbytes/s,
@@ -52,3 +56,4 @@ ok(run_err('amtapetype', 'TESTCONF', 'smallvtape'),
 like(run_get('amtapetype', 'TESTCONF', '-f', '-b', '33000', 'smallvtape'),
     qr/add device-property/,
     "with a non-kilobyte block size, directs user to add a device_property");
+rmtree(vtape_dir() . '/drive0');

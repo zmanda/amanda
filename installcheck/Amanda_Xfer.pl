@@ -24,15 +24,16 @@ use warnings;
 
 use lib "@amperldir@";
 use Installcheck;
-use Installcheck::Run;
+use Installcheck::Run qw( load_vtape_res );
 use Installcheck::Mock;
 use Amanda::Xfer qw( :constants );
 use Amanda::Header;
 use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Paths;
-use Amanda::Config;
+use Amanda::Config qw( :init :getconf );
 use Amanda::Constants;
+use Amanda::Changer;
 
 # get Amanda::Device only when we're building for server
 BEGIN {
@@ -396,11 +397,20 @@ SKIP: {
 	# set up vtapes
 	my $testconf = Installcheck::Run::setup();
 	$testconf->write();
+	config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+	my ($cfgerr_level, @cfgerr_errors) = config_errors();
+	if ($cfgerr_level >= $CFGERR_WARNINGS) {
+	    config_print_errors();
+	    BAIL_OUT("config errors");
+	}
 
 	# set up a device for slot 1
-	my $device = Amanda::Device->new("file:" . Installcheck::Run::load_vtape(1));
+	my $chg = Amanda::Changer->new();
+	my $res = load_vtape_res($chg, 1);
+	my $device = $res->{'device'};
+
 	die("Could not open VFS device: " . $device->error())
-	    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_SUCCESS);
+	    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_VOLUME_UNLABELED);
 
 	# write to it
 	my $hdr = Amanda::Header->new();
@@ -440,6 +450,11 @@ SKIP: {
 	$xfer->start($quit_cb);
 
 	Amanda::MainLoop::run();
+
+	$res->release(finished_cb => sub { Amanda::MainLoop::quit() });
+	Amanda::MainLoop::run();
+	$chg->quit();
+
 	pass("read from a device succeeded, too, and data was correct");
     }
 
@@ -449,13 +464,18 @@ SKIP: {
     sub test_taper_dest {
 	my ($src, $dest_sub, $expected_messages, $msg_prefix, %params) = @_;
 	my $xfer;
-	my $device;
 	my $vtape_num = 1;
 	my @messages;
 
 	# set up vtapes
 	my $testconf = Installcheck::Run::setup();
 	$testconf->write();
+	config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+	my ($cfgerr_level, @cfgerr_errors) = config_errors();
+	if ($cfgerr_level >= $CFGERR_WARNINGS) {
+	    config_print_errors();
+	    BAIL_OUT("config errors");
+	}
 
 	my $hdr = Amanda::Header->new();
 	$hdr->{'type'} = $Amanda::Header::F_DUMPFILE;
@@ -465,19 +485,25 @@ SKIP: {
 	$hdr->{'program'} = "INSTALLCHECK";
 
 	# set up a device for the taper dest
-	$device = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($vtape_num++));
+	my $chg = Amanda::Changer->new();
+	my $res = load_vtape_res($chg, $vtape_num++);
+	my $device = $res->{'device'};
+
 	die("Could not open VFS device: " . $device->error())
-	    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_SUCCESS);
+	    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_VOLUME_UNLABELED);
 	$device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
 	$device->property_set("LEOM", $params{'disable_leom'}? 0 : 1);
 	$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
 	my $dest = $dest_sub->($device);
 
+	my ($successful, $eof, $partnum, $eom);
 	# and create the xfer
 	$xfer = Amanda::Xfer->new([ $src, $dest ]);
 
+	my $start_new_part_1;
+	my $start_new_part_2;
 	my $start_new_part = sub {
-	    my ($successful, $eof, $partnum, $eom) = @_;
+	    ($successful, $eof, $partnum, $eom) = @_;
 
 	    if (exists $params{'cancel_after_partnum'}
 		    and $params{'cancel_after_partnum'} == $partnum) {
@@ -489,15 +515,30 @@ SKIP: {
 	    if (!$device || $eom) {
 		# set up a device and start writing a part to it
 		$device->finish() if $device;
-		$device = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($vtape_num++));
-		die("Could not open VFS device: " . $device->error())
-		    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_SUCCESS);
-		$dest->use_device($device);
-		$device->property_set("LEOM", $params{'disable_leom'}? 0 : 1);
-		$device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
-		$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
+		if ($res) {
+		    return $res->release(finished_cb => $start_new_part_1);
+		}
+		return $start_new_part_1->();
 	    }
+	    $start_new_part_2->();
+	};
 
+	$start_new_part_1 = sub {
+	    $chg->load(slot => $vtape_num++,
+		res_cb => sub {
+			(my $err, $res) = @_;
+			my $device = $res->{'device'};
+			die("Could not open VFS device: " . $device->error())
+			    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_VOLUME_UNLABELED);
+			$dest->use_device($device);
+			$device->property_set("LEOM", $params{'disable_leom'}? 0 : 1);
+			$device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
+			$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
+			$start_new_part_2->();
+		});
+	};
+
+	$start_new_part_2 = sub {
 	    # bail out if we shouldn't retry this part
 	    if (!$successful and $params{'do_not_retry'}) {
 		push @messages, "NOT-RETRYING";
@@ -536,6 +577,10 @@ SKIP: {
 	Amanda::MainLoop::call_later(sub { $start_new_part->(1, 0, -1); });
 	Amanda::MainLoop::run();
 
+	$res->release(finished_cb => sub { Amanda::MainLoop::quit() });
+	Amanda::MainLoop::run();
+	$chg->quit();
+
 	is_deeply([@messages],
 	    $expected_messages,
 	    "$msg_prefix: element produces the correct series of messages")
@@ -550,13 +595,23 @@ SKIP: {
 	my $xfer;
 	my $dev;
 	my $src;
+	my $chg;
+	my $res;
 
 	my $steps = define_steps
 	    cb_ref => \$finished_cb;
 
 	step setup => sub {
 	    # we need a device up front, so sneak a peek into @$files
-	    $dev = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($files->[0]));
+	    $chg = Amanda::Changer->new();
+	    $chg->load(slot => $files->[0],
+		res_cb => $steps->{'first_load'});
+	};
+
+	step first_load => sub {
+	    (my $err, $res) = @_;
+	    $dev = $res->{'device'};
+
 	    $src = Amanda::Xfer::Source::Recovery->new($dev);
 	    $xfer = Amanda::Xfer->new([ $src, $dest ]);
 
@@ -565,6 +620,7 @@ SKIP: {
 	};
 
 	step got_ready => sub {
+	    return $res->release(finished_cb => $steps->{'load_slot'}) if $res;
 	    $steps->{'load_slot'}->();
 	};
 
@@ -577,7 +633,12 @@ SKIP: {
 	    my $slot = shift @$files;
 	    @filenums = @{ shift @$files };
 
-	    $dev = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($slot));
+	    $chg->load(slot => $slot,
+		res_cb => $steps->{'loaded'});
+	};
+	step loaded => sub {
+	    (my $err, $res) = @_;
+	    $dev = $res->{'device'};
 	    if ($dev->status != $Amanda::Device::DEVICE_STATUS_SUCCESS) {
 		die $dev->error_or_status();
 	    }
@@ -593,7 +654,7 @@ SKIP: {
 
 	step seek_file => sub {
 	    if (!@filenums) {
-		return $steps->{'load_slot'}->();
+		return $steps->{'got_ready'}->();
 	    }
 
 	    my $hdr = $dev->seek_file(shift @filenums);
@@ -630,7 +691,7 @@ SKIP: {
 		$expected_messages,
 		"files read back and verified successfully with Amanda::Xfer::Recovery::Source")
 	    or diag(Dumper([@messages]));
-
+	    $chg->quit();
 	    $finished_cb->();
 	};
     }
@@ -988,6 +1049,13 @@ SKIP: {
 	# set up vtapes
 	my $testconf = Installcheck::Run::setup();
 	$testconf->write();
+	config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+	my ($cfgerr_level, @cfgerr_errors) = config_errors();
+	if ($cfgerr_level >= $CFGERR_WARNINGS) {
+	    config_print_errors();
+	    BAIL_OUT("config errors");
+	}
+
 
 	my $hdr = Amanda::Header->new();
 	$hdr->{'type'} = $Amanda::Header::F_DUMPFILE;
@@ -1000,9 +1068,11 @@ SKIP: {
 	open($fh, "<", "$cache_file") or die("Could not open '$cache_file' for reading");
 
 	# set up a device for writing
-	$device = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($vtape_num++));
+	my $chg = Amanda::Changer->new();
+	my $res = load_vtape_res($chg, $vtape_num++);
+	$device = $res->{'device'};
 	die("Could not open VFS device: " . $device->error())
-	    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_SUCCESS);
+	    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_VOLUME_UNLABELED);
 	$device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
 	$device->property_set("LEOM", 0);
 	$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
@@ -1014,21 +1084,40 @@ SKIP: {
 	    $dest,
 	]);
 
+	my ($successful, $eof, $last_partnum);
+
+	my $start_new_part_1;
+	my $start_new_part_2;
 	my $start_new_part = sub {
-	    my ($successful, $eof, $last_partnum) = @_;
+	    ($successful, $eof, $last_partnum) = @_;
 
 	    if (!$device || !$successful) {
 		# set up a device and start writing a part to it
 		$device->finish() if $device;
-		$device = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($vtape_num++));
+		if ($res) {
+		    return $res->release(finished_cb => $start_new_part_1);
+		}
+		return $start_new_part_1->();
+	    }
+	    $start_new_part_2->();
+	};
+
+	$start_new_part_1 = sub {
+	    $chg->load(slot => $vtape_num++,
+		res_cb => sub {
+		    (my $err, $res) = @_;
+		$device = $res->{'device'};
 		die("Could not open VFS device: " . $device->error())
-		    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_SUCCESS);
+		    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_VOLUME_UNLABELED);
 		$dest->use_device($device);
 		$device->property_set("LEOM", 0);
 		$device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
 		$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
-	    }
+		$start_new_part_2->();
+	    });
+	};
 
+	$start_new_part_2 = sub {
 	    # feed enough chunks to cache_inform
 	    my $upto = ($last_partnum+2) * $part_size;
 	    while (@holding_chunks and $holding_chunks[0]->[1] < $upto) {
@@ -1056,7 +1145,10 @@ SKIP: {
 		$start_new_part->($msg->{'successful'}, $msg->{'eof'}, $msg->{'partnum'});
 	    } elsif ($msg->{'type'} == $XMSG_DONE) {
 		push @messages, "DONE";
-		Amanda::MainLoop::quit();
+		$res->release(finished_cb => sub {
+		    $chg->quit();
+		    Amanda::MainLoop::quit();
+		});
 	    } elsif ($msg->{'type'} == $XMSG_CANCEL) {
 		push @messages, "CANCELLED";
 	    } else {

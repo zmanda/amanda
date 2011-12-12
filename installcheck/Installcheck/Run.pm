@@ -161,7 +161,7 @@ require Exporter;
     cleanup
     $diskname $taperoot $holdingdir
     $stdout $stderr $exit_code
-    load_vtape vtape_dir
+    load_vtape load_vtape_res vtape_dir
     amdump_diag run_expect );
 @EXPORT = qw(exp_continue exp_continue_timeout);
 
@@ -189,17 +189,12 @@ our $taperoot = "$Installcheck::TMP/vtapes";
 our $holdingdir ="$Installcheck::TMP/holding";
 
 sub setup {
-    my $new_vtapes = shift;
     my $nb_slot = shift;
     my $testconf = Installcheck::Config->new();
 
     $nb_slot = 3 if !defined $nb_slot;
     (-d $diskname) or setup_backmeup();
-    if ($new_vtapes) {
-	setup_new_vtapes($testconf, $nb_slot);
-    } else {
-	setup_vtapes($testconf, $nb_slot);
-    }
+    setup_new_vtapes($testconf, $nb_slot);
     setup_holding($testconf, 25);
     setup_disklist($testconf);
 
@@ -268,34 +263,6 @@ sub setup_backmeup {
     $create->($diskname, $dir_structure);
 }
 
-sub setup_vtapes {
-    my ($testconf, $ntapes) = @_;
-    if (-d $taperoot) {
-	rmtree($taperoot);
-    }
-
-    # make each of the tape directories
-    for (my $i = 1; $i < $ntapes+1; $i++) {
-	my $tapepath = "$taperoot/slot$i";
-	mkpath("$tapepath");
-    }
-
-    load_vtape(1);
-
-    # set up the appropriate configuration
-    $testconf->add_param("tapedev", "\"file:$taperoot\"");
-    $testconf->add_param("tpchanger", "\"chg-disk\"");
-    $testconf->add_param("changerfile", "\"$CONFIG_DIR/TESTCONF/ignored-filename\"");
-    $testconf->add_param("labelstr", "\"TESTCONF[0-9][0-9]\"");
-    $testconf->add_param("tapecycle", "$ntapes");
-
-    # this overwrites the existing TEST-TAPE tapetype
-    $testconf->add_tapetype('TEST-TAPE', [
-	'length' => '30 mbytes',
-	'filemark' => '4 kbytes',
-    ]);
-}
-
 sub setup_new_vtapes {
     my ($testconf, $ntapes) = @_;
     if (-d $taperoot) {
@@ -359,12 +326,29 @@ sub vtape_dir {
 sub load_vtape {
     my ($slot) = @_;
 
+    system("amtape TESTCONF slot $slot > /dev/null 2>/dev/null");
     # make the data/ symlink from our taperoot
-    unlink("$taperoot/data");
-    symlink(vtape_dir($slot), "$taperoot/data")
-	or die("Could not create 'data' symlink: $!");
+#    unlink("$taperoot/data");
+#    symlink(vtape_dir($slot), "$taperoot/data")
+#	or die("Could not create 'data' symlink: $!");
+#
+#    return $taperoot;
+}
 
-    return $taperoot;
+sub load_vtape_res {
+    my ($chg, $slot) = @_;
+    my $res;
+
+    $chg->load(slot => $slot,
+	res_cb => sub {
+	    (my $err, $res) = @_;
+	    if ($err) {
+		BAIL_OUT("load_vtape_res: device error");
+            }
+	    Amanda::MainLoop::quit();
+	});
+    Amanda::MainLoop::run();
+    return $res;
 }
 
 sub run {

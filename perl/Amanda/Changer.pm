@@ -223,8 +223,7 @@ volume.
 In general, the method takes a C<res_cb> giving a callback that will receive
 the reservation.  If set_current is specified and true, then the changer's
 current slot should be updated to correspond to C<$slot>. If not, then the changer
-should not update its current slot (but some changers will anyway -
-specifically, chg-compat).
+should not update its current slot (but some changers will anyway).
 
 The load method always read the label if it succeed to load a volume.
 
@@ -748,19 +747,13 @@ sub new {
 	    getconf($CNF_TPCHANGER) ne '') {
 	    my $tpchanger = getconf($CNF_TPCHANGER);
 
-	    # first, is it an old changer script?
-	    if ($uri = _old_script_to_uri($tpchanger)) {
-		return _new_from_uri($uri, undef, $tpchanger, %params);
-	    }
-
 	    # if not, then there had better be no tapdev
 	    if (getconf_seen($CNF_TAPEDEV) and getconf($CNF_TAPEDEV) ne '' and
 		((getconf_linenum($CNF_TAPEDEV) > 0 and
 		  getconf_linenum($CNF_TPCHANGER) > 0) ||
 		 (getconf_linenum($CNF_TAPEDEV) == -2))) {
 		return Amanda::Changer::Error->new('fatal',
-		    message => "Cannot specify both 'tapedev' and 'tpchanger' " .
-			"unless using an old-style changer script");
+		    message => "Cannot specify both 'tapedev' and 'tpchanger'");
 	    }
 
 	    # maybe a changer alias?
@@ -822,18 +815,12 @@ sub _changer_alias_to_uri {
     my $cc = Amanda::Config::lookup_changer_config($name);
     if ($cc) {
 	my $tpchanger = changer_config_getconf($cc, $CHANGER_CONFIG_TPCHANGER);
-	if ($tpchanger) {
-	    if (my $uri = _old_script_to_uri($tpchanger)) {
-		return ($uri, $cc);
-	    }
-	}
 
 	my $seen_tpchanger = changer_config_seen($cc, $CHANGER_CONFIG_TPCHANGER);
 	my $seen_tapedev = changer_config_seen($cc, $CHANGER_CONFIG_TAPEDEV);
 	if ($seen_tpchanger and $seen_tapedev) {
 	    return Amanda::Changer::Error->new('fatal',
-		message => "Cannot specify both 'tapedev' and 'tpchanger' " .
-		    "**unless using an old-style changer script");
+		message => "Cannot specify both 'tapedev' and 'tpchanger'");
 	}
 	if (!$seen_tpchanger and !$seen_tapedev) {
 	    return Amanda::Changer::Error->new('fatal',
@@ -849,19 +836,6 @@ sub _changer_alias_to_uri {
     }
 
     # not an alias
-    return;
-}
-
-sub _old_script_to_uri {
-    my ($name) = @_;
-
-    die("empty changer script name") unless $name;
-
-    if ((-x "$amlibexecdir/$name") or (($name =~ qr{^/}) and (-x $name))) {
-	return "chg-compat:$name"
-    }
-
-    # not an old script
     return;
 }
 

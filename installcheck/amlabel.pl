@@ -22,20 +22,21 @@ use warnings;
 
 use lib "@amperldir@";
 use Installcheck::Config;
-use Installcheck::Run qw(run run_err run_get load_vtape vtape_dir);
+use Installcheck::Run qw(run run_err run_get load_vtape load_vtape_res );
 use Amanda::Device qw( :constants );
 use Amanda::Config qw( :init :getconf );
 use Amanda::Paths;
 use Amanda::Debug;
 use Amanda::Constants;
 use Amanda::Tapelist;
+use Amanda::Changer;
 
 my $testconf;
 
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
 
-$testconf = Installcheck::Run::setup(1, 4);
+$testconf = Installcheck::Run::setup(4);
 $testconf->add_param('autolabel', '"TESTCONF%%" any');
 $testconf->write();
 
@@ -46,24 +47,47 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
     BAIL_OUT("config errors");
 }
 
-# label slot 2 with "MyTape", slot 3 with "TESTCONF13", and add
-# the latter to the tapelist
-my ($devdir, $dev);
-
-$devdir = load_vtape(2);
-$dev = Amanda::Device->new("file:$devdir");
-($dev && $dev->status == $DEVICE_STATUS_SUCCESS)
-    or BAIL_OUT("device error");
-
-$dev->start($ACCESS_WRITE, "MyTape", undef)
-    or BAIL_OUT("device error");
-$dev->finish()
-    or BAIL_OUT("device error");
-
 my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
 my $tl = Amanda::Tapelist->new($tlf, 1);
-$tl->add_tapelabel("0", "TESTCONF13", "test tape");
-$tl->write($tlf);
+my $chg;
+my $dev;
+
+# label slot 2 with "MyTape", slot 3 with "TESTCONF13", and add
+# the latter to the tapelist
+{
+    $chg = Amanda::Changer->new();
+    $chg->load(slot => 2,
+        res_cb => sub {
+            my ($err, $reservation) = @_;
+            if ($err) {
+                BAIL_OUT("device error 1");
+            }
+            $dev = $reservation->{'device'};
+
+            ($dev && ($dev->status == $DEVICE_STATUS_SUCCESS ||
+                      $dev->status == $DEVICE_STATUS_VOLUME_UNLABELED))
+                or BAIL_OUT("device error 2");
+
+            $dev->start($ACCESS_WRITE, "MyTape", undef)
+                or BAIL_OUT("device error 3");
+            $dev->finish()
+                or BAIL_OUT("device error 4");
+            $reservation->release(
+                finished_cb => sub {
+		     Amanda::MainLoop::quit(); return;
+                });
+        });
+
+    Amanda::MainLoop::run();
+
+    $chg->quit();
+    $tl->add_tapelabel("0", "TESTCONF13", "test tape");
+    $tl->write($tlf);
+}
+
+
+
+load_vtape(1);
 
 like(run_err('amlabel'),
     qr/^Usage:/,
@@ -90,10 +114,15 @@ is_deeply($tl->{'tles'}->[0], {
      },
     "tapelist correctly updated");
 
-$devdir = load_vtape(1);
-$dev = Amanda::Device->new("file:$devdir");
+$chg = Amanda::Changer->new();
+my $res = load_vtape_res($chg, 1);
+$dev = $res->{'device'};
 die "read_label failed" unless $dev->read_label() == $DEVICE_STATUS_SUCCESS;
 is($dev->volume_label, "TESTCONF92", "volume is actually labeled");
+
+$res->release(finished_cb => sub { Amanda::MainLoop::quit() });
+Amanda::MainLoop::run();
+$chg->quit();
 
 ok(!run('amlabel', 'TESTCONF', 'TESTCONF93'),
     "amlabel refuses to re-label a labeled volume");

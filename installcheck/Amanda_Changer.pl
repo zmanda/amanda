@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 54;
+use Test::More tests => 50;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -621,14 +621,6 @@ loadconfig(undef, "mychanger", "chg-disk:/bar", undef);
 is_deeply( Amanda::Changer->new(), [ "chg-disk:/bar", "cc" ],
     "default changer with global tpchanger naming a defined changer with a uri");
 
-loadconfig(undef, "mychanger", "chg-zd-mtx", undef);
-is_deeply( Amanda::Changer->new(), [ "chg-compat:chg-zd-mtx", "cc" ],
-    "default changer with global tpchanger naming a defined changer with a compat script");
-
-loadconfig(undef, "chg-zd-mtx", undef, undef);
-is_deeply( Amanda::Changer->new(), [ "chg-compat:chg-zd-mtx", undef ],
-    "default changer with global tpchanger naming a compat script");
-
 loadconfig("tape:/dev/foo", undef, undef, undef);
 is_deeply( Amanda::Changer->new(), [ "chg-single:tape:/dev/foo", undef ],
     "default changer with global tapedev naming a device and no tpchanger");
@@ -641,10 +633,6 @@ assert_invalid("tape:/dev/foo", "chg-disk:/foo", undef, undef, undef,
     qr/Cannot specify both 'tapedev' and 'tpchanger'/,
     "supplying a device for tapedev and a changer for tpchanger is invalid");
 
-loadconfig("tape:/dev/foo", 'chg-zd-mtx', undef, undef);
-is_deeply( Amanda::Changer->new(), [ "chg-compat:chg-zd-mtx", undef ],
-    "default changer with global tapedev naming a device and a global tpchanger naming a compat script");
-
 assert_invalid("chg-disk:/foo", "tape:/dev/foo", undef, undef, undef,
     qr/Cannot specify both 'tapedev' and 'tpchanger'/,
     "supplying a changer for tapedev and a device for tpchanger is invalid");
@@ -656,10 +644,6 @@ is_deeply( Amanda::Changer->new(), [ "chg-disk:/foo", undef ],
 loadconfig("mychanger", undef, "chg-disk:/bar", undef);
 is_deeply( Amanda::Changer->new(), [ "chg-disk:/bar", "cc" ],
     "default changer with global tapedev naming a defined changer with a uri");
-
-loadconfig("mychanger", undef, "chg-zd-mtx", undef);
-is_deeply( Amanda::Changer->new(), [ "chg-compat:chg-zd-mtx", "cc" ],
-    "default changer with global tapedev naming a defined changer with a compat script");
 
 loadconfig(undef, undef, "chg-disk:/foo", undef);
 is_deeply( Amanda::Changer->new("mychanger"), [ "chg-disk:/foo", "cc" ],
