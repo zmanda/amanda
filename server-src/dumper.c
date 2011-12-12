@@ -2443,7 +2443,7 @@ startup_dump(
             level, options + 1);
 
         p = g_string_free(strbuf, FALSE);
-	pclean = clean_dle_str_for_client(p);
+	pclean = clean_dle_str_for_client(p, their_features);
         g_string_append(reqbuf, pclean);
 	g_free(pclean);
 	dle_str = p;

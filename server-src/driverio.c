@@ -630,6 +630,12 @@ dumper_cmd(
             g_string_append(strbuf, qtmp);
             g_free(qtmp);
 
+	    tmp = xml_dumptype_properties(dp);
+	    qtmp = quote_string(tmp);
+	    g_free(tmp);
+	    g_string_append(strbuf, qtmp);
+	    g_free(qtmp);
+
             if (application) {
                 tmp = xml_application(dp, application, features);
                 qtmp = quote_string(tmp);

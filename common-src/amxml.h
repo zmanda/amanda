@@ -79,6 +79,7 @@ typedef struct a_dle_s {
     sl_t   *include_list;
     int     exclude_optional;
     int     include_optional;
+    proplist_t property;
     proplist_t application_property;
     char        *application_client_name;
     scriptlist_t scriptlist;

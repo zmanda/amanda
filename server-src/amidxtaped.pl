@@ -601,6 +601,10 @@ sub send_header {
     # filter out some things the remote might not be able to process
     if (!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_dle_in_header)) {
 	$header->{'dle_str'} = undef;
+    } else {
+	$header->{'dle_str'} =
+	    Amanda::Disklist::clean_dle_str_for_client($header->{'dle_str'},
+		   Amanda::Feature::am_features($self->{'their_features'}));
     }
     if (!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_origsize_in_header)) {
 	$header->{'orig_size'} = 0;
