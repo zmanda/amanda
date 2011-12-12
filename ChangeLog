@@ -1,3 +1,18 @@
+2011-12-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amfeatures.c: Add fe_dumptype_property.
+	* common-src/amfeatures.h: Add fe_dumptype_property.
+	* common-src/amxml.c: Parse dumptype properties.
+	* common-src/amxml.h (dle_t): Add property field.
+	* perl/Amanda/Disklist.swg: Add clean_dle_str_for_client.
+	* perl/Amanda/Feature.pod: Add fe_dumptype_property.
+	* perl/Amanda/Feature.swg: Add Amanda::Feature::Set::features
+	* server-src/amidxtaped.pl: Call clean_dle_str_for_client.
+	* server-src/diskfile.c (xml_dumptype_properties): New function to
+	  return dumptype propertyes.
+	* server-src/diskfile.h (xml_dumptype_properties) Add prototype.
+	* server-src/driverio.c: Add xml_dumptype_properties to dumper cmd.
+	* server-src/dumper.c: Call clean_dle_str_for_client.
+
 2011-12-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* example/template.d/amanda-harddisk.conf.in: fix for installcheck.
 

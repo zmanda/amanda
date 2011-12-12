@@ -600,6 +600,7 @@ dumper_cmd(
 	    char *qclient_username;
 	    char *qclient_port;
 	    char *qssh_keys;
+	    char *d_prop;
 
 	    if (dp->application != NULL) {
 		application = lookup_application(dp->application);
@@ -613,6 +614,11 @@ dumper_cmd(
 	    features = am_feature_to_string(dp->host->features);
 	    if (am_has_feature(dp->host->features, fe_req_xml)) {
 		o = xml_optionstr(dp, 1);
+
+		d_prop = xml_dumptype_properties(dp);
+		vstrextend(&o, d_prop, NULL);
+		amfree(d_prop);
+
 		if (application) {
 		    char *xml_app;
 		    xml_app = xml_application(dp, application,

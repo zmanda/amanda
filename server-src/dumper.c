@@ -2400,7 +2400,7 @@ startup_dump(
 	}
 	vstrextend(&p, "  <level>", level_string, "</level>\n", NULL);
 	vstrextend(&p, options+1, "</dle>\n", NULL);
-	pclean = clean_dle_str_for_client(p);
+	pclean = clean_dle_str_for_client(p, their_features);
 	vstrextend(&req, pclean, NULL);
 	amfree(pclean);
 	dle_str = p;

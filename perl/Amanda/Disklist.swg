@@ -316,3 +316,4 @@ push @EXPORT_OK, qw( read_disklist
 	get_interface all_interfaces);
 
 %}
+char *clean_dle_str_for_client(char *dle_str, am_feature_t *their_features);

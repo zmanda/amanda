@@ -241,6 +241,18 @@ If set, amindexd quote the label (holdingdisk filename)
 
 If set, amidxtaped do not decompress/decrypt client compressed/decrypted stream.
 
+=item fe_application_client_name
+
+If set, add the 'client_name' for application in the xml code.
+
+=item fe_script_client_name
+
+If set, add the 'client_name' for script in the xml code.
+
+=item fe_dumptype_property
+
+If set, add the dumptype property in the xml code.
+
 =back
 
 =cut

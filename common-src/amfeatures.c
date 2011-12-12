@@ -165,6 +165,7 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_amrecover_receive_unfiltered);
 	am_add_feature(f, fe_application_client_name);
 	am_add_feature(f, fe_script_client_name);
+	am_add_feature(f, fe_dumptype_property);
     }
     return f;
 }
@@ -458,4 +459,11 @@ bad:
     g_warning("Bad feature string '%s'", orig);
     am_release_feature_set(f);
     return NULL;
+}
+
+am_feature_t *
+am_features(
+    am_feature_t *f)
+{
+    return f;
 }
