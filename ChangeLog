@@ -1,4 +1,7 @@
 2011-12-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c (s3_is_bucket_exists): Set max-keys=1.
+
+2011-12-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Recovery/Scan.pm (new): Return changer error.
 
 2011-12-12  Jean-Louis Martineau <martineau@zmanda.com>
