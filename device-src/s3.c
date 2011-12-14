@@ -2203,7 +2203,7 @@ s3_is_bucket_exists(S3Handle *hdl,
         { 0, 0,                       0, /* default: */ S3_RESULT_FAIL  }
         };
 
-    result = perform_request(hdl, "GET", bucket, NULL, NULL, NULL,
+    result = perform_request(hdl, "GET", bucket, NULL, NULL, "max-keys=1",
                              NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                              NULL, NULL, result_handling);
 
