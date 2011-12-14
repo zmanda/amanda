@@ -1,3 +1,6 @@
+2011-12-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Recovery/Scan.pm (new): Return changer error.
+
 2011-12-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amfeatures.c: Add fe_dumptype_property.
 	* common-src/amfeatures.h: Add fe_dumptype_property.

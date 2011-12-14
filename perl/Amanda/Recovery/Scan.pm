@@ -163,6 +163,7 @@ sub new {
     #until we have a config for it.
     $scan_conf = Amanda::Recovery::Scan::Config->new();
     $chg = Amanda::Changer->new() if !defined $chg;
+    return $chg if $chg->isa("Amanda::Changer::Error");
 
     my $self = {
 	initial_chg   => $chg,
