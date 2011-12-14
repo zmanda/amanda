@@ -1,4 +1,8 @@
 2011-12-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Installcheck/Run.pm (load_vtape): Use $sbindir to
+	  execute amtape.
+
+2011-12-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c (s3_is_bucket_exists): Set max-keys=1.
 
 2011-12-14  Jean-Louis Martineau <martineau@zmanda.com>

@@ -326,7 +326,7 @@ sub vtape_dir {
 sub load_vtape {
     my ($slot) = @_;
 
-    system("amtape TESTCONF slot $slot > /dev/null 2>/dev/null");
+    system("$sbindir/amtape TESTCONF slot $slot > /dev/null 2>/dev/null");
     # make the data/ symlink from our taperoot
 #    unlink("$taperoot/data");
 #    symlink(vtape_dir($slot), "$taperoot/data")
