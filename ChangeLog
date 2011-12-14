@@ -1,3 +1,6 @@
+2011-12-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Recovery/Scan.pm (new): Return changer error.
+
 2011-12-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* Makefile.am (SERVER_SUBDIRS): Remove changer-src.
 	* changer-src: Remove subdirectoy.
