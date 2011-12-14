@@ -33,13 +33,14 @@ use Amanda::MainLoop;
 use Amanda::Paths;
 use Amanda::Config qw( :init :getconf );
 use Amanda::Constants;
-use Amanda::Changer;
 
 # get Amanda::Device only when we're building for server
 BEGIN {
     use Amanda::Util;
     if (Amanda::Util::built_with_component("server")) {
 	eval "use Amanda::Device;";
+	die $@ if $@;
+	eval "use Amanda::Changer;";
 	die $@ if $@;
     }
 }
@@ -1261,9 +1262,11 @@ SKIP: {
 	# in an error state.  NDMP devices do not support append, so starting in
 	# append mode should trigger the failure.
 	if ($do_cancel eq 'in_setup') {
+	    no warnings 'once';
 	    if ($dev->start($Amanda::Device::ACCESS_APPEND, "MYLABEL", undef)) {
 		die "successfully started NDMP device in ACCESS_APPEND?!";
 	    }
+	    use warnings 'once';
 	}
 
 	$xfer->start($xmsg_cb);
