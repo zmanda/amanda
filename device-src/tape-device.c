@@ -1429,7 +1429,8 @@ tape_device_finish (Device * d_self) {
 
     self = TAPE_DEVICE(d_self);
 
-    if (device_in_error(self)) return FALSE;
+    if (device_in_error(self))
+	goto finish_error;
 
     /* if we're already in ACCESS_NULL, then there are no filemarks or anything
      * to worry about, but we need to release the kernel device */
@@ -1442,7 +1443,7 @@ tape_device_finish (Device * d_self) {
     /* Polish off this file, if relevant. */
     if (d_self->in_file && IS_WRITABLE_ACCESS_MODE(d_self->access_mode)) {
         if (!device_finish_file(d_self))
-            return FALSE;
+	    goto finish_error;
     }
 
     /* Straighten out the filemarks.  We already wrote one in finish_file, and
@@ -1464,7 +1465,7 @@ tape_device_finish (Device * d_self) {
 	    device_set_error(d_self,
 		stralloc(_("Amanda file header won't fit in a single block!")),
 		DEVICE_STATUS_DEVICE_ERROR);
-	    return FALSE;
+	    goto finish_error;
 	}
 
 	result = tape_device_robust_write(self, header, d_self->block_size, &msg);
@@ -1475,7 +1476,7 @@ tape_device_finish (Device * d_self) {
 		DEVICE_STATUS_DEVICE_ERROR);
 	    amfree(header);
 	    amfree(msg);
-	    return FALSE;
+	    goto finish_error;
 	}
 	amfree(header);
     }
@@ -1485,7 +1486,7 @@ tape_device_finish (Device * d_self) {
 	device_set_error(d_self,
 	    vstrallocf(_("Couldn't rewind device to finish: %s"), strerror(errno)),
 	    DEVICE_STATUS_DEVICE_ERROR);
-        return FALSE;
+	goto finish_error;
     }
 
     d_self->is_eof = FALSE;
@@ -1496,6 +1497,15 @@ tape_device_finish (Device * d_self) {
     self->fd = -1;
 
     return TRUE;
+
+finish_error:
+    d_self->access_mode = ACCESS_NULL;
+
+    /* release the kernel's device */
+    robust_close(self->fd);
+    self->fd = -1;
+
+    return FALSE;
 }
 
 /* Works just like read(), except for the following:

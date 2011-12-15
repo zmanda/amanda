@@ -248,9 +248,10 @@ null_device_start (Device * pself, DeviceAccessMode mode,
 /* This default implementation does very little. */
 static gboolean
 null_device_finish (Device * pself) {
+    pself->access_mode = ACCESS_NULL;
+
     if (device_in_error(pself)) return FALSE;
 
-    pself->access_mode = ACCESS_NULL;
     return TRUE;
 }
 

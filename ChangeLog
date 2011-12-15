@@ -1,3 +1,13 @@
+2011-12-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/ndmp-device.c: Always call close_tape_agent and
+				    close_connection.
+	* device-src/null-device.c: Always set pself->access_mode to
+				    ACCESS_NULL.
+	* device-src/rait-device.c: Always call child finish.
+	* device-src/s3-device.c: Always set pself->access_mode to ACCESS_NULL.
+	* device-src/tape-device.c: Always close self->fd.
+	* device-src/vfs-device.c: Always set pself->access_mode to ACCESS_NULL.
+
 2011-11-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/xfer-source-recovery.c (pull_buffer_impl): Release lock
 	  before calling wait_until_xfer_cancelled.
