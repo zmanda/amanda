@@ -1,3 +1,6 @@
+2011-12-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Fix GNUTAR-LISTDIR property.
+
 2011-12-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c (s3_is_bucket_exists): Set max-keys=1.
 

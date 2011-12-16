@@ -296,6 +296,7 @@ main(
 #else
     gnutar_path = NULL;
 #endif
+    gnutar_listdir = NULL;
     gnutar_directory = NULL;
     gnutar_onefilesystem = 1;
     gnutar_atimepreserve = 1;
@@ -357,6 +358,7 @@ main(
     /* parse argument */
     command = argv[1];
 
+    gnutar_listdir = stralloc(getconf_str(CNF_GNUTAR_LIST_DIR));
     argument.config     = NULL;
     argument.host       = NULL;
     argument.message    = 0;
@@ -547,7 +549,6 @@ main(
 	}
     }
 
-    gnutar_listdir = getconf_str(CNF_GNUTAR_LIST_DIR);
     if (strlen(gnutar_listdir) == 0)
 	gnutar_listdir = NULL;
 
