@@ -24,7 +24,7 @@ use Installcheck;
 use Installcheck::Run qw(run run_err $diskname);
 use Amanda::Paths;
 use Amanda::Constants;
-use Amanda::Util qw( slurp burp );
+use Amanda::Util qw( slurp burp :constants );
 use Amanda::Config qw( :init );
 
 # this basically gets one run of amserverconfig in for each template, and then
@@ -42,6 +42,13 @@ sub config_ok {
     config_uninit();
 }
 
+my $amandahomedir="$localstatedir/lib/amanda";
+my $config = "TESTCONF";
+my $holding_exists = 0;
+$holding_exists = 1 if -d "$amandahomedir/holdings/$config";
+my $vtapes_exists = 0;
+$vtapes_exists = 1 if -d "$amandahomedir/vtapes/$config";
+
 Installcheck::Run::cleanup();
 ok(run("$sbindir/amserverconfig", 'TESTCONF', '--template', 'S3'),
     "amserverconfig with S3 template")
@@ -53,6 +60,12 @@ ok(run("$sbindir/amserverconfig", 'TESTCONF', '--template', 'harddisk'),
     "amserverconfig with harddisk template")
     or diag($Installcheck::Run::stdout);
 config_ok();
+if (!$holding_exists and -d "$amandahomedir/holdings/$config") {
+    rmtree("$amandahomedir/holdings/$config");
+}
+if (!$vtapes_exists and -d "$amandahomedir/vtapes/$config") {
+    rmtree("$amandahomedir/vtapes/$config");
+}
 
 Installcheck::Run::cleanup();
 mkpath(Installcheck::Run::vtape_dir());
@@ -62,6 +75,13 @@ ok(run("$sbindir/amserverconfig", 'TESTCONF', '--template', 'harddisk',
     "amserverconfig with harddisk template and tapedev and tapecycle")
     or diag($Installcheck::Run::stdout);
 config_ok();
+if (!$holding_exists and -d "$amandahomedir/holdings/$config") {
+    rmtree("$amandahomedir/holdings/$config");
+}
+if (!$vtapes_exists and -d "$amandahomedir/vtapes/$config") {
+    rmtree("$amandahomedir/vtapes/$config");
+}
+
 
 Installcheck::Run::cleanup();
 ok(run("$sbindir/amserverconfig", 'TESTCONF', '--template', 'single-tape'),
@@ -78,5 +98,12 @@ SKIP: {
 	or diag($Installcheck::Run::stdout);
     config_ok();
 }
+if (!$holding_exists and -d "$amandahomedir/holdings/$config") {
+    rmtree("$amandahomedir/holdings/$config");
+}
+if (!$vtapes_exists and -d "$amandahomedir/vtapes/$config") {
+    rmtree("$amandahomedir/vtapes/$config");
+}
+
 
 Installcheck::Run::cleanup();
