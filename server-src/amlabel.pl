@@ -71,7 +71,7 @@ GetOptions(
     'version'    => \&Amanda::Util::version_opt,
 ) or usage();
 
-if ($opt_assign && (!$opt_meta || !$opt_barcode)) {
+if ($opt_assign && (!$opt_meta and !$opt_barcode)) {
     print STDERR "--assign require --barcode or --meta\n";
     usage();
 }
