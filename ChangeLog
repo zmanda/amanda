@@ -1,4 +1,7 @@
 2011-12-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Fix force-bump with overdue filesystem.
+
+2011-12-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amlabel.pl: --asign require --meta or --barcode.
 
 2011-12-16  Jean-Louis Martineau <martineau@zmanda.com>

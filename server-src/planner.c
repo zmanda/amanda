@@ -1984,7 +1984,8 @@ static void handle_result(
 		break;
 	    }
 	}
-	if (i == MAX_LEVELS) {
+	if (i == MAX_LEVELS && level > 0) {
+			/* client always report level 0 for some error */
 	    goto bad_msg;		/* this est wasn't requested */
 	}
 	est(dp)->got_estimate++;
@@ -2988,7 +2989,8 @@ static int promote_hills(void)
     }
 
     for(dp = schedq.head; dp != NULL; dp = dp->next) {
-	days = est(dp)->next_level0;   /* This is > 0 by definition */
+	days = est(dp)->next_level0;
+	if (days < 0) days = 0;
 	if(days<my_dumpcycle && !dp->skip_full && dp->strategy != DS_NOFULL &&
 	   dp->strategy != DS_INCRONLY) {
 	    sp[days].disks++;
