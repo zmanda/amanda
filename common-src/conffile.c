@@ -4157,7 +4157,7 @@ read_int_or_str(
 	val->v.s = newstralloc(val->v.s, tokenval.v.s);
 	break;
     default:
-	conf_parserror(_("CLIENT or SERVER expected"));
+	conf_parserror(_("an integer or a quoted string is expected"));
     }
 }
 
