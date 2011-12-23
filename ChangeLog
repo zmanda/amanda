@@ -1,3 +1,7 @@
+2011-12-23  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by Nathan Stratton Treadway.
+	* common-src/conffile.c (read_int_or_str): Fix error message.
+
 2011-12-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Fix force-bump with overdue filesystem.
 
