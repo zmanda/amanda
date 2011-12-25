@@ -1,5 +1,9 @@
 2011-12-24  Dustin J. Mitchell <dustin@mozilla.com>
 	Patch by Nathan Stratton Treadway.
+	* man/xml-source/amgetconf.8.xml: a typo in the amgetconf.8 man page
+
+2011-12-24  Dustin J. Mitchell <dustin@mozilla.com>
+	Patch by Nathan Stratton Treadway.
 	* common-src/conffile.c: minor problem with an error message in
 	  conffile.c, this time in the read_confline() function.  It's just a
 	  mention of "APPLICATION-TOOL"/"SCRIPT-TOOL" that was missed in SVN

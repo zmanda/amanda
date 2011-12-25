@@ -79,7 +79,7 @@ the name of the disired parameter within that subsection.</para>
 a certain type, where the type is givein as the parameter.</para>
 
 <para>The <literal>--client</literal> option is equivalent to 
-<literal>--execute-where server</literal> (below).</para>
+<literal>--execute-where client</literal> (below).</para>
 
 <para>The <literal>--execute-where</literal> option tells amgetconf whether
 to operate on the client or the server; the server is the default.</para>
