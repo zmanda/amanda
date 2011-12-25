@@ -1886,10 +1886,11 @@ read_confline(
     case CONF_DEFINE:
 	if (is_client) {
 	    get_conftoken(CONF_ANY);
-	    /* accept application-tool here, too, for backward compatibility */
+	    /* "application" and "script" are now preferred, but accept
+	     * "application-tool" and "script-tool" too, for backward compatibility */
 	    if(tok == CONF_APPLICATION_TOOL || tok == CONF_APPLICATION) get_application();
 	    else if(tok == CONF_SCRIPT_TOOL || tok == CONF_SCRIPT) get_pp_script();
-	    else conf_parserror(_("APPLICATION-TOOL or SCRIPT-TOOL expected"));
+	    else conf_parserror(_("APPLICATION or SCRIPT expected"));
 	} else {
 	    get_conftoken(CONF_ANY);
 	    if(tok == CONF_DUMPTYPE) get_dumptype();

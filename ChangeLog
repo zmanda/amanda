@@ -1,3 +1,11 @@
+2011-12-24  Dustin J. Mitchell <dustin@mozilla.com>
+	Patch by Nathan Stratton Treadway.
+	* common-src/conffile.c: minor problem with an error message in
+	  conffile.c, this time in the read_confline() function.  It's just a
+	  mention of "APPLICATION-TOOL"/"SCRIPT-TOOL" that was missed in SVN
+	  revision 2028/git commit d0d9425b5d1e5a535719e754243c8f9f12a0ecf1 (in
+	  which those names were changed to "APPLICATION" and "SCRIPT" instead).
+
 2011-12-23  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Nathan Stratton Treadway.
 	* common-src/conffile.c (read_int_or_str): Fix error message.
