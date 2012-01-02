@@ -1,4 +1,8 @@
 2012-01-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/multi.pm: Print the state filename to the debug
+	  file.
+
+2012-01-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/ScanInventory.pm: Correctly set 'err'.
 	* server-src/amtape.pl: quit the changer even on error.
 
