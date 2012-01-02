@@ -629,10 +629,10 @@ sub {
 	},
 	finished_cb => sub {
 	    my ($err) = @_;
+	    $chg->quit();
 	    return failure($err, $finished_cb) if $err;
 
 	    print STDERR "update complete\n";
-	    $chg->quit();
 	    $finished_cb->();
 	});
 });

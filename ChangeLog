@@ -1,3 +1,7 @@
+2012-01-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/ScanInventory.pm: Correctly set 'err'.
+	* server-src/amtape.pl: quit the changer even on error.
+
 2011-12-23  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Nathan Stratton Treadway.
 	* common-src/conffile.c (read_int_or_str): Fix error message.

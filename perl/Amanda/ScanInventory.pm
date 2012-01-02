@@ -564,7 +564,7 @@ sub volume_is_labelable {
     } elsif ($dev_status != $DEVICE_STATUS_SUCCESS) {
 	    $self->_user_msg(slot_result  => 1,
 			     not_success  => 1,
-			     err          => $dev_status,
+			     err          => $sl->{'device_error'},
 			     slot         => $slot);
 	return 0;
     } elsif ($dev_status & $DEVICE_STATUS_SUCCESS and
