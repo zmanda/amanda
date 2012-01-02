@@ -111,6 +111,7 @@ sub new {
     }
 
     my $state_filename = Amanda::Config::config_dir_relative($config->{'changerfile'});
+    Amanda::Debug::debug("Using state file: $state_filename");
 
     my $self = {
 	slots => \@slots,
