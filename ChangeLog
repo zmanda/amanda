@@ -1,3 +1,8 @@
+2012-01-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Report DEVICE ERROR if s3_is_bucket_exists
+	  response with curl error CURLE_COULDNT_CONNECT or
+	  CURLE_COULDNT_RESOLVE_HOST.
+
 2012-01-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/multi.pm: Print the state filename to the debug
 	  file.
