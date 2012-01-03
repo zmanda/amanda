@@ -1719,14 +1719,27 @@ make_bucket(
     Device * pself)
 {
     S3Device *self = S3_DEVICE(pself);
+    guint response_code;
+    s3_error_code_t s3_error_code;
+    CURLcode curl_code;
 
     if (s3_is_bucket_exists(self->s3t[0].s3, self->bucket)) {
 	return TRUE;
     }
 
+    s3_error(self->s3t[0].s3, NULL, &response_code, &s3_error_code, NULL, &curl_code, NULL);
+
+    if (response_code == 0 && s3_error_code == 0 &&
+	(curl_code == CURLE_COULDNT_CONNECT ||
+	 curl_code == CURLE_COULDNT_RESOLVE_HOST)) {
+	device_set_error(pself,
+	    g_strdup_printf(_("While connecting to S3 bucket: %s"),
+			    s3_strerror(self->s3t[0].s3)),
+		DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+    }
+
     if (!s3_make_bucket(self->s3t[0].s3, self->bucket)) {
-        guint response_code;
-        s3_error_code_t s3_error_code;
         s3_error(self->s3t[0].s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
 
         /* if it isn't an expected error (bucket already exists),
