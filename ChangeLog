@@ -1,3 +1,6 @@
+2012-01-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/extract_list.c: Fix for compilation on AIX.
+
 2012-01-04 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/sun-pkg/buildpkg: Add GLIB_* flags to sun packages
 	*  config/amanda/libs.m4: fix "exit when explicit flags are given"
