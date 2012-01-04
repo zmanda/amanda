@@ -1925,7 +1925,6 @@ extract_files_child(
     case IS_DUMP:
 	g_ptr_array_add(argv_ptr, stralloc("restore"));
 #ifdef AIX_BACKUP
-        restore_args[j++] = stralloc("-xB");
 	g_ptr_array_add(argv_ptr, stralloc("-xB"));
 #else
 #if defined(XFSDUMP)
