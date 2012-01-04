@@ -98,13 +98,14 @@ AC_DEFUN([AMANDA_CHECK_NET_LIBS], [
 #   "out of the box" on more boxes.
 #
 AC_DEFUN([AMANDA_CHECK_GLIB], [
-    AC_ARG_VAR(GLIB_CFLAGS, [CFLAGS to build with glib; disables use of pkg-config])
-    AC_ARG_VAR(GLIB_LIBS, [libraries to build with glib; disables use of pkg-config])
-    AC_ARG_VAR(GLIB_GENMARSHAL, [genmarshal binary to use with glib; disables use of pkg-config])
-    AC_ARG_VAR(GOBJECT_QUERY, [gobject_query binary to use with glib; disables use of pkg-config])
-    AC_ARG_VAR(GLIB_MKENUMS, [mkenums binary to use with glib; disables use of pkg-config])
+    AC_ARG_VAR(GLIB_CFLAGS, [CFLAGS to build with glib; disables use of pkg-config; must specify all GLIB_ vars])
+    AC_ARG_VAR(GLIB_LIBS, [libraries to build with glib; disables use of pkg-config; must specify all GLIB_vars])
+    AC_ARG_VAR(GLIB_GENMARSHAL, [genmarshal binary to use with glib; disables use of pkg-config; must specify all GLIB_ vars])
+    AC_ARG_VAR(GOBJECT_QUERY, [gobject_query binary to use with glib; disables use of pkg-config; must specify all GLIB_ vars])
+    AC_ARG_VAR(GLIB_MKENUMS, [mkenums binary to use with glib; disables use of pkg-config; must specify all GLIB_ vars])
 
-    # if any of the precious variables are set, disable the pkg-config run
+    # if any of the precious variables are set, disable the pkg-config run.
+    # Further, if any is specified, all must be specified.
     explicit_glib=no
     test x"$GLIB_CFLAGS" = x"" || explicit_glib=yes
     test x"$GLIB_LIBS" = x"" || explicit_glib=yes
@@ -134,7 +135,16 @@ AC_DEFUN([AMANDA_CHECK_GLIB], [
 	    AC_MSG_ERROR(glib not found or too old; See http://wiki.zmanda.com/index.php/Installation for help)
 	], gmodule gobject gthread)
     else
-	AC_MSG_ERROR(explicit glib)
+        # Confirm that all GLIB_ variables are set
+        if test ! x"$GLIB_CFLAGS" = x"" && \
+           test ! x"$GLIB_LIBS" = x"" && \
+           test ! x"$GLIB_GENMARSHAL" = x"" && \
+           test ! x"$GOBJECT_QUERY" = x"" && \
+           test ! x"$GLIB_MKENUMS" = x""; then
+            :
+        else
+            AC_MSG_ERROR(Not all precious glib variables were set.)
+        fi
     fi
 
     # GLIB_CPPFLAGS is not set by autoconf, yet GLIB_CFLAGS contains what GLIB_CPPFLAGS should contain.

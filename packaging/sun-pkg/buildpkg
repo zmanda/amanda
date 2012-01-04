@@ -1,6 +1,6 @@
 #!/bin/sh
 # This is useful for debugging
- set -x
+#set -x
 
 #### CHECKS
 if [ ! -f common-src/amanda.h ]; then
@@ -92,6 +92,11 @@ do_build() {
     ./configure CFLAGS="${CFLAGS}" \
 	CPPFLAGS="${CPPFLAGS}" \
 	LDFLAGS="${LDFLAGS}" \
+        GLIB_CFLAGS="${GLIB_CFLAGS}" \
+        GLIB_LIBS="${GLIB_LIBS}" \
+        GLIB_GENMARSHAL=glib-genmarshal \
+        GOBJECT_QUERY=gobject-query \
+        GLIB_MKENUMS=glib-mkenums \
 	${CONF} || exit 1
 
     echo "Building.."
@@ -239,10 +244,17 @@ if [ "x${1}" = "xclient" -o "x${1}" = "x" ]; then
         -Wl,-z,ignore"; export LDFLAGS
     PKG_CONFIG_PATH="/usr/lib/pkgconfig"; export PKG_CONFIG_PATH
     if [ "x$arch" = "xsparc" -a "x$os_rel" = "x5.10" ]; then
-	:
+        # Use explicit flags for GLIB, because pkgconfig provides flags
+        # for SunStudio compiler (not compatible with gcc).
+        GLIB_CFLAGS="-I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include"; export GLIB_CFLAGS
+        GLIB_LIBS="-lglib-2.0 -lgobject-2.0 -lgthread-2.0"; export GLIB_LIBS
     elif [ "x$arch" = "xi386" -a "x$os_rel" = "x5.10" ]; then
-	:
+        GLIB_CFLAGS="-I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include"; export GLIB_CFLAGS
     elif [ "x$arch" = "xsparc" -a "x$os_rel" = "x5.8" ]; then
+        # CSW glib2.0 flags for gcc.  CSW compiles with Sunstudio, so some
+        # flags may not work
+        GLIB_CFLAGS="-I/opt/csw/include/glib-2.0 -I/opt/csw/lib/glib-2.0/include"; export GLIB_CFLAGS
+        GLIB_LIBS="-lglib-2.0 -lintl -lgobject-2.0 -lgthread-2.0"; export GLIB_LIBS
 	CC="/usr/local/bin/gcc"
     fi
     CONF="--with-amlibdir=/${amlibdir} \
@@ -256,17 +268,19 @@ if [ "x${1}" = "xclient" -o "x${1}" = "x" ]; then
 fi
 
 if [ "x${1}" = "xserver"  -o "x${1}" = "x" ]; then
-    #libcurl_dir=opt/csw; export libcurl_dir
-    #CPPFLAGS="${CPPFLAGS} -I/${libcurl_dir}/include/curl"; export CPPFLAGS
     LDFLAGS="-L/usr/lib -R/usr/lib \
         -L/opt/csw/lib -R/opt/csw/lib \
         -L/usr/sfw/lib \
         -Wl,-z,ignore"; export LDFLAGS
     PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/lib/pkgconfig:/opt/csw/lib/pkgconfig"; export PKG_CONFIG_PATH
     if [ "x$arch" = "xsparc" -a "x$os_rel" = "x5.10" ]; then
-        :
+        # Use explicit flags for GLIB, because pkgconfig provides flags
+        # for SunStudio compiler (not compatible with gcc).
+        GLIB_CFLAGS="-I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include"; export GLIB_CFLAGS
+        GLIB_LIBS="-lglib-2.0 -lgobject-2.0 -lgthread-2.0"; export GLIB_LIBS
     elif [ "x$arch" = "xi386" -a "x$os_rel" = "x5.10" ]; then
-        :
+        GLIB_CFLAGS="-I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include"; export GLIB_CFLAGS
+        GLIB_LIBS="-lglib-2.0 -lgobject-2.0 -lgthread-2.0"; export GLIB_LIBS
     elif [ "x$arch" = "xsparc" -a "x$os_rel" = "x5.8" ]; then
 	msg="We don't support server on Solaris 5.8."
 	# if we were run with no arguments, then this is not an error, just a warning
@@ -278,7 +292,6 @@ if [ "x${1}" = "xserver"  -o "x${1}" = "x" ]; then
 	    exit 1
 	fi
     fi
-    # --with-libcurl=/${libcurl_dir} \
     CONF="--with-amlibdir=/${amlibdir} \
 	--enable-s3-device \
 	CC=/usr/sfw/bin/gcc \
