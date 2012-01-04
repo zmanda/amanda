@@ -1,3 +1,8 @@
+2012-01-04 Dan Locks <dwlocks@zmanda.com>
+	*  packaging/sun-pkg/buildpkg: Add GLIB_* flags to sun packages
+	*  config/amanda/libs.m4: fix "exit when explicit flags are given"
+	   error, and require all flags when one is given.
+
 2012-01-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Report DEVICE ERROR if s3_is_bucket_exists
 	  response with curl error CURLE_COULDNT_CONNECT or
