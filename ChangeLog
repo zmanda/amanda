@@ -1,3 +1,7 @@
+2012-01-04 Dan Locks <dwlocks@zmanda.com>
+	*  config/amanda/libs.m4: fix "exit when explicit flags are given"
+	   error, and require all flags when one is given.
+
 2012-01-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/extract_list.c: Fix for compilation on AIX.
 
