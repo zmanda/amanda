@@ -173,10 +173,8 @@ sub {
 		    push @slots, $begin;
 		    $begin++;
 		}
-	    } elsif ($what1 =~ /^\d+$/) {
-		push @slots, $what1;
 	    } else {
-		print STDERR "Invalid slot range: $what1\n";
+		push @slots, $what1;
 	    }
 	}
     }
