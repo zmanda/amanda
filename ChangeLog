@@ -1,3 +1,6 @@
+2012-01-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Fix deleting files.
+
 2012-01-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amtape.pl: Fix amtape show for non numeric slot.
 

@@ -313,6 +313,9 @@ delete_all_files(S3Device *self);
 static gboolean
 setup_handle(S3Device * self);
 
+static void
+s3_wait_thread_delete(S3Device *self);
+
 /*
  * class mechanics */
 
@@ -700,8 +703,13 @@ delete_file(S3Device *self,
     gboolean result;
     GSList *keys;
     guint64 total_size = 0;
-    char *my_prefix = g_strdup_printf("%sf%08x-", self->prefix, file);
     Device *d_self = DEVICE(self);
+    char *my_prefix;
+    if (file == -1) {
+	my_prefix = g_strdup_printf("%sf", self->prefix);
+    } else {
+	my_prefix = g_strdup_printf("%sf%08x-", self->prefix, file);
+    }
 
     result = s3_list_keys(self->s3t[0].s3, self->bucket, my_prefix, NULL, &keys,
 			  &total_size);
@@ -730,6 +738,7 @@ delete_file(S3Device *self,
 		self->s3t[thread].errflags = DEVICE_STATUS_SUCCESS;
 		self->s3t[thread].errmsg = NULL;
 		g_mutex_unlock(self->thread_idle_mutex);
+		s3_wait_thread_delete(self);
 		return FALSE;
 	    }
 	    self->s3t[thread].idle = 0;
@@ -742,6 +751,8 @@ delete_file(S3Device *self,
     g_mutex_unlock(self->thread_idle_mutex);
 
     self->volume_bytes = total_size;
+
+    s3_wait_thread_delete(self);
 
     return TRUE;
 }
@@ -812,72 +823,11 @@ s3_wait_thread_delete(S3Device *self)
     g_mutex_unlock(self->thread_idle_mutex);
 }
 
-static void
-s3_wait_thread_delete_one(S3Device *self)
-{
-    int idle_thread = 0;
-    int thread;
-
-    g_mutex_lock(self->thread_idle_mutex);
-    while (idle_thread == 0) {
-	for (thread = 0; thread < self->nb_threads; thread++)  {
-	    if (self->s3t[thread].idle == 1) {
-		idle_thread++;
-		break;
-	    }
-	}
-	if (idle_thread == 0) {
-	    g_cond_wait(self->thread_idle_cond, self->thread_idle_mutex);
-	}
-    }
-    g_mutex_unlock(self->thread_idle_mutex);
-}
 
 static gboolean
 delete_all_files(S3Device *self)
 {
-    Device *pself = (Device *)self;
-    int file, last_file;
-
-    /*
-     * Note: this has to be allowed to retry for a while because the bucket
-     * may have been created and not yet appeared
-     */
-    last_file = find_last_file(self);
-    if (last_file < 0) {
-        guint response_code;
-        s3_error_code_t s3_error_code;
-        s3_error(self->s3t[0].s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
-
-        /*
-         * if the bucket doesn't exist, it doesn't contain any files,
-         * so the operation is a success
-         */
-        if ((response_code == 404 && s3_error_code == S3_ERROR_NoSuchBucket)) {
-            /* find_last_file set an error; clear it */
-            device_set_error(DEVICE(self), NULL, DEVICE_STATUS_SUCCESS);
-            return TRUE;
-        } else {
-            /* find_last_file already set the error */
-            return FALSE;
-        }
-    }
-
-    if (pself->volume_label) {
-	g_debug("Deleting all files on volume '%s'", pself->volume_label);
-    } else {
-	g_debug("Deleting all files on unlabelled volume");
-    }
-    reset_thread(self);
-    for (file = 1; file <= last_file; file++) {
-        if (!delete_file(self, file))
-            /* delete_file already set our error message */
-	    break;
-	s3_wait_thread_delete_one(self);
-    }
-    s3_wait_thread_delete(self);
-
-    return !device_in_error(self);
+    return delete_file(self, -1);
 }
 
 /*
