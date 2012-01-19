@@ -1,3 +1,10 @@
+2012-01-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Add support for openstack swift api.
+	* device-src/s3.c: Add support for openstack swift api.
+	* device-src/s3.h: Add support for openstack swift api.
+	* man/xml-source/amanda-devices.7.xml: Add openstack-swift-api 
+	  property.
+
 2012-01-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Fix deleting files.
 

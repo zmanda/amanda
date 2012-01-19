@@ -95,6 +95,10 @@ struct _S3Device {
     char *access_key;
     char *user_token;
 
+    /* The Openstack swift information. */
+    char *swift_account_id;
+    char *swift_access_key;
+
     char *bucket_location;
     char *storage_class;
     char *host;
@@ -116,6 +120,7 @@ struct _S3Device {
 
     /* Use SSL? */
     gboolean use_ssl;
+    gboolean openstack_swift_api;
 
     /* Throttling */
     guint64 max_send_speed;
@@ -180,6 +185,12 @@ static DevicePropertyBase device_property_s3_secret_key;
 #define PROPERTY_S3_SECRET_KEY (device_property_s3_secret_key.ID)
 #define PROPERTY_S3_ACCESS_KEY (device_property_s3_access_key.ID)
 
+/* Authentication information for Openstack Swift. Both of these are strings. */
+static DevicePropertyBase device_property_swift_account_id;
+static DevicePropertyBase device_property_swift_access_key;
+#define PROPERTY_SWIFT_ACCOUNT_ID (device_property_swift_account_id.ID)
+#define PROPERTY_SWIFT_ACCESS_KEY (device_property_swift_access_key.ID)
+
 /* Host and path */
 static DevicePropertyBase device_property_s3_host;
 static DevicePropertyBase device_property_s3_service_path;
@@ -205,6 +216,10 @@ static DevicePropertyBase device_property_s3_server_side_encryption;
 /* Path to certificate authority certificate */
 static DevicePropertyBase device_property_ssl_ca_info;
 #define PROPERTY_SSL_CA_INFO (device_property_ssl_ca_info.ID)
+
+/* Whether to use openstack protocol. */
+static DevicePropertyBase device_property_openstack_swift_api;
+#define PROPERTY_OPENSTACK_SWIFT_API (device_property_openstack_swift_api.ID)
 
 /* Whether to use SSL with Amazon S3. */
 static DevicePropertyBase device_property_s3_ssl;
@@ -342,6 +357,14 @@ static gboolean s3_device_set_secret_key_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
+static gboolean s3_device_set_swift_account_id_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_swift_access_key_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
 static gboolean s3_device_set_user_token_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
@@ -363,6 +386,10 @@ static gboolean s3_device_set_ca_info_fn(Device *self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_verbose_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_openstack_swift_api_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -847,6 +874,12 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_s3_access_key,
                                       G_TYPE_STRING, "s3_access_key",
        "Access key ID to authenticate with Amazon S3");
+    device_property_fill_and_register(&device_property_swift_account_id,
+                                      G_TYPE_STRING, "swift_account_id",
+       "Account ID to authenticate with openstack swift");
+    device_property_fill_and_register(&device_property_swift_access_key,
+                                      G_TYPE_STRING, "swift_access_key",
+       "Access key to authenticate with openstack swift");
     device_property_fill_and_register(&device_property_s3_host,
                                       G_TYPE_STRING, "s3_host",
        "hostname:port of the server");
@@ -868,6 +901,9 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_ssl_ca_info,
                                       G_TYPE_STRING, "ssl_ca_info",
        "Path to certificate authority certificate");
+    device_property_fill_and_register(&device_property_openstack_swift_api,
+                                      G_TYPE_BOOLEAN, "openstack_swift_api",
+       "Whether to use openstack protocol");
     device_property_fill_and_register(&device_property_s3_ssl,
                                       G_TYPE_BOOLEAN, "s3_ssl",
        "Whether to use SSL with Amazon S3");
@@ -1040,6 +1076,16 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    device_simple_property_get_fn,
 	    s3_device_set_secret_key_fn);
 
+    device_class_register_property(device_class, PROPERTY_SWIFT_ACCOUNT_ID,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_swift_account_id_fn);
+
+    device_class_register_property(device_class, PROPERTY_SWIFT_ACCESS_KEY,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_swift_access_key_fn);
+
     device_class_register_property(device_class, PROPERTY_S3_HOST,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
@@ -1079,6 +1125,11 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
 	    s3_device_set_verbose_fn);
+
+    device_class_register_property(device_class, PROPERTY_OPENSTACK_SWIFT_API,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_openstack_swift_api_fn);
 
     device_class_register_property(device_class, PROPERTY_S3_SSL,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
@@ -1155,6 +1206,32 @@ s3_device_set_secret_key_fn(Device *p_self, DevicePropertyBase *base,
 
     amfree(self->secret_key);
     self->secret_key = g_value_dup_string(val);
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_swift_account_id_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->swift_account_id);
+    self->swift_account_id = g_value_dup_string(val);
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_swift_access_key_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->swift_access_key);
+    self->swift_access_key = g_value_dup_string(val);
     device_clear_volume_details(p_self);
 
     return device_simple_property_set_fn(p_self, base, val, surety, source);
@@ -1292,6 +1369,17 @@ s3_device_set_verbose_fn(Device *p_self, DevicePropertyBase *base,
 		s3_verbose(self->s3t[thread].s3, self->verbose);
 	}
     }
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_openstack_swift_api_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    self->openstack_swift_api = g_value_get_boolean(val);
 
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
@@ -1508,6 +1596,7 @@ s3_device_open_device(Device *pself, char *device_name,
 
     /* default values */
     self->verbose = FALSE;
+    self->openstack_swift_api = FALSE;
 
     /* use SSL if available */
     self->use_ssl = s3_curl_supports_ssl();
@@ -1559,6 +1648,8 @@ static void s3_device_finalize(GObject * obj_self) {
     if(self->prefix) g_free(self->prefix);
     if(self->access_key) g_free(self->access_key);
     if(self->secret_key) g_free(self->secret_key);
+    if(self->swift_account_id) g_free(self->swift_account_id);
+    if(self->swift_access_key) g_free(self->swift_access_key);
     if(self->host) g_free(self->host);
     if(self->service_path) g_free(self->service_path);
     if(self->user_token) g_free(self->user_token);
@@ -1571,6 +1662,9 @@ static void s3_device_finalize(GObject * obj_self) {
 static gboolean setup_handle(S3Device * self) {
     Device *d_self = DEVICE(self);
     int thread;
+    guint response_code;
+    s3_error_code_t s3_error_code;
+    CURLcode curl_code;
 
     if (self->s3t == NULL) {
 	self->s3t = g_new(S3_by_thread, self->nb_threads);
@@ -1580,23 +1674,44 @@ static gboolean setup_handle(S3Device * self) {
 		DEVICE_STATUS_DEVICE_ERROR);
             return FALSE;
 	}
-        if (self->access_key == NULL || self->access_key[0] == '\0') {
-	    device_set_error(d_self,
-		stralloc(_("No Amazon access key specified")),
-		DEVICE_STATUS_DEVICE_ERROR);
-            return FALSE;
-	}
 
-	if (self->secret_key == NULL || self->secret_key[0] == '\0') {
-	    device_set_error(d_self,
-		stralloc(_("No Amazon secret key specified")),
-		DEVICE_STATUS_DEVICE_ERROR);
-            return FALSE;
+	if (!self->openstack_swift_api) {
+	    if (self->access_key == NULL || self->access_key[0] == '\0') {
+		device_set_error(d_self,
+		    g_strdup(_("No Amazon access key specified")),
+		    DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    }
+
+	    if (self->secret_key == NULL || self->secret_key[0] == '\0') {
+		device_set_error(d_self,
+		    g_strdup(_("No Amazon secret key specified")),
+		    DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    }
+	} else {
+	    if (self->swift_account_id == NULL ||
+		self->swift_account_id[0] == '\0') {
+		device_set_error(d_self,
+		    g_strdup(_("No Swift account id specified")),
+		    DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    }
+            if (self->swift_access_key == NULL ||
+		self->swift_access_key[0] == '\0') {
+		device_set_error(d_self,
+		    g_strdup(_("No Swift access key specified")),
+		    DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    }
 	}
 
 	if (!self->use_ssl && self->ca_info) {
 	    amfree(self->ca_info);
 	}
+
+	self->thread_idle_cond = g_cond_new();
+	self->thread_idle_mutex = g_mutex_new();
 
 	for (thread = 0; thread < self->nb_threads; thread++) {
 	    self->s3t[thread].idle = 1;
@@ -1608,17 +1723,32 @@ static gboolean setup_handle(S3Device * self) {
 	    self->s3t[thread].curl_buffer.buffer = NULL;
 	    self->s3t[thread].curl_buffer.buffer_len = 0;
             self->s3t[thread].s3 = s3_open(self->access_key, self->secret_key,
+					   self->swift_account_id,
+					   self->swift_access_key,
 					   self->host, self->service_path,
 					   self->use_subdomain,
 					   self->user_token, self->bucket_location,
 					   self->storage_class, self->ca_info,
-					   self->server_side_encryption);
+					   self->server_side_encryption,
+					   self->openstack_swift_api);
             if (self->s3t[thread].s3 == NULL) {
 	        device_set_error(d_self,
 		    stralloc(_("Internal error creating S3 handle")),
 		    DEVICE_STATUS_DEVICE_ERROR);
+		self->nb_threads = thread+1;
                 return FALSE;
-            }
+            } else {
+		s3_error(self->s3t[0].s3, NULL, &response_code,
+			&s3_error_code, NULL, &curl_code, NULL);
+		if (response_code != 200) {
+		    device_set_error(d_self,
+			g_strdup_printf(_("Internal error creating S3 handle: %s"),
+					s3_strerror(self->s3t[0].s3)),
+			DEVICE_STATUS_DEVICE_ERROR);
+		    self->nb_threads = thread+1;
+		    return FALSE;
+		}
+	    }
         }
 
 	g_debug("Create %d threads", self->nb_threads);
@@ -1629,8 +1759,6 @@ static gboolean setup_handle(S3Device * self) {
 					      self->nb_threads, 0, NULL);
 	self->thread_pool_read = g_thread_pool_new(s3_thread_read_block, self,
 					      self->nb_threads, 0, NULL);
-	self->thread_idle_cond = g_cond_new();
-	self->thread_idle_mutex = g_mutex_new();
     }
 
     for (thread = 0; thread < self->nb_threads; thread++) {
@@ -1741,7 +1869,9 @@ s3_device_read_label(Device *pself) {
 
         /* if it's an expected error (not found), just return FALSE */
         if (response_code == 404 &&
-             (s3_error_code == S3_ERROR_NoSuchKey ||
+             (s3_error_code == S3_ERROR_None ||
+              s3_error_code == S3_ERROR_Unknown ||
+	      s3_error_code == S3_ERROR_NoSuchKey ||
 	      s3_error_code == S3_ERROR_NoSuchEntity ||
 	      s3_error_code == S3_ERROR_NoSuchBucket)) {
             g_debug(_("Amanda header not found while reading tapestart header (this is expected for empty tapes)"));
@@ -2190,7 +2320,8 @@ s3_device_seek_file(Device *pself, guint file) {
 
         /* if it's an expected error (not found), check what to do. */
         if (response_code == 404 &&
-	    (s3_error_code == S3_ERROR_NoSuchKey ||
+            (s3_error_code == S3_ERROR_None ||
+	     s3_error_code == S3_ERROR_NoSuchKey ||
 	     s3_error_code == S3_ERROR_NoSuchEntity)) {
             int next_file;
             next_file = find_next_file(self, pself->file);
@@ -2398,10 +2529,11 @@ s3_thread_read_block(
 	guint response_code;
 	s3_error_code_t s3_error_code;
 	s3_error(s3t->s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
-
 	/* if it's an expected error (not found), just return -1 */
 	if (response_code == 404 &&
-	    (s3_error_code == S3_ERROR_NoSuchKey ||
+            (s3_error_code == S3_ERROR_None ||
+	     s3_error_code == S3_ERROR_Unknown ||
+	     s3_error_code == S3_ERROR_NoSuchKey ||
 	     s3_error_code == S3_ERROR_NoSuchEntity)) {
 	    s3t->eof = TRUE;
 	} else {
