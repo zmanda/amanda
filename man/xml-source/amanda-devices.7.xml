@@ -444,6 +444,10 @@ writing long enough to bring the average below this value.
 (read-write) The number of thread that read data from the s3 device, higher value can provide more throutput.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>OPENSTACK_SWIFT_API</term><listitem>
+ (read-write) Set to yes if it is an openstack storage device.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>S3_ACCESS_KEY</term><listitem>
  (read-write) This property gives the Amazon S3 access key used to access the service.
 </listitem></varlistentry>
