@@ -1737,7 +1737,7 @@ static gboolean setup_handle(S3Device * self) {
 		    DEVICE_STATUS_DEVICE_ERROR);
 		self->nb_threads = thread+1;
                 return FALSE;
-            } else {
+            } else if (self->openstack_swift_api) {
 		s3_error(self->s3t[0].s3, NULL, &response_code,
 			&s3_error_code, NULL, &curl_code, NULL);
 		if (response_code != 200) {

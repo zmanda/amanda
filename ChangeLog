@@ -1,4 +1,7 @@
 2012-01-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Fix for openstack swift api.
+
+2012-01-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm, server-src/amlabel.pl:use the 
 	  block_size instead of the header-block_size to write the BLOCK_SIZE
 	  in the tapelist.
