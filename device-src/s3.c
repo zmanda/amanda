@@ -88,7 +88,7 @@
 
 #define AMAZON_SECURITY_HEADER "x-amz-security-token"
 #define AMAZON_BUCKET_CONF_TEMPLATE "\
-  <CreateBucketConfiguration>\n\
+  <CreateBucketConfiguration%s>\n\
     <LocationConstraint>%s</LocationConstraint>\n\
   </CreateBucketConfiguration>"
 
@@ -1809,9 +1809,9 @@ s3_open(const char *access_key,
 
     if (!is_non_empty_string(host))
 	host = "s3.amazonaws.com";
-    hdl->host = g_strdup(host);
+    hdl->host = g_ascii_strdown(host);
     hdl->use_subdomain = use_subdomain ||
-			 (g_str_equal(host, "s3.amazonaws.com") &&
+			 (g_str_equal(hdl->host, "s3.amazonaws.com") &&
 			  is_non_empty_string(hdl->bucket_location));
     hdl->openstack_swift_api = openstack_swift_api;
     if (service_path) {
@@ -2373,7 +2373,11 @@ s3_make_bucket(S3Handle *hdl,
         !g_str_equal(AMAZON_WILDCARD_LOCATION, hdl->bucket_location)) {
         if (s3_bucket_location_compat(bucket)) {
             ptr = &buf;
-            buf.buffer = g_strdup_printf(AMAZON_BUCKET_CONF_TEMPLATE, hdl->bucket_location);
+            buf.buffer = g_strdup_printf(AMAZON_BUCKET_CONF_TEMPLATE,
+		 g_str_equal(hdl->host, "gss.iijgio.com")?
+			" xmlns=\"http://acs.iijgio.com/doc/2006-03-01/\"":
+			"",
+		hdl->bucket_location);
             buf.buffer_len = (guint) strlen(buf.buffer);
             buf.buffer_pos = 0;
             buf.max_buffer_size = buf.buffer_len;
