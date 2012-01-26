@@ -1809,7 +1809,7 @@ s3_open(const char *access_key,
 
     if (!is_non_empty_string(host))
 	host = "s3.amazonaws.com";
-    hdl->host = g_ascii_strdown(host);
+    hdl->host = g_ascii_strdown(host, -1);
     hdl->use_subdomain = use_subdomain ||
 			 (g_str_equal(hdl->host, "s3.amazonaws.com") &&
 			  is_non_empty_string(hdl->bucket_location));
