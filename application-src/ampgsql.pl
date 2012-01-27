@@ -811,10 +811,13 @@ sub _incr_backup {
 
    debug("running _incr_backup");
 
-   _run_psql_command($self, "SELECT file_name from pg_xlogfile_name_offset(pg_switch_xlog())");
-   if (defined($self->{'switch_xlog_filename'})) {
-	$self->_wait_for_wal($self->{'switch_xlog_filename'});
-    }
+   if ($self->{'action'} eq 'backup') {
+      _run_psql_command($self, "SELECT file_name from pg_xlogfile_name_offset(pg_switch_xlog())");
+      if (defined($self->{'switch_xlog_filename'})) {
+	 $self->_wait_for_wal($self->{'switch_xlog_filename'});
+      }
+   }
+
    my $end_wal = _get_prev_state($self);
    if ($end_wal) {
        debug("previously ended at: $end_wal");

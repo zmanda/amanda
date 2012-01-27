@@ -1,4 +1,7 @@
 2012-01-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Call pg_switch_xlog() only for backup.
+
+2012-01-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Run pg_switch_xlog() and wait for the
 	  archived WAl before doing an incremental backup.
 
