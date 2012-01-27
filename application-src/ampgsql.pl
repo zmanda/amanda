@@ -222,7 +222,8 @@ sub _run_psql_command {
     push @cmd, "-p", $self->{'props'}->{'pg-port'} if ($self->{'props'}->{'pg-port'});
     push @cmd, "-U", $self->{'props'}->{'pg-user'} if ($self->{'props'}->{'pg-user'});
 
-    push @cmd, '--quiet', '--output', '/dev/null', '--command', $cmd, $self->{'props'}->{'pg-db'};
+    push @cmd, '--quiet', '--output', '/dev/null' if (!($cmd =~ /pg_xlogfile_name_offset/));
+    push @cmd, '--command', $cmd, $self->{'props'}->{'pg-db'};
     debug("running " . join(" ", @cmd));
 
     my ($wtr, $rdr);
@@ -245,6 +246,14 @@ sub _run_psql_command {
 	}
 	chomp $line;
 	debug("psql stdout: $line");
+	if ($cmd =~ /pg_xlogfile_name_offset/) {
+	    return if $line =~ /file_name/;
+	    return if $line =~ /------/;
+	    return if $line =~ /\(1 row\)/;
+	    if ($line =~ /^ ($_WAL_FILE_PAT)/) {
+		$self->{'switch_xlog_filename'} = $1;
+	    }
+	}
 	if ($line =~ /NOTICE: pg_stop_backup complete, all required WAL segments have been archived/) {
 	} else {
 	    $self->print_to_server("psql stdout: $line",
@@ -802,6 +811,10 @@ sub _incr_backup {
 
    debug("running _incr_backup");
 
+   _run_psql_command($self, "SELECT file_name from pg_xlogfile_name_offset(pg_switch_xlog())");
+   if (defined($self->{'switch_xlog_filename'})) {
+	$self->_wait_for_wal($self->{'switch_xlog_filename'});
+    }
    my $end_wal = _get_prev_state($self);
    if ($end_wal) {
        debug("previously ended at: $end_wal");
