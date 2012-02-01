@@ -1,3 +1,7 @@
+2012-01-31 Dan Locks <dwlocks@zmanda.com>
+	* packaging/deb/preinst, packaging/rpm/amanda.spec.src: change /bin/sh
+	  to /bin/bash.
+
 2012-01-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Run pg_switch_xlog() and wait for the
 	  archived WAl before doing an incremental backup.
