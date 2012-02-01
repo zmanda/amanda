@@ -1,3 +1,7 @@
+2012-02-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Do not print normal
+	  pg_xlogfile_name_offset output to MESG stream.
+
 2012-01-31 Dan Locks <dwlocks@zmanda.com>
 	* packaging/deb/preinst, packaging/rpm/amanda.spec.src: change /bin/sh
 	  to /bin/bash.

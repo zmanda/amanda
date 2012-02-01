@@ -245,6 +245,7 @@ sub _run_psql_command {
 	    return;
 	}
 	chomp $line;
+	return if $line =~ /^\s*$/;
 	debug("psql stdout: $line");
 	if ($cmd =~ /pg_xlogfile_name_offset/) {
 	    return if $line =~ /file_name/;
@@ -252,6 +253,7 @@ sub _run_psql_command {
 	    return if $line =~ /\(1 row\)/;
 	    if ($line =~ /^ ($_WAL_FILE_PAT)/) {
 		$self->{'switch_xlog_filename'} = $1;
+		return;
 	    }
 	}
 	if ($line =~ /NOTICE: pg_stop_backup complete, all required WAL segments have been archived/) {
