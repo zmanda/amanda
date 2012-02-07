@@ -701,7 +701,7 @@ sub _wait_for_wal {
 	
 	# for versions 8.0 or 8.1, the only way to "force" a WAL archive is to write
 	# garbage to the database.
-	if ($pg_version < 802000) {
+	if ($pg_version < 80200) {
 	    $self->_write_garbage_to_db();
 	} else {
 	    sleep(1);
