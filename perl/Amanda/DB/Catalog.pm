@@ -817,7 +817,7 @@ sub sort_dumps {
 	for my $key (@$keys) {
 	    my ($rev, $k) = ($key =~ /^(-?)(.*)$/);
 
-	    if ($k =~ /^(nparts|level)$/) {
+	    if ($k =~ /^(nparts|level|filenum)$/) {
 		# compare dump components numerically
 		$res = $a->{$k} <=> $b->{$k};
 	    } else { # ($k =~ /^(hostname|diskname|write_timestamp|dump_timestamp)$/)

@@ -1,3 +1,6 @@
+2012-02-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/DB/Catalog.pm: filenum must be sorted numerically.
+
 2012-01-04 Dan Locks <dwlocks@zmanda.com>
 	*  config/amanda/libs.m4: fix "exit when explicit flags are given"
 	   error, and require all flags when one is given.
