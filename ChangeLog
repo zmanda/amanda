@@ -1,3 +1,6 @@
+2012-02-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/DB/Catalog.pm: filenum must be sorted numerically.
+
 2012-02-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: pg_version 802000 => 80200.
 
