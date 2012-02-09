@@ -504,6 +504,15 @@ sub _get_prev_state {
     $end_wal;
 }
 
+sub _make_dummy_dir_base {
+    my ($self) = @_;
+
+   my $dummydir = "$self->{'args'}->{'tmpdir'}/ampgsql-dummy-$$";
+   mkpath("$dummydir/$_ARCHIVE_DIR_RESTORE");
+
+   return $dummydir;
+}
+
 sub _make_dummy_dir {
     my ($self) = @_;
 
@@ -518,9 +527,10 @@ sub _make_dummy_dir {
 sub _run_tar_totals {
     my ($self, @other_args) = @_;
 
-    my @cmd = ($self->{'runtar'}, $self->{'args'}->{'config'},
+    my @cmd;
+    @cmd = ($self->{'runtar'}, $self->{'args'}->{'config'},
         $Amanda::Constants::GNUTAR, '--create', '--totals', @other_args);
-    debug("running " . join(" ", @cmd));
+    debug("running: " . join(" ", @cmd));
 
     local (*TAR_IN, *TAR_OUT, *TAR_ERR);
     open TAR_OUT, ">&", $self->{'out_h'};
@@ -617,6 +627,7 @@ sub _get_backup_info {
                        $lab = $1;
                    }
                }
+	       close TAROUT;
                if ($lab and $lab eq $label) {
                    $start_wal = $start;
                    $end_wal = $end;
@@ -698,7 +709,7 @@ sub _wait_for_wal {
     my $stoptime = time() + $maxwait;
     while ($maxwait == 0 || time < $stoptime || $count++ < 4) {
 	return if -f "$archive_dir/$wal";
-	
+
 	# for versions 8.0 or 8.1, the only way to "force" a WAL archive is to write
 	# garbage to the database.
 	if ($pg_version < 80200) {
@@ -717,27 +728,9 @@ sub _base_backup {
    debug("running _base_backup");
 
    my $label = "$self->{'label-prefix'}-" . time();
-   my $tmp = "$self->{'args'}->{'tmpdir'}/$label";
 
    -d $self->{'props'}->{'pg-archivedir'} or
 	die("WAL file archive directory does not exist (or is not a directory)");
-
-   # try to protect what we create
-   my $old_umask = umask();
-   umask(077);
-
-   my $cleanup = sub {
-       umask($old_umask);
-       eval {rmtree($tmp); 1}
-   };
-   my $old_die = $self->{'die_cb'};
-   $self->{'die_cb'} = sub {
-       my $msg = shift @_;
-       $cleanup->();
-       $old_die->($msg);
-   };
-   eval {rmtree($tmp,{'keep_root' => 1}); 1} or $self->{'die_cb'}->("Failed to clear tmp directory: $@");
-   eval {mkpath($tmp, 0, 0700); 1} or $self->{'die_cb'}->("Failed to create tmp directory: $@");
 
    _run_psql_command($self, "SELECT pg_start_backup('$label')") or
        $self->{'die_cb'}->("Failed to call pg_start_backup");
@@ -753,10 +746,11 @@ sub _base_backup {
        }
        $old_die_cb->($msg);
    };
-   _run_tar_totals($self, '--file', "$tmp/$_DATA_DIR_TAR",
+   my $size = _run_tar_totals($self, '--file', "-",
        '--directory', $self->{'props'}->{'pg-datadir'},
        '--exclude', 'postmaster.pid',
        '--exclude', 'pg_xlog/*', # contains WAL files; will be handled below
+       '--transform', "s,^,$_DATA_DIR_RESTORE/,S",
        ".");
    $self->{'die_cb'} = $old_die_cb;
 
@@ -789,22 +783,19 @@ sub _base_backup {
    $adir->close();
 
    if (@wal_files) {
-       _run_tar_totals($self, '--file', "$tmp/$_ARCHIVE_DIR_TAR",
-	   '--directory', $self->{'props'}->{'pg-archivedir'}, @wal_files);
+       $size += _run_tar_totals($self, '--file', "-",
+	   '--directory', $self->{'props'}->{'pg-archivedir'},
+	   '--transform', "s,^,$_ARCHIVE_DIR_RESTORE/,S",
+	   @wal_files);
    } else {
-       my $dummydir = $self->_make_dummy_dir();
+       my $dummydir = $self->_make_dummy_dir_base();
        $self->{'done_cb'}->(_run_tar_totals($self, '--file', '-',
-           '--directory', $dummydir, "empty-incremental"));
+           '--directory', $dummydir, "$_ARCHIVE_DIR_RESTORE"));
        rmtree($dummydir);
    }
 
-   # create the final tar file
-   my $size = _run_tar_totals($self, '--directory', $tmp, '--file', '-',
-       $_ARCHIVE_DIR_TAR, $_DATA_DIR_TAR);
-
    $self->{'state_cb'}->($self, $end_wal);
 
-   $cleanup->();
    $self->{'done_cb'}->($size);
 }
 
@@ -913,63 +904,82 @@ sub command_backup {
 }
 
 sub command_restore {
-   my $self = shift;
+    my $self = shift;
 
-   chdir(Amanda::Util::get_original_cwd());
-   if (defined $self->{'args'}->{directory}) {
-      if (!-d $self->{'args'}->{directory}) {
-	 $self->print_to_server_and_die("Directory $self->{directory}: $!",
-					$Amanda::Script_App::ERROR);
-      }
-      if (!-w $self->{'args'}->{directory}) {
-	 $self->print_to_server_and_die("Directory $self->{directory}: $!",
-					$Amanda::Script_App::ERROR);
-      }
-      chdir($self->{'args'}->{directory});
-   }
-   my $cur_dir = POSIX::getcwd();
+    chdir(Amanda::Util::get_original_cwd());
+    if (defined $self->{'args'}->{directory}) {
+	if (!-d $self->{'args'}->{directory}) {
+	    $self->print_to_server_and_die("Directory $self->{directory}: $!",
+					   $Amanda::Script_App::ERROR);
+	}
+	if (!-w $self->{'args'}->{directory}) {
+	    $self->print_to_server_and_die("Directory $self->{directory}: $!",
+					   $Amanda::Script_App::ERROR);
+	}
+	chdir($self->{'args'}->{directory});
+    }
+    my $cur_dir = POSIX::getcwd();
 
-   if (!-d $_ARCHIVE_DIR_RESTORE) {
-       mkdir($_ARCHIVE_DIR_RESTORE) or die("could not create archive WAL directory: $!");
-   }
-   my $status;
-   if ($self->{'args'}->{'level'} > 0) {
-       debug("extracting incremental backup to $cur_dir/$_ARCHIVE_DIR_RESTORE");
-       $status = system($self->{'args'}->{'gnutar-path'}, '--extract',
-	   '--file', '-',
-	   '--ignore-zeros',
-	   '--exclude', 'empty-incremental',
-           '--directory', $_ARCHIVE_DIR_RESTORE) >> 8;
-       (0 == $status) or die("Failed to extract level $self->{'args'}->{'level'} backup (exit status: $status)");
-   } else {
-       debug("extracting base of full backup");
-       if (!-d $_DATA_DIR_RESTORE) {
-           mkdir($_DATA_DIR_RESTORE) or die("could not create archive WAL directory: $!");
-       }
-       $status = system($self->{'args'}->{'gnutar-path'}, '--extract', '--file', '-',) >> 8;
-       (0 == $status) or die("Failed to extract base backup (exit status: $status)");
+    if (!-d $_ARCHIVE_DIR_RESTORE) {
+	mkdir($_ARCHIVE_DIR_RESTORE) or die("could not create archive WAL directory: $!");
+    }
+    my $status;
+    if ($self->{'args'}->{'level'} > 0) {
+	debug("extracting incremental backup to $cur_dir/$_ARCHIVE_DIR_RESTORE");
+	$status = system($self->{'args'}->{'gnutar-path'},
+		'--extract',
+		'--file', '-',
+		'--ignore-zeros',
+		'--exclude', 'empty-incremental',
+		'--directory', $_ARCHIVE_DIR_RESTORE) >> 8;
+	(0 == $status) or die("Failed to extract level $self->{'args'}->{'level'} backup (exit status: $status)");
+    } else {
+	debug("extracting base of full backup to $cur_dir/$_DATA_DIR_RESTORE");
+	debug("extracting archive dir to $cur_dir/$_ARCHIVE_DIR_RESTORE");
+	if (!-d $_DATA_DIR_RESTORE) {
+	    mkdir($_DATA_DIR_RESTORE) or die("could not create archive WAL directory: $!");
+	}
+	my @cmd = ($self->{'args'}->{'gnutar-path'}, '--extract',
+		'--file', '-',
+		'--ignore-zero',
+		'--transform', "s,^DATA/,$_DATA_DIR_RESTORE/,S",
+		'--transform', "s,^WAL/,$_ARCHIVE_DIR_RESTORE/,S");
+	debug("run: " . join ' ',@cmd);
+	$status = system(@cmd) >> 8;
+	(0 == $status) or die("Failed to extract base backup (exit status: $status)");
 
-       debug("extracting archive dir to $cur_dir/$_ARCHIVE_DIR_RESTORE");
-       $status = system($self->{'args'}->{'gnutar-path'}, '--extract',
-	  '--exclude', 'empty-incremental',
-          '--file', $_ARCHIVE_DIR_TAR, '--directory', $_ARCHIVE_DIR_RESTORE) >> 8;
-       (0 == $status) or die("Failed to extract archived WAL files from base backup (exit status: $status)");
-       if (unlink($_ARCHIVE_DIR_TAR) == 0) {
-           debug("Failed to unlink '$_ARCHIVE_DIR_TAR': $!");
-           $self->print_to_server("Failed to unlink '$_ARCHIVE_DIR_TAR': $!",
-				  $Amanda::Script_App::ERROR);
-       }
+	if (-f $_ARCHIVE_DIR_TAR) {
+	    debug("extracting archive dir to $cur_dir/$_ARCHIVE_DIR_RESTORE");
+	    my @cmd = ($self->{'args'}->{'gnutar-path'}, '--extract',
+		'--exclude', 'empty-incremental',
+		'--file', $_ARCHIVE_DIR_TAR, '--directory',
+		$_ARCHIVE_DIR_RESTORE);
+	    debug("run: " . join ' ',@cmd);
+	    $status = system(@cmd) >> 8;
+	    (0 == $status) or die("Failed to extract archived WAL files from base backup (exit status: $status)");
+	    if (unlink($_ARCHIVE_DIR_TAR) == 0) {
+		debug("Failed to unlink '$_ARCHIVE_DIR_TAR': $!");
+		$self->print_to_server(
+				"Failed to unlink '$_ARCHIVE_DIR_TAR': $!",
+				$Amanda::Script_App::ERROR);
+	    }
+	}
 
-       debug("extracting data dir to $cur_dir/$_DATA_DIR_RESTORE");
-       $status = system($self->{'args'}->{'gnutar-path'}, '--extract',
-          '--file', $_DATA_DIR_TAR, '--directory', $_DATA_DIR_RESTORE) >> 8;
-       (0 == $status) or die("Failed to extract data directory from base backup (exit status: $status)");
-       if (unlink($_DATA_DIR_TAR) == 0) {
-           debug("Failed to unlink '$_DATA_DIR_TAR': $!");
-           $self->print_to_server("Failed to unlink '$_DATA_DIR_TAR': $!",
-				  $Amanda::Script_App::ERROR);
-       }
-   }
+	if (-f $_DATA_DIR_TAR) {
+	    debug("extracting data dir to $cur_dir/$_DATA_DIR_RESTORE");
+	    my @cmd = ($self->{'args'}->{'gnutar-path'}, '--extract',
+		'--file', $_DATA_DIR_TAR,
+		'--directory', $_DATA_DIR_RESTORE);
+	    debug("run: " . join ' ',@cmd);
+	    $status = system(@cmd) >> 8;
+	    (0 == $status) or die("Failed to extract data directory from base backup (exit status: $status)");
+	    if (unlink($_DATA_DIR_TAR) == 0) {
+		debug("Failed to unlink '$_DATA_DIR_TAR': $!");
+		$self->print_to_server("Failed to unlink '$_DATA_DIR_TAR': $!",
+				$Amanda::Script_App::ERROR);
+	    }
+	}
+    }
 }
 
 sub command_validate {
