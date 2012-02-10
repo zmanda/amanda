@@ -1,3 +1,6 @@
+2012-02-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Do not print the data to the debug file.
+
 2012-02-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Do not use temporary disk space while
 	  doing backup or recovery.

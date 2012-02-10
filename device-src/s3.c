@@ -1264,7 +1264,7 @@ curl_debug_message(CURL *curl G_GNUC_UNUSED,
     case CURLINFO_HEADER_OUT:
         lineprefix="Hdr Out: ";
         break;
-
+/*
     case CURLINFO_DATA_IN:
 	if (len > 1000) return 0;
         lineprefix="Data In: ";
@@ -1274,7 +1274,7 @@ curl_debug_message(CURL *curl G_GNUC_UNUSED,
 	if (len > 1000) return 0;
         lineprefix="Data Out: ";
         break;
-
+*/
     default:
         /* ignore data in/out -- nobody wants to see that in the
          * debug logs! */
