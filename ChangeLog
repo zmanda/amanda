@@ -1,3 +1,6 @@
+2012-02-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/make_html.pl: generate correct absolute link.
+
 2011-11-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/xfer-source-recovery.c (pull_buffer_impl): Release lock
 	  before calling wait_until_xfer_cancelled.
