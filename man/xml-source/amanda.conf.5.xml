@@ -860,7 +860,7 @@ How many times the server will resend a REQ packet if it doesn't get the ACK pac
   <term><amkeyword>netusage</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<amdefault>8000 Kbps</amdefault>.
+<amdefault>80000 Kbps</amdefault>.
 The maximum network bandwidth allocated to Amanda, in Kbytes per second.
 See also the
 <emphasis remap='B'>interface</emphasis>
@@ -2627,7 +2627,7 @@ A comment string describing this set of network information.</para>
   <term><amkeyword>use</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<amdefault>8000 Kbps</amdefault>.
+<amdefault>80000 Kbps</amdefault>.
 The speed of the interface in Kbytes per second.</para>
   </listitem>
   </varlistentry>
