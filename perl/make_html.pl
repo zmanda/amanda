@@ -99,8 +99,8 @@ specific to the version of Amanda on your system, use the 'perldoc' command.
 FOOTER
     close ($fh);
 
-    pod2html("--podpath=.",
-	    "--htmlroot=/TO_REMOVE",
+    pod2html("--podpath=Amanda",
+	    "--htmlroot=.",
 	    "--infile=$tmp",
 	    "--css=/pod/amperl.css",
 	    "--noindex",
@@ -123,7 +123,6 @@ sub postprocess {
     $html =~ s{<link rev="made" [^>]*/>}{};
     $html =~ s{html">the (\S+) manpage</a>}{html">$1</a>}g;
     $html =~ s{</body>}{</div><hr><center>$version</center></body>};
-    $html =~ s{/TO_REMOVE/.}{.}g;
     # write it out
     open($fh, ">", $filename) or die("open $filename: $!");
     print $fh $html;
