@@ -1,4 +1,7 @@
 2012-02-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Recovery/Clerk.pm: Typo.
+
+2012-02-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/make_html.pl: generate correct absolute link.
 
 2012-02-10  Jean-Louis Martineau <martineau@zmanda.com>
