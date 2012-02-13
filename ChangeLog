@@ -1,4 +1,7 @@
 2012-02-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: Fix default netusage.
+
+2012-02-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Recovery/Clerk.pm: Typo.
 
 2012-02-13  Jean-Louis Martineau <martineau@zmanda.com>
