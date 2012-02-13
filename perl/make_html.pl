@@ -33,10 +33,12 @@ my $version_major = "@VERSION_MAJOR@";
 my $version_minor = "@VERSION_MINOR@";
 my $version_patch = "@VERSION_PATCH@";
 my $pod_path;
-if ($version =~ /alpha/ or $version =~ /beta/) {
-    $pod_path = "/pod/beta";
-} elsif ($version_comment eq "") {
+if ($version_comment eq "") {
     $pod_path = "/pod/$version_major.$version_minor.$version_patch";
+} elsif ($version_comment =~ /beta\d*/) {
+    $pod_path = "/pod/$version_major.$version_minor.$version_patch$version_comment";
+} elsif ($version_comment =~ /alpha/ or $version_comment =~ /beta/) {
+    $pod_path = "/pod/beta";
 } else {
     $pod_path = "/pod/$version_major.$version_minor";
 }
