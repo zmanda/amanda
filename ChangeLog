@@ -1,4 +1,7 @@
 2012-02-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/make_html.pl: More fix.
+
+2012-02-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/make_html.pl: Make relative link.
 
 2012-02-13  Jean-Louis Martineau <martineau@zmanda.com>

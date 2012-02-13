@@ -155,13 +155,19 @@ sub postprocess {
 # and generate an index HTML for each new directory
 # we created.
 for $dir (keys %dirs) {
+	my $css;
+	if ($dir) {
+		$css = pm2css("$dir/");
+	} else {
+		$css = "amperl.css";
+	}
 	open(my $idx, ">", "$targetdir/$dir/index.html") or die("Error opening $dir/index.html: $!");
-	print $idx <<'HEADER';
+	print $idx <<HEADER;
 <?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<link rel="stylesheet" href="amperl.css" type="text/css" />
+<link rel="stylesheet" href="$css" type="text/css"
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 </head>
 <body>
@@ -173,10 +179,12 @@ HEADER
 		my $html = pm2html($pm);
 		my $mod = pm2module($pm);
 		next unless ($pm =~ /^$dir/);
-		if ($pm =~ /^$dir\//) {
-			$html =~ s{^$dir/}{}g;
-		} else {
-			$html =~ s{^[^/]*/}{../};
+		if ($dir) {
+			if ($pm =~ /^$dir\//) {
+				$html =~ s{^$dir/}{}g;
+			} else {
+				$html =~ s{^[^/]*/}{../};
+			}
 		}
 		print $idx " <li><a href=\"$html\">$mod</a>\n";
 	}
