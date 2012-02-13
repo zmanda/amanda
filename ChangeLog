@@ -1,4 +1,7 @@
 2012-02-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/make_html.pl: Add link to index page.
+
+2012-02-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/make_html.pl: More fix.
 
 2012-02-13  Jean-Louis Martineau <martineau@zmanda.com>

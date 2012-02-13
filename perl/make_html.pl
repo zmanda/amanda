@@ -95,6 +95,31 @@ for $pm (@sources) {
 
 =begin html
 
+HEADER
+
+    my $module_parent = $module;
+    my $index;
+    my $dir1 = $pm;
+    $dir1 =~ s/\.pm$//;
+    if (-d $dir1) {
+	$dir1 =~ s{^.*/}{}g;
+	print $fh "<a href=\"$dir1/index.html\">$module_parent Module list</a><br />\n";
+    }
+
+    $module_parent =~ s{::[^:]*$}{};
+    $index = "index.html";
+    my $moduleX;
+    my $count = 1;
+    do {
+	print $fh "<a href=\"$index\">$module_parent Module list</a><br />\n";
+	$moduleX = $module_parent;
+	$module_parent =~ s{::[^:]*$}{};
+	$index = "../" . $index;
+	$count++;
+	die() if $count > 5;
+    } while $moduleX ne $module_parent;
+
+    print $fh <<HEADER;
 <div class="pod">
 <h1 class="module">$module</h1>
 
@@ -161,6 +186,8 @@ for $dir (keys %dirs) {
 	} else {
 		$css = "amperl.css";
 	}
+	my $module = $dir;
+	$module =~ s{/}{::}g;
 	open(my $idx, ">", "$targetdir/$dir/index.html") or die("Error opening $dir/index.html: $!");
 	print $idx <<HEADER;
 <?xml version="1.0" ?>
@@ -170,11 +197,28 @@ for $dir (keys %dirs) {
 <link rel="stylesheet" href="$css" type="text/css"
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 </head>
-<body>
-<div class="pod">
-<h1 class="module">Module List</h1>
-<ul>
+<body></div><center>$version<hr></center>
 HEADER
+	my $module_parent = $module;
+print STDERR "module: $module\n";
+	$module_parent =~ s{::[^:]*$}{};
+	my $index = "../index.html";
+	my $moduleX;
+	my $count = 1;
+	do {
+		print $idx "<a href=\"$index\">$module_parent Module list</a><br />\n";
+		$moduleX = $module_parent;
+		$module_parent =~ s{::[^:]*$}{};
+		$index = "../" . $index;
+		$count++;
+		die() if $count > 5;
+	} while $moduleX ne $module_parent;
+
+	print $idx <<BODY;
+<div class="pod">
+<h1 class="module">$module Module List</h1>
+<ul>
+BODY
 	for $pm (@sources) {
 		my $html = pm2html($pm);
 		my $mod = pm2module($pm);
