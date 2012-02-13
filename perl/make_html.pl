@@ -59,6 +59,14 @@ sub pm2module {
 	return $pm;
 }
 
+sub pm2css {
+	my ($pm) = @_;
+	$pm =~ s{[^/]*/}{../}g;
+	$pm =~ s{/[^/]*$}{/};
+	$pm .= "amperl.css";
+	return $pm;
+}
+
 # generate the HTML
 for $pm (@sources) {
     my $module = pm2module($pm);
@@ -113,10 +121,11 @@ specific to the version of Amanda on your system, use the 'perldoc' command.
 FOOTER
     close ($fh);
 
+    my $css = pm2css($pm);
     pod2html("--podpath=Amanda",
-	    "--htmlroot=$pod_path",
+	    "--htmldir=$targetdir",
 	    "--infile=$tmp",
-	    "--css=/pod/amperl.css",
+	    "--css=$css",
 	    "--noindex",
 	    "--outfile=$targetdir/$html");
 
@@ -129,7 +138,7 @@ sub postprocess {
 
     # slurp it up
     open(my $fh, "<", $filename) or die("open $filename: $!");
-    my $html = do { local $/; <$fh> }; 
+    my $html = do { local $/; <$fh> };
     close($fh);
 
     $html =~ s{<title>.*</title>}{<title>$module</title>};
@@ -152,7 +161,7 @@ for $dir (keys %dirs) {
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<link rel="stylesheet" href="/pod/amperl.css" type="text/css" />
+<link rel="stylesheet" href="amperl.css" type="text/css" />
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 </head>
 <body>
@@ -164,6 +173,11 @@ HEADER
 		my $html = pm2html($pm);
 		my $mod = pm2module($pm);
 		next unless ($pm =~ /^$dir/);
+		if ($pm =~ /^$dir\//) {
+			$html =~ s{^$dir/}{}g;
+		} else {
+			$html =~ s{^[^/]*/}{../};
+		}
 		print $idx " <li><a href=\"$html\">$mod</a>\n";
 	}
 	print $idx <<'FOOTER';
