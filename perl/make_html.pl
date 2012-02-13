@@ -100,7 +100,7 @@ FOOTER
     close ($fh);
 
     pod2html("--podpath=.",
-	    "--htmlroot=/pod",
+	    "--htmlroot=/TO_REMOVE",
 	    "--infile=$tmp",
 	    "--css=/pod/amperl.css",
 	    "--noindex",
@@ -123,6 +123,7 @@ sub postprocess {
     $html =~ s{<link rev="made" [^>]*/>}{};
     $html =~ s{html">the (\S+) manpage</a>}{html">$1</a>}g;
     $html =~ s{</body>}{</div><hr><center>$version</center></body>};
+    $html =~ s{/TO_REMOVE/.}{.}g;
     # write it out
     open($fh, ">", $filename) or die("open $filename: $!");
     print $fh $html;

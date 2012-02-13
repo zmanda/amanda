@@ -1,3 +1,6 @@
+2012-02-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/make_html.pl: Fix html for relative link.
+
 2012-02-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Do not print the data to the debug file.
 
