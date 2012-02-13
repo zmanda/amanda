@@ -69,7 +69,7 @@ Amanda::Recovery::Clerk - handle assembling dumpfiles from multiple parts
 
 =head1 OVERVIEW
 
-This package is the counterpart to L<Amanda::Recovery::Scribe>, and handles
+This package is the counterpart to L<Amanda::Taper::Scribe>, and handles
 re-assembling dumpfiles from multiple parts, possibly distributed over several
 volumes.
 
