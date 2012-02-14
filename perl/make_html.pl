@@ -23,6 +23,13 @@ use Pod::Html;
 use File::Basename;
 use File::Path;
 use File::Temp;
+use Getopt::Long;
+
+my $opt_homeurl;
+Getopt::Long::Configure(qw(bundling));
+GetOptions(
+    'homeurl=s' => \$opt_homeurl,
+);
 
 my ($targetdir, @sources) = @ARGV;
 @sources = sort @sources;
@@ -45,6 +52,11 @@ if ($version_comment eq "") {
 
 my %dirs = ( '' => 1 );
 my ($dir, $pm);
+
+sub usage {
+    print STDERR "Usage: make_html [--homeurl]\n";
+    exit(1);
+}
 
 sub pm2html {
 	my ($pm) = @_;
@@ -103,7 +115,7 @@ HEADER
     $dir1 =~ s/\.pm$//;
     if (-d $dir1) {
 	$dir1 =~ s{^.*/}{}g;
-	print $fh "<a href=\"$dir1/index.html\">$module_parent Module list</a><br />\n";
+	print $fh "<a href=\"$dir1/index.html\">$module_parent modules list</a><br />\n";
     }
 
     $module_parent =~ s{::[^:]*$}{};
@@ -111,7 +123,7 @@ HEADER
     my $moduleX;
     my $count = 1;
     do {
-	print $fh "<a href=\"$index\">$module_parent Module list</a><br />\n";
+	print $fh "<a href=\"$index\">$module_parent modules list</a><br />\n";
 	$moduleX = $module_parent;
 	$module_parent =~ s{::[^:]*$}{};
 	$index = "../" . $index;
@@ -119,6 +131,12 @@ HEADER
 	die() if $count > 5;
     } while $moduleX ne $module_parent;
 
+    print $fh "<a href=\"$index\">List of All Modules</a><br />\n";
+    if ($opt_homeurl) {
+	$index = "../" . $index;
+	$index =~ s{/index.html}{};
+	print $fh "<a href=\"$index\">$opt_homeurl</a><br />\n";
+    }
     print $fh <<HEADER;
 <div class="pod">
 <h1 class="module">$module</h1>
@@ -180,59 +198,136 @@ sub postprocess {
 # and generate an index HTML for each new directory
 # we created.
 for $dir (keys %dirs) {
-	my $css;
-	if ($dir) {
-		$css = pm2css("$dir/");
-	} else {
-		$css = "amperl.css";
-	}
-	my $module = $dir;
-	$module =~ s{/}{::}g;
-	open(my $idx, ">", "$targetdir/$dir/index.html") or die("Error opening $dir/index.html: $!");
-	print $idx <<HEADER;
+#for $dir ("") {
+    my $css;
+    if ($dir) {
+	$css = pm2css("$dir/");
+    } else {
+	$css = "amperl.css";
+    }
+    my $module = $dir;
+    $module =~ s{/}{::}g;
+    my $module_name = $module;
+    $module_name = "All" if $module eq "";
+    open(my $idx, ">", "$targetdir/$dir/index.html") or die("Error opening $dir/index.html: $!");
+    print $idx <<HEADER;
 <?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
+<title>$module_name modules list</title>
 <link rel="stylesheet" href="$css" type="text/css"
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 </head>
 <body></div><center>$version<hr></center>
 HEADER
-	my $module_parent = $module;
-print STDERR "module: $module\n";
+    my $module_parent = $module;
+    my $index;
+    if ($module_parent =~ /::/) {
 	$module_parent =~ s{::[^:]*$}{};
-	my $index = "../index.html";
-	my $moduleX;
-	my $count = 1;
-	do {
-		print $idx "<a href=\"$index\">$module_parent Module list</a><br />\n";
-		$moduleX = $module_parent;
-		$module_parent =~ s{::[^:]*$}{};
-		$index = "../" . $index;
-		$count++;
-		die() if $count > 5;
-	} while $moduleX ne $module_parent;
+	$index = "../index.html";
+    } elsif ($module_parent eq "Amanda") {
+	$module_parent = "";
+	$index = "../index.html";
+    } elsif ($module_parent eq "") {
+	$module_parent = "";
+	$index = "index.html";
+    }
+    my $moduleX;
+    my $count = 1;
+    while ($module_parent ne "") {
+	print $idx "<a href=\"$index\">$module_parent modules list</a><br />\n";
+	if ($module_parent =~ /::/) {
+	    $module_parent =~ s{::[^:]*$}{};
+	} else {
+	    $module_parent = "";
+	}
+	$index = "../" . $index;
+	$count++;
+	die() if $count > 5;
+     }
 
-	print $idx <<BODY;
+    if ($dir ne "") {
+	print $idx "<a href=\"$index\">List of All Modules</a><br />\n";
+    }
+    if ($opt_homeurl) {
+	my $my_index = "../$index";
+	$my_index =~ s{/index.html}{};
+	print $idx "<a href=\"$my_index\">$opt_homeurl</a><br />\n";
+    }
+    print $idx <<BODY;
 <div class="pod">
-<h1 class="module">$module Module List</h1>
+<h1 class="module">$module_name modules list</h1>
 <ul>
 BODY
-	for $pm (@sources) {
-		my $html = pm2html($pm);
-		my $mod = pm2module($pm);
-		next unless ($pm =~ /^$dir/);
-		if ($dir) {
-			if ($pm =~ /^$dir\//) {
-				$html =~ s{^$dir/}{}g;
-			} else {
-				$html =~ s{^[^/]*/}{../};
-			}
-		}
-		print $idx " <li><a href=\"$html\">$mod</a>\n";
+    my @rdirs;
+    for $pm (@sources) {
+	my $html = pm2html($pm);
+	my $mod = pm2module($pm);
+	next unless ($pm =~ /^$dir/);
+	if (@rdirs) {
+	    while (@rdirs and !($pm =~ /$rdirs[0]/)) {
+		shift @rdirs;
+		print $idx " </ul>\n";
+	    }
 	}
-	print $idx <<'FOOTER';
+	my $pm_dir = $pm;
+	$pm_dir =~ s/\.pm//;
+	my $my_pm_dir = $pm_dir;
+	my @toto;
+	while (!@rdirs or $rdirs[0] ne $my_pm_dir) {
+	    last if $my_pm_dir le $dir;
+	    my $url = $my_pm_dir;
+	    $url =~ s{$dir}{}g if $dir ne "";
+	    $url .= "/index.html";
+	    $url =~ s{^/}{};
+	    if (-d $my_pm_dir) {
+		unshift @toto, [$my_pm_dir, $url];
+	    }
+	    last if $my_pm_dir eq "";
+	    if ($my_pm_dir =~ /\//) {
+		$my_pm_dir =~ s{/[^/]*$}{};
+	    } else {
+		$my_pm_dir = "";
+	    }
+	}
+	$count = 0;
+	while (@toto) {
+	    my $a = shift @toto;
+	    my $pm_dir = $a->[0];
+	    my $url    = $a->[1];
+	    my $my_mod = $pm_dir;
+	    $my_mod =~ s{/}{::}g;
+	    print $idx " <li><a href=\"$url\">$my_mod modules list</a>\n <ul>\n";
+	    unshift @rdirs, $pm_dir;
+	    $count++;
+	    die("XX") if $count > 5;
+	}
+	if ($dir) {
+	    if ($pm =~ /^$dir\//) {
+		$html =~ s{^$dir/}{}g;
+	    } else {
+		my $my_dir = $dir;
+		my $my_html = $html;
+		$my_dir =~ /^(.*)\//;
+		my $a = $1;
+		$my_html =~ /^(.*)\//;
+		my $b = $1;
+		while (defined $a and defined $b and $a eq $b and $a ne "") {
+		    $my_dir  =~ s{^$a/}{};
+		    $my_html =~ s{^$a/}{};
+		    $my_dir =~ /^(.*)\//;
+		    $a = $1;
+		    $my_html =~ /^(.*)\//;
+		    $b = $1;
+		}
+		#$html =~ s{^[^/]*/}{../};
+		$html = "../$my_html";
+	    }
+	}
+	print $idx " <li><a href=\"$html\">$mod</a>\n";
+    }
+    print $idx <<'FOOTER';
 </ul>
 </div>
 </body>

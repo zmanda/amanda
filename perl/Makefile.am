@@ -53,7 +53,7 @@ endif
 html: make_html amperl.css $(PM_FILES)
 	rm -rf html-tmp/ && mkdir html-tmp/
 	cp amperl.css html-tmp/
-	$(PERL) make_html html-tmp/ $(PM_FILES)
+	$(PERL) make_html --homeurl "$(POD_HOME_URL)" html-tmp/ $(PM_FILES)
 	cd html-tmp/ && tar -zcf $(abs_builddir)/html.tar.gz .
 	rm -rf html-tmp/
 ##

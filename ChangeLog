@@ -1,3 +1,7 @@
+2012-02-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am: Add '--homeurl "$(POD_HOME_URL)"' to make_html
+	* perl/make_html.pl: Improved modules list.
+
 2012-02-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/make_html.pl: Add link to index page.
 
