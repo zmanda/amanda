@@ -456,7 +456,7 @@ echo "`date +'%b %e %Y %T'`: Preparing to install: %{amanda_version_info}" >${TM
 # Check for the 'amanda' user
 echo "`date +'%b %e %Y %T'`: Checking for '%{amanda_user}' user..." >>${TMPFILE}
 if [ "`id -u %{amanda_user} > /dev/null 2>&1 && echo 0 || echo 1`" != "0" ] ; then
-        useradd -c "Amanda" -M -g %{amanda_group} -d %{AMANDAHOMEDIR} -s /bin/sh %{amanda_user}
+        useradd -c "Amanda" -M -g %{amanda_group} -d %{AMANDAHOMEDIR} -s /bin/bash %{amanda_user}
         if [ %{dist} = "SuSE" ]; then
                 PASSWD_EXIT=$?
         else
@@ -509,7 +509,7 @@ else
         echo "`date +'%b %e %Y %T'`:  please see that the following parameters are set for that" >>${TMPFILE}
         echo "`date +'%b %e %Y %T'`:  user.:" >>${TMPFILE}
         echo "`date +'%b %e %Y %T'`:" >>${TMPFILE}
-        echo "`date +'%b %e %Y %T'`:  SHELL:          /bin/sh" >>${TMPFILE}
+        echo "`date +'%b %e %Y %T'`:  SHELL:          /bin/bash" >>${TMPFILE}
         echo "`date +'%b %e %Y %T'`:  HOME:           %{AMANDAHOMEDIR}" >>${TMPFILE}
         echo "`date +'%b %e %Y %T'`:  Default group:  %{amanda_group}" >>${TMPFILE}
         echo "`date +'%b %e %Y %T'`:  Verifying %{amanda_user} parameters :" >>${TMPFILE}
@@ -523,10 +523,10 @@ else
                 echo "`date +'%b %e %Y %T'`:  Verified group name of user 'amandabackup'" >>${TMPFILE}
         fi
 
-        if [ "`grep ^%{amanda_user} /etc/passwd|cut -d: -f7`" != "/bin/sh" ] ; then
+        if [ "`grep ^%{amanda_user} /etc/passwd|cut -d: -f7`" != "/bin/bash" ] ; then
                 echo "`date +'%b %e %Y %T'`:  !!! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! !!!" >>${TMPFILE}
                 echo "`date +'%b %e %Y %T'`:  !!! user 'amandabackup' default shell should be set to    !!!" >>${TMPFILE}
-                echo "`date +'%b %e %Y %T'`:  !!! /bin/sh, pl correct before start using Amanda         !!!" >>${TMPFILE}
+                echo "`date +'%b %e %Y %T'`:  !!! /bin/bash, pl correct before start using Amanda         !!!" >>${TMPFILE}
                 echo "`date +'%b %e %Y %T'`:  !!! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! !!!" >>${TMPFILE}
         else
                 echo "`date +'%b %e %Y %T'`:  Verified Default shell for user 'amandabackup'" >>${TMPFILE}
@@ -821,7 +821,7 @@ echo "`date +'%b %e %Y %T'`: Preparing to install: %{amanda_version_info}" >${TM
 # Check for the 'amanda' user
 echo "`date +'%b %e %Y %T'`: Checking for '%{amanda_user}' user..." >>${TMPFILE}
 if [ "`id -u %{amanda_user} > /dev/null 2>&1 && echo 0 || echo 1`" != "0" ] ; then
-        useradd -c "Amanda" -M -g %{amanda_group} -d %{AMANDAHOMEDIR} -s /bin/sh %{amanda_user}
+        useradd -c "Amanda" -M -g %{amanda_group} -d %{AMANDAHOMEDIR} -s /bin/bash %{amanda_user}
         if [ %{dist} = "SuSE" ]; then
                 PASSWD_EXIT=$?
         else
@@ -874,7 +874,7 @@ else
         echo "`date +'%b %e %Y %T'`:  please see that the following parameters are set for that" >>${TMPFILE}
         echo "`date +'%b %e %Y %T'`:  user.:" >>${TMPFILE}
         echo "`date +'%b %e %Y %T'`:" >>${TMPFILE}
-        echo "`date +'%b %e %Y %T'`:  SHELL:          /bin/sh" >>${TMPFILE}
+        echo "`date +'%b %e %Y %T'`:  SHELL:          /bin/bash" >>${TMPFILE}
         echo "`date +'%b %e %Y %T'`:  HOME:           %{AMANDAHOMEDIR}" >>${TMPFILE}
         echo "`date +'%b %e %Y %T'`:  Default group:  %{amanda_group}" >>${TMPFILE}
         echo "`date +'%b %e %Y %T'`:  Verifying %{amanda_user} parameters :" >>${TMPFILE}
@@ -888,10 +888,10 @@ else
                 echo "`date +'%b %e %Y %T'`:  Verified group name of user 'amandabackup'" >>${TMPFILE}
         fi
 
-        if [ "`grep ^%{amanda_user} /etc/passwd|cut -d: -f7`" != "/bin/sh" ] ; then
+        if [ "`grep ^%{amanda_user} /etc/passwd|cut -d: -f7`" != "/bin/bash" ] ; then
                 echo "`date +'%b %e %Y %T'`:  !!! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! !!!" >>${TMPFILE}
                 echo "`date +'%b %e %Y %T'`:  !!! user 'amandabackup' default shell should be set to    !!!" >>${TMPFILE}
-                echo "`date +'%b %e %Y %T'`:  !!! /bin/sh, pl correct before start using Amanda         !!!" >>${TMPFILE}
+                echo "`date +'%b %e %Y %T'`:  !!! /bin/bash, pl correct before start using Amanda         !!!" >>${TMPFILE}
                 echo "`date +'%b %e %Y %T'`:  !!! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! !!!" >>${TMPFILE}
         else
                 echo "`date +'%b %e %Y %T'`:  Verified Default shell for user 'amandabackup'" >>${TMPFILE}
@@ -1207,7 +1207,7 @@ echo "`date +'%b %e %Y %T'`: Preparing to install: %{amanda_version_info}" >${TM
 # Check for the 'amanda' user
 echo "`date +'%b %e %Y %T'`: Checking for '%{amanda_user}' user..." >>${TMPFILE}
 if [ "`id -u %{amanda_user} > /dev/null 2>&1 && echo 0 || echo 1`" != "0" ] ; then
-        useradd -c "Amanda" -M -g %{amanda_group} -d %{AMANDAHOMEDIR} -s /bin/sh %{amanda_user} >>${TMPFILE} 2>&1
+        useradd -c "Amanda" -M -g %{amanda_group} -d %{AMANDAHOMEDIR} -s /bin/bash %{amanda_user} >>${TMPFILE} 2>&1
         if [ %{dist} = "SuSE" ]; then
                 PASSWD_EXIT=$?
         else
@@ -1260,7 +1260,7 @@ else
         echo "`date +'%b %e %Y %T'`:  please see that the following parameters are set for that" >>${TMPFILE}
         echo "`date +'%b %e %Y %T'`:  user.:" >>${TMPFILE}
         echo "`date +'%b %e %Y %T'`:" >>${TMPFILE}
-        echo "`date +'%b %e %Y %T'`:  SHELL:          /bin/sh" >>${TMPFILE}
+        echo "`date +'%b %e %Y %T'`:  SHELL:          /bin/bash" >>${TMPFILE}
         echo "`date +'%b %e %Y %T'`:  HOME:           %{AMANDAHOMEDIR}" >>${TMPFILE}
         echo "`date +'%b %e %Y %T'`:  Default group:  %{amanda_group}" >>${TMPFILE}
         echo "`date +'%b %e %Y %T'`:  Verifying %{amanda_user} parameters :" >>${TMPFILE}
@@ -1274,10 +1274,10 @@ else
                 echo "`date +'%b %e %Y %T'`:  Verified group name of user 'amandabackup'" >>${TMPFILE}
         fi
 
-        if [ "`grep ^%{amanda_user} /etc/passwd|cut -d: -f7`" != "/bin/sh" ] ; then
+        if [ "`grep ^%{amanda_user} /etc/passwd|cut -d: -f7`" != "/bin/bash" ] ; then
                 echo "`date +'%b %e %Y %T'`:  !!! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! !!!" >>${TMPFILE}
                 echo "`date +'%b %e %Y %T'`:  !!! user 'amandabackup' default shell should be set to    !!!" >>${TMPFILE}
-                echo "`date +'%b %e %Y %T'`:  !!! /bin/sh, pl correct before start using Amanda         !!!" >>${TMPFILE}
+                echo "`date +'%b %e %Y %T'`:  !!! /bin/bash, pl correct before start using Amanda         !!!" >>${TMPFILE}
                 echo "`date +'%b %e %Y %T'`:  !!! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! !!!" >>${TMPFILE}
         else
                 echo "`date +'%b %e %Y %T'`:  Verified Default shell for user 'amandabackup'" >>${TMPFILE}

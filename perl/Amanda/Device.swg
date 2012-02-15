@@ -503,15 +503,16 @@ typedef struct Device {
 	    memset(&gval, 0, sizeof(gval));
 	    g_value_init(&gval, pbase->type);
 	    if (!set_gvalue_from_sv(sv, &gval))
-		goto fail;
+		goto failunset;
 
 	    if (!device_property_set(self, pbase->ID, &gval))
-		goto fail;
+		goto failunset;
 
 	    g_value_unset(&gval);
 	    return TRUE;
-	fail:
+	failunset:
 	    g_value_unset(&gval);
+	fail:
 	    return FALSE;
 	}
 
@@ -553,6 +554,7 @@ typedef struct Device {
 	gsize min_block_size(void) { return self->min_block_size; }
 	gsize max_block_size(void) { return self->max_block_size; }
 	gsize block_size(void) { return self->block_size; }
+	gsize header_block_size(void) { return self->header_block_size; }
 	dumpfile_t *volume_header(void) { return self->volume_header; }
     };
 

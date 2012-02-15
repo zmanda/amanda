@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 582;
+use Test::More tests => 593;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -249,6 +249,9 @@ ok($dev->property_set("comment", "32k"),
 
 ok($dev->property_set("block_size", 32768),
     "set an integer property to an integer");
+
+ok(!($dev->property_set("invalid-property-name", 32768)),
+    "set an invalid-property-name");
 
 $dev->read_label();
 ok($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED,
@@ -732,7 +735,7 @@ my $base_name;
 
 SKIP: {
     skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
-            91 +
+            101 +
             1 * $verify_file_count +
             7 * $write_file_count +
             13 * $s3_make_device_count
@@ -1121,6 +1124,22 @@ SKIP: {
     ok(!$dev->property_set('S3_BUCKET_LOCATION', 'EU'),
        "should not be able to set S3 bucket location with an incompatible name")
         or diag($dev->error_or_status());
+
+    $dev_name = lc("s3:$base_name-s3-eu");
+    $dev = s3_make_device($dev_name, "s3");
+    ok($dev->property_set('S3_BUCKET_LOCATION', 'XYZ'),
+       "should be able to set S3 bucket location with a compatible name")
+        or diag($dev->error_or_status());
+    $dev->read_label();
+    $status = $dev->status();
+    ok(($status == $DEVICE_STATUS_DEVICE_ERROR),
+       "status is DEVICE_STATUS_DEVICE_ERROR")
+        or diag($dev->error_or_status());
+    my $error_msg = $dev->error_or_status();
+    ok(($dev->error_or_status() == "While creating new S3 bucket: The specified location-constraint is not valid (Unknown) (HTTP 400)"),
+       "invalid location-constraint")
+       or diag("bad error: " . $dev->error_or_status());
+
 }
 
 SKIP: {

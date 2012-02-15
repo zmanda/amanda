@@ -57,8 +57,11 @@ $opt_force = 0;
 $opt_barcode = undef;
 $opt_meta = undef;
 $opt_assign = undef;
+
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
+    'version' => \&Amanda::Util::version_opt,
     'help|usage|?' => \&usage,
     'o=s'        => sub { add_config_override_opt($config_overrides, $_[1]); },
     'f'          => \$opt_force,
@@ -68,7 +71,7 @@ GetOptions(
     'version'    => \&Amanda::Util::version_opt,
 ) or usage();
 
-if ($opt_assign && (!$opt_meta || !$opt_barcode)) {
+if ($opt_assign && (!$opt_meta and !$opt_barcode)) {
     print STDERR "--assign require --barcode or --meta\n";
     usage();
 }
@@ -297,7 +300,7 @@ sub main {
 	    # update the tapelist
 	    $tl->reload(1);
 	    $tl->remove_tapelabel($label);
-	    $tl->add_tapelabel("0", $label, undef, 1, $meta, $res->{'barcode'});
+	    $tl->add_tapelabel("0", $label, undef, 1, $meta, $res->{'barcode'}, $dev->block_size/1024);
 	    $tl->write();
 
 	    print "Success!\n";

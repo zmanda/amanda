@@ -37,7 +37,7 @@
 
 
 <refsect1><title>DESCRIPTION</title>
-<para><emphasis remap='B'>Amdump_client</emphasis> initiate backup on the client. There are two commands (CMD):</para>
+<para><emphasis remap='B'>Amdump_client</emphasis> initiate backup on the client. There are three commands (CMD):</para>
 <variablelist remap='TP'>
 
   <varlistentry><term><amkeyword>list</amkeyword></term>

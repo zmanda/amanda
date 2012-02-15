@@ -76,6 +76,7 @@ static int  inparallel;
 static int nodump = 0;
 static off_t tape_length = (off_t)0;
 static int current_tape = 0;
+static int conf_max_dle_by_volume;
 static int conf_taperalgo;
 static int conf_taper_parallel_write;
 static int conf_runtapes;
@@ -201,6 +202,11 @@ main(
     int no_taper = FALSE;
     int from_client = FALSE;
 
+    if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
+	printf("driver-%s\n", VERSION);
+	return (0);
+    }
+
     /*
      * Configure program for internationalization:
      *   1) Only set the message locale for now.
@@ -271,6 +277,7 @@ main(
     if (argc > 2) {
 	if (strcmp(argv[2], "--from-client") == 0) {
 	    from_client = TRUE;
+	    from_client = from_client;
 	    argv++;
 	    argc--;
 	}
@@ -335,6 +342,7 @@ main(
     conf_taper_parallel_write = getconf_int(CNF_TAPER_PARALLEL_WRITE);
     conf_tapetype = getconf_str(CNF_TAPETYPE);
     conf_runtapes = getconf_int(CNF_RUNTAPES);
+    conf_max_dle_by_volume = getconf_int(CNF_MAX_DLE_BY_VOLUME);
     if (conf_taper_parallel_write > conf_runtapes) {
 	conf_taper_parallel_write = conf_runtapes;
     }
@@ -344,7 +352,6 @@ main(
     conf_flush_threshold_dumped = getconf_int(CNF_FLUSH_THRESHOLD_DUMPED);
     conf_flush_threshold_scheduled = getconf_int(CNF_FLUSH_THRESHOLD_SCHEDULED);
     conf_taperflush = getconf_int(CNF_TAPERFLUSH);
-
     flush_threshold_dumped = (conf_flush_threshold_dumped * tape_length) / 100;
     flush_threshold_scheduled = (conf_flush_threshold_scheduled * tape_length) / 100;
     taperflush = (conf_taperflush *tape_length) / 100;
@@ -720,46 +727,51 @@ wait_for_children(void)
 
 }
 
-static void startaflush_tape(taper_t *taper);
+static void startaflush_tape(taper_t *taper, gboolean *state_changed);
 
 static void
 startaflush(void)
 {
     taper_t *taper;
+    gboolean state_changed = FALSE;
 
     for(taper = tapetable; taper <= tapetable+conf_taper_parallel_write;
 	taper++) {
 	if (!(taper->state & TAPER_STATE_DONE) &&
 	    taper->state & TAPER_STATE_WAIT_FOR_TAPE) {
-	    startaflush_tape(taper);
+	    startaflush_tape(taper, &state_changed);
 	}
     }
     for(taper = tapetable; taper <= tapetable+conf_taper_parallel_write;
 	taper++) {
 	if (!(taper->state & TAPER_STATE_DONE) &&
 	    taper->state & TAPER_STATE_TAPE_REQUESTED) {
-	    startaflush_tape(taper);
+	    startaflush_tape(taper, &state_changed);
 	}
     }
     for(taper = tapetable; taper <= tapetable+conf_taper_parallel_write;
 	taper++) {
 	if (!(taper->state & TAPER_STATE_DONE) &&
 	    taper->state & TAPER_STATE_INIT) {
-	    startaflush_tape(taper);
+	    startaflush_tape(taper, &state_changed);
 	}
     }
     for(taper = tapetable; taper <= tapetable+conf_taper_parallel_write;
 	taper++) {
 	if (!(taper->state & TAPER_STATE_DONE) &&
 	    taper->state & TAPER_STATE_IDLE) {
-	    startaflush_tape(taper);
+	    startaflush_tape(taper, &state_changed);
 	}
+    }
+    if (state_changed) {
+	short_dump_state();
     }
 }
 
 static void
 startaflush_tape(
-    taper_t *taper)
+    taper_t  *taper,
+    gboolean *state_changed)
 {
     disk_t *dp = NULL;
     disk_t *fit = NULL;
@@ -788,6 +800,7 @@ startaflush_tape(
 	taper_cmd(NO_NEW_TAPE, taper->disk, why_no_new_tape, 0, NULL);
 	taper->state |= TAPER_STATE_DONE;
 	start_degraded_mode(&runq);
+	*state_changed = TRUE;
     } else if (result_tape_action & TAPE_ACTION_MOVE) {
 	taper_t *taper1 = idle_taper();
 	if (taper1) {
@@ -797,9 +810,11 @@ startaflush_tape(
 	    taper1->state = TAPER_STATE_DEFAULT;
 	    taper->state |= TAPER_STATE_TAPE_STARTED;
 	    taper->left = taper1->left;
+	    taper->nb_dle++;
 	    if (last_started_taper == taper1) {
 		last_started_taper = taper;
 	    }
+	    *state_changed = TRUE;
 	}
     }
 
@@ -961,6 +976,7 @@ startaflush_tape(
 					       handle_taper_result, NULL);
 	    }
 	    taper_nb_wait_reply++;
+	    taper->nb_dle++;
 	    sched(dp)->taper = taper;
 	    taper_cmd(FILE_WRITE, dp, sched(dp)->destname, sched(dp)->level,
 		      sched(dp)->datestamp);
@@ -969,8 +985,8 @@ startaflush_tape(
 		    (long long)sched(taper->disk)->act_size,
 		    (long long)taper->left);
 	    amfree(qname);
+	    *state_changed = TRUE;
 	}
-	short_dump_state();
     }
 }
 
@@ -1110,6 +1126,7 @@ start_some_dumps(
     char dumptype;
     char *dumporder;
     int  dumper_to_holding = 0;
+    gboolean state_changed = FALSE;
 
     /* don't start any actual dumps until the taper is started */
     if (!taper_started) return;
@@ -1364,6 +1381,7 @@ start_some_dumps(
 	    taper->dumper = dumper;
 	    taper->state |= TAPER_STATE_DUMP_TO_TAPE;
 	    taper->state &= ~TAPER_STATE_IDLE;
+	    taper->nb_dle++;
 	    if (taper_nb_wait_reply == 0) {
 		taper_ev_read = event_register(taper_fd, EV_READFD,
 					       handle_taper_result, NULL);
@@ -1374,8 +1392,11 @@ start_some_dumps(
 		      sched(diskp)->datestamp);
 	    diskp->host->start_t = now + 15;
 
-	    short_dump_state();
+	    state_changed = TRUE;
 	}
+    }
+    if (state_changed) {
+	short_dump_state();
     }
 }
 
@@ -1580,6 +1601,7 @@ handle_taper_result(
 	    }
 	    assert(taper != NULL);
 	    taper->left = 0;
+	    taper->nb_dle = 0;
 	    taper->state &= ~TAPER_STATE_INIT;
 	    taper->state |= TAPER_STATE_RESERVATION;
 	    taper->state |= TAPER_STATE_IDLE;
@@ -1785,6 +1807,7 @@ handle_taper_result(
 	    taper = sched(dp)->taper;
             /* Update our tape counter and reset taper->left */
 	    current_tape++;
+	    taper->nb_dle = 1;
 	    taper->left = tape_length;
 	    taper->state &= ~TAPER_STATE_WAIT_NEW_TAPE;
 	    taper->state |= TAPER_STATE_TAPE_STARTED;
@@ -1962,6 +1985,9 @@ handle_taper_result(
 	g_strfreev(result_argv);
 
 	if (taper && taper->disk && taper->result != LAST_TOK) {
+	    if (taper->nb_dle >= conf_max_dle_by_volume) {
+		taper_cmd(CLOSE_VOLUME, dp, NULL, 0, NULL);
+	    }
 	    if(taper->dumper) {
 		if (taper->dumper->result != LAST_TOK) {
 		    // Dumper already returned it's result
@@ -2095,7 +2121,6 @@ dumper_taper_result(
 {
     dumper_t *dumper;
     taper_t  *taper;
-    int is_partial;
     char *qname;
 
     dumper = sched(dp)->dumper;
@@ -2119,8 +2144,6 @@ dumper_taper_result(
     } else {
 	update_failed_dump(dp);
     }
-
-    is_partial = dumper->result != DONE || taper->result != DONE;
 
     sched(dp)->dump_attempted += 1;
     sched(dp)->taper_attempted += 1;
@@ -3572,10 +3595,18 @@ build_diskspace(
 		break;
 	    }
 	}
-
+	if (!ha || j >= num_holdalloc) {
+	    fprintf(stderr,_("build_diskspace: holding disk file '%s' is not in a holding disk directory.\n"), filename);
+	    amfree(used);
+	    amfree(result);
+	    return NULL;
+	}
 	if(stat(filename, &finfo) == -1) {
-	    g_fprintf(stderr, _("stat %s: %s\n"), filename, strerror(errno));
-	    finfo.st_size = (off_t)0;
+	    g_fprintf(stderr, _("build_diskspace: can't stat %s: %s\n"),
+		      filename, strerror(errno));
+	    amfree(used);
+	    amfree(result);
+	    return NULL;
 	}
 	used[j] += ((off_t)finfo.st_size+(off_t)1023)/(off_t)1024;
 	if((fd = open(filename,O_RDONLY)) == -1) {
@@ -3713,10 +3744,12 @@ tape_action(
     int   dump_to_disk_terminated;
     int   nb_taper_active = nb_sent_new_tape;
     int   nb_taper_flushing = 0;
+    int   dle_free = 0;
     off_t data_next_tape = 0;
     off_t data_free = 0;
     off_t data_lost = 0;
     off_t data_lost_next_tape = 0;
+    gboolean allow_size_or_number;
 
     dumpers_size = 0;
     for(dumper = dmptable; dumper < (dmptable+inparallel); dumper++) {
@@ -3755,6 +3788,7 @@ tape_action(
 	 taper1++) {
 	if (taper1->state & TAPER_STATE_TAPE_STARTED) {
 	    tapeq_size -= taper1->left;
+	    dle_free += (conf_max_dle_by_volume - taper1->nb_dle);
 	}
 	if (taper1->disk) {
 	    off_t data_to_go;
@@ -3766,6 +3800,7 @@ tape_action(
 	    if (data_to_go > taper1->left) {
 		data_next_tape += data_to_go - taper1->left;
 		data_lost += taper1->written + taper1->left;
+		dle_free--;
 	    } else {
 		data_free += taper1->left - data_to_go;
 	    }
@@ -3795,6 +3830,12 @@ tape_action(
 	}
     }
 
+    allow_size_or_number = (flush_threshold_dumped < tapeq_size &&
+			    flush_threshold_scheduled < sched_size) ||
+			   (dle_free < (queue_length(runq) +
+					queue_length(directq) +
+					queue_length(tapeq)));
+
     // Changing conditionals can produce a driver hang, take care.
     // 
     // when to start writting to a new tape
@@ -3806,8 +3847,7 @@ tape_action(
 	    result |= TAPE_ACTION_NO_NEW_TAPE;
 	} else if (current_tape < conf_runtapes &&
 		   taper_nb_scan_volume == 0 &&
-		   ((flush_threshold_dumped < tapeq_size &&
-		     flush_threshold_scheduled < sched_size) ||
+		   (allow_size_or_number ||
 		    (data_lost > data_lost_next_tape) ||
 		    nb_taper_active == 0) &&
 		   (last_started_taper == NULL ||
@@ -3821,8 +3861,7 @@ tape_action(
 	 !empty(directq) ||				// if a dle is waiting for a dump to tape
          !empty(roomq) ||				// holding disk constraint
          idle_reason == IDLE_NO_DISKSPACE ||		// holding disk constraint
-         (flush_threshold_dumped < tapeq_size &&	// flush-threshold-dumped &&
-	  flush_threshold_scheduled < sched_size) ||	//  flush-threshold-scheduled
+	 allow_size_or_number ||
 	 (data_lost > data_lost_next_tape) ||
 	 (taperflush < tapeq_size &&			// taperflush
 	  (force_flush == 1 ||				//  if force_flush
@@ -3852,8 +3891,7 @@ tape_action(
 	    (taper->state & TAPER_STATE_TAPE_STARTED ||		// tape already started 
              !empty(roomq) ||					// holding disk constraint
              idle_reason == IDLE_NO_DISKSPACE ||		// holding disk constraint
-             (flush_threshold_dumped < tapeq_size &&		// flush-threshold-dumped &&
-	      flush_threshold_scheduled < sched_size) ||	//  flush-threshold-scheduled
+	     allow_size_or_number ||
              (force_flush == 1 && taperflush < tapeq_size))) {	// taperflush if force_flush
 
 	    if (nb_taper_flushing == 0) {

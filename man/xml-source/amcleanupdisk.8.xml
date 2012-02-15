@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amcleanupdisk.8'>
+
+<refmeta>
+<refentrytitle>amcleanupdisk</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amcleanupdisk</refname>
+<refpurpose>cleanup holding disk directory</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jds;
+&author.sgw.xml;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amcleanupdisk</command>
+    <arg choice='opt'><option>-r</option></arg>
+    <arg choice='opt'><option>-v</option></arg>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amcleanupdisk</emphasis>
+list and/or remove invalid file from the holding disk directories.</para>
+
+<para>This program is run by <emphasis remap='B'>amcleanup</emphasis>.</para>
+
+<para>See the
+<manref name="amanda" vol="8"/>
+man page for more details about Amanda.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-r</option></term>
+  <listitem>
+   <para>Remove invalid file from holding disk.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+   <para>Generate verbose output.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>EXAMPLES</title>
+<para>This example runs the Amanda holding disk cleanup process.</para>
+
+<programlisting>
+% amcleanupdisk daily -v -r
+</programlisting>
+</refsect1>
+
+<seealso>
+<manref name="amcleanup" vol="8"/>
+<manref name="amdump" vol="8"/>
+</seealso>
+
+</refentry>
+

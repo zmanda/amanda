@@ -50,7 +50,7 @@ const char *cmdstr[] = {
     "PARTDONE", "PORT-WRITE", "DUMPER-STATUS",		    /* taper cmds */
     "PORT", "TAPE-ERROR", "TAPER-OK",			 /* taper results */
     "REQUEST-NEW-TAPE", "DIRECTTCP-PORT", "TAKE-SCRIBE-FROM",
-    "START-SCAN", "LAST_TOK",
+    "START-SCAN", "CLOSE-VOLUME", "LAST_TOK",
     NULL
 };
 
@@ -691,10 +691,9 @@ server_can_do_estimate(
     info_t *info,
     int     level)
 {
-    gint64  size;
     int     stats;
 
-    size = internal_server_estimate(dp, info, level, &stats);
+    internal_server_estimate(dp, info, level, &stats);
     return stats;
 }
 

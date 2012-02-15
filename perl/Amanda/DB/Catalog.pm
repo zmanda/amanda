@@ -401,11 +401,10 @@ TODO: add_dump
 
 =cut
 
-use Amanda::Logfile qw( :constants match_disk match_host
-			match_datestamp match_level );
+use Amanda::Logfile qw( :constants );
 use Amanda::Tapelist;
 use Amanda::Config qw( :init :getconf config_dir_relative );
-use Amanda::Util qw( quote_string weaken_ref );
+use Amanda::Util qw( quote_string weaken_ref match_disk match_host match_datestamp match_level);
 use File::Glob qw( :glob );
 use warnings;
 use strict;
@@ -903,7 +902,7 @@ sub sort_dumps {
 	for my $key (@$keys) {
 	    my ($rev, $k) = ($key =~ /^(-?)(.*)$/);
 
-	    if ($k =~ /^(nparts|level)$/) {
+	    if ($k =~ /^(nparts|level|filenum)$/) {
 		# compare dump components numerically
 		$res = $a->{$k} <=> $b->{$k};
 	    } else { # ($k =~ /^(hostname|diskname|write_timestamp|dump_timestamp)$/)

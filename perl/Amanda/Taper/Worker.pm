@@ -100,7 +100,8 @@ sub new {
     my $scribe = Amanda::Taper::Scribe->new(
 	taperscan => $controller->{'taperscan'},
 	feedback => $self,
-	debug => $Amanda::Config::debug_taper);
+	debug => $Amanda::Config::debug_taper,
+	eject_volume => getconf($CNF_EJECT_VOLUME));
 
     $self->{'scribe'} = $scribe;
     $self->{'scribe'}->start(write_timestamp => $write_timestamp,
@@ -240,6 +241,15 @@ sub FAILED {
     }
 }
 
+sub CLOSE_VOLUME {
+    my $self = shift;
+    my ($msgtype, %params) = @_;
+
+    $self->_assert_in_state("idle") or return;
+
+    $self->{'scribe'}->close_volume();
+}
+
 sub result_cb {
     my $self = shift;
     my %params = %{$self->{'dump_params'}};
@@ -373,7 +383,7 @@ sub scribe_notif_new_tape {
 
     # TODO: if $params{error} is set, report it back to the driver
     # (this will be a change to the protocol)
-    log_add($L_INFO, $params{'error'}) if defined $params{'error'};
+    log_add($L_INFO, "$params{'error'}") if defined $params{'error'};
 
     if ($params{'volume_label'}) {
 	$self->{'label'} = $params{'volume_label'};
@@ -438,7 +448,8 @@ sub scribe_notif_log_info {
     my $self = shift;
     my %params = @_;
 
-    log_add($L_INFO, $params{'message'});
+    debug("$params{'message'}");
+    log_add($L_INFO, "$params{'message'}");
 }
 
 ##
@@ -525,7 +536,7 @@ sub send_port_and_get_header {
 	if ($xmsg->{'type'} == $XMSG_INFO) {
 	    info($xmsg->{'message'});
 	} elsif ($xmsg->{'type'} == $XMSG_ERROR) {
-	    $errmsg = $xmsg->{'messsage'};
+	    $errmsg = $xmsg->{'message'};
 	} elsif ($xmsg->{'type'} == $XMSG_DONE) {
 	    if ($errmsg) {
 		$finished_cb->($errmsg);

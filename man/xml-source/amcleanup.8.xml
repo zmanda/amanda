@@ -28,9 +28,10 @@
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
-  <command>amcleanup</command>    
+  <command>amcleanup</command>
     <arg choice='opt'><option>-k</option></arg>
     <arg choice='opt'><option>-p</option></arg>
+    <arg choice='opt'><option>-r</option></arg>
     <arg choice='opt'><option>-v</option></arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
 </cmdsynopsis>
@@ -49,6 +50,10 @@ program, but if
 cannot complete for some reason (usually because of a tape server host crash),
 <command>amcleanup</command>
 must be run some time later (usually during system boot).</para>
+
+<para>The <emphasis remap='B'>amcleanupdisk</emphasis> program is run with
+the same <arg choice='opt'><option>-r</option></arg> and
+<arg choice='opt'><option>-v</option></arg> options.</para>
 
 <para>See the
 <manref name="amanda" vol="8"/>
@@ -70,9 +75,15 @@ man page for more details about Amanda.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><option>-r</option></term>
+  <listitem>
+   <para>Remove bad file in holding disk.  This options is passed to amcleanupdisk.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><option>-v</option></term>
   <listitem>
-   <para>Generate verbose output.</para>
+   <para>Generate verbose output.  This options is passed to amcleanupdisk.</para>
   </listitem>
   </varlistentry>
 </variablelist>

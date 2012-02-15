@@ -242,6 +242,7 @@ null_device_start (Device * pself, DeviceAccessMode mode,
     if (mode == ACCESS_WRITE) {
         pself->volume_label = newstralloc(pself->volume_label, label);
         pself->volume_time = newstralloc(pself->volume_time, timestamp);
+	pself->header_block_size = 32768;
 	return TRUE;
     } else {
 	device_set_error(pself,

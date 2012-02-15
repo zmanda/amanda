@@ -129,4 +129,8 @@ use constant DUMPER_STATUS => message("DUMPER-STATUS",
     format => [ qw( handle ) ],
 );
 
+use constant CLOSE_VOLUME => message("CLOSE-VOLUME",
+    format => [ qw( worker_name ) ],
+);
+
 1;

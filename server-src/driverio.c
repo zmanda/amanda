@@ -428,6 +428,12 @@ taper_cmd(
 			    " ", datestamp,
 			    "\n", NULL);
 	break;
+    case CLOSE_VOLUME:
+	dp = (disk_t *) ptr;
+	cmdline = g_strjoin(NULL, cmdstr[cmd],
+			    " ", sched(dp)->taper->name,
+			    "\n", NULL);
+	break;
     case FILE_WRITE:
 	dp = (disk_t *) ptr;
         qname = quote_string(dp->name);
@@ -594,6 +600,7 @@ dumper_cmd(
 	    char *qclient_username;
 	    char *qclient_port;
 	    char *qssh_keys;
+	    char *d_prop;
 
 	    if (dp->application != NULL) {
 		application = lookup_application(dp->application);
@@ -607,6 +614,11 @@ dumper_cmd(
 	    features = am_feature_to_string(dp->host->features);
 	    if (am_has_feature(dp->host->features, fe_req_xml)) {
 		o = xml_optionstr(dp, 1);
+
+		d_prop = xml_dumptype_properties(dp);
+		vstrextend(&o, d_prop, NULL);
+		amfree(d_prop);
+
 		if (application) {
 		    char *xml_app;
 		    xml_app = xml_application(dp, application,
@@ -988,7 +1000,11 @@ update_info_dumper(
     infp->size = origsize;
     infp->csize = dumpsize;
     infp->secs = dumptime;
-    infp->date = get_time_from_timestamp(sched(dp)->datestamp);
+    if (sched(dp)->timestamp == 0) {
+	infp->date = 0;
+    } else {
+	infp->date = get_time_from_timestamp(sched(dp)->datestamp);
+    }
 
     if(level == 0) perfp = &info.full;
     else perfp = &info.incr;
@@ -1023,7 +1039,11 @@ update_info_dumper(
 	info.history[0].level = level;
 	info.history[0].size  = origsize;
 	info.history[0].csize = dumpsize;
-	info.history[0].date  = get_time_from_timestamp(sched(dp)->datestamp);
+	if (sched(dp)->timestamp == 0) {
+	    info.history[0].date = 0;
+	} else {
+	    info.history[0].date = get_time_from_timestamp(sched(dp)->datestamp);
+	}
 	info.history[0].secs  = dumptime;
     }
 

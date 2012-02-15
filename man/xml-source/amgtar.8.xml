@@ -31,6 +31,9 @@
 <para>Amgtar is an Amanda Application API script.  It should not be run
 by users directly.  It uses GNU Tar to backup and restore data.</para>
 
+<para>The <emphasis remap='B'>diskdevice</emphasis> in the disklist (DLE)
+must be the directory to backup.</para>
+
 </refsect1>
 
 <refsect1><title>PROPERTIES</title>

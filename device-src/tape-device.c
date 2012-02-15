@@ -578,6 +578,9 @@ tape_device_set_compression_fn(Device *p_self, DevicePropertyBase *base,
 	/* looks good .. let's start the device over, though */
 	device_clear_volume_details(p_self);
     } else {
+	device_set_error(p_self,
+	    g_strdup("Error setting COMPRESION property"),
+	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
 
@@ -603,6 +606,9 @@ tape_device_set_read_block_size_fn(Device *p_self, DevicePropertyBase *base G_GN
     if (read_block_size != 0 &&
 	    ((gsize)read_block_size < p_self->block_size ||
 	     (gsize)read_block_size > p_self->max_block_size))
+	device_set_error(p_self,
+	    g_strdup_printf("Error setting READ-BLOCk-SIZE property to '%u', it must be between %zu and %zu", read_block_size, p_self->block_size, p_self->max_block_size),
+	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
 
     self->private->read_block_size = read_block_size;
@@ -919,6 +925,7 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
 	return dself->status;
     }
 
+    dself->header_block_size = buffer_len;
     header = dself->volume_header = g_new(dumpfile_t, 1);
     fh_init(header);
 
@@ -1111,6 +1118,7 @@ static gboolean write_tapestart_header(TapeDevice * self, char * label,
 	return FALSE;
      }
 
+     d_self->header_block_size = d_self->block_size;
      amfree(header_buf);
 
      if (!tape_weof(self->fd, 1)) {

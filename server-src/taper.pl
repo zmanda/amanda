@@ -26,15 +26,18 @@ package main;
 use Amanda::Util qw( :constants );
 use Amanda::Config qw( :init :getconf );
 use Amanda::Logfile qw( :logtype_t log_add $amanda_log_trace_log );
-use Amanda::Debug;
+use Amanda::Debug qw( debug );
 use Amanda::Taper::Controller;
 use Getopt::Long;
 
 Amanda::Util::setup_application("taper", "server", $CONTEXT_DAEMON);
 
 my $config_overrides = new_config_overrides($#ARGV+1);
+
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
+    'version' => \&Amanda::Util::version_opt,
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
 ) or usage();
 

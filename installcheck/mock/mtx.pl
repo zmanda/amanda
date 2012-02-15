@@ -81,7 +81,7 @@ sub load_statefile {
     }
 
     # make sure some things are zero if they're not defined
-    for my $k qw(num_drives num_slots num_ie first_drive first_slot first_ie) {
+    for my $k (qw(num_drives num_slots num_ie first_drive first_slot first_ie)) {
 	$CONFIG->{$k} = 0 unless defined $CONFIG->{$k};
     }
 }

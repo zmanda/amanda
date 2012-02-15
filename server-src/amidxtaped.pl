@@ -118,7 +118,7 @@ use Sys::Hostname;
 
 use Amanda::Debug qw( debug info warning );
 use Amanda::MainLoop qw( :GIOCondition );
-use Amanda::Util qw( :constants );
+use Amanda::Util qw( :constants match_disk match_host );
 use Amanda::Feature;
 use Amanda::Config qw( :init :getconf );
 use Amanda::Changer;
@@ -130,7 +130,6 @@ use Amanda::Recovery::Planner;
 use Amanda::Recovery::Scan;
 use Amanda::DB::Catalog;
 use Amanda::Disklist;
-use Amanda::Logfile qw( match_disk match_host );
 
 # Note that this class performs its control IO synchronously.  This is adequate
 # for this service, as it never receives unsolicited input from the remote
@@ -602,6 +601,10 @@ sub send_header {
     # filter out some things the remote might not be able to process
     if (!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_dle_in_header)) {
 	$header->{'dle_str'} = undef;
+    } else {
+	$header->{'dle_str'} =
+	    Amanda::Disklist::clean_dle_str_for_client($header->{'dle_str'},
+		   Amanda::Feature::am_features($self->{'their_features'}));
     }
     if (!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_origsize_in_header)) {
 	$header->{'orig_size'} = 0;

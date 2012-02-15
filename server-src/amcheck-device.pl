@@ -38,6 +38,7 @@ my $config_overrides = new_config_overrides($#ARGV+1);
 my $overwrite = 0;
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
+    'version' => \&Amanda::Util::version_opt,
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
     'w' => \$overwrite,
 ) or usage();
@@ -167,11 +168,20 @@ sub do_check {
 
     step result_cb => sub {
 	(my $err, $res, $label, $mode) = @_;
-	return failure($err, $finished_cb) if $err;
+	if ($err) {
+	    if ($res) {
+		$res->release(finished_cb => sub {
+		    return failure($err, $finished_cb);
+		});
+		return;
+	    } else {
+		return failure($err, $finished_cb);
+	    }
+	}
 
 	my $modestr = ($mode == $ACCESS_APPEND)? "append" : "write";
 	my $slot = $res->{'this_slot'};
-	if (defined $res->{'device'}->volume_label()) {
+	if (defined $res->{'device'} and defined $res->{'device'}->volume_label()) {
 	    print "Will $modestr to volume '$label' in slot $slot.\n";
 	} else {
 	    print "Will $modestr label '$label' to new volume in slot $slot.\n";

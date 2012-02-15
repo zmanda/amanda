@@ -153,17 +153,13 @@ sub analyze {
 		    if ($vol_tle->{'datestamp'} eq '0') {
 			push @new_labeled, $sl;
 		    }
-		} elsif ($self->{'chg'}->volume_is_labelable($sl->{'device_status'},
-							     $sl->{'f_type'},
-							     $sl->{'label'})) {
+		} elsif ($self->volume_is_labelable($sl)) {
 		    $first_new_volume = $sl if !$first_new_volume;
 		    $new_volume = $sl if $current && !$new_volume;
 		    push @new_volume, $sl;
 		}
 	    }
-	} elsif ($self->{'chg'}->volume_is_labelable($sl->{'device_status'},
-						     $sl->{'f_type'},
-						     $sl->{'label'})) {
+	} elsif ($self->volume_is_labelable($sl)) {
 	    $first_new_volume = $sl if !$first_new_volume;
 	    $new_volume = $sl if $current && !$new_volume;
 	    push @new_volume, $sl;
@@ -209,6 +205,7 @@ sub analyze {
     for my $sl (@new_volume) {
 	$sl->{'label'} = $self->{'chg'}->make_new_tape_label(
 					barcode => $sl->{'barcode'},
+					slot => $sl->{'slot'},
 					meta => $sl->{'meta'});
 	$new_volume = $sl if defined $last_label and
 			     $new_volume->{'label'} ne $sl->{'label'} and

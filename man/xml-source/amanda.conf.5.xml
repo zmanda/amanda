@@ -348,6 +348,16 @@ Specify which types of messages will trigger an email from amreport. amreport is
     </variablelist>
   </listitem>
   </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>max-dle-by-volume</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default:
+<amdefault>1000000000</amdefault>.
+The maximum number of dle written to a single volume.</para>
+  </listitem>
+  </varlistentry>
+
   <varlistentry>
   <term><amkeyword>dumpcycle</amkeyword> <amtype>int</amtype></term>
   <listitem>
@@ -387,6 +397,7 @@ days /
 <amkeyword>runtapes</amkeyword>.</para>
   </listitem>
   </varlistentry>
+
   <varlistentry>
   <term><amkeyword>tapecycle</amkeyword> <amtype>int</amtype></term>
   <listitem>
@@ -466,9 +477,11 @@ values:
     $c : config name
     $o : org configuration
     $b : barcode of the volume
+    $s : slot number, can specify a minimun number of digit:
+         $3s to get '001'
     $m : meta label
 </programlisting></para>
-<para>The template should contain some number of contiguous '%'
+<para>The template can contain some number of contiguous '%'
 characters, which will be replaced with a generated number. Be sure to
 specify enough '%' characters that you do not run out of tape labels.
 Example:
@@ -476,6 +489,10 @@ Example:
 <markup>&quot;$c-%%%&quot;</markup>,
 <markup>&quot;$m-%%%&quot;</markup>,
 <markup>&quot;$m-$b&quot;</markup>
+</para>
+<para>The generared label can be used only if it match the
+<amkeyword>labelstr</amkeyword> setting. The volume will not be used if the
+generated label doesn't match the <amkeyword>labelstr</amkeyword> setting.
 </para>
 <para>Note that many devices cannot distinguish an empty tape from an error
 condition, so it may is often necessary to include
@@ -729,13 +746,23 @@ The algorithm used to choose which dump image to send to the taper.</para>
   </listitem>
   </varlistentry>
 <varlistentry>
-<term><amkeyword>taper-parallel-write</amkeyword> <amtype>int</amtype></term>
-<listitem>
-  </listitem>
-<para>Default: <amdefault>1</amdefault>.
+  <term><amkeyword>taper-parallel-write</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+    <para>Default: <amdefault>1</amdefault>.
 Amanda can write simultaneously up to that number of volume at any given
 time. The changer must have as many drives.</para>
-  </varlistentry>
+  </listitem>
+</varlistentry>
+
+<varlistentry>
+  <term><amkeyword>eject-volume</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+    <para>Default: <amdefault>no</amdefault>.
+Set to <amkeyword>yes</amkeyword> if you want the volume to be ejected
+after Amanda wrote data to it. It works only with some changer and device.</para>
+  </listitem>
+</varlistentry>
+
 <varlistentry>
 <term><amkeyword>labelstr</amkeyword> <amtype>string</amtype></term>
 <listitem>
@@ -833,7 +860,7 @@ How many times the server will resend a REQ packet if it doesn't get the ACK pac
   <term><amkeyword>netusage</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<amdefault>8000 Kbps</amdefault>.
+<amdefault>80000 Kbps</amdefault>.
 The maximum network bandwidth allocated to Amanda, in Kbytes per second.
 See also the
 <emphasis remap='B'>interface</emphasis>
@@ -2600,7 +2627,7 @@ A comment string describing this set of network information.</para>
   <term><amkeyword>use</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
-<amdefault>8000 Kbps</amdefault>.
+<amdefault>80000 Kbps</amdefault>.
 The speed of the interface in Kbytes per second.</para>
   </listitem>
   </varlistentry>

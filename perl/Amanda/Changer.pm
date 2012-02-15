@@ -385,6 +385,7 @@ Each slot is represented by a hash with the following keys:
 =head3 make_new_tape_label
 
   $chg->make_new_tape_label(barcode => $barcode,
+			    slot    => $slot,
 			    meta    => $meta);
 
 To devise a new name for a volume using the C<barcode> and C<meta> arguments.
@@ -1087,7 +1088,7 @@ sub make_error {
 	$self->{'fatal_error'} = $err
 	    if ($err->fatal);
 
-	$cb->($err);
+	$cb->($err) if $cb;
     }
 
     return $err;
@@ -1256,6 +1257,7 @@ sub make_new_tape_label {
     return undef if !defined $self->{'labelstr'};
     my $template = $self->{'autolabel'}->{'template'};
     my $labelstr = $self->{'labelstr'};
+    my $slot_digit = 1;
 
     if (!$template) {
 	return (undef, "template is not set, you must set autolabel");
@@ -1265,12 +1267,19 @@ sub make_new_tape_label {
     $template =~ s/\$m/SUBSTITUTE_META/g;
     $template =~ s/\$o/SUBSTITUTE_ORG/g;
     $template =~ s/\$c/SUBSTITUTE_CONFIG/g;
+    if ($template =~ /\$([0-9]*)s/) {
+	$slot_digit = $1;
+	$slot_digit = 1 if $slot_digit < 1;
+	$template =~ s/\$[0-9]*s/SUBSTITUTE_SLOT/g;
+    }
 
     my $org = getconf($CNF_ORG);
     my $config = Amanda::Config::get_config_name();
     my $barcode = $params{'barcode'};
     $barcode = '' if !defined $barcode;
     my $meta = $params{'meta'};
+    my $slot = $params{'slot'};
+    $slot = '' if !defined $slot;
     $meta = $self->make_new_meta_label(%params) if !defined $meta;
     $meta = '' if !defined $meta;
 
@@ -1278,24 +1287,28 @@ sub make_new_tape_label {
     $template =~ s/SUBSTITUTE_ORG/$org/g;
     $template =~ s/SUBSTITUTE_CONFIG/$config/g;
     $template =~ s/SUBSTITUTE_META/$meta/g;
-    # Do not susbtitute the barcode now
+    # Do not susbtitute the barcode and slot now
 
     (my $npercents =
 	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
-    my $nlabels = 10 ** $npercents;
+    $npercents = 0 if $npercents eq $template;
 
     my $label;
     if ($npercents == 0) {
-	if ($template =~ /SUBSTITUTE_BARCODE/ && defined $barcode) {
-            $label = $template;
-            $label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
-            if ($tl->lookup_tapelabel($label)) {
-		return (undef, "Label '$label' already exists");
-            }
-	} elsif ($template =~ /SUBSTITUTE_BARCODE/ && !defined $barcode) {
-	    return (undef, "Can't generate new label because volume have no barcode");
-	} else {
+        $label = $template;
+        $label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
+	if ($template =~ /SUBSTITUTE_SLOT/) {
+	    my $slot_label = sprintf("%0*d", $slot_digit, $slot);
+	    $label =~ s/SUBSTITUTE_SLOT/$slot_label/g;
+	}
+	if ($template =~ /SUBSTITUTE_BARCODE/ && !defined $barcode) {
+	    return (undef, "Can't generate new label because volume has no barcode");
+	} elsif ($template =~ /SUBSTITUTE_SLOT/ && !defined $slot) {
+	    return (undef, "Can't generate new label because volume has no slot");
+	} elsif ($label eq $template) {
 	    return (undef, "autolabel require at least one '%'");
+	} elsif ($tl->lookup_tapelabel($label)) {
+	    return (undef, "Label '$label' already exists");
 	}
     } else {
 	# make up a sprintf pattern
@@ -1314,14 +1327,19 @@ sub make_new_tape_label {
 	    }
 	}
 
+	my $nlabels = 10 ** $npercents;
 	my ($i);
 	for ($i = 1; $i < $nlabels; $i++) {
 	    $label = sprintf($sprintf_pat, $i);
 	    last unless (exists $existing_labels{$label});
 	}
-	# susbtitute the barcode
 
+	# susbtitute the barcode and slot
 	$label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
+	if ($template =~ /SUBSTITUTE_SLOT/) {
+	    my $slot_label = sprintf("%0*d", $slot_digit, $slot);
+            $label =~ s/SUBSTITUTE_SLOT/$slot_label/g;
+	}
 
 	# bail out if we didn't find an unused label
 	return (undef, "Can't label unlabeled volume: All label used")
@@ -1366,6 +1384,7 @@ sub make_new_meta_label {
 
     (my $npercents =
 	$template) =~ s/[^%]*(%+)[^%]*/length($1)/e;
+    $npercents = 0 if $npercents eq $template;
     my $nlabels = 10 ** $npercents;
 
     # make up a sprintf pattern
@@ -1401,9 +1420,11 @@ sub volume_is_labelable {
     if (!defined $dev_status) {
 	return 0;
     } elsif ($dev_status & $DEVICE_STATUS_VOLUME_UNLABELED and
-	$f_type == $Amanda::Header::F_EMPTY) {
+	     defined $f_type and
+	     $f_type == $Amanda::Header::F_EMPTY) {
 	return 0 if (!$autolabel->{'empty'});
     } elsif ($dev_status & $DEVICE_STATUS_VOLUME_UNLABELED and
+	     defined $f_type and
 	     $f_type == $Amanda::Header::F_WEIRD) {
 	return 0 if (!$autolabel->{'non_amanda'});
     } elsif ($dev_status & $DEVICE_STATUS_VOLUME_ERROR) {
@@ -1527,7 +1548,10 @@ sub release {
     my $self = shift;
     my %params = @_;
 
-    return if $self->{'released'};
+    if ($self->{'released'}) {
+	$params{'finished_cb'}->(undef) if exists $params{'finished_cb'};
+	return;
+    }
 
     # always finish the device on release; it's illegal for anything
     # else to use the device after this point, anyway, so we want to
@@ -1579,6 +1603,7 @@ sub make_new_tape_label {
 
     $params{'barcode'} = $self->{'barcode'} if !defined $params{'barcode'};
     $params{'meta'} = $self->{'meta'} if !defined $params{'meta'};
+    $params{'slot'} = $self->{'this_slot'} if !defined $params{'slot'};
     return $self->{'chg'}->make_new_tape_label(%params);
 }
 
@@ -1592,7 +1617,7 @@ sub make_new_meta_label {
 
 package Amanda::Changer::Config;
 use Amanda::Config qw( :getconf string_to_boolean );
-use Amanda::Device;
+use Amanda::Device qw( :constants );
 
 sub new {
     my $class = shift;
@@ -1653,7 +1678,12 @@ sub configure_device {
     while (my ($propname, $propinfo) = each(%properties)) {
 	for my $value (@{$propinfo->{'values'}}) {
 	    if (!$device->property_set($propname, $value)) {
-		my $msg = "Error setting '$propname' on device '".$device->device_name."'";
+		my $msg;
+		    if ($device->status == $DEVICE_STATUS_SUCCESS) {
+			$msg = "Error setting '$propname' on device '".$device->device_name."'";
+		    } else {
+			$msg = $device->error() . " on device '".$device->device_name."'";
+		    }
 		if (exists $propinfo->{'optional'}) {
 		    if ($propinfo->{'optional'} eq 'warn') {
 			warn("$msg (ignored)");

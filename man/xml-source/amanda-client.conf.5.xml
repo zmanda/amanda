@@ -73,6 +73,15 @@ Similar to the parameter of the same name in &amconf;, this specifies the port t
   </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>amdump-server</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>No default:
+<amdefault>Set by configure</amdefault>.
+The amanda server to connect with the amdump_client program.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>index-server</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:

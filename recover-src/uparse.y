@@ -53,7 +53,7 @@ extern char *	yytext;
 %token SETHOST SETDISK SETDATE SETTAPE SETMODE SETDEVICE SETPROPERTY
 %token CD CDX QUIT DHIST LS ADD ADDX EXTRACT DASH_H
 %token LIST DELETE DELETEX PWD CLEAR HELP LCD LPWD MODE SMB TAR
-%token APPEND PRIORITY
+%token APPEND PRIORITY SETTRANSLATE
 %token NL
 
         /* typed tokens */
@@ -87,6 +87,9 @@ set_command:
   |	LISTDISK STRING invalid_string { yyerror("Invalid argument"); amfree($2); }
   |	LISTPROPERTY NL { list_property(); }
   |	LISTPROPERTY invalid_string { yyerror("Invalid argument"); }
+  |	SETTRANSLATE NL { set_translate(NULL); }
+  |	SETTRANSLATE STRING invalid_string NL { yyerror("Invalid argument"); }
+  |	SETTRANSLATE STRING NL { set_translate($2); amfree($2); }
   |	SETHOST STRING NL { set_host($2); amfree($2); }
   |	SETHOST STRING invalid_string { yyerror("Invalid argument"); amfree($2); }
   |	SETHOST NL { yyerror("Argument required"); }

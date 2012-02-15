@@ -585,7 +585,7 @@ void add_file(
     char *err = NULL;
     int i;
     ssize_t j;
-    char *dir, *dir_undo, dir_undo_ch = '\0';
+    char *dir_undo, dir_undo_ch = '\0';
     char *ditem_path = NULL;
     char *l = NULL;
     int  added;
@@ -757,7 +757,6 @@ void add_file(
 			err = _("bad reply: missing directory field");
 			continue;
 		    }
-		    dir = s - 1;
 		    skip_quoted_string(s, ch);
 		    dir_undo = s - 1;
 		    dir_undo_ch = *dir_undo;
@@ -902,7 +901,6 @@ delete_file(
     char *tape, *tape_undo, tape_undo_ch = '\0';
     char *dir_undo, dir_undo_ch = '\0';
     int  level = 0;
-    off_t fileno;
     char *ditem_path = NULL;
     char *l = NULL;
     int  deleted;
@@ -1064,7 +1062,6 @@ delete_file(
 			    err = _("bad reply: cannot parse fileno field");
 			    continue;
 			}
-			fileno = (off_t)fileno_;
 			skip_integer(s, ch);
 		    }
 

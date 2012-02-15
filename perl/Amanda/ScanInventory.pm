@@ -68,13 +68,14 @@ sub new {
 
     #until we have a config for it.
     $scan_conf = Amanda::ScanInventory::Config->new();
-    $chg = Amanda::Changer->new() if !defined $chg;
+    $chg = Amanda::Changer->new(undef, tapelist => $tapelist) if !defined $chg;
 
     my $self = {
 	initial_chg => $chg,
 	chg         => $chg,
 	scanning    => 0,
 	scan_conf   => $scan_conf,
+	tapelist    => $tapelist,
         interactivity => $interactivity,
 	seen        => {},
 	scan_num    => 0
@@ -115,6 +116,7 @@ sub _scan {
     my $action;
     my $action_slot;
     my $res;
+    my $label;
     my %seen = ();
     my $inventory;
     my $current;
@@ -146,7 +148,7 @@ sub _scan {
 	if ($err && $err->notimpl) {
 	    #inventory not implemented
 	    die("no inventory");
-	} elsif ($err) {
+	} elsif ($err and $err->fatal) {
 	    #inventory fail
 	    return $steps->{'call_result_cb'}->($err, undef);
 	}
@@ -447,10 +449,10 @@ sub _scan {
 	    # use a new changer
 	    my $new_chg;
 	    if (ref($message) eq 'HASH' and $message == $DEFAULT_CHANGER) {
-		$new_chg = Amanda::Changer->new();
-	    } else {
-		$new_chg = Amanda::Changer->new($message);
+		$message = undef;
 	    }
+	    $new_chg = Amanda::Changer->new($message,
+					    tapelist => $self->{'tapelist'});
 	    if ($new_chg->isa("Amanda::Changer::Error")) {
 		return $steps->{'scan_interactivity'}->("$new_chg");
 	    }
@@ -497,22 +499,87 @@ sub _scan {
 	    $self->{'scanning'} = 0;
 	    return $result_cb->($err, $res);
 	}
-	my $label = $res->{'device'}->volume_label;
+	$label = $res->{'device'}->volume_label;
 	if (!defined $label) {
-	    ($label, my $make_err) = $res->make_new_tape_label();
-	    if (!defined $label) {
-		# make this fatal, rather than silently skipping new tapes
-		$self->{'scanning'} = 0;
-		return $result_cb->($make_err, $res);
-	    }
-	    $self->{'scanning'} = 0;
-	    return $result_cb->(undef, $res, $label, $ACCESS_WRITE, 1);
+	    $res->get_meta_label(finished_cb => $steps->{'got_meta_label'});
+	    return;
 	}
 	$self->{'scanning'} = 0;
 	return $result_cb->(undef, $res, $label, $ACCESS_WRITE);
     };
+
+    step got_meta_label => sub {
+	my ($err, $meta) = @_;
+	if (defined $err) {
+	    return $result_cb->($err, $res);
+	}
+	($label, my $make_err) = $res->make_new_tape_label(meta => $meta);
+	if (!defined $label) {
+	    # make this fatal, rather than silently skipping new tapes
+	    $self->{'scanning'} = 0;
+	    return $result_cb->($make_err, $res);
+	}
+	$self->{'scanning'} = 0;
+	return $result_cb->(undef, $res, $label, $ACCESS_WRITE, 1);
+    };
 }
 
+sub volume_is_labelable {
+    my $self = shift;
+    my $sl = shift;
+    my $dev_status  = $sl->{'device_status'};
+    my $f_type = $sl->{'f_type'};
+    my $label = $sl->{'label'};
+    my $slot = $sl->{'slot'};
+    my $chg = $self->{'chg'};
+    my $autolabel = $chg->{'autolabel'};
+
+    if (!defined $dev_status) {
+	return 0;
+    } elsif ($dev_status & $DEVICE_STATUS_VOLUME_UNLABELED and
+	     defined $f_type and
+	     $f_type == $Amanda::Header::F_EMPTY) {
+	if (!$autolabel->{'empty'}) {
+	    $self->_user_msg(slot_result  => 1,
+			     empty        => 1,
+			     slot         => $slot);
+	    return 0;
+	}
+    } elsif ($dev_status & $DEVICE_STATUS_VOLUME_UNLABELED and
+	     defined $f_type and
+	     $f_type == $Amanda::Header::F_WEIRD) {
+	if (!$autolabel->{'non_amanda'}) {
+	    $self->_user_msg(slot_result  => 1,
+			     non_amanda   => 1,
+			     slot         => $slot);
+	    return 0;
+	}
+    } elsif ($dev_status & $DEVICE_STATUS_VOLUME_ERROR) {
+	if (!$autolabel->{'volume_error'}) {
+	    $self->_user_msg(slot_result  => 1,
+			     volume_error => 1,
+			     slot         => $slot);
+	    return 0;
+	}
+    } elsif ($dev_status != $DEVICE_STATUS_SUCCESS) {
+	    $self->_user_msg(slot_result  => 1,
+			     not_success  => 1,
+			     err          => $sl->{'device_error'},
+			     slot         => $slot);
+	return 0;
+    } elsif ($dev_status & $DEVICE_STATUS_SUCCESS and
+	     $f_type == $Amanda::Header::F_TAPESTART and
+	     $label !~ /$self->{'labelstr'}/) {
+	if (!$autolabel->{'other_config'}) {
+	    $self->_user_msg(slot_result  => 1,
+			     other_config => 1,
+			     slot         => $slot);
+	    return 0;
+	}
+    }
+
+    return 1;
+}
 package Amanda::ScanInventory::Config;
 
 sub new {

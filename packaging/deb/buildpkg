@@ -40,6 +40,9 @@ then
     exit 1
 fi
 
+# Until we get package revisioning in community.
+[ -f "PKG_REV" ] || echo "1" > PKG_REV
+
 #### Build functions
 
 do_substitute() {

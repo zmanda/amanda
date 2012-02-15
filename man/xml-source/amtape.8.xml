@@ -97,11 +97,11 @@ supported by all changers.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>show</command></term>
+<term><command>show</command> <arg choice='opt'>slots</arg></term>
 <listitem>
 
-<para>Show the contents of all slots by loading each slot and reading its
-label.  This can be very slow.</para>
+<para>Show the contents of all slots (or listed slots) by loading each slot
+and reading its label.  This can be very slow.  The slots arguments is of the form 1,3-5,7.</para>
 
 </listitem>
 </varlistentry>

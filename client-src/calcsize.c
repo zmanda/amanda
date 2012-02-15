@@ -171,6 +171,11 @@ main(
     char *amname=NULL, *qamname=NULL;
     char *filename=NULL, *qfilename = NULL;
 
+    if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
+	printf("calcsize-%s\n", VERSION);
+	return (0);
+    }
+
     safe_fd(-1, 0);
     safe_cd();
 

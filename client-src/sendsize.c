@@ -140,6 +140,11 @@ main(
     (void)argc;	/* Quiet unused parameter warning */
     (void)argv;	/* Quiet unused parameter warning */
 
+    if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
+	printf("sendsize-%s\n", VERSION);
+	return (0);
+    }
+
     /* initialize */
 
     /*
@@ -1007,7 +1012,6 @@ generic_calc_estimates(
     char *file_include = NULL;
     times_t start_time;
     FILE *dumpout = NULL;
-    off_t size = (off_t)1;
     char *line = NULL;
     char *match_expr;
     amwait_t wait_status;
@@ -1097,7 +1101,7 @@ generic_calc_estimates(
     }
     match_expr = vstralloc(" %d SIZE %lld", NULL);
     len = strlen(est->qamname);
-    for(size = (off_t)-1; (line = agets(dumpout)) != NULL; free(line)) {
+    for(; (line = agets(dumpout)) != NULL; free(line)) {
 	long long size_ = (long long)0;
 	if (line[0] == '\0' || (int)strlen(line) <= len)
 	    continue;
@@ -1110,7 +1114,6 @@ generic_calc_estimates(
 		      level,
 		      size_);
 	}
-	size = (off_t)size_;
     }
     amfree(match_expr);
 

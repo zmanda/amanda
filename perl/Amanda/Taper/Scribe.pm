@@ -442,7 +442,7 @@ sub new {
     my %params = @_;
 
     my $decide_debug = $Amanda::Config::debug_taper || $params{'debug'};
-    for my $rq_param qw(taperscan feedback) {
+    for my $rq_param (qw(taperscan feedback)) {
 	croak "required parameter '$rq_param' mising"
 	    unless exists $params{$rq_param};
     }
@@ -451,6 +451,7 @@ sub new {
 	taperscan => $params{'taperscan'},
 	feedback => $params{'feedback'},
 	debug => $decide_debug,
+	eject_volume => $params{'eject_volume'},
 	write_timestamp => undef,
 	started => 0,
 
@@ -463,6 +464,7 @@ sub new {
 	device => undef,
 	device_size => undef,
 	device_at_eom => undef, # device still exists, but is full
+	close_volume => undef,
 
         # callback passed to start_dump
 	dump_cb => undef,
@@ -491,7 +493,7 @@ sub start {
     my $self = shift;
     my %params = @_;
 
-    for my $rq_param qw(write_timestamp finished_cb) {
+    for my $rq_param (qw(write_timestamp finished_cb)) {
 	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }
@@ -615,7 +617,7 @@ sub get_xfer_dest {
     my $self = shift;
     my %params = @_;
 
-    for my $rq_param qw(max_memory) {
+    for my $rq_param (qw(max_memory)) {
 	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }
@@ -790,6 +792,12 @@ sub cancel_dump {
     $self->{'xfer'} = undef;
 }
 
+sub close_volume {
+    my $self = shift;
+
+    $self->{'close_volume'} = 1;
+}
+
 sub get_bytes_written {
     my ($self) = @_;
 
@@ -811,6 +819,11 @@ sub _start_part {
 	$self->dbg("XDT not ready yet; waiting until it is");
 	$self->{'start_part_on_xdt_ready'} = 1;
 	return
+    }
+
+    if ($self->{'close_volume'}) {
+	$self->{'close_volume'} = undef;
+	return $self->_get_new_volume();
     }
 
     # we need an actual, permitted device at this point, so if we don't have
@@ -939,11 +952,12 @@ sub _xmsg_part_done {
 	    # if the part was unsuccessful, but the xfer dest has reason to believe
 	    # this is not due to EOM, then the dump is done
 	    if (!$msg->{'successful'}) {
-		my $msg = "unknown error while dumping";
 		if ($self->{'device'}->status() != $DEVICE_STATUS_SUCCESS) {
 		    $msg = $self->{'device'}->error_or_status();
+		    $self->_operation_failed(device_error => $msg);
+		} else {
+		    $self->_operation_failed();
 		}
-		$self->_operation_failed(device_error => $msg);
 		return;
 	    }
 
@@ -990,7 +1004,8 @@ sub _dump_done {
 
     # determine the correct final status - DONE if we're done, PARTIAL
     # if we've started writing to the volume, otherwise FAILED
-    if (@{$self->{'device_errors'}} or $self->{'config_denial_message'}) {
+    if (@{$self->{'device_errors'}} or $self->{'config_denial_message'} or
+	!$self->{'last_part_successful'}) {
 	$result = $self->{'started_writing'}? 'PARTIAL' : 'FAILED';
     } else {
 	$result = 'DONE';
@@ -1031,7 +1046,7 @@ sub _operation_failed {
 
     my $error_message = $params{'device_error'}
 		     || $params{'config_denial_message'}
-		     || 'no reason';
+		     || 'input error';
     $self->dbg("operation failed: $error_message");
 
     # tuck the message away as desired
@@ -1063,11 +1078,13 @@ sub _release_reservation {
     my $self = shift;
     my %params = @_;
     my @errors;
+    my $do_eject = 0;
 
     my ($label, $fm, $kb);
 
     # if we've already written a volume, log it
     if ($self->{'device'} and defined $self->{'device'}->volume_label) {
+	$do_eject = 1 if $self->{'eject_volume'};
 	$label = $self->{'device'}->volume_label();
 	$fm = $self->{'device'}->file();
 	$kb = $self->{'device_size'} / 1024;
@@ -1088,7 +1105,7 @@ sub _release_reservation {
     $self->{'device'} = undef;
     $self->{'device_at_eom'} = 0;
 
-    $self->{'reservation'}->release(finished_cb => sub {
+    $self->{'reservation'}->release(eject => $do_eject, finished_cb => sub {
 	my ($err) = @_;
 	push @errors, "$err" if $err;
 
@@ -1352,11 +1369,6 @@ sub _device_start {
 	if ($is_new) {
 	    # generate the new label and write it to the tapelist file
 	    $tl->reload(1);
-	    ($new_label, my $err) = $reservation->make_new_tape_label();
-	    if (!defined $new_label) {
-		$tl->unlock();
-		return $finished_cb->($err);
-	    }
 	    if (!$meta) {
 		($meta, $err) = $reservation->make_new_meta_label();
 		if (defined $err) {
@@ -1364,7 +1376,14 @@ sub _device_start {
 		    return $finished_cb->($err);
 		}
 	    }
-	    $tl->add_tapelabel('0', $new_label, undef, $meta, $reservation->{'barcode'});
+	    ($new_label, my $err) = $reservation->make_new_tape_label(
+					meta => $meta);
+	    if (!defined $new_label) {
+		$tl->unlock();
+		return $finished_cb->($err);
+	    }
+	    $tl->add_tapelabel('0', $new_label, undef, 1, $meta,
+			       $reservation->{'barcode'});
 	    $tl->write();
 	    $self->dbg("generate new label '$new_label'");
 	} elsif (!defined $meta) {
@@ -1390,7 +1409,8 @@ sub _device_start {
 	$meta = $tle->{'meta'} if !$meta && $tle->{'meta'};
 	$tl->remove_tapelabel($new_label);
 	$tl->add_tapelabel($self->{'write_timestamp'}, $new_label,
-			   $tle? $tle->{'comment'} : undef, 1, $meta);
+			   $tle? $tle->{'comment'} : undef, 1, $meta,
+			   $reservation->{'barcode'}, $device->block_size/1024);
 	$tl->write();
 
 	$reservation->set_meta_label(meta => $meta,
@@ -1559,6 +1579,7 @@ sub scribe_notif_tape_done {
 package Amanda::Taper::Scribe::DevHandling;
 use Amanda::MainLoop;
 use Carp;
+use Amanda::Debug qw( :logging );
 
 # This class handles scanning for volumes, requesting permission for those
 # volumes (the driver likes to feel like it's in control), and providing those
@@ -1622,7 +1643,7 @@ sub quit {
     my $self = shift;
     my %params = @_;
 
-    for my $rq_param qw(finished_cb) {
+    for my $rq_param (qw(finished_cb)) {
 	croak "required parameter '$rq_param' mising"
 	    unless exists $params{$rq_param};
     }
@@ -1727,16 +1748,16 @@ sub _start_scanning {
 		}
 	    } elsif ($params{'empty'}) {
 		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} is empty");
+		    message => "Slot $params{'slot'} is empty, autolabel disabled");
 	    } elsif ($params{'non_amanda'}) {
 		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} is a non-amanda volume");
+		    message => "Slot $params{'slot'} is a non-amanda volume, autolabel disabled");
 	    } elsif ($params{'volume_error'}) {
 		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} is a volume in error: $params{'err'}");
+		    message => "Slot $params{'slot'} is a volume in error: $params{'err'}, autolabel disabled");
 	    } elsif ($params{'not_success'}) {
 		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} is a device in error: $params{'err'}");
+		    message => "Slot $params{'slot'} is a device in error: $params{'err'}, autolabel disabled");
 	    } elsif ($params{'err'}) {
 		$self->{'feedback'}->scribe_notif_log_info(
 		    message => "$params{'err'}");
@@ -1761,15 +1782,12 @@ sub _start_scanning {
 	$self->{'scan_running'} = 0;
 	$self->{'scan_finished'} = 1;
 
-	if ($error) {
-	    $self->{'scan_error'} = $error;
-	} else {
-	    $self->{'reservation'} = $reservation;
-	    $self->{'device'} = $reservation->{'device'};
-	    $self->{'volume_label'} = $volume_label;
-	    $self->{'access_mode'} = $access_mode;
-	    $self->{'is_new'} = $is_new;
-	}
+	$self->{'scan_error'} = $error;
+	$self->{'reservation'} = $reservation;
+	$self->{'device'} = $reservation->{'device'} if $reservation;
+	$self->{'volume_label'} = $volume_label;
+	$self->{'access_mode'} = $access_mode;
+	$self->{'is_new'} = $is_new;
 
 	$self->_maybe_callback();
     });

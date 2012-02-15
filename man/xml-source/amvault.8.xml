@@ -27,8 +27,8 @@
 <cmdsynopsis>
   <command>amvault</command>
     &configoverride.synopsis;
-    <arg choice='opt'>-q</arg> <arg choice='opt'>--quiet</arg>
-    <arg choice='opt'>-n</arg> <arg choice='opt'>--dry-run</arg>
+    <group choice='opt'><arg choice='plain'>--dry-run</arg><arg choice='plain'>-n</arg></group>
+    <group choice='opt'><arg choice='plain'>--quiet</arg><arg choice='plain'>-q</arg></group>
     <arg choice='opt'>--fulls-only </arg>
     <arg choice='opt'>--export </arg>
     <arg choice='opt'><option>--src-timestamp</option>
@@ -83,16 +83,7 @@ specified dumps from secondary media and re-writes them on tertiary media.</para
 <para><emphasis remap='B'>Amvault</emphasis> Copies data from the run with
 timestamp <option>src-timestamp</option> onto volumes using the changer
 <option>dst-changer</option>, and labeling new volumes with
-<option>label-template</option>.  If <option>src-timestamp</option> is
-"latest", then the most recent amdump or amflush run will be used.  If
-<option>--fulls-only</option> is given, then only full (level-0) dumps are
-copied.</para>
-
-<para>The <option>--quiet</option> (<option>-q</option>) option will
-eliminate non-error messages, and is useful when running amvault from
-cron.  The <option>--dry-run</option> (<option>-n</option>) option will
-cause amvault to print the dumps it would vault, but not actually perform
-any vaulting operations.</para>
+<option>label-template</option>.</para>
 
 <refsect2><title>Secondary Media</title>
 
@@ -115,27 +106,8 @@ might have been flushed from holding disk.</para>
 
 <refsect2><title>Tertiary Media</title>
 
-<para>The <option>--dst-changer</option> must be specified, and names the changer
-in which tertiary media are stored.  In general, this should be different
-from the secondary changer, to eliminate the possibility of overwriting
-secondary media with tertiary data.</para>
-
-<para>The changer parameter should specify the name of a changer defined in
-&amconf;.  For example:
-<programlisting>
-define changer vaulting_tape {
-    tapedev "/dev/rmt/1n"
-    tpchanger "chg-zd-mtx"
-    changerdev "/dev/sg0"
-    changerfile "vaulting-changer.conf"
-}
-</programlisting></para>
-
-<para>The <option>--label-template</option> option is required, and specifies a
-label template which is used to generate new labels for tertiary volumes.
-The <option>--autolabel</option> option works just like the
-<amkeyword>autolabel</amkeyword> parameter in &amconf;, and can be
-specified multiple times if necessary.  The default is 'empty'.</para>
+<para>The <option>--dst-changer</option> must be specified, and names the
+changer in which tertiary media are stored.</para>
 
 <para>If &amconf; contains the new <amkeyword>part-size</amkeyword>
 splitting parameters, then amvault will use them without any additional configuration.
@@ -151,11 +123,124 @@ parameters there.  Then reference that tapetype in the amvault invocation:
     amvault -otapetype=TERTIARY ...
 </programlisting></para>
 
-<para>The <option>--export</option> option will cause amvault to attempt to move
-completed tertiary volumes to import/export slots, where they can be
-more easily removed by an operator.</para>
-
 </refsect2>
+
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>--autolabel</option> <arg choice='opt'>any</arg>
+                                     <arg choice='opt'>other-config</arg>
+                                     <arg choice='opt'>non-amanda</arg>
+                                     <arg choice='opt'>volume-error</arg>
+                                     <arg choice='opt'>empty</arg></term>
+  <listitem>
+<para>Works just like the
+<amkeyword>autolabel</amkeyword> parameter in &amconf;, and can be
+specified multiple times if necessary.  The default is 'empty'.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--dst-changer</option> <replaceable>dst-changer</replaceable></term>
+  <listitem>
+<para>Specifies the changer
+in which tertiary media are stored.  In general, this should be different
+from the secondary changer, to eliminate the possibility of overwriting
+secondary media with tertiary data.</para>
+
+<para>The <amkeyword>dst-changer</amkeyword> parameter should specify the name of a changer defined in
+&amconf;.  For example:
+<programlisting>
+define changer vaulting_tape {
+    tapedev "/dev/rmt/1n"
+    tpchanger "chg-zd-mtx"
+    changerdev "/dev/sg0"
+    changerfile "vaulting-changer.conf"
+}
+</programlisting></para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--dry-run</option></term><term><option>-n</option></term>
+  <listitem>
+<para>Cause amvault to print the dumps it would vault, but not actually
+perform any vaulting operations.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--export</option></term>
+  <listitem>
+<para>Cause amvault to attempt to move completed tertiary volumes to
+import/export slots, where they can be more easily removed by an operator.
+</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>---fulls-only</option></term>
+  <listitem>
+<para>Only full (level-0) dumps are copied.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--label-template</option> <replaceable>label-template</replaceable></term>
+  <listitem>
+<para>Specifies a label template which is used to generate new labels for
+tertiary volumes.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--quiet</option></term><term><option>-q</option></term>
+  <listitem>
+<para>Eliminate non-error messages, and is useful when running amvault from
+cron.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--src-timestamps</option> <replaceable>src-timestamps</replaceable></term>
+  <listitem>
+<para>Specifies the timestamps in the format 'YYYYMMDDHHMMSS' of the run to
+vault, can be "latest", then the most recent amdump or amflush run will be
+used.</para>
+  </listitem>
+  </varlistentry>
+
+ <varlistentry>
+  <term><option>-o</option> <replaceable>configoption</replaceable></term>
+  <listitem>
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>"
+ section in <manref name="amanda" vol="8"/>.</para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+
+
+</refsect1>
+
+<refsect1><title>EXAMPLES</title>
+
+<para>Vault all dump written to tape in the latest amdump or amflush run:</para>
+<programlisting>
+$ amvault --src-timestamps latest --label-template "CONF-%%%" --dst-changer vault-changer CONF
+</programlisting>
+
+<para>Vault all dump written on the run of December 7 2011 12:13:14 :</para>
+<programlisting>
+$ amvault --src-timestamps 20111207121314 --label-template "CONF-%%%" --dst-changer vault-changer CONF
+</programlisting>
+
+<para>Vault all dump dumped on any run of December 7 2011:</para>
+<programlisting>
+$ amvault --label-template "CONF-%%%" --dst-changer vault-changer CONF \* \* 20111207
+</programlisting>
 
 </refsect1>
 

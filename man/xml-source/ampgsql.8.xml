@@ -74,25 +74,78 @@ for information on application properties and how they are configured.</para>
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 <variablelist>
  <!-- ==== -->
- <varlistentry><term>DIRECTORY</term><listitem>
-For restore command only, the data is recoved in that directory. Must be a unix path.
+ <varlistentry><term>ARCHIVEDIR</term><listitem>
+<para>Directory that WAL segment files are archived to, as specified by the
+archive_command in PosgreSQL's postgresql.conf.  The amanda user on the
+client must have at least read and execute permission on this directory,
+and preferably write.  Without write permission, Amanda cannot clean up
+expired WAL and backup files.</para>
 </listitem></varlistentry>
-
+ <!-- ==== -->
+ <varlistentry><term>CLEANUPWAL</term><listitem>
+<para>Whether or not to remove old WAL segment files during base backups.
+Defaults to yes.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>DB</term><listitem>
+<para>Database to connect to. Defaults to "template1" (which exists by
+default).</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>DIRECTORY</term><listitem>
+<para>For restore command only, the data is recoved in that directory.
+Must be a unix path.</para>
+</listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>GNUTAR-PATH</term><listitem>
-Path to the GNU tar executable. This option only has an effect during restore.
-The default is set when Amanda is built by the --with-gnutar configure option.
+<para>Path to the GNU tar executable. This option only has an effect
+during restore.  The default is set when Amanda is built by the
+--with-gnutar configure option.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>HOST</term><listitem>
+<para>Host to connect to. If it starts with "/" it will be interepreted as a
+directory that holds the socket file. PostgreSQL defaults to /tmp.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>MAX-WAL-WAIT</term><listitem>
+<para>The maximum amount of time to wait for PG_STOP_BACKUP to archive a WAL
+file.  In versions of PostgreSQL before 8.2, PG_STOP_BACKUP does not
+automatically archive the latest WAL file, so a quiet database may
+wait a very long time before archiving the WAL file.  Default: 60
+seconds.  Set to 0 to wait forever.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PASSFILE</term><listitem>
+<para>Connect using the creditials in this file. Each line should have the
+format "hostname:port:database:username:password". The permissions must
+permit it to be read only by the user, or the file will not be used.
+Only usable with Postgres 8.1 and up.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PORT</term><listitem>
+<para>The TCP port to connect to, or the suffix of the socket file. PostgreSQL
+defaults to 5432.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PSQL-PATH</term><listitem>
+<para>Path to the psql binary. If not specified, the PATH environment variable
+will be searched.</para>
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>STATEDIR</term><listitem>
-Directory for saving state about backups already made. The default is set
-when Amanda is built by the --with-gnutar-listdir configure option.
+<para>Directory for saving state about backups already made. The default is set
+when Amanda is built by the --with-gnutar-listdir configure option.</para>
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>TMPDIR</term><listitem>
-Directory to use for temporary files during the backup process. It should
+<para>Directory to use for temporary files during the backup process. It should
 have enough space to store a complete copy of the database. The default is set
-when Amanda is built by the --with-tmpdir configure option.
+when Amanda is built by the --with-tmpdir configure option.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>USER</term><listitem>
+<para>User to connect as. It must be a superuser.</para>
 </listitem></varlistentry>
 
 </variablelist>
@@ -100,6 +153,9 @@ when Amanda is built by the --with-tmpdir configure option.
 </refsect1>
 
 <refsect1><title>CLIENT PROPERTIES</title>
+
+<para>Client properties are deprecated. All properties should be set in
+the dumptype.</para>
 
 <para>This section lists the <manref name="amanda-client.conf" vol="5"/> properties that control ampsql's functionality.
 If a property is prefixed with the diskname and an underscore,

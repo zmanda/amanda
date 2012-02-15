@@ -112,10 +112,9 @@ package main;
 sub usage {
     my ($msg) = @_;
     print STDERR <<EOF;
-Usage: amfetchdump config [-c|-C|-l] [-p|-n] [-a]
-    [-O directory] [-d device] [-o configoption]*
-    [--header-file file] [--header-fd fd]
-    hostname [diskname [datestamp [hostname [diskname [datestamp ... ]]]]]"));
+Usage: amfetchdump [-c|-C|-l] [-p|-n] [-a] [-O directory] [-d device]
+    [-h] [--header-file file] [--header-fd fd] [-o configoption]* config
+    hostname [diskname [datestamp [hostname [diskname [datestamp ... ]]]]]
 EOF
     print STDERR "ERROR: $msg\n" if $msg;
     exit(1);
@@ -131,6 +130,8 @@ my $config_overrides = new_config_overrides($#ARGV+1);
 my ($opt_config, $opt_no_reassembly, $opt_compress, $opt_compress_best, $opt_pipe,
     $opt_assume, $opt_leave, $opt_blocksize, $opt_device, $opt_chdir, $opt_header,
     $opt_header_file, $opt_header_fd, @opt_dumpspecs);
+
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
     'version' => \&Amanda::Util::version_opt,

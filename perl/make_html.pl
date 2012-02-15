@@ -28,6 +28,18 @@ my ($targetdir, @sources) = @ARGV;
 @sources = sort @sources;
 
 my $version = "@VERSION@";
+my $version_comment = @VERSION_COMMENT@;
+my $version_major = "@VERSION_MAJOR@";
+my $version_minor = "@VERSION_MINOR@";
+my $version_patch = "@VERSION_PATCH@";
+my $pod_path;
+if ($version =~ /alpha/ or $version =~ /beta/) {
+    $pod_path = "/pod/beta";
+} elsif ($version_comment eq "") {
+    $pod_path = "/pod/$version_major.$version_minor.$version_patch";
+} else {
+    $pod_path = "/pod/$version_major.$version_minor";
+}
 
 my %dirs = ( '' => 1 );
 my ($dir, $pm);
@@ -99,8 +111,8 @@ specific to the version of Amanda on your system, use the 'perldoc' command.
 FOOTER
     close ($fh);
 
-    pod2html("--podpath=.",
-	    "--htmlroot=/pod",
+    pod2html("--podpath=Amanda",
+	    "--htmlroot=$pod_path",
 	    "--infile=$tmp",
 	    "--css=/pod/amperl.css",
 	    "--noindex",

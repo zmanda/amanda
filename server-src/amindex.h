@@ -36,6 +36,7 @@
 #include "conffile.h"
 
 char *getindexfname(char *host, char *disk, char *date, int level);
+char *getheaderfname(char *host, char *disk, char *date, int level);
 char *getoldindexfname(char *host, char *disk, char *date, int level);
 
 #endif /* AMINDEX_H */

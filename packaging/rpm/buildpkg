@@ -27,6 +27,9 @@ if [ -z $AMVER ]; then
     AMVER=amanda-${VER}
 fi
 
+# Until we get package revisioning in community.
+[ -f "PKG_REV" ] || echo "1" > PKG_REV
+
 # Substitute amanda.spec.src
 /usr/bin/perl packaging/common/substitute.pl \
     packaging/rpm/amanda.spec.src packaging/rpm/amanda.spec

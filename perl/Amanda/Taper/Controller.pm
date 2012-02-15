@@ -104,7 +104,7 @@ sub start {
 	} else {
 	    $msg = $params{'error'};
 	}
-	log_add($L_ERROR, $msg);
+	log_add($L_ERROR, "$msg");
 	print STDERR "$msg\n";
 	$self->{'proto'}->send(Amanda::Taper::Protocol::BAD_COMMAND,
 	    message => $msg);
@@ -263,6 +263,14 @@ sub msg_FAILED {
 
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->FAILED(@_);
+}
+
+sub msg_CLOSE_VOLUME {
+    my $self = shift;
+    my ($msgtype, %params) = @_;
+
+    my $worker = $self->{'worker'}->{$params{'worker_name'}};
+    $worker->CLOSE_VOLUME(@_);
 }
 
 sub msg_TAKE_SCRIBE_FROM {

@@ -28,15 +28,18 @@ use IPC::Open3;
 use Amanda::Util qw( :constants );
 use Amanda::Config qw( :init :getconf );
 use Amanda::Paths;
-use Amanda::Logfile qw( log_rename get_current_log_timestamp $amanda_log_trace_log );
+use Amanda::Util qw ( match_disk );
 use Amanda::Debug qw( debug );
 
 Amanda::Util::setup_application("amdump_client", "client", $CONTEXT_CMDLINE);
 
 my $config;
 my $config_overrides = new_config_overrides($#ARGV+1);
+
+debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
+    'version' => \&Amanda::Util::version_opt,
     'config=s' => sub { $config = $_[1]; },
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
 ) or usage();
@@ -94,7 +97,7 @@ if ($cmd eq 'list') {
         #find the diskname that match
 	for (my $i=1; $i <= $#ARGV; $i++) {
 	    for my $diskname (@disks) {
-		if (Amanda::Logfile::match_disk($ARGV[$i], $diskname)) {
+		if (match_disk($ARGV[$i], $diskname)) {
 		    debug("send: DISK " . Amanda::Util::quote_string($diskname));
 		    print {$amservice_in} "DISK " . Amanda::Util::quote_string($diskname) . "\n";
 		    my $a = <$amservice_out>;
@@ -117,7 +120,7 @@ if ($cmd eq 'list') {
         #find the diskname that match
 	for (my $i=1; $i <= $#ARGV; $i++) {
 	    for my $diskname (@disks) {
-		if (Amanda::Logfile::match_disk($ARGV[$i], $diskname)) {
+		if (match_disk($ARGV[$i], $diskname)) {
 		    debug("send: DISK " . Amanda::Util::quote_string($diskname));
 		    print {$amservice_in} "DISK " . Amanda::Util::quote_string($diskname) . "\n";
 		    my $a = <$amservice_out>;

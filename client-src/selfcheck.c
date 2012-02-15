@@ -78,6 +78,7 @@ static void check_disk(dle_t *dle);
 static void check_overall(void);
 static int check_file_exist(char *filename);
 static void check_space(char *dir, off_t kbytes);
+static void print_platform(void);
 
 int
 main(
@@ -95,6 +96,11 @@ main(
     int level;
     GSList *errlist;
     level_t *alevel;
+
+    if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
+	printf("selfcheck-%s\n", VERSION);
+	return (0);
+    }
 
     /* initialize */
 
@@ -121,6 +127,8 @@ main(
     dbopen(DBG_SUBDIR_CLIENT);
     startclock();
     dbprintf(_("version %s\n"), VERSION);
+    g_printf("OK version %s\n", VERSION);
+    print_platform();
 
     if(argc > 2 && strcmp(argv[1], "amandad") == 0) {
 	amandad_auth = stralloc(argv[2]);
@@ -611,6 +619,7 @@ check_disk(
 #endif
 				     "-c", "quit",
 				     NULL);
+		checkpid = checkpid;
 		amfree(domain);
 		aclose(nullfd);
 		/*@ignore@*/
@@ -921,8 +930,8 @@ check_disk(
 	    access_type = "access";
 #endif
 	    if(access_result == -1) {
-		err = vstrallocf(_("Could not access %s (%s): %s"),
-				 qdevice, qdisk, strerror(errno));
+		err = vstrallocf(_("Could not %s %s (%s): %s"),
+				 access_type, qdevice, qdisk, strerror(errno));
 	    }
 #ifdef CHECK_FOR_ACCESS_WITH_OPEN
 	    aclose(access_result);
@@ -1209,3 +1218,85 @@ check_file_exist(
     return 1;
 }
 
+static void
+print_platform(void)
+{
+    struct stat stat_buf;
+    char *uname;
+    char *distro = NULL;
+    char *platform = NULL;
+    char  line[1025];
+    GPtrArray *argv_ptr;
+
+    if (stat("/etc/lsb-release", &stat_buf) == 0) {
+	FILE *release = fopen("/etc/lsb-release", "r");
+	distro = "Ubuntu";
+	if (release) {
+	    char *result;
+	    while ((result = fgets(line, 1024, release))) {
+		if (strstr(line, "DESCRIPTION")) {
+		    platform = strchr(line, '=');
+		    if (platform) platform++;
+		}
+	    }
+	    fclose(release);
+	}
+    } else if (stat("/etc/redhat-release", &stat_buf) == 0) {
+	FILE *release = fopen("/etc/redhat-release", "r");
+	distro = "RPM";
+	if (release) {
+	    char *result;
+	    result = fgets(line, 1024, release);
+	    if (result) {
+		platform = line;
+	    }
+	    fclose(release);
+	}
+    } else if (stat("/etc/debian_version", &stat_buf) == 0) {
+	FILE *release = fopen("/etc/debian_version", "r");
+	distro = "Debian";
+	if (release) {
+	    char *result;
+	    result = fgets(line, 1024, release);
+	    if (result) {
+		platform = line;
+	    }
+	    fclose(release);
+	}
+    } else {
+	argv_ptr = g_ptr_array_new();
+
+	g_ptr_array_add(argv_ptr, UNAME_PATH);
+	g_ptr_array_add(argv_ptr, "-s");
+	g_ptr_array_add(argv_ptr, NULL);
+	uname = get_first_line(argv_ptr);
+	if (uname) {
+	    if (strncmp(uname, "SunOS", 5) == 0) {
+		FILE *release = fopen("/etc/release", "r");
+		distro = "Solaris";
+		if (release) {
+		    char *result;
+		    result = fgets(line, 1024, release);
+		    if (result) {
+			platform = line;
+		    }
+		}
+		fclose(release);
+	    }
+	    amfree(uname);
+	}
+	g_ptr_array_free(argv_ptr, TRUE);
+    }
+
+    if (!distro) {
+	distro = "Unknown";
+    }
+    if (!platform) {
+	platform = "Unknown";
+    }
+    if (platform[strlen(platform) -1] == '\n') {
+	platform[strlen(platform) -1] = '\0';
+    }
+    g_fprintf(stdout, "OK distro %s\n", distro);
+    g_fprintf(stdout, "OK platform %s\n", platform);
+}

@@ -1628,8 +1628,12 @@ ndmp_device_set_read_block_size_fn(Device *p_self, DevicePropertyBase *base G_GN
 
     if (read_block_size != 0 &&
 	    ((gsize)read_block_size < p_self->block_size ||
-	     (gsize)read_block_size > p_self->max_block_size))
+	     (gsize)read_block_size > p_self->max_block_size)) {
+	device_set_error(p_self,
+	    g_strdup_printf("Error setting READ-BLOCk-SIZE property to '%zu', it must be between %zu and %zu", read_block_size, p_self->block_size, p_self->max_block_size),
+	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
+    }
 
     self->read_block_size = read_block_size;
 
@@ -1816,10 +1820,8 @@ ndmp_device_factory(
     char *device_node)
 {
     Device *rval;
-    NdmpDevice * ndmp_rval;
     g_assert(0 == strcmp(device_type, NDMP_DEVICE_NAME));
     rval = DEVICE(g_object_new(TYPE_NDMP_DEVICE, NULL));
-    ndmp_rval = (NdmpDevice *)rval;
 
     device_open_device(rval, device_name, device_type, device_node);
     return rval;
