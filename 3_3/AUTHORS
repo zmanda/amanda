@@ -1,0 +1,120 @@
+This file lists all known contributors of significant changes to Amanda.  Many
+of the contributors listed here are no longer active.  Please do not contact
+anyone on this list directly with questions about Amanda; instead, post to the
+Amanda Users mailing list: amanda-users@amanda.org
+
+James da Silva <jds@cs.umd.edu>
+    Hacker Emeritus
+    Contributions made under the UMD license
+
+Mike Grupenhoff <kashmir@munge.com>
+    Ex-UMIACS hacker
+    Contributions made under the UMD license
+
+Todd Kover <kovert@omniscient.com>
+    Mailing eist maintainer
+    Ex-UMIACS hacker, developer and supporter
+    Contributions made under the UMD license
+
+James Mathiesen <James-Mathiesen@deshaw.com>
+    Numerous bug fixes
+    Contributions made under the UMD license
+
+Alan McIvor <a.mcivor@irl.cri.nz>
+    Developer of amindex and various bug fixes
+    Contributions made under the UMD license
+
+George Scott <George.Scott@cc.monash.edu.au>
+    Developer during 2.4.0 release cycle
+    Contributions made under the UMD license
+
+Alexandre Oliva <oliva@lsd.ic.unicamp.br>
+    Long-time developer
+    Contributions made under the UMD license
+
+Blair Zajac <blair@gps.caltech.edu>
+    De-facto maintainer between release 2.3.0 and the creation of the Amanda
+    Development Team, at some point after release 2.3.0.4.
+    Contributions made under the UMD license
+
+Curtis Varner <cvarner@cs.ucr.edu>
+    Feature development and bug fixes
+    Contributions made under the UMD license
+
+John R. Jackson <jrj@gandalf.cc.purdue.edu>
+    Security fixes, feature development
+    Contributions made under the UMD license
+
+Jean-Louis Martineau <martineau@zmanda.com>
+    New features, bug fixes, and current maintainer
+    Application API
+    Contributions made under GPLv2
+
+Thomas Hepper <th@ant.han.de>:
+    Original Changer API
+    Contributions made under the UMD license
+
+Jon LaBadie <jon@jgcomp.com>
+    Active supporter
+    Contributions made under the UMD license
+
+Stefan G. Weichinger <monitor@oops.co.at>
+    Documentation author and compiler
+    Contributions made under the UMD license
+
+John Franks <jrfranks@zmanda.com>
+    Contributions made under GPLv2
+
+Paddy Sreenivasan <paddy@zmanda.com>
+    Contributions made under GPLv2
+
+Kevin Till <kevin.till@zmanda.com>
+    Contributions made under GPLv2
+
+Ian Turner <ian@zmanda.com>
+    Device API
+    Contributions made under GPLv2
+
+Dustin J. Mitchell <dustin@mozilla.com>
+    Device API, Changer API, Xfer Architecture, and Perl rewrite
+    Contributions before Oct 18, 2010 made under GPLv2
+    Contributions after Oct 18, 2010 made under the UMD license
+
+Nikolas Coukouma <atrus@zmanda.com>
+    S3 Device
+    Contributions made under GPLv2
+
+John Hein <jhein@timing.com>
+    Contributions made under the UMD license
+
+Nick Smith <nick.smith@techop.ch>
+    Patches to ZFS applications and scripts
+    Contributions made under the UMD license
+
+Satya Ganga <gsat@zmanda.com>
+    Contributions made under GPLv2
+
+Alan Hodgson <ahodgson@simkin.ca>
+    Contributions made under the UMD license
+
+Ben Slusky <sluskyb@paranoiacs.org>
+    amcrypt-ossl.sh and amcrypt-ossl-asym.sh
+    Contributions made under the UMD license
+
+Sam Couter <sam@couter.id.au>
+    DVD-RW device
+    Contributions made under the UMD license
+
+Orion Poplawski <orion@cora.nwra.com>
+    amoverview, perl report fixes
+    Contributions made under GPLv2
+
+Stephen Gelman <ssgelm@gmail.com>
+    Nexenta support and patches
+    Contributions made under GPLv2
+
+Nikhil Bhupale <nikhilb@zmanda.com>
+    Contributions made under GPLv2
+
+Francis Galiegue <fgaliegue@gmail.com>
+    Contributions made under GPLv2

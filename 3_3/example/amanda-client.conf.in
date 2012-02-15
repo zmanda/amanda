@@ -1,0 +1,24 @@
+#
+# amanda-client.conf - sample Amanda client configuration file.
+#
+# This file normally goes in @CONFIG_DIR@/amanda-client.conf.
+#
+
+conf "@DEFAULT_CONFIG@"		# your config name
+
+index_server "@DEFAULT_SERVER@"	# your amindexd server
+tape_server  "@DEFAULT_TAPE_SERVER@"	# your amidxtaped server
+tapedev      "@EXAMPLE_TAPEDEV@"	# your tape device
+			# if not set, Use configure or ask server.
+			# if set to empty string "", ask server
+			# amrecover will use the changer if set to the value
+			# of 'amrecover_changer' in the server amanda.conf.
+
+#   auth	- authentication scheme to use between server and client.
+#		  Valid values are "bsd", "bsdudp", "bsdtcp", "krb5", "local",
+#		  "rsh" and "ssh".  
+#		  Default: [auth "bsdtcp"]
+auth "bsdtcp"
+
+ssh_keys ""			# your ssh keys file if you use ssh auth
+

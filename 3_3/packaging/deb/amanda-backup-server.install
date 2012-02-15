@@ -1,0 +1,13 @@
+usr/lib/amanda/* 
+usr/lib/amanda/application/*
+usr/libexec/amanda/*
+usr/libexec/amanda/application/*
+usr/sbin/*
+usr/share/man/man5/*
+usr/share/man/man7/*
+usr/share/man/man8/*
+var/lib/amanda/*
+var/lib/amanda/gnutar-lists/*
+var/lib/amanda/example/*
+var/lib/amanda/example/label-templates/*
+var/log/amanda/*

@@ -1,0 +1,6 @@
+i pkginfo=./pkginfo
+i depend=./depend
+i preinstall=./preinstall
+i postinstall=./postinstall
+i postrm=./postremove
+i copyright=./copyright

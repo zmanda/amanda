@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amgetconf.8'>
+
+<refmeta>
+<refentrytitle>amgetconf</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amgetconf</refname>
+<refpurpose>look up configuration parameters and manipulate debug logs</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jlm;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amgetconf</command>    
+    <arg choice='opt'><replaceable>-l|--list</replaceable></arg>
+    <arg choice='opt'><replaceable>--client</replaceable></arg>
+    <arg choice='opt'><replaceable>--execute-where client|server</replaceable></arg>
+    &configoverride.synopsis;
+    <arg choice='opt'><replaceable>config</replaceable></arg>
+    <arg choice='plain'><replaceable>parameter</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>DESCRIPTION</title>
+
+<para><emphasis remap='B'>Amgetconf</emphasis> has three main jobs:
+<!-- itemizedlist doesn't work in translation to a manpage.. --> to
+fetch configuration information from the Amanda configuration; to fetch
+build-time configuration values; and to open and close debug logs for
+shell scripts.  Each is treated in its own subsection, below.</para>
+
+<para>If <emphasis remap='I'>config</emphasis> is not
+specified, <command>amgetconf</command> assumes it is
+being run from the configuration directory and that <emphasis
+remap='I'>amanda.conf</emphasis> is present. The order of options and
+arguments does not matter.  <emphasis remap='I'>parameter</emphasis>
+is always case-insensitive, and '-' and '_' are treated as identical, just
+as in <manref name="amanda.conf" vol="5"/>.</para>
+
+<para>See the "<emphasis
+remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in
+<manref name="amanda" vol="8"/>
+for information on the <literal>-o</literal> option.</para>
+
+<refsect2><title>AMANDA CONFIGURATION</title>
+
+<para>If <emphasis remap='I'>parameter</emphasis> is a configuration
+keyword (from <manref name="amanda.conf" vol="5"/>), then amgetconf will return
+the corresponding value.  For keywords which can take multiple values,
+amgetconf will return all values, one on each line.</para>
+
+<para>Values in configuration subsections are specified with
+parameters of the form <literal>TYPE:NAME:PARAMETER</literal>,
+where <literal>TYPE</literal> is the subsection type (one
+of <literal>dumptype</literal>, <literal>tapetype</literal>,
+<literal>interface</literal>, <literal>holdingdisk</literal>,
+<literal>application-tool</literal>, or <literal>script-tool</literal>;
+<literal>NAME</literal> is the name of the subsection (e.g.,
+<literal>user-tar</literal>), and <literal>PARAMETER</literal> is
+the name of the disired parameter within that subsection.</para>
+
+<para>The <literal>--list</literal> option lists the subsections of
+a certain type, where the type is givein as the parameter.</para>
+
+<para>The <literal>--client</literal> option is equivalent to 
+<literal>--execute-where server</literal> (below).</para>
+
+<para>The <literal>--execute-where</literal> option tells amgetconf whether
+to operate on the client or the server; the server is the default.</para>
+
+</refsect2>
+
+<refsect2><title>BUILD CONFIGURATION</title>
+
+<para>If <emphasis remap='I'>parameter</emphasis> begins
+with <literal>build.</literal>, then the following name is a
+build environment variable.  Variables without a value (e.g.
+<literal>XFSDUMP</literal> on a system that does not support that
+type of file system) will not report an error and will return an
+empty string as the value.  Some boolean variables (e.g.  <emphasis
+remap='I'>USE_AMANDAHOSTS</emphasis>) will return <literal>1</literal>
+if the flag is set or an empty string if it is not, while others
+return <literal>yes</literal> or <literal>no</literal>, as indicated
+below (the difference is historical).</para>
+
+<para>Combining the <literal>--list</literal> option with the parameter
+<literal>build</literal> will enumerate all available build parameters.</para>
+
+<variablelist><title>Build Parameters</title>
+ <varlistentry><term><literal>bindir</literal></term>
+               <term><literal>sbindir</literal></term>
+               <term><literal>libexecdir</literal></term>
+               <term><literal>mandir</literal></term>
+  <listitem><para>Install directories</para></listitem>
+ </varlistentry>
+
+ <varlistentry><term><literal>AMANDA_TMPDIR</literal></term>
+               <term><literal>CONFIG_DIR</literal></term>
+               <term><literal>AMANDA_DBGDIR</literal></term>
+               <term><literal>GNUTAR_LISTED_INCREMENTAL_DIR</literal></term>
+  <listitem><para>Runtime directories</para></listitem>
+ </varlistentry>
+ <varlistentry><term><literal>listed_inc_dir</literal></term>
+  <listitem><para>Same as <literal>GNUTAR_LISTED_INCREMENTAL_DIR</literal></para></listitem>
+ </varlistentry>
+
+ <varlistentry><term><literal>CC</literal></term>
+               <term><literal>VERSION</literal></term>
+               <term><literal>ASSERTIONS</literal></term>
+               <term><literal>LOCKING</literal></term>
+
+  <listitem><para>Build information.  <literal>ASSERTIONS</literal>
+  is 1 or empty.</para></listitem>
+ </varlistentry>
+
+ <varlistentry><term><literal>DUMP</literal></term>
+               <term><literal>RESTORE</literal></term>
+               <term><literal>VDUMP</literal></term>
+               <term><literal>VRESTORE</literal></term>
+               <term><literal>XFSDUMP</literal></term>
+               <term><literal>XFSRESTORE</literal></term>
+               <term><literal>VXDUMP</literal></term>
+               <term><literal>VXRESTORE</literal></term>
+               <term><literal>SAMBA_CLIENT</literal></term>
+               <term><literal>GNUTAR</literal></term>
+               <term><literal>STAR</literal></term>
+               <term><literal>COMPRESS_PATH</literal></term>
+               <term><literal>UNCOMPRESS_PATH</literal></term>
+  <listitem><para>Paths to various utility progarms (empty if they
+  are not found or not used)</para></listitem>
+ </varlistentry>
+
+ <varlistentry><term><literal>AIX_BACKUP</literal></term>
+  <listitem><para>Is <literal>DUMP</literal> the AIX backup program? (empty or 1)</para></listitem>
+ </varlistentry>
+
+ <varlistentry><term><literal>DUMP_RETURNS_1</literal></term>
+  <listitem><para>Does <literal>DUMP</literal> return 1 on success? (empty or 1)</para></listitem>
+ </varlistentry>
+
+ <varlistentry><term><literal>BSD_SECURITY</literal></term>
+               <term><literal>BSDUDP_SECURITY</literal></term>
+               <term><literal>BSDTCP_SECURITY</literal></term>
+               <term><literal>KRB5_SECURITY</literal></term>
+               <term><literal>SSH_SECURITY</literal></term>
+               <term><literal>RSH_SECURITY</literal></term>
+  <listitem><para>Indicate which authentication mechanisms are
+  available (yes or no).</para></listitem>
+ </varlistentry>
+
+ <varlistentry><term><literal>USE_AMANDAHOSTS</literal></term>
+  <listitem><para>Should the "bsd" authentication mechanism use
+  <filename>amandahosts</filename>?  (yes or no).</para></listitem>
+ </varlistentry>
+
+ <varlistentry><term><literal>AMANDA_DEBUG_DAYS</literal></term>
+  <listitem><para>Number of days after which debug logs are deleted.</para></listitem>
+ </varlistentry>
+
+ <varlistentry><term><literal>DEFAULT_SERVER</literal></term>
+               <term><literal>DEFAULT_CONFIG</literal></term>
+               <term><literal>DEFAULT_TAPE_SERVER</literal></term>
+               <term><literal>DEFAULT_TAPE_DEVICE</literal></term>
+  <listitem><para>Default values for configuration parameters</para></listitem>
+ </varlistentry>
+
+ <varlistentry><term><literal>CLIENT_LOGIN</literal></term>
+  <listitem><para>Userid under which the client runs (from
+  <literal>--with-user</literal>).</para></listitem>
+ </varlistentry>
+
+ <varlistentry><term><literal>USE_RUNDUMP</literal></term>
+  <listitem><para>Should Amanda use the <literal>rundump</literal>
+  wrapper? (empty or 1)</para></listitem>
+ </varlistentry>
+
+ <varlistentry><term><literal>CHECK_USERID</literal></term>
+  <listitem><para>Does Amanda check that userids are correct? (empty or 1)</para></listitem>
+ </varlistentry>
+
+ <varlistentry><term><literal>COMPRESS_SUFFIX</literal></term>
+               <term><literal>COMPRESS_FAST_OPT</literal></term>
+               <term><literal>COMPRESS_BEST_OPT</literal></term>
+               <term><literal>UNCOMPRESS_OPT</literal></term>
+  <listitem><para>Command-line options for the compression program.</para></listitem>
+ </varlistentry>
+
+ <varlistentry><term><literal>TICKET_LIFETIME</literal></term>
+               <term><literal>SERVER_HOST_PRINCIPAL</literal></term>
+               <term><literal>SERVER_HOST_INSTANCE</literal></term>
+               <term><literal>SERVER_HOST_KEY_FILE</literal></term>
+               <term><literal>CLIENT_HOST_PRINCIPAL</literal></term>
+               <term><literal>CLIENT_HOST_INSTANCE</literal></term>
+               <term><literal>CLIENT_HOST_KEY_FILE</literal></term>
+  <listitem><para>Kerberos parameters.</para></listitem>
+ </varlistentry>
+</variablelist>
+
+</refsect2>
+
+<refsect2><title>DEBUG LOG MANAGEMENT</title>
+
+<note>That this application is responsible for debug logs is a
+historical quirk, but the functionality is widely used.
+</note>
+
+<para>If <emphasis remap='I'>parameter</emphasis> begins with <emphasis
+remap='I'>dbopen.</emphasis>, the string following the period is a
+program name and an Amanda debug file will be created for the caller.
+The name of the logfile is returned.</para>
+
+<para>If <emphasis remap='I'>parameter</emphasis> begins with
+<emphasis remap='I'>dbclose.</emphasis>, the string following
+the period is a program name previously used with <emphasis
+remap='I'>dbopen.</emphasis>, followed by a colon (:) and
+the previously opened file name.  The name of the logfile is
+returned.</para>
+
+</refsect2>
+</refsect1>
+
+
+<refsect1><title>EXAMPLES</title>
+<para>Find out the path to the log file directory:</para>
+
+<programlisting remap='.nf'>
+% amgetconf daily logdir
+/usr/local/etc/amanda/daily/logs
+</programlisting>
+
+<para>Find out the current tape type:</para>
+<programlisting remap='.nf'>
+% amgetconf daily tapetype
+DLT4000-IV
+</programlisting>
+
+<para>Find out that tape type's length:</para>
+<programlisting remap='.nf'>
+% amgetconf daily tapetype:DLT4000-IV:length
+1024000
+</programlisting>
+
+<para>List the other available tapetype:</para>
+<programlisting remap='.nf'>
+% amgetconf daily --list tapetype
+DISK
+QIC-60
+DEC-DLT2000
+...
+</programlisting>
+
+<para>Find out the configuration directory:</para>
+<programlisting remap='.nf'>
+% amgetconf build.CONFIG_DIR
+/usr/local/etc/amanda/
+</programlisting>
+
+<para>List all build-time parameters</para>
+<programlisting remap='.nf'>
+% amgetconf --list build
+AIX_BACKUP
+AMANDA_DBGDIR
+AMANDA_DEBUG_DAYS
+...
+</programlisting>
+
+<para>Create, use and close a debug file in a script:</para>
+<programlisting remap='.nf'>
+% debug_file=`amgetconf daily dbopen.myscript`
+% echo debug information &gt;&gt; $debug_file
+% amgetconf daily dbclose.myscript:$debug_file
+</programlisting>
+</refsect1>
+
+<refsect1><title>MESSAGES</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>amgetconf: no such parameter <emphasis remap='I'>param</emphasis></term>
+
+  <listitem><para>Parameter <emphasis remap='I'>param</emphasis>
+  is not a known keyword (e.g. not a valid <emphasis
+  remap='I'>amanda.conf</emphasis> keyword).</para></listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-client.conf" vol="5"/>
+</seealso>
+
+</refentry>

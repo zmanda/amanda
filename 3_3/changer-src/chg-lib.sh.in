@@ -1,0 +1,136 @@
+################################################################################
+# You may want to customize these values
+################################################################################
+
+# These are the defaults discovered by configure when Amanda was installed.
+# They can be overridden here, or by by 'mt_binary' and 'mtx_binary', 
+# respectively, in the changerfile (currently only for chg-zd-mtx.sh and
+# chg-manual.sh).
+
+MT=@MT@
+MTX=@MTX@
+
+# This is the flag used to specify a device filename to 'mt', usually '-f'
+MTF=@MT_FILE_FLAG@
+
+################################################################################
+# No user-level customization should be required beyond this point.
+################################################################################
+
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+sbindir="@sbindir@"
+libexecdir="@libexecdir@"
+amlibexecdir="@amlibexecdir@"
+. "${amlibexecdir}/amanda-sh-lib.sh"
+
+####
+# Eponymous functions to access various amanda apps
+# TODO: move to amanda-sh-lib.sh
+
+amgetconf() {
+    "${sbindir}/amgetconf" "${@}"
+}
+amdevcheck() {
+    "${sbindir}/amdevcheck" "${@}"
+}
+
+# This function tries to find a useable mt binary. If a fully-qualified path
+# was provided at configure time or via a config file, we check that it
+# exists and is executable. If an incomplete path was specified (e.g., "mt"),
+# we ask the shell to search the path. Returns 0 on success, 1 on failure.
+
+try_find_mt() {
+    # Only do this once.
+    if test -n $mt_found; then
+        return 0
+    fi
+
+    if test -z $MT; then
+        MT=mt
+    fi
+
+    if "`echo $MT | dd bs=1 count=1`" = "/"; then
+        if ! test -f "${MT}"; then
+            echo `_ "mt binary at '%s' not found" "$MTX"`
+            return 1
+        fi
+        if ! test -x "${MT}"; then
+            echo `_ "mt binary at '%s' is not executable" "$MTX"`
+            return 1
+        fi
+    else
+        # try running it to see if the shell can find it
+        "$MT" >/dev/null 2>/dev/null
+        if test $? -eq 127 -o $? -eq 126; then
+            echo `_ "Could not run mt binary at '%s'" "$MTX"`
+            return 1
+        fi
+    fi
+
+    mt_found=yes
+    return 0
+}
+
+# This function strips the tape: from the front of device names.
+# Capture its output with ``.
+tape_device_filename() {
+    if echo "$1"|grep '^tape:' >/dev/null; then
+	echo "$1" | sed 's/^tape://'
+    else
+	if echo "$1"|grep '^/' >/dev/null; then
+	    echo "$1"
+	fi
+    fi
+}
+
+# Invoke amdevcheck to determine whether the device is ready for use.
+#
+# @return 0 if a tape is loaded or error
+# @return 1 if a tape is tape offline or busy
+#
+# @side-effect: $amdevcheck_message is the contents of all MESSAGE lines from
+#               amdevcheck, suitable for use in higher-level error messages
+amdevcheck_status() {
+    amdevcheck_message=
+    local amdevcheck_output=`amdevcheck . $@`
+    local amdevcheck_status=$?
+
+    test "$amdevcheck_status" -ne 0 && return 0
+
+    # extract any messages
+    amdevcheck_message=`echo "$amdevcheck_output" | sed -n -e '/^MESSAGE /{' -e 's/^MESSAGE //' -e 'p' -e 'q' -e '}'`
+
+    # Return 1 if it's possible that the device is offline or busy; if the device cannot
+    # distinguish this state from an error condition, then our caller will just have to
+    # time out
+    if echo "$amdevcheck_output" | $EGREP "VOLUME_MISSING|DEVICE_BUSY" > /dev/null; then
+	return 1
+    else
+	return 0
+    fi
+}
+
+# This attempts to eject a device using whatever system tools are available.
+# At the moment, that means mt for tapes, and nothing otherwise, but might
+# be extended at some later time.
+
+try_eject_device() {
+    if echo "$1" | grep '^tape:' > /dev/null; then
+        try_eject_device_tape="`echo \"$1\" | cut -b6-`"
+    elif echo "$1" | grep -v : > /dev/null; then
+        try_eject_device_tape="$1"
+    else
+        try_eject_device_tape=
+    fi
+
+    if test -n "$try_eject_device_tape"; then
+        if try_find_mt; then
+            $MT $MTF "$try_eject_device_tape" offline
+        fi
+    else
+        # Technically we failed to eject the device, but we presume that's
+        # because it doesn't require ejection.
+        return 0
+    fi
+}

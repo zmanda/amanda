@@ -1,0 +1,631 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amrecover.8'>
+
+<!-- P1 listing suppressed (not used) -->
+<refmeta>
+<refentrytitle>amrecover</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amrecover</refname>
+<refpurpose>Amanda index database browser</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.alan;
+&author.sgw.xml;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amrecover</command>    
+    <arg choice='opt'>-s <replaceable>index-server</replaceable></arg>
+    <arg choice='opt'>-t <replaceable>tape-server</replaceable></arg>
+    <arg choice='opt'>-d <replaceable>tape-device</replaceable></arg>
+    <arg choice='opt'>-h <replaceable>hostname</replaceable></arg>
+    &configoverride.synopsis;
+    <arg choice='opt'>-C <replaceable>config</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amrecover</emphasis>
+browses the database of Amanda index files to determine which tapes
+contain files to recover.  Furthermore, it is able to recover files.</para>
+
+<para>In order to restore files in place, you must invoke
+<command>amrecover</command>
+from the root of the backed up filesystem, or use
+<emphasis remap='B'>lcd</emphasis>
+to move into that directory, otherwise a directory tree that resembles 
+the backed up filesystem will be created in the current directory.
+See the examples below for details.</para>
+
+<para>Amrecover will read the <emphasis remap='B'>amanda-client.conf</emphasis> file and the <replaceable>config</replaceable><emphasis remap='B'>/amanda-client.conf</emphasis> file.  If no configuration name is supplied on the command line, Amrecover will try the compiled-in default configuration ,usually <emphasis remap='B'>DailySet1</emphasis>.</para>
+
+<para>See the
+<manref name="amanda" vol="8"/>
+man page for more details about Amanda.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<note><para>The Default values are those set at compile-time.
+Use <command>amrestore</command> to recover client-encrypted or
+client-custom-compressed tapes.</para>
+</note>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>[ -C ] config</emphasis></term>
+  <listitem>
+<para>Amanda configuration.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s index-server</option></term>
+  <listitem>
+<para>Host that runs the index daemon.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-t tape-server</option></term>
+  <listitem>
+<para>Host that runs the tape server daemon.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-d tape-device</option></term>
+  <listitem>
+<para>Tape device to use on the tape server host.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-h hostname</option></term>
+  <listitem>
+<para>Hostname to begin restoring; defaults to the system's hostname.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>-o</emphasis> <replaceable>clientconfigoption</replaceable></term>
+  <listitem>
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>"
+ section in <manref name="amanda" vol="8"/>.</para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>AUTH</title>
+<para>The default <emphasis remap='B'>auth</emphasis> is 'BSDTCP', you can set
+a different auth in the <emphasis remap='B'>amanda-client.conf</emphasis> file
+or by specifying the '-oauth=bsd' command line argument.</para>
+</refsect1>
+
+<refsect1><title>COMMANDS</title>
+<para><emphasis remap='B'>Amrecover</emphasis>
+connects to the index server and then presents a command line prompt.
+Usage is similar to an ftp client.
+The GNU readline library is used to provide command line history and editing
+if it was built in to
+<command>amrecover</command>.</para>
+
+<para>The purpose of browsing the database is to build up a
+<emphasis remap='I'>restore list</emphasis>
+of files to be extracted from the backup system.
+The following commands are available:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>sethost hostname</emphasis></term>
+  <listitem>
+<para>Specifies which host to look at backup files for (default: the local host).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>setdate YYYY-MM-DD-HH-MM[-SS] | YYYY-MM-DD</emphasis></term>
+  <listitem>
+<para>Set the restore time (default: now).
+File listing commands only return information on
+backup images for this day,
+for the day before with the next lower dump level,
+and so on,
+until the most recent level 0 backup on or before
+the specified date is encountered.</para>
+
+<para>For example, if:</para>
+
+<!-- .RS -->
+<literallayout remap='.nf'>
+1996-07-01 was a level 0 backup
+1996-07-02 through 1996-07-05 were level 1 backups
+1996-07-06 through 1997-07-08 were level 2 backups
+</literallayout> <!-- .fi -->
+
+<para>then the command <emphasis remap='B'>setdate 1997-07-08-00</emphasis>
+would yield files from the following days:</para>
+
+<!-- .RS -->
+<literallayout remap='.nf'>
+1997-07-08 (the latest level 2 backup)
+1997-07-05 (the latest level 1 backup)
+1997-07-01 (the latest level 0 backup)
+</literallayout> <!-- .fi -->
+
+<para>Only the most recent version of a file will be presented.</para>
+
+<para>The following abbreviated date specifications are accepted:</para>
+<!-- .RS -->
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>--MM-DD</option></term>
+  <listitem>
+<para>dates in the current year</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>---DD</option></term>
+  <listitem>
+<para>dates in the current month of the current year</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+  </listitem>
+  </varlistentry>
+</variablelist>
+<!-- .RE -->
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>setdisk</emphasis> <emphasis remap='I'>diskname</emphasis> [<emphasis remap='I'>mountpoint</emphasis>]</term>
+  <listitem>
+<para>Specifies which disk to consider
+(default: the disk holding the working directory where
+<command>amrecover</command>
+is started).
+It can only be set after the host is set with
+<emphasis remap='B'>sethost</emphasis>.
+<emphasis remap='I'>Diskname</emphasis>
+is the device name specified in the
+<emphasis remap='I'>amanda.conf</emphasis>
+or &disklist;.
+The disk must be local to the host.
+If
+<emphasis remap='I'>mountpoint</emphasis>
+is not specified, all pathnames will be relative to the (unknown)
+mount point instead of full pathnames.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>listhost</emphasis> [<emphasis remap='I'>diskdevice</emphasis>]</term>
+  <listitem>
+<para>List all
+<emphasis remap='B'>host</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>listdisk</emphasis> [<emphasis remap='I'>diskdevice</emphasis>]</term>
+  <listitem>
+<para>List all
+<emphasis remap='B'>diskname</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>listproperty</emphasis></term>
+  <listitem>
+<para>List all
+<emphasis remap='B'>property</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>setproperty</emphasis> [<emphasis remap='B'>append</emphasis>] [<emphasis remap='B'>priority</emphasis>] <emphasis remap='I'>name</emphasis> [<emphasis remap='I'>value</emphasis> ...]</term>
+  <listitem>
+<para>Set the property <emphasis remap='I'>name</emphasis> to the value <emphasis remap='I'>value</emphasis>.
+The <emphasis remap='B'>append</emphasis> keyword appends the <emphasis remap='I'>value</emphasis> to the values already set for this property.
+Without <emphasis remap='I'>value</emphasis>, the property is unset.
+The <emphasis remap='B'>priority</emphasis> keyword is unused, it is present for ease of copy/paste from application definition.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>setdevice</emphasis> [[-h <emphasis remap='I'>tape-server</emphasis>] <emphasis remap='I'>tapedev</emphasis>]</term>
+  <listitem>
+<para>Specifies the host to use as the tape server, and which of its tape devices to use.
+If the server is omitted, the server name reverts to the configure-time default.
+If the tape device is omitted, the default is used.</para>
+
+<para>If you want amrecover to use your changer, the 
+<emphasis remap='I'>tapedev</emphasis>
+must be equal to the <amkeyword>amrecover-changer</amkeyword> setting on the server.</para>
+
+<para>Since device names contain colons, you must always specify the hostname.</para>
+
+<programlisting>
+settape 192.168.0.10:file:/file1
+</programlisting>
+<para>You can change the tape device when amrecover ask you to load the tape:</para>
+
+<programlisting>
+Load tape DMP014 now
+Continue? [Y/n/t]: t
+Tape device: server2:/dev/nst2
+Continue? [Y/n/t]: Y
+Using tape /dev/nst2 from server server2.
+</programlisting>
+
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>setmode</emphasis> <emphasis remap='I'>mode</emphasis></term>
+  <listitem>
+<para>Set the extraction mode for Samba shares.
+If
+<emphasis remap='I'>mode</emphasis>
+is
+<emphasis remap='B'>smb</emphasis>,
+shares are sent to the Samba server
+to be restored back onto the PC.
+If
+<emphasis remap='I'>mode</emphasis>
+is
+<emphasis remap='B'>tar</emphasis>,
+they are extracted on the local machine the same way tar volumes are extracted.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>settranslate</emphasis> [<emphasis remap='B'>on</emphasis>|<emphasis remap='B'>off</emphasis>]</term>
+  <listitem>
+<para>Default: on. Translate escaped octal value ('\000') in
+the index file to their corespondig characters, it improve the interface
+if amrecover is run in the same charset as the filename. Set it to
+<emphasis remap='B'>off</emphasis> if the charset of some filename is not compatible with the amrecover charset.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>mode</emphasis></term>
+  <listitem>
+<para>Displays the extracting mode for Samba shares.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>history</emphasis></term>
+  <listitem>
+<para>Show the backup history of the current host and disk.
+Dates, levels, tapes and file position on tape of each backup are displayed.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>pwd</emphasis></term>
+  <listitem>
+<para>Display the name of the current backup working directory.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>cd</emphasis> <emphasis remap='I'>dir</emphasis></term>
+  <listitem>
+<para>Change the backup working directory to
+<emphasis remap='I'>dir.</emphasis>
+If the mount point was specified with
+<emphasis remap='B'>setdisk</emphasis>,
+this can be a full pathname or it can be
+relative to the current backup working directory.
+If the mount point was not specified,
+paths are relative to the mount point if they start with &quot;/&quot;,
+otherwise they are relative to the current backup working directory.
+The
+<emphasis remap='I'>dir</emphasis>
+can be a shell style wildcards.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>cdx</emphasis> <emphasis remap='I'>dir</emphasis></term>
+  <listitem>
+<para>Like the
+<emphasis remap='B'>cd</emphasis>
+command but allow regular expression.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>lpwd</emphasis></term>
+  <listitem>
+<para>Display the
+<command>amrecover</command>
+working directory.
+Files will be restored under this directory,
+relative to the backed up filesystem.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>lcd</emphasis> <emphasis remap='I'>path</emphasis></term>
+  <listitem>
+<para>Change the
+<command>amrecover</command>
+working directory to
+<emphasis remap='I'>path</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>ls</emphasis></term>
+  <listitem>
+<para>List the contents of the current backup working directory.
+See the description of the
+<emphasis remap='B'>setdate</emphasis>
+command for how the view of the
+directory is built up.
+The backup date is shown for each file.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>add</emphasis> <emphasis remap='I'>item1 item2 ...</emphasis></term>
+  <listitem>
+<para>Add the specified files or directories to the restore list.
+Each item may have shell style wildcards.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>addx</emphasis> <emphasis remap='I'>item1 item2 ...</emphasis></term>
+  <listitem>
+<para>Add the specified files or directories to the restore list.
+Each item may be a regular expression.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>delete</emphasis> <emphasis remap='I'>item1 item2 ...</emphasis></term>
+  <listitem>
+<para>Delete the specified files or directories from the restore list.
+Each item may have shell style wildcards.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>deletex</emphasis> <emphasis remap='I'>item1 item2 ...</emphasis></term>
+  <listitem>
+<para>Delete the specified files or directories from the restore list.
+Each item may be a regular expression.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>list</emphasis> <emphasis remap='I'>file</emphasis></term>
+  <listitem>
+<para>Display the contents of the restore list.
+If a file name is specified,
+the restore list is written to that file.
+This can be used to manually extract the files from the Amanda tapes with
+<emphasis remap='B'>amrestore</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>clear</emphasis></term>
+  <listitem>
+<para>Clear the restore list.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>quit</emphasis></term>
+  <listitem>
+<para>Close the connection to the index server and exit.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>exit</emphasis></term>
+  <listitem>
+<para>Close the connection to the index server and exit.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>extract</emphasis></term>
+  <listitem>
+<para>Start the extract sequence (see the examples below).  Make sure the
+local working directory is the root of the backed up filesystem, or
+another directory that will behave like that.  Use
+<emphasis remap='B'>lpwd</emphasis>
+to display the local working directory, and
+<emphasis remap='B'>lcd</emphasis>
+to change it.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>help</emphasis></term>
+  <listitem>
+<para>Display a brief list of these commands.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>EXAMPLES</title>
+<para>The following shows the recovery of an old
+<emphasis remap='I'>syslog</emphasis>
+file.</para>
+
+<programlisting>
+# cd /var/log
+# ls -l syslog.7
+syslog.7: No such file or directory
+# amrecover MyConfig
+AMRECOVER Version 2.4.2. Contacting server on oops ...
+220 oops Amanda index server (2.4.2) ready.
+Setting restore date to today (1997-12-09)
+200 Working date set to 1997-12-09.
+200 Config set to MyConfig.
+200 Dump host set to this-host.some.org.
+$CWD '/var/log' is on disk '/var' mounted at '/var'.
+200 Disk set to /var.
+/var/log
+WARNING: not on root of selected filesystem, check man-page!
+amrecover&gt; ls
+1997-12-09 daemon.log
+1997-12-09 syslog
+1997-12-08 authlog
+1997-12-08 sysidconfig.log
+1997-12-08 syslog.0
+1997-12-08 syslog.1
+1997-12-08 syslog.2
+1997-12-08 syslog.3
+1997-12-08 syslog.4
+1997-12-08 syslog.5
+1997-12-08 syslog.6
+1997-12-08 syslog.7
+amrecover&gt; add syslog.7
+Added /log/syslog.7
+amrecover&gt; lpwd
+/var/log
+amrecover&gt; lcd ..
+/var
+amrecover&gt; extract
+
+Extracting files using tape drive /dev/nst0 on host 192.168.0.10
+
+The following tapes are needed: DMP014
+
+Restoring files into directory /var
+Continue? [Y/n]: y
+
+Load tape DMP014 now
+Continue? [Y/n/t]: y
+set owner/mode for '.'? [yn] n
+amrecover&gt; quit
+200 Good bye.
+# ls -l syslog.7
+total 26
+-rw-r--r--   1 root     other      12678 Oct 14 16:36 syslog.7
+</programlisting>
+
+<para>If you do not want to overwrite existing files,
+create a subdirectory to run
+<command>amrecover</command>
+from and then move the restored files afterward.</para>
+
+<programlisting>
+# cd /var
+# (umask 077 ; mkdir .restore)
+# cd .restore
+# amrecover
+AMRECOVER Version 2.4.2. Contacting server on oops ...
+...
+amrecover&gt; cd log
+/var/log
+amrecover&gt; ls
+...
+amrecover&gt; add syslog.7
+Added /log/syslog.7
+amrecover&gt; lpwd
+/var/.restore
+amrecover&gt; extract
+
+Extracting files using tape drive /dev/nst0 on host 192.168.0.10
+...
+amrecover&gt; quit
+200 Good bye.
+# mv -i log/syslog.7 ../log/syslog.7-restored
+# cd ..
+# rm -fr .restore
+</programlisting>
+
+<para>If you need to run
+<emphasis remap='B'>amrestore</emphasis>
+by hand instead of letting
+<command>amrecover</command>
+control it,
+use the
+<emphasis remap='B'>list</emphasis>
+command after browsing to display the needed tapes.</para>
+
+<programlisting>
+# cd /var/log
+# amrecover
+AMRECOVER Version 2.4.2. Contacting server on oops ...
+...
+amrecover&gt; ls
+...
+amrecover&gt; add syslog syslog.6 syslog.7
+Added /log/syslog
+Added /log/syslog.6
+Added /log/syslog.7
+amrecover&gt; list
+TAPE DMP014 LEVEL 0 DATE 1997-12-08
+        /log/syslog.7
+        /log/syslog.6
+TAPE DMP015 LEVEL 1 DATE 1997-12-09
+        /log/syslog
+amrecover&gt; quit 
+</programlisting>
+
+<para>The
+<emphasis remap='B'>history</emphasis>
+command shows each tape that has a backup of the
+current disk along with the date of the backup,
+the level,
+the tape label
+and the file position on the tape.
+All active tapes are listed, not just back to
+the most recent full dump.</para>
+
+<para>Tape file position zero is a label.
+The first backup image is in file position one.</para>
+
+<programlisting>
+# cd /var/log
+# amrecover
+AMRECOVER Version 2.4.2. Contacting server on oops ...
+...
+amrecover&gt; history
+200- Dump history for config &quot;MyConfig&quot; host &quot;this-host.some.org&quot; disk &quot;/var&quot;
+201- 1997-12-09 1 DMP015 9
+201- 1997-12-08 1 DMP014 11
+201- 1997-12-07 0 DMP013 22
+201- 1997-12-06 1 DMP012 16
+201- 1997-12-05 1 DMP011 9
+201- 1997-12-04 0 DMP010 11
+201- 1997-12-03 1 DMP009 7
+201- 1997-12-02 1 DMP008 7
+201- 1997-12-01 1 DMP007 9
+201- 1997-11-30 1 DMP006 6
+...
+amrecover&gt; quit 
+</programlisting>
+</refsect1>
+
+<refsect1><title>ENVIRONMENT</title>
+<para><envar>PAGER</envar>
+<!-- .RS -->
+The 
+<emphasis remap='B'>ls</emphasis>
+and 
+<emphasis remap='B'>list</emphasis>
+commands will use $PAGER to display the file lists.
+Defaults to
+<emphasis remap='I'>more</emphasis>
+if PAGER is not set.</para>
+<para><envar>AMANDA_SERVER</envar>
+If set, $AMANDA_SERVER will be used as index-server.
+The value will take precedence over the compiled default,
+but will be overridden by the -s switch.
+</para>
+<para><envar>AMANDA_TAPE_SERVER</envar>
+If set, $AMANDA_TAPE_SERVER will be used as tape-server.
+The value will take precedence over the compiled default,
+but will be overridden by the -t switch.
+</para>
+<!-- .RE -->
+</refsect1>
+
+<seealso>
+<manref name="amanda-client.conf" vol="5"/>
+<manref name="amrestore" vol="8"/>
+<manref name="amfetchdump" vol="8"/>
+<manref name="readline" vol="3"/>
+</seealso>
+
+</refentry>

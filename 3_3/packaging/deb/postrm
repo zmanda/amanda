@@ -1,0 +1,39 @@
+#!/bin/sh -e
+case "$1" in
+  purge)
+	if [ -d /etc/amanda ]; then
+		# remove /etc amanda if there are no files left
+		rmdir /etc/amanda 2> /dev/null || true
+	fi
+	if [ -d /var/log/amanda ]; then
+		rm -rf /var/log/amanda
+	fi
+	if [ -d /var/lib/amanda/gnutar-lists ]; then
+		rm -rf /var/lib/amanda/gnutar-lists
+	fi
+	if [ -d /var/lib/amanda ]; then
+		rm -rf /var/lib/amanda
+	fi
+	if which deluser >/dev/null 2>&1 ; then
+		for group in disk; do
+			# only call deluser when amandabackup is in $group
+			if getent group "$group" |
+			   awk -F: '{ print $4 }' |
+			   awk -F, '{ for (i=1; i <= NF; i++ ) print $i }' |
+			   grep '^amandabackup$' > /dev/null; then
+				deluser "amandabackup $group" || true
+			fi
+		done
+	fi
+  ;;
+  remove|upgrade|deconfigure)
+  ;;
+
+  failed-upgrade)
+  ;;
+
+  *)
+        echo "unknown argument --> $1" >&2
+        exit 0
+  ;;
+esac

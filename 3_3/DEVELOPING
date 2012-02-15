@@ -1,0 +1,63 @@
+Notes For Developers
+====================
+
+This document describes a few basic tasks for managing the codebase;
+see http://wiki.zmanda.com/ for more detailed developer-oriented
+documentation.
+
+Adding Gnulib Modules
+---------------------
+
+Edit the clearly marked section in gnulib/regenerate/regenerate,
+then re-run that script as directed below.
+
+Updating Gnulib
+---------------
+
+This should probably be done after most releases, so that we have
+adequate time to uncover any bugs or problems in the new gnulib before
+we make another release.
+
+To update the gnulib files included with Amanda, you'll first need a git
+working copy of gnulib; let's call it $GNULIB_BR:
+
+  cd /tmp
+  git clone git://git.savannah.gnu.org/gnulib.git
+  GNULIB_BR=/tmp/gnulib
+
+See http://www.gnu.org/software/gnulib/ for more information.  Then, in the
+root of the Amanda source, run
+
+  GNULIB_TOOL=$GNULIB_BR/gnulib-tool ./gnulib/regenerate/regenerate
+
+Use 'svn status' to figure out what changed, and 'svn add' / 'svn rm'
+to inform Subversion.  Then re-run autogen, configure, make, and test
+the result.
+
+Get the object ID of the latest commit, using 'git show', and replace the
+previous object ID in Amanda's gnulib/regenerate/regenerate, so that other
+developers can access the same "release" of gnulib as you did.
+
+Updating Libtool
+----------------
+
+Libtool includes such useful files as config/config.guess.
+Occasionally (probably right after a release), these files should be
+updated.  On a machine with libtool installed, simply run 
+  libtoolize --force --copy
+
+Then use 'svn status' to see what changed, test it out, and commit.
+
+Updating Gettext
+----------------
+
+The gettext library contains a significant number of files.  Assuming
+you have the proper version of gettext installed, these files can be
+updated by running
+
+  po/reautopoint
+
+and then adjusting as appropriate with 'svn add' / 'svn rm', testing,
+and committing.  Note that this script post-processes the results of
+autopoint rather extensively, and will probably need to be adjusted
+for a new version of autopoint.

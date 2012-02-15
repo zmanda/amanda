@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+
+<refentry id='amservice.8'>
+
+<refmeta>
+<refentrytitle>amservice</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amservice</refname>
+<refpurpose>run an amanda service on a client</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jlm;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amservice</command>    
+    <arg choice='opt'><arg choice='plain'>-f</arg><arg choice='plain'><replaceable>input_file</replaceable></arg><arg choice='opt'>-s</arg></arg>
+    &configoverride.synopsis;
+    <arg choice='plain'><replaceable>hostname</replaceable></arg>
+    <arg choice='plain'><replaceable>auth</replaceable></arg>
+    <arg choice='plain'><replaceable>service</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amservice</emphasis>
+execute an Amanda service on a client.
+It can be used without amanda server configuration (amanda.conf and disklist).
+It can be used to check communication between a server and a client.
+Amservice reads stdin to capture the REQ packet to send to the client.</para>
+<para>See the
+<manref name="amanda" vol="8"/>
+man page for more details about Amanda.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>hostname</emphasis></term>
+  <listitem>
+<para>The hostname of the client.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>auth</option></term>
+  <listitem>
+<para>The auth to use, one of: bsd, bsdudp, bsdtcp, ssh, rsh or krb5.
+The client must be configured with this auth.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>service</option></term>
+  <listitem>
+<para>The amanda service to execute on the client. One of noop, selfcheck or sendsize.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-f input_file</option></term>
+  <listitem>
+<para>Use the file input_file instead of stdin to read the REQ packet from.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>-s</option></term>
+  <listitem>
+<para>Redirect the first connected stream to stdin/stdout. The -f argument is required for the REQ packet, the REP packet is not printed on stdout.</para>
+  </listitem>
+  </varlistentry>
+
+  &configoverride.varlistentry;
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+
+<para>The noop service is easy to execute because it does not require a REQ packet:</para>
+<programlisting>amservice hostname bsdtcp noop &lt; /dev/null
+</programlisting>
+<para>The example executes the noop service on the client using bsdtcp auth.
+This is useful for debugging connection problems.
+It print an OPTIONS line upon success.</para>
+
+<para>It is more difficult to execute the selfcheck or sendsize service, as these require a valid REQ packet. If you have already uccessfully run amanda, you can find valid REQ packets in the amandad.*.debug files.</para>
+</refsect1>
+
+<refsect1><title>EXIT CODE</title>
+The exit code of <command>amservice</command> is one of:
+<programlisting>
+ 0  = success
+ 1  = error executing amandad on the client.
+</programlisting>
+<para>As <command>amservice</command> doesn't parse the REP packet,
+it can only detect failures in executing amandad on the client.
+<command>amservice</command> can exit with value 0 even if the user
+is not authorized to execute the service.  An error message will be printed.
+</para>
+</refsect1>
+
+<seealso>
+<manref name="amanda" vol="8"/>,
+<manref name="amcheck" vol="8"/>,
+<manref name="amdump" vol="8"/>,
+<manref name="amadmin" vol="8"/>
+</seealso>
+
+</refentry>
+

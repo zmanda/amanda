@@ -1,0 +1,162 @@
+<?xml version='1.0'?>
+<!-- vim:set sts=2 shiftwidth=2 syntax=xml: -->
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                version='1.0'>
+
+
+<!-- the @..@ is substituted by config.status to contain the XSL release selected
+     at configure time -->
+<xsl:import href="http://docbook.sourceforge.net/release/xsl/@XSLREL@/html/docbook.xsl"/>
+
+<xsl:import href="settings.xsl"/>
+
+<xsl:param name="citerefentry.link" select="'1'"/>
+<xsl:param name="css.decoration" select="1"/>
+<xsl:param name="html.stylesheet" select="'amanda.css'"/>
+<xsl:param name="html.stylesheet.type">text/css</xsl:param>
+<xsl:param name="html.cleanup" select="1"/>
+<xsl:param name="use.extensions" select="'0'"/>
+<xsl:param name="use.id.as.filename" select="'0'"/>
+<xsl:param name="use.local.olink.style" select="1"/>
+<xsl:param name="use.role.as.xrefstyle" select="1"/>
+<xsl:param name="refentry.generate.title" select="1"/>
+
+<xsl:output method="html" 
+            encoding="UTF-8"
+            indent="no" />
+
+<!-- generate correct links to other manpages -->
+<xsl:template name="generate.citerefentry.link">
+  <xsl:value-of select="refentrytitle"/><xsl:text>.</xsl:text><xsl:value-of select="manvolnum"/><xsl:text>.html</xsl:text>
+</xsl:template>
+
+<!--  add missing AUTHOR(S) section -->
+<!-- this section originated with fglrx_man:
+	http://vcs.wgdd.de/cvsweb/fglrx_man/fglrx_html.xsl?rev=1.5
+     License information from that file:
+	This file is free software. The copyright owner gives unlimited
+	permission to copy, distribute and modify it.
+  -->
+<xsl:template match="refentry">
+  <div class="refentry">
+  <xsl:apply-templates/>
+  <xsl:choose>
+    <xsl:when test="refentryinfo//author">
+      <xsl:apply-templates select="refentryinfo" mode="authorsect"/>
+    </xsl:when>
+  </xsl:choose>
+  </div>
+</xsl:template>
+
+<xsl:template match="refentryinfo" mode="authorsect">
+  <div class="refsect1">
+    <h2>
+      <xsl:text>AUTHOR</xsl:text>
+      <xsl:if test="count(.//author)+count(.//othercredit)>1">
+	<xsl:text>S</xsl:text>
+      </xsl:if>
+    </h2>
+    <xsl:text>&#10;</xsl:text>
+    <xsl:if test="count(.//author)>0">
+      <p>
+	<xsl:text>This manual page was written by </xsl:text>
+	<xsl:for-each select=".//author">
+	  <xsl:if test="position() > 1">
+	    <xsl:choose>
+	      <xsl:when test="position() = last()">
+		<xsl:text> and </xsl:text>
+	      </xsl:when>
+	      <xsl:otherwise>
+		<xsl:text>, </xsl:text>
+	      </xsl:otherwise>
+	    </xsl:choose>
+	  </xsl:if>
+	  <xsl:apply-templates select="." mode="authorsect"/>
+	</xsl:for-each>
+	<xsl:text>.</xsl:text>
+      </p>
+    </xsl:if>
+    <xsl:if test="count(.//othercredit)>0">
+      <p>
+	<xsl:text>Contributions were derived from </xsl:text>
+	<xsl:for-each select=".//othercredit">
+	  <xsl:if test="position() > 1">
+	    <xsl:choose>
+	      <xsl:when test="position() = last()">
+		<xsl:text> and </xsl:text>
+	      </xsl:when>
+	      <xsl:otherwise>
+		<xsl:text>, </xsl:text>
+	      </xsl:otherwise>
+	    </xsl:choose>
+	  </xsl:if>
+	  <xsl:apply-templates select="." mode="authorsect"/>
+	</xsl:for-each>
+	<xsl:text>.</xsl:text>
+      </p>
+    </xsl:if>
+    <xsl:if test="count(.//editor)>0">
+      <p>
+	<xsl:text disable-output-escaping="yes">Edited by </xsl:text>
+	<xsl:for-each select=".//editor">
+	  <xsl:if test="position() > 1">
+	    <xsl:choose>
+	      <xsl:when test="position() = last()">
+		<xsl:text> and </xsl:text>
+	      </xsl:when>
+	      <xsl:otherwise>
+		<xsl:text>, </xsl:text>
+	      </xsl:otherwise>
+	    </xsl:choose>
+	  </xsl:if>
+	  <xsl:apply-templates select="." mode="authorsect"/>
+	</xsl:for-each>
+	<xsl:text>.</xsl:text>
+      </p>
+    </xsl:if>
+  </div>
+</xsl:template>
+
+<xsl:template match="affiliation" mode="authorsect">
+  <xsl:choose>
+    <xsl:when test="./org/uri">
+      <a>
+       <xsl:attribute name="href">
+	 <xsl:apply-templates select="./org/uri" />
+       </xsl:attribute>
+       <xsl:apply-templates select="./org/orgname" />
+      </a>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:apply-templates select="./org/orgname" />
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
+<xsl:template match="author|editor|othercredit" mode="authorsect">
+  <span class="{name(.)}">
+    <xsl:call-template name="anchor"/>
+    <xsl:call-template name="person.name"/>
+    <xsl:if test=".//email">
+      <xsl:text> </xsl:text>
+      <xsl:apply-templates select=".//email"/>
+    </xsl:if>
+    <xsl:if test=".//affiliation">
+      <xsl:text> (</xsl:text>
+      <xsl:apply-templates mode="authorsect" select="./affiliation"/>
+      <xsl:text>)</xsl:text>
+    </xsl:if>
+  </span>
+</xsl:template>
+
+<xsl:template name="user.header.content">
+  <center>Amanda-@VERSION@</center>
+  <hr />
+</xsl:template>
+
+<xsl:template name="user.footer.content">
+  <hr />
+  <center>Amanda-@VERSION@</center>
+</xsl:template>
+
+</xsl:stylesheet>

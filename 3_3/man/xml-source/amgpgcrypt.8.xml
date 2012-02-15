@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amgpgcrypt.8'>
+<refmeta>
+<refentrytitle>amgpgcrypt</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amgpgcrypt</refname>
+<refpurpose>reference crypt program for Amanda public-key data encryption</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.ktill;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amgpgcrypt</command>  to be called by Amanda only 
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>DESCRIPTION</title>
+<para>&amgpgcrypt;
+calls <emphasis remap='B'>gpg</emphasis> to perform public-key data encryption
+on Amanda backup.
+&amgpgcrypt; will search for the gpg program in the following directories:
+/usr/local/bin:/usr/bin:/usr/sbin:/bin:/sbin</para>
+<para>&amgpgcrypt; sets GNUPGHOME to $AMANDA_HOME/.gnupg where gpg will look for the
+gpg keys.
+&amgpgcrypt; uses the public key to encrypt the Amanda data
+and uses the private key to decrypt the Amanda backup data. Thus, passphrase is only
+required at the time of data restore.</para> 
+</refsect1>
+
+
+<refsect1><title>Key and Passphrase</title>
+<para>&amgpgcrypt; uses the  private key to decrypt Amanda backup data.</para>
+It is very important to store, manage and  protect the key and the passphrase
+properly. Encrypted backup data can <emphasis remap='B'>only</emphasis> be recovered with the correct key and
+passphrase.
+</refsect1>
+
+
+
+<refsect1><title>How to create encryption keys and Passphrase for amgpgcrypt</title>
+
+<para>Store the  passphrase that you used in following "gpg --gen-key" command  inside the home-directory of the AMANDA-user($amanda_user) and protect it with proper permissions:</para>
+   echo my_secret_passphrase > ~$amanda_user/.am_passphrase
+   chown $amanda_user:disk ~$amanda_user/.am_passphrase
+   chmod 700 ~$amanda_user/.am_passphrase
+<para> Run "gpg --gen-key". Below is an example:</para>
+<programlisting>
+$ gpg --gen-key
+gpg (GnuPG) 1.2.6; Copyright (C) 2004 Free Software Foundation, Inc.
+This program comes with ABSOLUTELY NO WARRANTY.
+This is free software, and you are welcome to redistribute it
+under certain conditions. See the file COPYING for details.
+
+Please select what kind of key you want:
+   (1) DSA and ElGamal (default)
+   (2) DSA (sign only)
+   (4) RSA (sign only)
+Your selection? 1
+DSA keypair will have 1024 bits.
+About to generate a new ELG-E keypair.
+              minimum keysize is  768 bits
+              default keysize is 1024 bits
+    highest suggested keysize is 2048 bits
+What keysize do you want? (1024)
+Requested keysize is 1024 bits
+Please specify how long the key should be valid.
+         0 = key does not expire
+      (n)  = key expires in n days
+      (n)w = key expires in n weeks
+      (n)m = key expires in n months
+      (n)y = key expires in n years
+Key is valid for? (0) 6m
+Key expires at Sun 06 Aug 2006 03:51:25 PM PDT
+Is this correct (y/n)? y
+
+You need a User-ID to identify your key; the software constructs the user id
+from Real Name, Comment and Email Address in this form:
+    "Heinrich Heine (Der Dichter) (heinrichh@duesseldorf.de)"
+
+Real name: amandabackup
+Email address:
+Comment: gpg keys for amandabackup
+You selected this USER-ID:
+    "amandabackup (gpg keys for amandabackup)"
+
+Change (N)ame, (C)omment, (E)mail or (O)kay/(Q)uit? o
+You need a Passphrase to protect your secret key.
+
+We need to generate a lot of random bytes. It is a good idea to perform
+some other action (type on the keyboard, move the mouse, utilize the
+disks) during the prime generation; this gives the random number
+generator a better chance to gain enough entropy.
+
+We need to generate a lot of random bytes. It is a good idea to perform
+some other action (type on the keyboard, move the mouse, utilize the
+disks) during the prime generation; this gives the random number
+generator a better chance to gain enough entropy.
+
+public and secret key created and signed.
+key marked as ultimately trusted.
+
+pub  1024D/4417A8CB 2006-02-07 amandabackup (gpg keys for amandabackup)
+     Key fingerprint = 139C 6369 44FC 7F1A 655C  E5E9 7EAA 515A 4417 A8CB
+sub  1024g/8C3A6A78 2006-02-07 [expires: 2006-08-06]
+
+</programlisting>
+</refsect1>
+
+
+<refsect1><title>Files</title>
+<variablelist remap='TP'>
+ <varlistentry>
+ <term><option>$AMANDA_HOME/.gnupg/pubring.gpg</option></term>
+  <listitem>
+<para>The public key. &amgpgcrypt; encrypt data with this public key along with the
+cipher algorithm.</para>
+  </listitem>
+  </varlistentry>
+
+ <varlistentry>
+ <term><option>$AMANDA_HOME/.gnupg/secring.gpg</option></term>
+  <listitem>
+<para>The private/secret key. It's only needed during amrecover/amrestore. Store
+and protect it properly during other time.</para>
+  </listitem>
+  </varlistentry>
+
+ <varlistentry>
+ <term><option>$AMANDA_HOME/.am_passphrase</option></term>
+  <listitem>
+<para>The passphrase. It's only needed during amrecover/amrestore. Store
+and protect it properly during other time.</para>
+  </listitem>
+  </varlistentry>
+
+
+</variablelist>
+</refsect1>
+
+
+<refsect1><title>BUGS</title>
+<para>Amanda has problem with gpg mdc(modification detection code) in the binary
+mode. &amgpgcrypt; calls gpg with mdc disabled</para>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amcrypt" vol="8"/>,
+<manref name="amrestore" vol="8"/>,
+<manref name="gpg" vol="1"/>
+</seealso>
+
+</refentry>
+

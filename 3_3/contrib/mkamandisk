@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# This script prepares an IOmega disk for use with amanda.
+# More precisely, it
+# - formats the disk, checking for bad sectors
+# - mounts the disk and adds a data subdirectory
+# - makes user amanda owner of this data sub directory
+# - calls amlabel to label the disk
+# - unmounts and ejects the disk.
+# 
+# This shell script is not generally usable as is, 
+# because it is relying on a couple of settings of personal taste, such as
+# - IOmega disks are partitioned and the fourth primary partition 
+#   is taking the whole disk. So the disk is visible as /dev/sda4.
+# - I am preferring to use an ext2 filesystem on the disk 
+#   (rather then a dos or vfat file system)
+# - I am doing a chown of the data sub directory such that - depending 
+#   on the umask setting - only user amanda and root can see 
+#   the files written to the disk.
+
+# It has to be called as root
+
+if [ "$#" -lt "2" ]
+	then
+	echo "Usage : $0 <backup set> <disk label>"
+	exit 1
+fi
+
+backup="$1"
+label="$2"
+
+echo "insert tape $2 into slot and press return" 
+read ANSWER
+
+mkfs.ext2 -c -L $label /dev/iomega
+
+echo "mounting disk ..."
+mount /dev/iomega
+if [ ! -d /mnt/iomega/lost+found ]
+	then
+	echo "mount did not work properly - please investigate"
+	exit 1
+fi
+
+echo "adding data subdirectory ..."
+cd /mnt/iomega
+mkdir data
+chown -R amanda:disk .
+if [ -n "$label" ]
+	then
+	echo "attempting to write amanda disk label"
+	su - amanda -c "/usr/sbin/amlabel $backup $label"
+fi
+
+echo "preparing to eject disk ..."
+cd >/dev/null 2>&1
+eject /mnt/iomega
+
+echo "please don't forget to label with $backup $label"

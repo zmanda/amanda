@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amlabel.8'>
+
+<refmeta>
+<refentrytitle>amlabel</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amlabel</refname>
+<refpurpose>label an Amanda tape</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jds;
+&author.sgw.xml;
+&author.dustin;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amlabel</command>    
+    <arg choice='opt'><option>--barcode <replaceable>barcode</replaceable></option></arg>
+    <arg choice='opt'><option>--meta <replaceable>meta-label</replaceable></option></arg>
+    <arg><option>--assign</option></arg>
+    <arg><option>-f</option></arg>
+    &version.synopsis;
+    &configoverride.synopsis;
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='opt'><replaceable>label</replaceable></arg>
+    <arg choice='opt'>slot <replaceable>slot</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>This command applies a label to an Amanda volume, erasing the volume in
+the process.</para>
+
+<para>Amanda uses labels to identify volumes: <manref name="amdump" vol="8" />
+and <manref name="amflush" vol="8" /> verify the label before writing to make
+sure the proper volume is loaded, and the recovery programs use the label to
+ensure they are reading the data they expect.</para>
+
+<para>If no <arg choice="opt"><replaceable>slot</replaceable></arg> and no <arg choice="opt"><replaceable>barcode</replaceable></arg> is given,
+then <command>amlabel</command> labels the tape in the current slot of the
+default changer.  If a slot is given, it labels the volume in that slot. If a barcode is given, it labels the volume with that barcode.
+<emphasis remap='I'>Label</emphasis> may be any string that does not contain
+whitespace and that matches the <emphasis remap='B'>labelstr</emphasis> (see
+<manref name="amanda.conf" vol="5" />).</para>
+
+<para>If <arg choice="opt"><replaceable>label</replaceable></arg> is not given, an autolabel is
+generated, see <emphasis remap='B'>autolabel</emphasis> in <manref name="amanda.conf" vol="5"/>.</para>
+
+<para>If <arg><option>--assign</option></arg> is given, the barcode and meta-label are assigned to the label without labeling the volume. The label must already be in the tapelist file.</para>
+<para>This command also appends the new volume to the &tapelist; file, so that
+they will be used in the order they are labeled (depending on the taperscan in
+use &mdash; see <manref name="amanda-taperscan" vol="7" />).</para>
+
+<para>As a precaution, <command>amlabel</command> will not write a label if the
+volume already contains an active label or if the label specified is on an
+active tape.  The <arg choice="opt">-f</arg> (force) flag bypasses these
+verifications.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+
+  <varlistentry>
+  <term><option>--barcode <replaceable>barcode</replaceable></option></term>
+  <listitem>
+  <para>With <arg choice="opt">--assign</arg>, assign the barcode to the label.
+Without <arg choice="opt">--assign</arg>, label the volume with that barcode.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--meta <replaceable>meta-label</replaceable></option></term>
+  <listitem>
+  <para>Assign the meta label to the label after labeling the volume.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--assign</option></term>
+  <listitem>
+  <para>Assign the barcode or meta-label to the label without labeling the volume. The label must already be in the tapelist file.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>-f</option></term>
+  <listitem>
+  <para>Force the label operation; see above</para>
+  </listitem>
+  </varlistentry>
+
+  &version.varlistentry;
+  &configoverride.varlistentry;
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para>Write an Amanda label with the string &quot;DMP000&quot; on
+the current volume:</para>
+
+<programlisting>
+% amlabel daily DMP000 
+</programlisting>
+
+<para>Label the tape in slot 3 of the changer with the label
+&quot;DMP003&quot;:</para>
+
+<programlisting>
+% amlabel daily DMP003 slot 3 
+</programlisting>
+</refsect1>
+
+<refsect1><title>MESSAGES</title>
+<variablelist remap='TP'>
+
+  <varlistentry>
+
+  <term>Label '<replaceable>label</replaceable>' doesn't match labelstr
+  '<replaceable>labelstr</replaceable>'</term>
+
+  <listitem><para>The given label does not match the configured labelstr.  Even
+  with <option>-f</option>, this is an error.</para></listitem>
+
+  </varlistentry>
+  <varlistentry>
+
+  <term>Label '<replaceable>label</replaceable>' already on a volume</term>
+
+  <listitem><para>The given label is already on another volume in the tapelist, and
+  Amanda will not write it to this volume unless forced.</para></listitem>
+
+  </varlistentry>
+  <varlistentry>
+
+  <term>Found label '<replaceable>label</replaceable>', but it is not from
+  configuration <replaceable>config</replaceable>.</term>
+
+  <listitem><para>The label <command>amlabel</command> found on the volume does
+  not match this configuration's <emphasis remap='B'>labelstr</emphasis>, so it
+  is probably part of a different Amanda configuration.  Amanda will not
+  overwrite the label unless it is forced.</para> </listitem>
+
+  </varlistentry>
+  <varlistentry>
+
+  <term>Volume with label '<emphasis remap='I'>label</emphasis>' contains
+  data from this configuration.</term>
+
+  <listitem> <para>The label <command>amlabel</command> found on the volume
+  still has valid data on it and Amanda will not overwrite it unless
+  forced.  Note that this does not distinguish between active and inactive
+  volumes.</para></listitem>
+
+  </varlistentry>
+  <varlistentry>
+
+  </varlistentry>
+
+</variablelist>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>
+<manref name="tapelist" vol="5"/>
+<manref name="amanda-taperscan" vol="7"/>
+<manref name="amdump" vol="8"/>,
+<manref name="amflush" vol="8"/>
+</seealso>
+
+</refentry>
+

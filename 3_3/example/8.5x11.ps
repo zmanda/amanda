@@ -1,0 +1,253 @@
+%!
+%%BoundingBox: 25 25 290 900
+%%Title: AMANDA Full Page Label
+%%Creator: Amanda reporter
+%%Pages: 1
+%%EndComments
+
+%%%%
+%%%% This is a template file used by AMANDA to create 8.5 x 11 inch
+%%%% PostScript dump logs for each dump.
+%%%%
+
+%
+% The label is made up of 6 parts:  statistics, tape name, date,
+% header, filesystem list, and the logo.  Geometrically, the label 
+% looks like this:
+%
+%   +----+-------------------+
+%   |        TAPE_NAME       |   <- section 'A'
+%   | version  Location date |   <- section 'B'
+%   +------------------------+
+%   |statistics  |  message  |   <- section 'C' | 'F'
+%   +----+--+--------+-------+
+%   | f# hst fs lvl O-KB C-KB|   <- section 'D'
+%   +-------+--------+-------+
+%   |       |        |       |   <- section 'E'
+%   |       |        |       |
+%   v       v        v       v
+%
+
+% section 'A' font and position (text centered around this point)
+%
+/TitleFont		{ /Helvetica-Bold findfont 24 scalefont setfont } def
+/TitlePos		{ 321 728 } def
+
+% section 'B' font, position of the date (left justified) and the version
+%
+/DateFont		{ /Palatino-Bold findfont 11 scalefont setfont } def
+/DatePos		{ 580 715 } def
+/VersFont		{ /Palatino-Bold findfont 11 scalefont setfont } def
+/VersPos		{ 43 715 } def
+/LocFont		{ /Helvetica-Bold findfont 12 scalefont setfont } def
+/LocPos			{ 321 715 } def
+
+% section 'C' font, start position, and line separation
+%
+/StatFont 		{ /Courier findfont 9 scalefont setfont } def
+/StatPos		{ 43 695 } def
+/StatSep		{ 9 } def
+
+% section 'D' font, and field positions (x coord is relative to each column)
+%
+
+/HeadingFont		{ /Palatino-Bold findfont 9 scalefont setfont } def
+/HeadingFilePos		{ 43 644 } def
+/HeadingHostPos		{ 73 644 } def
+/HeadingFsPos		{ 198 644 } def
+/HeadingLvlPos		{ 333 644 } def
+/HeadingOSizePos1	{ 403 652 } def
+/HeadingOSizePos	{ 403 644 } def
+/HeadingCSizePos1	{ 483 652 } def
+/HeadingCSizePos	{ 483 644 } def
+
+
+% section 'E' font, and line separation
+%
+/HostFont		{ /Courier findfont 9 scalefont setfont } def
+/HostSep		{ 10 } def
+/HostBasePos		{ 38 630 } def
+
+% section 'F' font, and line separation
+%
+/MessFont		{ /Courier findfont 9 scalefont setfont } def
+/MessPos                { 215 702 } def
+/MessSep		{ 9 } def
+
+
+% the following rectangles separate the regions
+%
+/TitleBox		{ 590 750 38 710 } def
+/StatBox		{ 590 710 38 660 } def
+/HeadingBox		{ 590 660 38 640 } def
+/HostBox		{ 590 640 38 0 } def
+/CFline                 { 208 710 208 660 } def
+
+
+
+
+%%%%
+%%%% END OF USER-CONFIGURABLE OPTIONS
+%%%%
+%%%% the rest of this file contains the internal functions that are used
+%%%% by genlabel to draw the label
+%%%%
+
+
+%
+% Initial Setup... draws everything that is the same for all labels
+%
+
+% function to draw a box
+%
+/box {
+	/ury exch def
+	/urx exch def
+	/lly exch def
+	/llx exch def
+
+	llx lly moveto
+	llx ury lineto
+	urx ury lineto
+	urx lly lineto
+	closepath
+} def
+
+
+% move the origin up a bit
+%
+0 20 translate
+
+% draw all of the boxes
+%
+0 setgray 
+2 setlinewidth					% thick lines
+StatBox box stroke
+TitleBox box stroke
+HeadingBox box stroke
+HostBox box stroke
+CFline moveto lineto stroke
+
+
+HeadingFont
+HeadingFilePos  moveto
+  (File #) show
+HeadingHostPos moveto
+  (Host) show
+HeadingFsPos moveto
+  (File System) show
+HeadingLvlPos moveto
+  (Level) stringwidth pop 2 div neg 0 rmoveto (Level) show
+HeadingOSizePos1 moveto
+  (Original) stringwidth pop 2 div neg 0 rmoveto (Original) show
+HeadingOSizePos moveto
+  (File Size (KB)) stringwidth pop 2 div neg 0 rmoveto (File Size (KB)) show
+HeadingCSizePos1 moveto
+  (Compressed) stringwidth pop 2 div neg 0 rmoveto (Compressed) show
+HeadingCSizePos moveto
+  (File Size (KB)) stringwidth pop 2 div neg 0 rmoveto (File Size (KB)) show
+
+
+%
+% the following functions draw strings for each kind of information
+%
+
+/CurrStatY StatPos exch pop def
+/CurrMessY MessPos exch pop def
+HostBasePos /CurrColumnY exch def
+/CurrColumnX exch def
+
+
+% DrawStat draws the string on the top of the stack in the next position
+% in section 'A'
+%
+/DrawStat {
+	StatFont
+	StatPos pop CurrStatY moveto
+	show
+	/CurrStatY CurrStatY StatSep sub def
+} def
+
+
+% DrawTitle draws the string on the top of the stack in section 'B'
+%
+/DrawTitle {
+	TitleFont
+	TitlePos moveto
+	dup stringwidth pop 2 div neg 0 rmoveto
+	show
+} def
+
+
+% DrawDate draws the string on the top of the stack in section 'C'
+%
+/DrawDate {
+	DateFont
+	DatePos moveto
+	dup stringwidth pop neg 0 rmoveto
+	show
+} def
+
+% DrawLoc draws the string on the top of the stack in section 'C'
+%
+/DrawLoc {
+	LocFont
+	LocPos moveto
+        dup stringwidth pop 2 div neg 0 rmoveto
+	show
+} def
+
+% DrawVers draws the string on the top of the stack in section 'C'
+%
+/DrawVers {
+	VersFont
+	VersPos moveto
+	show
+} def
+
+% DrawMess draws the string on the top of the stack in section 'F'
+%
+/DrawMess {
+        MessFont
+        MessPos pop CurrMessY moveto
+        show
+        /CurrMessY CurrMessY MessSep sub def
+} def
+
+% Fill in Location name and message
+%
+(Magic Software Development, Inc.) DrawLoc
+
+(To restore:) DrawMess
+(    position tape at the start of the file and run:) DrawMess
+(        dd if=/dev/nrst0 bs=32k skip=1 | zcat | restore -if -) DrawMess
+(    or run:) DrawMess
+(        amrestore -p /dev/nrst0 <host> <filesystem> | restore -if -) DrawMess
+
+
+% DrawHost expects six strings to be on the stack.  The strings are 
+% Host Name, Partition Name, Dump Level, Tape File Number, and Output Size.
+%
+/DrawHost {
+	HostFont
+        .25 setlinewidth			% thin lines
+	HeadingCSizePos pop CurrColumnY moveto
+	-22 0 rmoveto show
+	HeadingOSizePos pop CurrColumnY moveto
+	-22 0 rmoveto show
+	HeadingFilePos pop CurrColumnY moveto
+	show
+	HeadingLvlPos pop CurrColumnY moveto
+	show
+	HeadingFsPos pop CurrColumnY moveto
+	show
+	HeadingHostPos pop CurrColumnY moveto
+	show
+        38 CurrColumnY 2.5 sub moveto 590 CurrColumnY 2.5 sub lineto stroke
+	/CurrColumnY CurrColumnY HostSep sub def
+} def
+
+
+%%%%
+%%%% END OF TEMPLATE FILE
+%%%% 

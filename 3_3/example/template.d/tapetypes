@@ -1,0 +1,304 @@
+# tapetypes
+
+# Define the type of tape you use here, and use it in "tapetype"
+# above.  Some typical types of tapes are included here.  The tapetype
+# tells amanda how many MB will fit on the tape, how big the filemarks
+# are, and how fast the tape device is.
+
+# A filemark is the amount of wasted space every time a tape section
+# ends.
+
+# For completeness Amanda should calculate the inter-record gaps too,
+# but it doesn't.  For EXABYTE and DAT tapes this is ok.  Anyone using
+# 9 tracks for amanda and need IRG calculations?  Drop me a note if
+# so.
+
+# If you want amanda to print postscript paper tape labels
+# add a line after the comment in the tapetype of the form
+#    lbl-templ "/path/to/postscript/template/label.ps"
+
+# if you want the label to go to a printer other than the default
+# for your system, you can also add a line above for a different
+# printer. (i usually add that line after the dumpuser specification)
+
+# dumpuser "operator"     # the user to run dumps under
+# printer "mypostscript"  # printer to print paper label on
+
+# here is an example of my definition for an EXB-8500
+
+# define tapetype EXB-8500 {
+# ...
+#     lbl-templ "/usr/local/amanda/config/lbl.exabyte.ps"
+# }
+
+# HARDDISK defintion in amanda.conf
+
+define tapetype DLT-S4 {
+   comment "just produced by tapetype prog, compression off"
+   length 772096 mbytes
+   filemark 0 kbytes
+   speed 33596 kps
+}
+
+define tapetype DLT8000 {
+    comment "Quantum DLT8000 created by tapetype"
+    length 38130 mbytes
+    filemark 29 kbytes
+    speed 5627 kps
+}
+
+define tapetype QUANTUM-DLT4000 {
+    comment "Quantum DLT4000, compression off"
+    length 19534 mbytes
+    filemark 4 kbytes
+    speed 1096 kps
+}
+
+
+define tapetype SDLT600 {
+    comment "Quantum SDLT600 with 10MB/s"
+    length 306789 mbytes
+    filemark 0 kbytes
+    speed 8247 kps
+}
+
+
+define tapetype SDLT320 {
+     comment "HP Super DLTtape I, data cartridge, C7980A, compression on"
+     length 139776 mbytes
+     filemark 0 kbytes
+     speed 13980 kps
+}
+
+define tapetype SDLT220NOCOMP {
+  comment "Quantum SDLT 220, compression off"
+  length 109539 mbytes
+  filemark 0 kbytes
+  speed 10351 kps
+}
+
+define tapetype Quantum-DLT-V4 {
+     comment "Quantum-DLT-V4 on Adaptec 29160"
+     length 157284 mbytes
+     filemark 0 kbytes
+     speed 9936 kps
+}
+
+define tapetype AIT1{
+     comment "Sony AIT-1 with 170m tapes"
+     length 21568 mbytes
+     filemark 0 kbytes
+     speed 2699 kps
+} 
+
+define tapetype AIT1-35 {
+     comment "Sony AIT1 cartridge 35/70 Gbyte, compression off"
+     length 33400 mbytes    # rounded down
+     filemark 500 kbytes
+     speed 2890 kps
+}
+
+define tapetype LTO {
+   comment "Dell PowerVault 122T, Seagate Ultrium, IBM 3581-H17, compression off"
+   length 101376 mbytes
+   filemark 0 kbytes
+   speed 13872 kps
+}
+
+define tapetype QUANTUM-LTO2 {
+   comment " Quantum LTO-2 HH, compression off"
+   length 186368 mbytes
+   filemark 0 kbytes
+   speed 2781 kps
+}
+
+define tapetype LTO2 {
+   comment "HP Ultrium 448, hardware compression off"
+   length 193024 mbytes
+   filemark 0 kbytes
+   speed 20355 kps
+}
+
+define tapetype DELL-LTO3-400 {
+     comment "Dell PV124T LTO3, compression off"
+     length 402432 mbytes
+     filemark 0 kbytes
+     speed 71189 kps
+}
+
+define tapetype DELL-LTO2-200 {
+     comment "Dell PV132T LTO2, hardware compression"
+     length 201216 mbytes
+     filemark 0 kbytes
+     speed 31343 kps
+}
+
+define tapetype IBM-ULTRIUM-3582 {
+     comment "IBM Ultrium 3582, compression on"
+     length 199168 mbytes
+     filemark 0 kbytes
+     speed 30760 kps
+}
+
+define tapetype LTO3-400 {
+     comment "LTO Ultrium 3 400/800, compression off"
+     length 402432 mbytes
+     filemark 0 kbytes
+     speed 71702 kps
+}
+
+define tapetype HP-ULTRIUM-960 {
+     comment "HP Ultrium 960, compression off"
+     length 386048 mbytes
+     filemark 0 kbytes
+     speed 67629 kps
+}
+
+define tapetype SEAGATE-ULTRIUM-LTO {
+     comment "SEAGATE ULTRIUM 06242 LTO, compression off"
+     length 99584 mbytes
+     filemark 0 kbytes
+     speed 11288 kps
+}
+
+define tapetype QS3LTO-3 {
+     comment "Quantum Super Loader 3 LTO-3 16 tape library"
+     length 448369 mbytes
+     filemark 6403 kbytes
+     speed 37739 kps
+}
+
+define tapetype DDS90 {
+     comment "DDS tapes drives - 90 meter tapes"
+     length 1900000 kbytes # rounded down
+     filemark 111 kbytes
+     speed 380 kps
+}
+
+define tapetype DDS120 {
+     comment "DDS tape drives - 120 meter tapes"
+     length 3850000  # rounded down
+     filemark 111 kbytes
+     speed 380 kps
+}
+
+define tapetype IBM-DAT-72 {
+   comment "DDS5, compression on"
+   length 30227 mbytes
+   filemark 0 kbytes
+   speed 2559 kps
+}
+
+define tapetype HP-DAT-72 {
+   comment "DDS5, /dev/rmt/0ln, HP C7438A Rev V309, compression on"
+   length 30227 mbytes
+   filemark 0 kbytes
+   speed 2551 kps
+}
+
+define tapetype DLT1 {
+   comment "HP DLT1, DLT IV Tape C5141F, compression on"
+   length 34818 mbytes
+   filemark 32 kbytes
+   speed 2879 kps
+}
+
+define tapetype ARCvault24 {
+   comment "Overland ARCvault, compression off"
+   length 386048 mbytes
+   filemark 0 kbytes
+   speed 38246 kps
+}
+
+define tapetype QIC-60 {
+    comment "Archive Viper"
+    length 60 mbytes
+    filemark 100 kbytes         
+    speed 100 kbytes            
+}
+
+define tapetype CD650 {
+    comment "CD-R 650MB sized vtape"
+    length 681984000 bytes
+    filemark 4 Kbytes
+}
+
+
+define tapetype CD700 {
+    comment "CD-R 700MB sized vtape"
+    length 737280000 bytes
+    filemark 4 Kbytes
+}
+
+define tapetype DVD47 {
+    comment "A 4.7 Gbyte DVD-sized vtape"
+    length 4482 mbytes
+    filemark 4 kbytes
+}
+
+define tapetype DVD85 {
+     comment "A 8.5 GB DVD double layer"
+     length 8100 mbytes   # approximately - exact value not found
+     filemark 4 kbytes
+}
+
+
+define tapetype DEC-DLT2000 {
+    comment "DEC Differential Digital Linear Tape 2000"
+    length 15000 mbytes
+    filemark 8 kbytes
+    speed 1250 kbytes
+}
+
+# goluboff@butch.Colorado.EDU
+# in amanda-users (Thu Dec 26 01:55:38 MEZ 1996)
+define tapetype DLT {
+    comment "DLT tape drives"
+    length 20000 mbytes		# 20 Gig tapes
+    filemark 2000 kbytes	
+    speed 1536 kbytes		
+}
+
+define tapetype SURESTORE-1200E {
+    comment "HP AutoLoader"
+    length 3900 mbytes
+    filemark 100 kbytes
+    speed 500 kbytes
+}
+
+define tapetype EXB-8500 {
+    comment "Exabyte EXB-8500 drive on decent machine"
+    length 4200 mbytes
+    filemark 48 kbytes
+    speed 474 kbytes			
+}
+
+define tapetype EXB-8200 {
+    comment "Exabyte EXB-8200 drive on decent machine"
+    length 2200 mbytes
+    filemark 2130 kbytes
+    speed 240 kbytes			
+}
+
+define tapetype HP-DAT {
+    comment "DAT tape drives"
+    # data provided by Rob Browning <rlb@cs.utexas.edu>
+    length 1930 mbytes
+    filemark 111 kbytes
+    speed 468 kbytes
+}
+
+define tapetype DAT {
+    comment "DAT tape drives"
+    length 1000 mbytes		# these numbers are not accurate
+    filemark 100 kbytes		# but you get the idea
+    speed 100 kbytes
+}
+
+define tapetype MIMSY-MEGATAPE {
+    comment "Megatape (Exabyte based) drive through Emulex on Vax 8600"
+    length 2200 mbytes
+    filemark 2130 kbytes
+    speed 170 kbytes		# limited by the Emulex bus interface, ugh
+}
+

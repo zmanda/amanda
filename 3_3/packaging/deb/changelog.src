@@ -1,0 +1,5 @@
+amanda (%%VERSION%%-1%%DISTRO%%%%DEB_REL%%) unstable; urgency=low
+
+  * Initial debian release.
+
+ -- Zmanda <support@zmanda.com>  %%DATE%%

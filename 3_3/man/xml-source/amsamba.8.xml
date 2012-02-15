@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amsamba.8'>
+
+<refmeta>
+<refentrytitle>amsamba</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amsamba</refname>
+<refpurpose>Amanda Application to interface with smbclient</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jlm;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Amsamba is an Amanda Application API script.  It should not be run
+by users directly.  It uses smbclient to backup and restore data.</para>
+
+<para> The  <emphasis remap='B'>diskdevice</emphasis> in the disklist (DLE)
+must have the form
+'//CIFSHOST/SHARE/SUBDIR' where CIFSHOST is the CIFS host containing the data
+to be backed up, SHARE is the share to connect, and subdir is the subdirectory
+to backup. '/subdir' can be ommited, in which case the complete share is
+archived.  </para>
+
+<para> Unlike most applications, amsamba backs up and restores data located on
+a different system from that where amsamba itself runs.  The host containing
+the data is the CIFS host.  In practice, amsamba is usually run on the same
+system as the Amanda server, with a DLE like
+<programlisting>
+localhost "//CIFSHOST/SHARENAME" amsamba-dumptype
+</programlisting>
+</para>
+
+<para> Include or exclude can be used, but not both. The path for 'exclude
+list' or 'include list' must be absolute path on the CIFS host. The estimate
+calculates the complete size of the share, without regard for include or
+exclude directives.  It will be larger than the actual dump if you use include
+or exclude. Using 'estimate server' in the dumptype could give better estimate.
+</para>
+
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control amsamba's functionality.
+See <manref name="amanda-applications" vol="7"/>
+for information on application properties and how they are configured.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>SMBCLIENT-PATH</term><listitem>
+The path to the smbclient binary.  The default is set when Amanda is built by the 
+--with-smbclient configure option.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>GNUTAR-PATH</term><listitem>
+The path to the gnutar binary.  The default is set when Amanda is built by the 
+--with-gnutar configure option. gnutar is used to create the index.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>AMANDAPASS</term><listitem>
+Location of the amandapass file, defaulting to "$CONFIG_DIR/amandapass".
+Relative pathnames are relative to the configuration directory,
+"$CONFIG_DIR/&lt;config&gt;". 
+Note that this file is located on the client, not on the server.
+The format of the file is as follow:
+<programlisting>
+  Sharename User%Password Domain
+</programlisting>
+Sharename is '//HOST/SHARE' without the SUBDIR.
+Sharename can be quoted,
+it can be '*' to match all share,
+it can be '//pc-host/*' to match all share on pc-host.
+User is the username use to connect to the share.
+Password is the password use to connect to the share.
+'%Password' is optional if the user can connect to the share without password.
+'User%Password' is optional, the user 'guest' without password is use to connect to the share.
+Domain is optional. Example:
+<programlisting>
+  //another-pc/share otheruser%otherpw domain
+  //another-pc/share otheruser%otherpw
+  //another-pc/share myuser mydomain
+  //another-pc/share myuser
+  //another-pc/share
+</programlisting>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>ALLOW-ANONYMOUS</term><listitem>
+This username without password is used to connect to the share if no matching entry is found in the amandapass file.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>DIRECTORY</term><listitem>
+For restore command only, the data is recoved in that directory. Must be a unix path for "tar" RECOVER-MODE or a smb path for "smb" recover-MODE.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>RECOVER-MODE</term><listitem>
+"tar" or "smb", default to "tar". If "tar", the data is recovered on the local machine, If "smb", the data is recovered on the smb client machine.
+</listitem></varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>INCLUDE AND EXCLUDE LISTS</title>
+
+<para>This application supplies exclude lists via the
+<command>smbclient</command> <option>-TX</option> option.  Normal shell-style
+wildcard expressions, using * and ?, are not supported.  All expressions are
+matched only from the base directory of the DLE.  Expressions that match a
+directory may have a leading or trailing "/".  Example expressions:
+<programlisting>
+  ./temp-files           # exclude top-level dir "temp-files" entirely
+  ./temp-files/          # same
+  /temp-files            # same
+  temp-files             # same
+  ./temp-files/*         # BAD: does nothing
+  *.iso                  # BAD: does nothing
+  proxy/local/cache      # exclude "cache" in dir "proxy/local"
+</programlisting>
+</para>
+
+<para>Include lists are supported only if excludes are not given.  They are
+handled via the <command>smbclient</command> <option>-TI</option> option.
+Include matching is identical to the exclude matching described above.</para>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<programlisting>
+  define application app_amsamba {
+    property "SMBCLIENT-PATH" "/usr/bin/smbclient"
+    property "GNUTAR-PATH" "/bin/tar"
+    property "AMANDAPASS" /etc/amandapass"
+    property "ALLOW-ANONYMOUS" "guest"
+  }
+</programlisting>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-applications" vol="7"/>
+</seealso>
+</refentry>

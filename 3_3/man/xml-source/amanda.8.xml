@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amanda.8'>
+
+<refmeta>
+<refentrytitle>amanda</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amanda</refname>
+<refpurpose>The Open Source Backup Platform</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jds;
+&author.sgw.xml;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+<para>This manual page gives an overview of the Amanda commands and
+configuration files for quick reference.</para>
+
+<!--
+ - NOTE: the comma after each citerefentry works around a bug in the docbook-to-man conversion; using &nbsp;
+ - causes problems in the docbook-to-html conversion.
+-->
+
+<refsect2><title>COMMANDS</title> <!-- a.k.a. any section 8 manpage -->
+<para>Here are all the Amanda commands.  Each one has its own manual page.  See them for all the gory details.</para>
+<itemizedlist>
+<listitem>
+<manref name="amaddclient" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amadmin" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amaespipe" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amarchiver" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amcheck" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amcheckdb" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amcheckdump" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amcleanup" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amcrypt-ossl-asym" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amcrypt-ossl" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amcrypt" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amcryptsimple" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amdevcheck" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amdump" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amfetchdump" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amflush" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amgetconf" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amgpgcrypt" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amgtar" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amlabel" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amoverview" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="ampgsql" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amplot" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amraw" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amrecover" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amreport" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amrestore" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amrmtape" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amsamba" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amserverconfig" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amservice" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amstar" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amstatus" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amsuntar" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amtape" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amtapetype" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amtoc" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amvault" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amzfs-sendrecv" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amzfs-snapshot" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="script-email" vol="8"/>,
+</listitem>
+</itemizedlist>
+</refsect2>
+<refsect2><title>CONFIGURATION FILES</title> <!-- a.k.a. most section 5 manpages -->
+<itemizedlist>
+<listitem>
+<manref name="amanda.conf" vol="5"/>,
+</listitem>
+<listitem>
+<manref name="amanda-client.conf" vol="5"/>,
+</listitem>
+<listitem>
+<manref name="disklist" vol="5"/>,
+</listitem>
+<listitem>
+<manref name="tapelist" vol="5"/>,
+</listitem>
+</itemizedlist>
+</refsect2>
+<refsect2><title>DATA FORMATS</title> <!-- a.k.a. section 5 manpages about internal data formats -->
+<itemizedlist>
+<listitem>
+<manref name="amanda-archive-format" vol="5"/>,
+</listitem>
+</itemizedlist>
+</refsect2>
+<refsect2><title>CONCEPTS</title> <!-- a.k.a. any section 7 manpage -->
+<itemizedlist>
+<listitem>
+<manref name="amanda-applications" vol="7"/>,
+</listitem>
+<listitem>
+<manref name="amanda-auth" vol="7"/>,
+</listitem>
+<listitem>
+<manref name="amanda-changers" vol="7"/>,
+</listitem>
+<listitem>
+<manref name="amanda-compatibility" vol="7"/>,
+</listitem>
+<listitem>
+<manref name="amanda-devices" vol="7"/>,
+</listitem>
+<listitem>
+<manref name="amanda-interactivity" vol="7"/>,
+</listitem>
+<listitem>
+<manref name="amanda-match" vol="7"/>,
+</listitem>
+<listitem>
+<manref name="amanda-scripts" vol="7"/>,
+</listitem>
+<listitem>
+<manref name="amanda-taperscan" vol="7"/>,
+</listitem>
+</itemizedlist>
+</refsect2>
+</refsect1>
+
+<refsect1><title>CONFIGURATION FILES</title>
+<para>There are four user-editable files that control the behavior of Amanda.
+</para>
+<para>
+The first two are &amconf; and &amclientconf;,
+the main configuration files for the server and client, respectively.
+They contain parameters to customize Amanda for the site.
+</para>
+<para>
+Next is the &disklist; file, which lists hosts and disk partitions to back up.
+</para>
+<para>
+Last is the seldom-edited &tapelist;
+file, which lists tapes that are currently active.
+These files are described in more detail in the following sections.</para>
+
+<para>All configuration files are stored in individual configuration
+directories, usually under <filename>/etc/amanda/</filename>.
+A site will often have more than
+one configuration.
+For example, it might have a
+<emphasis remap='I'>normal</emphasis>
+configuration for everyday backups and an
+<emphasis remap='I'>archive</emphasis>
+configuration for infrequent full archival backups.
+The configuration files would be stored under directories
+<filename>/etc/amanda/normal/</filename> and
+<filename>/etc/amanda/archive/</filename>, respectively.
+Part of the job of an Amanda administrator is to create,
+populate and maintain these directories.</para>
+
+<para>Most Amanda applications take a "config" parameter; this is generally the
+(unqualified) name of the configuration directory, e.g.,
+<filename>normal</filename>.  If the parameter is <filename>.</filename> (dot),
+the current directory is used.  This feature is present for backward
+compatibility, but is not commonly used.</para>
+
+<refsect2><title>Configuration Override</title>
+<para>Most commands allow the override of specific
+configuration options on the command line, using the <arg
+choice="plain">-o</arg> option.  This option has the form <arg
+choice="plain">-o</arg><replaceable>name</replaceable>=<replaceable>value</replaceable>.
+An optional space is allowed after the <arg choice="plain">-o</arg>.
+Each configuration option should be specified in a separate
+command-line option.</para>
+
+<para>For global options, <replaceable>name</replaceable> is simply the name of the option, e.g.,
+<programlisting>
+amdump -oruntapes=2
+</programlisting>
+For options in a named section of the configuration, <replaceable>name</replaceable> has the
+form <replaceable>SECTION</replaceable>:<replaceable>section_name</replaceable>:<replaceable>name</replaceable>,
+where <replaceable>SECTION</replaceable> is one of TAPETYPE, DUMPTYPE, HOLDINGDISK, or INTERFACE, and
+<replaceable>section_name</replaceable> is the name of the tapetype, dumptype, holdingdisk, or interface.
+Examples:
+<programlisting>
+amdump -o TAPETYPE:HP-DAT:length=2000m
+amdump -o DUMPTYPE:no-compress:compress="server fast"
+amdump -o HOLDINGDISK:hd1:use="-100 mb"
+amdump -o INTERFACE:local:use="2000 kbps"
+</programlisting>
+</para>
+
+<para>When overriding device properties, one must carefully quote the
+  command line to simulate the syntax of real configuration files. The
+  following example should serve as a guide:
+<programlisting>
+amdump -o 'device-property="PROPERTY_MAX_VOLUME_USAGE" "100000"'
+</programlisting></para>
+
+<para>Note that configuration overrides are not effective for tape
+changers, which supply a tapedev based on their own configuration.  In order to
+override <emphasis remap="I">tapedev</emphasis>, you must also disable any changer:
+<programlisting>
+amdump -otapedev=/dev/nst1 -otpchanger=''
+</programlisting>
+</para>
+
+</refsect2>
+
+</refsect1>
+
+</refentry>
+

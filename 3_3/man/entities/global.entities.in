@@ -1,0 +1,176 @@
+<!-- Global Entities File -->
+
+<!-- extra refmiscinfo stuff -->
+<!ENTITY rmi.source '<refmiscinfo class="source">Amanda</refmiscinfo>'>
+<!ENTITY rmi.version '<refmiscinfo class="version">@VERSION@</refmiscinfo>'>
+<!ENTITY rmi.manual.5 '<refmiscinfo class="manual">File formats and conventions</refmiscinfo>'>
+<!ENTITY rmi.manual.7 '<refmiscinfo class="manual">Miscellanea</refmiscinfo>'>
+<!ENTITY rmi.manual.8 '<refmiscinfo class="manual">System Administration Commands</refmiscinfo>'>
+
+<!-- utilities for below -->
+<!ENTITY affil.zmanda '<affiliation><org>
+		<orgname>Zmanda, Inc.</orgname>
+		<uri type="webpage">http://www.zmanda.com</uri></org></affiliation>'>
+<!ENTITY affil.nap '<affiliation><org>
+		<orgname>National Academies Press</orgname></org></affiliation>'>
+<!ENTITY affil.tis '<affiliation><org>
+		<orgname>Trusted Information Systems</orgname></org></affiliation>'>
+<!ENTITY affil.unigech '<affiliation><org>
+		<orgname>University of Geneva/Switzerland</orgname></org></affiliation>'>
+
+<!-- author IDs; use these in an <info> -->
+<!ENTITY author.dustin '<author><personname>Dustin J. Mitchell</personname>
+		    &affil.zmanda;
+		    <email>dustin@zmanda.com</email></author>'>
+<!ENTITY author.jlm '<author><personname>Jean-Louis Martineau</personname>
+		    &affil.zmanda;
+		    <email>martineau@zmanda.com</email></author>'>
+<!ENTITY author.sgw '<author><personname>Stefan G. Weichinger</personname>
+		    <email>sgw@amanda.org</email></author>'>
+<!ENTITY author.sgw.xml '<author><personname>Stefan G. Weichinger</personname>
+		    <contrib>XML-conversion</contrib>
+		    <email>sgw@amanda.org</email></author>'>
+<!ENTITY author.ian '<author><personname>Ian Turner</personname>
+		    &affil.zmanda;
+		    <email>ian@zmanda.com</email></author>'>
+<!ENTITY author.jds '<author><personname>James da Silva</personname>
+		    <email>jds@amanda.org</email></author>'>
+<!ENTITY author.jstange '<author><personname>John Stange</personname>
+		    &affil.nap;
+		    <email>building@nap.edu</email></author>'>
+<!ENTITY author.ktill '<author><personname>Kevin Till</personname>
+		    &affil.zmanda;
+		    <email>kevin.till@zmanda.com</email></author>'>
+<!ENTITY author.dwlocks '<author><personname>Dan Locks</personname>
+		    &affil.zmanda;
+		    <email>dwlocks@zmanda.com</email></author>'>
+<!ENTITY author.ncoukouma '<author><personname>Nikolas Coukouma</personname>
+		    &affil.zmanda;
+		    <email>atrus@zmanda.com</email></author>'>
+<!ENTITY author.atf3r '<author><personname>Adrian T. Filipi-Martin</personname>
+		    <email>atf3r@cs.virginia.edu</email></author>'>
+<!ENTITY author.alan '<author><personname>Alan M. McIvor</personname>
+		    <email>alan@kauri.auck.irl.cri.nz</email></author>'>
+<!ENTITY author.ogud '<author><personname>Olafur Gudmundsson</personname>
+		    &affil.tis;
+		    <email>ogud@tis.com</email></author>'>
+<!ENTITY author.nm '<author><personname>Nicolas Mayencourt</personname>
+		    &affil.unigech;
+		    <email>Nicolas.Mayencourt@cui.unige.ch</email></author>'>
+<!ENTITY author.pby '<author><personname>Paul Yeatman</personname>
+		    &affil.zmanda;
+		    <email>pyeatman@zmanda.com</email></author>'>
+<!ENTITY author.gsat '<author><personname>Satya Ganga</personname>
+		    &affil.zmanda;
+		    <email>gast@zmanda.com</email></author>'>
+
+<!-- common option -->
+
+<!ENTITY version.synopsis
+    '<group choice="opt"><option>--version</option></group>'>
+
+<!ENTITY version.varlistentry
+  '<varlistentry>
+  <term><option>--version</option></term>
+  <listitem>
+<para>Output version information</para>
+  </listitem>
+  </varlistentry>'>
+
+<!ENTITY configoverride.synopsis
+    '<arg rep="repeat" choice="opt"><option>-o</option> <replaceable>configoption</replaceable></arg>'>
+
+<!ENTITY configoverride.varlistentry
+  '<varlistentry>
+  <term><option>-o <replaceable>configoption</replaceable></option></term>
+  <listitem>
+<para>See the "CONFIGURATION OVERRIDE" section in <manref name="amanda" vol="8"/>.</para>
+  </listitem>
+  </varlistentry>'>
+
+<!-- IDs for AMANDA files-->
+<!ENTITY amconf '<manref name="amanda.conf" vol="5"/>'>
+<!ENTITY amclientconf '<manref name="amanda-client.conf" vol="5"/>'>
+<!ENTITY amandahosts '<filename>.amandahosts</filename>'>
+<!ENTITY disklist '<manref name="disklist" vol="5"/>'>
+<!ENTITY amandapass '<filename>/etc/amandapass</filename>'>
+<!ENTITY inetdconf '<filename>/etc/inetd.conf</filename>'>
+<!ENTITY tapelist '<manref name="tapelist" vol="5"/>'>
+
+<!-- IDs for files used by AMANDA-->
+<!ENTITY dumpdates '<filename>/etc/dumpdates</filename>'>
+
+<!-- IDs for AMANDA commands-->
+<!ENTITY amadmin ' <command>amadmin</command>'>
+<!ENTITY amaespipe ' <command>amaespipe</command>'>
+<!ENTITY amcheck ' <command>amcheck</command>'>
+<!ENTITY amcheckdb ' <command>amcheckdb</command>'>
+<!ENTITY amcleanup ' <command>amcleanup</command>'>
+<!ENTITY amcrypt ' <command>amcrypt</command>'>
+<!ENTITY amcryptsimple ' <command>amcryptsimple</command>'>
+<!ENTITY amcryptossl ' <command>amcrypt-ossl</command>'>
+<!ENTITY amcryptosslasym ' <command>amcrypt-ossl-asym</command>'>
+<!ENTITY amgpgcrypt ' <command>amgpgcrypt</command>'>
+<!ENTITY amdd ' <command>amdd</command>'>
+<!ENTITY amaddclient ' <command>amaddclient</command>'>
+<!ENTITY amdump ' <command>amdump</command>'>
+<!ENTITY amflush ' <command>amflush</command>'>
+<!ENTITY amgetconf ' <command>amgetconf</command>'>
+<!ENTITY amlabel ' <command>amlabel</command>'>
+<!ENTITY ammt ' <command>ammt</command>'>
+<!ENTITY amoverview ' <command>amoverview</command>'>
+<!ENTITY amplot ' <command>amplot</command>'>
+<!ENTITY amrecover ' <command>amrecover</command>'>
+<!ENTITY amreport ' <command>amreport</command>'>
+<!ENTITY amrestore ' <command>amrestore</command>'>
+<!ENTITY amrmtape ' <command>amrmtape</command>'>
+<!ENTITY amserverconfig ' <command>amserverconfig</command>'>
+<!ENTITY amstatus ' <command>amstatus</command>'>
+<!ENTITY amtape ' <command>amtape</command>'>
+<!ENTITY amtapetype ' <command>amtapetype</command>'>
+<!ENTITY amtoc ' <command>amtoc</command>'>
+
+<!ENTITY amandad ' <command>amandad</command>'>
+<!ENTITY amandaidx ' <command>amandaidx</command>'>
+<!ENTITY amgetidx ' <command>amgetidx</command>'>
+<!ENTITY amidxtape ' <command>amidxtape </command>'>
+<!ENTITY amidxtaped ' <command>amidxtaped</command>'>
+<!ENTITY amindexd ' <command>amindexd</command>'>
+<!ENTITY amtrmidx ' <command>amtrmidx</command>'>
+<!ENTITY calcsize ' <command>calcsize</command>'>
+<!ENTITY driver ' <command>driver</command>'>
+<!ENTITY dumper ' <command>dumper</command>'>
+<!ENTITY planner ' <command>planner</command>'>
+<!ENTITY reporter ' <command>reporter</command>'>
+<!ENTITY runtar ' <command>runtar</command>'>
+<!ENTITY selfcheck ' <command>selfcheck</command>'>
+<!ENTITY sendbackup ' <command>sendbackup</command>'>
+<!ENTITY sendsize ' <command>sendsize</command>'>
+<!ENTITY taper ' <command>taper</command>'>
+
+<!-- IDs for commands used by AMANDA-->
+<!ENTITY mt '<command>mt</command>'>
+<!ENTITY mtx '<command>mtx</command>'>
+<!ENTITY tar '<command>tar</command>'>
+<!ENTITY gnutar '<command>GNU-tar</command>'>
+<!ENTITY gzip '<command>GNU-zip</command>'>
+
+<!ENTITY dump '<command>dump</command>'>
+<!ENTITY restore.binary '<command>restore</command>'>
+
+<!ENTITY dd '<command>dd</command>'>
+<!ENTITY cpio '<command>cpio</command>'>
+
+<!ENTITY gcc '<command>gcc</command>'>
+<!ENTITY configure '<command>configure</command>'>
+<!ENTITY make '<command>make</command>'>
+<!ENTITY ssh '<command>ssh</command>'>
+<!ENTITY rsh '<command>rsh</command>'>
+<!ENTITY inetd '<command>inetd</command>'>
+<!ENTITY xinetd '<command>xinetd</command>'>
+<!ENTITY lsof '<command>lsof</command>'>
+
+<!ENTITY runtapes '<command>runtapes</command>'>
+<!ENTITY dumpers '<command>dumpers</command>'>
+<!ENTITY dumptype '<command>dumptype</command>'>
+<!ENTITY dumpcycle '<command>dumpcycle</command>'>

@@ -1,0 +1,19 @@
+amanda-backup-client: binary-or-shlib-defines-rpath usr/lib/amanda/*
+amanda-backup-client: binary-or-shlib-defines-rpath usr/libexec/amanda/*
+amanda-backup-client: binary-or-shlib-defines-rpath amoldrecover amrecover
+amanda-backup-client: binary-without-manpage amaespipe
+amanda-backup-client: binary-without-manpage amcryp*
+amanda-backup-client: binary-without-manpage amgpgcrypt
+amanda-backup-client: binary-without-manpage amoldrecover
+amanda-backup-client: file-in-unusual-dir usr/libexec/amanda/*
+amanda-backup-client: manpage-has-bad-whatis-entry
+amanda-backup-client: non-standard-dir-in-usr usr/libexec
+amanda-backup-client: non-standard-dir-in-var var/log/amanda
+amanda-backup-client: non-standard-dir-perm var/lib/amanda/gnutar-lists
+amanda-backup-client: non-standard-dir-perm var/log/amanda 
+amanda-backup-client: package-name-doesnt-match-sonames
+amanda-backup-client: setuid-binary usr/libexec/amanda/calcsize 
+amanda-backup-client: setuid-binary usr/libexec/amanda/killgrp 
+amanda-backup-client: setuid-binary usr/libexec/amanda/planner 
+amanda-backup-client: setuid-binary usr/libexec/amanda/rundump 
+amanda-backup-client: setuid-binary usr/libexec/amanda/runtar

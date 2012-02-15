@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='script-email.8'>
+
+<refmeta>
+<refentrytitle>script-email</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>script-email</refname>
+<refpurpose>Amanda script to send email notifications</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jlm;
+&author.dustin;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>script-email is an Amanda script implementing the Script API.  It should not
+be run by users directly.  It sends a notification email to the addresses
+specified in the MAILTO property.</para>
+
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control script-email's functionality.
+See <manref name="amanda-scripts" vol="7"/>
+for information on the Script API, script configuration.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>MAILTO</term><listitem>
+List of email addresses that will receive an email on command execution. It is a multi-valued property:
+<programlisting>
+  property "MAILTO" "amanda@domain.com" "sysadmin@domain.com" "amandauser@domain.com"
+</programlisting>
+</listitem></varlistentry>
+ <!-- ==== -->
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+
+In this example, script-email is scheduled to be run before the DLE, on the
+server.  The unqualified email address <emphasis>amanda</emphasis> will be
+passed to the email system unchanged.  The script is then attached to a
+dumptype, which can then be specified for any DLEs which require notification.
+
+<programlisting>
+ define script-tool pre-email {
+   comment "email me before this DLE is backed up"
+   plugin  "script-email"
+   execute-on pre-dle-backup
+   execute-where server
+   property "mailto" "amanda"
+ }
+
+ define dumptype user-tar-email {
+   user-tar
+   script "pre-email"
+ }
+</programlisting>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-client.conf" vol="5"/>,
+<manref name="amanda-scripts" vol="7"/>
+</seealso>
+
+</refentry>

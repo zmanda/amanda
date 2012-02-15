@@ -1,0 +1,1 @@
+amanda stream tcp nowait amandabackup @amlibexecdir@/amandad amandad -auth=bsdtcp amdump amindexd amidxtaped

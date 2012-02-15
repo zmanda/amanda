@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amcheckdump.8'>
+<refmeta>
+<refentrytitle>amcheckdump</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amcheckdump</refname>
+<refpurpose>check the results of an Amanda dump</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.ian;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amcheckdump</command>    
+    <arg choice='opt'>--timestamp|-t <replaceable>timestamp</replaceable></arg>
+    <arg choice='opt'>--verbose</arg>
+    &configoverride.synopsis;
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>DESCRIPTION</title>
+
+<para><emphasis remap='B'>Amcheckdump</emphasis> verifies Amanda dump images by
+reading them from storage volume(s) and verifying that the images can be parsed
+by the appropriate application (if available).  For example, a GNUTAR
+image is passed to GNU Tar for parsing, and any errors
+(e.g., corrupt or missing data) are noted.</para>
+
+<para>The application runs on the most recent dump or, if <emphasis
+remap='I'>--timestamp</emphasis> is specified, on the most recent dump with
+that timestamp.  Note that the verification is local to the Amanda server; if the
+dump application is not available, or is configured differently on the server
+than on the client, then the verification will most likely fail.</para>
+
+<para>If a changer is available, it is used to load the required
+tapes.  Otherwise, the application interactively requests the tapes.</para>
+
+<para>See the "<emphasis
+remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in
+<manref name="amanda" vol="8"/>
+for information on the <literal>-o</literal> option.</para>
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para><programlisting>
+# check the most recent dump
+amcheckdump MYCONFIG
+
+# check a specific dump from back in '78
+amcheckdump MYCONFIG --timestamp 19780615
+</programlisting></para>
+</refsect1>
+
+<seealso>
+<manref name="amcheck" vol="8" />
+</seealso>
+
+</refentry>

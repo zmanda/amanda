@@ -1,0 +1,56 @@
+This patch fixes Samba 2.0.0 up to 2.0.3, so that it does not overflow
+on filesystems larger than 2GB.  The problem is fixed in newer
+releases of Samba.
+
+Index: client/client.c
+--- client/client.c	1999/01/27 19:37:27	1.125
++++ client/client.c	1999/03/30 10:25:18	1.128
+@@ -101,7 +101,7 @@
+ int put_total_time_ms = 0;
+ 
+ /* totals globals */
+-int dir_total = 0;
++static double dir_total;
+ 
+ #define USENMB
+ 
+@@ -430,7 +430,7 @@
+ 
+ 	do_dskattr();
+ 
+-	DEBUG(3, ("Total bytes listed: %d\n", dir_total));
++	DEBUG(3, ("Total bytes listed: %.0f\n", dir_total));
+ }
+ 
+ 
+@@ -463,7 +463,7 @@
+ 
+ 	do_dskattr();
+ 
+-	DEBUG(0, ("Total number of bytes: %d\n", dir_total));
++	DEBUG(0, ("Total number of bytes: %.0f\n", dir_total));
+ }
+ 
+ 
+Index: client/clitar.c
+--- client/clitar.c	1999/02/03 16:30:54	1.67
++++ client/clitar.c	1999/03/30 10:41:07	1.70
+@@ -85,7 +85,8 @@
+ #endif
+ 
+ static char *tarbuf, *buffer_p;
+-static int tp, ntarf, tbufsiz, ttarf;
++static int tp, ntarf, tbufsiz;
++static double ttarf;
+ /* Incremental mode */
+ BOOL tar_inc=False;
+ /* Reset archive bit */
+@@ -1486,7 +1487,7 @@
+     free(tarbuf);
+     
+     DEBUG(0, ("tar: dumped %d tar files\n", ntarf));
+-    DEBUG(0, ("Total bytes written: %d\n", ttarf));
++    DEBUG(0, ("Total bytes written: %.0f\n", (double)ttarf));
+     break;
+   }
+ 

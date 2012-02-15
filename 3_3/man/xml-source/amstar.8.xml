@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amstar.8'>
+
+<refmeta>
+<refentrytitle>amstar</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amstar</refname>
+<refpurpose>Amanda Application to interface with star</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jlm;
+&author.dustin;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Amstar is an Amanda Application API script.  It should not be run
+by users directly.  It uses star to backup and restore data.</para>
+
+<para>The <emphasis remap='B'>diskdevice</emphasis> in the disklist (DLE)
+must be the directory to backup.</para>
+
+</refsect1>
+
+<refsect1><title>INCLUDE - EXCLUDE</title>
+
+<para>amstar doesn't support include. Both 'exclude list' and 'exclude file' are supported. There is a maximum of 100 patterns (limit of star).</para>
+
+<para>Moving directories into and out of directories on the exclude list
+causes incremental backups to not contain the files in the moved directories until the next full backup unless the moved files are modified after the move.</para>
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control amstar's functionality.
+See <manref name="amanda-applications" vol="7"/>
+for information on application properties and how they are configured.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>ACL</term><listitem>
+If "YES" (the default), amstar will store files acl by passing the <emphasis>-acl</emphasis> argument to star. If "NO", then the <emphasis>-acl</emphasis> option is not given to star, and it will not try to backup the acl.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>COMMAND-OPTIONS</term><listitem>
+<para>If set, theses options are passed asis to star. Each option must be a different value of the property. Some option can break how amanda do backup, use it with care.</para>
+Use:
+<programlisting>
+  property "COMMAND-OPTIONS" "--foo" "bar"
+</programlisting>
+Do not use:
+<programlisting>
+  property "COMMAND-OPTIONS" "--foo bar"
+</programlisting>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>DIRECTORY</term><listitem>
+If set, gnutar will backup from that directory instead of the <emphasis>diskdevice</emphasis> set by the DLE. On restore, the data is restore in that directpory instead of the current working directory.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>ONE-FILE-SYSTEM</term><listitem>
+The default is "YES". This property is deprecated and the default value can't be changed. star requires it when it works in dump mode.  This corresponds to the <emphasis>-xdev</emphasis> option of star.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>SPARSE</term><listitem>
+If "YES" (the default), star will store sparse files efficiently. If "NO", then the <emphasis>-sparse</emphasis> option is not given to star, and it will not try to detect sparse files.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>STAR-DLE-TARDUMP</term><listitem>
+If "YES", amstar will use a different tardump file for each DLE. The default is "NO".  This property is needed with older versions of star doing many dumps in parallel, because of a race condition in updating the tardump file.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>STAR-PATH</term><listitem>
+The path to the star binary. The default is set when Amanda is built by the
+--with-star configure option.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>STAR-TARDUMP</term><listitem>
+The directory where star stores the database it uses to generate incremental
+dumps.  The default is /etc/tardumps.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>NORMAL</term><listitem>
+List all regex (POSIX Extended Regular Expression syntax) that are normal output from star. These output are in the "FAILED DUMP DETAILS" section of the email report if the dump result is STRANGE or FAILED. Default values:
+<programlisting>
+  "^could not open conf file"
+  "^Type of this level "
+  "^Date of this level "
+  "^Date of last level "
+  "^Dump record  level "
+  "^Throughput"
+  "^.*is sparse$"
+  "^star: dumped [0-9][0-9]* (tar )?files"
+  "^.*The following problems occurred during .* processing.*$"
+  "^.*Processed all possible files, despite earlier errors.*$"
+  "^.*not written due to problems during backup.*$"
+</programlisting>
+<para>To treat one of these default patterns differently, specify it explicitly in a different property.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>IGNORE</term><listitem>
+List all regex (POSIX Extended Regular Expression syntax) that amanda ignore. These output are never in the email report. 
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>STRANGE</term><listitem>
+List all regex (POSIX Extended Regular Expression syntax) that are strange output from star. All star output that doesn't match a normal or ignore regex are strange by default. The result of the dump is STRANGE if star produce a strange output. These output are in the "FAILED DUMP DETAILS" section of the email report.
+<programlisting>
+  "^Perform a level 0 dump first.*$"
+</programlisting>
+<para>To treat one of these default patterns differently, specify it explicitly in a different property.</para>
+</listitem></varlistentry>
+
+</variablelist>
+
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-applications" vol="7"/>
+</seealso>
+
+</refentry>

@@ -1,0 +1,9 @@
+etc/amanda
+usr/share/lintian/overrides
+usr/share/man/man5
+usr/share/man/man8
+var/amanda
+var/lib/amanda
+var/lib/amanda/gnutar-lists
+var/lib/amanda/example/label-templates
+var/log/amanda
