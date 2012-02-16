@@ -2102,7 +2102,7 @@ disklist_one(
     hp = dp->host;
     ip = hp->netif;
 
-    g_printf("line %d:\n", dp->line);
+    g_printf("line %d (%s):\n", dp->line, dp->filename);
 
     g_printf("    host %s:\n", hp->hostname);
     g_printf("        interface %s\n",

@@ -1,6 +1,7 @@
 Changes in release 4.0.0
 
    * Add letter based sequence to autolabel and meta-autolabel.
+   * And 'includefile' directive for the disklist.
 
 Changes in release 3.3.1
 
