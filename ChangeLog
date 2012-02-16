@@ -1,3 +1,8 @@
+2012-02-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amadmin.c (disklist_one): print the filename.
+	* server-src/diskfile.c: Add includefile directive.
+	* server-src/diskfile.h (disk_t): Add filename.
+
 2012-02-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: Fix default netusage.
 

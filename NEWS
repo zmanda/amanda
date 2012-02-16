@@ -6,6 +6,8 @@ Changes in release 3.3.1
        o new '$s' substitution in autolabel.
        o new 'max-dle-by-volume' global option.
        o new 'eject-volume' global option.
+   * diskfile
+       o new 'includefile' option
    * All perl programs have a new '--version' argument.
    * ampgsql can take property from server configuration.
    * amgetconf can print one property of a section.

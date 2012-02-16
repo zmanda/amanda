@@ -341,6 +341,7 @@ free_disklist(
 
     while (dl->head != NULL) {
 	dp = dequeue_disk(dl);
+	amfree(dp->filename);
 	amfree(dp->name);
 	amfree(dp->hostname);
 	amfree(dp->device);
@@ -423,6 +424,28 @@ parse_diskline(
     fp = s - 1;
     skip_non_whitespace(s, ch);
     s[-1] = '\0';
+    if (g_str_equal(fp, "includefile")) {
+	char *include_name;
+	char *include_filename;
+	skip_whitespace(s, ch);
+	if (ch == '\0' || ch == '#') {
+	    disk_parserror(filename, line_num, _("include filename name expected"));
+	    return (-1);
+	}
+	fp = s - 1;
+	skip_quoted_string(s, ch);
+	s[-1] = '\0';
+	include_name = unquote_string(fp);
+	include_filename = config_dir_relative(include_name);
+	read_diskfile(include_filename, lst);
+	g_free(include_filename);
+	g_free(include_name);
+	if (config_errors(NULL) >= CFGERR_WARNINGS) {
+	    return -1;
+	} else {
+	    return 0;
+	}
+    }
     host = lookup_host(fp);
     if (host == NULL) {
 	hostname = stralloc(fp);
@@ -540,6 +563,7 @@ parse_diskline(
     }
     if (!disk) {
 	disk = alloc(SIZEOF(disk_t));
+	disk->filename = g_strdup(filename);
 	disk->line = line_num;
 	disk->hostname = hostname;
 	disk->name = diskname;
