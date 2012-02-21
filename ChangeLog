@@ -1,4 +1,8 @@
 2012-02-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/make_html.pl: Add link at top, better list display.
+	* perl/Makefile.am: Execute make_html with a --homeurl argument.
+
+2012-02-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* VERSION: 3.3.1
 	* ReleaseNotes, NEWS: update for 3.3.1
 
