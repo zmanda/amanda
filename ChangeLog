@@ -1,3 +1,7 @@
+2012-02-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* VERSION: 3.3.1
+	* ReleaseNotes, NEWS: update for 3.3.1
+
 2012-02-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin.c (disklist_one): print the filename.
 	* server-src/diskfile.c: Add includefile directive.

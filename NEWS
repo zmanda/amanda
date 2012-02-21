@@ -7,12 +7,15 @@ Changes in release 3.3.1
        o new 'max-dle-by-volume' global option.
        o new 'eject-volume' global option.
    * diskfile
-       o new 'includefile' option
-   * All perl programs have a new '--version' argument.
+       o new 'includefile' option.
+   * amcheck
+       o new '--client-verbose' argument.
+   * All programs have a new '--version' argument.
    * ampgsql can take property from server configuration.
    * amgetconf can print one property of a section.
    * s3 device
        o new S3_SERVER_SIDE_ENCRYPTION property.
+       o use multiple thread to speedup deleting a volume.
    * Many bug fix.
 
 Changes in release 3.3.0
