@@ -30,8 +30,25 @@
 <refsect1><title>DESCRIPTION</title>
 <para>The
 <emphasis remap='I'>disklist</emphasis>
-file determines which disks will be backed up by Amanda.
-The file usually contains one line per disk:</para>
+file determines which disks will be backed up by Amanda. The file contains
+<amkeyword>includefile</amkeyword> directive or disklist entry
+(<amkeyword>DLE</amkeyword>).</para>
+
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><amkeyword>includefile</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default:
+<amdefault>no default</amdefault>.
+The name of a disklist file to include within the current file.
+Useful for sharing disklist among several configurations.
+Relative pathnames are relative to the configuration directory.
+</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>A <amkeyword>DLE</amkeyword> usually contains one line per disk:</para>
 
 <programlisting>
 <emphasis>hostname diskname</emphasis> [<emphasis>diskdevice</emphasis>] <emphasis>dumptype</emphasis> [<emphasis>spindle</emphasis> [<emphasis>interface</emphasis>] ]
