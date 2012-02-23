@@ -108,7 +108,7 @@ In this example, a dumptype is defined to use amzfs-sendrecv application to back
  }
 
  define dumptype user-zfs-sendrecv {
-   program "APPLICATAION"
+   program "APPLICATION"
    application "amzfs_sendrecv"
  }
 </programlisting>
