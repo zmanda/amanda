@@ -1,4 +1,7 @@
 2012-02-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amzfs-sendrecv.8.xml: Typo.
+
+2012-02-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/disklist.5.xml: Document includefile directive.
 
 2012-02-16  Jean-Louis Martineau <martineau@zmanda.com>
