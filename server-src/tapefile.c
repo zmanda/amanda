@@ -106,8 +106,6 @@ write_tapelist(
 	    g_fprintf(tapef, " BARCODE:%s", tp->barcode);
 	if (tp->meta)
 	    g_fprintf(tapef, " META:%s", tp->meta);
-	if (tp->blocksize)
-	    g_fprintf(tapef, " BLOCKSIZE:%jd", (intmax_t)tp->blocksize);
 	if (tp->comment)
 	    g_fprintf(tapef, " #%s", tp->comment);
 	g_fprintf(tapef, "\n");
@@ -423,15 +421,6 @@ parse_tapeline(
 	tp->meta = NULL;
     }
 
-    if (strncmp_const(s - 1, "BLOCKSIZE:") == 0) {
-	s1 = s - 1 + 10;
-	skip_non_whitespace(s, ch);
-	s[-1] = '\0';
-	skip_whitespace(s, ch);
-	tp->blocksize = atol(s1);
-    } else {
-	tp->blocksize = 0;
-    }
     if (*(s - 1) == '#') {
 	tp->comment = stralloc(s); /* skip leading '#' */
     } else {

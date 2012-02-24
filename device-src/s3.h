@@ -115,7 +115,7 @@ typedef curl_progress_callback s3_progress_func;
 /* This preprocessor magic will enumerate constants named S3_ERROR_XxxYyy for
  * each of the errors in parentheses.
  *
- * see http://docs.amazonwebservices.com/AmazonS3/latest/API/ErrorResponses.html
+ * see http://docs.amazonwebservices.com/AmazonS3/2006-03-01/ErrorCodeList.html
  * for Amazon's breakdown of error responses.
  */
 #define S3_ERROR_LIST \
@@ -166,11 +166,6 @@ typedef curl_progress_callback s3_progress_func;
     S3_ERROR(UnexpectedContent), \
     S3_ERROR(UnresolvableGrantByEmailAddress), \
     S3_ERROR(Unknown), \
-    S3_ERROR(Unauthorized), \
-    S3_ERROR(Created), \
-    S3_ERROR(Accepted), \
-    S3_ERROR(Forbidden), \
-    S3_ERROR(Conflict), \
     S3_ERROR(END)
 
 typedef enum {
@@ -238,14 +233,10 @@ s3_init(void);
  * @returns: the new S3Handle
  */
 S3Handle *
-s3_open(const char * access_key, const char *secret_key,
-	const char *swift_account_id, const char *swift_access_key,
-	const char *host,
+s3_open(const char * access_key, const char *secret_key, const char *host,
         const char *service_path, gboolean use_subdomain,
         const char * user_token,
-        const char * bucket_location, const char * storage_class,
-	const char * ca_info, const char * server_side_encryption,
-	const gboolean openstack_swift_api);
+        const char * bucket_location, const char * storage_class, const char * ca_info);
 
 /* Deallocate an S3Handle
  *
@@ -432,16 +423,6 @@ s3_delete(S3Handle *hdl,
 gboolean
 s3_make_bucket(S3Handle *hdl,
                const char *bucket);
-
-/* Check if a bucket exists.
- *
- * @param hdl: the S3Handle object
- * @param bucket: the bucket to create
- * @returns: FALSE if an error occur
- */
-gboolean
-s3_is_bucket_exists(S3Handle *hdl,
-                    const char *bucket);
 
 /* Delete a bucket
  *

@@ -328,11 +328,6 @@ main(
     char *cfg_opt = NULL;
     int dumper_setuid;
 
-    if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
-	printf("dumper-%s\n", VERSION);
-	return (0);
-    }
-
     /*
      * Configure program for internationalization:
      *   1) Only set the message locale for now.
@@ -1291,95 +1286,6 @@ do_dump(
 	if (!errstr) errstr = stralloc(_("got no data"));
     }
 
-    if (indexfile_tmp) {
-	amwait_t index_status;
-
-	/*@i@*/ aclose(indexout);
-	waitpid(indexpid,&index_status,0);
-	log_add(L_INFO, "pid-done %ld", (long)indexpid);
-	if (rename(indexfile_tmp, indexfile_real) != 0) {
-	    log_add(L_WARNING, _("could not rename \"%s\" to \"%s\": %s"),
-		    indexfile_tmp, indexfile_real, strerror(errno));
-	}
-	amfree(indexfile_tmp);
-	amfree(indexfile_real);
-    }
-
-    /* copy the header in a file on the index dir */
-    {
-	FILE *a;
-	char *s;
-	char *f = getheaderfname(hostname, diskname, dumper_timestamp, level);
-	a = fopen(f,"w");
-	if (a) {
-	    s = build_header(&file, NULL, DISK_BLOCK_BYTES);
-	    fprintf(a,"%s", s);
-	    g_free(s);
-	    fclose(a);
-	}
-	g_free(f);
-    }
-
-    if (db->compresspid != -1 && dump_result < 2) {
-	amwait_t  wait_status;
-	char *errmsg = NULL;
-
-	waitpid(db->compresspid, &wait_status, 0);
-	if (WIFSIGNALED(wait_status)) {
-	    errmsg = g_strdup_printf(_("%s terminated with signal %d"),
-				     "compress", WTERMSIG(wait_status));
-	} else if (WIFEXITED(wait_status)) {
-	    if (WEXITSTATUS(wait_status) != 0) {
-		errmsg = g_strdup_printf(_("%s exited with status %d"),
-					 "compress", WEXITSTATUS(wait_status));
-	    }
-	} else {
-	    errmsg = g_strdup_printf(_("%s got bad exit"),
-				     "compress");
-	}
-	if (errmsg) {
-	    g_fprintf(errf, _("? %s\n"), errmsg);
-	    g_debug("%s", errmsg);
-	    dump_result = max(dump_result, 2);
-	    if (!errstr)
-		errstr = errmsg;
-	    else
-		g_free(errmsg);
-	}
-	log_add(L_INFO, "pid-done %ld", (long)db->compresspid);
-	db->compresspid = -1;
-    }
-
-    if (db->encryptpid != -1 && dump_result < 2) {
-	amwait_t  wait_status;
-	char *errmsg = NULL;
-
-	waitpid(db->encryptpid, &wait_status, 0);
-	if (WIFSIGNALED(wait_status)) {
-	    errmsg = g_strdup_printf(_("%s terminated with signal %d"),
-				     "encrypt", WTERMSIG(wait_status));
-	} else if (WIFEXITED(wait_status)) {
-	    if (WEXITSTATUS(wait_status) != 0) {
-		errmsg = g_strdup_printf(_("%s exited with status %d"),
-					 "encrypt", WEXITSTATUS(wait_status));
-	    }
-	} else {
-	    errmsg = g_strdup_printf(_("%s got bad exit"),
-				     "encrypt");
-	}
-	if (errmsg) {
-	    g_fprintf(errf, _("? %s\n"), errmsg);
-	    g_debug("%s", errmsg);
-	    dump_result = max(dump_result, 2);
-	    if (!errstr)
-		errstr = errmsg;
-	    else
-		g_free(errmsg);
-	}
-	log_add(L_INFO, "pid-done %ld", (long)db->encryptpid);
-	db->encryptpid  = -1;
-    }
-
     if (dump_result > 1)
 	goto failed;
 
@@ -1427,6 +1333,29 @@ do_dump(
 
     if (data_path == DATA_PATH_AMANDA)
 	aclose(db->fd);
+
+    if (indexfile_tmp) {
+	amwait_t index_status;
+
+	/*@i@*/ aclose(indexout);
+	waitpid(indexpid,&index_status,0);
+	log_add(L_INFO, "pid-done %ld", (long)indexpid);
+	if (rename(indexfile_tmp, indexfile_real) != 0) {
+	    log_add(L_WARNING, _("could not rename \"%s\" to \"%s\": %s"),
+		    indexfile_tmp, indexfile_real, strerror(errno));
+	}
+	amfree(indexfile_tmp);
+	amfree(indexfile_real);
+    }
+
+    if(db->compresspid != -1) {
+	waitpid(db->compresspid,NULL,0);
+	log_add(L_INFO, "pid-done %ld", (long)db->compresspid);
+    }
+    if(db->encryptpid != -1) {
+	waitpid(db->encryptpid,NULL,0);
+	log_add(L_INFO, "pid-done %ld", (long)db->encryptpid);
+    }
 
     amfree(errstr);
     dumpfile_free_data(&file);
@@ -1512,9 +1441,6 @@ failed:
 	amfree(indexfile_real);
     }
 
-    amfree(errstr);
-    dumpfile_free_data(&file);
-
     return 0;
 }
 
@@ -1582,8 +1508,10 @@ read_mesgfd(
 				  strerror(errno));
 	    dump_result = 2;
 	    stop_dump();
+	    dumpfile_free_data(&file);
 	    return;
 	}
+	dumpfile_free_data(&file);
 	aclose(db->fd);
 	if (data_path == DATA_PATH_AMANDA) {
 	    g_debug(_("Sending data to %s:%d\n"), data_host, data_port);
@@ -1783,6 +1711,10 @@ handle_filter_stderr(
     nread = read(filter->fd, filter->buffer + filter->first + filter->size,
 			     filter->allocated_size - filter->first - filter->size - 2);
 
+    if (nread != 0) {
+	dump_result = max(dump_result, 2);
+    }
+
     if (nread <= 0) {
 	aclose(filter->fd);
 	if (filter->size > 0 && filter->buffer[filter->first + filter->size - 1] != '\n') {
@@ -1808,7 +1740,6 @@ handle_filter_stderr(
 	filter->first += len;
 	filter->size -= len;
 	b = p + 1;
-	dump_result = max(dump_result, 1);
     }
 
     if (nread <= 0) {
@@ -2029,8 +1960,7 @@ runencrypt(
 	aclose(errpipe[0]);
 	aclose(errpipe[1]);
 	return (-1);
-    default: {
-	char *base;
+    default:
 	rval = dup2(outpipe[1], outfd);
 	if (rval < 0)
 	    errstr = newvstrallocf(errstr, _("couldn't dup2: %s"), strerror(errno));
@@ -2039,9 +1969,7 @@ runencrypt(
 	aclose(errpipe[1]);
 	filter = g_new0(filter_t, 1);
 	filter->fd = errpipe[0];
-	base = g_strdup(srv_encrypt);
-	filter->name = g_strdup(basename(base));
-	amfree(base);
+	filter->name = "encrypt";
 	filter->buffer = NULL;
 	filter->size = 0;
 	filter->allocated_size = 0;
@@ -2049,7 +1977,6 @@ runencrypt(
 				       handle_filter_stderr, filter);
 g_debug("event register %s %d", "encrypt data", filter->fd);
 	return (rval);
-	}
     case 0: {
 	char *base;
 	if (dup2(outpipe[0], 0) < 0) {
@@ -2204,7 +2131,6 @@ bad_nak:
 		*p++ = '\0';
 		if(strncmp_const_skip(tok, "features=", tok, ch) == 0) {
 		    char *u = strchr(tok, ';');
-		    ch = ch;
 		    if (u)
 		       *u = '\0';
 		    am_release_feature_set(their_features);
@@ -2335,6 +2261,7 @@ startup_dump(
 {
     char level_string[NUM_STR_SIZE];
     char *req = NULL;
+    char *authopt;
     int response_error;
     const security_driver_t *secdrv;
     char *application_api;
@@ -2400,7 +2327,7 @@ startup_dump(
 	}
 	vstrextend(&p, "  <level>", level_string, "</level>\n", NULL);
 	vstrextend(&p, options+1, "</dle>\n", NULL);
-	pclean = clean_dle_str_for_client(p, their_features);
+	pclean = clean_dle_str_for_client(p);
 	vstrextend(&req, pclean, NULL);
 	amfree(pclean);
 	dle_str = p;
@@ -2410,6 +2337,7 @@ startup_dump(
 	amfree(req);
 	return 2;
     } else {
+	authopt = strstr(options, "auth=");
 	if (auth == NULL) {
 	    auth = "BSD";
 	}

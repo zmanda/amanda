@@ -163,11 +163,10 @@ char *optionstr(disk_t *dp);
 GPtrArray *validate_optionstr(disk_t *dp);
 char *xml_optionstr(disk_t *dp, int to_server);
 char *xml_estimate(estimatelist_t estimatelist, am_feature_t *their_features);
-char *clean_dle_str_for_client(char *dle_str, am_feature_t *their_features);
+char *clean_dle_str_for_client(char *dle_str);
 char *xml_application(disk_t *dp, application_t *application,
 		      am_feature_t *their_features);
 char *xml_scripts(identlist_t pp_scriptlist, am_feature_t *their_features);
-char *xml_dumptype_properties(disk_t *dp);
 
 /* disable_skip_disk() set the db->todo flag to 0 for each dle with 'ignore'
  * 'strategy skip'. It is useful for all programs that want to skip them,i

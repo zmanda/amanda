@@ -63,9 +63,7 @@ extern Set *am_string_to_feature(char *s);
 %newobject am_set_default_feature_set;
 extern Set *am_set_default_feature_set(void);
 %newobject am_init_feature_set;
-extern Set *am_init_feature_set();
-%newobject features;
-extern am_feature_t *am_features(Set *);
+extern Set *am_init_feature_set(void);
 
 %perlcode %{
 
@@ -90,12 +88,6 @@ sub Amanda::Feature::Set::mine {
     my $class = shift;
     return Amanda::Feature::am_init_feature_set();
 }
-
-sub Amanda::Feature::Set::features {
-    my $class = shift;
-    return Amanmda::Feature::features();
-}
-
 
 package Amanda::Feature;
 

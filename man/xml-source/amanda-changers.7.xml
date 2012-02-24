@@ -430,7 +430,7 @@ slotinfofile=FILENAME       #### record slot information to this file, in
 <refsect2><title>chg-rait:{CHILD1,CHILD2,..}</title>
 <programlisting>
 define changer vtape {
-    tpchanger "chg-disk:/path/to/vtape"
+    tpcanger "chg-disk:/path/to/vtape"
 }
 define changer robot {
     tpchanger "chg-robot:/dev/sg0"
@@ -756,17 +756,6 @@ If true, enables the NDMJOB library's verbose (packet-level) debugging.
 </variablelist>
 
 </refsect3>
-
-</refsect2>
-
-<refsect2><title>chg-single:DEVICE</title>
-<programlisting>
-tpchanger "chg-single:tape:/dev/nst0"
-</programlisting>
-
-<para>This changer is for use with standalone drive, it can work with any
-device. The device (<command>tape:/dev/nst0</command>) must be set in the tpchanger definition.</para>
-<para>The <command>chg-single</command> changer has no property.</para>
 
 </refsect2>
 

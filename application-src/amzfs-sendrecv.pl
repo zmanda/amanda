@@ -33,7 +33,7 @@ use Amanda::Constants;
 use Amanda::Config qw( :init :getconf  config_dir_relative );
 use Amanda::Debug qw( :logging );
 use Amanda::Paths;
-use Amanda::Util qw( :constants quote_string );
+use Amanda::Util qw( :constants );
 
 sub new {
     my $class = shift;
@@ -102,10 +102,6 @@ sub command_support {
 sub command_selfcheck {
     my $self = shift;
 
-    $self->print_to_server("disk " . quote_string($self->{disk}));
-
-    $self->print_to_server("amzfs-sendrecv version " . $Amanda::Constants::VERSION,
-			   $Amanda::Script_App::GOOD);
     $self->zfs_set_value();
 
     if (!defined $self->{device}) {
@@ -115,6 +111,7 @@ sub command_selfcheck {
     if ($self->{error_status} == $Amanda::Script_App::GOOD) {
 	$self->zfs_create_snapshot();
 	$self->zfs_destroy_snapshot();
+	print "OK " . $self->{disk} . "\n";
 	print "OK " . $self->{device} . "\n";
     }
 
@@ -337,18 +334,12 @@ sub command_index_from_image {
 sub command_restore {
     my $self = shift;
 
-    my $current_snapshot;
     my $level = $self->{level}[0];
     my $device = $self->{device};
-    if (defined $device) {
-	$device =~ s,^/,,;
-	$current_snapshot = $self->zfs_build_snapshotname($device);
-	$self->{'snapshot'} = $self->zfs_build_snapshotname($device, $level);
-    }
-
-    my $directory = $device;
-    $directory = $self->{directory} if defined $self->{directory};
-    $directory =~ s,^/,,;
+    $device = $self->{directory} if defined $self->{directory};
+    $device =~ s,^/,,;
+    my $current_snapshot = $self->zfs_build_snapshotname($device);
+    $self->{'snapshot'} = $self->zfs_build_snapshotname($device, $level);
 
     my @cmd = ();
 
@@ -357,81 +348,22 @@ sub command_restore {
     }
     push @cmd, $self->{zfs_path};
     push @cmd, "recv";
-    push @cmd, $directory;
+    push @cmd, $device;
 
     debug("cmd:" . join(" ", @cmd));
     system @cmd;
 
-    my $snapshotname;
-    my $newsnapname;
-    if (defined $device) {
-	$snapshotname = "$directory\@$current_snapshot";
-	$newsnapname = "$directory\@$self->{'snapshot'}";
-    } else {
-	# find snapshot name
-	@cmd = ();
-	if ($self->{pfexec_cmd}) {
-	    push @cmd, $self->{pfexec_cmd};
-	}
-	push @cmd, $self->{zfs_path};
-	push @cmd, "list";
-	push @cmd, "-r";
-	push @cmd, "-t";
-	push @cmd, "snapshot";
-	push @cmd, $directory;
-	debug("cmd:" . join(" ", @cmd));
-
-	my($wtr, $rdr, $err, $pid);
-	my($msg, $errmsg);
-	$err = Symbol::gensym;
-	$pid = open3($wtr, $rdr, $err, @cmd);
-	close $wtr;
-	while ($msg = <$rdr>) {
-	    next if $msg =~ /^NAME/;
-	    my ($name, $used, $avail) = split(/ +/, $msg);
-	    if ($name =~ /-current$/) {
-		$snapshotname = $name;
-		last;
-	    }
-	}
-	$errmsg = <$err>;
-	waitpid $pid, 0;
-    	close $rdr;
-	close $err;
-
-	if (defined $snapshotname and defined($level)) {
-	    $newsnapname = $snapshotname;
-	    $newsnapname =~ s/current$/$level/;
-	} else {
-	    # destroy the snapshot
-	    # restoring next level will fail.
-	    @cmd = ();
-	    if ($self->{pfexec_cmd}) {
-		push @cmd, $self->{pfexec_cmd};
-	    }
-	    push @cmd, $self->{zfs_path};
-	    push @cmd, "destroy";
-	    push @cmd, $snapshotname;
-
-	    debug("cmd:" . join(" ", @cmd));
-	    system @cmd;
-	}
+    @cmd = ();
+    if ($self->{pfexec_cmd}) {
+	push @cmd, $self->{pfexec_cmd};
     }
+    push @cmd, $self->{zfs_path};
+    push @cmd, "rename";
+    push @cmd, "$device\@$current_snapshot";
+    push @cmd, "$device\@$self->{'snapshot'}";
 
-    if (defined $newsnapname) {
-	# rename -current snapshot to -level
-	@cmd = ();
-	if ($self->{pfexec_cmd}) {
-	    push @cmd, $self->{pfexec_cmd};
-	}
-	push @cmd, $self->{zfs_path};
-	push @cmd, "rename";
-	push @cmd, $snapshotname;
-	push @cmd, $newsnapname;
-
-	debug("cmd:" . join(" ", @cmd));
-	system @cmd;
-    }
+    debug("cmd:" . join(" ", @cmd));
+    system @cmd;
 }
 
 sub command_print_command {

@@ -17,7 +17,7 @@ echo "`date +'%b %e %Y %T'`: Preparing to install Amanda" >${TMPFILE}
 # Check for the '${amanda_user}' user
 echo "`date +'%b %e %Y %T'`: Checking for ${amanda_user} user..." >>${TMPFILE}
 if [ "`id -u ${amanda_user} >/dev/null 2>&1 && echo 0 || echo 1`" != "0" ] ; then
-	useradd -c "Amanda" -g ${amanda_group} -d /var/lib/amanda -s /bin/bash ${amanda_user}
+	useradd -c "Amanda" -g ${amanda_group} -d /var/lib/amanda -s /bin/sh ${amanda_user}
 	# Lock the ${amanda_user} account until admin sets password
 	passwd -l ${amanda_user} >>/dev/null
 	PASSWD_EXIT=$?
@@ -66,7 +66,7 @@ else
 	echo "`date +'%b %e %Y %T'`:  please see that the following parameters are set for that" >>${TMPFILE}
 	echo "`date +'%b %e %Y %T'`:  user.:" >>${TMPFILE}
 	echo "`date +'%b %e %Y %T'`:" >>${TMPFILE}
-	echo "`date +'%b %e %Y %T'`:  SHELL:          /bin/bash" >>${TMPFILE}
+	echo "`date +'%b %e %Y %T'`:  SHELL:          /bin/sh" >>${TMPFILE}
 	echo "`date +'%b %e %Y %T'`:  HOME:           /var/lib/amanda" >>${TMPFILE}
 	echo "`date +'%b %e %Y %T'`:  Default group:  ${amanda_group}" >>${TMPFILE}
 	echo "`date +'%b %e %Y %T'`:  Verifying ${amanda_user} user parameters :" >>${TMPFILE}

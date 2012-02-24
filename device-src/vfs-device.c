@@ -585,9 +585,11 @@ vfs_device_open_device (Device * pself, char * device_name, char * device_type, 
 static gboolean delete_vfs_files_functor(const char * filename,
                                          gpointer user_data) {
     VfsDevice * self;
+    Device * d_self;
     char * path_name;
 
     self = VFS_DEVICE(user_data);
+    d_self = DEVICE(self);
 
     /* Skip the volume lock. */
     if (strcmp(filename, VOLUME_LOCKFILE_NAME) == 0)
@@ -689,7 +691,6 @@ static gboolean clear_and_prepare_label(VfsDevice * self, char * label,
         return FALSE;
     }
     dumpfile_free(d_self->volume_header);
-    d_self->header_block_size = VFS_DEVICE_LABEL_SIZE;
     d_self->volume_header = label_header;
     self->volume_bytes = VFS_DEVICE_LABEL_SIZE;
     return TRUE;
@@ -1229,9 +1230,6 @@ vfs_device_seek_file (Device * dself, guint requested_file) {
     }
 
     /* update our state */
-    if (requested_file == 0) {
-	dself->header_block_size = header_buffer_size;
-    }
     dself->in_file = TRUE;
     dself->file = file;
 
@@ -1405,11 +1403,6 @@ vfs_device_erase (Device * dself) {
     delete_vfs_files(self);
 
     release_file(self);
-
-    dumpfile_free(dself->volume_header);
-    dself->volume_header = NULL;
-    device_set_error(dself, g_strdup("Unlabeled volume"),
-		     DEVICE_STATUS_VOLUME_UNLABELED);
 
     return TRUE;
 }

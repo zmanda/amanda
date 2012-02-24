@@ -28,7 +28,7 @@
 #include "glib-util.h"
 #include "device.h"
 #include "fileheader.h"
-#include "amsemaphore.h"
+#include "semaphore.h"
 
 /* Just a note about the failure mode of different operations:
    - Recovers from a failure (enters degraded mode)
@@ -115,7 +115,7 @@ typedef struct RaitDevicePrivate_s {
 
     /* value of this semaphore is the number of threaded operations
      * in progress */
-    amsemaphore_t *threads_sem;
+    semaphore_t *threads_sem;
 #endif
 } RaitDevicePrivate;
 
@@ -286,7 +286,7 @@ rait_device_finalize(GObject *obj_self)
     }
 
     if (PRIVATE(self)->threads_sem)
-	amsemaphore_free(PRIVATE(self)->threads_sem);
+	semaphore_free(PRIVATE(self)->threads_sem);
 #endif
     amfree(self->private);
 }
@@ -426,7 +426,7 @@ static gpointer rait_thread_pool_func(gpointer data) {
 	    inf->data = NULL;
 
             /* indicate that we're finished; will not block */
-	    amsemaphore_down(inf->private->threads_sem);
+	    semaphore_down(inf->private->threads_sem);
 	}
     }
     g_mutex_unlock(inf->mutex);
@@ -437,7 +437,7 @@ static void do_thread_pool_op(RaitDevice *self, GFunc func, GPtrArray * ops) {
     guint i;
 
     if (PRIVATE(self)->threads_sem == NULL)
-	PRIVATE(self)->threads_sem = amsemaphore_new_with_value(0);
+	PRIVATE(self)->threads_sem = semaphore_new_with_value(0);
 
     if (PRIVATE(self)->threads == NULL)
 	PRIVATE(self)->threads = g_array_sized_new(FALSE, TRUE,
@@ -449,7 +449,7 @@ static void do_thread_pool_op(RaitDevice *self, GFunc func, GPtrArray * ops) {
 	g_array_set_size(PRIVATE(self)->threads, ops->len);
 
     /* the semaphore will hit zero when each thread has decremented it */
-    amsemaphore_force_set(PRIVATE(self)->threads_sem, ops->len);
+    semaphore_force_set(PRIVATE(self)->threads_sem, ops->len);
 
     for (i = 0; i < ops->len; i++) {
 	ThreadInfo *inf = &g_array_index(PRIVATE(self)->threads, ThreadInfo, i);
@@ -469,7 +469,7 @@ static void do_thread_pool_op(RaitDevice *self, GFunc func, GPtrArray * ops) {
     }
 
     /* wait until semaphore hits zero */
-    amsemaphore_wait_empty(PRIVATE(self)->threads_sem);
+    semaphore_wait_empty(PRIVATE(self)->threads_sem);
 }
 
 #else /* USE_INTERNAL_THREADPOOL */
@@ -1134,7 +1134,6 @@ static DeviceStatusFlags rait_device_read_label(Device * dself) {
         if (first_success->volume_header != NULL) {
             dself->volume_header = dumpfile_copy(first_success->volume_header);
         }
-	dself->header_block_size = first_success->header_block_size;
     }
 
     g_ptr_array_free_full(ops);
@@ -1301,12 +1300,6 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
 	}
     }
 
-    if (total_status == DEVICE_STATUS_SUCCESS) {
-	StartOp * op = g_ptr_array_index(ops, 0);
-	Device *child = op->base.child;
-	dself->header_block_size = child->header_block_size;
-    }
-
     amfree(label_from_device);
     g_ptr_array_free_full(ops);
 
@@ -1316,6 +1309,7 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
 	device_set_error(dself, failure_errmsgs, total_status);
         return FALSE;
     }
+
     amfree(failure_errmsgs);
     return TRUE;
 }

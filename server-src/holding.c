@@ -401,9 +401,12 @@ holding_walk(
     for (il = getconf_identlist(CNF_HOLDINGDISK);
 		il != NULL;
 		il = il->next) {
+	int is_cruft = 0;
 	hdisk_conf = lookup_holdingdisk(il->data);
 
 	hdisk = holdingdisk_get_diskdir(hdisk_conf);
+	if (!is_dir(hdisk))
+	    is_cruft = 1;
 
 	if (per_disk_fn) 
 	    proceed = per_disk_fn(datap, 
@@ -778,7 +781,7 @@ holding_cleanup_file(
 	return 0;
     }
 
-    if(file.dumplevel < 0 || file.dumplevel > 399) {
+    if(file.dumplevel < 0 || file.dumplevel > 9) {
 	if (data->verbose_output)
 	    g_fprintf(data->verbose_output, 
 		_("File '%s' has invalid level %d\n"), element, file.dumplevel);

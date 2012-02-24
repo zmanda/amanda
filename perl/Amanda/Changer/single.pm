@@ -166,10 +166,6 @@ sub do_release {
     my $self = shift;
     my %params = @_;
 
-    $self->{'device'}->eject() if (exists $self->{'device'} and
-				   exists $params{'eject'} and
-				   $params{'eject'});
-
     $self->{'chg'}->{'reserved'} = 0;
 
     # unref the device, for good measure

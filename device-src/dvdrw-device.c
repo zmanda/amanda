@@ -690,6 +690,7 @@ execute_command(DvdRwDevice *self, gchar **argv, gint *result)
     gint errnum = 0;
     GError *error = NULL;
     gboolean success;
+    int signum = 0;
 
     /* g_debug("Executing: %s", argv[0]); */
 
@@ -700,6 +701,7 @@ execute_command(DvdRwDevice *self, gchar **argv, gint *result)
 
     if (WIFSIGNALED(errnum)) {
 	success = FALSE;
+	signum = WTERMSIG(errnum);
     } else if (WIFEXITED(errnum)) {
 	success = (WEXITSTATUS(errnum) == 0);
     } else {

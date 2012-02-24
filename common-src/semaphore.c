@@ -22,10 +22,10 @@
    So, we implement it here. */
 
 #include "amanda.h"
-#include "amsemaphore.h"
+#include "semaphore.h"
 
-amsemaphore_t* amsemaphore_new_with_value(int value) {
-    amsemaphore_t *rval;
+semaphore_t* semaphore_new_with_value(int value) {
+    semaphore_t *rval;
 
     if (!g_thread_supported())
         return NULL;
@@ -38,14 +38,14 @@ amsemaphore_t* amsemaphore_new_with_value(int value) {
     
     if (rval->mutex == NULL || rval->decrement_cond == NULL ||
         rval->zero_cond == NULL) {
-        amsemaphore_free(rval);
+        semaphore_free(rval);
         return NULL;
     } else {
         return rval;
     }
 }
 
-void amsemaphore_free(amsemaphore_t* o) {
+void semaphore_free(semaphore_t* o) {
     g_mutex_free(o->mutex);
     g_cond_free(o->decrement_cond);
     g_cond_free(o->zero_cond);
@@ -55,20 +55,20 @@ void amsemaphore_free(amsemaphore_t* o) {
 /* This function checks if the semaphore would is zero or negative.
  * If so, the zero_cond is signalled. We assume that the mutex is
  * locked. */
-static void check_empty(amsemaphore_t * o) {
+static void check_empty(semaphore_t * o) {
     if (o->value <= 0) {
         g_cond_broadcast(o->zero_cond);
     }
 }
 
-void amsemaphore_increment(amsemaphore_t* o, unsigned int inc) {
+void semaphore_increment(semaphore_t* o, unsigned int inc) {
     g_return_if_fail(o != NULL);
     g_return_if_fail(inc != 0);
 
-    amsemaphore_force_adjust(o, inc);
+    semaphore_force_adjust(o, inc);
 }
 
-void amsemaphore_decrement(amsemaphore_t* o, unsigned int dec) {
+void semaphore_decrement(semaphore_t* o, unsigned int dec) {
     int sdec;
     g_return_if_fail(o != NULL);
     sdec = (int) dec;
@@ -83,7 +83,7 @@ void amsemaphore_decrement(amsemaphore_t* o, unsigned int dec) {
     g_mutex_unlock(o->mutex);
 }
 
-void amsemaphore_force_adjust(amsemaphore_t* o, int inc) {
+void semaphore_force_adjust(semaphore_t* o, int inc) {
     g_return_if_fail(o != NULL);
 
     g_mutex_lock(o->mutex);
@@ -96,7 +96,7 @@ void amsemaphore_force_adjust(amsemaphore_t* o, int inc) {
 
 }
 
-void amsemaphore_force_set(amsemaphore_t* o, int value) {
+void semaphore_force_set(semaphore_t* o, int value) {
     int oldvalue;
     g_return_if_fail(o != NULL);
     
@@ -111,7 +111,7 @@ void amsemaphore_force_set(amsemaphore_t* o, int value) {
     
 }
 
-void amsemaphore_wait_empty(amsemaphore_t * o) {
+void semaphore_wait_empty(semaphore_t * o) {
     g_return_if_fail(o != NULL);
     
     g_mutex_lock(o->mutex);

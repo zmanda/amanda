@@ -296,7 +296,6 @@ main(
 #else
     gnutar_path = NULL;
 #endif
-    gnutar_listdir = NULL;
     gnutar_directory = NULL;
     gnutar_onefilesystem = 1;
     gnutar_atimepreserve = 1;
@@ -358,7 +357,6 @@ main(
     /* parse argument */
     command = argv[1];
 
-    gnutar_listdir = stralloc(getconf_str(CNF_GNUTAR_LIST_DIR));
     argument.config     = NULL;
     argument.host       = NULL;
     argument.message    = 0;
@@ -371,7 +369,6 @@ main(
     argument.exclude_list_glob = NULL;
     argument.verbose = 0;
     init_dle(&argument.dle);
-    argument.dle.record = 0;
 
     while (1) {
 	int option_index = 0;
@@ -549,6 +546,7 @@ main(
 	}
     }
 
+    gnutar_listdir = getconf_str(CNF_GNUTAR_LIST_DIR);
     if (strlen(gnutar_listdir) == 0)
 	gnutar_listdir = NULL;
 
@@ -638,37 +636,11 @@ static void
 amgtar_selfcheck(
     application_argument_t *argument)
 {
-    if (argument->dle.disk) {
-	char *qdisk = quote_string(argument->dle.disk);
-	fprintf(stdout, "OK disk %s\n", qdisk);
-	amfree(qdisk);
-    }
-
-    printf("OK amgtar version %s\n", VERSION);
     amgtar_build_exinclude(&argument->dle, 1, NULL, NULL, NULL, NULL);
 
     printf("OK amgtar\n");
     if (gnutar_path) {
-	if (check_file(gnutar_path, X_OK)) {
-	    char *gtar_version;
-	    GPtrArray *argv_ptr = g_ptr_array_new();
-
-	    g_ptr_array_add(argv_ptr, gnutar_path);
-	    g_ptr_array_add(argv_ptr, "--version");
-	    g_ptr_array_add(argv_ptr, NULL);
-
-	    gtar_version = get_first_line(argv_ptr);
-	    if (gtar_version) {
-		char *gv;
-		for (gv = gtar_version; *gv && !g_ascii_isdigit(*gv); gv++);
-		printf("OK amgtar gtar-version %s\n", gv);
-	    } else {
-		printf(_("ERROR [Can't get %s version]\n"), gnutar_path);
-	    }
-
-	    g_ptr_array_free(argv_ptr, TRUE);
-	    amfree(gtar_version);
-	}
+	check_file(gnutar_path, X_OK);
     } else {
 	printf(_("ERROR [GNUTAR program not available]\n"));
     }
@@ -682,6 +654,11 @@ amgtar_selfcheck(
 	printf(_("ERROR [No GNUTAR-LISTDIR]\n"));
     }
 
+    if (argument->dle.disk) {
+	char *qdisk = quote_string(argument->dle.disk);
+	fprintf(stdout, "OK %s\n", qdisk);
+	amfree(qdisk);
+    }
     if (gnutar_directory) {
 	check_dir(gnutar_directory, R_OK);
     } else if (argument->dle.device) {
@@ -1045,25 +1022,16 @@ amgtar_backup(
     }
 
     if (!errmsg && incrname && strlen(incrname) > 4) {
-	if (argument->dle.record) {
-	    char *nodotnew;
-	    nodotnew = stralloc(incrname);
-	    nodotnew[strlen(nodotnew)-4] = '\0';
-	    if (rename(incrname, nodotnew)) {
-		dbprintf(_("%s: warning [renaming %s to %s: %s]\n"),
-			 get_pname(), incrname, nodotnew, strerror(errno));
-		g_fprintf(mesgstream, _("? warning [renaming %s to %s: %s]\n"),
-			  incrname, nodotnew, strerror(errno));
-	    }
-	    amfree(nodotnew);
-	} else {
-	    if (unlink(incrname) == -1) {
-		dbprintf(_("%s: warning [unlink %s: %s]\n"),
-			 get_pname(), incrname, strerror(errno));
-		g_fprintf(mesgstream, _("? warning [unlink %s: %s]\n"),
-			  incrname, strerror(errno));
-	    }
+	char *nodotnew;
+	nodotnew = stralloc(incrname);
+	nodotnew[strlen(nodotnew)-4] = '\0';
+	if (rename(incrname, nodotnew)) {
+	    dbprintf(_("%s: warning [renaming %s to %s: %s]\n"),
+		     get_pname(), incrname, nodotnew, strerror(errno));
+	    g_fprintf(mesgstream, _("? warning [renaming %s to %s: %s]\n"),
+		      incrname, nodotnew, strerror(errno));
 	}
+	amfree(nodotnew);
     }
 
     dbprintf("sendbackup: size %lld\n", (long long)dump_size);

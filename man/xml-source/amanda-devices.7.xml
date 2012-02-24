@@ -444,10 +444,6 @@ writing long enough to bring the average below this value.
 (read-write) The number of thread that read data from the s3 device, higher value can provide more throutput.
 </listitem></varlistentry>
  <!-- ==== -->
- <varlistentry><term>OPENSTACK_SWIFT_API</term><listitem>
- (read-write) Set to yes if it is an openstack storage device.
-</listitem></varlistentry>
- <!-- ==== -->
  <varlistentry><term>S3_ACCESS_KEY</term><listitem>
  (read-write) This property gives the Amazon S3 access key used to access the service.
 </listitem></varlistentry>
@@ -457,7 +453,7 @@ writing long enough to bring the average below this value.
 As of this writing, it can be set to "*" (US Standard, i.e. lowest-latency
 choice of US East or West), "us-west-1" (US West, Northern California), "EU"
 (European Union), or "ap-southeast-1" (Asia Pacific).  See <ulink
-url="http://docs.amazonwebservices.com/general/latest/gr/index.html?rande.html"
+url="http://docs.amazonwebservices.com/AmazonS3/latest/index.html?LocationSelection.html"
 /> for the most up-to-date list.
 </listitem></varlistentry>
  <!-- ==== -->
@@ -476,14 +472,6 @@ The value is passed to curl_easy_setopt(3) as CURLOPT_CAINFO.
  <!-- ==== -->
  <varlistentry><term>S3_SECRET_KEY</term><listitem>
 (read-write) This property gives the Amazon S3 secret key used to access the service.
-</listitem></varlistentry>
- <!-- ==== -->
- <varlistentry><term>S3_SERVER_SIDE_ENCRYPTION</term><listitem>
-(read-write) Set to the server side encryption algorithm to use.
-There is actually only one algorithm, it is "AES256".  The encryption is done
-by Amazon on their server. See
-<ulink url="http://docs.amazonwebservices.com/AmazonS3/latest/API/index.html?RESTObjectPUT.html" />
-for the most up-to-date list.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>S3_SERVICE_PATH</term><listitem>
@@ -597,7 +585,7 @@ operations can be emulated with the MTREW and read data operations.</para>
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>NONBLOCKING_OPEN</term><listitem>
- (read-write) Set this boolean property to "true" if O_NONBLOCK must be used on the open call. Default to "true" on Linux and "false" on all others machines. Without it, Linux wait for a few seconds if no tape are loaded. Solaris have strange error it is set to "yes".
+ (read-write) Set this boolean property to "true" if O_NONBLOCK must be used on the open call. Default to "true" on Linux and "false" on all others machines. Witout it, Linux wait for a few seconds if no tape are loaded. Solaris have strange error it is set to "yes".
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>READ_BLOCK_SIZE</term><listitem>

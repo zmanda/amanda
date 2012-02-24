@@ -91,7 +91,6 @@ typedef enum {
     CONF_DEVICE,               CONF_ORDER,		CONF_SINGLE_EXECUTION,
     CONF_DATA_PATH,            CONF_AMANDA,		CONF_DIRECTTCP,
     CONF_TAPER_PARALLEL_WRITE, CONF_INTERACTIVITY,	CONF_TAPERSCAN,
-    CONF_MAX_DLE_BY_VOLUME,    CONF_EJECT_VOLUME,
 
     /* execute on */
     CONF_PRE_AMCHECK,          CONF_POST_AMCHECK,
@@ -952,7 +951,6 @@ keytab_t server_keytab[] = {
     { "DUMPTYPE", CONF_DUMPTYPE },
     { "DUMPUSER", CONF_DUMPUSER },
     { "DUMP_LIMIT", CONF_DUMP_LIMIT },
-    { "EJECT_VOLUME", CONF_EJECT_VOLUME },
     { "EMPTY", CONF_EMPTY },
     { "ENCRYPT", CONF_ENCRYPT },
     { "ERROR", CONF_ERROR },
@@ -998,7 +996,6 @@ keytab_t server_keytab[] = {
     { "MAILER", CONF_MAILER },
     { "MAILTO", CONF_MAILTO },
     { "READBLOCKSIZE", CONF_READBLOCKSIZE },
-    { "MAX_DLE_BY_VOLUME", CONF_MAX_DLE_BY_VOLUME },
     { "MAXDUMPS", CONF_MAXDUMPS },
     { "MAXDUMPSIZE", CONF_MAXDUMPSIZE },
     { "MAXPROMOTEDAY", CONF_MAXPROMOTEDAY },
@@ -1260,7 +1257,6 @@ conf_var_t server_var [] = {
    { CONF_INPARALLEL           , CONFTYPE_INT      , read_int         , CNF_INPARALLEL           , validate_inparallel },
    { CONF_DUMPORDER            , CONFTYPE_STR      , read_str         , CNF_DUMPORDER            , NULL },
    { CONF_MAXDUMPS             , CONFTYPE_INT      , read_int         , CNF_MAXDUMPS             , validate_positive },
-   { CONF_MAX_DLE_BY_VOLUME    , CONFTYPE_INT      , read_int         , CNF_MAX_DLE_BY_VOLUME    , validate_positive },
    { CONF_ETIMEOUT             , CONFTYPE_INT      , read_int         , CNF_ETIMEOUT             , validate_non_zero },
    { CONF_DTIMEOUT             , CONFTYPE_INT      , read_int         , CNF_DTIMEOUT             , validate_positive },
    { CONF_CTIMEOUT             , CONFTYPE_INT      , read_int         , CNF_CTIMEOUT             , validate_positive },
@@ -1281,7 +1277,6 @@ conf_var_t server_var [] = {
    { CONF_LABEL_NEW_TAPES      , CONFTYPE_STR      , read_str         , CNF_LABEL_NEW_TAPES      , NULL },
    { CONF_AUTOLABEL            , CONFTYPE_AUTOLABEL, read_autolabel   , CNF_AUTOLABEL            , NULL },
    { CONF_META_AUTOLABEL       , CONFTYPE_STR      , read_str         , CNF_META_AUTOLABEL       , NULL },
-   { CONF_EJECT_VOLUME         , CONFTYPE_BOOLEAN  , read_bool        , CNF_EJECT_VOLUME         , NULL },
    { CONF_USETIMESTAMPS        , CONFTYPE_BOOLEAN  , read_bool        , CNF_USETIMESTAMPS        , NULL },
    { CONF_AMRECOVER_DO_FSF     , CONFTYPE_BOOLEAN  , read_bool        , CNF_AMRECOVER_DO_FSF     , NULL },
    { CONF_AMRECOVER_CHANGER    , CONFTYPE_STR      , read_str         , CNF_AMRECOVER_CHANGER    , NULL },
@@ -4157,7 +4152,7 @@ read_int_or_str(
 	val->v.s = newstralloc(val->v.s, tokenval.v.s);
 	break;
     default:
-	conf_parserror(_("an integer or a quoted string is expected"));
+	conf_parserror(_("CLIENT or SERVER expected"));
     }
 }
 
@@ -5101,6 +5096,7 @@ config_init(
 	    config_name = stralloc(config_name + 1);
 	}
 
+        amfree(cwd);
     } else if (flags & CONFIG_INIT_CLIENT) {
 	amfree(config_name);
 	config_dir = newstralloc(config_dir, CONFIG_DIR);
@@ -5348,7 +5344,6 @@ init_defaults(
     conf_init_str   (&conf_data[CNF_TPCHANGER]            , "");
     conf_init_int      (&conf_data[CNF_RUNTAPES]             , 1);
     conf_init_int      (&conf_data[CNF_MAXDUMPS]             , 1);
-    conf_init_int      (&conf_data[CNF_MAX_DLE_BY_VOLUME]    , 1000000000);
     conf_init_int      (&conf_data[CNF_ETIMEOUT]             , 300);
     conf_init_int      (&conf_data[CNF_DTIMEOUT]             , 1800);
     conf_init_int      (&conf_data[CNF_CTIMEOUT]             , 30);
@@ -5371,7 +5366,6 @@ init_defaults(
     conf_init_str   (&conf_data[CNF_KRB5KEYTAB]           , "/.amanda-v5-keytab");
     conf_init_str   (&conf_data[CNF_KRB5PRINCIPAL]        , "service/amanda");
     conf_init_str   (&conf_data[CNF_LABEL_NEW_TAPES]      , "");
-    conf_init_bool     (&conf_data[CNF_EJECT_VOLUME]         , 0);
     conf_init_bool     (&conf_data[CNF_USETIMESTAMPS]        , 1);
     conf_init_int      (&conf_data[CNF_CONNECT_TRIES]        , 3);
     conf_init_int      (&conf_data[CNF_REP_TRIES]            , 5);

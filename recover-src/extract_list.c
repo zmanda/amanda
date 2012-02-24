@@ -49,7 +49,6 @@
 
 typedef struct EXTRACT_LIST_ITEM {
     char *path;
-    char *tpath;
     struct EXTRACT_LIST_ITEM *next;
 }
 EXTRACT_LIST_ITEM;
@@ -273,7 +272,6 @@ clear_tape_list(
     {
 	next = this->next;
         amfree(this->path);
-        amfree(this->tpath);
         amfree(this);
 	this = next;
     }
@@ -387,7 +385,6 @@ clean_tape_list(
 		ofn2 = fn2;
 		fn2 = fn2->next;
 		amfree(ofn2->path);
-		amfree(ofn2->tpath);
 		amfree(ofn2);
 		pfn2->next = fn2;
 	    } else if (remove_fn1 == 0) {
@@ -399,11 +396,10 @@ clean_tape_list(
 	if(remove_fn1 != 0) {
 	    /* fn2->path is always valid */
 	    /*@i@*/ dbprintf(_("removing path %s, it is included in %s\n"),
-	    /*@i@*/	      fn1->tpath, fn2->tpath);
+	    /*@i@*/	      fn1->path, fn2->path);
 	    ofn1 = fn1;
 	    fn1 = fn1->next;
 	    amfree(ofn1->path);
-	    amfree(ofn1->tpath);
 	    if(pfn1 == NULL) {
 		amfree(tape_list->files);
 		tape_list->files = fn1;
@@ -587,7 +583,7 @@ add_extract_item(
 {
     EXTRACT_LIST *this, *this1;
     EXTRACT_LIST_ITEM *that, *curr;
-    char *ditem_path;
+    char *ditem_path = NULL;
 
     ditem_path = stralloc(ditem->path);
     clean_pathname(ditem_path);
@@ -602,16 +598,16 @@ add_extract_item(
 	    while(curr!=NULL)
 	    {
 		if (strcmp(curr->path,ditem_path) == 0) {
-		    g_free(ditem_path);
+		    amfree(ditem_path);
 		    return 1;
 		}
 		curr=curr->next;
 	    }
 	    that = (EXTRACT_LIST_ITEM *)alloc(sizeof(EXTRACT_LIST_ITEM));
-            that->path = ditem_path;
-	    that->tpath = clean_pathname(g_strdup(ditem->tpath));
+            that->path = stralloc(ditem_path);
 	    that->next = this->files;
 	    this->files = that;		/* add at front since easiest */
+	    amfree(ditem_path);
 	    return 0;
 	}
     }
@@ -623,8 +619,7 @@ add_extract_item(
     this->fileno = ditem->fileno;
     this->date = stralloc(ditem->date);
     that = (EXTRACT_LIST_ITEM *)alloc(sizeof(EXTRACT_LIST_ITEM));
-    that->path = ditem_path;
-    that->tpath = clean_pathname(g_strdup(ditem->tpath));
+    that->path = stralloc(ditem_path);
     that->next = NULL;
     this->files = that;
 
@@ -635,6 +630,7 @@ add_extract_item(
     {
 	this->next = extract_list;
 	extract_list = this;
+	amfree(ditem_path);
 	return 0;
     }
     for (this1 = extract_list; this1->next != NULL; this1 = this1->next)
@@ -644,12 +640,14 @@ add_extract_item(
 	{
 	    this->next = this1->next;
 	    this1->next = this;
+	    amfree(ditem_path);
 	    return 0;
 	}
     }
     /* add at end */
     this->next = NULL;
     this1->next = this;
+    amfree(ditem_path);
     return 0;
 }
 
@@ -680,7 +678,6 @@ delete_extract_item(
 		/* first on list */
 		this->files = that->next;
                 amfree(that->path);
-                amfree(that->tpath);
 		amfree(that);
 		/* if list empty delete it */
 		if (this->files == NULL)
@@ -696,7 +693,6 @@ delete_extract_item(
 		{
 		    prev->next = that->next;
                     amfree(that->path);
-                    amfree(that->tpath);
 		    amfree(that);
 		    amfree(ditem_path);
 		    return 0;
@@ -830,12 +826,12 @@ add_file(
     char *	regex)
 {
     DIR_ITEM *ditem, lditem;
-    char *tpath_on_disk = NULL;
+    char *path_on_disk = NULL;
     char *cmd = NULL;
     char *err = NULL;
     int i;
     ssize_t j;
-    char *dir_undo, dir_undo_ch = '\0';
+    char *dir, *dir_undo, dir_undo_ch = '\0';
     char *ditem_path = NULL;
     char *qditem_path = NULL;
     char *l = NULL;
@@ -869,34 +865,34 @@ add_file(
     if (strcmp(disk_path, "/") == 0) {
         if (*regex == '/') {
 	    /* No mods needed if already starts with '/' */
-	    tpath_on_disk = g_strdup(regex);
+	    path_on_disk = stralloc(regex);
 	} else {
 	    /* Prepend '/' */
-	    tpath_on_disk = g_strconcat("/", regex, NULL);
+	    path_on_disk = stralloc2("/", regex);
 	}
     } else {
-	char *clean_disk_tpath = clean_regex(disk_tpath, 0);
-	tpath_on_disk = g_strjoin(NULL, clean_disk_tpath, "/", regex, NULL);
-	amfree(clean_disk_tpath);
+	char *clean_disk_path = clean_regex(disk_path, 0);
+	path_on_disk = vstralloc(clean_disk_path, "/", regex, NULL);
+	amfree(clean_disk_path);
     }
 
-    dbprintf(_("add_file: Converted path=\"%s\" to tpath_on_disk=\"%s\"\n"),
-	      regex, tpath_on_disk);
+    dbprintf(_("add_file: Converted path=\"%s\" to path_on_disk=\"%s\"\n"),
+	      regex, path_on_disk);
 
     found_one = 0;
     dir_entries = 0;
     for (ditem=get_dir_list(); ditem!=NULL; ditem=get_next_dir_item(ditem))
     {
 	dir_entries++;
-	quoted = quote_string(ditem->tpath);
+	quoted = quote_string(ditem->path);
 	dbprintf(_("add_file: Pondering ditem->path=%s\n"), quoted);
 	amfree(quoted);
-	if (match(tpath_on_disk, ditem->tpath))
+	if (match(path_on_disk, ditem->path))
 	{
 	    found_one = 1;
-	    j = (ssize_t)strlen(ditem->tpath);
-	    if((j > 0 && ditem->tpath[j-1] == '/')
-	       || (j > 1 && ditem->tpath[j-2] == '/' && ditem->tpath[j-1] == '.'))
+	    j = (ssize_t)strlen(ditem->path);
+	    if((j > 0 && ditem->path[j-1] == '/')
+	       || (j > 1 && ditem->path[j-2] == '/' && ditem->path[j-1] == '.'))
 	    {	/* It is a directory */
 		ditem_path = newstralloc(ditem_path, ditem->path);
 		clean_pathname(ditem_path);
@@ -907,7 +903,7 @@ add_file(
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
 		    amfree(ditem_path);
-		    amfree(tpath_on_disk);
+		    amfree(path_on_disk);
 		    exit(1);
 		}
 		amfree(cmd);
@@ -915,28 +911,25 @@ add_file(
 		/* skip preamble */
 		if ((i = get_reply_line()) == -1) {
 		    amfree(ditem_path);
-		    amfree(tpath_on_disk);
+		    amfree(path_on_disk);
 		    exit(1);
 		}
 		if(i==0) {		/* assume something wrong */
 		    amfree(ditem_path);
-		    amfree(tpath_on_disk);
+		    amfree(path_on_disk);
 		    l = reply_line();
 		    g_printf("%s\n", l);
 		    return;
 		}
 		dir_undo = NULL;
 		added=0;
-		g_free(lditem.path);
-		g_free(lditem.tpath);
-                lditem.path = g_strdup(ditem->path);
-                lditem.tpath = g_strdup(ditem->tpath);
+                lditem.path = newstralloc(lditem.path, ditem->path);
 		/* skip the last line -- duplicate of the preamble */
 
 		while ((i = get_reply_line()) != 0) {
 		    if (i == -1) {
 			amfree(ditem_path);
-		        amfree(tpath_on_disk);
+		        amfree(path_on_disk);
 			exit(1);
 		    }
 		    if(err) {
@@ -1007,6 +1000,7 @@ add_file(
 			err = _("bad reply: missing directory field");
 			continue;
 		    }
+		    dir = s - 1;
 		    skip_quoted_string(s, ch);
 		    dir_undo = s - 1;
 		    dir_undo_ch = *dir_undo;
@@ -1019,7 +1013,7 @@ add_file(
 			break;
 
 		    case  0:
-			quoted = quote_string(lditem.tpath);
+			quoted = quote_string(lditem.path);
 			g_printf(_("Added dir %s at date %s\n"),
 			       quoted, lditem.date);
 			dbprintf(_("add_file: (Successful) Added dir %s at date %s\n"),
@@ -1055,14 +1049,14 @@ add_file(
 		    break;
 
 		case  0:
-		    quoted = quote_string(ditem->tpath);
+		    quoted = quote_string(ditem->path);
 		    g_printf(_("Added file %s\n"), quoted);
 		    dbprintf(_("add_file: (Successful) Added %s\n"), quoted);
 		    amfree(quoted);
 		    break;
 
 		case  1:
-		    quoted = quote_string(ditem->tpath);
+		    quoted = quote_string(ditem->path);
 		    g_printf(_("File %s already added\n"), quoted);
 		    dbprintf(_("add_file: file %s already added\n"), quoted);
 		    amfree(quoted);
@@ -1073,10 +1067,9 @@ add_file(
 
     amfree(cmd);
     amfree(ditem_path);
-    amfree(tpath_on_disk);
+    amfree(path_on_disk);
 
     amfree(lditem.path);
-    amfree(lditem.tpath);
     amfree(lditem.date);
     amfree(lditem.tape);
 
@@ -1188,11 +1181,11 @@ delete_regex(
 
 void
 delete_file(
-    char *	tpath,
+    char *	path,
     char *	regex)
 {
     DIR_ITEM *ditem, lditem;
-    char *tpath_on_disk = NULL;
+    char *path_on_disk = NULL;
     char *cmd = NULL;
     char *err = NULL;
     int i;
@@ -1201,8 +1194,8 @@ delete_file(
     char *tape, *tape_undo, tape_undo_ch = '\0';
     char *dir_undo, dir_undo_ch = '\0';
     int  level = 0;
+    off_t fileno;
     char *ditem_path = NULL;
-    char *ditem_tpath = NULL;
     char *qditem_path;
     char *l = NULL;
     int  deleted;
@@ -1217,7 +1210,7 @@ delete_file(
     }
     memset(&lditem, 0, sizeof(lditem)); /* Prevent use of bogus data... */
 
-    dbprintf(_("delete_file: Looking for \"%s\"\n"), tpath);
+    dbprintf(_("delete_file: Looking for \"%s\"\n"), path);
 
     if (strcmp(regex, "[^/]*[/]*$") == 0) {
 	/* Looking for * find everything but single . */
@@ -1233,40 +1226,38 @@ delete_file(
         if (*regex == '/') {
 	    if (strcmp(regex, "/[/]*$") == 0) {
 		/* We want "/" to match the directory itself: "/." */
-		tpath_on_disk = stralloc("/\\.[/]*$");
+		path_on_disk = stralloc("/\\.[/]*$");
 	    } else {
 		/* No mods needed if already starts with '/' */
-		tpath_on_disk = stralloc(regex);
+		path_on_disk = stralloc(regex);
 	    }
 	} else {
 	    /* Prepend '/' */
-	    tpath_on_disk = g_strconcat("/", regex, NULL);
+	    path_on_disk = stralloc2("/", regex);
 	}
     } else {
-	char *clean_disk_tpath = clean_regex(disk_tpath, 0);
-	tpath_on_disk = g_strjoin(NULL, clean_disk_tpath, "/", regex, NULL);
-	amfree(clean_disk_tpath);
+	char *clean_disk_path = clean_regex(disk_path, 0);
+	path_on_disk = vstralloc(clean_disk_path, "/", regex, NULL);
+	amfree(clean_disk_path);
     }
 
-    dbprintf(_("delete_file: Converted path=\"%s\" to tpath_on_disk=\"%s\"\n"),
-	      regex, tpath_on_disk);
+    dbprintf(_("delete_file: Converted path=\"%s\" to path_on_disk=\"%s\"\n"),
+	      regex, path_on_disk);
     found_one = 0;
     for (ditem=get_dir_list(); ditem!=NULL; ditem=get_next_dir_item(ditem))
     {
-	quoted = quote_string(ditem->tpath);
+	quoted = quote_string(ditem->path);
 	dbprintf(_("delete_file: Pondering ditem->path=%s\n"), quoted);
 	amfree(quoted);
-	if (match(tpath_on_disk, ditem->tpath))
+	if (match(path_on_disk, ditem->path))
 	{
 	    found_one = 1;
-	    j = (ssize_t)strlen(ditem->tpath);
-	    if((j > 0 && ditem->tpath[j-1] == '/')
-	       || (j > 1 && ditem->tpath[j-2] == '/' && ditem->tpath[j-1] == '.'))
+	    j = (ssize_t)strlen(ditem->path);
+	    if((j > 0 && ditem->path[j-1] == '/')
+	       || (j > 1 && ditem->path[j-2] == '/' && ditem->path[j-1] == '.'))
 	    {	/* It is a directory */
 		ditem_path = newstralloc(ditem_path, ditem->path);
-		ditem_tpath = newstralloc(ditem_tpath, ditem->tpath);
 		clean_pathname(ditem_path);
-		clean_pathname(ditem_tpath);
 
 		qditem_path = quote_string(ditem_path);
 		cmd = newstralloc2(cmd, "ORLD ", qditem_path);
@@ -1274,27 +1265,26 @@ delete_file(
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
 		    amfree(ditem_path);
-		    amfree(tpath_on_disk);
+		    amfree(path_on_disk);
 		    exit(1);
 		}
 		amfree(cmd);
 		/* skip preamble */
 		if ((i = get_reply_line()) == -1) {
 		    amfree(ditem_path);
-		    amfree(tpath_on_disk);
+		    amfree(path_on_disk);
 		    exit(1);
 		}
 		if(i==0)		/* assume something wrong */
 		{
 		    amfree(ditem_path);
-		    amfree(tpath_on_disk);
+		    amfree(path_on_disk);
 		    l = reply_line();
 		    g_printf("%s\n", l);
 		    return;
 		}
 		deleted=0;
                 lditem.path = newstralloc(lditem.path, ditem->path);
-                lditem.tpath = newstralloc(lditem.tpath, ditem->tpath);
 		amfree(cmd);
 		tape_undo = dir_undo = NULL;
 		/* skip the last line -- duplicate of the preamble */
@@ -1302,7 +1292,7 @@ delete_file(
 		{
 		    if (i == -1) {
 			amfree(ditem_path);
-			amfree(tpath_on_disk);
+			amfree(path_on_disk);
 			exit(1);
 		    }
 		    if(err) {
@@ -1362,6 +1352,7 @@ delete_file(
 			    err = _("bad reply: cannot parse fileno field");
 			    continue;
 			}
+			fileno = (off_t)fileno_;
 			skip_integer(s, ch);
 		    }
 
@@ -1377,17 +1368,16 @@ delete_file(
 
                     lditem.date = newstralloc(lditem.date, date);
 		    lditem.level=level;
-		    g_free(lditem.tape);
-		    lditem.tape = unquote_string(tape);
+                    lditem.tape = newstralloc(lditem.tape, tape);
 		    switch(delete_extract_item(&lditem)) {
 		    case -1:
 			g_printf(_("System error\n"));
 			dbprintf(_("delete_file: (Failed) System error\n"));
 			break;
 		    case  0:
-			g_printf(_("Deleted dir %s at date %s\n"), ditem_tpath, date);
+			g_printf(_("Deleted dir %s at date %s\n"), ditem_path, date);
 			dbprintf(_("delete_file: (Successful) Deleted dir %s at date %s\n"),
-				  ditem_tpath, date);
+				  ditem_path, date);
 			deleted=1;
 			break;
 		    case  1:
@@ -1403,9 +1393,9 @@ delete_file(
 			puts(cmd);
 		} else if(deleted == 0) {
 		    g_printf(_("Warning - dir '%s' not on tape list\n"),
-			   ditem_tpath);
+			   ditem_path);
 		    dbprintf(_("delete_file: dir '%s' not on tape list\n"),
-			      ditem_tpath);
+			      ditem_path);
 		}
 	    }
 	    else
@@ -1416,15 +1406,15 @@ delete_file(
 		    dbprintf(_("delete_file: (Failed) System error\n"));
 		    break;
 		case  0:
-		    g_printf(_("Deleted %s\n"), ditem->tpath);
+		    g_printf(_("Deleted %s\n"), ditem->path);
 		    dbprintf(_("delete_file: (Successful) Deleted %s\n"),
-			      ditem->tpath);
+			      ditem->path);
 		    break;
 		case  1:
 		    g_printf(_("Warning - file '%s' not on tape list\n"),
-			   ditem->tpath);
+			   ditem->path);
 		    dbprintf(_("delete_file: file '%s' not on tape list\n"),
-			      ditem->tpath);
+			      ditem->path);
 		    break;
 		}
 	    }
@@ -1432,13 +1422,12 @@ delete_file(
     }
     amfree(cmd);
     amfree(ditem_path);
-    amfree(ditem_tpath);
-    amfree(tpath_on_disk);
+    amfree(path_on_disk);
 
     if(! found_one) {
-	g_printf(_("File %s doesn't exist in directory\n"), tpath);
+	g_printf(_("File %s doesn't exist in directory\n"), path);
 	dbprintf(_("delete_file: (Failed) File %s doesn't exist in directory\n"),
-	          tpath);
+	          path);
     }
 }
 
@@ -1490,7 +1479,7 @@ display_extract_list(
 	g_fprintf(fp, _("TAPE %s LEVEL %d DATE %s\n"),
 		this->tape, this->level, this->date);
 	for (that = this->files; that != NULL; that = that->next)
-	    g_fprintf(fp, "\t%s\n", that->tpath);
+	    g_fprintf(fp, "\t%s\n", that->path);
     }
 
     if (file == NULL) {
@@ -1699,14 +1688,7 @@ extract_files_setup(
 	tt = newstralloc2(tt, "FEATURES=", our_features_string);
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	get_amidxtaped_line();
-	if (!amidxtaped_line) {
-	    g_fprintf(stderr, _("amrecover - amidxtaped closed the connection\n"));
-	    stop_amidxtaped();
-	    amfree(disk_regex);
-	    amfree(host_regex);
-	    amfree(clean_datestamp);
-	    return -1;
-	} else if(strncmp_const(amidxtaped_line,"FEATURES=") == 0) {
+	if(strncmp_const(amidxtaped_line,"FEATURES=") == 0) {
 	    tapesrv_features = am_string_to_feature(amidxtaped_line+9);
 	} else {
 	    g_fprintf(stderr, _("amrecover - expecting FEATURES line from amidxtaped\n"));
@@ -1925,6 +1907,7 @@ extract_files_child(
     case IS_DUMP:
 	g_ptr_array_add(argv_ptr, stralloc("restore"));
 #ifdef AIX_BACKUP
+        restore_args[j++] = stralloc("-xB");
 	g_ptr_array_add(argv_ptr, stralloc("-xB"));
 #else
 #if defined(XFSDUMP)

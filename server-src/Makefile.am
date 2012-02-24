@@ -25,7 +25,8 @@ sbin_PROGRAMS =		amadmin		amcheck		\
 
 amlibexec_PROGRAMS =	amindexd	amtrmidx	\
 			amtrmlog	driver		dumper		\
-			planner		chunker
+			planner		amcleanupdisk	\
+			chunker
 
 amlibexec_SCRIPTS_PERL = \
 	    amlogroll \
@@ -40,7 +41,6 @@ sbin_SCRIPTS_PERL = \
 	    amtoc \
 	    amcheckdump \
 	    amcleanup \
-	    amcleanupdisk \
 	    amrmtape \
 	    amlabel \
 	    amreport \

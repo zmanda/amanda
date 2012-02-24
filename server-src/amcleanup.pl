@@ -28,15 +28,13 @@ use Amanda::Paths;
 use Amanda::Constants;
 use Amanda::Process;
 use Amanda::Logfile;
-use Amanda::Holding;
-use Amanda::Debug qw( debug );
+
 my $kill_enable=0;
 my $process_alive=0;
 my $verbose=0;
-my $clean_holding=0;
 
 sub usage() {
-    print "Usage: amcleanup [-k] [-v] [-p] [-r] conf\n";
+    print "Usage: amcleanup [-k] [-v] [-p] conf\n";
     exit 1;
 }
 
@@ -44,14 +42,11 @@ Amanda::Util::setup_application("amcleanup", "server", $CONTEXT_CMDLINE);
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 
-debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
-    'version' => \&Amanda::Util::version_opt,
     'k' => \$kill_enable,
     'p' => \$process_alive,
     'v' => \$verbose,
-    'r' => \$clean_holding,
     'help|usage' => \&usage,
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
 ) or usage();
@@ -78,7 +73,7 @@ my $logdir=config_dir_relative(getconf($CNF_LOGDIR));
 my $logfile = "$logdir/log";
 my $amreport="$sbindir/amreport";
 my $amtrmidx="$amlibexecdir/amtrmidx";
-my $amcleanupdisk="$sbindir/amcleanupdisk";
+my $amcleanupdisk="$amlibexecdir/amcleanupdisk";
 
 if ( ! -e "$CONFIG_DIR/$config_name" ) {
     die "Configuration directory '$CONFIG_DIR/$config_name' doesn't exist\n";
@@ -200,11 +195,10 @@ foreach my $pname ("amdump", "amflush") {
     }
 }
 
-my @amcleanupdisk;
-push @amcleanupdisk, $amcleanupdisk;
-push @amcleanupdisk, "-v" if $verbose;
-push @amcleanupdisk, "-r" if $clean_holding;
-push @amcleanupdisk, $config_name;
-system @amcleanupdisk;
+if ($verbose) {
+    system $amcleanupdisk, "-v", $config_name;
+} else {
+    system $amcleanupdisk, $config_name;
+}
 
 Amanda::Util::finish_application();

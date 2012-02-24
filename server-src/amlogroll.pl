@@ -24,17 +24,14 @@ use warnings;
 use Amanda::Util qw( :constants );
 use Amanda::Config qw( :init );
 use Amanda::Logfile qw( log_rename get_current_log_timestamp $amanda_log_trace_log );
-use Amanda::Debug qw( debug );
+use Amanda::Debug;
 use Getopt::Long;
 
 Amanda::Util::setup_application("amlogroll", "server", $CONTEXT_CMDLINE);
 
 my $config_overrides = new_config_overrides($#ARGV+1);
-
-debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
-    'version' => \&Amanda::Util::version_opt,
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
 ) or usage();
 

@@ -41,7 +41,6 @@
 #include "event.h"
 #include "security.h"
 #include "conffile.h"
-#include "getopt.h"
 
 #define amrecover_debug(i, ...) do {	\
 	if ((i) <= debug_amrecover) {	\
@@ -49,18 +48,13 @@
 	}				\
 } while (0)
 
-static struct option long_options[] = {
-    {"version"         , 0, NULL,  1},
-    {NULL, 0, NULL, 0}
-};
-
 extern int process_line(char *line);
 int get_line(void);
 int grab_reply(int show);
 void sigint_handler(int signum);
 int main(int argc, char **argv);
 
-#define USAGE _("Usage: amrecover [--version] [[-C] <config>] [-s <index-server>] [-t <tape-server>] [-d <tape-device>] [-o <clientconfigoption>]*\n")
+#define USAGE _("Usage: amrecover [[-C] <config>] [-s <index-server>] [-t <tape-server>] [-d <tape-device>] [-o <clientconfigoption>]*\n")
 
 char *server_name = NULL;
 int server_socket;
@@ -71,7 +65,6 @@ char *disk_name = NULL;			/* disk we are restoring */
 dle_t *dump_dle = NULL;
 char *mount_point = NULL;		/* where disk was mounted */
 char *disk_path = NULL;			/* path relative to mount point */
-char *disk_tpath = NULL;		/* translated path relative to mount point */
 char dump_date[STR_SIZE];		/* date on which we are restoring */
 int quit_prog;				/* set when time to exit parser */
 char *tape_server_name = NULL;
@@ -279,7 +272,7 @@ sigint_handler(
 }
 
 
-char *
+void
 clean_pathname(
     char *	s)
 {
@@ -297,8 +290,6 @@ clean_pathname(
     /* remove "/." at end of path */
     if(strcmp(&(s[length-2]),"/.")==0)
 	s[length-2]='\0';
-
-    return s;
 }
 
 
@@ -369,12 +360,8 @@ main(
     }
 
     /* now parse regular command-line '-' options */
-    while ((i = getopt_long(argc, argv, "o:C:s:t:d:Uh:", long_options, NULL)) != EOF) {
+    while ((i = getopt(argc, argv, "o:C:s:t:d:Uh:")) != EOF) {
 	switch (i) {
-	    case 1:
-		printf("amrecover-%s\n", VERSION);
-		return(0);
-		break;
 	    case 'C':
 		add_config_override(cfg_ovr, "conf", optarg);
 		break;
@@ -500,7 +487,6 @@ main(
     amfree(disk_name);
     amfree(mount_point);
     amfree(disk_path);
-    amfree(disk_tpath);
     dump_date[0] = '\0';
 
     /* Don't die when child closes pipe */
@@ -845,40 +831,3 @@ stop_amindexd(void)
         }
     }
 }
-
-
-char *
-translate_octal(
-    char *line)
-{
-    char *s = line, *s1, *s2;
-    char *p = line;
-    int i;
-
-    if (!translate_mode)
-	return strdup(line);
-
-    while(*s != '\0') {
-	if ((s == line || *(s-1) != '\\') && *s == '\\') {
-	    s++;
-	    s1 = s+1;
-	    s2 = s+2;
-	    if (g_ascii_isdigit(*s) && *s1 != '\0' &&
-		g_ascii_isdigit(*s1) &&
-		g_ascii_isdigit(*s2)) {
-		i = ((*s)-'0')*64 + ((*s1)-'0')*8 + ((*s2)-'0');
-		*p++ = i;
-		s += 3;
-	    } else {
-		*p++ = *s++;
-	    }
-
-	} else {
-	    *p++ = *s++;
-	}
-    }
-    *p = '\0';
-
-    return line;
-}
-

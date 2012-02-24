@@ -69,7 +69,7 @@ Amanda::Recovery::Clerk - handle assembling dumpfiles from multiple parts
 
 =head1 OVERVIEW
 
-This package is the counterpart to L<Amanda::Taper::Scribe>, and handles
+This package is the counterpart to L<Amanda::Recovery::Scribe>, and handles
 re-assembling dumpfiles from multiple parts, possibly distributed over several
 volumes.
 
@@ -228,7 +228,7 @@ sub get_xfer_src {
     my $self = shift;
     my %params = @_;
 
-    for my $rq_param (qw(dump xfer_src_cb)) {
+    for my $rq_param qw(dump xfer_src_cb) {
 	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }
@@ -262,7 +262,7 @@ sub start_recovery {
     my %params = @_;
 
     $self->dbg("starting recovery");
-    for my $rq_param (qw(xfer recovery_cb)) {
+    for my $rq_param qw(xfer recovery_cb) {
 	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }

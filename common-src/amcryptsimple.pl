@@ -53,18 +53,9 @@ $ENV{'PATH'} = '/usr/local/bin:/usr/bin:/usr/sbin:/bin:/sbin:/opt/csw/bin';
 
 $ENV{'GNUPGHOME'} = "$AMANDA_HOME/.gnupg";
 
-sub do_gpg_agent() {
-    my $path=`which gpg-agent 2>/dev/null`;
-    chomp $path;
-    if (-x $path) {
-	return "gpg-agent --daemon --";
-    }
-    return ""
-}
 
 sub encrypt() {
-    my $gpg_agent_cmd = do_gpg_agent();
-    system "$gpg_agent_cmd gpg --batch --no-secmem-warning --disable-mdc --symmetric --cipher-algo AES256 --passphrase-fd 3  3<$AM_PASS";
+    system "gpg --batch --no-secmem-warning --disable-mdc --symmetric --cipher-algo AES256 --passphrase-fd 3  3<$AM_PASS";
     if ($? == -1) {
 	print STDERR "failed to execute gpg: $!\n";
 	exit (1);
@@ -78,8 +69,7 @@ sub encrypt() {
 }
 
 sub decrypt() {
-    my $gpg_agent_cmd = do_gpg_agent();
-    system "$gpg_agent_cmd gpg --batch --quiet --no-mdc-warning --decrypt --passphrase-fd 3  3<$AM_PASS";
+    system "gpg --batch --quiet --no-mdc-warning --decrypt --passphrase-fd 3  3<$AM_PASS";
     if ($? == -1) {
 	print STDERR "failed to execute gpg: $!\n";
 	exit (1);

@@ -148,38 +148,16 @@ sub {
 	});
 });
 
-subcommand("show", "show [<slots>]", "scan all slots (or listed slots) in the changer, starting with the current slot",
+subcommand("show", "show", "scan all slots in the changer, starting with the current slot",
 sub {
     my ($finished_cb, @args) = @_;
     my $last_slot;
     my %seen_slots;
     my $chg;
 
-    if (@args > 1) {
+    if (@args != 0) {
 	return usage($finished_cb);
     }
-
-    my $what = $args[0];
-    my @slots;
-
-    if (defined $what) {
-	my @what1 = split /,/, $what;
-	foreach my $what1 (@what1) {
-	    if ($what1 =~ /^(\d*)-(\d*)$/) {
-		my $begin = $1;
-		my $end = $2;
-		$end = $begin if $begin > $end;
-		while ($begin <= $end) {
-		    push @slots, $begin;
-		    $begin++;
-		}
-	    } else {
-		push @slots, $what1;
-	    }
-	}
-    }
-
-    my $use_slots = @slots > 0;
 
     $chg = load_changer($finished_cb) or return;
 
@@ -195,19 +173,13 @@ sub {
 	my ($err, %info) = @_;
 	return failure($err, $finished_cb) if $err;
 
-	if ($use_slots) {
-	   my $slot = shift @slots;
-	   $chg->load(slot => $slot,
-		      mode => "read",
-		      res_cb => $steps->{'loaded'});
+	print STDERR "amtape: scanning all $info{num_slots} slots in changer:\n";
 
-	} else {
-	    print STDERR "amtape: scanning all $info{num_slots} slots in changer:\n";
+	$steps->{'load_current'}->();
+    };
 
-	    $chg->load(relative_slot => 'current',
-		       mode => "read",
-		       res_cb => $steps->{'loaded'});
-	}
+    step load_current => sub {
+	$chg->load(relative_slot => 'current', mode => "read", res_cb => $steps->{'loaded'});
     };
 
     step loaded => sub {
@@ -252,19 +224,8 @@ sub {
     };
 
     step released => sub {
-	if ($use_slots) {
-	   return $finished_cb->() if @slots == 0;
-	   my $slot = shift @slots;
-	   $chg->load(slot => $slot,
-		      mode => "read",
-		      res_cb => $steps->{'loaded'});
-
-	} else {
-	    $chg->load(relative_slot => 'next',
-		       slot => $last_slot,
-		       except_slots => { %seen_slots },
-		       res_cb => $steps->{'loaded'});
-	}
+	$chg->load(relative_slot => 'next', slot => $last_slot,
+		   except_slots => { %seen_slots }, res_cb => $steps->{'loaded'});
     };
 });
 
@@ -313,11 +274,7 @@ sub {
 		} elsif ($sl->{'device_status'} == $DEVICE_STATUS_VOLUME_UNLABELED) {
 		    $line .= " blank";
 		} elsif ($sl->{'device_status'} != $DEVICE_STATUS_SUCCESS) {
-		    if (defined $sl->{'device_error'}) {
-			$line .= " " . $sl->{'device_error'};
-		    } else {
-			$line .= "device error";
-		    }
+		    $line .= "device error";
 		} elsif ($sl->{'f_type'} != $Amanda::Header::F_TAPESTART) {
 		    $line .= " blank";
 		} else {
@@ -577,25 +534,13 @@ sub {
     my $result_cb = make_cb(result_cb => sub {
 	my ($err, $res, $label, $mode) = @_;
 	if ($err) {
-	    if ($res) {
-		$res->release(finished_cb => sub {
-		    $taperscan->quit() if defined $taperscan;
-		    return failure($err, $finished_cb);
-		});
-		return;
-	    } else {
-		$taperscan->quit() if defined $taperscan;
-		return failure($err, $finished_cb);
-	    }
+	    $taperscan->quit() if defined $taperscan;
+	    return failure($err, $finished_cb);
 	}
 
 	my $modestr = ($mode == $ACCESS_APPEND)? "append" : "write";
 	my $slot = $res->{'this_slot'};
-	if (defined $res->{'device'} and defined $res->{'device'}->volume_label()) {
-	    print STDERR "Will $modestr to volume '$label' in slot $slot.\n";
-	} else {
-	    print STDERR "Will $modestr label '$label' to new volume in slot $slot.\n";
-	}
+	print STDERR "Will $modestr to volume $label in slot $slot.\n";
 	$res->release(finished_cb => sub {
 	    my ($err) = @_;
 	    die "$err" if $err;
@@ -627,10 +572,10 @@ sub {
 	},
 	finished_cb => sub {
 	    my ($err) = @_;
-	    $chg->quit();
 	    return failure($err, $finished_cb) if $err;
 
 	    print STDERR "update complete\n";
+	    $chg->quit();
 	    $finished_cb->();
 	});
 });
@@ -675,10 +620,8 @@ Amanda::Util::setup_application("amtape", "server", $CONTEXT_CMDLINE);
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 
-debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
-    'version' => \&Amanda::Util::version_opt,
     'help|usage|?' => \&usage,
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
 ) or usage();

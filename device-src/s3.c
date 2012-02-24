@@ -88,13 +88,11 @@
 
 #define AMAZON_SECURITY_HEADER "x-amz-security-token"
 #define AMAZON_BUCKET_CONF_TEMPLATE "\
-  <CreateBucketConfiguration%s>\n\
+  <CreateBucketConfiguration>\n\
     <LocationConstraint>%s</LocationConstraint>\n\
   </CreateBucketConfiguration>"
 
 #define AMAZON_STORAGE_CLASS_HEADER "x-amz-storage-class"
-
-#define AMAZON_SERVER_SIDE_ENCRYPTION_HEADER "x-amz-server-side-encryption"
 
 #define AMAZON_WILDCARD_LOCATION "*"
 
@@ -122,7 +120,6 @@
         { 0,    0,                           CURLE_COULDNT_RESOLVE_HOST, S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_PARTIAL_FILE,         S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_OPERATION_TIMEOUTED,  S3_RESULT_RETRY }, \
-        { 0,    0,                           CURLE_SSL_CONNECT_ERROR,    S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_SEND_ERROR,           S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_RECV_ERROR,           S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_GOT_NOTHING,          S3_RESULT_RETRY }
@@ -137,20 +134,14 @@ struct S3Handle {
     char *access_key;
     char *secret_key;
     char *user_token;
-    char *swift_account_id;
-    char *swift_access_key;
 
     /* attributes for new objects */
     char *bucket_location;
     char *storage_class;
-    char *server_side_encryption;
     char *host;
     char *service_path;
     gboolean use_subdomain;
-    gboolean openstack_swift_api;
     char *ca_info;
-    char *x_auth_token;
-    char *x_storage_url;
 
     CURL *curl;
 
@@ -275,8 +266,7 @@ lookup_result(const result_handling_t *result_handling,
 /*
  * Precompiled regular expressions */
 static regex_t etag_regex, error_name_regex, message_regex, subdomain_regex,
-    location_con_regex, date_sync_regex, x_auth_token_regex,
-    x_storage_url_regex;
+    location_con_regex, date_sync_regex;
 
 
 /*
@@ -295,11 +285,14 @@ static gboolean is_non_empty_string(const char *str);
  * A new string is allocated and returned; it is the responsiblity of the caller.
  *
  * @param hdl: the S3Handle object
+ * @param verb: capitalized verb for this request ('PUT', 'GET', etc.)
+ * @param host: the host name to connect to, 's3.amazonaws.com'
  * @param service_path: A path to add in the URL, or NULL for none.
  * @param bucket: the bucket being accessed, or NULL for none
  * @param key: the key being accessed, or NULL for none
  * @param subresource: the sub-resource being accessed (e.g. "acl"), or NULL for none
- * @param query: the query being accessed (e.g. "acl"), or NULL for none
+ * @param use_subdomain: if TRUE, a subdomain of 'host' will be used
+ * @param use_ssl: if TRUE, use 'https'
  *
  * !use_subdomain: http://host/service_path/bucket/key
  * use_subdomain : http://bucket.host/service_path/key
@@ -307,11 +300,14 @@ static gboolean is_non_empty_string(const char *str);
  */
 static char *
 build_url(
-      S3Handle *hdl,
+      const char *host,
+      const char *service_path,
       const char *bucket,
       const char *key,
       const char *subresource,
-      const char *query);
+      const char *query,
+      gboolean use_subdomain,
+      gboolean use_ssl);
 
 /* Create proper authorization headers for an Amazon S3 REST
  * request to C{headers}.
@@ -528,76 +524,50 @@ is_non_empty_string(const char *str)
 
 static char *
 build_url(
-      S3Handle   *hdl,
+      const char *host,
+      const char *service_path,
       const char *bucket,
       const char *key,
       const char *subresource,
-      const char *query)
+      const char *query,
+      gboolean use_subdomain,
+      gboolean use_ssl)
 {
     GString *url = NULL;
     char *esc_bucket = NULL, *esc_key = NULL;
 
-    if (hdl->openstack_swift_api && hdl->x_storage_url) {
-	url = g_string_new(hdl->x_storage_url);
-	g_string_append(url, "/");
+    /* scheme */
+    url = g_string_new("http");
+    if (use_ssl)
+        g_string_append(url, "s");
+
+    g_string_append(url, "://");
+
+    /* domain */
+    if (use_subdomain && bucket)
+        g_string_append_printf(url, "%s.%s", bucket, host);
+    else
+        g_string_append_printf(url, "%s", host);
+
+    if (service_path) {
+        g_string_append_printf(url, "%s/", service_path);
     } else {
-	/* scheme */
-	url = g_string_new("http");
-	if (hdl->use_ssl)
-            g_string_append(url, "s");
-
-	g_string_append(url, "://");
-
-	/* domain */
-	if (hdl->use_subdomain && bucket)
-            g_string_append_printf(url, "%s.%s", bucket, hdl->host);
-	else
-            g_string_append_printf(url, "%s", hdl->host);
-
-	if (hdl->service_path) {
-            g_string_append_printf(url, "%s/", hdl->service_path);
-	} else {
-	    g_string_append(url, "/");
-	}
+	g_string_append(url, "/");
     }
 
     /* path */
-    if (!hdl->use_subdomain && bucket) {
-	/* curl_easy_escape addeded in 7.15.4 */
-	#if LIBCURL_VERSION_NUM >= 0x070f04
-	    curl_version_info_data *info;
-	    /* check the runtime version too */
-	    info = curl_version_info(CURLVERSION_NOW);
-	    if (info->version_num >= 0x070f04)
-		esc_bucket = curl_easy_escape(hdl->curl, bucket, 0);
-	    else
-		esc_bucket = curl_escape(bucket, 0);
-	#else
-	    esc_bucket = curl_escape(bucket, 0);
-	#endif
+    if (!use_subdomain && bucket) {
+        esc_bucket = curl_escape(bucket, 0);
         if (!esc_bucket) goto cleanup;
         g_string_append_printf(url, "%s", esc_bucket);
         if (key)
             g_string_append(url, "/");
-	curl_free(esc_bucket);
     }
 
     if (key) {
-	/* curl_easy_escape addeded in 7.15.4 */
-	#if LIBCURL_VERSION_NUM >= 0x070f04
-	    curl_version_info_data *info;
-	    /* check the runtime version too */
-	    info = curl_version_info(CURLVERSION_NOW);
-	    if (info->version_num >= 0x070f04)
-		esc_key = curl_easy_escape(hdl->curl, key, 0);
-	    else
-		esc_key = curl_escape(key, 0);
-	#else
-	    esc_key = curl_escape(key, 0);
-	#endif
+        esc_key = curl_escape(key, 0);
         if (!esc_key) goto cleanup;
         g_string_append_printf(url, "%s", esc_key);
-	curl_free(esc_key);
     }
 
     /* query string */
@@ -614,6 +584,8 @@ build_url(
         g_string_append(url, query);
 
 cleanup:
+    if (esc_bucket) curl_free(esc_bucket);
+    if (esc_key) curl_free(esc_key);
 
     return g_string_free(url, FALSE);
 }
@@ -643,6 +615,24 @@ authenticate_request(S3Handle *hdl,
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 
+
+    /* Build the string to sign, per the S3 spec.
+     * See: "Authenticating REST Requests" - API Version 2006-03-01 pg 58
+     */
+
+    /* verb */
+    auth_string = g_string_new(verb);
+    g_string_append(auth_string, "\n");
+
+    /* Content-MD5 header */
+    if (md5_hash)
+        g_string_append(auth_string, md5_hash);
+    g_string_append(auth_string, "\n");
+
+    /* Content-Type is empty*/
+    g_string_append(auth_string, "\n");
+
+
     /* calculate the date */
     t = time(NULL);
 
@@ -660,137 +650,86 @@ authenticate_request(S3Handle *hdl,
         wkday[tmp.tm_wday], tmp.tm_mday, month[tmp.tm_mon], 1900+tmp.tm_year,
         tmp.tm_hour, tmp.tm_min, tmp.tm_sec);
 
-    if (hdl->openstack_swift_api) {
-	if (!bucket) {
-            buf = g_strdup_printf("X-Auth-User: %s", hdl->swift_account_id);
-            headers = curl_slist_append(headers, buf);
-            g_free(buf);
-            buf = g_strdup_printf("X-Auth-Key: %s", hdl->swift_access_key);
-            headers = curl_slist_append(headers, buf);
-            g_free(buf);
-	} else {
-            buf = g_strdup_printf("X-Auth-Token: %s", hdl->x_auth_token);
-            headers = curl_slist_append(headers, buf);
-            g_free(buf);
-	}
-    } else {
-	/* Build the string to sign, per the S3 spec.
-	 * See: "Authenticating REST Requests" - API Version 2006-03-01 pg 58
-	 */
+    g_string_append(auth_string, date);
+    g_string_append(auth_string, "\n");
 
-	/* verb */
-	auth_string = g_string_new(verb);
-	g_string_append(auth_string, "\n");
+    /* CanonicalizedAmzHeaders, sorted lexicographically */
+    if (is_non_empty_string(hdl->user_token)) {
+        g_string_append(auth_string, AMAZON_SECURITY_HEADER);
+        g_string_append(auth_string, ":");
+        g_string_append(auth_string, hdl->user_token);
+        g_string_append(auth_string, ",");
+        g_string_append(auth_string, STS_PRODUCT_TOKEN);
+        g_string_append(auth_string, "\n");
+    }
 
-	/* Content-MD5 header */
-	if (md5_hash)
-            g_string_append(auth_string, md5_hash);
-	g_string_append(auth_string, "\n");
+    if (is_non_empty_string(hdl->storage_class)) {
+        g_string_append(auth_string, AMAZON_STORAGE_CLASS_HEADER);
+        g_string_append(auth_string, ":");
+        g_string_append(auth_string, hdl->storage_class);
+        g_string_append(auth_string, "\n");
+    }
 
-	/* Content-Type is empty*/
-	g_string_append(auth_string, "\n");
+    /* CanonicalizedResource */
+    if (hdl->service_path) {
+	g_string_append(auth_string, hdl->service_path);
+    }
+    g_string_append(auth_string, "/");
+    if (bucket) {
+        if (hdl->use_subdomain)
+            g_string_append(auth_string, bucket);
+        else {
+            esc_bucket = curl_escape(bucket, 0);
+            if (!esc_bucket) goto cleanup;
+            g_string_append(auth_string, esc_bucket);
+        }
+    }
 
-	/* Date */
-	g_string_append(auth_string, date);
-	g_string_append(auth_string, "\n");
+    if (bucket && (hdl->use_subdomain || key))
+        g_string_append(auth_string, "/");
 
-	/* CanonicalizedAmzHeaders, sorted lexicographically */
-	if (is_non_empty_string(hdl->user_token)) {
-	    g_string_append(auth_string, AMAZON_SECURITY_HEADER);
-	    g_string_append(auth_string, ":");
-	    g_string_append(auth_string, hdl->user_token);
-	    g_string_append(auth_string, ",");
-	    g_string_append(auth_string, STS_PRODUCT_TOKEN);
-	    g_string_append(auth_string, "\n");
-	}
+    if (key) {
+            esc_key = curl_escape(key, 0);
+            if (!esc_key) goto cleanup;
+            g_string_append(auth_string, esc_key);
+    }
 
-	if (g_str_equal(verb,"PUT") &&
-	    is_non_empty_string(hdl->server_side_encryption)) {
-	    g_string_append(auth_string, AMAZON_SERVER_SIDE_ENCRYPTION_HEADER);
-	    g_string_append(auth_string, ":");
-	    g_string_append(auth_string, hdl->server_side_encryption);
-	    g_string_append(auth_string, "\n");
-	}
+    if (subresource) {
+        g_string_append(auth_string, "?");
+        g_string_append(auth_string, subresource);
+    }
 
-	if (is_non_empty_string(hdl->storage_class)) {
-	    g_string_append(auth_string, AMAZON_STORAGE_CLASS_HEADER);
-	    g_string_append(auth_string, ":");
-	    g_string_append(auth_string, hdl->storage_class);
-	    g_string_append(auth_string, "\n");
-	}
+    /* run HMAC-SHA1 on the canonicalized string */
+    md = g_byte_array_sized_new(EVP_MAX_MD_SIZE+1);
+    HMAC_CTX_init(&ctx);
+    HMAC_Init_ex(&ctx, hdl->secret_key, (int) strlen(hdl->secret_key), EVP_sha1(), NULL);
+    HMAC_Update(&ctx, (unsigned char*) auth_string->str, auth_string->len);
+    HMAC_Final(&ctx, md->data, &md->len);
+    HMAC_CTX_cleanup(&ctx);
+    auth_base64 = s3_base64_encode(md);
+    /* append the new headers */
+    if (is_non_empty_string(hdl->user_token)) {
+        /* Devpay headers are included in hash. */
+        buf = g_strdup_printf(AMAZON_SECURITY_HEADER ": %s", hdl->user_token);
+        headers = curl_slist_append(headers, buf);
+        g_free(buf);
 
-	/* CanonicalizedResource */
-	if (hdl->service_path) {
-	    g_string_append(auth_string, hdl->service_path);
-	}
-	g_string_append(auth_string, "/");
-	if (bucket) {
-	    if (hdl->use_subdomain)
-		g_string_append(auth_string, bucket);
-	    else {
-		esc_bucket = curl_escape(bucket, 0);
-		if (!esc_bucket) goto cleanup;
-		g_string_append(auth_string, esc_bucket);
-	    }
-	}
+        buf = g_strdup_printf(AMAZON_SECURITY_HEADER ": %s", STS_PRODUCT_TOKEN);
+        headers = curl_slist_append(headers, buf);
+        g_free(buf);
+    }
 
-	if (bucket && (hdl->use_subdomain || key))
-	    g_string_append(auth_string, "/");
-
-	if (key) {
-	    esc_key = curl_escape(key, 0);
-	    if (!esc_key) goto cleanup;
-	    g_string_append(auth_string, esc_key);
-	}
-
-	if (subresource) {
-	    g_string_append(auth_string, "?");
-	    g_string_append(auth_string, subresource);
-	}
-
-	/* run HMAC-SHA1 on the canonicalized string */
-	md = g_byte_array_sized_new(EVP_MAX_MD_SIZE+1);
-	HMAC_CTX_init(&ctx);
-	HMAC_Init_ex(&ctx, hdl->secret_key, (int) strlen(hdl->secret_key),
-		     EVP_sha1(), NULL);
-	HMAC_Update(&ctx, (unsigned char*) auth_string->str, auth_string->len);
-	HMAC_Final(&ctx, md->data, &md->len);
-	HMAC_CTX_cleanup(&ctx);
-	auth_base64 = s3_base64_encode(md);
-	/* append the new headers */
-	if (is_non_empty_string(hdl->user_token)) {
-	    /* Devpay headers are included in hash. */
-	    buf = g_strdup_printf(AMAZON_SECURITY_HEADER ": %s",
-				  hdl->user_token);
-	    headers = curl_slist_append(headers, buf);
-	    g_free(buf);
-
-	    buf = g_strdup_printf(AMAZON_SECURITY_HEADER ": %s",
-				  STS_PRODUCT_TOKEN);
-	    headers = curl_slist_append(headers, buf);
-	    g_free(buf);
-	}
-
-	if (g_str_equal(verb,"PUT") &&
-	    is_non_empty_string(hdl->server_side_encryption)) {
-	    buf = g_strdup_printf(AMAZON_SERVER_SIDE_ENCRYPTION_HEADER ": %s",
-				  hdl->server_side_encryption);
-	    headers = curl_slist_append(headers, buf);
-	    g_free(buf);
-	}
-
-	if (is_non_empty_string(hdl->storage_class)) {
-	    buf = g_strdup_printf(AMAZON_STORAGE_CLASS_HEADER ": %s",
-				  hdl->storage_class);
-	    headers = curl_slist_append(headers, buf);
-	    g_free(buf);
-	}
-
-	buf = g_strdup_printf("Authorization: AWS %s:%s",
-                          hdl->access_key, auth_base64);
+    if (is_non_empty_string(hdl->storage_class)) {
+	buf = g_strdup_printf(AMAZON_STORAGE_CLASS_HEADER ": %s", hdl->storage_class);
 	headers = curl_slist_append(headers, buf);
 	g_free(buf);
     }
+
+
+    buf = g_strdup_printf("Authorization: AWS %s:%s",
+                          hdl->access_key, auth_base64);
+    headers = curl_slist_append(headers, buf);
+    g_free(buf);
 
     if (md5_hash && '\0' != md5_hash[0]) {
         buf = g_strdup_printf("Content-MD5: %s", md5_hash);
@@ -801,126 +740,15 @@ authenticate_request(S3Handle *hdl,
     buf = g_strdup_printf("Date: %s", date);
     headers = curl_slist_append(headers, buf);
     g_free(buf);
-
 cleanup:
     g_free(date);
     g_free(esc_bucket);
     g_free(esc_key);
-    if (md) g_byte_array_free(md, TRUE);
+    g_byte_array_free(md, TRUE);
     g_free(auth_base64);
-    if (auth_string) g_string_free(auth_string, TRUE);
+    g_string_free(auth_string, TRUE);
 
     return headers;
-}
-
-/* Functions for a SAX parser to parse the XML failure from Amazon */
-
-/* Private structure for our "thunk", which tracks where the user is in the list
- *  * of keys. */
-struct failure_thunk {
-    gboolean want_text;
-
-    gboolean in_title;
-    gboolean in_body;
-    gboolean in_code;
-    gboolean in_message;
-    gint     in_others;
-
-    gchar *text;
-    gsize text_len;
-
-    gchar *message;
-    gchar *error_name;
-};
-
-static void
-failure_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
-                   const gchar *element_name,
-                   const gchar **attribute_names G_GNUC_UNUSED,
-                   const gchar **attribute_values G_GNUC_UNUSED,
-                   gpointer user_data,
-                   GError **error G_GNUC_UNUSED)
-{
-    struct failure_thunk *thunk = (struct failure_thunk *)user_data;
-
-    if (g_ascii_strcasecmp(element_name, "title") == 0) {
-        thunk->in_title = 1;
-	thunk->in_others = 0;
-        thunk->want_text = 1;
-    } else if (g_ascii_strcasecmp(element_name, "body") == 0) {
-        thunk->in_body = 1;
-	thunk->in_others = 0;
-        thunk->want_text = 1;
-    } else if (g_ascii_strcasecmp(element_name, "code") == 0) {
-        thunk->in_code = 1;
-	thunk->in_others = 0;
-        thunk->want_text = 1;
-    } else if (g_ascii_strcasecmp(element_name, "message") == 0) {
-        thunk->in_message = 1;
-	thunk->in_others = 0;
-        thunk->want_text = 1;
-    } else {
-	thunk->in_others++;
-    }
-}
-
-static void
-failure_end_element(GMarkupParseContext *context G_GNUC_UNUSED,
-                 const gchar *element_name,
-                 gpointer user_data,
-                 GError **error G_GNUC_UNUSED)
-{
-    struct failure_thunk *thunk = (struct failure_thunk *)user_data;
-
-    if (g_ascii_strcasecmp(element_name, "title") == 0) {
-	char *p = strchr(thunk->text, ' ');
-	if (p) {
-	    p++;
-	    if (*p) {
-		thunk->error_name = g_strdup(p);
-	    }
-	}
-	g_free(thunk->text);
-	thunk->text = NULL;
-        thunk->in_title = 0;
-    } else if (g_ascii_strcasecmp(element_name, "body") == 0) {
-	thunk->message = thunk->text;
-	g_strstrip(thunk->message);
-	thunk->text = NULL;
-        thunk->in_body = 0;
-    } else if (g_ascii_strcasecmp(element_name, "code") == 0) {
-	thunk->error_name = thunk->text;
-	thunk->text = NULL;
-        thunk->in_code = 0;
-    } else if (g_ascii_strcasecmp(element_name, "message") == 0) {
-	thunk->message = thunk->text;
-	thunk->text = NULL;
-        thunk->in_message = 0;
-    } else {
-	thunk->in_others--;
-    }
-}
-
-static void
-failure_text(GMarkupParseContext *context G_GNUC_UNUSED,
-          const gchar *text,
-          gsize text_len,
-          gpointer user_data,
-          GError **error G_GNUC_UNUSED)
-{
-    struct failure_thunk *thunk = (struct failure_thunk *)user_data;
-
-    if (thunk->want_text && thunk->in_others == 0) {
-        char *new_text;
-
-        new_text = g_strndup(text, text_len);
-	if (thunk->text) {
-	    strappend(thunk->text, new_text);
-	    g_free(new_text);
-	} else {
-	    thunk->text = new_text;
-	}
-    }
 }
 
 static gboolean
@@ -933,11 +761,10 @@ interpret_response(S3Handle *hdl,
                    const char *content_md5)
 {
     long response_code = 0;
+    regmatch_t pmatch[2];
+    char *error_name = NULL, *message = NULL;
+    char *body_copy = NULL;
     gboolean ret = TRUE;
-    struct failure_thunk thunk;
-    GMarkupParseContext *ctxt = NULL;
-    static GMarkupParser parser = { failure_start_element, failure_end_element, failure_text, NULL, NULL };
-    GError *err = NULL;
 
     if (!hdl) return FALSE;
 
@@ -963,13 +790,15 @@ interpret_response(S3Handle *hdl,
             ret = FALSE;
         return ret;
     }
+
     if (200 <= response_code && response_code < 400) {
         /* 2xx and 3xx codes won't have a response body we care about */
         hdl->last_s3_error_code = S3_ERROR_None;
         return FALSE;
     }
 
-    /* Now look at the body to try to get the actual Amazon error message. */
+    /* Now look at the body to try to get the actual Amazon error message. Rather
+     * than parse out the XML, just use some regexes. */
 
     /* impose a reasonable limit on body size */
     if (body_len > MAX_ERROR_RESPONSE_LEN) {
@@ -980,81 +809,30 @@ interpret_response(S3Handle *hdl,
         return TRUE; /* perhaps a network error; retry the request */
     }
 
-    thunk.in_title = FALSE;
-    thunk.in_body = FALSE;
-    thunk.in_code = FALSE;
-    thunk.in_message = FALSE;
-    thunk.in_others = 0;
-    thunk.text = NULL;
-    thunk.want_text = FALSE;
-    thunk.text_len = 0;
-    thunk.message = NULL;
-    thunk.error_name = NULL;
+    /* use strndup to get a zero-terminated string */
+    body_copy = g_strndup(body, body_len);
+    if (!body_copy) goto cleanup;
 
-    if (hdl->openstack_swift_api &&
-	!g_strstr_len(body, body_len, "xml version") &&
-	!g_strstr_len(body, body_len, "<html>")) {
-	char *body_copy = g_strndup(body, body_len);
-	char *b = body_copy;
-	char *p = strchr(b, '\n');
-	char *p1;
-	if (p) { /* first line: error code */
-	    *p = '\0';
-	    p++;
-	    p1 = strchr(b, ' ');
-	    if (p1) {
-		p1++;
-		if (*p1) {
-	            thunk.error_name = g_strdup(p1);
-		}
-	    }
-	    b = p;
-	}
-	p = strchr(b, '\n');
-	if (p) { /* second line: error message */
-	    *p = '\0';
-	    p++;
-            thunk.message = g_strdup(p);
-	    g_strstrip(thunk.message);
-	    b = p;
-	}
-	goto parsing_done;
+    if (!s3_regexec_wrap(&error_name_regex, body_copy, 2, pmatch, 0))
+        error_name = find_regex_substring(body_copy, pmatch[1]);
+
+    if (!s3_regexec_wrap(&message_regex, body_copy, 2, pmatch, 0))
+        message = find_regex_substring(body_copy, pmatch[1]);
+
+    if (error_name) {
+        hdl->last_s3_error_code = s3_error_code_from_name(error_name);
     }
 
-    /* run the parser over it */
-    ctxt = g_markup_parse_context_new(&parser, 0, (gpointer)&thunk, NULL);
-    if (!g_markup_parse_context_parse(ctxt, body, body_len, &err)) {
-	    if (hdl->last_message) g_free(hdl->last_message);
-	    hdl->last_message = g_strdup(err->message);
-	    goto cleanup;
-    }
-
-    if (!g_markup_parse_context_end_parse(ctxt, &err)) {
-	    if (hdl->last_message) g_free(hdl->last_message);
-	    hdl->last_message = g_strdup(err->message);
-	    goto cleanup;
-    }
-
-    g_markup_parse_context_free(ctxt);
-    ctxt = NULL;
-
-parsing_done:
-    if (thunk.error_name) {
-        hdl->last_s3_error_code = s3_error_code_from_name(thunk.error_name);
-	g_free(thunk.error_name);
-	thunk.error_name = NULL;
-    }
-
-    if (thunk.message) {
-	g_free(hdl->last_message);
-        hdl->last_message = thunk.message;
-        thunk.message = NULL; /* steal the reference to the string */
+    if (message) {
+        hdl->last_message = message;
+        message = NULL; /* steal the reference to the string */
     }
 
 cleanup:
-    g_free(thunk.text);
-    g_free(thunk.message);
-    g_free(thunk.error_name);
+    g_free(body_copy);
+    g_free(message);
+    g_free(error_name);
+
     return FALSE;
 }
 
@@ -1264,17 +1042,7 @@ curl_debug_message(CURL *curl G_GNUC_UNUSED,
     case CURLINFO_HEADER_OUT:
         lineprefix="Hdr Out: ";
         break;
-/*
-    case CURLINFO_DATA_IN:
-	if (len > 1000) return 0;
-        lineprefix="Data In: ";
-        break;
 
-    case CURLINFO_DATA_OUT:
-	if (len > 1000) return 0;
-        lineprefix="Data Out: ";
-        break;
-*/
     default:
         /* ignore data in/out -- nobody wants to see that in the
          * debug logs! */
@@ -1337,7 +1105,8 @@ perform_request(S3Handle *hdl,
 
     s3_reset(hdl);
 
-    url = build_url(hdl, bucket, key, subresource, query);
+    url = build_url(hdl->host, hdl->service_path, bucket, key, subresource,
+                    query, hdl->use_subdomain, hdl->use_ssl);
     if (!url) goto cleanup;
 
     /* libcurl may behave strangely if these are not set correctly */
@@ -1452,7 +1221,7 @@ perform_request(S3Handle *hdl,
 		    goto curl_error;
 
 	    if (hdl->max_recv_speed)
-		if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t)hdl->max_recv_speed)))
+		if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_MAX_SEND_SPEED_LARGE, (curl_off_t)hdl->max_recv_speed)))
 		    goto curl_error;
 	}
 #endif
@@ -1591,24 +1360,10 @@ s3_internal_header_func(void *ptr, size_t size, size_t nmemb, void * stream)
 
     header = g_strndup((gchar *) ptr, (gsize) size*nmemb);
 
-    if (header[strlen(header)-1] == '\n')
-	header[strlen(header)-1] = '\0';
-    if (header[strlen(header)-1] == '\r')
-	header[strlen(header)-1] = '\0';
     if (!s3_regexec_wrap(&etag_regex, header, 2, pmatch, 0))
         data->etag = find_regex_substring(header, pmatch[1]);
-    if (!s3_regexec_wrap(&x_auth_token_regex, header, 2, pmatch, 0))
-	data->hdl->x_auth_token = find_regex_substring(header, pmatch[1]);
-
-    if (!s3_regexec_wrap(&x_storage_url_regex, header, 2, pmatch, 0))
-	data->hdl->x_storage_url = find_regex_substring(header, pmatch[1]);
-
-    if (strlen(header) == 0)
-	data->headers_done = TRUE;
-    if (g_str_equal(final_header, header))
+    if (!strcmp(final_header, header))
         data->headers_done = TRUE;
-    if (g_str_equal("\n", header))
-	data->headers_done = TRUE;
 
     /* If date header is found */
     if (!s3_regexec_wrap(&date_sync_regex, header, 2, pmatch, 0)){
@@ -1644,8 +1399,6 @@ compile_regexes(void)
   struct {const char * str; int flags; regex_t *regex;} regexes[] = {
         {"<Code>[[:space:]]*([^<]*)[[:space:]]*</Code>", REG_EXTENDED | REG_ICASE, &error_name_regex},
         {"^ETag:[[:space:]]*\"([^\"]+)\"[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &etag_regex},
-        {"^X-Auth-Token:[[:space:]]*([^ ]+)[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &x_auth_token_regex},
-        {"^X-Storage-Url:[[:space:]]*([^ ]+)[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &x_storage_url_regex},
         {"<Message>[[:space:]]*([^<]*)[[:space:]]*</Message>", REG_EXTENDED | REG_ICASE, &message_regex},
         {"^[a-z0-9](-*[a-z0-9]){2,62}$", REG_EXTENDED | REG_NOSUB, &subdomain_regex},
         {"(/>)|(>([^<]*)</LocationConstraint>)", REG_EXTENDED | REG_ICASE, &location_con_regex},
@@ -1653,13 +1406,13 @@ compile_regexes(void)
         {NULL, 0, NULL}
     };
     char regmessage[1024];
-    int i;
+    int size, i;
     int reg_result;
 
     for (i = 0; regexes[i].str; i++) {
         reg_result = regcomp(regexes[i].regex, regexes[i].str, regexes[i].flags);
         if (reg_result != 0) {
-            regerror(reg_result, regexes[i].regex, regmessage, sizeof(regmessage));
+            size = regerror(reg_result, regexes[i].regex, regmessage, sizeof(regmessage));
             g_error(_("Regex error: %s"), regmessage);
             return FALSE;
         }
@@ -1737,40 +1490,17 @@ s3_bucket_location_compat(const char *bucket)
     return !s3_regexec_wrap(&subdomain_regex, bucket, 0, NULL, 0);
 }
 
-static gboolean
-get_openstack_swift_api_setting(
-	S3Handle *hdl)
-{
-    s3_result_t result = S3_RESULT_FAIL;
-    static result_handling_t result_handling[] = {
-	{ 200,  0,                    0, S3_RESULT_OK },
-	RESULT_HANDLING_ALWAYS_RETRY,
-	{ 0, 0,                       0, /* default: */ S3_RESULT_FAIL  }
-	};
-
-    s3_verbose(hdl, 1);
-    result = perform_request(hdl, "GET", NULL, NULL, NULL, NULL,
-                             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                             NULL, NULL, result_handling);
-
-    return result == S3_RESULT_OK;
-
-}
-
 S3Handle *
 s3_open(const char *access_key,
         const char *secret_key,
-        const char *swift_account_id,
-        const char *swift_access_key,
         const char *host,
         const char *service_path,
         const gboolean use_subdomain,
         const char *user_token,
         const char *bucket_location,
         const char *storage_class,
-        const char *ca_info,
-        const char *server_side_encryption,
-        const gboolean openstack_swift_api)
+        const char *ca_info
+        )
 {
     S3Handle *hdl;
 
@@ -1780,18 +1510,10 @@ s3_open(const char *access_key,
     hdl->verbose = FALSE;
     hdl->use_ssl = s3_curl_supports_ssl();
 
-    if (!openstack_swift_api) {
-	g_assert(access_key);
-	hdl->access_key = g_strdup(access_key);
-	g_assert(secret_key);
-	hdl->secret_key = g_strdup(secret_key);
-    } else {
-	g_assert(swift_account_id);
-	hdl->swift_account_id = g_strdup(swift_account_id);
-	g_assert(swift_access_key);
-	hdl->swift_access_key = g_strdup(swift_access_key);
-    }
-
+    g_assert(access_key);
+    hdl->access_key = g_strdup(access_key);
+    g_assert(secret_key);
+    hdl->secret_key = g_strdup(secret_key);
     /* NULL is okay */
     hdl->user_token = g_strdup(user_token);
 
@@ -1801,34 +1523,20 @@ s3_open(const char *access_key,
     /* NULL is ok */
     hdl->storage_class = g_strdup(storage_class);
 
-    /* NULL is ok */
-    hdl->server_side_encryption = g_strdup(server_side_encryption);
-
     /* NULL is okay */
     hdl->ca_info = g_strdup(ca_info);
 
     if (!is_non_empty_string(host))
 	host = "s3.amazonaws.com";
-    hdl->host = g_ascii_strdown(host, -1);
+    hdl->host = g_strdup(host);
     hdl->use_subdomain = use_subdomain ||
-			 (strcmp(hdl->host, "s3.amazonaws.com") == 0 &&
+			 (strcmp(host, "s3.amazonaws.com") == 0 &&
 			  is_non_empty_string(hdl->bucket_location));
-    hdl->openstack_swift_api = openstack_swift_api;
     if (service_path) {
-	if (strlen(service_path) == 0 ||
-	    (strlen(service_path) == 1 && service_path[0] == '/')) {
-	    hdl->service_path = NULL;
-	} else if (service_path[0] != '/') {
+	if (service_path[0] != '/')
 	    hdl->service_path = g_strdup_printf("/%s", service_path);
-	} else {
+	else
 	    hdl->service_path = g_strdup(service_path);
-	}
-	if (hdl->service_path) {
-	    /* remove trailling / */
-	    size_t len = strlen(hdl->service_path) - 1;
-	    if (hdl->service_path[len] == '/')
-		hdl->service_path[len] = '\0';
-	}
     } else {
 	hdl->service_path = NULL;
     }
@@ -1836,9 +1544,6 @@ s3_open(const char *access_key,
     hdl->curl = curl_easy_init();
     if (!hdl->curl) goto error;
 
-    if (openstack_swift_api) { /* get the X-Storage-Url and X-Auth-Token */
-	get_openstack_swift_api_setting(hdl);
-    }
     return hdl;
 
 error:
@@ -1854,12 +1559,9 @@ s3_free(S3Handle *hdl)
     if (hdl) {
         g_free(hdl->access_key);
         g_free(hdl->secret_key);
-        g_free(hdl->swift_account_id);
-        g_free(hdl->swift_access_key);
         if (hdl->user_token) g_free(hdl->user_token);
         if (hdl->bucket_location) g_free(hdl->bucket_location);
         if (hdl->storage_class) g_free(hdl->storage_class);
-        if (hdl->server_side_encryption) g_free(hdl->server_side_encryption);
         if (hdl->host) g_free(hdl->host);
         if (hdl->service_path) g_free(hdl->service_path);
         if (hdl->curl) curl_easy_cleanup(hdl->curl);
@@ -2016,7 +1718,6 @@ s3_upload(S3Handle *hdl,
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
         { 200,  0, 0, S3_RESULT_OK },
-        { 201,  0, 0, S3_RESULT_OK },
         RESULT_HANDLING_ALWAYS_RETRY,
         { 0,    0, 0, /* default: */ S3_RESULT_FAIL }
         };
@@ -2063,20 +1764,15 @@ list_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
     struct list_keys_thunk *thunk = (struct list_keys_thunk *)user_data;
 
     thunk->want_text = 0;
-    if (g_ascii_strcasecmp(element_name, "contents") == 0 ||
-	g_ascii_strcasecmp(element_name, "object") == 0) {
+    if (g_ascii_strcasecmp(element_name, "contents") == 0) {
         thunk->in_contents = 1;
     } else if (g_ascii_strcasecmp(element_name, "commonprefixes") == 0) {
         thunk->in_common_prefixes = 1;
     } else if (g_ascii_strcasecmp(element_name, "prefix") == 0 && thunk->in_common_prefixes) {
         thunk->want_text = 1;
-    } else if ((g_ascii_strcasecmp(element_name, "key") == 0 ||
-		g_ascii_strcasecmp(element_name, "name") == 0) &&
-	       thunk->in_contents) {
+    } else if (g_ascii_strcasecmp(element_name, "key") == 0 && thunk->in_contents) {
         thunk->want_text = 1;
-    } else if ((g_ascii_strcasecmp(element_name, "size") == 0 ||
-		g_ascii_strcasecmp(element_name, "bytes") == 0) &&
-	       thunk->in_contents) {
+    } else if (g_ascii_strcasecmp(element_name, "size") == 0 && thunk->in_contents) {
         thunk->want_text = 1;
     } else if (g_ascii_strcasecmp(element_name, "istruncated")) {
         thunk->want_text = 1;
@@ -2097,18 +1793,10 @@ list_end_element(GMarkupParseContext *context G_GNUC_UNUSED,
         thunk->in_contents = 0;
     } else if (g_ascii_strcasecmp(element_name, "commonprefixes") == 0) {
         thunk->in_common_prefixes = 0;
-    } else if ((g_ascii_strcasecmp(element_name, "key") == 0 ||
-		g_ascii_strcasecmp(element_name, "name") == 0) &&
-	       thunk->in_contents) {
+    } else if (g_ascii_strcasecmp(element_name, "key") == 0 && thunk->in_contents) {
         thunk->filename_list = g_slist_prepend(thunk->filename_list, thunk->text);
-	if (thunk->is_truncated) {
-	    if (thunk->next_marker) g_free(thunk->next_marker);
-	    thunk->next_marker = g_strdup(thunk->text);
-	}
         thunk->text = NULL;
-    } else if ((g_ascii_strcasecmp(element_name, "size") == 0 ||
-		g_ascii_strcasecmp(element_name, "bytes") == 0) &&
-	       thunk->in_contents) {
+    } else if (g_ascii_strcasecmp(element_name, "size") == 0 && thunk->in_contents) {
         thunk->size += g_ascii_strtoull (thunk->text, NULL, 10);
         thunk->text = NULL;
     } else if (g_ascii_strcasecmp(element_name, "prefix") == 0 && thunk->in_common_prefixes) {
@@ -2153,7 +1841,6 @@ list_fetch(S3Handle *hdl,
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
         { 200, 0, 0, S3_RESULT_OK },
-        { 204, 0, 0, S3_RESULT_OK },
         RESULT_HANDLING_ALWAYS_RETRY,
         { 0,   0, 0, /* default: */ S3_RESULT_FAIL  }
         };
@@ -2172,25 +1859,15 @@ list_fetch(S3Handle *hdl,
     /* loop over possible parts to build query string */
     query = g_string_new("");
     for (i = 0; pos_parts[i][0]; i++) {
-	if (pos_parts[i][1]) {
-	    const char *keyword;
-            if (have_prev_part)
-		g_string_append(query, "&");
-            else
-		have_prev_part = TRUE;
-            esc_value = curl_escape(pos_parts[i][1], 0);
-	    keyword = pos_parts[i][0];
-	    if (hdl->openstack_swift_api && strcmp(keyword, "max-keys") == 0) {
-		keyword = "limit";
-	    }
-            g_string_append_printf(query, "%s=%s", keyword, esc_value);
-            curl_free(esc_value);
-	}
-    }
-    if (hdl->openstack_swift_api) {
-	if (have_prev_part)
-	    g_string_append(query, "&");
-	g_string_append(query, "format=xml");
+      if (pos_parts[i][1]) {
+          if (have_prev_part)
+              g_string_append(query, "&");
+          else
+              have_prev_part = TRUE;
+          esc_value = curl_escape(pos_parts[i][1], 0);
+          g_string_append_printf(query, "%s=%s", pos_parts[i][0], esc_value);
+          curl_free(esc_value);
+      }
     }
 
     /* and perform the request on that URI */
@@ -2245,14 +1922,11 @@ s3_list_keys(S3Handle *hdl,
         /* get some data from S3 */
         result = list_fetch(hdl, bucket, prefix, delimiter, thunk.next_marker, MAX_KEYS, &buf);
         if (result != S3_RESULT_OK) goto cleanup;
-	if (buf.buffer_pos == 0) goto cleanup; /* no body */
 
         /* run the parser over it */
         thunk.in_contents = FALSE;
         thunk.in_common_prefixes = FALSE;
         thunk.is_truncated = FALSE;
-        if (thunk.next_marker) g_free(thunk.next_marker);
-	thunk.next_marker = NULL;
         thunk.want_text = FALSE;
 
         ctxt = g_markup_parse_context_new(&parser, 0, (gpointer)&thunk, NULL);
@@ -2313,6 +1987,7 @@ s3_read(S3Handle *hdl,
 
     g_assert(hdl != NULL);
     g_assert(write_func != NULL);
+
     result = perform_request(hdl, "GET", bucket, key, NULL, NULL,
         NULL, NULL, NULL, NULL, NULL, write_func, reset_func, write_data,
         progress_func, progress_data, result_handling);
@@ -2328,10 +2003,8 @@ s3_delete(S3Handle *hdl,
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
         { 204,  0,                     0, S3_RESULT_OK },
-        { 404,  0,                     0, S3_RESULT_OK },
         { 404,  S3_ERROR_NoSuchBucket, 0, S3_RESULT_OK },
         RESULT_HANDLING_ALWAYS_RETRY,
-        { 409,  0,                     0, S3_RESULT_OK },
         { 0,    0,                     0, /* default: */ S3_RESULT_FAIL  }
         };
 
@@ -2352,9 +2025,6 @@ s3_make_bucket(S3Handle *hdl,
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
         { 200,  0,                    0, S3_RESULT_OK },
-        { 201,  0,                    0, S3_RESULT_OK },
-        { 202,  0,                    0, S3_RESULT_OK },
-        { 204,  0,                    0, S3_RESULT_OK },
         { 404, S3_ERROR_NoSuchBucket, 0, S3_RESULT_RETRY },
         RESULT_HANDLING_ALWAYS_RETRY,
         { 0, 0,                       0, /* default: */ S3_RESULT_FAIL  }
@@ -2373,11 +2043,7 @@ s3_make_bucket(S3Handle *hdl,
         0 != strcmp(AMAZON_WILDCARD_LOCATION, hdl->bucket_location)) {
         if (s3_bucket_location_compat(bucket)) {
             ptr = &buf;
-            buf.buffer = g_strdup_printf(AMAZON_BUCKET_CONF_TEMPLATE,
-		 g_str_equal(hdl->host, "gss.iijgio.com")?
-			" xmlns=\"http://acs.iijgio.com/doc/2006-03-01/\"":
-			"",
-		hdl->bucket_location);
+            buf.buffer = g_strdup_printf(AMAZON_BUCKET_CONF_TEMPLATE, hdl->bucket_location);
             buf.buffer_len = (guint) strlen(buf.buffer);
             buf.buffer_pos = 0;
             buf.max_buffer_size = buf.buffer_len;
@@ -2457,26 +2123,6 @@ cleanup:
 
     return result == S3_RESULT_OK;
 
-}
-
-gboolean
-s3_is_bucket_exists(S3Handle *hdl,
-                     const char *bucket)
-{
-    s3_result_t result = S3_RESULT_FAIL;
-    static result_handling_t result_handling[] = {
-        { 200,  0,                    0, S3_RESULT_OK },
-        { 204,  0,                    0, S3_RESULT_OK },
-        RESULT_HANDLING_ALWAYS_RETRY,
-        { 0, 0,                       0, /* default: */ S3_RESULT_FAIL  }
-        };
-
-    result = perform_request(hdl, "GET", bucket, NULL, NULL,
-			     hdl->openstack_swift_api?"limit=1":"max-keys=1",
-                             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                             NULL, NULL, result_handling);
-
-    return result == S3_RESULT_OK;
 }
 
 gboolean

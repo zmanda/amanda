@@ -82,7 +82,6 @@ setmode		{ BEGIN(needmode); return SETMODE; }
 settape		{ BEGIN(needstring); return SETTAPE; }
 setdevice	{ BEGIN(needdevice); return SETDEVICE; }
 setproperty	{ BEGIN(propertyappend); return SETPROPERTY; }
-settranslate	{ BEGIN(needstring); return SETTRANSLATE; }
 <needdevice>-h	{ BEGIN(needstring); return DASH_H; }
 cd		{ BEGIN(needstring); return CD; }
 cdx		{ BEGIN(needstring); return CDX; }

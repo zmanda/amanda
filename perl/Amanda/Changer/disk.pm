@@ -267,8 +267,6 @@ sub with_disk_locked_state {
     };
 
     step locked => sub {
-	my $err = shift;
-	return $cb->($err) if $err;
 	$self->with_locked_state($self->{'state_filename'},
 	    sub { my @args = @_;
 		  $self->try_unlock();
@@ -597,8 +595,9 @@ sub _validate() {
     my $dir = $self->{'dir'};
 
     unless (-d $dir) {
-	return $self->make_error("fatal", undef,
+	$self->{'fatal_error'} = Amanda::Changer->make_error("fatal", undef,
 	    message => "directory '$dir' does not exist");
+	return;
     }
 
     if ($self->{'removable'}) {
@@ -612,9 +611,9 @@ sub _validate() {
 	    }
 	}
 	if ($dev == $pdev) {
-	    return $self->make_error("failed", undef,
-		reason => "notfound",
+	    $self->{'fatal_error'} = Amanda::Changer->make_error("fatal", undef,
 		message => "No removable disk mounted on '$dir'");
+	    return;
 	}
     }
 
@@ -624,22 +623,24 @@ sub _validate() {
 	    if (!-e $slot_dir) {
 		if ($self->{'auto-create-slot'}) {
 		    if (!mkdir ($slot_dir)) {
-			return $self->make_error("fatal", undef,
+			$self->{'fatal_error'} = Amanda::Changer->make_error("fatal", undef,
 			    message => "Can't create '$slot_dir': $!");
+			return;
 		    }
 		} else {
-		    return $self->make_error("fatal", undef,
+		    $self->{'fatal_error'} = Amanda::Changer->make_error("fatal", undef,
 			message => "slot $i doesn't exists '$slot_dir'");
+		    return;
 		}
 	    }
 	}
     } else {
 	if ($self->{'auto-create-slot'}) {
-	    return $self->make_error("fatal", undef,
+	    $self->{'fatal_error'} = Amanda::Changer->make_error("fatal", undef,
 		message => "property 'auto-create-slot' set but property 'num-slot' is not set");
+	    return;
 	}
     }
-    return undef;
 }
 
 sub try_lock {
@@ -655,7 +656,7 @@ sub try_lock {
 	    !$self->{'fl'}->locked()) {
 	    return $steps->{'lock'}->();
 	}
-	$steps->{'lock_done'}->();
+	$steps->{'done'}->();
     };
 
     step lock => sub {
@@ -672,14 +673,15 @@ sub try_lock {
 		$self->{'umount_src'}->remove();
 		$self->{'umount_src'} = undef;
 	    }
-	    return $steps->{'lock_done'}->();
+	    return $steps->{'done'}->();
 	}
     };
 
-    step lock_done => sub {
-	my $err = $self->_validate();
-	$cb->($err);
+    step done => sub {
+	$self->_validate();
+	$cb->();
     };
+
 }
 
 sub try_umount {

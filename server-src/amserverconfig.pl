@@ -229,10 +229,11 @@ sub create_vtape {
 	if ($template_only==0){ #  check $template mode
 		$mylabelprefix=$labelstr;   #set labelstr
 		if ($tapedev eq "$def_tapedev/$config"){
-		    &create_deftapedir;
+		&create_deftapedir;
 		}
 		else {
-		    $parentdir=$tapedev;
+		$tapedev=~/^(file:\/)/;
+		$parentdir=$';
 		}
 	}
 	else {
@@ -273,11 +274,11 @@ sub create_vtape {
 
 	for $i (1..$tp_cyclelimit) {
 		unless ( -e "slot$i"){
-		    mkpath ("slot$i", $def_perm) ||
-		    ( &mprint ("WARNING: mkpath $parentdir/slot$i failed: $!\n"), $vtape_err++, return);
+		mkpath ("slot$i", $def_perm) ||
+		( &mprint ("WARNING: mkpath $parentdir/slot$i failed: $!\n"), $vtape_err++, return);
 		}
 		( @amlabel_out = `$sbindir/amlabel -f $config $mylabelprefix-$i slot $i`) ||
-	        ( &mprint ("WARNING: amlabel vtapes failed at slot $i: $!\n"), $vtape_err++, return);
+	    ( &mprint ("WARNING: amlabel vtapes failed at slot $i: $!\n"), $vtape_err++, return);
     }
 	foreach (@amlabel_out) {
 	  print LOG;
@@ -309,6 +310,40 @@ sub create_customconf{
 	    $labelstr="^$config-[0-9][0-9]*\$";
 	  }
 	}
+	if ((!(defined($template)))||($template eq "harddisk"))	
+	  {
+		if (defined $tapedev){
+		$tapedev="file:/".$tapedev;
+		}
+		unless ( $tpchanger ) { $tpchanger="chg-disk"; }
+		unless ( $tapedev ) { $tapedev="$def_tapedev/$config"; }
+		unless ( $changerfile ) { $changerfile="$confdir/$config/changer.conf"; }
+		unless ( $changerdev ) { $changerdev="/dev/null";}
+		unless ( $tapetype ) { $tapetype="HARDDISK"; }	
+	  }
+	elsif ($template eq "single-tape")
+	  {
+		unless ($tpchanger) {$tpchanger="chg-manual";}
+		unless ($tapedev)     {$tapedev="/dev/nst0";}
+		unless ($changerfile) {$changerfile="$confdir/$config/chg-manual.conf";}
+		unless ($changerdev) {$changerdev="/dev/null";}
+		unless ($tapetype) {$tapetype="HP-DAT";}
+	  }
+	elsif ($template eq "tape-changer") 
+          {
+		unless ($tpchanger){$tpchanger="chg-zd-mtx";}
+		unless ($tapedev){ $tapedev="/dev/nst0";}
+		unless ($changerfile){$changerfile="$confdir/$config/changer.conf";}
+		unless ($changerdev) {$changerdev="/dev/sg1";}
+		unless ($tapetype)  {$tapetype="HP-DAT";}
+          }
+        else # S3 case
+	  {
+	    unless ($tpchanger){$tpchanger="chg-multi";}
+	    unless ($changerfile){$changerfile="$confdir/$config/changer.conf";}
+	    unless ($tapetype)  {$tapetype="HP-DAT";}
+	  }
+
 
 	open (CONF, ">$confdir/$config/amanda.conf") ||
 	    &log_and_die ("ERROR: Cannot create amanda.conf file: $!\n", 1);
@@ -319,53 +354,13 @@ sub create_customconf{
 	print CONF "dumpuser \"$dumpuser\"\t# the user to run dumps under\n";
 	print CONF "mailto \"$mailto\"\t# space separated list of operators at your site\n";
 	print CONF "dumpcycle $dumpcycle\t\t# the number of days in the normal dump cycle\n";
-	print CONF "runspercycle $runspercycle\t\t# the number of amdump runs in dumpcycle days\n";
-	print CONF "tapecycle $tapecycle\t# the number of tapes in rotation\n";
+        print CONF "runspercycle $runspercycle\t\t# the number of amdump runs in dumpcycle days\n";
+	print CONF "tapecycle $tapecycle\t# the number of tapes in rotation\n"; 
 	print CONF "runtapes $runtapes\t\t# number of tapes to be used in a single run of amdump\n";
-
-	if ((!(defined($template)))||($template eq "harddisk"))	
-	  {
-		print CONF "\n";
-		print CONF "define changer my_vtapes {\n";
-		print CONF "    tpchanger \"chg-disk:$tapedev\"\n";
-		print CONF "    property \"num-slot\" \"10\"\n";
-		print CONF "    property \"auto-create-slot\" \"yes\"\n";
-		print CONF "}\n";
-		print CONF "tpchanger \"my_vtapes\"\n\n";
-		unless ( $tapetype ) { $tapetype="HARDDISK"; }	
-	  }
-	elsif ($template eq "single-tape")
-	  {
-		print CONF "\n";
-		print CONF "define changer my_single {\n";
-		print CONF "    tpchanger \"chg-single:$tapedev\"\n";
-		print CONF "}\n";
-		print CONF "tpchanger \"my_single\"\n\n";
-		unless ($tapetype) {$tapetype="HP-DAT";}
-	  }
-	elsif ($template eq "tape-changer") 
-          {
-		print CONF "\n";
-		print CONF "define changer my_robot {\n";
-		print CONF "    tpchanger \"chg-robot:$changerdev\"\n";
-		print CONF "    property \"tape-device\" \"0=$tapedev\"\n";
-		print CONF "}\n";
-		print CONF "tpchanger \"my_robot\"\n\n";
-		unless ($tapetype)  {$tapetype="HP-DAT";}
-          }
-        else # S3 case
-	  {
-		print CONF "\n";
-		print CONF "define changer my_s3 {\n";
-		print CONF "    tpchanger \"chg-multi:$tapedev\"\n";
-		print CONF "    device-property \"S3_ACCESS_KEY\" \"\"\n";
-		print CONF "    device-property \"S3_SECRET_KEY\" \"\"\n";
-		print CONF "    device-property \"NB_THREADS_BACKUP\" \"\"\n";
-		print CONF "}\n";
-		print CONF "tpchanger \"my_s3\"\n\n";
-	    unless ($tapetype)  {$tapetype="HP-DAT";}
-	  }
-
+	print CONF "tpchanger \"$tpchanger\"\t# the tape-changer glue script\n";
+	print CONF "tapedev \"$tapedev\"\t# the no-rewind tape device\n";
+	print CONF "changerfile \"$changerfile\"\t# tape changer configuration parameter file\n";
+	print CONF "changerdev \"$changerdev\"\t# tape changer configuration parameter device\n";
 	print CONF "tapetype $tapetype\t# what kind of tape it is\n";
 	print CONF "labelstr \"$labelstr\"\t# label constraint regex: all tapes must match\n";
 	print CONF "dtimeout $def_dtimeout\t# number of idle seconds before a dump is aborted\n";

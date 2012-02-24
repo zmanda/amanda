@@ -49,11 +49,8 @@ my @config_overrides_opts;
 
 my $opt_no_taper = 0;
 my $opt_from_client = 0;
-
-debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
-    'version' => \&Amanda::Util::version_opt,
     'help|usage|?' => \&usage,
     'no-taper' => \$opt_no_taper,
     'from-client' => \$opt_from_client,
@@ -153,7 +150,6 @@ sub bail_already_running {
 	or die("cannot open a fake log to send an report - situation is dire");
     print $fakelog <<EOF;
 INFO amdump amdump pid $$
-START planner date $timestamp
 START driver date $timestamp
 ERROR amdump $msg
 EOF

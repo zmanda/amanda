@@ -68,7 +68,6 @@ See the amanda-changers(7) manpage for usage information.
 # as values.  Each slot's hash has keys
 #   state - SLOT_FULL/SLOT_EMPTY/SLOT_UNKNOWN
 #   device_status - the status of the device
-#   device_error - the error message of the device
 #   f_type - The f_type of the header
 #   label - volume label, if known
 #   barcode - volume barcode, if available
@@ -267,7 +266,7 @@ sub new {
     }
 
     # status-interval, eject-delay, unload-delay
-    for my $propname (qw(status-interval eject-delay unload-delay)) {
+    for my $propname qw(status-interval eject-delay unload-delay) {
 	next unless exists $config->{'properties'}->{$propname};
 	if (@{$config->{'properties'}->{$propname}->{'values'}} > 1) {
 	    return Amanda::Changer->make_error("fatal", undef,
@@ -618,7 +617,9 @@ sub load_unlocked {
 	} elsif ($device->status & $DEVICE_STATUS_VOLUME_UNLABELED) {
 	    $label = undef;
 	} else {
-	    $label = undef;
+	    return $self->make_error("fatal", $params{'res_cb'},
+		    message => "while waiting for '$device_name' to become ready: "
+			. $device->error_or_status());
 	}
 
 	# success!
@@ -636,7 +637,6 @@ sub load_unlocked {
 	    # update metadata with this new information
 	    $state->{'slots'}->{$slot}->{'state'} = Amanda::Changer::SLOT_FULL;
 	    $state->{'slots'}->{$slot}->{'device_status'} = $device->status;
-	    $state->{'slots'}->{$slot}->{'device_error'} = $device->error;
 	    if (defined $device->{'volume_header'}) {
 		$state->{'slots'}->{$slot}->{'f_type'} = $device->{'volume_header'}->{type};
 	    } else {
@@ -659,7 +659,6 @@ sub load_unlocked {
 	    # update metadata with this new information
 	    $state->{'slots'}->{$slot}->{'state'} = Amanda::Changer::SLOT_FULL;
 	    $state->{'slots'}->{$slot}->{'device_status'} = $device->status;
-	    $state->{'slots'}->{$slot}->{'device_error'} = $device->error;
 	    if (defined $device->{'volume_header'}) {
 		$state->{'slots'}->{$slot}->{'f_type'} = $device->{'volume_header'}->{type};
 	    } else {
@@ -688,7 +687,7 @@ sub load_unlocked {
 	$state->{'drives'}->{$drive}->{'label'} = $label;
 	$state->{'drives'}->{$drive}->{'state'} = Amanda::Changer::SLOT_FULL;
 	$state->{'drives'}->{$drive}->{'barcode'} = $state->{'slots'}->{$slot}->{'barcode'};
-	$state->{'slots'}->{$slot}->{'device_status'} = $device->status;
+	#$state->{'slots'}->{$slot}->{'device_status'} = 9;
 	if ($label and $state->{'slots'}->{$slot}->{'barcode'}) {
 	    $state->{'bc2lb'}->{$state->{'slots'}->{$slot}->{'barcode'}} = $label;
 	}
@@ -829,13 +828,9 @@ sub _set_label_unlocked {
 
     $state->{'drives'}->{$drive}->{'label'} = $label;
     if (defined $slot) {
+	delete $state->{'slots'}->{$slot}->{'unkknown_state'};
 	$state->{'slots'}->{$slot}->{'state'} = Amanda::Changer::SLOT_FULL;
 	$state->{'slots'}->{$slot}->{'device_status'} = "".$dev->status;
-	if ($dev->status != $DEVICE_STATUS_SUCCESS) {
-	    $state->{'slots'}->{$slot}->{'device_error'} = $dev->error;
-	} else {
-	    $state->{'slots'}->{$slot}->{'device_error'} = undef;
-	}
 	my $volume_header = $dev->volume_header;
 	if (defined $volume_header) {
 	    $state->{'slots'}->{$slot}->{'f_type'} = "".$volume_header->{type};
@@ -1095,7 +1090,6 @@ sub update_unlocked {
 	    while (my ($sl, $inf) = each %{$state->{'slots'}}) {
 		if ($inf->{'label'} and $inf->{'label'} eq $label) {
 		    delete $inf->{'device_status'};
-		    delete $inf->{'device_error'};
 		    delete $inf->{'f_type'};
 		    delete $inf->{'label'};
 		}
@@ -1158,7 +1152,6 @@ sub update_unlocked {
 	if (!defined $state->{'slots'}->{$slot}->{'barcode'}) {
 	    $state->{'slots'}->{$slot}->{'label'} = undef;
 	    $state->{'slots'}->{$slot}->{'device_status'} = undef;
-	    $state->{'slots'}->{$slot}->{'device_error'} = undef;
 	    $state->{'slots'}->{$slot}->{'f_type'} = undef;
 	    if (defined $state->{'slots'}->{$slot}->{'loaded_in'}) {
 		my $drive = $state->{'slots'}->{$slot}->{'loaded_in'};
@@ -1237,7 +1230,6 @@ sub inventory_unlocked {
 	$i->{'slot'} = $slot_name;
 	$i->{'state'} = $slot->{'state'};
 	$i->{'device_status'} = $slot->{'device_status'};
-	$i->{'device_error'} = $slot->{'device_error'};
 	$i->{'f_type'} = $slot->{'f_type'};
 	$i->{'label'} = $slot->{'label'};
 	$i->{'barcode'} = $slot->{'barcode'}
@@ -1534,7 +1526,6 @@ sub _with_updated_state {
                 $new_slots->{$slot} = {
                     state => Amanda::Changer::SLOT_EMPTY,
 		    device_status => undef,
-		    device_error => undef,
 		    f_type => undef,
                     label => undef,
                     barcode => undef,
@@ -1551,7 +1542,6 @@ sub _with_updated_state {
 		$new_slots->{$slot} = {
                     state => Amanda::Changer::SLOT_FULL,
 		    device_status => $state->{'slots'}->{$slot}->{device_status},
-		    device_error => $state->{'slots'}->{$slot}->{device_error},
 		    f_type => $state->{'slots'}->{$slot}->{f_type},
 		    label => $label,
 		    barcode => $info->{'barcode'},
@@ -1568,7 +1558,6 @@ sub _with_updated_state {
 		    $new_slots->{$slot} = {
 			state => Amanda::Changer::SLOT_FULL,
 			device_status => undef,
-			device_error => undef,
 			f_type => undef,
 			label => undef,
 			barcode => undef,
@@ -1664,7 +1653,6 @@ sub _with_updated_state {
 		$state->{'slots'}->{$info->{'orig_slot'}} = {
                     state => $info->{'state'},
                     device_status => $old_state->{'device_status'},
-                    device_error => $old_state->{'device_error'},
                     f_type => $old_state->{'f_type'},
 		    label => $info->{'label'},
                     barcode => $info->{'barcode'},
@@ -1888,28 +1876,14 @@ sub status {
 
     synchronized($self->{'lock'}, $status_cb, sub {
 	my ($status_cb) = @_;
-	my ($counter) = 120;
 
-	my $sys_cb;
-	my $run_mtx = make_cb(run_mtx => sub {
-	    my @nobarcode = ('nobarcode') if $self->{'ignore_barcodes'};
-	    $self->_run_system_command($sys_cb,
-	            $self->{'mtx'}, "-f", $self->{'device_name'}, @nobarcode,
-		    'status');
-	});
-
-	$sys_cb = make_cb(sys_cb => sub {
+	my $sys_cb = make_cb(sys_cb => sub {
 	    my ($exitstatus, $output) = @_;
 	    if ($exitstatus != 0) {
 		my $err = $output;
 		# if it's a regular SCSI error, just show the sense key
 		my ($sensekey) = ($err =~ /mtx: Request Sense: Sense Key=(.*)\n/);
 		$err = "SCSI error; Sense Key=$sensekey" if $sensekey;
-		$counter--;
-		if ($sensekey eq "Not Ready" and $counter > 0) {
-		    debug("$output");
-		    return Amanda::MainLoop::call_after(1000, $run_mtx);
-		}
 		return $status_cb->("error from mtx: " . $err, {});
 	    } else {
 		my %status;
@@ -1958,7 +1932,9 @@ sub status {
 	    }
 
 	});
-	$run_mtx->();
+	my @nobarcode = ('nobarcode') if $self->{'ignore_barcodes'};
+	$self->_run_system_command($sys_cb,
+	    $self->{'mtx'}, "-f", $self->{'device_name'}, @nobarcode, 'status');
     });
 }
 

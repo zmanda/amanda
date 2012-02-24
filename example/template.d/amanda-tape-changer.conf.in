@@ -10,12 +10,10 @@ tapecycle 10 tapes	# the number of tapes in rotation
 			# backups performed at the beginning of the previous
 			# cycle
 runtapes 1		# number of tapes to be used in a single run of amdump
-
-define changer my_robot {
-    tpchanger "chg-robot:/dev/sg1"
-    property "tape-device" "0=tape:/dev/nst0"
-}
-tpchanger "my_robot"
+tpchanger "chg-zd-mtx"	# the tape-changer glue script
+tapedev "tape:/dev/nst0"	# the no-rewind tape device to be used
+changerfile "@CONFIG_DIR@/@DEFAULT_CONFIG@/changer.conf" 
+changerdev "/dev/sg1"
 tapetype HP-DAT			# what kind of tape it is (see tapetypes below)
 
 holdingdisk hd2 {

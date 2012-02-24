@@ -689,11 +689,6 @@ sub set_label {
         return;
     }
 
-    if (!defined $params{'label'}) {
-        $params{'finished_cb'}->(undef) if $params{'finished_cb'};
-        return;
-    }
-
     my $run_cb = sub {
 	my ($exitval, $slot, $rest) = @_;
 	if ($exitval == 0) {

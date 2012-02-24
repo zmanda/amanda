@@ -1227,45 +1227,7 @@ optionstr(
     return result;
 }
 
-typedef struct {
-    am_feature_t  *features;
-    char          *result;
-} xml_app_t;
-
-/* A GHFunc (callback for g_hash_table_foreach) */
-static void xml_property(
-    gpointer key_p,
-    gpointer value_p,
-    gpointer user_data_p)
-{
-    char       *tmp;
-    property_t *property = value_p;
-    xml_app_t  *xml_app = user_data_p;
-    GSList     *value;
-    GString    *strbuf;
-
-    strbuf = g_string_new(xml_app->result);
-
-    tmp = amxml_format_tag("name", (char *)key_p);
-    g_string_append_printf(strbuf, "    <property>\n      %s\n", tmp);
-    g_free(tmp);
-
-    // TODO if client have fe_xml_property_priority
-    if (property->priority
-	&& am_has_feature(xml_app->features, fe_xml_property_priority))
-	g_string_append(strbuf, "      <priority>yes</priority>\n");
-
-    for (value = property->values; value != NULL; value = value->next) {
-	tmp = amxml_format_tag("value", value->data);
-	g_string_append_printf(strbuf, "      %s", tmp);
-	g_free(tmp);
-    }
-    g_string_append_printf(strbuf, "\n    </property>\n");
-
-    g_free(xml_app->result);
-    xml_app->result = g_string_free(strbuf, FALSE);
-}
-
+ 
 char *
 xml_optionstr(
     disk_t *		dp,
@@ -1522,21 +1484,6 @@ xml_optionstr(
 }
 
 char *
-xml_dumptype_properties(
-    disk_t *dp)
-{
-    xml_app_t xml_dumptype;
-
-    xml_dumptype.result = g_strdup("");
-    xml_dumptype.features = NULL;
-    if (dp && dp->config) {
-	g_hash_table_foreach(dumptype_get_property(dp->config), xml_property,
-			     &xml_dumptype);
-    }
-    return xml_dumptype.result;
-}
-
-char *
 xml_estimate(
     estimatelist_t estimatelist,
     am_feature_t *their_features)
@@ -1574,13 +1521,10 @@ xml_estimate(
 
 char *
 clean_dle_str_for_client(
-    char *dle_str,
-    am_feature_t *their_features)
+    char *dle_str)
 {
     char *rval_dle_str;
     char *hack1, *hack2;
-    char *pend, *pscript, *pproperty, *eproperty;
-    int len;
 
     if (!dle_str)
 	return NULL;
@@ -1600,38 +1544,44 @@ clean_dle_str_for_client(
 #undef SC
 #undef SC_LEN
 
-    if (!am_has_feature(their_features, fe_dumptype_property)) {
-#define SC "</property>\n"
-#define SC_LEN strlen(SC)
-	/* remove all dle properties, they are before backup-program or script
-	  properties */
-	hack1 = rval_dle_str;
-	pend = strstr(rval_dle_str, "<backup-program>");
-	pscript = strstr(rval_dle_str, "<script>");
-	if (pscript && pscript < pend)
-	    pend = pscript;
-	if (!pend) /* the complete string */
-	    pend = rval_dle_str + strlen(rval_dle_str);
-	while (hack1) {
-	    pproperty = strstr(hack1, "    <property>");
-	    if (pproperty && pproperty < pend) { /* remove it */
-		eproperty = strstr(pproperty, SC);
-		len = eproperty + SC_LEN - pproperty;
-		memmove(pproperty, eproperty + SC_LEN, strlen(eproperty + SC_LEN) + 1);
-		pend  -= len;
-		hack1 = pproperty;
-	    } else {
-		hack1 = NULL;
-	    }
-	}
-    } else {
-    }
-#undef SC
-#undef SC_LEN
-
     return rval_dle_str;
 }
 
+typedef struct {
+    am_feature_t  *features;
+    char          *result;
+} xml_app_t;
+
+/* A GHFunc (callback for g_hash_table_foreach) */
+static void xml_property(
+    gpointer key_p,
+    gpointer value_p,
+    gpointer user_data_p)
+{
+    char       *property_s = key_p;
+    char       *b64property;
+    property_t *property = value_p;
+    char       *b64value_data;
+    xml_app_t  *xml_app = user_data_p;
+    GSList     *value;
+
+    b64property = amxml_format_tag("name", property_s);
+    vstrextend(&xml_app->result, "    <property>\n",
+				"      ", b64property, "\n", NULL);
+    // TODO if client have fe_xml_property_priority
+    if (property->priority &&
+	am_has_feature(xml_app->features, fe_xml_property_priority)) {
+	vstrextend(&xml_app->result, "      <priority>yes</priority>\n", NULL);
+    }
+    for(value = property->values; value != NULL; value = value->next) {
+	b64value_data = amxml_format_tag("value", value->data);
+	vstrextend(&xml_app->result, "      ", b64value_data, "\n", NULL);
+	amfree(b64value_data);
+    }
+    vstrextend(&xml_app->result, "    </property>\n", NULL);
+
+    amfree(b64property);
+}
 
 char *
 xml_application(
@@ -1669,7 +1619,7 @@ xml_application(
     return xml_app.result;
 }
 
-
+ 
 char *
 xml_scripts(
     identlist_t pp_scriptlist,

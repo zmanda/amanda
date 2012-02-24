@@ -35,12 +35,6 @@
 #include "protocol.h"
 #include "amfeatures.h"
 #include "event.h"
-#include "getopt.h"
-
-static struct option long_options[] = {
-    {"version"         , 0, NULL,  1},
-    {NULL, 0, NULL, 0}
-};
 
 static int copy_stream = 0;
 static time_t conf_ctimeout;
@@ -64,7 +58,7 @@ static void read_server(void *cookie, void *buf, ssize_t size);
 void
 usage(void)
 {
-    error(_("Usage: amservice [--version] [-o configoption]* [-f input_file [-s]] host auth service"));
+    error(_("Usage: amservice [-o configoption]* [-f input_file [-s]] host auth service"));
     /*NOTREACHED*/
 }
 
@@ -116,11 +110,8 @@ main(
 
     cfg_ovr = new_config_overrides(argc/2);
     input_file = stdin;
-    while((opt = getopt_long(argc, argv, "o:f:s", long_options, NULL)) != EOF) {
+    while((opt = getopt(argc, argv, "o:f:s")) != EOF) {
 	switch(opt) {
-	case 1:		printf("amservice-%s\n", VERSION);
-			return(0);
-			break;
 	case 'o':	add_config_override_opt(cfg_ovr, optarg);
 			break;
 	case 'f':	got_input_file = 1;

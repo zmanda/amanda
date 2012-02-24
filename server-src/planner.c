@@ -193,11 +193,6 @@ main(
     gboolean no_taper = FALSE;
     gboolean from_client = FALSE;
 
-    if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
-	printf("planner-%s\n", VERSION);
-	return (0);
-    }
-
     /*
      * Configure program for internationalization:
      *   1) Only set the message locale for now.
@@ -1026,10 +1021,6 @@ setup_estimate(
 	case DS_STANDARD: 
 	case DS_NOINC:
 	    askfor(ep, i++, 0, &info);
-	    if (ep->last_level == -1)
-		ep->degr_mesg = _("Skipping: new disk can't be dumped in degraded mode");
-	    else
-		ep->degr_mesg = _("Skipping: strategy NOINC can't be dumped in degraded mode");
 	    if(dp->skip_full) {
 		log_add(L_INFO, _("Ignoring skip-full for %s:%s "
 			"because the strategy is NOINC."),
@@ -1984,8 +1975,7 @@ static void handle_result(
 		break;
 	    }
 	}
-	if (i == MAX_LEVELS && level > 0) {
-			/* client always report level 0 for some error */
+	if (i == MAX_LEVELS) {
 	    goto bad_msg;		/* this est wasn't requested */
 	}
 	est(dp)->got_estimate++;
@@ -2989,8 +2979,7 @@ static int promote_hills(void)
     }
 
     for(dp = schedq.head; dp != NULL; dp = dp->next) {
-	days = est(dp)->next_level0;
-	if (days < 0) days = 0;
+	days = est(dp)->next_level0;   /* This is > 0 by definition */
 	if(days<my_dumpcycle && !dp->skip_full && dp->strategy != DS_NOFULL &&
 	   dp->strategy != DS_INCRONLY) {
 	    sp[days].disks++;

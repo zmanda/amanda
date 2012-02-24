@@ -1,18 +1,3 @@
-Changes in release 3.3.1
-
-   * amrecover
-       o New 'settransalte' command.
-   * amanda.conf
-       o new '$s' substitution in autolabel.
-       o new 'max-dle-by-volume' global option.
-       o new 'eject-volume' global option.
-   * All perl programs have a new '--version' argument.
-   * ampgsql can take property from server configuration.
-   * amgetconf can print one property of a section.
-   * s3 device
-       o new S3_SERVER_SIDE_ENCRYPTION property.
-   * Many bug fix.
-
 Changes in release 3.3.0
 
    * The default auth is changed to "bsdtcp", if you are using the default bsd

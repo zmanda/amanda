@@ -93,7 +93,7 @@ sub user_request {
 package Amvault;
 
 use Amanda::Config qw( :getconf config_dir_relative );
-use Amanda::Debug qw( :logging debug );
+use Amanda::Debug qw( :logging );
 use Amanda::Xfer qw( :constants );
 use Amanda::Header qw( :constants );
 use Amanda::MainLoop;
@@ -108,8 +108,8 @@ use Amanda::Changer qw( :constants );
 use Amanda::Cmdline;
 use Amanda::Paths;
 use Amanda::Logfile qw( :logtype_t log_add log_add_full
-			log_rename $amanda_log_trace_log make_stats );
-use Amanda::Util qw ( match_datestamp match_level );
+			log_rename $amanda_log_trace_log make_stats
+			match_datestamp match_level );
 
 use base qw(
     Amanda::Recovery::Clerk::Feedback
@@ -313,7 +313,7 @@ sub plan_cb {
 		      $dump->{'dump_timestamp'} . " " .
 		      $dump->{'level'} . "\n";
 	    }
-	    $total_kb += int $dump->{'kb'};
+	    $total_kb += $dump->{'kb'};
 	}
 
 	print STDOUT "Total Size: $total_kb KB\n";
@@ -630,14 +630,6 @@ sub quit {
     };
 
     step roll_log => sub {
-	if (defined $self->{'src'}->{'chg'}) {
-	    $self->{'src'}->{'chg'}->quit();
-	    $self->{'src'}->{'chg'} = undef;
-	}
-	if (defined $self->{'dst'}->{'chg'}) {
-	    $self->{'dst'}->{'chg'}->quit();
-	    $self->{'dst'}->{'chg'} = undef;
-	}
 	if ($self->{'cleanup'}{'roll_trace_log'}) {
 	    log_add_full($L_FINISH, "driver", "fake driver finish");
 	    log_add($L_INFO, "pid-done $$");
@@ -748,7 +740,6 @@ sub scribe_notif_log_info {
     my $self = shift;
     my %params = @_;
 
-    debug("$params{'message'}");
     log_add_full($L_INFO, "taper", $params{'message'});
 }
 
@@ -951,7 +942,6 @@ sub add_autolabel {
     usage("unknown --autolabel value '$val'");
 }
 
-debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{ bundling });
 GetOptions(
     'o=s' => sub {

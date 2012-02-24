@@ -107,10 +107,7 @@ Amanda::Util::setup_application("amrmtape", "server", $CONTEXT_CMDLINE);
 
 my $config_overrides = new_config_overrides( scalar(@ARGV) + 1 );
 
-debug("Arguments: " . join(' ', @ARGV));
-Getopt::Long::Configure(qw{ bundling });
 my $opts_ok = GetOptions(
-    'version' => \&Amanda::Util::version_opt,
     "changer=s" => \$changer_name,
     "cleanup" => \$cleanup,
     "dryrun|n" => \$dry_run,
@@ -242,7 +239,7 @@ my $scrub_db = sub {
             }
             my $level = $parts[1];
             my $cur_label = $parts[7];
-            if (defined $cur_label and $cur_label eq $label) {
+            if ($cur_label eq $label) {
                 $dead_level = $level;
                 vlog "Discarding Host: $host, Disk: $disk, Level: $level\n";
             } elsif ( $level > $dead_level ) {
@@ -309,36 +306,26 @@ my $erase_volume = make_cb('erase_volume' => sub {
                 my $dev = $resv->{'device'};
                 die "Can not erase $label because the device doesn't support this feature"
                     unless $dev->property_get('full_deletion');
-
-		my $rel_cb = make_cb('rel_cb' => sub {
-		    $resv->release(finished_cb => sub {
-			my ($err) = @_;
-
-			$chg->quit();
-			die $err if $err;
-
-			$scrub_db->();
-		    });
-		});
-
                 if (!$dry_run) {
                     $dev->erase()
                         or die "Failed to erase volume";
-		    $resv->set_label(finished_cb => sub {
-			$dev->finish();
+                    $dev->finish();
 
-			# label the tape with the same label it had
-			if ($keep_label) {
-			    $dev->start($ACCESS_WRITE, $label, undef)
-				or die "Failed to write tape label";
-			    return $resv->set_label(label => $label, finished_cb => $rel_cb);
-			}
-			$rel_cb->();
-		    });
-		} else {
-		    $rel_cb->();
-		}
+                    # label the tape with the same label it had
+                    if ($keep_label) {
+                        $dev->start($ACCESS_WRITE, $label, undef)
+                            or die "Failed to write tape label";
+                    }
+                }
 
+		$resv->release(finished_cb => sub {
+		    my ($err) = @_;
+
+		    $chg->quit();
+		    die $err if $err;
+
+		    $scrub_db->();
+		});
             });
     } else {
         $scrub_db->();

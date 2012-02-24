@@ -45,7 +45,6 @@ END
 }
 
 # overrideable defaults
-my $opt_version;
 my $opt_config		= undef;
 my $opt_hostwidth	= 8;
 my $opt_diskwidth	= 20;
@@ -55,8 +54,7 @@ my $opt_num0		= 0;
 my $opt_togo0		= 0;
 my $opt_verbose		= 0;
 
-GetOptions('version'            => \$opt_version,
-	   'config=s'		=> \$opt_config,
+GetOptions('config=s'		=> \$opt_config,
 	   'hostwidth=i'	=> \$opt_hostwidth,
 	   'diskwidth=i'	=> \$opt_diskwidth,
 	   'skipmissed'		=> \$opt_skipmissed,
@@ -65,11 +63,6 @@ GetOptions('version'            => \$opt_version,
 	   'togo0'		=> \$opt_togo0,
 	   'verbose'		=> \$opt_verbose)
 or Usage();
-
-if (defined $opt_version) {
-    print "amoverview-" . $Amanda::Constants::VERSION , "\n";
-    exit 0;
-}
 
 unless(defined($opt_config)) {
     if (@ARGV == 1) {

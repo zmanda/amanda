@@ -246,7 +246,6 @@ main(
     argument.level      = NULL;
     argument.command_options = NULL;
     init_dle(&argument.dle);
-    argument.dle.record = 0;
 
     opterr = 0;
     while (1) {
@@ -326,7 +325,6 @@ main(
 	case 22: argument.command_options =
 			g_slist_append(argument.command_options,
 				       stralloc(optarg));
-		 break;
 	case 23: if (optarg)
 		     argument.dle.exclude_file =
 			 append_sl(argument.dle.exclude_file, optarg);
@@ -414,15 +412,12 @@ static void
 amstar_selfcheck(
     application_argument_t *argument)
 {
+    fprintf(stdout, "OK amstar\n");
     if (argument->dle.disk) {
 	char *qdisk = quote_string(argument->dle.disk);
-	fprintf(stdout, "OK disk %s\n", qdisk);
+	fprintf(stdout, "OK %s\n", qdisk);
 	amfree(qdisk);
     }
-
-    fprintf(stdout, "OK amstar version %s\n", VERSION);
-    fprintf(stdout, "OK amstar\n");
-
     if (argument->dle.device) {
 	char *qdevice = quote_string(argument->dle.device);
 	fprintf(stdout, "OK %s\n", qdevice);
@@ -442,29 +437,7 @@ amstar_selfcheck(
     if (!star_path) {
 	fprintf(stdout, "ERROR STAR-PATH not defined\n");
     } else {
-	if (check_file(star_path, X_OK)) {
-	    char *star_version;
-	    GPtrArray *argv_ptr = g_ptr_array_new();
-
-	    g_ptr_array_add(argv_ptr, star_path);
-	    g_ptr_array_add(argv_ptr, "--version");
-	    g_ptr_array_add(argv_ptr, NULL);
-
-	    star_version = get_first_line(argv_ptr);
-
-	    if (star_version) {
-		char *sv, *sv1;
-		for (sv = star_version; *sv && !g_ascii_isdigit(*sv); sv++);
-		for (sv1 = sv; *sv1 && *sv1 != ' '; sv1++);
-		*sv1 = '\0';
-		printf("OK amstar star-version %s\n", sv);
-	    } else {
-		printf(_("ERROR [Can't get %s version]\n"), star_path);
-	    }
-	    g_ptr_array_free(argv_ptr, TRUE);
-	    amfree(star_version);
-
-	}
+	check_file(star_path, X_OK);
     }
 
     if (argument->calcsize) {
@@ -1022,6 +995,10 @@ static GPtrArray *amstar_build_argv(
 	g_ptr_array_add(argv_ptr, stralloc("-sparse"));
     g_ptr_array_add(argv_ptr, stralloc("-dodesc"));
 
+    for (copt = argument->command_options; copt != NULL; copt = copt->next) {
+	g_ptr_array_add(argv_ptr, stralloc((char *)copt->data));
+    }
+
     if (command == CMD_BACKUP && argument->dle.create_index)
 	g_ptr_array_add(argv_ptr, stralloc("-v"));
 
@@ -1071,14 +1048,6 @@ static GPtrArray *amstar_build_argv(
 	    }
 	    amfree(exclname);
 	}
-    }
-
-    /* It is best to place command_options at the and of command line.
-     * For example '-find' option requires that it is the last option used.
-     * See: http://cdrecord.berlios.de/private/man/star/star.1.html
-     */
-    for (copt = argument->command_options; copt != NULL; copt = copt->next) {
-	g_ptr_array_add(argv_ptr, stralloc((char *)copt->data));
     }
 
     g_ptr_array_add(argv_ptr, stralloc("."));

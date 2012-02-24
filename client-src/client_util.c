@@ -1425,6 +1425,7 @@ run_calcsize(
     FILE        *dumpout = NULL;
     int          dumpsince;
     char        *errmsg = NULL;
+    off_t        size = (off_t)1;
     char        *line = NULL;
     amwait_t     wait_status;
     int          len;
@@ -1520,7 +1521,7 @@ run_calcsize(
 
     match_expr = vstralloc(" %d SIZE %lld", NULL);
     len = strlen(qdisk);
-    for(; (line = agets(dumpout)) != NULL; free(line)) {
+    for(size = (off_t)-1; (line = agets(dumpout)) != NULL; free(line)) {
 	long long size_ = (long long)0;
 	if (line[0] == '\0' || (int)strlen(line) <= len)
 	    continue;
@@ -1531,6 +1532,7 @@ run_calcsize(
 	    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
 		     qdisk, level, size_);
 	}
+	size = (off_t)size_;
     }
     amfree(match_expr);
 
@@ -1574,10 +1576,11 @@ common_exit:
     amfree(errmsg);
     g_ptr_array_free_full(argv_ptr);
     amfree(cmd);
+
 }
 
 
-gboolean
+void
 check_access(
     char *	filename,
     int		mode)
@@ -1594,18 +1597,14 @@ check_access(
     else 
 	noun = "access", adjective = "accessible";
 
-    if(access(filename, mode) == -1) {
+    if(access(filename, mode) == -1)
 	g_printf(_("ERROR [can not %s %s: %s]\n"), noun, quoted, strerror(errno));
-	amfree(quoted);
-	return FALSE;
-    } else {
+    else
 	g_printf(_("OK %s %s\n"), quoted, adjective);
-    }
     amfree(quoted);
-    return TRUE;
 }
 
-gboolean
+void
 check_file(
     char *	filename,
     int		mode)
@@ -1618,7 +1617,6 @@ check_file(
 	    quoted = quote_string(filename);
 	    g_printf(_("ERROR [%s is not a file]\n"), quoted);
 	    amfree(quoted);
-	    return FALSE;
 	}
     } else {
 	int save_errno = errno;
@@ -1626,19 +1624,13 @@ check_file(
 	g_printf(_("ERROR [can not stat %s: %s]\n"), quoted,
 		 strerror(save_errno));
 	amfree(quoted);
-	return FALSE;
     }
     if (getuid() == geteuid()) {
-	return check_access(filename, mode);
-    } else {
-	quoted = quote_string(filename);
-	g_printf("OK %s\n", quoted);
-	amfree(quoted);
+	check_access(filename, mode);
     }
-    return TRUE;
 }
 
-gboolean
+void
 check_dir(
     char *	dirname,
     int		mode)
@@ -1652,7 +1644,6 @@ check_dir(
 	    quoted = quote_string(dirname);
 	    g_printf(_("ERROR [%s is not a directory]\n"), quoted);
 	    amfree(quoted);
-	    return FALSE;
 	}
     } else {
 	int save_errno = errno;
@@ -1660,23 +1651,15 @@ check_dir(
 	g_printf(_("ERROR [can not stat %s: %s]\n"), quoted,
 		 strerror(save_errno));
 	amfree(quoted);
-	return FALSE;
     }
     if (getuid() == geteuid()) {
-	gboolean  result;
 	dir = stralloc2(dirname, "/.");
-	result = check_access(dir, mode);
+	check_access(dir, mode);
 	amfree(dir);
-	return result;
-    } else {
-	quoted = quote_string(dirname);
-	g_printf("OK %s\n", quoted);
-	amfree(quoted);
     }
-    return TRUE;
 }
 
-gboolean
+void
 check_suid(
     char *	filename)
 {
@@ -1687,25 +1670,18 @@ check_suid(
     if(!stat(filename, &stat_buf)) {
 	if(stat_buf.st_uid != 0 ) {
 	    g_printf(_("ERROR [%s is not owned by root]\n"), quoted);
-	    amfree(quoted);
-	    return FALSE;
 	}
 	if((stat_buf.st_mode & S_ISUID) != S_ISUID) {
 	    g_printf(_("ERROR [%s is not SUID root]\n"), quoted);
-	    amfree(quoted);
-	    return FALSE;
 	}
     }
     else {
 	g_printf(_("ERROR [can not stat %s: %s]\n"), quoted, strerror(errno));
-	amfree(quoted);
-	return FALSE;
     }
     amfree(quoted);
 #else
     (void)filename;	/* Quiet unused parameter warning */
 #endif
-    return TRUE;
 }
 
 /*
