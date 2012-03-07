@@ -1,4 +1,7 @@
 2012-03-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndmjob_args.c: Add '-o D-agent-fd' argument.
+
+2012-03-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Do not execute pg_start_backup and
 	  pg_stop_backup on selfcheck.
 
