@@ -146,6 +146,9 @@ sub validate_inexclude {
 		next;
 	    }
 	    while (<FF>) {
+		if (defined $self->{'subdir'}) {
+		    $_ =~ s/^\./$self->{'subdir'}/;
+		}
 		print INC_FILE;
 	    }
 	    close(FF);
@@ -155,7 +158,11 @@ sub validate_inexclude {
 	for(my $i=1;defined $ARGV[$i]; $i++) {
 	    my $param = $ARGV[$i];
 	    $param =~ /^(.*)$/;
-	    print INC_FILE "$1\n";
+	    $_ = $1;
+	    if (defined $self->{'subdir'}) {
+		$_ =~ s/^\./$self->{'subdir'}/;
+	    }
+	    print INC_FILE "$_\n";
 	}
 
 	close INC_FILE;
@@ -176,6 +183,10 @@ sub validate_inexclude {
 	    }
 	    while (<FF>) {
 		chomp;
+		if ($self->{action} eq "restore" and
+		    defined $self->{'subdir'}) {
+		    $_ =~ s/^\./$self->{'subdir'}/;
+		}
 		push @{$self->{include}}, $_;
 	    }
 	    close(FF);
@@ -186,6 +197,10 @@ sub validate_inexclude {
 		for(my $i=1;defined $ARGV[$i]; $i++) {
 		my $param = $ARGV[$i];
 		$param =~ /^(.*)$/;
+		$_ = $1;
+		if (defined $self->{'subdir'}) {
+		    $_ =~ s/^\./$self->{'subdir'}/;
+		}
 		push @{$self->{include}}, $1;
 	    }
 	}
@@ -207,6 +222,11 @@ sub parsesharename {
     $to_parse = $self->{device} if !defined $to_parse;;
 
     return if !defined $to_parse;
+    if ($to_parse =~ /^\\\\/) {
+	$self->{unc}          = 1;
+    } else {
+	$self->{unc}          = 0;
+    }
 
     if ($self->{unc}) {
 	if ($to_parse =~ m,^(\\\\[^\\]+\\[^\\]+)\\(.*)$,) {
@@ -744,6 +764,7 @@ sub command_restore {
 	$self->validate_inexclude();
 	$self->findpass();
 	push @cmd, $self->{smbclient}, $self->{share};
+	push @cmd, "-D", $self->{'subdir'} if defined $self->{'subdir'};
 	push @cmd, "" if (!defined $self->{password});
 	push @cmd, "-d", "0",
 		   "-U", $self->{username};
