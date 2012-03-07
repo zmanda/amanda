@@ -117,6 +117,7 @@ char *help_text[] = {
 	"  -o use-eject=N",
 	"           -- use eject when unloading tapes (default 0)",
         "  -o tape-tcp=hostname:port -- send the data directly to that tcp port.",
+        "  -o D-agent-fd=<fd> -- file descriptor to read the -D agent.",
 	"CONTROL of ROBOT agent parameters",
 	"  -R AGENT -- robot agent if different than -T (see AGENT below)",
 	"  -m MEDIA -- add entry to media table (see below)",
@@ -660,6 +661,22 @@ handle_long_option (char *str)
 		o_config_file = value;
 	} else if (strcmp (name, "tape-tcp") == 0 && value) {
 		o_tape_tcp = value;
+	} else if (strcmp (name, "D-agent-fd") == 0 && value) {
+		char d_agent[1025];
+		int fd = atoi(value);
+		int size;
+
+		if (AGENT_GIVEN(D_data_agent)) {
+			error_byebye ("more than one of -D or -D-agent-fd");
+		}
+
+		size = full_read(fd, d_agent, 1024);
+		d_agent[size] = '\0';
+		if (size > 0 && d_agent[size-1] == '\n')
+		    d_agent[size-1] = '\0';
+		if (ndmagent_from_str (&D_data_agent, d_agent)) {
+			error_byebye ("bad -D-agent-fd argument");
+		}
 	} else if (strcmp (name, "tape-limit") == 0) {
 		if (!value) {
 			error_byebye ("tape-limit argument is required");
