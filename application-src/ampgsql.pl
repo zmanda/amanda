@@ -425,19 +425,6 @@ sub command_selfcheck {
 		_check("Connecting to database server", "succeeded", "failed",
 		   \&_run_psql_command, $self, '');
 	}
-        
-	if ($try_connect) {
-	    my $label = "$self->{'label-prefix'}-selfcheck-" . time();
-	    if (_check("Call pg_start_backup", "succeeded",
-		       "failed (is another backup running?)",
-		       \&_run_psql_command, $self, "SELECT pg_start_backup('$label')")
-		and _check("Call pg_stop_backup", "succeeded", "failed",
-			   \&_run_psql_command, $self, "SELECT pg_stop_backup()")) {
-
-		_check("Get info from .backup file", "succeeded", "failed",
-		       sub {my ($start, $end) = _get_backup_info($self, $label); $start and $end});
-	    }
-	}
 
 	{
 	    my @gv = `$self->{'args'}->{'gnutar-path'} --version`;
