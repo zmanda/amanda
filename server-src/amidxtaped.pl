@@ -546,7 +546,6 @@ sub xfer_src_cb {
     if ($header->{'compressed'}) {
 	# need to uncompress this file
 	debug("..with decompression applied");
-	my $dle = $header->get_dle();
 
 	if ($header->{'srvcompprog'}) {
 	    # TODO: this assumes that srvcompprog takes "-d" to decrypt
@@ -569,9 +568,11 @@ sub xfer_src_cb {
 		$header->{'clntcompprog'} = '';
 	    }
 	} else {
-	    if (!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_receive_unfiltered) ||
-		$dle->{'compress'} == $Amanda::Config::COMP_SERVER_FAST ||
-		$dle->{'compress'} == $Amanda::Config::COMP_SERVER_BEST) {
+	    my $dle = $header->get_dle();
+	    if ($dle &&
+		(!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_receive_unfiltered) ||
+		 $dle->{'compress'} == $Amanda::Config::COMP_SERVER_FAST ||
+		 $dle->{'compress'} == $Amanda::Config::COMP_SERVER_BEST)) {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
 			[ $Amanda::Constants::UNCOMPRESS_PATH,
