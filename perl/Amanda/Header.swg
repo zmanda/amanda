@@ -151,7 +151,11 @@ sub from_string {
 sub get_dle {
     my $self = shift;
 
-    return Amanda::Header::HeaderXML->new($self->{'dle_str'});
+    if ($self->{'dle_str'}) {
+	return Amanda::Header::HeaderXML->new($self->{'dle_str'});
+    } else {
+	return undef;
+    }
 }
 
 package Amanda::Header::Header;

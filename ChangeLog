@@ -1,4 +1,8 @@
 2012-03-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Header.swg (get_dle): Return undef if not set.
+	* server-src/amidxtaped.pl: Check dle is set.
+
+2012-03-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amvault.pl: Use the write-timestamp, not the
 	  dump-timestamp.
 
