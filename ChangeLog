@@ -1,4 +1,8 @@
 2012-03-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amvault.pl: Use the write-timestamp, not the
+	  dump-timestamp.
+
+2012-03-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/ssh-security.c: use default port if client-port is not 
 	  set.
 
