@@ -114,7 +114,7 @@ ssh_connect(
     int result;
     struct sec_handle *rh;
     char *amandad_path=NULL, *client_username=NULL, *ssh_keys=NULL;
-    char *client_port = "22";
+    char *client_port = NULL;
 
     assert(fn != NULL);
     assert(hostname != NULL);
@@ -304,6 +304,10 @@ runssh(
     char *xclient_username = (char *)client_username;
     char *xssh_keys = (char *)ssh_keys;
     char *xclient_port = (char *)client_port;
+    GPtrArray *myargs;
+    gchar *ssh_options[100] = {SSH_OPTIONS, NULL};
+    gchar **ssh_option;
+    gchar *cmd;
 
     memset(rpipe, -1, SIZEOF(rpipe));
     memset(wpipe, -1, SIZEOF(wpipe));
@@ -317,18 +321,31 @@ runssh(
     if(!xclient_username || strlen(xclient_username) <= 1)
 	xclient_username = CLIENT_LOGIN;
     if(!xclient_port || strlen(xclient_port) <= 1)
-	xclient_port = "22";
+	xclient_port = NULL;
 
-    if(!ssh_keys || strlen(ssh_keys) <= 1) {
-	g_debug("exec: %s %s %s %s %s %s %s %s %s",
-		SSH, "SSH_OPTIONS", "-l", xclient_username, "-p", client_port,
-	        rc->hostname, xamandad_path, "-auth=ssh");
+    myargs = g_ptr_array_sized_new(20);
+    g_ptr_array_add(myargs, SSH);
+    for (ssh_option = ssh_options; *ssh_option != NULL; ssh_option++) {
+	g_ptr_array_add(myargs, *ssh_option);
     }
-    else {
-	g_debug("exec: %s %s %s %s %s %s %s %s %s %s %s",
-		SSH, "SSH_OPTIONS", "-l", xclient_username, "-p", client_port,
-	        "-i", xssh_keys, rc->hostname, xamandad_path, "-auth=ssh");
+    g_ptr_array_add(myargs, "-l");
+    g_ptr_array_add(myargs, xclient_username);
+    if (xclient_port) {
+	g_ptr_array_add(myargs, "-p");
+	g_ptr_array_add(myargs, xclient_port);
     }
+    if (ssh_keys && strlen(ssh_keys) > 1) {
+	g_ptr_array_add(myargs, "-i");
+	g_ptr_array_add(myargs, xssh_keys);
+    }
+    g_ptr_array_add(myargs, rc->hostname);
+    g_ptr_array_add(myargs, xamandad_path);
+    g_ptr_array_add(myargs, "-auth=ssh");
+    g_ptr_array_add(myargs, NULL);
+
+    cmd = g_strjoinv(" ", (gchar **)myargs->pdata);
+    g_debug("exec: %s", cmd);
+    g_free(cmd);
 
     switch (rc->pid = fork()) {
     case -1:
@@ -355,15 +372,8 @@ runssh(
 
     safe_fd(-1, 0);
 
-    if(!ssh_keys || strlen(ssh_keys) <= 1) {
-	execlp(SSH, SSH, SSH_OPTIONS, "-l", xclient_username, "-p", client_port,
-	       rc->hostname, xamandad_path, "-auth=ssh", (char *)NULL);
-    }
-    else {
-	execlp(SSH, SSH, SSH_OPTIONS, "-l", xclient_username, "-p", client_port,
-	       "-i", xssh_keys, rc->hostname, xamandad_path, "-auth=ssh",
-	       (char *)NULL);
-    }
+    execvp(SSH, (gchar **)myargs->pdata);
+
     error("error: couldn't exec %s: %s", SSH, strerror(errno));
 
     /* should never go here, shut up compiler warning */

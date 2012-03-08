@@ -1,3 +1,7 @@
+2012-03-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ssh-security.c: use default port if client-port is not 
+	  set.
+
 2012-03-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsamba.pl:  Fix use of subdir for restore,
 	  prepend subdir on include for restore.
