@@ -249,7 +249,7 @@ sub setup_src {
 	# convert the timestamp and level to a dumpspec
 	my $level = $self->{'fulls_only'}? "0" : undef;
 	push @dumpspecs, Amanda::Cmdline::dumpspec_t->new(
-		undef, undef, $self->{'src_write_timestamp'}, $level, undef);
+		undef, undef, undef, $level, $self->{'src_write_timestamp'});
     }
 
     # if we ignored all of the dumpspecs and didn't create any, then dump
