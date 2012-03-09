@@ -49,6 +49,7 @@ typedef struct XferSourceHolding {
 
     int fd;
     char *next_filename;
+    guint64 bytes_read;
 
     XferElement *dest_taper;
 } XferSourceHolding;
@@ -195,6 +196,7 @@ pull_buffer_impl(
 	bytes_read = read_fully(self->fd, buf, HOLDING_BLOCK_SIZE, NULL);
 	if (bytes_read > 0) {
 	    *size = bytes_read;
+	    self->bytes_read += bytes_read;
 	    return buf;
 	}
 
@@ -296,7 +298,17 @@ xfer_source_holding(
     XferElement *elt = XFER_ELEMENT(self);
 
     self->next_filename = g_strdup(filename);
+    self->bytes_read = 0;
 
     return elt;
+}
+
+guint64
+xfer_source_holding_get_bytes_read(
+    XferElement *elt)
+{
+    XferSourceHolding *self = (XferSourceHolding *)elt;
+
+    return self->bytes_read;
 }
 

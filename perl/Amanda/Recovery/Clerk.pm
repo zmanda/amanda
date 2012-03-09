@@ -374,6 +374,7 @@ sub _xmsg_done {
     return $xfer_state->{'recovery_cb'}->(
 	result => $result,
 	errors => $xfer_state->{'errors'},
+	bytes_read => $xfer_state->{'xfer_src'}->get_bytes_read()
     );
 }
 

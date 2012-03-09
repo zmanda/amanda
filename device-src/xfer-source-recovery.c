@@ -75,6 +75,9 @@ typedef struct XferSourceRecovery {
      * part) */
     size_t block_size;
 
+    /* bytes read for this image */
+    guint64 bytes_read;
+
     /* part size (potentially including any zero-padding from the
      * device) */
     guint64 part_size;
@@ -425,6 +428,7 @@ pull_buffer_impl(
 	    self->paused = TRUE;
 	    g_object_unref(self->device);
 	    self->device = NULL;
+	    self->bytes_read += self->part_size;
 	    self->part_size = 0;
 	    self->block_size = 0;
 	    if (self->part_timer) {
@@ -699,3 +703,17 @@ xfer_source_recovery_use_device(
     klass = XFER_SOURCE_RECOVERY_GET_CLASS(elt);
     klass->use_device(XFER_SOURCE_RECOVERY(elt), device);
 }
+
+guint64
+xfer_source_recovery_get_bytes_read(
+    XferElement *elt)
+{
+    XferSourceRecovery *self = XFER_SOURCE_RECOVERY(elt);
+    guint64 bytes_read = self->bytes_read;
+
+    if (self->device)
+	bytes_read += device_get_bytes_read(self->device);
+
+    return bytes_read;
+}
+

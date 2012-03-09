@@ -143,4 +143,8 @@ void xfer_source_recovery_use_device(
     XferElement *self,
     Device *device);
 
+guint64
+xfer_source_recovery_get_bytes_read(
+    XferElement *elt);
+
 #endif

@@ -37,6 +37,9 @@
 XferElement *xfer_source_holding(
     const char *filename);
 
+guint64
+xfer_source_holding_get_bytes_read(
+    XferElement *elt);
 
 /* A transfer destination that writes to holding file.
  *

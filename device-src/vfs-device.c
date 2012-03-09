@@ -838,6 +838,7 @@ vfs_device_read_block(Device * pself, gpointer data, int * size_req) {
     switch (result) {
     case RESULT_SUCCESS:
         *size_req = size;
+	pself->bytes_read += size;
 	pself->block++;
         return size;
     case RESULT_NO_DATA:
@@ -1143,6 +1144,7 @@ vfs_device_seek_file (Device * dself, guint requested_file) {
     dself->in_file = FALSE;
     dself->is_eof = FALSE;
     dself->block = 0;
+    dself->bytes_read = 0;
 
     release_file(self);
 

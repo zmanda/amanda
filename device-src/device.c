@@ -1112,6 +1112,23 @@ device_finish (Device * self) {
     return (klass->finish)(self);
 }
 
+guint64
+device_get_bytes_read (Device * self) {
+    DeviceClass *klass;
+
+    g_assert(IS_DEVICE (self));
+
+    if (self->in_file) {
+	klass = DEVICE_GET_CLASS(self);
+	if (klass->get_bytes_read) {
+	    return (klass->get_bytes_read)(self);
+	} else {
+	    return self->bytes_read;
+	}
+    }
+    return 0;
+}
+
 gboolean
 device_configure (Device * self, gboolean use_global_config)
 {

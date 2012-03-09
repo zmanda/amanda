@@ -916,6 +916,7 @@ incomplete_bsf:
     dself->in_file = TRUE;
     dself->file = file;
     dself->block = 0;
+    dself->bytes_read = 0;
 
     /* now read the header */
     read_block_size = ndmp_device_read_size(self);
@@ -990,6 +991,7 @@ ndmp_device_read_block (Device * dself, gpointer data, int *size_req) {
     }
 
     *size_req = (int)actual; /* cast is OK - requested size was < INT_MAX too */
+    dself->bytes_read += actual;
 
     return *size_req;
 }
