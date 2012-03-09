@@ -144,6 +144,7 @@ struct S3Handle {
     char *bucket_location;
     char *storage_class;
     char *server_side_encryption;
+    char *proxy;
     char *host;
     char *service_path;
     gboolean use_subdomain;
@@ -1484,6 +1485,11 @@ perform_request(S3Handle *hdl,
                                               NULL)))
                 goto curl_error;
         }
+	if (hdl->proxy) {
+            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_PROXY,
+                                              hdl->proxy)))
+                goto curl_error;
+	}
 
         /* Perform the request */
         curl_code = curl_easy_perform(hdl->curl);
@@ -1770,6 +1776,7 @@ s3_open(const char *access_key,
         const char *storage_class,
         const char *ca_info,
         const char *server_side_encryption,
+        const char *proxy,
         const gboolean openstack_swift_api)
 {
     S3Handle *hdl;
@@ -1803,6 +1810,9 @@ s3_open(const char *access_key,
 
     /* NULL is ok */
     hdl->server_side_encryption = g_strdup(server_side_encryption);
+
+    /* NULL is ok */
+    hdl->proxy = g_strdup(proxy);
 
     /* NULL is okay */
     hdl->ca_info = g_strdup(ca_info);

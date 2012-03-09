@@ -104,6 +104,7 @@ struct _S3Device {
     char *host;
     char *service_path;
     char *server_side_encryption;
+    char *proxy;
 
     char *ca_info;
 
@@ -209,9 +210,13 @@ static DevicePropertyBase device_property_s3_bucket_location;
 static DevicePropertyBase device_property_s3_storage_class;
 #define PROPERTY_S3_STORAGE_CLASS (device_property_s3_storage_class.ID)
 
-/* Storage class */
+/* Server side encryption */
 static DevicePropertyBase device_property_s3_server_side_encryption;
 #define PROPERTY_S3_SERVER_SIDE_ENCRYPTION (device_property_s3_server_side_encryption.ID)
+
+/* proxy */
+static DevicePropertyBase device_property_proxy;
+#define PROPERTY_PROXY (device_property_proxy.ID)
 
 /* Path to certificate authority certificate */
 static DevicePropertyBase device_property_ssl_ca_info;
@@ -378,6 +383,10 @@ static gboolean s3_device_set_storage_class_fn(Device *self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_server_side_encryption_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_proxy_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -899,6 +908,9 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_s3_server_side_encryption,
                                       G_TYPE_STRING, "s3_server_side_encryption",
        "Serve side encryption as specified by Amazon (AES256)");
+    device_property_fill_and_register(&device_property_proxy,
+                                      G_TYPE_STRING, "proxy",
+       "The proxy");
     device_property_fill_and_register(&device_property_ssl_ca_info,
                                       G_TYPE_STRING, "ssl_ca_info",
        "Path to certificate authority certificate");
@@ -1116,6 +1128,11 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
 	    s3_device_set_server_side_encryption_fn);
+
+    device_class_register_property(device_class, PROPERTY_PROXY,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_proxy_fn);
 
     device_class_register_property(device_class, PROPERTY_SSL_CA_INFO,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
@@ -1336,6 +1353,20 @@ s3_device_set_server_side_encryption_fn(Device *p_self, DevicePropertyBase *base
 
     amfree(self->server_side_encryption);
     self->server_side_encryption = str_val;
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_proxy_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+    char *str_val = g_value_dup_string(val);
+
+    amfree(self->proxy);
+    self->proxy = str_val;
     device_clear_volume_details(p_self);
 
     return device_simple_property_set_fn(p_self, base, val, surety, source);
@@ -1657,6 +1688,7 @@ static void s3_device_finalize(GObject * obj_self) {
     if(self->bucket_location) g_free(self->bucket_location);
     if(self->storage_class) g_free(self->storage_class);
     if(self->server_side_encryption) g_free(self->server_side_encryption);
+    if(self->proxy) g_free(self->proxy);
     if(self->ca_info) g_free(self->ca_info);
 }
 
@@ -1731,6 +1763,7 @@ static gboolean setup_handle(S3Device * self) {
 					   self->user_token, self->bucket_location,
 					   self->storage_class, self->ca_info,
 					   self->server_side_encryption,
+					   self->proxy,
 					   self->openstack_swift_api);
             if (self->s3t[thread].s3 == NULL) {
 	        device_set_error(d_self,
