@@ -283,8 +283,9 @@ sub find_volume {
 	# check if label is in the inventory
 	for my $i (0..(scalar(@$inventory)-1)) {
 	    my $sl = $inventory->[$i];
-	    if (defined $sl->{'label'} &&
-		$sl->{'label'} eq $label) {
+	    if (defined $sl->{'label'} and
+		$sl->{'label'} eq $label and
+		!defined $seen{$sl->{'slot'}}) {
 		$slot_scanned = $sl->{'slot'};
 		if ($sl->{'reserved'}) {
 		    return $steps->{'handle_error'}->(
@@ -591,7 +592,6 @@ sub find_volume {
 	$interactivity_running = 0;
 	$poll_src->remove() if defined $poll_src;
 	$poll_src = undef;
-	$last_err = undef;
 
 	if ($err) {
 	    if ($scan_running) {
@@ -613,6 +613,7 @@ sub find_volume {
 	    if ($new_chg->isa("Amanda::Changer::Error")) {
 		return $steps->{'scan_interactivity'}->("$new_chg");
 	    }
+	    $last_err = undef;
 	    $self->{'chg'}->quit();
 	    $self->{'chg'} = $new_chg;
 	    %seen = ();
