@@ -245,6 +245,7 @@ s3_open(const char * access_key, const char *secret_key,
         const char * user_token,
         const char * bucket_location, const char * storage_class,
 	const char * ca_info, const char * server_side_encryption,
+	const char *proxy,
 	const gboolean openstack_swift_api);
 
 /* Deallocate an S3Handle
