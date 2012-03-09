@@ -31,7 +31,7 @@
  */
 
 #include "amanda.h"
-#include "sl.h"
+#include "am_sl.h"
 
 
 void init_sl(

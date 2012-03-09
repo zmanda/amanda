@@ -1,4 +1,7 @@
 2012-03-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/Makefile.am, common-src/am_sl.c: typo.
+
+2012-03-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c, client-src/selfcheck.c,
 	  client-src/sendbackup-dump.c, client-src/sendbackup-gnutar.c,
 	  client-src/sendbackup.c, client-src/sendsize.c,
