@@ -2307,7 +2307,7 @@ extract_files(void)
     g_options.hostname = dump_hostname;
     for (elist = first_tape_list(); elist != NULL;
 	 elist = next_tape_list(elist)) {
-	level_t *level = g_new0(level_t, 1);
+	am_level_t *level = g_new0(am_level_t, 1);
 	level->level = elist->level;
 	all_level = g_slist_append(all_level, level);
     }
@@ -2349,13 +2349,13 @@ extract_files(void)
 	dump_datestamp = newstralloc(dump_datestamp, elist->date);
 
 	if (last_level != -1 && dump_dle) {
-	    level_t *level;
+	    am_level_t *level;
 
-	    level = g_new0(level_t, 1);
+	    level = g_new0(am_level_t, 1);
 	    level->level = last_level;
 	    dump_dle->levellist = g_slist_append(dump_dle->levellist, level);
 
-	    level = g_new0(level_t, 1);
+	    level = g_new0(am_level_t, 1);
 	    level->level = elist->level;
 	    dump_dle->levellist = g_slist_append(dump_dle->levellist, level);
 	    run_client_scripts(EXECUTE_ON_INTER_LEVEL_RECOVER, &g_options,
@@ -2372,9 +2372,9 @@ extract_files(void)
 	    return;
 	}
 	if (dump_dle) {
-	    level_t *level;
+	    am_level_t *level;
 
-	    level = g_new0(level_t, 1);
+	    level = g_new0(am_level_t, 1);
 	    level->level = elist->level;
 	    dump_dle->levellist = g_slist_append(dump_dle->levellist, level);
 	    run_client_scripts(EXECUTE_ON_PRE_LEVEL_RECOVER, &g_options,

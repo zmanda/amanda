@@ -196,10 +196,10 @@ typedef struct {
     int     record;
     int     create_index;
     char   *auth;
-    sl_t   *exclude_file;
-    sl_t   *exclude_list;
-    sl_t   *include_file;
-    sl_t   *include_list;
+    am_sl_t   *exclude_file;
+    am_sl_t   *exclude_list;
+    am_sl_t   *include_file;
+    am_sl_t   *include_list;
     int     exclude_optional;
     int     include_optional;
     proplist_t application_property;

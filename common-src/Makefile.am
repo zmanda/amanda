@@ -19,6 +19,7 @@ LINTFLAGS=$(AMLINTFLAGS)
 
 libamanda_la_SOURCES =		\
 	alloc.c			\
+	am_sl.c			\
 	amfeatures.c		\
 	amflock.c		\
 	ipc-binary.c		\
@@ -40,7 +41,6 @@ libamanda_la_SOURCES =		\
 	security.c		\
 	security-util.c		\
 	simpleprng.c		\
-	sl.c			\
 	sockaddr-util.c		\
 	stream.c		\
 	tapelist.c		\

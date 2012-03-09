@@ -49,8 +49,8 @@ typedef GSList *scriptlist_t;
 typedef struct level_s {
     int level;
     int server;			/* if server can do the estimate */
-} level_t;
-typedef GSList *levellist_t;	/* A list where each element is a (level_t *) */
+} am_level_t;
+typedef GSList *levellist_t;	/* A list where each element is a (am_level_t *) */
 
 typedef struct a_dle_s {
     char   *disk;
@@ -73,10 +73,10 @@ typedef struct a_dle_s {
     int     record;
     int     create_index;
     char   *auth;
-    sl_t   *exclude_file;
-    sl_t   *exclude_list;
-    sl_t   *include_file;
-    sl_t   *include_list;
+    am_sl_t   *exclude_file;
+    am_sl_t   *exclude_list;
+    am_sl_t   *include_file;
+    am_sl_t   *include_list;
     int     exclude_optional;
     int     include_optional;
     proplist_t property;

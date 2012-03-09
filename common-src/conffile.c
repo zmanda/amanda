@@ -3808,7 +3808,7 @@ read_exinclude(
     val_t *val)
 {
     int file, got_one = 0;
-    sl_t *exclude;
+    am_sl_t *exclude;
     int optional = 0;
 
     get_conftoken(CONF_ANY);
@@ -8083,7 +8083,7 @@ exinclude_display_str(
     val_t *val,
     int    file)
 {
-    sl_t  *sl;
+    am_sl_t  *sl;
     sle_t *excl;
     char *rval;
 

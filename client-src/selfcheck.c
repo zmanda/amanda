@@ -95,7 +95,7 @@ main(
     dle_t *dle;
     int level;
     GSList *errlist;
-    level_t *alevel;
+    am_level_t *alevel;
 
     if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("selfcheck-%s\n", VERSION);
@@ -260,7 +260,7 @@ main(
 	if (ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
 	    goto err;				/* bad level */
 	}
-	alevel = g_new0(level_t, 1);
+	alevel = g_new0(am_level_t, 1);
 	alevel->level = level;
 	dle->levellist = g_slist_append(dle->levellist, alevel);
 	skip_integer(s, ch);

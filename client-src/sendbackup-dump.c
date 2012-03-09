@@ -143,7 +143,7 @@ start_backup(
     char *encryptopt = skip_argument;
     char *qdisk;
     char *config;
-    level_t *alevel = (level_t *)dle->levellist->data;
+    am_level_t *alevel = (am_level_t *)dle->levellist->data;
     int      level  = alevel->level;
 
     g_snprintf(level_str, SIZEOF(level_str), "%d", level);

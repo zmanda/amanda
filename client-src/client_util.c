@@ -1166,7 +1166,7 @@ run_client_script(
 	levellist_t levellist;
 	char number[NUM_STR_SIZE];
 	for (levellist=dle->levellist; levellist; levellist=levellist->next) {
-	    level_t *alevel = (level_t *)levellist->data;
+	    amlevel_t *alevel = (amlevel_t *)levellist->data;
 	    g_ptr_array_add(argv_ptr, stralloc("--level"));
 	    g_snprintf(number, SIZEOF(number), "%d", alevel->level);
 	    g_ptr_array_add(argv_ptr, stralloc(number));

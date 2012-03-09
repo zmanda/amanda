@@ -195,8 +195,8 @@ typedef enum {
 } data_path_t;
 
 typedef struct exinclude_s {
-    sl_t *sl_list;
-    sl_t *sl_file;
+    am_sl_t *sl_list;
+    am_sl_t *sl_file;
     int  optional;
 } exinclude_t;
 

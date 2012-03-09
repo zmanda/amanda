@@ -33,7 +33,7 @@
 
 #include "amanda.h"
 #include "amfeatures.h"
-#include "sl.h"
+#include "am_sl.h"
 #include "util.h"		/* for bstrncmp() */
 
 typedef struct g_option_s {

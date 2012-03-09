@@ -1,4 +1,19 @@
 2012-03-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c, client-src/selfcheck.c,
+	  client-src/sendbackup-dump.c, client-src/sendbackup-gnutar.c,
+	  client-src/sendbackup.c, client-src/sendsize.c,
+	  common-src/amxml.c, common-src/amxml.h,
+	  recover-src/extract_list.c: s/level_t/am_level_t/g
+	* client-src/calcsize.c, common-src/amxml.h,
+	  common-src/conffile.c, common-src/conffile.h,
+	  common-src/sl.c, common-src/sl.h,
+	  perl/Amanda/Header.swg: s/sl_t/am_sl_t/g
+	* amandad-src/amandad.h, client-src/calcsize.c,
+	  client-src/client_util.h, common-src/Makefile.am: s/sl.h/am_sl.h
+	* common-src/am_sl.h: renamed from common-src/sl.h
+	* common-src/am_sl.c: renamed from common-src/sl.c
+
+2012-03-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amfetchdump.pl: Print progress.
 	* device-src/device.c (device_get_bytes_read ): New API method.
 	* device-src/device.h (Device): Add bytes_read.

@@ -35,7 +35,7 @@
 #include "match.h"
 #include "conffile.h"
 #include "fsusage.h"
-#include "sl.h"
+#include "am_sl.h"
 #include "util.h"
 
 #define ROUND(n,x)	((x) + (n) - 1 - (((x) + (n) - 1) % (n)))
@@ -108,12 +108,12 @@ void add_file_name_unknown(int, char *);
 void add_file_unknown(int, struct stat *);
 off_t final_size_unknown(int, char *);
 
-sl_t *calc_load_file(char *filename);
+am_sl_t *calc_load_file(char *filename);
 int calc_check_exclude(char *filename);
 
 int use_star_excl = 0;
 int use_gtar_excl = 0;
-sl_t *include_sl=NULL, *exclude_sl=NULL;
+am_sl_t *include_sl=NULL, *exclude_sl=NULL;
 
 int
 main(
@@ -682,13 +682,13 @@ final_size_unknown(
 /*
  * =========================================================================
  */
-sl_t *
+am_sl_t *
 calc_load_file(
     char *	filename)
 {
     char pattern[1025];
 
-    sl_t *sl_list;
+    am_sl_t *sl_list;
 
     FILE *file = fopen(filename, "r");
 
