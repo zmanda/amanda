@@ -35,7 +35,7 @@
 
 
 void init_sl(
-    sl_t *sl)
+    am_sl_t *sl)
 {
     sl->first = NULL;
     sl->last  = NULL;
@@ -43,19 +43,19 @@ void init_sl(
 }
 
 
-sl_t *
+am_sl_t *
 new_sl(void)
 {
-    sl_t *sl;
-    sl = g_malloc(sizeof(sl_t));
+    am_sl_t *sl;
+    sl = g_malloc(sizeof(am_sl_t));
     init_sl(sl);
     return(sl);
 }
 
 
-sl_t *
+am_sl_t *
 insert_sl(
-    sl_t *sl,
+    am_sl_t *sl,
     char *name)
 {
     sle_t *a;
@@ -77,9 +77,9 @@ insert_sl(
 }
 
 
-sl_t *
+am_sl_t *
 append_sl(
-    sl_t *	sl,
+    am_sl_t *	sl,
     char *	name)
 {
     sle_t *a;
@@ -101,9 +101,9 @@ append_sl(
 }
 
 
-sl_t *
+am_sl_t *
 insert_sort_sl(
-    sl_t *	sl,
+    am_sl_t *	sl,
     char *	name)
 {
     sle_t *a, *b;
@@ -136,7 +136,7 @@ insert_sort_sl(
 
 void
 free_sl(
-    sl_t *	sl)
+    am_sl_t *	sl)
 {
     sle_t *a, *b;
 
@@ -155,7 +155,7 @@ free_sl(
 
 void
 remove_sl(
-    sl_t *	sl,
+    am_sl_t *	sl,
     sle_t *	elem)
 {
     if(elem->prev)
@@ -175,11 +175,11 @@ remove_sl(
 }
 
 
-sl_t *
+am_sl_t *
 duplicate_sl(
-    sl_t *	sl)
+    am_sl_t *	sl)
 {
-    sl_t *new_sl = NULL;
+    am_sl_t *new_sl = NULL;
     sle_t *a;
 
     if(!sl) return new_sl;
@@ -196,7 +196,7 @@ duplicate_sl(
  */
 int
 is_empty_sl(
-    sl_t *	sl)
+    am_sl_t *	sl)
 {
     if (sl == NULL)
 	return 1;

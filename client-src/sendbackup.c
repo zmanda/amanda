@@ -123,7 +123,7 @@ main(
     int ch;
     GSList *errlist;
     FILE   *mesgstream;
-    level_t *alevel;
+    am_level_t *alevel;
 
     if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("sendbackup-%s\n", VERSION);
@@ -303,7 +303,7 @@ main(
 	    goto err;				/* bad level */
 	}
 	skip_integer(s, ch);
-	alevel = g_new0(level_t, 1);
+	alevel = g_new0(am_level_t, 1);
 	alevel->level = level;
 	dle->levellist = g_slist_append(dle->levellist, alevel);
 
@@ -383,7 +383,7 @@ main(
 	goto err;
     }
 
-    alevel = (level_t *)dle->levellist->data;
+    alevel = (am_level_t *)dle->levellist->data;
     level = alevel->level;
     dbprintf(_("  Parsed request as: program `%s'\n"), dle->program);
     dbprintf(_("                     disk `%s'\n"), qdisk);

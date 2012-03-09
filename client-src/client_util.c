@@ -1188,7 +1188,7 @@ run_client_script(
 	levellist_t levellist;
 	char number[NUM_STR_SIZE];
 	for (levellist=dle->levellist; levellist; levellist=levellist->next) {
-	    level_t *alevel = (level_t *)levellist->data;
+	    am_level_t *alevel = (am_level_t *)levellist->data;
 	    g_ptr_array_add(argv_ptr, g_strdup("--level"));
 	    g_snprintf(number, sizeof(number), "%d", alevel->level);
 	    g_ptr_array_add(argv_ptr, g_strdup(number));

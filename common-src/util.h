@@ -30,7 +30,7 @@
 #define	UTIL_H
 
 #include "amanda.h"
-#include "sl.h"
+#include "am_sl.h"
 
 #include <glib.h>
 #include <glib-object.h>

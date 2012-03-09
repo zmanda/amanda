@@ -60,7 +60,7 @@ typedef struct amgxml_s {
     property_t *property_data;
     proplist_t  property;
     script_t   *script;
-    level_t    *alevel;
+    am_level_t    *alevel;
     char       *encoding;
     char       *raw;
 } amgxml_t;
@@ -318,7 +318,7 @@ amstart_element(
                                                                 "include"))
 	   data_user->has_optional = 0;
 	if (g_str_equal(element_name, "level")) {
-	    data_user->alevel = g_new0(level_t, 1);
+	    data_user->alevel = g_new0(am_level_t, 1);
 	}
     } else if (g_str_equal(element_name, "server")) {
 	if (!last_element_name || !g_str_equal(last_element_name, "level")) {

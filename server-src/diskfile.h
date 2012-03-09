@@ -79,10 +79,10 @@ typedef struct disk_s {
     char	*client_username;	/* username to connect on the client */
     char	*client_port;		/* port to connect on the client */
     char	*ssh_keys;		/* ssh_key file to use */
-    sl_t	*exclude_file;		/* file exclude spec */
-    sl_t	*exclude_list;		/* exclude list */
-    sl_t	*include_file;		/* file include spec */
-    sl_t	*include_list;		/* include list */
+    am_sl_t	*exclude_file;		/* file exclude spec */
+    am_sl_t	*exclude_list;		/* exclude list */
+    am_sl_t	*include_file;		/* file include spec */
+    am_sl_t	*include_list;		/* include list */
     int		exclude_optional;	/* exclude list are optional */
     int		include_optional;	/* include list are optional */
     int		priority;		/* priority of disk */

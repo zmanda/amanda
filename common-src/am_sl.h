@@ -49,16 +49,16 @@ typedef struct sle_s {
 typedef struct sl_s {
     struct sle_s *first, *last;
     int nb_element;
-} sl_t;
+} am_sl_t;
 
-void init_sl(sl_t *sl);
-sl_t *new_sl(void);
-sl_t *insert_sl(sl_t *sl, char *name);
-sl_t *append_sl(sl_t *sl, char *name);
-sl_t *insert_sort_sl(sl_t *sl, char *name);
-void free_sl(sl_t *sl);
-void remove_sl(sl_t *sl,sle_t *elem);
-sl_t *duplicate_sl(sl_t *sl);
-int  is_empty_sl(sl_t *sl);
+void init_sl(am_sl_t *sl);
+am_sl_t *new_sl(void);
+am_sl_t *insert_sl(am_sl_t *sl, char *name);
+am_sl_t *append_sl(am_sl_t *sl, char *name);
+am_sl_t *insert_sort_sl(am_sl_t *sl, char *name);
+void free_sl(am_sl_t *sl);
+void remove_sl(am_sl_t *sl,sle_t *elem);
+am_sl_t *duplicate_sl(am_sl_t *sl);
+int  is_empty_sl(am_sl_t *sl);
 
 #endif
