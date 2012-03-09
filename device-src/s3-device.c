@@ -65,6 +65,7 @@ static GType	s3_device_get_type	(void);
  * Main object structure
  */
 typedef struct _S3MetadataFile S3MetadataFile;
+typedef struct _S3Device S3Device;
 
 typedef struct _S3_by_thread S3_by_thread;
 struct _S3_by_thread {
@@ -77,9 +78,9 @@ struct _S3_by_thread {
     char volatile * volatile     filename;
     DeviceStatusFlags volatile   errflags;	/* device_status */
     char volatile * volatile     errmsg;	/* device error message */
+    guint64			 dlnow, ulnow;
 };
 
-typedef struct _S3Device S3Device;
 struct _S3Device {
     Device __parent__;
 
@@ -143,6 +144,9 @@ struct _S3Device {
     GMutex      *thread_idle_mutex;
     int          next_block_to_read;
     GSList      *keys;
+
+    guint64      dltotal;
+    guint64      ultotal;
 };
 
 /*
@@ -473,6 +477,9 @@ s3_device_start(Device * self,
 
 static gboolean
 s3_device_finish(Device * self);
+
+static guint64
+s3_device_get_bytes_read(Device * self);
 
 static gboolean
 s3_device_start_file(Device * self,
@@ -1064,6 +1071,7 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
     device_class->read_label = s3_device_read_label;
     device_class->start = s3_device_start;
     device_class->finish = s3_device_finish;
+    device_class->get_bytes_read = s3_device_get_bytes_read;
 
     device_class->start_file = s3_device_start_file;
     device_class->write_block = s3_device_write_block;
@@ -1867,6 +1875,21 @@ make_bucket(
     return TRUE;
 }
 
+static int progress_func(
+    void *thread_data,
+    double dltotal G_GNUC_UNUSED,
+    double dlnow,
+    double ultotal G_GNUC_UNUSED,
+    double ulnow)
+{
+    S3_by_thread *s3t = (S3_by_thread *)thread_data;
+
+    s3t->dlnow = dlnow;
+    s3t->ulnow = ulnow;
+
+    return 0;
+}
+
 static DeviceStatusFlags
 s3_device_read_label(Device *pself) {
     S3Device *self = S3_DEVICE(pself);
@@ -2044,6 +2067,25 @@ s3_device_finish (
 /* functions for writing */
 
 
+static guint64
+s3_device_get_bytes_read(
+    Device * pself)
+{
+    S3Device *self = S3_DEVICE(pself);
+    int       thread;
+    guint64   dltotal = self->dltotal;
+
+    /* Add per thread */
+    g_mutex_lock(self->thread_idle_mutex);
+    for (thread = 0; thread < self->nb_threads_recovery; thread++)  {
+	dltotal += self->s3t[thread].dlnow;
+    }
+    g_mutex_unlock(self->thread_idle_mutex);
+
+    return dltotal;
+}
+
+
 static gboolean
 s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
     S3Device *self = S3_DEVICE(pself);
@@ -2200,7 +2242,8 @@ s3_thread_write_block(
     gboolean result;
 
     result = s3_upload(s3t->s3, self->bucket, (char *)s3t->filename,
-		       S3_BUFFER_READ_FUNCS, (CurlBuffer *)&s3t->curl_buffer, NULL, NULL);
+		       S3_BUFFER_READ_FUNCS, (CurlBuffer *)&s3t->curl_buffer,
+		       progress_func, s3t);
     g_free((void *)s3t->filename);
     s3t->filename = NULL;
     if (!result) {
@@ -2338,7 +2381,9 @@ s3_device_seek_file(Device *pself, guint file) {
     pself->is_eof = FALSE;
     pself->in_file = FALSE;
     pself->block = 0;
+    pself->bytes_read = 0;
     self->next_block_to_read = 0;
+    self->dltotal = 0;
 
     /* read it in */
     key = special_file_to_key(self, "filestart", pself->file);
@@ -2446,6 +2491,8 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
 	    s3t->done = 0;
 	    s3t->idle = 0;
 	    s3t->eof = FALSE;
+	    s3t->dlnow = 0;
+	    s3t->ulnow = 0;
 	    s3t->errflags = DEVICE_STATUS_SUCCESS;
 	    if (self->s3t[thread].curl_buffer.buffer &&
 		(int)self->s3t[thread].curl_buffer.buffer_len < *size_req) {
@@ -2528,6 +2575,8 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
 	    s3t->done = 0;
 	    s3t->idle = 0;
 	    s3t->eof = FALSE;
+	    s3t->dlnow = 0;
+	    s3t->ulnow = 0;
 	    s3t->errflags = DEVICE_STATUS_SUCCESS;
 	    if (!self->s3t[thread].curl_buffer.buffer) {
 		self->s3t[thread].curl_buffer.buffer = g_malloc(*size_req);
@@ -2554,8 +2603,9 @@ s3_thread_read_block(
     S3Device *self = S3_DEVICE(pself);
     gboolean result;
 
-    result = s3_read(s3t->s3, self->bucket, (char *)s3t->filename, s3_buffer_write_func,
-        s3_buffer_reset_func, (CurlBuffer *)&s3t->curl_buffer, NULL, NULL);
+    result = s3_read(s3t->s3, self->bucket, (char *)s3t->filename,
+	S3_BUFFER_WRITE_FUNCS,
+	(CurlBuffer *)&s3t->curl_buffer, progress_func, s3t);
 
     g_mutex_lock(self->thread_idle_mutex);
     if (!result) {
@@ -2576,7 +2626,11 @@ s3_thread_read_block(
 	    s3t->errmsg = g_strdup_printf(_("While reading data block from S3: %s"),
 					  s3_strerror(s3t->s3));
 	}
+    } else {
+	self->dltotal += s3t->curl_buffer.buffer_len;
     }
+    s3t->dlnow = 0;
+    s3t->ulnow = 0;
     s3t->done = 1;
     g_cond_broadcast(self->thread_idle_cond);
     g_mutex_unlock(self->thread_idle_mutex);

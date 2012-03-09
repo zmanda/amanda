@@ -205,11 +205,12 @@ use Amanda::MainLoop;
 
 sub new {
     my $class = shift;
-    my ($chg, $dev_name) = @_;
+    my ($chg, $dev_name, $is_tty) = @_;
 
     return bless {
 	chg => $chg,
 	dev_name => $dev_name,
+	is_tty => $is_tty,
     }, $class;
 }
 
@@ -217,6 +218,7 @@ sub clerk_notif_part {
     my $self = shift;
     my ($label, $filenum, $header) = @_;
 
+    print STDERR "\n" if $self->{'is_tty'};
     print STDERR "amfetchdump: $filenum: restoring ", $header->summary(), "\n";
 }
 
@@ -225,6 +227,7 @@ sub clerk_notif_holding {
     my ($filename, $header) = @_;
 
     # this used to give the fd from which the holding file was being read.. why??
+    print STDERR "\n" if $self->{'is_tty'};
     print STDERR "Reading '$filename'\n", $header->summary(), "\n";
 }
 
@@ -238,6 +241,9 @@ sub main {
     my @xfer_errs;
     my %all_filter;
     my $fetch_done;
+    my $timer;
+    my $is_tty;
+    my $delay;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb;
@@ -252,6 +258,13 @@ sub main {
 	    return failure("Cannot chdir to $destdir: $!", $finished_cb);
 	}
 
+	$is_tty = -t STDERR;
+	if($is_tty) {
+	    $delay = 1000; # 1 second
+	} else {
+	    $delay = 5000; # 5 seconds
+	}
+
 	my $interactivity = Amanda::Interactivity::amfetchdump->new();
 	# if we have an explicit device, then the clerk doesn't get a changer --
 	# we operate the changer via Amanda::Recovery::Scan
@@ -263,7 +276,7 @@ sub main {
 				interactivity => $interactivity);
 	    return failure($scan, $finished_cb) if $scan->isa("Amanda::Changer::Error");
 	    $clerk = Amanda::Recovery::Clerk->new(
-		feedback => main::Feedback->new($chg, $opt_device),
+		feedback => main::Feedback->new($chg, $opt_device, $is_tty),
 		scan     => $scan);
 	} else {
 	    my $scan = Amanda::Recovery::Scan->new(
@@ -272,7 +285,7 @@ sub main {
 
 	    $clerk = Amanda::Recovery::Clerk->new(
 		changer => $chg,
-		feedback => main::Feedback->new($chg, undef),
+		feedback => main::Feedback->new($chg, undef, $is_tty),
 		scan     => $scan);
 	}
 
@@ -294,6 +307,7 @@ sub main {
 
 	# if we are doing a -p operation, only keep the first dump
 	if ($opt_pipe) {
+	    print STDERR "WARNING: Fetch first dump only because of -p argument\n" if @{$plan->{'dumps'}} > 1;
 	    @{$plan->{'dumps'}} = ($plan->{'dumps'}[0]);
 	}
 
@@ -358,6 +372,16 @@ sub main {
 		return failure("Could not open '$filename' for writing: $!", $finished_cb);
 	    }
 	}
+
+	$timer = Amanda::MainLoop::timeout_source($delay);
+	$timer->set_callback(sub {
+	    my $size = $xfer_src->get_bytes_read();
+	    if ($is_tty) {
+		print STDERR "\r" . int($size/1024) . " kb ";
+	    } else {
+		print STDERR "READ SIZE: " . int($size/1024) . " kb\n";
+	    }
+	});
 
 	my $xfer_dest = Amanda::Xfer::Dest::Fd->new($dest_fh);
 
@@ -495,6 +519,11 @@ sub main {
     step recovery_cb => sub {
 	my %params = @_;
 
+	if ($is_tty) {
+	    print STDERR "\r" . int($params{'bytes_read'}/1024) . " kb ";
+	} else {
+	    print STDERR "READ SIZE: " . int($params{'bytes_read'}/1024) . " kb\n";
+	}
 	@xfer_errs = (@xfer_errs, @{$params{'errors'}})
 	    if $params{'errors'};
 	return failure(join("; ", @xfer_errs), $finished_cb)
@@ -516,9 +545,14 @@ sub main {
     step quit => sub {
 	my ($err) = @_;
 
+	if (defined $timer) {
+	    $timer->remove();
+	    $timer = undef;
+	}
+	print STDERR "\n" if $is_tty;
 	return failure($err, $finished_cb) if $err;
 
-#do all filter are done reading stderr
+	#do all filter are done reading stderr
 	$fetch_done = 1;
         if (!%all_filter) {
 	    $finished_cb->();

@@ -1,4 +1,29 @@
 2012-03-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amfetchdump.pl: Print progress.
+	* device-src/device.c (device_get_bytes_read ): New API method.
+	* device-src/device.h (Device): Add bytes_read.
+	* device-src/device.h (_DeviceClass): Add get_bytes_read.
+	* device-src/device.h (device_get_bytes_read): Add prototype.
+	* device-src/ndmp-device.c: Set bytes_read.
+	* device-src/rait-device.c: Set bytes_read.
+	* device-src/s3-device.c: Use curl progress callback to set bytes_read.
+	* device-src/s3.c: Set a progress callback.
+	* device-src/tape-device.c: Set bytes_read.
+	* device-src/vfs-device.c: Set bytes_read.
+	* device-src/xfer-device.h (xfer_source_recovery_get_bytes_read): Add
+	  prototype.
+	* device-src/xfer-source-recovery.c
+	  (xfer_source_recovery_get_bytes_read): new function.
+	* perl/Amanda/Device.swg (device_get_bytes_read): New function.
+	* perl/Amanda/Recovery/Clerk.pm: Call get_bytes_read.
+	* perl/Amanda/XferServer.swg: (xfer_source_holding_get_bytes_read,
+	* xfer_source_recovery_get_bytes_read): New prototypes.
+	* server-src/xfer-server.h (xfer_source_holding_get_bytes_read):
+	  New protoype.
+	* server-src/xfer-source-holding.c (xfer_source_holding_get_bytes_read):
+	  New function.
+
+2012-03-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Recovery/Scan.pm: Do not rescan the same slot
 	  indefinitely.
 

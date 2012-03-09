@@ -47,6 +47,9 @@ XferElement *xfer_dest_device(
 XferElement * xfer_source_holding(
     const char *filename);
 
+guint64 xfer_source_holding_get_bytes_read(
+    XferElement *self);
+
 %newobject xfer_dest_taper_splitter;
 XferElement *xfer_dest_taper_splitter(
     Device *first_device,
@@ -96,6 +99,10 @@ void xfer_source_recovery_use_device(
     XferElement *self,
     Device *device);
 
+guint64 xfer_source_recovery_get_bytes_read(
+    XferElement *self);
+
+
 /* ---- */
 
 PACKAGE(Amanda::Xfer::Source::Device)
@@ -113,6 +120,7 @@ DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_dest_device)
 PACKAGE(Amanda::Xfer::Source::Holding)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_source_holding)
+DECLARE_METHOD(get_bytes_read, Amanda::XferServer::xfer_source_holding_get_bytes_read)
 
 /* ---- */
 
@@ -148,3 +156,5 @@ XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_source_recovery)
 DECLARE_METHOD(start_part, Amanda::XferServer::xfer_source_recovery_start_part)
 DECLARE_METHOD(use_device, Amanda::XferServer::xfer_source_recovery_use_device)
+DECLARE_METHOD(get_bytes_read, Amanda::XferServer::xfer_source_recovery_get_bytes_read)
+

@@ -1658,6 +1658,7 @@ rait_device_seek_file (Device * dself, guint file) {
     dself->in_file = FALSE;
     dself->is_eof = FALSE;
     dself->block = 0;
+    dself->bytes_read = 0;
 
     ops = g_ptr_array_sized_new(self->private->children->len);
     for (i = 0; i < self->private->children->len; i ++) {
@@ -2007,6 +2008,7 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
     if (success) {
 	dself->block++;
 	*size = blocksize;
+	dself->bytes_read += blocksize;
         return blocksize;
     } else {
         return -1;

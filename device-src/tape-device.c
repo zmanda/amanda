@@ -1025,6 +1025,7 @@ static int tape_device_read_block (Device * pself, gpointer buf,
     case RESULT_SUCCESS:
         *size_req = size;
         pself->block++;
+	pself->bytes_read += size;
         return size;
     case RESULT_SMALL_BUFFER: {
         gsize new_size;
@@ -1326,6 +1327,7 @@ tape_device_seek_file (Device * d_self, guint file) {
     d_self->in_file = FALSE;
     d_self->is_eof = FALSE;
     d_self->block = 0;
+    d_self->bytes_read = 0;
 
 reseek:
     if (difference > 0) {

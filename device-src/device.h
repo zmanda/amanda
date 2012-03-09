@@ -134,6 +134,8 @@ typedef struct Device {
     gsize block_size;
     gsize header_block_size;
 
+    guint64 bytes_read;
+
     /* surety and source for the block size; if you set block_size directly,
      * set these, too! */
     PropertySurety block_size_surety;
@@ -193,6 +195,7 @@ struct _DeviceClass {
     gboolean (* erase) (Device * self);
     gboolean (* eject) (Device * self);
     gboolean (* finish) (Device * self);
+    guint64  (* get_bytes_read) (Device * self);
 
     gboolean (* listen)(Device *self, gboolean for_writing, DirectTCPAddr **addrs);
     gboolean (* accept)(Device *self, DirectTCPConnection **conn,
@@ -294,6 +297,7 @@ gboolean 	device_start	(Device * self,
                                  DeviceAccessMode mode, char * label,
                                  char * timestamp);
 gboolean 	device_finish	(Device * self);
+guint64 	device_get_bytes_read	(Device * self);
 gboolean        device_start_file       (Device * self,
                                          dumpfile_t * jobInfo);
 gboolean 	device_write_block	(Device * self,

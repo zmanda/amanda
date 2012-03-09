@@ -1434,6 +1434,10 @@ perform_request(S3Handle *hdl,
             goto curl_error;
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_PROGRESSFUNCTION, progress_func)))
             goto curl_error;
+	if (progress_func) {
+	    if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_NOPROGRESS,0)))
+		goto curl_error;
+	}
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_PROGRESSDATA, progress_data)))
             goto curl_error;
 
