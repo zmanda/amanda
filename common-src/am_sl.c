@@ -31,7 +31,7 @@
  */
 
 #include "amanda.h"
-#include "sl.h"
+#include "am_sl.h"
 
 
 void init_sl(
@@ -43,19 +43,19 @@ void init_sl(
 }
 
 
-amsl_t *
+am_sl_t *
 new_sl(void)
 {
-    amsl_t *sl;
-    sl = alloc(SIZEOF(amsl_t));
+    am_sl_t *sl;
+    sl = alloc(SIZEOF(am_sl_t));
     init_sl(sl);
     return(sl);
 }
 
 
-amsl_t *
+am_sl_t *
 insert_sl(
-    amsl_t *sl,
+    am_sl_t *sl,
     char *name)
 {
     sle_t *a;

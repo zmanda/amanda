@@ -5,7 +5,7 @@ include $(top_srcdir)/config/automake/scripts.am
 include $(top_srcdir)/config/automake/installperms.am
 include $(top_srcdir)/config/automake/precompile.am
 
-INCLUDES =      -I$(top_srcdir)/gnulib   
+INCLUDES =      -I$(top_srcdir)/gnulib
 
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS) $(AS_NEEDED_FLAGS)
@@ -123,7 +123,7 @@ noinst_HEADERS =		\
 	security.h		\
 	security-util.h		\
 	simpleprng.h		\
-	sl.h			\
+	am_sl.h			\
 	sockaddr-util.h		\
 	stream.h		\
 	tapelist.h		\
