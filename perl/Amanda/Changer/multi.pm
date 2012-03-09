@@ -410,7 +410,8 @@ sub inventory {
 	    my $s = { slot => $slot,
 		      state => $state->{slots}->{$unaliased}->{state} || Amanda::Changer::SLOT_UNKNOWN,
 		      reserved => $self->_is_slot_in_use($state, $slot) };
-	    if (defined $state->{slots}->{$unaliased}) {
+	    if (defined $state->{slots}->{$unaliased} and
+		exists $state->{slots}->{$unaliased}->{device_status}) {
 		$s->{'device_status'} =
 			      $state->{slots}->{$unaliased}->{device_status};
 		if ($s->{'device_status'} != $DEVICE_STATUS_SUCCESS) {
