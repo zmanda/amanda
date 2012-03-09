@@ -84,6 +84,7 @@ struct _S3Device {
 
     char *bucket_location;
     char *storage_class;
+    char *proxy;
 
     char *ca_info;
 
@@ -157,6 +158,10 @@ static DevicePropertyBase device_property_s3_bucket_location;
 /* Storage class */
 static DevicePropertyBase device_property_s3_storage_class;
 #define PROPERTY_S3_STORAGE_CLASS (device_property_s3_storage_class.ID)
+
+/* proxy */
+static DevicePropertyBase device_property_proxy;
+#define PROPERTY_PROXY (device_property_proxy.ID)
 
 /* Path to certificate authority certificate */
 static DevicePropertyBase device_property_ssl_ca_info;
@@ -295,6 +300,10 @@ static gboolean s3_device_set_bucket_location_fn(Device *self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_storage_class_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_proxy_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -667,6 +676,10 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_s3_storage_class,
                                       G_TYPE_STRING, "s3_storage_class",
        "Storage class as specified by Amazon (STANDARD or REDUCED_REDUNDANCY)");
+    device_property_fill_and_register(&device_property_proxy,
+                                      G_TYPE_STRING, "proxy",
+       "The proxy");
+
     device_property_fill_and_register(&device_property_ssl_ca_info,
                                       G_TYPE_STRING, "ssl_ca_info",
        "Path to certificate authority certificate");
@@ -816,6 +829,11 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    device_simple_property_get_fn,
 	    s3_device_set_storage_class_fn);
 
+    device_class_register_property(device_class, PROPERTY_PROXY,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_proxy_fn);
+
     device_class_register_property(device_class, PROPERTY_SSL_CA_INFO,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
@@ -929,6 +947,20 @@ s3_device_set_storage_class_fn(Device *p_self, DevicePropertyBase *base,
 
     amfree(self->storage_class);
     self->storage_class = str_val;
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_proxy_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+    char *str_val = g_value_dup_string(val);
+
+    amfree(self->proxy);
+    self->proxy = str_val;
     device_clear_volume_details(p_self);
 
     return device_simple_property_set_fn(p_self, base, val, surety, source);
@@ -1111,6 +1143,7 @@ static void s3_device_finalize(GObject * obj_self) {
     if(self->user_token) g_free(self->user_token);
     if(self->bucket_location) g_free(self->bucket_location);
     if(self->storage_class) g_free(self->storage_class);
+    if(self->proxy) g_free(self->proxy);
     if(self->ca_info) g_free(self->ca_info);
 }
 
@@ -1133,7 +1166,8 @@ static gboolean setup_handle(S3Device * self) {
 	}
 
         self->s3 = s3_open(self->access_key, self->secret_key, self->user_token,
-            self->bucket_location, self->storage_class, self->ca_info);
+            self->bucket_location, self->storage_class, self->ca_info,
+	    self->proxy);
         if (self->s3 == NULL) {
 	    device_set_error(d_self,
 		stralloc(_("Internal error creating S3 handle")),

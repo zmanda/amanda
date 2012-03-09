@@ -1,3 +1,9 @@
+2012-03-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: New PROXY property.
+	* device-src/s3.c: Set CURLOPT_PROXY from PROXY property.
+	* device-src/s3.h (s3_open): Add proxy argument.
+	* man/xml-source/amanda-devices.7.xml: Document PROXY property.
+
 2012-02-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amzfs-sendrecv.8.xml: Typo.
 

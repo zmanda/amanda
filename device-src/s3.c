@@ -138,6 +138,7 @@ struct S3Handle {
     /* attributes for new objects */
     char *bucket_location;
     char *storage_class;
+    char *proxy;
 
     char *ca_info;
 
@@ -1222,6 +1223,12 @@ perform_request(S3Handle *hdl,
                 goto curl_error;
         }
 
+	if (hdl->proxy) {
+	    if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_PROXY,
+					      hdl->proxy)))
+		goto curl_error;
+	}
+
         /* Perform the request */
         curl_code = curl_easy_perform(hdl->curl);
 
@@ -1436,7 +1443,8 @@ s3_open(const char *access_key,
         const char *user_token,
         const char *bucket_location,
         const char *storage_class,
-        const char *ca_info
+        const char *ca_info,
+        const char *proxy
         ) {
     S3Handle *hdl;
 
@@ -1461,6 +1469,9 @@ s3_open(const char *access_key,
 
     /* NULL is okay */
     hdl->ca_info = g_strdup(ca_info);
+
+    /* NULL is okay */
+    hdl->proxy = g_strdup(proxy);
 
     hdl->curl = curl_easy_init();
     if (!hdl->curl) goto error;

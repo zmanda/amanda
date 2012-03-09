@@ -399,6 +399,10 @@ data to S3.  If the average speed exceeds this value, the device will stop
 writing long enough to bring the average below this value.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>PROXY</term><listitem>
+ (read-write) The proxy hostname or IP in the format "host[:port]".
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>S3_ACCESS_KEY</term><listitem>
  (read-write) This property gives the Amazon S3 access key used to access the service.
 </listitem></varlistentry>
