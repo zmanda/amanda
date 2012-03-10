@@ -72,7 +72,6 @@ void slist_free_full(GSList * list, GDestroyNotify free_fn);
 
 /* These functions all take a GLib container, and call free() on all the
  * pointers in the container before free()ing the container itself. */
-void g_queue_free_full(GQueue * queue);
 void g_ptr_array_free_full(GPtrArray * array);
 
 /* g_value_compare() does what you expect. It returns TRUE if and

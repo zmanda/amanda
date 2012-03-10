@@ -1,3 +1,7 @@
+2012-03-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/glib-util.c, common-src/glib-util.h: Remove
+	  g_queue_free_full.
+
 2012-03-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c, common-src/Makefile.am, common-src/am_sl.c,
 	  common-src/amxml.c: typo.
