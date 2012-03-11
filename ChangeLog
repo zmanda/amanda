@@ -1,3 +1,7 @@
+2012-03-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/glib-util.c: g_thread_supported always return TRUE on
+	  newer version.
+
 2012-03-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/glib-util.c, common-src/glib-util.h: Remove
 	  g_queue_free_full.

@@ -42,7 +42,9 @@ glib_init(void) {
      * is initialized) */
 #ifdef HAVE_LIBCURL
 # ifdef G_THREADS_ENABLED
+#  if (GLIB_MAJOR_VERSION < 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 31))
     g_assert(!g_thread_supported()); /* assert threads aren't initialized yet */
+#  endif
 # endif
     g_assert(curl_global_init(CURL_GLOBAL_ALL) == 0);
 #endif
