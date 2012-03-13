@@ -1,5 +1,9 @@
+2012-03-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Do not Execute pg_start_backup for
+	  estimate.
+
 2012-03-11  Jean-Louis Martineau <martineau@zmanda.com>
-	* common-src/glib-util.c: g_thread_supported always return TRUE on 
+	* common-src/glib-util.c: g_thread_supported always return TRUE on
 	  newer version.
 
 2012-03-10  Jean-Louis Martineau <martineau@zmanda.com>
