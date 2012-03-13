@@ -1,4 +1,7 @@
 2012-03-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am: touch $@
+
+2012-03-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Do not Execute pg_start_backup for
 	  estimate.
 

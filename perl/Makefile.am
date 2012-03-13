@@ -97,6 +97,7 @@ SWIG_OPTIONS=-perl5 -proxy -DSWIG_TYPE_TABLE=SWIG_TYPES_Amanda -I$(srcdir)
 	$(SWIG) $(SWIG_OPTIONS) -o $@ $(top_srcdir)/perl/$< || { rm -f $@; false; }
 %.pm : %.c
 	@echo "$@ was produced as a side-effect of creating $<"
+	@touch $@
 %.i : %.swg $(AMGLUE_SWG)
 	$(SWIG) $(SWIG_OPTIONS) -E $(top_srcdir)/perl/$< >$@
 
