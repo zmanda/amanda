@@ -719,8 +719,10 @@ sub _base_backup {
    -d $self->{'props'}->{'pg-archivedir'} or
 	die("WAL file archive directory does not exist (or is not a directory)");
 
-   _run_psql_command($self, "SELECT pg_start_backup('$label')") or
-       $self->{'die_cb'}->("Failed to call pg_start_backup");
+   if ($self->{'action'} eq 'backup') {
+       _run_psql_command($self, "SELECT pg_start_backup('$label')") or
+           $self->{'die_cb'}->("Failed to call pg_start_backup");
+   }
 
    # tar data dir, using symlink to prefix
    # XXX: tablespaces and their symlinks?
@@ -728,8 +730,10 @@ sub _base_backup {
    my $old_die_cb = $self->{'die_cb'};
    $self->{'die_cb'} = sub {
        my $msg = shift @_;
-       unless(_run_psql_command($self, "SELECT pg_stop_backup()")) {
-           $msg .= " and failed to call pg_stop_backup";
+       if ($self->{'action'} eq 'backup') {
+           unless(_run_psql_command($self, "SELECT pg_stop_backup()")) {
+               $msg .= " and failed to call pg_stop_backup";
+	   }
        }
        $old_die_cb->($msg);
    };
@@ -741,8 +745,10 @@ sub _base_backup {
        ".");
    $self->{'die_cb'} = $old_die_cb;
 
-   unless (_run_psql_command($self, "SELECT pg_stop_backup()")) {
-       $self->{'die_cb'}->("Failed to call pg_stop_backup");
+   if ($self->{'action'} eq 'backup') {
+       unless (_run_psql_command($self, "SELECT pg_stop_backup()")) {
+           $self->{'die_cb'}->("Failed to call pg_stop_backup");
+       }
    }
 
    # determine WAL files and append and create their tar file
