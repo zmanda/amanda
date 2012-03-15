@@ -122,6 +122,7 @@ typedef struct application_argument_s {
     int        argc;
     char     **argv;
     int        verbose;
+    int        ignore_zeros;
 } application_argument_t;
 
 enum { CMD_ESTIMATE, CMD_BACKUP };
@@ -194,6 +195,7 @@ static struct option long_options[] = {
     {"include-list-glob", 1, NULL, 34},
     {"exclude-list-glob", 1, NULL, 35},
     {"verbose"          , 1, NULL, 36},
+    {"ignore-zeros"     , 1, NULL, 37},
     {NULL, 0, NULL, 0}
 };
 
@@ -370,6 +372,7 @@ main(
     argument.include_list_glob = NULL;
     argument.exclude_list_glob = NULL;
     argument.verbose = 0;
+    argument.ignore_zeros = 1;
     init_dle(&argument.dle);
     argument.dle.record = 0;
 
@@ -501,6 +504,9 @@ main(
 		 break;
 	case 36: if (strcasecmp(optarg, "YES") == 0)
 		     argument.verbose = 1;
+		 break;
+	case 37: if (strcasecmp(optarg, "YES") != 0)
+		     argument.ignore_zeros = 0;
 		 break;
 	case ':':
 	case '?':
@@ -1135,7 +1141,9 @@ amgtar_restore(
     if (gnutar_xattrs)
 	g_ptr_array_add(argv_ptr, g_strdup("--xattrs"));
     /* ignore trailing zero blocks on input (this was the default until tar-1.21) */
-    g_ptr_array_add(argv_ptr, g_strdup("--ignore-zeros"));
+    if (argument->ignore_zeros) {
+	g_ptr_array_add(argv_ptr, g_strdup("--ignore-zeros"));
+    }
     g_ptr_array_add(argv_ptr, g_strdup("-xpGvf"));
     g_ptr_array_add(argv_ptr, g_strdup("-"));
     if (gnutar_directory) {

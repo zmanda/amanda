@@ -77,6 +77,11 @@ The directory where gnutar stores the database it uses to generate incremental d
 The path to the gnutar binary.  The default is set when Amanda is built.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>IGNORE-ZEROS</term><listitem>
+If "YES" (the default), use the <emphasis>--ignore-zeros</emphasis> argument of gtar on recovery,
+set it to "NO" if you do not want that argument.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>INCLUDE-LIST-GLOB</term><listitem>
 A filename containing include glob expression for the restore command.
 </listitem></varlistentry>
