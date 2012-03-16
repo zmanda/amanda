@@ -1,3 +1,7 @@
+2012-03-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Use statefile to find end_wal on
+	  estimate.
+
 2012-03-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Add IGNORE-ZEROS property.
 	* man/xml-source/amgtar.8.xml: Document IGNORE-ZEROS property.
