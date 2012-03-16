@@ -466,9 +466,11 @@ sub _write_state_file {
 
 sub _get_prev_state {
     my $self = shift @_;
+    my $initial_level = shift;
+    $initial_level = $self->{'args'}->{'level'} - 1 if !defined $initial_level;
 
     my $end_wal;
-    for (my $level = $self->{'args'}->{'level'} - 1; $level >= 0; $level--) {
+    for (my $level = $initial_level; $level >= 0; $level--) {
         my $fn = _state_filename($self, $level);
         debug("reading state file: $fn");
         my $h = new IO::File($fn, "r");
@@ -695,7 +697,10 @@ sub _wait_for_wal {
     my $count = 0; # try at least 4 cycles
     my $stoptime = time() + $maxwait;
     while ($maxwait == 0 || time < $stoptime || $count++ < 4) {
-	return if -f "$archive_dir/$wal";
+	if (-f "$archive_dir/$wal") {
+	    sleep(1);
+	    return;
+	}
 
 	# for versions 8.0 or 8.1, the only way to "force" a WAL archive is to write
 	# garbage to the database.
@@ -752,23 +757,32 @@ sub _base_backup {
    }
 
    # determine WAL files and append and create their tar file
-   my ($start_wal, $end_wal) = _get_backup_info($self, $label);
+   my $start_wal;
+   my $end_wal;
 
-   ($start_wal and $end_wal)
-       or $self->{'die_cb'}->("A .backup file was never found in the archive "
-			    . "dir $self->{'props'}->{'pg-archivedir'}");
-
-   $self->_wait_for_wal($end_wal);
+   if ($self->{'action'} eq 'backup') {
+	($start_wal, $end_wal)  = _get_backup_info($self, $label);
+	($start_wal and $end_wal)
+		or $self->{'die_cb'}->("A .backup file was never found in the archive "
+				    . "dir $self->{'props'}->{'pg-archivedir'}");
+	$self->_wait_for_wal($end_wal);
+   } else {
+	$start_wal = undef;
+	$end_wal = _get_prev_state($self, 0);
+   }
 
    # now grab all of the WAL files, *inclusive* of $start_wal
    my @wal_files;
    my $adir = new IO::Dir($self->{'props'}->{'pg-archivedir'});
    while (defined(my $fname = $adir->read())) {
        if ($fname =~ /^$_WAL_FILE_PAT$/) {
-           if (($fname ge $start_wal) and ($fname le $end_wal)) {
+           if (!defined $end_wal ||
+	       (!defined $start_wal and ($fname le $end_wal)) ||
+	       (defined $start_wal and ($fname ge $start_wal) and
+		($fname le $end_wal))) {
                push @wal_files, $fname;
                debug("will store: $fname");
-           } elsif ($fname lt $start_wal) {
+           } elsif (defined $start_wal and $fname lt $start_wal) {
                $self->{'unlink_cb'}->("$self->{'props'}->{'pg-archivedir'}/$fname");
            }
        }
