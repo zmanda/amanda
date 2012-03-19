@@ -1,3 +1,6 @@
+2012-03-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Use "TAR-BLOCKSIZE" on restore.
+
 2012-03-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Use statefile to find end_wal on
 	  estimate.

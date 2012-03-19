@@ -1127,6 +1127,10 @@ amgtar_restore(
     if (argument->ignore_zeros) {
 	g_ptr_array_add(argv_ptr, stralloc("--ignore-zeros"));
     }
+    if (argument->tar_blocksize) {
+	g_ptr_array_add(argv_ptr, stralloc("--blocking-factor"));
+	g_ptr_array_add(argv_ptr, stralloc(argument->tar_blocksize));
+    }
     g_ptr_array_add(argv_ptr, stralloc("-xpGvf"));
     g_ptr_array_add(argv_ptr, stralloc("-"));
     if (gnutar_directory) {
