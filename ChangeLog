@@ -1,4 +1,10 @@
 2012-03-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/fileheader.c: header type for non-amanda header is
+	  F_WEIRD.
+* server-src/amcheck-device.pl,
+  server-src/amtape.pl: Improve output for non-Amanda volume.
+
+2012-03-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Chunker/Scribe.pm: do not call _start_chunk if the
 	  transfer is finished.
 	* server-src/driver.c: Fix hang.

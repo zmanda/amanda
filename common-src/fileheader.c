@@ -139,7 +139,7 @@ parse_file_header(
 
     if (!g_str_equal(tok, "NETDUMP:") && !g_str_equal(tok, "AMANDA:")) {
 	amfree(buf);
-	file->type = F_UNKNOWN;
+	file->type = F_WEIRD;
 	amfree(line1);
 	return;
     }
