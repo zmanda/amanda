@@ -139,7 +139,7 @@ parse_file_header(
 
     if (strcmp(tok, "NETDUMP:") != 0 && strcmp(tok, "AMANDA:") != 0) {
 	amfree(buf);
-	file->type = F_UNKNOWN;
+	file->type = F_WEIRD;
 	amfree(line1);
 	return;
     }

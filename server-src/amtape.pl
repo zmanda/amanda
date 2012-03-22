@@ -550,7 +550,12 @@ sub {
 		} elsif ($dev->status & $DEVICE_STATUS_VOLUME_UNLABELED and
 			 $dev->volume_header and
 			 $dev->volume_header->{'type'} == $Amanda::Header::F_WEIRD) {
-		    print STDERR " contains a non-Amanda volume; check and relabel it with 'amlabel -f'\n";
+		    my $autolabel = getconf($CNF_AUTOLABEL);
+		    if ($autolabel->{'non_amanda'}) {
+			print STDERR " contains a non-Amanda volume\n";
+		    } else {
+			print STDERR " contains a non-Amanda volume; check and relabel it with 'amlabel -f'\n";
+		    }
 		} elsif ($dev->status & $DEVICE_STATUS_VOLUME_ERROR) {
 		    my $message = $dev->error_or_status();
 		    print STDERR " can't read label: $message\n";
@@ -594,7 +599,12 @@ sub {
 	if (defined $res->{'device'} and defined $res->{'device'}->volume_label()) {
 	    print STDERR "Will $modestr to volume '$label' in slot $slot.\n";
 	} else {
-	    print STDERR "Will $modestr label '$label' to new volume in slot $slot.\n";
+	    my $header = $res->{'device'}->volume_header();
+	    if ($header->{'type'} == $Amanda::Header::F_WEIRD) {
+		print STDERR "Will $modestr label '$label' to non-Amanda volume in slot $slot.\n";
+	    } else {
+		print STDERR "Will $modestr label '$label' to new volume in slot $slot.\n";
+	    }
 	}
 	$res->release(finished_cb => sub {
 	    my ($err) = @_;
