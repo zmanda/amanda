@@ -2687,6 +2687,12 @@ handle_chunker_result(
 	    chunker->result = cmd;
 
 	    g_strfreev(result_argv);
+
+	    if (chunker->result != LAST_TOK &&
+		chunker->dumper->result != LAST_TOK) {
+		dumper_chunker_result(dp);
+	    }
+
 	    return;
 
 	    break;

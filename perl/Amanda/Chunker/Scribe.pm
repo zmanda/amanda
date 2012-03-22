@@ -444,7 +444,7 @@ sub continue_chunk {
     $self->{'chunk_size'} = $params{'chunk_size'};
     $self->{'use_bytes'} = $params{'use_bytes'};
 
-    $self->_start_chunk();
+    $self->_start_chunk() if defined $self->{'xdh'};
 }
 
 sub _start_chunk {
