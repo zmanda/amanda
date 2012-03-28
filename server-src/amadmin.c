@@ -1539,7 +1539,7 @@ int
 bump_thresh(
     int		level)
 {
-    int bump = getconf_int(CNF_BUMPSIZE);
+    gint64 bump = getconf_int64(CNF_BUMPSIZE);
     double mult = getconf_real(CNF_BUMPMULT);
 
     while(--level)
@@ -1561,8 +1561,8 @@ bumpsize(
 
     g_printf(_("Current bump parameters:\n"));
     if(conf_bumppercent == 0) {
-	g_printf(_("  bumpsize %5d KB\t- minimum savings (threshold) to bump level 1 -> 2\n"),
-	       getconf_int(CNF_BUMPSIZE));
+	g_printf(_("  bumpsize %5jd KB\t- minimum savings (threshold) to bump level 1 -> 2\n"),
+	       (intmax_t)getconf_int64(CNF_BUMPSIZE));
 	g_printf(_("  bumpdays %5d\t- minimum days at each level\n"),
 	       getconf_int(CNF_BUMPDAYS));
 	g_printf(_("  bumpmult %5.5lg\t- threshold = bumpsize * bumpmult**(level-1)\n\n"),
