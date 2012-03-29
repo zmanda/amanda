@@ -2,6 +2,12 @@
 # This is useful for debugging
 #set -x
 
+if [ "$1" = "-v" ]; then
+    silent_make_flags=""
+    shift
+else
+    silent_make_flags="-s LIBTOOLFLAGS=--silent"
+fi
 #### CHECKS
 if [ ! -f common-src/amanda.h ]; then
     echo "Error: 'buildpkg' must be run from the root of an otherwise unused amanda source"
@@ -52,7 +58,7 @@ do_build() {
 	{ echo "client or server not given" && exit 1; }
     rm -rf ${INSTALL_DEST} ${PKG_DEST}
     mkdir ${INSTALL_DEST} ${PKG_DEST} || exit 1
-    make distclean
+    make ${silent_make_flags} distclean
     echo "Running configure.."
     CONF="$CONF \
 	STAR=/opt/csw/bin/star \
@@ -99,7 +105,7 @@ do_build() {
         GLIB_MKENUMS=glib-mkenums \
 	${CONF} || exit 1
 
-    echo "Building.."
+    echo "Building $1.."
 
     # rpcgen should be run natively on solaris, linux generated XDR stubs
     # are not compatible. Specially when being compiled in 64 bit mode.
@@ -107,8 +113,8 @@ do_build() {
 
     (cd ndmp-src;rpcgen ndmp0.x;rpcgen ndmp2.x;rpcgen ndmp3.x;rpcgen ndmp4.x; rpcgen ndmp9.x)
 
-    make || exit 1
-    make DESTDIR=${INSTALL_DEST} install || exit 1
+    make ${silent_make_flags}|| exit 1
+    make ${silent_make_flags} DESTDIR=${INSTALL_DEST} install || exit 1
 
     # the gnulib makefiles create $amlibdir/charset.alias in hopes of "merging"
     # it with a similar file from other applications.  This doesn't work with
@@ -210,12 +216,11 @@ PKG_DEST=${PKG_TMP}/pkg; export PKG_DEST
 
 # Explanation of solaris paths:
 # /opt/SUNWspro/*: Sun compiler, NOT USED FOR PACKAGING.
-# /opt/csw/*: blastwave.
+# /opt/csw/*: OpenCSW.
 # /usr/ccs/*: sun compilation tools (ld, lex, yacc)
 # /usr/sfw/*: SunFreeware, sometimes. (solaris 10)
 # /usr/local/*: SunFreeware, othertimes. (solaris 8)
 
-# Not Absolute!  Remember to prefix a "/" except in pkgproto.
 # sparc or intel
 arch=`uname -p`
 # 5.8 or 5.10
@@ -228,7 +233,8 @@ PATH=/opt/csw/bin:/usr/bin:/usr/sbin:/usr/ccs/bin;export PATH
 # Compile 32bit because csw perl is 32bit and native is too old.
 CFLAGS="-O2 -pipe -m32"; export CFLAGS
 CPPFLAGS="-I/opt/csw/include"; export CPPFLAGS
-PREFIX=opt/amanda; export PREFIX # Not absolute.  Pkgprot needs this.
+# Not Absolute!  Remember to prefix a "/" except in pkgproto.
+PREFIX=opt/amanda; export PREFIX # Not absolute.
 amlibdir=${PREFIX}/lib     # Not absolute
 LOCALSTATEDIR=var; export LOCALSTATEDIR
 AMSTATEDIR=${LOCALSTATEDIR}/lib/amanda; export AMSTATEDIR
@@ -250,6 +256,7 @@ if [ "x${1}" = "xclient" -o "x${1}" = "x" ]; then
         GLIB_LIBS="-lglib-2.0 -lgobject-2.0 -lgthread-2.0"; export GLIB_LIBS
     elif [ "x$arch" = "xi386" -a "x$os_rel" = "x5.10" ]; then
         GLIB_CFLAGS="-I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include"; export GLIB_CFLAGS
+        GLIB_LIBS="-lglib-2.0 -lgobject-2.0 -lgthread-2.0"; export GLIB_LIBS
     elif [ "x$arch" = "xsparc" -a "x$os_rel" = "x5.8" ]; then
         # CSW glib2.0 flags for gcc.  CSW compiles with Sunstudio, so some
         # flags may not work
