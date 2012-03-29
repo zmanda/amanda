@@ -116,6 +116,7 @@
         { 403,  S3_ERROR_RequestTimeTooSkewed,0,                          S3_RESULT_RETRY }, \
         { 409,  S3_ERROR_OperationAborted,   0,                          S3_RESULT_RETRY }, \
         { 412,  S3_ERROR_PreconditionFailed, 0,                          S3_RESULT_RETRY }, \
+        { 500,  S3_ERROR_None,               0,                          S3_RESULT_RETRY }, \
         { 500,  S3_ERROR_InternalError,      0,                          S3_RESULT_RETRY }, \
         { 501,  S3_ERROR_NotImplemented,     0,                          S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_COULDNT_CONNECT,      S3_RESULT_RETRY }, \
@@ -979,6 +980,12 @@ interpret_response(S3Handle *hdl,
     } else if (!body || body_len == 0) {
         hdl->last_message = g_strdup("S3 Error: Unknown (empty response body)");
         return TRUE; /* perhaps a network error; retry the request */
+    }
+
+    if (hdl->verbose) {
+	char *body_copy = g_strndup(body, body_len);
+	g_debug("data in: %s", body_copy);
+	amfree(body_copy);
     }
 
     thunk.in_title = FALSE;
