@@ -1,4 +1,7 @@
 2012-03-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Fix hang if taper crash.
+
+2012-03-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Retry on {500, S3_ERROR_None} error.
 	  Improving debugging.
 

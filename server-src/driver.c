@@ -1954,7 +1954,7 @@ handle_taper_result(
 	    for (taper = tapetable;
 		 taper < tapetable + conf_taper_parallel_write;
                  taper++) {
-		if (taper && taper->disk && taper->result != LAST_TOK) {
+		if (taper && taper->disk) {
 		    g_free(taper->tape_error);
 		    taper->tape_error = g_strdup("BOGUS");
 		    taper->result = cmd;
