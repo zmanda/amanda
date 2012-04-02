@@ -1022,9 +1022,21 @@ listen_impl(
 	return FALSE;
     }
 
-    if (!ndmp_connection_mover_set_window(self->ndmp, 0, 0)) {
-	set_error_from_ndmp(self);
-	return FALSE;
+    if (for_writing) {
+	if (!ndmp_connection_mover_set_window(self->ndmp, 0, 0)) {
+	    set_error_from_ndmp(self);
+	    return FALSE;
+	}
+    } else {
+	/* For reading, set the window to the second mover record, so that the
+	 * mover will pause immediately when it wants to read the first mover
+	 * record. */
+	if (!ndmp_connection_mover_set_window(self->ndmp,
+					      dself->block_size,
+					      dself->block_size)) {
+	    set_error_from_ndmp(self);
+	    return FALSE;
+	}
     }
 
     /* then tell it to start listening */

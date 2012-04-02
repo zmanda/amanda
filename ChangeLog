@@ -1,3 +1,7 @@
+2012-04-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/ndmp-device.c (listen_impl): Set the window offset and
+	  length to blocksize when reading.
+
 2012-03-29 Dan Locks <dwlocks@zmanda.com>
 	* packaging/sun-pkg/buildpkg: add missing GLIB_LIBS variable to intel
 	  builds. Add flags to make invocation to reduce output.
