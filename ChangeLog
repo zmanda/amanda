@@ -1,4 +1,7 @@
 2012-04-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsamba.pl: Do not set unc prematurely.
+
+2012-04-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/ndmp-device.c (listen_impl): Set the window offset and
 	  length to blocksize when reading.
 
