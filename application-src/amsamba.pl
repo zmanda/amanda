@@ -70,11 +70,6 @@ sub new {
     } else {
 	$self->{device}       = $disk;
     }
-    if ($self->{disk} =~ /^\\\\/) {
-	$self->{unc}          = 1;
-    } else {
-	$self->{unc}          = 0;
-    }
     $self->{level}            = [ @{$level} ];
     $self->{index}            = $index;
     $self->{message}          = $message;
