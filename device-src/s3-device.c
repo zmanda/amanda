@@ -100,6 +100,11 @@ struct _S3Device {
     char *swift_account_id;
     char *swift_access_key;
 
+    char *username;
+    char *password;
+    char *tenant_id;
+    char *tenant_name;
+
     char *bucket_location;
     char *storage_class;
     char *host;
@@ -122,7 +127,7 @@ struct _S3Device {
 
     /* Use SSL? */
     gboolean use_ssl;
-    gboolean openstack_swift_api;
+    S3_api s3_api;
 
     /* Throttling */
     guint64 max_send_speed;
@@ -196,6 +201,16 @@ static DevicePropertyBase device_property_swift_access_key;
 #define PROPERTY_SWIFT_ACCOUNT_ID (device_property_swift_account_id.ID)
 #define PROPERTY_SWIFT_ACCESS_KEY (device_property_swift_access_key.ID)
 
+/* Authentication information for Openstack Swift. Both of these are strings. */
+static DevicePropertyBase device_property_username;
+static DevicePropertyBase device_property_password;
+static DevicePropertyBase device_property_tenant_id;
+static DevicePropertyBase device_property_tenant_name;
+#define PROPERTY_USERNAME (device_property_username.ID)
+#define PROPERTY_PASSWORD (device_property_password.ID)
+#define PROPERTY_TENANT_ID (device_property_tenant_id.ID)
+#define PROPERTY_TENANT_NAME (device_property_tenant_name.ID)
+
 /* Host and path */
 static DevicePropertyBase device_property_s3_host;
 static DevicePropertyBase device_property_s3_service_path;
@@ -226,7 +241,12 @@ static DevicePropertyBase device_property_proxy;
 static DevicePropertyBase device_property_ssl_ca_info;
 #define PROPERTY_SSL_CA_INFO (device_property_ssl_ca_info.ID)
 
+/* Which strotage api to use. */
+static DevicePropertyBase device_property_storage_api;
+#define PROPERTY_STORAGE_API (device_property_storage_api.ID)
+
 /* Whether to use openstack protocol. */
+/* DEPRECATED */
 static DevicePropertyBase device_property_openstack_swift_api;
 #define PROPERTY_OPENSTACK_SWIFT_API (device_property_openstack_swift_api.ID)
 
@@ -374,6 +394,22 @@ static gboolean s3_device_set_swift_access_key_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
+static gboolean s3_device_set_username(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_password(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_tenant_id(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_tenant_name(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
 static gboolean s3_device_set_user_token_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
@@ -399,6 +435,10 @@ static gboolean s3_device_set_ca_info_fn(Device *self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_verbose_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_storage_api(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -896,6 +936,18 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_swift_access_key,
                                       G_TYPE_STRING, "swift_access_key",
        "Access key to authenticate with openstack swift");
+    device_property_fill_and_register(&device_property_username,
+                                      G_TYPE_STRING, "username",
+       "Username to authenticate with");
+    device_property_fill_and_register(&device_property_password,
+                                      G_TYPE_STRING, "password",
+       "password to authenticate with");
+    device_property_fill_and_register(&device_property_tenant_id,
+                                      G_TYPE_STRING, "tenant_id",
+       "tenant_id to authenticate with");
+    device_property_fill_and_register(&device_property_tenant_name,
+                                      G_TYPE_STRING, "tenant_name",
+       "tenant_name to authenticate with");
     device_property_fill_and_register(&device_property_s3_host,
                                       G_TYPE_STRING, "s3_host",
        "hostname:port of the server");
@@ -920,8 +972,11 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_ssl_ca_info,
                                       G_TYPE_STRING, "ssl_ca_info",
        "Path to certificate authority certificate");
+    device_property_fill_and_register(&device_property_storage_api,
+                                      G_TYPE_STRING, "storage_api",
+       "Which cloud API to use.");
     device_property_fill_and_register(&device_property_openstack_swift_api,
-                                      G_TYPE_BOOLEAN, "openstack_swift_api",
+                                      G_TYPE_STRING, "openstack_swift_api",
        "Whether to use openstack protocol");
     device_property_fill_and_register(&device_property_s3_ssl,
                                       G_TYPE_BOOLEAN, "s3_ssl",
@@ -978,6 +1033,7 @@ s3_device_init(S3Device * self)
     Device * dself = DEVICE(self);
     GValue response;
 
+    self->s3_api = S3_API_S3;
     self->volume_bytes = 0;
     self->volume_limit = 0;
     self->leom = TRUE;
@@ -1106,6 +1162,26 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    device_simple_property_get_fn,
 	    s3_device_set_swift_access_key_fn);
 
+    device_class_register_property(device_class, PROPERTY_USERNAME,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_username);
+
+    device_class_register_property(device_class, PROPERTY_PASSWORD,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_password);
+
+    device_class_register_property(device_class, PROPERTY_TENANT_ID,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_tenant_id);
+
+    device_class_register_property(device_class, PROPERTY_TENANT_NAME,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_tenant_name);
+
     device_class_register_property(device_class, PROPERTY_S3_HOST,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
@@ -1150,6 +1226,11 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
 	    s3_device_set_verbose_fn);
+
+    device_class_register_property(device_class, PROPERTY_STORAGE_API,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_storage_api);
 
     device_class_register_property(device_class, PROPERTY_OPENSTACK_SWIFT_API,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
@@ -1257,6 +1338,58 @@ s3_device_set_swift_access_key_fn(Device *p_self, DevicePropertyBase *base,
 
     amfree(self->swift_access_key);
     self->swift_access_key = g_value_dup_string(val);
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_username(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->username);
+    self->username = g_value_dup_string(val);
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_password(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->password);
+    self->password = g_value_dup_string(val);
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_tenant_id(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->tenant_id);
+    self->tenant_id = g_value_dup_string(val);
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_tenant_name(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->tenant_name);
+    self->tenant_name = g_value_dup_string(val);
     device_clear_volume_details(p_self);
 
     return device_simple_property_set_fn(p_self, base, val, surety, source);
@@ -1413,14 +1546,40 @@ s3_device_set_verbose_fn(Device *p_self, DevicePropertyBase *base,
 }
 
 static gboolean
-s3_device_set_openstack_swift_api_fn(Device *p_self, DevicePropertyBase *base,
+s3_device_set_storage_api(Device *p_self, DevicePropertyBase *base,
     GValue *val, PropertySurety surety, PropertySource source)
 {
     S3Device *self = S3_DEVICE(p_self);
 
-    self->openstack_swift_api = g_value_get_boolean(val);
+    const char *storage_api = g_value_get_string(val);
+    if (g_str_equal(storage_api, "S3")) {
+	self->s3_api = S3_API_S3;
+    } else if (g_str_equal(storage_api, "SWIFT-1.0")) {
+	self->s3_api = S3_API_SWIFT_1;
+    } else if (g_str_equal(storage_api, "SWIFT-2.0")) {
+	self->s3_api = S3_API_SWIFT_2;
+    } else {
+	g_debug("Invalid STORAGE_API, using \"S3\".");
+	self->s3_api = S3_API_S3;
+    }
 
     return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_openstack_swift_api_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+
+    const gboolean openstack_swift_api = g_value_get_boolean(val);
+    if (openstack_swift_api) {
+	GValue storage_api_val;
+	g_value_init(&storage_api_val, G_TYPE_STRING);
+	g_value_set_static_string(&storage_api_val, "SWIFT-1.0");
+	return s3_device_set_storage_api(p_self, base, &storage_api_val,
+					 surety, source);
+    }
+    return TRUE;
 }
 
 static gboolean
@@ -1635,7 +1794,7 @@ s3_device_open_device(Device *pself, char *device_name,
 
     /* default values */
     self->verbose = FALSE;
-    self->openstack_swift_api = FALSE;
+    self->s3_api = S3_API_S3;
 
     /* use SSL if available */
     self->use_ssl = s3_curl_supports_ssl();
@@ -1689,6 +1848,10 @@ static void s3_device_finalize(GObject * obj_self) {
     if(self->secret_key) g_free(self->secret_key);
     if(self->swift_account_id) g_free(self->swift_account_id);
     if(self->swift_access_key) g_free(self->swift_access_key);
+    if(self->username) g_free(self->username);
+    if(self->password) g_free(self->password);
+    if(self->tenant_id) g_free(self->tenant_id);
+    if(self->tenant_name) g_free(self->tenant_name);
     if(self->host) g_free(self->host);
     if(self->service_path) g_free(self->service_path);
     if(self->user_token) g_free(self->user_token);
@@ -1715,7 +1878,7 @@ static gboolean setup_handle(S3Device * self) {
             return FALSE;
 	}
 
-	if (!self->openstack_swift_api) {
+	if (self->s3_api == S3_API_S3) {
 	    if (self->access_key == NULL || self->access_key[0] == '\0') {
 		device_set_error(d_self,
 		    g_strdup(_("No Amazon access key specified")),
@@ -1729,7 +1892,7 @@ static gboolean setup_handle(S3Device * self) {
 		    DEVICE_STATUS_DEVICE_ERROR);
 		return FALSE;
 	    }
-	} else {
+	} else if (self->s3_api == S3_API_SWIFT_1) {
 	    if (self->swift_account_id == NULL ||
 		self->swift_account_id[0] == '\0') {
 		device_set_error(d_self,
@@ -1741,6 +1904,16 @@ static gboolean setup_handle(S3Device * self) {
 		self->swift_access_key[0] == '\0') {
 		device_set_error(d_self,
 		    g_strdup(_("No Swift access key specified")),
+		    DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    }
+	} else if (self->s3_api == S3_API_SWIFT_2) {
+	    if (!((self->username && self->password && self->tenant_id) ||
+		  (self->username && self->password && self->tenant_name) ||
+		  (self->access_key && self->secret_key && self->tenant_id) ||
+		  (self->access_key && self->secret_key && self->tenant_name))) {
+		device_set_error(d_self,
+		    g_strdup(_("Missing authorization properties")),
 		    DEVICE_STATUS_DEVICE_ERROR);
 		return FALSE;
 	    }
@@ -1771,14 +1944,18 @@ static gboolean setup_handle(S3Device * self) {
 					   self->storage_class, self->ca_info,
 					   self->server_side_encryption,
 					   self->proxy,
-					   self->openstack_swift_api);
+					   self->s3_api,
+					   self->username,
+					   self->password,
+					   self->tenant_id,
+					   self->tenant_name);
             if (self->s3t[thread].s3 == NULL) {
 	        device_set_error(d_self,
 		    stralloc(_("Internal error creating S3 handle")),
 		    DEVICE_STATUS_DEVICE_ERROR);
 		self->nb_threads = thread+1;
                 return FALSE;
-            } else if (self->openstack_swift_api) {
+            } else if (self->s3_api != S3_API_S3) {
 		s3_error(self->s3t[0].s3, NULL, &response_code,
 			&s3_error_code, NULL, &curl_code, NULL);
 		if (response_code != 200) {

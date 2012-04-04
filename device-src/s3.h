@@ -27,6 +27,12 @@
  * Data types
  */
 
+typedef enum {
+   S3_API_S3,
+   S3_API_SWIFT_1,
+   S3_API_SWIFT_2
+} S3_api;
+
 /* An opaque handle.  S3Handles should only be accessed from a single
  * thread at any given time, although it is fine to use different handles
  * in different threads simultaneously. */
@@ -246,7 +252,11 @@ s3_open(const char * access_key, const char *secret_key,
         const char * bucket_location, const char * storage_class,
 	const char * ca_info, const char * server_side_encryption,
 	const char *proxy,
-	const gboolean openstack_swift_api);
+	const S3_api s3_api,
+	const char *username,
+	const char *password,
+	const char *tenant_id,
+	const char *tenant_name);
 
 /* Deallocate an S3Handle
  *
