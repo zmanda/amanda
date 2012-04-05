@@ -434,6 +434,19 @@ s3_delete(S3Handle *hdl,
           const char *bucket,
           const char *key);
 
+/* Delete multiple file.
+ *
+ * @param hdl: the S3Handle object
+ * @param bucket: the bucket to delete from
+ * @param key: the key array to delete
+ * @returns: 0 on sucess, 1 if multi_delete is not supported, 2 if an error
+ *           occurs; a non-existent file is I{not} considered an error.
+ */
+int
+s3_multi_delete(S3Handle *hdl,
+                const char *bucket,
+                const char **key);
+
 /* Create a bucket.
  *
  * @param hdl: the S3Handle object

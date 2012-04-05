@@ -1,4 +1,11 @@
 2012-04-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: New S3_MULTI_DELETE property.
+	* device-src/s3.c: New S3_MULTI_DELETE property.
+	* device-src/s3.h (s3_multi_delete): New prototype.
+	* man/xml-source/amanda-devices.7.xml: Document new S3_MULTI_DELETE s3
+	  device property.
+
+2012-04-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: New PASSWORD, USERNAME, TENANT_ID,
 	  TENANT_NAME and STORAGE_API property. Handle SWIFT-2.
 	* device-src/s3.c: Handle SWIFT-2.
