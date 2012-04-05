@@ -1962,6 +1962,12 @@ runcompress(
 	return (-1);
     }
 
+    if (comptype != COMP_SERVER_CUST) {
+	g_debug("execute: %s %s", COMPRESS_PATH,
+		comptype == COMP_BEST ? COMPRESS_BEST_OPT : COMPRESS_FAST_OPT);
+    } else {
+	g_debug("execute: %s", srvcompprog);
+    }
     switch (*pid = fork()) {
     case -1:
 	g_free(errstr);
@@ -2063,6 +2069,7 @@ runencrypt(
 	return (-1);
     }
 
+    g_debug("execute: %s", srv_encrypt);
     switch (*pid = fork()) {
     case -1:
 	g_free(errstr);

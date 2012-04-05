@@ -62,9 +62,22 @@ sub do_gpg_agent() {
     return ""
 }
 
+sub which_gpg() {
+    my $path=`which gpg2 2>/dev/null`;
+    if (!$path) {
+        $path=`which gpg 2>/dev/null`;
+    }
+    if (!$path) {
+        die("no gpg or gpg2");
+    }
+    chomp $path;
+    return $path;
+}
+
 sub encrypt() {
     my $gpg_agent_cmd = do_gpg_agent();
-    system "$gpg_agent_cmd gpg --batch --no-secmem-warning --disable-mdc --symmetric --cipher-algo AES256 --passphrase-fd 3  3<$AM_PASS";
+    my $gpg = which_gpg();
+    system "$gpg_agent_cmd $gpg --batch --no-secmem-warning --disable-mdc --symmetric --cipher-algo AES256 --passphrase-fd 3  3<$AM_PASS";
     if ($? == -1) {
 	print STDERR "failed to execute gpg: $!\n";
 	exit (1);
@@ -79,7 +92,8 @@ sub encrypt() {
 
 sub decrypt() {
     my $gpg_agent_cmd = do_gpg_agent();
-    system "$gpg_agent_cmd gpg --batch --quiet --no-mdc-warning --decrypt --passphrase-fd 3  3<$AM_PASS";
+    my $gpg = which_gpg();
+    system "$gpg_agent_cmd $gpg --batch --quiet --no-mdc-warning --decrypt --passphrase-fd 3  3<$AM_PASS";
     if ($? == -1) {
 	print STDERR "failed to execute gpg: $!\n";
 	exit (1);
