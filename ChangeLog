@@ -1,4 +1,9 @@
 2012-04-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amcryptsimple.pl: Use gpg if available.
+	* common-src/amgpgcrypt.pl: Use gpg-agent and/or gpg2 if available.
+	* server-src/dumper.c: Log compression/encryption executed.
+
+2012-04-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: New S3_MULTI_DELETE property.
 	* device-src/s3.c: New S3_MULTI_DELETE property.
 	* device-src/s3.h (s3_multi_delete): New prototype.
