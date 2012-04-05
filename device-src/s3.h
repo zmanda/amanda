@@ -30,7 +30,8 @@
 typedef enum {
    S3_API_S3,
    S3_API_SWIFT_1,
-   S3_API_SWIFT_2
+   S3_API_SWIFT_2,
+   S3_API_OAUTH2
 } S3_api;
 
 /* An opaque handle.  S3Handles should only be accessed from a single
@@ -177,6 +178,7 @@ typedef curl_progress_callback s3_progress_func;
     S3_ERROR(Accepted), \
     S3_ERROR(Forbidden), \
     S3_ERROR(Conflict), \
+    S3_ERROR(AuthenticationRequired), \
     S3_ERROR(END)
 
 typedef enum {
@@ -256,7 +258,10 @@ s3_open(const char * access_key, const char *secret_key,
 	const char *username,
 	const char *password,
 	const char *tenant_id,
-	const char *tenant_name);
+	const char *tenant_name,
+	const char *client_id,
+	const char *client_secret,
+	const char *refresh_token);
 
 /* Deallocate an S3Handle
  *

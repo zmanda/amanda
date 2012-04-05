@@ -153,6 +153,11 @@ struct _S3Device {
 
     guint64      dltotal;
     guint64      ultotal;
+
+    /* google OAUTH2 */
+    char        *client_id;
+    char        *client_secret;
+    char        *refresh_token;
 };
 
 /*
@@ -274,6 +279,18 @@ static DevicePropertyBase device_property_nb_threads_recovery;
 /* If the s3 server have the multi-delete functionality */
 static DevicePropertyBase device_property_s3_multi_delete;
 #define PROPERTY_S3_MULTI_DELETE (device_property_s3_multi_delete.ID)
+
+/* The client_id for OAUTH2 */
+static DevicePropertyBase device_property_client_id;
+#define PROPERTY_CLIENT_ID (device_property_client_id.ID)
+
+/* The client_secret for OAUTH2 */
+static DevicePropertyBase device_property_client_secret;
+#define PROPERTY_CLIENT_SECRET (device_property_client_secret.ID)
+
+/* The refresh token for OAUTH2 */
+static DevicePropertyBase device_property_refresh_token;
+#define PROPERTY_REFRESH_TOKEN (device_property_refresh_token.ID)
 
 /*
  * prototypes
@@ -496,6 +513,18 @@ static gboolean s3_device_set_host_fn(Device *p_self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_service_path_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_client_id_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_client_secret_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_refresh_token_fn(Device *p_self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -873,6 +902,7 @@ s3_thread_delete_block(
 	    while (self->keys && n<1000) {
 		*f++ = self->keys->data;
 		self->keys = g_slist_remove(self->keys, self->keys->data);
+		n++;
 	    }
 	    *f++ = NULL;
 	    g_mutex_unlock(self->thread_idle_mutex);
@@ -897,9 +927,9 @@ s3_thread_delete_block(
 		}
 		g_mutex_unlock(self->thread_idle_mutex);
 		g_free(filenames);
-		delete_file(self, -1);
+		result = 1;
 		g_mutex_lock(self->thread_idle_mutex);
-		break;
+		continue;
 	    }
 	    f = filenames;
 	    while(*f) {
@@ -1033,6 +1063,15 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_openstack_swift_api,
                                       G_TYPE_STRING, "openstack_swift_api",
        "Whether to use openstack protocol");
+    device_property_fill_and_register(&device_property_client_id,
+                                      G_TYPE_STRING, "client_id",
+       "client_id for use with oauth2");
+    device_property_fill_and_register(&device_property_client_secret,
+                                      G_TYPE_STRING, "client_secret",
+       "client_secret for use with oauth2");
+    device_property_fill_and_register(&device_property_refresh_token,
+                                      G_TYPE_STRING, "refresh_token",
+       "refresh_token for use with oauth2");
     device_property_fill_and_register(&device_property_s3_ssl,
                                       G_TYPE_BOOLEAN, "s3_ssl",
        "Whether to use SSL with Amazon S3");
@@ -1349,10 +1388,24 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
             s3_device_set_enforce_max_volume_usage_fn);
 
     device_class_register_property(device_class, PROPERTY_S3_SUBDOMAIN,
-            (PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK) &
-                (~ PROPERTY_ACCESS_SET_INSIDE_FILE_WRITE),
+            PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
             device_simple_property_get_fn,
             s3_device_set_use_subdomain_fn);
+
+    device_class_register_property(device_class, PROPERTY_CLIENT_ID,
+            PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+            device_simple_property_get_fn,
+            s3_device_set_client_id_fn);
+
+    device_class_register_property(device_class, PROPERTY_CLIENT_SECRET,
+            PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+            device_simple_property_get_fn,
+            s3_device_set_client_secret_fn);
+
+    device_class_register_property(device_class, PROPERTY_REFRESH_TOKEN,
+            PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+            device_simple_property_get_fn,
+            s3_device_set_refresh_token_fn);
 }
 
 static gboolean
@@ -1622,6 +1675,8 @@ s3_device_set_storage_api(Device *p_self, DevicePropertyBase *base,
 	self->s3_api = S3_API_SWIFT_1;
     } else if (g_str_equal(storage_api, "SWIFT-2.0")) {
 	self->s3_api = S3_API_SWIFT_2;
+    } else if (g_str_equal(storage_api, "OAUTH2")) {
+	self->s3_api = S3_API_OAUTH2;
     } else {
 	g_debug("Invalid STORAGE_API, using \"S3\".");
 	self->s3_api = S3_API_S3;
@@ -1819,6 +1874,46 @@ property_set_leom_fn(Device *p_self,
 
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
+
+static gboolean
+s3_device_set_client_id_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->client_id);
+    self->client_id = g_value_dup_string(val);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_client_secret_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->client_secret);
+    self->client_secret = g_value_dup_string(val);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_refresh_token_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->refresh_token);
+    self->refresh_token = g_value_dup_string(val);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
 static Device*
 s3_device_factory(char * device_name, char * device_type, char * device_node)
 {
@@ -1993,6 +2088,28 @@ static gboolean setup_handle(S3Device * self) {
 		    DEVICE_STATUS_DEVICE_ERROR);
 		return FALSE;
 	    }
+	} else if (self->s3_api == S3_API_OAUTH2) {
+	    if (self->client_id == NULL ||
+		self->client_id[0] == '\0') {
+		device_set_error(d_self,
+		    g_strdup(_("Missing client_id properties")),
+		    DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    }
+	    if (self->client_secret == NULL ||
+		self->client_secret[0] == '\0') {
+		device_set_error(d_self,
+		    g_strdup(_("Missing client_secret properties")),
+		    DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    }
+	    if (self->refresh_token == NULL ||
+		self->refresh_token[0] == '\0') {
+		device_set_error(d_self,
+		    g_strdup(_("Missing refresh_token properties")),
+		    DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    }
 	}
 
 	if (!self->use_ssl && self->ca_info) {
@@ -2024,14 +2141,18 @@ static gboolean setup_handle(S3Device * self) {
 					   self->username,
 					   self->password,
 					   self->tenant_id,
-					   self->tenant_name);
+					   self->tenant_name,
+					   self->client_id,
+					   self->client_secret,
+					   self->refresh_token);
             if (self->s3t[thread].s3 == NULL) {
 	        device_set_error(d_self,
 		    g_strdup(_("Internal error creating S3 handle")),
 		    DEVICE_STATUS_DEVICE_ERROR);
 		self->nb_threads = thread+1;
                 return FALSE;
-	    } else if (self->s3_api != S3_API_S3) {
+	    } else if (self->s3_api == S3_API_SWIFT_1 ||
+		       self->s3_api == S3_API_SWIFT_2) {
 		s3_error(self->s3t[0].s3, NULL, &response_code,
 			 &s3_error_code, NULL, &curl_code, NULL);
 		if (response_code != 200) {

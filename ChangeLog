@@ -1,4 +1,12 @@
 2012-04-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: New CLIENT_ID, CLIENT_SECRET and
+	  REFRESH_TOKEN properties. Handle OAUTH2.
+	* device-src/s3.c: Handle OAUTH2.
+	* device-src/s3.h (S3_api): Add S3_API_OAUTH2.
+	* man/xml-source/amanda-devices.7.xml: Document new CLIENT_ID,
+	  CLIENT_SECRET and REFRESH_TOKEN properties.
+
+2012-04-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amfetchdump.8.xml: Document -l do not unencrypt.
 
 2012-04-05  Jean-Louis Martineau <martineau@zmanda.com>
