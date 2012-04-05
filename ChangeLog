@@ -1,3 +1,13 @@
+2012-04-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: New PASSWORD, USERNAME, TENANT_ID,
+	  TENANT_NAME and STORAGE_API property. Handle SWIFT-2.
+	* device-src/s3.c: Handle SWIFT-2.
+	* device-src/s3.h (s3_open): New prototype.
+	* device-src/s3.h (S3_api): New enum.
+	* man/xml-source/amanda-devices.7.xml: Document new PASSWORD,
+	  USERNAME, TENANT_ID, TENANT_NAME and STORAGE_API S3 device
+	  properties.
+
 2012-04-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsamba.pl: Do not set unc prematurely.
 

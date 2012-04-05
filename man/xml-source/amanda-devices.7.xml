@@ -445,11 +445,15 @@ writing long enough to bring the average below this value.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>OPENSTACK_SWIFT_API</term><listitem>
- (read-write) Set to yes if it is an openstack storage device.
+ (read-write) Deprecated, set "STORAGE_API to "SWIFT-1.0".
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PROXY</term><listitem>
  (read-write) The proxy hostname or IP in the format "host[:port]".
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PASSWORD</term><listitem>
+(read-write) The password (for swift v2).
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>S3_ACCESS_KEY</term><listitem>
@@ -511,6 +515,27 @@ for the most up-to-date list.
  <!-- ==== -->
  <varlistentry><term>S3_USER_TOKEN</term><listitem>
 (read-write) This property specifies the user token for Amanda Enterprise Edition customers.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>STORAGE_API</term><listitem>
+ (read-write) Which API to use for the cloud:
+<programlisting>
+  S3            Amanzon S3 api
+  SWITF-1.0     Openstack swift v1.0
+  SWIFT-2.0     Openstack swift v2.0
+</programlisting>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>TENANT_ID</term><listitem>
+(read-write) The tenant_id (for swift v2).
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>TENANT_NAME</term><listitem>
+(read-write) The tenant_name (for swift v2).
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>USERNAME</term><listitem>
+(read-write) The username (for swift v2).
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>VERBOSE</term><listitem>
