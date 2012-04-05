@@ -221,11 +221,14 @@ sub DONE {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
-    $self->_assert_in_state("writing") or return;
-    $self->{'dumper_status'} = "DONE";
-    $self->{'orig_kb'} = $params{'orig_kb'};
-    if (defined $self->{'result'}) {
-	$self->result_cb(undef);
+    if (!defined $self->{'dumper_status'}) {
+	$self->{'dumper_status'} = "DONE";
+	$self->{'orig_kb'} = $params{'orig_kb'};
+	if (defined $self->{'result'}) {
+	    $self->result_cb(undef);
+	}
+    } else {
+	# ignore the message
     }
 }
 
@@ -233,11 +236,14 @@ sub FAILED {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
-    $self->_assert_in_state("writing") or return;
-
     $self->{'dumper_status'} = "FAILED";
     if (defined $self->{'result'}) {
 	$self->result_cb(undef);
+    } else { # Abort the dump
+	push @{$self->{'input_errors'}}, "dumper failed";
+	$self->{'scribe'}->cancel_dump(
+		xfer => $self->{'scribe'}->{'xfer'},
+		dump_cb => $self->{'dump_cb'});
     }
 }
 
@@ -569,6 +575,8 @@ sub setup_and_start_dump {
     my $self = shift;
     my ($msgtype, %params) = @_;
     my %get_xfer_dest_args;
+
+    $self->{'dump_cb'} = $params{'dump_cb'};
 
     # setting up the dump is a bit complex, due to the requirements of
     # a directtcp port_write.  This function:

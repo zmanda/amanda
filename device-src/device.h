@@ -200,9 +200,14 @@ struct _DeviceClass {
     gboolean (* listen)(Device *self, gboolean for_writing, DirectTCPAddr **addrs);
     gboolean (* accept)(Device *self, DirectTCPConnection **conn,
 			ProlongProc prolong, gpointer prolong_data);
+    int (* accept_with_cond)(Device *self, DirectTCPConnection **conn,
+				  GMutex *abort_mutex, GCond *abort_cond);
     gboolean (* connect)(Device *self, gboolean for_writing, DirectTCPAddr *addrs,
 			DirectTCPConnection **conn, ProlongProc prolong,
 			gpointer prolong_data);
+    gboolean (* connect_with_cond)(Device *self, gboolean for_writing,
+			DirectTCPAddr *addrs, DirectTCPConnection **conn,
+			GMutex *abort_mutex, GCond *abort_cond);
     gboolean (* write_from_connection)(Device *self, guint64 size, guint64 *actual_size);
     gboolean (* read_to_connection)(Device *self, guint64 size, guint64 *actual_size);
     gboolean (* use_connection)(Device *self, DirectTCPConnection *conn);
@@ -335,9 +340,14 @@ gboolean 	device_eject	(Device * self);
 gboolean device_listen(Device *self, gboolean for_writing, DirectTCPAddr **addrs);
 gboolean device_accept(Device *self, DirectTCPConnection **conn,
                 ProlongProc prolong, gpointer prolong_data);
+int device_accept_with_cond(Device *self, DirectTCPConnection **conn,
+				 GMutex *abort_mutex, GCond *abort_cond);
 gboolean device_connect(Device *self, gboolean for_writing, DirectTCPAddr *addrs,
 			DirectTCPConnection **conn, ProlongProc prolong,
 			gpointer prolong_data);
+gboolean device_connect_with_cond(Device *self, gboolean for_writing,
+			DirectTCPAddr *addrs, DirectTCPConnection **conn,
+			GMutex *abort_mutex, GCond *abort_cond);
 gboolean device_write_from_connection(Device *self, guint64 size, guint64 *actual_size);
 gboolean device_read_to_connection(Device *self, guint64 size, guint64 *actual_size);
 gboolean device_use_connection(Device *self, DirectTCPConnection *conn);

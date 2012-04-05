@@ -220,7 +220,7 @@ do_directtcp_connect(
     /* set up the sockaddr -- IPv4 only */
     copy_sockaddr(&addr, addrs);
 
-    g_debug("making data connection to %s", str_sockaddr(&addr));
+    g_debug("do_directtcp_connect making data connection to %s", str_sockaddr(&addr));
     sock = socket(SU_GET_FAMILY(&addr), SOCK_STREAM, 0);
     if (sock < 0) {
 	xfer_cancel_with_error(elt,

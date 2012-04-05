@@ -224,6 +224,20 @@ gboolean ndmp_connection_wait_for_notify(
 	ndmp9_mover_pause_reason *mover_pause_reason,
 	guint64 *mover_pause_seek_position);
 
+/* Synchronous notification interface.  This handles all types of notification,
+ * returning the result in the appropriate output parameter. */
+gboolean ndmp_connection_wait_for_notify_with_cond(
+	NDMPConnection *self,
+	/* NDMP_NOTIFY_DATA_HALTED */
+	ndmp9_data_halt_reason *data_halt_reason,
+	/* NDMP_NOTIFY_MOVER_HALTED */
+	ndmp9_mover_halt_reason *mover_halt_reason,
+	/* NDMP_NOTIFY_MOVER_PAUSED */
+	ndmp9_mover_pause_reason *mover_pause_reason,
+	guint64 *mover_pause_seek_position,
+	GMutex *abort_mutex,
+	GCond *abort_cond);
+
 /*
  * Constructor
  */

@@ -269,7 +269,10 @@ xfer_cancel(
 {
     /* Since xfer_cancel can be called from any thread, we just send a message.
      * The action takes place when the message is received. */
-    XferElement *src = g_ptr_array_index(xfer->elements, 0);
+    XferElement *src;
+    if (xfer->cancelled > 0) return;
+    xfer->cancelled++;
+    src = g_ptr_array_index(xfer->elements, 0);
     xfer_queue_message(xfer, xmsg_new(src, XMSG_CANCEL, 0));
 }
 
