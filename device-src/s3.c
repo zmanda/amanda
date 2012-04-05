@@ -143,6 +143,10 @@ struct S3Handle {
     char *password;
     char *tenant_id;
     char *tenant_name;
+    char *client_id;
+    char *client_secret;
+    char *refresh_token;
+    char *access_token;
 
     /* attributes for new objects */
     char *bucket_location;
@@ -176,6 +180,7 @@ struct S3Handle {
 
     /* offset with s3 */
     time_t time_offset_with_s3;
+    char *content_type;
 };
 
 typedef struct {
@@ -264,6 +269,11 @@ typedef struct result_handling {
     s3_result_t result;
 } result_handling_t;
 
+/*
+ * get the access token for OAUTH2
+ */
+static gboolean oauth2_get_access_token(S3Handle *hdl);
+
 /* Lookup a result in C{result_handling}.
  *
  * @param result_handling: array of handling specifications
@@ -282,7 +292,7 @@ lookup_result(const result_handling_t *result_handling,
  * Precompiled regular expressions */
 static regex_t etag_regex, error_name_regex, message_regex, subdomain_regex,
     location_con_regex, date_sync_regex, x_auth_token_regex,
-    x_storage_url_regex;
+    x_storage_url_regex, access_token_regex, content_type_regex;
 
 
 /*
@@ -546,7 +556,9 @@ build_url(
     GString *url = NULL;
     char *esc_bucket = NULL, *esc_key = NULL;
 
-    if (hdl->s3_api != S3_API_S3 && hdl->x_storage_url) {
+    if ((hdl->s3_api == S3_API_SWIFT_1 || hdl->s3_api == S3_API_SWIFT_2 ||
+	 hdl->s3_api == S3_API_OAUTH2) &&
+	 hdl->x_storage_url) {
 	url = g_string_new(hdl->x_storage_url);
 	g_string_append(url, "/");
     } else {
@@ -688,11 +700,7 @@ authenticate_request(S3Handle *hdl,
             g_free(buf);
 	}
     } else if (hdl->s3_api == S3_API_SWIFT_2) {
-	if (!bucket) {
-	    buf = g_strdup_printf("Content-Type: %s", "application/xml");
-	    headers = curl_slist_append(headers, buf);
-	    g_free(buf);
-	} else {
+	if (bucket) {
             buf = g_strdup_printf("X-Auth-Token: %s", hdl->x_auth_token);
             headers = curl_slist_append(headers, buf);
             g_free(buf);
@@ -700,6 +708,12 @@ authenticate_request(S3Handle *hdl,
 	buf = g_strdup_printf("Accept: %s", "application/xml");
 	headers = curl_slist_append(headers, buf);
 	g_free(buf);
+    } else if (hdl->s3_api == S3_API_OAUTH2) {
+	if (bucket) {
+            buf = g_strdup_printf("Authorization: Bearer %s", hdl->access_token);
+            headers = curl_slist_append(headers, buf);
+            g_free(buf);
+	}
     } else {
 	/* Build the string to sign, per the S3 spec.
 	 * See: "Authenticating REST Requests" - API Version 2006-03-01 pg 58
@@ -1086,10 +1100,15 @@ interpret_response(S3Handle *hdl,
 			g_strdup("S3 Error: Unknown (empty response body)");
             return TRUE; /* perhaps a network error; retry the request */
 	} else {
-	    /* 2xx and 3xx codes without body ar good result */
+	    /* 2xx and 3xx codes without body are good result */
 	    hdl->last_s3_error_code = S3_ERROR_None;
 	    return FALSE;
 	}
+    }
+
+    if (!hdl->content_type ||
+	!g_str_equal(hdl->content_type, "application/xml")) {
+	return FALSE;
     }
 
     thunk.in_title = FALSE;
@@ -1111,7 +1130,8 @@ interpret_response(S3Handle *hdl,
     thunk.service_type = NULL;
     thunk.service_public_url = NULL;
 
-    if (hdl->s3_api != S3_API_S3 &&
+    if ((hdl->s3_api == S3_API_SWIFT_1 ||
+	 hdl->s3_api == S3_API_SWIFT_2) &&
 	!g_strstr_len(body, body_len, "xml version") &&
 	!g_strstr_len(body, body_len, "<html>")) {
 	char *body_copy = g_strndup(body, body_len);
@@ -1423,8 +1443,8 @@ curl_debug_message(CURL *curl G_GNUC_UNUSED,
     g_free(message);
 
     for (line = lines; *line; line++) {
-    if (**line == '\0') continue; /* skip blank lines */
-    g_debug("%s%s", lineprefix, *line);
+	if (**line == '\0') continue; /* skip blank lines */
+	g_debug("%s%s", lineprefix, *line);
     }
     g_strfreev(lines);
 
@@ -1649,6 +1669,11 @@ perform_request(S3Handle *hdl,
         should_retry = interpret_response(hdl, curl_code, curl_error_buffer,
             int_writedata.resp_buf.buffer, int_writedata.resp_buf.buffer_pos, int_writedata.etag, md5_hash_hex);
 
+	if (hdl->s3_api == S3_API_OAUTH2 &&
+	    hdl->last_response_code == 401 &&
+	    hdl->last_s3_error_code == S3_ERROR_AuthenticationRequired) {
+	    should_retry = oauth2_get_access_token(hdl);
+	}
         /* and, unless we know we need to retry, see what we're to do now */
         if (!should_retry) {
             result = lookup_result(result_handling, hdl->last_response_code,
@@ -1758,6 +1783,9 @@ s3_internal_header_func(void *ptr, size_t size, size_t nmemb, void * stream)
     if (!s3_regexec_wrap(&x_storage_url_regex, header, 2, pmatch, 0))
 	data->hdl->x_storage_url = find_regex_substring(header, pmatch[1]);
 
+    if (!s3_regexec_wrap(&content_type_regex, header, 2, pmatch, 0))
+       data->hdl->content_type = find_regex_substring(header, pmatch[1]);
+
     if (strlen(header) == 0)
 	data->headers_done = TRUE;
     if (g_str_equal(final_header, header))
@@ -1801,10 +1829,12 @@ compile_regexes(void)
         {"^ETag:[[:space:]]*\"([^\"]+)\"[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &etag_regex},
         {"^X-Auth-Token:[[:space:]]*([^ ]+)[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &x_auth_token_regex},
         {"^X-Storage-Url:[[:space:]]*([^ ]+)[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &x_storage_url_regex},
+        {"^Content-Type:[[:space:]]*([^ ;]+).*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &content_type_regex},
         {"<Message>[[:space:]]*([^<]*)[[:space:]]*</Message>", REG_EXTENDED | REG_ICASE, &message_regex},
         {"^[a-z0-9](-*[a-z0-9]){2,62}$", REG_EXTENDED | REG_NOSUB, &subdomain_regex},
         {"(/>)|(>([^<]*)</LocationConstraint>)", REG_EXTENDED | REG_ICASE, &location_con_regex},
         {"^Date:(.*)\r",REG_EXTENDED | REG_ICASE | REG_NEWLINE, &date_sync_regex},
+        {"\"access_token\" : \"([^\"]*)\",", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &access_token_regex},
         {NULL, 0, NULL}
     };
     char regmessage[1024];
@@ -1828,6 +1858,15 @@ compile_regexes(void)
         {"^ETag:\\s*\"([^\"]+)\"\\s*$",
          G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
          &etag_regex},
+        {"^X-Auth-Token:\\s*([^ ]+)\\s*$",
+         G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
+         &x_auth_token_regex},
+        {"^X-Storage-Url:\\s*([^ ]+)\\s*$",
+         G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
+         &x_storage_url_regex},
+        {"^Content-Type:\\s*([^ ]+)\\s*$",
+         G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
+         &content_type_regex},
         {"<Message>\\s*([^<]*)\\s*</Message>",
          G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
          &message_regex},
@@ -1840,6 +1879,9 @@ compile_regexes(void)
         {"^Date:(.*)\\r",
          G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
          &date_sync_regex},
+        {"\"access_token\" : \"([^\"]*)\"",
+         G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
+         &access_token_regex},
         {NULL, 0, NULL}
   };
   int i;
@@ -1947,7 +1989,8 @@ get_openstack_swift_api_v2_setting(
     buf.buffer = g_string_free(body, FALSE);
     buf.buffer_len = strlen(buf.buffer);
     s3_verbose(hdl, 1);
-    result = perform_request(hdl, "POST", NULL, NULL, NULL, NULL, NULL,
+    result = perform_request(hdl, "POST", NULL, NULL, NULL, NULL,
+			     "application/xml",
 			     S3_BUFFER_READ_FUNCS, &buf,
 			     NULL, NULL, NULL,
                              NULL, NULL, result_handling);
@@ -1973,14 +2016,17 @@ s3_open(const char *access_key,
         const char *username,
         const char *password,
         const char *tenant_id,
-        const char *tenant_name)
+        const char *tenant_name,
+	const char *client_id,
+	const char *client_secret,
+	const char *refresh_token)
 {
     S3Handle *hdl;
 
     hdl = g_new0(S3Handle, 1);
     if (!hdl) goto error;
 
-    hdl->verbose = FALSE;
+    hdl->verbose = TRUE;
     hdl->use_ssl = s3_curl_supports_ssl();
 
     if (s3_api == S3_API_S3) {
@@ -2002,6 +2048,10 @@ s3_open(const char *access_key,
 	g_assert(tenant_id || tenant_name);
 	hdl->tenant_id = g_strdup(tenant_id);
 	hdl->tenant_name = g_strdup(tenant_name);
+    } else if (s3_api == S3_API_OAUTH2) {
+	hdl->client_id = g_strdup(client_id);
+	hdl->client_secret = g_strdup(client_secret);
+	hdl->refresh_token = g_strdup(refresh_token);
     }
 
     /* NULL is okay */
@@ -2074,6 +2124,18 @@ s3_free(S3Handle *hdl)
         g_free(hdl->secret_key);
         g_free(hdl->swift_account_id);
         g_free(hdl->swift_access_key);
+        g_free(hdl->content_type);
+        g_free(hdl->user_token);
+        g_free(hdl->ca_info);
+        g_free(hdl->proxy);
+        g_free(hdl->username);
+        g_free(hdl->password);
+        g_free(hdl->tenant_id);
+        g_free(hdl->tenant_name);
+        g_free(hdl->client_id);
+        g_free(hdl->client_secret);
+        g_free(hdl->refresh_token);
+        g_free(hdl->access_token);
         if (hdl->user_token) g_free(hdl->user_token);
         if (hdl->bucket_location) g_free(hdl->bucket_location);
         if (hdl->storage_class) g_free(hdl->storage_class);
@@ -2106,6 +2168,10 @@ s3_reset(S3Handle *hdl)
         if (hdl->last_response_body) {
             g_free(hdl->last_response_body);
             hdl->last_response_body = NULL;
+        }
+        if (hdl->content_type) {
+            g_free(hdl->content_type);
+            hdl->content_type = NULL;
         }
 
         hdl->last_response_body_size = 0;
@@ -2605,7 +2671,8 @@ s3_multi_delete(S3Handle *hdl,
     data.buffer_pos = 0;
     data.max_buffer_size = data.buffer_len;
 
-    result = perform_request(hdl, "POST", bucket, NULL, "delete", NULL, "application/xml",
+    result = perform_request(hdl, "POST", bucket, NULL, "delete", NULL,
+		 "application/xml",
 		 s3_buffer_read_func, s3_buffer_reset_func,
 		 s3_buffer_size_func, s3_buffer_md5_func,
 		 &data, NULL, NULL, NULL, NULL, NULL,
@@ -2735,6 +2802,67 @@ cleanup:
 
 }
 
+static s3_result_t
+oauth2_get_access_token(
+    S3Handle *hdl)
+{
+    GString *query;
+    CurlBuffer data;
+    s3_result_t result = S3_RESULT_FAIL;
+    static result_handling_t result_handling[] = {
+        { 200,  0,                    0, S3_RESULT_OK },
+        { 204,  0,                    0, S3_RESULT_OK },
+        RESULT_HANDLING_ALWAYS_RETRY,
+        { 0, 0,                       0, /* default: */ S3_RESULT_FAIL  }
+        };
+    char *body;
+    regmatch_t pmatch[2];
+
+    g_assert(hdl != NULL);
+
+    query = g_string_new(NULL);
+    g_string_append(query, "client_id=");
+    g_string_append(query, hdl->client_id);
+    g_string_append(query, "&client_secret=");
+    g_string_append(query, hdl->client_secret);
+    g_string_append(query, "&refresh_token=");
+    g_string_append(query, hdl->refresh_token);
+    g_string_append(query, "&grant_type=refresh_token");
+
+    data.buffer_len = query->len;
+    data.buffer = query->str;
+    data.buffer_pos = 0;
+    data.max_buffer_size = data.buffer_len;
+
+    hdl->x_storage_url = "https://accounts.google.com/o/oauth2/token";
+    result = perform_request(hdl, "POST", NULL, NULL, NULL, NULL,
+			     "application/x-www-form-urlencoded",
+			     s3_buffer_read_func, s3_buffer_reset_func,
+			     s3_buffer_size_func, s3_buffer_md5_func,
+                             &data, NULL, NULL, NULL, NULL, NULL,
+			     result_handling);
+    hdl->x_storage_url = NULL;
+
+    /* use strndup to get a null-terminated string */
+    body = g_strndup(hdl->last_response_body, hdl->last_response_body_size);
+    if (!body) {
+        hdl->last_message = g_strdup(_("No body received for location request"));
+        goto cleanup;
+    } else if ('\0' == body[0]) {
+        hdl->last_message = g_strdup(_("Empty body received for location request"));
+        goto cleanup;
+    }
+
+    if (!s3_regexec_wrap(&access_token_regex, body, 2, pmatch, 0)) {
+        hdl->access_token = find_regex_substring(body, pmatch[1]);
+        hdl->x_auth_token = g_strdup(hdl->access_token);
+    }
+
+cleanup:
+    g_free(body);
+    return result == S3_RESULT_OK;
+}
+
 gboolean
 s3_is_bucket_exists(S3Handle *hdl,
                      const char *bucket)
@@ -2746,6 +2874,12 @@ s3_is_bucket_exists(S3Handle *hdl,
         RESULT_HANDLING_ALWAYS_RETRY,
         { 0, 0,                       0, /* default: */ S3_RESULT_FAIL  }
         };
+
+    if (hdl->s3_api == S3_API_OAUTH2 && !hdl->access_token) {
+	if (oauth2_get_access_token(hdl)) {
+	    return FALSE;
+	}
+    }
 
     result = perform_request(hdl, "GET", bucket, NULL, NULL,
 			     hdl->s3_api != S3_API_S3?"limit=1":"max-keys=1",
