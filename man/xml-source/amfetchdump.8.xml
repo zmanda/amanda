@@ -134,10 +134,9 @@ prompting for each volume.</para></listitem>
   </varlistentry>
   <varlistentry>
     <term><option>-l</option></term>
-<listitem><para>Leave dumps in the compressed/uncompressed state in which they
-were found on tape. By default, <emphasis
-remap='B'>amfetchdump</emphasis> will automatically uncompress when
-restoring.</para></listitem>
+<listitem><para>Leave dumps in the compressed/uncompressed and
+encrypted/unencrypted state in which they were found on tape. By default,
+<emphasis remap='B'>amfetchdump</emphasis> will automatically uncompress and/or unencrypt when restoring.</para></listitem>
   </varlistentry>
   <varlistentry>
     <term><option>-a</option></term>

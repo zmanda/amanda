@@ -1,4 +1,7 @@
 2012-04-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amfetchdump.8.xml: Document -l do not unencrypt.
+
+2012-04-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.c (device_accept_with_cond,
 	  device_connect_with_cond): New functions.
 	* device-src/device.h (device_accept_with_cond,
