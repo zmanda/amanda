@@ -1157,6 +1157,122 @@ accept_impl(
     return TRUE;
 }
 
+static int
+accept_with_cond_impl(
+    Device *dself,
+    DirectTCPConnection **dtcpconn,
+    GMutex *abort_mutex,
+    GCond *abort_cond)
+{
+    NdmpDevice *self = NDMP_DEVICE(dself);
+    ndmp9_mover_state state;
+    guint64 bytes_moved;
+    ndmp9_mover_mode mode;
+    ndmp9_mover_pause_reason reason;
+    guint64 seek_position;
+    int result;
+
+    if (device_in_error(self)) return 1;
+
+    g_assert(self->listen_addrs);
+
+    *dtcpconn = NULL;
+
+    if (!self->for_writing) {
+	/* when reading, we don't get any kind of notification that the
+	 * connection has been established, but we can't call NDMP_MOVER_READ
+	 * until the mover is active.  So we have to poll, waiting for ACTIVE.
+	 * This is ugly. */
+	gulong backoff = G_USEC_PER_SEC/20; /* 5 msec */
+	while (1) {
+	    if (!ndmp_connection_mover_get_state(self->ndmp,
+		    &state, &bytes_moved, NULL, NULL)) {
+		set_error_from_ndmp(self);
+		return 1;
+	    }
+
+	    if (state != NDMP9_MOVER_STATE_LISTEN)
+		break;
+
+	    /* back off a little bit to give the other side time to breathe,
+	     * but not more than one second */
+	    g_usleep(backoff);
+	    backoff *= 2;
+	    if (backoff > G_USEC_PER_SEC)
+		backoff = G_USEC_PER_SEC;
+	}
+
+	/* double-check state */
+	if (state != NDMP9_MOVER_STATE_ACTIVE) {
+	    device_set_error(DEVICE(self),
+		g_strdup("mover did not enter the ACTIVE state as expected"),
+		DEVICE_STATUS_DEVICE_ERROR);
+	    return 1;
+	}
+
+	/* now, we need to get this into the PAUSED state, since right now we
+	 * aren't allowed to perform any tape movement commands.  So we issue a
+	 * MOVER_READ request for the whole darn image stream after setting the
+	 * usual empty window. Note that this means the whole dump will be read
+	 * in one MOVER_READ operation, even if it does not begin at the
+	 * beginning of a part. */
+	if (!ndmp_connection_mover_read(self->ndmp, 0, G_MAXUINT64)) {
+	    set_error_from_ndmp(self);
+	    return 1;
+	}
+
+	/* now we should expect a notice that the mover has paused */
+    } else {
+	/* when writing, the mover will pause as soon as the first byte comes
+	 * in, so there's no need to do anything to trigger the pause. */
+    }
+
+    /* NDMJOB sends NDMP9_MOVER_PAUSE_SEEK to indicate that it wants to write
+     * outside the window, while the standard specifies .._EOW, instead.  When
+     * reading to a connection, we get the appropriate .._SEEK.  It's easy
+     * enough to handle both. */
+
+    result = ndmp_connection_wait_for_notify_with_cond(self->ndmp,
+	    NULL,
+	    NULL,
+	    &reason, &seek_position,
+	    abort_mutex, abort_cond);
+
+    g_free(self->listen_addrs);
+    self->listen_addrs = NULL;
+
+    if (result == 1) {
+	set_error_from_ndmp(self);
+	return 1;
+    } else if (result == 2) {
+	return 2;
+    }
+
+    if (reason != NDMP9_MOVER_PAUSE_SEEK && reason != NDMP9_MOVER_PAUSE_EOW) {
+	device_set_error(DEVICE(self),
+	    g_strdup_printf("got NOTIFY_MOVER_PAUSED, but not because of EOW or SEEK"),
+	    DEVICE_STATUS_DEVICE_ERROR);
+	return 1;
+    }
+
+    if (self->for_writing)
+	mode = NDMP9_MOVER_MODE_READ;
+    else
+	mode = NDMP9_MOVER_MODE_WRITE;
+
+    /* set up the new directtcp connection */
+    if (self->directtcp_conn)
+	g_object_unref(self->directtcp_conn);
+    self->directtcp_conn =
+	directtcp_connection_ndmp_new(self->ndmp, mode);
+    *dtcpconn = DIRECTTCP_CONNECTION(self->directtcp_conn);
+
+    /* reference it for the caller */
+    g_object_ref(*dtcpconn);
+
+    return 0;
+}
+
 static gboolean
 connect_impl(
     Device *dself,
@@ -1262,6 +1378,115 @@ connect_impl(
     g_object_ref(*dtcpconn);
 
     return TRUE;
+}
+
+static gboolean
+connect_with_cond_impl(
+    Device *dself,
+    gboolean for_writing,
+    DirectTCPAddr *addrs,
+    DirectTCPConnection **dtcpconn,
+    GMutex *abort_mutex,
+    GCond *abort_cond)
+{
+    NdmpDevice *self = NDMP_DEVICE(dself);
+    ndmp9_mover_mode mode;
+    ndmp9_mover_pause_reason reason;
+    guint64 seek_position;
+    int result;
+
+    g_assert(!self->listen_addrs);
+
+    *dtcpconn = NULL;
+    self->for_writing = for_writing;
+
+    if (!open_tape_agent(self)) {
+	/* error message was set by open_tape_agent */
+	return 1;
+    }
+
+    /* first, set the window to an empty span so that the mover doesn't start
+     * reading or writing data immediately.  NDMJOB tends to reset the record
+     * size periodically (in direct contradiction to the spec), so we reset it
+     * here as well. */
+    if (!ndmp_connection_mover_set_record_size(self->ndmp,
+		DEVICE(self)->block_size)) {
+	set_error_from_ndmp(self);
+	return 1;
+    }
+
+    if (!ndmp_connection_mover_set_window(self->ndmp, 0, 0)) {
+	set_error_from_ndmp(self);
+	return 1;
+    }
+
+    if (self->for_writing)
+	mode = NDMP9_MOVER_MODE_READ;
+    else
+	mode = NDMP9_MOVER_MODE_WRITE;
+
+    if (!ndmp_connection_mover_connect(self->ndmp, mode, addrs)) {
+	set_error_from_ndmp(self);
+	return 1;
+    }
+
+    if (!self->for_writing) {
+	/* The agent is in the ACTIVE state, and will remain so until we tell
+	 * it to do something else.  The thing we want to is for it to start
+	 * reading data from the tape, which will immediately trigger an EOW or
+	 * SEEK pause. */
+	if (!ndmp_connection_mover_read(self->ndmp, 0, G_MAXUINT64)) {
+	    set_error_from_ndmp(self);
+	    return 1;
+	}
+
+	/* now we should expect a notice that the mover has paused */
+    } else {
+	/* when writing, the mover will pause as soon as the first byte comes
+	 * in, so there's no need to do anything to trigger the pause. */
+    }
+
+    /* NDMJOB sends NDMP9_MOVER_PAUSE_SEEK to indicate that it wants to write
+     * outside the window, while the standard specifies .._EOW, instead.  When
+     * reading to a connection, we get the appropriate .._SEEK.  It's easy
+     * enough to handle both. */
+
+    result = ndmp_connection_wait_for_notify_with_cond(self->ndmp,
+	    NULL,
+	    NULL,
+	    &reason, &seek_position,
+	    abort_mutex, abort_cond);
+
+    if (result == 1) {
+	set_error_from_ndmp(self);
+	return 1;
+    } else if (result == 2) {
+	return 2;
+    }
+
+    if (reason != NDMP9_MOVER_PAUSE_SEEK && reason != NDMP9_MOVER_PAUSE_EOW) {
+	device_set_error(DEVICE(self),
+	    g_strdup_printf("got NOTIFY_MOVER_PAUSED, but not because of EOW or SEEK"),
+	    DEVICE_STATUS_DEVICE_ERROR);
+	return 1;
+    }
+
+    if (self->listen_addrs) {
+	g_free(self->listen_addrs);
+	self->listen_addrs = NULL;
+    }
+
+    /* set up the new directtcp connection */
+    if (self->directtcp_conn)
+	g_object_unref(self->directtcp_conn);
+    self->directtcp_conn =
+	directtcp_connection_ndmp_new(self->ndmp, mode);
+    *dtcpconn = DIRECTTCP_CONNECTION(self->directtcp_conn);
+
+    /* reference it for the caller */
+    g_object_ref(*dtcpconn);
+
+    return 0;
 }
 
 static gboolean
@@ -1671,7 +1896,9 @@ ndmp_device_class_init(NdmpDeviceClass * c G_GNUC_UNUSED)
     device_class->directtcp_supported = TRUE;
     device_class->listen = listen_impl;
     device_class->accept = accept_impl;
+    device_class->accept_with_cond = accept_with_cond_impl;
     device_class->connect = connect_impl;
+    device_class->connect_with_cond = connect_with_cond_impl;
     device_class->write_from_connection = write_from_connection_impl;
     device_class->read_to_connection = read_to_connection_impl;
     device_class->use_connection = use_connection_impl;

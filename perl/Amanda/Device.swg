@@ -356,6 +356,21 @@ typedef struct Device {
 	    return conn;
 	}
 
+	%newobject accept_with_cond; /* connection is already ref'd, so we own it */
+	DirectTCPConnection *
+	accept_with_cond(GMutex *abort_mutex, GCond *abort_cond) {
+	    DirectTCPConnection *conn = NULL;
+	    gboolean rv;
+
+	    rv = device_accept_with_cond(self, &conn, abort_mutex, abort_cond);
+	    if (!rv && conn) {
+		/* conn is ref'd for our convenience, but we don't want it */
+		g_object_unref(conn);
+		conn = NULL;
+	    }
+	    return conn;
+	}
+
 	%newobject connect; /* connection is already ref'd, so we own it */
 	DirectTCPConnection *
 	connect(gboolean for_writing, DirectTCPAddr *addrs) {
@@ -363,6 +378,23 @@ typedef struct Device {
 	    gboolean rv;
 
 	    rv = device_connect(self, for_writing, addrs, &conn, NULL, NULL);
+	    if (!rv && conn) {
+		/* conn is ref'd for our convenience, but we don't want it */
+		g_object_unref(conn);
+		conn = NULL;
+	    }
+	    return conn;
+	}
+
+	%newobject connect_with_cond; /* connection is already ref'd, so we own it */
+	DirectTCPConnection *
+	connect_with_cond(gboolean for_writing, DirectTCPAddr *addrs,
+			  GMutex *abort_mutex, GCond *abort_cond) {
+	    DirectTCPConnection *conn = NULL;
+	    gboolean rv;
+
+	    rv = device_connect_with_cond(self, for_writing, addrs, &conn,
+					  abort_mutex, abort_cond);
 	    if (!rv && conn) {
 		/* conn is ref'd for our convenience, but we don't want it */
 		g_object_unref(conn);

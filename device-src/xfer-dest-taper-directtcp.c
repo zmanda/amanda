@@ -73,6 +73,7 @@ typedef struct XferDestTaperDirectTCP {
      * corresponding condition variable. */
     volatile gboolean paused;
     GCond *paused_cond;
+    GCond *abort_accept_cond; /* condition to trigger to abort an accept */
 
 } XferDestTaperDirectTCP;
 
@@ -107,6 +108,7 @@ worker_thread(
     XferElement *elt = (XferElement *)data;
     XferDestTaperDirectTCP *self = (XferDestTaperDirectTCP *)data;
     GTimer *timer = g_timer_new();
+    int result;
 
     /* This thread's job is to accept() an incoming connection, then call
      * write_from_connection for each part, and then close the connection */
@@ -123,10 +125,16 @@ worker_thread(
 
     /* first, accept a new connection from the device */
     DBG(2, "accepting DirectTCP connection on device %s", self->device->device_name);
-    if (!device_accept(self->device, &self->conn, NULL, NULL)) {
+    result = device_accept_with_cond(self->device, &self->conn,
+				     self->state_mutex,
+				     self->abort_accept_cond);
+    if (result == 2) {
 	xfer_cancel_with_error(XFER_ELEMENT(self),
 	    "accepting DirectTCP connection: %s",
 	    device_error_or_status(self->device));
+	g_mutex_unlock(self->state_mutex);
+	return NULL;
+    } else if (result == 1) {
 	g_mutex_unlock(self->state_mutex);
 	return NULL;
     }
@@ -326,6 +334,7 @@ cancel_impl(
      * longer paused */
     g_mutex_lock(self->state_mutex);
     g_cond_broadcast(self->paused_cond);
+    g_cond_broadcast(self->abort_accept_cond);
     g_mutex_unlock(self->state_mutex);
 
     return rv;
@@ -417,6 +426,7 @@ instance_init(
     self->conn = NULL;
     self->state_mutex = g_mutex_new();
     self->paused_cond = g_cond_new();
+    self->abort_accept_cond = g_cond_new();
 }
 
 static void
@@ -439,6 +449,7 @@ finalize_impl(
 
     g_mutex_free(self->state_mutex);
     g_cond_free(self->paused_cond);
+    g_cond_free(self->abort_accept_cond);
 
     if (self->part_header)
 	dumpfile_free(self->part_header);

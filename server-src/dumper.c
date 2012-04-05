@@ -1994,7 +1994,6 @@ runcompress(
 	filter->allocated_size = 0;
 	filter->event = event_register((event_id_t)filter->fd, EV_READFD,
 				       handle_filter_stderr, filter);
-g_debug("event register %s %d", name, filter->fd);
 	return (rval);
     case 0:
 	close(outpipe[1]);
@@ -2099,7 +2098,6 @@ runencrypt(
 	filter->allocated_size = 0;
 	filter->event = event_register((event_id_t)filter->fd, EV_READFD,
 				       handle_filter_stderr, filter);
-g_debug("event register %s %d", "encrypt data", filter->fd);
 	return (rval);
 	}
     case 0: {

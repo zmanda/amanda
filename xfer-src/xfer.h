@@ -90,6 +90,8 @@ struct Xfer {
     /* Used to coordinate handing off file descriptors among elements of this
      * xfer */
     GMutex *fd_mutex;
+
+    int cancelled;
 };
 
 typedef struct Xfer Xfer;
