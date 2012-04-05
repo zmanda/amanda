@@ -253,7 +253,8 @@ s3_error_name_from_code(s3_error_code_t s3_error_code);
 typedef enum {
     S3_RESULT_RETRY = -1,
     S3_RESULT_FAIL = 0,
-    S3_RESULT_OK = 1
+    S3_RESULT_OK = 1,
+    S3_RESULT_NOTIMPL = 2
 } s3_result_t;
 
 typedef struct result_handling {
@@ -340,7 +341,9 @@ authenticate_request(S3Handle *hdl,
                      const char *bucket,
                      const char *key,
                      const char *subresource,
-                     const char *md5_hash);
+                     const char *md5_hash,
+                     const char *content_type,
+                     const size_t content_length);
 
 
 
@@ -406,6 +409,7 @@ perform_request(S3Handle *hdl,
                 const char *key,
                 const char *subresource,
                 const char *query,
+                const char *content_type,
                 s3_read_func read_func,
                 s3_reset_func read_reset_func,
                 s3_size_func size_func,
@@ -606,7 +610,7 @@ build_url(
     }
 
     if (url->str[strlen(url->str)-1] == '/') {
-	url->str[strlen(url->str)-1] = '\0';
+	g_string_truncate(url, strlen(url->str)-1);
     }
 
     /* query string */
@@ -633,7 +637,9 @@ authenticate_request(S3Handle *hdl,
                      const char *bucket,
                      const char *key,
                      const char *subresource,
-                     const char *md5_hash)
+                     const char *md5_hash,
+                     const char *content_type,
+                     const size_t content_length)
 {
     time_t t;
     struct tm tmp;
@@ -650,7 +656,6 @@ authenticate_request(S3Handle *hdl,
     static const char *wkday[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
     static const char *month[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-
 
     /* calculate the date */
     t = time(NULL);
@@ -709,7 +714,9 @@ authenticate_request(S3Handle *hdl,
             g_string_append(auth_string, md5_hash);
 	g_string_append(auth_string, "\n");
 
-	/* Content-Type is empty*/
+	if (content_type) {
+	    g_string_append(auth_string, content_type);
+	}
 	g_string_append(auth_string, "\n");
 
 	/* Date */
@@ -816,6 +823,17 @@ authenticate_request(S3Handle *hdl,
 
     if (md5_hash && '\0' != md5_hash[0]) {
         buf = g_strdup_printf("Content-MD5: %s", md5_hash);
+        headers = curl_slist_append(headers, buf);
+        g_free(buf);
+    }
+    if (content_length > 0) {
+        buf = g_strdup_printf("Content-Length: %zu", content_length);
+        headers = curl_slist_append(headers, buf);
+        g_free(buf);
+    }
+
+    if (content_type) {
+        buf = g_strdup_printf("Content-Type: %s", content_type);
         headers = curl_slist_append(headers, buf);
         g_free(buf);
     }
@@ -1380,6 +1398,7 @@ curl_debug_message(CURL *curl G_GNUC_UNUSED,
     case CURLINFO_HEADER_OUT:
         lineprefix="Hdr Out: ";
         break;
+
 /*
     case CURLINFO_DATA_IN:
 	if (len > 3000) return 0;
@@ -1391,6 +1410,7 @@ curl_debug_message(CURL *curl G_GNUC_UNUSED,
         lineprefix="Data Out: ";
         break;
 */
+
     default:
         /* ignore data in/out -- nobody wants to see that in the
          * debug logs! */
@@ -1418,6 +1438,7 @@ perform_request(S3Handle *hdl,
                 const char *key,
                 const char *subresource,
                 const char *query,
+                const char *content_type,
                 s3_read_func read_func,
                 s3_reset_func read_reset_func,
                 s3_size_func size_func,
@@ -1511,7 +1532,7 @@ perform_request(S3Handle *hdl,
 
         /* set up the request */
         headers = authenticate_request(hdl, verb, bucket, key, subresource,
-            md5_hash_b64);
+            md5_hash_b64, content_type, request_body_size);
 
         if (hdl->use_ssl && hdl->ca_info) {
             if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_CAINFO, hdl->ca_info)))
@@ -1883,7 +1904,7 @@ get_openstack_swift_api_v1_setting(
 	};
 
     s3_verbose(hdl, 1);
-    result = perform_request(hdl, "GET", NULL, NULL, NULL, NULL,
+    result = perform_request(hdl, "GET", NULL, NULL, NULL, NULL, NULL,
                              NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                              NULL, NULL, result_handling);
 
@@ -1926,7 +1947,7 @@ get_openstack_swift_api_v2_setting(
     buf.buffer = g_string_free(body, FALSE);
     buf.buffer_len = strlen(buf.buffer);
     s3_verbose(hdl, 1);
-    result = perform_request(hdl, "POST", NULL, NULL, NULL, NULL,
+    result = perform_request(hdl, "POST", NULL, NULL, NULL, NULL, NULL,
 			     S3_BUFFER_READ_FUNCS, &buf,
 			     NULL, NULL, NULL,
                              NULL, NULL, result_handling);
@@ -2220,7 +2241,7 @@ s3_upload(S3Handle *hdl,
 
     g_assert(hdl != NULL);
 
-    result = perform_request(hdl, "PUT", bucket, key, NULL, NULL,
+    result = perform_request(hdl, "PUT", bucket, key, NULL, NULL, NULL,
                  read_func, reset_func, size_func, md5_func, read_data,
                  NULL, NULL, NULL, progress_func, progress_data,
                  result_handling);
@@ -2393,7 +2414,7 @@ list_fetch(S3Handle *hdl,
     }
 
     /* and perform the request on that URI */
-    result = perform_request(hdl, "GET", bucket, NULL, NULL, query->str,
+    result = perform_request(hdl, "GET", bucket, NULL, NULL, query->str, NULL,
                              NULL, NULL, NULL, NULL, NULL,
                              S3_BUFFER_WRITE_FUNCS, buf, NULL, NULL,
                              result_handling);
@@ -2512,7 +2533,8 @@ s3_read(S3Handle *hdl,
 
     g_assert(hdl != NULL);
     g_assert(write_func != NULL);
-    result = perform_request(hdl, "GET", bucket, key, NULL, NULL,
+
+    result = perform_request(hdl, "GET", bucket, key, NULL, NULL, NULL,
         NULL, NULL, NULL, NULL, NULL, write_func, reset_func, write_data,
         progress_func, progress_data, result_handling);
 
@@ -2536,11 +2558,66 @@ s3_delete(S3Handle *hdl,
 
     g_assert(hdl != NULL);
 
-    result = perform_request(hdl, "DELETE", bucket, key, NULL, NULL,
+    result = perform_request(hdl, "DELETE", bucket, key, NULL, NULL, NULL,
                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                  result_handling);
 
     return result == S3_RESULT_OK;
+}
+
+int
+s3_multi_delete(S3Handle *hdl,
+		const char *bucket,
+		const char **key)
+{
+    GString *query;
+    CurlBuffer data;
+    s3_result_t result = S3_RESULT_FAIL;
+    static result_handling_t result_handling[] = {
+        { 200,  0,                     0, S3_RESULT_OK },
+        { 204,  0,                     0, S3_RESULT_OK },
+        { 400,  0,                     0, S3_RESULT_NOTIMPL },
+        { 404,  S3_ERROR_NoSuchBucket, 0, S3_RESULT_OK },
+        RESULT_HANDLING_ALWAYS_RETRY,
+        { 0,    0,                     0, /* default: */ S3_RESULT_FAIL  }
+        };
+
+    g_assert(hdl != NULL);
+
+    query = g_string_new(NULL);
+    g_string_append(query, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    g_string_append(query, "<Delete>\n");
+    if (!hdl->verbose) {
+	g_string_append(query, "  <Quiet>true</Quiet>\n");
+    }
+    while (*key != NULL) {
+	g_string_append(query, "  <Object>\n");
+	g_string_append(query, "    <Key>");
+	g_string_append(query, *key);
+	g_string_append(query, "</Key>\n");
+	g_string_append(query, "  </Object>\n");
+	key++;
+    }
+    g_string_append(query, "</Delete>\n");
+
+    data.buffer_len = query->len;
+    data.buffer = query->str;
+    data.buffer_pos = 0;
+    data.max_buffer_size = data.buffer_len;
+
+    result = perform_request(hdl, "POST", bucket, NULL, "delete", NULL, "application/xml",
+		 s3_buffer_read_func, s3_buffer_reset_func,
+		 s3_buffer_size_func, s3_buffer_md5_func,
+		 &data, NULL, NULL, NULL, NULL, NULL,
+                 result_handling);
+
+    g_string_free(query, TRUE);
+    if (result == S3_RESULT_OK)
+	return 1;
+    else if (result == S3_RESULT_NOTIMPL)
+	return 2;
+    else
+	return 0;
 }
 
 gboolean
@@ -2592,7 +2669,7 @@ s3_make_bucket(S3Handle *hdl,
         }
     }
 
-    result = perform_request(hdl, "PUT", bucket, NULL, NULL, NULL,
+    result = perform_request(hdl, "PUT", bucket, NULL, NULL, NULL, NULL,
                  read_func, reset_func, size_func, md5_func, ptr,
                  NULL, NULL, NULL, NULL, NULL, result_handling);
 
@@ -2603,11 +2680,11 @@ s3_make_bucket(S3Handle *hdl,
          * the one that's configured.
          */
 	if (is_non_empty_string(hdl->bucket_location)) {
-            result = perform_request(hdl, "GET", bucket, NULL, "location", NULL,
+            result = perform_request(hdl, "GET", bucket, NULL, "location", NULL, NULL,
                                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                                      NULL, NULL, result_handling);
 	} else {
-            result = perform_request(hdl, "GET", bucket, NULL, NULL, NULL,
+            result = perform_request(hdl, "GET", bucket, NULL, NULL, NULL, NULL,
                                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                                      NULL, NULL, result_handling);
 	}
@@ -2672,6 +2749,7 @@ s3_is_bucket_exists(S3Handle *hdl,
 
     result = perform_request(hdl, "GET", bucket, NULL, NULL,
 			     hdl->s3_api != S3_API_S3?"limit=1":"max-keys=1",
+			     NULL,
                              NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                              NULL, NULL, result_handling);
 

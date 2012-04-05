@@ -436,6 +436,11 @@ data to S3.  If the average speed exceeds this value, the device will stop
 writing long enough to bring the average below this value.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>S3_MULTI_DELETE</term><listitem>
+(read-write) If the server support the multi delete protocol (only Amazon S3),
+default is "YES". If it fail, it revert to single delete.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>NB_THREADS_BACKUP</term><listitem>
 (read-write) The number of thread that send data to the s3 device, higher value can provide more throutput.
 </listitem></varlistentry>

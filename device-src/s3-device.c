@@ -138,6 +138,7 @@ struct _S3Device {
     guint64 volume_limit;
     gboolean enforce_volume_limit;
     gboolean use_subdomain;
+    gboolean use_s3_multi_delete;
 
     int          nb_threads;
     int          nb_threads_backup;
@@ -269,6 +270,10 @@ static DevicePropertyBase device_property_nb_threads_backup;
 #define PROPERTY_NB_THREADS_BACKUP (device_property_nb_threads_backup.ID)
 static DevicePropertyBase device_property_nb_threads_recovery;
 #define PROPERTY_NB_THREADS_RECOVERY (device_property_nb_threads_recovery.ID)
+
+/* If the s3 server have the multi-delete functionality */
+static DevicePropertyBase device_property_s3_multi_delete;
+#define PROPERTY_S3_MULTI_DELETE (device_property_s3_multi_delete.ID)
 
 /*
  * prototypes
@@ -443,6 +448,10 @@ static gboolean s3_device_set_storage_api(Device *self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_openstack_swift_api_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_s3_multi_delete_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -788,19 +797,21 @@ delete_file(S3Device *self,
     guint64 total_size = 0;
     Device *d_self = DEVICE(self);
     char *my_prefix;
+
     if (file == -1) {
 	my_prefix = g_strdup_printf("%sf", self->prefix);
     } else {
 	my_prefix = g_strdup_printf("%sf%08x-", self->prefix, file);
     }
 
-    result = s3_list_keys(self->s3t[0].s3, self->bucket, my_prefix, NULL, &keys,
-			  &total_size);
+    result = s3_list_keys(self->s3t[0].s3, self->bucket, my_prefix, NULL,
+			  &keys, &total_size);
     if (!result) {
 	device_set_error(d_self,
-	    vstrallocf(_("While listing S3 keys: %s"), s3_strerror(self->s3t[0].s3)),
-	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
-        return FALSE;
+		g_strdup_printf(_("While listing S3 keys: %s"),
+		    s3_strerror(self->s3t[0].s3)),
+		DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
+	return FALSE;
     }
 
     g_mutex_lock(self->thread_idle_mutex);
@@ -849,26 +860,69 @@ s3_thread_delete_block(
     S3_by_thread *s3t = (S3_by_thread *)thread_data;
     Device *pself = (Device *)data;
     S3Device *self = S3_DEVICE(pself);
-    gboolean result = 1;
+    int result = 1;
     char *filename;
 
     g_mutex_lock(self->thread_idle_mutex);
     while (result && self->keys) {
-	filename = self->keys->data;
-	self->keys = g_slist_remove(self->keys, self->keys->data);
-	count++;
-	if (count >= 1000) {
-	    g_debug("Deleting %s ...", filename);
-	    count = 0;
-	}
-	g_mutex_unlock(self->thread_idle_mutex);
-	result = s3_delete(s3t->s3, (const char *)self->bucket, (const char *)filename);
-	if (!result) {
-	    s3t->errflags = DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR;
-	    s3t->errmsg = g_strdup_printf(_("While deleting key '%s': %s"),
+	if (self->use_s3_multi_delete) {
+	    char **filenames = g_new(char *, 1001);
+	    char **f = filenames;
+	    int  n = 0;
+	    while (self->keys && n<1000) {
+		*f++ = self->keys->data;
+		self->keys = g_slist_remove(self->keys, self->keys->data);
+	    }
+	    *f++ = NULL;
+	    g_mutex_unlock(self->thread_idle_mutex);
+	    result = s3_multi_delete(s3t->s3, (const char *)self->bucket,
+					      (const char **)filenames);
+	    if (result != 1) {
+		char **f;
+
+		if (result == 2) {
+		    g_debug("Deleting multiple keys not implemented");
+		} else { /* result == 0 */
+		    g_debug("Deleteing multiple keys failed: %s",
+			    s3_strerror(s3t->s3));
+		}
+
+		self->use_s3_multi_delete = 0;
+		/* re-add all filenames */
+		f = filenames;
+		g_mutex_lock(self->thread_idle_mutex);
+		while(*f) {
+		    self->keys = g_slist_prepend(self->keys, *f++);
+		}
+		g_mutex_unlock(self->thread_idle_mutex);
+		g_free(filenames);
+		delete_file(self, -1);
+		g_mutex_lock(self->thread_idle_mutex);
+		break;
+	    }
+	    f = filenames;
+	    while(*f) {
+		g_free(*f++);
+	    }
+	    g_free(filenames);
+	} else {
+	    filename = self->keys->data;
+	    self->keys = g_slist_remove(self->keys, self->keys->data);
+	    count++;
+	    if (count >= 1000) {
+		g_debug("Deleting %s ...", filename);
+		count = 0;
+	    }
+	    g_mutex_unlock(self->thread_idle_mutex);
+	    result = s3_delete(s3t->s3, (const char *)self->bucket,
+					(const char *)filename);
+	    if (!result) {
+		s3t->errflags = DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR;
+		s3t->errmsg = g_strdup_printf(_("While deleting key '%s': %s"),
 					  filename, s3_strerror(s3t->s3));
+	    }
+	    g_free(filename);
 	}
-	g_free(filename);
 	g_mutex_lock(self->thread_idle_mutex);
     }
     s3t->idle = 1;
@@ -996,6 +1050,9 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_nb_threads_recovery,
                                       G_TYPE_UINT64, "nb_threads_recovery",
        "Number of reader thread");
+    device_property_fill_and_register(&device_property_s3_multi_delete,
+                                      G_TYPE_BOOLEAN, "s3_multi_delete",
+       "Whether to use multi-delete");
 
     /* register the device itself */
     register_device(s3_device_factory, device_prefix_list);
@@ -1047,6 +1104,7 @@ s3_device_init(S3Device * self)
     self->thread_pool_read = NULL;
     self->thread_idle_cond = NULL;
     self->thread_idle_mutex = NULL;
+    self->use_s3_multi_delete = 1;
 
     /* Register property values
      * Note: Some aren't added until s3_device_open_device()
@@ -1236,6 +1294,11 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
 	    s3_device_set_openstack_swift_api_fn);
+
+    device_class_register_property(device_class, PROPERTY_S3_MULTI_DELETE,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_s3_multi_delete_fn);
 
     device_class_register_property(device_class, PROPERTY_S3_SSL,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
@@ -1580,6 +1643,18 @@ s3_device_set_openstack_swift_api_fn(Device *p_self, DevicePropertyBase *base,
 					 surety, source);
     }
     return TRUE;
+}
+
+static gboolean
+s3_device_set_s3_multi_delete_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    self->use_s3_multi_delete = g_value_get_boolean(val);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
 
 static gboolean
@@ -2186,7 +2261,9 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
             break;
 
         case ACCESS_WRITE:
-            delete_all_files(self);
+            if (!delete_all_files(self)) {
+		return FALSE;
+	    }
 
             /* write a new amanda header */
             if (!write_amanda_header(self, label, timestamp)) {
