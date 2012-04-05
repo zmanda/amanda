@@ -139,6 +139,10 @@ struct S3Handle {
     char *user_token;
     char *swift_account_id;
     char *swift_access_key;
+    char *username;
+    char *password;
+    char *tenant_id;
+    char *tenant_name;
 
     /* attributes for new objects */
     char *bucket_location;
@@ -148,7 +152,7 @@ struct S3Handle {
     char *host;
     char *service_path;
     gboolean use_subdomain;
-    gboolean openstack_swift_api;
+    S3_api s3_api;
     char *ca_info;
     char *x_auth_token;
     char *x_storage_url;
@@ -538,7 +542,7 @@ build_url(
     GString *url = NULL;
     char *esc_bucket = NULL, *esc_key = NULL;
 
-    if (hdl->openstack_swift_api && hdl->x_storage_url) {
+    if (hdl->s3_api != S3_API_S3 && hdl->x_storage_url) {
 	url = g_string_new(hdl->x_storage_url);
 	g_string_append(url, "/");
     } else {
@@ -601,6 +605,10 @@ build_url(
 	curl_free(esc_key);
     }
 
+    if (url->str[strlen(url->str)-1] == '/') {
+	url->str[strlen(url->str)-1] = '\0';
+    }
+
     /* query string */
     if (subresource || query)
         g_string_append(url, "?");
@@ -661,7 +669,7 @@ authenticate_request(S3Handle *hdl,
         wkday[tmp.tm_wday], tmp.tm_mday, month[tmp.tm_mon], 1900+tmp.tm_year,
         tmp.tm_hour, tmp.tm_min, tmp.tm_sec);
 
-    if (hdl->openstack_swift_api) {
+    if (hdl->s3_api == S3_API_SWIFT_1) {
 	if (!bucket) {
             buf = g_strdup_printf("X-Auth-User: %s", hdl->swift_account_id);
             headers = curl_slist_append(headers, buf);
@@ -674,6 +682,19 @@ authenticate_request(S3Handle *hdl,
             headers = curl_slist_append(headers, buf);
             g_free(buf);
 	}
+    } else if (hdl->s3_api == S3_API_SWIFT_2) {
+	if (!bucket) {
+	    buf = g_strdup_printf("Content-Type: %s", "application/xml");
+	    headers = curl_slist_append(headers, buf);
+	    g_free(buf);
+	} else {
+            buf = g_strdup_printf("X-Auth-Token: %s", hdl->x_auth_token);
+            headers = curl_slist_append(headers, buf);
+            g_free(buf);
+	}
+	buf = g_strdup_printf("Accept: %s", "application/xml");
+	headers = curl_slist_append(headers, buf);
+	g_free(buf);
     } else {
 	/* Build the string to sign, per the S3 spec.
 	 * See: "Authenticating REST Requests" - API Version 2006-03-01 pg 58
@@ -825,6 +846,11 @@ struct failure_thunk {
     gboolean in_body;
     gboolean in_code;
     gboolean in_message;
+    gboolean in_access;
+    gboolean in_token;
+    gboolean in_serviceCatalog;
+    gboolean in_service;
+    gboolean in_endpoint;
     gint     in_others;
 
     gchar *text;
@@ -832,6 +858,9 @@ struct failure_thunk {
 
     gchar *message;
     gchar *error_name;
+    gchar *token_id;
+    gchar *service_type;
+    gchar *service_public_url;
 };
 
 static void
@@ -843,6 +872,7 @@ failure_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
                    GError **error G_GNUC_UNUSED)
 {
     struct failure_thunk *thunk = (struct failure_thunk *)user_data;
+    const gchar **att_name, **att_value;
 
     if (g_ascii_strcasecmp(element_name, "title") == 0) {
         thunk->in_title = 1;
@@ -860,6 +890,45 @@ failure_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
         thunk->in_message = 1;
 	thunk->in_others = 0;
         thunk->want_text = 1;
+    } else if (g_ascii_strcasecmp(element_name, "access") == 0) {
+        thunk->in_access = 1;
+	thunk->in_others = 0;
+    } else if (g_ascii_strcasecmp(element_name, "token") == 0) {
+        thunk->in_token = 1;
+	thunk->in_others = 0;
+	for (att_name=attribute_names, att_value=attribute_values;
+	     *att_name != NULL;
+	     att_name++, att_value++) {
+	    if (g_str_equal(*att_name, "id")) {
+		thunk->token_id = g_strdup(*att_value);
+	    }
+	}
+    } else if (g_ascii_strcasecmp(element_name, "serviceCatalog") == 0) {
+        thunk->in_serviceCatalog = 1;
+	thunk->in_others = 0;
+    } else if (g_ascii_strcasecmp(element_name, "service") == 0) {
+        thunk->in_service = 1;
+	thunk->in_others = 0;
+	for (att_name=attribute_names, att_value=attribute_values;
+	     *att_name != NULL;
+	     att_name++, att_value++) {
+	    if (g_str_equal(*att_name, "type")) {
+		thunk->service_type = g_strdup(*att_value);
+	    }
+	}
+    } else if (g_ascii_strcasecmp(element_name, "endpoint") == 0) {
+        thunk->in_endpoint = 1;
+	thunk->in_others = 0;
+	if (thunk->service_type &&
+	    g_str_equal(thunk->service_type, "object-store")) {
+	    for (att_name=attribute_names, att_value=attribute_values;
+		 *att_name != NULL;
+		 att_name++, att_value++) {
+		if (g_str_equal(*att_name, "publicURL")) {
+		    thunk->service_public_url = g_strdup(*att_value);
+		}
+	    }
+	}
     } else {
 	thunk->in_others++;
     }
@@ -897,6 +966,28 @@ failure_end_element(GMarkupParseContext *context G_GNUC_UNUSED,
 	thunk->message = thunk->text;
 	thunk->text = NULL;
         thunk->in_message = 0;
+    } else if (g_ascii_strcasecmp(element_name, "access") == 0) {
+	thunk->message = thunk->text;
+	thunk->text = NULL;
+        thunk->in_access = 0;
+    } else if (g_ascii_strcasecmp(element_name, "token") == 0) {
+	thunk->message = thunk->text;
+	thunk->text = NULL;
+        thunk->in_token = 0;
+    } else if (g_ascii_strcasecmp(element_name, "serviceCatalog") == 0) {
+	thunk->message = thunk->text;
+	thunk->text = NULL;
+        thunk->in_serviceCatalog = 0;
+    } else if (g_ascii_strcasecmp(element_name, "service") == 0) {
+	thunk->message = thunk->text;
+	thunk->text = NULL;
+	g_free(thunk->service_type);
+	thunk->service_type = NULL;
+        thunk->in_service = 0;
+    } else if (g_ascii_strcasecmp(element_name, "endpoint") == 0) {
+	thunk->message = thunk->text;
+	thunk->text = NULL;
+        thunk->in_endpoint = 0;
     } else {
 	thunk->in_others--;
     }
@@ -964,11 +1055,6 @@ interpret_response(S3Handle *hdl,
             ret = FALSE;
         return ret;
     }
-    if (200 <= response_code && response_code < 400) {
-        /* 2xx and 3xx codes won't have a response body we care about */
-        hdl->last_s3_error_code = S3_ERROR_None;
-        return FALSE;
-    }
 
     /* Now look at the body to try to get the actual Amazon error message. */
 
@@ -977,22 +1063,37 @@ interpret_response(S3Handle *hdl,
         hdl->last_message = g_strdup("S3 Error: Unknown (response body too large to parse)");
         return FALSE;
     } else if (!body || body_len == 0) {
-        hdl->last_message = g_strdup("S3 Error: Unknown (empty response body)");
-        return TRUE; /* perhaps a network error; retry the request */
+	if (response_code < 100 || response_code >= 400) {
+	    hdl->last_message =
+			g_strdup("S3 Error: Unknown (empty response body)");
+            return TRUE; /* perhaps a network error; retry the request */
+	} else {
+	    /* 2xx and 3xx codes without body ar good result */
+	    hdl->last_s3_error_code = S3_ERROR_None;
+	    return FALSE;
+	}
     }
 
     thunk.in_title = FALSE;
     thunk.in_body = FALSE;
     thunk.in_code = FALSE;
     thunk.in_message = FALSE;
+    thunk.in_access = FALSE;
+    thunk.in_token = FALSE;
+    thunk.in_serviceCatalog = FALSE;
+    thunk.in_service = FALSE;
+    thunk.in_endpoint = FALSE;
     thunk.in_others = 0;
     thunk.text = NULL;
     thunk.want_text = FALSE;
     thunk.text_len = 0;
     thunk.message = NULL;
     thunk.error_name = NULL;
+    thunk.token_id = NULL;
+    thunk.service_type = NULL;
+    thunk.service_public_url = NULL;
 
-    if (hdl->openstack_swift_api &&
+    if (hdl->s3_api != S3_API_S3 &&
 	!g_strstr_len(body, body_len, "xml version") &&
 	!g_strstr_len(body, body_len, "<html>")) {
 	char *body_copy = g_strndup(body, body_len);
@@ -1039,6 +1140,17 @@ interpret_response(S3Handle *hdl,
     g_markup_parse_context_free(ctxt);
     ctxt = NULL;
 
+    if (hdl->s3_api == S3_API_SWIFT_2) {
+	if (!hdl->x_auth_token && thunk.token_id) {
+	    hdl->x_auth_token = thunk.token_id;
+	    thunk.token_id = NULL;
+	}
+	if (!hdl->x_storage_url && thunk.service_public_url) {
+	    hdl->x_storage_url = thunk.service_public_url;
+	    thunk.service_public_url = NULL;
+	}
+    }
+
 parsing_done:
     if (thunk.error_name) {
         hdl->last_s3_error_code = s3_error_code_from_name(thunk.error_name);
@@ -1056,6 +1168,9 @@ cleanup:
     g_free(thunk.text);
     g_free(thunk.message);
     g_free(thunk.error_name);
+    g_free(thunk.token_id);
+    g_free(thunk.service_public_url);
+    g_free(thunk.service_type);
     return FALSE;
 }
 
@@ -1267,12 +1382,12 @@ curl_debug_message(CURL *curl G_GNUC_UNUSED,
         break;
 /*
     case CURLINFO_DATA_IN:
-	if (len > 1000) return 0;
+	if (len > 3000) return 0;
         lineprefix="Data In: ";
         break;
 
     case CURLINFO_DATA_OUT:
-	if (len > 1000) return 0;
+	if (len > 3000) return 0;
         lineprefix="Data Out: ";
         break;
 */
@@ -1449,6 +1564,15 @@ perform_request(S3Handle *hdl,
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_INFILESIZE, (long)request_body_size)))
             goto curl_error;
 #endif
+/* CURLOPT_POSTFIELDSIZE_LARGE added in 7.11.1 */
+#if LIBCURL_VERSION_NUM >= 0x070b01
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t)request_body_size)))
+            goto curl_error;
+#else
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_POSTFIELDSIZE, (long)request_body_size)))
+            goto curl_error;
+#endif
+
 /* CURLOPT_MAX_{RECV,SEND}_SPEED_LARGE added in 7.15.5 */
 #if LIBCURL_VERSION_NUM >= 0x070f05
 	if (s3_curl_throttling_compat()) {
@@ -1475,7 +1599,7 @@ perform_request(S3Handle *hdl,
             goto curl_error;
 
 
-        if (curlopt_upload) {
+        if (curlopt_upload || curlopt_post) {
             if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_READFUNCTION, read_func)))
                 goto curl_error;
             if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_READDATA, read_data)))
@@ -1748,7 +1872,7 @@ s3_bucket_location_compat(const char *bucket)
 }
 
 static gboolean
-get_openstack_swift_api_setting(
+get_openstack_swift_api_v1_setting(
 	S3Handle *hdl)
 {
     s3_result_t result = S3_RESULT_FAIL;
@@ -1764,7 +1888,50 @@ get_openstack_swift_api_setting(
                              NULL, NULL, result_handling);
 
     return result == S3_RESULT_OK;
+}
 
+static gboolean
+get_openstack_swift_api_v2_setting(
+	S3Handle *hdl)
+{
+    s3_result_t result = S3_RESULT_FAIL;
+    static result_handling_t result_handling[] = {
+	{ 200,  0,                    0, S3_RESULT_OK },
+	RESULT_HANDLING_ALWAYS_RETRY,
+	{ 0, 0,                       0, /* default: */ S3_RESULT_FAIL  }
+	};
+
+    CurlBuffer buf = {NULL, 0, 0, 0};
+    GString *body = g_string_new("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+    if (hdl->username && hdl->password) {
+	g_string_append_printf(body, "<auth xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://docs.openstack.org/identity/api/v2.0\"");
+    } else {
+	g_string_append_printf(body, "<auth xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://www.hp.com/identity/api/ext/HP-IDM/v1.0\"");
+    }
+
+    if (hdl->tenant_id) {
+	g_string_append_printf(body, " tenantId=\"%s\"", hdl->tenant_id);
+    }
+    if (hdl->tenant_name) {
+	g_string_append_printf(body, " tenantName=\"%s\"", hdl->tenant_name);
+    }
+    g_string_append(body, ">");
+    if (hdl->username && hdl->password) {
+	g_string_append_printf(body, "<passwordCredentials username=\"%s\" password=\"%s\"/>", hdl->username, hdl->password);
+    } else {
+	g_string_append_printf(body, "<apiAccessKeyCredentials accessKey=\"%s\" secretKey=\"%s\"/>", hdl->access_key, hdl->secret_key);
+    }
+    g_string_append(body, "</auth>");
+
+    buf.buffer = g_string_free(body, FALSE);
+    buf.buffer_len = strlen(buf.buffer);
+    s3_verbose(hdl, 1);
+    result = perform_request(hdl, "POST", NULL, NULL, NULL, NULL,
+			     S3_BUFFER_READ_FUNCS, &buf,
+			     NULL, NULL, NULL,
+                             NULL, NULL, result_handling);
+
+    return result == S3_RESULT_OK;
 }
 
 S3Handle *
@@ -1781,7 +1948,11 @@ s3_open(const char *access_key,
         const char *ca_info,
         const char *server_side_encryption,
         const char *proxy,
-        const gboolean openstack_swift_api)
+        const S3_api s3_api,
+        const char *username,
+        const char *password,
+        const char *tenant_id,
+        const char *tenant_name)
 {
     S3Handle *hdl;
 
@@ -1791,16 +1962,25 @@ s3_open(const char *access_key,
     hdl->verbose = FALSE;
     hdl->use_ssl = s3_curl_supports_ssl();
 
-    if (!openstack_swift_api) {
+    if (s3_api == S3_API_S3) {
 	g_assert(access_key);
 	hdl->access_key = g_strdup(access_key);
 	g_assert(secret_key);
 	hdl->secret_key = g_strdup(secret_key);
-    } else {
+    } else if (s3_api == S3_API_SWIFT_1) {
 	g_assert(swift_account_id);
 	hdl->swift_account_id = g_strdup(swift_account_id);
 	g_assert(swift_access_key);
 	hdl->swift_access_key = g_strdup(swift_access_key);
+    } else if (s3_api == S3_API_SWIFT_2) {
+	g_assert((username && password) || (access_key && secret_key));
+	hdl->username = g_strdup(username);
+	hdl->password = g_strdup(password);
+	hdl->access_key = g_strdup(access_key);
+	hdl->secret_key = g_strdup(secret_key);
+	g_assert(tenant_id || tenant_name);
+	hdl->tenant_id = g_strdup(tenant_id);
+	hdl->tenant_name = g_strdup(tenant_name);
     }
 
     /* NULL is okay */
@@ -1827,7 +2007,7 @@ s3_open(const char *access_key,
     hdl->use_subdomain = use_subdomain ||
 			 (strcmp(hdl->host, "s3.amazonaws.com") == 0 &&
 			  is_non_empty_string(hdl->bucket_location));
-    hdl->openstack_swift_api = openstack_swift_api;
+    hdl->s3_api = s3_api;
     if (service_path) {
 	if (strlen(service_path) == 0 ||
 	    (strlen(service_path) == 1 && service_path[0] == '/')) {
@@ -1850,8 +2030,11 @@ s3_open(const char *access_key,
     hdl->curl = curl_easy_init();
     if (!hdl->curl) goto error;
 
-    if (openstack_swift_api) { /* get the X-Storage-Url and X-Auth-Token */
-	get_openstack_swift_api_setting(hdl);
+    /* get the X-Storage-Url and X-Auth-Token */
+    if (s3_api == S3_API_SWIFT_1) {
+	get_openstack_swift_api_v1_setting(hdl);
+    } else if (s3_api == S3_API_SWIFT_2) {
+	get_openstack_swift_api_v2_setting(hdl);
     }
     return hdl;
 
@@ -2194,14 +2377,16 @@ list_fetch(S3Handle *hdl,
 		have_prev_part = TRUE;
             esc_value = curl_escape(pos_parts[i][1], 0);
 	    keyword = pos_parts[i][0];
-	    if (hdl->openstack_swift_api && strcmp(keyword, "max-keys") == 0) {
+	    if ((hdl->s3_api == S3_API_SWIFT_1 ||
+		 hdl->s3_api == S3_API_SWIFT_2) &&
+		strcmp(keyword, "max-keys") == 0) {
 		keyword = "limit";
 	    }
             g_string_append_printf(query, "%s=%s", keyword, esc_value);
             curl_free(esc_value);
 	}
     }
-    if (hdl->openstack_swift_api) {
+    if (hdl->s3_api == S3_API_SWIFT_1 || hdl->s3_api == S3_API_SWIFT_2) {
 	if (have_prev_part)
 	    g_string_append(query, "&");
 	g_string_append(query, "format=xml");
@@ -2486,7 +2671,7 @@ s3_is_bucket_exists(S3Handle *hdl,
         };
 
     result = perform_request(hdl, "GET", bucket, NULL, NULL,
-			     hdl->openstack_swift_api?"limit=1":"max-keys=1",
+			     hdl->s3_api != S3_API_S3?"limit=1":"max-keys=1",
                              NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                              NULL, NULL, result_handling);
 
