@@ -1,4 +1,8 @@
 2012-04-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: psql /could not connect to server/
+	  message result in STRANGE.
+
+2012-04-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/ScanInventory.pm: Fix for label not matching labelstr.
 
 2012-04-06  Jean-Louis Martineau <martineau@zmanda.com>

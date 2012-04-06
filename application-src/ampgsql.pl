@@ -273,6 +273,9 @@ sub _run_psql_command {
 	chomp $line;
 	debug("psql stderr: $line");
 	if ($line =~ /NOTICE: pg_stop_backup complete, all required WAL segments have been archived/) {
+	} elsif ($line =~ /could not connect to server/) {
+	    $self->print_to_server("psql stderr: $line",
+				   $Amanda::Script_App::ERROR);
 	} else {
 	    $self->print_to_server("psql stderr: $line",
 				   $Amanda::Script_App::GOOD);
