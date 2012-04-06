@@ -1,4 +1,7 @@
 2012-04-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/ScanInventory.pm: Fix for label not matching labelstr.
+
+2012-04-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.c (device_get_bytes_written): New function.
 	* device-src/device.h (device_get_bytes_written): New prototype.
 	* device-src/ndmp-device.c, device-src/rait-device.c,
