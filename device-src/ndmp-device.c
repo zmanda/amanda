@@ -716,6 +716,7 @@ ndmp_device_start_file(
 
     dself->is_eof = FALSE;
     dself->is_eom = FALSE;
+    dself->bytes_written = 0;
 
     /* set the blocksize in the header properly */
     header->blocksize = dself->block_size;
@@ -811,6 +812,7 @@ ndmp_device_write_block(
     }
 
     dself->block++;
+    dself->bytes_written += size;
 
     if (replacement_buffer) g_free(replacement_buffer);
     return TRUE;

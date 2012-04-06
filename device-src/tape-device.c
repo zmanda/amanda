@@ -995,6 +995,7 @@ tape_device_write_block(Device * pself, guint size, gpointer data) {
     }
 
     pself->block++;
+    pself->bytes_written += size;
 
     return TRUE;
 }
@@ -1279,6 +1280,7 @@ static gboolean tape_device_start_file(Device * d_self,
     d_self->block = 0;
     if (d_self->file >= 0)
         d_self->file ++;
+    d_self->bytes_written = 0;
     return TRUE;
 }
 

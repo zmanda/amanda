@@ -1129,6 +1129,23 @@ device_get_bytes_read (Device * self) {
     return 0;
 }
 
+guint64
+device_get_bytes_written (Device * self) {
+    DeviceClass *klass;
+
+    g_assert(IS_DEVICE (self));
+
+    if (self->in_file) {
+	klass = DEVICE_GET_CLASS(self);
+	if (klass->get_bytes_written) {
+	    return (klass->get_bytes_written)(self);
+	} else {
+	    return self->bytes_written;
+	}
+    }
+    return 0;
+}
+
 gboolean
 device_configure (Device * self, gboolean use_global_config)
 {
