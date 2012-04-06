@@ -1,5 +1,15 @@
+2012-04-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/device.c (device_get_bytes_written): New function.
+	* device-src/device.h (device_get_bytes_written): New prototype.
+	* device-src/ndmp-device.c, device-src/rait-device.c,
+	  device-src/s3-device.c, device-src/tape-device.c,
+	  device-src/vfs-device.c: Implement get_bytes_written.
+	* device-src/xfer-dest-taper-cacher.c,
+	  device-src/xfer-dest-taper-splitter.c: Use device_get_bytes_written.
+	* perl/Amanda/Device.swg: Swig device_get_bytes_written.
+
 2012-04-05  Jean-Louis Martineau <martineau@zmanda.com>
-	* device-src/s3-device.c: New CLIENT_ID, CLIENT_SECRET and 
+	* device-src/s3-device.c: New CLIENT_ID, CLIENT_SECRET and
 	  REFRESH_TOKEN properties. Handle OAUTH2.
 	* device-src/s3.c: Handle OAUTH2.
 	* device-src/s3.h (S3_api): Add S3_API_OAUTH2.

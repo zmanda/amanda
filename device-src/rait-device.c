@@ -1407,6 +1407,7 @@ rait_device_start_file (Device * dself, dumpfile_t * info) {
     dself->in_file = TRUE;
     g_assert(actual_file >= 1);
     dself->file = actual_file;
+    dself->bytes_written = 0;
 
     return TRUE;
 }
@@ -1584,6 +1585,7 @@ rait_device_write_block (Device * dself, guint size, gpointer data) {
         return FALSE;
     } else {
         dself->block ++;
+	dself->bytes_written += size;
 
         return TRUE;
     }

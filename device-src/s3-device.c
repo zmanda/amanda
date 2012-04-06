@@ -559,6 +559,9 @@ s3_device_finish(Device * self);
 static guint64
 s3_device_get_bytes_read(Device * self);
 
+static guint64
+s3_device_get_bytes_written(Device * self);
+
 static gboolean
 s3_device_start_file(Device * self,
                      dumpfile_t * jobInfo);
@@ -1225,6 +1228,7 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
     device_class->start = s3_device_start;
     device_class->finish = s3_device_finish;
     device_class->get_bytes_read = s3_device_get_bytes_read;
+    device_class->get_bytes_written = s3_device_get_bytes_written;
 
     device_class->start_file = s3_device_start_file;
     device_class->write_block = s3_device_write_block;
@@ -2452,12 +2456,31 @@ s3_device_get_bytes_read(
 
     /* Add per thread */
     g_mutex_lock(self->thread_idle_mutex);
-    for (thread = 0; thread < self->nb_threads_recovery; thread++)  {
+    for (thread = 0; thread < self->nb_threads_recovery; thread++) {
 	dltotal += self->s3t[thread].dlnow;
     }
     g_mutex_unlock(self->thread_idle_mutex);
 
     return dltotal;
+}
+
+
+static guint64
+s3_device_get_bytes_written(
+    Device * pself)
+{
+    S3Device *self = S3_DEVICE(pself);
+    int       thread;
+    guint64   ultotal = self->ultotal;
+
+    /* Add per thread */
+    g_mutex_lock(self->thread_idle_mutex);
+    for (thread = 0; thread < self->nb_threads_backup; thread++) {
+	ultotal += self->s3t[thread].ulnow;
+    }
+    g_mutex_unlock(self->thread_idle_mutex);
+
+    return ultotal;
 }
 
 
@@ -2502,9 +2525,17 @@ s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
         g_free(amanda_header.buffer);
         return FALSE;
     }
+
+    for (thread = 0; thread < self->nb_threads; thread++)  {
+	self->s3t[thread].idle = 1;
+	self->s3t[thread].ulnow = 0;
+    }
+
     /* set the file and block numbers correctly */
     pself->file = (pself->file > 0)? pself->file+1 : 1;
     pself->block = 0;
+    pself->bytes_written = 0;
+    self->ultotal = 0;
     pself->in_file = TRUE;
     /* write it out as a special block (not the 0th) */
     key = special_file_to_key(self, "filestart", pself->file);
@@ -2520,9 +2551,6 @@ s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
     }
 
     self->volume_bytes += header_size;
-    for (thread = 0; thread < self->nb_threads; thread++)  {
-	self->s3t[thread].idle = 1;
-    }
 
     return TRUE;
 }
@@ -2628,7 +2656,10 @@ s3_thread_write_block(
     g_mutex_lock(self->thread_idle_mutex);
     s3t->idle = 1;
     s3t->done = 1;
+    if (result)
+	self->ultotal += s3t->curl_buffer.buffer_len;
     s3t->curl_buffer.buffer_len = s3t->buffer_len;
+    s3t->ulnow = 0;
     g_cond_broadcast(self->thread_idle_cond);
     g_mutex_unlock(self->thread_idle_mutex);
 }
@@ -2666,6 +2697,8 @@ s3_device_finish_file (Device * pself) {
 
     /* we're not in a file anymore */
     pself->in_file = FALSE;
+    pself->bytes_written = 0;;
+    self->ultotal = 0;
 
     return TRUE;
 }
@@ -2827,11 +2860,12 @@ s3_device_seek_file(Device *pself, guint file) {
             return NULL;
     }
 
-    pself->in_file = TRUE;
     for (thread = 0; thread < self->nb_threads; thread++)  {
 	self->s3t[thread].idle = 1;
 	self->s3t[thread].eof = FALSE;
+	self->s3t[thread].ulnow = 0;
     }
+    pself->in_file = TRUE;
     return amanda_header;
 }
 

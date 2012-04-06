@@ -289,6 +289,11 @@ typedef struct Device {
 	    return device_get_bytes_read(self);
 	}
 
+	guint64
+	get_bytes_written() {
+	    return device_get_bytes_written(self);
+	}
+
 	gboolean
 	start_file(dumpfile_t *jobInfo) {
 	    return device_start_file(self, jobInfo);

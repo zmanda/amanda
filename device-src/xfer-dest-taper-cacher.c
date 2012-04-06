@@ -1328,7 +1328,12 @@ get_part_bytes_written_impl(
     /* NOTE: this access is unsafe and may return inconsistent results (e.g, a
      * partial write to the 64-bit value on a 32-bit system).  This is ok for
      * the moment, as it's only informational, but be warned. */
-    return self->bytes_written + self->slab_bytes_written;
+    if (self->device) {
+	return device_get_bytes_written(self->device);
+    } else {
+	return self->bytes_written + self->slab_bytes_written;
+    }
+
 }
 
 static void

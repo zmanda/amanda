@@ -811,6 +811,7 @@ static gboolean vfs_device_write_block(Device * pself, guint size, gpointer data
     self->volume_bytes += size;
     self->checked_bytes_used += size;
     pself->block ++;
+    pself->bytes_written += size;
 
     return TRUE;
 }
@@ -1105,6 +1106,7 @@ vfs_device_start_file (Device * dself, dumpfile_t * ji) {
     self->checked_bytes_used += VFS_DEVICE_LABEL_SIZE;
     dself->in_file = TRUE;
     dself->block = 0;
+    dself->bytes_written = 0;
     /* make_new_file_name set pself->file for us */
 
     return TRUE;
