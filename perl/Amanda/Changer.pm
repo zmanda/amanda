@@ -1253,15 +1253,19 @@ sub make_new_tape_label {
 
     my $tl = $self->{'tapelist'};
     die ("make_new_tape_label: no tapelist") if !$tl;
-    return undef if !defined $self->{'autolabel'}->{'template'};
-    return undef if !defined $self->{'labelstr'};
+    if (!defined $self->{'autolabel'}) {
+	return (undef, "autolabel not set");
+    }
+    if (!defined $self->{'autolabel'}->{'template'}) {
+	return (undef, "template is not set, you must set autolabel");
+    }
+    if (!defined $self->{'labelstr'}) {
+	return (undef, "labelstr not set");
+    }
     my $template = $self->{'autolabel'}->{'template'};
     my $labelstr = $self->{'labelstr'};
     my $slot_digit = 1;
 
-    if (!$template) {
-	return (undef, "template is not set, you must set autolabel");
-    }
     $template =~ s/\$\$/SUBSTITUTE_DOLLAR/g;
     $template =~ s/\$b/SUBSTITUTE_BARCODE/g;
     $template =~ s/\$m/SUBSTITUTE_META/g;

@@ -1,4 +1,11 @@
 2012-04-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm (make_new_tape_label): Fix error return.
+	* perl/Amanda/Taper/Scribe.pm ($_user_msg_fn): Improve message if tape
+	  is relabeled with a new label.
+	* perl/Amanda/ScanInventory.pm: Set relabeled.
+	* installcheck/Amanda_Changer.pl: Fix for new message.
+
+2012-04-11  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Nathan Stratton Treadway
 	* device-src/vfs-device.c: Improve message for MAX_VOLUME_USAGE.
 	* installcheck/taper.pl: Fix.
