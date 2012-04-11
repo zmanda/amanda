@@ -1,3 +1,6 @@
+2012-04-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Limit the number of log line to 20.
+
 2012-03-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: New PROXY property.
 	* device-src/s3.c: Set CURLOPT_PROXY from PROXY property.
