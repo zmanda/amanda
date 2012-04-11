@@ -223,7 +223,7 @@ A dumptype using this application might look like:
   }
 </programlisting>
 Note that the <emphasis>program</emphasis> parameter must be set to
-<emphasis>"APPLCIATION"</emphasis> to use the <emphasis>application</emphasis>
+<emphasis>"APPLICATION"</emphasis> to use the <emphasis>application</emphasis>
 parameter.
 </para>
 </refsect1>
