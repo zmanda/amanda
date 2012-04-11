@@ -1,4 +1,9 @@
 2012-04-11  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by Nathan Stratton Treadway
+	* device-src/vfs-device.c: Improve message for MAX_VOLUME_USAGE.
+	* installcheck/taper.pl: Fix.
+
+2012-04-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amgtar.8.xml: s/APPLCIATION/APPLICATION/
 
 2012-04-06  Jean-Louis Martineau <martineau@zmanda.com>
