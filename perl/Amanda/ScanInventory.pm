@@ -264,10 +264,12 @@ sub _scan {
 	    $res->{device}->status == $DEVICE_STATUS_SUCCESS) {
 	    $label = $res->{device}->volume_label;
 	}
+	my $relabeled = !defined($label) || $label !~ /$self->{'labelstr'}/;
 	$self->_user_msg(slot_result => 1,
 			 slot => $slot_scanned,
 			 label => $label,
 			 err  => $err,
+			 relabeled => $relabeled,
 			 res  => $res);
 	if ($res) {
 	    my $f_type;
@@ -500,7 +502,7 @@ sub _scan {
 	    return $result_cb->($err, $res);
 	}
 	$label = $res->{'device'}->volume_label;
-	if (!defined $label) {
+	if (!defined($label) || $label !~ /$self->{'labelstr'}/) {
 	    $res->get_meta_label(finished_cb => $steps->{'got_meta_label'});
 	    return;
 	}

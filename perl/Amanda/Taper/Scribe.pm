@@ -1767,6 +1767,9 @@ sub _start_scanning {
 	    } elsif (!defined $params{'label'}) {
 		$self->{'feedback'}->scribe_notif_log_info(
 		    message => "Slot $params{'slot'} without label can be labeled");
+	    } elsif ($params{'relabeled'}) {
+		$self->{'feedback'}->scribe_notif_log_info(
+		    message => "Slot $params{'slot'} with label $params{'label'} will be relabeled");
 	    } else {
 		$self->{'feedback'}->scribe_notif_log_info(
 		    message => "Slot $params{'slot'} with label $params{'label'} is usable");
