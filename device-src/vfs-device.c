@@ -795,9 +795,10 @@ static gboolean vfs_device_write_block(Device * pself, guint size, gpointer data
 	pself->is_eom = TRUE;
 
     if (check_at_peom(self, size)) {
+	/* check_at_peom() only checks against MAX_VOLUME_USAGE limit */
 	pself->is_eom = TRUE;
 	device_set_error(pself,
-	    stralloc(_("No space left on device")),
+	    stralloc(_("No space left on device: more than MAX_VOLUME_USAGE bytes written")),
 	    DEVICE_STATUS_VOLUME_ERROR);
 	return FALSE;
     }
@@ -1061,9 +1062,10 @@ vfs_device_start_file (Device * dself, dumpfile_t * ji) {
 	dself->is_eom = TRUE;
 
     if (check_at_peom(self, VFS_DEVICE_LABEL_SIZE)) {
+	/* check_at_peom() only checks against MAX_VOLUME_USAGE limit */
 	dself->is_eom = TRUE;
 	device_set_error(dself,
-		stralloc(_("No space left on device")),
+		stralloc(_("No space left on device: more than MAX_VOLUME_USAGE bytes written")),
 		DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
