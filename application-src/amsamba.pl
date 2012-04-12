@@ -36,6 +36,7 @@ use Amanda::Config qw( :init :getconf  config_dir_relative );
 use Amanda::Debug qw( :logging );
 use Amanda::Paths;
 use Amanda::Util qw( :constants :quoting);
+use Amanda::MainLoop qw( :GIOCondition );
 
 sub new {
     my $class = shift;
@@ -390,13 +391,13 @@ sub command_selfcheck {
     print "OK " . $self->{device} . "\n";
     print "OK " . $self->{directory} . "\n" if defined $self->{directory};
 
-    my ($child_rdr, $parent_wtr);
+    my ($password_rdr, $password_wtr);
     if (defined $self->{password}) {
 	# Don't set close-on-exec
         $^F=10;
-        pipe($child_rdr, $parent_wtr);
+        pipe($password_rdr, $password_wtr);
         $^F=2;
-        $parent_wtr->autoflush(1);
+        $password_wtr->autoflush(1);
     }
     my($wtr, $rdr, $err);
     $err = Symbol::gensym;
@@ -404,10 +405,10 @@ sub command_selfcheck {
     if ($pid == 0) {
 	#child
         if (defined $self->{password}) {
-	    my $ff = $child_rdr->fileno;
-	    debug("child_rdr $ff");
-	    $parent_wtr->close();
-	    $ENV{PASSWD_FD} = $child_rdr->fileno;
+	    my $ff = $password_rdr->fileno;
+	    debug("password_rdr $ff");
+	    $password_wtr->close();
+	    $ENV{PASSWD_FD} = $password_rdr->fileno;
 	}
 	close(1);
 	close(2);
@@ -429,11 +430,11 @@ sub command_selfcheck {
     }
     #parent
     if (defined $self->{password}) {
-        my $ff = $parent_wtr->fileno;
-        debug("parent_wtr $ff");
-        $parent_wtr->print($self->{password});
-        $parent_wtr->close();
-        $child_rdr->close();
+        my $ff = $password_wtr->fileno;
+        debug("password_wtr $ff");
+        $password_wtr->print($self->{password});
+        $password_wtr->close();
+        $password_rdr->close();
     } else {
 	debug("No password");
     }
@@ -462,13 +463,13 @@ sub command_estimate {
     $self->validate_inexclude();
 
     my $level = $self->{level}[0];
-    my ($child_rdr, $parent_wtr);
+    my ($password_rdr, $password_wtr);
     if (defined $self->{password}) {
 	# Don't set close-on-exec
         $^F=10;
-        pipe($child_rdr,  $parent_wtr);
+        pipe($password_rdr,  $password_wtr);
         $^F=2;
-        $parent_wtr->autoflush(1);
+        $password_wtr->autoflush(1);
     }
     my($wtr, $rdr, $err);
     $err = Symbol::gensym;
@@ -476,10 +477,10 @@ sub command_estimate {
     if ($pid == 0) {
 	#child
         if (defined $self->{password}) {
-	    my $ff = $child_rdr->fileno;
-	    debug("child_rdr $ff");
-	    $parent_wtr->close();
-	    $ENV{PASSWD_FD} = $child_rdr->fileno;
+	    my $ff = $password_rdr->fileno;
+	    debug("password_rdr $ff");
+	    $password_wtr->close();
+	    $ENV{PASSWD_FD} = $password_rdr->fileno;
 	}
 	close(0);
 	close(1);
@@ -506,12 +507,12 @@ sub command_estimate {
     }
     #parent
     if (defined $self->{password}) {
-        my $ff = $parent_wtr->fileno;
-        debug("parent_wtr $ff");
+        my $ff = $password_wtr->fileno;
+        debug("password_wtr $ff");
         debug("password $self->{password}");
-        $parent_wtr->print($self->{password});
-        $parent_wtr->close();
-        $child_rdr->close();
+        $password_wtr->print($self->{password});
+        $password_wtr->close();
+        $password_rdr->close();
     }
     close($wtr);
     close($rdr);
@@ -561,6 +562,22 @@ sub output_size {
    }
 }
 
+sub send_empty_tar_file {
+    my $self = shift;
+    my ($out1, $out2) = @_;
+    my $out;
+    my $buf;
+    my $size;
+
+    Amanda::Debug::debug("Create empty archive with: tar --create --file=- --files-from=/dev/null");
+    open2($out, undef, "tar", "--create", "--file=-", "--files-from=/dev/null");
+
+    while(($size = sysread($out, $buf, 32768))) {
+	syswrite($out1, $buf, $size);
+	syswrite($out2, $buf, $size);
+    }
+}
+
 sub command_backup {
     my $self = shift;
 
@@ -570,38 +587,25 @@ sub command_backup {
     $self->findpass();
     $self->validate_inexclude();
 
-    my $pid_tee = open3(\*INDEX_IN, '>&STDOUT', \*INDEX_TEE, "-");
-    if ($pid_tee == 0) {
-	close(INDEX_IN);
-	close(INDEX_TEE);
-	my $buf;
-	my $size = -1;
-	while (($size = POSIX::read(0, $buf, 32768)) > 0) {
-	    POSIX::write(1, $buf, $size);
-	    POSIX::write(2, $buf, $size);
-	}
-	exit 0;
-    }
-    my ($child_rdr, $parent_wtr);
+    my ($password_rdr, $password_wtr);
     if (defined $self->{password}) {
 	# Don't set close-on-exec
         $^F=10;
-        pipe($child_rdr,  $parent_wtr);
+        pipe($password_rdr,  $password_wtr);
         $^F=2;
-        $parent_wtr->autoflush(1);
+        $password_wtr->autoflush(1);
     }
-    my($wtr, $err);
-    $err = Symbol::gensym;
-    my $pid = open3($wtr, ">&INDEX_IN", $err, "-");
+    my($smbclient_wtr, $smbclient_rdr, $smbclient_err);
+    $smbclient_err = Symbol::gensym;
+    my $pid = open3($smbclient_wtr, $smbclient_rdr, $smbclient_err, "-");
     if ($pid == 0) {
 	#child
 	if (defined $self->{password}) {
-	    my $ff = $child_rdr->fileno;
-	    debug("child_rdr $ff");
-	    $parent_wtr->close();
-	    $ENV{PASSWD_FD} = $child_rdr->fileno;
+	    my $ff = $password_rdr->fileno;
+	    debug("password_rdr $ff");
+	    $password_wtr->close();
+	    $ENV{PASSWD_FD} = $password_rdr->fileno;
 	}
-	close(0);
 	my @ARGV = ();
 	push @ARGV, $self->{smbclient}, $self->{share};
 	push @ARGV, "" if (!defined($self->{password}));
@@ -642,53 +646,126 @@ sub command_backup {
     }
 
     if (defined $self->{password}) {
-        my $ff = $parent_wtr->fileno;
-        debug("parent_wtr $ff");
-        debug("password $self->{password}");
-        $parent_wtr->print($self->{password});
-        $parent_wtr->close();
-        $child_rdr->close();
+        my $ff = $password_wtr->fileno;
+        debug("password_wtr $ff");
+        $password_wtr->print($self->{password});
+        $password_wtr->close();
+        $password_rdr->close();
     } else {
 	debug("No password");
     }
-    close($wtr);
+    close($smbclient_wtr);
 
     #index process 
-    my $index;
+    my $index_rdr;
+    my $index_wtr;
     debug("$self->{gnutar} -tf -");
-    my $pid_index1 = open2($index, '<&INDEX_TEE', $self->{gnutar}, "-tf", "-");
-    close(INDEX_IN);
+    my $pid_index1 = open2($index_rdr, $index_wtr, $self->{gnutar}, "-tf", "-");
     my $size = -1;
-    my $index_fd = $index->fileno;
+    my $index_fd = $index_rdr->fileno;
     debug("index $index_fd");
+    my $indexout_fd;
     if (defined($self->{index})) {
-	my $indexout_fd;
 	open($indexout_fd, '>&=4') ||
 	    $self->print_to_server_and_die("Can't open indexout_fd: $!",
 					   $Amanda::Script_App::ERROR);
-	$self->parse_backup($index, $self->{mesgout}, $indexout_fd);
-	close($indexout_fd);
     }
-    else {
-	$self->parse_backup($index_fd, $self->{mesgout}, undef);
-    }
-    close($index);
 
-    while (<$err>) {
-	chomp;
-	debug("stderr: " . $_);
-	next if /^Domain=/;
-	next if /^tarmode is now /;
-	next if /dumped (\d+) files and directories/;
-	# message if samba server is configured with 'security = share'
-	next if /Server not using user level security and no password supplied./;
-	if (/^Total bytes written: (\d*)/) {
-	    $size = $1;
-	} else {
-	    $self->print_to_server("smbclient: $_",
-			           $Amanda::Script_App::ERROR);
+    my $file_to_close = 3;
+    my $smbclient_stdout_src = Amanda::MainLoop::fd_source($smbclient_rdr,
+				$G_IO_IN|$G_IO_HUP|$G_IO_ERR);
+    my $smbclient_stderr_src = Amanda::MainLoop::fd_source($smbclient_err,
+				$G_IO_IN|$G_IO_HUP|$G_IO_ERR);
+    my $index_tar_stdout_src = Amanda::MainLoop::fd_source($index_rdr,
+				$G_IO_IN|$G_IO_HUP|$G_IO_ERR);
+
+    my $smbclient_stdout_done = 0;
+    my $smbclient_stderr_done = 0;
+    my $data_size = 0;
+    my $nb_files = 0;
+    $smbclient_stdout_src->set_callback(sub {
+	my $buf;
+	my $blocksize = -1;
+	$blocksize = sysread($smbclient_rdr, $buf, 32768);
+	if (!$blocksize) {
+	    $file_to_close--;
+	    $smbclient_stdout_src->remove();
+	    $smbclient_stdout_done = 1;
+	    if ($smbclient_stderr_done) {
+		if ($data_size == 0 and $nb_files == 0 and $size == 0) {
+		    $self->send_empty_tar_file(*STDOUT, $index_wtr);
+		}
+		close($index_wtr);
+		close(STDOUT);
+	    }
+	    close($smbclient_rdr);
+	    Amanda::MainLoop::quit() if $file_to_close == 0;
+	    return;
 	}
-    }
+	$data_size += $blocksize;
+	syswrite(STDOUT, $buf, $blocksize);
+	syswrite($index_wtr, $buf, $blocksize);
+    });
+
+    $smbclient_stderr_src->set_callback(sub {
+	my $line = <$smbclient_err>;
+	if (!defined $line) {
+	    $file_to_close--;
+	    $smbclient_stderr_src->remove();
+	    $smbclient_stderr_done = 1;
+	    if ($smbclient_stdout_done) {
+		if ($data_size == 0 and $nb_files == 0 and $size == 0) {
+		    $self->send_empty_tar_file(*STDOUT, $index_wtr);
+		}
+		close($index_wtr);
+		close(STDOUT);
+	    }
+	    close ($smbclient_err);
+	    Amanda::MainLoop::quit() if $file_to_close == 0;
+	    return;
+	}
+	chomp $line;
+	debug("stderr: " . $line);
+	return if $line =~ /^Domain=/;
+	return if $line =~ /^tarmode is now /;
+	if ($line =~ /dumped (\d+) files and directories/) {
+	    $nb_files = $1;
+	    return;
+	}
+	# message if samba server is configured with 'security = share'
+	return if $line =~$line =~  /Server not using user level security and no password supplied./;
+	if ($line =~ /^Total bytes written: (\d*)/) {
+	    $size = $1;
+	    return;
+	}
+	$self->print_to_server("smbclient: $line", $Amanda::Script_App::ERROR);
+    });
+
+    $index_tar_stdout_src->set_callback(sub {
+	my $line = <$index_rdr>;
+	if (!defined $line) {
+	    $file_to_close--;
+	    $index_tar_stdout_src->remove();
+	    close($index_rdr);
+	    close($indexout_fd);
+	    Amanda::MainLoop::quit() if $file_to_close == 0;
+	    return;
+	}
+	chomp $line;
+	if ($line =~ /^\.\//) {
+	    if(defined($indexout_fd)) {
+		if(defined($self->{index})) {
+		    $line =~ s/^\.//;
+		    print $indexout_fd $line;
+		}
+	    }
+	} else {
+	    $self->print_to_server($line, $Amanda::Script_App::ERROR);
+	}
+    });
+
+    Amanda::MainLoop::run();
+
     if ($size >= 0) {
 	my $ksize = $size / 1024;
 	if ($ksize < 32) {
