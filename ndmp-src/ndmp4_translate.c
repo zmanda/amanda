@@ -194,6 +194,27 @@ ndmp_9to4_pval_vec_dup (
 	return ndmp_9to4_pval_vec (pval9, *pval4_p, n_pval);
 }
 
+int
+ndmp_4to9_pval_free(
+  ndmp9_pval *pval9)
+{
+	CNVT_FREE(pval9, name);
+        CNVT_FREE(pval9, value);
+
+	return 0;
+}
+
+int
+ndmp_4to9_pval_vec_free (
+  ndmp9_pval *pval9,
+  unsigned n_pval)
+{
+	unsigned int    i;
+
+	for (i = 0; i < n_pval; i++)
+		ndmp_4to9_pval_free(&pval9[i]);
+	NDMOS_MACRO_FREE(pval9);
+}
 
 /*
  * ndmp_addr
@@ -271,6 +292,15 @@ ndmp_9to4_addr (
 	return 0;
 }
 
+int
+ndmp_9to4_addr_free (
+  ndmp4_addr *addr4)
+{
+	if (addr4->addr_type == NDMP4_ADDR_TCP) {
+	    NDMOS_MACRO_FREE(addr4->ndmp4_addr_u.tcp_addr.tcp_addr_val);
+	}
+	return 0;
+}
 
 /*
  * CONNECT INTERFACES
@@ -1570,6 +1600,15 @@ ndmp_4to9_tape_open_request (
 }
 
 int
+ndmp_4to9_tape_open_free_request (
+  ndmp9_tape_open_request *request9)
+{
+	NDMOS_API_FREE(request9->device);
+	request9->device = NULL;
+	return 0;
+}
+
+int
 ndmp_9to4_tape_open_request (
   ndmp9_tape_open_request *request9,
   ndmp4_tape_open_request *request4)
@@ -2026,6 +2065,13 @@ ndmp_9to4_mover_get_state_reply (
 	return 0;
 }
 
+int
+ndmp_9to4_mover_get_state_free_reply(
+  ndmp4_mover_get_state_reply *reply4)
+{
+//	ndmp_9to4_addr_free(&reply4->data_connection_addr);
+	return 0;
+}
 
 /*
  * ndmp_mover_listen
@@ -2560,6 +2606,14 @@ ndmp_4to9_data_get_env_reply (
 }
 
 int
+ndmp_4to9_data_get_env_free_reply (
+  ndmp9_data_get_env_reply *reply9)
+{
+g_debug("ndmp_4to9_data_get_env_free_reply");
+	ndmp_4to9_pval_vec_free(reply9->env.env_val, reply9->env.env_len);
+}
+
+int
 ndmp_9to4_data_get_env_reply (
   ndmp9_data_get_env_reply *reply9,
   ndmp4_data_get_env_reply *reply4)
@@ -2980,6 +3034,14 @@ ndmp_4to9_log_message_request (
 }
 
 int
+ndmp_4to9_log_message_free_request (
+  ndmp9_log_message_request *request9)
+{
+	CNVT_FREE(request9, entry);
+	return 0;
+}
+
+int
 ndmp_9to4_log_message_request (
   ndmp9_log_message_request *request9,
   ndmp4_log_message_post *request4)
@@ -3165,6 +3227,19 @@ ndmp_4to9_fh_add_file_request (
 	request9->files.files_val = table;
 
 	return 0;
+}
+
+int
+ndmp_4to9_fh_add_file_free_request (
+  ndmp9_fh_add_file_request *request9)
+{
+	int i;
+
+	for (i = 0; i < request9->files.files_len; i++) {
+		NDMOS_API_FREE(request9->files.files_val[i].unix_path);
+	}
+
+	NDMOS_MACRO_FREE(request9->files.files_val);
 }
 
 int
@@ -3602,7 +3677,7 @@ struct reqrep_xlate	ndmp4_reqrep_xlate_table[] = {
 	ndmp_4to9_tape_open_request,
 	ndmp_9to4_tape_open_request,
 	JUST_ERROR_REPLY,
-	NO_MEMUSED /* no memory free routines written yet */
+	ndmp_4to9_tape_open_free_request, ndmp_xtox_no_memused, ndmp_xtox_no_memused, ndmp_xtox_no_memused
     },
     {
 	NDMP4_TAPE_CLOSE,	NDMP9_TAPE_CLOSE,
@@ -3680,7 +3755,7 @@ struct reqrep_xlate	ndmp4_reqrep_xlate_table[] = {
 	NO_ARG_REQUEST,
 	ndmp_4to9_data_get_env_reply,
 	ndmp_9to4_data_get_env_reply,
-	NO_MEMUSED /* no memory free routines written yet */
+	ndmp_xtox_no_memused, ndmp_xtox_no_memused, ndmp_4to9_data_get_env_free_reply, ndmp_xtox_no_memused
     },
     {
 	NDMP4_DATA_STOP,	NDMP9_DATA_STOP,
@@ -3758,7 +3833,7 @@ struct reqrep_xlate	ndmp4_reqrep_xlate_table[] = {
 	ndmp_4to9_log_message_request,
 	ndmp_9to4_log_message_request,
 	JUST_ERROR_REPLY,		/* no reply actually */
-	NO_MEMUSED /* no memory free routines written yet */
+	ndmp_4to9_log_message_free_request, ndmp_xtox_no_memused, ndmp_xtox_no_memused, ndmp_xtox_no_memused
     },
 
     {
@@ -3766,7 +3841,7 @@ struct reqrep_xlate	ndmp4_reqrep_xlate_table[] = {
 	ndmp_4to9_fh_add_file_request,
 	ndmp_9to4_fh_add_file_request,
 	JUST_ERROR_REPLY,		/* no reply actually */
-	NO_MEMUSED /* no memory free routines written yet */
+	ndmp_4to9_fh_add_file_free_request, ndmp_xtox_no_memused, ndmp_xtox_no_memused, ndmp_xtox_no_memused
     },
     {
 	NDMP4_FH_ADD_DIR,		NDMP9_FH_ADD_DIR,
@@ -3792,7 +3867,7 @@ struct reqrep_xlate	ndmp4_reqrep_xlate_table[] = {
 	NO_ARG_REQUEST,
 	ndmp_4to9_mover_get_state_reply,
 	ndmp_9to4_mover_get_state_reply,
-	NO_MEMUSED /* no memory free routines written yet */
+	ndmp_xtox_no_memused, ndmp_xtox_no_memused, ndmp_xtox_no_memused, ndmp_9to4_mover_get_state_free_reply
     },
     {
 	NDMP4_MOVER_LISTEN,	NDMP9_MOVER_LISTEN,

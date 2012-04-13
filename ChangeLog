@@ -1,3 +1,9 @@
+2012-04-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndmos.h: Define NDMOS_MACRO_FREE
+	* ndmp-src/ndmos_glib.h: Define NDMOS_MACRO_FREE
+	* ndmp-src/ndmp_translate.h: define CNVT_FREE.
+	* ndmp-src/ndmp4_translate.c:#Add many free function.
+
 2012-04-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Limit the number of log line to 20.
 
