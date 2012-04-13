@@ -448,6 +448,7 @@ typedef enum {
     CNF_HOLDINGDISK,
     CNF_AUTOLABEL,
     CNF_DEBUG_DAYS,
+    CNF_TMPDIR,
     CNF_CNF /* sentinel */
 } confparm_key;
 

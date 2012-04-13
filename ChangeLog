@@ -1,4 +1,11 @@
 2012-04-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add TMPDIR.
+	* common-src/conffile.h: Add CNF_TMPDIR.
+	* man/xml-source/amanda.conf.5.xml: Document TMPDIR.
+	* perl/Amanda/Config.swg: Add CNF_TMPDIR.
+	* server-src/amindexd.c: Use CNF_TMPDIR.
+
+2012-04-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndmos.h: Define NDMOS_MACRO_FREE
 	* ndmp-src/ndmos_glib.h: Define NDMOS_MACRO_FREE
 	* ndmp-src/ndmp_translate.h: define CNVT_FREE.

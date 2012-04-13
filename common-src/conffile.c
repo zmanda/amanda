@@ -90,6 +90,7 @@ typedef enum {
     CONF_EXECUTE_ON,           CONF_EXECUTE_WHERE,	CONF_SEND_AMREPORT_ON,
     CONF_DEVICE,               CONF_ORDER,
     CONF_DATA_PATH,            CONF_AMANDA,		CONF_DIRECTTCP,
+    CONF_TMPDIR,
 
     /* execute on */
     CONF_PRE_DLE_AMCHECK,      CONF_PRE_HOST_AMCHECK,
@@ -534,6 +535,8 @@ static void validate_port_range(val_t *, int, int);
 static void validate_reserved_port_range(conf_var_t *, val_t *);
 static void validate_unreserved_port_range(conf_var_t *, val_t *);
 static void validate_program(conf_var_t *, val_t *);
+static void validate_tmpdir(conf_var_t *, val_t *);
+
 gint compare_pp_script_order(gconstpointer a, gconstpointer b);
 
 /*
@@ -985,6 +988,7 @@ keytab_t server_keytab[] = {
     { "TAPERFLUSH", CONF_TAPERFLUSH },
     { "TAPETYPE", CONF_TAPETYPE },
     { "TAPE_SPLITSIZE", CONF_TAPE_SPLITSIZE },
+    { "TMPDIR", CONF_TMPDIR },
     { "TPCHANGER", CONF_TPCHANGER },
     { "UNRESERVED_TCP_PORT", CONF_UNRESERVED_TCP_PORT },
     { "USE", CONF_USE },
@@ -1157,6 +1161,7 @@ conf_var_t server_var [] = {
    { CONF_KRB5PRINCIPAL        , CONFTYPE_STR      , read_str         , CNF_KRB5PRINCIPAL        , NULL },
    { CONF_LABEL_NEW_TAPES      , CONFTYPE_STR      , read_str         , CNF_LABEL_NEW_TAPES      , NULL },
    { CONF_AUTOLABEL            , CONFTYPE_AUTOLABEL, read_autolabel   , CNF_AUTOLABEL            , NULL },
+   { CONF_TMPDIR               , CONFTYPE_STR      , read_str         , CNF_TMPDIR               , validate_tmpdir },
    { CONF_USETIMESTAMPS        , CONFTYPE_BOOLEAN  , read_bool        , CNF_USETIMESTAMPS        , NULL },
    { CONF_AMRECOVER_DO_FSF     , CONFTYPE_BOOLEAN  , read_bool        , CNF_AMRECOVER_DO_FSF     , NULL },
    { CONF_AMRECOVER_CHANGER    , CONFTYPE_STR      , read_str         , CNF_AMRECOVER_CHANGER    , NULL },
@@ -4308,6 +4313,31 @@ validate_unreserved_port_range(
 }
 
 /*
+ * Validate tmpdir, the directory must exist and be writable by the user.
+ */
+
+static void validate_tmpdir(conf_var_t *var G_GNUC_UNUSED, val_t *value)
+{
+    struct stat stat_buf;
+    gchar *tmpdir = val_t_to_str(value);
+
+    if (stat(tmpdir, &stat_buf)) {
+	conf_parserror(_("invalid TMPDIR: directory '%s': %s."),
+		      tmpdir, strerror(errno));
+    } else if (!S_ISDIR(stat_buf.st_mode)) {
+	conf_parserror(_("invalid TMPDIR: '%s' is not a directory."),
+		      tmpdir);
+    } else {
+	gchar *dir = g_strconcat(tmpdir, "/.", NULL);
+	if (access(dir, R_OK|W_OK) == -1) {
+	    conf_parserror(_("invalid TMPDIR: '%s': can not read/write: %s."),
+			   tmpdir, strerror(errno));
+	}
+	g_free(dir);
+    }
+}
+
+/*
  * Initialization Implementation
  */
 
@@ -4609,6 +4639,7 @@ init_defaults(
     conf_init_str   (&conf_data[CNF_KRB5KEYTAB]           , "/.amanda-v5-keytab");
     conf_init_str   (&conf_data[CNF_KRB5PRINCIPAL]        , "service/amanda");
     conf_init_str   (&conf_data[CNF_LABEL_NEW_TAPES]      , "");
+    conf_init_str      (&conf_data[CNF_TMPDIR]               , "");
     conf_init_bool     (&conf_data[CNF_USETIMESTAMPS]        , 1);
     conf_init_int      (&conf_data[CNF_CONNECT_TRIES]        , 3);
     conf_init_int      (&conf_data[CNF_REP_TRIES]            , 5);
