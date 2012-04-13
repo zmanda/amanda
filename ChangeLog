@@ -1,3 +1,10 @@
+2012-04-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add TMPDIR.
+	* common-src/conffile.h: Add CNF_TMPDIR.
+	* man/xml-source/amanda.conf.5.xml: Document TMPDIR.
+	* perl/Amanda/Config.swg: Add CNF_TMPDIR.
+	* server-src/amindexd.c: Use CNF_TMPDIR.
+
 2012-04-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsamba.pl: Create incremental empty archive.
 
