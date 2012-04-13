@@ -1465,6 +1465,13 @@ Range is inclusive.</para>
   </listitem>
   </varlistentry>
 
+  <varlistentry>
+  <term><amkeyword>tmpdir</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: none (system default).  Set it to a directory with lots of free
+space if sort in amindexd fail with 'No space left on device'.</para>
+  </listitem>
+  </varlistentry>
 </variablelist>
 </refsect1>
 

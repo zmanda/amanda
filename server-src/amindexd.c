@@ -282,9 +282,16 @@ uncompress_file(
 
 	/* start the sort process */
 	putenv(stralloc("LC_ALL=C"));
-	pid_sort = pipespawn(SORT_PATH, STDIN_PIPE|STDERR_PIPE, 0,
-			     &pipe_to_sort, &indexfd, &sort_errfd,
-			     SORT_PATH, NULL);
+	if (getconf_seen(CNF_TMPDIR)) {
+	    gchar *tmpdir = getconf_str(CNF_TMPDIR);
+	    pid_sort = pipespawn(SORT_PATH, STDIN_PIPE|STDERR_PIPE, 0,
+				 &pipe_to_sort, &indexfd, &sort_errfd,
+				 SORT_PATH, "-T", tmpdir, NULL);
+	} else {
+	    pid_sort = pipespawn(SORT_PATH, STDIN_PIPE|STDERR_PIPE, 0,
+				 &pipe_to_sort, &indexfd, &sort_errfd,
+				 SORT_PATH, NULL);
+	}
 	aclose(indexfd);
 
 	/* start a subprocess */
