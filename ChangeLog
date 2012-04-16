@@ -1,3 +1,6 @@
+2012-04-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amstar.c: Remove spurious space on directory entry.
+
 2012-04-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Add TMPDIR.
 	* common-src/conffile.h: Add CNF_TMPDIR.
