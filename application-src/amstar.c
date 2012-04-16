@@ -758,7 +758,7 @@ amstar_backup(
 
 	if (regexec(&regex_dir, line, 3, regmatch, 0) == 0) {
 	    if (argument->dle.create_index && regmatch[1].rm_so == 2) {
-		line[regmatch[1].rm_eo+1]='\0';
+		line[regmatch[1].rm_eo]='\0';
 		fprintf(indexstream, "/%s\n", &line[regmatch[1].rm_so]);
 	    }
 	    continue;
