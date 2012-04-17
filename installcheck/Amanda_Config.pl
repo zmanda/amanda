@@ -602,7 +602,7 @@ is($error_level, $CFGERR_ERRORS, "bogus config overwrite flagged as an error");
 my $pid = open(my $kid, "-|");
 die "Can't fork: $!" unless defined($pid);
 if (!$pid) {
-    Amanda::Config::dump_configuration();
+    Amanda::Config::dump_configuration(1, 0);
     exit 1;
 }
 my $dump_first_line = <$kid>;

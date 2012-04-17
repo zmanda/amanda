@@ -42,6 +42,7 @@
 #include "util.h"
 #include "timestamp.h"
 #include "server_util.h"
+#include <getopt.h>
 
 disklist_t diskq;
 
@@ -88,6 +89,8 @@ static void show_config(int argc, char **argv);
 static char *conf_tapelist = NULL;
 static char *displayunit;
 static long int unitdivisor;
+static gboolean print_default = 1;
+static gboolean print_source = 0;
 
 static const struct {
     const char *name;
@@ -143,6 +146,13 @@ static const struct {
 };
 #define	NCMDS	(int)(sizeof(cmdtab) / sizeof(cmdtab[0]))
 
+static struct option long_options[] = {
+    {"version"       , 0, NULL,  1},
+    {"no-default"    , 0, NULL,  2},
+    {"print-source"  , 0, NULL,  3},
+    {NULL, 0, NULL, 0}
+};
+
 int
 main(
     int		argc,
@@ -175,6 +185,27 @@ main(
     add_amanda_log_handler(amanda_log_stderr);
 
     cfg_ovr = extract_commandline_config_overrides(&argc, &argv);
+
+    while (1) {
+	int option_index = 0;
+        int c;
+        c = getopt_long(argc, argv, "", long_options, &option_index);
+
+	if (c == -1) {
+	    break;
+	}
+
+	switch(c) {
+	case 1: printf("amadmin-%s\n", VERSION);
+		return 0;
+	case 2: print_default = 0;
+		break;
+	case 3: print_source = 1;
+		break;
+	default: usage();
+	}
+    }
+    argc -= optind-1, argv += optind-1;
 
     if(argc < 3) usage();
 
@@ -246,7 +277,7 @@ usage(void)
 {
     int i;
 
-    g_fprintf(stderr, _("\nUsage: %s [-o configoption]* <conf> <command> {<args>} ...\n"),
+    g_fprintf(stderr, _("\nUsage: %s [--version] [--no-default] [--print-source] [-o configoption]*\n               <conf> <command> {<args>} ...\n"),
 	    get_pname());
     g_fprintf(stderr, _("    Valid <command>s are:\n"));
     for (i = 0; i < NCMDS; i++)
@@ -2092,9 +2123,6 @@ disklist_one(
 {
     am_host_t *hp;
     netif_t *ip;
-    sle_t *excl;
-    identlist_t pp_scriptlist;
-    estimatelist_t  estimates;
     dumptype_t *dtype = lookup_dumptype(dp->dtype_name);
 
     hp = dp->host;
@@ -2111,222 +2139,10 @@ disklist_one(
     g_printf("        program \"%s\"\n", dp->program);
     if (dp->application)
 	g_printf("        application \"%s\"\n", dp->application);
-    g_printf("        data-path %s\n", data_path_to_string(dp->data_path));
-    if (dp->exclude_file != NULL && dp->exclude_file->nb_element > 0) {
-	g_printf("        exclude file");
-	for(excl = dp->exclude_file->first; excl != NULL; excl = excl->next) {
-	    g_printf(" \"%s\"", excl->name);
-	}
-	g_printf("\n");
-    }
-    if (dp->exclude_list != NULL && dp->exclude_list->nb_element > 0) {
-	g_printf("        exclude list");
-	if(dp->exclude_optional) g_printf(" optional");
-	for(excl = dp->exclude_list->first; excl != NULL; excl = excl->next) {
-	    g_printf(" \"%s\"", excl->name);
-	}
-	g_printf("\n");
-    }
-    if (dp->include_file != NULL && dp->include_file->nb_element > 0) {
-	g_printf("        include file");
-	for(excl = dp->include_file->first; excl != NULL; excl = excl->next) {
-	    g_printf(" \"%s\"", excl->name);
-	}
-	g_printf("\n");
-    }
-    if (dp->include_list != NULL && dp->include_list->nb_element > 0) {
-	g_printf("        include list");
-	if (dp->include_optional) g_printf(" optional");
-	for(excl = dp->include_list->first; excl != NULL; excl = excl->next) {
-	    g_printf(" \"%s\"", excl->name);
-	}
-	g_printf("\n");
-    }
-    g_printf("        priority %d\n", dp->priority);
-    g_printf("        dumpcycle %d\n", dp->dumpcycle);
-    g_printf("        maxdumps %d\n", dp->maxdumps);
-    g_printf("        maxpromoteday %d\n", dp->maxpromoteday);
-    if (dp->bumppercent > 0) {
-	g_printf("        bumppercent %d\n", dp->bumppercent);
-    }
-    else {
-	g_printf("        bumpsize %lld\n",
-		(long long)dp->bumpsize);
-    }
-    g_printf("        bumpdays %d\n", dp->bumpdays);
-    g_printf("        bumpmult %lf\n", dp->bumpmult);
 
-    g_printf("        strategy ");
-    switch(dp->strategy) {
-    case DS_SKIP:
-	g_printf("SKIP\n");
-	break;
-    case DS_STANDARD:
-	g_printf("STANDARD\n");
-	break;
-    case DS_NOFULL:
-	g_printf("NOFULL\n");
-	break;
-    case DS_NOINC:
-	g_printf("NOINC\n");
-	break;
-    case DS_HANOI:
-	g_printf("HANOI\n");
-	break;
-    case DS_INCRONLY:
-	g_printf("INCRONLY\n");
-	break;
-    }
-    g_printf("        ignore %s\n", (dp->ignore? "YES" : "NO"));
-    g_printf("        estimate ");
-    estimates = dp->estimatelist;
-    while (estimates) {
-	switch((estimate_t)GPOINTER_TO_INT(estimates->data)) {
-	case ES_CLIENT:
-	    g_printf("CLIENT");
-	    break;
-	case ES_SERVER:
-	    g_printf("SERVER");
-	    break;
-	case ES_CALCSIZE:
-	    g_printf("CALCSIZE");
-	    break;
-	case ES_ES:
-	    break;
-	}
-	estimates = estimates->next;
-	if (estimates)
-	    g_printf(", ");
-    }
-    g_printf("\n");
+    dump_dumptype(dtype, "  ", print_default, print_source);
 
-    g_printf("        compress ");
-    switch(dp->compress) {
-    case COMP_NONE:
-	g_printf("NONE\n");
-	break;
-    case COMP_FAST:
-	g_printf("CLIENT FAST\n");
-	break;
-    case COMP_BEST:
-	g_printf("CLIENT BEST\n");
-	break;
-    case COMP_CUST:
-	g_printf("CLIENT CUSTOM\n");
-	g_printf("        client-custom-compress \"%s\"\n",
-		    dp->clntcompprog? dp->clntcompprog : "");
-	break;
-    case COMP_SERVER_FAST:
-	g_printf("SERVER FAST\n");
-	break;
-    case COMP_SERVER_BEST:
-	g_printf("SERVER BEST\n");
-	break;
-    case COMP_SERVER_CUST:
-	g_printf("SERVER CUSTOM\n");
-	g_printf("        server-custom-compress \"%s\"\n",
-		    dp->srvcompprog? dp->srvcompprog : "");
-	break;
-    }
-    if(dp->compress != COMP_NONE) {
-	g_printf("        comprate %.2lf %.2lf\n",
-	       dp->comprate[0], dp->comprate[1]);
-    }
-
-    g_printf("        encrypt ");
-    switch(dp->encrypt) {
-    case ENCRYPT_NONE:
-	g_printf("NONE\n");
-	break;
-    case ENCRYPT_CUST:
-	g_printf("CLIENT\n");
-	g_printf("        client-encrypt \"%s\"\n",
-		    dp->clnt_encrypt? dp->clnt_encrypt : "");
-	g_printf("        client-decrypt-option \"%s\"\n",
-		    dp->clnt_decrypt_opt? dp->clnt_decrypt_opt : "");
-	break;
-    case ENCRYPT_SERV_CUST:
-	g_printf("SERVER\n");
-	g_printf("        server-encrypt \"%s\"\n",
-		    dp->srv_encrypt? dp->srv_encrypt : "");
-	g_printf("        server-decrypt-option \"%s\"\n",
-		    dp->srv_decrypt_opt? dp->srv_decrypt_opt : "");
-	break;
-    }
-
-    g_printf("        auth \"%s\"\n", dp->auth);
-    g_printf("        kencrypt %s\n", (dp->kencrypt? "YES" : "NO"));
-    g_printf("        amandad-path \"%s\"\n", dp->amandad_path);
-    g_printf("        client-username \"%s\"\n", dp->client_username);
-    g_printf("        client-port \"%s\"\n", dp->client_port);
-    g_printf("        ssh-keys \"%s\"\n", dp->ssh_keys);
-
-    g_printf("        holdingdisk ");
-    switch(dp->to_holdingdisk) {
-    case HOLD_NEVER:
-	g_printf("NEVER\n");
-	break;
-    case HOLD_AUTO:
-	g_printf("AUTO\n");
-	break;
-    case HOLD_REQUIRED:
-	g_printf("REQUIRED\n");
-	break;
-    }
-
-    g_printf("        record %s\n", (dp->record? "YES" : "NO"));
-    g_printf("        index %s\n", (dp->index? "YES" : "NO"));
-    g_printf("        starttime %04d\n", (int)dp->starttime);
-    if(dp->tape_splitsize > (off_t)0) {
-	g_printf("        tape-splitsize %lld\n",
-	       (long long)dp->tape_splitsize);
-    }
-    if(dp->split_diskbuffer) {
-	g_printf("        split-diskbuffer %s\n", dp->split_diskbuffer);
-    }
-    if(dp->fallback_splitsize > (off_t)0) {
-	g_printf("        fallback-splitsize %lldMb\n",
-	       (long long)(dp->fallback_splitsize / (off_t)1024));
-    }
-    g_printf("        skip-incr %s\n", (dp->skip_incr? "YES" : "NO"));
-    g_printf("        skip-full %s\n", (dp->skip_full? "YES" : "NO"));
-    g_printf("        allow-split %s\n", (dp->allow_split ? "YES" : "NO"));
-    if (dumptype_seen(dtype, DUMPTYPE_RECOVERY_LIMIT)) {
-	char **rl, **r1;
-	rl = val_t_display_strs(dumptype_getconf((dtype),
-				DUMPTYPE_RECOVERY_LIMIT), 1);
-	for(r1 = rl; *r1 != NULL; r1++) {
-	    g_printf("        recovery-limit %s\n", *r1);
-	free(*r1);
-	}
-    }
-    if (dumptype_seen(dtype, DUMPTYPE_DUMP_LIMIT)) {
-	char **rl, **r1;
-	rl = val_t_display_strs(dumptype_getconf((dtype),
-				DUMPTYPE_DUMP_LIMIT), 1);
-	for(r1 = rl; *r1 != NULL; r1++) {
-	    g_printf("        dump-limit %s\n", *r1);
-	free(*r1);
-	}
-    }
     g_printf("        spindle %d\n", dp->spindle);
-    pp_scriptlist = dp->pp_scriptlist;
-    while (pp_scriptlist != NULL) {
-	g_printf("        script \"%s\"\n", (char *)pp_scriptlist->data);
-	pp_scriptlist = pp_scriptlist->next;
-    }
-
-    {
-	char **prop, **p1;;
-
-	prop = val_t_display_strs(dumptype_getconf((dtype), DUMPTYPE_PROPERTY),
-				  0);
-	for(p1 = prop; *p1 != NULL; p1++) {
-	    g_printf("        property %s\n", *p1);
-	    free(*p1);
-	}
-	amfree(prop);
-    }
 
     g_printf("\n");
 }
@@ -2402,6 +2218,6 @@ void show_config(
     int argc G_GNUC_UNUSED,
     char **argv G_GNUC_UNUSED)
 {
-    dump_configuration();
+    dump_configuration(print_default, print_source);
 }
 

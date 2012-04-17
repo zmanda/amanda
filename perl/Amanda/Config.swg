@@ -694,7 +694,7 @@ typedef char **val_t_strs;
 val_t_strs getconf_byname_strs(char *key, int str_needs_quotes) {
     val_t *val = getconf_byname(key);
     if (!val) return NULL;
-    return val_t_display_strs(val, str_needs_quotes);
+    return val_t_display_strs(val, str_needs_quotes, FALSE);
 }
 %}
 
@@ -910,7 +910,7 @@ amglue_export_tag(init,
  * Miscellaneous
  */
 
-void dump_configuration(void);
+void dump_configuration(gboolean print_default, gboolean print_source);
 %newobject config_dir_relative;
 char *config_dir_relative(char *filename);
 char *taperalgo2str(taperalgo_t taperalgo);

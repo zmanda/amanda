@@ -30,6 +30,9 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amadmin</command>    
+    <arg choice='opt'>--version</arg>
+    <arg choice='opt'>--no-default</arg>
+    <arg choice='opt'>--print-source</arg>
     &configoverride.synopsis;
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>command</replaceable></arg>
@@ -47,6 +50,26 @@ Amanda configuration.</para>
 <para>See the
 <manref name="amanda" vol="8"/>
 man page for more details about Amanda.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+ <varlistentry>
+    <term><option>--version</option></term>
+<listitem><para>Print the version and exit.</para></listitem>
+  </varlistentry>
+ <varlistentry>
+    <term><option>--no-default</option></term>
+<listitem><para>Do not print default values for <emphasis remap='B'>config</emphasis>
+and <emphasis remap='B'>disklist</emphasis> commands.</para></listitem>
+  </varlistentry>
+ <varlistentry>
+    <term><option>--print-source</option></term>
+<listitem><para>Print where a value is definedi for <emphasis remap='B'>config</emphasis>
+and <emphasis remap='B'>disklist</emphasis> commands.</para></listitem>
+  </varlistentry>
+
+</variablelist>
 </refsect1>
 
 <refsect1><title>COMMANDS</title>

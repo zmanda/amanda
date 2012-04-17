@@ -25,6 +25,7 @@ use Amanda::Debug qw( :logging );
 use Amanda::Util qw( :constants );
 use Amanda::Paths;
 use Amanda::Constants;
+eval 'use Amanda::Disklist;';  # can fail if compiled for client only
 use Getopt::Long;
 
 # Implementation note: this application is a bit funny, because it does not
@@ -349,6 +350,14 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 }
 
 Amanda::Util::finish_setup($RUNNING_AS_ANY);
+
+if ($execute_where != $CONFIG_INIT_CLIENT) {
+    my $diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));
+    $cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
+#    if ($cfgerr_level >= $CFGERR_ERRORS) {
+#	die "Errors processing disklist";
+#    }
+}
 
 conf_param($parameter, $opt_list);
 

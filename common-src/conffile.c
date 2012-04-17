@@ -229,6 +229,7 @@ static FILE *current_file = NULL;
 static char *current_filename = NULL;
 static char *current_line = NULL;
 static char *current_char = NULL;
+static char *current_block = NULL;
 static int current_line_num = 0; /* (technically, managed by the parser) */
 
 /* A static buffer for storing tokens while they are being scanned. */
@@ -357,7 +358,7 @@ struct device_config_s {
 
 struct changer_config_s {
     struct changer_config_s *next;
-    int seen;
+    seen_t seen;
     char *name;
 
     val_t value[CHANGER_CONFIG_CHANGER_CONFIG];
@@ -758,7 +759,7 @@ void free_property_t(gpointer p);
 /* Utility functions/structs for val_t_display_strs */
 static char *exinclude_display_str(val_t *val, int file);
 static void proplist_display_str_foreach_fn(gpointer key_p, gpointer value_p, gpointer user_data_p);
-static void val_t_print_token(FILE *output, char *prefix, char *format, keytab_t *kt, val_t *val);
+static void val_t_print_token(gboolean print_default, gboolean print_source, FILE *output, char *prefix, char *format, keytab_t *kt, val_t *val);
 
 /* Given a key name as used in config overwrites, return a pointer to the corresponding
  * conf_var_t in the current parsetable, and the val_t representing that value.  This
@@ -1907,6 +1908,7 @@ read_confline(
 	    else if(tok == CONF_INTERACTIVITY) get_interactivity();
 	    else if(tok == CONF_TAPERSCAN) get_taperscan();
 	    else conf_parserror(_("DUMPTYPE, INTERFACE, TAPETYPE, HOLDINGDISK, APPLICATION, SCRIPT, DEVICE, CHANGER, INTERACTIVITY or TAPERSCAN expected"));
+	    current_block = NULL;
 	}
 	break;
 
@@ -2179,6 +2181,8 @@ get_holdingdisk(
 
     get_conftoken(CONF_IDENT);
     hdcur.name = stralloc(tokenval.v.s);
+    current_block = g_strconcat("holdingdisk ", hdcur.name, NULL);
+    hdcur.seen.block = current_block;
     hdcur.seen.filename = current_filename;
     hdcur.seen.linenum = current_line_num;
 
@@ -2319,6 +2323,8 @@ read_dumptype(
 	get_conftoken(CONF_IDENT);
 	dpcur.name = stralloc(tokenval.v.s);
     }
+    current_block = g_strconcat("dumptype ", dpcur.name, NULL);
+    dpcur.seen.block = current_block;
     dpcur.seen.filename = current_filename;
     dpcur.seen.linenum = current_line_num;
 
@@ -2475,6 +2481,8 @@ get_tapetype(void)
 
     get_conftoken(CONF_IDENT);
     tpcur.name = stralloc(tokenval.v.s);
+    current_block = g_strconcat("tapetype ", tpcur.name, NULL);
+    tpcur.seen.block = current_block;
     tpcur.seen.filename = current_filename;
     tpcur.seen.linenum = current_line_num;
 
@@ -2570,6 +2578,8 @@ get_interface(void)
 
     get_conftoken(CONF_IDENT);
     ifcur.name = stralloc(tokenval.v.s);
+    current_block = g_strconcat("interface ", ifcur.name, NULL);
+    ifcur.seen.block = current_block;
     ifcur.seen.filename = current_filename;
     ifcur.seen.linenum = current_line_num;
 
@@ -2674,6 +2684,8 @@ read_application(
 	get_conftoken(CONF_IDENT);
 	apcur.name = stralloc(tokenval.v.s);
     }
+    current_block = g_strconcat("application ", apcur.name, NULL);
+    apcur.seen.block = current_block;
     apcur.seen.filename = current_filename;
     apcur.seen.linenum = current_line_num;
 
@@ -2801,6 +2813,8 @@ read_interactivity(
 	get_conftoken(CONF_IDENT);
 	ivcur.name = stralloc(tokenval.v.s);
     }
+    current_block = g_strconcat("interactivity ", ivcur.name, NULL);
+    ivcur.seen.block = current_block;
     ivcur.seen.filename = current_filename;
     ivcur.seen.linenum = current_line_num;
 
@@ -2927,6 +2941,8 @@ read_taperscan(
 	get_conftoken(CONF_IDENT);
 	tscur.name = stralloc(tokenval.v.s);
     }
+    current_block = g_strconcat("taperscan ", tscur.name, NULL);
+    tscur.seen.block = current_block;
     tscur.seen.filename = current_filename;
     tscur.seen.linenum = current_line_num;
 
@@ -3053,6 +3069,8 @@ read_pp_script(
 	get_conftoken(CONF_IDENT);
 	pscur.name = stralloc(tokenval.v.s);
     }
+    current_block = g_strconcat("script ", pscur.name, NULL);
+    pscur.seen.block = current_block;
     pscur.seen.filename = current_filename;
     pscur.seen.linenum = current_line_num;
 
@@ -3184,6 +3202,8 @@ read_device_config(
 	get_conftoken(CONF_IDENT);
 	dccur.name = stralloc(tokenval.v.s);
     }
+    current_block = g_strconcat("device ", dccur.name, NULL);
+    dccur.seen.block = current_block;
     dccur.seen.filename = current_filename;
     dccur.seen.linenum = current_line_num;
 
@@ -3310,7 +3330,10 @@ read_changer_config(
 	get_conftoken(CONF_IDENT);
 	cccur.name = stralloc(tokenval.v.s);
     }
-    cccur.seen = current_line_num;
+    current_block = g_strconcat("changer ", cccur.name, NULL);
+    cccur.seen.block = current_block;
+    cccur.seen.filename = current_filename;
+    cccur.seen.linenum = current_line_num;
 
     read_block(changer_config_var, cccur.value,
 	       _("changer parameter expected"),
@@ -3365,8 +3388,8 @@ save_changer_config(
     dc = lookup_changer_config(cccur.name);
 
     if(dc != (changer_config_t *)0) {
-	conf_parserror(_("changer %s already defined on line %d"),
-		       dc->name, dc->seen);
+	conf_parserror(_("changer %s already defined at %s:%d"),
+		       dc->name, dc->seen.filename, dc->seen.linenum);
 	return;
     }
 
@@ -3892,6 +3915,7 @@ read_property(
     val_t      *val)
 {
     char *key;
+    gboolean set_seen = TRUE;
     property_t *property = malloc(sizeof(property_t));
     property_t *old_property;
     property->append = 0; 
@@ -3925,8 +3949,7 @@ read_property(
     }
 
     if(val->seen.linenum == 0) {
-	val->seen.filename = current_filename;
-	val->seen.linenum = current_line_num;
+	ckseen(&val->seen); // first property
     }
 
     old_property = g_hash_table_lookup(val->v.proplist, key);
@@ -3938,6 +3961,7 @@ read_property(
 		property->priority = 1;
 	    property->values = old_property->values;
 	    old_property->values = NULL;
+	    set_seen = FALSE;
 	}
     }
     while(tok == CONF_STRING) {
@@ -3947,6 +3971,12 @@ read_property(
     }
     unget_conftoken();
     g_hash_table_insert(val->v.proplist, key, property);
+    if (set_seen) {
+	property->seen.linenum = 0;
+	property->seen.filename = NULL;
+	property->seen.block = NULL;
+	ckseen(&property->seen);
+    }
 }
 
 
@@ -4809,6 +4839,7 @@ ckseen(
 	conf_parserror(_("duplicate parameter; previous definition %s:%d"),
 		seen->filename, seen->linenum);
     }
+    seen->block = current_block;
     seen->filename = current_filename;
     seen->linenum = current_line_num;
 }
@@ -5700,6 +5731,7 @@ conf_init_int(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_INT;
     val_t__int(val) = i;
 }
@@ -5711,6 +5743,7 @@ conf_init_int64(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_INT64;
     val_t__int64(val) = l;
 }
@@ -5722,6 +5755,7 @@ conf_init_real(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_REAL;
     val_t__real(val) = r;
 }
@@ -5733,6 +5767,7 @@ conf_init_str(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_STR;
     if(s)
 	val->v.s = stralloc(s);
@@ -5747,6 +5782,7 @@ conf_init_ident(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_IDENT;
     if(s)
 	val->v.s = stralloc(s);
@@ -5761,6 +5797,7 @@ conf_init_identlist(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_IDENTLIST;
     val->v.identlist = NULL;
     if (s)
@@ -5774,6 +5811,7 @@ conf_init_time(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_TIME;
     val_t__time(val) = t;
 }
@@ -5785,6 +5823,7 @@ conf_init_size(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_SIZE;
     val_t__size(val) = sz;
 }
@@ -5796,6 +5835,7 @@ conf_init_bool(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_BOOLEAN;
     val_t__boolean(val) = i;
 }
@@ -5807,6 +5847,7 @@ conf_init_no_yes_all(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_NO_YES_ALL;
     val_t__int(val) = i;
 }
@@ -5818,6 +5859,7 @@ conf_init_compress(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_COMPRESS;
     val_t__compress(val) = (int)i;
 }
@@ -5829,6 +5871,7 @@ conf_init_encrypt(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_ENCRYPT;
     val_t__encrypt(val) = (int)i;
 }
@@ -5840,6 +5883,7 @@ conf_init_part_cache_type(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_PART_CACHE_TYPE;
     val_t__part_cache_type(val) = (int)i;
 }
@@ -5850,6 +5894,7 @@ conf_init_host_limit(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_HOST_LIMIT;
     val_t__host_limit(val).match_pats = NULL;
     val_t__host_limit(val).same_host  = FALSE;
@@ -5871,6 +5916,7 @@ conf_init_data_path(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_DATA_PATH;
     val_t__data_path(val) = (int)i;
 }
@@ -5882,6 +5928,7 @@ conf_init_holding(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_HOLDING;
     val_t__holding(val) = (int)i;
 }
@@ -5894,6 +5941,7 @@ conf_init_estimatelist(
     GSList *estimates = NULL;
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_ESTIMATELIST;
     estimates = g_slist_append(estimates, GINT_TO_POINTER(i));
     val_t__estimatelist(val) = estimates;
@@ -5906,6 +5954,7 @@ conf_init_strategy(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_STRATEGY;
     val_t__strategy(val) = i;
 }
@@ -5917,6 +5966,7 @@ conf_init_taperalgo(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_TAPERALGO;
     val_t__taperalgo(val) = i;
 }
@@ -5928,6 +5978,7 @@ conf_init_priority(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_PRIORITY;
     val_t__priority(val) = i;
 }
@@ -5940,6 +5991,7 @@ conf_init_rate(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_RATE;
     val_t__rate(val)[0] = r1;
     val_t__rate(val)[1] = r2;
@@ -5951,6 +6003,7 @@ conf_init_exinclude(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_EXINCLUDE;
     val_t__exinclude(val).optional = 0;
     val_t__exinclude(val).sl_list = NULL;
@@ -5965,6 +6018,7 @@ conf_init_intrange(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_INTRANGE;
     val_t__intrange(val)[0] = i1;
     val_t__intrange(val)[1] = i2;
@@ -5975,6 +6029,7 @@ conf_init_autolabel(
     val_t *val) {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_AUTOLABEL;
     val->v.autolabel.template = NULL;
     val->v.autolabel.autolabel = 0;
@@ -5995,6 +6050,7 @@ conf_init_proplist(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_PROPLIST;
     val_t__proplist(val) =
         g_hash_table_new_full(g_str_amanda_hash, g_str_amanda_equal,
@@ -6008,6 +6064,7 @@ conf_init_execute_on(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_EXECUTE_ON;
     val->v.i = i;
 }
@@ -6019,6 +6076,7 @@ conf_init_execute_where(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_EXECUTE_WHERE;
     val->v.i = i;
 }
@@ -6030,6 +6088,7 @@ conf_init_send_amreport(
 {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_SEND_AMREPORT_ON;
     val->v.i = i;
 }
@@ -6037,6 +6096,7 @@ conf_init_send_amreport(
 static void conf_init_application(val_t *val) {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
     val->type = CONFTYPE_APPLICATION;
     val->v.s = NULL;
 }
@@ -6969,6 +7029,12 @@ merge_val_t(
 {
     if (valsrc->type == CONFTYPE_PROPLIST) {
 	if (valsrc->v.proplist) {
+	    if (valdst->v.proplist == NULL ||
+		g_hash_table_size(valdst->v.proplist) == 0) {
+		valdst->seen.block = current_block;
+		valdst->seen.filename = current_filename;
+		valdst->seen.linenum = current_line_num;
+	    }
 	    if (valdst->v.proplist == NULL) {
 	        valdst->v.proplist = g_hash_table_new_full(g_str_amanda_hash,
 							   g_str_amanda_equal,
@@ -7135,6 +7201,7 @@ merge_proplist_foreach_fn(
     }
     if (!new_property) {
         new_property = malloc(sizeof(property_t));
+	new_property->seen = property->seen;
 	new_property->append = property->append;
 	new_property->priority = property->priority;
 	new_property->values = NULL;
@@ -7162,6 +7229,7 @@ copy_proplist_foreach_fn(
     property_t *new_property = malloc(sizeof(property_t));
     new_property->append = property->append;
     new_property->priority = property->priority;
+    new_property->seen = property->seen;
     new_property->values = NULL;
 
     for(elem = property->values;elem != NULL; elem=elem->next) {
@@ -7233,6 +7301,7 @@ free_val_t(
     }
     val->seen.linenum = 0;
     val->seen.filename = NULL;
+    val->seen.block = NULL;
 }
 
 /*
@@ -7299,7 +7368,9 @@ generic_client_get_security_conf(
 }
 
 void
-dump_configuration(void)
+dump_configuration(
+    gboolean print_default,
+    gboolean print_source)
 {
     tapetype_t *tp;
     dumptype_t *dp;
@@ -7331,7 +7402,7 @@ dump_configuration(void)
 	if(kt->token == CONF_UNKNOWN)
 	    error(_("server bad token"));
 
-        val_t_print_token(stdout, NULL, "%-21s ", kt, &conf_data[np->parm]);
+        val_t_print_token(print_default, print_source, stdout, NULL, "%-21s ", kt, &conf_data[np->parm]);
     }
 
     for(hp = holdinglist; hp != NULL; hp = hp->next) {
@@ -7352,7 +7423,7 @@ dump_configuration(void)
 	    if(kt->token == CONF_UNKNOWN)
 		error(_("holding bad token"));
 
-            val_t_print_token(stdout, NULL, "      %-9s ", kt, &hd->value[i]);
+            val_t_print_token(print_default, print_source, stdout, NULL, "      %-9s ", kt, &hd->value[i]);
 	}
 	g_printf("}\n");
     }
@@ -7374,7 +7445,7 @@ dump_configuration(void)
 	    if(kt->token == CONF_UNKNOWN)
 		error(_("tapetype bad token"));
 
-            val_t_print_token(stdout, prefix, "      %-9s ", kt, &tp->value[i]);
+            val_t_print_token(print_default, print_source, stdout, prefix, "      %-9s ", kt, &tp->value[i]);
 	}
 	g_printf("%s}\n", prefix);
     }
@@ -7397,7 +7468,7 @@ dump_configuration(void)
 		if(kt->token == CONF_UNKNOWN)
 		    error(_("dumptype bad token"));
 
-		val_t_print_token(stdout, prefix, "      %-19s ", kt, &dp->value[i]);
+		val_t_print_token(print_default, print_source, stdout, prefix, "      %-19s ", kt, &dp->value[i]);
 	    }
 	    g_printf("%s}\n", prefix);
 	}
@@ -7423,7 +7494,7 @@ dump_configuration(void)
 	    if(kt->token == CONF_UNKNOWN)
 		error(_("interface bad token"));
 
-	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &ip->value[i]);
+	    val_t_print_token(print_default, print_source, stdout, prefix, "      %-19s ", kt, &ip->value[i]);
 	}
 	g_printf("%s}\n",prefix);
     }
@@ -7445,7 +7516,7 @@ dump_configuration(void)
 	    if(kt->token == CONF_UNKNOWN)
 		error(_("application bad token"));
 
-	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &ap->value[i]);
+	    val_t_print_token(print_default, print_source, stdout, prefix, "      %-19s ", kt, &ap->value[i]);
 	}
 	g_printf("%s}\n",prefix);
     }
@@ -7467,7 +7538,7 @@ dump_configuration(void)
 	    if(kt->token == CONF_UNKNOWN)
 		error(_("script bad token"));
 
-	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &ps->value[i]);
+	    val_t_print_token(print_default, print_source, stdout, prefix, "      %-19s ", kt, &ps->value[i]);
 	}
 	g_printf("%s}\n",prefix);
     }
@@ -7486,7 +7557,7 @@ dump_configuration(void)
 	    if(kt->token == CONF_UNKNOWN)
 		error(_("device bad token"));
 
-	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &dc->value[i]);
+	    val_t_print_token(print_default, print_source, stdout, prefix, "      %-19s ", kt, &dc->value[i]);
 	}
 	g_printf("%s}\n",prefix);
     }
@@ -7505,7 +7576,7 @@ dump_configuration(void)
 	    if(kt->token == CONF_UNKNOWN)
 		error(_("changer bad token"));
 
-	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &cc->value[i]);
+	    val_t_print_token(print_default, print_source, stdout, prefix, "      %-19s ", kt, &cc->value[i]);
 	}
 	g_printf("%s}\n",prefix);
     }
@@ -7524,7 +7595,7 @@ dump_configuration(void)
 	    if(kt->token == CONF_UNKNOWN)
 		error(_("interactivity bad token"));
 
-	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &iv->value[i]);
+	    val_t_print_token(print_default, print_source, stdout, prefix, "      %-19s ", kt, &iv->value[i]);
 	}
 	g_printf("%s}\n",prefix);
     }
@@ -7543,14 +7614,41 @@ dump_configuration(void)
 	    if(kt->token == CONF_UNKNOWN)
 		error(_("taperscan bad token"));
 
-	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &ts->value[i]);
+	    val_t_print_token(print_default, print_source, stdout, prefix, "      %-19s ", kt, &ts->value[i]);
 	}
 	g_printf("%s}\n",prefix);
     }
 }
 
+void dump_dumptype(
+    dumptype_t *dp,
+    char       *prefix,
+    gboolean    print_default,
+    gboolean    print_source)
+{
+    int i;
+    conf_var_t *np;
+    keytab_t *kt;
+
+    for(i=0; i < DUMPTYPE_DUMPTYPE; i++) {
+	for(np=dumptype_var; np->token != CONF_UNKNOWN; np++)
+	    if(np->parm == i) break;
+	if(np->token == CONF_UNKNOWN)
+	    error(_("dumptype bad value"));
+
+	for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
+	    if(kt->token == np->token) break;
+	if(kt->token == CONF_UNKNOWN)
+	    error(_("dumptype bad token"));
+
+	val_t_print_token(print_default, print_source, stdout, prefix, "      %-19s ", kt, &dp->value[i]);
+    }
+}
+
 static void
 val_t_print_token(
+    gboolean  print_default,
+    gboolean  print_source,
     FILE     *output,
     char     *prefix,
     char     *format,
@@ -7558,7 +7656,12 @@ val_t_print_token(
     val_t    *val)
 {
     char       **dispstrs, **dispstr;
-    dispstrs = val_t_display_strs(val, 1);
+
+    if (print_default == 0 && !val_t_seen(val)) {
+	return;
+    }
+
+    dispstrs = val_t_display_strs(val, 1, print_source);
 
     /* For most configuration types, this outputs
      *   PREFIX KEYWORD DISPSTR
@@ -7585,11 +7688,38 @@ val_t_print_token(
     g_strfreev(dispstrs);
 }
 
+typedef struct proplist_display_str_foreach_user_data {
+    char     **msg;
+    gboolean   print_source;
+} proplist_display_str_foreach_user_data;
+
+char *source_string(seen_t *seen);
+char *source_string(
+    seen_t *seen)
+{
+    char *buf;
+
+    if (seen->linenum) {
+	if (seen->block) {
+	    buf = g_strdup_printf("     (%s file %s line %d)",
+			seen->block, seen->filename, seen->linenum);
+	} else {
+	    buf = g_strdup_printf("     (file %s line %d)",
+			seen->filename, seen->linenum);
+	}
+    } else {
+	buf = g_strdup("     (default)");
+    }
+    return buf;
+}
+
 char **
 val_t_display_strs(
     val_t *val,
-    int    str_need_quote)
+    int    str_need_quote,
+    gboolean print_source)
 {
+    gboolean add_source = TRUE;
     char **buf;
     buf = malloc(3*SIZEOF(char *));
     buf[0] = NULL;
@@ -7922,16 +8052,18 @@ val_t_display_strs(
 
     case CONFTYPE_PROPLIST: {
 	int    nb_property;
-	char **mybuf;
+	proplist_display_str_foreach_user_data user_data;
 
 	nb_property = g_hash_table_size(val_t__proplist(val));
-	amfree(buf);
+	g_free(buf);
 	buf = malloc((nb_property+1)*SIZEOF(char*));
 	buf[nb_property] = NULL;
-	mybuf = buf;
+	user_data.msg = buf;
+	user_data.print_source = print_source;
 	g_hash_table_foreach(val_t__proplist(val),
 			     proplist_display_str_foreach_fn,
-			     &mybuf);
+			     &user_data);
+	add_source = FALSE;
         break;
     }
 
@@ -8044,6 +8176,16 @@ val_t_display_strs(
         break;
 
     }
+
+    /* add source */
+    if (print_source && add_source) {
+	char **buf1;
+	for (buf1 = buf; *buf1 != NULL; buf1++) {
+	    char *buf2 = g_strjoin("", *buf1, source_string(&val->seen), NULL);
+	    g_free(*buf1);
+	    *buf1 = buf2;
+	}
+    }
     return buf;
 }
 
@@ -8090,7 +8232,8 @@ proplist_display_str_foreach_fn(
     char         *property_s = quote_string_always(key_p);
     property_t   *property   = value_p;
     GSList       *value;
-    char       ***msg        = (char ***)user_data_p;
+    proplist_display_str_foreach_user_data *user_data = user_data_p;
+    char       ***msg        = (char ***)&user_data->msg;
 
     /* What to do with property->append? it should be printed only on client */
     if (property->priority) {
@@ -8104,6 +8247,9 @@ proplist_display_str_foreach_fn(
 	char *qstr = quote_string_always((char *)value->data);
 	**msg = vstrextend(*msg, " ", qstr, NULL);
 	amfree(qstr);
+    }
+    if (user_data->print_source) {
+	**msg = vstrextend(*msg, source_string(&property->seen));
     }
     (*msg)++;
 }
@@ -8193,6 +8339,8 @@ parm_key_info(
     pp_script_t   *pp;
     device_config_t   *dc;
     changer_config_t   *cc;
+    taperscan_t        *ts;
+    interactivity_t    *iv;
     int success = FALSE;
 
     /* WARNING: assumes globals keytable and parsetable are set correctly. */
@@ -8220,7 +8368,7 @@ parm_key_info(
 	    if (*s == '-') *s = '_';
 	}
 
-	subsec_key = strchr(subsec_name,':');
+	subsec_key = strrchr(subsec_name,':');
 	if(!subsec_key) goto out; /* failure */
 
 	*subsec_key = '\0';
@@ -8339,6 +8487,30 @@ parm_key_info(
 	    if (np->token == CONF_UNKNOWN) goto out;
 
 	    if (val) *val = &cc->value[np->parm];
+	    if (parm) *parm = np;
+	    success = TRUE;
+	} else if (g_str_equal(subsec_type, "INTERACTIVITY")) {
+	    iv = lookup_interactivity(subsec_name);
+	    if (!iv) goto out;
+	    for(np = interactivity_var; np->token != CONF_UNKNOWN; np++) {
+		if(np->token == kt->token)
+		   break;
+	    }
+	    if (np->token == CONF_UNKNOWN) goto out;
+
+	    if (val) *val = &iv->value[np->parm];
+	    if (parm) *parm = np;
+	    success = TRUE;
+	} else if (g_str_equal(subsec_type, "TAPERSCAN")) {
+	    ts = lookup_taperscan(subsec_name);
+	    if (!ts) goto out;
+	    for(np = taperscan_var; np->token != CONF_UNKNOWN; np++) {
+		if(np->token == kt->token)
+		   break;
+	    }
+	    if (np->token == CONF_UNKNOWN) goto out;
+
+	    if (val) *val = &ts->value[np->parm];
 	    if (parm) *parm = np;
 	    success = TRUE;
 	}

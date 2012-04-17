@@ -81,6 +81,15 @@
  * this works and it's here.
  */
 
+/* A "seen" struct.  Rather than allocate strings all over the place, this
+ * string is in the "parsed_filenames" GSList and will be freed when that
+ * GSList is freed.  This struct should be opaque to other modules. */
+typedef struct seen_s {
+    char *block;
+    char *filename;
+    int linenum;
+} seen_t;
+
 /* holdingdisk types */
 typedef enum {
     HOLD_NEVER,                 /* Always direct to tape  */
@@ -204,6 +213,7 @@ typedef struct {
     int append;
     int priority;
     GSList* values;
+    seen_t seen;
 } property_t;
 
 typedef GHashTable* proplist_t;
@@ -257,14 +267,6 @@ typedef enum {
     CONFTYPE_HOST_LIMIT,
     CONFTYPE_NO_YES_ALL,
 } conftype_t;
-
-/* A "seen" struct.  Rather than allocate strings all over the place, this
- * string is in the "parsed_filenames" GSList and will be freed when that
- * GSList is freed.  This struct should be opaque to other modules. */
-typedef struct seen_s {
-    char *filename;
-    int linenum;
-} seen_t;
 
 /* This should be considered an opaque type for any other modules.  The complete
  * struct is included here to allow quick access via macros. Access it *only* through
@@ -1482,7 +1484,10 @@ char *generic_get_security_conf(char *, void *);
  * This function only dumps the server configuration, and will fail on
  * clients.
  */
-void dump_configuration(void);
+void dump_configuration(gboolean print_default, gboolean print_source);
+
+void dump_dumptype(dumptype_t *dp, char *prefix, gboolean print_default,
+		   gboolean print_source);
 
 /* Return a sequence of strings giving the printable representation
  * of the given val_t.  If str_needs_quotes is true and each string is
@@ -1501,7 +1506,7 @@ void dump_configuration(void);
  * @param str_needs_quotes: add quotes to CONFTYPE_STR values?
  * @returns: NULL-terminated string vector
  */
-char **val_t_display_strs(val_t *val, int str_needs_quotes);
+char **val_t_display_strs(val_t *val, int str_needs_quotes, gboolean  print_source);
 
 /* Read a dumptype; this is used by this module as well as by diskfile.c to
  * read the disklist.  The two are carefully balanced in their parsing process.
