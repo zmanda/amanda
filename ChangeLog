@@ -1,3 +1,16 @@
+2012-04-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amgetconf.pl: Read the disklist.
+	* common-src/conffile.h (seen_t): Add block.
+	* common-src/conffile.c: Set seen.block
+	* common-src/conffile.c (dump_configuration): New print_default and
+	  print_source arguments.
+	* installcheck/Amanda_Config.pl: Fix dump_configuration call.
+	* server-src/amadmin.c: Add --no-default and --print-source arguments
+	  for config and disklist command.
+	* man/xml-source/amadmin.8.xml: Document new arguments.
+	* perl/Amanda/Chunker/Scribe.pm: Do load Amanda::Device.
+	* perl/Amanda/Config.swg: Fix for new dump_configuration arguments.
+
 2012-04-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amstar.c: Remove spurious space on directory entry.
 

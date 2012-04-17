@@ -242,7 +242,6 @@ use warnings;
 use Carp;
 
 use Amanda::Xfer qw( :constants );
-use Amanda::Device qw( :constants );
 use Amanda::Header;
 use Amanda::Debug qw( :logging );
 use Amanda::MainLoop;
