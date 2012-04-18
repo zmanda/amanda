@@ -205,6 +205,7 @@ add_disk(
     bzero(disk, SIZEOF(disk_t));
     disk->line = 0;
     disk->allow_split = 0;
+    disk->max_warnings = 20;
     disk->splitsize = (off_t)0;
     disk->tape_splitsize = (off_t)0;
     disk->split_diskbuffer = NULL;
@@ -687,6 +688,7 @@ parse_diskline(
     disk->auth               = dumptype_get_auth(dtype);
     disk->maxdumps	     = dumptype_get_maxdumps(dtype);
     disk->allow_split        = dumptype_get_allow_split(dtype);
+    disk->max_warnings       = dumptype_get_max_warnings(dtype);
     disk->tape_splitsize     = dumptype_get_tape_splitsize(dtype);
     disk->split_diskbuffer   = dumptype_get_split_diskbuffer(dtype);
     disk->fallback_splitsize = dumptype_get_fallback_splitsize(dtype);

@@ -2124,6 +2124,17 @@ promotion, set it to 1 or 2 if your disks get overpromoted.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><amkeyword>max-warnings</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default:
+<amdefault>20</amdefault>.
+The maximum number of error lines in the report for a dle. A value of '0'
+means unlimited. This is useful to reduce the size of the log file and the
+size of the report. All errors are put in separate files if a dle have more
+errors.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><amkeyword>priority</amkeyword> [ <amkeyword>low</amkeyword> | <amkeyword>medium</amkeyword> | <amkeyword>high</amkeyword> ]</term>
   <listitem>
 <para>Default: <amkeyword>medium</amkeyword>.

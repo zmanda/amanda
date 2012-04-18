@@ -128,6 +128,7 @@ typedef enum {
     CONF_CLNTCOMPPROG,		CONF_SRV_ENCRYPT,	CONF_CLNT_ENCRYPT,
     CONF_SRV_DECRYPT_OPT,	CONF_CLNT_DECRYPT_OPT,	CONF_AMANDAD_PATH,
     CONF_CLIENT_USERNAME,	CONF_CLIENT_PORT,	CONF_ALLOW_SPLIT,
+    CONF_MAX_WARNINGS,
 
     /* tape type */
     /*COMMENT,*/		CONF_BLOCKSIZE,
@@ -1005,6 +1006,7 @@ keytab_t server_keytab[] = {
     { "MAXDUMPS", CONF_MAXDUMPS },
     { "MAXDUMPSIZE", CONF_MAXDUMPSIZE },
     { "MAXPROMOTEDAY", CONF_MAXPROMOTEDAY },
+    { "MAX_WARNINGS", CONF_MAX_WARNINGS },
     { "MEMORY", CONF_MEMORY },
     { "MEDIUM", CONF_MEDIUM },
     { "META_AUTOLABEL", CONF_META_AUTOLABEL },
@@ -1381,6 +1383,7 @@ conf_var_t dumptype_var [] = {
    { CONF_SCRIPT            , CONFTYPE_STR      , read_dpp_script, DUMPTYPE_SCRIPTLIST       , NULL },
    { CONF_DATA_PATH         , CONFTYPE_DATA_PATH, read_data_path, DUMPTYPE_DATA_PATH         , NULL },
    { CONF_ALLOW_SPLIT       , CONFTYPE_BOOLEAN  , read_bool    , DUMPTYPE_ALLOW_SPLIT        , NULL },
+   { CONF_MAX_WARNINGS      , CONFTYPE_INT      , read_int     , DUMPTYPE_MAX_WARNINGS       , validate_nonnegative },
    { CONF_RECOVERY_LIMIT    , CONFTYPE_HOST_LIMIT, read_host_limit, DUMPTYPE_RECOVERY_LIMIT  , NULL },
    { CONF_DUMP_LIMIT        , CONFTYPE_HOST_LIMIT, read_host_limit, DUMPTYPE_DUMP_LIMIT      , validate_dump_limit },
    { CONF_UNKNOWN           , CONFTYPE_INT      , NULL          , DUMPTYPE_DUMPTYPE          , NULL }
@@ -2409,6 +2412,7 @@ init_dumptype_defaults(void)
     conf_init_identlist(&dpcur.value[DUMPTYPE_SCRIPTLIST], NULL);
     conf_init_proplist(&dpcur.value[DUMPTYPE_PROPERTY]);
     conf_init_bool     (&dpcur.value[DUMPTYPE_ALLOW_SPLIT]       , 1);
+    conf_init_int      (&dpcur.value[DUMPTYPE_MAX_WARNINGS]      , 20);
     conf_init_host_limit(&dpcur.value[DUMPTYPE_RECOVERY_LIMIT]);
     conf_init_host_limit_server(&dpcur.value[DUMPTYPE_DUMP_LIMIT]);
 }

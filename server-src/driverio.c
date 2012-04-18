@@ -574,6 +574,7 @@ dumper_cmd(
     char *cmdline = NULL;
     char number[NUM_STR_SIZE];
     char numberport[NUM_STR_SIZE];
+    char maxwarnings[NUM_STR_SIZE];
     char *o, *oo;
     char *device;
     char *features;
@@ -611,6 +612,7 @@ dumper_cmd(
 	    qname = quote_string(dp->name);
 	    g_snprintf(number, SIZEOF(number), "%d", sched(dp)->level);
 	    g_snprintf(numberport, SIZEOF(numberport), "%d", dumper->output_port);
+	    g_snprintf(maxwarnings, SIZEOF(maxwarnings), "%d", dp->max_warnings);
 	    features = am_feature_to_string(dp->host->features);
 	    if (am_has_feature(dp->host->features, fe_req_xml)) {
 		o = xml_optionstr(dp, 1);
@@ -664,6 +666,7 @@ dumper_cmd(
 			    " ", dp->auth,
 			    " ", data_path_to_string(dp->data_path),
 			    " ", dp->dataport_list,
+			    " ", maxwarnings,
 			    " |", o,
 			    "\n", NULL);
 	    amfree(qplugin);
