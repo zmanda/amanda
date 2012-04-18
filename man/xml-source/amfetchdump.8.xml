@@ -36,6 +36,22 @@
     <arg choice='opt'>-h</arg>
     <arg choice='opt'>--header-file <replaceable>filename</replaceable></arg>
     <arg choice='opt'>--header-fd <replaceable>fd</replaceable></arg>
+    <arg choice='opt'>--decompress
+      <group choice='req'>
+	<arg choice='plain'>ALL</arg>
+	<arg choice='plain'>NONE</arg>
+	<arg choice='plain'>SERVER</arg>
+	<arg choice='plain'>CLIENT</arg>
+      </group>
+    </arg>
+    <arg choice='opt'>--decrypt
+      <group choice='req'>
+	<arg choice='plain'>ALL</arg>
+	<arg choice='plain'>NONE</arg>
+	<arg choice='plain'>SERVER</arg>
+	<arg choice='plain'>CLIENT</arg>
+      </group>
+    </arg>
     &configoverride.synopsis;
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>hostname</replaceable></arg>
@@ -131,6 +147,62 @@ prompting for each volume.</para></listitem>
     <term><option>-C</option></term>
     <listitem><para>Compress output, smallest file size method
     available.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--decompress <replaceable>OPT</replaceable></option></term>
+<listitem><para>Where OPT is one of the following:
+<variablelist remap='TP'>
+<varlistentry>
+<term>ALL</term>
+<listitem>Always do the decompression
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>NONE</term>
+<listitem>Never do the decompression
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>SERVER</term>
+<listitem>Do the decompression only if the compression was done on the server
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>CLIENT</term>
+<listitem>Do the decompression only if the compression was done on the client
+</listitem>
+</varlistentry>
+</variablelist>
+</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--decrypt <replaceable>OPT</replaceable></option></term>
+<listitem><para>A backup must be decompressed before decrypted if it is both
+compressed and encrypted, amfetchdump must decompress.</para>
+<para>Where OPT is one of the following:
+<variablelist remap='TP'>
+<varlistentry>
+<term>ALL</term>
+<listitem>Always do the decryption
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>NONE</term>
+<listitem>Never do the decryption
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>SERVER</term>
+<listitem>Do the decryption only if the encryption was done on the server
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>CLIENT</term>
+<listitem>Do the decryption only if the encryption was done on the client
+</listitem>
+</varlistentry>
+</variablelist>
+</para></listitem>
   </varlistentry>
   <varlistentry>
     <term><option>-l</option></term>
