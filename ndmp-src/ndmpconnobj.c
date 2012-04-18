@@ -841,9 +841,6 @@ handle_notify(void *cookie)
     struct ndmp_msg_buf nmb;
     gboolean found = FALSE;
 
-    if (g_source_is_destroyed (g_main_current_source ())) {
-	return;
-    }
     g_mutex_lock(ndata->abort_mutex);
 
     event_release(ndata->read_event);

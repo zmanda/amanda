@@ -1,3 +1,6 @@
+2012-04-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndmpconnobj.c: Remove useless g_source_is_destroyed check.
+
 2012-04-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amgetconf.pl: Read the disklist.
 	* common-src/conffile.h (seen_t): Add block.
