@@ -1,4 +1,15 @@
 2012-04-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Parse MAX_WARNINGS in dumptype.
+	* common-src/conffile.h: Add DUMPTYPE_MAX_WARNINGS and
+	  dumptype_get_max_warnings
+	* man/xml-source/amanda.conf.5.xml: Document max_warning in dumptype.
+	* perl/Amanda/Config.swg: Add DUMPTYPE_MAX_WARNINGS.
+	* server-src/diskfile.c (add_disk): Copy max_warnings from dumptype.
+	* server-src/diskfile.h: Add max_warnings in disk_t.
+	* server-src/driverio.c (dumper_cmd): Send max_warnings to dumper.
+	* server-src/dumper.c: Use max_warnings.
+
+2012-04-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndmpconnobj.c: Remove useless g_source_is_destroyed check.
 
 2012-04-17  Jean-Louis Martineau <martineau@zmanda.com>

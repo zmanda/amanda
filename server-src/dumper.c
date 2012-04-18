@@ -123,6 +123,7 @@ static int set_datafd;
 static char *dle_str = NULL;
 static char *errfname = NULL;
 static int   errf_lines = 0;
+static int   max_warnings = 0;
 
 static dumpfile_t file;
 
@@ -546,6 +547,11 @@ main(
 	    }
 	    g_free(dataport_list);
 	    dataport_list = g_strdup(cmdargs->argv[a++]);
+
+	    if(a >= cmdargs->argc) {
+		error(_("error [dumper PORT-DUMP: not enough args: max_warnings]"));
+	    }
+	    max_warnings = atoi(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: options]"));
@@ -1027,14 +1033,18 @@ log_msgout(
 {
     char *line;
     int   count = 0;
+    int   to_unlink = 1;
 
     fflush(errf);
     if (fseeko(errf, 0L, SEEK_SET) < 0) {
 	dbprintf(_("log_msgout: warning - seek failed: %s\n"), strerror(errno));
     }
     while ((line = agets(errf)) != NULL) {
-	if (errf_lines >= 100 && count >= 20)
+	if (max_warnings > 0 && errf_lines >= max_warnings && count >= max_warnings) {
+	    log_add(typ, "Look in the '%s' file for full error messages", errfname);
+	    to_unlink = 0;
 	    break;
+	}
 	if (line[0] != '\0') {
 		log_add(typ, "%s", line);
 	}
@@ -1043,11 +1053,7 @@ log_msgout(
     }
     amfree(line);
 
-    if (errf_lines >= 100) {
-	log_add(typ, "Look in the '%s' file for full error messages", errfname);
-    }
-
-    return errf_lines < 100;
+    return to_unlink;
 }
 
 /* ------------- */

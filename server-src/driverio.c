@@ -669,6 +669,7 @@ dumper_cmd(
         g_ptr_array_add(array, g_strdup(dp->auth));
         g_ptr_array_add(array, g_strdup(data_path_to_string(dp->data_path)));
         g_ptr_array_add(array, g_strdup(dp->dataport_list));
+        g_ptr_array_add(array, g_strdup_printf("%d", dp->max_warnings));
         g_ptr_array_add(array, g_string_free(strbuf, FALSE));
         g_ptr_array_add(array, NULL);
 
