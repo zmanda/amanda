@@ -1,4 +1,8 @@
 2012-04-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c: Add debugging.
+	* device-src/vfs-device.c: Add debugging.
+
+2012-04-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/amdump_client.pl: Fix warning.
 
 2012-04-18  Jean-Louis Martineau <martineau@zmanda.com>
