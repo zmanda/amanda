@@ -1,3 +1,6 @@
+2012-04-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/amdump_client.pl: Fix warning.
+
 2012-04-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amfetchdump.pl: add --decompress and --decrypt options.
 	* man/xml-source/amfetchdump.8.xml: Document new options.

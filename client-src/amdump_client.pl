@@ -101,7 +101,7 @@ if ($cmd eq 'list') {
 		    debug("send: DISK " . Amanda::Util::quote_string($diskname));
 		    print {$amservice_in} "DISK " . Amanda::Util::quote_string($diskname) . "\n";
 		    my $a = <$amservice_out>;
-		    print if ($a != /^DISK /)
+		    print if ($a !~ /^DISK /)
 		}
 	    }
 	}
