@@ -91,6 +91,10 @@ static char *displayunit;
 static long int unitdivisor;
 static gboolean print_default = 1;
 static gboolean print_source = 0;
+static int opt_days = -1;
+static char *opt_sort = NULL;
+static gboolean opt_long = 0;
+static gboolean opt_outdated = 0;
 
 static const struct {
     const char *name;
@@ -150,6 +154,8 @@ static struct option long_options[] = {
     {"version"       , 0, NULL,  1},
     {"no-default"    , 0, NULL,  2},
     {"print-source"  , 0, NULL,  3},
+    {"days"          , 1, NULL,  4},
+    {"sort"          , 1, NULL,  5},
     {NULL, 0, NULL, 0}
 };
 
@@ -189,7 +195,7 @@ main(
     while (1) {
 	int option_index = 0;
         int c;
-        c = getopt_long(argc, argv, "", long_options, &option_index);
+        c = getopt_long(argc, argv, "ld", long_options, &option_index);
 
 	if (c == -1) {
 	    break;
@@ -201,6 +207,14 @@ main(
 	case 2: print_default = 0;
 		break;
 	case 3: print_source = 1;
+		break;
+	case 4: opt_days = atoi(optarg);
+		break;
+	case 5: opt_sort = g_strdup(optarg);
+		break;
+	case 'l': opt_long = TRUE;
+		break;
+	case 'd': opt_outdated = TRUE;
 		break;
 	default: usage();
 	}
@@ -929,8 +943,8 @@ tape(
 
 void
 balance(
-    int		argc,
-    char **	argv)
+    int		argc G_GNUC_UNUSED,
+    char **	argv G_GNUC_UNUSED)
 {
     disk_t *dp;
     struct balance_stats {
@@ -952,9 +966,10 @@ balance(
     overdue = 0;
     max_overdue = 0;
 
-    if(argc > 4 && strcmp(argv[3],"--days") == 0) {
-	later = atoi(argv[4]);
-	if(later < 0) later = conf_dumpcycle;
+    if (opt_days > 0) {
+	later = opt_days;
+    } else if (opt_days == 0) {
+	later = conf_dumpcycle;
     }
     if(later > 10000) later = 10000;
 
@@ -1149,11 +1164,11 @@ find(
 
 
     sort_order = newstralloc(sort_order, DEFAULT_SORT_ORDER);
-    if(argc > 4 && strcmp(argv[3],"--sort") == 0) {
+    if (opt_sort) {
 	size_t i, valid_sort=1;
 
-	for(i = strlen(argv[4]); i > 0; i--) {
-	    switch (argv[4][i - 1]) {
+	for(i = strlen(opt_sort); i > 0; i--) {
+	    switch (opt_sort[i - 1]) {
 	    case 'h':
 	    case 'H':
 	    case 'k':
@@ -1175,15 +1190,13 @@ find(
 	    }
 	}
 	if(valid_sort) {
-	    sort_order = newstralloc(sort_order, argv[4]);
+	    sort_order = newstralloc(sort_order, opt_sort);
 	} else {
-	    g_printf(_("Invalid sort order: %s\n"), argv[4]);
+	    g_printf(_("Invalid sort order: %s\n"), opt_sort);
 	    g_printf(_("Use default sort order: %s\n"), sort_order);
 	}
-	start_argc=6;
-    } else {
-	start_argc=4;
     }
+    start_argc=4;
     errstr = match_disklist(&diskq, argc-(start_argc-1), argv+(start_argc-1));
 
     /* check all log file exists */
@@ -1485,22 +1498,9 @@ holding(
             return;
 
         case HOLDING_LIST:
+	    long_list = opt_long;
+	    outdated_list = opt_outdated;
             argc -= 4; argv += 4;
-	    while (argc && argv[0][0] == '-') {
-		switch (argv[0][1]) {
-		    case 'l': 
-			long_list = 1; 
-			break;
-		    case 'd': /* have to use '-d', and not '-o', because of parse_config */
-			outdated_list = 1;
-			break;
-		    default:
-			g_fprintf(stderr, _("Unknown option -%c\n"), argv[0][1]);
-			usage();
-			return;
-		}
-		argc--; argv++;
-	    }
 
 	    /* header */
             if (long_list) {
