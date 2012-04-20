@@ -1,4 +1,7 @@
 2012-04-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amfetchdump.pl: Fix.
+
+2012-04-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin.c: Fix handling of optional arguments.
 	* installcheck/amadmin.pl: Check it.
 
