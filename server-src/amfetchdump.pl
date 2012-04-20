@@ -186,8 +186,11 @@ $opt_config = shift @ARGV;
 
 $opt_compress = 1 if $opt_compress_best;
 
-$decompress = "ALL" if !defined($decompress) and !defined($opt_compress);
-$decrypt = "ALL" if !defined($decrypt);
+$decompress = "ALL" if !defined($decompress) and !defined($opt_compress) and !defined($opt_leave);
+$decrypt = "ALL" if !defined($decrypt) and !defined($opt_leave);
+
+$decompress = "NO" if !defined($decompress) and !defined($opt_compress) and defined($opt_leave);
+$decrypt = "NO" if !defined($decrypt) and defined($opt_leave);
 
 usage("must specify at least a hostname") unless @ARGV;
 @opt_dumpspecs = Amanda::Cmdline::parse_dumpspecs([@ARGV],
@@ -423,21 +426,15 @@ sub main {
 
 	# set up any filters that need to be applied; decryption first
 	my @filters;
-print "encrypted: $hdr->{'encrypted'}\n";
-print "srv_encrypt: $hdr->{'srv_encrypt'}\n";
-print "clnt_encrypt: $hdr->{'clnt_encrypt'}\n";
-print "decrypt: $decrypt\n";
 	if ($hdr->{'encrypted'} and
 	    (($hdr->{'srv_encrypt'} and ($decrypt eq "ALL" || $decrypt eq "SERVER")) ||
 	     ($hdr->{'clnt_encrypt'} and ($decrypt eq "ALL" || $decrypt eq "CLIENT")) ||
 	     (!defined($decrypt and not $opt_leave)))) {
 	    if ($hdr->{'srv_encrypt'}) {
-print "decrypting server\n";
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
 			[ $hdr->{'srv_encrypt'}, $hdr->{'srv_decrypt_opt'} ], 0);
 	    } elsif ($hdr->{'clnt_encrypt'}) {
-print "decrypting client\n";
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
 			[ $hdr->{'clnt_encrypt'}, $hdr->{'clnt_decrypt_opt'} ], 0);
@@ -454,10 +451,6 @@ print "decrypting client\n";
 	    $hdr->{'encrypt_suffix'} = 'N';
 	}
 
-print "compressed: $hdr->{'compressed'}\n";
-print "srvcompprog: $hdr->{'srvcompprog'}\n";
-print "clntcompprog: $hdr->{'clntcompprog'}\n";
-print "decompress: $decompress\n";
 	if ($hdr->{'compressed'} and not $opt_compress and
 	    (($hdr->{'srvcompprog'} and ($decompress eq "ALL" || $decompress eq "SERVER")) ||
 	     ($hdr->{'clntcompprog'} and ($decompress eq "ALL" || $decompress eq "CLIENT")) ||
@@ -467,7 +460,6 @@ print "decompress: $decompress\n";
 	     ($dle->{'compress'} == $Amanda::Config::COMP_BEST and ($decompress eq "ALL" || $decompress eq "CLIENT")) ||
 	     (!defined($decompress and not $opt_leave)))) {
 	    # need to uncompress this file
-print "decompressing\n";
 	    if ($hdr->{'encrypted'}) {
 		print "Not decompressing because the backup image is not decrypted\n";
 	    } elsif ($hdr->{'srvcompprog'}) {
