@@ -1,4 +1,7 @@
 2012-04-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/amreport.pl: Comment a test that fail too often.
+
+2012-04-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c: Add debugging statement.
 	* device-src/vfs-device.c: Add debugging statement.
 
