@@ -1,3 +1,7 @@
+2012-04-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c: Add debugging statement.
+	* device-src/vfs-device.c: Add debugging statement.
+
 2012-04-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Add TMPDIR.
 	* common-src/conffile.h: Add CNF_TMPDIR.

@@ -641,6 +641,9 @@ search_vfs_directory(
 error:
     if (dir_handle)
 	closedir(dir_handle);
+    if (result == -1) {
+	g_debug("search_vfs_directory return -1");
+    }
     return result;
 }
 
@@ -839,6 +842,7 @@ static gboolean get_last_file_number_functor(const char * filename,
     glfn_data * data = (glfn_data*)datap;
 
     file = g_ascii_strtoull(filename, NULL, 10); /* Guaranteed to work. */
+    g_debug("get_last_file_number_functor: %lld, %s", (long long) file, filename);
     if (file > G_MAXINT) {
 	g_warning(_("Super-large device file %s found, ignoring"), filename);
         return TRUE;
@@ -846,6 +850,7 @@ static gboolean get_last_file_number_functor(const char * filename,
     /* This condition is needlessly complex due to sign issues. */
     if (data->rval < 0 || ((guint)data->rval) < file) {
         data->rval = file;
+	g_debug("get_last_file_number_functor: set data->rval to %d", data->rval);
     }
     return TRUE;
 }
@@ -863,6 +868,7 @@ get_last_file_number(VfsDevice * self) {
 
     if (count <= 0) {
         /* Somebody deleted something important while we weren't looking. */
+	g_debug("get_last_file_number: search_vfs_directory returned %d", count);
 	device_set_error(d_self,
 	    stralloc(_("Error identifying VFS device contents!")),
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
@@ -871,6 +877,7 @@ get_last_file_number(VfsDevice * self) {
         g_assert(data.rval >= 0);
     }
 
+    g_debug("get_last_file_number return data.rval: %d", data.rval);
     return data.rval;
 }
 
@@ -915,6 +922,7 @@ get_next_file_number(VfsDevice * self, guint request) {
 
     if (count <= 0) {
         /* Somebody deleted something important while we weren't looking. */
+	g_debug("get_next_file_number: Error identifying VFS device contents");
 	device_set_error(d_self,
 	    stralloc(_("Error identifying VFS device contents!")),
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
@@ -934,8 +942,10 @@ char * make_new_file_name(VfsDevice * self, const dumpfile_t * ji) {
 
     for (;;) {
         fileno = 1 + get_last_file_number(self);
-        if (fileno <= 0)
+        if (fileno <= 0) {
+	    g_debug("make_new_file_name: get_last_file_number returned %d", fileno-1);
             return NULL;
+	}
 
         if (open_lock(self, fileno, TRUE)) {
             break;
@@ -952,6 +962,9 @@ char * make_new_file_name(VfsDevice * self, const dumpfile_t * ji) {
     sanitary_base = sanitise_filename(base);
     amfree(base);
     rval = g_strdup_printf("%s/%s", self->dir_name, sanitary_base);
+    if (!rval) {
+	g_debug("make_new_file_name: rval is NULL: %s/%s", self->dir_name, sanitary_base);
+    }
     amfree(sanitary_base);
     return rval;
 }

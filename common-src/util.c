@@ -1063,9 +1063,13 @@ int search_directory(DIR * handle, const char * regex,
     int rval = 0;
     regex_t compiled_regex;
     gboolean done = FALSE;
+    int result;
 
-    if (regcomp(&compiled_regex, regex, REG_EXTENDED | REG_NOSUB) != 0) {
+    if ((result = regcomp(&compiled_regex, regex, REG_EXTENDED | REG_NOSUB)) != 0) {
+	char errmsg[STR_SIZE];
         regfree(&compiled_regex);
+	regerror(result, &compiled_regex, errmsg, SIZEOF(errmsg));
+	g_debug("compiling the regex \"%s\" failed: %s", regex, errmsg);
         return -1;
     }
 
