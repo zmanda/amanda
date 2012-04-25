@@ -83,6 +83,7 @@
 #define NDMOS_MACRO_SRAND() g_random_set_seed(time(0))
 #define NDMOS_MACRO_RAND() g_random_int()
 /* default: NDMOS_MACRO_OK_TAPE_REC_LEN */
+#define NDMOS_MACRO_FREE(T) g_free(T)
 
 /* extra */
 #ifdef assert
