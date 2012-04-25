@@ -100,6 +100,8 @@
 #define CNVT_STRDUP_FROM_9x(PX, P9, MEMBERX, MEMBER9) \
     convert_strdup ((P9)->MEMBER9, &(PX)->MEMBERX)
 
+#define CNVT_FREE(PX, MEMBERX) \
+    { NDMOS_API_FREE((PX)->MEMBERX) ; (PX)->MEMBERX = NULL; };
 
 
 /*

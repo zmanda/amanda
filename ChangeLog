@@ -1,3 +1,9 @@
+2012-04-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndmos.h: Define NDMOS_MACRO_FREE
+	* ndmp-src/ndmos_glib.h: Define NDMOS_MACRO_FREE
+	* ndmp-src/ndmp_translate.h: define CNVT_FREE.
+	* ndmp-src/ndmp4_translate.c:#Add many free function.
+
 2012-04-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amfetchdump.pl: Fix.
 

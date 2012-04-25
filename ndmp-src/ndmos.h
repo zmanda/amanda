@@ -317,6 +317,10 @@ extern char *ndml_strend(char *s);	/* ndml_util.c */
 #define NDMOS_MACRO_NEWN(T,N)	((T *) NDMOS_API_MALLOC(sizeof (T) * (N)))
 #endif /* !NDMOS_MACRO_NEWN */
 
+#ifndef NDMOS_MACRO_FREE
+#define NDMOS_MACRO_FREE(T) free(T)
+#endif
+
 #ifndef NDMOS_MACRO_ZEROFILL
 #define NDMOS_MACRO_ZEROFILL(P)	NDMOS_API_BZERO(P,sizeof *(P))
 #endif /* !NDMOS_MACRO_ZEROFILL */
