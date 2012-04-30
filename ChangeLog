@@ -1,4 +1,7 @@
 2012-04-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/amreport.pl: Comment a bogus test.
+
+2012-04-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* gnulib/*, config/gnulib/*: Add missing files.
 
 2012-04-30  Jean-Louis Martineau <martineau@zmanda.com>
